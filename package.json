@@ -31,7 +31,7 @@
     "posthog-js": "1.412.1",
     "posthog-node": "5.47.11",
     "react": "19.2.3",
-    "react-dom": "19.2.3",
+    "react-dom": "19.2.8",
     "zod": "^4.4.3"
   },
   "devDependencies": {
