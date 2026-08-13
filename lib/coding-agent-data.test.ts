@@ -33,13 +33,25 @@ const validRecord: CodingAgentRecord = {
 };
 
 const validSnapshot: CodingAgentSnapshot = {
-  schemaVersion: 1,
+  schemaVersion: 2,
   source: {
     name: "Artificial Analysis",
     url: "https://artificialanalysis.ai/agents/coding-agents/",
     retrievedAt: "2026-07-17T16:29:07.106Z",
     method: "next-flight",
   },
+  updates: [{
+    id: "model-added:prime",
+    agent: "Codex CLI",
+    benchmarks: validRecord.benchmarks,
+    detectedAt: "2026-07-17T16:29:07.106Z",
+    kind: "model-added",
+    model: "Model Prime",
+    providerId: "provider",
+    providerName: "Provider",
+    setting: "medium",
+    variantCount: 1,
+  }],
   records: [validRecord],
 };
 
@@ -79,6 +91,18 @@ describe("coding-agent snapshot boundary", () => {
 
     expect(scoreResult.ok).toBe(false);
     expect(dateResult.ok).toBe(false);
+  });
+
+  test("rejects update events that omit their kind-specific evidence", () => {
+    const result = parseCodingAgentSnapshot({
+      ...validSnapshot,
+      updates: [{
+        ...validSnapshot.updates[0],
+        kind: "benchmark-changed",
+      }],
+    });
+
+    expect(result.ok).toBe(false);
   });
 });
 

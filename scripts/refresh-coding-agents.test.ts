@@ -1,5 +1,12 @@
 import { describe, expect, test } from "bun:test";
-import { extractSourceRows, normalizeSourceRows, validateSnapshotUpdate } from "./refresh-coding-agents";
+import { assertProperty, fc } from "../lib/property-test";
+import {
+  deriveSnapshotUpdates,
+  extractSourceRows,
+  mergeSnapshotUpdates,
+  normalizeSourceRows,
+  validateSnapshotUpdate,
+} from "./refresh-coding-agents";
 
 function sourceRow(index: number, model = `Model ${index}`) {
   return {
@@ -151,5 +158,126 @@ describe("Artificial Analysis Flight extraction", () => {
       expect(result.ok).toBe(false);
       if (!result.ok) expect(result.error.message).toContain(`${metric} coverage from 10 to 7`);
     }
+  });
+
+  test("groups newly added settings into one model event with the best benchmark summary", () => {
+    const previous = normalizedSnapshot(10);
+    const candidate = normalizedSnapshot(10);
+    const low = sourceRow(10, "Model Next (low)");
+    low.hostModelSlug = "model-next";
+    low.indexScore = 0.68;
+    const high = sourceRow(11, "Model Next (high)");
+    high.hostModelSlug = "model-next";
+    high.indexScore = 0.76;
+    const additions = normalizeSourceRows([low, high, ...Array.from({ length: 8 }, (_, index) => sourceRow(index))], "2026-07-18T16:29:07.106Z");
+    candidate.source = additions.source;
+    candidate.records.push(...additions.records.filter(({ model }) => model === "Model Next"));
+
+    const updates = deriveSnapshotUpdates(previous, candidate);
+
+    expect(updates).toHaveLength(1);
+    expect(updates[0]).toMatchObject({
+      benchmarks: { aaIndex: 76 },
+      kind: "model-added",
+      model: "Model Next",
+      setting: "high",
+      variantCount: 2,
+    });
+  });
+
+  test("distinguishes a new setting from a genuinely new model", () => {
+    const previous = normalizedSnapshot(10);
+    const candidate = normalizedSnapshot(10);
+    candidate.source = { ...candidate.source, retrievedAt: "2026-07-18T16:29:07.106Z" };
+    const existing = candidate.records[0];
+    expect(existing).toBeDefined();
+    if (existing === undefined) return;
+    candidate.records.push({
+      ...existing,
+      id: "new-setting-row",
+      modelLabel: `${existing.model} (high)`,
+      setting: "high",
+      settingRank: 4,
+    });
+
+    expect(deriveSnapshotUpdates(previous, candidate)).toMatchObject([{
+      kind: "variant-added",
+      model: existing.model,
+      setting: "high",
+      variantCount: 1,
+    }]);
+  });
+
+  test("records material benchmark changes and suppresses sub-half-point noise", () => {
+    const previous = normalizedSnapshot(10);
+    const candidate = normalizedSnapshot(10);
+    candidate.source = { ...candidate.source, retrievedAt: "2026-07-18T16:29:07.106Z" };
+    const first = candidate.records[0];
+    const second = candidate.records[1];
+    expect(first).toBeDefined();
+    expect(second).toBeDefined();
+    if (first === undefined || second === undefined) return;
+    candidate.records[0] = {
+      ...first,
+      benchmarks: { ...first.benchmarks, aaIndex: 75.49, terminalBench: 82 },
+    };
+    candidate.records[1] = {
+      ...second,
+      benchmarks: { ...second.benchmarks, aaIndex: 75.3 },
+    };
+
+    const updates = deriveSnapshotUpdates(previous, candidate);
+
+    expect(updates).toHaveLength(1);
+    expect(updates[0]).toMatchObject({
+      changes: [{ current: 82, metric: "terminalBench", previous: 81 }],
+      kind: "benchmark-changed",
+      model: "Model 0",
+    });
+  });
+
+  test("keeps prior history when a refresh has no notable changes", () => {
+    const previous = normalizedSnapshot(10);
+    previous.updates = [{
+      id: "existing-update",
+      agent: "Codex CLI",
+      benchmarks: previous.records[0]?.benchmarks ?? {
+        aaIndex: null,
+        deepSwe: null,
+        sweAtlas: null,
+        terminalBench: null,
+      },
+      detectedAt: "2026-07-17T16:29:07.106Z",
+      kind: "model-added",
+      model: "Model 0",
+      providerId: "openai",
+      providerName: "OpenAI",
+      setting: "default",
+      variantCount: 1,
+    }];
+    const candidate = normalizedSnapshot(10);
+    candidate.source = { ...candidate.source, retrievedAt: "2026-07-18T16:29:07.106Z" };
+
+    expect(mergeSnapshotUpdates(previous, candidate).updates).toEqual(previous.updates);
+  });
+
+  test("property: upstream row-id churn and ordering never fabricate model updates", () => {
+    assertProperty(fc.property(
+      fc.array(fc.integer(), { minLength: 10, maxLength: 10 }),
+      (weights) => {
+        const previous = normalizedSnapshot(10);
+        const candidate = normalizedSnapshot(10);
+        candidate.source = { ...candidate.source, retrievedAt: "2026-07-18T16:29:07.106Z" };
+        candidate.records = candidate.records
+          .map((record) => ({ ...record, id: `churned-${record.id}` }))
+          .sort((left, right) => (
+            (weights[Number(left.seriesId.slice("series-".length))] ?? 0)
+            - (weights[Number(right.seriesId.slice("series-".length))] ?? 0)
+            || left.seriesId.localeCompare(right.seriesId)
+          ));
+
+        expect(deriveSnapshotUpdates(previous, candidate)).toEqual([]);
+      },
+    ));
   });
 });

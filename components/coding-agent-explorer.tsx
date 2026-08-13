@@ -12,6 +12,7 @@ import {
 import {
   Icon,
   IconButton,
+  LinkButton,
   Menu,
   MenuItem,
   MenuSection,
@@ -38,6 +39,7 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { createBrandedChartPng, downloadChartPng } from "@/components/chart-export";
+import { ModelUpdateTimeline } from "@/components/model-update-timeline";
 import {
   buildChartShareUrl,
   chartImageFilename,
@@ -52,6 +54,7 @@ import { providerColorRange, recordColor } from "@/lib/chart-colors";
 import { layoutChartLabels, type LabelPlacement } from "@/lib/chart-label-layout";
 import { placeChartTooltip } from "@/lib/chart-tooltip-layout";
 import { codingAgentRecordKey, type CodingAgentRecord, type CodingAgentSnapshot } from "@/lib/coding-agent-data";
+import { formatRetrievedAt, formatUpdateDate, latestUpdateGroup } from "@/lib/coding-agent-updates";
 import {
   computeDomain,
   formatMetricValue,
@@ -75,20 +78,6 @@ const chartHeight = 1320;
 const plot = { top: 24, right: 1360, bottom: 1240, left: 72 } as const;
 const initialTooltipSize = { height: 260, width: 264 } as const;
 const refreshDelayThresholdMs = 48 * 60 * 60 * 1_000;
-const utcMonthLabels = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
-] as const;
 const yMetricItems = [
   { id: "aaIndex", label: yMetricLabels.aaIndex },
   { id: "deepSwe", label: yMetricLabels.deepSwe },
@@ -159,19 +148,7 @@ function isPointNavigationKey(key: string): key is PointNavigationKey {
     || key === "Home";
 }
 
-/** Keeps server and browser markup identical across differing ICU versions. */
-export function formatRetrievedAt(timestamp: string): string {
-  const date = new Date(timestamp);
-  const month = utcMonthLabels[date.getUTCMonth()];
-  if (!Number.isFinite(date.valueOf()) || month === undefined) {
-    throw new RangeError(`Invalid retrieval timestamp: ${timestamp}`);
-  }
-  const hour = date.getUTCHours();
-  const displayHour = hour % 12 || 12;
-  const minutes = String(date.getUTCMinutes()).padStart(2, "0");
-  const meridiem = hour >= 12 ? "PM" : "AM";
-  return `${month} ${date.getUTCDate()}, ${date.getUTCFullYear()}, ${displayHour}:${minutes} ${meridiem} UTC`;
-}
+export { formatRetrievedAt } from "@/lib/coding-agent-updates";
 
 function pointInDirection(points: readonly PlotPoint[], index: number, key: PointNavigationKey): PlotPoint | null {
   if (key === "Home") return points[0] ?? null;
@@ -621,6 +598,7 @@ export function CodingAgentExplorer({ brand, snapshot }: { brand: ChartBrand; sn
     return () => observer.disconnect();
   }, [hoveredPointId, tooltipVisible]);
   const retrievedAt = formatRetrievedAt(snapshot.source.retrievedAt);
+  const latestUpdate = latestUpdateGroup(snapshot.updates);
   const accessibleTitle = `${yMetricLabels[yMetric]} versus ${xMetricLabels[xMetric]}`;
   const accessibleDescription = `Scatter plot comparing coding-agent models. Hover or focus a point or provider to preview it. Select a point to pin agents within ${performanceTierRadius} points of its ${yMetricLabels[yMetric]} score, or select a provider to pin its models. Use arrow keys to move between points.`;
   const shareSelectionLabel = pinnedPoint?.record.modelLabel ?? pinnedProvider?.name ?? null;
@@ -847,7 +825,14 @@ export function CodingAgentExplorer({ brand, snapshot }: { brand: ChartBrand; sn
   return (
     <div className="chart-app">
       <TopBar
-        actions={<ThemeToggle aria-label="Chart appearance" />}
+        actions={(
+          <>
+            <LinkButton href="/blog" size="compact" variant="quiet">
+              Blog
+            </LinkButton>
+            <ThemeToggle aria-label="Chart appearance" />
+          </>
+        )}
         className="chart-top-bar"
         title={<h1>{brand.domain}</h1>}
       />
@@ -864,6 +849,13 @@ export function CodingAgentExplorer({ brand, snapshot }: { brand: ChartBrand; sn
           <div className="chart-title">
             <div className="chart-subtitle-row">
               <p className="chart-subtitle">Compare AI coding models</p>
+              {latestUpdate !== null && (
+                <a className="latest-update-badge chart-selection-boundary" href="#model-updates">
+                  <span>Latest</span>
+                  <strong>{latestUpdate.summary}</strong>
+                  <time dateTime={latestUpdate.detectedAt}>{formatUpdateDate(latestUpdate.detectedAt)}</time>
+                </a>
+              )}
               <div className="chart-provenance-control chart-selection-boundary">
                 <MenuTrigger>
                   <IconButton
@@ -1276,6 +1268,7 @@ export function CodingAgentExplorer({ brand, snapshot }: { brand: ChartBrand; sn
         xMetric={xMetric}
         yMetric={yMetric}
       />
+      <ModelUpdateTimeline retrievedAt={snapshot.source.retrievedAt} updates={snapshot.updates} />
       <footer className="chart-footer">
         <HranessBrand className="chart-footer-hraness" />
       </footer>

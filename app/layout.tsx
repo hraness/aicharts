@@ -45,21 +45,33 @@ export const viewport: Viewport = {
   themeColor: "#f8f7f4",
 };
 
-const structuredData = {
-  "@context": "https://schema.org",
-  "@type": "WebApplication",
-  applicationCategory: "DeveloperApplication",
-  description: site.description,
-  featureList: [
-    "Side-by-side coding-agent comparison",
-    "Model and provider filters",
-    "Source-dated benchmark snapshots",
-  ],
-  isAccessibleForFree: true,
-  name: site.name,
-  operatingSystem: "Any",
-  url: site.origin,
-};
+const websiteId = `${site.origin}/#website`;
+const structuredData = [
+  {
+    "@context": "https://schema.org",
+    "@id": websiteId,
+    "@type": "WebSite",
+    description: site.description,
+    name: site.name,
+    url: `${site.origin}/`,
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    applicationCategory: "DeveloperApplication",
+    description: site.description,
+    featureList: [
+      "Side-by-side coding-agent comparison",
+      "Model and provider filters",
+      "Source-dated benchmark snapshots",
+    ],
+    isAccessibleForFree: true,
+    isPartOf: { "@id": websiteId },
+    name: site.name,
+    operatingSystem: "Any",
+    url: site.origin,
+  },
+];
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (

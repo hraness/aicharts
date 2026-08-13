@@ -74,6 +74,19 @@ test("tucks data provenance behind a compact named control", async () => {
   expect(source).not.toContain('className="chart-data-status"');
 });
 
+test("links the latest data-derived update badge to the bottom timeline", async () => {
+  const source = await Bun.file(new URL("./coding-agent-explorer.tsx", import.meta.url)).text();
+  const overviewIndex = source.indexOf("<OptionSpaceOverview");
+  const timelineIndex = source.indexOf("<ModelUpdateTimeline");
+  const footerIndex = source.indexOf('<footer className="chart-footer">');
+
+  expect(source).toContain('className="latest-update-badge chart-selection-boundary"');
+  expect(source).toContain('href="#model-updates"');
+  expect(source).toContain("latestUpdate.summary");
+  expect(timelineIndex).toBeGreaterThan(overviewIndex);
+  expect(footerIndex).toBeGreaterThan(timelineIndex);
+});
+
 test("keeps chart chrome compact and metric labels semantic-only", async () => {
   const source = await Bun.file(new URL("./coding-agent-explorer.tsx", import.meta.url)).text();
 

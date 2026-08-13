@@ -1,11 +1,121 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "source": {
     "name": "Artificial Analysis",
     "url": "https://artificialanalysis.ai/agents/coding-agents/",
-    "retrievedAt": "2026-08-13T09:32:51.535Z",
+    "retrievedAt": "2026-08-13T10:00:45.017Z",
     "method": "next-flight"
   },
+  "updates": [
+    {
+      "id": "[\"model-added\",\"2026-08-12T11:29:54.373Z\",\"[\\\"Claude Code\\\",\\\"alibaba_cloud\\\",\\\"Qwen3.8 Max\\\"]\"]",
+      "detectedAt": "2026-08-12T11:29:54.373Z",
+      "agent": "Claude Code",
+      "model": "Qwen3.8 Max",
+      "providerId": "alibaba_cloud",
+      "providerName": "Alibaba Cloud",
+      "setting": "default",
+      "benchmarks": {
+        "aaIndex": 58.72498553771748,
+        "deepSwe": 51.917404129793496,
+        "terminalBench": 79.36507936507931,
+        "sweAtlas": 44.892473118279604
+      },
+      "kind": "model-added",
+      "variantCount": 1
+    },
+    {
+      "id": "[\"model-added\",\"2026-08-12T11:29:54.373Z\",\"[\\\"Codex\\\",\\\"deepseek\\\",\\\"DeepSeek V4 Flash\\\"]\"]",
+      "detectedAt": "2026-08-12T11:29:54.373Z",
+      "agent": "Codex",
+      "model": "DeepSeek V4 Flash",
+      "providerId": "deepseek",
+      "providerName": "DeepSeek",
+      "setting": "max",
+      "benchmarks": {
+        "aaIndex": 55.467724565640644,
+        "deepSwe": 42.772861356932204,
+        "terminalBench": 84.9206349206349,
+        "sweAtlas": 38.7096774193548
+      },
+      "kind": "model-added",
+      "variantCount": 1
+    },
+    {
+      "id": "[\"model-added\",\"2026-08-08T11:06:22.000Z\",\"[\\\"Opencode\\\",\\\"google\\\",\\\"Gemini 3.6 Flash\\\"]\"]",
+      "detectedAt": "2026-08-08T11:06:22.000Z",
+      "agent": "Opencode",
+      "model": "Gemini 3.6 Flash",
+      "providerId": "google",
+      "providerName": "Google",
+      "setting": "high",
+      "benchmarks": {
+        "aaIndex": 45.6272174870519,
+        "deepSwe": 41.2979351032448,
+        "terminalBench": 73.8095238095238,
+        "sweAtlas": 21.7741935483871
+      },
+      "kind": "model-added",
+      "variantCount": 1
+    },
+    {
+      "id": "[\"benchmark-changed\",\"2026-08-06T12:30:43.670Z\",\"[\\\"Cursor CLI:openai_gpt-5-4\\\",\\\"medium\\\"]\"]",
+      "detectedAt": "2026-08-06T12:30:43.670Z",
+      "agent": "Cursor CLI",
+      "model": "GPT-5.4",
+      "providerId": "openai",
+      "providerName": "OpenAI",
+      "setting": "medium",
+      "benchmarks": {
+        "aaIndex": 37.0541047960403,
+        "deepSwe": 16.6666666666667,
+        "terminalBench": 66.2698412698413,
+        "sweAtlas": 28.2258064516129
+      },
+      "kind": "benchmark-changed",
+      "changes": [
+        {
+          "metric": "terminalBench",
+          "previous": 65.4761904761905,
+          "current": 66.2698412698413
+        }
+      ]
+    },
+    {
+      "id": "[\"variant-added\",\"2026-07-26T11:48:13.455Z\",\"[\\\"Claude Code\\\",\\\"anthropic\\\",\\\"Opus 4.8\\\"]\"]",
+      "detectedAt": "2026-07-26T11:48:13.455Z",
+      "agent": "Claude Code",
+      "model": "Opus 4.8",
+      "providerId": "anthropic",
+      "providerName": "Anthropic",
+      "setting": "xhigh",
+      "benchmarks": {
+        "aaIndex": 58.47285848713201,
+        "deepSwe": 51.327433628318595,
+        "terminalBench": 81.3492063492064,
+        "sweAtlas": 42.741935483871
+      },
+      "kind": "variant-added",
+      "variantCount": 3
+    },
+    {
+      "id": "[\"model-added\",\"2026-07-25T11:49:28.450Z\",\"[\\\"Claude Code\\\",\\\"anthropic\\\",\\\"Opus 5\\\"]\"]",
+      "detectedAt": "2026-07-25T11:49:28.450Z",
+      "agent": "Claude Code",
+      "model": "Opus 5",
+      "providerId": "anthropic",
+      "providerName": "Anthropic",
+      "setting": "xhigh",
+      "benchmarks": {
+        "aaIndex": 66.74377366641137,
+        "deepSwe": 60.47197640117991,
+        "terminalBench": 84.9206349206349,
+        "sweAtlas": 54.838709677419295
+      },
+      "kind": "model-added",
+      "variantCount": 5
+    }
+  ],
   "records": [
     {
       "id": "e1d299b2461811a5e3922910872e21ac",

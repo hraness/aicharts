@@ -374,7 +374,11 @@ function applyTheme(theme: "dark" | "light" | "system") {
   );
 }
 
-export function ThemeToggle({ "aria-label": ariaLabel }: Readonly<{ "aria-label": string }>) {
+export function ThemeToggle({ "aria-label": ariaLabel }: Readonly<{
+  "aria-label": string;
+  presentation?: "menu";
+  size?: "compact";
+}>) {
   const [theme, setTheme] = useState<"dark" | "light" | "system">("system");
 
   useEffect(() => {
@@ -516,5 +520,45 @@ export function RangePlotChart({
 }
 
 export function HranessBrand({ className = "" }: Readonly<{ className?: string }>) {
-  return <a className={className} href="https://hraness.com" rel="noreferrer">Hraness</a>;
+  return <a aria-label="hraness" className={className} href="https://hraness.com" rel="noreferrer">Hraness</a>;
+}
+
+export function LinkButton({
+  children,
+  href,
+}: Readonly<{
+  children: ReactNode;
+  href: string;
+  size?: "compact";
+  variant?: "quiet";
+}>) {
+  return <a className="ui-link-button" href={href}>{children}</a>;
+}
+
+export function SkipLink({ children, href }: Readonly<{ children: ReactNode; href: string }>) {
+  return <a className="ui-skip-link" href={href}>{children}</a>;
+}
+
+export function Breadcrumbs({
+  "aria-label": ariaLabel,
+  className = "",
+  items,
+}: Readonly<{
+  "aria-label": string;
+  className?: string;
+  items: readonly Readonly<{ href?: string; id: string; label: string }>[];
+}>) {
+  return (
+    <nav aria-label={ariaLabel} className={className}>
+      <ol>
+        {items.map((item) => (
+          <li key={item.id}>
+            {item.href === undefined
+              ? <span aria-current="page">{item.label}</span>
+              : <a href={item.href}>{item.label}</a>}
+          </li>
+        ))}
+      </ol>
+    </nav>
+  );
 }

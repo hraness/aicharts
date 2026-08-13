@@ -5,14 +5,19 @@ import { parseResult, z } from "../lib/schema";
 import {
   codingAgentRecordKey,
   parseCodingAgentSnapshot,
+  type BenchmarkMetric,
   type CodingAgentRecord,
   type CodingAgentSnapshot,
+  type CodingAgentUpdate,
 } from "../lib/coding-agent-data";
 
 const SOURCE_URL = "https://artificialanalysis.ai/agents/coding-agents/";
 const OUTPUT_PATH = path.join(import.meta.dir, "..", "data", "coding-agents.json");
 const FLIGHT_PREFIX = "self.__next_f.push(";
 const minimumRetentionRatio = 0.8;
+const notableBenchmarkDelta = 0.5;
+const updateHistoryLimit = 48;
+const benchmarkMetrics = ["aaIndex", "deepSwe", "terminalBench", "sweAtlas"] as const satisfies readonly BenchmarkMetric[];
 const guardedMetrics = [
   "aaIndex",
   "deepSwe",
@@ -251,14 +256,131 @@ export function normalizeSourceRows(rows: readonly SourceRow[], retrievedAt: str
 
   records.sort((left, right) => left.seriesLabel.localeCompare(right.seriesLabel) || left.settingRank - right.settingRank || left.id.localeCompare(right.id));
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     source: {
       name: "Artificial Analysis",
       url: SOURCE_URL,
       retrievedAt,
       method: "next-flight",
     },
+    updates: [],
     records,
+  };
+}
+
+function compareNullableScores(left: number | null, right: number | null): number {
+  if (left === right) return 0;
+  if (left === null) return 1;
+  if (right === null) return -1;
+  return right - left;
+}
+
+function representativeRecord(records: readonly CodingAgentRecord[]): CodingAgentRecord {
+  const sorted = [...records].sort((left, right) => (
+    compareNullableScores(left.benchmarks.aaIndex, right.benchmarks.aaIndex)
+    || right.settingRank - left.settingRank
+    || left.modelLabel.localeCompare(right.modelLabel)
+    || left.id.localeCompare(right.id)
+  ));
+  const record = sorted[0];
+  if (record === undefined) throw new Error("A model-added update requires at least one record.");
+  return record;
+}
+
+function materialBenchmarkChanges(
+  previous: CodingAgentRecord,
+  candidate: CodingAgentRecord,
+): Extract<CodingAgentUpdate, { kind: "benchmark-changed" }>["changes"] {
+  return benchmarkMetrics.flatMap((metric) => {
+    const previousValue = previous.benchmarks[metric];
+    const currentValue = candidate.benchmarks[metric];
+    if (Object.is(previousValue, currentValue)) return [];
+    if (
+      previousValue !== null
+      && currentValue !== null
+      && Math.abs(currentValue - previousValue) < notableBenchmarkDelta
+    ) return [];
+    return [{ current: currentValue, metric, previous: previousValue }];
+  });
+}
+
+function modelGroupKey(record: CodingAgentRecord): string {
+  return JSON.stringify([record.agent, record.providerId, record.model]);
+}
+
+/** Derives stable, display-ready events while suppressing sub-half-point benchmark noise. */
+export function deriveSnapshotUpdates(
+  previous: CodingAgentSnapshot,
+  candidate: CodingAgentSnapshot,
+): CodingAgentUpdate[] {
+  const previousByKey = new Map(previous.records.map((record) => [codingAgentRecordKey(record), record]));
+  const previousModelGroups = new Set(previous.records.map(modelGroupKey));
+  const addedGroups = new Map<string, CodingAgentRecord[]>();
+  const changed: Extract<CodingAgentUpdate, { kind: "benchmark-changed" }>[] = [];
+
+  for (const record of candidate.records) {
+    const previousRecord = previousByKey.get(codingAgentRecordKey(record));
+    if (previousRecord === undefined) {
+      const groupKey = modelGroupKey(record);
+      const group = addedGroups.get(groupKey) ?? [];
+      group.push(record);
+      addedGroups.set(groupKey, group);
+      continue;
+    }
+
+    const changes = materialBenchmarkChanges(previousRecord, record);
+    if (changes.length === 0) continue;
+    changed.push({
+      id: JSON.stringify(["benchmark-changed", candidate.source.retrievedAt, codingAgentRecordKey(record)]),
+      agent: record.agent,
+      benchmarks: record.benchmarks,
+      changes,
+      detectedAt: candidate.source.retrievedAt,
+      kind: "benchmark-changed",
+      model: record.model,
+      providerId: record.providerId,
+      providerName: record.providerName,
+      setting: record.setting,
+    });
+  }
+
+  const added: Array<Extract<CodingAgentUpdate, { kind: "model-added" | "variant-added" }>> = Array.from(addedGroups.entries()).map(([groupKey, records]) => {
+    const record = representativeRecord(records);
+    const kind = previousModelGroups.has(groupKey) ? "variant-added" : "model-added";
+    return {
+      id: JSON.stringify([kind, candidate.source.retrievedAt, groupKey]),
+      agent: record.agent,
+      benchmarks: record.benchmarks,
+      detectedAt: candidate.source.retrievedAt,
+      kind,
+      model: record.model,
+      providerId: record.providerId,
+      providerName: record.providerName,
+      setting: record.setting,
+      variantCount: records.length,
+    };
+  });
+
+  return [...added, ...changed].sort((left, right) => (
+    compareNullableScores(left.benchmarks.aaIndex, right.benchmarks.aaIndex)
+    || left.model.localeCompare(right.model)
+    || left.setting.localeCompare(right.setting)
+    || left.id.localeCompare(right.id)
+  ));
+}
+
+export function mergeSnapshotUpdates(
+  previous: CodingAgentSnapshot,
+  candidate: CodingAgentSnapshot,
+): CodingAgentSnapshot {
+  const detected = deriveSnapshotUpdates(previous, candidate);
+  const detectedIds = new Set(detected.map(({ id }) => id));
+  return {
+    ...candidate,
+    updates: [
+      ...detected,
+      ...previous.updates.filter(({ id }) => !detectedIds.has(id)),
+    ].slice(0, updateHistoryLimit),
   };
 }
 
@@ -361,11 +483,12 @@ async function refresh(): Promise<Result<CodingAgentSnapshot, Error>> {
   if (!source.ok) return source;
   const rows = extractSourceRows(source.value);
   if (!rows.ok) return rows;
-  const snapshot = normalizeSourceRows(rows.value, new Date().toISOString());
+  const normalized = normalizeSourceRows(rows.value, new Date().toISOString());
+  const safeUpdate = validateSnapshotUpdate(previous.value, normalized);
+  if (!safeUpdate.ok) return safeUpdate;
+  const snapshot = mergeSnapshotUpdates(previous.value, normalized);
   const validated = parseCodingAgentSnapshot(snapshot);
   if (!validated.ok) return err(new Error(`Normalized snapshot is invalid: ${validated.error.message}`, { cause: validated.error }));
-  const safeUpdate = validateSnapshotUpdate(previous.value, validated.value);
-  if (!safeUpdate.ok) return safeUpdate;
 
   const temporaryPath = `${OUTPUT_PATH}.tmp`;
   await Bun.write(temporaryPath, `${JSON.stringify(validated.value, null, 2)}\n`);

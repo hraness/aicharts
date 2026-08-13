@@ -10,7 +10,9 @@ The site is a static-data Next.js application. Its benchmark snapshot is committ
 - Plot each result against cost, duration, or total token use.
 - Pin a model to see its nearby performance cohort, or pin a provider to inspect its range.
 - Explore the cost/performance Pareto frontier and per-provider score ranges.
+- Follow a checked timeline of newly detected models, settings, and material benchmark changes.
 - Share the current axes and selection as a link or export a full-resolution PNG.
+- Read sourced benchmark notes at [`/blog`](https://codingchart.com/blog).
 
 The checked snapshot records its source URL and retrieval time. CodingChart is an independent visualization and is not affiliated with Artificial Analysis or the model providers represented in the data.
 
@@ -40,8 +42,9 @@ The [`data-refresh.yml`](.github/workflows/data-refresh.yml) workflow runs daily
 1. downloads the public Artificial Analysis coding-agent page;
 2. parses its Next.js Flight payload into the owned schema;
 3. rejects duplicate records, large row-count drops, low stable-key overlap, and major metric-coverage regressions;
-4. atomically updates only [`data/coding-agents.json`](data/coding-agents.json);
-5. runs the full project check before committing the new snapshot to `main`.
+4. records new models, new settings, and benchmark changes of at least half a point in a bounded 48-event history;
+5. atomically updates only [`data/coding-agents.json`](data/coding-agents.json);
+6. runs the full project check before committing the new snapshot to `main`.
 
 That commit triggers the normal Vercel production deployment. A source-shape change or suspicious data loss fails closed and leaves the published snapshot untouched.
 
@@ -82,11 +85,12 @@ Production source maps are uploaded only when all private build settings and Ver
 
 ## Repository map
 
-- `app/` contains the App Router surface, metadata, error states, and product styling.
-- `components/` contains the interactive chart, linked summaries, sharing, export, and local UI primitives.
-- `lib/` contains strict data boundaries, chart math, deterministic layout, analytics events, and property tests.
+- `app/` contains the App Router chart, sourced benchmark notes, metadata, error states, and product styling.
+- `components/` contains the interactive chart, update timeline, linked summaries, sharing, export, and local UI primitives.
+- `lib/` contains strict data and update boundaries, chart math, deterministic layout, analytics events, and property tests.
 - `data/` contains the checked production snapshot.
 - `scripts/` contains the guarded data refresh and deterministic color generator.
+- `styles/` contains the portable plain-publication styles used by the benchmark notes.
 - `.github/workflows/` contains CI and daily refresh automation.
 
 ## License and data notice
