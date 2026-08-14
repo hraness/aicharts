@@ -51,6 +51,7 @@ const structuredData = [
     "@context": "https://schema.org",
     "@id": websiteId,
     "@type": "WebSite",
+    alternateName: ["AICharts", site.domain],
     description: site.description,
     name: site.name,
     url: `${site.origin}/`,
@@ -79,7 +80,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
       <body>
         <script
           dangerouslySetInnerHTML={{
-            __html: "try{const t=localStorage.getItem('codingchart-theme');const d=t==='dark'||(t!==\"light\"&&matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.dataset.theme=d?'dark':'light';document.documentElement.style.colorScheme=d?'dark':'light'}catch{}",
+            __html: "try{const t=localStorage.getItem('aicharts-theme');const d=t==='dark'||(t!==\"light\"&&matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.dataset.theme=d?'dark':'light';document.documentElement.style.colorScheme=d?'dark':'light'}catch{}",
           }}
         />
         <script

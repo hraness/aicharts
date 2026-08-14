@@ -11,7 +11,7 @@
 
 # Guidelines
 
-- Keep CodingChart a static-data Next.js product with a checked chart snapshot, sourced benchmark notes, and no runtime dependency on the upstream benchmark page.
+- Keep AI Charts a static-data Next.js product with a checked chart snapshot, sourced benchmark notes, and no runtime dependency on the upstream benchmark page.
 - Treat network, file, URL, and query-string values as `unknown` until an owned schema or predicate narrows them.
 - Prefer explicit `Result` values for recoverable domain failures and reserve throwing for invalid checked-in invariants.
 - Update `data/coding-agents.json` only through `bun run data:refresh`; preserve duplicate, retention, stable-key, metric-coverage, material-change, and bounded-history guards.

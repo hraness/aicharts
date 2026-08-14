@@ -59,7 +59,7 @@ export function parseChartShareView(search: string): ParsedChartShareView {
 
 export function chartImageFilename(view: ChartShareView, selectionLabel: string | null): string {
   const selection = filenamePart(selectionLabel ?? "") || "all-models";
-  return `codingchart-${view.yMetric}-${view.xMetric}-${selection}.png`;
+  return `aicharts-${view.yMetric}-${view.xMetric}-${selection}.png`;
 }
 
 export function chartImageShareData(file: File): ShareData {

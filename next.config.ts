@@ -7,6 +7,28 @@ const POSTHOG_UI_HOSTS = new Set([
 ]);
 
 const nextConfig: NextConfig = {
+  async redirects() {
+    return [
+      {
+        destination: "https://aicharts.io/:path*",
+        has: [{ type: "host", value: "codingchart.com" }],
+        permanent: true,
+        source: "/:path*",
+      },
+      {
+        destination: "https://aicharts.io/:path*",
+        has: [{ type: "host", value: "www.codingchart.com" }],
+        permanent: true,
+        source: "/:path*",
+      },
+      {
+        destination: "https://aicharts.io/:path*",
+        has: [{ type: "host", value: "www.aicharts.io" }],
+        permanent: true,
+        source: "/:path*",
+      },
+    ];
+  },
   reactStrictMode: true,
 };
 
@@ -31,7 +53,7 @@ function withProductionSourceMaps(config: NextConfig): NextConfig {
     logLevel: "error",
     sourcemaps: {
       enabled: true,
-      releaseName: "codingchart",
+      releaseName: "aicharts",
       releaseVersion,
       deleteAfterUpload: true,
     },

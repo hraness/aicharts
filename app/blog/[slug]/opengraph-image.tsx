@@ -9,7 +9,7 @@ import { getBlogArticle } from "../articles";
 
 export const size = BLOG_IMAGE_SIZE;
 export const contentType = "image/png";
-export const alt = "CodingChart benchmark article cover";
+export const alt = "AI Charts benchmark article cover";
 
 export default async function OpenGraphImage({
   params,

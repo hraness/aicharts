@@ -1,7 +1,7 @@
 import type { Instrumentation } from "next";
 import { PostHog } from "posthog-node";
 
-const allowedHosts = new Set(["codingchart.com", "www.codingchart.com"]);
+const allowedHosts = new Set(["aicharts.io", "www.aicharts.io"]);
 const apiKey = process.env.NEXT_PUBLIC_POSTHOG_KEY;
 const apiHost = process.env.NEXT_PUBLIC_POSTHOG_HOST ?? "https://us.i.posthog.com";
 
@@ -53,8 +53,8 @@ export const onRequestError: Instrumentation.onRequestError = async (value, requ
   const posthog = analyticsClient();
   if (!posthog) return;
   try {
-    await posthog.captureExceptionImmediate(sanitizeError(value), "server:codingchart", {
-      site_id: "codingchart",
+    await posthog.captureExceptionImmediate(sanitizeError(value), "server:aicharts", {
+      site_id: "aicharts",
       schema_version: 1,
       error_surface: "server",
       request_method: request.method.slice(0, 12).toUpperCase(),

@@ -6,12 +6,12 @@ export default function BlogLayout({
   children,
 }: Readonly<{ children: ReactNode }>) {
   return (
-    <div className="plain-site plain-publication codingchart-blog">
+    <div className="plain-site plain-publication aicharts-blog">
       <SkipLink href="#blog-content">Skip to benchmark notes</SkipLink>
       <header className="plain-header">
         <div className="plain-header__inner">
           <Link className="plain-wordmark" href="/">
-            codingchart.com
+            aicharts.io
           </Link>
           <nav aria-label="Blog navigation" className="plain-nav">
             <Link href="/blog">Blog</Link>
@@ -26,7 +26,7 @@ export default function BlogLayout({
       </header>
       {children}
       <footer className="plain-footer">
-        <p>codingchart.com</p>
+        <p>aicharts.io</p>
         <div className="plain-footer__links">
           <Link href="/blog">Blog</Link>
           <Link href="/">Chart</Link>

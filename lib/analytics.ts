@@ -25,7 +25,7 @@ function analyticsEnabled(): boolean {
   const token = process.env.NEXT_PUBLIC_POSTHOG_KEY;
   return Boolean(
     token?.startsWith("phc_")
-    && (window.location.hostname === "codingchart.com" || window.location.hostname === "www.codingchart.com"),
+    && (window.location.hostname === "aicharts.io" || window.location.hostname === "www.aicharts.io"),
   );
 }
 
@@ -33,7 +33,7 @@ export function captureChartEvent(event: ChartAnalyticsEvent): void {
   if (!analyticsEnabled()) return;
   posthog.capture(event.name, {
     ...event.properties,
-    site_id: "codingchart",
+    site_id: "aicharts",
     schema_version: 1,
     $process_person_profile: false,
   });

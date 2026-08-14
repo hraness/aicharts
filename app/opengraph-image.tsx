@@ -39,8 +39,8 @@ export default function Image() {
         <span>{site.domain}</span>
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
-        <div style={{ fontSize: 82, fontWeight: 700, letterSpacing: "-4px" }}>Compare coding agents</div>
-        <div style={{ color: "#625d57", fontSize: 34 }}>Performance, cost, runtime, and token use in one chart.</div>
+        <div style={{ fontSize: 76, fontWeight: 700, letterSpacing: "-4px" }}>Compare AI coding models</div>
+        <div style={{ color: "#625d57", fontSize: 34 }}>Benchmark agents across performance, API cost, task time, and token use.</div>
       </div>
       <div style={{ background: site.palette.chromatic.key, height: 10, width: "100%" }} />
     </div>,

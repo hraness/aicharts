@@ -30,7 +30,7 @@ import {
   breadcrumbJsonLd,
 } from "./seo";
 
-describe("CodingChart benchmark notes", () => {
+describe("AI Charts benchmark notes", () => {
   test("uses the shared publication shell with chart discovery", () => {
     const markup = renderToStaticMarkup(
       createElement(
@@ -41,7 +41,7 @@ describe("CodingChart benchmark notes", () => {
     );
 
     expect(markup).toContain(
-      'class="plain-site plain-publication codingchart-blog"',
+      'class="plain-site plain-publication aicharts-blog"',
     );
     expect(markup).toContain('class="ui-skip-link"');
     expect(markup).toContain('class="plain-header__inner"');
@@ -156,7 +156,7 @@ describe("CodingChart benchmark notes", () => {
   });
 });
 
-describe("CodingChart blog discovery", () => {
+describe("AI Charts blog discovery", () => {
   test("keeps dynamic article images independent of monorepo files", () => {
     expect(nextConfig.outputFileTracingIncludes).toBeUndefined();
   });
@@ -168,17 +168,17 @@ describe("CodingChart blog discovery", () => {
       const generated = await generateMetadata({
         params: Promise.resolve({ slug: article.slug }),
       });
-      const image = `https://codingchart.com${blogArticleImagePath(article.slug)}`;
+      const image = `https://aicharts.io${blogArticleImagePath(article.slug)}`;
 
       expect(generated).toEqual(metadata);
       expect(metadata.title).toBe(article.title);
       expect(metadata.description).toBe(article.seoDescription);
       expect(metadata.alternates).toEqual({
-        canonical: `https://codingchart.com${path}`,
+        canonical: `https://aicharts.io${path}`,
       });
       expect(metadata.openGraph).toMatchObject({
         type: "article",
-        url: `https://codingchart.com${path}`,
+        url: `https://aicharts.io${path}`,
         title: article.title,
         description: article.seoDescription,
         publishedTime: `${article.publishedAt}T00:00:00.000Z`,
@@ -198,9 +198,9 @@ describe("CodingChart blog discovery", () => {
     expect(collection).toMatchObject({
       "@context": "https://schema.org",
       "@type": "CollectionPage",
-      url: "https://codingchart.com/blog",
+      url: "https://aicharts.io/blog",
       primaryImageOfPage:
-        "https://codingchart.com/blog/opengraph-image",
+        "https://aicharts.io/blog/opengraph-image",
     });
     expect(collection.mainEntity.numberOfItems).toBe(blogArticles.length);
 
@@ -228,8 +228,8 @@ describe("CodingChart blog discovery", () => {
     ])).toMatchObject({
       "@type": "BreadcrumbList",
       itemListElement: [
-        { item: "https://codingchart.com/", position: 1 },
-        { item: "https://codingchart.com/blog", position: 2 },
+        { item: "https://aicharts.io/", position: 1 },
+        { item: "https://aicharts.io/blog", position: 2 },
       ],
     });
   });
@@ -237,22 +237,22 @@ describe("CodingChart blog discovery", () => {
   test("lists every public blog route and social image in the sitemap", () => {
     const entries = sitemap();
     expect(entries.map(entry => entry.url)).toEqual([
-      "https://codingchart.com/",
-      "https://codingchart.com/blog",
+      "https://aicharts.io/",
+      "https://aicharts.io/blog",
       ...blogArticles.map(article =>
-        `https://codingchart.com${blogArticlePath(article.slug)}`),
+        `https://aicharts.io${blogArticlePath(article.slug)}`),
     ]);
 
     const collection = entries.find(entry => entry.url.endsWith("/blog"));
     expect(collection?.images).toEqual([
-      `https://codingchart.com${BLOG_SOCIAL_IMAGE_PATH}`,
+      `https://aicharts.io${BLOG_SOCIAL_IMAGE_PATH}`,
     ]);
     for (const article of blogArticles) {
       const entry = entries.find(candidate =>
         candidate.url.endsWith(blogArticlePath(article.slug)));
       expect(entry?.lastModified).toBe(article.updatedAt);
       expect(entry?.images).toEqual([
-        `https://codingchart.com${blogArticleImagePath(article.slug)}`,
+        `https://aicharts.io${blogArticleImagePath(article.slug)}`,
       ]);
     }
   });

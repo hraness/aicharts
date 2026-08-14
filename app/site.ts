@@ -1,9 +1,9 @@
 export const site = {
-  description: "Compare AI coding agents across benchmark performance, cost, runtime, and token use.",
-  domain: "codingchart.com",
+  description: "Compare AI coding models and agents across benchmark performance, API cost, task time, and token use.",
+  domain: "aicharts.io",
   emoji: "◉",
-  name: "CodingChart",
-  origin: "https://codingchart.com",
+  name: "AI Charts",
+  origin: "https://aicharts.io",
   palette: {
     chromatic: { key: "#5e2e02", support: "#fefefd" },
     tonal: { highlight: "#e1e0e0", shadow: "#291201" },
@@ -15,8 +15,8 @@ export const searchSite = {
   name: site.name,
   origin: site.origin,
   socialImage: {
-    alt: "CodingChart comparison of AI coding models and coding agents",
+    alt: "AI Charts comparison of AI coding models and coding agents",
     path: "/opengraph-image",
   },
-  title: "CodingChart — Compare AI Coding Models and Agents",
+  title: "AI Charts: Compare AI Coding Models and Agents",
 } as const;

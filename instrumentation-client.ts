@@ -3,8 +3,8 @@ import type { PostHogConfig } from "posthog-js";
 
 const token = process.env.NEXT_PUBLIC_POSTHOG_KEY;
 const host = process.env.NEXT_PUBLIC_POSTHOG_HOST ?? "https://us.i.posthog.com";
-const allowedHost = window.location.hostname === "codingchart.com"
-  || window.location.hostname === "www.codingchart.com";
+const allowedHost = window.location.hostname === "aicharts.io"
+  || window.location.hostname === "www.aicharts.io";
 
 const privacyConfig = {
   api_host: host,

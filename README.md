@@ -1,8 +1,8 @@
-# CodingChart
+# AI Charts
 
-[CodingChart](https://codingchart.com) is an interactive comparison of AI coding agents. It puts benchmark performance, cost, runtime, and token use on one chart so you can inspect trade-offs instead of relying on a single leaderboard.
+[AI Charts](https://aicharts.io) is an interactive AI coding benchmark comparing models and agents across performance, API cost, task time, and token use. It puts those trade-offs on one chart so you can inspect the option space instead of relying on a single leaderboard.
 
-The site is a static-data Next.js application. Its benchmark snapshot is committed to the repository, validated at build time, and refreshed automatically every day. Production never depends on the upstream data source being available during a request.
+The site is a static-data Next.js and TypeScript application. Its benchmark snapshot is committed to the repository, validated at build time, and refreshed automatically every day. Production never depends on the upstream data source being available during a request.
 
 ## What the chart shows
 
@@ -12,20 +12,20 @@ The site is a static-data Next.js application. Its benchmark snapshot is committ
 - Explore the cost/performance Pareto frontier and per-provider score ranges.
 - Follow a checked timeline of newly detected models, settings, and material benchmark changes.
 - Share the current axes and selection as a link or export a full-resolution PNG.
-- Read sourced benchmark notes at [`/blog`](https://codingchart.com/blog).
+- Read sourced benchmark notes at [`/blog`](https://aicharts.io/blog).
 
-The checked snapshot records its source URL and retrieval time. CodingChart is an independent visualization and is not affiliated with Artificial Analysis or the model providers represented in the data.
+The checked snapshot records its source URL and retrieval time. AI Charts is an independent visualization and is not affiliated with Artificial Analysis or the model providers represented in the data.
 
 ## Local development
 
-CodingChart uses [Bun 1.3.14](https://bun.sh/) and Node.js 24.
+AI Charts uses [Bun 1.3.14](https://bun.sh/) and Node.js 24.
 
 ```sh
 bun install --frozen-lockfile
 bun run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). Analytics are disabled outside production on `codingchart.com`, so local development does not send PostHog events.
+Open [http://localhost:3000](http://localhost:3000). Analytics are disabled outside production on `aicharts.io`, so local development does not send PostHog events.
 
 Run the complete local gate before opening a pull request:
 
@@ -59,7 +59,7 @@ Review the resulting data diff before committing it. `bun run data:check` is net
 
 ## PostHog
 
-PostHog is initialized only in production on the canonical CodingChart domains. The browser configuration is cookieless and privacy constrained:
+PostHog is initialized only in production on the canonical AI Charts domains. The browser configuration is cookieless and privacy constrained:
 
 - no person profiles, persistent identifiers, autocapture, session replay, surveys, heatmaps, or feature flags;
 - memory-only persistence, Do Not Track support, masked text and element attributes;

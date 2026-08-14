@@ -452,7 +452,7 @@ async function fetchSource(): Promise<Result<string, Error>> {
       const response = await fetch(SOURCE_URL, {
         headers: {
           accept: "text/html,application/xhtml+xml",
-          "user-agent": "codingchart-data-refresh/1.0 (+https://codingchart.com)",
+          "user-agent": "aicharts-data-refresh/1.0 (+https://aicharts.io)",
         },
         signal: AbortSignal.timeout(20_000),
       });

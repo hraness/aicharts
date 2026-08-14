@@ -38,7 +38,7 @@ export default function BlogIndex() {
             { name: "Blog", path: "/blog" },
           ]),
         ]}
-        id="codingchart-blog-collection-structured-data"
+        id="aicharts-blog-collection-structured-data"
       />
 
       <div className="plain-publication__shell plain-publication__index-content">

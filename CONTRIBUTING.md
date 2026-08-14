@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for helping improve CodingChart.
+Thanks for helping improve AI Charts.
 
 ## Development
 

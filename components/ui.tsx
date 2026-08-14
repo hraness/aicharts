@@ -382,7 +382,7 @@ export function ThemeToggle({ "aria-label": ariaLabel }: Readonly<{
   const [theme, setTheme] = useState<"dark" | "light" | "system">("system");
 
   useEffect(() => {
-    const stored = window.localStorage.getItem("codingchart-theme");
+    const stored = window.localStorage.getItem("aicharts-theme");
     const next = stored === "dark" || stored === "light" ? stored : "system";
     applyTheme(next);
     const frame = window.requestAnimationFrame(() => setTheme(next));
@@ -398,8 +398,8 @@ export function ThemeToggle({ "aria-label": ariaLabel }: Readonly<{
   const cycle = () => {
     const next = theme === "system" ? "light" : theme === "light" ? "dark" : "system";
     setTheme(next);
-    if (next === "system") window.localStorage.removeItem("codingchart-theme");
-    else window.localStorage.setItem("codingchart-theme", next);
+    if (next === "system") window.localStorage.removeItem("aicharts-theme");
+    else window.localStorage.setItem("aicharts-theme", next);
     applyTheme(next);
   };
 

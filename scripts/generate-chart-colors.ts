@@ -35,6 +35,7 @@ const providerPalette = iwanthue(providerIds.length, {
   distance: "compromise",
   originalColorsToExpand: Object.values(fixedProviderColors),
   quality: 80,
+  // This pre-rename seed is stable chart data. Changing it would recolor every provider.
   seed: "codingchart/providers/v3-no-purple",
   ultraPrecision: false,
 });
@@ -60,6 +61,7 @@ const openAiEffortPalette = iwanthue(effortSettings.length, {
   distance: "cmc",
   originalColorsToExpand: [fixedProviderColors.openai],
   quality: 80,
+  // This pre-rename seed is stable chart data. Changing it would recolor every effort tier.
   seed: "codingchart/openai-effort/v1",
   ultraPrecision: true,
 }).sort((left, right) => rgbHexToLab(left)[0] - rgbHexToLab(right)[0]);

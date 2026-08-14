@@ -174,7 +174,7 @@ function appendProviderLegend(
   parent.append(definitions);
 
   for (const placement of placements) {
-    const gradientId = `codingchart-provider-${placement.index}`;
+    const gradientId = `aicharts-provider-${placement.index}`;
     const gradient = document.createElementNS(svgNamespace, "linearGradient");
     gradient.setAttribute("id", gradientId);
     gradient.setAttribute("x1", "0%");

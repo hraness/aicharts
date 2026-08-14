@@ -75,7 +75,7 @@ export default async function BlogArticlePage({
             { name: article.title, path },
           ]),
         ]}
-        id="codingchart-blog-article-structured-data"
+        id="aicharts-blog-article-structured-data"
       />
 
       <header className="plain-publication__article-header plain-publication__shell">
@@ -83,7 +83,7 @@ export default async function BlogArticlePage({
           aria-label="Breadcrumb"
           className="plain-publication__breadcrumbs"
           items={[
-            { href: "/", id: "codingchart", label: "CodingChart" },
+            { href: "/", id: "aicharts", label: "AI Charts" },
             { href: "/blog", id: "blog", label: "Blog" },
             { id: article.slug, label: article.title },
           ]}
@@ -91,7 +91,7 @@ export default async function BlogArticlePage({
         <h1>{article.title}</h1>
         <p className="plain-publication__article-dek">{article.dek}</p>
         <p className="plain-publication__article-meta">
-          <span>By CodingChart</span>
+          <span>By AI Charts</span>
           <span aria-hidden="true"> · </span>
           <span>Published </span>
           <time dateTime={article.publishedAt}>

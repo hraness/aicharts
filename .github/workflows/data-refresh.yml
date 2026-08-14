@@ -1,4 +1,4 @@
-name: CodingChart data refresh
+name: AI Charts data refresh
 
 on:
   schedule:
@@ -9,7 +9,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: codingchart-data-refresh
+  group: aicharts-data-refresh
   cancel-in-progress: false
 
 jobs:

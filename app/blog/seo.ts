@@ -20,12 +20,12 @@ export const BLOG_SOCIAL_IMAGE_PATH = "/blog/opengraph-image" as const;
 const blogSearchSite = {
   ...searchSite,
   description: blogDescription,
-  name: "CodingChart Blog",
+  name: "AI Charts Blog",
   socialImage: {
-    alt: "CodingChart notes about coding agent benchmarks",
+    alt: "AI Charts notes about coding agent benchmarks",
     path: BLOG_SOCIAL_IMAGE_PATH,
   },
-  title: "Coding Agent Benchmark Notes | CodingChart",
+  title: "Coding Agent Benchmark Notes | AI Charts",
 } as const;
 
 export const blogCollectionMetadata = createPublicSiteMetadata(
@@ -50,24 +50,24 @@ export function blogArticleMetadata(article: BlogArticle): Metadata {
     searchSite.origin,
     blogArticleImagePath(article.slug),
   );
-  const imageAlt = `${article.title} | CodingChart`;
+  const imageAlt = `${article.title} | AI Charts`;
 
   return {
     title: article.title,
     description: article.seoDescription,
     alternates: { canonical },
     authors: [{
-      name: "CodingChart",
+      name: "AI Charts",
       url: absoluteWebUrl(searchSite.origin, "/blog"),
     }],
-    creator: "CodingChart",
-    publisher: "CodingChart",
+    creator: "AI Charts",
+    publisher: "AI Charts",
     category: "Coding agent benchmarks",
     openGraph: {
       type: "article",
       locale: "en_US",
       url: canonical,
-      siteName: "CodingChart",
+      siteName: "AI Charts",
       title: article.title,
       description: article.seoDescription,
       publishedTime: isoDateTime(article.publishedAt),
@@ -147,7 +147,7 @@ export function blogArticleJsonLd(article: BlogArticle) {
     dateModified: isoDateTime(article.updatedAt),
     author: {
       "@type": "Organization",
-      name: "CodingChart",
+      name: "AI Charts",
       url: blogUrl,
     },
     publisher: {

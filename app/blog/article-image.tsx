@@ -19,7 +19,7 @@ function renderBlogImage({
   return createSocialImageResponse({
     description,
     domain: `${site.domain}/blog`,
-    eyebrow: "CodingChart benchmark notes",
+    eyebrow: "AI Charts benchmark notes",
     theme: { accent: site.palette.chromatic.key },
     title,
   });
