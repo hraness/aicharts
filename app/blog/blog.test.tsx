@@ -16,6 +16,7 @@ import {
   articleWordCount,
   blogArticlePath,
   blogArticles,
+  blogDescription,
   getBlogArticle,
   headingId,
 } from "./articles";
@@ -118,7 +119,10 @@ describe("AI Charts benchmark notes", () => {
 
   test("renders the index, static routes, breadcrumbs, dates, and sources", async () => {
     const indexMarkup = renderToStaticMarkup(createElement(BlogIndex));
-    expect(indexMarkup).toContain("Coding agent benchmark notes");
+    expect(indexMarkup).toContain("AI model and agent benchmark analysis");
+    expect(indexMarkup).toContain(blogDescription);
+    expect(indexMarkup).toContain("The first collection focuses on coding agents.");
+    expect(indexMarkup).toContain("Explore the coding-agent chart");
     expect(indexMarkup).toContain("Method");
     for (const article of blogArticles) {
       expect(indexMarkup).toContain(`href="${blogArticlePath(article.slug)}"`);
@@ -134,6 +138,7 @@ describe("AI Charts benchmark notes", () => {
         `<span aria-current="page">${article.title}</span>`,
       );
       expect(markup).toContain(`dateTime="${article.publishedAt}"`);
+      expect(markup).toContain("Current comparison: coding agents");
       for (const sourceId of article.sourceIds) {
         expect(markup).toContain(`href="${BLOG_SOURCES[sourceId].url}"`);
       }
@@ -198,6 +203,7 @@ describe("AI Charts blog discovery", () => {
     expect(collection).toMatchObject({
       "@context": "https://schema.org",
       "@type": "CollectionPage",
+      name: "AI model and agent benchmark analysis",
       url: "https://aicharts.io/blog",
       primaryImageOfPage:
         "https://aicharts.io/blog/opengraph-image",

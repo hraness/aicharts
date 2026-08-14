@@ -1,4 +1,5 @@
 import { JsonLdScript } from "@/components/structured-data";
+import { TrackedChartLink } from "@/components/tracked-chart-link";
 import type { Metadata } from "next";
 import Link from "next/link";
 
@@ -43,11 +44,16 @@ export default function BlogIndex() {
 
       <div className="plain-publication__shell plain-publication__index-content">
         <header className="plain-publication__hero">
-          <h1>Coding agent benchmark notes</h1>
-          <p>{blogDescription}</p>
-          <Link className="plain-publication__primary-link" href="/">
-            Open the comparison chart <span aria-hidden="true">→</span>
-          </Link>
+          <h1>AI model and agent benchmark analysis</h1>
+          <p>
+            {blogDescription} The first collection focuses on coding agents.
+          </p>
+          <TrackedChartLink
+            className="plain-publication__primary-link"
+            sourceKind="blog_index"
+          >
+            Explore the coding-agent chart <span aria-hidden="true">→</span>
+          </TrackedChartLink>
         </header>
 
         <section

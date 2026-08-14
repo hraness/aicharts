@@ -59,11 +59,11 @@ const structuredData = [
   {
     "@context": "https://schema.org",
     "@type": "WebApplication",
-    applicationCategory: "DeveloperApplication",
+    applicationCategory: "DataVisualizationApplication",
     description: site.description,
     featureList: [
-      "Side-by-side coding-agent comparison",
-      "Model and provider filters",
+      "Sourced AI model and agent benchmark charts",
+      "Performance, cost, speed, and token-use comparisons",
       "Source-dated benchmark snapshots",
     ],
     isAccessibleForFree: true,

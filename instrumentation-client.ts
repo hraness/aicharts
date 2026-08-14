@@ -1,6 +1,8 @@
 import posthog from "posthog-js";
 import type { PostHogConfig } from "posthog-js";
 
+import { pageAnalyticsContext } from "@/lib/page-analytics";
+
 const token = process.env.NEXT_PUBLIC_POSTHOG_KEY;
 const host = process.env.NEXT_PUBLIC_POSTHOG_HOST ?? "https://us.i.posthog.com";
 const allowedHost = window.location.hostname === "aicharts.io"
@@ -9,6 +11,16 @@ const allowedHost = window.location.hostname === "aicharts.io"
 const privacyConfig = {
   api_host: host,
   ui_host: host.includes("eu.i.posthog.com") ? "https://eu.posthog.com" : "https://us.posthog.com",
+  before_send(event) {
+    if (event === null) return null;
+    return {
+      ...event,
+      properties: {
+        ...event.properties,
+        ...pageAnalyticsContext(window.location.pathname),
+      },
+    };
+  },
   defaults: "2026-05-30",
   autocapture: false,
   capture_pageview: "history_change",

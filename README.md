@@ -1,10 +1,12 @@
 # AI Charts
 
-[AI Charts](https://aicharts.io) is an interactive AI coding benchmark comparing models and agents across performance, API cost, task time, and token use. It puts those trade-offs on one chart so you can inspect the option space instead of relying on a single leaderboard.
+[AI Charts](https://aicharts.io) is an open-source home for sourced, interactive AI benchmark charts. It compares models and agents across performance, cost, speed, and token use without collapsing those trade-offs into one rank.
 
-The site is a static-data Next.js and TypeScript application. Its benchmark snapshot is committed to the repository, validated at build time, and refreshed automatically every day. Production never depends on the upstream data source being available during a request.
+The current chart focuses on coding agents. That is the first published comparison in a broader product for AI model and agent benchmarks, not the limit of the AI Charts brand.
 
-## What the chart shows
+## Current chart: coding agents
+
+The site is a static-data Next.js and TypeScript application. Its coding-agent snapshot is committed to the repository, validated at build time, and refreshed automatically every day. Production never depends on the upstream data source being available during a request.
 
 - Compare Artificial Analysis's AA Index, DeepSWE, Terminal-Bench 2.0, and SWE-Atlas-QnA results.
 - Plot each result against cost, duration, or total token use.
@@ -63,9 +65,11 @@ PostHog is initialized only in production on the canonical AI Charts domains. Th
 
 - no person profiles, persistent identifiers, autocapture, session replay, surveys, heatmaps, or feature flags;
 - memory-only persistence, Do Not Track support, masked text and element attributes;
-- page-view, page-leave, Core Web Vitals, and three explicit product event families only.
+- page-view, page-leave, Core Web Vitals, and four explicit product event families only.
 
-The product events are `chart metric selected`, `chart selection pinned`, and `chart shared`. They contain controlled enum-like properties, never chart URLs, query strings, free-form text, or model-level user data.
+The product events are `chart metric selected`, `chart selection pinned`, `chart shared`, and `content chart opened`. They contain controlled enum-like properties, never chart URLs, query strings, free-form text, or model-level user data. Every event also receives a bounded page classification so acquisition and engagement can be compared without storing article slugs or query strings.
+
+The durable positioning, search-intent map, technical invariants, event schema, baseline, and review cadence live in [`docs/seo-strategy.md`](docs/seo-strategy.md). Search Console measures impressions, queries, clicks, click-through rate, and search position. PostHog measures acquisition and qualified engagement after a visitor arrives.
 
 Copy [`.env.example`](.env.example) to `.env.local` to exercise configuration. The public project token and ingest host are safe browser variables. `POSTHOG_API_KEY` is a private build credential used only to upload production source maps; never expose it through a `NEXT_PUBLIC_` variable.
 
@@ -91,6 +95,7 @@ Production source maps are uploaded only when all private build settings and Ver
 - `data/` contains the checked production snapshot.
 - `scripts/` contains the guarded data refresh and deterministic color generator.
 - `styles/` contains the portable plain-publication styles used by the benchmark notes.
+- `docs/` contains the current search, measurement, and engineering strategy.
 - `.github/workflows/` contains CI and daily refresh automation.
 
 ## License and data notice

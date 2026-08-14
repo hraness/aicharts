@@ -19,7 +19,7 @@ function renderBlogImage({
   return createSocialImageResponse({
     description,
     domain: `${site.domain}/blog`,
-    eyebrow: "AI Charts benchmark notes",
+    eyebrow: "AI Charts benchmark analysis",
     theme: { accent: site.palette.chromatic.key },
     title,
   });
@@ -34,7 +34,7 @@ export function renderBlogArticleImage(article: BlogArticle): ImageResponse {
 
 export function renderBlogCollectionImage(): ImageResponse {
   return renderBlogImage({
-    description: "Methods, results, and limits from coding-agent evaluations.",
-    title: "Coding agent benchmark notes",
+    description: "Sourced methods, results, and limits from AI evaluations.",
+    title: "AI model and agent benchmark analysis",
   });
 }

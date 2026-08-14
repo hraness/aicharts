@@ -4,7 +4,7 @@ export const BLOG_SLUGS = [
 ] as const;
 
 export const blogDescription =
-  "Sourced notes on coding-agent benchmarks, including what each evaluation measures, its reported results, and the limits on interpreting them.";
+  "Sourced analysis of AI model and agent benchmarks: what each evaluation measures, what the results show, and where the evidence stops.";
 
 export type BlogSlug = (typeof BLOG_SLUGS)[number];
 

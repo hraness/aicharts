@@ -1,7 +1,7 @@
 {
   "name": "aicharts",
   "version": "1.0.0",
-  "description": "Interactive AI coding benchmark comparing models and agents across performance, cost, runtime, and token use.",
+  "description": "Open-source AI benchmark charts for comparing models and agents across performance, cost, speed, and token use.",
   "private": true,
   "type": "module",
   "license": "MIT",
@@ -16,11 +16,17 @@
   "keywords": [
     "ai",
     "ai-agents",
+    "ai-benchmark",
+    "ai-model-comparison",
+    "ai-models",
     "benchmark",
+    "benchmark-visualization",
     "coding-agents",
     "data-visualization",
     "llm",
-    "llm-benchmark"
+    "llm-benchmark",
+    "llm-comparison",
+    "machine-learning"
   ],
   "packageManager": "bun@1.3.14",
   "engines": {

@@ -1,5 +1,5 @@
 export const site = {
-  description: "Compare AI coding models and agents across benchmark performance, API cost, task time, and token use.",
+  description: "Compare AI models and agents with sourced benchmark charts across performance, cost, speed, and token use. Explore trade-offs, trends, and analysis.",
   domain: "aicharts.io",
   emoji: "◉",
   name: "AI Charts",
@@ -15,8 +15,8 @@ export const searchSite = {
   name: site.name,
   origin: site.origin,
   socialImage: {
-    alt: "AI Charts comparison of AI coding models and coding agents",
+    alt: "AI Charts comparison of AI models and agents",
     path: "/opengraph-image",
   },
-  title: "AI Charts: Compare AI Coding Models and Agents",
+  title: "AI Model & Agent Comparison Charts | AI Charts",
 } as const;

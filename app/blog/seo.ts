@@ -22,10 +22,10 @@ const blogSearchSite = {
   description: blogDescription,
   name: "AI Charts Blog",
   socialImage: {
-    alt: "AI Charts notes about coding agent benchmarks",
+    alt: "AI Charts analysis of AI model and agent benchmarks",
     path: BLOG_SOCIAL_IMAGE_PATH,
   },
-  title: "Coding Agent Benchmark Notes | AI Charts",
+  title: "AI Model & Agent Benchmark Analysis | AI Charts",
 } as const;
 
 export const blogCollectionMetadata = createPublicSiteMetadata(
@@ -99,7 +99,7 @@ export function blogCollectionJsonLd() {
     "@type": "CollectionPage",
     "@id": `${url}#collection`,
     url,
-    name: "Coding agent benchmark notes",
+    name: "AI model and agent benchmark analysis",
     description: blogDescription,
     inLanguage: "en-US",
     primaryImageOfPage: absoluteWebUrl(

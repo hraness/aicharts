@@ -1,5 +1,6 @@
 import { Breadcrumbs } from "@/components/ui";
 import { JsonLdScript } from "@/components/structured-data";
+import { TrackedChartLink } from "@/components/tracked-chart-link";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -127,14 +128,17 @@ export default async function BlogArticlePage({
           <ArticleBody blocks={article.body} />
 
           <aside className="plain-publication__cta">
-            <h2>Artificial Analysis chart</h2>
+            <h2>Current comparison: coding agents</h2>
             <p>
-              Compare current coding models by benchmark score, task cost,
-              time, and total token use.
+              Explore the current coding-agent dataset by benchmark score,
+              task cost, time, and total token use.
             </p>
-            <Link className="plain-publication__primary-link" href="/">
+            <TrackedChartLink
+              className="plain-publication__primary-link"
+              sourceKind="blog_article"
+            >
               Open the comparison chart <span aria-hidden="true">→</span>
-            </Link>
+            </TrackedChartLink>
           </aside>
 
           <section
@@ -176,7 +180,7 @@ export default async function BlogArticlePage({
               href={blogArticlePath(relatedArticle.slug)}
               key={relatedArticle.slug}
             >
-              <span>Coding agent benchmark</span>
+              <span>AI agent benchmark</span>
               <strong>{relatedArticle.title}</strong>
             </Link>
           ))}

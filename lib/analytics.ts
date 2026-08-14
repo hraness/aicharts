@@ -20,6 +20,16 @@ export type ChartAnalyticsEvent =
     };
   }>;
 
+export type ContentAnalyticsEvent = Readonly<{
+  name: "content chart opened";
+  properties: {
+    destination_chart: "coding_agents";
+    source_kind: "blog_article" | "blog_index";
+  };
+}>;
+
+type ProductAnalyticsEvent = ChartAnalyticsEvent | ContentAnalyticsEvent;
+
 function analyticsEnabled(): boolean {
   if (typeof window === "undefined" || process.env.NODE_ENV !== "production") return false;
   const token = process.env.NEXT_PUBLIC_POSTHOG_KEY;
@@ -29,7 +39,7 @@ function analyticsEnabled(): boolean {
   );
 }
 
-export function captureChartEvent(event: ChartAnalyticsEvent): void {
+function captureProductEvent(event: ProductAnalyticsEvent): void {
   if (!analyticsEnabled()) return;
   posthog.capture(event.name, {
     ...event.properties,
@@ -37,4 +47,12 @@ export function captureChartEvent(event: ChartAnalyticsEvent): void {
     schema_version: 1,
     $process_person_profile: false,
   });
+}
+
+export function captureChartEvent(event: ChartAnalyticsEvent): void {
+  captureProductEvent(event);
+}
+
+export function captureContentEvent(event: ContentAnalyticsEvent): void {
+  captureProductEvent(event);
 }

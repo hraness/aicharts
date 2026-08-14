@@ -1,17 +1,20 @@
 # Contents
 
-- `app/` – Next.js App Router chart, sourced benchmark notes, metadata, error states, and product stylesheet.
+- `app/` – Next.js App Router comparison chart, sourced benchmark analysis, metadata, error states, and product stylesheet.
 - `components/` – interactive scatter chart, update timeline, linked summaries, sharing, export, and UI primitives.
 - `lib/` – strict data and update boundaries, chart math, layout, analytics, and property tests.
 - `data/` – deterministic checked-in benchmark snapshot.
 - `scripts/` – guarded snapshot refresh and generated color workflows.
 - `styles/` – portable plain-site and publication styling for the benchmark notes.
+- `docs/` – current product search, measurement, and engineering strategy.
 - `.github/workflows/` – continuous integration and daily data refresh automation.
 - `README.md`, `CONTRIBUTING.md`, `SECURITY.md`, and `NOTICE.md` – public project documentation.
 
 # Guidelines
 
-- Keep AI Charts a static-data Next.js product with a checked chart snapshot, sourced benchmark notes, and no runtime dependency on the upstream benchmark page.
+- Keep AI Charts the general product for sourced AI model and agent comparison charts. Describe coding agents as the first published chart, not the limit of the brand or a claim of broader current coverage.
+- Follow `docs/seo-strategy.md` for page roles, canonical copy, internal links, technical discovery, analytics properties, and review cadence. Keep individual evidence pages specific to what their sources evaluate.
+- Keep the current chart a static-data Next.js product with a checked snapshot and no runtime dependency on the upstream benchmark page.
 - Treat network, file, URL, and query-string values as `unknown` until an owned schema or predicate narrows them.
 - Prefer explicit `Result` values for recoverable domain failures and reserve throwing for invalid checked-in invariants.
 - Update `data/coding-agents.json` only through `bun run data:refresh`; preserve duplicate, retention, stable-key, metric-coverage, material-change, and bounded-history guards.
