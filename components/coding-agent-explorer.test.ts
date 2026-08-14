@@ -64,27 +64,47 @@ test("keeps chart export compact, discoverable, and fully named", async () => {
 
 test("tucks data provenance behind a compact named control", async () => {
   const source = await Bun.file(new URL("./coding-agent-explorer.tsx", import.meta.url)).text();
+  const topBarIndex = source.indexOf("<TopBar");
+  const provenanceIndex = source.indexOf('className="chart-provenance-control chart-selection-boundary"');
+  const pageCanvasIndex = source.indexOf("<PageCanvas");
 
   expect(source).toContain('tooltip="Data provenance"');
   expect(source).toContain('aria-label="Data provenance"');
   expect(source).toContain('textValue="Open Artificial Analysis source"');
-  expect(source).toContain('className="chart-subtitle-row"');
   expect(source).toContain('className="chart-provenance-control chart-selection-boundary"');
+  expect(source).toContain('placement="bottom end"');
   expect(source).toContain('popoverClassName="share-menu-popover provenance-menu-popover chart-selection-boundary"');
+  expect(provenanceIndex).toBeGreaterThan(topBarIndex);
+  expect(provenanceIndex).toBeLessThan(pageCanvasIndex);
+  expect(source).not.toContain('className="chart-subtitle-row"');
   expect(source).not.toContain('className="chart-data-status"');
 });
 
 test("links the latest data-derived update badge to the bottom timeline", async () => {
   const source = await Bun.file(new URL("./coding-agent-explorer.tsx", import.meta.url)).text();
+  const badgeIndex = source.indexOf('className="latest-update-badge chart-selection-boundary"');
+  const pageCanvasIndex = source.indexOf("<PageCanvas");
   const overviewIndex = source.indexOf("<OptionSpaceOverview");
   const timelineIndex = source.indexOf("<ModelUpdateTimeline");
   const footerIndex = source.indexOf('<footer className="chart-footer">');
 
   expect(source).toContain('className="latest-update-badge chart-selection-boundary"');
+  expect(source).toContain("aria-label={`Latest update: ${latestUpdate.summary}, ${formatUpdateDate(latestUpdate.detectedAt)}`}");
   expect(source).toContain('href="#model-updates"');
   expect(source).toContain("latestUpdate.summary");
+  expect(badgeIndex).toBeLessThan(pageCanvasIndex);
   expect(timelineIndex).toBeGreaterThan(overviewIndex);
   expect(footerIndex).toBeGreaterThan(timelineIndex);
+});
+
+test("leaves only the selected benchmark description in the chart header", async () => {
+  const source = await Bun.file(new URL("./coding-agent-explorer.tsx", import.meta.url)).text();
+
+  expect(source).toContain('<header className="chart-header">');
+  expect(source).toContain('<p aria-live="polite" className="benchmark-description">');
+  expect(source).not.toContain('<p className="chart-subtitle">Compare AI coding models</p>');
+  expect(source).not.toContain('className="chart-header-content"');
+  expect(source).not.toContain('className="chart-title"');
 });
 
 test("keeps chart chrome compact and metric labels semantic-only", async () => {

@@ -75,6 +75,14 @@ test("compact chart chrome shares the 12px design inset", () => {
   expect(stylesheet).toMatch(/@media \(max-width:\s*760px\)[\s\S]*?\.chart-footer\s*\{[^}]*padding:\s*10px var\(--chart-compact-inset\) max\(var\(--space-4\), env\(safe-area-inset-bottom\)\);/u);
 });
 
+test("global chart context stays dense in the sticky header", () => {
+  expect(firstRule(".chart-top-bar .ui-top-bar__actions")).toContain("gap: 2px");
+  expect(firstRule(".chart-top-bar .ui-top-bar__actions")).toContain("min-width: 0");
+  expect(stylesheet).toMatch(/@media \(max-width:\s*520px\)[\s\S]*?\.latest-update-badge strong\s*\{[^}]*display:\s*none;/u);
+  expect(stylesheet).not.toContain(".chart-subtitle-row");
+  expect(stylesheet).not.toContain(".chart-header-content");
+});
+
 test("compact icon actions expand to the full touch target on mobile", () => {
   expect(stylesheet).toMatch(/@media \(max-width:\s*760px\)[\s\S]*?\.chart-provenance-control \.ui-icon-button\[data-size="compact"\],[\s\S]*?\.share-trigger\.ui-icon-button\[data-size="compact"\]\s*\{[^}]*width:\s*var\(--interactive-target-min\);[^}]*height:\s*var\(--interactive-target-min\);[^}]*flex-basis:\s*var\(--interactive-target-min\);/u);
   expect(stylesheet).toMatch(/\.chart-provenance-control \.ui-icon-button\[data-size="compact"\] > \.ui-icon-button__control,[\s\S]*?\.share-trigger\.ui-icon-button\[data-size="compact"\] > \.ui-icon-button__control\s*\{[^}]*width:\s*var\(--interactive-target-min\);[^}]*height:\s*var\(--interactive-target-min\);/u);
@@ -88,7 +96,7 @@ test("chart canvas is full bleed while its header and footer own safe gutters", 
   expect(firstRule(".chart-page-canvas")).toContain("margin-inline: 0");
   expect(firstRule(".chart-page-canvas")).toContain("max-width: none");
   expect(firstRule(".chart-page-canvas")).toContain("padding: 0");
-  expect(firstRule(".chart-header")).toContain("padding: clamp(16px, 2vw, 24px) var(--chart-content-inset) 24px");
+  expect(firstRule(".chart-header")).toContain("padding: clamp(12px, 1.5vw, 18px) var(--chart-content-inset) 16px");
   expect(firstRule(".chart-footer")).toContain("padding: 10px var(--chart-content-inset) max(var(--space-4), env(safe-area-inset-bottom))");
 });
 

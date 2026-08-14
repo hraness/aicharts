@@ -269,6 +269,10 @@ a { color: inherit; }
   font-weight: var(--font-weight-bold);
   letter-spacing: -.025em;
 }
+.chart-top-bar .ui-top-bar__actions {
+  gap: 2px;
+  min-width: 0;
+}
 
 .chart-page-canvas {
   margin-inline: 0;
@@ -281,28 +285,7 @@ a { color: inherit; }
 
 .chart-header {
   display: grid;
-  padding: clamp(16px, 2vw, 24px) var(--chart-content-inset) 24px;
-}
-.chart-header-content {
-  align-items: flex-end;
-  column-gap: 40px;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  row-gap: 16px;
-}
-.chart-title { min-width: 0; }
-.chart-title .chart-subtitle {
-  color: var(--foreground);
-  font-size: 16px;
-  font-weight: 500;
-  line-height: 1.3;
-}
-.chart-subtitle-row {
-  align-items: center;
-  display: flex;
-  gap: var(--space-1);
-  min-width: 0;
+  padding: clamp(12px, 1.5vw, 18px) var(--chart-content-inset) 16px;
 }
 .latest-update-badge {
   align-items: center;
@@ -316,6 +299,7 @@ a { color: inherit; }
   line-height: 1;
   max-width: min(440px, 52vw);
   min-height: 28px;
+  min-width: 0;
   padding: 5px 9px;
   text-decoration: none;
 }
@@ -341,11 +325,11 @@ a { color: inherit; }
   background: var(--surface-active);
   color: var(--foreground);
 }
-.chart-title .benchmark-description {
+.benchmark-description {
   color: var(--muted);
   font-size: 13px;
   line-height: 1.5;
-  margin-top: 5px;
+  margin: 0;
   max-width: 690px;
 }
 .benchmark-description strong {
@@ -1014,16 +998,9 @@ a { color: inherit; }
   .chart-header {
     padding: var(--chart-compact-inset) var(--chart-compact-inset) 12px;
   }
-  .chart-header-content {
-    align-items: stretch;
-    flex-direction: column;
-  }
-  .chart-title .chart-subtitle { font-size: 15px; }
-  .chart-title .benchmark-description { font-size: 12px; }
-  .chart-subtitle-row { flex-wrap: wrap; }
+  .benchmark-description { font-size: 12px; }
   .latest-update-badge {
-    max-width: calc(100vw - 92px);
-    order: 3;
+    max-width: min(240px, 30vw);
   }
   .latest-update-badge time { display: none; }
   .chart-provenance-control .ui-icon-button[data-size="compact"],
@@ -1098,6 +1075,11 @@ a { color: inherit; }
   .chart-footer {
     padding: 10px var(--chart-compact-inset) max(var(--space-4), env(safe-area-inset-bottom));
   }
+}
+
+@media (max-width: 520px) {
+  .latest-update-badge { max-width: none; }
+  .latest-update-badge strong { display: none; }
 }
 
 @media (hover: none), (pointer: coarse) {

@@ -827,6 +827,57 @@ export function CodingAgentExplorer({ brand, snapshot }: { brand: ChartBrand; sn
       <TopBar
         actions={(
           <>
+            {latestUpdate !== null && (
+              <a
+                aria-label={`Latest update: ${latestUpdate.summary}, ${formatUpdateDate(latestUpdate.detectedAt)}`}
+                className="latest-update-badge chart-selection-boundary"
+                href="#model-updates"
+              >
+                <span>Latest</span>
+                <strong>{latestUpdate.summary}</strong>
+                <time dateTime={latestUpdate.detectedAt}>{formatUpdateDate(latestUpdate.detectedAt)}</time>
+              </a>
+            )}
+            <div className="chart-provenance-control chart-selection-boundary">
+              <MenuTrigger>
+                <IconButton
+                  aria-label="Data provenance"
+                  size="compact"
+                  tooltip="Data provenance"
+                >
+                  <Icon icon={InformationCircleIcon} size={18} strokeWidth={1.75} />
+                </IconButton>
+                <Menu
+                  aria-label="Data provenance"
+                  className="share-menu provenance-menu chart-selection-boundary"
+                  placement="bottom end"
+                  popoverClassName="share-menu-popover provenance-menu-popover chart-selection-boundary"
+                >
+                  <MenuSection
+                    title={(
+                      <div className="share-menu-heading provenance-menu-heading">
+                        <strong>Data provenance</strong>
+                        <span className={`refresh-cadence${refreshDelayed ? " is-delayed" : ""}`}>
+                          <i aria-hidden="true" /> {refreshDelayed ? "Refresh delayed" : "Auto-refreshes daily"}
+                        </span>
+                        <span>Last refreshed <time dateTime={snapshot.source.retrievedAt}>{retrievedAt}</time></span>
+                      </div>
+                    )}
+                  >
+                    <MenuItem
+                      href={snapshot.source.url}
+                      id="data-source"
+                      leading={<Icon icon={ExternalLinkIcon} size={17} strokeWidth={1.75} />}
+                      rel="noreferrer"
+                      target="_blank"
+                      textValue="Open Artificial Analysis source"
+                    >
+                      Open Artificial Analysis source
+                    </MenuItem>
+                  </MenuSection>
+                </Menu>
+              </MenuTrigger>
+            </div>
             <LinkButton href="/blog" size="compact" variant="quiet">
               Blog
             </LinkButton>
@@ -845,63 +896,9 @@ export function CodingAgentExplorer({ brand, snapshot }: { brand: ChartBrand; sn
         tabIndex={-1}
       >
       <header className="chart-header">
-        <div className="chart-header-content">
-          <div className="chart-title">
-            <div className="chart-subtitle-row">
-              <p className="chart-subtitle">Compare AI coding models</p>
-              {latestUpdate !== null && (
-                <a className="latest-update-badge chart-selection-boundary" href="#model-updates">
-                  <span>Latest</span>
-                  <strong>{latestUpdate.summary}</strong>
-                  <time dateTime={latestUpdate.detectedAt}>{formatUpdateDate(latestUpdate.detectedAt)}</time>
-                </a>
-              )}
-              <div className="chart-provenance-control chart-selection-boundary">
-                <MenuTrigger>
-                  <IconButton
-                    aria-label="Data provenance"
-                    size="compact"
-                    tooltip="Data provenance"
-                  >
-                    <Icon icon={InformationCircleIcon} size={18} strokeWidth={1.75} />
-                  </IconButton>
-                  <Menu
-                    aria-label="Data provenance"
-                    className="share-menu provenance-menu chart-selection-boundary"
-                    placement="bottom start"
-                    popoverClassName="share-menu-popover provenance-menu-popover chart-selection-boundary"
-                  >
-                    <MenuSection
-                      title={(
-                        <div className="share-menu-heading provenance-menu-heading">
-                          <strong>Data provenance</strong>
-                          <span className={`refresh-cadence${refreshDelayed ? " is-delayed" : ""}`}>
-                            <i aria-hidden="true" /> {refreshDelayed ? "Refresh delayed" : "Auto-refreshes daily"}
-                          </span>
-                          <span>Last refreshed <time dateTime={snapshot.source.retrievedAt}>{retrievedAt}</time></span>
-                        </div>
-                      )}
-                    >
-                      <MenuItem
-                        href={snapshot.source.url}
-                        id="data-source"
-                        leading={<Icon icon={ExternalLinkIcon} size={17} strokeWidth={1.75} />}
-                        rel="noreferrer"
-                        target="_blank"
-                        textValue="Open Artificial Analysis source"
-                      >
-                        Open Artificial Analysis source
-                      </MenuItem>
-                    </MenuSection>
-                  </Menu>
-                </MenuTrigger>
-              </div>
-            </div>
-            <p aria-live="polite" className="benchmark-description">
-              <strong>{yMetricLabels[yMetric]}</strong> — {yMetricDescriptions[yMetric]}
-            </p>
-          </div>
-        </div>
+        <p aria-live="polite" className="benchmark-description">
+          <strong>{yMetricLabels[yMetric]}</strong> — {yMetricDescriptions[yMetric]}
+        </p>
       </header>
 
       <div className={overflowClassName("provider-filter-shell", providerOverflow)}>
