@@ -3,10 +3,78 @@
   "source": {
     "name": "Artificial Analysis",
     "url": "https://artificialanalysis.ai/agents/coding-agents/",
-    "retrievedAt": "2026-08-14T11:29:12.842Z",
+    "retrievedAt": "2026-08-15T10:59:09.311Z",
     "method": "next-flight"
   },
   "updates": [
+    {
+      "id": "[\"model-added\",\"2026-08-15T10:59:09.311Z\",\"[\\\"Muse Code\\\",\\\"meta\\\",\\\"Muse Spark 1.2\\\"]\"]",
+      "detectedAt": "2026-08-15T10:59:09.311Z",
+      "agent": "Muse Code",
+      "model": "Muse Spark 1.2",
+      "providerId": "meta",
+      "providerName": "Meta",
+      "setting": "xhigh",
+      "benchmarks": {
+        "aaIndex": 60.52533202832947,
+        "deepSwe": 58.1120943952802,
+        "terminalBench": 78.5714285714286,
+        "sweAtlas": 44.892473118279604
+      },
+      "kind": "model-added",
+      "variantCount": 1
+    },
+    {
+      "id": "[\"model-added\",\"2026-08-15T10:59:09.311Z\",\"[\\\"Opencode\\\",\\\"google\\\",\\\"Gemini 3.7 Flash\\\"]\"]",
+      "detectedAt": "2026-08-15T10:59:09.311Z",
+      "agent": "Opencode",
+      "model": "Gemini 3.7 Flash",
+      "providerId": "google",
+      "providerName": "Google",
+      "setting": "high",
+      "benchmarks": {
+        "aaIndex": 57.06854442224124,
+        "deepSwe": 57.227138643067796,
+        "terminalBench": 83.3333333333333,
+        "sweAtlas": 30.645161290322598
+      },
+      "kind": "model-added",
+      "variantCount": 1
+    },
+    {
+      "id": "[\"model-added\",\"2026-08-15T10:59:09.311Z\",\"[\\\"Opencode\\\",\\\"meta\\\",\\\"Muse Spark 1.2\\\"]\"]",
+      "detectedAt": "2026-08-15T10:59:09.311Z",
+      "agent": "Opencode",
+      "model": "Muse Spark 1.2",
+      "providerId": "meta",
+      "providerName": "Meta",
+      "setting": "xhigh",
+      "benchmarks": {
+        "aaIndex": 56.5024763354766,
+        "deepSwe": 52.8023598820059,
+        "terminalBench": 72.6190476190476,
+        "sweAtlas": 44.0860215053763
+      },
+      "kind": "model-added",
+      "variantCount": 1
+    },
+    {
+      "id": "[\"model-added\",\"2026-08-15T10:59:09.311Z\",\"[\\\"Antigravity SDK\\\",\\\"google\\\",\\\"Gemini 3.7 Flash\\\"]\"]",
+      "detectedAt": "2026-08-15T10:59:09.311Z",
+      "agent": "Antigravity SDK",
+      "model": "Gemini 3.7 Flash",
+      "providerId": "google",
+      "providerName": "Google",
+      "setting": "high",
+      "benchmarks": {
+        "aaIndex": 55.64263133489511,
+        "deepSwe": 56.04719764011799,
+        "terminalBench": 83.7301587301587,
+        "sweAtlas": 27.1505376344086
+      },
+      "kind": "model-added",
+      "variantCount": 1
+    },
     {
       "id": "[\"benchmark-changed\",\"2026-08-14T11:29:12.842Z\",\"[\\\"Claude Code:alibaba_cloud_qwen3-8-max-public\\\",\\\"default\\\"]\"]",
       "detectedAt": "2026-08-14T11:29:12.842Z",
@@ -169,6 +237,32 @@
   ],
   "records": [
     {
+      "id": "a4e29e578e3a5877244c3e6419907805",
+      "agent": "Antigravity SDK",
+      "model": "Gemini 3.7 Flash",
+      "modelLabel": "Gemini 3.7 Flash (high)",
+      "providerId": "google",
+      "providerName": "Google",
+      "seriesId": "Antigravity SDK v0.1.8:google_andwise_ai-studio",
+      "seriesLabel": "Antigravity SDK · Gemini 3.7 Flash",
+      "setting": "high",
+      "settingRank": 4,
+      "completeIndex": true,
+      "benchmarks": {
+        "aaIndex": 55.64263133489511,
+        "deepSwe": 56.04719764011799,
+        "terminalBench": 83.7301587301587,
+        "sweAtlas": 27.1505376344086
+      },
+      "economics": {
+        "costUsd": 0,
+        "durationSeconds": 379.42819861712644
+      },
+      "usage": {
+        "totalTokens": 14993503.888524689
+      }
+    },
+    {
       "id": "e1d299b2461811a5e3922910872e21ac",
       "agent": "Claude Code",
       "model": "DeepSeek V4 Pro",
@@ -187,11 +281,11 @@
         "sweAtlas": 19.8924731182796
       },
       "economics": {
-        "costUsd": 0.27193461309864964,
+        "costUsd": 0.2719346130986499,
         "durationSeconds": 1072.4858556593977
       },
       "usage": {
-        "totalTokens": 9823145.160955353
+        "totalTokens": 9823145.160955349
       }
     },
     {
@@ -233,9 +327,9 @@
       "settingRank": 0,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 36.13153955717473,
+        "aaIndex": 36.131539557174705,
         "deepSwe": 18.5840707964602,
-        "terminalBench": 65.0793650793651,
+        "terminalBench": 65.079365079365,
         "sweAtlas": 24.7311827956989
       },
       "economics": {
@@ -243,7 +337,7 @@
         "durationSeconds": 1166.2455368639653
       },
       "usage": {
-        "totalTokens": 25881728.400830757
+        "totalTokens": 25881728.40083072
       }
     },
     {
@@ -291,7 +385,7 @@
         "sweAtlas": 15.8602150537634
       },
       "economics": {
-        "costUsd": 1.188952092336449,
+        "costUsd": 1.1889520923364492,
         "durationSeconds": 2460.8149844236777
       },
       "usage": {
@@ -311,9 +405,9 @@
       "settingRank": 3,
       "completeIndex": false,
       "benchmarks": {
-        "aaIndex": 46.47337429595495,
+        "aaIndex": 46.4733742959549,
         "deepSwe": null,
-        "terminalBench": 70.63492063492069,
+        "terminalBench": 70.63492063492059,
         "sweAtlas": 22.311827956989198
       },
       "economics": {
@@ -321,7 +415,7 @@
         "durationSeconds": 479.6315032051282
       },
       "usage": {
-        "totalTokens": 4476377.92628205
+        "totalTokens": 4476377.926282057
       }
     },
     {
@@ -396,7 +490,7 @@
       },
       "economics": {
         "costUsd": 2.15043354465213,
-        "durationSeconds": 505.6732139148495
+        "durationSeconds": 505.6732139148491
       },
       "usage": {
         "totalTokens": 5167218.9646936655
@@ -421,7 +515,7 @@
         "sweAtlas": 36.021505376344095
       },
       "economics": {
-        "costUsd": 3.2631243045171314,
+        "costUsd": 3.263124304517135,
         "durationSeconds": 742.5446853582553
       },
       "usage": {
@@ -477,7 +571,7 @@
         "durationSeconds": 1062.3746635514033
       },
       "usage": {
-        "totalTokens": 13701048.253374878
+        "totalTokens": 13701048.253374875
       }
     },
     {
@@ -526,10 +620,10 @@
       },
       "economics": {
         "costUsd": 2.1784609327668933,
-        "durationSeconds": 569.2926957424712
+        "durationSeconds": 569.2926957424716
       },
       "usage": {
-        "totalTokens": 5159611.715472481
+        "totalTokens": 5159611.7154724775
       }
     },
     {
@@ -551,8 +645,8 @@
         "sweAtlas": 44.3548387096774
       },
       "economics": {
-        "costUsd": 3.1436240575635868,
-        "durationSeconds": 731.4867113187952
+        "costUsd": 3.143624057563587,
+        "durationSeconds": 731.4867113187956
       },
       "usage": {
         "totalTokens": 7936908.352024915
@@ -581,7 +675,7 @@
         "durationSeconds": 802.3227175493257
       },
       "usage": {
-        "totalTokens": 9699126.034267925
+        "totalTokens": 9699126.034267921
       }
     },
     {
@@ -604,7 +698,7 @@
       },
       "economics": {
         "costUsd": 8.234594254641607,
-        "durationSeconds": 1418.8133717549326
+        "durationSeconds": 1418.8133717549324
       },
       "usage": {
         "totalTokens": 21823529.824506745
@@ -655,8 +749,8 @@
         "sweAtlas": 23.6559139784946
       },
       "economics": {
-        "costUsd": 6.226261819189548,
-        "durationSeconds": 633.8206448598129
+        "costUsd": 6.226261819189514,
+        "durationSeconds": 633.8206448598132
       },
       "usage": {
         "totalTokens": 8695924.406022852
@@ -707,11 +801,11 @@
         "sweAtlas": 19.6236559139785
       },
       "economics": {
-        "costUsd": 2.0058686946521296,
+        "costUsd": 2.005868694652129,
         "durationSeconds": 807.4225254413302
       },
       "usage": {
-        "totalTokens": 8481318.90550363
+        "totalTokens": 8481318.905503629
       }
     },
     {
@@ -727,14 +821,14 @@
       "settingRank": 6,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 55.467724565640644,
-        "deepSwe": 42.772861356932204,
+        "aaIndex": 55.46772456564061,
+        "deepSwe": 42.772861356932104,
         "terminalBench": 84.9206349206349,
         "sweAtlas": 38.7096774193548
       },
       "economics": {
         "costUsd": 0.07068777881703028,
-        "durationSeconds": 877.443800623052
+        "durationSeconds": 877.4438006230517
       },
       "usage": {
         "totalTokens": 20876437.68431982
@@ -763,7 +857,7 @@
         "durationSeconds": 425.0698348214286
       },
       "usage": {
-        "totalTokens": 5924972.105654759
+        "totalTokens": 5924972.105654764
       }
     },
     {
@@ -812,7 +906,7 @@
       },
       "economics": {
         "costUsd": 5.069575952232609,
-        "durationSeconds": 604.9694164070614
+        "durationSeconds": 604.9694164070611
       },
       "usage": {
         "totalTokens": 12260230.264797531
@@ -841,7 +935,7 @@
         "durationSeconds": 149.6666500519211
       },
       "usage": {
-        "totalTokens": 3566156.750778814
+        "totalTokens": 3566156.750778817
       }
     },
     {
@@ -889,7 +983,7 @@
         "sweAtlas": 27.1505376344086
       },
       "economics": {
-        "costUsd": 0.09477914066458966,
+        "costUsd": 0.0947791406645897,
         "durationSeconds": 202.33462357217016
       },
       "usage": {
@@ -909,8 +1003,8 @@
       "settingRank": 4,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 51.41666175779793,
-        "deepSwe": 53.3923303834809,
+        "aaIndex": 51.4166617577979,
+        "deepSwe": 53.392330383480804,
         "terminalBench": 71.82539682539681,
         "sweAtlas": 29.032258064516096
       },
@@ -1049,7 +1143,7 @@
         "durationSeconds": 310.17845482866045
       },
       "usage": {
-        "totalTokens": 5817518.553478712
+        "totalTokens": 5817518.553478716
       }
     },
     {
@@ -1072,10 +1166,10 @@
       },
       "economics": {
         "costUsd": 4.144239101765319,
-        "durationSeconds": 379.28783800623074
+        "durationSeconds": 379.28783800623034
       },
       "usage": {
-        "totalTokens": 8084866.6967809
+        "totalTokens": 8084866.696780904
       }
     },
     {
@@ -1098,7 +1192,7 @@
       },
       "economics": {
         "costUsd": 5.235289045690551,
-        "durationSeconds": 443.6217289719626
+        "durationSeconds": 443.6217289719623
       },
       "usage": {
         "totalTokens": 9940685.693665624
@@ -1124,7 +1218,7 @@
       },
       "economics": {
         "costUsd": 7.0835100321910645,
-        "durationSeconds": 610.0822637590865
+        "durationSeconds": 610.0822637590861
       },
       "usage": {
         "totalTokens": 13228192.3831776
@@ -1149,7 +1243,7 @@
         "sweAtlas": 18.5483870967742
       },
       "economics": {
-        "costUsd": 0.2959885690550364,
+        "costUsd": 0.295988569055036,
         "durationSeconds": 107.57151921079952
       },
       "usage": {
@@ -1175,7 +1269,7 @@
         "sweAtlas": 22.8494623655914
       },
       "economics": {
-        "costUsd": 0.3874593570093459,
+        "costUsd": 0.3874593570093456,
         "durationSeconds": 167.002074766355
       },
       "usage": {
@@ -1202,7 +1296,7 @@
       },
       "economics": {
         "costUsd": 0.720980822845275,
-        "durationSeconds": 256.38568743509836
+        "durationSeconds": 256.3856874350987
       },
       "usage": {
         "totalTokens": 3130307.8078920064
@@ -1227,8 +1321,8 @@
         "sweAtlas": 30.913978494623702
       },
       "economics": {
-        "costUsd": 1.2717923584631377,
-        "durationSeconds": 370.7822777777776
+        "costUsd": 1.271792358463138,
+        "durationSeconds": 370.78227777777795
       },
       "usage": {
         "totalTokens": 5540011.526998961
@@ -1283,7 +1377,7 @@
         "durationSeconds": 502.37997507788185
       },
       "usage": {
-        "totalTokens": 9465877.399792325
+        "totalTokens": 9465877.399792328
       }
     },
     {
@@ -1325,14 +1419,14 @@
       "settingRank": 0,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 38.19077223302172,
+        "aaIndex": 38.190772233021754,
         "deepSwe": 15.929203539823,
-        "terminalBench": 67.4603174603174,
+        "terminalBench": 67.46031746031751,
         "sweAtlas": 31.18279569892475
       },
       "economics": {
-        "costUsd": 0.08223328400830736,
-        "durationSeconds": 572.8118920041538
+        "costUsd": 0.0822332840083074,
+        "durationSeconds": 572.8118920041536
       },
       "usage": {
         "totalTokens": 3577610.0197300087
@@ -1351,9 +1445,9 @@
       "settingRank": 0,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 38.19077223302172,
+        "aaIndex": 38.190772233021754,
         "deepSwe": 15.929203539823,
-        "terminalBench": 67.4603174603174,
+        "terminalBench": 67.46031746031751,
         "sweAtlas": 31.18279569892475
       },
       "economics": {
@@ -1387,7 +1481,7 @@
         "durationSeconds": 485.6827581120946
       },
       "usage": {
-        "totalTokens": 4017672.641592925
+        "totalTokens": 4017672.64159292
       }
     },
     {
@@ -1409,11 +1503,11 @@
         "sweAtlas": 27.6881720430107
       },
       "economics": {
-        "costUsd": 2.0149947633091063,
-        "durationSeconds": 398.80334683281404
+        "costUsd": 2.0149947633091023,
+        "durationSeconds": 398.8033468328143
       },
       "usage": {
-        "totalTokens": 3989303.3560401546
+        "totalTokens": 3989303.356040147
       }
     },
     {
@@ -1429,17 +1523,17 @@
       "settingRank": 3,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 45.35643673525493,
-        "deepSwe": 31.5634218289086,
-        "terminalBench": 70.63492063492069,
+        "aaIndex": 45.35643673525487,
+        "deepSwe": 31.5634218289085,
+        "terminalBench": 70.63492063492059,
         "sweAtlas": 33.8709677419355
       },
       "economics": {
-        "costUsd": 2.6798684284787093,
+        "costUsd": 2.679868428478713,
         "durationSeconds": 816.8511308411215
       },
       "usage": {
-        "totalTokens": 5656580.0716511
+        "totalTokens": 5656580.071651096
       }
     },
     {
@@ -1461,7 +1555,7 @@
         "sweAtlas": 8.60215053763441
       },
       "economics": {
-        "costUsd": 1.996407103219105,
+        "costUsd": 1.9964071032191046,
         "durationSeconds": 649.431679127727
       },
       "usage": {
@@ -1491,7 +1585,7 @@
         "durationSeconds": 988.6643136033242
       },
       "usage": {
-        "totalTokens": 3574850.550363447
+        "totalTokens": 3574850.5503634433
       }
     },
     {
@@ -1517,7 +1611,33 @@
         "durationSeconds": 1427.7253894081002
       },
       "usage": {
-        "totalTokens": 10619290.22409137
+        "totalTokens": 10619290.224091364
+      }
+    },
+    {
+      "id": "7003d64534eb0a83f85563741e1dd387",
+      "agent": "Muse Code",
+      "model": "Muse Spark 1.2",
+      "modelLabel": "Muse Spark 1.2 (xhigh)",
+      "providerId": "meta",
+      "providerName": "Meta",
+      "seriesId": "tbh:meta_spiffy-blimp350-tbh-r708-1",
+      "seriesLabel": "Muse Code · Muse Spark 1.2",
+      "setting": "xhigh",
+      "settingRank": 5,
+      "completeIndex": true,
+      "benchmarks": {
+        "aaIndex": 60.52533202832947,
+        "deepSwe": 58.1120943952802,
+        "terminalBench": 78.5714285714286,
+        "sweAtlas": 44.892473118279604
+      },
+      "economics": {
+        "costUsd": 2.326112277362408,
+        "durationSeconds": 2519.4239839044653
+      },
+      "usage": {
+        "totalTokens": 21454249.668743517
       }
     },
     {
@@ -1540,10 +1660,36 @@
       },
       "economics": {
         "costUsd": 2.0792301894081002,
-        "durationSeconds": 625.2649283489094
+        "durationSeconds": 625.2649283489097
       },
       "usage": {
         "totalTokens": 13024312.415368645
+      }
+    },
+    {
+      "id": "6618764de249675762f155bbd0cfc82e",
+      "agent": "Opencode",
+      "model": "Gemini 3.7 Flash",
+      "modelLabel": "Gemini 3.7 Flash (high)",
+      "providerId": "google",
+      "providerName": "Google",
+      "seriesId": "Opencode:google_andwise_ai-studio",
+      "seriesLabel": "Opencode · Gemini 3.7 Flash",
+      "setting": "high",
+      "settingRank": 4,
+      "completeIndex": true,
+      "benchmarks": {
+        "aaIndex": 57.06854442224124,
+        "deepSwe": 57.227138643067796,
+        "terminalBench": 83.3333333333333,
+        "sweAtlas": 30.645161290322598
+      },
+      "economics": {
+        "costUsd": 0,
+        "durationSeconds": 507.93494600207674
+      },
+      "usage": {
+        "totalTokens": 18537559.052959505
       }
     },
     {
@@ -1565,11 +1711,37 @@
         "sweAtlas": 33.3333333333333
       },
       "economics": {
-        "costUsd": 1.428240683805814,
+        "costUsd": 1.4282406838058135,
         "durationSeconds": 755.2098182762193
       },
       "usage": {
-        "totalTokens": 12243521.204517122
+        "totalTokens": 12243521.204517119
+      }
+    },
+    {
+      "id": "8e532b4c1fa0766d03b23f0a624c5c09",
+      "agent": "Opencode",
+      "model": "Muse Spark 1.2",
+      "modelLabel": "Muse Spark 1.2 (xhigh)",
+      "providerId": "meta",
+      "providerName": "Meta",
+      "seriesId": "Opencode:meta_spiffy-blimp350",
+      "seriesLabel": "Opencode · Muse Spark 1.2",
+      "setting": "xhigh",
+      "settingRank": 5,
+      "completeIndex": true,
+      "benchmarks": {
+        "aaIndex": 56.5024763354766,
+        "deepSwe": 52.8023598820059,
+        "terminalBench": 72.6190476190476,
+        "sweAtlas": 44.0860215053763
+      },
+      "economics": {
+        "costUsd": 1.9121964471391506,
+        "durationSeconds": 1073.6791817237795
+      },
+      "usage": {
+        "totalTokens": 16355511.891536862
       }
     },
     {
@@ -1595,7 +1767,7 @@
         "durationSeconds": 731.6785908618888
       },
       "usage": {
-        "totalTokens": 7560139.581516111
+        "totalTokens": 7560139.581516107
       }
     }
   ]
