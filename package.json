@@ -45,7 +45,11 @@
     "data:refresh": "bun run scripts/refresh-coding-agents.ts",
     "data:check": "bun run scripts/refresh-coding-agents.ts --check",
     "check:generated": "bun run colors:check && bun run data:check",
-    "check": "bun run check:generated && bun run typecheck && bun run lint && bun run test && bun run build"
+    "check": "bun run check:generated && bun run typecheck && bun run lint && bun run test && bun run build",
+    "kb:refresh": "bunx --bun github:hraness/kb#v0.15.1 refresh --root kb",
+    "kb:check:lane": "bunx --bun github:hraness/kb#v0.15.1 check --root kb --no-catalog",
+    "kb:check": "bunx --bun github:hraness/kb#v0.15.1 check --root kb && bunx --bun github:hraness/kb#v0.15.1 agents check --root kb --repo .",
+    "kb:catalog": "bunx --bun github:hraness/kb#v0.15.1 catalog --root kb"
   },
   "dependencies": {
     "@hugeicons/core-free-icons": "^4.2.2",

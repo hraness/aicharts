@@ -1,3 +1,4 @@
+<!-- kb:context scopes/repository--cdb4ee2aea69 -->
 # Contents
 
 - `app/` – Next.js App Router comparison chart, sourced benchmark analysis, metadata, error states, and product stylesheet.
@@ -7,11 +8,21 @@
 - `scripts/` – guarded snapshot refresh and generated color workflows.
 - `styles/` – portable plain-site and publication styling for the benchmark notes.
 - `docs/` – current product search, measurement, and engineering strategy.
+- `.agents/skills/` – reusable cross-repository KB and phased-execution workflows.
+- `kb/` – authored repository rationale, evidence, synthesis, and plans.
+- `WRITING.md` and `STYLE.md` – internal and public prose contracts.
 - `.github/workflows/` – continuous integration and daily data refresh automation.
 - `README.md`, `CONTRIBUTING.md`, `SECURITY.md`, and `NOTICE.md` – public project documentation.
 
 # Guidelines
 
+- Follow `WRITING.md` for internal prose and `STYLE.md` for public prose.
+- Apply unreasonably robust programming when agent work is cheap. Model invalid states out of existence and pair readable regression examples with property tests for general laws.
+- Pin Hraness dependencies to reviewed immutable releases or full commits. Never connect repositories with sibling paths, Git submodules, or coordinated `main` assumptions.
+- Extract a shared package only after two concrete consumers need the same stable interface. Keep shared packages product-neutral.
+- Use a shared design kit or `@hraness/ui` only for stable, portable primitives and tokens at an immutable version. Keep chart geometry, evidence presentation, page composition, and the local visual contract product-owned.
+- Freeze shared interfaces before parallel lanes begin. Give checked data, generated colors, manifests, lockfiles, and other convergence surfaces one owner while lanes edit disjoint paths.
+- Keep mandatory rules in the closest `AGENTS.md`, current procedures in `docs/`, executable contracts in types and tests, and pull-based rationale, evidence, synthesis, and plans in `kb/`.
 - Keep AI Charts the general product for sourced AI model and agent comparison charts. Describe coding agents as the first published chart, not the limit of the brand or a claim of broader current coverage.
 - Treat `https://aicharts.io` as the only canonical public origin. Keep retired `codingchart.com` URLs on matching permanent redirects and follow `docs/seo-strategy.md` for migration, discovery, page roles, internal links, analytics properties, and review cadence.
 - Build answer-engine visibility through people-first technical SEO and source-backed, citable content. Keep important copy, provenance, dates, and links in server-rendered or static HTML. Do not add `llms.txt`, duplicate answer pages, keyword variants, or unsupported schema as search shortcuts.
