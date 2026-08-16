@@ -269,9 +269,28 @@
 }
 
 .plain-site.plain-publication .plain-publication__breadcrumbs ol {
+  align-items: center;
   color: var(--plain-muted);
+  display: flex;
+  flex-wrap: wrap;
   font: inherit;
   font-size: 0.85rem;
+  gap: 0.3rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.plain-site.plain-publication .plain-publication__breadcrumbs li {
+  align-items: center;
+  display: inline-flex;
+  min-width: 0;
+}
+
+.plain-site.plain-publication .plain-publication__breadcrumbs li:not(:last-child)::after {
+  color: var(--plain-muted);
+  content: "/";
+  margin-left: 0.3rem;
 }
 
 .plain-site.plain-publication .plain-publication__breadcrumbs li:last-child {

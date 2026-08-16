@@ -1,0 +1,17 @@
+cff-version: 1.2.0
+message: "If you use AI Charts, cite this software and the primary source for the benchmark data."
+title: AI Charts
+type: software
+authors:
+  - name: AI Charts contributors
+abstract: "Open-source interactive charts for comparing AI models and agents across performance, cost, speed, and token use."
+date-released: 2026-07-17
+license: MIT
+repository-code: "https://github.com/hraness/aicharts"
+url: "https://aicharts.io"
+keywords:
+  - AI benchmarks
+  - AI agents
+  - model comparison
+  - coding agents
+  - data visualization

@@ -38,6 +38,7 @@ import {
   type MouseEvent as ReactMouseEvent,
 } from "react";
 import { createPortal } from "react-dom";
+import Link from "next/link";
 import { createBrandedChartPng, downloadChartPng } from "@/components/chart-export";
 import { ModelUpdateTimeline } from "@/components/model-update-timeline";
 import {
@@ -1267,6 +1268,10 @@ export function CodingAgentExplorer({ brand, snapshot }: { brand: ChartBrand; sn
       />
       <ModelUpdateTimeline retrievedAt={snapshot.source.retrievedAt} updates={snapshot.updates} />
       <footer className="chart-footer">
+        <nav aria-label="AI Charts resources" className="chart-footer-links">
+          <Link href="/data">Data</Link>
+          <Link href="/blog">Analysis</Link>
+        </nav>
         <HranessBrand className="chart-footer-hraness" />
       </footer>
       </PageCanvas>

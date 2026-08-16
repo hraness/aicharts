@@ -15,8 +15,9 @@ The site is a static-data Next.js and TypeScript application. Its coding-agent s
 - Follow a checked timeline of newly detected models, settings, and material benchmark changes.
 - Share the current axes and selection as a link or export a full-resolution PNG.
 - Read sourced benchmark notes at [`/blog`](https://aicharts.io/blog).
+- Inspect the current snapshot, methodology, provenance, and machine-readable distribution at [`/data`](https://aicharts.io/data).
 
-The checked snapshot records its source URL and retrieval time. AI Charts is an independent visualization and is not affiliated with Artificial Analysis or the model providers represented in the data.
+The checked snapshot records its source URL, retrieval time, and material update history. The `/data` page exposes the same checked facts and links to a JSON distribution so people, search engines, and answer engines can verify what the chart shows. AI Charts is an independent visualization and is not affiliated with Artificial Analysis or the model providers represented in the data.
 
 ## Local development
 
@@ -101,5 +102,9 @@ Production source maps are uploaded only when all private build settings and Ver
 ## License and data notice
 
 The application code is available under the [MIT License](LICENSE). The repository also contains a normalized snapshot of facts sourced from [Artificial Analysis](https://artificialanalysis.ai/agents/coding-agents/). The MIT license does not grant rights to third-party data, names, logos, or trademarks; see [NOTICE.md](NOTICE.md).
+
+## Citation
+
+GitHub can generate a citation from [`CITATION.cff`](CITATION.cff). Cite AI Charts when referring to this software or its visualization method, and cite Artificial Analysis or the relevant primary benchmark source for the underlying measurements. Include the source URL, retrieval date, selected metrics, and configuration when a claim depends on a particular snapshot.
 
 Contributions are welcome. Start with [CONTRIBUTING.md](CONTRIBUTING.md), and report security issues through the process in [SECURITY.md](SECURITY.md).

@@ -40,6 +40,14 @@ test("keeps promotional credits out of the persistent chart chrome", async () =>
   expect(source).not.toContain("zo-pegasus.svg");
 });
 
+test("links the chart to crawlable data and analysis resources", async () => {
+  const source = await Bun.file(new URL("./coding-agent-explorer.tsx", import.meta.url)).text();
+
+  expect(source).toContain('aria-label="AI Charts resources"');
+  expect(source).toContain('<Link href="/data">Data</Link>');
+  expect(source).toContain('<Link href="/blog">Analysis</Link>');
+});
+
 test("opts the visualization canvas into the shared full-bleed contract", async () => {
   const source = await Bun.file(new URL("./coding-agent-explorer.tsx", import.meta.url)).text();
 

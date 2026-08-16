@@ -1,5 +1,6 @@
 export type AnalyticsPageKind =
   | "benchmark_chart"
+  | "benchmark_data"
   | "blog_article"
   | "blog_index"
   | "other";
@@ -7,7 +8,7 @@ export type AnalyticsPageKind =
 export interface PageAnalyticsContext {
   readonly analytics_schema_version: 2;
   readonly canonical_domain: "aicharts.io";
-  readonly canonical_path: "/" | "/blog" | "/blog/[article]" | "/[other]";
+  readonly canonical_path: "/" | "/blog" | "/blog/[article]" | "/data" | "/[other]";
   readonly content_group: "ai_comparison" | "benchmark_research" | "site";
   readonly page_kind: AnalyticsPageKind;
   readonly site_id: "aicharts";
@@ -56,6 +57,15 @@ export function pageAnalyticsContext(value: unknown): PageAnalyticsContext {
       canonical_path: "/blog/[article]",
       content_group: "benchmark_research",
       page_kind: "blog_article",
+    };
+  }
+
+  if (pathname === "/data") {
+    return {
+      ...shared,
+      canonical_path: "/data",
+      content_group: "ai_comparison",
+      page_kind: "benchmark_data",
     };
   }
 

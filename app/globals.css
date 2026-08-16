@@ -980,6 +980,18 @@ a { color: inherit; }
   min-height: 42px;
   padding: 10px var(--chart-content-inset) max(var(--space-4), env(safe-area-inset-bottom));
 }
+.chart-footer-links {
+  align-items: center;
+  display: flex;
+  gap: 14px;
+}
+.chart-footer-links a {
+  color: var(--muted);
+  font-size: 12px;
+  text-underline-offset: 3px;
+}
+.chart-footer-links a:hover,
+.chart-footer-links a:focus-visible { color: var(--foreground); }
 .chart-footer-hraness {
   color: var(--muted);
   margin-inline-start: auto;

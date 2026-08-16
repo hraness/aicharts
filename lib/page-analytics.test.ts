@@ -30,6 +30,14 @@ describe("page analytics context", () => {
     expect(JSON.stringify(context)).not.toContain("campaign");
   });
 
+  test("classifies the crawlable benchmark dataset separately", () => {
+    expect(pageAnalyticsContext("/data?download=false")).toMatchObject({
+      canonical_path: "/data",
+      content_group: "ai_comparison",
+      page_kind: "benchmark_data",
+    });
+  });
+
   test("maps foreign and unknown routes to one controlled fallback", () => {
     for (const value of [undefined, null, 42, "", "/not-found"]) {
       expect(pageAnalyticsContext(value)).toMatchObject({

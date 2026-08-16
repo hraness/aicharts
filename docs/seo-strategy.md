@@ -15,6 +15,7 @@ Do not describe AI Charts as a comprehensive catalog until the product has the d
 | Page | Role | Search intent | Copy contract |
 | --- | --- | --- | --- |
 | `/` | Product landing page and current comparison | AI model comparison, AI agent comparison, AI benchmark charts | Frame the general product, then make the current coding-agent dataset clear through chart labels, sources, and context. |
+| `/data` | Dataset, methodology, and provenance | AI coding agent benchmark data, benchmark methodology, machine-readable AI benchmark data | Describe the checked snapshot in visible HTML, name its upstream source and retrieval time, explain normalization and limits, and link the JSON distribution. |
 | `/blog` | Research collection | AI model benchmarks, AI agent benchmarks, benchmark analysis | Introduce the broader editorial method and state that the first collection focuses on coding agents. |
 | `/blog/[slug]` | Evidence page | Named benchmark, method, result, limitation, or model question | Stay specific to the source. Preserve the benchmark name, observation date, configuration, limits, and primary citations. |
 
@@ -44,6 +45,16 @@ Every indexable research page must:
 
 Update a page when its underlying result changes materially. Do not change a publication date to simulate freshness. Remove or consolidate a page when it no longer provides a distinct answer.
 
+## Answer-engine discovery
+
+Answer-engine optimization is people-first technical SEO plus evidence that another system can inspect and cite. Google's AI search guidance says the same foundational Search requirements apply to AI features. OpenAI likewise requires its search crawler to be allowed before a site can appear in ChatGPT search. AI Charts therefore makes its useful content available in static or server-rendered HTML, uses descriptive headings and crawlable links, identifies primary sources, and publishes a machine-readable copy of the data behind the visible chart.
+
+Do not create an `llms.txt` file for search visibility. Google does not use it for Search. Do not split prose into artificial fragments, publish thin keyword variants, add unsupported structured-data types, or repeat a claim only to influence generated answers. Schema helps machines interpret content; it cannot replace content a visitor can see and verify.
+
+The `/data` page is the citable boundary for the current coding-agent snapshot. It must show the dataset name, description, publisher role, upstream creator and source URL, retrieval time, covered metrics, normalization method, important limits, license or notice boundary, and a link to the JSON distribution. Any `Dataset` structured data must match that visible description. AI Charts is the publisher and visualizer of the normalized snapshot; it must not present itself as the creator of Artificial Analysis measurements.
+
+These rules follow Google's [AI search optimization guide](https://developers.google.com/search/docs/fundamentals/ai-optimization-guide), [people-first content](https://developers.google.com/search/docs/fundamentals/creating-helpful-content), and [structured data](https://developers.google.com/search/docs/appearance/structured-data/sd-policies) guidance, plus OpenAI's [publisher and developer FAQ](https://help.openai.com/en/articles/12627856-publishers-and-developers-faq).
+
 ## Technical discovery contract
 
 The repository tests and build must preserve:
@@ -52,12 +63,44 @@ The repository tests and build must preserve:
 - descriptive, page-specific titles and meta descriptions;
 - crawlable HTML links between the chart, collection, and evidence pages;
 - a sitemap containing every public canonical route and its social image;
-- `WebSite`, `WebApplication`, `CollectionPage`, `BlogPosting`, and breadcrumb structured data only where the page supports those types;
+- static or server-rendered primary content and provenance that do not depend on client JavaScript to become meaningful;
+- `WebSite`, `WebApplication`, `Dataset`, `CollectionPage`, `BlogPosting`, and breadcrumb structured data only where the visible page supports those types;
+- a truthful sitemap `lastmod` derived from the latest meaningful page, article, or checked-data change, never an unchanged poll, deployment, or request time;
 - truthful Open Graph and X card copy that matches the page role;
 - permanent redirects from retired `codingchart.com` routes to the matching `aicharts.io` routes;
+- an allowed `OAI-SearchBot` user agent and no CDN rule that silently blocks it;
+- a crawlable `/data` page and stable JSON distribution whose data and timestamps match the chart;
 - static source and observation data so an upstream outage cannot remove indexable content.
 
 These rules follow Google's guidance on [descriptive title links](https://developers.google.com/search/docs/appearance/title-link), [helpful people-first content](https://developers.google.com/search/docs/fundamentals/creating-helpful-content), and [crawlable internal links](https://developers.google.com/search/docs/crawling-indexing/links-crawlable).
+
+## Search properties and site migration
+
+Search Console setup is part of production ownership, not an optional launch task:
+
+1. Add and verify Domain properties for `aicharts.io` and the retired `codingchart.com` domain with DNS TXT records. Keep both properties verified while the migration is being evaluated.
+2. Confirm every old path resolves through a permanent redirect to the matching `https://aicharts.io` path. Avoid redirect chains and do not redirect unrelated pages to the homepage.
+3. Use Search Console's Change of Address tool for the move from `codingchart.com` to `aicharts.io` after both properties are verified and the redirects are live.
+4. Submit `https://aicharts.io/sitemap.xml` in the new property. Keep the sitemap listed in `robots.txt`, inspect the homepage, `/data`, `/blog`, and each evidence page, then watch indexing and migration errors.
+5. In the new property, confirm Settings → Search generative AI includes the site. Inclusion is the default, but the production owner must verify it rather than infer it from ordinary Search traffic. Review the Generative AI performance report when the property has enough impressions for Google to expose it.
+6. Keep redirects, both domain registrations, and old-property verification in place for at least one year. Do not remove them merely because the new domain has begun receiving impressions.
+
+Google documents [Domain properties and DNS verification](https://support.google.com/webmasters/answer/34592), the [Change of Address tool](https://support.google.com/webmasters/answer/9370220), [site moves with URL changes](https://developers.google.com/search/docs/crawling-indexing/site-move-with-url-changes), the [Search generative AI control](https://support.google.com/webmasters/answer/16908024), and the [Generative AI performance report](https://support.google.com/webmasters/answer/16984139).
+
+Import the verified Search Console property into [Bing Webmaster Tools](https://www.bing.com/webmasters/help/import-sites-from-search-console-91fa6552) and submit the same sitemap. Use [IndexNow](https://www.indexnow.org/documentation) only when a canonical URL is added, removed, or changes materially. A successful daily check that produces no content change must not send IndexNow notifications or alter freshness metadata.
+
+## Public repository discovery
+
+The canonical source repository is `https://github.com/hraness/aicharts`. Keep its public metadata aligned with the product:
+
+- description: `Open-source AI benchmark charts for comparing models and agents across performance, cost, speed, and token use.`;
+- homepage: `https://aicharts.io`;
+- focused topics that name the technology, data form, and current benchmark domain without exhausting GitHub's topic limit;
+- a readable README that links the live chart, `/data`, `/blog`, source, notice, contribution, and security information;
+- an MIT license for the software and a separate notice for third-party data and trademarks;
+- a valid root `CITATION.cff` so GitHub exposes a consistent software citation.
+
+The citation describes AI Charts software and visualization work. Claims based on the checked snapshot must also cite Artificial Analysis or the relevant primary benchmark source, with retrieval date, metrics, and configuration. GitHub documents repository discovery through [topics](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/classifying-your-repository-with-topics) and citation support through [`CITATION.cff`](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-citation-files).
 
 ## Measurement
 
@@ -91,8 +134,8 @@ The pinned [AI Charts: Search & Content dashboard](https://us.posthog.com/projec
 | `site_id` | `aicharts` |
 | `canonical_domain` | `aicharts.io` |
 | `analytics_schema_version` | `2` |
-| `canonical_path` | `/`, `/blog`, `/blog/[article]`, `/[other]` |
-| `page_kind` | `benchmark_chart`, `blog_index`, `blog_article`, `other` |
+| `canonical_path` | `/`, `/data`, `/blog`, `/blog/[article]`, `/[other]` |
+| `page_kind` | `benchmark_chart`, `benchmark_data`, `blog_index`, `blog_article`, `other` |
 | `content_group` | `ai_comparison`, `benchmark_research`, `site` |
 
 The grouped article path deliberately avoids sending slugs, URLs, query strings, free-form text, identities, or persistent identifiers.
@@ -119,6 +162,8 @@ This is a continuity baseline, not evidence that the broader positioning is work
 Weekly:
 
 - confirm current `aicharts.io` events reach all four dashboard views;
+- review Search Console indexing, sitemap, crawl, and migration errors for both domain properties;
+- review Search Console generative-AI visibility when its report is available;
 - investigate broken page classification, missing events, bot spikes, or sudden zeroes;
 - annotate releases that materially change a title, route, chart, or article.
 

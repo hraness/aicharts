@@ -13,7 +13,11 @@
 # Guidelines
 
 - Keep AI Charts the general product for sourced AI model and agent comparison charts. Describe coding agents as the first published chart, not the limit of the brand or a claim of broader current coverage.
-- Follow `docs/seo-strategy.md` for page roles, canonical copy, internal links, technical discovery, analytics properties, and review cadence. Keep individual evidence pages specific to what their sources evaluate.
+- Treat `https://aicharts.io` as the only canonical public origin. Keep retired `codingchart.com` URLs on matching permanent redirects and follow `docs/seo-strategy.md` for migration, discovery, page roles, internal links, analytics properties, and review cadence.
+- Build answer-engine visibility through people-first technical SEO and source-backed, citable content. Keep important copy, provenance, dates, and links in server-rendered or static HTML. Do not add `llms.txt`, duplicate answer pages, keyword variants, or unsupported schema as search shortcuts.
+- Keep `/data` and its JSON distribution crawlable, internally linked, and consistent with the checked snapshot. Structured data must describe visible page content. Set sitemap `lastmod` from the latest meaningful content or data change, never from an unchanged refresh attempt or build time.
+- Keep individual evidence pages specific to what their sources evaluate. State primary sources, observation dates, configurations, analysis boundaries, and limitations close to the claims they support.
+- Keep the public GitHub repository discoverable with an accurate description, canonical homepage, focused topics, a self-contained README, license and data notice, and `CITATION.cff`.
 - Keep the current chart a static-data Next.js product with a checked snapshot and no runtime dependency on the upstream benchmark page.
 - Treat network, file, URL, and query-string values as `unknown` until an owned schema or predicate narrows them.
 - Prefer explicit `Result` values for recoverable domain failures and reserve throwing for invalid checked-in invariants.

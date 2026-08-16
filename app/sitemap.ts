@@ -1,13 +1,41 @@
 import type { MetadataRoute } from "next";
 
+import codingAgentData from "@/data/coding-agents.json";
+import { parseCodingAgentSnapshot } from "@/lib/coding-agent-data";
+import {
+  CODING_AGENT_DATASET_PATH,
+  codingAgentDatasetModifiedAt,
+} from "@/lib/coding-agent-dataset";
 import { blogArticlePath, blogArticles } from "./blog/articles";
 import { BLOG_SOCIAL_IMAGE_PATH, blogArticleImagePath } from "./blog/seo";
-import { site } from "./site";
+import { searchSite, site } from "./site";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const absolute = (path: string) => new URL(path, site.origin).toString();
+  const input: unknown = codingAgentData;
+  const parsed = parseCodingAgentSnapshot(input);
+  if (!parsed.ok) {
+    throw new Error(`Checked coding-agent snapshot is invalid: ${parsed.error.message}`, {
+      cause: parsed.error,
+    });
+  }
+  const datasetModifiedAt = codingAgentDatasetModifiedAt(parsed.value);
+  const siteImage = absolute(searchSite.socialImage.path);
   return [
-    { url: absolute("/"), changeFrequency: "daily", priority: 1 },
+    {
+      changeFrequency: "daily",
+      images: [siteImage],
+      lastModified: datasetModifiedAt,
+      priority: 1,
+      url: absolute("/"),
+    },
+    {
+      changeFrequency: "daily",
+      images: [siteImage],
+      lastModified: datasetModifiedAt,
+      priority: 0.9,
+      url: absolute(CODING_AGENT_DATASET_PATH),
+    },
     {
       changeFrequency: "monthly",
       images: [absolute(BLOG_SOCIAL_IMAGE_PATH)],
