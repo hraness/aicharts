@@ -14,24 +14,28 @@ describe("site migration redirects", () => {
       host: redirect.has?.find(condition => condition.type === "host")?.value,
       permanent: redirect.permanent,
       source: redirect.source,
+      statusCode: redirect.statusCode,
     }))).toEqual([
       {
         destination: "https://aicharts.io/:path*",
         host: "codingchart.com",
-        permanent: true,
+        permanent: undefined,
         source: "/:path*",
+        statusCode: 301,
       },
       {
         destination: "https://aicharts.io/:path*",
         host: "www.codingchart.com",
-        permanent: true,
+        permanent: undefined,
         source: "/:path*",
+        statusCode: 301,
       },
       {
         destination: "https://aicharts.io/:path*",
         host: "www.aicharts.io",
         permanent: true,
         source: "/:path*",
+        statusCode: undefined,
       },
     ]);
   });

@@ -79,7 +79,7 @@ These rules follow Google's guidance on [descriptive title links](https://develo
 Search Console setup is part of production ownership, not an optional launch task:
 
 1. Add and verify Domain properties for `aicharts.io` and the retired `codingchart.com` domain with DNS TXT records. Keep both properties verified while the migration is being evaluated.
-2. Confirm every old path resolves through a permanent redirect to the matching `https://aicharts.io` path. Avoid redirect chains and do not redirect unrelated pages to the homepage.
+2. Confirm every old path resolves through a direct `301` redirect to the matching `https://aicharts.io` path. Search Console's Change of Address validator requires `301` specifically. Avoid redirect chains and do not redirect unrelated pages to the homepage.
 3. Use Search Console's Change of Address tool for the move from `codingchart.com` to `aicharts.io` after both properties are verified and the redirects are live.
 4. Submit `https://aicharts.io/sitemap.xml` in the new property. Keep the sitemap listed in `robots.txt`, inspect the homepage, `/data`, `/blog`, and each evidence page, then watch indexing and migration errors.
 5. In the new property, confirm Settings → Search generative AI includes the site. Inclusion is the default, but the production owner must verify it rather than infer it from ordinary Search traffic. Review the Generative AI performance report when the property has enough impressions for Google to expose it.
