@@ -1,6 +1,6 @@
 import { Breadcrumbs } from "@/components/ui";
-import { JsonLdScript } from "@/components/structured-data";
 import { TrackedChartLink } from "@/components/tracked-chart-link";
+import { JsonLdScript } from "@hraness/web-discovery/json-ld";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";

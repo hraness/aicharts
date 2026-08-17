@@ -1,7 +1,7 @@
 import {
   createSocialImageResponse,
   socialImageSize,
-} from "@/lib/social-image";
+} from "@hraness/web-discovery/social-image";
 import type { ImageResponse } from "next/og";
 
 import { site } from "../site";

@@ -5,6 +5,8 @@
     "": {
       "name": "aicharts",
       "dependencies": {
+        "@hraness/vercel-delivery": "github:hraness/vercel-delivery#v0.1.2",
+        "@hraness/web-discovery": "github:hraness/web-discovery#v0.1.0",
         "@hugeicons/core-free-icons": "^4.2.2",
         "@hugeicons/react": "^1.1.9",
         "@posthog/nextjs-config": "1.9.68",
@@ -84,6 +86,10 @@
     "@eslint/object-schema": ["@eslint/object-schema@2.1.7", "", {}, "sha512-VtAOaymWVfZcmZbp6E2mympDIHvyjXs/12LqWYjVw6qjrfF+VK+fyG33kChz3nnK+SU5/NeHOqrTEHS8sXO3OA=="],
 
     "@eslint/plugin-kit": ["@eslint/plugin-kit@0.4.1", "", { "dependencies": { "@eslint/core": "^0.17.0", "levn": "^0.4.1" } }, "sha512-43/qtrDUokr7LJqoF2c3+RInu/t4zfrpYdoSDfYyhg52rwLV6TnOvdG4fXm7IkSB3wErkcmJS9iEhjVtOSEjjA=="],
+
+    "@hraness/vercel-delivery": ["@hraness/vercel-delivery@github:hraness/vercel-delivery#7a1a0da", { "peerDependencies": { "next": ">=16.2.0 <17.0.0" } }, "hraness-vercel-delivery-7a1a0da", "sha512-7E/nkfGJq21UOHz6xZFFJlxgZWmtQj57PLlRsu5WopetsFFoJAJt/p/8MP6l0kMiBWZp7aB12T7pxmn99syiRg=="],
+
+    "@hraness/web-discovery": ["@hraness/web-discovery@github:hraness/web-discovery#1fc2cd2", { "peerDependencies": { "next": ">=16.2.0 <17.0.0", "react": ">=19.0.0 <20.0.0" } }, "hraness-web-discovery-1fc2cd2", "sha512-NCWiL+Qp4YKA0Q8XQvB52ddqtKRkl1w5uzMKU42rlP84Q0VG3I+fQjDFXWdrALiFVInQZFYNXCOoFrKdqBEwpg=="],
 
     "@hugeicons/core-free-icons": ["@hugeicons/core-free-icons@4.2.3", "", {}, "sha512-fpiU0qFZkv4ABi23xJ2m4qNr0BBfuIaYjPboN8WDA6aj9D+OzXa7eykxKOpACZRuGbDz1U9S5DsNx1d5KNnsgA=="],
 

@@ -1,4 +1,8 @@
 import { withPostHogConfig } from "@posthog/nextjs-config";
+import {
+  type ProductionDeliveryProofEnvironment,
+  withProductionDeliveryProof,
+} from "@hraness/vercel-delivery";
 import type { NextConfig } from "next";
 
 const POSTHOG_UI_HOSTS = new Set([
@@ -32,13 +36,16 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
 };
 
-function withProductionSourceMaps(config: NextConfig): NextConfig {
-  const personalApiKey = process.env.POSTHOG_API_KEY;
-  const projectId = process.env.POSTHOG_PROJECT_ID;
-  const releaseVersion = process.env.VERCEL_GIT_COMMIT_SHA;
-  const host = process.env.POSTHOG_UI_HOST ?? "https://us.posthog.com";
+function withProductionSourceMaps(
+  config: NextConfig,
+  environment: ProductionDeliveryProofEnvironment,
+): NextConfig {
+  const personalApiKey = environment.POSTHOG_API_KEY;
+  const projectId = environment.POSTHOG_PROJECT_ID;
+  const releaseVersion = environment.VERCEL_GIT_COMMIT_SHA;
+  const host = environment.POSTHOG_UI_HOST ?? "https://us.posthog.com";
   if (
-    process.env.VERCEL_ENV !== "production"
+    environment.VERCEL_ENV !== "production"
     || !personalApiKey?.startsWith("phx_")
     || !projectId?.match(/^[1-9]\d*$/u)
     || !releaseVersion
@@ -60,4 +67,13 @@ function withProductionSourceMaps(config: NextConfig): NextConfig {
   });
 }
 
-export default withProductionSourceMaps(nextConfig);
+export function createNextConfig(
+  environment: ProductionDeliveryProofEnvironment = process.env,
+): NextConfig {
+  return withProductionDeliveryProof(
+    withProductionSourceMaps(nextConfig, environment),
+    { environment, projectName: "aicharts" },
+  );
+}
+
+export default createNextConfig();

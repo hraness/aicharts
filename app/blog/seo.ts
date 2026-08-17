@@ -2,7 +2,7 @@ import {
   absoluteWebUrl,
   createPublicSiteMetadata,
   INDEXABLE_ROBOTS,
-} from "@/lib/web-discovery";
+} from "@hraness/web-discovery";
 import type { Metadata } from "next";
 
 import { searchSite, site } from "../site";

@@ -16,7 +16,7 @@ import {
   codingAgentDatasetSummary,
   currentCodingAgentBenchmarkLeaders,
 } from "@/lib/coding-agent-dataset";
-import { INDEXABLE_ROBOTS } from "@/lib/web-discovery";
+import { INDEXABLE_ROBOTS } from "@hraness/web-discovery";
 
 import { searchSite } from "../site";
 import { GET, dynamic } from "./coding-agents.json/route";

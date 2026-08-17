@@ -3,8 +3,8 @@ import type {
   CodingAgentRecord,
   CodingAgentSnapshot,
 } from "./coding-agent-data";
+import { absoluteWebUrl, type SearchSite } from "@hraness/web-discovery";
 import { yMetricDescriptions, yMetricLabels } from "./chart-math";
-import { absoluteWebUrl, type SearchSite } from "./web-discovery";
 
 export const CODING_AGENT_DATASET_PATH = "/data" as const;
 export const CODING_AGENT_DATASET_DOWNLOAD_PATH = "/data/coding-agents.json" as const;
