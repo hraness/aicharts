@@ -58,8 +58,8 @@
     "@hraness/web-discovery": "github:hraness/web-discovery#v0.1.0",
     "@posthog/nextjs-config": "1.9.69",
     "next": "16.3.1",
-    "posthog-js": "1.412.1",
-    "posthog-node": "5.49.0",
+    "posthog-js": "1.417.1",
+    "posthog-node": "5.49.1",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "zod": "^4.4.3"
