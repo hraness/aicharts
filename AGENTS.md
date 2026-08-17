@@ -18,6 +18,7 @@
 
 - Follow `WRITING.md` for internal prose and `STYLE.md` for public prose.
 - Apply unreasonably robust programming when agent work is cheap. Model invalid states out of existence and pair readable regression examples with property tests for general laws.
+- Deliver ordinary single-owner changes by fast-forward push to `main` after repository checks. Escalate to a pull request when a change touches schemas or migrations, auth, billing, provider or deployment state, a public or consumed contract, a shared generated or lockfile convergence surface, or another active lane. Repository-owned bounded automation may keep its documented direct path. Never force-push.
 - Pin Hraness dependencies to reviewed immutable releases or full commits. Never connect repositories with sibling paths, Git submodules, or coordinated `main` assumptions.
 - Extract a shared package only after two concrete consumers need the same stable interface. Keep shared packages product-neutral.
 - Use a shared design kit or `@hraness/ui` only for stable, portable primitives and tokens at an immutable version. Keep chart geometry, evidence presentation, page composition, and the local visual contract product-owned.
