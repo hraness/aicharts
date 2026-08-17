@@ -57,7 +57,7 @@
     "@posthog/nextjs-config": "1.9.68",
     "next": "16.2.12",
     "posthog-js": "1.412.1",
-    "posthog-node": "5.47.11",
+    "posthog-node": "5.49.0",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "zod": "^4.4.3"
