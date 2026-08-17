@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { INDEXABLE_ROBOTS } from "@/lib/web-discovery";
+import { INDEXABLE_ROBOTS } from "@hraness/web-discovery";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 

@@ -54,6 +54,8 @@
   "dependencies": {
     "@hugeicons/core-free-icons": "^4.2.2",
     "@hugeicons/react": "^1.1.9",
+    "@hraness/vercel-delivery": "github:hraness/vercel-delivery#v0.1.2",
+    "@hraness/web-discovery": "github:hraness/web-discovery#v0.1.0",
     "@posthog/nextjs-config": "1.9.68",
     "next": "16.2.12",
     "posthog-js": "1.412.1",

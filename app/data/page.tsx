@@ -1,4 +1,3 @@
-import { JsonLdScript } from "@/components/structured-data";
 import { Breadcrumbs } from "@/components/ui";
 import codingAgentData from "@/data/coding-agents.json";
 import { parseCodingAgentSnapshot } from "@/lib/coding-agent-data";
@@ -12,7 +11,8 @@ import {
   codingAgentDatasetSummary,
   currentCodingAgentBenchmarkLeaders,
 } from "@/lib/coding-agent-dataset";
-import { createPublicSiteMetadata } from "@/lib/web-discovery";
+import { createPublicSiteMetadata } from "@hraness/web-discovery";
+import { JsonLdScript } from "@hraness/web-discovery/json-ld";
 import type { Metadata } from "next";
 
 import { searchSite } from "../site";
