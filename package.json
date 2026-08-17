@@ -57,7 +57,7 @@
     "@hraness/vercel-delivery": "github:hraness/vercel-delivery#v0.1.2",
     "@hraness/web-discovery": "github:hraness/web-discovery#v0.1.0",
     "@posthog/nextjs-config": "1.9.68",
-    "next": "16.2.12",
+    "next": "16.3.1",
     "posthog-js": "1.412.1",
     "posthog-node": "5.47.11",
     "react": "19.2.8",
