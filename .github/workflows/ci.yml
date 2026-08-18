@@ -29,3 +29,14 @@ jobs:
         run: bun install --frozen-lockfile
       - name: Check application
         run: bun run check
+
+  required:
+    name: Required
+    if: always()
+    needs: [check]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require every blocking job
+        env:
+          CHECK_RESULT: ${{ needs.check.result }}
+        run: test "$CHECK_RESULT" = success
