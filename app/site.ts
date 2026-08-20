@@ -20,3 +20,11 @@ export const searchSite = {
   },
   title: "AI Model & Agent Comparison Charts | AI Charts",
 } as const;
+
+export const homeHeading = "AI model and agent comparison charts";
+
+export const notFoundSearchSite = {
+  ...searchSite,
+  description: "This page does not exist. Return to the chart.",
+  title: "Page not found | AI Charts",
+} as const;

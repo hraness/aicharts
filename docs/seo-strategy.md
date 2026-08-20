@@ -61,6 +61,7 @@ The repository tests and build must preserve:
 
 - one canonical HTTPS URL for every indexable page;
 - descriptive, page-specific titles and meta descriptions;
+- homepage-owned identity, including explicit indexable robots, so 404 responses keep a distinct title, noindex, and no homepage canonical;
 - crawlable HTML links between the chart, collection, and evidence pages;
 - a sitemap containing every public canonical route and its social image;
 - static or server-rendered primary content and provenance that do not depend on client JavaScript to become meaningful;
