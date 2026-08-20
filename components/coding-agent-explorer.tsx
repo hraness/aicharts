@@ -93,6 +93,7 @@ const xMetricItems = [
 
 type ChartBrand = Readonly<{
   domain: string;
+  heading: string;
 }>;
 
 type PlotPoint = {
@@ -886,7 +887,7 @@ export function CodingAgentExplorer({ brand, snapshot }: { brand: ChartBrand; sn
           </>
         )}
         className="chart-top-bar"
-        title={<h1>{brand.domain}</h1>}
+        title={<h1>{brand.heading}</h1>}
       />
       <PageCanvas
         className="chart-page-canvas"

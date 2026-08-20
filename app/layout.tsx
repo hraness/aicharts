@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from "next";
 import type { CSSProperties, ReactNode } from "react";
 
 import "./globals.css";
-import { searchSite, site } from "./site";
+import { site } from "./site";
 
 type BrandThemeStyle = CSSProperties & Readonly<{
   "--brand-highlight": string;
@@ -20,24 +20,7 @@ const brandTheme: BrandThemeStyle = {
 
 export const metadata: Metadata = {
   metadataBase: new URL(site.origin),
-  title: searchSite.title,
-  description: searchSite.description,
-  alternates: { canonical: "/" },
   applicationName: site.name,
-  openGraph: {
-    type: "website",
-    url: "/",
-    siteName: site.name,
-    title: searchSite.title,
-    description: searchSite.description,
-    images: [{ url: searchSite.socialImage.path, alt: searchSite.socialImage.alt }],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: searchSite.title,
-    description: searchSite.description,
-    images: [searchSite.socialImage.path],
-  },
 };
 
 export const viewport: Viewport = {
