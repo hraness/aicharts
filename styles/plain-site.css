@@ -180,6 +180,7 @@ body.plain-site > main {
   text-transform: none;
 }
 
+.plain-header__actions,
 .plain-nav,
 .plain-footer__links {
   align-items: center;

@@ -13,12 +13,14 @@ export default function BlogLayout({
           <Link className="plain-wordmark" href="/">
             aicharts.io
           </Link>
-          <nav aria-label="Blog navigation" className="plain-nav">
-            <Link href="/blog">Blog</Link>
-            <Link href="/data">Data</Link>
-            <Link href="/">Chart</Link>
+          <div className="plain-header__actions">
+            <nav aria-label="Blog navigation" className="plain-nav">
+              <Link href="/blog">Blog</Link>
+              <Link href="/data">Data</Link>
+              <Link href="/">Chart</Link>
+            </nav>
             <ThemeMenuButton aria-label="Blog appearance" />
-          </nav>
+          </div>
         </div>
       </header>
       {children}

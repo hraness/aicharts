@@ -51,9 +51,27 @@ describe("AI Charts benchmark notes", () => {
     expect(markup).toContain('href="/blog"');
     expect(markup).toContain('href="/"');
     expect(markup.match(/data-presentation="menu"/gu)).toHaveLength(1);
-    expect(markup.indexOf('>Chart</a>')).toBeLessThan(
-      markup.indexOf('data-presentation="menu"'),
+    const headerStart = markup.indexOf('<header class="plain-header">');
+    const headerEnd = markup.indexOf("</header>", headerStart);
+    const actionsStart = markup.indexOf(
+      'class="plain-header__actions"',
+      headerStart,
     );
+    const navigationStart = markup.indexOf(
+      'aria-label="Blog navigation"',
+      actionsStart,
+    );
+    const navigationEnd = markup.indexOf("</nav>", navigationStart);
+    const appearance = markup.indexOf('data-presentation="menu"', actionsStart);
+    expect(headerStart).toBeGreaterThan(-1);
+    expect(actionsStart).toBeGreaterThan(headerStart);
+    expect(navigationStart).toBeGreaterThan(actionsStart);
+    expect(navigationEnd).toBeGreaterThan(navigationStart);
+    expect(appearance).toBeGreaterThan(navigationEnd);
+    expect(appearance).toBeLessThan(headerEnd);
+    expect(markup.slice(navigationStart, navigationEnd))
+      .not.toContain("hraness-design-theme-toggle");
+    expect(markup.slice(appearance, headerEnd)).not.toContain("<a ");
     expect(markup).toContain('class="plain-footer"');
     expect(markup.slice(markup.indexOf('<footer class="plain-footer"')))
       .not.toContain("hraness-design-theme-toggle");
