@@ -3,6 +3,8 @@
 import { useEffect } from "react";
 import Link from "next/link";
 
+import { notFoundRecoveryLinks } from "@/app/site";
+
 export type RouteErrorProps = Readonly<{
   error: Error & { digest?: string };
   reset: () => void;
@@ -23,5 +25,19 @@ export function RouteLoadingState() {
 }
 
 export function RouteNotFoundState() {
-  return <main className="route-state"><h1>Page not found</h1><Link href="/">Return to the chart</Link></main>;
+  return (
+    <main className="route-state">
+      <h1>Page not found</h1>
+      <p>This path does not exist on AI Charts.</p>
+      <nav aria-label="Where to look next">
+        <ul>
+          {notFoundRecoveryLinks.map(link => (
+            <li key={link.href}>
+              <Link href={link.href}>{link.label}</Link>
+            </li>
+          ))}
+        </ul>
+      </nav>
+    </main>
+  );
 }

@@ -263,10 +263,22 @@ a { color: inherit; }
   top: 0;
 }
 
-.chart-top-bar h1 {
+.chart-top-bar .chart-heading {
   font-size: var(--text-body);
   font-weight: var(--font-weight-bold);
   letter-spacing: -.025em;
+}
+
+.home-document {
+  border: 0;
+  clip: rect(0, 0, 0, 0);
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  padding: 0;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
 }
 .chart-top-bar .ui-top-bar__actions {
   gap: 2px;

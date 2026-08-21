@@ -40,4 +40,10 @@ test("fallback documents remain control-free", () => {
   const notFound = renderToStaticMarkup(<NotFound />);
 
   expect(`${globalError}${notFound}`).not.toContain("hraness-design-theme-toggle");
+  expect(notFound).toContain("<h1>Page not found</h1>");
+  expect(notFound).toContain('href="/"');
+  expect(notFound).toContain('href="/data"');
+  expect(notFound).toContain('href="/blog"');
+  expect(notFound).toContain('href="/llms.txt"');
+  expect(notFound).toContain('href="/sitemap.xml"');
 });

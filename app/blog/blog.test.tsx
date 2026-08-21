@@ -13,6 +13,7 @@ import { ArticleBody } from "./article-body";
 import {
   BLOG_SLUGS,
   BLOG_SOURCES,
+  articleToMarkdown,
   articleWordCount,
   blogArticlePath,
   blogArticles,
@@ -88,6 +89,8 @@ describe("AI Charts benchmark notes", () => {
       expect(article.seoDescription.length).toBeGreaterThanOrEqual(120);
       expect(article.seoDescription.length).toBeLessThanOrEqual(160);
       expect(articleWordCount(article)).toBeGreaterThanOrEqual(800);
+      expect(articleToMarkdown(article)).toContain(`# ${article.title}`);
+      expect(articleToMarkdown(article)).toContain(article.dek);
       expect(article.sourceIds.length).toBeGreaterThanOrEqual(1);
       expect(article.relatedSlugs).toHaveLength(1);
       expect(article.publishedAt).toBe("2026-08-04");

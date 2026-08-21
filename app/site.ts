@@ -28,3 +28,11 @@ export const notFoundSearchSite = {
   description: "This page does not exist. Return to the chart.",
   title: "Page not found | AI Charts",
 } as const;
+
+export const notFoundRecoveryLinks = [
+  { href: "/", label: "Comparison chart" },
+  { href: "/data", label: "Dataset" },
+  { href: "/blog", label: "Benchmark analysis" },
+  { href: "/llms.txt", label: "Site guide" },
+  { href: "/sitemap.xml", label: "Sitemap" },
+] as const;

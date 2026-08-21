@@ -125,7 +125,8 @@ test("leaves only the selected benchmark description in the chart header", async
 test("uses a product phrase for the homepage heading", async () => {
   const source = await Bun.file(new URL("./coding-agent-explorer.tsx", import.meta.url)).text();
 
-  expect(source).toContain("<h1>{brand.heading}</h1>");
+  expect(source).toContain('<p className="chart-heading">{brand.heading}</p>');
+  expect(source).not.toContain("<h1>{brand.heading}</h1>");
   expect(source).not.toContain("<h1>{brand.domain}</h1>");
 });
 

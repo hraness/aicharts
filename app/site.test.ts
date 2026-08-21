@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import packageJson from "../package.json";
-import { homeHeading, notFoundSearchSite, searchSite, site } from "./site";
+import { homeHeading, notFoundRecoveryLinks, notFoundSearchSite, searchSite, site } from "./site";
 
 describe("AI Charts public positioning", () => {
   test("keeps umbrella metadata general and decision-oriented", () => {
@@ -22,6 +22,13 @@ describe("AI Charts public positioning", () => {
       "This page does not exist. Return to the chart.",
     );
     expect(notFoundSearchSite.description).not.toBe(searchSite.description);
+    expect(notFoundRecoveryLinks).toEqual([
+      { href: "/", label: "Comparison chart" },
+      { href: "/data", label: "Dataset" },
+      { href: "/blog", label: "Benchmark analysis" },
+      { href: "/llms.txt", label: "Site guide" },
+      { href: "/sitemap.xml", label: "Sitemap" },
+    ]);
   });
 
   test("keeps the canonical repository description in the strategy", async () => {
