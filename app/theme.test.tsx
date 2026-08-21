@@ -1,14 +1,17 @@
 import { expect, test } from "bun:test";
 import {
   DesignThemeProvider,
-  ThemeToggle,
+  ThemeMenuButton,
 } from "@hraness/design-kit/react";
 import { renderToStaticMarkup } from "react-dom/server";
+
+import GlobalError from "./global-error";
+import NotFound from "./not-found";
 
 test("appearance starts with System and uses the shared persisted runtime", () => {
   const html = renderToStaticMarkup(
     <DesignThemeProvider storageKey="aicharts-theme">
-      <ThemeToggle aria-label="Chart appearance" presentation="menu" />
+      <ThemeMenuButton aria-label="Chart appearance" />
     </DesignThemeProvider>,
   );
 
@@ -28,4 +31,13 @@ test("AI Charts does not keep a second theme runtime", async () => {
   expect(controls).toContain('from "@hraness/design-kit/react"');
   expect(controls).not.toContain("localStorage");
   expect(controls).not.toContain("matchMedia");
+});
+
+test("fallback documents remain control-free", () => {
+  const globalError = renderToStaticMarkup(
+    <GlobalError error={new Error("render failed")} reset={() => undefined} />,
+  );
+  const notFound = renderToStaticMarkup(<NotFound />);
+
+  expect(`${globalError}${notFound}`).not.toContain("hraness-design-theme-toggle");
 });

@@ -1,4 +1,4 @@
-import { HranessBrand, SkipLink, ThemeToggle } from "@/components/ui";
+import { HranessBrand, SkipLink, ThemeMenuButton } from "@/components/ui";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
@@ -17,11 +17,7 @@ export default function BlogLayout({
             <Link href="/blog">Blog</Link>
             <Link href="/data">Data</Link>
             <Link href="/">Chart</Link>
-            <ThemeToggle
-              aria-label="Blog appearance"
-              presentation="menu"
-              size="compact"
-            />
+            <ThemeMenuButton aria-label="Blog appearance" />
           </nav>
         </div>
       </header>
