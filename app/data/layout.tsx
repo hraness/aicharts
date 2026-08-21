@@ -13,12 +13,14 @@ export default function DataLayout({
           <Link className="plain-wordmark" href="/">
             aicharts.io
           </Link>
-          <nav aria-label="Dataset navigation" className="plain-nav">
-            <Link aria-current="page" href="/data">Data</Link>
-            <Link href="/blog">Blog</Link>
-            <Link href="/">Chart</Link>
+          <div className="plain-header__actions">
+            <nav aria-label="Dataset navigation" className="plain-nav">
+              <Link aria-current="page" href="/data">Data</Link>
+              <Link href="/blog">Blog</Link>
+              <Link href="/">Chart</Link>
+            </nav>
             <ThemeMenuButton aria-label="Dataset appearance" />
-          </nav>
+          </div>
         </div>
       </header>
       {children}
