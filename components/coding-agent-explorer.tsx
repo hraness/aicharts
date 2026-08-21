@@ -887,7 +887,7 @@ export function CodingAgentExplorer({ brand, snapshot }: { brand: ChartBrand; sn
           </>
         )}
         className="chart-top-bar"
-        title={<h1>{brand.heading}</h1>}
+        title={<p className="chart-heading">{brand.heading}</p>}
       />
       <PageCanvas
         className="chart-page-canvas"

@@ -1,3 +1,5 @@
+import { site } from "../site";
+
 export const BLOG_SLUGS = [
   "mirrorcode-coding-agent-benchmark",
   "slopcodebench-long-horizon-coding-agents",
@@ -381,8 +383,63 @@ export function headingId(text: string): string {
     .replace(/^-|-$/gu, "");
 }
 
-function inlineText(content: InlineContent): string {
+export function inlineText(content: InlineContent): string {
   return content.map(part => typeof part === "string" ? part : part.text).join(" ");
+}
+
+export function inlineMarkdown(content: InlineContent): string {
+  return content.map((part) => {
+    if (typeof part === "string") return part;
+    let text = part.text;
+    if (part.emphasis === "strong") text = `**${text}**`;
+    if (part.emphasis === "em") text = `*${text}*`;
+    if (part.href !== undefined) text = `[${text}](${part.href})`;
+    return text;
+  }).join("");
+}
+
+export function articleToMarkdown(article: BlogArticle): string {
+  const published = article.publishedAt === article.updatedAt
+    ? article.publishedAt
+    : `${article.publishedAt}, updated ${article.updatedAt}`;
+  const blocks = article.body.map((block) => {
+    if (block.type === "heading") {
+      return `${"#".repeat(block.level)} ${block.text}`;
+    }
+    if (block.type === "paragraph") return inlineMarkdown(block.content);
+    if (block.type === "callout") {
+      return `> **${block.label}**\n>\n> ${inlineMarkdown(block.content)}`;
+    }
+    if (block.type === "list") {
+      const marker = block.style === "ordered" ? "1." : "-";
+      return block.items.map(item => `${marker} ${inlineMarkdown(item)}`).join("\n");
+    }
+    const header = `| ${block.columns.join(" | ")} |`;
+    const divider = `| ${block.columns.map(() => "---").join(" | ")} |`;
+    const rows = block.rows.map(row => `| ${row.map(inlineMarkdown).join(" | ")} |`);
+    return [`*${block.caption}*`, header, divider, ...rows].join("\n");
+  });
+  const sources = article.sourceIds.map((sourceId) => {
+    const source = BLOG_SOURCES[sourceId];
+    return `- [${source.title}](${source.url}). ${source.publication}, ${source.year}. ${source.note}`;
+  });
+  return [
+    `# ${article.title}`,
+    "",
+    article.dek,
+    "",
+    `Published ${published}.`,
+    "",
+    ...blocks.flatMap(block => [block, ""]),
+    "## Sources",
+    "",
+    ...sources,
+    "",
+    "Results describe the named model, harness, task set, budget, and evaluation version. They do not establish performance on every production repository.",
+    "",
+    `[Current coding-agent comparison](${site.origin}/)`,
+    "",
+  ].join("\n");
 }
 
 function blockText(block: BlogBlock): string {
