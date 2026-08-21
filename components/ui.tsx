@@ -1,6 +1,6 @@
 "use client";
 
-import { ThemeToggle as DesignThemeToggle } from "@hraness/design-kit/react";
+import { ThemeMenuButton as DesignThemeMenuButton } from "@hraness/design-kit/react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Children,
@@ -363,16 +363,12 @@ export function ToggleGroup<Value extends string>({
   );
 }
 
-export function ThemeToggle({
+export function ThemeMenuButton({
   "aria-label": ariaLabel,
-  presentation = "menu",
-  size = "compact",
 }: Readonly<{
   "aria-label": string;
-  presentation?: "menu";
-  size?: "compact";
 }>) {
-  return <DesignThemeToggle aria-label={ariaLabel} presentation={presentation} size={size} />;
+  return <DesignThemeMenuButton aria-label={ariaLabel} />;
 }
 
 export function TextField({

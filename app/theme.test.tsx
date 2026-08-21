@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 import {
   DesignThemeProvider,
-  ThemeToggle,
+  ThemeMenuButton,
 } from "@hraness/design-kit/react";
 import { renderToStaticMarkup } from "react-dom/server";
 
@@ -11,7 +11,7 @@ import NotFound from "./not-found";
 test("appearance starts with System and uses the shared persisted runtime", () => {
   const html = renderToStaticMarkup(
     <DesignThemeProvider storageKey="aicharts-theme">
-      <ThemeToggle aria-label="Chart appearance" presentation="menu" />
+      <ThemeMenuButton aria-label="Chart appearance" />
     </DesignThemeProvider>,
   );
 
