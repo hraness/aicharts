@@ -52,7 +52,7 @@
     "kb:catalog": "bunx --bun github:hraness/kb#v0.15.2 catalog --root kb"
   },
   "dependencies": {
-    "@hraness/design-kit": "github:hraness/design-kit#v0.1.6",
+    "@hraness/design-kit": "github:hraness/design-kit#v0.1.7",
     "@hraness/ui": "github:hraness/ui#v0.4.6",
     "@hugeicons/core-free-icons": "^4.2.2",
     "@hugeicons/react": "^1.1.9",
