@@ -1,4 +1,4 @@
-import { markdownForPath, MARKDOWN_CONTENT_TYPE } from "@/lib/site-markdown";
+import { markdownForPath } from "@/lib/site-markdown";
 
 function pathnameFromSlug(slug: readonly string[] | undefined): string {
   if (slug === undefined || slug.length === 0) return "/";
@@ -21,5 +21,3 @@ export async function GET(
     status: document.found ? 200 : 404,
   });
 }
-
-export const markdownRouteContentType = MARKDOWN_CONTENT_TYPE;
