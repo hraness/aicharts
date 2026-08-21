@@ -1,3 +1,7 @@
+import {
+  DesignThemeProvider,
+  ThemeColorSync,
+} from "@hraness/design-kit/react";
 import type { Metadata, Viewport } from "next";
 import type { CSSProperties, ReactNode } from "react";
 
@@ -25,7 +29,10 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   colorScheme: "light dark",
-  themeColor: "#f8f7f4",
+  themeColor: [
+    { color: "#f8f7f4", media: "(prefers-color-scheme: light)" },
+    { color: "#12100f", media: "(prefers-color-scheme: dark)" },
+  ],
 };
 
 const websiteId = `${site.origin}/#website`;
@@ -61,16 +68,14 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
   return (
     <html data-theme="light" lang="en" style={brandTheme} suppressHydrationWarning>
       <body>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: "try{const t=localStorage.getItem('aicharts-theme');const d=t==='dark'||(t!==\"light\"&&matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.dataset.theme=d?'dark':'light';document.documentElement.style.colorScheme=d?'dark':'light'}catch{}",
-          }}
-        />
-        <script
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replaceAll("<", "\\u003c") }}
-          type="application/ld+json"
-        />
-        {children}
+        <DesignThemeProvider storageKey="aicharts-theme">
+          <ThemeColorSync darkColor="#12100f" lightColor="#f8f7f4" />
+          <script
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replaceAll("<", "\\u003c") }}
+            type="application/ld+json"
+          />
+          {children}
+        </DesignThemeProvider>
       </body>
     </html>
   );
