@@ -1,5 +1,6 @@
 "use client";
 
+import { ThemeToggle as DesignThemeToggle } from "@hraness/design-kit/react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Children,
@@ -362,52 +363,16 @@ export function ToggleGroup<Value extends string>({
   );
 }
 
-function applyTheme(theme: "dark" | "light" | "system") {
-  const resolved = theme === "system"
-    ? window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
-    : theme;
-  document.documentElement.dataset.theme = resolved;
-  document.documentElement.style.colorScheme = resolved;
-  document.querySelector('meta[name="theme-color"]')?.setAttribute(
-    "content",
-    resolved === "dark" ? "#12100f" : "#f8f7f4",
-  );
-}
-
-export function ThemeToggle({ "aria-label": ariaLabel }: Readonly<{
+export function ThemeToggle({
+  "aria-label": ariaLabel,
+  presentation = "menu",
+  size = "compact",
+}: Readonly<{
   "aria-label": string;
   presentation?: "menu";
   size?: "compact";
 }>) {
-  const [theme, setTheme] = useState<"dark" | "light" | "system">("system");
-
-  useEffect(() => {
-    const stored = window.localStorage.getItem("aicharts-theme");
-    const next = stored === "dark" || stored === "light" ? stored : "system";
-    applyTheme(next);
-    const frame = window.requestAnimationFrame(() => setTheme(next));
-    const media = window.matchMedia("(prefers-color-scheme: dark)");
-    const updateSystem = () => { if (next === "system") applyTheme("system"); };
-    media.addEventListener("change", updateSystem);
-    return () => {
-      window.cancelAnimationFrame(frame);
-      media.removeEventListener("change", updateSystem);
-    };
-  }, []);
-
-  const cycle = () => {
-    const next = theme === "system" ? "light" : theme === "light" ? "dark" : "system";
-    setTheme(next);
-    if (next === "system") window.localStorage.removeItem("aicharts-theme");
-    else window.localStorage.setItem("aicharts-theme", next);
-    applyTheme(next);
-  };
-
-  return (
-    <button aria-label={ariaLabel} className="ui-theme-toggle" onClick={cycle} title={`Appearance: ${theme}`} type="button">
-      <span aria-hidden="true">{theme === "dark" ? "◐" : theme === "light" ? "○" : "◒"}</span>
-    </button>
-  );
+  return <DesignThemeToggle aria-label={ariaLabel} presentation={presentation} size={size} />;
 }
 
 export function TextField({

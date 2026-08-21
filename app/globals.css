@@ -1,3 +1,4 @@
+@import "@hraness/design-kit/styles.css";
 @import "../styles/plain-site.css";
 @import "../styles/plain-publication.css";
 
@@ -80,7 +81,6 @@ a { color: inherit; }
 .ui-top-bar__title { min-width: 0; }
 .ui-top-bar__actions { align-items: center; display: flex; justify-content: flex-end; }
 
-.ui-theme-toggle,
 .ui-icon-button__control {
   align-items: center;
   background: transparent;
@@ -91,7 +91,6 @@ a { color: inherit; }
   justify-content: center;
   min-width: 36px;
 }
-.ui-theme-toggle:hover,
 .ui-icon-button__control:hover { background: var(--secondary); }
 .ui-icon-button { align-items: center; display: inline-flex; border-radius: 9px; }
 .ui-icon-button[data-size="compact"] > .ui-icon-button__control { height: 32px; min-width: 32px; width: 32px; }

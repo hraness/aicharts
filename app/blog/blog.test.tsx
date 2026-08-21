@@ -150,12 +150,13 @@ describe("AI Charts benchmark notes", () => {
     expect(getBlogArticle("not-an-article")).toBeUndefined();
   });
 
-  test("uses repository-owned portable publication CSS", async () => {
+  test("layers shared controls below repository-owned publication CSS", async () => {
     const [globals, publication] = await Promise.all([
       Bun.file(new URL("../globals.css", import.meta.url)).text(),
       Bun.file(new URL("../../styles/plain-publication.css", import.meta.url)).text(),
     ]);
-    expect(globals).toStartWith('@import "../styles/plain-site.css";');
+    expect(globals).toStartWith('@import "@hraness/design-kit/styles.css";');
+    expect(globals).toContain('@import "../styles/plain-site.css";');
     expect(globals).toContain('@import "../styles/plain-publication.css";');
     expect(publication).toContain(".plain-site.plain-publication");
   });
