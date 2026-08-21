@@ -74,6 +74,8 @@ test("tucks data provenance behind a compact named control", async () => {
   const source = await Bun.file(new URL("./coding-agent-explorer.tsx", import.meta.url)).text();
   const topBarIndex = source.indexOf("<TopBar");
   const provenanceIndex = source.indexOf('className="chart-provenance-control chart-selection-boundary"');
+  const themeIndex = source.indexOf('<ThemeToggle aria-label="Chart appearance" />');
+  const topBarClassIndex = source.indexOf('className="chart-top-bar"', topBarIndex);
   const pageCanvasIndex = source.indexOf("<PageCanvas");
 
   expect(source).toContain('tooltip="Data provenance"');
@@ -83,6 +85,11 @@ test("tucks data provenance behind a compact named control", async () => {
   expect(source).toContain('placement="bottom end"');
   expect(source).toContain('popoverClassName="share-menu-popover provenance-menu-popover chart-selection-boundary"');
   expect(provenanceIndex).toBeGreaterThan(topBarIndex);
+  expect(themeIndex).toBeGreaterThan(provenanceIndex);
+  expect(themeIndex).toBeLessThan(topBarClassIndex);
+  expect(source.slice(themeIndex, topBarClassIndex)).toMatch(
+    /<ThemeToggle aria-label="Chart appearance" \/>\s*<\/>\s*\)\}/u,
+  );
   expect(provenanceIndex).toBeLessThan(pageCanvasIndex);
   expect(source).not.toContain('className="chart-subtitle-row"');
   expect(source).not.toContain('className="chart-data-status"');

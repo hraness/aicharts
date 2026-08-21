@@ -59,7 +59,13 @@ describe("coding-agent dataset surface", () => {
     expect(markup).toContain('aria-current="page" href="/data"');
     expect(markup).toContain('href="/blog"');
     expect(markup).toContain('href="/"');
+    expect(markup.match(/data-presentation="menu"/gu)).toHaveLength(1);
+    expect(markup.indexOf('>Chart</a>')).toBeLessThan(
+      markup.indexOf('data-presentation="menu"'),
+    );
     expect(markup).toContain('class="plain-footer"');
+    expect(markup.slice(markup.indexOf('<footer class="plain-footer"')))
+      .not.toContain("hraness-design-theme-toggle");
   });
 
   test("renders literal provenance, definitions, leaders, method, and limits", () => {
