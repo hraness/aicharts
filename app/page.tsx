@@ -15,7 +15,7 @@ export default function Home() {
   if (!parsed.ok) throw new Error(`Checked coding-agent snapshot is invalid: ${parsed.error.message}`, { cause: parsed.error });
   return (
     <>
-      <HomeDocument document={homeDocumentModel(parsed.value)} />
+      <HomeDocument document={homeDocumentModel(parsed.value)} snapshot={parsed.value} />
       <CodingAgentExplorer brand={{ domain: site.domain, heading: homeHeading }} snapshot={parsed.value} />
     </>
   );

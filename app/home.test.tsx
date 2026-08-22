@@ -8,7 +8,6 @@ import { parseCodingAgentSnapshot } from "@/lib/coding-agent-data";
 import { codingAgentSnapshotRows } from "@/lib/coding-agent-snapshot-rows";
 import { homeDocumentModel, homeDocumentText } from "@/lib/site-markdown";
 
-import Loading from "./loading";
 import Home from "./page";
 import { homeHeading } from "./site";
 
@@ -39,13 +38,6 @@ describe("homepage agent document", () => {
       expect(markup).toContain(row.model);
       expect(markup).toContain(row.agent);
     }
-  });
-
-  test("keeps the snapshot table in the loading fallback beside Loading chart", () => {
-    const markup = renderToStaticMarkup(createElement(Loading));
-    expect(markup).toContain('id="coding-agent-snapshot"');
-    expect(markup).toContain("Loading chart…");
-    expect(markup).toContain(snapshot.records[0]?.model ?? "");
   });
 
   test("keeps the document on the server page beside the chart", async () => {
