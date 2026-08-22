@@ -40,6 +40,13 @@ test("fallback documents remain control-free", () => {
   const notFound = renderToStaticMarkup(<NotFound />);
 
   expect(`${globalError}${notFound}`).not.toContain("hraness-design-theme-toggle");
+  expect(globalError).toContain('<meta content="light dark" name="color-scheme"/>');
+  expect(globalError).toContain(
+    '<meta content="#f8f7f4" media="(prefers-color-scheme: light)" name="theme-color"/>',
+  );
+  expect(globalError).toContain(
+    '<meta content="#12100f" media="(prefers-color-scheme: dark)" name="theme-color"/>',
+  );
   expect(notFound).toContain("<h1>Page not found</h1>");
   expect(notFound).toContain('href="/"');
   expect(notFound).toContain('href="/data"');
