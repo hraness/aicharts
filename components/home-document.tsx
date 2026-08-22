@@ -1,8 +1,5 @@
-import { CodingAgentSnapshotTable } from "@/components/coding-agent-snapshot-table";
 import codingAgentData from "@/data/coding-agents.json";
 import { parseCodingAgentSnapshot, type CodingAgentSnapshot } from "@/lib/coding-agent-data";
-import { codingAgentSnapshotRows } from "@/lib/coding-agent-snapshot-rows";
-import { formatRetrievedAt } from "@/lib/coding-agent-updates";
 import { homeDocumentModel, type HomeDocumentModel } from "@/lib/site-markdown";
 
 function checkedSnapshot(): CodingAgentSnapshot {
@@ -22,26 +19,13 @@ export function HomeDocument({
   document?: HomeDocumentModel;
   snapshot?: CodingAgentSnapshot;
 }>) {
-  const resolvedSnapshot = snapshot ?? checkedSnapshot();
-  const resolvedDocument = document ?? homeDocumentModel(resolvedSnapshot);
-  const rows = codingAgentSnapshotRows(resolvedSnapshot.records);
-  const caption = [
-    `Current ${resolvedSnapshot.source.name} coding-agent snapshot: model, agent harness, setting, AA Index, and mean API cost per task.`,
-    `Retrieved ${formatRetrievedAt(resolvedSnapshot.source.retrievedAt)}.`,
-  ].join(" ");
+  const resolvedDocument = document ?? homeDocumentModel(snapshot ?? checkedSnapshot());
 
   return (
-    <section className="home-document" aria-labelledby="home-document-heading">
-      <h1 id="home-document-heading">{resolvedDocument.heading}</h1>
+    <section className="home-document" aria-label={resolvedDocument.heading}>
       {resolvedDocument.paragraphs.map(paragraph => (
         <p key={paragraph}>{paragraph}</p>
       ))}
-      <CodingAgentSnapshotTable
-        caption={caption}
-        id="coding-agent-snapshot"
-        rows={rows}
-        variant="compact"
-      />
       <nav aria-label="AI Charts pages">
         <ul>
           {resolvedDocument.links.map(link => (

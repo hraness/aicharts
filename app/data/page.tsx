@@ -1,4 +1,5 @@
 import { Breadcrumbs } from "@/components/ui";
+import { CodingAgentLeadersTable } from "@/components/coding-agent-leaders-table";
 import { CodingAgentSnapshotTable } from "@/components/coding-agent-snapshot-table";
 import codingAgentData from "@/data/coding-agents.json";
 import { parseCodingAgentSnapshot } from "@/lib/coding-agent-data";
@@ -44,10 +45,6 @@ const retrievedAtFormatter = new Intl.DateTimeFormat("en-US", {
 
 function formatRetrievedAt(value: string): string {
   return retrievedAtFormatter.format(new Date(value));
-}
-
-function formatScore(value: number): string {
-  return value.toFixed(1);
 }
 
 export default function CodingAgentDatasetPage() {
@@ -168,33 +165,10 @@ export default function CodingAgentDatasetPage() {
               one row per benchmark. They are observations of the named model,
               agent harness, and effort setting rather than general model ranks.
             </p>
-            <div className="plain-publication__table-scroll">
-              <table className="plain-publication__table">
-                <caption>Highest score by benchmark in the current snapshot</caption>
-                <thead>
-                  <tr>
-                    <th scope="col">Benchmark</th>
-                    <th scope="col">Model</th>
-                    <th scope="col">Agent</th>
-                    <th scope="col">Provider</th>
-                    <th scope="col">Setting</th>
-                    <th scope="col">Score</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {leaders.map(leader => (
-                    <tr key={leader.definition.id}>
-                      <th scope="row">{leader.definition.label}</th>
-                      <td>{leader.record.model}</td>
-                      <td>{leader.record.agent}</td>
-                      <td>{leader.record.providerName}</td>
-                      <td>{leader.record.setting}</td>
-                      <td>{formatScore(leader.value)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <CodingAgentLeadersTable
+              caption="Highest score by benchmark in the current snapshot"
+              leaders={leaders}
+            />
             <p>
               For AA Index versus mean API cost, including the cost/performance
               frontier, see{" "}

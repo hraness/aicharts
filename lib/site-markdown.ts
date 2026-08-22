@@ -15,10 +15,12 @@ import {
   CODING_AGENT_DATASET_PATH,
   codingAgentDatasetModifiedAt,
   codingAgentDatasetSummary,
+  codingAgentLeadersMarkdownTable,
   currentCodingAgentBenchmarkLeaders,
+  currentCodingAgentLeadersHeading,
+  homeLeadersParagraphs,
 } from "./coding-agent-dataset";
 import {
-  COMPACT_SNAPSHOT_COLUMNS,
   FULL_SNAPSHOT_COLUMNS,
   codingAgentSnapshotRows,
   snapshotRowsMarkdownTable,
@@ -128,16 +130,16 @@ export function homeDocumentText(
 
 function homeMarkdown(snapshot: CodingAgentSnapshot): string {
   const document = homeDocumentModel(snapshot);
+  const leaders = currentCodingAgentBenchmarkLeaders(snapshot);
   return joinMarkdown([
     `# ${document.heading}`,
     "",
+    `## ${currentCodingAgentLeadersHeading(snapshot.source.retrievedAt)}`,
+    "",
+    ...homeLeadersParagraphs(snapshot).flatMap(paragraph => [paragraph, ""]),
+    codingAgentLeadersMarkdownTable(leaders),
+    "",
     ...document.paragraphs.flatMap(paragraph => [paragraph, ""]),
-    "## Current snapshot",
-    "",
-    `Current ${snapshot.source.name} coding-agent snapshot: model, agent harness, setting, AA Index, and mean API cost per task. Retrieved ${formatRetrievedAt(snapshot.source.retrievedAt)}.`,
-    "",
-    snapshotRowsMarkdownTable(codingAgentSnapshotRows(snapshot.records), COMPACT_SNAPSHOT_COLUMNS),
-    "",
     "## Pages",
     "",
     ...document.links.map(link => `- [${link.label}](${absolute(link.href)}). ${link.note}`),
@@ -177,11 +179,7 @@ function datasetMarkdown(snapshot: CodingAgentSnapshot): string {
     "",
     "These are the highest available scores in the retrieved snapshot, one row per benchmark. They are observations of the named model, agent harness, and effort setting rather than general model ranks.",
     "",
-    "| Benchmark | Model | Agent | Provider | Setting | Score |",
-    "| --- | --- | --- | --- | --- | --- |",
-    ...leaders.map(leader => (
-      `| ${leader.definition.label} | ${leader.record.model} | ${leader.record.agent} | ${leader.record.providerName} | ${leader.record.setting} | ${leader.value.toFixed(1)} |`
-    )),
+    codingAgentLeadersMarkdownTable(leaders),
     "",
     "## All configurations",
     "",

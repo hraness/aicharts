@@ -14,7 +14,7 @@ Do not describe AI Charts as a comprehensive catalog until the product has the d
 
 | Page | Role | Search intent | Copy contract |
 | --- | --- | --- | --- |
-| `/` | Product landing page and current comparison | AI model comparison, AI agent comparison, AI benchmark charts | Frame the general product, then make the current coding-agent dataset clear through chart labels, sources, and context. |
+| `/` | Product landing page and current comparison | AI model comparison, AI agent comparison, AI benchmark charts | Frame the general product in a server-rendered H1, then answer the current coding-agent snapshot with an H2 dated to `retrievedAt`, two to four sentences, and the current-leader HTML table before the interactive chart. |
 | `/data` | Dataset, methodology, and provenance | AI coding agent benchmark data, benchmark methodology, machine-readable AI benchmark data | Describe the checked snapshot in visible HTML, name its upstream source and retrieval time, explain normalization and limits, and link the JSON distribution. |
 | `/blog` | Research collection | AI model benchmarks, AI agent benchmarks, benchmark analysis | Introduce the broader editorial method and state that the first collection focuses on coding agents. |
 | `/blog/[slug]` | Evidence page | Named benchmark, method, result, limitation, or model question | Stay specific to the source. Preserve the benchmark name, observation date, configuration, limits, and primary citations. |
