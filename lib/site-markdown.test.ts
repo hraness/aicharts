@@ -42,8 +42,12 @@ describe("markdown representations", () => {
     expect(home).toMatchObject({ found: true, contentType: MARKDOWN_CONTENT_TYPE });
     expect(home.body).toContain(`# ${homeHeading}`);
     expect(home.body).toContain(site.origin);
+    expect(home.body).toContain("| Model | Agent | Setting | AA Index | Cost |");
+    expect(home.body).toContain(snapshot.records[0]?.model ?? "");
     expect(data.body).toContain(CODING_AGENT_DATASET_DESCRIPTION);
     expect(data.body).toContain(snapshot.source.url);
+    expect(data.body).toContain("## All configurations");
+    expect(data.body).toContain("| Model | Agent | Provider | Setting | AA Index | DeepSWE | Terminal-Bench v2 | SWE-Atlas-QnA | Cost |");
     expect(blog.body).toContain(blogArticles[0].title);
     expect(guide).toMatchObject({ found: true, contentType: AGENT_GUIDE_CONTENT_TYPE });
     expect(guide.body).toBe(agentGuideMarkdown(snapshot));

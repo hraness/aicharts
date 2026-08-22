@@ -1,6 +1,8 @@
 import { site } from "../site";
+import { createAaIndexCostArticle } from "./aa-index-cost-article";
 
 export const BLOG_SLUGS = [
+  "aa-index-cost-coding-agents",
   "mirrorcode-coding-agent-benchmark",
   "slopcodebench-long-horizon-coding-agents",
 ] as const;
@@ -80,6 +82,14 @@ export const BLOG_SOURCES = {
     url: "https://arxiv.org/abs/2603.24755",
     year: 2026,
   },
+  artificialAnalysisCodingAgents: {
+    note:
+      "The public coding-agents comparison is the upstream source of the checked AI Charts snapshot. Model names, agent harnesses, settings, AA Index scores, and mean API costs are Artificial Analysis measurements.",
+    publication: "Artificial Analysis",
+    title: "Coding Agents",
+    url: "https://artificialanalysis.ai/agents/coding-agents/",
+    year: 2026,
+  },
 } as const satisfies Record<string, BlogSource>;
 
 export type BlogSourceId = keyof typeof BLOG_SOURCES;
@@ -98,23 +108,23 @@ export interface BlogArticle {
   readonly updatedAt: string;
 }
 
-function paragraph(...content: InlinePart[]): BlogBlock {
+export function paragraph(...content: InlinePart[]): BlogBlock {
   return { content, type: "paragraph" };
 }
 
-function heading(text: string, level: 2 | 3 = 2): BlogBlock {
+export function heading(text: string, level: 2 | 3 = 2): BlogBlock {
   return { level, text, type: "heading" };
 }
 
-function callout(label: string, ...content: InlinePart[]): BlogBlock {
+export function callout(label: string, ...content: InlinePart[]): BlogBlock {
   return { content, label, type: "callout" };
 }
 
-function list(...items: readonly InlineContent[]): BlogBlock {
+export function list(...items: readonly InlineContent[]): BlogBlock {
   return { items, style: "unordered", type: "list" };
 }
 
-function table(
+export function table(
   caption: string,
   columns: readonly string[],
   rows: readonly (readonly InlineContent[])[],
@@ -362,6 +372,7 @@ const slopCodeBenchArticle = {
 } as const satisfies BlogArticle;
 
 export const blogArticles = [
+  createAaIndexCostArticle(),
   mirrorCodeArticle,
   slopCodeBenchArticle,
 ] as const satisfies readonly BlogArticle[];

@@ -17,6 +17,12 @@ import {
   codingAgentDatasetSummary,
   currentCodingAgentBenchmarkLeaders,
 } from "./coding-agent-dataset";
+import {
+  COMPACT_SNAPSHOT_COLUMNS,
+  FULL_SNAPSHOT_COLUMNS,
+  codingAgentSnapshotRows,
+  snapshotRowsMarkdownTable,
+} from "./coding-agent-snapshot-rows";
 import { formatRetrievedAt } from "./coding-agent-updates";
 
 export const AGENT_GUIDE_PATH = "/llms.txt" as const;
@@ -81,7 +87,12 @@ export function homeDocumentModel(
       {
         href: CODING_AGENT_DATASET_PATH,
         label: "Coding-agent benchmark dataset",
-        note: "Provenance, benchmark definitions, leaders, method, and limits for the checked snapshot.",
+        note: "Provenance, benchmark definitions, the full configuration table, leaders, method, and limits for the checked snapshot.",
+      },
+      {
+        href: blogArticlePath("aa-index-cost-coding-agents"),
+        label: "AA Index versus cost",
+        note: "Leaders, the cost/performance frontier, and limits from the same checked snapshot.",
       },
       {
         href: CODING_AGENT_DATASET_DOWNLOAD_PATH,
@@ -121,6 +132,12 @@ function homeMarkdown(snapshot: CodingAgentSnapshot): string {
     `# ${document.heading}`,
     "",
     ...document.paragraphs.flatMap(paragraph => [paragraph, ""]),
+    "## Current snapshot",
+    "",
+    `Current ${snapshot.source.name} coding-agent snapshot: model, agent harness, setting, AA Index, and mean API cost per task. Retrieved ${formatRetrievedAt(snapshot.source.retrievedAt)}.`,
+    "",
+    snapshotRowsMarkdownTable(codingAgentSnapshotRows(snapshot.records), COMPACT_SNAPSHOT_COLUMNS),
+    "",
     "## Pages",
     "",
     ...document.links.map(link => `- [${link.label}](${absolute(link.href)}). ${link.note}`),
@@ -165,6 +182,12 @@ function datasetMarkdown(snapshot: CodingAgentSnapshot): string {
     ...leaders.map(leader => (
       `| ${leader.definition.label} | ${leader.record.model} | ${leader.record.agent} | ${leader.record.providerName} | ${leader.record.setting} | ${leader.value.toFixed(1)} |`
     )),
+    "",
+    "## All configurations",
+    "",
+    `Every model-agent configuration in the retrieved snapshot, with AA Index, component scores, and mean API cost per task. Retrieved ${formatRetrievedAt(snapshot.source.retrievedAt)}.`,
+    "",
+    snapshotRowsMarkdownTable(codingAgentSnapshotRows(snapshot.records), FULL_SNAPSHOT_COLUMNS),
     "",
     "## Normalization method",
     "",

@@ -3,6 +3,17 @@ import { INDEXABLE_ROBOTS } from "@hraness/web-discovery";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
+import codingAgentData from "@/data/coding-agents.json";
+import { parseCodingAgentSnapshot } from "@/lib/coding-agent-data";
+import {
+  aaIndexCostEfficiencyRows,
+  aaIndexCostFrontier,
+  codingAgentSnapshotRows,
+  formatSnapshotCostUsd,
+  formatSnapshotScore,
+} from "@/lib/coding-agent-snapshot-rows";
+import { formatRetrievedAt } from "@/lib/coding-agent-updates";
+
 import nextConfig from "../../next.config";
 import sitemap from "../sitemap";
 import BlogArticlePage, {
@@ -79,8 +90,8 @@ describe("AI Charts benchmark notes", () => {
     expect(markup).toContain('aria-label="hraness"');
   });
 
-  test("publishes two substantial complementary articles", () => {
-    expect(blogArticles).toHaveLength(2);
+  test("publishes substantial complementary articles", () => {
+    expect(blogArticles).toHaveLength(3);
     expect(blogArticles.map(article => article.slug)).toEqual([...BLOG_SLUGS]);
     expect(new Set(BLOG_SLUGS).size).toBe(BLOG_SLUGS.length);
 
@@ -93,8 +104,13 @@ describe("AI Charts benchmark notes", () => {
       expect(articleToMarkdown(article)).toContain(article.dek);
       expect(article.sourceIds.length).toBeGreaterThanOrEqual(1);
       expect(article.relatedSlugs).toHaveLength(1);
-      expect(article.publishedAt).toBe("2026-08-04");
-      expect(article.updatedAt).toBe("2026-08-04");
+      if (article.slug === "aa-index-cost-coding-agents") {
+        expect(article.publishedAt).toBe("2026-08-22");
+        expect(article.updatedAt >= article.publishedAt).toBeTrue();
+      } else {
+        expect(article.publishedAt).toBe("2026-08-04");
+        expect(article.updatedAt).toBe("2026-08-04");
+      }
 
       const headings = article.body
         .filter(block => block.type === "heading")
@@ -120,6 +136,44 @@ describe("AI Charts benchmark notes", () => {
     }
   });
 
+  test("derives the AA Index versus cost note from the checked snapshot", () => {
+    const parsed = parseCodingAgentSnapshot(codingAgentData);
+    if (!parsed.ok) throw parsed.error;
+    const article = getBlogArticle("aa-index-cost-coding-agents");
+    expect(article).toBeDefined();
+    if (article === undefined) return;
+
+    const markup = renderToStaticMarkup(
+      createElement(ArticleBody, { blocks: article.body }),
+    );
+    const leaders = codingAgentSnapshotRows(parsed.value.records).slice(0, 10);
+    const frontier = aaIndexCostFrontier(parsed.value.records);
+    const efficiency = aaIndexCostEfficiencyRows(parsed.value.records).slice(0, 10);
+
+    expect(markup).toContain(parsed.value.source.url);
+    expect(markup).toContain(formatRetrievedAt(parsed.value.source.retrievedAt));
+    expect(leaders[0]).toBeDefined();
+    for (const row of [...leaders, ...frontier.map(point => ({
+      model: point.record.model,
+      agent: point.record.agent,
+      setting: point.record.setting,
+      aaIndex: point.yValue,
+      costUsd: point.xValue,
+    })), ...efficiency.map(row => ({
+      model: row.record.model,
+      agent: row.record.agent,
+      setting: row.record.setting,
+      aaIndex: row.aaIndex,
+      costUsd: row.costUsd,
+    }))]) {
+      expect(markup).toContain(row.model);
+      expect(markup).toContain(row.agent);
+      expect(markup).toContain(row.setting);
+      expect(markup).toContain(formatSnapshotScore(row.aaIndex));
+      expect(markup).toContain(formatSnapshotCostUsd(row.costUsd));
+    }
+  });
+
   test("keeps sources unique, descriptive, and HTTPS-only", () => {
     const sources = Object.values(BLOG_SOURCES);
     expect(new Set(sources.map(source => source.url)).size).toBe(sources.length);
@@ -142,6 +196,7 @@ describe("AI Charts benchmark notes", () => {
     expect(markup).toContain('scope="row"');
     expect(markup).toContain(`href="${BLOG_SOURCES.mirrorCode.url}"`);
     expect(markup).toContain(`href="${BLOG_SOURCES.slopCodeBench.url}"`);
+    expect(markup).toContain(`href="${BLOG_SOURCES.artificialAnalysisCodingAgents.url}"`);
   });
 
   test("renders the index, static routes, breadcrumbs, dates, and sources", async () => {

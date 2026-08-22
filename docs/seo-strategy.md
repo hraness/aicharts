@@ -26,7 +26,7 @@ Future chart verticals need a distinct crawlable route, canonical URL, visible h
 AI Charts targets three connected query groups:
 
 1. Umbrella discovery: `AI model comparison`, `AI agent comparison`, `AI benchmark charts`, and `LLM comparison`.
-2. Decision trade-offs: `AI model performance vs cost`, `AI model speed comparison`, `token use comparison`, and benchmark-specific cost or quality questions.
+2. Decision trade-offs: `AI model performance vs cost`, `AI model speed comparison`, `token use comparison`, and benchmark-specific cost or quality questions. The AA Index versus cost note answers that question for the current coding-agent snapshot with named configurations and the checked Artificial Analysis retrieval date.
 3. Evidence: exact benchmark and methodology searches such as MirrorCode, SlopCodeBench, SWE-bench, Terminal-Bench, and questions about what a result does or does not establish.
 
 The product and collection pages carry umbrella language. Chart pages and research articles earn narrower searches through original visualization, primary sources, reported configurations, dates, and explicit limits. Exact benchmark names must not be replaced with generic keyword variants.
