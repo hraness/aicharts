@@ -82,6 +82,13 @@ test("homepage document stays in the HTML without taking chart layout", () => {
   expect(firstRule(".chart-top-bar .chart-heading")).toContain("font-weight: var(--font-weight-bold)");
 });
 
+test("homepage leaders stay visible above the chart", () => {
+  expect(firstRule(".home-leaders")).not.toMatch(/display\s*:\s*none/u);
+  expect(firstRule(".home-leaders")).not.toMatch(/clip\s*:/u);
+  expect(firstRule(".home-leaders")).toContain("border-bottom: 1px solid var(--line)");
+  expect(firstRule(".home-leaders .plain-publication__table")).toContain("border-collapse: collapse");
+});
+
 test("global chart context stays dense in the sticky header", () => {
   expect(firstRule(".chart-top-bar .ui-top-bar__actions")).toContain("gap: 2px");
   expect(firstRule(".chart-top-bar .ui-top-bar__actions")).toContain("min-width: 0");

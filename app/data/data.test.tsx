@@ -97,6 +97,7 @@ describe("coding-agent dataset surface", () => {
     expect(markup).toContain('id="source"');
     expect(markup).toContain('id="benchmarks"');
     expect(markup).toContain('id="leaders"');
+    expect(markup).toContain('id="configurations"');
     expect(markup).toContain('id="method"');
     expect(markup).toContain('id="limitations"');
     expect(markup).toContain('scope="row"');
@@ -118,6 +119,13 @@ describe("coding-agent dataset surface", () => {
     for (const leader of currentCodingAgentBenchmarkLeaders(snapshot)) {
       expect(markup).toContain(leader.record.model);
       expect(markup).toContain(leader.value.toFixed(1));
+    }
+    expect(markup).toContain('href="/blog/aa-index-cost-coding-agents"');
+    expect(markup).toContain('id="coding-agent-snapshot"');
+    for (const record of snapshot.records) {
+      expect(markup).toContain(record.model);
+      expect(markup).toContain(record.agent);
+      expect(markup).toContain(record.setting);
     }
   });
 

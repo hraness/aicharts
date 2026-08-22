@@ -269,6 +269,75 @@ a { color: inherit; }
   letter-spacing: -.025em;
 }
 
+.home-leaders {
+  background: var(--background);
+  border-bottom: 1px solid var(--line);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  max-width: 100%;
+  padding: var(--space-4) var(--chart-content-inset) 1.25rem;
+}
+
+.home-leaders h1 {
+  font-size: 1.5rem;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: -.025em;
+  margin-bottom: 0.75rem;
+}
+
+.home-leaders h2 {
+  font-size: 1.125rem;
+  font-weight: var(--font-weight-bold);
+  margin: 0 0 0.75rem;
+}
+
+.home-leaders p {
+  color: var(--foreground);
+  font-size: var(--text-body);
+  line-height: 1.55;
+  margin: 0 0 0.75rem;
+  max-width: 48rem;
+}
+
+.home-leaders .plain-publication__table-scroll {
+  border-block: 1px solid var(--line);
+  margin: 0.75rem 0 0;
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.home-leaders .plain-publication__table {
+  border-collapse: collapse;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  min-width: 40rem;
+  width: 100%;
+}
+
+.home-leaders .plain-publication__table caption {
+  font-weight: 700;
+  padding: 0.75rem 0;
+  text-align: left;
+}
+
+.home-leaders .plain-publication__table th,
+.home-leaders .plain-publication__table td {
+  border-top: 1px solid var(--line);
+  padding: 0.65rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.home-leaders .plain-publication__table thead th {
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.home-leaders .plain-publication__table tbody th {
+  color: var(--foreground);
+  font-weight: 700;
+}
+
 .home-document {
   border: 0;
   clip: rect(0, 0, 0, 0);

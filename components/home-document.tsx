@@ -1,17 +1,34 @@
+import codingAgentData from "@/data/coding-agents.json";
+import { parseCodingAgentSnapshot, type CodingAgentSnapshot } from "@/lib/coding-agent-data";
 import { homeDocumentModel, type HomeDocumentModel } from "@/lib/site-markdown";
 
+function checkedSnapshot(): CodingAgentSnapshot {
+  const parsed = parseCodingAgentSnapshot(codingAgentData);
+  if (!parsed.ok) {
+    throw new Error(`Checked coding-agent snapshot is invalid: ${parsed.error.message}`, {
+      cause: parsed.error,
+    });
+  }
+  return parsed.value;
+}
+
 export function HomeDocument({
-  document = homeDocumentModel(),
-}: Readonly<{ document?: HomeDocumentModel }>) {
+  document,
+  snapshot,
+}: Readonly<{
+  document?: HomeDocumentModel;
+  snapshot?: CodingAgentSnapshot;
+}>) {
+  const resolvedDocument = document ?? homeDocumentModel(snapshot ?? checkedSnapshot());
+
   return (
-    <section className="home-document" aria-labelledby="home-document-heading">
-      <h1 id="home-document-heading">{document.heading}</h1>
-      {document.paragraphs.map(paragraph => (
+    <section className="home-document" aria-label={resolvedDocument.heading}>
+      {resolvedDocument.paragraphs.map(paragraph => (
         <p key={paragraph}>{paragraph}</p>
       ))}
       <nav aria-label="AI Charts pages">
         <ul>
-          {document.links.map(link => (
+          {resolvedDocument.links.map(link => (
             <li key={link.href}>
               <a href={link.href}>{link.label}</a>
               <span> {link.note}</span>

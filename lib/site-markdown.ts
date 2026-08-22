@@ -15,8 +15,16 @@ import {
   CODING_AGENT_DATASET_PATH,
   codingAgentDatasetModifiedAt,
   codingAgentDatasetSummary,
+  codingAgentLeadersMarkdownTable,
   currentCodingAgentBenchmarkLeaders,
+  currentCodingAgentLeadersHeading,
+  homeLeadersParagraphs,
 } from "./coding-agent-dataset";
+import {
+  FULL_SNAPSHOT_COLUMNS,
+  codingAgentSnapshotRows,
+  snapshotRowsMarkdownTable,
+} from "./coding-agent-snapshot-rows";
 import { formatRetrievedAt } from "./coding-agent-updates";
 
 export const AGENT_GUIDE_PATH = "/llms.txt" as const;
@@ -81,7 +89,12 @@ export function homeDocumentModel(
       {
         href: CODING_AGENT_DATASET_PATH,
         label: "Coding-agent benchmark dataset",
-        note: "Provenance, benchmark definitions, leaders, method, and limits for the checked snapshot.",
+        note: "Provenance, benchmark definitions, the full configuration table, leaders, method, and limits for the checked snapshot.",
+      },
+      {
+        href: blogArticlePath("aa-index-cost-coding-agents"),
+        label: "AA Index versus cost",
+        note: "Leaders, the cost/performance frontier, and limits from the same checked snapshot.",
       },
       {
         href: CODING_AGENT_DATASET_DOWNLOAD_PATH,
@@ -117,8 +130,14 @@ export function homeDocumentText(
 
 function homeMarkdown(snapshot: CodingAgentSnapshot): string {
   const document = homeDocumentModel(snapshot);
+  const leaders = currentCodingAgentBenchmarkLeaders(snapshot);
   return joinMarkdown([
     `# ${document.heading}`,
+    "",
+    `## ${currentCodingAgentLeadersHeading(snapshot.source.retrievedAt)}`,
+    "",
+    ...homeLeadersParagraphs(snapshot).flatMap(paragraph => [paragraph, ""]),
+    codingAgentLeadersMarkdownTable(leaders),
     "",
     ...document.paragraphs.flatMap(paragraph => [paragraph, ""]),
     "## Pages",
@@ -160,11 +179,13 @@ function datasetMarkdown(snapshot: CodingAgentSnapshot): string {
     "",
     "These are the highest available scores in the retrieved snapshot, one row per benchmark. They are observations of the named model, agent harness, and effort setting rather than general model ranks.",
     "",
-    "| Benchmark | Model | Agent | Provider | Setting | Score |",
-    "| --- | --- | --- | --- | --- | --- |",
-    ...leaders.map(leader => (
-      `| ${leader.definition.label} | ${leader.record.model} | ${leader.record.agent} | ${leader.record.providerName} | ${leader.record.setting} | ${leader.value.toFixed(1)} |`
-    )),
+    codingAgentLeadersMarkdownTable(leaders),
+    "",
+    "## All configurations",
+    "",
+    `Every model-agent configuration in the retrieved snapshot, with AA Index, component scores, and mean API cost per task. Retrieved ${formatRetrievedAt(snapshot.source.retrievedAt)}.`,
+    "",
+    snapshotRowsMarkdownTable(codingAgentSnapshotRows(snapshot.records), FULL_SNAPSHOT_COLUMNS),
     "",
     "## Normalization method",
     "",

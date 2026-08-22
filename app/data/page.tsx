@@ -1,6 +1,9 @@
 import { Breadcrumbs } from "@/components/ui";
+import { CodingAgentLeadersTable } from "@/components/coding-agent-leaders-table";
+import { CodingAgentSnapshotTable } from "@/components/coding-agent-snapshot-table";
 import codingAgentData from "@/data/coding-agents.json";
 import { parseCodingAgentSnapshot } from "@/lib/coding-agent-data";
+import { codingAgentSnapshotRows } from "@/lib/coding-agent-snapshot-rows";
 import {
   CODING_AGENT_BENCHMARK_DEFINITIONS,
   CODING_AGENT_DATASET_DESCRIPTION,
@@ -14,6 +17,7 @@ import {
 import { createPublicSiteMetadata } from "@hraness/web-discovery";
 import { JsonLdScript } from "@hraness/web-discovery/json-ld";
 import type { Metadata } from "next";
+import Link from "next/link";
 
 import { searchSite } from "../site";
 
@@ -41,10 +45,6 @@ const retrievedAtFormatter = new Intl.DateTimeFormat("en-US", {
 
 function formatRetrievedAt(value: string): string {
   return retrievedAtFormatter.format(new Date(value));
-}
-
-function formatScore(value: number): string {
-  return value.toFixed(1);
 }
 
 export default function CodingAgentDatasetPage() {
@@ -110,6 +110,7 @@ export default function CodingAgentDatasetPage() {
             <li><a href="#source">Source and refresh</a></li>
             <li><a href="#benchmarks">Benchmark definitions</a></li>
             <li><a href="#leaders">Current leaders</a></li>
+            <li><a href="#configurations">All configurations</a></li>
             <li><a href="#method">Normalization method</a></li>
             <li><a href="#limitations">Limitations</a></li>
           </ol>
@@ -164,33 +165,32 @@ export default function CodingAgentDatasetPage() {
               one row per benchmark. They are observations of the named model,
               agent harness, and effort setting rather than general model ranks.
             </p>
-            <div className="plain-publication__table-scroll">
-              <table className="plain-publication__table">
-                <caption>Highest score by benchmark in the current snapshot</caption>
-                <thead>
-                  <tr>
-                    <th scope="col">Benchmark</th>
-                    <th scope="col">Model</th>
-                    <th scope="col">Agent</th>
-                    <th scope="col">Provider</th>
-                    <th scope="col">Setting</th>
-                    <th scope="col">Score</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {leaders.map(leader => (
-                    <tr key={leader.definition.id}>
-                      <th scope="row">{leader.definition.label}</th>
-                      <td>{leader.record.model}</td>
-                      <td>{leader.record.agent}</td>
-                      <td>{leader.record.providerName}</td>
-                      <td>{leader.record.setting}</td>
-                      <td>{formatScore(leader.value)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <CodingAgentLeadersTable
+              caption="Highest score by benchmark in the current snapshot"
+              leaders={leaders}
+            />
+            <p>
+              For AA Index versus mean API cost, including the cost/performance
+              frontier, see{" "}
+              <Link href="/blog/aa-index-cost-coding-agents">
+                AA Index versus cost for coding agents
+              </Link>.
+            </p>
+
+            <h2 id="configurations">All configurations</h2>
+            <p>
+              Every model-agent configuration in the retrieved snapshot, with
+              AA Index, component scores, and mean API cost per task. Missing
+              values are stored as empty in the source and shown as a dash.
+            </p>
+            <CodingAgentSnapshotTable
+              caption={`All ${summary.recordCount} model-agent configurations in the ${snapshot.source.name} snapshot retrieved ${formatRetrievedAt(snapshot.source.retrievedAt)}`}
+              className="plain-publication__table-scroll"
+              id="coding-agent-snapshot"
+              rows={codingAgentSnapshotRows(snapshot.records)}
+              tableClassName="plain-publication__table"
+              variant="full"
+            />
 
             <h2 id="method">Normalization method</h2>
             <p>

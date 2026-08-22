@@ -8,6 +8,7 @@ import { parseCodingAgentSnapshot } from "./coding-agent-data";
 import {
   CODING_AGENT_DATASET_DESCRIPTION,
   codingAgentDatasetSummary,
+  currentCodingAgentBenchmarkLeaders,
 } from "./coding-agent-dataset";
 import {
   AGENT_GUIDE_CONTENT_TYPE,
@@ -42,8 +43,13 @@ describe("markdown representations", () => {
     expect(home).toMatchObject({ found: true, contentType: MARKDOWN_CONTENT_TYPE });
     expect(home.body).toContain(`# ${homeHeading}`);
     expect(home.body).toContain(site.origin);
+    expect(home.body).toContain(`## Current leaders as of ${snapshot.source.retrievedAt}`);
+    expect(home.body).toContain("| Benchmark | Model | Agent | Provider | Setting | Score |");
+    expect(home.body).toContain(currentCodingAgentBenchmarkLeaders(snapshot)[0]?.record.model ?? "");
     expect(data.body).toContain(CODING_AGENT_DATASET_DESCRIPTION);
     expect(data.body).toContain(snapshot.source.url);
+    expect(data.body).toContain("## All configurations");
+    expect(data.body).toContain("| Model | Agent | Provider | Setting | AA Index | DeepSWE | Terminal-Bench v2 | SWE-Atlas-QnA | Cost |");
     expect(blog.body).toContain(blogArticles[0].title);
     expect(guide).toMatchObject({ found: true, contentType: AGENT_GUIDE_CONTENT_TYPE });
     expect(guide.body).toBe(agentGuideMarkdown(snapshot));

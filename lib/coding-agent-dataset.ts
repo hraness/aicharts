@@ -5,6 +5,7 @@ import type {
 } from "./coding-agent-data";
 import { absoluteWebUrl, type SearchSite } from "@hraness/web-discovery";
 import { yMetricDescriptions, yMetricLabels } from "./chart-math";
+import { formatRetrievedAt } from "./coding-agent-updates";
 
 export const CODING_AGENT_DATASET_PATH = "/data" as const;
 export const CODING_AGENT_DATASET_DOWNLOAD_PATH = "/data/coding-agents.json" as const;
@@ -90,6 +91,25 @@ function compareLeaderRecords(
     || left.id.localeCompare(right.id);
 }
 
+export function formatBenchmarkScore(value: number): string {
+  return value.toFixed(1);
+}
+
+export function currentCodingAgentLeadersHeading(retrievedAt: string): string {
+  return `Current leaders as of ${retrievedAt}`;
+}
+
+export function homeLeadersParagraphs(
+  snapshot: CodingAgentSnapshot,
+): readonly [string, string] {
+  const summary = codingAgentDatasetSummary(snapshot);
+  const retrievedAt = formatRetrievedAt(snapshot.source.retrievedAt);
+  return [
+    `The current chart is a coding-agent comparison built from a checked ${snapshot.source.name} snapshot of ${summary.recordCount} model-agent configurations, retrieved ${retrievedAt}.`,
+    `The table lists the highest stored score for each benchmark, with the named model, agent harness, and effort setting. These values are observations from that snapshot, not general ranks or production guarantees.`,
+  ];
+}
+
 export function currentCodingAgentBenchmarkLeaders(
   snapshot: CodingAgentSnapshot,
 ): readonly CodingAgentBenchmarkLeader[] {
@@ -102,6 +122,18 @@ export function currentCodingAgentBenchmarkLeaders(
     }
     return { definition, record, value };
   });
+}
+
+export function codingAgentLeadersMarkdownTable(
+  leaders: readonly CodingAgentBenchmarkLeader[],
+): string {
+  return [
+    "| Benchmark | Model | Agent | Provider | Setting | Score |",
+    "| --- | --- | --- | --- | --- | --- |",
+    ...leaders.map(leader =>
+      `| ${leader.definition.label} | ${leader.record.model} | ${leader.record.agent} | ${leader.record.providerName} | ${leader.record.setting} | ${formatBenchmarkScore(leader.value)} |`,
+    ),
+  ].join("\n");
 }
 
 type DatasetPublisher = Pick<SearchSite, "name" | "origin">;
