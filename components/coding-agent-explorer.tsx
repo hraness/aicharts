@@ -883,6 +883,9 @@ export function CodingAgentExplorer({ brand, snapshot }: { brand: ChartBrand; sn
             <LinkButton href="/blog" size="compact" variant="quiet">
               Blog
             </LinkButton>
+            <LinkButton href="/gpt-subsidy" size="compact" variant="quiet">
+              Subsidy
+            </LinkButton>
             <ThemeMenuButton aria-label="Chart appearance" />
           </>
         )}
@@ -1272,6 +1275,7 @@ export function CodingAgentExplorer({ brand, snapshot }: { brand: ChartBrand; sn
         <nav aria-label="AI Charts resources" className="chart-footer-links">
           <Link href="/data">Data</Link>
           <Link href="/blog">Analysis</Link>
+          <Link href="/gpt-subsidy">Subsidy</Link>
         </nav>
         <HranessBrand className="chart-footer-hraness" />
       </footer>

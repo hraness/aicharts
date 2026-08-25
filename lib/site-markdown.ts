@@ -6,6 +6,7 @@ import {
 } from "@/app/blog/articles";
 import { homeHeading, notFoundRecoveryLinks, site } from "@/app/site";
 import codingAgentData from "@/data/coding-agents.json";
+import gptSubsidyData from "@/data/gpt-subsidy.json";
 
 import { parseCodingAgentSnapshot, type CodingAgentSnapshot } from "./coding-agent-data";
 import {
@@ -26,6 +27,16 @@ import {
   snapshotRowsMarkdownTable,
 } from "./coding-agent-snapshot-rows";
 import { formatRetrievedAt } from "./coding-agent-updates";
+import {
+  GPT_SUBSIDY_DESCRIPTION,
+  formatSubsidyDate,
+  formatSubsidyMultiple,
+  formatSubsidyTokens,
+  formatSubsidyUsd,
+  latestGptSubsidyObservation,
+  parseGptSubsidySnapshot,
+  type GptSubsidySnapshot,
+} from "./gpt-subsidy-data";
 
 export const AGENT_GUIDE_PATH = "/llms.txt" as const;
 export const MARKDOWN_CONTENT_TYPE = "text/markdown; charset=utf-8";
@@ -59,6 +70,16 @@ function checkedSnapshot(): CodingAgentSnapshot {
   return parsed.value;
 }
 
+function checkedGptSubsidySnapshot(): GptSubsidySnapshot {
+  const parsed = parseGptSubsidySnapshot(gptSubsidyData);
+  if (!parsed.ok) {
+    throw new Error(`Checked GPT subsidy snapshot is invalid: ${parsed.error.message}`, {
+      cause: parsed.error,
+    });
+  }
+  return parsed.value;
+}
+
 function absolute(path: string): string {
   return new URL(path, site.origin).toString();
 }
@@ -86,6 +107,11 @@ export function homeDocumentModel(
       `AI Charts is an independent visualization. It does not recalculate upstream benchmark outcomes and is not affiliated with Artificial Analysis or the listed providers.`,
     ],
     links: [
+      {
+        href: "/gpt-subsidy",
+        label: "ChatGPT Pro API-equivalent value",
+        note: "Historical estimates from measured Codex token usage, the checked August 25, 2026 API price basis, and the $200 monthly subscription price.",
+      },
       {
         href: CODING_AGENT_DATASET_PATH,
         label: "Coding-agent benchmark dataset",
@@ -230,6 +256,63 @@ function blogIndexMarkdown(): string {
   ]);
 }
 
+export function gptSubsidyMarkdown(
+  snapshot: GptSubsidySnapshot = checkedGptSubsidySnapshot(),
+): string {
+  const latest = latestGptSubsidyObservation(snapshot);
+  const rows = snapshot.observations.map(observation => [
+    formatSubsidyDate(observation.observedAt),
+    `${formatSubsidyDate(observation.periodStartedAt)}–${formatSubsidyDate(observation.periodEndsAt)}`,
+    formatSubsidyTokens(observation.tokens.total),
+    formatSubsidyUsd(observation.monthlyApiEquivalentUsd),
+    formatSubsidyMultiple(observation.planPriceMultiple),
+  ]);
+  const table = [
+    "| Observed | Period | Tokens | Monthly API-value pace | Multiple |",
+    "| --- | --- | ---: | ---: | ---: |",
+    ...rows.map(row => `| ${row.join(" | ")} |`),
+  ].join("\n");
+
+  return joinMarkdown([
+    `# ${snapshot.title}`,
+    "",
+    GPT_SUBSIDY_DESCRIPTION,
+    "",
+    `The latest monthly plan-price multiple is ${formatSubsidyMultiple(latest.planPriceMultiple)}, derived from seven settled UTC days. That equals ${formatSubsidyUsd(latest.monthlyApiEquivalentUsd)} in monthly API-retail-equivalent usage divided by one ${formatSubsidyUsd(snapshot.plan.monthlyPriceUsd)} plan-price unit.`,
+    "",
+    `Across the measured ${snapshot.periodSummary.days}-day period, local Codex usage has an estimated API value of ${formatSubsidyUsd(snapshot.periodSummary.apiEquivalentUsd)}, or ${formatSubsidyMultiple(snapshot.periodSummary.planPriceMultiple)} of one $200 plan-price unit.`,
+    "",
+    "This is one user's available local Codex logs on one machine. It is not a platform-wide or representative ChatGPT Pro estimate. The logs do not retain a durable account ID or billing mode and cannot distinguish plan allowance from API-key or otherwise API-billed usage, purchased ChatGPT credits, free or reset credits, or temporary promotions. Historical account switches and usage across multiple subscriptions cannot be excluded.",
+    "",
+    "## History",
+    "",
+    table,
+    "",
+    "No per-refill projection is published because active-account quota telemetry cannot be joined reliably to historical session usage across authentication, subscription, or credit-source changes.",
+    "",
+    "## Calculation",
+    "",
+    snapshot.methodology.formula,
+    "",
+    "The collector reads all canonical local Codex task logs, including child agents. The pinned Tokscale 4.13.0 parser globally deduplicates replayed token events. Model-specific API-price estimates come from the checked AI Charts OpenAI rate manifest, not Tokscale's pricing catalog.",
+    "",
+    "The scheduled collector task's own small Codex token usage is included in the next settled bucket.",
+    "",
+    snapshot.methodology.disclaimer,
+    "",
+    `The checked snapshot was generated ${snapshot.generatedAt}. The rate manifest was frozen ${snapshot.pricing.manifest.frozenAt} with SHA-256 ${snapshot.pricing.manifest.sha256}. The measurement implementation is pinned by revision ${snapshot.methodology.measurement.revision} and manifest SHA-256 ${snapshot.methodology.measurement.sha256}. GPT-5.6 Sol is retained only as a reference price, not as the rate applied to every historical model call.`,
+    "",
+    "## Sources",
+    "",
+    ...Array.from(new Set([
+      snapshot.plan.sourceUrl,
+      snapshot.pricing.manifest.sourceUrl,
+      snapshot.pricing.referenceModel.sourceUrl,
+      ...snapshot.methodology.sourceUrls,
+    ])).map(url => `- [${new URL(url).hostname}](${url})`),
+  ]);
+}
+
 export function agentGuideMarkdown(
   snapshot: CodingAgentSnapshot = checkedSnapshot(),
 ): string {
@@ -250,6 +333,7 @@ export function agentGuideMarkdown(
     "## Main pages",
     "",
     `- [Comparison chart](${absolute("/")}). Current coding-agent scatter chart.`,
+    `- [ChatGPT Pro API-equivalent value](${absolute("/gpt-subsidy")}). Historical estimates from measured Codex usage and the checked August 25, 2026 API price basis.`,
     `- [Dataset and methodology](${absolute(CODING_AGENT_DATASET_PATH)}). Provenance, definitions, leaders, method, and limits.`,
     `- [JSON snapshot](${absolute(CODING_AGENT_DATASET_DOWNLOAD_PATH)}). Machine-readable copy of the checked records.`,
     `- [Benchmark analysis](${absolute("/blog")}). Sourced notes on named evaluations.`,
@@ -299,6 +383,9 @@ export function markdownForPath(pathname: string): MarkdownDocument {
   if (path === CODING_AGENT_DATASET_PATH) {
     return { body: datasetMarkdown(snapshot), contentType: MARKDOWN_CONTENT_TYPE, found: true };
   }
+  if (path === "/gpt-subsidy") {
+    return { body: gptSubsidyMarkdown(), contentType: MARKDOWN_CONTENT_TYPE, found: true };
+  }
   if (path === "/blog") {
     return { body: blogIndexMarkdown(), contentType: MARKDOWN_CONTENT_TYPE, found: true };
   }
@@ -312,4 +399,3 @@ export function markdownForPath(pathname: string): MarkdownDocument {
 
   return { body: notFoundMarkdown(), contentType: MARKDOWN_CONTENT_TYPE, found: false };
 }
-

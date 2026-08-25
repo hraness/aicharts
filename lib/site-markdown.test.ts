@@ -34,9 +34,10 @@ describe("homepage document", () => {
 });
 
 describe("markdown representations", () => {
-  test("serves the homepage, dataset, blog, and agent guide", () => {
+  test("serves the homepage, dataset, subsidy history, blog, and agent guide", () => {
     const home = markdownForPath("/");
     const data = markdownForPath("/data");
+    const subsidy = markdownForPath("/gpt-subsidy");
     const blog = markdownForPath("/blog");
     const guide = markdownForPath("/llms.txt");
 
@@ -50,6 +51,10 @@ describe("markdown representations", () => {
     expect(data.body).toContain(snapshot.source.url);
     expect(data.body).toContain("## All configurations");
     expect(data.body).toContain("| Model | Agent | Provider | Setting | AA Index | DeepSWE | Terminal-Bench v2 | SWE-Atlas-QnA | Cost |");
+    expect(subsidy).toMatchObject({ found: true, contentType: MARKDOWN_CONTENT_TYPE });
+    expect(subsidy.body).toContain("# Subsidy for ChatGPT Pro 20x subscription");
+    expect(subsidy.body).toContain("## Calculation");
+    expect(subsidy.body).toContain("API-key or otherwise API-billed usage");
     expect(blog.body).toContain(blogArticles[0].title);
     expect(guide).toMatchObject({ found: true, contentType: AGENT_GUIDE_CONTENT_TYPE });
     expect(guide.body).toBe(agentGuideMarkdown(snapshot));

@@ -328,6 +328,7 @@ describe("AI Charts blog discovery", () => {
     expect(entries.map(entry => entry.url)).toEqual([
       "https://aicharts.io/",
       "https://aicharts.io/data",
+      "https://aicharts.io/gpt-subsidy",
       "https://aicharts.io/blog",
       ...blogArticles.map(article =>
         `https://aicharts.io${blogArticlePath(article.slug)}`),

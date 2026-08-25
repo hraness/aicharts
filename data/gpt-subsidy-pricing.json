@@ -1,0 +1,119 @@
+{
+  "schemaVersion": 1,
+  "kind": "aicharts-openai-rate-manifest",
+  "currency": "USD",
+  "unit": "per-million-tokens",
+  "frozenAt": "2026-08-25T00:00:00Z",
+  "normalizationPolicy": "Every retained observation is valued with this frozen August 25, 2026 OpenAI API retail-rate snapshot. Historical observations are normalized to one price basis rather than repriced on later runs.",
+  "models": [
+    {
+      "modelId": "codex-auto-review",
+      "pricingType": "proxy",
+      "proxyModelId": "gpt-5.6-luna",
+      "proxyRationale": "OpenAI does not publish an API price for the internal Codex review alias. GPT-5.6 Luna is used as an explicit conservative proxy because it is the lowest-priced published GPT-5.6 tier in this snapshot.",
+      "sourceUrl": "https://developers.openai.com/api/docs/models/gpt-5.6-luna",
+      "rates": {
+        "input": 0.2,
+        "cachedInput": 0.02,
+        "cacheWrite": 0.25,
+        "output": 1.2
+      },
+      "longContext": {
+        "thresholdInputTokens": 272000,
+        "billingScope": "full-request",
+        "inputMultiplier": 2,
+        "cachedInputMultiplier": 2,
+        "cacheWriteMultiplier": 2,
+        "outputMultiplier": 1.5
+      }
+    },
+    {
+      "modelId": "gpt-5.4",
+      "pricingType": "official",
+      "sourceUrl": "https://developers.openai.com/api/docs/models/gpt-5.4",
+      "rates": {
+        "input": 2.5,
+        "cachedInput": 0.25,
+        "cacheWrite": null,
+        "output": 15
+      },
+      "longContext": {
+        "thresholdInputTokens": 272000,
+        "billingScope": "full-request",
+        "inputMultiplier": 2,
+        "cachedInputMultiplier": 2,
+        "cacheWriteMultiplier": 2,
+        "outputMultiplier": 1.5
+      }
+    },
+    {
+      "modelId": "gpt-5.4-mini",
+      "pricingType": "official",
+      "sourceUrl": "https://developers.openai.com/api/docs/models/gpt-5.4-mini",
+      "rates": {
+        "input": 0.75,
+        "cachedInput": 0.075,
+        "cacheWrite": null,
+        "output": 4.5
+      },
+      "longContext": null
+    },
+    {
+      "modelId": "gpt-5.6-luna",
+      "pricingType": "official",
+      "sourceUrl": "https://developers.openai.com/api/docs/models/gpt-5.6-luna",
+      "rates": {
+        "input": 0.2,
+        "cachedInput": 0.02,
+        "cacheWrite": 0.25,
+        "output": 1.2
+      },
+      "longContext": {
+        "thresholdInputTokens": 272000,
+        "billingScope": "full-request",
+        "inputMultiplier": 2,
+        "cachedInputMultiplier": 2,
+        "cacheWriteMultiplier": 2,
+        "outputMultiplier": 1.5
+      }
+    },
+    {
+      "modelId": "gpt-5.6-sol",
+      "pricingType": "official",
+      "sourceUrl": "https://developers.openai.com/api/docs/models/gpt-5.6-sol",
+      "rates": {
+        "input": 4,
+        "cachedInput": 0.4,
+        "cacheWrite": 5,
+        "output": 20
+      },
+      "longContext": {
+        "thresholdInputTokens": 272000,
+        "billingScope": "full-request",
+        "inputMultiplier": 2,
+        "cachedInputMultiplier": 2,
+        "cacheWriteMultiplier": 2,
+        "outputMultiplier": 1.5
+      }
+    },
+    {
+      "modelId": "gpt-5.6-terra",
+      "pricingType": "official",
+      "sourceUrl": "https://developers.openai.com/api/docs/models/gpt-5.6-terra",
+      "rates": {
+        "input": 2,
+        "cachedInput": 0.2,
+        "cacheWrite": 2.5,
+        "output": 12
+      },
+      "longContext": {
+        "thresholdInputTokens": 272000,
+        "billingScope": "full-request",
+        "inputMultiplier": 2,
+        "cachedInputMultiplier": 2,
+        "cacheWriteMultiplier": 2,
+        "outputMultiplier": 1.5
+      }
+    }
+  ]
+}

@@ -19,6 +19,12 @@ The site is a static-data Next.js and TypeScript application. Its coding-agent s
 
 The checked snapshot records its source URL, retrieval time, and material update history. The `/data` page exposes the same checked facts and links to a JSON distribution so people, search engines, and answer engines can verify what the chart shows. AI Charts is an independent visualization and is not affiliated with Artificial Analysis or the model providers represented in the data.
 
+## GPT subsidy history
+
+[`/gpt-subsidy`](https://aicharts.io/gpt-subsidy) tracks the API-retail-equivalent value of one user’s available local Codex logs against one $200 ChatGPT Pro plan-price unit. Each daily point covers seven complete UTC days. The collector globally deduplicates parent, child-agent, active, and archived session events, values each recorded model with the checked [`gpt-subsidy-pricing.json`](data/gpt-subsidy-pricing.json) rate manifest, and publishes only aggregate token and dollar totals. The checked [`gpt-subsidy-measurement.json`](data/gpt-subsidy-measurement.json) manifest pins the parser, adapter, updater, and rolling-window constants so a methodology change cannot silently mix unlike historical points.
+
+This is a personal usage trace, not a platform-wide estimate or a representative sample of ChatGPT Pro usage. Local logs do not retain durable account or billing-mode attribution and cannot distinguish plan allowance from API-key or otherwise API-billed usage, multiple subscriptions, purchased credits, free resets, or temporary promotions. The page keeps those limits beside the chart and publishes the calculation and source links in static HTML.
+
 ## Local development
 
 AI Charts uses [Bun 1.3.14](https://bun.sh/) and Node.js 24.
@@ -93,8 +99,8 @@ Production source maps are uploaded only when all private build settings and Ver
 - `app/` contains the App Router chart, sourced benchmark notes, metadata, error states, and product styling.
 - `components/` contains the interactive chart, update timeline, linked summaries, sharing, export, and local UI primitives.
 - `lib/` contains strict data and update boundaries, chart math, deterministic layout, analytics events, and property tests.
-- `data/` contains the checked production snapshot.
-- `scripts/` contains the guarded data refresh and deterministic color generator.
+- `data/` contains the checked benchmark, subsidy-history, and pricing snapshots.
+- `scripts/` contains the guarded benchmark refresh, local subsidy collector and publisher, and deterministic color generator.
 - `styles/` contains the portable plain-publication styles used by the benchmark notes.
 - `docs/` contains the current search, measurement, and engineering strategy.
 - `.github/workflows/` contains CI and daily refresh automation.
