@@ -3,12 +3,19 @@ export type AnalyticsPageKind =
   | "benchmark_data"
   | "blog_article"
   | "blog_index"
+  | "gpt_subsidy"
   | "other";
 
 export interface PageAnalyticsContext {
   readonly analytics_schema_version: 2;
   readonly canonical_domain: "aicharts.io";
-  readonly canonical_path: "/" | "/blog" | "/blog/[article]" | "/data" | "/[other]";
+  readonly canonical_path:
+    | "/"
+    | "/blog"
+    | "/blog/[article]"
+    | "/data"
+    | "/gpt-subsidy"
+    | "/[other]";
   readonly content_group: "ai_comparison" | "benchmark_research" | "site";
   readonly page_kind: AnalyticsPageKind;
   readonly site_id: "aicharts";
@@ -66,6 +73,15 @@ export function pageAnalyticsContext(value: unknown): PageAnalyticsContext {
       canonical_path: "/data",
       content_group: "ai_comparison",
       page_kind: "benchmark_data",
+    };
+  }
+
+  if (pathname === "/gpt-subsidy") {
+    return {
+      ...shared,
+      canonical_path: "/gpt-subsidy",
+      content_group: "ai_comparison",
+      page_kind: "gpt_subsidy",
     };
   }
 

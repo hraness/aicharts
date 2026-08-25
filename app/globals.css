@@ -1191,3 +1191,205 @@ a { color: inherit; }
 :root[data-verification-pointer="coarse"] .chart-segmented-control .ui-segmented-control__item {
   min-width: var(--interactive-target-min);
 }
+
+/* GPT subsidy history */
+.plain-site.plain-publication.aicharts-gpt-subsidy {
+  --plain-shell-measure: 72rem;
+}
+
+.aicharts-gpt-subsidy .gpt-subsidy-latest {
+  border-block: 1px solid var(--plain-line);
+  padding-block: 1.25rem;
+}
+
+.aicharts-gpt-subsidy .gpt-subsidy-account-limit {
+  border-left: 3px solid var(--plain-foreground);
+  margin-bottom: 1.5rem;
+  padding-block: 0.2rem;
+}
+
+.aicharts-gpt-subsidy .gpt-subsidy-account-limit strong,
+.aicharts-gpt-subsidy .gpt-subsidy-account-limit p {
+  display: block;
+  margin-left: 1rem;
+}
+
+.aicharts-gpt-subsidy .gpt-subsidy-account-limit p {
+  color: var(--plain-muted);
+  margin-top: 0.2rem;
+  max-width: 52rem;
+}
+
+.aicharts-gpt-subsidy .gpt-subsidy-latest h2,
+.aicharts-gpt-subsidy .gpt-subsidy-section-heading h2 {
+  color: var(--plain-foreground);
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.aicharts-gpt-subsidy .gpt-subsidy-latest dl {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 0.8rem;
+}
+
+.aicharts-gpt-subsidy .gpt-subsidy-latest dl > div {
+  min-width: 0;
+}
+
+.aicharts-gpt-subsidy .gpt-subsidy-latest dt,
+.aicharts-gpt-subsidy .gpt-subsidy-latest .gpt-subsidy-stat-detail {
+  color: var(--plain-muted);
+  display: block;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.aicharts-gpt-subsidy .gpt-subsidy-latest .gpt-subsidy-stat-value {
+  color: var(--plain-foreground);
+  font-size: clamp(1.35rem, 3vw, 2rem);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  line-height: 1.2;
+  margin-block: 0.15rem;
+}
+
+.aicharts-gpt-subsidy .gpt-subsidy-history {
+  padding-block: 2rem 1rem;
+}
+
+.aicharts-gpt-subsidy .gpt-subsidy-section-heading {
+  align-items: baseline;
+  display: grid;
+  gap: 0.35rem 1.5rem;
+  grid-template-columns: minmax(10rem, 0.35fr) minmax(0, 1fr);
+}
+
+.aicharts-gpt-subsidy .gpt-subsidy-section-heading p {
+  color: var(--plain-muted);
+  font-size: 0.9rem;
+  margin: 0;
+  max-width: 47rem;
+}
+
+.gpt-subsidy-chart {
+  margin: 1.25rem 0 0;
+}
+
+.gpt-subsidy-chart__plot {
+  border-block: 1px solid var(--plain-line);
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+
+.gpt-subsidy-chart__svg {
+  color: var(--plain-link);
+  display: block;
+  height: auto;
+  min-width: 42rem;
+  width: 100%;
+}
+
+.gpt-subsidy-chart__grid line {
+  stroke: var(--plain-line);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.gpt-subsidy-chart__grid g:not(:first-child) > line {
+  stroke-dasharray: 2 5;
+}
+
+.gpt-subsidy-chart__grid text,
+.gpt-subsidy-chart__axis-title {
+  fill: var(--plain-muted);
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.gpt-subsidy-chart__line {
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2.5;
+  vector-effect: non-scaling-stroke;
+}
+
+.gpt-subsidy-chart__points circle {
+  fill: var(--plain-link);
+  stroke: var(--plain-background);
+  stroke-width: 3;
+  vector-effect: non-scaling-stroke;
+}
+
+.gpt-subsidy-chart__caption {
+  color: var(--plain-muted);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 0.8rem;
+  gap: 0.4rem 1rem;
+  margin-top: 0.7rem;
+}
+
+.gpt-subsidy-chart__caption span {
+  align-items: center;
+  display: inline-flex;
+  gap: 0.35rem;
+}
+
+.gpt-subsidy-chart__scroll-hint {
+  display: none;
+}
+
+.plain-site.plain-publication .gpt-subsidy-table-scroll {
+  margin-bottom: 0;
+}
+
+.plain-site.plain-publication .gpt-subsidy-table {
+  min-width: 46rem;
+}
+
+.gpt-subsidy-table td,
+.gpt-subsidy-table th {
+  font-variant-numeric: tabular-nums;
+}
+
+.aicharts-gpt-subsidy .gpt-subsidy-method {
+  border-top: 1px solid var(--plain-line);
+  padding-block: 1rem 4rem;
+}
+
+.aicharts-gpt-subsidy .gpt-subsidy-method > * {
+  max-width: 48rem;
+}
+
+@media (max-width: 42rem) {
+  .gpt-subsidy-chart__scroll-hint {
+    display: inline-flex;
+  }
+
+  .aicharts-gpt-subsidy .gpt-subsidy-latest dl {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .aicharts-gpt-subsidy .gpt-subsidy-latest dl > div + div {
+    border-top: 1px solid var(--plain-line);
+    padding-top: 0.8rem;
+  }
+
+  .aicharts-gpt-subsidy .gpt-subsidy-section-heading {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (forced-colors: active) {
+  .gpt-subsidy-chart__line,
+  .gpt-subsidy-chart__points circle {
+    stroke: CanvasText;
+  }
+}

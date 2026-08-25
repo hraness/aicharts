@@ -38,6 +38,16 @@ describe("page analytics context", () => {
     });
   });
 
+  test("classifies the GPT subsidy history without retaining URL details", () => {
+    expect(pageAnalyticsContext(
+      "https://aicharts.io/gpt-subsidy?source=private#history",
+    )).toMatchObject({
+      canonical_path: "/gpt-subsidy",
+      content_group: "ai_comparison",
+      page_kind: "gpt_subsidy",
+    });
+  });
+
   test("maps foreign and unknown routes to one controlled fallback", () => {
     for (const value of [undefined, null, 42, "", "/not-found"]) {
       expect(pageAnalyticsContext(value)).toMatchObject({
