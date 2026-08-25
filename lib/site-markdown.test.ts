@@ -55,6 +55,9 @@ describe("markdown representations", () => {
     expect(subsidy.body).toContain("# Subsidy for ChatGPT Pro 20x subscription");
     expect(subsidy.body).toContain("## Calculation");
     expect(subsidy.body).toContain("API-key or otherwise API-billed usage");
+    expect(subsidy.body).toContain("Multiplying that value by exactly 4");
+    expect(subsidy.body).toContain("does not observe whether a weekly quota was exhausted or when it reset");
+    expect(subsidy.body).toContain("not four observed exhausted allocations");
     expect(blog.body).toContain(blogArticles[0].title);
     expect(guide).toMatchObject({ found: true, contentType: AGENT_GUIDE_CONTENT_TYPE });
     expect(guide.body).toBe(agentGuideMarkdown(snapshot));

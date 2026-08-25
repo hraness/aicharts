@@ -58,7 +58,7 @@ function observation({
     tokens,
     pricing.referenceModel,
   );
-  const monthlyApiEquivalentUsd = trailingSevenDayApiEquivalentUsd * 4.348125;
+  const monthlyApiEquivalentUsd = trailingSevenDayApiEquivalentUsd * 4;
   const planPriceMultiple = monthlyApiEquivalentUsd / 200;
   return {
     id: `trailing-7d-${date}`,
@@ -113,7 +113,7 @@ export const validGptSubsidySnapshot = {
   },
   methodology: {
     deduplication: "tokscale-global-event-identity",
-    weeksPerMonth: 4.348125,
+    weeksPerMonth: 4,
     measurement: {
       name: "AI Charts GPT subsidy measurement manifest",
       schemaVersion: 1,
@@ -159,7 +159,7 @@ describe("GPT subsidy snapshot", () => {
     expect(second).toBeDefined();
     if (first === undefined || second === undefined) return;
     const trailingSevenDayApiEquivalentUsd = first.trailingSevenDayApiEquivalentUsd + 25;
-    const monthlyApiEquivalentUsd = trailingSevenDayApiEquivalentUsd * 4.348125;
+    const monthlyApiEquivalentUsd = trailingSevenDayApiEquivalentUsd * 4;
     const summaryApiEquivalentUsd = validGptSubsidySnapshot.periodSummary.apiEquivalentUsd + 50;
     const parsed = parseGptSubsidySnapshot({
       ...validGptSubsidySnapshot,

@@ -26,14 +26,15 @@ const defaultMeasurementPath = path.join(repositoryRoot, "data", "gpt-subsidy-me
 const defaultLedgerPath = path.join(homedir(), ".local", "bin", "aicharts-gpt-subsidy-ledger");
 const PLAN_BASIS_OBSERVED_AT = "2026-08-25T00:00:00Z";
 const PLAN_SOURCE_URL = "https://help.openai.com/en/articles/9793128";
+const CODEX_LIMITS_SOURCE_URL = "https://learn.chatgpt.com/docs/pricing";
 const TOKSCALE_PARSER_SOURCE_URL =
   `https://github.com/junhoyeo/tokscale/blob/${TOKSCALE_COMMIT}/crates/tokscale-core/src/sessions/codex.rs#L98-L214`;
 const TOKSCALE_DEDUPLICATION_SOURCE_URL =
   `https://github.com/junhoyeo/tokscale/blob/${TOKSCALE_COMMIT}/crates/tokscale-core/src/sessions/codex.rs#L518-L675`;
 const METHODOLOGY_FORMULA =
-  "Each observation values every recorded model with its per-model rate from the checked August 25, 2026 AI Charts OpenAI rate manifest, sums seven settled UTC days, multiplies that trailing-seven-day API-retail-equivalent value by 4.348125 weeks per month, and divides by the frozen $200 ChatGPT Pro plan-price unit.";
+  "Each observation values every recorded model with its per-model rate from the checked August 25, 2026 AI Charts OpenAI rate manifest, sums seven settled UTC days, multiplies that trailing-seven-day API-retail-equivalent value by exactly 4 to form a four-week estimate, and divides by the frozen $200 ChatGPT Pro plan-price unit.";
 const METHODOLOGY_DISCLAIMER =
-  "This is an API-retail-equivalent estimate of one user's available local Codex logs on one machine, not OpenAI's internal serving cost or an audited subsidy, and it is not a platform-wide or representative ChatGPT Pro estimate. Codex logs do not retain a durable account ID or billing mode, so API-key or otherwise API-billed usage, multiple accounts, subscriptions, purchased ChatGPT credits, free or reset credits, and temporary promotions cannot be distinguished or excluded. The internal codex-auto-review alias uses the explicit GPT-5.6 Luna proxy rate. Non-token product features and fees absent from the logs are excluded.";
+  "This is an API-retail-equivalent estimate of one user's available local Codex logs on one machine, not OpenAI's internal serving cost or an audited subsidy, and it is not a platform-wide or representative ChatGPT Pro estimate. The published series does not observe whether a weekly quota was exhausted or when it reset; exact ×4 is a normalization convention, not four observed exhausted allocations. Codex logs do not retain a durable account ID or billing mode, so API-key or otherwise API-billed usage, multiple accounts, subscriptions, purchased ChatGPT credits, free or reset credits, and temporary promotions cannot be distinguished or excluded. The internal codex-auto-review alias uses the explicit GPT-5.6 Luna proxy rate. Non-token product features and fees absent from the logs are excluded.";
 const MAX_SCANNED_DAYS = 366;
 const UTC_DAY_MILLISECONDS = 24 * 60 * 60 * 1_000;
 
@@ -738,6 +739,7 @@ function derivePublicData(
       disclaimer: METHODOLOGY_DISCLAIMER,
       sourceUrls: [
         PLAN_SOURCE_URL,
+        CODEX_LIMITS_SOURCE_URL,
         GPT_SUBSIDY_MEASUREMENT_MANIFEST_URL,
         ...pricing.sourceUrls,
         TOKSCALE_PARSER_SOURCE_URL,
