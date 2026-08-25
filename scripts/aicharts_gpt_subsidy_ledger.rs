@@ -235,7 +235,7 @@ impl MeasurementManifest {
             || self.calendar != "UTC"
             || self.rolling_days != 7
             || self.period_summary_days != 31
-            || self.weeks_per_month.to_bits() != 4.348125_f64.to_bits()
+            || self.weeks_per_month.to_bits() != 4_f64.to_bits()
             || self.plan_price_usd != 200
         {
             return Err("checked measurement manifest semantics are invalid".to_string());

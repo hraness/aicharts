@@ -82,6 +82,7 @@ const expectedPricing = {
 };
 const expectedMethodologySourceUrls = [
   "https://help.openai.com/en/articles/9793128",
+  "https://learn.chatgpt.com/docs/pricing",
   "https://github.com/hraness/aicharts/blob/main/data/gpt-subsidy-measurement.json",
   "https://developers.openai.com/api/docs/models/gpt-5.6-luna",
   "https://developers.openai.com/api/docs/models/gpt-5.6-sol",
@@ -124,7 +125,7 @@ function tokens(value: number): { uncachedInput: number; cachedInput: number; ou
 
 function observation(date: string, value = 1, status: "settled" | "live" = "settled"): Observation {
   const weekly = value + 0.25;
-  const monthly = weekly * 4.348125;
+  const monthly = weekly * 4;
   return {
     id: `trailing-7d-${date}`,
     observedAt: `${date}T23:59:59.999Z`,
@@ -320,9 +321,9 @@ describe("globally deduplicated rolling collector", () => {
       proxyModelIds: ["codex-auto-review"],
     });
     expect(data.observations[0]?.monthlyApiEquivalentUsd)
-      .toBe(Number((22.75 * 4.348125).toFixed(12)));
+      .toBe(Number((22.75 * 4).toFixed(12)));
     expect(data.methodology).toMatchObject({
-      weeksPerMonth: 4.348125,
+      weeksPerMonth: 4,
       deduplication: "tokscale-global-event-identity",
       measurement: expectedMeasurement,
     });
@@ -330,7 +331,10 @@ describe("globally deduplicated rolling collector", () => {
       "checked August 25, 2026 AI Charts OpenAI rate manifest",
     );
     expect(data.methodology.formula).not.toContain("current");
+    expect(data.methodology.formula).toContain("multiplies that trailing-seven-day API-retail-equivalent value by exactly 4");
     expect(data.methodology.disclaimer).toContain("one user's available local Codex logs");
+    expect(data.methodology.disclaimer).toContain("does not observe whether a weekly quota was exhausted or when it reset");
+    expect(data.methodology.disclaimer).toContain("not four observed exhausted allocations");
     expect(data.methodology.disclaimer).toContain("API-key or otherwise API-billed usage");
     expect(data.methodology.disclaimer).toContain("purchased ChatGPT credits");
     expect(data.methodology.sourceUrls).toEqual(expectedMethodologySourceUrls);

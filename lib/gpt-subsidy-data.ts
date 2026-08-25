@@ -5,7 +5,7 @@ export const GPT_SUBSIDY_TITLE =
   "Subsidy for ChatGPT Pro 20x subscription" as const;
 
 export const GPT_SUBSIDY_DESCRIPTION =
-  "Daily API-retail-equivalent value of seven complete UTC days from one user's available local Codex logs on one machine, converted to a monthly pace and compared with a $200 ChatGPT Pro plan-price unit.";
+  "Daily API-retail-equivalent value of seven complete UTC days from one user's available local Codex logs on one machine, projected over four weeks and compared with a $200 ChatGPT Pro plan-price unit.";
 
 const UTC_DAY_MILLISECONDS = 24 * 60 * 60 * 1_000;
 
@@ -83,7 +83,7 @@ export const gptSubsidySnapshotSchema = z.object({
   periodSummary: periodSummarySchema,
   methodology: z.object({
     deduplication: z.literal("tokscale-global-event-identity"),
-    weeksPerMonth: z.literal(4.348125),
+    weeksPerMonth: z.literal(4),
     measurement: z.object({
       name: z.literal("AI Charts GPT subsidy measurement manifest"),
       schemaVersion: z.literal(1),
@@ -183,7 +183,7 @@ export const gptSubsidySnapshotSchema = z.object({
     if (!approximatelyEqual(observation.monthlyApiEquivalentUsd, expectedMonthlyUsd, 0.02)) {
       context.addIssue({
         code: "custom",
-        message: "Monthly API-equivalent value does not match the weekly pace",
+        message: "Four-week API-equivalent value does not match the weekly pace",
         path: [...path, "monthlyApiEquivalentUsd"],
       });
     }

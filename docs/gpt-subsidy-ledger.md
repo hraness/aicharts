@@ -37,7 +37,7 @@ The start must be a UTC day boundary. The range can contain at most 366 UTC days
   "deduplication": "tokscale-global-event-identity",
   "measurementBasis": {
     "kind": "aicharts-gpt-subsidy-measurement",
-    "revision": "2026-08-25.1",
+    "revision": "2026-08-25.2",
     "sha256": "64-lowercase-hex-characters",
     "frozenAt": "2026-08-25T00:00:00Z"
   },
@@ -90,6 +90,10 @@ The adapter asks Tokscale for every local Codex session and archived session, th
 
 Tokscale 4.13.0 handles both cases in its Codex parser. It skips a fork child's inherited cumulative baseline, scopes replay identities to the fork parent, and globally collapses equal cumulative-total identities across active and archived files while retaining the child's new totals. Its persistent source cache avoids reparsing unchanged files and incrementally extends growing rollouts. It still deserializes and materializes the full cached corpus, performs global deduplication, and only then applies the requested date range. At the current 1.35 million-message corpus, a warm daily collection takes about eight minutes rather than time proportional only to new work.
 
-The output deliberately has no active-account or quota-window field. Local session files do not carry a durable account identity that can be joined safely to the currently signed-in ChatGPT Pro account, especially across account switches.
+The output deliberately has no active-account or quota-window field. Local session files do not carry a durable account identity that can be joined safely to the currently signed-in ChatGPT Pro account, especially across account switches. Some raw events can contain transient rate-limit snapshots, but they vary by limit ID and reset time and are not a durable historical account ledger. The published series therefore does not claim that a weekly quota was exhausted or identify when it reset. Current remaining limits belong to the signed-in usage dashboard or Codex `/status`, as described in the [official Codex pricing documentation](https://learn.chatgpt.com/docs/pricing).
+
+The public four-week figure is a normalization convention: the API-retail-equivalent value of a trailing seven-day UTC window is multiplied by exactly four, then divided by the frozen $200 plan-price unit. It represents a 28-day pace. It is not four observed quota windows and does not prove that one subscription supplied the measured usage.
+
+The v1 public snapshot retains the field name `monthlyApiEquivalentUsd` for compatibility. Its checked methodology defines that field as this exact four-week estimate, not the average 4.348125-week Gregorian month used by measurement revision `2026-08-25.1`.
 
 For fixture or isolated-home verification, set `AICHARTS_GPT_SUBSIDY_HOME` to an absolute home directory containing `.codex/sessions` and `.codex/archived_sessions`. `TOKSCALE_CONFIG_DIR` can isolate Tokscale's persistent source-message cache. The adapter's integration fixture exercises this exact call path with a parent session, replayed child baseline, genuine child continuation, and an active/archive duplicate, then asserts the globally deduplicated token totals on both cold and warm-cache passes.

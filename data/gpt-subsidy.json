@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "generatedAt": "2026-08-25T17:42:56.000Z",
+  "generatedAt": "2026-08-25T20:39:52.000Z",
   "observations": [
     {
       "id": "trailing-7d-2026-07-25",
@@ -14,8 +14,8 @@
         "total": 34397408631
       },
       "trailingSevenDayApiEquivalentUsd": 19245.221075149995,
-      "monthlyApiEquivalentUsd": 83680.62688738656,
-      "planPriceMultiple": 418.403134436933,
+      "monthlyApiEquivalentUsd": 76980.88430059998,
+      "planPriceMultiple": 384.904421503,
       "status": "settled"
     },
     {
@@ -30,8 +30,8 @@
         "total": 34992503892
       },
       "trailingSevenDayApiEquivalentUsd": 19424.76989354998,
-      "monthlyApiEquivalentUsd": 84461.327593392,
-      "planPriceMultiple": 422.30663796696,
+      "monthlyApiEquivalentUsd": 77699.07957419992,
+      "planPriceMultiple": 388.495397871,
       "status": "settled"
     },
     {
@@ -46,8 +46,8 @@
         "total": 33329762512
       },
       "trailingSevenDayApiEquivalentUsd": 18440.820114349972,
-      "monthlyApiEquivalentUsd": 80182.99095970797,
-      "planPriceMultiple": 400.91495479854,
+      "monthlyApiEquivalentUsd": 73763.28045739989,
+      "planPriceMultiple": 368.816402286999,
       "status": "settled"
     },
     {
@@ -62,8 +62,8 @@
         "total": 29344730794
       },
       "trailingSevenDayApiEquivalentUsd": 16136.106513549994,
-      "monthlyApiEquivalentUsd": 70161.80813422956,
-      "planPriceMultiple": 350.809040671148,
+      "monthlyApiEquivalentUsd": 64544.426054199976,
+      "planPriceMultiple": 322.722130271,
       "status": "settled"
     },
     {
@@ -78,8 +78,8 @@
         "total": 25116925718
       },
       "trailingSevenDayApiEquivalentUsd": 13708.38079507001,
-      "monthlyApiEquivalentUsd": 59605.753244563784,
-      "planPriceMultiple": 298.028766222819,
+      "monthlyApiEquivalentUsd": 54833.52318028004,
+      "planPriceMultiple": 274.1676159014,
       "status": "settled"
     },
     {
@@ -94,8 +94,8 @@
         "total": 24271558141
       },
       "trailingSevenDayApiEquivalentUsd": 13143.779998190013,
-      "monthlyApiEquivalentUsd": 57150.798404629946,
-      "planPriceMultiple": 285.75399202315,
+      "monthlyApiEquivalentUsd": 52575.119992760054,
+      "planPriceMultiple": 262.8755999638,
       "status": "settled"
     },
     {
@@ -110,8 +110,8 @@
         "total": 21105966835
       },
       "trailingSevenDayApiEquivalentUsd": 11280.145201800024,
-      "monthlyApiEquivalentUsd": 49047.481355576725,
-      "planPriceMultiple": 245.237406777884,
+      "monthlyApiEquivalentUsd": 45120.580807200095,
+      "planPriceMultiple": 225.602904036,
       "status": "settled"
     },
     {
@@ -126,8 +126,8 @@
         "total": 17106661655
       },
       "trailingSevenDayApiEquivalentUsd": 9010.22437664001,
-      "monthlyApiEquivalentUsd": 39177.581867677836,
-      "planPriceMultiple": 195.887909338389,
+      "monthlyApiEquivalentUsd": 36040.89750656004,
+      "planPriceMultiple": 180.2044875328,
       "status": "settled"
     },
     {
@@ -142,8 +142,8 @@
         "total": 15503473993
       },
       "trailingSevenDayApiEquivalentUsd": 8113.92786364002,
-      "monthlyApiEquivalentUsd": 35280.37259208976,
-      "planPriceMultiple": 176.401862960449,
+      "monthlyApiEquivalentUsd": 32455.71145456008,
+      "planPriceMultiple": 162.2785572728,
       "status": "settled"
     },
     {
@@ -158,8 +158,8 @@
         "total": 18083444911
       },
       "trailingSevenDayApiEquivalentUsd": 9502.581736120026,
-      "monthlyApiEquivalentUsd": 41318.41321136688,
-      "planPriceMultiple": 206.592066056834,
+      "monthlyApiEquivalentUsd": 38010.326944480104,
+      "planPriceMultiple": 190.051634722401,
       "status": "settled"
     },
     {
@@ -174,8 +174,8 @@
         "total": 20169592239
       },
       "trailingSevenDayApiEquivalentUsd": 10612.250998760011,
-      "monthlyApiEquivalentUsd": 46143.39387398337,
-      "planPriceMultiple": 230.716969369917,
+      "monthlyApiEquivalentUsd": 42449.003995040046,
+      "planPriceMultiple": 212.2450199752,
       "status": "settled"
     },
     {
@@ -190,8 +190,8 @@
         "total": 25351417495
       },
       "trailingSevenDayApiEquivalentUsd": 13231.958998000007,
-      "monthlyApiEquivalentUsd": 57534.211718178776,
-      "planPriceMultiple": 287.671058590894,
+      "monthlyApiEquivalentUsd": 52927.83599200003,
+      "planPriceMultiple": 264.63917996,
       "status": "settled"
     },
     {
@@ -206,8 +206,8 @@
         "total": 27986923647
       },
       "trailingSevenDayApiEquivalentUsd": 14298.204000600015,
-      "monthlyApiEquivalentUsd": 62170.37827010894,
-      "planPriceMultiple": 310.851891350545,
+      "monthlyApiEquivalentUsd": 57192.81600240006,
+      "planPriceMultiple": 285.964080012,
       "status": "settled"
     },
     {
@@ -222,8 +222,8 @@
         "total": 29107400446
       },
       "trailingSevenDayApiEquivalentUsd": 14739.337926080021,
-      "monthlyApiEquivalentUsd": 64088.48371983669,
-      "planPriceMultiple": 320.442418599183,
+      "monthlyApiEquivalentUsd": 58957.351704320085,
+      "planPriceMultiple": 294.7867585216,
       "status": "settled"
     },
     {
@@ -238,8 +238,8 @@
         "total": 28324240459
       },
       "trailingSevenDayApiEquivalentUsd": 14269.633971600011,
-      "monthlyApiEquivalentUsd": 62046.15221276329,
-      "planPriceMultiple": 310.230761063816,
+      "monthlyApiEquivalentUsd": 57078.535886400045,
+      "planPriceMultiple": 285.392679432,
       "status": "settled"
     },
     {
@@ -254,8 +254,8 @@
         "total": 30644483795
       },
       "trailingSevenDayApiEquivalentUsd": 15269.511154200009,
-      "monthlyApiEquivalentUsd": 66393.74318735591,
-      "planPriceMultiple": 331.96871593678,
+      "monthlyApiEquivalentUsd": 61078.044616800034,
+      "planPriceMultiple": 305.390223084,
       "status": "settled"
     },
     {
@@ -270,8 +270,8 @@
         "total": 30159122706
       },
       "trailingSevenDayApiEquivalentUsd": 14875.913291240015,
-      "monthlyApiEquivalentUsd": 64682.330479472985,
-      "planPriceMultiple": 323.411652397365,
+      "monthlyApiEquivalentUsd": 59503.65316496006,
+      "planPriceMultiple": 297.5182658248,
       "status": "settled"
     },
     {
@@ -286,8 +286,8 @@
         "total": 32591785711
       },
       "trailingSevenDayApiEquivalentUsd": 15907.100957640016,
-      "monthlyApiEquivalentUsd": 69166.06335143848,
-      "planPriceMultiple": 345.830316757192,
+      "monthlyApiEquivalentUsd": 63628.40383056006,
+      "planPriceMultiple": 318.1420191528,
       "status": "settled"
     },
     {
@@ -302,8 +302,8 @@
         "total": 32375981217
       },
       "trailingSevenDayApiEquivalentUsd": 15519.910930800053,
-      "monthlyApiEquivalentUsd": 67482.51271598498,
-      "planPriceMultiple": 337.412563579925,
+      "monthlyApiEquivalentUsd": 62079.64372320021,
+      "planPriceMultiple": 310.398218616001,
       "status": "settled"
     },
     {
@@ -318,8 +318,8 @@
         "total": 34599741924
       },
       "trailingSevenDayApiEquivalentUsd": 16059.710642040029,
-      "monthlyApiEquivalentUsd": 69829.6293354203,
-      "planPriceMultiple": 349.148146677101,
+      "monthlyApiEquivalentUsd": 64238.842568160115,
+      "planPriceMultiple": 321.194212840801,
       "status": "settled"
     },
     {
@@ -334,8 +334,8 @@
         "total": 35200351011
       },
       "trailingSevenDayApiEquivalentUsd": 15898.067449920027,
-      "monthlyApiEquivalentUsd": 69126.78453068351,
-      "planPriceMultiple": 345.633922653418,
+      "monthlyApiEquivalentUsd": 63592.26979968011,
+      "planPriceMultiple": 317.961348998401,
       "status": "settled"
     },
     {
@@ -350,8 +350,8 @@
         "total": 36891887746
       },
       "trailingSevenDayApiEquivalentUsd": 16731.16453968002,
-      "monthlyApiEquivalentUsd": 72749.19481409618,
-      "planPriceMultiple": 363.745974070481,
+      "monthlyApiEquivalentUsd": 66924.65815872008,
+      "planPriceMultiple": 334.6232907936,
       "status": "settled"
     },
     {
@@ -366,8 +366,8 @@
         "total": 37866332240
       },
       "trailingSevenDayApiEquivalentUsd": 17193.821535720028,
-      "monthlyApiEquivalentUsd": 74760.88526500264,
-      "planPriceMultiple": 373.804426325013,
+      "monthlyApiEquivalentUsd": 68775.28614288011,
+      "planPriceMultiple": 343.876430714401,
       "status": "settled"
     },
     {
@@ -382,8 +382,8 @@
         "total": 38404502480
       },
       "trailingSevenDayApiEquivalentUsd": 17460.101840920033,
-      "monthlyApiEquivalentUsd": 75918.70531705041,
-      "planPriceMultiple": 379.593526585252,
+      "monthlyApiEquivalentUsd": 69840.40736368013,
+      "planPriceMultiple": 349.202036818401,
       "status": "settled"
     },
     {
@@ -398,8 +398,8 @@
         "total": 38145544687
       },
       "trailingSevenDayApiEquivalentUsd": 17308.880920200056,
-      "monthlyApiEquivalentUsd": 75261.17785114486,
-      "planPriceMultiple": 376.305889255724,
+      "monthlyApiEquivalentUsd": 69235.52368080022,
+      "planPriceMultiple": 346.177618404001,
       "status": "settled"
     },
     {
@@ -414,8 +414,8 @@
         "total": 36666475246
       },
       "trailingSevenDayApiEquivalentUsd": 16715.877910800034,
-      "monthlyApiEquivalentUsd": 72682.7266408974,
-      "planPriceMultiple": 363.413633204487,
+      "monthlyApiEquivalentUsd": 66863.51164320014,
+      "planPriceMultiple": 334.317558216001,
       "status": "settled"
     },
     {
@@ -430,8 +430,8 @@
         "total": 29732878439
       },
       "trailingSevenDayApiEquivalentUsd": 13840.341512520037,
-      "monthlyApiEquivalentUsd": 60179.534939126184,
-      "planPriceMultiple": 300.897674695631,
+      "monthlyApiEquivalentUsd": 55361.36605008015,
+      "planPriceMultiple": 276.806830250401,
       "status": "settled"
     },
     {
@@ -446,8 +446,8 @@
         "total": 29130783009
       },
       "trailingSevenDayApiEquivalentUsd": 14075.417912320057,
-      "monthlyApiEquivalentUsd": 61201.67651000664,
-      "planPriceMultiple": 306.008382550033,
+      "monthlyApiEquivalentUsd": 56301.67164928023,
+      "planPriceMultiple": 281.508358246401,
       "status": "settled"
     },
     {
@@ -462,8 +462,8 @@
         "total": 31946612781
       },
       "trailingSevenDayApiEquivalentUsd": 15466.030597760075,
-      "monthlyApiEquivalentUsd": 67248.23429288552,
-      "planPriceMultiple": 336.241171464428,
+      "monthlyApiEquivalentUsd": 61864.1223910403,
+      "planPriceMultiple": 309.320611955202,
       "status": "settled"
     },
     {
@@ -478,8 +478,8 @@
         "total": 30761743397
       },
       "trailingSevenDayApiEquivalentUsd": 15066.53860036006,
-      "monthlyApiEquivalentUsd": 65511.193151690575,
-      "planPriceMultiple": 327.555965758453,
+      "monthlyApiEquivalentUsd": 60266.15440144024,
+      "planPriceMultiple": 301.330772007201,
       "status": "settled"
     },
     {
@@ -494,8 +494,8 @@
         "total": 31136829923
       },
       "trailingSevenDayApiEquivalentUsd": 15353.192586680037,
-      "monthlyApiEquivalentUsd": 66757.60051595813,
-      "planPriceMultiple": 333.788002579791,
+      "monthlyApiEquivalentUsd": 61412.77034672015,
+      "planPriceMultiple": 307.063851733601,
       "status": "settled"
     }
   ],
@@ -527,21 +527,22 @@
     }
   },
   "methodology": {
-    "weeksPerMonth": 4.348125,
+    "weeksPerMonth": 4,
     "deduplication": "tokscale-global-event-identity",
     "measurement": {
       "name": "AI Charts GPT subsidy measurement manifest",
       "schemaVersion": 1,
       "kind": "aicharts-gpt-subsidy-measurement",
-      "revision": "2026-08-25.1",
-      "sha256": "8f2bb6b16e04e2b8054b8adefc06d4c29eac4d434df005fd9df098ce0de1086a",
+      "revision": "2026-08-25.2",
+      "sha256": "7f2396ff1cc6c0d26acb3d7f7dc43f988b70d9cf0df5d65461257157b8dee34b",
       "frozenAt": "2026-08-25T00:00:00Z",
       "sourceUrl": "https://github.com/hraness/aicharts/blob/main/data/gpt-subsidy-measurement.json"
     },
-    "formula": "Each observation values every recorded model with its per-model rate from the checked August 25, 2026 AI Charts OpenAI rate manifest, sums seven settled UTC days, multiplies that trailing-seven-day API-retail-equivalent value by 4.348125 weeks per month, and divides by the frozen $200 ChatGPT Pro plan-price unit.",
-    "disclaimer": "This is an API-retail-equivalent estimate of one user's available local Codex logs on one machine, not OpenAI's internal serving cost or an audited subsidy, and it is not a platform-wide or representative ChatGPT Pro estimate. Codex logs do not retain a durable account ID or billing mode, so API-key or otherwise API-billed usage, multiple accounts, subscriptions, purchased ChatGPT credits, free or reset credits, and temporary promotions cannot be distinguished or excluded. The internal codex-auto-review alias uses the explicit GPT-5.6 Luna proxy rate. Non-token product features and fees absent from the logs are excluded.",
+    "formula": "Each observation values every recorded model with its per-model rate from the checked August 25, 2026 AI Charts OpenAI rate manifest, sums seven settled UTC days, multiplies that trailing-seven-day API-retail-equivalent value by exactly 4 to form a four-week estimate, and divides by the frozen $200 ChatGPT Pro plan-price unit.",
+    "disclaimer": "This is an API-retail-equivalent estimate of one user's available local Codex logs on one machine, not OpenAI's internal serving cost or an audited subsidy, and it is not a platform-wide or representative ChatGPT Pro estimate. The published series does not observe whether a weekly quota was exhausted or when it reset; exact ×4 is a normalization convention, not four observed exhausted allocations. Codex logs do not retain a durable account ID or billing mode, so API-key or otherwise API-billed usage, multiple accounts, subscriptions, purchased ChatGPT credits, free or reset credits, and temporary promotions cannot be distinguished or excluded. The internal codex-auto-review alias uses the explicit GPT-5.6 Luna proxy rate. Non-token product features and fees absent from the logs are excluded.",
     "sourceUrls": [
       "https://help.openai.com/en/articles/9793128",
+      "https://learn.chatgpt.com/docs/pricing",
       "https://github.com/hraness/aicharts/blob/main/data/gpt-subsidy-measurement.json",
       "https://developers.openai.com/api/docs/models/gpt-5.4",
       "https://developers.openai.com/api/docs/models/gpt-5.4-mini",

@@ -68,6 +68,14 @@ describe("GPT subsidy page components", () => {
     expect(markup).toContain(
       "daily observations. The line shows the",
     );
+    expect(markup).toContain('viewBox="0 0 960 340"');
+    expect(markup).toContain('class="gpt-subsidy-chart__dates"');
+    expect(markup).toContain('gpt-subsidy-chart__point--latest');
+    expect(markup).toContain("Historical points are subdued");
+    expect(markup).toContain("<details");
+    expect(markup).toContain(
+      `View all ${snapshot.observations.length} observations`,
+    );
     expect(markup).toContain("<table");
     expect(markup).toContain("<caption>");
     expect(markup).toContain('scope="row"');
@@ -82,7 +90,7 @@ describe("GPT subsidy page components", () => {
     }
   });
 
-  test("renders the checked history, calculation, and limits in static HTML", () => {
+  test("renders the checked history, visible quota boundary, and details in static HTML", () => {
     const markup = renderToStaticMarkup(createElement(GptSubsidyPage));
 
     expect(markup).toContain("<h1>" + GPT_SUBSIDY_TITLE + "</h1>");
@@ -90,19 +98,36 @@ describe("GPT subsidy page components", () => {
     expect(markup).toContain('id="latest-subsidy-observation"');
     expect(markup).toContain('id="subsidy-history"');
     expect(markup).not.toContain('id="allowance-estimate"');
-    expect(markup).toContain("No per-refill projection is published");
     expect(markup).toContain('id="calculation"');
     expect(markup).toContain('id="interpretation"');
     expect(markup).toContain("API-retail-equivalent value");
-    expect(markup).toContain("One user&#x27;s available local logs on one machine");
+    expect(markup).toContain("one user&#x27;s available local logs on one machine");
     expect(markup).toContain("not a platform-wide or representative ChatGPT Pro estimate");
     expect(markup).toContain("API-key or otherwise API-billed usage");
     expect(markup).toContain("purchased ChatGPT credits");
     expect(markup).toContain("scheduled collector&#x27;s own small Codex token use");
-    expect(markup).toContain("Monthly plan-price multiple");
-    expect(markup).toContain("model-specific API-price estimate");
+    expect(markup).toContain("Four-week API-equivalent multiple");
+    expect(markup).toContain(
+      `× ${snapshot.methodology.weeksPerMonth} ÷`,
+    );
+    expect(markup).toContain("Weekly quota status is not observed");
+    expect(markup).toContain(
+      "does not track weekly quota exhaustion or reset windows",
+    );
+    expect(markup).toContain(
+      "cannot be durably attributed to one subscription or billing source",
+    );
+    expect(markup).toContain(
+      "The ×4 is a fixed 28-day convention, not four observed exhausted allocations",
+    );
+    expect(markup).toContain("prove that a weekly limit was exhausted");
+    expect(markup).toContain("model-specific API-price estimates");
     expect(markup).toContain("pins the parser, adapter, rolling-window math");
     expect(markup).toContain("An unknown recorded model blocks publication");
+    expect(markup).toContain("Measurement details, limits, and sources");
+    expect(markup).toContain(
+      `View all ${snapshot.observations.length} observations`,
+    );
     expect(markup).toContain(snapshot.pricing.manifest.sourceUrl);
     expect(markup).toContain(snapshot.methodology.measurement.sourceUrl);
     expect(markup).toContain(snapshot.generatedAt);

@@ -11,6 +11,8 @@ The local publisher reads the aggregate Codex ledger, updates the checked GPT su
 
 The token-ledger adapter and price snapshot are documented separately in `docs/gpt-subsidy-ledger.md`.
 
+The four-week estimate uses the trailing-seven-day API-retail value × 4 ÷ $200. It does not use weekly quota exhaustion as an input. The publisher has no durable account or quota-window identity and fails closed when its installed ledger adapter carries a different measurement revision. After any reviewed measurement-manifest change, reinstall the adapter with `./scripts/install-gpt-subsidy-ledger.sh` before the next scheduled publication.
+
 ## Install
 
 Run this once from a reviewed AI Charts checkout after the publisher is on `main`:
