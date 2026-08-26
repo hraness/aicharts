@@ -132,6 +132,11 @@ export function homeDocumentModel(
         note: "Dan Luu’s FRE holdout and the checked snapshot’s named-suite scores, kept distinct from the open-models comparison.",
       },
       {
+        href: blogArticlePath("coding-agent-scores-still-need-expertise"),
+        label: "Coding-agent scores still need expertise",
+        note: "Lars Faye and Sean Goedecke on why a named-suite score still needs a person who can specify and audit the work.",
+      },
+      {
         href: CODING_AGENT_DATASET_DOWNLOAD_PATH,
         label: "JSON snapshot",
         note: "The same versioned records the production chart uses.",
@@ -216,7 +221,7 @@ function datasetMarkdown(snapshot: CodingAgentSnapshot): string {
     "",
     codingAgentLeadersMarkdownTable(leaders),
     "",
-    `For AA Index versus mean API cost see [AA Index versus cost for coding agents](${absolute(blogArticlePath("aa-index-cost-coding-agents"))}). For whether classified open-weight rows sit with those leaders see [open models on coding-agent benchmarks](${absolute(blogArticlePath("open-models-coding-agent-benchmarks"))}). For why a public-suite high score still needs a holdout see [why a coding-agent high score still needs a holdout](${absolute(blogArticlePath("coding-agent-score-holdouts"))}).`,
+    `For AA Index versus mean API cost see [AA Index versus cost for coding agents](${absolute(blogArticlePath("aa-index-cost-coding-agents"))}). For whether classified open-weight rows sit with those leaders see [open models on coding-agent benchmarks](${absolute(blogArticlePath("open-models-coding-agent-benchmarks"))}). For why a public-suite high score still needs a holdout see [why a coding-agent high score still needs a holdout](${absolute(blogArticlePath("coding-agent-score-holdouts"))}). For why that number still needs a person who can specify and audit the work see [coding-agent scores still need expertise](${absolute(blogArticlePath("coding-agent-scores-still-need-expertise"))}).`,
     "",
     "## All configurations",
     "",
