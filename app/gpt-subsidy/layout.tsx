@@ -1,4 +1,5 @@
 import { HranessBrand, SkipLink, ThemeMenuButton } from "@/components/ui";
+import { chatGptSubsidyChartLabel } from "@/app/site";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
@@ -7,7 +8,7 @@ export default function GptSubsidyLayout({
 }: Readonly<{ children: ReactNode }>) {
   return (
     <div className="plain-site plain-publication aicharts-gpt-subsidy">
-      <SkipLink href="#gpt-subsidy-content">Skip to subsidy history</SkipLink>
+      <SkipLink href="#gpt-subsidy-content">Skip to subsidy chart</SkipLink>
       <header className="plain-header">
         <div className="plain-header__inner">
           <Link className="plain-wordmark" href="/">
@@ -15,7 +16,7 @@ export default function GptSubsidyLayout({
           </Link>
           <div className="plain-header__actions">
             <nav aria-label="GPT subsidy navigation" className="plain-nav">
-              <Link aria-current="page" href="/gpt-subsidy">Subsidy</Link>
+              <Link aria-current="page" href="/gpt-subsidy">{chatGptSubsidyChartLabel}</Link>
               <Link href="/">Chart</Link>
               <Link href="/data">Data</Link>
               <Link href="/blog">Blog</Link>
@@ -28,7 +29,7 @@ export default function GptSubsidyLayout({
       <footer className="plain-footer">
         <p>aicharts.io</p>
         <div className="plain-footer__links">
-          <Link href="/gpt-subsidy">Subsidy</Link>
+          <Link href="/gpt-subsidy">{chatGptSubsidyChartLabel}</Link>
           <Link href="/">Chart</Link>
           <Link href="/data">Data</Link>
           <Link href="/blog">Blog</Link>

@@ -114,12 +114,10 @@ export default function GptSubsidyPage() {
       />
 
       <header className="gpt-subsidy-hero plain-publication__article-header plain-publication__shell">
-        <h1>{snapshot.title}</h1>
-        <p className="plain-publication__article-dek">
-          {GPT_SUBSIDY_DESCRIPTION}
-        </p>
+        <h1>ChatGPT Subsidy Chart</h1>
         <p className="plain-publication__article-meta">
-          <span>{snapshot.observations.length} settled observations · </span>
+          <span>{snapshot.observations.length} observations</span>
+          <span>·</span>
           <time dateTime={first.observedAt}>
             {formatSubsidyDate(first.observedAt)}
           </time>
@@ -127,7 +125,7 @@ export default function GptSubsidyPage() {
           <time dateTime={latest.observedAt}>
             {formatSubsidyDate(latest.observedAt)}
           </time>
-          <span>· Data generated </span>
+          <span>· Updated</span>
           <time dateTime={snapshot.generatedAt}>
             {formatSubsidyDateTime(snapshot.generatedAt)}
           </time>
@@ -135,79 +133,66 @@ export default function GptSubsidyPage() {
       </header>
 
       <section
-        aria-labelledby="latest-subsidy-observation"
+        aria-label="Current API-equivalent values"
         className="gpt-subsidy-summary plain-publication__shell"
       >
-        <div className="gpt-subsidy-summary__primary">
-          <h2 id="latest-subsidy-observation">Trailing 7-day API-equivalent value</h2>
+        <div className="gpt-subsidy-summary__metric gpt-subsidy-summary__primary">
+          <h2>Trailing 7 days</h2>
           <p className="gpt-subsidy-summary__value">
             {formatSubsidyUsd(latest.trailingSevenDayApiEquivalentUsd)}
           </p>
-          <p className="gpt-subsidy-summary__equation">
-            Seven complete UTC days · model-specific API rates
-          </p>
         </div>
-        <div className="gpt-subsidy-summary__context">
-          <p>
-            <strong>{formatSubsidyUsd(snapshot.periodSummary.apiEquivalentUsd)}</strong>
-            <span> measured trailing {snapshot.periodSummary.days}-day API-equivalent value</span>
+        <div className="gpt-subsidy-summary__metric gpt-subsidy-summary__context">
+          <h2>Trailing {snapshot.periodSummary.days} days</h2>
+          <p className="gpt-subsidy-summary__value">
+            {formatSubsidyUsd(snapshot.periodSummary.apiEquivalentUsd)}
           </p>
           <p className="gpt-subsidy-summary__period">
-            From{" "}
             <time dateTime={snapshot.periodSummary.startedAt}>
               {formatSubsidyDate(snapshot.periodSummary.startedAt)}
             </time>
-            {" to "}
+            {" – "}
             <time dateTime={snapshot.periodSummary.endedAt}>
               {formatSubsidyDate(snapshot.periodSummary.endedAt)}
             </time>
           </p>
-          <p className="gpt-subsidy-summary__scope">
-            <strong>Subscription-adjusted multiple unavailable.</strong>{" "}
-            Historical logs span account switches without durable account
-            attribution, so dividing this usage by one $200 subscription would
-            overstate the result.
-          </p>
         </div>
       </section>
 
       <section
-        aria-labelledby="subsidy-history"
+        aria-label="Trailing seven-day API-equivalent value history"
         className="gpt-subsidy-history plain-publication__shell"
       >
-        <div className="gpt-subsidy-section-heading">
-          <h2 id="subsidy-history">History</h2>
-          <p>
-            Each point is the preceding seven complete UTC days, priced at
-            model-specific API rates.
-          </p>
-        </div>
         <GptSubsidyChart snapshot={snapshot} />
       </section>
 
       <section
-        aria-labelledby="calculation"
+        aria-label="About the subsidy chart"
         className="gpt-subsidy-method plain-publication__shell"
       >
-        <div className="gpt-subsidy-method__summary">
-          <h2 id="calculation">Calculation</h2>
-          <p>
-            Available local Codex task logs, including child agents, are
-            deduplicated into daily token buckets and repriced with
-            model-specific API-price estimates from the checked manifest. Each
-            point sums seven settled days. No monthly projection or one-plan
-            normalization is applied.
-          </p>
-          <p className="gpt-subsidy-method__boundary">
-            The line is measured local usage. It is not an allowance ledger or
-            a per-subscription subsidy multiple.
-          </p>
-        </div>
-
         <details className="gpt-subsidy-disclosure gpt-subsidy-method__details">
-          <summary>Measurement details, limits, and sources</summary>
+          <summary>About this chart</summary>
           <div className="gpt-subsidy-disclosure__body">
             <article className="plain-publication__article-body">
+              <h2 id="calculation">Calculation</h2>
+              <p>{GPT_SUBSIDY_DESCRIPTION}</p>
+              <p>
+                Available local Codex task logs, including child agents, are
+                deduplicated into daily token buckets and repriced with
+                model-specific API-price estimates from the checked manifest.
+                Each point sums seven settled days. No monthly projection or
+                one-plan normalization is applied.
+              </p>
+              <p className="gpt-subsidy-method__boundary">
+                The line is measured local usage. It is not an allowance ledger
+                or a per-subscription subsidy multiple.
+              </p>
+              <p className="gpt-subsidy-summary__scope">
+                <strong>Subscription-adjusted multiple unavailable.</strong>{" "}
+                Historical logs span account switches without durable account
+                attribution, so dividing this usage by one $200 subscription
+                would overstate the result.
+              </p>
               <p>
                 Cached input is a subset of input and reasoning tokens are a
                 subset of output, so neither is counted twice. The pricing
@@ -226,6 +211,12 @@ export default function GptSubsidyPage() {
                 recomputed before publication.
               </p>
               <p>{snapshot.methodology.disclaimer}</p>
+
+              <p>
+                The dataset title is <cite>{snapshot.title}</cite>. Its “20x”
+                describes the advertised Pro usage tier, not a multiple
+                calculated by this chart.
+              </p>
 
               <h3 id="interpretation">Limits</h3>
               <ul>
@@ -257,10 +248,6 @@ export default function GptSubsidyPage() {
                   non-token product operations are excluded. The internal{" "}
                   <code>codex-auto-review</code> alias uses a manifest proxy
                   estimate rather than a published first-party API rate.
-                </li>
-                <li>
-                  The title&apos;s “20x” is the advertised Pro usage tier, not this
-                  chart&apos;s calculated API-equivalent multiple.
                 </li>
               </ul>
             </article>

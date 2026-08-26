@@ -50,6 +50,7 @@ describe("GPT subsidy page components", () => {
     expect(markup).toContain('href="#gpt-subsidy-content"');
     expect(markup).toContain('aria-label="GPT subsidy navigation"');
     expect(markup).toContain('aria-current="page" href="/gpt-subsidy"');
+    expect(markup).toContain('href="/gpt-subsidy">ChatGPT Subsidy Chart</a>');
     expect(markup.match(/data-presentation="menu"/gu)).toHaveLength(1);
     const navigationEnd = markup.indexOf("</nav>");
     const appearance = markup.indexOf('data-presentation="menu"');
@@ -69,10 +70,15 @@ describe("GPT subsidy page components", () => {
     expect(markup).toContain(
       "daily observations. The line shows the",
     );
-    expect(markup).toContain('viewBox="0 0 960 340"');
+    expect(markup).toContain('viewBox="0 0 720 300"');
     expect(markup).toContain('class="gpt-subsidy-chart__dates"');
     expect(markup).toContain('gpt-subsidy-chart__point--latest');
     expect(markup).toContain("Historical points are subdued");
+    expect(markup).toContain('text-anchor="start"');
+    expect(markup).toContain('text-anchor="end"');
+    expect(markup).toMatch(/\$[0-9.]+k/u);
+    expect(markup).not.toContain("gpt-subsidy-chart__axis-title");
+    expect(markup).not.toContain("Scroll horizontally");
     expect(markup).toContain("<details");
     expect(markup).toContain(
       `View all ${snapshot.observations.length} observations`,
@@ -81,7 +87,7 @@ describe("GPT subsidy page components", () => {
     expect(markup).toContain("<caption>");
     expect(markup).toContain('scope="row"');
     expect(markup).not.toContain("data-status=");
-    expect(markup).toContain("Each point covers seven complete UTC days");
+    expect(markup).toContain("Seven complete UTC days per point");
 
     for (const observation of snapshot.observations) {
       expect(markup).toContain(observation.observedAt);
@@ -91,13 +97,14 @@ describe("GPT subsidy page components", () => {
     }
   });
 
-  test("renders the checked history, visible quota boundary, and details in static HTML", () => {
+  test("leads with the chart and metrics while keeping methodology in static HTML", () => {
     const markup = renderToStaticMarkup(createElement(GptSubsidyPage));
 
-    expect(markup).toContain("<h1>" + GPT_SUBSIDY_TITLE + "</h1>");
+    expect(markup).toContain("<h1>ChatGPT Subsidy Chart</h1>");
     expect(markup).toContain(GPT_SUBSIDY_DESCRIPTION);
-    expect(markup).toContain('id="latest-subsidy-observation"');
-    expect(markup).toContain('id="subsidy-history"');
+    expect(markup).toContain('aria-label="Current API-equivalent values"');
+    expect(markup).toContain("Trailing 7 days");
+    expect(markup).toContain(`Trailing ${snapshot.periodSummary.days} days`);
     expect(markup).not.toContain('id="allowance-estimate"');
     expect(markup).toContain('id="calculation"');
     expect(markup).toContain('id="interpretation"');
@@ -107,7 +114,7 @@ describe("GPT subsidy page components", () => {
     expect(markup).toContain("API-key or otherwise API-billed usage");
     expect(markup).toContain("purchased ChatGPT credits");
     expect(markup).toContain("scheduled collector&#x27;s own small Codex token use");
-    expect(markup).toContain("Trailing 7-day API-equivalent value");
+    expect(markup).toContain("Trailing-seven-day API-retail-equivalent value");
     expect(markup).toContain("Subscription-adjusted multiple unavailable");
     expect(markup).toContain(
       "No monthly projection or one-plan normalization is applied",
@@ -119,7 +126,7 @@ describe("GPT subsidy page components", () => {
     expect(markup).toContain("model-specific API-price estimates");
     expect(markup).toContain("pins the parser, adapter, rolling-window math");
     expect(markup).toContain("An unknown recorded model blocks publication");
-    expect(markup).toContain("Measurement details, limits, and sources");
+    expect(markup).toContain("<summary>About this chart</summary>");
     expect(markup).toContain(
       `View all ${snapshot.observations.length} observations`,
     );
@@ -133,6 +140,13 @@ describe("GPT subsidy page components", () => {
       + snapshot.observations.at(-1)!.periodEndsAt,
     );
     expect(markup).toContain("application/ld+json");
+
+    const summaryIndex = markup.indexOf('class="gpt-subsidy-summary');
+    const chartIndex = markup.indexOf('class="gpt-subsidy-history');
+    const methodologyIndex = markup.indexOf('class="gpt-subsidy-method');
+    expect(summaryIndex).toBeGreaterThan(-1);
+    expect(chartIndex).toBeGreaterThan(summaryIndex);
+    expect(methodologyIndex).toBeGreaterThan(chartIndex);
 
     for (const observation of snapshot.observations) {
       expect(markup).toContain(observation.observedAt);

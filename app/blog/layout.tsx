@@ -1,4 +1,5 @@
 import { HranessBrand, SkipLink, ThemeMenuButton } from "@/components/ui";
+import { chatGptSubsidyChartLabel } from "@/app/site";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
@@ -17,7 +18,7 @@ export default function BlogLayout({
             <nav aria-label="Blog navigation" className="plain-nav">
               <Link href="/blog">Blog</Link>
               <Link href="/data">Data</Link>
-              <Link href="/gpt-subsidy">Subsidy</Link>
+              <Link href="/gpt-subsidy">{chatGptSubsidyChartLabel}</Link>
               <Link href="/">Chart</Link>
             </nav>
             <ThemeMenuButton aria-label="Blog appearance" />
@@ -30,7 +31,7 @@ export default function BlogLayout({
         <div className="plain-footer__links">
           <Link href="/blog">Blog</Link>
           <Link href="/data">Data</Link>
-          <Link href="/gpt-subsidy">Subsidy</Link>
+          <Link href="/gpt-subsidy">{chatGptSubsidyChartLabel}</Link>
           <Link href="/">Chart</Link>
           <HranessBrand />
         </div>

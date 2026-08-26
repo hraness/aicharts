@@ -22,6 +22,7 @@ export const searchSite = {
 } as const;
 
 export const homeHeading = "AI model and agent comparison charts";
+export const chatGptSubsidyChartLabel = "ChatGPT Subsidy Chart";
 
 export const notFoundSearchSite = {
   ...searchSite,
@@ -31,7 +32,7 @@ export const notFoundSearchSite = {
 
 export const notFoundRecoveryLinks = [
   { href: "/", label: "Comparison chart" },
-  { href: "/gpt-subsidy", label: "GPT subsidy history" },
+  { href: "/gpt-subsidy", label: chatGptSubsidyChartLabel },
   { href: "/data", label: "Dataset" },
   { href: "/blog", label: "Benchmark analysis" },
   { href: "/llms.txt", label: "Site guide" },

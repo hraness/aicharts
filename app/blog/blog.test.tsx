@@ -88,6 +88,9 @@ describe("AI Charts benchmark notes", () => {
     expect(markup.slice(markup.indexOf('<footer class="plain-footer"')))
       .not.toContain("hraness-design-theme-toggle");
     expect(markup).toContain('aria-label="hraness"');
+    expect(markup).toContain('class="hraness-ra-mark"');
+    expect(markup).toContain('viewBox="0 0 512 512"');
+    expect(markup).toContain('class="hraness-brand__name">hraness</span>');
   });
 
   test("publishes substantial complementary articles", () => {
