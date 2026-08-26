@@ -42,6 +42,11 @@ import {
   getBlogArticle,
   headingId,
 } from "./articles";
+import {
+  HARNESS_DEFINITION_URL,
+  LARS_FAYE_EXPERTISE,
+  SEAN_GOEDECKE_EXPERTISE,
+} from "./coding-agent-scores-still-need-expertise-article";
 import BlogLayout from "./layout";
 import BlogIndex from "./page";
 import {
@@ -104,7 +109,7 @@ describe("AI Charts benchmark notes", () => {
   });
 
   test("publishes substantial complementary articles", () => {
-    expect(blogArticles).toHaveLength(5);
+    expect(blogArticles).toHaveLength(6);
     expect(blogArticles.map(article => article.slug)).toEqual([...BLOG_SLUGS]);
     expect(new Set(BLOG_SLUGS).size).toBe(BLOG_SLUGS.length);
 
@@ -118,7 +123,8 @@ describe("AI Charts benchmark notes", () => {
       expect(article.sourceIds.length).toBeGreaterThanOrEqual(1);
       expect(article.relatedSlugs).toHaveLength(1);
       if (
-        article.slug === "coding-agent-score-holdouts"
+        article.slug === "coding-agent-scores-still-need-expertise"
+        || article.slug === "coding-agent-score-holdouts"
         || article.slug === "open-models-coding-agent-benchmarks"
       ) {
         expect(article.publishedAt).toBe("2026-08-26");
@@ -289,6 +295,49 @@ describe("AI Charts benchmark notes", () => {
     }
   });
 
+  test("derives the expertise note from fetched essay quotes and the checked snapshot", () => {
+    const parsed = parseCodingAgentSnapshot(codingAgentData);
+    if (!parsed.ok) throw parsed.error;
+    const article = getBlogArticle("coding-agent-scores-still-need-expertise");
+    expect(article).toBeDefined();
+    if (article === undefined) return;
+
+    const markup = renderToStaticMarkup(
+      createElement(ArticleBody, { blocks: article.body }),
+    );
+    const markdown = articleToMarkdown(article);
+    const leaders = currentCodingAgentBenchmarkLeaders(parsed.value);
+    const aaLeader = leaders.find(leader => leader.definition.id === "aaIndex");
+    expect(aaLeader).toBeDefined();
+    if (aaLeader === undefined) return;
+
+    expect(markup).toContain(BLOG_SOURCES.larsFayeExpertise.url);
+    expect(markup).toContain(BLOG_SOURCES.hranessFayeReading.url);
+    expect(markup).toContain(BLOG_SOURCES.seanGoedeckeExpertise.url);
+    expect(markup).toContain(BLOG_SOURCES.hranessGoedeckeReading.url);
+    expect(markup).toContain(BLOG_SOURCES.artificialAnalysisCodingAgents.url);
+    expect(markup).toContain(HARNESS_DEFINITION_URL);
+    expect(markup).toContain('href="/"');
+    expect(markup).toContain('href="/data"');
+    expect(markup).toContain('href="/blog/coding-agent-score-holdouts"');
+    expect(markup).toContain(formatRetrievedAt(parsed.value.source.retrievedAt));
+    expect(markdown).toContain(LARS_FAYE_EXPERTISE.quotes.paradox);
+    expect(markdown).toContain(LARS_FAYE_EXPERTISE.quotes.illusion);
+    expect(markdown).toContain(LARS_FAYE_EXPERTISE.quotes.spolsky);
+    expect(markdown).toContain(LARS_FAYE_EXPERTISE.quotes.chollet);
+    expect(markdown).toContain(SEAN_GOEDECKE_EXPERTISE.quotes.prompting);
+    expect(markdown).toContain(SEAN_GOEDECKE_EXPERTISE.quotes.bottleneck);
+    expect(markdown).toContain(SEAN_GOEDECKE_EXPERTISE.quotes.specifics);
+    expect(markup).toContain(aaLeader.record.model);
+    expect(markup).toContain(aaLeader.record.agent);
+    expect(markup).toContain(aaLeader.record.setting);
+    expect(markup).toContain(formatBenchmarkScore(aaLeader.value));
+    for (const leader of leaders) {
+      expect(markup).toContain(leader.record.model);
+      expect(markup).toContain(formatBenchmarkScore(leader.value));
+    }
+  });
+
   test("keeps sources unique, descriptive, and HTTPS-only", () => {
     const sources = Object.values(BLOG_SOURCES);
     expect(new Set(sources.map(source => source.url)).size).toBe(sources.length);
@@ -316,6 +365,10 @@ describe("AI Charts benchmark notes", () => {
     expect(markup).toContain(`href="${BLOG_SOURCES.hranessOpenModelsReading.url}"`);
     expect(markup).toContain(`href="${BLOG_SOURCES.danLuuBenchpocalypse.url}"`);
     expect(markup).toContain(`href="${BLOG_SOURCES.hranessBenchpocalypseReading.url}"`);
+    expect(markup).toContain(`href="${BLOG_SOURCES.larsFayeExpertise.url}"`);
+    expect(markup).toContain(`href="${BLOG_SOURCES.hranessFayeReading.url}"`);
+    expect(markup).toContain(`href="${BLOG_SOURCES.seanGoedeckeExpertise.url}"`);
+    expect(markup).toContain(`href="${BLOG_SOURCES.hranessGoedeckeReading.url}"`);
   });
 
   test("renders the index, static routes, breadcrumbs, dates, and sources", async () => {

@@ -184,6 +184,11 @@ export default function CodingAgentDatasetPage() {
               <Link href="/blog/coding-agent-score-holdouts">
                 why a coding-agent high score still needs a holdout
               </Link>
+              . For why that number still needs a person who can specify and
+              audit the work, see{" "}
+              <Link href="/blog/coding-agent-scores-still-need-expertise">
+                coding-agent scores still need expertise
+              </Link>
               .
             </p>
 
