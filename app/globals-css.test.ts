@@ -41,20 +41,16 @@ test("chart collections retain shared paint geometry and target sizes", () => {
   expect(stylesheet).not.toContain("interaction-guide");
 });
 
-test("metric selectors replace the axis labels without consuming header space", () => {
+test("metric selectors reserve normal-flow space outside the plot", () => {
   expect(stylesheet).not.toContain("chart-header-actions");
-  expect(stylesheet).not.toContain("chart-controls");
-  expect(firstRule(".chart-axis-control")).toContain("position: absolute");
-  expect(firstRule(".chart-axis-control--x")).toContain("bottom: 5px");
-  expect(firstRule(".chart-axis-control--y")).toContain("top: 47.88%");
-  expect(firstRule(".chart-axis-control--y")).toContain(
-    "left: calc(env(safe-area-inset-left) + 40px)",
-  );
-  expect(firstRule(".chart-axis-control--y .metric-control")).toContain("rotate(-90deg)");
+  expect(stylesheet).toContain('@import "@hraness/ui/components.css"');
+  expect(firstRule(".chart-metric-controls")).toContain("display: grid");
+  expect(firstRule(".chart-metric-controls")).toContain("grid-template-columns: minmax(76px, 1fr) auto minmax(76px, 1fr)");
+  expect(firstRule(".chart-metric-controls")).not.toContain("position: absolute");
+  expect(firstRule(".chart-benchmark-select")).toContain("width: 76px");
+  expect(stylesheet).not.toContain("chart-axis-control");
+  expect(stylesheet).not.toContain("rotate(-90deg)");
   expect(firstRule(".chart-export-axis-title")).toContain("visibility: hidden");
-  expect(stylesheet).not.toMatch(
-    /@media \(max-width:\s*760px\)[\s\S]*?\.chart-axis-control--y\s*\{/u,
-  );
 });
 
 test("provider filtering uses one responsive edge inset", () => {
@@ -71,7 +67,7 @@ test("compact chart chrome shares the 12px design inset", () => {
   expect(stylesheet).toContain("--chart-compact-inset: var(--space-3, 0.75rem)");
   expect(stylesheet).toMatch(/@media \(max-width:\s*760px\)[\s\S]*?\.chart-top-bar\s*\{[^}]*padding-inline:\s*var\(--chart-compact-inset\);/u);
   expect(stylesheet).toMatch(/@media \(max-width:\s*760px\)[\s\S]*?\.chart-header\s*\{[^}]*padding:\s*var\(--chart-compact-inset\) var\(--chart-compact-inset\) 12px;/u);
-  expect(stylesheet).not.toMatch(/@media \(max-width:\s*760px\)[\s\S]*?\.chart-axis-control--y\s*\{/u);
+  expect(firstRule(".chart-metric-controls")).toContain("padding: 6px var(--chart-content-inset)");
   expect(stylesheet).toMatch(/@media \(max-width:\s*760px\)[\s\S]*?\.chart-footer\s*\{[^}]*padding:\s*10px var\(--chart-compact-inset\) max\(var\(--space-4\), env\(safe-area-inset-bottom\)\);/u);
 });
 
@@ -86,7 +82,31 @@ test("homepage leaders stay visible above the chart", () => {
   expect(firstRule(".home-leaders")).not.toMatch(/display\s*:\s*none/u);
   expect(firstRule(".home-leaders")).not.toMatch(/clip\s*:/u);
   expect(firstRule(".home-leaders")).toContain("border-bottom: 1px solid var(--line)");
+  expect(firstRule(".home-leaders")).toContain("padding: 0 var(--chart-content-inset)");
   expect(firstRule(".home-leaders .plain-publication__table")).toContain("border-collapse: collapse");
+  expect(firstRule(".home-leaders .plain-publication__table caption")).toContain("clip: rect(0, 0, 0, 0)");
+  expect(stylesheet).not.toContain(".home-leaders h1");
+  expect(stylesheet).not.toContain(".home-leaders h2");
+  expect(stylesheet).not.toContain(".home-leaders p");
+});
+
+test("the subsidy plot fits its shell without forced scrolling or colliding axis chrome", () => {
+  expect(firstRule(".gpt-subsidy-chart__plot")).toContain("overflow: hidden");
+  expect(firstRule(".gpt-subsidy-chart__svg")).toContain("min-width: 0");
+  expect(firstRule(".gpt-subsidy-chart__svg")).toContain("width: 100%");
+  expect(stylesheet).not.toContain("gpt-subsidy-chart__axis-title");
+  expect(stylesheet).not.toContain("gpt-subsidy-chart__scroll-hint");
+  expect(stylesheet).not.toMatch(/\.gpt-subsidy-chart__plot\s*\{[^}]*direction:\s*rtl/u);
+});
+
+test("the Hraness lockup and resource links are quiet at rest", () => {
+  expect(firstRule(".hraness-brand")).toContain("display: inline-flex");
+  expect(firstRule(".hraness-brand")).toContain("text-decoration: none");
+  expect(firstRule(".hraness-ra-mark")).toContain("height: 2rem");
+  expect(firstRule(".chart-footer-links a")).toContain("text-decoration: none");
+  expect(firstRule(".chart-footer-links a:hover,\n.chart-footer-links a:focus-visible")).toContain(
+    "text-decoration: underline",
+  );
 });
 
 test("global chart context stays dense in the sticky header", () => {
@@ -98,8 +118,8 @@ test("global chart context stays dense in the sticky header", () => {
 });
 
 test("compact icon actions expand to the full touch target on mobile", () => {
-  expect(stylesheet).toMatch(/@media \(max-width:\s*760px\)[\s\S]*?\.chart-provenance-control \.ui-icon-button\[data-size="compact"\],[\s\S]*?\.share-trigger\.ui-icon-button\[data-size="compact"\]\s*\{[^}]*width:\s*var\(--interactive-target-min\);[^}]*height:\s*var\(--interactive-target-min\);[^}]*flex-basis:\s*var\(--interactive-target-min\);/u);
-  expect(stylesheet).toMatch(/\.chart-provenance-control \.ui-icon-button\[data-size="compact"\] > \.ui-icon-button__control,[\s\S]*?\.share-trigger\.ui-icon-button\[data-size="compact"\] > \.ui-icon-button__control\s*\{[^}]*width:\s*var\(--interactive-target-min\);[^}]*height:\s*var\(--interactive-target-min\);/u);
+  expect(stylesheet).not.toContain("chart-provenance-control");
+  expect(stylesheet).toMatch(/@media \(max-width:\s*760px\)[\s\S]*?\.share-trigger\.ui-icon-button\[data-size="compact"\]\s*\{[^}]*width:\s*var\(--interactive-target-min\);[^}]*height:\s*var\(--interactive-target-min\);[^}]*flex-basis:\s*var\(--interactive-target-min\);/u);
   expect(stylesheet).toMatch(/\.share-trigger\.ui-icon-button\[data-size="compact"\] > \.ui-icon-button__control\s*\{[^}]*width:\s*var\(--interactive-target-min\);[^}]*height:\s*var\(--interactive-target-min\);/u);
 });
 

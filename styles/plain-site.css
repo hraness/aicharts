@@ -103,11 +103,17 @@ body.plain-site > main {
 :where(.plain-header a, .plain-page a, .plain-footer a) {
   color: var(--plain-link);
   overflow-wrap: anywhere;
+  text-decoration: none;
   text-decoration-thickness: 1px;
   text-underline-offset: 0.15em;
 }
 
-:where(.plain-header a:hover, .plain-page a:hover, .plain-footer a:hover) {
+:where(
+  .plain-header a:is(:hover, :focus-visible),
+  .plain-page a:is(:hover, :focus-visible),
+  .plain-footer a:is(:hover, :focus-visible)
+) {
+  text-decoration: underline;
   text-decoration-thickness: 2px;
 }
 
@@ -201,7 +207,7 @@ body.plain-site > main {
   min-block-size: var(--plain-link-target-min);
   min-inline-size: var(--plain-link-target-min);
   padding: 0;
-  text-decoration: underline;
+  text-decoration: none;
   text-transform: none;
 }
 

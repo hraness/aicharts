@@ -6,9 +6,9 @@ import {
   type GptSubsidySnapshot,
 } from "@/lib/gpt-subsidy-data";
 
-const WIDTH = 960;
-const HEIGHT = 340;
-const MARGIN = { bottom: 48, left: 56, right: 22, top: 22 } as const;
+const WIDTH = 720;
+const HEIGHT = 300;
+const MARGIN = { bottom: 38, left: 52, right: 18, top: 18 } as const;
 const PLOT_WIDTH = WIDTH - MARGIN.left - MARGIN.right;
 const PLOT_HEIGHT = HEIGHT - MARGIN.top - MARGIN.bottom;
 
@@ -17,6 +17,19 @@ const shortDateFormatter = new Intl.DateTimeFormat("en-US", {
   month: "short",
   timeZone: "UTC",
 });
+
+function formatCompactUsd(value: number): string {
+  const absoluteValue = Math.abs(value);
+  if (absoluteValue >= 1_000_000) {
+    const millions = value / 1_000_000;
+    return `$${Number.isInteger(millions) ? millions : millions.toFixed(1)}m`;
+  }
+  if (absoluteValue >= 1_000) {
+    const thousands = value / 1_000;
+    return `$${Number.isInteger(thousands) ? thousands : thousands.toFixed(1)}k`;
+  }
+  return formatSubsidyUsd(value);
+}
 
 type Point = Readonly<{
   observation: GptSubsidyObservation;
@@ -130,7 +143,7 @@ export function GptSubsidyChart({
                   x={MARGIN.left - 12}
                   y={yScale(tick) + 4}
                 >
-                  {formatSubsidyUsd(tick)}
+                  {formatCompactUsd(tick)}
                 </text>
               </g>
             ))}
@@ -179,21 +192,12 @@ export function GptSubsidyChart({
             )}
           </g>
 
-          <text
-            aria-hidden="true"
-            className="gpt-subsidy-chart__axis-title"
-            textAnchor="middle"
-            transform={`translate(17 ${MARGIN.top + PLOT_HEIGHT / 2}) rotate(-90)`}
-          >
-            Trailing 7-day API value
-          </text>
         </svg>
       </div>
 
       <figcaption className="gpt-subsidy-chart__caption">
-        <span>Each point covers seven complete UTC days</span>
-        <span className="gpt-subsidy-chart__scroll-hint">
-          Scroll horizontally for all dates
+        <span>
+          Seven complete UTC days per point · model-specific API rates
         </span>
       </figcaption>
 

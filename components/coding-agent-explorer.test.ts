@@ -70,27 +70,23 @@ test("keeps chart export compact, discoverable, and fully named", async () => {
   expect(source).not.toContain("<span>Share chart</span>");
 });
 
-test("tucks data provenance behind a compact named control", async () => {
+test("keeps the header compact without a standalone provenance action", async () => {
   const source = await Bun.file(new URL("./coding-agent-explorer.tsx", import.meta.url)).text();
   const topBarIndex = source.indexOf("<TopBar");
-  const provenanceIndex = source.indexOf('className="chart-provenance-control chart-selection-boundary"');
   const themeIndex = source.indexOf('<ThemeMenuButton aria-label="Chart appearance" />');
   const topBarClassIndex = source.indexOf('className="chart-top-bar"', topBarIndex);
   const pageCanvasIndex = source.indexOf("<PageCanvas");
 
-  expect(source).toContain('tooltip="Data provenance"');
-  expect(source).toContain('aria-label="Data provenance"');
-  expect(source).toContain('textValue="Open Artificial Analysis source"');
-  expect(source).toContain('className="chart-provenance-control chart-selection-boundary"');
-  expect(source).toContain('placement="bottom end"');
-  expect(source).toContain('popoverClassName="share-menu-popover provenance-menu-popover chart-selection-boundary"');
-  expect(provenanceIndex).toBeGreaterThan(topBarIndex);
-  expect(themeIndex).toBeGreaterThan(provenanceIndex);
+  expect(source).not.toContain('tooltip="Data provenance"');
+  expect(source).not.toContain('aria-label="Data provenance"');
+  expect(source).not.toContain('className="chart-provenance-control');
+  expect(source).not.toContain("InformationCircleIcon");
+  expect(themeIndex).toBeGreaterThan(topBarIndex);
   expect(themeIndex).toBeLessThan(topBarClassIndex);
   expect(source.slice(themeIndex, topBarClassIndex)).toMatch(
     /<ThemeMenuButton aria-label="Chart appearance" \/>\s*<\/>\s*\)\}/u,
   );
-  expect(provenanceIndex).toBeLessThan(pageCanvasIndex);
+  expect(themeIndex).toBeLessThan(pageCanvasIndex);
   expect(source).not.toContain('className="chart-subtitle-row"');
   expect(source).not.toContain('className="chart-data-status"');
 });
@@ -122,11 +118,11 @@ test("leaves only the selected benchmark description in the chart header", async
   expect(source).not.toContain('className="chart-title"');
 });
 
-test("uses a product phrase for the homepage heading", async () => {
+test("uses the domain as the homepage H1 above the chart", async () => {
   const source = await Bun.file(new URL("./coding-agent-explorer.tsx", import.meta.url)).text();
 
-  expect(source).toContain('<p className="chart-heading">{brand.heading}</p>');
-  expect(source).not.toContain("<h1>{brand.heading}</h1>");
+  expect(source).toContain('<h1 className="chart-heading">{brand.heading}</h1>');
+  expect(source).not.toContain('<p className="chart-heading">');
   expect(source).not.toContain("<h1>{brand.domain}</h1>");
 });
 
@@ -136,11 +132,16 @@ test("keeps chart chrome compact and metric labels semantic-only", async () => {
   expect(source).toContain("const plot = { top: 24, right: 1360, bottom: 1240, left: 72 }");
   expect(source).toContain('tooltip="Clear pinned selection"');
   expect(source).toContain('aria-label={label}');
-  expect(source).toContain('className="chart-axis-control chart-axis-control--y chart-selection-boundary"');
-  expect(source).toContain('className="chart-axis-control chart-axis-control--x chart-selection-boundary"');
+  expect(source).toContain('className="chart-metric-controls chart-selection-boundary"');
+  expect(source).toContain('<NativeSelectField');
+  expect(source).toContain('className="chart-benchmark-select"');
+  expect(source).toContain('label: "AAI"');
+  expect(source).toContain('label: "DSWE"');
+  expect(source).toContain('label: "TB"');
+  expect(source).toContain('label: "SWEA"');
+  expect(source).not.toContain("chart-axis-control");
   expect(source).toContain('className="chart-axis-title chart-export-axis-title"');
   expect(source).not.toContain('className="chart-header-actions"');
-  expect(source).not.toContain('className="chart-controls"');
   expect(source).not.toContain('x={plot.left - 14}');
   expect(source).not.toContain('tooltip="Chart controls"');
   expect(source).not.toContain('aria-label="Chart controls"');
@@ -186,20 +187,18 @@ test("ports point details above chart chrome and routes a leader around visible 
 
 test("places complementary option-space views below the primary scatter chart", async () => {
   const source = await Bun.file(new URL("./coding-agent-explorer.tsx", import.meta.url)).text();
+  const metricControlsIndex = source.indexOf('className="chart-metric-controls chart-selection-boundary"');
   const shellIndex = source.indexOf('overflowClassName("chart-scroll-shell"');
   const pinStatusIndex = source.indexOf('className="pin-status"');
-  const yAxisControlIndex = source.indexOf('className="chart-axis-control chart-axis-control--y');
-  const xAxisControlIndex = source.indexOf('className="chart-axis-control chart-axis-control--x');
   const scatterIndex = source.indexOf('className="chart-scroll"');
   const overviewIndex = source.indexOf("<OptionSpaceOverview");
   const footerIndex = source.indexOf('<footer className="chart-footer">');
 
+  expect(metricControlsIndex).toBeGreaterThan(-1);
   expect(shellIndex).toBeGreaterThan(-1);
+  expect(metricControlsIndex).toBeLessThan(shellIndex);
   expect(pinStatusIndex).toBeGreaterThan(shellIndex);
-  expect(yAxisControlIndex).toBeGreaterThan(shellIndex);
-  expect(xAxisControlIndex).toBeGreaterThan(yAxisControlIndex);
   expect(scatterIndex).toBeGreaterThan(pinStatusIndex);
-  expect(scatterIndex).toBeGreaterThan(xAxisControlIndex);
   expect(scatterIndex).toBeGreaterThan(-1);
   expect(overviewIndex).toBeGreaterThan(scatterIndex);
   expect(footerIndex).toBeGreaterThan(overviewIndex);
@@ -207,12 +206,12 @@ test("places complementary option-space views below the primary scatter chart", 
   expect(source).toContain("onPinProvider={(providerId)");
 });
 
-test("keeps pinned selections through provenance interactions", () => {
-  const provenanceTrigger = clickTargetWithin("chart-provenance-control", "chart-selection-boundary");
-  const portalledProvenanceContent = clickTargetWithin("provenance-menu-popover", "chart-selection-boundary");
+test("keeps pinned selections through metric interactions", () => {
+  const metricToolbar = clickTargetWithin("chart-metric-controls", "chart-selection-boundary");
+  const benchmarkSelect = clickTargetWithin("chart-benchmark-select", "chart-selection-boundary");
 
-  expect(shouldClearChartSelection(provenanceTrigger)).toBeFalse();
-  expect(shouldClearChartSelection(portalledProvenanceContent)).toBeFalse();
+  expect(shouldClearChartSelection(metricToolbar)).toBeFalse();
+  expect(shouldClearChartSelection(benchmarkSelect)).toBeFalse();
 });
 
 test("still treats the unadorned canvas background as click-away space", () => {

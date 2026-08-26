@@ -8,7 +8,7 @@ import { RouteLoadingState } from "@/components/route-state";
 import { parseCodingAgentSnapshot } from "@/lib/coding-agent-data";
 import { homeDocumentModel } from "@/lib/site-markdown";
 
-import { homeHeading, searchSite, site } from "./site";
+import { searchSite, site } from "./site";
 
 export const metadata = createPublicSiteMetadata(searchSite, { canonicalPath: "/" });
 
@@ -21,7 +21,7 @@ export default function Home() {
       <HomeLeaders snapshot={parsed.value} />
       <HomeDocument document={homeDocumentModel(parsed.value)} snapshot={parsed.value} />
       <Suspense fallback={<RouteLoadingState />}>
-        <CodingAgentExplorer brand={{ domain: site.domain, heading: homeHeading }} snapshot={parsed.value} />
+        <CodingAgentExplorer brand={{ domain: site.domain, heading: site.domain }} snapshot={parsed.value} />
       </Suspense>
     </>
   );

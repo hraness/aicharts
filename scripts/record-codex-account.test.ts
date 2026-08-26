@@ -292,7 +292,7 @@ describe("Codex account recorder", () => {
     await reacquired!();
   });
 
-  test("splits same-account coverage after a missed-heartbeat gap", async () => {
+  test("keeps hourly samples and one missed run with jitter contiguous", async () => {
     const subject = await fixture();
     await writeAuth(subject.home, {
       auth_mode: "chatgpt",
@@ -304,14 +304,19 @@ describe("Codex account recorder", () => {
     );
     const contiguous = await recordCodexAccount(
       subject.environment,
-      new Date("2026-08-25T12:15:00.000Z"),
+      new Date("2026-08-25T13:00:00.000Z"),
+    );
+    const afterMissedRun = await recordCodexAccount(
+      subject.environment,
+      new Date("2026-08-25T15:30:00.000Z"),
     );
     const afterGap = await recordCodexAccount(
       subject.environment,
-      new Date("2026-08-25T12:46:00.000Z"),
+      new Date("2026-08-25T18:00:00.001Z"),
     );
     expect(first).toMatchObject({ changed: true, kind: "recorded" });
     expect(contiguous).toMatchObject({ changed: false, kind: "recorded" });
+    expect(afterMissedRun).toMatchObject({ changed: false, kind: "recorded" });
     expect(afterGap).toMatchObject({ changed: false, kind: "recorded" });
     const ledger = JSON.parse(await readFile(subject.paths.ledger, "utf8")) as {
       intervals: Array<{
@@ -328,14 +333,55 @@ describe("Codex account recorder", () => {
         authMode: "chatgpt",
         planStatus: "subscription-unverified",
         startedAt: "2026-08-25T12:00:00.000Z",
-        lastObservedAt: "2026-08-25T12:15:00.000Z",
+        lastObservedAt: "2026-08-25T15:30:00.000Z",
       },
       {
         accountFingerprint: expect.any(String),
         authMode: "chatgpt",
         planStatus: "subscription-unverified",
-        startedAt: "2026-08-25T12:46:00.000Z",
-        lastObservedAt: "2026-08-25T12:46:00.000Z",
+        startedAt: "2026-08-25T18:00:00.001Z",
+        lastObservedAt: "2026-08-25T18:00:00.001Z",
+      },
+    ]);
+  });
+
+  test("splits same-account coverage across the five-hour overnight pause", async () => {
+    const subject = await fixture();
+    await writeAuth(subject.home, {
+      auth_mode: "chatgpt",
+      tokens: { account_id: "overnight-gap-private-account" },
+    });
+    await recordCodexAccount(
+      subject.environment,
+      new Date("2026-08-25T02:00:00.000Z"),
+    );
+    await recordCodexAccount(
+      subject.environment,
+      new Date("2026-08-25T07:00:00.000Z"),
+    );
+    const ledger = JSON.parse(await readFile(subject.paths.ledger, "utf8")) as {
+      intervals: Array<{
+        accountFingerprint: string;
+        authMode: string;
+        lastObservedAt: string;
+        planStatus: string;
+        startedAt: string;
+      }>;
+    };
+    expect(ledger.intervals).toEqual([
+      {
+        accountFingerprint: expect.any(String),
+        authMode: "chatgpt",
+        planStatus: "subscription-unverified",
+        startedAt: "2026-08-25T02:00:00.000Z",
+        lastObservedAt: "2026-08-25T02:00:00.000Z",
+      },
+      {
+        accountFingerprint: expect.any(String),
+        authMode: "chatgpt",
+        planStatus: "subscription-unverified",
+        startedAt: "2026-08-25T07:00:00.000Z",
+        lastObservedAt: "2026-08-25T07:00:00.000Z",
       },
     ]);
   });

@@ -1,14 +1,15 @@
 "use client";
 
+import { chatGptSubsidyChartLabel } from "@/app/site";
 import {
   Cancel01Icon,
   CopyLinkIcon,
   Download01Icon,
   ExternalLinkIcon,
   Image01Icon,
-  InformationCircleIcon,
   Share08Icon,
 } from "@hugeicons/core-free-icons";
+import { NativeSelectField, type NativeSelectOption } from "@hraness/ui";
 import {
   Icon,
   IconButton,
@@ -80,11 +81,11 @@ const plot = { top: 24, right: 1360, bottom: 1240, left: 72 } as const;
 const initialTooltipSize = { height: 260, width: 264 } as const;
 const refreshDelayThresholdMs = 48 * 60 * 60 * 1_000;
 const yMetricItems = [
-  { id: "aaIndex", label: yMetricLabels.aaIndex },
-  { id: "deepSwe", label: yMetricLabels.deepSwe },
-  { id: "terminalBench", label: yMetricLabels.terminalBench },
-  { id: "sweAtlas", label: yMetricLabels.sweAtlas },
-] satisfies readonly SegmentedItem<YMetric>[];
+  { id: "aaIndex", label: "AAI" },
+  { id: "deepSwe", label: "DSWE" },
+  { id: "terminalBench", label: "TB" },
+  { id: "sweAtlas", label: "SWEA" },
+] satisfies readonly NativeSelectOption<YMetric>[];
 const xMetricItems = [
   { id: "costUsd", label: xMetricControlLabels.costUsd },
   { id: "durationMinutes", label: xMetricControlLabels.durationMinutes },
@@ -263,23 +264,21 @@ function PointGlyph({ color, shape }: { color: string; shape: number }) {
 }
 
 function MetricControl<T extends string>({
-  axis,
   items,
   label,
   onChange,
   value,
 }: {
-  axis: "x" | "y";
   items: readonly SegmentedItem<T>[];
   label: string;
   onChange: (value: T) => void;
   value: T;
 }) {
   return (
-    <div className={`metric-control metric-control--${axis}`}>
+    <div className="metric-control metric-control--x">
       <SegmentedControl
         aria-label={label}
-        className={`chart-segmented-control chart-segmented-control--${axis}`}
+        className="chart-segmented-control chart-segmented-control--x"
         items={items}
         onChange={onChange}
         size="compact"
@@ -840,57 +839,17 @@ export function CodingAgentExplorer({ brand, snapshot }: { brand: ChartBrand; sn
                 <time dateTime={latestUpdate.detectedAt}>{formatUpdateDate(latestUpdate.detectedAt)}</time>
               </a>
             )}
-            <div className="chart-provenance-control chart-selection-boundary">
-              <MenuTrigger>
-                <IconButton
-                  aria-label="Data provenance"
-                  size="compact"
-                  tooltip="Data provenance"
-                >
-                  <Icon icon={InformationCircleIcon} size={18} strokeWidth={1.75} />
-                </IconButton>
-                <Menu
-                  aria-label="Data provenance"
-                  className="share-menu provenance-menu chart-selection-boundary"
-                  placement="bottom end"
-                  popoverClassName="share-menu-popover provenance-menu-popover chart-selection-boundary"
-                >
-                  <MenuSection
-                    title={(
-                      <div className="share-menu-heading provenance-menu-heading">
-                        <strong>Data provenance</strong>
-                        <span className={`refresh-cadence${refreshDelayed ? " is-delayed" : ""}`}>
-                          <i aria-hidden="true" /> {refreshDelayed ? "Refresh delayed" : "Auto-refreshes daily"}
-                        </span>
-                        <span>Last refreshed <time dateTime={snapshot.source.retrievedAt}>{retrievedAt}</time></span>
-                      </div>
-                    )}
-                  >
-                    <MenuItem
-                      href={snapshot.source.url}
-                      id="data-source"
-                      leading={<Icon icon={ExternalLinkIcon} size={17} strokeWidth={1.75} />}
-                      rel="noreferrer"
-                      target="_blank"
-                      textValue="Open Artificial Analysis source"
-                    >
-                      Open Artificial Analysis source
-                    </MenuItem>
-                  </MenuSection>
-                </Menu>
-              </MenuTrigger>
-            </div>
             <LinkButton href="/blog" size="compact" variant="quiet">
               Blog
             </LinkButton>
             <LinkButton href="/gpt-subsidy" size="compact" variant="quiet">
-              Subsidy
+              {chatGptSubsidyChartLabel}
             </LinkButton>
             <ThemeMenuButton aria-label="Chart appearance" />
           </>
         )}
         className="chart-top-bar"
-        title={<p className="chart-heading">{brand.heading}</p>}
+        title={<h1 className="chart-heading">{brand.heading}</h1>}
       />
       <PageCanvas
         className="chart-page-canvas"
@@ -928,6 +887,37 @@ export function CodingAgentExplorer({ brand, snapshot }: { brand: ChartBrand; sn
         />
       </div>
 
+      <div className="chart-metric-controls chart-selection-boundary">
+        <NativeSelectField
+          className="chart-benchmark-select"
+          label="Benchmark"
+          onChange={(metric) => {
+            if (metric !== yMetric) {
+              captureChartEvent({ name: "chart metric selected", properties: { axis: "y", metric } });
+            }
+            setYMetric(metric);
+            clearSelection();
+          }}
+          options={yMetricItems}
+          showLabel={false}
+          size="compact"
+          surface="pane"
+          value={yMetric}
+        />
+        <MetricControl
+          items={xMetricItems}
+          label="Compare by"
+          onChange={(metric) => {
+            if (metric !== xMetric) {
+              captureChartEvent({ name: "chart metric selected", properties: { axis: "x", metric } });
+            }
+            setXMetric(metric);
+            clearSelection();
+          }}
+          value={xMetric}
+        />
+      </div>
+
       <div className={overflowClassName("chart-scroll-shell", chartOverflow)}>
         {(pinnedPoint !== null || pinnedProvider !== null) && (
           <div className="pin-status">
@@ -942,36 +932,6 @@ export function CodingAgentExplorer({ brand, snapshot }: { brand: ChartBrand; sn
             </IconButton>
           </div>
         )}
-        <div className="chart-axis-control chart-axis-control--y chart-selection-boundary">
-          <MetricControl
-            axis="y"
-            items={yMetricItems}
-            label="Benchmark"
-            onChange={(metric) => {
-              if (metric !== yMetric) {
-                captureChartEvent({ name: "chart metric selected", properties: { axis: "y", metric } });
-              }
-              setYMetric(metric);
-              clearSelection();
-            }}
-            value={yMetric}
-          />
-        </div>
-        <div className="chart-axis-control chart-axis-control--x chart-selection-boundary">
-          <MetricControl
-            axis="x"
-            items={xMetricItems}
-            label="Compare by"
-            onChange={(metric) => {
-              if (metric !== xMetric) {
-                captureChartEvent({ name: "chart metric selected", properties: { axis: "x", metric } });
-              }
-              setXMetric(metric);
-              clearSelection();
-            }}
-            value={xMetric}
-          />
-        </div>
         <div className="share-control chart-selection-boundary">
           <MenuTrigger isOpen={shareOpen} onOpenChange={handleShareOpenChange}>
             <IconButton
@@ -1275,7 +1235,7 @@ export function CodingAgentExplorer({ brand, snapshot }: { brand: ChartBrand; sn
         <nav aria-label="AI Charts resources" className="chart-footer-links">
           <Link href="/data">Data</Link>
           <Link href="/blog">Analysis</Link>
-          <Link href="/gpt-subsidy">Subsidy</Link>
+          <Link href="/gpt-subsidy">{chatGptSubsidyChartLabel}</Link>
         </nav>
         <HranessBrand className="chart-footer-hraness" />
       </footer>

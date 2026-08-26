@@ -28,11 +28,13 @@
 :where(.plain-site.plain-publication a:not(.ui-skip-link)) {
   color: var(--plain-link);
   overflow-wrap: anywhere;
+  text-decoration: none;
   text-decoration-thickness: 1px;
   text-underline-offset: 0.15em;
 }
 
-:where(.plain-site.plain-publication a:not(.ui-skip-link):hover) {
+:where(.plain-site.plain-publication a:not(.ui-skip-link):is(:hover, :focus-visible)) {
+  text-decoration: underline;
   text-decoration-thickness: 2px;
 }
 
@@ -110,7 +112,7 @@
   color: var(--plain-link);
   font: inherit;
   font-weight: 400;
-  text-decoration: underline;
+  text-decoration: none;
 }
 
 .plain-site.plain-publication .plain-publication__primary-link:is(:hover, :focus-visible) {
@@ -174,7 +176,7 @@
 }
 
 .plain-site.plain-publication .plain-publication__entry h3 a {
-  text-decoration: underline;
+  text-decoration: none;
 }
 
 @media (pointer: coarse) {
@@ -533,7 +535,7 @@
   padding: 0.8rem 0;
   border-top: 1px solid var(--plain-line);
   background: transparent;
-  text-decoration: underline;
+  text-decoration: none;
 }
 
 .plain-site.plain-publication .plain-publication__related-grid > a:hover {

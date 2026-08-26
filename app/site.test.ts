@@ -1,7 +1,14 @@
 import { describe, expect, test } from "bun:test";
 
 import packageJson from "../package.json";
-import { homeHeading, notFoundRecoveryLinks, notFoundSearchSite, searchSite, site } from "./site";
+import {
+  chatGptSubsidyChartLabel,
+  homeHeading,
+  notFoundRecoveryLinks,
+  notFoundSearchSite,
+  searchSite,
+  site,
+} from "./site";
 
 describe("AI Charts public positioning", () => {
   test("keeps umbrella metadata general and decision-oriented", () => {
@@ -24,7 +31,7 @@ describe("AI Charts public positioning", () => {
     expect(notFoundSearchSite.description).not.toBe(searchSite.description);
     expect(notFoundRecoveryLinks).toEqual([
       { href: "/", label: "Comparison chart" },
-      { href: "/gpt-subsidy", label: "GPT subsidy history" },
+      { href: "/gpt-subsidy", label: chatGptSubsidyChartLabel },
       { href: "/data", label: "Dataset" },
       { href: "/blog", label: "Benchmark analysis" },
       { href: "/llms.txt", label: "Site guide" },
