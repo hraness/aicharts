@@ -67,7 +67,9 @@ test("property: open-weight rows are exactly the allowlisted subset", () => {
       expect(source).toBeDefined();
       if (source === undefined) continue;
       expect(codingAgentWeightClass(source.providerId)).toBe("open");
-      expect(OPEN_WEIGHT_PROVIDER_IDS).toContain(source.providerId);
+      expect(
+        (OPEN_WEIGHT_PROVIDER_IDS as readonly string[]).includes(source.providerId),
+      ).toBeTrue();
     }
   }));
 });
