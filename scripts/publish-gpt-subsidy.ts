@@ -102,7 +102,11 @@ function run(
       + `${signal}.\n${result.stdout}${result.stderr}`,
     );
   }
-  return result.stdout.trim();
+  return normalizeCommandOutput(result.stdout);
+}
+
+export function normalizeCommandOutput(source: string): string {
+  return source.trimEnd();
 }
 
 function nonemptyLines(source: string): string[] {

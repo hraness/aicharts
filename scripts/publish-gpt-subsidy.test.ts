@@ -22,6 +22,7 @@ import {
   canonicalRemote,
   checkCandidateSnapshot,
   createDataCommit,
+  normalizeCommandOutput,
   publishCandidate,
   publisherEnvironment,
   statusPaths,
@@ -470,7 +471,11 @@ esac
 
   test("extracts only paths from porcelain status rows", () => {
     expect(statusPaths("")).toEqual([]);
-    expect(statusPaths(" M data/gpt-subsidy.json\n?? unexpected.txt"))
+    const commandOutput = normalizeCommandOutput(
+      " M data/gpt-subsidy.json\n?? unexpected.txt\n",
+    );
+    expect(commandOutput.startsWith(" M ")).toBeTrue();
+    expect(statusPaths(commandOutput))
       .toEqual(["data/gpt-subsidy.json", "unexpected.txt"]);
   });
 
