@@ -122,6 +122,7 @@ describe("coding-agent dataset surface", () => {
     }
     expect(markup).toContain('href="/blog/aa-index-cost-coding-agents"');
     expect(markup).toContain('href="/blog/open-models-coding-agent-benchmarks"');
+    expect(markup).toContain('href="/blog/coding-agent-score-holdouts"');
     expect(markup).toContain('id="coding-agent-snapshot"');
     for (const record of snapshot.records) {
       expect(markup).toContain(record.model);

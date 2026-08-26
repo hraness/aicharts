@@ -6,6 +6,10 @@ import { renderToStaticMarkup } from "react-dom/server";
 import codingAgentData from "@/data/coding-agents.json";
 import { parseCodingAgentSnapshot } from "@/lib/coding-agent-data";
 import {
+  currentCodingAgentBenchmarkLeaders,
+  formatBenchmarkScore,
+} from "@/lib/coding-agent-dataset";
+import {
   aaIndexCostEfficiencyRows,
   aaIndexCostFrontier,
   codingAgentSnapshotRows,
@@ -100,7 +104,7 @@ describe("AI Charts benchmark notes", () => {
   });
 
   test("publishes substantial complementary articles", () => {
-    expect(blogArticles).toHaveLength(4);
+    expect(blogArticles).toHaveLength(5);
     expect(blogArticles.map(article => article.slug)).toEqual([...BLOG_SLUGS]);
     expect(new Set(BLOG_SLUGS).size).toBe(BLOG_SLUGS.length);
 
@@ -113,7 +117,10 @@ describe("AI Charts benchmark notes", () => {
       expect(articleToMarkdown(article)).toContain(article.dek);
       expect(article.sourceIds.length).toBeGreaterThanOrEqual(1);
       expect(article.relatedSlugs).toHaveLength(1);
-      if (article.slug === "open-models-coding-agent-benchmarks") {
+      if (
+        article.slug === "coding-agent-score-holdouts"
+        || article.slug === "open-models-coding-agent-benchmarks"
+      ) {
         expect(article.publishedAt).toBe("2026-08-26");
         expect(article.updatedAt >= article.publishedAt).toBeTrue();
       } else if (article.slug === "aa-index-cost-coding-agents") {
@@ -210,6 +217,7 @@ describe("AI Charts benchmark notes", () => {
     expect(markup).toContain('href="/"');
     expect(markup).toContain('href="/data"');
     expect(markup).toContain('href="/blog/aa-index-cost-coding-agents"');
+    expect(markup).toContain('href="/blog/coding-agent-score-holdouts"');
     expect(markup).toContain(formatRetrievedAt(parsed.value.source.retrievedAt));
     expect(markup).toContain(top.model);
     expect(markup).toContain(formatSnapshotScore(top.aaIndex));
@@ -226,6 +234,58 @@ describe("AI Charts benchmark notes", () => {
     if (glm !== undefined) {
       expect(markup).toContain(glm.model);
       expect(markup).toContain(formatSnapshotScore(glm.aaIndex));
+    }
+  });
+
+  test("derives the holdout note from fetched Luu quotes and the checked snapshot", () => {
+    const parsed = parseCodingAgentSnapshot(codingAgentData);
+    if (!parsed.ok) throw parsed.error;
+    const article = getBlogArticle("coding-agent-score-holdouts");
+    expect(article).toBeDefined();
+    if (article === undefined) return;
+
+    const markup = renderToStaticMarkup(
+      createElement(ArticleBody, { blocks: article.body }),
+    );
+    const markdown = articleToMarkdown(article);
+    const leaders = currentCodingAgentBenchmarkLeaders(parsed.value);
+    const aaLeader = leaders.find(leader => leader.definition.id === "aaIndex");
+    expect(aaLeader).toBeDefined();
+    if (aaLeader === undefined) return;
+
+    expect(markup).toContain(BLOG_SOURCES.danLuuBenchpocalypse.url);
+    expect(markup).toContain(BLOG_SOURCES.hranessBenchpocalypseReading.url);
+    expect(markup).toContain(BLOG_SOURCES.artificialAnalysisCodingAgents.url);
+    expect(markup).toContain('href="/"');
+    expect(markup).toContain('href="/data"');
+    expect(markup).toContain('href="/blog/aa-index-cost-coding-agents"');
+    expect(markup).toContain('href="/blog/open-models-coding-agent-benchmarks"');
+    expect(markup).toContain(formatRetrievedAt(parsed.value.source.retrievedAt));
+    expect(markdown).toContain(
+      "LLMs not only make this trivial, they do it by default, making formerly trustworthy benchmarks meaningless unless you audit the result or trust someone who did.",
+    );
+    expect(markdown).toContain(
+      "It's trivial to \"win\" a non-trivial benchmark in a meaningless way even when you instruct agents to not reward hack or overfit to win the benchmark",
+    );
+    expect(markdown).toContain(
+      "Once again, telling the LLM there's a holdout set worked better than just telling the LLM to do generalized work or not overfit or cheat",
+    );
+    expect(markdown).toContain(
+      "Another aspect of the benchmarkpocalypse is that, at least for now, LLMs are good at doing bad benchmarking",
+    );
+    expect(markdown).toContain(
+      "Dan Luu argues that coding agents make sophisticated benchmark gaming cheap enough to overwhelm human scrutiny.",
+    );
+    expect(markup).toContain("1.4x faster");
+    expect(markup).toContain("10x slower");
+    expect(markup).toContain("2.4x slower");
+    expect(markup).toContain("GPT-5.6 Sol");
+    expect(markup).toContain(aaLeader.record.model);
+    expect(markup).toContain(aaLeader.record.agent);
+    expect(markup).toContain(formatBenchmarkScore(aaLeader.value));
+    for (const leader of leaders) {
+      expect(markup).toContain(leader.record.model);
+      expect(markup).toContain(formatBenchmarkScore(leader.value));
     }
   });
 
@@ -254,6 +314,8 @@ describe("AI Charts benchmark notes", () => {
     expect(markup).toContain(`href="${BLOG_SOURCES.artificialAnalysisCodingAgents.url}"`);
     expect(markup).toContain(`href="${BLOG_SOURCES.semiAnalysisOpenModels.url}"`);
     expect(markup).toContain(`href="${BLOG_SOURCES.hranessOpenModelsReading.url}"`);
+    expect(markup).toContain(`href="${BLOG_SOURCES.danLuuBenchpocalypse.url}"`);
+    expect(markup).toContain(`href="${BLOG_SOURCES.hranessBenchpocalypseReading.url}"`);
   });
 
   test("renders the index, static routes, breadcrumbs, dates, and sources", async () => {

@@ -180,6 +180,10 @@ export default function CodingAgentDatasetPage() {
               <Link href="/blog/open-models-coding-agent-benchmarks">
                 open models on coding-agent benchmarks
               </Link>
+              . For why a public-suite high score still needs a holdout, see{" "}
+              <Link href="/blog/coding-agent-score-holdouts">
+                why a coding-agent high score still needs a holdout
+              </Link>
               .
             </p>
 
