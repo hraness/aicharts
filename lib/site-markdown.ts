@@ -127,6 +127,11 @@ export function homeDocumentModel(
         note: "Whether classified open-weight rows sit with the current AA Index leaders, using the same checked snapshot and a SemiAnalysis catch-up essay.",
       },
       {
+        href: blogArticlePath("coding-agent-score-holdouts"),
+        label: "Why a coding-agent high score still needs a holdout",
+        note: "Dan Luu’s FRE holdout and the checked snapshot’s named-suite scores, kept distinct from the open-models comparison.",
+      },
+      {
         href: CODING_AGENT_DATASET_DOWNLOAD_PATH,
         label: "JSON snapshot",
         note: "The same versioned records the production chart uses.",
@@ -211,7 +216,7 @@ function datasetMarkdown(snapshot: CodingAgentSnapshot): string {
     "",
     codingAgentLeadersMarkdownTable(leaders),
     "",
-    `For AA Index versus mean API cost see [AA Index versus cost for coding agents](${absolute(blogArticlePath("aa-index-cost-coding-agents"))}). For whether classified open-weight rows sit with those leaders see [open models on coding-agent benchmarks](${absolute(blogArticlePath("open-models-coding-agent-benchmarks"))}).`,
+    `For AA Index versus mean API cost see [AA Index versus cost for coding agents](${absolute(blogArticlePath("aa-index-cost-coding-agents"))}). For whether classified open-weight rows sit with those leaders see [open models on coding-agent benchmarks](${absolute(blogArticlePath("open-models-coding-agent-benchmarks"))}). For why a public-suite high score still needs a holdout see [why a coding-agent high score still needs a holdout](${absolute(blogArticlePath("coding-agent-score-holdouts"))}).`,
     "",
     "## All configurations",
     "",

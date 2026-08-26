@@ -312,7 +312,9 @@ export function createOpenModelsCodingAgentsArticle(
         { href: "/data", text: "checked dataset" },
         " when you need the current Artificial Analysis configuration list. Read ",
         { href: "/blog/aa-index-cost-coding-agents", text: "AA Index versus cost for coding agents" },
-        " when the decision is score against mean API cost rather than open versus closed.",
+        " when the decision is score against mean API cost rather than open versus closed. Read ",
+        { href: "/blog/coding-agent-score-holdouts", text: "why a high score still needs a holdout" },
+        " when the question is whether a public-suite lead still needs cases the optimizer could not see.",
       ),
       paragraph(
         "The useful sentence is narrower than the essay title. Open-weight coding agents in this snapshot are close enough to matter on cost and close enough to appear in the middle of the AA Index list. They are not the current AA Index leaders. SemiAnalysis's faster catch-up time describes their composites, not this table.",

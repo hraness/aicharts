@@ -54,6 +54,7 @@ describe("homepage agent document", () => {
     expect(markup).toContain('href="/data"');
     expect(markup).toContain('href="/blog/aa-index-cost-coding-agents"');
     expect(markup).toContain('href="/blog/open-models-coding-agent-benchmarks"');
+    expect(markup).toContain('href="/blog/coding-agent-score-holdouts"');
     expect(markup).toContain('href="/llms.txt"');
     expect(markup).toContain('href="/sitemap.xml"');
     expect(text.length).toBeGreaterThan(500);

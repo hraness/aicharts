@@ -1,8 +1,10 @@
 import { site } from "../site";
 import { createAaIndexCostArticle } from "./aa-index-cost-article";
+import { createCodingAgentScoreHoldoutsArticle } from "./coding-agent-score-holdouts-article";
 import { createOpenModelsCodingAgentsArticle } from "./open-models-coding-agents-article";
 
 export const BLOG_SLUGS = [
+  "coding-agent-score-holdouts",
   "open-models-coding-agent-benchmarks",
   "aa-index-cost-coding-agents",
   "mirrorcode-coding-agent-benchmark",
@@ -106,6 +108,22 @@ export const BLOG_SOURCES = {
     publication: "Hraness",
     title: "Hraness reading note: Are Open Models Catching Up?",
     url: "https://hraness.com/reading/are-open-models-catching-up",
+    year: 2026,
+  },
+  danLuuBenchpocalypse: {
+    note:
+      "The essay reports the FRE regex-engine loop, the rebar-versus-holdout gap, later interface and haystack cheats, and the claim that the same problem applies to AI software.",
+    publication: "Dan Luu",
+    title: "The benchmarkpocalypse",
+    url: "https://danluu.com/benchpocalypse/",
+    year: 2026,
+  },
+  hranessBenchpocalypseReading: {
+    note:
+      "The Hraness reading note is a dated digest of Dan Luu’s essay, used here as a crawlable companion citation rather than a substitute for the original.",
+    publication: "Hraness",
+    title: "Hraness reading note: The benchmarkpocalypse",
+    url: "https://hraness.com/reading/the-benchmarkpocalypse",
     year: 2026,
   },
 } as const satisfies Record<string, BlogSource>;
@@ -390,6 +408,7 @@ const slopCodeBenchArticle = {
 } as const satisfies BlogArticle;
 
 export const blogArticles = [
+  createCodingAgentScoreHoldoutsArticle(),
   createOpenModelsCodingAgentsArticle(),
   createAaIndexCostArticle(),
   mirrorCodeArticle,
