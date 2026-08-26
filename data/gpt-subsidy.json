@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-08-25T20:39:52.000Z",
+  "generatedAt": "2026-08-26T00:18:46.545Z",
   "observations": [
     {
       "id": "trailing-7d-2026-07-25",
@@ -14,13 +14,13 @@
         "total": 34397408631
       },
       "trailingSevenDayApiEquivalentUsd": 19245.221075149995,
-      "status": "settled",
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
         "coverage": 0
       },
-      "subscriptionAdjustedMultiple": null
+      "subscriptionAdjustedMultiple": null,
+      "status": "settled"
     },
     {
       "id": "trailing-7d-2026-07-26",
@@ -34,13 +34,13 @@
         "total": 34992503892
       },
       "trailingSevenDayApiEquivalentUsd": 19424.76989354998,
-      "status": "settled",
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
         "coverage": 0
       },
-      "subscriptionAdjustedMultiple": null
+      "subscriptionAdjustedMultiple": null,
+      "status": "settled"
     },
     {
       "id": "trailing-7d-2026-07-27",
@@ -54,13 +54,13 @@
         "total": 33329762512
       },
       "trailingSevenDayApiEquivalentUsd": 18440.820114349972,
-      "status": "settled",
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
         "coverage": 0
       },
-      "subscriptionAdjustedMultiple": null
+      "subscriptionAdjustedMultiple": null,
+      "status": "settled"
     },
     {
       "id": "trailing-7d-2026-07-28",
@@ -74,13 +74,13 @@
         "total": 29344730794
       },
       "trailingSevenDayApiEquivalentUsd": 16136.106513549994,
-      "status": "settled",
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
         "coverage": 0
       },
-      "subscriptionAdjustedMultiple": null
+      "subscriptionAdjustedMultiple": null,
+      "status": "settled"
     },
     {
       "id": "trailing-7d-2026-07-29",
@@ -94,13 +94,13 @@
         "total": 25116925718
       },
       "trailingSevenDayApiEquivalentUsd": 13708.38079507001,
-      "status": "settled",
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
         "coverage": 0
       },
-      "subscriptionAdjustedMultiple": null
+      "subscriptionAdjustedMultiple": null,
+      "status": "settled"
     },
     {
       "id": "trailing-7d-2026-07-30",
@@ -114,13 +114,13 @@
         "total": 24271558141
       },
       "trailingSevenDayApiEquivalentUsd": 13143.779998190013,
-      "status": "settled",
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
         "coverage": 0
       },
-      "subscriptionAdjustedMultiple": null
+      "subscriptionAdjustedMultiple": null,
+      "status": "settled"
     },
     {
       "id": "trailing-7d-2026-07-31",
@@ -134,13 +134,13 @@
         "total": 21105966835
       },
       "trailingSevenDayApiEquivalentUsd": 11280.145201800024,
-      "status": "settled",
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
         "coverage": 0
       },
-      "subscriptionAdjustedMultiple": null
+      "subscriptionAdjustedMultiple": null,
+      "status": "settled"
     },
     {
       "id": "trailing-7d-2026-08-01",
@@ -154,13 +154,13 @@
         "total": 17106661655
       },
       "trailingSevenDayApiEquivalentUsd": 9010.22437664001,
-      "status": "settled",
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
         "coverage": 0
       },
-      "subscriptionAdjustedMultiple": null
+      "subscriptionAdjustedMultiple": null,
+      "status": "settled"
     },
     {
       "id": "trailing-7d-2026-08-02",
@@ -174,13 +174,13 @@
         "total": 15503473993
       },
       "trailingSevenDayApiEquivalentUsd": 8113.92786364002,
-      "status": "settled",
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
         "coverage": 0
       },
-      "subscriptionAdjustedMultiple": null
+      "subscriptionAdjustedMultiple": null,
+      "status": "settled"
     },
     {
       "id": "trailing-7d-2026-08-03",
@@ -194,13 +194,13 @@
         "total": 18083444911
       },
       "trailingSevenDayApiEquivalentUsd": 9502.581736120026,
-      "status": "settled",
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
         "coverage": 0
       },
-      "subscriptionAdjustedMultiple": null
+      "subscriptionAdjustedMultiple": null,
+      "status": "settled"
     },
     {
       "id": "trailing-7d-2026-08-04",
@@ -214,13 +214,13 @@
         "total": 20169592239
       },
       "trailingSevenDayApiEquivalentUsd": 10612.250998760011,
-      "status": "settled",
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
         "coverage": 0
       },
-      "subscriptionAdjustedMultiple": null
+      "subscriptionAdjustedMultiple": null,
+      "status": "settled"
     },
     {
       "id": "trailing-7d-2026-08-05",
@@ -234,13 +234,13 @@
         "total": 25351417495
       },
       "trailingSevenDayApiEquivalentUsd": 13231.958998000007,
-      "status": "settled",
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
         "coverage": 0
       },
-      "subscriptionAdjustedMultiple": null
+      "subscriptionAdjustedMultiple": null,
+      "status": "settled"
     },
     {
       "id": "trailing-7d-2026-08-06",
@@ -254,13 +254,13 @@
         "total": 27986923647
       },
       "trailingSevenDayApiEquivalentUsd": 14298.204000600015,
-      "status": "settled",
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
         "coverage": 0
       },
-      "subscriptionAdjustedMultiple": null
+      "subscriptionAdjustedMultiple": null,
+      "status": "settled"
     },
     {
       "id": "trailing-7d-2026-08-07",
@@ -274,13 +274,13 @@
         "total": 29107400446
       },
       "trailingSevenDayApiEquivalentUsd": 14739.337926080021,
-      "status": "settled",
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
         "coverage": 0
       },
-      "subscriptionAdjustedMultiple": null
+      "subscriptionAdjustedMultiple": null,
+      "status": "settled"
     },
     {
       "id": "trailing-7d-2026-08-08",
@@ -294,13 +294,13 @@
         "total": 28324240459
       },
       "trailingSevenDayApiEquivalentUsd": 14269.633971600011,
-      "status": "settled",
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
         "coverage": 0
       },
-      "subscriptionAdjustedMultiple": null
+      "subscriptionAdjustedMultiple": null,
+      "status": "settled"
     },
     {
       "id": "trailing-7d-2026-08-09",
@@ -314,13 +314,13 @@
         "total": 30644483795
       },
       "trailingSevenDayApiEquivalentUsd": 15269.511154200009,
-      "status": "settled",
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
         "coverage": 0
       },
-      "subscriptionAdjustedMultiple": null
+      "subscriptionAdjustedMultiple": null,
+      "status": "settled"
     },
     {
       "id": "trailing-7d-2026-08-10",
@@ -334,13 +334,13 @@
         "total": 30159122706
       },
       "trailingSevenDayApiEquivalentUsd": 14875.913291240015,
-      "status": "settled",
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
         "coverage": 0
       },
-      "subscriptionAdjustedMultiple": null
+      "subscriptionAdjustedMultiple": null,
+      "status": "settled"
     },
     {
       "id": "trailing-7d-2026-08-11",
@@ -354,13 +354,13 @@
         "total": 32591785711
       },
       "trailingSevenDayApiEquivalentUsd": 15907.100957640016,
-      "status": "settled",
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
         "coverage": 0
       },
-      "subscriptionAdjustedMultiple": null
+      "subscriptionAdjustedMultiple": null,
+      "status": "settled"
     },
     {
       "id": "trailing-7d-2026-08-12",
@@ -374,13 +374,13 @@
         "total": 32375981217
       },
       "trailingSevenDayApiEquivalentUsd": 15519.910930800053,
-      "status": "settled",
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
         "coverage": 0
       },
-      "subscriptionAdjustedMultiple": null
+      "subscriptionAdjustedMultiple": null,
+      "status": "settled"
     },
     {
       "id": "trailing-7d-2026-08-13",
@@ -394,13 +394,13 @@
         "total": 34599741924
       },
       "trailingSevenDayApiEquivalentUsd": 16059.710642040029,
-      "status": "settled",
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
         "coverage": 0
       },
-      "subscriptionAdjustedMultiple": null
+      "subscriptionAdjustedMultiple": null,
+      "status": "settled"
     },
     {
       "id": "trailing-7d-2026-08-14",
@@ -414,13 +414,13 @@
         "total": 35200351011
       },
       "trailingSevenDayApiEquivalentUsd": 15898.067449920027,
-      "status": "settled",
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
         "coverage": 0
       },
-      "subscriptionAdjustedMultiple": null
+      "subscriptionAdjustedMultiple": null,
+      "status": "settled"
     },
     {
       "id": "trailing-7d-2026-08-15",
@@ -434,13 +434,13 @@
         "total": 36891887746
       },
       "trailingSevenDayApiEquivalentUsd": 16731.16453968002,
-      "status": "settled",
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
         "coverage": 0
       },
-      "subscriptionAdjustedMultiple": null
+      "subscriptionAdjustedMultiple": null,
+      "status": "settled"
     },
     {
       "id": "trailing-7d-2026-08-16",
@@ -454,13 +454,13 @@
         "total": 37866332240
       },
       "trailingSevenDayApiEquivalentUsd": 17193.821535720028,
-      "status": "settled",
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
         "coverage": 0
       },
-      "subscriptionAdjustedMultiple": null
+      "subscriptionAdjustedMultiple": null,
+      "status": "settled"
     },
     {
       "id": "trailing-7d-2026-08-17",
@@ -474,13 +474,13 @@
         "total": 38404502480
       },
       "trailingSevenDayApiEquivalentUsd": 17460.101840920033,
-      "status": "settled",
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
         "coverage": 0
       },
-      "subscriptionAdjustedMultiple": null
+      "subscriptionAdjustedMultiple": null,
+      "status": "settled"
     },
     {
       "id": "trailing-7d-2026-08-18",
@@ -494,13 +494,13 @@
         "total": 38145544687
       },
       "trailingSevenDayApiEquivalentUsd": 17308.880920200056,
-      "status": "settled",
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
         "coverage": 0
       },
-      "subscriptionAdjustedMultiple": null
+      "subscriptionAdjustedMultiple": null,
+      "status": "settled"
     },
     {
       "id": "trailing-7d-2026-08-19",
@@ -514,13 +514,13 @@
         "total": 36666475246
       },
       "trailingSevenDayApiEquivalentUsd": 16715.877910800034,
-      "status": "settled",
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
         "coverage": 0
       },
-      "subscriptionAdjustedMultiple": null
+      "subscriptionAdjustedMultiple": null,
+      "status": "settled"
     },
     {
       "id": "trailing-7d-2026-08-20",
@@ -534,13 +534,13 @@
         "total": 29732878439
       },
       "trailingSevenDayApiEquivalentUsd": 13840.341512520037,
-      "status": "settled",
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
         "coverage": 0
       },
-      "subscriptionAdjustedMultiple": null
+      "subscriptionAdjustedMultiple": null,
+      "status": "settled"
     },
     {
       "id": "trailing-7d-2026-08-21",
@@ -554,13 +554,13 @@
         "total": 29130783009
       },
       "trailingSevenDayApiEquivalentUsd": 14075.417912320057,
-      "status": "settled",
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
         "coverage": 0
       },
-      "subscriptionAdjustedMultiple": null
+      "subscriptionAdjustedMultiple": null,
+      "status": "settled"
     },
     {
       "id": "trailing-7d-2026-08-22",
@@ -574,13 +574,13 @@
         "total": 31946612781
       },
       "trailingSevenDayApiEquivalentUsd": 15466.030597760075,
-      "status": "settled",
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
         "coverage": 0
       },
-      "subscriptionAdjustedMultiple": null
+      "subscriptionAdjustedMultiple": null,
+      "status": "settled"
     },
     {
       "id": "trailing-7d-2026-08-23",
@@ -594,13 +594,13 @@
         "total": 30761743397
       },
       "trailingSevenDayApiEquivalentUsd": 15066.53860036006,
-      "status": "settled",
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
         "coverage": 0
       },
-      "subscriptionAdjustedMultiple": null
+      "subscriptionAdjustedMultiple": null,
+      "status": "settled"
     },
     {
       "id": "trailing-7d-2026-08-24",
@@ -614,13 +614,33 @@
         "total": 31136829923
       },
       "trailingSevenDayApiEquivalentUsd": 15353.192586680037,
-      "status": "settled",
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
         "coverage": 0
       },
-      "subscriptionAdjustedMultiple": null
+      "subscriptionAdjustedMultiple": null,
+      "status": "settled"
+    },
+    {
+      "id": "trailing-7d-2026-08-25",
+      "observedAt": "2026-08-25T23:59:59.999Z",
+      "periodStartedAt": "2026-08-19T00:00:00.000Z",
+      "periodEndsAt": "2026-08-25T23:59:59.999Z",
+      "tokens": {
+        "uncachedInput": 1031083010,
+        "cachedInput": 30322895872,
+        "output": 81510456,
+        "total": 31435489338
+      },
+      "trailingSevenDayApiEquivalentUsd": 15517.531198970064,
+      "accountAttribution": {
+        "status": "unavailable",
+        "distinctObservedAccounts": null,
+        "coverage": 0
+      },
+      "subscriptionAdjustedMultiple": null,
+      "status": "settled"
     }
   ],
   "plan": {
@@ -679,15 +699,15 @@
   "title": "Subsidy for ChatGPT Pro 20x subscription",
   "currency": "USD",
   "periodSummary": {
-    "startedAt": "2026-07-25T00:00:00.000Z",
-    "endedAt": "2026-08-24T23:59:59.999Z",
+    "startedAt": "2026-07-26T00:00:00.000Z",
+    "endedAt": "2026-08-25T23:59:59.999Z",
     "days": 31,
     "tokens": {
-      "uncachedInput": 3929226161,
-      "cachedInput": 124885552384,
-      "output": 272160008,
-      "total": 129086938553
+      "uncachedInput": 3983684685,
+      "cachedInput": 123763623936,
+      "output": 269175053,
+      "total": 128016483674
     },
-    "apiEquivalentUsd": 63289.13973616013
+    "apiEquivalentUsd": 62352.961639570145
   }
 }
