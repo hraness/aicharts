@@ -2,7 +2,6 @@ import { describe, expect, test } from "bun:test";
 
 import {
   calculateApiEquivalentUsd,
-  formatSubsidyMultiple,
   formatSubsidyRateUsd,
   formatSubsidyTokens,
   formatSubsidyUsd,
@@ -58,8 +57,6 @@ function observation({
     tokens,
     pricing.referenceModel,
   );
-  const monthlyApiEquivalentUsd = trailingSevenDayApiEquivalentUsd * 4;
-  const planPriceMultiple = monthlyApiEquivalentUsd / 200;
   return {
     id: `trailing-7d-${date}`,
     observedAt: `${date}T23:59:59.999Z`,
@@ -68,8 +65,12 @@ function observation({
     status: "settled",
     tokens,
     trailingSevenDayApiEquivalentUsd,
-    monthlyApiEquivalentUsd,
-    planPriceMultiple,
+    accountAttribution: {
+      status: "unavailable",
+      distinctObservedAccounts: null,
+      coverage: 0,
+    },
+    subscriptionAdjustedMultiple: null,
   } as const;
 }
 
@@ -85,7 +86,7 @@ const summaryUsd = calculateApiEquivalentUsd(
 );
 
 export const validGptSubsidySnapshot = {
-  schemaVersion: 1,
+  schemaVersion: 2,
   title: GPT_SUBSIDY_TITLE,
   generatedAt: "2026-08-25T16:00:00.000Z",
   currency: "USD",
@@ -109,11 +110,9 @@ export const validGptSubsidySnapshot = {
     days: 31,
     tokens: summaryTokens,
     apiEquivalentUsd: summaryUsd,
-    planPriceMultiple: summaryUsd / 200,
   },
   methodology: {
     deduplication: "tokscale-global-event-identity",
-    weeksPerMonth: 4,
     measurement: {
       name: "AI Charts GPT subsidy measurement manifest",
       schemaVersion: 1,
@@ -153,13 +152,55 @@ describe("GPT subsidy snapshot", () => {
     }, pricing.referenceModel)).toBe(10);
   });
 
+  test("models account coverage without inventing subscription evidence", () => {
+    for (const accountAttribution of [
+      {
+        status: "partial",
+        distinctObservedAccounts: 2,
+        coverage: 0.5,
+      },
+      {
+        status: "complete",
+        distinctObservedAccounts: 3,
+        coverage: 1,
+      },
+    ] as const) {
+      const parsed = parseGptSubsidySnapshot({
+        ...validGptSubsidySnapshot,
+        observations: validGptSubsidySnapshot.observations.map((point, index) =>
+          index === 0 ? { ...point, accountAttribution } : point),
+      });
+      expect(parsed.ok).toBeTrue();
+    }
+
+    expect(parseGptSubsidySnapshot({
+      ...validGptSubsidySnapshot,
+      observations: validGptSubsidySnapshot.observations.map((point, index) =>
+        index === 0
+          ? {
+              ...point,
+              accountAttribution: {
+                status: "unavailable",
+                distinctObservedAccounts: 1,
+                coverage: 0,
+              },
+            }
+          : point),
+    }).ok).toBeFalse();
+
+    expect(parseGptSubsidySnapshot({
+      ...validGptSubsidySnapshot,
+      observations: validGptSubsidySnapshot.observations.map((point, index) =>
+        index === 0 ? { ...point, subscriptionAdjustedMultiple: 307.1 } : point),
+    }).ok).toBeFalse();
+  });
+
   test("preserves per-model manifest values instead of repricing aggregate tokens", () => {
     const [first, second] = validGptSubsidySnapshot.observations;
     expect(first).toBeDefined();
     expect(second).toBeDefined();
     if (first === undefined || second === undefined) return;
     const trailingSevenDayApiEquivalentUsd = first.trailingSevenDayApiEquivalentUsd + 25;
-    const monthlyApiEquivalentUsd = trailingSevenDayApiEquivalentUsd * 4;
     const summaryApiEquivalentUsd = validGptSubsidySnapshot.periodSummary.apiEquivalentUsd + 50;
     const parsed = parseGptSubsidySnapshot({
       ...validGptSubsidySnapshot,
@@ -168,15 +209,12 @@ describe("GPT subsidy snapshot", () => {
           ? {
               ...first,
               trailingSevenDayApiEquivalentUsd,
-              monthlyApiEquivalentUsd,
-              planPriceMultiple: monthlyApiEquivalentUsd / 200,
             }
           : point
       )),
       periodSummary: {
         ...validGptSubsidySnapshot.periodSummary,
         apiEquivalentUsd: summaryApiEquivalentUsd,
-        planPriceMultiple: summaryApiEquivalentUsd / 200,
       },
     });
     expect(parsed.ok).toBeTrue();
@@ -214,29 +252,13 @@ describe("GPT subsidy snapshot", () => {
 
     expect(parseGptSubsidySnapshot({
       ...validGptSubsidySnapshot,
-      observations: validGptSubsidySnapshot.observations.map((point, index) =>
-        index === 0 ? { ...point, planPriceMultiple: point.planPriceMultiple + 1 } : point),
-    }).ok).toBeFalse();
-
-    expect(parseGptSubsidySnapshot({
-      ...validGptSubsidySnapshot,
       observations: validGptSubsidySnapshot.observations.slice(1),
-    }).ok).toBeFalse();
-
-    expect(parseGptSubsidySnapshot({
-      ...validGptSubsidySnapshot,
-      methodology: {
-        ...validGptSubsidySnapshot.methodology,
-        weeksPerMonth: 4.3,
-      },
     }).ok).toBeFalse();
 
     const zeroValuePoint = {
       ...validGptSubsidySnapshot.observations[0],
       tokens: { uncachedInput: 1, cachedInput: 0, output: 0, total: 1 },
       trailingSevenDayApiEquivalentUsd: 0,
-      monthlyApiEquivalentUsd: 0,
-      planPriceMultiple: 0,
     };
     expect(parseGptSubsidySnapshot({
       ...validGptSubsidySnapshot,
@@ -291,7 +313,6 @@ describe("GPT subsidy snapshot", () => {
   });
 
   test("formats the public summary values consistently", () => {
-    expect(formatSubsidyMultiple(40.255)).toBe("40.3×");
     expect(formatSubsidyUsd(8_051.1)).toBe("$8,051");
     expect(formatSubsidyRateUsd(0.4)).toBe("$0.40");
     expect(formatSubsidyRateUsd(20)).toBe("$20.00");

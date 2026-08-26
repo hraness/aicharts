@@ -3,6 +3,7 @@ import { describe, expect, test } from "bun:test";
 import { articleToMarkdown, blogArticles } from "@/app/blog/articles";
 import { homeHeading, notFoundRecoveryLinks, site } from "@/app/site";
 import codingAgentData from "@/data/coding-agents.json";
+import gptSubsidyData from "@/data/gpt-subsidy.json";
 
 import { parseCodingAgentSnapshot } from "./coding-agent-data";
 import {
@@ -10,6 +11,11 @@ import {
   codingAgentDatasetSummary,
   currentCodingAgentBenchmarkLeaders,
 } from "./coding-agent-dataset";
+import {
+  formatSubsidyUsd,
+  latestGptSubsidyObservation,
+  parseGptSubsidySnapshot,
+} from "./gpt-subsidy-data";
 import {
   AGENT_GUIDE_CONTENT_TYPE,
   MARKDOWN_CONTENT_TYPE,
@@ -22,6 +28,9 @@ import {
 const parsed = parseCodingAgentSnapshot(codingAgentData);
 if (!parsed.ok) throw parsed.error;
 const snapshot = parsed.value;
+const parsedSubsidy = parseGptSubsidySnapshot(gptSubsidyData);
+if (!parsedSubsidy.ok) throw parsedSubsidy.error;
+const latestSubsidy = latestGptSubsidyObservation(parsedSubsidy.value);
 
 describe("homepage document", () => {
   test("has the product heading and more than 500 characters of text", () => {
@@ -55,9 +64,12 @@ describe("markdown representations", () => {
     expect(subsidy.body).toContain("# Subsidy for ChatGPT Pro 20x subscription");
     expect(subsidy.body).toContain("## Calculation");
     expect(subsidy.body).toContain("API-key or otherwise API-billed usage");
-    expect(subsidy.body).toContain("Multiplying that value by exactly 4");
-    expect(subsidy.body).toContain("does not observe whether a weekly quota was exhausted or when it reset");
-    expect(subsidy.body).toContain("not four observed exhausted allocations");
+    expect(subsidy.body).toContain(
+      `The latest measured trailing-seven-day API-retail-equivalent value is ${formatSubsidyUsd(latestSubsidy.trailingSevenDayApiEquivalentUsd)}`,
+    );
+    expect(subsidy.body).toContain("subscription-adjusted multiple is therefore unavailable");
+    expect(subsidy.body).toContain("No monthly projection, one-plan normalization");
+    expect(subsidy.body).not.toContain("307.1×");
     expect(blog.body).toContain(blogArticles[0].title);
     expect(guide).toMatchObject({ found: true, contentType: AGENT_GUIDE_CONTENT_TYPE });
     expect(guide.body).toBe(agentGuideMarkdown(snapshot));

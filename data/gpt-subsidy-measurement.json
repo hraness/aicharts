@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "kind": "aicharts-gpt-subsidy-measurement",
-  "revision": "2026-08-25.2",
+  "revision": "2026-08-25.3",
   "frozenAt": "2026-08-25T00:00:00Z",
   "parser": {
     "name": "tokscale",
@@ -12,20 +12,18 @@
   "calendar": "UTC",
   "rollingDays": 7,
   "periodSummaryDays": 31,
-  "weeksPerMonth": 4,
-  "planPriceUsd": 200,
   "implementation": {
     "ledgerAdapter": {
       "path": "scripts/aicharts_gpt_subsidy_ledger.rs",
-      "sha256": "8b86c3012a1a581c99f5d9a2c10e989c12fba24ab109cd56c8b4ecd89bdf21d8"
+      "sha256": "bd2d1cb302fc29d03e9ad7d66820b9947c28880f3e430e8ba87d17905e54f637"
     },
     "publicUpdater": {
       "path": "scripts/update-gpt-subsidy.ts",
-      "sha256": "29e8045d12b503f1e649fea2adcbd94e780ece5551732be0ca1523bd1210040e"
+      "sha256": "5957c30916ae146325034b8e5d3a5afde2afda4d5bb3f6fba6c4a74f49629501"
     },
     "sharedContract": {
       "path": "lib/gpt-subsidy-manifests.ts",
-      "sha256": "9746d6bd5272e0fb7274a08f59af344037e9852fc98f1bb6464904457acd39ca"
+      "sha256": "f7b37ca33ddfa89e44880b238aac32ccec808602494255fab03da4dd5608e7ad"
     }
   }
 }

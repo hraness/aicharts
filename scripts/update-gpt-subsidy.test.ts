@@ -101,8 +101,12 @@ type Observation = {
   status: "settled" | "live";
   tokens: TokenBuckets;
   trailingSevenDayApiEquivalentUsd: number;
-  monthlyApiEquivalentUsd: number;
-  planPriceMultiple: number;
+  accountAttribution: {
+    status: "unavailable";
+    distinctObservedAccounts: null;
+    coverage: 0;
+  };
+  subscriptionAdjustedMultiple: null;
 };
 type FixtureData = {
   observations: Observation[];
@@ -125,7 +129,6 @@ function tokens(value: number): { uncachedInput: number; cachedInput: number; ou
 
 function observation(date: string, value = 1, status: "settled" | "live" = "settled"): Observation {
   const weekly = value + 0.25;
-  const monthly = weekly * 4;
   return {
     id: `trailing-7d-${date}`,
     observedAt: `${date}T23:59:59.999Z`,
@@ -134,14 +137,18 @@ function observation(date: string, value = 1, status: "settled" | "live" = "sett
     status,
     tokens: tokens(value),
     trailingSevenDayApiEquivalentUsd: weekly,
-    monthlyApiEquivalentUsd: monthly,
-    planPriceMultiple: monthly / 200,
+    accountAttribution: {
+      status: "unavailable",
+      distinctObservedAccounts: null,
+      coverage: 0,
+    },
+    subscriptionAdjustedMultiple: null,
   };
 }
 
 function baseData(observations: Observation[] = []): FixtureData {
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     generatedAt: "2026-08-24T12:00:00.000Z",
     plan: {
       name: "ChatGPT Pro",
@@ -169,7 +176,6 @@ function baseData(observations: Observation[] = []): FixtureData {
         frozenAt: measurementManifest.frozenAt,
         sourceUrl: "https://github.com/hraness/aicharts/blob/main/data/gpt-subsidy-measurement.json",
       },
-      weeksPerMonth: 99,
       formula: "Use current Tokscale catalog pricing.",
       disclaimer: "Stale methodology that must never be republished.",
       sourceUrls: ["https://example.com/stale"],
@@ -198,7 +204,6 @@ async function readFixture(dataPath: string): Promise<FixtureData & {
     proxyModelIds: string[];
   };
   methodology: {
-    weeksPerMonth: number;
     deduplication: string;
     measurement: {
       frozenAt: string;
@@ -218,7 +223,6 @@ async function readFixture(dataPath: string): Promise<FixtureData & {
       proxyModelIds: string[];
     };
     methodology: {
-      weeksPerMonth: number;
       deduplication: string;
       measurement: {
         frozenAt: string;
@@ -320,10 +324,13 @@ describe("globally deduplicated rolling collector", () => {
       },
       proxyModelIds: ["codex-auto-review"],
     });
-    expect(data.observations[0]?.monthlyApiEquivalentUsd)
-      .toBe(Number((22.75 * 4).toFixed(12)));
+    expect(data.observations[0]?.accountAttribution).toEqual({
+      status: "unavailable",
+      distinctObservedAccounts: null,
+      coverage: 0,
+    });
+    expect(data.observations[0]?.subscriptionAdjustedMultiple).toBeNull();
     expect(data.methodology).toMatchObject({
-      weeksPerMonth: 4,
       deduplication: "tokscale-global-event-identity",
       measurement: expectedMeasurement,
     });
@@ -331,10 +338,10 @@ describe("globally deduplicated rolling collector", () => {
       "checked August 25, 2026 AI Charts OpenAI rate manifest",
     );
     expect(data.methodology.formula).not.toContain("current");
-    expect(data.methodology.formula).toContain("multiplies that trailing-seven-day API-retail-equivalent value by exactly 4");
+    expect(data.methodology.formula).toContain("sums seven settled UTC days");
+    expect(data.methodology.formula).not.toContain("multiplies");
     expect(data.methodology.disclaimer).toContain("one user's available local Codex logs");
-    expect(data.methodology.disclaimer).toContain("does not observe whether a weekly quota was exhausted or when it reset");
-    expect(data.methodology.disclaimer).toContain("not four observed exhausted allocations");
+    expect(data.methodology.disclaimer).toContain("cannot assign usage to distinct subscriptions");
     expect(data.methodology.disclaimer).toContain("API-key or otherwise API-billed usage");
     expect(data.methodology.disclaimer).toContain("purchased ChatGPT credits");
     expect(data.methodology.sourceUrls).toEqual(expectedMethodologySourceUrls);

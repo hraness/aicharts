@@ -7,7 +7,10 @@ import {
   CODING_AGENT_DATASET_PATH,
   codingAgentDatasetModifiedAt,
 } from "@/lib/coding-agent-dataset";
-import { parseGptSubsidySnapshot } from "@/lib/gpt-subsidy-data";
+import {
+  gptSubsidyPageModifiedAt,
+  parseGptSubsidySnapshot,
+} from "@/lib/gpt-subsidy-data";
 
 import robots from "./robots";
 import sitemap from "./sitemap";
@@ -29,7 +32,7 @@ describe("public search discovery", () => {
     const subsidy = parseGptSubsidySnapshot(gptSubsidyData);
     if (!subsidy.ok) throw subsidy.error;
     expect(entries.find(entry => entry.url.endsWith("/gpt-subsidy"))?.lastModified)
-      .toBe(subsidy.value.generatedAt);
+      .toBe(gptSubsidyPageModifiedAt(subsidy.value));
     expect(new Date(modifiedAt).getTime())
       .toBeLessThanOrEqual(new Date(parsed.value.source.retrievedAt).getTime());
   });

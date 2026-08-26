@@ -11,7 +11,6 @@ import {
   GPT_SUBSIDY_PRICING_MANIFEST_URL,
   GPT_SUBSIDY_ROLLING_DAYS,
   GPT_SUBSIDY_SUMMARY_DAYS,
-  GPT_SUBSIDY_WEEKS_PER_MONTH,
   parseGptSubsidyMeasurementManifest,
   parseGptSubsidyPricingManifest,
   sha256,
@@ -32,9 +31,9 @@ const TOKSCALE_PARSER_SOURCE_URL =
 const TOKSCALE_DEDUPLICATION_SOURCE_URL =
   `https://github.com/junhoyeo/tokscale/blob/${TOKSCALE_COMMIT}/crates/tokscale-core/src/sessions/codex.rs#L518-L675`;
 const METHODOLOGY_FORMULA =
-  "Each observation values every recorded model with its per-model rate from the checked August 25, 2026 AI Charts OpenAI rate manifest, sums seven settled UTC days, multiplies that trailing-seven-day API-retail-equivalent value by exactly 4 to form a four-week estimate, and divides by the frozen $200 ChatGPT Pro plan-price unit.";
+  "Each observation values every recorded model with its per-model rate from the checked August 25, 2026 AI Charts OpenAI rate manifest and sums seven settled UTC days. The v2 series does not calculate a subscription-adjusted multiple because account identity alone is not subscription-price or billing-period evidence.";
 const METHODOLOGY_DISCLAIMER =
-  "This is an API-retail-equivalent estimate of one user's available local Codex logs on one machine, not OpenAI's internal serving cost or an audited subsidy, and it is not a platform-wide or representative ChatGPT Pro estimate. The published series does not observe whether a weekly quota was exhausted or when it reset; exact ×4 is a normalization convention, not four observed exhausted allocations. Codex logs do not retain a durable account ID or billing mode, so API-key or otherwise API-billed usage, multiple accounts, subscriptions, purchased ChatGPT credits, free or reset credits, and temporary promotions cannot be distinguished or excluded. The internal codex-auto-review alias uses the explicit GPT-5.6 Luna proxy rate. Non-token product features and fees absent from the logs are excluded.";
+  "This is an API-retail-equivalent estimate of one user's available local Codex logs on one machine, not OpenAI's internal serving cost or an audited subsidy, and it is not a platform-wide or representative ChatGPT Pro estimate. Historical Codex logs do not retain durable account attribution, so the published historical series cannot assign usage to distinct subscriptions or calculate a subscription-adjusted multiple. API-key or otherwise API-billed usage, purchased ChatGPT credits, free or reset credits, and temporary promotions cannot be distinguished or excluded. The internal codex-auto-review alias uses the explicit GPT-5.6 Luna proxy rate. Non-token product features and fees absent from the logs are excluded.";
 const MAX_SCANNED_DAYS = 366;
 const UTC_DAY_MILLISECONDS = 24 * 60 * 60 * 1_000;
 
@@ -122,8 +121,24 @@ const observationFields = {
   periodEndsAt: isoSchema,
   tokens: tokensSchema,
   trailingSevenDayApiEquivalentUsd: moneySchema,
-  monthlyApiEquivalentUsd: moneySchema,
-  planPriceMultiple: moneySchema,
+  accountAttribution: z.discriminatedUnion("status", [
+    z.object({
+      status: z.literal("unavailable"),
+      distinctObservedAccounts: z.null(),
+      coverage: z.literal(0),
+    }).strict(),
+    z.object({
+      status: z.literal("partial"),
+      distinctObservedAccounts: z.number().int().positive(),
+      coverage: z.number().finite().gt(0).lt(1),
+    }).strict(),
+    z.object({
+      status: z.literal("complete"),
+      distinctObservedAccounts: z.number().int().positive(),
+      coverage: z.literal(1),
+    }).strict(),
+  ]),
+  subscriptionAdjustedMultiple: z.null(),
 } as const;
 const existingObservationSchema = z.object({
   ...observationFields,
@@ -253,7 +268,7 @@ function sumMoney(values: readonly number[]): number {
 
 function parsePublicData(value: unknown): PublicData {
   return z.object({
-    schemaVersion: z.literal(1),
+    schemaVersion: z.literal(2),
     generatedAt: isoSchema,
     observations: z.array(existingObservationSchema),
     plan: z.object({
@@ -668,7 +683,6 @@ function derivePublicData(
       throw new TypeError("Ledger lacks a complete trailing window.");
     }
     const weekly = sumMoney(window.map(({ apiEquivalentUsd }) => apiEquivalentUsd));
-    const monthly = rounded(weekly * GPT_SUBSIDY_WEEKS_PER_MONTH);
     const endsAt = settledDayEnd(day.date);
     return settledObservationSchema.parse({
       id: `trailing-7d-${day.date}`,
@@ -678,8 +692,12 @@ function derivePublicData(
       status: "settled",
       tokens: sumTokenBuckets(window.map(({ tokens }) => tokens)),
       trailingSevenDayApiEquivalentUsd: weekly,
-      monthlyApiEquivalentUsd: monthly,
-      planPriceMultiple: rounded(monthly / data.plan.monthlyPriceUsd),
+      accountAttribution: {
+        status: "unavailable",
+        distinctObservedAccounts: null,
+        coverage: 0,
+      },
+      subscriptionAdjustedMultiple: null,
     });
   });
   const observations = mergeObservationHistory(data.observations, derivedObservations);
@@ -724,7 +742,6 @@ function derivePublicData(
       referenceModel: pricing.referenceModel,
     },
     methodology: {
-      weeksPerMonth: GPT_SUBSIDY_WEEKS_PER_MONTH,
       deduplication: "tokscale-global-event-identity",
       measurement: {
         name: "AI Charts GPT subsidy measurement manifest",
@@ -753,7 +770,6 @@ function derivePublicData(
       days: GPT_SUBSIDY_SUMMARY_DAYS,
       tokens: periodTokens,
       apiEquivalentUsd: periodValue,
-      planPriceMultiple: rounded(periodValue / data.plan.monthlyPriceUsd),
     },
   };
 }

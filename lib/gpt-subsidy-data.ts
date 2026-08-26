@@ -5,7 +5,10 @@ export const GPT_SUBSIDY_TITLE =
   "Subsidy for ChatGPT Pro 20x subscription" as const;
 
 export const GPT_SUBSIDY_DESCRIPTION =
-  "Daily API-retail-equivalent value of seven complete UTC days from one user's available local Codex logs on one machine, projected over four weeks and compared with a $200 ChatGPT Pro plan-price unit.";
+  "Daily history of the measured API-retail-equivalent value of seven complete UTC days from one user's available local Codex logs on one machine. Historical account attribution is unavailable.";
+
+export const GPT_SUBSIDY_PAGE_CONTENT_MODIFIED_AT =
+  "2026-08-26T00:01:56.000Z" as const;
 
 const UTC_DAY_MILLISECONDS = 24 * 60 * 60 * 1_000;
 
@@ -22,6 +25,30 @@ const tokenUsageSchema = z.object({
   total: tokenCountSchema,
 }).strict();
 
+const unavailableAccountAttributionSchema = z.object({
+  status: z.literal("unavailable"),
+  distinctObservedAccounts: z.null(),
+  coverage: z.literal(0),
+}).strict();
+
+const partialAccountAttributionSchema = z.object({
+  status: z.literal("partial"),
+  distinctObservedAccounts: z.number().int().positive(),
+  coverage: z.number().finite().gt(0).lt(1),
+}).strict();
+
+const completeAccountAttributionSchema = z.object({
+  status: z.literal("complete"),
+  distinctObservedAccounts: z.number().int().positive(),
+  coverage: z.literal(1),
+}).strict();
+
+const accountAttributionSchema = z.discriminatedUnion("status", [
+  unavailableAccountAttributionSchema,
+  partialAccountAttributionSchema,
+  completeAccountAttributionSchema,
+]);
+
 export const gptSubsidyObservationSchema = z.object({
   id: z.string().min(1),
   observedAt: isoDateTimeSchema,
@@ -30,8 +57,8 @@ export const gptSubsidyObservationSchema = z.object({
   status: z.literal("settled"),
   tokens: tokenUsageSchema,
   trailingSevenDayApiEquivalentUsd: finiteNonnegativeSchema,
-  monthlyApiEquivalentUsd: finiteNonnegativeSchema,
-  planPriceMultiple: finiteNonnegativeSchema,
+  accountAttribution: accountAttributionSchema,
+  subscriptionAdjustedMultiple: z.null(),
 }).strict();
 
 const periodSummarySchema = z.object({
@@ -40,11 +67,10 @@ const periodSummarySchema = z.object({
   days: z.literal(31),
   tokens: tokenUsageSchema,
   apiEquivalentUsd: finiteNonnegativeSchema,
-  planPriceMultiple: finiteNonnegativeSchema,
 }).strict();
 
 export const gptSubsidySnapshotSchema = z.object({
-  schemaVersion: z.literal(1),
+  schemaVersion: z.literal(2),
   title: z.literal(GPT_SUBSIDY_TITLE),
   generatedAt: isoDateTimeSchema,
   currency: z.literal("USD"),
@@ -83,7 +109,6 @@ export const gptSubsidySnapshotSchema = z.object({
   periodSummary: periodSummarySchema,
   methodology: z.object({
     deduplication: z.literal("tokscale-global-event-identity"),
-    weeksPerMonth: z.literal(4),
     measurement: z.object({
       name: z.literal("AI Charts GPT subsidy measurement manifest"),
       schemaVersion: z.literal(1),
@@ -178,26 +203,6 @@ export const gptSubsidySnapshotSchema = z.object({
       });
     }
 
-    const expectedMonthlyUsd = observation.trailingSevenDayApiEquivalentUsd
-      * snapshot.methodology.weeksPerMonth;
-    if (!approximatelyEqual(observation.monthlyApiEquivalentUsd, expectedMonthlyUsd, 0.02)) {
-      context.addIssue({
-        code: "custom",
-        message: "Four-week API-equivalent value does not match the weekly pace",
-        path: [...path, "monthlyApiEquivalentUsd"],
-      });
-    }
-
-    const expectedMultiple = observation.monthlyApiEquivalentUsd
-      / snapshot.plan.monthlyPriceUsd;
-    if (!approximatelyEqual(observation.planPriceMultiple, expectedMultiple, 0.02)) {
-      context.addIssue({
-        code: "custom",
-        message: "Plan-price multiple does not match monthly value divided by plan price",
-        path: [...path, "planPriceMultiple"],
-      });
-    }
-
   });
 
   const summary = snapshot.periodSummary;
@@ -225,18 +230,6 @@ export const gptSubsidySnapshotSchema = z.object({
       path: ["periodSummary", "endedAt"],
     });
   }
-  if (!approximatelyEqual(
-    summary.planPriceMultiple,
-    summary.apiEquivalentUsd / snapshot.plan.monthlyPriceUsd,
-    0.02,
-  )) {
-    context.addIssue({
-      code: "custom",
-      message: "Summary multiple does not match value divided by plan price",
-      path: ["periodSummary", "planPriceMultiple"],
-    });
-  }
-
   const latest = snapshot.observations.at(-1);
   if (latest !== undefined) {
     const latestDate = latest.observedAt.slice(0, 10);
@@ -283,14 +276,16 @@ export const gptSubsidySnapshotSchema = z.object({
 export type GptSubsidyObservation = z.infer<typeof gptSubsidyObservationSchema>;
 export type GptSubsidySnapshot = z.infer<typeof gptSubsidySnapshotSchema>;
 
+export function gptSubsidyPageModifiedAt(snapshot: GptSubsidySnapshot): string {
+  return Date.parse(snapshot.generatedAt) >= Date.parse(GPT_SUBSIDY_PAGE_CONTENT_MODIFIED_AT)
+    ? snapshot.generatedAt
+    : GPT_SUBSIDY_PAGE_CONTENT_MODIFIED_AT;
+}
+
 type TokenUsage = Pick<GptSubsidyObservation["tokens"],
   "uncachedInput" | "cachedInput" | "output">;
 type ModelPricing = Pick<GptSubsidySnapshot["pricing"]["referenceModel"],
   "uncachedInputPerMillionUsd" | "cachedInputPerMillionUsd" | "outputPerMillionUsd">;
-
-function approximatelyEqual(left: number, right: number, tolerance: number): boolean {
-  return Math.abs(left - right) <= tolerance;
-}
 
 export function calculateApiEquivalentUsd(
   tokens: TokenUsage,
@@ -353,10 +348,6 @@ const utcDateTimeFormatter = new Intl.DateTimeFormat("en-US", {
   timeZoneName: "short",
   year: "numeric",
 });
-
-export function formatSubsidyMultiple(value: number): string {
-  return `${value.toFixed(1)}×`;
-}
 
 export function formatSubsidyUsd(value: number): string {
   return usdFormatter.format(value);

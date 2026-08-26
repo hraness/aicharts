@@ -13,7 +13,6 @@ export const TOKSCALE_COMMIT =
   "0149a44329fb89865837dde40adb8cd9bc06bead" as const;
 export const GPT_SUBSIDY_ROLLING_DAYS = 7 as const;
 export const GPT_SUBSIDY_SUMMARY_DAYS = 31 as const;
-export const GPT_SUBSIDY_WEEKS_PER_MONTH = 4 as const;
 
 const sha256Schema = z.string().regex(/^[0-9a-f]{64}$/u);
 const modelIdSchema = z.string().min(1).max(256).refine(
@@ -122,8 +121,6 @@ export const gptSubsidyMeasurementManifestSchema = z.object({
   calendar: z.literal("UTC"),
   rollingDays: z.literal(GPT_SUBSIDY_ROLLING_DAYS),
   periodSummaryDays: z.literal(GPT_SUBSIDY_SUMMARY_DAYS),
-  weeksPerMonth: z.literal(GPT_SUBSIDY_WEEKS_PER_MONTH),
-  planPriceUsd: z.literal(200),
   implementation: z.object({
     ledgerAdapter: implementationFileSchema,
     publicUpdater: implementationFileSchema,

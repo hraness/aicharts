@@ -91,13 +91,6 @@ export async function checkGptSubsidyData(
       "GPT subsidy data claims a measurement basis that differs from the checked measurement manifest.",
     );
   }
-  if (
-    parsedSnapshot.value.methodology.weeksPerMonth !== measurementManifest.weeksPerMonth
-    || parsedSnapshot.value.plan.monthlyPriceUsd !== measurementManifest.planPriceUsd
-  ) {
-    throw new Error("GPT subsidy public math differs from the checked measurement manifest.");
-  }
-
   const referenceModel = pricingManifest.models.find(
     model => model.modelId === "gpt-5.6-sol" && model.pricingType === "official",
   );

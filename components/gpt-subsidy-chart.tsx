@@ -1,6 +1,5 @@
 import {
   formatSubsidyDate,
-  formatSubsidyMultiple,
   formatSubsidyTokens,
   formatSubsidyUsd,
   type GptSubsidyObservation,
@@ -32,8 +31,8 @@ function pathThrough(points: readonly Readonly<{ x: number; y: number }>[]): str
 }
 
 function boundedDomain(observations: readonly GptSubsidyObservation[]) {
-  const minimum = Math.min(...observations.map(point => point.planPriceMultiple));
-  const maximum = Math.max(...observations.map(point => point.planPriceMultiple));
+  const minimum = Math.min(...observations.map(point => point.trailingSevenDayApiEquivalentUsd));
+  const maximum = Math.max(...observations.map(point => point.trailingSevenDayApiEquivalentUsd));
   const observedSpan = maximum - minimum;
   const padding = observedSpan === 0
     ? Math.max(Math.abs(maximum) * 0.05, 1)
@@ -84,7 +83,7 @@ export function GptSubsidyChart({
   const points: readonly Point[] = observations.map(observation => ({
     observation,
     x: xScale(Date.parse(observation.observedAt)),
-    y: yScale(observation.planPriceMultiple),
+    y: yScale(observation.trailingSevenDayApiEquivalentUsd),
   }));
   const latestPoint = points.at(-1);
 
@@ -108,13 +107,13 @@ export function GptSubsidyChart({
           viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
         >
           <title id="gpt-subsidy-chart-title">
-            Four-week API-retail-equivalent multiple over time
+            Trailing-seven-day API-retail-equivalent value over time
           </title>
           <desc id="gpt-subsidy-chart-description">
             {observations.length} daily observations. The line shows the
-            API-retail-equivalent plan-price multiple derived from each
-            trailing seven-day period. Historical points are subdued and the
-            latest point is emphasized.
+            measured API-retail-equivalent value of each trailing seven-day
+            period in US dollars. Historical points are subdued and the latest
+            point is emphasized.
           </desc>
 
           <g aria-hidden="true" className="gpt-subsidy-chart__grid">
@@ -131,7 +130,7 @@ export function GptSubsidyChart({
                   x={MARGIN.left - 12}
                   y={yScale(tick) + 4}
                 >
-                  {tick}×
+                  {formatSubsidyUsd(tick)}
                 </text>
               </g>
             ))}
@@ -186,7 +185,7 @@ export function GptSubsidyChart({
             textAnchor="middle"
             transform={`translate(17 ${MARGIN.top + PLOT_HEIGHT / 2}) rotate(-90)`}
           >
-            Four-week value ÷ $200
+            Trailing 7-day API value
           </text>
         </svg>
       </div>
@@ -208,8 +207,7 @@ export function GptSubsidyChart({
                 <th scope="col">Observed</th>
                 <th scope="col">Period</th>
                 <th scope="col">Tokens</th>
-                <th scope="col">Four-week estimate</th>
-                <th scope="col">Multiple</th>
+                <th scope="col">Trailing 7-day API value</th>
               </tr>
             </thead>
             <tbody>
@@ -230,8 +228,7 @@ export function GptSubsidyChart({
                     </time>
                   </td>
                   <td>{formatSubsidyTokens(observation.tokens.total)}</td>
-                  <td>{formatSubsidyUsd(observation.monthlyApiEquivalentUsd)}</td>
-                  <td>{formatSubsidyMultiple(observation.planPriceMultiple)}</td>
+                  <td>{formatSubsidyUsd(observation.trailingSevenDayApiEquivalentUsd)}</td>
                 </tr>
               ))}
             </tbody>
