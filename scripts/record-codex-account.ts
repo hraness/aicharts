@@ -18,7 +18,7 @@ const LEDGER_FILE_MAX_BYTES = 16 * 1_048_576;
 const LOCK_STALE_AFTER_MS = 5 * 60 * 1_000;
 const MAX_ACCOUNTS = 50_000;
 const MAX_INTERVALS = 200_000;
-const MAX_CONTIGUOUS_OBSERVATION_GAP_MS = 30 * 60 * 1_000;
+const MAX_CONTIGUOUS_OBSERVATION_GAP_MS = 150 * 60 * 1_000;
 const SECRET_BYTES = 32;
 
 const authModes = ["api-key", "chatgpt", "missing", "invalid", "unknown"] as const;
