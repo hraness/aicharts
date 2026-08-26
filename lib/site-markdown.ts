@@ -122,6 +122,11 @@ export function homeDocumentModel(
         note: "Leaders, the cost/performance frontier, and limits from the same checked snapshot.",
       },
       {
+        href: blogArticlePath("open-models-coding-agent-benchmarks"),
+        label: "Open models on coding-agent benchmarks",
+        note: "Whether classified open-weight rows sit with the current AA Index leaders, using the same checked snapshot and a SemiAnalysis catch-up essay.",
+      },
+      {
         href: CODING_AGENT_DATASET_DOWNLOAD_PATH,
         label: "JSON snapshot",
         note: "The same versioned records the production chart uses.",
@@ -205,6 +210,8 @@ function datasetMarkdown(snapshot: CodingAgentSnapshot): string {
     "These are the highest available scores in the retrieved snapshot, one row per benchmark. They are observations of the named model, agent harness, and effort setting rather than general model ranks.",
     "",
     codingAgentLeadersMarkdownTable(leaders),
+    "",
+    `For AA Index versus mean API cost see [AA Index versus cost for coding agents](${absolute(blogArticlePath("aa-index-cost-coding-agents"))}). For whether classified open-weight rows sit with those leaders see [open models on coding-agent benchmarks](${absolute(blogArticlePath("open-models-coding-agent-benchmarks"))}).`,
     "",
     "## All configurations",
     "",

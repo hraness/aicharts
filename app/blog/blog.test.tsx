@@ -13,6 +13,12 @@ import {
   formatSnapshotScore,
 } from "@/lib/coding-agent-snapshot-rows";
 import { formatRetrievedAt } from "@/lib/coding-agent-updates";
+import {
+  formatAaIndexGap,
+  highestAaIndexRow,
+  highestAaIndexRowForModel,
+  openWeightCodingAgentRows,
+} from "@/lib/open-weight-coding-agents";
 
 import nextConfig from "../../next.config";
 import sitemap from "../sitemap";
@@ -91,7 +97,7 @@ describe("AI Charts benchmark notes", () => {
   });
 
   test("publishes substantial complementary articles", () => {
-    expect(blogArticles).toHaveLength(3);
+    expect(blogArticles).toHaveLength(4);
     expect(blogArticles.map(article => article.slug)).toEqual([...BLOG_SLUGS]);
     expect(new Set(BLOG_SLUGS).size).toBe(BLOG_SLUGS.length);
 
@@ -104,7 +110,10 @@ describe("AI Charts benchmark notes", () => {
       expect(articleToMarkdown(article)).toContain(article.dek);
       expect(article.sourceIds.length).toBeGreaterThanOrEqual(1);
       expect(article.relatedSlugs).toHaveLength(1);
-      if (article.slug === "aa-index-cost-coding-agents") {
+      if (article.slug === "open-models-coding-agent-benchmarks") {
+        expect(article.publishedAt).toBe("2026-08-26");
+        expect(article.updatedAt >= article.publishedAt).toBeTrue();
+      } else if (article.slug === "aa-index-cost-coding-agents") {
         expect(article.publishedAt).toBe("2026-08-22");
         expect(article.updatedAt >= article.publishedAt).toBeTrue();
       } else {
@@ -174,6 +183,49 @@ describe("AI Charts benchmark notes", () => {
     }
   });
 
+  test("derives the open-models note from the checked snapshot and quoted SemiAnalysis figures", () => {
+    const parsed = parseCodingAgentSnapshot(codingAgentData);
+    if (!parsed.ok) throw parsed.error;
+    const article = getBlogArticle("open-models-coding-agent-benchmarks");
+    expect(article).toBeDefined();
+    if (article === undefined) return;
+
+    const markup = renderToStaticMarkup(
+      createElement(ArticleBody, { blocks: article.body }),
+    );
+    const rows = codingAgentSnapshotRows(parsed.value.records);
+    const top = highestAaIndexRow(rows);
+    const topOpen = highestAaIndexRow(openWeightCodingAgentRows(parsed.value.records));
+    const kimi = highestAaIndexRowForModel(rows, "Kimi K2.6");
+    const glm = highestAaIndexRowForModel(rows, "GLM-5.2");
+    expect(top?.aaIndex).not.toBeNull();
+    expect(topOpen?.aaIndex).not.toBeNull();
+    if (top?.aaIndex == null || topOpen?.aaIndex == null) return;
+
+    expect(markup).toContain(BLOG_SOURCES.semiAnalysisOpenModels.url);
+    expect(markup).toContain(BLOG_SOURCES.hranessOpenModelsReading.url);
+    expect(markup).toContain('href="/"');
+    expect(markup).toContain('href="/data"');
+    expect(markup).toContain('href="/blog/aa-index-cost-coding-agents"');
+    expect(markup).toContain(formatRetrievedAt(parsed.value.source.retrievedAt));
+    expect(markup).toContain(top.model);
+    expect(markup).toContain(formatSnapshotScore(top.aaIndex));
+    expect(markup).toContain(topOpen.model);
+    expect(markup).toContain(formatSnapshotScore(topOpen.aaIndex));
+    expect(markup).toContain(formatAaIndexGap(top.aaIndex, topOpen.aaIndex));
+    expect(markup).toContain("75.7");
+    expect(markup).toContain("56.3");
+    expect(markup).toContain("72.4");
+    if (kimi !== undefined) {
+      expect(markup).toContain(kimi.model);
+      expect(markup).toContain(formatSnapshotScore(kimi.aaIndex));
+    }
+    if (glm !== undefined) {
+      expect(markup).toContain(glm.model);
+      expect(markup).toContain(formatSnapshotScore(glm.aaIndex));
+    }
+  });
+
   test("keeps sources unique, descriptive, and HTTPS-only", () => {
     const sources = Object.values(BLOG_SOURCES);
     expect(new Set(sources.map(source => source.url)).size).toBe(sources.length);
@@ -197,6 +249,8 @@ describe("AI Charts benchmark notes", () => {
     expect(markup).toContain(`href="${BLOG_SOURCES.mirrorCode.url}"`);
     expect(markup).toContain(`href="${BLOG_SOURCES.slopCodeBench.url}"`);
     expect(markup).toContain(`href="${BLOG_SOURCES.artificialAnalysisCodingAgents.url}"`);
+    expect(markup).toContain(`href="${BLOG_SOURCES.semiAnalysisOpenModels.url}"`);
+    expect(markup).toContain(`href="${BLOG_SOURCES.hranessOpenModelsReading.url}"`);
   });
 
   test("renders the index, static routes, breadcrumbs, dates, and sources", async () => {
