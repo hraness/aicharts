@@ -1,0 +1,429 @@
+import { spawnSync } from "node:child_process";
+import {
+  access,
+  chmod,
+  mkdir,
+  mkdtemp,
+  readFile,
+  readdir,
+  rm,
+  stat,
+  writeFile,
+} from "node:fs/promises";
+import { tmpdir } from "node:os";
+import path from "node:path";
+
+import { afterEach, describe, expect, test } from "bun:test";
+import fc from "fast-check";
+
+import {
+  acquireRecorderLock,
+  observeParsedAuth,
+  recordCodexAccount,
+  recorderPaths,
+} from "./record-codex-account";
+
+const temporaryRoots: string[] = [];
+const recorder = path.join(import.meta.dir, "record-codex-account.ts");
+
+afterEach(async () => {
+  await Promise.all(temporaryRoots.splice(0).map(root => rm(root, {
+    force: true,
+    recursive: true,
+  })));
+});
+
+async function fixture(): Promise<Readonly<{
+  environment: NodeJS.ProcessEnv;
+  home: string;
+  paths: ReturnType<typeof recorderPaths>;
+  root: string;
+}>> {
+  const root = await mkdtemp(path.join(tmpdir(), "aicharts-account-recorder-test-"));
+  temporaryRoots.push(root);
+  const home = path.join(root, "home");
+  const xdgState = path.join(root, "state");
+  await mkdir(path.join(home, ".codex"), { recursive: true });
+  const environment = {
+    ...process.env,
+    HOME: home,
+    XDG_STATE_HOME: xdgState,
+  };
+  return { environment, home, paths: recorderPaths(environment), root };
+}
+
+async function writeAuth(
+  home: string,
+  value: unknown,
+  mode = 0o600,
+): Promise<void> {
+  const authPath = path.join(home, ".codex", "auth.json");
+  await writeFile(authPath, `${JSON.stringify(value)}\n`, { encoding: "utf8", mode });
+  await chmod(authPath, mode);
+}
+
+function run(environment: NodeJS.ProcessEnv) {
+  return spawnSync(process.execPath, [recorder], {
+    encoding: "utf8",
+    env: environment,
+    stdio: ["ignore", "pipe", "pipe"],
+    timeout: 10_000,
+  });
+}
+
+async function allFileContents(root: string): Promise<string> {
+  const contents: string[] = [];
+  async function visit(directory: string): Promise<void> {
+    for (const entry of await readdir(directory, { withFileTypes: true })) {
+      const target = path.join(directory, entry.name);
+      if (entry.isDirectory()) await visit(target);
+      else if (entry.isFile()) contents.push(await readFile(target, "utf8"));
+    }
+  }
+  await visit(root);
+  return contents.join("\n");
+}
+
+describe("Codex account recorder", () => {
+  test("records distinct account intervals without printing or persisting auth data", async () => {
+    const subject = await fixture();
+    const firstAccount = "account-private-alpha-1234567890";
+    const secondAccount = "account-private-beta-0987654321";
+    const email = "private-person@example.test";
+    const accessToken = "access-token-that-must-never-leak";
+    await writeAuth(subject.home, {
+      auth_mode: "chatgpt",
+      email,
+      tokens: {
+        access_token: accessToken,
+        account_id: firstAccount,
+        id_token: "private-id-token",
+        refresh_token: "private-refresh-token",
+      },
+    });
+
+    const first = run(subject.environment);
+    expect(first.status).toBe(0);
+    const firstStatus = JSON.parse(first.stdout) as Record<string, unknown>;
+    expect(firstStatus).toEqual({
+      kind: "recorded",
+      observedAt: expect.any(String),
+      changed: true,
+      observedAccountFingerprintCount: 1,
+      authMode: "chatgpt",
+      planStatus: "subscription-unverified",
+    });
+    expect(first.stderr).toBe("");
+
+    const refresh = run(subject.environment);
+    expect(refresh.status).toBe(0);
+    expect(JSON.parse(refresh.stdout)).toEqual({
+      kind: "recorded",
+      observedAt: expect.any(String),
+      changed: false,
+      observedAccountFingerprintCount: 1,
+      authMode: "chatgpt",
+      planStatus: "subscription-unverified",
+    });
+
+    await writeAuth(subject.home, {
+      auth_mode: "chatgpt",
+      tokens: { account_id: secondAccount },
+    });
+    const switched = run(subject.environment);
+    expect(switched.status).toBe(0);
+    expect(JSON.parse(switched.stdout)).toEqual({
+      kind: "recorded",
+      observedAt: expect.any(String),
+      changed: true,
+      observedAccountFingerprintCount: 2,
+      authMode: "chatgpt",
+      planStatus: "subscription-unverified",
+    });
+
+    const ledger = JSON.parse(await readFile(subject.paths.ledger, "utf8")) as {
+      accounts: unknown[];
+      intervals: unknown[];
+    };
+    expect(ledger.accounts).toHaveLength(2);
+    expect(ledger.intervals).toHaveLength(2);
+    const persisted = await allFileContents(subject.paths.stateRoot);
+    for (const secretValue of [
+      firstAccount,
+      secondAccount,
+      email,
+      accessToken,
+      "private-id-token",
+      "private-refresh-token",
+    ]) {
+      expect(`${first.stdout}${refresh.stdout}${switched.stdout}${persisted}`)
+        .not.toContain(secretValue);
+    }
+    expect((await stat(subject.paths.stateRoot)).mode & 0o777).toBe(0o700);
+    expect((await stat(subject.paths.secret)).mode & 0o777).toBe(0o600);
+    expect((await stat(subject.paths.ledger)).mode & 0o777).toBe(0o600);
+  });
+
+  test("represents missing, invalid, and API-key auth without inventing an account", async () => {
+    const subject = await fixture();
+    const missing = run(subject.environment);
+    expect(missing.status).toBe(0);
+    expect(JSON.parse(missing.stdout)).toMatchObject({
+      authMode: "missing",
+      changed: true,
+      observedAccountFingerprintCount: 0,
+      planStatus: "unavailable",
+    });
+
+    await writeFile(path.join(subject.home, ".codex", "auth.json"), "{invalid", {
+      encoding: "utf8",
+      mode: 0o600,
+    });
+    const invalid = run(subject.environment);
+    expect(invalid.status).toBe(0);
+    expect(JSON.parse(invalid.stdout)).toMatchObject({
+      authMode: "invalid",
+      changed: true,
+      observedAccountFingerprintCount: 0,
+      planStatus: "unavailable",
+    });
+
+    await writeAuth(subject.home, {
+      OPENAI_API_KEY: "private-api-key",
+      auth_mode: "api_key",
+    });
+    const apiKey = run(subject.environment);
+    expect(apiKey.status).toBe(0);
+    expect(JSON.parse(apiKey.stdout)).toMatchObject({
+      authMode: "api-key",
+      changed: true,
+      observedAccountFingerprintCount: 0,
+      planStatus: "not-applicable",
+    });
+    expect(await allFileContents(subject.paths.stateRoot)).not.toContain("private-api-key");
+  });
+
+  test("fails closed on broad auth permissions without leaking file contents", async () => {
+    const subject = await fixture();
+    const accountId = "permission-failure-account-private";
+    await writeAuth(subject.home, {
+      auth_mode: "chatgpt",
+      tokens: { account_id: accountId, access_token: "permission-secret-token" },
+    }, 0o644);
+    const result = run(subject.environment);
+    expect(result.status).toBe(65);
+    expect(result.stdout).toBe("");
+    expect(result.stderr).toContain("permissions are too broad");
+    expect(result.stderr).not.toContain(accountId);
+    expect(result.stderr).not.toContain("permission-secret-token");
+  });
+
+  test("rejects corrupt or privacy-expanded ledgers instead of carrying unknown fields", async () => {
+    const subject = await fixture();
+    await writeAuth(subject.home, {
+      auth_mode: "chatgpt",
+      tokens: { account_id: "corrupt-ledger-private-account" },
+    });
+    expect(run(subject.environment).status).toBe(0);
+    const ledger = JSON.parse(await readFile(subject.paths.ledger, "utf8")) as Record<string, unknown>;
+    ledger.email = "should-never-be-retained@example.test";
+    await writeFile(subject.paths.ledger, `${JSON.stringify(ledger)}\n`, {
+      encoding: "utf8",
+      mode: 0o600,
+    });
+    const result = run(subject.environment);
+    expect(result.status).toBe(65);
+    expect(result.stdout).toBe("");
+    expect(result.stderr).toBe("Account observation ledger is invalid.\n");
+    expect(result.stderr).not.toContain("should-never-be-retained@example.test");
+  });
+
+  test("fails closed when a ledger outlives its HMAC key", async () => {
+    const subject = await fixture();
+    await writeAuth(subject.home, {
+      auth_mode: "chatgpt",
+      tokens: { account_id: "missing-key-private-account" },
+    });
+    expect(run(subject.environment).status).toBe(0);
+    await rm(subject.paths.secret);
+
+    const result = run(subject.environment);
+    expect(result.status).toBe(65);
+    expect(result.stdout).toBe("");
+    expect(result.stderr).toBe("Account HMAC secret is missing while observations exist.\n");
+    await expect(access(subject.paths.secret)).rejects.toThrow();
+  });
+
+  test("fails closed when a valid replacement HMAC key does not match the ledger", async () => {
+    const subject = await fixture();
+    const replacement = await fixture();
+    await writeAuth(subject.home, {
+      auth_mode: "chatgpt",
+      tokens: { account_id: "original-key-private-account" },
+    });
+    await writeAuth(replacement.home, {
+      auth_mode: "chatgpt",
+      tokens: { account_id: "replacement-key-private-account" },
+    });
+    expect(run(subject.environment).status).toBe(0);
+    expect(run(replacement.environment).status).toBe(0);
+    await writeFile(subject.paths.secret, await readFile(replacement.paths.secret), {
+      mode: 0o600,
+    });
+    await chmod(subject.paths.secret, 0o600);
+
+    const result = run(subject.environment);
+    expect(result.status).toBe(65);
+    expect(result.stdout).toBe("");
+    expect(result.stderr).toBe("Account HMAC secret does not match the observation ledger.\n");
+  });
+
+  test("deduplicates concurrent recorder ownership", async () => {
+    const subject = await fixture();
+    await mkdir(subject.paths.stateRoot, { recursive: true, mode: 0o700 });
+    const acquiredAt = new Date().toISOString();
+    const release = await acquireRecorderLock(subject.paths.lock, acquiredAt);
+    expect(release).not.toBeNull();
+    const competing = await acquireRecorderLock(subject.paths.lock, acquiredAt);
+    expect(competing).toBeNull();
+    await release!();
+    const reacquired = await acquireRecorderLock(subject.paths.lock, acquiredAt);
+    expect(reacquired).not.toBeNull();
+    await reacquired!();
+  });
+
+  test("splits same-account coverage after a missed-heartbeat gap", async () => {
+    const subject = await fixture();
+    await writeAuth(subject.home, {
+      auth_mode: "chatgpt",
+      tokens: { account_id: "gap-aware-private-account" },
+    });
+    const first = await recordCodexAccount(
+      subject.environment,
+      new Date("2026-08-25T12:00:00.000Z"),
+    );
+    const contiguous = await recordCodexAccount(
+      subject.environment,
+      new Date("2026-08-25T12:15:00.000Z"),
+    );
+    const afterGap = await recordCodexAccount(
+      subject.environment,
+      new Date("2026-08-25T12:46:00.000Z"),
+    );
+    expect(first).toMatchObject({ changed: true, kind: "recorded" });
+    expect(contiguous).toMatchObject({ changed: false, kind: "recorded" });
+    expect(afterGap).toMatchObject({ changed: false, kind: "recorded" });
+    const ledger = JSON.parse(await readFile(subject.paths.ledger, "utf8")) as {
+      intervals: Array<{
+        accountFingerprint: string;
+        authMode: string;
+        lastObservedAt: string;
+        planStatus: string;
+        startedAt: string;
+      }>;
+    };
+    expect(ledger.intervals).toEqual([
+      {
+        accountFingerprint: expect.any(String),
+        authMode: "chatgpt",
+        planStatus: "subscription-unverified",
+        startedAt: "2026-08-25T12:00:00.000Z",
+        lastObservedAt: "2026-08-25T12:15:00.000Z",
+      },
+      {
+        accountFingerprint: expect.any(String),
+        authMode: "chatgpt",
+        planStatus: "subscription-unverified",
+        startedAt: "2026-08-25T12:46:00.000Z",
+        lastObservedAt: "2026-08-25T12:46:00.000Z",
+      },
+    ]);
+  });
+
+  test("maps arbitrary parsed auth documents into a bounded nonidentifying result", () => {
+    const secret = Buffer.alloc(32, 7);
+    fc.assert(fc.property(fc.jsonValue(), value => {
+      const observation = observeParsedAuth(value, secret);
+      expect(Object.keys(observation).sort()).toEqual([
+        "accountFingerprint",
+        "authMode",
+        "planStatus",
+      ]);
+      expect(["api-key", "chatgpt", "invalid", "unknown"])
+        .toContain(observation.authMode);
+      expect(["not-applicable", "subscription-unverified", "unavailable"])
+        .toContain(observation.planStatus);
+      expect(observation.accountFingerprint === null
+        || /^hmac-sha256:v1:[A-Za-z0-9_-]{43}$/.test(observation.accountFingerprint))
+        .toBe(true);
+    }), { numRuns: 500 });
+  });
+
+  test("never returns a raw account identifier from a valid auth document", () => {
+    const secret = Buffer.alloc(32, 11);
+    fc.assert(fc.property(
+      fc.string({ minLength: 20, maxLength: 200 }),
+      fc.string({ minLength: 20, maxLength: 200 }),
+      (accountId, token) => {
+        const observation = observeParsedAuth({
+          auth_mode: "chatgpt",
+          tokens: { access_token: token, account_id: accountId },
+        }, secret);
+        const serialized = JSON.stringify(observation);
+        expect(serialized).not.toContain(accountId);
+        expect(serialized).not.toContain(token);
+      },
+    ), { numRuns: 500 });
+  });
+});
+
+describe("Codex account recorder installer", () => {
+  test("installs a runnable launcher and preserves private state on uninstall", async () => {
+    const subject = await fixture();
+    const binHome = path.join(subject.root, "bin-home");
+    const environment = {
+      ...subject.environment,
+      XDG_BIN_HOME: binHome,
+      XDG_DATA_HOME: path.join(subject.root, "data-home"),
+    };
+    const installer = path.join(import.meta.dir, "install-codex-account-recorder.sh");
+    const installed = path.join(binHome, "aicharts-record-codex-account");
+    const install = spawnSync("/bin/sh", [installer, "install"], {
+      encoding: "utf8",
+      env: environment,
+      stdio: ["ignore", "pipe", "pipe"],
+      timeout: 10_000,
+    });
+    expect(install.status).toBe(0);
+    expect(install.stderr).toBe("");
+    await access(installed);
+
+    await writeAuth(subject.home, {
+      auth_mode: "chatgpt",
+      tokens: { account_id: "installed-recorder-private-account" },
+    });
+    const recorded = spawnSync(installed, [], {
+      encoding: "utf8",
+      env: environment,
+      stdio: ["ignore", "pipe", "pipe"],
+      timeout: 10_000,
+    });
+    expect(recorded.status).toBe(0);
+    expect(JSON.parse(recorded.stdout)).toMatchObject({
+      kind: "recorded",
+      observedAccountFingerprintCount: 1,
+    });
+    await access(subject.paths.ledger);
+
+    const uninstall = spawnSync("/bin/sh", [installer, "uninstall"], {
+      encoding: "utf8",
+      env: environment,
+      stdio: ["ignore", "pipe", "pipe"],
+      timeout: 10_000,
+    });
+    expect(uninstall.status).toBe(0);
+    await expect(access(installed)).rejects.toThrow();
+    await access(subject.paths.ledger);
+    expect(uninstall.stdout).toContain("Private account observations remain");
+  });
+});

@@ -5,7 +5,8 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { GptSubsidyChart } from "@/components/gpt-subsidy-chart";
 import gptSubsidyData from "@/data/gpt-subsidy.json";
 import {
-  formatSubsidyMultiple,
+  formatSubsidyUsd,
+  gptSubsidyPageModifiedAt,
   GPT_SUBSIDY_DESCRIPTION,
   GPT_SUBSIDY_TITLE,
   parseGptSubsidySnapshot,
@@ -85,7 +86,7 @@ describe("GPT subsidy page components", () => {
     for (const observation of snapshot.observations) {
       expect(markup).toContain(observation.observedAt);
       expect(markup).toContain(
-        formatSubsidyMultiple(observation.planPriceMultiple),
+        formatSubsidyUsd(observation.trailingSevenDayApiEquivalentUsd),
       );
     }
   });
@@ -106,19 +107,13 @@ describe("GPT subsidy page components", () => {
     expect(markup).toContain("API-key or otherwise API-billed usage");
     expect(markup).toContain("purchased ChatGPT credits");
     expect(markup).toContain("scheduled collector&#x27;s own small Codex token use");
-    expect(markup).toContain("Four-week API-equivalent multiple");
+    expect(markup).toContain("Trailing 7-day API-equivalent value");
+    expect(markup).toContain("Subscription-adjusted multiple unavailable");
     expect(markup).toContain(
-      `× ${snapshot.methodology.weeksPerMonth} ÷`,
-    );
-    expect(markup).toContain("Weekly quota status is not observed");
-    expect(markup).toContain(
-      "does not track weekly quota exhaustion or reset windows",
+      "No monthly projection or one-plan normalization is applied",
     );
     expect(markup).toContain(
-      "cannot be durably attributed to one subscription or billing source",
-    );
-    expect(markup).toContain(
-      "The ×4 is a fixed 28-day convention, not four observed exhausted allocations",
+      "without durable account attribution",
     );
     expect(markup).toContain("prove that a weekly limit was exhausted");
     expect(markup).toContain("model-specific API-price estimates");
@@ -131,6 +126,7 @@ describe("GPT subsidy page components", () => {
     expect(markup).toContain(snapshot.pricing.manifest.sourceUrl);
     expect(markup).toContain(snapshot.methodology.measurement.sourceUrl);
     expect(markup).toContain(snapshot.generatedAt);
+    expect(markup).toContain(gptSubsidyPageModifiedAt(snapshot));
     expect(markup).toContain(
       snapshot.observations[0]!.periodStartedAt
       + "/"
@@ -141,8 +137,9 @@ describe("GPT subsidy page components", () => {
     for (const observation of snapshot.observations) {
       expect(markup).toContain(observation.observedAt);
       expect(markup).toContain(
-        formatSubsidyMultiple(observation.planPriceMultiple),
+        formatSubsidyUsd(observation.trailingSevenDayApiEquivalentUsd),
       );
     }
+    expect(markup).not.toContain("307.1×");
   });
 });

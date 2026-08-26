@@ -211,8 +211,6 @@ struct MeasurementManifest {
     calendar: String,
     rolling_days: u8,
     period_summary_days: u8,
-    weeks_per_month: f64,
-    plan_price_usd: u16,
     implementation: MeasurementImplementation,
 }
 
@@ -235,8 +233,6 @@ impl MeasurementManifest {
             || self.calendar != "UTC"
             || self.rolling_days != 7
             || self.period_summary_days != 31
-            || self.weeks_per_month.to_bits() != 4_f64.to_bits()
-            || self.plan_price_usd != 200
         {
             return Err("checked measurement manifest semantics are invalid".to_string());
         }
@@ -260,7 +256,10 @@ impl MeasurementManifest {
         ] {
             if file.path != expected_path
                 || file.sha256.len() != 64
-                || !file.sha256.bytes().all(|byte| byte.is_ascii_hexdigit() && !byte.is_ascii_uppercase())
+                || !file
+                    .sha256
+                    .bytes()
+                    .all(|byte| byte.is_ascii_hexdigit() && !byte.is_ascii_uppercase())
             {
                 return Err("checked measurement implementation identity is invalid".to_string());
             }
@@ -896,6 +895,29 @@ mod tests {
             .expect("valid checked measurement manifest")
     }
 
+    #[test]
+    fn measurement_contract_has_no_subscription_projection_inputs() {
+        let value: serde_json::Value = serde_json::from_slice(MEASUREMENT_MANIFEST_BYTES)
+            .expect("valid checked measurement JSON");
+        let object = value.as_object().expect("measurement manifest object");
+        assert!(!object.contains_key("weeksPerMonth"));
+        assert!(!object.contains_key("planPriceUsd"));
+        measurement();
+    }
+
+    #[test]
+    fn measurement_contract_rejects_legacy_subscription_projection_inputs() {
+        let mut value: serde_json::Value = serde_json::from_slice(MEASUREMENT_MANIFEST_BYTES)
+            .expect("valid checked measurement JSON");
+        let object = value.as_object_mut().expect("measurement manifest object");
+        object.insert("weeksPerMonth".to_string(), serde_json::json!(4));
+        object.insert("planPriceUsd".to_string(), serde_json::json!(200));
+        let legacy = serde_json::to_vec(&value).expect("serializable legacy manifest");
+        let error = MeasurementManifest::parse(&legacy)
+            .expect_err("legacy projection inputs must not be accepted");
+        assert!(error.contains("unknown field"));
+    }
+
     fn timestamp(raw: &str) -> i64 {
         parse_rfc3339(raw)
             .expect("valid test timestamp")
@@ -984,9 +1006,8 @@ mod tests {
                 },
             ),
         ];
-        let ledger =
-            ledger_from_messages(&messages, &pricing(), &measurement(), &range())
-                .expect("complete ledger");
+        let ledger = ledger_from_messages(&messages, &pricing(), &measurement(), &range())
+            .expect("complete ledger");
         assert_eq!(
             ledger
                 .days
@@ -1042,20 +1063,15 @@ mod tests {
 
     #[test]
     fn serializes_the_strict_public_contract_without_account_attribution() {
-        let ledger = ledger_from_messages(&[], &pricing(), &measurement(), &range())
-            .expect("empty ledger");
+        let ledger =
+            ledger_from_messages(&[], &pricing(), &measurement(), &range()).expect("empty ledger");
         let value = serde_json::to_value(ledger).expect("serializable ledger");
         assert_eq!(value["schemaVersion"], 1);
         assert_eq!(value["deduplication"], DEDUPLICATION);
         assert_eq!(value["parser"]["version"], TOKSCALE_VERSION);
+        assert_eq!(value["measurementBasis"]["kind"], MEASUREMENT_MANIFEST_KIND);
         assert_eq!(
-            value["measurementBasis"]["kind"],
-            MEASUREMENT_MANIFEST_KIND
-        );
-        assert_eq!(
-            value["measurementBasis"]["sha256"]
-                .as_str()
-                .map(str::len),
+            value["measurementBasis"]["sha256"].as_str().map(str::len),
             Some(64)
         );
         assert_eq!(value["pricingCoverage"]["status"], "complete");

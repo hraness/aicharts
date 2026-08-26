@@ -30,7 +30,6 @@ import { formatRetrievedAt } from "./coding-agent-updates";
 import {
   GPT_SUBSIDY_DESCRIPTION,
   formatSubsidyDate,
-  formatSubsidyMultiple,
   formatSubsidyTokens,
   formatSubsidyUsd,
   latestGptSubsidyObservation,
@@ -110,7 +109,7 @@ export function homeDocumentModel(
       {
         href: "/gpt-subsidy",
         label: "ChatGPT Pro API-equivalent value",
-        note: "Historical estimates from measured Codex token usage, the checked August 25, 2026 API price basis, and the $200 monthly subscription price.",
+        note: "Historical measured values from Codex token usage and the checked August 25, 2026 API price basis. Subscription-adjusted history is unavailable.",
       },
       {
         href: CODING_AGENT_DATASET_PATH,
@@ -264,12 +263,11 @@ export function gptSubsidyMarkdown(
     formatSubsidyDate(observation.observedAt),
     `${formatSubsidyDate(observation.periodStartedAt)}–${formatSubsidyDate(observation.periodEndsAt)}`,
     formatSubsidyTokens(observation.tokens.total),
-    formatSubsidyUsd(observation.monthlyApiEquivalentUsd),
-    formatSubsidyMultiple(observation.planPriceMultiple),
+    formatSubsidyUsd(observation.trailingSevenDayApiEquivalentUsd),
   ]);
   const table = [
-    "| Observed | Period | Tokens | Four-week API-value estimate | Multiple |",
-    "| --- | --- | ---: | ---: | ---: |",
+    "| Observed | Period | Tokens | Trailing 7-day API value |",
+    "| --- | --- | ---: | ---: |",
     ...rows.map(row => `| ${row.join(" | ")} |`),
   ].join("\n");
 
@@ -278,17 +276,17 @@ export function gptSubsidyMarkdown(
     "",
     GPT_SUBSIDY_DESCRIPTION,
     "",
-    `The latest four-week plan-price multiple is ${formatSubsidyMultiple(latest.planPriceMultiple)}, derived from seven settled UTC days. The measured trailing-seven-day API-retail value is ${formatSubsidyUsd(latest.trailingSevenDayApiEquivalentUsd)}. Multiplying that value by exactly ${snapshot.methodology.weeksPerMonth} produces a ${formatSubsidyUsd(latest.monthlyApiEquivalentUsd)} four-week estimate; dividing by one ${formatSubsidyUsd(snapshot.plan.monthlyPriceUsd)} plan-price unit produces the multiple.`,
+    `The latest measured trailing-seven-day API-retail-equivalent value is ${formatSubsidyUsd(latest.trailingSevenDayApiEquivalentUsd)}. It covers seven complete UTC days and is not projected into a monthly value.`,
     "",
-    `Across the measured ${snapshot.periodSummary.days}-day period, local Codex usage has an estimated API value of ${formatSubsidyUsd(snapshot.periodSummary.apiEquivalentUsd)}, or ${formatSubsidyMultiple(snapshot.periodSummary.planPriceMultiple)} of one $200 plan-price unit.`,
+    `Across the measured trailing ${snapshot.periodSummary.days}-day period, local Codex usage has an API-retail-equivalent value of ${formatSubsidyUsd(snapshot.periodSummary.apiEquivalentUsd)}.`,
     "",
-    "This is one user's available local Codex logs on one machine. It is not a platform-wide or representative ChatGPT Pro estimate. The published series does not observe whether a weekly quota was exhausted or when it reset. Exact ×4 is a normalization convention, not four observed exhausted allocations. The logs do not retain a durable account ID or billing mode and cannot distinguish plan allowance from API-key or otherwise API-billed usage, purchased ChatGPT credits, free or reset credits, or temporary promotions. Historical account switches and usage across multiple subscriptions cannot be excluded.",
+    "This is one user's available local Codex logs on one machine. It is not a platform-wide or representative ChatGPT Pro estimate. Historical logs span account switches without durable account attribution. The subscription-adjusted multiple is therefore unavailable rather than calculated against one $200 subscription. API-key or otherwise API-billed usage, purchased ChatGPT credits, free or reset credits, and temporary promotions cannot be separated.",
     "",
     "## History",
     "",
     table,
     "",
-    "No quota-exhaustion or per-refill projection is published because current allowance state belongs to the signed-in usage dashboard or Codex /status and cannot be joined reliably to historical session usage across authentication, subscription, or credit-source changes.",
+    "No monthly projection, one-plan normalization, quota-exhaustion estimate, or per-refill projection is published for this historical period. Current allowance state cannot be joined reliably to historical session usage across authentication, subscription, or credit-source changes.",
     "",
     "## Calculation",
     "",

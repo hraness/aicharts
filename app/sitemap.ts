@@ -7,7 +7,10 @@ import {
   CODING_AGENT_DATASET_PATH,
   codingAgentDatasetModifiedAt,
 } from "@/lib/coding-agent-dataset";
-import { parseGptSubsidySnapshot } from "@/lib/gpt-subsidy-data";
+import {
+  gptSubsidyPageModifiedAt,
+  parseGptSubsidySnapshot,
+} from "@/lib/gpt-subsidy-data";
 import { blogArticlePath, blogArticles } from "./blog/articles";
 import { BLOG_SOCIAL_IMAGE_PATH, blogArticleImagePath } from "./blog/seo";
 import { searchSite, site } from "./site";
@@ -47,7 +50,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     {
       changeFrequency: "daily",
       images: [absolute("/gpt-subsidy/opengraph-image")],
-      lastModified: parsedSubsidy.value.generatedAt,
+      lastModified: gptSubsidyPageModifiedAt(parsedSubsidy.value),
       priority: 0.9,
       url: absolute("/gpt-subsidy"),
     },

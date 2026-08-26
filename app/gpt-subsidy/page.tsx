@@ -3,10 +3,10 @@ import gptSubsidyData from "@/data/gpt-subsidy.json";
 import {
   formatSubsidyDate,
   formatSubsidyDateTime,
-  formatSubsidyMultiple,
   formatSubsidyUsd,
   GPT_SUBSIDY_DESCRIPTION,
   GPT_SUBSIDY_TITLE,
+  gptSubsidyPageModifiedAt,
   latestGptSubsidyObservation,
   parseGptSubsidySnapshot,
   type GptSubsidySnapshot,
@@ -71,15 +71,16 @@ function subsidyDatasetJsonLd(snapshot: GptSubsidySnapshot) {
       name: site.name,
       url: searchSite.origin,
     },
-    dateModified: snapshot.generatedAt,
+    dateModified: gptSubsidyPageModifiedAt(snapshot),
     temporalCoverage: first.periodStartedAt + "/" + last.periodEndsAt,
     inLanguage: "en-US",
     isAccessibleForFree: true,
     measurementTechnique: snapshot.methodology.formula,
     variableMeasured: [
-      "Four-week API-retail-equivalent value",
-      "API-retail-equivalent multiple of the ChatGPT Pro monthly price",
+      "Trailing-seven-day API-retail-equivalent value",
+      "Trailing-31-day API-retail-equivalent value",
       "Globally deduplicated Codex task token use",
+      "Account-attribution coverage",
     ],
     citation: Array.from(new Set([
       snapshot.plan.sourceUrl,
@@ -126,7 +127,7 @@ export default function GptSubsidyPage() {
           <time dateTime={latest.observedAt}>
             {formatSubsidyDate(latest.observedAt)}
           </time>
-          <span>· Updated </span>
+          <span>· Data generated </span>
           <time dateTime={snapshot.generatedAt}>
             {formatSubsidyDateTime(snapshot.generatedAt)}
           </time>
@@ -138,24 +139,21 @@ export default function GptSubsidyPage() {
         className="gpt-subsidy-summary plain-publication__shell"
       >
         <div className="gpt-subsidy-summary__primary">
-          <h2 id="latest-subsidy-observation">Four-week API-equivalent multiple</h2>
+          <h2 id="latest-subsidy-observation">Trailing 7-day API-equivalent value</h2>
           <p className="gpt-subsidy-summary__value">
-            {formatSubsidyMultiple(latest.planPriceMultiple)}
+            {formatSubsidyUsd(latest.trailingSevenDayApiEquivalentUsd)}
           </p>
           <p className="gpt-subsidy-summary__equation">
-            {formatSubsidyUsd(latest.trailingSevenDayApiEquivalentUsd)} ×{" "}
-            {snapshot.methodology.weeksPerMonth} ÷{" "}
-            {formatSubsidyUsd(snapshot.plan.monthlyPriceUsd)}
+            Seven complete UTC days · model-specific API rates
           </p>
         </div>
         <div className="gpt-subsidy-summary__context">
           <p>
-            <strong>{formatSubsidyUsd(latest.monthlyApiEquivalentUsd)}</strong>
-            <span> projected 28-day API-retail-equivalent value</span>
+            <strong>{formatSubsidyUsd(snapshot.periodSummary.apiEquivalentUsd)}</strong>
+            <span> measured trailing {snapshot.periodSummary.days}-day API-equivalent value</span>
           </p>
           <p className="gpt-subsidy-summary__period">
-            Measured {snapshot.periodSummary.days}-day total:{" "}
-            {formatSubsidyUsd(snapshot.periodSummary.apiEquivalentUsd)} from{" "}
+            From{" "}
             <time dateTime={snapshot.periodSummary.startedAt}>
               {formatSubsidyDate(snapshot.periodSummary.startedAt)}
             </time>
@@ -165,10 +163,10 @@ export default function GptSubsidyPage() {
             </time>
           </p>
           <p className="gpt-subsidy-summary__scope">
-            <strong>Weekly quota status is not observed.</strong> The ×4 is a
-            fixed 28-day convention, not four observed exhausted allocations,
-            and the usage cannot be durably attributed to one subscription or
-            billing source.
+            <strong>Subscription-adjusted multiple unavailable.</strong>{" "}
+            Historical logs span account switches without durable account
+            attribution, so dividing this usage by one $200 subscription would
+            overstate the result.
           </p>
         </div>
       </section>
@@ -181,7 +179,7 @@ export default function GptSubsidyPage() {
           <h2 id="subsidy-history">History</h2>
           <p>
             Each point is the preceding seven complete UTC days, priced at
-            model-specific API rates and compared with the $200 plan price.
+            model-specific API rates.
           </p>
         </div>
         <GptSubsidyChart snapshot={snapshot} />
@@ -197,14 +195,12 @@ export default function GptSubsidyPage() {
             Available local Codex task logs, including child agents, are
             deduplicated into daily token buckets and repriced with
             model-specific API-price estimates from the checked manifest. Each
-            point sums seven settled days, multiplies that value by{" "}
-            {snapshot.methodology.weeksPerMonth}, then divides by the{" "}
-            {formatSubsidyUsd(snapshot.plan.monthlyPriceUsd)} plan price.
+            point sums seven settled days. No monthly projection or one-plan
+            normalization is applied.
           </p>
           <p className="gpt-subsidy-method__boundary">
-            The published collector does not track weekly quota exhaustion or
-            reset windows. Its line is realized local usage, not an allowance
-            ledger.
+            The line is measured local usage. It is not an allowance ledger or
+            a per-subscription subsidy multiple.
           </p>
         </div>
 
@@ -238,16 +234,17 @@ export default function GptSubsidyPage() {
                   a platform-wide or representative ChatGPT Pro estimate.
                 </li>
                 <li>
-                  The session directory has no durable account ID or billing
-                  mode. Historical account switches, multiple subscriptions,
+                  Historical session files have no durable account attribution.
+                  Account switches, multiple subscriptions,
                   API-key or otherwise API-billed usage, purchased ChatGPT
                   credits, free or reset credits, and promotions cannot be
                   separated.
                 </li>
                 <li>
-                  The line is realized local usage pace. It does not reconstruct
-                  allowance resets, prove that a weekly limit was exhausted, or
-                  establish how much usage one subscription supplied.
+                  The line does not reconstruct allowance resets, prove that a
+                  weekly limit was exhausted, or establish how much usage one
+                  subscription supplied. Historical observations publish a null
+                  subscription-adjusted multiple.
                 </li>
                 <li>
                   Every point uses seven complete UTC days. Open current-day
