@@ -1,7 +1,9 @@
 import { site } from "../site";
 import { createAaIndexCostArticle } from "./aa-index-cost-article";
+import { createOpenModelsCodingAgentsArticle } from "./open-models-coding-agents-article";
 
 export const BLOG_SLUGS = [
+  "open-models-coding-agent-benchmarks",
   "aa-index-cost-coding-agents",
   "mirrorcode-coding-agent-benchmark",
   "slopcodebench-long-horizon-coding-agents",
@@ -88,6 +90,22 @@ export const BLOG_SOURCES = {
     publication: "Artificial Analysis",
     title: "Coding Agents",
     url: "https://artificialanalysis.ai/agents/coding-agents/",
+    year: 2026,
+  },
+  semiAnalysisOpenModels: {
+    note:
+      "The August 21, 2026 essay reports era-specific open-versus-closed composites, catch-up intervals, and the limits of public-benchmark scores.",
+    publication: "SemiAnalysis",
+    title: "Are Open Models Catching Up?",
+    url: "https://newsletter.semianalysis.com/p/are-open-models-catching-up",
+    year: 2026,
+  },
+  hranessOpenModelsReading: {
+    note:
+      "The Hraness reading note is a dated digest of the SemiAnalysis essay, used here as a crawlable companion citation rather than a substitute for the original.",
+    publication: "Hraness",
+    title: "Hraness reading note: Are Open Models Catching Up?",
+    url: "https://hraness.com/reading/are-open-models-catching-up",
     year: 2026,
   },
 } as const satisfies Record<string, BlogSource>;
@@ -372,6 +390,7 @@ const slopCodeBenchArticle = {
 } as const satisfies BlogArticle;
 
 export const blogArticles = [
+  createOpenModelsCodingAgentsArticle(),
   createAaIndexCostArticle(),
   mirrorCodeArticle,
   slopCodeBenchArticle,

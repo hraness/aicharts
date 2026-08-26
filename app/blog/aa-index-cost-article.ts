@@ -202,10 +202,12 @@ export function createAaIndexCostArticle(
         " for provenance, benchmark definitions, and the full configuration table.",
       ),
       paragraph(
+        { href: "/blog/open-models-coding-agent-benchmarks", text: "Open-weight catch-up on this snapshot" },
+        ", ",
         { href: "/blog/mirrorcode-coding-agent-benchmark", text: "MirrorCode" },
-        " and ",
+        ", and ",
         { href: "/blog/slopcodebench-long-horizon-coding-agents", text: "SlopCodeBench" },
-        " answer different questions: project-scale reimplementation under large budgets, and quality change as an agent repeatedly extends its own code. They are not substitutes for the AA Index and cost pairs stored here.",
+        " answer different questions: whether classified open-weight rows sit with the current AA Index leaders, project-scale reimplementation under large budgets, and quality change as an agent repeatedly extends its own code. They are not substitutes for the AA Index and cost pairs stored here.",
       ),
       heading("Limits of the comparison"),
       list(

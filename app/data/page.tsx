@@ -174,7 +174,13 @@ export default function CodingAgentDatasetPage() {
               frontier, see{" "}
               <Link href="/blog/aa-index-cost-coding-agents">
                 AA Index versus cost for coding agents
-              </Link>.
+              </Link>
+              . For whether classified open-weight rows sit with those leaders,
+              see{" "}
+              <Link href="/blog/open-models-coding-agent-benchmarks">
+                open models on coding-agent benchmarks
+              </Link>
+              .
             </p>
 
             <h2 id="configurations">All configurations</h2>

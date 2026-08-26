@@ -57,7 +57,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
     {
       changeFrequency: "monthly",
       images: [absolute(BLOG_SOCIAL_IMAGE_PATH)],
-      lastModified: "2026-08-04",
+      lastModified: blogArticles.reduce(
+        (latest, article) => article.updatedAt > latest ? article.updatedAt : latest,
+        blogArticles[0]?.updatedAt ?? "2026-08-04",
+      ),
       priority: 0.8,
       url: absolute("/blog"),
     },
