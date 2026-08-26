@@ -5,10 +5,10 @@ export const GPT_SUBSIDY_TITLE =
   "Subsidy for ChatGPT Pro 20x subscription" as const;
 
 export const GPT_SUBSIDY_DESCRIPTION =
-  "Daily history of the measured API-retail-equivalent value of seven complete UTC days from one user's available local Codex logs on one machine. Historical account attribution is unavailable.";
+  "Daily history of the measured API-retail-equivalent value of seven complete UTC days from all available local Codex logs on one machine. Usage spans switched accounts, and historical account count is unavailable.";
 
 export const GPT_SUBSIDY_PAGE_CONTENT_MODIFIED_AT =
-  "2026-08-26T00:01:56.000Z" as const;
+  "2026-08-26T15:31:44.000Z" as const;
 
 const UTC_DAY_MILLISECONDS = 24 * 60 * 60 * 1_000;
 
@@ -298,6 +298,25 @@ export function calculateApiEquivalentUsd(
   ) / 1_000_000;
 }
 
+export function calculateOnePlanUpperBoundMultiple(
+  aggregateApiEquivalentUsd: number,
+  onePlanPriceUsd: number,
+): number {
+  if (
+    !Number.isFinite(aggregateApiEquivalentUsd)
+    || aggregateApiEquivalentUsd < 0
+  ) {
+    throw new RangeError(
+      "Aggregate API-equivalent value must be finite and nonnegative",
+    );
+  }
+  if (!Number.isFinite(onePlanPriceUsd) || onePlanPriceUsd <= 0) {
+    throw new RangeError("One-plan price must be finite and positive");
+  }
+
+  return aggregateApiEquivalentUsd / onePlanPriceUsd;
+}
+
 export function parseGptSubsidySnapshot(
   value: unknown,
 ): Result<GptSubsidySnapshot, z.ZodError> {
@@ -332,6 +351,11 @@ const compactTokenFormatter = new Intl.NumberFormat("en-US", {
   notation: "compact",
 });
 
+const wholeMultipleFormatter = new Intl.NumberFormat("en-US", {
+  maximumFractionDigits: 0,
+  minimumFractionDigits: 0,
+});
+
 const utcDateFormatter = new Intl.DateTimeFormat("en-US", {
   day: "numeric",
   month: "short",
@@ -359,6 +383,14 @@ export function formatSubsidyRateUsd(value: number): string {
 
 export function formatSubsidyTokens(value: number): string {
   return compactTokenFormatter.format(value);
+}
+
+export function formatOnePlanUpperBoundMultiple(value: number): string {
+  if (!Number.isFinite(value) || value < 0) {
+    throw new RangeError("One-plan comparison must be finite and nonnegative");
+  }
+
+  return `≤${wholeMultipleFormatter.format(Math.ceil(value))}×`;
 }
 
 export function formatSubsidyDate(value: string): string {

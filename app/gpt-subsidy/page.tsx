@@ -1,11 +1,12 @@
 import { GptSubsidyChart } from "@/components/gpt-subsidy-chart";
 import gptSubsidyData from "@/data/gpt-subsidy.json";
 import {
+  calculateOnePlanUpperBoundMultiple,
+  formatOnePlanUpperBoundMultiple,
   formatSubsidyDate,
   formatSubsidyDateTime,
   formatSubsidyUsd,
   GPT_SUBSIDY_DESCRIPTION,
-  GPT_SUBSIDY_TITLE,
   gptSubsidyPageModifiedAt,
   latestGptSubsidyObservation,
   parseGptSubsidySnapshot,
@@ -18,7 +19,7 @@ import {
 import { JsonLdScript } from "@hraness/web-discovery/json-ld";
 import type { Metadata } from "next";
 
-import { searchSite, site } from "../site";
+import { chatGptSubsidyChartLabel, searchSite, site } from "../site";
 
 const canonicalPath = "/gpt-subsidy" as const;
 const socialImagePath = "/gpt-subsidy/opengraph-image" as const;
@@ -27,11 +28,11 @@ const subsidySearchSite = {
   ...searchSite,
   description: GPT_SUBSIDY_DESCRIPTION,
   socialImage: {
-    alt: GPT_SUBSIDY_TITLE + " historical chart",
+    alt: chatGptSubsidyChartLabel + " historical chart",
     path: socialImagePath,
   },
-  socialTitle: GPT_SUBSIDY_TITLE + " | AI Charts",
-  title: GPT_SUBSIDY_TITLE + " | AI Charts",
+  socialTitle: chatGptSubsidyChartLabel + " | AI Charts",
+  title: chatGptSubsidyChartLabel + " | AI Charts",
 } as const;
 
 export const metadata: Metadata = createPublicSiteMetadata(
@@ -105,6 +106,10 @@ export default function GptSubsidyPage() {
     snapshot.pricing.referenceModel.sourceUrl,
     ...snapshot.methodology.sourceUrls,
   ]));
+  const onePlanUpperBound = calculateOnePlanUpperBoundMultiple(
+    snapshot.periodSummary.apiEquivalentUsd,
+    snapshot.plan.monthlyPriceUsd,
+  );
 
   return (
     <main id="gpt-subsidy-content">
@@ -114,7 +119,7 @@ export default function GptSubsidyPage() {
       />
 
       <header className="gpt-subsidy-hero plain-publication__article-header plain-publication__shell">
-        <h1>ChatGPT Subsidy Chart</h1>
+        <h1>{chatGptSubsidyChartLabel}</h1>
         <p className="plain-publication__article-meta">
           <span>{snapshot.observations.length} observations</span>
           <span>·</span>
@@ -133,19 +138,27 @@ export default function GptSubsidyPage() {
       </header>
 
       <section
-        aria-label="Current API-equivalent values"
+        aria-label="Current one-plan upper bound and API-equivalent value"
         className="gpt-subsidy-summary plain-publication__shell"
       >
         <div className="gpt-subsidy-summary__metric gpt-subsidy-summary__primary">
-          <h2>Trailing 7 days</h2>
+          <h2>One-plan comparison upper bound</h2>
           <p className="gpt-subsidy-summary__value">
-            {formatSubsidyUsd(latest.trailingSevenDayApiEquivalentUsd)}
+            {formatOnePlanUpperBoundMultiple(onePlanUpperBound)}
+          </p>
+          <p className="gpt-subsidy-summary__scope">
+            {snapshot.periodSummary.days}-day API value divided by one{" "}
+            {formatSubsidyUsd(snapshot.plan.monthlyPriceUsd)} plan, before
+            switched-account adjustment.
           </p>
         </div>
         <div className="gpt-subsidy-summary__metric gpt-subsidy-summary__context">
-          <h2>Trailing {snapshot.periodSummary.days} days</h2>
+          <h2>{snapshot.periodSummary.days}-day API-equivalent value</h2>
           <p className="gpt-subsidy-summary__value">
             {formatSubsidyUsd(snapshot.periodSummary.apiEquivalentUsd)}
+          </p>
+          <p className="gpt-subsidy-summary__scope">
+            All available local Codex usage across accounts.
           </p>
           <p className="gpt-subsidy-summary__period">
             <time dateTime={snapshot.periodSummary.startedAt}>
@@ -157,12 +170,25 @@ export default function GptSubsidyPage() {
             </time>
           </p>
         </div>
+        <p className="gpt-subsidy-summary__note">
+          The true subscription-spend-adjusted multiple is lower but unknown
+          because historical account count is unavailable.
+        </p>
       </section>
 
       <section
         aria-label="Trailing seven-day API-equivalent value history"
         className="gpt-subsidy-history plain-publication__shell"
       >
+        <div className="gpt-subsidy-history__context">
+          <h2>Trailing 7-day API value</h2>
+          <p>
+            <strong>
+              {formatSubsidyUsd(latest.trailingSevenDayApiEquivalentUsd)}
+            </strong>{" "}
+            latest
+          </p>
+        </div>
         <GptSubsidyChart snapshot={snapshot} />
       </section>
 
@@ -180,18 +206,19 @@ export default function GptSubsidyPage() {
                 Available local Codex task logs, including child agents, are
                 deduplicated into daily token buckets and repriced with
                 model-specific API-price estimates from the checked manifest.
-                Each point sums seven settled days. No monthly projection or
-                one-plan normalization is applied.
+                Each point sums seven settled days. The headline upper bound
+                divides the settled 31-day aggregate by one plan; it does not
+                estimate how many subscriptions supplied that usage.
               </p>
               <p className="gpt-subsidy-method__boundary">
                 The line is measured local usage. It is not an allowance ledger
                 or a per-subscription subsidy multiple.
               </p>
               <p className="gpt-subsidy-summary__scope">
-                <strong>Subscription-adjusted multiple unavailable.</strong>{" "}
+                <strong>Subscription-spend-adjusted multiple unavailable.</strong>{" "}
                 Historical logs span account switches without durable account
-                attribution, so dividing this usage by one $200 subscription
-                would overstate the result.
+                attribution, so the one-plan comparison is published only as
+                an upper bound. The true multiple is lower but unknown.
               </p>
               <p>
                 Cached input is a subset of input and reasoning tokens are a

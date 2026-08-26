@@ -8,7 +8,6 @@ import {
   formatSubsidyUsd,
   gptSubsidyPageModifiedAt,
   GPT_SUBSIDY_DESCRIPTION,
-  GPT_SUBSIDY_TITLE,
   parseGptSubsidySnapshot,
 } from "@/lib/gpt-subsidy-data";
 import { INDEXABLE_ROBOTS } from "@hraness/web-discovery";
@@ -23,7 +22,7 @@ const snapshot = parsed.value;
 describe("GPT subsidy page components", () => {
   test("publishes canonical, indexable metadata", () => {
     expect(metadata).toMatchObject({
-      title: GPT_SUBSIDY_TITLE + " | AI Charts",
+      title: "ChatGPT Subsidy Chart | AI Charts",
       description: GPT_SUBSIDY_DESCRIPTION,
       alternates: { canonical: "https://aicharts.io/gpt-subsidy" },
       robots: INDEXABLE_ROBOTS,
@@ -49,8 +48,14 @@ describe("GPT subsidy page components", () => {
     );
     expect(markup).toContain('href="#gpt-subsidy-content"');
     expect(markup).toContain('aria-label="GPT subsidy navigation"');
-    expect(markup).toContain('aria-current="page" href="/gpt-subsidy"');
+    const headerMarkup = markup.slice(
+      markup.indexOf("<header"),
+      markup.indexOf("</header>") + "</header>".length,
+    );
+    expect(headerMarkup).not.toContain("ChatGPT Subsidy Chart");
+    expect(headerMarkup).toContain('href="/">Home</a>');
     expect(markup).toContain('href="/gpt-subsidy">ChatGPT Subsidy Chart</a>');
+    expect(markup).not.toContain('href="/">Chart</a>');
     expect(markup.match(/data-presentation="menu"/gu)).toHaveLength(1);
     const navigationEnd = markup.indexOf("</nav>");
     const appearance = markup.indexOf('data-presentation="menu"');
@@ -102,9 +107,31 @@ describe("GPT subsidy page components", () => {
 
     expect(markup).toContain("<h1>ChatGPT Subsidy Chart</h1>");
     expect(markup).toContain(GPT_SUBSIDY_DESCRIPTION);
-    expect(markup).toContain('aria-label="Current API-equivalent values"');
-    expect(markup).toContain("Trailing 7 days");
-    expect(markup).toContain(`Trailing ${snapshot.periodSummary.days} days`);
+    expect(markup).toContain(
+      'aria-label="Current one-plan upper bound and API-equivalent value"',
+    );
+    expect(markup).toContain("One-plan comparison upper bound");
+    expect(markup).toContain("≤312×");
+    expect(markup).toContain(
+      `${snapshot.periodSummary.days}-day API-equivalent value`,
+    );
+    expect(markup).toContain(
+      formatSubsidyUsd(snapshot.periodSummary.apiEquivalentUsd),
+    );
+    expect(markup).toContain("Trailing 7-day API value");
+    expect(markup).toContain(
+      formatSubsidyUsd(
+        snapshot.observations.at(-1)!.trailingSevenDayApiEquivalentUsd,
+      ),
+    );
+    expect(markup).toContain("All available local Codex usage across accounts");
+    expect(markup).toContain(
+      "true subscription-spend-adjusted multiple is lower but unknown",
+    );
+    expect(markup).toContain("historical account count is unavailable");
+    expect(markup).toContain("before switched-account adjustment");
+    expect(markup).not.toContain("312× cheaper");
+    expect(markup).not.toContain("actual subsidy");
     expect(markup).not.toContain('id="allowance-estimate"');
     expect(markup).toContain('id="calculation"');
     expect(markup).toContain('id="interpretation"');
@@ -115,9 +142,9 @@ describe("GPT subsidy page components", () => {
     expect(markup).toContain("purchased ChatGPT credits");
     expect(markup).toContain("scheduled collector&#x27;s own small Codex token use");
     expect(markup).toContain("Trailing-seven-day API-retail-equivalent value");
-    expect(markup).toContain("Subscription-adjusted multiple unavailable");
+    expect(markup).toContain("Subscription-spend-adjusted multiple unavailable");
     expect(markup).toContain(
-      "No monthly projection or one-plan normalization is applied",
+      "does not estimate how many subscriptions supplied that usage",
     );
     expect(markup).toContain(
       "without durable account attribution",

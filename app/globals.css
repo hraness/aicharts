@@ -1288,12 +1288,52 @@ a { color: inherit; }
   line-height: 1.5;
 }
 
+.aicharts-gpt-subsidy .gpt-subsidy-summary__scope {
+  color: var(--plain-muted);
+  font-size: 0.72rem;
+  line-height: 1.5;
+  margin-top: 0.45rem;
+  max-width: 30rem;
+}
+
 .aicharts-gpt-subsidy .gpt-subsidy-summary__period {
   margin-top: 0.2rem;
 }
 
+.aicharts-gpt-subsidy .gpt-subsidy-summary__note {
+  border-top: 1px solid var(--plain-line);
+  color: var(--plain-muted);
+  font-size: 0.72rem;
+  grid-column: 1 / -1;
+  line-height: 1.5;
+  margin-top: 0.75rem;
+  padding-top: 0.65rem;
+}
+
 .aicharts-gpt-subsidy .gpt-subsidy-history {
   padding-block: 0.9rem 0.75rem;
+}
+
+.aicharts-gpt-subsidy .gpt-subsidy-history__context {
+  align-items: baseline;
+  display: flex;
+  gap: 0.75rem;
+  justify-content: space-between;
+  margin-bottom: 0.35rem;
+}
+
+.aicharts-gpt-subsidy .gpt-subsidy-history__context h2,
+.aicharts-gpt-subsidy .gpt-subsidy-history__context p {
+  color: var(--plain-muted);
+  font-size: 0.72rem;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.aicharts-gpt-subsidy .gpt-subsidy-history__context strong {
+  color: var(--plain-foreground);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
 }
 
 .gpt-subsidy-chart {
@@ -1475,6 +1515,19 @@ a { color: inherit; }
 
   .aicharts-gpt-subsidy .gpt-subsidy-method {
     padding-bottom: 2.25rem;
+  }
+}
+
+@media (max-width: 34rem) {
+  .aicharts-gpt-subsidy .gpt-subsidy-summary {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .aicharts-gpt-subsidy .gpt-subsidy-summary__context {
+    border-left: 0;
+    border-top: 1px solid var(--plain-line);
+    margin: 0.8rem 0 0;
+    padding: 0.8rem 0 0;
   }
 }
 

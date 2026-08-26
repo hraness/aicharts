@@ -2,6 +2,8 @@ import { describe, expect, test } from "bun:test";
 
 import {
   calculateApiEquivalentUsd,
+  calculateOnePlanUpperBoundMultiple,
+  formatOnePlanUpperBoundMultiple,
   formatSubsidyRateUsd,
   formatSubsidyTokens,
   formatSubsidyUsd,
@@ -10,6 +12,7 @@ import {
   latestGptSubsidyObservation,
   parseGptSubsidySnapshot,
 } from "./gpt-subsidy-data";
+import { assertProperty, fc } from "./property-test";
 
 const pricing = {
   basis: "per-model-api-retail",
@@ -131,9 +134,11 @@ export const validGptSubsidySnapshot = {
 } as const;
 
 describe("GPT subsidy snapshot", () => {
-  test("keeps the one-user local-log scope in search and social copy", () => {
-    expect(GPT_SUBSIDY_DESCRIPTION).toContain("one user's available local Codex logs");
+  test("states the local-log and switched-account scope in search and social copy", () => {
+    expect(GPT_SUBSIDY_DESCRIPTION).toContain("all available local Codex logs");
     expect(GPT_SUBSIDY_DESCRIPTION).toContain("one machine");
+    expect(GPT_SUBSIDY_DESCRIPTION).toContain("switched accounts");
+    expect(GPT_SUBSIDY_DESCRIPTION).toContain("account count is unavailable");
   });
 
   test("parses adjacent settled history and returns its latest point", () => {
@@ -150,6 +155,47 @@ describe("GPT subsidy snapshot", () => {
       cachedInput: 10_000_000,
       output: 100_000,
     }, pricing.referenceModel)).toBe(10);
+  });
+
+  test("computes and formats a one-plan comparison as an explicit upper bound", () => {
+    const comparison = calculateOnePlanUpperBoundMultiple(
+      62_352.961639570145,
+      200,
+    );
+
+    expect(comparison).toBeCloseTo(311.7648081978507);
+    expect(formatOnePlanUpperBoundMultiple(comparison)).toBe("≤312×");
+    expect(() => calculateOnePlanUpperBoundMultiple(-1, 200)).toThrow(RangeError);
+    expect(() => calculateOnePlanUpperBoundMultiple(1, 0)).toThrow(RangeError);
+  });
+
+  test("property: one-plan comparisons are finite, nonnegative, and scale linearly", () => {
+    assertProperty(fc.property(
+      fc.double({ min: 0, max: 1_000_000_000, noNaN: true }),
+      fc.double({ min: 0.01, max: 1_000_000, noNaN: true }),
+      fc.double({ min: 0.01, max: 100, noNaN: true }),
+      (apiEquivalentUsd, planPriceUsd, scale) => {
+        const comparison = calculateOnePlanUpperBoundMultiple(
+          apiEquivalentUsd,
+          planPriceUsd,
+        );
+        const scaled = calculateOnePlanUpperBoundMultiple(
+          apiEquivalentUsd * scale,
+          planPriceUsd,
+        );
+        const displayedUpperBound = Number(
+          formatOnePlanUpperBoundMultiple(comparison).slice(1, -1).replaceAll(",", ""),
+        );
+
+        expect(Number.isFinite(comparison)).toBeTrue();
+        expect(comparison).toBeGreaterThanOrEqual(0);
+        const expectedScaled = comparison * scale;
+        expect(Math.abs(scaled - expectedScaled)).toBeLessThanOrEqual(
+          Math.max(1e-9, Math.abs(expectedScaled) * 1e-12),
+        );
+        expect(displayedUpperBound).toBeGreaterThanOrEqual(comparison);
+      },
+    ));
   });
 
   test("models account coverage without inventing subscription evidence", () => {
