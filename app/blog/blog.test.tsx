@@ -497,14 +497,17 @@ describe("AI Charts blog discovery", () => {
 
   test("lists every public blog route and social image in the sitemap", () => {
     const entries = sitemap();
-    expect(entries.map(entry => entry.url)).toEqual([
+    const urls = entries.map(entry => entry.url);
+    const expectedRoutes = [
       "https://aicharts.io/",
       "https://aicharts.io/data",
       "https://aicharts.io/gpt-subsidy",
       "https://aicharts.io/blog",
       ...blogArticles.map(article =>
         `https://aicharts.io${blogArticlePath(article.slug)}`),
-    ]);
+    ];
+    expect(new Set(urls).size).toBe(urls.length);
+    for (const route of expectedRoutes) expect(urls).toContain(route);
 
     const collection = entries.find(entry => entry.url.endsWith("/blog"));
     expect(collection?.images).toEqual([

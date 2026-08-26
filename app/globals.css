@@ -2,6 +2,7 @@
 @import "@hraness/ui/components.css";
 @import "../styles/plain-site.css";
 @import "../styles/plain-publication.css";
+@import "../styles/model-cards.css";
 
 *, *::before, *::after { box-sizing: border-box; }
 
@@ -63,7 +64,8 @@ body {
   min-height: 100svh;
   text-rendering: optimizeLegibility;
 }
-button, input { color: inherit; font: inherit; }
+button, input { font: inherit; }
+input { color: inherit; }
 button, a { -webkit-tap-highlight-color: transparent; }
 button { cursor: pointer; }
 a { color: inherit; }

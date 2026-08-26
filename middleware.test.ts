@@ -53,4 +53,19 @@ describe("markdown content negotiation", () => {
     expect(json.headers.get("x-middleware-rewrite")).toBeNull();
     expect(sitemap.headers.get("x-middleware-rewrite")).toBeNull();
   });
+
+  test("does not negotiate generated model-card images", () => {
+    const portrait = middleware(request(
+      "/models/openai/gpt-5.6-sol/max/card.png",
+      { Accept: "image/png" },
+    ));
+    const social = middleware(request(
+      "/models/openai/gpt-5.6-sol/max/opengraph-image",
+      { Accept: "image/png" },
+    ));
+    expect(portrait.headers.get("x-middleware-rewrite")).toBeNull();
+    expect(portrait.status).not.toBe(406);
+    expect(social.headers.get("x-middleware-rewrite")).toBeNull();
+    expect(social.status).not.toBe(406);
+  });
 });

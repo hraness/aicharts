@@ -17,6 +17,7 @@ export default function GptSubsidyLayout({
           <div className="plain-header__actions">
             <nav aria-label="GPT subsidy navigation" className="plain-nav">
               <Link href="/">Home</Link>
+              <Link href="/models">Cards</Link>
               <Link href="/data">Data</Link>
               <Link href="/blog">Blog</Link>
             </nav>
@@ -29,6 +30,7 @@ export default function GptSubsidyLayout({
         <p>aicharts.io</p>
         <div className="plain-footer__links">
           <Link href="/gpt-subsidy">{chatGptSubsidyChartLabel}</Link>
+          <Link href="/models">Cards</Link>
           <Link href="/">Home</Link>
           <Link href="/data">Data</Link>
           <Link href="/blog">Blog</Link>
