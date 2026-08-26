@@ -11,9 +11,21 @@ import {
   gptSubsidyPageModifiedAt,
   parseGptSubsidySnapshot,
 } from "@/lib/gpt-subsidy-data";
+import {
+  MODEL_CARD_PRESENTATIONS,
+  versionedModelCardImagePath,
+} from "@/lib/model-card-collection";
+import type { ModelCardPresentation } from "@/lib/model-card-presentation";
+import { modelCardRouteStatus } from "@/lib/model-card-route-status";
 import { blogArticlePath, blogArticles } from "./blog/articles";
 import { BLOG_SOCIAL_IMAGE_PATH, blogArticleImagePath } from "./blog/seo";
 import { searchSite, site } from "./site";
+
+export function indexableModelCards(
+  cards: readonly ModelCardPresentation[] = MODEL_CARD_PRESENTATIONS,
+): readonly ModelCardPresentation[] {
+  return cards.filter(card => !modelCardRouteStatus(card).isProvisional);
+}
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const absolute = (path: string) => new URL(path, site.origin).toString();
@@ -64,6 +76,20 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.8,
       url: absolute("/blog"),
     },
+    {
+      changeFrequency: "daily",
+      images: [siteImage],
+      lastModified: datasetModifiedAt,
+      priority: 0.9,
+      url: absolute("/models"),
+    },
+    ...indexableModelCards().map(card => ({
+      changeFrequency: "daily" as const,
+      images: [absolute(versionedModelCardImagePath(card.path, "opengraph-image"))],
+      lastModified: datasetModifiedAt,
+      priority: 0.75,
+      url: absolute(card.path),
+    })),
     ...blogArticles.map((article) => ({
       changeFrequency: "monthly" as const,
       images: [absolute(blogArticleImagePath(article.slug))],

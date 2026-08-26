@@ -4,6 +4,8 @@ export type AnalyticsPageKind =
   | "blog_article"
   | "blog_index"
   | "gpt_subsidy"
+  | "model_card"
+  | "model_cards"
   | "other";
 
 export interface PageAnalyticsContext {
@@ -15,6 +17,8 @@ export interface PageAnalyticsContext {
     | "/blog/[article]"
     | "/data"
     | "/gpt-subsidy"
+    | "/models"
+    | "/models/[model]/[profile]"
     | "/[other]";
   readonly content_group: "ai_comparison" | "benchmark_research" | "site";
   readonly page_kind: AnalyticsPageKind;
@@ -82,6 +86,24 @@ export function pageAnalyticsContext(value: unknown): PageAnalyticsContext {
       canonical_path: "/gpt-subsidy",
       content_group: "ai_comparison",
       page_kind: "gpt_subsidy",
+    };
+  }
+
+  if (pathname === "/models") {
+    return {
+      ...shared,
+      canonical_path: "/models",
+      content_group: "ai_comparison",
+      page_kind: "model_cards",
+    };
+  }
+
+  if (pathname?.startsWith("/models/") === true) {
+    return {
+      ...shared,
+      canonical_path: "/models/[model]/[profile]",
+      content_group: "ai_comparison",
+      page_kind: "model_card",
     };
   }
 

@@ -22,6 +22,7 @@ function isExcludedPath(pathname: string): boolean {
     || pathname === "/data/coding-agents.json"
     || pathname === "/robots.txt"
     || pathname === "/sitemap.xml"
+    || pathname.endsWith("/card.png")
     || pathname.endsWith("/opengraph-image")
     || pathname === "/opengraph-image";
 }

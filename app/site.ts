@@ -32,6 +32,7 @@ export const notFoundSearchSite = {
 
 export const notFoundRecoveryLinks = [
   { href: "/", label: "Comparison chart" },
+  { href: "/models", label: "Model cards" },
   { href: "/gpt-subsidy", label: chatGptSubsidyChartLabel },
   { href: "/data", label: "Dataset" },
   { href: "/blog", label: "Benchmark analysis" },

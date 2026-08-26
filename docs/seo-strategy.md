@@ -16,6 +16,8 @@ Do not describe AI Charts as a comprehensive catalog until the product has the d
 | --- | --- | --- | --- |
 | `/` | Product landing page and current comparison | AI model comparison, AI agent comparison, AI benchmark charts | Frame the general product in a server-rendered H1, then answer the current coding-agent snapshot with an H2 dated to `retrievedAt`, two to four sentences, and the current-leader HTML table before the interactive chart. |
 | `/data` | Dataset, methodology, and provenance | AI coding agent benchmark data, benchmark methodology, machine-readable AI benchmark data | Describe the checked snapshot in visible HTML, name its upstream source and retrieval time, explain normalization and limits, and link the JSON distribution. |
+| `/models` | Model-card collection | AI model benchmark cards, shareable model comparison | List every current model-and-profile card in static HTML with the source snapshot date and crawlable card links. |
+| `/models/[creator]/[model]/[profile]` | Model profile card | Named AI model benchmark, cost, speed, and token use | Keep the stable canonical and Gateway identities distinct from the execution profile. Show observed ranges, source date, branded image, and method link. |
 | `/blog` | Research collection | AI model benchmarks, AI agent benchmarks, benchmark analysis | Introduce the broader editorial method and state that the first collection focuses on coding agents. |
 | `/blog/[slug]` | Evidence page | Named benchmark, method, result, limitation, or model question | Stay specific to the source. Preserve the benchmark name, observation date, configuration, limits, and primary citations. |
 
@@ -63,6 +65,7 @@ The repository tests and build must preserve:
 - descriptive, page-specific titles and meta descriptions;
 - homepage-owned identity, including explicit indexable robots, so 404 responses keep a distinct title, noindex, and no homepage canonical;
 - crawlable HTML links between the chart, collection, and evidence pages;
+- stable canonical routes for cataloged model cards, deterministic provisional routes for uncatalogued arrivals, profile-specific titles, downloadable branded images, and dedicated 1200×630 social previews;
 - a sitemap containing every public canonical route and its social image;
 - static or server-rendered primary content and provenance that do not depend on client JavaScript to become meaningful;
 - `WebSite`, `WebApplication`, `Dataset`, `CollectionPage`, `BlogPosting`, and breadcrumb structured data only where the visible page supports those types;
@@ -135,8 +138,8 @@ The pinned [AI Charts: Search & Content dashboard](https://us.posthog.com/projec
 | `site_id` | `aicharts` |
 | `canonical_domain` | `aicharts.io` |
 | `analytics_schema_version` | `2` |
-| `canonical_path` | `/`, `/data`, `/blog`, `/blog/[article]`, `/[other]` |
-| `page_kind` | `benchmark_chart`, `benchmark_data`, `blog_index`, `blog_article`, `other` |
+| `canonical_path` | `/`, `/data`, `/models`, `/models/[model]/[profile]`, `/blog`, `/blog/[article]`, `/gpt-subsidy`, `/[other]` |
+| `page_kind` | `benchmark_chart`, `benchmark_data`, `model_cards`, `model_card`, `blog_index`, `blog_article`, `gpt_subsidy`, `other` |
 | `content_group` | `ai_comparison`, `benchmark_research`, `site` |
 
 The grouped article path deliberately avoids sending slugs, URLs, query strings, free-form text, identities, or persistent identifiers.

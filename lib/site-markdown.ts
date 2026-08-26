@@ -36,6 +36,15 @@ import {
   parseGptSubsidySnapshot,
   type GptSubsidySnapshot,
 } from "./gpt-subsidy-data";
+import {
+  MODEL_CARD_PRESENTATIONS,
+  MODEL_CARD_SNAPSHOT,
+  findModelCardPresentation,
+  versionedModelCardImagePath,
+} from "./model-card-collection";
+import type { ModelCardPresentation } from "./model-card-presentation";
+import { modelCardRouteStatus } from "./model-card-route-status";
+import { vercelGatewayModelCatalog } from "./model-card-sources";
 
 export const AGENT_GUIDE_PATH = "/llms.txt" as const;
 export const MARKDOWN_CONTENT_TYPE = "text/markdown; charset=utf-8";
@@ -106,6 +115,11 @@ export function homeDocumentModel(
       `AI Charts is an independent visualization. It does not recalculate upstream benchmark outcomes and is not affiliated with Artificial Analysis or the listed providers.`,
     ],
     links: [
+      {
+        href: "/models",
+        label: "Model benchmark cards",
+        note: "Shareable model-and-profile cards with observed benchmark, cost, time, and total-token ranges from the current snapshot.",
+      },
       {
         href: "/gpt-subsidy",
         label: "ChatGPT Pro API-equivalent value",
@@ -272,6 +286,55 @@ function blogIndexMarkdown(): string {
   ]);
 }
 
+function modelCardsMarkdown(): string {
+  return joinMarkdown([
+    "# Model cards",
+    "",
+    `${MODEL_CARD_PRESENTATIONS.length} model-and-profile benchmark cards from the current Artificial Analysis coding-agents snapshot. Cataloged cards use canonical model-and-profile routes. Newly observed identities or profile settings receive deterministic provisional routes so a data refresh can publish without manual intervention. Cards show observed ranges when multiple agent harnesses evaluated the same configuration.`,
+    "",
+    `[Source snapshot](${MODEL_CARD_SNAPSHOT.source.url}), retrieved ${formatRetrievedAt(MODEL_CARD_SNAPSHOT.source.retrievedAt)}.`,
+    "",
+    "## Cards",
+    "",
+    ...MODEL_CARD_PRESENTATIONS.map(card => (
+      `- [${card.model} · ${card.profileLabel}](${absolute(card.path)}). ${card.providerName}; ${card.classLabel}; ${card.observationCount} ${card.observationCount === 1 ? "configuration" : "configurations"}.`
+    )),
+  ]);
+}
+
+function modelCardMarkdown(card: ModelCardPresentation): string {
+  const routeStatus = modelCardRouteStatus(card);
+  const markdownStatValue = (stat: ModelCardPresentation["performance"][number]) => (
+    stat.available ? stat.value : "Not available"
+  );
+  return joinMarkdown([
+    `# ${card.model} · ${card.profileLabel}`,
+    "",
+    `${card.providerName} ${card.classLabel.toLowerCase()} card based on ${card.observationCount} ${card.observationCount === 1 ? "configuration" : "configurations"} in the current Artificial Analysis coding-agents snapshot. Values are observed min–max ranges; AI Charts does not average unlike agent harnesses.`,
+    "",
+    "## Performance",
+    "",
+    ...card.performance.map(stat => `- ${stat.label}: ${markdownStatValue(stat)}`),
+    "",
+    "## Economics",
+    "",
+    ...card.economics.map(stat => `- ${stat.label}: ${markdownStatValue(stat)}`),
+    "",
+    "## Identity",
+    "",
+    `- ${routeStatus.provisionalIdentity ? "Provisional" : "Canonical"} model ID: \`${card.canonicalModelId}\``,
+    ...(routeStatus.isProvisional ? [`- Route status: provisional until the new upstream ${routeStatus.primaryReason} is cataloged`] : []),
+    `- Vercel AI Gateway ID: ${card.gatewayModelId === null ? "not available in the checked catalog" : `\`${card.gatewayModelId}\``}`,
+    `- [Gateway model catalog](${vercelGatewayModelCatalog.url}), checked ${vercelGatewayModelCatalog.verifiedAt}`,
+    `- Profile: \`${card.profileSlug}\``,
+    `- Agent ${card.agentNames.length === 1 ? "harness" : "harnesses"}: ${card.agentNames.join(", ")}`,
+    `- [Artificial Analysis source snapshot](${MODEL_CARD_SNAPSHOT.source.url}), retrieved ${formatRetrievedAt(MODEL_CARD_SNAPSHOT.source.retrievedAt)}`,
+    `- [Download the branded PNG](${absolute(versionedModelCardImagePath(card.path, "card.png"))})`,
+    `- [All model cards](${absolute("/models")})`,
+    `- [Dataset and method](${absolute(CODING_AGENT_DATASET_PATH)})`,
+  ]);
+}
+
 export function gptSubsidyMarkdown(
   snapshot: GptSubsidySnapshot = checkedGptSubsidySnapshot(),
 ): string {
@@ -341,13 +404,14 @@ export function agentGuideMarkdown(
     "",
     "Use AI Charts when you need a sourced comparison of coding agents across benchmark score, API cost, active time, and total token use. Use it to read the current checked snapshot, cite a retrieval time, or explain what AA Index, DeepSWE, Terminal-Bench 2.0, or SWE-Atlas-QnA measures in this dataset.",
     "",
-    "Use the `/data` page or the JSON download when you need the same records the chart uses, including provenance, leaders, normalization, and limits. Use `/blog` when you need a sourced note on a named benchmark rather than the interactive chart.",
+    "Use the `/data` page or the JSON download when you need the same records the chart uses, including provenance, leaders, normalization, and limits. Use `/models` for canonical cataloged model-and-profile card routes, deterministic provisional routes for newly observed identities, and shareable images. Use `/blog` when you need a sourced note on a named benchmark rather than the interactive chart.",
     "",
     `Do not treat AI Charts as a live API, ranker, or production SLA. It does not expose OAuth, GraphQL, MCP, or commerce endpoints. It does not recalculate upstream scores. The current snapshot covers ${summary.recordCount} coding-agent configurations, not every AI model or agent domain.`,
     "",
     "## Main pages",
     "",
     `- [Comparison chart](${absolute("/")}). Current coding-agent scatter chart.`,
+    `- [Model benchmark cards](${absolute("/models")}). Shareable cards for each model and benchmark profile, with canonical routes for cataloged identities.`,
     `- [ChatGPT Pro API-equivalent value](${absolute("/gpt-subsidy")}). Historical estimates from measured Codex usage and the checked August 25, 2026 API price basis.`,
     `- [Dataset and methodology](${absolute(CODING_AGENT_DATASET_PATH)}). Provenance, definitions, leaders, method, and limits.`,
     `- [JSON snapshot](${absolute(CODING_AGENT_DATASET_DOWNLOAD_PATH)}). Machine-readable copy of the checked records.`,
@@ -400,6 +464,19 @@ export function markdownForPath(pathname: string): MarkdownDocument {
   }
   if (path === "/gpt-subsidy") {
     return { body: gptSubsidyMarkdown(), contentType: MARKDOWN_CONTENT_TYPE, found: true };
+  }
+  if (path === "/models") {
+    return { body: modelCardsMarkdown(), contentType: MARKDOWN_CONTENT_TYPE, found: true };
+  }
+  if (path.startsWith("/models/")) {
+    const segments = path.slice("/models/".length).split("/");
+    if (segments.length === 3) {
+      const [creatorSlug, modelSlug, profileSlug] = segments;
+      const card = findModelCardPresentation({ creatorSlug, modelSlug, profileSlug });
+      if (card !== undefined) {
+        return { body: modelCardMarkdown(card), contentType: MARKDOWN_CONTENT_TYPE, found: true };
+      }
+    }
   }
   if (path === "/blog") {
     return { body: blogIndexMarkdown(), contentType: MARKDOWN_CONTENT_TYPE, found: true };

@@ -17,9 +17,10 @@ export default function BlogLayout({
           <div className="plain-header__actions">
             <nav aria-label="Blog navigation" className="plain-nav">
               <Link href="/blog">Blog</Link>
+              <Link href="/models">Cards</Link>
               <Link href="/data">Data</Link>
               <Link href="/gpt-subsidy">{chatGptSubsidyChartLabel}</Link>
-              <Link href="/">Chart</Link>
+              <Link href="/">Home</Link>
             </nav>
             <ThemeMenuButton aria-label="Blog appearance" />
           </div>
@@ -30,9 +31,10 @@ export default function BlogLayout({
         <p>aicharts.io</p>
         <div className="plain-footer__links">
           <Link href="/blog">Blog</Link>
+          <Link href="/models">Cards</Link>
           <Link href="/data">Data</Link>
           <Link href="/gpt-subsidy">{chatGptSubsidyChartLabel}</Link>
-          <Link href="/">Chart</Link>
+          <Link href="/">Home</Link>
           <HranessBrand />
         </div>
       </footer>

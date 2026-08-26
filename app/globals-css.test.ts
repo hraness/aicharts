@@ -7,6 +7,11 @@ function firstRule(selector: string): string {
   return stylesheet.match(new RegExp(`${escaped}\\s*\\{(?<body>[^}]*)\\}`, "u"))?.groups?.body ?? "";
 }
 
+test("global resets preserve shared action contrast tokens", () => {
+  expect(firstRule("button, input")).not.toContain("color:");
+  expect(stylesheet).toMatch(/\ninput\s*\{[^}]*color:\s*inherit;/u);
+});
+
 test("share-link fallback leaves geometry, focus, and paint to the shared field", () => {
   const field = stylesheet.match(
     /\.share-link-fallback \.ui-field__input\s*\{(?<body>[^}]*)\}/u,

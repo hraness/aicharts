@@ -17,9 +17,10 @@ export default function DataLayout({
           <div className="plain-header__actions">
             <nav aria-label="Dataset navigation" className="plain-nav">
               <Link aria-current="page" href="/data">Data</Link>
+              <Link href="/models">Cards</Link>
               <Link href="/blog">Blog</Link>
               <Link href="/gpt-subsidy">{chatGptSubsidyChartLabel}</Link>
-              <Link href="/">Chart</Link>
+              <Link href="/">Home</Link>
             </nav>
             <ThemeMenuButton aria-label="Dataset appearance" />
           </div>
@@ -30,9 +31,10 @@ export default function DataLayout({
         <p>aicharts.io</p>
         <div className="plain-footer__links">
           <Link href="/data">Data</Link>
+          <Link href="/models">Cards</Link>
           <Link href="/blog">Blog</Link>
           <Link href="/gpt-subsidy">{chatGptSubsidyChartLabel}</Link>
-          <Link href="/">Chart</Link>
+          <Link href="/">Home</Link>
           <HranessBrand />
         </div>
       </footer>

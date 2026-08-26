@@ -14,6 +14,7 @@ The site is a static-data Next.js and TypeScript application. Its coding-agent s
 - Explore the cost/performance Pareto frontier and per-provider score ranges.
 - Follow a checked timeline of newly detected models, settings, and material benchmark changes.
 - Share the current axes and selection as a link or export a full-resolution PNG.
+- Open a profile-specific benchmark card for each model, then share its branded image through the native share sheet, download it, or post its URL from [`/models`](https://aicharts.io/models). Cataloged identities and settings use stable canonical routes; newly observed identities or profile settings use deterministic provisional routes until reviewed.
 - Read sourced benchmark notes at [`/blog`](https://aicharts.io/blog), including the current [AA Index versus cost](https://aicharts.io/blog/aa-index-cost-coding-agents) snapshot analysis, [open models on coding-agent benchmarks](https://aicharts.io/blog/open-models-coding-agent-benchmarks), [why a high score still needs a holdout](https://aicharts.io/blog/coding-agent-score-holdouts), and [why coding-agent scores still need expertise](https://aicharts.io/blog/coding-agent-scores-still-need-expertise).
 - Inspect the current snapshot, methodology, provenance, full configuration table, and machine-readable distribution at [`/data`](https://aicharts.io/data).
 
@@ -97,9 +98,9 @@ Production source maps are uploaded only when all private build settings and Ver
 ## Repository map
 
 - `app/` contains the App Router chart, sourced benchmark notes, metadata, error states, and product styling.
-- `components/` contains the interactive chart, update timeline, linked summaries, sharing, export, and local UI primitives.
-- `lib/` contains strict data and update boundaries, chart math, deterministic layout, analytics events, and property tests.
-- `data/` contains the checked benchmark, subsidy-history, and pricing snapshots.
+- `components/` contains the interactive chart, model cards, update timeline, linked summaries, sharing, export, and local UI primitives.
+- `lib/` contains strict data and model-card boundaries, chart math, deterministic layout, analytics events, and property tests.
+- `data/` contains the checked benchmark, model-card catalog, subsidy-history, and pricing snapshots.
 - `scripts/` contains the guarded benchmark refresh, local subsidy collector and publisher, and deterministic color generator.
 - `styles/` contains the portable plain-publication styles used by the benchmark notes.
 - `docs/` contains the current search, measurement, and engineering strategy.

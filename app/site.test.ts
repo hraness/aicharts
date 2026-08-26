@@ -31,6 +31,7 @@ describe("AI Charts public positioning", () => {
     expect(notFoundSearchSite.description).not.toBe(searchSite.description);
     expect(notFoundRecoveryLinks).toEqual([
       { href: "/", label: "Comparison chart" },
+      { href: "/models", label: "Model cards" },
       { href: "/gpt-subsidy", label: chatGptSubsidyChartLabel },
       { href: "/data", label: "Dataset" },
       { href: "/blog", label: "Benchmark analysis" },

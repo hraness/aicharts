@@ -11,9 +11,10 @@ import {
   gptSubsidyPageModifiedAt,
   parseGptSubsidySnapshot,
 } from "@/lib/gpt-subsidy-data";
+import { MODEL_CARD_PRESENTATIONS } from "@/lib/model-card-collection";
 
 import robots from "./robots";
-import sitemap from "./sitemap";
+import sitemap, { indexableModelCards } from "./sitemap";
 
 describe("public search discovery", () => {
   test("publishes unique canonical URLs with truthful benchmark freshness", () => {
@@ -33,8 +34,35 @@ describe("public search discovery", () => {
     if (!subsidy.ok) throw subsidy.error;
     expect(entries.find(entry => entry.url.endsWith("/gpt-subsidy"))?.lastModified)
       .toBe(gptSubsidyPageModifiedAt(subsidy.value));
+    const cardEntries = entries.filter(entry => entry.url.includes("/models/"));
+    expect(entries.find(entry => entry.url.endsWith("/models"))?.lastModified)
+      .toBe(modifiedAt);
+    expect(cardEntries).toHaveLength(indexableModelCards().length);
+    expect(cardEntries.every(entry => entry.lastModified === modifiedAt)).toBe(true);
+    expect(cardEntries.every(entry => entry.images?.length === 1)).toBe(true);
     expect(new Date(modifiedAt).getTime())
       .toBeLessThanOrEqual(new Date(parsed.value.source.retrievedAt).getTime());
+  });
+
+  test("keeps provisional model-card routes out of the sitemap", () => {
+    const canonical = MODEL_CARD_PRESENTATIONS[0];
+    if (canonical === undefined) throw new Error("Expected a model-card fixture.");
+    const provisionalIdentity = {
+      ...canonical,
+      canonicalModelId: "unlisted/new-model.1234567890abcdef12345678",
+      path: "/models/unlisted/new-model.1234567890abcdef12345678/max" as const,
+    };
+    const provisionalProfile = {
+      ...canonical,
+      path: "/models/openai/gpt-5.6-sol/upstream.preview.1234567890abcdef12345678" as const,
+      profileSlug: "upstream.preview.1234567890abcdef12345678",
+    };
+
+    expect(indexableModelCards([
+      canonical,
+      provisionalIdentity,
+      provisionalProfile,
+    ])).toEqual([canonical]);
   });
 
   test("allows ordinary search and ChatGPT Search crawlers", () => {

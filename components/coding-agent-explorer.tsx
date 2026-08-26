@@ -288,7 +288,15 @@ function MetricControl<T extends string>({
   );
 }
 
-export function CodingAgentExplorer({ brand, snapshot }: { brand: ChartBrand; snapshot: CodingAgentSnapshot }) {
+export function CodingAgentExplorer({
+  brand,
+  modelCardPaths,
+  snapshot,
+}: {
+  brand: ChartBrand;
+  modelCardPaths: Readonly<Record<string, string>>;
+  snapshot: CodingAgentSnapshot;
+}) {
   const descriptionId = useId();
   const pointRefs = useRef(new Map<string, SVGGElement>());
   const shareInputRef = useRef<HTMLInputElement>(null);
@@ -473,6 +481,9 @@ export function CodingAgentExplorer({ brand, snapshot }: { brand: ChartBrand; sn
   const pinnedPoint = chart.points.find((point) => point.record.id === pinnedPointId) ?? null;
   const hoveredPoint = chart.points.find((point) => point.record.id === hoveredPointId) ?? null;
   const pinnedProvider = providers.find((provider) => provider.id === pinnedProviderId) ?? null;
+  const pinnedCardPath = pinnedPoint === null
+    ? null
+    : modelCardPaths[pinnedPoint.record.id] ?? null;
   const benchmarkPoint = pinnedPoint ?? (pinnedProviderId === null ? hoveredPoint : null);
   const selectedProviderId = benchmarkPoint === null ? pinnedProviderId ?? hoveredProviderId : null;
   const performanceCohort = useMemo(() => (
@@ -842,6 +853,9 @@ export function CodingAgentExplorer({ brand, snapshot }: { brand: ChartBrand; sn
             <LinkButton href="/blog" size="compact" variant="quiet">
               Blog
             </LinkButton>
+            <LinkButton href="/models" size="compact" variant="quiet">
+              Cards
+            </LinkButton>
             <LinkButton href="/gpt-subsidy" size="compact" variant="quiet">
               {chatGptSubsidyChartLabel}
             </LinkButton>
@@ -922,6 +936,11 @@ export function CodingAgentExplorer({ brand, snapshot }: { brand: ChartBrand; sn
         {(pinnedPoint !== null || pinnedProvider !== null) && (
           <div className="pin-status">
             <span aria-live="polite"><strong>Pinned</strong> {pinnedPoint?.record.modelLabel ?? pinnedProvider?.name}</span>
+            {pinnedCardPath !== null && (
+              <LinkButton href={pinnedCardPath} size="compact" variant="quiet">
+                View card
+              </LinkButton>
+            )}
             <IconButton
               aria-label="Clear pinned selection"
               onPress={clearSelection}

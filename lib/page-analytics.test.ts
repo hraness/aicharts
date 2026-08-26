@@ -48,6 +48,21 @@ describe("page analytics context", () => {
     });
   });
 
+  test("classifies the model-card gallery and hides individual card slugs", () => {
+    expect(pageAnalyticsContext("/models")).toMatchObject({
+      canonical_path: "/models",
+      content_group: "ai_comparison",
+      page_kind: "model_cards",
+    });
+    const detail = pageAnalyticsContext("/models/openai/gpt-5.6-sol/max?source=private");
+    expect(detail).toMatchObject({
+      canonical_path: "/models/[model]/[profile]",
+      content_group: "ai_comparison",
+      page_kind: "model_card",
+    });
+    expect(JSON.stringify(detail)).not.toContain("gpt-5.6-sol");
+  });
+
   test("maps foreign and unknown routes to one controlled fallback", () => {
     for (const value of [undefined, null, 42, "", "/not-found"]) {
       expect(pageAnalyticsContext(value)).toMatchObject({
