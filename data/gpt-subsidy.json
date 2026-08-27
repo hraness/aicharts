@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-08-26T00:18:46.545Z",
+  "generatedAt": "2026-08-27T14:24:52.544Z",
   "observations": [
     {
       "id": "trailing-7d-2026-07-25",
@@ -553,7 +553,7 @@
         "output": 67582923,
         "total": 29130783009
       },
-      "trailingSevenDayApiEquivalentUsd": 14075.417912320057,
+      "trailingSevenDayApiEquivalentUsd": 14075.417912320056,
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
@@ -573,7 +573,7 @@
         "output": 75691032,
         "total": 31946612781
       },
-      "trailingSevenDayApiEquivalentUsd": 15466.030597760075,
+      "trailingSevenDayApiEquivalentUsd": 15466.030597760084,
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
@@ -593,7 +593,7 @@
         "output": 74839842,
         "total": 30761743397
       },
-      "trailingSevenDayApiEquivalentUsd": 15066.53860036006,
+      "trailingSevenDayApiEquivalentUsd": 15066.538600360078,
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
@@ -613,7 +613,7 @@
         "output": 78047648,
         "total": 31136829923
       },
-      "trailingSevenDayApiEquivalentUsd": 15353.192586680037,
+      "trailingSevenDayApiEquivalentUsd": 15353.192586680056,
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
@@ -633,7 +633,27 @@
         "output": 81510456,
         "total": 31435489338
       },
-      "trailingSevenDayApiEquivalentUsd": 15517.531198970064,
+      "trailingSevenDayApiEquivalentUsd": 15517.531198970091,
+      "accountAttribution": {
+        "status": "unavailable",
+        "distinctObservedAccounts": null,
+        "coverage": 0
+      },
+      "subscriptionAdjustedMultiple": null,
+      "status": "settled"
+    },
+    {
+      "id": "trailing-7d-2026-08-26",
+      "observedAt": "2026-08-26T23:59:59.999Z",
+      "periodStartedAt": "2026-08-20T00:00:00.000Z",
+      "periodEndsAt": "2026-08-26T23:59:59.999Z",
+      "tokens": {
+        "uncachedInput": 973380761,
+        "cachedInput": 29479380992,
+        "output": 80718126,
+        "total": 30533479879
+      },
+      "trailingSevenDayApiEquivalentUsd": 15148.265146370073,
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
@@ -699,15 +719,15 @@
   "title": "Subsidy for ChatGPT Pro 20x subscription",
   "currency": "USD",
   "periodSummary": {
-    "startedAt": "2026-07-26T00:00:00.000Z",
-    "endedAt": "2026-08-25T23:59:59.999Z",
+    "startedAt": "2026-07-27T00:00:00.000Z",
+    "endedAt": "2026-08-26T23:59:59.999Z",
     "days": 31,
     "tokens": {
-      "uncachedInput": 3983684685,
-      "cachedInput": 123763623936,
-      "output": 269175053,
-      "total": 128016483674
+      "uncachedInput": 4005820511,
+      "cachedInput": 124213034496,
+      "output": 271945121,
+      "total": 128490800128
     },
-    "apiEquivalentUsd": 62352.961639570145
+    "apiEquivalentUsd": 62463.98706237017
   }
 }
