@@ -14,18 +14,40 @@
   --model-card-ink: #f7f6f2;
   --model-card-muted: rgb(247 246 242 / 66%);
   --model-card-panel: rgb(5 6 8 / 58%);
+  --model-card-speck-foil-opacity: .22;
+  --model-card-rail-spectrum-opacity: .22;
   --model-card-rule: rgb(255 255 255 / 12%);
 
   aspect-ratio: 5 / 7;
-  background-clip: padding-box;
   background:
-    radial-gradient(circle at 76% 18%, color-mix(in oklch, var(--model-card-color) 42%, transparent), transparent 40%),
-    radial-gradient(circle at 10% 82%, color-mix(in oklch, var(--model-card-secondary) 24%, transparent), transparent 36%),
-    linear-gradient(145deg, color-mix(in oklch, var(--model-card-color) 22%, rgb(19 20 24 / 84%)), rgb(7 8 11 / 88%) 52%, rgb(15 16 20 / 90%));
-  border: 0;
+    radial-gradient(circle at 76% 18%, color-mix(in oklch, var(--model-card-color) 42%, transparent), transparent 40%) padding-box,
+    radial-gradient(circle at 10% 82%, color-mix(in oklch, var(--model-card-secondary) 24%, transparent), transparent 36%) padding-box,
+    linear-gradient(145deg, color-mix(in oklch, var(--model-card-color) 22%, rgb(19 20 24 / 96%)), rgb(7 8 11 / 97%) 52%, rgb(15 16 20 / 96%)) padding-box,
+    radial-gradient(
+      circle at var(--foil-light-x, 50%) var(--foil-light-y, 50%),
+      rgb(255 255 255 / calc(.28 + var(--foil-sheen-opacity, .04) * 1.15)) 0 1.4%,
+      rgb(223 238 255 / calc(.12 + var(--foil-sheen-opacity, .04) * .72)) 3.2%,
+      transparent 12%
+    ) border-box,
+    conic-gradient(
+      from calc(var(--foil-spectrum-angle, 0deg) + 18deg) at 50% 50%,
+      color-mix(in oklch, var(--model-card-color) 62%, #dbe4ed) 0 9%,
+      hsl(calc(var(--foil-spectrum-angle, 0deg) + 334deg) 96% 76% / calc(var(--model-card-rail-spectrum-opacity) + var(--foil-activity, 0) * .16)) 13%,
+      color-mix(in oklch, var(--model-card-secondary) 58%, #f4e6bd) 20%,
+      hsl(calc(var(--foil-spectrum-angle, 0deg) + 52deg) 96% 78% / calc(var(--model-card-rail-spectrum-opacity) + var(--foil-activity, 0) * .13)) 29%,
+      #f8fbff 36%,
+      hsl(calc(var(--foil-spectrum-angle, 0deg) + 164deg) 88% 74% / calc(var(--model-card-rail-spectrum-opacity) + var(--foil-activity, 0) * .15)) 46%,
+      color-mix(in oklch, var(--model-card-color) 48%, #aab6c4) 57%,
+      hsl(calc(var(--foil-spectrum-angle, 0deg) + 218deg) 94% 76% / calc(var(--model-card-rail-spectrum-opacity) + var(--foil-activity, 0) * .14)) 68%,
+      color-mix(in oklch, var(--model-card-secondary) 56%, #eef3f8) 79%,
+      hsl(calc(var(--foil-spectrum-angle, 0deg) + 286deg) 94% 77% / calc(var(--model-card-rail-spectrum-opacity) + var(--foil-activity, 0) * .12)) 89%,
+      color-mix(in oklch, var(--model-card-color) 62%, #dbe4ed) 100%
+    ) border-box;
+  border: 1.5px solid transparent;
   border-radius: 1.4rem;
   box-shadow:
-    inset 0 0 0 1px color-mix(in srgb, var(--model-card-color) 24%, rgb(255 255 255 / 15%)),
+    inset 0 0 0 1px rgb(1 2 4 / 68%),
+    inset 0 0 0 2px color-mix(in srgb, var(--model-card-color) 18%, rgb(255 255 255 / 8%)),
     inset 0 0 2.4rem rgb(0 0 0 / 14%);
   color: var(--model-card-ink);
   container-type: inline-size;
@@ -35,6 +57,71 @@
   isolation: isolate;
   overflow: clip;
   position: relative;
+}
+
+.model-card-face[data-card-density="1"] {
+  --model-card-rail-spectrum-opacity: .1;
+  --model-card-speck-foil-opacity: .1;
+}
+.model-card-face[data-card-density="2"] {
+  --model-card-rail-spectrum-opacity: .16;
+  --model-card-speck-foil-opacity: .15;
+}
+.model-card-face[data-card-density="3"] {
+  --model-card-rail-spectrum-opacity: .22;
+  --model-card-speck-foil-opacity: .21;
+}
+.model-card-face[data-card-density="4"] {
+  --model-card-rail-spectrum-opacity: .29;
+  --model-card-speck-foil-opacity: .27;
+}
+.model-card-face[data-card-density="5"] {
+  --model-card-rail-spectrum-opacity: .37;
+  --model-card-speck-foil-opacity: .34;
+}
+
+.model-card-face::before,
+.model-card-face::after {
+  background-repeat: no-repeat;
+  content: "";
+  inset: -8%;
+  pointer-events: none;
+  position: absolute;
+  transform:
+    translate(var(--model-card-speck-shift-x, 0), var(--model-card-speck-shift-y, 0))
+    rotate(var(--model-card-speck-rotation, 0deg))
+    scale(var(--model-card-speck-scale, 1));
+  transform-origin: center;
+  z-index: 1;
+}
+
+.model-card-face::before {
+  background-image:
+    radial-gradient(circle at 8% 14%, color-mix(in srgb, var(--model-card-color) 62%, transparent) 0 .55px, transparent 1.25px),
+    radial-gradient(circle at 19% 31%, color-mix(in srgb, var(--model-card-secondary) 54%, transparent) 0 .8px, transparent 1.45px),
+    radial-gradient(circle at 91% 22%, color-mix(in srgb, var(--model-card-color) 48%, transparent) 0 .45px, transparent 1.15px),
+    radial-gradient(circle at 78% 7%, color-mix(in srgb, var(--model-card-secondary) 56%, transparent) 0 .65px, transparent 1.35px),
+    radial-gradient(circle at 94% 47%, color-mix(in srgb, var(--model-card-color) 58%, transparent) 0 .75px, transparent 1.5px),
+    radial-gradient(circle at 12% 62%, color-mix(in srgb, var(--model-card-secondary) 46%, transparent) 0 .5px, transparent 1.2px),
+    radial-gradient(circle at 22% 88%, color-mix(in srgb, var(--model-card-color) 52%, transparent) 0 .7px, transparent 1.4px),
+    radial-gradient(circle at 86% 82%, color-mix(in srgb, var(--model-card-secondary) 52%, transparent) 0 .55px, transparent 1.25px),
+    radial-gradient(circle at 67% 95%, color-mix(in srgb, var(--model-card-color) 44%, transparent) 0 .85px, transparent 1.55px),
+    radial-gradient(circle at 4% 79%, color-mix(in srgb, var(--model-card-secondary) 52%, transparent) 0 .45px, transparent 1.15px);
+  mix-blend-mode: screen;
+  opacity: .58;
+}
+
+.model-card-face::after {
+  background-image:
+    radial-gradient(circle at 14% 9%, hsl(calc(var(--foil-spectrum-angle, 0deg) + 334deg) 96% 78% / 86%) 0 .65px, transparent 1.4px),
+    radial-gradient(circle at 87% 16%, hsl(calc(var(--foil-spectrum-angle, 0deg) + 42deg) 96% 78% / 82%) 0 .9px, transparent 1.65px),
+    radial-gradient(circle at 96% 58%, hsl(calc(var(--foil-spectrum-angle, 0deg) + 148deg) 90% 76% / 78%) 0 .6px, transparent 1.35px),
+    radial-gradient(circle at 9% 51%, hsl(calc(var(--foil-spectrum-angle, 0deg) + 205deg) 94% 78% / 82%) 0 .75px, transparent 1.5px),
+    radial-gradient(circle at 17% 91%, hsl(calc(var(--foil-spectrum-angle, 0deg) + 271deg) 94% 79% / 82%) 0 .95px, transparent 1.7px),
+    radial-gradient(circle at 81% 89%, hsl(calc(var(--foil-spectrum-angle, 0deg) + 312deg) 94% 79% / 78%) 0 .55px, transparent 1.3px);
+  mix-blend-mode: screen;
+  opacity: calc(var(--model-card-speck-foil-opacity) + var(--foil-activity, 0) * .14);
+  transition: opacity 110ms linear;
 }
 
 .model-card-face__grain {
@@ -120,14 +207,33 @@
 .model-card-face__art {
   align-items: center;
   background:
-    radial-gradient(circle at 50% 52%, rgb(2 3 5 / 20%) 0 20%, transparent 58%),
-    radial-gradient(ellipse at 24% 82%, color-mix(in srgb, var(--model-card-secondary) 13%, transparent), transparent 54%),
-    radial-gradient(ellipse at 78% 18%, color-mix(in srgb, var(--model-card-color) 17%, transparent), transparent 57%),
-    linear-gradient(160deg, rgb(255 255 255 / 3%), rgb(0 0 0 / 10%));
-  border: 1px solid color-mix(in oklch, var(--model-card-color) 20%, rgb(255 255 255 / 10%));
+    radial-gradient(circle at 50% 52%, rgb(2 3 5 / 20%) 0 20%, transparent 58%) padding-box,
+    radial-gradient(ellipse at 24% 82%, color-mix(in srgb, var(--model-card-secondary) 13%, transparent), transparent 54%) padding-box,
+    radial-gradient(ellipse at 78% 18%, color-mix(in srgb, var(--model-card-color) 17%, transparent), transparent 57%) padding-box,
+    linear-gradient(160deg, rgb(10 11 15 / 91%), rgb(2 3 6 / 94%)) padding-box,
+    radial-gradient(
+      circle at var(--foil-light-x, 50%) var(--foil-light-y, 50%),
+      rgb(255 255 255 / calc(.2 + var(--foil-sheen-opacity, .04) * .9)) 0 1.8%,
+      rgb(218 235 255 / calc(.08 + var(--foil-sheen-opacity, .04) * .6)) 3.8%,
+      transparent 15%
+    ) border-box,
+    conic-gradient(
+      from calc(var(--foil-spectrum-angle, 0deg) + 103deg) at 50% 50%,
+      color-mix(in oklch, var(--model-card-secondary) 54%, #dbe4ed) 0 12%,
+      hsl(calc(var(--foil-spectrum-angle, 0deg) + 22deg) 96% 77% / calc(var(--model-card-rail-spectrum-opacity) * .84 + var(--foil-activity, 0) * .12)) 18%,
+      color-mix(in oklch, var(--model-card-color) 56%, #b8c3ce) 27%,
+      hsl(calc(var(--foil-spectrum-angle, 0deg) + 132deg) 88% 75% / calc(var(--model-card-rail-spectrum-opacity) * .84 + var(--foil-activity, 0) * .13)) 39%,
+      #f5f8fb 49%,
+      hsl(calc(var(--foil-spectrum-angle, 0deg) + 232deg) 94% 76% / calc(var(--model-card-rail-spectrum-opacity) * .84 + var(--foil-activity, 0) * .11)) 61%,
+      color-mix(in oklch, var(--model-card-secondary) 58%, #edf1f6) 73%,
+      hsl(calc(var(--foil-spectrum-angle, 0deg) + 312deg) 94% 78% / calc(var(--model-card-rail-spectrum-opacity) * .84 + var(--foil-activity, 0) * .1)) 84%,
+      color-mix(in oklch, var(--model-card-color) 52%, #dbe4ed) 100%
+    ) border-box;
+  border: 1.25px solid transparent;
   border-radius: 4.2cqi;
   box-shadow:
-    inset 0 0 0 1px color-mix(in srgb, var(--model-card-secondary) 7%, transparent),
+    inset 0 0 0 1px rgb(1 2 4 / 64%),
+    inset 0 0 0 2px color-mix(in srgb, var(--model-card-secondary) 8%, transparent),
     inset 0 -18px 36px rgb(0 0 0 / 14%);
   display: flex;
   isolation: isolate;
@@ -149,6 +255,11 @@
 .model-card-illumination {
   display: block;
   opacity: .97;
+}
+
+.model-card-illumination [data-ornament-mark="organic-speck-field"] {
+  opacity: .76;
+  transition: opacity 110ms linear;
 }
 
 .model-card-holographic-foil {
@@ -256,6 +367,10 @@
   filter: brightness(1.16) drop-shadow(0 0 .1rem rgb(255 255 255 / 32%));
 }
 
+.model-card-frame[data-foil-active] .model-card-illumination [data-ornament-mark="organic-speck-field"] {
+  opacity: 1;
+}
+
 .model-card-face__art img {
   block-size: 50%;
   filter:
@@ -354,21 +469,33 @@
   .model-card-face__grain,
   .model-card-face__art::after,
   .model-card-illumination { display: none; }
+  .model-card-face__art {
+    background: Canvas;
+    border: 1px solid CanvasText;
+    box-shadow: none;
+  }
   .model-card-face__art img { filter: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .model-card-holographic-foil__metal,
   .model-card-holographic-foil__spectrum,
-  .model-card-holographic-foil__glint {
+  .model-card-holographic-foil__glint,
+  .model-card-face::after,
+  .model-card-illumination [data-ornament-mark="organic-speck-field"] {
     transition: none;
   }
 }
 
 @media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  .model-card-face[data-card-density] {
+    --model-card-rail-spectrum-opacity: .06;
+    --model-card-speck-foil-opacity: .04;
+  }
   .model-card-holographic-foil__metal { opacity: .44; }
   .model-card-holographic-foil__spectrum { opacity: .08; }
   .model-card-holographic-foil__glint { opacity: .035; }
+  .model-card-illumination [data-ornament-mark="organic-speck-field"] { opacity: .52; }
 }
 
 .model-cards-site {
@@ -533,16 +660,28 @@
   aspect-ratio: 5 / 7;
   border-radius: 1.4rem;
   color: inherit;
-  contain: layout paint style;
-  contain-intrinsic-block-size: auto 19.6rem;
-  contain-intrinsic-inline-size: auto 14rem;
-  content-visibility: auto;
+  contain: layout style;
   display: block;
   min-inline-size: 0;
+  position: relative;
   text-decoration: none;
   transform: translateY(0);
   transition: transform 150ms ease;
 }
+
+.model-card-grid__bleed {
+  contain: layout paint style;
+  contain-intrinsic-block-size: auto 20.35rem;
+  contain-intrinsic-inline-size: auto 14.75rem;
+  content-visibility: auto;
+  display: grid;
+  inset: -.375rem;
+  padding: .375rem;
+  pointer-events: none;
+  position: absolute;
+}
+
+.model-card-grid__bleed > .model-card-frame { pointer-events: auto; }
 
 .model-card-grid__link:hover { transform: translateY(-4px); }
 .model-card-grid__link:focus-visible { outline-offset: 5px; }
@@ -694,9 +833,11 @@
     justify-content: center;
   }
   .model-card-grid__link {
-    contain-intrinsic-block-size: auto 35rem;
-    contain-intrinsic-inline-size: auto 25rem;
     inline-size: 100%;
+  }
+  .model-card-grid__bleed {
+    contain-intrinsic-block-size: auto 35.75rem;
+    contain-intrinsic-inline-size: auto 25.75rem;
   }
 }
 

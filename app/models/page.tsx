@@ -68,12 +68,14 @@ export default function ModelCardsPage() {
             href={card.path}
             key={card.path}
           >
-            <ModelCardFoilFrame
-              foilPreset={card.foilPreset}
-              seed={card.seed}
-            >
-              <ModelCardFace card={card} illuminationMode="gallery" />
-            </ModelCardFoilFrame>
+            <div className="model-card-grid__bleed">
+              <ModelCardFoilFrame
+                foilPreset={card.foilPreset}
+                seed={card.seed}
+              >
+                <ModelCardFace card={card} illuminationMode="gallery" />
+              </ModelCardFoilFrame>
+            </div>
           </Link>
         ))}
       </FoilCardDeck>

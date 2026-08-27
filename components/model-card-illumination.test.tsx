@@ -188,6 +188,63 @@ describe("model card illumination", () => {
     );
   });
 
+  test("grows a deterministic organic speck field without rearranging model identity", () => {
+    const speckCounts = [1, 2, 3, 4, 5].map(density => {
+      const card = MODEL_CARD_PRESENTATIONS.find(candidate => (
+        candidate.illuminationDensity === density
+      ));
+      if (card === undefined) throw new Error(`Expected a density ${density} speck fixture.`);
+      const markup = render(card, "gallery", "holographic");
+      const count = markup.match(/data-speck-count="(\d+)"/u)?.[1];
+      const foilCount = markup.match(/data-holographic-speck-count="(\d+)"/u)?.[1];
+      if (count === undefined || foilCount === undefined) {
+        throw new Error("Expected organic pigment and foil speck counts.");
+      }
+      expect(Number.parseInt(foilCount, 10)).toBeGreaterThan(0);
+      expect(Number.parseInt(foilCount, 10)).toBeLessThan(Number.parseInt(count, 10));
+      return Number.parseInt(count, 10);
+    });
+    expect(speckCounts).toEqual([10, 14, 19, 25, 32]);
+
+    const cardsWithDifferentDensities = [...Map.groupBy(
+      MODEL_CARD_PRESENTATIONS,
+      card => card.canonicalModelId,
+    ).values()].find(cards => new Set(cards.map(card => card.illuminationDensity)).size > 1);
+    if (cardsWithDifferentDensities === undefined) {
+      throw new Error("Expected one model with multiple speck densities.");
+    }
+    const sortedProfiles = cardsWithDifferentDensities.toSorted((left, right) => (
+      left.illuminationDensity - right.illuminationDensity
+    ));
+    const lower = sortedProfiles[0];
+    const higher = sortedProfiles.at(-1);
+    if (lower === undefined || higher === undefined) throw new Error("Expected speck profiles.");
+    const lowerPath = attributedPath(
+      render(lower, "gallery"),
+      "data-ornament-mark",
+      "organic-speck-field",
+    );
+    const higherPath = attributedPath(
+      render(higher, "gallery"),
+      "data-ornament-mark",
+      "organic-speck-field",
+    );
+    expect(higherPath.startsWith(lowerPath)).toBe(true);
+
+    const firstProfileByModel = new Map<string, ModelCardPresentation>();
+    for (const card of MODEL_CARD_PRESENTATIONS) {
+      if (!firstProfileByModel.has(card.canonicalModelId)) {
+        firstProfileByModel.set(card.canonicalModelId, card);
+      }
+    }
+    const modelPaths = [...firstProfileByModel.values()].map(card => attributedPath(
+      render(card, "gallery"),
+      "data-ornament-mark",
+      "organic-speck-field",
+    ));
+    expect(new Set(modelPaths).size).toBe(modelPaths.length);
+  });
+
   test("gives every provider a stable, structurally distinct outer court", () => {
     const courtByProvider = new Map<string, { hand: string; name: string; path: string }>();
     for (const card of MODEL_CARD_PRESENTATIONS) {

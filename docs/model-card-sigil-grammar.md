@@ -17,7 +17,7 @@ The model-card emblem is a deterministic identity system, not decorative noise. 
 
 The plate is a `400 × 230` SVG with three explicit planes:
 
-1. **Background:** inset broken cartouche, provider court, engine-turned field, relief cells, and sparse hatch. Its marks are broad, thin, and low-contrast.
+1. **Background:** inset broken cartouche, provider court, engine-turned field, relief cells, sparse hatch, and an organic punched-speck constellation. Its marks are broad, thin, and low-contrast.
 2. **Midground:** family-specific dark sanctuary, painted inlay, one intentional organic growth species, filled leaves, and the family radical.
 3. **Foreground:** generation topology and inscription, edition device, role totems, class corona, and exact profile tally.
 
@@ -46,9 +46,13 @@ The finish models three optical components:
 
 Foil coverage is semantic and bounded. Every card stamps its generation inscription and edition device. Density two adds generation topology, density three adds the corona, density four adds a satin family edge and one profile stamp, and density five adds two more stamps. The provider court, organic underpainting, logo, typography, and statistics remain pigment rather than rainbow foil.
 
+Two inset rails bind the material together. The outer card rail is the stronger binding edge; the illustration rail is finer and offset by 85 degrees of diffraction phase. Each combines a dark engraved trough, provider/class-tinted silver, narrow spectral interruptions, and a pointer-positioned glint. Both rails are painted inside their rounded clips, so no centered stroke or glow can recreate the square-corner artifact.
+
+Specks follow a nested constellation grammar rather than an evenly distributed star field. Family identity chooses three broad clustering arcs; canonical model identity supplies deterministic jitter, mark species, scale, and foil selection. Profile density reveals a stable prefix of 10, 14, 19, 25, or 32 marks, so a richer profile never rearranges its simpler sibling. Most marks remain low-opacity provider/secondary pigment; only a small deterministic minority enters the holographic fill. A second, much sparser face-level field uses the same canonical model seed for rotation, translation, and scale, giving the card stock a few foil pinpricks without competing with the title or statistics.
+
 Interaction reuses the parent card's delegated `--foil-light-x`, `--foil-light-y`, and `--foil-spectrum-angle` variables. The resting pose is seeded by canonical model rather than profile, so profiles retain one material phase while coverage and secondary ink change. The 53-card gallery therefore retains one request-animation-frame controller, updates only the active card, runs no idle animation, creates no canvas or WebGL context, and adds no JavaScript dependency. Every SVG instance receives a hydration-stable React namespace so duplicate cards cannot collide through gradient fragment identifiers. Reduced-motion freezes the seeded pose, reduced-transparency and increased-contrast preferences suppress spectral intensity, and forced-colors removes the decorative illustration.
 
-The live gallery keeps explicit structural budgets for total DOM elements and serialized markup as well as path geometry. Each card uses eighteen compact gradient stops and referenced shapes instead of duplicating stamped paths per optical pass; `content-visibility` and paint containment then keep off-screen cards out of active paint work.
+The live gallery keeps explicit structural budgets for total DOM elements and serialized markup as well as path geometry. Each card uses eighteen compact gradient stops, one compound pigment-speck path, and referenced shapes instead of duplicating stamped paths per optical pass. Off-screen work remains virtualized through an oversized paint-contained bleed wrapper. Its content box stays card-sized while its clip sits six pixels beyond the link, preserving `content-visibility` without shearing the ±5°/±6° projected card tilt.
 
 Three.js is intentionally not part of this tier. A renderer per card would duplicate contexts and GPU state while forking live art from the SVG/ImageResponse pipeline. If a future single-card hero genuinely needs physical thin-film BRDF rendering, it should be one dynamically loaded low-power fragment-shader surface over the detail card, with the current SVG finish remaining the complete fallback.
 
