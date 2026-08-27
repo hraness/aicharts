@@ -197,8 +197,8 @@ export function ModelCardIllumination({
   const petalWidth = rounded(10 + density * 1.6 + sample(providerHash, 6) * 5);
   const petal = petalPath(centerX, centerY, petalLength, petalWidth, topology.petalVariant);
   const vineLayerCount = isGallery ? 1 : density;
-  const ringCount = isGallery ? Math.ceil(density / 2) : density;
-  const leafPairs = isGallery ? Math.ceil((density + 1) / 2) : density + 1;
+  const ringCount = density;
+  const leafPairs = isGallery ? density : density + 1;
   const pearlCount = isGallery ? 0 : density >= 3 ? density * 4 : 0;
   const leaf = leafPath(topology.leafVariant);
   const primaryStroke = rounded(1.05 + density * .17);

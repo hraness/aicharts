@@ -86,15 +86,19 @@ describe("model card illumination", () => {
   });
 
   test("adds visibly more geometry at each density", () => {
-    const geometryCounts = [1, 2, 3, 4, 5].map((density) => {
-      const card = MODEL_CARD_PRESENTATIONS.find(candidate => (
-        candidate.illuminationDensity === density
-      ));
-      if (card === undefined) throw new Error(`Expected a density ${density} fixture.`);
-      const markup = renderToStaticMarkup(<ModelCardIllumination card={card} />);
-      return geometryCount(markup);
-    });
-    expect(geometryCounts).toEqual([...geometryCounts].sort((left, right) => left - right));
-    expect(new Set(geometryCounts).size).toBe(geometryCounts.length);
+    for (const mode of ["full", "gallery"] as const) {
+      const geometryCounts = [1, 2, 3, 4, 5].map((density) => {
+        const card = MODEL_CARD_PRESENTATIONS.find(candidate => (
+          candidate.illuminationDensity === density
+        ));
+        if (card === undefined) throw new Error(`Expected a density ${density} fixture.`);
+        const markup = renderToStaticMarkup(
+          <ModelCardIllumination card={card} mode={mode} />,
+        );
+        return geometryCount(markup);
+      });
+      expect(geometryCounts).toEqual([...geometryCounts].sort((left, right) => left - right));
+      expect(new Set(geometryCounts).size).toBe(geometryCounts.length);
+    }
   });
 });
