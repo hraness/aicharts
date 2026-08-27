@@ -66,9 +66,10 @@ describe("model card presentation", () => {
     );
   });
 
-  test("preserves the dedicated fast and max foil identities", () => {
-    expect(MODEL_CARD_PRESENTATIONS.find(card => card.cardClass === "fast")?.foilPreset).toBe("fast");
-    expect(MODEL_CARD_PRESENTATIONS.find(card => card.cardClass === "max")?.foilPreset).toBe("max");
+  test("uses one neutral foil field so the provider and model inks own color", () => {
+    expect(new Set(MODEL_CARD_PRESENTATIONS.map(card => card.foilPreset))).toEqual(
+      new Set(["etched"]),
+    );
   });
 
   test("turns operational source labels into a clean collectible title", () => {
@@ -92,6 +93,10 @@ describe("model card presentation", () => {
     expect(formatModelCardDisplayTitle("Model Prime xhigh", "X-high")).toBe(
       "Model Prime X-high",
     );
+    expect(MODEL_CARD_PRESENTATIONS.find(card => card.visualClass === "thinking")).toMatchObject({
+      displayTitle: "Qwen3.7 Plus Thinking",
+      model: "Qwen3.7 Plus (thinking)",
+    });
   });
 
   test("combines a non-default profile exactly once", () => {
