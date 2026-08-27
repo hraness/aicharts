@@ -51,6 +51,26 @@ export function computeParetoFrontier(
   return frontier;
 }
 
+/** Lower x and higher y are better; preserves every exact nondominated tie. */
+export function computeParetoSet(
+  records: readonly CodingAgentRecord[],
+  xMetric: XMetric,
+  yMetric: YMetric,
+): FrontierRecord[] {
+  const comparable = recordsWithMetrics(records, xMetric, yMetric).map((record) => {
+    const xValue = xMetricValue(record, xMetric);
+    const yValue = yMetricValue(record, yMetric);
+    if (xValue === null || yValue === null) throw new Error("Comparable record lost a selected metric.");
+    return { record, xValue, yValue };
+  }).sort(compareFrontierRecords);
+
+  return comparable.filter(candidate => !comparable.some(other => (
+    other.xValue <= candidate.xValue
+    && other.yValue >= candidate.yValue
+    && (other.xValue < candidate.xValue || other.yValue > candidate.yValue)
+  )));
+}
+
 /** Keeps both ends and evenly spaced intermediate frontier steps in a compact ladder. */
 export function sampleFrontierLadder(
   frontier: readonly FrontierRecord[],

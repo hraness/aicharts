@@ -96,12 +96,26 @@ test("homepage document stays in the HTML without taking chart layout", () => {
   expect(firstRule(".chart-top-bar .chart-heading")).toContain("font-weight: var(--font-weight-bold)");
 });
 
-test("homepage leaders stay visible above the chart", () => {
-  expect(firstRule(".home-leaders")).not.toMatch(/display\s*:\s*none/u);
-  expect(firstRule(".home-leaders")).not.toMatch(/clip\s*:/u);
-  expect(firstRule(".home-leaders")).toContain("border-bottom: 1px solid var(--line)");
-  expect(firstRule(".home-leaders")).toContain("padding: 0 var(--chart-content-inset)");
-  expect(firstRule(".home-leaders .plain-publication__table")).toContain("border-collapse: collapse");
+test("homepage leaders use one owned rule at each outer edge", () => {
+  const leaders = firstRule(".home-leaders");
+  const tableScroll = firstRule(".home-leaders .plain-publication__table-scroll");
+  const table = firstRule(".home-leaders .plain-publication__table");
+  const tableHead = firstRule(".home-leaders .plain-publication__table thead th");
+
+  expect(firstRule(".ui-top-bar")).toContain("border-bottom: 1px solid var(--grid)");
+  expect(leaders).not.toMatch(/display\s*:\s*none/u);
+  expect(leaders).not.toMatch(/clip\s*:/u);
+  expect(leaders).toContain("border-bottom: 1px solid var(--line)");
+  expect(leaders).not.toMatch(/border-(?:top|block-start)\s*:/u);
+  expect(leaders).toContain("padding: 0 var(--chart-content-inset)");
+  expect(tableScroll).toContain("border: 0");
+  expect(tableScroll).not.toMatch(/border-block\s*:/u);
+  expect(tableScroll).toContain("max-width: 100%");
+  expect(tableScroll).toContain("overflow-x: auto");
+  expect(table).toContain("border-collapse: collapse");
+  expect(table).toContain("min-width: 40rem");
+  expect(tableHead).toContain("border-top: 0");
+  expect(stylesheet).toMatch(/\.home-leaders \.plain-publication__table th,[\s\S]*?\.home-leaders \.plain-publication__table td\s*\{[^}]*border-top:\s*1px solid var\(--line\);/u);
   expect(firstRule(".home-leaders .plain-publication__table caption")).toContain("clip: rect(0, 0, 0, 0)");
   expect(stylesheet).not.toContain(".home-leaders h1");
   expect(stylesheet).not.toContain(".home-leaders h2");

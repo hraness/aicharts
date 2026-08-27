@@ -319,7 +319,7 @@ body {
 }
 
 .home-leaders .plain-publication__table-scroll {
-  border-block: 1px solid var(--line);
+  border: 0;
   margin: 0;
   max-width: 100%;
   overflow-x: auto;
@@ -354,6 +354,7 @@ body {
 }
 
 .home-leaders .plain-publication__table thead th {
+  border-top: 0;
   color: var(--muted);
   font-weight: 700;
 }

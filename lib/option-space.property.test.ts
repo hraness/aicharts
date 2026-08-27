@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 import { assertProperty, fc } from "./property-test";
 import type { CodingAgentRecord } from "./coding-agent-data";
-import { computeParetoFrontier, providerPerformanceRanges } from "./option-space";
+import { computeParetoFrontier, computeParetoSet, providerPerformanceRanges } from "./option-space";
 
 function record(id: string, providerId: string, costUsd: number, aaIndex: number): CodingAgentRecord {
   return {
@@ -64,8 +64,36 @@ test("property: frontier and provider summaries ignore input order", () => {
     ).toEqual(
       computeParetoFrontier(reversed, "costUsd", "aaIndex").map(({ record: item }) => item.id),
     );
+    expect(
+      computeParetoSet(records, "costUsd", "aaIndex").map(({ record: item }) => item.id),
+    ).toEqual(
+      computeParetoSet(reversed, "costUsd", "aaIndex").map(({ record: item }) => item.id),
+    );
     expect(providerPerformanceRanges(records, "aaIndex"))
       .toEqual(providerPerformanceRanges(reversed, "aaIndex"));
+  }), { numRuns: 500 });
+});
+
+test("property: the Pareto set contains every tie and only nondominated choices", () => {
+  assertProperty(fc.property(generatedRecords, (records) => {
+    const pareto = computeParetoSet(records, "costUsd", "aaIndex");
+    const paretoIds = new Set(pareto.map(({ record: item }) => item.id));
+
+    for (const candidate of records) {
+      const xValue = candidate.economics.costUsd;
+      const yValue = candidate.benchmarks.aaIndex;
+      if (xValue === null || yValue === null) continue;
+      const strictDominator = records.find(other => {
+        const otherX = other.economics.costUsd;
+        const otherY = other.benchmarks.aaIndex;
+        return otherX !== null
+          && otherY !== null
+          && otherX <= xValue
+          && otherY >= yValue
+          && (otherX < xValue || otherY > yValue);
+      });
+      expect(paretoIds.has(candidate.id)).toBe(strictDominator === undefined);
+    }
   }), { numRuns: 500 });
 });
 
