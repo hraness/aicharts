@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  FoilCardSurface,
   type FoilCardIntensity,
   type FoilCardRenderMode,
 } from "@hraness/design-kit/react";
@@ -9,6 +8,7 @@ import {
 import type { ModelCardPresentation } from "@/lib/model-card-presentation";
 
 import { ModelCardFace } from "./model-card-face";
+import { ModelCardFoilFrame } from "./model-card-foil-frame";
 
 export function ModelTradingCard({
   card,
@@ -20,14 +20,14 @@ export function ModelTradingCard({
   renderMode?: FoilCardRenderMode;
 }>) {
   return (
-    <FoilCardSurface
-      className="model-card-frame"
+    <ModelCardFoilFrame
+      foilPreset={card.foilPreset}
       intensity={intensity}
-      preset={card.foilPreset}
       renderMode={renderMode}
       seed={card.seed}
+      visualClass={card.visualClass}
     >
       <ModelCardFace card={card} />
-    </FoilCardSurface>
+    </ModelCardFoilFrame>
   );
 }

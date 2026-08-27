@@ -57,7 +57,7 @@
     "kb:catalog": "bunx --bun github:hraness/kb#v0.15.2 catalog --root kb"
   },
   "dependencies": {
-    "@hraness/design-kit": "github:hraness/design-kit#b24c966f73d142d13e129c247c0e0aed2db88615",
+    "@hraness/design-kit": "github:hraness/design-kit#73972e336ff1fbb58744d657e46aa7802b64cb8f",
     "@hraness/ui": "github:hraness/ui#6a4b0bd474262114356ab79c4ca10b76fe22c9cf",
     "@hraness/vercel-delivery": "github:hraness/vercel-delivery#v0.1.2",
     "@hraness/web-discovery": "github:hraness/web-discovery#v0.1.0",

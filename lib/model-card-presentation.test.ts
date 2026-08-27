@@ -2,11 +2,14 @@ import { describe, expect, test } from "bun:test";
 
 import { MODEL_CARD_PRESENTATIONS } from "./model-card-collection";
 import {
+  cleanModelCardDisplayName,
   compactModelCardHarnessLabel,
+  formatModelCardDisplayTitle,
   formatModelCardMetricRange,
   formatModelCardSourceDate,
   modelCardIndexingPolicy,
 } from "./model-card-presentation";
+import { assertProperty, fc } from "./property-test";
 
 describe("model card presentation", () => {
   test("shows one observed value without inventing precision", () => {
@@ -66,5 +69,51 @@ describe("model card presentation", () => {
   test("preserves the dedicated fast and max foil identities", () => {
     expect(MODEL_CARD_PRESENTATIONS.find(card => card.cardClass === "fast")?.foilPreset).toBe("fast");
     expect(MODEL_CARD_PRESENTATIONS.find(card => card.cardClass === "max")?.foilPreset).toBe("max");
+  });
+
+  test("turns operational source labels into a clean collectible title", () => {
+    const fable = MODEL_CARD_PRESENTATIONS.find(card => card.model.includes("with fallback"));
+    expect(fable).toMatchObject({
+      canonicalModelId: "anthropic/claude-fable-5",
+      classLabel: "Max",
+      displayTitle: "Fable 5 Max",
+      harnessLabel: "Claude Code",
+      model: "Fable 5 (with fallback)",
+      profileLabel: "Max",
+      visualClass: "max",
+    });
+    expect(cleanModelCardDisplayName("Qwen3.7 Plus (thinking)")).toBe("Qwen3.7 Plus");
+    expect(cleanModelCardDisplayName("Model Prime (with fallback) (thinking)")).toBe("Model Prime");
+    expect(formatModelCardDisplayTitle("Qwen3.8 Max", "Standard")).toBe("Qwen3.8 Max");
+    expect(formatModelCardDisplayTitle("Model Prime Max", "Max")).toBe("Model Prime Max");
+    expect(formatModelCardDisplayTitle("Fable 5 (max) (with fallback)", "Max")).toBe(
+      "Fable 5 Max",
+    );
+    expect(formatModelCardDisplayTitle("Model Prime xhigh", "X-high")).toBe(
+      "Model Prime X-high",
+    );
+  });
+
+  test("combines a non-default profile exactly once", () => {
+    const word = fc.constantFrom("Model", "Alpha", "5", "Prime", "Vision");
+    const baseName = fc.array(word, { minLength: 1, maxLength: 5 }).map(words => words.join(" "));
+    const profile = fc.constantFrom(
+      ["Standard", "standard"] as const,
+      ["Low", "low"] as const,
+      ["Medium", "medium"] as const,
+      ["High", "high"] as const,
+      ["X-high", "xhigh"] as const,
+      ["Max", "max"] as const,
+    );
+    assertProperty(fc.property(baseName, profile, (base, [profileLabel, profileAlias]) => {
+      const sourceName = profileLabel === "Standard" || base.endsWith(profileLabel)
+        ? base
+        : `${base} (${profileAlias})`;
+      const title = formatModelCardDisplayTitle(sourceName, profileLabel);
+      expect(formatModelCardDisplayTitle(title, profileLabel)).toBe(title);
+      expect(title).not.toMatch(/\s{2,}/u);
+      expect(title).not.toMatch(/\((?:thinking|with fallback)\)$/iu);
+      expect(title).not.toMatch(/\((?:low|medium|high|max|xhigh)\)$/iu);
+    }));
   });
 });

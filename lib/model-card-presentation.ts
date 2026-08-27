@@ -17,6 +17,8 @@ export type ModelCardStat = Readonly<{
   value: string;
 }>;
 
+export type ModelCardVisualClass = Exclude<ModelCardClass, "fallback">;
+
 export type ModelCardIndexingPolicy = Readonly<{
   follow: true;
   index: false;
@@ -28,9 +30,11 @@ export type ModelCardPresentation = Readonly<{
   cardClass: ModelCardClass;
   cardNumber: number;
   classLabel: string;
+  displayTitle: string;
   economics: readonly ModelCardStat[];
   foilPreset: FoilCardPreset;
   gatewayModelId: string | null;
+  harnessLabel: string;
   iconDataUrl: string;
   model: string;
   observationCount: number;
@@ -43,6 +47,7 @@ export type ModelCardPresentation = Readonly<{
   seed: string;
   sourceDate: string;
   totalCards: number;
+  visualClass: ModelCardVisualClass;
 }>;
 
 const performanceLabels: Readonly<Record<Extract<ModelCardMetricId,
@@ -67,18 +72,73 @@ function formatProfileLabel(value: string): string {
   return value.charAt(0).toUpperCase() + value.slice(1).replaceAll("-", " ");
 }
 
-function classLabel(value: ModelCardClass): string {
-  if (value === "fallback") return "Fallback";
+function classLabel(value: ModelCardVisualClass): string {
   if (value === "thinking") return "Thinking";
   return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
-function foilPreset(value: ModelCardClass): FoilCardPreset {
+function foilPreset(value: ModelCardVisualClass): FoilCardPreset {
   if (value === "fast") return "fast";
   if (value === "max") return "max";
   if (value === "thinking") return "aurora";
-  if (value === "fallback") return "prism";
   return "etched";
+}
+
+const modelCardOperationalSuffixes = [
+  /\s+\(with fallback\)$/iu,
+  /\s+\(thinking\)$/iu,
+] as const;
+
+/** Removes upstream operational qualifiers without changing source identity. */
+export function cleanModelCardDisplayName(model: string): string {
+  let displayName = model.trim();
+  let previousName: string;
+  do {
+    previousName = displayName;
+    for (const suffix of modelCardOperationalSuffixes) {
+      displayName = displayName.replace(suffix, "").trim();
+    }
+  } while (displayName !== previousName);
+  if (displayName.length === 0) {
+    throw new Error("Model-card display name must contain visible text.");
+  }
+  return displayName;
+}
+
+/** Combines the collectible name and non-default profile exactly once. */
+export function formatModelCardDisplayTitle(
+  model: string,
+  profileLabel: string,
+): string {
+  const displayName = cleanModelCardDisplayName(model);
+  if (profileLabel === "Standard") return displayName;
+  const normalizedProfile = profileLabel.toLocaleLowerCase("en-US")
+    .replace(/[\s_-]+/gu, "");
+  const parenthesizedSuffix = displayName.match(/\s+\(([^()]*)\)$/u);
+  if (
+    parenthesizedSuffix !== null
+    && parenthesizedSuffix[1]?.toLocaleLowerCase("en-US")
+      .replace(/[\s_-]+/gu, "") === normalizedProfile
+  ) {
+    return `${displayName.slice(0, parenthesizedSuffix.index).trim()} ${profileLabel}`;
+  }
+  const words = displayName.split(/\s+/u);
+  for (let index = 0; index < words.length; index += 1) {
+    const suffix = words.slice(index).join(" ").toLocaleLowerCase("en-US")
+      .replace(/[\s_-]+/gu, "");
+    if (suffix === normalizedProfile) {
+      return `${words.slice(0, index).join(" ")} ${profileLabel}`.trim();
+    }
+  }
+  return `${displayName} ${profileLabel}`;
+}
+
+function visualClass(
+  value: ModelCardClass,
+  profileSlug: string,
+): ModelCardVisualClass {
+  if (value !== "fallback") return value;
+  return profileSlug === "max" ? "max" : "standard";
 }
 
 function compactNumber(value: number): string {
@@ -180,30 +240,35 @@ export function createModelCardPresentation(
   if (agentNames.length === 0) {
     throw new Error("Model-card presentation requires at least one agent harness.");
   }
+  const profileLabel = formatProfileLabel(variant.profileSlug);
+  const cardVisualClass = visualClass(variant.cardClass, variant.profileSlug);
   return {
     agentNames,
     canonicalModelId: variant.canonicalModelId,
     cardClass: variant.cardClass,
     cardNumber,
-    classLabel: classLabel(variant.cardClass),
+    classLabel: classLabel(cardVisualClass),
+    displayTitle: formatModelCardDisplayTitle(variant.model, profileLabel),
     economics: economics.map(({ id, label }) => modelCardStat(
       id,
       label,
       variant.metricRanges[id],
     )),
-    foilPreset: foilPreset(variant.cardClass),
+    foilPreset: foilPreset(cardVisualClass),
     gatewayModelId: variant.gatewayModelId,
+    harnessLabel: compactModelCardHarnessLabel(agentNames),
     iconDataUrl: modelIconDataUrl(variant.lobeIconKey, variant.providerName),
     model: variant.model,
     observationCount: variant.observationCount,
     path: variant.path,
     performance,
-    profileLabel: formatProfileLabel(variant.profileSlug),
+    profileLabel,
     profileSlug: variant.profileSlug,
     providerColor: providerColor(variant.providerId),
     providerName: variant.providerName,
     seed: `${variant.canonicalModelId}/${variant.profileSlug}`,
     sourceDate: formatModelCardSourceDate(sourceRetrievedAt),
     totalCards,
+    visualClass: cardVisualClass,
   };
 }
