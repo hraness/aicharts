@@ -29,6 +29,16 @@ function invariant(value: unknown, message: string): asserts value {
   if (!value) throw new Error(message);
 }
 
+function cssDurationMilliseconds(value: string): number | null {
+  const match = /^((?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?)(ms|s)$/iu.exec(value.trim());
+  const numeric = match?.[1];
+  const unit = match?.[2];
+  if (numeric === undefined || unit === undefined) return null;
+  const duration = Number(numeric);
+  if (!Number.isFinite(duration) || duration < 0) return null;
+  return unit.toLowerCase() === "s" ? duration * 1_000 : duration;
+}
+
 async function firstExecutable(paths: readonly string[]): Promise<string> {
   for (const path of paths) {
     try {
@@ -259,7 +269,12 @@ async function verifyReducedMotion(browser: Browser, baseUrl: string): Promise<v
       `Reduced motion changed the deterministic seed pose: ${JSON.stringify({ initial, moved })}`,
     );
     invariant(
-      moved.transitionDurations.every(duration => duration === "0s"),
+      moved.transitionDurations.every((duration) => {
+        const milliseconds = cssDurationMilliseconds(duration);
+        // Chromium normalizes a disabled transition to 1e-05s in reduced-motion
+        // emulation, which is its effectively-zero computed duration.
+        return milliseconds !== null && milliseconds <= 0.01;
+      }),
       `Reduced motion retained foil transitions: ${JSON.stringify(moved.transitionDurations)}`,
     );
     invariant(failures.length === 0, failures.join("; "));
