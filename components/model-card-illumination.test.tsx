@@ -38,13 +38,18 @@ function geometrySignature(markup: string): string {
   )).join("|");
 }
 
-function holographicPhaseSignature(markup: string): string {
-  const gradients = markup.match(
-    /<(?:linearGradient|radialGradient)\b[\s\S]*?<\/(?:linearGradient|radialGradient)>/gu,
-  ) ?? [];
-  return gradients.map(gradient => (
-    gradient.replace(/\s(?:id|stop-color)="[^"]+"/gu, "")
-  )).join("|");
+function holographicBandSignature(markup: string): string {
+  const stops = (markup.match(/<stop\b[^>]*data-holographic-band="[^"]+"[^>]*>/gu) ?? [])
+    .map((element) => {
+      const index = element.match(/data-holographic-band="(\d+)"/u)?.[1];
+      const color = element.match(/stop-color="([^"]+)"/u)?.[1];
+      if (index === undefined || color === undefined) {
+        throw new Error("Expected a numbered holographic color band.");
+      }
+      return `${index}:${color}`;
+    });
+  if (stops.length !== 5) throw new Error("Expected all five holographic color bands.");
+  return stops.join("|");
 }
 
 function render(
@@ -183,8 +188,8 @@ describe("model card illumination", () => {
     expect(first.illuminationDensity).not.toBe(last.illuminationDensity);
     expect(first.seed).toBe(first.canonicalModelId);
     expect(last.seed).toBe(first.seed);
-    expect(holographicPhaseSignature(render(first, "gallery", "holographic"))).toBe(
-      holographicPhaseSignature(render(last, "gallery", "holographic")),
+    expect(holographicBandSignature(render(first, "gallery", "holographic"))).toBe(
+      holographicBandSignature(render(last, "gallery", "holographic")),
     );
   });
 
@@ -313,11 +318,20 @@ describe("model card illumination", () => {
     const opus5 = render(cardFor("anthropic/claude-opus-5", "low"));
     expect(signaturePath(opus48, "family")).toBe(signaturePath(opus5, "family"));
     expect(signaturePath(opus48, "generation")).not.toBe(signaturePath(opus5, "generation"));
-    expect(holographicPhaseSignature(
+    expect(holographicBandSignature(
       render(cardFor("anthropic/claude-opus-4.8", "low"), "full", "holographic"),
-    )).not.toBe(holographicPhaseSignature(
+    )).not.toBe(holographicBandSignature(
       render(cardFor("anthropic/claude-opus-5", "low"), "full", "holographic"),
     ));
+
+    const gptLuna = cardFor("openai/gpt-5.6-luna", "low");
+    const gptLunaWithSolEdition: ModelCardPresentation = {
+      ...gptLuna,
+      emblemIdentity: { ...gptLuna.emblemIdentity, editionId: "sol" },
+    };
+    expect(holographicBandSignature(render(gptLuna, "full", "holographic"))).not.toBe(
+      holographicBandSignature(render(gptLunaWithSolEdition, "full", "holographic")),
+    );
 
     const gptEditions = ["luna", "sol", "terra"].map(edition => (
       render(cardFor(`openai/gpt-5.6-${edition}`, "low"))

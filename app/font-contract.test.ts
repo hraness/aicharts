@@ -7,6 +7,7 @@ const plainPublication = await Bun.file(new URL("../styles/plain-publication.css
 const rootSocialImage = await Bun.file(new URL("./opengraph-image.tsx", import.meta.url)).text();
 const modelImages = await Bun.file(new URL("../components/model-card-image.tsx", import.meta.url)).text();
 const chartExport = await Bun.file(new URL("../components/chart-export.ts", import.meta.url)).text();
+const chartExportFont = await Bun.file(new URL("../components/chart-export-font.ts", import.meta.url)).text();
 
 test("uses the released Nebula Sans contract across web, exports, and social images", () => {
   expect(packageJson.dependencies).toMatchObject({
@@ -22,4 +23,7 @@ test("uses the released Nebula Sans contract across web, exports, and social ima
   expect(rootSocialImage).toContain("fonts: [...nebulaSansSocialFonts()]");
   expect(modelImages.match(/fontFamily: "Nebula Sans"/gu)?.length).toBe(3);
   expect(chartExport).toContain('"Nebula Sans, sans-serif"');
+  expect(chartExport).toContain("appendEmbeddedNebulaSans(exportedSvg)");
+  expect(chartExportFont).toContain('"@hraness/design-kit/fonts/nebula-sans/social"');
+  expect(chartExportFont).toContain("SIL Open Font License, Version 1.1");
 });

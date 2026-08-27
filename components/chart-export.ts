@@ -1,3 +1,5 @@
+import { createNebulaSansSvgFontResource } from "./chart-export-font";
+
 const svgNamespace = "http://www.w3.org/2000/svg";
 const exportSummaryHeight = 112;
 const providerLegendGutter = 84;
@@ -98,6 +100,19 @@ function appendText(
   text.setAttribute("y", String(options.y));
   text.textContent = value;
   parent.append(text);
+}
+
+async function appendEmbeddedNebulaSans(parent: SVGSVGElement): Promise<void> {
+  const resource = await createNebulaSansSvgFontResource();
+  const metadata = document.createElementNS(svgNamespace, "metadata");
+  metadata.setAttribute("data-font-provenance", "nebula-sans-1.010");
+  metadata.textContent = resource.metadata;
+  const definitions = document.createElementNS(svgNamespace, "defs");
+  const style = document.createElementNS(svgNamespace, "style");
+  style.setAttribute("type", "text/css");
+  style.textContent = resource.css;
+  definitions.append(style);
+  parent.append(metadata, definitions);
 }
 
 function canvasBlob(canvas: HTMLCanvasElement): Promise<Blob> {
@@ -251,6 +266,7 @@ export async function createBrandedChartPng(
   exportedSvg.setAttribute("viewBox", `0 0 ${chartWidth} ${imageHeight}`);
   exportedSvg.setAttribute("width", String(chartWidth));
   exportedSvg.setAttribute("xmlns", svgNamespace);
+  await appendEmbeddedNebulaSans(exportedSvg);
 
   const background = document.createElementNS(svgNamespace, "rect");
   background.setAttribute("fill", theme.background);
