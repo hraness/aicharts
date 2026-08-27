@@ -16,7 +16,7 @@ const modelCardsSearchSite = {
   ...searchSite,
   description: "Shareable model trading cards for the current Artificial Analysis coding-agent benchmark snapshot.",
   socialImage: {
-    alt: "AI model benchmark cards across ten providers",
+    alt: "AI model benchmark card codex with distinct provider sigils",
     path: "/models/opengraph-image",
   },
   socialTitle: "AI Model Benchmark Cards | AI Charts",

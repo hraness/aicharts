@@ -269,7 +269,10 @@ export function ModelCardSocialImage({ card }: Readonly<{ card: ModelCardPresent
   );
 }
 
-function CollectionEmblem({ card }: Readonly<{ card: ModelCardPresentation }>) {
+function CollectionEmblem({
+  card,
+  width,
+}: Readonly<{ card: ModelCardPresentation; width: number }>) {
   return (
     <div style={{
       ...imageStyles.column,
@@ -278,7 +281,7 @@ function CollectionEmblem({ card }: Readonly<{ card: ModelCardPresentation }>) {
       borderRadius: 15,
       height: 190,
       overflow: "hidden",
-      width: 112,
+      width,
     }}>
       <div style={{ ...imageStyles.row, alignItems: "center", flex: 1, justifyContent: "center", overflow: "hidden", position: "relative", width: "100%" }}>
         <ModelCardIllumination card={card} mode="gallery" />
@@ -305,6 +308,46 @@ function CollectionEmblem({ card }: Readonly<{ card: ModelCardPresentation }>) {
   );
 }
 
+function CollectionOverflowEmblem({
+  count,
+  width,
+}: Readonly<{ count: number; width: number }>) {
+  return (
+    <div data-provider-overflow={count} style={{
+      ...imageStyles.column,
+      background: "radial-gradient(circle at 50% 28%, rgba(240,201,109,.18), transparent 52%), rgba(7,8,11,.88)",
+      border: "1px solid rgba(240,201,109,.48)",
+      borderRadius: 15,
+      height: 190,
+      overflow: "hidden",
+      width,
+    }}>
+      <div style={{ ...imageStyles.column, alignItems: "center", flex: 1, justifyContent: "center" }}>
+        <span style={{ color: "#f0c96d", fontFamily: "monospace", fontSize: 36, fontWeight: 700 }}>
+          +{count}
+        </span>
+        <span style={{ color: "rgba(247,246,242,.48)", fontSize: 10, letterSpacing: ".08em", marginTop: 7, textTransform: "uppercase" }}>
+          more houses
+        </span>
+      </div>
+      <div style={{
+        ...imageStyles.row,
+        alignItems: "center",
+        borderTop: "1px solid rgba(255,255,255,.1)",
+        color: "rgba(247,246,242,.72)",
+        fontSize: 10,
+        fontWeight: 700,
+        height: 38,
+        justifyContent: "center",
+        letterSpacing: ".07em",
+        textTransform: "uppercase",
+      }}>
+        Providers
+      </div>
+    </div>
+  );
+}
+
 export function ModelCardCollectionSocialImage({
   cards,
   profileCount,
@@ -314,6 +357,9 @@ export function ModelCardCollectionSocialImage({
   profileCount: number;
   providerCount: number;
 }>) {
+  const overflowCount = Math.max(0, providerCount - cards.length);
+  const tileCount = cards.length + (overflowCount > 0 ? 1 : 0);
+  const crestWidth = tileCount > 10 ? 94 : 112;
   return (
     <div style={{
       ...imageStyles.column,
@@ -355,7 +401,12 @@ export function ModelCardCollectionSocialImage({
           </div>
         </div>
         <div style={{ ...imageStyles.row, flex: 1, flexWrap: "wrap", gap: 10, justifyContent: "flex-end", marginLeft: 34 }}>
-          {cards.map(card => <CollectionEmblem card={card} key={card.providerId} />)}
+          {cards.map(card => (
+            <CollectionEmblem card={card} key={card.providerId} width={crestWidth} />
+          ))}
+          {overflowCount > 0 ? (
+            <CollectionOverflowEmblem count={overflowCount} width={crestWidth} />
+          ) : null}
         </div>
       </div>
     </div>

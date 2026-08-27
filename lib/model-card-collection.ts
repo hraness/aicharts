@@ -39,6 +39,8 @@ export const MODEL_CARD_PRESENTATIONS = MODEL_CARD_VARIANTS.map((variant, index,
   )
 ));
 
+export const MODEL_CARD_COLLECTION_CREST_LIMIT = 11;
+
 export function modelCardRouteStaticParams(): readonly ModelCardRouteParams[] {
   return modelCardStaticParams(MODEL_CARD_VARIANTS);
 }
@@ -46,7 +48,7 @@ export function modelCardRouteStaticParams(): readonly ModelCardRouteParams[] {
 /** Selects one high-detail, non-ranked heraldic representative per provider. */
 export function modelCardProviderRepresentatives(
   cards: readonly ModelCardPresentation[] = MODEL_CARD_PRESENTATIONS,
-  limit = 12,
+  limit = MODEL_CARD_COLLECTION_CREST_LIMIT,
 ): readonly ModelCardPresentation[] {
   if (!Number.isSafeInteger(limit) || limit < 1) {
     throw new RangeError("Model-card representative limit must be a positive integer.");
@@ -68,6 +70,12 @@ export function modelCardProviderRepresentatives(
   return [...byProvider.values()]
     .sort((left, right) => left.cardNumber - right.cardNumber)
     .slice(0, limit);
+}
+
+export function modelCardProviderCount(
+  cards: readonly ModelCardPresentation[] = MODEL_CARD_PRESENTATIONS,
+): number {
+  return new Set(cards.map(card => card.providerId)).size;
 }
 
 export function versionedModelCardImagePath(
