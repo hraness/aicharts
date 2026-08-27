@@ -24,6 +24,23 @@ const modelsPageSource = await Bun.file(
 ).text();
 
 describe("public model cards", () => {
+  function cardSpeckTransform(card: (typeof MODEL_CARD_PRESENTATIONS)[number]): string {
+    const markup = renderToStaticMarkup(<ModelCardFace card={card} />);
+    const properties = [
+      "rotation",
+      "scale",
+      "shift-x",
+      "shift-y",
+    ].map(property => markup.match(new RegExp(
+      `--model-card-speck-${property}:([^;\"]+)`,
+      "u",
+    ))?.[1]);
+    if (properties.some(value => value === undefined)) {
+      throw new Error("Expected a complete card-background speck transform.");
+    }
+    return properties.join("/");
+  }
+
   test("keeps model-specific resources without a second site footer", () => {
     expect(modelsLayoutSource).toContain('aria-label="Model card resources"');
     expect(modelsLayoutSource).toContain("Icons by LobeHub");
@@ -65,12 +82,18 @@ describe("public model cards", () => {
     expect(markup.match(/data-holographic-finish="diffractive-spot-foil"/gu)).toHaveLength(
       MODEL_CARD_PRESENTATIONS.length,
     );
+    expect(markup.match(/data-ornament-mark="organic-speck-field"/gu)).toHaveLength(
+      MODEL_CARD_PRESENTATIONS.length,
+    );
+    expect(markup.match(/model-card-grid__bleed/gu)).toHaveLength(
+      MODEL_CARD_PRESENTATIONS.length,
+    );
     expect(markup.match(/<(?:path|ellipse|circle)\b/gu)?.length ?? 0).toBeLessThan(1_250);
     expect(markup.match(/<[A-Za-z][^>]*>/gu)?.length ?? 0).toBeLessThan(
       MODEL_CARD_PRESENTATIONS.length * 115,
     );
     expect(Buffer.byteLength(markup)).toBeLessThan(
-      MODEL_CARD_PRESENTATIONS.length * 18_500,
+      MODEL_CARD_PRESENTATIONS.length * 20_500,
     );
     expect(markup).not.toContain("<canvas");
     expect(markup).toContain('aria-label="How to read model card emblems"');
@@ -90,6 +113,20 @@ describe("public model cards", () => {
       `aria-label="Open ${thinkingCard.displayTitle} model card; Thinking class"`,
     );
     expect(markup).not.toContain("model-card-face__class");
+  });
+
+  test("keeps card-background specks model-stable and collection-distinct", () => {
+    const signaturesByModel = new Map<string, Set<string>>();
+    for (const card of MODEL_CARD_PRESENTATIONS) {
+      const signatures = signaturesByModel.get(card.canonicalModelId) ?? new Set<string>();
+      signatures.add(cardSpeckTransform(card));
+      signaturesByModel.set(card.canonicalModelId, signatures);
+    }
+    expect([...signaturesByModel.values()].every(signatures => signatures.size === 1)).toBe(true);
+    const modelSignatures = [...signaturesByModel.values()].map(signatures => (
+      [...signatures][0]
+    ));
+    expect(new Set(modelSignatures).size).toBe(modelSignatures.length);
   });
 
   test("keeps semantic content in the live face and both raster layouts", () => {
@@ -129,6 +166,10 @@ describe("public model cards", () => {
     expect(stylesheet).toContain("--foil-light-x");
     expect(stylesheet).toContain("--foil-light-y");
     expect(stylesheet).toContain("--foil-spectrum-angle");
+    expect(stylesheet).toContain("--model-card-rail-spectrum-opacity");
+    expect(stylesheet).toMatch(/\.model-card-face\s*\{[^}]*conic-gradient\(/su);
+    expect(stylesheet).toMatch(/\.model-card-face__art\s*\{[^}]*conic-gradient\(/su);
+    expect(stylesheet).toMatch(/\.model-card-face\[data-card-density="5"\]\s*\{[^}]*--model-card-rail-spectrum-opacity:\s*\.37;/su);
     expect(stylesheet).toMatch(/\.model-card-holographic-foil__spectrum use\s*\{[^}]*stroke-dasharray:/su);
     expect(stylesheet).toMatch(/\.model-card-frame\[data-foil-active\][\s\S]*?\.model-card-holographic-foil__spectrum/u);
     expect(stylesheet).toMatch(/@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*?\.model-card-holographic-foil__spectrum/u);
@@ -220,25 +261,29 @@ describe("public model cards", () => {
       );
       expect(markup).toContain('data-foil-ornament="none"');
       expect(markup).toContain(`data-illumination-density="${density}"`);
+      expect(markup).toContain(`data-card-density="${density}"`);
       expect(markup).toContain("data-illumination-motif=");
       expect(markup).not.toContain("model-card-face__class");
     }
   });
 
-  test("keeps gallery cards legible and paint-contained on narrow screens", async () => {
+  test("keeps gallery cards legible with a paint-safe transform bleed", async () => {
     const stylesheet = await Bun.file(
       new URL("../../styles/model-cards.css", import.meta.url),
     ).text();
 
-    expect(stylesheet).toMatch(/\.model-card-grid__link\s*\{[^}]*aspect-ratio:\s*5 \/ 7;[^}]*contain:\s*layout paint style;[^}]*content-visibility:\s*auto;/su);
+    expect(stylesheet).toMatch(/\.model-card-grid__link\s*\{[^}]*aspect-ratio:\s*5 \/ 7;[^}]*contain:\s*layout style;[^}]*position:\s*relative;/su);
+    expect(stylesheet).not.toMatch(/\.model-card-grid__link\s*\{[^}]*content-visibility:\s*auto;/su);
+    expect(stylesheet).toMatch(/\.model-card-grid__bleed\s*\{[^}]*contain:\s*layout paint style;[^}]*content-visibility:\s*auto;[^}]*inset:\s*-\.375rem;[^}]*padding:\s*\.375rem;/su);
     expect(stylesheet).toMatch(/\.model-card-frame\s*\{[^}]*outline:\s*none;/su);
     expect(stylesheet).toMatch(/\.model-card-frame\s*\{[^}]*clip-path:\s*inset\(0 round var\(--foil-card-radius\)\);[^}]*overflow:\s*clip;/su);
     expect(stylesheet).toMatch(/\.model-card-grid__link:focus-visible\s*\{[^}]*outline-offset:\s*5px;/su);
-    expect(stylesheet).toMatch(/\.model-card-grid__link\s*\{[^}]*contain-intrinsic-block-size:\s*auto 19\.6rem;[^}]*contain-intrinsic-inline-size:\s*auto 14rem;/su);
+    expect(stylesheet).toMatch(/\.model-card-grid__bleed\s*\{[^}]*contain-intrinsic-block-size:\s*auto 20\.35rem;[^}]*contain-intrinsic-inline-size:\s*auto 14\.75rem;/su);
     expect(stylesheet).toMatch(/@media \(max-width:\s*560px\)[\s\S]*?\.model-card-grid\s*\{[^}]*grid-template-columns:\s*minmax\(0, 25rem\);/u);
     expect(stylesheet).toMatch(/@media \(max-width:\s*430px\)[\s\S]*?\.model-card-frame\s*\{[^}]*--foil-card-radius:\s*\.85rem;/u);
     expect(stylesheet).toMatch(/\.model-card-face dt\s*\{[^}]*font-size:\s*max\(\.625rem, 2\.4cqi\);/su);
     expect(stylesheet).toMatch(/@media \(forced-colors:\s*active\)[\s\S]*?\.model-card-illumination\s*\{[^}]*display:\s*none;/u);
+    expect(stylesheet).toMatch(/@media \(prefers-reduced-transparency:\s*reduce\), \(prefers-contrast:\s*more\)[\s\S]*?--model-card-rail-spectrum-opacity:\s*\.06;/u);
     expect(modelsPageSource).toContain("path: MODEL_CARD_COLLECTION_SOCIAL_IMAGE_PATH");
   });
 });
