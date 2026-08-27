@@ -5,6 +5,8 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { GptSubsidyChart } from "@/components/gpt-subsidy-chart";
 import gptSubsidyData from "@/data/gpt-subsidy.json";
 import {
+  calculateOnePlanUpperBoundMultiple,
+  formatOnePlanUpperBoundMultiple,
   formatSubsidyUsd,
   gptSubsidyPageModifiedAt,
   GPT_SUBSIDY_DESCRIPTION,
@@ -111,7 +113,14 @@ describe("GPT subsidy page components", () => {
       'aria-label="Current one-plan upper bound and API-equivalent value"',
     );
     expect(markup).toContain("One-plan comparison upper bound");
-    expect(markup).toContain("≤312×");
+    expect(markup).toContain(
+      formatOnePlanUpperBoundMultiple(
+        calculateOnePlanUpperBoundMultiple(
+          snapshot.periodSummary.apiEquivalentUsd,
+          snapshot.plan.monthlyPriceUsd,
+        ),
+      ),
+    );
     expect(markup).toContain(
       `${snapshot.periodSummary.days}-day API-equivalent value`,
     );

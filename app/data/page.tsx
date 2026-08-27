@@ -180,6 +180,11 @@ export default function CodingAgentDatasetPage() {
               <Link href="/blog/open-models-coding-agent-benchmarks">
                 open models on coding-agent benchmarks
               </Link>
+              . For whether a SemiAnalysis catch-up composite should collapse
+              those rows into an open-won headline, see{" "}
+              <Link href="/blog/are-open-models-catching-up">
+                open models can close a scoreboard and still lose the product
+              </Link>
               . For why a public-suite high score still needs a holdout, see{" "}
               <Link href="/blog/coding-agent-score-holdouts">
                 why a coding-agent high score still needs a holdout

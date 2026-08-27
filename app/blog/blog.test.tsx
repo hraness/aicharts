@@ -43,6 +43,10 @@ import {
   headingId,
 } from "./articles";
 import {
+  HRANESS_CATCHING_UP_READING,
+  SEMIANALYSIS_CATCHING_UP,
+} from "./are-open-models-catching-up-article";
+import {
   HARNESS_DEFINITION_URL,
   LARS_FAYE_EXPERTISE,
   SEAN_GOEDECKE_EXPERTISE,
@@ -104,7 +108,7 @@ describe("AI Charts benchmark notes", () => {
   });
 
   test("publishes substantial complementary articles", () => {
-    expect(blogArticles).toHaveLength(6);
+    expect(blogArticles).toHaveLength(7);
     expect(blogArticles.map(article => article.slug)).toEqual([...BLOG_SLUGS]);
     expect(new Set(BLOG_SLUGS).size).toBe(BLOG_SLUGS.length);
 
@@ -117,7 +121,10 @@ describe("AI Charts benchmark notes", () => {
       expect(articleToMarkdown(article)).toContain(article.dek);
       expect(article.sourceIds.length).toBeGreaterThanOrEqual(1);
       expect(article.relatedSlugs).toHaveLength(1);
-      if (
+      if (article.slug === "are-open-models-catching-up") {
+        expect(article.publishedAt).toBe("2026-08-27");
+        expect(article.updatedAt >= article.publishedAt).toBeTrue();
+      } else if (
         article.slug === "coding-agent-scores-still-need-expertise"
         || article.slug === "coding-agent-score-holdouts"
         || article.slug === "open-models-coding-agent-benchmarks"
@@ -219,6 +226,7 @@ describe("AI Charts benchmark notes", () => {
     expect(markup).toContain('href="/data"');
     expect(markup).toContain('href="/blog/aa-index-cost-coding-agents"');
     expect(markup).toContain('href="/blog/coding-agent-score-holdouts"');
+    expect(markup).toContain('href="/blog/are-open-models-catching-up"');
     expect(markup).toContain(formatRetrievedAt(parsed.value.source.retrievedAt));
     expect(markup).toContain(top.model);
     expect(markup).toContain(formatSnapshotScore(top.aaIndex));
@@ -235,6 +243,53 @@ describe("AI Charts benchmark notes", () => {
     if (glm !== undefined) {
       expect(markup).toContain(glm.model);
       expect(markup).toContain(formatSnapshotScore(glm.aaIndex));
+    }
+  });
+
+  test("derives the catch-up take from sourced SemiAnalysis findings and the checked snapshot", () => {
+    const parsed = parseCodingAgentSnapshot(codingAgentData);
+    if (!parsed.ok) throw parsed.error;
+    const article = getBlogArticle("are-open-models-catching-up");
+    expect(article).toBeDefined();
+    if (article === undefined) return;
+
+    const markup = renderToStaticMarkup(
+      createElement(ArticleBody, { blocks: article.body }),
+    );
+    const markdown = articleToMarkdown(article);
+    const leaders = currentCodingAgentBenchmarkLeaders(parsed.value);
+    const aaLeader = leaders.find(leader => leader.definition.id === "aaIndex");
+    expect(aaLeader).toBeDefined();
+    if (aaLeader === undefined) return;
+
+    expect(markup).toContain(BLOG_SOURCES.semiAnalysisOpenModels.url);
+    expect(markup).toContain(BLOG_SOURCES.hranessOpenModelsReading.url);
+    expect(markup).toContain(BLOG_SOURCES.artificialAnalysisCodingAgents.url);
+    expect(markup).toContain(HARNESS_DEFINITION_URL);
+    expect(markup).toContain('href="/"');
+    expect(markup).toContain('href="/data"');
+    expect(markup).toContain('href="/blog/open-models-coding-agent-benchmarks"');
+    expect(markup).toContain('href="/blog/coding-agent-score-holdouts"');
+    expect(markup).toContain('href="/blog/coding-agent-scores-still-need-expertise"');
+    expect(markup).toContain(formatRetrievedAt(parsed.value.source.retrievedAt));
+    expect(markdown).toContain("each generation takes about half as long");
+    expect(markdown).toContain("faster close in Era 3");
+    expect(markdown).toContain("Kimi K3 scores higher than Fable 5");
+    expect(markdown).toContain("reinforcement-learning environments");
+    expect(markdown).toContain("complete model-and-harness product");
+    expect(markdown).toContain(HRANESS_CATCHING_UP_READING.gist);
+    expect(markdown).toContain(HRANESS_CATCHING_UP_READING.productDecides);
+    expect(markup).toContain(SEMIANALYSIS_CATCHING_UP.reported.era3KimiMonths);
+    expect(markup).toContain(SEMIANALYSIS_CATCHING_UP.reported.era3GlmMonths);
+    expect(markup).toContain(SEMIANALYSIS_CATCHING_UP.reported.era3KimiK26);
+    expect(markup).toContain(SEMIANALYSIS_CATCHING_UP.reported.era3Glm52);
+    expect(markup).toContain(aaLeader.record.model);
+    expect(markup).toContain(aaLeader.record.agent);
+    expect(markup).toContain(aaLeader.record.setting);
+    expect(markup).toContain(formatBenchmarkScore(aaLeader.value));
+    for (const leader of leaders) {
+      expect(markup).toContain(leader.record.model);
+      expect(markup).toContain(formatBenchmarkScore(leader.value));
     }
   });
 
