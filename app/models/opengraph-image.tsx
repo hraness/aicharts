@@ -1,3 +1,4 @@
+import { nebulaSansSocialFonts } from "@hraness/design-kit/fonts/nebula-sans/social";
 import { ImageResponse } from "next/og";
 
 import { ModelCardCollectionSocialImage } from "@/components/model-card-image";
@@ -19,6 +20,6 @@ export default function OpenGraphImage() {
       profileCount={MODEL_CARD_PRESENTATIONS.length}
       providerCount={modelCardProviderCount()}
     />,
-    size,
+    { ...size, fonts: [...nebulaSansSocialFonts()] },
   );
 }

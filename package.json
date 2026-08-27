@@ -57,11 +57,11 @@
     "kb:catalog": "bunx --bun github:hraness/kb#v0.15.2 catalog --root kb"
   },
   "dependencies": {
-    "@hraness/design-kit": "github:hraness/design-kit#73972e336ff1fbb58744d657e46aa7802b64cb8f",
+    "@hraness/design-kit": "github:hraness/design-kit#v0.2.1",
     "@hraness/site-footer": "github:hraness/site-footer#v0.3.0",
-    "@hraness/ui": "github:hraness/ui#6a4b0bd474262114356ab79c4ca10b76fe22c9cf",
+    "@hraness/ui": "github:hraness/ui#v0.4.7",
     "@hraness/vercel-delivery": "github:hraness/vercel-delivery#v0.1.2",
-    "@hraness/web-discovery": "github:hraness/web-discovery#v0.1.0",
+    "@hraness/web-discovery": "github:hraness/web-discovery#v0.2.0",
     "@hugeicons/core-free-icons": "^4.3.0",
     "@hugeicons/react": "^1.1.10",
     "@lobehub/icons-static-svg": "1.94.0",

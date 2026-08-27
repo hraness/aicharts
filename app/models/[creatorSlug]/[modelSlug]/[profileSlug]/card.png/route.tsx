@@ -1,3 +1,4 @@
+import { nebulaSansSocialFonts } from "@hraness/design-kit/fonts/nebula-sans/social";
 import { ImageResponse } from "next/og";
 
 import { ModelCardRasterFace } from "@/components/model-card-image";
@@ -21,6 +22,7 @@ export async function GET(
   if (card === undefined) return new Response("Not found", { status: 404 });
   return new ImageResponse(<ModelCardRasterFace card={card} />, {
     ...portraitSize,
+    fonts: [...nebulaSansSocialFonts()],
     headers: {
       "Cache-Control": "public, max-age=3600, s-maxage=86400",
       "Content-Disposition": `inline; filename="aicharts-${card.canonicalModelId.replaceAll("/", "-")}-${card.profileSlug}.png"`,

@@ -23,6 +23,7 @@
 - Use immutable `@hraness/web-discovery` exports for generic metadata, JSON-LD serialization, and social-image rendering, and `@hraness/vercel-delivery` for the generic Vercel proof and Preview response contract. Keep chart semantics, public copy, redirects, and analytics policy product-owned.
 - Extract a shared package only after two concrete consumers need the same stable interface. Keep shared packages product-neutral.
 - Use a shared design kit or `@hraness/ui` only for stable, portable primitives and tokens at an immutable version. Keep chart geometry, evidence presentation, page composition, and the local visual contract product-owned.
+- Keep Nebula Sans from the immutable design-kit release as the ordinary proportional face across the chart, publication, exports, and social images. Preserve the explicit monospace role for code and compact benchmark data.
 - Freeze shared interfaces before parallel lanes begin. Give checked data, generated colors, manifests, lockfiles, and other convergence surfaces one owner while lanes edit disjoint paths.
 - Keep mandatory rules in the closest `AGENTS.md`, current procedures in `docs/`, executable contracts in types and tests, and pull-based rationale, evidence, synthesis, and plans in `kb/`.
 - Keep AI Charts the general product for sourced AI model and agent comparison charts. Describe coding agents as the first published chart, not the limit of the brand or a claim of broader current coverage.

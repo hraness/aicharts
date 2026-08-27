@@ -49,7 +49,7 @@ test("chart collections retain shared paint geometry and target sizes", () => {
 test("metric selectors reserve normal-flow space outside the plot", () => {
   expect(stylesheet).not.toContain("chart-header-actions");
   expect(stylesheet).toContain('@import "@hraness/site-footer/styles.css"');
-  expect(stylesheet).toContain('@import "@hraness/ui/components.css"');
+  expect(stylesheet).not.toContain('@import "@hraness/ui/components.css"');
   expect(firstRule(".chart-metric-controls")).toContain("display: grid");
   expect(firstRule(".chart-metric-controls")).toContain("grid-template-columns: minmax(76px, 1fr) auto minmax(76px, 1fr)");
   expect(firstRule(".chart-metric-controls")).not.toContain("position: absolute");
