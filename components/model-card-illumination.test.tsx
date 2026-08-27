@@ -4,7 +4,10 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { MODEL_CARD_PRESENTATIONS } from "@/lib/model-card-collection";
 import type { ModelCardPresentation } from "@/lib/model-card-presentation";
 
-import { ModelCardIllumination } from "./model-card-illumination";
+import {
+  ModelCardIllumination,
+  type ModelCardIlluminationFinish,
+} from "./model-card-illumination";
 
 type EmblemSignature = "class" | "edition" | "family" | "generation" | "profile" | "provider" | "role";
 
@@ -35,8 +38,23 @@ function geometrySignature(markup: string): string {
   )).join("|");
 }
 
-function render(card: ModelCardPresentation, mode: "full" | "gallery" = "full"): string {
-  return renderToStaticMarkup(<ModelCardIllumination card={card} mode={mode} />);
+function holographicPhaseSignature(markup: string): string {
+  const gradients = markup.match(
+    /<(?:linearGradient|radialGradient)\b[\s\S]*?<\/(?:linearGradient|radialGradient)>/gu,
+  ) ?? [];
+  return gradients.map(gradient => (
+    gradient.replace(/\s(?:id|stop-color)="[^"]+"/gu, "")
+  )).join("|");
+}
+
+function render(
+  card: ModelCardPresentation,
+  mode: "full" | "gallery" = "full",
+  finish: ModelCardIlluminationFinish = "print",
+): string {
+  return renderToStaticMarkup(
+    <ModelCardIllumination card={card} finish={finish} mode={mode} />,
+  );
 }
 
 function coreSignature(markup: string): string {
@@ -80,6 +98,94 @@ describe("model card illumination", () => {
     expect(markup).toContain('data-ornament-mark="drypoint-ghost"');
     expect(markup).not.toMatch(/<(?:defs|filter|mask|pattern|text)\b/iu);
     expect(markup).not.toMatch(/\sid=/u);
+  });
+
+  test("adds deterministic spot foil without mutating the canonical print geometry", () => {
+    const fixture = MODEL_CARD_PRESENTATIONS.find(card => card.illuminationDensity === 5);
+    if (fixture === undefined) throw new Error("Expected a density 5 foil fixture.");
+    const printed = render(fixture);
+    const holographic = render(fixture, "full", "holographic");
+
+    expect(holographic).toBe(render(fixture, "full", "holographic"));
+    expect(holographic).toContain('data-holographic-finish="diffractive-spot-foil"');
+    expect(holographic).toContain('data-holographic-coverage="5"');
+    expect(holographic).toContain('data-holographic-channel-count="14"');
+    expect(holographic).toContain("generation-inscription");
+    expect(holographic).toContain("edition-cell");
+    expect(holographic).toContain("microglint");
+    expect(holographic).toMatch(/<(?:linearGradient|radialGradient)\b/u);
+    expect(holographic).toContain("<use");
+    expect(holographic).not.toMatch(/<(?:filter|mask|pattern|foreignObject|canvas)\b/iu);
+    expect(geometryCount(holographic) - geometryCount(printed)).toBeLessThanOrEqual(3);
+    for (const signature of ["provider", "family", "generation", "edition", "class"] as const) {
+      expect(signaturePath(holographic, signature)).toBe(signaturePath(printed, signature));
+    }
+  });
+
+  test("keeps live gradient identifiers unique and family foil fields recognizable", () => {
+    const identifiers: string[] = [];
+    const fieldByFamily = new Map<string, string>();
+    for (const card of MODEL_CARD_PRESENTATIONS) {
+      const markup = render(card, "gallery", "holographic");
+      identifiers.push(...[...markup.matchAll(/\sid="([^"]+)"/gu)].map(match => match[1] ?? ""));
+      const field = markup.match(/data-holographic-field="([^"]+)"/u)?.[1];
+      if (field === undefined) throw new Error("Expected a holographic family field.");
+      const previous = fieldByFamily.get(card.emblemIdentity.familyId);
+      if (previous === undefined) fieldByFamily.set(card.emblemIdentity.familyId, field);
+      else expect(field).toBe(previous);
+    }
+    expect(identifiers.every(identifier => identifier.length > 0)).toBe(true);
+    expect(new Set(identifiers).size).toBe(identifiers.length);
+    expect(fieldByFamily.size).toBe(12);
+    expect(new Set(fieldByFamily.values()).size).toBe(fieldByFamily.size);
+  });
+
+  test("names duplicate instances independently inside one document", () => {
+    const fixture = MODEL_CARD_PRESENTATIONS.find(card => card.illuminationDensity === 5);
+    if (fixture === undefined) throw new Error("Expected a holographic card fixture.");
+    const markup = renderToStaticMarkup(
+      <>
+        <ModelCardIllumination card={fixture} finish="holographic" />
+        <ModelCardIllumination card={fixture} finish="holographic" />
+      </>,
+    );
+    const identifiers = [...markup.matchAll(/\sid="([^"]+)"/gu)]
+      .map(match => match[1] ?? "");
+    expect(identifiers).toHaveLength(12);
+    expect(new Set(identifiers).size).toBe(identifiers.length);
+    expect(markup).not.toContain('id=""');
+  });
+
+  test("adds stamped foil coverage instead of increasing motion by profile", () => {
+    const channelCounts = [1, 2, 3, 4, 5].map(density => {
+      const card = MODEL_CARD_PRESENTATIONS.find(candidate => (
+        candidate.illuminationDensity === density
+      ));
+      if (card === undefined) throw new Error(`Expected a density ${density} foil fixture.`);
+      const markup = render(card, "gallery", "holographic");
+      const value = markup.match(/data-holographic-channel-count="(\d+)"/u)?.[1];
+      if (value === undefined) throw new Error("Expected holographic channel coverage.");
+      return Number.parseInt(value, 10);
+    });
+    expect(channelCounts).toEqual([4, 6, 8, 11, 14]);
+
+    const cardsWithDifferentDensities = [...Map.groupBy(
+      MODEL_CARD_PRESENTATIONS,
+      card => card.canonicalModelId,
+    ).values()].find(cards => new Set(cards.map(card => card.illuminationDensity)).size > 1);
+    if (cardsWithDifferentDensities === undefined) {
+      throw new Error("Expected one model with multiple foil coverage tiers.");
+    }
+    const [first, last] = cardsWithDifferentDensities.toSorted((left, right) => (
+      left.illuminationDensity - right.illuminationDensity
+    ));
+    if (first === undefined || last === undefined) throw new Error("Expected foil profile fixtures.");
+    expect(first.illuminationDensity).not.toBe(last.illuminationDensity);
+    expect(first.seed).toBe(first.canonicalModelId);
+    expect(last.seed).toBe(first.seed);
+    expect(holographicPhaseSignature(render(first, "gallery", "holographic"))).toBe(
+      holographicPhaseSignature(render(last, "gallery", "holographic")),
+    );
   });
 
   test("gives every provider a stable, structurally distinct outer court", () => {
@@ -150,6 +256,11 @@ describe("model card illumination", () => {
     const opus5 = render(cardFor("anthropic/claude-opus-5", "low"));
     expect(signaturePath(opus48, "family")).toBe(signaturePath(opus5, "family"));
     expect(signaturePath(opus48, "generation")).not.toBe(signaturePath(opus5, "generation"));
+    expect(holographicPhaseSignature(
+      render(cardFor("anthropic/claude-opus-4.8", "low"), "full", "holographic"),
+    )).not.toBe(holographicPhaseSignature(
+      render(cardFor("anthropic/claude-opus-5", "low"), "full", "holographic"),
+    ));
 
     const gptEditions = ["luna", "sol", "terra"].map(edition => (
       render(cardFor(`openai/gpt-5.6-${edition}`, "low"))

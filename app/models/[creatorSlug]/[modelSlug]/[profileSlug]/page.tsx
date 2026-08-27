@@ -128,7 +128,7 @@ export default async function ModelCardPage({
                   {" · "}{emblemTerm(card.emblemIdentity.familyId)} family seal
                   {" · "}{card.emblemIdentity.generation.join(".")} version marks
                   {" · "}{emblemTerm(card.emblemIdentity.editionId)} edition
-                  {" · "}density {card.illuminationDensity}/5
+                  {" · "}foil/detail {card.illuminationDensity}/5
                 </dd>
               </div>
               <div>
