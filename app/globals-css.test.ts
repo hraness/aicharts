@@ -7,9 +7,21 @@ function firstRule(selector: string): string {
   return stylesheet.match(new RegExp(`${escaped}\\s*\\{(?<body>[^}]*)\\}`, "u"))?.groups?.body ?? "";
 }
 
-test("global resets preserve shared action contrast tokens", () => {
-  expect(firstRule("button, input")).not.toContain("color:");
-  expect(stylesheet).toMatch(/\ninput\s*\{[^}]*color:\s*inherit;/u);
+test("application resets stay below shared component styles", () => {
+  const baseStart = stylesheet.indexOf("@layer base {");
+  const baseEnd = stylesheet.indexOf("\n}\n\n:root", baseStart);
+  const baseLayer = stylesheet.slice(baseStart, baseEnd + 2);
+  const unlayeredStyles = stylesheet.slice(baseEnd + 2);
+
+  expect(baseStart).toBeGreaterThan(0);
+  expect(baseEnd).toBeGreaterThan(baseStart);
+  expect(baseLayer).toContain("button, input { font: inherit; }");
+  expect(baseLayer).toContain("input { color: inherit; }");
+  expect(baseLayer).toContain("button:not(:disabled) { cursor: pointer; }");
+  expect(baseLayer).toMatch(/a, button, input,[\s\S]*?padding:\s*0;/u);
+  expect(unlayeredStyles).not.toMatch(/button,\s*input\s*\{[^}]*font:/u);
+  expect(unlayeredStyles).not.toMatch(/button\s*\{[^}]*cursor:/u);
+  expect(unlayeredStyles).not.toMatch(/\na\s*\{[^}]*color:\s*inherit;/u);
 });
 
 test("share-link fallback leaves geometry, focus, and paint to the shared field", () => {
