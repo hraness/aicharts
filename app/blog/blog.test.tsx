@@ -246,7 +246,7 @@ describe("AI Charts benchmark notes", () => {
     }
   });
 
-  test("derives the catch-up take from fetched SemiAnalysis quotes and the checked snapshot", () => {
+  test("derives the catch-up take from sourced SemiAnalysis findings and the checked snapshot", () => {
     const parsed = parseCodingAgentSnapshot(codingAgentData);
     if (!parsed.ok) throw parsed.error;
     const article = getBlogArticle("are-open-models-catching-up");
@@ -272,12 +272,11 @@ describe("AI Charts benchmark notes", () => {
     expect(markup).toContain('href="/blog/coding-agent-score-holdouts"');
     expect(markup).toContain('href="/blog/coding-agent-scores-still-need-expertise"');
     expect(markup).toContain(formatRetrievedAt(parsed.value.source.retrievedAt));
-    expect(markdown).toContain(SEMIANALYSIS_CATCHING_UP.quotes.cycles);
-    expect(markdown).toContain(SEMIANALYSIS_CATCHING_UP.quotes.halfAsLong);
-    expect(markdown).toContain(SEMIANALYSIS_CATCHING_UP.quotes.era3Faster);
-    expect(markdown).toContain(SEMIANALYSIS_CATCHING_UP.quotes.hillClimb);
-    expect(markdown).toContain(SEMIANALYSIS_CATCHING_UP.quotes.preferFable);
-    expect(markdown).toContain(SEMIANALYSIS_CATCHING_UP.quotes.modelPlusHarness);
+    expect(markdown).toContain("each generation takes about half as long");
+    expect(markdown).toContain("faster close in Era 3");
+    expect(markdown).toContain("Kimi K3 scores higher than Fable 5");
+    expect(markdown).toContain("reinforcement-learning environments");
+    expect(markdown).toContain("complete model-and-harness product");
     expect(markdown).toContain(HRANESS_CATCHING_UP_READING.gist);
     expect(markdown).toContain(HRANESS_CATCHING_UP_READING.productDecides);
     expect(markup).toContain(SEMIANALYSIS_CATCHING_UP.reported.era3KimiMonths);
