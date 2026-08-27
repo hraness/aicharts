@@ -28,20 +28,6 @@ export const CATCHING_UP_ARTICLE_PUBLISHED_AT = "2026-08-27" as const;
 export const SEMIANALYSIS_CATCHING_UP = {
   digestUrl: "https://hraness.com/reading/are-open-models-catching-up" as const,
   publishedOn: "August 21, 2026",
-  quotes: {
-    cycles: "the open vs. closed gap moves in cycles.",
-    halfAsLong:
-      "with each generation, open-source models take half as long to catch up to the first closed-source model of the era.",
-    era3Faster: "the gap closed faster in Era 3 than either era before it.",
-    hillClimb:
-      "public benchmarks, which model makers can easily hill climb by simply creating a bunch of RL environments that closely mimic the benchmark tasks.",
-    preferFable:
-      "Kimi K3 may score higher than Fable 5 on our curated composite, but we still prefer using Fable at SemiAnalysis for our day to day work.",
-    productized:
-      "This is partly because Anthropic has done a better job productizing their model via things like Claude Code and Claude Tag, but also largely because benchmarks aren’t a perfect proxy for real work.",
-    modelPlusHarness:
-      "The full agentic product (model + harness) was now what mattered",
-  },
   reported: {
     era2CatchupMonths: "8.5",
     era2R10528: "78",
@@ -152,7 +138,7 @@ export function createAreOpenModelsCatchingUpArticle(
         "The essay refuses one historical scoreboard. Early-scaling exams saturate, reasoning exams replace them, and agentic work then needs terminal, browsing, and software-engineering tasks. Their Era 3 suite is Terminal-Bench 2.1, BrowseComp-Plus, τ³-banking, and DeepSWE. They ran most scores on Prime Intellect’s evaluation stack and used additional runs from Artificial Analysis and Datacurve.",
       ),
       paragraph(
-        `On that design they report a cycle: “${SEMIANALYSIS_CATCHING_UP.quotes.cycles}” A closed lab jumps first. Other labs reverse-engineer the advance, including through distillation, and close the gap. The trend they quote is that “${SEMIANALYSIS_CATCHING_UP.quotes.halfAsLong}”`,
+        "On that design they report a cycle. A closed lab jumps first. Other labs reverse-engineer the advance, including through distillation, and close the gap. Their measured trend is that each generation takes about half as long to catch the first closed model of its era.",
       ),
       table(
         "Quoted SemiAnalysis catch-up intervals from the August 21, 2026 essay",
@@ -176,14 +162,14 @@ export function createAreOpenModelsCatchingUpArticle(
         ],
       ),
       paragraph(
-        `Those sentences are SemiAnalysis measurements. They also write that “${SEMIANALYSIS_CATCHING_UP.quotes.era3Faster}” The numbers belong to their suite and their choice of era-opening closed flags. They are not AA Index cells, and they are not a verdict on every later closed product.`,
+        "Those are SemiAnalysis measurements. They report a faster close in Era 3 than in the two earlier eras. The numbers belong to their suite and their choice of era-opening closed flags. They are not AA Index cells, and they are not a verdict on every later closed product.",
       ),
       heading("The same authors still pick a product"),
       paragraph(
-        `The essay’s daily-work clause sits next to the catch-up chart. The authors write: “${SEMIANALYSIS_CATCHING_UP.quotes.preferFable}” They give two reasons: “${SEMIANALYSIS_CATCHING_UP.quotes.productized}”`,
+        "The essay’s daily-work clause sits next to the catch-up chart. Kimi K3 scores higher than Fable 5 on their curated composite, but the authors still prefer Fable for daily work. They credit Anthropic’s product work around the model and warn that benchmarks are incomplete proxies for real use.",
       ),
       paragraph(
-        `They already applied that clause inside the closed field. GPT-5.2 scored higher than Opus 4.5 on their suite. The user experience, they say, did not follow the composite. “${SEMIANALYSIS_CATCHING_UP.quotes.modelPlusHarness}” Anthropic’s model-plus-harness product is the stack they treat as the agentic-era default, even when another closed flag leads the same suite.`,
+        "They already applied that clause inside the closed field. GPT-5.2 scored higher than Opus 4.5 on their suite, yet their account says the user experience did not follow the composite. They treat the complete model-and-harness product as the relevant unit and Anthropic’s stack as the agentic-era default, even when another closed flag leads the same suite.",
       ),
       paragraph(
         "A ",
@@ -192,7 +178,7 @@ export function createAreOpenModelsCatchingUpArticle(
       ),
       heading("Public composites are hill-climbable"),
       paragraph(
-        `SemiAnalysis limits what the composites prove. They treat public benchmarks as surfaces a lab can imitate: “${SEMIANALYSIS_CATCHING_UP.quotes.hillClimb}” A later open release can pass the era-opening closed flags on that suite and still leave the daily product undecided.`,
+        "SemiAnalysis limits what the composites prove. A lab can build reinforcement-learning environments that resemble published benchmark tasks and optimize against them. A later open release can pass the era-opening closed flags on that suite and still leave the daily product undecided.",
       ),
       paragraph(
         "Hill-climbing is a property of a published task set, not a property of open weights. A closed lab can train against the same public composite. An open lab can ship weights that look strong on that composite and weak inside another harness, another setting, or a private workflow. The catch-up interval measures how fast the suite moved. It does not measure whether the winning weights are the thing a person should run tomorrow.",
