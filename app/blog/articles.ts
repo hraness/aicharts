@@ -1,10 +1,12 @@
 import { site } from "../site";
 import { createAaIndexCostArticle } from "./aa-index-cost-article";
+import { createAreOpenModelsCatchingUpArticle } from "./are-open-models-catching-up-article";
 import { createCodingAgentScoreHoldoutsArticle } from "./coding-agent-score-holdouts-article";
 import { createCodingAgentScoresStillNeedExpertiseArticle } from "./coding-agent-scores-still-need-expertise-article";
 import { createOpenModelsCodingAgentsArticle } from "./open-models-coding-agents-article";
 
 export const BLOG_SLUGS = [
+  "are-open-models-catching-up",
   "coding-agent-scores-still-need-expertise",
   "coding-agent-score-holdouts",
   "open-models-coding-agent-benchmarks",
@@ -442,6 +444,7 @@ const slopCodeBenchArticle = {
 } as const satisfies BlogArticle;
 
 export const blogArticles = [
+  createAreOpenModelsCatchingUpArticle(),
   createCodingAgentScoresStillNeedExpertiseArticle(),
   createCodingAgentScoreHoldoutsArticle(),
   createOpenModelsCodingAgentsArticle(),
