@@ -15,13 +15,25 @@ test("application resets stay below shared component styles", () => {
 
   expect(baseStart).toBeGreaterThan(0);
   expect(baseEnd).toBeGreaterThan(baseStart);
-  expect(baseLayer).toContain("button, input { font: inherit; }");
-  expect(baseLayer).toContain("input { color: inherit; }");
+  expect(baseLayer).toContain("button, input, select, textarea { font: inherit; }");
+  expect(baseLayer).toContain("input, select, textarea { color: inherit; }");
   expect(baseLayer).toContain("button:not(:disabled) { cursor: pointer; }");
   expect(baseLayer).toMatch(/a, button, input,[\s\S]*?padding:\s*0;/u);
   expect(unlayeredStyles).not.toMatch(/button,\s*input\s*\{[^}]*font:/u);
   expect(unlayeredStyles).not.toMatch(/button\s*\{[^}]*cursor:/u);
   expect(unlayeredStyles).not.toMatch(/\na\s*\{[^}]*color:\s*inherit;/u);
+});
+
+test("native select menus inherit the application theme", () => {
+  const baseStart = stylesheet.indexOf("@layer base {");
+  const baseEnd = stylesheet.indexOf("\n}\n\n:root", baseStart);
+  const baseLayer = stylesheet.slice(baseStart, baseEnd + 2);
+
+  expect(firstRule(":root")).toContain("color-scheme: light");
+  expect(firstRule(':root[data-theme="dark"]')).toContain("color-scheme: dark");
+  expect(baseLayer).toContain(":where(select) { color-scheme: inherit; }");
+  expect(baseLayer).toMatch(/:where\(select > option, select > optgroup, select > optgroup > option\)\s*\{[^}]*background-color:\s*var\(--popover\);[^}]*color:\s*var\(--foreground\);/su);
+  expect(baseLayer).toContain(":where(select option:disabled) { color: var(--muted); }");
 });
 
 test("share-link fallback leaves geometry, focus, and paint to the shared field", () => {

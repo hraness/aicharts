@@ -4,6 +4,8 @@ import { renderToStaticMarkup } from "react-dom/server";
 import {
   ModelCardGalleryFilterItem,
   ModelCardGalleryFilters,
+  modelCardFilterFromSearch,
+  modelCardFilterSearch,
   modelCardMatchesFilter,
   type ModelCardProviderFilter,
 } from "./model-card-gallery-filters";
@@ -14,6 +16,52 @@ const providers: readonly ModelCardProviderFilter[] = [
 ];
 
 describe("model-card gallery filters", () => {
+  test("parses only canonical provider and Top query values", () => {
+    const providerIds = providers.map(provider => provider.id);
+
+    expect(modelCardFilterFromSearch("?provider=one&top=1", providerIds)).toEqual({
+      providerId: "one",
+      topOnly: true,
+    });
+    expect(modelCardFilterFromSearch("?provider=unknown&top=true", providerIds)).toEqual({
+      providerId: "",
+      topOnly: false,
+    });
+    expect(modelCardFilterFromSearch("?provider=two&provider=one&top=0&top=1", providerIds)).toEqual({
+      providerId: "",
+      topOnly: false,
+    });
+    expect(modelCardFilterFromSearch("?provider=two&provider=two&top=1&top=1", providerIds)).toEqual({
+      providerId: "two",
+      topOnly: true,
+    });
+  });
+
+  test("writes stable filter permalinks while preserving unrelated parameters", () => {
+    expect(modelCardFilterSearch("?campaign=folio&provider=old&top=0", {
+      providerId: "one",
+      topOnly: true,
+    })).toBe("campaign=folio&provider=one&top=1");
+    expect(modelCardFilterSearch("?provider=one&provider=two&top=1", {
+      providerId: "",
+      topOnly: false,
+    })).toBe("");
+    expect(modelCardFilterSearch("", {
+      providerId: "two",
+      topOnly: false,
+    })).toBe("provider=two");
+
+    for (const providerId of ["", ...providers.map(provider => provider.id)]) {
+      for (const topOnly of [false, true]) {
+        const filter = { providerId, topOnly };
+        expect(modelCardFilterFromSearch(
+          modelCardFilterSearch("?campaign=folio", filter),
+          providers.map(provider => provider.id),
+        )).toEqual(filter);
+      }
+    }
+  });
+
   test("combines provider and Top as an intersection", () => {
     const topOne = { isTop: true, providerId: "one" };
     const ordinaryOne = { isTop: false, providerId: "one" };
