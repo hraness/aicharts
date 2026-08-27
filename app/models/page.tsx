@@ -43,7 +43,7 @@ export default function ModelCardsPage() {
       <FoilCardDeck className="model-card-grid">
         {MODEL_CARD_PRESENTATIONS.map(card => (
           <Link
-            aria-label={`Open ${card.displayTitle} model card`}
+            aria-label={`Open ${card.displayTitle} model card; ${card.classLabel} class`}
             className="model-card-grid__link"
             href={card.path}
             key={card.path}
@@ -51,9 +51,8 @@ export default function ModelCardsPage() {
             <ModelCardFoilFrame
               foilPreset={card.foilPreset}
               seed={card.seed}
-              visualClass={card.visualClass}
             >
-              <ModelCardFace card={card} />
+              <ModelCardFace card={card} illuminationMode="gallery" />
             </ModelCardFoilFrame>
           </Link>
         ))}

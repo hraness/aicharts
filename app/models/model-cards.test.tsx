@@ -52,6 +52,21 @@ describe("public model cards", () => {
     expect(markup.match(/data-foil-render-mode="interactive"/gu)).toHaveLength(
       MODEL_CARD_PRESENTATIONS.length,
     );
+    expect(markup.match(/data-illumination-mode="gallery"/gu)).toHaveLength(
+      MODEL_CARD_PRESENTATIONS.length,
+    );
+    expect(markup.match(/<(?:path|ellipse|circle)\b/gu)?.length ?? 0).toBeLessThan(1_250);
+  });
+
+  test("keeps non-standard class context after removing the visible badge", () => {
+    const thinkingCard = MODEL_CARD_PRESENTATIONS.find(card => card.visualClass === "thinking");
+    if (thinkingCard === undefined) throw new Error("Expected a Thinking card fixture.");
+    expect(thinkingCard.displayTitle).toContain("Thinking");
+    const markup = renderToStaticMarkup(<ModelCardsPage />);
+    expect(markup).toContain(
+      `aria-label="Open ${thinkingCard.displayTitle} model card; Thinking class"`,
+    );
+    expect(markup).not.toContain("model-card-face__class");
   });
 
   test("keeps semantic content in the live face and both raster layouts", () => {
@@ -135,33 +150,31 @@ describe("public model cards", () => {
   test("includes the renderer contract in versioned card artwork URLs", () => {
     const card = MODEL_CARD_PRESENTATIONS[0];
     if (card === undefined) throw new Error("Expected at least one model card.");
-    expect(MODEL_CARD_RENDERER_VERSION).toBe("model-card-v2");
+    expect(MODEL_CARD_RENDERER_VERSION).toBe("model-card-v3");
     expect(versionedModelCardImagePath(card.path, "card.png")).toMatch(
       /\/card\.png\?v=[a-f0-9]{16}$/u,
     );
   });
 
-  test("draws a distinct semantic frame for every collectible class", () => {
-    for (const visualClass of ["standard", "fast", "thinking", "max"] as const) {
-      const card = MODEL_CARD_PRESENTATIONS.find(candidate => candidate.visualClass === visualClass);
-      if (card === undefined) throw new Error(`Expected a ${visualClass} card fixture.`);
+  test("moves class expression from the outer frame into the illuminated logo field", () => {
+    for (const density of [1, 2, 3, 4, 5] as const) {
+      const card = MODEL_CARD_PRESENTATIONS.find(candidate => (
+        candidate.illuminationDensity === density
+      ));
+      if (card === undefined) throw new Error(`Expected a density ${density} card fixture.`);
       const markup = renderToStaticMarkup(
         <ModelCardFoilFrame
           foilPreset={card.foilPreset}
           renderMode="static"
           seed={card.seed}
-          visualClass={card.visualClass}
         >
           <ModelCardFace card={card} />
         </ModelCardFoilFrame>,
       );
-      const ornament = {
-        fast: "rails",
-        max: "facets",
-        standard: "corners",
-        thinking: "circuit",
-      }[visualClass];
-      expect(markup).toContain(`data-foil-ornament="${ornament}"`);
+      expect(markup).toContain('data-foil-ornament="none"');
+      expect(markup).toContain(`data-illumination-density="${density}"`);
+      expect(markup).toContain("data-illumination-motif=");
+      expect(markup).not.toContain("model-card-face__class");
     }
   });
 
@@ -175,5 +188,6 @@ describe("public model cards", () => {
     expect(stylesheet).toMatch(/@media \(max-width:\s*560px\)[\s\S]*?\.model-card-grid\s*\{[^}]*grid-template-columns:\s*minmax\(0, 25rem\);/u);
     expect(stylesheet).toMatch(/@media \(max-width:\s*430px\)[\s\S]*?\.model-card-frame\s*\{[^}]*--foil-card-radius:\s*\.85rem;/u);
     expect(stylesheet).toMatch(/\.model-card-face dt\s*\{[^}]*font-size:\s*max\(\.625rem, 2\.4cqi\);/su);
+    expect(stylesheet).toMatch(/@media \(forced-colors:\s*active\)[\s\S]*?\.model-card-illumination\s*\{[^}]*display:\s*none;/u);
   });
 });

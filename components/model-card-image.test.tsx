@@ -3,6 +3,7 @@ import { ImageResponse } from "next/og";
 import { renderToStaticMarkup } from "react-dom/server";
 
 import { MODEL_CARD_PRESENTATIONS } from "@/lib/model-card-collection";
+import { modelCardProviderColors } from "@/lib/model-card-art-direction";
 
 import { ModelCardRasterFace, ModelCardSocialImage } from "./model-card-image";
 
@@ -32,13 +33,18 @@ describe("model card ImageResponse rendering", () => {
     }
   });
 
-  test("renders a distinct filigree geometry for every visual class", async () => {
-    for (const visualClass of ["standard", "fast", "thinking", "max"] as const) {
-      const card = MODEL_CARD_PRESENTATIONS.find(candidate => candidate.visualClass === visualClass);
+  test("renders the shared illuminated geometry at every density", async () => {
+    for (const density of [1, 2, 3, 4, 5] as const) {
+      const card = MODEL_CARD_PRESENTATIONS.find(candidate => (
+        candidate.illuminationDensity === density
+      ));
       expect(card).toBeDefined();
       if (card === undefined) continue;
       const markup = renderToStaticMarkup(<ModelCardRasterFace card={card} />);
-      expect(markup).toContain(`data-card-filigree="${visualClass}"`);
+      expect(markup).toContain(`data-illumination-density="${density}"`);
+      expect(markup).toContain(`data-illumination-accent="${card.accentFamily}"`);
+      expect(markup).not.toContain("data-card-filigree");
+      expect(markup).not.toContain("model-card-face__class");
       const raster = await new ImageResponse(<ModelCardRasterFace card={card} compact />, {
         height: 350,
         width: 250,
@@ -46,6 +52,20 @@ describe("model card ImageResponse rendering", () => {
       expect(pngDimensions(raster)).toEqual({ height: 350, width: 250 });
     }
   }, 20_000);
+
+  test("keeps every provider emblem compatible with the PNG renderer", async () => {
+    const cardByProvider = new Map(MODEL_CARD_PRESENTATIONS.map(card => [card.providerId, card]));
+    expect([...cardByProvider.keys()].sort()).toEqual(Object.keys(modelCardProviderColors).sort());
+    for (const card of cardByProvider.values()) {
+      const markup = renderToStaticMarkup(<ModelCardRasterFace card={card} compact />);
+      expect(markup).toMatch(/data-illumination-motif="[^"]+"/u);
+      const raster = await new ImageResponse(<ModelCardRasterFace card={card} compact />, {
+        height: 350,
+        width: 250,
+      }).arrayBuffer();
+      expect(pngDimensions(raster)).toEqual({ height: 350, width: 250 });
+    }
+  }, 40_000);
 
   test("renders the portrait download and social preview as valid PNGs", async () => {
     const card = MODEL_CARD_PRESENTATIONS.find(candidate => candidate.cardClass === "max");

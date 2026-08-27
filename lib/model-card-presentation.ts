@@ -1,6 +1,11 @@
 import type { FoilCardPreset } from "@hraness/design-kit/react";
 
-import { providerColor } from "./chart-colors";
+import {
+  modelCardArtDirection,
+  type ModelCardAccentFamily,
+  type ModelCardIlluminationDensity,
+  type ModelCardVisualClass,
+} from "./model-card-art-direction";
 import {
   type ModelCardClass,
   type ModelCardMetricId,
@@ -17,7 +22,7 @@ export type ModelCardStat = Readonly<{
   value: string;
 }>;
 
-export type ModelCardVisualClass = Exclude<ModelCardClass, "fallback">;
+export type { ModelCardVisualClass } from "./model-card-art-direction";
 
 export type ModelCardIndexingPolicy = Readonly<{
   follow: true;
@@ -25,6 +30,7 @@ export type ModelCardIndexingPolicy = Readonly<{
 }> | undefined;
 
 export type ModelCardPresentation = Readonly<{
+  accentFamily: ModelCardAccentFamily;
   agentNames: readonly string[];
   canonicalModelId: string;
   cardClass: ModelCardClass;
@@ -36,6 +42,7 @@ export type ModelCardPresentation = Readonly<{
   gatewayModelId: string | null;
   harnessLabel: string;
   iconDataUrl: string;
+  illuminationDensity: ModelCardIlluminationDensity;
   model: string;
   observationCount: number;
   path: ModelCardVariant["path"];
@@ -43,7 +50,9 @@ export type ModelCardPresentation = Readonly<{
   profileLabel: string;
   profileSlug: string;
   providerColor: string;
+  providerId: string;
   providerName: string;
+  secondaryColor: string;
   seed: string;
   sourceDate: string;
   totalCards: number;
@@ -77,10 +86,17 @@ function classLabel(value: ModelCardVisualClass): string {
   return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
-function foilPreset(value: ModelCardVisualClass): FoilCardPreset {
-  if (value === "fast") return "fast";
-  if (value === "max") return "max";
-  if (value === "thinking") return "aurora";
+function classAwareDisplayTitle(
+  displayTitle: string,
+  visualClass: ModelCardVisualClass,
+): string {
+  if (visualClass !== "thinking" || /\bthinking\b/iu.test(displayTitle)) {
+    return displayTitle;
+  }
+  return `${displayTitle} Thinking`;
+}
+
+function foilPreset(): FoilCardPreset {
   return "etched";
 }
 
@@ -242,19 +258,28 @@ export function createModelCardPresentation(
   }
   const profileLabel = formatProfileLabel(variant.profileSlug);
   const cardVisualClass = visualClass(variant.cardClass, variant.profileSlug);
+  const artDirection = modelCardArtDirection(
+    variant.providerId,
+    cardVisualClass,
+    variant.profileSlug,
+  );
   return {
+    ...artDirection,
     agentNames,
     canonicalModelId: variant.canonicalModelId,
     cardClass: variant.cardClass,
     cardNumber,
     classLabel: classLabel(cardVisualClass),
-    displayTitle: formatModelCardDisplayTitle(variant.model, profileLabel),
+    displayTitle: classAwareDisplayTitle(
+      formatModelCardDisplayTitle(variant.model, profileLabel),
+      cardVisualClass,
+    ),
     economics: economics.map(({ id, label }) => modelCardStat(
       id,
       label,
       variant.metricRanges[id],
     )),
-    foilPreset: foilPreset(cardVisualClass),
+    foilPreset: foilPreset(),
     gatewayModelId: variant.gatewayModelId,
     harnessLabel: compactModelCardHarnessLabel(agentNames),
     iconDataUrl: modelIconDataUrl(variant.lobeIconKey, variant.providerName),
@@ -264,7 +289,7 @@ export function createModelCardPresentation(
     performance,
     profileLabel,
     profileSlug: variant.profileSlug,
-    providerColor: providerColor(variant.providerId),
+    providerId: variant.providerId,
     providerName: variant.providerName,
     seed: `${variant.canonicalModelId}/${variant.profileSlug}`,
     sourceDate: formatModelCardSourceDate(sourceRetrievedAt),

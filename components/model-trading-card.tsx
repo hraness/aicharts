@@ -25,7 +25,6 @@ export function ModelTradingCard({
       intensity={intensity}
       renderMode={renderMode}
       seed={card.seed}
-      visualClass={card.visualClass}
     >
       <ModelCardFace card={card} />
     </ModelCardFoilFrame>
