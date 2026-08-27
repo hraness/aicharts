@@ -130,6 +130,7 @@
     inset 0 0 0 1px color-mix(in srgb, var(--model-card-secondary) 7%, transparent),
     inset 0 -18px 36px rgb(0 0 0 / 14%);
   display: flex;
+  isolation: isolate;
   justify-content: center;
   min-block-size: 0;
   overflow: hidden;
@@ -148,6 +149,111 @@
 .model-card-illumination {
   display: block;
   opacity: .97;
+}
+
+.model-card-holographic-foil {
+  --holographic-groove: 3 8;
+  --holographic-groove-offset: 0;
+
+  pointer-events: none;
+}
+
+.model-card-holographic-foil[data-holographic-field="tidal-iridescence"],
+.model-card-holographic-foil[data-holographic-field="vesica-thin-film"],
+.model-card-holographic-foil[data-holographic-field="lunar-laminate"] {
+  --holographic-groove: 6 5;
+  --holographic-groove-offset: 1.5;
+}
+
+.model-card-holographic-foil[data-holographic-field="engine-turned-maze"],
+.model-card-holographic-foil[data-holographic-field="radial-diffraction"],
+.model-card-holographic-foil[data-holographic-field="rose-window-foil"] {
+  --holographic-groove: 2 6.5;
+  --holographic-groove-offset: .5;
+}
+
+.model-card-holographic-foil[data-holographic-field="pearl-vellum"],
+.model-card-holographic-foil[data-holographic-field="cloisonne-spectrum"],
+.model-card-holographic-foil[data-holographic-field="faceted-prism"] {
+  --holographic-groove: 2.75 5.25;
+  --holographic-groove-offset: 2.25;
+}
+
+.model-card-holographic-foil__rim {
+  mix-blend-mode: multiply;
+}
+
+.model-card-holographic-foil__metal,
+.model-card-holographic-foil__spectrum,
+.model-card-holographic-foil__glint {
+  transition: filter 110ms linear, opacity 110ms linear;
+}
+
+.model-card-holographic-foil__metal {
+  mix-blend-mode: screen;
+  opacity: clamp(.3, var(--foil-base-opacity, .4), .56);
+}
+
+.model-card-holographic-foil__spectrum {
+  mix-blend-mode: screen;
+  opacity: clamp(.09, var(--foil-spectrum-opacity, .12), .64);
+}
+
+.model-card-holographic-foil__spectrum use {
+  stroke-dasharray: var(--holographic-groove);
+  stroke-dashoffset: var(--holographic-groove-offset);
+}
+
+.model-card-holographic-foil__glint {
+  mix-blend-mode: color-dodge;
+  opacity: clamp(.025, var(--foil-sheen-opacity, .04), .48);
+}
+
+.model-card-holographic-foil[data-holographic-coverage="1"] .model-card-holographic-foil__metal {
+  opacity: clamp(.42, calc(var(--foil-base-opacity, .4) + .08), .62);
+}
+
+.model-card-holographic-foil[data-holographic-coverage="1"] .model-card-holographic-foil__spectrum {
+  opacity: clamp(.05, calc(var(--foil-spectrum-opacity, .12) * .5), .22);
+}
+
+.model-card-holographic-foil[data-holographic-coverage="1"] .model-card-holographic-foil__glint {
+  opacity: clamp(.04, calc(var(--foil-sheen-opacity, .04) + .025), .32);
+}
+
+.model-card-holographic-foil__glint-gradient {
+  cx: var(--foil-light-x, 50%);
+  cy: var(--foil-light-y, 50%);
+}
+
+.model-card-illumination[data-illumination-finish="holographic"] stop[data-holographic-band="0"] {
+  stop-color: hsl(calc(var(--foil-spectrum-angle, 0deg) + 334deg) 98% 74%);
+}
+.model-card-illumination[data-illumination-finish="holographic"] stop[data-holographic-band="1"] {
+  stop-color: hsl(calc(var(--foil-spectrum-angle, 0deg) + 22deg) 98% 73%);
+}
+.model-card-illumination[data-illumination-finish="holographic"] stop[data-holographic-band="2"] {
+  stop-color: hsl(calc(var(--foil-spectrum-angle, 0deg) + 58deg) 98% 76%);
+}
+.model-card-illumination[data-illumination-finish="holographic"] stop[data-holographic-band="3"] {
+  stop-color: hsl(calc(var(--foil-spectrum-angle, 0deg) + 151deg) 92% 72%);
+}
+.model-card-illumination[data-illumination-finish="holographic"] stop[data-holographic-band="4"] {
+  stop-color: hsl(calc(var(--foil-spectrum-angle, 0deg) + 196deg) 98% 73%);
+}
+.model-card-frame[data-foil-active] .model-card-holographic-foil__metal {
+  filter: brightness(1.12) saturate(1.08);
+}
+
+.model-card-frame[data-foil-active] .model-card-holographic-foil__spectrum {
+  filter:
+    saturate(1.28)
+    contrast(1.06)
+    drop-shadow(0 0 .16rem rgb(196 228 255 / 32%));
+}
+
+.model-card-frame[data-foil-active] .model-card-holographic-foil__glint {
+  filter: brightness(1.16) drop-shadow(0 0 .1rem rgb(255 255 255 / 32%));
 }
 
 .model-card-face__art img {
@@ -249,6 +355,20 @@
   .model-card-face__art::after,
   .model-card-illumination { display: none; }
   .model-card-face__art img { filter: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .model-card-holographic-foil__metal,
+  .model-card-holographic-foil__spectrum,
+  .model-card-holographic-foil__glint {
+    transition: none;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  .model-card-holographic-foil__metal { opacity: .44; }
+  .model-card-holographic-foil__spectrum { opacity: .08; }
+  .model-card-holographic-foil__glint { opacity: .035; }
 }
 
 .model-cards-site {

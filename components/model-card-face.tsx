@@ -57,7 +57,11 @@ export function ModelCardFace({
         </div>
 
         <div className="model-card-face__art" aria-hidden="true">
-          <ModelCardIllumination card={card} mode={illuminationMode} />
+          <ModelCardIllumination
+            card={card}
+            finish="holographic"
+            mode={illuminationMode}
+          />
           {/* eslint-disable-next-line @next/next/no-img-element -- The pinned Lobe SVG bytes must remain identical in DOM and exported images. */}
           <img alt="" height="156" src={card.iconDataUrl} width="156" />
         </div>

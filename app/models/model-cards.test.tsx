@@ -59,12 +59,25 @@ describe("public model cards", () => {
     expect(markup.match(/data-illumination-mode="gallery"/gu)).toHaveLength(
       MODEL_CARD_PRESENTATIONS.length,
     );
+    expect(markup.match(/data-illumination-finish="holographic"/gu)).toHaveLength(
+      MODEL_CARD_PRESENTATIONS.length,
+    );
+    expect(markup.match(/data-holographic-finish="diffractive-spot-foil"/gu)).toHaveLength(
+      MODEL_CARD_PRESENTATIONS.length,
+    );
     expect(markup.match(/<(?:path|ellipse|circle)\b/gu)?.length ?? 0).toBeLessThan(1_250);
+    expect(markup.match(/<[A-Za-z][^>]*>/gu)?.length ?? 0).toBeLessThan(
+      MODEL_CARD_PRESENTATIONS.length * 115,
+    );
+    expect(Buffer.byteLength(markup)).toBeLessThan(
+      MODEL_CARD_PRESENTATIONS.length * 18_500,
+    );
+    expect(markup).not.toContain("<canvas");
     expect(markup).toContain('aria-label="How to read model card emblems"');
     expect(markup).toContain("Maker — color &amp; outer court");
     expect(markup).toContain("Family — sanctuary &amp; growth");
-    expect(markup).toContain("Version — topology &amp; inscription");
-    expect(markup).toContain("Profile — ink &amp; detail");
+    expect(markup).toContain("Version — form, rune &amp; foil");
+    expect(markup).toContain("Profile — ink, coverage &amp; detail");
     expect(markup).toContain("High · X-high · Max");
   });
 
@@ -101,6 +114,26 @@ describe("public model cards", () => {
     expect(live).toContain("<div");
     expect(live).not.toContain("<article");
     expect(live).toContain("<dl");
+    expect(live).toContain('data-illumination-finish="holographic"');
+    expect(portrait).toContain('data-illumination-finish="print"');
+    expect(social).toContain('data-illumination-finish="print"');
+    expect(portrait).not.toContain("data-holographic-finish");
+    expect(social).not.toContain("data-holographic-finish");
+  });
+
+  test("drives holographic ink from the delegated pose with accessible fallbacks", async () => {
+    const stylesheet = await Bun.file(
+      new URL("../../styles/model-cards.css", import.meta.url),
+    ).text();
+
+    expect(stylesheet).toContain("--foil-light-x");
+    expect(stylesheet).toContain("--foil-light-y");
+    expect(stylesheet).toContain("--foil-spectrum-angle");
+    expect(stylesheet).toMatch(/\.model-card-holographic-foil__spectrum use\s*\{[^}]*stroke-dasharray:/su);
+    expect(stylesheet).toMatch(/\.model-card-frame\[data-foil-active\][\s\S]*?\.model-card-holographic-foil__spectrum/u);
+    expect(stylesheet).toMatch(/@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*?\.model-card-holographic-foil__spectrum/u);
+    expect(stylesheet).toMatch(/@media \(prefers-reduced-transparency:\s*reduce\), \(prefers-contrast:\s*more\)[\s\S]*?\.model-card-holographic-foil__glint/u);
+    expect(stylesheet).not.toContain("animation:");
   });
 
   test("names every contributing agent harness on detail and Markdown surfaces", async () => {
@@ -124,7 +157,7 @@ describe("public model cards", () => {
     expect(detailMarkup).toContain("Snapshot");
     expect(detailMarkup).toContain(">Sigil</dt>");
     expect(detailMarkup).toContain(`${card.emblemIdentity.generation.join(".")} version marks`);
-    expect(detailMarkup).toContain(`density ${card.illuminationDensity}/5`);
+    expect(detailMarkup).toContain(`foil/detail ${card.illuminationDensity}/5`);
     expect(detailMarkup).toContain("model-card-detail__code-token");
     expect(detailMarkup).not.toContain(">Observations<");
     expect(markdown).toContain("Agent harnesses:");
