@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react";
 
+import { modelCardSecondaryColors } from "@/lib/model-card-art-direction";
 import type { ModelCardPresentation } from "@/lib/model-card-presentation";
 
 import { ModelCardIllumination } from "./model-card-illumination";
@@ -204,11 +205,16 @@ function SocialStat({
 
 function emblemReading(card: ModelCardPresentation): string {
   const identity = card.emblemIdentity;
+  const displayTerm = (value: string) => value.split("-").filter(Boolean).map(term => (
+    term.length <= 3
+      ? term.toLocaleUpperCase("en-US")
+      : term.charAt(0).toLocaleUpperCase("en-US") + term.slice(1)
+  )).join(" ");
   return [
-    identity.familyId,
+    displayTerm(identity.familyId),
     identity.generation.join("."),
-    identity.editionId === "base" ? null : identity.editionId,
-  ].filter(value => value !== null).join(" · ").toLocaleUpperCase("en-US");
+    identity.editionId === "base" ? null : displayTerm(identity.editionId),
+  ].filter(value => value !== null).join(" · ");
 }
 
 export function ModelCardSocialImage({ card }: Readonly<{ card: ModelCardPresentation }>) {
@@ -216,11 +222,12 @@ export function ModelCardSocialImage({ card }: Readonly<{ card: ModelCardPresent
   const harnessLabel = compactImageLabel(card.harnessLabel, 46);
   const providerLabel = compactImageLabel(card.providerName, 28);
   const emblemLabel = compactImageLabel(emblemReading(card), 38);
+  const profileLabel = compactImageLabel(card.profileLabel, 24);
   const serial = `${String(card.cardNumber).padStart(3, "0")} / ${String(card.totalCards).padStart(3, "0")}`;
   return (
     <div style={{
       ...imageStyles.column,
-      background: `radial-gradient(circle at 12% 15%, ${card.providerColor}42 0%, transparent 38%), radial-gradient(circle at 86% 78%, ${card.secondaryColor}20 0%, transparent 35%), linear-gradient(145deg, #15171c 0%, #08090c 54%, #101116 100%)`,
+      background: `radial-gradient(circle at 13% 19%, ${card.providerColor}38 0%, transparent 39%), radial-gradient(circle at 88% 82%, ${card.secondaryColor}17 0%, transparent 36%), linear-gradient(145deg, #14161b 0%, #07080b 57%, #101116 100%)`,
       color: "#f7f6f2",
       height: "100%",
       overflow: "hidden",
@@ -242,7 +249,7 @@ export function ModelCardSocialImage({ card }: Readonly<{ card: ModelCardPresent
       </div>
 
       <div style={{ ...imageStyles.row, alignItems: "center", flex: 1, marginTop: 18, position: "relative" }}>
-        <ModelCardEmblemPanel card={card} height={315} logoSize={174} width={490} />
+        <ModelCardEmblemPanel card={card} height={315} logoSize={144} width={500} />
         <div style={{ ...imageStyles.column, flex: 1, marginLeft: 44, minWidth: 0 }}>
           <span style={{ color: card.secondaryColor, fontFamily: "monospace", fontSize: 16, letterSpacing: ".12em", textTransform: "uppercase" }}>
             {emblemLabel}
@@ -253,17 +260,29 @@ export function ModelCardSocialImage({ card }: Readonly<{ card: ModelCardPresent
           <span style={{ color: "rgba(247,246,242,.64)", fontSize: 25, marginTop: 15 }}>
             {harnessLabel}
           </span>
-          <span style={{ fontSize: 27, fontWeight: 760, marginTop: 34 }}>aicharts.io</span>
+          <div style={{ ...imageStyles.row, alignItems: "center", marginTop: 28 }}>
+            <span style={{ border: `1px solid ${card.secondaryColor}66`, borderRadius: 999, color: card.secondaryColor, fontFamily: "monospace", fontSize: 15, letterSpacing: ".08em", padding: "7px 11px", textTransform: "uppercase" }}>
+              {profileLabel} profile
+            </span>
+            <span style={{ color: "rgba(247,246,242,.42)", fontSize: 16, marginLeft: 15 }}>
+              illuminated benchmark specimen
+            </span>
+          </div>
+          <span style={{ fontSize: 25, fontWeight: 760, marginTop: 23 }}>aicharts.io</span>
         </div>
       </div>
 
-      <div style={{ ...imageStyles.row, border: "1px solid rgba(255,255,255,.12)", borderRadius: 12, marginTop: 18, overflow: "hidden", position: "relative" }}>
-        {card.performance.map(stat => (
-          <SocialStat accent={card.providerColor} key={stat.id} label={stat.label} value={stat.value} />
-        ))}
-        {card.economics.map(stat => (
-          <SocialStat accent={card.secondaryColor} key={stat.id} label={stat.label} value={stat.value} />
-        ))}
+      <div style={{ ...imageStyles.row, gap: 12, marginTop: 18, position: "relative" }}>
+        <div style={{ ...imageStyles.row, border: "1px solid rgba(255,255,255,.12)", borderRadius: 12, flex: 4, overflow: "hidden" }}>
+          {card.performance.map(stat => (
+            <SocialStat accent={card.providerColor} key={stat.id} label={stat.label} value={stat.value} />
+          ))}
+        </div>
+        <div style={{ ...imageStyles.row, border: "1px solid rgba(255,255,255,.12)", borderRadius: 12, flex: 3, overflow: "hidden" }}>
+          {card.economics.map(stat => (
+            <SocialStat accent={card.secondaryColor} key={stat.id} label={stat.label} value={stat.value} />
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -273,6 +292,14 @@ function CollectionEmblem({
   card,
   width,
 }: Readonly<{ card: ModelCardPresentation; width: number }>) {
+  const atlasCard = {
+    ...card,
+    accentFamily: "base",
+    illuminationDensity: 1,
+    profileSlug: "atlas",
+    secondaryColor: modelCardSecondaryColors.base,
+    visualClass: "standard",
+  } as const satisfies ModelCardPresentation;
   return (
     <div style={{
       ...imageStyles.column,
@@ -284,7 +311,7 @@ function CollectionEmblem({
       width,
     }}>
       <div style={{ ...imageStyles.row, alignItems: "center", flex: 1, justifyContent: "center", overflow: "hidden", position: "relative", width: "100%" }}>
-        <ModelCardIllumination card={card} mode="gallery" />
+        <ModelCardIllumination card={atlasCard} mode="gallery" />
         {/* eslint-disable-next-line @next/next/no-img-element -- ImageResponse consumes a pinned SVG data URL. */}
         <img alt="" height={52} src={card.iconDataUrl} style={{ objectFit: "contain", position: "relative" }} width={52} />
       </div>
@@ -376,7 +403,7 @@ export function ModelCardCollectionSocialImage({
       <div style={{ ...imageStyles.row, alignItems: "center", fontSize: 22, fontWeight: 760, justifyContent: "space-between", position: "relative" }}>
         <span>aicharts.io</span>
         <span style={{ color: "rgba(247,246,242,.46)", fontFamily: "monospace", fontSize: 15, letterSpacing: ".11em" }}>
-          THE MODEL CODEX
+          THE BENCHMARK ATLAS
         </span>
       </div>
       <div style={{ ...imageStyles.row, alignItems: "center", flex: 1, marginTop: 24, position: "relative" }}>
@@ -386,10 +413,10 @@ export function ModelCardCollectionSocialImage({
               Performance · cost · speed · tokens
             </span>
             <span style={{ fontSize: 69, fontWeight: 780, letterSpacing: "-.058em", lineHeight: .91, marginTop: 20 }}>
-              AI model benchmark cards
+              The model codex
             </span>
             <span style={{ color: "rgba(247,246,242,.61)", fontSize: 24, lineHeight: 1.28, marginTop: 22 }}>
-              A living illuminated catalog of coding-agent profiles.
+              An illuminated atlas of coding-agent performance, cost, speed, and scale.
             </span>
           </div>
           <div style={{ ...imageStyles.row, alignItems: "baseline" }}>

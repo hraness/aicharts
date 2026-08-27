@@ -38,7 +38,7 @@ describe("public search discovery", () => {
     const modelsEntry = entries.find(entry => entry.url.endsWith("/models"));
     expect(modelsEntry?.lastModified).toBe(modifiedAt);
     expect(modelsEntry?.images).toEqual([
-      "https://aicharts.io/models/opengraph-image",
+      "https://aicharts.io/models/opengraph-image-v5",
     ]);
     expect(cardEntries).toHaveLength(indexableModelCards().length);
     expect(cardEntries.every(entry => entry.lastModified === modifiedAt)).toBe(true);

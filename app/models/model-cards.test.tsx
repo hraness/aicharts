@@ -7,6 +7,7 @@ import { ModelCardFace } from "@/components/model-card-face";
 import { ModelCardFoilFrame } from "@/components/model-card-foil-frame";
 import { ModelCardRasterFace, ModelCardSocialImage } from "@/components/model-card-image";
 import {
+  MODEL_CARD_COLLECTION_SOCIAL_IMAGE_PATH,
   MODEL_CARD_PRESENTATIONS,
   MODEL_CARD_RENDERER_VERSION,
   findModelCardPresentation,
@@ -60,10 +61,10 @@ describe("public model cards", () => {
     );
     expect(markup.match(/<(?:path|ellipse|circle)\b/gu)?.length ?? 0).toBeLessThan(1_250);
     expect(markup).toContain('aria-label="How to read model card emblems"');
-    expect(markup).toContain("Maker color");
-    expect(markup).toContain("Family seal");
-    expect(markup).toContain("Version marks");
-    expect(markup).toContain("Profile density");
+    expect(markup).toContain("Maker — color &amp; outer court");
+    expect(markup).toContain("Family — sanctuary &amp; growth");
+    expect(markup).toContain("Version — topology &amp; inscription");
+    expect(markup).toContain("Profile — ink &amp; detail");
     expect(markup).toContain("High · X-high · Max");
   });
 
@@ -162,7 +163,8 @@ describe("public model cards", () => {
   test("includes the renderer contract in versioned card artwork URLs", () => {
     const card = MODEL_CARD_PRESENTATIONS[0];
     if (card === undefined) throw new Error("Expected at least one model card.");
-    expect(MODEL_CARD_RENDERER_VERSION).toBe("model-card-v4");
+    expect(MODEL_CARD_RENDERER_VERSION).toBe("model-card-v5");
+    expect(MODEL_CARD_COLLECTION_SOCIAL_IMAGE_PATH).toBe("/models/opengraph-image-v5");
     expect(versionedModelCardImagePath(card.path, "card.png")).toMatch(
       /\/card\.png\?v=[a-f0-9]{16}$/u,
     );
@@ -197,12 +199,13 @@ describe("public model cards", () => {
 
     expect(stylesheet).toMatch(/\.model-card-grid__link\s*\{[^}]*aspect-ratio:\s*5 \/ 7;[^}]*contain:\s*layout paint style;[^}]*content-visibility:\s*auto;/su);
     expect(stylesheet).toMatch(/\.model-card-frame\s*\{[^}]*outline:\s*none;/su);
+    expect(stylesheet).toMatch(/\.model-card-frame\s*\{[^}]*clip-path:\s*inset\(0 round var\(--foil-card-radius\)\);[^}]*overflow:\s*clip;/su);
     expect(stylesheet).toMatch(/\.model-card-grid__link:focus-visible\s*\{[^}]*outline-offset:\s*5px;/su);
     expect(stylesheet).toMatch(/\.model-card-grid__link\s*\{[^}]*contain-intrinsic-block-size:\s*auto 19\.6rem;[^}]*contain-intrinsic-inline-size:\s*auto 14rem;/su);
     expect(stylesheet).toMatch(/@media \(max-width:\s*560px\)[\s\S]*?\.model-card-grid\s*\{[^}]*grid-template-columns:\s*minmax\(0, 25rem\);/u);
     expect(stylesheet).toMatch(/@media \(max-width:\s*430px\)[\s\S]*?\.model-card-frame\s*\{[^}]*--foil-card-radius:\s*\.85rem;/u);
     expect(stylesheet).toMatch(/\.model-card-face dt\s*\{[^}]*font-size:\s*max\(\.625rem, 2\.4cqi\);/su);
     expect(stylesheet).toMatch(/@media \(forced-colors:\s*active\)[\s\S]*?\.model-card-illumination\s*\{[^}]*display:\s*none;/u);
-    expect(modelsPageSource).toContain('path: "/models/opengraph-image"');
+    expect(modelsPageSource).toContain("path: MODEL_CARD_COLLECTION_SOCIAL_IMAGE_PATH");
   });
 });

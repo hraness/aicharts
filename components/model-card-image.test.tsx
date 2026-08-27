@@ -44,6 +44,8 @@ describe("model card ImageResponse rendering", () => {
       expect(social).toContain(`>${stat.label}</span>`);
       expect(social).toContain(`>${stat.value}</span>`);
     }
+    expect(social).toContain(`>${card.profileLabel} profile</span>`);
+    expect(social).toContain(">illuminated benchmark specimen</span>");
     expect(social.match(/data:image\/svg\+xml;base64,/gu)).toHaveLength(1);
     expect(social).toContain(`data-emblem-family="${card.emblemIdentity.familyId}"`);
   });
@@ -139,6 +141,9 @@ describe("model card ImageResponse rendering", () => {
       />,
     );
     expect(markup.match(/data-emblem-family=/gu)).toHaveLength(providerCount);
+    expect(markup.match(/data-illumination-density="1"/gu)).toHaveLength(providerCount);
+    expect(markup).toContain(">THE BENCHMARK ATLAS</span>");
+    expect(markup).toContain(">The model codex</span>");
     expect(markup).toContain(`${MODEL_CARD_PRESENTATIONS.length}</span>`);
     expect(markup).toContain(`${providerCount}</span>`);
     for (const card of cards) expect(markup).toContain(`>${card.providerName}</div>`);

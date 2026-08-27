@@ -8,7 +8,7 @@ import {
 } from "@/lib/model-card-collection";
 import type { ModelCardRouteParams } from "@/lib/model-card-data";
 
-export const alt = "AI model coding-agent benchmark card";
+export const alt = "Horizontal illuminated AI model benchmark specimen with logo and statistics";
 export const contentType = "image/png";
 export const size = { height: 630, width: 1200 };
 

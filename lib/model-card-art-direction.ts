@@ -19,20 +19,20 @@ export const modelCardSecondaryColors = {
   thinking: "#ae8bff",
 } as const satisfies Readonly<Record<ModelCardAccentFamily, string>>;
 
-// A product-owned Tableau-derived categorical assignment for dark collectible
-// fields. Cobalt replaces Tableau's yellow because gold is reserved for the
-// elevated class family; provider identity and class ink never collapse.
+// A product-owned, dark-field categorical palette. Neighboring providers are
+// deliberately separated by hue and lightness; neutral silver is reserved for
+// xAI, while gold remains exclusive to the elevated class family.
 export const modelCardProviderColors = {
   alibaba_cloud: "#f28e2b",
-  anthropic: "#e15759",
-  cursor: "#ff9da7",
+  anthropic: "#ff665c",
+  cursor: "#f062a6",
   deepseek: "#499894",
-  google: "#59a14f",
+  google: "#67c95c",
   meta: "#b07aa1",
   moonshot_ai: "#4c78d8",
-  openai: "#5c86b3",
+  openai: "#58b3e7",
   xai: "#918f94",
-  z_ai: "#a9826b",
+  z_ai: "#c88759",
 } as const;
 
 const elevatedProfiles = new Set(["high", "xhigh", "max"]);

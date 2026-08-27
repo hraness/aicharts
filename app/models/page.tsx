@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ModelCardFace } from "@/components/model-card-face";
 import { ModelCardFoilFrame } from "@/components/model-card-foil-frame";
 import {
+  MODEL_CARD_COLLECTION_SOCIAL_IMAGE_PATH,
   MODEL_CARD_PRESENTATIONS,
   MODEL_CARD_SNAPSHOT,
 } from "@/lib/model-card-collection";
@@ -16,8 +17,8 @@ const modelCardsSearchSite = {
   ...searchSite,
   description: "Shareable model trading cards for the current Artificial Analysis coding-agent benchmark snapshot.",
   socialImage: {
-    alt: "AI model benchmark card codex with distinct provider sigils",
-    path: "/models/opengraph-image",
+    alt: "Illuminated AI model benchmark atlas with distinct provider sigils",
+    path: MODEL_CARD_COLLECTION_SOCIAL_IMAGE_PATH,
   },
   socialTitle: "AI Model Benchmark Cards | AI Charts",
   title: "AI Model Benchmark Cards | AI Charts",
@@ -47,10 +48,10 @@ export default function ModelCardsPage() {
       <aside aria-label="How to read model card emblems" className="model-card-gallery__legend">
         <p>
           <strong>Read the sigil</strong>
-          <span>Maker color</span>
-          <span>Family seal</span>
-          <span>Version marks</span>
-          <span>Profile density</span>
+          <span>Maker — color &amp; outer court</span>
+          <span>Family — sanctuary &amp; growth</span>
+          <span>Version — topology &amp; inscription</span>
+          <span>Profile — ink &amp; detail</span>
         </p>
         <ul aria-label="Emblem secondary ink legend">
           <li data-emblem-ink="standard">Standard</li>
