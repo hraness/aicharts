@@ -1,6 +1,5 @@
 @import "@hraness/design-kit/styles.css";
 @import "@hraness/site-footer/styles.css";
-@import "@hraness/ui/components.css";
 @import "../styles/plain-site.css";
 @import "../styles/plain-publication.css";
 @import "../styles/model-cards.css";
@@ -30,7 +29,7 @@ html, body, div, span, h1, h2, h3, p, a, button, input, dl, dt, dd, header, main
   --text-body: .9375rem;
   --text-caption: .75rem;
   --font-weight-bold: 700;
-  --font-sans: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-sans: var(--font-text);
   --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
   --interactive-target-min: 44px;
   --jelly-radius-compact: 8px;

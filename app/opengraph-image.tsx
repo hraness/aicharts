@@ -1,3 +1,4 @@
+import { nebulaSansSocialFonts } from "@hraness/design-kit/fonts/nebula-sans/social";
 import { ImageResponse } from "next/og";
 
 import { searchSite, site } from "./site";
@@ -15,7 +16,7 @@ export default function Image() {
         color: "#1c1917",
         display: "flex",
         flexDirection: "column",
-        fontFamily: "Arial, sans-serif",
+        fontFamily: "Nebula Sans",
         height: "100%",
         justifyContent: "space-between",
         padding: "72px 82px",
@@ -44,6 +45,6 @@ export default function Image() {
       </div>
       <div style={{ background: site.palette.chromatic.key, height: 10, width: "100%" }} />
     </div>,
-    size,
+    { ...size, fonts: [...nebulaSansSocialFonts()] },
   );
 }

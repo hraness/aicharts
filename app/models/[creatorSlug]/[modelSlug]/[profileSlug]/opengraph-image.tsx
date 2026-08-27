@@ -1,3 +1,4 @@
+import { nebulaSansSocialFonts } from "@hraness/design-kit/fonts/nebula-sans/social";
 import { ImageResponse } from "next/og";
 import { notFound } from "next/navigation";
 
@@ -21,5 +22,8 @@ export default async function OpenGraphImage({
 }: Readonly<{ params: Promise<ModelCardRouteParams> }>) {
   const card = findModelCardPresentation(await params);
   if (card === undefined) notFound();
-  return new ImageResponse(<ModelCardSocialImage card={card} />, size);
+  return new ImageResponse(
+    <ModelCardSocialImage card={card} />,
+    { ...size, fonts: [...nebulaSansSocialFonts()] },
+  );
 }

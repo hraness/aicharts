@@ -90,7 +90,7 @@ function appendText(
 ): void {
   const text = document.createElementNS(svgNamespace, "text");
   text.setAttribute("fill", options.fill);
-  text.setAttribute("font-family", "ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif");
+  text.setAttribute("font-family", "Nebula Sans, sans-serif");
   text.setAttribute("font-size", String(options.fontSize));
   text.setAttribute("font-weight", String(options.fontWeight ?? 400));
   text.setAttribute("text-anchor", options.anchor ?? "start");
