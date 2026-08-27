@@ -22,14 +22,15 @@ export default function Home() {
   )));
   return (
     <>
-      <HomeLeaders snapshot={parsed.value} />
-      <HomeDocument document={homeDocumentModel(parsed.value)} snapshot={parsed.value} />
       <Suspense fallback={<RouteLoadingState />}>
         <CodingAgentExplorer
           brand={{ domain: site.domain, heading: site.domain }}
           modelCardPaths={modelCardPaths}
           snapshot={parsed.value}
-        />
+        >
+          <HomeLeaders snapshot={parsed.value} />
+          <HomeDocument document={homeDocumentModel(parsed.value)} snapshot={parsed.value} />
+        </CodingAgentExplorer>
       </Suspense>
     </>
   );

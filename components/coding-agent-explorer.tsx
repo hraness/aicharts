@@ -36,6 +36,7 @@ import {
   type CSSProperties,
   type KeyboardEvent,
   type MouseEvent as ReactMouseEvent,
+  type ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
@@ -289,10 +290,12 @@ function MetricControl<T extends string>({
 
 export function CodingAgentExplorer({
   brand,
+  children,
   modelCardPaths,
   snapshot,
 }: {
   brand: ChartBrand;
+  children: ReactNode;
   modelCardPaths: Readonly<Record<string, string>>;
   snapshot: CodingAgentSnapshot;
 }) {
@@ -855,7 +858,12 @@ export function CodingAgentExplorer({
             <LinkButton href="/models" size="compact" variant="quiet">
               Cards
             </LinkButton>
-            <LinkButton href="/gpt-subsidy" size="compact" variant="quiet">
+            <LinkButton
+              className="chart-top-bar__optional-action"
+              href="/gpt-subsidy"
+              size="compact"
+              variant="quiet"
+            >
               {chatGptSubsidyChartLabel}
             </LinkButton>
             <ThemeMenuButton aria-label="Chart appearance" />
@@ -872,6 +880,7 @@ export function CodingAgentExplorer({
         size="full"
         tabIndex={-1}
       >
+      {children}
       <header className="chart-header">
         <p aria-live="polite" className="benchmark-description">
           <strong>{yMetricLabels[yMetric]}</strong> — {yMetricDescriptions[yMetric]}

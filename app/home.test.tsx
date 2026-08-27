@@ -63,17 +63,32 @@ describe("homepage agent document", () => {
     expect(text).toContain(document.paragraphs[0] ?? "");
   });
 
-  test("mounts visible leaders before the chart explorer and has no root loading fallback", async () => {
+  test("mounts visible leaders inside the chart shell after its shared header", async () => {
     const source = await Bun.file(new URL("./page.tsx", import.meta.url)).text();
+    const markup = renderToStaticMarkup(createElement(Home));
     const leadersAt = source.indexOf("<HomeLeaders");
     const explorerAt = source.indexOf("<CodingAgentExplorer");
+    const documentAt = source.indexOf("<HomeDocument");
+    const explorerEndAt = source.indexOf("</CodingAgentExplorer>");
     const loadingAt = source.indexOf("Loading chart");
 
     expect(leadersAt).toBeGreaterThan(-1);
-    expect(explorerAt).toBeGreaterThan(leadersAt);
+    expect(explorerAt).toBeLessThan(leadersAt);
+    expect(documentAt).toBeGreaterThan(leadersAt);
+    expect(explorerEndAt).toBeGreaterThan(documentAt);
     expect(loadingAt).toBe(-1);
     expect(source).toContain("heading: site.domain");
     expect(existsSync(new URL("./loading.tsx", import.meta.url))).toBeFalse();
     expect(Home.name).toBe("Home");
+
+    const headerAt = markup.indexOf('<header class="ui-top-bar chart-top-bar"');
+    const mainAt = markup.indexOf('<main class="chart-page-canvas"');
+    const renderedLeadersAt = markup.indexOf('class="home-leaders"');
+    const mainEndAt = markup.indexOf("</main>", mainAt);
+
+    expect(headerAt).toBeGreaterThan(-1);
+    expect(mainAt).toBeGreaterThan(headerAt);
+    expect(renderedLeadersAt).toBeGreaterThan(mainAt);
+    expect(mainEndAt).toBeGreaterThan(renderedLeadersAt);
   });
 });
