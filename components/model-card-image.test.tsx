@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { ImageResponse } from "next/og";
+import { renderToStaticMarkup } from "react-dom/server";
 
 import { MODEL_CARD_PRESENTATIONS } from "@/lib/model-card-collection";
 
@@ -12,6 +13,40 @@ function pngDimensions(bytes: ArrayBuffer): Readonly<{ height: number; width: nu
 }
 
 describe("model card ImageResponse rendering", () => {
+  test("keeps the collectible identity focused on title, harness, and serial", () => {
+    const card = MODEL_CARD_PRESENTATIONS.find(candidate => candidate.model.includes("with fallback"));
+    expect(card).toBeDefined();
+    if (card === undefined) return;
+
+    const portrait = renderToStaticMarkup(<ModelCardRasterFace card={card} />);
+    const social = renderToStaticMarkup(<ModelCardSocialImage card={card} />);
+    for (const markup of [portrait, social]) {
+      expect(markup).toContain(">Fable 5 Max</span>");
+      expect(markup).toContain(`>${card.harnessLabel}</span>`);
+      expect(markup).toContain("aicharts.io");
+      expect(markup).not.toContain("with fallback");
+      expect(markup).not.toContain("Artificial Analysis");
+      expect(markup).not.toContain(card.sourceDate);
+      expect(markup).not.toMatch(/\bconfigs?\b/iu);
+      expect(markup).not.toContain("benchmark profile");
+    }
+  });
+
+  test("renders a distinct filigree geometry for every visual class", async () => {
+    for (const visualClass of ["standard", "fast", "thinking", "max"] as const) {
+      const card = MODEL_CARD_PRESENTATIONS.find(candidate => candidate.visualClass === visualClass);
+      expect(card).toBeDefined();
+      if (card === undefined) continue;
+      const markup = renderToStaticMarkup(<ModelCardRasterFace card={card} />);
+      expect(markup).toContain(`data-card-filigree="${visualClass}"`);
+      const raster = await new ImageResponse(<ModelCardRasterFace card={card} compact />, {
+        height: 350,
+        width: 250,
+      }).arrayBuffer();
+      expect(pngDimensions(raster)).toEqual({ height: 350, width: 250 });
+    }
+  }, 20_000);
+
   test("renders the portrait download and social preview as valid PNGs", async () => {
     const card = MODEL_CARD_PRESENTATIONS.find(candidate => candidate.cardClass === "max");
     expect(card).toBeDefined();
@@ -32,6 +67,8 @@ describe("model card ImageResponse rendering", () => {
     const provisional = {
       ...card,
       canonicalModelId: "unlisted/an-extremely-long-newly-observed-upstream-model-identity.a1234567890abcdef",
+      displayTitle: "An Extremely Long Newly Observed Upstream Model Name With Experimental Capabilities X-high",
+      harnessLabel: "An Extremely Long Experimental Agent Harness",
       model: "An Extremely Long Newly Observed Upstream Model Name With Experimental Capabilities",
       path: "/models/unlisted/an-extremely-long-newly-observed-upstream-model-identity.a1234567890abcdef/upstream-an-extremely-long-setting.a1234567890abcdef" as const,
       profileLabel: "An Extremely Long Experimental Upstream Setting",

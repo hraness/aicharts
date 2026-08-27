@@ -297,7 +297,7 @@ function modelCardsMarkdown(): string {
     "## Cards",
     "",
     ...MODEL_CARD_PRESENTATIONS.map(card => (
-      `- [${card.model} · ${card.profileLabel}](${absolute(card.path)}). ${card.providerName}; ${card.classLabel}; ${card.observationCount} ${card.observationCount === 1 ? "configuration" : "configurations"}.`
+      `- [${card.displayTitle}](${absolute(card.path)}). ${card.providerName}; ${card.classLabel}; ${card.observationCount} ${card.observationCount === 1 ? "configuration" : "configurations"}.`
     )),
   ]);
 }
@@ -308,7 +308,7 @@ function modelCardMarkdown(card: ModelCardPresentation): string {
     stat.available ? stat.value : "Not available"
   );
   return joinMarkdown([
-    `# ${card.model} · ${card.profileLabel}`,
+    `# ${card.displayTitle}`,
     "",
     `${card.providerName} ${card.classLabel.toLowerCase()} card based on ${card.observationCount} ${card.observationCount === 1 ? "configuration" : "configurations"} in the current Artificial Analysis coding-agents snapshot. Values are observed min–max ranges; AI Charts does not average unlike agent harnesses.`,
     "",

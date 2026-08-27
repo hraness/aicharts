@@ -1,7 +1,9 @@
 import { createPublicSiteMetadata } from "@hraness/web-discovery";
+import { FoilCardDeck } from "@hraness/design-kit/react";
 import Link from "next/link";
 
 import { ModelCardFace } from "@/components/model-card-face";
+import { ModelCardFoilFrame } from "@/components/model-card-foil-frame";
 import {
   MODEL_CARD_PRESENTATIONS,
   MODEL_CARD_SNAPSHOT,
@@ -38,18 +40,24 @@ export default function ModelCardsPage() {
           <time dateTime={MODEL_CARD_SNAPSHOT.source.retrievedAt}>{formatRetrievedAt(MODEL_CARD_SNAPSHOT.source.retrievedAt)}</time>
         </p>
       </header>
-      <div className="model-card-grid">
+      <FoilCardDeck className="model-card-grid">
         {MODEL_CARD_PRESENTATIONS.map(card => (
           <Link
-            aria-label={`Open ${card.model}, ${card.profileLabel} model card`}
+            aria-label={`Open ${card.displayTitle} model card`}
             className="model-card-grid__link"
             href={card.path}
             key={card.path}
           >
-            <ModelCardFace card={card} />
+            <ModelCardFoilFrame
+              foilPreset={card.foilPreset}
+              seed={card.seed}
+              visualClass={card.visualClass}
+            >
+              <ModelCardFace card={card} />
+            </ModelCardFoilFrame>
           </Link>
         ))}
-      </div>
+      </FoilCardDeck>
     </main>
   );
 }

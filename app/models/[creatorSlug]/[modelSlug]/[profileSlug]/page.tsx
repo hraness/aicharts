@@ -31,8 +31,8 @@ export async function generateMetadata({
 }: Readonly<{ params: Promise<ModelCardRouteParams> }>): Promise<Metadata> {
   const card = findModelCardPresentation(await params);
   if (card === undefined) notFound();
-  const title = `${card.model} ${card.profileLabel} Benchmark Card | AI Charts`;
-  const description = `${card.model} ${card.profileLabel} profile with available observed coding-agent benchmark, cost, time, and total-token ranges from Artificial Analysis.`;
+  const title = `${card.displayTitle} Benchmark Card | AI Charts`;
+  const description = `${card.displayTitle} with available observed coding-agent benchmark, cost, time, and total-token ranges from Artificial Analysis.`;
   const base = createPublicSiteMetadata({
     ...searchSite,
     description,
@@ -40,7 +40,7 @@ export async function generateMetadata({
     title,
   }, { canonicalPath: card.path });
   const imagePath = versionedModelCardImagePath(card.path, "opengraph-image");
-  const imageAlt = `${card.model} ${card.profileLabel} benchmark card`;
+  const imageAlt = `${card.displayTitle} benchmark card`;
   const indexingPolicy = modelCardIndexingPolicy(card);
   return {
     ...base,
@@ -86,8 +86,8 @@ export default async function ModelCardPage({
         <div className="model-card-detail__copy">
           <header>
             <p>{card.providerName} · {card.classLabel}</p>
-            <h1>{card.model} · {card.profileLabel}</h1>
-            <p>Benchmark profile</p>
+            <h1>{card.displayTitle}</h1>
+            <p>{card.harnessLabel}</p>
           </header>
           <ModelCardShare
             canonicalUrl={canonicalUrl}
@@ -97,7 +97,7 @@ export default async function ModelCardPage({
           <section aria-labelledby="model-card-details-title" className="model-card-detail__facts">
             <h2 id="model-card-details-title">Card details</h2>
             <dl>
-              <div><dt>{routeStatus.provisionalIdentity ? "Provisional ID" : "Canonical ID"}</dt><dd><code>{card.canonicalModelId}</code></dd></div>
+              <div><dt>{routeStatus.provisionalIdentity ? "Provisional ID" : "Canonical ID"}</dt><dd><code className="model-card-detail__code-token">{card.canonicalModelId}</code></dd></div>
               {routeStatus.isProvisional && (
                 <div>
                   <dt>Route status</dt>
@@ -109,13 +109,12 @@ export default async function ModelCardPage({
               <div>
                 <dt>Gateway ID</dt>
                 <dd>
-                  {card.gatewayModelId === null ? "Not in the verified Gateway catalog" : <code>{card.gatewayModelId}</code>}
+                  {card.gatewayModelId === null ? "Not in the verified Gateway catalog" : <code className="model-card-detail__code-token">{card.gatewayModelId}</code>}
                   {" · "}
                   <a href={vercelGatewayModelCatalog.url}>catalog checked <time dateTime={vercelGatewayModelCatalog.verifiedAt}>Aug 26, 2026</time></a>
                 </dd>
               </div>
-              <div><dt>Profile</dt><dd><code>{card.profileSlug}</code></dd></div>
-              <div><dt>Observations</dt><dd>{card.observationCount}</dd></div>
+              <div><dt>Profile</dt><dd><code className="model-card-detail__code-token">{card.profileSlug}</code></dd></div>
               <div>
                 <dt>{card.agentNames.length === 1 ? "Agent harness" : "Agent harnesses"}</dt>
                 <dd>

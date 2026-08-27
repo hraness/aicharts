@@ -22,8 +22,11 @@ if (!parsedSnapshot.ok) {
 }
 
 export const MODEL_CARD_SNAPSHOT = parsedSnapshot.value;
+export const MODEL_CARD_RENDERER_VERSION = "model-card-v2";
 export const MODEL_CARD_SNAPSHOT_VERSION = createHash("sha256")
   .update(JSON.stringify(codingAgentData))
+  .update("\0")
+  .update(MODEL_CARD_RENDERER_VERSION)
   .digest("hex")
   .slice(0, 16);
 export const MODEL_CARD_VARIANTS = buildModelCardVariants(MODEL_CARD_SNAPSHOT.records);

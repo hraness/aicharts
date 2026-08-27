@@ -45,7 +45,7 @@ export function ModelCardShare({
   const preparedImage = prepared?.imageUrl === imageUrl ? prepared : null;
   const preparationFailed = failedImageUrl === imageUrl;
   const nativeShareAvailable = preparedImage !== null && canShareFileNatively(preparedImage.file);
-  const shareText = `${card.model} · ${card.profileLabel} coding-agent benchmark card`;
+  const shareText = `${card.displayTitle} coding-agent benchmark card`;
   const socialLinks = useMemo(() => ({
     bluesky: buildBlueskyShareIntentUrl({ text: shareText, url: canonicalUrl }),
     linkedin: buildLinkedInShareIntentUrl(canonicalUrl),

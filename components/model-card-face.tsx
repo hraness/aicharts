@@ -1,7 +1,6 @@
 import type { CSSProperties } from "react";
 
 import {
-  compactModelCardHarnessLabel,
   type ModelCardPresentation,
   type ModelCardStat,
 } from "@/lib/model-card-presentation";
@@ -26,13 +25,10 @@ export function ModelCardFace({
   card: ModelCardPresentation;
 }>) {
   const serial = `${String(card.cardNumber).padStart(3, "0")} / ${String(card.totalCards).padStart(3, "0")}`;
-  const sourceLabel = `${card.observationCount} ${card.observationCount === 1 ? "config" : "configs"}`;
-  const harnessLabel = compactModelCardHarnessLabel(card.agentNames);
   return (
-    <article
-      aria-label={`${card.model}, ${card.profileLabel} model card`}
+    <div
       className="model-card-face"
-      data-card-class={card.cardClass}
+      data-card-class={card.visualClass}
       style={{ "--model-card-color": card.providerColor } as ModelCardStyle}
     >
       <div aria-hidden="true" className="model-card-face__grain" />
@@ -46,8 +42,8 @@ export function ModelCardFace({
         </header>
 
         <div className="model-card-face__title">
-          <p className="model-card-face__model">{card.model}</p>
-          <p>{card.profileLabel} profile</p>
+          <p className="model-card-face__model">{card.displayTitle}</p>
+          <p className="model-card-face__harness" title={card.agentNames.join(", ")}>{card.harnessLabel}</p>
         </div>
 
         <div className="model-card-face__art" aria-hidden="true">
@@ -75,14 +71,10 @@ export function ModelCardFace({
         </dl>
 
         <footer className="model-card-face__footer">
-          <span className="model-card-face__source">
-            <span>Artificial Analysis · {card.sourceDate}</span>
-            <span title={card.agentNames.join(", ")}>{harnessLabel} · {sourceLabel}</span>
-          </span>
+          <span className="model-card-face__watermark">aicharts.io</span>
           <span>{serial}</span>
         </footer>
-        <p className="model-card-face__watermark">aicharts.io</p>
       </div>
-    </article>
+    </div>
   );
 }
