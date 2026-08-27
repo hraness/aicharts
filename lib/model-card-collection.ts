@@ -22,7 +22,7 @@ if (!parsedSnapshot.ok) {
 }
 
 export const MODEL_CARD_SNAPSHOT = parsedSnapshot.value;
-export const MODEL_CARD_RENDERER_VERSION = "model-card-v3";
+export const MODEL_CARD_RENDERER_VERSION = "model-card-v4";
 export const MODEL_CARD_SNAPSHOT_VERSION = createHash("sha256")
   .update(JSON.stringify(codingAgentData))
   .update("\0")
@@ -41,6 +41,33 @@ export const MODEL_CARD_PRESENTATIONS = MODEL_CARD_VARIANTS.map((variant, index,
 
 export function modelCardRouteStaticParams(): readonly ModelCardRouteParams[] {
   return modelCardStaticParams(MODEL_CARD_VARIANTS);
+}
+
+/** Selects one high-detail, non-ranked heraldic representative per provider. */
+export function modelCardProviderRepresentatives(
+  cards: readonly ModelCardPresentation[] = MODEL_CARD_PRESENTATIONS,
+  limit = 12,
+): readonly ModelCardPresentation[] {
+  if (!Number.isSafeInteger(limit) || limit < 1) {
+    throw new RangeError("Model-card representative limit must be a positive integer.");
+  }
+  const byProvider = new Map<string, ModelCardPresentation>();
+  for (const card of cards) {
+    const selected = byProvider.get(card.providerId);
+    if (
+      selected === undefined
+      || card.illuminationDensity > selected.illuminationDensity
+      || (
+        card.illuminationDensity === selected.illuminationDensity
+        && card.cardNumber < selected.cardNumber
+      )
+    ) {
+      byProvider.set(card.providerId, card);
+    }
+  }
+  return [...byProvider.values()]
+    .sort((left, right) => left.cardNumber - right.cardNumber)
+    .slice(0, limit);
 }
 
 export function versionedModelCardImagePath(

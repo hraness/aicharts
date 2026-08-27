@@ -4,6 +4,7 @@
   aspect-ratio: 5 / 7;
   inline-size: 100%;
   max-inline-size: 25rem;
+  outline: none;
 }
 
 .model-card-face {
@@ -14,12 +15,14 @@
 
   aspect-ratio: 5 / 7;
   background:
-    radial-gradient(circle at 72% 22%, color-mix(in oklch, var(--model-card-color) 34%, transparent), transparent 38%),
-    radial-gradient(circle at 14% 78%, color-mix(in oklch, var(--model-card-secondary) 16%, transparent), transparent 34%),
-    linear-gradient(145deg, color-mix(in oklch, var(--model-card-color) 15%, rgb(19 20 24 / 84%)), rgb(7 8 11 / 86%) 52%, rgb(15 16 20 / 88%));
+    radial-gradient(circle at 76% 18%, color-mix(in oklch, var(--model-card-color) 42%, transparent), transparent 40%),
+    radial-gradient(circle at 10% 82%, color-mix(in oklch, var(--model-card-secondary) 24%, transparent), transparent 36%),
+    linear-gradient(145deg, color-mix(in oklch, var(--model-card-color) 22%, rgb(19 20 24 / 84%)), rgb(7 8 11 / 88%) 52%, rgb(15 16 20 / 90%));
   border: 0;
   border-radius: 1.4rem;
-  box-shadow: none;
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--model-card-color) 24%, rgb(255 255 255 / 15%)),
+    inset 0 0 2.4rem rgb(0 0 0 / 14%);
   color: var(--model-card-ink);
   container-type: inline-size;
   display: block;
@@ -78,12 +81,13 @@
 .model-card-face__provider i {
   background: var(--model-card-color);
   border: 1px solid var(--model-card-secondary);
-  border-radius: 999px;
+  border-radius: 1px;
   box-shadow:
     0 0 10px color-mix(in srgb, var(--model-card-color) 65%, transparent),
     0 0 16px color-mix(in srgb, var(--model-card-secondary) 30%, transparent);
   block-size: 1.8cqi;
   inline-size: 1.8cqi;
+  transform: rotate(45deg);
 }
 
 .model-card-face__model {
@@ -139,7 +143,7 @@
 
 .model-card-illumination {
   display: block;
-  opacity: .94;
+  opacity: .97;
 }
 
 .model-card-face__art img {
@@ -340,6 +344,61 @@
 .model-card-gallery__header a:is(:hover, :focus-visible),
 .model-card-detail__facts a:is(:hover, :focus-visible) { color: var(--foreground); }
 
+.model-card-gallery__legend {
+  align-items: center;
+  border-block: 1px solid var(--grid);
+  color: var(--muted);
+  display: flex;
+  font-size: .72rem;
+  gap: .65rem 1.5rem;
+  justify-content: space-between;
+  margin-block: -1rem clamp(1.5rem, 4vw, 3rem);
+  padding-block: .8rem;
+}
+
+.model-card-gallery__legend :is(p, ul) {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: .45rem 1rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.model-card-gallery__legend strong {
+  color: var(--foreground);
+  font-weight: 700;
+  letter-spacing: -.015em;
+}
+
+.model-card-gallery__legend p span + span::before {
+  content: "·";
+  margin-inline-end: 1rem;
+}
+
+.model-card-gallery__legend li {
+  align-items: center;
+  display: inline-flex;
+  gap: .42rem;
+  white-space: nowrap;
+}
+
+.model-card-gallery__legend li::before {
+  background: var(--legend-ink);
+  block-size: .42rem;
+  border-radius: 1px;
+  box-shadow: 0 0 .45rem color-mix(in srgb, var(--legend-ink) 52%, transparent);
+  content: "";
+  inline-size: .42rem;
+  transform: rotate(45deg);
+}
+
+.model-card-gallery__legend li[data-emblem-ink="standard"] { --legend-ink: #d8c9aa; }
+.model-card-gallery__legend li[data-emblem-ink="fast"] { --legend-ink: #69dce3; }
+.model-card-gallery__legend li[data-emblem-ink="thinking"] { --legend-ink: #ae8bff; }
+.model-card-gallery__legend li[data-emblem-ink="elevated"] { --legend-ink: #f0c96d; }
+
 .model-card-grid {
   display: grid;
   gap: clamp(1rem, 2vw, 1.75rem);
@@ -499,6 +558,7 @@
   .model-cards-nav a[href="/gpt-subsidy"] { display: none; }
   .model-card-gallery__header { align-items: start; flex-direction: column; }
   .model-card-gallery__header > p { text-align: start; }
+  .model-card-gallery__legend { align-items: flex-start; flex-direction: column; }
   .model-card-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .model-card-detail__layout { grid-template-columns: minmax(0, 1fr); }
   .model-card-detail__stage { margin-inline: auto; max-inline-size: 25rem; position: static; width: 100%; }

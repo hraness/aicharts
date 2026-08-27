@@ -18,6 +18,9 @@ import { markdownForPath } from "@/lib/site-markdown";
 const modelsLayoutSource = await Bun.file(
   new URL("./layout.tsx", import.meta.url),
 ).text();
+const modelsPageSource = await Bun.file(
+  new URL("./page.tsx", import.meta.url),
+).text();
 
 describe("public model cards", () => {
   test("keeps model-specific resources without a second site footer", () => {
@@ -56,6 +59,12 @@ describe("public model cards", () => {
       MODEL_CARD_PRESENTATIONS.length,
     );
     expect(markup.match(/<(?:path|ellipse|circle)\b/gu)?.length ?? 0).toBeLessThan(1_250);
+    expect(markup).toContain('aria-label="How to read model card emblems"');
+    expect(markup).toContain("Maker color");
+    expect(markup).toContain("Family seal");
+    expect(markup).toContain("Version marks");
+    expect(markup).toContain("Profile density");
+    expect(markup).toContain("High · X-high · Max");
   });
 
   test("keeps non-standard class context after removing the visible badge", () => {
@@ -112,6 +121,9 @@ describe("public model cards", () => {
     }
     expect(detailMarkup).toContain("Agent harnesses");
     expect(detailMarkup).toContain("Snapshot");
+    expect(detailMarkup).toContain(">Sigil</dt>");
+    expect(detailMarkup).toContain(`${card.emblemIdentity.generation.join(".")} version marks`);
+    expect(detailMarkup).toContain(`density ${card.illuminationDensity}/5`);
     expect(detailMarkup).toContain("model-card-detail__code-token");
     expect(detailMarkup).not.toContain(">Observations<");
     expect(markdown).toContain("Agent harnesses:");
@@ -150,7 +162,7 @@ describe("public model cards", () => {
   test("includes the renderer contract in versioned card artwork URLs", () => {
     const card = MODEL_CARD_PRESENTATIONS[0];
     if (card === undefined) throw new Error("Expected at least one model card.");
-    expect(MODEL_CARD_RENDERER_VERSION).toBe("model-card-v3");
+    expect(MODEL_CARD_RENDERER_VERSION).toBe("model-card-v4");
     expect(versionedModelCardImagePath(card.path, "card.png")).toMatch(
       /\/card\.png\?v=[a-f0-9]{16}$/u,
     );
@@ -184,10 +196,13 @@ describe("public model cards", () => {
     ).text();
 
     expect(stylesheet).toMatch(/\.model-card-grid__link\s*\{[^}]*aspect-ratio:\s*5 \/ 7;[^}]*contain:\s*layout paint style;[^}]*content-visibility:\s*auto;/su);
+    expect(stylesheet).toMatch(/\.model-card-frame\s*\{[^}]*outline:\s*none;/su);
+    expect(stylesheet).toMatch(/\.model-card-grid__link:focus-visible\s*\{[^}]*outline-offset:\s*5px;/su);
     expect(stylesheet).toMatch(/\.model-card-grid__link\s*\{[^}]*contain-intrinsic-block-size:\s*auto 19\.6rem;[^}]*contain-intrinsic-inline-size:\s*auto 14rem;/su);
     expect(stylesheet).toMatch(/@media \(max-width:\s*560px\)[\s\S]*?\.model-card-grid\s*\{[^}]*grid-template-columns:\s*minmax\(0, 25rem\);/u);
     expect(stylesheet).toMatch(/@media \(max-width:\s*430px\)[\s\S]*?\.model-card-frame\s*\{[^}]*--foil-card-radius:\s*\.85rem;/u);
     expect(stylesheet).toMatch(/\.model-card-face dt\s*\{[^}]*font-size:\s*max\(\.625rem, 2\.4cqi\);/su);
     expect(stylesheet).toMatch(/@media \(forced-colors:\s*active\)[\s\S]*?\.model-card-illumination\s*\{[^}]*display:\s*none;/u);
+    expect(modelsPageSource).toContain('path: "/models/opengraph-image"');
   });
 });

@@ -78,7 +78,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
     {
       changeFrequency: "daily",
-      images: [siteImage],
+      images: [absolute("/models/opengraph-image")],
       lastModified: datasetModifiedAt,
       priority: 0.9,
       url: absolute("/models"),

@@ -18,6 +18,13 @@ const settingRank = new Map(settings.map((setting, index) => [setting, index + 1
 const syntheticCatalog = [{
   aliases: ["provider_model-prime"],
   canonicalModelId: "creator/model-prime",
+  emblemIdentity: {
+    editionId: "base",
+    familyId: "model-prime",
+    generation: ["1"],
+    revision: null,
+    role: "general",
+  },
   gatewayModelId: "creator/model-prime",
   intrinsicClass: "standard",
   lobeIconKey: "openai",
@@ -191,8 +198,17 @@ test("property: unknown upstream identities get bounded unique deterministic rou
       expect(variant.path.length).toBeLessThanOrEqual(100);
       expect(variant.gatewayModelId).toBeNull();
       expect(variant.lobeIconKey).toBeNull();
+      expect(variant.emblemIdentity.revision).toMatch(/^[a-f0-9]{24}$/u);
+      expect(variant.emblemIdentity.generation.length).toBeGreaterThan(0);
+      expect(variant.emblemIdentity.familyId).toMatch(
+        /^[a-z0-9]+(?:[.-][a-z0-9]+)*$/u,
+      );
       expect(parseModelCardPath(variant.path).ok).toBe(true);
     }
+    expect(new Set(forward.map(variant => JSON.stringify([
+      variant.providerId,
+      variant.emblemIdentity,
+    ]))).size).toBe(forward.length);
   }));
 });
 

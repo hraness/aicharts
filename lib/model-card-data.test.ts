@@ -133,6 +133,47 @@ describe("model-card catalog boundary", () => {
     );
   });
 
+  test("owns a distinct hierarchical emblem identity for every catalog model", () => {
+    const emblemKeys = MODEL_CARD_CATALOG.map(entry => JSON.stringify([
+      entry.providerId,
+      entry.emblemIdentity.familyId,
+      entry.emblemIdentity.generation,
+      entry.emblemIdentity.revision,
+      entry.emblemIdentity.editionId,
+      entry.emblemIdentity.role,
+    ]));
+    expect(new Set(emblemKeys).size).toBe(MODEL_CARD_CATALOG.length);
+
+    const opus48 = resolveModelCardCatalogEntry("anthropic/claude-opus-4.8");
+    const opus5 = resolveModelCardCatalogEntry("anthropic/claude-opus-5");
+    expect(opus48?.emblemIdentity).toEqual({
+      editionId: "base",
+      familyId: "opus",
+      generation: ["4", "8"],
+      revision: null,
+      role: "flagship",
+    });
+    expect(opus5?.emblemIdentity).toMatchObject({
+      editionId: "base",
+      familyId: "opus",
+      generation: ["5"],
+      role: "flagship",
+    });
+
+    const gpt56 = MODEL_CARD_CATALOG.filter(entry => (
+      entry.providerId === "openai"
+      && entry.emblemIdentity.generation.join(".") === "5.6"
+    ));
+    expect(gpt56.map(entry => entry.emblemIdentity.editionId).sort()).toEqual([
+      "luna",
+      "sol",
+      "terra",
+    ]);
+    expect(new Set(gpt56.map(entry => entry.emblemIdentity.familyId))).toEqual(
+      new Set(["gpt"]),
+    );
+  });
+
   test("rejects unknown fields, malformed IDs, and duplicate identities", () => {
     const first = modelCardCatalogData[0];
     const second = modelCardCatalogData[1];
@@ -147,6 +188,35 @@ describe("model-card catalog boundary", () => {
     expect(parseModelCardCatalog([first, {
       ...second,
       model: first.model,
+    }]).ok).toBe(false);
+  });
+
+  test("rejects missing, malformed, and duplicate emblem identities", () => {
+    const first = modelCardCatalogData[0];
+    const second = modelCardCatalogData[1];
+    if (first === undefined || second === undefined) {
+      throw new Error("Expected checked catalog fixtures.");
+    }
+    const missingIdentity = Object.fromEntries(
+      Object.entries(first).filter(([field]) => field !== "emblemIdentity"),
+    );
+
+    expect(parseModelCardCatalog([missingIdentity]).ok).toBe(false);
+    expect(parseModelCardCatalog([{
+      ...first,
+      emblemIdentity: { ...first.emblemIdentity, familyId: "Not route safe" },
+    }]).ok).toBe(false);
+    expect(parseModelCardCatalog([{
+      ...first,
+      emblemIdentity: { ...first.emblemIdentity, generation: [] },
+    }]).ok).toBe(false);
+    expect(parseModelCardCatalog([{
+      ...first,
+      emblemIdentity: { ...first.emblemIdentity, role: "royal" },
+    }]).ok).toBe(false);
+    expect(parseModelCardCatalog([first, {
+      ...second,
+      emblemIdentity: first.emblemIdentity,
     }]).ok).toBe(false);
   });
 
@@ -309,6 +379,13 @@ describe("model-card variants", () => {
     const [variant] = buildModelCardVariants([corrected]);
     expect(variant).toMatchObject({
       canonicalModelId: "openai/gpt-5.6-sol",
+      emblemIdentity: {
+        editionId: "sol",
+        familyId: "gpt",
+        generation: ["5", "6"],
+        revision: null,
+        role: "flagship",
+      },
       gatewayModelId: "openai/gpt-5.6-sol",
       model: "GPT 5.6 Sol",
       path: "/models/openai/gpt-5.6-sol/max",
@@ -393,7 +470,48 @@ describe("model-card variants", () => {
     ))).toBe(true);
     expect(unknownVariants.every(variant => variant.gatewayModelId === null)).toBe(true);
     expect(unknownVariants.every(variant => variant.lobeIconKey === "openai")).toBe(true);
+    expect(unknownVariants.every(variant => (
+      variant.emblemIdentity.familyId === "model-a"
+      && variant.emblemIdentity.generation[0] === "unlisted"
+      && variant.emblemIdentity.revision !== null
+    ))).toBe(true);
     expect(buildModelCardVariants([...unknownRecords].reverse())).toEqual(unknownVariants);
+  });
+
+  test("heuristically relates unlisted versions while keeping their emblems distinct", () => {
+    const unlisted = [
+      fixtureRecord({
+        id: "unlisted-fast-a",
+        model: "Aurora 7.2 Fast",
+        modelLabel: "Aurora 7.2 Fast",
+        providerId: "new_lab",
+        providerName: "New Lab",
+        seriesId: "Agent:aurora-fast-a",
+      }),
+      fixtureRecord({
+        id: "unlisted-fast-b",
+        model: "Aurora 7.3 Fast",
+        modelLabel: "Aurora 7.3 Fast",
+        providerId: "new_lab",
+        providerName: "New Lab",
+        seriesId: "Agent:aurora-fast-b",
+      }),
+    ];
+    const built = buildModelCardVariants(unlisted);
+
+    expect(built.map(variant => variant.emblemIdentity.familyId)).toEqual([
+      "aurora",
+      "aurora",
+    ]);
+    expect(built.map(variant => variant.emblemIdentity.generation)).toEqual([
+      ["7", "2"],
+      ["7", "3"],
+    ]);
+    expect(built.every(variant => (
+      variant.emblemIdentity.editionId === "fast"
+      && variant.emblemIdentity.role === "speed"
+    ))).toBe(true);
+    expect(new Set(built.map(variant => variant.emblemIdentity.revision)).size).toBe(2);
   });
 
   test("keeps a complete range object even when a metric has no observation", () => {

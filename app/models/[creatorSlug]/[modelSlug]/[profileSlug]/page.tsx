@@ -26,6 +26,12 @@ export function generateStaticParams() {
   return [...modelCardRouteStaticParams()];
 }
 
+function emblemTerm(value: string): string {
+  return value.split("-").filter(Boolean).map(term => (
+    term.charAt(0).toLocaleUpperCase("en-US") + term.slice(1)
+  )).join(" ");
+}
+
 export async function generateMetadata({
   params,
 }: Readonly<{ params: Promise<ModelCardRouteParams> }>): Promise<Metadata> {
@@ -85,7 +91,7 @@ export default async function ModelCardPage({
         </section>
         <div className="model-card-detail__copy">
           <header>
-            <p>{card.providerName} · {card.classLabel}</p>
+            <p>{card.providerName}</p>
             <h1>{card.displayTitle}</h1>
             <p>{card.harnessLabel}</p>
           </header>
@@ -115,6 +121,16 @@ export default async function ModelCardPage({
                 </dd>
               </div>
               <div><dt>Profile</dt><dd><code className="model-card-detail__code-token">{card.profileSlug}</code></dd></div>
+              <div>
+                <dt>Sigil</dt>
+                <dd>
+                  {card.providerName} court
+                  {" · "}{emblemTerm(card.emblemIdentity.familyId)} family seal
+                  {" · "}{card.emblemIdentity.generation.join(".")} version marks
+                  {" · "}{emblemTerm(card.emblemIdentity.editionId)} edition
+                  {" · "}density {card.illuminationDensity}/5
+                </dd>
+              </div>
               <div>
                 <dt>{card.agentNames.length === 1 ? "Agent harness" : "Agent harnesses"}</dt>
                 <dd>

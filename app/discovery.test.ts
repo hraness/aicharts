@@ -35,8 +35,11 @@ describe("public search discovery", () => {
     expect(entries.find(entry => entry.url.endsWith("/gpt-subsidy"))?.lastModified)
       .toBe(gptSubsidyPageModifiedAt(subsidy.value));
     const cardEntries = entries.filter(entry => entry.url.includes("/models/"));
-    expect(entries.find(entry => entry.url.endsWith("/models"))?.lastModified)
-      .toBe(modifiedAt);
+    const modelsEntry = entries.find(entry => entry.url.endsWith("/models"));
+    expect(modelsEntry?.lastModified).toBe(modifiedAt);
+    expect(modelsEntry?.images).toEqual([
+      "https://aicharts.io/models/opengraph-image",
+    ]);
     expect(cardEntries).toHaveLength(indexableModelCards().length);
     expect(cardEntries.every(entry => entry.lastModified === modifiedAt)).toBe(true);
     expect(cardEntries.every(entry => entry.images?.length === 1)).toBe(true);
