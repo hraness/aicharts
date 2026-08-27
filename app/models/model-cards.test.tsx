@@ -22,6 +22,9 @@ const modelsLayoutSource = await Bun.file(
 const modelsPageSource = await Bun.file(
   new URL("./page.tsx", import.meta.url),
 ).text();
+const modelCardsStyles = await Bun.file(
+  new URL("../../styles/model-cards.css", import.meta.url),
+).text();
 
 describe("public model cards", () => {
   function cardSpeckTransform(card: (typeof MODEL_CARD_PRESENTATIONS)[number]): string {
@@ -42,11 +45,33 @@ describe("public model cards", () => {
   }
 
   test("keeps model-specific resources without a second site footer", () => {
+    expect(modelsLayoutSource).toContain("<TopBar");
+    expect(modelsLayoutSource).toContain('className="model-cards-header"');
     expect(modelsLayoutSource).toContain('aria-label="Model card resources"');
-    expect(modelsLayoutSource).toContain("Icons by LobeHub");
+    expect(modelsLayoutSource).toContain('className="model-cards-footer__links"');
     expect(modelsLayoutSource).toContain("Data and method");
+    expect(modelsLayoutSource).not.toContain("Icons by LobeHub");
+    expect(modelsLayoutSource).not.toContain("lobehub.com/icons");
     expect(modelsLayoutSource).not.toContain("<footer");
     expect(modelsLayoutSource).not.toContain("HranessBrand");
+  });
+
+  test("uses named collision-proof header and resource-link contracts", () => {
+    const footerLinks = modelCardsStyles.match(
+      /\.model-cards-footer__links\s*\{(?<body>[^}]*)\}/u,
+    )?.groups?.body ?? "";
+
+    expect(footerLinks).toContain("display: flex");
+    expect(footerLinks).toContain("flex-wrap: wrap");
+    expect(footerLinks).toContain("gap: .25rem .85rem");
+    expect(footerLinks).toContain("min-inline-size: 0");
+    expect(modelCardsStyles).not.toContain(".model-cards-footer > div");
+    expect(modelCardsStyles).not.toContain("align-items: flex-start; padding-block: .8rem");
+    expect(modelCardsStyles).toContain("--ui-top-bar-min-block-size: var(--model-cards-header-block-size)");
+    expect(modelCardsStyles).toContain("top: calc(var(--model-cards-header-block-size) + 1.5rem)");
+    expect(modelCardsStyles).toContain("scroll-margin-block-start: calc(var(--model-cards-sticky-offset) + .75rem)");
+    expect(modelCardsStyles).toMatch(/@media \(max-width:\s*720px\)[\s\S]*?\.model-cards-nav \.model-cards-nav__optional-link\s*\{\s*display:\s*none;/u);
+    expect(modelCardsStyles).toMatch(/@media \(max-width:\s*720px\)[\s\S]*?\.model-card-detail__stage\s*\{[^}]*position:\s*static;/u);
   });
 
   test("renders every cataloged or provisional profile through one unique route", () => {

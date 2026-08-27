@@ -1,4 +1,4 @@
-import { SkipLink, ThemeMenuButton } from "@/components/ui";
+import { SkipLink, ThemeMenuButton, TopBar } from "@/components/ui";
 import { chatGptSubsidyChartLabel } from "@/app/site";
 import Link from "next/link";
 import type { ReactNode } from "react";
@@ -7,24 +7,28 @@ export default function ModelsLayout({ children }: Readonly<{ children: ReactNod
   return (
     <div className="model-cards-site">
       <SkipLink href="#model-cards-content">Skip to model cards</SkipLink>
-      <header className="model-cards-header">
-        <Link className="model-cards-wordmark" href="/">aicharts.io</Link>
-        <div className="model-cards-header__actions">
-          <nav aria-label="Model card navigation" className="model-cards-nav">
-            <Link href="/">Home</Link>
-            <Link aria-current="page" href="/models">Cards</Link>
-            <Link href="/data">Data</Link>
-            <Link href="/blog">Blog</Link>
-            <Link href="/gpt-subsidy">{chatGptSubsidyChartLabel}</Link>
-          </nav>
-          <ThemeMenuButton aria-label="Model card appearance" />
-        </div>
-      </header>
+      <TopBar
+        actions={(
+          <>
+            <nav aria-label="Model card navigation" className="model-cards-nav">
+              <Link href="/">Home</Link>
+              <Link aria-current="page" href="/models">Cards</Link>
+              <Link href="/data">Data</Link>
+              <Link href="/blog">Blog</Link>
+              <Link className="model-cards-nav__optional-link" href="/gpt-subsidy">
+                {chatGptSubsidyChartLabel}
+              </Link>
+            </nav>
+            <ThemeMenuButton aria-label="Model card appearance" />
+          </>
+        )}
+        className="model-cards-header"
+        title={<Link className="model-cards-wordmark" href="/">aicharts.io</Link>}
+      />
       {children}
       <aside aria-label="Model card resources" className="model-cards-footer">
         <p>aicharts.io</p>
-        <nav aria-label="Model card links">
-          <a href="https://lobehub.com/icons" rel="noopener noreferrer" target="_blank">Icons by LobeHub</a>
+        <nav aria-label="Model card links" className="model-cards-footer__links">
           <Link href="/data">Data and method</Link>
         </nav>
       </aside>

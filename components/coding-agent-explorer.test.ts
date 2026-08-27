@@ -92,6 +92,19 @@ test("keeps the header compact without a standalone provenance action", async ()
   expect(source).not.toContain('className="chart-data-status"');
 });
 
+test("keeps server-rendered opening content in flow below the sticky header", async () => {
+  const source = await Bun.file(new URL("./coding-agent-explorer.tsx", import.meta.url)).text();
+  const topBarIndex = source.indexOf("<TopBar");
+  const pageCanvasIndex = source.indexOf("<PageCanvas", topBarIndex);
+  const childrenIndex = source.indexOf("{children}", pageCanvasIndex);
+  const chartHeaderIndex = source.indexOf('<header className="chart-header">', pageCanvasIndex);
+
+  expect(source).toContain("children: ReactNode");
+  expect(pageCanvasIndex).toBeGreaterThan(topBarIndex);
+  expect(childrenIndex).toBeGreaterThan(pageCanvasIndex);
+  expect(chartHeaderIndex).toBeGreaterThan(childrenIndex);
+});
+
 test("links the latest data-derived update badge to the bottom timeline", async () => {
   const source = await Bun.file(new URL("./coding-agent-explorer.tsx", import.meta.url)).text();
   const badgeIndex = source.indexOf('className="latest-update-badge chart-selection-boundary"');

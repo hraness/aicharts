@@ -270,10 +270,19 @@ export function PageCanvas({
 export function TopBar({
   actions,
   className = "",
+  isSticky = true,
   title,
-}: Readonly<{ actions?: ReactNode; className?: string; title: ReactNode }>) {
+}: Readonly<{
+  actions?: ReactNode;
+  className?: string;
+  isSticky?: boolean;
+  title: ReactNode;
+}>) {
   return (
-    <header className={`ui-top-bar ${className}`.trim()}>
+    <header
+      className={`ui-top-bar ${className}`.trim()}
+      data-sticky={isSticky || undefined}
+    >
       <div className="ui-top-bar__title">{title}</div>
       {actions !== undefined && <div className="ui-top-bar__actions">{actions}</div>}
     </header>
@@ -482,14 +491,16 @@ export function RangePlotChart({
 
 export function LinkButton({
   children,
+  className = "",
   href,
 }: Readonly<{
   children: ReactNode;
+  className?: string;
   href: string;
   size?: "compact";
   variant?: "quiet";
 }>) {
-  return <a className="ui-link-button" href={href}>{children}</a>;
+  return <a className={`ui-link-button ${className}`.trim()} href={href}>{children}</a>;
 }
 
 export function SkipLink({ children, href }: Readonly<{ children: ReactNode; href: string }>) {

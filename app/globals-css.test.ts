@@ -83,7 +83,7 @@ test("provider filtering uses one responsive edge inset", () => {
 
 test("compact chart chrome shares the 12px design inset", () => {
   expect(stylesheet).toContain("--chart-compact-inset: var(--space-3, 0.75rem)");
-  expect(stylesheet).toMatch(/@media \(max-width:\s*760px\)[\s\S]*?\.chart-top-bar\s*\{[^}]*padding-inline:\s*var\(--chart-compact-inset\);/u);
+  expect(stylesheet).toMatch(/@media \(max-width:\s*760px\)[\s\S]*?\.chart-top-bar\s*\{[^}]*--ui-top-bar-inline-padding:\s*var\(--chart-compact-inset\);/u);
   expect(stylesheet).toMatch(/@media \(max-width:\s*760px\)[\s\S]*?\.chart-header\s*\{[^}]*padding:\s*var\(--chart-compact-inset\) var\(--chart-compact-inset\) 12px;/u);
   expect(firstRule(".chart-metric-controls")).toContain("padding: 6px var(--chart-content-inset)");
   expect(stylesheet).toMatch(/@media \(max-width:\s*760px\)[\s\S]*?\.chart-resource-nav\s*\{[^}]*padding:\s*10px var\(--chart-compact-inset\) max\(var\(--space-4\), env\(safe-area-inset-bottom\)\);/u);
@@ -106,6 +106,34 @@ test("homepage leaders stay visible above the chart", () => {
   expect(stylesheet).not.toContain(".home-leaders h1");
   expect(stylesheet).not.toContain(".home-leaders h2");
   expect(stylesheet).not.toContain(".home-leaders p");
+});
+
+test("shared top bars reserve sticky flow and cannot starve their title", () => {
+  const topBar = firstRule(".ui-top-bar");
+  const sticky = firstRule(".ui-top-bar[data-sticky]");
+  const title = firstRule(".ui-top-bar__title");
+  const actions = firstRule(".ui-top-bar__actions");
+
+  expect(topBar).toContain("background: var(--background)");
+  expect(topBar).toContain("grid-template-columns: minmax(0, max-content) minmax(0, 1fr)");
+  expect(topBar).toContain("isolation: isolate");
+  expect(topBar).toContain("padding-block: var(--ui-top-bar-block-padding, .5rem)");
+  expect(sticky).toContain("position: sticky");
+  expect(sticky).toContain("inset-block-start: 0");
+  expect(title).toContain("min-inline-size: 0");
+  expect(title).toContain("max-inline-size: min(42vw, 28rem)");
+  expect(title).toContain("overflow: hidden");
+  expect(title).toContain("text-overflow: ellipsis");
+  expect(title).toContain("overflow-wrap: normal");
+  expect(title).toContain("white-space: nowrap");
+  expect(actions).toContain("flex-wrap: wrap");
+  expect(actions).toContain("min-inline-size: 0");
+  expect(stylesheet).toMatch(/@media \(max-width:\s*520px\)[\s\S]*?\.ui-top-bar\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\);/u);
+  expect(stylesheet).toMatch(/@media \(max-width:\s*520px\)[\s\S]*?\.chart-top-bar__optional-action\s*\{[^}]*display:\s*none;/u);
+  expect(stylesheet).toMatch(/@media \(hover:\s*none\), \(pointer:\s*coarse\)[\s\S]*?\.ui-top-bar :is\(a, button\)[\s\S]*?min-block-size:\s*var\(--interactive-target-min\);/u);
+  expect(firstRule(".chart-top-bar")).not.toContain("position: sticky");
+  expect(firstRule(".chart-page-canvas")).toContain("scroll-margin-block-start: var(--chart-sticky-header-block-size)");
+  expect(firstRule(".model-update-timeline")).toContain("scroll-margin-block-start: calc(var(--chart-sticky-header-block-size) + .75rem)");
 });
 
 test("the subsidy plot fits its shell without forced scrolling or colliding axis chrome", () => {
@@ -171,6 +199,8 @@ test("chart guidance does not reserve a help row or card stack", () => {
 test("the chart declares only horizontal scrolling", () => {
   expect(firstRule(".chart-scroll")).toContain("overflow-x: auto");
   expect(firstRule(".chart-scroll")).not.toContain("overflow-y:");
+  expect(firstRule(".chart-app")).toContain("grid-template-columns: minmax(0, 1fr)");
+  expect(firstRule(".chart-app")).toContain("grid-template-rows: auto minmax(0, 1fr)");
   expect(firstRule(".chart-app")).toContain("overflow-x: clip");
   expect(firstRule(".chart-page-canvas")).toContain("overflow-x: clip");
   expect(firstRule(".chart-scroll")).toContain("max-width: 100%");
