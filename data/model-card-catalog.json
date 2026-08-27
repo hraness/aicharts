@@ -3,6 +3,13 @@
     "providerId": "alibaba_cloud",
     "model": "Qwen3.7 Plus (thinking)",
     "canonicalModelId": "alibaba/qwen3.7-plus",
+    "emblemIdentity": {
+      "familyId": "qwen",
+      "generation": ["3", "7"],
+      "revision": null,
+      "editionId": "plus",
+      "role": "reasoning"
+    },
     "gatewayModelId": "alibaba/qwen3.7-plus",
     "lobeIconKey": "alibabacloud",
     "intrinsicClass": "thinking",
@@ -12,6 +19,13 @@
     "providerId": "alibaba_cloud",
     "model": "Qwen3.8 Max",
     "canonicalModelId": "alibaba/qwen3.8-max",
+    "emblemIdentity": {
+      "familyId": "qwen",
+      "generation": ["3", "8"],
+      "revision": null,
+      "editionId": "max",
+      "role": "flagship"
+    },
     "gatewayModelId": "alibaba/qwen3.8-max",
     "lobeIconKey": "alibabacloud",
     "intrinsicClass": "max",
@@ -21,6 +35,13 @@
     "providerId": "anthropic",
     "model": "Fable 5 (with fallback)",
     "canonicalModelId": "anthropic/claude-fable-5",
+    "emblemIdentity": {
+      "familyId": "fable",
+      "generation": ["5"],
+      "revision": null,
+      "editionId": "base",
+      "role": "general"
+    },
     "gatewayModelId": "anthropic/claude-fable-5",
     "lobeIconKey": "claude",
     "intrinsicClass": "fallback",
@@ -30,6 +51,13 @@
     "providerId": "anthropic",
     "model": "Opus 4.6",
     "canonicalModelId": "anthropic/claude-opus-4.6",
+    "emblemIdentity": {
+      "familyId": "opus",
+      "generation": ["4", "6"],
+      "revision": null,
+      "editionId": "base",
+      "role": "flagship"
+    },
     "gatewayModelId": "anthropic/claude-opus-4.6",
     "lobeIconKey": "claude",
     "intrinsicClass": "standard",
@@ -39,6 +67,13 @@
     "providerId": "anthropic",
     "model": "Opus 4.7",
     "canonicalModelId": "anthropic/claude-opus-4.7",
+    "emblemIdentity": {
+      "familyId": "opus",
+      "generation": ["4", "7"],
+      "revision": null,
+      "editionId": "base",
+      "role": "flagship"
+    },
     "gatewayModelId": "anthropic/claude-opus-4.7",
     "lobeIconKey": "claude",
     "intrinsicClass": "standard",
@@ -48,6 +83,13 @@
     "providerId": "anthropic",
     "model": "Opus 4.8",
     "canonicalModelId": "anthropic/claude-opus-4.8",
+    "emblemIdentity": {
+      "familyId": "opus",
+      "generation": ["4", "8"],
+      "revision": null,
+      "editionId": "base",
+      "role": "flagship"
+    },
     "gatewayModelId": "anthropic/claude-opus-4.8",
     "lobeIconKey": "claude",
     "intrinsicClass": "standard",
@@ -60,6 +102,13 @@
     "providerId": "anthropic",
     "model": "Opus 5",
     "canonicalModelId": "anthropic/claude-opus-5",
+    "emblemIdentity": {
+      "familyId": "opus",
+      "generation": ["5"],
+      "revision": null,
+      "editionId": "base",
+      "role": "flagship"
+    },
     "gatewayModelId": "anthropic/claude-opus-5",
     "lobeIconKey": "claude",
     "intrinsicClass": "standard",
@@ -73,6 +122,13 @@
     "providerId": "anthropic",
     "model": "Sonnet 4.6",
     "canonicalModelId": "anthropic/claude-sonnet-4.6",
+    "emblemIdentity": {
+      "familyId": "sonnet",
+      "generation": ["4", "6"],
+      "revision": null,
+      "editionId": "base",
+      "role": "general"
+    },
     "gatewayModelId": "anthropic/claude-sonnet-4.6",
     "lobeIconKey": "claude",
     "intrinsicClass": "standard",
@@ -82,6 +138,13 @@
     "providerId": "cursor",
     "model": "Composer 2",
     "canonicalModelId": "cursor/composer-2",
+    "emblemIdentity": {
+      "familyId": "composer",
+      "generation": ["2"],
+      "revision": null,
+      "editionId": "base",
+      "role": "general"
+    },
     "gatewayModelId": null,
     "lobeIconKey": "cursor",
     "intrinsicClass": "standard",
@@ -91,6 +154,13 @@
     "providerId": "cursor",
     "model": "Composer 2.5",
     "canonicalModelId": "cursor/composer-2.5",
+    "emblemIdentity": {
+      "familyId": "composer",
+      "generation": ["2", "5"],
+      "revision": null,
+      "editionId": "base",
+      "role": "general"
+    },
     "gatewayModelId": null,
     "lobeIconKey": "cursor",
     "intrinsicClass": "standard",
@@ -100,6 +170,13 @@
     "providerId": "cursor",
     "model": "Composer 2.5 Fast",
     "canonicalModelId": "cursor/composer-2.5-fast",
+    "emblemIdentity": {
+      "familyId": "composer",
+      "generation": ["2", "5"],
+      "revision": null,
+      "editionId": "fast",
+      "role": "speed"
+    },
     "gatewayModelId": null,
     "lobeIconKey": "cursor",
     "intrinsicClass": "fast",
@@ -109,6 +186,13 @@
     "providerId": "deepseek",
     "model": "DeepSeek V4 Flash",
     "canonicalModelId": "deepseek/deepseek-v4-flash-0731",
+    "emblemIdentity": {
+      "familyId": "deepseek-v",
+      "generation": ["4"],
+      "revision": "0731",
+      "editionId": "flash",
+      "role": "speed"
+    },
     "gatewayModelId": "deepseek/deepseek-v4-flash-0731",
     "lobeIconKey": "deepseek",
     "intrinsicClass": "fast",
@@ -118,6 +202,13 @@
     "providerId": "deepseek",
     "model": "DeepSeek V4 Pro",
     "canonicalModelId": "deepseek/deepseek-v4-pro",
+    "emblemIdentity": {
+      "familyId": "deepseek-v",
+      "generation": ["4"],
+      "revision": null,
+      "editionId": "pro",
+      "role": "flagship"
+    },
     "gatewayModelId": "deepseek/deepseek-v4-pro",
     "lobeIconKey": "deepseek",
     "intrinsicClass": "standard",
@@ -127,6 +218,13 @@
     "providerId": "google",
     "model": "Gemini 3.1 Pro",
     "canonicalModelId": "google/gemini-3.1-pro",
+    "emblemIdentity": {
+      "familyId": "gemini",
+      "generation": ["3", "1"],
+      "revision": null,
+      "editionId": "pro",
+      "role": "flagship"
+    },
     "gatewayModelId": null,
     "lobeIconKey": "gemini",
     "intrinsicClass": "standard",
@@ -136,6 +234,13 @@
     "providerId": "google",
     "model": "Gemini 3.6 Flash",
     "canonicalModelId": "google/gemini-3.6-flash",
+    "emblemIdentity": {
+      "familyId": "gemini",
+      "generation": ["3", "6"],
+      "revision": null,
+      "editionId": "flash",
+      "role": "speed"
+    },
     "gatewayModelId": "google/gemini-3.6-flash",
     "lobeIconKey": "gemini",
     "intrinsicClass": "fast",
@@ -145,6 +250,13 @@
     "providerId": "google",
     "model": "Gemini 3.7 Flash",
     "canonicalModelId": "google/gemini-3.7-flash",
+    "emblemIdentity": {
+      "familyId": "gemini",
+      "generation": ["3", "7"],
+      "revision": null,
+      "editionId": "flash",
+      "role": "speed"
+    },
     "gatewayModelId": "google/gemini-3.7-flash",
     "lobeIconKey": "gemini",
     "intrinsicClass": "fast",
@@ -154,6 +266,13 @@
     "providerId": "meta",
     "model": "Muse Spark 1.1",
     "canonicalModelId": "meta/muse-spark-1.1",
+    "emblemIdentity": {
+      "familyId": "muse-spark",
+      "generation": ["1", "1"],
+      "revision": null,
+      "editionId": "base",
+      "role": "general"
+    },
     "gatewayModelId": "meta/muse-spark-1.1",
     "lobeIconKey": "meta",
     "intrinsicClass": "standard",
@@ -163,6 +282,13 @@
     "providerId": "meta",
     "model": "Muse Spark 1.2",
     "canonicalModelId": "meta/muse-spark-1.2",
+    "emblemIdentity": {
+      "familyId": "muse-spark",
+      "generation": ["1", "2"],
+      "revision": null,
+      "editionId": "base",
+      "role": "general"
+    },
     "gatewayModelId": "meta/muse-spark-1.2",
     "lobeIconKey": "meta",
     "intrinsicClass": "standard",
@@ -175,6 +301,13 @@
     "providerId": "moonshot_ai",
     "model": "Kimi K2.6",
     "canonicalModelId": "moonshotai/kimi-k2.6",
+    "emblemIdentity": {
+      "familyId": "kimi-k",
+      "generation": ["2", "6"],
+      "revision": null,
+      "editionId": "base",
+      "role": "flagship"
+    },
     "gatewayModelId": "moonshotai/kimi-k2.6",
     "lobeIconKey": "moonshot",
     "intrinsicClass": "standard",
@@ -184,6 +317,13 @@
     "providerId": "moonshot_ai",
     "model": "Kimi K3",
     "canonicalModelId": "moonshotai/kimi-k3",
+    "emblemIdentity": {
+      "familyId": "kimi-k",
+      "generation": ["3"],
+      "revision": null,
+      "editionId": "base",
+      "role": "flagship"
+    },
     "gatewayModelId": "moonshotai/kimi-k3",
     "lobeIconKey": "moonshot",
     "intrinsicClass": "standard",
@@ -193,6 +333,13 @@
     "providerId": "openai",
     "model": "GPT-5.4",
     "canonicalModelId": "openai/gpt-5.4",
+    "emblemIdentity": {
+      "familyId": "gpt",
+      "generation": ["5", "4"],
+      "revision": null,
+      "editionId": "base",
+      "role": "flagship"
+    },
     "gatewayModelId": "openai/gpt-5.4",
     "lobeIconKey": "openai",
     "intrinsicClass": "standard",
@@ -202,6 +349,13 @@
     "providerId": "openai",
     "model": "GPT-5.5",
     "canonicalModelId": "openai/gpt-5.5",
+    "emblemIdentity": {
+      "familyId": "gpt",
+      "generation": ["5", "5"],
+      "revision": null,
+      "editionId": "base",
+      "role": "flagship"
+    },
     "gatewayModelId": "openai/gpt-5.5",
     "lobeIconKey": "openai",
     "intrinsicClass": "standard",
@@ -214,6 +368,13 @@
     "providerId": "openai",
     "model": "GPT-5.6 Luna",
     "canonicalModelId": "openai/gpt-5.6-luna",
+    "emblemIdentity": {
+      "familyId": "gpt",
+      "generation": ["5", "6"],
+      "revision": null,
+      "editionId": "luna",
+      "role": "speed"
+    },
     "gatewayModelId": "openai/gpt-5.6-luna",
     "lobeIconKey": "openai",
     "intrinsicClass": "standard",
@@ -223,6 +384,13 @@
     "providerId": "openai",
     "model": "GPT-5.6 Sol",
     "canonicalModelId": "openai/gpt-5.6-sol",
+    "emblemIdentity": {
+      "familyId": "gpt",
+      "generation": ["5", "6"],
+      "revision": null,
+      "editionId": "sol",
+      "role": "flagship"
+    },
     "gatewayModelId": "openai/gpt-5.6-sol",
     "lobeIconKey": "openai",
     "intrinsicClass": "standard",
@@ -232,6 +400,13 @@
     "providerId": "openai",
     "model": "GPT-5.6 Terra",
     "canonicalModelId": "openai/gpt-5.6-terra",
+    "emblemIdentity": {
+      "familyId": "gpt",
+      "generation": ["5", "6"],
+      "revision": null,
+      "editionId": "terra",
+      "role": "general"
+    },
     "gatewayModelId": "openai/gpt-5.6-terra",
     "lobeIconKey": "openai",
     "intrinsicClass": "standard",
@@ -241,6 +416,13 @@
     "providerId": "xai",
     "model": "Grok 4.5",
     "canonicalModelId": "spacexai/grok-4.5",
+    "emblemIdentity": {
+      "familyId": "grok",
+      "generation": ["4", "5"],
+      "revision": null,
+      "editionId": "base",
+      "role": "flagship"
+    },
     "gatewayModelId": "spacexai/grok-4.5",
     "lobeIconKey": "xai",
     "intrinsicClass": "standard",
@@ -250,6 +432,13 @@
     "providerId": "z_ai",
     "model": "GLM-5.1",
     "canonicalModelId": "zai/glm-5.1",
+    "emblemIdentity": {
+      "familyId": "glm",
+      "generation": ["5", "1"],
+      "revision": null,
+      "editionId": "base",
+      "role": "flagship"
+    },
     "gatewayModelId": "zai/glm-5.1",
     "lobeIconKey": "zai",
     "intrinsicClass": "standard",
@@ -259,6 +448,13 @@
     "providerId": "z_ai",
     "model": "GLM-5.2",
     "canonicalModelId": "zai/glm-5.2",
+    "emblemIdentity": {
+      "familyId": "glm",
+      "generation": ["5", "2"],
+      "revision": null,
+      "editionId": "base",
+      "role": "flagship"
+    },
     "gatewayModelId": "zai/glm-5.2",
     "lobeIconKey": "zai",
     "intrinsicClass": "standard",

@@ -2,10 +2,19 @@ import { describe, expect, test } from "bun:test";
 import { ImageResponse } from "next/og";
 import { renderToStaticMarkup } from "react-dom/server";
 
-import { MODEL_CARD_PRESENTATIONS } from "@/lib/model-card-collection";
+import {
+  MODEL_CARD_COLLECTION_CREST_LIMIT,
+  MODEL_CARD_PRESENTATIONS,
+  modelCardProviderCount,
+  modelCardProviderRepresentatives,
+} from "@/lib/model-card-collection";
 import { modelCardProviderColors } from "@/lib/model-card-art-direction";
 
-import { ModelCardRasterFace, ModelCardSocialImage } from "./model-card-image";
+import {
+  ModelCardCollectionSocialImage,
+  ModelCardRasterFace,
+  ModelCardSocialImage,
+} from "./model-card-image";
 
 function pngDimensions(bytes: ArrayBuffer): Readonly<{ height: number; width: number }> {
   const view = new DataView(bytes);
@@ -31,6 +40,12 @@ describe("model card ImageResponse rendering", () => {
       expect(markup).not.toMatch(/\bconfigs?\b/iu);
       expect(markup).not.toContain("benchmark profile");
     }
+    for (const stat of [...card.performance, ...card.economics]) {
+      expect(social).toContain(`>${stat.label}</span>`);
+      expect(social).toContain(`>${stat.value}</span>`);
+    }
+    expect(social.match(/data:image\/svg\+xml;base64,/gu)).toHaveLength(1);
+    expect(social).toContain(`data-emblem-family="${card.emblemIdentity.familyId}"`);
   });
 
   test("renders the shared illuminated geometry at every density", async () => {
@@ -100,5 +115,75 @@ describe("model card ImageResponse rendering", () => {
       width: 1200,
     }).arrayBuffer();
     expect(pngDimensions(provisionalSocial)).toEqual({ height: 630, width: 1200 });
+  }, 30_000);
+
+  test("renders a complete two-row provider codex for the collection image", async () => {
+    const cards = modelCardProviderRepresentatives();
+    const providerCount = modelCardProviderCount();
+    expect(cards).toHaveLength(providerCount);
+    expect(new Set(cards.map(card => card.providerId)).size).toBe(cards.length);
+    for (const card of cards) {
+      const providerCards = MODEL_CARD_PRESENTATIONS.filter(candidate => (
+        candidate.providerId === card.providerId
+      ));
+      expect(Number(card.illuminationDensity)).toBe(Math.max(
+        ...providerCards.map(candidate => candidate.illuminationDensity),
+      ));
+    }
+
+    const markup = renderToStaticMarkup(
+      <ModelCardCollectionSocialImage
+        cards={cards}
+        profileCount={MODEL_CARD_PRESENTATIONS.length}
+        providerCount={providerCount}
+      />,
+    );
+    expect(markup.match(/data-emblem-family=/gu)).toHaveLength(providerCount);
+    expect(markup).toContain(`${MODEL_CARD_PRESENTATIONS.length}</span>`);
+    expect(markup).toContain(`${providerCount}</span>`);
+    for (const card of cards) expect(markup).toContain(`>${card.providerName}</div>`);
+
+    const raster = await new ImageResponse(
+      <ModelCardCollectionSocialImage
+        cards={cards}
+        profileCount={MODEL_CARD_PRESENTATIONS.length}
+        providerCount={providerCount}
+      />,
+      { height: 630, width: 1200 },
+    ).arrayBuffer();
+    expect(pngDimensions(raster)).toEqual({ height: 630, width: 1200 });
+  }, 30_000);
+
+  test("keeps future provider growth inside two rows with an overflow crest", async () => {
+    const exemplar = MODEL_CARD_PRESENTATIONS[0];
+    if (exemplar === undefined) throw new Error("Expected a model-card fixture.");
+    const futureCards = Array.from({ length: 17 }, (_, index) => ({
+      ...exemplar,
+      cardNumber: index + 1,
+      providerId: `future-provider-${index + 1}`,
+      providerName: `Future House ${index + 1}`,
+    }));
+    const cards = modelCardProviderRepresentatives(futureCards);
+    const providerCount = modelCardProviderCount(futureCards);
+    expect(cards).toHaveLength(MODEL_CARD_COLLECTION_CREST_LIMIT);
+    expect(providerCount).toBe(17);
+
+    const image = (
+      <ModelCardCollectionSocialImage
+        cards={cards}
+        profileCount={futureCards.length}
+        providerCount={providerCount}
+      />
+    );
+    const markup = renderToStaticMarkup(image);
+    expect(markup.match(/data-emblem-family=/gu)).toHaveLength(MODEL_CARD_COLLECTION_CREST_LIMIT);
+    expect(markup).toContain('data-provider-overflow="6"');
+    expect(markup).toContain(">+6</span>");
+
+    const raster = await new ImageResponse(image, {
+      height: 630,
+      width: 1200,
+    }).arrayBuffer();
+    expect(pngDimensions(raster)).toEqual({ height: 630, width: 1200 });
   }, 30_000);
 });

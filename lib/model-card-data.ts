@@ -45,6 +45,37 @@ export const modelCardIntrinsicClassSchema = z.enum([
   "fallback",
 ]);
 
+export const modelCardEmblemRoleSchema = z.enum([
+  "general",
+  "speed",
+  "reasoning",
+  "flagship",
+]);
+
+const emblemIdentitySegmentSchema = z.string()
+  .min(1)
+  .max(40)
+  .regex(
+    routeSegmentPattern,
+    "Expected a route-safe lowercase emblem identity segment.",
+  );
+
+const emblemGenerationTokenSchema = z.string()
+  .min(1)
+  .max(12)
+  .regex(
+    /^[a-z0-9]+$/u,
+    "Expected a lowercase alphanumeric emblem generation token.",
+  );
+
+export const modelCardEmblemIdentitySchema = z.object({
+  editionId: emblemIdentitySegmentSchema,
+  familyId: emblemIdentitySegmentSchema,
+  generation: z.array(emblemGenerationTokenSchema).min(1).max(4).readonly(),
+  revision: emblemIdentitySegmentSchema.nullable(),
+  role: modelCardEmblemRoleSchema,
+}).strict().readonly();
+
 export const canonicalModelIdSchema = z.string().regex(
   canonicalModelIdPattern,
   "Expected a creator/model identifier made from route-safe lowercase slugs.",
@@ -61,6 +92,7 @@ export const modelCardCatalogEntrySchema = z.object({
     "Expected an exact raw machine identifier.",
   )).readonly(),
   canonicalModelId: canonicalModelIdSchema,
+  emblemIdentity: modelCardEmblemIdentitySchema,
   gatewayModelId: canonicalModelIdSchema.nullable(),
   intrinsicClass: modelCardIntrinsicClassSchema,
   lobeIconKey: lobeIconKeySchema,
@@ -78,6 +110,7 @@ export const modelCardCatalogSchema = z.array(modelCardCatalogEntrySchema)
   .min(1)
   .superRefine((entries, context) => {
     const identities = new Map<string, number>();
+    const emblemIdentities = new Map<string, number>();
     const routeIdentifierOwners = new Map<string, number>();
     const aliases = new Map<string, readonly [number, number]>();
     const reservedIds = new Set(entries.flatMap(entry => [
@@ -96,6 +129,25 @@ export const modelCardCatalogSchema = z.array(modelCardCatalogEntrySchema)
         });
       } else {
         identities.set(identity, entryIndex);
+      }
+
+      const emblemIdentity = JSON.stringify([
+        entry.providerId,
+        entry.emblemIdentity.familyId,
+        entry.emblemIdentity.generation,
+        entry.emblemIdentity.revision,
+        entry.emblemIdentity.editionId,
+        entry.emblemIdentity.role,
+      ]);
+      const previousEmblemIdentity = emblemIdentities.get(emblemIdentity);
+      if (previousEmblemIdentity !== undefined) {
+        context.addIssue({
+          code: "custom",
+          message: `Duplicates emblem identity at entry ${previousEmblemIdentity}.`,
+          path: [entryIndex, "emblemIdentity"],
+        });
+      } else {
+        emblemIdentities.set(emblemIdentity, entryIndex);
       }
 
       if (entry.canonicalModelId.startsWith(`${fallbackCreatorSlug}/`)) {
@@ -151,6 +203,8 @@ export const modelCardCatalogSchema = z.array(modelCardCatalogEntrySchema)
 export type LobeIconKey = z.infer<typeof lobeIconKeySchema>;
 export type ModelCardIntrinsicClass = z.infer<typeof modelCardIntrinsicClassSchema>;
 export type ModelCardClass = ModelCardIntrinsicClass;
+export type ModelCardEmblemRole = z.infer<typeof modelCardEmblemRoleSchema>;
+export type ModelCardEmblemIdentity = z.infer<typeof modelCardEmblemIdentitySchema>;
 export type ModelCardCatalogEntry = z.infer<typeof modelCardCatalogEntrySchema>;
 export type ModelCardCatalog = z.infer<typeof modelCardCatalogSchema>;
 export type ModelCardProfileSlug = z.infer<typeof modelCardProfileSlugSchema>;
@@ -223,6 +277,24 @@ const fallbackLobeIconByProviderId: Readonly<Record<string, LobeIconKey>> = {
   z_ai: "zai",
 };
 
+const fallbackEmblemEditionIds = new Set([
+  "fast",
+  "flash",
+  "lite",
+  "max",
+  "mini",
+  "plus",
+  "pro",
+  "reasoning",
+  "thinking",
+  "turbo",
+  "ultra",
+]);
+
+const fallbackEmblemSpeedEditions = new Set(["fast", "flash", "lite", "mini", "turbo"]);
+const fallbackEmblemReasoningEditions = new Set(["reasoning", "thinking"]);
+const fallbackEmblemFlagshipEditions = new Set(["max", "pro", "ultra"]);
+
 function stableIdentityDigest(values: readonly string[]): string {
   const digest = createHash("sha256");
   for (const value of values) {
@@ -259,9 +331,37 @@ function fallbackCatalogEntry(
     "model",
     fallbackModelLabelLength,
   );
+  const modelTokens = modelLabel.split(/[.-]/u).filter(Boolean);
+  const editionId = modelTokens.find(token => fallbackEmblemEditionIds.has(token))
+    ?? "base";
+  const familyId = modelTokens
+    .filter(token => !fallbackEmblemEditionIds.has(token))
+    .map(token => token.replace(/[0-9].*$/u, ""))
+    .filter(Boolean)
+    .join("-")
+    .slice(0, 40)
+    .replace(/[.-]+$/u, "")
+    || "unlisted";
+  const parsedGeneration = record.model.match(/[0-9]+/gu)
+    ?.slice(0, 4)
+    .map(token => token.slice(0, 12));
+  const role: ModelCardEmblemRole = fallbackEmblemSpeedEditions.has(editionId)
+    ? "speed"
+    : fallbackEmblemReasoningEditions.has(editionId)
+      ? "reasoning"
+      : fallbackEmblemFlagshipEditions.has(editionId)
+        ? "flagship"
+        : "general";
   return {
     aliases: [],
     canonicalModelId: `${fallbackCreatorSlug}/${modelLabel}.${identityDigest}`,
+    emblemIdentity: {
+      editionId,
+      familyId,
+      generation: parsedGeneration?.length ? parsedGeneration : ["unlisted"],
+      revision: identityDigest,
+      role,
+    },
     gatewayModelId: null,
     intrinsicClass: "standard",
     lobeIconKey: fallbackLobeIconByProviderId[record.providerId] ?? null,
@@ -440,6 +540,7 @@ export type ModelCardVariant = Readonly<{
   canonicalModelId: string;
   cardClass: ModelCardClass;
   creatorSlug: string;
+  emblemIdentity: ModelCardEmblemIdentity;
   gatewayModelId: string | null;
   intrinsicClass: ModelCardIntrinsicClass;
   lobeIconKey: LobeIconKey | null;

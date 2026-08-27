@@ -37,6 +37,7 @@ export type ModelCardPresentation = Readonly<{
   cardNumber: number;
   classLabel: string;
   displayTitle: string;
+  emblemIdentity: ModelCardVariant["emblemIdentity"];
   economics: readonly ModelCardStat[];
   foilPreset: FoilCardPreset;
   gatewayModelId: string | null;
@@ -274,6 +275,7 @@ export function createModelCardPresentation(
       formatModelCardDisplayTitle(variant.model, profileLabel),
       cardVisualClass,
     ),
+    emblemIdentity: variant.emblemIdentity,
     economics: economics.map(({ id, label }) => modelCardStat(
       id,
       label,

@@ -137,44 +137,277 @@ export function ModelCardRasterFace({
   );
 }
 
-export function ModelCardSocialImage({ card }: Readonly<{ card: ModelCardPresentation }>) {
-  const modelLabel = compactImageLabel(card.displayTitle, 48);
-  const harnessLabel = compactImageLabel(card.harnessLabel, 46);
-  const providerLabel = compactImageLabel(card.providerName, 28);
+function ModelCardEmblemPanel({
+  card,
+  height,
+  logoSize,
+  mode = "full",
+  width,
+}: Readonly<{
+  card: ModelCardPresentation;
+  height: number;
+  logoSize: number;
+  mode?: "full" | "gallery";
+  width: number;
+}>) {
   return (
     <div style={{
       ...imageStyles.row,
       alignItems: "center",
-      background: "#0d0e11",
+      background: `radial-gradient(circle at 75% 18%, ${card.providerColor}44 0%, transparent 48%), radial-gradient(circle at 12% 88%, ${card.secondaryColor}28 0%, transparent 46%), linear-gradient(145deg, ${card.providerColor}22 0%, #090a0d 54%, #111318 100%)`,
+      border: `2px solid ${card.providerColor}8f`,
+      borderRadius: 28,
+      height,
+      justifyContent: "center",
+      overflow: "hidden",
+      position: "relative",
+      width,
+    }}>
+      <div style={{ border: `1px solid ${card.secondaryColor}38`, borderRadius: 19, inset: 11, position: "absolute" }} />
+      <ModelCardIllumination card={card} mode={mode} />
+      {/* eslint-disable-next-line @next/next/no-img-element -- ImageResponse consumes a pinned SVG data URL. */}
+      <img
+        alt=""
+        height={logoSize}
+        src={card.iconDataUrl}
+        style={{ objectFit: "contain", position: "relative" }}
+        width={logoSize}
+      />
+    </div>
+  );
+}
+
+function SocialStat({
+  accent,
+  label,
+  value,
+}: Readonly<{ accent: string; label: string; value: string }>) {
+  return (
+    <div style={{
+      ...imageStyles.column,
+      background: "rgba(4,5,8,.54)",
+      borderLeft: "1px solid rgba(255,255,255,.12)",
+      borderTop: `3px solid ${accent}`,
+      flex: 1,
+      minWidth: 0,
+      padding: "13px 14px 12px",
+    }}>
+      <span style={{ color: "rgba(247,246,242,.58)", fontSize: 15, letterSpacing: ".09em", textTransform: "uppercase" }}>
+        {label}
+      </span>
+      <span style={{ fontFamily: "monospace", fontSize: 25, fontWeight: 700, marginTop: 7, whiteSpace: "nowrap" }}>
+        {value}
+      </span>
+    </div>
+  );
+}
+
+function emblemReading(card: ModelCardPresentation): string {
+  const identity = card.emblemIdentity;
+  return [
+    identity.familyId,
+    identity.generation.join("."),
+    identity.editionId === "base" ? null : identity.editionId,
+  ].filter(value => value !== null).join(" · ").toLocaleUpperCase("en-US");
+}
+
+export function ModelCardSocialImage({ card }: Readonly<{ card: ModelCardPresentation }>) {
+  const modelLabel = compactImageLabel(card.displayTitle, 54);
+  const harnessLabel = compactImageLabel(card.harnessLabel, 46);
+  const providerLabel = compactImageLabel(card.providerName, 28);
+  const emblemLabel = compactImageLabel(emblemReading(card), 38);
+  const serial = `${String(card.cardNumber).padStart(3, "0")} / ${String(card.totalCards).padStart(3, "0")}`;
+  return (
+    <div style={{
+      ...imageStyles.column,
+      background: `radial-gradient(circle at 12% 15%, ${card.providerColor}42 0%, transparent 38%), radial-gradient(circle at 86% 78%, ${card.secondaryColor}20 0%, transparent 35%), linear-gradient(145deg, #15171c 0%, #08090c 54%, #101116 100%)`,
       color: "#f7f6f2",
       height: "100%",
-      padding: "48px 58px",
+      overflow: "hidden",
+      padding: "38px 48px 42px",
+      position: "relative",
       width: "100%",
     }}>
-      <div style={{ display: "flex", height: 526, width: 376 }}>
-        <ModelCardRasterFace card={card} compact />
-      </div>
-      <div style={{ ...imageStyles.column, flex: 1, marginLeft: 58 }}>
-        <span style={{ color: card.providerColor, fontSize: 23, fontWeight: 700, letterSpacing: ".09em", textTransform: "uppercase" }}>
+      <div style={{ border: `1px solid ${card.providerColor}7d`, borderRadius: 30, inset: 18, position: "absolute" }} />
+      <div style={{ border: "1px solid rgba(255,255,255,.1)", borderRadius: 22, inset: 27, position: "absolute" }} />
+
+      <div style={{ ...imageStyles.row, alignItems: "center", justifyContent: "space-between", position: "relative" }}>
+        <span style={{ ...imageStyles.row, alignItems: "center", fontSize: 20, fontWeight: 700, letterSpacing: ".1em", textTransform: "uppercase" }}>
+          <i style={{ background: card.providerColor, border: `1px solid ${card.secondaryColor}`, borderRadius: 1, height: 10, marginRight: 13, transform: "rotate(45deg)", width: 10 }} />
           {providerLabel}
         </span>
-        <span style={{ fontSize: 68, fontWeight: 780, letterSpacing: "-.055em", lineHeight: .93, marginTop: 19 }}>
-          {modelLabel}
+        <span style={{ color: "rgba(247,246,242,.5)", fontFamily: "monospace", fontSize: 17, letterSpacing: ".06em" }}>
+          MODEL CARD {serial}
         </span>
-        <span style={{ color: "rgba(247,246,242,.65)", fontSize: 27, marginTop: 15 }}>
-          {harnessLabel}
-        </span>
-        <div style={{ ...imageStyles.row, flexWrap: "wrap", gap: 10, marginTop: 34 }}>
-          {card.performance.map(stat => (
-            <span key={stat.id} style={{ background: "rgba(255,255,255,.07)", border: "1px solid rgba(255,255,255,.12)", borderRadius: 999, fontFamily: "monospace", fontSize: 20, padding: "10px 15px" }}>
-              {stat.label} {stat.value}
-            </span>
-          ))}
+      </div>
+
+      <div style={{ ...imageStyles.row, alignItems: "center", flex: 1, marginTop: 18, position: "relative" }}>
+        <ModelCardEmblemPanel card={card} height={315} logoSize={174} width={490} />
+        <div style={{ ...imageStyles.column, flex: 1, marginLeft: 44, minWidth: 0 }}>
+          <span style={{ color: card.secondaryColor, fontFamily: "monospace", fontSize: 16, letterSpacing: ".12em", textTransform: "uppercase" }}>
+            {emblemLabel}
+          </span>
+          <span style={{ fontSize: modelLabel.length > 34 ? 58 : 68, fontWeight: 780, letterSpacing: "-.055em", lineHeight: .94, marginTop: 14 }}>
+            {modelLabel}
+          </span>
+          <span style={{ color: "rgba(247,246,242,.64)", fontSize: 25, marginTop: 15 }}>
+            {harnessLabel}
+          </span>
+          <span style={{ fontSize: 27, fontWeight: 760, marginTop: 34 }}>aicharts.io</span>
         </div>
-        <span style={{ color: "rgba(247,246,242,.48)", fontFamily: "monospace", fontSize: 18, marginTop: 37 }}>
-          MODEL CARD {String(card.cardNumber).padStart(3, "0")} / {String(card.totalCards).padStart(3, "0")}
+      </div>
+
+      <div style={{ ...imageStyles.row, border: "1px solid rgba(255,255,255,.12)", borderRadius: 12, marginTop: 18, overflow: "hidden", position: "relative" }}>
+        {card.performance.map(stat => (
+          <SocialStat accent={card.providerColor} key={stat.id} label={stat.label} value={stat.value} />
+        ))}
+        {card.economics.map(stat => (
+          <SocialStat accent={card.secondaryColor} key={stat.id} label={stat.label} value={stat.value} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function CollectionEmblem({
+  card,
+  width,
+}: Readonly<{ card: ModelCardPresentation; width: number }>) {
+  return (
+    <div style={{
+      ...imageStyles.column,
+      background: `linear-gradient(150deg, ${card.providerColor}2f, rgba(7,8,11,.9) 58%)`,
+      border: `1px solid ${card.providerColor}78`,
+      borderRadius: 15,
+      height: 190,
+      overflow: "hidden",
+      width,
+    }}>
+      <div style={{ ...imageStyles.row, alignItems: "center", flex: 1, justifyContent: "center", overflow: "hidden", position: "relative", width: "100%" }}>
+        <ModelCardIllumination card={card} mode="gallery" />
+        {/* eslint-disable-next-line @next/next/no-img-element -- ImageResponse consumes a pinned SVG data URL. */}
+        <img alt="" height={52} src={card.iconDataUrl} style={{ objectFit: "contain", position: "relative" }} width={52} />
+      </div>
+      <div style={{
+        ...imageStyles.row,
+        alignItems: "center",
+        borderTop: "1px solid rgba(255,255,255,.1)",
+        color: "rgba(247,246,242,.8)",
+        fontSize: 10,
+        fontWeight: 700,
+        height: 38,
+        justifyContent: "center",
+        letterSpacing: ".07em",
+        padding: "0 7px",
+        textAlign: "center",
+        textTransform: "uppercase",
+      }}>
+        {compactImageLabel(card.providerName, 16)}
+      </div>
+    </div>
+  );
+}
+
+function CollectionOverflowEmblem({
+  count,
+  width,
+}: Readonly<{ count: number; width: number }>) {
+  return (
+    <div data-provider-overflow={count} style={{
+      ...imageStyles.column,
+      background: "radial-gradient(circle at 50% 28%, rgba(240,201,109,.18), transparent 52%), rgba(7,8,11,.88)",
+      border: "1px solid rgba(240,201,109,.48)",
+      borderRadius: 15,
+      height: 190,
+      overflow: "hidden",
+      width,
+    }}>
+      <div style={{ ...imageStyles.column, alignItems: "center", flex: 1, justifyContent: "center" }}>
+        <span style={{ color: "#f0c96d", fontFamily: "monospace", fontSize: 36, fontWeight: 700 }}>
+          +{count}
         </span>
-        <span style={{ fontSize: 28, fontWeight: 760, marginTop: 17 }}>aicharts.io</span>
+        <span style={{ color: "rgba(247,246,242,.48)", fontSize: 10, letterSpacing: ".08em", marginTop: 7, textTransform: "uppercase" }}>
+          more houses
+        </span>
+      </div>
+      <div style={{
+        ...imageStyles.row,
+        alignItems: "center",
+        borderTop: "1px solid rgba(255,255,255,.1)",
+        color: "rgba(247,246,242,.72)",
+        fontSize: 10,
+        fontWeight: 700,
+        height: 38,
+        justifyContent: "center",
+        letterSpacing: ".07em",
+        textTransform: "uppercase",
+      }}>
+        Providers
+      </div>
+    </div>
+  );
+}
+
+export function ModelCardCollectionSocialImage({
+  cards,
+  profileCount,
+  providerCount,
+}: Readonly<{
+  cards: readonly ModelCardPresentation[];
+  profileCount: number;
+  providerCount: number;
+}>) {
+  const overflowCount = Math.max(0, providerCount - cards.length);
+  const tileCount = cards.length + (overflowCount > 0 ? 1 : 0);
+  const crestWidth = tileCount > 10 ? 94 : 112;
+  return (
+    <div style={{
+      ...imageStyles.column,
+      background: "radial-gradient(circle at 78% 40%, rgba(92,134,179,.2), transparent 42%), radial-gradient(circle at 12% 88%, rgba(240,201,109,.1), transparent 38%), linear-gradient(145deg, #15171c 0%, #07080b 58%, #111218 100%)",
+      color: "#f7f6f2",
+      height: "100%",
+      overflow: "hidden",
+      padding: "42px 50px",
+      position: "relative",
+      width: "100%",
+    }}>
+      <div style={{ border: "1px solid rgba(240,201,109,.38)", borderRadius: 30, inset: 18, position: "absolute" }} />
+      <div style={{ border: "1px solid rgba(255,255,255,.09)", borderRadius: 22, inset: 27, position: "absolute" }} />
+      <div style={{ ...imageStyles.row, alignItems: "center", fontSize: 22, fontWeight: 760, justifyContent: "space-between", position: "relative" }}>
+        <span>aicharts.io</span>
+        <span style={{ color: "rgba(247,246,242,.46)", fontFamily: "monospace", fontSize: 15, letterSpacing: ".11em" }}>
+          THE MODEL CODEX
+        </span>
+      </div>
+      <div style={{ ...imageStyles.row, alignItems: "center", flex: 1, marginTop: 24, position: "relative" }}>
+        <div style={{ ...imageStyles.column, height: 420, justifyContent: "space-between", width: 390 }}>
+          <div style={{ ...imageStyles.column }}>
+            <span style={{ color: "#f0c96d", fontFamily: "monospace", fontSize: 16, letterSpacing: ".12em", textTransform: "uppercase" }}>
+              Performance · cost · speed · tokens
+            </span>
+            <span style={{ fontSize: 69, fontWeight: 780, letterSpacing: "-.058em", lineHeight: .91, marginTop: 20 }}>
+              AI model benchmark cards
+            </span>
+            <span style={{ color: "rgba(247,246,242,.61)", fontSize: 24, lineHeight: 1.28, marginTop: 22 }}>
+              A living illuminated catalog of coding-agent profiles.
+            </span>
+          </div>
+          <div style={{ ...imageStyles.row, alignItems: "baseline" }}>
+            <span style={{ fontFamily: "monospace", fontSize: 42, fontWeight: 700 }}>{profileCount}</span>
+            <span style={{ color: "rgba(247,246,242,.5)", fontSize: 17, marginLeft: 10 }}>profiles</span>
+            <span style={{ color: "rgba(247,246,242,.24)", fontSize: 28, margin: "0 18px" }}>·</span>
+            <span style={{ fontFamily: "monospace", fontSize: 42, fontWeight: 700 }}>{providerCount}</span>
+            <span style={{ color: "rgba(247,246,242,.5)", fontSize: 17, marginLeft: 10 }}>providers</span>
+          </div>
+        </div>
+        <div style={{ ...imageStyles.row, flex: 1, flexWrap: "wrap", gap: 10, justifyContent: "flex-end", marginLeft: 34 }}>
+          {cards.map(card => (
+            <CollectionEmblem card={card} key={card.providerId} width={crestWidth} />
+          ))}
+          {overflowCount > 0 ? (
+            <CollectionOverflowEmblem count={overflowCount} width={crestWidth} />
+          ) : null}
+        </div>
       </div>
     </div>
   );
