@@ -1,4 +1,5 @@
 @import "@hraness/design-kit/styles.css";
+@import "@hraness/site-footer/styles.css";
 @import "@hraness/ui/components.css";
 @import "../styles/plain-site.css";
 @import "../styles/plain-publication.css";
@@ -70,27 +71,6 @@ button, a { -webkit-tap-highlight-color: transparent; }
 button { cursor: pointer; }
 a { color: inherit; }
 :focus-visible { outline: 2px solid var(--brand-key); outline-offset: 2px; }
-
-.hraness-brand {
-  align-items: center;
-  border-radius: var(--radius-xs);
-  color: inherit;
-  display: inline-flex;
-  font-family: var(--font-sans);
-  font-size: 1.125rem;
-  font-weight: var(--font-weight-bold);
-  gap: .625rem;
-  letter-spacing: -.045em;
-  line-height: 1;
-  min-height: var(--interactive-target-min);
-  text-decoration: none;
-}
-.hraness-ra-mark {
-  display: block;
-  flex: 0 0 auto;
-  height: 2rem;
-  width: 2rem;
-}
 
 .ui-top-bar {
   align-items: center;
@@ -1042,42 +1022,29 @@ a { color: inherit; }
 .model-update-deltas dd span { color: var(--muted); }
 .model-update-deltas dd strong { font-weight: 600; }
 
-.chart-footer {
+.chart-resource-nav {
   align-items: center;
   border-top: 1px solid var(--grid);
   display: flex;
   min-height: 42px;
   padding: 10px var(--chart-content-inset) max(var(--space-4), env(safe-area-inset-bottom));
 }
-.chart-footer-links {
+.chart-resource-nav__links {
   align-items: center;
   display: flex;
   gap: 14px;
 }
-.chart-footer-links a {
+.chart-resource-nav__links a {
   color: var(--muted);
   font-size: 12px;
   text-decoration: none;
   text-underline-offset: 3px;
 }
-.chart-footer-links a:hover,
-.chart-footer-links a:focus-visible {
+.chart-resource-nav__links a:hover,
+.chart-resource-nav__links a:focus-visible {
   color: var(--foreground);
   text-decoration: underline;
 }
-.chart-footer-hraness {
-  color: var(--muted);
-  font-size: 12px;
-  gap: 6px;
-  margin-inline-start: auto;
-  min-height: 32px;
-}
-.chart-footer-hraness .hraness-ra-mark {
-  height: 18px;
-  width: 18px;
-}
-.chart-footer-hraness:hover,
-.chart-footer-hraness:focus-visible { color: var(--foreground); }
 
 @media (max-width: 760px) {
   .chart-page-canvas { padding: 0; }
@@ -1162,7 +1129,7 @@ a { color: inherit; }
   .model-update-group:not(:last-child)::after { left: 5px; }
   .model-update-cards { padding-left: 0; }
   .model-update-benchmarks { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .chart-footer {
+  .chart-resource-nav {
     padding: 10px var(--chart-compact-inset) max(var(--space-4), env(safe-area-inset-bottom));
   }
 }

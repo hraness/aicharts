@@ -1,4 +1,4 @@
-import { HranessBrand, SkipLink, ThemeMenuButton } from "@/components/ui";
+import { SkipLink, ThemeMenuButton } from "@/components/ui";
 import { chatGptSubsidyChartLabel } from "@/app/site";
 import Link from "next/link";
 import type { ReactNode } from "react";
@@ -27,17 +27,6 @@ export default function DataLayout({
         </div>
       </header>
       {children}
-      <footer className="plain-footer">
-        <p>aicharts.io</p>
-        <div className="plain-footer__links">
-          <Link href="/data">Data</Link>
-          <Link href="/models">Cards</Link>
-          <Link href="/blog">Blog</Link>
-          <Link href="/gpt-subsidy">{chatGptSubsidyChartLabel}</Link>
-          <Link href="/">Home</Link>
-          <HranessBrand />
-        </div>
-      </footer>
     </div>
   );
 }

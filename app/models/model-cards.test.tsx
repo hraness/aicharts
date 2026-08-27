@@ -15,7 +15,19 @@ import {
 } from "@/lib/model-card-collection";
 import { markdownForPath } from "@/lib/site-markdown";
 
+const modelsLayoutSource = await Bun.file(
+  new URL("./layout.tsx", import.meta.url),
+).text();
+
 describe("public model cards", () => {
+  test("keeps model-specific resources without a second site footer", () => {
+    expect(modelsLayoutSource).toContain('aria-label="Model card resources"');
+    expect(modelsLayoutSource).toContain("Icons by LobeHub");
+    expect(modelsLayoutSource).toContain("Data and method");
+    expect(modelsLayoutSource).not.toContain("<footer");
+    expect(modelsLayoutSource).not.toContain("HranessBrand");
+  });
+
   test("renders every cataloged or provisional profile through one unique route", () => {
     expect(MODEL_CARD_PRESENTATIONS.length).toBeGreaterThan(0);
     expect(modelCardRouteStaticParams()).toHaveLength(MODEL_CARD_PRESENTATIONS.length);
