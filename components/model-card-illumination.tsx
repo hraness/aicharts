@@ -696,6 +696,104 @@ type ModelCardIlluminationCard = Pick<ModelCardPresentation,
   | "secondaryColor"
   | "visualClass">;
 
+type ModelCardOrganicSpeckField = Readonly<{
+  foilCount: number;
+  foilPath: string;
+  pigmentPath: string;
+  totalCount: number;
+}>;
+
+const organicSpeckCounts = [10, 14, 19, 25, 32] as const;
+
+function organicSpeckMarkPath(
+  x: number,
+  y: number,
+  size: number,
+  angle: number,
+  kind: number,
+): string {
+  const tangentX = Math.cos(angle);
+  const tangentY = Math.sin(angle);
+  const normalX = -tangentY;
+  const normalY = tangentX;
+  if (kind === 0) {
+    return `M${x} ${rounded(y - size)}L${rounded(x + size * .62)} ${y}L${x} ${rounded(y + size)}L${rounded(x - size * .62)} ${y}Z`;
+  }
+  if (kind === 1) {
+    const points = Array.from({ length: 8 }, (_, index) => {
+      const pointAngle = -Math.PI / 2 + index * Math.PI / 4;
+      const radius = index % 2 === 0 ? size * 1.45 : size * .34;
+      return `${rounded(x + Math.cos(pointAngle) * radius)} ${rounded(y + Math.sin(pointAngle) * radius)}`;
+    });
+    return `M${points.join("L")}Z`;
+  }
+  if (kind === 2) {
+    const halfLength = size * 2.15;
+    const width = size * .78;
+    const headX = rounded(x + tangentX * halfLength);
+    const headY = rounded(y + tangentY * halfLength);
+    const tailX = rounded(x - tangentX * halfLength);
+    const tailY = rounded(y - tangentY * halfLength);
+    return `M${headX} ${headY}C${rounded(x + normalX * width)} ${rounded(y + normalY * width)} ${rounded(x - tangentX * size + normalX * width)} ${rounded(y - tangentY * size + normalY * width)} ${tailX} ${tailY}C${rounded(x - normalX * width)} ${rounded(y - normalY * width)} ${rounded(x + tangentX * size - normalX * width)} ${rounded(y + tangentY * size - normalY * width)} ${headX} ${headY}Z`;
+  }
+  const halfLength = size * 2.45;
+  const halfWidth = size * .28;
+  return [
+    `M${rounded(x - tangentX * halfLength + normalX * halfWidth)} ${rounded(y - tangentY * halfLength + normalY * halfWidth)}`,
+    `L${rounded(x + tangentX * halfLength + normalX * halfWidth)} ${rounded(y + tangentY * halfLength + normalY * halfWidth)}`,
+    `L${rounded(x + tangentX * halfLength - normalX * halfWidth)} ${rounded(y + tangentY * halfLength - normalY * halfWidth)}`,
+    `L${rounded(x - tangentX * halfLength - normalX * halfWidth)} ${rounded(y - tangentY * halfLength - normalY * halfWidth)}Z`,
+  ].join("");
+}
+
+function modelCardOrganicSpeckField(
+  card: ModelCardIlluminationCard,
+  modelHash: number,
+): ModelCardOrganicSpeckField {
+  const totalCount = organicSpeckCounts[card.illuminationDensity - 1] ?? organicSpeckCounts[0];
+  const familyHash = stableHash(`organic-specks/${card.emblemIdentity.familyId}`);
+  const familyPhase = sample(familyHash, 307) * Math.PI * 2;
+  const forcedFoilIndex = familyHash % 5;
+  const pigmentPaths: string[] = [];
+  const foilPaths: string[] = [];
+
+  for (let index = 0; index < totalCount; index += 1) {
+    const cluster = index % 3;
+    const turn = Math.floor(index / 3);
+    const direction = cluster === 1 ? -1 : 1;
+    const angle = familyPhase
+      + cluster * Math.PI * 2 / 3
+      + turn * .17 * direction
+      + (sample(modelHash, 311 + index) - .5) * .72;
+    const radiusX = 103 + sample(modelHash, 353 + index) * 66;
+    const radiusY = 66 + sample(modelHash, 397 + index) * 31;
+    const x = rounded(Math.min(380, Math.max(20,
+      200 + Math.cos(angle) * radiusX + (sample(modelHash, 439 + index) - .5) * 8,
+    )));
+    const y = rounded(Math.min(212, Math.max(18,
+      115 + Math.sin(angle) * radiusY + (sample(modelHash, 487 + index) - .5) * 6,
+    )));
+    const size = .72 + sample(modelHash, 521 + index) * 1.38;
+    const markAngle = angle + (sample(modelHash, 563 + index) - .5) * 1.4;
+    const kind = Math.floor(sample(modelHash, 601 + index) * 4);
+    const path = organicSpeckMarkPath(x, y, size, markAngle, kind);
+    pigmentPaths.push(path);
+    if (
+      index === forcedFoilIndex
+      || sample(modelHash, 647 + index) < .11
+    ) {
+      foilPaths.push(path);
+    }
+  }
+
+  return {
+    foilCount: foilPaths.length,
+    foilPath: foilPaths.join(""),
+    pigmentPath: pigmentPaths.join(""),
+    totalCount,
+  };
+}
+
 type HolographicShape = Readonly<{
   channel: "corona" | "edition-cell" | "edition-glyph" | "generation-inscription" | "generation-topology" | "microglint" | "profile-stamp" | "seal-edge";
   d: string;
@@ -851,12 +949,14 @@ function ModelCardHolographicFoil({
   fingerprint,
   lineHand,
   modelHash,
+  speckField,
 }: Readonly<{
   archetype: ModelCardFamilyArchetype;
   card: ModelCardIlluminationCard;
   fingerprint: string;
   lineHand: ModelCardProviderLineHand;
   modelHash: number;
+  speckField: ModelCardOrganicSpeckField;
 }>) {
   const instanceId = useId().replace(/[^a-zA-Z0-9_-]/gu, "");
   const materialKey = [
@@ -889,7 +989,7 @@ function ModelCardHolographicFoil({
   const spectralFillPath = shapes
     .filter(shape => shape.spectral && shape.filled)
     .map(shape => shape.d)
-    .join("");
+    .join("") + speckField.foilPath;
   const spectralStrokePath = shapes
     .filter(shape => shape.spectral && !shape.filled)
     .map(shape => shape.d)
@@ -965,6 +1065,7 @@ function ModelCardHolographicFoil({
         data-holographic-coverage={card.illuminationDensity}
         data-holographic-field={modelCardHolographicField(card.emblemIdentity.familyId)}
         data-holographic-finish="diffractive-spot-foil"
+        data-holographic-speck-count={speckField.foilCount}
         data-holographic-axis-hand={lineHand}
       >
         <g className="model-card-holographic-foil__rim" opacity=".66">
@@ -1027,6 +1128,7 @@ export function ModelCardIllumination({
   const isGallery = mode === "gallery";
   const modelHash = stableHash(card.canonicalModelId);
   const organism = familyOrganism(archetype);
+  const speckField = modelCardOrganicSpeckField(card, modelHash);
   const fingerprint = identityValue(card);
 
   return (
@@ -1055,6 +1157,17 @@ export function ModelCardIllumination({
       width="100%"
     >
       <g data-ornament-depth="background">
+        <path
+          d={speckField.pigmentPath}
+          data-ornament-mark="organic-speck-field"
+          data-speck-count={speckField.totalCount}
+          fill={card.secondaryColor}
+          fillOpacity={isGallery ? ".2" : ".26"}
+          paintOrder="stroke fill"
+          stroke={card.providerColor}
+          strokeOpacity={isGallery ? ".14" : ".19"}
+          strokeWidth=".32"
+        />
         <g
           data-emblem-signature="provider"
           data-illumination-signature="provider"
@@ -1241,6 +1354,7 @@ export function ModelCardIllumination({
           fingerprint={fingerprint}
           lineHand={lineHand}
           modelHash={modelHash}
+          speckField={speckField}
         />
       ) : null}
     </svg>
