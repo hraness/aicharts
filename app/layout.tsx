@@ -2,6 +2,7 @@ import {
   DesignThemeProvider,
   ThemeColorSync,
 } from "@hraness/design-kit/react";
+import { HranessSiteFooter } from "@hraness/site-footer/react";
 import type { Metadata, Viewport } from "next";
 import type { CSSProperties, ReactNode } from "react";
 
@@ -75,6 +76,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
             type="application/ld+json"
           />
           {children}
+          <HranessSiteFooter />
         </DesignThemeProvider>
       </body>
     </html>

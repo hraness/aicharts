@@ -48,6 +48,7 @@ test("chart collections retain shared paint geometry and target sizes", () => {
 
 test("metric selectors reserve normal-flow space outside the plot", () => {
   expect(stylesheet).not.toContain("chart-header-actions");
+  expect(stylesheet).toContain('@import "@hraness/site-footer/styles.css"');
   expect(stylesheet).toContain('@import "@hraness/ui/components.css"');
   expect(firstRule(".chart-metric-controls")).toContain("display: grid");
   expect(firstRule(".chart-metric-controls")).toContain("grid-template-columns: minmax(76px, 1fr) auto minmax(76px, 1fr)");
@@ -73,7 +74,7 @@ test("compact chart chrome shares the 12px design inset", () => {
   expect(stylesheet).toMatch(/@media \(max-width:\s*760px\)[\s\S]*?\.chart-top-bar\s*\{[^}]*padding-inline:\s*var\(--chart-compact-inset\);/u);
   expect(stylesheet).toMatch(/@media \(max-width:\s*760px\)[\s\S]*?\.chart-header\s*\{[^}]*padding:\s*var\(--chart-compact-inset\) var\(--chart-compact-inset\) 12px;/u);
   expect(firstRule(".chart-metric-controls")).toContain("padding: 6px var(--chart-content-inset)");
-  expect(stylesheet).toMatch(/@media \(max-width:\s*760px\)[\s\S]*?\.chart-footer\s*\{[^}]*padding:\s*10px var\(--chart-compact-inset\) max\(var\(--space-4\), env\(safe-area-inset-bottom\)\);/u);
+  expect(stylesheet).toMatch(/@media \(max-width:\s*760px\)[\s\S]*?\.chart-resource-nav\s*\{[^}]*padding:\s*10px var\(--chart-compact-inset\) max\(var\(--space-4\), env\(safe-area-inset-bottom\)\);/u);
 });
 
 test("homepage document stays in the HTML without taking chart layout", () => {
@@ -104,12 +105,11 @@ test("the subsidy plot fits its shell without forced scrolling or colliding axis
   expect(stylesheet).not.toMatch(/\.gpt-subsidy-chart__plot\s*\{[^}]*direction:\s*rtl/u);
 });
 
-test("the Hraness lockup and resource links are quiet at rest", () => {
-  expect(firstRule(".hraness-brand")).toContain("display: inline-flex");
-  expect(firstRule(".hraness-brand")).toContain("text-decoration: none");
-  expect(firstRule(".hraness-ra-mark")).toContain("height: 2rem");
-  expect(firstRule(".chart-footer-links a")).toContain("text-decoration: none");
-  expect(firstRule(".chart-footer-links a:hover,\n.chart-footer-links a:focus-visible")).toContain(
+test("the local resource links are quiet at rest", () => {
+  expect(stylesheet).not.toContain(".hraness-brand");
+  expect(stylesheet).not.toContain(".hraness-ra-mark");
+  expect(firstRule(".chart-resource-nav__links a")).toContain("text-decoration: none");
+  expect(firstRule(".chart-resource-nav__links a:hover,\n.chart-resource-nav__links a:focus-visible")).toContain(
     "text-decoration: underline",
   );
 });
@@ -128,7 +128,7 @@ test("compact icon actions expand to the full touch target on mobile", () => {
   expect(stylesheet).toMatch(/\.share-trigger\.ui-icon-button\[data-size="compact"\] > \.ui-icon-button__control\s*\{[^}]*width:\s*var\(--interactive-target-min\);[^}]*height:\s*var\(--interactive-target-min\);/u);
 });
 
-test("chart canvas is full bleed while its header and footer own safe gutters", () => {
+test("chart canvas is full bleed while its header and resource nav own safe gutters", () => {
   expect(firstRule(".chart-app")).not.toMatch(/padding\s*:/u);
   expect(firstRule(".chart-top-bar")).not.toMatch(/padding-block\s*:/u);
   expect(stylesheet).toContain("--chart-content-inset: clamp(12px, 2vw, 28px)");
@@ -136,7 +136,7 @@ test("chart canvas is full bleed while its header and footer own safe gutters", 
   expect(firstRule(".chart-page-canvas")).toContain("max-width: none");
   expect(firstRule(".chart-page-canvas")).toContain("padding: 0");
   expect(firstRule(".chart-header")).toContain("padding: clamp(12px, 1.5vw, 18px) var(--chart-content-inset) 16px");
-  expect(firstRule(".chart-footer")).toContain("padding: 10px var(--chart-content-inset) max(var(--space-4), env(safe-area-inset-bottom))");
+  expect(firstRule(".chart-resource-nav")).toContain("padding: 10px var(--chart-content-inset) max(var(--space-4), env(safe-area-inset-bottom))");
 });
 
 test("share export floats over the chart with a quiet bounded surface", () => {
@@ -164,7 +164,7 @@ test("the chart declares only horizontal scrolling", () => {
   expect(firstRule(".chart-scroll")).toContain("max-width: 100%");
 });
 
-test("the persistent header and footer omit promotional credit chrome", () => {
+test("the persistent header and resource nav omit promotional credit chrome", () => {
   expect(stylesheet).not.toContain("chart-attribution");
   expect(stylesheet).not.toContain("chart-top-bar-actions");
   expect(stylesheet).not.toContain("chart-footer-credit");

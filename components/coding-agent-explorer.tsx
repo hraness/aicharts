@@ -26,7 +26,6 @@ import {
   TopBar,
   type SegmentedItem,
   type ToggleItem,
-  HranessBrand,
 } from "@/components/ui";
 import {
   useEffect,
@@ -1250,14 +1249,13 @@ export function CodingAgentExplorer({
         yMetric={yMetric}
       />
       <ModelUpdateTimeline retrievedAt={snapshot.source.retrievedAt} updates={snapshot.updates} />
-      <footer className="chart-footer">
-        <nav aria-label="AI Charts resources" className="chart-footer-links">
+      <nav aria-label="AI Charts resources" className="chart-resource-nav">
+        <div className="chart-resource-nav__links">
           <Link href="/data">Data</Link>
           <Link href="/blog">Analysis</Link>
           <Link href="/gpt-subsidy">{chatGptSubsidyChartLabel}</Link>
-        </nav>
-        <HranessBrand className="chart-footer-hraness" />
-      </footer>
+        </div>
+      </nav>
       </PageCanvas>
       {hoveredPoint !== null && tooltipLayout !== null && typeof document !== "undefined" && createPortal(
         <>

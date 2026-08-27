@@ -30,10 +30,11 @@ describe("retrieval timestamp formatting", () => {
   });
 });
 
-test("keeps promotional credits out of the persistent chart chrome", async () => {
+test("keeps the organization footer out of local chart chrome", async () => {
   const source = await Bun.file(new URL("./coding-agent-explorer.tsx", import.meta.url)).text();
 
-  expect(source).toContain('<HranessBrand className="chart-footer-hraness" />');
+  expect(source).not.toContain("HranessBrand");
+  expect(source).toContain('className="chart-resource-nav"');
   expect(source).not.toContain("by @0thernet");
   expect(source).not.toContain("https://x.com/0thernet");
   expect(source).not.toContain("Zo Computer");
@@ -97,7 +98,7 @@ test("links the latest data-derived update badge to the bottom timeline", async 
   const pageCanvasIndex = source.indexOf("<PageCanvas");
   const overviewIndex = source.indexOf("<OptionSpaceOverview");
   const timelineIndex = source.indexOf("<ModelUpdateTimeline");
-  const footerIndex = source.indexOf('<footer className="chart-footer">');
+  const resourceNavIndex = source.indexOf('className="chart-resource-nav"');
 
   expect(source).toContain('className="latest-update-badge chart-selection-boundary"');
   expect(source).toContain("aria-label={`Latest update: ${latestUpdate.summary}, ${formatUpdateDate(latestUpdate.detectedAt)}`}");
@@ -105,7 +106,7 @@ test("links the latest data-derived update badge to the bottom timeline", async 
   expect(source).toContain("latestUpdate.summary");
   expect(badgeIndex).toBeLessThan(pageCanvasIndex);
   expect(timelineIndex).toBeGreaterThan(overviewIndex);
-  expect(footerIndex).toBeGreaterThan(timelineIndex);
+  expect(resourceNavIndex).toBeGreaterThan(timelineIndex);
 });
 
 test("leaves only the selected benchmark description in the chart header", async () => {
@@ -192,7 +193,7 @@ test("places complementary option-space views below the primary scatter chart", 
   const pinStatusIndex = source.indexOf('className="pin-status"');
   const scatterIndex = source.indexOf('className="chart-scroll"');
   const overviewIndex = source.indexOf("<OptionSpaceOverview");
-  const footerIndex = source.indexOf('<footer className="chart-footer">');
+  const resourceNavIndex = source.indexOf('className="chart-resource-nav"');
 
   expect(metricControlsIndex).toBeGreaterThan(-1);
   expect(shellIndex).toBeGreaterThan(-1);
@@ -201,7 +202,7 @@ test("places complementary option-space views below the primary scatter chart", 
   expect(scatterIndex).toBeGreaterThan(pinStatusIndex);
   expect(scatterIndex).toBeGreaterThan(-1);
   expect(overviewIndex).toBeGreaterThan(scatterIndex);
-  expect(footerIndex).toBeGreaterThan(overviewIndex);
+  expect(resourceNavIndex).toBeGreaterThan(overviewIndex);
   expect(source).toContain("onPinPoint={(recordId)");
   expect(source).toContain("onPinProvider={(providerId)");
 });

@@ -1,4 +1,4 @@
-import { HranessBrand, SkipLink, ThemeMenuButton } from "@/components/ui";
+import { SkipLink, ThemeMenuButton } from "@/components/ui";
 import { chatGptSubsidyChartLabel } from "@/app/site";
 import Link from "next/link";
 import type { ReactNode } from "react";
@@ -21,14 +21,13 @@ export default function ModelsLayout({ children }: Readonly<{ children: ReactNod
         </div>
       </header>
       {children}
-      <footer className="model-cards-footer">
+      <aside aria-label="Model card resources" className="model-cards-footer">
         <p>aicharts.io</p>
-        <div>
+        <nav aria-label="Model card links">
           <a href="https://lobehub.com/icons" rel="noopener noreferrer" target="_blank">Icons by LobeHub</a>
           <Link href="/data">Data and method</Link>
-          <HranessBrand />
-        </div>
-      </footer>
+        </nav>
+      </aside>
     </div>
   );
 }

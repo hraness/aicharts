@@ -54,7 +54,7 @@ describe("GPT subsidy page components", () => {
     );
     expect(headerMarkup).not.toContain("ChatGPT Subsidy Chart");
     expect(headerMarkup).toContain('href="/">Home</a>');
-    expect(markup).toContain('href="/gpt-subsidy">ChatGPT Subsidy Chart</a>');
+    expect(markup).not.toContain('class="plain-footer"');
     expect(markup).not.toContain('href="/">Chart</a>');
     expect(markup.match(/data-presentation="menu"/gu)).toHaveLength(1);
     const navigationEnd = markup.indexOf("</nav>");

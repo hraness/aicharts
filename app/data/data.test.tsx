@@ -81,9 +81,7 @@ describe("coding-agent dataset surface", () => {
     expect(markup.slice(navigationStart, navigationEnd))
       .not.toContain("hraness-design-theme-toggle");
     expect(markup.slice(appearance, headerEnd)).not.toContain("<a ");
-    expect(markup).toContain('class="plain-footer"');
-    expect(markup.slice(markup.indexOf('<footer class="plain-footer"')))
-      .not.toContain("hraness-design-theme-toggle");
+    expect(markup).not.toContain('class="plain-footer"');
   });
 
   test("renders literal provenance, definitions, leaders, method, and limits", () => {
