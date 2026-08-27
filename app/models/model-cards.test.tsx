@@ -10,7 +10,10 @@ import {
   MODEL_CARD_COLLECTION_SOCIAL_IMAGE_PATH,
   MODEL_CARD_PRESENTATIONS,
   MODEL_CARD_RENDERER_VERSION,
+  MODEL_CARD_TOP_PATHS,
+  MODEL_CARD_VARIANTS,
   findModelCardPresentation,
+  modelCardCostAaFrontierPaths,
   modelCardRouteStaticParams,
   versionedModelCardImagePath,
 } from "@/lib/model-card-collection";
@@ -121,12 +124,29 @@ describe("public model cards", () => {
       MODEL_CARD_PRESENTATIONS.length * 20_500,
     );
     expect(markup).not.toContain("<canvas");
-    expect(markup).toContain('aria-label="How to read model card emblems"');
-    expect(markup).toContain("Maker — color &amp; outer court");
-    expect(markup).toContain("Family — sanctuary &amp; growth");
-    expect(markup).toContain("Version — form, rune &amp; foil");
-    expect(markup).toContain("Profile — ink, coverage &amp; detail");
-    expect(markup).toContain("High · X-high · Max");
+    expect(markup).toContain('aria-label="Filter model cards"');
+    expect(markup).toContain('aria-label="Show only cost and AA Index Pareto-frontier cards"');
+    expect(markup).toContain("All providers · 53");
+    expect(markup).toContain(`${MODEL_CARD_TOP_PATHS.length} cards · Cost ↓ · AA Index ↑`);
+    expect(markup).toContain(`${MODEL_CARD_PRESENTATIONS.length} of ${MODEL_CARD_PRESENTATIONS.length} cards`);
+    expect(markup).not.toContain('aria-label="How to read model card emblems"');
+    expect(markup).not.toContain("Read the sigil");
+    expect(markup).not.toContain("Maker — color &amp; outer court");
+    expect(modelsPageSource).not.toContain("model-card-gallery__legend");
+  });
+
+  test("maps the exact tie-preserving cost and AA frontier onto stable card paths", () => {
+    const topPaths = modelCardCostAaFrontierPaths(MODEL_CARD_VARIANTS);
+    const topPathSet = new Set(topPaths);
+
+    expect(topPaths).toEqual(MODEL_CARD_TOP_PATHS);
+    expect(topPaths.length).toBeGreaterThan(0);
+    expect(topPaths.length).toBeLessThan(MODEL_CARD_PRESENTATIONS.length);
+    expect(topPathSet.size).toBe(topPaths.length);
+    expect(topPaths.every(path => MODEL_CARD_PRESENTATIONS.some(card => card.path === path))).toBeTrue();
+    expect(modelsPageSource).toContain("topCount");
+    expect(modelsPageSource).toContain("ModelCardGalleryFilterItem");
+    expect(modelsPageSource).toContain("topPaths.has(card.path)");
   });
 
   test("keeps non-standard class context after removing the visible badge", () => {

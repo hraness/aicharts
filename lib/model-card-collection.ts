@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import codingAgentData from "@/data/coding-agents.json";
 
 import { parseCodingAgentSnapshot } from "./coding-agent-data";
+import { computeParetoSet } from "./option-space";
 import {
   buildModelCardVariants,
   findModelCardVariant,
@@ -39,8 +40,30 @@ export const MODEL_CARD_PRESENTATIONS = MODEL_CARD_VARIANTS.map((variant, index,
     MODEL_CARD_SNAPSHOT.source.retrievedAt,
   )
 ));
+export const MODEL_CARD_TOP_PATHS = modelCardCostAaFrontierPaths(MODEL_CARD_VARIANTS);
 
 export const MODEL_CARD_COLLECTION_CREST_LIMIT = 11;
+
+/**
+ * Maps the checked cost/AA Index Pareto frontier back to card profiles.
+ * A profile is Top when at least one retained configuration has no alternative
+ * that is no more expensive and at least as strong, with an advantage on one axis.
+ */
+export function modelCardCostAaFrontierPaths(
+  variants = MODEL_CARD_VARIANTS,
+): readonly ModelCardPresentation["path"][] {
+  const frontierRecordIds = new Set(computeParetoSet(
+    variants.flatMap(variant => variant.observations),
+    "costUsd",
+    "aaIndex",
+  ).map(({ record }) => record.id));
+
+  return variants
+    .filter(variant => variant.observations.some(observation => (
+      frontierRecordIds.has(observation.id)
+    )))
+    .map(variant => variant.path);
+}
 
 export function modelCardRouteStaticParams(): readonly ModelCardRouteParams[] {
   return modelCardStaticParams(MODEL_CARD_VARIANTS);
