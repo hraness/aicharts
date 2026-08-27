@@ -2,9 +2,12 @@
   --foil-card-radius: 1.4rem;
 
   aspect-ratio: 5 / 7;
+  border-radius: var(--foil-card-radius);
+  clip-path: inset(0 round var(--foil-card-radius));
   inline-size: 100%;
   max-inline-size: 25rem;
   outline: none;
+  overflow: clip;
 }
 
 .model-card-face {
@@ -14,6 +17,7 @@
   --model-card-rule: rgb(255 255 255 / 12%);
 
   aspect-ratio: 5 / 7;
+  background-clip: padding-box;
   background:
     radial-gradient(circle at 76% 18%, color-mix(in oklch, var(--model-card-color) 42%, transparent), transparent 40%),
     radial-gradient(circle at 10% 82%, color-mix(in oklch, var(--model-card-secondary) 24%, transparent), transparent 36%),
@@ -29,7 +33,7 @@
   font-family: var(--font-sans);
   inline-size: 100%;
   isolation: isolate;
-  overflow: hidden;
+  overflow: clip;
   position: relative;
 }
 

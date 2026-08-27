@@ -19,6 +19,23 @@ export type ModelCardProviderCourt = typeof providerCourts[keyof typeof provider
 
 const courtNames = Object.values(providerCourts);
 
+const providerLineHands = {
+  alibaba_cloud: "cloud-burin",
+  anthropic: "radiant-drypoint",
+  cursor: "quill-engraving",
+  deepseek: "tidal-wrigglework",
+  google: "cloisonne-hatch",
+  meta: "ribbon-blackwork",
+  moonshot_ai: "lunar-ruling",
+  openai: "engine-turning",
+  xai: "bright-cut",
+  z_ai: "pochoir-fan",
+} as const;
+
+export type ModelCardProviderLineHand = typeof providerLineHands[keyof typeof providerLineHands];
+
+const lineHandNames = Object.values(providerLineHands);
+
 const familyArchetypes = {
   composer: "interlaced-stave",
   "deepseek-v": "abyssal-eye",
@@ -65,6 +82,12 @@ export function modelCardProviderCourt(providerId: string): ModelCardProviderCou
   return providerCourts[providerId as keyof typeof providerCourts]
     ?? courtNames[stableHash(providerId) % courtNames.length]
     ?? "hex-interlace";
+}
+
+export function modelCardProviderLineHand(providerId: string): ModelCardProviderLineHand {
+  return providerLineHands[providerId as keyof typeof providerLineHands]
+    ?? lineHandNames[stableHash(`line-hand/${providerId}`) % lineHandNames.length]
+    ?? "engine-turning";
 }
 
 export function modelCardFamilyArchetype(familyId: string): ModelCardFamilyArchetype {
@@ -150,6 +173,319 @@ function familyRadicalPath(archetype: ModelCardFamilyArchetype): string {
   return "M154 51H246L264 69V161L246 179H154L136 161V69ZM154 69H246V161H154ZM171 88H229M171 104H215M171 126H229M171 142H205M145 60L160 75M255 60L240 75M145 170L160 155M255 170L240 155";
 }
 
+type OrnamentPoint = Readonly<{ x: number; y: number }>;
+
+function smoothClosedPath(points: readonly OrnamentPoint[]): string {
+  const first = points[0];
+  const last = points.at(-1);
+  if (first === undefined || last === undefined) return "";
+  const startX = rounded((last.x + first.x) / 2);
+  const startY = rounded((last.y + first.y) / 2);
+  return `M${startX} ${startY}${points.map((point, index) => {
+    const next = points[(index + 1) % points.length];
+    if (next === undefined) return "";
+    return `Q${rounded(point.x)} ${rounded(point.y)} ${rounded((point.x + next.x) / 2)} ${rounded((point.y + next.y) / 2)}`;
+  }).join("")}Z`;
+}
+
+function harmonicLoopPath(
+  seed: number,
+  phase: number,
+  radiusX: number,
+  radiusY: number,
+  sampleCount = 36,
+): string {
+  const primaryFrequency = 3 + seed % 5;
+  const secondaryFrequency = primaryFrequency + 2 + (seed >>> 4) % 3;
+  const points = Array.from({ length: sampleCount }, (_, index) => {
+    const angle = index * Math.PI * 2 / sampleCount;
+    const harmonic = 1
+      + Math.cos(angle * primaryFrequency + phase) * .105
+      + Math.cos(angle * secondaryFrequency - phase * .7) * .045;
+    return {
+      x: 200 + Math.cos(angle) * radiusX * harmonic,
+      y: 115 + Math.sin(angle) * radiusY * harmonic,
+    };
+  });
+  return smoothClosedPath(points);
+}
+
+function safeCartouchePath(court: ModelCardProviderCourt): string {
+  const index = Math.max(0, courtNames.indexOf(court));
+  const topBreak = 105 + index % 4 * 12;
+  const sideBreak = 83 + index % 3 * 16;
+  return [
+    `M18 ${sideBreak}V31Q18 18 31 18H${topBreak}`,
+    `M${topBreak + 42} 18H${358 - topBreak / 5}`,
+    `M${390 - topBreak / 5} 18H369Q382 18 382 31V${sideBreak - 9}`,
+    `M382 ${sideBreak + 35}V199Q382 212 369 212H${278 - index * 2}`,
+    `M${232 - index * 2} 212H31Q18 212 18 199V${151 - index * 2}`,
+    `M18 ${119 - index * 2}V${sideBreak + 18}`,
+  ].join("");
+}
+
+function providerFieldPath(court: ModelCardProviderCourt): string {
+  const seed = stableHash(`provider-field/${court}`);
+  return [
+    harmonicLoopPath(seed, sample(seed, 3) * Math.PI, 121, 88),
+    harmonicLoopPath(seed ^ 0x9e3779b9, sample(seed, 7) * Math.PI, 105, 75),
+  ].join("");
+}
+
+function providerReliefPath(court: ModelCardProviderCourt): string {
+  if (court === "cloud-gate") {
+    return "M31 166C44 143 65 146 70 162C77 151 94 153 98 166C88 177 43 179 31 166ZM302 166C306 153 323 151 330 162C335 146 356 143 369 166C357 179 312 177 302 166Z";
+  }
+  if (court === "aureole-book") {
+    return "M72 74L116 84L92 102ZM328 74L284 84L308 102ZM109 178Q151 164 191 184L174 196Q141 181 109 190ZM291 178Q249 164 209 184L226 196Q259 181 291 190Z";
+  }
+  if (court === "quill-spine") {
+    return "M41 186L52 159L66 180ZM67 159L80 130L92 151ZM92 132L108 103L119 124ZM284 58L310 42L303 67ZM316 43L344 28L335 54Z";
+  }
+  if (court === "boustrophedon-tide") {
+    return "M24 65Q47 47 70 65Q47 59 24 65ZM330 65Q353 47 376 65Q353 59 330 65ZM24 174Q47 156 70 174Q47 168 24 174ZM330 174Q353 156 376 174Q353 168 330 174Z";
+  }
+  if (court === "quatrefoil-window") {
+    return "M200 24Q225 48 200 73Q175 48 200 24ZM291 115Q266 140 241 115Q266 90 291 115ZM200 206Q175 182 200 157Q225 182 200 206ZM109 115Q134 90 159 115Q134 140 109 115Z";
+  }
+  if (court === "lemniscate-knot") {
+    return "M33 115Q91 55 160 111Q94 100 33 115ZM367 115Q309 175 240 119Q306 130 367 115Z";
+  }
+  if (court === "lunar-pillars") {
+    return "M67 42C42 69 42 161 67 188C55 147 55 83 67 42ZM333 42C358 69 358 161 333 188C345 147 345 83 333 42Z";
+  }
+  if (court === "hex-interlace") {
+    return "M200 23L225 38L225 67L200 82L175 67L175 38ZM200 207L175 192L175 163L200 148L225 163L225 192Z";
+  }
+  if (court === "broken-compass") {
+    return "M200 19L212 52L200 67L188 52ZM200 211L188 178L200 163L212 178ZM22 115L55 103L70 115L55 127ZM378 115L345 127L330 115L345 103Z";
+  }
+  return "M200 202L151 190L200 43L249 190ZM200 202L177 190L200 74L223 190Z";
+}
+
+function providerHatchPath(hand: ModelCardProviderLineHand): string {
+  if (hand === "cloud-burin") return "M31 151Q52 132 73 151M38 158Q57 141 76 158M324 158Q343 141 362 158M327 151Q348 132 369 151";
+  if (hand === "radiant-drypoint") return Array.from({ length: 9 }, (_, index) => `M${104 + index * 24} 41L${116 + index * 21} ${55 + index % 2 * 7}`).join("");
+  if (hand === "quill-engraving") return "M47 176L75 181M56 159L84 165M68 141L96 147M82 122L109 129M301 55L329 61M320 41L347 47";
+  if (hand === "tidal-wrigglework") return "M32 89Q44 80 56 89T80 89M320 89Q332 98 344 89T368 89M32 142Q44 133 56 142T80 142M320 142Q332 151 344 142T368 142";
+  if (hand === "cloisonne-hatch") return "M81 61L108 88M75 72L101 98M292 88L319 61M299 98L325 72M81 169L108 142M75 158L101 132M292 142L319 169M299 132L325 158";
+  if (hand === "ribbon-blackwork") return "M47 101L70 124M47 124L70 101M330 101L353 124M330 124L353 101M72 67L88 83M312 83L328 67M72 163L88 147M312 147L328 163";
+  if (hand === "lunar-ruling") return "M81 61V169M93 68V162M307 68V162M319 61V169M72 91H101M299 139H328";
+  if (hand === "engine-turning") return "M83 79Q112 45 151 56M317 79Q288 45 249 56M83 151Q112 185 151 174M317 151Q288 185 249 174";
+  if (hand === "bright-cut") return "M68 68L91 91M71 91L94 68M306 68L329 91M309 91L332 68M68 162L91 139M71 139L94 162M306 162L329 139M309 139L332 162";
+  return "M68 187L112 74M89 190L132 58M111 190L151 48M249 48L289 190M268 58L311 190M288 74L332 187";
+}
+
+function familyMattePath(archetype: ModelCardFamilyArchetype): string {
+  if (archetype === "paired-gate") return "M132 174V79L153 57H180L200 77L220 57H247L268 79V174L247 193H153ZM149 95V164L169 177H231L251 164V95L231 77H220L200 96L180 77H169Z";
+  if (archetype === "illuminated-initial") return "M137 54H224Q250 54 258 74L247 100Q265 117 250 137L260 162Q247 188 218 185L198 199L178 185Q149 188 136 162L146 137Q131 117 149 100L138 74Z";
+  if (archetype === "cathedral-window") return "M200 36Q154 62 145 114Q140 157 177 187L200 205L223 187Q260 157 255 114Q246 62 200 36Z";
+  if (archetype === "lyre") return "M151 52Q123 101 146 150Q155 170 181 180L175 197H225L219 180Q245 170 254 150Q277 101 249 52L223 70Q235 105 218 143L200 160L182 143Q165 105 177 70Z";
+  if (archetype === "interlaced-stave") return "M131 77L164 46L200 86L236 46L269 77L226 116L271 162L238 194L200 151L162 194L129 162L174 116Z";
+  if (archetype === "abyssal-eye") return "M119 115Q151 63 200 70Q249 63 281 115Q249 167 200 160Q151 167 119 115ZM154 115Q176 87 200 92Q224 87 246 115Q224 143 200 138Q176 143 154 115Z";
+  if (archetype === "twin-vesica") return "M200 35Q137 73 147 125Q151 164 200 195Q249 164 253 125Q263 73 200 35ZM200 60Q170 85 170 125Q173 156 200 175Q227 156 230 125Q230 85 200 60Z";
+  if (archetype === "lantern-spark") return "M200 31L251 79V151L200 199L149 151V79ZM200 56L229 91V139L200 174L171 139V91Z";
+  if (archetype === "lunar-ladder") return "M168 38Q124 70 143 124Q125 173 168 196L183 177H217L232 196Q275 173 257 124Q276 70 232 38L217 56H183Z";
+  if (archetype === "labyrinth-knot") return "M200 32L254 63L254 96L286 115L254 134V167L200 198L146 167V134L114 115L146 96V63Z";
+  if (archetype === "astrolabe-cross") return "M200 29L219 87L278 67L239 115L278 163L219 143L200 201L181 143L122 163L161 115L122 67L181 87Z";
+  return "M150 47H250L273 70V160L250 183H150L127 160V70ZM155 70V160H245V70Z";
+}
+
+function familyInlayPath(archetype: ModelCardFamilyArchetype): string {
+  const index = Math.max(0, archetypeNames.indexOf(archetype));
+  const points = 3 + index % 5;
+  return Array.from({ length: points }, (_, pointIndex) => {
+    const angle = -Math.PI / 2 + pointIndex * Math.PI * 2 / points;
+    const x = rounded(200 + Math.cos(angle) * (74 + index % 3 * 5));
+    const y = rounded(115 + Math.sin(angle) * (57 + index % 4 * 3));
+    const tangentX = rounded(Math.cos(angle + Math.PI / 2) * 7);
+    const tangentY = rounded(Math.sin(angle + Math.PI / 2) * 7);
+    return `M${x - tangentX} ${y - tangentY}L${rounded(x + Math.cos(angle) * 9)} ${rounded(y + Math.sin(angle) * 9)}L${x + tangentX} ${y + tangentY}L${rounded(x - Math.cos(angle) * 4)} ${rounded(y - Math.sin(angle) * 4)}Z`;
+  }).join("");
+}
+
+function leafPath(
+  baseX: number,
+  baseY: number,
+  angleDegrees: number,
+  length: number,
+  width: number,
+): string {
+  const angle = angleDegrees * Math.PI / 180;
+  const tangentX = Math.cos(angle);
+  const tangentY = Math.sin(angle);
+  const normalX = -tangentY;
+  const normalY = tangentX;
+  const tipX = baseX + tangentX * length;
+  const tipY = baseY + tangentY * length;
+  const shoulderX = baseX + tangentX * length * .48;
+  const shoulderY = baseY + tangentY * length * .48;
+  return `M${rounded(baseX)} ${rounded(baseY)}C${rounded(shoulderX + normalX * width)} ${rounded(shoulderY + normalY * width)} ${rounded(tipX - tangentX * length * .18 + normalX * width * .5)} ${rounded(tipY - tangentY * length * .18 + normalY * width * .5)} ${rounded(tipX)} ${rounded(tipY)}C${rounded(tipX - tangentX * length * .18 - normalX * width * .5)} ${rounded(tipY - tangentY * length * .18 - normalY * width * .5)} ${rounded(shoulderX - normalX * width)} ${rounded(shoulderY - normalY * width)} ${rounded(baseX)} ${rounded(baseY)}Z`;
+}
+
+function leafVeinPath(
+  baseX: number,
+  baseY: number,
+  angleDegrees: number,
+  length: number,
+): string {
+  const angle = angleDegrees * Math.PI / 180;
+  return `M${rounded(baseX)} ${rounded(baseY)}L${rounded(baseX + Math.cos(angle) * length * .82)} ${rounded(baseY + Math.sin(angle) * length * .82)}`;
+}
+
+type FamilyOrganism = Readonly<{
+  ghost: string;
+  leaves: readonly Readonly<{ angle: number; length: number; path: string; vein: string }>[];
+  ribbons: readonly string[];
+  spine: string;
+}>;
+
+function familyOrganism(archetype: ModelCardFamilyArchetype): FamilyOrganism {
+  const hash = stableHash(`family-organism/${archetype}`);
+  const archFamilies = new Set<ModelCardFamilyArchetype>([
+    "cathedral-window",
+    "paired-gate",
+  ]);
+  const tideFamilies = new Set<ModelCardFamilyArchetype>([
+    "abyssal-eye",
+    "lunar-ladder",
+    "lyre",
+  ]);
+  const climbingFamilies = new Set<ModelCardFamilyArchetype>([
+    "illuminated-initial",
+    "lantern-spark",
+    "twin-vesica",
+  ]);
+  const interlacedFamilies = new Set<ModelCardFamilyArchetype>([
+    "astrolabe-cross",
+    "interlaced-stave",
+    "labyrinth-knot",
+  ]);
+  let ghost: string;
+  let leafSpecs: readonly Readonly<{
+    angle: number;
+    baseX: number;
+    baseY: number;
+    length: number;
+    width: number;
+  }>[];
+  let ribbons: readonly string[];
+  let spine: string;
+
+  if (tideFamilies.has(archetype)) {
+    const rise = rounded(88 + sample(hash, 1) * 15);
+    const left = `M20 135C55 ${rise} 89 ${rounded(rise - 8)} 117 116C134 129 139 151 153 170`;
+    const right = `M380 131C345 ${rounded(rise + 4)} 311 ${rounded(rise - 5)} 283 113C266 126 261 148 247 168`;
+    spine = `${left}${right}`;
+    ribbons = [
+      `${left}C135 148 130 124 115 122C88 ${rounded(rise - 1)} 55 ${rise + 8} 23 142Z`,
+      `${right}C265 145 270 121 285 119C312 ${rounded(rise + 2)} 345 ${rise + 12} 377 138Z`,
+    ];
+    ghost = `M21 128C57 ${rise - 6} 89 ${rise - 14} 120 109C138 123 143 145 157 166M379 124C343 ${rise - 2} 311 ${rise - 11} 280 106C262 120 257 142 243 164`;
+    leafSpecs = [
+      { angle: -48, baseX: 61, baseY: rise + 3, length: 25, width: 6.5 },
+      { angle: 34, baseX: 111, baseY: 113, length: 25, width: 6.5 },
+      { angle: -132, baseX: 339, baseY: rise + 7, length: 25, width: 6.5 },
+      { angle: 146, baseX: 289, baseY: 111, length: 25, width: 6.5 },
+    ];
+  } else if (climbingFamilies.has(archetype)) {
+    const crown = rounded(48 + sample(hash, 2) * 15);
+    const left = `M45 196C35 153 61 105 103 86C119 79 132 65 151 ${crown}`;
+    const right = `M355 196C365 153 339 105 297 86C281 79 268 65 249 ${crown + 2}`;
+    spine = `${left}${right}`;
+    ribbons = [
+      `${left}C133 73 121 86 106 93C67 113 45 155 53 198Z`,
+      `${right}C267 73 279 86 294 93C333 113 355 155 347 198Z`,
+    ];
+    ghost = `M39 192C30 150 57 99 100 80C117 73 130 59 149 ${crown - 6}M361 192C370 150 343 99 300 80C283 73 270 59 251 ${crown - 4}`;
+    leafSpecs = [
+      { angle: -18, baseX: 58, baseY: 147, length: 26, width: 7 },
+      { angle: -56, baseX: 101, baseY: 87, length: 27, width: 7 },
+      { angle: 198, baseX: 342, baseY: 147, length: 26, width: 7 },
+      { angle: 236, baseX: 299, baseY: 87, length: 27, width: 7 },
+    ];
+  } else if (interlacedFamilies.has(archetype)) {
+    const skew = rounded((sample(hash, 3) - .5) * 12);
+    const left = `M27 184C66 161 95 116 151 ${58 + skew}`;
+    const right = `M373 184C334 161 305 116 249 ${58 - skew}`;
+    spine = `${left}${right}M61 77L131 165M339 77L269 165`;
+    ribbons = [
+      `${left}L158 ${66 + skew}C103 126 72 169 30 192Z`,
+      `${right}L242 ${66 - skew}C297 126 328 169 370 192Z`,
+    ];
+    ghost = `M24 176C64 153 91 108 147 ${51 + skew}M376 176C336 153 309 108 253 ${51 - skew}`;
+    leafSpecs = [
+      { angle: -76, baseX: 64, baseY: 154, length: 22, width: 5.5 },
+      { angle: 12, baseX: 99, baseY: 113, length: 24, width: 6 },
+      { angle: -104, baseX: 336, baseY: 154, length: 22, width: 5.5 },
+      { angle: 168, baseX: 301, baseY: 113, length: 24, width: 6 },
+    ];
+  } else if (archFamilies.has(archetype)) {
+    const shoulder = rounded(67 + sample(hash, 1) * 17);
+    const belly = rounded(151 + sample(hash, 2) * 16);
+    const left = `M23 188C55 174 65 ${belly} 101 ${belly - 9}C126 ${belly - 15} 125 ${shoulder + 30} 148 ${shoulder}`;
+    const right = `M377 184C344 171 333 ${belly - 4} 298 ${belly - 12}C274 ${belly - 18} 276 ${shoulder + 25} 251 ${shoulder - 3}`;
+    spine = `${left}${right}`;
+    ribbons = [
+      `${left}C134 ${shoulder + 31} 130 ${belly - 7} 101 ${belly - 3}C66 ${belly + 7} 56 184 26 195Z`,
+      `${right}C266 ${shoulder + 29} 270 ${belly - 9} 298 ${belly - 6}C333 ${belly + 3} 345 177 374 191Z`,
+    ];
+    ghost = `M26 183C57 172 67 ${belly - 4} 102 ${belly - 13}C126 ${belly - 18} 129 ${shoulder + 26} 151 ${shoulder - 4}M374 179C343 168 331 ${belly - 8} 297 ${belly - 16}C273 ${belly - 22} 272 ${shoulder + 21} 248 ${shoulder - 7}`;
+    leafSpecs = [
+      { angle: -68, baseX: 64, baseY: belly - 6, length: 25, width: 6.5 },
+      { angle: -38, baseX: 103, baseY: belly - 12, length: 27, width: 7 },
+      { angle: -112, baseX: 336, baseY: belly - 11, length: 24, width: 6 },
+      { angle: -142, baseX: 297, baseY: belly - 15, length: 28, width: 7.5 },
+    ];
+  } else {
+    const left = "M58 192V73Q58 55 76 55H139";
+    const right = "M342 192V73Q342 55 324 55H261";
+    spine = `${left}${right}M58 104H117M342 126H283`;
+    ribbons = [
+      `${left}V63H80Q67 63 67 76V192Z`,
+      `${right}V63H320Q333 63 333 76V192Z`,
+    ];
+    ghost = "M51 192V70Q51 48 74 48H137M349 192V70Q349 48 326 48H263";
+    leafSpecs = [
+      { angle: -28, baseX: 66, baseY: 147, length: 23, width: 6 },
+      { angle: 31, baseX: 66, baseY: 101, length: 23, width: 6 },
+      { angle: 208, baseX: 334, baseY: 147, length: 23, width: 6 },
+      { angle: 149, baseX: 334, baseY: 101, length: 23, width: 6 },
+    ];
+  }
+  const leaves = leafSpecs.map(spec => ({
+    angle: spec.angle,
+    length: spec.length,
+    path: leafPath(spec.baseX, spec.baseY, spec.angle, spec.length, spec.width),
+    vein: leafVeinPath(spec.baseX, spec.baseY, spec.angle, spec.length),
+  }));
+  return {
+    ghost,
+    leaves,
+    ribbons,
+    spine,
+  };
+}
+
+function editionCellPath(editionId: string): string {
+  if (editionId === "max") return "M181 44L186 24L196 34L200 17L204 34L214 24L219 44L211 51H189Z";
+  if (editionId === "fast") return "M172 28L191 21L184 39L199 33L218 24L211 43L228 36L218 53L195 48L179 51Z";
+  if (editionId === "flash") return "M205 18L181 40H198L191 55L222 29H204Z";
+  if (editionId === "pro") return "M190 21H210V29H217V44H210V51H190V44H183V29H190Z";
+  if (editionId === "luna") return "M210 19C187 21 178 43 194 55C187 42 193 27 210 19Z";
+  if (editionId === "sol") return "M200 17L207 28L220 30L211 40L214 53L200 47L186 53L189 40L180 30L193 28Z";
+  if (editionId === "terra") return "M174 48Q186 25 200 44Q214 17 228 48L218 55H182Z";
+  if (editionId === "plus") return "M194 21H206V30H215V42H206V51H194V42H185V30H194Z";
+  return "M200 21L211 34L200 48L189 34Z";
+}
+
+function roleTotemPath(role: ModelCardPresentation["emblemIdentity"]["role"]): string {
+  if (role === "speed") return "M111 184L130 176L123 190ZM289 184L270 176L277 190Z";
+  if (role === "reasoning") return "M102 181Q116 166 130 181Q116 196 102 181ZM298 181Q284 166 270 181Q284 196 298 181Z";
+  if (role === "flagship") return "M103 187L108 170L117 179L126 168L131 187ZM269 187L274 168L283 179L292 170L297 187Z";
+  return "M108 172L120 184L108 196L96 184ZM292 172L304 184L292 196L280 184Z";
+}
+
 const runeSegments = {
   a: "M0 12L4 0L8 12M2 7H6",
   k: "M0 0V12M0 7L8 0M2 6L8 12",
@@ -199,6 +535,32 @@ function runePath(value: string, centerX = 200, baselineY = 205): string {
   }).join("");
 }
 
+function generationTopologyPath(generation: readonly string[]): string {
+  const token = generation.join(".");
+  const hash = stableHash(`generation-topology/${token}`);
+  const lobeCount = 3 + hash % 5;
+  const phase = sample(hash, 21) * Math.PI * 2;
+  const points = Array.from({ length: lobeCount * 2 }, (_, index) => {
+    const angle = -Math.PI / 2 + phase * .08 + index * Math.PI / lobeCount;
+    const radiusX = index % 2 === 0 ? 84 : 69 + sample(hash, 30 + index) * 5;
+    const radiusY = index % 2 === 0 ? 66 : 53 + sample(hash, 50 + index) * 4;
+    return {
+      x: 200 + Math.cos(angle) * radiusX,
+      y: 115 + Math.sin(angle) * radiusY,
+    };
+  });
+  const axialCount = Math.min(4, Math.max(1, generation.length));
+  const axes = Array.from({ length: axialCount }, (_, index) => {
+    const angle = phase + index * Math.PI / axialCount;
+    const x1 = rounded(200 + Math.cos(angle) * 66);
+    const y1 = rounded(115 + Math.sin(angle) * 49);
+    const x2 = rounded(200 + Math.cos(angle) * 80);
+    const y2 = rounded(115 + Math.sin(angle) * 61);
+    return `M${x1} ${y1}L${x2} ${y2}`;
+  }).join("");
+  return `${smoothClosedPath(points)}${axes}`;
+}
+
 function generationSignaturePath(
   generation: readonly string[],
   revision: string | null,
@@ -214,7 +576,7 @@ function generationSignaturePath(
   const revisionMark = revision === null
     ? ""
     : runePath(revision.slice(-4), 321, 203);
-  return `${topBand}${runePath(generationLabel)}${revisionMark}`;
+  return `${generationTopologyPath(generation)}${topBand}${runePath(generationLabel)}${revisionMark}`;
 }
 
 function editionSignaturePath(editionId: string): string {
@@ -253,22 +615,23 @@ function coronaPath(
   return "M119 115L127 107L135 115L127 123ZM281 115L273 107L265 115L273 123Z";
 }
 
-function acanthusSprigPath(index: number, hash: number): string {
-  const y = rounded(71 + index * 144 / 6 + (sample(hash, 30 + index) - .5) * 7);
-  const curl = rounded(18 + sample(hash, 40 + index) * 11);
-  const scale = rounded(.78 + index * .055);
-  const left = `M30 ${y}C${rounded(52 + curl)} ${rounded(y - 21)} ${rounded(71 + curl)} ${rounded(y + 22)} 101 ${rounded(y - 3)}C88 ${rounded(y + 1)} 82 ${rounded(y + 15)} 96 ${rounded(y + 18)}C83 ${rounded(y + 24)} 72 ${rounded(y + 16)} 74 ${rounded(y + 5)}C62 ${rounded(y + 15)} 52 ${rounded(y + 7)} 57 ${rounded(y - 3)}`;
-  return `${left}M370 ${y}C${rounded(348 - curl)} ${rounded(y - 21)} ${rounded(329 - curl)} ${rounded(y + 22)} 299 ${rounded(y - 3)}C312 ${rounded(y + 1)} 318 ${rounded(y + 15)} 304 ${rounded(y + 18)}C317 ${rounded(y + 24)} 328 ${rounded(y + 16)} 326 ${rounded(y + 5)}C338 ${rounded(y + 15)} 348 ${rounded(y + 7)} 343 ${rounded(y - 3)}M${rounded(92 - scale * 4)} ${rounded(y - 1)}L${rounded(99 - scale * 2)} ${rounded(y - 10)}M${rounded(308 + scale * 4)} ${rounded(y - 1)}L${rounded(301 + scale * 2)} ${rounded(y - 10)}`;
+function profileDetailLeafPath(index: number, hash: number): string {
+  const isLeft = index % 2 === 0;
+  const row = Math.floor(index / 2);
+  const baseX = isLeft ? 39 + row * 8 : 361 - row * 8;
+  const baseY = 60 + row * 38 + (sample(hash, 70 + index) - .5) * 8;
+  const angle = isLeft
+    ? -18 + sample(hash, 80 + index) * 37
+    : 161 + sample(hash, 80 + index) * 37;
+  return leafPath(baseX, baseY, angle, 17 + row * 2, 4.5 + row * .5);
 }
 
-function scribeGlyphPath(token: string): string {
-  const hash = stableHash(token);
-  return [0, 1, 2].map((index) => {
-    const x = 61 + index * 139;
-    const y = 104 + (index % 2) * 18;
-    const branch = sample(hash, index) > .5 ? 1 : -1;
-    const bowl = sample(hash, 10 + index) > .5;
-    return `M${x} ${y - 11}V${y + 11}M${x} ${y - 5}L${x + branch * 8} ${y - 10}${bowl ? `M${x} ${y + 1}Q${x + branch * 10} ${y + 5} ${x} ${y + 9}` : `M${x} ${y + 3}L${x - branch * 7} ${y + 9}`}M${x + branch * 10} ${y - 12}L${x + branch * 12} ${y - 10}`;
+function profileTallyPath(profileSlug: string): string {
+  const hash = stableHash(`profile-tally/${profileSlug}`);
+  return Array.from({ length: 12 }, (_, index) => {
+    const x = 43 + index * 6;
+    const high = (hash >>> (index % 24)) & 1;
+    return `M${x} ${high === 1 ? 194 : 199}V205`;
   }).join("");
 }
 
@@ -303,12 +666,12 @@ export function ModelCardIllumination({
 }>) {
   const identity = card.emblemIdentity;
   const court = modelCardProviderCourt(card.providerId);
+  const lineHand = modelCardProviderLineHand(card.providerId);
   const archetype = modelCardFamilyArchetype(identity.familyId);
   const density = card.illuminationDensity;
   const isGallery = mode === "gallery";
   const modelHash = stableHash(card.canonicalModelId);
-  const flourishCount = isGallery ? density : density + 1;
-  const jewelCount = density * 2;
+  const organism = familyOrganism(archetype);
   const fingerprint = identityValue(card);
 
   return (
@@ -326,6 +689,8 @@ export function ModelCardIllumination({
       data-illumination-density={density}
       data-illumination-mode={mode}
       data-illumination-motif={court}
+      data-ornament-line-hand={lineHand}
+      data-ornament-medium="deterministic-svg-engraving"
       focusable="false"
       height="100%"
       preserveAspectRatio="xMidYMid slice"
@@ -333,119 +698,186 @@ export function ModelCardIllumination({
       viewBox="0 0 400 230"
       width="100%"
     >
-      <g
-        data-emblem-signature="provider"
-        data-illumination-signature="provider"
-        fill="none"
-        opacity=".49"
-        stroke={card.providerColor}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="2.15"
-      >
-        <path d={providerCourtPath(court)} />
-      </g>
-
-      <g
-        data-emblem-signature="family"
-        fill="none"
-        opacity=".64"
-        stroke={card.secondaryColor}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="1.7"
-      >
-        <path d={familyRadicalPath(archetype)} />
-      </g>
-
-      <g
-        data-emblem-signature="generation"
-        fill="none"
-        opacity=".72"
-        stroke={card.secondaryColor}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="1.35"
-      >
-        <path d={generationSignaturePath(identity.generation, identity.revision)} />
-      </g>
-
-      <g
-        data-emblem-signature="edition"
-        fill="none"
-        opacity=".78"
-        stroke={card.providerColor}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="1.45"
-      >
-        <path d={editionSignaturePath(identity.editionId)} />
-      </g>
-
-      <g
-        data-emblem-signature="class"
-        data-illumination-signature="class"
-        fill="none"
-        opacity=".34"
-        stroke={card.secondaryColor}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="1.15"
-      >
-        <path d={coronaPath(card.accentFamily, card.visualClass, density)} />
-      </g>
-
-      <g
-        data-emblem-signature="profile"
-        fill={card.secondaryColor}
-        fillOpacity=".58"
-        stroke={card.providerColor}
-        strokeOpacity=".58"
-        strokeWidth=".8"
-      >
-        {Array.from({ length: jewelCount }, (_, index) => {
-          const angle = (-156 + index * 312 / Math.max(1, jewelCount - 1)) * Math.PI / 180;
-          const x = rounded(200 + Math.cos(angle) * 83);
-          const y = rounded(115 + Math.sin(angle) * 67);
-          return <circle cx={x} cy={y} key={`jewel-${index}`} r={rounded(1.85 + density * .1)} />;
-        })}
-      </g>
-
-      <g
-        fill="none"
-        opacity={isGallery ? ".32" : ".39"}
-        stroke={card.providerColor}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="1.05"
-      >
-        {Array.from({ length: flourishCount }, (_, index) => (
-          <path d={acanthusSprigPath(index, modelHash)} key={`acanthus-${index}`} />
-        ))}
-      </g>
-
-      {!isGallery && (
+      <g data-ornament-depth="background">
         <g
-          data-emblem-signature="scribe"
+          data-emblem-signature="provider"
+          data-illumination-signature="provider"
           fill="none"
-          opacity=".27"
+          opacity=".3"
+          stroke={card.providerColor}
+          strokeLinecap="butt"
+          strokeLinejoin="miter"
+          strokeWidth=".82"
+        >
+          <path d={`${safeCartouchePath(court)}${providerCourtPath(court)}${providerFieldPath(court)}`} />
+        </g>
+        <path
+          d={providerReliefPath(court)}
+          data-ornament-mark="painted-relief"
+          fill={card.providerColor}
+          fillOpacity=".13"
+          stroke={card.providerColor}
+          strokeOpacity=".25"
+          strokeWidth=".6"
+        />
+        <path
+          d={providerHatchPath(lineHand)}
+          data-ornament-mark="engraving-hatch"
+          fill="none"
+          opacity=".23"
+          stroke={card.secondaryColor}
+          strokeLinecap="butt"
+          strokeWidth=".7"
+        />
+      </g>
+
+      <g data-ornament-depth="midground">
+        <path
+          d={familyMattePath(archetype)}
+          data-emblem-signature="family-matte"
+          fill="#050609"
+          fillOpacity=".82"
+          stroke={card.providerColor}
+          strokeOpacity=".32"
+          strokeWidth=".85"
+        />
+        <path
+          d={familyInlayPath(archetype)}
+          data-ornament-mark="cloisonne-inlay"
+          fill={card.secondaryColor}
+          fillOpacity=".24"
+        />
+        <path
+          d={organism.ribbons.join("")}
+          data-ornament-mark="calligraphic-ribbon"
+          fill={card.providerColor}
+          fillOpacity={isGallery ? ".22" : ".28"}
+          stroke={card.providerColor}
+          strokeOpacity=".42"
+          strokeWidth=".45"
+        />
+        <path
+          d={organism.leaves.map(leaf => leaf.path).join("")}
+          data-ornament-mark="botanical-inlay"
+          fill={card.secondaryColor}
+          fillOpacity={isGallery ? ".31" : ".4"}
+          stroke={card.secondaryColor}
+          strokeOpacity=".54"
+          strokeWidth=".55"
+        />
+        <path
+          d={`${organism.spine}${organism.leaves.map(leaf => leaf.vein).join("")}`}
+          data-ornament-mark="burin-contour"
+          fill="none"
+          opacity=".52"
           stroke={card.secondaryColor}
           strokeLinecap="round"
           strokeLinejoin="round"
-          strokeWidth="1"
+          strokeWidth="1.18"
+        />
+        {!isGallery ? (
+          <path
+            d={organism.ghost}
+            data-ornament-mark="drypoint-ghost"
+            fill="none"
+            opacity=".17"
+            stroke={card.providerColor}
+            strokeLinecap="round"
+            strokeWidth=".72"
+          />
+        ) : null}
+        <g
+          data-emblem-signature="family"
+          fill="none"
+          opacity=".84"
+          stroke={card.secondaryColor}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="1.62"
         >
-          <path d={scribeGlyphPath(`${card.providerId}/${identity.familyId}/${identity.editionId}`)} />
+          <path d={familyRadicalPath(archetype)} />
         </g>
-      )}
+      </g>
 
-      <ellipse
-        cx="200"
-        cy="115"
-        fill="#050609"
-        fillOpacity=".78"
-        rx="64"
-        ry="54"
-      />
+      <g data-ornament-depth="foreground">
+        <g
+          data-emblem-signature="generation"
+          fill="none"
+          opacity=".62"
+          stroke={card.secondaryColor}
+          strokeLinecap="butt"
+          strokeLinejoin="miter"
+          strokeWidth="1.08"
+        >
+          <path d={generationSignaturePath(identity.generation, identity.revision)} />
+        </g>
+        <path
+          d={editionCellPath(identity.editionId)}
+          data-ornament-mark="edition-inlay"
+          fill={card.providerColor}
+          fillOpacity=".43"
+          stroke={card.secondaryColor}
+          strokeOpacity=".72"
+          strokeWidth=".7"
+        />
+        <g
+          data-emblem-signature="edition"
+          fill="none"
+          opacity=".86"
+          stroke={card.providerColor}
+          strokeLinecap="butt"
+          strokeLinejoin="miter"
+          strokeWidth="1.42"
+        >
+          <path d={editionSignaturePath(identity.editionId)} />
+        </g>
+        <g
+          data-emblem-signature="role"
+          fill={card.secondaryColor}
+          fillOpacity=".48"
+          stroke={card.providerColor}
+          strokeOpacity=".7"
+          strokeWidth=".65"
+        >
+          <path d={roleTotemPath(identity.role)} />
+        </g>
+        <g
+          data-emblem-signature="class"
+          data-illumination-signature="class"
+          fill="none"
+          opacity=".38"
+          stroke={card.secondaryColor}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="1.05"
+        >
+          <path d={coronaPath(card.accentFamily, card.visualClass, density)} />
+        </g>
+        <g
+          data-emblem-signature="profile"
+          fill={card.secondaryColor}
+          fillOpacity=".38"
+          stroke={card.providerColor}
+          strokeOpacity=".62"
+          strokeWidth=".65"
+        >
+          <path d={profileTallyPath(card.profileSlug)} fill="none" />
+          {Array.from({ length: density }, (_, index) => (
+            <path d={profileDetailLeafPath(index, modelHash)} key={`profile-leaf-${index}`} />
+          ))}
+        </g>
+        {!isGallery ? (
+          <path
+            d={profileDetailLeafPath(density + 1, modelHash ^ 0x85ebca6b)}
+            data-ornament-mark="bright-cut-detail"
+            fill={card.providerColor}
+            fillOpacity=".3"
+            stroke={card.secondaryColor}
+            strokeOpacity=".55"
+            strokeWidth=".55"
+          />
+        ) : null}
+      </g>
     </svg>
   );
 }

@@ -7,15 +7,14 @@ import {
   modelCardProviderRepresentatives,
 } from "@/lib/model-card-collection";
 
-export const alt = "Illuminated AI model benchmark atlas with distinct provider sigils";
-export const contentType = "image/png";
-export const size = { height: 630, width: 1200 };
+const size = { height: 630, width: 1200 } as const;
 
-export default function OpenGraphImage() {
-  const representatives = modelCardProviderRepresentatives();
+export const dynamic = "force-static";
+
+export function GET() {
   return new ImageResponse(
     <ModelCardCollectionSocialImage
-      cards={representatives}
+      cards={modelCardProviderRepresentatives()}
       profileCount={MODEL_CARD_PRESENTATIONS.length}
       providerCount={modelCardProviderCount()}
     />,

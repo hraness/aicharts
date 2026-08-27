@@ -6,7 +6,7 @@ import type { ModelCardPresentation } from "@/lib/model-card-presentation";
 
 import { ModelCardIllumination } from "./model-card-illumination";
 
-type EmblemSignature = "class" | "edition" | "family" | "generation" | "provider";
+type EmblemSignature = "class" | "edition" | "family" | "generation" | "profile" | "provider" | "role";
 
 function geometryCount(markup: string): number {
   return (markup.match(/<(?:path|ellipse|circle)\b/gu) ?? []).length;
@@ -19,6 +19,20 @@ function signaturePath(markup: string, signature: EmblemSignature): string {
   ));
   if (match?.[1] === undefined) throw new Error(`Expected a ${signature} signature path.`);
   return match[1];
+}
+
+function attributedPath(markup: string, attribute: string, value: string): string {
+  const elements = markup.match(/<path\b[^>]*>/gu) ?? [];
+  const element = elements.find(candidate => candidate.includes(`${attribute}="${value}"`));
+  const path = element?.match(/\bd="([^"]+)"/u)?.[1];
+  if (path === undefined) throw new Error(`Expected ${attribute}=${value} path.`);
+  return path;
+}
+
+function geometrySignature(markup: string): string {
+  return (markup.match(/<(?:path|ellipse|circle)\b[^>]*>/gu) ?? []).map(element => (
+    element.replace(/\s(?:data-[^=]+|class|style|aria-hidden|focusable)="[^"]*"/gu, "")
+  )).join("|");
 }
 
 function render(card: ModelCardPresentation, mode: "full" | "gallery" = "full"): string {
@@ -49,16 +63,34 @@ describe("model card illumination", () => {
     expect(render(first)).toBe(render(first));
     const renderedCards = MODEL_CARD_PRESENTATIONS.map(card => render(card));
     expect(new Set(renderedCards).size).toBe(renderedCards.length);
+    expect(new Set(renderedCards.map(geometrySignature)).size).toBe(renderedCards.length);
     expect(renderedCards.every(markup => markup.includes("data-emblem-fingerprint="))).toBe(true);
   });
 
+  test("uses three ordered depth planes and conservative ImageResponse-safe SVG", () => {
+    const fixture = MODEL_CARD_PRESENTATIONS[0];
+    if (fixture === undefined) throw new Error("Expected a model-card fixture.");
+    const markup = render(fixture);
+    const depths = [...markup.matchAll(/data-ornament-depth="([^"]+)"/gu)].map(match => match[1]);
+    expect(depths).toEqual(["background", "midground", "foreground"]);
+    expect(markup).toContain('data-ornament-medium="deterministic-svg-engraving"');
+    expect(markup).toContain('data-ornament-mark="engraving-hatch"');
+    expect(markup).toContain('data-ornament-mark="calligraphic-ribbon"');
+    expect(markup).toContain('data-ornament-mark="botanical-inlay"');
+    expect(markup).toContain('data-ornament-mark="drypoint-ghost"');
+    expect(markup).not.toMatch(/<(?:defs|filter|mask|pattern|text)\b/iu);
+    expect(markup).not.toMatch(/\sid=/u);
+  });
+
   test("gives every provider a stable, structurally distinct outer court", () => {
-    const courtByProvider = new Map<string, { name: string; path: string }>();
+    const courtByProvider = new Map<string, { hand: string; name: string; path: string }>();
     for (const card of MODEL_CARD_PRESENTATIONS) {
       const markup = render(card);
       const name = markup.match(/data-illumination-motif="([^"]+)"/u)?.[1];
       if (name === undefined) throw new Error("Expected a named provider court.");
-      const value = { name, path: signaturePath(markup, "provider") };
+      const hand = markup.match(/data-ornament-line-hand="([^"]+)"/u)?.[1];
+      if (hand === undefined) throw new Error("Expected a named provider line hand.");
+      const value = { hand, name, path: signaturePath(markup, "provider") };
       const previous = courtByProvider.get(card.providerId);
       if (previous === undefined) courtByProvider.set(card.providerId, value);
       else expect(value).toEqual(previous);
@@ -67,18 +99,27 @@ describe("model card illumination", () => {
       .toBe(courtByProvider.size);
     expect(new Set([...courtByProvider.values()].map(value => value.path)).size)
       .toBe(courtByProvider.size);
+    expect(new Set([...courtByProvider.values()].map(value => value.hand)).size)
+      .toBe(courtByProvider.size);
   });
 
   test("gives every current family one dominant, shared lineage seal", () => {
     const pathByFamily = new Map<string, string>();
+    const matteByFamily = new Map<string, string>();
     for (const card of MODEL_CARD_PRESENTATIONS) {
-      const path = signaturePath(render(card), "family");
+      const markup = render(card);
+      const path = signaturePath(markup, "family");
+      const matte = attributedPath(markup, "data-emblem-signature", "family-matte");
       const previous = pathByFamily.get(card.emblemIdentity.familyId);
       if (previous === undefined) pathByFamily.set(card.emblemIdentity.familyId, path);
       else expect(path).toBe(previous);
+      const previousMatte = matteByFamily.get(card.emblemIdentity.familyId);
+      if (previousMatte === undefined) matteByFamily.set(card.emblemIdentity.familyId, matte);
+      else expect(matte).toBe(previousMatte);
     }
     expect(pathByFamily.size).toBe(12);
     expect(new Set(pathByFamily.values()).size).toBe(pathByFamily.size);
+    expect(new Set(matteByFamily.values()).size).toBe(matteByFamily.size);
   });
 
   test("keeps a model core byte-identical across profiles", () => {
@@ -134,6 +175,20 @@ describe("model card illumination", () => {
     for (const [index, accentFamily] of families.entries()) {
       expect(markups[index]).toContain(`data-illumination-accent="${accentFamily}"`);
     }
+  });
+
+  test("uses role as visible topology and exact profile tallies", () => {
+    const roles = ["general", "speed", "reasoning", "flagship"] as const;
+    const rolePaths = roles.map(role => {
+      const card = MODEL_CARD_PRESENTATIONS.find(candidate => candidate.emblemIdentity.role === role);
+      if (card === undefined) throw new Error(`Expected a ${role} fixture.`);
+      return signaturePath(render(card), "role");
+    });
+    expect(new Set(rolePaths).size).toBe(roles.length);
+
+    const none = render(cardFor("openai/gpt-5.6-luna", "none"));
+    const low = render(cardFor("openai/gpt-5.6-luna", "low"));
+    expect(signaturePath(none, "profile")).not.toBe(signaturePath(low, "profile"));
   });
 
   test("uses a lighter gallery pass without losing semantic signatures", () => {
