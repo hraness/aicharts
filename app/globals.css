@@ -4,11 +4,22 @@
 @import "../styles/plain-publication.css";
 @import "../styles/model-cards.css";
 
-*, *::before, *::after { box-sizing: border-box; }
+/* Keep application resets in the shared base layer. Unlayered resets outrank
+ * every @hraness/ui component layer and silently erase control typography,
+ * padding, and disabled-state behavior. */
+@layer base {
+  *, *::before, *::after { box-sizing: border-box; }
 
-html, body, div, span, h1, h2, h3, p, a, button, input, dl, dt, dd, header, main, footer, section, article {
-  margin: 0;
-  padding: 0;
+  html, body, div, span, h1, h2, h3, p, a, button, input, dl, dt, dd, header, main, footer, section, article {
+    margin: 0;
+    padding: 0;
+  }
+
+  button, input { font: inherit; }
+  input { color: inherit; }
+  button, a { -webkit-tap-highlight-color: transparent; }
+  button:not(:disabled) { cursor: pointer; }
+  a { color: inherit; }
 }
 
 :root {
@@ -64,11 +75,6 @@ body {
   min-height: 100svh;
   text-rendering: optimizeLegibility;
 }
-button, input { font: inherit; }
-input { color: inherit; }
-button, a { -webkit-tap-highlight-color: transparent; }
-button { cursor: pointer; }
-a { color: inherit; }
 :focus-visible { outline: 2px solid var(--brand-key); outline-offset: 2px; }
 
 .ui-top-bar {

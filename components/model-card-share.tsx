@@ -13,7 +13,7 @@ import {
   SocialIcon,
   WrappingRow,
 } from "@hraness/ui";
-import { Download01Icon, Image01Icon } from "@hugeicons/core-free-icons";
+import { Copy01Icon, Download01Icon, Share08Icon } from "@hugeicons/core-free-icons";
 import { Icon } from "@/components/ui";
 import { useEffect, useMemo, useState } from "react";
 
@@ -85,8 +85,9 @@ export function ModelCardShare({
         {nativeShareAvailable && (
           <Button
             isPending={sharing}
-            leading={<Icon icon={Image01Icon} size={17} strokeWidth={1.7} />}
+            leading={<Icon icon={Share08Icon} size={16} strokeWidth={1.7} />}
             onPress={() => { void handleNativeShare(); }}
+            size="compact"
             variant="primary"
           >
             Share image
@@ -95,24 +96,27 @@ export function ModelCardShare({
         <LinkButton
           download={filename}
           href={imageUrl}
-          leading={<Icon icon={Download01Icon} size={17} strokeWidth={1.7} />}
+          leading={<Icon icon={Download01Icon} size={16} strokeWidth={1.7} />}
+          size="compact"
           variant={nativeShareAvailable ? "secondary" : "primary"}
         >
           Download PNG
         </LinkButton>
-        <CopyButton copiedLabel="Link copied" copyLabel="Copy link" value={canonicalUrl} />
+        <CopyButton
+          copiedLabel="Link copied"
+          copyLabel="Copy link"
+          leading={<Icon icon={Copy01Icon} size={16} strokeWidth={1.7} />}
+          size="compact"
+          value={canonicalUrl}
+          variant="quiet"
+        />
       </WrappingRow>
-      {preparationFailed && (
-        <p className="model-card-share__status" role="status">
-          Native image sharing is unavailable, but you can still download the PNG or post the card link.
-        </p>
-      )}
-      {status !== "" && <p className="model-card-share__status" role="status">{status}</p>}
       <WrappingRow aria-label="Post the model card link" as="nav" className="model-card-share__social">
         <LinkButton
           href={socialLinks.x}
           leading={<SocialIcon name="x" />}
           rel="noopener noreferrer"
+          size="compact"
           target="_blank"
           variant="quiet"
         >
@@ -122,6 +126,7 @@ export function ModelCardShare({
           href={socialLinks.bluesky}
           leading={<SocialIcon name="bluesky" />}
           rel="noopener noreferrer"
+          size="compact"
           target="_blank"
           variant="quiet"
         >
@@ -131,12 +136,19 @@ export function ModelCardShare({
           href={socialLinks.linkedin}
           leading={<SocialIcon name="linkedin" />}
           rel="noopener noreferrer"
+          size="compact"
           target="_blank"
           variant="quiet"
         >
           LinkedIn
         </LinkButton>
       </WrappingRow>
+      {preparationFailed && (
+        <p className="model-card-share__status" role="status">
+          Native image sharing is unavailable, but you can still download the PNG or post the card link.
+        </p>
+      )}
+      {status !== "" && <p className="model-card-share__status" role="status">{status}</p>}
     </section>
   );
 }

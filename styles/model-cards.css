@@ -849,6 +849,11 @@
   .model-card-face { border-radius: .85rem; }
   .model-card-face__border { border-radius: .6rem; }
   .model-card-grid__link { border-radius: .85rem; }
+  .model-card-share__primary {
+    display: grid;
+    grid-template-columns: max-content max-content;
+  }
+  .model-card-share__primary > [data-variant="primary"] { grid-column: 1 / -1; }
 }
 
 @media (prefers-reduced-motion: reduce) {
