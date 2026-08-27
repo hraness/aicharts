@@ -293,7 +293,7 @@ export function createModelCardPresentation(
     profileSlug: variant.profileSlug,
     providerId: variant.providerId,
     providerName: variant.providerName,
-    seed: `${variant.canonicalModelId}/${variant.profileSlug}`,
+    seed: variant.canonicalModelId,
     sourceDate: formatModelCardSourceDate(sourceRetrievedAt),
     totalCards,
     visualClass: cardVisualClass,

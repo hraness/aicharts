@@ -50,8 +50,8 @@ export default function ModelCardsPage() {
           <strong>Read the sigil</strong>
           <span>Maker — color &amp; outer court</span>
           <span>Family — sanctuary &amp; growth</span>
-          <span>Version — topology &amp; inscription</span>
-          <span>Profile — ink &amp; detail</span>
+          <span>Version — form, rune &amp; foil</span>
+          <span>Profile — ink, coverage &amp; detail</span>
         </p>
         <ul aria-label="Emblem secondary ink legend">
           <li data-emblem-ink="standard">Standard</li>

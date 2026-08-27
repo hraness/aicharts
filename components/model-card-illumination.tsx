@@ -1,6 +1,9 @@
+import { useId } from "react";
+
 import type { ModelCardPresentation } from "@/lib/model-card-presentation";
 
 export type ModelCardIlluminationMode = "full" | "gallery";
+export type ModelCardIlluminationFinish = "holographic" | "print";
 
 const providerCourts = {
   alibaba_cloud: "cloud-gate",
@@ -55,6 +58,35 @@ export type ModelCardFamilyArchetype = typeof familyArchetypes[keyof typeof fami
 
 const archetypeNames = Object.values(familyArchetypes);
 
+const familyHolographicFields = {
+  "interlaced-stave": "crossed-grating",
+  "abyssal-eye": "tidal-iridescence",
+  "illuminated-initial": "pearl-vellum",
+  "twin-vesica": "vesica-thin-film",
+  "seal-tablet": "cloisonne-spectrum",
+  "labyrinth-knot": "engine-turned-maze",
+  "astrolabe-cross": "radial-diffraction",
+  "lunar-ladder": "lunar-laminate",
+  "lantern-spark": "faceted-prism",
+  "cathedral-window": "rose-window-foil",
+  "paired-gate": "axial-burin",
+  lyre: "string-anisotropy",
+} as const satisfies Readonly<Record<ModelCardFamilyArchetype, string>>;
+
+const holographicFieldNames = Object.values(familyHolographicFields);
+
+const holographicSpectrum = [
+  "#ff78b7",
+  "#ffb45f",
+  "#fff08a",
+  "#83f3cf",
+  "#65d7ff",
+  "#7e9cff",
+  "#c884ff",
+] as const;
+
+const holographicBandOffsets = [31, 40, 50, 60, 69] as const;
+
 function stableHash(value: string): number {
   let hash = 2_166_136_261;
   for (const character of value) {
@@ -94,6 +126,13 @@ export function modelCardFamilyArchetype(familyId: string): ModelCardFamilyArche
   return familyArchetypes[familyId as keyof typeof familyArchetypes]
     ?? archetypeNames[stableHash(familyId) % archetypeNames.length]
     ?? "seal-tablet";
+}
+
+export function modelCardHolographicField(familyId: string): string {
+  const archetype = modelCardFamilyArchetype(familyId);
+  return familyHolographicFields[archetype]
+    ?? holographicFieldNames[stableHash(`holographic-field/${familyId}`) % holographicFieldNames.length]
+    ?? "cloisonne-spectrum";
 }
 
 function providerCourtPath(court: ModelCardProviderCourt): string {
@@ -561,10 +600,10 @@ function generationTopologyPath(generation: readonly string[]): string {
   return `${smoothClosedPath(points)}${axes}`;
 }
 
-function generationSignaturePath(
+function generationSignaturePaths(
   generation: readonly string[],
   revision: string | null,
-): string {
+): Readonly<{ inscription: string; topology: string }> {
   const generationLabel = generation.join(".");
   const majorDigits = generation[0]?.match(/\d+/u)?.[0] ?? "3";
   const cuspCount = Math.max(3, Math.min(7, Number.parseInt(majorDigits, 10) || 3));
@@ -576,7 +615,18 @@ function generationSignaturePath(
   const revisionMark = revision === null
     ? ""
     : runePath(revision.slice(-4), 321, 203);
-  return `${generationTopologyPath(generation)}${topBand}${runePath(generationLabel)}${revisionMark}`;
+  return {
+    inscription: `${topBand}${runePath(generationLabel)}${revisionMark}`,
+    topology: generationTopologyPath(generation),
+  };
+}
+
+function generationSignaturePath(
+  generation: readonly string[],
+  revision: string | null,
+): string {
+  const paths = generationSignaturePaths(generation, revision);
+  return `${paths.topology}${paths.inscription}`;
 }
 
 function editionSignaturePath(editionId: string): string {
@@ -635,6 +685,318 @@ function profileTallyPath(profileSlug: string): string {
   }).join("");
 }
 
+type ModelCardIlluminationCard = Pick<ModelCardPresentation,
+  | "accentFamily"
+  | "canonicalModelId"
+  | "emblemIdentity"
+  | "illuminationDensity"
+  | "profileSlug"
+  | "providerColor"
+  | "providerId"
+  | "secondaryColor"
+  | "visualClass">;
+
+type HolographicShape = Readonly<{
+  channel: "corona" | "edition-cell" | "edition-glyph" | "generation-inscription" | "generation-topology" | "microglint" | "profile-stamp" | "seal-edge";
+  d: string;
+  filled: boolean;
+  spectral: boolean;
+}>;
+
+function holographicShapes(
+  card: ModelCardIlluminationCard,
+  archetype: ModelCardFamilyArchetype,
+  modelHash: number,
+): readonly HolographicShape[] {
+  const identity = card.emblemIdentity;
+  const generation = generationSignaturePaths(identity.generation, identity.revision);
+  const shapes: HolographicShape[] = [
+    {
+      channel: "edition-cell",
+      d: editionCellPath(identity.editionId),
+      filled: true,
+      spectral: true,
+    },
+    {
+      channel: "edition-glyph",
+      d: editionSignaturePath(identity.editionId),
+      filled: false,
+      spectral: true,
+    },
+    {
+      channel: "generation-inscription",
+      d: generation.inscription,
+      filled: false,
+      spectral: true,
+    },
+  ];
+
+  if (card.illuminationDensity >= 2) {
+    shapes.push({
+      channel: "generation-topology",
+      d: generation.topology,
+      filled: false,
+      spectral: true,
+    });
+  }
+  if (card.illuminationDensity >= 3) {
+    shapes.push({
+      channel: "corona",
+      d: coronaPath(card.accentFamily, card.visualClass, card.illuminationDensity),
+      filled: false,
+      spectral: true,
+    });
+  }
+  if (card.illuminationDensity >= 4) {
+    shapes.push(
+      {
+        channel: "seal-edge",
+        d: familyRadicalPath(archetype),
+        filled: false,
+        spectral: false,
+      },
+      {
+        channel: "profile-stamp",
+        d: profileDetailLeafPath(0, modelHash),
+        filled: true,
+        spectral: true,
+      },
+    );
+  }
+  if (card.illuminationDensity >= 5) {
+    shapes.push(
+      {
+        channel: "profile-stamp",
+        d: profileDetailLeafPath(1, modelHash),
+        filled: true,
+        spectral: true,
+      },
+      {
+        channel: "profile-stamp",
+        d: profileDetailLeafPath(2, modelHash),
+        filled: true,
+        spectral: true,
+      },
+    );
+  }
+  for (let index = 0; index < card.illuminationDensity; index += 1) {
+    const angle = sample(modelHash, 121 + index) * Math.PI * 2;
+    const radiusX = 111 + sample(modelHash, 141 + index) * 24;
+    const radiusY = 72 + sample(modelHash, 161 + index) * 16;
+    const x = rounded(200 + Math.cos(angle) * radiusX);
+    const y = rounded(115 + Math.sin(angle) * radiusY);
+    const size = rounded(1.7 + sample(modelHash, 181 + index) * 1.5);
+    shapes.push({
+      channel: "microglint",
+      d: `M${x} ${rounded(y - size)}L${rounded(x + size * .62)} ${y}L${x} ${rounded(y + size)}L${rounded(x - size * .62)} ${y}Z`,
+      filled: true,
+      spectral: true,
+    });
+  }
+  return shapes;
+}
+
+function holographicGradientVector(
+  card: ModelCardIlluminationCard,
+  lineHand: ModelCardProviderLineHand,
+): Readonly<{ x1: number; x2: number; y1: number; y2: number }> {
+  const generationKey = card.emblemIdentity.generation.join(".");
+  const handIndex = Math.max(0, lineHandNames.indexOf(lineHand));
+  const step = (
+    handIndex * 3
+    + stableHash(`holographic-axis/${generationKey}`) % 24
+  ) % 24;
+  const angle = step * 15 * Math.PI / 180;
+  const dx = Math.cos(angle) * 245;
+  const dy = Math.sin(angle) * 245;
+  return {
+    x1: rounded(200 - dx),
+    x2: rounded(200 + dx),
+    y1: rounded(115 - dy),
+    y2: rounded(115 + dy),
+  };
+}
+
+function HolographicUse({
+  filled,
+  href,
+  paint,
+  pass,
+}: Readonly<{
+  filled: boolean;
+  href: string;
+  paint: string;
+  pass: "glint" | "metal" | "rim" | "spectrum";
+}>) {
+  const isRim = pass === "rim";
+  const strokeWidth = filled
+    ? isRim ? 2.3 : .8
+    : isRim ? 3 : 1.45;
+  return (
+    <use
+      fill={filled ? paint : "none"}
+      href={href}
+      paintOrder="stroke fill"
+      stroke={paint}
+      strokeLinecap={filled ? "butt" : "round"}
+      strokeLinejoin={filled ? "miter" : "round"}
+      strokeWidth={strokeWidth}
+    />
+  );
+}
+
+function ModelCardHolographicFoil({
+  archetype,
+  card,
+  fingerprint,
+  lineHand,
+  modelHash,
+}: Readonly<{
+  archetype: ModelCardFamilyArchetype;
+  card: ModelCardIlluminationCard;
+  fingerprint: string;
+  lineHand: ModelCardProviderLineHand;
+  modelHash: number;
+}>) {
+  const instanceId = useId().replace(/[^a-zA-Z0-9_-]/gu, "");
+  const materialKey = [
+    card.providerId,
+    card.canonicalModelId,
+    card.emblemIdentity.familyId,
+    card.emblemIdentity.generation.join("."),
+    card.emblemIdentity.revision ?? "none",
+    card.emblemIdentity.editionId,
+    card.emblemIdentity.role,
+  ].join("/");
+  const materialHash = stableHash(`holographic-material/${materialKey}`);
+  const identifierHash = stableHash(`holographic-identifier/${fingerprint}`);
+  const reverseHash = stableHash([...fingerprint].reverse().join(""));
+  const idSuffix = `${identifierHash.toString(36)}-${reverseHash.toString(36)}-${instanceId}`;
+  const metalId = `model-card-metal-${idSuffix}`;
+  const spectrumId = `model-card-spectrum-${idSuffix}`;
+  const glintId = `model-card-glint-${idSuffix}`;
+  const fillShapeId = `model-card-foil-fill-${idSuffix}`;
+  const strokeShapeId = `model-card-foil-stroke-${idSuffix}`;
+  const sealShapeId = `model-card-foil-seal-${idSuffix}`;
+  const vector = holographicGradientVector(card, lineHand);
+  const phase = materialHash % holographicSpectrum.length;
+  const colors = holographicSpectrum.map((_, index) => (
+    holographicSpectrum[(index + phase) % holographicSpectrum.length]
+      ?? holographicSpectrum[0]
+  ));
+  const bandColors = [colors[0], colors[1], colors[3], colors[5], colors[6]] as const;
+  const shapes = holographicShapes(card, archetype, modelHash);
+  const spectralFillPath = shapes
+    .filter(shape => shape.spectral && shape.filled)
+    .map(shape => shape.d)
+    .join("");
+  const spectralStrokePath = shapes
+    .filter(shape => shape.spectral && !shape.filled)
+    .map(shape => shape.d)
+    .join("");
+  const sealStrokePath = shapes
+    .filter(shape => !shape.spectral)
+    .map(shape => shape.d)
+    .join("");
+  const channels = [...new Set(shapes.map(shape => shape.channel))].join(" ");
+  const glintX = `${rounded(31 + sample(materialHash, 91) * 38)}%`;
+  const glintY = `${rounded(29 + sample(materialHash, 97) * 42)}%`;
+
+  return (
+    <>
+      <defs>
+        <linearGradient
+          gradientUnits="userSpaceOnUse"
+          id={metalId}
+          x1={vector.x1}
+          x2={vector.x2}
+          y1={vector.y1}
+          y2={vector.y2}
+        >
+          <stop offset="0%" stopColor={card.providerColor} stopOpacity=".48" />
+          <stop offset="34%" stopColor={card.secondaryColor} stopOpacity=".82" />
+          <stop offset="49%" stopColor="#fffdf1" />
+          <stop offset="65%" stopColor="#8994a0" stopOpacity=".82" />
+          <stop offset="100%" stopColor={card.secondaryColor} stopOpacity=".52" />
+        </linearGradient>
+        <linearGradient
+          gradientUnits="userSpaceOnUse"
+          id={spectrumId}
+          x1={vector.x1}
+          x2={vector.x2}
+          y1={vector.y1}
+          y2={vector.y2}
+        >
+          <stop offset="0%" stopColor={card.providerColor} stopOpacity=".04" />
+          <stop offset="23%" stopColor={card.providerColor} stopOpacity="0" />
+          {bandColors.map((color, index) => (
+            <stop
+              data-holographic-band={index}
+              key={`${color}-${String(index)}`}
+              offset={`${String(holographicBandOffsets[index])}%`}
+              stopColor={color}
+              stopOpacity={index === 0 || index === bandColors.length - 1 ? ".4" : ".92"}
+            />
+          ))}
+          <stop offset="77%" stopColor={card.secondaryColor} stopOpacity="0" />
+          <stop offset="100%" stopColor={card.providerColor} stopOpacity=".03" />
+        </linearGradient>
+        <radialGradient
+          className="model-card-holographic-foil__glint-gradient"
+          cx={glintX}
+          cy={glintY}
+          gradientUnits="userSpaceOnUse"
+          id={glintId}
+          r="54%"
+        >
+          <stop offset="0%" stopColor="#ffffff" stopOpacity=".98" />
+          <stop offset="18%" stopColor="#fffbdc" stopOpacity=".68" />
+          <stop offset="42%" stopColor={card.secondaryColor} stopOpacity=".16" />
+          <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
+        </radialGradient>
+        <path d={spectralFillPath} id={fillShapeId} />
+        <path d={spectralStrokePath} id={strokeShapeId} />
+        {sealStrokePath.length > 0 ? <path d={sealStrokePath} id={sealShapeId} /> : null}
+      </defs>
+      <g
+        className="model-card-holographic-foil"
+        data-holographic-channel-count={shapes.length}
+        data-holographic-channels={channels}
+        data-holographic-coverage={card.illuminationDensity}
+        data-holographic-field={modelCardHolographicField(card.emblemIdentity.familyId)}
+        data-holographic-finish="diffractive-spot-foil"
+        data-holographic-axis-hand={lineHand}
+      >
+        <g className="model-card-holographic-foil__rim" opacity=".66">
+          <HolographicUse filled href={`#${fillShapeId}`} paint="#020307" pass="rim" />
+          <HolographicUse filled={false} href={`#${strokeShapeId}`} paint="#020307" pass="rim" />
+          {sealStrokePath.length > 0 ? (
+            <HolographicUse filled={false} href={`#${sealShapeId}`} paint="#020307" pass="rim" />
+          ) : null}
+        </g>
+        <g className="model-card-holographic-foil__metal" opacity=".36">
+          <HolographicUse filled href={`#${fillShapeId}`} paint={`url(#${metalId})`} pass="metal" />
+          <HolographicUse filled={false} href={`#${strokeShapeId}`} paint={`url(#${metalId})`} pass="metal" />
+          {sealStrokePath.length > 0 ? (
+            <HolographicUse filled={false} href={`#${sealShapeId}`} paint={`url(#${metalId})`} pass="metal" />
+          ) : null}
+        </g>
+        <g className="model-card-holographic-foil__spectrum" opacity=".14">
+          <HolographicUse filled href={`#${fillShapeId}`} paint={`url(#${spectrumId})`} pass="spectrum" />
+          <HolographicUse filled={false} href={`#${strokeShapeId}`} paint={`url(#${spectrumId})`} pass="spectrum" />
+        </g>
+        <g className="model-card-holographic-foil__glint" opacity=".05">
+          <HolographicUse filled href={`#${fillShapeId}`} paint={`url(#${glintId})`} pass="glint" />
+          <HolographicUse filled={false} href={`#${strokeShapeId}`} paint={`url(#${glintId})`} pass="glint" />
+          {sealStrokePath.length > 0 ? (
+            <HolographicUse filled={false} href={`#${sealShapeId}`} paint={`url(#${glintId})`} pass="glint" />
+          ) : null}
+        </g>
+      </g>
+    </>
+  );
+}
+
 function identityValue(card: Pick<ModelCardPresentation, "emblemIdentity" | "profileSlug" | "providerId">): string {
   const identity = card.emblemIdentity;
   return [
@@ -650,18 +1012,11 @@ function identityValue(card: Pick<ModelCardPresentation, "emblemIdentity" | "pro
 
 export function ModelCardIllumination({
   card,
+  finish = "print",
   mode = "full",
 }: Readonly<{
-  card: Pick<ModelCardPresentation,
-    | "accentFamily"
-    | "canonicalModelId"
-    | "emblemIdentity"
-    | "illuminationDensity"
-    | "profileSlug"
-    | "providerColor"
-    | "providerId"
-    | "secondaryColor"
-    | "visualClass">;
+  card: ModelCardIlluminationCard;
+  finish?: ModelCardIlluminationFinish;
   mode?: ModelCardIlluminationMode;
 }>) {
   const identity = card.emblemIdentity;
@@ -687,6 +1042,7 @@ export function ModelCardIllumination({
       data-illumination-accent={card.accentFamily}
       data-illumination-class={card.visualClass}
       data-illumination-density={density}
+      data-illumination-finish={finish}
       data-illumination-mode={mode}
       data-illumination-motif={court}
       data-ornament-line-hand={lineHand}
@@ -878,6 +1234,15 @@ export function ModelCardIllumination({
           />
         ) : null}
       </g>
+      {finish === "holographic" ? (
+        <ModelCardHolographicFoil
+          archetype={archetype}
+          card={card}
+          fingerprint={fingerprint}
+          lineHand={lineHand}
+          modelHash={modelHash}
+        />
+      ) : null}
     </svg>
   );
 }
