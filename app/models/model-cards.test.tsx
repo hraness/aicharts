@@ -8,6 +8,7 @@ import { ModelCardFoilFrame } from "@/components/model-card-foil-frame";
 import { ModelCardRasterFace, ModelCardSocialImage } from "@/components/model-card-image";
 import {
   MODEL_CARD_COLLECTION_SOCIAL_IMAGE_PATH,
+  MODEL_CARD_LISTINGS,
   MODEL_CARD_PRESENTATIONS,
   MODEL_CARD_RENDERER_VERSION,
   MODEL_CARD_TOP_PATHS,
@@ -17,6 +18,10 @@ import {
   modelCardRouteStaticParams,
   versionedModelCardImagePath,
 } from "@/lib/model-card-collection";
+import {
+  formatModelCardListingDate,
+  modelCardListingAccessibleLabel,
+} from "@/lib/model-card-presentation";
 import { markdownForPath, modelCardMarkdown } from "@/lib/site-markdown";
 import {
   MODEL_RELEASE_RADAR_HIGHLIGHTS,
@@ -122,7 +127,7 @@ describe("public model cards", () => {
     );
     expect(markup.match(/<(?:path|ellipse|circle)\b/gu)?.length ?? 0).toBeLessThan(1_250);
     expect(markup.match(/<[A-Za-z][^>]*>/gu)?.length ?? 0).toBeLessThan(
-      MODEL_CARD_PRESENTATIONS.length * 115 + 64,
+      MODEL_CARD_PRESENTATIONS.length * 118 + 64,
     );
     expect(Buffer.byteLength(markup)).toBeLessThan(
       MODEL_CARD_PRESENTATIONS.length * 20_500 + 8_000,
@@ -178,7 +183,7 @@ describe("public model cards", () => {
   });
 
   test("uses shared centered select geometry instead of a baseline chevron glyph", () => {
-    expect(modelsPageSource).toContain("MODEL_CARD_RELEASE_DATES.get(card.path)");
+    expect(modelsPageSource).toContain("card.listing?.sourceAddedAt");
     expect(modelCardsStyles).toContain(".model-card-gallery__provider-filter .hraness-field__select");
     expect(modelCardsStyles).toContain("background-color: transparent");
     expect(modelCardsStyles).not.toContain("model-card-gallery__select-shell");
@@ -192,7 +197,7 @@ describe("public model cards", () => {
     expect(thinkingCard.displayTitle).toContain("Thinking");
     const markup = renderToStaticMarkup(<ModelCardsPage />);
     expect(markup).toContain(
-      `aria-label="Open ${thinkingCard.displayTitle} model card; Thinking class"`,
+      `aria-label="Open ${thinkingCard.displayTitle} model card; Thinking class.`,
     );
     expect(markup).not.toContain("model-card-face__class");
   });
@@ -218,6 +223,8 @@ describe("public model cards", () => {
     const live = renderToStaticMarkup(<ModelCardFace card={card} />);
     const portrait = renderToStaticMarkup(<ModelCardRasterFace card={card} />);
     const social = renderToStaticMarkup(<ModelCardSocialImage card={card} />);
+    expect(card.listing).not.toBeNull();
+    if (card.listing === null) return;
     for (const markup of [live, portrait, social]) {
       expect(markup).toContain(card.displayTitle);
       expect(markup).toContain(card.harnessLabel);
@@ -226,6 +233,10 @@ describe("public model cards", () => {
       expect(markup).not.toContain("with fallback");
       expect(markup).not.toContain("Artificial Analysis");
       expect(markup).not.toContain(card.sourceDate);
+      expect(markup).toContain("Listed on OpenRouter");
+      expect(markup).toContain(formatModelCardListingDate(card.listing.sourceAddedAt));
+      expect(markup).toContain(`dateTime="${card.listing.sourceAddedAt}"`);
+      expect(markup).toContain(modelCardListingAccessibleLabel(card.listing));
       expect(markup).not.toMatch(/\bconfigs?\b/iu);
       expect(markup).not.toContain("NaN");
       expect(markup).not.toContain("undefined");
@@ -238,6 +249,14 @@ describe("public model cards", () => {
     expect(social).toContain('data-illumination-finish="print"');
     expect(portrait).not.toContain("data-holographic-finish");
     expect(social).not.toContain("data-holographic-finish");
+
+    const unmatched = MODEL_CARD_PRESENTATIONS.find(candidate => candidate.listing === null);
+    expect(unmatched).toBeDefined();
+    if (unmatched !== undefined) {
+      const unmatchedLive = renderToStaticMarkup(<ModelCardFace card={unmatched} />);
+      expect(unmatchedLive).not.toContain("Listed on OpenRouter");
+      expect(unmatchedLive).not.toContain(unmatched.sourceDate);
+    }
   });
 
   test("drives holographic ink from the delegated pose with accessible fallbacks", async () => {
@@ -326,8 +345,9 @@ describe("public model cards", () => {
   test("includes the renderer contract in versioned card artwork URLs", () => {
     const card = MODEL_CARD_PRESENTATIONS[0];
     if (card === undefined) throw new Error("Expected at least one model card.");
-    expect(MODEL_CARD_RENDERER_VERSION).toBe("model-card-v5");
-    expect(MODEL_CARD_COLLECTION_SOCIAL_IMAGE_PATH).toBe("/models/opengraph-image-v5");
+    expect(MODEL_CARD_RENDERER_VERSION).toBe("model-card-v6");
+    expect(MODEL_CARD_COLLECTION_SOCIAL_IMAGE_PATH).toBe("/models/opengraph-image-v6");
+    expect(MODEL_CARD_LISTINGS.size).toBe(MODEL_CARD_PRESENTATIONS.length);
     expect(versionedModelCardImagePath(card.path, "card.png")).toMatch(
       /\/card\.png\?v=[a-f0-9]{16}$/u,
     );

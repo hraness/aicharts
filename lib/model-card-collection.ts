@@ -14,6 +14,7 @@ import {
 } from "./model-card-data";
 import {
   createModelCardPresentation,
+  type ModelCardListing,
   type ModelCardPresentation,
 } from "./model-card-presentation";
 import {
@@ -30,28 +31,31 @@ if (!parsedSnapshot.ok) {
 }
 
 export const MODEL_CARD_SNAPSHOT = parsedSnapshot.value;
-export const MODEL_CARD_RENDERER_VERSION = "model-card-v5";
-export const MODEL_CARD_COLLECTION_SOCIAL_IMAGE_PATH = "/models/opengraph-image-v5";
+export const MODEL_CARD_RENDERER_VERSION = "model-card-v6";
+export const MODEL_CARD_COLLECTION_SOCIAL_IMAGE_PATH = "/models/opengraph-image-v6";
 export const MODEL_CARD_SNAPSHOT_VERSION = createHash("sha256")
   .update(JSON.stringify(codingAgentData))
+  .update("\0")
+  .update(JSON.stringify(MODEL_RELEASE_RADAR.observedListings))
   .update("\0")
   .update(MODEL_CARD_RENDERER_VERSION)
   .digest("hex")
   .slice(0, 16);
 export const MODEL_CARD_VARIANTS = buildModelCardVariants(MODEL_CARD_SNAPSHOT.records);
+export const MODEL_CARD_LISTINGS = modelCardListings(
+  MODEL_CARD_VARIANTS,
+  MODEL_RELEASE_RADAR,
+);
 export const MODEL_CARD_PRESENTATIONS = MODEL_CARD_VARIANTS.map((variant, index, variants) => (
   createModelCardPresentation(
     variant,
     index + 1,
     variants.length,
     MODEL_CARD_SNAPSHOT.source.retrievedAt,
+    MODEL_CARD_LISTINGS.get(variant.path) ?? null,
   )
 ));
 export const MODEL_CARD_TOP_PATHS = modelCardCostAaFrontierPaths(MODEL_CARD_VARIANTS);
-export const MODEL_CARD_RELEASE_DATES = modelCardReleaseDates(
-  MODEL_CARD_VARIANTS,
-  MODEL_RELEASE_RADAR,
-);
 
 export const MODEL_CARD_COLLECTION_CREST_LIMIT = 11;
 
@@ -80,19 +84,28 @@ export function modelCardCostAaFrontierPaths(
  * Maps every benchmark card to its newest independently observed OpenRouter listing.
  * The durable observation ledger is independent of the bounded current-release radar.
  */
-export function modelCardReleaseDates(
+export function modelCardListings(
   cards: readonly Pick<ModelCardVariant, "model" | "path" | "providerId">[],
   radar: ModelReleaseRadar,
-): ReadonlyMap<ModelCardPath, string | null> {
-  const newestByModel = new Map<string, string>();
-  for (const release of radar.observedListings) {
-    const key = modelReleaseSemanticKey(release.providerId, release.model);
+): ReadonlyMap<ModelCardPath, ModelCardListing | null> {
+  const newestByModel = new Map<string, ModelCardListing>();
+  for (const observed of radar.observedListings) {
+    const key = modelReleaseSemanticKey(observed.providerId, observed.model);
     const existing = newestByModel.get(key);
+    const listing: ModelCardListing = {
+      id: observed.id,
+      source: "OpenRouter",
+      sourceAddedAt: observed.sourceAddedAt,
+    };
     if (
       existing === undefined
-      || Date.parse(release.sourceAddedAt) > Date.parse(existing)
+      || Date.parse(listing.sourceAddedAt) > Date.parse(existing.sourceAddedAt)
+      || (
+        Date.parse(listing.sourceAddedAt) === Date.parse(existing.sourceAddedAt)
+        && listing.id < existing.id
+      )
     ) {
-      newestByModel.set(key, release.sourceAddedAt);
+      newestByModel.set(key, listing);
     }
   }
 

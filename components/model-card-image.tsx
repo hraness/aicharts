@@ -1,7 +1,11 @@
 import type { CSSProperties } from "react";
 
 import { modelCardSecondaryColors } from "@/lib/model-card-art-direction";
-import type { ModelCardPresentation } from "@/lib/model-card-presentation";
+import {
+  formatModelCardListingDate,
+  modelCardListingAccessibleLabel,
+  type ModelCardPresentation,
+} from "@/lib/model-card-presentation";
 
 import { ModelCardIllumination } from "./model-card-illumination";
 
@@ -53,6 +57,38 @@ function Stat({ label, value, compact }: Readonly<{ compact?: boolean; label: st
   );
 }
 
+function ModelCardImageListing({
+  card,
+  compact = false,
+}: Readonly<{
+  card: ModelCardPresentation;
+  compact?: boolean;
+}>) {
+  if (card.listing === null) return null;
+  return (
+    <time
+      aria-label={modelCardListingAccessibleLabel(card.listing)}
+      dateTime={card.listing.sourceAddedAt}
+      style={{
+        ...imageStyles.column,
+        alignItems: "flex-end",
+        flex: "0 0 auto",
+        lineHeight: 1,
+        textAlign: "right",
+        textTransform: "uppercase",
+        whiteSpace: "nowrap",
+      }}
+    >
+      <span style={{ color: "rgba(247,246,242,.48)", fontSize: compact ? 6 : 14, letterSpacing: ".11em" }}>
+        {compact ? "OpenRouter" : "Listed on OpenRouter"}
+      </span>
+      <span style={{ color: "rgba(247,246,242,.84)", fontFamily: "monospace", fontSize: compact ? 9 : 21, letterSpacing: ".045em", marginTop: compact ? 4 : 8 }}>
+        {formatModelCardListingDate(card.listing.sourceAddedAt)}
+      </span>
+    </time>
+  );
+}
+
 export function ModelCardRasterFace({
   card,
   compact = false,
@@ -64,7 +100,7 @@ export function ModelCardRasterFace({
   const radius = compact ? 24 : 56;
   const serial = `${String(card.cardNumber).padStart(3, "0")} / ${String(card.totalCards).padStart(3, "0")}`;
   const modelLabel = compactImageLabel(card.displayTitle, compact ? 34 : 48);
-  const providerLabel = compactImageLabel(card.providerName, compact ? 18 : 24);
+  const providerLabel = compactImageLabel(card.providerName, compact ? 10 : 24);
   const harnessLabel = compactImageLabel(card.harnessLabel, compact ? 30 : 44);
   return (
     <div style={{
@@ -87,11 +123,12 @@ export function ModelCardRasterFace({
         padding: compact ? 23 : 47,
         position: "relative",
       }}>
-        <div style={{ ...imageStyles.row, alignItems: "center", justifyContent: "space-between" }}>
-          <span style={{ ...imageStyles.row, alignItems: "center", fontSize: compact ? 13 : 27, fontWeight: 700, letterSpacing: ".08em", textTransform: "uppercase" }}>
+        <div style={{ ...imageStyles.row, alignItems: "center", gap: compact ? 7 : 16, justifyContent: "space-between" }}>
+          <span style={{ ...imageStyles.row, alignItems: "center", flex: 1, fontSize: compact ? 13 : 27, fontWeight: 700, letterSpacing: ".08em", minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", textTransform: "uppercase", whiteSpace: "nowrap" }}>
             <i style={{ background: card.providerColor, border: `${compact ? 1 : 2}px solid ${card.secondaryColor}`, borderRadius: 999, boxShadow: `0 0 ${compact ? 7 : 14}px ${card.providerColor}aa`, height: compact ? 8 : 17, marginRight: compact ? 8 : 16, width: compact ? 8 : 17 }} />
             {providerLabel}
           </span>
+          <ModelCardImageListing card={card} compact={compact} />
         </div>
 
         <div style={{ ...imageStyles.column, marginTop: compact ? 16 : 34 }}>
@@ -245,9 +282,12 @@ export function ModelCardSocialImage({ card }: Readonly<{ card: ModelCardPresent
           <i style={{ background: card.providerColor, border: `1px solid ${card.secondaryColor}`, borderRadius: 1, height: 10, marginRight: 13, transform: "rotate(45deg)", width: 10 }} />
           {providerLabel}
         </span>
-        <span style={{ color: "rgba(247,246,242,.5)", fontFamily: "monospace", fontSize: 17, letterSpacing: ".06em" }}>
-          MODEL CARD {serial}
-        </span>
+        <div style={{ ...imageStyles.column, alignItems: "flex-end" }}>
+          <ModelCardImageListing card={card} />
+          <span style={{ color: "rgba(247,246,242,.5)", fontFamily: "monospace", fontSize: 15, letterSpacing: ".06em", marginTop: card.listing === null ? 0 : 8 }}>
+            MODEL CARD {serial}
+          </span>
+        </div>
       </div>
 
       <div style={{ ...imageStyles.row, alignItems: "center", flex: 1, marginTop: 18, position: "relative" }}>

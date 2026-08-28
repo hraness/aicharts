@@ -4,9 +4,11 @@ import { MODEL_CARD_PRESENTATIONS } from "./model-card-collection";
 import {
   cleanModelCardDisplayName,
   compactModelCardHarnessLabel,
+  formatModelCardListingDate,
   formatModelCardDisplayTitle,
   formatModelCardMetricRange,
   formatModelCardSourceDate,
+  modelCardListingAccessibleLabel,
   modelCardIndexingPolicy,
 } from "./model-card-presentation";
 import { assertProperty, fc } from "./property-test";
@@ -60,6 +62,35 @@ describe("model card presentation", () => {
     expect(compactModelCardHarnessLabel(multiHarness.agentNames)).toBe(
       `${multiHarness.agentNames[0]} +${multiHarness.agentNames.length - 1}`,
     );
+  });
+
+  test("presents source-listing dates with explicit OpenRouter provenance", () => {
+    const listed = MODEL_CARD_PRESENTATIONS.find(card => (
+      card.listing?.sourceAddedAt === "2026-08-13T17:03:01.000Z"
+    ));
+    expect(listed?.listing).toEqual({
+      id: "google/gemini-3.7-flash",
+      source: "OpenRouter",
+      sourceAddedAt: "2026-08-13T17:03:01.000Z",
+    });
+    if (listed?.listing === null || listed?.listing === undefined) {
+      throw new Error("Expected a current card with OpenRouter listing metadata.");
+    }
+    expect(formatModelCardListingDate(listed.listing.sourceAddedAt)).toBe("13 AUG 2026");
+    expect(modelCardListingAccessibleLabel(listed.listing)).toBe(
+      "Listed by OpenRouter on Aug 13, 2026; not an official release date.",
+    );
+  });
+
+  test("rejects malformed and impossible source-listing timestamps", () => {
+    expect(() => formatModelCardListingDate("Aug 13, 2026")).toThrow("valid ISO timestamp");
+    expect(() => formatModelCardListingDate("2026-02-30T00:00:00.000Z"))
+      .toThrow("valid ISO timestamp");
+    expect(() => modelCardListingAccessibleLabel({
+      id: "openai/example",
+      source: "OpenRouter",
+      sourceAddedAt: "2026-08-13T25:00:00.000Z",
+    })).toThrow("valid ISO timestamp");
   });
 
   test("uses one neutral foil field so the provider and model inks own color", () => {

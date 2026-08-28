@@ -12,12 +12,12 @@ import {
 import {
   MODEL_CARD_COLLECTION_SOCIAL_IMAGE_PATH,
   MODEL_CARD_PRESENTATIONS,
-  MODEL_CARD_RELEASE_DATES,
   MODEL_CARD_SNAPSHOT,
   MODEL_CARD_TOP_PATHS,
 } from "@/lib/model-card-collection";
 import { formatRetrievedAt, formatUpdateDate } from "@/lib/coding-agent-updates";
 import { modelCardArtDirection } from "@/lib/model-card-art-direction";
+import { modelCardListingAccessibleLabel } from "@/lib/model-card-presentation";
 import {
   MODEL_RELEASE_RADAR,
   MODEL_RELEASE_RADAR_HIGHLIGHTS,
@@ -132,12 +132,12 @@ export default function ModelCardsPage() {
           items={MODEL_CARD_PRESENTATIONS.map(card => ({
             isTop: topPaths.has(card.path),
             providerId: card.providerId,
-            sourceAddedAt: MODEL_CARD_RELEASE_DATES.get(card.path) ?? null,
+            sourceAddedAt: card.listing?.sourceAddedAt ?? null,
           }))}
         >
           {MODEL_CARD_PRESENTATIONS.map(card => (
             <Link
-              aria-label={`Open ${card.displayTitle} model card; ${card.classLabel} class`}
+              aria-label={`Open ${card.displayTitle} model card; ${card.classLabel} class.${card.listing === null ? "" : ` ${modelCardListingAccessibleLabel(card.listing)}`}`}
               className="model-card-grid__link"
               href={card.path}
               key={card.path}

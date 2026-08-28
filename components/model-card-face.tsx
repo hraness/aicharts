@@ -1,6 +1,8 @@
 import type { CSSProperties } from "react";
 
 import {
+  formatModelCardListingDate,
+  modelCardListingAccessibleLabel,
   type ModelCardPresentation,
   type ModelCardStat,
 } from "@/lib/model-card-presentation";
@@ -82,8 +84,19 @@ export function ModelCardFace({
         <header className="model-card-face__header">
           <span className="model-card-face__provider">
             <i aria-hidden="true" />
-            {card.providerName}
+            <span>{card.providerName}</span>
           </span>
+          {card.listing !== null && (
+            <time
+              aria-label={modelCardListingAccessibleLabel(card.listing)}
+              className="model-card-face__listing"
+              dateTime={card.listing.sourceAddedAt}
+              title={modelCardListingAccessibleLabel(card.listing)}
+            >
+              <span>Listed on OpenRouter</span>
+              <span>{formatModelCardListingDate(card.listing.sourceAddedAt)}</span>
+            </time>
+          )}
         </header>
 
         <div className="model-card-face__title">
