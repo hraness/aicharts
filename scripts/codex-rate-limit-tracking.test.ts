@@ -326,7 +326,9 @@ setInterval(() => {}, 1_000);
 process.stdin.on("error", () => {});
 process.stdin.once("data", () => {
   closeSync(0);
-  process.stdout.write(JSON.stringify({ id: 1, result: {} }) + "\\n");
+  setTimeout(() => {
+    process.stdout.write(JSON.stringify({ id: 1, result: {} }) + "\\n");
+  }, 50);
 });
 `);
 
