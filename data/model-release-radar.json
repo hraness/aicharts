@@ -3,7 +3,7 @@
   "source": {
     "method": "models-api",
     "name": "OpenRouter",
-    "retrievedAt": "2026-08-28T02:03:26.685Z",
+    "retrievedAt": "2026-08-28T14:46:41.999Z",
     "timestampMeaning": "source-added-at",
     "url": "https://openrouter.ai/api/v1/models?sort=newest"
   },
