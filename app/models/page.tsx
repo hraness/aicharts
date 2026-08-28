@@ -1,6 +1,7 @@
 import { createPublicSiteMetadata } from "@hraness/web-discovery";
 import { FoilCardDeck } from "@hraness/design-kit/react";
 import Link from "next/link";
+import type { CSSProperties } from "react";
 
 import { ModelCardFace } from "@/components/model-card-face";
 import { ModelCardFoilFrame } from "@/components/model-card-foil-frame";
@@ -15,7 +16,13 @@ import {
   MODEL_CARD_SNAPSHOT,
   MODEL_CARD_TOP_PATHS,
 } from "@/lib/model-card-collection";
-import { formatRetrievedAt } from "@/lib/coding-agent-updates";
+import { formatRetrievedAt, formatUpdateDate } from "@/lib/coding-agent-updates";
+import { modelCardArtDirection } from "@/lib/model-card-art-direction";
+import {
+  MODEL_RELEASE_RADAR,
+  MODEL_RELEASE_RADAR_HIGHLIGHTS,
+  MODEL_RELEASES_AWAITING_BENCHMARK,
+} from "@/lib/model-release-collection";
 
 import { searchSite } from "../site";
 
@@ -64,6 +71,55 @@ export default function ModelCardsPage() {
           </span>
         </p>
       </header>
+      {MODEL_RELEASE_RADAR_HIGHLIGHTS.length > 0 && (
+        <section
+          aria-labelledby="model-release-radar-title"
+          className="model-release-radar"
+        >
+          <div className="model-release-radar__heading">
+            <p>Release radar</p>
+            <h2 id="model-release-radar-title">New, awaiting comparable results</h2>
+            <small>
+              {MODEL_RELEASES_AWAITING_BENCHMARK.length} awaiting · OpenRouter checked{" "}
+              <time dateTime={MODEL_RELEASE_RADAR.source.retrievedAt}>
+                {formatUpdateDate(MODEL_RELEASE_RADAR.source.retrievedAt)}
+              </time>
+            </small>
+          </div>
+          <ul>
+            {MODEL_RELEASE_RADAR_HIGHLIGHTS.map(release => (
+              <li
+                key={release.id}
+                style={{
+                  "--release-provider": modelCardArtDirection(
+                    release.providerId,
+                    "standard",
+                    "default",
+                  ).providerColor,
+                } as CSSProperties}
+              >
+                <a href={release.modelUrl}>
+                  <i aria-hidden="true" />
+                  <span>
+                    <strong>{release.model}</strong>
+                    <small>
+                      {release.providerName} · listed{" "}
+                      <time dateTime={release.sourceAddedAt}>
+                        {formatUpdateDate(release.sourceAddedAt)}
+                      </time>
+                    </small>
+                  </span>
+                  <span aria-hidden="true">↗</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+          <p className="model-release-radar__note">
+            Discovery is not a score. These models stay off the chart and cards
+            until Artificial Analysis publishes comparable coding-agent results.
+          </p>
+        </section>
+      )}
       <ModelCardGalleryFilters
         gridId={gridId}
         providers={providers}

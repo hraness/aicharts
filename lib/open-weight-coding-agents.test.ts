@@ -71,6 +71,7 @@ describe("open-weight coding-agent classification", () => {
     expect(codingAgentWeightClass("z_ai")).toBe("open");
     expect(codingAgentWeightClass("anthropic")).toBe("closed");
     expect(codingAgentWeightClass("openai")).toBe("closed");
+    expect(codingAgentWeightClass("cognition")).toBe("unclassified");
     expect(codingAgentWeightClass("meta")).toBe("unclassified");
     expect(codingAgentWeightClass("unknown_lab")).toBe("unclassified");
     expect(isOpenWeightCodingAgent(record({ providerId: "deepseek" }))).toBeTrue();

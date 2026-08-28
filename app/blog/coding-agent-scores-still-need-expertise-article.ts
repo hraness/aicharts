@@ -224,7 +224,7 @@ export function createCodingAgentScoresStillNeedExpertiseArticle(
         ]),
       ),
       paragraph(
-        "AA Index is the snapshot’s overall 0–100 score across code changes, terminal work, and repository understanding. DeepSWE, Terminal-Bench v2, and SWE-Atlas-QnA stay separate. The highest stored AA Index is ",
+        "AA Index is the snapshot’s overall 0–100 score across code changes, terminal work, and repository understanding. DeepSWE, Terminal-Bench v2.1, and SWE-Atlas-QnA stay separate. The highest stored AA Index is ",
         formatBenchmarkScore(aaLeader.value),
         " for ",
         aaLeader.record.model,
@@ -264,7 +264,7 @@ export function createCodingAgentScoresStillNeedExpertiseArticle(
       ),
       callout(
         "The scoreboard and the reader",
-        "Use a stored AA Index, DeepSWE, Terminal-Bench v2, or SWE-Atlas-QnA value as evidence that a named model, harness, and setting did well on that named suite. Use Faye and Goedecke when the question is whether the person reading that value can specify the work and audit the output.",
+        "Use a stored AA Index, DeepSWE, Terminal-Bench v2.1, or SWE-Atlas-QnA value as evidence that a named model, harness, and setting did well on that named suite. Use Faye and Goedecke when the question is whether the person reading that value can specify the work and audit the output.",
       ),
       heading("Specify and audit stay human work"),
       paragraph(

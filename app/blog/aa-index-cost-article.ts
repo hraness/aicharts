@@ -116,7 +116,7 @@ export function createAaIndexCostArticle(
       ),
       heading("What this snapshot measures"),
       paragraph(
-        "AA Index is the snapshot's overall 0–100 score across code changes, terminal work, and repository understanding. Artificial Analysis also reports DeepSWE, Terminal-Bench v2, and SWE-Atlas-QnA as separate metrics. Those component scores are not combined here. This note uses AA Index because it is the composite the source publishes for the same configuration that also carries a task-level cost.",
+        "AA Index is the snapshot's overall 0–100 score across code changes, terminal work, and repository understanding. Artificial Analysis also reports DeepSWE, Terminal-Bench v2.1, and SWE-Atlas-QnA as separate metrics. Those component scores are not combined here. This note uses AA Index because it is the composite the source publishes for the same configuration that also carries a task-level cost.",
       ),
       paragraph(
         "API cost is the mean API cost in US dollars for the evaluated task configuration. It is not a subscription price, a latency guarantee, or a production invoice. Active time and total token use exist in the same records and are left for the ",
@@ -142,7 +142,7 @@ export function createAaIndexCostArticle(
         ]),
       ),
       paragraph(
-        "These are the highest stored AA Index scores, not a claim that the same systems lead on DeepSWE, Terminal-Bench v2, or SWE-Atlas-QnA. The ",
+        "These are the highest stored AA Index scores, not a claim that the same systems lead on DeepSWE, Terminal-Bench v2.1, or SWE-Atlas-QnA. The ",
         { href: "/data", text: "dataset page" },
         " lists the highest available score for each of those metrics separately and includes every configuration in the snapshot.",
       ),

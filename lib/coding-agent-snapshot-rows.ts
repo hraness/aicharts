@@ -147,7 +147,7 @@ export const SNAPSHOT_COLUMN_LABELS = {
   provider: "Provider",
   setting: "Setting",
   sweAtlas: "SWE-Atlas-QnA",
-  terminalBench: "Terminal-Bench v2",
+  terminalBench: "Terminal-Bench v2.1",
 } as const satisfies Record<SnapshotTableColumn, string>;
 
 export function snapshotRowCell(

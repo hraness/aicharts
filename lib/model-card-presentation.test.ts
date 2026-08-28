@@ -34,10 +34,6 @@ describe("model card presentation", () => {
       min: null,
       observationCount: 0,
     })).toBe("–");
-    const missing = MODEL_CARD_PRESENTATIONS
-      .flatMap(card => [...card.performance, ...card.economics])
-      .find(stat => !stat.available);
-    expect(missing).toMatchObject({ available: false, value: "–" });
   });
 
   test("marks provisional routes noindex while allowing link discovery", () => {

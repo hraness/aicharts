@@ -3,6 +3,7 @@
 export const providerColors = {
   alibaba_cloud: "#6ac13c",
   anthropic: "#ff805d",
+  cognition: "#d7ef39",
   cursor: "#f26898",
   deepseek: "#49c898",
   google: "#69c06a",
