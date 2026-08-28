@@ -480,7 +480,6 @@ export async function readCodexRateLimits(
     let buffered = "";
     let receivedBytes = 0;
     let stderrBytes = 0;
-    let timeout: ReturnType<typeof setTimeout> | undefined;
 
     const finish = (
       error: CodexRateLimitRecorderFailure | null,
@@ -488,7 +487,7 @@ export async function readCodexRateLimits(
     ): void => {
       if (finishing) return;
       finishing = true;
-      if (timeout !== undefined) clearTimeout(timeout);
+      clearTimeout(timeout);
       void terminateChild(child, terminationGraceMs, killGraceMs).then(
         reaped => {
           if (!reaped) {
@@ -509,7 +508,7 @@ export async function readCodexRateLimits(
       );
     };
 
-    timeout = setTimeout(() => {
+    const timeout = setTimeout(() => {
       finish(new CodexRateLimitRecorderFailure("Codex rate-limit reader timed out.", 69));
     }, timeoutMs);
 
