@@ -54,6 +54,20 @@ async function fixture(): Promise<Readonly<{
   await mkdir(path.join(home, ".codex"), { recursive: true });
   await writeFile(fakeCodex, `#!${process.execPath}
 import { createInterface } from "node:readline";
+if (process.env.AICHARTS_ASSERT_AUTH_CONTEXT === "1") {
+  const expectedArgs = ["-c", "cli_auth_credentials_store=\\\"file\\\"", "app-server", "--stdio"];
+  const externalAuthKeys = [
+    "CODEX_ACCESS_TOKEN",
+    "CODEX_API_KEY",
+    "OPENAI_API_KEY",
+    "OPENAI_FEDERATION_RULE_ID",
+    "OPENAI_IDENTITY_TOKEN_FILE",
+    "OPENAI_WORKLOAD_IDENTITY_CONTEXT",
+  ];
+  if (JSON.stringify(process.argv.slice(2)) !== JSON.stringify(expectedArgs)
+    || process.env.CODEX_HOME !== process.env.AICHARTS_EXPECTED_CODEX_HOME
+    || externalAuthKeys.some(key => process.env[key] !== undefined)) process.exit(70);
+}
 const lines = createInterface({ input: process.stdin });
 lines.on("line", line => {
   const message = JSON.parse(line);
@@ -61,6 +75,9 @@ lines.on("line", line => {
     process.stdout.write(JSON.stringify({ id: 1, result: {} }) + "\\n");
   }
   if (message.id === 2) {
+    process.stdout.write(JSON.stringify({ id: 2, result: { requirements: null } }) + "\\n");
+  }
+  if (message.id === 3) {
     const bucket = {
       limitId: "codex",
       limitName: null,
@@ -70,9 +87,10 @@ lines.on("line", line => {
       individualLimit: null,
       planType: "pro",
       rateLimitReachedType: null,
+      spendControlReached: null,
     };
     process.stdout.write(JSON.stringify({
-      id: 2,
+      id: 3,
       result: {
         rateLimits: bucket,
         rateLimitsByLimitId: { codex: bucket },
@@ -97,7 +115,16 @@ async function writeAuth(
   value: unknown,
   mode = 0o600,
 ): Promise<void> {
-  const authPath = path.join(home, ".codex", "auth.json");
+  await writeCodexHomeAuth(path.join(home, ".codex"), value, mode);
+}
+
+async function writeCodexHomeAuth(
+  codexHome: string,
+  value: unknown,
+  mode = 0o600,
+): Promise<void> {
+  await mkdir(codexHome, { recursive: true });
+  const authPath = path.join(codexHome, "auth.json");
   await writeFile(authPath, `${JSON.stringify(value)}\n`, { encoding: "utf8", mode });
   await chmod(authPath, mode);
 }
@@ -125,6 +152,61 @@ async function allFileContents(root: string): Promise<string> {
 }
 
 describe("Codex account recorder", () => {
+  test("binds fingerprint and quota reads to the same explicit CODEX_HOME file context", async () => {
+    const subject = await fixture();
+    const codexHome = path.join(subject.root, "explicit-codex-home");
+    await writeAuth(subject.home, {
+      auth_mode: "chatgpt",
+      tokens: { account_id: "default-home-account-private" },
+    });
+    await writeCodexHomeAuth(codexHome, {
+      auth_mode: "chatgpt",
+      tokens: { account_id: "explicit-home-account-private" },
+    });
+    const environment = {
+      ...subject.environment,
+      AICHARTS_ASSERT_AUTH_CONTEXT: "1",
+      AICHARTS_EXPECTED_CODEX_HOME: codexHome,
+      CODEX_ACCESS_TOKEN: "must-be-stripped",
+      CODEX_API_KEY: "must-be-stripped",
+      CODEX_HOME: codexHome,
+      OPENAI_API_KEY: "must-be-stripped",
+      OPENAI_FEDERATION_RULE_ID: "must-be-stripped",
+      OPENAI_IDENTITY_TOKEN_FILE: "must-be-stripped",
+      OPENAI_WORKLOAD_IDENTITY_CONTEXT: "must-be-stripped",
+    };
+
+    const first = run(environment);
+    expect(first.status).toBe(0);
+    expect(JSON.parse(first.stdout)).toMatchObject({
+      changed: true,
+      observedAccountFingerprintCount: 1,
+      rateLimits: recordedRateLimits,
+    });
+
+    await writeAuth(subject.home, {
+      auth_mode: "chatgpt",
+      tokens: { account_id: "changed-default-home-account-private" },
+    });
+    const unchanged = run(environment);
+    expect(unchanged.status).toBe(0);
+    expect(JSON.parse(unchanged.stdout)).toMatchObject({
+      changed: false,
+      observedAccountFingerprintCount: 1,
+    });
+
+    await writeCodexHomeAuth(codexHome, {
+      auth_mode: "chatgpt",
+      tokens: { account_id: "changed-explicit-home-account-private" },
+    });
+    const changed = run(environment);
+    expect(changed.status).toBe(0);
+    expect(JSON.parse(changed.stdout)).toMatchObject({
+      changed: true,
+      observedAccountFingerprintCount: 2,
+    });
+  });
+
   test("records distinct account intervals without printing or persisting auth data", async () => {
     const subject = await fixture();
     const firstAccount = "account-private-alpha-1234567890";
@@ -280,13 +362,16 @@ describe("Codex account recorder", () => {
           tokens: { account_id: secondAccount },
         });
         return {
-          availableResetCreditCount: 0,
-          buckets: [{
-            limitId: "codex",
-            planType: "pro",
-            primary: { resetsAt: 2_000_000_000, usedPercent: 12, windowDurationMins: 300 },
-            secondary: null,
-          }],
+          observedAt: "2026-08-28T12:00:01.000Z",
+          snapshot: {
+            availableResetCreditCount: 0,
+            buckets: [{
+              limitId: "codex",
+              planType: "pro",
+              primary: { resetsAt: 2_000_000_000, usedPercent: 12, windowDurationMins: 300 },
+              secondary: null,
+            }],
+          },
         };
       },
     )).rejects.toThrow("Codex account changed during the rate-limit observation.");
@@ -294,6 +379,70 @@ describe("Codex account recorder", () => {
     const persisted = await allFileContents(subject.paths.stateRoot);
     expect(persisted).not.toContain(firstAccount);
     expect(persisted).not.toContain(secondAccount);
+  });
+
+  test("classifies a boundary crossed during the read using the response-time observation", async () => {
+    const subject = await fixture();
+    await writeAuth(subject.home, {
+      auth_mode: "chatgpt",
+      tokens: { account_id: "timing-boundary-private-account" },
+    });
+    const previousResetAt = Date.parse("2026-08-28T13:00:00.000Z") / 1_000;
+    const snapshots = [
+      {
+        observedAt: "2026-08-28T12:59:51.000Z",
+        snapshot: {
+          availableResetCreditCount: 0,
+          buckets: [{
+            limitId: "codex",
+            planType: "pro" as const,
+            primary: { resetsAt: previousResetAt, usedPercent: 76, windowDurationMins: 300 },
+            secondary: null,
+          }],
+        },
+      },
+      {
+        observedAt: "2026-08-28T13:00:05.000Z",
+        snapshot: {
+          availableResetCreditCount: 0,
+          buckets: [{
+            limitId: "codex",
+            planType: "pro" as const,
+            primary: {
+              resetsAt: previousResetAt + 300 * 60,
+              usedPercent: 81,
+              windowDurationMins: 300,
+            },
+            secondary: null,
+          }],
+        },
+      },
+    ];
+    const reader = async () => snapshots.shift()!;
+
+    await recordCodexAccount(
+      subject.environment,
+      new Date("2026-08-28T12:59:50.000Z"),
+      reader,
+    );
+    const second = await recordCodexAccount(
+      subject.environment,
+      new Date("2026-08-28T12:59:59.000Z"),
+      reader,
+    );
+
+    expect(second).toMatchObject({
+      rateLimits: {
+        detectedResets: [{
+          classification: "scheduled",
+          currentUsedPercent: 81,
+          freshCapacityPercent: 100,
+          previousUsedPercent: 76,
+          restoredPercentLowerBound: 76,
+          windowDurationMins: 300,
+        }],
+      },
+    });
   });
 
   test("rejects corrupt or privacy-expanded ledgers instead of carrying unknown fields", async () => {

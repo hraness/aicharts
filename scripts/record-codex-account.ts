@@ -15,9 +15,9 @@ import path from "node:path";
 
 import {
   CodexRateLimitRecorderFailure,
-  type CodexRateLimitReadResult,
   type CodexRateLimitReader,
   type CodexRateLimitRecorderResult,
+  type TimedCodexRateLimitReadResult,
   readCodexRateLimits,
   recordCodexRateLimits,
 } from "./codex-rate-limit-tracking";
@@ -85,6 +85,7 @@ export type RecorderResult = Readonly<{
 
 type RecorderPaths = Readonly<{
   auth: string;
+  codexHome: string;
   ledger: string;
   lock: string;
   rateLimits: string;
@@ -618,9 +619,18 @@ export function recorderPaths(environment: NodeJS.ProcessEnv): RecorderPaths {
   if (!path.isAbsolute(stateBase)) {
     throw new RecorderFailure("XDG_STATE_HOME must be an absolute path.", 64);
   }
+  const configuredCodexHome = typeof environment.CODEX_HOME === "string"
+    && environment.CODEX_HOME.length > 0
+    ? environment.CODEX_HOME
+    : path.join(home, ".codex");
+  if (!path.isAbsolute(configuredCodexHome)) {
+    throw new RecorderFailure("CODEX_HOME must be an absolute path.", 64);
+  }
+  const codexHome = path.normalize(configuredCodexHome);
   const stateRoot = path.join(stateBase, "aicharts", "gpt-subsidy");
   return {
-    auth: path.join(home, ".codex", "auth.json"),
+    auth: path.join(codexHome, "auth.json"),
+    codexHome,
     ledger: path.join(stateRoot, "account-observations.json"),
     lock: path.join(stateRoot, ".account-recorder.lock"),
     rateLimits: path.join(stateRoot, "codex-rate-limit-observations.json"),
@@ -658,9 +668,11 @@ export async function recordCodexAccount(
     await atomicWriteLedger(paths.ledger, update.ledger);
     let rateLimits: CodexRateLimitRecorderResult;
     try {
-      let confirmedRead: CodexRateLimitReadResult | null = null;
+      let confirmedRead: TimedCodexRateLimitReadResult | null = null;
       if (observation.accountFingerprint !== null) {
-        confirmedRead = await (rateLimitReader ?? readCodexRateLimits)(environment);
+        confirmedRead = await (rateLimitReader ?? readCodexRateLimits)(environment, {
+          codexHome: paths.codexHome,
+        });
         const confirmation = await readAuthObservation(paths.auth, secret.secret);
         if (confirmation.accountFingerprint !== observation.accountFingerprint
           || confirmation.authMode !== observation.authMode
@@ -672,10 +684,10 @@ export async function recordCodexAccount(
       }
       rateLimits = await recordCodexRateLimits({
         accountFingerprint: observation.accountFingerprint,
+        authContext: { codexHome: paths.codexHome },
         environment,
         keyId: secret.keyId,
         ledgerPath: paths.rateLimits,
-        observedAt,
         reader: confirmedRead === null ? rateLimitReader : async () => confirmedRead!,
       });
     } catch (error) {

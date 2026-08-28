@@ -6,7 +6,10 @@ import path from "node:path";
 
 const APP_SERVER_RESPONSE_MAX_BYTES = 1_048_576;
 const APP_SERVER_TIMEOUT_MS = 15_000;
+const APP_SERVER_TERMINATION_GRACE_MS = 1_000;
+const APP_SERVER_KILL_GRACE_MS = 1_000;
 const LEDGER_FILE_MAX_BYTES = 32 * 1_048_576;
+const LEGACY_SINGLE_BUCKET_LIMIT_ID = "codex";
 const MAX_BUCKETS = 32;
 const MAX_OBSERVATIONS = 200_000;
 const MAX_RESETS = 200_000;
@@ -20,12 +23,26 @@ const planTypes = [
   "pro",
   "prolite",
   "team",
+  "self_serve_business_prolite",
   "self_serve_business_usage_based",
   "business",
+  "ent26",
+  "enterprise_cbp_automation",
   "enterprise_cbp_usage_based",
   "enterprise",
   "edu",
+  "edu_plus",
+  "edu_pro",
   "unknown",
+] as const;
+
+const externalAuthEnvironmentKeys = [
+  "CODEX_ACCESS_TOKEN",
+  "CODEX_API_KEY",
+  "OPENAI_API_KEY",
+  "OPENAI_FEDERATION_RULE_ID",
+  "OPENAI_IDENTITY_TOKEN_FILE",
+  "OPENAI_WORKLOAD_IDENTITY_CONTEXT",
 ] as const;
 
 const resetClassifications = [
@@ -56,6 +73,15 @@ export type CodexRateLimitBucket = Readonly<{
 export type CodexRateLimitReadResult = Readonly<{
   availableResetCreditCount: number | null;
   buckets: readonly CodexRateLimitBucket[];
+}>;
+
+export type TimedCodexRateLimitReadResult = Readonly<{
+  observedAt: string;
+  snapshot: CodexRateLimitReadResult;
+}>;
+
+export type CodexRateLimitAuthContext = Readonly<{
+  codexHome: string;
 }>;
 
 type RateLimitObservation = {
@@ -114,7 +140,15 @@ export type CodexRateLimitRecorderResult = Readonly<{
 
 export type CodexRateLimitReader = (
   environment: NodeJS.ProcessEnv,
-) => Promise<CodexRateLimitReadResult>;
+  authContext: CodexRateLimitAuthContext,
+) => Promise<TimedCodexRateLimitReadResult>;
+
+type CodexRateLimitReaderOptions = Readonly<{
+  killGraceMs?: number;
+  now?: () => Date;
+  terminationGraceMs?: number;
+  timeoutMs?: number;
+}>;
 
 export class CodexRateLimitRecorderFailure extends Error {
   readonly exitCode: number;
@@ -166,6 +200,10 @@ function isLimitId(value: unknown): value is string {
   return typeof value === "string" && /^[A-Za-z0-9._:-]{1,128}$/.test(value);
 }
 
+function compareCodeUnits(left: string, right: string): number {
+  return left < right ? -1 : left > right ? 1 : 0;
+}
+
 function isResetCount(value: unknown): value is number {
   return typeof value === "number" && Number.isSafeInteger(value)
     && value >= 0 && value <= MAX_RESET_CREDITS;
@@ -196,7 +234,11 @@ function parseWindow(value: unknown): CodexRateLimitWindow | null | undefined {
   };
 }
 
-function parseBucket(value: unknown, mapLimitId: string | null): CodexRateLimitBucket | null {
+function parseBucket(
+  value: unknown,
+  mapLimitId: string | null,
+  fallbackLimitId: string | null = null,
+): CodexRateLimitBucket | null {
   if (!isRecord(value) || !hasOnlyKeys(value, [
     "credits",
     "individualLimit",
@@ -206,11 +248,19 @@ function parseBucket(value: unknown, mapLimitId: string | null): CodexRateLimitB
     "primary",
     "rateLimitReachedType",
     "secondary",
+    "spendControlReached",
   ])) return null;
-  const limitId = value.limitId ?? mapLimitId;
-  if (!isLimitId(limitId) || (mapLimitId !== null && limitId !== mapLimitId)) return null;
+  const protocolLimitId = value.limitId ?? null;
+  if (protocolLimitId !== null && !isLimitId(protocolLimitId)) return null;
+  if (mapLimitId !== null && protocolLimitId !== null && protocolLimitId !== mapLimitId) {
+    return null;
+  }
+  const limitId = mapLimitId ?? protocolLimitId ?? fallbackLimitId;
+  if (!isLimitId(limitId)) return null;
   const planType = value.planType ?? null;
   if (planType !== null && !isPlanType(planType)) return null;
+  if (value.spendControlReached !== undefined && value.spendControlReached !== null
+    && typeof value.spendControlReached !== "boolean") return null;
   const primary = parseWindow(value.primary ?? null);
   const secondary = parseWindow(value.secondary ?? null);
   if (primary === undefined || secondary === undefined) return null;
@@ -270,7 +320,11 @@ export function parseCodexRateLimitResponse(value: unknown): CodexRateLimitReadR
       buckets.push(bucket);
     }
   } else {
-    const fallback = parseBucket(value.rateLimits, null);
+    const fallback = parseBucket(
+      value.rateLimits,
+      null,
+      LEGACY_SINGLE_BUCKET_LIMIT_ID,
+    );
     if (fallback === null) {
       throw new CodexRateLimitRecorderFailure(
         "Codex rate-limit response failed its privacy/shape check.",
@@ -279,7 +333,7 @@ export function parseCodexRateLimitResponse(value: unknown): CodexRateLimitReadR
     buckets.push(fallback);
   }
 
-  buckets.sort((left, right) => left.limitId.localeCompare(right.limitId));
+  buckets.sort((left, right) => compareCodeUnits(left.limitId, right.limitId));
   if (buckets.length === 0
     || buckets.some((bucket, index) => index > 0
       && bucket.limitId === buckets[index - 1]!.limitId)) {
@@ -301,9 +355,92 @@ function writeJsonLine(
   stdin.write(`${JSON.stringify(value)}\n`, "utf8");
 }
 
+function boundedReaderDelay(
+  value: number | undefined,
+  fallback: number,
+): number {
+  if (value === undefined) return fallback;
+  if (!Number.isSafeInteger(value) || value <= 0 || value > 60_000) {
+    throw new CodexRateLimitRecorderFailure(
+      "Codex rate-limit reader timing configuration is invalid.",
+      64,
+    );
+  }
+  return value;
+}
+
+function childHasExited(child: ReturnType<typeof spawn>): boolean {
+  return child.pid === undefined || child.exitCode !== null || child.signalCode !== null;
+}
+
+async function waitForChildClose(
+  child: ReturnType<typeof spawn>,
+  timeoutMs: number,
+): Promise<boolean> {
+  if (childHasExited(child)) return true;
+  return await new Promise<boolean>(resolve => {
+    let completed = false;
+    const complete = (closed: boolean): void => {
+      if (completed) return;
+      completed = true;
+      clearTimeout(timeout);
+      child.removeListener("close", onClose);
+      resolve(closed);
+    };
+    const onClose = (): void => complete(true);
+    const timeout = setTimeout(() => complete(childHasExited(child)), timeoutMs);
+    child.once("close", onClose);
+    if (childHasExited(child)) complete(true);
+  });
+}
+
+async function terminateChild(
+  child: ReturnType<typeof spawn>,
+  terminationGraceMs: number,
+  killGraceMs: number,
+): Promise<boolean> {
+  child.stdin?.end();
+  if (childHasExited(child)) return true;
+  try {
+    child.kill("SIGTERM");
+  } catch {
+    // A concurrent exit is confirmed by the bounded close wait below.
+  }
+  if (await waitForChildClose(child, terminationGraceMs)) return true;
+  try {
+    child.kill("SIGKILL");
+  } catch {
+    // A concurrent exit is confirmed by the bounded close wait below.
+  }
+  return await waitForChildClose(child, killGraceMs);
+}
+
+function appServerEnvironment(
+  environment: NodeJS.ProcessEnv,
+  authContext: CodexRateLimitAuthContext,
+): NodeJS.ProcessEnv {
+  const childEnvironment = { ...environment, CODEX_HOME: authContext.codexHome };
+  for (const key of externalAuthEnvironmentKeys) delete childEnvironment[key];
+  return childEnvironment;
+}
+
+function requirementsPermitFileAuth(value: unknown): boolean {
+  if (!isRecord(value) || !("requirements" in value)) return false;
+  if (value.requirements === null) return true;
+  if (!isRecord(value.requirements)) return false;
+  const configured = value.requirements.cliAuthCredentialsStore;
+  // Older supported app servers predate this requirement field. Their managed
+  // requirements cannot override the CLI credential-store selection.
+  return configured === undefined || configured === null || configured === "file";
+}
+
 export async function readCodexRateLimits(
   environment: NodeJS.ProcessEnv = process.env,
-): Promise<CodexRateLimitReadResult> {
+  authContext: CodexRateLimitAuthContext = {
+    codexHome: path.join(environment.HOME ?? "", ".codex"),
+  },
+  options: CodexRateLimitReaderOptions = {},
+): Promise<TimedCodexRateLimitReadResult> {
   const executable = environment.AICHARTS_CODEX_APP_SERVER_EXECUTABLE;
   if (typeof executable !== "string" || !path.isAbsolute(executable)) {
     throw new CodexRateLimitRecorderFailure(
@@ -311,40 +448,73 @@ export async function readCodexRateLimits(
       69,
     );
   }
+  if (!path.isAbsolute(authContext.codexHome)) {
+    throw new CodexRateLimitRecorderFailure(
+      "Codex rate-limit auth context is invalid.",
+      64,
+    );
+  }
+  const timeoutMs = boundedReaderDelay(options.timeoutMs, APP_SERVER_TIMEOUT_MS);
+  const terminationGraceMs = boundedReaderDelay(
+    options.terminationGraceMs,
+    APP_SERVER_TERMINATION_GRACE_MS,
+  );
+  const killGraceMs = boundedReaderDelay(options.killGraceMs, APP_SERVER_KILL_GRACE_MS);
 
-  return await new Promise<CodexRateLimitReadResult>((resolve, reject) => {
-    const child = spawn(executable, ["app-server", "--stdio"], {
-      env: environment,
+  return await new Promise<TimedCodexRateLimitReadResult>((resolve, reject) => {
+    const child = spawn(executable, [
+      "-c",
+      'cli_auth_credentials_store="file"',
+      "app-server",
+      "--stdio",
+    ], {
+      env: appServerEnvironment(environment, authContext),
       stdio: ["pipe", "pipe", "pipe"],
     });
-    let settled = false;
+    let finishing = false;
     let initialized = false;
+    let requirementsChecked = false;
     let buffered = "";
     let receivedBytes = 0;
     let stderrBytes = 0;
+    let timeout: ReturnType<typeof setTimeout> | undefined;
 
     const finish = (
       error: CodexRateLimitRecorderFailure | null,
-      result?: CodexRateLimitReadResult,
+      result?: TimedCodexRateLimitReadResult,
     ): void => {
-      if (settled) return;
-      settled = true;
-      clearTimeout(timeout);
-      child.stdin?.end();
-      child.kill("SIGTERM");
-      if (error !== null) reject(error);
-      else resolve(result!);
+      if (finishing) return;
+      finishing = true;
+      if (timeout !== undefined) clearTimeout(timeout);
+      void terminateChild(child, terminationGraceMs, killGraceMs).then(
+        reaped => {
+          if (!reaped) {
+            reject(new CodexRateLimitRecorderFailure(
+              "Codex rate-limit reader could not terminate its app-server process.",
+              69,
+            ));
+          } else if (error !== null) {
+            reject(error);
+          } else {
+            resolve(result!);
+          }
+        },
+        () => reject(new CodexRateLimitRecorderFailure(
+          "Codex rate-limit reader could not terminate its app-server process.",
+          69,
+        )),
+      );
     };
 
-    const timeout = setTimeout(() => {
+    timeout = setTimeout(() => {
       finish(new CodexRateLimitRecorderFailure("Codex rate-limit reader timed out.", 69));
-    }, APP_SERVER_TIMEOUT_MS);
+    }, timeoutMs);
 
     child.once("error", () => {
       finish(new CodexRateLimitRecorderFailure("Unable to start Codex rate-limit reader.", 69));
     });
     child.once("close", () => {
-      if (!settled) {
+      if (!finishing) {
         finish(new CodexRateLimitRecorderFailure("Codex rate-limit reader exited early.", 69));
       }
     });
@@ -355,7 +525,7 @@ export async function readCodexRateLimits(
       }
     });
     child.stdout.on("data", chunk => {
-      if (settled) return;
+      if (finishing) return;
       receivedBytes += Buffer.byteLength(chunk);
       if (receivedBytes > APP_SERVER_RESPONSE_MAX_BYTES) {
         finish(new CodexRateLimitRecorderFailure("Codex rate-limit reader exceeded its size limit."));
@@ -386,7 +556,7 @@ export async function readCodexRateLimits(
           initialized = true;
           try {
             writeJsonLine(child, { method: "initialized" });
-            writeJsonLine(child, { id: 2, method: "account/rateLimits/read" });
+            writeJsonLine(child, { id: 2, method: "configRequirements/read" });
           } catch (error) {
             finish(error instanceof CodexRateLimitRecorderFailure
               ? error
@@ -394,13 +564,34 @@ export async function readCodexRateLimits(
           }
           continue;
         }
-        if (message.id === 2) {
+        if (message.id === 2 && !requirementsChecked) {
+          if (!("result" in message) || "error" in message
+            || !requirementsPermitFileAuth(message.result)) {
+            finish(new CodexRateLimitRecorderFailure(
+              "Codex rate-limit auth context could not be attested as file-backed.",
+              69,
+            ));
+            return;
+          }
+          requirementsChecked = true;
+          try {
+            writeJsonLine(child, { id: 3, method: "account/rateLimits/read" });
+          } catch (error) {
+            finish(error instanceof CodexRateLimitRecorderFailure
+              ? error
+              : new CodexRateLimitRecorderFailure("Codex rate-limit reader exited early.", 69));
+          }
+          continue;
+        }
+        if (message.id === 3 && requirementsChecked) {
           if (!("result" in message) || "error" in message) {
             finish(new CodexRateLimitRecorderFailure("Codex rate-limit read failed.", 69));
             return;
           }
           try {
-            finish(null, parseCodexRateLimitResponse(message.result));
+            const snapshot = parseCodexRateLimitResponse(message.result);
+            const observedAt = (options.now?.() ?? new Date()).toISOString();
+            finish(null, { observedAt, snapshot });
           } catch (error) {
             finish(error instanceof CodexRateLimitRecorderFailure
               ? error
@@ -418,7 +609,7 @@ export async function readCodexRateLimits(
         id: 1,
         method: "initialize",
         params: {
-          capabilities: { experimentalApi: false },
+          capabilities: { experimentalApi: true },
           clientInfo: { name: "aicharts-rate-limit-recorder", version: "1.0.0" },
         },
       });
@@ -461,7 +652,7 @@ function parseObservation(value: unknown, createdAt: string, updatedAt: string):
     buckets.push(bucket);
   }
   if (buckets.some((bucket, index) => index > 0
-    && bucket.limitId <= buckets[index - 1]!.limitId)) return null;
+    && compareCodeUnits(bucket.limitId, buckets[index - 1]!.limitId) <= 0)) return null;
   return {
     accountFingerprint: value.accountFingerprint,
     availableResetCreditCount: value.availableResetCreditCount as number | null,
@@ -816,29 +1007,32 @@ function publicReset(reset: RateLimitReset): DetectedRateLimitReset {
 
 export async function recordCodexRateLimits(options: Readonly<{
   accountFingerprint: string | null;
+  authContext: CodexRateLimitAuthContext;
   environment: NodeJS.ProcessEnv;
   keyId: string;
   ledgerPath: string;
-  observedAt: string;
   reader?: CodexRateLimitReader;
 }>): Promise<CodexRateLimitRecorderResult> {
   if (options.accountFingerprint === null) return { kind: "not-applicable" };
-  const readResult = await (options.reader ?? readCodexRateLimits)(options.environment);
+  const read = await (options.reader ?? readCodexRateLimits)(
+    options.environment,
+    options.authContext,
+  );
   const current = await readPrivateLedger(options.ledgerPath);
   const update = updateCodexRateLimitLedger(
     current,
-    readResult,
+    read.snapshot,
     options.accountFingerprint,
     options.keyId,
-    options.observedAt,
+    read.observedAt,
   );
   await atomicWriteLedger(options.ledgerPath, update.ledger);
   return {
-    availableResetCreditCount: readResult.availableResetCreditCount,
-    bucketCount: readResult.buckets.length,
+    availableResetCreditCount: read.snapshot.availableResetCreditCount,
+    bucketCount: read.snapshot.buckets.length,
     detectedResets: update.detectedResets.map(publicReset),
     kind: "recorded",
-    windowCount: readResult.buckets.reduce(
+    windowCount: read.snapshot.buckets.reduce(
       (count, bucket) => count + Number(bucket.primary !== null) + Number(bucket.secondary !== null),
       0,
     ),

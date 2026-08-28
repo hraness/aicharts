@@ -1,15 +1,45 @@
-import { describe, expect, test } from "bun:test";
+import { access, chmod, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import path from "node:path";
+
+import { afterEach, describe, expect, test } from "bun:test";
 import fc from "fast-check";
 
 import {
   type CodexRateLimitReadResult,
   parseCodexRateLimitResponse,
+  readCodexRateLimits,
   updateCodexRateLimitLedger,
 } from "./codex-rate-limit-tracking";
 
 const accountA = `hmac-sha256:v1:${"A".repeat(43)}`;
 const accountB = `hmac-sha256:v1:${"B".repeat(43)}`;
 const keyId = `sha256:v1:${"K".repeat(43)}`;
+const temporaryRoots: string[] = [];
+
+afterEach(async () => {
+  await Promise.all(temporaryRoots.splice(0).map(root => rm(root, {
+    force: true,
+    recursive: true,
+  })));
+});
+
+function protocolBucket(options: Readonly<{
+  limitId?: string | null;
+  planType?: string;
+}> = {}) {
+  return {
+    credits: null,
+    individualLimit: null,
+    limitId: options.limitId === undefined ? "codex" : options.limitId,
+    limitName: null,
+    planType: options.planType ?? "pro",
+    primary: { resetsAt: 2_000_000_000, usedPercent: 34, windowDurationMins: 300 },
+    rateLimitReachedType: null,
+    secondary: null,
+    spendControlReached: null,
+  };
+}
 
 function readResult(options: Readonly<{
   availableResetCreditCount?: number | null;
@@ -32,6 +62,44 @@ function readResult(options: Readonly<{
   };
 }
 
+async function fakeAppServer(source: string): Promise<Readonly<{
+  authContext: { codexHome: string };
+  environment: NodeJS.ProcessEnv;
+  markerPath: string;
+  pidPath: string;
+}>> {
+  const root = await mkdtemp(path.join(tmpdir(), "aicharts-rate-limit-reader-test-"));
+  temporaryRoots.push(root);
+  const codexHome = path.join(root, "codex-home");
+  const executable = path.join(root, "fake-codex");
+  const markerPath = path.join(root, "rate-limit-requested");
+  const pidPath = path.join(root, "pid");
+  await mkdir(codexHome, { recursive: true });
+  await writeFile(executable, `#!${process.execPath}\n${source}\n`, {
+    encoding: "utf8",
+    mode: 0o500,
+  });
+  await chmod(executable, 0o500);
+  return {
+    authContext: { codexHome },
+    environment: {
+      ...process.env,
+      AICHARTS_CODEX_APP_SERVER_EXECUTABLE: executable,
+      AICHARTS_FAKE_MARKER_PATH: markerPath,
+      AICHARTS_FAKE_PID_PATH: pidPath,
+      HOME: root,
+    },
+    markerPath,
+    pidPath,
+  };
+}
+
+async function expectRecordedProcessGone(pidPath: string): Promise<void> {
+  const pid = Number.parseInt(await readFile(pidPath, "utf8"), 10);
+  expect(Number.isSafeInteger(pid)).toBe(true);
+  expect(() => process.kill(pid, 0)).toThrow();
+}
+
 describe("Codex rate-limit response boundary", () => {
   test("retains only bounded quota fields and discards reset-credit identifiers and copy", () => {
     const opaqueCreditId = "opaque-credit-identifier-that-must-not-persist";
@@ -47,6 +115,7 @@ describe("Codex rate-limit response boundary", () => {
       primary: { resetsAt: 2_000_000_000, usedPercent: 34, windowDurationMins: 300 },
       rateLimitReachedType: null,
       secondary: { resetsAt: 2_000_500_000, usedPercent: 67, windowDurationMins: 10_080 },
+      spendControlReached: false,
     };
     const parsed = parseCodexRateLimitResponse({
       rateLimits: bucket,
@@ -96,6 +165,113 @@ describe("Codex rate-limit response boundary", () => {
         secondary: null,
       },
     })).toThrow("privacy/shape check");
+  });
+
+  test("accepts every current official plan value without retaining spend control", () => {
+    for (const planType of [
+      "self_serve_business_prolite",
+      "ent26",
+      "enterprise_cbp_automation",
+      "edu_plus",
+      "edu_pro",
+    ]) {
+      const parsed = parseCodexRateLimitResponse({
+        rateLimits: protocolBucket({ planType }),
+        rateLimitsByLimitId: null,
+      });
+      expect(parsed.buckets[0]!.planType).toBe(planType);
+      expect(JSON.stringify(parsed)).not.toContain("spendControlReached");
+    }
+  });
+
+  test("assigns a stable internal ID to a nullable legacy single bucket", () => {
+    for (const limitId of [null, undefined]) {
+      const bucket = protocolBucket({ limitId });
+      if (limitId === undefined) delete (bucket as { limitId?: string | null }).limitId;
+      expect(parseCodexRateLimitResponse({ rateLimits: bucket })).toEqual({
+        availableResetCreditCount: null,
+        buckets: [expect.objectContaining({ limitId: "codex" })],
+      });
+    }
+  });
+
+  test("sorts mixed-case and punctuation IDs by explicit code-unit order", () => {
+    const rateLimitsByLimitId = Object.fromEntries(["a", "_", "Z", "A"].map(limitId => [
+      limitId,
+      protocolBucket({ limitId: null }),
+    ]));
+    const parsed = parseCodexRateLimitResponse({
+      rateLimits: protocolBucket({ limitId: null }),
+      rateLimitsByLimitId,
+    });
+    expect(parsed.buckets.map(bucket => bucket.limitId)).toEqual(["A", "Z", "_", "a"]);
+  });
+});
+
+describe("Codex rate-limit app-server lifecycle", () => {
+  test("fails closed before quota read when managed requirements override file auth", async () => {
+    const subject = await fakeAppServer(`
+import { writeFileSync } from "node:fs";
+import { createInterface } from "node:readline";
+writeFileSync(process.env.AICHARTS_FAKE_PID_PATH, String(process.pid));
+createInterface({ input: process.stdin }).on("line", line => {
+  const message = JSON.parse(line);
+  if (message.id === 1) process.stdout.write(JSON.stringify({ id: 1, result: {} }) + "\\n");
+  if (message.id === 2) process.stdout.write(JSON.stringify({
+    id: 2,
+    result: { requirements: { cliAuthCredentialsStore: "keyring" } },
+  }) + "\\n");
+  if (message.id === 3) writeFileSync(process.env.AICHARTS_FAKE_MARKER_PATH, "requested");
+});
+`);
+
+    await expect(readCodexRateLimits(subject.environment, subject.authContext, {
+      killGraceMs: 500,
+      terminationGraceMs: 100,
+      timeoutMs: 1_000,
+    })).rejects.toThrow("could not be attested as file-backed");
+    await expect(access(subject.markerPath)).rejects.toThrow();
+    await expectRecordedProcessGone(subject.pidPath);
+  });
+
+  test("reaps a reader that emits malformed output and ignores SIGTERM", async () => {
+    const subject = await fakeAppServer(`
+import { writeFileSync } from "node:fs";
+import { createInterface } from "node:readline";
+writeFileSync(process.env.AICHARTS_FAKE_PID_PATH, String(process.pid));
+process.on("SIGTERM", () => {});
+setInterval(() => {}, 1_000);
+createInterface({ input: process.stdin }).on("line", line => {
+  const message = JSON.parse(line);
+  if (message.id === 1) process.stdout.write(JSON.stringify({ id: 1, result: {} }) + "\\n");
+  if (message.id === 2) process.stdout.write(JSON.stringify({ id: 2, result: { requirements: null } }) + "\\n");
+  if (message.id === 3) process.stdout.write("{malformed\\n");
+});
+`);
+
+    await expect(readCodexRateLimits(subject.environment, subject.authContext, {
+      killGraceMs: 500,
+      terminationGraceMs: 25,
+      timeoutMs: 1_000,
+    })).rejects.toThrow("privacy/shape check");
+    await expectRecordedProcessGone(subject.pidPath);
+  });
+
+  test("SIGKILLs and reaps a wedged reader after the bounded timeout", async () => {
+    const subject = await fakeAppServer(`
+import { writeFileSync } from "node:fs";
+writeFileSync(process.env.AICHARTS_FAKE_PID_PATH, String(process.pid));
+process.on("SIGTERM", () => {});
+setInterval(() => {}, 1_000);
+process.stdin.resume();
+`);
+
+    await expect(readCodexRateLimits(subject.environment, subject.authContext, {
+      killGraceMs: 500,
+      terminationGraceMs: 25,
+      timeoutMs: 500,
+    })).rejects.toThrow("timed out");
+    await expectRecordedProcessGone(subject.pidPath);
   });
 });
 
