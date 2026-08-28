@@ -2,6 +2,12 @@ name: CI
 
 on:
   pull_request:
+    # Data-refresh PRs dispatch this workflow explicitly on their exact head SHA.
+    # Ignoring the redundant event avoids GitHub's approval-required run for PRs
+    # opened by GITHUB_TOKEN while the dispatched Required check remains mandatory.
+    paths-ignore:
+      - data/coding-agents.json
+      - data/model-release-radar.json
   push:
     branches: [main]
   workflow_dispatch:

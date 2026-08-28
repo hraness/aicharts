@@ -13,7 +13,12 @@ const workflow = parse(source) as {
     steps?: Array<Record<string, unknown>>;
   }>;
 };
-const ciWorkflow = parse(ciSource) as { on?: Record<string, unknown> };
+const ciWorkflow = parse(ciSource) as {
+  on?: {
+    pull_request?: { "paths-ignore"?: string[] };
+    workflow_dispatch?: unknown;
+  };
+};
 const refresh = workflow.jobs?.refresh;
 if (refresh === undefined) throw new Error("Expected the data-refresh job.");
 const steps = refresh.steps ?? [];
@@ -62,14 +67,20 @@ describe("scheduled model-data refresh", () => {
     expect(publish).toContain('--commit "$head_sha" --event workflow_dispatch');
     expect(publish).toContain('gh workflow run ci.yml --ref "$REFRESH_BRANCH"');
     expect(publish).toContain('gh run watch "$ci_run_id" --exit-status');
-    expect(publish).toContain('gh pr merge "$pr_url" --squash --delete-branch');
+    expect(publish).toContain('gh pr merge "$pr_url" --auto --squash --delete-branch');
+    expect(publish).toContain('for merge_attempt in {1..60}');
+    expect(publish).toContain('if [[ "$merge_attempt" -lt 60 ]]; then sleep 5; fi');
+    expect(publish).toContain('gh pr merge "$pr_url" --disable-auto || true');
     expect(publish).toContain('if [[ "$pr_state" != "MERGED" ]]');
     expect(publish.indexOf('echo "pr_url=${pr_url}"')).toBeLessThan(
       publish.indexOf('gh workflow run ci.yml --ref "$REFRESH_BRANCH"'),
     );
-    expect(publish).not.toContain("--auto");
     expect(publish).not.toContain("HEAD:main");
     expect(ciWorkflow.on).toHaveProperty("workflow_dispatch");
+    expect(ciWorkflow.on?.pull_request?.["paths-ignore"]).toEqual([
+      "data/coding-agents.json",
+      "data/model-release-radar.json",
+    ]);
   });
 
   test("retries transient installs and owns one durable self-healing alert", () => {
