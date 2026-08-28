@@ -3,7 +3,7 @@
   "source": {
     "name": "Artificial Analysis",
     "url": "https://artificialanalysis.ai/agents/coding-agents/",
-    "retrievedAt": "2026-08-28T01:01:37.877Z",
+    "retrievedAt": "2026-08-28T02:03:26.429Z",
     "method": "next-flight",
     "benchmarkDatasets": {
       "deepSwe": "deep-swe",
@@ -14,128 +14,128 @@
   "updates": [
     {
       "id": "[\"benchmark-changed\",\"2026-08-28T01:01:37.877Z\",\"[\\\"Codex:openai_kindle-alpha-api\\\",\\\"high\\\"]\"]",
+      "detectedAt": "2026-08-28T01:01:37.877Z",
       "agent": "Codex",
+      "model": "GPT-5.6 Sol",
+      "providerId": "openai",
+      "providerName": "OpenAI",
+      "setting": "high",
       "benchmarks": {
         "aaIndex": 64.116444866412,
         "deepSwe": 64.8967551622419,
         "terminalBench": 82.0224719101124,
         "sweAtlas": 45.4301075268817
       },
+      "kind": "benchmark-changed",
       "changes": [
         {
-          "current": 45.4301075268817,
           "metric": "sweAtlas",
-          "previous": 44.892473118279604
+          "previous": 44.892473118279604,
+          "current": 45.4301075268817
         }
-      ],
-      "detectedAt": "2026-08-28T01:01:37.877Z",
-      "kind": "benchmark-changed",
-      "model": "GPT-5.6 Sol",
-      "providerId": "openai",
-      "providerName": "OpenAI",
-      "setting": "high"
+      ]
     },
     {
       "id": "[\"benchmark-changed\",\"2026-08-28T01:01:37.877Z\",\"[\\\"Codex:openai_kindle-alpha-api\\\",\\\"xhigh\\\"]\"]",
+      "detectedAt": "2026-08-28T01:01:37.877Z",
       "agent": "Codex",
+      "model": "GPT-5.6 Sol",
+      "providerId": "openai",
+      "providerName": "OpenAI",
+      "setting": "xhigh",
       "benchmarks": {
         "aaIndex": 63.338834236251195,
         "deepSwe": 66.9616519174041,
         "terminalBench": 79.7752808988764,
         "sweAtlas": 43.279569892473106
       },
+      "kind": "benchmark-changed",
       "changes": [
         {
-          "current": 43.279569892473106,
           "metric": "sweAtlas",
-          "previous": 42.2043010752688
+          "previous": 42.2043010752688,
+          "current": 43.279569892473106
         }
-      ],
-      "detectedAt": "2026-08-28T01:01:37.877Z",
-      "kind": "benchmark-changed",
-      "model": "GPT-5.6 Sol",
-      "providerId": "openai",
-      "providerName": "OpenAI",
-      "setting": "xhigh"
+      ]
     },
     {
       "id": "[\"benchmark-changed\",\"2026-08-28T01:01:37.877Z\",\"[\\\"Claude Code:alibaba_cloud_qwen3-8-max-public\\\",\\\"default\\\"]\"]",
+      "detectedAt": "2026-08-28T01:01:37.877Z",
       "agent": "Claude Code",
+      "model": "Qwen3.8 Max",
+      "providerId": "alibaba_cloud",
+      "providerName": "Alibaba Cloud",
+      "setting": "default",
       "benchmarks": {
         "aaIndex": 61.31027159527611,
         "deepSwe": 51.917404129793496,
         "terminalBench": 83.8951310861423,
         "sweAtlas": 48.1182795698925
       },
+      "kind": "benchmark-changed",
       "changes": [
         {
-          "current": 48.1182795698925,
           "metric": "sweAtlas",
-          "previous": 38.5714285714286
+          "previous": 38.5714285714286,
+          "current": 48.1182795698925
         }
-      ],
-      "detectedAt": "2026-08-28T01:01:37.877Z",
-      "kind": "benchmark-changed",
-      "model": "Qwen3.8 Max",
-      "providerId": "alibaba_cloud",
-      "providerName": "Alibaba Cloud",
-      "setting": "default"
+      ]
     },
     {
       "id": "[\"model-added\",\"2026-08-28T01:01:37.877Z\",\"[\\\"Devin CLI\\\",\\\"cognition\\\",\\\"SWE-1.7 Lightning Max\\\"]\"]",
+      "detectedAt": "2026-08-28T01:01:37.877Z",
       "agent": "Devin CLI",
+      "model": "SWE-1.7 Lightning Max",
+      "providerId": "cognition",
+      "providerName": "Cognition",
+      "setting": "default",
       "benchmarks": {
         "aaIndex": 52.21389513465004,
         "deepSwe": 40.412979351032405,
         "terminalBench": 79.40074906367039,
         "sweAtlas": 36.8279569892473
       },
-      "detectedAt": "2026-08-28T01:01:37.877Z",
       "kind": "model-added",
-      "model": "SWE-1.7 Lightning Max",
-      "providerId": "cognition",
-      "providerName": "Cognition",
-      "setting": "default",
       "variantCount": 1
     },
     {
       "id": "[\"benchmark-changed\",\"2026-08-28T01:01:37.877Z\",\"[\\\"Codex:openai_nova-alpha\\\",\\\"medium\\\"]\"]",
+      "detectedAt": "2026-08-28T01:01:37.877Z",
       "agent": "Codex",
+      "model": "GPT-5.6 Terra",
+      "providerId": "openai",
+      "providerName": "OpenAI",
+      "setting": "medium",
       "benchmarks": {
         "aaIndex": 48.04969202427884,
         "deepSwe": 45.722713864306805,
         "terminalBench": 69.6629213483146,
         "sweAtlas": 28.763440860215102
       },
+      "kind": "benchmark-changed",
       "changes": [
         {
-          "current": 28.763440860215102,
           "metric": "sweAtlas",
-          "previous": 28.2258064516129
+          "previous": 28.2258064516129,
+          "current": 28.763440860215102
         }
-      ],
-      "detectedAt": "2026-08-28T01:01:37.877Z",
-      "kind": "benchmark-changed",
-      "model": "GPT-5.6 Terra",
-      "providerId": "openai",
-      "providerName": "OpenAI",
-      "setting": "medium"
+      ]
     },
     {
       "id": "[\"model-added\",\"2026-08-28T01:01:37.877Z\",\"[\\\"Codex\\\",\\\"deepseek\\\",\\\"DeepSeek V4 Pro 0813\\\"]\"]",
+      "detectedAt": "2026-08-28T01:01:37.877Z",
       "agent": "Codex",
+      "model": "DeepSeek V4 Pro 0813",
+      "providerId": "deepseek",
+      "providerName": "DeepSeek",
+      "setting": "max",
       "benchmarks": {
         "aaIndex": 42.77969516408803,
         "deepSwe": 16.2241887905605,
         "terminalBench": 62.921348314606796,
         "sweAtlas": 49.193548387096804
       },
-      "detectedAt": "2026-08-28T01:01:37.877Z",
       "kind": "model-added",
-      "model": "DeepSeek V4 Pro 0813",
-      "providerId": "deepseek",
-      "providerName": "DeepSeek",
-      "setting": "max",
       "variantCount": 1
     }
   ],
