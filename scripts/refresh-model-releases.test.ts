@@ -2,14 +2,15 @@ import { describe, expect, test } from "bun:test";
 import type { CodingAgentRecord, CodingAgentSnapshot } from "../lib/coding-agent-data";
 import {
   MODEL_RELEASE_LIMIT,
+  modelReleaseSemanticKey,
   parseModelReleaseRadar,
   parseOpenRouterModelsResponse,
+  type ModelReleaseListing,
   type ModelReleaseProviderId,
   type OpenRouterModel,
 } from "../lib/model-release-data";
 import {
   deriveModelReleaseRadar,
-  modelReleaseSemanticKey,
   reconcileModelReleaseRadarStatuses,
   validateModelReleaseRadarStatuses,
 } from "./refresh-model-releases";
@@ -170,6 +171,10 @@ describe("OpenRouter release-radar derivation", () => {
       "z-ai/glm-5.3-flash",
       "z-ai/glm-5.3",
     ]);
+    expect(radar.observedListings.map(({ id }) => id)).toEqual([
+      "z-ai/glm-5.3-flash",
+      "z-ai/glm-5.3",
+    ]);
     expect(radar.releases.map(({ status }) => status)).toEqual([
       "awaiting-benchmark",
       "awaiting-benchmark",
@@ -198,6 +203,7 @@ describe("OpenRouter release-radar derivation", () => {
     const radar = deriveModelReleaseRadar(sources, benchmarkSnapshot(), retrievedAt);
 
     expect(radar.releases.map(({ id }) => id)).toEqual(["z-ai/glm-5.3"]);
+    expect(radar.observedListings.map(({ id }) => id)).toEqual(["z-ai/glm-5.3"]);
   });
 
   test("uses conservative provider-plus-model semantics for benchmark status", () => {
@@ -236,10 +242,82 @@ describe("OpenRouter release-radar derivation", () => {
     const radar = deriveModelReleaseRadar(sources, benchmarkSnapshot(), retrievedAt);
 
     expect(radar.releases).toHaveLength(MODEL_RELEASE_LIMIT);
+    expect(radar.observedListings).toHaveLength(MODEL_RELEASE_LIMIT + 8);
     expect(new Set(radar.releases.map(({ id }) => id)).size).toBe(MODEL_RELEASE_LIMIT);
+    expect(new Set(radar.observedListings.map(({ id }) => id)).size)
+      .toBe(MODEL_RELEASE_LIMIT + 8);
     expect(radar.releases[0]?.id).toBe("openai/example-00");
     expect(radar.releases.at(-1)?.id).toBe("openai/example-47");
+    expect(radar.observedListings.at(-1)?.id).toBe("openai/example-55");
     expect(parseModelReleaseRadar(radar).ok).toBe(true);
+  });
+
+  test("retains aged listings after they leave the bounded current radar", () => {
+    const priorListings: readonly ModelReleaseListing[] = [{
+      id: "z-ai/glm-5.2",
+      model: "GLM 5.2",
+      providerId: "z_ai",
+      sourceAddedAt: "2026-05-20T00:00:00.000Z",
+    }];
+    const sources = parseSourceModels([
+      rawModel("z-ai/glm-5.3", "Z.ai: GLM 5.3", "2026-08-18T20:57:35.000Z"),
+    ]);
+
+    const radar = deriveModelReleaseRadar(
+      sources,
+      benchmarkSnapshot(),
+      retrievedAt,
+      priorListings,
+    );
+
+    expect(radar.releases.map(({ id }) => id)).toEqual(["z-ai/glm-5.3"]);
+    expect(radar.observedListings).toEqual([
+      {
+        id: "z-ai/glm-5.3",
+        model: "GLM 5.3",
+        providerId: "z_ai",
+        sourceAddedAt: "2026-08-18T20:57:35.000Z",
+      },
+      priorListings[0],
+    ]);
+    expect(parseModelReleaseRadar(radar).ok).toBe(true);
+  });
+
+  test("lets a current source row correct a retained id without duplicating it", () => {
+    const priorListings: readonly ModelReleaseListing[] = [{
+      id: "openai/example",
+      model: "Old Example Label",
+      providerId: "openai",
+      sourceAddedAt: "2026-08-01T00:00:00.000Z",
+    }];
+    const sources = parseSourceModels([
+      rawModel(
+        "openai/example",
+        "OpenAI: Corrected Example Label",
+        "2026-08-20T00:00:00.000Z",
+      ),
+    ]);
+
+    const first = deriveModelReleaseRadar(
+      sources,
+      benchmarkSnapshot(),
+      retrievedAt,
+      priorListings,
+    );
+    const repeated = deriveModelReleaseRadar(
+      sources,
+      benchmarkSnapshot(),
+      retrievedAt,
+      first.observedListings,
+    );
+
+    expect(first.observedListings).toEqual([{
+      id: "openai/example",
+      model: "Corrected Example Label",
+      providerId: "openai",
+      sourceAddedAt: "2026-08-20T00:00:00.000Z",
+    }]);
+    expect(repeated.observedListings).toEqual(first.observedListings);
   });
 
   test("checked-radar validation rejects stale benchmark status and additive fields", () => {
@@ -254,8 +332,9 @@ describe("OpenRouter release-radar derivation", () => {
     };
 
     expect(validateModelReleaseRadarStatuses(stale, snapshot).ok).toBe(false);
-    expect(reconcileModelReleaseRadarStatuses(stale, snapshot).releases[0]?.status)
-      .toBe("benchmarked");
+    const reconciled = reconcileModelReleaseRadarStatuses(stale, snapshot);
+    expect(reconciled.releases[0]?.status).toBe("benchmarked");
+    expect(reconciled.observedListings).toBe(stale.observedListings);
     expect(parseModelReleaseRadar({ ...radar, unexpected: true }).ok).toBe(false);
   });
 });

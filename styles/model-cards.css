@@ -721,26 +721,24 @@
 }
 
 .model-card-gallery__provider-filter {
-  color: var(--muted);
-  display: grid;
   flex: 1 1 14rem;
-  font-size: .68rem;
-  gap: .28rem;
-  letter-spacing: .08em;
   max-inline-size: 20rem;
-  text-transform: uppercase;
 }
 
-.model-card-gallery__select-shell {
-  align-items: center;
+.model-card-gallery__provider-filter .hraness-field__control {
+  background-color: color-mix(in oklch, var(--secondary) 52%, transparent);
+  border-color: var(--grid);
+  border-radius: .65rem;
+  min-block-size: 2.75rem;
   display: grid;
   position: relative;
 }
 
-.model-card-gallery__select-shell > i {
+.model-card-gallery__provider-filter .hraness-field__control::before {
   background: var(--model-card-filter-color);
   block-size: .45rem;
   box-shadow: 0 0 .55rem color-mix(in srgb, var(--model-card-filter-color) 52%, transparent);
+  content: "";
   inline-size: .45rem;
   inset-inline-start: .85rem;
   pointer-events: none;
@@ -749,34 +747,17 @@
   z-index: 1;
 }
 
-.model-card-gallery__select-shell::after {
-  color: var(--muted);
-  content: "⌄";
-  font-size: 1rem;
-  inset-inline-end: .85rem;
-  line-height: 1;
-  pointer-events: none;
-  position: absolute;
-}
-
-.model-card-gallery__select-shell select {
-  appearance: none;
-  background: color-mix(in oklch, var(--secondary) 52%, transparent);
-  border: 1px solid var(--grid);
-  border-radius: .65rem;
+.model-card-gallery__provider-filter .hraness-field__select {
+  background-color: transparent;
   color: var(--foreground);
   font: inherit;
   font-size: .82rem;
-  inline-size: 100%;
-  letter-spacing: 0;
   min-block-size: 2.75rem;
-  padding: .55rem 2.25rem .55rem 2rem;
-  text-transform: none;
+  padding-inline-start: 2rem;
 }
 
-.model-card-gallery__top-filter {
+.model-card-gallery__scope-filter {
   align-items: center;
-  align-self: end;
   background: color-mix(in oklch, var(--secondary) 52%, transparent);
   border: 1px solid var(--grid);
   border-radius: .65rem;
@@ -787,31 +768,42 @@
   padding: .42rem .8rem;
 }
 
-.model-card-gallery__top-filter > i {
+.model-card-gallery__scope-filter > i {
+  flex: 0 0 auto;
+}
+
+.model-card-gallery__scope-filter[data-filter="top"] > i {
   border: 1px solid currentColor;
   block-size: .55rem;
   inline-size: .55rem;
   transform: rotate(45deg);
 }
 
-.model-card-gallery__top-filter > span {
+.model-card-gallery__scope-filter[data-filter="new"] > i {
+  background: currentColor;
+  block-size: .72rem;
+  clip-path: polygon(50% 0, 61% 39%, 100% 50%, 61% 61%, 50% 100%, 39% 61%, 0 50%, 39% 39%);
+  inline-size: .72rem;
+}
+
+.model-card-gallery__scope-filter > span {
   display: grid;
   line-height: 1.1;
   text-align: start;
 }
 
-.model-card-gallery__top-filter strong { font-size: .8rem; }
-.model-card-gallery__top-filter small { color: var(--muted); font-size: .62rem; margin-block-start: .2rem; }
-.model-card-gallery__top-filter[data-selected] {
+.model-card-gallery__scope-filter strong { font-size: .8rem; }
+.model-card-gallery__scope-filter small { color: var(--muted); font-size: .62rem; margin-block-start: .2rem; }
+.model-card-gallery__scope-filter[data-selected] {
   background: var(--foreground);
   border-color: var(--foreground);
   color: var(--background);
 }
-.model-card-gallery__top-filter[data-selected] small {
+.model-card-gallery__scope-filter[data-selected] small {
   color: color-mix(in oklch, var(--background) 72%, transparent);
 }
 
-.model-card-gallery__top-definition {
+.model-card-gallery__filter-definition {
   block-size: 1px;
   clip: rect(0, 0, 0, 0);
   clip-path: inset(50%);
@@ -819,12 +811,6 @@
   overflow: hidden;
   position: absolute;
   white-space: nowrap;
-}
-
-.model-card-gallery__filter-count {
-  color: var(--muted);
-  font-size: .72rem;
-  margin-inline-start: auto;
 }
 
 .model-card-gallery__empty {
@@ -1013,6 +999,11 @@
     gap: .15rem;
   }
   .model-card-gallery__meta > span + span::before { content: none; }
+  .model-card-gallery__provider-filter {
+    flex-basis: 100%;
+    max-inline-size: none;
+  }
+  .model-card-gallery__scope-filter { flex: 1 1 10rem; }
   .model-card-grid {
     grid-template-columns: minmax(0, 25rem);
     justify-content: center;

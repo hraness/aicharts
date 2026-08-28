@@ -69,8 +69,15 @@ const modelReleaseSchema = z.object({
   status: modelReleaseStatusSchema,
 }).strict();
 
+const modelReleaseListingSchema = z.object({
+  id: openRouterModelIdSchema,
+  model: z.string().min(1),
+  providerId: modelReleaseProviderIdSchema,
+  sourceAddedAt: z.string().datetime({ offset: true }),
+}).strict();
+
 const modelReleaseRadarBaseSchema = z.object({
-  schemaVersion: z.literal(1),
+  schemaVersion: z.literal(2),
   source: z.object({
     method: z.literal("models-api"),
     name: z.literal("OpenRouter"),
@@ -85,6 +92,7 @@ const modelReleaseRadarBaseSchema = z.object({
     requires: z.tuple([z.literal("text-output"), z.literal("tools")]),
     windowDays: z.literal(MODEL_RELEASE_WINDOW_DAYS),
   }).strict(),
+  observedListings: z.array(modelReleaseListingSchema),
   releases: z.array(modelReleaseSchema).max(MODEL_RELEASE_LIMIT),
 }).strict();
 
@@ -109,6 +117,48 @@ export const modelReleaseRadarSchema = modelReleaseRadarBaseSchema.superRefine((
   const earliestAllowed = retrievedAt - MODEL_RELEASE_WINDOW_DAYS * 24 * 60 * 60 * 1_000;
   const ids = new Set<string>();
   const canonicalSlugs = new Set<string>();
+  const observedListingsById = new Map<string, ModelReleaseListing>();
+
+  radar.observedListings.forEach((listing, index) => {
+    const sourceAddedAt = Date.parse(listing.sourceAddedAt);
+    if (sourceAddedAt > retrievedAt) {
+      context.addIssue({
+        code: "custom",
+        message: `Observed listing ${listing.id} is newer than its source retrieval.`,
+        path: ["observedListings", index, "sourceAddedAt"],
+      });
+    }
+    if (observedListingsById.has(listing.id)) {
+      context.addIssue({
+        code: "custom",
+        message: `Duplicate observed OpenRouter model id ${listing.id}.`,
+        path: ["observedListings", index, "id"],
+      });
+    }
+    observedListingsById.set(listing.id, listing);
+    if (normalizedModelReleaseTokens(listing.providerId, listing.model).length === 0) {
+      context.addIssue({
+        code: "custom",
+        message: `Observed listing ${listing.id} has no semantic model-name tokens.`,
+        path: ["observedListings", index, "model"],
+      });
+    }
+
+    const previous = radar.observedListings[index - 1];
+    if (previous !== undefined) {
+      const previousTime = Date.parse(previous.sourceAddedAt);
+      if (
+        previousTime < sourceAddedAt
+        || (previousTime === sourceAddedAt && compareText(previous.id, listing.id) > 0)
+      ) {
+        context.addIssue({
+          code: "custom",
+          message: "Observed listings must be newest-first with model-id tie breaking.",
+          path: ["observedListings", index],
+        });
+      }
+    }
+  });
 
   radar.releases.forEach((release, index) => {
     const sourceAddedAt = Date.parse(release.sourceAddedAt);
@@ -140,6 +190,26 @@ export const modelReleaseRadarSchema = modelReleaseRadarBaseSchema.superRefine((
         code: "custom",
         message: `Release ${release.id} has a non-canonical model URL.`,
         path: ["releases", index, "modelUrl"],
+      });
+    }
+    if (normalizedModelReleaseTokens(release.providerId, release.model).length === 0) {
+      context.addIssue({
+        code: "custom",
+        message: `Release ${release.id} has no semantic model-name tokens.`,
+        path: ["releases", index, "model"],
+      });
+    }
+    const observed = observedListingsById.get(release.id);
+    if (
+      observed === undefined
+      || observed.providerId !== release.providerId
+      || observed.model !== release.model
+      || observed.sourceAddedAt !== release.sourceAddedAt
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: `Release ${release.id} must have an exact durable observed-listing projection.`,
+        path: ["releases", index],
       });
     }
     if (!release.capabilities.outputModalities.includes("text")) {
@@ -185,7 +255,31 @@ export type ModelReleaseProviderId = z.infer<typeof modelReleaseProviderIdSchema
 export type ModelReleaseStatus = z.infer<typeof modelReleaseStatusSchema>;
 export type OpenRouterModel = z.infer<typeof openRouterModelSchema>;
 export type ModelRelease = z.infer<typeof modelReleaseSchema>;
+export type ModelReleaseListing = z.infer<typeof modelReleaseListingSchema>;
 export type ModelReleaseRadar = z.infer<typeof modelReleaseRadarBaseSchema>;
+
+function normalizedModelReleaseTokens(providerId: string, value: string): readonly string[] {
+  const canonical = value
+    .normalize("NFKC")
+    .toLowerCase()
+    .replace(/\(\s*(?:thinking|with fallback)\s*\)/gu, " ");
+  const tokens = canonical.match(
+    /[\p{Letter}\p{Mark}]+|\p{Number}+|\p{Symbol}+/gu,
+  ) ?? [];
+
+  if (providerId !== "anthropic") return tokens;
+  const withoutAnthropic = tokens[0] === "anthropic" ? tokens.slice(1) : tokens;
+  return withoutAnthropic[0] === "claude" ? withoutAnthropic.slice(1) : withoutAnthropic;
+}
+
+/** Conservatively joins provider-owned model labels across release and benchmark sources. */
+export function modelReleaseSemanticKey(providerId: string, model: string): string {
+  const tokens = normalizedModelReleaseTokens(providerId, model);
+  if (tokens.length === 0) {
+    throw new RangeError("A model-release semantic key requires at least one name token.");
+  }
+  return JSON.stringify([providerId, tokens]);
+}
 
 function projectOpenRouterArchitecture(value: unknown): unknown {
   if (!isRecord(value)) return value;

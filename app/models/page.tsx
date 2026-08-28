@@ -1,18 +1,18 @@
 import { createPublicSiteMetadata } from "@hraness/web-discovery";
-import { FoilCardDeck } from "@hraness/design-kit/react";
 import Link from "next/link";
 import type { CSSProperties } from "react";
 
 import { ModelCardFace } from "@/components/model-card-face";
 import { ModelCardFoilFrame } from "@/components/model-card-foil-frame";
 import {
-  ModelCardGalleryFilterItem,
   ModelCardGalleryFilters,
+  ModelCardGalleryItems,
   type ModelCardProviderFilter,
 } from "@/components/model-card-gallery-filters";
 import {
   MODEL_CARD_COLLECTION_SOCIAL_IMAGE_PATH,
   MODEL_CARD_PRESENTATIONS,
+  MODEL_CARD_RELEASE_DATES,
   MODEL_CARD_SNAPSHOT,
   MODEL_CARD_TOP_PATHS,
 } from "@/lib/model-card-collection";
@@ -126,30 +126,33 @@ export default function ModelCardsPage() {
         topCount={topPaths.size}
         totalCount={MODEL_CARD_PRESENTATIONS.length}
       >
-        <FoilCardDeck className="model-card-grid" id={gridId}>
+        <ModelCardGalleryItems
+          className="model-card-grid"
+          id={gridId}
+          items={MODEL_CARD_PRESENTATIONS.map(card => ({
+            isTop: topPaths.has(card.path),
+            providerId: card.providerId,
+            sourceAddedAt: MODEL_CARD_RELEASE_DATES.get(card.path) ?? null,
+          }))}
+        >
           {MODEL_CARD_PRESENTATIONS.map(card => (
-            <ModelCardGalleryFilterItem
-              isTop={topPaths.has(card.path)}
+            <Link
+              aria-label={`Open ${card.displayTitle} model card; ${card.classLabel} class`}
+              className="model-card-grid__link"
+              href={card.path}
               key={card.path}
-              providerId={card.providerId}
             >
-              <Link
-                aria-label={`Open ${card.displayTitle} model card; ${card.classLabel} class`}
-                className="model-card-grid__link"
-                href={card.path}
-              >
-                <div className="model-card-grid__bleed">
-                  <ModelCardFoilFrame
-                    foilPreset={card.foilPreset}
-                    seed={card.seed}
-                  >
-                    <ModelCardFace card={card} illuminationMode="gallery" />
-                  </ModelCardFoilFrame>
-                </div>
-              </Link>
-            </ModelCardGalleryFilterItem>
+              <div className="model-card-grid__bleed">
+                <ModelCardFoilFrame
+                  foilPreset={card.foilPreset}
+                  seed={card.seed}
+                >
+                  <ModelCardFace card={card} illuminationMode="gallery" />
+                </ModelCardFoilFrame>
+              </div>
+            </Link>
           ))}
-        </FoilCardDeck>
+        </ModelCardGalleryItems>
       </ModelCardGalleryFilters>
     </main>
   );

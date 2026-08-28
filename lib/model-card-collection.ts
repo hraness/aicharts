@@ -9,11 +9,18 @@ import {
   findModelCardVariant,
   modelCardStaticParams,
   type ModelCardRouteParams,
+  type ModelCardPath,
+  type ModelCardVariant,
 } from "./model-card-data";
 import {
   createModelCardPresentation,
   type ModelCardPresentation,
 } from "./model-card-presentation";
+import {
+  modelReleaseSemanticKey,
+  type ModelReleaseRadar,
+} from "./model-release-data";
+import { MODEL_RELEASE_RADAR } from "./model-release-collection";
 
 const parsedSnapshot = parseCodingAgentSnapshot(codingAgentData as unknown);
 if (!parsedSnapshot.ok) {
@@ -41,6 +48,10 @@ export const MODEL_CARD_PRESENTATIONS = MODEL_CARD_VARIANTS.map((variant, index,
   )
 ));
 export const MODEL_CARD_TOP_PATHS = modelCardCostAaFrontierPaths(MODEL_CARD_VARIANTS);
+export const MODEL_CARD_RELEASE_DATES = modelCardReleaseDates(
+  MODEL_CARD_VARIANTS,
+  MODEL_RELEASE_RADAR,
+);
 
 export const MODEL_CARD_COLLECTION_CREST_LIMIT = 11;
 
@@ -63,6 +74,32 @@ export function modelCardCostAaFrontierPaths(
       frontierRecordIds.has(observation.id)
     )))
     .map(variant => variant.path);
+}
+
+/**
+ * Maps every benchmark card to its newest independently observed OpenRouter listing.
+ * The durable observation ledger is independent of the bounded current-release radar.
+ */
+export function modelCardReleaseDates(
+  cards: readonly Pick<ModelCardVariant, "model" | "path" | "providerId">[],
+  radar: ModelReleaseRadar,
+): ReadonlyMap<ModelCardPath, string | null> {
+  const newestByModel = new Map<string, string>();
+  for (const release of radar.observedListings) {
+    const key = modelReleaseSemanticKey(release.providerId, release.model);
+    const existing = newestByModel.get(key);
+    if (
+      existing === undefined
+      || Date.parse(release.sourceAddedAt) > Date.parse(existing)
+    ) {
+      newestByModel.set(key, release.sourceAddedAt);
+    }
+  }
+
+  return new Map(cards.map(card => [
+    card.path,
+    newestByModel.get(modelReleaseSemanticKey(card.providerId, card.model)) ?? null,
+  ]));
 }
 
 export function modelCardRouteStaticParams(): readonly ModelCardRouteParams[] {
