@@ -420,7 +420,8 @@ createInterface({ input: process.stdin }).on("line", line => {
       expect((await stat(isolatedHome)).mode & 0o777).toBe(0o700);
       await expect(access(isolatedHome)).resolves.toBeUndefined();
       if (childPid === undefined) throw new Error("Reader PID was not captured.");
-      expect(() => process.kill(childPid, 0)).not.toThrow();
+      const liveChildPid = childPid;
+      expect(() => process.kill(liveChildPid, 0)).not.toThrow();
     } finally {
       if (childPid !== undefined) {
         try {
