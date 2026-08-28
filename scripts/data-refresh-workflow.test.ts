@@ -3,6 +3,8 @@ import { parse } from "yaml";
 
 const workflowPath = new URL("../.github/workflows/data-refresh.yml", import.meta.url);
 const source = await Bun.file(workflowPath).text();
+const ciWorkflowPath = new URL("../.github/workflows/ci.yml", import.meta.url);
+const ciSource = await Bun.file(ciWorkflowPath).text();
 const workflow = parse(source) as {
   permissions?: Record<string, string>;
   jobs?: Record<string, {
@@ -10,6 +12,7 @@ const workflow = parse(source) as {
     steps?: Array<Record<string, unknown>>;
   }>;
 };
+const ciWorkflow = parse(ciSource) as { on?: Record<string, unknown> };
 const refresh = workflow.jobs?.refresh;
 if (refresh === undefined) throw new Error("Expected the data-refresh job.");
 const steps = refresh.steps ?? [];
@@ -39,7 +42,7 @@ describe("scheduled model-data refresh", () => {
     );
   });
 
-  test("publishes only the two owned snapshots after full validation", () => {
+  test("publishes only the two owned snapshots through the protected-branch contract", () => {
     expect(refresh.env).toMatchObject({
       BENCHMARK_PATH: "data/coding-agents.json",
       RELEASE_RADAR_PATH: "data/model-release-radar.json",
@@ -50,10 +53,21 @@ describe("scheduled model-data refresh", () => {
     expect(String(step("publish").run)).toContain(
       'git add -- "$BENCHMARK_PATH" "$RELEASE_RADAR_PATH"',
     );
+    expect(String(step("publish").run)).toContain('"HEAD:refs/heads/${REFRESH_BRANCH}"');
+    expect(String(step("publish").run)).toContain('gh pr create --base main');
+    expect(String(step("publish").run)).toContain('gh workflow run ci.yml --ref "$REFRESH_BRANCH"');
+    expect(String(step("publish").run)).toContain('--auto --squash --delete-branch');
+    expect(String(step("publish").run)).not.toContain("HEAD:main");
+    expect(ciWorkflow.on).toHaveProperty("workflow_dispatch");
   });
 
   test("retries transient installs and owns one durable self-healing alert", () => {
-    expect(workflow.permissions).toMatchObject({ contents: "write", issues: "write" });
+    expect(workflow.permissions).toMatchObject({
+      actions: "write",
+      contents: "write",
+      issues: "write",
+      "pull-requests": "write",
+    });
     expect(String(step("dependencies").run)).toContain("for attempt in 1 2 3");
     const health = steps.find(candidate => candidate.name === "Report health and manage the durable alert");
     expect(health).toBeDefined();
@@ -61,5 +75,7 @@ describe("scheduled model-data refresh", () => {
     expect(String(health?.run)).toContain("gh issue create");
     expect(String(health?.run)).toContain("gh issue edit");
     expect(String(health?.run)).toContain("gh issue close");
+    expect(String(health?.run)).toContain('.status == "awaiting-benchmark"');
+    expect(String(health?.run)).not.toContain('\\"awaiting-benchmark\\"');
   });
 });
