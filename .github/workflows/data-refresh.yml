@@ -6,8 +6,10 @@ on:
   workflow_dispatch:
 
 permissions:
+  actions: write
   contents: write
   issues: write
+  pull-requests: write
 
 concurrency:
   group: aicharts-data-refresh
@@ -20,6 +22,7 @@ jobs:
     timeout-minutes: 20
     env:
       BENCHMARK_PATH: data/coding-agents.json
+      REFRESH_BRANCH: automation/model-data-refresh-${{ github.run_id }}
       RELEASE_RADAR_PATH: data/model-release-radar.json
       REFRESH_ISSUE_TITLE: "[automation] Data refresh is unhealthy"
     steps:
@@ -100,11 +103,13 @@ jobs:
         if: steps.snapshot.outputs.changed == 'true'
         continue-on-error: true
         run: bun run check
-      - name: Commit and publish updated data
+      - name: Open and queue the validated update PR
         id: publish
         if: steps.validation.outcome == 'success' && steps.snapshot.outputs.changed == 'true'
         continue-on-error: true
         env:
+          GH_REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
           GITHUB_TOKEN: ${{ github.token }}
         shell: bash
         run: |
@@ -112,7 +117,14 @@ jobs:
           git config user.email "894119+0thernet@users.noreply.github.com"
           git add -- "$BENCHMARK_PATH" "$RELEASE_RADAR_PATH"
           git commit -m "chore: refresh model data"
-          git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:main
+          git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:refs/heads/${REFRESH_BRANCH}"
+
+          run_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          printf -v pr_body 'Automated model-data refresh from %s.\n\nBoth checked snapshots were validated with `bun run check` before this PR was created. The required CI workflow is dispatched explicitly because GitHub suppresses ordinary workflow events created by `GITHUB_TOKEN`.' "$run_url"
+          pr_url="$(gh pr create --base main --head "$REFRESH_BRANCH" --title "chore: refresh model data" --body "$pr_body")"
+          gh workflow run ci.yml --ref "$REFRESH_BRANCH"
+          gh pr merge "$pr_url" --auto --squash --delete-branch
+          echo "pr_url=${pr_url}" >> "$GITHUB_OUTPUT"
       - name: Report health and manage the durable alert
         if: always()
         env:
@@ -123,6 +135,7 @@ jobs:
           GH_REPO: ${{ github.repository }}
           GH_TOKEN: ${{ github.token }}
           PUBLISH_OUTCOME: ${{ steps.publish.outcome }}
+          PUBLISH_PR_URL: ${{ steps.publish.outputs.pr_url }}
           RELEASE_OUTCOME: ${{ steps.release_radar.outcome }}
           RELEASE_RECONCILE_OUTCOME: ${{ steps.release_reconcile.outcome }}
           SETUP_BUN_OUTCOME: ${{ steps.setup_bun.outcome }}
@@ -158,13 +171,16 @@ jobs:
             echo "| Offline radar reconciliation | ${RELEASE_RECONCILE_OUTCOME} |"
             echo "| Change boundary | ${DETECT_OUTCOME} |"
             echo "| Application validation | ${VALIDATION_OUTCOME} |"
-            echo "| Publish | ${PUBLISH_OUTCOME} |"
+            echo "| Update PR | ${PUBLISH_OUTCOME} |"
             echo
+            if [[ -n "$PUBLISH_PR_URL" ]]; then
+              echo "- Update PR: ${PUBLISH_PR_URL} (required CI dispatched; squash auto-merge enabled)."
+            fi
             if [[ -f "$BENCHMARK_PATH" ]]; then
               jq -r '"- Benchmark snapshot: \(.records | length) configurations across \([.records[].providerId] | unique | length) providers; retrieved \(.source.retrievedAt)."' "$BENCHMARK_PATH"
             fi
             if [[ -f "$RELEASE_RADAR_PATH" ]]; then
-              jq -r '"- Release radar: \(.releases | length) tracked; \([.releases[] | select(.status == \"awaiting-benchmark\")] | length) awaiting benchmark; retrieved \(.source.retrievedAt)."' "$RELEASE_RADAR_PATH"
+              jq -r '"- Release radar: \(.releases | length) tracked; \([.releases[] | select(.status == "awaiting-benchmark")] | length) awaiting benchmark; retrieved \(.source.retrievedAt)."' "$RELEASE_RADAR_PATH"
             fi
           } >> "$GITHUB_STEP_SUMMARY"
 
@@ -172,14 +188,14 @@ jobs:
           issue_number="$(gh issue list --state open --limit 100 --json number,title --jq '.[] | select(.title == "[automation] Data refresh is unhealthy") | .number' | head -n 1)"
 
           if [[ "$unhealthy" == "true" ]]; then
-            printf -v issue_body 'The scheduled model-data refresh is unhealthy and the last-known-good source snapshots remain in production.\n\n- Run: %s\n- Artificial Analysis: `%s`\n- OpenRouter: `%s`\n- Validation: `%s`\n- Publish: `%s`\n\nThis issue is updated on repeated failures and closes automatically after recovery.' \
+            printf -v issue_body 'The scheduled model-data refresh is unhealthy. Any valid source update was queued through the normal pull-request gate; failed sources remain on their last-known-good snapshots.\n\n- Run: %s\n- Artificial Analysis: `%s`\n- OpenRouter: `%s`\n- Validation: `%s`\n- Update PR: `%s`\n\nThis issue is updated on repeated failures and closes automatically after recovery.' \
               "$run_url" "$BENCHMARK_OUTCOME" "$RELEASE_OUTCOME" "$VALIDATION_OUTCOME" "$PUBLISH_OUTCOME"
             if [[ -z "$issue_number" ]]; then
               gh issue create --title "$REFRESH_ISSUE_TITLE" --body "$issue_body"
             else
               gh issue edit "$issue_number" --body "$issue_body"
             fi
-            echo "::error title=Model data refresh unhealthy::Artificial Analysis=${BENCHMARK_OUTCOME}; OpenRouter=${RELEASE_OUTCOME}; validation=${VALIDATION_OUTCOME}; publish=${PUBLISH_OUTCOME}."
+            echo "::error title=Model data refresh unhealthy::Artificial Analysis=${BENCHMARK_OUTCOME}; OpenRouter=${RELEASE_OUTCOME}; validation=${VALIDATION_OUTCOME}; update PR=${PUBLISH_OUTCOME}."
             exit 1
           fi
 
