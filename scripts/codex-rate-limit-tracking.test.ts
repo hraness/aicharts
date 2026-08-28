@@ -1,4 +1,4 @@
-import { access, chmod, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { access, chmod, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
@@ -6,6 +6,7 @@ import { afterEach, describe, expect, test } from "bun:test";
 import fc from "fast-check";
 
 import {
+  type CodexRateLimitAuthContext,
   type CodexRateLimitReadResult,
   parseCodexRateLimitResponse,
   readCodexRateLimits,
@@ -63,32 +64,40 @@ function readResult(options: Readonly<{
 }
 
 async function fakeAppServer(source: string): Promise<Readonly<{
-  authContext: { codexHome: string };
+  authContext: CodexRateLimitAuthContext;
   environment: NodeJS.ProcessEnv;
+  isolatedHomePath: string;
   markerPath: string;
   pidPath: string;
 }>> {
   const root = await mkdtemp(path.join(tmpdir(), "aicharts-rate-limit-reader-test-"));
   temporaryRoots.push(root);
-  const codexHome = path.join(root, "codex-home");
   const executable = path.join(root, "fake-codex");
+  const isolatedHomePath = path.join(root, "isolated-home-path");
   const markerPath = path.join(root, "rate-limit-requested");
   const pidPath = path.join(root, "pid");
-  await mkdir(codexHome, { recursive: true });
-  await writeFile(executable, `#!${process.execPath}\n${source}\n`, {
+  await writeFile(executable, `#!${process.execPath}\nimport { writeFileSync as writeAichartsMarker } from "node:fs";\nwriteAichartsMarker(process.env.AICHARTS_FAKE_ISOLATED_HOME_PATH, process.env.CODEX_HOME ?? "");\n${source}\n`, {
     encoding: "utf8",
     mode: 0o500,
   });
   await chmod(executable, 0o500);
   return {
-    authContext: { codexHome },
+    authContext: {
+      authJsonBytes: Buffer.from(JSON.stringify({
+        auth_mode: "chatgpt",
+        tokens: { account_id: "reader-fixture-private-account" },
+      })),
+      temporaryParent: root,
+    },
     environment: {
       ...process.env,
       AICHARTS_CODEX_APP_SERVER_EXECUTABLE: executable,
+      AICHARTS_FAKE_ISOLATED_HOME_PATH: isolatedHomePath,
       AICHARTS_FAKE_MARKER_PATH: markerPath,
       AICHARTS_FAKE_PID_PATH: pidPath,
       HOME: root,
     },
+    isolatedHomePath,
     markerPath,
     pidPath,
   };
@@ -98,6 +107,12 @@ async function expectRecordedProcessGone(pidPath: string): Promise<void> {
   const pid = Number.parseInt(await readFile(pidPath, "utf8"), 10);
   expect(Number.isSafeInteger(pid)).toBe(true);
   expect(() => process.kill(pid, 0)).toThrow();
+}
+
+async function expectIsolatedHomeGone(isolatedHomePath: string): Promise<void> {
+  const isolatedHome = await readFile(isolatedHomePath, "utf8");
+  expect(path.isAbsolute(isolatedHome)).toBe(true);
+  await expect(access(isolatedHome)).rejects.toThrow();
 }
 
 describe("Codex rate-limit response boundary", () => {
@@ -209,6 +224,49 @@ describe("Codex rate-limit response boundary", () => {
 });
 
 describe("Codex rate-limit app-server lifecycle", () => {
+  test("removes the isolated auth home after a successful read", async () => {
+    const subject = await fakeAppServer(`
+import { writeFileSync } from "node:fs";
+import { createInterface } from "node:readline";
+writeFileSync(process.env.AICHARTS_FAKE_PID_PATH, String(process.pid));
+createInterface({ input: process.stdin }).on("line", line => {
+  const message = JSON.parse(line);
+  if (message.id === 1) process.stdout.write(JSON.stringify({ id: 1, result: {} }) + "\\n");
+  if (message.id === 2) process.stdout.write(JSON.stringify({ id: 2, result: { requirements: null } }) + "\\n");
+  if (message.id === 3) {
+    const bucket = {
+      credits: null,
+      individualLimit: null,
+      limitId: "codex",
+      limitName: null,
+      planType: "pro",
+      primary: { resetsAt: 2_000_000_000, usedPercent: 34, windowDurationMins: 300 },
+      rateLimitReachedType: null,
+      secondary: null,
+      spendControlReached: null,
+    };
+    process.stdout.write(JSON.stringify({
+      id: 3,
+      result: { rateLimits: bucket, rateLimitsByLimitId: { codex: bucket } },
+    }) + "\\n");
+  }
+});
+`);
+
+    await expect(readCodexRateLimits(subject.environment, subject.authContext, {
+      killGraceMs: 500,
+      terminationGraceMs: 100,
+      timeoutMs: 1_000,
+    })).resolves.toMatchObject({
+      snapshot: {
+        availableResetCreditCount: null,
+        buckets: [expect.objectContaining({ limitId: "codex" })],
+      },
+    });
+    await expectRecordedProcessGone(subject.pidPath);
+    await expectIsolatedHomeGone(subject.isolatedHomePath);
+  });
+
   test("fails closed before quota read when managed requirements override file auth", async () => {
     const subject = await fakeAppServer(`
 import { writeFileSync } from "node:fs";
@@ -232,6 +290,7 @@ createInterface({ input: process.stdin }).on("line", line => {
     })).rejects.toThrow("could not be attested as file-backed");
     await expect(access(subject.markerPath)).rejects.toThrow();
     await expectRecordedProcessGone(subject.pidPath);
+    await expectIsolatedHomeGone(subject.isolatedHomePath);
   });
 
   test("reaps a reader that emits malformed output and ignores SIGTERM", async () => {
@@ -255,6 +314,29 @@ createInterface({ input: process.stdin }).on("line", line => {
       timeoutMs: 1_000,
     })).rejects.toThrow("privacy/shape check");
     await expectRecordedProcessGone(subject.pidPath);
+    await expectIsolatedHomeGone(subject.isolatedHomePath);
+  });
+
+  test("handles a closed stdin pipe and reaps the resistant reader", async () => {
+    const subject = await fakeAppServer(`
+import { closeSync, writeFileSync } from "node:fs";
+writeFileSync(process.env.AICHARTS_FAKE_PID_PATH, String(process.pid));
+process.on("SIGTERM", () => {});
+setInterval(() => {}, 1_000);
+process.stdin.on("error", () => {});
+process.stdin.once("data", () => {
+  closeSync(0);
+  process.stdout.write(JSON.stringify({ id: 1, result: {} }) + "\\n");
+});
+`);
+
+    await expect(readCodexRateLimits(subject.environment, subject.authContext, {
+      killGraceMs: 500,
+      terminationGraceMs: 25,
+      timeoutMs: 1_000,
+    })).rejects.toThrow("exited early");
+    await expectRecordedProcessGone(subject.pidPath);
+    await expectIsolatedHomeGone(subject.isolatedHomePath);
   });
 
   test("SIGKILLs and reaps a wedged reader after the bounded timeout", async () => {
@@ -272,6 +354,7 @@ process.stdin.resume();
       timeoutMs: 500,
     })).rejects.toThrow("timed out");
     await expectRecordedProcessGone(subject.pidPath);
+    await expectIsolatedHomeGone(subject.isolatedHomePath);
   });
 });
 

@@ -1,13 +1,15 @@
 import { spawn } from "node:child_process";
 import { randomUUID } from "node:crypto";
-import { constants } from "node:fs";
-import { open, rename, unlink } from "node:fs/promises";
+import { constants, type Stats } from "node:fs";
+import { chmod, lstat, mkdtemp, open, rename, rm, unlink } from "node:fs/promises";
 import path from "node:path";
 
+const AUTH_FILE_MAX_BYTES = 1_048_576;
 const APP_SERVER_RESPONSE_MAX_BYTES = 1_048_576;
 const APP_SERVER_TIMEOUT_MS = 15_000;
 const APP_SERVER_TERMINATION_GRACE_MS = 1_000;
 const APP_SERVER_KILL_GRACE_MS = 1_000;
+const ISOLATED_CODEX_HOME_PREFIX = ".codex-rate-limit-home-";
 const LEDGER_FILE_MAX_BYTES = 32 * 1_048_576;
 const LEGACY_SINGLE_BUCKET_LIMIT_ID = "codex";
 const MAX_BUCKETS = 32;
@@ -81,7 +83,8 @@ export type TimedCodexRateLimitReadResult = Readonly<{
 }>;
 
 export type CodexRateLimitAuthContext = Readonly<{
-  codexHome: string;
+  authJsonBytes: Buffer;
+  temporaryParent: string;
 }>;
 
 type RateLimitObservation = {
@@ -399,7 +402,11 @@ async function terminateChild(
   terminationGraceMs: number,
   killGraceMs: number,
 ): Promise<boolean> {
-  child.stdin?.end();
+  try {
+    child.stdin?.end();
+  } catch {
+    // The persistent stdin error handler owns asynchronous stream failures.
+  }
   if (childHasExited(child)) return true;
   try {
     child.kill("SIGTERM");
@@ -417,14 +424,104 @@ async function terminateChild(
 
 function appServerEnvironment(
   environment: NodeJS.ProcessEnv,
-  authContext: CodexRateLimitAuthContext,
+  isolatedCodexHome: string,
 ): NodeJS.ProcessEnv {
   const childEnvironment: NodeJS.ProcessEnv = {
     ...environment,
-    CODEX_HOME: authContext.codexHome,
+    CODEX_HOME: isolatedCodexHome,
   };
   for (const key of externalAuthEnvironmentKeys) delete childEnvironment[key];
   return childEnvironment;
+}
+
+type IsolatedCodexHome = Readonly<{
+  home: string;
+  parent: string;
+}>;
+
+async function createIsolatedCodexHome(
+  authContext: CodexRateLimitAuthContext,
+): Promise<IsolatedCodexHome> {
+  if (!Buffer.isBuffer(authContext.authJsonBytes)
+    || authContext.authJsonBytes.length === 0
+    || authContext.authJsonBytes.length > AUTH_FILE_MAX_BYTES
+    || !path.isAbsolute(authContext.temporaryParent)) {
+    throw new CodexRateLimitRecorderFailure(
+      "Codex rate-limit auth context is invalid.",
+      64,
+    );
+  }
+  const authJsonBytes = Buffer.from(authContext.authJsonBytes);
+  const parent = path.normalize(authContext.temporaryParent);
+  let parentMetadata: Stats;
+  try {
+    parentMetadata = await lstat(parent);
+  } catch {
+    throw new CodexRateLimitRecorderFailure(
+      "Codex rate-limit private auth parent is unavailable.",
+      69,
+    );
+  }
+  if (!parentMetadata.isDirectory() || parentMetadata.isSymbolicLink()
+    || (parentMetadata.mode & 0o077) !== 0
+    || (typeof process.getuid === "function" && parentMetadata.uid !== process.getuid())) {
+    throw new CodexRateLimitRecorderFailure(
+      "Codex rate-limit private auth parent is unsafe.",
+      69,
+    );
+  }
+
+  let home: string | null = null;
+  try {
+    home = await mkdtemp(path.join(parent, ISOLATED_CODEX_HOME_PREFIX));
+    await chmod(home, 0o700);
+    const authFile = await open(
+      path.join(home, "auth.json"),
+      constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | constants.O_NOFOLLOW,
+      0o600,
+    );
+    try {
+      // Copy only the captured file-auth bytes. In particular, do not expose
+      // the real CODEX_HOME .env or user config to this bounded reader.
+      await authFile.writeFile(authJsonBytes);
+      await authFile.chmod(0o600);
+      await authFile.sync();
+    } finally {
+      await authFile.close();
+    }
+    return { home, parent };
+  } catch {
+    if (home !== null) {
+      await rm(home, { force: true, recursive: true }).catch(() => undefined);
+    }
+    throw new CodexRateLimitRecorderFailure(
+      "Unable to create private Codex rate-limit auth context.",
+      69,
+    );
+  }
+}
+
+async function removeIsolatedCodexHome(context: IsolatedCodexHome): Promise<void> {
+  if (path.dirname(context.home) !== context.parent
+    || !path.basename(context.home).startsWith(ISOLATED_CODEX_HOME_PREFIX)) {
+    throw new CodexRateLimitRecorderFailure(
+      "Codex rate-limit private auth cleanup target is invalid.",
+      69,
+    );
+  }
+  try {
+    await rm(context.home, {
+      force: true,
+      maxRetries: 2,
+      recursive: true,
+      retryDelay: 10,
+    });
+  } catch {
+    throw new CodexRateLimitRecorderFailure(
+      "Unable to remove private Codex rate-limit auth context.",
+      69,
+    );
+  }
 }
 
 function requirementsPermitFileAuth(value: unknown): boolean {
@@ -437,11 +534,9 @@ function requirementsPermitFileAuth(value: unknown): boolean {
   return configured === undefined || configured === null || configured === "file";
 }
 
-export async function readCodexRateLimits(
-  environment: NodeJS.ProcessEnv = process.env,
-  authContext: CodexRateLimitAuthContext = {
-    codexHome: path.join(environment.HOME ?? "", ".codex"),
-  },
+async function runCodexRateLimitAppServer(
+  environment: NodeJS.ProcessEnv,
+  isolatedCodexHome: string,
   options: CodexRateLimitReaderOptions = {},
 ): Promise<TimedCodexRateLimitReadResult> {
   const executable = environment.AICHARTS_CODEX_APP_SERVER_EXECUTABLE;
@@ -449,12 +544,6 @@ export async function readCodexRateLimits(
     throw new CodexRateLimitRecorderFailure(
       "Codex rate-limit reader executable is unavailable.",
       69,
-    );
-  }
-  if (!path.isAbsolute(authContext.codexHome)) {
-    throw new CodexRateLimitRecorderFailure(
-      "Codex rate-limit auth context is invalid.",
-      64,
     );
   }
   const timeoutMs = boundedReaderDelay(options.timeoutMs, APP_SERVER_TIMEOUT_MS);
@@ -471,7 +560,7 @@ export async function readCodexRateLimits(
       "app-server",
       "--stdio",
     ], {
-      env: appServerEnvironment(environment, authContext),
+      env: appServerEnvironment(environment, isolatedCodexHome),
       stdio: ["pipe", "pipe", "pipe"],
     });
     let finishing = false;
@@ -511,6 +600,15 @@ export async function readCodexRateLimits(
     const timeout = setTimeout(() => {
       finish(new CodexRateLimitRecorderFailure("Codex rate-limit reader timed out.", 69));
     }, timeoutMs);
+
+    child.stdin?.on("error", () => {
+      if (!finishing) {
+        finish(new CodexRateLimitRecorderFailure(
+          "Codex rate-limit reader exited early.",
+          69,
+        ));
+      }
+    });
 
     child.once("error", () => {
       finish(new CodexRateLimitRecorderFailure("Unable to start Codex rate-limit reader.", 69));
@@ -621,6 +719,19 @@ export async function readCodexRateLimits(
         : new CodexRateLimitRecorderFailure("Codex rate-limit reader exited early.", 69));
     }
   });
+}
+
+export async function readCodexRateLimits(
+  environment: NodeJS.ProcessEnv,
+  authContext: CodexRateLimitAuthContext,
+  options: CodexRateLimitReaderOptions = {},
+): Promise<TimedCodexRateLimitReadResult> {
+  const isolatedCodexHome = await createIsolatedCodexHome(authContext);
+  try {
+    return await runCodexRateLimitAppServer(environment, isolatedCodexHome.home, options);
+  } finally {
+    await removeIsolatedCodexHome(isolatedCodexHome);
+  }
 }
 
 function parseLedgerBucket(value: unknown): CodexRateLimitBucket | null {

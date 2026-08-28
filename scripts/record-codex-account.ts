@@ -15,6 +15,7 @@ import path from "node:path";
 
 import {
   CodexRateLimitRecorderFailure,
+  type CodexRateLimitAuthContext,
   type CodexRateLimitReader,
   type CodexRateLimitRecorderResult,
   type TimedCodexRateLimitReadResult,
@@ -40,6 +41,11 @@ type AccountObservation = Readonly<{
   accountFingerprint: string | null;
   authMode: RecordedAuthMode;
   planStatus: RecordedPlanStatus;
+}>;
+
+type AccountAuthCapture = Readonly<{
+  authJsonBytes: Buffer | null;
+  observation: AccountObservation;
 }>;
 
 type AccountEntry = {
@@ -389,18 +395,27 @@ async function readOrCreateSecret(
   }
 }
 
-async function readAuthObservation(authPath: string, secret: Buffer): Promise<AccountObservation> {
+async function readAuthCapture(authPath: string, secret: Buffer): Promise<AccountAuthCapture> {
   const authBytes = await readPrivateRegularFile(authPath, "Codex auth file", AUTH_FILE_MAX_BYTES);
   if (authBytes === null) {
-    return { accountFingerprint: null, authMode: "missing", planStatus: "unavailable" };
+    return {
+      authJsonBytes: null,
+      observation: { accountFingerprint: null, authMode: "missing", planStatus: "unavailable" },
+    };
   }
   let parsed: unknown;
   try {
     parsed = JSON.parse(authBytes.toString("utf8")) as unknown;
   } catch {
-    return { accountFingerprint: null, authMode: "invalid", planStatus: "unavailable" };
+    return {
+      authJsonBytes: authBytes,
+      observation: { accountFingerprint: null, authMode: "invalid", planStatus: "unavailable" },
+    };
   }
-  return observeParsedAuth(parsed, secret);
+  return {
+    authJsonBytes: authBytes,
+    observation: observeParsedAuth(parsed, secret),
+  };
 }
 
 async function readLedger(ledgerPath: string): Promise<AccountLedger | null> {
@@ -655,7 +670,8 @@ export async function recordCodexAccount(
     if (existingLedger !== null && existingLedger.keyId !== secret.keyId) {
       throw new RecorderFailure("Account HMAC secret does not match the observation ledger.");
     }
-    const observation = await readAuthObservation(paths.auth, secret.secret);
+    const authCapture = await readAuthCapture(paths.auth, secret.secret);
+    const observation = authCapture.observation;
     const current: AccountLedger = existingLedger ?? {
       version: 1,
       keyId: secret.keyId,
@@ -668,12 +684,18 @@ export async function recordCodexAccount(
     await atomicWriteLedger(paths.ledger, update.ledger);
     let rateLimits: CodexRateLimitRecorderResult;
     try {
-      let confirmedRead: TimedCodexRateLimitReadResult | null = null;
       if (observation.accountFingerprint !== null) {
-        confirmedRead = await (rateLimitReader ?? readCodexRateLimits)(environment, {
-          codexHome: paths.codexHome,
-        });
-        const confirmation = await readAuthObservation(paths.auth, secret.secret);
+        if (authCapture.authJsonBytes === null) {
+          throw new RecorderFailure("Codex account auth capture is unavailable.");
+        }
+        const authContext: CodexRateLimitAuthContext = {
+          authJsonBytes: authCapture.authJsonBytes,
+          temporaryParent: paths.stateRoot,
+        };
+        const confirmedRead: TimedCodexRateLimitReadResult = await (
+          rateLimitReader ?? readCodexRateLimits
+        )(environment, authContext);
+        const confirmation = (await readAuthCapture(paths.auth, secret.secret)).observation;
         if (confirmation.accountFingerprint !== observation.accountFingerprint
           || confirmation.authMode !== observation.authMode
           || confirmation.planStatus !== observation.planStatus) {
@@ -681,15 +703,17 @@ export async function recordCodexAccount(
             "Codex account changed during the rate-limit observation.",
           );
         }
+        rateLimits = await recordCodexRateLimits({
+          accountFingerprint: observation.accountFingerprint,
+          authContext,
+          environment,
+          keyId: secret.keyId,
+          ledgerPath: paths.rateLimits,
+          reader: async () => confirmedRead,
+        });
+      } else {
+        rateLimits = { kind: "not-applicable" };
       }
-      rateLimits = await recordCodexRateLimits({
-        accountFingerprint: observation.accountFingerprint,
-        authContext: { codexHome: paths.codexHome },
-        environment,
-        keyId: secret.keyId,
-        ledgerPath: paths.rateLimits,
-        reader: confirmedRead === null ? rateLimitReader : async () => confirmedRead!,
-      });
     } catch (error) {
       if (error instanceof CodexRateLimitRecorderFailure) {
         throw new RecorderFailure(error.message, error.exitCode);

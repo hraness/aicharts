@@ -1,4 +1,5 @@
 import { spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import {
   access,
   chmod,
@@ -41,8 +42,10 @@ afterEach(async () => {
 });
 
 async function fixture(): Promise<Readonly<{
+  authSourcePath: string;
   environment: NodeJS.ProcessEnv;
   home: string;
+  isolatedHomePath: string;
   paths: ReturnType<typeof recorderPaths>;
   root: string;
 }>> {
@@ -51,9 +54,14 @@ async function fixture(): Promise<Readonly<{
   const home = path.join(root, "home");
   const xdgState = path.join(root, "state");
   const fakeCodex = path.join(root, "fake-codex");
+  const authSourcePath = path.join(root, "auth-source");
+  const isolatedHomePath = path.join(root, "isolated-home-path");
   await mkdir(path.join(home, ".codex"), { recursive: true });
   await writeFile(fakeCodex, `#!${process.execPath}
+import { createHash } from "node:crypto";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { createInterface } from "node:readline";
+import path from "node:path";
 if (process.env.AICHARTS_ASSERT_AUTH_CONTEXT === "1") {
   const expectedArgs = ["-c", "cli_auth_credentials_store=\\\"file\\\"", "app-server", "--stdio"];
   const externalAuthKeys = [
@@ -64,8 +72,27 @@ if (process.env.AICHARTS_ASSERT_AUTH_CONTEXT === "1") {
     "OPENAI_IDENTITY_TOKEN_FILE",
     "OPENAI_WORKLOAD_IDENTITY_CONTEXT",
   ];
+  const dotenvPath = path.join(process.env.CODEX_HOME, ".env");
+  if (existsSync(dotenvPath)) {
+    for (const rawLine of readFileSync(dotenvPath, "utf8").split(/\\r?\\n/u)) {
+      const equals = rawLine.indexOf("=");
+      if (equals <= 0) continue;
+      const key = rawLine.slice(0, equals).trim();
+      const value = rawLine.slice(equals + 1).trim();
+      if (!key.toUpperCase().startsWith("CODEX_")) process.env[key] = value;
+    }
+  }
+  const workloadSelected = process.env.OPENAI_FEDERATION_RULE_ID !== undefined
+    || process.env.OPENAI_IDENTITY_TOKEN_FILE !== undefined;
+  const authBytes = readFileSync(path.join(process.env.CODEX_HOME, "auth.json"));
+  writeFileSync(
+    process.env.AICHARTS_FAKE_AUTH_SOURCE_PATH,
+    workloadSelected ? "workload" : createHash("sha256").update(authBytes).digest("hex"),
+  );
+  writeFileSync(process.env.AICHARTS_FAKE_ISOLATED_HOME_PATH, process.env.CODEX_HOME);
   if (JSON.stringify(process.argv.slice(2)) !== JSON.stringify(expectedArgs)
-    || process.env.CODEX_HOME !== process.env.AICHARTS_EXPECTED_CODEX_HOME
+    || process.env.CODEX_HOME === process.env.AICHARTS_EXPECTED_REAL_CODEX_HOME
+    || existsSync(dotenvPath)
     || externalAuthKeys.some(key => process.env[key] !== undefined)) process.exit(70);
 }
 const lines = createInterface({ input: process.stdin });
@@ -104,10 +131,19 @@ lines.on("line", line => {
   const environment = {
     ...process.env,
     AICHARTS_CODEX_APP_SERVER_EXECUTABLE: fakeCodex,
+    AICHARTS_FAKE_AUTH_SOURCE_PATH: authSourcePath,
+    AICHARTS_FAKE_ISOLATED_HOME_PATH: isolatedHomePath,
     HOME: home,
     XDG_STATE_HOME: xdgState,
   };
-  return { environment, home, paths: recorderPaths(environment), root };
+  return {
+    authSourcePath,
+    environment,
+    home,
+    isolatedHomePath,
+    paths: recorderPaths(environment),
+    root,
+  };
 }
 
 async function writeAuth(
@@ -138,6 +174,19 @@ function run(environment: NodeJS.ProcessEnv) {
   });
 }
 
+async function expectCapturedFileAuth(
+  subject: Awaited<ReturnType<typeof fixture>>,
+  codexHome: string,
+): Promise<void> {
+  const expectedDigest = createHash("sha256")
+    .update(await readFile(path.join(codexHome, "auth.json")))
+    .digest("hex");
+  expect(await readFile(subject.authSourcePath, "utf8")).toBe(expectedDigest);
+  const isolatedHome = await readFile(subject.isolatedHomePath, "utf8");
+  expect(isolatedHome).not.toBe(codexHome);
+  await expect(access(isolatedHome)).rejects.toThrow();
+}
+
 async function allFileContents(root: string): Promise<string> {
   const contents: string[] = [];
   async function visit(directory: string): Promise<void> {
@@ -152,9 +201,10 @@ async function allFileContents(root: string): Promise<string> {
 }
 
 describe("Codex account recorder", () => {
-  test("binds fingerprint and quota reads to the same explicit CODEX_HOME file context", async () => {
+  test("isolates captured file auth from real CODEX_HOME workload identity", async () => {
     const subject = await fixture();
     const codexHome = path.join(subject.root, "explicit-codex-home");
+    const identityTokenPath = path.join(codexHome, "identity-b-token");
     await writeAuth(subject.home, {
       auth_mode: "chatgpt",
       tokens: { account_id: "default-home-account-private" },
@@ -163,10 +213,17 @@ describe("Codex account recorder", () => {
       auth_mode: "chatgpt",
       tokens: { account_id: "explicit-home-account-private" },
     });
+    await writeFile(identityTokenPath, "identity-b-token", { mode: 0o600 });
+    await writeFile(path.join(codexHome, ".env"), [
+      "OPENAI_FEDERATION_RULE_ID=identity-b-federation",
+      `OPENAI_IDENTITY_TOKEN_FILE=${identityTokenPath}`,
+      "OPENAI_WORKLOAD_IDENTITY_CONTEXT=identity-b-context",
+      "",
+    ].join("\n"), { mode: 0o600 });
     const environment = {
       ...subject.environment,
       AICHARTS_ASSERT_AUTH_CONTEXT: "1",
-      AICHARTS_EXPECTED_CODEX_HOME: codexHome,
+      AICHARTS_EXPECTED_REAL_CODEX_HOME: codexHome,
       CODEX_ACCESS_TOKEN: "must-be-stripped",
       CODEX_API_KEY: "must-be-stripped",
       CODEX_HOME: codexHome,
@@ -183,6 +240,7 @@ describe("Codex account recorder", () => {
       observedAccountFingerprintCount: 1,
       rateLimits: recordedRateLimits,
     });
+    await expectCapturedFileAuth(subject, codexHome);
 
     await writeAuth(subject.home, {
       auth_mode: "chatgpt",
@@ -194,6 +252,7 @@ describe("Codex account recorder", () => {
       changed: false,
       observedAccountFingerprintCount: 1,
     });
+    await expectCapturedFileAuth(subject, codexHome);
 
     await writeCodexHomeAuth(codexHome, {
       auth_mode: "chatgpt",
@@ -205,6 +264,7 @@ describe("Codex account recorder", () => {
       changed: true,
       observedAccountFingerprintCount: 2,
     });
+    await expectCapturedFileAuth(subject, codexHome);
   });
 
   test("records distinct account intervals without printing or persisting auth data", async () => {
