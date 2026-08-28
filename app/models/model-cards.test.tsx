@@ -130,9 +130,12 @@ describe("public model cards", () => {
     expect(markup).not.toContain("<canvas");
     expect(markup).toContain('aria-label="Filter model cards"');
     expect(markup).toContain('aria-label="Show only cost and AA Index Pareto-frontier cards"');
+    expect(markup).toContain('aria-label="Sort model cards by recent OpenRouter listing time"');
     expect(markup).toContain(`All providers · ${MODEL_CARD_PRESENTATIONS.length}`);
-    expect(markup).toContain(`${MODEL_CARD_TOP_PATHS.length} cards · Cost ↓ · AA Index ↑`);
-    expect(markup).toContain(`${MODEL_CARD_PRESENTATIONS.length} of ${MODEL_CARD_PRESENTATIONS.length} cards`);
+    expect(markup).toContain(`${MODEL_CARD_TOP_PATHS.length} cards · Cost ↓ · AAI ↑`);
+    expect(markup).toContain("Recently listed first");
+    expect(markup).not.toContain(`${MODEL_CARD_PRESENTATIONS.length} of ${MODEL_CARD_PRESENTATIONS.length} cards`);
+    expect(markup).not.toContain("<span>Provider</span>");
     expect(markup).not.toContain('aria-label="How to read model card emblems"');
     expect(markup).not.toContain("Read the sigil");
     expect(markup).not.toContain("Maker — color &amp; outer court");
@@ -170,8 +173,17 @@ describe("public model cards", () => {
     expect(topPathSet.size).toBe(topPaths.length);
     expect(topPaths.every(path => MODEL_CARD_PRESENTATIONS.some(card => card.path === path))).toBeTrue();
     expect(modelsPageSource).toContain("topCount");
-    expect(modelsPageSource).toContain("ModelCardGalleryFilterItem");
+    expect(modelsPageSource).toContain("ModelCardGalleryItems");
     expect(modelsPageSource).toContain("topPaths.has(card.path)");
+  });
+
+  test("uses shared centered select geometry instead of a baseline chevron glyph", () => {
+    expect(modelsPageSource).toContain("MODEL_CARD_RELEASE_DATES.get(card.path)");
+    expect(modelCardsStyles).toContain(".model-card-gallery__provider-filter .hraness-field__select");
+    expect(modelCardsStyles).toContain("background-color: transparent");
+    expect(modelCardsStyles).not.toContain("model-card-gallery__select-shell");
+    expect(modelCardsStyles).not.toContain('content: "⌄"');
+    expect(modelCardsStyles).not.toContain("model-card-gallery__filter-count");
   });
 
   test("keeps non-standard class context after removing the visible badge", () => {
