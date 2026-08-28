@@ -149,6 +149,7 @@
 .model-card-face__footer {
   align-items: center;
   display: flex;
+  gap: 2cqi;
   justify-content: space-between;
   min-inline-size: 0;
 }
@@ -167,6 +168,13 @@
   display: inline-flex;
   font-weight: 650;
   gap: 1.8cqi;
+  min-inline-size: 0;
+}
+
+.model-card-face__provider > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .model-card-face__provider i {
@@ -177,8 +185,33 @@
     0 0 10px color-mix(in srgb, var(--model-card-color) 65%, transparent),
     0 0 16px color-mix(in srgb, var(--model-card-secondary) 30%, transparent);
   block-size: 1.8cqi;
+  flex: 0 0 auto;
   inline-size: 1.8cqi;
   transform: rotate(45deg);
+}
+
+.model-card-face__listing {
+  color: var(--model-card-muted);
+  display: grid;
+  flex: 0 0 auto;
+  line-height: 1;
+  text-align: end;
+  text-decoration: none;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.model-card-face__listing > span:first-child {
+  font-size: max(.4375rem, 1.7cqi);
+  letter-spacing: .11em;
+}
+
+.model-card-face__listing > span:last-child {
+  color: rgb(247 246 242 / 84%);
+  font-family: var(--font-mono);
+  font-size: max(.5rem, 2.25cqi);
+  letter-spacing: .045em;
+  margin-block-start: .9cqi;
 }
 
 .model-card-face__model {

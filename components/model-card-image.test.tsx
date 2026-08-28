@@ -9,6 +9,10 @@ import {
   modelCardProviderRepresentatives,
 } from "@/lib/model-card-collection";
 import { modelCardProviderColors } from "@/lib/model-card-art-direction";
+import {
+  formatModelCardListingDate,
+  modelCardListingAccessibleLabel,
+} from "@/lib/model-card-presentation";
 
 import {
   ModelCardCollectionSocialImage,
@@ -23,13 +27,15 @@ function pngDimensions(bytes: ArrayBuffer): Readonly<{ height: number; width: nu
 }
 
 describe("model card ImageResponse rendering", () => {
-  test("keeps the collectible identity focused on title, harness, and serial", () => {
+  test("keeps the collectible identity focused while naming listing provenance", () => {
     const card = MODEL_CARD_PRESENTATIONS.find(candidate => candidate.model.includes("with fallback"));
     expect(card).toBeDefined();
     if (card === undefined) return;
 
     const portrait = renderToStaticMarkup(<ModelCardRasterFace card={card} />);
     const social = renderToStaticMarkup(<ModelCardSocialImage card={card} />);
+    expect(card.listing).not.toBeNull();
+    if (card.listing === null) return;
     for (const markup of [portrait, social]) {
       expect(markup).toContain(">Fable 5 Max</span>");
       expect(markup).toContain(`>${card.harnessLabel}</span>`);
@@ -37,6 +43,10 @@ describe("model card ImageResponse rendering", () => {
       expect(markup).not.toContain("with fallback");
       expect(markup).not.toContain("Artificial Analysis");
       expect(markup).not.toContain(card.sourceDate);
+      expect(markup).toContain("Listed on OpenRouter");
+      expect(markup).toContain(formatModelCardListingDate(card.listing.sourceAddedAt));
+      expect(markup).toContain(`dateTime="${card.listing.sourceAddedAt}"`);
+      expect(markup).toContain(modelCardListingAccessibleLabel(card.listing));
       expect(markup).not.toMatch(/\bconfigs?\b/iu);
       expect(markup).not.toContain("benchmark profile");
     }
@@ -48,6 +58,21 @@ describe("model card ImageResponse rendering", () => {
     expect(social).toContain(">illuminated benchmark specimen</span>");
     expect(social.match(/data:image\/svg\+xml;base64,/gu)).toHaveLength(1);
     expect(social).toContain(`data-emblem-family="${card.emblemIdentity.familyId}"`);
+  });
+
+  test("omits the listing imprint when no checked OpenRouter timestamp matches", () => {
+    const card = MODEL_CARD_PRESENTATIONS.find(candidate => candidate.listing === null);
+    expect(card).toBeDefined();
+    if (card === undefined) return;
+
+    for (const markup of [
+      renderToStaticMarkup(<ModelCardRasterFace card={card} />),
+      renderToStaticMarkup(<ModelCardSocialImage card={card} />),
+    ]) {
+      expect(markup).not.toContain("Listed on OpenRouter");
+      expect(markup).not.toContain("not an official release date");
+      expect(markup).not.toContain(card.sourceDate);
+    }
   });
 
   test("renders the shared illuminated geometry at every density", async () => {
@@ -83,6 +108,23 @@ describe("model card ImageResponse rendering", () => {
       expect(pngDimensions(raster)).toEqual({ height: 350, width: 250 });
     }
   }, 40_000);
+
+  test("reserves the compact top row for long provider identities and listing dates", () => {
+    const card = MODEL_CARD_PRESENTATIONS.find(candidate => (
+      candidate.providerName === "Alibaba Cloud" && candidate.listing !== null
+    ));
+    expect(card).toBeDefined();
+    if (card === undefined) return;
+
+    const compact = renderToStaticMarkup(<ModelCardRasterFace card={card} compact />);
+    const full = renderToStaticMarkup(<ModelCardRasterFace card={card} />);
+    expect(compact).toContain(">Alibaba C…</span>");
+    expect(compact).toContain(">OpenRouter</span>");
+    expect(compact).not.toContain(">Alibaba Cloud</span>");
+    expect(compact).not.toContain(">Listed on OpenRouter</span>");
+    expect(full).toContain(">Alibaba Cloud</span>");
+    expect(full).toContain(">Listed on OpenRouter</span>");
+  });
 
   test("renders the portrait download and social preview as valid PNGs", async () => {
     const card = MODEL_CARD_PRESENTATIONS.find(candidate => candidate.cardClass === "max");

@@ -22,6 +22,12 @@ export type ModelCardStat = Readonly<{
   value: string;
 }>;
 
+export type ModelCardListing = Readonly<{
+  id: string;
+  source: "OpenRouter";
+  sourceAddedAt: string;
+}>;
+
 export type { ModelCardVisualClass } from "./model-card-art-direction";
 
 export type ModelCardIndexingPolicy = Readonly<{
@@ -44,6 +50,7 @@ export type ModelCardPresentation = Readonly<{
   harnessLabel: string;
   iconDataUrl: string;
   illuminationDensity: ModelCardIlluminationDensity;
+  listing: ModelCardListing | null;
   model: string;
   observationCount: number;
   path: ModelCardVariant["path"];
@@ -171,6 +178,74 @@ const modelCardSourceDateFormatter = new Intl.DateTimeFormat("en-US", {
   year: "numeric",
 });
 
+const modelCardListingDateFormatter = new Intl.DateTimeFormat("en-GB", {
+  day: "numeric",
+  month: "short",
+  timeZone: "UTC",
+  year: "numeric",
+});
+
+const modelCardListingAccessibleDateFormatter = new Intl.DateTimeFormat("en-US", {
+  day: "numeric",
+  month: "short",
+  timeZone: "UTC",
+  year: "numeric",
+});
+
+const isoTimestampPattern = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.\d+)?(?:Z|[+-](\d{2}):(\d{2}))$/u;
+
+function daysInMonth(year: number, month: number): number {
+  if (month === 2) {
+    return year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0) ? 29 : 28;
+  }
+  return [4, 6, 9, 11].includes(month) ? 30 : 31;
+}
+
+function modelCardListingDate(sourceAddedAt: string): Date {
+  const match = sourceAddedAt.match(isoTimestampPattern);
+  const date = new Date(sourceAddedAt);
+  const year = Number(match?.[1]);
+  const month = Number(match?.[2]);
+  const day = Number(match?.[3]);
+  const hour = Number(match?.[4]);
+  const minute = Number(match?.[5]);
+  const second = Number(match?.[6]);
+  const offsetHour = match?.[7] === undefined ? 0 : Number(match[7]);
+  const offsetMinute = match?.[8] === undefined ? 0 : Number(match[8]);
+  if (
+    match === null
+    || month < 1
+    || month > 12
+    || day < 1
+    || day > daysInMonth(year, month)
+    || hour > 23
+    || minute > 59
+    || second > 59
+    || offsetHour > 14
+    || offsetMinute > 59
+    || (offsetHour === 14 && offsetMinute !== 0)
+    || !Number.isFinite(date.getTime())
+  ) {
+    throw new Error("Model-card listing time must be a valid ISO timestamp.");
+  }
+  return date;
+}
+
+/** Formats an independently observed source-listing date for the compact card face. */
+export function formatModelCardListingDate(sourceAddedAt: string): string {
+  return modelCardListingDateFormatter
+    .format(modelCardListingDate(sourceAddedAt))
+    .toLocaleUpperCase("en-US");
+}
+
+/** Keeps source provenance and the release-date caveat available to assistive UI. */
+export function modelCardListingAccessibleLabel(listing: ModelCardListing): string {
+  const date = modelCardListingAccessibleDateFormatter.format(
+    modelCardListingDate(listing.sourceAddedAt),
+  );
+  return `Listed by ${listing.source} on ${date}; not an official release date.`;
+}
+
 export function formatModelCardSourceDate(retrievedAt: string): string {
   const date = new Date(retrievedAt);
   if (!Number.isFinite(date.getTime())) {
@@ -237,6 +312,7 @@ export function createModelCardPresentation(
   cardNumber: number,
   totalCards: number,
   sourceRetrievedAt: string,
+  listing: ModelCardListing | null,
 ): ModelCardPresentation {
   if (!Number.isSafeInteger(cardNumber) || cardNumber <= 0 || cardNumber > totalCards) {
     throw new Error("Model-card number must identify one card in the collection.");
@@ -285,6 +361,7 @@ export function createModelCardPresentation(
     gatewayModelId: variant.gatewayModelId,
     harnessLabel: compactModelCardHarnessLabel(agentNames),
     iconDataUrl: modelIconDataUrl(variant.lobeIconKey, variant.providerName),
+    listing,
     model: variant.model,
     observationCount: variant.observationCount,
     path: variant.path,
