@@ -352,6 +352,16 @@ exec /bin/sleep 60
 
     await expect(readCodexRateLimits(subject.environment, subject.authContext, {
       killGraceMs: 500,
+      onChildSpawned: child => {
+        child.stdout.once("data", () => {
+          // Bun retains a duplicate pipe reader in this fixture, so mirror the
+          // EPIPE that Node emits after the fake's OS-level fd 0 close.
+          const pipeError = Object.assign(new Error("Fixture stdin pipe closed."), {
+            code: "EPIPE",
+          });
+          child.stdin?.destroy(pipeError);
+        });
+      },
       terminationGraceMs: 25,
       timeoutMs: 1_000,
     })).rejects.toThrow("exited early");

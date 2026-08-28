@@ -149,6 +149,7 @@ export type CodexRateLimitReader = (
 type CodexRateLimitReaderOptions = Readonly<{
   killGraceMs?: number;
   now?: () => Date;
+  onChildSpawned?: (child: ReturnType<typeof spawn>) => void;
   reapChild?: (
     child: ReturnType<typeof spawn>,
     terminationGraceMs: number,
@@ -733,6 +734,7 @@ async function runCodexRateLimitAppServer(
     });
 
     try {
+      options.onChildSpawned?.(child);
       writeJsonLine(child, {
         id: 1,
         method: "initialize",
