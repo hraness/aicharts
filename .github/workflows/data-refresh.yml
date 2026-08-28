@@ -10,6 +10,7 @@ permissions:
   contents: write
   issues: write
   pull-requests: write
+  statuses: write
 
 concurrency:
   group: aicharts-data-refresh
@@ -24,6 +25,7 @@ jobs:
       BENCHMARK_PATH: data/coding-agents.json
       REFRESH_BRANCH: automation/model-data-refresh-${{ github.run_id }}-${{ github.run_attempt }}
       RELEASE_RADAR_PATH: data/model-release-radar.json
+      REQUIRED_CHECK_CONTEXT: Required
       REFRESH_ISSUE_TITLE: "[automation] Data refresh is unhealthy"
     steps:
       # Scheduled and manual runs always execute trusted default-branch code.
@@ -141,6 +143,15 @@ jobs:
           ci_run_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${ci_run_id}"
           echo "ci_run_url=${ci_run_url}" >> "$GITHUB_OUTPUT"
           gh run watch "$ci_run_id" --exit-status
+
+          # workflow_dispatch check runs are attached to the commit but omitted
+          # from a pull request's merge rollup. Attest to the exact successful run
+          # with the same GitHub Actions integration and required context.
+          gh api --method POST "repos/${GITHUB_REPOSITORY}/statuses/${head_sha}" \
+            -f state=success \
+            -f context="$REQUIRED_CHECK_CONTEXT" \
+            -f description="Exact-head CI passed for this generated data refresh" \
+            -f target_url="$ci_run_url"
           gh pr merge "$pr_url" --auto --squash --delete-branch
 
           pr_state="OPEN"
