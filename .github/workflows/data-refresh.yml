@@ -141,9 +141,20 @@ jobs:
           ci_run_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${ci_run_id}"
           echo "ci_run_url=${ci_run_url}" >> "$GITHUB_OUTPUT"
           gh run watch "$ci_run_id" --exit-status
-          gh pr merge "$pr_url" --squash --delete-branch
+          gh pr merge "$pr_url" --auto --squash --delete-branch
 
+          pr_state="OPEN"
+          for merge_attempt in {1..60}; do
+            pr_state="$(gh pr view "$pr_url" --json state --jq '.state')"
+            if [[ "$pr_state" == "MERGED" ]]; then break; fi
+            if [[ "$pr_state" == "CLOSED" ]]; then break; fi
+            if [[ "$merge_attempt" -lt 60 ]]; then sleep 5; fi
+          done
           pr_state="$(gh pr view "$pr_url" --json state --jq '.state')"
+          if [[ "$pr_state" != "MERGED" ]]; then
+            gh pr merge "$pr_url" --disable-auto || true
+            pr_state="$(gh pr view "$pr_url" --json state --jq '.state')"
+          fi
           if [[ "$pr_state" != "MERGED" ]]; then
             echo "Update PR finished publication in unexpected state: ${pr_state}."
             exit 1
