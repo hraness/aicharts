@@ -17,7 +17,11 @@ import {
   modelCardRouteStaticParams,
   versionedModelCardImagePath,
 } from "@/lib/model-card-collection";
-import { markdownForPath } from "@/lib/site-markdown";
+import { markdownForPath, modelCardMarkdown } from "@/lib/site-markdown";
+import {
+  MODEL_RELEASE_RADAR_HIGHLIGHTS,
+  MODEL_RELEASES_AWAITING_BENCHMARK,
+} from "@/lib/model-release-collection";
 
 const modelsLayoutSource = await Bun.file(
   new URL("./layout.tsx", import.meta.url),
@@ -118,21 +122,42 @@ describe("public model cards", () => {
     );
     expect(markup.match(/<(?:path|ellipse|circle)\b/gu)?.length ?? 0).toBeLessThan(1_250);
     expect(markup.match(/<[A-Za-z][^>]*>/gu)?.length ?? 0).toBeLessThan(
-      MODEL_CARD_PRESENTATIONS.length * 115,
+      MODEL_CARD_PRESENTATIONS.length * 115 + 64,
     );
     expect(Buffer.byteLength(markup)).toBeLessThan(
-      MODEL_CARD_PRESENTATIONS.length * 20_500,
+      MODEL_CARD_PRESENTATIONS.length * 20_500 + 8_000,
     );
     expect(markup).not.toContain("<canvas");
     expect(markup).toContain('aria-label="Filter model cards"');
     expect(markup).toContain('aria-label="Show only cost and AA Index Pareto-frontier cards"');
-    expect(markup).toContain("All providers · 53");
+    expect(markup).toContain(`All providers · ${MODEL_CARD_PRESENTATIONS.length}`);
     expect(markup).toContain(`${MODEL_CARD_TOP_PATHS.length} cards · Cost ↓ · AA Index ↑`);
     expect(markup).toContain(`${MODEL_CARD_PRESENTATIONS.length} of ${MODEL_CARD_PRESENTATIONS.length} cards`);
     expect(markup).not.toContain('aria-label="How to read model card emblems"');
     expect(markup).not.toContain("Read the sigil");
     expect(markup).not.toContain("Maker — color &amp; outer court");
     expect(modelsPageSource).not.toContain("model-card-gallery__legend");
+  });
+
+  test("surfaces a restrained release radar without inventing benchmark cards", () => {
+    const markup = renderToStaticMarkup(<ModelCardsPage />);
+    expect(MODEL_RELEASE_RADAR_HIGHLIGHTS).toEqual(
+      MODEL_RELEASES_AWAITING_BENCHMARK.slice(0, 2),
+    );
+    expect(MODEL_RELEASE_RADAR_HIGHLIGHTS.length).toBeLessThanOrEqual(2);
+    for (const release of MODEL_RELEASE_RADAR_HIGHLIGHTS) {
+      expect(markup).toContain(release.model);
+      expect(markup).toContain(release.modelUrl);
+    }
+    if (MODEL_RELEASE_RADAR_HIGHLIGHTS.length > 0) {
+      expect(markup).toContain("Release radar");
+      expect(markup).toContain("Discovery is not a score");
+    } else {
+      expect(markup).not.toContain("Release radar");
+    }
+    expect(markup.match(/model-card-grid__link/gu)).toHaveLength(
+      MODEL_CARD_PRESENTATIONS.length,
+    );
   });
 
   test("maps the exact tie-preserving cost and AA frontier onto stable card paths", () => {
@@ -250,19 +275,26 @@ describe("public model cards", () => {
   });
 
   test("shows missing metrics as a dash with an explicit accessible value", () => {
-    const card = MODEL_CARD_PRESENTATIONS.find(candidate => (
-      [...candidate.performance, ...candidate.economics].some(stat => !stat.available)
-    ));
-    if (card === undefined) throw new Error("Expected a card with a missing metric fixture.");
+    const current = MODEL_CARD_PRESENTATIONS[0];
+    if (current === undefined) throw new Error("Expected a model-card fixture.");
+    const firstStat = current.performance[0];
+    if (firstStat === undefined) throw new Error("Expected a performance-stat fixture.");
+    const card = {
+      ...current,
+      performance: [
+        { ...firstStat, available: false, value: "–" },
+        ...current.performance.slice(1),
+      ],
+    };
     const missing = [...card.performance, ...card.economics].find(stat => !stat.available);
     if (missing === undefined) throw new Error("Expected a missing metric.");
 
     const live = renderToStaticMarkup(<ModelCardFace card={card} />);
-    const detail = markdownForPath(card.path);
+    const detail = modelCardMarkdown(card);
     expect(live).toContain('<span aria-hidden="true">–</span>');
     expect(live).toContain(">Not available</span>");
-    expect(detail.body).toContain(`- ${missing.label}: Not available`);
-    expect(detail.body).not.toContain(`- ${missing.label}: –`);
+    expect(detail).toContain(`- ${missing.label}: Not available`);
+    expect(detail).not.toContain(`- ${missing.label}: –`);
   });
 
   test("publishes useful Markdown for the collection and each card", () => {

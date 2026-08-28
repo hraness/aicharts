@@ -1,11 +1,12 @@
 import { readFile, rename, writeFile } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
 import iwanthue from "iwanthue";
-import { labToHcl, rgbHexToLab } from "iwanthue/helpers";
+import { rgbHexToLab } from "iwanthue/helpers";
 
 const providerIds = [
   "alibaba_cloud",
   "anthropic",
+  "cognition",
   "cursor",
   "deepseek",
   "google",
@@ -16,40 +17,25 @@ const providerIds = [
   "z_ai",
 ] as const;
 
-const fixedProviderColors = {
+// Provider colors are durable visual identities. New providers are reviewed and
+// appended without asking the palette generator to recolor established series.
+const pinnedProviderColors = {
+  alibaba_cloud: "#6ac13c",
   anthropic: "#ff805d",
+  cognition: "#d7ef39",
+  cursor: "#f26898",
+  deepseek: "#49c898",
+  google: "#69c06a",
+  meta: "#d6aa3c",
+  moonshot_ai: "#abb73e",
   openai: "#3b9cff",
+  xai: "#e58b69",
+  z_ai: "#e58d32",
 } as const;
 
-const providerPalette = iwanthue(providerIds.length, {
-  attempts: 10,
-  clustering: "k-means",
-  colorFilter: (_rgb, lab) => {
-    const [hue, chroma, lightness] = labToHcl(lab);
-    return (hue < 295 || hue > 345)
-      && chroma >= 42
-      && chroma <= 86
-      && lightness >= 60
-      && lightness <= 82;
-  },
-  distance: "compromise",
-  originalColorsToExpand: Object.values(fixedProviderColors),
-  quality: 80,
-  // This pre-rename seed is stable chart data. Changing it would recolor every provider.
-  seed: "codingchart/providers/v3-no-purple",
-  ultraPrecision: false,
-});
-
-const fixedColors = new Set<string>(Object.values(fixedProviderColors));
-const generatedProviderColors = providerPalette.filter((color) => !fixedColors.has(color));
-let generatedIndex = 0;
 const providerEntries = providerIds.map((providerId) => {
-  if (providerId in fixedProviderColors) {
-    return [providerId, fixedProviderColors[providerId as keyof typeof fixedProviderColors]] as const;
-  }
-  const color = generatedProviderColors[generatedIndex];
-  generatedIndex += 1;
-  if (color === undefined) throw new Error(`Missing generated color for ${providerId}.`);
+  const color = pinnedProviderColors[providerId];
+  if (color === undefined) throw new Error(`Missing pinned color for ${providerId}.`);
   return [providerId, color] as const;
 });
 
@@ -59,7 +45,7 @@ const openAiEffortPalette = iwanthue(effortSettings.length, {
   clustering: "k-means",
   colorSpace: { hmin: 265, hmax: 285, cmin: 30, cmax: 78, lmin: 50, lmax: 86 },
   distance: "cmc",
-  originalColorsToExpand: [fixedProviderColors.openai],
+  originalColorsToExpand: [pinnedProviderColors.openai],
   quality: 80,
   // This pre-rename seed is stable chart data. Changing it would recolor every effort tier.
   seed: "codingchart/openai-effort/v1",

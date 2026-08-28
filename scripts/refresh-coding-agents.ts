@@ -3,8 +3,10 @@ import path from "node:path";
 import { err, isRecord, ok, type Result } from "../lib/result";
 import { parseResult, z } from "../lib/schema";
 import {
+  CODING_AGENT_BENCHMARK_DATASETS,
   codingAgentRecordKey,
   parseCodingAgentSnapshot,
+  parseRefreshCodingAgentSnapshot,
   type BenchmarkMetric,
   type CodingAgentRecord,
   type CodingAgentSnapshot,
@@ -17,6 +19,7 @@ const FLIGHT_PREFIX = "self.__next_f.push(";
 const minimumRetentionRatio = 0.8;
 const notableBenchmarkDelta = 0.5;
 const updateHistoryLimit = 48;
+const benchmarkDatasets = CODING_AGENT_BENCHMARK_DATASETS;
 const benchmarkMetrics = ["aaIndex", "deepSwe", "terminalBench", "sweAtlas"] as const satisfies readonly BenchmarkMetric[];
 const guardedMetrics = [
   "aaIndex",
@@ -242,9 +245,9 @@ export function normalizeSourceRows(rows: readonly SourceRow[], retrievedAt: str
       completeIndex: row.indexComponentCount === 3 && row.evalCount === 3,
       benchmarks: {
         aaIndex: row.indexScore === undefined || row.indexScore === null ? null : row.indexScore * 100,
-        deepSwe: benchmarkScore(row, "deep-swe"),
-        terminalBench: benchmarkScore(row, "terminal-bench-v2"),
-        sweAtlas: benchmarkScore(row, "swe-atlas-qna"),
+        deepSwe: benchmarkScore(row, benchmarkDatasets.deepSwe),
+        terminalBench: benchmarkScore(row, benchmarkDatasets.terminalBench),
+        sweAtlas: benchmarkScore(row, benchmarkDatasets.sweAtlas),
       },
       economics: {
         costUsd: valueOrNull(row.mean.costUsd),
@@ -256,8 +259,9 @@ export function normalizeSourceRows(rows: readonly SourceRow[], retrievedAt: str
 
   records.sort((left, right) => left.seriesLabel.localeCompare(right.seriesLabel) || left.settingRank - right.settingRank || left.id.localeCompare(right.id));
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     source: {
+      benchmarkDatasets,
       name: "Artificial Analysis",
       url: SOURCE_URL,
       retrievedAt,
@@ -290,8 +294,10 @@ function representativeRecord(records: readonly CodingAgentRecord[]): CodingAgen
 function materialBenchmarkChanges(
   previous: CodingAgentRecord,
   candidate: CodingAgentRecord,
+  comparableMetrics: ReadonlySet<BenchmarkMetric>,
 ): Extract<CodingAgentUpdate, { kind: "benchmark-changed" }>["changes"] {
   return benchmarkMetrics.flatMap((metric) => {
+    if (!comparableMetrics.has(metric)) return [];
     const previousValue = previous.benchmarks[metric];
     const currentValue = candidate.benchmarks[metric];
     if (Object.is(previousValue, currentValue)) return [];
@@ -304,8 +310,64 @@ function materialBenchmarkChanges(
   });
 }
 
+function comparableBenchmarkMetrics(
+  previous: CodingAgentSnapshot,
+  candidate: CodingAgentSnapshot,
+): ReadonlySet<BenchmarkMetric> {
+  const datasets = ["deepSwe", "terminalBench", "sweAtlas"] as const;
+  const unchangedDatasets = new Set<BenchmarkMetric>(datasets.filter(metric => (
+    previous.source.benchmarkDatasets[metric]
+    === candidate.source.benchmarkDatasets[metric]
+  )));
+  if (unchangedDatasets.size === datasets.length) unchangedDatasets.add("aaIndex");
+  return unchangedDatasets;
+}
+
 function modelGroupKey(record: CodingAgentRecord): string {
   return JSON.stringify([record.agent, record.providerId, record.model]);
+}
+
+function refreshSemanticRecordKey(record: CodingAgentRecord): string {
+  return JSON.stringify([record.agent, record.providerId, record.model, record.setting]);
+}
+
+function uniquelyKeyedSemanticRecords(
+  records: readonly CodingAgentRecord[],
+): ReadonlyMap<string, CodingAgentRecord> {
+  const unique = new Map<string, CodingAgentRecord>();
+  const duplicates = new Set<string>();
+
+  for (const record of records) {
+    const key = refreshSemanticRecordKey(record);
+    if (duplicates.has(key)) continue;
+    if (unique.has(key)) {
+      unique.delete(key);
+      duplicates.add(key);
+      continue;
+    }
+    unique.set(key, record);
+  }
+
+  return unique;
+}
+
+/** Keeps owned series keys (and therefore share URLs) stable when AA renames a source slug. */
+export function reconcileSnapshotSeriesIds(
+  previous: CodingAgentSnapshot,
+  candidate: CodingAgentSnapshot,
+): CodingAgentSnapshot {
+  const previousExactKeys = new Set(previous.records.map(codingAgentRecordKey));
+  const previousBySemanticKey = uniquelyKeyedSemanticRecords(previous.records);
+  return {
+    ...candidate,
+    records: candidate.records.map((record) => {
+      if (previousExactKeys.has(codingAgentRecordKey(record))) return record;
+      const previousRecord = previousBySemanticKey.get(refreshSemanticRecordKey(record));
+      return previousRecord === undefined
+        ? record
+        : { ...record, seriesId: previousRecord.seriesId };
+    }),
+  };
 }
 
 /** Derives stable, display-ready events while suppressing sub-half-point benchmark noise. */
@@ -314,12 +376,15 @@ export function deriveSnapshotUpdates(
   candidate: CodingAgentSnapshot,
 ): CodingAgentUpdate[] {
   const previousByKey = new Map(previous.records.map((record) => [codingAgentRecordKey(record), record]));
+  const previousBySemanticKey = uniquelyKeyedSemanticRecords(previous.records);
+  const comparableMetrics = comparableBenchmarkMetrics(previous, candidate);
   const previousModelGroups = new Set(previous.records.map(modelGroupKey));
   const addedGroups = new Map<string, CodingAgentRecord[]>();
   const changed: Extract<CodingAgentUpdate, { kind: "benchmark-changed" }>[] = [];
 
   for (const record of candidate.records) {
-    const previousRecord = previousByKey.get(codingAgentRecordKey(record));
+    const previousRecord = previousByKey.get(codingAgentRecordKey(record))
+      ?? previousBySemanticKey.get(refreshSemanticRecordKey(record));
     if (previousRecord === undefined) {
       const groupKey = modelGroupKey(record);
       const group = addedGroups.get(groupKey) ?? [];
@@ -328,7 +393,7 @@ export function deriveSnapshotUpdates(
       continue;
     }
 
-    const changes = materialBenchmarkChanges(previousRecord, record);
+    const changes = materialBenchmarkChanges(previousRecord, record, comparableMetrics);
     if (changes.length === 0) continue;
     changed.push({
       id: JSON.stringify(["benchmark-changed", candidate.source.retrievedAt, codingAgentRecordKey(record)]),
@@ -375,11 +440,18 @@ export function mergeSnapshotUpdates(
 ): CodingAgentSnapshot {
   const detected = deriveSnapshotUpdates(previous, candidate);
   const detectedIds = new Set(detected.map(({ id }) => id));
+  const benchmarkDatasetsMatch = (
+    previous.source.benchmarkDatasets.deepSwe === candidate.source.benchmarkDatasets.deepSwe
+    && previous.source.benchmarkDatasets.terminalBench === candidate.source.benchmarkDatasets.terminalBench
+    && previous.source.benchmarkDatasets.sweAtlas === candidate.source.benchmarkDatasets.sweAtlas
+  );
   return {
     ...candidate,
     updates: [
       ...detected,
-      ...previous.updates.filter(({ id }) => !detectedIds.has(id)),
+      ...(benchmarkDatasetsMatch
+        ? previous.updates.filter(({ id }) => !detectedIds.has(id))
+        : []),
     ].slice(0, updateHistoryLimit),
   };
 }
@@ -404,6 +476,7 @@ export function validateSnapshotUpdate(
 ): Result<void, Error> {
   const seenIds = new Set<string>();
   const seenStableKeys = new Set<string>();
+  const seenSemanticKeys = new Set<string>();
   for (const record of candidate.records) {
     if (seenIds.has(record.id)) return err(new Error(`Refreshed snapshot contains duplicate row id ${record.id}.`));
     seenIds.add(record.id);
@@ -413,6 +486,14 @@ export function validateSnapshotUpdate(
       return err(new Error(`Refreshed snapshot contains duplicate series/setting ${record.seriesId} / ${record.setting}.`));
     }
     seenStableKeys.add(stableKey);
+
+    const semanticKey = refreshSemanticRecordKey(record);
+    if (seenSemanticKeys.has(semanticKey)) {
+      return err(new Error(
+        `Refreshed snapshot contains duplicate semantic observation ${record.agent} / ${record.providerId} / ${record.model} / ${record.setting}.`,
+      ));
+    }
+    seenSemanticKeys.add(semanticKey);
   }
 
   const minimumRecordCount = minimumRetained(previous.records.length);
@@ -423,11 +504,15 @@ export function validateSnapshotUpdate(
   }
 
   const previousStableKeys = new Set(previous.records.map(codingAgentRecordKey));
-  const retainedStableKeys = candidate.records.filter((record) => previousStableKeys.has(codingAgentRecordKey(record))).length;
+  const previousBySemanticKey = uniquelyKeyedSemanticRecords(previous.records);
+  const retainedStableKeys = candidate.records.filter((record) => (
+    previousStableKeys.has(codingAgentRecordKey(record))
+    || previousBySemanticKey.has(refreshSemanticRecordKey(record))
+  )).length;
   const minimumStableKeyCount = minimumRetained(previousStableKeys.size);
   if (retainedStableKeys < minimumStableKeyCount) {
     return err(new Error(
-      `Refreshed snapshot retained ${retainedStableKeys} of ${previousStableKeys.size} stable series/setting keys; minimum safe overlap is ${minimumStableKeyCount}.`,
+      `Refreshed snapshot retained ${retainedStableKeys} of ${previousStableKeys.size} stable series/setting keys (including semantic matches); minimum safe overlap is ${minimumStableKeyCount}.`,
     ));
   }
 
@@ -466,10 +551,14 @@ async function fetchSource(): Promise<Result<string, Error>> {
   return err(new Error("Could not download Artificial Analysis after 3 attempts.", { cause: lastError }));
 }
 
-async function validateCommittedSnapshot(): Promise<Result<CodingAgentSnapshot, Error>> {
+async function validateCommittedSnapshot(
+  allowLegacyForRefresh: boolean,
+): Promise<Result<CodingAgentSnapshot, Error>> {
   try {
     const input: unknown = await Bun.file(OUTPUT_PATH).json();
-    const parsed = parseCodingAgentSnapshot(input);
+    const parsed = allowLegacyForRefresh
+      ? parseRefreshCodingAgentSnapshot(input)
+      : parseCodingAgentSnapshot(input);
     return parsed.ok ? ok(parsed.value) : err(new Error(`Invalid ${OUTPUT_PATH}: ${parsed.error.message}`, { cause: parsed.error }));
   } catch (cause) {
     return err(new Error(`Could not read ${OUTPUT_PATH}.`, { cause }));
@@ -477,7 +566,7 @@ async function validateCommittedSnapshot(): Promise<Result<CodingAgentSnapshot, 
 }
 
 async function refresh(): Promise<Result<CodingAgentSnapshot, Error>> {
-  const previous = await validateCommittedSnapshot();
+  const previous = await validateCommittedSnapshot(true);
   if (!previous.ok) return previous;
   const source = await fetchSource();
   if (!source.ok) return source;
@@ -486,7 +575,16 @@ async function refresh(): Promise<Result<CodingAgentSnapshot, Error>> {
   const normalized = normalizeSourceRows(rows.value, new Date().toISOString());
   const safeUpdate = validateSnapshotUpdate(previous.value, normalized);
   if (!safeUpdate.ok) return safeUpdate;
-  const snapshot = mergeSnapshotUpdates(previous.value, normalized);
+  const reconciled = reconcileSnapshotSeriesIds(previous.value, normalized);
+  const safeReconciledUpdate = validateSnapshotUpdate(previous.value, reconciled);
+  if (!safeReconciledUpdate.ok) return safeReconciledUpdate;
+  const reconciledSeriesCount = reconciled.records.filter((record, index) => (
+    record.seriesId !== normalized.records[index]?.seriesId
+  )).length;
+  if (reconciledSeriesCount > 0) {
+    console.log(`Reconciled ${reconciledSeriesCount} renamed upstream series identifiers to owned stable keys.`);
+  }
+  const snapshot = mergeSnapshotUpdates(previous.value, reconciled);
   const validated = parseCodingAgentSnapshot(snapshot);
   if (!validated.ok) return err(new Error(`Normalized snapshot is invalid: ${validated.error.message}`, { cause: validated.error }));
 
@@ -498,7 +596,7 @@ async function refresh(): Promise<Result<CodingAgentSnapshot, Error>> {
 
 if (import.meta.main) {
   const checkOnly = Bun.argv.includes("--check");
-  const result = checkOnly ? await validateCommittedSnapshot() : await refresh();
+  const result = checkOnly ? await validateCommittedSnapshot(false) : await refresh();
   if (!result.ok) {
     console.error(result.error.message);
     process.exitCode = 1;

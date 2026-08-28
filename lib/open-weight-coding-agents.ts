@@ -20,6 +20,7 @@ export const CLOSED_WEIGHT_PROVIDER_IDS = [
 ] as const;
 
 export const UNCLASSIFIED_WEIGHT_PROVIDER_IDS = [
+  "cognition",
   "meta",
 ] as const;
 

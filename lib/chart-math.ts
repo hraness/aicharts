@@ -20,7 +20,7 @@ export const xMetricControlLabels: Record<XMetric, string> = {
 export const yMetricLabels: Record<YMetric, string> = {
   aaIndex: "AA Index",
   deepSwe: "DeepSWE",
-  terminalBench: "Terminal-Bench v2",
+  terminalBench: "Terminal-Bench v2.1",
   sweAtlas: "SWE-Atlas-QnA",
 };
 

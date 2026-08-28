@@ -26,7 +26,7 @@ import {
   codingAgentSnapshotRows,
   snapshotRowsMarkdownTable,
 } from "./coding-agent-snapshot-rows";
-import { formatRetrievedAt } from "./coding-agent-updates";
+import { formatRetrievedAt, formatUpdateDate } from "./coding-agent-updates";
 import {
   GPT_SUBSIDY_DESCRIPTION,
   formatSubsidyDate,
@@ -45,6 +45,10 @@ import {
 import type { ModelCardPresentation } from "./model-card-presentation";
 import { modelCardRouteStatus } from "./model-card-route-status";
 import { vercelGatewayModelCatalog } from "./model-card-sources";
+import {
+  MODEL_RELEASE_RADAR_HIGHLIGHTS,
+  MODEL_RELEASES_AWAITING_BENCHMARK,
+} from "./model-release-collection";
 
 export const AGENT_GUIDE_PATH = "/llms.txt" as const;
 export const MARKDOWN_CONTENT_TYPE = "text/markdown; charset=utf-8";
@@ -299,6 +303,14 @@ function modelCardsMarkdown(): string {
     "",
     `[Source snapshot](${MODEL_CARD_SNAPSHOT.source.url}), retrieved ${formatRetrievedAt(MODEL_CARD_SNAPSHOT.source.retrievedAt)}.`,
     "",
+    "## Release radar",
+    "",
+    `${MODEL_RELEASES_AWAITING_BENCHMARK.length} recent releases from established providers are awaiting comparable coding-agent results. Discovery is not a score, so these models do not enter the chart or card collection until Artificial Analysis publishes a matching observation.`,
+    "",
+    ...MODEL_RELEASE_RADAR_HIGHLIGHTS.map(release => (
+      `- [${release.model}](${release.modelUrl}). ${release.providerName}; listed by OpenRouter ${formatUpdateDate(release.sourceAddedAt)}.`
+    )),
+    "",
     "## Cards",
     "",
     ...MODEL_CARD_PRESENTATIONS.map(card => (
@@ -307,7 +319,7 @@ function modelCardsMarkdown(): string {
   ]);
 }
 
-function modelCardMarkdown(card: ModelCardPresentation): string {
+export function modelCardMarkdown(card: ModelCardPresentation): string {
   const routeStatus = modelCardRouteStatus(card);
   const markdownStatValue = (stat: ModelCardPresentation["performance"][number]) => (
     stat.available ? stat.value : "Not available"
@@ -407,7 +419,7 @@ export function agentGuideMarkdown(
     "",
     "## When to use AI Charts",
     "",
-    "Use AI Charts when you need a sourced comparison of coding agents across benchmark score, API cost, active time, and total token use. Use it to read the current checked snapshot, cite a retrieval time, or explain what AA Index, DeepSWE, Terminal-Bench 2.0, or SWE-Atlas-QnA measures in this dataset.",
+    "Use AI Charts when you need a sourced comparison of coding agents across benchmark score, API cost, active time, and total token use. Use it to read the current checked snapshot, cite a retrieval time, or explain what AA Index, DeepSWE, Terminal-Bench v2.1, or SWE-Atlas-QnA measures in this dataset.",
     "",
     "Use the `/data` page or the JSON download when you need the same records the chart uses, including provenance, leaders, normalization, and limits. Use `/models` for canonical cataloged model-and-profile card routes, deterministic provisional routes for newly observed identities, and shareable images. Use `/blog` when you need a sourced note on a named benchmark rather than the interactive chart.",
     "",

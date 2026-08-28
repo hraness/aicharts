@@ -8,7 +8,7 @@ The current chart focuses on coding agents. That is the first published comparis
 
 The site is a static-data Next.js and TypeScript application. Its coding-agent snapshot is committed to the repository, validated at build time, and refreshed automatically every day. Production never depends on the upstream data source being available during a request.
 
-- Compare Artificial Analysis's AA Index, DeepSWE, Terminal-Bench 2.0, and SWE-Atlas-QnA results.
+- Compare Artificial Analysis's AA Index, DeepSWE, Terminal-Bench v2.1, and SWE-Atlas-QnA results.
 - Plot each result against cost, duration, or total token use.
 - Pin a model to see its nearby performance cohort, or pin a provider to inspect its range.
 - Explore the cost/performance Pareto frontier and per-provider score ranges.
@@ -47,25 +47,24 @@ That validates generated files and the checked data contract, runs strict TypeSc
 
 ## Data refresh
 
-The [`data-refresh.yml`](.github/workflows/data-refresh.yml) workflow runs daily at 10:43 UTC and can also be started manually. It:
+The [`data-refresh.yml`](.github/workflows/data-refresh.yml) workflow runs daily at 10:43 UTC and can also be started manually. It treats benchmark ingestion and release discovery as separate failure domains:
 
-1. downloads the public Artificial Analysis coding-agent page;
-2. parses its Next.js Flight payload into the owned schema;
-3. rejects duplicate records, large row-count drops, low stable-key overlap, and major metric-coverage regressions;
-4. records new models, new settings, and benchmark changes of at least half a point in a bounded 48-event history;
-5. atomically updates only [`data/coding-agents.json`](data/coding-agents.json);
-6. runs the full project check before committing the new snapshot to `main`.
+1. Artificial Analysis supplies the comparable AA Index, DeepSWE, Terminal-Bench v2.1, and SWE-Atlas-QnA observations used by the chart and cards. The importer parses the public Next.js Flight payload, reconciles upstream slug changes against stable model semantics, and rejects duplicates, suspicious row loss, and metric-coverage regressions.
+2. OpenRouter's public models API supplies a bounded 90-day release radar for the providers already represented by the site. It keeps text-output models with tool support, filters aliases and hosted variants, and records OpenRouter's listing timestamp as discovery metadata—not as a claimed release date.
+3. The radar is discovery-only. An unbenchmarked release can appear in the small “Release radar” notice on `/models`, but it cannot acquire a score, chart point, or model card until a comparable Artificial Analysis coding-agent observation exists.
+4. The workflow atomically updates only [`data/coding-agents.json`](data/coding-agents.json) and [`data/model-release-radar.json`](data/model-release-radar.json), runs the full project check, and commits valid source updates to `main`.
 
-That commit triggers the normal Vercel production deployment. A source-shape change or suspicious data loss fails closed and leaves the published snapshot untouched.
+The sources refresh independently, so one outage does not discard a valid update from the other. Dependency installation is retried, and any unhealthy run creates or updates one durable GitHub issue that closes automatically after recovery. Source-shape changes and suspicious data loss still fail closed, leaving the last-known-good snapshot in production.
 
 To refresh locally:
 
 ```sh
 bun run data:refresh
+bun run releases:refresh
 bun run check
 ```
 
-Review the resulting data diff before committing it. `bun run data:check` is network-free and only validates the committed snapshot.
+Review the resulting data diff before committing it. `bun run data:check` and `bun run releases:check` are network-free validations of the committed snapshots. `bun run releases:reconcile` updates only radar benchmark statuses from the checked Artificial Analysis snapshot and is the offline fallback when OpenRouter is temporarily unavailable.
 
 ## PostHog
 
@@ -100,18 +99,18 @@ Production source maps are uploaded only when all private build settings and Ver
 - `app/` contains the App Router chart, sourced benchmark notes, metadata, error states, and product styling.
 - `components/` contains the interactive chart, model cards, update timeline, linked summaries, sharing, export, and local UI primitives.
 - `lib/` contains strict data and model-card boundaries, chart math, deterministic layout, analytics events, and property tests.
-- `data/` contains the checked benchmark, model-card catalog, subsidy-history, and pricing snapshots.
-- `scripts/` contains the guarded benchmark refresh, local subsidy collector and publisher, and deterministic color generator.
+- `data/` contains the checked benchmark, release-radar, model-card catalog, subsidy-history, and pricing snapshots.
+- `scripts/` contains the guarded benchmark and release-radar refreshes, local subsidy collector and publisher, and deterministic color generator.
 - `styles/` contains the portable plain-publication styles used by the benchmark notes.
 - `docs/` contains the current search, measurement, and engineering strategy.
 - `.github/workflows/` contains CI and daily refresh automation.
 
 ## License and data notice
 
-The application code is available under the [MIT License](LICENSE). The repository also contains a normalized snapshot of facts sourced from [Artificial Analysis](https://artificialanalysis.ai/agents/coding-agents/). The MIT license does not grant rights to third-party data, names, logos, or trademarks; see [NOTICE.md](NOTICE.md).
+The application code is available under the [MIT License](LICENSE). The repository also contains normalized public facts sourced from [Artificial Analysis](https://artificialanalysis.ai/agents/coding-agents/) and the [OpenRouter Models API](https://openrouter.ai/docs/api/api-reference/models/get-models). The MIT license does not grant rights to third-party data, names, logos, or trademarks; see [NOTICE.md](NOTICE.md).
 
 ## Citation
 
-GitHub can generate a citation from [`CITATION.cff`](CITATION.cff). Cite AI Charts when referring to this software or its visualization method, and cite Artificial Analysis or the relevant primary benchmark source for the underlying measurements. Include the source URL, retrieval date, selected metrics, and configuration when a claim depends on a particular snapshot.
+GitHub can generate a citation from [`CITATION.cff`](CITATION.cff). Cite AI Charts when referring to this software or its visualization method, Artificial Analysis or the relevant primary benchmark source for measurements, and OpenRouter for release-radar metadata. Include the source URL, retrieval date, selected metrics, and configuration when a claim depends on a particular snapshot.
 
 Contributions are welcome. Start with [CONTRIBUTING.md](CONTRIBUTING.md), and report security issues through the process in [SECURITY.md](SECURITY.md).
