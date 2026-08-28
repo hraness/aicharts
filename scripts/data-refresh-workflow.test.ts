@@ -55,6 +55,7 @@ describe("scheduled model-data refresh", () => {
       BENCHMARK_PATH: "data/coding-agents.json",
       REFRESH_BRANCH: "automation/model-data-refresh-${{ github.run_id }}-${{ github.run_attempt }}",
       RELEASE_RADAR_PATH: "data/model-release-radar.json",
+      REQUIRED_CHECK_CONTEXT: "Required",
     });
     expect(String(step("snapshot").run)).toContain('"$BENCHMARK_PATH"');
     expect(String(step("snapshot").run)).toContain('"$RELEASE_RADAR_PATH"');
@@ -67,6 +68,8 @@ describe("scheduled model-data refresh", () => {
     expect(publish).toContain('--commit "$head_sha" --event workflow_dispatch');
     expect(publish).toContain('gh workflow run ci.yml --ref "$REFRESH_BRANCH"');
     expect(publish).toContain('gh run watch "$ci_run_id" --exit-status');
+    expect(publish).toContain('"repos/${GITHUB_REPOSITORY}/statuses/${head_sha}"');
+    expect(publish).toContain('-f context="$REQUIRED_CHECK_CONTEXT"');
     expect(publish).toContain('gh pr merge "$pr_url" --auto --squash --delete-branch');
     expect(publish).toContain('for merge_attempt in {1..60}');
     expect(publish).toContain('if [[ "$merge_attempt" -lt 60 ]]; then sleep 5; fi');
@@ -74,6 +77,12 @@ describe("scheduled model-data refresh", () => {
     expect(publish).toContain('if [[ "$pr_state" != "MERGED" ]]');
     expect(publish.indexOf('echo "pr_url=${pr_url}"')).toBeLessThan(
       publish.indexOf('gh workflow run ci.yml --ref "$REFRESH_BRANCH"'),
+    );
+    expect(publish.indexOf('gh run watch "$ci_run_id" --exit-status')).toBeLessThan(
+      publish.indexOf('"repos/${GITHUB_REPOSITORY}/statuses/${head_sha}"'),
+    );
+    expect(publish.indexOf('"repos/${GITHUB_REPOSITORY}/statuses/${head_sha}"')).toBeLessThan(
+      publish.indexOf('gh pr merge "$pr_url" --auto'),
     );
     expect(publish).not.toContain("HEAD:main");
     expect(ciWorkflow.on).toHaveProperty("workflow_dispatch");
@@ -89,6 +98,7 @@ describe("scheduled model-data refresh", () => {
       contents: "write",
       issues: "write",
       "pull-requests": "write",
+      statuses: "write",
     });
     expect(String(step("dependencies").run)).toContain("for attempt in 1 2 3");
     const health = steps.find(candidate => candidate.name === "Report health and manage the durable alert");
