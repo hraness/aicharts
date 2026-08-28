@@ -12,6 +12,7 @@ import {
 import {
   deriveModelReleaseRadar,
   reconcileModelReleaseRadarStatuses,
+  validateModelReleaseRadarReplacement,
   validateModelReleaseRadarStatuses,
 } from "./refresh-model-releases";
 
@@ -228,6 +229,24 @@ describe("OpenRouter release-radar derivation", () => {
     expect(validateModelReleaseRadarStatuses(radar, snapshot).ok).toBe(true);
   });
 
+  test("does not graduate a release from a partial AAI observation", () => {
+    const sources = parseSourceModels([
+      rawModel("z-ai/glm-5.3", "Z.ai: GLM 5.3", "2026-08-18T20:57:35.000Z"),
+    ]);
+    const complete = benchmarkRecord("z_ai", "Z.ai", "GLM-5.3", 0);
+    const snapshot = benchmarkSnapshot();
+    snapshot.records.push({
+      ...complete,
+      benchmarks: { ...complete.benchmarks, sweAtlas: null },
+      completeIndex: false,
+    });
+
+    const radar = deriveModelReleaseRadar(sources, snapshot, retrievedAt);
+
+    expect(radar.releases[0]?.status).toBe("awaiting-benchmark");
+    expect(validateModelReleaseRadarStatuses(radar, snapshot).ok).toBe(true);
+  });
+
   test("is newest-first, deterministic, unique by id, and bounded", () => {
     const sources = parseSourceModels(Array.from({ length: MODEL_RELEASE_LIMIT + 8 }, (_, index) => (
       rawModel(
@@ -318,6 +337,109 @@ describe("OpenRouter release-radar derivation", () => {
       sourceAddedAt: "2026-08-20T00:00:00.000Z",
     }]);
     expect(repeated.observedListings).toEqual(first.observedListings);
+  });
+
+  test("rejects a one-row irrelevant catalog instead of erasing the current radar", () => {
+    const previous = deriveModelReleaseRadar(
+      parseSourceModels([
+        rawModel("z-ai/glm-5.3", "Z.ai: GLM 5.3", "2026-08-18T20:57:35.000Z"),
+      ]),
+      benchmarkSnapshot(),
+      "2026-08-26T18:00:00.000Z",
+    );
+    const candidate = deriveModelReleaseRadar(
+      parseSourceModels([
+        rawModel("untracked/irrelevant", "Untracked: Irrelevant", retrievedAt),
+      ]),
+      benchmarkSnapshot(),
+      retrievedAt,
+      previous.observedListings,
+    );
+
+    expect(candidate.releases).toEqual([]);
+    expect(candidate.observedListings).toEqual(previous.observedListings);
+    expect(validateModelReleaseRadarReplacement(previous, candidate).ok).toBe(false);
+  });
+
+  test("rejects a large still-current release collapse", () => {
+    const previousSources = parseSourceModels(Array.from({ length: 10 }, (_, index) => (
+      rawModel(
+        `openai/retained-${index}`,
+        `OpenAI: Retained ${index}`,
+        new Date(Date.parse("2026-08-20T18:00:00.000Z") - index * 60_000).toISOString(),
+      )
+    )));
+    const previous = deriveModelReleaseRadar(
+      previousSources,
+      benchmarkSnapshot(),
+      "2026-08-26T18:00:00.000Z",
+    );
+    const candidate = deriveModelReleaseRadar(
+      previousSources.slice(0, 2),
+      benchmarkSnapshot(),
+      retrievedAt,
+      previous.observedListings,
+    );
+
+    expect(candidate.releases).toHaveLength(2);
+    expect(validateModelReleaseRadarReplacement(previous, candidate).ok).toBe(false);
+  });
+
+  test("allows releases to age out while retaining their durable listing", () => {
+    const previous = deriveModelReleaseRadar(
+      parseSourceModels([
+        rawModel("z-ai/glm-5.2", "Z.ai: GLM 5.2", "2026-05-20T00:00:00.000Z"),
+      ]),
+      benchmarkSnapshot(),
+      "2026-06-01T00:00:00.000Z",
+    );
+    const candidate = deriveModelReleaseRadar(
+      parseSourceModels([
+        rawModel("untracked/irrelevant", "Untracked: Irrelevant", retrievedAt),
+      ]),
+      benchmarkSnapshot(),
+      retrievedAt,
+      previous.observedListings,
+    );
+
+    expect(previous.releases).toHaveLength(1);
+    expect(candidate.releases).toEqual([]);
+    expect(candidate.observedListings).toEqual(previous.observedListings);
+    expect(validateModelReleaseRadarReplacement(previous, candidate).ok).toBe(true);
+  });
+
+  test("allows newer releases to displace the bounded tail without losing its ledger", () => {
+    const previousSources = parseSourceModels(Array.from({ length: MODEL_RELEASE_LIMIT }, (_, index) => (
+      rawModel(
+        `openai/previous-${String(index).padStart(2, "0")}`,
+        `OpenAI: Previous ${index}`,
+        new Date(Date.parse("2026-08-20T18:00:00.000Z") - index * 60_000).toISOString(),
+      )
+    )));
+    const previous = deriveModelReleaseRadar(
+      previousSources,
+      benchmarkSnapshot(),
+      "2026-08-26T18:00:00.000Z",
+    );
+    const newSources = parseSourceModels(Array.from({ length: 10 }, (_, index) => (
+      rawModel(
+        `openai/new-${String(index).padStart(2, "0")}`,
+        `OpenAI: New ${index}`,
+        new Date(Date.parse(retrievedAt) - index * 60_000).toISOString(),
+      )
+    )));
+    const candidate = deriveModelReleaseRadar(
+      [...newSources, ...previousSources],
+      benchmarkSnapshot(),
+      retrievedAt,
+      previous.observedListings,
+    );
+
+    expect(candidate.releases).toHaveLength(MODEL_RELEASE_LIMIT);
+    expect(candidate.releases.filter(release => release.id.startsWith("openai/new-")))
+      .toHaveLength(10);
+    expect(candidate.observedListings).toHaveLength(MODEL_RELEASE_LIMIT + 10);
+    expect(validateModelReleaseRadarReplacement(previous, candidate).ok).toBe(true);
   });
 
   test("checked-radar validation rejects stale benchmark status and additive fields", () => {

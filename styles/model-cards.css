@@ -739,7 +739,19 @@
   white-space: nowrap;
 }
 .model-release-radar li strong { font-size: .82rem; }
+.model-release-radar li .model-release-radar__early-score {
+  color: color-mix(in oklch, var(--release-provider) 42%, var(--foreground));
+  font-size: .67rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  letter-spacing: .005em;
+  margin-block-start: .2rem;
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+}
 .model-release-radar__note { grid-column: 1 / -1; line-height: 1.45; }
+.model-release-radar__note a { color: var(--foreground); text-underline-offset: .16em; }
 
 .model-card-gallery__filters {
   --model-card-filter-color: var(--muted);

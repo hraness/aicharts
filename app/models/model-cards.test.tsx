@@ -22,10 +22,16 @@ import {
   formatModelCardListingDate,
   modelCardListingAccessibleLabel,
 } from "@/lib/model-card-presentation";
+import {
+  DIRECT_DEEP_SWE_EVIDENCE,
+  directDeepSweEvidenceForRelease,
+} from "@/lib/deep-swe-evidence-collection";
+import { formatDeepSweEvidenceScore } from "@/lib/deep-swe-evidence";
 import { markdownForPath, modelCardMarkdown } from "@/lib/site-markdown";
 import {
   MODEL_RELEASE_RADAR_HIGHLIGHTS,
   MODEL_RELEASES_AWAITING_BENCHMARK,
+  MODEL_RELEASES_WITH_EARLY_DEEP_SWE,
 } from "@/lib/model-release-collection";
 
 const modelsLayoutSource = await Bun.file(
@@ -149,17 +155,38 @@ describe("public model cards", () => {
 
   test("surfaces a restrained release radar without inventing benchmark cards", () => {
     const markup = renderToStaticMarkup(<ModelCardsPage />);
-    expect(MODEL_RELEASE_RADAR_HIGHLIGHTS).toEqual(
-      MODEL_RELEASES_AWAITING_BENCHMARK.slice(0, 2),
+    expect(MODEL_RELEASE_RADAR_HIGHLIGHTS[0]).toBe(
+      MODEL_RELEASES_AWAITING_BENCHMARK[0],
     );
     expect(MODEL_RELEASE_RADAR_HIGHLIGHTS.length).toBeLessThanOrEqual(2);
+    const earliestEvidenceRelease = MODEL_RELEASES_AWAITING_BENCHMARK.find(
+      release => directDeepSweEvidenceForRelease(release) !== null,
+    );
+    if (earliestEvidenceRelease !== undefined) {
+      expect(MODEL_RELEASE_RADAR_HIGHLIGHTS).toContain(earliestEvidenceRelease);
+    }
     for (const release of MODEL_RELEASE_RADAR_HIGHLIGHTS) {
       expect(markup).toContain(release.model);
       expect(markup).toContain(release.modelUrl);
     }
     if (MODEL_RELEASE_RADAR_HIGHLIGHTS.length > 0) {
       expect(markup).toContain("Release radar");
+      expect(markup).toContain("New, awaiting complete benchmark coverage");
       expect(markup).toContain("Discovery is not a score");
+      expect(markup).toContain("missing metrics shown explicitly");
+      expect(markup).toContain(`${MODEL_RELEASES_WITH_EARLY_DEEP_SWE.length} with early DeepSWE`);
+      expect(markup).toContain(`DeepSWE v${DIRECT_DEEP_SWE_EVIDENCE.source.benchmarkVersion}`);
+      expect(markup).toContain("mini-swe-agent leaderboard");
+      const highlightedEvidence = MODEL_RELEASE_RADAR_HIGHLIGHTS
+        .map(directDeepSweEvidenceForRelease)
+        .find(evidence => evidence !== null);
+      if (highlightedEvidence !== undefined && highlightedEvidence !== null) {
+        expect(markup).toContain(
+          `Early DeepSWE ${formatDeepSweEvidenceScore(highlightedEvidence.passAt1)} pass@1`,
+        );
+        expect(markup).toContain(`${highlightedEvidence.runs} runs`);
+        expect(markup).toContain(`${highlightedEvidence.identity.resolver.name} match`);
+      }
     } else {
       expect(markup).not.toContain("Release radar");
     }

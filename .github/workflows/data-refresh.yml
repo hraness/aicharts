@@ -2,8 +2,18 @@ name: AI Charts data refresh
 
 on:
   schedule:
+    - cron: "17 */4 * * *"
     - cron: "43 10 * * *"
   workflow_dispatch:
+    inputs:
+      mode:
+        description: Refresh OpenRouter and direct DeepSWE only, or include the heavier AAI snapshot.
+        required: true
+        default: full
+        type: choice
+        options:
+          - full
+          - discovery
 
 permissions:
   actions: write
@@ -23,10 +33,13 @@ jobs:
     timeout-minutes: 45
     env:
       BENCHMARK_PATH: data/coding-agents.json
+      DEEP_SWE_PATH: data/deep-swe-evidence.json
+      REFRESH_MODE: ${{ ((github.event_name == 'schedule' && github.event.schedule == '43 10 * * *') || (github.event_name == 'workflow_dispatch' && inputs.mode == 'full')) && 'full' || 'discovery' }}
       REFRESH_BRANCH: automation/model-data-refresh-${{ github.run_id }}-${{ github.run_attempt }}
       RELEASE_RADAR_PATH: data/model-release-radar.json
       REQUIRED_CHECK_CONTEXT: Required
       REFRESH_ISSUE_TITLE: "[automation] Data refresh is unhealthy"
+      RUN_AAI_REFRESH: ${{ (github.event_name == 'schedule' && github.event.schedule == '43 10 * * *') || (github.event_name == 'workflow_dispatch' && inputs.mode == 'full') }}
     steps:
       # Scheduled and manual runs always execute trusted default-branch code.
       - id: checkout
@@ -61,24 +74,26 @@ jobs:
             if [[ "$attempt" -lt 3 ]]; then sleep $((attempt * 5)); fi
           done
           exit 1
-      - name: Refresh benchmark snapshot from Artificial Analysis
-        id: benchmark
-        if: steps.dependencies.outcome == 'success'
-        continue-on-error: true
-        run: bun run data:refresh
       - name: Refresh model-release radar from OpenRouter
         id: release_radar
         if: steps.dependencies.outcome == 'success'
         continue-on-error: true
         run: bun run releases:refresh
-      - name: Reconcile release statuses after a source outage
+      - name: Refresh benchmark snapshot from Artificial Analysis
+        id: benchmark
+        if: steps.dependencies.outcome == 'success' && env.RUN_AAI_REFRESH == 'true'
+        continue-on-error: true
+        run: bun run data:refresh
+      - name: Reconcile release statuses from the available checked snapshots
         id: release_reconcile
-        if: >-
-          steps.dependencies.outcome == 'success'
-          && steps.benchmark.outcome == 'success'
-          && steps.release_radar.outcome != 'success'
+        if: steps.dependencies.outcome == 'success'
         continue-on-error: true
         run: bun run releases:reconcile
+      - name: Refresh direct DeepSWE early evidence
+        id: deep_swe
+        if: steps.dependencies.outcome == 'success'
+        continue-on-error: true
+        run: bun run deepswe:refresh
       - name: Detect owned data changes
         id: snapshot
         if: steps.dependencies.outcome == 'success'
@@ -93,11 +108,41 @@ jobs:
           fi
 
           while IFS= read -r changed_file; do
-            if [[ "$changed_file" != "$BENCHMARK_PATH" && "$changed_file" != "$RELEASE_RADAR_PATH" ]]; then
+            if [[ "$changed_file" != "$BENCHMARK_PATH" && "$changed_file" != "$DEEP_SWE_PATH" && "$changed_file" != "$RELEASE_RADAR_PATH" ]]; then
               echo "Refresh changed unexpected file: ${changed_file}"
               exit 1
             fi
           done <<< "$changed_files"
+
+          # Frequent source checks should publish evidence changes, not clocks.
+          # Restore an owned snapshot when its only differences are poll metadata;
+          # source health remains visible in this run.
+          while IFS= read -r changed_file; do
+            case "$changed_file" in
+              "$BENCHMARK_PATH")
+                semantic_filter='del(.source.retrievedAt)'
+                ;;
+              "$RELEASE_RADAR_PATH")
+                semantic_filter='del(.source.retrievedAt)'
+                ;;
+              "$DEEP_SWE_PATH")
+                semantic_filter='walk(if type == "object" then del(.attemptedAt, .retrievedAt) else . end) | del(.identitySource.status)'
+                ;;
+            esac
+            previous_semantic="$(git show "HEAD:${changed_file}" | jq -cS "$semantic_filter")"
+            current_semantic="$(jq -cS "$semantic_filter" "$changed_file")"
+            if [[ "$previous_semantic" == "$current_semantic" ]]; then
+              git restore --source=HEAD -- "$changed_file"
+              echo "Ignored timestamp-only refresh for ${changed_file}."
+            fi
+          done <<< "$changed_files"
+
+          changed_files="$(git diff --name-only)"
+          if [[ -z "$changed_files" ]]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "Source checks succeeded without publishable data changes."
+            exit 0
+          fi
 
           echo "changed=true" >> "$GITHUB_OUTPUT"
       - name: Validate updated application
@@ -117,12 +162,12 @@ jobs:
         run: |
           git config user.name "0thernet"
           git config user.email "894119+0thernet@users.noreply.github.com"
-          git add -- "$BENCHMARK_PATH" "$RELEASE_RADAR_PATH"
+          git add -- "$BENCHMARK_PATH" "$DEEP_SWE_PATH" "$RELEASE_RADAR_PATH"
           git commit -m "chore: refresh model data"
           git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:refs/heads/${REFRESH_BRANCH}"
 
           run_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
-          printf -v pr_body 'Automated model-data refresh from %s.\n\nBoth checked snapshots were validated with `bun run check` before this PR was created. Required CI is dispatched explicitly because pull-request checks created by `GITHUB_TOKEN` otherwise wait for manual approval.' "$run_url"
+          printf -v pr_body 'Automated model-data refresh from %s.\n\nAll three checked snapshots were validated with `bun run check` before this PR was created. Required CI is dispatched explicitly because pull-request checks created by `GITHUB_TOKEN` otherwise wait for manual approval.' "$run_url"
           pr_url="$(gh pr create --base main --head "$REFRESH_BRANCH" --title "chore: refresh model data" --body "$pr_body")"
           echo "pr_url=${pr_url}" >> "$GITHUB_OUTPUT"
 
@@ -176,6 +221,7 @@ jobs:
           BENCHMARK_OUTCOME: ${{ steps.benchmark.outcome }}
           CHECKOUT_OUTCOME: ${{ steps.checkout.outcome }}
           DEPENDENCIES_OUTCOME: ${{ steps.dependencies.outcome }}
+          DEEP_SWE_OUTCOME: ${{ steps.deep_swe.outcome }}
           DETECT_OUTCOME: ${{ steps.snapshot.outcome }}
           GH_REPO: ${{ github.repository }}
           GH_TOKEN: ${{ github.token }}
@@ -184,6 +230,8 @@ jobs:
           PUBLISH_PR_URL: ${{ steps.publish.outputs.pr_url }}
           RELEASE_OUTCOME: ${{ steps.release_radar.outcome }}
           RELEASE_RECONCILE_OUTCOME: ${{ steps.release_reconcile.outcome }}
+          REFRESH_MODE: ${{ env.REFRESH_MODE }}
+          RUN_AAI_REFRESH: ${{ env.RUN_AAI_REFRESH }}
           SETUP_BUN_OUTCOME: ${{ steps.setup_bun.outcome }}
           SETUP_NODE_OUTCOME: ${{ steps.setup_node.outcome }}
           SNAPSHOT_CHANGED: ${{ steps.snapshot.outputs.changed }}
@@ -196,8 +244,11 @@ jobs:
           done
 
           if [[ "$DEPENDENCIES_OUTCOME" == "success" ]]; then
-            if [[ "$BENCHMARK_OUTCOME" != "success" ]]; then unhealthy=true; fi
+            if [[ "$RUN_AAI_REFRESH" == "true" && "$BENCHMARK_OUTCOME" != "success" ]]; then unhealthy=true; fi
+            if [[ "$RUN_AAI_REFRESH" != "true" && "$BENCHMARK_OUTCOME" != "skipped" ]]; then unhealthy=true; fi
+            if [[ "$DEEP_SWE_OUTCOME" != "success" ]]; then unhealthy=true; fi
             if [[ "$RELEASE_OUTCOME" != "success" ]]; then unhealthy=true; fi
+            if [[ "$RELEASE_RECONCILE_OUTCOME" != "success" ]]; then unhealthy=true; fi
             if [[ "$DETECT_OUTCOME" != "success" ]]; then unhealthy=true; fi
             if [[ "$SNAPSHOT_CHANGED" == "true" && "$VALIDATION_OUTCOME" != "success" ]]; then unhealthy=true; fi
             if [[ "$SNAPSHOT_CHANGED" == "true" && "$PUBLISH_OUTCOME" != "success" ]]; then unhealthy=true; fi
@@ -205,6 +256,8 @@ jobs:
 
           {
             echo "## Model data refresh"
+            echo
+            echo "- Refresh mode: ${REFRESH_MODE}."
             echo
             echo "| Stage | Outcome |"
             echo "| --- | --- |"
@@ -214,7 +267,8 @@ jobs:
             echo "| Dependencies | ${DEPENDENCIES_OUTCOME} |"
             echo "| Artificial Analysis | ${BENCHMARK_OUTCOME} |"
             echo "| OpenRouter | ${RELEASE_OUTCOME} |"
-            echo "| Offline radar reconciliation | ${RELEASE_RECONCILE_OUTCOME} |"
+            echo "| Radar reconciliation | ${RELEASE_RECONCILE_OUTCOME} |"
+            echo "| Direct DeepSWE evidence | ${DEEP_SWE_OUTCOME} |"
             echo "| Change boundary | ${DETECT_OUTCOME} |"
             echo "| Application validation | ${VALIDATION_OUTCOME} |"
             echo "| Update PR | ${PUBLISH_OUTCOME} |"
@@ -229,7 +283,10 @@ jobs:
               jq -r '"- Benchmark snapshot: \(.records | length) configurations across \([.records[].providerId] | unique | length) providers; retrieved \(.source.retrievedAt)."' "$BENCHMARK_PATH"
             fi
             if [[ -f "$RELEASE_RADAR_PATH" ]]; then
-              jq -r '"- Release radar: \(.releases | length) tracked; \([.releases[] | select(.status == "awaiting-benchmark")] | length) awaiting benchmark; retrieved \(.source.retrievedAt)."' "$RELEASE_RADAR_PATH"
+              jq -r '"- Release radar: \(.releases | length) tracked; \([.releases[] | select(.status == "awaiting-benchmark")] | length) awaiting complete coverage; retrieved \(.source.retrievedAt)."' "$RELEASE_RADAR_PATH"
+            fi
+            if [[ -f "$DEEP_SWE_PATH" ]]; then
+              jq -r '"- Direct DeepSWE: \(.records | length) configurations across \([.records[].sourceModel] | unique | length) models; \(.unmatchedModels | length) unmatched; generated \(.source.generatedAt)."' "$DEEP_SWE_PATH"
             fi
           } >> "$GITHUB_STEP_SUMMARY"
 
@@ -237,17 +294,19 @@ jobs:
           issue_number="$(gh issue list --state open --limit 100 --json number,title --jq '.[] | select(.title == "[automation] Data refresh is unhealthy") | .number' | head -n 1)"
 
           if [[ "$unhealthy" == "true" ]]; then
-            printf -v issue_body 'The scheduled model-data refresh is unhealthy. Valid updates publish only after the normal pull-request gate has passed; failed sources remain on their last-known-good snapshots.\n\n- Run: %s\n- Artificial Analysis: `%s`\n- OpenRouter: `%s`\n- Validation: `%s`\n- Publication: `%s`\n- Update PR: %s\n- Required CI: %s\n\nThis issue is updated on repeated failures and closes automatically after recovery.' \
-              "$run_url" "$BENCHMARK_OUTCOME" "$RELEASE_OUTCOME" "$VALIDATION_OUTCOME" "$PUBLISH_OUTCOME" "${PUBLISH_PR_URL:-not created}" "${PUBLISH_CI_RUN_URL:-not dispatched}"
+            printf -v issue_body 'The scheduled model-data refresh is unhealthy. Valid updates publish only after the normal pull-request gate has passed; failed sources remain on their last-known-good snapshots.\n\n- Run: %s\n- Mode: `%s`\n- OpenRouter: `%s`\n- Artificial Analysis: `%s`\n- Direct DeepSWE: `%s`\n- Radar reconciliation: `%s`\n- Validation: `%s`\n- Publication: `%s`\n- Update PR: %s\n- Required CI: %s\n\nThis issue is updated on repeated failures and closes automatically after a healthy full refresh.' \
+              "$run_url" "$REFRESH_MODE" "$RELEASE_OUTCOME" "$BENCHMARK_OUTCOME" "$DEEP_SWE_OUTCOME" "$RELEASE_RECONCILE_OUTCOME" "$VALIDATION_OUTCOME" "$PUBLISH_OUTCOME" "${PUBLISH_PR_URL:-not created}" "${PUBLISH_CI_RUN_URL:-not dispatched}"
             if [[ -z "$issue_number" ]]; then
               gh issue create --title "$REFRESH_ISSUE_TITLE" --body "$issue_body"
             else
               gh issue edit "$issue_number" --body "$issue_body"
             fi
-            echo "::error title=Model data refresh unhealthy::Artificial Analysis=${BENCHMARK_OUTCOME}; OpenRouter=${RELEASE_OUTCOME}; validation=${VALIDATION_OUTCOME}; publication=${PUBLISH_OUTCOME}."
+            echo "::error title=Model data refresh unhealthy::OpenRouter=${RELEASE_OUTCOME}; Artificial Analysis=${BENCHMARK_OUTCOME}; Direct DeepSWE=${DEEP_SWE_OUTCOME}; reconciliation=${RELEASE_RECONCILE_OUTCOME}; validation=${VALIDATION_OUTCOME}; publication=${PUBLISH_OUTCOME}."
             exit 1
           fi
 
-          if [[ -n "$issue_number" ]]; then
-            gh issue close "$issue_number" --comment "Recovered in ${run_url}. Both sources refreshed and validation passed."
+          if [[ -n "$issue_number" && "$RUN_AAI_REFRESH" == "true" ]]; then
+            gh issue close "$issue_number" --comment "Recovered in ${run_url}. All sources refreshed and validation passed."
+          elif [[ -n "$issue_number" ]]; then
+            echo "A healthy discovery run leaves the alert open until a full AAI refresh also passes."
           fi

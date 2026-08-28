@@ -258,6 +258,49 @@ export type ModelRelease = z.infer<typeof modelReleaseSchema>;
 export type ModelReleaseListing = z.infer<typeof modelReleaseListingSchema>;
 export type ModelReleaseRadar = z.infer<typeof modelReleaseRadarBaseSchema>;
 
+export type ModelReleaseProvider = Readonly<{
+  providerId: ModelReleaseProviderId;
+  providerName: string;
+}>;
+
+const providerByOpenRouterAuthor: Readonly<Record<string, ModelReleaseProvider>> = {
+  anthropic: { providerId: "anthropic", providerName: "Anthropic" },
+  deepseek: { providerId: "deepseek", providerName: "DeepSeek" },
+  google: { providerId: "google", providerName: "Google" },
+  meta: { providerId: "meta", providerName: "Meta" },
+  "meta-llama": { providerId: "meta", providerName: "Meta" },
+  moonshotai: { providerId: "moonshot_ai", providerName: "Moonshot AI" },
+  openai: { providerId: "openai", providerName: "OpenAI" },
+  qwen: { providerId: "alibaba_cloud", providerName: "Alibaba Cloud" },
+  "x-ai": { providerId: "xai", providerName: "xAI" },
+  "z-ai": { providerId: "z_ai", providerName: "Z.ai" },
+};
+
+/** Returns the canonical established-provider identity for an exact OpenRouter model id. */
+export function modelReleaseProviderForOpenRouterId(
+  id: string,
+): ModelReleaseProvider | null {
+  if (id.startsWith("~") || id.includes(":")) return null;
+  const separator = id.indexOf("/");
+  if (
+    separator <= 0
+    || separator === id.length - 1
+    || id.indexOf("/", separator + 1) !== -1
+  ) return null;
+  return providerByOpenRouterAuthor[id.slice(0, separator)] ?? null;
+}
+
+export function openRouterModelIdTail(id: string): string | null {
+  return modelReleaseProviderForOpenRouterId(id) === null
+    ? null
+    : id.slice(id.indexOf("/") + 1);
+}
+
+export function modelReleaseDisplayName(name: string): string {
+  const separator = name.indexOf(":");
+  return (separator === -1 ? name : name.slice(separator + 1)).trim();
+}
+
 function normalizedModelReleaseTokens(providerId: string, value: string): readonly string[] {
   const canonical = value
     .normalize("NFKC")

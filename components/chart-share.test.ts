@@ -3,6 +3,8 @@ import {
   buildChartShareUrl,
   chartImageFilename,
   chartImageShareData,
+  DEFAULT_CHART_X_METRIC,
+  DEFAULT_CHART_Y_METRIC,
   parseChartShareView,
   xPostIntentUrl,
   type ChartShareView,
@@ -17,6 +19,11 @@ const defaultView: ChartShareView = {
 };
 
 describe("chart sharing", () => {
+  test("defines the unfiltered homepage as DeepSWE versus cost", () => {
+    expect(DEFAULT_CHART_X_METRIC).toBe("costUsd");
+    expect(DEFAULT_CHART_Y_METRIC).toBe("deepSwe");
+  });
+
   test("serializes the selected metrics and exactly one pinned item", () => {
     expect(codingAgentRecordKey({ seriesId: "agent/model", setting: "max" })).toBe("[\"agent/model\",\"max\"]");
     const url = buildChartShareUrl("https://aicharts.io/old?ignored=true#chart", {

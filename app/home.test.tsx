@@ -91,5 +91,7 @@ describe("homepage agent document", () => {
     expect(mainAt).toBeGreaterThan(headerAt);
     expect(renderedLeadersAt).toBeGreaterThan(mainAt);
     expect(mainEndAt).toBeGreaterThan(renderedLeadersAt);
+    expect(markup).toContain('<option value="deepSwe" selected="">DSWE</option>');
+    expect(markup).toContain('<strong>DeepSWE</strong>');
   });
 });

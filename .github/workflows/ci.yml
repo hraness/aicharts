@@ -7,6 +7,7 @@ on:
     # opened by GITHUB_TOKEN while the dispatched Required check remains mandatory.
     paths-ignore:
       - data/coding-agents.json
+      - data/deep-swe-evidence.json
       - data/model-release-radar.json
   push:
     branches: [main]

@@ -5,7 +5,9 @@ import {
   MODEL_RELEASE_SOURCE_URL,
   MODEL_RELEASE_WINDOW_DAYS,
   modelReleaseProviderIds,
+  modelReleaseProviderForOpenRouterId,
   modelReleaseSemanticKey,
+  openRouterModelIdTail,
   parseModelReleaseRadar,
   type ModelReleaseListing,
 } from "./model-release-data";
@@ -47,6 +49,17 @@ function radar(
 }
 
 describe("model-release semantic identity", () => {
+  test("resolves only canonical established-provider OpenRouter ids", () => {
+    expect(modelReleaseProviderForOpenRouterId("z-ai/glm-5.3")).toEqual({
+      providerId: "z_ai",
+      providerName: "Z.ai",
+    });
+    expect(openRouterModelIdTail("openai/gpt-5.6-sol")).toBe("gpt-5.6-sol");
+    expect(modelReleaseProviderForOpenRouterId("~openai/private")).toBeNull();
+    expect(modelReleaseProviderForOpenRouterId("openai/gpt-5.6-sol:batch")).toBeNull();
+    expect(modelReleaseProviderForOpenRouterId("unknown/example")).toBeNull();
+  });
+
   test("retains deliberate punctuation, configuration, and Anthropic brand matches", () => {
     expect(modelReleaseSemanticKey("z_ai", "GLM 5.3 Flash"))
       .toBe(modelReleaseSemanticKey("z_ai", "GLM-5.3-Flash"));
