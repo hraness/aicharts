@@ -63,7 +63,10 @@ function readResult(options: Readonly<{
   };
 }
 
-async function fakeAppServer(source: string): Promise<Readonly<{
+async function fakeAppServer(
+  source: string,
+  runtime: "node" | "shell" = "node",
+): Promise<Readonly<{
   authContext: CodexRateLimitAuthContext;
   environment: NodeJS.ProcessEnv;
   isolatedHomePath: string;
@@ -76,7 +79,10 @@ async function fakeAppServer(source: string): Promise<Readonly<{
   const isolatedHomePath = path.join(root, "isolated-home-path");
   const markerPath = path.join(root, "rate-limit-requested");
   const pidPath = path.join(root, "pid");
-  await writeFile(executable, `#!${process.execPath}\nimport { writeFileSync as writeAichartsMarker } from "node:fs";\nwriteAichartsMarker(process.env.AICHARTS_FAKE_ISOLATED_HOME_PATH, process.env.CODEX_HOME ?? "");\n${source}\n`, {
+  const executableSource = runtime === "node"
+    ? `#!${process.execPath}\nimport { writeFileSync as writeAichartsMarker } from "node:fs";\nwriteAichartsMarker(process.env.AICHARTS_FAKE_ISOLATED_HOME_PATH, process.env.CODEX_HOME ?? "");\n${source}\n`
+    : `#!/bin/sh\nprintf '%s' "$CODEX_HOME" > "$AICHARTS_FAKE_ISOLATED_HOME_PATH"\n${source}\n`;
+  await writeFile(executable, executableSource, {
     encoding: "utf8",
     mode: 0o500,
   });
@@ -332,21 +338,17 @@ createInterface({ input: process.stdin }).on("line", line => {
 
   test("handles a closed stdin pipe and reaps the resistant reader", async () => {
     const subject = await fakeAppServer(`
-import { writeFileSync } from "node:fs";
-import { createInterface } from "node:readline";
-writeFileSync(process.env.AICHARTS_FAKE_PID_PATH, String(process.pid));
-process.on("SIGTERM", () => {});
-setInterval(() => {}, 1_000);
-process.stdin.on("error", () => {});
-createInterface({ input: process.stdin }).once("line", line => {
-  const message = JSON.parse(line);
-  if (message.id !== 1) process.exit(2);
-  process.stdin.once("close", () => {
-    process.stdout.write(JSON.stringify({ id: 1, result: {} }) + "\\n");
-  });
-  process.stdin.destroy();
-});
-`);
+printf '%s' "$$" > "$AICHARTS_FAKE_PID_PATH"
+trap '' TERM
+IFS= read -r initialize
+case "$initialize" in
+  *'"id":1'*) ;;
+  *) exit 2 ;;
+esac
+exec 0<&-
+printf '%s\\n' '{"id":1,"result":{}}'
+exec /bin/sleep 60
+`, "shell");
 
     await expect(readCodexRateLimits(subject.environment, subject.authContext, {
       killGraceMs: 500,
