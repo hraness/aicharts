@@ -13,6 +13,15 @@ import {
 import { constants } from "node:fs";
 import path from "node:path";
 
+import {
+  CodexRateLimitRecorderFailure,
+  type CodexRateLimitReadResult,
+  type CodexRateLimitReader,
+  type CodexRateLimitRecorderResult,
+  readCodexRateLimits,
+  recordCodexRateLimits,
+} from "./codex-rate-limit-tracking";
+
 const AUTH_FILE_MAX_BYTES = 1_048_576;
 const LEDGER_FILE_MAX_BYTES = 16 * 1_048_576;
 const LOCK_STALE_AFTER_MS = 5 * 60 * 1_000;
@@ -68,6 +77,7 @@ export type RecorderResult = Readonly<{
   observedAccountFingerprintCount: number;
   authMode: RecordedAuthMode;
   planStatus: RecordedPlanStatus;
+  rateLimits: CodexRateLimitRecorderResult;
 }> | Readonly<{
   kind: "busy";
   observedAt: string;
@@ -77,6 +87,7 @@ type RecorderPaths = Readonly<{
   auth: string;
   ledger: string;
   lock: string;
+  rateLimits: string;
   secret: string;
   stateRoot: string;
 }>;
@@ -612,6 +623,7 @@ export function recorderPaths(environment: NodeJS.ProcessEnv): RecorderPaths {
     auth: path.join(home, ".codex", "auth.json"),
     ledger: path.join(stateRoot, "account-observations.json"),
     lock: path.join(stateRoot, ".account-recorder.lock"),
+    rateLimits: path.join(stateRoot, "codex-rate-limit-observations.json"),
     secret: path.join(stateRoot, "account-hmac.key"),
     stateRoot,
   };
@@ -620,6 +632,7 @@ export function recorderPaths(environment: NodeJS.ProcessEnv): RecorderPaths {
 export async function recordCodexAccount(
   environment: NodeJS.ProcessEnv = process.env,
   now: Date = new Date(),
+  rateLimitReader?: CodexRateLimitReader,
 ): Promise<RecorderResult> {
   const observedAt = now.toISOString();
   const paths = recorderPaths(environment);
@@ -643,6 +656,34 @@ export async function recordCodexAccount(
     };
     const update = updateLedger(current, observation, observedAt);
     await atomicWriteLedger(paths.ledger, update.ledger);
+    let rateLimits: CodexRateLimitRecorderResult;
+    try {
+      let confirmedRead: CodexRateLimitReadResult | null = null;
+      if (observation.accountFingerprint !== null) {
+        confirmedRead = await (rateLimitReader ?? readCodexRateLimits)(environment);
+        const confirmation = await readAuthObservation(paths.auth, secret.secret);
+        if (confirmation.accountFingerprint !== observation.accountFingerprint
+          || confirmation.authMode !== observation.authMode
+          || confirmation.planStatus !== observation.planStatus) {
+          throw new RecorderFailure(
+            "Codex account changed during the rate-limit observation.",
+          );
+        }
+      }
+      rateLimits = await recordCodexRateLimits({
+        accountFingerprint: observation.accountFingerprint,
+        environment,
+        keyId: secret.keyId,
+        ledgerPath: paths.rateLimits,
+        observedAt,
+        reader: confirmedRead === null ? rateLimitReader : async () => confirmedRead!,
+      });
+    } catch (error) {
+      if (error instanceof CodexRateLimitRecorderFailure) {
+        throw new RecorderFailure(error.message, error.exitCode);
+      }
+      throw error;
+    }
     return {
       kind: "recorded",
       observedAt,
@@ -650,6 +691,7 @@ export async function recordCodexAccount(
       observedAccountFingerprintCount: update.ledger.accounts.length,
       authMode: observation.authMode,
       planStatus: observation.planStatus,
+      rateLimits,
     };
   } finally {
     await releaseLock();

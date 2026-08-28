@@ -25,6 +25,13 @@ import {
 
 const temporaryRoots: string[] = [];
 const recorder = path.join(import.meta.dir, "record-codex-account.ts");
+const recordedRateLimits = {
+  availableResetCreditCount: 0,
+  bucketCount: 1,
+  detectedResets: [],
+  kind: "recorded",
+  windowCount: 1,
+};
 
 afterEach(async () => {
   await Promise.all(temporaryRoots.splice(0).map(root => rm(root, {
@@ -43,9 +50,42 @@ async function fixture(): Promise<Readonly<{
   temporaryRoots.push(root);
   const home = path.join(root, "home");
   const xdgState = path.join(root, "state");
+  const fakeCodex = path.join(root, "fake-codex");
   await mkdir(path.join(home, ".codex"), { recursive: true });
+  await writeFile(fakeCodex, `#!${process.execPath}
+import { createInterface } from "node:readline";
+const lines = createInterface({ input: process.stdin });
+lines.on("line", line => {
+  const message = JSON.parse(line);
+  if (message.id === 1) {
+    process.stdout.write(JSON.stringify({ id: 1, result: {} }) + "\\n");
+  }
+  if (message.id === 2) {
+    const bucket = {
+      limitId: "codex",
+      limitName: null,
+      primary: { usedPercent: 10, windowDurationMins: 300, resetsAt: 2_000_000_000 },
+      secondary: null,
+      credits: { hasCredits: false, unlimited: false, balance: "0" },
+      individualLimit: null,
+      planType: "pro",
+      rateLimitReachedType: null,
+    };
+    process.stdout.write(JSON.stringify({
+      id: 2,
+      result: {
+        rateLimits: bucket,
+        rateLimitsByLimitId: { codex: bucket },
+        rateLimitResetCredits: { availableCount: 0, credits: [] },
+      },
+    }) + "\\n");
+  }
+});
+`, { encoding: "utf8", mode: 0o500 });
+  await chmod(fakeCodex, 0o500);
   const environment = {
     ...process.env,
+    AICHARTS_CODEX_APP_SERVER_EXECUTABLE: fakeCodex,
     HOME: home,
     XDG_STATE_HOME: xdgState,
   };
@@ -112,6 +152,7 @@ describe("Codex account recorder", () => {
       observedAccountFingerprintCount: 1,
       authMode: "chatgpt",
       planStatus: "subscription-unverified",
+      rateLimits: recordedRateLimits,
     });
     expect(first.stderr).toBe("");
 
@@ -124,6 +165,7 @@ describe("Codex account recorder", () => {
       observedAccountFingerprintCount: 1,
       authMode: "chatgpt",
       planStatus: "subscription-unverified",
+      rateLimits: recordedRateLimits,
     });
 
     await writeAuth(subject.home, {
@@ -139,6 +181,7 @@ describe("Codex account recorder", () => {
       observedAccountFingerprintCount: 2,
       authMode: "chatgpt",
       planStatus: "subscription-unverified",
+      rateLimits: recordedRateLimits,
     });
 
     const ledger = JSON.parse(await readFile(subject.paths.ledger, "utf8")) as {
@@ -162,6 +205,7 @@ describe("Codex account recorder", () => {
     expect((await stat(subject.paths.stateRoot)).mode & 0o777).toBe(0o700);
     expect((await stat(subject.paths.secret)).mode & 0o777).toBe(0o600);
     expect((await stat(subject.paths.ledger)).mode & 0o777).toBe(0o600);
+    expect((await stat(subject.paths.rateLimits)).mode & 0o777).toBe(0o600);
   });
 
   test("represents missing, invalid, and API-key auth without inventing an account", async () => {
@@ -216,6 +260,40 @@ describe("Codex account recorder", () => {
     expect(result.stderr).toContain("permissions are too broad");
     expect(result.stderr).not.toContain(accountId);
     expect(result.stderr).not.toContain("permission-secret-token");
+  });
+
+  test("does not attribute a rate-limit snapshot across an account-switch race", async () => {
+    const subject = await fixture();
+    const firstAccount = "race-first-private-account";
+    const secondAccount = "race-second-private-account";
+    await writeAuth(subject.home, {
+      auth_mode: "chatgpt",
+      tokens: { account_id: firstAccount },
+    });
+
+    await expect(recordCodexAccount(
+      subject.environment,
+      new Date("2026-08-28T12:00:00.000Z"),
+      async () => {
+        await writeAuth(subject.home, {
+          auth_mode: "chatgpt",
+          tokens: { account_id: secondAccount },
+        });
+        return {
+          availableResetCreditCount: 0,
+          buckets: [{
+            limitId: "codex",
+            planType: "pro",
+            primary: { resetsAt: 2_000_000_000, usedPercent: 12, windowDurationMins: 300 },
+            secondary: null,
+          }],
+        };
+      },
+    )).rejects.toThrow("Codex account changed during the rate-limit observation.");
+    await expect(access(subject.paths.rateLimits)).rejects.toThrow();
+    const persisted = await allFileContents(subject.paths.stateRoot);
+    expect(persisted).not.toContain(firstAccount);
+    expect(persisted).not.toContain(secondAccount);
   });
 
   test("rejects corrupt or privacy-expanded ledgers instead of carrying unknown fields", async () => {
@@ -470,6 +548,6 @@ describe("Codex account recorder installer", () => {
     expect(uninstall.status).toBe(0);
     await expect(access(installed)).rejects.toThrow();
     await access(subject.paths.ledger);
-    expect(uninstall.stdout).toContain("Private account observations remain");
+    expect(uninstall.stdout).toContain("Private account and rate-limit observations remain");
   });
 });

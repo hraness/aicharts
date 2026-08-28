@@ -1,0 +1,238 @@
+import { describe, expect, test } from "bun:test";
+import fc from "fast-check";
+
+import {
+  type CodexRateLimitReadResult,
+  parseCodexRateLimitResponse,
+  updateCodexRateLimitLedger,
+} from "./codex-rate-limit-tracking";
+
+const accountA = `hmac-sha256:v1:${"A".repeat(43)}`;
+const accountB = `hmac-sha256:v1:${"B".repeat(43)}`;
+const keyId = `sha256:v1:${"K".repeat(43)}`;
+
+function readResult(options: Readonly<{
+  availableResetCreditCount?: number | null;
+  resetsAt: number;
+  usedPercent: number;
+  windowDurationMins?: number;
+}>): CodexRateLimitReadResult {
+  return {
+    availableResetCreditCount: options.availableResetCreditCount ?? 0,
+    buckets: [{
+      limitId: "codex",
+      planType: "pro",
+      primary: {
+        resetsAt: options.resetsAt,
+        usedPercent: options.usedPercent,
+        windowDurationMins: options.windowDurationMins ?? 300,
+      },
+      secondary: null,
+    }],
+  };
+}
+
+describe("Codex rate-limit response boundary", () => {
+  test("retains only bounded quota fields and discards reset-credit identifiers and copy", () => {
+    const opaqueCreditId = "opaque-credit-identifier-that-must-not-persist";
+    const backendTitle = "backend-title-that-must-not-persist";
+    const backendDescription = "backend-description-that-must-not-persist";
+    const privateBalance = "private-credit-balance-that-must-not-persist";
+    const bucket = {
+      credits: { balance: privateBalance, hasCredits: true, unlimited: false },
+      individualLimit: null,
+      limitId: "codex",
+      limitName: "Codex",
+      planType: "pro",
+      primary: { resetsAt: 2_000_000_000, usedPercent: 34, windowDurationMins: 300 },
+      rateLimitReachedType: null,
+      secondary: { resetsAt: 2_000_500_000, usedPercent: 67, windowDurationMins: 10_080 },
+    };
+    const parsed = parseCodexRateLimitResponse({
+      rateLimits: bucket,
+      rateLimitsByLimitId: { codex: bucket },
+      rateLimitResetCredits: {
+        availableCount: 1,
+        credits: [{
+          description: backendDescription,
+          expiresAt: 2_100_000_000,
+          grantedAt: 2_000_000_000,
+          id: opaqueCreditId,
+          resetType: "codexRateLimits",
+          status: "available",
+          title: backendTitle,
+        }],
+      },
+    });
+
+    expect(parsed).toEqual({
+      availableResetCreditCount: 1,
+      buckets: [{
+        limitId: "codex",
+        planType: "pro",
+        primary: { resetsAt: 2_000_000_000, usedPercent: 34, windowDurationMins: 300 },
+        secondary: { resetsAt: 2_000_500_000, usedPercent: 67, windowDurationMins: 10_080 },
+      }],
+    });
+    const serialized = JSON.stringify(parsed);
+    for (const discarded of [
+      opaqueCreditId,
+      backendTitle,
+      backendDescription,
+      privateBalance,
+    ]) expect(serialized).not.toContain(discarded);
+  });
+
+  test("rejects unknown fields and invalid percentages", () => {
+    expect(() => parseCodexRateLimitResponse({
+      accountEmail: "must-not-cross-boundary@example.test",
+      rateLimits: {},
+    })).toThrow("privacy/shape check");
+    expect(() => parseCodexRateLimitResponse({
+      rateLimits: {
+        limitId: "codex",
+        planType: "pro",
+        primary: { resetsAt: 2_000_000_000, usedPercent: 101, windowDurationMins: 300 },
+        secondary: null,
+      },
+    })).toThrow("privacy/shape check");
+  });
+});
+
+describe("Codex rate-limit reset detection", () => {
+  test("detects a scheduled boundary even when usage resumes before the next sample", () => {
+    const previousResetAt = Date.parse("2026-08-28T13:00:00.000Z") / 1_000;
+    const first = updateCodexRateLimitLedger(
+      null,
+      readResult({ resetsAt: previousResetAt, usedPercent: 76 }),
+      accountA,
+      keyId,
+      "2026-08-28T12:00:00.000Z",
+    );
+    const second = updateCodexRateLimitLedger(
+      first.ledger,
+      readResult({ resetsAt: previousResetAt + 300 * 60, usedPercent: 81 }),
+      accountA,
+      keyId,
+      "2026-08-28T13:30:00.000Z",
+    );
+
+    expect(second.detectedResets).toEqual([expect.objectContaining({
+      classification: "scheduled",
+      currentUsedPercent: 81,
+      freshCapacityPercent: 100,
+      previousUsedPercent: 76,
+      restoredPercentLowerBound: 76,
+      windowDurationMins: 300,
+    })]);
+  });
+
+  test("correlates an early boundary with a reset-credit inventory decrease", () => {
+    const previousResetAt = Date.parse("2026-08-28T18:00:00.000Z") / 1_000;
+    const first = updateCodexRateLimitLedger(
+      null,
+      readResult({
+        availableResetCreditCount: 1,
+        resetsAt: previousResetAt,
+        usedPercent: 98,
+      }),
+      accountA,
+      keyId,
+      "2026-08-28T12:00:00.000Z",
+    );
+    const second = updateCodexRateLimitLedger(
+      first.ledger,
+      readResult({
+        availableResetCreditCount: 0,
+        resetsAt: previousResetAt + 300 * 60,
+        usedPercent: 3,
+      }),
+      accountA,
+      keyId,
+      "2026-08-28T13:00:00.000Z",
+    );
+
+    expect(second.detectedResets).toEqual([expect.objectContaining({
+      availableResetCreditCountAfter: 0,
+      availableResetCreditCountBefore: 1,
+      classification: "reset-credit-correlated",
+      restoredPercentLowerBound: 98,
+    })]);
+  });
+
+  test("does not mistake an account switch for a reset", () => {
+    const first = updateCodexRateLimitLedger(
+      null,
+      readResult({ resetsAt: 2_000_000_000, usedPercent: 94 }),
+      accountA,
+      keyId,
+      "2026-08-28T12:00:00.000Z",
+    );
+    const switched = updateCodexRateLimitLedger(
+      first.ledger,
+      readResult({ resetsAt: 2_000_018_000, usedPercent: 2 }),
+      accountB,
+      keyId,
+      "2026-08-28T13:00:00.000Z",
+    );
+
+    expect(switched.detectedResets).toEqual([]);
+  });
+
+  test("requires evidence for an early provider reset", () => {
+    const first = updateCodexRateLimitLedger(
+      null,
+      readResult({ resetsAt: 2_000_000_000, usedPercent: 40 }),
+      accountA,
+      keyId,
+      "2026-08-28T12:00:00.000Z",
+    );
+    const unsupported = updateCodexRateLimitLedger(
+      first.ledger,
+      readResult({ resetsAt: 2_000_018_000, usedPercent: 41 }),
+      accountA,
+      keyId,
+      "2026-08-28T13:00:00.000Z",
+    );
+    const supported = updateCodexRateLimitLedger(
+      first.ledger,
+      readResult({ resetsAt: 2_000_018_000, usedPercent: 4 }),
+      accountA,
+      keyId,
+      "2026-08-28T13:00:00.000Z",
+    );
+
+    expect(unsupported.detectedResets).toEqual([]);
+    expect(supported.detectedResets).toEqual([expect.objectContaining({
+      classification: "provider-unscheduled",
+      restoredPercentLowerBound: 40,
+    })]);
+  });
+
+  test("classifies every observed post-deadline boundary as scheduled", () => {
+    fc.assert(fc.property(
+      fc.integer({ min: 0, max: 100 }),
+      fc.integer({ min: 0, max: 100 }),
+      (previousUsedPercent, currentUsedPercent) => {
+        const first = updateCodexRateLimitLedger(
+          null,
+          readResult({ resetsAt: 2_000_000_000, usedPercent: previousUsedPercent }),
+          accountA,
+          keyId,
+          new Date(1_999_996_400 * 1_000).toISOString(),
+        );
+        const second = updateCodexRateLimitLedger(
+          first.ledger,
+          readResult({ resetsAt: 2_000_018_000, usedPercent: currentUsedPercent }),
+          accountA,
+          keyId,
+          new Date(2_000_000_001 * 1_000).toISOString(),
+        );
+        expect(second.detectedResets).toHaveLength(1);
+        expect(second.detectedResets[0]!.classification).toBe("scheduled");
+        expect(second.detectedResets[0]!.restoredPercentLowerBound)
+          .toBe(previousUsedPercent);
+      },
+    ), { numRuns: 200 });
+  });
+});
