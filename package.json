@@ -38,6 +38,7 @@
     "start": "next start",
     "lint": "eslint .",
     "test": "bun test .",
+    "test:browser": "bun run ./scripts/model-card-browser.ts",
     "test:property": "bun test ./lib/*.property.test.ts",
     "typecheck": "tsc --noEmit",
     "colors:generate": "bun run scripts/generate-chart-colors.ts",
@@ -53,7 +54,7 @@
     "subsidy:check": "bun run scripts/check-gpt-subsidy-data.ts",
     "subsidy:publish": "bun run scripts/publish-gpt-subsidy.ts",
     "check:generated": "bun run colors:check && bun run model-icons:check && bun run data:check && bun run releases:check && bun run subsidy:check",
-    "check": "bun run check:generated && bun run typecheck && bun run lint && bun run test && bun run build",
+    "check": "bun run check:generated && bun run typecheck && bun run lint && bun run test && bun run build && bun run test:browser",
     "kb:refresh": "bunx --bun github:hraness/kb#v0.15.2 refresh --root kb",
     "kb:check:lane": "bunx --bun github:hraness/kb#v0.15.2 check --root kb --no-catalog",
     "kb:check": "bunx --bun github:hraness/kb#v0.15.2 check --root kb && bunx --bun github:hraness/kb#v0.15.2 agents check --root kb --repo .",
@@ -85,6 +86,7 @@
     "eslint-config-next": "16.3.3",
     "fast-check": "^4.8.0",
     "iwanthue": "2.1.0",
+    "playwright-core": "1.62.0",
     "typescript": "^6.0.3",
     "yaml": "2.9.0"
   }

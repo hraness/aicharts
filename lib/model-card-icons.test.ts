@@ -27,8 +27,16 @@ describe("model card icons", () => {
   test("creates a deterministic neutral monogram for an uncatalogued provider", () => {
     const first = modelIconDataUrl(null, "Example Research");
     const svg = Buffer.from(first.split(",")[1] ?? "", "base64").toString("utf8");
-    expect(svg).toContain(">ER<");
+    expect(svg).toContain('data-generic-monogram="ER"');
+    expect(svg.match(/<path\b/gu)).toHaveLength(2);
+    expect(svg).not.toMatch(/<(?:text|style)\b/iu);
+    expect(svg).not.toContain("font-family");
+    expect(svg).toContain("NebulaSans-Bold.otf 1.010");
+    expect(svg).toContain("SIL Open Font License 1.1");
     expect(svg).toContain("#f7f6f2");
     expect(modelIconDataUrl(null, "Example Research")).toBe(first);
+    expect(modelIconDataUrl(null, "Example Research")).not.toBe(
+      modelIconDataUrl(null, "Another Institute"),
+    );
   });
 });
