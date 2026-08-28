@@ -174,7 +174,7 @@ describe("Codex rate-limit response boundary", () => {
       "enterprise_cbp_automation",
       "edu_plus",
       "edu_pro",
-    ]) {
+    ] as const) {
       const parsed = parseCodexRateLimitResponse({
         rateLimits: protocolBucket({ planType }),
         rateLimitsByLimitId: null,

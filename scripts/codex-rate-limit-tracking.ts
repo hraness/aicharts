@@ -419,7 +419,10 @@ function appServerEnvironment(
   environment: NodeJS.ProcessEnv,
   authContext: CodexRateLimitAuthContext,
 ): NodeJS.ProcessEnv {
-  const childEnvironment = { ...environment, CODEX_HOME: authContext.codexHome };
+  const childEnvironment: NodeJS.ProcessEnv = {
+    ...environment,
+    CODEX_HOME: authContext.codexHome,
+  };
   for (const key of externalAuthEnvironmentKeys) delete childEnvironment[key];
   return childEnvironment;
 }
