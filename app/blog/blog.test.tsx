@@ -47,6 +47,10 @@ import {
   SEMIANALYSIS_CATCHING_UP,
 } from "./are-open-models-catching-up-article";
 import {
+  FRENCH_OWEN_SMALL_MODELS,
+  HRANESS_SMALL_MODELS_READING,
+} from "./small-models-have-arrived-article";
+import {
   HARNESS_DEFINITION_URL,
   LARS_FAYE_EXPERTISE,
   SEAN_GOEDECKE_EXPERTISE,
@@ -108,7 +112,7 @@ describe("AI Charts benchmark notes", () => {
   });
 
   test("publishes substantial complementary articles", () => {
-    expect(blogArticles).toHaveLength(7);
+    expect(blogArticles).toHaveLength(8);
     expect(blogArticles.map(article => article.slug)).toEqual([...BLOG_SLUGS]);
     expect(new Set(BLOG_SLUGS).size).toBe(BLOG_SLUGS.length);
 
@@ -121,7 +125,10 @@ describe("AI Charts benchmark notes", () => {
       expect(articleToMarkdown(article)).toContain(article.dek);
       expect(article.sourceIds.length).toBeGreaterThanOrEqual(1);
       expect(article.relatedSlugs).toHaveLength(1);
-      if (article.slug === "are-open-models-catching-up") {
+      if (article.slug === "small-models-have-arrived") {
+        expect(article.publishedAt).toBe("2026-08-28");
+        expect(article.updatedAt >= article.publishedAt).toBeTrue();
+      } else if (article.slug === "are-open-models-catching-up") {
         expect(article.publishedAt).toBe("2026-08-27");
         expect(article.updatedAt >= article.publishedAt).toBeTrue();
       } else if (
@@ -271,6 +278,7 @@ describe("AI Charts benchmark notes", () => {
     expect(markup).toContain('href="/blog/open-models-coding-agent-benchmarks"');
     expect(markup).toContain('href="/blog/coding-agent-score-holdouts"');
     expect(markup).toContain('href="/blog/coding-agent-scores-still-need-expertise"');
+    expect(markup).toContain('href="/blog/small-models-have-arrived"');
     expect(markup).toContain(formatRetrievedAt(parsed.value.source.retrievedAt));
     expect(markdown).toContain("each generation takes about half as long");
     expect(markdown).toContain("faster close in Era 3");
@@ -291,6 +299,54 @@ describe("AI Charts benchmark notes", () => {
       expect(markup).toContain(leader.record.model);
       expect(markup).toContain(formatBenchmarkScore(leader.value));
     }
+  });
+
+  test("derives the small-models take from sourced French-Owen findings and named snapshot rows", () => {
+    const parsed = parseCodingAgentSnapshot(codingAgentData);
+    if (!parsed.ok) throw parsed.error;
+    const article = getBlogArticle("small-models-have-arrived");
+    expect(article).toBeDefined();
+    if (article === undefined) return;
+
+    const markup = renderToStaticMarkup(
+      createElement(ArticleBody, { blocks: article.body }),
+    );
+    const markdown = articleToMarkdown(article);
+    const rows = codingAgentSnapshotRows(parsed.value.records);
+    const fable = rows.find(row =>
+      row.model.startsWith("Fable 5") && row.aaIndex !== null);
+    const sol = rows.find(row =>
+      row.model === "GPT-5.6 Sol" && row.aaIndex !== null);
+    expect(fable).toBeDefined();
+    expect(sol).toBeDefined();
+    if (fable === undefined || sol === undefined) return;
+
+    expect(markup).toContain(BLOG_SOURCES.calvinFrenchOwenSmallModels.url);
+    expect(markup).toContain(BLOG_SOURCES.hranessSmallModelsReading.url);
+    expect(markup).toContain(BLOG_SOURCES.artificialAnalysisCodingAgents.url);
+    expect(markup).toContain(HARNESS_DEFINITION_URL);
+    expect(markup).toContain('href="/"');
+    expect(markup).toContain('href="/blog/are-open-models-catching-up"');
+    expect(markup).toContain(formatRetrievedAt(parsed.value.source.retrievedAt));
+    expect(markdown).toContain("This page is not the");
+    expect(markdown).toContain("Hraness reading digest");
+    expect(markdown).toContain(FRENCH_OWEN_SMALL_MODELS.quotes.tokenCosts);
+    expect(markdown).toContain(FRENCH_OWEN_SMALL_MODELS.quotes.lunaNews);
+    expect(markdown).toContain(HRANESS_SMALL_MODELS_READING.gist);
+    expect(markdown).toContain(HRANESS_SMALL_MODELS_READING.tokenCostNotTaste);
+    expect(markup).toContain(FRENCH_OWEN_SMALL_MODELS.reported.lunaSpeed);
+    expect(markup).toContain(FRENCH_OWEN_SMALL_MODELS.reported.newsEvalLuna);
+    expect(markup).toContain(FRENCH_OWEN_SMALL_MODELS.reported.newsEvalSonnet);
+    expect(markup).toContain(FRENCH_OWEN_SMALL_MODELS.reported.researchThread);
+    expect(markup).toContain(fable.model);
+    expect(markup).toContain(fable.agent);
+    expect(markup).toContain(fable.setting);
+    expect(markup).toContain(formatSnapshotScore(fable.aaIndex));
+    expect(markup).toContain(sol.model);
+    expect(markup).toContain(sol.agent);
+    expect(markup).toContain(sol.setting);
+    expect(markup).toContain(formatSnapshotScore(sol.aaIndex));
+    expect(markdown).toContain("does not store a gpt-5.6-luna coding-agent row");
   });
 
   test("derives the holdout note from fetched Luu quotes and the checked snapshot", () => {
@@ -419,6 +475,8 @@ describe("AI Charts benchmark notes", () => {
     expect(markup).toContain(`href="${BLOG_SOURCES.hranessFayeReading.url}"`);
     expect(markup).toContain(`href="${BLOG_SOURCES.seanGoedeckeExpertise.url}"`);
     expect(markup).toContain(`href="${BLOG_SOURCES.hranessGoedeckeReading.url}"`);
+    expect(markup).toContain(`href="${BLOG_SOURCES.calvinFrenchOwenSmallModels.url}"`);
+    expect(markup).toContain(`href="${BLOG_SOURCES.hranessSmallModelsReading.url}"`);
   });
 
   test("renders the index, static routes, breadcrumbs, dates, and sources", async () => {
