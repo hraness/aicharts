@@ -4,8 +4,10 @@ import { createAreOpenModelsCatchingUpArticle } from "./are-open-models-catching
 import { createCodingAgentScoreHoldoutsArticle } from "./coding-agent-score-holdouts-article";
 import { createCodingAgentScoresStillNeedExpertiseArticle } from "./coding-agent-scores-still-need-expertise-article";
 import { createOpenModelsCodingAgentsArticle } from "./open-models-coding-agents-article";
+import { createSmallModelsHaveArrivedArticle } from "./small-models-have-arrived-article";
 
 export const BLOG_SLUGS = [
+  "small-models-have-arrived",
   "are-open-models-catching-up",
   "coding-agent-scores-still-need-expertise",
   "coding-agent-score-holdouts",
@@ -160,6 +162,22 @@ export const BLOG_SOURCES = {
     publication: "Hraness",
     title: "Hraness reading note: LLMs reward expertise",
     url: "https://hraness.com/reading/llms-reward-expertise",
+    year: 2026,
+  },
+  calvinFrenchOwenSmallModels: {
+    note:
+      "The August 26, 2026 essay reports gpt-5.6-luna speed and consumer-eval cost, and argues inference cost, not taste, kept consumer AI companies scarce.",
+    publication: "calv.info",
+    title: "Small Models Have Arrived",
+    url: "https://calv.info/small-models-have-arrived",
+    year: 2026,
+  },
+  hranessSmallModelsReading: {
+    note:
+      "The Hraness reading note is a dated digest of Calvin French-Owen’s essay, used here as a crawlable companion citation rather than a substitute for the original.",
+    publication: "Hraness",
+    title: "Hraness reading note: Small Models Have Arrived",
+    url: "https://hraness.com/reading/small-models-have-arrived",
     year: 2026,
   },
 } as const satisfies Record<string, BlogSource>;
@@ -444,6 +462,7 @@ const slopCodeBenchArticle = {
 } as const satisfies BlogArticle;
 
 export const blogArticles = [
+  createSmallModelsHaveArrivedArticle(),
   createAreOpenModelsCatchingUpArticle(),
   createCodingAgentScoresStillNeedExpertiseArticle(),
   createCodingAgentScoreHoldoutsArticle(),
