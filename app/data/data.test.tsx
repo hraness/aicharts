@@ -202,7 +202,7 @@ describe("coding-agent dataset surface", () => {
     expect(data.variableMeasured.map(variable => variable.name)).toEqual([
       "AA Index",
       "DeepSWE",
-      "Terminal-Bench v2",
+      "Terminal-Bench v2.1",
       "SWE-Atlas-QnA",
       "API cost per task",
       "Active time per task",

@@ -16,6 +16,7 @@ import {
   latestGptSubsidyObservation,
   parseGptSubsidySnapshot,
 } from "./gpt-subsidy-data";
+import { MODEL_RELEASE_RADAR_HIGHLIGHTS } from "./model-release-collection";
 import {
   AGENT_GUIDE_CONTENT_TYPE,
   MARKDOWN_CONTENT_TYPE,
@@ -59,7 +60,13 @@ describe("markdown representations", () => {
     expect(data.body).toContain(CODING_AGENT_DATASET_DESCRIPTION);
     expect(data.body).toContain(snapshot.source.url);
     expect(data.body).toContain("## All configurations");
-    expect(data.body).toContain("| Model | Agent | Provider | Setting | AA Index | DeepSWE | Terminal-Bench v2 | SWE-Atlas-QnA | Cost |");
+    expect(data.body).toContain("| Model | Agent | Provider | Setting | AA Index | DeepSWE | Terminal-Bench v2.1 | SWE-Atlas-QnA | Cost |");
+    const cards = markdownForPath("/models");
+    expect(cards.body).toContain("## Release radar");
+    expect(cards.body).toContain("Discovery is not a score");
+    for (const release of MODEL_RELEASE_RADAR_HIGHLIGHTS) {
+      expect(cards.body).toContain(`[${release.model}](${release.modelUrl})`);
+    }
     expect(subsidy).toMatchObject({ found: true, contentType: MARKDOWN_CONTENT_TYPE });
     expect(subsidy.body).toContain("# Subsidy for ChatGPT Pro 20x subscription");
     expect(subsidy.body).toContain("## Calculation");

@@ -1,243 +1,147 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "source": {
     "name": "Artificial Analysis",
     "url": "https://artificialanalysis.ai/agents/coding-agents/",
-    "retrievedAt": "2026-08-18T11:03:21.488Z",
-    "method": "next-flight"
+    "retrievedAt": "2026-08-28T02:03:26.429Z",
+    "method": "next-flight",
+    "benchmarkDatasets": {
+      "deepSwe": "deep-swe",
+      "terminalBench": "terminal-bench-v2.1",
+      "sweAtlas": "swe-atlas-qna"
+    }
   },
   "updates": [
     {
-      "id": "[\"model-added\",\"2026-08-15T10:59:09.311Z\",\"[\\\"Muse Code\\\",\\\"meta\\\",\\\"Muse Spark 1.2\\\"]\"]",
-      "detectedAt": "2026-08-15T10:59:09.311Z",
-      "agent": "Muse Code",
-      "model": "Muse Spark 1.2",
-      "providerId": "meta",
-      "providerName": "Meta",
-      "setting": "xhigh",
-      "benchmarks": {
-        "aaIndex": 60.52533202832947,
-        "deepSwe": 58.1120943952802,
-        "terminalBench": 78.5714285714286,
-        "sweAtlas": 44.892473118279604
-      },
-      "kind": "model-added",
-      "variantCount": 1
-    },
-    {
-      "id": "[\"model-added\",\"2026-08-15T10:59:09.311Z\",\"[\\\"Opencode\\\",\\\"google\\\",\\\"Gemini 3.7 Flash\\\"]\"]",
-      "detectedAt": "2026-08-15T10:59:09.311Z",
-      "agent": "Opencode",
-      "model": "Gemini 3.7 Flash",
-      "providerId": "google",
-      "providerName": "Google",
+      "id": "[\"benchmark-changed\",\"2026-08-28T01:01:37.877Z\",\"[\\\"Codex:openai_kindle-alpha-api\\\",\\\"high\\\"]\"]",
+      "detectedAt": "2026-08-28T01:01:37.877Z",
+      "agent": "Codex",
+      "model": "GPT-5.6 Sol",
+      "providerId": "openai",
+      "providerName": "OpenAI",
       "setting": "high",
       "benchmarks": {
-        "aaIndex": 57.06854442224124,
-        "deepSwe": 57.227138643067796,
-        "terminalBench": 83.3333333333333,
-        "sweAtlas": 30.645161290322598
-      },
-      "kind": "model-added",
-      "variantCount": 1
-    },
-    {
-      "id": "[\"model-added\",\"2026-08-15T10:59:09.311Z\",\"[\\\"Opencode\\\",\\\"meta\\\",\\\"Muse Spark 1.2\\\"]\"]",
-      "detectedAt": "2026-08-15T10:59:09.311Z",
-      "agent": "Opencode",
-      "model": "Muse Spark 1.2",
-      "providerId": "meta",
-      "providerName": "Meta",
-      "setting": "xhigh",
-      "benchmarks": {
-        "aaIndex": 56.5024763354766,
-        "deepSwe": 52.8023598820059,
-        "terminalBench": 72.6190476190476,
-        "sweAtlas": 44.0860215053763
-      },
-      "kind": "model-added",
-      "variantCount": 1
-    },
-    {
-      "id": "[\"model-added\",\"2026-08-15T10:59:09.311Z\",\"[\\\"Antigravity SDK\\\",\\\"google\\\",\\\"Gemini 3.7 Flash\\\"]\"]",
-      "detectedAt": "2026-08-15T10:59:09.311Z",
-      "agent": "Antigravity SDK",
-      "model": "Gemini 3.7 Flash",
-      "providerId": "google",
-      "providerName": "Google",
-      "setting": "high",
-      "benchmarks": {
-        "aaIndex": 55.64263133489511,
-        "deepSwe": 56.04719764011799,
-        "terminalBench": 83.7301587301587,
-        "sweAtlas": 27.1505376344086
-      },
-      "kind": "model-added",
-      "variantCount": 1
-    },
-    {
-      "id": "[\"benchmark-changed\",\"2026-08-14T11:29:12.842Z\",\"[\\\"Claude Code:alibaba_cloud_qwen3-8-max-public\\\",\\\"default\\\"]\"]",
-      "detectedAt": "2026-08-14T11:29:12.842Z",
-      "agent": "Claude Code",
-      "model": "Qwen3.8 Max",
-      "providerId": "alibaba_cloud",
-      "providerName": "Alibaba Cloud",
-      "setting": "default",
-      "benchmarks": {
-        "aaIndex": 56.61797068876715,
-        "deepSwe": 51.917404129793496,
-        "terminalBench": 79.36507936507931,
-        "sweAtlas": 38.5714285714286
+        "aaIndex": 64.116444866412,
+        "deepSwe": 64.8967551622419,
+        "terminalBench": 82.0224719101124,
+        "sweAtlas": 45.4301075268817
       },
       "kind": "benchmark-changed",
       "changes": [
-        {
-          "metric": "aaIndex",
-          "previous": 58.72498553771748,
-          "current": 56.61797068876715
-        },
         {
           "metric": "sweAtlas",
           "previous": 44.892473118279604,
-          "current": 38.5714285714286
+          "current": 45.4301075268817
         }
       ]
     },
     {
-      "id": "[\"benchmark-changed\",\"2026-08-14T11:29:12.842Z\",\"[\\\"Opencode:anthropic_claude-opus-4-7\\\",\\\"medium\\\"]\"]",
-      "detectedAt": "2026-08-14T11:29:12.842Z",
-      "agent": "Opencode",
-      "model": "Opus 4.7",
-      "providerId": "anthropic",
-      "providerName": "Anthropic",
-      "setting": "medium",
+      "id": "[\"benchmark-changed\",\"2026-08-28T01:01:37.877Z\",\"[\\\"Codex:openai_kindle-alpha-api\\\",\\\"xhigh\\\"]\"]",
+      "detectedAt": "2026-08-28T01:01:37.877Z",
+      "agent": "Codex",
+      "model": "GPT-5.6 Sol",
+      "providerId": "openai",
+      "providerName": "OpenAI",
+      "setting": "xhigh",
       "benchmarks": {
-        "aaIndex": 50.315451457329864,
-        "deepSwe": 39.5280235988201,
-        "terminalBench": 75.39682539682539,
-        "sweAtlas": 36.021505376344095
+        "aaIndex": 63.338834236251195,
+        "deepSwe": 66.9616519174041,
+        "terminalBench": 79.7752808988764,
+        "sweAtlas": 43.279569892473106
       },
       "kind": "benchmark-changed",
       "changes": [
         {
           "metric": "sweAtlas",
-          "previous": 34.9462365591398,
-          "current": 36.021505376344095
+          "previous": 42.2043010752688,
+          "current": 43.279569892473106
         }
       ]
     },
     {
-      "id": "[\"model-added\",\"2026-08-12T11:29:54.373Z\",\"[\\\"Claude Code\\\",\\\"alibaba_cloud\\\",\\\"Qwen3.8 Max\\\"]\"]",
-      "detectedAt": "2026-08-12T11:29:54.373Z",
+      "id": "[\"benchmark-changed\",\"2026-08-28T01:01:37.877Z\",\"[\\\"Claude Code:alibaba_cloud_qwen3-8-max-public\\\",\\\"default\\\"]\"]",
+      "detectedAt": "2026-08-28T01:01:37.877Z",
       "agent": "Claude Code",
       "model": "Qwen3.8 Max",
       "providerId": "alibaba_cloud",
       "providerName": "Alibaba Cloud",
       "setting": "default",
       "benchmarks": {
-        "aaIndex": 58.72498553771748,
+        "aaIndex": 61.31027159527611,
         "deepSwe": 51.917404129793496,
-        "terminalBench": 79.36507936507931,
-        "sweAtlas": 44.892473118279604
+        "terminalBench": 83.8951310861423,
+        "sweAtlas": 48.1182795698925
+      },
+      "kind": "benchmark-changed",
+      "changes": [
+        {
+          "metric": "sweAtlas",
+          "previous": 38.5714285714286,
+          "current": 48.1182795698925
+        }
+      ]
+    },
+    {
+      "id": "[\"model-added\",\"2026-08-28T01:01:37.877Z\",\"[\\\"Devin CLI\\\",\\\"cognition\\\",\\\"SWE-1.7 Lightning Max\\\"]\"]",
+      "detectedAt": "2026-08-28T01:01:37.877Z",
+      "agent": "Devin CLI",
+      "model": "SWE-1.7 Lightning Max",
+      "providerId": "cognition",
+      "providerName": "Cognition",
+      "setting": "default",
+      "benchmarks": {
+        "aaIndex": 52.21389513465004,
+        "deepSwe": 40.412979351032405,
+        "terminalBench": 79.40074906367039,
+        "sweAtlas": 36.8279569892473
       },
       "kind": "model-added",
       "variantCount": 1
     },
     {
-      "id": "[\"model-added\",\"2026-08-12T11:29:54.373Z\",\"[\\\"Codex\\\",\\\"deepseek\\\",\\\"DeepSeek V4 Flash\\\"]\"]",
-      "detectedAt": "2026-08-12T11:29:54.373Z",
+      "id": "[\"benchmark-changed\",\"2026-08-28T01:01:37.877Z\",\"[\\\"Codex:openai_nova-alpha\\\",\\\"medium\\\"]\"]",
+      "detectedAt": "2026-08-28T01:01:37.877Z",
       "agent": "Codex",
-      "model": "DeepSeek V4 Flash",
-      "providerId": "deepseek",
-      "providerName": "DeepSeek",
-      "setting": "max",
-      "benchmarks": {
-        "aaIndex": 55.467724565640644,
-        "deepSwe": 42.772861356932204,
-        "terminalBench": 84.9206349206349,
-        "sweAtlas": 38.7096774193548
-      },
-      "kind": "model-added",
-      "variantCount": 1
-    },
-    {
-      "id": "[\"model-added\",\"2026-08-08T11:06:22.000Z\",\"[\\\"Opencode\\\",\\\"google\\\",\\\"Gemini 3.6 Flash\\\"]\"]",
-      "detectedAt": "2026-08-08T11:06:22.000Z",
-      "agent": "Opencode",
-      "model": "Gemini 3.6 Flash",
-      "providerId": "google",
-      "providerName": "Google",
-      "setting": "high",
-      "benchmarks": {
-        "aaIndex": 45.6272174870519,
-        "deepSwe": 41.2979351032448,
-        "terminalBench": 73.8095238095238,
-        "sweAtlas": 21.7741935483871
-      },
-      "kind": "model-added",
-      "variantCount": 1
-    },
-    {
-      "id": "[\"benchmark-changed\",\"2026-08-06T12:30:43.670Z\",\"[\\\"Cursor CLI:openai_gpt-5-4\\\",\\\"medium\\\"]\"]",
-      "detectedAt": "2026-08-06T12:30:43.670Z",
-      "agent": "Cursor CLI",
-      "model": "GPT-5.4",
+      "model": "GPT-5.6 Terra",
       "providerId": "openai",
       "providerName": "OpenAI",
       "setting": "medium",
       "benchmarks": {
-        "aaIndex": 37.0541047960403,
-        "deepSwe": 16.6666666666667,
-        "terminalBench": 66.2698412698413,
-        "sweAtlas": 28.2258064516129
+        "aaIndex": 48.04969202427884,
+        "deepSwe": 45.722713864306805,
+        "terminalBench": 69.6629213483146,
+        "sweAtlas": 28.763440860215102
       },
       "kind": "benchmark-changed",
       "changes": [
         {
-          "metric": "terminalBench",
-          "previous": 65.4761904761905,
-          "current": 66.2698412698413
+          "metric": "sweAtlas",
+          "previous": 28.2258064516129,
+          "current": 28.763440860215102
         }
       ]
     },
     {
-      "id": "[\"variant-added\",\"2026-07-26T11:48:13.455Z\",\"[\\\"Claude Code\\\",\\\"anthropic\\\",\\\"Opus 4.8\\\"]\"]",
-      "detectedAt": "2026-07-26T11:48:13.455Z",
-      "agent": "Claude Code",
-      "model": "Opus 4.8",
-      "providerId": "anthropic",
-      "providerName": "Anthropic",
-      "setting": "xhigh",
+      "id": "[\"model-added\",\"2026-08-28T01:01:37.877Z\",\"[\\\"Codex\\\",\\\"deepseek\\\",\\\"DeepSeek V4 Pro 0813\\\"]\"]",
+      "detectedAt": "2026-08-28T01:01:37.877Z",
+      "agent": "Codex",
+      "model": "DeepSeek V4 Pro 0813",
+      "providerId": "deepseek",
+      "providerName": "DeepSeek",
+      "setting": "max",
       "benchmarks": {
-        "aaIndex": 58.47285848713201,
-        "deepSwe": 51.327433628318595,
-        "terminalBench": 81.3492063492064,
-        "sweAtlas": 42.741935483871
-      },
-      "kind": "variant-added",
-      "variantCount": 3
-    },
-    {
-      "id": "[\"model-added\",\"2026-07-25T11:49:28.450Z\",\"[\\\"Claude Code\\\",\\\"anthropic\\\",\\\"Opus 5\\\"]\"]",
-      "detectedAt": "2026-07-25T11:49:28.450Z",
-      "agent": "Claude Code",
-      "model": "Opus 5",
-      "providerId": "anthropic",
-      "providerName": "Anthropic",
-      "setting": "xhigh",
-      "benchmarks": {
-        "aaIndex": 66.74377366641137,
-        "deepSwe": 60.47197640117991,
-        "terminalBench": 84.9206349206349,
-        "sweAtlas": 54.838709677419295
+        "aaIndex": 42.77969516408803,
+        "deepSwe": 16.2241887905605,
+        "terminalBench": 62.921348314606796,
+        "sweAtlas": 49.193548387096804
       },
       "kind": "model-added",
-      "variantCount": 5
+      "variantCount": 1
     }
   ],
   "records": [
     {
-      "id": "a4e29e578e3a5877244c3e6419907805",
+      "id": "97d23cb0189af0bd83b489fc51582331",
       "agent": "Antigravity SDK",
       "model": "Gemini 3.7 Flash",
       "modelLabel": "Gemini 3.7 Flash (high)",
@@ -249,21 +153,21 @@
       "settingRank": 4,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 55.64263133489511,
+        "aaIndex": 56.57152973570364,
         "deepSwe": 56.04719764011799,
-        "terminalBench": 83.7301587301587,
+        "terminalBench": 86.5168539325843,
         "sweAtlas": 27.1505376344086
       },
       "economics": {
-        "costUsd": 1.3827854236787462,
-        "durationSeconds": 379.42819861712644
+        "costUsd": 1.396316917192255,
+        "durationSeconds": 384.96212576687134
       },
       "usage": {
-        "totalTokens": 14993503.888524689
+        "totalTokens": 15113684.865953416
       }
     },
     {
-      "id": "e1d299b2461811a5e3922910872e21ac",
+      "id": "8409ab2b091b3f2dd5af20c518d6217f",
       "agent": "Claude Code",
       "model": "DeepSeek V4 Pro",
       "modelLabel": "DeepSeek V4 Pro (high)",
@@ -275,21 +179,21 @@
       "settingRank": 4,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 31.440020420893976,
+        "aaIndex": 32.828166191062216,
         "deepSwe": 8.55457227138643,
-        "terminalBench": 65.8730158730159,
+        "terminalBench": 70.0374531835206,
         "sweAtlas": 19.8924731182796
       },
       "economics": {
-        "costUsd": 0.27193461309864964,
-        "durationSeconds": 1072.4858556593977
+        "costUsd": 0.2547256318476481,
+        "durationSeconds": 1072.5318353783239
       },
       "usage": {
-        "totalTokens": 9823145.160955355
+        "totalTokens": 9942165.528629862
       }
     },
     {
-      "id": "1d6603e65afa69261ec25dd3db0ae990",
+      "id": "cd471e5f13685c3e9fd4961baef60542",
       "agent": "Claude Code",
       "model": "Fable 5 (with fallback)",
       "modelLabel": "Fable 5 (max) (with fallback)",
@@ -301,21 +205,21 @@
       "settingRank": 6,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 65.8470366292233,
-        "deepSwe": 66.07669616519169,
-        "terminalBench": 82.5396825396825,
+        "aaIndex": 67.17276042685727,
+        "deepSwe": 66.07669616519179,
+        "terminalBench": 86.5168539325843,
         "sweAtlas": 48.924731182795696
       },
       "economics": {
-        "costUsd": 11.704644306334382,
-        "durationSeconds": 1403.7077476635493
+        "costUsd": 11.687407620910031,
+        "durationSeconds": 1407.3063016359897
       },
       "usage": {
-        "totalTokens": 13980586.380062293
+        "totalTokens": 13868659.998977493
       }
     },
     {
-      "id": "e4bb7e4e0e5d7b647699565bb3e9f718",
+      "id": "b026d661faa32a782bbeaf16ae84eb4c",
       "agent": "Claude Code",
       "model": "GLM-5.1",
       "modelLabel": "GLM-5.1",
@@ -327,21 +231,21 @@
       "settingRank": 0,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 36.13153955717473,
+        "aaIndex": 36.91032797641257,
         "deepSwe": 18.5840707964602,
-        "terminalBench": 65.0793650793651,
+        "terminalBench": 67.4157303370786,
         "sweAtlas": 24.7311827956989
       },
       "economics": {
-        "costUsd": 4.327675352897197,
-        "durationSeconds": 1166.2455368639653
+        "costUsd": 4.282000252842536,
+        "durationSeconds": 1140.250613496931
       },
       "usage": {
-        "totalTokens": 25881728.40083072
+        "totalTokens": 25761884.929447833
       }
     },
     {
-      "id": "8b6eea9ec9aca082aed5713b4ffc5abb",
+      "id": "c423d479bff9f1361be05e20b92e7577",
       "agent": "Claude Code",
       "model": "GLM-5.2",
       "modelLabel": "GLM-5.2",
@@ -353,21 +257,21 @@
       "settingRank": 0,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 43.17779252895107,
+        "aaIndex": 43.3101571936022,
         "deepSwe": 28.613569321533898,
-        "terminalBench": 71.88755020080319,
+        "terminalBench": 72.2846441947566,
         "sweAtlas": 29.032258064516096
       },
       "economics": {
-        "costUsd": 6.5111001416041745,
-        "durationSeconds": 1505.0868187500016
+        "costUsd": 6.657531358159516,
+        "durationSeconds": 1507.044470347651
       },
       "usage": {
-        "totalTokens": 6517238.031249985
+        "totalTokens": 6619529.539877302
       }
     },
     {
-      "id": "846aef1bbf3857553dd98019096491d8",
+      "id": "81e05f6f587e1c1add0e717f7702b496",
       "agent": "Claude Code",
       "model": "Kimi K2.6",
       "modelLabel": "Kimi K2.6",
@@ -379,47 +283,21 @@
       "settingRank": 0,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 32.6185265237506,
+        "aaIndex": 33.889259536056635,
         "deepSwe": 16.519174041297898,
-        "terminalBench": 65.4761904761905,
+        "terminalBench": 69.2883895131086,
         "sweAtlas": 15.8602150537634
       },
       "economics": {
-        "costUsd": 1.1889520923364485,
-        "durationSeconds": 2460.8149844236777
+        "costUsd": 1.2171000741104296,
+        "durationSeconds": 2443.3850674846617
       },
       "usage": {
-        "totalTokens": 11454355.889927303
+        "totalTokens": 11660527.815950915
       }
     },
     {
-      "id": "b08354cddd8d6202450b8275e2a37982",
-      "agent": "Claude Code",
-      "model": "Opus 4.6",
-      "modelLabel": "Opus 4.6 (medium)",
-      "providerId": "anthropic",
-      "providerName": "Anthropic",
-      "seriesId": "Claude Code:anthropic_claude-opus-4-6",
-      "seriesLabel": "Claude Code · Opus 4.6",
-      "setting": "medium",
-      "settingRank": 3,
-      "completeIndex": false,
-      "benchmarks": {
-        "aaIndex": 46.47337429595495,
-        "deepSwe": null,
-        "terminalBench": 70.63492063492069,
-        "sweAtlas": 22.311827956989198
-      },
-      "economics": {
-        "costUsd": 1.2777181349358966,
-        "durationSeconds": 479.6315032051282
-      },
-      "usage": {
-        "totalTokens": 4476377.92628205
-      }
-    },
-    {
-      "id": "91bffb438ac05ce8766f38f5feb0a25b",
+      "id": "5f0e6c243cc2349353481b6c445fda4c",
       "agent": "Claude Code",
       "model": "Opus 4.7",
       "modelLabel": "Opus 4.7 (medium)",
@@ -431,21 +309,21 @@
       "settingRank": 3,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 40.480948302815264,
+        "aaIndex": 42.3892771774363,
         "deepSwe": 27.433628318584102,
-        "terminalBench": 71.4285714285714,
+        "terminalBench": 77.1535580524345,
         "sweAtlas": 22.5806451612903
       },
       "economics": {
-        "costUsd": 1.6798828591381083,
-        "durationSeconds": 379.60947871235743
+        "costUsd": 1.8006617447341524,
+        "durationSeconds": 399.3926789366056
       },
       "usage": {
-        "totalTokens": 4574240.579439253
+        "totalTokens": 4636274.728016358
       }
     },
     {
-      "id": "cd52b3abde9774798e4cbacbffd5e789",
+      "id": "b30fdf295a5c8fe070c6f0063bb81bfa",
       "agent": "Claude Code",
       "model": "Opus 4.7",
       "modelLabel": "Opus 4.7 (max)",
@@ -457,21 +335,21 @@
       "settingRank": 6,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 50.341430701122405,
+        "aaIndex": 51.58095272716129,
         "deepSwe": 40.117994100295,
-        "terminalBench": 73.8095238095238,
+        "terminalBench": 77.52808988764049,
         "sweAtlas": 37.0967741935484
       },
       "economics": {
-        "costUsd": 5.631408828556593,
-        "durationSeconds": 939.752571131881
+        "costUsd": 5.915424259100206,
+        "durationSeconds": 950.3123588957067
       },
       "usage": {
-        "totalTokens": 15939667.438213924
+        "totalTokens": 16129723.114519436
       }
     },
     {
-      "id": "fd41f7c83539f7114d55af9209fc2234",
+      "id": "e13ae2d1b90ef9252222611bc047ba1a",
       "agent": "Claude Code",
       "model": "Opus 4.8",
       "modelLabel": "Opus 4.8 (low)",
@@ -483,21 +361,21 @@
       "settingRank": 2,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 47.41487643999776,
+        "aaIndex": 49.04379267565557,
         "deepSwe": 41.0029498525074,
-        "terminalBench": 73.015873015873,
+        "terminalBench": 77.9026217228464,
         "sweAtlas": 28.2258064516129
       },
       "economics": {
-        "costUsd": 2.15043354465213,
-        "durationSeconds": 505.6732139148495
+        "costUsd": 2.1825946797034774,
+        "durationSeconds": 516.6536431492841
       },
       "usage": {
-        "totalTokens": 5167218.9646936655
+        "totalTokens": 5214050.029652352
       }
     },
     {
-      "id": "463e26f9b1fa8eea013b33b0eb44fb9e",
+      "id": "59096497f7a1a7458a4c5e5ebba2777a",
       "agent": "Claude Code",
       "model": "Opus 4.8",
       "modelLabel": "Opus 4.8 (medium)",
@@ -509,21 +387,21 @@
       "settingRank": 3,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 53.56028921544193,
+        "aaIndex": 55.76883805320427,
         "deepSwe": 49.2625368731563,
-        "terminalBench": 75.39682539682539,
+        "terminalBench": 82.0224719101124,
         "sweAtlas": 36.021505376344095
       },
       "economics": {
-        "costUsd": 3.263124304517135,
-        "durationSeconds": 742.5446853582553
+        "costUsd": 3.3038416339468313,
+        "durationSeconds": 722.922882413088
       },
       "usage": {
-        "totalTokens": 7769574.429906536
+        "totalTokens": 7827354.369120649
       }
     },
     {
-      "id": "ae81b5655c18fe914465e96e5e9fbe23",
+      "id": "69b3d87eb6afbb59c379f2e891de8713",
       "agent": "Claude Code",
       "model": "Opus 4.8",
       "modelLabel": "Opus 4.8 (high)",
@@ -535,21 +413,21 @@
       "settingRank": 4,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 56.69800035343857,
+        "aaIndex": 57.576366681243066,
         "deepSwe": 51.6224188790561,
-        "terminalBench": 79.7619047619048,
+        "terminalBench": 82.3970037453183,
         "sweAtlas": 38.7096774193548
       },
       "economics": {
-        "costUsd": 3.735076363707167,
-        "durationSeconds": 746.2789200415376
+        "costUsd": 3.7823013803680996,
+        "durationSeconds": 761.0308312883442
       },
       "usage": {
-        "totalTokens": 9148668.115264785
+        "totalTokens": 9188690.866053157
       }
     },
     {
-      "id": "b1b9586bd5995356cc11d7afa0bbdfa7",
+      "id": "2716a5a99ab155d317bae7f710d4af5c",
       "agent": "Claude Code",
       "model": "Opus 4.8",
       "modelLabel": "Opus 4.8 (xhigh)",
@@ -561,21 +439,21 @@
       "settingRank": 5,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 58.47285848713197,
+        "aaIndex": 59.07181217597331,
         "deepSwe": 51.327433628318595,
-        "terminalBench": 81.3492063492063,
+        "terminalBench": 83.1460674157303,
         "sweAtlas": 42.741935483871
       },
       "economics": {
-        "costUsd": 5.666355583333328,
-        "durationSeconds": 1062.3746635514033
+        "costUsd": 5.665366469580767,
+        "durationSeconds": 1065.6153854805739
       },
       "usage": {
-        "totalTokens": 13701048.253374878
+        "totalTokens": 13628306.242331294
       }
     },
     {
-      "id": "d5768a9c2a80806a3eac3765b9550f4b",
+      "id": "6e559b7e9283e560f0df72b78be2a52a",
       "agent": "Claude Code",
       "model": "Opus 4.8",
       "modelLabel": "Opus 4.8 (max)",
@@ -587,21 +465,21 @@
       "settingRank": 6,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 60.63049510094897,
+        "aaIndex": 62.14051234130329,
         "deepSwe": 55.752212389380496,
-        "terminalBench": 79.36507936507931,
+        "terminalBench": 83.8951310861423,
         "sweAtlas": 46.7741935483871
       },
       "economics": {
-        "costUsd": 7.696804867315693,
-        "durationSeconds": 1387.4439714434081
+        "costUsd": 7.724725797009217,
+        "durationSeconds": 1386.6877980572617
       },
       "usage": {
-        "totalTokens": 17911638.988058154
+        "totalTokens": 17920579.42791411
       }
     },
     {
-      "id": "b7bb1f995d11fc2ee162a8a00e49a145",
+      "id": "95e3fe05999bbda4eebc90806b9beb5e",
       "agent": "Claude Code",
       "model": "Opus 5",
       "modelLabel": "Opus 5 (low)",
@@ -613,21 +491,21 @@
       "settingRank": 2,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 56.79527147554554,
+        "aaIndex": 59.40064571013326,
         "deepSwe": 56.9321533923304,
-        "terminalBench": 74.2063492063492,
+        "terminalBench": 82.0224719101124,
         "sweAtlas": 39.247311827957
       },
       "economics": {
-        "costUsd": 2.1784609327668933,
-        "durationSeconds": 569.2926957424716
+        "costUsd": 2.2951577448875273,
+        "durationSeconds": 598.7677147239262
       },
       "usage": {
-        "totalTokens": 5159611.7154724775
+        "totalTokens": 5258606.375255628
       }
     },
     {
-      "id": "1cb4fba928bdc85aa94ad34c44ed4c27",
+      "id": "6c3080bc3b0c724948e1397602acafde",
       "agent": "Claude Code",
       "model": "Opus 5",
       "modelLabel": "Opus 5 (medium)",
@@ -639,21 +517,21 @@
       "settingRank": 3,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 61.919375229395236,
-        "deepSwe": 62.8318584070797,
-        "terminalBench": 78.5714285714286,
+        "aaIndex": 64.06847456950577,
+        "deepSwe": 62.8318584070796,
+        "terminalBench": 85.0187265917603,
         "sweAtlas": 44.3548387096774
       },
       "economics": {
-        "costUsd": 3.1436240575635908,
-        "durationSeconds": 731.4867113187952
+        "costUsd": 3.1718671924846644,
+        "durationSeconds": 730.9243895705523
       },
       "usage": {
-        "totalTokens": 7936908.352024915
+        "totalTokens": 7999358.108384448
       }
     },
     {
-      "id": "11912c305f397585671a10cbad9421ad",
+      "id": "a5175928405dcdb4f3be90b935fbf33b",
       "agent": "Claude Code",
       "model": "Opus 5",
       "modelLabel": "Opus 5 (high)",
@@ -665,21 +543,21 @@
       "settingRank": 4,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 63.3730800659148,
+        "aaIndex": 65.61729860226816,
         "deepSwe": 60.7669616519174,
-        "terminalBench": 80.1587301587302,
+        "terminalBench": 86.8913857677903,
         "sweAtlas": 49.193548387096804
       },
       "economics": {
-        "costUsd": 3.7974520290226352,
-        "durationSeconds": 802.3227175493262
+        "costUsd": 3.918602446063396,
+        "durationSeconds": 842.8052382413097
       },
       "usage": {
-        "totalTokens": 9699126.034267921
+        "totalTokens": 9911366.34969326
       }
     },
     {
-      "id": "eeb626dff25025c5cd3679a4818e6f4d",
+      "id": "3c73b850f5f23b7b609fef4e067e27e8",
       "agent": "Claude Code",
       "model": "Opus 5",
       "modelLabel": "Opus 5 (xhigh)",
@@ -691,21 +569,21 @@
       "settingRank": 5,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 66.74377366641141,
+        "aaIndex": 68.14975428587518,
         "deepSwe": 60.47197640117991,
-        "terminalBench": 84.9206349206349,
+        "terminalBench": 89.1385767790262,
         "sweAtlas": 54.838709677419395
       },
       "economics": {
-        "costUsd": 8.234594254641607,
-        "durationSeconds": 1418.8133717549363
+        "costUsd": 8.170783921523505,
+        "durationSeconds": 1421.879982617586
       },
       "usage": {
-        "totalTokens": 21823529.824506782
+        "totalTokens": 21565879.138036843
       }
     },
     {
-      "id": "b4e3bfe152628dcb2a79bba1258dc84e",
+      "id": "842ebd5261ec73cba427b5ae3cf5d6a0",
       "agent": "Claude Code",
       "model": "Opus 5",
       "modelLabel": "Opus 5 (max)",
@@ -717,21 +595,21 @@
       "settingRank": 6,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 65.5251281214741,
+        "aaIndex": 67.02814566291137,
         "deepSwe": 63.1268436578171,
-        "terminalBench": 84.5238095238095,
-        "sweAtlas": 48.924731182795696
+        "terminalBench": 88.7640449438202,
+        "sweAtlas": 49.193548387096804
       },
       "economics": {
-        "costUsd": 8.949660113613344,
-        "durationSeconds": 1423.9871225337483
+        "costUsd": 8.943547018021487,
+        "durationSeconds": 1451.329194274025
       },
       "usage": {
-        "totalTokens": 23891138.252336435
+        "totalTokens": 23699428.05214722
       }
     },
     {
-      "id": "5a84753fc015b73cd84a26c73977b4da",
+      "id": "7ec73e2c1c6f40b3526a6b5a27380d8f",
       "agent": "Claude Code",
       "model": "Qwen3.7 Plus (thinking)",
       "modelLabel": "Qwen3.7 Plus (thinking)",
@@ -743,21 +621,21 @@
       "settingRank": 0,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 35.9697734519316,
+        "aaIndex": 38.12184526692477,
         "deepSwe": 19.174041297935098,
-        "terminalBench": 65.0793650793651,
+        "terminalBench": 71.5355805243446,
         "sweAtlas": 23.6559139784946
       },
       "economics": {
-        "costUsd": 6.226261819189548,
-        "durationSeconds": 633.8206448598129
+        "costUsd": 6.3006588057259885,
+        "durationSeconds": 643.9465817995912
       },
       "usage": {
-        "totalTokens": 8695924.406022852
+        "totalTokens": 8784635.035787327
       }
     },
     {
-      "id": "f06493dca66d238f2252adb8092dd10f",
+      "id": "ee068af6a74f61f807ec8ba283f120bd",
       "agent": "Claude Code",
       "model": "Qwen3.8 Max",
       "modelLabel": "Qwen3.8 Max",
@@ -769,21 +647,21 @@
       "settingRank": 0,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 56.61797068876717,
+        "aaIndex": 61.31027159527611,
         "deepSwe": 51.917404129793496,
-        "terminalBench": 79.36507936507941,
-        "sweAtlas": 38.5714285714286
+        "terminalBench": 83.8951310861423,
+        "sweAtlas": 48.1182795698925
       },
       "economics": {
-        "costUsd": 3.8605881587643722,
-        "durationSeconds": 1942.0505064655167
+        "costUsd": 3.2306109660020477,
+        "durationSeconds": 1792.1471809815948
       },
       "usage": {
-        "totalTokens": 13160842.964798827
+        "totalTokens": 12503741.564417152
       }
     },
     {
-      "id": "05941975b2dc8ed93cfcdb3feaf85847",
+      "id": "30408f5170add44f218b8104d76deccf",
       "agent": "Claude Code",
       "model": "Sonnet 4.6",
       "modelLabel": "Sonnet 4.6 (medium)",
@@ -795,73 +673,73 @@
       "settingRank": 3,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 37.60597492398807,
+        "aaIndex": 38.64931360777617,
         "deepSwe": 28.9085545722714,
-        "terminalBench": 64.2857142857143,
+        "terminalBench": 67.4157303370786,
         "sweAtlas": 19.6236559139785
       },
       "economics": {
-        "costUsd": 2.0058686946521296,
-        "durationSeconds": 807.4225254413305
+        "costUsd": 2.0415130214723938,
+        "durationSeconds": 827.6555807770972
       },
       "usage": {
-        "totalTokens": 8481318.905503629
+        "totalTokens": 8444053.035787314
       }
     },
     {
-      "id": "ba75b0f1ce2019c511374b7a7f850ce5",
+      "id": "fddf43987dffa7d7558f623e05afa535",
       "agent": "Codex",
-      "model": "DeepSeek V4 Flash",
-      "modelLabel": "DeepSeek V4 Flash (max)",
+      "model": "DeepSeek V4 Flash 0731",
+      "modelLabel": "DeepSeek V4 Flash 0731 (max)",
       "providerId": "deepseek",
       "providerName": "DeepSeek",
       "seriesId": "Codex:deepseek_deepseek-v4-flash-0731",
-      "seriesLabel": "Codex · DeepSeek V4 Flash",
+      "seriesLabel": "Codex · DeepSeek V4 Flash 0731",
       "setting": "max",
       "settingRank": 6,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 55.467724565640644,
+        "aaIndex": 49.75760031619053,
         "deepSwe": 42.772861356932204,
-        "terminalBench": 84.9206349206349,
+        "terminalBench": 67.7902621722846,
         "sweAtlas": 38.7096774193548
       },
       "economics": {
-        "costUsd": 0.07068777881703028,
-        "durationSeconds": 877.443800623052
+        "costUsd": 0.05949917044417178,
+        "durationSeconds": 868.3750143149272
       },
       "usage": {
-        "totalTokens": 20876437.68431982
+        "totalTokens": 20844227.99386505
       }
     },
     {
-      "id": "49eb59f1612c45154a4fda6b8daaf5c7",
+      "id": "9cb708b920e4975c78ca7d4ab4b2c7c6",
       "agent": "Codex",
-      "model": "GPT-5.4",
-      "modelLabel": "GPT-5.4 (medium)",
-      "providerId": "openai",
-      "providerName": "OpenAI",
-      "seriesId": "Codex:openai_gpt-5-4",
-      "seriesLabel": "Codex · GPT-5.4",
-      "setting": "medium",
-      "settingRank": 3,
+      "model": "DeepSeek V4 Pro 0813",
+      "modelLabel": "DeepSeek V4 Pro 0813 (max)",
+      "providerId": "deepseek",
+      "providerName": "DeepSeek",
+      "seriesId": "Codex:deepseek_deepseek-v4-pro-0813",
+      "seriesLabel": "Codex · DeepSeek V4 Pro 0813",
+      "setting": "max",
+      "settingRank": 6,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 39.05103259941966,
-        "deepSwe": 25,
-        "terminalBench": 69.8412698412698,
-        "sweAtlas": 22.311827956989198
+        "aaIndex": 42.77969516408803,
+        "deepSwe": 16.2241887905605,
+        "terminalBench": 62.921348314606796,
+        "sweAtlas": 49.193548387096804
       },
       "economics": {
-        "costUsd": 2.4151032730654785,
-        "durationSeconds": 425.0698348214286
+        "costUsd": 0.09081146755368102,
+        "durationSeconds": 743.5829417177914
       },
       "usage": {
-        "totalTokens": 5924972.105654759
+        "totalTokens": 12713750.951942736
       }
     },
     {
-      "id": "20c06470acbef9fff90155035e70ecc1",
+      "id": "5813c5748981e65ac6323473cf4c594b",
       "agent": "Codex",
       "model": "GPT-5.5",
       "modelLabel": "GPT-5.5 (medium)",
@@ -873,21 +751,21 @@
       "settingRank": 3,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 54.35866007518876,
+        "aaIndex": 55.31133827505798,
         "deepSwe": 56.637168141592895,
-        "terminalBench": 75.7936507936508,
+        "terminalBench": 78.65168539325839,
         "sweAtlas": 30.645161290322598
       },
       "economics": {
-        "costUsd": 2.7545190841121476,
-        "durationSeconds": 384.1285565939767
+        "costUsd": 2.6525358742331298,
+        "durationSeconds": 386.30447648261713
       },
       "usage": {
-        "totalTokens": 6962550.33644859
+        "totalTokens": 6885560.579754601
       }
     },
     {
-      "id": "e4cbff3e0fa0bfa4ca4f885f7510ab44",
+      "id": "98fcc93d8df3a3df337855dba1e72e29",
       "agent": "Codex",
       "model": "GPT-5.5",
       "modelLabel": "GPT-5.5 (xhigh)",
@@ -899,21 +777,21 @@
       "settingRank": 5,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 61.4850913880317,
-        "deepSwe": 64.30678466076691,
-        "terminalBench": 84.1269841269841,
+        "aaIndex": 61.03327520587847,
+        "deepSwe": 64.30678466076701,
+        "terminalBench": 82.7715355805243,
         "sweAtlas": 36.021505376344095
       },
       "economics": {
-        "costUsd": 5.069575952232609,
-        "durationSeconds": 604.9694164070614
+        "costUsd": 4.7523700715746395,
+        "durationSeconds": 614.9898987730056
       },
       "usage": {
-        "totalTokens": 12260230.264797496
+        "totalTokens": 12150851.179959117
       }
     },
     {
-      "id": "0cd5be46fed6b03c59bafdbb1fead847",
+      "id": "6b7cca33a464262a13e3bacf43871d16",
       "agent": "Codex",
       "model": "GPT-5.6 Luna",
       "modelLabel": "GPT-5.6 Luna (none)",
@@ -925,21 +803,21 @@
       "settingRank": 1,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 20.4214603657938,
+        "aaIndex": 19.098709043042465,
         "deepSwe": 6.48967551622419,
-        "terminalBench": 37.301587301587304,
+        "terminalBench": 33.3333333333333,
         "sweAtlas": 17.4731182795699
       },
       "economics": {
-        "costUsd": 0.07039237183800615,
-        "durationSeconds": 149.6666500519211
+        "costUsd": 0.32808355709611475,
+        "durationSeconds": 131.81620961145202
       },
       "usage": {
-        "totalTokens": 3566156.750778814
+        "totalTokens": 3549957.210633946
       }
     },
     {
-      "id": "7bf00ecf57f06e288bcc707e2c86777b",
+      "id": "2ff7e570bfd5380c3b39acacaf61d455",
       "agent": "Codex",
       "model": "GPT-5.6 Luna",
       "modelLabel": "GPT-5.6 Luna (low)",
@@ -951,21 +829,21 @@
       "settingRank": 2,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 25.083413008049032,
+        "aaIndex": 25.0636604330228,
         "deepSwe": 10.3244837758112,
-        "terminalBench": 49.6031746031746,
-        "sweAtlas": 15.322580645161299
+        "terminalBench": 49.812734082397,
+        "sweAtlas": 15.053763440860198
       },
       "economics": {
-        "costUsd": 0.041711162305295986,
-        "durationSeconds": 115.41225233644843
+        "costUsd": 0.1920449385685073,
+        "durationSeconds": 100.02603374233118
       },
       "usage": {
-        "totalTokens": 1504521.291796471
+        "totalTokens": 1435665.8445807756
       }
     },
     {
-      "id": "6c28cf9b5d78f220602572cd732e3141",
+      "id": "6d8067b23e62fa66558c776c2237ea61",
       "agent": "Codex",
       "model": "GPT-5.6 Luna",
       "modelLabel": "GPT-5.6 Luna (medium)",
@@ -977,21 +855,21 @@
       "settingRank": 3,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 42.406924072639164,
+        "aaIndex": 41.96699779001624,
         "deepSwe": 36.5781710914454,
-        "terminalBench": 63.4920634920635,
+        "terminalBench": 62.1722846441947,
         "sweAtlas": 27.1505376344086
       },
       "economics": {
-        "costUsd": 0.09477914066458966,
-        "durationSeconds": 202.33462357217016
+        "costUsd": 0.44305367719836414,
+        "durationSeconds": 191.3819171779141
       },
       "usage": {
-        "totalTokens": 4389586.230529595
+        "totalTokens": 4287327.734151328
       }
     },
     {
-      "id": "72f36b6cc5f42615e4ed6ca2078e8348",
+      "id": "0672bef72830f21f0bf6e5adb03efa37",
       "agent": "Codex",
       "model": "GPT-5.6 Luna",
       "modelLabel": "GPT-5.6 Luna (high)",
@@ -1003,21 +881,21 @@
       "settingRank": 4,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 51.4166617577979,
+        "aaIndex": 51.6945881593198,
         "deepSwe": 53.392330383480804,
-        "terminalBench": 71.82539682539681,
+        "terminalBench": 72.65917602996251,
         "sweAtlas": 29.032258064516096
       },
       "economics": {
-        "costUsd": 0.19173260969885772,
-        "durationSeconds": 339.0524771547249
+        "costUsd": 0.9174253706543963,
+        "durationSeconds": 342.6686574642128
       },
       "usage": {
-        "totalTokens": 9501375.002076855
+        "totalTokens": 9641370.49386502
       }
     },
     {
-      "id": "33fb0c4320d4f30c4351f5b4b54a805f",
+      "id": "cfa79ce9b0580609991f7d6e6f347105",
       "agent": "Codex",
       "model": "GPT-5.6 Luna",
       "modelLabel": "GPT-5.6 Luna (xhigh)",
@@ -1029,21 +907,21 @@
       "settingRank": 5,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 54.67014667699793,
+        "aaIndex": 52.958432632917095,
         "deepSwe": 56.637168141592895,
-        "terminalBench": 76.1904761904762,
-        "sweAtlas": 31.182795698924696
+        "terminalBench": 70.7865168539326,
+        "sweAtlas": 31.4516129032258
       },
       "economics": {
-        "costUsd": 0.25127707397715476,
-        "durationSeconds": 395.3811438213914
+        "costUsd": 1.2093171048466254,
+        "durationSeconds": 413.89877096114486
       },
       "usage": {
-        "totalTokens": 12310694.31568016
+        "totalTokens": 12806609.005112467
       }
     },
     {
-      "id": "3a30362dcf759090896f412187029f11",
+      "id": "fb21a5f096c93f898cfdb70695b60fb2",
       "agent": "Codex",
       "model": "GPT-5.6 Luna",
       "modelLabel": "GPT-5.6 Luna (max)",
@@ -1055,21 +933,21 @@
       "settingRank": 6,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 58.65981086506346,
-        "deepSwe": 63.4218289085545,
-        "terminalBench": 79.7619047619047,
+        "aaIndex": 57.166142236563445,
+        "deepSwe": 63.4218289085546,
+        "terminalBench": 75.2808988764045,
         "sweAtlas": 32.7956989247312
       },
       "economics": {
-        "costUsd": 0.31339139950155764,
-        "durationSeconds": 479.7352201453791
+        "costUsd": 1.508396035337423,
+        "durationSeconds": 482.0907147239265
       },
       "usage": {
-        "totalTokens": 15463935.666666673
+        "totalTokens": 15963259.28016359
       }
     },
     {
-      "id": "afaab614668086ae47ac295b4a580f15",
+      "id": "61259a77ada3123995322fd9b678ac93",
       "agent": "Codex",
       "model": "GPT-5.6 Sol",
       "modelLabel": "GPT-5.6 Sol (none)",
@@ -1081,21 +959,21 @@
       "settingRank": 1,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 43.41743358300597,
+        "aaIndex": 43.36881923573267,
         "deepSwe": 35.3982300884956,
-        "terminalBench": 60.7142857142857,
-        "sweAtlas": 34.1397849462366
+        "terminalBench": 60.2996254681648,
+        "sweAtlas": 34.4086021505376
       },
       "economics": {
-        "costUsd": 1.3982889177050872,
-        "durationSeconds": 206.26470976116292
+        "costUsd": 1.0868546433537856,
+        "durationSeconds": 197.8853650306747
       },
       "usage": {
-        "totalTokens": 3415816.0560747664
+        "totalTokens": 3404912.347648262
       }
     },
     {
-      "id": "162e0a28a93b5447f34328793ec3793b",
+      "id": "26c49d626af606abb33dbbc9dd951c20",
       "agent": "Codex",
       "model": "GPT-5.6 Sol",
       "modelLabel": "GPT-5.6 Sol (low)",
@@ -1107,21 +985,21 @@
       "settingRank": 2,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 53.605601849963804,
+        "aaIndex": 55.234518085621644,
         "deepSwe": 53.392330383480804,
-        "terminalBench": 73.015873015873,
+        "terminalBench": 77.9026217228465,
         "sweAtlas": 34.4086021505376
       },
       "economics": {
-        "costUsd": 1.7175155051921107,
-        "durationSeconds": 221.85372326064396
+        "costUsd": 1.2924588445807745,
+        "durationSeconds": 212.89958282208605
       },
       "usage": {
-        "totalTokens": 3165239.343198341
+        "totalTokens": 3200236.065439673
       }
     },
     {
-      "id": "b8273de3b1829734759539490d730e4f",
+      "id": "83b40ab12281bbce1ddfb03eaf1cb2cc",
       "agent": "Codex",
       "model": "GPT-5.6 Sol",
       "modelLabel": "GPT-5.6 Sol (medium)",
@@ -1133,21 +1011,21 @@
       "settingRank": 3,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 60.6144468762225,
+        "aaIndex": 61.6195748748264,
         "deepSwe": 64.0117994100295,
-        "terminalBench": 77.7777777777778,
-        "sweAtlas": 40.0537634408602
+        "terminalBench": 80.5243445692884,
+        "sweAtlas": 40.322580645161295
       },
       "economics": {
-        "costUsd": 2.9913424496365533,
-        "durationSeconds": 310.17845482866045
+        "costUsd": 2.192997850306748,
+        "durationSeconds": 297.95992535787343
       },
       "usage": {
-        "totalTokens": 5817518.553478712
+        "totalTokens": 5765545.476482615
       }
     },
     {
-      "id": "09a757ee60dc6cd6e2df1e27b488a78f",
+      "id": "198fa31740fe182ce8f553c452921037",
       "agent": "Codex",
       "model": "GPT-5.6 Sol",
       "modelLabel": "GPT-5.6 Sol (high)",
@@ -1159,21 +1037,21 @@
       "settingRank": 4,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 64.10963694006799,
+        "aaIndex": 64.116444866412,
         "deepSwe": 64.8967551622419,
-        "terminalBench": 82.5396825396825,
-        "sweAtlas": 44.892473118279604
+        "terminalBench": 82.0224719101124,
+        "sweAtlas": 45.4301075268817
       },
       "economics": {
-        "costUsd": 4.144239101765319,
-        "durationSeconds": 379.28783800623074
+        "costUsd": 3.000466998773008,
+        "durationSeconds": 369.9402760736197
       },
       "usage": {
-        "totalTokens": 8084866.696780904
+        "totalTokens": 8030278.504089991
       }
     },
     {
-      "id": "7d8e7b360069f2cce68fd20e3952a47b",
+      "id": "c90542f374d129ffef7d68a008a5b2b7",
       "agent": "Codex",
       "model": "GPT-5.6 Sol",
       "modelLabel": "GPT-5.6 Sol (xhigh)",
@@ -1185,21 +1063,21 @@
       "settingRank": 5,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 65.09235470126134,
+        "aaIndex": 63.338834236251195,
         "deepSwe": 66.9616519174041,
-        "terminalBench": 86.1111111111111,
-        "sweAtlas": 42.2043010752688
+        "terminalBench": 79.7752808988764,
+        "sweAtlas": 43.279569892473106
       },
       "economics": {
-        "costUsd": 5.235289045690551,
-        "durationSeconds": 443.6217289719626
+        "costUsd": 3.7366775271983648,
+        "durationSeconds": 440.51306952965217
       },
       "usage": {
-        "totalTokens": 9940685.693665624
+        "totalTokens": 9886595.803681007
       }
     },
     {
-      "id": "345f8adb212fc6a898b2efc99650420f",
+      "id": "880e4b6741c80ef089bb4b6cea21856d",
       "agent": "Codex",
       "model": "GPT-5.6 Sol",
       "modelLabel": "GPT-5.6 Sol (max)",
@@ -1211,21 +1089,21 @@
       "settingRank": 6,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 66.5698486709049,
+        "aaIndex": 65.05240024334414,
         "deepSwe": 68.7315634218289,
-        "terminalBench": 87.6984126984127,
+        "terminalBench": 83.1460674157304,
         "sweAtlas": 43.279569892473106
       },
       "economics": {
-        "costUsd": 7.0835100321910645,
-        "durationSeconds": 610.0822637590861
+        "costUsd": 4.995463274846626,
+        "durationSeconds": 613.70177198364
       },
       "usage": {
-        "totalTokens": 13228192.3831776
+        "totalTokens": 13169248.796012262
       }
     },
     {
-      "id": "c88a91acf7dee88f9f752e2a2648ddfc",
+      "id": "ffd92212c2d830b2b9cb4802389e60bb",
       "agent": "Codex",
       "model": "GPT-5.6 Terra",
       "modelLabel": "GPT-5.6 Terra (none)",
@@ -1237,21 +1115,21 @@
       "settingRank": 1,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 23.702812555224767,
+        "aaIndex": 23.091968966853067,
         "deepSwe": 13.2743362831858,
-        "terminalBench": 39.2857142857143,
+        "terminalBench": 37.4531835205992,
         "sweAtlas": 18.5483870967742
       },
       "economics": {
-        "costUsd": 0.2959885690550364,
-        "durationSeconds": 107.57151921079952
+        "costUsd": 0.36162878445807756,
+        "durationSeconds": 88.85438650306735
       },
       "usage": {
-        "totalTokens": 1116050.1651090332
+        "totalTokens": 1105801.5552147229
       }
     },
     {
-      "id": "4133ec78cb0b0dfac45568a527654d7b",
+      "id": "b71c4b2b1f31fca376169725acda2bee",
       "agent": "Codex",
       "model": "GPT-5.6 Terra",
       "modelLabel": "GPT-5.6 Terra (low)",
@@ -1263,21 +1141,21 @@
       "settingRank": 2,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 36.72755174325257,
+        "aaIndex": 38.64628427996264,
         "deepSwe": 29.7935103244838,
-        "terminalBench": 57.5396825396825,
+        "terminalBench": 63.2958801498127,
         "sweAtlas": 22.8494623655914
       },
       "economics": {
-        "costUsd": 0.3874593570093456,
-        "durationSeconds": 167.002074766355
+        "costUsd": 0.49095808057259693,
+        "durationSeconds": 154.81494989775024
       },
       "usage": {
-        "totalTokens": 1529812.9345794395
+        "totalTokens": 1657646.8445807747
       }
     },
     {
-      "id": "781bb9b75677f1c07570a8a4302871fa",
+      "id": "4859ca98b6e4ab6b3f67be401b33326f",
       "agent": "Codex",
       "model": "GPT-5.6 Terra",
       "modelLabel": "GPT-5.6 Terra (medium)",
@@ -1289,21 +1167,21 @@
       "settingRank": 3,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 47.79765492012141,
+        "aaIndex": 48.04969202427884,
         "deepSwe": 45.722713864306805,
-        "terminalBench": 69.4444444444445,
-        "sweAtlas": 28.2258064516129
+        "terminalBench": 69.6629213483146,
+        "sweAtlas": 28.763440860215102
       },
       "economics": {
-        "costUsd": 0.720980822845275,
-        "durationSeconds": 256.3856874350987
+        "costUsd": 0.8847820614519432,
+        "durationSeconds": 240.094656441718
       },
       "usage": {
-        "totalTokens": 3130307.8078920064
+        "totalTokens": 3164606.548057258
       }
     },
     {
-      "id": "c151f5fa983cb63fbae07f7daa6cdba3",
+      "id": "4584eb859617bbc12a810ea1e7717eb4",
       "agent": "Codex",
       "model": "GPT-5.6 Terra",
       "modelLabel": "GPT-5.6 Terra (high)",
@@ -1315,21 +1193,21 @@
       "settingRank": 4,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 55.792672795955745,
-        "deepSwe": 60.47197640118001,
-        "terminalBench": 75.9920634920635,
-        "sweAtlas": 30.913978494623702
+        "aaIndex": 54.64647209828707,
+        "deepSwe": 60.47197640117991,
+        "terminalBench": 72.2846441947566,
+        "sweAtlas": 31.182795698924696
       },
       "economics": {
-        "costUsd": 1.2717923584631377,
-        "durationSeconds": 370.7822777777776
+        "costUsd": 1.5618390533742323,
+        "durationSeconds": 358.73964826175916
       },
       "usage": {
-        "totalTokens": 5540011.526998964
+        "totalTokens": 5600275.774028629
       }
     },
     {
-      "id": "4fbb19c8498325b257d454069f14fa32",
+      "id": "0eb5f9920c6d4e3347f30b73266f1e7d",
       "agent": "Codex",
       "model": "GPT-5.6 Terra",
       "modelLabel": "GPT-5.6 Terra (xhigh)",
@@ -1341,21 +1219,21 @@
       "settingRank": 5,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 57.07356657256744,
+        "aaIndex": 56.02917313962744,
         "deepSwe": 58.4070796460177,
-        "terminalBench": 80.5555555555556,
-        "sweAtlas": 32.258064516129
+        "terminalBench": 77.1535580524345,
+        "sweAtlas": 32.5268817204301
       },
       "economics": {
-        "costUsd": 1.5161057096573183,
-        "durationSeconds": 412.94842263759074
+        "costUsd": 1.879152746625766,
+        "durationSeconds": 403.2234447852764
       },
       "usage": {
-        "totalTokens": 6460892.479750777
+        "totalTokens": 6631652.20858896
       }
     },
     {
-      "id": "99fc7a41674acd861df20610d8a84d04",
+      "id": "fe452287ec00459d819078798647bbb3",
       "agent": "Codex",
       "model": "GPT-5.6 Terra",
       "modelLabel": "GPT-5.6 Terra (max)",
@@ -1367,47 +1245,21 @@
       "settingRank": 6,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 62.28044140547706,
+        "aaIndex": 60.420103617266875,
         "deepSwe": 66.9616519174041,
-        "terminalBench": 84.1269841269841,
-        "sweAtlas": 35.752688172043
+        "terminalBench": 78.2771535580524,
+        "sweAtlas": 36.021505376344095
       },
       "economics": {
-        "costUsd": 2.205787872897198,
-        "durationSeconds": 502.37997507788145
+        "costUsd": 2.695350269529651,
+        "durationSeconds": 491.0206543967283
       },
       "usage": {
-        "totalTokens": 9465877.399792328
+        "totalTokens": 9630511.582822077
       }
     },
     {
-      "id": "7852b0bca6949e59c05bf5619e52382b",
-      "agent": "Cursor CLI",
-      "model": "Composer 2",
-      "modelLabel": "Composer 2",
-      "providerId": "cursor",
-      "providerName": "Cursor",
-      "seriesId": "Cursor CLI:cursor_composer-2",
-      "seriesLabel": "Cursor CLI · Composer 2",
-      "setting": "default",
-      "settingRank": 0,
-      "completeIndex": true,
-      "benchmarks": {
-        "aaIndex": 27.47482505547023,
-        "deepSwe": 0,
-        "terminalBench": 64.6825396825397,
-        "sweAtlas": 17.741935483871
-      },
-      "economics": {
-        "costUsd": 0.04363878773584906,
-        "durationSeconds": 514.0380707547172
-      },
-      "usage": {
-        "totalTokens": 2954430.6674528313
-      }
-    },
-    {
-      "id": "e9dfaf09a4e2af4ccf196aacce01931c",
+      "id": "467c7211ff2f9d82fd40e8cdf50cfa58",
       "agent": "Cursor CLI",
       "model": "Composer 2.5",
       "modelLabel": "Composer 2.5",
@@ -1419,21 +1271,21 @@
       "settingRank": 0,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 38.19077223302173,
+        "aaIndex": 38.300753803677466,
         "deepSwe": 15.929203539823,
-        "terminalBench": 67.46031746031746,
+        "terminalBench": 67.79026217228466,
         "sweAtlas": 31.18279569892475
       },
       "economics": {
-        "costUsd": 0.08223328400830736,
-        "durationSeconds": 572.8118920041536
+        "costUsd": 0.08505141359918204,
+        "durationSeconds": 625.1976421267894
       },
       "usage": {
-        "totalTokens": 3577610.0197300087
+        "totalTokens": 3705076.4698364004
       }
     },
     {
-      "id": "7808b1b84bc4fefe8aa8d019c4dd6000",
+      "id": "2dc78f952370ae68be45fa8b6f5e4f74",
       "agent": "Cursor CLI",
       "model": "Composer 2.5 Fast",
       "modelLabel": "Composer 2.5 Fast",
@@ -1445,47 +1297,21 @@
       "settingRank": 0,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 38.19077223302173,
+        "aaIndex": 38.300753803677466,
         "deepSwe": 15.929203539823,
-        "terminalBench": 67.46031746031746,
+        "terminalBench": 67.79026217228466,
         "sweAtlas": 31.18279569892475
       },
       "economics": {
-        "costUsd": 0.5493899408099693,
-        "durationSeconds": 406.07837279335405
+        "costUsd": 0.5573437730061347,
+        "durationSeconds": 472.37220245398777
       },
       "usage": {
-        "totalTokens": 4238246.973001038
+        "totalTokens": 4259887.413087931
       }
     },
     {
-      "id": "ad8e1d88886cc5dd31d397a366f44f62",
-      "agent": "Cursor CLI",
-      "model": "GPT-5.4",
-      "modelLabel": "GPT-5.4 (medium)",
-      "providerId": "openai",
-      "providerName": "OpenAI",
-      "seriesId": "Cursor CLI:openai_gpt-5-4",
-      "seriesLabel": "Cursor CLI · GPT-5.4",
-      "setting": "medium",
-      "settingRank": 3,
-      "completeIndex": true,
-      "benchmarks": {
-        "aaIndex": 37.0541047960403,
-        "deepSwe": 16.6666666666667,
-        "terminalBench": 66.2698412698413,
-        "sweAtlas": 28.2258064516129
-      },
-      "economics": {
-        "costUsd": 1.5457807820796459,
-        "durationSeconds": 485.6827581120946
-      },
-      "usage": {
-        "totalTokens": 4017672.64159292
-      }
-    },
-    {
-      "id": "e8ba29caae815354f649228cb3cc305d",
+      "id": "a0dad1a77e513acdbf8f2ac7f0514f60",
       "agent": "Cursor CLI",
       "model": "GPT-5.5",
       "modelLabel": "GPT-5.5 (medium)",
@@ -1497,21 +1323,21 @@
       "settingRank": 3,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 46.0896706828765,
-        "deepSwe": 37.1681415929204,
-        "terminalBench": 73.41269841269839,
-        "sweAtlas": 27.6881720430107
+        "aaIndex": 47.08693600598453,
+        "deepSwe": 37.1681415929203,
+        "terminalBench": 76.4044943820225,
+        "sweAtlas": 27.688172043010802
       },
       "economics": {
-        "costUsd": 2.0149947633091063,
-        "durationSeconds": 398.80334683281404
+        "costUsd": 1.9980312342194944,
+        "durationSeconds": 386.6294212678939
       },
       "usage": {
-        "totalTokens": 3989303.3560401546
+        "totalTokens": 3955817.7421949576
       }
     },
     {
-      "id": "19fdb1c401861fd3bcb55f3ffbb67e02",
+      "id": "c16a6ff58b95541022890f02e13b0cb5",
       "agent": "Cursor CLI",
       "model": "Opus 4.7",
       "modelLabel": "Opus 4.7 (medium)",
@@ -1523,21 +1349,47 @@
       "settingRank": 3,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 45.35643673525487,
-        "deepSwe": 31.5634218289085,
-        "terminalBench": 70.63492063492059,
+        "aaIndex": 46.655408258945535,
+        "deepSwe": 31.5634218289086,
+        "terminalBench": 74.53183520599251,
         "sweAtlas": 33.8709677419355
       },
       "economics": {
-        "costUsd": 2.6798684284787093,
-        "durationSeconds": 816.8511308411215
+        "costUsd": 2.72490571101738,
+        "durationSeconds": 826.6777535787326
       },
       "usage": {
-        "totalTokens": 5656580.071651096
+        "totalTokens": 5728865.1804703595
       }
     },
     {
-      "id": "7fa67a9e1f722082acda6674e2d6000e",
+      "id": "058d0070e59fbd4de08fd8404ad6780b",
+      "agent": "Devin CLI",
+      "model": "SWE-1.7 Lightning Max",
+      "modelLabel": "SWE-1.7 Lightning Max",
+      "providerId": "cognition",
+      "providerName": "Cognition",
+      "seriesId": "Devin CLI:cognition_swe-1-7-lightning",
+      "seriesLabel": "Devin CLI · SWE-1.7 Lightning Max",
+      "setting": "default",
+      "settingRank": 0,
+      "completeIndex": true,
+      "benchmarks": {
+        "aaIndex": 52.21389513465004,
+        "deepSwe": 40.412979351032405,
+        "terminalBench": 79.40074906367039,
+        "sweAtlas": 36.8279569892473
+      },
+      "economics": {
+        "costUsd": 8.521259638036815,
+        "durationSeconds": 637.3248271983654
+      },
+      "usage": {
+        "totalTokens": 15573672.601226985
+      }
+    },
+    {
+      "id": "66ac7c91716267e154f215ab26e4172f",
       "agent": "Gemini CLI",
       "model": "Gemini 3.1 Pro",
       "modelLabel": "Gemini 3.1 Pro (high)",
@@ -1549,21 +1401,21 @@
       "settingRank": 4,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 30.338470275666975,
+        "aaIndex": 32.93046837328304,
         "deepSwe": 14.159292035398199,
-        "terminalBench": 68.2539682539683,
+        "terminalBench": 76.02996254681649,
         "sweAtlas": 8.60215053763441
       },
       "economics": {
-        "costUsd": 1.996407103219105,
-        "durationSeconds": 649.431679127727
+        "costUsd": 1.0400415618609393,
+        "durationSeconds": 663.8363599182014
       },
       "usage": {
-        "totalTokens": 4704372.036863967
+        "totalTokens": 4727804.222392637
       }
     },
     {
-      "id": "826cff5ab69aa8b11bf5ce37dd0c619c",
+      "id": "f9dfa1352b8ad65082db64e79f6512e6",
       "agent": "Grok Build",
       "model": "Grok 4.5",
       "modelLabel": "Grok 4.5 (high)",
@@ -1575,21 +1427,21 @@
       "settingRank": 4,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 64.43924859568592,
+        "aaIndex": 64.08998279698193,
         "deepSwe": 59.88200589970501,
-        "terminalBench": 85.3174603174603,
+        "terminalBench": 84.2696629213483,
         "sweAtlas": 48.1182795698925
       },
       "economics": {
-        "costUsd": 2.592057121495327,
-        "durationSeconds": 988.6643136033242
+        "costUsd": 2.4389824437627774,
+        "durationSeconds": 929.1851094069538
       },
       "usage": {
-        "totalTokens": 3574850.550363447
+        "totalTokens": 3598867.582822087
       }
     },
     {
-      "id": "6a3f4427a0ee251db8ba6e3e21bb7afe",
+      "id": "ee21768cfe97130b229e53061fe287c7",
       "agent": "Kimi Code CLI",
       "model": "Kimi K3",
       "modelLabel": "Kimi K3",
@@ -1601,21 +1453,21 @@
       "settingRank": 0,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 61.33537089146564,
-        "deepSwe": 63.716814159292,
-        "terminalBench": 83.7301587301587,
+        "aaIndex": 62.63880112748019,
+        "deepSwe": 63.7168141592921,
+        "terminalBench": 87.6404494382023,
         "sweAtlas": 36.5591397849462
       },
       "economics": {
-        "costUsd": 3.1751868971339587,
-        "durationSeconds": 1427.7253894081002
+        "costUsd": 3.081635541610427,
+        "durationSeconds": 1447.3730531697347
       },
       "usage": {
-        "totalTokens": 10619290.22409137
+        "totalTokens": 10383196.737883452
       }
     },
     {
-      "id": "7003d64534eb0a83f85563741e1dd387",
+      "id": "279e5a03d4cf7f4856bff2d8410c20c0",
       "agent": "Muse Code",
       "model": "Muse Spark 1.2",
       "modelLabel": "Muse Spark 1.2 (xhigh)",
@@ -1627,21 +1479,21 @@
       "settingRank": 5,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 60.52533202832947,
+        "aaIndex": 61.64044159758908,
         "deepSwe": 58.1120943952802,
-        "terminalBench": 78.5714285714286,
-        "sweAtlas": 44.892473118279604
+        "terminalBench": 81.6479400749064,
+        "sweAtlas": 45.1612903225806
       },
       "economics": {
-        "costUsd": 2.3261122773624114,
-        "durationSeconds": 2519.4239839044617
+        "costUsd": 2.072823051942741,
+        "durationSeconds": 2448.643313905929
       },
       "usage": {
-        "totalTokens": 21454249.668743517
+        "totalTokens": 19963139.084867075
       }
     },
     {
-      "id": "4fb40d5633b706eecb1da0a68cb4f1ed",
+      "id": "72584108afbb1ea9bb96db4cc4809e0d",
       "agent": "Opencode",
       "model": "Gemini 3.6 Flash",
       "modelLabel": "Gemini 3.6 Flash (high)",
@@ -1653,21 +1505,21 @@
       "settingRank": 4,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 45.6272174870519,
+        "aaIndex": 47.24127134829677,
         "deepSwe": 41.2979351032448,
-        "terminalBench": 73.8095238095238,
+        "terminalBench": 78.65168539325839,
         "sweAtlas": 21.7741935483871
       },
       "economics": {
-        "costUsd": 2.0792301894081002,
-        "durationSeconds": 625.2649283489097
+        "costUsd": 2.0838901547546023,
+        "durationSeconds": 626.0057290388545
       },
       "usage": {
-        "totalTokens": 13024312.41536864
+        "totalTokens": 13020159.542944789
       }
     },
     {
-      "id": "6618764de249675762f155bbd0cfc82e",
+      "id": "a3de73b424f0aa6d48daef70434ea21e",
       "agent": "Opencode",
       "model": "Gemini 3.7 Flash",
       "modelLabel": "Gemini 3.7 Flash (high)",
@@ -1679,21 +1531,21 @@
       "settingRank": 4,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 57.06854442224124,
+        "aaIndex": 59.62784529614886,
         "deepSwe": 57.227138643067796,
-        "terminalBench": 83.3333333333333,
+        "terminalBench": 91.01123595505621,
         "sweAtlas": 30.645161290322598
       },
       "economics": {
-        "costUsd": 1.2621324787383168,
-        "durationSeconds": 507.93494600207674
+        "costUsd": 1.2679325688650294,
+        "durationSeconds": 527.0915644171779
       },
       "usage": {
-        "totalTokens": 18537559.05295947
+        "totalTokens": 18493123.3742331
       }
     },
     {
-      "id": "c8eeed9aed54ca291e444ff7b972d2de",
+      "id": "e347a66c457b5dca0bf4ed67c15afc5f",
       "agent": "Opencode",
       "model": "Muse Spark 1.1",
       "modelLabel": "Muse Spark 1.1 (xhigh)",
@@ -1705,21 +1557,21 @@
       "settingRank": 5,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 53.54216416163317,
+        "aaIndex": 54.92139250715367,
         "deepSwe": 54.2772861356932,
-        "terminalBench": 73.015873015873,
+        "terminalBench": 77.1535580524345,
         "sweAtlas": 33.3333333333333
       },
       "economics": {
-        "costUsd": 1.4282406838058175,
-        "durationSeconds": 755.2098182762193
+        "costUsd": 1.4352184351738226,
+        "durationSeconds": 761.3780071574632
       },
       "usage": {
-        "totalTokens": 12243521.204517122
+        "totalTokens": 12289527.214723915
       }
     },
     {
-      "id": "8e532b4c1fa0766d03b23f0a624c5c09",
+      "id": "7f339363f7624e3dfa5a098bace791f9",
       "agent": "Opencode",
       "model": "Muse Spark 1.2",
       "modelLabel": "Muse Spark 1.2 (xhigh)",
@@ -1731,21 +1583,21 @@
       "settingRank": 5,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 56.5024763354766,
+        "aaIndex": 58.88788742875287,
         "deepSwe": 52.8023598820059,
-        "terminalBench": 72.6190476190476,
+        "terminalBench": 79.7752808988764,
         "sweAtlas": 44.0860215053763
       },
       "economics": {
-        "costUsd": 1.912196447139147,
-        "durationSeconds": 1073.6791817237795
+        "costUsd": 1.914379785695295,
+        "durationSeconds": 1064.7406922290384
       },
       "usage": {
-        "totalTokens": 16355511.891536862
+        "totalTokens": 16350688.074539876
       }
     },
     {
-      "id": "0e986585915615e683f7ebf5aeb877e2",
+      "id": "44d95004637ad30aed1fba83572cff96",
       "agent": "Opencode",
       "model": "Opus 4.7",
       "modelLabel": "Opus 4.7 (medium)",
@@ -1757,17 +1609,17 @@
       "settingRank": 3,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 50.315451457329864,
+        "aaIndex": 51.27556084440553,
         "deepSwe": 39.5280235988201,
-        "terminalBench": 75.39682539682539,
+        "terminalBench": 78.2771535580524,
         "sweAtlas": 36.021505376344095
       },
       "economics": {
-        "costUsd": 2.931337044262723,
-        "durationSeconds": 731.6785908618888
+        "costUsd": 2.942840985557261,
+        "durationSeconds": 752.2755521472382
       },
       "usage": {
-        "totalTokens": 7560139.581516107
+        "totalTokens": 7582747.093047052
       }
     }
   ]

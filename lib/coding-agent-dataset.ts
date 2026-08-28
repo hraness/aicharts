@@ -201,7 +201,7 @@ export function codingAgentDatasetJsonLd(
       "LLM benchmark",
       "AA Index",
       "DeepSWE",
-      "Terminal-Bench v2",
+      "Terminal-Bench v2.1",
       "SWE-Atlas-QnA",
     ],
     measurementTechnique: CODING_AGENT_BENCHMARK_DEFINITIONS.map(

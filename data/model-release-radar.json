@@ -1,0 +1,744 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "method": "models-api",
+    "name": "OpenRouter",
+    "retrievedAt": "2026-08-28T02:03:26.685Z",
+    "timestampMeaning": "source-added-at",
+    "url": "https://openrouter.ai/api/v1/models?sort=newest"
+  },
+  "policy": {
+    "limit": 48,
+    "providers": [
+      "alibaba_cloud",
+      "anthropic",
+      "deepseek",
+      "google",
+      "meta",
+      "moonshot_ai",
+      "openai",
+      "xai",
+      "z_ai"
+    ],
+    "publication": "discovery-only",
+    "requires": [
+      "text-output",
+      "tools"
+    ],
+    "windowDays": 90
+  },
+  "releases": [
+    {
+      "capabilities": {
+        "inputModalities": [
+          "image",
+          "text",
+          "video"
+        ],
+        "outputModalities": [
+          "text"
+        ],
+        "supportsTools": true
+      },
+      "canonicalSlug": "qwen/qwen3.8-flash-20260826",
+      "id": "qwen/qwen3.8-flash",
+      "model": "Qwen3.8 Flash",
+      "modelUrl": "https://openrouter.ai/qwen/qwen3.8-flash",
+      "providerId": "alibaba_cloud",
+      "providerName": "Alibaba Cloud",
+      "sourceAddedAt": "2026-08-26T19:37:40.000Z",
+      "status": "awaiting-benchmark"
+    },
+    {
+      "capabilities": {
+        "inputModalities": [
+          "image",
+          "text",
+          "video"
+        ],
+        "outputModalities": [
+          "text"
+        ],
+        "supportsTools": true
+      },
+      "canonicalSlug": "z-ai/glm-5.3-flash-20260826",
+      "id": "z-ai/glm-5.3-flash",
+      "model": "GLM 5.3 Flash",
+      "modelUrl": "https://openrouter.ai/z-ai/glm-5.3-flash",
+      "providerId": "z_ai",
+      "providerName": "Z.ai",
+      "sourceAddedAt": "2026-08-26T13:59:01.000Z",
+      "status": "awaiting-benchmark"
+    },
+    {
+      "capabilities": {
+        "inputModalities": [
+          "audio",
+          "file",
+          "image",
+          "text",
+          "video"
+        ],
+        "outputModalities": [
+          "text"
+        ],
+        "supportsTools": true
+      },
+      "canonicalSlug": "meta/muse-spark-1.2-contributor-20260805",
+      "id": "meta/muse-spark-1.2-contributor",
+      "model": "Muse Spark 1.2 Contributor",
+      "modelUrl": "https://openrouter.ai/meta/muse-spark-1.2-contributor",
+      "providerId": "meta",
+      "providerName": "Meta",
+      "sourceAddedAt": "2026-08-21T18:21:16.000Z",
+      "status": "awaiting-benchmark"
+    },
+    {
+      "capabilities": {
+        "inputModalities": [
+          "image",
+          "text"
+        ],
+        "outputModalities": [
+          "text"
+        ],
+        "supportsTools": true
+      },
+      "canonicalSlug": "deepseek/deepseek-v4-flash-vision-exp-20260821",
+      "id": "deepseek/deepseek-v4-flash-vision-exp",
+      "model": "DeepSeek V4 Flash Vision Exp",
+      "modelUrl": "https://openrouter.ai/deepseek/deepseek-v4-flash-vision-exp",
+      "providerId": "deepseek",
+      "providerName": "DeepSeek",
+      "sourceAddedAt": "2026-08-21T11:26:03.000Z",
+      "status": "awaiting-benchmark"
+    },
+    {
+      "capabilities": {
+        "inputModalities": [
+          "text"
+        ],
+        "outputModalities": [
+          "text"
+        ],
+        "supportsTools": true
+      },
+      "canonicalSlug": "z-ai/glm-5.3-20260816",
+      "id": "z-ai/glm-5.3",
+      "model": "GLM 5.3",
+      "modelUrl": "https://openrouter.ai/z-ai/glm-5.3",
+      "providerId": "z_ai",
+      "providerName": "Z.ai",
+      "sourceAddedAt": "2026-08-18T20:57:35.000Z",
+      "status": "awaiting-benchmark"
+    },
+    {
+      "capabilities": {
+        "inputModalities": [
+          "image",
+          "text",
+          "video"
+        ],
+        "outputModalities": [
+          "text"
+        ],
+        "supportsTools": true
+      },
+      "canonicalSlug": "qwen/qwen3.8-27b-20260814",
+      "id": "qwen/qwen3.8-27b",
+      "model": "Qwen3.8 27B",
+      "modelUrl": "https://openrouter.ai/qwen/qwen3.8-27b",
+      "providerId": "alibaba_cloud",
+      "providerName": "Alibaba Cloud",
+      "sourceAddedAt": "2026-08-14T15:55:10.000Z",
+      "status": "awaiting-benchmark"
+    },
+    {
+      "capabilities": {
+        "inputModalities": [
+          "audio",
+          "file",
+          "image",
+          "text",
+          "video"
+        ],
+        "outputModalities": [
+          "text"
+        ],
+        "supportsTools": true
+      },
+      "canonicalSlug": "google/gemini-3.7-flash-20260813",
+      "id": "google/gemini-3.7-flash",
+      "model": "Gemini 3.7 Flash",
+      "modelUrl": "https://openrouter.ai/google/gemini-3.7-flash",
+      "providerId": "google",
+      "providerName": "Google",
+      "sourceAddedAt": "2026-08-13T17:03:01.000Z",
+      "status": "benchmarked"
+    },
+    {
+      "capabilities": {
+        "inputModalities": [
+          "text"
+        ],
+        "outputModalities": [
+          "text"
+        ],
+        "supportsTools": true
+      },
+      "canonicalSlug": "qwen/qwen3.8-2.4t-a95b-20260812",
+      "id": "qwen/qwen3.8-2.4t-a95b",
+      "model": "Qwen3.8 2.4T A95B",
+      "modelUrl": "https://openrouter.ai/qwen/qwen3.8-2.4t-a95b",
+      "providerId": "alibaba_cloud",
+      "providerName": "Alibaba Cloud",
+      "sourceAddedAt": "2026-08-12T16:21:42.000Z",
+      "status": "awaiting-benchmark"
+    },
+    {
+      "capabilities": {
+        "inputModalities": [
+          "text"
+        ],
+        "outputModalities": [
+          "text"
+        ],
+        "supportsTools": true
+      },
+      "canonicalSlug": "deepseek/deepseek-v4-pro-20260813",
+      "id": "deepseek/deepseek-v4-pro-0813",
+      "model": "DeepSeek V4 Pro 0813",
+      "modelUrl": "https://openrouter.ai/deepseek/deepseek-v4-pro-0813",
+      "providerId": "deepseek",
+      "providerName": "DeepSeek",
+      "sourceAddedAt": "2026-08-12T15:42:44.000Z",
+      "status": "benchmarked"
+    },
+    {
+      "capabilities": {
+        "inputModalities": [
+          "file",
+          "image",
+          "text"
+        ],
+        "outputModalities": [
+          "text"
+        ],
+        "supportsTools": true
+      },
+      "canonicalSlug": "x-ai/grok-4.6-20260810",
+      "id": "x-ai/grok-4.6",
+      "model": "Grok 4.6",
+      "modelUrl": "https://openrouter.ai/x-ai/grok-4.6",
+      "providerId": "xai",
+      "providerName": "xAI",
+      "sourceAddedAt": "2026-08-12T15:35:57.000Z",
+      "status": "awaiting-benchmark"
+    },
+    {
+      "capabilities": {
+        "inputModalities": [
+          "image",
+          "text"
+        ],
+        "outputModalities": [
+          "text"
+        ],
+        "supportsTools": true
+      },
+      "canonicalSlug": "meta/muse-glimmer-30b-20260810",
+      "id": "meta/muse-glimmer-30b",
+      "model": "Muse Glimmer 30B",
+      "modelUrl": "https://openrouter.ai/meta/muse-glimmer-30b",
+      "providerId": "meta",
+      "providerName": "Meta",
+      "sourceAddedAt": "2026-08-09T19:06:34.000Z",
+      "status": "awaiting-benchmark"
+    },
+    {
+      "capabilities": {
+        "inputModalities": [
+          "audio",
+          "file",
+          "image",
+          "text",
+          "video"
+        ],
+        "outputModalities": [
+          "text"
+        ],
+        "supportsTools": true
+      },
+      "canonicalSlug": "meta/muse-spark-1.2-20260805",
+      "id": "meta/muse-spark-1.2",
+      "model": "Muse Spark 1.2",
+      "modelUrl": "https://openrouter.ai/meta/muse-spark-1.2",
+      "providerId": "meta",
+      "providerName": "Meta",
+      "sourceAddedAt": "2026-08-05T19:48:07.000Z",
+      "status": "benchmarked"
+    },
+    {
+      "capabilities": {
+        "inputModalities": [
+          "image",
+          "text",
+          "video"
+        ],
+        "outputModalities": [
+          "text"
+        ],
+        "supportsTools": true
+      },
+      "canonicalSlug": "qwen/qwen3.8-max-20260803",
+      "id": "qwen/qwen3.8-max",
+      "model": "Qwen3.8 Max",
+      "modelUrl": "https://openrouter.ai/qwen/qwen3.8-max",
+      "providerId": "alibaba_cloud",
+      "providerName": "Alibaba Cloud",
+      "sourceAddedAt": "2026-08-03T04:33:32.000Z",
+      "status": "benchmarked"
+    },
+    {
+      "capabilities": {
+        "inputModalities": [
+          "text"
+        ],
+        "outputModalities": [
+          "text"
+        ],
+        "supportsTools": true
+      },
+      "canonicalSlug": "deepseek/deepseek-v4-flash-20260731",
+      "id": "deepseek/deepseek-v4-flash-0731",
+      "model": "DeepSeek V4 Flash 0731",
+      "modelUrl": "https://openrouter.ai/deepseek/deepseek-v4-flash-0731",
+      "providerId": "deepseek",
+      "providerName": "DeepSeek",
+      "sourceAddedAt": "2026-07-31T06:21:48.000Z",
+      "status": "benchmarked"
+    },
+    {
+      "capabilities": {
+        "inputModalities": [
+          "image",
+          "text",
+          "video"
+        ],
+        "outputModalities": [
+          "text"
+        ],
+        "supportsTools": true
+      },
+      "canonicalSlug": "qwen/qwen3.7-flash-20260727",
+      "id": "qwen/qwen3.7-flash",
+      "model": "Qwen3.7 Flash",
+      "modelUrl": "https://openrouter.ai/qwen/qwen3.7-flash",
+      "providerId": "alibaba_cloud",
+      "providerName": "Alibaba Cloud",
+      "sourceAddedAt": "2026-07-27T22:16:01.000Z",
+      "status": "awaiting-benchmark"
+    },
+    {
+      "capabilities": {
+        "inputModalities": [
+          "file",
+          "image",
+          "text"
+        ],
+        "outputModalities": [
+          "text"
+        ],
+        "supportsTools": true
+      },
+      "canonicalSlug": "anthropic/claude-opus-5-fast-20260723",
+      "id": "anthropic/claude-opus-5-fast",
+      "model": "Claude Opus 5 (Fast)",
+      "modelUrl": "https://openrouter.ai/anthropic/claude-opus-5-fast",
+      "providerId": "anthropic",
+      "providerName": "Anthropic",
+      "sourceAddedAt": "2026-07-24T17:02:26.000Z",
+      "status": "awaiting-benchmark"
+    },
+    {
+      "capabilities": {
+        "inputModalities": [
+          "file",
+          "image",
+          "text"
+        ],
+        "outputModalities": [
+          "text"
+        ],
+        "supportsTools": true
+      },
+      "canonicalSlug": "anthropic/claude-opus-5-20260723",
+      "id": "anthropic/claude-opus-5",
+      "model": "Claude Opus 5",
+      "modelUrl": "https://openrouter.ai/anthropic/claude-opus-5",
+      "providerId": "anthropic",
+      "providerName": "Anthropic",
+      "sourceAddedAt": "2026-07-24T17:02:24.000Z",
+      "status": "benchmarked"
+    },
+    {
+      "capabilities": {
+        "inputModalities": [
+          "audio",
+          "file",
+          "image",
+          "text",
+          "video"
+        ],
+        "outputModalities": [
+          "text"
+        ],
+        "supportsTools": true
+      },
+      "canonicalSlug": "google/gemini-3.6-flash-20260721",
+      "id": "google/gemini-3.6-flash",
+      "model": "Gemini 3.6 Flash",
+      "modelUrl": "https://openrouter.ai/google/gemini-3.6-flash",
+      "providerId": "google",
+      "providerName": "Google",
+      "sourceAddedAt": "2026-07-21T15:12:13.000Z",
+      "status": "benchmarked"
+    },
+    {
+      "capabilities": {
+        "inputModalities": [
+          "audio",
+          "file",
+          "image",
+          "text",
+          "video"
+        ],
+        "outputModalities": [
+          "text"
+        ],
+        "supportsTools": true
+      },
+      "canonicalSlug": "google/gemini-3.5-flash-lite-20260721",
+      "id": "google/gemini-3.5-flash-lite",
+      "model": "Gemini 3.5 Flash Lite",
+      "modelUrl": "https://openrouter.ai/google/gemini-3.5-flash-lite",
+      "providerId": "google",
+      "providerName": "Google",
+      "sourceAddedAt": "2026-07-21T15:12:06.000Z",
+      "status": "awaiting-benchmark"
+    },
+    {
+      "capabilities": {
+        "inputModalities": [
+          "image",
+          "text",
+          "video"
+        ],
+        "outputModalities": [
+          "text"
+        ],
+        "supportsTools": true
+      },
+      "canonicalSlug": "moonshotai/kimi-k3-20260715",
+      "id": "moonshotai/kimi-k3",
+      "model": "Kimi K3",
+      "modelUrl": "https://openrouter.ai/moonshotai/kimi-k3",
+      "providerId": "moonshot_ai",
+      "providerName": "Moonshot AI",
+      "sourceAddedAt": "2026-07-16T15:30:58.000Z",
+      "status": "benchmarked"
+    },
+    {
+      "capabilities": {
+        "inputModalities": [
+          "audio",
+          "file",
+          "image",
+          "text",
+          "video"
+        ],
+        "outputModalities": [
+          "text"
+        ],
+        "supportsTools": true
+      },
+      "canonicalSlug": "meta/muse-spark-1.1-20260709",
+      "id": "meta/muse-spark-1.1",
+      "model": "Muse Spark 1.1",
+      "modelUrl": "https://openrouter.ai/meta/muse-spark-1.1",
+      "providerId": "meta",
+      "providerName": "Meta",
+      "sourceAddedAt": "2026-07-16T15:29:01.000Z",
+      "status": "benchmarked"
+    },
+    {
+      "capabilities": {
+        "inputModalities": [
+          "file",
+          "image",
+          "text"
+        ],
+        "outputModalities": [
+          "text"
+        ],
+        "supportsTools": true
+      },
+      "canonicalSlug": "openai/gpt-5.6-luna-pro-20260709",
+      "id": "openai/gpt-5.6-luna-pro",
+      "model": "GPT-5.6 Luna Pro",
+      "modelUrl": "https://openrouter.ai/openai/gpt-5.6-luna-pro",
+      "providerId": "openai",
+      "providerName": "OpenAI",
+      "sourceAddedAt": "2026-07-09T09:54:27.000Z",
+      "status": "awaiting-benchmark"
+    },
+    {
+      "capabilities": {
+        "inputModalities": [
+          "file",
+          "image",
+          "text"
+        ],
+        "outputModalities": [
+          "text"
+        ],
+        "supportsTools": true
+      },
+      "canonicalSlug": "openai/gpt-5.6-luna-20260709",
+      "id": "openai/gpt-5.6-luna",
+      "model": "GPT-5.6 Luna",
+      "modelUrl": "https://openrouter.ai/openai/gpt-5.6-luna",
+      "providerId": "openai",
+      "providerName": "OpenAI",
+      "sourceAddedAt": "2026-07-09T09:54:24.000Z",
+      "status": "benchmarked"
+    },
+    {
+      "capabilities": {
+        "inputModalities": [
+          "file",
+          "image",
+          "text"
+        ],
+        "outputModalities": [
+          "text"
+        ],
+        "supportsTools": true
+      },
+      "canonicalSlug": "openai/gpt-5.6-terra-pro-20260709",
+      "id": "openai/gpt-5.6-terra-pro",
+      "model": "GPT-5.6 Terra Pro",
+      "modelUrl": "https://openrouter.ai/openai/gpt-5.6-terra-pro",
+      "providerId": "openai",
+      "providerName": "OpenAI",
+      "sourceAddedAt": "2026-07-09T09:54:21.000Z",
+      "status": "awaiting-benchmark"
+    },
+    {
+      "capabilities": {
+        "inputModalities": [
+          "file",
+          "image",
+          "text"
+        ],
+        "outputModalities": [
+          "text"
+        ],
+        "supportsTools": true
+      },
+      "canonicalSlug": "openai/gpt-5.6-terra-20260709",
+      "id": "openai/gpt-5.6-terra",
+      "model": "GPT-5.6 Terra",
+      "modelUrl": "https://openrouter.ai/openai/gpt-5.6-terra",
+      "providerId": "openai",
+      "providerName": "OpenAI",
+      "sourceAddedAt": "2026-07-09T09:54:17.000Z",
+      "status": "benchmarked"
+    },
+    {
+      "capabilities": {
+        "inputModalities": [
+          "file",
+          "image",
+          "text"
+        ],
+        "outputModalities": [
+          "text"
+        ],
+        "supportsTools": true
+      },
+      "canonicalSlug": "openai/gpt-5.6-sol-pro-20260709",
+      "id": "openai/gpt-5.6-sol-pro",
+      "model": "GPT-5.6 Sol Pro",
+      "modelUrl": "https://openrouter.ai/openai/gpt-5.6-sol-pro",
+      "providerId": "openai",
+      "providerName": "OpenAI",
+      "sourceAddedAt": "2026-07-09T09:54:14.000Z",
+      "status": "awaiting-benchmark"
+    },
+    {
+      "capabilities": {
+        "inputModalities": [
+          "file",
+          "image",
+          "text"
+        ],
+        "outputModalities": [
+          "text"
+        ],
+        "supportsTools": true
+      },
+      "canonicalSlug": "openai/gpt-5.6-sol-20260709",
+      "id": "openai/gpt-5.6-sol",
+      "model": "GPT-5.6 Sol",
+      "modelUrl": "https://openrouter.ai/openai/gpt-5.6-sol",
+      "providerId": "openai",
+      "providerName": "OpenAI",
+      "sourceAddedAt": "2026-07-09T09:54:10.000Z",
+      "status": "benchmarked"
+    },
+    {
+      "capabilities": {
+        "inputModalities": [
+          "file",
+          "image",
+          "text"
+        ],
+        "outputModalities": [
+          "text"
+        ],
+        "supportsTools": true
+      },
+      "canonicalSlug": "x-ai/grok-4.5-20260708",
+      "id": "x-ai/grok-4.5",
+      "model": "Grok 4.5",
+      "modelUrl": "https://openrouter.ai/x-ai/grok-4.5",
+      "providerId": "xai",
+      "providerName": "xAI",
+      "sourceAddedAt": "2026-07-08T15:05:54.000Z",
+      "status": "benchmarked"
+    },
+    {
+      "capabilities": {
+        "inputModalities": [
+          "file",
+          "image",
+          "text"
+        ],
+        "outputModalities": [
+          "text"
+        ],
+        "supportsTools": true
+      },
+      "canonicalSlug": "anthropic/claude-sonnet-5-20260630",
+      "id": "anthropic/claude-sonnet-5",
+      "model": "Claude Sonnet 5",
+      "modelUrl": "https://openrouter.ai/anthropic/claude-sonnet-5",
+      "providerId": "anthropic",
+      "providerName": "Anthropic",
+      "sourceAddedAt": "2026-06-30T18:11:23.000Z",
+      "status": "awaiting-benchmark"
+    },
+    {
+      "capabilities": {
+        "inputModalities": [
+          "image",
+          "text"
+        ],
+        "outputModalities": [
+          "image",
+          "text"
+        ],
+        "supportsTools": true
+      },
+      "canonicalSlug": "google/gemini-3-pro-image-20260528",
+      "id": "google/gemini-3-pro-image",
+      "model": "Nano Banana Pro (Gemini 3 Pro Image)",
+      "modelUrl": "https://openrouter.ai/google/gemini-3-pro-image",
+      "providerId": "google",
+      "providerName": "Google",
+      "sourceAddedAt": "2026-06-18T03:40:54.000Z",
+      "status": "awaiting-benchmark"
+    },
+    {
+      "capabilities": {
+        "inputModalities": [
+          "text"
+        ],
+        "outputModalities": [
+          "text"
+        ],
+        "supportsTools": true
+      },
+      "canonicalSlug": "z-ai/glm-5.2-20260616",
+      "id": "z-ai/glm-5.2",
+      "model": "GLM 5.2",
+      "modelUrl": "https://openrouter.ai/z-ai/glm-5.2",
+      "providerId": "z_ai",
+      "providerName": "Z.ai",
+      "sourceAddedAt": "2026-06-16T17:45:30.000Z",
+      "status": "benchmarked"
+    },
+    {
+      "capabilities": {
+        "inputModalities": [
+          "image",
+          "text"
+        ],
+        "outputModalities": [
+          "text"
+        ],
+        "supportsTools": true
+      },
+      "canonicalSlug": "moonshotai/kimi-k2.7-code-20260612",
+      "id": "moonshotai/kimi-k2.7-code",
+      "model": "Kimi K2.7 Code",
+      "modelUrl": "https://openrouter.ai/moonshotai/kimi-k2.7-code",
+      "providerId": "moonshot_ai",
+      "providerName": "Moonshot AI",
+      "sourceAddedAt": "2026-06-12T12:12:41.000Z",
+      "status": "awaiting-benchmark"
+    },
+    {
+      "capabilities": {
+        "inputModalities": [
+          "file",
+          "image",
+          "text"
+        ],
+        "outputModalities": [
+          "text"
+        ],
+        "supportsTools": true
+      },
+      "canonicalSlug": "anthropic/claude-5-fable-20260609",
+      "id": "anthropic/claude-fable-5",
+      "model": "Claude Fable 5",
+      "modelUrl": "https://openrouter.ai/anthropic/claude-fable-5",
+      "providerId": "anthropic",
+      "providerName": "Anthropic",
+      "sourceAddedAt": "2026-06-09T12:18:35.000Z",
+      "status": "benchmarked"
+    },
+    {
+      "capabilities": {
+        "inputModalities": [
+          "image",
+          "text"
+        ],
+        "outputModalities": [
+          "text"
+        ],
+        "supportsTools": true
+      },
+      "canonicalSlug": "qwen/qwen3.7-plus-20260602",
+      "id": "qwen/qwen3.7-plus",
+      "model": "Qwen3.7 Plus",
+      "modelUrl": "https://openrouter.ai/qwen/qwen3.7-plus",
+      "providerId": "alibaba_cloud",
+      "providerName": "Alibaba Cloud",
+      "sourceAddedAt": "2026-06-03T13:03:03.000Z",
+      "status": "benchmarked"
+    }
+  ]
+}

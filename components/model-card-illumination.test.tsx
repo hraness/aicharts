@@ -141,7 +141,9 @@ describe("model card illumination", () => {
     }
     expect(identifiers.every(identifier => identifier.length > 0)).toBe(true);
     expect(new Set(identifiers).size).toBe(identifiers.length);
-    expect(fieldByFamily.size).toBe(12);
+    expect(fieldByFamily.size).toBe(new Set(
+      MODEL_CARD_PRESENTATIONS.map(card => card.emblemIdentity.familyId),
+    ).size);
     expect(new Set(fieldByFamily.values()).size).toBe(fieldByFamily.size);
   });
 
@@ -285,7 +287,9 @@ describe("model card illumination", () => {
       if (previousMatte === undefined) matteByFamily.set(card.emblemIdentity.familyId, matte);
       else expect(matte).toBe(previousMatte);
     }
-    expect(pathByFamily.size).toBe(12);
+    expect(pathByFamily.size).toBe(new Set(
+      MODEL_CARD_PRESENTATIONS.map(card => card.emblemIdentity.familyId),
+    ).size);
     expect(new Set(pathByFamily.values()).size).toBe(pathByFamily.size);
     expect(new Set(matteByFamily.values()).size).toBe(matteByFamily.size);
   });

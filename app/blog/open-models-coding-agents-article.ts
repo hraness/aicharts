@@ -208,12 +208,12 @@ export function createOpenModelsCodingAgentsArticle(
       ),
       heading("What the coding-agent snapshot records"),
       paragraph(
-        `AI Charts retrieved the checked snapshot on ${retrievedAt}. The dataset contains ${summary.recordCount} model-agent configurations across ${summary.modelCount} models, ${summary.agentCount} agent harnesses, and ${summary.providerCount} providers. AA Index is the snapshot's overall 0–100 score across code changes, terminal work, and repository understanding. DeepSWE, Terminal-Bench v2, and SWE-Atlas-QnA stay separate. The `,
+        `AI Charts retrieved the checked snapshot on ${retrievedAt}. The dataset contains ${summary.recordCount} model-agent configurations across ${summary.modelCount} models, ${summary.agentCount} agent harnesses, and ${summary.providerCount} providers. AA Index is the snapshot's overall 0–100 score across code changes, terminal work, and repository understanding. DeepSWE, Terminal-Bench v2.1, and SWE-Atlas-QnA stay separate. The `,
         { href: "/data", text: "dataset page" },
         " lists every configuration and the highest stored score for each metric.",
       ),
       paragraph(
-        "This is a closer relative of SemiAnalysis's agentic era than of their earlier exams, but it is not the same composite. The snapshot uses Terminal-Bench v2 rather than 2.1, omits BrowseComp-Plus and τ³-banking, adds SWE-Atlas-QnA, and reports DeepSWE as its own column instead of folding it into an unpublished average. Every row also carries a harness and setting. A model name without those fields is an incomplete citation here.",
+        "This is a closer relative of SemiAnalysis's agentic era than of their earlier exams, but it is not the same composite. The snapshot omits BrowseComp-Plus and τ³-banking, adds SWE-Atlas-QnA, and reports DeepSWE as its own column instead of folding it into an unpublished average. Every row also carries a harness and setting. A model name without those fields is an incomplete citation here.",
       ),
       heading("Closed configurations still lead on AA Index"),
       paragraph(

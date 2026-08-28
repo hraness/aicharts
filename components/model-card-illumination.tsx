@@ -8,6 +8,7 @@ export type ModelCardIlluminationFinish = "holographic" | "print";
 const providerCourts = {
   alibaba_cloud: "cloud-gate",
   anthropic: "aureole-book",
+  cognition: "mnemonic-orbit",
   cursor: "quill-spine",
   deepseek: "boustrophedon-tide",
   google: "quatrefoil-window",
@@ -25,6 +26,7 @@ const courtNames = Object.values(providerCourts);
 const providerLineHands = {
   alibaba_cloud: "cloud-burin",
   anthropic: "radiant-drypoint",
+  cognition: "synaptic-stippling",
   cursor: "quill-engraving",
   deepseek: "tidal-wrigglework",
   google: "cloisonne-hatch",
@@ -52,6 +54,7 @@ const familyArchetypes = {
   opus: "cathedral-window",
   qwen: "paired-gate",
   sonnet: "lyre",
+  "swe-lightning": "lightning-codex",
 } as const;
 
 export type ModelCardFamilyArchetype = typeof familyArchetypes[keyof typeof familyArchetypes];
@@ -71,6 +74,7 @@ const familyHolographicFields = {
   "cathedral-window": "rose-window-foil",
   "paired-gate": "axial-burin",
   lyre: "string-anisotropy",
+  "lightning-codex": "fulgurite-script",
 } as const satisfies Readonly<Record<ModelCardFamilyArchetype, string>>;
 
 const holographicFieldNames = Object.values(familyHolographicFields);
@@ -151,6 +155,9 @@ function providerCourtPath(court: ModelCardProviderCourt): string {
     }).join("");
     return `${rays}M46 185Q112 169 168 193L200 205L232 193Q288 169 354 185M168 193Q184 184 200 193Q216 184 232 193`;
   }
+  if (court === "mnemonic-orbit") {
+    return "M200 18C256 18 288 56 271 91C254 126 205 125 193 99C182 76 207 62 222 78C232 89 222 104 211 99C203 95 205 85 212 84M200 212C144 212 112 174 129 139C146 104 195 105 207 131C218 154 193 168 178 152C168 141 178 126 189 131C197 135 195 145 188 146M35 115H94M306 115H365M62 91L82 115L62 139M338 91L318 115L338 139";
+  }
   if (court === "quill-spine") {
     return "M42 198Q92 119 174 68Q245 24 356 28M65 172L98 170L88 144M100 135L137 132L124 103M143 94L181 91L170 63M236 73L257 47L281 52M279 54L300 35L325 40M326 41L346 29L356 28M44 198L49 174L67 193Z";
   }
@@ -187,6 +194,9 @@ function familyRadicalPath(archetype: ModelCardFamilyArchetype): string {
   }
   if (archetype === "lyre") {
     return "M158 61C135 91 139 137 174 157L187 166V184M242 61C265 91 261 137 226 157L213 166V184M158 61L178 76M242 61L222 76M178 76C166 110 175 143 200 157C225 143 234 110 222 76M185 80V153M200 75V157M215 80V153M172 189H228";
+  }
+  if (archetype === "lightning-codex") {
+    return "M218 35L155 117H191L171 195L247 98H210ZM151 61H184M144 79H171M229 151H258M220 169H251M135 188Q166 173 198 191Q232 173 265 188L245 201Q220 188 198 199Q176 188 151 201Z";
   }
   if (archetype === "interlaced-stave") {
     return "M142 174L244 55L266 72L165 191ZM146 81L165 58L258 166L238 190ZM155 166L178 164M171 145L194 143M188 124L211 122M205 103L228 101M222 82L245 80";
@@ -278,6 +288,9 @@ function providerReliefPath(court: ModelCardProviderCourt): string {
   if (court === "aureole-book") {
     return "M72 74L116 84L92 102ZM328 74L284 84L308 102ZM109 178Q151 164 191 184L174 196Q141 181 109 190ZM291 178Q249 164 209 184L226 196Q259 181 291 190Z";
   }
+  if (court === "mnemonic-orbit") {
+    return "M200 27L210 45L200 63L190 45ZM200 203L190 185L200 167L210 185ZM43 115L63 105L83 115L63 125ZM357 115L337 125L317 115L337 105ZM112 70L124 82L112 94L100 82ZM288 136L300 148L288 160L276 148Z";
+  }
   if (court === "quill-spine") {
     return "M41 186L52 159L66 180ZM67 159L80 130L92 151ZM92 132L108 103L119 124ZM284 58L310 42L303 67ZM316 43L344 28L335 54Z";
   }
@@ -305,6 +318,7 @@ function providerReliefPath(court: ModelCardProviderCourt): string {
 function providerHatchPath(hand: ModelCardProviderLineHand): string {
   if (hand === "cloud-burin") return "M31 151Q52 132 73 151M38 158Q57 141 76 158M324 158Q343 141 362 158M327 151Q348 132 369 151";
   if (hand === "radiant-drypoint") return Array.from({ length: 9 }, (_, index) => `M${104 + index * 24} 41L${116 + index * 21} ${55 + index % 2 * 7}`).join("");
+  if (hand === "synaptic-stippling") return "M72 70h5M88 82h4M69 99h6M87 115h5M70 132h4M90 149h6M323 70h5M308 82h4M325 99h6M308 115h5M326 132h4M304 149h6";
   if (hand === "quill-engraving") return "M47 176L75 181M56 159L84 165M68 141L96 147M82 122L109 129M301 55L329 61M320 41L347 47";
   if (hand === "tidal-wrigglework") return "M32 89Q44 80 56 89T80 89M320 89Q332 98 344 89T368 89M32 142Q44 133 56 142T80 142M320 142Q332 151 344 142T368 142";
   if (hand === "cloisonne-hatch") return "M81 61L108 88M75 72L101 98M292 88L319 61M299 98L325 72M81 169L108 142M75 158L101 132M292 142L319 169M299 132L325 158";
@@ -320,6 +334,7 @@ function familyMattePath(archetype: ModelCardFamilyArchetype): string {
   if (archetype === "illuminated-initial") return "M137 54H224Q250 54 258 74L247 100Q265 117 250 137L260 162Q247 188 218 185L198 199L178 185Q149 188 136 162L146 137Q131 117 149 100L138 74Z";
   if (archetype === "cathedral-window") return "M200 36Q154 62 145 114Q140 157 177 187L200 205L223 187Q260 157 255 114Q246 62 200 36Z";
   if (archetype === "lyre") return "M151 52Q123 101 146 150Q155 170 181 180L175 197H225L219 180Q245 170 254 150Q277 101 249 52L223 70Q235 105 218 143L200 160L182 143Q165 105 177 70Z";
+  if (archetype === "lightning-codex") return "M214 25L143 112L181 126L154 204L205 184L257 92L219 84L244 42Z";
   if (archetype === "interlaced-stave") return "M131 77L164 46L200 86L236 46L269 77L226 116L271 162L238 194L200 151L162 194L129 162L174 116Z";
   if (archetype === "abyssal-eye") return "M119 115Q151 63 200 70Q249 63 281 115Q249 167 200 160Q151 167 119 115ZM154 115Q176 87 200 92Q224 87 246 115Q224 143 200 138Q176 143 154 115Z";
   if (archetype === "twin-vesica") return "M200 35Q137 73 147 125Q151 164 200 195Q249 164 253 125Q263 73 200 35ZM200 60Q170 85 170 125Q173 156 200 175Q227 156 230 125Q230 85 200 60Z";
