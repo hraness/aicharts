@@ -353,7 +353,9 @@ exec /bin/sleep 60
     await expect(readCodexRateLimits(subject.environment, subject.authContext, {
       killGraceMs: 500,
       onChildSpawned: child => {
-        child.stdout.once("data", () => {
+        const stdout = child.stdout;
+        if (stdout === null) throw new Error("Fixture reader stdout is unavailable.");
+        stdout.once("data", () => {
           // Bun retains a duplicate pipe reader in this fixture, so mirror the
           // EPIPE that Node emits after the fake's OS-level fd 0 close.
           const pipeError = Object.assign(new Error("Fixture stdin pipe closed."), {
