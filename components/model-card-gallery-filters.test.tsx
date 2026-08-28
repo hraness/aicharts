@@ -2,10 +2,11 @@ import { describe, expect, test } from "bun:test";
 import { renderToStaticMarkup } from "react-dom/server";
 
 import {
-  ModelCardGalleryFilterItem,
   ModelCardGalleryFilters,
+  ModelCardGalleryItems,
   modelCardFilterFromSearch,
   modelCardFilterSearch,
+  modelCardGalleryItemOrder,
   modelCardMatchesFilter,
   type ModelCardProviderFilter,
 } from "./model-card-gallery-filters";
@@ -16,48 +17,57 @@ const providers: readonly ModelCardProviderFilter[] = [
 ];
 
 describe("model-card gallery filters", () => {
-  test("parses only canonical provider and Top query values", () => {
+  test("parses only canonical provider, Top, and New-sort query values", () => {
     const providerIds = providers.map(provider => provider.id);
 
-    expect(modelCardFilterFromSearch("?provider=one&top=1", providerIds)).toEqual({
+    expect(modelCardFilterFromSearch("?provider=one&sort=new&top=1", providerIds)).toEqual({
       providerId: "one",
+      sort: "new",
       topOnly: true,
     });
-    expect(modelCardFilterFromSearch("?provider=unknown&top=true", providerIds)).toEqual({
+    expect(modelCardFilterFromSearch("?provider=unknown&sort=old&top=true", providerIds)).toEqual({
       providerId: "",
+      sort: "",
       topOnly: false,
     });
-    expect(modelCardFilterFromSearch("?provider=two&provider=one&top=0&top=1", providerIds)).toEqual({
+    expect(modelCardFilterFromSearch("?provider=two&provider=one&sort=new&sort=old&top=0&top=1", providerIds)).toEqual({
       providerId: "",
+      sort: "",
       topOnly: false,
     });
-    expect(modelCardFilterFromSearch("?provider=two&provider=two&top=1&top=1", providerIds)).toEqual({
+    expect(modelCardFilterFromSearch("?provider=two&provider=two&sort=new&sort=new&top=1&top=1", providerIds)).toEqual({
       providerId: "two",
+      sort: "new",
       topOnly: true,
     });
   });
 
   test("writes stable filter permalinks while preserving unrelated parameters", () => {
-    expect(modelCardFilterSearch("?campaign=folio&provider=old&top=0", {
+    expect(modelCardFilterSearch("?campaign=folio&provider=old&sort=old&top=0", {
       providerId: "one",
+      sort: "new",
       topOnly: true,
-    })).toBe("campaign=folio&provider=one&top=1");
-    expect(modelCardFilterSearch("?provider=one&provider=two&top=1", {
+    })).toBe("campaign=folio&provider=one&sort=new&top=1");
+    expect(modelCardFilterSearch("?provider=one&provider=two&sort=new&top=1", {
       providerId: "",
+      sort: "",
       topOnly: false,
     })).toBe("");
     expect(modelCardFilterSearch("", {
       providerId: "two",
+      sort: "",
       topOnly: false,
     })).toBe("provider=two");
 
     for (const providerId of ["", ...providers.map(provider => provider.id)]) {
       for (const topOnly of [false, true]) {
-        const filter = { providerId, topOnly };
-        expect(modelCardFilterFromSearch(
-          modelCardFilterSearch("?campaign=folio", filter),
-          providers.map(provider => provider.id),
-        )).toEqual(filter);
+        for (const sort of ["", "new"] as const) {
+          const filter = { providerId, sort, topOnly };
+          expect(modelCardFilterFromSearch(
+            modelCardFilterSearch("?campaign=folio", filter),
+            providers.map(provider => provider.id),
+          )).toEqual(filter);
+        }
       }
     }
   });
@@ -74,7 +84,34 @@ describe("model-card gallery filters", () => {
     expect(modelCardMatchesFilter(topTwo, "one", true)).toBeFalse();
   });
 
-  test("server-renders labelled controls and every default card slot", () => {
+  test("sorts recently listed cards in real DOM order without changing filtering", () => {
+    const items = [
+      { isTop: true, providerId: "one", sourceAddedAt: "2026-07-01T00:00:00.000Z" },
+      { isTop: false, providerId: "two", sourceAddedAt: null },
+      { isTop: true, providerId: "one", sourceAddedAt: "2026-08-01T00:00:00.000Z" },
+      { isTop: true, providerId: "one", sourceAddedAt: "2026-08-01T00:00:00.000Z" },
+      { isTop: false, providerId: "one", sourceAddedAt: "not-a-date" },
+    ] as const;
+
+    expect(modelCardGalleryItemOrder(items, {
+      providerId: "",
+      sort: "",
+      topOnly: false,
+    })).toEqual([0, 1, 2, 3, 4]);
+    expect(modelCardGalleryItemOrder(items, {
+      providerId: "",
+      sort: "new",
+      topOnly: false,
+    })).toEqual([2, 3, 0, 1, 4]);
+    expect(modelCardGalleryItemOrder(items, {
+      providerId: "one",
+      sort: "new",
+      topOnly: true,
+    })).toEqual([2, 3, 0]);
+    expect(items.map(item => item.providerId)).toEqual(["one", "two", "one", "one", "one"]);
+  });
+
+  test("server-renders compact accessible controls and every default card slot", () => {
     const markup = renderToStaticMarkup(
       <ModelCardGalleryFilters
         gridId="cards"
@@ -82,23 +119,37 @@ describe("model-card gallery filters", () => {
         topCount={1}
         totalCount={3}
       >
-        <div id="cards">
-          <ModelCardGalleryFilterItem isTop providerId="one"><a href="/one">One</a></ModelCardGalleryFilterItem>
-          <ModelCardGalleryFilterItem isTop={false} providerId="two"><a href="/two">Two</a></ModelCardGalleryFilterItem>
-        </div>
+        <ModelCardGalleryItems
+          id="cards"
+          items={[
+            { isTop: true, providerId: "one", sourceAddedAt: "2026-08-01T00:00:00.000Z" },
+            { isTop: false, providerId: "two", sourceAddedAt: null },
+          ]}
+        >
+          <a href="/one">One</a>
+          <a href="/two">Two</a>
+        </ModelCardGalleryItems>
       </ModelCardGalleryFilters>,
     );
 
     expect(markup).toContain('aria-label="Filter model cards"');
-    expect(markup).toContain('<span>Provider</span>');
+    expect(markup).toContain('data-slot="native-select-field"');
+    expect(markup).toContain('class="hraness-field__label hraness-visually-hidden"');
+    expect(markup).toContain('>Provider</label>');
+    expect(markup).not.toContain('<span>Provider</span>');
     expect(markup).toContain('aria-label="Show only cost and AA Index Pareto-frontier cards"');
-    expect(markup).toContain('aria-pressed="false"');
+    expect(markup).toContain('aria-label="Sort model cards by recent OpenRouter listing time"');
+    expect(markup.match(/aria-pressed="false"/gu)).toHaveLength(2);
     expect(markup).toContain("All providers · 3");
     expect(markup).toContain("One · 2");
-    expect(markup).toContain("1 card · Cost ↓ · AA Index ↑");
-    expect(markup).toContain("3 of 3 cards");
+    expect(markup).toContain("1 card · Cost ↓ · AAI ↑");
+    expect(markup).toContain("Recently listed first");
+    expect(markup).not.toContain("3 of 3 cards");
+    expect(markup).toContain('aria-live="polite"');
+    expect(markup).toContain("Showing 3 model cards.");
     expect(markup).toContain('href="/one"');
     expect(markup).toContain('href="/two"');
     expect(markup).toContain("no other configuration is at least as strong and no more expensive");
+    expect(markup).toContain("does not claim an official release date");
   });
 });

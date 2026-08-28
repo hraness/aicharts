@@ -7,9 +7,11 @@ import {
   MODEL_RELEASE_SOURCE_URL,
   MODEL_RELEASE_WINDOW_DAYS,
   modelReleaseProviderIds,
+  modelReleaseSemanticKey,
   parseModelReleaseRadar,
   parseOpenRouterModelsResponse,
   type ModelRelease,
+  type ModelReleaseListing,
   type ModelReleaseProviderId,
   type ModelReleaseRadar,
   type ModelReleaseStatus,
@@ -57,25 +59,6 @@ function openRouterAuthor(id: string): string | null {
 function displayModelName(name: string): string {
   const separator = name.indexOf(":");
   return (separator === -1 ? name : name.slice(separator + 1)).trim();
-}
-
-function normalizeModelName(providerId: ModelReleaseProviderId, value: string): string {
-  const withoutConfiguration = value.replace(/\((?:thinking|with fallback)\)/giu, " ");
-  const withoutBrand = providerId === "anthropic"
-    ? withoutConfiguration.replace(/^(?:anthropic\s+)?claude\s+/iu, "")
-    : withoutConfiguration;
-  return withoutBrand
-    .normalize("NFKD")
-    .replace(/\p{Mark}/gu, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/gu, "");
-}
-
-export function modelReleaseSemanticKey(
-  providerId: ModelReleaseProviderId,
-  model: string,
-): string {
-  return JSON.stringify([providerId, normalizeModelName(providerId, model)]);
 }
 
 function benchmarkedModelKeys(snapshot: CodingAgentSnapshot): Set<string> {
@@ -133,11 +116,32 @@ function candidateRelease(
   };
 }
 
-/** Builds a bounded discovery ledger. It never supplies chart scores or publishes model cards. */
+function releaseListing(release: ModelRelease): ModelReleaseListing {
+  return {
+    id: release.id,
+    model: release.model,
+    providerId: release.providerId,
+    sourceAddedAt: release.sourceAddedAt,
+  };
+}
+
+function compareReleaseListings(
+  left: ModelReleaseListing,
+  right: ModelReleaseListing,
+): number {
+  return Date.parse(right.sourceAddedAt) - Date.parse(left.sourceAddedAt)
+    || compareText(left.id, right.id);
+}
+
+/**
+ * Builds a bounded current radar while retaining every previously observed listing.
+ * It never supplies chart scores or publishes model cards.
+ */
 export function deriveModelReleaseRadar(
   sourceModels: readonly OpenRouterModel[],
   benchmarkSnapshot: CodingAgentSnapshot,
   retrievedAt: string,
+  previousListings: readonly ModelReleaseListing[] = [],
 ): ModelReleaseRadar {
   const retrievedAtMilliseconds = Date.parse(retrievedAt);
   if (!Number.isFinite(retrievedAtMilliseconds)) {
@@ -161,15 +165,22 @@ export function deriveModelReleaseRadar(
     }
   }
 
-  const releases = Array.from(releasesById.values())
-    .sort((left, right) => (
-      Date.parse(right.sourceAddedAt) - Date.parse(left.sourceAddedAt)
-      || compareText(left.id, right.id)
-    ))
-    .slice(0, MODEL_RELEASE_LIMIT);
+  const currentCandidates = Array.from(releasesById.values()).sort((left, right) => (
+    Date.parse(right.sourceAddedAt) - Date.parse(left.sourceAddedAt)
+    || compareText(left.id, right.id)
+  ));
+  const observedListingsById = new Map(
+    previousListings.map(listing => [listing.id, listing]),
+  );
+  for (const release of currentCandidates) {
+    observedListingsById.set(release.id, releaseListing(release));
+  }
+  const observedListings = [...observedListingsById.values()]
+    .sort(compareReleaseListings);
+  const releases = currentCandidates.slice(0, MODEL_RELEASE_LIMIT);
 
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     source: {
       method: "models-api",
       name: "OpenRouter",
@@ -184,6 +195,7 @@ export function deriveModelReleaseRadar(
       requires: ["text-output", "tools"],
       windowDays: MODEL_RELEASE_WINDOW_DAYS,
     },
+    observedListings,
     releases,
   };
 }
@@ -230,32 +242,40 @@ async function readBenchmarkSnapshot(): Promise<Result<CodingAgentSnapshot, Erro
   }
 }
 
-export async function validateCommittedModelReleaseRadar(): Promise<Result<ModelReleaseRadar, Error>> {
+/** Reads the prior ledger without comparing its snapshot-relative statuses. */
+async function readCommittedModelReleaseRadar(): Promise<Result<ModelReleaseRadar, Error>> {
   try {
     const input: unknown = await Bun.file(OUTPUT_PATH).json();
     const parsed = parseModelReleaseRadar(input);
     if (!parsed.ok) {
       return err(new Error(`Invalid ${OUTPUT_PATH}: ${parsed.error.message}`, { cause: parsed.error }));
     }
-    const benchmark = await readBenchmarkSnapshot();
-    if (!benchmark.ok) return benchmark;
-    const statuses = validateModelReleaseRadarStatuses(parsed.value, benchmark.value);
-    return statuses.ok ? ok(parsed.value) : statuses;
+    return ok(parsed.value);
   } catch (cause) {
     return err(new Error(`Could not read ${OUTPUT_PATH}.`, { cause }));
   }
 }
 
-async function reconcileCommittedModelReleaseRadar(): Promise<Result<ModelReleaseRadar, Error>> {
+export async function validateCommittedModelReleaseRadar(): Promise<Result<ModelReleaseRadar, Error>> {
+  const radar = await readCommittedModelReleaseRadar();
+  if (!radar.ok) return radar;
   try {
-    const input: unknown = await Bun.file(OUTPUT_PATH).json();
-    const parsed = parseModelReleaseRadar(input);
-    if (!parsed.ok) {
-      return err(new Error(`Invalid ${OUTPUT_PATH}: ${parsed.error.message}`, { cause: parsed.error }));
-    }
     const benchmark = await readBenchmarkSnapshot();
     if (!benchmark.ok) return benchmark;
-    const reconciled = reconcileModelReleaseRadarStatuses(parsed.value, benchmark.value);
+    const statuses = validateModelReleaseRadarStatuses(radar.value, benchmark.value);
+    return statuses.ok ? radar : statuses;
+  } catch (cause) {
+    return err(new Error(`Could not validate ${OUTPUT_PATH}.`, { cause }));
+  }
+}
+
+async function reconcileCommittedModelReleaseRadar(): Promise<Result<ModelReleaseRadar, Error>> {
+  const radar = await readCommittedModelReleaseRadar();
+  if (!radar.ok) return radar;
+  try {
+    const benchmark = await readBenchmarkSnapshot();
+    if (!benchmark.ok) return benchmark;
+    const reconciled = reconcileModelReleaseRadarStatuses(radar.value, benchmark.value);
     const validated = parseModelReleaseRadar(reconciled);
     if (!validated.ok) {
       return err(new Error(`Reconciled release radar is invalid: ${validated.error.message}`, { cause: validated.error }));
@@ -293,6 +313,8 @@ async function fetchSource(): Promise<Result<unknown, Error>> {
 }
 
 async function refresh(): Promise<Result<ModelReleaseRadar, Error>> {
+  const previous = await readCommittedModelReleaseRadar();
+  if (!previous.ok) return previous;
   const benchmark = await readBenchmarkSnapshot();
   if (!benchmark.ok) return benchmark;
   const source = await fetchSource();
@@ -305,6 +327,7 @@ async function refresh(): Promise<Result<ModelReleaseRadar, Error>> {
     parsedSource.value,
     benchmark.value,
     new Date().toISOString(),
+    previous.value.observedListings,
   );
   const validated = parseModelReleaseRadar(radar);
   if (!validated.ok) {
