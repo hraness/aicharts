@@ -28,6 +28,14 @@ import {
 } from "./coding-agent-snapshot-rows";
 import { formatRetrievedAt, formatUpdateDate } from "./coding-agent-updates";
 import {
+  DIRECT_DEEP_SWE_EVIDENCE,
+  directDeepSweEvidenceForRelease,
+} from "./deep-swe-evidence-collection";
+import {
+  DEEP_SWE_LEADERBOARD_URL,
+  formatDeepSweEvidenceScore,
+} from "./deep-swe-evidence";
+import {
   GPT_SUBSIDY_DESCRIPTION,
   formatSubsidyDate,
   formatSubsidyTokens,
@@ -48,6 +56,7 @@ import { vercelGatewayModelCatalog } from "./model-card-sources";
 import {
   MODEL_RELEASE_RADAR_HIGHLIGHTS,
   MODEL_RELEASES_AWAITING_BENCHMARK,
+  MODEL_RELEASES_WITH_EARLY_DEEP_SWE,
 } from "./model-release-collection";
 
 export const AGENT_GUIDE_PATH = "/llms.txt" as const;
@@ -310,11 +319,15 @@ function modelCardsMarkdown(): string {
     "",
     "## Release radar",
     "",
-    `${MODEL_RELEASES_AWAITING_BENCHMARK.length} recent releases from established providers are awaiting comparable coding-agent results. Discovery is not a score, so these models do not enter the chart or card collection until Artificial Analysis publishes a matching observation.`,
+    `${MODEL_RELEASES_AWAITING_BENCHMARK.length} recent releases from established providers are awaiting a complete four-benchmark Artificial Analysis index; ${MODEL_RELEASES_WITH_EARLY_DEEP_SWE.length} already have direct DeepSWE evidence. Discovery is not a score. OpenRouter is the first-line model-identity catalog, with Artificial Analysis used only when a model is unresolved. A labeled early [DeepSWE v${DIRECT_DEEP_SWE_EVIDENCE.source.benchmarkVersion}](${DEEP_SWE_LEADERBOARD_URL}) pass@1 result, when present, comes directly from DataCurve's mini-swe-agent leaderboard and remains outside the Artificial Analysis chart and cards. Partial Artificial Analysis observations can appear there with missing metrics shown explicitly.`,
     "",
-    ...MODEL_RELEASE_RADAR_HIGHLIGHTS.map(release => (
-      `- [${release.model}](${release.modelUrl}). ${release.providerName}; listed by OpenRouter ${formatUpdateDate(release.sourceAddedAt)}.`
-    )),
+    ...MODEL_RELEASE_RADAR_HIGHLIGHTS.map(release => {
+      const earlyEvidence = directDeepSweEvidenceForRelease(release);
+      const evidenceText = earlyEvidence === null
+        ? ""
+        : ` Early DeepSWE: ${formatDeepSweEvidenceScore(earlyEvidence.passAt1)} pass@1; ${earlyEvidence.reasoningEffort ?? "default"}; ${earlyEvidence.runs} runs; ${earlyEvidence.identity.resolver.name} model match.`;
+      return `- [${release.model}](${release.modelUrl}). ${release.providerName}; listed by OpenRouter ${formatUpdateDate(release.sourceAddedAt)}.${evidenceText}`;
+    }),
     "",
     "## Cards",
     "",

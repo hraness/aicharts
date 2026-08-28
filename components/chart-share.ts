@@ -3,6 +3,9 @@ import type { XMetric, YMetric } from "@/lib/chart-math";
 const xMetrics = ["costUsd", "durationMinutes", "totalTokens"] as const satisfies readonly XMetric[];
 const yMetrics = ["aaIndex", "deepSwe", "terminalBench", "sweAtlas"] as const satisfies readonly YMetric[];
 
+export const DEFAULT_CHART_X_METRIC: XMetric = "costUsd";
+export const DEFAULT_CHART_Y_METRIC: YMetric = "deepSwe";
+
 export type ChartShareView = {
   pointKey: string | null;
   providerId: string | null;

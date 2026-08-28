@@ -16,12 +16,21 @@ import {
   MODEL_CARD_TOP_PATHS,
 } from "@/lib/model-card-collection";
 import { formatRetrievedAt, formatUpdateDate } from "@/lib/coding-agent-updates";
+import {
+  DIRECT_DEEP_SWE_EVIDENCE,
+  directDeepSweEvidenceForRelease,
+} from "@/lib/deep-swe-evidence-collection";
+import {
+  DEEP_SWE_LEADERBOARD_URL,
+  formatDeepSweEvidenceScore,
+} from "@/lib/deep-swe-evidence";
 import { modelCardArtDirection } from "@/lib/model-card-art-direction";
 import { modelCardListingAccessibleLabel } from "@/lib/model-card-presentation";
 import {
   MODEL_RELEASE_RADAR,
   MODEL_RELEASE_RADAR_HIGHLIGHTS,
   MODEL_RELEASES_AWAITING_BENCHMARK,
+  MODEL_RELEASES_WITH_EARLY_DEEP_SWE,
 } from "@/lib/model-release-collection";
 
 import { searchSite } from "../site";
@@ -78,45 +87,62 @@ export default function ModelCardsPage() {
         >
           <div className="model-release-radar__heading">
             <p>Release radar</p>
-            <h2 id="model-release-radar-title">New, awaiting comparable results</h2>
+            <h2 id="model-release-radar-title">New, awaiting complete benchmark coverage</h2>
             <small>
-              {MODEL_RELEASES_AWAITING_BENCHMARK.length} awaiting · OpenRouter checked{" "}
+              {MODEL_RELEASES_AWAITING_BENCHMARK.length} incomplete · {MODEL_RELEASES_WITH_EARLY_DEEP_SWE.length} with early DeepSWE · OpenRouter checked{" "}
               <time dateTime={MODEL_RELEASE_RADAR.source.retrievedAt}>
                 {formatUpdateDate(MODEL_RELEASE_RADAR.source.retrievedAt)}
               </time>
             </small>
           </div>
           <ul>
-            {MODEL_RELEASE_RADAR_HIGHLIGHTS.map(release => (
-              <li
-                key={release.id}
-                style={{
-                  "--release-provider": modelCardArtDirection(
-                    release.providerId,
-                    "standard",
-                    "default",
-                  ).providerColor,
-                } as CSSProperties}
-              >
-                <a href={release.modelUrl}>
-                  <i aria-hidden="true" />
-                  <span>
-                    <strong>{release.model}</strong>
-                    <small>
-                      {release.providerName} · listed{" "}
-                      <time dateTime={release.sourceAddedAt}>
-                        {formatUpdateDate(release.sourceAddedAt)}
-                      </time>
-                    </small>
-                  </span>
-                  <span aria-hidden="true">↗</span>
-                </a>
-              </li>
-            ))}
+            {MODEL_RELEASE_RADAR_HIGHLIGHTS.map(release => {
+              const earlyEvidence = directDeepSweEvidenceForRelease(release);
+              return (
+                <li
+                  key={release.id}
+                  style={{
+                    "--release-provider": modelCardArtDirection(
+                      release.providerId,
+                      "standard",
+                      "default",
+                    ).providerColor,
+                  } as CSSProperties}
+                >
+                  <a href={release.modelUrl}>
+                    <i aria-hidden="true" />
+                    <span>
+                      <strong>{release.model}</strong>
+                      <small>
+                        {release.providerName} · listed{" "}
+                        <time dateTime={release.sourceAddedAt}>
+                          {formatUpdateDate(release.sourceAddedAt)}
+                        </time>
+                      </small>
+                      {earlyEvidence !== null && (
+                        <small className="model-release-radar__early-score">
+                          Early DeepSWE {formatDeepSweEvidenceScore(earlyEvidence.passAt1)} pass@1
+                          {" · "}{earlyEvidence.reasoningEffort ?? "default"}
+                          {" · "}{earlyEvidence.runs} runs
+                          {" · "}{earlyEvidence.identity.resolver.name} match
+                        </small>
+                      )}
+                    </span>
+                    <span aria-hidden="true">↗</span>
+                  </a>
+                </li>
+              );
+            })}
           </ul>
           <p className="model-release-radar__note">
-            Discovery is not a score. These models stay off the chart and cards
-            until Artificial Analysis publishes comparable coding-agent results.
+            Discovery is not a score. OpenRouter is the first-line model-identity
+            catalog, with Artificial Analysis used only when a model is unresolved;
+            when shown, early{" "}
+            <a href={DEEP_SWE_LEADERBOARD_URL}>DeepSWE v{DIRECT_DEEP_SWE_EVIDENCE.source.benchmarkVersion}</a>
+            {" "}pass@1 comes directly from DataCurve&apos;s mini-swe-agent leaderboard.
+            The direct result is harness-specific and stays off the Artificial
+            Analysis chart and cards. Partial Artificial Analysis observations can
+            appear there with missing metrics shown explicitly.
           </p>
         </section>
       )}

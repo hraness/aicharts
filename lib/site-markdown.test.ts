@@ -16,6 +16,7 @@ import {
   latestGptSubsidyObservation,
   parseGptSubsidySnapshot,
 } from "./gpt-subsidy-data";
+import { directDeepSweEvidenceForRelease } from "./deep-swe-evidence-collection";
 import { MODEL_RELEASE_RADAR_HIGHLIGHTS } from "./model-release-collection";
 import {
   AGENT_GUIDE_CONTENT_TYPE,
@@ -63,9 +64,17 @@ describe("markdown representations", () => {
     expect(data.body).toContain("| Model | Agent | Provider | Setting | AA Index | DeepSWE | Terminal-Bench v2.1 | SWE-Atlas-QnA | Cost |");
     const cards = markdownForPath("/models");
     expect(cards.body).toContain("## Release radar");
+    expect(cards.body).toContain("awaiting a complete four-benchmark Artificial Analysis index");
     expect(cards.body).toContain("Discovery is not a score");
+    expect(cards.body).toContain("missing metrics shown explicitly");
+    expect(cards.body).toContain("DataCurve's mini-swe-agent leaderboard");
+    expect(cards.body).toContain("remains outside the Artificial Analysis chart and cards");
     for (const release of MODEL_RELEASE_RADAR_HIGHLIGHTS) {
       expect(cards.body).toContain(`[${release.model}](${release.modelUrl})`);
+      const evidence = directDeepSweEvidenceForRelease(release);
+      if (evidence !== null) {
+        expect(cards.body).toContain(`${evidence.identity.resolver.name} model match`);
+      }
     }
     expect(subsidy).toMatchObject({ found: true, contentType: MARKDOWN_CONTENT_TYPE });
     expect(subsidy.body).toContain("# Subsidy for ChatGPT Pro 20x subscription");

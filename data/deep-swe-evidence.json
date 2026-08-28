@@ -1,0 +1,1614 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "benchmark": "DeepSWE",
+    "benchmarkVersion": "1.1",
+    "generatedAt": "2026-08-26T07:38:24.821609+00:00",
+    "latestJob": {
+      "finishedAt": null,
+      "name": "20260825-deep-swe-glm-5-3-flash"
+    },
+    "method": "leaderboard-artifact",
+    "name": "DataCurve DeepSWE",
+    "retrievedAt": "2026-08-28T19:49:04.708Z",
+    "scope": "Every DeepSWE rollout across imported Pier jobs, grouped by configuration (harness + model + reasoning effort)",
+    "taskCount": 113,
+    "unit": "pass@1 is attempt pass rate over scored rollout attempts. pass@4 is tasks with at least one passing rollout divided by tasks attempted. Context-window failures and agent timeouts are scored failures; provider/verifier/network errors are excluded. Efficiency aggregates are over every scored attempt.",
+    "url": "https://deepswe.datacurve.ai/artifacts/v1.1/leaderboard-live.json"
+  },
+  "identitySource": {
+    "attemptedAt": "2026-08-28T19:49:02.267Z",
+    "method": "exact-semantic-model-id",
+    "name": "OpenRouter",
+    "retrievedAt": "2026-08-28T19:49:03.914Z",
+    "status": "available",
+    "url": "https://openrouter.ai/api/v1/models?sort=newest"
+  },
+  "policy": {
+    "harness": "mini-swe-agent",
+    "identityPriority": [
+      "openrouter",
+      "artificial-analysis"
+    ],
+    "publication": "early-evidence-only",
+    "score": "pass@1"
+  },
+  "records": [
+    {
+      "attempted": 449,
+      "ci95": {
+        "high": 0.6012381717139396,
+        "low": 0.5479823182637887
+      },
+      "config": "mini_swe_agent_qwen3_8_max_xhigh",
+      "harness": "mini-swe-agent",
+      "identity": {
+        "modelId": "qwen/qwen3.8-max",
+        "resolver": {
+          "name": "OpenRouter",
+          "retrievedAt": "2026-08-28T19:49:03.914Z",
+          "url": "https://openrouter.ai/api/v1/models?sort=newest"
+        },
+        "source": "openrouter"
+      },
+      "model": "Qwen3.8 Max",
+      "passAt1": 0.5746102449888641,
+      "passed": 258,
+      "providerId": "alibaba_cloud",
+      "runs": 4,
+      "reasoningEffort": "xhigh",
+      "sourceModel": "qwen3-8-max"
+    },
+    {
+      "attempted": 452,
+      "ci95": {
+        "high": 0.7315642200025008,
+        "low": 0.6666658684930744
+      },
+      "config": "mini_swe_agent_claude_fable_5_xhigh",
+      "harness": "mini-swe-agent",
+      "identity": {
+        "modelId": "anthropic/claude-fable-5",
+        "resolver": {
+          "name": "OpenRouter",
+          "retrievedAt": "2026-08-28T19:49:03.914Z",
+          "url": "https://openrouter.ai/api/v1/models?sort=newest"
+        },
+        "source": "openrouter"
+      },
+      "model": "Claude Fable 5",
+      "passAt1": 0.6991150442477876,
+      "passed": 316,
+      "providerId": "anthropic",
+      "runs": 4,
+      "reasoningEffort": "xhigh",
+      "sourceModel": "claude-fable-5"
+    },
+    {
+      "attempted": 436,
+      "ci95": {
+        "high": 0.7375824489300977,
+        "low": 0.656912963913939
+      },
+      "config": "mini_swe_agent_claude_fable_5_max",
+      "harness": "mini-swe-agent",
+      "identity": {
+        "modelId": "anthropic/claude-fable-5",
+        "resolver": {
+          "name": "OpenRouter",
+          "retrievedAt": "2026-08-28T19:49:03.914Z",
+          "url": "https://openrouter.ai/api/v1/models?sort=newest"
+        },
+        "source": "openrouter"
+      },
+      "model": "Claude Fable 5",
+      "passAt1": 0.6972477064220184,
+      "passed": 304,
+      "providerId": "anthropic",
+      "runs": 4,
+      "reasoningEffort": "max",
+      "sourceModel": "claude-fable-5"
+    },
+    {
+      "attempted": 430,
+      "ci95": {
+        "high": 0.6972549388022109,
+        "low": 0.674838084453603
+      },
+      "config": "mini_swe_agent_claude_fable_5_high",
+      "harness": "mini-swe-agent",
+      "identity": {
+        "modelId": "anthropic/claude-fable-5",
+        "resolver": {
+          "name": "OpenRouter",
+          "retrievedAt": "2026-08-28T19:49:03.914Z",
+          "url": "https://openrouter.ai/api/v1/models?sort=newest"
+        },
+        "source": "openrouter"
+      },
+      "model": "Claude Fable 5",
+      "passAt1": 0.686046511627907,
+      "passed": 295,
+      "providerId": "anthropic",
+      "runs": 4,
+      "reasoningEffort": "high",
+      "sourceModel": "claude-fable-5"
+    },
+    {
+      "attempted": 436,
+      "ci95": {
+        "high": 0.6978890135630239,
+        "low": 0.6094504359782605
+      },
+      "config": "mini_swe_agent_claude_fable_5_medium",
+      "harness": "mini-swe-agent",
+      "identity": {
+        "modelId": "anthropic/claude-fable-5",
+        "resolver": {
+          "name": "OpenRouter",
+          "retrievedAt": "2026-08-28T19:49:03.914Z",
+          "url": "https://openrouter.ai/api/v1/models?sort=newest"
+        },
+        "source": "openrouter"
+      },
+      "model": "Claude Fable 5",
+      "passAt1": 0.6536697247706422,
+      "passed": 285,
+      "providerId": "anthropic",
+      "runs": 4,
+      "reasoningEffort": "medium",
+      "sourceModel": "claude-fable-5"
+    },
+    {
+      "attempted": 433,
+      "ci95": {
+        "high": 0.6237830105713897,
+        "low": 0.5679029016687951
+      },
+      "config": "mini_swe_agent_claude_fable_5_low",
+      "harness": "mini-swe-agent",
+      "identity": {
+        "modelId": "anthropic/claude-fable-5",
+        "resolver": {
+          "name": "OpenRouter",
+          "retrievedAt": "2026-08-28T19:49:03.914Z",
+          "url": "https://openrouter.ai/api/v1/models?sort=newest"
+        },
+        "source": "openrouter"
+      },
+      "model": "Claude Fable 5",
+      "passAt1": 0.5958429561200924,
+      "passed": 258,
+      "providerId": "anthropic",
+      "runs": 4,
+      "reasoningEffort": "low",
+      "sourceModel": "claude-fable-5"
+    },
+    {
+      "attempted": 429,
+      "ci95": {
+        "high": 0.6073917432178823,
+        "low": 0.5720954362692973
+      },
+      "config": "mini_swe_agent_claude_opus_4_8_max",
+      "harness": "mini-swe-agent",
+      "identity": {
+        "modelId": "anthropic/claude-opus-4.8",
+        "resolver": {
+          "name": "OpenRouter",
+          "retrievedAt": "2026-08-28T19:49:03.914Z",
+          "url": "https://openrouter.ai/api/v1/models?sort=newest"
+        },
+        "source": "openrouter"
+      },
+      "model": "Claude Opus 4.8",
+      "passAt1": 0.5897435897435898,
+      "passed": 253,
+      "providerId": "anthropic",
+      "runs": 4,
+      "reasoningEffort": "max",
+      "sourceModel": "claude-opus-4-8"
+    },
+    {
+      "attempted": 447,
+      "ci95": {
+        "high": 0.5807584673547702,
+        "low": 0.5064898547928808
+      },
+      "config": "mini_swe_agent_claude_opus_4_8_xhigh",
+      "harness": "mini-swe-agent",
+      "identity": {
+        "modelId": "anthropic/claude-opus-4.8",
+        "resolver": {
+          "name": "OpenRouter",
+          "retrievedAt": "2026-08-28T19:49:03.914Z",
+          "url": "https://openrouter.ai/api/v1/models?sort=newest"
+        },
+        "source": "openrouter"
+      },
+      "model": "Claude Opus 4.8",
+      "passAt1": 0.5436241610738255,
+      "passed": 243,
+      "providerId": "anthropic",
+      "runs": 4,
+      "reasoningEffort": "xhigh",
+      "sourceModel": "claude-opus-4-8"
+    },
+    {
+      "attempted": 452,
+      "ci95": {
+        "high": 0.5633152065018062,
+        "low": 0.4720830235866894
+      },
+      "config": "mini_swe_agent_claude_opus_4_8_high",
+      "harness": "mini-swe-agent",
+      "identity": {
+        "modelId": "anthropic/claude-opus-4.8",
+        "resolver": {
+          "name": "OpenRouter",
+          "retrievedAt": "2026-08-28T19:49:03.914Z",
+          "url": "https://openrouter.ai/api/v1/models?sort=newest"
+        },
+        "source": "openrouter"
+      },
+      "model": "Claude Opus 4.8",
+      "passAt1": 0.5176991150442478,
+      "passed": 234,
+      "providerId": "anthropic",
+      "runs": 4,
+      "reasoningEffort": "high",
+      "sourceModel": "claude-opus-4-8"
+    },
+    {
+      "attempted": 452,
+      "ci95": {
+        "high": 0.5091177223341886,
+        "low": 0.4643336050994396
+      },
+      "config": "mini_swe_agent_claude_opus_4_8_medium",
+      "harness": "mini-swe-agent",
+      "identity": {
+        "modelId": "anthropic/claude-opus-4.8",
+        "resolver": {
+          "name": "OpenRouter",
+          "retrievedAt": "2026-08-28T19:49:03.914Z",
+          "url": "https://openrouter.ai/api/v1/models?sort=newest"
+        },
+        "source": "openrouter"
+      },
+      "model": "Claude Opus 4.8",
+      "passAt1": 0.48672566371681414,
+      "passed": 220,
+      "providerId": "anthropic",
+      "runs": 4,
+      "reasoningEffort": "medium",
+      "sourceModel": "claude-opus-4-8"
+    },
+    {
+      "attempted": 451,
+      "ci95": {
+        "high": 0.42261810922648974,
+        "low": 0.3933464140551067
+      },
+      "config": "mini_swe_agent_claude_opus_4_8_low",
+      "harness": "mini-swe-agent",
+      "identity": {
+        "modelId": "anthropic/claude-opus-4.8",
+        "resolver": {
+          "name": "OpenRouter",
+          "retrievedAt": "2026-08-28T19:49:03.914Z",
+          "url": "https://openrouter.ai/api/v1/models?sort=newest"
+        },
+        "source": "openrouter"
+      },
+      "model": "Claude Opus 4.8",
+      "passAt1": 0.4079822616407982,
+      "passed": 184,
+      "providerId": "anthropic",
+      "runs": 4,
+      "reasoningEffort": "low",
+      "sourceModel": "claude-opus-4-8"
+    },
+    {
+      "attempted": 444,
+      "ci95": {
+        "high": 0.7752095907502038,
+        "low": 0.6977633822227692
+      },
+      "config": "mini_swe_agent_claude_opus_5_max",
+      "harness": "mini-swe-agent",
+      "identity": {
+        "modelId": "anthropic/claude-opus-5",
+        "resolver": {
+          "name": "OpenRouter",
+          "retrievedAt": "2026-08-28T19:49:03.914Z",
+          "url": "https://openrouter.ai/api/v1/models?sort=newest"
+        },
+        "source": "openrouter"
+      },
+      "model": "Claude Opus 5",
+      "passAt1": 0.7364864864864865,
+      "passed": 327,
+      "providerId": "anthropic",
+      "runs": 4,
+      "reasoningEffort": "max",
+      "sourceModel": "claude-opus-5"
+    },
+    {
+      "attempted": 447,
+      "ci95": {
+        "high": 0.7621534423774585,
+        "low": 0.7009338059446892
+      },
+      "config": "mini_swe_agent_claude_opus_5_xhigh",
+      "harness": "mini-swe-agent",
+      "identity": {
+        "modelId": "anthropic/claude-opus-5",
+        "resolver": {
+          "name": "OpenRouter",
+          "retrievedAt": "2026-08-28T19:49:03.914Z",
+          "url": "https://openrouter.ai/api/v1/models?sort=newest"
+        },
+        "source": "openrouter"
+      },
+      "model": "Claude Opus 5",
+      "passAt1": 0.7315436241610739,
+      "passed": 327,
+      "providerId": "anthropic",
+      "runs": 4,
+      "reasoningEffort": "xhigh",
+      "sourceModel": "claude-opus-5"
+    },
+    {
+      "attempted": 449,
+      "ci95": {
+        "high": 0.7477393995226038,
+        "low": 0.7088307563794007
+      },
+      "config": "mini_swe_agent_claude_opus_5_high",
+      "harness": "mini-swe-agent",
+      "identity": {
+        "modelId": "anthropic/claude-opus-5",
+        "resolver": {
+          "name": "OpenRouter",
+          "retrievedAt": "2026-08-28T19:49:03.914Z",
+          "url": "https://openrouter.ai/api/v1/models?sort=newest"
+        },
+        "source": "openrouter"
+      },
+      "model": "Claude Opus 5",
+      "passAt1": 0.7282850779510023,
+      "passed": 327,
+      "providerId": "anthropic",
+      "runs": 4,
+      "reasoningEffort": "high",
+      "sourceModel": "claude-opus-5"
+    },
+    {
+      "attempted": 447,
+      "ci95": {
+        "high": 0.7007636179788415,
+        "low": 0.6773124446609795
+      },
+      "config": "mini_swe_agent_claude_opus_5_medium",
+      "harness": "mini-swe-agent",
+      "identity": {
+        "modelId": "anthropic/claude-opus-5",
+        "resolver": {
+          "name": "OpenRouter",
+          "retrievedAt": "2026-08-28T19:49:03.914Z",
+          "url": "https://openrouter.ai/api/v1/models?sort=newest"
+        },
+        "source": "openrouter"
+      },
+      "model": "Claude Opus 5",
+      "passAt1": 0.6890380313199105,
+      "passed": 308,
+      "providerId": "anthropic",
+      "runs": 4,
+      "reasoningEffort": "medium",
+      "sourceModel": "claude-opus-5"
+    },
+    {
+      "attempted": 449,
+      "ci95": {
+        "high": 0.6045986389323216,
+        "low": 0.5579848799986361
+      },
+      "config": "mini_swe_agent_claude_opus_5_low",
+      "harness": "mini-swe-agent",
+      "identity": {
+        "modelId": "anthropic/claude-opus-5",
+        "resolver": {
+          "name": "OpenRouter",
+          "retrievedAt": "2026-08-28T19:49:03.914Z",
+          "url": "https://openrouter.ai/api/v1/models?sort=newest"
+        },
+        "source": "openrouter"
+      },
+      "model": "Claude Opus 5",
+      "passAt1": 0.5812917594654788,
+      "passed": 261,
+      "providerId": "anthropic",
+      "runs": 4,
+      "reasoningEffort": "low",
+      "sourceModel": "claude-opus-5"
+    },
+    {
+      "attempted": 451,
+      "ci95": {
+        "high": 0.34025622422182483,
+        "low": 0.2584133988380421
+      },
+      "config": "mini_swe_agent_claude_sonnet_4_6_high",
+      "harness": "mini-swe-agent",
+      "identity": {
+        "modelId": "anthropic/claude-sonnet-4.6",
+        "resolver": {
+          "name": "OpenRouter",
+          "retrievedAt": "2026-08-28T19:49:03.914Z",
+          "url": "https://openrouter.ai/api/v1/models?sort=newest"
+        },
+        "source": "openrouter"
+      },
+      "model": "Claude Sonnet 4.6",
+      "passAt1": 0.29933481152993346,
+      "passed": 135,
+      "providerId": "anthropic",
+      "runs": 4,
+      "reasoningEffort": "high",
+      "sourceModel": "claude-sonnet-4-6"
+    },
+    {
+      "attempted": 442,
+      "ci95": {
+        "high": 0.5808307031632823,
+        "low": 0.4960923737597946
+      },
+      "config": "mini_swe_agent_claude_sonnet_5_max",
+      "harness": "mini-swe-agent",
+      "identity": {
+        "modelId": "anthropic/claude-sonnet-5",
+        "resolver": {
+          "name": "OpenRouter",
+          "retrievedAt": "2026-08-28T19:49:03.914Z",
+          "url": "https://openrouter.ai/api/v1/models?sort=newest"
+        },
+        "source": "openrouter"
+      },
+      "model": "Claude Sonnet 5",
+      "passAt1": 0.5384615384615384,
+      "passed": 238,
+      "providerId": "anthropic",
+      "runs": 4,
+      "reasoningEffort": "max",
+      "sourceModel": "claude-sonnet-5"
+    },
+    {
+      "attempted": 451,
+      "ci95": {
+        "high": 0.5312195475664461,
+        "low": 0.4621285677328888
+      },
+      "config": "mini_swe_agent_claude_sonnet_5_xhigh",
+      "harness": "mini-swe-agent",
+      "identity": {
+        "modelId": "anthropic/claude-sonnet-5",
+        "resolver": {
+          "name": "OpenRouter",
+          "retrievedAt": "2026-08-28T19:49:03.914Z",
+          "url": "https://openrouter.ai/api/v1/models?sort=newest"
+        },
+        "source": "openrouter"
+      },
+      "model": "Claude Sonnet 5",
+      "passAt1": 0.49667405764966743,
+      "passed": 224,
+      "providerId": "anthropic",
+      "runs": 4,
+      "reasoningEffort": "xhigh",
+      "sourceModel": "claude-sonnet-5"
+    },
+    {
+      "attempted": 452,
+      "ci95": {
+        "high": 0.5273640336579006,
+        "low": 0.4372377362536038
+      },
+      "config": "mini_swe_agent_claude_sonnet_5_high",
+      "harness": "mini-swe-agent",
+      "identity": {
+        "modelId": "anthropic/claude-sonnet-5",
+        "resolver": {
+          "name": "OpenRouter",
+          "retrievedAt": "2026-08-28T19:49:03.914Z",
+          "url": "https://openrouter.ai/api/v1/models?sort=newest"
+        },
+        "source": "openrouter"
+      },
+      "model": "Claude Sonnet 5",
+      "passAt1": 0.4823008849557522,
+      "passed": 218,
+      "providerId": "anthropic",
+      "runs": 4,
+      "reasoningEffort": "high",
+      "sourceModel": "claude-sonnet-5"
+    },
+    {
+      "attempted": 450,
+      "ci95": {
+        "high": 0.4290535398410751,
+        "low": 0.3665020157144805
+      },
+      "config": "mini_swe_agent_claude_sonnet_5_medium",
+      "harness": "mini-swe-agent",
+      "identity": {
+        "modelId": "anthropic/claude-sonnet-5",
+        "resolver": {
+          "name": "OpenRouter",
+          "retrievedAt": "2026-08-28T19:49:03.914Z",
+          "url": "https://openrouter.ai/api/v1/models?sort=newest"
+        },
+        "source": "openrouter"
+      },
+      "model": "Claude Sonnet 5",
+      "passAt1": 0.3977777777777778,
+      "passed": 179,
+      "providerId": "anthropic",
+      "runs": 4,
+      "reasoningEffort": "medium",
+      "sourceModel": "claude-sonnet-5"
+    },
+    {
+      "attempted": 449,
+      "ci95": {
+        "high": 0.31638266984649877,
+        "low": 0.2938623190176438
+      },
+      "config": "mini_swe_agent_claude_sonnet_5_low",
+      "harness": "mini-swe-agent",
+      "identity": {
+        "modelId": "anthropic/claude-sonnet-5",
+        "resolver": {
+          "name": "OpenRouter",
+          "retrievedAt": "2026-08-28T19:49:03.914Z",
+          "url": "https://openrouter.ai/api/v1/models?sort=newest"
+        },
+        "source": "openrouter"
+      },
+      "model": "Claude Sonnet 5",
+      "passAt1": 0.3051224944320713,
+      "passed": 137,
+      "providerId": "anthropic",
+      "runs": 4,
+      "reasoningEffort": "low",
+      "sourceModel": "claude-sonnet-5"
+    },
+    {
+      "attempted": 452,
+      "ci95": {
+        "high": 0.5688553428582889,
+        "low": 0.4975163385576403
+      },
+      "config": "mini_swe_agent_deepseek_v4_flash_max",
+      "harness": "mini-swe-agent",
+      "identity": {
+        "modelId": "deepseek/deepseek-v4-flash",
+        "resolver": {
+          "name": "OpenRouter",
+          "retrievedAt": "2026-08-28T19:49:03.914Z",
+          "url": "https://openrouter.ai/api/v1/models?sort=newest"
+        },
+        "source": "openrouter"
+      },
+      "model": "DeepSeek V4 Flash 0423",
+      "passAt1": 0.5331858407079646,
+      "passed": 241,
+      "providerId": "deepseek",
+      "runs": 4,
+      "reasoningEffort": "max",
+      "sourceModel": "deepseek-v4-flash"
+    },
+    {
+      "attempted": 452,
+      "ci95": {
+        "high": 0.6916528900430852,
+        "low": 0.5649842780985077
+      },
+      "config": "mini_swe_agent_deepseek_v4_pro_max",
+      "harness": "mini-swe-agent",
+      "identity": {
+        "modelId": "deepseek/deepseek-v4-pro",
+        "resolver": {
+          "name": "OpenRouter",
+          "retrievedAt": "2026-08-28T19:49:03.914Z",
+          "url": "https://openrouter.ai/api/v1/models?sort=newest"
+        },
+        "source": "openrouter"
+      },
+      "model": "DeepSeek V4 Pro 0423",
+      "passAt1": 0.6283185840707964,
+      "passed": 284,
+      "providerId": "deepseek",
+      "runs": 4,
+      "reasoningEffort": "max",
+      "sourceModel": "deepseek-v4-pro"
+    },
+    {
+      "attempted": 452,
+      "ci95": {
+        "high": 0.13206759177923005,
+        "low": 0.10244568255705315
+      },
+      "config": "mini_swe_agent_gemini_3_1_pro_preview_high",
+      "harness": "mini-swe-agent",
+      "identity": {
+        "modelId": "google/gemini-3.1-pro-preview",
+        "resolver": {
+          "name": "OpenRouter",
+          "retrievedAt": "2026-08-28T19:49:03.914Z",
+          "url": "https://openrouter.ai/api/v1/models?sort=newest"
+        },
+        "source": "openrouter"
+      },
+      "model": "Gemini 3.1 Pro Preview",
+      "passAt1": 0.1172566371681416,
+      "passed": 53,
+      "providerId": "google",
+      "runs": 4,
+      "reasoningEffort": "high",
+      "sourceModel": "gemini-3-1-pro-preview"
+    },
+    {
+      "attempted": 452,
+      "ci95": {
+        "high": 0.40028249913175307,
+        "low": 0.3209564389213443
+      },
+      "config": "mini_swe_agent_gemini_3_5_flash_high",
+      "harness": "mini-swe-agent",
+      "identity": {
+        "modelId": "google/gemini-3.5-flash",
+        "resolver": {
+          "name": "OpenRouter",
+          "retrievedAt": "2026-08-28T19:49:03.914Z",
+          "url": "https://openrouter.ai/api/v1/models?sort=newest"
+        },
+        "source": "openrouter"
+      },
+      "model": "Gemini 3.5 Flash",
+      "passAt1": 0.3606194690265487,
+      "passed": 163,
+      "providerId": "google",
+      "runs": 4,
+      "reasoningEffort": "high",
+      "sourceModel": "gemini-3-5-flash"
+    },
+    {
+      "attempted": 452,
+      "ci95": {
+        "high": 0.5038626982845081,
+        "low": 0.4297656202995626
+      },
+      "config": "mini_swe_agent_gemini_3_6_flash_high",
+      "harness": "mini-swe-agent",
+      "identity": {
+        "modelId": "google/gemini-3.6-flash",
+        "resolver": {
+          "name": "OpenRouter",
+          "retrievedAt": "2026-08-28T19:49:03.914Z",
+          "url": "https://openrouter.ai/api/v1/models?sort=newest"
+        },
+        "source": "openrouter"
+      },
+      "model": "Gemini 3.6 Flash",
+      "passAt1": 0.4668141592920354,
+      "passed": 211,
+      "providerId": "google",
+      "runs": 4,
+      "reasoningEffort": "high",
+      "sourceModel": "gemini-3-6-flash"
+    },
+    {
+      "attempted": 452,
+      "ci95": {
+        "high": 0.6857325794013234,
+        "low": 0.624001933873013
+      },
+      "config": "mini_swe_agent_gemini_3_7_flash_medium",
+      "harness": "mini-swe-agent",
+      "identity": {
+        "modelId": "google/gemini-3.7-flash",
+        "resolver": {
+          "name": "OpenRouter",
+          "retrievedAt": "2026-08-28T19:49:03.914Z",
+          "url": "https://openrouter.ai/api/v1/models?sort=newest"
+        },
+        "source": "openrouter"
+      },
+      "model": "Gemini 3.7 Flash",
+      "passAt1": 0.6548672566371682,
+      "passed": 296,
+      "providerId": "google",
+      "runs": 4,
+      "reasoningEffort": "medium",
+      "sourceModel": "gemini-3-7-flash"
+    },
+    {
+      "attempted": 452,
+      "ci95": {
+        "high": 0.6705334923244803,
+        "low": 0.6347762421887939
+      },
+      "config": "mini_swe_agent_gemini_3_7_flash_high",
+      "harness": "mini-swe-agent",
+      "identity": {
+        "modelId": "google/gemini-3.7-flash",
+        "resolver": {
+          "name": "OpenRouter",
+          "retrievedAt": "2026-08-28T19:49:03.914Z",
+          "url": "https://openrouter.ai/api/v1/models?sort=newest"
+        },
+        "source": "openrouter"
+      },
+      "model": "Gemini 3.7 Flash",
+      "passAt1": 0.6526548672566371,
+      "passed": 295,
+      "providerId": "google",
+      "runs": 4,
+      "reasoningEffort": "high",
+      "sourceModel": "gemini-3-7-flash"
+    },
+    {
+      "attempted": 452,
+      "ci95": {
+        "high": 0.5635071102873452,
+        "low": 0.5117141286507079
+      },
+      "config": "mini_swe_agent_gemini_3_7_flash_low",
+      "harness": "mini-swe-agent",
+      "identity": {
+        "modelId": "google/gemini-3.7-flash",
+        "resolver": {
+          "name": "OpenRouter",
+          "retrievedAt": "2026-08-28T19:49:03.914Z",
+          "url": "https://openrouter.ai/api/v1/models?sort=newest"
+        },
+        "source": "openrouter"
+      },
+      "model": "Gemini 3.7 Flash",
+      "passAt1": 0.5376106194690266,
+      "passed": 243,
+      "providerId": "google",
+      "runs": 4,
+      "reasoningEffort": "low",
+      "sourceModel": "gemini-3-7-flash"
+    },
+    {
+      "attempted": 452,
+      "ci95": {
+        "high": 0.5635392652473017,
+        "low": 0.5028324161686275
+      },
+      "config": "mini_swe_agent_muse_spark_1_1_xhigh",
+      "harness": "mini-swe-agent",
+      "identity": {
+        "modelId": "meta/muse-spark-1.1",
+        "resolver": {
+          "name": "OpenRouter",
+          "retrievedAt": "2026-08-28T19:49:03.914Z",
+          "url": "https://openrouter.ai/api/v1/models?sort=newest"
+        },
+        "source": "openrouter"
+      },
+      "model": "Muse Spark 1.1",
+      "passAt1": 0.5331858407079646,
+      "passed": 241,
+      "providerId": "meta",
+      "runs": 4,
+      "reasoningEffort": "xhigh",
+      "sourceModel": "muse-spark-1-1"
+    },
+    {
+      "attempted": 452,
+      "ci95": {
+        "high": 0.5699155383909527,
+        "low": 0.5274295943524101
+      },
+      "config": "mini_swe_agent_muse_spark_1_2_xhigh",
+      "harness": "mini-swe-agent",
+      "identity": {
+        "modelId": "meta/muse-spark-1.2",
+        "resolver": {
+          "name": "OpenRouter",
+          "retrievedAt": "2026-08-28T19:49:03.914Z",
+          "url": "https://openrouter.ai/api/v1/models?sort=newest"
+        },
+        "source": "openrouter"
+      },
+      "model": "Muse Spark 1.2",
+      "passAt1": 0.5486725663716814,
+      "passed": 248,
+      "providerId": "meta",
+      "runs": 4,
+      "reasoningEffort": "xhigh",
+      "sourceModel": "muse-spark-1-2"
+    },
+    {
+      "attempted": 452,
+      "ci95": {
+        "high": 0.31031675103573525,
+        "low": 0.3003027179908134
+      },
+      "config": "mini_swe_agent_kimi_k2_7_code_default",
+      "harness": "mini-swe-agent",
+      "identity": {
+        "modelId": "moonshotai/kimi-k2.7-code",
+        "resolver": {
+          "name": "OpenRouter",
+          "retrievedAt": "2026-08-28T19:49:03.914Z",
+          "url": "https://openrouter.ai/api/v1/models?sort=newest"
+        },
+        "source": "openrouter"
+      },
+      "model": "Kimi K2.7 Code",
+      "passAt1": 0.3053097345132743,
+      "passed": 138,
+      "providerId": "moonshot_ai",
+      "runs": 4,
+      "reasoningEffort": null,
+      "sourceModel": "kimi-k2-7-code"
+    },
+    {
+      "attempted": 451,
+      "ci95": {
+        "high": 0.7305142649613376,
+        "low": 0.6397739833756912
+      },
+      "config": "mini_swe_agent_kimi_k3_max",
+      "harness": "mini-swe-agent",
+      "identity": {
+        "modelId": "moonshotai/kimi-k3",
+        "resolver": {
+          "name": "OpenRouter",
+          "retrievedAt": "2026-08-28T19:49:03.914Z",
+          "url": "https://openrouter.ai/api/v1/models?sort=newest"
+        },
+        "source": "openrouter"
+      },
+      "model": "Kimi K3",
+      "passAt1": 0.6851441241685144,
+      "passed": 309,
+      "providerId": "moonshot_ai",
+      "runs": 4,
+      "reasoningEffort": "max",
+      "sourceModel": "kimi-k3"
+    },
+    {
+      "attempted": 452,
+      "ci95": {
+        "high": 0.5327201646116306,
+        "low": 0.502678065476865
+      },
+      "config": "mini_swe_agent_gpt_5_4_xhigh",
+      "harness": "mini-swe-agent",
+      "identity": {
+        "modelId": "openai/gpt-5.4",
+        "resolver": {
+          "name": "OpenRouter",
+          "retrievedAt": "2026-08-28T19:49:03.914Z",
+          "url": "https://openrouter.ai/api/v1/models?sort=newest"
+        },
+        "source": "openrouter"
+      },
+      "model": "GPT-5.4",
+      "passAt1": 0.5176991150442478,
+      "passed": 234,
+      "providerId": "openai",
+      "runs": 4,
+      "reasoningEffort": "xhigh",
+      "sourceModel": "gpt-5-4"
+    },
+    {
+      "attempted": 452,
+      "ci95": {
+        "high": 0.7350104457099735,
+        "low": 0.6056975188917963
+      },
+      "config": "mini_swe_agent_gpt_5_5_xhigh",
+      "harness": "mini-swe-agent",
+      "identity": {
+        "modelId": "openai/gpt-5.5",
+        "resolver": {
+          "name": "OpenRouter",
+          "retrievedAt": "2026-08-28T19:49:03.914Z",
+          "url": "https://openrouter.ai/api/v1/models?sort=newest"
+        },
+        "source": "openrouter"
+      },
+      "model": "GPT-5.5",
+      "passAt1": 0.6703539823008849,
+      "passed": 303,
+      "providerId": "openai",
+      "runs": 4,
+      "reasoningEffort": "xhigh",
+      "sourceModel": "gpt-5-5"
+    },
+    {
+      "attempted": 452,
+      "ci95": {
+        "high": 0.6749737362295679,
+        "low": 0.6126368832394585
+      },
+      "config": "mini_swe_agent_gpt_5_5_high",
+      "harness": "mini-swe-agent",
+      "identity": {
+        "modelId": "openai/gpt-5.5",
+        "resolver": {
+          "name": "OpenRouter",
+          "retrievedAt": "2026-08-28T19:49:03.914Z",
+          "url": "https://openrouter.ai/api/v1/models?sort=newest"
+        },
+        "source": "openrouter"
+      },
+      "model": "GPT-5.5",
+      "passAt1": 0.6438053097345132,
+      "passed": 291,
+      "providerId": "openai",
+      "runs": 4,
+      "reasoningEffort": "high",
+      "sourceModel": "gpt-5-5"
+    },
+    {
+      "attempted": 452,
+      "ci95": {
+        "high": 0.5653538838024673,
+        "low": 0.5142921338966476
+      },
+      "config": "mini_swe_agent_gpt_5_5_medium",
+      "harness": "mini-swe-agent",
+      "identity": {
+        "modelId": "openai/gpt-5.5",
+        "resolver": {
+          "name": "OpenRouter",
+          "retrievedAt": "2026-08-28T19:49:03.914Z",
+          "url": "https://openrouter.ai/api/v1/models?sort=newest"
+        },
+        "source": "openrouter"
+      },
+      "model": "GPT-5.5",
+      "passAt1": 0.5398230088495575,
+      "passed": 244,
+      "providerId": "openai",
+      "runs": 4,
+      "reasoningEffort": "medium",
+      "sourceModel": "gpt-5-5"
+    },
+    {
+      "attempted": 452,
+      "ci95": {
+        "high": 0.29285653664485056,
+        "low": 0.24696647220470694
+      },
+      "config": "mini_swe_agent_gpt_5_5_low",
+      "harness": "mini-swe-agent",
+      "identity": {
+        "modelId": "openai/gpt-5.5",
+        "resolver": {
+          "name": "OpenRouter",
+          "retrievedAt": "2026-08-28T19:49:03.914Z",
+          "url": "https://openrouter.ai/api/v1/models?sort=newest"
+        },
+        "source": "openrouter"
+      },
+      "model": "GPT-5.5",
+      "passAt1": 0.26991150442477874,
+      "passed": 122,
+      "providerId": "openai",
+      "runs": 4,
+      "reasoningEffort": "low",
+      "sourceModel": "gpt-5-5"
+    },
+    {
+      "attempted": 448,
+      "ci95": {
+        "high": 0.7117950123567105,
+        "low": 0.6319549876432895
+      },
+      "config": "mini_swe_agent_gpt_5_6_luna_max",
+      "harness": "mini-swe-agent",
+      "identity": {
+        "modelId": "openai/gpt-5.6-luna",
+        "resolver": {
+          "name": "OpenRouter",
+          "retrievedAt": "2026-08-28T19:49:03.914Z",
+          "url": "https://openrouter.ai/api/v1/models?sort=newest"
+        },
+        "source": "openrouter"
+      },
+      "model": "GPT-5.6 Luna",
+      "passAt1": 0.671875,
+      "passed": 301,
+      "providerId": "openai",
+      "runs": 4,
+      "reasoningEffort": "max",
+      "sourceModel": "gpt-5-6-luna"
+    },
+    {
+      "attempted": 452,
+      "ci95": {
+        "high": 0.5902650883245582,
+        "low": 0.5469030532683623
+      },
+      "config": "mini_swe_agent_gpt_5_6_luna_xhigh",
+      "harness": "mini-swe-agent",
+      "identity": {
+        "modelId": "openai/gpt-5.6-luna",
+        "resolver": {
+          "name": "OpenRouter",
+          "retrievedAt": "2026-08-28T19:49:03.914Z",
+          "url": "https://openrouter.ai/api/v1/models?sort=newest"
+        },
+        "source": "openrouter"
+      },
+      "model": "GPT-5.6 Luna",
+      "passAt1": 0.5685840707964602,
+      "passed": 257,
+      "providerId": "openai",
+      "runs": 4,
+      "reasoningEffort": "xhigh",
+      "sourceModel": "gpt-5-6-luna"
+    },
+    {
+      "attempted": 452,
+      "ci95": {
+        "high": 0.47167354858536004,
+        "low": 0.4132822036270294
+      },
+      "config": "mini_swe_agent_gpt_5_6_luna_high",
+      "harness": "mini-swe-agent",
+      "identity": {
+        "modelId": "openai/gpt-5.6-luna",
+        "resolver": {
+          "name": "OpenRouter",
+          "retrievedAt": "2026-08-28T19:49:03.914Z",
+          "url": "https://openrouter.ai/api/v1/models?sort=newest"
+        },
+        "source": "openrouter"
+      },
+      "model": "GPT-5.6 Luna",
+      "passAt1": 0.4424778761061947,
+      "passed": 200,
+      "providerId": "openai",
+      "runs": 4,
+      "reasoningEffort": "high",
+      "sourceModel": "gpt-5-6-luna"
+    },
+    {
+      "attempted": 452,
+      "ci95": {
+        "high": 0.12113505596913615,
+        "low": 0.10452866084502313
+      },
+      "config": "mini_swe_agent_gpt_5_6_luna_medium",
+      "harness": "mini-swe-agent",
+      "identity": {
+        "modelId": "openai/gpt-5.6-luna",
+        "resolver": {
+          "name": "OpenRouter",
+          "retrievedAt": "2026-08-28T19:49:03.914Z",
+          "url": "https://openrouter.ai/api/v1/models?sort=newest"
+        },
+        "source": "openrouter"
+      },
+      "model": "GPT-5.6 Luna",
+      "passAt1": 0.11283185840707964,
+      "passed": 51,
+      "providerId": "openai",
+      "runs": 4,
+      "reasoningEffort": "medium",
+      "sourceModel": "gpt-5-6-luna"
+    },
+    {
+      "attempted": 452,
+      "ci95": {
+        "high": 0.023789923225773328,
+        "low": 0.0071835281016603
+      },
+      "config": "mini_swe_agent_gpt_5_6_luna_low",
+      "harness": "mini-swe-agent",
+      "identity": {
+        "modelId": "openai/gpt-5.6-luna",
+        "resolver": {
+          "name": "OpenRouter",
+          "retrievedAt": "2026-08-28T19:49:03.914Z",
+          "url": "https://openrouter.ai/api/v1/models?sort=newest"
+        },
+        "source": "openrouter"
+      },
+      "model": "GPT-5.6 Luna",
+      "passAt1": 0.015486725663716814,
+      "passed": 7,
+      "providerId": "openai",
+      "runs": 4,
+      "reasoningEffort": "low",
+      "sourceModel": "gpt-5-6-luna"
+    },
+    {
+      "attempted": 450,
+      "ci95": {
+        "high": 0.7549648891650385,
+        "low": 0.6983684441682949
+      },
+      "config": "mini_swe_agent_gpt_5_6_sol_max",
+      "harness": "mini-swe-agent",
+      "identity": {
+        "modelId": "openai/gpt-5.6-sol",
+        "resolver": {
+          "name": "OpenRouter",
+          "retrievedAt": "2026-08-28T19:49:03.914Z",
+          "url": "https://openrouter.ai/api/v1/models?sort=newest"
+        },
+        "source": "openrouter"
+      },
+      "model": "GPT-5.6 Sol",
+      "passAt1": 0.7266666666666667,
+      "passed": 327,
+      "providerId": "openai",
+      "runs": 4,
+      "reasoningEffort": "max",
+      "sourceModel": "gpt-5-6-sol"
+    },
+    {
+      "attempted": 451,
+      "ci95": {
+        "high": 0.7155081903880748,
+        "low": 0.6991259559533886
+      },
+      "config": "mini_swe_agent_gpt_5_6_sol_xhigh",
+      "harness": "mini-swe-agent",
+      "identity": {
+        "modelId": "openai/gpt-5.6-sol",
+        "resolver": {
+          "name": "OpenRouter",
+          "retrievedAt": "2026-08-28T19:49:03.914Z",
+          "url": "https://openrouter.ai/api/v1/models?sort=newest"
+        },
+        "source": "openrouter"
+      },
+      "model": "GPT-5.6 Sol",
+      "passAt1": 0.7073170731707317,
+      "passed": 319,
+      "providerId": "openai",
+      "runs": 4,
+      "reasoningEffort": "xhigh",
+      "sourceModel": "gpt-5-6-sol"
+    },
+    {
+      "attempted": 451,
+      "ci95": {
+        "high": 0.7083347559731736,
+        "low": 0.679691851565629
+      },
+      "config": "mini_swe_agent_gpt_5_6_sol_high",
+      "harness": "mini-swe-agent",
+      "identity": {
+        "modelId": "openai/gpt-5.6-sol",
+        "resolver": {
+          "name": "OpenRouter",
+          "retrievedAt": "2026-08-28T19:49:03.914Z",
+          "url": "https://openrouter.ai/api/v1/models?sort=newest"
+        },
+        "source": "openrouter"
+      },
+      "model": "GPT-5.6 Sol",
+      "passAt1": 0.6940133037694013,
+      "passed": 313,
+      "providerId": "openai",
+      "runs": 4,
+      "reasoningEffort": "high",
+      "sourceModel": "gpt-5-6-sol"
+    },
+    {
+      "attempted": 452,
+      "ci95": {
+        "high": 0.6264530455196208,
+        "low": 0.5947858925334765
+      },
+      "config": "mini_swe_agent_gpt_5_6_sol_medium",
+      "harness": "mini-swe-agent",
+      "identity": {
+        "modelId": "openai/gpt-5.6-sol",
+        "resolver": {
+          "name": "OpenRouter",
+          "retrievedAt": "2026-08-28T19:49:03.914Z",
+          "url": "https://openrouter.ai/api/v1/models?sort=newest"
+        },
+        "source": "openrouter"
+      },
+      "model": "GPT-5.6 Sol",
+      "passAt1": 0.6106194690265486,
+      "passed": 276,
+      "providerId": "openai",
+      "runs": 4,
+      "reasoningEffort": "medium",
+      "sourceModel": "gpt-5-6-sol"
+    },
+    {
+      "attempted": 452,
+      "ci95": {
+        "high": 0.47742176972343875,
+        "low": 0.42965787629426033
+      },
+      "config": "mini_swe_agent_gpt_5_6_sol_low",
+      "harness": "mini-swe-agent",
+      "identity": {
+        "modelId": "openai/gpt-5.6-sol",
+        "resolver": {
+          "name": "OpenRouter",
+          "retrievedAt": "2026-08-28T19:49:03.914Z",
+          "url": "https://openrouter.ai/api/v1/models?sort=newest"
+        },
+        "source": "openrouter"
+      },
+      "model": "GPT-5.6 Sol",
+      "passAt1": 0.45353982300884954,
+      "passed": 205,
+      "providerId": "openai",
+      "runs": 4,
+      "reasoningEffort": "low",
+      "sourceModel": "gpt-5-6-sol"
+    },
+    {
+      "attempted": 451,
+      "ci95": {
+        "high": 0.7217999881740815,
+        "low": 0.6706612091651647
+      },
+      "config": "mini_swe_agent_gpt_5_6_terra_max",
+      "harness": "mini-swe-agent",
+      "identity": {
+        "modelId": "openai/gpt-5.6-terra",
+        "resolver": {
+          "name": "OpenRouter",
+          "retrievedAt": "2026-08-28T19:49:03.914Z",
+          "url": "https://openrouter.ai/api/v1/models?sort=newest"
+        },
+        "source": "openrouter"
+      },
+      "model": "GPT-5.6 Terra",
+      "passAt1": 0.6962305986696231,
+      "passed": 314,
+      "providerId": "openai",
+      "runs": 4,
+      "reasoningEffort": "max",
+      "sourceModel": "gpt-5-6-terra"
+    },
+    {
+      "attempted": 452,
+      "ci95": {
+        "high": 0.6230128835236961,
+        "low": 0.5805269394851535
+      },
+      "config": "mini_swe_agent_gpt_5_6_terra_xhigh",
+      "harness": "mini-swe-agent",
+      "identity": {
+        "modelId": "openai/gpt-5.6-terra",
+        "resolver": {
+          "name": "OpenRouter",
+          "retrievedAt": "2026-08-28T19:49:03.914Z",
+          "url": "https://openrouter.ai/api/v1/models?sort=newest"
+        },
+        "source": "openrouter"
+      },
+      "model": "GPT-5.6 Terra",
+      "passAt1": 0.6017699115044248,
+      "passed": 272,
+      "providerId": "openai",
+      "runs": 4,
+      "reasoningEffort": "xhigh",
+      "sourceModel": "gpt-5-6-terra"
+    },
+    {
+      "attempted": 452,
+      "ci95": {
+        "high": 0.5809003241411621,
+        "low": 0.49432091479689105
+      },
+      "config": "mini_swe_agent_gpt_5_6_terra_high",
+      "harness": "mini-swe-agent",
+      "identity": {
+        "modelId": "openai/gpt-5.6-terra",
+        "resolver": {
+          "name": "OpenRouter",
+          "retrievedAt": "2026-08-28T19:49:03.914Z",
+          "url": "https://openrouter.ai/api/v1/models?sort=newest"
+        },
+        "source": "openrouter"
+      },
+      "model": "GPT-5.6 Terra",
+      "passAt1": 0.5376106194690266,
+      "passed": 243,
+      "providerId": "openai",
+      "runs": 4,
+      "reasoningEffort": "high",
+      "sourceModel": "gpt-5-6-terra"
+    },
+    {
+      "attempted": 450,
+      "ci95": {
+        "high": 0.3849307541451774,
+        "low": 0.3172914680770448
+      },
+      "config": "mini_swe_agent_gpt_5_6_terra_medium",
+      "harness": "mini-swe-agent",
+      "identity": {
+        "modelId": "openai/gpt-5.6-terra",
+        "resolver": {
+          "name": "OpenRouter",
+          "retrievedAt": "2026-08-28T19:49:03.914Z",
+          "url": "https://openrouter.ai/api/v1/models?sort=newest"
+        },
+        "source": "openrouter"
+      },
+      "model": "GPT-5.6 Terra",
+      "passAt1": 0.3511111111111111,
+      "passed": 158,
+      "providerId": "openai",
+      "runs": 4,
+      "reasoningEffort": "medium",
+      "sourceModel": "gpt-5-6-terra"
+    },
+    {
+      "attempted": 449,
+      "ci95": {
+        "high": 0.24830213482757701,
+        "low": 0.23276690748868134
+      },
+      "config": "mini_swe_agent_gpt_5_6_terra_low",
+      "harness": "mini-swe-agent",
+      "identity": {
+        "modelId": "openai/gpt-5.6-terra",
+        "resolver": {
+          "name": "OpenRouter",
+          "retrievedAt": "2026-08-28T19:49:03.914Z",
+          "url": "https://openrouter.ai/api/v1/models?sort=newest"
+        },
+        "source": "openrouter"
+      },
+      "model": "GPT-5.6 Terra",
+      "passAt1": 0.24053452115812918,
+      "passed": 108,
+      "providerId": "openai",
+      "runs": 4,
+      "reasoningEffort": "low",
+      "sourceModel": "gpt-5-6-terra"
+    },
+    {
+      "attempted": 452,
+      "ci95": {
+        "high": 0.5604186651978057,
+        "low": 0.5148025737402474
+      },
+      "config": "mini_swe_agent_grok_4_5_high",
+      "harness": "mini-swe-agent",
+      "identity": {
+        "modelId": "x-ai/grok-4.5",
+        "resolver": {
+          "name": "OpenRouter",
+          "retrievedAt": "2026-08-28T19:49:03.914Z",
+          "url": "https://openrouter.ai/api/v1/models?sort=newest"
+        },
+        "source": "openrouter"
+      },
+      "model": "Grok 4.5",
+      "passAt1": 0.5376106194690266,
+      "passed": 243,
+      "providerId": "xai",
+      "runs": 4,
+      "reasoningEffort": "high",
+      "sourceModel": "grok-4-5"
+    },
+    {
+      "attempted": 452,
+      "ci95": {
+        "high": 0.697586806790726,
+        "low": 0.6519707153331677
+      },
+      "config": "mini_swe_agent_grok_4_6_medium",
+      "harness": "mini-swe-agent",
+      "identity": {
+        "modelId": "x-ai/grok-4.6",
+        "resolver": {
+          "name": "OpenRouter",
+          "retrievedAt": "2026-08-28T19:49:03.914Z",
+          "url": "https://openrouter.ai/api/v1/models?sort=newest"
+        },
+        "source": "openrouter"
+      },
+      "model": "Grok 4.6",
+      "passAt1": 0.6747787610619469,
+      "passed": 305,
+      "providerId": "xai",
+      "runs": 4,
+      "reasoningEffort": "medium",
+      "sourceModel": "grok-4-6"
+    },
+    {
+      "attempted": 451,
+      "ci95": {
+        "high": 0.689162607210791,
+        "low": 0.64564892272269
+      },
+      "config": "mini_swe_agent_grok_4_6_xhigh",
+      "harness": "mini-swe-agent",
+      "identity": {
+        "modelId": "x-ai/grok-4.6",
+        "resolver": {
+          "name": "OpenRouter",
+          "retrievedAt": "2026-08-28T19:49:03.914Z",
+          "url": "https://openrouter.ai/api/v1/models?sort=newest"
+        },
+        "source": "openrouter"
+      },
+      "model": "Grok 4.6",
+      "passAt1": 0.6674057649667405,
+      "passed": 301,
+      "providerId": "xai",
+      "runs": 4,
+      "reasoningEffort": "xhigh",
+      "sourceModel": "grok-4-6"
+    },
+    {
+      "attempted": 451,
+      "ci95": {
+        "high": 0.6672207088517614,
+        "low": 0.6365486924786155
+      },
+      "config": "mini_swe_agent_grok_4_6_high",
+      "harness": "mini-swe-agent",
+      "identity": {
+        "modelId": "x-ai/grok-4.6",
+        "resolver": {
+          "name": "OpenRouter",
+          "retrievedAt": "2026-08-28T19:49:03.914Z",
+          "url": "https://openrouter.ai/api/v1/models?sort=newest"
+        },
+        "source": "openrouter"
+      },
+      "model": "Grok 4.6",
+      "passAt1": 0.6518847006651884,
+      "passed": 294,
+      "providerId": "xai",
+      "runs": 4,
+      "reasoningEffort": "high",
+      "sourceModel": "grok-4-6"
+    },
+    {
+      "attempted": 449,
+      "ci95": {
+        "high": 0.43966758668661526,
+        "low": 0.3932945513980172
+      },
+      "config": "mini_swe_agent_grok_4_6_low",
+      "harness": "mini-swe-agent",
+      "identity": {
+        "modelId": "x-ai/grok-4.6",
+        "resolver": {
+          "name": "OpenRouter",
+          "retrievedAt": "2026-08-28T19:49:03.914Z",
+          "url": "https://openrouter.ai/api/v1/models?sort=newest"
+        },
+        "source": "openrouter"
+      },
+      "model": "Grok 4.6",
+      "passAt1": 0.41648106904231624,
+      "passed": 187,
+      "providerId": "xai",
+      "runs": 4,
+      "reasoningEffort": "low",
+      "sourceModel": "grok-4-6"
+    },
+    {
+      "attempted": 450,
+      "ci95": {
+        "high": 0.45503407398358586,
+        "low": 0.42052148157196967
+      },
+      "config": "mini_swe_agent_glm_5_2_max",
+      "harness": "mini-swe-agent",
+      "identity": {
+        "modelId": "z-ai/glm-5.2",
+        "resolver": {
+          "name": "OpenRouter",
+          "retrievedAt": "2026-08-28T19:49:03.914Z",
+          "url": "https://openrouter.ai/api/v1/models?sort=newest"
+        },
+        "source": "openrouter"
+      },
+      "model": "GLM 5.2",
+      "passAt1": 0.43777777777777777,
+      "passed": 197,
+      "providerId": "z_ai",
+      "runs": 4,
+      "reasoningEffort": "max",
+      "sourceModel": "glm-5-2"
+    },
+    {
+      "attempted": 452,
+      "ci95": {
+        "high": 0.41033258788629623,
+        "low": 0.3153311289278631
+      },
+      "config": "mini_swe_agent_glm_5_2_high",
+      "harness": "mini-swe-agent",
+      "identity": {
+        "modelId": "z-ai/glm-5.2",
+        "resolver": {
+          "name": "OpenRouter",
+          "retrievedAt": "2026-08-28T19:49:03.914Z",
+          "url": "https://openrouter.ai/api/v1/models?sort=newest"
+        },
+        "source": "openrouter"
+      },
+      "model": "GLM 5.2",
+      "passAt1": 0.36283185840707965,
+      "passed": 164,
+      "providerId": "z_ai",
+      "runs": 4,
+      "reasoningEffort": "high",
+      "sourceModel": "glm-5-2"
+    },
+    {
+      "attempted": 451,
+      "ci95": {
+        "high": 0.7197652266845449,
+        "low": 0.6593922012533708
+      },
+      "config": "mini_swe_agent_glm_5_3_max",
+      "harness": "mini-swe-agent",
+      "identity": {
+        "modelId": "z-ai/glm-5.3",
+        "resolver": {
+          "name": "OpenRouter",
+          "retrievedAt": "2026-08-28T19:49:03.914Z",
+          "url": "https://openrouter.ai/api/v1/models?sort=newest"
+        },
+        "source": "openrouter"
+      },
+      "model": "GLM 5.3",
+      "passAt1": 0.6895787139689579,
+      "passed": 311,
+      "providerId": "z_ai",
+      "runs": 4,
+      "reasoningEffort": "max",
+      "sourceModel": "glm-5-3"
+    },
+    {
+      "attempted": 448,
+      "ci95": {
+        "high": 0.6777082789455078,
+        "low": 0.590148863911635
+      },
+      "config": "mini_swe_agent_glm_5_3_flash_max",
+      "harness": "mini-swe-agent",
+      "identity": {
+        "modelId": "z-ai/glm-5.3-flash",
+        "resolver": {
+          "name": "OpenRouter",
+          "retrievedAt": "2026-08-28T19:49:03.914Z",
+          "url": "https://openrouter.ai/api/v1/models?sort=newest"
+        },
+        "source": "openrouter"
+      },
+      "model": "GLM 5.3 Flash",
+      "passAt1": 0.6339285714285714,
+      "passed": 284,
+      "providerId": "z_ai",
+      "runs": 4,
+      "reasoningEffort": "max",
+      "sourceModel": "glm-5-3-flash"
+    }
+  ],
+  "unmatchedModels": []
+}

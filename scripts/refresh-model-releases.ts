@@ -7,6 +7,8 @@ import {
   MODEL_RELEASE_SOURCE_URL,
   MODEL_RELEASE_WINDOW_DAYS,
   modelReleaseProviderIds,
+  modelReleaseDisplayName,
+  modelReleaseProviderForOpenRouterId,
   modelReleaseSemanticKey,
   parseModelReleaseRadar,
   parseOpenRouterModelsResponse,
@@ -22,24 +24,7 @@ import { err, ok, type Result } from "../lib/result";
 const OUTPUT_PATH = path.join(import.meta.dir, "..", "data", "model-release-radar.json");
 const BENCHMARK_PATH = path.join(import.meta.dir, "..", "data", "coding-agents.json");
 const millisecondsPerDay = 24 * 60 * 60 * 1_000;
-
-type ProviderPolicy = Readonly<{
-  providerId: ModelReleaseProviderId;
-  providerName: string;
-}>;
-
-const providerByOpenRouterAuthor: Readonly<Record<string, ProviderPolicy>> = {
-  anthropic: { providerId: "anthropic", providerName: "Anthropic" },
-  deepseek: { providerId: "deepseek", providerName: "DeepSeek" },
-  google: { providerId: "google", providerName: "Google" },
-  meta: { providerId: "meta", providerName: "Meta" },
-  "meta-llama": { providerId: "meta", providerName: "Meta" },
-  moonshotai: { providerId: "moonshot_ai", providerName: "Moonshot AI" },
-  openai: { providerId: "openai", providerName: "OpenAI" },
-  qwen: { providerId: "alibaba_cloud", providerName: "Alibaba Cloud" },
-  "x-ai": { providerId: "xai", providerName: "xAI" },
-  "z-ai": { providerId: "z_ai", providerName: "Z.ai" },
-};
+const minimumReleaseRetentionRatio = .8;
 
 function compareText(left: string, right: string): number {
   return left < right ? -1 : left > right ? 1 : 0;
@@ -49,22 +34,15 @@ function uniqueSorted(values: readonly string[]): string[] {
   return Array.from(new Set(values)).sort(compareText);
 }
 
-function openRouterAuthor(id: string): string | null {
-  if (id.startsWith("~") || id.includes(":")) return null;
-  const separator = id.indexOf("/");
-  if (separator <= 0 || separator === id.length - 1 || id.indexOf("/", separator + 1) !== -1) return null;
-  return id.slice(0, separator);
-}
-
-function displayModelName(name: string): string {
-  const separator = name.indexOf(":");
-  return (separator === -1 ? name : name.slice(separator + 1)).trim();
-}
-
 function benchmarkedModelKeys(snapshot: CodingAgentSnapshot): Set<string> {
   const providerIds = new Set<string>(modelReleaseProviderIds);
   return new Set(snapshot.records.flatMap((record) => (
     providerIds.has(record.providerId)
+      && record.completeIndex
+      && record.benchmarks.aaIndex !== null
+      && record.benchmarks.deepSwe !== null
+      && record.benchmarks.terminalBench !== null
+      && record.benchmarks.sweAtlas !== null
       ? [modelReleaseSemanticKey(record.providerId as ModelReleaseProviderId, record.model)]
       : []
   )));
@@ -86,17 +64,15 @@ function candidateRelease(
   earliestCreated: number,
   retrievedAt: number,
 ): ModelRelease | null {
-  const author = openRouterAuthor(source.id);
-  if (author === null) return null;
-  const provider = providerByOpenRouterAuthor[author];
-  if (provider === undefined || source.canonicalSlug === null) return null;
+  const provider = modelReleaseProviderForOpenRouterId(source.id);
+  if (provider === null || source.canonicalSlug === null) return null;
   if (source.canonicalSlug.startsWith("~") || source.canonicalSlug.includes(":")) return null;
   if (!source.architecture.outputModalities.includes("text")) return null;
   if (!source.supportedParameters.includes("tools")) return null;
 
   const sourceAddedAtMilliseconds = source.created * 1_000;
   if (sourceAddedAtMilliseconds < earliestCreated || sourceAddedAtMilliseconds > retrievedAt) return null;
-  const model = displayModelName(source.name);
+  const model = modelReleaseDisplayName(source.name);
   if (model === "") return null;
 
   return {
@@ -212,6 +188,63 @@ export function validateModelReleaseRadarStatuses(
         `Release ${release.id} is marked ${release.status}, but the checked benchmark snapshot requires ${expected}.`,
       ));
     }
+  }
+  return ok(undefined);
+}
+
+/**
+ * Rejects a suspiciously incomplete catalog while allowing releases to age out
+ * of the bounded current window or be displaced by newer in-policy releases.
+ * The durable observed-listing ledger itself may never lose an id.
+ */
+export function validateModelReleaseRadarReplacement(
+  previous: ModelReleaseRadar,
+  candidate: ModelReleaseRadar,
+): Result<void, Error> {
+  const previousRetrievedAt = Date.parse(previous.source.retrievedAt);
+  const candidateRetrievedAt = Date.parse(candidate.source.retrievedAt);
+  if (candidateRetrievedAt < previousRetrievedAt) {
+    return err(new Error(
+      `OpenRouter retrieval regressed from ${previous.source.retrievedAt} to ${candidate.source.retrievedAt}.`,
+    ));
+  }
+
+  const candidateObservedIds = new Set(candidate.observedListings.map(listing => listing.id));
+  const missingObservedIds = previous.observedListings.filter(
+    listing => !candidateObservedIds.has(listing.id),
+  );
+  if (missingObservedIds.length > 0) {
+    return err(new Error(
+      `OpenRouter replacement dropped ${missingObservedIds.length} durable observed listing ids.`,
+    ));
+  }
+
+  const earliestCurrentRelease = candidateRetrievedAt
+    - MODEL_RELEASE_WINDOW_DAYS * millisecondsPerDay;
+  const candidateReleaseIds = new Set(candidate.releases.map(release => release.id));
+  const boundedCutoff = candidate.releases.length === MODEL_RELEASE_LIMIT
+    ? candidate.releases.at(-1) ?? null
+    : null;
+  const expectedRetainedReleases = previous.releases.filter(release => {
+    if (Date.parse(release.sourceAddedAt) < earliestCurrentRelease) return false;
+    if (boundedCutoff === null) return true;
+    return compareReleaseListings(
+      releaseListing(release),
+      releaseListing(boundedCutoff),
+    ) <= 0;
+  });
+  const retainedReleaseCount = expectedRetainedReleases.filter(
+    release => candidateReleaseIds.has(release.id),
+  ).length;
+  const minimumRetainedReleaseCount = Math.ceil(
+    expectedRetainedReleases.length * minimumReleaseRetentionRatio,
+  );
+  if (retainedReleaseCount < minimumRetainedReleaseCount) {
+    return err(new Error(
+      `OpenRouter replacement retained ${retainedReleaseCount} of `
+      + `${expectedRetainedReleases.length} still-current release ids; minimum safe count is `
+      + `${minimumRetainedReleaseCount}.`,
+    ));
   }
   return ok(undefined);
 }
@@ -335,6 +368,8 @@ async function refresh(): Promise<Result<ModelReleaseRadar, Error>> {
   }
   const statuses = validateModelReleaseRadarStatuses(validated.value, benchmark.value);
   if (!statuses.ok) return statuses;
+  const safeReplacement = validateModelReleaseRadarReplacement(previous.value, validated.value);
+  if (!safeReplacement.ok) return safeReplacement;
 
   const temporaryPath = `${OUTPUT_PATH}.tmp`;
   await Bun.write(temporaryPath, `${JSON.stringify(validated.value, null, 2)}\n`);
@@ -356,7 +391,7 @@ if (import.meta.main) {
     const awaiting = result.value.releases.filter(({ status }) => status === "awaiting-benchmark").length;
     const verb = checkOnly ? "Validated" : reconcileOnly ? "Reconciled" : "Refreshed";
     console.log(
-      `${verb} ${result.value.releases.length} tracked model releases (${awaiting} awaiting comparable benchmark data) in data/model-release-radar.json.`,
+      `${verb} ${result.value.releases.length} tracked model releases (${awaiting} awaiting complete benchmark coverage) in data/model-release-radar.json.`,
     );
   }
 }

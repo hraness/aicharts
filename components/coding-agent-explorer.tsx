@@ -46,6 +46,8 @@ import {
   buildChartShareUrl,
   chartImageFilename,
   chartImageShareData,
+  DEFAULT_CHART_X_METRIC,
+  DEFAULT_CHART_Y_METRIC,
   parseChartShareView,
   xPostIntentUrl,
   type ChartShareView,
@@ -317,8 +319,8 @@ export function CodingAgentExplorer({
     leading: <i aria-hidden="true" />,
     style: providerStyle(provider.id),
   })), [providers]);
-  const [xMetric, setXMetric] = useState<XMetric>("costUsd");
-  const [yMetric, setYMetric] = useState<YMetric>("aaIndex");
+  const [xMetric, setXMetric] = useState<XMetric>(DEFAULT_CHART_X_METRIC);
+  const [yMetric, setYMetric] = useState<YMetric>(DEFAULT_CHART_Y_METRIC);
   const [pinnedPointId, setPinnedPointId] = useState<string | null>(null);
   const [pinnedProviderId, setPinnedProviderId] = useState<string | null>(null);
   const [hoveredPointId, setHoveredPointId] = useState<string | null>(null);
@@ -348,8 +350,8 @@ export function CodingAgentExplorer({
 
   useEffect(() => {
     const sharedView = parseChartShareView(window.location.search);
-    const nextXMetric = sharedView.xMetric ?? "costUsd";
-    const nextYMetric = sharedView.yMetric ?? "aaIndex";
+    const nextXMetric = sharedView.xMetric ?? DEFAULT_CHART_X_METRIC;
+    const nextYMetric = sharedView.yMetric ?? DEFAULT_CHART_Y_METRIC;
     const sharedPoint = sharedView.pointKey === null
       ? null
       : snapshot.records.find((record) => codingAgentRecordKey(record) === sharedView.pointKey) ?? null;
