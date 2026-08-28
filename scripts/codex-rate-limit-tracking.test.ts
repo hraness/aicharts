@@ -332,16 +332,19 @@ createInterface({ input: process.stdin }).on("line", line => {
 
   test("handles a closed stdin pipe and reaps the resistant reader", async () => {
     const subject = await fakeAppServer(`
-import { closeSync, writeFileSync } from "node:fs";
+import { writeFileSync } from "node:fs";
+import { createInterface } from "node:readline";
 writeFileSync(process.env.AICHARTS_FAKE_PID_PATH, String(process.pid));
 process.on("SIGTERM", () => {});
 setInterval(() => {}, 1_000);
 process.stdin.on("error", () => {});
-process.stdin.once("data", () => {
-  closeSync(0);
-  setTimeout(() => {
+createInterface({ input: process.stdin }).once("line", line => {
+  const message = JSON.parse(line);
+  if (message.id !== 1) process.exit(2);
+  process.stdin.once("close", () => {
     process.stdout.write(JSON.stringify({ id: 1, result: {} }) + "\\n");
-  }, 50);
+  });
+  process.stdin.destroy();
 });
 `);
 
@@ -418,7 +421,7 @@ createInterface({ input: process.stdin }).on("line", line => {
       isolatedHome = await readFile(subject.isolatedHomePath, "utf8");
       expect(path.isAbsolute(isolatedHome)).toBe(true);
       expect((await stat(isolatedHome)).mode & 0o777).toBe(0o700);
-      await expect(access(isolatedHome)).resolves.toBeUndefined();
+      await access(isolatedHome);
       if (childPid === undefined) throw new Error("Reader PID was not captured.");
       const liveChildPid = childPid;
       expect(() => process.kill(liveChildPid, 0)).not.toThrow();
