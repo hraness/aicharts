@@ -1,4 +1,4 @@
-import { access, chmod, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { access, chmod, mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
@@ -113,6 +113,19 @@ async function expectIsolatedHomeGone(isolatedHomePath: string): Promise<void> {
   const isolatedHome = await readFile(isolatedHomePath, "utf8");
   expect(path.isAbsolute(isolatedHome)).toBe(true);
   await expect(access(isolatedHome)).rejects.toThrow();
+}
+
+async function waitForPathRemoval(target: string, timeoutMs = 1_000): Promise<void> {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    try {
+      await access(target);
+    } catch {
+      return;
+    }
+    await new Promise(resolve => setTimeout(resolve, 10));
+  }
+  await expect(access(target)).rejects.toThrow();
 }
 
 describe("Codex rate-limit response boundary", () => {
@@ -357,6 +370,70 @@ process.stdin.resume();
     })).rejects.toThrow("timed out");
     await expectRecordedProcessGone(subject.pidPath);
     await expectIsolatedHomeGone(subject.isolatedHomePath);
+  });
+
+  test("retains isolated auth until an unreaped reader later closes", async () => {
+    const subject = await fakeAppServer(`
+import { writeFileSync } from "node:fs";
+import { createInterface } from "node:readline";
+writeFileSync(process.env.AICHARTS_FAKE_PID_PATH, String(process.pid));
+setInterval(() => {}, 1_000);
+createInterface({ input: process.stdin }).on("line", line => {
+  const message = JSON.parse(line);
+  if (message.id === 1) process.stdout.write(JSON.stringify({ id: 1, result: {} }) + "\\n");
+  if (message.id === 2) process.stdout.write(JSON.stringify({ id: 2, result: { requirements: null } }) + "\\n");
+  if (message.id === 3) {
+    const bucket = {
+      credits: null,
+      individualLimit: null,
+      limitId: "codex",
+      limitName: null,
+      planType: "pro",
+      primary: { resetsAt: 2_000_000_000, usedPercent: 34, windowDurationMins: 300 },
+      rateLimitReachedType: null,
+      secondary: null,
+      spendControlReached: null,
+    };
+    process.stdout.write(JSON.stringify({
+      id: 3,
+      result: { rateLimits: bucket, rateLimitsByLimitId: { codex: bucket } },
+    }) + "\\n");
+  }
+});
+`);
+    let childPid: number | undefined;
+    let isolatedHome: string | undefined;
+
+    try {
+      await expect(readCodexRateLimits(subject.environment, subject.authContext, {
+        killGraceMs: 25,
+        reapChild: child => {
+          childPid = child.pid;
+          return Promise.resolve(false);
+        },
+        terminationGraceMs: 25,
+        timeoutMs: 1_000,
+      })).rejects.toThrow("could not terminate its app-server process");
+
+      isolatedHome = await readFile(subject.isolatedHomePath, "utf8");
+      expect(path.isAbsolute(isolatedHome)).toBe(true);
+      expect((await stat(isolatedHome)).mode & 0o777).toBe(0o700);
+      await expect(access(isolatedHome)).resolves.toBeUndefined();
+      if (childPid === undefined) throw new Error("Reader PID was not captured.");
+      expect(() => process.kill(childPid, 0)).not.toThrow();
+    } finally {
+      if (childPid !== undefined) {
+        try {
+          process.kill(childPid, "SIGKILL");
+        } catch {
+          // A concurrent close is sufficient for the deferred cleanup assertion.
+        }
+      }
+    }
+
+    if (isolatedHome === undefined) throw new Error("Isolated auth home was not captured.");
+    await waitForPathRemoval(isolatedHome);
+    await expectRecordedProcessGone(subject.pidPath);
   });
 });
 

@@ -149,6 +149,11 @@ export type CodexRateLimitReader = (
 type CodexRateLimitReaderOptions = Readonly<{
   killGraceMs?: number;
   now?: () => Date;
+  reapChild?: (
+    child: ReturnType<typeof spawn>,
+    terminationGraceMs: number,
+    killGraceMs: number,
+  ) => Promise<boolean>;
   terminationGraceMs?: number;
   timeoutMs?: number;
 }>;
@@ -160,6 +165,16 @@ export class CodexRateLimitRecorderFailure extends Error {
     super(message);
     this.name = "CodexRateLimitRecorderFailure";
     this.exitCode = exitCode;
+  }
+}
+
+class CodexRateLimitUnreapedChildFailure extends CodexRateLimitRecorderFailure {
+  readonly childClosed: Promise<void>;
+
+  constructor(childClosed: Promise<void>) {
+    super("Codex rate-limit reader could not terminate its app-server process.", 69);
+    this.name = "CodexRateLimitUnreapedChildFailure";
+    this.childClosed = childClosed;
   }
 }
 
@@ -376,6 +391,21 @@ function childHasExited(child: ReturnType<typeof spawn>): boolean {
   return child.pid === undefined || child.exitCode !== null || child.signalCode !== null;
 }
 
+function observeEventualChildClose(child: ReturnType<typeof spawn>): Promise<void> {
+  if (childHasExited(child)) return Promise.resolve();
+  return new Promise<void>(resolve => {
+    let completed = false;
+    const complete = (): void => {
+      if (completed) return;
+      completed = true;
+      child.removeListener("close", complete);
+      resolve();
+    };
+    child.once("close", complete);
+    if (childHasExited(child)) complete();
+  });
+}
+
 async function waitForChildClose(
   child: ReturnType<typeof spawn>,
   timeoutMs: number,
@@ -552,6 +582,7 @@ async function runCodexRateLimitAppServer(
     APP_SERVER_TERMINATION_GRACE_MS,
   );
   const killGraceMs = boundedReaderDelay(options.killGraceMs, APP_SERVER_KILL_GRACE_MS);
+  const reapChild = options.reapChild ?? terminateChild;
 
   return await new Promise<TimedCodexRateLimitReadResult>((resolve, reject) => {
     const child = spawn(executable, [
@@ -577,23 +608,20 @@ async function runCodexRateLimitAppServer(
       if (finishing) return;
       finishing = true;
       clearTimeout(timeout);
-      void terminateChild(child, terminationGraceMs, killGraceMs).then(
+      const rejectUnreaped = (): void => {
+        reject(new CodexRateLimitUnreapedChildFailure(observeEventualChildClose(child)));
+      };
+      void reapChild(child, terminationGraceMs, killGraceMs).then(
         reaped => {
           if (!reaped) {
-            reject(new CodexRateLimitRecorderFailure(
-              "Codex rate-limit reader could not terminate its app-server process.",
-              69,
-            ));
+            rejectUnreaped();
           } else if (error !== null) {
             reject(error);
           } else {
             resolve(result!);
           }
         },
-        () => reject(new CodexRateLimitRecorderFailure(
-          "Codex rate-limit reader could not terminate its app-server process.",
-          69,
-        )),
+        rejectUnreaped,
       );
     };
 
@@ -727,10 +755,22 @@ export async function readCodexRateLimits(
   options: CodexRateLimitReaderOptions = {},
 ): Promise<TimedCodexRateLimitReadResult> {
   const isolatedCodexHome = await createIsolatedCodexHome(authContext);
+  let cleanupAfterClose: Promise<void> | null = null;
   try {
     return await runCodexRateLimitAppServer(environment, isolatedCodexHome.home, options);
+  } catch (error) {
+    if (error instanceof CodexRateLimitUnreapedChildFailure) {
+      cleanupAfterClose = error.childClosed;
+    }
+    throw error;
   } finally {
-    await removeIsolatedCodexHome(isolatedCodexHome);
+    if (cleanupAfterClose === null) {
+      await removeIsolatedCodexHome(isolatedCodexHome);
+    } else {
+      void cleanupAfterClose
+        .then(() => removeIsolatedCodexHome(isolatedCodexHome))
+        .catch(() => undefined);
+    }
   }
 }
 
