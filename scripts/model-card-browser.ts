@@ -39,14 +39,37 @@ function cssDurationMilliseconds(value: string): number | null {
   return unit.toLowerCase() === "s" ? duration * 1_000 : duration;
 }
 
-async function firstExecutable(paths: readonly string[]): Promise<string> {
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
+async function launchFirstAvailableBrowser(paths: readonly string[]): Promise<Browser> {
+  const failures: string[] = [];
+  let availableExecutableCount = 0;
   for (const path of paths) {
     try {
       await access(path);
-      return path;
     } catch {
       // Continue through the supported Chromium and Chrome installations.
+      continue;
     }
+
+    availableExecutableCount += 1;
+    try {
+      return await chromium.launch({
+        args: ["--no-sandbox"],
+        executablePath: path,
+        headless: true,
+      });
+    } catch (error: unknown) {
+      failures.push(`${path}: ${errorMessage(error)}`);
+    }
+  }
+
+  if (availableExecutableCount > 0) {
+    throw new Error(
+      `No discovered Chromium executable could launch:\n${failures.join("\n")}`,
+    );
   }
   throw new Error(
     "No Chromium executable found. Set CHROMIUM_EXECUTABLE_PATH to run the model-card browser contract.",
@@ -356,17 +379,17 @@ async function verifyForcedColors(browser: Browser, baseUrl: string): Promise<vo
 
 invariant(Bun.version === expectedBunVersion, `Expected Bun ${expectedBunVersion}; received ${Bun.version}.`);
 await access(join(repository, ".next", "BUILD_ID"));
-const executablePath = await firstExecutable([
+const executablePaths = [
   ...(process.env.CHROMIUM_EXECUTABLE_PATH === undefined
     ? []
     : [process.env.CHROMIUM_EXECUTABLE_PATH]),
   chromium.executablePath(),
-  "/Applications/Chromium.app/Contents/MacOS/Chromium",
   "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+  "/Applications/Chromium.app/Contents/MacOS/Chromium",
   "/usr/bin/google-chrome",
   "/usr/bin/chromium",
   "/usr/bin/chromium-browser",
-]);
+] as const;
 const port = await reservePort();
 const baseUrl = `http://${hostname}:${String(port)}`;
 const server = Bun.spawn([
@@ -387,11 +410,7 @@ const server = Bun.spawn([
 
 try {
   await waitForServer(`${baseUrl}/models`, server);
-  const browser = await chromium.launch({
-    args: ["--no-sandbox"],
-    executablePath,
-    headless: true,
-  });
+  const browser = await launchFirstAvailableBrowser(executablePaths);
   try {
     await verifyChartExport(browser, baseUrl);
     await verifyInteractivePointer(browser, baseUrl);
