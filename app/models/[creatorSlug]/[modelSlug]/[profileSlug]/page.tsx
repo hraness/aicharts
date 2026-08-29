@@ -13,7 +13,12 @@ import {
   versionedModelCardImagePath,
 } from "@/lib/model-card-collection";
 import type { ModelCardRouteParams } from "@/lib/model-card-data";
-import { modelCardIndexingPolicy } from "@/lib/model-card-presentation";
+import {
+  formatModelCardReleaseDateLong,
+  formatModelCardReleaseStage,
+  modelCardIndexingPolicy,
+  modelCardReleaseLabel,
+} from "@/lib/model-card-presentation";
 import { modelCardRouteStatus } from "@/lib/model-card-route-status";
 import { vercelGatewayModelCatalog } from "@/lib/model-card-sources";
 import { formatRetrievedAt } from "@/lib/coding-agent-updates";
@@ -104,6 +109,26 @@ export default async function ModelCardPage({
             <h2 id="model-card-details-title">Card details</h2>
             <dl>
               <div><dt>{routeStatus.provisionalIdentity ? "Provisional ID" : "Canonical ID"}</dt><dd><code className="model-card-detail__code-token">{card.canonicalModelId}</code></dd></div>
+              <div>
+                <dt>{modelCardReleaseLabel(card.release)}</dt>
+                <dd>
+                  {card.release.status === "verified" ? (
+                    <>
+                      <a href={card.release.sources[0].url}>
+                        <time dateTime={card.release.releasedOn}>
+                          {formatModelCardReleaseDateLong(card.release.releasedOn)}
+                        </time>
+                        {" · "}{card.release.sources[0].title}
+                      </a>
+                      {" · "}{formatModelCardReleaseStage(card.release.stage)}
+                    </>
+                  ) : card.release.status === "pending" ? (
+                    <>Official date pending verification · researched <time dateTime={card.release.researchedOn}>{formatModelCardReleaseDateLong(card.release.researchedOn)}</time></>
+                  ) : (
+                    <>Official date pending first-party review · first observed in the benchmark snapshot <time dateTime={card.release.observedOn}>{formatModelCardReleaseDateLong(card.release.observedOn)}</time></>
+                  )}
+                </dd>
+              </div>
               {routeStatus.isProvisional && (
                 <div>
                   <dt>Route status</dt>

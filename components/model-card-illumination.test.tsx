@@ -6,6 +6,8 @@ import type { ModelCardPresentation } from "@/lib/model-card-presentation";
 
 import {
   ModelCardIllumination,
+  modelCardFamilyArchetype,
+  modelCardHolographicField,
   type ModelCardIlluminationFinish,
 } from "./model-card-illumination";
 
@@ -80,6 +82,18 @@ function cardFor(canonicalModelId: string, profileSlug?: string): ModelCardPrese
 }
 
 describe("model card illumination", () => {
+  test("assigns every current family a distinct curated archetype and foil field", () => {
+    const familyIds = [...new Set(
+      MODEL_CARD_PRESENTATIONS.map(card => card.emblemIdentity.familyId),
+    )];
+    const archetypes = familyIds.map(modelCardFamilyArchetype);
+    const fields = familyIds.map(modelCardHolographicField);
+
+    expect(modelCardFamilyArchetype("swe")).toBe("lightning-codex");
+    expect(new Set(archetypes).size).toBe(familyIds.length);
+    expect(new Set(fields).size).toBe(familyIds.length);
+  });
+
   test("is deterministic for each profile and unique across the collection", () => {
     const first = MODEL_CARD_PRESENTATIONS[0];
     if (first === undefined) throw new Error("Expected a model-card fixture.");

@@ -84,13 +84,13 @@ describe("model-card gallery filters", () => {
     expect(modelCardMatchesFilter(topTwo, "one", true)).toBeFalse();
   });
 
-  test("sorts recently listed cards in real DOM order without changing filtering", () => {
+  test("sorts official release dates in real DOM order without changing filtering", () => {
     const items = [
-      { isTop: true, providerId: "one", sourceAddedAt: "2026-07-01T00:00:00.000Z" },
-      { isTop: false, providerId: "two", sourceAddedAt: null },
-      { isTop: true, providerId: "one", sourceAddedAt: "2026-08-01T00:00:00.000Z" },
-      { isTop: true, providerId: "one", sourceAddedAt: "2026-08-01T00:00:00.000Z" },
-      { isTop: false, providerId: "one", sourceAddedAt: "not-a-date" },
+      { isTop: true, providerId: "one", releasedOn: "2026-07-01" },
+      { isTop: false, providerId: "two", releasedOn: null },
+      { isTop: true, providerId: "one", releasedOn: "2026-08-01" },
+      { isTop: true, providerId: "one", releasedOn: "2026-08-01" },
+      { isTop: false, providerId: "one", releasedOn: "not-a-date" },
     ] as const;
 
     expect(modelCardGalleryItemOrder(items, {
@@ -122,8 +122,8 @@ describe("model-card gallery filters", () => {
         <ModelCardGalleryItems
           id="cards"
           items={[
-            { isTop: true, providerId: "one", sourceAddedAt: "2026-08-01T00:00:00.000Z" },
-            { isTop: false, providerId: "two", sourceAddedAt: null },
+            { isTop: true, providerId: "one", releasedOn: "2026-08-01" },
+            { isTop: false, providerId: "two", releasedOn: null },
           ]}
         >
           <a href="/one">One</a>
@@ -138,18 +138,18 @@ describe("model-card gallery filters", () => {
     expect(markup).toContain('>Provider</label>');
     expect(markup).not.toContain('<span>Provider</span>');
     expect(markup).toContain('aria-label="Show only cost and AA Index Pareto-frontier cards"');
-    expect(markup).toContain('aria-label="Sort model cards by recent OpenRouter listing time"');
+    expect(markup).toContain('aria-label="Sort model cards by official release date"');
     expect(markup.match(/aria-pressed="false"/gu)).toHaveLength(2);
     expect(markup).toContain("All providers · 3");
     expect(markup).toContain("One · 2");
     expect(markup).toContain("1 card · Cost ↓ · AAI ↑");
-    expect(markup).toContain("Recently listed first");
+    expect(markup).toContain("Newest releases first");
     expect(markup).not.toContain("3 of 3 cards");
     expect(markup).toContain('aria-live="polite"');
     expect(markup).toContain("Showing 3 model cards.");
     expect(markup).toContain('href="/one"');
     expect(markup).toContain('href="/two"');
     expect(markup).toContain("no other configuration is at least as strong and no more expensive");
-    expect(markup).toContain("does not claim an official release date");
+    expect(markup).toContain("checked first-party release date");
   });
 });

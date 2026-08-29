@@ -54,7 +54,7 @@ const familyArchetypes = {
   opus: "cathedral-window",
   qwen: "paired-gate",
   sonnet: "lyre",
-  "swe-lightning": "lightning-codex",
+  swe: "lightning-codex",
 } as const;
 
 export type ModelCardFamilyArchetype = typeof familyArchetypes[keyof typeof familyArchetypes];

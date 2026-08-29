@@ -1,15 +1,23 @@
 import { describe, expect, test } from "bun:test";
 
-import { MODEL_CARD_PRESENTATIONS } from "./model-card-collection";
+import {
+  MODEL_CARD_PRESENTATIONS,
+  MODEL_CARD_SNAPSHOT,
+  MODEL_CARD_VARIANTS,
+} from "./model-card-collection";
 import {
   cleanModelCardDisplayName,
   compactModelCardHarnessLabel,
-  formatModelCardListingDate,
+  createModelCardPresentation,
   formatModelCardDisplayTitle,
   formatModelCardMetricRange,
+  formatModelCardReleaseDate,
+  formatModelCardReleaseDateLong,
+  formatModelCardReleaseStage,
   formatModelCardSourceDate,
-  modelCardListingAccessibleLabel,
   modelCardIndexingPolicy,
+  modelCardReleaseAccessibleLabel,
+  modelCardReleaseLabel,
 } from "./model-card-presentation";
 import { assertProperty, fc } from "./property-test";
 
@@ -64,33 +72,77 @@ describe("model card presentation", () => {
     );
   });
 
-  test("presents source-listing dates with explicit OpenRouter provenance", () => {
-    const listed = MODEL_CARD_PRESENTATIONS.find(card => (
-      card.listing?.sourceAddedAt === "2026-08-13T17:03:01.000Z"
+  test("presents checked first-party release dates with official provenance", () => {
+    const released = MODEL_CARD_PRESENTATIONS.find(card => (
+      card.canonicalModelId === "google/gemini-3.7-flash"
     ));
-    expect(listed?.listing).toEqual({
-      id: "google/gemini-3.7-flash",
-      source: "OpenRouter",
-      sourceAddedAt: "2026-08-13T17:03:01.000Z",
+    expect(released?.release).toMatchObject({
+      releasedOn: "2026-08-13",
+      stage: "public-release",
+      status: "verified",
     });
-    if (listed?.listing === null || listed?.listing === undefined) {
-      throw new Error("Expected a current card with OpenRouter listing metadata.");
+    if (released?.release.status !== "verified") {
+      throw new Error("Expected a current card with verified official release metadata.");
     }
-    expect(formatModelCardListingDate(listed.listing.sourceAddedAt)).toBe("13 AUG 2026");
-    expect(modelCardListingAccessibleLabel(listed.listing)).toBe(
-      "Listed by OpenRouter on Aug 13, 2026; not an official release date.",
+    expect(formatModelCardReleaseDate(released.release.releasedOn)).toBe("13 AUG 2026");
+    expect(formatModelCardReleaseDateLong(released.release.releasedOn)).toBe("Aug 13, 2026");
+    expect(formatModelCardReleaseStage(released.release.stage)).toBe("Public release");
+    expect(modelCardReleaseAccessibleLabel(released.release)).toBe(
+      "Official release date: Aug 13, 2026. Verified from Introducing Gemini 3.7 Flash.",
     );
   });
 
-  test("rejects malformed and impossible source-listing timestamps", () => {
-    expect(() => formatModelCardListingDate("Aug 13, 2026")).toThrow("valid ISO timestamp");
-    expect(() => formatModelCardListingDate("2026-02-30T00:00:00.000Z"))
-      .toThrow("valid ISO timestamp");
-    expect(() => modelCardListingAccessibleLabel({
-      id: "openai/example",
-      source: "OpenRouter",
-      sourceAddedAt: "2026-08-13T25:00:00.000Z",
-    })).toThrow("valid ISO timestamp");
+  test("rejects malformed and impossible official release dates", () => {
+    expect(() => formatModelCardReleaseDate("Aug 13, 2026"))
+      .toThrow("valid ISO calendar date");
+    expect(() => formatModelCardReleaseDate("2026-02-30"))
+      .toThrow("valid ISO calendar date");
+    expect(modelCardReleaseAccessibleLabel({
+      canonicalModelId: "openai/example",
+      reason: "No official date found.",
+      researchedOn: "2026-08-13",
+      status: "pending",
+    })).toBe(
+      "Official release date pending verification; researched Aug 13, 2026.",
+    );
+    expect(modelCardReleaseAccessibleLabel({
+      canonicalModelId: "unlisted/example.1234567890abcdef12345678",
+      observedOn: "2026-08-28",
+      reason: "Awaiting first-party research.",
+      status: "unreviewed",
+    })).toBe(
+      "Official release date pending review for this newly observed model identity; first observed in the benchmark snapshot on Aug 28, 2026.",
+    );
+  });
+
+  test("discloses when a verified date applies to the base model", () => {
+    const cognition = MODEL_CARD_PRESENTATIONS.find(card => (
+      card.canonicalModelId === "cognition/swe-1.7"
+    ));
+    if (cognition?.release.status !== "verified") {
+      throw new Error("Expected checked Cognition base-model release metadata.");
+    }
+    expect(modelCardReleaseLabel(cognition.release)).toBe("Base released");
+    expect(modelCardReleaseAccessibleLabel(cognition.release)).toBe(
+      "Official base-model release date for SWE-1.7: Jul 8, 2026. Verified from SWE-1.7: Frontier Intelligence at a Fraction of the Cost.",
+    );
+  });
+
+  test("refuses to attach another model identity's release provenance", () => {
+    const variant = MODEL_CARD_VARIANTS[0];
+    const otherCard = MODEL_CARD_PRESENTATIONS.find(card => (
+      card.canonicalModelId !== variant?.canonicalModelId
+    ));
+    if (variant === undefined || otherCard === undefined) {
+      throw new Error("Expected two distinct model-card fixtures.");
+    }
+    expect(() => createModelCardPresentation(
+      variant,
+      1,
+      1,
+      MODEL_CARD_SNAPSHOT.source.retrievedAt,
+      otherCard.release,
+    )).toThrow("must match");
   });
 
   test("uses one neutral foil field so the provider and model inks own color", () => {

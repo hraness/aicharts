@@ -1,8 +1,9 @@
 import type { CSSProperties } from "react";
 
 import {
-  formatModelCardListingDate,
-  modelCardListingAccessibleLabel,
+  formatModelCardReleaseDate,
+  modelCardReleaseAccessibleLabel,
+  modelCardReleaseLabel,
   type ModelCardPresentation,
   type ModelCardStat,
 } from "@/lib/model-card-presentation";
@@ -86,16 +87,25 @@ export function ModelCardFace({
             <i aria-hidden="true" />
             <span>{card.providerName}</span>
           </span>
-          {card.listing !== null && (
+          {card.release.status === "verified" ? (
             <time
-              aria-label={modelCardListingAccessibleLabel(card.listing)}
-              className="model-card-face__listing"
-              dateTime={card.listing.sourceAddedAt}
-              title={modelCardListingAccessibleLabel(card.listing)}
+              aria-label={modelCardReleaseAccessibleLabel(card.release)}
+              className="model-card-face__release"
+              dateTime={card.release.releasedOn}
+              title={modelCardReleaseAccessibleLabel(card.release)}
             >
-              <span>Listed on OpenRouter</span>
-              <span>{formatModelCardListingDate(card.listing.sourceAddedAt)}</span>
+              <span>{modelCardReleaseLabel(card.release)}</span>
+              <span>{formatModelCardReleaseDate(card.release.releasedOn)}</span>
             </time>
+          ) : (
+            <span
+              aria-label={modelCardReleaseAccessibleLabel(card.release)}
+              className="model-card-face__release"
+              title={modelCardReleaseAccessibleLabel(card.release)}
+            >
+              <span>{modelCardReleaseLabel(card.release)}</span>
+              <span>Verifying</span>
+            </span>
           )}
         </header>
 

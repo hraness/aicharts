@@ -12,7 +12,7 @@ import {
   parseGptSubsidySnapshot,
 } from "@/lib/gpt-subsidy-data";
 import {
-  MODEL_CARD_COLLECTION_SOCIAL_IMAGE_PATH,
+  MODEL_CARD_COLLECTION_SOCIAL_IMAGE_URL,
   MODEL_CARD_PRESENTATIONS,
   versionedModelCardImagePath,
 } from "@/lib/model-card-collection";
@@ -79,7 +79,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     },
     {
       changeFrequency: "daily",
-      images: [absolute(MODEL_CARD_COLLECTION_SOCIAL_IMAGE_PATH)],
+      images: [absolute(MODEL_CARD_COLLECTION_SOCIAL_IMAGE_URL)],
       lastModified: datasetModifiedAt,
       priority: 0.9,
       url: absolute("/models"),

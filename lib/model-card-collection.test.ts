@@ -9,9 +9,13 @@ import {
   MODEL_CARD_PRESENTATIONS,
   MODEL_CARD_RENDERER_VERSION,
   MODEL_CARD_SNAPSHOT_VERSION,
+  MODEL_CARD_SNAPSHOT,
   MODEL_CARD_VARIANTS,
   modelCardListings,
+  modelCardReleaseForVariant,
 } from "./model-card-collection";
+import { MODEL_CARD_CATALOG, buildModelCardVariants } from "./model-card-data";
+import { createModelCardPresentation } from "./model-card-presentation";
 import {
   MODEL_RELEASE_LIMIT,
   MODEL_RELEASE_SOURCE_URL,
@@ -21,7 +25,10 @@ import {
   type ModelReleaseListing,
   type ModelReleaseRadar,
 } from "./model-release-data";
-import { MODEL_RELEASE_RADAR } from "./model-release-collection";
+import {
+  MODEL_RELEASE_DATES,
+  modelReleaseDateForCanonicalId,
+} from "./model-release-date-data";
 
 const retrievedAt = "2026-08-28T00:00:00.000Z";
 
@@ -84,11 +91,13 @@ function radar(
 }
 
 describe("model-card OpenRouter listings", () => {
-  test("includes durable listing bytes in the v6 image cache key", () => {
+  test("includes curated identity and official-release bytes in the v7 image cache key", () => {
     const expected = createHash("sha256")
       .update(JSON.stringify(codingAgentData))
       .update("\0")
-      .update(JSON.stringify(MODEL_RELEASE_RADAR.observedListings))
+      .update(JSON.stringify(MODEL_CARD_CATALOG))
+      .update("\0")
+      .update(JSON.stringify(MODEL_RELEASE_DATES))
       .update("\0")
       .update(MODEL_CARD_RENDERER_VERSION)
       .digest("hex")
@@ -100,7 +109,7 @@ describe("model-card OpenRouter listings", () => {
       .digest("hex")
       .slice(0, 16);
 
-    expect(MODEL_CARD_RENDERER_VERSION).toBe("model-card-v6");
+    expect(MODEL_CARD_RENDERER_VERSION).toBe("model-card-v7");
     expect(MODEL_CARD_SNAPSHOT_VERSION).toBe(expected);
     expect(MODEL_CARD_SNAPSHOT_VERSION).not.toBe(benchmarkOnly);
   });
@@ -184,7 +193,12 @@ describe("model-card OpenRouter listings", () => {
       expect(MODEL_CARD_LISTINGS.has(card.path)).toBeTrue();
     }
     for (const card of MODEL_CARD_PRESENTATIONS) {
-      expect(card.listing).toEqual(MODEL_CARD_LISTINGS.get(card.path) ?? null);
+      const expectedRelease = modelReleaseDateForCanonicalId(card.canonicalModelId);
+      if (expectedRelease === undefined) {
+        throw new Error(`Missing release fixture for ${card.canonicalModelId}.`);
+      }
+      expect(card.release).toEqual(expectedRelease);
+      expect(card.canonicalModelId).not.toStartWith("unlisted/");
     }
 
     const datedOpusProfiles = MODEL_CARD_VARIANTS.filter(card => (
@@ -202,5 +216,33 @@ describe("model-card OpenRouter listings", () => {
     if (unmatchedDeepSeek !== undefined) {
       expect(MODEL_CARD_LISTINGS.get(unmatchedDeepSeek.path)).toBeNull();
     }
+  });
+
+  test("publishes a provisional card while its official release research catches up", () => {
+    const checkedRecord = MODEL_CARD_SNAPSHOT.records[0];
+    if (checkedRecord === undefined) throw new Error("Expected a benchmark record fixture.");
+    const unknownRecord = {
+      ...checkedRecord,
+      id: "new-openai-model-fixture",
+      model: "GPT-6 Preview",
+      modelLabel: "GPT-6 Preview (max)",
+      seriesId: "fixture:openai_gpt-6-preview",
+      seriesLabel: "Fixture · GPT-6 Preview",
+      setting: "max",
+      settingRank: 5,
+    };
+    const variant = buildModelCardVariants([unknownRecord])[0];
+    if (variant === undefined) throw new Error("Expected a provisional model-card variant.");
+    expect(variant.canonicalModelId).toStartWith("unlisted/");
+
+    const release = modelCardReleaseForVariant(variant, retrievedAt);
+    expect(release).toEqual({
+      canonicalModelId: variant.canonicalModelId,
+      observedOn: "2026-08-28",
+      reason: "New benchmark identity awaiting checked first-party release research.",
+      status: "unreviewed",
+    });
+    expect(createModelCardPresentation(variant, 1, 1, retrievedAt, release).release)
+      .toEqual(release);
   });
 });

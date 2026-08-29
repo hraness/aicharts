@@ -95,7 +95,7 @@ export const modelCardCatalogEntrySchema = z.object({
   emblemIdentity: modelCardEmblemIdentitySchema,
   gatewayModelId: canonicalModelIdSchema.nullable(),
   intrinsicClass: modelCardIntrinsicClassSchema,
-  lobeIconKey: lobeIconKeySchema,
+  lobeIconKey: lobeIconKeySchema.nullable(),
   model: exactNonBlankStringSchema,
   providerId: exactNonBlankStringSchema,
 }).strict().readonly();

@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { MODEL_CARD_COLLECTION_SOCIAL_IMAGE_PATH } from "@/lib/model-card-collection";
+import { MODEL_CARD_COLLECTION_SOCIAL_IMAGE_URL } from "@/lib/model-card-collection";
 
 import { GET } from "./route";
 
@@ -48,7 +48,7 @@ describe("Hraness model-card preview", () => {
     const body = await GET().text();
 
     expect(body).toContain(`<h1>AI model trading cards</h1>`);
-    expect(body).toContain(`src="${MODEL_CARD_COLLECTION_SOCIAL_IMAGE_PATH}"`);
+    expect(body).toContain(`src="${MODEL_CARD_COLLECTION_SOCIAL_IMAGE_URL}"`);
     expect(body).not.toMatch(/<(?:a|button|form|iframe|input|script)\b/iu);
     expect(body).not.toMatch(/\son[a-z]+\s*=/iu);
     expect(Buffer.byteLength(body)).toBeLessThan(5_000);
