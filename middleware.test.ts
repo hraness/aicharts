@@ -69,17 +69,19 @@ describe("markdown content negotiation", () => {
     expect(social.status).not.toBe(406);
   });
 
-  test("leaves the inert Hraness model preview on its single HTML representation", () => {
-    const markdown = middleware(request("/models/preview", {
-      Accept: "text/markdown",
-    }));
-    const unsupported = middleware(request("/models/preview", {
-      Accept: "application/pdf",
-    }));
+  test("leaves inert Hraness previews on their single HTML representation", () => {
+    for (const path of ["/preview", "/models/preview"]) {
+      const markdown = middleware(request(path, {
+        Accept: "text/markdown",
+      }));
+      const unsupported = middleware(request(path, {
+        Accept: "application/pdf",
+      }));
 
-    expect(markdown.headers.get("x-middleware-rewrite")).toBeNull();
-    expect(markdown.status).toBe(200);
-    expect(unsupported.headers.get("x-middleware-rewrite")).toBeNull();
-    expect(unsupported.status).toBe(200);
+      expect(markdown.headers.get("x-middleware-rewrite")).toBeNull();
+      expect(markdown.status).toBe(200);
+      expect(unsupported.headers.get("x-middleware-rewrite")).toBeNull();
+      expect(unsupported.status).toBe(200);
+    }
   });
 });
