@@ -11,6 +11,7 @@ import {
 } from "@/components/model-card-gallery-filters";
 import {
   MODEL_CARD_COLLECTION_SOCIAL_IMAGE_PATH,
+  MODEL_CARD_COLLECTION_SOCIAL_IMAGE_URL,
   MODEL_CARD_PRESENTATIONS,
   MODEL_CARD_SNAPSHOT,
   MODEL_CARD_TOP_PATHS,
@@ -25,7 +26,7 @@ import {
   formatDeepSweEvidenceScore,
 } from "@/lib/deep-swe-evidence";
 import { modelCardArtDirection } from "@/lib/model-card-art-direction";
-import { modelCardListingAccessibleLabel } from "@/lib/model-card-presentation";
+import { modelCardReleaseAccessibleLabel } from "@/lib/model-card-presentation";
 import {
   MODEL_RELEASE_RADAR,
   MODEL_RELEASE_RADAR_HIGHLIGHTS,
@@ -46,9 +47,28 @@ const modelCardsSearchSite = {
   title: "AI Model Benchmark Cards | AI Charts",
 } as const;
 
-export const metadata = createPublicSiteMetadata(modelCardsSearchSite, {
+const modelCardsMetadata = createPublicSiteMetadata(modelCardsSearchSite, {
   canonicalPath: "/models",
 });
+const modelCardsSocialImage = {
+  alt: modelCardsSearchSite.socialImage.alt,
+  height: 630,
+  type: "image/png",
+  url: MODEL_CARD_COLLECTION_SOCIAL_IMAGE_URL,
+  width: 1200,
+} as const;
+export const metadata = {
+  ...modelCardsMetadata,
+  openGraph: {
+    ...modelCardsMetadata.openGraph,
+    images: [modelCardsSocialImage],
+  },
+  twitter: {
+    ...modelCardsMetadata.twitter,
+    card: "summary_large_image",
+    images: [modelCardsSocialImage],
+  },
+};
 
 export default function ModelCardsPage() {
   const topPaths = new Set(MODEL_CARD_TOP_PATHS);
@@ -114,7 +134,7 @@ export default function ModelCardsPage() {
                     <span>
                       <strong>{release.model}</strong>
                       <small>
-                        {release.providerName} · listed{" "}
+                        {release.providerName} · first observed{" "}
                         <time dateTime={release.sourceAddedAt}>
                           {formatUpdateDate(release.sourceAddedAt)}
                         </time>
@@ -158,12 +178,14 @@ export default function ModelCardsPage() {
           items={MODEL_CARD_PRESENTATIONS.map(card => ({
             isTop: topPaths.has(card.path),
             providerId: card.providerId,
-            sourceAddedAt: card.listing?.sourceAddedAt ?? null,
+            releasedOn: card.release.status === "verified"
+              ? card.release.releasedOn
+              : null,
           }))}
         >
           {MODEL_CARD_PRESENTATIONS.map(card => (
             <Link
-              aria-label={`Open ${card.displayTitle} model card; ${card.classLabel} class.${card.listing === null ? "" : ` ${modelCardListingAccessibleLabel(card.listing)}`}`}
+              aria-label={`Open ${card.displayTitle} model card; ${card.classLabel} class. ${modelCardReleaseAccessibleLabel(card.release)}`}
               className="model-card-grid__link"
               href={card.path}
               key={card.path}

@@ -2,8 +2,9 @@ import type { CSSProperties } from "react";
 
 import { modelCardSecondaryColors } from "@/lib/model-card-art-direction";
 import {
-  formatModelCardListingDate,
-  modelCardListingAccessibleLabel,
+  formatModelCardReleaseDate,
+  modelCardReleaseAccessibleLabel,
+  modelCardReleaseLabel,
   type ModelCardPresentation,
 } from "@/lib/model-card-presentation";
 
@@ -36,6 +37,24 @@ function compactImageLabel(value: string, maximumCharacters: number): string {
   return `${normalized.slice(0, maximumCharacters - 1).trimEnd()}…`;
 }
 
+function subtitleImageStyle({
+  color,
+  fontSize,
+  marginTop,
+}: Readonly<{
+  color: string;
+  fontSize: number;
+  marginTop: number;
+}>): CSSProperties {
+  return {
+    color,
+    fontSize,
+    lineHeight: 1.2,
+    marginTop,
+    paddingBottom: Math.max(2, Math.round(fontSize * .14)),
+  };
+}
+
 function Stat({ label, value, compact }: Readonly<{ compact?: boolean; label: string; value: string }>) {
   return (
     <div style={{
@@ -57,34 +76,50 @@ function Stat({ label, value, compact }: Readonly<{ compact?: boolean; label: st
   );
 }
 
-function ModelCardImageListing({
+function ModelCardImageRelease({
   card,
   compact = false,
 }: Readonly<{
   card: ModelCardPresentation;
   compact?: boolean;
 }>) {
-  if (card.listing === null) return null;
+  const style = {
+    ...imageStyles.column,
+    alignItems: "flex-end",
+    flex: "0 0 auto",
+    lineHeight: 1,
+    textAlign: "right",
+    textTransform: "uppercase",
+    whiteSpace: "nowrap",
+  } satisfies CSSProperties;
+  const label = (
+    <span style={{ color: "rgba(247,246,242,.48)", fontSize: compact ? 6 : 14, letterSpacing: ".11em" }}>
+      {modelCardReleaseLabel(card.release)}
+    </span>
+  );
+  const value = (
+    <span style={{ color: "rgba(247,246,242,.84)", fontFamily: "monospace", fontSize: compact ? 9 : 21, letterSpacing: ".045em", marginTop: compact ? 4 : 8 }}>
+      {card.release.status === "verified"
+        ? formatModelCardReleaseDate(card.release.releasedOn)
+        : "Verifying"}
+    </span>
+  );
+  if (card.release.status !== "verified") {
+    return (
+      <div aria-label={modelCardReleaseAccessibleLabel(card.release)} role="note" style={style}>
+        {label}
+        {value}
+      </div>
+    );
+  }
   return (
     <time
-      aria-label={modelCardListingAccessibleLabel(card.listing)}
-      dateTime={card.listing.sourceAddedAt}
-      style={{
-        ...imageStyles.column,
-        alignItems: "flex-end",
-        flex: "0 0 auto",
-        lineHeight: 1,
-        textAlign: "right",
-        textTransform: "uppercase",
-        whiteSpace: "nowrap",
-      }}
+      aria-label={modelCardReleaseAccessibleLabel(card.release)}
+      dateTime={card.release.releasedOn}
+      style={style}
     >
-      <span style={{ color: "rgba(247,246,242,.48)", fontSize: compact ? 6 : 14, letterSpacing: ".11em" }}>
-        {compact ? "OpenRouter" : "Listed on OpenRouter"}
-      </span>
-      <span style={{ color: "rgba(247,246,242,.84)", fontFamily: "monospace", fontSize: compact ? 9 : 21, letterSpacing: ".045em", marginTop: compact ? 4 : 8 }}>
-        {formatModelCardListingDate(card.listing.sourceAddedAt)}
-      </span>
+      {label}
+      {value}
     </time>
   );
 }
@@ -128,14 +163,18 @@ export function ModelCardRasterFace({
             <i style={{ background: card.providerColor, border: `${compact ? 1 : 2}px solid ${card.secondaryColor}`, borderRadius: 999, boxShadow: `0 0 ${compact ? 7 : 14}px ${card.providerColor}aa`, height: compact ? 8 : 17, marginRight: compact ? 8 : 16, width: compact ? 8 : 17 }} />
             {providerLabel}
           </span>
-          <ModelCardImageListing card={card} compact={compact} />
+          <ModelCardImageRelease card={card} compact={compact} />
         </div>
 
         <div style={{ ...imageStyles.column, marginTop: compact ? 16 : 34 }}>
           <span style={{ fontSize: compact ? 36 : 74, fontWeight: 780, letterSpacing: "-.05em", lineHeight: .94 }}>
             {modelLabel}
           </span>
-          <span style={{ color: "rgba(247,246,242,.72)", fontSize: compact ? 15 : 31, marginTop: compact ? 9 : 18 }}>
+          <span style={subtitleImageStyle({
+            color: "rgba(247,246,242,.72)",
+            fontSize: compact ? 15 : 31,
+            marginTop: compact ? 9 : 18,
+          })}>
             {harnessLabel}
           </span>
         </div>
@@ -283,8 +322,8 @@ export function ModelCardSocialImage({ card }: Readonly<{ card: ModelCardPresent
           {providerLabel}
         </span>
         <div style={{ ...imageStyles.column, alignItems: "flex-end" }}>
-          <ModelCardImageListing card={card} />
-          <span style={{ color: "rgba(247,246,242,.5)", fontFamily: "monospace", fontSize: 15, letterSpacing: ".06em", marginTop: card.listing === null ? 0 : 8 }}>
+          <ModelCardImageRelease card={card} />
+          <span style={{ color: "rgba(247,246,242,.5)", fontFamily: "monospace", fontSize: 15, letterSpacing: ".06em", marginTop: 8 }}>
             MODEL CARD {serial}
           </span>
         </div>
@@ -299,7 +338,11 @@ export function ModelCardSocialImage({ card }: Readonly<{ card: ModelCardPresent
           <span style={{ fontSize: modelLabel.length > 34 ? 58 : 68, fontWeight: 780, letterSpacing: "-.055em", lineHeight: .94, marginTop: 14 }}>
             {modelLabel}
           </span>
-          <span style={{ color: "rgba(247,246,242,.64)", fontSize: 25, marginTop: 15 }}>
+          <span style={subtitleImageStyle({
+            color: "rgba(247,246,242,.64)",
+            fontSize: 25,
+            marginTop: 15,
+          })}>
             {harnessLabel}
           </span>
           <div style={{ ...imageStyles.row, alignItems: "center", marginTop: 28 }}>

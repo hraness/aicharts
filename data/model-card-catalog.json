@@ -135,6 +135,22 @@
     "aliases": ["anthropic_claude-sonnet-4-6"]
   },
   {
+    "providerId": "cognition",
+    "model": "SWE-1.7 Lightning Max",
+    "canonicalModelId": "cognition/swe-1.7",
+    "emblemIdentity": {
+      "familyId": "swe",
+      "generation": ["1", "7"],
+      "revision": null,
+      "editionId": "lightning-max",
+      "role": "speed"
+    },
+    "gatewayModelId": null,
+    "lobeIconKey": null,
+    "intrinsicClass": "fast",
+    "aliases": ["cognition_swe-1-7-lightning"]
+  },
+  {
     "providerId": "cursor",
     "model": "Composer 2",
     "canonicalModelId": "cursor/composer-2",
@@ -213,6 +229,22 @@
     "lobeIconKey": "deepseek",
     "intrinsicClass": "standard",
     "aliases": ["deepseek_deepseek-v4-pro-1m"]
+  },
+  {
+    "providerId": "deepseek",
+    "model": "DeepSeek V4 Pro 0813",
+    "canonicalModelId": "deepseek/deepseek-v4-pro-0813",
+    "emblemIdentity": {
+      "familyId": "deepseek-v",
+      "generation": ["4"],
+      "revision": "0813",
+      "editionId": "pro",
+      "role": "flagship"
+    },
+    "gatewayModelId": null,
+    "lobeIconKey": "deepseek",
+    "intrinsicClass": "standard",
+    "aliases": ["deepseek_deepseek-v4-pro-0813"]
   },
   {
     "providerId": "google",

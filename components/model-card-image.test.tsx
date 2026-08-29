@@ -10,8 +10,8 @@ import {
 } from "@/lib/model-card-collection";
 import { modelCardProviderColors } from "@/lib/model-card-art-direction";
 import {
-  formatModelCardListingDate,
-  modelCardListingAccessibleLabel,
+  formatModelCardReleaseDate,
+  modelCardReleaseAccessibleLabel,
 } from "@/lib/model-card-presentation";
 
 import {
@@ -27,15 +27,15 @@ function pngDimensions(bytes: ArrayBuffer): Readonly<{ height: number; width: nu
 }
 
 describe("model card ImageResponse rendering", () => {
-  test("keeps the collectible identity focused while naming listing provenance", () => {
+  test("keeps the collectible identity focused while naming official release provenance", () => {
     const card = MODEL_CARD_PRESENTATIONS.find(candidate => candidate.model.includes("with fallback"));
     expect(card).toBeDefined();
     if (card === undefined) return;
+    expect(card.release.status).toBe("verified");
+    if (card.release.status !== "verified") return;
 
     const portrait = renderToStaticMarkup(<ModelCardRasterFace card={card} />);
     const social = renderToStaticMarkup(<ModelCardSocialImage card={card} />);
-    expect(card.listing).not.toBeNull();
-    if (card.listing === null) return;
     for (const markup of [portrait, social]) {
       expect(markup).toContain(">Fable 5 Max</span>");
       expect(markup).toContain(`>${card.harnessLabel}</span>`);
@@ -43,10 +43,12 @@ describe("model card ImageResponse rendering", () => {
       expect(markup).not.toContain("with fallback");
       expect(markup).not.toContain("Artificial Analysis");
       expect(markup).not.toContain(card.sourceDate);
-      expect(markup).toContain("Listed on OpenRouter");
-      expect(markup).toContain(formatModelCardListingDate(card.listing.sourceAddedAt));
-      expect(markup).toContain(`dateTime="${card.listing.sourceAddedAt}"`);
-      expect(markup).toContain(modelCardListingAccessibleLabel(card.listing));
+      expect(markup).toContain(">Released</span>");
+      expect(markup).toContain(formatModelCardReleaseDate(card.release.releasedOn));
+      expect(markup).toContain(`dateTime="${card.release.releasedOn}"`);
+      expect(markup).toContain(modelCardReleaseAccessibleLabel(card.release));
+      expect(markup).not.toContain("Listed on OpenRouter");
+      expect(markup).not.toContain(">OpenRouter</span>");
       expect(markup).not.toMatch(/\bconfigs?\b/iu);
       expect(markup).not.toContain("benchmark profile");
     }
@@ -60,18 +62,32 @@ describe("model card ImageResponse rendering", () => {
     expect(social).toContain(`data-emblem-family="${card.emblemIdentity.familyId}"`);
   });
 
-  test("omits the listing imprint when no checked OpenRouter timestamp matches", () => {
-    const card = MODEL_CARD_PRESENTATIONS.find(candidate => candidate.listing === null);
+  test("renders an explicit pending release state without inventing a date", () => {
+    const card = MODEL_CARD_PRESENTATIONS[0];
     expect(card).toBeDefined();
     if (card === undefined) return;
+    const pendingCard = {
+      ...card,
+      release: {
+        canonicalModelId: card.canonicalModelId,
+        reason: "No provider-owned publication date has been verified.",
+        researchedOn: "2026-08-29",
+        status: "pending",
+      } as const,
+    };
 
     for (const markup of [
-      renderToStaticMarkup(<ModelCardRasterFace card={card} />),
-      renderToStaticMarkup(<ModelCardSocialImage card={card} />),
+      renderToStaticMarkup(<ModelCardRasterFace card={pendingCard} />),
+      renderToStaticMarkup(<ModelCardSocialImage card={pendingCard} />),
     ]) {
+      expect(markup).toContain(">Release date</span>");
+      expect(markup).toContain(">Verifying</span>");
+      expect(markup).toContain('role="note"');
+      expect(markup).toContain(modelCardReleaseAccessibleLabel(pendingCard.release));
+      expect(markup).not.toContain(`dateTime="${pendingCard.release.researchedOn}"`);
+      expect(markup).not.toContain(">Released</span>");
       expect(markup).not.toContain("Listed on OpenRouter");
-      expect(markup).not.toContain("not an official release date");
-      expect(markup).not.toContain(card.sourceDate);
+      expect(markup).not.toContain(">OpenRouter</span>");
     }
   });
 
@@ -109,21 +125,49 @@ describe("model card ImageResponse rendering", () => {
     }
   }, 40_000);
 
-  test("reserves the compact top row for long provider identities and listing dates", () => {
+  test("reserves the compact top row for long provider identities and official release dates", () => {
     const card = MODEL_CARD_PRESENTATIONS.find(candidate => (
-      candidate.providerName === "Alibaba Cloud" && candidate.listing !== null
+      candidate.providerName === "Alibaba Cloud" && candidate.release.status === "verified"
     ));
     expect(card).toBeDefined();
     if (card === undefined) return;
+    if (card.release.status !== "verified") return;
 
     const compact = renderToStaticMarkup(<ModelCardRasterFace card={card} compact />);
     const full = renderToStaticMarkup(<ModelCardRasterFace card={card} />);
     expect(compact).toContain(">Alibaba C…</span>");
-    expect(compact).toContain(">OpenRouter</span>");
     expect(compact).not.toContain(">Alibaba Cloud</span>");
-    expect(compact).not.toContain(">Listed on OpenRouter</span>");
     expect(full).toContain(">Alibaba Cloud</span>");
-    expect(full).toContain(">Listed on OpenRouter</span>");
+    for (const markup of [compact, full]) {
+      expect(markup).toContain(">Released</span>");
+      expect(markup).toContain(formatModelCardReleaseDate(card.release.releasedOn));
+      expect(markup).not.toContain("Listed on OpenRouter");
+      expect(markup).not.toContain(">OpenRouter</span>");
+    }
+  });
+
+  test("reserves descender room for agent subtitles in portrait and social images", () => {
+    const card = MODEL_CARD_PRESENTATIONS.find(candidate => (
+      /[gjpqy]/u.test(candidate.harnessLabel)
+    ));
+    expect(card).toBeDefined();
+    if (card === undefined) return;
+    const escapedHarnessLabel = card.harnessLabel.replace(
+      /[.*+?^${}()|[\]\\]/gu,
+      "\\$&",
+    );
+
+    const compact = renderToStaticMarkup(<ModelCardRasterFace card={card} compact />);
+    const portrait = renderToStaticMarkup(<ModelCardRasterFace card={card} />);
+    const social = renderToStaticMarkup(<ModelCardSocialImage card={card} />);
+    for (const markup of [compact, portrait, social]) {
+      const subtitle = markup.match(new RegExp(
+        `<span style="(?<style>[^"]*)">${escapedHarnessLabel}</span>`,
+        "u",
+      ));
+      expect(subtitle?.groups?.style).toContain("line-height:1.2");
+      expect(subtitle?.groups?.style).toMatch(/padding-bottom:[24]px/u);
+    }
   });
 
   test("renders the portrait download and social preview as valid PNGs", async () => {

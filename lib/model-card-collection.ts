@@ -5,6 +5,7 @@ import codingAgentData from "@/data/coding-agents.json";
 import { parseCodingAgentSnapshot } from "./coding-agent-data";
 import { computeParetoSet } from "./option-space";
 import {
+  MODEL_CARD_CATALOG,
   buildModelCardVariants,
   findModelCardVariant,
   modelCardStaticParams,
@@ -16,12 +17,18 @@ import {
   createModelCardPresentation,
   type ModelCardListing,
   type ModelCardPresentation,
+  type ModelCardRelease,
 } from "./model-card-presentation";
 import {
   modelReleaseSemanticKey,
   type ModelReleaseRadar,
 } from "./model-release-data";
+import {
+  MODEL_RELEASE_DATES,
+  modelReleaseDateForCanonicalId,
+} from "./model-release-date-data";
 import { MODEL_RELEASE_RADAR } from "./model-release-collection";
+import { modelCardRouteStatus } from "./model-card-route-status";
 
 const parsedSnapshot = parseCodingAgentSnapshot(codingAgentData as unknown);
 if (!parsedSnapshot.ok) {
@@ -31,28 +38,74 @@ if (!parsedSnapshot.ok) {
 }
 
 export const MODEL_CARD_SNAPSHOT = parsedSnapshot.value;
-export const MODEL_CARD_RENDERER_VERSION = "model-card-v6";
-export const MODEL_CARD_COLLECTION_SOCIAL_IMAGE_PATH = "/models/opengraph-image-v6";
+export const MODEL_CARD_RENDERER_VERSION = "model-card-v7";
+export const MODEL_CARD_COLLECTION_SOCIAL_IMAGE_PATH = "/models/opengraph-image-v7";
 export const MODEL_CARD_SNAPSHOT_VERSION = createHash("sha256")
   .update(JSON.stringify(codingAgentData))
   .update("\0")
-  .update(JSON.stringify(MODEL_RELEASE_RADAR.observedListings))
+  .update(JSON.stringify(MODEL_CARD_CATALOG))
+  .update("\0")
+  .update(JSON.stringify(MODEL_RELEASE_DATES))
   .update("\0")
   .update(MODEL_CARD_RENDERER_VERSION)
   .digest("hex")
   .slice(0, 16);
+export const MODEL_CARD_COLLECTION_SOCIAL_IMAGE_URL = (
+  `${MODEL_CARD_COLLECTION_SOCIAL_IMAGE_PATH}?v=${MODEL_CARD_SNAPSHOT_VERSION}`
+);
 export const MODEL_CARD_VARIANTS = buildModelCardVariants(MODEL_CARD_SNAPSHOT.records);
 export const MODEL_CARD_LISTINGS = modelCardListings(
   MODEL_CARD_VARIANTS,
   MODEL_RELEASE_RADAR,
 );
+
+export function modelCardReleaseForVariant(
+  variant: Pick<ModelCardVariant, "canonicalModelId" | "profileSlug">,
+  sourceRetrievedAt: string,
+): ModelCardRelease {
+  const release = modelReleaseDateForCanonicalId(variant.canonicalModelId);
+  if (release !== undefined) return release;
+  if (!modelCardRouteStatus(variant).isProvisional) {
+    throw new Error(
+      `Published curated model card ${variant.canonicalModelId} has no checked official release record.`,
+    );
+  }
+  const sourceDate = new Date(sourceRetrievedAt);
+  if (!Number.isFinite(sourceDate.getTime())) {
+    throw new Error("Provisional model release observation requires a valid source timestamp.");
+  }
+  const observedOn = sourceDate.toISOString().slice(0, 10);
+  if (observedOn.length !== 10) {
+    throw new Error("Provisional model release observation requires an ISO calendar date.");
+  }
+  return {
+    canonicalModelId: variant.canonicalModelId,
+    observedOn,
+    reason: "New benchmark identity awaiting checked first-party release research.",
+    status: "unreviewed",
+  };
+}
+
+function requiredModelReleaseDate(variant: ModelCardVariant): ModelCardRelease {
+  const release = modelCardReleaseForVariant(
+    variant,
+    MODEL_CARD_SNAPSHOT.source.retrievedAt,
+  );
+  if (release === undefined) {
+    throw new Error(
+      `Published model card ${variant.canonicalModelId} has no release presentation state.`,
+    );
+  }
+  return release;
+}
+
 export const MODEL_CARD_PRESENTATIONS = MODEL_CARD_VARIANTS.map((variant, index, variants) => (
   createModelCardPresentation(
     variant,
     index + 1,
     variants.length,
     MODEL_CARD_SNAPSHOT.source.retrievedAt,
-    MODEL_CARD_LISTINGS.get(variant.path) ?? null,
+    requiredModelReleaseDate(variant),
   )
 ));
 export const MODEL_CARD_TOP_PATHS = modelCardCostAaFrontierPaths(MODEL_CARD_VARIANTS);

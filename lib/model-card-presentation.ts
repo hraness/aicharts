@@ -13,6 +13,11 @@ import {
   type ModelCardVariant,
 } from "./model-card-data";
 import { modelIconDataUrl } from "./model-card-icons";
+import { isoCalendarDateToUtcDate } from "./iso-calendar-date";
+import type {
+  ModelReleaseDateEntry,
+  VerifiedModelReleaseDate,
+} from "./model-release-date-data";
 import { modelCardRouteStatus } from "./model-card-route-status";
 
 export type ModelCardStat = Readonly<{
@@ -35,6 +40,16 @@ export type ModelCardIndexingPolicy = Readonly<{
   index: false;
 }> | undefined;
 
+/** A provisional identity observed in the benchmark before first-party research is checked in. */
+export type UnreviewedModelRelease = Readonly<{
+  canonicalModelId: string;
+  observedOn: string;
+  reason: string;
+  status: "unreviewed";
+}>;
+
+export type ModelCardRelease = ModelReleaseDateEntry | UnreviewedModelRelease;
+
 export type ModelCardPresentation = Readonly<{
   accentFamily: ModelCardAccentFamily;
   agentNames: readonly string[];
@@ -50,7 +65,6 @@ export type ModelCardPresentation = Readonly<{
   harnessLabel: string;
   iconDataUrl: string;
   illuminationDensity: ModelCardIlluminationDensity;
-  listing: ModelCardListing | null;
   model: string;
   observationCount: number;
   path: ModelCardVariant["path"];
@@ -60,6 +74,7 @@ export type ModelCardPresentation = Readonly<{
   providerColor: string;
   providerId: string;
   providerName: string;
+  release: ModelCardRelease;
   secondaryColor: string;
   seed: string;
   sourceDate: string;
@@ -178,72 +193,69 @@ const modelCardSourceDateFormatter = new Intl.DateTimeFormat("en-US", {
   year: "numeric",
 });
 
-const modelCardListingDateFormatter = new Intl.DateTimeFormat("en-GB", {
+const modelCardReleaseDateFormatter = new Intl.DateTimeFormat("en-GB", {
   day: "numeric",
   month: "short",
   timeZone: "UTC",
   year: "numeric",
 });
 
-const modelCardListingAccessibleDateFormatter = new Intl.DateTimeFormat("en-US", {
+const modelCardReleaseAccessibleDateFormatter = new Intl.DateTimeFormat("en-US", {
   day: "numeric",
   month: "short",
   timeZone: "UTC",
   year: "numeric",
 });
 
-const isoTimestampPattern = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.\d+)?(?:Z|[+-](\d{2}):(\d{2}))$/u;
-
-function daysInMonth(year: number, month: number): number {
-  if (month === 2) {
-    return year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0) ? 29 : 28;
-  }
-  return [4, 6, 9, 11].includes(month) ? 30 : 31;
-}
-
-function modelCardListingDate(sourceAddedAt: string): Date {
-  const match = sourceAddedAt.match(isoTimestampPattern);
-  const date = new Date(sourceAddedAt);
-  const year = Number(match?.[1]);
-  const month = Number(match?.[2]);
-  const day = Number(match?.[3]);
-  const hour = Number(match?.[4]);
-  const minute = Number(match?.[5]);
-  const second = Number(match?.[6]);
-  const offsetHour = match?.[7] === undefined ? 0 : Number(match[7]);
-  const offsetMinute = match?.[8] === undefined ? 0 : Number(match[8]);
-  if (
-    match === null
-    || month < 1
-    || month > 12
-    || day < 1
-    || day > daysInMonth(year, month)
-    || hour > 23
-    || minute > 59
-    || second > 59
-    || offsetHour > 14
-    || offsetMinute > 59
-    || (offsetHour === 14 && offsetMinute !== 0)
-    || !Number.isFinite(date.getTime())
-  ) {
-    throw new Error("Model-card listing time must be a valid ISO timestamp.");
+function modelCardReleaseDate(releasedOn: string): Date {
+  const date = isoCalendarDateToUtcDate(releasedOn);
+  if (date === null) {
+    throw new Error("Model-card release date must be a valid ISO calendar date.");
   }
   return date;
 }
 
-/** Formats an independently observed source-listing date for the compact card face. */
-export function formatModelCardListingDate(sourceAddedAt: string): string {
-  return modelCardListingDateFormatter
-    .format(modelCardListingDate(sourceAddedAt))
+/** Formats a checked first-party release date for the compact card face. */
+export function formatModelCardReleaseDate(releasedOn: string): string {
+  return modelCardReleaseDateFormatter
+    .format(modelCardReleaseDate(releasedOn))
     .toLocaleUpperCase("en-US");
 }
 
-/** Keeps source provenance and the release-date caveat available to assistive UI. */
-export function modelCardListingAccessibleLabel(listing: ModelCardListing): string {
-  const date = modelCardListingAccessibleDateFormatter.format(
-    modelCardListingDate(listing.sourceAddedAt),
+export function formatModelCardReleaseDateLong(releasedOn: string): string {
+  return modelCardReleaseAccessibleDateFormatter.format(
+    modelCardReleaseDate(releasedOn),
   );
-  return `Listed by ${listing.source} on ${date}; not an official release date.`;
+}
+
+export function formatModelCardReleaseStage(
+  stage: VerifiedModelReleaseDate["stage"],
+): string {
+  if (stage === "general-availability") return "General availability";
+  if (stage === "public-preview") return "Public preview";
+  return "Public release";
+}
+
+/** Compact release label that discloses whether evidence covers only the base model. */
+export function modelCardReleaseLabel(release: ModelCardRelease): string {
+  if (release.status === "verified" && release.appliesTo?.kind === "base-model") {
+    return "Base released";
+  }
+  return release.status === "verified" ? "Released" : "Release date";
+}
+
+/** Keeps official-source provenance available to assistive UI and card links. */
+export function modelCardReleaseAccessibleLabel(release: ModelCardRelease): string {
+  if (release.status === "pending") {
+    return `Official release date pending verification; researched ${formatModelCardReleaseDateLong(release.researchedOn)}.`;
+  }
+  if (release.status === "unreviewed") {
+    return `Official release date pending review for this newly observed model identity; first observed in the benchmark snapshot on ${formatModelCardReleaseDateLong(release.observedOn)}.`;
+  }
+  if (release.appliesTo?.kind === "base-model") {
+    return `Official base-model release date for ${release.appliesTo.model}: ${formatModelCardReleaseDateLong(release.releasedOn)}. Verified from ${release.sources[0]?.title ?? "a first-party source"}.`;
+  }
+  return `Official release date: ${formatModelCardReleaseDateLong(release.releasedOn)}. Verified from ${release.sources[0]?.title ?? "a first-party source"}.`;
 }
 
 export function formatModelCardSourceDate(retrievedAt: string): string {
@@ -312,8 +324,13 @@ export function createModelCardPresentation(
   cardNumber: number,
   totalCards: number,
   sourceRetrievedAt: string,
-  listing: ModelCardListing | null,
+  release: ModelCardRelease,
 ): ModelCardPresentation {
+  if (release.canonicalModelId !== variant.canonicalModelId) {
+    throw new Error(
+      `Model-card release identity ${release.canonicalModelId} must match ${variant.canonicalModelId}.`,
+    );
+  }
   if (!Number.isSafeInteger(cardNumber) || cardNumber <= 0 || cardNumber > totalCards) {
     throw new Error("Model-card number must identify one card in the collection.");
   }
@@ -361,7 +378,6 @@ export function createModelCardPresentation(
     gatewayModelId: variant.gatewayModelId,
     harnessLabel: compactModelCardHarnessLabel(agentNames),
     iconDataUrl: modelIconDataUrl(variant.lobeIconKey, variant.providerName),
-    listing,
     model: variant.model,
     observationCount: variant.observationCount,
     path: variant.path,
@@ -370,6 +386,7 @@ export function createModelCardPresentation(
     profileSlug: variant.profileSlug,
     providerId: variant.providerId,
     providerName: variant.providerName,
+    release,
     seed: variant.canonicalModelId,
     sourceDate: formatModelCardSourceDate(sourceRetrievedAt),
     totalCards,

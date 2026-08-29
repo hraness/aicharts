@@ -35,11 +35,13 @@ const expectedGatewayByCanonicalId = {
   "anthropic/claude-opus-4.8": "anthropic/claude-opus-4.8",
   "anthropic/claude-opus-5": "anthropic/claude-opus-5",
   "anthropic/claude-sonnet-4.6": "anthropic/claude-sonnet-4.6",
+  "cognition/swe-1.7": null,
   "cursor/composer-2": null,
   "cursor/composer-2.5": null,
   "cursor/composer-2.5-fast": null,
   "deepseek/deepseek-v4-flash-0731": "deepseek/deepseek-v4-flash-0731",
   "deepseek/deepseek-v4-pro": "deepseek/deepseek-v4-pro",
+  "deepseek/deepseek-v4-pro-0813": null,
   "google/gemini-3.1-pro": null,
   "google/gemini-3.6-flash": "google/gemini-3.6-flash",
   "google/gemini-3.7-flash": "google/gemini-3.7-flash",
@@ -131,6 +133,10 @@ describe("model-card catalog boundary", () => {
     expect(getModelCardCatalogEntry("xai", "Grok 4.5")?.canonicalModelId).toBe(
       "spacexai/grok-4.5",
     );
+    expect(getModelCardCatalogEntry(
+      "cognition",
+      "SWE-1.7 Lightning Max",
+    )?.lobeIconKey).toBeNull();
   });
 
   test("owns a distinct hierarchical emblem identity for every catalog model", () => {

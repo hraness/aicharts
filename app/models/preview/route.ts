@@ -1,5 +1,5 @@
 import { site } from "@/app/site";
-import { MODEL_CARD_COLLECTION_SOCIAL_IMAGE_PATH } from "@/lib/model-card-collection";
+import { MODEL_CARD_COLLECTION_SOCIAL_IMAGE_URL } from "@/lib/model-card-collection";
 
 export const dynamic = "force-static";
 
@@ -78,7 +78,7 @@ const document = `<!doctype html>
 </head>
 <body>
   <main>
-    <img alt="AI model benchmark trading cards arranged by provider" src="${MODEL_CARD_COLLECTION_SOCIAL_IMAGE_PATH}">
+    <img alt="AI model benchmark trading cards arranged by provider" src="${MODEL_CARD_COLLECTION_SOCIAL_IMAGE_URL}">
     <header>
       <h1>AI model trading cards</h1>
       <p>aicharts.io/models</p>

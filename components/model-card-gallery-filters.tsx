@@ -109,12 +109,12 @@ export function modelCardMatchesFilter(
 export type ModelCardGalleryItemMetadata = Readonly<{
   isTop: boolean;
   providerId: string;
-  sourceAddedAt: string | null;
+  releasedOn: string | null;
 }>;
 
-function sourceAddedAtMilliseconds(value: string | null): number | null {
+function releaseDateMilliseconds(value: string | null): number | null {
   if (value === null) return null;
-  const milliseconds = Date.parse(value);
+  const milliseconds = Date.parse(`${value}T00:00:00.000Z`);
   return Number.isFinite(milliseconds) ? milliseconds : null;
 }
 
@@ -133,8 +133,8 @@ export function modelCardGalleryItemOrder(
 
   if (filter.sort === "new") {
     visible.sort((left, right) => {
-      const leftTime = sourceAddedAtMilliseconds(left.item.sourceAddedAt);
-      const rightTime = sourceAddedAtMilliseconds(right.item.sourceAddedAt);
+      const leftTime = releaseDateMilliseconds(left.item.releasedOn);
+      const rightTime = releaseDateMilliseconds(right.item.releasedOn);
       if (leftTime === null && rightTime !== null) return 1;
       if (leftTime !== null && rightTime === null) return -1;
       if (leftTime !== null && rightTime !== null && leftTime !== rightTime) {
@@ -182,7 +182,7 @@ export function ModelCardGalleryFilters({
         `Showing ${visibleCount} ${visibleCount === 1 ? "model card" : "model cards"}`,
         selectedProvider === undefined ? "" : ` from ${selectedProvider.name}`,
         topOnly ? " on the cost and AA Index Pareto frontier" : "",
-        sort === "new" ? ", sorted by recent OpenRouter listing time." : ".",
+        sort === "new" ? ", sorted by official release date." : ".",
       ].join("");
   const style: ModelCardFilterStyle = {
     "--model-card-filter-color": selectedProvider?.color ?? "var(--muted)",
@@ -245,7 +245,7 @@ export function ModelCardGalleryFilters({
           <button
             aria-controls={gridId}
             aria-describedby={newDefinitionId}
-            aria-label="Sort model cards by recent OpenRouter listing time"
+            aria-label="Sort model cards by official release date"
             aria-pressed={sort === "new"}
             className="model-card-gallery__scope-filter"
             data-filter="new"
@@ -260,14 +260,14 @@ export function ModelCardGalleryFilters({
             <i aria-hidden="true" />
             <span>
               <strong>New</strong>
-              <small>Recently listed first</small>
+              <small>Newest releases first</small>
             </span>
           </button>
           <span className="model-card-gallery__filter-definition" id={topDefinitionId}>
             Top keeps profiles with an observed configuration for which no other configuration is at least as strong and no more expensive, with an advantage on one axis.
           </span>
           <span className="model-card-gallery__filter-definition" id={newDefinitionId}>
-            New sorts benchmark cards by OpenRouter source-listing time. It does not claim an official release date, and models without a checked listing keep their stable catalog order.
+            New sorts benchmark cards by checked first-party release date. Models whose official date is still being verified follow dated releases in stable catalog order.
           </span>
           <p
             aria-atomic="true"

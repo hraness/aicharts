@@ -11,7 +11,10 @@ import {
   gptSubsidyPageModifiedAt,
   parseGptSubsidySnapshot,
 } from "@/lib/gpt-subsidy-data";
-import { MODEL_CARD_PRESENTATIONS } from "@/lib/model-card-collection";
+import {
+  MODEL_CARD_COLLECTION_SOCIAL_IMAGE_URL,
+  MODEL_CARD_PRESENTATIONS,
+} from "@/lib/model-card-collection";
 
 import robots from "./robots";
 import sitemap, { indexableModelCards } from "./sitemap";
@@ -40,7 +43,7 @@ describe("public search discovery", () => {
     const modelsEntry = entries.find(entry => entry.url.endsWith("/models"));
     expect(modelsEntry?.lastModified).toBe(modifiedAt);
     expect(modelsEntry?.images).toEqual([
-      "https://aicharts.io/models/opengraph-image-v6",
+      new URL(MODEL_CARD_COLLECTION_SOCIAL_IMAGE_URL, "https://aicharts.io").toString(),
     ]);
     expect(cardEntries).toHaveLength(indexableModelCards().length);
     expect(cardEntries.every(entry => entry.lastModified === modifiedAt)).toBe(true);

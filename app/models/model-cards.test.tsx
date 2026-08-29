@@ -8,9 +8,10 @@ import { ModelCardFoilFrame } from "@/components/model-card-foil-frame";
 import { ModelCardRasterFace, ModelCardSocialImage } from "@/components/model-card-image";
 import {
   MODEL_CARD_COLLECTION_SOCIAL_IMAGE_PATH,
-  MODEL_CARD_LISTINGS,
+  MODEL_CARD_COLLECTION_SOCIAL_IMAGE_URL,
   MODEL_CARD_PRESENTATIONS,
   MODEL_CARD_RENDERER_VERSION,
+  MODEL_CARD_SNAPSHOT_VERSION,
   MODEL_CARD_TOP_PATHS,
   MODEL_CARD_VARIANTS,
   findModelCardPresentation,
@@ -19,9 +20,10 @@ import {
   versionedModelCardImagePath,
 } from "@/lib/model-card-collection";
 import {
-  formatModelCardListingDate,
-  modelCardListingAccessibleLabel,
+  formatModelCardReleaseDate,
+  modelCardReleaseAccessibleLabel,
 } from "@/lib/model-card-presentation";
+import { MODEL_RELEASE_DATES } from "@/lib/model-release-date-data";
 import {
   DIRECT_DEEP_SWE_EVIDENCE,
   directDeepSweEvidenceForRelease,
@@ -133,7 +135,7 @@ describe("public model cards", () => {
     );
     expect(markup.match(/<(?:path|ellipse|circle)\b/gu)?.length ?? 0).toBeLessThan(1_250);
     expect(markup.match(/<[A-Za-z][^>]*>/gu)?.length ?? 0).toBeLessThan(
-      MODEL_CARD_PRESENTATIONS.length * 118 + 64,
+      MODEL_CARD_PRESENTATIONS.length * 119 + 64,
     );
     expect(Buffer.byteLength(markup)).toBeLessThan(
       MODEL_CARD_PRESENTATIONS.length * 20_500 + 8_000,
@@ -141,10 +143,10 @@ describe("public model cards", () => {
     expect(markup).not.toContain("<canvas");
     expect(markup).toContain('aria-label="Filter model cards"');
     expect(markup).toContain('aria-label="Show only cost and AA Index Pareto-frontier cards"');
-    expect(markup).toContain('aria-label="Sort model cards by recent OpenRouter listing time"');
+    expect(markup).toContain('aria-label="Sort model cards by official release date"');
     expect(markup).toContain(`All providers · ${MODEL_CARD_PRESENTATIONS.length}`);
     expect(markup).toContain(`${MODEL_CARD_TOP_PATHS.length} cards · Cost ↓ · AAI ↑`);
-    expect(markup).toContain("Recently listed first");
+    expect(markup).toContain("Newest releases first");
     expect(markup).not.toContain(`${MODEL_CARD_PRESENTATIONS.length} of ${MODEL_CARD_PRESENTATIONS.length} cards`);
     expect(markup).not.toContain("<span>Provider</span>");
     expect(markup).not.toContain('aria-label="How to read model card emblems"');
@@ -210,7 +212,7 @@ describe("public model cards", () => {
   });
 
   test("uses shared centered select geometry instead of a baseline chevron glyph", () => {
-    expect(modelsPageSource).toContain("card.listing?.sourceAddedAt");
+    expect(modelsPageSource).toContain('card.release.status === "verified"');
     expect(modelCardsStyles).toContain(".model-card-gallery__provider-filter .hraness-field__select");
     expect(modelCardsStyles).toContain("background-color: transparent");
     expect(modelCardsStyles).not.toContain("model-card-gallery__select-shell");
@@ -250,8 +252,8 @@ describe("public model cards", () => {
     const live = renderToStaticMarkup(<ModelCardFace card={card} />);
     const portrait = renderToStaticMarkup(<ModelCardRasterFace card={card} />);
     const social = renderToStaticMarkup(<ModelCardSocialImage card={card} />);
-    expect(card.listing).not.toBeNull();
-    if (card.listing === null) return;
+    expect(card.release.status).toBe("verified");
+    if (card.release.status !== "verified") return;
     for (const markup of [live, portrait, social]) {
       expect(markup).toContain(card.displayTitle);
       expect(markup).toContain(card.harnessLabel);
@@ -260,10 +262,12 @@ describe("public model cards", () => {
       expect(markup).not.toContain("with fallback");
       expect(markup).not.toContain("Artificial Analysis");
       expect(markup).not.toContain(card.sourceDate);
-      expect(markup).toContain("Listed on OpenRouter");
-      expect(markup).toContain(formatModelCardListingDate(card.listing.sourceAddedAt));
-      expect(markup).toContain(`dateTime="${card.listing.sourceAddedAt}"`);
-      expect(markup).toContain(modelCardListingAccessibleLabel(card.listing));
+      expect(markup).toContain(">Released</span>");
+      expect(markup).toContain(formatModelCardReleaseDate(card.release.releasedOn));
+      expect(markup).toContain(`dateTime="${card.release.releasedOn}"`);
+      expect(markup).toContain(modelCardReleaseAccessibleLabel(card.release));
+      expect(markup).not.toContain("Listed on OpenRouter");
+      expect(markup).not.toContain(">OpenRouter</span>");
       expect(markup).not.toMatch(/\bconfigs?\b/iu);
       expect(markup).not.toContain("NaN");
       expect(markup).not.toContain("undefined");
@@ -277,13 +281,22 @@ describe("public model cards", () => {
     expect(portrait).not.toContain("data-holographic-finish");
     expect(social).not.toContain("data-holographic-finish");
 
-    const unmatched = MODEL_CARD_PRESENTATIONS.find(candidate => candidate.listing === null);
-    expect(unmatched).toBeDefined();
-    if (unmatched !== undefined) {
-      const unmatchedLive = renderToStaticMarkup(<ModelCardFace card={unmatched} />);
-      expect(unmatchedLive).not.toContain("Listed on OpenRouter");
-      expect(unmatchedLive).not.toContain(unmatched.sourceDate);
-    }
+    const pendingCard = {
+      ...card,
+      release: {
+        canonicalModelId: card.canonicalModelId,
+        reason: "No provider-owned publication date has been verified.",
+        researchedOn: "2026-08-29",
+        status: "pending",
+      } as const,
+    };
+    const pendingLive = renderToStaticMarkup(<ModelCardFace card={pendingCard} />);
+    expect(pendingLive).toContain(">Release date</span>");
+    expect(pendingLive).toContain(">Verifying</span>");
+    expect(pendingLive).toContain(modelCardReleaseAccessibleLabel(pendingCard.release));
+    expect(pendingLive).not.toContain(`dateTime="${pendingCard.release.researchedOn}"`);
+    expect(pendingLive).not.toContain("Listed on OpenRouter");
+    expect(pendingLive).not.toContain(">OpenRouter</span>");
   });
 
   test("drives holographic ink from the delegated pose with accessible fallbacks", async () => {
@@ -372,9 +385,22 @@ describe("public model cards", () => {
   test("includes the renderer contract in versioned card artwork URLs", () => {
     const card = MODEL_CARD_PRESENTATIONS[0];
     if (card === undefined) throw new Error("Expected at least one model card.");
-    expect(MODEL_CARD_RENDERER_VERSION).toBe("model-card-v6");
-    expect(MODEL_CARD_COLLECTION_SOCIAL_IMAGE_PATH).toBe("/models/opengraph-image-v6");
-    expect(MODEL_CARD_LISTINGS.size).toBe(MODEL_CARD_PRESENTATIONS.length);
+    expect(MODEL_CARD_RENDERER_VERSION).toBe("model-card-v7");
+    expect(MODEL_CARD_COLLECTION_SOCIAL_IMAGE_PATH).toBe("/models/opengraph-image-v7");
+    expect(MODEL_CARD_COLLECTION_SOCIAL_IMAGE_URL).toBe(
+      `${MODEL_CARD_COLLECTION_SOCIAL_IMAGE_PATH}?v=${MODEL_CARD_SNAPSHOT_VERSION}`,
+    );
+    const releaseByCanonicalId = new Map(MODEL_RELEASE_DATES.map(release => [
+      release.canonicalModelId,
+      release,
+    ]));
+    for (const presentation of MODEL_CARD_PRESENTATIONS) {
+      const expectedRelease = releaseByCanonicalId.get(presentation.canonicalModelId);
+      if (expectedRelease === undefined) {
+        throw new Error(`Missing release fixture for ${presentation.canonicalModelId}.`);
+      }
+      expect(presentation.release).toEqual(expectedRelease);
+    }
     expect(versionedModelCardImagePath(card.path, "card.png")).toMatch(
       /\/card\.png\?v=[a-f0-9]{16}$/u,
     );
@@ -417,9 +443,10 @@ describe("public model cards", () => {
     expect(stylesheet).toMatch(/\.model-card-grid__bleed\s*\{[^}]*contain-intrinsic-block-size:\s*auto 20\.35rem;[^}]*contain-intrinsic-inline-size:\s*auto 14\.75rem;/su);
     expect(stylesheet).toMatch(/@media \(max-width:\s*560px\)[\s\S]*?\.model-card-grid\s*\{[^}]*grid-template-columns:\s*minmax\(0, 25rem\);/u);
     expect(stylesheet).toMatch(/@media \(max-width:\s*430px\)[\s\S]*?\.model-card-frame\s*\{[^}]*--foil-card-radius:\s*\.85rem;/u);
+    expect(stylesheet).toMatch(/\.model-card-face__harness\s*\{[^}]*overflow:\s*hidden;[^}]*padding-block-end:\s*\.18em;[^}]*text-overflow:\s*ellipsis;/su);
     expect(stylesheet).toMatch(/\.model-card-face dt\s*\{[^}]*font-size:\s*max\(\.625rem, 2\.4cqi\);/su);
     expect(stylesheet).toMatch(/@media \(forced-colors:\s*active\)[\s\S]*?\.model-card-illumination\s*\{[^}]*display:\s*none;/u);
     expect(stylesheet).toMatch(/@media \(prefers-reduced-transparency:\s*reduce\), \(prefers-contrast:\s*more\)[\s\S]*?--model-card-rail-spectrum-opacity:\s*\.06;/u);
-    expect(modelsPageSource).toContain("path: MODEL_CARD_COLLECTION_SOCIAL_IMAGE_PATH");
+    expect(modelsPageSource).toContain("url: MODEL_CARD_COLLECTION_SOCIAL_IMAGE_URL");
   });
 });

@@ -1,0 +1,434 @@
+[
+  {
+    "canonicalModelId": "alibaba/qwen3.7-plus",
+    "status": "verified",
+    "releasedOn": "2026-06-01",
+    "stage": "general-availability",
+    "basis": "release-notes",
+    "verifiedOn": "2026-08-29",
+    "sources": [
+      {
+        "title": "Model lifecycle and updates",
+        "url": "https://www.alibabacloud.com/help/en/model-studio/newly-released-models"
+      }
+    ]
+  },
+  {
+    "canonicalModelId": "alibaba/qwen3.8-max",
+    "status": "verified",
+    "releasedOn": "2026-08-02",
+    "stage": "general-availability",
+    "basis": "release-notes",
+    "verifiedOn": "2026-08-29",
+    "sources": [
+      {
+        "title": "Model lifecycle and updates",
+        "url": "https://www.alibabacloud.com/help/en/model-studio/newly-released-models"
+      }
+    ]
+  },
+  {
+    "canonicalModelId": "anthropic/claude-fable-5",
+    "status": "verified",
+    "releasedOn": "2026-06-09",
+    "stage": "public-release",
+    "basis": "announcement",
+    "verifiedOn": "2026-08-29",
+    "sources": [
+      {
+        "title": "Introducing Claude Fable 5 and Mythos 5",
+        "url": "https://www.anthropic.com/news/claude-fable-5-mythos-5"
+      }
+    ]
+  },
+  {
+    "canonicalModelId": "anthropic/claude-opus-4.6",
+    "status": "verified",
+    "releasedOn": "2026-02-05",
+    "stage": "public-release",
+    "basis": "announcement",
+    "verifiedOn": "2026-08-29",
+    "sources": [
+      {
+        "title": "Introducing Claude Opus 4.6",
+        "url": "https://www.anthropic.com/news/claude-opus-4-6"
+      }
+    ]
+  },
+  {
+    "canonicalModelId": "anthropic/claude-opus-4.7",
+    "status": "verified",
+    "releasedOn": "2026-04-16",
+    "stage": "general-availability",
+    "basis": "announcement",
+    "verifiedOn": "2026-08-29",
+    "sources": [
+      {
+        "title": "Introducing Claude Opus 4.7",
+        "url": "https://www.anthropic.com/news/claude-opus-4-7"
+      }
+    ]
+  },
+  {
+    "canonicalModelId": "anthropic/claude-opus-4.8",
+    "status": "verified",
+    "releasedOn": "2026-05-28",
+    "stage": "public-release",
+    "basis": "announcement",
+    "verifiedOn": "2026-08-29",
+    "sources": [
+      {
+        "title": "Introducing Claude Opus 4.8",
+        "url": "https://www.anthropic.com/news/claude-opus-4-8"
+      }
+    ]
+  },
+  {
+    "canonicalModelId": "anthropic/claude-opus-5",
+    "status": "verified",
+    "releasedOn": "2026-07-24",
+    "stage": "general-availability",
+    "basis": "announcement",
+    "verifiedOn": "2026-08-29",
+    "sources": [
+      {
+        "title": "Introducing Claude Opus 5",
+        "url": "https://www.anthropic.com/news/claude-opus-5"
+      }
+    ]
+  },
+  {
+    "canonicalModelId": "anthropic/claude-sonnet-4.6",
+    "status": "verified",
+    "releasedOn": "2026-02-17",
+    "stage": "public-release",
+    "basis": "announcement",
+    "verifiedOn": "2026-08-29",
+    "sources": [
+      {
+        "title": "Introducing Claude Sonnet 4.6",
+        "url": "https://www.anthropic.com/news/claude-sonnet-4-6"
+      }
+    ]
+  },
+  {
+    "canonicalModelId": "cognition/swe-1.7",
+    "appliesTo": {
+      "kind": "base-model",
+      "model": "SWE-1.7"
+    },
+    "status": "verified",
+    "releasedOn": "2026-07-08",
+    "stage": "public-release",
+    "basis": "announcement",
+    "verifiedOn": "2026-08-29",
+    "sources": [
+      {
+        "title": "SWE-1.7: Frontier Intelligence at a Fraction of the Cost",
+        "url": "https://cognition.com/blog/swe-1-7"
+      }
+    ]
+  },
+  {
+    "canonicalModelId": "cursor/composer-2",
+    "status": "verified",
+    "releasedOn": "2026-03-19",
+    "stage": "public-release",
+    "basis": "announcement",
+    "verifiedOn": "2026-08-29",
+    "sources": [
+      {
+        "title": "Composer 2",
+        "url": "https://cursor.com/blog/composer-2"
+      }
+    ]
+  },
+  {
+    "canonicalModelId": "cursor/composer-2.5",
+    "status": "verified",
+    "releasedOn": "2026-05-18",
+    "stage": "public-release",
+    "basis": "announcement",
+    "verifiedOn": "2026-08-29",
+    "sources": [
+      {
+        "title": "Composer 2.5",
+        "url": "https://cursor.com/blog/composer-2-5"
+      }
+    ]
+  },
+  {
+    "canonicalModelId": "cursor/composer-2.5-fast",
+    "status": "verified",
+    "releasedOn": "2026-05-18",
+    "stage": "public-release",
+    "basis": "announcement",
+    "verifiedOn": "2026-08-29",
+    "sources": [
+      {
+        "title": "Composer 2.5",
+        "url": "https://cursor.com/blog/composer-2-5"
+      }
+    ]
+  },
+  {
+    "canonicalModelId": "deepseek/deepseek-v4-flash-0731",
+    "status": "verified",
+    "releasedOn": "2026-07-31",
+    "stage": "public-preview",
+    "basis": "release-notes",
+    "verifiedOn": "2026-08-29",
+    "sources": [
+      {
+        "title": "DeepSeek API change log",
+        "url": "https://api-docs.deepseek.com/updates/"
+      }
+    ]
+  },
+  {
+    "canonicalModelId": "deepseek/deepseek-v4-pro",
+    "status": "verified",
+    "releasedOn": "2026-08-13",
+    "stage": "general-availability",
+    "basis": "announcement",
+    "verifiedOn": "2026-08-29",
+    "sources": [
+      {
+        "title": "DeepSeek-V4-Pro GA Release",
+        "url": "https://api-docs.deepseek.com/news/news260813/"
+      }
+    ]
+  },
+  {
+    "canonicalModelId": "deepseek/deepseek-v4-pro-0813",
+    "appliesTo": {
+      "kind": "base-model",
+      "model": "DeepSeek-V4-Pro"
+    },
+    "status": "verified",
+    "releasedOn": "2026-08-13",
+    "stage": "general-availability",
+    "basis": "announcement",
+    "verifiedOn": "2026-08-29",
+    "sources": [
+      {
+        "title": "DeepSeek-V4-Pro GA Release",
+        "url": "https://api-docs.deepseek.com/news/news260813/"
+      }
+    ]
+  },
+  {
+    "canonicalModelId": "google/gemini-3.1-pro",
+    "status": "verified",
+    "releasedOn": "2026-02-19",
+    "stage": "public-preview",
+    "basis": "announcement",
+    "verifiedOn": "2026-08-29",
+    "sources": [
+      {
+        "title": "Gemini 3.1 Pro: A smarter model for your most complex tasks",
+        "url": "https://blog.google/innovation-and-ai/models-and-research/gemini-models/gemini-3-1-pro/"
+      }
+    ]
+  },
+  {
+    "canonicalModelId": "google/gemini-3.6-flash",
+    "status": "verified",
+    "releasedOn": "2026-07-21",
+    "stage": "public-release",
+    "basis": "announcement",
+    "verifiedOn": "2026-08-29",
+    "sources": [
+      {
+        "title": "Gemini 3.6 Flash and 3.5 Flash-Lite",
+        "url": "https://blog.google/innovation-and-ai/models-and-research/gemini-models/gemini-3-6-flash-3-5-flash-lite-3-5-flash-cyber/"
+      }
+    ]
+  },
+  {
+    "canonicalModelId": "google/gemini-3.7-flash",
+    "status": "verified",
+    "releasedOn": "2026-08-13",
+    "stage": "public-release",
+    "basis": "announcement",
+    "verifiedOn": "2026-08-29",
+    "sources": [
+      {
+        "title": "Introducing Gemini 3.7 Flash",
+        "url": "https://blog.google/innovation-and-ai/models-and-research/gemini-models/introducing-gemini-3-7-flash/"
+      }
+    ]
+  },
+  {
+    "canonicalModelId": "meta/muse-spark-1.1",
+    "status": "verified",
+    "releasedOn": "2026-07-09",
+    "stage": "public-preview",
+    "basis": "announcement",
+    "verifiedOn": "2026-08-29",
+    "sources": [
+      {
+        "title": "Introducing Muse Spark 1.1",
+        "url": "https://research.meta.ai/blog/introducing-muse-spark-meta-model-api"
+      }
+    ]
+  },
+  {
+    "canonicalModelId": "meta/muse-spark-1.2",
+    "status": "verified",
+    "releasedOn": "2026-08-05",
+    "stage": "public-release",
+    "basis": "announcement",
+    "verifiedOn": "2026-08-29",
+    "sources": [
+      {
+        "title": "Introducing Muse Code and Muse Spark 1.2",
+        "url": "https://research.meta.ai/blog/introducing-muse-code-and-muse-spark-1-2"
+      }
+    ]
+  },
+  {
+    "canonicalModelId": "moonshotai/kimi-k2.6",
+    "status": "verified",
+    "releasedOn": "2026-04-20",
+    "stage": "public-release",
+    "basis": "announcement",
+    "verifiedOn": "2026-08-29",
+    "sources": [
+      {
+        "title": "Kimi K2.6: Advancing Open-Source Coding",
+        "url": "https://www.kimi.com/en/blog/kimi-k2-6"
+      },
+      {
+        "title": "Kimi Research",
+        "url": "https://www.kimi.com/en/blog/"
+      }
+    ]
+  },
+  {
+    "canonicalModelId": "moonshotai/kimi-k3",
+    "status": "verified",
+    "releasedOn": "2026-07-16",
+    "stage": "public-release",
+    "basis": "model-index",
+    "verifiedOn": "2026-08-29",
+    "sources": [
+      {
+        "title": "Kimi Research",
+        "url": "https://www.kimi.com/en/blog/"
+      }
+    ]
+  },
+  {
+    "canonicalModelId": "openai/gpt-5.4",
+    "status": "verified",
+    "releasedOn": "2026-03-05",
+    "stage": "public-release",
+    "basis": "announcement",
+    "verifiedOn": "2026-08-29",
+    "sources": [
+      {
+        "title": "Introducing GPT-5.4",
+        "url": "https://openai.com/index/introducing-gpt-5-4/"
+      }
+    ]
+  },
+  {
+    "canonicalModelId": "openai/gpt-5.5",
+    "status": "verified",
+    "releasedOn": "2026-04-23",
+    "stage": "public-release",
+    "basis": "announcement",
+    "verifiedOn": "2026-08-29",
+    "sources": [
+      {
+        "title": "Introducing GPT-5.5",
+        "url": "https://openai.com/index/introducing-gpt-5-5/"
+      }
+    ]
+  },
+  {
+    "canonicalModelId": "openai/gpt-5.6-luna",
+    "status": "verified",
+    "releasedOn": "2026-07-09",
+    "stage": "general-availability",
+    "basis": "announcement",
+    "verifiedOn": "2026-08-29",
+    "sources": [
+      {
+        "title": "GPT-5.6: Frontier intelligence that scales with your ambition",
+        "url": "https://openai.com/index/gpt-5-6/"
+      }
+    ]
+  },
+  {
+    "canonicalModelId": "openai/gpt-5.6-sol",
+    "status": "verified",
+    "releasedOn": "2026-07-09",
+    "stage": "general-availability",
+    "basis": "announcement",
+    "verifiedOn": "2026-08-29",
+    "sources": [
+      {
+        "title": "GPT-5.6: Frontier intelligence that scales with your ambition",
+        "url": "https://openai.com/index/gpt-5-6/"
+      }
+    ]
+  },
+  {
+    "canonicalModelId": "openai/gpt-5.6-terra",
+    "status": "verified",
+    "releasedOn": "2026-07-09",
+    "stage": "general-availability",
+    "basis": "announcement",
+    "verifiedOn": "2026-08-29",
+    "sources": [
+      {
+        "title": "GPT-5.6: Frontier intelligence that scales with your ambition",
+        "url": "https://openai.com/index/gpt-5-6/"
+      }
+    ]
+  },
+  {
+    "canonicalModelId": "spacexai/grok-4.5",
+    "status": "verified",
+    "releasedOn": "2026-07-16",
+    "stage": "public-release",
+    "basis": "announcement",
+    "verifiedOn": "2026-08-29",
+    "sources": [
+      {
+        "title": "Introducing Grok 4.5",
+        "url": "https://x.ai/news/grok-4-5"
+      }
+    ]
+  },
+  {
+    "canonicalModelId": "zai/glm-5.1",
+    "status": "verified",
+    "releasedOn": "2026-04-07",
+    "stage": "public-release",
+    "basis": "release-notes",
+    "verifiedOn": "2026-08-29",
+    "sources": [
+      {
+        "title": "Z.AI model releases",
+        "url": "https://docs.z.ai/release-notes/new-released"
+      }
+    ]
+  },
+  {
+    "canonicalModelId": "zai/glm-5.2",
+    "status": "verified",
+    "releasedOn": "2026-06-16",
+    "stage": "public-release",
+    "basis": "announcement",
+    "verifiedOn": "2026-08-29",
+    "sources": [
+      {
+        "title": "GLM-5.2: Built for Long-Horizon Tasks",
+        "url": "https://z.ai/blog/glm-5.2"
+      }
+    ]
+  }
+]

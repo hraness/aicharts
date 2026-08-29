@@ -190,7 +190,7 @@
   transform: rotate(45deg);
 }
 
-.model-card-face__listing {
+.model-card-face__release {
   color: var(--model-card-muted);
   display: grid;
   flex: 0 0 auto;
@@ -201,12 +201,12 @@
   white-space: nowrap;
 }
 
-.model-card-face__listing > span:first-child {
+.model-card-face__release > span:first-child {
   font-size: max(.4375rem, 1.7cqi);
   letter-spacing: .11em;
 }
 
-.model-card-face__listing > span:last-child {
+.model-card-face__release > span:last-child {
   color: rgb(247 246 242 / 84%);
   font-family: var(--font-mono);
   font-size: max(.5rem, 2.25cqi);
@@ -233,6 +233,7 @@
   line-height: 1.2;
   margin-block-start: 2cqi;
   overflow: hidden;
+  padding-block-end: .18em;
   text-overflow: ellipsis;
   white-space: nowrap;
 }

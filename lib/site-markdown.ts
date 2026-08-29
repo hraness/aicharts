@@ -50,7 +50,11 @@ import {
   findModelCardPresentation,
   versionedModelCardImagePath,
 } from "./model-card-collection";
-import type { ModelCardPresentation } from "./model-card-presentation";
+import {
+  formatModelCardReleaseDateLong,
+  formatModelCardReleaseStage,
+  type ModelCardPresentation,
+} from "./model-card-presentation";
 import { modelCardRouteStatus } from "./model-card-route-status";
 import { vercelGatewayModelCatalog } from "./model-card-sources";
 import {
@@ -326,14 +330,19 @@ function modelCardsMarkdown(): string {
       const evidenceText = earlyEvidence === null
         ? ""
         : ` Early DeepSWE: ${formatDeepSweEvidenceScore(earlyEvidence.passAt1)} pass@1; ${earlyEvidence.reasoningEffort ?? "default"}; ${earlyEvidence.runs} runs; ${earlyEvidence.identity.resolver.name} model match.`;
-      return `- [${release.model}](${release.modelUrl}). ${release.providerName}; listed by OpenRouter ${formatUpdateDate(release.sourceAddedAt)}.${evidenceText}`;
+      return `- [${release.model}](${release.modelUrl}). ${release.providerName}; first observed in the OpenRouter discovery catalog ${formatUpdateDate(release.sourceAddedAt)}.${evidenceText}`;
     }),
     "",
     "## Cards",
     "",
-    ...MODEL_CARD_PRESENTATIONS.map(card => (
-      `- [${card.displayTitle}](${absolute(card.path)}). ${card.providerName}; ${card.classLabel}; ${card.observationCount} ${card.observationCount === 1 ? "configuration" : "configurations"}.`
-    )),
+    ...MODEL_CARD_PRESENTATIONS.map(card => {
+      const release = card.release.status === "verified"
+        ? `${card.release.appliesTo?.kind === "base-model" ? `official base-model release (${card.release.appliesTo.model})` : "official release"} [${formatModelCardReleaseDateLong(card.release.releasedOn)}](${card.release.sources[0]?.url ?? absolute(card.path)})`
+        : card.release.status === "pending"
+          ? "official release date pending verification"
+          : `official release date pending first-party review; first observed in the benchmark snapshot ${formatModelCardReleaseDateLong(card.release.observedOn)}`;
+      return `- [${card.displayTitle}](${absolute(card.path)}). ${card.providerName}; ${card.classLabel}; ${release}; ${card.observationCount} ${card.observationCount === 1 ? "configuration" : "configurations"}.`;
+    }),
   ]);
 }
 
@@ -359,6 +368,11 @@ export function modelCardMarkdown(card: ModelCardPresentation): string {
     "",
     `- ${routeStatus.provisionalIdentity ? "Provisional" : "Canonical"} model ID: \`${card.canonicalModelId}\``,
     ...(routeStatus.isProvisional ? [`- Route status: provisional until the new upstream ${routeStatus.primaryReason} is cataloged`] : []),
+    ...(card.release.status === "verified"
+      ? [`- ${card.release.appliesTo?.kind === "base-model" ? `Official base-model release (${card.release.appliesTo.model})` : "Official release"}: [${formatModelCardReleaseDateLong(card.release.releasedOn)} · ${card.release.sources[0]?.title ?? "first-party source"}](${card.release.sources[0]?.url ?? absolute(card.path)}); ${formatModelCardReleaseStage(card.release.stage)}`]
+      : card.release.status === "pending"
+        ? [`- Official release date: pending verification; researched ${formatModelCardReleaseDateLong(card.release.researchedOn)}`]
+        : [`- Official release date: pending first-party review; first observed in the benchmark snapshot ${formatModelCardReleaseDateLong(card.release.observedOn)}`]),
     `- Vercel AI Gateway ID: ${card.gatewayModelId === null ? "not available in the checked catalog" : `\`${card.gatewayModelId}\``}`,
     `- [Gateway model catalog](${vercelGatewayModelCatalog.url}), checked ${vercelGatewayModelCatalog.verifiedAt}`,
     `- Profile: \`${card.profileSlug}\``,
