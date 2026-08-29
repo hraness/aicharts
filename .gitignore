@@ -6,5 +6,6 @@
 .vercel/
 coverage/
 node_modules/
+artifacts/atet/
 *.log
 *.tsbuildinfo

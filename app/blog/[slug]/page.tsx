@@ -6,6 +6,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { ArticleBody } from "../article-body";
+import { EditorialFigure } from "../editorial-figure";
+import { blogEditorialImage } from "../editorial-images";
 import {
   BLOG_SOURCES,
   articleReadingMinutes,
@@ -110,6 +112,10 @@ export default async function BlogArticlePage({
           <span aria-hidden="true"> · </span>
           <span>{articleReadingMinutes(article)} min read</span>
         </p>
+        <EditorialFigure
+          image={blogEditorialImage(article.slug)}
+          preload
+        />
       </header>
 
       <div className="plain-publication__article-layout plain-publication__shell">

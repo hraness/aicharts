@@ -14,6 +14,7 @@ import {
   type BlogArticle,
   type BlogSlug,
 } from "./articles";
+import { blogEditorialImage } from "./editorial-images";
 
 export const BLOG_SOCIAL_IMAGE_PATH = "/blog/opengraph-image" as const;
 
@@ -28,10 +29,20 @@ const blogSearchSite = {
   title: "AI Model & Agent Benchmark Analysis | AI Charts",
 } as const;
 
-export const blogCollectionMetadata = createPublicSiteMetadata(
+const baseBlogCollectionMetadata = createPublicSiteMetadata(
   blogSearchSite,
   { canonicalPath: "/blog" },
 );
+
+export const blogCollectionMetadata: Metadata = {
+  ...baseBlogCollectionMetadata,
+  alternates: {
+    ...baseBlogCollectionMetadata.alternates,
+    types: {
+      "application/atom+xml": absoluteWebUrl(searchSite.origin, "/blog/feed.xml"),
+    },
+  },
+};
 
 function isoDateTime(date: string): string {
   return `${date}T00:00:00.000Z`;
@@ -39,8 +50,8 @@ function isoDateTime(date: string): string {
 
 export function blogArticleImagePath(
   slug: BlogSlug,
-): `/blog/${BlogSlug}/opengraph-image` {
-  return `${blogArticlePath(slug)}/opengraph-image`;
+): `/images/blog/${BlogSlug}.webp` {
+  return blogEditorialImage(slug).socialSrc;
 }
 
 export function blogArticleMetadata(article: BlogArticle): Metadata {
@@ -50,7 +61,7 @@ export function blogArticleMetadata(article: BlogArticle): Metadata {
     searchSite.origin,
     blogArticleImagePath(article.slug),
   );
-  const imageAlt = `${article.title} | AI Charts`;
+  const editorialImage = blogEditorialImage(article.slug);
 
   return {
     title: article.title,
@@ -76,10 +87,10 @@ export function blogArticleMetadata(article: BlogArticle): Metadata {
       section: "Coding agent benchmarks",
       tags: [...article.keywords],
       images: [{
-        alt: imageAlt,
-        height: 630,
+        alt: editorialImage.alt,
+        height: editorialImage.height,
         url: image,
-        width: 1200,
+        width: editorialImage.width,
       }],
     },
     robots: INDEXABLE_ROBOTS,
@@ -87,7 +98,7 @@ export function blogArticleMetadata(article: BlogArticle): Metadata {
       card: "summary_large_image",
       title: article.title,
       description: article.seoDescription,
-      images: [{ alt: imageAlt, url: image }],
+      images: [{ alt: editorialImage.alt, url: image }],
     },
   };
 }
