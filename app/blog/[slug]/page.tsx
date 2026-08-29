@@ -10,6 +10,7 @@ import { EditorialFigure } from "../editorial-figure";
 import { blogEditorialImage } from "../editorial-images";
 import {
   BLOG_SOURCES,
+  blogArticleSection,
   articleReadingMinutes,
   blogArticlePath,
   blogArticles,
@@ -133,19 +134,21 @@ export default async function BlogArticlePage({
         <div className="plain-publication__article-main">
           <ArticleBody blocks={article.body} />
 
-          <aside className="plain-publication__cta">
-            <h2>Current comparison: coding agents</h2>
-            <p>
-              Explore the current coding-agent dataset by benchmark score,
-              task cost, time, and total token use.
-            </p>
-            <TrackedChartLink
-              className="plain-publication__primary-link"
-              sourceKind="blog_article"
-            >
-              Open the comparison chart <span aria-hidden="true">→</span>
-            </TrackedChartLink>
-          </aside>
+          {article.showChartCta !== false && (
+            <aside className="plain-publication__cta">
+              <h2>Current comparison: coding agents</h2>
+              <p>
+                Explore the current coding-agent dataset by benchmark score,
+                task cost, time, and total token use.
+              </p>
+              <TrackedChartLink
+                className="plain-publication__primary-link"
+                sourceKind="blog_article"
+              >
+                Open the comparison chart <span aria-hidden="true">→</span>
+              </TrackedChartLink>
+            </aside>
+          )}
 
           <section
             aria-labelledby="sources-title"
@@ -168,16 +171,16 @@ export default async function BlogArticlePage({
           </section>
 
           <p className="plain-publication__disclosure">
-            Results describe the named model, harness, task set, budget, and
-            evaluation version. They do not establish performance on every
-            production repository.
+            Reported results apply to the named source, workload,
+            configuration, and observation date. They do not establish
+            performance on every task or product.
           </p>
         </div>
       </div>
 
       <footer className="plain-publication__related plain-publication__shell">
         <div className="plain-publication__section-heading">
-          <h2>Related benchmark note</h2>
+          <h2>Related analysis</h2>
           <Link href="/blog">All articles</Link>
         </div>
         <div className="plain-publication__related-grid">
@@ -186,7 +189,7 @@ export default async function BlogArticlePage({
               href={blogArticlePath(relatedArticle.slug)}
               key={relatedArticle.slug}
             >
-              <span>AI agent benchmark</span>
+              <span>{blogArticleSection(relatedArticle)}</span>
               <strong>{relatedArticle.title}</strong>
             </Link>
           ))}

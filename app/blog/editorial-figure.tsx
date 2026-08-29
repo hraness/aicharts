@@ -16,6 +16,7 @@ export function EditorialFigure({
       <Image
         alt={image.alt}
         height={image.height}
+        preload={preload}
         sizes="(max-width: 42rem) calc(100vw - 2rem), 20rem"
         src={image.src}
         width={image.width}

@@ -4,6 +4,20 @@ This guide covers public editorial, product copy, documentation, and other prose
 
 Public prose must be precise, useful, and free of hype. Use a direct, natural voice that reads well aloud.
 
+## Leave the reader with a clearer model
+
+- Write for a reader who knows the general subject but has not read the sources, related articles, or internal project material.
+- State the article's central claim and why it matters in plain language before adding detail.
+- Introduce each person, organization, source, and necessary technical term at first use. Do not make a link carry context the prose has not supplied.
+- Make every article understandable on its own. Related links may deepen the explanation but must not be prerequisites.
+- Organize sections around the reader's questions. Do not organize public prose around citation handling, repository structures, data schemas, search strategy, or the sequence in which the analysis was produced.
+- Cite the primary source for a reported claim. Use a secondary digest only when it contributes distinct evidence or analysis, and state that contribution without explaining internal citation mechanics.
+- Label personal observations, controlled benchmarks, official specifications, and forecasts accurately. Do not turn an anecdote into a general finding or a possible cause into the only cause.
+- Do not invent an opposing claim, conflict, or consequence to manufacture an argument. If a source does not connect two topics, connect them only with independent evidence that helps answer the reader's question.
+- Keep implementation details, internal reasoning, and editorial process out of public prose. State the supported conclusion, the evidence a reader can inspect, and the limitations that affect the conclusion.
+- Connect an external source to AI Charts only when the connection helps answer the article's central question. Do not force every source into the site's current dataset or product vocabulary.
+- After editing, confirm that a first-time reader can state the thesis, key evidence, and limits after one pass. Rewrite or remove any passage that adds context without improving that understanding.
+
 ## Use a direct voice
 
 - State what the object does. Let the reader decide whether it is good.

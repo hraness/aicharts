@@ -60,7 +60,7 @@ export const BLOG_EDITORIAL_IMAGES = {
   "small-models-have-arrived": image(
     "small-models-have-arrived",
     "A compact blue and coral computing core moves a light stream through a modular machine beside a separate taller structure.",
-    "Consumer inference cost and coding-agent benchmark performance are separate questions.",
+    "Lower inference costs can make repeated AI work viable when the model still meets the task’s quality bar.",
     "f6bfe3d262147db6408e069df98803277b34b1f471eb61f03a51a7ef2eb51330",
     "e29d12c19ab8ff27d923fe92a66207897a19522f4f59ecdfc7d0c8bfff7a9cf8",
     "20260829T044909987Z-image-8a112f56-e2a/receipt.json",
