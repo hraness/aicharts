@@ -71,8 +71,9 @@ describe("homepage agent document", () => {
   test("shows a curated three-card editorial module", () => {
     const markup = renderToStaticMarkup(createElement(HomeEditorialResources));
     expect(HOME_EDITORIAL_SLUGS).toHaveLength(3);
-    expect(markup).toContain("Benchmark analysis");
+    expect(markup).toContain("Model and benchmark analysis");
     expect(markup).toContain('href="/blog"');
+    expect(markup.match(/rel="preload"/gu)).toHaveLength(1);
     for (const slug of HOME_EDITORIAL_SLUGS) {
       expect(markup).toContain(`href="/blog/${slug}"`);
       expect(markup).toContain(

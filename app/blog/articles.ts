@@ -166,18 +166,18 @@ export const BLOG_SOURCES = {
   },
   calvinFrenchOwenSmallModels: {
     note:
-      "The August 26, 2026 essay reports gpt-5.6-luna speed and consumer-eval cost, and argues inference cost, not taste, kept consumer AI companies scarce.",
+      "The August 26, 2026 essay reports GPT-5.6 Luna speed and costs from French-Owen’s research and personalized-news experiments.",
     publication: "calv.info",
     title: "Small Models Have Arrived",
     url: "https://calv.info/small-models-have-arrived",
     year: 2026,
   },
-  hranessSmallModelsReading: {
+  openAiGpt56Luna: {
     note:
-      "The Hraness reading note is a dated digest of Calvin French-Owen’s essay, used here as a crawlable companion citation rather than a substitute for the original.",
-    publication: "Hraness",
-    title: "Hraness reading note: Small Models Have Arrived",
-    url: "https://hraness.com/reading/small-models-have-arrived",
+      "The official model page describes GPT-5.6 Luna as a cost-sensitive, high-volume model and lists its current token prices and additional cost conditions.",
+    publication: "OpenAI",
+    title: "GPT-5.6 Luna Model",
+    url: "https://developers.openai.com/api/docs/models/gpt-5.6-luna",
     year: 2026,
   },
 } as const satisfies Record<string, BlogSource>;
@@ -191,7 +191,9 @@ export interface BlogArticle {
   readonly keywords: readonly string[];
   readonly publishedAt: string;
   readonly relatedSlugs: readonly BlogSlug[];
+  readonly section?: string;
   readonly seoDescription: string;
+  readonly showChartCta?: boolean;
   readonly slug: BlogSlug;
   readonly sourceIds: readonly BlogSourceId[];
   readonly title: string;
@@ -480,6 +482,10 @@ export function getBlogArticle(slug: string): BlogArticle | undefined {
   return blogArticles.find(article => article.slug === slug);
 }
 
+export function blogArticleSection(article: BlogArticle): string {
+  return article.section ?? "Coding agent benchmarks";
+}
+
 export function headingId(text: string): string {
   return text
     .toLowerCase()
@@ -529,6 +535,16 @@ export function articleToMarkdown(article: BlogArticle): string {
     const source = BLOG_SOURCES[sourceId];
     return `- [${source.title}](${source.url}). ${source.publication}, ${source.year}. ${source.note}`;
   });
+  const chartLink = article.showChartCta === false
+    ? []
+    : ["", `[Current coding-agent comparison](${site.origin}/)`];
+  const relatedLinks = article.relatedSlugs.map((slug) => {
+    const relatedArticle = getBlogArticle(slug);
+    if (relatedArticle === undefined) {
+      throw new Error(`Unknown related blog article: ${slug}`);
+    }
+    return `- [${relatedArticle.title}](${site.origin}${blogArticlePath(slug)})`;
+  });
   return [
     `# ${article.title}`,
     "",
@@ -541,9 +557,12 @@ export function articleToMarkdown(article: BlogArticle): string {
     "",
     ...sources,
     "",
-    "Results describe the named model, harness, task set, budget, and evaluation version. They do not establish performance on every production repository.",
+    "Reported results apply to the named source, workload, configuration, and observation date. They do not establish performance on every task or product.",
     "",
-    `[Current coding-agent comparison](${site.origin}/)`,
+    "## Related analysis",
+    "",
+    ...relatedLinks,
+    ...chartLink,
     "",
   ].join("\n");
 }

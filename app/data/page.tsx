@@ -185,10 +185,10 @@ export default function CodingAgentDatasetPage() {
               <Link href="/blog/are-open-models-catching-up">
                 open models can close a scoreboard and still lose the product
               </Link>
-              . For whether a consumer news-eval dollar chart should collapse
-              those rows into a cheap-won headline, see{" "}
+              . For how lower inference costs change frequent-use product
+              economics, see{" "}
               <Link href="/blog/small-models-have-arrived">
-                a cheap model can close a bill and still lose the scoreboard
+                cheaper AI models can make everyday products viable
               </Link>
               . For why a public-suite high score still needs a holdout, see{" "}
               <Link href="/blog/coding-agent-score-holdouts">

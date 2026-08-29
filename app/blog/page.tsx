@@ -64,10 +64,10 @@ export default function BlogIndex() {
         >
           <div className="plain-publication__section-heading">
             <h2 id="benchmark-articles">Articles</h2>
-            <p>{blogArticles.length} sourced benchmark summaries</p>
+            <p>{blogArticles.length} sourced analysis articles</p>
           </div>
           <div className="plain-publication__article-list">
-            {blogArticles.map(article => (
+            {blogArticles.map((article, index) => (
               <article className="plain-publication__entry" key={article.slug}>
                 <Link
                   aria-label={article.title}
@@ -76,6 +76,7 @@ export default function BlogIndex() {
                 >
                   <EditorialFigure
                     image={blogEditorialImage(article.slug)}
+                    preload={index === 0}
                     variant="card"
                   />
                 </Link>

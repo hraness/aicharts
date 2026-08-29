@@ -8,6 +8,7 @@ import type { Metadata } from "next";
 import { searchSite, site } from "../site";
 import {
   BLOG_SOURCES,
+  blogArticleSection,
   blogArticlePath,
   blogArticles,
   blogDescription,
@@ -62,6 +63,7 @@ export function blogArticleMetadata(article: BlogArticle): Metadata {
     blogArticleImagePath(article.slug),
   );
   const editorialImage = blogEditorialImage(article.slug);
+  const section = blogArticleSection(article);
 
   return {
     title: article.title,
@@ -73,7 +75,7 @@ export function blogArticleMetadata(article: BlogArticle): Metadata {
     }],
     creator: "AI Charts",
     publisher: "AI Charts",
-    category: "Coding agent benchmarks",
+    category: section,
     openGraph: {
       type: "article",
       locale: "en_US",
@@ -84,7 +86,7 @@ export function blogArticleMetadata(article: BlogArticle): Metadata {
       publishedTime: isoDateTime(article.publishedAt),
       modifiedTime: isoDateTime(article.updatedAt),
       authors: [absoluteWebUrl(searchSite.origin, "/blog")],
-      section: "Coding agent benchmarks",
+      section,
       tags: [...article.keywords],
       images: [{
         alt: editorialImage.alt,
@@ -171,7 +173,7 @@ export function blogArticleJsonLd(article: BlogArticle) {
     },
     isAccessibleForFree: true,
     inLanguage: "en-US",
-    articleSection: "Coding agent benchmarks",
+    articleSection: blogArticleSection(article),
     keywords: article.keywords,
     citation: article.sourceIds.map(sourceId => BLOG_SOURCES[sourceId].url),
   } as const;

@@ -28,7 +28,7 @@ Future chart verticals need a distinct crawlable route, canonical URL, visible h
 AI Charts targets three connected query groups:
 
 1. Umbrella discovery: `AI model comparison`, `AI agent comparison`, `AI benchmark charts`, and `LLM comparison`.
-2. Decision trade-offs: `AI model performance vs cost`, `AI model speed comparison`, `token use comparison`, and benchmark-specific cost or quality questions. The AA Index versus cost note answers that question for the current coding-agent snapshot with named configurations and the checked Artificial Analysis retrieval date. The open-models note answers whether classified open-weight rows sit with the current AA Index leaders. The scoreboard-versus-product note answers whether a SemiAnalysis catch-up composite is a reason to collapse those named rows into an open-won headline. The consumer-bill note answers whether a news-eval dollar chart is a reason to collapse those named rows into a cheap-won headline. The holdout note answers why a public-suite high score still needs hidden cases. The expertise note answers why that named-suite score still needs a person who can specify and audit the work.
+2. Decision trade-offs: `AI model performance vs cost`, `AI model speed comparison`, `token use comparison`, and benchmark-specific cost or quality questions. The AA Index versus cost note answers that question for the current coding-agent snapshot with named configurations and the checked Artificial Analysis retrieval date. The open-models note answers whether classified open-weight rows sit with the current AA Index leaders. The scoreboard-versus-product note explains why a closing benchmark gap does not settle product choice. The small-model economics note explains how lower inference costs can make frequent-use AI features viable and how to test whether a cheaper model meets a workload's quality bar. The holdout note answers why a public-suite high score still needs hidden cases. The expertise note answers why that named-suite score still needs a person who can specify and audit the work.
 3. Evidence: exact benchmark and methodology searches such as MirrorCode, SlopCodeBench, SWE-bench, Terminal-Bench, and questions about what a result does or does not establish.
 
 The product and collection pages carry umbrella language. Chart pages and research articles earn narrower searches through original visualization, primary sources, reported configurations, dates, and explicit limits. Exact benchmark names must not be replaced with generic keyword variants.
@@ -38,12 +38,18 @@ The product and collection pages carry umbrella language. Chart pages and resear
 Every indexable research page must:
 
 - answer one identifiable search intent in its title, heading, introduction, and body;
+- make its thesis, key evidence, terms, and limits understandable without requiring another article, digest, or internal project context;
 - cite the paper or maintained primary source for material claims;
+- use a secondary source only when it adds distinct evidence or analysis;
 - distinguish reported facts from AI Charts analysis;
+- label anecdotes, controlled evaluations, official specifications, and forecasts accurately;
+- avoid invented conflicts or consequences that no source supports;
 - attach observation dates and named configurations to changing results;
 - keep limitations near the claims they qualify;
 - add a useful internal link to the relevant chart and related evidence;
 - provide analysis or presentation that is meaningfully more useful than repeating a source abstract.
+
+Public research pages must not narrate repository structure, source-ingestion mechanics, data-field bookkeeping, editorial decisions, citation strategy, search strategy, or the order in which the analysis was produced. Connect a source to an AI Charts dataset only when that relationship helps answer the article's central question and the evidence supports it. Before publication, a fresh reader should be able to state the conclusion, the evidence behind it, and its limits after one pass.
 
 Update a page when its underlying result changes materially. Do not change a publication date to simulate freshness. Remove or consolidate a page when it no longer provides a distinct answer.
 

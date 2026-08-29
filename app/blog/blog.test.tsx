@@ -36,6 +36,7 @@ import {
   BLOG_SOURCES,
   articleToMarkdown,
   articleWordCount,
+  blogArticleSection,
   blogArticlePath,
   blogArticles,
   blogDescription,
@@ -48,7 +49,7 @@ import {
 } from "./are-open-models-catching-up-article";
 import {
   FRENCH_OWEN_SMALL_MODELS,
-  HRANESS_SMALL_MODELS_READING,
+  OPENAI_GPT_56_LUNA,
 } from "./small-models-have-arrived-article";
 import {
   HARNESS_DEFINITION_URL,
@@ -311,9 +312,7 @@ describe("AI Charts benchmark notes", () => {
     }
   });
 
-  test("derives the small-models take from sourced French-Owen findings and named snapshot rows", () => {
-    const parsed = parseCodingAgentSnapshot(codingAgentData);
-    if (!parsed.ok) throw parsed.error;
+  test("explains small-model economics from primary sources without internal publishing context", () => {
     const article = getBlogArticle("small-models-have-arrived");
     expect(article).toBeDefined();
     if (article === undefined) return;
@@ -322,41 +321,34 @@ describe("AI Charts benchmark notes", () => {
       createElement(ArticleBody, { blocks: article.body }),
     );
     const markdown = articleToMarkdown(article);
-    const rows = codingAgentSnapshotRows(parsed.value.records);
-    const fable = rows.find(row =>
-      row.model.startsWith("Fable 5") && row.aaIndex !== null);
-    const sol = rows.find(row =>
-      row.model === "GPT-5.6 Sol" && row.aaIndex !== null);
-    expect(fable).toBeDefined();
-    expect(sol).toBeDefined();
-    if (fable === undefined || sol === undefined) return;
 
+    expect(article.title).toBe("Cheaper AI models can make everyday products viable");
+    expect(article.sourceIds).toEqual([
+      "calvinFrenchOwenSmallModels",
+      "openAiGpt56Luna",
+    ]);
     expect(markup).toContain(BLOG_SOURCES.calvinFrenchOwenSmallModels.url);
-    expect(markup).toContain(BLOG_SOURCES.hranessSmallModelsReading.url);
-    expect(markup).toContain(BLOG_SOURCES.artificialAnalysisCodingAgents.url);
-    expect(markup).toContain(HARNESS_DEFINITION_URL);
-    expect(markup).toContain('href="/"');
-    expect(markup).toContain('href="/blog/are-open-models-catching-up"');
-    expect(markup).toContain(formatRetrievedAt(parsed.value.source.retrievedAt));
-    expect(markdown).toContain("This page is not the");
-    expect(markdown).toContain("Hraness reading digest");
-    expect(markdown).toContain(FRENCH_OWEN_SMALL_MODELS.quotes.tokenCosts);
-    expect(markdown).toContain(FRENCH_OWEN_SMALL_MODELS.quotes.lunaNews);
-    expect(markdown).toContain(HRANESS_SMALL_MODELS_READING.gist);
-    expect(markdown).toContain(HRANESS_SMALL_MODELS_READING.tokenCostNotTaste);
+    expect(markup).toContain(BLOG_SOURCES.openAiGpt56Luna.url);
+    expect(markdown).toContain("one person’s experiment");
+    expect(markdown).toContain("cheapest model that meets the requirement");
+    expect(markdown).toContain("cost of a successful result");
     expect(markup).toContain(FRENCH_OWEN_SMALL_MODELS.reported.lunaSpeed);
     expect(markup).toContain(FRENCH_OWEN_SMALL_MODELS.reported.newsEvalLuna);
     expect(markup).toContain(FRENCH_OWEN_SMALL_MODELS.reported.newsEvalSonnet);
     expect(markup).toContain(FRENCH_OWEN_SMALL_MODELS.reported.researchThread);
-    expect(markup).toContain(fable.model);
-    expect(markup).toContain(fable.agent);
-    expect(markup).toContain(fable.setting);
-    expect(markup).toContain(formatSnapshotScore(fable.aaIndex));
-    expect(markup).toContain(sol.model);
-    expect(markup).toContain(sol.agent);
-    expect(markup).toContain(sol.setting);
-    expect(markup).toContain(formatSnapshotScore(sol.aaIndex));
-    expect(markdown).toContain("does not store a gpt-5.6-luna coding-agent row");
+    expect(markup).toContain(OPENAI_GPT_56_LUNA.pricing.inputPerMillionTokens);
+    expect(markup).toContain(OPENAI_GPT_56_LUNA.pricing.outputPerMillionTokens);
+    expect(markdown).toContain("$3 versus $30 over 30 days");
+    expect(markdown).toContain("## Related analysis");
+    expect(markdown).toContain(
+      "https://aicharts.io/blog/aa-index-cost-coding-agents",
+    );
+    expect(markdown).not.toContain("Current coding-agent comparison");
+    expect(markdown).not.toContain("Hraness reading");
+    expect(markdown).not.toContain("stored row");
+    expect(markdown).not.toContain("mint a");
+    expect(markdown).not.toContain("scoreboard");
+    expect(markdown).not.toContain("checked snapshot");
   });
 
   test("derives the holdout note from fetched Luu quotes and the checked snapshot", () => {
@@ -486,7 +478,7 @@ describe("AI Charts benchmark notes", () => {
     expect(markup).toContain(`href="${BLOG_SOURCES.seanGoedeckeExpertise.url}"`);
     expect(markup).toContain(`href="${BLOG_SOURCES.hranessGoedeckeReading.url}"`);
     expect(markup).toContain(`href="${BLOG_SOURCES.calvinFrenchOwenSmallModels.url}"`);
-    expect(markup).toContain(`href="${BLOG_SOURCES.hranessSmallModelsReading.url}"`);
+    expect(markup).toContain(`href="${BLOG_SOURCES.openAiGpt56Luna.url}"`);
   });
 
   test("renders the index, static routes, breadcrumbs, dates, and sources", async () => {
@@ -496,6 +488,7 @@ describe("AI Charts benchmark notes", () => {
     expect(indexMarkup).toContain("The first collection focuses on coding agents.");
     expect(indexMarkup).toContain("Explore the coding-agent chart");
     expect(indexMarkup).toContain("Method");
+    expect(indexMarkup.match(/rel="preload"/gu)).toHaveLength(1);
     for (const article of blogArticles) {
       expect(indexMarkup).toContain(`href="${blogArticlePath(article.slug)}"`);
       expect(indexMarkup).toContain(
@@ -515,7 +508,11 @@ describe("AI Charts benchmark notes", () => {
       expect(markup).toContain(`dateTime="${article.publishedAt}"`);
       expect(markup).toContain(blogEditorialImage(article.slug).caption);
       expect(markup).toContain(blogEditorialImage(article.slug).alt);
-      expect(markup).toContain("Current comparison: coding agents");
+      if ("showChartCta" in article && article.showChartCta === false) {
+        expect(markup).not.toContain("Current comparison: coding agents");
+      } else {
+        expect(markup).toContain("Current comparison: coding agents");
+      }
       for (const sourceId of article.sourceIds) {
         expect(markup).toContain(`href="${BLOG_SOURCES[sourceId].url}"`);
       }
@@ -566,6 +563,7 @@ describe("AI Charts blog discovery", () => {
         description: article.seoDescription,
         publishedTime: `${article.publishedAt}T00:00:00.000Z`,
         modifiedTime: `${article.updatedAt}T00:00:00.000Z`,
+        section: blogArticleSection(article),
         images: [{
           alt: blogEditorialImage(article.slug).alt,
           height: EDITORIAL_IMAGE_HEIGHT,
@@ -654,8 +652,17 @@ describe("AI Charts blog discovery", () => {
       expect(structured.citation).toEqual(
         article.sourceIds.map(sourceId => BLOG_SOURCES[sourceId].url),
       );
+      expect(structured.articleSection).toBe(blogArticleSection(article));
       expect(structured).not.toHaveProperty("review");
       expect(structured).not.toHaveProperty("aggregateRating");
+    }
+
+    const smallModels = getBlogArticle("small-models-have-arrived");
+    expect(smallModels).toBeDefined();
+    if (smallModels !== undefined) {
+      expect(blogArticleMetadata(smallModels).category).toBe("AI model economics");
+      expect(blogArticleJsonLd(smallModels).articleSection)
+        .toBe("AI model economics");
     }
 
     expect(breadcrumbJsonLd([

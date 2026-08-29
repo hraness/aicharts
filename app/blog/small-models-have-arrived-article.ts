@@ -1,16 +1,3 @@
-import codingAgentData from "@/data/coding-agents.json";
-import { parseCodingAgentSnapshot, type CodingAgentSnapshot } from "@/lib/coding-agent-data";
-import {
-  codingAgentDatasetModifiedAt,
-  codingAgentDatasetSummary,
-} from "@/lib/coding-agent-dataset";
-import {
-  codingAgentSnapshotRows,
-  formatSnapshotScore,
-  type CodingAgentSnapshotRow,
-} from "@/lib/coding-agent-snapshot-rows";
-import { formatRetrievedAt } from "@/lib/coding-agent-updates";
-
 import {
   BLOG_SOURCES,
   callout,
@@ -21,293 +8,182 @@ import {
   type BlogArticle,
   type InlineContent,
 } from "./articles";
-import { HARNESS_DEFINITION_URL } from "./coding-agent-scores-still-need-expertise-article";
 
 export const SMALL_MODELS_ARTICLE_SLUG = "small-models-have-arrived" as const;
 export const SMALL_MODELS_ARTICLE_PUBLISHED_AT = "2026-08-28" as const;
-export const CATCHING_UP_SIBLING_PATH = "/blog/are-open-models-catching-up" as const;
+export const SMALL_MODELS_ARTICLE_UPDATED_AT = "2026-08-29" as const;
 
 export const FRENCH_OWEN_SMALL_MODELS = {
   publishedOn: "August 26, 2026",
-  quotes: {
-    lunaNews:
-      "But looking at luna, the results are pretty decent, and the average cost is ~$0.10.",
-    tokenCosts: "There's a straightforward answer: token costs.",
-  },
   reported: {
-    lunaSpeed: "100",
+    lunaSpeed: "about 100 tokens per second",
     newsEvalLuna: "$0.10",
     newsEvalSonnet: "$1",
     researchThread: "tens of cents",
-    tokenSpewerShare: "95%",
   },
 } as const;
 
-export const HRANESS_SMALL_MODELS_READING = {
-  digestUrl: "https://hraness.com/reading/small-models-have-arrived" as const,
-  gist:
-    "Calvin French-Owen argues that small, fast models have crossed a cost-quality threshold that unlocks consumer AI.",
-  savedOn: "2026-08-27",
-  tokenCostNotTaste:
-    "Inference cost, not product taste, is why consumer AI companies have been scarce.",
+export const OPENAI_GPT_56_LUNA = {
+  documentedOn: "August 29, 2026",
+  pricing: {
+    inputPerMillionTokens: "$0.20",
+    outputPerMillionTokens: "$1.20",
+  },
 } as const;
-
-const NAMED_CODING_MODELS = ["Fable 5", "GPT-5.6 Sol"] as const;
-
-function checkedSnapshot(): CodingAgentSnapshot {
-  const parsed = parseCodingAgentSnapshot(codingAgentData);
-  if (!parsed.ok) {
-    throw new Error(`Checked coding-agent snapshot is invalid: ${parsed.error.message}`, {
-      cause: parsed.error,
-    });
-  }
-  return parsed.value;
-}
-
-function utcCalendarDate(timestamp: string): string {
-  const date = new Date(timestamp);
-  if (!Number.isFinite(date.valueOf())) {
-    throw new RangeError(`Invalid snapshot timestamp: ${timestamp}`);
-  }
-  return date.toISOString().slice(0, 10);
-}
-
-function latestCalendarDate(...dates: readonly string[]): string {
-  const [first, ...rest] = dates;
-  if (first === undefined) throw new Error("At least one calendar date is required.");
-  return rest.reduce((latest, current) => current > latest ? current : latest, first);
-}
 
 function textCell(value: string): InlineContent {
   return [value];
 }
 
-function requireHighestAaIndexRowForModelPrefix(
-  rows: readonly CodingAgentSnapshotRow[],
-  modelPrefix: string,
-): CodingAgentSnapshotRow {
-  const row = rows.find(candidate => (
-    candidate.model.startsWith(modelPrefix) && candidate.aaIndex !== null
-  ));
-  if (row === undefined || row.aaIndex === null) {
-    throw new Error(`Checked snapshot has no AA Index row for ${modelPrefix}.`);
-  }
-  return row;
-}
-
-export function createSmallModelsHaveArrivedArticle(
-  snapshot: CodingAgentSnapshot = checkedSnapshot(),
-): BlogArticle {
-  const summary = codingAgentDatasetSummary(snapshot);
-  const retrievedAt = formatRetrievedAt(snapshot.source.retrievedAt);
-  const rows = codingAgentSnapshotRows(snapshot.records);
-  const namedCodingRows = NAMED_CODING_MODELS.map(modelPrefix =>
-    requireHighestAaIndexRowForModelPrefix(rows, modelPrefix));
-  const updatedAt = latestCalendarDate(
-    SMALL_MODELS_ARTICLE_PUBLISHED_AT,
-    utcCalendarDate(snapshot.source.retrievedAt),
-    utcCalendarDate(codingAgentDatasetModifiedAt(snapshot)),
-  );
-
+export function createSmallModelsHaveArrivedArticle(): BlogArticle {
   return {
     slug: SMALL_MODELS_ARTICLE_SLUG,
-    title: "A cheap model can close a bill and still lose the scoreboard",
+    title: "Cheaper AI models can make everyday products viable",
     dek:
-      "Calvin French-Owen says small fast models crossed a consumer cost threshold. A news-eval dollar win is not a reason to collapse named coding-agent rows.",
-    focusPhrase: "small models have arrived",
+      "Lower inference costs can turn a promising demo into a sustainable feature. The practical goal is to use the cheapest model that meets the task’s quality bar.",
+    focusPhrase: "small AI models",
     seoDescription:
-      "French-Owen says small models crossed a consumer cost threshold. A news-eval dollar win is not a reason to collapse named coding-agent rows.",
+      "Small AI models can cut inference costs enough to support frequent-use products. Learn how to compare quality, speed, and total cost for your task.",
     keywords: [
-      "small models have arrived",
-      "cheap models",
+      "small AI models",
+      "cheap AI models",
       "consumer AI",
       "gpt-5.6-luna",
-      "coding agent benchmarks",
       "inference cost",
+      "AI model selection",
     ],
     publishedAt: SMALL_MODELS_ARTICLE_PUBLISHED_AT,
-    updatedAt,
+    updatedAt: SMALL_MODELS_ARTICLE_UPDATED_AT,
+    section: "AI model economics",
+    showChartCta: false,
     sourceIds: [
       "calvinFrenchOwenSmallModels",
-      "hranessSmallModelsReading",
-      "artificialAnalysisCodingAgents",
+      "openAiGpt56Luna",
     ],
-    relatedSlugs: ["are-open-models-catching-up"],
+    relatedSlugs: ["aa-index-cost-coding-agents"],
     body: [
       paragraph(
-        { href: BLOG_SOURCES.calvinFrenchOwenSmallModels.url, text: "Calvin French-Owen writes that small models have arrived" },
-        `, in an essay published ${FRENCH_OWEN_SMALL_MODELS.publishedOn}. He reports gpt-5.6-luna near ${FRENCH_OWEN_SMALL_MODELS.reported.lunaSpeed} tokens per second, research-thread API bills in the ${FRENCH_OWEN_SMALL_MODELS.reported.researchThread}, and a personalized news eval near ${FRENCH_OWEN_SMALL_MODELS.reported.newsEvalLuna} versus about ${FRENCH_OWEN_SMALL_MODELS.reported.newsEvalSonnet} on Sonnet-class models. He treats inference cost as the reason consumer AI companies were scarce. He still reaches for frontier models when the work is hard coding. This note keeps that split.`,
+        "A lower-cost AI model can change a product as soon as it meets the quality bar for a repeated task at a sustainable price. Inference is the work of running a trained model to produce an answer, and every use adds to a product’s inference bill. In an ",
+        { href: BLOG_SOURCES.calvinFrenchOwenSmallModels.url, text: `essay published ${FRENCH_OWEN_SMALL_MODELS.publishedOn}` },
+        `, software founder Calvin French-Owen reports that GPT-5.6 Luna built his personalized daily news page for about ${FRENCH_OWEN_SMALL_MODELS.reported.newsEvalLuna} per run. Earlier, more expensive models that he describes as Sonnet class cost him roughly ${FRENCH_OWEN_SMALL_MODELS.reported.newsEvalSonnet} for the same prompt. At one run a day, that difference is about $3 versus $30 over 30 days, before the rest of the product’s costs.`,
       ),
       paragraph(
-        "AI Charts publishes ",
-        { href: "/", text: "named coding-agent rows" },
-        " on a Pareto frontier and a scoreboard. Each stored row names a model, an agent harness, and an effort setting. A consumer-cheap model that wins a news-eval dollar chart is not a reason to collapse those rows into one cheap-won column. ",
-        { href: CATCHING_UP_SIBLING_PATH, text: "Closing a scoreboard is a different event from closing a consumer bill" },
-        ". That sibling note asks whether a SemiAnalysis era composite should erase the named rows. This page asks whether a ten-cent news eval should.",
+        "That example captures the opportunity and its limit. The cost difference could make a frequent-use feature affordable. It comes from one person’s experiment, without a published run count, written quality standard, usage breakdown, or exact Sonnet model. It shows that the economics may have shifted for some workloads. A team still has to test its own task before choosing a model.",
       ),
+      heading("What French-Owen observed"),
       paragraph(
-        "This page is not the ",
-        { href: HRANESS_SMALL_MODELS_READING.digestUrl, text: "Hraness reading digest of French-Owen’s essay" },
-        `. The digest, saved ${HRANESS_SMALL_MODELS_READING.savedOn}, is a dated companion citation. Quote French-Owen for the measurements. Quote the digest only for its own sentences.`,
-      ),
-      heading("French-Owen measures a consumer bill"),
-      paragraph(
-        `The essay’s evidence is a personal cost chart, not a public coding-agent suite. French-Owen has been running gpt-5.6-luna through a codebase, email, and a knowledge base. The speed claim is about ${FRENCH_OWEN_SMALL_MODELS.reported.lunaSpeed} tokens per second. The bill claim is that fairly complicated research threads stay in the ${FRENCH_OWEN_SMALL_MODELS.reported.researchThread}, including searches across thousands of emails.`,
-      ),
-      paragraph(
-        `His pet eval is a daily personalized news site. The prompt asks a model to research him, then build a micro-site of stories from Hacker News, Reddit, and Twitter. On Sonnet-class models he spent about ${FRENCH_OWEN_SMALL_MODELS.reported.newsEvalSonnet} to get anywhere. On luna he reports decent results at an average of about ${FRENCH_OWEN_SMALL_MODELS.reported.newsEvalLuna}. He writes: “${FRENCH_OWEN_SMALL_MODELS.quotes.lunaNews}”`,
+        "French-Owen describes several weeks of using GPT-5.6 Luna across source code, email, and a personal knowledge base. He reports generation at ",
+        FRENCH_OWEN_SMALL_MODELS.reported.lunaSpeed,
+        `, a measure of how quickly it writes text. Tokens are the small text units a model reads and writes. He says complicated research sessions, including searches across thousands of emails, often cost ${FRENCH_OWEN_SMALL_MODELS.reported.researchThread}. His clearest product example is a prompt that researches his interests and assembles a small site with stories from Hacker News, Reddit, and X. He judged Luna’s output useful at an average cost of about ${FRENCH_OWEN_SMALL_MODELS.reported.newsEvalLuna}.`,
       ),
       table(
-        "Quoted consumer-cost observations from the August 26, 2026 essay",
-        ["Observation", "Quoted figure", "What it measures"],
+        "Results French-Owen reports from his own GPT-5.6 Luna use",
+        ["Work", "Reported result", "Scope"],
         [
           [
-            textCell("gpt-5.6-luna speed"),
-            textCell(`About ${FRENCH_OWEN_SMALL_MODELS.reported.lunaSpeed} tokens per second`),
-            textCell("Interactive throughput on his runs"),
+            textCell("Interactive generation"),
+            textCell(FRENCH_OWEN_SMALL_MODELS.reported.lunaSpeed),
+            textCell("Observed speed during his use"),
           ],
           [
-            textCell("Research-thread API bill"),
+            textCell("Complicated research sessions"),
             textCell(FRENCH_OWEN_SMALL_MODELS.reported.researchThread),
-            textCell("Complicated personal research, including large email search"),
+            textCell("API charges for his research workflow"),
           ],
           [
-            textCell("Personalized news eval"),
-            textCell(`${FRENCH_OWEN_SMALL_MODELS.reported.newsEvalLuna} versus ${FRENCH_OWEN_SMALL_MODELS.reported.newsEvalSonnet} on Sonnet-class models`),
-            textCell("His daily news-site prompt, not a coding-agent suite"),
+            textCell("Personalized daily news page"),
+            textCell(`${FRENCH_OWEN_SMALL_MODELS.reported.newsEvalLuna} with Luna versus roughly ${FRENCH_OWEN_SMALL_MODELS.reported.newsEvalSonnet} with Sonnet-class models`),
+            textCell("Luna is his reported average; the Sonnet-class figure is his approximate earlier cost"),
           ],
         ],
       ),
       paragraph(
-        "Those figures belong to French-Owen’s runs and his news prompt. They are not AA Index cells, DeepSWE cells, or mean API costs from ",
-        { href: BLOG_SOURCES.artificialAnalysisCodingAgents.url, text: "Artificial Analysis’s coding-agents comparison" },
-        ". A ten-cent news eval can be a faithful citation of the essay and still leave the coding-agent scoreboard untouched.",
+        "Here, small is a relative product label. It describes a lower-cost model tier, not a disclosed parameter count or a universal capability boundary. ",
+        { href: BLOG_SOURCES.openAiGpt56Luna.url, text: "OpenAI describes GPT-5.6 Luna" },
+        ` as a model for cost-sensitive, high-volume work. On ${OPENAI_GPT_56_LUNA.documentedOn}, its listed text prices were ${OPENAI_GPT_56_LUNA.pricing.inputPerMillionTokens} per million input tokens and ${OPENAI_GPT_56_LUNA.pricing.outputPerMillionTokens} per million output tokens. External searches and other paid tools can add charges, so token prices alone cannot predict the final cost of a feature.`,
       ),
-      heading("Token cost, not taste, blocked consumer AI"),
+      heading("Why a tenfold cost drop matters"),
       paragraph(
-        "Investors asked him why consumer AI companies have been scarce. His answer is a cost structure, not a missing product idea. “",
-        FRENCH_OWEN_SMALL_MODELS.quotes.tokenCosts,
-        "” The pre-AI consumer playbook assumed a cheap-to-run website, virality, then an ads marketplace. Per-request inference broke that capital path. A product that spends a dollar to assemble one personalized edition cannot charge a newspaper subscription and survive.",
-      ),
-      paragraph(
-        "A ",
-        { href: HRANESS_SMALL_MODELS_READING.digestUrl, text: "Hraness reading note of the essay" },
-        ` records the same limit as a dated digest: “${HRANESS_SMALL_MODELS_READING.gist}” The digest’s cost sentence is the one this page keeps in view: “${HRANESS_SMALL_MODELS_READING.tokenCostNotTaste}”`,
-      ),
-      paragraph(
-        "That claim is about whether a consumer loop can pay for itself. It is not a claim about which named coding-agent configuration leads a public suite. Crossing a news-eval dollar threshold can unlock a class of products and still leave the scoreboard’s columns in place.",
-      ),
-      heading("He still keeps frontier models for hard coding"),
-      paragraph(
-        "The same essay refuses to retire the expensive models. For coding work French-Owen almost always reaches for Fable 5 and GPT-5.6 Sol. He says that habit made the small-model progress easy to miss. He also expects demand for frontier-level models to keep compounding in engineering, hard science, and model training.",
-      ),
-      paragraph(
-        `He reports a second demand curve from Peter Reinhardt. About ${FRENCH_OWEN_SMALL_MODELS.reported.tokenSpewerShare} of that operator work is “token spewer” responsiveness: hopping on calls, nudging people, and blocking and tackling. The remaining slice is the novel-breakthrough work he still assigns to an expensive model. Cheap models, in this telling, can start to cover the responsive slice. They do not replace the slice that still needs a frontier stack.`,
-      ),
-      paragraph(
-        "French-Owen also names GLM 5.3 as a new option on a general Pareto frontier. That sentence is his. The checked coding-agent snapshot does not store a GLM-5.3 row, and this page does not mint one. A general cost-quality remark is not a stored AA Index cell.",
-      ),
-      heading("A news-eval win is not a coding-agent cell"),
-      paragraph(
-        `AI Charts retrieved the checked snapshot on ${retrievedAt}. The dataset contains ${summary.recordCount} model-agent configurations across ${summary.modelCount} models, ${summary.agentCount} agent harnesses, and ${summary.providerCount} providers. The snapshot has no consumer-bill field and no news-eval dollar column. Each row is already a product citation: a model name, a harness name, and an effort setting, with scores copied from Artificial Analysis.`,
-      ),
-      paragraph(
-        "The snapshot does not store a gpt-5.6-luna coding-agent row. That absence is part of the argument. A consumer-eval dollar chart does not mint a named AA Index cell. Inventing a luna scoreboard line from a ten-cent news prompt would collapse two jobs into one column.",
-      ),
-      paragraph(
-        "The snapshot does store named Fable 5 and GPT-5.6 Sol configurations, the models French-Owen still reaches for when the work is hard coding. Those rows stay attached to a harness and a setting. They are coding-agent observations on the retrieval date. They are not consumer-bill observations.",
+        "A product pays the model cost every time a person uses an AI feature. Frequent use multiplies a small per-run difference quickly. French-Owen’s daily-news example makes that multiplication easy to see:",
       ),
       table(
-        `Named coding-agent rows already stored for French-Owen’s coding models, ${snapshot.source.name} snapshot retrieved ${retrievedAt}`,
-        ["Model", "Agent", "Setting", "AA Index"],
-        namedCodingRows.map(row => [
-          textCell(row.model),
-          textCell(row.agent),
-          textCell(row.setting),
-          textCell(formatSnapshotScore(row.aaIndex)),
-        ]),
+        "Illustrative model cost for one run a day over 30 days",
+        ["Cost per run", "Runs", "30-day model cost"],
+        [
+          [textCell("$1.00"), textCell("30"), textCell("$30.00")],
+          [textCell("$0.10"), textCell("30"), textCell("$3.00")],
+        ],
       ),
       paragraph(
-        "Those two lines are already on the ",
-        { href: "/", text: "live coding-agent comparison" },
-        ". They remain two named products. A cheap-model headline that erased the harness or the setting would drop the only fields that make a stored row citeable.",
+        "A $30 monthly subscription has little room for a $30 model bill per customer after hosting, customer support, payment fees, the cost of finding customers, and the rest of the service. A $3 model bill leaves much more room. The lower amount can also support a free trial, more frequent refreshes, or several model attempts when the first answer fails.",
+      ),
+      paragraph(
+        "Lower model cost does not prove that a business will work. People still need to value the product, return to it, trust its output, and pay enough to cover every expense. Cost removes one constraint. It cannot find customers, keep them, make the product distinct, or make it reliable.",
+      ),
+      heading("Start with the cheapest model that meets the requirement"),
+      paragraph(
+        "French-Owen says he still chooses the most capable and expensive models for difficult coding work. That preference does not conflict with his enthusiasm for Luna. The two model tiers serve different jobs. A frontier model, meaning the highest-capability tier available at the time, can be worth its higher price when the task is unusually difficult or a mistake is expensive. A lower-cost model can be the better choice for work that is frequent, well specified, and easy to check.",
+      ),
+      paragraph(
+        "The useful decision rule is to choose the least expensive model that reliably clears the requirement for a specific task. A tool that sorts support requests, a personalized digest, and a large code migration have different success criteria. Testing them as one category hides the trade-off that matters.",
       ),
       callout(
-        "Consumer bill and scoreboard stay separate",
-        "Use French-Owen for the news-eval dollar threshold, the research-thread bills, and his own split between cheap responsiveness and frontier coding. Use the coding-agent snapshot when you need a named model, harness, and setting. Do not treat a ten-cent news eval as an instruction to merge those rows.",
+        "Choose by task",
+        "Use the lowest-cost model that passes a realistic test set. Send a task to a stronger model when its complexity, uncertainty, or consequences justify the extra cost.",
       ),
-      heading("The harness still names the row"),
+      heading("Measure the cost of a successful result"),
       paragraph(
-        { href: HARNESS_DEFINITION_URL, text: "Hraness defines an agent harness" },
-        " as software that gives a model a place to work: it injects instructions, offers tools, runs an assess-act-reassess loop, and translates across model APIs. French-Owen’s own close already points at that layer. He says fast, cheap, good-enough models still need new harnesses, prompt-injection safety, roles, and permissions before they can run a business.",
-      ),
-      paragraph(
-        "A cheaper engine does not delete the place the engine works. If the consumer job is a news loop, the missing work is a harness that can run that loop at a ten-cent bill. If the coding job is a named scoreboard cell, the row still has to say which harness and which setting produced the score. Keeping those jobs in different columns is how a later cheap-model row can appear without rewriting the frontier rows already stored.",
-      ),
-      heading("Closing a bill is not closing a scoreboard"),
-      paragraph(
-        { href: CATCHING_UP_SIBLING_PATH, text: "Open models can close a scoreboard and still lose the product" },
-        " asks whether a SemiAnalysis era composite should collapse named coding-agent rows into an open-won headline. This page asks the adjacent question for a consumer bill. Both notes keep the snapshot as named configurations. They do not share a source suite.",
+        "Published token prices are useful inputs, but customers experience completed work. A cheaper request can become expensive when it needs several retries, produces output that requires extensive review, or calls paid tools. A more expensive request can save money when it succeeds more often. Compare the full cost of reaching an acceptable result.",
       ),
       table(
-        "What each source is allowed to decide",
-        ["Source", "Question it answers", "What a win there means"],
+        "A practical model-selection scorecard",
+        ["Measure", "Question to answer"],
         [
           [
-            textCell("French-Owen news eval"),
-            textCell("Can a small fast model assemble a personalized edition at a consumer-viable bill?"),
-            textCell("A dollar-chart observation on his prompt"),
+            textCell("Quality"),
+            textCell("How often does the result meet a written acceptance rule?"),
           ],
           [
-            textCell("French-Owen coding habit"),
-            textCell("Which models does he still use for hard coding?"),
-            textCell("A product preference, not a second news eval"),
+            textCell("Total cost"),
+            textCell("What do model tokens, tools, retries, and review cost per accepted result?"),
           ],
           [
-            textCell("AI Charts coding-agent snapshot"),
-            textCell("What did this named model, harness, and setting score on the stored metrics?"),
-            textCell("A configuration observation on the retrieval date"),
+            textCell("Response time"),
+            textCell("How long does the complete task take, including tools and retries?"),
+          ],
+          [
+            textCell("Consistency"),
+            textCell("Does the model keep passing across different examples and repeated runs?"),
+          ],
+          [
+            textCell("Failure cost"),
+            textCell("What happens when the answer is wrong, incomplete, or unsafe to use?"),
           ],
         ],
       ),
       paragraph(
-        "The useful failure mode is a headline that treats the first row as a substitute for the third. “Small models have arrived” can be a faithful citation of French-Owen and still be the wrong instruction for this snapshot. The snapshot would have to invent a luna coding-agent cell, or drop harness and setting from the Fable and Sol rows, to print a cheap-won rank. The essay does not ask for that drop. It keeps frontier models for hard coding while it celebrates the cheaper consumer loop.",
+        "The last question changes the acceptable quality bar. A misspelled heading in a private draft may take a few seconds to fix. An incorrect financial action, destructive code change, or exposed private record can cause lasting harm. Higher-consequence work needs stronger safeguards and may justify a more capable model, human review, or both.",
       ),
-      heading("How to read this page"),
+      heading("Test the work you plan to ship"),
       paragraph(
-        "Read the French-Owen essay for the luna speed, the research-thread bills, the news-eval dollar comparison, the consumer-capital argument, and the coding-versus-responsiveness split. Read the ",
-        { href: HRANESS_SMALL_MODELS_READING.digestUrl, text: "Hraness reading note" },
-        " for a dated digest of those claims. This page is not that digest. Read the ",
-        { href: "/", text: "coding-agent comparison" },
-        " when you need the live named rows. Read ",
-        { href: CATCHING_UP_SIBLING_PATH, text: "why closing a scoreboard is not closing a consumer bill" },
-        " when the adjacent source is SemiAnalysis rather than a news-eval dollar chart. Read the ",
-        { href: HARNESS_DEFINITION_URL, text: "Hraness harness definition" },
-        " when a later cheap-model row still needs a noun for the software around the weights.",
+        "A benchmark, meaning a standardized model test, can help narrow the field. A product decision still needs examples from the real workflow. Before switching a feature to a lower-cost model, assemble a small evaluation that includes ordinary cases, difficult cases, and the failures that matter most.",
       ),
-      paragraph(
-        "The useful sentence is narrower than the essay title. Small fast models can close a consumer bill on a news eval. French-Owen still picks frontier models for hard coding. AI Charts keeps the live coding-agent snapshot as named model, harness, and setting rows for the same reason.",
-      ),
-      heading("Limits of this comparison"),
       list(
-        [
-          "French-Owen reports his own luna runs, news-eval bills, and coding preference. AI Charts does not rerun that prompt or recover unpublished cost traces.",
-        ],
-        [
-          "The Hraness page is a dated digest, not a substitute for the essay. Quote French-Owen for the measurements and the Hraness note only for its own digest sentences. This page is not that digest.",
-        ],
-        [
-          "Artificial Analysis defines the coding-agent scores. AI Charts is an independent visualization and is not affiliated with Artificial Analysis, French-Owen, or the listed providers.",
-        ],
-        [
-          "This page does not add a gpt-5.6-luna coding-agent cell. A consumer-eval dollar chart is not a stored AA Index observation.",
-        ],
-        [
-          "Named Fable 5 and GPT-5.6 Sol scores belong to the stored model, harness, setting, task set, and evaluation version on the retrieval date. They do not establish results for every repository or production workflow.",
-        ],
-        [
-          "This is a checked snapshot, not a live mirror. Cite the retrieval timestamp when quoting a value.",
-        ],
+        ["Define one task precisely, including the information and tools the model may use."],
+        ["Write an acceptance rule that a reviewer can apply consistently."],
+        ["Run both models on the same representative examples and settings."],
+        ["Record accepted results, total cost, complete response time, retries, and review effort."],
+        ["Set an escalation rule for cases the lower-cost model cannot handle reliably."],
+      ),
+      paragraph(
+        "Run this evaluation again after a model, prompt, tool, or the kinds of inputs people send have changed. The best choice can move as prices and capabilities change. A dated result is evidence for that configuration and workload, not a permanent rank for the model.",
+      ),
+      heading("What has actually arrived"),
+      paragraph(
+        "French-Owen’s experiment supports a narrow and useful conclusion: GPT-5.6 Luna produced results he considered acceptable for several substantial, repeated tasks at prices that changed how he thought about products. OpenAI’s pricing and description confirm that Luna is intended for cost-sensitive, high-volume work. Neither source establishes equal quality across models or guarantees that a particular consumer product will succeed.",
+      ),
+      paragraph(
+        "The practical shift is a larger range of viable choices. Teams can reserve expensive models for work that benefits from their capability and use cheaper models where speed, repetition, and cost matter more. The opportunity begins only when a lower-cost model passes the product’s own test.",
       ),
     ],
   };

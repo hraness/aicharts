@@ -278,9 +278,9 @@ export function createAreOpenModelsCatchingUpArticle(
         " when the next question is whether the person citing the cell can specify and audit the work. Those notes share the leaders table. They do not share this product-versus-scoreboard question.",
       ),
       paragraph(
-        "Read ",
-        { href: "/blog/small-models-have-arrived", text: "why a cheap model can close a consumer bill and still lose the scoreboard" },
-        " when the source is a news-eval dollar chart rather than an era composite.",
+        "For a separate cost question, read ",
+        { href: "/blog/small-models-have-arrived", text: "how cheaper AI models can make everyday products viable" },
+        ". It explains how to evaluate a lower-cost model against a specific workload and quality bar.",
       ),
       paragraph(
         "The useful sentence is narrower than the essay title. Open models can close an era composite against the closed flags that opened that era. SemiAnalysis still picks a productized closed stack for daily work. AI Charts keeps the live coding-agent snapshot as named model, harness, and setting rows for the same reason.",
