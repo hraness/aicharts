@@ -20,6 +20,7 @@ function isExcludedPath(pathname: string): boolean {
     || pathname.startsWith("/_next/")
     || pathname.startsWith("/_vercel/")
     || pathname === "/data/coding-agents.json"
+    || pathname === "/preview"
     || pathname === "/models/preview"
     || pathname === "/robots.txt"
     || pathname === "/sitemap.xml"

@@ -26,6 +26,8 @@ describe("public search discovery", () => {
 
     expect(new Set(urls).size).toBe(urls.length);
     expect(urls.every(url => new URL(url).origin === "https://aicharts.io")).toBeTrue();
+    expect(urls).not.toContain("https://aicharts.io/preview");
+    expect(urls).not.toContain("https://aicharts.io/models/preview");
     expect(entries.find(entry => entry.url === "https://aicharts.io/")?.lastModified)
       .toBe(modifiedAt);
     expect(entries.find(entry => entry.url.endsWith(CODING_AGENT_DATASET_PATH))?.lastModified)
