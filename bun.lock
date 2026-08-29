@@ -7,7 +7,7 @@
       "dependencies": {
         "@hraness/design-kit": "github:hraness/design-kit#v0.2.1",
         "@hraness/site-footer": "github:hraness/site-footer#v0.3.1",
-        "@hraness/ui": "github:hraness/ui#v0.4.7",
+        "@hraness/ui": "github:hraness/ui#v0.4.10",
         "@hraness/vercel-delivery": "github:hraness/vercel-delivery#v0.1.2",
         "@hraness/web-discovery": "github:hraness/web-discovery#v0.2.0",
         "@hugeicons/core-free-icons": "^4.3.0",
@@ -97,7 +97,7 @@
 
     "@hraness/site-footer": ["@hraness/site-footer@github:hraness/site-footer#3c7bf22", { "peerDependencies": { "react": ">=18 <20" }, "optionalPeers": ["react"] }, "hraness-site-footer-3c7bf22", "sha512-/dCF0Oo+Glmj1VGXwi8R/4fSWYXZE83PLbCo2XbCQK9e4/uFN5Xhir3L07CYWsQGbPEP0iv1EbqXI4kD0ZYOsw=="],
 
-    "@hraness/ui": ["@hraness/ui@github:hraness/ui#0fb3389", { "dependencies": { "@hugeicons/core-free-icons": "^4.2.2", "@hugeicons/react": "^1.1.9", "@stylexjs/stylex": "0.19.0", "clsx": "^2.1.1", "react-aria": "3.50.0", "react-aria-components": "1.19.0", "tailwind-merge": "^3.6.0" }, "peerDependencies": { "react": ">=18 <20", "react-dom": ">=18 <20" } }, "hraness-ui-0fb3389", "sha512-RmnSdy4RBa0i9gV/dirB7m6ukAKgk/gUWP1hXK+Yna6KNHFvpLWcIWUoIc2L0N+mxBc5nXUmCFcGL8GL8dFSKQ=="],
+    "@hraness/ui": ["@hraness/ui@github:hraness/ui#2d1a5e1", { "dependencies": { "@hugeicons/core-free-icons": "^4.2.2", "@hugeicons/react": "^1.1.9", "@stylexjs/stylex": "0.19.0", "clsx": "^2.1.1", "react-aria": "3.50.0", "react-aria-components": "1.19.0", "tailwind-merge": "^3.6.0" }, "peerDependencies": { "react": ">=18 <20", "react-dom": ">=18 <20" } }, "hraness-ui-2d1a5e1", "sha512-nWNEPPPYJNz6Uq11f9Y8D8XQKhdulgLw8mdCmNB4Zc8rbnwQurqJcQcr+h9Q3ZTtJwp7ifRFtVMWfy5BRuRUTA=="],
 
     "@hraness/vercel-delivery": ["@hraness/vercel-delivery@github:hraness/vercel-delivery#7a1a0da", { "peerDependencies": { "next": ">=16.2.0 <17.0.0" } }, "hraness-vercel-delivery-7a1a0da", "sha512-7E/nkfGJq21UOHz6xZFFJlxgZWmtQj57PLlRsu5WopetsFFoJAJt/p/8MP6l0kMiBWZp7aB12T7pxmn99syiRg=="],
 

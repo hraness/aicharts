@@ -12,7 +12,7 @@ const chartExportFont = await Bun.file(new URL("../components/chart-export-font.
 test("uses the released Nebula Sans contract across web, exports, and social images", () => {
   expect(packageJson.dependencies).toMatchObject({
     "@hraness/design-kit": "github:hraness/design-kit#v0.2.1",
-    "@hraness/ui": "github:hraness/ui#v0.4.7",
+    "@hraness/ui": "github:hraness/ui#v0.4.10",
     "@hraness/web-discovery": "github:hraness/web-discovery#v0.2.0",
   });
   expect(globals).toContain("--font-sans: var(--font-text)");
