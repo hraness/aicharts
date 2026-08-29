@@ -3,6 +3,8 @@ import { JsonLdScript } from "@hraness/web-discovery/json-ld";
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { EditorialFigure } from "./editorial-figure";
+import { blogEditorialImage } from "./editorial-images";
 import {
   articleReadingMinutes,
   blogArticlePath,
@@ -67,6 +69,16 @@ export default function BlogIndex() {
           <div className="plain-publication__article-list">
             {blogArticles.map(article => (
               <article className="plain-publication__entry" key={article.slug}>
+                <Link
+                  aria-label={article.title}
+                  className="plain-publication__entry-image"
+                  href={blogArticlePath(article.slug)}
+                >
+                  <EditorialFigure
+                    image={blogEditorialImage(article.slug)}
+                    variant="card"
+                  />
+                </Link>
                 <h3>
                   <Link href={blogArticlePath(article.slug)}>
                     {article.title}

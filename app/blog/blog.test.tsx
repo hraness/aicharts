@@ -57,11 +57,21 @@ import {
 } from "./coding-agent-scores-still-need-expertise-article";
 import BlogLayout from "./layout";
 import BlogIndex from "./page";
+import { atomFeed } from "./atom-feed";
+import { GET as getAtomFeed } from "./feed.xml/route";
+import {
+  BLOG_EDITORIAL_IMAGES,
+  EDITORIAL_IMAGE_HEIGHT,
+  EDITORIAL_IMAGE_WIDTH,
+  blogEditorialImage,
+  blogEditorialImages,
+} from "./editorial-images";
 import {
   BLOG_SOCIAL_IMAGE_PATH,
   blogArticleImagePath,
   blogArticleJsonLd,
   blogArticleMetadata,
+  blogCollectionMetadata,
   blogCollectionJsonLd,
   breadcrumbJsonLd,
 } from "./seo";
@@ -488,6 +498,9 @@ describe("AI Charts benchmark notes", () => {
     expect(indexMarkup).toContain("Method");
     for (const article of blogArticles) {
       expect(indexMarkup).toContain(`href="${blogArticlePath(article.slug)}"`);
+      expect(indexMarkup).toContain(
+        encodeURIComponent(blogEditorialImage(article.slug).src),
+      );
 
       const page = await BlogArticlePage({
         params: Promise.resolve({ slug: article.slug }),
@@ -500,6 +513,8 @@ describe("AI Charts benchmark notes", () => {
         `<span aria-current="page">${article.title}</span>`,
       );
       expect(markup).toContain(`dateTime="${article.publishedAt}"`);
+      expect(markup).toContain(blogEditorialImage(article.slug).caption);
+      expect(markup).toContain(blogEditorialImage(article.slug).alt);
       expect(markup).toContain("Current comparison: coding agents");
       for (const sourceId of article.sourceIds) {
         expect(markup).toContain(`href="${BLOG_SOURCES[sourceId].url}"`);
@@ -551,7 +566,12 @@ describe("AI Charts blog discovery", () => {
         description: article.seoDescription,
         publishedTime: `${article.publishedAt}T00:00:00.000Z`,
         modifiedTime: `${article.updatedAt}T00:00:00.000Z`,
-        images: [{ height: 630, url: image, width: 1200 }],
+        images: [{
+          alt: blogEditorialImage(article.slug).alt,
+          height: EDITORIAL_IMAGE_HEIGHT,
+          url: image,
+          width: EDITORIAL_IMAGE_WIDTH,
+        }],
       });
       expect(metadata.twitter).toMatchObject({
         card: "summary_large_image",
@@ -559,6 +579,52 @@ describe("AI Charts blog discovery", () => {
       });
       expect(metadata.robots).toEqual(INDEXABLE_ROBOTS);
     }
+  });
+
+  test("keeps one exhaustive editorial image record per article", async () => {
+    expect(Object.keys(BLOG_EDITORIAL_IMAGES)).toEqual([...BLOG_SLUGS]);
+    expect(blogEditorialImages).toHaveLength(blogArticles.length);
+    expect(new Set(blogEditorialImages.map(image => image.sha256)).size)
+      .toBe(blogArticles.length);
+
+    for (const article of blogArticles) {
+      const image = blogEditorialImage(article.slug);
+      expect(image.slug).toBe(article.slug);
+      expect(image.src).toBe(`/images/blog/${article.slug}.webp`);
+      expect(image.width).toBe(1536);
+      expect(image.height).toBe(864);
+      expect(image.alt.length).toBeGreaterThan(50);
+      expect(image.caption.length).toBeGreaterThan(50);
+      expect(image.sha256).toMatch(/^[a-f0-9]{64}$/u);
+
+      const file = Bun.file(new URL(`../../public${image.src}`, import.meta.url));
+      expect(await file.exists()).toBeTrue();
+      const hasher = new Bun.CryptoHasher("sha256");
+      hasher.update(await file.arrayBuffer());
+      expect(hasher.digest("hex")).toBe(image.sha256);
+    }
+  });
+
+  test("publishes an Atom feed with the same representative image", async () => {
+    const xml = atomFeed();
+    const response = getAtomFeed();
+    expect(response.headers.get("content-type"))
+      .toBe("application/atom+xml; charset=utf-8");
+    expect(xml).toContain('<feed xmlns="http://www.w3.org/2005/Atom">');
+    expect(xml.match(/<entry>/gu)).toHaveLength(blogArticles.length);
+    for (const article of blogArticles) {
+      const image = blogEditorialImage(article.slug);
+      expect(xml).toContain(
+        `href="https://aicharts.io${image.src}" rel="enclosure" type="image/webp"`,
+      );
+      expect(xml).toContain(image.alt);
+      expect(xml).toContain(image.caption);
+    }
+    expect(blogCollectionMetadata.alternates).toMatchObject({
+      types: {
+        "application/atom+xml": "https://aicharts.io/blog/feed.xml",
+      },
+    });
   });
 
   test("publishes truthful collection, article, and breadcrumb schema", () => {
@@ -583,6 +649,7 @@ describe("AI Charts blog discovery", () => {
         datePublished: `${article.publishedAt}T00:00:00.000Z`,
         dateModified: `${article.updatedAt}T00:00:00.000Z`,
         isAccessibleForFree: true,
+        image: `https://aicharts.io${blogEditorialImage(article.slug).src}`,
       });
       expect(structured.citation).toEqual(
         article.sourceIds.map(sourceId => BLOG_SOURCES[sourceId].url),

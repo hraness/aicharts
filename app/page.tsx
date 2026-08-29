@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import codingAgentData from "@/data/coding-agents.json";
 import { CodingAgentExplorer } from "@/components/coding-agent-explorer";
 import { HomeDocument } from "@/components/home-document";
+import { HomeEditorialResources } from "@/components/home-editorial-resources";
 import { HomeLeaders } from "@/components/home-leaders";
 import { ProjectAskAiAboutThis } from "@/components/project-ask-ai-about-this";
 import { RouteLoadingState } from "@/components/route-state";
@@ -30,6 +31,7 @@ export default function Home() {
           snapshot={parsed.value}
         >
           <HomeLeaders snapshot={parsed.value} />
+          <HomeEditorialResources />
           <HomeDocument document={homeDocumentModel(parsed.value)} snapshot={parsed.value} />
         </CodingAgentExplorer>
       </Suspense>

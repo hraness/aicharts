@@ -5,6 +5,10 @@ import { renderToStaticMarkup } from "react-dom/server";
 
 import { HomeDocument } from "@/components/home-document";
 import { HomeLeaders } from "@/components/home-leaders";
+import {
+  HOME_EDITORIAL_SLUGS,
+  HomeEditorialResources,
+} from "@/components/home-editorial-resources";
 import codingAgentData from "@/data/coding-agents.json";
 import { parseCodingAgentSnapshot } from "@/lib/coding-agent-data";
 import {
@@ -64,10 +68,24 @@ describe("homepage agent document", () => {
     expect(text).toContain(document.paragraphs[0] ?? "");
   });
 
+  test("shows a curated three-card editorial module", () => {
+    const markup = renderToStaticMarkup(createElement(HomeEditorialResources));
+    expect(HOME_EDITORIAL_SLUGS).toHaveLength(3);
+    expect(markup).toContain("Benchmark analysis");
+    expect(markup).toContain('href="/blog"');
+    for (const slug of HOME_EDITORIAL_SLUGS) {
+      expect(markup).toContain(`href="/blog/${slug}"`);
+      expect(markup).toContain(
+        encodeURIComponent(`/images/blog/${slug}.webp`),
+      );
+    }
+  });
+
   test("mounts visible leaders inside the chart shell after its shared header", async () => {
     const source = await Bun.file(new URL("./page.tsx", import.meta.url)).text();
     const markup = renderToStaticMarkup(createElement(Home));
     const leadersAt = source.indexOf("<HomeLeaders");
+    const resourcesAt = source.indexOf("<HomeEditorialResources");
     const explorerAt = source.indexOf("<CodingAgentExplorer");
     const documentAt = source.indexOf("<HomeDocument");
     const explorerEndAt = source.indexOf("</CodingAgentExplorer>");
@@ -75,6 +93,8 @@ describe("homepage agent document", () => {
 
     expect(leadersAt).toBeGreaterThan(-1);
     expect(explorerAt).toBeLessThan(leadersAt);
+    expect(resourcesAt).toBeGreaterThan(leadersAt);
+    expect(documentAt).toBeGreaterThan(resourcesAt);
     expect(documentAt).toBeGreaterThan(leadersAt);
     expect(explorerEndAt).toBeGreaterThan(documentAt);
     expect(loadingAt).toBe(-1);
