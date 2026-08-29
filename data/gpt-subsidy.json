@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-08-28T02:24:06.544Z",
+  "generatedAt": "2026-08-29T21:12:27.256Z",
   "observations": [
     {
       "id": "trailing-7d-2026-07-25",
@@ -233,7 +233,7 @@
         "output": 55093944,
         "total": 25351417495
       },
-      "trailingSevenDayApiEquivalentUsd": 13231.95899800001,
+      "trailingSevenDayApiEquivalentUsd": 13231.958998000002,
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
@@ -253,7 +253,7 @@
         "output": 58354751,
         "total": 27986923647
       },
-      "trailingSevenDayApiEquivalentUsd": 14298.204000600015,
+      "trailingSevenDayApiEquivalentUsd": 14298.20400060001,
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
@@ -273,7 +273,7 @@
         "output": 58193381,
         "total": 29107400446
       },
-      "trailingSevenDayApiEquivalentUsd": 14739.337926080021,
+      "trailingSevenDayApiEquivalentUsd": 14739.337926080016,
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
@@ -293,7 +293,7 @@
         "output": 55232641,
         "total": 28324240459
       },
-      "trailingSevenDayApiEquivalentUsd": 14269.633971600013,
+      "trailingSevenDayApiEquivalentUsd": 14269.633971600006,
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
@@ -313,7 +313,7 @@
         "output": 60109815,
         "total": 30644483795
       },
-      "trailingSevenDayApiEquivalentUsd": 15269.51115420001,
+      "trailingSevenDayApiEquivalentUsd": 15269.511154200005,
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
@@ -333,7 +333,7 @@
         "output": 59336539,
         "total": 30159122706
       },
-      "trailingSevenDayApiEquivalentUsd": 14875.913291240016,
+      "trailingSevenDayApiEquivalentUsd": 14875.913291240011,
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
@@ -353,7 +353,7 @@
         "output": 65836649,
         "total": 32591785711
       },
-      "trailingSevenDayApiEquivalentUsd": 15907.100957640017,
+      "trailingSevenDayApiEquivalentUsd": 15907.100957640012,
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
@@ -513,7 +513,7 @@
         "output": 65922451,
         "total": 36666475246
       },
-      "trailingSevenDayApiEquivalentUsd": 16715.87791080004,
+      "trailingSevenDayApiEquivalentUsd": 16715.877910800045,
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
@@ -533,7 +533,7 @@
         "output": 60967102,
         "total": 29732878439
       },
-      "trailingSevenDayApiEquivalentUsd": 13840.341512520039,
+      "trailingSevenDayApiEquivalentUsd": 13840.34151252004,
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
@@ -553,7 +553,7 @@
         "output": 67582923,
         "total": 29130783009
       },
-      "trailingSevenDayApiEquivalentUsd": 14075.417912320043,
+      "trailingSevenDayApiEquivalentUsd": 14075.417912320045,
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
@@ -573,7 +573,7 @@
         "output": 75691032,
         "total": 31946612781
       },
-      "trailingSevenDayApiEquivalentUsd": 15466.030597760058,
+      "trailingSevenDayApiEquivalentUsd": 15466.030597760062,
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
@@ -593,7 +593,7 @@
         "output": 74839842,
         "total": 30761743397
       },
-      "trailingSevenDayApiEquivalentUsd": 15066.538600360042,
+      "trailingSevenDayApiEquivalentUsd": 15066.538600360049,
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
@@ -613,7 +613,7 @@
         "output": 78047648,
         "total": 31136829923
       },
-      "trailingSevenDayApiEquivalentUsd": 15353.192586680047,
+      "trailingSevenDayApiEquivalentUsd": 15353.192586680054,
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
@@ -633,7 +633,7 @@
         "output": 81510456,
         "total": 31435489338
       },
-      "trailingSevenDayApiEquivalentUsd": 15517.531198970035,
+      "trailingSevenDayApiEquivalentUsd": 15517.531198970039,
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
@@ -653,7 +653,7 @@
         "output": 80718126,
         "total": 30533479879
       },
-      "trailingSevenDayApiEquivalentUsd": 15148.26514637004,
+      "trailingSevenDayApiEquivalentUsd": 15148.265146370053,
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
@@ -673,7 +673,27 @@
         "output": 95357160,
         "total": 35323136987
       },
-      "trailingSevenDayApiEquivalentUsd": 17693.69237013006,
+      "trailingSevenDayApiEquivalentUsd": 17693.692370130073,
+      "accountAttribution": {
+        "status": "unavailable",
+        "distinctObservedAccounts": null,
+        "coverage": 0
+      },
+      "subscriptionAdjustedMultiple": null,
+      "status": "settled"
+    },
+    {
+      "id": "trailing-7d-2026-08-28",
+      "observedAt": "2026-08-28T23:59:59.999Z",
+      "periodStartedAt": "2026-08-22T00:00:00.000Z",
+      "periodEndsAt": "2026-08-28T23:59:59.999Z",
+      "tokens": {
+        "uncachedInput": 1146130607,
+        "cachedInput": 36789202816,
+        "output": 104688726,
+        "total": 38040022149
+      },
+      "trailingSevenDayApiEquivalentUsd": 19061.60499313006,
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
@@ -739,15 +759,15 @@
   "title": "Subsidy for ChatGPT Pro 20x subscription",
   "currency": "USD",
   "periodSummary": {
-    "startedAt": "2026-07-28T00:00:00.000Z",
-    "endedAt": "2026-08-27T23:59:59.999Z",
+    "startedAt": "2026-07-29T00:00:00.000Z",
+    "endedAt": "2026-08-28T23:59:59.999Z",
     "days": 31,
     "tokens": {
-      "uncachedInput": 4172669184,
-      "cachedInput": 129944571904,
-      "output": 289420606,
-      "total": 134406661694
+      "uncachedInput": 4367336177,
+      "cachedInput": 135821360768,
+      "output": 307630695,
+      "total": 140496327640
     },
-    "apiEquivalentUsd": 65489.49221053015
+    "apiEquivalentUsd": 68561.78438205016
   }
 }
