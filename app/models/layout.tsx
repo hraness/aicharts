@@ -1,4 +1,8 @@
 import { SkipLink, ThemeMenuButton, TopBar } from "@/components/ui";
+import {
+  AI_CHARTS_MODELS_URL,
+  ProjectAskAiAboutThis,
+} from "@/components/project-ask-ai-about-this";
 import { chatGptSubsidyChartLabel } from "@/app/site";
 import Link from "next/link";
 import type { ReactNode } from "react";
@@ -26,6 +30,7 @@ export default function ModelsLayout({ children }: Readonly<{ children: ReactNod
         title={<Link className="model-cards-wordmark" href="/">aicharts.io</Link>}
       />
       {children}
+      <ProjectAskAiAboutThis url={AI_CHARTS_MODELS_URL} />
       <aside aria-label="Model card resources" className="model-cards-footer">
         <p>aicharts.io</p>
         <nav aria-label="Model card links" className="model-cards-footer__links">

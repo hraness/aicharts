@@ -4,6 +4,7 @@ import codingAgentData from "@/data/coding-agents.json";
 import { CodingAgentExplorer } from "@/components/coding-agent-explorer";
 import { HomeDocument } from "@/components/home-document";
 import { HomeLeaders } from "@/components/home-leaders";
+import { ProjectAskAiAboutThis } from "@/components/project-ask-ai-about-this";
 import { RouteLoadingState } from "@/components/route-state";
 import { parseCodingAgentSnapshot } from "@/lib/coding-agent-data";
 import { MODEL_CARD_VARIANTS } from "@/lib/model-card-collection";
@@ -32,6 +33,7 @@ export default function Home() {
           <HomeDocument document={homeDocumentModel(parsed.value)} snapshot={parsed.value} />
         </CodingAgentExplorer>
       </Suspense>
+      <ProjectAskAiAboutThis url={site.origin} />
     </>
   );
 }

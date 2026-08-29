@@ -82,6 +82,12 @@ body {
   min-height: 100svh;
   text-rendering: optimizeLegibility;
 }
+
+.aicharts-ask-ai {
+  border-top: 1px solid var(--grid);
+  inline-size: 100%;
+  padding: 1rem var(--chart-content-inset, 20px);
+}
 :focus-visible { outline: 2px solid var(--brand-key); outline-offset: 2px; }
 
 .ui-top-bar {
