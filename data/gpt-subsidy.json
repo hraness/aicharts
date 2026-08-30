@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-08-29T21:12:27.256Z",
+  "generatedAt": "2026-08-30T00:19:10.396Z",
   "observations": [
     {
       "id": "trailing-7d-2026-07-25",
@@ -701,6 +701,26 @@
       },
       "subscriptionAdjustedMultiple": null,
       "status": "settled"
+    },
+    {
+      "id": "trailing-7d-2026-08-29",
+      "observedAt": "2026-08-29T23:59:59.999Z",
+      "periodStartedAt": "2026-08-23T00:00:00.000Z",
+      "periodEndsAt": "2026-08-29T23:59:59.999Z",
+      "tokens": {
+        "uncachedInput": 1095991998,
+        "cachedInput": 35062893696,
+        "output": 99904439,
+        "total": 36258790133
+      },
+      "trailingSevenDayApiEquivalentUsd": 18306.71287069005,
+      "accountAttribution": {
+        "status": "unavailable",
+        "distinctObservedAccounts": null,
+        "coverage": 0
+      },
+      "subscriptionAdjustedMultiple": null,
+      "status": "settled"
     }
   ],
   "plan": {
@@ -759,15 +779,15 @@
   "title": "Subsidy for ChatGPT Pro 20x subscription",
   "currency": "USD",
   "periodSummary": {
-    "startedAt": "2026-07-29T00:00:00.000Z",
-    "endedAt": "2026-08-28T23:59:59.999Z",
+    "startedAt": "2026-07-30T00:00:00.000Z",
+    "endedAt": "2026-08-29T23:59:59.999Z",
     "days": 31,
     "tokens": {
-      "uncachedInput": 4367336177,
-      "cachedInput": 135821360768,
-      "output": 307630695,
-      "total": 140496327640
+      "uncachedInput": 4458962734,
+      "cachedInput": 138488637952,
+      "output": 313541127,
+      "total": 143261141813
     },
-    "apiEquivalentUsd": 68561.78438205016
+    "apiEquivalentUsd": 69931.30202237018
   }
 }
