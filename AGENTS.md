@@ -1,7 +1,7 @@
 <!-- kb:context scopes/repository--cdb4ee2aea69 -->
 # Contents
 
-- `app/` – Next.js App Router comparison chart, sourced benchmark analysis, metadata, error states, and product stylesheet.
+- `app/` – Next.js App Router comparison chart, sourced benchmark analysis, metadata, error states, product stylesheet, and fail-closed product-scoped mailing footer configuration.
 - `components/` – interactive scatter chart, update timeline, linked summaries, sharing, export, and UI primitives.
 - `lib/` – strict data and update boundaries, chart math, layout, analytics, and property tests.
 - `data/` – deterministic checked-in benchmark snapshot.
@@ -42,6 +42,7 @@
 - Keep pointer, keyboard, focus, and touch behavior equivalent. Preserve semantic landmarks, accessible names, visible focus, and responsive horizontal chart panning.
 - Give every ordinary themed page exactly one shared icon-menu appearance control as the final action in its header. Do not put appearance controls in footers, content, or fallback action rows.
 - Keep analytics cookieless and production-only. Add only allowlisted events with controlled properties; do not send URLs, query strings, free-form text, identities, or persistent identifiers.
+- Bind the shared footer to the `aicharts` audience, require the checked public Turnstile widget key, and keep newsletter consent separate from product use and every other Hraness audience.
 - Never expose `POSTHOG_API_KEY`, commit credentials, or provider secrets in browser variables, source, logs, fixtures, or documentation.
 - Run narrow tests while iterating and `bun run check` before handoff.
 
