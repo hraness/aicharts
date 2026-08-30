@@ -129,7 +129,7 @@ async function settle(page: Page): Promise<void> {
 }
 
 async function openModels(page: Page, baseUrl: string): Promise<Locator> {
-  await page.goto(`${baseUrl}/models`, { waitUntil: "networkidle" });
+  await page.goto(`${baseUrl}/models`, { waitUntil: "domcontentloaded" });
   const frame = page.locator(".model-card-frame").first();
   await frame.waitFor();
   await settle(page);
@@ -144,7 +144,7 @@ async function verifyChartExport(browser: Browser, baseUrl: string): Promise<voi
   const page = await context.newPage();
   const failures = attachDiagnostics(page, "chart export");
   try {
-    await page.goto(baseUrl, { waitUntil: "networkidle" });
+    await page.goto(baseUrl, { waitUntil: "domcontentloaded" });
     await settle(page);
     await page.getByRole("button", { name: "Share and export chart" }).click();
     await page.getByText("Image ready to share.", { exact: true }).waitFor({
