@@ -65,7 +65,7 @@
   },
   "dependencies": {
     "@hraness/design-kit": "github:hraness/design-kit#v0.2.1",
-    "@hraness/site-footer": "github:hraness/site-footer#v0.4.2",
+    "@hraness/site-footer": "github:hraness/site-footer#v0.4.3",
     "@hraness/ui": "github:hraness/ui#v0.4.10",
     "@hraness/vercel-delivery": "github:hraness/vercel-delivery#v0.1.2",
     "@hraness/web-discovery": "github:hraness/web-discovery#v0.2.0",
