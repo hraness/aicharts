@@ -3,7 +3,7 @@
   "source": {
     "name": "Artificial Analysis",
     "url": "https://artificialanalysis.ai/agents/coding-agents/",
-    "retrievedAt": "2026-08-29T15:19:56.617Z",
+    "retrievedAt": "2026-08-30T15:01:27.010Z",
     "method": "next-flight",
     "benchmarkDatasets": {
       "deepSwe": "deep-swe",
@@ -159,7 +159,7 @@
         "sweAtlas": 27.1505376344086
       },
       "economics": {
-        "costUsd": 1.396316917192255,
+        "costUsd": 1.3963169171922545,
         "durationSeconds": 384.96212576687134
       },
       "usage": {
@@ -211,7 +211,7 @@
         "sweAtlas": 48.924731182795696
       },
       "economics": {
-        "costUsd": 11.687407620910026,
+        "costUsd": 11.687407620910031,
         "durationSeconds": 1407.3063016359897
       },
       "usage": {
@@ -241,7 +241,7 @@
         "durationSeconds": 1140.250613496931
       },
       "usage": {
-        "totalTokens": 25761884.929447833
+        "totalTokens": 25761884.92944787
       }
     },
     {
@@ -263,7 +263,7 @@
         "sweAtlas": 29.032258064516096
       },
       "economics": {
-        "costUsd": 6.657531358159516,
+        "costUsd": 6.657531358159519,
         "durationSeconds": 1507.044470347651
       },
       "usage": {
@@ -309,9 +309,9 @@
       "settingRank": 3,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 42.38927717743627,
+        "aaIndex": 42.3892771774363,
         "deepSwe": 27.433628318584102,
-        "terminalBench": 77.1535580524344,
+        "terminalBench": 77.1535580524345,
         "sweAtlas": 22.5806451612903
       },
       "economics": {
@@ -368,7 +368,7 @@
       },
       "economics": {
         "costUsd": 2.1825946797034774,
-        "durationSeconds": 516.6536431492844
+        "durationSeconds": 516.6536431492841
       },
       "usage": {
         "totalTokens": 5214050.029652352
@@ -387,14 +387,14 @@
       "settingRank": 3,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 55.768838053204306,
-        "deepSwe": 49.2625368731564,
+        "aaIndex": 55.76883805320427,
+        "deepSwe": 49.2625368731563,
         "terminalBench": 82.0224719101124,
         "sweAtlas": 36.021505376344095
       },
       "economics": {
         "costUsd": 3.3038416339468313,
-        "durationSeconds": 722.9228824130877
+        "durationSeconds": 722.9228824130884
       },
       "usage": {
         "totalTokens": 7827354.369120649
@@ -413,9 +413,9 @@
       "settingRank": 4,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 57.57636668124311,
-        "deepSwe": 51.6224188790561,
-        "terminalBench": 82.3970037453184,
+        "aaIndex": 57.576366681243044,
+        "deepSwe": 51.622418879056,
+        "terminalBench": 82.3970037453183,
         "sweAtlas": 38.7096774193548
       },
       "economics": {
@@ -471,8 +471,8 @@
         "sweAtlas": 46.7741935483871
       },
       "economics": {
-        "costUsd": 7.724725797009217,
-        "durationSeconds": 1386.6877980572617
+        "costUsd": 7.7247257970092145,
+        "durationSeconds": 1386.6877980572583
       },
       "usage": {
         "totalTokens": 17920579.42791411
@@ -491,9 +491,9 @@
       "settingRank": 2,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 59.40064571013324,
+        "aaIndex": 59.40064571013326,
         "deepSwe": 56.9321533923304,
-        "terminalBench": 82.0224719101123,
+        "terminalBench": 82.0224719101124,
         "sweAtlas": 39.247311827957
       },
       "economics": {
@@ -501,7 +501,7 @@
         "durationSeconds": 598.7677147239262
       },
       "usage": {
-        "totalTokens": 5258606.375255624
+        "totalTokens": 5258606.375255628
       }
     },
     {
@@ -524,7 +524,7 @@
       },
       "economics": {
         "costUsd": 3.1718671924846644,
-        "durationSeconds": 730.9243895705516
+        "durationSeconds": 730.9243895705522
       },
       "usage": {
         "totalTokens": 7999358.108384448
@@ -579,7 +579,7 @@
         "durationSeconds": 1421.8799826175893
       },
       "usage": {
-        "totalTokens": 21565879.138036843
+        "totalTokens": 21565879.138036806
       }
     },
     {
@@ -628,7 +628,7 @@
       },
       "economics": {
         "costUsd": 6.3006588057259885,
-        "durationSeconds": 643.9465817995908
+        "durationSeconds": 643.9465817995912
       },
       "usage": {
         "totalTokens": 8784635.035787327
@@ -653,11 +653,11 @@
         "sweAtlas": 48.1182795698925
       },
       "economics": {
-        "costUsd": 3.2306109660020477,
+        "costUsd": 3.2306109660020437,
         "durationSeconds": 1792.1471809815948
       },
       "usage": {
-        "totalTokens": 12503741.564417152
+        "totalTokens": 12503741.564417187
       }
     },
     {
@@ -673,14 +673,14 @@
       "settingRank": 3,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 38.6493136077762,
+        "aaIndex": 38.64931360777617,
         "deepSwe": 28.9085545722714,
-        "terminalBench": 67.4157303370787,
+        "terminalBench": 67.4157303370786,
         "sweAtlas": 19.6236559139785
       },
       "economics": {
         "costUsd": 2.0415130214723938,
-        "durationSeconds": 827.6555807770972
+        "durationSeconds": 827.6555807770975
       },
       "usage": {
         "totalTokens": 8444053.035787314
@@ -699,9 +699,9 @@
       "settingRank": 6,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 49.75760031619057,
+        "aaIndex": 49.75760031619053,
         "deepSwe": 42.772861356932204,
-        "terminalBench": 67.7902621722847,
+        "terminalBench": 67.7902621722846,
         "sweAtlas": 38.7096774193548
       },
       "economics": {
@@ -709,7 +709,7 @@
         "durationSeconds": 868.3750143149272
       },
       "usage": {
-        "totalTokens": 20844227.993865013
+        "totalTokens": 20844227.99386505
       }
     },
     {
@@ -732,7 +732,7 @@
       },
       "economics": {
         "costUsd": 0.09081146755368105,
-        "durationSeconds": 743.5829417177914
+        "durationSeconds": 743.5829417177911
       },
       "usage": {
         "totalTokens": 12713750.951942736
@@ -758,7 +758,7 @@
       },
       "economics": {
         "costUsd": 2.6525358742331298,
-        "durationSeconds": 386.3044764826176
+        "durationSeconds": 386.30447648261713
       },
       "usage": {
         "totalTokens": 6885560.579754606
@@ -783,8 +783,8 @@
         "sweAtlas": 36.021505376344095
       },
       "economics": {
-        "costUsd": 4.752370071574643,
-        "durationSeconds": 614.9898987730061
+        "costUsd": 4.7523700715746395,
+        "durationSeconds": 614.9898987730064
       },
       "usage": {
         "totalTokens": 12150851.179959117
@@ -809,11 +809,11 @@
         "sweAtlas": 17.4731182795699
       },
       "economics": {
-        "costUsd": 0.06947505231083852,
+        "costUsd": 0.06947505231083853,
         "durationSeconds": 131.81620961145202
       },
       "usage": {
-        "totalTokens": 3549957.210633946
+        "totalTokens": 3549958.812883432
       }
     },
     {
@@ -839,7 +839,7 @@
         "durationSeconds": 100.02603374233121
       },
       "usage": {
-        "totalTokens": 1435665.8445807758
+        "totalTokens": 1436684.32822086
       }
     },
     {
@@ -865,7 +865,7 @@
         "durationSeconds": 191.3819171779141
       },
       "usage": {
-        "totalTokens": 4287327.734151331
+        "totalTokens": 4290985.346625767
       }
     },
     {
@@ -891,7 +891,7 @@
         "durationSeconds": 342.6686574642128
       },
       "usage": {
-        "totalTokens": 9641370.49386502
+        "totalTokens": 9651632.293456044
       }
     },
     {
@@ -914,10 +914,10 @@
       },
       "economics": {
         "costUsd": 0.23590978378323102,
-        "durationSeconds": 413.89877096114515
+        "durationSeconds": 413.8987709611452
       },
       "usage": {
-        "totalTokens": 12806609.005112467
+        "totalTokens": 12823340.911042936
       }
     },
     {
@@ -943,7 +943,7 @@
         "durationSeconds": 482.0907147239265
       },
       "usage": {
-        "totalTokens": 15963259.28016359
+        "totalTokens": 15987867.697341518
       }
     },
     {
@@ -969,7 +969,7 @@
         "durationSeconds": 197.8853650306747
       },
       "usage": {
-        "totalTokens": 3404912.575664622
+        "totalTokens": 3404914.2341513312
       }
     },
     {
@@ -995,7 +995,7 @@
         "durationSeconds": 212.89958282208605
       },
       "usage": {
-        "totalTokens": 3201202.965235171
+        "totalTokens": 3201864.8404907994
       }
     },
     {
@@ -1021,7 +1021,7 @@
         "durationSeconds": 297.95992535787343
       },
       "usage": {
-        "totalTokens": 5768244.3967280155
+        "totalTokens": 5770064.36707567
       }
     },
     {
@@ -1043,11 +1043,11 @@
         "sweAtlas": 45.4301075268817
       },
       "economics": {
-        "costUsd": 3.000466998773008,
+        "costUsd": 3.0004669987730046,
         "durationSeconds": 369.9402760736197
       },
       "usage": {
-        "totalTokens": 8034978.089979558
+        "totalTokens": 8038341.598159516
       }
     },
     {
@@ -1073,7 +1073,7 @@
         "durationSeconds": 440.51306952965217
       },
       "usage": {
-        "totalTokens": 9893975.39570552
+        "totalTokens": 9898822.473415133
       }
     },
     {
@@ -1099,7 +1099,7 @@
         "durationSeconds": 613.70177198364
       },
       "usage": {
-        "totalTokens": 13181190.74079755
+        "totalTokens": 13188716.589468306
       }
     },
     {
@@ -1125,7 +1125,7 @@
         "durationSeconds": 88.85438650306737
       },
       "usage": {
-        "totalTokens": 1105801.5552147229
+        "totalTokens": 1105802.1513292429
       }
     },
     {
@@ -1151,7 +1151,7 @@
         "durationSeconds": 154.81494989775024
       },
       "usage": {
-        "totalTokens": 1657646.8445807784
+        "totalTokens": 1659148.6635991833
       }
     },
     {
@@ -1177,7 +1177,7 @@
         "durationSeconds": 240.094656441718
       },
       "usage": {
-        "totalTokens": 3164606.548057258
+        "totalTokens": 3168659.0378323137
       }
     },
     {
@@ -1199,11 +1199,11 @@
         "sweAtlas": 31.182795698924696
       },
       "economics": {
-        "costUsd": 1.1409262999999978,
-        "durationSeconds": 358.7396482617588
+        "costUsd": 1.140926299999998,
+        "durationSeconds": 358.7396482617585
       },
       "usage": {
-        "totalTokens": 5600275.774028629
+        "totalTokens": 5610707.334355831
       }
     },
     {
@@ -1219,17 +1219,17 @@
       "settingRank": 5,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 56.02917313962741,
+        "aaIndex": 56.02917313962744,
         "deepSwe": 58.4070796460177,
-        "terminalBench": 77.1535580524344,
+        "terminalBench": 77.1535580524345,
         "sweAtlas": 32.5268817204301
       },
       "economics": {
         "costUsd": 1.3588569202453962,
-        "durationSeconds": 403.22344478527606
+        "durationSeconds": 403.2234447852764
       },
       "usage": {
-        "totalTokens": 6631652.208588953
+        "totalTokens": 6645929.991820038
       }
     },
     {
@@ -1245,8 +1245,8 @@
       "settingRank": 6,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 60.420103617266875,
-        "deepSwe": 66.9616519174041,
+        "aaIndex": 60.4201036172669,
+        "deepSwe": 66.9616519174042,
         "terminalBench": 78.2771535580524,
         "sweAtlas": 36.021505376344095
       },
@@ -1255,7 +1255,7 @@
         "durationSeconds": 491.0206543967283
       },
       "usage": {
-        "totalTokens": 9630511.582822077
+        "totalTokens": 9653668.778118595
       }
     },
     {
@@ -1277,7 +1277,7 @@
         "sweAtlas": 31.18279569892475
       },
       "economics": {
-        "costUsd": 0.08505141359918207,
+        "costUsd": 0.08505141359918204,
         "durationSeconds": 625.1976421267894
       },
       "usage": {
@@ -1303,11 +1303,11 @@
         "sweAtlas": 31.18279569892475
       },
       "economics": {
-        "costUsd": 0.5573437730061354,
+        "costUsd": 0.5573437730061347,
         "durationSeconds": 472.37220245398754
       },
       "usage": {
-        "totalTokens": 4259887.413087938
+        "totalTokens": 4259887.413087934
       }
     },
     {
@@ -1323,13 +1323,13 @@
       "settingRank": 3,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 47.08693600598457,
-        "deepSwe": 37.1681415929204,
+        "aaIndex": 47.08693600598453,
+        "deepSwe": 37.1681415929203,
         "terminalBench": 76.4044943820225,
         "sweAtlas": 27.688172043010802
       },
       "economics": {
-        "costUsd": 1.9980312342194984,
+        "costUsd": 1.9980312342194944,
         "durationSeconds": 386.62942126789363
       },
       "usage": {
@@ -1355,11 +1355,11 @@
         "sweAtlas": 33.8709677419355
       },
       "economics": {
-        "costUsd": 2.7249057110173838,
+        "costUsd": 2.72490571101738,
         "durationSeconds": 826.6777535787322
       },
       "usage": {
-        "totalTokens": 5728865.180470352
+        "totalTokens": 5728865.180470356
       }
     },
     {
@@ -1433,11 +1433,11 @@
         "sweAtlas": 48.1182795698925
       },
       "economics": {
-        "costUsd": 2.4389824437627774,
-        "durationSeconds": 929.185109406954
+        "costUsd": 2.438982443762781,
+        "durationSeconds": 929.1851094069543
       },
       "usage": {
-        "totalTokens": 3598867.582822087
+        "totalTokens": 3598867.5828220835
       }
     },
     {
@@ -1459,7 +1459,7 @@
         "sweAtlas": 36.5591397849462
       },
       "economics": {
-        "costUsd": 3.0816355416104315,
+        "costUsd": 3.081635541610427,
         "durationSeconds": 1447.3730531697342
       },
       "usage": {
@@ -1486,7 +1486,7 @@
       },
       "economics": {
         "costUsd": 2.0728230519427373,
-        "durationSeconds": 2448.643313905929
+        "durationSeconds": 2448.6433139059327
       },
       "usage": {
         "totalTokens": 19963139.084867075
@@ -1512,7 +1512,7 @@
       },
       "economics": {
         "costUsd": 2.0838901547546023,
-        "durationSeconds": 626.0057290388545
+        "durationSeconds": 626.0057290388548
       },
       "usage": {
         "totalTokens": 13020159.542944789
@@ -1541,7 +1541,7 @@
         "durationSeconds": 527.0915644171779
       },
       "usage": {
-        "totalTokens": 18493123.3742331
+        "totalTokens": 18493123.37423313
       }
     },
     {
@@ -1557,13 +1557,13 @@
       "settingRank": 5,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 54.92139250715367,
+        "aaIndex": 54.921392507153634,
         "deepSwe": 54.2772861356932,
-        "terminalBench": 77.1535580524345,
+        "terminalBench": 77.1535580524344,
         "sweAtlas": 33.3333333333333
       },
       "economics": {
-        "costUsd": 1.4352184351738262,
+        "costUsd": 1.435218435173823,
         "durationSeconds": 761.3780071574632
       },
       "usage": {
@@ -1589,8 +1589,8 @@
         "sweAtlas": 44.0860215053763
       },
       "economics": {
-        "costUsd": 1.9143797856952987,
-        "durationSeconds": 1064.7406922290388
+        "costUsd": 1.914379785695295,
+        "durationSeconds": 1064.7406922290384
       },
       "usage": {
         "totalTokens": 16350688.074539876
@@ -1615,7 +1615,7 @@
         "sweAtlas": 36.021505376344095
       },
       "economics": {
-        "costUsd": 2.9428409855572575,
+        "costUsd": 2.942840985557261,
         "durationSeconds": 752.2755521472382
       },
       "usage": {
