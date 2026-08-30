@@ -80,6 +80,16 @@ PostHog is initialized only in production on the canonical AI Charts domains. Th
 
 The product events are `chart metric selected`, `chart selection pinned`, `chart shared`, and `content chart opened`. They contain controlled enum-like properties, never chart URLs, query strings, free-form text, or model-level user data. Every event also receives a bounded page classification so acquisition and engagement can be compared without storing article slugs or query strings.
 
+The optional AI Charts mailing list is separate from product use and every
+other Hraness audience. Its footer sends the entered email address, the
+`aicharts` audience, the form source, and a short-lived Cloudflare Turnstile
+proof to Hraness Accounts at `account.hraness.com`. Cloudflare verifies the
+anti-abuse proof. Hraness Accounts records dated consent, and Resend sends the
+confirmation and subscribed messages from `news.hraness.com`. The address is
+not subscribed until its confirmation link is used. Every message includes an
+AI Charts-specific unsubscribe link, which does not change subscriptions to
+other Hraness products.
+
 The durable positioning, search-intent map, technical invariants, event schema, baseline, and review cadence live in [`docs/seo-strategy.md`](docs/seo-strategy.md). Search Console measures impressions, queries, clicks, click-through rate, and search position. PostHog measures acquisition and qualified engagement after a visitor arrives.
 
 Copy [`.env.example`](.env.example) to `.env.local` to exercise configuration. The public project token and ingest host are safe browser variables. `POSTHOG_API_KEY` is a private build credential used only to upload production source maps; never expose it through a `NEXT_PUBLIC_` variable.
@@ -92,6 +102,7 @@ The production site is deployed from `main` with Vercel. The repository-level [`
 | --- | --- | --- |
 | `NEXT_PUBLIC_POSTHOG_KEY` | Production, Preview | Public PostHog project token |
 | `NEXT_PUBLIC_POSTHOG_HOST` | Production, Preview | Regional PostHog ingest host |
+| `NEXT_PUBLIC_HRANESS_MAILING_TURNSTILE_SITEKEY` | Production, Preview | Public hostname-restricted Turnstile widget key for the `aicharts` audience |
 | `POSTHOG_API_KEY` | Production | Private key for source-map upload |
 | `POSTHOG_PROJECT_ID` | Production | Numeric PostHog project ID |
 | `POSTHOG_UI_HOST` | Production | `https://us.posthog.com` or `https://eu.posthog.com` |

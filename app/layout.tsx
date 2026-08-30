@@ -7,6 +7,7 @@ import type { Metadata, Viewport } from "next";
 import type { CSSProperties, ReactNode } from "react";
 
 import "./globals.css";
+import { aiChartsMailingListConfig } from "./mailing-config";
 import { site } from "./site";
 
 type BrandThemeStyle = CSSProperties & Readonly<{
@@ -76,7 +77,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
             type="application/ld+json"
           />
           {children}
-          <HranessSiteFooter />
+          <HranessSiteFooter mailingList={aiChartsMailingListConfig()} />
         </DesignThemeProvider>
       </body>
     </html>
