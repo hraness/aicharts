@@ -190,6 +190,11 @@ export default function CodingAgentDatasetPage() {
               <Link href="/blog/small-models-have-arrived">
                 cheaper AI models can make everyday products viable
               </Link>
+              . For why a 30% Terminal-Bench-Science score is not a product
+              win, see{" "}
+              <Link href="/blog/terminal-bench-science">
+                Terminal-Bench-Science: 30% is not a product win
+              </Link>
               . For why a public-suite high score still needs a holdout, see{" "}
               <Link href="/blog/coding-agent-score-holdouts">
                 why a coding-agent high score still needs a holdout

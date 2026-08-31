@@ -11,7 +11,7 @@ import {
 
 export const SMALL_MODELS_ARTICLE_SLUG = "small-models-have-arrived" as const;
 export const SMALL_MODELS_ARTICLE_PUBLISHED_AT = "2026-08-28" as const;
-export const SMALL_MODELS_ARTICLE_UPDATED_AT = "2026-08-29" as const;
+export const SMALL_MODELS_ARTICLE_UPDATED_AT = "2026-08-31" as const;
 
 export const FRENCH_OWEN_SMALL_MODELS = {
   publishedOn: "August 26, 2026",
@@ -184,6 +184,11 @@ export function createSmallModelsHaveArrivedArticle(): BlogArticle {
       ),
       paragraph(
         "The practical shift is a larger range of viable choices. Teams can reserve expensive models for work that benefits from their capability and use cheaper models where speed, repetition, and cost matter more. The opportunity begins only when a lower-cost model passes the product’s own test.",
+      ),
+      paragraph(
+        "A later note asks a different cost question. ",
+        { href: "/blog/terminal-bench-science", text: "Whether a 30% science-agent score is a product win" },
+        " looks at Terminal-Bench-Science 0.1, where scientists set the evaluation bar and the suite already reports cost and token Pareto. That page is about scientific research workflows, not everyday product features.",
       ),
     ],
   };
