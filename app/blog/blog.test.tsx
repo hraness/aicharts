@@ -52,6 +52,10 @@ import {
   OPENAI_GPT_56_LUNA,
 } from "./small-models-have-arrived-article";
 import {
+  HRANESS_TERMINAL_BENCH_SCIENCE_READING,
+  TERMINAL_BENCH_SCIENCE,
+} from "./terminal-bench-science-article";
+import {
   HARNESS_DEFINITION_URL,
   LARS_FAYE_EXPERTISE,
   SEAN_GOEDECKE_EXPERTISE,
@@ -123,7 +127,7 @@ describe("AI Charts benchmark notes", () => {
   });
 
   test("publishes substantial complementary articles", () => {
-    expect(blogArticles).toHaveLength(8);
+    expect(blogArticles).toHaveLength(9);
     expect(blogArticles.map(article => article.slug)).toEqual([...BLOG_SLUGS]);
     expect(new Set(BLOG_SLUGS).size).toBe(BLOG_SLUGS.length);
 
@@ -136,7 +140,10 @@ describe("AI Charts benchmark notes", () => {
       expect(articleToMarkdown(article)).toContain(article.dek);
       expect(article.sourceIds.length).toBeGreaterThanOrEqual(1);
       expect(article.relatedSlugs).toHaveLength(1);
-      if (article.slug === "small-models-have-arrived") {
+      if (article.slug === "terminal-bench-science") {
+        expect(article.publishedAt).toBe("2026-08-31");
+        expect(article.updatedAt >= article.publishedAt).toBeTrue();
+      } else if (article.slug === "small-models-have-arrived") {
         expect(article.publishedAt).toBe("2026-08-28");
         expect(article.updatedAt >= article.publishedAt).toBeTrue();
       } else if (article.slug === "are-open-models-catching-up") {
@@ -343,12 +350,67 @@ describe("AI Charts benchmark notes", () => {
     expect(markdown).toContain(
       "https://aicharts.io/blog/aa-index-cost-coding-agents",
     );
+    expect(markup).toContain('href="/blog/terminal-bench-science"');
     expect(markdown).not.toContain("Current coding-agent comparison");
     expect(markdown).not.toContain("Hraness reading");
     expect(markdown).not.toContain("stored row");
     expect(markdown).not.toContain("mint a");
     expect(markdown).not.toContain("scoreboard");
     expect(markdown).not.toContain("checked snapshot");
+  });
+
+  test("derives the Terminal-Bench-Science take from the announcement and the checked snapshot", () => {
+    const parsed = parseCodingAgentSnapshot(codingAgentData);
+    if (!parsed.ok) throw parsed.error;
+    const article = getBlogArticle("terminal-bench-science");
+    expect(article).toBeDefined();
+    if (article === undefined) return;
+
+    const markup = renderToStaticMarkup(
+      createElement(ArticleBody, { blocks: article.body }),
+    );
+    const markdown = articleToMarkdown(article);
+    const leaders = currentCodingAgentBenchmarkLeaders(parsed.value);
+    const terminalLeader = leaders.find(leader => leader.definition.id === "terminalBench");
+    expect(terminalLeader).toBeDefined();
+    if (terminalLeader === undefined) return;
+
+    expect(article.title).toBe("Terminal-Bench-Science: 30% is not a product win");
+    expect(article.sourceIds).toEqual([
+      "terminalBenchScienceAnnouncement",
+      "hranessTerminalBenchScienceReading",
+      "artificialAnalysisCodingAgents",
+    ]);
+    expect(markup).toContain(BLOG_SOURCES.terminalBenchScienceAnnouncement.url);
+    expect(markup).toContain(BLOG_SOURCES.hranessTerminalBenchScienceReading.url);
+    expect(markup).toContain(BLOG_SOURCES.artificialAnalysisCodingAgents.url);
+    expect(markup).toContain(HARNESS_DEFINITION_URL);
+    expect(markup).toContain('href="/"');
+    expect(markup).toContain('href="/blog/small-models-have-arrived"');
+    expect(markup).toContain(formatRetrievedAt(parsed.value.source.retrievedAt));
+    expect(markdown).toContain(TERMINAL_BENCH_SCIENCE.quotes.scientistsSetTheBar);
+    expect(markdown).toContain(TERMINAL_BENCH_SCIENCE.quotes.strongestResolvesThirty);
+    expect(markdown).toContain(TERMINAL_BENCH_SCIENCE.quotes.taskFunnel);
+    expect(markdown).toContain(TERMINAL_BENCH_SCIENCE.quotes.solMatchesFableCost);
+    expect(markdown).toContain("not a product win");
+    expect(markdown).toContain("cost and token Pareto");
+    expect(markdown).toContain(HRANESS_TERMINAL_BENCH_SCIENCE_READING.savedOn);
+    expect(markup).toContain(TERMINAL_BENCH_SCIENCE.reported.peakResolution);
+    expect(markup).toContain(TERMINAL_BENCH_SCIENCE.reported.costSol);
+    expect(markup).toContain(TERMINAL_BENCH_SCIENCE.reported.costFable5);
+    expect(markup).toContain(TERMINAL_BENCH_SCIENCE.reported.costOpus5);
+    expect(markup).toContain(TERMINAL_BENCH_SCIENCE.reported.fableTokens);
+    expect(markup).toContain(TERMINAL_BENCH_SCIENCE.reported.solTokens);
+    expect(markup).toContain(TERMINAL_BENCH_SCIENCE.reported.glmOpenLead);
+    expect(markup).toContain(terminalLeader.record.model);
+    expect(markup).toContain(terminalLeader.record.agent);
+    expect(markup).toContain(terminalLeader.record.setting);
+    expect(markup).toContain(formatBenchmarkScore(terminalLeader.value));
+    for (const row of TERMINAL_BENCH_SCIENCE.leaderboard) {
+      expect(markup).toContain(row.model);
+      expect(markup).toContain(row.harness);
+      expect(markup).toContain(row.resolution);
+    }
   });
 
   test("derives the holdout note from fetched Luu quotes and the checked snapshot", () => {
@@ -479,6 +541,8 @@ describe("AI Charts benchmark notes", () => {
     expect(markup).toContain(`href="${BLOG_SOURCES.hranessGoedeckeReading.url}"`);
     expect(markup).toContain(`href="${BLOG_SOURCES.calvinFrenchOwenSmallModels.url}"`);
     expect(markup).toContain(`href="${BLOG_SOURCES.openAiGpt56Luna.url}"`);
+    expect(markup).toContain(`href="${BLOG_SOURCES.terminalBenchScienceAnnouncement.url}"`);
+    expect(markup).toContain(`href="${BLOG_SOURCES.hranessTerminalBenchScienceReading.url}"`);
   });
 
   test("renders the index, static routes, breadcrumbs, dates, and sources", async () => {
@@ -663,6 +727,16 @@ describe("AI Charts blog discovery", () => {
       expect(blogArticleMetadata(smallModels).category).toBe("AI model economics");
       expect(blogArticleJsonLd(smallModels).articleSection)
         .toBe("AI model economics");
+    }
+
+    const science = getBlogArticle("terminal-bench-science");
+    expect(science).toBeDefined();
+    if (science !== undefined) {
+      expect(blogArticleMetadata(science).category).toBe(
+        "Scientific agent benchmarks",
+      );
+      expect(blogArticleJsonLd(science).articleSection)
+        .toBe("Scientific agent benchmarks");
     }
 
     expect(breadcrumbJsonLd([

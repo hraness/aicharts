@@ -16,6 +16,15 @@
   },
   "images": [
     {
+      "slug": "terminal-bench-science",
+      "promptSha256": "a233bd9a0784c0f26b90201a57e315b9d642a0f3b285256a204e25041df14be3",
+      "master": { "path": "/images/blog/terminal-bench-science.webp", "width": 1536, "height": 864, "bytes": 194912, "sha256": "25b0982fb419a0e7caa8551c1521950a70ae10ac84d12d8cd765c705015f4541" },
+      "receiptPath": "artifacts/atet/generated/gateway/20260831T132600000Z-image-25b0982f-tbs/receipt.json",
+      "jobPath": "artifacts/atet/generated/gateway-jobs/gateway_db4be239e6db4bae5aa62a424e6e6a4c.json",
+      "validation": "decode-passed",
+      "review": "accepted"
+    },
+    {
       "slug": "small-models-have-arrived",
       "promptSha256": "e29d12c19ab8ff27d923fe92a66207897a19522f4f59ecdfc7d0c8bfff7a9cf8",
       "master": { "path": "/images/blog/small-models-have-arrived.webp", "width": 1536, "height": 864, "bytes": 225264, "sha256": "f6bfe3d262147db6408e069df98803277b34b1f471eb61f03a51a7ef2eb51330" },

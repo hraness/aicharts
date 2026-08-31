@@ -5,8 +5,10 @@ import { createCodingAgentScoreHoldoutsArticle } from "./coding-agent-score-hold
 import { createCodingAgentScoresStillNeedExpertiseArticle } from "./coding-agent-scores-still-need-expertise-article";
 import { createOpenModelsCodingAgentsArticle } from "./open-models-coding-agents-article";
 import { createSmallModelsHaveArrivedArticle } from "./small-models-have-arrived-article";
+import { createTerminalBenchScienceArticle } from "./terminal-bench-science-article";
 
 export const BLOG_SLUGS = [
+  "terminal-bench-science",
   "small-models-have-arrived",
   "are-open-models-catching-up",
   "coding-agent-scores-still-need-expertise",
@@ -178,6 +180,22 @@ export const BLOG_SOURCES = {
     publication: "OpenAI",
     title: "GPT-5.6 Luna Model",
     url: "https://developers.openai.com/api/docs/models/gpt-5.6-luna",
+    year: 2026,
+  },
+  terminalBenchScienceAnnouncement: {
+    note:
+      "Steven Dillmann’s announcement defines Terminal-Bench-Science 0.1, reports the 70-task funnel, named resolution rates, cost and token frontiers, and the living-benchmark roadmap.",
+    publication: "Terminal-Bench-Science",
+    title: "Terminal-Bench-Science 0.1",
+    url: "https://www.terminal-bench-science.ai/announcement",
+    year: 2026,
+  },
+  hranessTerminalBenchScienceReading: {
+    note:
+      "The Hraness reading note is a dated digest of the Terminal-Bench-Science 0.1 announcement, used here as a crawlable companion citation rather than a substitute for the original.",
+    publication: "Hraness",
+    title: "Hraness reading note: Terminal-Bench-Science 0.1",
+    url: "https://hraness.com/reading/terminal-bench-science-0-1",
     year: 2026,
   },
 } as const satisfies Record<string, BlogSource>;
@@ -464,6 +482,7 @@ const slopCodeBenchArticle = {
 } as const satisfies BlogArticle;
 
 export const blogArticles = [
+  createTerminalBenchScienceArticle(),
   createSmallModelsHaveArrivedArticle(),
   createAreOpenModelsCatchingUpArticle(),
   createCodingAgentScoresStillNeedExpertiseArticle(),
