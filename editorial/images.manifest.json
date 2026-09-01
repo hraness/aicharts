@@ -16,6 +16,15 @@
   },
   "images": [
     {
+      "slug": "benchmarkpocalypse",
+      "promptSha256": "d71d6ebd2a165ea3b9271236a6abdd65dc934924eae0d8bf1586a7f218685206",
+      "master": { "path": "/images/blog/benchmarkpocalypse.webp", "width": 1536, "height": 864, "bytes": 105262, "sha256": "869fb250d053122ac5bc49762b42fbd165aa15054c1a3449e6d80e4315fb48e8" },
+      "receiptPath": "artifacts/atet/generated/gateway/20260901T134200000Z-image-869fb250-bmp/receipt.json",
+      "jobPath": "artifacts/atet/generated/gateway-jobs/gateway_c8e1a4b07f3e4d6aa21f90c4e5b7d812.json",
+      "validation": "decode-passed",
+      "review": "accepted"
+    },
+    {
       "slug": "terminal-bench-science",
       "promptSha256": "a233bd9a0784c0f26b90201a57e315b9d642a0f3b285256a204e25041df14be3",
       "master": { "path": "/images/blog/terminal-bench-science.webp", "width": 1536, "height": 864, "bytes": 194912, "sha256": "25b0982fb419a0e7caa8551c1521950a70ae10ac84d12d8cd765c705015f4541" },
