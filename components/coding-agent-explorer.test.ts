@@ -92,17 +92,28 @@ test("keeps the header compact without a standalone provenance action", async ()
   expect(source).not.toContain('className="chart-data-status"');
 });
 
-test("keeps server-rendered opening content in flow below the sticky header", async () => {
+test("keeps the compact orientation and working chart ahead of deeper evidence", async () => {
   const source = await Bun.file(new URL("./coding-agent-explorer.tsx", import.meta.url)).text();
   const topBarIndex = source.indexOf("<TopBar");
   const pageCanvasIndex = source.indexOf("<PageCanvas", topBarIndex);
-  const childrenIndex = source.indexOf("{children}", pageCanvasIndex);
+  const orientationIndex = source.indexOf('className="chart-orientation"', pageCanvasIndex);
   const chartHeaderIndex = source.indexOf('<header className="chart-header">', pageCanvasIndex);
+  const overviewIndex = source.indexOf("<OptionSpaceOverview", chartHeaderIndex);
+  const childrenIndex = source.indexOf("{children}", pageCanvasIndex);
 
   expect(source).toContain("children: ReactNode");
   expect(pageCanvasIndex).toBeGreaterThan(topBarIndex);
-  expect(childrenIndex).toBeGreaterThan(pageCanvasIndex);
-  expect(chartHeaderIndex).toBeGreaterThan(childrenIndex);
+  expect(orientationIndex).toBeGreaterThan(pageCanvasIndex);
+  expect(chartHeaderIndex).toBeGreaterThan(orientationIndex);
+  expect(overviewIndex).toBeGreaterThan(chartHeaderIndex);
+  expect(childrenIndex).toBeGreaterThan(overviewIndex);
+  expect(source).toContain("codingAgentDatasetSummary(snapshot)");
+  expect(source).toContain("Upstream scores stay on their stored 0–100 scales");
+  expect(source).toContain("Checked daily; dated only when a validated snapshot is stored.");
+  expect(source).toContain('href={snapshot.source.url}');
+  expect(source).toContain("{snapshot.source.name} source");
+  expect(source).toContain('<Link href="/data">Method</Link>');
+  expect(source).toContain('<a href="/data/coding-agents.json">JSON</a>');
 });
 
 test("links the latest data-derived update badge to the bottom timeline", async () => {
@@ -132,11 +143,12 @@ test("leaves only the selected benchmark description in the chart header", async
   expect(source).not.toContain('className="chart-title"');
 });
 
-test("uses the domain as the homepage H1 above the chart", async () => {
+test("uses an outcome heading while keeping the domain in compact product chrome", async () => {
   const source = await Bun.file(new URL("./coding-agent-explorer.tsx", import.meta.url)).text();
 
-  expect(source).toContain('<h1 className="chart-heading">{brand.heading}</h1>');
-  expect(source).not.toContain('<p className="chart-heading">');
+  expect(source).toContain('<p className="chart-heading">{brand.heading}</p>');
+  expect(source).toContain('<h1 id="chart-orientation-title">Compare coding agents by benchmark, cost, speed, or token use</h1>');
+  expect(source.match(/<h1/gu)).toHaveLength(1);
   expect(source).not.toContain("<h1>{brand.domain}</h1>");
 });
 

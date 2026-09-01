@@ -24,7 +24,7 @@ if (!parsed.ok) throw parsed.error;
 const snapshot = parsed.value;
 
 describe("homepage agent document", () => {
-  test("server-renders only the accessible leaders table in the visible opening block", () => {
+  test("server-renders the accessible leaders table without a duplicate marketing heading", () => {
     const markup = renderToStaticMarkup(createElement(HomeLeaders, { snapshot }));
     const leaders = currentCodingAgentBenchmarkLeaders(snapshot);
 
@@ -47,7 +47,7 @@ describe("homepage agent document", () => {
     expect(markup).not.toContain("Loading chart");
   });
 
-  test("keeps the clipped document on the server page after the leaders block", () => {
+  test("keeps the clipped document on the server page for discovery", () => {
     const document = homeDocumentModel(snapshot);
     const markup = renderToStaticMarkup(createElement(HomeDocument, { document, snapshot }));
     const text = homeDocumentText(snapshot);
@@ -84,7 +84,7 @@ describe("homepage agent document", () => {
     }
   });
 
-  test("mounts visible leaders inside the chart shell after its shared header", async () => {
+  test("mounts visible evidence after the working chart orientation and controls", async () => {
     const source = await Bun.file(new URL("./page.tsx", import.meta.url)).text();
     const markup = renderToStaticMarkup(createElement(Home));
     const leadersAt = source.indexOf("<HomeLeaders");
@@ -107,13 +107,20 @@ describe("homepage agent document", () => {
 
     const headerAt = markup.indexOf('<header class="ui-top-bar chart-top-bar"');
     const mainAt = markup.indexOf('<main class="chart-page-canvas"');
+    const orientationAt = markup.indexOf('class="chart-orientation"');
+    const chartAt = markup.indexOf('class="chart-scroll"');
     const renderedLeadersAt = markup.indexOf('class="home-leaders"');
     const mainEndAt = markup.indexOf("</main>", mainAt);
 
     expect(headerAt).toBeGreaterThan(-1);
     expect(mainAt).toBeGreaterThan(headerAt);
-    expect(renderedLeadersAt).toBeGreaterThan(mainAt);
+    expect(orientationAt).toBeGreaterThan(mainAt);
+    expect(chartAt).toBeGreaterThan(orientationAt);
+    expect(renderedLeadersAt).toBeGreaterThan(chartAt);
     expect(mainEndAt).toBeGreaterThan(renderedLeadersAt);
+    expect(markup).toContain("Compare coding agents by benchmark, cost, speed, or token use");
+    expect(markup).toContain("Upstream scores stay on their stored 0–100 scales");
+    expect(markup.match(/<h1(?:\s|>)/gu)).toHaveLength(1);
     expect(markup).toContain('<option value="deepSwe" selected="">DSWE</option>');
     expect(markup).toContain('<strong>DeepSWE</strong>');
   });

@@ -108,6 +108,20 @@ test("homepage document stays in the HTML without taking chart layout", () => {
   expect(firstRule(".chart-top-bar .chart-heading")).toContain("font-weight: var(--font-weight-bold)");
 });
 
+test("homepage orientation is compact, bounded, and responsive", () => {
+  const orientation = firstRule(".chart-orientation");
+  const facts = firstRule(".chart-orientation__facts");
+
+  expect(orientation).toContain("border-bottom: 1px solid var(--line)");
+  expect(orientation).toContain("grid-template-columns: minmax(0, 1.15fr) minmax(32rem, .85fr)");
+  expect(orientation).toContain("padding: clamp(16px, 2vw, 26px) var(--chart-content-inset)");
+  expect(facts).toContain("border: 1px solid var(--grid)");
+  expect(facts).toContain("gap: 1px");
+  expect(firstRule(".chart-orientation__facts > div")).toContain("background: var(--surface-raised)");
+  expect(stylesheet).toMatch(/@media \(max-width:\s*760px\)[\s\S]*?\.chart-orientation\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\);/u);
+  expect(stylesheet).toMatch(/@media \(max-width:\s*520px\)[\s\S]*?\.chart-orientation__facts > div:last-child\s*\{[^}]*grid-column:\s*1 \/ -1;/u);
+});
+
 test("homepage leaders use one owned rule at each outer edge", () => {
   const leaders = firstRule(".home-leaders");
   const tableScroll = firstRule(".home-leaders .plain-publication__table-scroll");

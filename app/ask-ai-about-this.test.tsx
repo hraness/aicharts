@@ -9,12 +9,19 @@ import { AI_CHARTS_MODELS_URL } from "@/components/project-ask-ai-about-this";
 
 function expectAskAiRow(markup: string, url: string): void {
   expect(markup.match(/aria-label="Ask AI about this"/gu)).toHaveLength(1);
-  for (const link of buildAskAiProviderLinks(url)) {
+  const providerLinks = buildAskAiProviderLinks(url);
+  for (const link of providerLinks) {
     expect(markup).toContain(`data-ask-ai-provider="${link.provider}"`);
     expect(markup).toContain(`href="${link.href.replaceAll("&", "&amp;")}"`);
   }
-  expect(markup.match(/target="_blank"/gu)).toHaveLength(4);
-  expect(markup.match(/rel="noopener noreferrer nofollow"/gu)).toHaveLength(4);
+  const providerAnchors = markup.match(
+    /<a\b[^>]*data-ask-ai-provider="[^"]+"[^>]*>/gu,
+  ) ?? [];
+  expect(providerAnchors).toHaveLength(providerLinks.length);
+  for (const anchor of providerAnchors) {
+    expect(anchor).toContain('target="_blank"');
+    expect(anchor).toContain('rel="noopener noreferrer nofollow"');
+  }
 }
 
 test("server-renders the project subject on the comparison chart", () => {
