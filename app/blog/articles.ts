@@ -6,8 +6,10 @@ import { createCodingAgentScoresStillNeedExpertiseArticle } from "./coding-agent
 import { createOpenModelsCodingAgentsArticle } from "./open-models-coding-agents-article";
 import { createSmallModelsHaveArrivedArticle } from "./small-models-have-arrived-article";
 import { createTerminalBenchScienceArticle } from "./terminal-bench-science-article";
+import { createBenchmarkpocalypseArticle } from "./benchmarkpocalypse-article";
 
 export const BLOG_SLUGS = [
+  "benchmarkpocalypse",
   "terminal-bench-science",
   "small-models-have-arrived",
   "are-open-models-catching-up",
@@ -482,6 +484,7 @@ const slopCodeBenchArticle = {
 } as const satisfies BlogArticle;
 
 export const blogArticles = [
+  createBenchmarkpocalypseArticle(),
   createTerminalBenchScienceArticle(),
   createSmallModelsHaveArrivedArticle(),
   createAreOpenModelsCatchingUpArticle(),

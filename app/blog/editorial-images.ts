@@ -57,6 +57,15 @@ function image<Slug extends BlogSlug>(
 }
 
 export const BLOG_EDITORIAL_IMAGES = {
+  "benchmarkpocalypse": image(
+    "benchmarkpocalypse",
+    "Identical-height charcoal and cobalt pillars fill a measuring rack under a low beam, while a compact unused apparatus and coral and mint weights sit aside.",
+    "A crowded public scoreboard can stop discriminating a product choice. The illustration is not a data plot.",
+    "869fb250d053122ac5bc49762b42fbd165aa15054c1a3449e6d80e4315fb48e8",
+    "d71d6ebd2a165ea3b9271236a6abdd65dc934924eae0d8bf1586a7f218685206",
+    "20260901T134200000Z-image-869fb250-bmp/receipt.json",
+    "gateway_c8e1a4b07f3e4d6aa21f90c4e5b7d812.json",
+  ),
   "terminal-bench-science": image(
     "terminal-bench-science",
     "Paper-cutout hands hold a high charcoal measuring beam while a compact cobalt apparatus reaches only partway, with coral and mint weights on a low tray.",

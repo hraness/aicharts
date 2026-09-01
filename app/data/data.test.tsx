@@ -123,6 +123,7 @@ describe("coding-agent dataset surface", () => {
     expect(markup).toContain('href="/blog/are-open-models-catching-up"');
     expect(markup).toContain('href="/blog/small-models-have-arrived"');
     expect(markup).toContain('href="/blog/terminal-bench-science"');
+    expect(markup).toContain('href="/blog/benchmarkpocalypse"');
     expect(markup).toContain('href="/blog/coding-agent-score-holdouts"');
     expect(markup).toContain('href="/blog/coding-agent-scores-still-need-expertise"');
     expect(markup).toContain('id="coding-agent-snapshot"');

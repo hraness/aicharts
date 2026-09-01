@@ -309,6 +309,11 @@ export function createTerminalBenchScienceArticle(
         TERMINAL_BENCH_SCIENCE.reported.acceptedCount,
         "-task funnel, and the cost and token frontiers the suite already publishes. Collapsing those questions into one “cheaper is better” headline would drop the bar, the harness, and the task set.",
       ),
+      paragraph(
+        "A later note asks the high-score version of the same product question. ",
+        { href: "/blog/benchmarkpocalypse", text: "Why scoreboard saturation is not a product win" },
+        " stays with Dan Luu’s benchmarkpocalypse: a public table can be cheap to win, or stop discriminating, without settling what to ship. That page is about public-suite meaning. This page is about a scientist-set remaining miss rate.",
+      ),
       heading("How to read Terminal-Bench-Science"),
       paragraph(
         "Read ",

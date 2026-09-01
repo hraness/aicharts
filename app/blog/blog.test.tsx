@@ -52,6 +52,10 @@ import {
   OPENAI_GPT_56_LUNA,
 } from "./small-models-have-arrived-article";
 import {
+  DAN_LUU_SCOREBOARD,
+  HRANESS_BENCHMARKPOCALYPSE_READING,
+} from "./benchmarkpocalypse-article";
+import {
   HRANESS_TERMINAL_BENCH_SCIENCE_READING,
   TERMINAL_BENCH_SCIENCE,
 } from "./terminal-bench-science-article";
@@ -127,7 +131,7 @@ describe("AI Charts benchmark notes", () => {
   });
 
   test("publishes substantial complementary articles", () => {
-    expect(blogArticles).toHaveLength(9);
+    expect(blogArticles).toHaveLength(10);
     expect(blogArticles.map(article => article.slug)).toEqual([...BLOG_SLUGS]);
     expect(new Set(BLOG_SLUGS).size).toBe(BLOG_SLUGS.length);
 
@@ -140,7 +144,10 @@ describe("AI Charts benchmark notes", () => {
       expect(articleToMarkdown(article)).toContain(article.dek);
       expect(article.sourceIds.length).toBeGreaterThanOrEqual(1);
       expect(article.relatedSlugs).toHaveLength(1);
-      if (article.slug === "terminal-bench-science") {
+      if (article.slug === "benchmarkpocalypse") {
+        expect(article.publishedAt).toBe("2026-09-01");
+        expect(article.updatedAt >= article.publishedAt).toBeTrue();
+      } else if (article.slug === "terminal-bench-science") {
         expect(article.publishedAt).toBe("2026-08-31");
         expect(article.updatedAt >= article.publishedAt).toBeTrue();
       } else if (article.slug === "small-models-have-arrived") {
@@ -387,6 +394,7 @@ describe("AI Charts benchmark notes", () => {
     expect(markup).toContain(HARNESS_DEFINITION_URL);
     expect(markup).toContain('href="/"');
     expect(markup).toContain('href="/blog/small-models-have-arrived"');
+    expect(markup).toContain('href="/blog/benchmarkpocalypse"');
     expect(markup).toContain(formatRetrievedAt(parsed.value.source.retrievedAt));
     expect(markdown).toContain(TERMINAL_BENCH_SCIENCE.quotes.scientistsSetTheBar);
     expect(markdown).toContain(TERMINAL_BENCH_SCIENCE.quotes.strongestResolvesThirty);
@@ -410,6 +418,63 @@ describe("AI Charts benchmark notes", () => {
       expect(markup).toContain(row.model);
       expect(markup).toContain(row.harness);
       expect(markup).toContain(row.resolution);
+    }
+  });
+
+  test("derives the benchmarkpocalypse take from Luu quotes and the checked snapshot", () => {
+    const parsed = parseCodingAgentSnapshot(codingAgentData);
+    if (!parsed.ok) throw parsed.error;
+    const article = getBlogArticle("benchmarkpocalypse");
+    expect(article).toBeDefined();
+    if (article === undefined) return;
+
+    const markup = renderToStaticMarkup(
+      createElement(ArticleBody, { blocks: article.body }),
+    );
+    const markdown = articleToMarkdown(article);
+    const leaders = currentCodingAgentBenchmarkLeaders(parsed.value);
+    const terminalLeader = leaders.find(leader => leader.definition.id === "terminalBench");
+    expect(terminalLeader).toBeDefined();
+    if (terminalLeader === undefined) return;
+
+    expect(article.title).toBe("The benchmarkpocalypse is not a product win");
+    expect(article.sourceIds).toEqual([
+      "danLuuBenchpocalypse",
+      "hranessBenchpocalypseReading",
+      "artificialAnalysisCodingAgents",
+    ]);
+    expect(article.relatedSlugs).toEqual(["terminal-bench-science"]);
+    expect(markup).toContain(BLOG_SOURCES.danLuuBenchpocalypse.url);
+    expect(markup).toContain(BLOG_SOURCES.hranessBenchpocalypseReading.url);
+    expect(markup).toContain(BLOG_SOURCES.artificialAnalysisCodingAgents.url);
+    expect(markup).toContain(HARNESS_DEFINITION_URL);
+    expect(markup).toContain('href="/"');
+    expect(markup).toContain('href="/blog/terminal-bench-science"');
+    expect(markup).toContain('href="/blog/coding-agent-score-holdouts"');
+    expect(markup).toContain(formatRetrievedAt(parsed.value.source.retrievedAt));
+    expect(markdown).toContain(DAN_LUU_SCOREBOARD.quotes.loopChangedCost);
+    expect(markdown).toContain(DAN_LUU_SCOREBOARD.quotes.defaultOverfit);
+    expect(markdown).toContain(DAN_LUU_SCOREBOARD.quotes.doubleForAi);
+    expect(markdown).toContain(DAN_LUU_SCOREBOARD.quotes.kimiFableComments);
+    expect(markdown).toContain(DAN_LUU_SCOREBOARD.quotes.realWorldGap);
+    expect(markdown).toContain("scoreboard saturation");
+    expect(markdown).not.toContain(
+      "Dan Luu argues that coding agents make sophisticated benchmark gaming cheap enough to overwhelm human scrutiny.",
+    );
+    expect(markdown).not.toContain(
+      "Holdouts and guardrails help, but do not restore trust automatically.",
+    );
+    expect(markdown).toContain(HRANESS_BENCHMARKPOCALYPSE_READING.savedOn);
+    expect(markup).toContain(DAN_LUU_SCOREBOARD.reported.specTask);
+    expect(markup).toContain(DAN_LUU_SCOREBOARD.reported.specSpeedup);
+    expect(markup).toContain(DAN_LUU_SCOREBOARD.reported.kimiVulnShare);
+    expect(markup).toContain(terminalLeader.record.model);
+    expect(markup).toContain(terminalLeader.record.agent);
+    expect(markup).toContain(terminalLeader.record.setting);
+    expect(markup).toContain(formatBenchmarkScore(terminalLeader.value));
+    for (const leader of leaders) {
+      expect(markup).toContain(leader.record.model);
+      expect(markup).toContain(formatBenchmarkScore(leader.value));
     }
   });
 
@@ -737,6 +802,16 @@ describe("AI Charts blog discovery", () => {
       );
       expect(blogArticleJsonLd(science).articleSection)
         .toBe("Scientific agent benchmarks");
+    }
+
+    const saturation = getBlogArticle("benchmarkpocalypse");
+    expect(saturation).toBeDefined();
+    if (saturation !== undefined) {
+      expect(blogArticleMetadata(saturation).category).toBe(
+        "Benchmark interpretation",
+      );
+      expect(blogArticleJsonLd(saturation).articleSection)
+        .toBe("Benchmark interpretation");
     }
 
     expect(breadcrumbJsonLd([
