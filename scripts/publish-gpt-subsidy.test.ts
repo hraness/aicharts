@@ -19,7 +19,9 @@ import { afterEach, describe, expect, test } from "bun:test";
 
 import {
   assertDataOnlyCommit,
+  candidateCheckEnvironment,
   canonicalRemote,
+  checkCandidateRepository,
   checkCandidateSnapshot,
   createDataCommit,
   normalizeCommandOutput,
@@ -409,6 +411,37 @@ esac
       TOKSCALE_CONFIG_DIR: "/fixture/cache",
     });
     expect(environment).toEqual({ NODE_ENV: "test", PATH: "/usr/bin:/bin" });
+  });
+
+  test("uses the public Turnstile test key only for candidate repository checks", async () => {
+    const root = await mkdtemp(path.join(tmpdir(), "aicharts-publisher-check-env-test-"));
+    temporaryRoots.push(root);
+    await Promise.all([
+      writeFile(path.join(root, "package.json"), `${JSON.stringify({
+        private: true,
+        scripts: { check: "bun run check-environment.ts" },
+        type: "module",
+      }, null, 2)}\n`, "utf8"),
+      writeFile(path.join(root, "check-environment.ts"), `
+if (process.env.NEXT_PUBLIC_HRANESS_MAILING_TURNSTILE_SITEKEY !== "1x00000000000000000000AA") {
+  throw new Error("candidate check did not receive the public Turnstile test key");
+}
+`, "utf8"),
+    ]);
+
+    const source = {
+      CI: "1",
+      NEXT_PUBLIC_HRANESS_MAILING_TURNSTILE_SITEKEY: "invalid-parent-value",
+      NODE_ENV: "test",
+      PATH: process.env.PATH,
+    } satisfies NodeJS.ProcessEnv;
+    expect(candidateCheckEnvironment(source)).toEqual({
+      ...source,
+      NEXT_PUBLIC_HRANESS_MAILING_TURNSTILE_SITEKEY: "1x00000000000000000000AA",
+    });
+    checkCandidateRepository(root, source);
+    expect(source.NEXT_PUBLIC_HRANESS_MAILING_TURNSTILE_SITEKEY)
+      .toBe("invalid-parent-value");
   });
 
   test("requires production verification before accepting an unchanged series", async () => {

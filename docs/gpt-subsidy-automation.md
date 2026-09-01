@@ -38,7 +38,7 @@ Each run performs these operations:
 1. Acquires a nonblocking kernel file lock. Empty or retained lock files carry no ownership, and a process crash releases the lock automatically.
 2. Verifies the dedicated checkout is clean, on `main`, and has canonical `hraness/aicharts` fetch and push URLs.
 3. Fast-forwards the dedicated checkout to `origin/main` without resetting or discarding files, then requires local `HEAD` to equal that remote commit exactly. A local-ahead or diverged checkout fails closed.
-4. Builds and validates the candidate in a detached temporary worktree at the observed remote commit.
+4. Builds and validates the candidate in a detached temporary worktree at the observed remote commit. Repository checks receive Cloudflare's public always-pass Turnstile test key, matching CI without reading or copying the hostname-restricted production key.
 5. Disables repository hooks for its worktree, commit, merge, and push operations. It attests that the new commit has the observed remote head as its sole parent, changes only `data/gpt-subsidy.json`, and leaves the candidate worktree clean before a normal non-force push.
 6. Rebuilds from the new remote head when `main` advances concurrently, for at most three attempts.
 7. Removes and prunes the temporary worktree on success, no-op, race, timeout, or failure.
