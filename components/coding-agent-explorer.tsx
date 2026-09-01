@@ -57,6 +57,7 @@ import { captureChartEvent } from "@/lib/analytics";
 import { providerColorRange, recordColor } from "@/lib/chart-colors";
 import { layoutChartLabels, type LabelPlacement } from "@/lib/chart-label-layout";
 import { placeChartTooltip } from "@/lib/chart-tooltip-layout";
+import { codingAgentDatasetSummary } from "@/lib/coding-agent-dataset";
 import { codingAgentRecordKey, type CodingAgentRecord, type CodingAgentSnapshot } from "@/lib/coding-agent-data";
 import { formatRetrievedAt, formatUpdateDate, latestUpdateGroup } from "@/lib/coding-agent-updates";
 import {
@@ -614,6 +615,7 @@ export function CodingAgentExplorer({
     return () => observer.disconnect();
   }, [hoveredPointId, tooltipVisible]);
   const retrievedAt = formatRetrievedAt(snapshot.source.retrievedAt);
+  const snapshotSummary = codingAgentDatasetSummary(snapshot);
   const latestUpdate = latestUpdateGroup(snapshot.updates);
   const accessibleTitle = `${yMetricLabels[yMetric]} versus ${xMetricLabels[xMetric]}`;
   const accessibleDescription = `Scatter plot comparing coding-agent models. Hover or focus a point or provider to preview it. Select a point to pin agents within ${performanceTierRadius} points of its ${yMetricLabels[yMetric]} score, or select a provider to pin its models. Use arrow keys to move between points.`;
@@ -872,7 +874,7 @@ export function CodingAgentExplorer({
           </>
         )}
         className="chart-top-bar"
-        title={<h1 className="chart-heading">{brand.heading}</h1>}
+        title={<p className="chart-heading">{brand.heading}</p>}
       />
       <PageCanvas
         className="chart-page-canvas"
@@ -882,7 +884,36 @@ export function CodingAgentExplorer({
         size="full"
         tabIndex={-1}
       >
-      {children}
+      <section aria-labelledby="chart-orientation-title" className="chart-orientation">
+        <div className="chart-orientation__copy">
+          <p className="chart-orientation__eyebrow">Current chart · coding agents</p>
+          <h1 id="chart-orientation-title">Compare coding agents by benchmark, cost, speed, or token use</h1>
+          <p>
+            Explore {snapshotSummary.recordCount} measured model-agent configurations across {snapshotSummary.modelCount} models and {snapshotSummary.providerCount} providers. Choose both axes, then pin a model or provider to inspect nearby trade-offs.
+          </p>
+        </div>
+        <dl aria-label="Chart evidence and boundaries" className="chart-orientation__facts">
+          <div>
+            <dt>Snapshot</dt>
+            <dd className="chart-orientation__snapshot">
+              <time dateTime={snapshot.source.retrievedAt}>{retrievedAt}</time>
+              <span>Checked daily; dated only when a validated snapshot is stored.</span>
+            </dd>
+          </div>
+          <div>
+            <dt>Normalization</dt>
+            <dd>Upstream scores stay on their stored 0–100 scales. Time converts from seconds to minutes; cost and tokens stay raw.</dd>
+          </div>
+          <div>
+            <dt>Evidence</dt>
+            <dd className="chart-orientation__links">
+              <a href={snapshot.source.url} rel="noreferrer" target="_blank">{snapshot.source.name} source</a>
+              <Link href="/data">Method</Link>
+              <a href="/data/coding-agents.json">JSON</a>
+            </dd>
+          </div>
+        </dl>
+      </section>
       <header className="chart-header">
         <p aria-live="polite" className="benchmark-description">
           <strong>{yMetricLabels[yMetric]}</strong> — {yMetricDescriptions[yMetric]}
@@ -1259,6 +1290,7 @@ export function CodingAgentExplorer({
         xMetric={xMetric}
         yMetric={yMetric}
       />
+      {children}
       <ModelUpdateTimeline retrievedAt={snapshot.source.retrievedAt} updates={snapshot.updates} />
       <nav aria-label="AI Charts resources" className="chart-resource-nav">
         <div className="chart-resource-nav__links">
