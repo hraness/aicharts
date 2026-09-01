@@ -14,10 +14,12 @@ const snapshotCheckTimeoutMs = 2 * 60_000;
 const checkTimeoutMs = 20 * 60_000;
 const verificationTimeoutMs = 4 * 60_000;
 const publishAttempts = 3;
+const turnstileAlwaysPassSitekey = "1x00000000000000000000AA";
 
 type RunOptions = Readonly<{
   allowFailure?: boolean;
   cwd?: string;
+  environment?: NodeJS.ProcessEnv;
   timeoutMs?: number;
 }>;
 
@@ -67,6 +69,16 @@ const noninteractiveEnvironment = {
   SSH_ASKPASS: "/usr/bin/false",
 } as const;
 
+export function candidateCheckEnvironment(
+  source: NodeJS.ProcessEnv = noninteractiveEnvironment,
+): NodeJS.ProcessEnv {
+  return {
+    ...source,
+    NEXT_PUBLIC_HRANESS_MAILING_TURNSTILE_SITEKEY:
+      turnstileAlwaysPassSitekey,
+  };
+}
+
 function commandResult(
   command: string,
   args: readonly string[],
@@ -75,7 +87,7 @@ function commandResult(
   return spawnSync(command, args, {
     cwd: options.cwd ?? defaultRepositoryRoot,
     encoding: "utf8",
-    env: noninteractiveEnvironment,
+    env: options.environment ?? noninteractiveEnvironment,
     killSignal: "SIGTERM",
     maxBuffer: 32 * 1_024 * 1_024,
     shell: false,
@@ -285,10 +297,7 @@ async function buildCandidate(
       throw new Error(`Collector changed files outside ${dataPath}: ${changed.join(", ")}.`);
     }
 
-    run(process.execPath, ["run", "check"], {
-      cwd: temporary.worktree,
-      timeoutMs: checkTimeoutMs,
-    });
+    checkCandidateRepository(temporary.worktree);
     const afterCheck = statusPaths(run(
       "git",
       ["status", "--porcelain=v1", "--untracked-files=all"],
@@ -314,6 +323,17 @@ export function checkCandidateSnapshot(worktree: string): void {
   run(process.execPath, ["run", "subsidy:check"], {
     cwd: worktree,
     timeoutMs: snapshotCheckTimeoutMs,
+  });
+}
+
+export function checkCandidateRepository(
+  worktree: string,
+  source: NodeJS.ProcessEnv = noninteractiveEnvironment,
+): void {
+  run(process.execPath, ["run", "check"], {
+    cwd: worktree,
+    environment: candidateCheckEnvironment(source),
+    timeoutMs: checkTimeoutMs,
   });
 }
 
