@@ -2,12 +2,15 @@
 
 [AI Charts](https://aicharts.io) is an open-source home for sourced, interactive AI benchmark charts. It compares models and agents across performance, cost, speed, and token use without collapsing those trade-offs into one rank.
 
-The current chart focuses on coding agents. That is the first published comparison in a broader product for AI model and agent benchmarks, not the limit of the AI Charts brand.
+The homepage starts with a five-role benchmark portfolio spanning terminal engineering, scientific workflows, professional work, computer use, and broad expert reasoning. Checked score views are added source by source; the interactive Artificial Analysis chart remains a separate coding-agent comparison.
 
-## Current chart: coding agents
+## Current benchmark portfolio
 
-The site is a static-data Next.js and TypeScript application. Its coding-agent snapshot is committed to the repository, validated at build time, and refreshed automatically every day. Production never depends on the upstream data source being available during a request.
+The site is a static-data Next.js and TypeScript application. Its benchmark snapshots are committed to the repository, validated at build time, and refreshed automatically. Production never depends on an upstream data source being available during a request.
 
+- Use the official, version-pinned Terminal-Bench 4.0 snapshot as the current coding standard, with exact model, agent, effort, trial, uncertainty, cost, token, duration, and source metadata.
+- Keep a checked, version-pinned Terminal-Bench-Science 0.1 owner snapshot—with per-domain results, uncertainty, cost, and token use—separate from GDPval-AA v2, OSWorld 2.0, and Humanity's Last Exam rather than collapsing the families into one composite score.
+- Treat CursorBench 3.2 as supplemental closed evidence for the model-plus-Cursor system, not an independently reproducible coding standard.
 - Compare Artificial Analysis's AA Index, DeepSWE, Terminal-Bench v2.1, and SWE-Atlas-QnA results.
 - Plot each result against cost, duration, or total token use.
 - Pin a model to see its nearby performance cohort, or pin a provider to inspect its range.
@@ -18,7 +21,7 @@ The site is a static-data Next.js and TypeScript application. Its coding-agent s
 - Read sourced analysis at [`/blog`](https://aicharts.io/blog), including the current [AA Index versus cost](https://aicharts.io/blog/aa-index-cost-coding-agents) snapshot analysis, [open models on coding-agent benchmarks](https://aicharts.io/blog/open-models-coding-agent-benchmarks), [how cheaper AI models can make everyday products viable](https://aicharts.io/blog/small-models-have-arrived), [Terminal-Bench-Science](https://aicharts.io/blog/terminal-bench-science), and [why a high score still needs a holdout](https://aicharts.io/blog/coding-agent-score-holdouts).
 - Inspect the current snapshot, methodology, provenance, full configuration table, and machine-readable distribution at [`/data`](https://aicharts.io/data).
 
-The checked snapshot records its source URL, retrieval time, and material update history. The `/data` page exposes the same checked facts and links to a JSON distribution so people, search engines, and answer engines can verify what the chart shows. AI Charts is an independent visualization and is not affiliated with Artificial Analysis or the model providers represented in the data.
+Each checked snapshot records its source, exact version or revision, and retrieval time. The `/data` page links the Artificial Analysis, Terminal-Bench 4, and Terminal-Bench-Science JSON distributions so people, search engines, and answer engines can verify what the homepage shows. AI Charts is an independent visualization and is not affiliated with the benchmark owners or model providers represented in the data.
 
 ## GPT subsidy history
 
@@ -47,14 +50,17 @@ That validates generated files and the checked data contract, runs strict TypeSc
 
 ## Data refresh
 
-The [`data-refresh.yml`](.github/workflows/data-refresh.yml) workflow checks OpenRouter discovery and direct DeepSWE evidence every four hours, adds the heavier Artificial Analysis refresh daily at 10:43 UTC, and can run either mode manually. Poll-metadata-only checks remain visible in Actions without creating a data pull request. It treats model discovery, comparable benchmark ingestion, and early benchmark evidence as separate failure domains:
+The [`data-refresh.yml`](.github/workflows/data-refresh.yml) workflow checks first-party release sources, OpenRouter discovery, Terminal-Bench 4, Terminal-Bench-Science 0.1, and direct DeepSWE evidence every four hours. It adds the heavier Artificial Analysis refresh daily at 10:43 UTC and can run either mode manually. Poll-metadata-only checks remain visible in Actions without creating a data pull request. It treats every source as a separate failure domain:
 
-1. OpenRouter's public models API runs first. It supplies a bounded 90-day release radar for the providers already represented by the site and the exact model-ID catalog used to identify direct benchmark observations. The radar keeps text-output models with tool support, filters aliases and hosted variants, and records OpenRouter's listing timestamp as discovery metadata—not as a claimed release date. Its checked snapshot retains a durable `observedListings` ledger for identity reconciliation only.
-2. Artificial Analysis supplies the comparable AA Index, DeepSWE, Terminal-Bench v2.1, and SWE-Atlas-QnA observations used by the chart and cards. The importer parses the public Next.js Flight payload, reconciles upstream slug changes against stable model semantics, and rejects duplicates, suspicious row loss, and metric-coverage regressions. Release status is reconciled after both source attempts using the valid checked snapshots that remain on disk. A release leaves the incomplete radar only after one observation contains the complete four-benchmark index.
-3. DataCurve's official DeepSWE v1.1 live artifact supplies earlier harness-specific pass@1 evidence. OpenRouter remains identity-only here because its benchmark catalog does not expose this direct coding-agent harness dataset. The importer requires one exact semantic match against the full OpenRouter model-ID tail and preserves that checked identity across partial responses or outages. A unique Artificial Analysis model identity is the fallback for a previously unseen model OpenRouter does not resolve. Ambiguous matches fail closed, unmatched models remain explicit, and every observation retains its harness, effort, run count, attempts, and source provenance in [`data/deep-swe-evidence.json`](data/deep-swe-evidence.json).
-4. The radar is discovery-only, and direct DeepSWE observations are early-evidence-only. Direct evidence alone cannot create an Artificial Analysis score, chart point, model card, or synthesized AA Index. Partial Artificial Analysis observations can appear on the chart and cards with missing metrics left explicit while their release remains on the incomplete radar. The homepage now opens on the DeepSWE axis, using only the comparable DeepSWE values in the Artificial Analysis snapshot.
-5. The workflow atomically updates only [`data/model-release-radar.json`](data/model-release-radar.json), [`data/coding-agents.json`](data/coding-agents.json), and [`data/deep-swe-evidence.json`](data/deep-swe-evidence.json), runs the full project check, opens a dedicated automation pull request, explicitly dispatches required CI on its head commit, waits for that exact run, and verifies the protected squash auto-merge completed. Data-only pull requests are excluded from the redundant `pull_request` CI event because GitHub holds workflows opened by `GITHUB_TOKEN` for manual approval. After exact-head CI succeeds, the trusted publisher records the required GitHub Actions commit status linked to that run because `workflow_dispatch` check runs are not included in the pull request's merge rollup. The publisher never bypasses the repository's protected-branch rules.
-6. Official card dates live in the manually reviewed [`data/model-release-dates.json`](data/model-release-dates.json) ledger, keyed by stable canonical model ID. Each verified record cites a provider-owned announcement, release note, or official model index. OpenRouter timestamps never populate this ledger, never drive the New sort, and never appear as release dates. Missing catalog coverage, malformed dates, or non-provider evidence fail the network-free release-date check.
+1. Anthropic and OpenAI provider-owned sitemaps supply a durable first-party announcement candidate ledger. Conservative URL parsing retains every parsed model in a multi-model release; announcement-like shapes from unknown model families enter the review queue as unresolved instead of disappearing. Source health, sitemap shape, last-modified semantics, presence, first-seen evidence, and manual review status stay explicit. Discovery never writes the reviewed official-date ledger.
+2. OpenRouter's public models API supplies a bounded 90-day identity radar and the model-ID catalog used to identify direct benchmark observations. Its listing timestamp is discovery metadata, not a claimed release date.
+3. Harbor Framework's official Terminal-Bench leaderboard repository supplies the current 4.0.0 snapshot. The importer pins one immutable commit, asserts the 4.0 leaderboard definition, and rejects duplicate configurations, incomplete trials, score arithmetic errors, version changes, or unsafe row loss.
+4. Terminal-Bench-Science's official 0.1 owner API supplies a separate scientific-workflow snapshot pinned to release `v0.1.0`, its immutable commit, and exact Harbor dataset version. The importer retains five-domain results, validates resolution-rate and binomial-error arithmetic, records unpublished protocol fields as null, and preserves aggregate and domain costs without inventing reconciliation.
+5. Artificial Analysis supplies the AA Index, DeepSWE, Terminal-Bench v2.1, and SWE-Atlas-QnA observations in the source-specific interactive chart and cards. Terminal-Bench v2.1 remains labeled and separate from 4.0.
+6. DataCurve's official DeepSWE v1.1 artifact supplies early harness-specific pass@1 evidence. Ambiguous model matches fail closed, unmatched models remain explicit, and every observation retains its harness, effort, run count, attempts, and source provenance.
+7. The first-party and OpenRouter radars are discovery-only, and direct DeepSWE observations are early-evidence-only. Missing values remain missing. None of these sources can invent another source's score, chart point, model card, or official release date.
+8. The workflow can atomically update only [`data/first-party-release-radar.json`](data/first-party-release-radar.json), [`data/model-release-radar.json`](data/model-release-radar.json), [`data/terminal-bench.json`](data/terminal-bench.json), [`data/terminal-bench-science.json`](data/terminal-bench-science.json), [`data/coding-agents.json`](data/coding-agents.json), and [`data/deep-swe-evidence.json`](data/deep-swe-evidence.json). It runs the full project check with the same public build key as CI, opens a dedicated pull request, dispatches required CI on its exact head, and verifies the protected squash merge. Failed sources leave the last-known-good production snapshots in place.
+9. Official card dates live in the manually reviewed [`data/model-release-dates.json`](data/model-release-dates.json) ledger, keyed by stable canonical model ID. Marketplace and sitemap timestamps never populate it or appear as official release dates.
 
 The repository keeps default workflow-token permissions read-only and grants write capabilities only inside this workflow. GitHub's repository-level “Allow GitHub Actions to create and approve pull requests” setting must remain enabled so that the scoped token can open its data PR; the workflow never submits reviews. The sources refresh independently, so one outage does not discard a valid update from the other. Dependency installation is retried, and any unhealthy run creates or updates one durable GitHub issue that closes automatically after the next healthy full refresh. Source-shape changes, suspicious data loss, failed required CI, and unmerged update PRs all fail closed, leaving the last-known-good snapshot in production.
 
@@ -62,13 +68,16 @@ To refresh locally:
 
 ```sh
 bun run releases:refresh
+bun run first-party-releases:refresh
+bun run terminal-bench:refresh
+bun run terminal-bench-science:refresh
 bun run data:refresh
 bun run releases:reconcile
 bun run deepswe:refresh
 bun run check
 ```
 
-Review the resulting data diff before committing it. `bun run data:check`, `bun run releases:check`, `bun run release-dates:check`, and `bun run deepswe:check` are network-free validations of the committed snapshots. `bun run releases:reconcile` updates only radar benchmark statuses from the checked Artificial Analysis snapshot and remains safe when either upstream source is temporarily unavailable. Official-date corrections remain reviewed source edits; scheduled discovery never overwrites them.
+Review the resulting data diff before committing it. The corresponding `*:check` commands are network-free validations of the committed snapshots. `bun run releases:reconcile` updates only OpenRouter radar benchmark statuses from the checked Artificial Analysis snapshot. Official-date and first-party candidate review statuses remain reviewed edits; scheduled discovery preserves them.
 
 ## PostHog
 
@@ -122,10 +131,10 @@ Production source maps are uploaded only when all private build settings and Ver
 
 ## License and data notice
 
-The application code is available under the [MIT License](LICENSE). The repository also contains normalized public facts sourced from [Artificial Analysis](https://artificialanalysis.ai/agents/coding-agents/), the [OpenRouter Models API](https://openrouter.ai/docs/api/api-reference/models/get-models), the [DataCurve DeepSWE leaderboard](https://deepswe.datacurve.ai/), and the first-party model-provider pages cited in the official release ledger. The MIT license does not grant rights to third-party data, names, logos, or trademarks; see [NOTICE.md](NOTICE.md).
+The application code is available under the [MIT License](LICENSE). The repository also contains normalized public facts sourced from [Harbor Framework's Terminal-Bench](https://github.com/harbor-framework/terminal-bench), [Terminal-Bench-Science](https://www.terminal-bench-science.ai/announcement), [Artificial Analysis](https://artificialanalysis.ai/agents/coding-agents/), the [OpenRouter Models API](https://openrouter.ai/docs/api/api-reference/models/get-models), the [DataCurve DeepSWE leaderboard](https://deepswe.datacurve.ai/), and provider-owned release sources. The MIT license does not grant rights to third-party data, names, logos, or trademarks; see [NOTICE.md](NOTICE.md).
 
 ## Citation
 
-GitHub can generate a citation from [`CITATION.cff`](CITATION.cff). Cite AI Charts when referring to this software or its visualization method, Artificial Analysis or DataCurve DeepSWE for their respective measurements, OpenRouter for discovery and model-identity metadata, and the linked first-party provider source for an official release date. Include the source URL, retrieval date, selected metrics, harness, and configuration when a claim depends on a particular snapshot.
+GitHub can generate a citation from [`CITATION.cff`](CITATION.cff). Cite AI Charts for this software or its visualization method and cite the named benchmark owner for measurements. Cite OpenRouter only for discovery and model-identity metadata, and cite the linked provider source for an official release date. Include the source URL, version, retrieval date, metric, harness, effort, and trial policy when a claim depends on a snapshot.
 
 Contributions are welcome. Start with [CONTRIBUTING.md](CONTRIBUTING.md), and report security issues through the process in [SECURITY.md](SECURITY.md).

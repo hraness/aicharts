@@ -25,16 +25,24 @@ import {
   DEEP_SWE_LEADERBOARD_URL,
   formatDeepSweEvidenceScore,
 } from "@/lib/deep-swe-evidence";
+import {
+  FIRST_PARTY_RELEASE_HIGHLIGHTS,
+  FIRST_PARTY_RELEASE_RADAR,
+} from "@/lib/first-party-release-collection";
 import { modelCardArtDirection } from "@/lib/model-card-art-direction";
 import { modelCardReleaseAccessibleLabel } from "@/lib/model-card-presentation";
 import {
   MODEL_RELEASE_RADAR,
-  MODEL_RELEASE_RADAR_HIGHLIGHTS,
   MODEL_RELEASES_AWAITING_BENCHMARK,
   MODEL_RELEASES_WITH_EARLY_DEEP_SWE,
+  modelReleaseRadarHighlightsExcluding,
 } from "@/lib/model-release-collection";
 
 import { searchSite } from "../site";
+
+const MODEL_RELEASE_RADAR_PAGE_HIGHLIGHTS = modelReleaseRadarHighlightsExcluding(
+  FIRST_PARTY_RELEASE_HIGHLIGHTS.flatMap(release => release.namedModels),
+);
 
 const modelCardsSearchSite = {
   ...searchSite,
@@ -100,7 +108,55 @@ export default function ModelCardsPage() {
           </span>
         </p>
       </header>
-      {MODEL_RELEASE_RADAR_HIGHLIGHTS.length > 0 && (
+      {FIRST_PARTY_RELEASE_HIGHLIGHTS.length > 0 && (
+        <section
+          aria-labelledby="first-party-release-radar-title"
+          className="model-release-radar"
+        >
+          <div className="model-release-radar__heading">
+            <p>First-party release radar</p>
+            <h2 id="first-party-release-radar-title">New releases found at the provider source</h2>
+            <small>
+              {FIRST_PARTY_RELEASE_RADAR.sources.length} configured provider sources · reviewed URL evidence
+            </small>
+          </div>
+          <ul>
+            {FIRST_PARTY_RELEASE_HIGHLIGHTS.map(release => (
+              <li
+                key={release.id}
+                style={{
+                  "--release-provider": modelCardArtDirection(
+                    release.providerId,
+                    "standard",
+                    "default",
+                  ).providerColor,
+                } as CSSProperties}
+              >
+                <a href={release.canonicalUrl}>
+                  <i aria-hidden="true" />
+                  <span>
+                    <strong>{release.namedModels.join(" and ")}</strong>
+                    <small>
+                      {release.providerName} · source changed{" "}
+                      <time dateTime={release.sourceModifiedAt}>
+                        {formatUpdateDate(release.sourceModifiedAt)}
+                      </time>
+                    </small>
+                  </span>
+                  <span aria-hidden="true">↗</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+          <p className="model-release-radar__note">
+            Provider sitemaps supply announcement candidates before an aggregator
+            may list every model. A sitemap change is discovery evidence, not an
+            official release date or a benchmark score; reviewed dates and scores
+            keep their own sources.
+          </p>
+        </section>
+      )}
+      {MODEL_RELEASE_RADAR_PAGE_HIGHLIGHTS.length > 0 && (
         <section
           aria-labelledby="model-release-radar-title"
           className="model-release-radar"
@@ -116,7 +172,7 @@ export default function ModelCardsPage() {
             </small>
           </div>
           <ul>
-            {MODEL_RELEASE_RADAR_HIGHLIGHTS.map(release => {
+            {MODEL_RELEASE_RADAR_PAGE_HIGHLIGHTS.map(release => {
               const earlyEvidence = directDeepSweEvidenceForRelease(release);
               return (
                 <li

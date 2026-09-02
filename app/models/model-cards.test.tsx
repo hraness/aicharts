@@ -29,12 +29,21 @@ import {
   directDeepSweEvidenceForRelease,
 } from "@/lib/deep-swe-evidence-collection";
 import { formatDeepSweEvidenceScore } from "@/lib/deep-swe-evidence";
+import {
+  FIRST_PARTY_RELEASE_HIGHLIGHTS,
+  FIRST_PARTY_RELEASE_RADAR,
+} from "@/lib/first-party-release-collection";
 import { markdownForPath, modelCardMarkdown } from "@/lib/site-markdown";
 import {
   MODEL_RELEASE_RADAR_HIGHLIGHTS,
   MODEL_RELEASES_AWAITING_BENCHMARK,
   MODEL_RELEASES_WITH_EARLY_DEEP_SWE,
+  modelReleaseRadarHighlightsExcluding,
 } from "@/lib/model-release-collection";
+
+const MODEL_RELEASE_RADAR_PAGE_HIGHLIGHTS = modelReleaseRadarHighlightsExcluding(
+  FIRST_PARTY_RELEASE_HIGHLIGHTS.flatMap(release => release.namedModels),
+);
 
 const modelsLayoutSource = await Bun.file(
   new URL("./layout.tsx", import.meta.url),
@@ -138,7 +147,7 @@ describe("public model cards", () => {
       MODEL_CARD_PRESENTATIONS.length * 119 + 64,
     );
     expect(Buffer.byteLength(markup)).toBeLessThan(
-      MODEL_CARD_PRESENTATIONS.length * 20_500 + 8_000,
+      MODEL_CARD_PRESENTATIONS.length * 20_500 + 10_400,
     );
     expect(markup).not.toContain("<canvas");
     expect(markup).toContain('aria-label="Filter model cards"');
@@ -157,6 +166,21 @@ describe("public model cards", () => {
 
   test("surfaces a restrained release radar without inventing benchmark cards", () => {
     const markup = renderToStaticMarkup(<ModelCardsPage />);
+    expect(FIRST_PARTY_RELEASE_HIGHLIGHTS.length).toBeLessThanOrEqual(2);
+    expect(FIRST_PARTY_RELEASE_RADAR.policy).toMatchObject({
+      publication: "discovery-only",
+      review: "manual-review-required",
+    });
+    for (const release of FIRST_PARTY_RELEASE_HIGHLIGHTS) {
+      expect(markup).toContain(release.canonicalUrl);
+      for (const model of release.namedModels) expect(markup).toContain(model);
+    }
+    if (FIRST_PARTY_RELEASE_HIGHLIGHTS.length > 0) {
+      expect(markup).toContain("First-party release radar");
+      expect(markup).toContain("New releases found at the provider source");
+      expect(markup).toContain("configured provider sources");
+      expect(markup).toContain("A sitemap change is discovery evidence");
+    }
     expect(MODEL_RELEASE_RADAR_HIGHLIGHTS[0]).toBe(
       MODEL_RELEASES_AWAITING_BENCHMARK[0],
     );
@@ -167,11 +191,16 @@ describe("public model cards", () => {
     if (earliestEvidenceRelease !== undefined) {
       expect(MODEL_RELEASE_RADAR_HIGHLIGHTS).toContain(earliestEvidenceRelease);
     }
-    for (const release of MODEL_RELEASE_RADAR_HIGHLIGHTS) {
+    for (const release of MODEL_RELEASE_RADAR_PAGE_HIGHLIGHTS) {
       expect(markup).toContain(release.model);
       expect(markup).toContain(release.modelUrl);
     }
-    if (MODEL_RELEASE_RADAR_HIGHLIGHTS.length > 0) {
+    expect(MODEL_RELEASE_RADAR_PAGE_HIGHLIGHTS.every(release => (
+      !FIRST_PARTY_RELEASE_HIGHLIGHTS.some(firstParty => (
+        firstParty.namedModels.includes(release.model)
+      ))
+    ))).toBeTrue();
+    if (MODEL_RELEASE_RADAR_PAGE_HIGHLIGHTS.length > 0) {
       expect(markup).toContain("Release radar");
       expect(markup).toContain("New, awaiting complete benchmark coverage");
       expect(markup).toContain("Discovery is not a score");
@@ -179,7 +208,7 @@ describe("public model cards", () => {
       expect(markup).toContain(`${MODEL_RELEASES_WITH_EARLY_DEEP_SWE.length} with early DeepSWE`);
       expect(markup).toContain(`DeepSWE v${DIRECT_DEEP_SWE_EVIDENCE.source.benchmarkVersion}`);
       expect(markup).toContain("mini-swe-agent leaderboard");
-      const highlightedEvidence = MODEL_RELEASE_RADAR_HIGHLIGHTS
+      const highlightedEvidence = MODEL_RELEASE_RADAR_PAGE_HIGHLIGHTS
         .map(directDeepSweEvidenceForRelease)
         .find(evidence => evidence !== null);
       if (highlightedEvidence !== undefined && highlightedEvidence !== null) {

@@ -104,21 +104,21 @@ describe("homepage agent document", () => {
     }
   });
 
-  test("mounts visible evidence after the working chart orientation and controls", async () => {
+  test("mounts the benchmark portfolio before the source-specific interactive chart", async () => {
     const source = await Bun.file(new URL("./page.tsx", import.meta.url)).text();
     const markup = renderToStaticMarkup(createElement(Home));
-    const leadersAt = source.indexOf("<HomeLeaders");
+    const portfolioAt = source.indexOf("<HomeBenchmarkPortfolio");
     const resourcesAt = source.indexOf("<HomeEditorialResources");
     const explorerAt = source.indexOf("<CodingAgentExplorer");
     const documentAt = source.indexOf("<HomeDocument");
     const explorerEndAt = source.indexOf("</CodingAgentExplorer>");
     const loadingAt = source.indexOf("Loading chart");
 
-    expect(leadersAt).toBeGreaterThan(-1);
-    expect(explorerAt).toBeLessThan(leadersAt);
-    expect(resourcesAt).toBeGreaterThan(leadersAt);
+    expect(portfolioAt).toBeGreaterThan(-1);
+    expect(explorerAt).toBeLessThan(portfolioAt);
+    expect(resourcesAt).toBeGreaterThan(portfolioAt);
     expect(documentAt).toBeGreaterThan(resourcesAt);
-    expect(documentAt).toBeGreaterThan(leadersAt);
+    expect(documentAt).toBeGreaterThan(portfolioAt);
     expect(explorerEndAt).toBeGreaterThan(documentAt);
     expect(loadingAt).toBe(-1);
     expect(source).toContain("heading: site.domain");
@@ -128,18 +128,27 @@ describe("homepage agent document", () => {
     const headerAt = markup.indexOf('<header class="ui-top-bar chart-top-bar"');
     const mainAt = markup.indexOf('<main class="chart-page-canvas"');
     const orientationAt = markup.indexOf('class="chart-orientation"');
+    const renderedPortfolioAt = markup.indexOf('class="home-benchmark-portfolio"');
+    const chartFamilyAt = markup.indexOf('class="chart-family-intro"');
     const chartAt = markup.indexOf('class="chart-scroll"');
-    const renderedLeadersAt = markup.indexOf('class="home-leaders"');
+    const renderedResourcesAt = markup.indexOf('class="home-editorial"');
     const mainEndAt = markup.indexOf("</main>", mainAt);
 
     expect(headerAt).toBeGreaterThan(-1);
     expect(mainAt).toBeGreaterThan(headerAt);
     expect(orientationAt).toBeGreaterThan(mainAt);
-    expect(chartAt).toBeGreaterThan(orientationAt);
-    expect(renderedLeadersAt).toBeGreaterThan(chartAt);
-    expect(mainEndAt).toBeGreaterThan(renderedLeadersAt);
-    expect(markup).toContain("Compare coding agents by benchmark, cost, speed, or token use");
-    expect(markup).toContain("Upstream scores stay on their stored 0–100 scales");
+    expect(renderedPortfolioAt).toBeGreaterThan(orientationAt);
+    expect(chartFamilyAt).toBeGreaterThan(renderedPortfolioAt);
+    expect(chartAt).toBeGreaterThan(chartFamilyAt);
+    expect(renderedResourcesAt).toBeGreaterThan(chartAt);
+    expect(mainEndAt).toBeGreaterThan(renderedResourcesAt);
+    expect(markup).toContain("A benchmark portfolio for the work AI systems are asked to do");
+    expect(markup).toContain("Five benchmark roles, one coding standard");
+    expect(markup).toContain("Terminal-Bench 4.0.0 snapshot");
+    expect(markup).toContain("Terminal-Bench-Science 0.1.0 snapshot");
+    expect(markup).toContain("GPT-5.6 Sol");
+    expect(markup).toContain("Scientific workflows");
+    expect(markup).toContain("This source still reports Terminal-Bench v2.1");
     expect(markup.match(/<h1(?:\s|>)/gu)).toHaveLength(1);
     expect(markup).toContain('<option value="deepSwe" selected="">DSWE</option>');
     expect(markup).toContain('<strong>DeepSWE</strong>');

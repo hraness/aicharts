@@ -2,7 +2,12 @@ import type { MetadataRoute } from "next";
 
 import codingAgentData from "@/data/coding-agents.json";
 import gptSubsidyData from "@/data/gpt-subsidy.json";
+import terminalBenchData from "@/data/terminal-bench.json";
+import terminalBenchScienceData from "@/data/terminal-bench-science.json";
 import { parseCodingAgentSnapshot } from "@/lib/coding-agent-data";
+import {
+  FIRST_PARTY_RELEASE_HIGHLIGHTS,
+} from "@/lib/first-party-release-collection";
 import {
   CODING_AGENT_DATASET_PATH,
   codingAgentDatasetModifiedAt,
@@ -18,6 +23,8 @@ import {
 } from "@/lib/model-card-collection";
 import type { ModelCardPresentation } from "@/lib/model-card-presentation";
 import { modelCardRouteStatus } from "@/lib/model-card-route-status";
+import { parseTerminalBenchSnapshot } from "@/lib/terminal-bench-data";
+import { parseTerminalBenchScienceSnapshot } from "@/lib/terminal-bench-science-data";
 import { blogArticlePath, blogArticles } from "./blog/articles";
 import { blogEditorialImage, type BlogEditorialImage } from "./blog/editorial-images";
 import { BLOG_SOCIAL_IMAGE_PATH } from "./blog/seo";
@@ -58,6 +65,30 @@ export default function sitemap(): MetadataRoute.Sitemap {
     });
   }
   const datasetModifiedAt = codingAgentDatasetModifiedAt(parsed.value);
+  const parsedTerminalBench = parseTerminalBenchSnapshot(terminalBenchData);
+  if (!parsedTerminalBench.ok) {
+    throw new Error(`Checked Terminal-Bench snapshot is invalid: ${parsedTerminalBench.error.message}`, {
+      cause: parsedTerminalBench.error,
+    });
+  }
+  const parsedTerminalBenchScience = parseTerminalBenchScienceSnapshot(
+    terminalBenchScienceData,
+  );
+  if (!parsedTerminalBenchScience.ok) {
+    throw new Error(
+      `Checked Terminal-Bench-Science snapshot is invalid: ${parsedTerminalBenchScience.error.message}`,
+      { cause: parsedTerminalBenchScience.error },
+    );
+  }
+  const benchmarkPortfolioModifiedAt = [
+    datasetModifiedAt,
+    parsedTerminalBench.value.source.retrievedAt,
+    parsedTerminalBenchScience.value.source.retrievedAt,
+  ].sort((left, right) => Date.parse(right) - Date.parse(left))[0] ?? datasetModifiedAt;
+  const modelCollectionModifiedAt = [
+    datasetModifiedAt,
+    ...FIRST_PARTY_RELEASE_HIGHLIGHTS.map(release => release.sourceModifiedAt),
+  ].sort((left, right) => Date.parse(right) - Date.parse(left))[0] ?? datasetModifiedAt;
   const parsedSubsidy = parseGptSubsidySnapshot(gptSubsidyData);
   if (!parsedSubsidy.ok) {
     throw new Error(`Checked GPT subsidy snapshot is invalid: ${parsedSubsidy.error.message}`, {
@@ -69,14 +100,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
     {
       changeFrequency: "daily",
       images: [siteImage],
-      lastModified: datasetModifiedAt,
+      lastModified: benchmarkPortfolioModifiedAt,
       priority: 1,
       url: absolute("/"),
     },
     {
       changeFrequency: "daily",
       images: [siteImage],
-      lastModified: datasetModifiedAt,
+      lastModified: benchmarkPortfolioModifiedAt,
       priority: 0.9,
       url: absolute(CODING_AGENT_DATASET_PATH),
     },
@@ -100,7 +131,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     {
       changeFrequency: "daily",
       images: [absolute(MODEL_CARD_COLLECTION_SOCIAL_IMAGE_URL)],
-      lastModified: datasetModifiedAt,
+      lastModified: modelCollectionModifiedAt,
       priority: 0.9,
       url: absolute("/models"),
     },

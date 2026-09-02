@@ -3,7 +3,7 @@
   "source": {
     "method": "models-api",
     "name": "OpenRouter",
-    "retrievedAt": "2026-08-28T15:04:13.672Z",
+    "retrievedAt": "2026-09-02T13:46:07.052Z",
     "timestampMeaning": "source-added-at",
     "url": "https://openrouter.ai/api/v1/models?sort=newest"
   },
@@ -28,6 +28,12 @@
     "windowDays": 90
   },
   "observedListings": [
+    {
+      "id": "anthropic/claude-fable-5.1",
+      "model": "Claude Fable 5.1",
+      "providerId": "anthropic",
+      "sourceAddedAt": "2026-09-01T18:03:58.000Z"
+    },
     {
       "id": "qwen/qwen3.8-flash",
       "model": "Qwen3.8 Flash",
@@ -234,6 +240,27 @@
     }
   ],
   "releases": [
+    {
+      "capabilities": {
+        "inputModalities": [
+          "file",
+          "image",
+          "text"
+        ],
+        "outputModalities": [
+          "text"
+        ],
+        "supportsTools": true
+      },
+      "canonicalSlug": "anthropic/claude-fable-5.1-20260831",
+      "id": "anthropic/claude-fable-5.1",
+      "model": "Claude Fable 5.1",
+      "modelUrl": "https://openrouter.ai/anthropic/claude-fable-5.1",
+      "providerId": "anthropic",
+      "providerName": "Anthropic",
+      "sourceAddedAt": "2026-09-01T18:03:58.000Z",
+      "status": "awaiting-benchmark"
+    },
     {
       "capabilities": {
         "inputModalities": [
@@ -543,27 +570,6 @@
       "providerId": "alibaba_cloud",
       "providerName": "Alibaba Cloud",
       "sourceAddedAt": "2026-07-27T22:16:01.000Z",
-      "status": "awaiting-benchmark"
-    },
-    {
-      "capabilities": {
-        "inputModalities": [
-          "file",
-          "image",
-          "text"
-        ],
-        "outputModalities": [
-          "text"
-        ],
-        "supportsTools": true
-      },
-      "canonicalSlug": "anthropic/claude-opus-5-fast-20260723",
-      "id": "anthropic/claude-opus-5-fast",
-      "model": "Claude Opus 5 (Fast)",
-      "modelUrl": "https://openrouter.ai/anthropic/claude-opus-5-fast",
-      "providerId": "anthropic",
-      "providerName": "Anthropic",
-      "sourceAddedAt": "2026-07-24T17:02:26.000Z",
       "status": "awaiting-benchmark"
     },
     {
@@ -924,26 +930,6 @@
       "providerId": "anthropic",
       "providerName": "Anthropic",
       "sourceAddedAt": "2026-06-09T12:18:35.000Z",
-      "status": "benchmarked"
-    },
-    {
-      "capabilities": {
-        "inputModalities": [
-          "image",
-          "text"
-        ],
-        "outputModalities": [
-          "text"
-        ],
-        "supportsTools": true
-      },
-      "canonicalSlug": "qwen/qwen3.7-plus-20260602",
-      "id": "qwen/qwen3.7-plus",
-      "model": "Qwen3.7 Plus",
-      "modelUrl": "https://openrouter.ai/qwen/qwen3.7-plus",
-      "providerId": "alibaba_cloud",
-      "providerName": "Alibaba Cloud",
-      "sourceAddedAt": "2026-06-03T13:03:03.000Z",
       "status": "benchmarked"
     }
   ]

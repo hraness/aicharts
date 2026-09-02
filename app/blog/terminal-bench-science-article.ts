@@ -223,10 +223,10 @@ export function createTerminalBenchScienceArticle(
       heading("How it relates to AI Charts"),
       paragraph(
         "The ",
-        { href: "/", text: "AI Charts coding-agent comparison" },
-        " plots AA Index, DeepSWE, Terminal-Bench v2.1, and SWE-Atlas-QnA against API cost, active time, or total token use. Those observations come from a checked ",
+        { href: "/", text: "AI Charts homepage" },
+        " now includes Terminal-Bench-Science 0.1 as the scientific-workflow member of its five-role benchmark portfolio. Its scores remain separate from the interactive Artificial Analysis coding-agent chart, which plots AA Index, DeepSWE, Terminal-Bench v2.1, and SWE-Atlas-QnA against API cost, active time, or total token use. Those coding observations come from a checked ",
         { href: BLOG_SOURCES.artificialAnalysisCodingAgents.url, text: "Artificial Analysis coding-agents snapshot" },
-        ` retrieved ${retrievedAt}. Terminal-Bench-Science 0.1 is a separate scientific task set and is not part of that chart.`,
+        ` retrieved ${retrievedAt}.`,
       ),
       paragraph(
         "For orientation, the snapshot’s highest stored Terminal-Bench v2.1 score is ",
@@ -245,7 +245,7 @@ export function createTerminalBenchScienceArticle(
           "Resolution rates, costs, and token totals belong to the named 0.1 release, models, harnesses, and three-trial protocol on the announcement. They can change in a later release.",
         ],
         [
-          "Terminal-Bench-Science 0.1 is not in the checked Artificial Analysis coding-agent snapshot. A stored Terminal-Bench v2.1 score is a different suite.",
+          "Terminal-Bench-Science 0.1 is a homepage benchmark family, not a field in the checked Artificial Analysis coding-agent snapshot. A stored Terminal-Bench v2.1 score is a different suite.",
         ],
         [
           "Reported evaluation costs are totals across all 70 tasks. They are not a production invoice, a subscription price, or a per-query quote.",

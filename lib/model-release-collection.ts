@@ -32,3 +32,23 @@ export const MODEL_RELEASE_RADAR_HIGHLIGHTS = [
   highlightedReleaseIds.add(release.id);
   return true;
 }).filter((release): release is ModelRelease => release !== undefined).slice(0, 2);
+
+export function modelReleaseRadarHighlightsExcluding(
+  excludedModels: readonly string[],
+  limit = 2,
+): readonly ModelRelease[] {
+  const excluded = new Set(excludedModels.map(model => model.trim().toLocaleLowerCase("en-US")));
+  const includedIds = new Set<string>();
+  return [
+    ...MODEL_RELEASE_RADAR_HIGHLIGHTS,
+    ...MODEL_RELEASES_WITH_EARLY_DEEP_SWE,
+    ...MODEL_RELEASES_AWAITING_BENCHMARK,
+  ].filter(release => {
+    if (
+      excluded.has(release.model.trim().toLocaleLowerCase("en-US"))
+      || includedIds.has(release.id)
+    ) return false;
+    includedIds.add(release.id);
+    return true;
+  }).slice(0, Math.max(0, limit));
+}
