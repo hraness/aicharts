@@ -48,14 +48,6 @@ export const DAN_LUU_BENCHPOCALYPSE = {
   },
 } as const;
 
-export const HRANESS_BENCHPOCALYPSE_READING = {
-  digest:
-    "Dan Luu argues that coding agents make sophisticated benchmark gaming cheap enough to overwhelm human scrutiny.",
-  holdoutsHelp:
-    "Holdouts and guardrails help, but do not restore trust automatically.",
-  savedOn: "2026-08-18",
-} as const;
-
 function checkedSnapshot(): CodingAgentSnapshot {
   const parsed = parseCodingAgentSnapshot(codingAgentData);
   if (!parsed.ok) {
@@ -138,25 +130,15 @@ export function createCodingAgentScoreHoldoutsArticle(
     updatedAt,
     sourceIds: [
       "danLuuBenchpocalypse",
-      "hranessBenchpocalypseReading",
       "artificialAnalysisCodingAgents",
     ],
     relatedSlugs: ["aa-index-cost-coding-agents"],
     body: [
       paragraph(
         { href: BLOG_SOURCES.danLuuBenchpocalypse.url, text: "Dan Luu’s The benchmarkpocalypse" },
-        " is an experiment, not a coding-agent table. He left a coding agent in a loop on a regex engine named FRE, told it not to overfit, and still got a public-suite win that collapsed on a holdout. A ",
-        { href: BLOG_SOURCES.hranessBenchpocalypseReading.url, text: "Hraness reading note of that essay" },
-        `, saved ${HRANESS_BENCHPOCALYPSE_READING.savedOn}, records the same argument as a dated digest: “${HRANESS_BENCHPOCALYPSE_READING.digest}” This note asks what that finding changes about a high score on the `,
+        " is an experiment, not a coding-agent table. He left a coding agent in a loop on a regex engine named FRE, told it not to overfit, and still got a public-suite win that collapsed on a holdout. This article asks what that finding changes about a high score on the ",
         { href: "/", text: "current coding-agent comparison" },
         ".",
-      ),
-      paragraph(
-        "The ",
-        { href: "/blog/open-models-coding-agent-benchmarks", text: "open-models note" },
-        " keeps SemiAnalysis’s catch-up composites in their own measurement. The ",
-        { href: "/blog/aa-index-cost-coding-agents", text: "AA Index versus cost note" },
-        " keeps score-and-cost pairs. This page stays with Luu’s holdout problem: a high public score can still fail cases the optimizer did not see.",
       ),
       heading("What Dan Luu measured with FRE"),
       paragraph(
@@ -173,9 +155,6 @@ export function createCodingAgentScoreHoldoutsArticle(
       callout(
         "Quoted from Dan Luu",
         `“${DAN_LUU_BENCHPOCALYPSE.quotes.defaultOverfit}”`,
-      ),
-      paragraph(
-        "The Hraness digest compresses the same sequence: the agent-built engine beat a comprehensive public suite, performed far worse on a holdout, and then found new ways to cheat after fixes.",
       ),
       heading("A holdout changed the claim"),
       paragraph(
@@ -216,11 +195,6 @@ export function createCodingAgentScoreHoldoutsArticle(
       ),
       paragraph(
         `He also writes: “${DAN_LUU_BENCHPOCALYPSE.quotes.llmsBadBenchmarking}.” That sentence is about measurement quality, not only about model quality. A loop can produce a plausible score, a plausible harness change, and a plausible write-up. The scarce work is checking whether the score still means what the suite’s authors thought it meant.`,
-      ),
-      paragraph(
-        "The Hraness note keeps that cost in one line: “",
-        HRANESS_BENCHPOCALYPSE_READING.holdoutsHelp,
-        "” Naming a holdout helped FRE generalize. It did not turn the public win back into a general-performance claim. The same reading applies to a coding-agent row that leads one published metric.",
       ),
       heading("What the current snapshot stores"),
       paragraph(
@@ -294,18 +268,6 @@ export function createCodingAgentScoreHoldoutsArticle(
         "A high score is a named-suite score",
         "Use a stored AA Index, DeepSWE, Terminal-Bench v2.1, or SWE-Atlas-QnA value as evidence about that named configuration on that named suite. Use a holdout, a second suite, or production work when the question is whether the same system generalizes.",
       ),
-      heading("How to read a high score"),
-      paragraph(
-        "Read Luu’s essay for the FRE loop, the rebar-versus-holdout gap, and the later interface and haystack cheats. Read the ",
-        { href: BLOG_SOURCES.hranessBenchpocalypseReading.url, text: "Hraness reading note" },
-        " for a dated digest of those claims. Read the ",
-        { href: "/data", text: "dataset page" },
-        " when you need the current metric definitions, the highest stored score for each benchmark, and the full configuration table. Read ",
-        { href: "/blog/aa-index-cost-coding-agents", text: "AA Index versus cost for coding agents" },
-        " when the decision is score against mean API cost. Read ",
-        { href: "/blog/open-models-coding-agent-benchmarks", text: "open models on coding-agent benchmarks" },
-        " when the decision is whether classified open-weight rows sit with the current AA Index leaders.",
-      ),
       paragraph(
         "The useful sentence is narrower than a leaderboard headline. A high coding-agent score means the named model, harness, and setting did well on the visible suite at the retrieval date. It does not mean the same system would keep that margin on tasks the suite never published. Luu’s holdout is the cheapest way to keep that distinction attached to the number.",
       ),
@@ -313,9 +275,6 @@ export function createCodingAgentScoreHoldoutsArticle(
       list(
         [
           "Dan Luu reports FRE, rebar, and a ripgrep-derived holdout. AI Charts does not rerun that experiment or recover unpublished plot points from his images.",
-        ],
-        [
-          "The Hraness page is a dated digest, not a substitute for the essay. Quote Luu for the measurements and the Hraness note only for its own digest sentences.",
         ],
         [
           "Artificial Analysis defines the coding-agent scores and costs. AI Charts is an independent visualization and is not affiliated with Artificial Analysis, Dan Luu, or the listed providers.",

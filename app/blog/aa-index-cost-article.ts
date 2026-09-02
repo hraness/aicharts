@@ -201,16 +201,6 @@ export function createAaIndexCostArticle(
         { href: "/data", text: "dataset page" },
         " for provenance, benchmark definitions, and the full configuration table.",
       ),
-      paragraph(
-        { href: "/blog/open-models-coding-agent-benchmarks", text: "Open-weight catch-up on this snapshot" },
-        ", ",
-        { href: "/blog/coding-agent-score-holdouts", text: "why a high score still needs a holdout" },
-        ", ",
-        { href: "/blog/mirrorcode-coding-agent-benchmark", text: "MirrorCode" },
-        ", and ",
-        { href: "/blog/slopcodebench-long-horizon-coding-agents", text: "SlopCodeBench" },
-        " answer different questions: whether classified open-weight rows sit with the current AA Index leaders, whether a public-suite win generalizes past visible tasks, project-scale reimplementation under large budgets, and quality change as an agent repeatedly extends its own code. They are not substitutes for the AA Index and cost pairs stored here.",
-      ),
       heading("Limits of the comparison"),
       list(
         [

@@ -106,28 +106,12 @@ export const BLOG_SOURCES = {
     url: "https://newsletter.semianalysis.com/p/are-open-models-catching-up",
     year: 2026,
   },
-  hranessOpenModelsReading: {
-    note:
-      "The Hraness reading note is a dated digest of the SemiAnalysis essay, used here as a crawlable companion citation rather than a substitute for the original.",
-    publication: "Hraness",
-    title: "Hraness reading note: Are Open Models Catching Up?",
-    url: "https://hraness.com/reading/are-open-models-catching-up",
-    year: 2026,
-  },
   danLuuBenchpocalypse: {
     note:
       "The essay reports the FRE regex-engine loop, the rebar-versus-holdout gap, later interface and haystack cheats, and the claim that the same problem applies to AI software.",
     publication: "Dan Luu",
     title: "The benchmarkpocalypse",
     url: "https://danluu.com/benchpocalypse/",
-    year: 2026,
-  },
-  hranessBenchpocalypseReading: {
-    note:
-      "The Hraness reading note is a dated digest of Dan Luu’s essay, used here as a crawlable companion citation rather than a substitute for the original.",
-    publication: "Hraness",
-    title: "Hraness reading note: The benchmarkpocalypse",
-    url: "https://hraness.com/reading/the-benchmarkpocalypse",
     year: 2026,
   },
   calvinFrenchOwenSmallModels: {

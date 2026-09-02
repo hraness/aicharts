@@ -38,7 +38,6 @@ const OPEN_WEIGHT_LEADER_LIMIT = 8;
 const CLOSED_LEADER_LIMIT = 8;
 
 const SEMIANALYSIS_OPEN_MODELS = {
-  digestUrl: "https://hraness.com/reading/are-open-models-catching-up" as const,
   publishedOn: "August 21, 2026",
   quotes: {
     era1DeepSeekV3: "94.1",
@@ -177,7 +176,6 @@ export function createOpenModelsCodingAgentsArticle(
     updatedAt,
     sourceIds: [
       "semiAnalysisOpenModels",
-      "hranessOpenModelsReading",
       "artificialAnalysisCodingAgents",
     ],
     relatedSlugs: ["aa-index-cost-coding-agents"],
@@ -202,9 +200,7 @@ export function createOpenModelsCodingAgentsArticle(
         `The reasoning-era opening gap is ${SEMIANALYSIS_OPEN_MODELS.quotes.era2StartGapPoints} points, against ${SEMIANALYSIS_OPEN_MODELS.quotes.era1StartGapPoints} at the start of the previous era. DeepSeek R1-0528 closes that opening gap at ${SEMIANALYSIS_OPEN_MODELS.quotes.era2R10528} after ${SEMIANALYSIS_OPEN_MODELS.quotes.era2CatchupMonths} months. In the agentic era they report that Kimi K2.6 surpassed Opus 4.5 at ${SEMIANALYSIS_OPEN_MODELS.quotes.era3KimiK26} in ${SEMIANALYSIS_OPEN_MODELS.quotes.era3KimiMonths} months, and that GLM-5.2 cleared GPT-5.2 at ${SEMIANALYSIS_OPEN_MODELS.quotes.era3Glm52} in ${SEMIANALYSIS_OPEN_MODELS.quotes.era3GlmMonths} months.`,
       ),
       paragraph(
-        "Those sentences are SemiAnalysis measurements, not AI Charts calculations. The essay also limits what the composites prove. The authors still prefer Fable 5 for daily work over Kimi K3, even while saying Kimi K3 may score higher on their curated suite. They treat public benchmarks as hill-climbable: labs can train reinforcement-learning environments that mimic the evals. A ",
-        { href: SEMIANALYSIS_OPEN_MODELS.digestUrl, text: "Hraness reading note of the SemiAnalysis essay" },
-        " records the same cycle, catch-up intervals, and caveat.",
+        "Those sentences are SemiAnalysis measurements, not AI Charts calculations. The essay also limits what the composites prove. The authors still prefer Fable 5 for daily work over Kimi K3, even while saying Kimi K3 may score higher on their curated suite. They treat public benchmarks as hill-climbable: labs can train reinforcement-learning environments that mimic the evals.",
       ),
       heading("What the coding-agent snapshot records"),
       paragraph(
@@ -301,20 +297,6 @@ export function createOpenModelsCodingAgentsArticle(
       callout(
         "Two questions, two answers",
         "Use SemiAnalysis for the historical catch-up cycle on their era composites. Use this snapshot when you need a named coding-agent configuration, a harness, and a task-level cost. Do not treat one as a reprint of the other.",
-      ),
-      heading("How to read both sources"),
-      paragraph(
-        "Read the SemiAnalysis essay for the cycle, the catch-up intervals, and the warning that public benchmarks can be imitated. Read the ",
-        { href: SEMIANALYSIS_OPEN_MODELS.digestUrl, text: "Hraness reading note" },
-        " for a dated digest of those claims. Read the ",
-        { href: "/", text: "coding-agent leaders table" },
-        " and the ",
-        { href: "/data", text: "checked dataset" },
-        " when you need the current Artificial Analysis configuration list. Read ",
-        { href: "/blog/aa-index-cost-coding-agents", text: "AA Index versus cost for coding agents" },
-        " when the decision is score against mean API cost rather than open versus closed. Read ",
-        { href: "/blog/coding-agent-score-holdouts", text: "why a high score still needs a holdout" },
-        " when the question is whether a public-suite lead still needs cases the optimizer could not see.",
       ),
       paragraph(
         "The useful sentence is narrower than the essay title. Open-weight coding agents in this snapshot are close enough to matter on cost and close enough to appear in the middle of the AA Index list. They are not the current AA Index leaders. SemiAnalysis's faster catch-up time describes their composites, not this table.",

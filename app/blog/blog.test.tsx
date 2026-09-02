@@ -128,7 +128,6 @@ describe("AI Charts benchmark notes", () => {
       expect(articleToMarkdown(article)).toContain(`# ${article.title}`);
       expect(articleToMarkdown(article)).toContain(article.dek);
       expect(article.sourceIds.length).toBeGreaterThanOrEqual(1);
-      expect(article.relatedSlugs).toHaveLength(1);
       if (article.slug === "terminal-bench-science") {
         expect(article.publishedAt).toBe("2026-08-31");
         expect(article.updatedAt >= article.publishedAt).toBeTrue();
@@ -231,17 +230,16 @@ describe("AI Charts benchmark notes", () => {
     if (top?.aaIndex == null || topOpen?.aaIndex == null) return;
 
     expect(markup).toContain(BLOG_SOURCES.semiAnalysisOpenModels.url);
-    expect(markup).toContain(BLOG_SOURCES.hranessOpenModelsReading.url);
     expect(markup).toContain('href="/"');
     expect(markup).toContain('href="/data"');
     expect(markup).toContain('href="/blog/aa-index-cost-coding-agents"');
-    expect(markup).toContain('href="/blog/coding-agent-score-holdouts"');
     expect(markup).toContain(formatRetrievedAt(parsed.value.source.retrievedAt));
     expect(markup).toContain(top.model);
     expect(markup).toContain(formatSnapshotScore(top.aaIndex));
     expect(markup).toContain(topOpen.model);
     expect(markup).toContain(formatSnapshotScore(topOpen.aaIndex));
     expect(markup).toContain(formatAaIndexGap(top.aaIndex, topOpen.aaIndex));
+    expect(markup).not.toContain("hraness.com/reading");
     expect(markup).toContain("75.7");
     expect(markup).toContain("56.3");
     expect(markup).toContain("72.4");
@@ -364,12 +362,9 @@ describe("AI Charts benchmark notes", () => {
     if (aaLeader === undefined) return;
 
     expect(markup).toContain(BLOG_SOURCES.danLuuBenchpocalypse.url);
-    expect(markup).toContain(BLOG_SOURCES.hranessBenchpocalypseReading.url);
     expect(markup).toContain(BLOG_SOURCES.artificialAnalysisCodingAgents.url);
     expect(markup).toContain('href="/"');
     expect(markup).toContain('href="/data"');
-    expect(markup).toContain('href="/blog/aa-index-cost-coding-agents"');
-    expect(markup).toContain('href="/blog/open-models-coding-agent-benchmarks"');
     expect(markup).toContain(formatRetrievedAt(parsed.value.source.retrievedAt));
     expect(markdown).toContain(
       "LLMs not only make this trivial, they do it by default, making formerly trustworthy benchmarks meaningless unless you audit the result or trust someone who did.",
@@ -383,9 +378,7 @@ describe("AI Charts benchmark notes", () => {
     expect(markdown).toContain(
       "Another aspect of the benchmarkpocalypse is that, at least for now, LLMs are good at doing bad benchmarking",
     );
-    expect(markdown).toContain(
-      "Dan Luu argues that coding agents make sophisticated benchmark gaming cheap enough to overwhelm human scrutiny.",
-    );
+    expect(markup).not.toContain("hraness.com/reading");
     expect(markup).toContain("1.4x faster");
     expect(markup).toContain("10x slower");
     expect(markup).toContain("2.4x slower");
@@ -423,9 +416,7 @@ describe("AI Charts benchmark notes", () => {
     expect(markup).toContain(`href="${BLOG_SOURCES.slopCodeBench.url}"`);
     expect(markup).toContain(`href="${BLOG_SOURCES.artificialAnalysisCodingAgents.url}"`);
     expect(markup).toContain(`href="${BLOG_SOURCES.semiAnalysisOpenModels.url}"`);
-    expect(markup).toContain(`href="${BLOG_SOURCES.hranessOpenModelsReading.url}"`);
     expect(markup).toContain(`href="${BLOG_SOURCES.danLuuBenchpocalypse.url}"`);
-    expect(markup).toContain(`href="${BLOG_SOURCES.hranessBenchpocalypseReading.url}"`);
     expect(markup).toContain(`href="${BLOG_SOURCES.calvinFrenchOwenSmallModels.url}"`);
     expect(markup).toContain(`href="${BLOG_SOURCES.openAiGpt56Luna.url}"`);
     expect(markup).toContain(`href="${BLOG_SOURCES.terminalBenchScienceAnnouncement.url}"`);
