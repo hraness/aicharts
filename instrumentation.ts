@@ -1,9 +1,12 @@
 import type { Instrumentation } from "next";
 import { PostHog } from "posthog-node";
 
+import { approvedPostHogEndpoint } from "@/lib/posthog-endpoint";
+import { sanitizedServerError } from "@/lib/server-error-analytics";
+
 const allowedHosts = new Set(["aicharts.io", "www.aicharts.io"]);
 const apiKey = process.env.NEXT_PUBLIC_POSTHOG_KEY;
-const apiHost = process.env.NEXT_PUBLIC_POSTHOG_HOST ?? "https://us.i.posthog.com";
+const endpoint = approvedPostHogEndpoint(process.env.NEXT_PUBLIC_POSTHOG_HOST);
 
 function headerValue(headers: NodeJS.Dict<string | string[]>, name: string): string {
   const value = headers[name];
@@ -18,26 +21,12 @@ function hostname(headers: NodeJS.Dict<string | string[]>): string {
     .replace(/:\d+$/u, "") ?? "";
 }
 
-function sanitizeError(value: unknown): Error {
-  const source = value instanceof Error ? value : new Error("Unknown request error");
-  const safe = new Error(
-    source.message
-      .slice(0, 500)
-      .replaceAll(/https?:\/\/\S+/gu, "[url]")
-      .replaceAll(/[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}/gu, "[email]")
-      .replaceAll(/(?:token|secret|key|code)=\S+/giu, "$1=[redacted]"),
-  );
-  safe.name = source.name.slice(0, 100);
-  if (source.stack) safe.stack = source.stack.slice(0, 12_000);
-  return safe;
-}
-
 let client: PostHog | null = null;
 
 function analyticsClient(): PostHog | null {
-  if (!apiKey?.startsWith("phc_")) return null;
+  if (!apiKey?.startsWith("phc_") || endpoint === null) return null;
   client ??= new PostHog(apiKey, {
-    host: apiHost,
+    host: endpoint.apiHost,
     flushAt: 1,
     flushInterval: 0,
     maxQueueSize: 100,
@@ -53,9 +42,9 @@ export const onRequestError: Instrumentation.onRequestError = async (value, requ
   const posthog = analyticsClient();
   if (!posthog) return;
   try {
-    await posthog.captureExceptionImmediate(sanitizeError(value), "server:aicharts", {
+    await posthog.captureExceptionImmediate(sanitizedServerError(value), "server:aicharts", {
       site_id: "aicharts",
-      schema_version: 1,
+      event_schema_version: 1,
       error_surface: "server",
       request_method: request.method.slice(0, 12).toUpperCase(),
       route_type: context.routeType,

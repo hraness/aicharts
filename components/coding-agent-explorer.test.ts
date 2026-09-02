@@ -108,8 +108,8 @@ test("keeps the compact orientation and working chart ahead of deeper evidence",
   expect(overviewIndex).toBeGreaterThan(chartHeaderIndex);
   expect(childrenIndex).toBeGreaterThan(overviewIndex);
   expect(source).toContain("codingAgentDatasetSummary(snapshot)");
-  expect(source).toContain("A benchmark portfolio for the work AI systems are asked to do");
-  expect(source).toContain("Five benchmark roles cover terminal engineering, scientific workflows");
+  expect(source).toContain('<h1 id="chart-orientation-title">{homeHeading}</h1>');
+  expect(source).toContain("A five-role benchmark portfolio covers terminal engineering, scientific workflows");
   expect(source).toContain("This source still reports Terminal-Bench v2.1");
   expect(source).toContain('href={snapshot.source.url}');
   expect(source).toContain("{snapshot.source.name} source");
@@ -144,11 +144,11 @@ test("leaves only the selected benchmark description in the chart header", async
   expect(source).not.toContain('className="chart-title"');
 });
 
-test("uses a portfolio heading while keeping the domain in compact product chrome", async () => {
+test("uses the task-explicit heading while keeping the domain in compact product chrome", async () => {
   const source = await Bun.file(new URL("./coding-agent-explorer.tsx", import.meta.url)).text();
 
   expect(source).toContain('<p className="chart-heading">{brand.heading}</p>');
-  expect(source).toContain('<h1 id="chart-orientation-title">A benchmark portfolio for the work AI systems are asked to do</h1>');
+  expect(source).toContain('<h1 id="chart-orientation-title">{homeHeading}</h1>');
   expect(source.match(/<h1/gu)).toHaveLength(1);
   expect(source).not.toContain("<h1>{brand.domain}</h1>");
 });

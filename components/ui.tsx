@@ -19,6 +19,8 @@ import {
   type Ref,
 } from "react";
 
+import type { AnalyticsSurface } from "@/lib/analytics";
+
 export type SegmentedItem<Value extends string> = Readonly<{
   id: Value;
   label: ReactNode;
@@ -268,6 +270,7 @@ export function PageCanvas({
 }
 
 export function TopBar({
+  "data-analytics-surface": analyticsSurface,
   actions,
   className = "",
   isSticky = true,
@@ -275,12 +278,14 @@ export function TopBar({
 }: Readonly<{
   actions?: ReactNode;
   className?: string;
+  "data-analytics-surface"?: AnalyticsSurface;
   isSticky?: boolean;
   title: ReactNode;
 }>) {
   return (
     <header
       className={`ui-top-bar ${className}`.trim()}
+      data-analytics-surface={analyticsSurface}
       data-sticky={isSticky || undefined}
     >
       <div className="ui-top-bar__title">{title}</div>

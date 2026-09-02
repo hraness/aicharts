@@ -6,7 +6,13 @@ import {
 } from "@/app/blog/articles";
 import { HOME_EDITORIAL_SLUGS } from "@/app/blog/article-admissions";
 import { blogEditorialImage } from "@/app/blog/editorial-images";
-import { homeHeading, notFoundRecoveryLinks, site } from "@/app/site";
+import {
+  homeHeading,
+  modelCardsHeading,
+  modelCardsLede,
+  notFoundRecoveryLinks,
+  site,
+} from "@/app/site";
 import codingAgentData from "@/data/coding-agents.json";
 import gptSubsidyData from "@/data/gpt-subsidy.json";
 import terminalBenchData from "@/data/terminal-bench.json";
@@ -47,6 +53,8 @@ import {
 } from "./deep-swe-evidence";
 import {
   GPT_SUBSIDY_DESCRIPTION,
+  calculateOnePlanUpperBoundMultiple,
+  formatOnePlanUpperBoundMultiple,
   formatSubsidyDate,
   formatSubsidyTokens,
   formatSubsidyUsd,
@@ -353,7 +361,7 @@ function datasetMarkdown(snapshot: CodingAgentSnapshot): string {
     "",
     "## Terminal-Bench 4 coding standard",
     "",
-    `The homepage uses Terminal-Bench ${terminalBench.benchmark.version} as its standard agentic terminal-engineering benchmark. The checked owner snapshot contains ${terminalBench.records.length} configurations across ${terminalBench.benchmark.taskCount} tasks and ${terminalBench.benchmark.trialsPerTask} trials per task. It was retrieved ${formatRetrievedAt(terminalBench.source.retrievedAt)} from [Harbor Framework submissions at commit ${terminalBench.source.repositoryCommit.slice(0, 7)}](${terminalBench.source.submissionsDirectoryUrl}).`,
+    `The homepage uses Terminal-Bench ${terminalBench.benchmark.version} as its standard agentic terminal-engineering benchmark. The checked owner snapshot contains ${terminalBench.records.length} configurations from the official [Harbor Framework submissions](${terminalBench.source.submissionsDirectoryUrl}) at [commit ${terminalBench.source.repositoryCommit.slice(0, 7)}](${terminalBench.source.repositoryCommitUrl}), committed on ${formatRetrievedAt(terminalBench.source.repositoryCommittedAt)}, with ${terminalBench.benchmark.taskCount} tasks and ${terminalBench.benchmark.trialsPerTask} trials per task. AI Charts retrieved it on ${formatRetrievedAt(terminalBench.source.retrievedAt)}.`,
     "",
     "Terminal-Bench 4 is a breaking exam generation. Its results remain separate from the Terminal-Bench v2.1 field in the Artificial Analysis dataset below. Every TB4 JSON row retains the model, agent, agent version, effort, accuracy, 95% confidence interval, trials, cost, tokens, duration, and pinned source files.",
     "",
@@ -361,7 +369,7 @@ function datasetMarkdown(snapshot: CodingAgentSnapshot): string {
     "",
     "## Terminal-Bench-Science 0.1",
     "",
-    `The checked scientific-workflow snapshot contains ${terminalBenchScience.records.length} owner-published system configurations across ${terminalBenchScience.benchmark.taskCount} tasks and ${terminalBenchScience.benchmark.trialsPerTask} trials per task. It was retrieved ${formatRetrievedAt(terminalBenchScience.source.retrievedAt)} and is pinned to [v0.1.0 release commit ${terminalBenchScience.source.releaseCommit.slice(0, 7)}](${terminalBenchScience.source.releaseCommitUrl}).`,
+    `The checked scientific-workflow snapshot published by [${terminalBenchScience.source.name}](${terminalBenchScience.source.repositoryUrl}) contains ${terminalBenchScience.records.length} owner-published system configurations across ${terminalBenchScience.benchmark.taskCount} tasks and ${terminalBenchScience.benchmark.trialsPerTask} trials per task. It is pinned to [v0.1.0 release commit ${terminalBenchScience.source.releaseCommit.slice(0, 7)}](${terminalBenchScience.source.releaseCommitUrl}). The release has the persistent citation [${terminalBenchScience.source.releaseDoiUrl}](${terminalBenchScience.source.releaseDoiUrl}), and the owner leaderboard was updated on ${formatRetrievedAt(terminalBenchScience.source.leaderboardUpdatedAt)}. AI Charts retrieved it on ${formatRetrievedAt(terminalBenchScience.source.retrievedAt)}.`,
     "",
     "Every row keeps the model, harness, reasoning effort, resolution rate, binomial standard error, trial count, evaluation cost, token use, per-domain metrics, and owner-published source link. Terminal-Bench-Science remains separate from general terminal engineering and does not feed a composite score. Owner-published aggregate and per-domain costs are retained independently and are not forced to reconcile.",
     "",
@@ -450,7 +458,9 @@ function modelCardsMarkdown(): string {
     FIRST_PARTY_RELEASE_HIGHLIGHTS.flatMap(release => release.namedModels),
   );
   return joinMarkdown([
-    "# Model cards",
+    `# ${modelCardsHeading}`,
+    "",
+    modelCardsLede,
     "",
     `${MODEL_CARD_PRESENTATIONS.length} model-and-profile benchmark cards from the current Artificial Analysis coding-agents snapshot. Cataloged cards use canonical model-and-profile routes. Newly observed identities or profile settings receive deterministic provisional routes so a data refresh can publish without manual intervention. Cards show observed ranges when multiple agent harnesses evaluated the same configuration.`,
     "",
@@ -531,6 +541,12 @@ export function gptSubsidyMarkdown(
   snapshot: GptSubsidySnapshot = checkedGptSubsidySnapshot(),
 ): string {
   const latest = latestGptSubsidyObservation(snapshot);
+  const onePlanUpperBound = formatOnePlanUpperBoundMultiple(
+    calculateOnePlanUpperBoundMultiple(
+      snapshot.periodSummary.apiEquivalentUsd,
+      snapshot.plan.monthlyPriceUsd,
+    ),
+  );
   const rows = snapshot.observations.map(observation => [
     formatSubsidyDate(observation.observedAt),
     `${formatSubsidyDate(observation.periodStartedAt)}–${formatSubsidyDate(observation.periodEndsAt)}`,
@@ -550,15 +566,15 @@ export function gptSubsidyMarkdown(
     "",
     `The latest measured trailing-seven-day API-retail-equivalent value is ${formatSubsidyUsd(latest.trailingSevenDayApiEquivalentUsd)}. It covers seven complete UTC days and is not projected into a monthly value.`,
     "",
-    `Across the measured trailing ${snapshot.periodSummary.days}-day period, local Codex usage has an API-retail-equivalent value of ${formatSubsidyUsd(snapshot.periodSummary.apiEquivalentUsd)}.`,
+    `Across the measured trailing ${snapshot.periodSummary.days}-day period, local Codex usage has an API-retail-equivalent value of ${formatSubsidyUsd(snapshot.periodSummary.apiEquivalentUsd)}. Dividing that value by one ${formatSubsidyUsd(snapshot.plan.monthlyPriceUsd)} plan produces a ${onePlanUpperBound} one-plan comparison upper bound before switched-account adjustment.`,
     "",
-    "This is one user's available local Codex logs on one machine. It is not a platform-wide or representative ChatGPT Pro estimate. Historical logs span account switches without durable account attribution. The subscription-adjusted multiple is therefore unavailable rather than calculated against one $200 subscription. API-key or otherwise API-billed usage, purchased ChatGPT credits, free or reset credits, and temporary promotions cannot be separated.",
+    "This is one user's available local Codex logs on one machine. It is not a platform-wide or representative ChatGPT Pro estimate. The one-plan upper bound is not a subscription-adjusted multiple and does not estimate how many subscriptions supplied that usage. Historical logs span account switches without durable account attribution, so the true subscription-spend-adjusted multiple is lower but unknown. API-key or otherwise API-billed usage, purchased ChatGPT credits, free or reset credits, and temporary promotions cannot be separated.",
     "",
     "## History",
     "",
     table,
     "",
-    "No monthly projection, one-plan normalization, quota-exhaustion estimate, or per-refill projection is published for this historical period. Current allowance state cannot be joined reliably to historical session usage across authentication, subscription, or credit-source changes.",
+    "No monthly projection, quota-exhaustion estimate, or per-refill projection is published for this historical period. The only plan-denominated figure is the explicitly bounded trailing-period API-equivalent value divided by one plan; it is not adjusted for the unknown number of accounts or subscriptions. Current allowance state cannot be joined reliably to historical session usage across authentication, subscription, or credit-source changes.",
     "",
     "## Calculation",
     "",

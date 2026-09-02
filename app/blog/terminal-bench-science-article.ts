@@ -140,6 +140,18 @@ export function createTerminalBenchScienceArticle(
       "artificialAnalysisCodingAgents",
     ],
     relatedSlugs: ["aa-index-cost-coding-agents"],
+    nextStep: {
+      title: "Inspect the version-pinned scientific benchmark",
+      description:
+        "Open the checked Terminal-Bench-Science 0.1 source, method, and machine-readable snapshot behind the homepage view.",
+      links: [
+        { href: "/data#terminal-bench-science", label: "Data and method" },
+        {
+          href: "/data/terminal-bench-science-0-1.json",
+          label: "Terminal-Bench-Science JSON",
+        },
+      ],
+    },
     body: [
       paragraph(
         { href: BLOG_SOURCES.terminalBenchScienceAnnouncement.url, text: "Terminal-Bench-Science 0.1" },

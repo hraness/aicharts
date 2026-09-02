@@ -38,7 +38,7 @@ import {
   modelReleaseRadarHighlightsExcluding,
 } from "@/lib/model-release-collection";
 
-import { searchSite } from "../site";
+import { modelCardsHeading, modelCardsLede, searchSite } from "../site";
 
 const MODEL_RELEASE_RADAR_PAGE_HIGHLIGHTS = modelReleaseRadarHighlightsExcluding(
   FIRST_PARTY_RELEASE_HIGHLIGHTS.flatMap(release => release.namedModels),
@@ -96,9 +96,14 @@ export default function ModelCardsPage() {
   ));
   const gridId = "model-card-grid";
   return (
-    <main className="model-card-gallery" id="model-cards-content">
-      <header className="model-card-gallery__header">
-        <h1>Model cards</h1>
+    <main
+      className="model-card-gallery"
+      data-analytics-surface="models_gallery"
+      id="model-cards-content"
+    >
+      <header className="model-card-gallery__header" data-analytics-surface="models_header">
+        <h1>{modelCardsHeading}</h1>
+        <p className="model-card-gallery__lede">{modelCardsLede}</p>
         <p className="model-card-gallery__meta">
           <span>{MODEL_CARD_PRESENTATIONS.length} benchmark profiles across {providers.length} providers</span>
           <span>
@@ -112,6 +117,7 @@ export default function ModelCardsPage() {
         <section
           aria-labelledby="first-party-release-radar-title"
           className="model-release-radar"
+          data-analytics-surface="model_release_radar"
         >
           <div className="model-release-radar__heading">
             <p>First-party release radar</p>
@@ -160,6 +166,7 @@ export default function ModelCardsPage() {
         <section
           aria-labelledby="model-release-radar-title"
           className="model-release-radar"
+          data-analytics-surface="model_release_radar"
         >
           <div className="model-release-radar__heading">
             <p>Release radar</p>

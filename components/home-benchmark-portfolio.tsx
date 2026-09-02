@@ -148,7 +148,13 @@ function TerminalBenchSnapshot({
           </h3>
         </div>
         <p className="terminal-bench-snapshot__provenance">
-          <a href={snapshot.sourceUrl}>{snapshot.sourceLabel}</a>
+          <a
+            data-analytics-destination-id="source:terminal-bench"
+            data-analytics-destination-kind="source"
+            href={snapshot.sourceUrl}
+          >
+            {snapshot.sourceLabel}
+          </a>
           {retrievalDate === null ? null : (
             <>
               {" · Retrieved "}
@@ -250,7 +256,13 @@ function TerminalBenchScienceSnapshot({
           </h3>
         </div>
         <p className="terminal-bench-snapshot__provenance">
-          <a href={snapshot.sourceUrl}>{snapshot.sourceLabel}</a>
+          <a
+            data-analytics-destination-id="source:terminal-bench-science"
+            data-analytics-destination-kind="source"
+            href={snapshot.sourceUrl}
+          >
+            {snapshot.sourceLabel}
+          </a>
           {retrievalDate === null ? null : (
             <>
               {" · Retrieved "}
@@ -327,6 +339,7 @@ export function HomeBenchmarkPortfolio({
       aria-describedby="home-benchmark-portfolio-summary"
       aria-labelledby="home-benchmark-portfolio-title"
       className="home-benchmark-portfolio"
+      data-analytics-surface="home_portfolio"
     >
       <header className="home-benchmark-portfolio__header">
         <p className="home-benchmark-portfolio__label">Benchmark selection</p>
@@ -354,7 +367,13 @@ export function HomeBenchmarkPortfolio({
                 <th scope="row">{benchmark.signal}</th>
                 <td>
                   <span className="home-benchmark-portfolio__benchmark-name">
-                    <a href={benchmark.sourceUrl}>{benchmark.name}</a>
+                    <a
+                      data-analytics-destination-id={`source:${benchmark.id}`}
+                      data-analytics-destination-kind="source"
+                      href={benchmark.sourceUrl}
+                    >
+                      {benchmark.name}
+                    </a>
                     <span>{benchmark.version}</span>
                     {benchmark.standard === true ? (
                       <strong className="home-benchmark-portfolio__standard">Standard</strong>
@@ -385,7 +404,11 @@ export function HomeBenchmarkPortfolio({
             Supplemental · closed
           </p>
           <h3 id="home-benchmark-supplement-title">
-            <a href={SUPPLEMENTAL_CODING_BENCHMARK.sourceUrl}>
+            <a
+              data-analytics-destination-id="source:cursorbench"
+              data-analytics-destination-kind="source"
+              href={SUPPLEMENTAL_CODING_BENCHMARK.sourceUrl}
+            >
               {SUPPLEMENTAL_CODING_BENCHMARK.name} {SUPPLEMENTAL_CODING_BENCHMARK.version}
             </a>
           </h3>

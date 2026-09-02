@@ -1,24 +1,28 @@
 import posthog from "posthog-js";
 import type { PostHogConfig } from "posthog-js";
 
-import { pageAnalyticsContext } from "@/lib/page-analytics";
+import { normalizedPageAnalyticsProperties } from "@/lib/page-analytics";
+import { approvedPostHogEndpoint } from "@/lib/posthog-endpoint";
 
 const token = process.env.NEXT_PUBLIC_POSTHOG_KEY;
-const host = process.env.NEXT_PUBLIC_POSTHOG_HOST ?? "https://us.i.posthog.com";
+const endpoint = approvedPostHogEndpoint(process.env.NEXT_PUBLIC_POSTHOG_HOST);
 const allowedHost = window.location.hostname === "aicharts.io"
   || window.location.hostname === "www.aicharts.io";
 
 const privacyConfig = {
-  api_host: host,
-  ui_host: host.includes("eu.i.posthog.com") ? "https://eu.posthog.com" : "https://us.posthog.com",
+  api_host: endpoint?.apiHost ?? "https://us.i.posthog.com",
+  ui_host: endpoint?.uiHost ?? "https://us.posthog.com",
   before_send(event) {
     if (event === null) return null;
+    if (event.event === "$$client_ingestion_warning") return null;
+    const eventLocation = event.properties?.$current_url
+      ?? window.location.pathname;
     return {
       ...event,
-      properties: {
-        ...event.properties,
-        ...pageAnalyticsContext(window.location.pathname),
-      },
+      properties: normalizedPageAnalyticsProperties(
+        eventLocation,
+        event.properties,
+      ),
     };
   },
   defaults: "2026-05-30",
@@ -56,6 +60,11 @@ const privacyConfig = {
   rate_limiting: { events_per_second: 2, events_burst_limit: 12 },
 } satisfies Partial<PostHogConfig>;
 
-if (process.env.NODE_ENV === "production" && allowedHost && token?.startsWith("phc_")) {
+if (
+  process.env.NODE_ENV === "production"
+  && allowedHost
+  && endpoint !== null
+  && token?.startsWith("phc_")
+) {
   posthog.init(token, privacyConfig);
 }

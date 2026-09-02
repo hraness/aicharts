@@ -5,6 +5,7 @@ import {
   ModelCardGalleryFilters,
   ModelCardGalleryItems,
   modelCardFilterFromSearch,
+  modelCardFilterResultCount,
   modelCardFilterSearch,
   modelCardGalleryItemOrder,
   modelCardMatchesFilter,
@@ -82,6 +83,33 @@ describe("model-card gallery filters", () => {
     expect(modelCardMatchesFilter(topOne, "one", true)).toBeTrue();
     expect(modelCardMatchesFilter(ordinaryOne, "one", true)).toBeFalse();
     expect(modelCardMatchesFilter(topTwo, "one", true)).toBeFalse();
+  });
+
+  test("reports the visible result count for each controlled filter state", () => {
+    expect(modelCardFilterResultCount(
+      { providerId: "", sort: "", topOnly: false },
+      providers,
+      1,
+      3,
+    )).toBe(3);
+    expect(modelCardFilterResultCount(
+      { providerId: "one", sort: "", topOnly: false },
+      providers,
+      1,
+      3,
+    )).toBe(2);
+    expect(modelCardFilterResultCount(
+      { providerId: "one", sort: "new", topOnly: true },
+      providers,
+      1,
+      3,
+    )).toBe(1);
+    expect(modelCardFilterResultCount(
+      { providerId: "two", sort: "", topOnly: true },
+      providers,
+      1,
+      3,
+    )).toBe(0);
   });
 
   test("sorts official release dates in real DOM order without changing filtering", () => {

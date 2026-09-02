@@ -17,6 +17,8 @@ import {
   type ReactNode,
 } from "react";
 
+import { captureAnalyticsEvent } from "@/lib/analytics";
+
 export type ModelCardProviderFilter = Readonly<{
   color: string;
   count: number;
@@ -106,6 +108,17 @@ export function modelCardMatchesFilter(
     && (!topOnly || card.isTop);
 }
 
+export function modelCardFilterResultCount(
+  filter: ModelCardFilterState,
+  providers: readonly ModelCardProviderFilter[],
+  topCount: number,
+  totalCount: number,
+): number {
+  const provider = providers.find(candidate => candidate.id === filter.providerId);
+  if (provider === undefined) return filter.topOnly ? topCount : totalCount;
+  return filter.topOnly ? provider.topCount : provider.count;
+}
+
 export type ModelCardGalleryItemMetadata = Readonly<{
   isTop: boolean;
   providerId: string;
@@ -173,9 +186,12 @@ export function ModelCardGalleryFilters({
   const topDefinitionId = useId();
   const { providerId, sort, topOnly } = filter;
   const selectedProvider = providers.find(provider => provider.id === providerId);
-  const visibleCount = selectedProvider === undefined
-    ? (topOnly ? topCount : totalCount)
-    : (topOnly ? selectedProvider.topCount : selectedProvider.count);
+  const visibleCount = modelCardFilterResultCount(
+    filter,
+    providers,
+    topCount,
+    totalCount,
+  );
   const resultStatus = visibleCount === 0
     ? "No model cards match the selected filters."
     : [
@@ -216,11 +232,23 @@ export function ModelCardGalleryFilters({
             aria-controls={gridId}
             className="model-card-gallery__provider-filter"
             label="Provider"
-            onChange={nextProviderId => pushFilterToURL({
-              providerId: nextProviderId,
-              sort,
-              topOnly,
-            })}
+            onChange={nextProviderId => {
+              const nextFilter = { providerId: nextProviderId, sort, topOnly };
+              pushFilterToURL(nextFilter);
+              captureAnalyticsEvent({
+                name: "model cards filtered",
+                properties: {
+                  filter_dimension: "provider",
+                  filter_value: nextProviderId === "" ? "all" : nextProviderId,
+                  result_count: modelCardFilterResultCount(
+                    nextFilter,
+                    providers,
+                    topCount,
+                    totalCount,
+                  ),
+                },
+              });
+            }}
             options={providerOptions}
             showLabel={false}
             value={providerId}
@@ -233,7 +261,23 @@ export function ModelCardGalleryFilters({
             className="model-card-gallery__scope-filter"
             data-filter="top"
             data-selected={topOnly || undefined}
-            onClick={() => pushFilterToURL({ providerId, sort, topOnly: !topOnly })}
+            onClick={() => {
+              const nextFilter = { providerId, sort, topOnly: !topOnly };
+              pushFilterToURL(nextFilter);
+              captureAnalyticsEvent({
+                name: "model cards filtered",
+                properties: {
+                  filter_dimension: "top_only",
+                  filter_value: nextFilter.topOnly ? "enabled" : "disabled",
+                  result_count: modelCardFilterResultCount(
+                    nextFilter,
+                    providers,
+                    topCount,
+                    totalCount,
+                  ),
+                },
+              });
+            }}
             type="button"
           >
             <i aria-hidden="true" />
@@ -250,11 +294,27 @@ export function ModelCardGalleryFilters({
             className="model-card-gallery__scope-filter"
             data-filter="new"
             data-selected={sort === "new" || undefined}
-            onClick={() => pushFilterToURL({
-              providerId,
-              sort: sort === "new" ? "" : "new",
-              topOnly,
-            })}
+            onClick={() => {
+              const nextFilter: ModelCardFilterState = {
+                providerId,
+                sort: sort === "new" ? "" : "new",
+                topOnly,
+              };
+              pushFilterToURL(nextFilter);
+              captureAnalyticsEvent({
+                name: "model cards filtered",
+                properties: {
+                  filter_dimension: "sort",
+                  filter_value: nextFilter.sort === "new" ? "new" : "default",
+                  result_count: modelCardFilterResultCount(
+                    nextFilter,
+                    providers,
+                    topCount,
+                    totalCount,
+                  ),
+                },
+              });
+            }}
             type="button"
           >
             <i aria-hidden="true" />

@@ -112,7 +112,7 @@ export default function GptSubsidyPage() {
   );
 
   return (
-    <main id="gpt-subsidy-content">
+    <main data-analytics-surface="gpt_subsidy" id="gpt-subsidy-content">
       <JsonLdScript
         data={subsidyDatasetJsonLd(snapshot)}
         id="aicharts-gpt-subsidy-structured-data"

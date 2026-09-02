@@ -21,7 +21,11 @@ export function HomeEditorialResources({
   imageForSlug = blogEditorialImage,
 }: HomeEditorialResourcesProps = {}) {
   return (
-    <section aria-labelledby="home-editorial-title" className="home-editorial">
+    <section
+      aria-labelledby="home-editorial-title"
+      className="home-editorial"
+      data-analytics-surface="home_editorial"
+    >
       <div className="home-editorial__heading">
         <div>
           <h2 id="home-editorial-title">Model and benchmark analysis</h2>

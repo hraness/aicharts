@@ -43,7 +43,7 @@
 - Regenerate `lib/chart-colors.generated.ts` through the checked iWantHue script. Do not hand-edit generated files.
 - Keep pointer, keyboard, focus, and touch behavior equivalent. Preserve semantic landmarks, accessible names, visible focus, and responsive horizontal chart panning.
 - Give every ordinary themed page exactly one shared icon-menu appearance control as the final action in its header. Do not put appearance controls in footers, content, or fallback action rows.
-- Keep analytics cookieless and production-only. Add only allowlisted events with controlled properties; do not send URLs, query strings, free-form text, identities, or persistent identifiers.
+- Keep analytics cookieless and production-only, and follow `docs/analytics-instrumentation.md`. Route capture through the typed `lib/analytics.ts` allowlist; do not import PostHog from feature code or send raw URLs, query strings, hashes, referrer paths, free-form text, visitor identities, or persistent identifiers. Bounded public content, provider, benchmark, model, profile, and source IDs are allowed.
 - Bind the shared footer to the `aicharts` audience, require the checked public Turnstile widget key, and keep newsletter consent separate from product use and every other Hraness audience.
 - Never expose `POSTHOG_API_KEY`, commit credentials, or provider secrets in browser variables, source, logs, fixtures, or documentation.
 - Run narrow tests while iterating and `bun run check` before handoff.

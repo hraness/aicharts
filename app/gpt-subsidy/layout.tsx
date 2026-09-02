@@ -8,7 +8,7 @@ export default function GptSubsidyLayout({
   return (
     <div className="plain-site plain-publication aicharts-gpt-subsidy">
       <SkipLink href="#gpt-subsidy-content">Skip to subsidy chart</SkipLink>
-      <header className="plain-header">
+      <header className="plain-header" data-analytics-surface="global_header">
         <div className="plain-header__inner">
           <Link className="plain-wordmark" href="/">
             aicharts.io

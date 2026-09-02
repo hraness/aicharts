@@ -9,7 +9,7 @@ export default function DataLayout({
   return (
     <div className="plain-site plain-publication aicharts-data">
       <SkipLink href="#data-content">Skip to dataset details</SkipLink>
-      <header className="plain-header">
+      <header className="plain-header" data-analytics-surface="global_header">
         <div className="plain-header__inner">
           <Link className="plain-wordmark" href="/">
             aicharts.io

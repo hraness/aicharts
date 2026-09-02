@@ -13,7 +13,7 @@ export type RouteErrorProps = Readonly<{
 export function RouteErrorState({ error, reset }: RouteErrorProps) {
   useEffect(() => { console.error(error); }, [error]);
   return (
-    <main className="route-state">
+    <main className="route-state" data-analytics-surface="error_recovery">
       <p>Something went wrong while drawing the chart.</p>
       <button onClick={reset} type="button">Try again</button>
     </main>
@@ -26,7 +26,7 @@ export function RouteLoadingState() {
 
 export function RouteNotFoundState() {
   return (
-    <main className="route-state">
+    <main className="route-state" data-analytics-surface="error_recovery">
       <h1>Page not found</h1>
       <p>This path does not exist on AI Charts.</p>
       <nav aria-label="Where to look next">

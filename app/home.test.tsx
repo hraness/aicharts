@@ -3,7 +3,6 @@ import { describe, expect, test } from "bun:test";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
-import { HomeDocument } from "@/components/home-document";
 import { HomeLeaders } from "@/components/home-leaders";
 import {
   HOME_EDITORIAL_SLUGS,
@@ -17,7 +16,6 @@ import {
   currentCodingAgentBenchmarkLeaders,
   formatBenchmarkScore,
 } from "@/lib/coding-agent-dataset";
-import { homeDocumentModel, homeDocumentText } from "@/lib/site-markdown";
 
 import Home from "./page";
 
@@ -25,7 +23,7 @@ const parsed = parseCodingAgentSnapshot(codingAgentData);
 if (!parsed.ok) throw parsed.error;
 const snapshot = parsed.value;
 
-describe("homepage agent document", () => {
+describe("homepage canonical content", () => {
   test("server-renders the accessible leaders table without a duplicate marketing heading", () => {
     const markup = renderToStaticMarkup(createElement(HomeLeaders, { snapshot }));
     const leaders = currentCodingAgentBenchmarkLeaders(snapshot);
@@ -47,25 +45,6 @@ describe("homepage agent document", () => {
       expect(markup).toContain(formatBenchmarkScore(leader.value));
     }
     expect(markup).not.toContain("Loading chart");
-  });
-
-  test("keeps the clipped document on the server page for discovery", () => {
-    const document = homeDocumentModel(snapshot);
-    const markup = renderToStaticMarkup(createElement(HomeDocument, { document, snapshot }));
-    const text = homeDocumentText(snapshot);
-
-    expect(markup).toContain('class="home-document"');
-    expect(markup).not.toContain("<h1");
-    expect(markup).not.toContain('id="coding-agent-snapshot"');
-    expect(markup).toContain('href="/data"');
-    expect(markup).toContain('href="/blog/aa-index-cost-coding-agents"');
-    expect(markup).toContain('href="/blog/open-models-coding-agent-benchmarks"');
-    expect(markup).toContain('href="/blog/small-models-have-arrived"');
-    expect(markup).toContain('href="/blog/terminal-bench-science"');
-    expect(markup).toContain('href="/blog/coding-agent-score-holdouts"');
-    expect(markup).toContain('href="/llms.txt"');
-    expect(markup).toContain('href="/sitemap.xml"');
-    expect(text).toContain(document.paragraphs[0] ?? "");
   });
 
   test("shows a small, role-distinct editorial module", () => {
@@ -110,18 +89,17 @@ describe("homepage agent document", () => {
     const portfolioAt = source.indexOf("<HomeBenchmarkPortfolio");
     const resourcesAt = source.indexOf("<HomeEditorialResources");
     const explorerAt = source.indexOf("<CodingAgentExplorer");
-    const documentAt = source.indexOf("<HomeDocument");
     const explorerEndAt = source.indexOf("</CodingAgentExplorer>");
     const loadingAt = source.indexOf("Loading chart");
 
     expect(portfolioAt).toBeGreaterThan(-1);
     expect(explorerAt).toBeLessThan(portfolioAt);
     expect(resourcesAt).toBeGreaterThan(portfolioAt);
-    expect(documentAt).toBeGreaterThan(resourcesAt);
-    expect(documentAt).toBeGreaterThan(portfolioAt);
-    expect(explorerEndAt).toBeGreaterThan(documentAt);
+    expect(explorerEndAt).toBeGreaterThan(resourcesAt);
     expect(loadingAt).toBe(-1);
     expect(source).toContain("heading: site.domain");
+    expect(source).not.toContain("HomeDocument");
+    expect(source).not.toContain("homeDocumentModel");
     expect(existsSync(new URL("./loading.tsx", import.meta.url))).toBeFalse();
     expect(Home.name).toBe("Home");
 
@@ -142,13 +120,17 @@ describe("homepage agent document", () => {
     expect(chartAt).toBeGreaterThan(chartFamilyAt);
     expect(renderedResourcesAt).toBeGreaterThan(chartAt);
     expect(mainEndAt).toBeGreaterThan(renderedResourcesAt);
-    expect(markup).toContain("A benchmark portfolio for the work AI systems are asked to do");
+    expect(markup).toContain(
+      '<h1 id="chart-orientation-title">AI model and agent comparison charts</h1>',
+    );
+    expect(markup).toContain("A five-role benchmark portfolio covers terminal engineering");
     expect(markup).toContain("Five benchmark roles, one coding standard");
     expect(markup).toContain("Terminal-Bench 4.0.0 snapshot");
     expect(markup).toContain("Terminal-Bench-Science 0.1.0 snapshot");
     expect(markup).toContain("GPT-5.6 Sol");
     expect(markup).toContain("Scientific workflows");
     expect(markup).toContain("This source still reports Terminal-Bench v2.1");
+    expect(markup).not.toContain('class="home-document"');
     expect(markup.match(/<h1(?:\s|>)/gu)).toHaveLength(1);
     expect(markup).toContain('<option value="deepSwe" selected="">DSWE</option>');
     expect(markup).toContain('<strong>DeepSWE</strong>');

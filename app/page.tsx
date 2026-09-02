@@ -5,13 +5,11 @@ import terminalBenchData from "@/data/terminal-bench.json";
 import terminalBenchScienceData from "@/data/terminal-bench-science.json";
 import { CodingAgentExplorer } from "@/components/coding-agent-explorer";
 import { HomeBenchmarkPortfolio } from "@/components/home-benchmark-portfolio";
-import { HomeDocument } from "@/components/home-document";
 import { HomeEditorialResources } from "@/components/home-editorial-resources";
 import { ProjectAskAiAboutThis } from "@/components/project-ask-ai-about-this";
 import { RouteLoadingState } from "@/components/route-state";
 import { parseCodingAgentSnapshot } from "@/lib/coding-agent-data";
 import { MODEL_CARD_VARIANTS } from "@/lib/model-card-collection";
-import { homeDocumentModel } from "@/lib/site-markdown";
 import { parseTerminalBenchSnapshot } from "@/lib/terminal-bench-data";
 import { parseTerminalBenchScienceSnapshot } from "@/lib/terminal-bench-science-data";
 
@@ -93,7 +91,6 @@ export default function Home() {
           snapshot={parsed.value}
         >
           <HomeEditorialResources />
-          <HomeDocument document={homeDocumentModel(parsed.value)} snapshot={parsed.value} />
         </CodingAgentExplorer>
       </Suspense>
       <ProjectAskAiAboutThis url={site.origin} />

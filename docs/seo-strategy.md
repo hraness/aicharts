@@ -123,7 +123,7 @@ Search Console is authoritative before arrival:
 - average search position;
 - indexing and sitemap health.
 
-PostHog is authoritative after arrival:
+PostHog provides directional product analytics after arrival:
 
 - pageviews by `traffic_channel`, `$search_engine`, and controlled `canonical_path`;
 - visits to the chart and research collection;
@@ -133,39 +133,43 @@ PostHog is authoritative after arrival:
 
 Google documents why [Search Console and analytics measure different systems](https://developers.google.com/search/docs/monitor-debug/google-analytics-search-console). Query and ranking conclusions must therefore come from Search Console, not referrer data alone.
 
-The pinned [AI Charts: Search & Content dashboard](https://us.posthog.com/project/543694/dashboard/1995999) contains weekly acquisition channels, organic search engines, landing pages, and qualified chart interactions over a rolling 90 days. Add `content chart opened` to that dashboard only after the first production event verifies its live schema.
+The pinned [AI Charts: Search & Content dashboard](https://us.posthog.com/project/543694/dashboard/1995999) contains weekly acquisition channels, organic search engines, landing pages, and qualified interactions over a rolling 90 days. Search Console remains authoritative for queries, rankings, impressions, and search clicks; PostHog can undercount browsers that block its analytics client or ingest requests.
 
 ### Controlled page properties
 
-`instrumentation-client.ts` adds these bounded values to every production event:
+`instrumentation-client.ts` adds bounded values to every production event. `canonical_path` groups dynamic routes, while `content_id` retains a validated public article or model-card identifier so content performance remains distinguishable. `context_schema_version=3` versions that page context; `event_schema_version=2` marks typed product events and `1` marks SDK-generated page, leave, and Web Vitals events.
 
-| Property | Allowed values |
-| --- | --- |
-| `site_id` | `aicharts` |
-| `canonical_domain` | `aicharts.io` |
-| `analytics_schema_version` | `2` |
-| `canonical_path` | `/`, `/data`, `/models`, `/models/[model]/[profile]`, `/blog`, `/blog/[article]`, `/gpt-subsidy`, `/[other]` |
-| `page_kind` | `benchmark_chart`, `benchmark_data`, `model_cards`, `model_card`, `blog_index`, `blog_article`, `gpt_subsidy`, `other` |
-| `content_group` | `ai_comparison`, `benchmark_research`, `site` |
+The browser rewrites automatic current, entry, and previous-page URLs to `https://aicharts.io` plus a grouped path. It reduces referrers to origins, validates acquisition domains, and removes raw external-click URLs, query-derived campaign values, query strings, and hashes. Unknown and invalid paths collapse to `/[other]` with `content_id=other`.
 
-The grouped article path deliberately avoids sending slugs, URLs, query strings, free-form text, identities, or persistent identifiers.
+The complete property, privacy, and version contract lives in [`analytics-instrumentation.md`](analytics-instrumentation.md).
 
 ### Product events
 
-| Event | Controlled properties | Qualified behavior |
-| --- | --- | --- |
-| `content chart opened` | `source_kind`, `destination_chart` | A reader chooses to move from research into the current comparison. |
-| `chart metric selected` | `axis`, `metric` | A visitor changes a comparison dimension. |
-| `chart selection pinned` | `provider_id`, `selection_kind` | A visitor focuses a model or provider for closer comparison. |
-| `chart shared` | `share_method`, `x_metric`, `y_metric` | A visitor exports or shares a configured chart. |
+One typed allowlist covers chart and model-card interactions, filtering, sharing, content-to-chart movement, public-anchor clicks, and footer signup requests. A root delegated listener classifies every public anchor into controlled `surface`, `link_kind`, `destination_kind`, and `destination_id` properties. It never sends link text or a raw href, query, or hash.
 
-PostHog remains cookieless, memory-only, and person-profile-free. The implementation follows PostHog's guidance for [custom events](https://posthog.com/docs/libraries/js/usage) and uses `before_send` only to add controlled first-party context without removing required internal properties.
+`newsletter signup request submitted` records form-submit intent only. An accepted request requires an explicit shared-footer or Accounts success callback; a confirmed subscription requires Accounts provider evidence. Do not infer either state from DOM text, fetch interception, or the presence of a request event.
+
+PostHog remains cookieless, memory-only, and person-profile-free. Feature code captures only through `lib/analytics.ts`; a repository guard rejects direct PostHog imports and capture calls outside the adapter and framework entrypoints.
 
 ## Baseline
 
-The 30-day window from July 15 through August 14, 2026 UTC contained 31 pageviews: 25 direct, 5 organic search, and 1 internal. The organic visits reported Bing for 4 pageviews and Google for 1. The only observed canonical paths were `/` with 25 pageviews and `/blog` with 6. Visitors recorded 7 metric selections and 5 pinned comparisons.
+The rolling 30-day PostHog checkpoint reviewed on September 2, 2026 contained 594 visitors, 994 views, and 629 sessions, with a 2 minute 29 second average session and 53% bounce rate. This is directional product analytics, not Search Console truth. PostHog's reverse-proxy warning estimates that ad blocking may still suppress 10–25% of traffic.
 
-This is a continuity baseline, not evidence that the broader positioning is working. The sample is small, and its page events still carry the predecessor `codingchart.com` canonical-domain value. The first useful AI Charts measurement checkpoint begins when production events report `canonical_domain = aicharts.io` and `site_id = aicharts`.
+| Page | Visitors | Views | Bounce rate |
+| --- | ---: | ---: | ---: |
+| `/` | 301 | 403 | 43.2% |
+| `/gpt-subsidy` | 161 | 213 | 42.3% |
+| `/data` | 55 | 55 | 84.6% |
+| `/models` | 43 | 113 | 41.5% |
+| `/blog` | 34 | 38 | 84.6% |
+| `/blog/terminal-bench-science` | 21 | 28 | 57.1% |
+| `/blog/aa-index-cost-coding-agents` | 10 | 10 | 100% |
+
+The channel report showed 348 direct visitors and 619 views, 119 Organic Social visitors and 201 views, 101 Referral visitors and 143 views, 27 Organic Search visitors and 28 views, and 2 AI visitors and 2 views. Visitors can appear in more than one channel. Identified search-engine traffic included 14 Bing views and 12 Google views.
+
+Aggregate Web Vitals were healthy overall: INP 113 ms, LCP 2.08 s, FCP 2.45 s, and CLS 0. There were no configured conversion goals, production mailing events, or subscriber-warehouse table available to this review, so the checkpoint cannot answer how many readers requested, accepted, or confirmed a newsletter subscription.
+
+The literal 404 `/some-path-that-does-not-exist` had 12 one-view visitors—8 direct and 4 attributed to Bing—with no outbound events, repository link, or current search result. Treat it as likely synthetic or stale-index noise, not a landing page to optimize. Grouping it under `/[other]` is intentional.
 
 ## Review cadence
 

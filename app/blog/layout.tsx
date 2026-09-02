@@ -9,7 +9,7 @@ export default function BlogLayout({
   return (
     <div className="plain-site plain-publication aicharts-blog">
       <SkipLink href="#blog-content">Skip to benchmark notes</SkipLink>
-      <header className="plain-header">
+      <header className="plain-header" data-analytics-surface="global_header">
         <div className="plain-header__inner">
           <Link className="plain-wordmark" href="/">
             aicharts.io

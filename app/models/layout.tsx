@@ -12,6 +12,7 @@ export default function ModelsLayout({ children }: Readonly<{ children: ReactNod
     <div className="model-cards-site">
       <SkipLink href="#model-cards-content">Skip to model cards</SkipLink>
       <TopBar
+        data-analytics-surface="global_header"
         actions={(
           <>
             <nav aria-label="Model card navigation" className="model-cards-nav">

@@ -70,7 +70,11 @@ export default async function BlogArticlePage({
   const editorialImage = blogEditorialImage(article.slug);
 
   return (
-    <main className="plain-publication__article" id="blog-content">
+    <main
+      className="plain-publication__article"
+      data-analytics-surface="blog_article"
+      id="blog-content"
+    >
       <JsonLdScript
         data={[
           blogArticleJsonLd(article),
@@ -83,7 +87,10 @@ export default async function BlogArticlePage({
         id="aicharts-blog-article-structured-data"
       />
 
-      <header className="plain-publication__article-header plain-publication__shell">
+      <header
+        className="plain-publication__article-header plain-publication__shell"
+        data-analytics-surface="blog_header"
+      >
         <Breadcrumbs
           aria-label="Breadcrumb"
           className="plain-publication__breadcrumbs"
@@ -136,7 +143,7 @@ export default async function BlogArticlePage({
         <div className="plain-publication__article-main">
           <ArticleBody blocks={article.body} />
 
-          {article.showChartCta !== false && (
+          {article.nextStep === undefined && article.showChartCta !== false && (
             <aside className="plain-publication__cta">
               <h2>Current comparison: coding agents</h2>
               <p>
@@ -149,6 +156,24 @@ export default async function BlogArticlePage({
               >
                 Open the comparison chart <span aria-hidden="true">→</span>
               </TrackedChartLink>
+            </aside>
+          )}
+
+          {article.nextStep === undefined ? null : (
+            <aside className="plain-publication__cta">
+              <h2>{article.nextStep.title}</h2>
+              <p>{article.nextStep.description}</p>
+              <nav aria-label={`${article.nextStep.title} links`}>
+                <ul className="plain-publication__cta-links">
+                  {article.nextStep.links.map(link => (
+                    <li key={link.href}>
+                      <Link className="plain-publication__primary-link" href={link.href}>
+                        {link.label} <span aria-hidden="true">→</span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </nav>
             </aside>
           )}
 
@@ -183,7 +208,10 @@ export default async function BlogArticlePage({
         </div>
       </div>
 
-      <footer className="plain-publication__related plain-publication__shell">
+      <footer
+        className="plain-publication__related plain-publication__shell"
+        data-analytics-surface="blog_related"
+      >
         <div className="plain-publication__section-heading">
           <h2>Related analysis</h2>
           <Link href="/blog">All articles</Link>

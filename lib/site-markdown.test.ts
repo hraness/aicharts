@@ -3,13 +3,22 @@ import { describe, expect, test } from "bun:test";
 import { articleToMarkdown, blogArticlePath, blogArticles } from "@/app/blog/articles";
 import { HOME_EDITORIAL_SLUGS } from "@/app/blog/article-admissions";
 import { blogEditorialImage } from "@/app/blog/editorial-images";
-import { homeHeading, notFoundRecoveryLinks, site } from "@/app/site";
+import {
+  homeHeading,
+  modelCardsHeading,
+  modelCardsLede,
+  notFoundRecoveryLinks,
+  site,
+} from "@/app/site";
 import codingAgentData from "@/data/coding-agents.json";
 import gptSubsidyData from "@/data/gpt-subsidy.json";
+import terminalBenchData from "@/data/terminal-bench.json";
+import terminalBenchScienceData from "@/data/terminal-bench-science.json";
 
 import { parseCodingAgentSnapshot } from "./coding-agent-data";
 import { BENCHMARK_DATA_DESCRIPTION } from "./benchmark-portfolio";
 import { codingAgentDatasetSummary } from "./coding-agent-dataset";
+import { formatRetrievedAt } from "./coding-agent-updates";
 import {
   formatSubsidyUsd,
   latestGptSubsidyObservation,
@@ -18,6 +27,8 @@ import {
 import { directDeepSweEvidenceForRelease } from "./deep-swe-evidence-collection";
 import { FIRST_PARTY_RELEASE_HIGHLIGHTS } from "./first-party-release-collection";
 import { modelReleaseRadarHighlightsExcluding } from "./model-release-collection";
+import { parseTerminalBenchSnapshot } from "./terminal-bench-data";
+import { parseTerminalBenchScienceSnapshot } from "./terminal-bench-science-data";
 import {
   AGENT_GUIDE_CONTENT_TYPE,
   MARKDOWN_CONTENT_TYPE,
@@ -33,6 +44,14 @@ const snapshot = parsed.value;
 const parsedSubsidy = parseGptSubsidySnapshot(gptSubsidyData);
 if (!parsedSubsidy.ok) throw parsedSubsidy.error;
 const latestSubsidy = latestGptSubsidyObservation(parsedSubsidy.value);
+const parsedTerminalBench = parseTerminalBenchSnapshot(terminalBenchData);
+if (!parsedTerminalBench.ok) throw parsedTerminalBench.error;
+const terminalBench = parsedTerminalBench.value;
+const parsedTerminalBenchScience = parseTerminalBenchScienceSnapshot(
+  terminalBenchScienceData,
+);
+if (!parsedTerminalBenchScience.ok) throw parsedTerminalBenchScience.error;
+const terminalBenchScience = parsedTerminalBenchScience.value;
 const distinctModelReleaseHighlights = modelReleaseRadarHighlightsExcluding(
   FIRST_PARTY_RELEASE_HIGHLIGHTS.flatMap(release => release.namedModels),
 );
@@ -82,15 +101,24 @@ describe("markdown representations", () => {
     }
     expect(data.body).toContain(BENCHMARK_DATA_DESCRIPTION);
     expect(data.body).toContain("## Terminal-Bench 4 coding standard");
-    expect(data.body).toContain("Harbor Framework submissions at commit");
+    expect(data.body).toContain(terminalBench.source.submissionsDirectoryUrl);
+    expect(data.body).toContain(terminalBench.source.repositoryCommitUrl);
+    expect(data.body).toContain(formatRetrievedAt(terminalBench.source.repositoryCommittedAt));
     expect(data.body).toContain("/data/terminal-bench-4.json");
     expect(data.body).toContain("## Terminal-Bench-Science 0.1");
+    expect(data.body).toContain(terminalBenchScience.source.name);
+    expect(data.body).toContain(terminalBenchScience.source.releaseDoiUrl);
+    expect(data.body).toContain(
+      formatRetrievedAt(terminalBenchScience.source.leaderboardUpdatedAt),
+    );
     expect(data.body).toContain("/data/terminal-bench-science-0-1.json");
     expect(data.body).toContain("per-domain costs are retained independently");
     expect(data.body).toContain(snapshot.source.url);
     expect(data.body).toContain("## All configurations");
     expect(data.body).toContain("| Model | Agent | Provider | Setting | AA Index | DeepSWE | Terminal-Bench v2.1 | SWE-Atlas-QnA | Cost |");
     const cards = markdownForPath("/models");
+    expect(cards.body).toContain(`# ${modelCardsHeading}`);
+    expect(cards.body).toContain(modelCardsLede);
     expect(cards.body).toContain("## First-party release radar");
     expect(cards.body).toContain("Claude Fable 5.1 and Claude Mythos 5.1");
     expect(cards.body).toContain("## Benchmark coverage radar");
@@ -113,8 +141,11 @@ describe("markdown representations", () => {
     expect(subsidy.body).toContain(
       `The latest measured trailing-seven-day API-retail-equivalent value is ${formatSubsidyUsd(latestSubsidy.trailingSevenDayApiEquivalentUsd)}`,
     );
-    expect(subsidy.body).toContain("subscription-adjusted multiple is therefore unavailable");
-    expect(subsidy.body).toContain("No monthly projection, one-plan normalization");
+    expect(subsidy.body).toContain("one-plan comparison upper bound before switched-account adjustment");
+    expect(subsidy.body).toContain("is not a subscription-adjusted multiple");
+    expect(subsidy.body).toContain("true subscription-spend-adjusted multiple is lower but unknown");
+    expect(subsidy.body).toContain("No monthly projection, quota-exhaustion estimate");
+    expect(subsidy.body).not.toContain("No monthly projection, one-plan normalization");
     expect(subsidy.body).not.toContain("307.1×");
     expect(blog.body).toContain(blogArticles[0].title);
     for (const article of blogArticles) {

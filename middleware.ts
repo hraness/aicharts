@@ -5,8 +5,16 @@ import {
   isMarkdownType,
   preferredType,
 } from "@/lib/http-accept";
+import { CANONICAL_MARKDOWN_REQUEST_HEADER } from "@/lib/markdown-http";
 
 const MARKDOWN_PREFIX = "/api/markdown";
+const NEGOTIABLE_PAGE_PATHS = new Set([
+  "/",
+  "/blog",
+  "/data",
+  "/gpt-subsidy",
+  "/models",
+]);
 
 function isNextDataRequest(request: NextRequest): boolean {
   return request.headers.has("rsc")
@@ -15,18 +23,21 @@ function isNextDataRequest(request: NextRequest): boolean {
     || request.headers.has("next-router-segment-prefetch");
 }
 
-function isExcludedPath(pathname: string): boolean {
-  return pathname.startsWith("/api/")
-    || pathname.startsWith("/_next/")
-    || pathname.startsWith("/_vercel/")
-    || pathname === "/data/coding-agents.json"
-    || pathname === "/preview"
-    || pathname === "/models/preview"
-    || pathname === "/robots.txt"
-    || pathname === "/sitemap.xml"
-    || pathname.endsWith("/card.png")
-    || pathname.endsWith("/opengraph-image")
-    || pathname === "/opengraph-image";
+function withoutMarkdownAlias(pathname: string): string {
+  const stripped = pathname.endsWith(".md") ? pathname.slice(0, -3) : pathname;
+  if (stripped === "") return "/";
+  return stripped.length > 1 ? stripped.replace(/\/+$/u, "") : stripped;
+}
+
+function isNegotiablePagePath(pathname: string): boolean {
+  const normalized = withoutMarkdownAlias(pathname);
+  if (NEGOTIABLE_PAGE_PATHS.has(normalized)) return true;
+
+  const segments = normalized.split("/").filter(Boolean);
+  return (segments[0] === "blog"
+      && segments.length === 2
+      && /^[a-z0-9-]+$/u.test(segments[1] ?? ""))
+    || (segments[0] === "models" && segments.length === 4);
 }
 
 function markdownPath(pathname: string): string {
@@ -37,14 +48,18 @@ function markdownPath(pathname: string): string {
 
 export function middleware(request: NextRequest): Response {
   const { pathname } = request.nextUrl;
-  if (isExcludedPath(pathname) || isNextDataRequest(request)) {
+  if (isNextDataRequest(request) || !isNegotiablePagePath(pathname)) {
     return NextResponse.next();
   }
 
   if (pathname.endsWith(".md")) {
     const url = request.nextUrl.clone();
     url.pathname = markdownPath(pathname);
-    const rewritten = NextResponse.rewrite(url);
+    const requestHeaders = new Headers(request.headers);
+    requestHeaders.delete(CANONICAL_MARKDOWN_REQUEST_HEADER);
+    const rewritten = NextResponse.rewrite(url, {
+      request: { headers: requestHeaders },
+    });
     appendVaryAccept(rewritten.headers);
     return rewritten;
   }
@@ -55,7 +70,12 @@ export function middleware(request: NextRequest): Response {
   if (isMarkdownType(chosen)) {
     const url = request.nextUrl.clone();
     url.pathname = markdownPath(pathname);
-    const rewritten = NextResponse.rewrite(url);
+    const requestHeaders = new Headers(request.headers);
+    requestHeaders.delete(CANONICAL_MARKDOWN_REQUEST_HEADER);
+    requestHeaders.set(CANONICAL_MARKDOWN_REQUEST_HEADER, "1");
+    const rewritten = NextResponse.rewrite(url, {
+      request: { headers: requestHeaders },
+    });
     appendVaryAccept(rewritten.headers);
     return rewritten;
   }

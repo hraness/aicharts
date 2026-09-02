@@ -1,6 +1,6 @@
 "use client";
 
-import { chatGptSubsidyChartLabel } from "@/app/site";
+import { chatGptSubsidyChartLabel, homeHeading } from "@/app/site";
 import {
   Cancel01Icon,
   CopyLinkIcon,
@@ -733,7 +733,12 @@ export function CodingAgentExplorer({
     setShareStatus("PNG downloaded.");
     captureChartEvent({
       name: "chart shared",
-      properties: { share_method: "download_png", x_metric: xMetric, y_metric: yMetric },
+      properties: {
+        share_method: "download_png",
+        share_outcome: "downloaded",
+        x_metric: xMetric,
+        y_metric: yMetric,
+      },
     });
   }
 
@@ -753,7 +758,12 @@ export function CodingAgentExplorer({
       setShareStatus("This browser cannot share image files, so the PNG was downloaded instead.");
       captureChartEvent({
         name: "chart shared",
-        properties: { share_method: "download_fallback", x_metric: xMetric, y_metric: yMetric },
+        properties: {
+          share_method: "download_fallback",
+          share_outcome: "downloaded",
+          x_metric: xMetric,
+          y_metric: yMetric,
+        },
       });
       return;
     }
@@ -764,7 +774,12 @@ export function CodingAgentExplorer({
       setShareStatus("Chart shared.");
       captureChartEvent({
         name: "chart shared",
-        properties: { share_method: "native_share", x_metric: xMetric, y_metric: yMetric },
+        properties: {
+          share_method: "native_share",
+          share_outcome: "completed",
+          x_metric: xMetric,
+          y_metric: yMetric,
+        },
       });
     } catch (error: unknown) {
       if (isShareCancellation(error)) setShareStatus("Image ready to share.");
@@ -773,7 +788,12 @@ export function CodingAgentExplorer({
         setShareStatus("Sharing was unavailable, so the PNG was downloaded instead.");
         captureChartEvent({
           name: "chart shared",
-          properties: { share_method: "download_fallback", x_metric: xMetric, y_metric: yMetric },
+          properties: {
+            share_method: "download_fallback",
+            share_outcome: "downloaded",
+            x_metric: xMetric,
+            y_metric: yMetric,
+          },
         });
       }
     } finally {
@@ -790,7 +810,12 @@ export function CodingAgentExplorer({
     }
     captureChartEvent({
       name: "chart shared",
-      properties: { share_method: "x", x_metric: xMetric, y_metric: yMetric },
+      properties: {
+        share_method: "x",
+        share_outcome: "initiated",
+        x_metric: xMetric,
+        y_metric: yMetric,
+      },
     });
   }
 
@@ -801,7 +826,12 @@ export function CodingAgentExplorer({
     if (copied) {
       captureChartEvent({
         name: "chart shared",
-        properties: { share_method: "copy_link", x_metric: xMetric, y_metric: yMetric },
+        properties: {
+          share_method: "copy_link",
+          share_outcome: "completed",
+          x_metric: xMetric,
+          y_metric: yMetric,
+        },
       });
     }
   }
@@ -845,6 +875,7 @@ export function CodingAgentExplorer({
   return (
     <div className="chart-app">
       <TopBar
+        data-analytics-surface="global_header"
         actions={(
           <>
             {latestUpdate !== null && (
@@ -880,18 +911,23 @@ export function CodingAgentExplorer({
       />
       <PageCanvas
         className="chart-page-canvas"
+        data-analytics-surface="benchmark_chart"
         id="main-content"
         inset="none"
         onClick={handleAppClick}
         size="full"
         tabIndex={-1}
       >
-      <section aria-labelledby="chart-orientation-title" className="chart-orientation">
+      <section
+        aria-labelledby="chart-orientation-title"
+        className="chart-orientation"
+        data-analytics-surface="home_orientation"
+      >
         <div className="chart-orientation__copy">
           <p className="chart-orientation__eyebrow">AI benchmark portfolio</p>
-          <h1 id="chart-orientation-title">A benchmark portfolio for the work AI systems are asked to do</h1>
+          <h1 id="chart-orientation-title">{homeHeading}</h1>
           <p>
-            Five benchmark roles cover terminal engineering, scientific workflows,
+            A five-role benchmark portfolio covers terminal engineering, scientific workflows,
             professional work, computer use, and broad expert reasoning. Checked score
             views are added without mixing versions or systems; the source-specific coding
             chart remains below for cost, speed, and token trade-offs.
@@ -923,7 +959,15 @@ export function CodingAgentExplorer({
         </p>
         <p className="chart-family-intro__evidence">
           <time dateTime={snapshot.source.retrievedAt}>{retrievedAt}</time>
-          <a href={snapshot.source.url} rel="noreferrer" target="_blank">{snapshot.source.name} source</a>
+          <a
+            data-analytics-destination-id="source:artificial-analysis"
+            data-analytics-destination-kind="source"
+            href={snapshot.source.url}
+            rel="noreferrer"
+            target="_blank"
+          >
+            {snapshot.source.name} source
+          </a>
           <Link href="/data">Method</Link>
           <a href="/data/coding-agents.json">JSON</a>
         </p>

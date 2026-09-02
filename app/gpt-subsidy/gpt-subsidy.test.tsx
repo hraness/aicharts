@@ -12,6 +12,7 @@ import {
   GPT_SUBSIDY_DESCRIPTION,
   parseGptSubsidySnapshot,
 } from "@/lib/gpt-subsidy-data";
+import { gptSubsidyMarkdown } from "@/lib/site-markdown";
 import { INDEXABLE_ROBOTS } from "@hraness/web-discovery";
 
 import GptSubsidyLayout from "./layout";
@@ -106,6 +107,13 @@ describe("GPT subsidy page components", () => {
 
   test("leads with the chart and metrics while keeping methodology in static HTML", () => {
     const markup = renderToStaticMarkup(createElement(GptSubsidyPage));
+    const markdown = gptSubsidyMarkdown(snapshot);
+    const formattedUpperBound = formatOnePlanUpperBoundMultiple(
+      calculateOnePlanUpperBoundMultiple(
+        snapshot.periodSummary.apiEquivalentUsd,
+        snapshot.plan.monthlyPriceUsd,
+      ),
+    );
 
     expect(markup).toContain("<h1>ChatGPT Subsidy Chart</h1>");
     expect(markup).toContain(GPT_SUBSIDY_DESCRIPTION);
@@ -113,14 +121,11 @@ describe("GPT subsidy page components", () => {
       'aria-label="Current one-plan upper bound and API-equivalent value"',
     );
     expect(markup).toContain("One-plan comparison upper bound");
-    expect(markup).toContain(
-      formatOnePlanUpperBoundMultiple(
-        calculateOnePlanUpperBoundMultiple(
-          snapshot.periodSummary.apiEquivalentUsd,
-          snapshot.plan.monthlyPriceUsd,
-        ),
-      ),
-    );
+    expect(markup).toContain(formattedUpperBound);
+    expect(markdown).toContain(formattedUpperBound);
+    expect(markdown).toContain("one-plan comparison upper bound before switched-account adjustment");
+    expect(markdown).toContain("does not estimate how many subscriptions supplied that usage");
+    expect(markdown).toContain("true subscription-spend-adjusted multiple is lower but unknown");
     expect(markup).toContain(
       `${snapshot.periodSummary.days}-day API-equivalent value`,
     );

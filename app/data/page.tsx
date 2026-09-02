@@ -8,6 +8,10 @@ import { parseCodingAgentSnapshot } from "@/lib/coding-agent-data";
 import { codingAgentSnapshotRows } from "@/lib/coding-agent-snapshot-rows";
 import { BENCHMARK_DATA_DESCRIPTION } from "@/lib/benchmark-portfolio";
 import {
+  terminalBenchDatasetJsonLd,
+  terminalBenchScienceDatasetJsonLd,
+} from "@/lib/benchmark-dataset-json-ld";
+import {
   CODING_AGENT_BENCHMARK_DEFINITIONS,
   CODING_AGENT_DATASET_DOWNLOAD_PATH,
   CODING_AGENT_DATASET_PATH,
@@ -85,10 +89,18 @@ export default function CodingAgentDatasetPage() {
   const leaders = currentCodingAgentBenchmarkLeaders(snapshot);
 
   return (
-    <main className="plain-publication__article" id="data-content">
+    <main
+      className="plain-publication__article"
+      data-analytics-surface="data_document"
+      id="data-content"
+    >
       <JsonLdScript
-        data={codingAgentDatasetJsonLd(snapshot, searchSite)}
-        id="aicharts-coding-agent-dataset-structured-data"
+        data={[
+          codingAgentDatasetJsonLd(snapshot, searchSite),
+          terminalBenchDatasetJsonLd(terminalBench, searchSite),
+          terminalBenchScienceDatasetJsonLd(terminalBenchScience, searchSite),
+        ]}
+        id="aicharts-benchmark-datasets-structured-data"
       />
 
       <header className="plain-publication__article-header plain-publication__shell">
@@ -117,13 +129,32 @@ export default function CodingAgentDatasetPage() {
           <span aria-hidden="true"> · </span>
           <span>{summary.providerCount} AA providers</span>
         </p>
-        <a
-          className="plain-publication__primary-link"
-          download="aicharts-coding-agent-benchmarks.json"
-          href={CODING_AGENT_DATASET_DOWNLOAD_PATH}
-        >
-          Download Artificial Analysis JSON <span aria-hidden="true">↓</span>
-        </a>
+        <nav aria-label="Dataset downloads" className="plain-publication__download-links">
+          <p>Download checked snapshots</p>
+          <ul>
+            <li>
+              <a download="aicharts-terminal-bench-4.json" href="/data/terminal-bench-4.json">
+                Terminal-Bench 4 <span aria-hidden="true">↓</span>
+              </a>
+            </li>
+            <li>
+              <a
+                download="aicharts-terminal-bench-science-0-1.json"
+                href="/data/terminal-bench-science-0-1.json"
+              >
+                Terminal-Bench-Science 0.1 <span aria-hidden="true">↓</span>
+              </a>
+            </li>
+            <li>
+              <a
+                download="aicharts-coding-agent-benchmarks.json"
+                href={CODING_AGENT_DATASET_DOWNLOAD_PATH}
+              >
+                Artificial Analysis coding agents <span aria-hidden="true">↓</span>
+              </a>
+            </li>
+          </ul>
+        </nav>
       </header>
 
       <div className="plain-publication__article-layout plain-publication__shell">
@@ -150,8 +181,16 @@ export default function CodingAgentDatasetPage() {
               snapshot contains {terminalBench.records.length} configurations from
               the official{" "}
               <a href={terminalBench.source.submissionsDirectoryUrl}>
-                Harbor Framework submissions at commit {terminalBench.source.repositoryCommit.slice(0, 7)}
+                Harbor Framework submissions
               </a>
+              {" "}at{" "}
+              <a href={terminalBench.source.repositoryCommitUrl}>
+                commit {terminalBench.source.repositoryCommit.slice(0, 7)}
+              </a>
+              , committed on{" "}
+              <time dateTime={terminalBench.source.repositoryCommittedAt}>
+                {formatRetrievedAt(terminalBench.source.repositoryCommittedAt)}
+              </time>
               , with {terminalBench.benchmark.taskCount} tasks and{" "}
               {terminalBench.benchmark.trialsPerTask} trials per task. AI Charts
               retrieved this owner snapshot on{" "}
@@ -176,7 +215,11 @@ export default function CodingAgentDatasetPage() {
 
             <h2 id="terminal-bench-science">Terminal-Bench-Science 0.1</h2>
             <p>
-              The checked scientific-workflow snapshot contains{" "}
+              The checked scientific-workflow snapshot published by{" "}
+              <a href={terminalBenchScience.source.repositoryUrl}>
+                {terminalBenchScience.source.name}
+              </a>
+              {" "}contains{" "}
               {terminalBenchScience.records.length} owner-published system
               configurations across {terminalBenchScience.benchmark.taskCount} tasks
               and {terminalBenchScience.benchmark.trialsPerTask} trials per task. It is
@@ -184,7 +227,15 @@ export default function CodingAgentDatasetPage() {
               <a href={terminalBenchScience.source.releaseCommitUrl}>
                 v0.1.0 release commit {terminalBenchScience.source.releaseCommit.slice(0, 7)}
               </a>
-              {" "}and was retrieved on{" "}
+              . The release has the persistent citation{" "}
+              <a href={terminalBenchScience.source.releaseDoiUrl}>
+                {terminalBenchScience.source.releaseDoiUrl}
+              </a>
+              , and the owner leaderboard was updated on{" "}
+              <time dateTime={terminalBenchScience.source.leaderboardUpdatedAt}>
+                {formatRetrievedAt(terminalBenchScience.source.leaderboardUpdatedAt)}
+              </time>
+              . AI Charts retrieved it on{" "}
               <time dateTime={terminalBenchScience.source.retrievedAt}>
                 {formatRetrievedAt(terminalBenchScience.source.retrievedAt)}
               </time>.
