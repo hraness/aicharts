@@ -58,12 +58,9 @@ describe("homepage agent document", () => {
     expect(markup).toContain('href="/data"');
     expect(markup).toContain('href="/blog/aa-index-cost-coding-agents"');
     expect(markup).toContain('href="/blog/open-models-coding-agent-benchmarks"');
-    expect(markup).toContain('href="/blog/are-open-models-catching-up"');
     expect(markup).toContain('href="/blog/small-models-have-arrived"');
     expect(markup).toContain('href="/blog/terminal-bench-science"');
-    expect(markup).toContain('href="/blog/benchmarkpocalypse"');
     expect(markup).toContain('href="/blog/coding-agent-score-holdouts"');
-    expect(markup).toContain('href="/blog/coding-agent-scores-still-need-expertise"');
     expect(markup).toContain('href="/llms.txt"');
     expect(markup).toContain('href="/sitemap.xml"');
     expect(text.length).toBeGreaterThan(500);
@@ -75,7 +72,7 @@ describe("homepage agent document", () => {
     expect(HOME_EDITORIAL_SLUGS).toHaveLength(3);
     expect(markup).toContain("Model and benchmark analysis");
     expect(markup).toContain('href="/blog"');
-    expect(markup.match(/rel="preload"/gu)).toHaveLength(1);
+    expect(markup).not.toContain('rel="preload"');
     for (const slug of HOME_EDITORIAL_SLUGS) {
       expect(markup).toContain(`href="/blog/${slug}"`);
       expect(markup).toContain(

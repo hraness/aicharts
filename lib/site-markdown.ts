@@ -158,16 +158,6 @@ export function homeDocumentModel(
         note: "Whether classified open-weight rows sit with the current AA Index leaders, using the same checked snapshot and a SemiAnalysis catch-up essay.",
       },
       {
-        href: blogArticlePath("are-open-models-catching-up"),
-        label: "Open models can close a scoreboard and still lose the product",
-        note: "SemiAnalysis’s era-composite catch-up versus their productized-stack preference, kept distinct from the named-row snapshot.",
-      },
-      {
-        href: blogArticlePath("benchmarkpocalypse"),
-        label: "The benchmarkpocalypse is not a product win",
-        note: "Dan Luu’s public-suite argument and scoreboard saturation: a cheap or clustered win is remaining measurement work, not a shipping decision.",
-      },
-      {
         href: blogArticlePath("terminal-bench-science"),
         label: "Terminal-Bench-Science: 30% is not a product win",
         note: "Scientists set the evaluation bar on Terminal-Bench-Science 0.1. The peak 30% resolution is remaining work; cost and token Pareto is the useful comparison.",
@@ -181,11 +171,6 @@ export function homeDocumentModel(
         href: blogArticlePath("coding-agent-score-holdouts"),
         label: "Why a coding-agent high score still needs a holdout",
         note: "Dan Luu’s FRE holdout and the checked snapshot’s named-suite scores, kept distinct from the open-models comparison.",
-      },
-      {
-        href: blogArticlePath("coding-agent-scores-still-need-expertise"),
-        label: "Coding-agent scores still need expertise",
-        note: "Lars Faye and Sean Goedecke on why a named-suite score still needs a person who can specify and audit the work.",
       },
       {
         href: CODING_AGENT_DATASET_DOWNLOAD_PATH,
@@ -272,7 +257,7 @@ function datasetMarkdown(snapshot: CodingAgentSnapshot): string {
     "",
     codingAgentLeadersMarkdownTable(leaders),
     "",
-    `For AA Index versus mean API cost see [AA Index versus cost for coding agents](${absolute(blogArticlePath("aa-index-cost-coding-agents"))}). For whether classified open-weight rows sit with those leaders see [open models on coding-agent benchmarks](${absolute(blogArticlePath("open-models-coding-agent-benchmarks"))}). For why a closing benchmark gap does not settle product choice see [open models can close a scoreboard and still lose the product](${absolute(blogArticlePath("are-open-models-catching-up"))}). For how lower inference costs change frequent-use product economics see [cheaper AI models can make everyday products viable](${absolute(blogArticlePath("small-models-have-arrived"))}). For why a 30% Terminal-Bench-Science score is not a product win see [Terminal-Bench-Science: 30% is not a product win](${absolute(blogArticlePath("terminal-bench-science"))}). For why scoreboard saturation is not a product win see [the benchmarkpocalypse is not a product win](${absolute(blogArticlePath("benchmarkpocalypse"))}). For why a public-suite high score still needs a holdout see [why a coding-agent high score still needs a holdout](${absolute(blogArticlePath("coding-agent-score-holdouts"))}). For why that number still needs a person who can specify and audit the work see [coding-agent scores still need expertise](${absolute(blogArticlePath("coding-agent-scores-still-need-expertise"))}).`,
+    `For AA Index versus mean API cost see [AA Index versus cost for coding agents](${absolute(blogArticlePath("aa-index-cost-coding-agents"))}). For whether classified open-weight rows sit with those leaders see [open models on coding-agent benchmarks](${absolute(blogArticlePath("open-models-coding-agent-benchmarks"))}). For how lower inference costs change frequent-use product economics see [cheaper AI models can make everyday products viable](${absolute(blogArticlePath("small-models-have-arrived"))}). For why a 30% Terminal-Bench-Science score is incomplete without cost and token trade-offs see [Terminal-Bench-Science: 30% is not a product win](${absolute(blogArticlePath("terminal-bench-science"))}). For why a public-suite high score still needs a holdout see [why a coding-agent high score still needs a holdout](${absolute(blogArticlePath("coding-agent-score-holdouts"))}).`,
     "",
     "## All configurations",
     "",

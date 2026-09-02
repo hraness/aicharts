@@ -16,18 +16,15 @@
   },
   "images": [
     {
-      "slug": "benchmarkpocalypse",
-      "promptSha256": "d71d6ebd2a165ea3b9271236a6abdd65dc934924eae0d8bf1586a7f218685206",
-      "master": { "path": "/images/blog/benchmarkpocalypse.webp", "width": 1536, "height": 864, "bytes": 105262, "sha256": "869fb250d053122ac5bc49762b42fbd165aa15054c1a3449e6d80e4315fb48e8" },
-      "receiptPath": "artifacts/atet/generated/gateway/20260901T134200000Z-image-869fb250-bmp/receipt.json",
-      "jobPath": "artifacts/atet/generated/gateway-jobs/gateway_c8e1a4b07f3e4d6aa21f90c4e5b7d812.json",
-      "validation": "decode-passed",
-      "review": "accepted"
-    },
-    {
       "slug": "terminal-bench-science",
       "promptSha256": "a233bd9a0784c0f26b90201a57e315b9d642a0f3b285256a204e25041df14be3",
-      "master": { "path": "/images/blog/terminal-bench-science.webp", "width": 1536, "height": 864, "bytes": 194912, "sha256": "25b0982fb419a0e7caa8551c1521950a70ae10ac84d12d8cd765c705015f4541" },
+      "master": {
+        "path": "/images/blog/terminal-bench-science.webp",
+        "width": 1536,
+        "height": 864,
+        "bytes": 194912,
+        "sha256": "25b0982fb419a0e7caa8551c1521950a70ae10ac84d12d8cd765c705015f4541"
+      },
       "receiptPath": "artifacts/atet/generated/gateway/20260831T132600000Z-image-25b0982f-tbs/receipt.json",
       "jobPath": "artifacts/atet/generated/gateway-jobs/gateway_db4be239e6db4bae5aa62a424e6e6a4c.json",
       "validation": "decode-passed",
@@ -36,34 +33,28 @@
     {
       "slug": "small-models-have-arrived",
       "promptSha256": "e29d12c19ab8ff27d923fe92a66207897a19522f4f59ecdfc7d0c8bfff7a9cf8",
-      "master": { "path": "/images/blog/small-models-have-arrived.webp", "width": 1536, "height": 864, "bytes": 225264, "sha256": "f6bfe3d262147db6408e069df98803277b34b1f471eb61f03a51a7ef2eb51330" },
+      "master": {
+        "path": "/images/blog/small-models-have-arrived.webp",
+        "width": 1536,
+        "height": 864,
+        "bytes": 225264,
+        "sha256": "f6bfe3d262147db6408e069df98803277b34b1f471eb61f03a51a7ef2eb51330"
+      },
       "receiptPath": "artifacts/atet/generated/gateway/20260829T044909987Z-image-8a112f56-e2a/receipt.json",
       "jobPath": "artifacts/atet/generated/gateway-jobs/gateway_b77cf0ef88e742678bb8a594e8dcfcee.json",
       "validation": "decode-passed",
       "review": "accepted"
     },
     {
-      "slug": "are-open-models-catching-up",
-      "promptSha256": "e020b195cacae4e6135dca805d35f060c0ecf0856a86c81dc04c045ede05ded8",
-      "master": { "path": "/images/blog/are-open-models-catching-up.webp", "width": 1536, "height": 864, "bytes": 358586, "sha256": "e96546990341ce2e1082a856016e46dedddfed9568f4cd0c6dda28bfdd29e385" },
-      "receiptPath": "artifacts/atet/generated/gateway/20260829T045119641Z-image-fe10f8ca-acc/receipt.json",
-      "jobPath": "artifacts/atet/generated/gateway-jobs/gateway_b3f9a421d0b149409c07dce46ddedc5c.json",
-      "validation": "decode-passed",
-      "review": "accepted"
-    },
-    {
-      "slug": "coding-agent-scores-still-need-expertise",
-      "promptSha256": "0e366967623c791b2db05cdbf3115de9719e4f4176b579eb38b358caf1f1d22d",
-      "master": { "path": "/images/blog/coding-agent-scores-still-need-expertise.webp", "width": 1536, "height": 864, "bytes": 406262, "sha256": "918be37c7f50cddab799fb6d4cfb4a2b25eb09850ea6ac471654c2d58a39c8c4" },
-      "receiptPath": "artifacts/atet/generated/gateway/20260829T045334214Z-image-adfc884a-0f2/receipt.json",
-      "jobPath": "artifacts/atet/generated/gateway-jobs/gateway_372083261e9c4a7aae8af256c9bfd24b.json",
-      "validation": "decode-passed",
-      "review": "accepted"
-    },
-    {
       "slug": "coding-agent-score-holdouts",
       "promptSha256": "febeb1a517412083a71e2bd9527f96d90cec32da5d975312a45244a8ced78562",
-      "master": { "path": "/images/blog/coding-agent-score-holdouts.webp", "width": 1536, "height": 864, "bytes": 270940, "sha256": "93d3936c6f6af202ea3da59def3563ba184a21779942e7fa7161cd92956667d5" },
+      "master": {
+        "path": "/images/blog/coding-agent-score-holdouts.webp",
+        "width": 1536,
+        "height": 864,
+        "bytes": 270940,
+        "sha256": "93d3936c6f6af202ea3da59def3563ba184a21779942e7fa7161cd92956667d5"
+      },
       "receiptPath": "artifacts/atet/generated/gateway/20260829T045554012Z-image-79298e96-a51/receipt.json",
       "jobPath": "artifacts/atet/generated/gateway-jobs/gateway_9346b1f302c942cd98baad3406be272b.json",
       "validation": "decode-passed",
@@ -72,7 +63,13 @@
     {
       "slug": "open-models-coding-agent-benchmarks",
       "promptSha256": "bde3d211d39a01393e6118edb2a6a101f15eac042f0fff1d87fde21f68e540be",
-      "master": { "path": "/images/blog/open-models-coding-agent-benchmarks.webp", "width": 1536, "height": 864, "bytes": 288172, "sha256": "bd86b36cda57755c74e7e7c08c04dd7e5d4ac21a4771bd6eb6696dba9fdb2270" },
+      "master": {
+        "path": "/images/blog/open-models-coding-agent-benchmarks.webp",
+        "width": 1536,
+        "height": 864,
+        "bytes": 288172,
+        "sha256": "bd86b36cda57755c74e7e7c08c04dd7e5d4ac21a4771bd6eb6696dba9fdb2270"
+      },
       "receiptPath": "artifacts/atet/generated/gateway/20260829T045629124Z-image-9eb375f4-52e/receipt.json",
       "jobPath": "artifacts/atet/generated/gateway-jobs/gateway_18c21b758a5a476294bdde88c1b45935.json",
       "validation": "decode-passed",
@@ -81,7 +78,13 @@
     {
       "slug": "aa-index-cost-coding-agents",
       "promptSha256": "0dbf95c4d09574546dff3dc815f4137ea6bf065595f56f0b3168977daca357ad",
-      "master": { "path": "/images/blog/aa-index-cost-coding-agents.webp", "width": 1536, "height": 864, "bytes": 166762, "sha256": "59dff83d9eb1a1ce7ebc46d10bc4a11712b260f38ed5e7123944763b98011fc4" },
+      "master": {
+        "path": "/images/blog/aa-index-cost-coding-agents.webp",
+        "width": 1536,
+        "height": 864,
+        "bytes": 166762,
+        "sha256": "59dff83d9eb1a1ce7ebc46d10bc4a11712b260f38ed5e7123944763b98011fc4"
+      },
       "receiptPath": "artifacts/atet/generated/gateway/20260829T045702332Z-image-bde652f9-edb/receipt.json",
       "jobPath": "artifacts/atet/generated/gateway-jobs/gateway_8d52216479e2468d8c685877699be66d.json",
       "validation": "decode-passed",
@@ -90,7 +93,13 @@
     {
       "slug": "mirrorcode-coding-agent-benchmark",
       "promptSha256": "489c252eef19475feb415cfee029ba1d0edbb48bbd85b6c2556d331e1036877f",
-      "master": { "path": "/images/blog/mirrorcode-coding-agent-benchmark.webp", "width": 1536, "height": 864, "bytes": 228150, "sha256": "1a4823c8de472b1edcb48d5a8ebf7a893c7aad2d26ea52be6cedecb6df331331" },
+      "master": {
+        "path": "/images/blog/mirrorcode-coding-agent-benchmark.webp",
+        "width": 1536,
+        "height": 864,
+        "bytes": 228150,
+        "sha256": "1a4823c8de472b1edcb48d5a8ebf7a893c7aad2d26ea52be6cedecb6df331331"
+      },
       "receiptPath": "artifacts/atet/generated/gateway/20260829T045733333Z-image-0903f6a9-912/receipt.json",
       "jobPath": "artifacts/atet/generated/gateway-jobs/gateway_e99b616d49ae40a9b656442b726178ed.json",
       "validation": "decode-passed",
@@ -99,7 +108,13 @@
     {
       "slug": "slopcodebench-long-horizon-coding-agents",
       "promptSha256": "e845ab6a7a4980b72d385d1f929f797edbe68bfc92f4069c5a2caaea0f1e6c91",
-      "master": { "path": "/images/blog/slopcodebench-long-horizon-coding-agents.webp", "width": 1536, "height": 864, "bytes": 222810, "sha256": "ce552845580b975f6a8c3fb1cd6d150c70e1fc7ef466068654a8ac301dcd4b32" },
+      "master": {
+        "path": "/images/blog/slopcodebench-long-horizon-coding-agents.webp",
+        "width": 1536,
+        "height": 864,
+        "bytes": 222810,
+        "sha256": "ce552845580b975f6a8c3fb1cd6d150c70e1fc7ef466068654a8ac301dcd4b32"
+      },
       "receiptPath": "artifacts/atet/generated/gateway/20260829T045808335Z-image-d89ed557-fba/receipt.json",
       "jobPath": "artifacts/atet/generated/gateway-jobs/gateway_b8ea95991c3b42b8a52b141a51324a80.json",
       "validation": "decode-passed",

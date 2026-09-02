@@ -1,19 +1,13 @@
 import { site } from "../site";
 import { createAaIndexCostArticle } from "./aa-index-cost-article";
-import { createAreOpenModelsCatchingUpArticle } from "./are-open-models-catching-up-article";
 import { createCodingAgentScoreHoldoutsArticle } from "./coding-agent-score-holdouts-article";
-import { createCodingAgentScoresStillNeedExpertiseArticle } from "./coding-agent-scores-still-need-expertise-article";
 import { createOpenModelsCodingAgentsArticle } from "./open-models-coding-agents-article";
 import { createSmallModelsHaveArrivedArticle } from "./small-models-have-arrived-article";
 import { createTerminalBenchScienceArticle } from "./terminal-bench-science-article";
-import { createBenchmarkpocalypseArticle } from "./benchmarkpocalypse-article";
 
 export const BLOG_SLUGS = [
-  "benchmarkpocalypse",
   "terminal-bench-science",
   "small-models-have-arrived",
-  "are-open-models-catching-up",
-  "coding-agent-scores-still-need-expertise",
   "coding-agent-score-holdouts",
   "open-models-coding-agent-benchmarks",
   "aa-index-cost-coding-agents",
@@ -484,11 +478,8 @@ const slopCodeBenchArticle = {
 } as const satisfies BlogArticle;
 
 export const blogArticles = [
-  createBenchmarkpocalypseArticle(),
   createTerminalBenchScienceArticle(),
   createSmallModelsHaveArrivedArticle(),
-  createAreOpenModelsCatchingUpArticle(),
-  createCodingAgentScoresStillNeedExpertiseArticle(),
   createCodingAgentScoreHoldoutsArticle(),
   createOpenModelsCodingAgentsArticle(),
   createAaIndexCostArticle(),

@@ -24,7 +24,7 @@ export function HomeEditorialResources() {
         <Link href="/blog">All articles</Link>
       </div>
       <div className="home-editorial__grid">
-        {HOME_EDITORIAL_SLUGS.map((slug, index) => {
+        {HOME_EDITORIAL_SLUGS.map((slug) => {
           const article = getBlogArticle(slug);
           if (article === undefined) return null;
           return (
@@ -32,7 +32,6 @@ export function HomeEditorialResources() {
               <Link aria-label={article.title} href={blogArticlePath(slug)}>
                 <EditorialFigure
                   image={blogEditorialImage(slug)}
-                  preload={index === 0}
                   variant="card"
                 />
               </Link>

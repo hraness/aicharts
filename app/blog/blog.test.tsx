@@ -44,26 +44,14 @@ import {
   headingId,
 } from "./articles";
 import {
-  HRANESS_CATCHING_UP_READING,
-  SEMIANALYSIS_CATCHING_UP,
-} from "./are-open-models-catching-up-article";
-import {
   FRENCH_OWEN_SMALL_MODELS,
   OPENAI_GPT_56_LUNA,
 } from "./small-models-have-arrived-article";
 import {
-  DAN_LUU_SCOREBOARD,
-  HRANESS_BENCHMARKPOCALYPSE_READING,
-} from "./benchmarkpocalypse-article";
-import {
+  HARNESS_DEFINITION_URL,
   HRANESS_TERMINAL_BENCH_SCIENCE_READING,
   TERMINAL_BENCH_SCIENCE,
 } from "./terminal-bench-science-article";
-import {
-  HARNESS_DEFINITION_URL,
-  LARS_FAYE_EXPERTISE,
-  SEAN_GOEDECKE_EXPERTISE,
-} from "./coding-agent-scores-still-need-expertise-article";
 import BlogLayout from "./layout";
 import BlogIndex from "./page";
 import { atomFeed } from "./atom-feed";
@@ -131,7 +119,7 @@ describe("AI Charts benchmark notes", () => {
   });
 
   test("publishes substantial complementary articles", () => {
-    expect(blogArticles).toHaveLength(10);
+    expect(blogArticles).toHaveLength(7);
     expect(blogArticles.map(article => article.slug)).toEqual([...BLOG_SLUGS]);
     expect(new Set(BLOG_SLUGS).size).toBe(BLOG_SLUGS.length);
 
@@ -144,21 +132,14 @@ describe("AI Charts benchmark notes", () => {
       expect(articleToMarkdown(article)).toContain(article.dek);
       expect(article.sourceIds.length).toBeGreaterThanOrEqual(1);
       expect(article.relatedSlugs).toHaveLength(1);
-      if (article.slug === "benchmarkpocalypse") {
-        expect(article.publishedAt).toBe("2026-09-01");
-        expect(article.updatedAt >= article.publishedAt).toBeTrue();
-      } else if (article.slug === "terminal-bench-science") {
+      if (article.slug === "terminal-bench-science") {
         expect(article.publishedAt).toBe("2026-08-31");
         expect(article.updatedAt >= article.publishedAt).toBeTrue();
       } else if (article.slug === "small-models-have-arrived") {
         expect(article.publishedAt).toBe("2026-08-28");
         expect(article.updatedAt >= article.publishedAt).toBeTrue();
-      } else if (article.slug === "are-open-models-catching-up") {
-        expect(article.publishedAt).toBe("2026-08-27");
-        expect(article.updatedAt >= article.publishedAt).toBeTrue();
       } else if (
-        article.slug === "coding-agent-scores-still-need-expertise"
-        || article.slug === "coding-agent-score-holdouts"
+        article.slug === "coding-agent-score-holdouts"
         || article.slug === "open-models-coding-agent-benchmarks"
       ) {
         expect(article.publishedAt).toBe("2026-08-26");
@@ -258,7 +239,6 @@ describe("AI Charts benchmark notes", () => {
     expect(markup).toContain('href="/data"');
     expect(markup).toContain('href="/blog/aa-index-cost-coding-agents"');
     expect(markup).toContain('href="/blog/coding-agent-score-holdouts"');
-    expect(markup).toContain('href="/blog/are-open-models-catching-up"');
     expect(markup).toContain(formatRetrievedAt(parsed.value.source.retrievedAt));
     expect(markup).toContain(top.model);
     expect(markup).toContain(formatSnapshotScore(top.aaIndex));
@@ -275,54 +255,6 @@ describe("AI Charts benchmark notes", () => {
     if (glm !== undefined) {
       expect(markup).toContain(glm.model);
       expect(markup).toContain(formatSnapshotScore(glm.aaIndex));
-    }
-  });
-
-  test("derives the catch-up take from sourced SemiAnalysis findings and the checked snapshot", () => {
-    const parsed = parseCodingAgentSnapshot(codingAgentData);
-    if (!parsed.ok) throw parsed.error;
-    const article = getBlogArticle("are-open-models-catching-up");
-    expect(article).toBeDefined();
-    if (article === undefined) return;
-
-    const markup = renderToStaticMarkup(
-      createElement(ArticleBody, { blocks: article.body }),
-    );
-    const markdown = articleToMarkdown(article);
-    const leaders = currentCodingAgentBenchmarkLeaders(parsed.value);
-    const aaLeader = leaders.find(leader => leader.definition.id === "aaIndex");
-    expect(aaLeader).toBeDefined();
-    if (aaLeader === undefined) return;
-
-    expect(markup).toContain(BLOG_SOURCES.semiAnalysisOpenModels.url);
-    expect(markup).toContain(BLOG_SOURCES.hranessOpenModelsReading.url);
-    expect(markup).toContain(BLOG_SOURCES.artificialAnalysisCodingAgents.url);
-    expect(markup).toContain(HARNESS_DEFINITION_URL);
-    expect(markup).toContain('href="/"');
-    expect(markup).toContain('href="/data"');
-    expect(markup).toContain('href="/blog/open-models-coding-agent-benchmarks"');
-    expect(markup).toContain('href="/blog/coding-agent-score-holdouts"');
-    expect(markup).toContain('href="/blog/coding-agent-scores-still-need-expertise"');
-    expect(markup).toContain('href="/blog/small-models-have-arrived"');
-    expect(markup).toContain(formatRetrievedAt(parsed.value.source.retrievedAt));
-    expect(markdown).toContain("each generation takes about half as long");
-    expect(markdown).toContain("faster close in Era 3");
-    expect(markdown).toContain("Kimi K3 scores higher than Fable 5");
-    expect(markdown).toContain("reinforcement-learning environments");
-    expect(markdown).toContain("complete model-and-harness product");
-    expect(markdown).toContain(HRANESS_CATCHING_UP_READING.gist);
-    expect(markdown).toContain(HRANESS_CATCHING_UP_READING.productDecides);
-    expect(markup).toContain(SEMIANALYSIS_CATCHING_UP.reported.era3KimiMonths);
-    expect(markup).toContain(SEMIANALYSIS_CATCHING_UP.reported.era3GlmMonths);
-    expect(markup).toContain(SEMIANALYSIS_CATCHING_UP.reported.era3KimiK26);
-    expect(markup).toContain(SEMIANALYSIS_CATCHING_UP.reported.era3Glm52);
-    expect(markup).toContain(aaLeader.record.model);
-    expect(markup).toContain(aaLeader.record.agent);
-    expect(markup).toContain(aaLeader.record.setting);
-    expect(markup).toContain(formatBenchmarkScore(aaLeader.value));
-    for (const leader of leaders) {
-      expect(markup).toContain(leader.record.model);
-      expect(markup).toContain(formatBenchmarkScore(leader.value));
     }
   });
 
@@ -394,7 +326,6 @@ describe("AI Charts benchmark notes", () => {
     expect(markup).toContain(HARNESS_DEFINITION_URL);
     expect(markup).toContain('href="/"');
     expect(markup).toContain('href="/blog/small-models-have-arrived"');
-    expect(markup).toContain('href="/blog/benchmarkpocalypse"');
     expect(markup).toContain(formatRetrievedAt(parsed.value.source.retrievedAt));
     expect(markdown).toContain(TERMINAL_BENCH_SCIENCE.quotes.scientistsSetTheBar);
     expect(markdown).toContain(TERMINAL_BENCH_SCIENCE.quotes.strongestResolvesThirty);
@@ -418,63 +349,6 @@ describe("AI Charts benchmark notes", () => {
       expect(markup).toContain(row.model);
       expect(markup).toContain(row.harness);
       expect(markup).toContain(row.resolution);
-    }
-  });
-
-  test("derives the benchmarkpocalypse take from Luu quotes and the checked snapshot", () => {
-    const parsed = parseCodingAgentSnapshot(codingAgentData);
-    if (!parsed.ok) throw parsed.error;
-    const article = getBlogArticle("benchmarkpocalypse");
-    expect(article).toBeDefined();
-    if (article === undefined) return;
-
-    const markup = renderToStaticMarkup(
-      createElement(ArticleBody, { blocks: article.body }),
-    );
-    const markdown = articleToMarkdown(article);
-    const leaders = currentCodingAgentBenchmarkLeaders(parsed.value);
-    const terminalLeader = leaders.find(leader => leader.definition.id === "terminalBench");
-    expect(terminalLeader).toBeDefined();
-    if (terminalLeader === undefined) return;
-
-    expect(article.title).toBe("The benchmarkpocalypse is not a product win");
-    expect(article.sourceIds).toEqual([
-      "danLuuBenchpocalypse",
-      "hranessBenchpocalypseReading",
-      "artificialAnalysisCodingAgents",
-    ]);
-    expect(article.relatedSlugs).toEqual(["terminal-bench-science"]);
-    expect(markup).toContain(BLOG_SOURCES.danLuuBenchpocalypse.url);
-    expect(markup).toContain(BLOG_SOURCES.hranessBenchpocalypseReading.url);
-    expect(markup).toContain(BLOG_SOURCES.artificialAnalysisCodingAgents.url);
-    expect(markup).toContain(HARNESS_DEFINITION_URL);
-    expect(markup).toContain('href="/"');
-    expect(markup).toContain('href="/blog/terminal-bench-science"');
-    expect(markup).toContain('href="/blog/coding-agent-score-holdouts"');
-    expect(markup).toContain(formatRetrievedAt(parsed.value.source.retrievedAt));
-    expect(markdown).toContain(DAN_LUU_SCOREBOARD.quotes.loopChangedCost);
-    expect(markdown).toContain(DAN_LUU_SCOREBOARD.quotes.defaultOverfit);
-    expect(markdown).toContain(DAN_LUU_SCOREBOARD.quotes.doubleForAi);
-    expect(markdown).toContain(DAN_LUU_SCOREBOARD.quotes.kimiFableComments);
-    expect(markdown).toContain(DAN_LUU_SCOREBOARD.quotes.realWorldGap);
-    expect(markdown).toContain("scoreboard saturation");
-    expect(markdown).not.toContain(
-      "Dan Luu argues that coding agents make sophisticated benchmark gaming cheap enough to overwhelm human scrutiny.",
-    );
-    expect(markdown).not.toContain(
-      "Holdouts and guardrails help, but do not restore trust automatically.",
-    );
-    expect(markdown).toContain(HRANESS_BENCHMARKPOCALYPSE_READING.savedOn);
-    expect(markup).toContain(DAN_LUU_SCOREBOARD.reported.specTask);
-    expect(markup).toContain(DAN_LUU_SCOREBOARD.reported.specSpeedup);
-    expect(markup).toContain(DAN_LUU_SCOREBOARD.reported.kimiVulnShare);
-    expect(markup).toContain(terminalLeader.record.model);
-    expect(markup).toContain(terminalLeader.record.agent);
-    expect(markup).toContain(terminalLeader.record.setting);
-    expect(markup).toContain(formatBenchmarkScore(terminalLeader.value));
-    for (const leader of leaders) {
-      expect(markup).toContain(leader.record.model);
-      expect(markup).toContain(formatBenchmarkScore(leader.value));
     }
   });
 
@@ -530,49 +404,6 @@ describe("AI Charts benchmark notes", () => {
     }
   });
 
-  test("derives the expertise note from fetched essay quotes and the checked snapshot", () => {
-    const parsed = parseCodingAgentSnapshot(codingAgentData);
-    if (!parsed.ok) throw parsed.error;
-    const article = getBlogArticle("coding-agent-scores-still-need-expertise");
-    expect(article).toBeDefined();
-    if (article === undefined) return;
-
-    const markup = renderToStaticMarkup(
-      createElement(ArticleBody, { blocks: article.body }),
-    );
-    const markdown = articleToMarkdown(article);
-    const leaders = currentCodingAgentBenchmarkLeaders(parsed.value);
-    const aaLeader = leaders.find(leader => leader.definition.id === "aaIndex");
-    expect(aaLeader).toBeDefined();
-    if (aaLeader === undefined) return;
-
-    expect(markup).toContain(BLOG_SOURCES.larsFayeExpertise.url);
-    expect(markup).toContain(BLOG_SOURCES.hranessFayeReading.url);
-    expect(markup).toContain(BLOG_SOURCES.seanGoedeckeExpertise.url);
-    expect(markup).toContain(BLOG_SOURCES.hranessGoedeckeReading.url);
-    expect(markup).toContain(BLOG_SOURCES.artificialAnalysisCodingAgents.url);
-    expect(markup).toContain(HARNESS_DEFINITION_URL);
-    expect(markup).toContain('href="/"');
-    expect(markup).toContain('href="/data"');
-    expect(markup).toContain('href="/blog/coding-agent-score-holdouts"');
-    expect(markup).toContain(formatRetrievedAt(parsed.value.source.retrievedAt));
-    expect(markdown).toContain(LARS_FAYE_EXPERTISE.quotes.paradox);
-    expect(markdown).toContain(LARS_FAYE_EXPERTISE.quotes.illusion);
-    expect(markdown).toContain(LARS_FAYE_EXPERTISE.quotes.spolsky);
-    expect(markdown).toContain(LARS_FAYE_EXPERTISE.quotes.chollet);
-    expect(markdown).toContain(SEAN_GOEDECKE_EXPERTISE.quotes.prompting);
-    expect(markdown).toContain(SEAN_GOEDECKE_EXPERTISE.quotes.bottleneck);
-    expect(markdown).toContain(SEAN_GOEDECKE_EXPERTISE.quotes.specifics);
-    expect(markup).toContain(aaLeader.record.model);
-    expect(markup).toContain(aaLeader.record.agent);
-    expect(markup).toContain(aaLeader.record.setting);
-    expect(markup).toContain(formatBenchmarkScore(aaLeader.value));
-    for (const leader of leaders) {
-      expect(markup).toContain(leader.record.model);
-      expect(markup).toContain(formatBenchmarkScore(leader.value));
-    }
-  });
-
   test("keeps sources unique, descriptive, and HTTPS-only", () => {
     const sources = Object.values(BLOG_SOURCES);
     expect(new Set(sources.map(source => source.url)).size).toBe(sources.length);
@@ -600,10 +431,6 @@ describe("AI Charts benchmark notes", () => {
     expect(markup).toContain(`href="${BLOG_SOURCES.hranessOpenModelsReading.url}"`);
     expect(markup).toContain(`href="${BLOG_SOURCES.danLuuBenchpocalypse.url}"`);
     expect(markup).toContain(`href="${BLOG_SOURCES.hranessBenchpocalypseReading.url}"`);
-    expect(markup).toContain(`href="${BLOG_SOURCES.larsFayeExpertise.url}"`);
-    expect(markup).toContain(`href="${BLOG_SOURCES.hranessFayeReading.url}"`);
-    expect(markup).toContain(`href="${BLOG_SOURCES.seanGoedeckeExpertise.url}"`);
-    expect(markup).toContain(`href="${BLOG_SOURCES.hranessGoedeckeReading.url}"`);
     expect(markup).toContain(`href="${BLOG_SOURCES.calvinFrenchOwenSmallModels.url}"`);
     expect(markup).toContain(`href="${BLOG_SOURCES.openAiGpt56Luna.url}"`);
     expect(markup).toContain(`href="${BLOG_SOURCES.terminalBenchScienceAnnouncement.url}"`);
@@ -802,16 +629,6 @@ describe("AI Charts blog discovery", () => {
       );
       expect(blogArticleJsonLd(science).articleSection)
         .toBe("Scientific agent benchmarks");
-    }
-
-    const saturation = getBlogArticle("benchmarkpocalypse");
-    expect(saturation).toBeDefined();
-    if (saturation !== undefined) {
-      expect(blogArticleMetadata(saturation).category).toBe(
-        "Benchmark interpretation",
-      );
-      expect(blogArticleJsonLd(saturation).articleSection)
-        .toBe("Benchmark interpretation");
     }
 
     expect(breadcrumbJsonLd([

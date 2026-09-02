@@ -57,15 +57,6 @@ function image<Slug extends BlogSlug>(
 }
 
 export const BLOG_EDITORIAL_IMAGES = {
-  "benchmarkpocalypse": image(
-    "benchmarkpocalypse",
-    "Identical-height charcoal and cobalt pillars fill a measuring rack under a low beam, while a compact unused apparatus and coral and mint weights sit aside.",
-    "A crowded public scoreboard can stop discriminating a product choice. The illustration is not a data plot.",
-    "869fb250d053122ac5bc49762b42fbd165aa15054c1a3449e6d80e4315fb48e8",
-    "d71d6ebd2a165ea3b9271236a6abdd65dc934924eae0d8bf1586a7f218685206",
-    "20260901T134200000Z-image-869fb250-bmp/receipt.json",
-    "gateway_c8e1a4b07f3e4d6aa21f90c4e5b7d812.json",
-  ),
   "terminal-bench-science": image(
     "terminal-bench-science",
     "Paper-cutout hands hold a high charcoal measuring beam while a compact cobalt apparatus reaches only partway, with coral and mint weights on a low tray.",
@@ -83,24 +74,6 @@ export const BLOG_EDITORIAL_IMAGES = {
     "e29d12c19ab8ff27d923fe92a66207897a19522f4f59ecdfc7d0c8bfff7a9cf8",
     "20260829T044909987Z-image-8a112f56-e2a/receipt.json",
     "gateway_b77cf0ef88e742678bb8a594e8dcfcee.json",
-  ),
-  "are-open-models-catching-up": image(
-    "are-open-models-catching-up",
-    "Open modular components approach a dark gate beside a separately integrated tool system.",
-    "A closing benchmark gap does not erase the product layer around a model.",
-    "e96546990341ce2e1082a856016e46dedddfed9568f4cd0c6dda28bfdd29e385",
-    "e020b195cacae4e6135dca805d35f060c0ecf0856a86c81dc04c045ede05ded8",
-    "20260829T045119641Z-image-fe10f8ca-acc/receipt.json",
-    "gateway_b3f9a421d0b149409c07dce46ddedc5c.json",
-  ),
-  "coding-agent-scores-still-need-expertise": image(
-    "coding-agent-scores-still-need-expertise",
-    "Hands inspect and align one path through a branching mechanical system on paper.",
-    "A task score still needs a person who can specify the work and judge the result.",
-    "918be37c7f50cddab799fb6d4cfb4a2b25eb09850ea6ac471654c2d58a39c8c4",
-    "0e366967623c791b2db05cdbf3115de9719e4f4176b579eb38b358caf1f1d22d",
-    "20260829T045334214Z-image-adfc884a-0f2/receipt.json",
-    "gateway_372083261e9c4a7aae8af256c9bfd24b.json",
   ),
   "coding-agent-score-holdouts": image(
     "coding-agent-score-holdouts",
