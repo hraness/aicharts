@@ -18,15 +18,11 @@ import {
   type BlogArticle,
   type InlineContent,
 } from "./articles";
-export const HARNESS_DEFINITION_URL =
-  "https://hraness.com/kb/agent-harnesses" as const;
-
 export const TERMINAL_BENCH_SCIENCE_ARTICLE_SLUG = "terminal-bench-science" as const;
 export const TERMINAL_BENCH_SCIENCE_ARTICLE_PUBLISHED_AT = "2026-08-31" as const;
 
 export const TERMINAL_BENCH_SCIENCE = {
   author: "Steven Dillmann",
-  nextReleasePrDeadline: "October 5, 2026",
   publishedOn: "August 2026",
   quotes: {
     scientistsSetTheBar:
@@ -51,9 +47,7 @@ export const TERMINAL_BENCH_SCIENCE = {
     pullRequestCount: "386",
     acceptedCount: "70",
     trialsPerTask: "three",
-    domainCount: "five",
     peakResolution: "30.0%",
-    peakResolutionPlain: "30%",
     bothFrontierModels: "Kimi K3 and Claude Opus 5",
   },
   leaderboard: [
@@ -67,10 +61,6 @@ export const TERMINAL_BENCH_SCIENCE = {
     { model: "Grok 4.6", harness: "Grok Build", resolution: "7.1%" },
     { model: "GPT-5.6 Luna", harness: "Codex", resolution: "3.3%" },
   ],
-} as const;
-
-export const HRANESS_TERMINAL_BENCH_SCIENCE_READING = {
-  savedOn: "2026-08-29",
 } as const;
 
 function checkedSnapshot(): CodingAgentSnapshot {
@@ -128,10 +118,10 @@ export function createTerminalBenchScienceArticle(
     slug: TERMINAL_BENCH_SCIENCE_ARTICLE_SLUG,
     title: "What Terminal-Bench-Science’s 30% result measures",
     dek:
-      "Scientists, not vendors, set the bar on Terminal-Bench-Science 0.1. The peak 30% resolution is remaining work, not a shipping product. Cost and token Pareto is the useful comparison.",
+      "Terminal-Bench-Science accepted 70 of 920 proposed research workflows. Its leading configuration resolved 30%; the published cost and token frontiers show why that score is only one part of the result.",
     focusPhrase: "Terminal-Bench-Science",
     seoDescription:
-      "Terminal-Bench-Science 0.1 lets scientists set the bar. A 30% peak resolution is not a product win; cost and token Pareto is the useful comparison.",
+      "See what Terminal-Bench-Science 0.1’s 30% result covers, how 70 tasks were selected, and how cost and token use change the model comparison.",
     keywords: [
       "Terminal-Bench-Science",
       "scientific AI agents",
@@ -145,67 +135,28 @@ export function createTerminalBenchScienceArticle(
     section: "Scientific agent benchmarks",
     sourceIds: [
       "terminalBenchScienceAnnouncement",
-      "hranessTerminalBenchScienceReading",
       "artificialAnalysisCodingAgents",
     ],
-    relatedSlugs: ["small-models-have-arrived"],
+    relatedSlugs: ["aa-index-cost-coding-agents"],
     body: [
       paragraph(
         { href: BLOG_SOURCES.terminalBenchScienceAnnouncement.url, text: "Terminal-Bench-Science 0.1" },
-        " is a Stanford-led benchmark of AI agents on scientific research workflows. ",
+        " is a Stanford-led evaluation of AI agents on scientific research workflows. ",
         TERMINAL_BENCH_SCIENCE.author,
-        ", writing the announcement for the Terminal-Bench-Science team, says ",
-        `“${TERMINAL_BENCH_SCIENCE.quotes.scientistsSetTheBar}”`,
-        " The suite is built with the Terminal-Bench and Harbor team and with domain experts. Of ",
+        ", writing for the benchmark team, reports that ",
         TERMINAL_BENCH_SCIENCE.reported.proposalCount,
-        " proposals, only ",
+        " proposed workflows became ",
         TERMINAL_BENCH_SCIENCE.reported.acceptedCount,
-        " tasks survived domain, technical, and bar-raiser review. ",
-        `“${TERMINAL_BENCH_SCIENCE.quotes.strongestResolvesThirty}”`,
+        " accepted tasks after domain, implementation, and difficulty review. The team’s stated principle is: ",
+        `“${TERMINAL_BENCH_SCIENCE.quotes.scientistsSetTheBar}”`,
       ),
+      heading("What the 30% result covers"),
       paragraph(
-        "That ",
-        TERMINAL_BENCH_SCIENCE.reported.peakResolutionPlain,
-        " cell is the headline. It is not a product win. A research assistant that fails most of the workflows scientists chose to measure is still a research object. The useful comparison on AI Charts is the one the suite already reports next to resolution: cost and token Pareto. The ",
-        { href: "/", text: "coding-agent comparison chart" },
-        " already plots those axes for a different, software-engineering snapshot.",
-      ),
-      paragraph(
-        "The ",
-        { href: BLOG_SOURCES.hranessTerminalBenchScienceReading.url, text: "Hraness reading note of that announcement" },
-        `, saved ${HRANESS_TERMINAL_BENCH_SCIENCE_READING.savedOn}, is a dated digest. It is not a substitute for the primary page.`,
-      ),
-      heading("Scientists set the evaluation bar"),
-      paragraph(
-        "Tasks come from researchers’ own work across the life, physical, Earth, mathematical, and engineering sciences. They are not textbook questions or standardized exercises. Contributors propose workflows. Reviewers approve a subset for implementation. A later review asks whether each task is objectively verifiable, hard for current frontier agents, and scientifically real.",
-      ),
-      paragraph(
-        `“${TERMINAL_BENCH_SCIENCE.quotes.taskFunnel}”`,
-        " Dillmann presents that selectivity as evidence that it is hard to write tasks that are scientifically interesting, hard for frontier agents, and specified well enough to grade. The accepted set covers scientific data analysis, statistical inference, simulation, optimization, theorem proving, image reconstruction, signal processing, inverse problems, sensor calibration, model fitting, classification, and scientific machine learning.",
-      ),
-      paragraph(
-        { href: HARNESS_DEFINITION_URL, text: "Hraness defines an agent harness" },
-        " as software that gives a model a place to work: it injects instructions, offers tools, runs an assess-act-reassess loop, and translates across model APIs. The Science leaderboard names that layer. Claude Code, Codex, and Grok Build are part of each observation. A model name without the harness is an incomplete citation here too.",
-      ),
-      heading("A 30% peak is remaining work"),
-      paragraph(
-        "Each evaluated model ran ",
+        `“${TERMINAL_BENCH_SCIENCE.quotes.taskFunnel}” Each configuration ran `,
         TERMINAL_BENCH_SCIENCE.reported.trialsPerTask,
         " independent trials per task across all ",
         TERMINAL_BENCH_SCIENCE.reported.acceptedCount,
-        " tasks. Claude Opus 5 with Claude Code leads at ",
-        TERMINAL_BENCH_SCIENCE.reported.peakResolution,
-        ". GPT-5.6 Sol with Codex is next at ",
-        TERMINAL_BENCH_SCIENCE.leaderboard[1].resolution,
-        ", then Claude Fable 5 with Claude Code at ",
-        TERMINAL_BENCH_SCIENCE.leaderboard[2].resolution,
-        ". Claude Opus 4.8 sits at ",
-        TERMINAL_BENCH_SCIENCE.leaderboard[3].resolution,
-        ". Several other named systems resolve less than 11%. GLM 5.3 with Claude Code is the strongest open model at ",
-        TERMINAL_BENCH_SCIENCE.reported.glmOpenLead,
-        ". GPT-5.6 Luna with Codex is last at ",
-        TERMINAL_BENCH_SCIENCE.leaderboard[8].resolution,
-        ".",
+        " tasks. The accepted set spans scientific data analysis, statistical inference, simulation, optimization, theorem proving, image reconstruction, signal processing, inverse problems, sensor calibration, model fitting, classification, and scientific machine learning. The leaderboard records the model together with its agent harness, because the harness is part of the evaluated configuration.",
       ),
       table(
         "Terminal-Bench-Science 0.1 resolution rates from the announcement",
@@ -217,16 +168,11 @@ export function createTerminalBenchScienceArticle(
         ]),
       ),
       paragraph(
-        "The suite is calibrated to sit ",
+        `“${TERMINAL_BENCH_SCIENCE.quotes.strongestResolvesThirty}” The suite is calibrated to sit `,
         TERMINAL_BENCH_SCIENCE.reported.hardnessGap,
-        " below Terminal-Bench 3.0 for every model evaluated on both. Reviewers rejected tasks that frontier agents already solve easily. A ",
-        TERMINAL_BENCH_SCIENCE.reported.peakResolutionPlain,
-        " resolution rate therefore means the leading configuration still failed most of the remaining, scientist-set workflows. That is a ceiling on current capability, not a claim that a lab can replace the scientist on the work the suite measures.",
+        " below Terminal-Bench 3.0 for every model evaluated on both. Because reviewers excluded workflows that frontier systems already solved easily, 30% describes performance on a deliberately difficult accepted set. It should not be read as a success rate for arbitrary laboratory work or as evidence that one model can replace a scientist.",
       ),
-      paragraph(
-        "The announcement’s own goal is agents that execute demanding workflows so scientists can spend more time on questions, hypotheses, interpretation, and communication. A system that resolves three in ten of the accepted tasks does not yet occupy that role.",
-      ),
-      heading("Cost and tokens split the useful ranking"),
+      heading("Cost and tokens change the comparison"),
       paragraph(
         `“${TERMINAL_BENCH_SCIENCE.quotes.solMatchesFableCost}”`,
         " Claude Opus 5 reaches the highest resolution at ",
@@ -266,22 +212,22 @@ export function createTerminalBenchScienceArticle(
         ],
       ),
       paragraph(
-        "Peak resolution and the useful trade-off are different questions. A product team that can only cite the ",
-        TERMINAL_BENCH_SCIENCE.reported.peakResolutionPlain,
-        " cell has not yet answered which configuration is cheapest, or cheapest in tokens, for a given quality bar.",
+        "The highest resolution, lowest evaluation cost, and lowest token use do not select the same configuration. A team choosing an evaluation candidate therefore needs a quality threshold and a budget, rather than a single overall winner.",
       ),
       callout(
-        "Pareto, not a trophy",
-        "Use the 30% cell as evidence that the leading named configuration still fails most scientist-set workflows. Use the cost and token frontiers when the question is which configuration is not strictly worse on quality and spend.",
+        "How to use the result",
+        "Use resolution to compare completion on this accepted task set. Use the published cost and token frontiers to find configurations that improve one of those resources without giving up more resolution than your work can tolerate.",
       ),
-      heading("This chart already plots that trade-off"),
+      heading("How it relates to AI Charts"),
       paragraph(
-        "The current AI Charts coding-agent comparison plots AA Index, DeepSWE, Terminal-Bench v2.1, and SWE-Atlas-QnA against API cost, active time, or total token use. Those scores belong to a checked ",
+        "The ",
+        { href: "/", text: "AI Charts coding-agent comparison" },
+        " plots AA Index, DeepSWE, Terminal-Bench v2.1, and SWE-Atlas-QnA against API cost, active time, or total token use. Those observations come from a checked ",
         { href: BLOG_SOURCES.artificialAnalysisCodingAgents.url, text: "Artificial Analysis coding-agents snapshot" },
-        `. AI Charts retrieved it on ${retrievedAt}. Terminal-Bench-Science 0.1 is not in that snapshot. The two Terminal-Bench names share a franchise and a review culture. They do not share a task set.`,
+        ` retrieved ${retrievedAt}. Terminal-Bench-Science 0.1 is a separate scientific task set and is not part of that chart.`,
       ),
       paragraph(
-        "The snapshot’s highest stored Terminal-Bench v2.1 score is ",
+        "For orientation, the snapshot’s highest stored Terminal-Bench v2.1 score is ",
         formatBenchmarkScore(terminalLeader.value),
         " for ",
         terminalLeader.record.model,
@@ -289,47 +235,9 @@ export function createTerminalBenchScienceArticle(
         terminalLeader.record.agent,
         " at the ",
         terminalLeader.record.setting,
-        " setting. That number is a software-engineering terminal-suite observation. It does not establish a Science resolution rate.",
+        " setting. That value belongs to a software-engineering terminal benchmark; it cannot be compared numerically with the 30% Science resolution rate. The shared lesson is methodological: keep the task set, model, harness, quality measure, cost, and token use attached to every comparison.",
       ),
-      paragraph(
-        "What transfers is the comparison shape. Terminal-Bench-Science publishes cost and token Pareto next to resolution because a peak score without those axes is an incomplete product signal. This host already charts that shape for the coding-agent snapshot. Open the ",
-        { href: "/", text: "coding-agent comparison chart" },
-        " to change axes. Read ",
-        { href: "/blog/small-models-have-arrived", text: "how cheaper AI models can make everyday products viable" },
-        " when the question is a frequent-use consumer feature rather than a scientist-set workflow.",
-      ),
-      heading("A different question from cheaper everyday models"),
-      paragraph(
-        { href: "/blog/small-models-have-arrived", text: "How cheaper AI models can make everyday products viable" },
-        " asks whether a lower-cost model can make a repeated product feature viable once it meets a written quality bar. This page asks whether a ",
-        TERMINAL_BENCH_SCIENCE.reported.peakResolutionPlain,
-        " peak on a scientist-set science suite is a shipping research assistant. Both notes treat cost as part of the result. They do not share a workload.",
-      ),
-      paragraph(
-        "The small-models note can stay with one person’s news-page experiment and listed token prices. This note stays with Dillmann’s scientist-set bar, the ",
-        TERMINAL_BENCH_SCIENCE.reported.acceptedCount,
-        "-task funnel, and the cost and token frontiers the suite already publishes. Collapsing those questions into one “cheaper is better” headline would drop the bar, the harness, and the task set.",
-      ),
-      heading("How to read Terminal-Bench-Science"),
-      paragraph(
-        "Read ",
-        { href: BLOG_SOURCES.terminalBenchScienceAnnouncement.url, text: "Dillmann’s announcement" },
-        " for the task funnel, the ",
-        TERMINAL_BENCH_SCIENCE.reported.acceptedCount,
-        "-task coverage, the named resolution rates, the cost and token frontiers, and the living-benchmark roadmap. Read the ",
-        { href: BLOG_SOURCES.hranessTerminalBenchScienceReading.url, text: "Hraness reading note of that announcement" },
-        " for a dated digest. Read the ",
-        { href: HARNESS_DEFINITION_URL, text: "Hraness harness definition" },
-        " when a row’s agent name needs a noun. The next release, 0.2, has a pull-request deadline of ",
-        TERMINAL_BENCH_SCIENCE.nextReleasePrDeadline,
-        ". Tasks are versioned so Harbor can re-run trials.",
-      ),
-      paragraph(
-        "The useful sentence is narrower than a leaderboard headline. Scientists set the bar. The leading named configuration resolves ",
-        TERMINAL_BENCH_SCIENCE.reported.peakResolutionPlain,
-        " of the accepted workflows. That remaining miss rate is the result. Cost and token Pareto is how AI Charts already asks the next product question.",
-      ),
-      heading("Limits of this reading"),
+      heading("Limits"),
       list(
         [
           "Resolution rates, costs, and token totals belong to the named 0.1 release, models, harnesses, and three-trial protocol on the announcement. They can change in a later release.",
@@ -340,15 +248,8 @@ export function createTerminalBenchScienceArticle(
         [
           "Reported evaluation costs are totals across all 70 tasks. They are not a production invoice, a subscription price, or a per-query quote.",
         ],
-        [
-          "The suite is a living benchmark. Later releases will add, retire, and recalibrate tasks as the frontier moves.",
-        ],
-        [
-          "Resolution varies by scientific domain. A suite score is not a domain score, and a domain lead is not a general research-assistant claim.",
-        ],
-        [
-          "The claim that 30% is not a product win is AI Charts analysis of those reported rates. Cite Dillmann for the measurements.",
-        ],
+        ["The suite is living and versioned; later releases can add, retire, or recalibrate tasks."],
+        ["Resolution varies by scientific domain, so the aggregate is not a domain-specific capability claim."],
       ),
     ],
   };

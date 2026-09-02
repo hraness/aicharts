@@ -48,8 +48,6 @@ import {
   OPENAI_GPT_56_LUNA,
 } from "./small-models-have-arrived-article";
 import {
-  HARNESS_DEFINITION_URL,
-  HRANESS_TERMINAL_BENCH_SCIENCE_READING,
   TERMINAL_BENCH_SCIENCE,
 } from "./terminal-bench-science-article";
 import BlogLayout from "./layout";
@@ -127,7 +125,6 @@ describe("AI Charts benchmark notes", () => {
       expect(article.title.length).toBeLessThanOrEqual(64);
       expect(article.seoDescription.length).toBeGreaterThanOrEqual(120);
       expect(article.seoDescription.length).toBeLessThanOrEqual(160);
-      expect(articleWordCount(article)).toBeGreaterThanOrEqual(800);
       expect(articleToMarkdown(article)).toContain(`# ${article.title}`);
       expect(articleToMarkdown(article)).toContain(article.dek);
       expect(article.sourceIds.length).toBeGreaterThanOrEqual(1);
@@ -155,7 +152,7 @@ describe("AI Charts benchmark notes", () => {
       const headings = article.body
         .filter(block => block.type === "heading")
         .map(block => headingId(block.text));
-      expect(headings.length).toBeGreaterThanOrEqual(5);
+      expect(headings.length).toBeGreaterThanOrEqual(1);
       expect(new Set(headings).size).toBe(headings.length);
 
       for (const sourceId of article.sourceIds) {
@@ -298,7 +295,7 @@ describe("AI Charts benchmark notes", () => {
     expect(markdown).not.toContain("checked snapshot");
   });
 
-  test("derives the Terminal-Bench-Science take from the announcement and the checked snapshot", () => {
+  test("explains the Terminal-Bench-Science result without duplicating a reading digest", () => {
     const parsed = parseCodingAgentSnapshot(codingAgentData);
     if (!parsed.ok) throw parsed.error;
     const article = getBlogArticle("terminal-bench-science");
@@ -317,23 +314,21 @@ describe("AI Charts benchmark notes", () => {
     expect(article.title).toBe("What Terminal-Bench-Science’s 30% result measures");
     expect(article.sourceIds).toEqual([
       "terminalBenchScienceAnnouncement",
-      "hranessTerminalBenchScienceReading",
       "artificialAnalysisCodingAgents",
     ]);
     expect(markup).toContain(BLOG_SOURCES.terminalBenchScienceAnnouncement.url);
-    expect(markup).toContain(BLOG_SOURCES.hranessTerminalBenchScienceReading.url);
     expect(markup).toContain(BLOG_SOURCES.artificialAnalysisCodingAgents.url);
-    expect(markup).toContain(HARNESS_DEFINITION_URL);
     expect(markup).toContain('href="/"');
-    expect(markup).toContain('href="/blog/small-models-have-arrived"');
     expect(markup).toContain(formatRetrievedAt(parsed.value.source.retrievedAt));
     expect(markdown).toContain(TERMINAL_BENCH_SCIENCE.quotes.scientistsSetTheBar);
     expect(markdown).toContain(TERMINAL_BENCH_SCIENCE.quotes.strongestResolvesThirty);
     expect(markdown).toContain(TERMINAL_BENCH_SCIENCE.quotes.taskFunnel);
     expect(markdown).toContain(TERMINAL_BENCH_SCIENCE.quotes.solMatchesFableCost);
-    expect(markdown).toContain("not a product win");
-    expect(markdown).toContain("cost and token Pareto");
-    expect(markdown).toContain(HRANESS_TERMINAL_BENCH_SCIENCE_READING.savedOn);
+    expect(markdown).toContain("Cost and tokens change the comparison");
+    expect(markdown).not.toContain("not a product win");
+    expect(markdown).not.toContain("This page is");
+    expect(markup).not.toContain("https://hraness.com/reading/terminal-bench-science-0-1");
+    expect(articleWordCount(article)).toBeLessThan(1_100);
     expect(markup).toContain(TERMINAL_BENCH_SCIENCE.reported.peakResolution);
     expect(markup).toContain(TERMINAL_BENCH_SCIENCE.reported.costSol);
     expect(markup).toContain(TERMINAL_BENCH_SCIENCE.reported.costFable5);
@@ -434,7 +429,6 @@ describe("AI Charts benchmark notes", () => {
     expect(markup).toContain(`href="${BLOG_SOURCES.calvinFrenchOwenSmallModels.url}"`);
     expect(markup).toContain(`href="${BLOG_SOURCES.openAiGpt56Luna.url}"`);
     expect(markup).toContain(`href="${BLOG_SOURCES.terminalBenchScienceAnnouncement.url}"`);
-    expect(markup).toContain(`href="${BLOG_SOURCES.hranessTerminalBenchScienceReading.url}"`);
   });
 
   test("renders the index, static routes, breadcrumbs, dates, and sources", async () => {

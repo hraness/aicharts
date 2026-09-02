@@ -186,14 +186,6 @@ export const BLOG_SOURCES = {
     url: "https://www.terminal-bench-science.ai/announcement",
     year: 2026,
   },
-  hranessTerminalBenchScienceReading: {
-    note:
-      "The Hraness reading note is a dated digest of the Terminal-Bench-Science 0.1 announcement, used here as a crawlable companion citation rather than a substitute for the original.",
-    publication: "Hraness",
-    title: "Hraness reading note: Terminal-Bench-Science 0.1",
-    url: "https://hraness.com/reading/terminal-bench-science-0-1",
-    year: 2026,
-  },
 } as const satisfies Record<string, BlogSource>;
 
 export type BlogSourceId = keyof typeof BLOG_SOURCES;

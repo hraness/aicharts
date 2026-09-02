@@ -60,7 +60,7 @@ export const BLOG_EDITORIAL_IMAGES = {
   "terminal-bench-science": image(
     "terminal-bench-science",
     "Paper-cutout hands hold a high charcoal measuring beam while a compact cobalt apparatus reaches only partway, with coral and mint weights on a low tray.",
-    "Scientists set the evaluation bar; a peak score without cost and token trade-offs is not a product win. The illustration is not a data plot.",
+    "Scientists set the task set; this illustration separates completion, evaluation cost, and token use. It is not a data plot.",
     "25b0982fb419a0e7caa8551c1521950a70ae10ac84d12d8cd765c705015f4541",
     "a233bd9a0784c0f26b90201a57e315b9d642a0f3b285256a204e25041df14be3",
     "20260831T132600000Z-image-25b0982f-tbs/receipt.json",
