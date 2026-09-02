@@ -198,7 +198,7 @@ const firstPartyReleaseRadarSchema = firstPartyReleaseRadarBaseSchema.superRefin
 
   const ids = new Set<string>();
   const urls = new Set<string>();
-  const presentCounts = new Map<FirstPartyReleaseSourceId, number>();
+  const selectedPresentCounts = new Map<FirstPartyReleaseSourceId, number>();
   radar.candidates.forEach((candidate, index) => {
     if (ids.has(candidate.id)) {
       context.addIssue({
@@ -275,8 +275,14 @@ const firstPartyReleaseRadarSchema = firstPartyReleaseRadarBaseSchema.superRefin
         path: ["candidates", index, "lastChangedAt"],
       });
     }
-    if (candidate.sourcePresence === "present") {
-      presentCounts.set(candidate.sourceId, (presentCounts.get(candidate.sourceId) ?? 0) + 1);
+    if (
+      candidate.sourcePresence === "present"
+      && releaseCandidateNamesForProviderUrl(candidate.providerId, candidate.canonicalUrl).length > 0
+    ) {
+      selectedPresentCounts.set(
+        candidate.sourceId,
+        (selectedPresentCounts.get(candidate.sourceId) ?? 0) + 1,
+      );
     }
     const previous = radar.candidates[index - 1];
     if (previous !== undefined && compareCandidates(previous, candidate) > 0) {
@@ -289,10 +295,10 @@ const firstPartyReleaseRadarSchema = firstPartyReleaseRadarBaseSchema.superRefin
   });
 
   radar.sources.forEach((source, index) => {
-    if (source.health.shape.candidateCount !== (presentCounts.get(source.id) ?? 0)) {
+    if (source.health.shape.candidateCount !== (selectedPresentCounts.get(source.id) ?? 0)) {
       context.addIssue({
         code: "custom",
-        message: `${source.id} candidate count does not match present ledger records.`,
+        message: `${source.id} candidate count does not match selected present ledger records.`,
         path: ["sources", index, "health", "shape", "candidateCount"],
       });
     }
@@ -327,6 +333,7 @@ export type FirstPartyReleaseSourceObservation = Readonly<{
     namedModels: readonly string[];
     sourceModifiedAt: string;
   }>[];
+  entries: readonly SitemapEntry[];
   source: FirstPartyReleaseSourceSnapshot;
 }>;
 
@@ -412,6 +419,15 @@ export function parseProviderSitemap(
 
 const anthropicFamilies = ["fable", "haiku", "mythos", "opus", "sonnet"] as const;
 const anthropicFamilyPattern = anthropicFamilies.join("|");
+const anthropicExactModelRoutes = {
+  "claude-2": ["Claude 2"],
+  "claude-2-1": ["Claude 2.1"],
+  // Haiku was announced as forthcoming on this page and has its own release route.
+  "claude-3-family": ["Claude 3 Opus", "Claude 3 Sonnet"],
+  "claude-3-haiku": ["Claude 3 Haiku"],
+  "claude-4": ["Claude Opus 4", "Claude Sonnet 4"],
+  "claude-gov-models-for-u-s-national-security-customers": ["Claude Gov models"],
+} as const satisfies Readonly<Record<string, readonly string[]>>;
 
 function anthropicModelName(family: string, major: string, minor?: string): string {
   const normalizedFamily = `${family[0]?.toUpperCase() ?? ""}${family.slice(1).toLowerCase()}`;
@@ -424,6 +440,10 @@ function anthropicModels(pathname: string): string[] {
     return [];
   }
   const route = slug.replace(/^news\/(?:introducing-)?/u, "");
+  const exactModels = anthropicExactModelRoutes[
+    route as keyof typeof anthropicExactModelRoutes
+  ];
+  if (exactModels !== undefined) return [...exactModels];
   const sharedVersion = route.match(new RegExp(
     `^claude-(${anthropicFamilyPattern})-and-(${anthropicFamilyPattern})-(\\d+)-(\\d+)$`,
     "u",
@@ -461,10 +481,14 @@ const ignoredOpenAiSuffixTokens = new Set([
   "baselines",
   "benchmark",
   "card",
+  "eval",
   "evals",
+  "evaluation",
+  "evaluations",
   "model-spec",
   "paper",
   "report",
+  "reports",
   "release",
   "research",
   "safe",
@@ -473,6 +497,14 @@ const ignoredOpenAiSuffixTokens = new Set([
   "system",
   "technical",
 ]);
+const openAiExactModelRoutes = {
+  "dall-e-2": ["DALL·E 2"],
+  "dall-e-3": ["DALL·E 3"],
+  "introducing-chatgpt-images-2-0": ["GPT Image 2"],
+  "openai-o1-mini-advancing-cost-efficient-reasoning": ["o1-mini"],
+  "openai-o3-mini": ["o3-mini"],
+  "sora-2": ["Sora 2", "Sora 2 Pro"],
+} as const satisfies Readonly<Record<string, readonly string[]>>;
 
 function openAiVariantName(value: string): string {
   return value.split("-").map(token => (
@@ -487,7 +519,13 @@ function openAiVariantName(value: string): string {
 function openAiModels(pathname: string): string[] {
   const pathMatch = pathname.match(/^\/index\/([^/]+)\/?$/u);
   if (pathMatch?.[1] === undefined) return [];
-  const slug = pathMatch[1].replace(/^(?:announcing|introducing|previewing)-/u, "");
+  const rawSlug = pathMatch[1];
+  const exactModels = openAiExactModelRoutes[
+    rawSlug as keyof typeof openAiExactModelRoutes
+  ];
+  if (exactModels !== undefined) return [...exactModels];
+  const slug = rawSlug.replace(/^(?:announcing|introducing|previewing)-/u, "");
+  if (slug.split("-").some(token => ignoredOpenAiSuffixTokens.has(token))) return [];
   const combinedOModels = slug.match(/^o(\d+)-and-o(\d+)(?:-([a-z0-9-]+))?$/u);
   if (combinedOModels !== null && combinedOModels[1] !== undefined && combinedOModels[2] !== undefined) {
     return sortedUnique([
@@ -539,7 +577,8 @@ function unresolvedAnnouncementName(
   const pathname = new URL(canonicalUrl).pathname.toLowerCase();
   const slug = pathname.replace(/^\/(?:news\/|index\/)?/u, "").replace(/\/$/u, "");
   if (providerId === "anthropic") {
-    if (!/^(?:introducing-)?claude-/u.test(slug)) return null;
+    const releaseSlug = slug.replace(/^introducing-/u, "");
+    if (!/^claude-/u.test(releaseSlug) || !/\d/u.test(releaseSlug)) return null;
   } else {
     const releaseSlug = slug.replace(/^(?:announcing|introducing|previewing)-/u, "");
     if (releaseSlug.split("-").some(token => ignoredOpenAiSuffixTokens.has(token))) return null;
@@ -588,6 +627,7 @@ export function observeFirstPartyReleaseSource(
   }
   return ok({
     candidates,
+    entries: parsed.value.entries,
     source: {
       health: {
         contentType: fetched.contentType,
@@ -646,12 +686,15 @@ export function deriveFirstPartyReleaseRadar(
   if (!Number.isFinite(observedTime)) throw new Error(`Invalid observation timestamp ${observedAt}.`);
   const normalizedObservedAt = new Date(observedTime).toISOString();
   const previousByUrl = new Map(previous.candidates.map(candidate => [candidate.canonicalUrl, candidate]));
-  const currentUrls = new Set<string>();
+  const currentCandidateUrls = new Set<string>();
+  const currentEntriesByUrl = new Map(observations.flatMap(observation => (
+    observation.entries.map(entry => [entry.url, entry] as const)
+  )));
   const candidates: FirstPartyReleaseCandidate[] = [];
 
   for (const observation of observations) {
     for (const current of observation.candidates) {
-      currentUrls.add(current.canonicalUrl);
+      currentCandidateUrls.add(current.canonicalUrl);
       const canonical = new URL(current.canonicalUrl);
       const existing = previousByUrl.get(current.canonicalUrl);
       const common = {
@@ -678,11 +721,19 @@ export function deriveFirstPartyReleaseRadar(
   }
 
   for (const prior of previous.candidates) {
-    if (currentUrls.has(prior.canonicalUrl)) continue;
-    const missing = { ...prior, sourcePresence: "missing" as const };
+    if (currentCandidateUrls.has(prior.canonicalUrl)) continue;
+    const currentEntry = currentEntriesByUrl.get(prior.canonicalUrl);
+    const retained = currentEntry === undefined
+      ? { ...prior, sourcePresence: "missing" as const }
+      : {
+          ...prior,
+          candidateDate: currentEntry.lastModifiedAt.slice(0, 10),
+          sourceModifiedAt: currentEntry.lastModifiedAt,
+          sourcePresence: "present" as const,
+        };
     candidates.push({
-      ...missing,
-      lastChangedAt: candidateChanged(prior, missing) ? normalizedObservedAt : prior.lastChangedAt,
+      ...retained,
+      lastChangedAt: candidateChanged(prior, retained) ? normalizedObservedAt : prior.lastChangedAt,
     });
   }
 

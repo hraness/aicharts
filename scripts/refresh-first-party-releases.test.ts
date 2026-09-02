@@ -47,6 +47,10 @@ function anthropicXml(includeLatest = true): string {
       lastmod: "2026-06-30T18:11:23.000Z",
       url: "https://www.anthropic.com/news/claude-5-0-sonnet",
     },
+    {
+      lastmod: "2026-08-27T15:13:34.000Z",
+      url: "https://www.anthropic.com/news/claude-for-life-sciences",
+    },
   ];
   const fillerCount = anthropic.minimumEntryCount - candidates.length;
   return sitemap([
@@ -106,6 +110,29 @@ describe("first-party release URL recognition", () => {
     )).toEqual(["Claude Fable 5.1", "Claude Mythos 5.1"]);
   });
 
+  test("uses reviewed exact identities for irregular Anthropic model-release routes", () => {
+    expect(namedModelsForProviderUrl(
+      "anthropic",
+      "https://www.anthropic.com/news/claude-4",
+    )).toEqual(["Claude Opus 4", "Claude Sonnet 4"]);
+    expect(namedModelsForProviderUrl(
+      "anthropic",
+      "https://www.anthropic.com/news/claude-3-family",
+    )).toEqual(["Claude 3 Opus", "Claude 3 Sonnet"]);
+    expect(namedModelsForProviderUrl(
+      "anthropic",
+      "https://www.anthropic.com/news/claude-3-haiku",
+    )).toEqual(["Claude 3 Haiku"]);
+    expect(namedModelsForProviderUrl(
+      "anthropic",
+      "https://www.anthropic.com/news/claude-2-1",
+    )).toEqual(["Claude 2.1"]);
+    expect(namedModelsForProviderUrl(
+      "anthropic",
+      "https://www.anthropic.com/news/claude-gov-models-for-u-s-national-security-customers",
+    )).toEqual(["Claude Gov models"]);
+  });
+
   test("recognizes current OpenAI flagship and variant release routes without treating reports as models", () => {
     expect(namedModelsForProviderUrl("openai", "https://openai.com/index/gpt-5-6/"))
       .toEqual(["GPT-5.6"]);
@@ -119,6 +146,50 @@ describe("first-party release URL recognition", () => {
     )).toEqual(["GPT-4o Mini"]);
     expect(namedModelsForProviderUrl("openai", "https://openai.com/index/gpt-4v-system-card/"))
       .toEqual([]);
+    expect(namedModelsForProviderUrl(
+      "openai",
+      "https://openai.com/index/openai-o1-mini-advancing-cost-efficient-reasoning/",
+    )).toEqual(["o1-mini"]);
+    expect(namedModelsForProviderUrl(
+      "openai",
+      "https://openai.com/index/openai-o3-mini/",
+    )).toEqual(["o3-mini"]);
+    expect(namedModelsForProviderUrl(
+      "openai",
+      "https://openai.com/index/introducing-chatgpt-images-2-0/",
+    )).toEqual(["GPT Image 2"]);
+    expect(namedModelsForProviderUrl(
+      "openai",
+      "https://openai.com/index/sora-2/",
+    )).toEqual(["Sora 2", "Sora 2 Pro"]);
+    expect(namedModelsForProviderUrl(
+      "openai",
+      "https://openai.com/index/dall-e-3/",
+    )).toEqual(["DALL·E 3"]);
+    expect(namedModelsForProviderUrl(
+      "openai",
+      "https://openai.com/index/dall-e-2/",
+    )).toEqual(["DALL·E 2"]);
+    expect(namedModelsForProviderUrl(
+      "openai",
+      "https://openai.com/index/sora-2-system-card/",
+    )).toEqual([]);
+    expect(namedModelsForProviderUrl(
+      "openai",
+      "https://openai.com/index/dall-e-3-report/",
+    )).toEqual([]);
+    expect(namedModelsForProviderUrl(
+      "openai",
+      "https://openai.com/index/o3-mini-system-card/",
+    )).toEqual([]);
+    expect(namedModelsForProviderUrl(
+      "openai",
+      "https://openai.com/index/introducing-o3-and-o4-mini-system-card/",
+    )).toEqual([]);
+    expect(namedModelsForProviderUrl(
+      "openai",
+      "https://openai.com/index/codex-1-evals/",
+    )).toEqual([]);
   });
 
   test("routes unknown model-family announcement shapes into review instead of dropping them", () => {
@@ -137,6 +208,14 @@ describe("first-party release URL recognition", () => {
     expect(releaseCandidateNamesForProviderUrl(
       "openai",
       "https://openai.com/index/gpt-5-safe-completions/",
+    )).toEqual([]);
+    expect(releaseCandidateNamesForProviderUrl(
+      "anthropic",
+      "https://www.anthropic.com/news/claude-for-life-sciences",
+    )).toEqual([]);
+    expect(releaseCandidateNamesForProviderUrl(
+      "anthropic",
+      "https://www.anthropic.com/news/introducing-claude-tag",
     )).toEqual([]);
   });
 });
@@ -279,6 +358,51 @@ describe("durable first-party candidate ledger", () => {
     });
     expect(parseFirstPartyReleaseRadar(second).ok).toBeTrue();
     expect(validateFirstPartyReleaseReplacement(first, second).ok).toBeTrue();
+  });
+
+  test("keeps literal sitemap presence separate from candidate selection", () => {
+    const first = deriveFirstPartyReleaseRadar(
+      currentObservations(),
+      emptyFirstPartyReleaseRadar(),
+      observedAt,
+    );
+    const prior: FirstPartyReleaseRadar = {
+      ...first,
+      candidates: [
+        ...first.candidates,
+        {
+          candidateDate: "2026-08-27",
+          candidateDateMeaning: "provider-sitemap-lastmod",
+          canonicalUrl: "https://www.anthropic.com/news/claude-for-life-sciences",
+          firstSeenAt: observedAt,
+          id: "anthropic:/news/claude-for-life-sciences",
+          lastChangedAt: observedAt,
+          namedModels: ["Unresolved announcement: Claude For Life Sciences"],
+          providerId: "anthropic",
+          providerName: "Anthropic",
+          sourceId: "anthropic-sitemap",
+          sourceModifiedAt: "2026-08-27T15:13:34.000Z",
+          sourcePresence: "present",
+          status: "not-a-release",
+        },
+      ],
+    };
+    const next = deriveFirstPartyReleaseRadar(
+      currentObservations(),
+      prior,
+      "2026-09-03T18:00:00.000Z",
+    );
+    const retained = next.candidates.find(candidate => (
+      candidate.canonicalUrl.endsWith("/news/claude-for-life-sciences")
+    ));
+
+    expect(retained).toMatchObject({
+      lastChangedAt: observedAt,
+      sourcePresence: "present",
+      status: "not-a-release",
+    });
+    expect(parseFirstPartyReleaseRadar(next).ok).toBeTrue();
+    expect(validateFirstPartyReleaseReplacement(prior, next).ok).toBeTrue();
   });
 
   test("rejects ledger deletion or refresh-driven review-status changes", () => {

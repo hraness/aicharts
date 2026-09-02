@@ -86,6 +86,11 @@ Release discovery and benchmark publication are different operations:
 3. **Reviewed release dates** promote a matched candidate only after a person
    or review agent confirms the model identity and provider-owned source. The
    first-party watcher never writes the official-date ledger automatically.
+   For unknown Anthropic URL shapes, the queue requires a version numeral;
+   reviewed irregular launches use exact route mappings. Product-only packages,
+   integrations, regional availability, programs, and policy announcements are
+   dispositioned as non-releases unless the primary source also introduces a
+   distinct underlying model.
 4. **Benchmark observations** use a benchmark owner export when one exists.
    Vendor-reported results stay in a separate evidence class and name the
    vendor harness and protocol.

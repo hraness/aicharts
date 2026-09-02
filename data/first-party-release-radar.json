@@ -6,16 +6,16 @@
       "canonicalUrl": "https://www.anthropic.com/claude-corps",
       "firstSeenAt": "2026-09-02T15:52:38.032Z",
       "id": "anthropic:/claude-corps",
-      "lastChangedAt": "2026-09-02T15:52:38.032Z",
+      "lastChangedAt": "2026-09-02T16:19:50.824Z",
       "namedModels": [
         "Unresolved announcement: Claude Corps"
       ],
       "providerId": "anthropic",
       "providerName": "Anthropic",
       "sourceId": "anthropic-sitemap",
-      "sourceModifiedAt": "2026-09-02T15:50:38.757Z",
+      "sourceModifiedAt": "2026-09-02T16:18:43.857Z",
       "sourcePresence": "present",
-      "status": "needs-review"
+      "status": "not-a-release"
     },
     {
       "candidateDate": "2026-09-02",
@@ -23,7 +23,7 @@
       "canonicalUrl": "https://www.anthropic.com/claude-fable-and-mythos-5-1",
       "firstSeenAt": "2026-09-02T13:54:58.398Z",
       "id": "anthropic:/claude-fable-and-mythos-5-1",
-      "lastChangedAt": "2026-09-02T15:52:38.032Z",
+      "lastChangedAt": "2026-09-02T16:19:50.824Z",
       "namedModels": [
         "Claude Fable 5.1",
         "Claude Mythos 5.1"
@@ -31,24 +31,7 @@
       "providerId": "anthropic",
       "providerName": "Anthropic",
       "sourceId": "anthropic-sitemap",
-      "sourceModifiedAt": "2026-09-02T15:50:38.757Z",
-      "sourcePresence": "present",
-      "status": "confirmed-release"
-    },
-    {
-      "candidateDate": "2026-09-02",
-      "candidateDateMeaning": "provider-sitemap-lastmod",
-      "canonicalUrl": "https://openai.com/index/introducing-gpt-5-5/",
-      "firstSeenAt": "2026-09-02T13:54:58.398Z",
-      "id": "openai:/index/introducing-gpt-5-5/",
-      "lastChangedAt": "2026-09-02T15:52:38.032Z",
-      "namedModels": [
-        "GPT-5.5"
-      ],
-      "providerId": "openai",
-      "providerName": "OpenAI",
-      "sourceId": "openai-release-sitemap",
-      "sourceModifiedAt": "2026-09-02T15:04:22.604Z",
+      "sourceModifiedAt": "2026-09-02T16:18:43.857Z",
       "sourcePresence": "present",
       "status": "confirmed-release"
     },
@@ -58,14 +41,14 @@
       "canonicalUrl": "https://openai.com/index/gpt-5-5-instant/",
       "firstSeenAt": "2026-09-02T13:54:58.398Z",
       "id": "openai:/index/gpt-5-5-instant/",
-      "lastChangedAt": "2026-09-02T15:52:38.032Z",
+      "lastChangedAt": "2026-09-02T16:11:08.754Z",
       "namedModels": [
         "GPT-5.5 Instant"
       ],
       "providerId": "openai",
       "providerName": "OpenAI",
       "sourceId": "openai-release-sitemap",
-      "sourceModifiedAt": "2026-09-02T15:04:21.152Z",
+      "sourceModifiedAt": "2026-09-02T15:54:35.304Z",
       "sourcePresence": "present",
       "status": "confirmed-release"
     },
@@ -75,14 +58,31 @@
       "canonicalUrl": "https://openai.com/index/introducing-gpt-5-4/",
       "firstSeenAt": "2026-09-02T13:54:58.398Z",
       "id": "openai:/index/introducing-gpt-5-4/",
-      "lastChangedAt": "2026-09-02T15:52:38.032Z",
+      "lastChangedAt": "2026-09-02T16:11:08.754Z",
       "namedModels": [
         "GPT-5.4"
       ],
       "providerId": "openai",
       "providerName": "OpenAI",
       "sourceId": "openai-release-sitemap",
-      "sourceModifiedAt": "2026-09-02T15:04:19.709Z",
+      "sourceModifiedAt": "2026-09-02T15:54:33.811Z",
+      "sourcePresence": "present",
+      "status": "confirmed-release"
+    },
+    {
+      "candidateDate": "2026-09-02",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://openai.com/index/introducing-gpt-5-5/",
+      "firstSeenAt": "2026-09-02T13:54:58.398Z",
+      "id": "openai:/index/introducing-gpt-5-5/",
+      "lastChangedAt": "2026-09-02T16:11:08.754Z",
+      "namedModels": [
+        "GPT-5.5"
+      ],
+      "providerId": "openai",
+      "providerName": "OpenAI",
+      "sourceId": "openai-release-sitemap",
+      "sourceModifiedAt": "2026-09-02T15:54:33.301Z",
       "sourcePresence": "present",
       "status": "confirmed-release"
     },
@@ -92,16 +92,16 @@
       "canonicalUrl": "https://openai.com/index/introducing-chatgpt-images-2-0/",
       "firstSeenAt": "2026-09-02T15:52:38.032Z",
       "id": "openai:/index/introducing-chatgpt-images-2-0/",
-      "lastChangedAt": "2026-09-02T15:52:38.032Z",
+      "lastChangedAt": "2026-09-02T16:11:08.754Z",
       "namedModels": [
-        "Unresolved announcement: Introducing Chatgpt Images 2 0"
+        "GPT Image 2"
       ],
       "providerId": "openai",
       "providerName": "OpenAI",
       "sourceId": "openai-release-sitemap",
-      "sourceModifiedAt": "2026-09-02T15:04:15.376Z",
+      "sourceModifiedAt": "2026-09-02T15:54:30.528Z",
       "sourcePresence": "present",
-      "status": "needs-review"
+      "status": "confirmed-release"
     },
     {
       "candidateDate": "2026-09-02",
@@ -109,14 +109,14 @@
       "canonicalUrl": "https://openai.com/index/gpt-5-1/",
       "firstSeenAt": "2026-09-02T13:54:58.398Z",
       "id": "openai:/index/gpt-5-1/",
-      "lastChangedAt": "2026-09-02T15:52:38.032Z",
+      "lastChangedAt": "2026-09-02T16:11:08.754Z",
       "namedModels": [
         "GPT-5.1"
       ],
       "providerId": "openai",
       "providerName": "OpenAI",
       "sourceId": "openai-release-sitemap",
-      "sourceModifiedAt": "2026-09-02T15:04:15.276Z",
+      "sourceModifiedAt": "2026-09-02T15:54:29.780Z",
       "sourcePresence": "present",
       "status": "confirmed-release"
     },
@@ -126,14 +126,14 @@
       "canonicalUrl": "https://openai.com/index/previewing-gpt-5-6-sol/",
       "firstSeenAt": "2026-09-02T13:54:58.398Z",
       "id": "openai:/index/previewing-gpt-5-6-sol/",
-      "lastChangedAt": "2026-09-02T15:52:38.032Z",
+      "lastChangedAt": "2026-09-02T16:11:08.754Z",
       "namedModels": [
         "GPT-5.6 Sol"
       ],
       "providerId": "openai",
       "providerName": "OpenAI",
       "sourceId": "openai-release-sitemap",
-      "sourceModifiedAt": "2026-09-02T15:04:14.727Z",
+      "sourceModifiedAt": "2026-09-02T15:54:28.929Z",
       "sourcePresence": "present",
       "status": "confirmed-release"
     },
@@ -143,16 +143,17 @@
       "canonicalUrl": "https://openai.com/index/sora-2/",
       "firstSeenAt": "2026-09-02T15:52:38.032Z",
       "id": "openai:/index/sora-2/",
-      "lastChangedAt": "2026-09-02T15:52:38.032Z",
+      "lastChangedAt": "2026-09-02T16:11:08.754Z",
       "namedModels": [
-        "Unresolved announcement: Sora 2"
+        "Sora 2",
+        "Sora 2 Pro"
       ],
       "providerId": "openai",
       "providerName": "OpenAI",
       "sourceId": "openai-release-sitemap",
-      "sourceModifiedAt": "2026-09-02T15:04:11.926Z",
+      "sourceModifiedAt": "2026-09-02T15:54:27.115Z",
       "sourcePresence": "present",
-      "status": "needs-review"
+      "status": "confirmed-release"
     },
     {
       "candidateDate": "2026-09-02",
@@ -160,14 +161,14 @@
       "canonicalUrl": "https://openai.com/index/gpt-5-6/",
       "firstSeenAt": "2026-09-02T13:54:58.398Z",
       "id": "openai:/index/gpt-5-6/",
-      "lastChangedAt": "2026-09-02T15:52:38.032Z",
+      "lastChangedAt": "2026-09-02T16:11:08.754Z",
       "namedModels": [
         "GPT-5.6"
       ],
       "providerId": "openai",
       "providerName": "OpenAI",
       "sourceId": "openai-release-sitemap",
-      "sourceModifiedAt": "2026-09-02T15:04:10.994Z",
+      "sourceModifiedAt": "2026-09-02T15:54:27.036Z",
       "sourcePresence": "present",
       "status": "confirmed-release"
     },
@@ -177,7 +178,7 @@
       "canonicalUrl": "https://www.anthropic.com/news/claude-text-watermark",
       "firstSeenAt": "2026-09-02T15:52:38.032Z",
       "id": "anthropic:/news/claude-text-watermark",
-      "lastChangedAt": "2026-09-02T15:52:38.032Z",
+      "lastChangedAt": "2026-09-02T16:19:50.824Z",
       "namedModels": [
         "Unresolved announcement: Claude Text Watermark"
       ],
@@ -186,7 +187,7 @@
       "sourceId": "anthropic-sitemap",
       "sourceModifiedAt": "2026-09-01T18:01:14.000Z",
       "sourcePresence": "present",
-      "status": "needs-review"
+      "status": "not-a-release"
     },
     {
       "candidateDate": "2026-08-28",
@@ -194,7 +195,7 @@
       "canonicalUrl": "https://openai.com/index/gpt-5-safe-completions/",
       "firstSeenAt": "2026-09-02T13:54:58.398Z",
       "id": "openai:/index/gpt-5-safe-completions/",
-      "lastChangedAt": "2026-09-02T15:52:38.032Z",
+      "lastChangedAt": "2026-09-02T16:19:50.824Z",
       "namedModels": [
         "GPT-5"
       ],
@@ -202,7 +203,7 @@
       "providerName": "OpenAI",
       "sourceId": "openai-release-sitemap",
       "sourceModifiedAt": "2026-08-28T20:11:42.616Z",
-      "sourcePresence": "missing",
+      "sourcePresence": "present",
       "status": "not-a-release"
     },
     {
@@ -211,7 +212,7 @@
       "canonicalUrl": "https://www.anthropic.com/news/claude-for-teachers",
       "firstSeenAt": "2026-09-02T15:52:38.032Z",
       "id": "anthropic:/news/claude-for-teachers",
-      "lastChangedAt": "2026-09-02T15:52:38.032Z",
+      "lastChangedAt": "2026-09-02T16:19:50.824Z",
       "namedModels": [
         "Unresolved announcement: Claude For Teachers"
       ],
@@ -220,7 +221,7 @@
       "sourceId": "anthropic-sitemap",
       "sourceModifiedAt": "2026-08-28T15:01:10.000Z",
       "sourcePresence": "present",
-      "status": "needs-review"
+      "status": "not-a-release"
     },
     {
       "candidateDate": "2026-08-27",
@@ -228,7 +229,7 @@
       "canonicalUrl": "https://www.anthropic.com/news/claude-for-life-sciences",
       "firstSeenAt": "2026-09-02T15:52:38.032Z",
       "id": "anthropic:/news/claude-for-life-sciences",
-      "lastChangedAt": "2026-09-02T15:52:38.032Z",
+      "lastChangedAt": "2026-09-02T16:19:50.824Z",
       "namedModels": [
         "Unresolved announcement: Claude For Life Sciences"
       ],
@@ -237,7 +238,7 @@
       "sourceId": "anthropic-sitemap",
       "sourceModifiedAt": "2026-08-27T15:13:34.000Z",
       "sourcePresence": "present",
-      "status": "needs-review"
+      "status": "not-a-release"
     },
     {
       "candidateDate": "2026-08-27",
@@ -245,7 +246,7 @@
       "canonicalUrl": "https://www.anthropic.com/news/claude-for-small-business",
       "firstSeenAt": "2026-09-02T15:52:38.032Z",
       "id": "anthropic:/news/claude-for-small-business",
-      "lastChangedAt": "2026-09-02T15:52:38.032Z",
+      "lastChangedAt": "2026-09-02T16:19:50.824Z",
       "namedModels": [
         "Unresolved announcement: Claude For Small Business"
       ],
@@ -254,7 +255,7 @@
       "sourceId": "anthropic-sitemap",
       "sourceModifiedAt": "2026-08-27T15:09:24.000Z",
       "sourcePresence": "present",
-      "status": "needs-review"
+      "status": "not-a-release"
     },
     {
       "candidateDate": "2026-08-27",
@@ -262,7 +263,7 @@
       "canonicalUrl": "https://www.anthropic.com/news/claude-corps",
       "firstSeenAt": "2026-09-02T15:52:38.032Z",
       "id": "anthropic:/news/claude-corps",
-      "lastChangedAt": "2026-09-02T15:52:38.032Z",
+      "lastChangedAt": "2026-09-02T16:19:50.824Z",
       "namedModels": [
         "Unresolved announcement: Claude Corps"
       ],
@@ -271,7 +272,7 @@
       "sourceId": "anthropic-sitemap",
       "sourceModifiedAt": "2026-08-27T15:08:34.000Z",
       "sourcePresence": "present",
-      "status": "needs-review"
+      "status": "not-a-release"
     },
     {
       "candidateDate": "2026-08-27",
@@ -279,7 +280,7 @@
       "canonicalUrl": "https://www.anthropic.com/news/claude-science-ai-workbench",
       "firstSeenAt": "2026-09-02T15:52:38.032Z",
       "id": "anthropic:/news/claude-science-ai-workbench",
-      "lastChangedAt": "2026-09-02T15:52:38.032Z",
+      "lastChangedAt": "2026-09-02T16:19:50.824Z",
       "namedModels": [
         "Unresolved announcement: Claude Science Ai Workbench"
       ],
@@ -288,7 +289,7 @@
       "sourceId": "anthropic-sitemap",
       "sourceModifiedAt": "2026-08-27T15:08:16.000Z",
       "sourcePresence": "present",
-      "status": "needs-review"
+      "status": "not-a-release"
     },
     {
       "candidateDate": "2026-08-25",
@@ -296,16 +297,16 @@
       "canonicalUrl": "https://openai.com/index/dall-e-2/",
       "firstSeenAt": "2026-09-02T15:52:38.032Z",
       "id": "openai:/index/dall-e-2/",
-      "lastChangedAt": "2026-09-02T15:52:38.032Z",
+      "lastChangedAt": "2026-09-02T16:11:08.754Z",
       "namedModels": [
-        "Unresolved announcement: Dall E 2"
+        "DALL·E 2"
       ],
       "providerId": "openai",
       "providerName": "OpenAI",
       "sourceId": "openai-release-sitemap",
       "sourceModifiedAt": "2026-08-25T22:09:37.813Z",
       "sourcePresence": "present",
-      "status": "needs-review"
+      "status": "confirmed-release"
     },
     {
       "candidateDate": "2026-08-25",
@@ -330,7 +331,7 @@
       "canonicalUrl": "https://www.anthropic.com/claude-corps/host",
       "firstSeenAt": "2026-09-02T15:52:38.032Z",
       "id": "anthropic:/claude-corps/host",
-      "lastChangedAt": "2026-09-02T15:52:38.032Z",
+      "lastChangedAt": "2026-09-02T16:19:50.824Z",
       "namedModels": [
         "Unresolved announcement: Claude Corps/host"
       ],
@@ -339,7 +340,7 @@
       "sourceId": "anthropic-sitemap",
       "sourceModifiedAt": "2026-08-24T15:22:11.000Z",
       "sourcePresence": "present",
-      "status": "needs-review"
+      "status": "not-a-release"
     },
     {
       "candidateDate": "2026-08-19",
@@ -381,16 +382,16 @@
       "canonicalUrl": "https://openai.com/index/openai-o1-mini-advancing-cost-efficient-reasoning/",
       "firstSeenAt": "2026-09-02T15:52:38.032Z",
       "id": "openai:/index/openai-o1-mini-advancing-cost-efficient-reasoning/",
-      "lastChangedAt": "2026-09-02T15:52:38.032Z",
+      "lastChangedAt": "2026-09-02T16:11:08.754Z",
       "namedModels": [
-        "Unresolved announcement: Openai O1 Mini Advancing Cost Efficient Reasoning"
+        "o1-mini"
       ],
       "providerId": "openai",
       "providerName": "OpenAI",
       "sourceId": "openai-release-sitemap",
       "sourceModifiedAt": "2026-08-19T00:21:16.272Z",
       "sourcePresence": "present",
-      "status": "needs-review"
+      "status": "confirmed-release"
     },
     {
       "candidateDate": "2026-08-14",
@@ -432,16 +433,16 @@
       "canonicalUrl": "https://openai.com/index/dall-e-3/",
       "firstSeenAt": "2026-09-02T15:52:38.032Z",
       "id": "openai:/index/dall-e-3/",
-      "lastChangedAt": "2026-09-02T15:52:38.032Z",
+      "lastChangedAt": "2026-09-02T16:11:08.754Z",
       "namedModels": [
-        "Unresolved announcement: Dall E 3"
+        "DALL·E 3"
       ],
       "providerId": "openai",
       "providerName": "OpenAI",
       "sourceId": "openai-release-sitemap",
       "sourceModifiedAt": "2026-08-14T20:31:35.961Z",
       "sourcePresence": "present",
-      "status": "needs-review"
+      "status": "confirmed-release"
     },
     {
       "candidateDate": "2026-08-14",
@@ -500,7 +501,7 @@
       "canonicalUrl": "https://openai.com/index/codex-now-generally-available/",
       "firstSeenAt": "2026-09-02T13:54:58.398Z",
       "id": "openai:/index/codex-now-generally-available/",
-      "lastChangedAt": "2026-09-02T13:57:08.109Z",
+      "lastChangedAt": "2026-09-02T16:19:50.824Z",
       "namedModels": [
         "Codex Now Generally Available"
       ],
@@ -508,7 +509,7 @@
       "providerName": "OpenAI",
       "sourceId": "openai-release-sitemap",
       "sourceModifiedAt": "2026-08-07T21:23:45.670Z",
-      "sourcePresence": "missing",
+      "sourcePresence": "present",
       "status": "not-a-release"
     },
     {
@@ -517,7 +518,7 @@
       "canonicalUrl": "https://www.anthropic.com/news/claude-for-nonprofits",
       "firstSeenAt": "2026-09-02T15:52:38.032Z",
       "id": "anthropic:/news/claude-for-nonprofits",
-      "lastChangedAt": "2026-09-02T15:52:38.032Z",
+      "lastChangedAt": "2026-09-02T16:19:50.824Z",
       "namedModels": [
         "Unresolved announcement: Claude For Nonprofits"
       ],
@@ -526,7 +527,7 @@
       "sourceId": "anthropic-sitemap",
       "sourceModifiedAt": "2026-08-03T16:00:43.000Z",
       "sourcePresence": "present",
-      "status": "needs-review"
+      "status": "not-a-release"
     },
     {
       "candidateDate": "2026-07-25",
@@ -688,7 +689,7 @@
       "canonicalUrl": "https://www.anthropic.com/news/claude-design-anthropic-labs",
       "firstSeenAt": "2026-09-02T15:52:38.032Z",
       "id": "anthropic:/news/claude-design-anthropic-labs",
-      "lastChangedAt": "2026-09-02T15:52:38.032Z",
+      "lastChangedAt": "2026-09-02T16:19:50.824Z",
       "namedModels": [
         "Unresolved announcement: Claude Design Anthropic Labs"
       ],
@@ -697,7 +698,7 @@
       "sourceId": "anthropic-sitemap",
       "sourceModifiedAt": "2026-07-22T01:02:08.000Z",
       "sourcePresence": "present",
-      "status": "needs-review"
+      "status": "not-a-release"
     },
     {
       "candidateDate": "2026-07-22",
@@ -739,7 +740,7 @@
       "canonicalUrl": "https://www.anthropic.com/news/introducing-claude-tag",
       "firstSeenAt": "2026-09-02T15:52:38.032Z",
       "id": "anthropic:/news/introducing-claude-tag",
-      "lastChangedAt": "2026-09-02T15:52:38.032Z",
+      "lastChangedAt": "2026-09-02T16:19:50.824Z",
       "namedModels": [
         "Unresolved announcement: Introducing Claude Tag"
       ],
@@ -748,7 +749,7 @@
       "sourceId": "anthropic-sitemap",
       "sourceModifiedAt": "2026-07-15T22:12:10.000Z",
       "sourcePresence": "present",
-      "status": "needs-review"
+      "status": "not-a-release"
     },
     {
       "candidateDate": "2026-07-13",
@@ -756,7 +757,7 @@
       "canonicalUrl": "https://www.anthropic.com/news/claude-for-creative-work",
       "firstSeenAt": "2026-09-02T15:52:38.032Z",
       "id": "anthropic:/news/claude-for-creative-work",
-      "lastChangedAt": "2026-09-02T15:52:38.032Z",
+      "lastChangedAt": "2026-09-02T16:19:50.824Z",
       "namedModels": [
         "Unresolved announcement: Claude For Creative Work"
       ],
@@ -765,7 +766,7 @@
       "sourceId": "anthropic-sitemap",
       "sourceModifiedAt": "2026-07-13T15:46:07.000Z",
       "sourcePresence": "present",
-      "status": "needs-review"
+      "status": "not-a-release"
     },
     {
       "candidateDate": "2026-07-01",
@@ -808,7 +809,7 @@
       "canonicalUrl": "https://www.anthropic.com/claude-corps/fellow",
       "firstSeenAt": "2026-09-02T15:52:38.032Z",
       "id": "anthropic:/claude-corps/fellow",
-      "lastChangedAt": "2026-09-02T15:52:38.032Z",
+      "lastChangedAt": "2026-09-02T16:19:50.824Z",
       "namedModels": [
         "Unresolved announcement: Claude Corps/fellow"
       ],
@@ -817,7 +818,7 @@
       "sourceId": "anthropic-sitemap",
       "sourceModifiedAt": "2026-06-11T17:43:29.000Z",
       "sourcePresence": "present",
-      "status": "needs-review"
+      "status": "not-a-release"
     },
     {
       "candidateDate": "2026-06-03",
@@ -825,7 +826,7 @@
       "canonicalUrl": "https://openai.com/index/gpt-2-1-5b-release/",
       "firstSeenAt": "2026-09-02T13:54:58.398Z",
       "id": "openai:/index/gpt-2-1-5b-release/",
-      "lastChangedAt": "2026-09-02T13:57:08.109Z",
+      "lastChangedAt": "2026-09-02T16:19:50.824Z",
       "namedModels": [
         "GPT-2.1 5b Release"
       ],
@@ -833,7 +834,7 @@
       "providerName": "OpenAI",
       "sourceId": "openai-release-sitemap",
       "sourceModifiedAt": "2026-06-03T03:59:53.912Z",
-      "sourcePresence": "missing",
+      "sourcePresence": "present",
       "status": "confirmed-release"
     },
     {
@@ -842,16 +843,16 @@
       "canonicalUrl": "https://openai.com/index/openai-o3-mini/",
       "firstSeenAt": "2026-09-02T15:52:38.032Z",
       "id": "openai:/index/openai-o3-mini/",
-      "lastChangedAt": "2026-09-02T15:52:38.032Z",
+      "lastChangedAt": "2026-09-02T16:11:08.754Z",
       "namedModels": [
-        "Unresolved announcement: Openai O3 Mini"
+        "o3-mini"
       ],
       "providerId": "openai",
       "providerName": "OpenAI",
       "sourceId": "openai-release-sitemap",
       "sourceModifiedAt": "2026-04-30T06:51:16.703Z",
       "sourcePresence": "present",
-      "status": "needs-review"
+      "status": "confirmed-release"
     },
     {
       "candidateDate": "2026-04-10",
@@ -859,7 +860,7 @@
       "canonicalUrl": "https://www.anthropic.com/news/claude-for-financial-services",
       "firstSeenAt": "2026-09-02T15:52:38.032Z",
       "id": "anthropic:/news/claude-for-financial-services",
-      "lastChangedAt": "2026-09-02T15:52:38.032Z",
+      "lastChangedAt": "2026-09-02T16:19:50.824Z",
       "namedModels": [
         "Unresolved announcement: Claude For Financial Services"
       ],
@@ -868,7 +869,7 @@
       "sourceId": "anthropic-sitemap",
       "sourceModifiedAt": "2026-04-10T12:11:09.000Z",
       "sourcePresence": "present",
-      "status": "needs-review"
+      "status": "not-a-release"
     },
     {
       "candidateDate": "2026-03-12",
@@ -876,7 +877,7 @@
       "canonicalUrl": "https://www.anthropic.com/news/claude-partner-network",
       "firstSeenAt": "2026-09-02T15:52:38.032Z",
       "id": "anthropic:/news/claude-partner-network",
-      "lastChangedAt": "2026-09-02T15:52:38.032Z",
+      "lastChangedAt": "2026-09-02T16:19:50.824Z",
       "namedModels": [
         "Unresolved announcement: Claude Partner Network"
       ],
@@ -885,7 +886,7 @@
       "sourceId": "anthropic-sitemap",
       "sourceModifiedAt": "2026-03-12T19:25:16.000Z",
       "sourcePresence": "present",
-      "status": "needs-review"
+      "status": "not-a-release"
     },
     {
       "candidateDate": "2026-02-20",
@@ -893,7 +894,7 @@
       "canonicalUrl": "https://www.anthropic.com/news/claude-code-security",
       "firstSeenAt": "2026-09-02T15:52:38.032Z",
       "id": "anthropic:/news/claude-code-security",
-      "lastChangedAt": "2026-09-02T15:52:38.032Z",
+      "lastChangedAt": "2026-09-02T16:19:50.824Z",
       "namedModels": [
         "Unresolved announcement: Claude Code Security"
       ],
@@ -902,7 +903,7 @@
       "sourceId": "anthropic-sitemap",
       "sourceModifiedAt": "2026-02-20T17:59:33.000Z",
       "sourcePresence": "present",
-      "status": "needs-review"
+      "status": "not-a-release"
     },
     {
       "candidateDate": "2026-02-04",
@@ -910,7 +911,7 @@
       "canonicalUrl": "https://www.anthropic.com/news/claude-is-a-space-to-think",
       "firstSeenAt": "2026-09-02T15:52:38.032Z",
       "id": "anthropic:/news/claude-is-a-space-to-think",
-      "lastChangedAt": "2026-09-02T15:52:38.032Z",
+      "lastChangedAt": "2026-09-02T16:19:50.824Z",
       "namedModels": [
         "Unresolved announcement: Claude Is A Space To Think"
       ],
@@ -919,7 +920,7 @@
       "sourceId": "anthropic-sitemap",
       "sourceModifiedAt": "2026-02-04T17:29:42.000Z",
       "sourcePresence": "present",
-      "status": "needs-review"
+      "status": "not-a-release"
     },
     {
       "candidateDate": "2026-01-21",
@@ -927,7 +928,7 @@
       "canonicalUrl": "https://www.anthropic.com/news/claude-new-constitution",
       "firstSeenAt": "2026-09-02T15:52:38.032Z",
       "id": "anthropic:/news/claude-new-constitution",
-      "lastChangedAt": "2026-09-02T15:52:38.032Z",
+      "lastChangedAt": "2026-09-02T16:19:50.824Z",
       "namedModels": [
         "Unresolved announcement: Claude New Constitution"
       ],
@@ -936,7 +937,7 @@
       "sourceId": "anthropic-sitemap",
       "sourceModifiedAt": "2026-01-21T16:34:47.000Z",
       "sourcePresence": "present",
-      "status": "needs-review"
+      "status": "not-a-release"
     },
     {
       "candidateDate": "2025-11-18",
@@ -944,7 +945,7 @@
       "canonicalUrl": "https://www.anthropic.com/news/claude-in-microsoft-foundry",
       "firstSeenAt": "2026-09-02T15:52:38.032Z",
       "id": "anthropic:/news/claude-in-microsoft-foundry",
-      "lastChangedAt": "2026-09-02T15:52:38.032Z",
+      "lastChangedAt": "2026-09-02T16:19:50.824Z",
       "namedModels": [
         "Unresolved announcement: Claude In Microsoft Foundry"
       ],
@@ -953,7 +954,7 @@
       "sourceId": "anthropic-sitemap",
       "sourceModifiedAt": "2025-11-18T16:52:14.000Z",
       "sourcePresence": "present",
-      "status": "needs-review"
+      "status": "not-a-release"
     },
     {
       "candidateDate": "2025-09-16",
@@ -978,16 +979,17 @@
       "canonicalUrl": "https://www.anthropic.com/news/claude-4",
       "firstSeenAt": "2026-09-02T15:52:38.032Z",
       "id": "anthropic:/news/claude-4",
-      "lastChangedAt": "2026-09-02T15:52:38.032Z",
+      "lastChangedAt": "2026-09-02T16:11:08.754Z",
       "namedModels": [
-        "Unresolved announcement: Claude 4"
+        "Claude Opus 4",
+        "Claude Sonnet 4"
       ],
       "providerId": "anthropic",
       "providerName": "Anthropic",
       "sourceId": "anthropic-sitemap",
       "sourceModifiedAt": "2025-09-16T16:56:20.000Z",
       "sourcePresence": "present",
-      "status": "needs-review"
+      "status": "confirmed-release"
     },
     {
       "candidateDate": "2025-09-15",
@@ -995,7 +997,7 @@
       "canonicalUrl": "https://www.anthropic.com/news/claude-in-xcode",
       "firstSeenAt": "2026-09-02T15:52:38.032Z",
       "id": "anthropic:/news/claude-in-xcode",
-      "lastChangedAt": "2026-09-02T15:52:38.032Z",
+      "lastChangedAt": "2026-09-02T16:19:50.824Z",
       "namedModels": [
         "Unresolved announcement: Claude In Xcode"
       ],
@@ -1004,7 +1006,7 @@
       "sourceId": "anthropic-sitemap",
       "sourceModifiedAt": "2025-09-15T21:27:03.000Z",
       "sourcePresence": "present",
-      "status": "needs-review"
+      "status": "not-a-release"
     },
     {
       "candidateDate": "2025-08-28",
@@ -1029,7 +1031,7 @@
       "canonicalUrl": "https://www.anthropic.com/news/claude-code-on-team-and-enterprise",
       "firstSeenAt": "2026-09-02T15:52:38.032Z",
       "id": "anthropic:/news/claude-code-on-team-and-enterprise",
-      "lastChangedAt": "2026-09-02T15:52:38.032Z",
+      "lastChangedAt": "2026-09-02T16:19:50.824Z",
       "namedModels": [
         "Unresolved announcement: Claude Code On Team And Enterprise"
       ],
@@ -1038,7 +1040,7 @@
       "sourceId": "anthropic-sitemap",
       "sourceModifiedAt": "2025-08-20T17:56:48.000Z",
       "sourcePresence": "present",
-      "status": "needs-review"
+      "status": "not-a-release"
     },
     {
       "candidateDate": "2025-08-14",
@@ -1063,16 +1065,16 @@
       "canonicalUrl": "https://www.anthropic.com/news/claude-gov-models-for-u-s-national-security-customers",
       "firstSeenAt": "2026-09-02T15:52:38.032Z",
       "id": "anthropic:/news/claude-gov-models-for-u-s-national-security-customers",
-      "lastChangedAt": "2026-09-02T15:52:38.032Z",
+      "lastChangedAt": "2026-09-02T16:11:08.754Z",
       "namedModels": [
-        "Unresolved announcement: Claude Gov Models For U S National Security Customers"
+        "Claude Gov models"
       ],
       "providerId": "anthropic",
       "providerName": "Anthropic",
       "sourceId": "anthropic-sitemap",
       "sourceModifiedAt": "2025-07-30T22:58:04.000Z",
       "sourcePresence": "present",
-      "status": "needs-review"
+      "status": "confirmed-release"
     },
     {
       "candidateDate": "2025-07-23",
@@ -1080,7 +1082,7 @@
       "canonicalUrl": "https://www.anthropic.com/news/claude-in-amazon-bedrock-fedramp-high",
       "firstSeenAt": "2026-09-02T15:52:38.032Z",
       "id": "anthropic:/news/claude-in-amazon-bedrock-fedramp-high",
-      "lastChangedAt": "2026-09-02T15:52:38.032Z",
+      "lastChangedAt": "2026-09-02T16:19:50.824Z",
       "namedModels": [
         "Unresolved announcement: Claude In Amazon Bedrock Fedramp High"
       ],
@@ -1089,7 +1091,7 @@
       "sourceId": "anthropic-sitemap",
       "sourceModifiedAt": "2025-07-23T18:04:11.000Z",
       "sourcePresence": "present",
-      "status": "needs-review"
+      "status": "not-a-release"
     },
     {
       "candidateDate": "2025-07-23",
@@ -1097,7 +1099,7 @@
       "canonicalUrl": "https://www.anthropic.com/news/introducing-claude-for-education",
       "firstSeenAt": "2026-09-02T15:52:38.032Z",
       "id": "anthropic:/news/introducing-claude-for-education",
-      "lastChangedAt": "2026-09-02T15:52:38.032Z",
+      "lastChangedAt": "2026-09-02T16:19:50.824Z",
       "namedModels": [
         "Unresolved announcement: Introducing Claude For Education"
       ],
@@ -1106,7 +1108,7 @@
       "sourceId": "anthropic-sitemap",
       "sourceModifiedAt": "2025-07-23T18:02:18.000Z",
       "sourcePresence": "present",
-      "status": "needs-review"
+      "status": "not-a-release"
     },
     {
       "candidateDate": "2025-02-26",
@@ -1114,7 +1116,7 @@
       "canonicalUrl": "https://www.anthropic.com/news/claude-and-alexa-plus",
       "firstSeenAt": "2026-09-02T15:52:38.032Z",
       "id": "anthropic:/news/claude-and-alexa-plus",
-      "lastChangedAt": "2026-09-02T15:52:38.032Z",
+      "lastChangedAt": "2026-09-02T16:19:50.824Z",
       "namedModels": [
         "Unresolved announcement: Claude And Alexa Plus"
       ],
@@ -1123,7 +1125,7 @@
       "sourceId": "anthropic-sitemap",
       "sourceModifiedAt": "2025-02-26T18:41:21.000Z",
       "sourcePresence": "present",
-      "status": "needs-review"
+      "status": "not-a-release"
     },
     {
       "candidateDate": "2024-12-19",
@@ -1131,16 +1133,17 @@
       "canonicalUrl": "https://www.anthropic.com/news/claude-3-family",
       "firstSeenAt": "2026-09-02T15:52:38.032Z",
       "id": "anthropic:/news/claude-3-family",
-      "lastChangedAt": "2026-09-02T15:52:38.032Z",
+      "lastChangedAt": "2026-09-02T16:11:08.754Z",
       "namedModels": [
-        "Unresolved announcement: Claude 3 Family"
+        "Claude 3 Opus",
+        "Claude 3 Sonnet"
       ],
       "providerId": "anthropic",
       "providerName": "Anthropic",
       "sourceId": "anthropic-sitemap",
       "sourceModifiedAt": "2024-12-19T19:00:30.000Z",
       "sourcePresence": "present",
-      "status": "needs-review"
+      "status": "confirmed-release"
     },
     {
       "candidateDate": "2024-12-19",
@@ -1148,7 +1151,7 @@
       "canonicalUrl": "https://www.anthropic.com/news/claude-brazil",
       "firstSeenAt": "2026-09-02T15:52:38.032Z",
       "id": "anthropic:/news/claude-brazil",
-      "lastChangedAt": "2026-09-02T15:52:38.032Z",
+      "lastChangedAt": "2026-09-02T16:19:50.824Z",
       "namedModels": [
         "Unresolved announcement: Claude Brazil"
       ],
@@ -1157,7 +1160,7 @@
       "sourceId": "anthropic-sitemap",
       "sourceModifiedAt": "2024-12-19T18:53:01.000Z",
       "sourcePresence": "present",
-      "status": "needs-review"
+      "status": "not-a-release"
     },
     {
       "candidateDate": "2024-09-10",
@@ -1165,7 +1168,7 @@
       "canonicalUrl": "https://www.anthropic.com/news/claude-europe",
       "firstSeenAt": "2026-09-02T15:52:38.032Z",
       "id": "anthropic:/news/claude-europe",
-      "lastChangedAt": "2026-09-02T15:52:38.032Z",
+      "lastChangedAt": "2026-09-02T16:19:50.824Z",
       "namedModels": [
         "Unresolved announcement: Claude Europe"
       ],
@@ -1174,7 +1177,7 @@
       "sourceId": "anthropic-sitemap",
       "sourceModifiedAt": "2024-09-10T17:28:44.000Z",
       "sourcePresence": "present",
-      "status": "needs-review"
+      "status": "not-a-release"
     },
     {
       "candidateDate": "2024-09-10",
@@ -1182,7 +1185,7 @@
       "canonicalUrl": "https://www.anthropic.com/news/introducing-claude-to-canada",
       "firstSeenAt": "2026-09-02T15:52:38.032Z",
       "id": "anthropic:/news/introducing-claude-to-canada",
-      "lastChangedAt": "2026-09-02T15:52:38.032Z",
+      "lastChangedAt": "2026-09-02T16:19:50.824Z",
       "namedModels": [
         "Unresolved announcement: Introducing Claude To Canada"
       ],
@@ -1191,7 +1194,7 @@
       "sourceId": "anthropic-sitemap",
       "sourceModifiedAt": "2024-09-10T17:28:44.000Z",
       "sourcePresence": "present",
-      "status": "needs-review"
+      "status": "not-a-release"
     },
     {
       "candidateDate": "2024-08-05",
@@ -1199,16 +1202,16 @@
       "canonicalUrl": "https://www.anthropic.com/news/claude-2",
       "firstSeenAt": "2026-09-02T15:52:38.032Z",
       "id": "anthropic:/news/claude-2",
-      "lastChangedAt": "2026-09-02T15:52:38.032Z",
+      "lastChangedAt": "2026-09-02T16:11:08.754Z",
       "namedModels": [
-        "Unresolved announcement: Claude 2"
+        "Claude 2"
       ],
       "providerId": "anthropic",
       "providerName": "Anthropic",
       "sourceId": "anthropic-sitemap",
       "sourceModifiedAt": "2024-08-05T19:55:40.000Z",
       "sourcePresence": "present",
-      "status": "needs-review"
+      "status": "confirmed-release"
     },
     {
       "candidateDate": "2024-08-05",
@@ -1216,16 +1219,16 @@
       "canonicalUrl": "https://www.anthropic.com/news/claude-2-1",
       "firstSeenAt": "2026-09-02T15:52:38.032Z",
       "id": "anthropic:/news/claude-2-1",
-      "lastChangedAt": "2026-09-02T15:52:38.032Z",
+      "lastChangedAt": "2026-09-02T16:11:08.754Z",
       "namedModels": [
-        "Unresolved announcement: Claude 2 1"
+        "Claude 2.1"
       ],
       "providerId": "anthropic",
       "providerName": "Anthropic",
       "sourceId": "anthropic-sitemap",
       "sourceModifiedAt": "2024-08-05T19:55:40.000Z",
       "sourcePresence": "present",
-      "status": "needs-review"
+      "status": "confirmed-release"
     },
     {
       "candidateDate": "2024-08-05",
@@ -1233,16 +1236,16 @@
       "canonicalUrl": "https://www.anthropic.com/news/claude-3-haiku",
       "firstSeenAt": "2026-09-02T15:52:38.032Z",
       "id": "anthropic:/news/claude-3-haiku",
-      "lastChangedAt": "2026-09-02T15:52:38.032Z",
+      "lastChangedAt": "2026-09-02T16:11:08.754Z",
       "namedModels": [
-        "Unresolved announcement: Claude 3 Haiku"
+        "Claude 3 Haiku"
       ],
       "providerId": "anthropic",
       "providerName": "Anthropic",
       "sourceId": "anthropic-sitemap",
       "sourceModifiedAt": "2024-08-05T19:55:40.000Z",
       "sourcePresence": "present",
-      "status": "needs-review"
+      "status": "confirmed-release"
     },
     {
       "candidateDate": "2024-08-05",
@@ -1250,7 +1253,7 @@
       "canonicalUrl": "https://www.anthropic.com/news/claude-pro",
       "firstSeenAt": "2026-09-02T15:52:38.032Z",
       "id": "anthropic:/news/claude-pro",
-      "lastChangedAt": "2026-09-02T15:52:38.032Z",
+      "lastChangedAt": "2026-09-02T16:19:50.824Z",
       "namedModels": [
         "Unresolved announcement: Claude Pro"
       ],
@@ -1259,7 +1262,7 @@
       "sourceId": "anthropic-sitemap",
       "sourceModifiedAt": "2024-08-05T19:55:40.000Z",
       "sourcePresence": "present",
-      "status": "needs-review"
+      "status": "not-a-release"
     }
   ],
   "policy": {
@@ -1275,7 +1278,7 @@
         "httpStatus": 200,
         "shape": {
           "byteLength": 68312,
-          "candidateCount": 48,
+          "candidateCount": 20,
           "canonicalHostEntryCount": 522,
           "datedEntryCount": 522,
           "duplicateEntryCount": 1,
@@ -1288,7 +1291,7 @@
       "id": "anthropic-sitemap",
       "providerId": "anthropic",
       "providerName": "Anthropic",
-      "retrievedAt": "2026-09-02T15:52:38.032Z",
+      "retrievedAt": "2026-09-02T16:19:50.824Z",
       "url": "https://www.anthropic.com/sitemap.xml"
     },
     {
@@ -1310,7 +1313,7 @@
       "id": "openai-release-sitemap",
       "providerId": "openai",
       "providerName": "OpenAI",
-      "retrievedAt": "2026-09-02T15:52:38.032Z",
+      "retrievedAt": "2026-09-02T16:19:50.824Z",
       "url": "https://openai.com/sitemap.xml/release/"
     }
   ]
