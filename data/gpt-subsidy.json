@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-09-01T21:01:11.854Z",
+  "generatedAt": "2026-09-02T00:18:05.898Z",
   "observations": [
     {
       "id": "trailing-7d-2026-07-25",
@@ -713,7 +713,7 @@
         "output": 99904439,
         "total": 36258790133
       },
-      "trailingSevenDayApiEquivalentUsd": 18306.71287069005,
+      "trailingSevenDayApiEquivalentUsd": 18306.712870690055,
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
@@ -733,7 +733,7 @@
         "output": 99059732,
         "total": 38058663455
       },
-      "trailingSevenDayApiEquivalentUsd": 18956.924649050066,
+      "trailingSevenDayApiEquivalentUsd": 18956.924649050063,
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
@@ -753,7 +753,27 @@
         "output": 94895098,
         "total": 37577727559
       },
-      "trailingSevenDayApiEquivalentUsd": 18642.354701330052,
+      "trailingSevenDayApiEquivalentUsd": 18642.354701330045,
+      "accountAttribution": {
+        "status": "unavailable",
+        "distinctObservedAccounts": null,
+        "coverage": 0
+      },
+      "subscriptionAdjustedMultiple": null,
+      "status": "settled"
+    },
+    {
+      "id": "trailing-7d-2026-09-01",
+      "observedAt": "2026-09-01T23:59:59.999Z",
+      "periodStartedAt": "2026-08-26T00:00:00.000Z",
+      "periodEndsAt": "2026-09-01T23:59:59.999Z",
+      "tokens": {
+        "uncachedInput": 1033216214,
+        "cachedInput": 35285252608,
+        "output": 88079489,
+        "total": 36406548311
+      },
+      "trailingSevenDayApiEquivalentUsd": 18124.349917880038,
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
@@ -819,15 +839,15 @@
   "title": "Subsidy for ChatGPT Pro 20x subscription",
   "currency": "USD",
   "periodSummary": {
-    "startedAt": "2026-08-01T00:00:00.000Z",
-    "endedAt": "2026-08-31T23:59:59.999Z",
+    "startedAt": "2026-08-02T00:00:00.000Z",
+    "endedAt": "2026-09-01T23:59:59.999Z",
     "days": 31,
     "tokens": {
-      "uncachedInput": 4569188291,
-      "cachedInput": 140673654784,
-      "output": 315856202,
-      "total": 145558699277
+      "uncachedInput": 4607639424,
+      "cachedInput": 142389909504,
+      "output": 318821402,
+      "total": 147316370330
     },
-    "apiEquivalentUsd": 70651.34923569017
+    "apiEquivalentUsd": 71467.08718081017
   }
 }
