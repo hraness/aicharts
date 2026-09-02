@@ -9,20 +9,28 @@ import { blogEditorialImage } from "@/app/blog/editorial-images";
 import { homeHeading, notFoundRecoveryLinks, site } from "@/app/site";
 import codingAgentData from "@/data/coding-agents.json";
 import gptSubsidyData from "@/data/gpt-subsidy.json";
+import terminalBenchData from "@/data/terminal-bench.json";
+import terminalBenchScienceData from "@/data/terminal-bench-science.json";
 
+import {
+  BENCHMARK_DATA_DESCRIPTION,
+  CORE_BENCHMARK_PORTFOLIO,
+  SUPPLEMENTAL_CODING_BENCHMARK,
+} from "./benchmark-portfolio";
 import { parseCodingAgentSnapshot, type CodingAgentSnapshot } from "./coding-agent-data";
 import {
   CODING_AGENT_BENCHMARK_DEFINITIONS,
-  CODING_AGENT_DATASET_DESCRIPTION,
   CODING_AGENT_DATASET_DOWNLOAD_PATH,
   CODING_AGENT_DATASET_PATH,
   codingAgentDatasetModifiedAt,
   codingAgentDatasetSummary,
   codingAgentLeadersMarkdownTable,
   currentCodingAgentBenchmarkLeaders,
-  currentCodingAgentLeadersHeading,
-  homeLeadersParagraphs,
 } from "./coding-agent-dataset";
+import {
+  FIRST_PARTY_RELEASE_HIGHLIGHTS,
+  FIRST_PARTY_RELEASE_RADAR,
+} from "./first-party-release-collection";
 import {
   FULL_SNAPSHOT_COLUMNS,
   codingAgentSnapshotRows,
@@ -60,10 +68,15 @@ import {
 import { modelCardRouteStatus } from "./model-card-route-status";
 import { vercelGatewayModelCatalog } from "./model-card-sources";
 import {
-  MODEL_RELEASE_RADAR_HIGHLIGHTS,
   MODEL_RELEASES_AWAITING_BENCHMARK,
   MODEL_RELEASES_WITH_EARLY_DEEP_SWE,
+  modelReleaseRadarHighlightsExcluding,
 } from "./model-release-collection";
+import { parseTerminalBenchSnapshot, type TerminalBenchSnapshot } from "./terminal-bench-data";
+import {
+  parseTerminalBenchScienceSnapshot,
+  type TerminalBenchScienceSnapshot,
+} from "./terminal-bench-science-data";
 
 export const AGENT_GUIDE_PATH = "/llms.txt" as const;
 export const MARKDOWN_CONTENT_TYPE = "text/markdown; charset=utf-8";
@@ -93,6 +106,27 @@ function checkedSnapshot(): CodingAgentSnapshot {
     throw new Error(`Checked coding-agent snapshot is invalid: ${parsed.error.message}`, {
       cause: parsed.error,
     });
+  }
+  return parsed.value;
+}
+
+function checkedTerminalBenchSnapshot(): TerminalBenchSnapshot {
+  const parsed = parseTerminalBenchSnapshot(terminalBenchData);
+  if (!parsed.ok) {
+    throw new Error(`Checked Terminal-Bench snapshot is invalid: ${parsed.error.message}`, {
+      cause: parsed.error,
+    });
+  }
+  return parsed.value;
+}
+
+function checkedTerminalBenchScienceSnapshot(): TerminalBenchScienceSnapshot {
+  const parsed = parseTerminalBenchScienceSnapshot(terminalBenchScienceData);
+  if (!parsed.ok) {
+    throw new Error(
+      `Checked Terminal-Bench-Science snapshot is invalid: ${parsed.error.message}`,
+      { cause: parsed.error },
+    );
   }
   return parsed.value;
 }
@@ -130,6 +164,8 @@ export function homeDocumentModel(
 ): HomeDocumentModel {
   const summary = codingAgentDatasetSummary(snapshot);
   const modifiedAt = codingAgentDatasetModifiedAt(snapshot);
+  const terminalBench = checkedTerminalBenchSnapshot();
+  const terminalBenchScience = checkedTerminalBenchScienceSnapshot();
   const benchmarks = CODING_AGENT_BENCHMARK_DEFINITIONS
     .map(definition => definition.label)
     .join(", ");
@@ -137,11 +173,12 @@ export function homeDocumentModel(
     heading: homeHeading,
     paragraphs: [
       site.description,
-      `The current chart is a coding-agent comparison. It is the first published chart in AI Charts, not a claim that every AI model or agent domain is covered yet.`,
-      `The checked snapshot contains ${summary.recordCount} model-agent configurations across ${summary.modelCount} models, ${summary.agentCount} agent harnesses, and ${summary.providerCount} providers. AI Charts retrieved it from the ${snapshot.source.name} coding-agents comparison on ${formatRetrievedAt(snapshot.source.retrievedAt)}. The latest notable model, variant, or benchmark change in the retained history was detected on ${formatRetrievedAt(modifiedAt)}.`,
-      `The chart plots ${benchmarks} against API cost, active time, or total token use. Scores stay on the 0–100 scale stored in the snapshot. Cost stays in US dollars, time stays in seconds in the dataset and minutes on the chart, and token use stays as a token count.`,
+      `The five-role benchmark portfolio covers agentic terminal engineering, scientific workflows, professional work, computer use, and broad expert reasoning. Each benchmark keeps its own version, metric, and comparison rules rather than feeding one composite rank.`,
+      `Terminal-Bench ${terminalBench.benchmark.version} is the coding standard. The checked Harbor Framework snapshot contains ${terminalBench.records.length} model-agent configurations across ${terminalBench.benchmark.taskCount} tasks and ${terminalBench.benchmark.trialsPerTask} trials per task. It was retrieved ${formatRetrievedAt(terminalBench.source.retrievedAt)} from the immutable source commit ${terminalBench.source.repositoryCommit.slice(0, 7)}.`,
+      `Terminal-Bench-Science ${terminalBenchScience.benchmark.version} adds a separate scientific-workflow view. Its checked owner snapshot contains ${terminalBenchScience.records.length} system configurations across ${terminalBenchScience.benchmark.taskCount} tasks and ${terminalBenchScience.benchmark.trialsPerTask} trials per task, pinned to release commit ${terminalBenchScience.source.releaseCommit.slice(0, 7)}.`,
+      `The source-specific interactive chart contains ${summary.recordCount} configurations across ${summary.modelCount} models, ${summary.agentCount} agent harnesses, and ${summary.providerCount} providers. It plots ${benchmarks} against API cost, active time, or total token use from the ${snapshot.source.name} snapshot retrieved ${formatRetrievedAt(snapshot.source.retrievedAt)}. Terminal-Bench v2.1 remains labeled and separate from 4.0.`,
       `Pin a model to see nearby scores, or pin a provider to inspect its range. The option-space panels show the cost/performance frontier and per-provider ranges for the selected axes. Values are observations of the named model, agent harness, and effort setting. They are not general ranks or production guarantees.`,
-      `AI Charts is an independent visualization. It does not recalculate upstream benchmark outcomes and is not affiliated with Artificial Analysis or the listed providers.`,
+      `The latest notable Artificial Analysis model, variant, or benchmark change was detected ${formatRetrievedAt(modifiedAt)}. AI Charts does not recalculate upstream outcomes and is not affiliated with the benchmark owners or listed providers.`,
     ],
     links: [
       {
@@ -156,8 +193,18 @@ export function homeDocumentModel(
       },
       {
         href: CODING_AGENT_DATASET_PATH,
-        label: "Coding-agent benchmark dataset",
-        note: "Provenance, benchmark definitions, the full configuration table, leaders, method, and limits for the checked snapshot.",
+        label: "Benchmark data and method",
+        note: "Terminal-Bench 4, Terminal-Bench-Science, and Artificial Analysis provenance, version boundaries, distributions, method, and limits.",
+      },
+      {
+        href: "/data/terminal-bench-4.json",
+        label: "Terminal-Bench 4 JSON",
+        note: "The version-pinned owner snapshot used for the homepage coding standard.",
+      },
+      {
+        href: "/data/terminal-bench-science-0-1.json",
+        label: "Terminal-Bench-Science 0.1 JSON",
+        note: "The version-pinned owner snapshot used for the homepage scientific-workflow view.",
       },
       {
         href: blogArticlePath("aa-index-cost-coding-agents"),
@@ -216,16 +263,62 @@ export function homeDocumentText(
     .join(" ");
 }
 
+function benchmarkPortfolioMarkdownTable(): string {
+  return [
+    "| Signal | Benchmark | Version | What it measures | Comparison rule |",
+    "| --- | --- | --- | --- | --- |",
+    ...CORE_BENCHMARK_PORTFOLIO.map(benchmark => (
+      `| ${benchmark.signal} | [${benchmark.name}](${benchmark.sourceUrl}) | ${benchmark.version} | ${benchmark.measure} | ${benchmark.comparisonRule} |`
+    )),
+  ].join("\n");
+}
+
+function terminalBenchMarkdownTable(snapshot: TerminalBenchSnapshot): string {
+  return [
+    "| Model | Agent configuration | Accuracy | 95% interval | Trials | Evaluation cost |",
+    "| --- | --- | ---: | ---: | ---: | ---: |",
+    ...snapshot.records.slice(0, 6).map(record => (
+      `| ${record.model.display.label} | ${record.harness.display.label} ${record.harness.version}; ${record.reasoningEffort} | ${record.metrics.accuracyPercent.toFixed(1)}% | ±${record.metrics.accuracyCi95HalfWidthPercent.toFixed(1)} points | ${record.metrics.nTrials} | $${record.metrics.totalCostUsd.toFixed(0)} |`
+    )),
+  ].join("\n");
+}
+
+function terminalBenchScienceMarkdownTable(
+  snapshot: TerminalBenchScienceSnapshot,
+): string {
+  return [
+    "| Model | Harness configuration | Resolution rate | Standard error | Trials | Evaluation cost |",
+    "| --- | --- | ---: | ---: | ---: | ---: |",
+    ...snapshot.records.slice(0, 6).map(record => (
+      `| ${record.model.display.label} | ${record.harness.display.label}; ${record.reasoningEffort} | ${record.metrics.resolutionRatePercent.toFixed(1)}% | ±${record.metrics.standardErrorPercent.toFixed(1)} points | ${record.metrics.nTrials} | $${record.metrics.totalCostUsd.toFixed(0)} |`
+    )),
+  ].join("\n");
+}
+
 function homeMarkdown(snapshot: CodingAgentSnapshot): string {
   const document = homeDocumentModel(snapshot);
-  const leaders = currentCodingAgentBenchmarkLeaders(snapshot);
+  const terminalBench = checkedTerminalBenchSnapshot();
+  const terminalBenchScience = checkedTerminalBenchScienceSnapshot();
   return joinMarkdown([
     `# ${document.heading}`,
     "",
-    `## ${currentCodingAgentLeadersHeading(snapshot.source.retrievedAt)}`,
+    "## Benchmark selection",
     "",
-    ...homeLeadersParagraphs(snapshot).flatMap(paragraph => [paragraph, ""]),
-    codingAgentLeadersMarkdownTable(leaders),
+    benchmarkPortfolioMarkdownTable(),
+    "",
+    `[${SUPPLEMENTAL_CODING_BENCHMARK.name} ${SUPPLEMENTAL_CODING_BENCHMARK.version}](${SUPPLEMENTAL_CODING_BENCHMARK.sourceUrl}) is supplemental closed evidence. ${SUPPLEMENTAL_CODING_BENCHMARK.measure} It does not feed a composite score.`,
+    "",
+    `## Terminal-Bench ${terminalBench.benchmark.version} snapshot`,
+    "",
+    `Official Harbor Framework results from [source commit ${terminalBench.source.repositoryCommit.slice(0, 7)}](${terminalBench.source.repositoryCommitUrl}), retrieved ${formatRetrievedAt(terminalBench.source.retrievedAt)}.`,
+    "",
+    terminalBenchMarkdownTable(terminalBench),
+    "",
+    `## Terminal-Bench-Science ${terminalBenchScience.benchmark.version} snapshot`,
+    "",
+    `Owner-published results from [release commit ${terminalBenchScience.source.releaseCommit.slice(0, 7)}](${terminalBenchScience.source.releaseCommitUrl}), retrieved ${formatRetrievedAt(terminalBenchScience.source.retrievedAt)} across ${terminalBenchScience.benchmark.taskCount} tasks and ${terminalBenchScience.benchmark.trialsPerTask} trials per task.`,
+    "",
+    terminalBenchScienceMarkdownTable(terminalBenchScience),
     "",
     ...document.paragraphs.flatMap(paragraph => [paragraph, ""]),
     "## Model and benchmark analysis",
@@ -251,14 +344,32 @@ function datasetMarkdown(snapshot: CodingAgentSnapshot): string {
   const summary = codingAgentDatasetSummary(snapshot);
   const modifiedAt = codingAgentDatasetModifiedAt(snapshot);
   const leaders = currentCodingAgentBenchmarkLeaders(snapshot);
+  const terminalBench = checkedTerminalBenchSnapshot();
+  const terminalBenchScience = checkedTerminalBenchScienceSnapshot();
   return joinMarkdown([
-    "# Coding-agent benchmark dataset",
+    "# Benchmark data and method",
     "",
-    CODING_AGENT_DATASET_DESCRIPTION,
+    BENCHMARK_DATA_DESCRIPTION,
+    "",
+    "## Terminal-Bench 4 coding standard",
+    "",
+    `The homepage uses Terminal-Bench ${terminalBench.benchmark.version} as its standard agentic terminal-engineering benchmark. The checked owner snapshot contains ${terminalBench.records.length} configurations across ${terminalBench.benchmark.taskCount} tasks and ${terminalBench.benchmark.trialsPerTask} trials per task. It was retrieved ${formatRetrievedAt(terminalBench.source.retrievedAt)} from [Harbor Framework submissions at commit ${terminalBench.source.repositoryCommit.slice(0, 7)}](${terminalBench.source.submissionsDirectoryUrl}).`,
+    "",
+    "Terminal-Bench 4 is a breaking exam generation. Its results remain separate from the Terminal-Bench v2.1 field in the Artificial Analysis dataset below. Every TB4 JSON row retains the model, agent, agent version, effort, accuracy, 95% confidence interval, trials, cost, tokens, duration, and pinned source files.",
+    "",
+    `- [Download the Terminal-Bench 4 JSON snapshot](${absolute("/data/terminal-bench-4.json")})`,
+    "",
+    "## Terminal-Bench-Science 0.1",
+    "",
+    `The checked scientific-workflow snapshot contains ${terminalBenchScience.records.length} owner-published system configurations across ${terminalBenchScience.benchmark.taskCount} tasks and ${terminalBenchScience.benchmark.trialsPerTask} trials per task. It was retrieved ${formatRetrievedAt(terminalBenchScience.source.retrievedAt)} and is pinned to [v0.1.0 release commit ${terminalBenchScience.source.releaseCommit.slice(0, 7)}](${terminalBenchScience.source.releaseCommitUrl}).`,
+    "",
+    "Every row keeps the model, harness, reasoning effort, resolution rate, binomial standard error, trial count, evaluation cost, token use, per-domain metrics, and owner-published source link. Terminal-Bench-Science remains separate from general terminal engineering and does not feed a composite score. Owner-published aggregate and per-domain costs are retained independently and are not forced to reconcile.",
+    "",
+    `- [Download the Terminal-Bench-Science 0.1 JSON snapshot](${absolute("/data/terminal-bench-science-0-1.json")})`,
+    "",
+    "## Artificial Analysis source and refresh",
     "",
     `Last retrieved ${formatRetrievedAt(snapshot.source.retrievedAt)}. Latest notable update ${formatRetrievedAt(modifiedAt)}. ${summary.recordCount} configurations, ${summary.providerCount} providers.`,
-    "",
-    "## Source and refresh",
     "",
     `The source is the public [${snapshot.source.name} coding-agents comparison](${snapshot.source.url}). AI Charts retrieved this snapshot on ${formatRetrievedAt(snapshot.source.retrievedAt)}. The site checks for a new source snapshot daily. The displayed retrieval time changes only when a validated snapshot is stored.`,
     "",
@@ -335,6 +446,9 @@ function blogIndexMarkdown(): string {
 }
 
 function modelCardsMarkdown(): string {
+  const distinctReleaseHighlights = modelReleaseRadarHighlightsExcluding(
+    FIRST_PARTY_RELEASE_HIGHLIGHTS.flatMap(release => release.namedModels),
+  );
   return joinMarkdown([
     "# Model cards",
     "",
@@ -342,11 +456,19 @@ function modelCardsMarkdown(): string {
     "",
     `[Source snapshot](${MODEL_CARD_SNAPSHOT.source.url}), retrieved ${formatRetrievedAt(MODEL_CARD_SNAPSHOT.source.retrievedAt)}.`,
     "",
-    "## Release radar",
+    "## First-party release radar",
+    "",
+    `${FIRST_PARTY_RELEASE_RADAR.sources.length} provider-owned sources supply durable announcement candidates. Sitemap last-modified values are discovery evidence, not official release dates or benchmark scores.`,
+    "",
+    ...FIRST_PARTY_RELEASE_HIGHLIGHTS.map(release => (
+      `- [${release.namedModels.join(" and ")}](${release.canonicalUrl}). ${release.providerName}; source changed ${formatUpdateDate(release.sourceModifiedAt)}.`
+    )),
+    "",
+    "## Benchmark coverage radar",
     "",
     `${MODEL_RELEASES_AWAITING_BENCHMARK.length} recent releases from established providers are awaiting a complete four-benchmark Artificial Analysis index; ${MODEL_RELEASES_WITH_EARLY_DEEP_SWE.length} already have direct DeepSWE evidence. Discovery is not a score. OpenRouter is the first-line model-identity catalog, with Artificial Analysis used only when a model is unresolved. A labeled early [DeepSWE v${DIRECT_DEEP_SWE_EVIDENCE.source.benchmarkVersion}](${DEEP_SWE_LEADERBOARD_URL}) pass@1 result, when present, comes directly from DataCurve's mini-swe-agent leaderboard and remains outside the Artificial Analysis chart and cards. Partial Artificial Analysis observations can appear there with missing metrics shown explicitly.`,
     "",
-    ...MODEL_RELEASE_RADAR_HIGHLIGHTS.map(release => {
+    ...distinctReleaseHighlights.map(release => {
       const earlyEvidence = directDeepSweEvidenceForRelease(release);
       const evidenceText = earlyEvidence === null
         ? ""
@@ -468,23 +590,25 @@ export function agentGuideMarkdown(
   return joinMarkdown([
     `# ${site.name}`,
     "",
-    `${site.description} The current published chart is a coding-agent comparison built from a checked ${snapshot.source.name} snapshot.`,
+    `${site.description} The homepage uses Terminal-Bench 4.0 as its coding standard, shows four other benchmark roles, and retains a source-specific ${snapshot.source.name} coding-agent chart for cost, time, and token trade-offs.`,
     "",
     "## When to use AI Charts",
     "",
-    "Use AI Charts when you need a sourced comparison of coding agents across benchmark score, API cost, active time, and total token use. Use it to read the current checked snapshot, cite a retrieval time, or explain what AA Index, DeepSWE, Terminal-Bench v2.1, or SWE-Atlas-QnA measures in this dataset.",
+    "Use AI Charts when you need a sourced comparison that keeps benchmark versions and system configurations explicit. The current five-role benchmark portfolio covers terminal engineering, scientific workflows, professional work, computer use, and broad expert reasoning. The interactive source view compares coding agents across benchmark score, API cost, active time, and token use.",
     "",
-    "Use the `/data` page or the JSON download when you need the same records the chart uses, including provenance, leaders, normalization, and limits. Use `/models` for canonical cataloged model-and-profile card routes, deterministic provisional routes for newly observed identities, and shareable images. Use `/blog` when you need a sourced note on a named benchmark rather than the interactive chart.",
+    "Use the `/data` page or its three JSON downloads for the Terminal-Bench 4 and Terminal-Bench-Science owner snapshots and the Artificial Analysis chart records, including provenance, versions, normalization, and limits. Use `/models` for canonical cataloged model-and-profile card routes, deterministic provisional routes for newly observed identities, and shareable images. Use `/blog` for a sourced note on a named benchmark.",
     "",
     `Do not treat AI Charts as a live API, ranker, or production SLA. It does not expose OAuth, GraphQL, MCP, or commerce endpoints. It does not recalculate upstream scores. The current snapshot covers ${summary.recordCount} coding-agent configurations, not every AI model or agent domain.`,
     "",
     "## Main pages",
     "",
-    `- [Comparison chart](${absolute("/")}). Current coding-agent scatter chart.`,
+    `- [Benchmark comparison](${absolute("/")}). Five benchmark roles, the current Terminal-Bench 4 owner snapshot, and the source-specific coding-agent scatter chart.`,
     `- [Model benchmark cards](${absolute("/models")}). Shareable cards for each model and benchmark profile, with canonical routes for cataloged identities.`,
     `- [ChatGPT Pro API-equivalent value](${absolute("/gpt-subsidy")}). Historical estimates from measured Codex usage and the checked August 25, 2026 API price basis.`,
-    `- [Dataset and methodology](${absolute(CODING_AGENT_DATASET_PATH)}). Provenance, definitions, leaders, method, and limits.`,
-    `- [JSON snapshot](${absolute(CODING_AGENT_DATASET_DOWNLOAD_PATH)}). Machine-readable copy of the checked records.`,
+    `- [Dataset and methodology](${absolute(CODING_AGENT_DATASET_PATH)}). Terminal-Bench 4, Terminal-Bench-Science, and Artificial Analysis provenance, version boundaries, definitions, method, and limits.`,
+    `- [Terminal-Bench 4 JSON](${absolute("/data/terminal-bench-4.json")}). Machine-readable owner snapshot for the current coding standard.`,
+    `- [Terminal-Bench-Science 0.1 JSON](${absolute("/data/terminal-bench-science-0-1.json")}). Machine-readable owner snapshot for scientific workflows.`,
+    `- [Artificial Analysis JSON](${absolute(CODING_AGENT_DATASET_DOWNLOAD_PATH)}). Machine-readable copy of the source-specific chart records.`,
     `- [Benchmark analysis](${absolute("/blog")}). Sourced notes on named evaluations.`,
     ...blogArticles.map(article => (
       `- [${article.title}](${absolute(blogArticlePath(article.slug))})`
@@ -494,9 +618,9 @@ export function agentGuideMarkdown(
     "",
     "## How to read the site",
     "",
-    "Request `Accept: text/markdown` on the HTML page URLs to receive the same content as Markdown. The JSON snapshot at `/data/coding-agents.json` stays `application/json`. Missing paths return HTTP 404 with recovery links to the chart, dataset, sitemap, and this guide.",
+    "Request `Accept: text/markdown` on the HTML page URLs to receive the same content as Markdown. The JSON snapshots at `/data/terminal-bench-4.json`, `/data/terminal-bench-science-0-1.json`, and `/data/coding-agents.json` stay `application/json`. Missing paths return HTTP 404 with recovery links to the chart, dataset, sitemap, and this guide.",
     "",
-    "Cite the retrieval timestamp on the dataset page when quoting a score. AI Charts is the publisher of the normalized snapshot, not the creator of the Artificial Analysis measurements.",
+    "Cite the benchmark owner, exact version, model-agent configuration, and retrieval timestamp when quoting a score. AI Charts publishes normalized snapshots; it does not create the measurements.",
   ]);
 }
 

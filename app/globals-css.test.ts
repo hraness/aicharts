@@ -122,6 +122,23 @@ test("homepage orientation is compact, bounded, and responsive", () => {
   expect(stylesheet).toMatch(/@media \(max-width:\s*520px\)[\s\S]*?\.chart-orientation__facts > div:last-child\s*\{[^}]*grid-column:\s*1 \/ -1;/u);
 });
 
+test("homepage benchmark evidence uses paired desktop tables and readable mobile cards", () => {
+  const portfolio = firstRule(".home-benchmark-portfolio");
+  const snapshots = firstRule(".home-benchmark-portfolio__snapshots");
+
+  expect(portfolio).toContain("border-bottom: 1px solid var(--line)");
+  expect(portfolio).toContain("padding: clamp(20px, 3vw, 38px) var(--chart-content-inset)");
+  expect(snapshots).toContain("grid-template-columns: repeat(2, minmax(0, 1fr))");
+  expect(stylesheet).toContain(".terminal-bench-snapshot__table { min-width: 540px; }");
+  expect(stylesheet).toMatch(/@media \(max-width:\s*1100px\)[\s\S]*?\.home-benchmark-portfolio__snapshots\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\);/u);
+  expect(stylesheet).toMatch(/@media \(max-width:\s*760px\)[\s\S]*?\.home-benchmark-portfolio__table,[\s\S]*?\.home-benchmark-portfolio__table td\s*\{[^}]*display:\s*block;[^}]*width:\s*100%;/u);
+  expect(stylesheet).toMatch(/@media \(max-width:\s*760px\)[\s\S]*?\.home-benchmark-portfolio__mobile-label\s*\{[^}]*display:\s*block;/u);
+});
+
+test("the two-row phone footer stays in document flow instead of obscuring evidence", () => {
+  expect(stylesheet).toMatch(/@media \(max-width:\s*760px\)[\s\S]*?\.hraness-site-footer__inner\s*\{[^}]*position:\s*static;/u);
+});
+
 test("homepage leaders use one owned rule at each outer edge", () => {
   const leaders = firstRule(".home-leaders");
   const tableScroll = firstRule(".home-leaders .plain-publication__table-scroll");

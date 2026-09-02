@@ -16,6 +16,7 @@ import {
   codingAgentDatasetSummary,
   currentCodingAgentBenchmarkLeaders,
 } from "@/lib/coding-agent-dataset";
+import { BENCHMARK_DATA_DESCRIPTION } from "@/lib/benchmark-portfolio";
 import { INDEXABLE_ROBOTS } from "@hraness/web-discovery";
 
 import { searchSite } from "../site";
@@ -30,8 +31,8 @@ const snapshot = parsed.value;
 describe("coding-agent dataset surface", () => {
   test("publishes canonical, indexable page metadata", () => {
     expect(metadata).toMatchObject({
-      title: "Coding Agent Benchmark Dataset | AI Charts",
-      description: CODING_AGENT_DATASET_DESCRIPTION,
+      title: "Benchmark Data and Method | AI Charts",
+      description: BENCHMARK_DATA_DESCRIPTION,
       alternates: { canonical: "https://aicharts.io/data" },
       robots: INDEXABLE_ROBOTS,
       openGraph: {
@@ -90,8 +91,17 @@ describe("coding-agent dataset surface", () => {
     );
     const summary = codingAgentDatasetSummary(snapshot);
 
-    expect(markup).toContain("<h1>Coding-agent benchmark dataset</h1>");
-    expect(markup).toContain(CODING_AGENT_DATASET_DESCRIPTION);
+    expect(markup).toContain("<h1>Benchmark data and method</h1>");
+    expect(markup).toContain(BENCHMARK_DATA_DESCRIPTION);
+    expect(markup).toContain("Download Artificial Analysis JSON");
+    expect(markup).toContain('id="terminal-bench-4"');
+    expect(markup).toContain("Terminal-Bench 4 coding standard");
+    expect(markup).toContain('href="/data/terminal-bench-4.json"');
+    expect(markup).toContain("breaking exam generation");
+    expect(markup).toContain('id="terminal-bench-science"');
+    expect(markup).toContain("Terminal-Bench-Science 0.1");
+    expect(markup).toContain('href="/data/terminal-bench-science-0-1.json"');
+    expect(markup).toContain("Owner-published aggregate and per-domain cost fields");
     expect(markup).toContain('id="source"');
     expect(markup).toContain('id="benchmarks"');
     expect(markup).toContain('id="leaders"');

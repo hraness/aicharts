@@ -295,11 +295,13 @@ export function CodingAgentExplorer({
   brand,
   children,
   modelCardPaths,
+  overview,
   snapshot,
 }: {
   brand: ChartBrand;
   children: ReactNode;
   modelCardPaths: Readonly<Record<string, string>>;
+  overview?: ReactNode;
   snapshot: CodingAgentSnapshot;
 }) {
   const descriptionId = useId();
@@ -886,33 +888,45 @@ export function CodingAgentExplorer({
       >
       <section aria-labelledby="chart-orientation-title" className="chart-orientation">
         <div className="chart-orientation__copy">
-          <p className="chart-orientation__eyebrow">Current chart · coding agents</p>
-          <h1 id="chart-orientation-title">Compare coding agents by benchmark, cost, speed, or token use</h1>
+          <p className="chart-orientation__eyebrow">AI benchmark portfolio</p>
+          <h1 id="chart-orientation-title">A benchmark portfolio for the work AI systems are asked to do</h1>
           <p>
-            Explore {snapshotSummary.recordCount} measured model-agent configurations across {snapshotSummary.modelCount} models and {snapshotSummary.providerCount} providers. Choose both axes, then pin a model or provider to inspect nearby trade-offs.
+            Five benchmark roles cover terminal engineering, scientific workflows,
+            professional work, computer use, and broad expert reasoning. Checked score
+            views are added without mixing versions or systems; the source-specific coding
+            chart remains below for cost, speed, and token trade-offs.
           </p>
         </div>
-        <dl aria-label="Chart evidence and boundaries" className="chart-orientation__facts">
+        <dl aria-label="Benchmark selection and boundaries" className="chart-orientation__facts">
           <div>
-            <dt>Snapshot</dt>
-            <dd className="chart-orientation__snapshot">
-              <time dateTime={snapshot.source.retrievedAt}>{retrievedAt}</time>
-              <span>Checked daily; dated only when a validated snapshot is stored.</span>
-            </dd>
+            <dt>Coding standard</dt>
+            <dd>Terminal-Bench 4.0. Major exam versions remain separate.</dd>
           </div>
           <div>
-            <dt>Normalization</dt>
-            <dd>Upstream scores stay on their stored 0–100 scales. Time converts from seconds to minutes; cost and tokens stay raw.</dd>
+            <dt>Comparison rule</dt>
+            <dd>Published release, model, agent, effort, trials, uncertainty, and source stay attached. Unreported protocol fields remain missing.</dd>
           </div>
           <div>
-            <dt>Evidence</dt>
-            <dd className="chart-orientation__links">
-              <a href={snapshot.source.url} rel="noreferrer" target="_blank">{snapshot.source.name} source</a>
-              <Link href="/data">Method</Link>
-              <a href="/data/coding-agents.json">JSON</a>
-            </dd>
+            <dt>Evidence class</dt>
+            <dd>Benchmark-owner and vendor-reported results stay distinct. Missing values remain missing.</dd>
           </div>
         </dl>
+      </section>
+      {overview}
+      <section aria-labelledby="coding-agent-chart-title" className="chart-family-intro">
+        <div>
+          <p className="chart-family-intro__eyebrow">Interactive source view</p>
+          <h2 id="coding-agent-chart-title">Artificial Analysis coding-agent trade-offs</h2>
+        </div>
+        <p>
+          Explore {snapshotSummary.recordCount} measured model-agent configurations across {snapshotSummary.modelCount} models and {snapshotSummary.providerCount} providers. This source still reports Terminal-Bench v2.1, so its values stay separate from the Terminal-Bench 4 standard above.
+        </p>
+        <p className="chart-family-intro__evidence">
+          <time dateTime={snapshot.source.retrievedAt}>{retrievedAt}</time>
+          <a href={snapshot.source.url} rel="noreferrer" target="_blank">{snapshot.source.name} source</a>
+          <Link href="/data">Method</Link>
+          <a href="/data/coding-agents.json">JSON</a>
+        </p>
       </section>
       <header className="chart-header">
         <p aria-live="polite" className="benchmark-description">

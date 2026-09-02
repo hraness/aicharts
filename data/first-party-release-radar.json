@@ -1,0 +1,637 @@
+{
+  "candidates": [
+    {
+      "candidateDate": "2026-09-02",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://www.anthropic.com/claude-fable-and-mythos-5-1",
+      "firstSeenAt": "2026-09-02T13:54:58.398Z",
+      "id": "anthropic:/claude-fable-and-mythos-5-1",
+      "lastChangedAt": "2026-09-02T13:57:08.109Z",
+      "namedModels": [
+        "Claude Fable 5.1",
+        "Claude Mythos 5.1"
+      ],
+      "providerId": "anthropic",
+      "providerName": "Anthropic",
+      "sourceId": "anthropic-sitemap",
+      "sourceModifiedAt": "2026-09-02T13:55:25.802Z",
+      "sourcePresence": "present",
+      "status": "confirmed-release"
+    },
+    {
+      "candidateDate": "2026-09-02",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://openai.com/index/gpt-5-5-instant/",
+      "firstSeenAt": "2026-09-02T13:54:58.398Z",
+      "id": "openai:/index/gpt-5-5-instant/",
+      "lastChangedAt": "2026-09-02T13:54:58.398Z",
+      "namedModels": [
+        "GPT-5.5 Instant"
+      ],
+      "providerId": "openai",
+      "providerName": "OpenAI",
+      "sourceId": "openai-release-sitemap",
+      "sourceModifiedAt": "2026-09-02T07:19:14.666Z",
+      "sourcePresence": "present",
+      "status": "confirmed-release"
+    },
+    {
+      "candidateDate": "2026-09-02",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://openai.com/index/introducing-gpt-5-4/",
+      "firstSeenAt": "2026-09-02T13:54:58.398Z",
+      "id": "openai:/index/introducing-gpt-5-4/",
+      "lastChangedAt": "2026-09-02T13:54:58.398Z",
+      "namedModels": [
+        "GPT-5.4"
+      ],
+      "providerId": "openai",
+      "providerName": "OpenAI",
+      "sourceId": "openai-release-sitemap",
+      "sourceModifiedAt": "2026-09-02T07:19:13.422Z",
+      "sourcePresence": "present",
+      "status": "confirmed-release"
+    },
+    {
+      "candidateDate": "2026-09-02",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://openai.com/index/previewing-gpt-5-6-sol/",
+      "firstSeenAt": "2026-09-02T13:54:58.398Z",
+      "id": "openai:/index/previewing-gpt-5-6-sol/",
+      "lastChangedAt": "2026-09-02T13:54:58.398Z",
+      "namedModels": [
+        "GPT-5.6 Sol"
+      ],
+      "providerId": "openai",
+      "providerName": "OpenAI",
+      "sourceId": "openai-release-sitemap",
+      "sourceModifiedAt": "2026-09-02T07:19:06.870Z",
+      "sourcePresence": "present",
+      "status": "confirmed-release"
+    },
+    {
+      "candidateDate": "2026-09-02",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://openai.com/index/introducing-gpt-5-5/",
+      "firstSeenAt": "2026-09-02T13:54:58.398Z",
+      "id": "openai:/index/introducing-gpt-5-5/",
+      "lastChangedAt": "2026-09-02T13:54:58.398Z",
+      "namedModels": [
+        "GPT-5.5"
+      ],
+      "providerId": "openai",
+      "providerName": "OpenAI",
+      "sourceId": "openai-release-sitemap",
+      "sourceModifiedAt": "2026-09-02T07:19:04.438Z",
+      "sourcePresence": "present",
+      "status": "confirmed-release"
+    },
+    {
+      "candidateDate": "2026-09-02",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://openai.com/index/gpt-5-6/",
+      "firstSeenAt": "2026-09-02T13:54:58.398Z",
+      "id": "openai:/index/gpt-5-6/",
+      "lastChangedAt": "2026-09-02T13:54:58.398Z",
+      "namedModels": [
+        "GPT-5.6"
+      ],
+      "providerId": "openai",
+      "providerName": "OpenAI",
+      "sourceId": "openai-release-sitemap",
+      "sourceModifiedAt": "2026-09-02T07:19:03.357Z",
+      "sourcePresence": "present",
+      "status": "confirmed-release"
+    },
+    {
+      "candidateDate": "2026-09-02",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://openai.com/index/gpt-5-1/",
+      "firstSeenAt": "2026-09-02T13:54:58.398Z",
+      "id": "openai:/index/gpt-5-1/",
+      "lastChangedAt": "2026-09-02T13:54:58.398Z",
+      "namedModels": [
+        "GPT-5.1"
+      ],
+      "providerId": "openai",
+      "providerName": "OpenAI",
+      "sourceId": "openai-release-sitemap",
+      "sourceModifiedAt": "2026-09-02T07:06:01.003Z",
+      "sourcePresence": "present",
+      "status": "confirmed-release"
+    },
+    {
+      "candidateDate": "2026-08-28",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://openai.com/index/gpt-5-safe-completions/",
+      "firstSeenAt": "2026-09-02T13:54:58.398Z",
+      "id": "openai:/index/gpt-5-safe-completions/",
+      "lastChangedAt": "2026-09-02T13:57:08.109Z",
+      "namedModels": [
+        "GPT-5"
+      ],
+      "providerId": "openai",
+      "providerName": "OpenAI",
+      "sourceId": "openai-release-sitemap",
+      "sourceModifiedAt": "2026-08-28T20:11:42.616Z",
+      "sourcePresence": "present",
+      "status": "not-a-release"
+    },
+    {
+      "candidateDate": "2026-08-25",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://openai.com/index/introducing-gpt-5-2/",
+      "firstSeenAt": "2026-09-02T13:54:58.398Z",
+      "id": "openai:/index/introducing-gpt-5-2/",
+      "lastChangedAt": "2026-09-02T13:54:58.398Z",
+      "namedModels": [
+        "GPT-5.2"
+      ],
+      "providerId": "openai",
+      "providerName": "OpenAI",
+      "sourceId": "openai-release-sitemap",
+      "sourceModifiedAt": "2026-08-25T00:20:18.243Z",
+      "sourcePresence": "present",
+      "status": "confirmed-release"
+    },
+    {
+      "candidateDate": "2026-08-19",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://openai.com/index/introducing-gpt-5-3-codex-spark/",
+      "firstSeenAt": "2026-09-02T13:54:58.398Z",
+      "id": "openai:/index/introducing-gpt-5-3-codex-spark/",
+      "lastChangedAt": "2026-09-02T13:54:58.398Z",
+      "namedModels": [
+        "GPT-5.3 Codex Spark"
+      ],
+      "providerId": "openai",
+      "providerName": "OpenAI",
+      "sourceId": "openai-release-sitemap",
+      "sourceModifiedAt": "2026-08-19T16:45:35.184Z",
+      "sourcePresence": "present",
+      "status": "confirmed-release"
+    },
+    {
+      "candidateDate": "2026-08-19",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://openai.com/index/introducing-gpt-5-3-codex/",
+      "firstSeenAt": "2026-09-02T13:54:58.398Z",
+      "id": "openai:/index/introducing-gpt-5-3-codex/",
+      "lastChangedAt": "2026-09-02T13:54:58.398Z",
+      "namedModels": [
+        "GPT-5.3 Codex"
+      ],
+      "providerId": "openai",
+      "providerName": "OpenAI",
+      "sourceId": "openai-release-sitemap",
+      "sourceModifiedAt": "2026-08-19T16:45:33.688Z",
+      "sourcePresence": "present",
+      "status": "confirmed-release"
+    },
+    {
+      "candidateDate": "2026-08-14",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://openai.com/index/introducing-gpt-5/",
+      "firstSeenAt": "2026-09-02T13:54:58.398Z",
+      "id": "openai:/index/introducing-gpt-5/",
+      "lastChangedAt": "2026-09-02T13:54:58.398Z",
+      "namedModels": [
+        "GPT-5"
+      ],
+      "providerId": "openai",
+      "providerName": "OpenAI",
+      "sourceId": "openai-release-sitemap",
+      "sourceModifiedAt": "2026-08-14T22:13:14.013Z",
+      "sourcePresence": "present",
+      "status": "confirmed-release"
+    },
+    {
+      "candidateDate": "2026-08-14",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://openai.com/index/introducing-gpt-4-5/",
+      "firstSeenAt": "2026-09-02T13:54:58.398Z",
+      "id": "openai:/index/introducing-gpt-4-5/",
+      "lastChangedAt": "2026-09-02T13:54:58.398Z",
+      "namedModels": [
+        "GPT-4.5"
+      ],
+      "providerId": "openai",
+      "providerName": "OpenAI",
+      "sourceId": "openai-release-sitemap",
+      "sourceModifiedAt": "2026-08-14T20:48:23.507Z",
+      "sourcePresence": "present",
+      "status": "confirmed-release"
+    },
+    {
+      "candidateDate": "2026-08-14",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://openai.com/index/gpt-4/",
+      "firstSeenAt": "2026-09-02T13:54:58.398Z",
+      "id": "openai:/index/gpt-4/",
+      "lastChangedAt": "2026-09-02T13:54:58.398Z",
+      "namedModels": [
+        "GPT-4"
+      ],
+      "providerId": "openai",
+      "providerName": "OpenAI",
+      "sourceId": "openai-release-sitemap",
+      "sourceModifiedAt": "2026-08-14T20:24:53.357Z",
+      "sourcePresence": "present",
+      "status": "confirmed-release"
+    },
+    {
+      "candidateDate": "2026-08-13",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://openai.com/index/introducing-gpt-5-2-codex/",
+      "firstSeenAt": "2026-09-02T13:54:58.398Z",
+      "id": "openai:/index/introducing-gpt-5-2-codex/",
+      "lastChangedAt": "2026-09-02T13:54:58.398Z",
+      "namedModels": [
+        "GPT-5.2 Codex"
+      ],
+      "providerId": "openai",
+      "providerName": "OpenAI",
+      "sourceId": "openai-release-sitemap",
+      "sourceModifiedAt": "2026-08-13T23:55:03.780Z",
+      "sourcePresence": "present",
+      "status": "confirmed-release"
+    },
+    {
+      "candidateDate": "2026-08-10",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://www.anthropic.com/news/claude-sonnet-5",
+      "firstSeenAt": "2026-09-02T13:54:58.398Z",
+      "id": "anthropic:/news/claude-sonnet-5",
+      "lastChangedAt": "2026-09-02T13:54:58.398Z",
+      "namedModels": [
+        "Claude Sonnet 5"
+      ],
+      "providerId": "anthropic",
+      "providerName": "Anthropic",
+      "sourceId": "anthropic-sitemap",
+      "sourceModifiedAt": "2026-08-10T19:00:15.000Z",
+      "sourcePresence": "present",
+      "status": "confirmed-release"
+    },
+    {
+      "candidateDate": "2026-08-07",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://openai.com/index/codex-now-generally-available/",
+      "firstSeenAt": "2026-09-02T13:54:58.398Z",
+      "id": "openai:/index/codex-now-generally-available/",
+      "lastChangedAt": "2026-09-02T13:57:08.109Z",
+      "namedModels": [
+        "Codex Now Generally Available"
+      ],
+      "providerId": "openai",
+      "providerName": "OpenAI",
+      "sourceId": "openai-release-sitemap",
+      "sourceModifiedAt": "2026-08-07T21:23:45.670Z",
+      "sourcePresence": "missing",
+      "status": "not-a-release"
+    },
+    {
+      "candidateDate": "2026-07-25",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://openai.com/index/introducing-o3-and-o4-mini/",
+      "firstSeenAt": "2026-09-02T13:54:58.398Z",
+      "id": "openai:/index/introducing-o3-and-o4-mini/",
+      "lastChangedAt": "2026-09-02T13:57:08.109Z",
+      "namedModels": [
+        "o3",
+        "o4-mini"
+      ],
+      "providerId": "openai",
+      "providerName": "OpenAI",
+      "sourceId": "openai-release-sitemap",
+      "sourceModifiedAt": "2026-07-25T07:09:31.335Z",
+      "sourcePresence": "present",
+      "status": "confirmed-release"
+    },
+    {
+      "candidateDate": "2026-07-25",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://openai.com/index/gpt-5-3-instant/",
+      "firstSeenAt": "2026-09-02T13:54:58.398Z",
+      "id": "openai:/index/gpt-5-3-instant/",
+      "lastChangedAt": "2026-09-02T13:54:58.398Z",
+      "namedModels": [
+        "GPT-5.3 Instant"
+      ],
+      "providerId": "openai",
+      "providerName": "OpenAI",
+      "sourceId": "openai-release-sitemap",
+      "sourceModifiedAt": "2026-07-25T07:09:10.403Z",
+      "sourcePresence": "present",
+      "status": "confirmed-release"
+    },
+    {
+      "candidateDate": "2026-07-25",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://openai.com/index/gpt-5-1-codex-max/",
+      "firstSeenAt": "2026-09-02T13:54:58.398Z",
+      "id": "openai:/index/gpt-5-1-codex-max/",
+      "lastChangedAt": "2026-09-02T13:54:58.398Z",
+      "namedModels": [
+        "GPT-5.1 Codex Max"
+      ],
+      "providerId": "openai",
+      "providerName": "OpenAI",
+      "sourceId": "openai-release-sitemap",
+      "sourceModifiedAt": "2026-07-25T07:00:23.569Z",
+      "sourcePresence": "present",
+      "status": "confirmed-release"
+    },
+    {
+      "candidateDate": "2026-07-25",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://www.anthropic.com/news/claude-opus-5",
+      "firstSeenAt": "2026-09-02T13:54:58.398Z",
+      "id": "anthropic:/news/claude-opus-5",
+      "lastChangedAt": "2026-09-02T13:54:58.398Z",
+      "namedModels": [
+        "Claude Opus 5"
+      ],
+      "providerId": "anthropic",
+      "providerName": "Anthropic",
+      "sourceId": "anthropic-sitemap",
+      "sourceModifiedAt": "2026-07-25T02:03:36.000Z",
+      "sourcePresence": "present",
+      "status": "confirmed-release"
+    },
+    {
+      "candidateDate": "2026-07-23",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://www.anthropic.com/news/claude-opus-4-7",
+      "firstSeenAt": "2026-09-02T13:54:58.398Z",
+      "id": "anthropic:/news/claude-opus-4-7",
+      "lastChangedAt": "2026-09-02T13:54:58.398Z",
+      "namedModels": [
+        "Claude Opus 4.7"
+      ],
+      "providerId": "anthropic",
+      "providerName": "Anthropic",
+      "sourceId": "anthropic-sitemap",
+      "sourceModifiedAt": "2026-07-23T04:19:56.000Z",
+      "sourcePresence": "present",
+      "status": "confirmed-release"
+    },
+    {
+      "candidateDate": "2026-07-23",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://www.anthropic.com/news/claude-opus-4-5",
+      "firstSeenAt": "2026-09-02T13:54:58.398Z",
+      "id": "anthropic:/news/claude-opus-4-5",
+      "lastChangedAt": "2026-09-02T13:54:58.398Z",
+      "namedModels": [
+        "Claude Opus 4.5"
+      ],
+      "providerId": "anthropic",
+      "providerName": "Anthropic",
+      "sourceId": "anthropic-sitemap",
+      "sourceModifiedAt": "2026-07-23T04:09:31.000Z",
+      "sourcePresence": "present",
+      "status": "confirmed-release"
+    },
+    {
+      "candidateDate": "2026-07-22",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://www.anthropic.com/news/claude-opus-4-8",
+      "firstSeenAt": "2026-09-02T13:54:58.398Z",
+      "id": "anthropic:/news/claude-opus-4-8",
+      "lastChangedAt": "2026-09-02T13:54:58.398Z",
+      "namedModels": [
+        "Claude Opus 4.8"
+      ],
+      "providerId": "anthropic",
+      "providerName": "Anthropic",
+      "sourceId": "anthropic-sitemap",
+      "sourceModifiedAt": "2026-07-22T01:28:45.000Z",
+      "sourcePresence": "present",
+      "status": "confirmed-release"
+    },
+    {
+      "candidateDate": "2026-07-22",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://www.anthropic.com/news/claude-sonnet-4-5",
+      "firstSeenAt": "2026-09-02T13:54:58.398Z",
+      "id": "anthropic:/news/claude-sonnet-4-5",
+      "lastChangedAt": "2026-09-02T13:54:58.398Z",
+      "namedModels": [
+        "Claude Sonnet 4.5"
+      ],
+      "providerId": "anthropic",
+      "providerName": "Anthropic",
+      "sourceId": "anthropic-sitemap",
+      "sourceModifiedAt": "2026-07-22T01:13:43.000Z",
+      "sourcePresence": "present",
+      "status": "confirmed-release"
+    },
+    {
+      "candidateDate": "2026-07-22",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://www.anthropic.com/news/claude-haiku-4-5",
+      "firstSeenAt": "2026-09-02T13:54:58.398Z",
+      "id": "anthropic:/news/claude-haiku-4-5",
+      "lastChangedAt": "2026-09-02T13:54:58.398Z",
+      "namedModels": [
+        "Claude Haiku 4.5"
+      ],
+      "providerId": "anthropic",
+      "providerName": "Anthropic",
+      "sourceId": "anthropic-sitemap",
+      "sourceModifiedAt": "2026-07-22T01:05:15.000Z",
+      "sourcePresence": "present",
+      "status": "confirmed-release"
+    },
+    {
+      "candidateDate": "2026-07-22",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://www.anthropic.com/news/claude-opus-4-6",
+      "firstSeenAt": "2026-09-02T13:54:58.398Z",
+      "id": "anthropic:/news/claude-opus-4-6",
+      "lastChangedAt": "2026-09-02T13:54:58.398Z",
+      "namedModels": [
+        "Claude Opus 4.6"
+      ],
+      "providerId": "anthropic",
+      "providerName": "Anthropic",
+      "sourceId": "anthropic-sitemap",
+      "sourceModifiedAt": "2026-07-22T00:06:14.000Z",
+      "sourcePresence": "present",
+      "status": "confirmed-release"
+    },
+    {
+      "candidateDate": "2026-07-21",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://www.anthropic.com/news/claude-sonnet-4-6",
+      "firstSeenAt": "2026-09-02T13:54:58.398Z",
+      "id": "anthropic:/news/claude-sonnet-4-6",
+      "lastChangedAt": "2026-09-02T13:54:58.398Z",
+      "namedModels": [
+        "Claude Sonnet 4.6"
+      ],
+      "providerId": "anthropic",
+      "providerName": "Anthropic",
+      "sourceId": "anthropic-sitemap",
+      "sourceModifiedAt": "2026-07-21T23:52:43.000Z",
+      "sourcePresence": "present",
+      "status": "confirmed-release"
+    },
+    {
+      "candidateDate": "2026-07-01",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://www.anthropic.com/news/claude-fable-5-mythos-5",
+      "firstSeenAt": "2026-09-02T13:54:58.398Z",
+      "id": "anthropic:/news/claude-fable-5-mythos-5",
+      "lastChangedAt": "2026-09-02T13:54:58.398Z",
+      "namedModels": [
+        "Claude Fable 5",
+        "Claude Mythos 5"
+      ],
+      "providerId": "anthropic",
+      "providerName": "Anthropic",
+      "sourceId": "anthropic-sitemap",
+      "sourceModifiedAt": "2026-07-01T19:34:43.000Z",
+      "sourcePresence": "present",
+      "status": "confirmed-release"
+    },
+    {
+      "candidateDate": "2026-06-19",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://openai.com/index/gpt-4o-mini-advancing-cost-efficient-intelligence/",
+      "firstSeenAt": "2026-09-02T13:54:58.398Z",
+      "id": "openai:/index/gpt-4o-mini-advancing-cost-efficient-intelligence/",
+      "lastChangedAt": "2026-09-02T13:57:08.109Z",
+      "namedModels": [
+        "GPT-4o Mini"
+      ],
+      "providerId": "openai",
+      "providerName": "OpenAI",
+      "sourceId": "openai-release-sitemap",
+      "sourceModifiedAt": "2026-06-19T14:15:11.065Z",
+      "sourcePresence": "present",
+      "status": "confirmed-release"
+    },
+    {
+      "candidateDate": "2026-06-03",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://openai.com/index/gpt-2-1-5b-release/",
+      "firstSeenAt": "2026-09-02T13:54:58.398Z",
+      "id": "openai:/index/gpt-2-1-5b-release/",
+      "lastChangedAt": "2026-09-02T13:57:08.109Z",
+      "namedModels": [
+        "GPT-2.1 5b Release"
+      ],
+      "providerId": "openai",
+      "providerName": "OpenAI",
+      "sourceId": "openai-release-sitemap",
+      "sourceModifiedAt": "2026-06-03T03:59:53.912Z",
+      "sourcePresence": "missing",
+      "status": "confirmed-release"
+    },
+    {
+      "candidateDate": "2025-09-16",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://www.anthropic.com/news/claude-3-7-sonnet",
+      "firstSeenAt": "2026-09-02T13:54:58.398Z",
+      "id": "anthropic:/news/claude-3-7-sonnet",
+      "lastChangedAt": "2026-09-02T13:54:58.398Z",
+      "namedModels": [
+        "Claude Sonnet 3.7"
+      ],
+      "providerId": "anthropic",
+      "providerName": "Anthropic",
+      "sourceId": "anthropic-sitemap",
+      "sourceModifiedAt": "2025-09-16T17:05:40.000Z",
+      "sourcePresence": "present",
+      "status": "confirmed-release"
+    },
+    {
+      "candidateDate": "2025-08-28",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://www.anthropic.com/news/claude-3-5-sonnet",
+      "firstSeenAt": "2026-09-02T13:54:58.398Z",
+      "id": "anthropic:/news/claude-3-5-sonnet",
+      "lastChangedAt": "2026-09-02T13:54:58.398Z",
+      "namedModels": [
+        "Claude Sonnet 3.5"
+      ],
+      "providerId": "anthropic",
+      "providerName": "Anthropic",
+      "sourceId": "anthropic-sitemap",
+      "sourceModifiedAt": "2025-08-28T15:58:52.000Z",
+      "sourcePresence": "present",
+      "status": "confirmed-release"
+    },
+    {
+      "candidateDate": "2025-08-14",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://www.anthropic.com/news/claude-opus-4-1",
+      "firstSeenAt": "2026-09-02T13:54:58.398Z",
+      "id": "anthropic:/news/claude-opus-4-1",
+      "lastChangedAt": "2026-09-02T13:54:58.398Z",
+      "namedModels": [
+        "Claude Opus 4.1"
+      ],
+      "providerId": "anthropic",
+      "providerName": "Anthropic",
+      "sourceId": "anthropic-sitemap",
+      "sourceModifiedAt": "2025-08-14T16:28:38.000Z",
+      "sourcePresence": "present",
+      "status": "confirmed-release"
+    }
+  ],
+  "policy": {
+    "durableCandidates": true,
+    "publication": "discovery-only",
+    "review": "manual-review-required"
+  },
+  "schemaVersion": 1,
+  "sources": [
+    {
+      "health": {
+        "contentType": "application/xml",
+        "httpStatus": 200,
+        "shape": {
+          "byteLength": 68312,
+          "candidateCount": 14,
+          "canonicalHostEntryCount": 522,
+          "datedEntryCount": 522,
+          "duplicateEntryCount": 1,
+          "entryCount": 522,
+          "rootElement": "urlset",
+          "uniqueEntryCount": 521
+        },
+        "status": "healthy"
+      },
+      "id": "anthropic-sitemap",
+      "providerId": "anthropic",
+      "providerName": "Anthropic",
+      "retrievedAt": "2026-09-02T13:57:08.109Z",
+      "url": "https://www.anthropic.com/sitemap.xml"
+    },
+    {
+      "health": {
+        "contentType": "application/xml",
+        "httpStatus": 200,
+        "shape": {
+          "byteLength": 433300,
+          "candidateCount": 18,
+          "canonicalHostEntryCount": 79,
+          "datedEntryCount": 79,
+          "duplicateEntryCount": 0,
+          "entryCount": 79,
+          "rootElement": "urlset",
+          "uniqueEntryCount": 79
+        },
+        "status": "healthy"
+      },
+      "id": "openai-release-sitemap",
+      "providerId": "openai",
+      "providerName": "OpenAI",
+      "retrievedAt": "2026-09-02T13:57:08.109Z",
+      "url": "https://openai.com/sitemap.xml/release/"
+    }
+  ]
+}

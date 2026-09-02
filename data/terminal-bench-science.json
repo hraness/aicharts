@@ -1,0 +1,779 @@
+{
+  "benchmark": {
+    "name": "Terminal-Bench-Science",
+    "score": "resolution-rate",
+    "scoreUnit": "percent",
+    "taskCount": 70,
+    "trialsPerConfiguration": 210,
+    "trialsPerTask": 3,
+    "version": "0.1.0",
+    "runPolicy": {
+      "actionLimit": null,
+      "agentCount": null,
+      "agentTimeoutSeconds": null,
+      "costAggregationPolicy": "preserve-owner-aggregate-and-domain-costs-without-reconciliation",
+      "costBasis": "source-reported-total-evaluation-usd; pricing basis unspecified",
+      "errorTreatment": null,
+      "retryPolicy": null,
+      "seedPolicy": null,
+      "tokenLimit": null,
+      "toolsMode": null,
+      "uncertaintyMethod": "source-reported-binomial-standard-error"
+    }
+  },
+  "records": [
+    {
+      "harness": {
+        "display": {
+          "label": "Claude Code",
+          "url": "https://claude.com/product/claude-code"
+        },
+        "organization": {
+          "label": "Anthropic",
+          "url": "https://www.anthropic.com"
+        },
+        "version": null
+      },
+      "id": "bcf50bd8-8555-48a6-8cae-9f697af54051",
+      "metrics": {
+        "domains": {
+          "earth": {
+            "nTrials": 24,
+            "passes": 11,
+            "resolutionRatePercent": 45.83333333333333,
+            "standardErrorPercent": 10.170707302692229,
+            "totalCostUsd": 1150.81077375,
+            "totalTokens": 897476528
+          },
+          "engineering": {
+            "nTrials": 27,
+            "passes": 8,
+            "resolutionRatePercent": 29.629629629629626,
+            "standardErrorPercent": 8.787718725951697,
+            "totalCostUsd": 1035.3482442499999,
+            "totalTokens": 1225811096
+          },
+          "life": {
+            "nTrials": 57,
+            "passes": 17,
+            "resolutionRatePercent": 29.82456140350877,
+            "standardErrorPercent": 6.059575107331345,
+            "totalCostUsd": 1324.0133410000003,
+            "totalTokens": 1306678199
+          },
+          "mathematical": {
+            "nTrials": 51,
+            "passes": 13,
+            "resolutionRatePercent": 25.49019607843137,
+            "standardErrorPercent": 6.102505932917984,
+            "totalCostUsd": 1634.1868124999999,
+            "totalTokens": 1709641761
+          },
+          "physical": {
+            "nTrials": 51,
+            "passes": 14,
+            "resolutionRatePercent": 27.450980392156865,
+            "standardErrorPercent": 6.2489869213841,
+            "totalCostUsd": 1848.3181522499997,
+            "totalTokens": 2127060729
+          }
+        },
+        "nTrials": 210,
+        "passes": 63,
+        "resolutionRatePercent": 30,
+        "standardErrorPercent": 3.162277660168379,
+        "totalCostUsd": 6992.67732375,
+        "totalTokens": 7266668313
+      },
+      "model": {
+        "display": {
+          "label": "Opus 5",
+          "url": "https://www.anthropic.com/news/claude-opus-5"
+        },
+        "organization": {
+          "label": "Anthropic",
+          "url": "https://www.anthropic.com"
+        },
+        "version": null
+      },
+      "rank": 1,
+      "reasoningEffort": "max",
+      "releaseDate": "2026-07-24",
+      "safeguardMode": null,
+      "sourceUpdatedAt": "2026-08-30T03:13:14.468783+00:00",
+      "sourceUrl": "https://hub.harborframework.com/datasets/terminal-bench-science/terminal-bench-science/0.1.0/leaderboards/v0-1-eval/rows/bcf50bd8-8555-48a6-8cae-9f697af54051"
+    },
+    {
+      "harness": {
+        "display": {
+          "label": "Codex",
+          "url": "https://openai.com/codex/"
+        },
+        "organization": {
+          "label": "OpenAI",
+          "url": "https://openai.com"
+        },
+        "version": null
+      },
+      "id": "378f8b49-dbd8-4acf-a065-8c07e1712de2",
+      "metrics": {
+        "domains": {
+          "earth": {
+            "nTrials": 24,
+            "passes": 5,
+            "resolutionRatePercent": 20.833333333333336,
+            "standardErrorPercent": 8.289816934939807,
+            "totalCostUsd": 584.5591491999999,
+            "totalTokens": 1224726937
+          },
+          "engineering": {
+            "nTrials": 27,
+            "passes": 4,
+            "resolutionRatePercent": 14.814814814814813,
+            "standardErrorPercent": 6.836727459191831,
+            "totalCostUsd": 315.064889,
+            "totalTokens": 569191613
+          },
+          "life": {
+            "nTrials": 57,
+            "passes": 10,
+            "resolutionRatePercent": 17.543859649122805,
+            "standardErrorPercent": 5.03775039171214,
+            "totalCostUsd": 513.1874942,
+            "totalTokens": 911217942
+          },
+          "mathematical": {
+            "nTrials": 51,
+            "passes": 16,
+            "resolutionRatePercent": 31.372549019607842,
+            "standardErrorPercent": 6.497387212388346,
+            "totalCostUsd": 1664.42933,
+            "totalTokens": 3257195155
+          },
+          "physical": {
+            "nTrials": 51,
+            "passes": 12,
+            "resolutionRatePercent": 23.52941176470588,
+            "standardErrorPercent": 5.939743109381191,
+            "totalCostUsd": 1144.6274403999996,
+            "totalTokens": 2444538546
+          }
+        },
+        "nTrials": 210,
+        "passes": 47,
+        "resolutionRatePercent": 22.380952380952383,
+        "standardErrorPercent": 2.876164947101791,
+        "totalCostUsd": 4221.8683028,
+        "totalTokens": 8406870193
+      },
+      "model": {
+        "display": {
+          "label": "GPT-5.6 Sol",
+          "url": "https://developers.openai.com/api/docs/models/gpt-5.6-sol"
+        },
+        "organization": {
+          "label": "OpenAI",
+          "url": "https://openai.com"
+        },
+        "version": null
+      },
+      "rank": 2,
+      "reasoningEffort": "max",
+      "releaseDate": "2026-07-09",
+      "safeguardMode": null,
+      "sourceUpdatedAt": "2026-08-30T00:08:39.126225+00:00",
+      "sourceUrl": "https://hub.harborframework.com/datasets/terminal-bench-science/terminal-bench-science/0.1.0/leaderboards/v0-1-eval/rows/378f8b49-dbd8-4acf-a065-8c07e1712de2"
+    },
+    {
+      "harness": {
+        "display": {
+          "label": "Claude Code",
+          "url": "https://claude.com/product/claude-code"
+        },
+        "organization": {
+          "label": "Anthropic",
+          "url": "https://www.anthropic.com"
+        },
+        "version": null
+      },
+      "id": "e3f2861a-97db-4730-a0ff-99f08d8c7299",
+      "metrics": {
+        "domains": {
+          "earth": {
+            "nTrials": 24,
+            "passes": 6,
+            "resolutionRatePercent": 25,
+            "standardErrorPercent": 8.838834764831844,
+            "totalCostUsd": 1622.574211,
+            "totalTokens": 602637767
+          },
+          "engineering": {
+            "nTrials": 27,
+            "passes": 3,
+            "resolutionRatePercent": 11.11111111111111,
+            "standardErrorPercent": 6.04812282168686,
+            "totalCostUsd": 2388.1075905000002,
+            "totalTokens": 1317986164
+          },
+          "life": {
+            "nTrials": 57,
+            "passes": 10,
+            "resolutionRatePercent": 17.543859649122805,
+            "standardErrorPercent": 5.03775039171214,
+            "totalCostUsd": 1963.0306967499992,
+            "totalTokens": 864297832
+          },
+          "mathematical": {
+            "nTrials": 51,
+            "passes": 17,
+            "resolutionRatePercent": 33.33333333333333,
+            "standardErrorPercent": 6.600983619844496,
+            "totalCostUsd": 4627.1448445,
+            "totalTokens": 2079346609
+          },
+          "physical": {
+            "nTrials": 51,
+            "passes": 9,
+            "resolutionRatePercent": 17.647058823529413,
+            "standardErrorPercent": 5.3381483116060595,
+            "totalCostUsd": 3575.090842499999,
+            "totalTokens": 1499293809
+          }
+        },
+        "nTrials": 210,
+        "passes": 45,
+        "resolutionRatePercent": 21.428571428571427,
+        "standardErrorPercent": 2.831517739900328,
+        "totalCostUsd": 14175.948185250001,
+        "totalTokens": 6363562181
+      },
+      "model": {
+        "display": {
+          "label": "Fable 5",
+          "url": "https://www.anthropic.com/"
+        },
+        "organization": {
+          "label": "Anthropic",
+          "url": "https://www.anthropic.com"
+        },
+        "version": null
+      },
+      "rank": 3,
+      "reasoningEffort": "max",
+      "releaseDate": "2026-06-09",
+      "safeguardMode": null,
+      "sourceUpdatedAt": "2026-08-30T02:23:50.049283+00:00",
+      "sourceUrl": "https://hub.harborframework.com/datasets/terminal-bench-science/terminal-bench-science/0.1.0/leaderboards/v0-1-eval/rows/e3f2861a-97db-4730-a0ff-99f08d8c7299"
+    },
+    {
+      "harness": {
+        "display": {
+          "label": "Claude Code",
+          "url": "https://claude.com/product/claude-code"
+        },
+        "organization": {
+          "label": "Anthropic",
+          "url": "https://www.anthropic.com"
+        },
+        "version": null
+      },
+      "id": "e8bf7739-3c94-46a3-95a5-fa4d4444034e",
+      "metrics": {
+        "domains": {
+          "earth": {
+            "nTrials": 24,
+            "passes": 1,
+            "resolutionRatePercent": 4.166666666666666,
+            "standardErrorPercent": 4.078937543219003,
+            "totalCostUsd": 694.2622874999998,
+            "totalTokens": 753694113
+          },
+          "engineering": {
+            "nTrials": 27,
+            "passes": 2,
+            "resolutionRatePercent": 7.4074074074074066,
+            "standardErrorPercent": 5.040102351405716,
+            "totalCostUsd": 831.492595,
+            "totalTokens": 1065198528
+          },
+          "life": {
+            "nTrials": 57,
+            "passes": 4,
+            "resolutionRatePercent": 7.017543859649122,
+            "standardErrorPercent": 3.383417933803951,
+            "totalCostUsd": 806.35009475,
+            "totalTokens": 780549951
+          },
+          "mathematical": {
+            "nTrials": 51,
+            "passes": 4,
+            "resolutionRatePercent": 7.8431372549019605,
+            "standardErrorPercent": 3.7646418038888574,
+            "totalCostUsd": 1901.8542739999996,
+            "totalTokens": 2166018647
+          },
+          "physical": {
+            "nTrials": 51,
+            "passes": 11,
+            "resolutionRatePercent": 21.568627450980394,
+            "standardErrorPercent": 5.7593182040981175,
+            "totalCostUsd": 1603.7576537499995,
+            "totalTokens": 2004770718
+          }
+        },
+        "nTrials": 210,
+        "passes": 22,
+        "resolutionRatePercent": 10.476190476190476,
+        "standardErrorPercent": 2.1133008267654967,
+        "totalCostUsd": 5837.716905,
+        "totalTokens": 6770231957
+      },
+      "model": {
+        "display": {
+          "label": "Opus 4.8",
+          "url": "https://www.anthropic.com/"
+        },
+        "organization": {
+          "label": "Anthropic",
+          "url": "https://www.anthropic.com"
+        },
+        "version": null
+      },
+      "rank": 4,
+      "reasoningEffort": "max",
+      "releaseDate": "2026-05-28",
+      "safeguardMode": null,
+      "sourceUpdatedAt": "2026-08-30T00:48:53.817356+00:00",
+      "sourceUrl": "https://hub.harborframework.com/datasets/terminal-bench-science/terminal-bench-science/0.1.0/leaderboards/v0-1-eval/rows/e8bf7739-3c94-46a3-95a5-fa4d4444034e"
+    },
+    {
+      "harness": {
+        "display": {
+          "label": "Codex",
+          "url": "https://openai.com/codex/"
+        },
+        "organization": {
+          "label": "OpenAI",
+          "url": "https://openai.com"
+        },
+        "version": null
+      },
+      "id": "c79d5ef6-b3c6-40da-84b5-946c11099426",
+      "metrics": {
+        "domains": {
+          "earth": {
+            "nTrials": 24,
+            "passes": 2,
+            "resolutionRatePercent": 8.333333333333332,
+            "standardErrorPercent": 5.64169333655275,
+            "totalCostUsd": 302.40976619999986,
+            "totalTokens": 1197812821
+          },
+          "engineering": {
+            "nTrials": 27,
+            "passes": 2,
+            "resolutionRatePercent": 7.4074074074074066,
+            "standardErrorPercent": 5.040102351405716,
+            "totalCostUsd": 141.00018310000002,
+            "totalTokens": 464143146
+          },
+          "life": {
+            "nTrials": 57,
+            "passes": 4,
+            "resolutionRatePercent": 7.017543859649122,
+            "standardErrorPercent": 3.383417933803951,
+            "totalCostUsd": 297.9608035,
+            "totalTokens": 1031960432
+          },
+          "mathematical": {
+            "nTrials": 51,
+            "passes": 5,
+            "resolutionRatePercent": 9.803921568627452,
+            "standardErrorPercent": 4.163980181949191,
+            "totalCostUsd": 450.6649798000001,
+            "totalTokens": 1639432828
+          },
+          "physical": {
+            "nTrials": 51,
+            "passes": 5,
+            "resolutionRatePercent": 9.803921568627452,
+            "standardErrorPercent": 4.163980181949191,
+            "totalCostUsd": 791.8832043,
+            "totalTokens": 3285452189
+          }
+        },
+        "nTrials": 210,
+        "passes": 18,
+        "resolutionRatePercent": 8.571428571428571,
+        "standardErrorPercent": 1.9317811536651808,
+        "totalCostUsd": 1983.9189368999998,
+        "totalTokens": 7618801416
+      },
+      "model": {
+        "display": {
+          "label": "GPT-5.6 Terra",
+          "url": "https://developers.openai.com/api/docs/models/gpt-5.6-terra"
+        },
+        "organization": {
+          "label": "OpenAI",
+          "url": "https://openai.com"
+        },
+        "version": null
+      },
+      "rank": 5,
+      "reasoningEffort": "max",
+      "releaseDate": "2026-07-09",
+      "safeguardMode": null,
+      "sourceUpdatedAt": "2026-08-30T01:34:23.771829+00:00",
+      "sourceUrl": "https://hub.harborframework.com/datasets/terminal-bench-science/terminal-bench-science/0.1.0/leaderboards/v0-1-eval/rows/c79d5ef6-b3c6-40da-84b5-946c11099426"
+    },
+    {
+      "harness": {
+        "display": {
+          "label": "Claude Code",
+          "url": "https://claude.com/product/claude-code"
+        },
+        "organization": {
+          "label": "Anthropic",
+          "url": "https://www.anthropic.com"
+        },
+        "version": null
+      },
+      "id": "78f18248-3ee9-4eb4-b7af-19019f1fc64f",
+      "metrics": {
+        "domains": {
+          "earth": {
+            "nTrials": 24,
+            "passes": 1,
+            "resolutionRatePercent": 4.166666666666666,
+            "standardErrorPercent": 4.078937543219003,
+            "totalCostUsd": 1404.890923,
+            "totalTokens": 1588775692
+          },
+          "engineering": {
+            "nTrials": 27,
+            "passes": 2,
+            "resolutionRatePercent": 7.4074074074074066,
+            "standardErrorPercent": 5.040102351405716,
+            "totalCostUsd": 788.2680359999999,
+            "totalTokens": 992085164
+          },
+          "life": {
+            "nTrials": 57,
+            "passes": 6,
+            "resolutionRatePercent": 10.526315789473683,
+            "standardErrorPercent": 4.064886556427542,
+            "totalCostUsd": 1310.9276260000004,
+            "totalTokens": 1506421392
+          },
+          "mathematical": {
+            "nTrials": 51,
+            "passes": 3,
+            "resolutionRatePercent": 5.88235294117647,
+            "standardErrorPercent": 3.294776668301199,
+            "totalCostUsd": 1571.9234520000002,
+            "totalTokens": 2053648887
+          },
+          "physical": {
+            "nTrials": 51,
+            "passes": 5,
+            "resolutionRatePercent": 9.803921568627452,
+            "standardErrorPercent": 4.163980181949191,
+            "totalCostUsd": 1726.556125,
+            "totalTokens": 2345166065
+          }
+        },
+        "nTrials": 210,
+        "passes": 17,
+        "resolutionRatePercent": 8.095238095238095,
+        "standardErrorPercent": 1.8822364227102866,
+        "totalCostUsd": 2733.16185912,
+        "totalTokens": 8486097200
+      },
+      "model": {
+        "display": {
+          "label": "GLM 5.3",
+          "url": "https://z.ai/"
+        },
+        "organization": {
+          "label": "Z.AI",
+          "url": "https://z.ai"
+        },
+        "version": null
+      },
+      "rank": 6,
+      "reasoningEffort": "max",
+      "releaseDate": "2026-08-14",
+      "safeguardMode": null,
+      "sourceUpdatedAt": "2026-08-30T04:43:51.891874+00:00",
+      "sourceUrl": "https://hub.harborframework.com/datasets/terminal-bench-science/terminal-bench-science/0.1.0/leaderboards/v0-1-eval/rows/78f18248-3ee9-4eb4-b7af-19019f1fc64f"
+    },
+    {
+      "harness": {
+        "display": {
+          "label": "Claude Code",
+          "url": "https://claude.com/product/claude-code"
+        },
+        "organization": {
+          "label": "Anthropic",
+          "url": "https://www.anthropic.com"
+        },
+        "version": null
+      },
+      "id": "66e64f64-abbd-40a6-a470-2151df25472e",
+      "metrics": {
+        "domains": {
+          "earth": {
+            "nTrials": 24,
+            "passes": 3,
+            "resolutionRatePercent": 12.5,
+            "standardErrorPercent": 6.750771560841522,
+            "totalCostUsd": 342.59728249999995,
+            "totalTokens": 380051652
+          },
+          "engineering": {
+            "nTrials": 27,
+            "passes": 1,
+            "resolutionRatePercent": 3.7037037037037033,
+            "standardErrorPercent": 3.6344694923159864,
+            "totalCostUsd": 354.7335025000001,
+            "totalTokens": 536303864
+          },
+          "life": {
+            "nTrials": 57,
+            "passes": 4,
+            "resolutionRatePercent": 7.017543859649122,
+            "standardErrorPercent": 3.383417933803951,
+            "totalCostUsd": 591.3448354999999,
+            "totalTokens": 612759967
+          },
+          "mathematical": {
+            "nTrials": 51,
+            "passes": 1,
+            "resolutionRatePercent": 1.9607843137254901,
+            "standardErrorPercent": 1.9414657705424987,
+            "totalCostUsd": 714.7604920000001,
+            "totalTokens": 863209487
+          },
+          "physical": {
+            "nTrials": 51,
+            "passes": 6,
+            "resolutionRatePercent": 11.76470588235294,
+            "standardErrorPercent": 4.511558757925709,
+            "totalCostUsd": 536.2298835,
+            "totalTokens": 799277999
+          }
+        },
+        "nTrials": 210,
+        "passes": 15,
+        "resolutionRatePercent": 7.142857142857142,
+        "standardErrorPercent": 1.7771905411718545,
+        "totalCostUsd": 1523.7995976,
+        "totalTokens": 3191602969
+      },
+      "model": {
+        "display": {
+          "label": "Kimi K3",
+          "url": "https://www.moonshot.ai/"
+        },
+        "organization": {
+          "label": "Moonshot AI",
+          "url": "https://www.moonshot.ai"
+        },
+        "version": null
+      },
+      "rank": 7,
+      "reasoningEffort": "max",
+      "releaseDate": "2026-07-16",
+      "safeguardMode": null,
+      "sourceUpdatedAt": "2026-08-29T19:21:10.538643+00:00",
+      "sourceUrl": "https://hub.harborframework.com/datasets/terminal-bench-science/terminal-bench-science/0.1.0/leaderboards/v0-1-eval/rows/66e64f64-abbd-40a6-a470-2151df25472e"
+    },
+    {
+      "harness": {
+        "display": {
+          "label": "Grok Build",
+          "url": "https://x.ai/"
+        },
+        "organization": {
+          "label": "xAI",
+          "url": "https://x.ai"
+        },
+        "version": null
+      },
+      "id": "231bc6c3-8f2b-455e-8c87-5a08ec200b05",
+      "metrics": {
+        "domains": {
+          "earth": {
+            "nTrials": 24,
+            "passes": 1,
+            "resolutionRatePercent": 4.166666666666666,
+            "standardErrorPercent": 4.078937543219003,
+            "totalCostUsd": 217.32519000000005,
+            "totalTokens": 244927564
+          },
+          "engineering": {
+            "nTrials": 27,
+            "passes": 4,
+            "resolutionRatePercent": 14.814814814814813,
+            "standardErrorPercent": 6.836727459191831,
+            "totalCostUsd": 231.56777400000001,
+            "totalTokens": 276719284
+          },
+          "life": {
+            "nTrials": 57,
+            "passes": 4,
+            "resolutionRatePercent": 7.017543859649122,
+            "standardErrorPercent": 3.383417933803951,
+            "totalCostUsd": 281.65276,
+            "totalTokens": 367523179
+          },
+          "mathematical": {
+            "nTrials": 51,
+            "passes": 3,
+            "resolutionRatePercent": 5.88235294117647,
+            "standardErrorPercent": 3.294776668301199,
+            "totalCostUsd": 2074.054437999999,
+            "totalTokens": 2173354326
+          },
+          "physical": {
+            "nTrials": 51,
+            "passes": 3,
+            "resolutionRatePercent": 5.88235294117647,
+            "standardErrorPercent": 3.294776668301199,
+            "totalCostUsd": 539.5871699999999,
+            "totalTokens": 646860649
+          }
+        },
+        "nTrials": 210,
+        "passes": 15,
+        "resolutionRatePercent": 7.142857142857142,
+        "standardErrorPercent": 1.7771905411718545,
+        "totalCostUsd": 3344.187332,
+        "totalTokens": 3709385002
+      },
+      "model": {
+        "display": {
+          "label": "Grok 4.6",
+          "url": "https://x.ai/"
+        },
+        "organization": {
+          "label": "xAI",
+          "url": "https://x.ai"
+        },
+        "version": null
+      },
+      "rank": 8,
+      "reasoningEffort": "xhigh",
+      "releaseDate": "2026-08-12",
+      "safeguardMode": null,
+      "sourceUpdatedAt": "2026-08-30T05:21:48.859178+00:00",
+      "sourceUrl": "https://hub.harborframework.com/datasets/terminal-bench-science/terminal-bench-science/0.1.0/leaderboards/v0-1-eval/rows/231bc6c3-8f2b-455e-8c87-5a08ec200b05"
+    },
+    {
+      "harness": {
+        "display": {
+          "label": "Codex",
+          "url": "https://openai.com/codex/"
+        },
+        "organization": {
+          "label": "OpenAI",
+          "url": "https://openai.com"
+        },
+        "version": null
+      },
+      "id": "7cf10b06-3e5b-4723-b98f-c679e773959b",
+      "metrics": {
+        "domains": {
+          "earth": {
+            "nTrials": 24,
+            "passes": 0,
+            "resolutionRatePercent": 0,
+            "standardErrorPercent": 0,
+            "totalCostUsd": 41.411879639999995,
+            "totalTokens": 1640103008
+          },
+          "engineering": {
+            "nTrials": 27,
+            "passes": 2,
+            "resolutionRatePercent": 7.4074074074074066,
+            "standardErrorPercent": 5.040102351405716,
+            "totalCostUsd": 35.81521945,
+            "totalTokens": 1247416609
+          },
+          "life": {
+            "nTrials": 57,
+            "passes": 1,
+            "resolutionRatePercent": 1.7543859649122806,
+            "standardErrorPercent": 1.7389285185380774,
+            "totalCostUsd": 83.50810593999996,
+            "totalTokens": 2852715005
+          },
+          "mathematical": {
+            "nTrials": 51,
+            "passes": 4,
+            "resolutionRatePercent": 7.8431372549019605,
+            "standardErrorPercent": 3.7646418038888574,
+            "totalCostUsd": 105.62130739999999,
+            "totalTokens": 3739866520
+          },
+          "physical": {
+            "nTrials": 51,
+            "passes": 0,
+            "resolutionRatePercent": 0,
+            "standardErrorPercent": 0,
+            "totalCostUsd": 116.84312716999993,
+            "totalTokens": 4766821210
+          }
+        },
+        "nTrials": 210,
+        "passes": 7,
+        "resolutionRatePercent": 3.3333333333333335,
+        "standardErrorPercent": 1.2387055882620108,
+        "totalCostUsd": 383.19963959999995,
+        "totalTokens": 14246922352
+      },
+      "model": {
+        "display": {
+          "label": "GPT-5.6 Luna",
+          "url": "https://developers.openai.com/api/docs/models/gpt-5.6-luna"
+        },
+        "organization": {
+          "label": "OpenAI",
+          "url": "https://openai.com"
+        },
+        "version": null
+      },
+      "rank": 9,
+      "reasoningEffort": "max",
+      "releaseDate": "2026-07-09",
+      "safeguardMode": null,
+      "sourceUpdatedAt": "2026-08-30T04:12:04.906326+00:00",
+      "sourceUrl": "https://hub.harborframework.com/datasets/terminal-bench-science/terminal-bench-science/0.1.0/leaderboards/v0-1-eval/rows/7cf10b06-3e5b-4723-b98f-c679e773959b"
+    }
+  ],
+  "schemaVersion": 1,
+  "source": {
+    "announcementUrl": "https://www.terminal-bench-science.ai/announcement",
+    "datasetVersionId": "2b817f26-dc4f-4477-8032-2218dcc553b5",
+    "leaderboardApiUrl": "https://www.terminal-bench-science.ai/api/leaderboard?package=terminal-bench-science%2Fterminal-bench-science&name=v0-1-eval",
+    "leaderboardId": "9a545a14-78d0-44b4-9003-afe062522a47",
+    "leaderboardName": "v0-1-eval",
+    "leaderboardPackage": "terminal-bench-science/terminal-bench-science",
+    "leaderboardUpdatedAt": "2026-08-30T05:21:48.859178+00:00",
+    "leaderboardUrl": "https://hub.harborframework.com/datasets/terminal-bench-science/terminal-bench-science/0.1.0?leaderboard=v0-1-eval&tab=leaderboard",
+    "method": "version-pinned-release-owner-leaderboard-api",
+    "name": "Terminal-Bench-Science and Harbor Framework",
+    "releaseCommit": "f81afac4f11048e77a15dfc8fb1dbfb897fea0ce",
+    "releaseCommittedAt": "2026-08-26T10:23:00Z",
+    "releaseCommitUrl": "https://github.com/harbor-framework/terminal-bench-science/commit/f81afac4f11048e77a15dfc8fb1dbfb897fea0ce",
+    "releaseDoiUrl": "https://doi.org/10.5281/zenodo.22110254",
+    "releaseNotesUrl": "https://github.com/harbor-framework/terminal-bench-science/blob/f81afac4f11048e77a15dfc8fb1dbfb897fea0ce/release-notes-v0.1.0.md",
+    "releasePublishedAt": "2026-08-26T10:24:33Z",
+    "releaseTag": "v0.1.0",
+    "releaseUrl": "https://github.com/harbor-framework/terminal-bench-science/releases/tag/v0.1.0",
+    "repositoryUrl": "https://github.com/harbor-framework/terminal-bench-science",
+    "retrievedAt": "2026-09-02T14:45:48.712Z",
+    "sourceClass": "benchmark-owner"
+  }
+}

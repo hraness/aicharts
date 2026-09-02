@@ -2,11 +2,13 @@ import { Breadcrumbs } from "@/components/ui";
 import { CodingAgentLeadersTable } from "@/components/coding-agent-leaders-table";
 import { CodingAgentSnapshotTable } from "@/components/coding-agent-snapshot-table";
 import codingAgentData from "@/data/coding-agents.json";
+import terminalBenchData from "@/data/terminal-bench.json";
+import terminalBenchScienceData from "@/data/terminal-bench-science.json";
 import { parseCodingAgentSnapshot } from "@/lib/coding-agent-data";
 import { codingAgentSnapshotRows } from "@/lib/coding-agent-snapshot-rows";
+import { BENCHMARK_DATA_DESCRIPTION } from "@/lib/benchmark-portfolio";
 import {
   CODING_AGENT_BENCHMARK_DEFINITIONS,
-  CODING_AGENT_DATASET_DESCRIPTION,
   CODING_AGENT_DATASET_DOWNLOAD_PATH,
   CODING_AGENT_DATASET_PATH,
   codingAgentDatasetJsonLd,
@@ -14,6 +16,8 @@ import {
   codingAgentDatasetSummary,
   currentCodingAgentBenchmarkLeaders,
 } from "@/lib/coding-agent-dataset";
+import { parseTerminalBenchSnapshot } from "@/lib/terminal-bench-data";
+import { parseTerminalBenchScienceSnapshot } from "@/lib/terminal-bench-science-data";
 import { createPublicSiteMetadata } from "@hraness/web-discovery";
 import { JsonLdScript } from "@hraness/web-discovery/json-ld";
 import type { Metadata } from "next";
@@ -23,9 +27,9 @@ import { searchSite } from "../site";
 
 const dataSearchSite = {
   ...searchSite,
-  description: CODING_AGENT_DATASET_DESCRIPTION,
-  socialTitle: "Coding Agent Benchmark Dataset | AI Charts",
-  title: "Coding Agent Benchmark Dataset | AI Charts",
+  description: BENCHMARK_DATA_DESCRIPTION,
+  socialTitle: "Benchmark Data and Method | AI Charts",
+  title: "Benchmark Data and Method | AI Charts",
 } as const;
 
 export const metadata: Metadata = createPublicSiteMetadata(
@@ -57,6 +61,25 @@ export default function CodingAgentDatasetPage() {
     );
   }
   const snapshot = parsed.value;
+  const parsedTerminalBench = parseTerminalBenchSnapshot(terminalBenchData);
+  if (!parsedTerminalBench.ok) {
+    throw new Error(
+      "Checked Terminal-Bench snapshot is invalid: " + parsedTerminalBench.error.message,
+      { cause: parsedTerminalBench.error },
+    );
+  }
+  const terminalBench = parsedTerminalBench.value;
+  const parsedTerminalBenchScience = parseTerminalBenchScienceSnapshot(
+    terminalBenchScienceData,
+  );
+  if (!parsedTerminalBenchScience.ok) {
+    throw new Error(
+      "Checked Terminal-Bench-Science snapshot is invalid: "
+        + parsedTerminalBenchScience.error.message,
+      { cause: parsedTerminalBenchScience.error },
+    );
+  }
+  const terminalBenchScience = parsedTerminalBenchScience.value;
   const modifiedAt = codingAgentDatasetModifiedAt(snapshot);
   const summary = codingAgentDatasetSummary(snapshot);
   const leaders = currentCodingAgentBenchmarkLeaders(snapshot);
@@ -77,29 +100,29 @@ export default function CodingAgentDatasetPage() {
             { id: "data", label: "Data" },
           ]}
         />
-        <h1>Coding-agent benchmark dataset</h1>
+        <h1>Benchmark data and method</h1>
         <p className="plain-publication__article-dek">
-          {CODING_AGENT_DATASET_DESCRIPTION}
+          {BENCHMARK_DATA_DESCRIPTION}
         </p>
         <p className="plain-publication__article-meta">
-          <span>Last retrieved </span>
+          <span>Artificial Analysis retrieved </span>
           <time dateTime={snapshot.source.retrievedAt}>
             {formatRetrievedAt(snapshot.source.retrievedAt)}
           </time>
           <span aria-hidden="true"> · </span>
-          <span>Latest notable update </span>
+          <span>Latest notable AA update </span>
           <time dateTime={modifiedAt}>{formatRetrievedAt(modifiedAt)}</time>
           <span aria-hidden="true"> · </span>
-          <span>{summary.recordCount} configurations</span>
+          <span>{summary.recordCount} AA configurations</span>
           <span aria-hidden="true"> · </span>
-          <span>{summary.providerCount} providers</span>
+          <span>{summary.providerCount} AA providers</span>
         </p>
         <a
           className="plain-publication__primary-link"
           download="aicharts-coding-agent-benchmarks.json"
           href={CODING_AGENT_DATASET_DOWNLOAD_PATH}
         >
-          Download JSON <span aria-hidden="true">↓</span>
+          Download Artificial Analysis JSON <span aria-hidden="true">↓</span>
         </a>
       </header>
 
@@ -107,6 +130,8 @@ export default function CodingAgentDatasetPage() {
         <nav aria-label="On this page" className="plain-publication__toc">
           <p>On this page</p>
           <ol>
+            <li><a href="#terminal-bench-4">Terminal-Bench 4 standard</a></li>
+            <li><a href="#terminal-bench-science">Terminal-Bench-Science 0.1</a></li>
             <li><a href="#source">Source and refresh</a></li>
             <li><a href="#benchmarks">Benchmark definitions</a></li>
             <li><a href="#leaders">Current leaders</a></li>
@@ -118,6 +143,68 @@ export default function CodingAgentDatasetPage() {
 
         <div className="plain-publication__article-main">
           <div className="plain-publication__article-body">
+            <h2 id="terminal-bench-4">Terminal-Bench 4 coding standard</h2>
+            <p>
+              The homepage uses Terminal-Bench {terminalBench.benchmark.version}{" "}
+              as its standard agentic terminal-engineering benchmark. The checked
+              snapshot contains {terminalBench.records.length} configurations from
+              the official{" "}
+              <a href={terminalBench.source.submissionsDirectoryUrl}>
+                Harbor Framework submissions at commit {terminalBench.source.repositoryCommit.slice(0, 7)}
+              </a>
+              , with {terminalBench.benchmark.taskCount} tasks and{" "}
+              {terminalBench.benchmark.trialsPerTask} trials per task. AI Charts
+              retrieved this owner snapshot on{" "}
+              <time dateTime={terminalBench.source.retrievedAt}>
+                {formatRetrievedAt(terminalBench.source.retrievedAt)}
+              </time>.
+            </p>
+            <p>
+              Terminal-Bench 4 is a breaking exam generation. Its scores remain
+              separate from the Terminal-Bench v2.1 field in the Artificial
+              Analysis dataset below. Every TB4 row retains its model, agent,
+              agent version, effort, accuracy, 95% confidence interval, trials,
+              cost, tokens, duration, and pinned source files.
+            </p>
+            <a
+              className="plain-publication__primary-link"
+              download="aicharts-terminal-bench-4.json"
+              href="/data/terminal-bench-4.json"
+            >
+              Download Terminal-Bench 4 JSON <span aria-hidden="true">↓</span>
+            </a>
+
+            <h2 id="terminal-bench-science">Terminal-Bench-Science 0.1</h2>
+            <p>
+              The checked scientific-workflow snapshot contains{" "}
+              {terminalBenchScience.records.length} owner-published system
+              configurations across {terminalBenchScience.benchmark.taskCount} tasks
+              and {terminalBenchScience.benchmark.trialsPerTask} trials per task. It is
+              pinned to the exact{" "}
+              <a href={terminalBenchScience.source.releaseCommitUrl}>
+                v0.1.0 release commit {terminalBenchScience.source.releaseCommit.slice(0, 7)}
+              </a>
+              {" "}and was retrieved on{" "}
+              <time dateTime={terminalBenchScience.source.retrievedAt}>
+                {formatRetrievedAt(terminalBenchScience.source.retrievedAt)}
+              </time>.
+            </p>
+            <p>
+              Every row keeps the named model, harness, reasoning effort, resolution
+              rate, binomial standard error, trial count, evaluation cost, token use,
+              and owner-published source link. Terminal-Bench-Science remains separate
+              from general terminal engineering and does not feed a composite score.
+              Owner-published aggregate and per-domain cost fields are retained
+              independently and are not forced to reconcile.
+            </p>
+            <a
+              className="plain-publication__primary-link"
+              download="aicharts-terminal-bench-science-0-1.json"
+              href="/data/terminal-bench-science-0-1.json"
+            >
+              Download Terminal-Bench-Science 0.1 JSON <span aria-hidden="true">↓</span>
+            </a>
+
             <h2 id="source">Source and refresh</h2>
             <p>
               The source is the public{" "}

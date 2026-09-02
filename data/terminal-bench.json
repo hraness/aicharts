@@ -1,0 +1,541 @@
+{
+  "schemaVersion": 1,
+  "benchmark": {
+    "datasetRef": "4",
+    "name": "Terminal-Bench",
+    "score": "accuracy",
+    "scoreUnit": "percent",
+    "taskCount": 66,
+    "trialsPerConfiguration": 330,
+    "trialsPerTask": 5,
+    "version": "4.0.0",
+    "runPolicy": {
+      "actionLimit": null,
+      "agentCount": null,
+      "agentTimeoutSeconds": 28800,
+      "costBasis": "source-reported-total-usd; pricing basis unspecified",
+      "disqualifiedTrialPolicy": "reject-submission",
+      "retryPolicy": null,
+      "seedPolicy": null,
+      "tokenLimit": null,
+      "toolsMode": null,
+      "uncertaintyMethod": "source-reported-95%-confidence-interval; method unspecified"
+    }
+  },
+  "source": {
+    "leaderboardDefinitionUrl": "https://github.com/harbor-framework/terminal-bench/blob/624df069c505c5ddd21d2d78467dd5579020db95/leaderboard/leaderboard.yaml",
+    "leaderboardUrl": "https://hub.harborframework.com/datasets/terminal-bench/terminal-bench/latest?leaderboard=4-0-0&tab=leaderboard",
+    "method": "version-pinned-github-submissions",
+    "name": "Harbor Framework",
+    "releaseUrl": "https://github.com/harbor-framework/terminal-bench/releases/tag/v4.0.0",
+    "repositoryCommit": "624df069c505c5ddd21d2d78467dd5579020db95",
+    "repositoryCommittedAt": "2026-08-29T23:27:45Z",
+    "repositoryCommitUrl": "https://github.com/harbor-framework/terminal-bench/commit/624df069c505c5ddd21d2d78467dd5579020db95",
+    "repositoryUrl": "https://github.com/harbor-framework/terminal-bench",
+    "retrievedAt": "2026-09-02T13:52:10.272Z",
+    "sourceClass": "benchmark-owner",
+    "submissionsDirectoryUrl": "https://github.com/harbor-framework/terminal-bench/tree/624df069c505c5ddd21d2d78467dd5579020db95/leaderboard/submissions"
+  },
+  "records": [
+    {
+      "id": "2026-08-26-anthropic-claude-opus-5-max-claude-code",
+      "releaseDate": "2026-07-24",
+      "reasoningEffort": "max",
+      "harness": {
+        "display": {
+          "label": "Claude Code",
+          "url": "https://claude.com/product/claude-code"
+        },
+        "id": "claude-code",
+        "organization": {
+          "label": "Anthropic",
+          "url": "https://www.anthropic.com"
+        },
+        "version": "2.1.231"
+      },
+      "model": {
+        "display": {
+          "label": "Opus 5",
+          "url": "https://www.anthropic.com/news/claude-opus-5"
+        },
+        "id": "anthropic/claude-opus-5",
+        "organization": {
+          "label": "Anthropic",
+          "url": "https://www.anthropic.com"
+        }
+      },
+      "metrics": {
+        "accuracyPercent": 51.82,
+        "accuracyCi95HalfWidthPercent": 3.39,
+        "averageTrialDurationSeconds": 4792.8,
+        "cachedInputTokens": 6271909956,
+        "nTrials": 330,
+        "outputTokens": 66012156,
+        "passAt2": 0.6167,
+        "passAt3": 0.6576,
+        "passAt4": 0.6818,
+        "passAt5": 0.697,
+        "successes": 171,
+        "totalCostUsd": 5969.11,
+        "totalTokens": 6527147637,
+        "uncachedInputTokens": 6461135481
+      },
+      "sourceFilterReasoningEffort": "max",
+      "sourceJobUrls": [
+        "https://hub.harborframework.com/jobs/a1ac63a1-8a9b-4bc7-9906-2b63657ee1c2"
+      ],
+      "sourcePath": "leaderboard/submissions/2026-08-26-anthropic-claude-opus-5-max-claude-code.json",
+      "sourceUrl": "https://raw.githubusercontent.com/harbor-framework/terminal-bench/624df069c505c5ddd21d2d78467dd5579020db95/leaderboard/submissions/2026-08-26-anthropic-claude-opus-5-max-claude-code.json"
+    },
+    {
+      "id": "2026-08-26-anthropic-claude-fable-5-max-claude-code",
+      "releaseDate": "2026-06-09",
+      "reasoningEffort": "max",
+      "harness": {
+        "display": {
+          "label": "Claude Code",
+          "url": "https://claude.com/product/claude-code"
+        },
+        "id": "claude-code",
+        "organization": {
+          "label": "Anthropic",
+          "url": "https://www.anthropic.com"
+        },
+        "version": "2.1.231"
+      },
+      "model": {
+        "display": {
+          "label": "Fable 5",
+          "url": "https://www.anthropic.com/news/claude-fable-5-mythos-5"
+        },
+        "id": "anthropic/claude-fable-5",
+        "organization": {
+          "label": "Anthropic",
+          "url": "https://www.anthropic.com"
+        }
+      },
+      "metrics": {
+        "accuracyPercent": 44.55,
+        "accuracyCi95HalfWidthPercent": 3.85,
+        "averageTrialDurationSeconds": 4202.8,
+        "cachedInputTokens": 3564065093,
+        "nTrials": 330,
+        "outputTokens": 58619905,
+        "passAt2": 0.5727,
+        "passAt3": 0.6318,
+        "passAt4": 0.6636,
+        "passAt5": 0.6818,
+        "successes": 147,
+        "totalCostUsd": 7265.01,
+        "totalTokens": 3785220369,
+        "uncachedInputTokens": 3726600464
+      },
+      "sourceFilterReasoningEffort": "max",
+      "sourceJobUrls": [
+        "https://hub.harborframework.com/jobs/991af5e0-8c5f-4511-9619-a2a46939ebd4"
+      ],
+      "sourcePath": "leaderboard/submissions/2026-08-26-anthropic-claude-fable-5-max-claude-code.json",
+      "sourceUrl": "https://raw.githubusercontent.com/harbor-framework/terminal-bench/624df069c505c5ddd21d2d78467dd5579020db95/leaderboard/submissions/2026-08-26-anthropic-claude-fable-5-max-claude-code.json"
+    },
+    {
+      "id": "2026-08-26-anthropic-glm-5-3-max-claude-code",
+      "releaseDate": "2026-08-14",
+      "reasoningEffort": "max",
+      "harness": {
+        "display": {
+          "label": "Claude Code",
+          "url": "https://claude.com/product/claude-code"
+        },
+        "id": "claude-code",
+        "organization": {
+          "label": "Anthropic",
+          "url": "https://www.anthropic.com"
+        },
+        "version": "2.1.207"
+      },
+      "model": {
+        "display": {
+          "label": "GLM-5.3",
+          "url": "https://docs.z.ai/guides/llm/glm-5.3"
+        },
+        "id": "anthropic/glm-5.3",
+        "organization": {
+          "label": "Z.ai",
+          "url": "https://z.ai"
+        }
+      },
+      "metrics": {
+        "accuracyPercent": 41.82,
+        "accuracyCi95HalfWidthPercent": 3.23,
+        "averageTrialDurationSeconds": 5831,
+        "cachedInputTokens": 8444041600,
+        "nTrials": 330,
+        "outputTokens": 68660047,
+        "passAt2": 0.5076,
+        "passAt3": 0.547,
+        "passAt4": 0.5667,
+        "passAt5": 0.5758,
+        "successes": 138,
+        "totalCostUsd": 2727.63,
+        "totalTokens": 8677039373,
+        "uncachedInputTokens": 8608379326
+      },
+      "sourceFilterReasoningEffort": "max",
+      "sourceJobUrls": [
+        "https://hub.harborframework.com/jobs/18e4ee29-d8b4-516b-b79d-b8bad5bcd5be"
+      ],
+      "sourcePath": "leaderboard/submissions/2026-08-26-anthropic-glm-5-3-max-claude-code.json",
+      "sourceUrl": "https://raw.githubusercontent.com/harbor-framework/terminal-bench/624df069c505c5ddd21d2d78467dd5579020db95/leaderboard/submissions/2026-08-26-anthropic-glm-5-3-max-claude-code.json"
+    },
+    {
+      "id": "2026-08-26-openai-gpt-5-6-sol-max-codex",
+      "releaseDate": "2026-06-26",
+      "reasoningEffort": "max",
+      "harness": {
+        "display": {
+          "label": "Codex",
+          "url": "https://openai.com/codex/"
+        },
+        "id": "codex",
+        "organization": {
+          "label": "OpenAI",
+          "url": "https://openai.com"
+        },
+        "version": "0.149.1"
+      },
+      "model": {
+        "display": {
+          "label": "GPT-5.6 Sol",
+          "url": "https://developers.openai.com/api/docs/models/gpt-5.6-sol"
+        },
+        "id": "openai/gpt-5.6-sol",
+        "organization": {
+          "label": "OpenAI",
+          "url": "https://openai.com"
+        }
+      },
+      "metrics": {
+        "accuracyPercent": 37.27,
+        "accuracyCi95HalfWidthPercent": 3.78,
+        "averageTrialDurationSeconds": 2388.4,
+        "cachedInputTokens": 4316454466,
+        "nTrials": 330,
+        "outputTokens": 23451415,
+        "passAt2": 0.4955,
+        "passAt3": 0.55,
+        "passAt4": 0.5818,
+        "passAt5": 0.6061,
+        "successes": 123,
+        "totalCostUsd": 2541.7,
+        "totalTokens": 4409948969,
+        "uncachedInputTokens": 4386497554
+      },
+      "sourceFilterReasoningEffort": "max",
+      "sourceJobUrls": [
+        "https://hub.harborframework.com/jobs/5aebbab5-1f8f-4cdb-8073-c6ce785a930d"
+      ],
+      "sourcePath": "leaderboard/submissions/2026-08-26-openai-gpt-5-6-sol-max-codex.json",
+      "sourceUrl": "https://raw.githubusercontent.com/harbor-framework/terminal-bench/624df069c505c5ddd21d2d78467dd5579020db95/leaderboard/submissions/2026-08-26-openai-gpt-5-6-sol-max-codex.json"
+    },
+    {
+      "id": "2026-08-26-anthropic-claude-opus-4-8-max-claude-code",
+      "releaseDate": "2026-05-28",
+      "reasoningEffort": "max",
+      "harness": {
+        "display": {
+          "label": "Claude Code",
+          "url": "https://claude.com/product/claude-code"
+        },
+        "id": "claude-code",
+        "organization": {
+          "label": "Anthropic",
+          "url": "https://www.anthropic.com"
+        },
+        "version": "2.1.231"
+      },
+      "model": {
+        "display": {
+          "label": "Opus 4.8",
+          "url": "https://www.anthropic.com/news/claude-opus-4-8"
+        },
+        "id": "anthropic/claude-opus-4-8",
+        "organization": {
+          "label": "Anthropic",
+          "url": "https://www.anthropic.com"
+        }
+      },
+      "metrics": {
+        "accuracyPercent": 23.64,
+        "accuracyCi95HalfWidthPercent": 3.56,
+        "averageTrialDurationSeconds": 5163,
+        "cachedInputTokens": 6136275149,
+        "nTrials": 330,
+        "outputTokens": 88813309,
+        "passAt2": 0.3455,
+        "passAt3": 0.4045,
+        "passAt4": 0.4424,
+        "passAt5": 0.4697,
+        "successes": 78,
+        "totalCostUsd": 6481.26,
+        "totalTokens": 6415823126,
+        "uncachedInputTokens": 6327009817
+      },
+      "sourceFilterReasoningEffort": "max",
+      "sourceJobUrls": [
+        "https://hub.harborframework.com/jobs/10722b22-0bbd-4c93-8d27-611fb8dd02a6"
+      ],
+      "sourcePath": "leaderboard/submissions/2026-08-26-anthropic-claude-opus-4-8-max-claude-code.json",
+      "sourceUrl": "https://raw.githubusercontent.com/harbor-framework/terminal-bench/624df069c505c5ddd21d2d78467dd5579020db95/leaderboard/submissions/2026-08-26-anthropic-claude-opus-4-8-max-claude-code.json"
+    },
+    {
+      "id": "2026-08-26-openai-gpt-5-6-terra-max-codex",
+      "releaseDate": "2026-06-26",
+      "reasoningEffort": "max",
+      "harness": {
+        "display": {
+          "label": "Codex",
+          "url": "https://openai.com/codex/"
+        },
+        "id": "codex",
+        "organization": {
+          "label": "OpenAI",
+          "url": "https://openai.com"
+        },
+        "version": "0.149.1"
+      },
+      "model": {
+        "display": {
+          "label": "GPT-5.6 Terra",
+          "url": "https://developers.openai.com/api/docs/models/gpt-5.6-terra"
+        },
+        "id": "openai/gpt-5.6-terra",
+        "organization": {
+          "label": "OpenAI",
+          "url": "https://openai.com"
+        }
+      },
+      "metrics": {
+        "accuracyPercent": 21.52,
+        "accuracyCi95HalfWidthPercent": 3.25,
+        "averageTrialDurationSeconds": 2514.6,
+        "cachedInputTokens": 5560907776,
+        "nTrials": 330,
+        "outputTokens": 33224833,
+        "passAt2": 0.3061,
+        "passAt3": 0.3636,
+        "passAt4": 0.4061,
+        "passAt5": 0.4394,
+        "successes": 71,
+        "totalCostUsd": 1733.52,
+        "totalTokens": 5683805798,
+        "uncachedInputTokens": 5650580965
+      },
+      "sourceFilterReasoningEffort": "max",
+      "sourceJobUrls": [
+        "https://hub.harborframework.com/jobs/3de0aee9-6de7-4d94-83c4-ac5e789fe757"
+      ],
+      "sourcePath": "leaderboard/submissions/2026-08-26-openai-gpt-5-6-terra-max-codex.json",
+      "sourceUrl": "https://raw.githubusercontent.com/harbor-framework/terminal-bench/624df069c505c5ddd21d2d78467dd5579020db95/leaderboard/submissions/2026-08-26-openai-gpt-5-6-terra-max-codex.json"
+    },
+    {
+      "id": "2026-08-26-xai-grok-4-6-none-grok-build",
+      "releaseDate": "2026-08-12",
+      "reasoningEffort": "none",
+      "harness": {
+        "display": {
+          "label": "Grok Build",
+          "url": "https://x.ai/build"
+        },
+        "id": "grok-build",
+        "organization": {
+          "label": "xAI",
+          "url": "https://x.ai"
+        },
+        "version": "1.0.5"
+      },
+      "model": {
+        "display": {
+          "label": "Grok 4.6",
+          "url": "https://docs.x.ai/developers/models/grok-4.6"
+        },
+        "id": "xai/grok-4.6",
+        "organization": {
+          "label": "xAI",
+          "url": "https://x.ai"
+        }
+      },
+      "metrics": {
+        "accuracyPercent": 20.3,
+        "accuracyCi95HalfWidthPercent": 3.09,
+        "averageTrialDurationSeconds": 2351.5,
+        "cachedInputTokens": 3877638528,
+        "nTrials": 330,
+        "outputTokens": 32618221,
+        "passAt2": 0.2848,
+        "passAt3": 0.3303,
+        "passAt4": 0.3636,
+        "passAt5": 0.3939,
+        "successes": 67,
+        "totalCostUsd": 3591.58,
+        "totalTokens": 4001923428,
+        "uncachedInputTokens": 3969305207
+      },
+      "sourceFilterReasoningEffort": null,
+      "sourceJobUrls": [
+        "https://hub.harborframework.com/jobs/2c89a14f-d14a-4ea8-ad8a-d08d90c67a5d"
+      ],
+      "sourcePath": "leaderboard/submissions/2026-08-26-xai-grok-4-6-none-grok-build.json",
+      "sourceUrl": "https://raw.githubusercontent.com/harbor-framework/terminal-bench/624df069c505c5ddd21d2d78467dd5579020db95/leaderboard/submissions/2026-08-26-xai-grok-4-6-none-grok-build.json"
+    },
+    {
+      "id": "2026-08-26-openai-gpt-5-6-luna-max-codex",
+      "releaseDate": "2026-06-26",
+      "reasoningEffort": "max",
+      "harness": {
+        "display": {
+          "label": "Codex",
+          "url": "https://openai.com/codex/"
+        },
+        "id": "codex",
+        "organization": {
+          "label": "OpenAI",
+          "url": "https://openai.com"
+        },
+        "version": "0.149.1"
+      },
+      "model": {
+        "display": {
+          "label": "GPT-5.6 Luna",
+          "url": "https://developers.openai.com/api/docs/models/gpt-5.6-luna"
+        },
+        "id": "openai/gpt-5.6-luna",
+        "organization": {
+          "label": "OpenAI",
+          "url": "https://openai.com"
+        }
+      },
+      "metrics": {
+        "accuracyPercent": 17.27,
+        "accuracyCi95HalfWidthPercent": 2.85,
+        "averageTrialDurationSeconds": 4088.3,
+        "cachedInputTokens": 11305212851,
+        "nTrials": 330,
+        "outputTokens": 61282672,
+        "passAt2": 0.2424,
+        "passAt3": 0.2848,
+        "passAt4": 0.3121,
+        "passAt5": 0.3333,
+        "successes": 57,
+        "totalCostUsd": 346.67,
+        "totalTokens": 11557463640,
+        "uncachedInputTokens": 11496180968
+      },
+      "sourceFilterReasoningEffort": "max",
+      "sourceJobUrls": [
+        "https://hub.harborframework.com/jobs/b7444ba2-78b7-46a0-a3c1-2196d40a337d"
+      ],
+      "sourcePath": "leaderboard/submissions/2026-08-26-openai-gpt-5-6-luna-max-codex.json",
+      "sourceUrl": "https://raw.githubusercontent.com/harbor-framework/terminal-bench/624df069c505c5ddd21d2d78467dd5579020db95/leaderboard/submissions/2026-08-26-openai-gpt-5-6-luna-max-codex.json"
+    },
+    {
+      "id": "2026-08-26-anthropic-claude-sonnet-5-max-claude-code",
+      "releaseDate": "2026-06-30",
+      "reasoningEffort": "max",
+      "harness": {
+        "display": {
+          "label": "Claude Code",
+          "url": "https://claude.com/product/claude-code"
+        },
+        "id": "claude-code",
+        "organization": {
+          "label": "Anthropic",
+          "url": "https://www.anthropic.com"
+        },
+        "version": "2.1.231"
+      },
+      "model": {
+        "display": {
+          "label": "Sonnet 5",
+          "url": "https://www.anthropic.com/news/claude-sonnet-5"
+        },
+        "id": "anthropic/claude-sonnet-5",
+        "organization": {
+          "label": "Anthropic",
+          "url": "https://www.anthropic.com"
+        }
+      },
+      "metrics": {
+        "accuracyPercent": 12.42,
+        "accuracyCi95HalfWidthPercent": 3.06,
+        "averageTrialDurationSeconds": 6510.3,
+        "cachedInputTokens": 21027162464,
+        "nTrials": 330,
+        "outputTokens": 116598866,
+        "passAt2": 0.2045,
+        "passAt3": 0.2621,
+        "passAt4": 0.3091,
+        "passAt5": 0.3485,
+        "successes": 41,
+        "totalCostUsd": 9603.86,
+        "totalTokens": 21562180742,
+        "uncachedInputTokens": 21445581876
+      },
+      "sourceFilterReasoningEffort": "max",
+      "sourceJobUrls": [
+        "https://hub.harborframework.com/jobs/a5758f1a-9ef2-4100-9893-34a99c99bd9c"
+      ],
+      "sourcePath": "leaderboard/submissions/2026-08-26-anthropic-claude-sonnet-5-max-claude-code.json",
+      "sourceUrl": "https://raw.githubusercontent.com/harbor-framework/terminal-bench/624df069c505c5ddd21d2d78467dd5579020db95/leaderboard/submissions/2026-08-26-anthropic-claude-sonnet-5-max-claude-code.json"
+    },
+    {
+      "id": "2026-08-26-xai-grok-4-5-none-grok-build",
+      "releaseDate": "2026-07-16",
+      "reasoningEffort": "none",
+      "harness": {
+        "display": {
+          "label": "Grok Build",
+          "url": "https://x.ai/build"
+        },
+        "id": "grok-build",
+        "organization": {
+          "label": "xAI",
+          "url": "https://x.ai"
+        },
+        "version": "1.0.5"
+      },
+      "model": {
+        "display": {
+          "label": "Grok 4.5",
+          "url": "https://docs.x.ai/developers/models/grok-4.5"
+        },
+        "id": "xai/grok-4.5",
+        "organization": {
+          "label": "xAI",
+          "url": "https://x.ai"
+        }
+      },
+      "metrics": {
+        "accuracyPercent": 12.42,
+        "accuracyCi95HalfWidthPercent": 2.62,
+        "averageTrialDurationSeconds": 3162.1,
+        "cachedInputTokens": 3248613376,
+        "nTrials": 330,
+        "outputTokens": 32389328,
+        "passAt2": 0.1833,
+        "passAt3": 0.2227,
+        "passAt4": 0.2515,
+        "passAt5": 0.2727,
+        "successes": 41,
+        "totalCostUsd": 2094.11,
+        "totalTokens": 3402536479,
+        "uncachedInputTokens": 3370147151
+      },
+      "sourceFilterReasoningEffort": null,
+      "sourceJobUrls": [
+        "https://hub.harborframework.com/jobs/51a17348-a8b8-4c5e-b8d2-73a9a724c3b6"
+      ],
+      "sourcePath": "leaderboard/submissions/2026-08-26-xai-grok-4-5-none-grok-build.json",
+      "sourceUrl": "https://raw.githubusercontent.com/harbor-framework/terminal-bench/624df069c505c5ddd21d2d78467dd5579020db95/leaderboard/submissions/2026-08-26-xai-grok-4-5-none-grok-build.json"
+    }
+  ]
+}
