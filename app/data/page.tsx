@@ -188,7 +188,7 @@ export default function CodingAgentDatasetPage() {
               . For why a 30% Terminal-Bench-Science score is not a product
               win, see{" "}
               <Link href="/blog/terminal-bench-science">
-                Terminal-Bench-Science: 30% is not a product win
+                What Terminal-Bench-Science’s 30% result measures
               </Link>
               . For why a public-suite high score still needs a holdout, see{" "}
               <Link href="/blog/coding-agent-score-holdouts">

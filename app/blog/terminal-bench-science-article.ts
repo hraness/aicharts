@@ -126,7 +126,7 @@ export function createTerminalBenchScienceArticle(
 
   return {
     slug: TERMINAL_BENCH_SCIENCE_ARTICLE_SLUG,
-    title: "Terminal-Bench-Science: 30% is not a product win",
+    title: "What Terminal-Bench-Science’s 30% result measures",
     dek:
       "Scientists, not vendors, set the bar on Terminal-Bench-Science 0.1. The peak 30% resolution is remaining work, not a shipping product. Cost and token Pareto is the useful comparison.",
     focusPhrase: "Terminal-Bench-Science",

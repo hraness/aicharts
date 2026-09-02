@@ -51,6 +51,27 @@ describe("site migration redirects", () => {
         source: "/:path*",
         statusCode: undefined,
       },
+      {
+        destination: "/blog/open-models-coding-agent-benchmarks",
+        host: undefined,
+        permanent: true,
+        source: "/blog/are-open-models-catching-up",
+        statusCode: undefined,
+      },
+      {
+        destination: "/blog/coding-agent-score-holdouts",
+        host: undefined,
+        permanent: true,
+        source: "/blog/benchmarkpocalypse",
+        statusCode: undefined,
+      },
+      {
+        destination: "/blog/coding-agent-score-holdouts",
+        host: undefined,
+        permanent: true,
+        source: "/blog/coding-agent-scores-still-need-expertise",
+        statusCode: undefined,
+      },
     ]);
   });
 

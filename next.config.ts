@@ -31,6 +31,21 @@ const nextConfig: NextConfig = {
         permanent: true,
         source: "/:path*",
       },
+      {
+        destination: "/blog/open-models-coding-agent-benchmarks",
+        permanent: true,
+        source: "/blog/are-open-models-catching-up",
+      },
+      {
+        destination: "/blog/coding-agent-score-holdouts",
+        permanent: true,
+        source: "/blog/benchmarkpocalypse",
+      },
+      {
+        destination: "/blog/coding-agent-score-holdouts",
+        permanent: true,
+        source: "/blog/coding-agent-scores-still-need-expertise",
+      },
     ];
   },
   reactStrictMode: true,

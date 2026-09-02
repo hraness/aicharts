@@ -314,7 +314,7 @@ describe("AI Charts benchmark notes", () => {
     expect(terminalLeader).toBeDefined();
     if (terminalLeader === undefined) return;
 
-    expect(article.title).toBe("Terminal-Bench-Science: 30% is not a product win");
+    expect(article.title).toBe("What Terminal-Bench-Science’s 30% result measures");
     expect(article.sourceIds).toEqual([
       "terminalBenchScienceAnnouncement",
       "hranessTerminalBenchScienceReading",

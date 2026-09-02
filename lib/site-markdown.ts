@@ -159,7 +159,7 @@ export function homeDocumentModel(
       },
       {
         href: blogArticlePath("terminal-bench-science"),
-        label: "Terminal-Bench-Science: 30% is not a product win",
+        label: "What Terminal-Bench-Science’s 30% result measures",
         note: "Scientists set the evaluation bar on Terminal-Bench-Science 0.1. The peak 30% resolution is remaining work; cost and token Pareto is the useful comparison.",
       },
       {
@@ -257,7 +257,7 @@ function datasetMarkdown(snapshot: CodingAgentSnapshot): string {
     "",
     codingAgentLeadersMarkdownTable(leaders),
     "",
-    `For AA Index versus mean API cost see [AA Index versus cost for coding agents](${absolute(blogArticlePath("aa-index-cost-coding-agents"))}). For whether classified open-weight rows sit with those leaders see [open models on coding-agent benchmarks](${absolute(blogArticlePath("open-models-coding-agent-benchmarks"))}). For how lower inference costs change frequent-use product economics see [cheaper AI models can make everyday products viable](${absolute(blogArticlePath("small-models-have-arrived"))}). For why a 30% Terminal-Bench-Science score is incomplete without cost and token trade-offs see [Terminal-Bench-Science: 30% is not a product win](${absolute(blogArticlePath("terminal-bench-science"))}). For why a public-suite high score still needs a holdout see [why a coding-agent high score still needs a holdout](${absolute(blogArticlePath("coding-agent-score-holdouts"))}).`,
+    `For AA Index versus mean API cost see [AA Index versus cost for coding agents](${absolute(blogArticlePath("aa-index-cost-coding-agents"))}). For whether classified open-weight rows sit with those leaders see [open models on coding-agent benchmarks](${absolute(blogArticlePath("open-models-coding-agent-benchmarks"))}). For how lower inference costs change frequent-use product economics see [cheaper AI models can make everyday products viable](${absolute(blogArticlePath("small-models-have-arrived"))}). For the acceptance funnel, cost, tokens, and remaining miss rate behind the leading scientific score see [what Terminal-Bench-Science’s 30% result measures](${absolute(blogArticlePath("terminal-bench-science"))}). For why a public-suite high score still needs a holdout see [why a coding-agent high score still needs a holdout](${absolute(blogArticlePath("coding-agent-score-holdouts"))}).`,
     "",
     "## All configurations",
     "",
