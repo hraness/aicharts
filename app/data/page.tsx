@@ -185,8 +185,8 @@ export default function CodingAgentDatasetPage() {
               <Link href="/blog/small-models-have-arrived">
                 cheaper AI models can make everyday products viable
               </Link>
-              . For why a 30% Terminal-Bench-Science score is not a product
-              win, see{" "}
+              . For what a 30% Terminal-Bench-Science result measures—and how
+              cost and token use change the comparison—see{" "}
               <Link href="/blog/terminal-bench-science">
                 What Terminal-Bench-Science’s 30% result measures
               </Link>

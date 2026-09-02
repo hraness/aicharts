@@ -41,11 +41,6 @@ const nextConfig: NextConfig = {
         permanent: true,
         source: "/blog/benchmarkpocalypse",
       },
-      {
-        destination: "/blog/coding-agent-score-holdouts",
-        permanent: true,
-        source: "/blog/coding-agent-scores-still-need-expertise",
-      },
     ];
   },
   reactStrictMode: true,

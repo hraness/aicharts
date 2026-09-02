@@ -65,13 +65,6 @@ describe("site migration redirects", () => {
         source: "/blog/benchmarkpocalypse",
         statusCode: undefined,
       },
-      {
-        destination: "/blog/coding-agent-score-holdouts",
-        host: undefined,
-        permanent: true,
-        source: "/blog/coding-agent-scores-still-need-expertise",
-        statusCode: undefined,
-      },
     ]);
   });
 

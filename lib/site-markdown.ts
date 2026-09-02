@@ -160,7 +160,7 @@ export function homeDocumentModel(
       {
         href: blogArticlePath("terminal-bench-science"),
         label: "What Terminal-Bench-Science’s 30% result measures",
-        note: "Scientists set the evaluation bar on Terminal-Bench-Science 0.1. The peak 30% resolution is remaining work; cost and token Pareto is the useful comparison.",
+        note: "Scientists selected 70 difficult workflows for Terminal-Bench-Science 0.1. The leading configuration resolved 30%; published cost and token frontiers distinguish otherwise similar results.",
       },
       {
         href: blogArticlePath("small-models-have-arrived"),

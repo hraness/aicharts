@@ -187,8 +187,8 @@ export function createSmallModelsHaveArrivedArticle(): BlogArticle {
       ),
       paragraph(
         "A later note asks a different cost question. ",
-        { href: "/blog/terminal-bench-science", text: "Whether a 30% science-agent score is a product win" },
-        " looks at Terminal-Bench-Science 0.1, where scientists set the evaluation bar and the suite already reports cost and token Pareto. That page is about scientific research workflows, not everyday product features.",
+        { href: "/blog/terminal-bench-science", text: "What a 30% science-agent result measures" },
+        " looks at Terminal-Bench-Science 0.1, where scientists selected the task set and the benchmark reports resolution beside evaluation cost and token use. That page is about scientific research workflows, not everyday product features.",
       ),
     ],
   };

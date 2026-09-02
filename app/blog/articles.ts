@@ -130,38 +130,6 @@ export const BLOG_SOURCES = {
     url: "https://hraness.com/reading/the-benchmarkpocalypse",
     year: 2026,
   },
-  larsFayeExpertise: {
-    note:
-      "The July 22, 2026 essay argues that coding assistants demand the expertise they also prevent novices from forming, and treats generation as a leaky abstraction.",
-    publication: "Lars Faye",
-    title: "AI Coding will Prevent Expertise",
-    url: "https://larsfaye.com/articles/ai-coding-will-prevent-expertise",
-    year: 2026,
-  },
-  hranessFayeReading: {
-    note:
-      "The Hraness reading note is a dated digest of Lars Faye’s essay, used here as a crawlable companion citation rather than a substitute for the original.",
-    publication: "Hraness",
-    title: "Hraness reading note: AI Coding will Prevent Expertise",
-    url: "https://hraness.com/reading/ai-coding-will-prevent-expertise",
-    year: 2026,
-  },
-  seanGoedeckeExpertise: {
-    note:
-      "The July 24, 2026 essay argues that LLMs amplify domain expertise rather than flatten it, and that specifying and judging a result remain human constraints.",
-    publication: "Sean Goedecke",
-    title: "LLMs reward expertise",
-    url: "https://www.seangoedecke.com/llms-reward-expertise/",
-    year: 2026,
-  },
-  hranessGoedeckeReading: {
-    note:
-      "The Hraness reading note is a dated digest of Sean Goedecke’s essay, used here as a crawlable companion citation rather than a substitute for the original.",
-    publication: "Hraness",
-    title: "Hraness reading note: LLMs reward expertise",
-    url: "https://hraness.com/reading/llms-reward-expertise",
-    year: 2026,
-  },
   calvinFrenchOwenSmallModels: {
     note:
       "The August 26, 2026 essay reports GPT-5.6 Luna speed and costs from French-Owen’s research and personalized-news experiments.",
