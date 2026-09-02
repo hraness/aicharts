@@ -19,13 +19,33 @@ import {
 import type { ModelCardPresentation } from "@/lib/model-card-presentation";
 import { modelCardRouteStatus } from "@/lib/model-card-route-status";
 import { blogArticlePath, blogArticles } from "./blog/articles";
-import { BLOG_SOCIAL_IMAGE_PATH, blogArticleImagePath } from "./blog/seo";
+import { blogEditorialImage, type BlogEditorialImage } from "./blog/editorial-images";
+import { BLOG_SOCIAL_IMAGE_PATH } from "./blog/seo";
 import { searchSite, site } from "./site";
 
 export function indexableModelCards(
   cards: readonly ModelCardPresentation[] = MODEL_CARD_PRESENTATIONS,
 ): readonly ModelCardPresentation[] {
   return cards.filter(card => !modelCardRouteStatus(card).isProvisional);
+}
+
+export function blogSitemapEntries(
+  imageForSlug: (slug: (typeof blogArticles)[number]["slug"])
+    => BlogEditorialImage | undefined = blogEditorialImage,
+): MetadataRoute.Sitemap {
+  const absolute = (path: string) => new URL(path, site.origin).toString();
+  return blogArticles.map((article) => {
+    const editorialImage = imageForSlug(article.slug);
+    return {
+      changeFrequency: "monthly" as const,
+      ...(editorialImage === undefined
+        ? {}
+        : { images: [absolute(editorialImage.src)] }),
+      lastModified: article.updatedAt,
+      priority: 0.7,
+      url: absolute(blogArticlePath(article.slug)),
+    };
+  });
 }
 
 export default function sitemap(): MetadataRoute.Sitemap {
@@ -91,12 +111,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.75,
       url: absolute(card.path),
     })),
-    ...blogArticles.map((article) => ({
-      changeFrequency: "monthly" as const,
-      images: [absolute(blogArticleImagePath(article.slug))],
-      lastModified: article.updatedAt,
-      priority: 0.7,
-      url: absolute(blogArticlePath(article.slug)),
-    })),
+    ...blogSitemapEntries(),
   ];
 }

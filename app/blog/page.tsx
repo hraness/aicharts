@@ -67,19 +67,23 @@ export default function BlogIndex() {
             <p>{blogArticles.length} sourced analysis articles</p>
           </div>
           <div className="plain-publication__article-list">
-            {blogArticles.map((article, index) => (
-              <article className="plain-publication__entry" key={article.slug}>
-                <Link
-                  aria-label={article.title}
-                  className="plain-publication__entry-image"
-                  href={blogArticlePath(article.slug)}
-                >
-                  <EditorialFigure
-                    image={blogEditorialImage(article.slug)}
-                    preload={index === 0}
-                    variant="card"
-                  />
-                </Link>
+            {blogArticles.map((article, index) => {
+              const editorialImage = blogEditorialImage(article.slug);
+              return (
+                <article className="plain-publication__entry" key={article.slug}>
+                  {editorialImage === undefined ? null : (
+                    <Link
+                      aria-label={article.title}
+                      className="plain-publication__entry-image"
+                      href={blogArticlePath(article.slug)}
+                    >
+                      <EditorialFigure
+                        image={editorialImage}
+                        preload={index === 0}
+                        variant="card"
+                      />
+                    </Link>
+                  )}
                 <h3>
                   <Link href={blogArticlePath(article.slug)}>
                     {article.title}
@@ -93,8 +97,9 @@ export default function BlogIndex() {
                   <span aria-hidden="true"> · </span>
                   <span>{articleReadingMinutes(article)} min read</span>
                 </p>
-              </article>
-            ))}
+                </article>
+              );
+            })}
           </div>
         </section>
 

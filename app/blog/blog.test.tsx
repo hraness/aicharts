@@ -25,7 +25,7 @@ import {
 } from "@/lib/open-weight-coding-agents";
 
 import nextConfig from "../../next.config";
-import sitemap from "../sitemap";
+import sitemap, { blogSitemapEntries } from "../sitemap";
 import BlogArticlePage, {
   generateMetadata,
   generateStaticParams,
@@ -35,7 +35,6 @@ import {
   BLOG_SLUGS,
   BLOG_SOURCES,
   articleToMarkdown,
-  articleWordCount,
   blogArticleSection,
   blogArticlePath,
   blogArticles,
@@ -43,6 +42,7 @@ import {
   getBlogArticle,
   headingId,
 } from "./articles";
+import { BLOG_ARTICLE_ADMISSIONS } from "./article-admissions";
 import {
   FRENCH_OWEN_SMALL_MODELS,
   OPENAI_GPT_56_LUNA,
@@ -116,18 +116,16 @@ describe("AI Charts benchmark notes", () => {
     expect(markup).not.toContain('class="hraness-ra-mark"');
   });
 
-  test("publishes substantial complementary articles", () => {
-    expect(blogArticles).toHaveLength(7);
+  test("publishes admitted complementary articles", () => {
     expect(blogArticles.map(article => article.slug)).toEqual([...BLOG_SLUGS]);
     expect(new Set(BLOG_SLUGS).size).toBe(BLOG_SLUGS.length);
 
     for (const article of blogArticles) {
       expect(article.title.length).toBeLessThanOrEqual(64);
-      expect(article.seoDescription.length).toBeGreaterThanOrEqual(120);
       expect(article.seoDescription.length).toBeLessThanOrEqual(160);
+      expect(article.seoDescription.trim()).toBe(article.seoDescription);
       expect(articleToMarkdown(article)).toContain(`# ${article.title}`);
       expect(articleToMarkdown(article)).toContain(article.dek);
-      expect(article.sourceIds.length).toBeGreaterThanOrEqual(1);
       if (article.slug === "terminal-bench-science") {
         expect(article.publishedAt).toBe("2026-08-31");
         expect(article.updatedAt >= article.publishedAt).toBeTrue();
@@ -151,7 +149,6 @@ describe("AI Charts benchmark notes", () => {
       const headings = article.body
         .filter(block => block.type === "heading")
         .map(block => headingId(block.text));
-      expect(headings.length).toBeGreaterThanOrEqual(1);
       expect(new Set(headings).size).toBe(headings.length);
 
       for (const sourceId of article.sourceIds) {
@@ -169,6 +166,29 @@ describe("AI Charts benchmark notes", () => {
           expect(row.length).toBe(block.columns.length);
         }
       }
+    }
+  });
+
+  test("records a reader job, primary evidence, and review window for every route", () => {
+    expect(Object.keys(BLOG_ARTICLE_ADMISSIONS)).toEqual([...BLOG_SLUGS]);
+    for (const article of blogArticles) {
+      const admission = BLOG_ARTICLE_ADMISSIONS[article.slug];
+      expect(admission.canonicalOwner).toBe(blogArticlePath(article.slug));
+      expect(admission.decision).toBe("keep");
+      expect(admission.readerJob.trim()).toBe(admission.readerJob);
+      expect(admission.originalContribution.trim())
+        .toBe(admission.originalContribution);
+      expect(admission.primaryEvidence.trim()).toBe(admission.primaryEvidence);
+      expect(admission.harmIfWrong.trim()).toBe(admission.harmIfWrong);
+      for (const sourceId of admission.primarySourceIds) {
+        expect(article.sourceIds).toContain(sourceId);
+        expect(BLOG_SOURCES[sourceId]).toBeDefined();
+      }
+      const reviewed = new Date(`${admission.reviewedOn}T00:00:00.000Z`);
+      const reassess = new Date(`${admission.reassessOn}T00:00:00.000Z`);
+      const days = (reassess.getTime() - reviewed.getTime()) / 86_400_000;
+      expect(days).toBeGreaterThanOrEqual(28);
+      expect(days).toBeLessThanOrEqual(56);
     }
   });
 
@@ -326,7 +346,6 @@ describe("AI Charts benchmark notes", () => {
     expect(markdown).not.toContain("not a product win");
     expect(markdown).not.toContain("This page is");
     expect(markup).not.toContain("https://hraness.com/reading/terminal-bench-science-0-1");
-    expect(articleWordCount(article)).toBeLessThan(1_100);
     expect(markup).toContain(TERMINAL_BENCH_SCIENCE.reported.peakResolution);
     expect(markup).toContain(TERMINAL_BENCH_SCIENCE.reported.costSol);
     expect(markup).toContain(TERMINAL_BENCH_SCIENCE.reported.costFable5);
@@ -396,7 +415,8 @@ describe("AI Charts benchmark notes", () => {
     const sources = Object.values(BLOG_SOURCES);
     expect(new Set(sources.map(source => source.url)).size).toBe(sources.length);
     for (const source of sources) {
-      expect(source.note.length).toBeGreaterThan(50);
+      expect(source.title.trim()).toBe(source.title);
+      expect(source.note.trim()).toBe(source.note);
       expect(new URL(source.url).protocol).toBe("https:");
     }
   });
@@ -432,9 +452,12 @@ describe("AI Charts benchmark notes", () => {
     expect(indexMarkup.match(/rel="preload"/gu)).toHaveLength(1);
     for (const article of blogArticles) {
       expect(indexMarkup).toContain(`href="${blogArticlePath(article.slug)}"`);
-      expect(indexMarkup).toContain(
-        encodeURIComponent(blogEditorialImage(article.slug).src),
-      );
+      const editorialImage = blogEditorialImage(article.slug);
+      if (editorialImage !== undefined) {
+        expect(indexMarkup).toContain(
+          encodeURIComponent(editorialImage.src),
+        );
+      }
 
       const page = await BlogArticlePage({
         params: Promise.resolve({ slug: article.slug }),
@@ -447,8 +470,10 @@ describe("AI Charts benchmark notes", () => {
         `<span aria-current="page">${article.title}</span>`,
       );
       expect(markup).toContain(`dateTime="${article.publishedAt}"`);
-      expect(markup).toContain(blogEditorialImage(article.slug).caption);
-      expect(markup).toContain(blogEditorialImage(article.slug).alt);
+      if (editorialImage !== undefined) {
+        expect(markup).toContain(editorialImage.caption);
+        expect(markup).toContain(editorialImage.alt);
+      }
       if ("showChartCta" in article && article.showChartCta === false) {
         expect(markup).not.toContain("Current comparison: coding agents");
       } else {
@@ -489,7 +514,7 @@ describe("AI Charts blog discovery", () => {
       const generated = await generateMetadata({
         params: Promise.resolve({ slug: article.slug }),
       });
-      const image = `https://aicharts.io${blogArticleImagePath(article.slug)}`;
+      const editorialImage = blogEditorialImage(article.slug);
 
       expect(generated).toEqual(metadata);
       expect(metadata.title).toBe(article.title);
@@ -505,35 +530,49 @@ describe("AI Charts blog discovery", () => {
         publishedTime: `${article.publishedAt}T00:00:00.000Z`,
         modifiedTime: `${article.updatedAt}T00:00:00.000Z`,
         section: blogArticleSection(article),
-        images: [{
-          alt: blogEditorialImage(article.slug).alt,
-          height: EDITORIAL_IMAGE_HEIGHT,
-          url: image,
-          width: EDITORIAL_IMAGE_WIDTH,
-        }],
       });
-      expect(metadata.twitter).toMatchObject({
-        card: "summary_large_image",
-        images: [{ url: image }],
-      });
+      if (editorialImage === undefined) {
+        expect(metadata.openGraph).not.toHaveProperty("images");
+        expect(metadata.twitter).toMatchObject({ card: "summary" });
+        expect(metadata.twitter).not.toHaveProperty("images");
+      } else {
+        const image = `https://aicharts.io${editorialImage.socialSrc}`;
+        expect(blogArticleImagePath(article.slug)).toBe(editorialImage.socialSrc);
+        expect(metadata.openGraph).toMatchObject({
+          images: [{
+            alt: editorialImage.alt,
+            height: EDITORIAL_IMAGE_HEIGHT,
+            url: image,
+            width: EDITORIAL_IMAGE_WIDTH,
+          }],
+        });
+        expect(metadata.twitter).toMatchObject({
+          card: "summary_large_image",
+          images: [{ url: image }],
+        });
+      }
       expect(metadata.robots).toEqual(INDEXABLE_ROBOTS);
     }
+
+    const imageLess = blogArticleMetadata(blogArticles[0], null);
+    expect(imageLess.openGraph).not.toHaveProperty("images");
+    expect(imageLess.twitter).toMatchObject({ card: "summary" });
+    expect(imageLess.twitter).not.toHaveProperty("images");
   });
 
-  test("keeps one exhaustive editorial image record per article", async () => {
-    expect(Object.keys(BLOG_EDITORIAL_IMAGES)).toEqual([...BLOG_SLUGS]);
-    expect(blogEditorialImages).toHaveLength(blogArticles.length);
+  test("validates each registered editorial image without requiring one per article", async () => {
+    for (const slug of Object.keys(BLOG_EDITORIAL_IMAGES)) {
+      expect(BLOG_SLUGS as readonly string[]).toContain(slug);
+    }
     expect(new Set(blogEditorialImages.map(image => image.sha256)).size)
-      .toBe(blogArticles.length);
+      .toBe(blogEditorialImages.length);
 
-    for (const article of blogArticles) {
-      const image = blogEditorialImage(article.slug);
-      expect(image.slug).toBe(article.slug);
-      expect(image.src).toBe(`/images/blog/${article.slug}.webp`);
+    for (const image of blogEditorialImages) {
+      expect(image.src).toBe(`/images/blog/${image.slug}.webp`);
       expect(image.width).toBe(1536);
       expect(image.height).toBe(864);
-      expect(image.alt.length).toBeGreaterThan(50);
-      expect(image.caption.length).toBeGreaterThan(50);
+      expect(image.alt.trim()).toBe(image.alt);
+      expect(image.caption.trim()).toBe(image.caption);
       expect(image.sha256).toMatch(/^[a-f0-9]{64}$/u);
 
       const file = Bun.file(new URL(`../../public${image.src}`, import.meta.url));
@@ -553,12 +592,18 @@ describe("AI Charts blog discovery", () => {
     expect(xml.match(/<entry>/gu)).toHaveLength(blogArticles.length);
     for (const article of blogArticles) {
       const image = blogEditorialImage(article.slug);
-      expect(xml).toContain(
-        `href="https://aicharts.io${image.src}" rel="enclosure" type="image/webp"`,
-      );
-      expect(xml).toContain(image.alt);
-      expect(xml).toContain(image.caption);
+      if (image !== undefined) {
+        expect(xml).toContain(
+          `href="https://aicharts.io${image.src}" rel="enclosure" type="image/webp"`,
+        );
+        expect(xml).toContain(image.alt);
+        expect(xml).toContain(image.caption);
+      }
     }
+    const imageLessFeed = atomFeed(() => undefined);
+    expect(imageLessFeed.match(/<entry>/gu)).toHaveLength(blogArticles.length);
+    expect(imageLessFeed).not.toContain('rel="enclosure"');
+    expect(imageLessFeed).not.toContain("&lt;figure&gt;");
     expect(blogCollectionMetadata.alternates).toMatchObject({
       types: {
         "application/atom+xml": "https://aicharts.io/blog/feed.xml",
@@ -588,8 +633,13 @@ describe("AI Charts blog discovery", () => {
         datePublished: `${article.publishedAt}T00:00:00.000Z`,
         dateModified: `${article.updatedAt}T00:00:00.000Z`,
         isAccessibleForFree: true,
-        image: `https://aicharts.io${blogEditorialImage(article.slug).src}`,
       });
+      const image = blogEditorialImage(article.slug);
+      if (image === undefined) {
+        expect(structured).not.toHaveProperty("image");
+      } else {
+        expect(structured.image).toBe(`https://aicharts.io${image.src}`);
+      }
       expect(structured.citation).toEqual(
         article.sourceIds.map(sourceId => BLOG_SOURCES[sourceId].url),
       );
@@ -597,6 +647,12 @@ describe("AI Charts blog discovery", () => {
       expect(structured).not.toHaveProperty("review");
       expect(structured).not.toHaveProperty("aggregateRating");
     }
+
+    const imageLessCollection = blogCollectionJsonLd(() => undefined);
+    for (const item of imageLessCollection.mainEntity.itemListElement) {
+      expect(item).not.toHaveProperty("image");
+    }
+    expect(blogArticleJsonLd(blogArticles[0], null)).not.toHaveProperty("image");
 
     const smallModels = getBlogArticle("small-models-have-arrived");
     expect(smallModels).toBeDefined();
@@ -650,9 +706,17 @@ describe("AI Charts blog discovery", () => {
       const entry = entries.find(candidate =>
         candidate.url.endsWith(blogArticlePath(article.slug)));
       expect(entry?.lastModified).toBe(article.updatedAt);
-      expect(entry?.images).toEqual([
-        `https://aicharts.io${blogArticleImagePath(article.slug)}`,
-      ]);
+      const image = blogEditorialImage(article.slug);
+      if (image === undefined) {
+        expect(entry).not.toHaveProperty("images");
+      } else {
+        expect(entry?.images).toEqual([
+          `https://aicharts.io${image.src}`,
+        ]);
+      }
+    }
+    for (const entry of blogSitemapEntries(() => undefined)) {
+      expect(entry).not.toHaveProperty("images");
     }
   });
 

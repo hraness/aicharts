@@ -24,7 +24,7 @@ export type BlogEditorialImage<Slug extends BlogSlug = BlogSlug> = Readonly<{
 }>;
 
 type EditorialImageRecord = Readonly<{
-  [Slug in BlogSlug]: BlogEditorialImage<Slug>;
+  [Slug in BlogSlug]?: BlogEditorialImage<Slug>;
 }>;
 
 function image<Slug extends BlogSlug>(
@@ -124,8 +124,10 @@ export const BLOG_EDITORIAL_IMAGES = {
 
 export function blogEditorialImage<Slug extends BlogSlug>(
   slug: Slug,
-): BlogEditorialImage<Slug> {
-  return BLOG_EDITORIAL_IMAGES[slug] as BlogEditorialImage<Slug>;
+): BlogEditorialImage<Slug> | undefined {
+  return (BLOG_EDITORIAL_IMAGES as EditorialImageRecord)[slug] as
+    | BlogEditorialImage<Slug>
+    | undefined;
 }
 
 export const blogEditorialImages = Object.values(BLOG_EDITORIAL_IMAGES);

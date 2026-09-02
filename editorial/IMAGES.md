@@ -7,8 +7,9 @@ recognize without depicting invented benchmark values.
 ## Visual system
 
 Use warm ivory paper, charcoal ink, cobalt blue, coral red, pale mint, fine
-screenprint grain, and crisp modular forms. Each article needs a distinct,
-center-safe silhouette that remains legible at 320 px wide.
+screenprint grain, and crisp modular forms. When an article genuinely benefits
+from an image, give it a distinct, center-safe silhouette that remains legible
+at 320 px wide.
 
 Do not use text, numbers, axes, fake charts, UI screenshots, model or provider
 logos, watermarks, robots, brains, or brand marks. A conceptual banner is not
@@ -17,10 +18,11 @@ data with repository-native chart code.
 
 ## Source of truth
 
-Every slug in `app/blog/articles.ts` must have exactly one record in
-`app/blog/editorial-images.ts`. That record drives the visible article figure,
-blog cards, the curated homepage module, Open Graph, Twitter,
-`BlogPosting.image`, Atom enclosures, and the image sitemap.
+`app/blog/editorial-images.ts` is a partial registry of the images that passed
+editorial review. A registered image drives the visible article figure, blog
+cards, the curated homepage module, Open Graph, Twitter, `BlogPosting.image`,
+Atom enclosures, and the image sitemap. An article without a registered image
+must remain image-free across all of those representations.
 
 Keep the reviewed 1536×864 WebP at `public/images/blog/<slug>.webp`. Alt text
 describes the visible composition. The caption explains the editorial

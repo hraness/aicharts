@@ -15,7 +15,10 @@ import {
   type BlogArticle,
   type BlogSlug,
 } from "./articles";
-import { blogEditorialImage } from "./editorial-images";
+import {
+  blogEditorialImage,
+  type BlogEditorialImage,
+} from "./editorial-images";
 
 export const BLOG_SOCIAL_IMAGE_PATH = "/blog/opengraph-image" as const;
 
@@ -51,18 +54,20 @@ function isoDateTime(date: string): string {
 
 export function blogArticleImagePath(
   slug: BlogSlug,
-): `/images/blog/${BlogSlug}.webp` {
-  return blogEditorialImage(slug).socialSrc;
+): `/images/blog/${BlogSlug}.webp` | undefined {
+  return blogEditorialImage(slug)?.socialSrc;
 }
 
-export function blogArticleMetadata(article: BlogArticle): Metadata {
+export function blogArticleMetadata(
+  article: BlogArticle,
+  editorialImage: BlogEditorialImage | null =
+    blogEditorialImage(article.slug) ?? null,
+): Metadata {
   const path = blogArticlePath(article.slug);
   const canonical = absoluteWebUrl(searchSite.origin, path);
-  const image = absoluteWebUrl(
-    searchSite.origin,
-    blogArticleImagePath(article.slug),
-  );
-  const editorialImage = blogEditorialImage(article.slug);
+  const image = editorialImage === null
+    ? undefined
+    : absoluteWebUrl(searchSite.origin, editorialImage.socialSrc);
   const section = blogArticleSection(article);
 
   return {
@@ -88,24 +93,31 @@ export function blogArticleMetadata(article: BlogArticle): Metadata {
       authors: [absoluteWebUrl(searchSite.origin, "/blog")],
       section,
       tags: [...article.keywords],
-      images: [{
-        alt: editorialImage.alt,
-        height: editorialImage.height,
-        url: image,
-        width: editorialImage.width,
-      }],
+      ...(editorialImage === null || image === undefined ? {} : {
+        images: [{
+          alt: editorialImage.alt,
+          height: editorialImage.height,
+          url: image,
+          width: editorialImage.width,
+        }],
+      }),
     },
     robots: INDEXABLE_ROBOTS,
     twitter: {
-      card: "summary_large_image",
+      card: editorialImage === null ? "summary" : "summary_large_image",
       title: article.title,
       description: article.seoDescription,
-      images: [{ alt: editorialImage.alt, url: image }],
+      ...(editorialImage === null || image === undefined ? {} : {
+        images: [{ alt: editorialImage.alt, url: image }],
+      }),
     },
   };
 }
 
-export function blogCollectionJsonLd() {
+export function blogCollectionJsonLd(
+  imageForSlug: (slug: BlogSlug) => BlogEditorialImage | undefined =
+    blogEditorialImage,
+) {
   const url = absoluteWebUrl(searchSite.origin, "/blog");
   return {
     "@context": "https://schema.org",
@@ -125,20 +137,30 @@ export function blogCollectionJsonLd() {
     mainEntity: {
       "@type": "ItemList",
       numberOfItems: blogArticles.length,
-      itemListElement: blogArticles.map((article, index) => ({
-        "@type": "ListItem",
-        position: index + 1,
-        name: article.title,
-        url: absoluteWebUrl(
-          searchSite.origin,
-          blogArticlePath(article.slug),
-        ),
-      })),
+      itemListElement: blogArticles.map((article, index) => {
+        const editorialImage = imageForSlug(article.slug);
+        return {
+          "@type": "ListItem",
+          position: index + 1,
+          name: article.title,
+          url: absoluteWebUrl(
+            searchSite.origin,
+            blogArticlePath(article.slug),
+          ),
+          ...(editorialImage === undefined ? {} : {
+            image: absoluteWebUrl(searchSite.origin, editorialImage.src),
+          }),
+        };
+      }),
     },
   } as const;
 }
 
-export function blogArticleJsonLd(article: BlogArticle) {
+export function blogArticleJsonLd(
+  article: BlogArticle,
+  editorialImage: BlogEditorialImage | null =
+    blogEditorialImage(article.slug) ?? null,
+) {
   const path = blogArticlePath(article.slug);
   const url = absoluteWebUrl(searchSite.origin, path);
   const blogUrl = absoluteWebUrl(searchSite.origin, "/blog");
@@ -152,10 +174,9 @@ export function blogArticleJsonLd(article: BlogArticle) {
     },
     headline: article.title,
     description: article.seoDescription,
-    image: absoluteWebUrl(
-      searchSite.origin,
-      blogArticleImagePath(article.slug),
-    ),
+    ...(editorialImage === null ? {} : {
+      image: absoluteWebUrl(searchSite.origin, editorialImage.src),
+    }),
     datePublished: isoDateTime(article.publishedAt),
     dateModified: isoDateTime(article.updatedAt),
     author: {
@@ -175,7 +196,9 @@ export function blogArticleJsonLd(article: BlogArticle) {
     inLanguage: "en-US",
     articleSection: blogArticleSection(article),
     keywords: article.keywords,
-    citation: article.sourceIds.map(sourceId => BLOG_SOURCES[sourceId].url),
+    ...(article.sourceIds.length === 0 ? {} : {
+      citation: article.sourceIds.map(sourceId => BLOG_SOURCES[sourceId].url),
+    }),
   } as const;
 }
 

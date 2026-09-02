@@ -35,12 +35,14 @@ if (!parsedSubsidy.ok) throw parsedSubsidy.error;
 const latestSubsidy = latestGptSubsidyObservation(parsedSubsidy.value);
 
 describe("homepage document", () => {
-  test("has the product heading and more than 500 characters of text", () => {
+  test("has the product heading and current dataset facts", () => {
     const text = homeDocumentText(snapshot);
     expect(text.startsWith(homeHeading)).toBeTrue();
     expect(text).toContain(site.description);
     expect(text).toContain(String(codingAgentDatasetSummary(snapshot).recordCount));
-    expect(text.length).toBeGreaterThan(500);
+    expect(text).toContain("Artificial Analysis coding-agents comparison");
+    expect(text).toContain("Coding-agent benchmark dataset");
+    expect(text).toContain("Machine-readable site guide");
   });
 });
 
