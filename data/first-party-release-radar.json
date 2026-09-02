@@ -6,14 +6,14 @@
       "canonicalUrl": "https://www.anthropic.com/claude-corps",
       "firstSeenAt": "2026-09-02T15:52:38.032Z",
       "id": "anthropic:/claude-corps",
-      "lastChangedAt": "2026-09-02T16:29:29.102Z",
+      "lastChangedAt": "2026-09-02T19:23:14.568Z",
       "namedModels": [
         "Unresolved announcement: Claude Corps"
       ],
       "providerId": "anthropic",
       "providerName": "Anthropic",
       "sourceId": "anthropic-sitemap",
-      "sourceModifiedAt": "2026-09-02T16:29:19.460Z",
+      "sourceModifiedAt": "2026-09-02T19:19:33.542Z",
       "sourcePresence": "present",
       "status": "not-a-release"
     },
@@ -23,7 +23,7 @@
       "canonicalUrl": "https://www.anthropic.com/claude-fable-and-mythos-5-1",
       "firstSeenAt": "2026-09-02T13:54:58.398Z",
       "id": "anthropic:/claude-fable-and-mythos-5-1",
-      "lastChangedAt": "2026-09-02T16:29:29.102Z",
+      "lastChangedAt": "2026-09-02T19:23:14.568Z",
       "namedModels": [
         "Claude Fable 5.1",
         "Claude Mythos 5.1"
@@ -31,7 +31,25 @@
       "providerId": "anthropic",
       "providerName": "Anthropic",
       "sourceId": "anthropic-sitemap",
-      "sourceModifiedAt": "2026-09-02T16:29:19.460Z",
+      "sourceModifiedAt": "2026-09-02T19:19:33.542Z",
+      "sourcePresence": "present",
+      "status": "confirmed-release"
+    },
+    {
+      "candidateDate": "2026-09-02",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://openai.com/index/sora-2/",
+      "firstSeenAt": "2026-09-02T15:52:38.032Z",
+      "id": "openai:/index/sora-2/",
+      "lastChangedAt": "2026-09-02T19:23:14.568Z",
+      "namedModels": [
+        "Sora 2",
+        "Sora 2 Pro"
+      ],
+      "providerId": "openai",
+      "providerName": "OpenAI",
+      "sourceId": "openai-release-sitemap",
+      "sourceModifiedAt": "2026-09-02T19:00:21.927Z",
       "sourcePresence": "present",
       "status": "confirmed-release"
     },
@@ -41,14 +59,14 @@
       "canonicalUrl": "https://openai.com/index/gpt-5-5-instant/",
       "firstSeenAt": "2026-09-02T13:54:58.398Z",
       "id": "openai:/index/gpt-5-5-instant/",
-      "lastChangedAt": "2026-09-02T16:11:08.754Z",
+      "lastChangedAt": "2026-09-02T19:23:14.568Z",
       "namedModels": [
         "GPT-5.5 Instant"
       ],
       "providerId": "openai",
       "providerName": "OpenAI",
       "sourceId": "openai-release-sitemap",
-      "sourceModifiedAt": "2026-09-02T15:54:35.304Z",
+      "sourceModifiedAt": "2026-09-02T19:00:21.633Z",
       "sourcePresence": "present",
       "status": "confirmed-release"
     },
@@ -58,14 +76,14 @@
       "canonicalUrl": "https://openai.com/index/introducing-gpt-5-4/",
       "firstSeenAt": "2026-09-02T13:54:58.398Z",
       "id": "openai:/index/introducing-gpt-5-4/",
-      "lastChangedAt": "2026-09-02T16:11:08.754Z",
+      "lastChangedAt": "2026-09-02T19:23:14.568Z",
       "namedModels": [
         "GPT-5.4"
       ],
       "providerId": "openai",
       "providerName": "OpenAI",
       "sourceId": "openai-release-sitemap",
-      "sourceModifiedAt": "2026-09-02T15:54:33.811Z",
+      "sourceModifiedAt": "2026-09-02T19:00:20.073Z",
       "sourcePresence": "present",
       "status": "confirmed-release"
     },
@@ -75,14 +93,65 @@
       "canonicalUrl": "https://openai.com/index/introducing-gpt-5-5/",
       "firstSeenAt": "2026-09-02T13:54:58.398Z",
       "id": "openai:/index/introducing-gpt-5-5/",
-      "lastChangedAt": "2026-09-02T16:11:08.754Z",
+      "lastChangedAt": "2026-09-02T19:23:14.568Z",
       "namedModels": [
         "GPT-5.5"
       ],
       "providerId": "openai",
       "providerName": "OpenAI",
       "sourceId": "openai-release-sitemap",
-      "sourceModifiedAt": "2026-09-02T15:54:33.301Z",
+      "sourceModifiedAt": "2026-09-02T19:00:18.333Z",
+      "sourcePresence": "present",
+      "status": "confirmed-release"
+    },
+    {
+      "candidateDate": "2026-09-02",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://openai.com/index/gpt-5-1/",
+      "firstSeenAt": "2026-09-02T13:54:58.398Z",
+      "id": "openai:/index/gpt-5-1/",
+      "lastChangedAt": "2026-09-02T19:23:14.568Z",
+      "namedModels": [
+        "GPT-5.1"
+      ],
+      "providerId": "openai",
+      "providerName": "OpenAI",
+      "sourceId": "openai-release-sitemap",
+      "sourceModifiedAt": "2026-09-02T19:00:15.273Z",
+      "sourcePresence": "present",
+      "status": "confirmed-release"
+    },
+    {
+      "candidateDate": "2026-09-02",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://openai.com/index/previewing-gpt-5-6-sol/",
+      "firstSeenAt": "2026-09-02T13:54:58.398Z",
+      "id": "openai:/index/previewing-gpt-5-6-sol/",
+      "lastChangedAt": "2026-09-02T19:23:14.568Z",
+      "namedModels": [
+        "GPT-5.6 Sol"
+      ],
+      "providerId": "openai",
+      "providerName": "OpenAI",
+      "sourceId": "openai-release-sitemap",
+      "sourceModifiedAt": "2026-09-02T19:00:13.927Z",
+      "sourcePresence": "present",
+      "status": "confirmed-release"
+    },
+    {
+      "candidateDate": "2026-09-02",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://openai.com/index/gpt-5-6/",
+      "firstSeenAt": "2026-09-02T13:54:58.398Z",
+      "id": "openai:/index/gpt-5-6/",
+      "lastChangedAt": "2026-09-02T19:23:14.568Z",
+      "namedModels": [
+        "GPT-5.6"
+      ],
+      "providerId": "openai",
+      "providerName": "OpenAI",
+      "sourceId": "openai-release-sitemap",
+      "sourceModifiedAt": "2026-09-02T19:00:11.172Z",
       "sourcePresence": "present",
       "status": "confirmed-release"
     },
@@ -100,75 +169,6 @@
       "providerName": "OpenAI",
       "sourceId": "openai-release-sitemap",
       "sourceModifiedAt": "2026-09-02T15:54:30.528Z",
-      "sourcePresence": "present",
-      "status": "confirmed-release"
-    },
-    {
-      "candidateDate": "2026-09-02",
-      "candidateDateMeaning": "provider-sitemap-lastmod",
-      "canonicalUrl": "https://openai.com/index/gpt-5-1/",
-      "firstSeenAt": "2026-09-02T13:54:58.398Z",
-      "id": "openai:/index/gpt-5-1/",
-      "lastChangedAt": "2026-09-02T16:11:08.754Z",
-      "namedModels": [
-        "GPT-5.1"
-      ],
-      "providerId": "openai",
-      "providerName": "OpenAI",
-      "sourceId": "openai-release-sitemap",
-      "sourceModifiedAt": "2026-09-02T15:54:29.780Z",
-      "sourcePresence": "present",
-      "status": "confirmed-release"
-    },
-    {
-      "candidateDate": "2026-09-02",
-      "candidateDateMeaning": "provider-sitemap-lastmod",
-      "canonicalUrl": "https://openai.com/index/previewing-gpt-5-6-sol/",
-      "firstSeenAt": "2026-09-02T13:54:58.398Z",
-      "id": "openai:/index/previewing-gpt-5-6-sol/",
-      "lastChangedAt": "2026-09-02T16:11:08.754Z",
-      "namedModels": [
-        "GPT-5.6 Sol"
-      ],
-      "providerId": "openai",
-      "providerName": "OpenAI",
-      "sourceId": "openai-release-sitemap",
-      "sourceModifiedAt": "2026-09-02T15:54:28.929Z",
-      "sourcePresence": "present",
-      "status": "confirmed-release"
-    },
-    {
-      "candidateDate": "2026-09-02",
-      "candidateDateMeaning": "provider-sitemap-lastmod",
-      "canonicalUrl": "https://openai.com/index/sora-2/",
-      "firstSeenAt": "2026-09-02T15:52:38.032Z",
-      "id": "openai:/index/sora-2/",
-      "lastChangedAt": "2026-09-02T16:11:08.754Z",
-      "namedModels": [
-        "Sora 2",
-        "Sora 2 Pro"
-      ],
-      "providerId": "openai",
-      "providerName": "OpenAI",
-      "sourceId": "openai-release-sitemap",
-      "sourceModifiedAt": "2026-09-02T15:54:27.115Z",
-      "sourcePresence": "present",
-      "status": "confirmed-release"
-    },
-    {
-      "candidateDate": "2026-09-02",
-      "candidateDateMeaning": "provider-sitemap-lastmod",
-      "canonicalUrl": "https://openai.com/index/gpt-5-6/",
-      "firstSeenAt": "2026-09-02T13:54:58.398Z",
-      "id": "openai:/index/gpt-5-6/",
-      "lastChangedAt": "2026-09-02T16:11:08.754Z",
-      "namedModels": [
-        "GPT-5.6"
-      ],
-      "providerId": "openai",
-      "providerName": "OpenAI",
-      "sourceId": "openai-release-sitemap",
-      "sourceModifiedAt": "2026-09-02T15:54:27.036Z",
       "sourcePresence": "present",
       "status": "confirmed-release"
     },
@@ -1291,7 +1291,7 @@
       "id": "anthropic-sitemap",
       "providerId": "anthropic",
       "providerName": "Anthropic",
-      "retrievedAt": "2026-09-02T16:29:29.102Z",
+      "retrievedAt": "2026-09-02T19:23:14.568Z",
       "url": "https://www.anthropic.com/sitemap.xml"
     },
     {
@@ -1313,7 +1313,7 @@
       "id": "openai-release-sitemap",
       "providerId": "openai",
       "providerName": "OpenAI",
-      "retrievedAt": "2026-09-02T16:29:29.102Z",
+      "retrievedAt": "2026-09-02T19:23:14.568Z",
       "url": "https://openai.com/sitemap.xml/release/"
     }
   ]
