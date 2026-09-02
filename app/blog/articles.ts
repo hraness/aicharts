@@ -1,18 +1,12 @@
 import { site } from "../site";
+import { PUBLIC_BLOG_SLUGS } from "@/lib/public-analytics-routes";
 import { createAaIndexCostArticle } from "./aa-index-cost-article";
 import { createCodingAgentScoreHoldoutsArticle } from "./coding-agent-score-holdouts-article";
 import { createOpenModelsCodingAgentsArticle } from "./open-models-coding-agents-article";
 import { createSmallModelsHaveArrivedArticle } from "./small-models-have-arrived-article";
 import { createTerminalBenchScienceArticle } from "./terminal-bench-science-article";
 
-export const BLOG_SLUGS = [
-  "terminal-bench-science",
-  "small-models-have-arrived",
-  "coding-agent-score-holdouts",
-  "open-models-coding-agent-benchmarks",
-  "aa-index-cost-coding-agents",
-  "mirrorcode-coding-agent-benchmark",
-] as const;
+export const BLOG_SLUGS = PUBLIC_BLOG_SLUGS;
 
 export const blogDescription =
   "Sourced analysis of AI model and agent benchmarks: what each evaluation measures, what the results show, and where the evidence stops.";
@@ -142,6 +136,11 @@ export interface BlogArticle {
   readonly dek: string;
   readonly focusPhrase: string;
   readonly keywords: readonly string[];
+  readonly nextStep?: Readonly<{
+    description: string;
+    links: readonly Readonly<{ href: `/${string}`; label: string }>[];
+    title: string;
+  }>;
   readonly publishedAt: string;
   readonly relatedSlugs: readonly BlogSlug[];
   readonly section?: string;
@@ -195,7 +194,7 @@ const mirrorCodeArticle = {
     "METR",
   ],
   publishedAt: "2026-08-04",
-  updatedAt: "2026-08-04",
+  updatedAt: "2026-08-05",
   sourceIds: ["mirrorCode", "mirrorCodePaper"],
   relatedSlugs: [],
   body: [
@@ -368,9 +367,27 @@ export function articleToMarkdown(
     const source = BLOG_SOURCES[sourceId];
     return `- [${source.title}](${source.url}). ${source.publication}, ${source.year}. ${source.note}`;
   });
-  const chartLink = article.showChartCta === false
-    ? []
-    : ["", `[Current coding-agent comparison](${site.origin}/)`];
+  const nextStep = article.nextStep === undefined
+    ? article.showChartCta === false
+      ? []
+      : [
+          "## Current comparison: coding agents",
+          "",
+          "The interactive chart shows the current source snapshot across benchmark performance, cost, speed, and token use.",
+          "",
+          `[Explore chart](${site.origin}/)`,
+          "",
+        ]
+    : [
+        `## ${article.nextStep.title}`,
+        "",
+        article.nextStep.description,
+        "",
+        ...article.nextStep.links.map(link => (
+          `- [${link.label}](${new URL(link.href, site.origin)})`
+        )),
+        "",
+      ];
   const relatedLinks = article.relatedSlugs.map((slug) => {
     const relatedArticle = getBlogArticle(slug);
     if (relatedArticle === undefined) {
@@ -394,13 +411,13 @@ export function articleToMarkdown(
       "",
     ]),
     ...blocks.flatMap(block => [block, ""]),
+    ...nextStep,
     ...(sources.length === 0 ? [] : ["## Sources", "", ...sources, ""]),
     "Reported results apply to the named source, workload, configuration, and observation date. They do not establish performance on every task or product.",
     "",
     "## Related analysis",
     "",
     ...relatedLinks,
-    ...chartLink,
     "",
   ].join("\n");
 }

@@ -212,6 +212,7 @@ async function foilEvidence(frame: Locator): Promise<FoilEvidence> {
 }
 
 async function moveInside(page: Page, frame: Locator): Promise<void> {
+  await frame.scrollIntoViewIfNeeded();
   const box = await frame.boundingBox();
   invariant(box !== null && box.width > 0 && box.height > 0, "The foil frame has no layout box.");
   await page.mouse.move(box.x + box.width * 0.78, box.y + box.height * 0.24);

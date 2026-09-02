@@ -6,6 +6,8 @@ import { HranessSiteFooter } from "@hraness/site-footer/react";
 import type { Metadata, Viewport } from "next";
 import type { CSSProperties, ReactNode } from "react";
 
+import { AnalyticsBoundary } from "@/components/analytics-boundary";
+
 import "./globals.css";
 import { aiChartsMailingListConfig } from "./mailing-config";
 import { site } from "./site";
@@ -78,6 +80,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
           />
           {children}
           <HranessSiteFooter mailingList={aiChartsMailingListConfig()} />
+          <AnalyticsBoundary />
         </DesignThemeProvider>
       </body>
     </html>

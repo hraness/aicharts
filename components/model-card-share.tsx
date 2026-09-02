@@ -17,6 +17,7 @@ import { Copy01Icon, Download01Icon, Share08Icon } from "@hugeicons/core-free-ic
 import { Icon } from "@/components/ui";
 import { useEffect, useMemo, useState } from "react";
 
+import { captureAnalyticsEvent } from "@/lib/analytics";
 import type { ModelCardPresentation } from "@/lib/model-card-presentation";
 import {
   prepareModelCardImage,
@@ -52,6 +53,21 @@ export function ModelCardShare({
     x: buildXShareIntentUrl({ text: shareText, url: canonicalUrl }),
   }), [canonicalUrl, shareText]);
 
+  function captureShare(
+    shareMethod: "bluesky" | "copy_link" | "download_png" | "linkedin" | "native_share" | "x",
+    shareOutcome: "cancelled" | "completed" | "downloaded" | "initiated",
+  ) {
+    captureAnalyticsEvent({
+      name: "model card shared",
+      properties: {
+        model_id: card.canonicalModelId,
+        profile_id: card.profileSlug,
+        share_method: shareMethod,
+        share_outcome: shareOutcome,
+      },
+    });
+  }
+
   useEffect(() => {
     const controller = new AbortController();
     const capabilityProbe = new File([], filename, { type: "image/png" });
@@ -73,9 +89,18 @@ export function ModelCardShare({
     setSharing(true);
     const result = await sharePreparedModelCardImage(preparedImage, filename);
     setSharing(false);
-    if (result === "shared") setStatus("Image sent to the share sheet.");
-    if (result === "cancelled") setStatus("");
-    if (result === "downloaded") setStatus("Image sharing is unavailable here, so the PNG was downloaded.");
+    if (result === "shared") {
+      captureShare("native_share", "completed");
+      setStatus("Image sent to the share sheet.");
+    }
+    if (result === "cancelled") {
+      captureShare("native_share", "cancelled");
+      setStatus("");
+    }
+    if (result === "downloaded") {
+      captureShare("native_share", "downloaded");
+      setStatus("Image sharing is unavailable here, so the PNG was downloaded.");
+    }
   }
 
   return (
@@ -97,6 +122,7 @@ export function ModelCardShare({
           download={filename}
           href={imageUrl}
           leading={<Icon icon={Download01Icon} size={16} strokeWidth={1.7} />}
+          onPress={() => captureShare("download_png", "initiated")}
           size="compact"
           variant={nativeShareAvailable ? "secondary" : "primary"}
         >
@@ -106,6 +132,7 @@ export function ModelCardShare({
           copiedLabel="Link copied"
           copyLabel="Copy link"
           leading={<Icon icon={Copy01Icon} size={16} strokeWidth={1.7} />}
+          onCopySuccess={() => captureShare("copy_link", "completed")}
           size="compact"
           value={canonicalUrl}
           variant="quiet"
@@ -115,6 +142,7 @@ export function ModelCardShare({
         <LinkButton
           href={socialLinks.x}
           leading={<SocialIcon name="x" />}
+          onPress={() => captureShare("x", "initiated")}
           rel="noopener noreferrer"
           size="compact"
           target="_blank"
@@ -125,6 +153,7 @@ export function ModelCardShare({
         <LinkButton
           href={socialLinks.bluesky}
           leading={<SocialIcon name="bluesky" />}
+          onPress={() => captureShare("bluesky", "initiated")}
           rel="noopener noreferrer"
           size="compact"
           target="_blank"
@@ -135,6 +164,7 @@ export function ModelCardShare({
         <LinkButton
           href={socialLinks.linkedin}
           leading={<SocialIcon name="linkedin" />}
+          onPress={() => captureShare("linkedin", "initiated")}
           rel="noopener noreferrer"
           size="compact"
           target="_blank"

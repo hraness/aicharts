@@ -87,7 +87,11 @@ export default async function ModelCardPage({
     && candidate.path !== card.path
   ));
   return (
-    <main className="model-card-detail" id="model-cards-content">
+    <main
+      className="model-card-detail"
+      data-analytics-surface="model_card"
+      id="model-cards-content"
+    >
       <Link className="model-card-detail__back" href="/models">← All model cards</Link>
       <div className="model-card-detail__layout">
         <section className="model-card-detail__stage" aria-label="Interactive foil model card">

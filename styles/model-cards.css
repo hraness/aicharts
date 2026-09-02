@@ -631,6 +631,13 @@
   line-height: .96;
 }
 
+.model-card-gallery__lede {
+  color: var(--muted);
+  font-size: clamp(.95rem, 1.4vw, 1.1rem);
+  line-height: 1.55;
+  max-inline-size: 56rem;
+}
+
 .model-card-gallery__meta,
 .model-card-detail__stage > p,
 .model-card-detail__copy header > p,

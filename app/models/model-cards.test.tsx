@@ -3,6 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 
 import ModelCardPage from "@/app/models/[creatorSlug]/[modelSlug]/[profileSlug]/page";
 import ModelCardsPage from "@/app/models/page";
+import { modelCardsHeading, modelCardsLede } from "@/app/site";
 import { ModelCardFace } from "@/components/model-card-face";
 import { ModelCardFoilFrame } from "@/components/model-card-foil-frame";
 import { ModelCardRasterFace, ModelCardSocialImage } from "@/components/model-card-image";
@@ -120,6 +121,11 @@ describe("public model cards", () => {
 
   test("uses one delegated foil deck for the full gallery", () => {
     const markup = renderToStaticMarkup(<ModelCardsPage />);
+    expect(markup).toContain("<h1>AI model benchmark cards</h1>");
+    expect(markup).toContain('class="model-card-gallery__lede"');
+    expect(markup).toContain(
+      "Each card keeps the model, agent harness, and reasoning profile attached",
+    );
     expect(markup).toContain("data-foil-card-deck");
     expect(markup.match(/data-foil-controller="deck"/gu)).toHaveLength(
       MODEL_CARD_PRESENTATIONS.length,
@@ -403,7 +409,8 @@ describe("public model cards", () => {
     const collection = markdownForPath("/models");
     const detail = markdownForPath(card.path);
     expect(collection.found).toBe(true);
-    expect(collection.body).toContain("# Model cards");
+    expect(collection.body).toContain(`# ${modelCardsHeading}`);
+    expect(collection.body).toContain(modelCardsLede);
     expect(collection.body).toContain(card.path);
     expect(detail.found).toBe(true);
     expect(detail.body).toContain(card.displayTitle);

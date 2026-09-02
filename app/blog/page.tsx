@@ -32,7 +32,11 @@ function formatDate(date: string): string {
 
 export default function BlogIndex() {
   return (
-    <main className="plain-publication__index" id="blog-content">
+    <main
+      className="plain-publication__index"
+      data-analytics-surface="blog_index"
+      id="blog-content"
+    >
       <JsonLdScript
         data={[
           blogCollectionJsonLd(),
@@ -45,7 +49,7 @@ export default function BlogIndex() {
       />
 
       <div className="plain-publication__shell plain-publication__index-content">
-        <header className="plain-publication__hero">
+        <header className="plain-publication__hero" data-analytics-surface="blog_header">
           <h1>AI model and agent benchmark analysis</h1>
           <p>
             {blogDescription} The first collection focuses on coding agents.

@@ -17,6 +17,14 @@ import {
   currentCodingAgentBenchmarkLeaders,
 } from "@/lib/coding-agent-dataset";
 import { BENCHMARK_DATA_DESCRIPTION } from "@/lib/benchmark-portfolio";
+import {
+  terminalBenchDatasetJsonLd,
+  terminalBenchScienceDatasetJsonLd,
+} from "@/lib/benchmark-dataset-json-ld";
+import terminalBenchData from "@/data/terminal-bench.json";
+import terminalBenchScienceData from "@/data/terminal-bench-science.json";
+import { parseTerminalBenchSnapshot } from "@/lib/terminal-bench-data";
+import { parseTerminalBenchScienceSnapshot } from "@/lib/terminal-bench-science-data";
 import { INDEXABLE_ROBOTS } from "@hraness/web-discovery";
 
 import { searchSite } from "../site";
@@ -27,6 +35,21 @@ import CodingAgentDatasetPage, { metadata } from "./page";
 const parsed = parseCodingAgentSnapshot(codingAgentData);
 if (!parsed.ok) throw parsed.error;
 const snapshot = parsed.value;
+const parsedTerminalBench = parseTerminalBenchSnapshot(terminalBenchData);
+if (!parsedTerminalBench.ok) throw parsedTerminalBench.error;
+const terminalBench = parsedTerminalBench.value;
+const parsedTerminalBenchScience = parseTerminalBenchScienceSnapshot(terminalBenchScienceData);
+if (!parsedTerminalBenchScience.ok) throw parsedTerminalBenchScience.error;
+const terminalBenchScience = parsedTerminalBenchScience.value;
+
+function renderedJsonLd(markup: string, id: string): unknown {
+  const script = new RegExp(
+    `<script[^>]*id="${id}"[^>]*>([^<]*)</script>`,
+    "u",
+  ).exec(markup);
+  expect(script).not.toBeNull();
+  return JSON.parse(script?.[1] ?? "null") as unknown;
+}
 
 describe("coding-agent dataset surface", () => {
   test("publishes canonical, indexable page metadata", () => {
@@ -61,7 +84,7 @@ describe("coding-agent dataset surface", () => {
     expect(markup).toContain('href="/blog"');
     expect(markup).toContain('href="/"');
     expect(markup.match(/data-presentation="menu"/gu)).toHaveLength(1);
-    const headerStart = markup.indexOf('<header class="plain-header">');
+    const headerStart = markup.indexOf('<header class="plain-header"');
     const headerEnd = markup.indexOf("</header>", headerStart);
     const actionsStart = markup.indexOf(
       'class="plain-header__actions"',
@@ -93,14 +116,20 @@ describe("coding-agent dataset surface", () => {
 
     expect(markup).toContain("<h1>Benchmark data and method</h1>");
     expect(markup).toContain(BENCHMARK_DATA_DESCRIPTION);
-    expect(markup).toContain("Download Artificial Analysis JSON");
+    expect(markup).toContain("Artificial Analysis coding agents");
+    expect(markup).toContain('aria-label="Dataset downloads"');
+    expect(markup).toContain("Download checked snapshots");
     expect(markup).toContain('id="terminal-bench-4"');
     expect(markup).toContain("Terminal-Bench 4 coding standard");
     expect(markup).toContain('href="/data/terminal-bench-4.json"');
+    expect(markup).toContain(terminalBench.source.repositoryCommitUrl);
+    expect(markup).toContain(terminalBench.source.repositoryCommittedAt);
     expect(markup).toContain("breaking exam generation");
     expect(markup).toContain('id="terminal-bench-science"');
     expect(markup).toContain("Terminal-Bench-Science 0.1");
     expect(markup).toContain('href="/data/terminal-bench-science-0-1.json"');
+    expect(markup).toContain(terminalBenchScience.source.releaseDoiUrl);
+    expect(markup).toContain(terminalBenchScience.source.leaderboardUpdatedAt);
     expect(markup).toContain("Owner-published aggregate and per-domain cost fields");
     expect(markup).toContain('id="source"');
     expect(markup).toContain('id="benchmarks"');
@@ -218,6 +247,43 @@ describe("coding-agent dataset surface", () => {
       "Active time per task",
       "Total tokens per task",
     ]);
+  });
+
+  test("describes all three visible dataset downloads in structured data", () => {
+    const markup = renderToStaticMarkup(createElement(CodingAgentDatasetPage));
+    const terminal = terminalBenchDatasetJsonLd(terminalBench, searchSite);
+    const science = terminalBenchScienceDatasetJsonLd(
+      terminalBenchScience,
+      searchSite,
+    );
+
+    expect(renderedJsonLd(markup, "aicharts-benchmark-datasets-structured-data"))
+      .toEqual([
+        codingAgentDatasetJsonLd(snapshot, searchSite),
+        terminal,
+        science,
+      ]);
+
+    expect(terminal).toMatchObject({
+      "@type": "Dataset",
+      "@id": "https://aicharts.io/data#terminal-bench-4",
+      citation: terminalBench.source.repositoryCommitUrl,
+      distribution: {
+        contentUrl: "https://aicharts.io/data/terminal-bench-4.json",
+        encodingFormat: "application/json",
+      },
+      version: terminalBench.benchmark.version,
+    });
+    expect(science).toMatchObject({
+      "@type": "Dataset",
+      "@id": "https://aicharts.io/data#terminal-bench-science",
+      citation: terminalBenchScience.source.releaseDoiUrl,
+      distribution: {
+        contentUrl: "https://aicharts.io/data/terminal-bench-science-0-1.json",
+        encodingFormat: "application/json",
+      },
+      version: terminalBenchScience.benchmark.version,
+    });
   });
 });
 

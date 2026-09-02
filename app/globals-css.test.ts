@@ -101,10 +101,8 @@ test("compact chart chrome shares the 12px design inset", () => {
   expect(stylesheet).toMatch(/@media \(max-width:\s*760px\)[\s\S]*?\.chart-resource-nav\s*\{[^}]*padding:\s*10px var\(--chart-compact-inset\) max\(var\(--space-4\), env\(safe-area-inset-bottom\)\);/u);
 });
 
-test("homepage document stays in the HTML without taking chart layout", () => {
-  expect(firstRule(".home-document")).toContain("clip: rect(0, 0, 0, 0)");
-  expect(firstRule(".home-document")).toContain("position: absolute");
-  expect(firstRule(".home-document")).not.toMatch(/display\s*:\s*none/u);
+test("homepage has no clipped discovery document", () => {
+  expect(stylesheet).not.toContain(".home-document");
   expect(firstRule(".chart-top-bar .chart-heading")).toContain("font-weight: var(--font-weight-bold)");
 });
 

@@ -27,7 +27,7 @@ Each checked snapshot records its source, exact version or revision, and retriev
 
 [`/gpt-subsidy`](https://aicharts.io/gpt-subsidy) tracks the measured API-retail-equivalent value of one user’s available local Codex logs. Each daily point covers seven complete UTC days. The collector globally deduplicates parent, child-agent, active, and archived session events, values each recorded model with the checked [`gpt-subsidy-pricing.json`](data/gpt-subsidy-pricing.json) rate manifest, and publishes only aggregate token and dollar totals. The checked [`gpt-subsidy-measurement.json`](data/gpt-subsidy-measurement.json) manifest pins the parser, adapter, updater, and rolling-window constants so a methodology change cannot silently mix unlike historical points.
 
-This is a personal usage trace, not a platform-wide estimate or a representative sample of ChatGPT Pro usage. Historical logs span account switches without durable account attribution. The public history therefore leaves the subscription-adjusted multiple null instead of dividing all usage by one $200 subscription. It does not publish a monthly projection or one-plan normalization. API-key or otherwise API-billed usage, purchased credits, free resets, and temporary promotions still cannot be separated. The page keeps those limits beside the chart and publishes the calculation and source links in static HTML.
+This is a personal usage trace, not a platform-wide estimate or a representative sample of ChatGPT Pro usage. Historical logs span account switches without durable account attribution. The public history leaves the subscription-adjusted multiple null and separately publishes an explicitly bounded one-plan upper bound: the measured 31-day API-equivalent value divided by one $200 plan before switched-account adjustment. That upper bound is not a subscription-adjusted multiple; the true subscription-spend-adjusted multiple is lower but unknown. It does not publish a monthly projection, quota-exhaustion estimate, or per-refill projection. API-key or otherwise API-billed usage, purchased credits, free resets, and temporary promotions still cannot be separated. The page keeps those limits beside the chart and publishes the calculation and source links in static HTML.
 
 ## Local development
 
@@ -85,9 +85,9 @@ PostHog is initialized only in production on the canonical AI Charts domains. Th
 
 - no person profiles, persistent identifiers, autocapture, session replay, surveys, heatmaps, or feature flags;
 - memory-only persistence, Do Not Track support, masked text and element attributes;
-- page-view, page-leave, Core Web Vitals, and four explicit product event families only.
+- page-view, page-leave, Core Web Vitals, and typed allowlisted product events only.
 
-The product events are `chart metric selected`, `chart selection pinned`, `chart shared`, and `content chart opened`. They contain controlled enum-like properties, never chart URLs, query strings, free-form text, or model-level user data. Every event also receives a bounded page classification so acquisition and engagement can be compared without storing article slugs or query strings.
+Product events cover chart and model-card interaction, delegated public-link clicks, and footer signup requests. They contain controlled enum-like properties, never raw URLs, query strings, hashes, link text, visitor-entered values, or model-level user data. Every event receives a grouped page classification plus a bounded public article or model-card content ID. The complete event and privacy contract lives in [`docs/analytics-instrumentation.md`](docs/analytics-instrumentation.md).
 
 The optional AI Charts mailing list is separate from product use and every
 other Hraness audience. Its footer sends the entered email address, the

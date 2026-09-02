@@ -95,7 +95,7 @@ describe("AI Charts benchmark notes", () => {
     expect(markup).toContain('href="/blog"');
     expect(markup).toContain('href="/"');
     expect(markup.match(/data-presentation="menu"/gu)).toHaveLength(1);
-    const headerStart = markup.indexOf('<header class="plain-header">');
+    const headerStart = markup.indexOf('<header class="plain-header"');
     const headerEnd = markup.indexOf("</header>", headerStart);
     const actionsStart = markup.indexOf(
       'class="plain-header__actions"',
@@ -147,9 +147,12 @@ describe("AI Charts benchmark notes", () => {
       } else if (article.slug === "aa-index-cost-coding-agents") {
         expect(article.publishedAt).toBe("2026-08-22");
         expect(article.updatedAt >= article.publishedAt).toBeTrue();
-      } else {
+      } else if (article.slug === "mirrorcode-coding-agent-benchmark") {
         expect(article.publishedAt).toBe("2026-08-04");
-        expect(article.updatedAt).toBe("2026-08-04");
+        expect(article.updatedAt).toBe("2026-08-05");
+        expect(articleToMarkdown(article)).toContain("captured August 5, 2026 UTC");
+      } else {
+        throw new Error(`Unhandled blog article date assertion: ${article.slug}`);
       }
 
       const headings = article.body
@@ -366,6 +369,20 @@ describe("AI Charts benchmark notes", () => {
     expect(markdown).toContain(TERMINAL_BENCH_SCIENCE.quotes.strongestResolvesThirty);
     expect(markdown).toContain(TERMINAL_BENCH_SCIENCE.quotes.taskFunnel);
     expect(markdown).toContain(TERMINAL_BENCH_SCIENCE.quotes.solMatchesFableCost);
+    expect(article.nextStep?.links.map(link => link.href)).toEqual([
+      "/data#terminal-bench-science",
+      "/data/terminal-bench-science-0-1.json",
+    ]);
+    expect(markdown).toContain("Inspect the version-pinned scientific benchmark");
+    const nextStepAt = markdown.indexOf(
+      "## Inspect the version-pinned scientific benchmark",
+    );
+    const sourcesAt = markdown.indexOf("## Sources");
+    const relatedAt = markdown.indexOf("## Related analysis");
+    expect(nextStepAt).toBeGreaterThan(-1);
+    expect(nextStepAt).toBeLessThan(sourcesAt);
+    expect(sourcesAt).toBeLessThan(relatedAt);
+    expect(markdown).not.toContain("### Inspect the version-pinned scientific benchmark");
     expect(markdown).toContain("Cost and tokens change the comparison");
     expect(markdown).not.toContain("not a product win");
     expect(markdown).not.toContain("This page is");
@@ -507,7 +524,13 @@ describe("AI Charts benchmark notes", () => {
         expect(article.slug).toBe(IMAGE_FREE_SLUG);
         expect(markup).not.toContain("<figure");
       }
-      if ("showChartCta" in article && article.showChartCta === false) {
+      if ("nextStep" in article && article.nextStep !== undefined) {
+        expect(markup).toContain(article.nextStep.title);
+        for (const link of article.nextStep.links) {
+          expect(markup).toContain(`href="${link.href}"`);
+        }
+        expect(markup).not.toContain("Current comparison: coding agents");
+      } else if ("showChartCta" in article && article.showChartCta === false) {
         expect(markup).not.toContain("Current comparison: coding agents");
       } else {
         expect(markup).toContain("Current comparison: coding agents");
