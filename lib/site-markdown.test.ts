@@ -1,6 +1,8 @@
 import { describe, expect, test } from "bun:test";
 
-import { articleToMarkdown, blogArticles } from "@/app/blog/articles";
+import { articleToMarkdown, blogArticlePath, blogArticles } from "@/app/blog/articles";
+import { HOME_EDITORIAL_SLUGS } from "@/app/blog/article-admissions";
+import { blogEditorialImage } from "@/app/blog/editorial-images";
 import { homeHeading, notFoundRecoveryLinks, site } from "@/app/site";
 import codingAgentData from "@/data/coding-agents.json";
 import gptSubsidyData from "@/data/gpt-subsidy.json";
@@ -35,12 +37,14 @@ if (!parsedSubsidy.ok) throw parsedSubsidy.error;
 const latestSubsidy = latestGptSubsidyObservation(parsedSubsidy.value);
 
 describe("homepage document", () => {
-  test("has the product heading and more than 500 characters of text", () => {
+  test("has the product heading and current dataset facts", () => {
     const text = homeDocumentText(snapshot);
     expect(text.startsWith(homeHeading)).toBeTrue();
     expect(text).toContain(site.description);
     expect(text).toContain(String(codingAgentDatasetSummary(snapshot).recordCount));
-    expect(text.length).toBeGreaterThan(500);
+    expect(text).toContain("Artificial Analysis coding-agents comparison");
+    expect(text).toContain("Coding-agent benchmark dataset");
+    expect(text).toContain("Machine-readable site guide");
   });
 });
 
@@ -58,6 +62,17 @@ describe("markdown representations", () => {
     expect(home.body).toContain(`## Current leaders as of ${snapshot.source.retrievedAt}`);
     expect(home.body).toContain("| Benchmark | Model | Agent | Provider | Setting | Score |");
     expect(home.body).toContain(currentCodingAgentBenchmarkLeaders(snapshot)[0]?.record.model ?? "");
+    expect(home.body).toContain("## Model and benchmark analysis");
+    for (const slug of HOME_EDITORIAL_SLUGS) {
+      const image = blogEditorialImage(slug);
+      expect(home.body).toContain(blogArticlePath(slug));
+      if (image === undefined) {
+        expect(home.body).not.toContain(`/images/blog/${slug}.webp`);
+      } else {
+        expect(home.body).toContain(image.src);
+        expect(home.body).toContain(image.caption);
+      }
+    }
     expect(data.body).toContain(CODING_AGENT_DATASET_DESCRIPTION);
     expect(data.body).toContain(snapshot.source.url);
     expect(data.body).toContain("## All configurations");
@@ -87,6 +102,15 @@ describe("markdown representations", () => {
     expect(subsidy.body).toContain("No monthly projection, one-plan normalization");
     expect(subsidy.body).not.toContain("307.1×");
     expect(blog.body).toContain(blogArticles[0].title);
+    for (const article of blogArticles) {
+      const image = blogEditorialImage(article.slug);
+      if (image === undefined) {
+        expect(blog.body).not.toContain(`/images/blog/${article.slug}.webp`);
+      } else {
+        expect(blog.body).toContain(image.src);
+        expect(blog.body).toContain(image.caption);
+      }
+    }
     expect(guide).toMatchObject({ found: true, contentType: AGENT_GUIDE_CONTENT_TYPE });
     expect(guide.body).toBe(agentGuideMarkdown(snapshot));
   });
@@ -95,9 +119,29 @@ describe("markdown representations", () => {
     for (const article of blogArticles) {
       const document = markdownForPath(`/blog/${article.slug}`);
       expect(document.found).toBeTrue();
-      expect(document.body).toBe(articleToMarkdown(article));
+      const image = blogEditorialImage(article.slug);
+      expect(document.body).toBe(articleToMarkdown(article, image));
       expect(document.body).toContain(`# ${article.title}`);
       expect(document.body).toContain(article.dek);
+      expect(document.body).toContain(article.authorshipDisclosure);
+      if (image === undefined) {
+        expect(article.slug).toBe("small-models-have-arrived");
+        expect(document.body).not.toContain(`/images/blog/${article.slug}.webp`);
+      } else {
+        expect(document.body).toContain(image.src);
+        expect(document.body).toContain(image.caption);
+        expect(document.body).toContain(image.credit);
+      }
+    }
+  });
+
+  test("returns honest 404 markdown for retired non-equivalent articles", () => {
+    for (const path of [
+      "/blog/benchmarkpocalypse",
+      "/blog/coding-agent-scores-still-need-expertise",
+      "/blog/slopcodebench-long-horizon-coding-agents",
+    ]) {
+      expect(markdownForPath(path).found).toBeFalse();
     }
   });
 

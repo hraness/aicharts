@@ -18,19 +18,19 @@ tags:
 
 ## Outcome
 
-`/blog/coding-agent-score-holdouts` is a crawlable evidence page with an H1, dated sources, and internal links to `/data`, the AA Index versus cost note, the open-models note, and the Hraness reading note. It quotes only fetched Dan Luu and Hraness sentences, copies snapshot leaders instead of inventing ranks, and stays a different question from the live open-models comparison.
+`/blog/coding-agent-score-holdouts` is a crawlable evidence page with an H1, dated primary sources, and only the internal links that help a reader inspect the dataset or continue a directly related analysis. It quotes fetched Dan Luu sentences, copies snapshot leaders instead of inventing ranks, and stays a different question from the live open-models comparison.
 
 ## Context
 
-The live collection already has an open-models reading take and an AA Index versus cost note. Dan Luu’s [The benchmarkpocalypse](https://danluu.com/benchpocalypse/) and the [Hraness digest](https://hraness.com/reading/the-benchmarkpocalypse) argue that a public-suite win can fail a holdout. That is a distinct search intent from open-versus-closed catch-up.
+The live collection already has an open-models reading take and an AA Index versus cost note. Dan Luu’s original essay, [The benchmarkpocalypse](https://danluu.com/benchpocalypse/), reports an agent-built regex engine whose public-suite win failed a holdout. That evidence answers a distinct reader question from open-versus-closed catch-up; a digest of the same essay would not independently support it.
 
 ## Scope
 
 ### In scope
 
 - One new blog article factory, slug, sources, and snapshot-derived tables.
-- Tests that lock fetched quotes, `/data` interlinks, and copied leaders.
-- Internal links from `/data`, homepage markdown, README, and related notes.
+- Tests that lock primary-source quotes, `/data` evidence links, and copied leaders.
+- Discovery links only on existing surfaces where the holdout analysis directly helps the reader.
 
 ### Non-goals
 
@@ -40,24 +40,24 @@ The live collection already has an open-models reading take and an AA Index vers
 
 ## Constraints and decisions
 
-- Quote only sentences visible in the fetched Luu essay and Hraness note.
+- Quote only sentences visible in the fetched Luu essay.
 - Highest stored scores come from `currentCodingAgentBenchmarkLeaders`.
-- `relatedSlugs` stays one item: the AA Index versus cost note.
+- `relatedSlugs` contains only links that advance the article’s argument; it may be empty and has no exact-count requirement.
 - Public contract change ships through a pull request, not a fast-forward to `main`.
 
 ## Plan
 
-1. Fetch both source pages and the live method pages.
+1. Fetch the Luu essay, the Artificial Analysis source, and the live method pages.
 2. Add the article and wire the crawlable `/blog` path.
 3. Update interlinks and repository checks.
 4. Open a draft pull request and leave it unmerged.
 
 ## Verification
 
-- Article title ≤ 64 characters, SEO description 120–160, body ≥ 800 words → `bun test app/blog/blog.test.tsx`.
-- Snapshot leaders and fetched quotes appear in rendered HTML → holdout derivation test.
+- The article answers the holdout question directly, cites the Luu essay and Artificial Analysis source, and avoids Hraness-digest or volume-based admission tests → `bun test app/blog/blog.test.tsx`.
+- Snapshot leaders and primary-source quotes appear in rendered HTML → holdout derivation test.
 - `bun run check` passes.
-- Rendered `/blog/coding-agent-score-holdouts` has an H1 and the required crawlable links.
+- Rendered `/blog/coding-agent-score-holdouts` has one H1, crawlable primary-source links, and no automatic sibling-link quota.
 
 ## Risks and recovery
 

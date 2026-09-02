@@ -180,33 +180,19 @@ export default function CodingAgentDatasetPage() {
               <Link href="/blog/open-models-coding-agent-benchmarks">
                 open models on coding-agent benchmarks
               </Link>
-              . For whether a SemiAnalysis catch-up composite should collapse
-              those rows into an open-won headline, see{" "}
-              <Link href="/blog/are-open-models-catching-up">
-                open models can close a scoreboard and still lose the product
-              </Link>
               . For how lower inference costs change frequent-use product
               economics, see{" "}
               <Link href="/blog/small-models-have-arrived">
                 cheaper AI models can make everyday products viable
               </Link>
-              . For why a 30% Terminal-Bench-Science score is not a product
-              win, see{" "}
+              . For what a 30% Terminal-Bench-Science result measures—and how
+              cost and token use change the comparison—see{" "}
               <Link href="/blog/terminal-bench-science">
-                Terminal-Bench-Science: 30% is not a product win
-              </Link>
-              . For why scoreboard saturation is not a product win, see{" "}
-              <Link href="/blog/benchmarkpocalypse">
-                the benchmarkpocalypse is not a product win
+                What Terminal-Bench-Science’s 30% result measures
               </Link>
               . For why a public-suite high score still needs a holdout, see{" "}
               <Link href="/blog/coding-agent-score-holdouts">
                 why a coding-agent high score still needs a holdout
-              </Link>
-              . For why that number still needs a person who can specify and
-              audit the work, see{" "}
-              <Link href="/blog/coding-agent-scores-still-need-expertise">
-                coding-agent scores still need expertise
               </Link>
               .
             </p>

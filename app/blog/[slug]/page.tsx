@@ -67,6 +67,7 @@ export default async function BlogArticlePage({
       ? [{ text: block.text }]
       : []);
   const path = blogArticlePath(article.slug);
+  const editorialImage = blogEditorialImage(article.slug);
 
   return (
     <main className="plain-publication__article" id="blog-content">
@@ -95,7 +96,7 @@ export default async function BlogArticlePage({
         <h1>{article.title}</h1>
         <p className="plain-publication__article-dek">{article.dek}</p>
         <p className="plain-publication__article-meta">
-          <span>By AI Charts</span>
+          <span>By AI Charts · AI-assisted</span>
           <span aria-hidden="true"> · </span>
           <span>Published </span>
           <time dateTime={article.publishedAt}>
@@ -113,23 +114,24 @@ export default async function BlogArticlePage({
           <span aria-hidden="true"> · </span>
           <span>{articleReadingMinutes(article)} min read</span>
         </p>
-        <EditorialFigure
-          image={blogEditorialImage(article.slug)}
-          preload
-        />
+        {editorialImage === undefined ? null : (
+          <EditorialFigure image={editorialImage} preload />
+        )}
       </header>
 
       <div className="plain-publication__article-layout plain-publication__shell">
-        <nav aria-label="In this article" className="plain-publication__toc">
-          <p>In this article</p>
-          <ol>
-            {headings.map(block => (
-              <li key={block.text}>
-                <a href={`#${headingId(block.text)}`}>{block.text}</a>
-              </li>
-            ))}
-          </ol>
-        </nav>
+        {headings.length === 0 ? null : (
+          <nav aria-label="In this article" className="plain-publication__toc">
+            <p>In this article</p>
+            <ol>
+              {headings.map(block => (
+                <li key={block.text}>
+                  <a href={`#${headingId(block.text)}`}>{block.text}</a>
+                </li>
+              ))}
+            </ol>
+          </nav>
+        )}
 
         <div className="plain-publication__article-main">
           <ArticleBody blocks={article.body} />
@@ -150,27 +152,30 @@ export default async function BlogArticlePage({
             </aside>
           )}
 
-          <section
-            aria-labelledby="sources-title"
-            className="plain-publication__sources"
-          >
-            <h2 id="sources-title">Sources</h2>
-            <ol>
-              {article.sourceIds.map(sourceId => {
-                const source = BLOG_SOURCES[sourceId];
-                return (
-                  <li key={sourceId}>
-                    <a href={source.url}>{source.title}</a>
-                    <span>
-                      {source.publication}, {source.year}. {source.note}
-                    </span>
-                  </li>
-                );
-              })}
-            </ol>
-          </section>
+          {article.sourceIds.length === 0 ? null : (
+            <section
+              aria-labelledby="sources-title"
+              className="plain-publication__sources"
+            >
+              <h2 id="sources-title">Sources</h2>
+              <ol>
+                {article.sourceIds.map(sourceId => {
+                  const source = BLOG_SOURCES[sourceId];
+                  return (
+                    <li key={sourceId}>
+                      <a href={source.url}>{source.title}</a>
+                      <span>
+                        {source.publication}, {source.year}. {source.note}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ol>
+            </section>
+          )}
 
           <p className="plain-publication__disclosure">
+            {article.authorshipDisclosure} {" "}
             Reported results apply to the named source, workload,
             configuration, and observation date. They do not establish
             performance on every task or product.

@@ -24,7 +24,7 @@ export type BlogEditorialImage<Slug extends BlogSlug = BlogSlug> = Readonly<{
 }>;
 
 type EditorialImageRecord = Readonly<{
-  [Slug in BlogSlug]: BlogEditorialImage<Slug>;
+  [Slug in BlogSlug]?: BlogEditorialImage<Slug>;
 }>;
 
 function image<Slug extends BlogSlug>(
@@ -57,50 +57,14 @@ function image<Slug extends BlogSlug>(
 }
 
 export const BLOG_EDITORIAL_IMAGES = {
-  "benchmarkpocalypse": image(
-    "benchmarkpocalypse",
-    "Identical-height charcoal and cobalt pillars fill a measuring rack under a low beam, while a compact unused apparatus and coral and mint weights sit aside.",
-    "A crowded public scoreboard can stop discriminating a product choice. The illustration is not a data plot.",
-    "869fb250d053122ac5bc49762b42fbd165aa15054c1a3449e6d80e4315fb48e8",
-    "d71d6ebd2a165ea3b9271236a6abdd65dc934924eae0d8bf1586a7f218685206",
-    "20260901T134200000Z-image-869fb250-bmp/receipt.json",
-    "gateway_c8e1a4b07f3e4d6aa21f90c4e5b7d812.json",
-  ),
   "terminal-bench-science": image(
     "terminal-bench-science",
     "Paper-cutout hands hold a high charcoal measuring beam while a compact cobalt apparatus reaches only partway, with coral and mint weights on a low tray.",
-    "Scientists set the evaluation bar; a peak score without cost and token trade-offs is not a product win. The illustration is not a data plot.",
+    "Scientists set the task set; this illustration separates completion, evaluation cost, and token use. It is not a data plot.",
     "25b0982fb419a0e7caa8551c1521950a70ae10ac84d12d8cd765c705015f4541",
     "a233bd9a0784c0f26b90201a57e315b9d642a0f3b285256a204e25041df14be3",
     "20260831T132600000Z-image-25b0982f-tbs/receipt.json",
     "gateway_db4be239e6db4bae5aa62a424e6e6a4c.json",
-  ),
-  "small-models-have-arrived": image(
-    "small-models-have-arrived",
-    "A compact blue and coral computing core moves a light stream through a modular machine beside a separate taller structure.",
-    "Lower inference costs can make repeated AI work viable when the model still meets the task’s quality bar.",
-    "f6bfe3d262147db6408e069df98803277b34b1f471eb61f03a51a7ef2eb51330",
-    "e29d12c19ab8ff27d923fe92a66207897a19522f4f59ecdfc7d0c8bfff7a9cf8",
-    "20260829T044909987Z-image-8a112f56-e2a/receipt.json",
-    "gateway_b77cf0ef88e742678bb8a594e8dcfcee.json",
-  ),
-  "are-open-models-catching-up": image(
-    "are-open-models-catching-up",
-    "Open modular components approach a dark gate beside a separately integrated tool system.",
-    "A closing benchmark gap does not erase the product layer around a model.",
-    "e96546990341ce2e1082a856016e46dedddfed9568f4cd0c6dda28bfdd29e385",
-    "e020b195cacae4e6135dca805d35f060c0ecf0856a86c81dc04c045ede05ded8",
-    "20260829T045119641Z-image-fe10f8ca-acc/receipt.json",
-    "gateway_b3f9a421d0b149409c07dce46ddedc5c.json",
-  ),
-  "coding-agent-scores-still-need-expertise": image(
-    "coding-agent-scores-still-need-expertise",
-    "Hands inspect and align one path through a branching mechanical system on paper.",
-    "A task score still needs a person who can specify the work and judge the result.",
-    "918be37c7f50cddab799fb6d4cfb4a2b25eb09850ea6ac471654c2d58a39c8c4",
-    "0e366967623c791b2db05cdbf3115de9719e4f4176b579eb38b358caf1f1d22d",
-    "20260829T045334214Z-image-adfc884a-0f2/receipt.json",
-    "gateway_372083261e9c4a7aae8af256c9bfd24b.json",
   ),
   "coding-agent-score-holdouts": image(
     "coding-agent-score-holdouts",
@@ -138,21 +102,14 @@ export const BLOG_EDITORIAL_IMAGES = {
     "20260829T045733333Z-image-0903f6a9-912/receipt.json",
     "gateway_e99b616d49ae40a9b656442b726178ed.json",
   ),
-  "slopcodebench-long-horizon-coding-agents": image(
-    "slopcodebench-long-horizon-coding-agents",
-    "A clean modular structure grows into a longer construction with denser duplicated additions and awkward braces.",
-    "Later changes inherit every earlier structural decision; the illustration is not a measured trajectory.",
-    "ce552845580b975f6a8c3fb1cd6d150c70e1fc7ef466068654a8ac301dcd4b32",
-    "e845ab6a7a4980b72d385d1f929f797edbe68bfc92f4069c5a2caaea0f1e6c91",
-    "20260829T045808335Z-image-d89ed557-fba/receipt.json",
-    "gateway_b8ea95991c3b42b8a52b141a51324a80.json",
-  ),
 } as const satisfies EditorialImageRecord;
 
 export function blogEditorialImage<Slug extends BlogSlug>(
   slug: Slug,
-): BlogEditorialImage<Slug> {
-  return BLOG_EDITORIAL_IMAGES[slug] as BlogEditorialImage<Slug>;
+): BlogEditorialImage<Slug> | undefined {
+  return (BLOG_EDITORIAL_IMAGES as EditorialImageRecord)[slug] as
+    | BlogEditorialImage<Slug>
+    | undefined;
 }
 
 export const blogEditorialImages = Object.values(BLOG_EDITORIAL_IMAGES);

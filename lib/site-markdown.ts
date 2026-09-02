@@ -4,6 +4,8 @@ import {
   blogArticles,
   blogDescription,
 } from "@/app/blog/articles";
+import { HOME_EDITORIAL_SLUGS } from "@/app/blog/article-admissions";
+import { blogEditorialImage } from "@/app/blog/editorial-images";
 import { homeHeading, notFoundRecoveryLinks, site } from "@/app/site";
 import codingAgentData from "@/data/coding-agents.json";
 import gptSubsidyData from "@/data/gpt-subsidy.json";
@@ -113,6 +115,16 @@ function joinMarkdown(lines: readonly string[]): string {
   return `${lines.join("\n").trim()}\n`;
 }
 
+function editorialImageMarkdown(slug: (typeof blogArticles)[number]["slug"]): string[] {
+  const image = blogEditorialImage(slug);
+  return image === undefined ? [] : [
+    `![${image.alt}](${absolute(image.src)})`,
+    "",
+    `*${image.caption} ${image.credit}*`,
+    "",
+  ];
+}
+
 export function homeDocumentModel(
   snapshot: CodingAgentSnapshot = checkedSnapshot(),
 ): HomeDocumentModel {
@@ -158,19 +170,9 @@ export function homeDocumentModel(
         note: "Whether classified open-weight rows sit with the current AA Index leaders, using the same checked snapshot and a SemiAnalysis catch-up essay.",
       },
       {
-        href: blogArticlePath("are-open-models-catching-up"),
-        label: "Open models can close a scoreboard and still lose the product",
-        note: "SemiAnalysis’s era-composite catch-up versus their productized-stack preference, kept distinct from the named-row snapshot.",
-      },
-      {
-        href: blogArticlePath("benchmarkpocalypse"),
-        label: "The benchmarkpocalypse is not a product win",
-        note: "Dan Luu’s public-suite argument and scoreboard saturation: a cheap or clustered win is remaining measurement work, not a shipping decision.",
-      },
-      {
         href: blogArticlePath("terminal-bench-science"),
-        label: "Terminal-Bench-Science: 30% is not a product win",
-        note: "Scientists set the evaluation bar on Terminal-Bench-Science 0.1. The peak 30% resolution is remaining work; cost and token Pareto is the useful comparison.",
+        label: "What Terminal-Bench-Science’s 30% result measures",
+        note: "Scientists selected 70 difficult workflows for Terminal-Bench-Science 0.1. The leading configuration resolved 30%; published cost and token frontiers distinguish otherwise similar results.",
       },
       {
         href: blogArticlePath("small-models-have-arrived"),
@@ -181,11 +183,6 @@ export function homeDocumentModel(
         href: blogArticlePath("coding-agent-score-holdouts"),
         label: "Why a coding-agent high score still needs a holdout",
         note: "Dan Luu’s FRE holdout and the checked snapshot’s named-suite scores, kept distinct from the open-models comparison.",
-      },
-      {
-        href: blogArticlePath("coding-agent-scores-still-need-expertise"),
-        label: "Coding-agent scores still need expertise",
-        note: "Lars Faye and Sean Goedecke on why a named-suite score still needs a person who can specify and audit the work.",
       },
       {
         href: CODING_AGENT_DATASET_DOWNLOAD_PATH,
@@ -231,6 +228,19 @@ function homeMarkdown(snapshot: CodingAgentSnapshot): string {
     codingAgentLeadersMarkdownTable(leaders),
     "",
     ...document.paragraphs.flatMap(paragraph => [paragraph, ""]),
+    "## Model and benchmark analysis",
+    "",
+    ...HOME_EDITORIAL_SLUGS.flatMap(slug => {
+      const article = blogArticles.find(candidate => candidate.slug === slug);
+      if (article === undefined) return [];
+      return [
+        `### [${article.title}](${absolute(blogArticlePath(article.slug))})`,
+        "",
+        ...editorialImageMarkdown(article.slug),
+        article.dek,
+        "",
+      ];
+    }),
     "## Pages",
     "",
     ...document.links.map(link => `- [${link.label}](${absolute(link.href)}). ${link.note}`),
@@ -272,7 +282,7 @@ function datasetMarkdown(snapshot: CodingAgentSnapshot): string {
     "",
     codingAgentLeadersMarkdownTable(leaders),
     "",
-    `For AA Index versus mean API cost see [AA Index versus cost for coding agents](${absolute(blogArticlePath("aa-index-cost-coding-agents"))}). For whether classified open-weight rows sit with those leaders see [open models on coding-agent benchmarks](${absolute(blogArticlePath("open-models-coding-agent-benchmarks"))}). For why a closing benchmark gap does not settle product choice see [open models can close a scoreboard and still lose the product](${absolute(blogArticlePath("are-open-models-catching-up"))}). For how lower inference costs change frequent-use product economics see [cheaper AI models can make everyday products viable](${absolute(blogArticlePath("small-models-have-arrived"))}). For why a 30% Terminal-Bench-Science score is not a product win see [Terminal-Bench-Science: 30% is not a product win](${absolute(blogArticlePath("terminal-bench-science"))}). For why scoreboard saturation is not a product win see [the benchmarkpocalypse is not a product win](${absolute(blogArticlePath("benchmarkpocalypse"))}). For why a public-suite high score still needs a holdout see [why a coding-agent high score still needs a holdout](${absolute(blogArticlePath("coding-agent-score-holdouts"))}). For why that number still needs a person who can specify and audit the work see [coding-agent scores still need expertise](${absolute(blogArticlePath("coding-agent-scores-still-need-expertise"))}).`,
+    `For AA Index versus mean API cost see [AA Index versus cost for coding agents](${absolute(blogArticlePath("aa-index-cost-coding-agents"))}). For whether classified open-weight rows sit with those leaders see [open models on coding-agent benchmarks](${absolute(blogArticlePath("open-models-coding-agent-benchmarks"))}). For how lower inference costs change frequent-use product economics see [cheaper AI models can make everyday products viable](${absolute(blogArticlePath("small-models-have-arrived"))}). For the acceptance funnel, cost, tokens, and remaining miss rate behind the leading scientific score see [what Terminal-Bench-Science’s 30% result measures](${absolute(blogArticlePath("terminal-bench-science"))}). For why a public-suite high score still needs a holdout see [why a coding-agent high score still needs a holdout](${absolute(blogArticlePath("coding-agent-score-holdouts"))}).`,
     "",
     "## All configurations",
     "",
@@ -312,12 +322,13 @@ function blogIndexMarkdown(): string {
     ...blogArticles.flatMap(article => [
       `### [${article.title}](${absolute(blogArticlePath(article.slug))})`,
       "",
+      ...editorialImageMarkdown(article.slug),
       article.dek,
       "",
     ]),
     "## Method",
     "",
-    "Each note starts with the benchmark paper or maintained source page. Material claims link to those primary sources. Leaderboard values are paired with their observation date and named configuration. Methodology limits stay near the results they qualify.",
+    "Each note starts with primary or first-party evidence. Material claims link directly to those sources. Leaderboard values are paired with their observation date and named configuration. Methodology limits stay near the results they qualify.",
     "",
     `[Explore the coding-agent chart](${absolute("/")})`,
   ]);
@@ -544,7 +555,11 @@ export function markdownForPath(pathname: string): MarkdownDocument {
     const slug = path.slice("/blog/".length);
     const article = blogArticles.find(candidate => candidate.slug === slug);
     if (article !== undefined) {
-      return { body: articleToMarkdown(article), contentType: MARKDOWN_CONTENT_TYPE, found: true };
+      return {
+        body: articleToMarkdown(article, blogEditorialImage(article.slug)),
+        contentType: MARKDOWN_CONTENT_TYPE,
+        found: true,
+      };
     }
   }
 

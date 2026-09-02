@@ -14,6 +14,7 @@ import {
 import { formatRetrievedAt } from "@/lib/coding-agent-updates";
 
 import {
+  BLOG_AUTHORSHIP_DISCLOSURE,
   BLOG_SOURCES,
   callout,
   heading,
@@ -86,6 +87,7 @@ export function createAaIndexCostArticle(
   );
 
   return {
+    authorshipDisclosure: BLOG_AUTHORSHIP_DISCLOSURE,
     slug: AA_INDEX_COST_ARTICLE_SLUG,
     title: "AA Index versus cost for coding agents",
     dek:
@@ -200,16 +202,6 @@ export function createAaIndexCostArticle(
         " to change axes, pin a model, or inspect provider ranges. Open the ",
         { href: "/data", text: "dataset page" },
         " for provenance, benchmark definitions, and the full configuration table.",
-      ),
-      paragraph(
-        { href: "/blog/open-models-coding-agent-benchmarks", text: "Open-weight catch-up on this snapshot" },
-        ", ",
-        { href: "/blog/coding-agent-score-holdouts", text: "why a high score still needs a holdout" },
-        ", ",
-        { href: "/blog/mirrorcode-coding-agent-benchmark", text: "MirrorCode" },
-        ", and ",
-        { href: "/blog/slopcodebench-long-horizon-coding-agents", text: "SlopCodeBench" },
-        " answer different questions: whether classified open-weight rows sit with the current AA Index leaders, whether a public-suite win generalizes past visible tasks, project-scale reimplementation under large budgets, and quality change as an agent repeatedly extends its own code. They are not substitutes for the AA Index and cost pairs stored here.",
       ),
       heading("Limits of the comparison"),
       list(

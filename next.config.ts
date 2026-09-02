@@ -31,6 +31,11 @@ const nextConfig: NextConfig = {
         permanent: true,
         source: "/:path*",
       },
+      {
+        destination: "/blog/open-models-coding-agent-benchmarks",
+        permanent: true,
+        source: "/blog/are-open-models-catching-up",
+      },
     ];
   },
   reactStrictMode: true,

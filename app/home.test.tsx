@@ -9,6 +9,8 @@ import {
   HOME_EDITORIAL_SLUGS,
   HomeEditorialResources,
 } from "@/components/home-editorial-resources";
+import { BLOG_ARTICLE_ADMISSIONS } from "@/app/blog/article-admissions";
+import { blogEditorialImage } from "@/app/blog/editorial-images";
 import codingAgentData from "@/data/coding-agents.json";
 import { parseCodingAgentSnapshot } from "@/lib/coding-agent-data";
 import {
@@ -58,29 +60,47 @@ describe("homepage agent document", () => {
     expect(markup).toContain('href="/data"');
     expect(markup).toContain('href="/blog/aa-index-cost-coding-agents"');
     expect(markup).toContain('href="/blog/open-models-coding-agent-benchmarks"');
-    expect(markup).toContain('href="/blog/are-open-models-catching-up"');
     expect(markup).toContain('href="/blog/small-models-have-arrived"');
     expect(markup).toContain('href="/blog/terminal-bench-science"');
-    expect(markup).toContain('href="/blog/benchmarkpocalypse"');
     expect(markup).toContain('href="/blog/coding-agent-score-holdouts"');
-    expect(markup).toContain('href="/blog/coding-agent-scores-still-need-expertise"');
     expect(markup).toContain('href="/llms.txt"');
     expect(markup).toContain('href="/sitemap.xml"');
-    expect(text.length).toBeGreaterThan(500);
     expect(text).toContain(document.paragraphs[0] ?? "");
   });
 
-  test("shows a curated three-card editorial module", () => {
+  test("shows a small, role-distinct editorial module", () => {
     const markup = renderToStaticMarkup(createElement(HomeEditorialResources));
-    expect(HOME_EDITORIAL_SLUGS).toHaveLength(3);
+    expect(HOME_EDITORIAL_SLUGS.length).toBeLessThanOrEqual(3);
+    expect(new Set(HOME_EDITORIAL_SLUGS).size).toBe(HOME_EDITORIAL_SLUGS.length);
+    const roles = HOME_EDITORIAL_SLUGS.map(slug =>
+      BLOG_ARTICLE_ADMISSIONS[slug].homepageRole);
+    expect(roles.every(role => role !== undefined)).toBeTrue();
+    expect(new Set(roles).size).toBe(roles.length);
     expect(markup).toContain("Model and benchmark analysis");
     expect(markup).toContain('href="/blog"');
-    expect(markup.match(/rel="preload"/gu)).toHaveLength(1);
+    expect(markup).not.toContain('rel="preload"');
     for (const slug of HOME_EDITORIAL_SLUGS) {
       expect(markup).toContain(`href="/blog/${slug}"`);
-      expect(markup).toContain(
-        encodeURIComponent(`/images/blog/${slug}.webp`),
-      );
+      const image = blogEditorialImage(slug);
+      if (image === undefined) {
+        expect(slug).toBe("small-models-have-arrived");
+        expect(markup).not.toContain(
+          encodeURIComponent(`/images/blog/${slug}.webp`),
+        );
+      } else {
+        expect(markup).toContain(encodeURIComponent(image.src));
+      }
+    }
+
+    const imageLessMarkup = renderToStaticMarkup(
+      HomeEditorialResources({
+        imageForSlug: () => undefined,
+      }),
+    );
+    expect(imageLessMarkup).toContain("Model and benchmark analysis");
+    expect(imageLessMarkup).not.toContain("/images/blog/");
+    for (const slug of HOME_EDITORIAL_SLUGS) {
+      expect(imageLessMarkup).toContain(`href="/blog/${slug}"`);
     }
   });
 
