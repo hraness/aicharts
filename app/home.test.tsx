@@ -10,6 +10,7 @@ import {
   HomeEditorialResources,
 } from "@/components/home-editorial-resources";
 import { BLOG_ARTICLE_ADMISSIONS } from "@/app/blog/article-admissions";
+import { blogEditorialImage } from "@/app/blog/editorial-images";
 import codingAgentData from "@/data/coding-agents.json";
 import { parseCodingAgentSnapshot } from "@/lib/coding-agent-data";
 import {
@@ -80,9 +81,15 @@ describe("homepage agent document", () => {
     expect(markup).not.toContain('rel="preload"');
     for (const slug of HOME_EDITORIAL_SLUGS) {
       expect(markup).toContain(`href="/blog/${slug}"`);
-      expect(markup).toContain(
-        encodeURIComponent(`/images/blog/${slug}.webp`),
-      );
+      const image = blogEditorialImage(slug);
+      if (image === undefined) {
+        expect(slug).toBe("small-models-have-arrived");
+        expect(markup).not.toContain(
+          encodeURIComponent(`/images/blog/${slug}.webp`),
+        );
+      } else {
+        expect(markup).toContain(encodeURIComponent(image.src));
+      }
     }
 
     const imageLessMarkup = renderToStaticMarkup(

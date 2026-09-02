@@ -174,6 +174,7 @@ export function blogArticleJsonLd(
     },
     headline: article.title,
     description: article.seoDescription,
+    creditText: article.authorshipDisclosure,
     ...(editorialImage === null ? {} : {
       image: absoluteWebUrl(searchSite.origin, editorialImage.src),
     }),

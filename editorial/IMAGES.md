@@ -21,14 +21,19 @@ data with repository-native chart code.
 `app/blog/editorial-images.ts` is a partial registry of the images that passed
 editorial review. A registered image drives the visible article figure, blog
 cards, the curated homepage module, Open Graph, Twitter, `BlogPosting.image`,
-Atom enclosures, and the image sitemap. An article without a registered image
-must remain image-free across all of those representations.
+Atom enclosures, canonical Markdown, and the image sitemap. An article without
+a registered image must remain image-free across all of those representations.
 
 Keep the reviewed 1536×864 WebP at `public/images/blog/<slug>.webp`. Alt text
 describes the visible composition. The caption explains the editorial
 distinction without overstating evidence. Record dimensions, bytes, hashes,
 prompt digest, and immutable Atet receipt/job paths in
 `editorial/images.manifest.json`.
+
+The focused discovery tests must validate manifest metadata against the typed
+registry and the exact binary, and exercise both a registered article and a
+real admitted image-free article. Injected `undefined` records are useful unit
+checks, but they do not prove that the live corpus remains optional.
 
 ## Generation boundary
 
@@ -53,4 +58,5 @@ code-native, sourced chart for numbers. Do not add decorative image breaks.
 
 Run `bun run check`, then inspect the homepage, blog index, and one article at
 desktop and mobile widths. Confirm the visible image, canonical metadata,
-JSON-LD, Atom enclosure, sitemap, and public image response all agree.
+JSON-LD, Atom enclosure, sitemap, canonical Markdown, and public image response
+all agree.

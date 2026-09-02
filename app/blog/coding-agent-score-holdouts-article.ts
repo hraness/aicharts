@@ -11,6 +11,7 @@ import { formatSnapshotScore } from "@/lib/coding-agent-snapshot-rows";
 import { formatRetrievedAt } from "@/lib/coding-agent-updates";
 
 import {
+  BLOG_AUTHORSHIP_DISCLOSURE,
   BLOG_SOURCES,
   callout,
   heading,
@@ -111,6 +112,7 @@ export function createCodingAgentScoreHoldoutsArticle(
   );
 
   return {
+    authorshipDisclosure: BLOG_AUTHORSHIP_DISCLOSURE,
     slug: HOLDOUT_ARTICLE_SLUG,
     title: "Why a coding-agent high score still needs a holdout",
     dek:
@@ -258,11 +260,7 @@ export function createCodingAgentScoreHoldoutsArticle(
         " asks an agent to reimplement a complete program. The replacement must pass end-to-end tests, including held-out tests the agent cannot inspect while developing. A lookup table limited to visible examples is not enough. That design is the holdout Luu used as a check, built into the benchmark instead of added after a public win.",
       ),
       paragraph(
-        { href: "/blog/slopcodebench-long-horizon-coding-agents", text: "SlopCodeBench" },
-        " keeps its test suites hidden, including held-out cases beyond the examples in the specification. The paper still reports low strict pass rates and quality loss as agents extend their own code. Hidden tests did not make the benchmark ungameable. They kept “the specification examples passed” from being reported as “the software is finished.”",
-      ),
-      paragraph(
-        "Those notes are complementary to this one. MirrorCode and SlopCodeBench show what a holdout looks like when the benchmark authors own it. Luu shows what happens when the public suite is the only target and the holdout arrives later. The Artificial Analysis snapshot sits between those poles: automated verification on named suites, with no unpublished holdout in the checked records.",
+        "MirrorCode shows what a holdout looks like when the benchmark authors own it. Luu shows what happens when the public suite is the only target and the holdout arrives later. The Artificial Analysis snapshot sits between those poles: automated verification on named suites, with no unpublished holdout in the checked records.",
       ),
       callout(
         "A high score is a named-suite score",

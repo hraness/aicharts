@@ -66,15 +66,6 @@ export const BLOG_EDITORIAL_IMAGES = {
     "20260831T132600000Z-image-25b0982f-tbs/receipt.json",
     "gateway_db4be239e6db4bae5aa62a424e6e6a4c.json",
   ),
-  "small-models-have-arrived": image(
-    "small-models-have-arrived",
-    "A compact blue and coral computing core moves a light stream through a modular machine beside a separate taller structure.",
-    "Lower inference costs can make repeated AI work viable when the model still meets the task’s quality bar.",
-    "f6bfe3d262147db6408e069df98803277b34b1f471eb61f03a51a7ef2eb51330",
-    "e29d12c19ab8ff27d923fe92a66207897a19522f4f59ecdfc7d0c8bfff7a9cf8",
-    "20260829T044909987Z-image-8a112f56-e2a/receipt.json",
-    "gateway_b77cf0ef88e742678bb8a594e8dcfcee.json",
-  ),
   "coding-agent-score-holdouts": image(
     "coding-agent-score-holdouts",
     "A modular testing path passes an open gate while an unresolved branch waits behind a folded screen.",
@@ -110,15 +101,6 @@ export const BLOG_EDITORIAL_IMAGES = {
     "489c252eef19475feb415cfee029ba1d0edbb48bbd85b6c2556d331e1036877f",
     "20260829T045733333Z-image-0903f6a9-912/receipt.json",
     "gateway_e99b616d49ae40a9b656442b726178ed.json",
-  ),
-  "slopcodebench-long-horizon-coding-agents": image(
-    "slopcodebench-long-horizon-coding-agents",
-    "A clean modular structure grows into a longer construction with denser duplicated additions and awkward braces.",
-    "Later changes inherit every earlier structural decision; the illustration is not a measured trajectory.",
-    "ce552845580b975f6a8c3fb1cd6d150c70e1fc7ef466068654a8ac301dcd4b32",
-    "e845ab6a7a4980b72d385d1f929f797edbe68bfc92f4069c5a2caaea0f1e6c91",
-    "20260829T045808335Z-image-d89ed557-fba/receipt.json",
-    "gateway_b8ea95991c3b42b8a52b141a51324a80.json",
   ),
 } as const satisfies EditorialImageRecord;
 

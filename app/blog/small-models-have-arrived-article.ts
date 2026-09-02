@@ -1,4 +1,5 @@
 import {
+  BLOG_AUTHORSHIP_DISCLOSURE,
   BLOG_SOURCES,
   callout,
   heading,
@@ -37,6 +38,7 @@ function textCell(value: string): InlineContent {
 
 export function createSmallModelsHaveArrivedArticle(): BlogArticle {
   return {
+    authorshipDisclosure: BLOG_AUTHORSHIP_DISCLOSURE,
     slug: SMALL_MODELS_ARTICLE_SLUG,
     title: "Cheaper AI models can make everyday products viable",
     dek:

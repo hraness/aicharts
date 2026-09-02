@@ -112,8 +112,8 @@ export default function BlogIndex() {
             <div>
               <h3>Sources</h3>
               <p>
-                Each note starts with the benchmark paper or maintained source
-                page. Material claims link to those primary sources.
+                Each note starts with primary or first-party evidence. Material
+                claims link directly to those sources.
               </p>
             </div>
             <div>

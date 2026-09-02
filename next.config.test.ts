@@ -58,13 +58,6 @@ describe("site migration redirects", () => {
         source: "/blog/are-open-models-catching-up",
         statusCode: undefined,
       },
-      {
-        destination: "/blog/coding-agent-score-holdouts",
-        host: undefined,
-        permanent: true,
-        source: "/blog/benchmarkpocalypse",
-        statusCode: undefined,
-      },
     ]);
   });
 

@@ -8,13 +8,10 @@ import {
   getBlogArticle,
   type BlogSlug,
 } from "@/app/blog/articles";
+import { HOME_EDITORIAL_SLUGS } from "@/app/blog/article-admissions";
 import Link from "next/link";
 
-export const HOME_EDITORIAL_SLUGS = [
-  "small-models-have-arrived",
-  "coding-agent-score-holdouts",
-  "mirrorcode-coding-agent-benchmark",
-] as const satisfies readonly BlogSlug[];
+export { HOME_EDITORIAL_SLUGS } from "@/app/blog/article-admissions";
 
 interface HomeEditorialResourcesProps {
   readonly imageForSlug?: (slug: BlogSlug) => BlogEditorialImage | undefined;

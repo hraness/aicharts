@@ -96,7 +96,7 @@ export default async function BlogArticlePage({
         <h1>{article.title}</h1>
         <p className="plain-publication__article-dek">{article.dek}</p>
         <p className="plain-publication__article-meta">
-          <span>By AI Charts</span>
+          <span>By AI Charts · AI-assisted</span>
           <span aria-hidden="true"> · </span>
           <span>Published </span>
           <time dateTime={article.publishedAt}>
@@ -175,6 +175,7 @@ export default async function BlogArticlePage({
           )}
 
           <p className="plain-publication__disclosure">
+            {article.authorshipDisclosure} {" "}
             Reported results apply to the named source, workload,
             configuration, and observation date. They do not establish
             performance on every task or product.

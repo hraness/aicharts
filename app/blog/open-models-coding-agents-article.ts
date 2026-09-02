@@ -22,6 +22,7 @@ import {
 } from "@/lib/open-weight-coding-agents";
 
 import {
+  BLOG_AUTHORSHIP_DISCLOSURE,
   BLOG_SOURCES,
   callout,
   heading,
@@ -157,6 +158,7 @@ export function createOpenModelsCodingAgentsArticle(
   const firstOpenFrontier = openFrontier[0];
 
   return {
+    authorshipDisclosure: BLOG_AUTHORSHIP_DISCLOSURE,
     slug: OPEN_MODELS_ARTICLE_SLUG,
     title: "Are open models catching up on coding-agent benchmarks?",
     dek:

@@ -4,6 +4,7 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
 import codingAgentData from "@/data/coding-agents.json";
+import editorialImageManifest from "@/editorial/images.manifest.json";
 import { parseCodingAgentSnapshot } from "@/lib/coding-agent-data";
 import {
   currentCodingAgentBenchmarkLeaders,
@@ -34,6 +35,7 @@ import { ArticleBody } from "./article-body";
 import {
   BLOG_SLUGS,
   BLOG_SOURCES,
+  BLOG_AUTHORSHIP_DISCLOSURE,
   articleToMarkdown,
   blogArticleSection,
   blogArticlePath,
@@ -70,6 +72,8 @@ import {
   blogCollectionJsonLd,
   breadcrumbJsonLd,
 } from "./seo";
+
+const IMAGE_FREE_SLUG = "small-models-have-arrived" as const;
 
 describe("AI Charts benchmark notes", () => {
   test("uses the shared publication shell with chart discovery", () => {
@@ -126,6 +130,8 @@ describe("AI Charts benchmark notes", () => {
       expect(article.seoDescription.trim()).toBe(article.seoDescription);
       expect(articleToMarkdown(article)).toContain(`# ${article.title}`);
       expect(articleToMarkdown(article)).toContain(article.dek);
+      expect(article.authorshipDisclosure).toBe(BLOG_AUTHORSHIP_DISCLOSURE);
+      expect(articleToMarkdown(article)).toContain(BLOG_AUTHORSHIP_DISCLOSURE);
       if (article.slug === "terminal-bench-science") {
         expect(article.publishedAt).toBe("2026-08-31");
         expect(article.updatedAt >= article.publishedAt).toBeTrue();
@@ -169,23 +175,41 @@ describe("AI Charts benchmark notes", () => {
     }
   });
 
-  test("records a reader job, primary evidence, and review window for every route", () => {
+  test("fails closed on complete, scored, individually authored admissions", () => {
     expect(Object.keys(BLOG_ARTICLE_ADMISSIONS)).toEqual([...BLOG_SLUGS]);
     for (const article of blogArticles) {
       const admission = BLOG_ARTICLE_ADMISSIONS[article.slug];
       expect(admission.canonicalOwner).toBe(blogArticlePath(article.slug));
       expect(admission.decision).toBe("keep");
+      expect(admission.lifecycleState).toBe("indexable");
+      expect(admission.reviewedBy).toBe("Codex editorial review");
+      expect(admission.humanReviewedOn).toBeNull();
       expect(admission.readerJob.trim()).toBe(admission.readerJob);
       expect(admission.originalContribution.trim())
         .toBe(admission.originalContribution);
       expect(admission.primaryEvidence.trim()).toBe(admission.primaryEvidence);
       expect(admission.harmIfWrong.trim()).toBe(admission.harmIfWrong);
+      expect(admission.hostFit.trim()).toBe(admission.hostFit);
+      expect(admission.overlapDecision.trim()).toBe(admission.overlapDecision);
+      expect(admission.nearestUrls.length).toBeGreaterThan(0);
+      for (const neighbor of admission.nearestUrls) {
+        expect(BLOG_SLUGS as readonly string[])
+          .toContain(neighbor.url.slice("/blog/".length));
+        expect(neighbor.url).not.toBe(admission.canonicalOwner);
+        expect(neighbor.distinction.trim()).toBe(neighbor.distinction);
+      }
       for (const sourceId of admission.primarySourceIds) {
         expect(article.sourceIds).toContain(sourceId);
         expect(BLOG_SOURCES[sourceId]).toBeDefined();
       }
+      const scores = Object.values(admission.scores);
+      expect(scores.every(score => score > 0)).toBeTrue();
+      expect(scores.reduce((sum, score) => sum + score, 0))
+        .toBeGreaterThanOrEqual(9);
       const reviewed = new Date(`${admission.reviewedOn}T00:00:00.000Z`);
       const reassess = new Date(`${admission.reassessOn}T00:00:00.000Z`);
+      const sourceChecked = new Date(`${admission.sourceCheckedOn}T00:00:00.000Z`);
+      expect(sourceChecked.getTime()).toBeLessThanOrEqual(reviewed.getTime());
       const days = (reassess.getTime() - reviewed.getTime()) / 86_400_000;
       expect(days).toBeGreaterThanOrEqual(28);
       expect(days).toBeLessThanOrEqual(56);
@@ -433,7 +457,6 @@ describe("AI Charts benchmark notes", () => {
     expect(markup).toContain("<table");
     expect(markup).toContain('scope="row"');
     expect(markup).toContain(`href="${BLOG_SOURCES.mirrorCode.url}"`);
-    expect(markup).toContain(`href="${BLOG_SOURCES.slopCodeBench.url}"`);
     expect(markup).toContain(`href="${BLOG_SOURCES.artificialAnalysisCodingAgents.url}"`);
     expect(markup).toContain(`href="${BLOG_SOURCES.semiAnalysisOpenModels.url}"`);
     expect(markup).toContain(`href="${BLOG_SOURCES.danLuuBenchpocalypse.url}"`);
@@ -457,6 +480,11 @@ describe("AI Charts benchmark notes", () => {
         expect(indexMarkup).toContain(
           encodeURIComponent(editorialImage.src),
         );
+      } else {
+        expect(article.slug).toBe(IMAGE_FREE_SLUG);
+        expect(indexMarkup).not.toContain(
+          encodeURIComponent(`/images/blog/${article.slug}.webp`),
+        );
       }
 
       const page = await BlogArticlePage({
@@ -470,9 +498,14 @@ describe("AI Charts benchmark notes", () => {
         `<span aria-current="page">${article.title}</span>`,
       );
       expect(markup).toContain(`dateTime="${article.publishedAt}"`);
+      expect(markup).toContain("By AI Charts · AI-assisted");
+      expect(markup).toContain(article.authorshipDisclosure);
       if (editorialImage !== undefined) {
         expect(markup).toContain(editorialImage.caption);
         expect(markup).toContain(editorialImage.alt);
+      } else {
+        expect(article.slug).toBe(IMAGE_FREE_SLUG);
+        expect(markup).not.toContain("<figure");
       }
       if ("showChartCta" in article && article.showChartCta === false) {
         expect(markup).not.toContain("Current comparison: coding agents");
@@ -554,13 +587,18 @@ describe("AI Charts blog discovery", () => {
       expect(metadata.robots).toEqual(INDEXABLE_ROBOTS);
     }
 
-    const imageLess = blogArticleMetadata(blogArticles[0], null);
+    const imageLessArticle = getBlogArticle(IMAGE_FREE_SLUG);
+    expect(imageLessArticle).toBeDefined();
+    if (imageLessArticle === undefined) return;
+    const imageLess = blogArticleMetadata(imageLessArticle);
     expect(imageLess.openGraph).not.toHaveProperty("images");
     expect(imageLess.twitter).toMatchObject({ card: "summary" });
     expect(imageLess.twitter).not.toHaveProperty("images");
   });
 
   test("validates each registered editorial image without requiring one per article", async () => {
+    expect(blogEditorialImage(IMAGE_FREE_SLUG)).toBeUndefined();
+    expect(blogEditorialImages.length).toBeLessThan(blogArticles.length);
     for (const slug of Object.keys(BLOG_EDITORIAL_IMAGES)) {
       expect(BLOG_SLUGS as readonly string[]).toContain(slug);
     }
@@ -581,6 +619,25 @@ describe("AI Charts blog discovery", () => {
       hasher.update(await file.arrayBuffer());
       expect(hasher.digest("hex")).toBe(image.sha256);
     }
+
+    expect(editorialImageManifest.generator.package).toBe("@hraness/atet@3.1.2");
+    expect(editorialImageManifest.images.map(entry => entry.slug).sort())
+      .toEqual(blogEditorialImages.map(image => image.slug).sort());
+    for (const image of blogEditorialImages) {
+      const entry = editorialImageManifest.images.find(candidate =>
+        candidate.slug === image.slug);
+      expect(entry).toBeDefined();
+      if (entry === undefined) continue;
+      expect(entry.master.path).toBe(image.src);
+      expect(entry.master.width).toBe(image.width);
+      expect(entry.master.height).toBe(image.height);
+      expect(entry.master.sha256).toBe(image.sha256);
+      expect(entry.promptSha256).toBe(image.provenance.promptSha256);
+      expect(entry.receiptPath.endsWith(image.provenance.receipt)).toBeTrue();
+      expect(entry.jobPath.endsWith(image.provenance.job)).toBeTrue();
+      const file = Bun.file(new URL(`../../public${image.src}`, import.meta.url));
+      expect(entry.master.bytes).toBe(file.size);
+    }
   });
 
   test("publishes an Atom feed with the same representative image", async () => {
@@ -600,6 +657,18 @@ describe("AI Charts blog discovery", () => {
         expect(xml).toContain(image.caption);
       }
     }
+    const imageFreeArticle = getBlogArticle(IMAGE_FREE_SLUG);
+    expect(imageFreeArticle).toBeDefined();
+    if (imageFreeArticle === undefined) return;
+    const imageFreeUrl = `https://aicharts.io${blogArticlePath(IMAGE_FREE_SLUG)}`;
+    const imageFreeStart = xml.indexOf(`<id>${imageFreeUrl}</id>`);
+    const imageFreeEnd = xml.indexOf("</entry>", imageFreeStart);
+    const imageFreeEntry = xml.slice(imageFreeStart, imageFreeEnd);
+    expect(imageFreeStart).toBeGreaterThan(-1);
+    expect(imageFreeEntry).not.toContain('rel="enclosure"');
+    expect(imageFreeEntry).not.toContain(`/images/blog/${IMAGE_FREE_SLUG}.webp`);
+    expect(imageFreeEntry).toContain("AI-assisted editorial workflow");
+    expect(imageFreeEntry).toContain("Prepared with AI assistance");
     const imageLessFeed = atomFeed(() => undefined);
     expect(imageLessFeed.match(/<entry>/gu)).toHaveLength(blogArticles.length);
     expect(imageLessFeed).not.toContain('rel="enclosure"');
@@ -633,6 +702,7 @@ describe("AI Charts blog discovery", () => {
         datePublished: `${article.publishedAt}T00:00:00.000Z`,
         dateModified: `${article.updatedAt}T00:00:00.000Z`,
         isAccessibleForFree: true,
+        creditText: article.authorshipDisclosure,
       });
       const image = blogEditorialImage(article.slug);
       if (image === undefined) {
@@ -653,6 +723,14 @@ describe("AI Charts blog discovery", () => {
       expect(item).not.toHaveProperty("image");
     }
     expect(blogArticleJsonLd(blogArticles[0], null)).not.toHaveProperty("image");
+    const liveImageFree = getBlogArticle(IMAGE_FREE_SLUG);
+    expect(liveImageFree).toBeDefined();
+    if (liveImageFree !== undefined) {
+      expect(blogArticleJsonLd(liveImageFree)).not.toHaveProperty("image");
+      const liveItem = collection.mainEntity.itemListElement.find(item =>
+        item.url.endsWith(blogArticlePath(IMAGE_FREE_SLUG)));
+      expect(liveItem).not.toHaveProperty("image");
+    }
 
     const smallModels = getBlogArticle("small-models-have-arrived");
     expect(smallModels).toBeDefined();
@@ -718,6 +796,10 @@ describe("AI Charts blog discovery", () => {
     for (const entry of blogSitemapEntries(() => undefined)) {
       expect(entry).not.toHaveProperty("images");
     }
+    const liveImageFree = entries.find(entry =>
+      entry.url.endsWith(blogArticlePath(IMAGE_FREE_SLUG)));
+    expect(liveImageFree).toBeDefined();
+    expect(liveImageFree).not.toHaveProperty("images");
   });
 
   test("emits a website identity and links the chart to the blog", async () => {

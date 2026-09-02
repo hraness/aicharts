@@ -31,21 +31,6 @@
       "review": "accepted"
     },
     {
-      "slug": "small-models-have-arrived",
-      "promptSha256": "e29d12c19ab8ff27d923fe92a66207897a19522f4f59ecdfc7d0c8bfff7a9cf8",
-      "master": {
-        "path": "/images/blog/small-models-have-arrived.webp",
-        "width": 1536,
-        "height": 864,
-        "bytes": 225264,
-        "sha256": "f6bfe3d262147db6408e069df98803277b34b1f471eb61f03a51a7ef2eb51330"
-      },
-      "receiptPath": "artifacts/atet/generated/gateway/20260829T044909987Z-image-8a112f56-e2a/receipt.json",
-      "jobPath": "artifacts/atet/generated/gateway-jobs/gateway_b77cf0ef88e742678bb8a594e8dcfcee.json",
-      "validation": "decode-passed",
-      "review": "accepted"
-    },
-    {
       "slug": "coding-agent-score-holdouts",
       "promptSha256": "febeb1a517412083a71e2bd9527f96d90cec32da5d975312a45244a8ced78562",
       "master": {
@@ -102,21 +87,6 @@
       },
       "receiptPath": "artifacts/atet/generated/gateway/20260829T045733333Z-image-0903f6a9-912/receipt.json",
       "jobPath": "artifacts/atet/generated/gateway-jobs/gateway_e99b616d49ae40a9b656442b726178ed.json",
-      "validation": "decode-passed",
-      "review": "accepted"
-    },
-    {
-      "slug": "slopcodebench-long-horizon-coding-agents",
-      "promptSha256": "e845ab6a7a4980b72d385d1f929f797edbe68bfc92f4069c5a2caaea0f1e6c91",
-      "master": {
-        "path": "/images/blog/slopcodebench-long-horizon-coding-agents.webp",
-        "width": 1536,
-        "height": 864,
-        "bytes": 222810,
-        "sha256": "ce552845580b975f6a8c3fb1cd6d150c70e1fc7ef466068654a8ac301dcd4b32"
-      },
-      "receiptPath": "artifacts/atet/generated/gateway/20260829T045808335Z-image-d89ed557-fba/receipt.json",
-      "jobPath": "artifacts/atet/generated/gateway-jobs/gateway_b8ea95991c3b42b8a52b141a51324a80.json",
       "validation": "decode-passed",
       "review": "accepted"
     }

@@ -36,11 +36,6 @@ const nextConfig: NextConfig = {
         permanent: true,
         source: "/blog/are-open-models-catching-up",
       },
-      {
-        destination: "/blog/coding-agent-score-holdouts",
-        permanent: true,
-        source: "/blog/benchmarkpocalypse",
-      },
     ];
   },
   reactStrictMode: true,

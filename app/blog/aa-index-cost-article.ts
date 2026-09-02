@@ -14,6 +14,7 @@ import {
 import { formatRetrievedAt } from "@/lib/coding-agent-updates";
 
 import {
+  BLOG_AUTHORSHIP_DISCLOSURE,
   BLOG_SOURCES,
   callout,
   heading,
@@ -86,6 +87,7 @@ export function createAaIndexCostArticle(
   );
 
   return {
+    authorshipDisclosure: BLOG_AUTHORSHIP_DISCLOSURE,
     slug: AA_INDEX_COST_ARTICLE_SLUG,
     title: "AA Index versus cost for coding agents",
     dek:

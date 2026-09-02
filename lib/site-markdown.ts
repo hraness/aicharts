@@ -4,6 +4,8 @@ import {
   blogArticles,
   blogDescription,
 } from "@/app/blog/articles";
+import { HOME_EDITORIAL_SLUGS } from "@/app/blog/article-admissions";
+import { blogEditorialImage } from "@/app/blog/editorial-images";
 import { homeHeading, notFoundRecoveryLinks, site } from "@/app/site";
 import codingAgentData from "@/data/coding-agents.json";
 import gptSubsidyData from "@/data/gpt-subsidy.json";
@@ -113,6 +115,16 @@ function joinMarkdown(lines: readonly string[]): string {
   return `${lines.join("\n").trim()}\n`;
 }
 
+function editorialImageMarkdown(slug: (typeof blogArticles)[number]["slug"]): string[] {
+  const image = blogEditorialImage(slug);
+  return image === undefined ? [] : [
+    `![${image.alt}](${absolute(image.src)})`,
+    "",
+    `*${image.caption} ${image.credit}*`,
+    "",
+  ];
+}
+
 export function homeDocumentModel(
   snapshot: CodingAgentSnapshot = checkedSnapshot(),
 ): HomeDocumentModel {
@@ -216,6 +228,19 @@ function homeMarkdown(snapshot: CodingAgentSnapshot): string {
     codingAgentLeadersMarkdownTable(leaders),
     "",
     ...document.paragraphs.flatMap(paragraph => [paragraph, ""]),
+    "## Model and benchmark analysis",
+    "",
+    ...HOME_EDITORIAL_SLUGS.flatMap(slug => {
+      const article = blogArticles.find(candidate => candidate.slug === slug);
+      if (article === undefined) return [];
+      return [
+        `### [${article.title}](${absolute(blogArticlePath(article.slug))})`,
+        "",
+        ...editorialImageMarkdown(article.slug),
+        article.dek,
+        "",
+      ];
+    }),
     "## Pages",
     "",
     ...document.links.map(link => `- [${link.label}](${absolute(link.href)}). ${link.note}`),
@@ -297,12 +322,13 @@ function blogIndexMarkdown(): string {
     ...blogArticles.flatMap(article => [
       `### [${article.title}](${absolute(blogArticlePath(article.slug))})`,
       "",
+      ...editorialImageMarkdown(article.slug),
       article.dek,
       "",
     ]),
     "## Method",
     "",
-    "Each note starts with the benchmark paper or maintained source page. Material claims link to those primary sources. Leaderboard values are paired with their observation date and named configuration. Methodology limits stay near the results they qualify.",
+    "Each note starts with primary or first-party evidence. Material claims link directly to those sources. Leaderboard values are paired with their observation date and named configuration. Methodology limits stay near the results they qualify.",
     "",
     `[Explore the coding-agent chart](${absolute("/")})`,
   ]);
@@ -529,7 +555,11 @@ export function markdownForPath(pathname: string): MarkdownDocument {
     const slug = path.slice("/blog/".length);
     const article = blogArticles.find(candidate => candidate.slug === slug);
     if (article !== undefined) {
-      return { body: articleToMarkdown(article), contentType: MARKDOWN_CONTENT_TYPE, found: true };
+      return {
+        body: articleToMarkdown(article, blogEditorialImage(article.slug)),
+        contentType: MARKDOWN_CONTENT_TYPE,
+        found: true,
+      };
     }
   }
 
