@@ -152,7 +152,10 @@ describe("model card presentation", () => {
   });
 
   test("turns operational source labels into a clean collectible title", () => {
-    const fable = MODEL_CARD_PRESENTATIONS.find(card => card.model.includes("with fallback"));
+    const fable = MODEL_CARD_PRESENTATIONS.find(card => (
+      card.canonicalModelId === "anthropic/claude-fable-5"
+      && card.profileSlug === "max"
+    ));
     expect(fable).toMatchObject({
       canonicalModelId: "anthropic/claude-fable-5",
       classLabel: "Max",
