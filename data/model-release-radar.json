@@ -3,7 +3,7 @@
   "source": {
     "method": "models-api",
     "name": "OpenRouter",
-    "retrievedAt": "2026-09-02T15:52:37.751Z",
+    "retrievedAt": "2026-09-02T22:38:18.539Z",
     "timestampMeaning": "source-added-at",
     "url": "https://openrouter.ai/api/v1/models?sort=newest"
   },
@@ -28,6 +28,18 @@
     "windowDays": 90
   },
   "observedListings": [
+    {
+      "id": "meta/muse-spark-1.3-contributor",
+      "model": "Muse Spark 1.3 Contributor",
+      "providerId": "meta",
+      "sourceAddedAt": "2026-09-02T20:38:39.000Z"
+    },
+    {
+      "id": "meta/muse-spark-1.3",
+      "model": "Muse Spark 1.3",
+      "providerId": "meta",
+      "sourceAddedAt": "2026-09-02T19:45:59.000Z"
+    },
     {
       "id": "google/gemini-3.8-flash",
       "model": "Gemini 3.8 Flash",
@@ -246,6 +258,52 @@
     }
   ],
   "releases": [
+    {
+      "capabilities": {
+        "inputModalities": [
+          "audio",
+          "file",
+          "image",
+          "text",
+          "video"
+        ],
+        "outputModalities": [
+          "text"
+        ],
+        "supportsTools": true
+      },
+      "canonicalSlug": "meta/muse-spark-1.3-contributor-20260902",
+      "id": "meta/muse-spark-1.3-contributor",
+      "model": "Muse Spark 1.3 Contributor",
+      "modelUrl": "https://openrouter.ai/meta/muse-spark-1.3-contributor",
+      "providerId": "meta",
+      "providerName": "Meta",
+      "sourceAddedAt": "2026-09-02T20:38:39.000Z",
+      "status": "awaiting-benchmark"
+    },
+    {
+      "capabilities": {
+        "inputModalities": [
+          "audio",
+          "file",
+          "image",
+          "text",
+          "video"
+        ],
+        "outputModalities": [
+          "text"
+        ],
+        "supportsTools": true
+      },
+      "canonicalSlug": "meta/muse-spark-1.3-20260902",
+      "id": "meta/muse-spark-1.3",
+      "model": "Muse Spark 1.3",
+      "modelUrl": "https://openrouter.ai/meta/muse-spark-1.3",
+      "providerId": "meta",
+      "providerName": "Meta",
+      "sourceAddedAt": "2026-09-02T19:45:59.000Z",
+      "status": "awaiting-benchmark"
+    },
     {
       "capabilities": {
         "inputModalities": [
