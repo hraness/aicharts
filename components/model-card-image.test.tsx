@@ -28,7 +28,10 @@ function pngDimensions(bytes: ArrayBuffer): Readonly<{ height: number; width: nu
 
 describe("model card ImageResponse rendering", () => {
   test("keeps the collectible identity focused while naming official release provenance", () => {
-    const card = MODEL_CARD_PRESENTATIONS.find(candidate => candidate.model.includes("with fallback"));
+    const card = MODEL_CARD_PRESENTATIONS.find(candidate => (
+      candidate.canonicalModelId === "anthropic/claude-fable-5"
+      && candidate.profileSlug === "max"
+    ));
     expect(card).toBeDefined();
     if (card === undefined) return;
     expect(card.release.status).toBe("verified");
