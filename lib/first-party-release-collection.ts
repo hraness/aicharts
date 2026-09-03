@@ -13,8 +13,28 @@ if (!checkedRadar.ok) {
 }
 
 export const FIRST_PARTY_RELEASE_RADAR = checkedRadar.value;
+
+export function summarizeFirstPartyReleaseSources(
+  sources: FirstPartyReleaseRadar["sources"],
+) {
+  return {
+    labCount: new Set(sources.map(source => source.providerId)).size,
+    sourceCount: sources.length,
+  } as const;
+}
+
+export const FIRST_PARTY_RELEASE_SOURCE_SUMMARY = summarizeFirstPartyReleaseSources(
+  FIRST_PARTY_RELEASE_RADAR.sources,
+);
+
 export function confirmedFirstPartyReleases(radar: FirstPartyReleaseRadar) {
-  return radar.candidates.filter(candidate => candidate.status === "confirmed-release");
+  return radar.candidates
+    .filter(candidate => candidate.status === "confirmed-release")
+    .sort((left, right) => (
+      Date.parse(right.sourceModifiedAt) - Date.parse(left.sourceModifiedAt)
+      || Date.parse(right.firstSeenAt) - Date.parse(left.firstSeenAt)
+      || (left.canonicalUrl < right.canonicalUrl ? -1 : left.canonicalUrl > right.canonicalUrl ? 1 : 0)
+    ));
 }
 
 export const CONFIRMED_FIRST_PARTY_RELEASES = confirmedFirstPartyReleases(

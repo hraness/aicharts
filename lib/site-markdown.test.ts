@@ -25,7 +25,10 @@ import {
   parseGptSubsidySnapshot,
 } from "./gpt-subsidy-data";
 import { directDeepSweEvidenceForRelease } from "./deep-swe-evidence-collection";
-import { FIRST_PARTY_RELEASE_HIGHLIGHTS } from "./first-party-release-collection";
+import {
+  FIRST_PARTY_RELEASE_HIGHLIGHTS,
+  FIRST_PARTY_RELEASE_SOURCE_SUMMARY,
+} from "./first-party-release-collection";
 import { modelReleaseRadarHighlightsExcluding } from "./model-release-collection";
 import { parseTerminalBenchSnapshot } from "./terminal-bench-data";
 import { parseTerminalBenchScienceSnapshot } from "./terminal-bench-science-data";
@@ -120,6 +123,12 @@ describe("markdown representations", () => {
     expect(cards.body).toContain(`# ${modelCardsHeading}`);
     expect(cards.body).toContain(modelCardsLede);
     expect(cards.body).toContain("## First-party release radar");
+    expect(cards.body).toContain(
+      `${FIRST_PARTY_RELEASE_SOURCE_SUMMARY.labCount} labs across ${FIRST_PARTY_RELEASE_SOURCE_SUMMARY.sourceCount} first-party sources`,
+    );
+    expect(cards.body).toContain("Previously unseen canonical URLs create candidates");
+    expect(cards.body).toContain("first observed");
+    expect(cards.body).not.toContain("source changed");
     expect(cards.body).toContain("Claude Fable 5.1 and Claude Mythos 5.1");
     expect(cards.body).toContain("## Benchmark coverage radar");
     expect(cards.body).toContain("awaiting a complete four-benchmark Artificial Analysis index");

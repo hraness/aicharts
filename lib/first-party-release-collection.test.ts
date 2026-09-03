@@ -2,10 +2,31 @@ import { describe, expect, test } from "bun:test";
 
 import {
   FIRST_PARTY_RELEASE_RADAR,
+  FIRST_PARTY_RELEASE_SOURCE_SUMMARY,
   confirmedFirstPartyReleases,
+  summarizeFirstPartyReleaseSources,
 } from "./first-party-release-collection";
 
 describe("first-party release publication", () => {
+  test("counts distinct labs separately from configured sources", () => {
+    const firstSource = FIRST_PARTY_RELEASE_RADAR.sources[0];
+    if (firstSource === undefined) throw new Error("Expected a checked first-party source.");
+
+    expect(FIRST_PARTY_RELEASE_SOURCE_SUMMARY).toEqual({
+      labCount: new Set(
+        FIRST_PARTY_RELEASE_RADAR.sources.map(source => source.providerId),
+      ).size,
+      sourceCount: FIRST_PARTY_RELEASE_RADAR.sources.length,
+    });
+    expect(summarizeFirstPartyReleaseSources([
+      ...FIRST_PARTY_RELEASE_RADAR.sources,
+      firstSource,
+    ])).toEqual({
+      labCount: FIRST_PARTY_RELEASE_SOURCE_SUMMARY.labCount,
+      sourceCount: FIRST_PARTY_RELEASE_SOURCE_SUMMARY.sourceCount + 1,
+    });
+  });
+
   test("keeps Meta research discovery in the checked ledger without publishing it", () => {
     const source = FIRST_PARTY_RELEASE_RADAR.sources.find(item => item.id === "meta-research-sitemap");
     const museSpark = FIRST_PARTY_RELEASE_RADAR.candidates.filter(candidate => (
@@ -36,5 +57,36 @@ describe("first-party release publication", () => {
     };
 
     expect(confirmedFirstPartyReleases(radar)).toEqual(radar.candidates);
+  });
+
+  test("orders reviewed releases by immutable source recency, including same-day ties", () => {
+    const reviewed = FIRST_PARTY_RELEASE_RADAR.candidates.filter(
+      candidate => candidate.status === "confirmed-release",
+    ).slice(0, 2);
+    const older = reviewed[0];
+    const newer = reviewed[1];
+    if (older === undefined || newer === undefined) {
+      throw new Error("Expected two reviewed release fixtures.");
+    }
+    const radar = {
+      ...FIRST_PARTY_RELEASE_RADAR,
+      candidates: [
+        {
+          ...older,
+          candidateDate: "2026-09-02",
+          firstSeenAt: "2026-09-03T00:00:00.000Z",
+          sourceModifiedAt: "2026-09-02T01:00:00.000Z",
+        },
+        {
+          ...newer,
+          candidateDate: "2026-09-02",
+          firstSeenAt: "2026-09-01T00:00:00.000Z",
+          sourceModifiedAt: "2026-09-02T23:00:00.000Z",
+        },
+      ],
+    };
+
+    expect(confirmedFirstPartyReleases(radar).map(candidate => candidate.id))
+      .toEqual([newer.id, older.id]);
   });
 });

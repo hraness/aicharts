@@ -177,6 +177,19 @@ describe("Terminal-Bench 4.0 source parsing", () => {
     for (const url of unsafeRetainedUrls) {
       expect(parseTerminalBenchSubmission(rawSubmission({ source_jobs: [url] })).ok).toBeFalse();
     }
+    expect(parseTerminalBenchSubmission(rawSubmission({ source_jobs: ["not-a-job-id"] })).ok)
+      .toBeFalse();
+  });
+
+  test("normalizes an owner-published Harbor job UUID to its HTTPS job page", () => {
+    const jobId = "542367e9-c4ae-5255-ab76-4c9045749e8e";
+    const parsed = parseTerminalBenchSubmission(rawSubmission({ source_jobs: [jobId] }));
+
+    expect(parsed.ok).toBeTrue();
+    if (!parsed.ok) return;
+    expect(parsed.value.source_jobs).toEqual([
+      `https://hub.harborframework.com/jobs/${jobId}`,
+    ]);
   });
 
   test("accepts a null source-filter effort only when the display effort is none", () => {
