@@ -6,14 +6,14 @@
       "canonicalUrl": "https://www.anthropic.com/claude-corps",
       "firstSeenAt": "2026-09-02T15:52:38.032Z",
       "id": "anthropic:/claude-corps",
-      "lastChangedAt": "2026-09-03T00:52:14.778Z",
+      "lastChangedAt": "2026-09-03T04:25:04.732Z",
       "namedModels": [
         "Unresolved announcement: Claude Corps"
       ],
       "providerId": "anthropic",
       "providerName": "Anthropic",
       "sourceId": "anthropic-sitemap",
-      "sourceModifiedAt": "2026-09-03T00:48:01.689Z",
+      "sourceModifiedAt": "2026-09-03T04:24:36.560Z",
       "sourcePresence": "present",
       "status": "not-a-release"
     },
@@ -23,7 +23,7 @@
       "canonicalUrl": "https://www.anthropic.com/claude-fable-and-mythos-5-1",
       "firstSeenAt": "2026-09-02T13:54:58.398Z",
       "id": "anthropic:/claude-fable-and-mythos-5-1",
-      "lastChangedAt": "2026-09-03T00:52:14.778Z",
+      "lastChangedAt": "2026-09-03T04:25:04.732Z",
       "namedModels": [
         "Claude Fable 5.1",
         "Claude Mythos 5.1"
@@ -31,7 +31,7 @@
       "providerId": "anthropic",
       "providerName": "Anthropic",
       "sourceId": "anthropic-sitemap",
-      "sourceModifiedAt": "2026-09-03T00:48:01.689Z",
+      "sourceModifiedAt": "2026-09-03T04:24:36.560Z",
       "sourcePresence": "present",
       "status": "confirmed-release"
     },
@@ -1394,7 +1394,7 @@
       "id": "anthropic-sitemap",
       "providerId": "anthropic",
       "providerName": "Anthropic",
-      "retrievedAt": "2026-09-03T00:52:14.778Z",
+      "retrievedAt": "2026-09-03T04:25:04.732Z",
       "url": "https://www.anthropic.com/sitemap.xml"
     },
     {
@@ -1416,7 +1416,7 @@
       "id": "openai-release-sitemap",
       "providerId": "openai",
       "providerName": "OpenAI",
-      "retrievedAt": "2026-09-03T00:52:14.778Z",
+      "retrievedAt": "2026-09-03T04:25:04.732Z",
       "url": "https://openai.com/sitemap.xml/release/"
     },
     {
@@ -1438,7 +1438,7 @@
       "id": "meta-research-sitemap",
       "providerId": "meta",
       "providerName": "Meta",
-      "retrievedAt": "2026-09-03T00:52:14.778Z",
+      "retrievedAt": "2026-09-03T04:25:04.732Z",
       "url": "https://research.meta.ai/sitemap.xml"
     }
   ]
