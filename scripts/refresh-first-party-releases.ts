@@ -7,6 +7,7 @@ import {
   emptyFirstPartyReleaseRadar,
   observeFirstPartyReleaseSource,
   parseFirstPartyReleaseRadar,
+  parsePreviousFirstPartyReleaseRadar,
   validateFirstPartyReleaseReplacement,
   type FetchedSitemap,
   type FirstPartyReleaseRadar,
@@ -21,7 +22,9 @@ async function readCommittedFirstPartyReleaseRadar(
 ): Promise<Result<FirstPartyReleaseRadar, Error>> {
   try {
     const input: unknown = await Bun.file(OUTPUT_PATH).json();
-    const parsed = parseFirstPartyReleaseRadar(input);
+    const parsed = allowMissing
+      ? parsePreviousFirstPartyReleaseRadar(input)
+      : parseFirstPartyReleaseRadar(input);
     return parsed.ok
       ? ok(parsed.value)
       : err(new Error(`Invalid ${OUTPUT_PATH}: ${parsed.error.message}`, { cause: parsed.error }));

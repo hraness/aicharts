@@ -1,29 +1,29 @@
 {
   "candidates": [
     {
-      "candidateDate": "2026-09-02",
+      "candidateDate": "2026-09-03",
       "candidateDateMeaning": "provider-sitemap-lastmod",
       "canonicalUrl": "https://www.anthropic.com/claude-corps",
       "firstSeenAt": "2026-09-02T15:52:38.032Z",
       "id": "anthropic:/claude-corps",
-      "lastChangedAt": "2026-09-02T22:38:18.879Z",
+      "lastChangedAt": "2026-09-03T00:52:14.778Z",
       "namedModels": [
         "Unresolved announcement: Claude Corps"
       ],
       "providerId": "anthropic",
       "providerName": "Anthropic",
       "sourceId": "anthropic-sitemap",
-      "sourceModifiedAt": "2026-09-02T22:35:49.419Z",
+      "sourceModifiedAt": "2026-09-03T00:48:01.689Z",
       "sourcePresence": "present",
       "status": "not-a-release"
     },
     {
-      "candidateDate": "2026-09-02",
+      "candidateDate": "2026-09-03",
       "candidateDateMeaning": "provider-sitemap-lastmod",
       "canonicalUrl": "https://www.anthropic.com/claude-fable-and-mythos-5-1",
       "firstSeenAt": "2026-09-02T13:54:58.398Z",
       "id": "anthropic:/claude-fable-and-mythos-5-1",
-      "lastChangedAt": "2026-09-02T22:38:18.879Z",
+      "lastChangedAt": "2026-09-03T00:52:14.778Z",
       "namedModels": [
         "Claude Fable 5.1",
         "Claude Mythos 5.1"
@@ -31,7 +31,7 @@
       "providerId": "anthropic",
       "providerName": "Anthropic",
       "sourceId": "anthropic-sitemap",
-      "sourceModifiedAt": "2026-09-02T22:35:49.419Z",
+      "sourceModifiedAt": "2026-09-03T00:48:01.689Z",
       "sourcePresence": "present",
       "status": "confirmed-release"
     },
@@ -171,6 +171,23 @@
       "sourceModifiedAt": "2026-09-02T15:54:30.528Z",
       "sourcePresence": "present",
       "status": "confirmed-release"
+    },
+    {
+      "candidateDate": "2026-09-02",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://research.meta.ai/blog/introducing-muse-spark-1-3",
+      "firstSeenAt": "2026-09-03T00:52:14.778Z",
+      "id": "meta:/blog/introducing-muse-spark-1-3",
+      "lastChangedAt": "2026-09-03T00:52:14.778Z",
+      "namedModels": [
+        "Muse Spark 1.3"
+      ],
+      "providerId": "meta",
+      "providerName": "Meta",
+      "sourceId": "meta-research-sitemap",
+      "sourceModifiedAt": "2026-09-02T00:00:00.000Z",
+      "sourcePresence": "present",
+      "status": "needs-review"
     },
     {
       "candidateDate": "2026-09-01",
@@ -343,6 +360,23 @@
       "status": "not-a-release"
     },
     {
+      "candidateDate": "2026-08-20",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://research.meta.ai/blog/multimodal-intelligence-of-muse-spark-1-2",
+      "firstSeenAt": "2026-09-03T00:52:14.778Z",
+      "id": "meta:/blog/multimodal-intelligence-of-muse-spark-1-2",
+      "lastChangedAt": "2026-09-03T00:52:14.778Z",
+      "namedModels": [
+        "Muse Spark 1.2"
+      ],
+      "providerId": "meta",
+      "providerName": "Meta",
+      "sourceId": "meta-research-sitemap",
+      "sourceModifiedAt": "2026-08-20T00:00:00.000Z",
+      "sourcePresence": "present",
+      "status": "needs-review"
+    },
+    {
       "candidateDate": "2026-08-19",
       "candidateDateMeaning": "provider-sitemap-lastmod",
       "canonicalUrl": "https://openai.com/index/introducing-gpt-5-3-codex-spark/",
@@ -462,6 +496,23 @@
       "status": "confirmed-release"
     },
     {
+      "candidateDate": "2026-08-14",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://research.meta.ai/blog/addressing-third-party-testing-misconfiguration-muse-spark-1-1",
+      "firstSeenAt": "2026-09-03T00:52:14.778Z",
+      "id": "meta:/blog/addressing-third-party-testing-misconfiguration-muse-spark-1-1",
+      "lastChangedAt": "2026-09-03T00:52:14.778Z",
+      "namedModels": [
+        "Muse Spark 1.1"
+      ],
+      "providerId": "meta",
+      "providerName": "Meta",
+      "sourceId": "meta-research-sitemap",
+      "sourceModifiedAt": "2026-08-14T00:00:00.000Z",
+      "sourcePresence": "present",
+      "status": "needs-review"
+    },
+    {
       "candidateDate": "2026-08-13",
       "candidateDateMeaning": "provider-sitemap-lastmod",
       "canonicalUrl": "https://openai.com/index/introducing-gpt-5-2-codex/",
@@ -496,6 +547,23 @@
       "status": "confirmed-release"
     },
     {
+      "candidateDate": "2026-08-10",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://research.meta.ai/blog/introducing-muse-glimmer-open-agentic-model",
+      "firstSeenAt": "2026-09-03T00:52:14.778Z",
+      "id": "meta:/blog/introducing-muse-glimmer-open-agentic-model",
+      "lastChangedAt": "2026-09-03T00:52:14.778Z",
+      "namedModels": [
+        "Muse Glimmer"
+      ],
+      "providerId": "meta",
+      "providerName": "Meta",
+      "sourceId": "meta-research-sitemap",
+      "sourceModifiedAt": "2026-08-10T00:00:00.000Z",
+      "sourcePresence": "present",
+      "status": "needs-review"
+    },
+    {
       "candidateDate": "2026-08-07",
       "candidateDateMeaning": "provider-sitemap-lastmod",
       "canonicalUrl": "https://openai.com/index/codex-now-generally-available/",
@@ -511,6 +579,24 @@
       "sourceModifiedAt": "2026-08-07T21:23:45.670Z",
       "sourcePresence": "present",
       "status": "not-a-release"
+    },
+    {
+      "candidateDate": "2026-08-05",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://research.meta.ai/blog/introducing-muse-code-and-muse-spark-1-2",
+      "firstSeenAt": "2026-09-03T00:52:14.778Z",
+      "id": "meta:/blog/introducing-muse-code-and-muse-spark-1-2",
+      "lastChangedAt": "2026-09-03T00:52:14.778Z",
+      "namedModels": [
+        "Muse Code",
+        "Muse Spark 1.2"
+      ],
+      "providerId": "meta",
+      "providerName": "Meta",
+      "sourceId": "meta-research-sitemap",
+      "sourceModifiedAt": "2026-08-05T00:00:00.000Z",
+      "sourcePresence": "present",
+      "status": "needs-review"
     },
     {
       "candidateDate": "2026-08-03",
@@ -767,6 +853,23 @@
       "sourceModifiedAt": "2026-07-13T15:46:07.000Z",
       "sourcePresence": "present",
       "status": "not-a-release"
+    },
+    {
+      "candidateDate": "2026-07-09",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://research.meta.ai/blog/introducing-muse-spark-meta-model-api",
+      "firstSeenAt": "2026-09-03T00:52:14.778Z",
+      "id": "meta:/blog/introducing-muse-spark-meta-model-api",
+      "lastChangedAt": "2026-09-03T00:52:14.778Z",
+      "namedModels": [
+        "Muse Spark"
+      ],
+      "providerId": "meta",
+      "providerName": "Meta",
+      "sourceId": "meta-research-sitemap",
+      "sourceModifiedAt": "2026-07-09T00:00:00.000Z",
+      "sourcePresence": "present",
+      "status": "needs-review"
     },
     {
       "candidateDate": "2026-07-01",
@@ -1291,7 +1394,7 @@
       "id": "anthropic-sitemap",
       "providerId": "anthropic",
       "providerName": "Anthropic",
-      "retrievedAt": "2026-09-02T22:38:18.879Z",
+      "retrievedAt": "2026-09-03T00:52:14.778Z",
       "url": "https://www.anthropic.com/sitemap.xml"
     },
     {
@@ -1313,8 +1416,30 @@
       "id": "openai-release-sitemap",
       "providerId": "openai",
       "providerName": "OpenAI",
-      "retrievedAt": "2026-09-02T22:38:18.879Z",
+      "retrievedAt": "2026-09-03T00:52:14.778Z",
       "url": "https://openai.com/sitemap.xml/release/"
+    },
+    {
+      "health": {
+        "contentType": "application/xml",
+        "httpStatus": 200,
+        "shape": {
+          "byteLength": 1668,
+          "candidateCount": 6,
+          "canonicalHostEntryCount": 9,
+          "datedEntryCount": 9,
+          "duplicateEntryCount": 0,
+          "entryCount": 9,
+          "rootElement": "urlset",
+          "uniqueEntryCount": 9
+        },
+        "status": "healthy"
+      },
+      "id": "meta-research-sitemap",
+      "providerId": "meta",
+      "providerName": "Meta",
+      "retrievedAt": "2026-09-03T00:52:14.778Z",
+      "url": "https://research.meta.ai/sitemap.xml"
     }
   ]
 }
