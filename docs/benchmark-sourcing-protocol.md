@@ -46,7 +46,7 @@ and computer-use axes.
 ## Cross-release comparison rule
 
 OpenAI's [GPT-6 Astra release](https://openai.com/index/gpt-6-astra/)
-reports 57.7% on Terminal-Bench 4.0 and 64.6% on
+reports 57.9% on Terminal-Bench 4.0 and 64.6% on
 Terminal-Bench-Science 0.1. Its comparison table also reports OSWorld 2.0,
 Humanity's Last Exam with tools, AutomationBench, DeepSWE, and the Artificial
 Analysis Coding Agent Index. This independently supports the selected portfolio:
