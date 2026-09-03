@@ -45,12 +45,27 @@ and computer-use axes.
 
 ## Cross-release comparison rule
 
+OpenAI's [GPT-6 Astra release](https://openai.com/index/gpt-6-astra/)
+reports 57.7% on Terminal-Bench 4.0 and 64.6% on
+Terminal-Bench-Science 0.1. Its comparison table also reports OSWorld 2.0,
+Humanity's Last Exam with tools, AutomationBench, DeepSWE, and the Artificial
+Analysis Coding Agent Index. This independently supports the selected portfolio:
+one owner-sourced standard for terminal coding plus distinct science,
+professional-work, computer-use, and broad-reasoning views. The release does
+not justify another coding standard or a composite score. Astra's launch rows
+remain `vendor-reported` until each benchmark owner publishes the matching
+system configuration.
+
 Anthropic's [Fable 5.1 and Mythos 5.1 release](https://www.anthropic.com/claude-fable-and-mythos-5-1)
 reports Terminal-Bench 4, Terminal-Bench-Science 0.1, and CursorBench 3.2
-results. Those rows remain `vendor-reported` until the benchmark owner
-publishes the matching system configuration. The trusted-access Mythos result
-also remains a separate safeguarded-system observation even though Anthropic
-describes Fable and Mythos as the same underlying model.
+results. Those launch values remain `vendor-reported`. Harbor's current TB4
+snapshot separately publishes Fable 5.1 with Claude Code 2.1.257 at max effort
+at 57.88%. AI Charts does not substitute that owner result for Anthropic's
+55.8% launch observation because the exact run configuration and result differ.
+Anthropic's Terminal-Bench-Science and CursorBench launch values remain
+`vendor-reported` pending matching owner observations. The trusted-access
+Mythos result also remains a separate safeguarded-system observation even
+though Anthropic describes Fable and Mythos as the same underlying model.
 
 OpenAI's [GPT-5.6 release](https://openai.com/index/gpt-5-6/) reports
 Terminal-Bench 2.1 because it predates the selected 4.0 owner leaderboard. AI
@@ -73,12 +88,12 @@ because their task files differ.
 
 Release discovery and benchmark publication are different operations:
 
-1. **First-party candidate discovery** checks configured provider-owned
-   announcement sources. It retains every model parsed from a multi-model
-   release URL, including a restricted model that no aggregator lists, and
-   sends unknown announcement-like URL shapes to review. A candidate records the
-   provider, canonical announcement URL, sitemap last-modified candidate date,
-   model names parsed from recognized canonical URL patterns,
+1. **First-party candidate discovery** checks configured lab-owned
+   announcement sources before it consults an aggregator. It retains every
+   model parsed from a multi-model release URL, including a restricted model
+   that no marketplace lists, and sends unknown announcement-like URL shapes
+   to review. A candidate records the lab, source, canonical announcement URL,
+   first-seen time, model names parsed from recognized canonical URL patterns,
    source freshness, and its review state.
 2. **Identity discovery** uses OpenRouter to learn available model identities
    and capability metadata. OpenRouter timestamps are discovery metadata, not
@@ -97,6 +112,54 @@ Release discovery and benchmark publication are different operations:
 
 This separation prevents an aggregator omission from hiding a release without
 letting an ambiguous announcement silently alter public model history.
+
+The active first-party registry covers 19 labs: Anthropic, OpenAI, Google
+DeepMind, Meta, xAI, Mistral AI, Cohere, DeepSeek, Z.ai, Moonshot AI/Kimi,
+Alibaba/Qwen, MiniMax, ByteDance Seed, Microsoft AI, NVIDIA Nemotron, Amazon
+Nova, Baidu ERNIE, Tencent Hunyuan, and Xiaomi MiMo. A lab can own more than one
+source, so public summaries report a distinct lab count and a separate source
+count. Source definitions, host constraints, and minimum safe shapes remain
+executable contracts in the refresh code and tests.
+
+### Active first-party coverage
+
+| Lab | Official discovery surface | Boundary |
+| --- | --- | --- |
+| Anthropic | [Site sitemap](https://www.anthropic.com/sitemap.xml) | Whole-host URL delta, including root launches, Claude pages, news, research, and system cards. |
+| OpenAI | [Release sitemap](https://openai.com/sitemap.xml/release/), [safety sitemap](https://openai.com/sitemap.xml/safety/), and [API model catalog](https://developers.openai.com/api/docs/models/all) | New release and safety URLs plus the featured catalog fingerprint. The catalog can detect availability before an announcement enters the release sitemap. |
+| Google DeepMind | [DeepMind sitemap](https://deepmind.google/sitemap.xml) | Model and model-card URLs, including Gemini, Gemma, Veo, Imagen, Lyria, and Genie families. |
+| Meta | [Meta AI research sitemap](https://research.meta.ai/sitemap.xml) and [Meta announcements guide](https://about.fb.com/llms.txt) | Research model URLs plus dated newsroom announcement links. |
+| xAI | [Release notes](https://docs.x.ai/developers/release-notes) | Release-note heading fingerprint for Grok model additions. |
+| Mistral AI | [Current site sitemap](https://mistral.ai/sitemap-0.xml) | Model-launch URLs under the official news namespace. |
+| Cohere | [Documentation sitemap](https://docs.cohere.com/sitemap.xml) | Model changelog URL additions; deployment-wide timestamps are ignored. |
+| DeepSeek | [Site sitemap](https://www.deepseek.com/sitemap.xml) and [API change log](https://api-docs.deepseek.com/updates/) | Official site releases plus dated API model headings; generic API-news pages are excluded. |
+| Z.ai | [Model release notes](https://docs.z.ai/release-notes/new-released) | Dated GLM release-note fingerprint. |
+| Moonshot AI/Kimi | [Platform documentation sitemap](https://platform.kimi.com/docs/sitemap.xml) | Kimi model-guide URL additions. |
+| Alibaba/Qwen | [Model changelog](https://docs.qwencloud.com/changelog/models) | Dated model changelog fingerprint. |
+| MiniMax | [Model release notes](https://platform.minimax.io/docs/release-notes/models) | Model release-note fingerprint; shallow marketing sitemaps remain supplemental. |
+| ByteDance Seed | [Site sitemap](https://seed.bytedance.com/sitemap.xml) | Model-launch blog URLs with locale variants canonicalized. |
+| Microsoft AI | [Model sitemap](https://microsoft.ai/model-sitemap.xml) | MAI model-page URL additions. |
+| NVIDIA Nemotron | [Nemotron RSS](https://blogs.nvidia.com/blog/tag/nemotron/feed/) | Dated Nemotron posts; every candidate still requires review because the feed also carries ecosystem news. |
+| Amazon Nova | [Nova category RSS](https://aws.amazon.com/blogs/aws/category/artificial-intelligence/amazon-machine-learning/amazon-bedrock/amazon-nova/feed/) | Dated model-launch URLs with roundups and product-only posts excluded. |
+| Baidu ERNIE | [English blog sitemap](https://ernie.baidu.com/blog/en/sitemap.xml) | English model-release posts with relative URLs resolved against the first-party host. |
+| Tencent Hunyuan | [Tencent sitemap index](https://www.tencent.com/sitemap_index.xml) | Hunyuan and Tencent HY model-release posts across all post sitemap children. |
+| Xiaomi MiMo | [MiMo sitemap](https://mimo.mi.com/sitemap.xml) | English model-release news URLs; locale variants are excluded. |
+
+Discovery is based on canonical URL deltas. A canonical announcement URL that
+was not in the durable ledger creates a candidate. Sitemap `lastmod` values and
+other provider timestamps can change after publication, so they remain
+secondary change evidence and never define a new release, an official release
+date, or a benchmark observation. Later source edits refresh source-level health
+and can update a candidate's parsed model names, presence, and last-changed
+marker. They do not rewrite its original source-modified date, first-seen time,
+identity, source ownership, or reviewed status.
+
+Active discovery does not guarantee chart admission. Modality-specific labs and
+publishers with broad or noisy announcement surfaces remain on the source
+watchlist until their releases add a distinct comparable signal. That watchlist
+currently includes Apple Foundation Models, Black Forest Labs/FLUX, Runway,
+Stability AI, ElevenLabs, AI21 Labs, Perplexity/Sonar, LG EXAONE, Naver
+HyperCLOVA, 01.AI, Sakana AI, and TII/MBZUAI.
 
 ## Observation envelope
 
@@ -135,23 +198,41 @@ as separate observations.
   retention boundary, duplicate-key checks, an exact-version assertion, and a
   last-known-good checked snapshot.
 - Timestamp-only polls do not create commits or change public freshness.
+- First-party sources degrade independently. When one source is unavailable or
+  changes shape, the refresh retains that source's last-known-good snapshot and
+  candidates and continues processing healthy sources. The preserved retrieval
+  time and the failed automation run expose the stale slice. The refresh never
+  substitutes an empty result for a failed source.
 - A source-shape failure, version mismatch, validation failure, or publication
-  failure opens or updates the durable automation-health issue. It never
-  publishes partial data.
+  failure opens or updates the durable automation-health issue. The checked
+  ledger stays schema-valid, and a failed source stays on its previous slice.
+- A newly observed first-party candidate opens or updates the durable release
+  review issue immediately after release discovery. That alert does not wait
+  for Terminal-Bench, Terminal-Bench-Science, Artificial Analysis, or another
+  benchmark refresh. Production data still passes the repository's complete
+  validation and publication gates.
 - The data refresh validates the exact changed tree with the same public build
   environment as CI before it creates a pull request.
 
-## September 1, 2026 release incident
+## September 2026 release-discovery incidents
 
-The existing release radar did not capture Anthropic's Fable 5.1 and Mythos
-5.1 announcement. It only polled OpenRouter. Fable 5.1 appeared there later,
-while trusted-access-only Mythos 5.1 had no aggregator identity and remained
-structurally invisible. The scheduled job also could not publish unrelated
-valid data changes because its build lacked the public Turnstile test key that
-CI already supplied.
+On September 1, the release radar did not capture Anthropic's Fable 5.1 and
+Mythos 5.1 announcement. It only polled OpenRouter. Fable 5.1 appeared there
+later, while trusted-access-only Mythos 5.1 had no aggregator identity and
+remained structurally invisible. The scheduled job also could not publish
+unrelated valid data changes because its build lacked the public Turnstile test
+key that CI already supplied.
 
-The remediation is to restore build parity, add first-party announcement
-candidate discovery, keep OpenRouter as the identity layer, and publish TB4
-through a separate owner-sourced dataset. The incident is resolved only after
-the workflow succeeds end to end and the production page shows the new
-sources.
+On September 3, the OpenAI watcher would not have caught GPT-6 Astra end to end.
+It polled only OpenAI's release sitemap while Astra material appeared on another
+OpenAI-owned discovery surface. The parser would also have treated the route as
+unresolved, and an unrelated benchmark refresh failure could have prevented the
+release-review alert.
+
+The remediation restores build parity, monitors the multi-lab first-party
+registry, detects canonical URL additions across each lab's official sources,
+and preserves a durable manual-review queue. OpenRouter remains the secondary
+identity layer. Release-review alerts run independently from benchmark imports,
+and Terminal-Bench 4 stays a separate owner-sourced dataset. A later outage can
+therefore preserve one source at its previous retrieval time without erasing its
+history or hiding a candidate found by a healthy source.

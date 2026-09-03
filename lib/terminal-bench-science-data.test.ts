@@ -56,7 +56,9 @@ describe("checked Terminal-Bench-Science data", () => {
     expect(parsed.value.source.sourceClass).toBe("benchmark-owner");
     expect(parsed.value.source.leaderboardUrl).toContain("/0.1.0?");
     expect(parsed.value.source.leaderboardUrl).not.toContain("/latest");
-    expect(parsed.value.records).toHaveLength(9);
+    expect(parsed.value.records.map(record => record.rank)).toEqual(
+      parsed.value.records.map((_, index) => index + 1),
+    );
   });
 
   test("retains model, harness, effort, uncertainty, usage, and cost for every system", () => {

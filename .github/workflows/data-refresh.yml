@@ -81,16 +81,63 @@ jobs:
             if [[ "$attempt" -lt 3 ]]; then sleep $((attempt * 5)); fi
           done
           exit 1
-      - name: Refresh model-release radar from OpenRouter
-        id: release_radar
-        if: steps.dependencies.outcome == 'success'
-        continue-on-error: true
-        run: bun run releases:refresh
       - name: Refresh first-party model-release candidates
         id: first_party_releases
         if: steps.dependencies.outcome == 'success'
         continue-on-error: true
         run: bun run first-party-releases:refresh
+      - name: Persist first-party release review alert
+        id: first_party_review
+        if: always() && steps.dependencies.outcome == 'success'
+        continue-on-error: true
+        env:
+          GH_REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          review_count="$(jq '[.candidates[] | select(.status == "needs-review")] | length' "$FIRST_PARTY_RELEASE_PATH")"
+          if [[ "$review_count" -eq 0 ]]; then
+            echo "First-party release sources have no candidates awaiting review."
+            exit 0
+          fi
+
+          run_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          review_issue_number="$(gh issue list --state open --limit 100 --json number,title --jq '.[] | select(.title == "[automation] First-party releases need review") | .number' | head -n 1)"
+          review_rows="$(jq -r '[.candidates[] | select(.status == "needs-review")] | sort_by(.firstSeenAt) | reverse | .[] | [.canonicalUrl, "- <!-- aicharts:first-party-release-candidate --> [\(.namedModels | join(" + "))](\(.canonicalUrl)) — \(.providerName); first seen \(.firstSeenAt)."] | @tsv' "$FIRST_PARTY_RELEASE_PATH")"
+          review_lines="$(printf '%s\n' "$review_rows" | cut -f2-)"
+          printf -v review_body 'First-party provider sources contain %s release candidates awaiting disposition. Confirmed releases may be published; non-release announcements should be marked `not-a-release`. Sitemap timestamps remain discovery metadata, not official release dates. Queue entries are append-only until their dispositions are published.\n\n%s\n\nSource run: %s' \
+            "$review_count" "$review_lines" "$run_url"
+          if [[ -z "$review_issue_number" ]]; then
+            gh issue create --title "$RELEASE_REVIEW_ISSUE_TITLE" --body "$review_body"
+          else
+            review_issue_body="$(gh issue view "$review_issue_number" --json body --jq '.body')"
+            review_issue_comments="$(gh api --paginate "repos/${GITHUB_REPOSITORY}/issues/${review_issue_number}/comments?per_page=100" --jq '.[].body')"
+            review_history="${review_issue_body}"$'\n'"${review_issue_comments}"
+            review_history_urls="$(
+              printf '%s\n' "$review_history" | sed -nE 's|^- <!-- aicharts:first-party-release-candidate --> .*\((https://[^)]+)\) — .*$|\1|p'
+            )"
+            new_review_lines=""
+            new_review_count=0
+            while IFS=$'\t' read -r review_url review_line; do
+              [[ -z "$review_url" ]] && continue
+              if ! grep -Fxq -- "$review_url" <<< "$review_history_urls"; then
+                new_review_lines+="${review_line}"$'\n'
+                new_review_count=$((new_review_count + 1))
+              fi
+            done <<< "$review_rows"
+            if [[ "$new_review_count" -gt 0 ]]; then
+              printf -v review_comment '%s newly observed candidates were appended to this durable queue (%s currently await review).\n\n%s\nSource run: %s' \
+                "$new_review_count" "$review_count" "$new_review_lines" "$run_url"
+              gh issue comment "$review_issue_number" --body "$review_comment"
+            else
+              echo "Every current first-party review candidate is already retained in the durable issue history."
+            fi
+          fi
+      - name: Refresh model-release radar from OpenRouter
+        id: release_radar
+        if: steps.dependencies.outcome == 'success'
+        continue-on-error: true
+        run: bun run releases:refresh
       - name: Refresh benchmark snapshot from Artificial Analysis
         id: benchmark
         if: steps.dependencies.outcome == 'success' && env.RUN_AAI_REFRESH == 'true'
@@ -128,6 +175,7 @@ jobs:
         run: |
           changed_files="$(git diff --name-only)"
           if [[ -z "$changed_files" ]]; then
+            echo "first_party_changed=false" >> "$GITHUB_OUTPUT"
             echo "changed=false" >> "$GITHUB_OUTPUT"
             echo "Checked benchmark and release data are unchanged."
             exit 0
@@ -173,6 +221,11 @@ jobs:
           done <<< "$changed_files"
 
           changed_files="$(git diff --name-only)"
+          if git diff --quiet -- "$FIRST_PARTY_RELEASE_PATH"; then
+            echo "first_party_changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "first_party_changed=true" >> "$GITHUB_OUTPUT"
+          fi
           if [[ -z "$changed_files" ]]; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
             echo "Source checks succeeded without publishable data changes."
@@ -258,7 +311,9 @@ jobs:
           DEPENDENCIES_OUTCOME: ${{ steps.dependencies.outcome }}
           DEEP_SWE_OUTCOME: ${{ steps.deep_swe.outcome }}
           DETECT_OUTCOME: ${{ steps.snapshot.outcome }}
+          FIRST_PARTY_CHANGED: ${{ steps.snapshot.outputs.first_party_changed }}
           FIRST_PARTY_RELEASE_OUTCOME: ${{ steps.first_party_releases.outcome }}
+          FIRST_PARTY_REVIEW_OUTCOME: ${{ steps.first_party_review.outcome }}
           GH_REPO: ${{ github.repository }}
           GH_TOKEN: ${{ github.token }}
           PUBLISH_CI_RUN_URL: ${{ steps.publish.outputs.ci_run_url }}
@@ -286,6 +341,7 @@ jobs:
             if [[ "$RUN_AAI_REFRESH" != "true" && "$BENCHMARK_OUTCOME" != "skipped" ]]; then unhealthy=true; fi
             if [[ "$DEEP_SWE_OUTCOME" != "success" ]]; then unhealthy=true; fi
             if [[ "$FIRST_PARTY_RELEASE_OUTCOME" != "success" ]]; then unhealthy=true; fi
+            if [[ "$FIRST_PARTY_RELEASE_OUTCOME" == "success" && "$FIRST_PARTY_REVIEW_OUTCOME" != "success" ]]; then unhealthy=true; fi
             if [[ "$RELEASE_OUTCOME" != "success" ]]; then unhealthy=true; fi
             if [[ "$RELEASE_RECONCILE_OUTCOME" != "success" ]]; then unhealthy=true; fi
             if [[ "$TERMINAL_BENCH_OUTCOME" != "success" ]]; then unhealthy=true; fi
@@ -309,6 +365,7 @@ jobs:
             echo "| Artificial Analysis | ${BENCHMARK_OUTCOME} |"
             echo "| OpenRouter | ${RELEASE_OUTCOME} |"
             echo "| First-party release sources | ${FIRST_PARTY_RELEASE_OUTCOME} |"
+            echo "| First-party review alert | ${FIRST_PARTY_REVIEW_OUTCOME} |"
             echo "| Radar reconciliation | ${RELEASE_RECONCILE_OUTCOME} |"
             echo "| Direct DeepSWE evidence | ${DEEP_SWE_OUTCOME} |"
             echo "| Terminal-Bench 4 | ${TERMINAL_BENCH_OUTCOME} |"
@@ -333,7 +390,7 @@ jobs:
               jq -r '"- Direct DeepSWE: \(.records | length) configurations across \([.records[].sourceModel] | unique | length) models; \(.unmatchedModels | length) unmatched; generated \(.source.generatedAt)."' "$DEEP_SWE_PATH"
             fi
             if [[ -f "$FIRST_PARTY_RELEASE_PATH" ]]; then
-              jq -r '"- First-party release radar: \(.candidates | length) durable candidates; \([.candidates[] | select(.status == "needs-review")] | length) need review; \(.sources | length) provider sources healthy."' "$FIRST_PARTY_RELEASE_PATH"
+              jq -r '"- First-party release radar: \(.candidates | length) durable candidates; \([.candidates[] | select(.status == "needs-review")] | length) need review; \(.sources | length) provider sources represented."' "$FIRST_PARTY_RELEASE_PATH"
             fi
             if [[ -f "$TERMINAL_BENCH_PATH" ]]; then
               jq -r '"- Terminal-Bench \(.benchmark.version): \(.records | length) configurations; source commit \(.source.repositoryCommit[0:7]); retrieved \(.source.retrievedAt)."' "$TERMINAL_BENCH_PATH"
@@ -347,33 +404,43 @@ jobs:
           issue_number="$(gh issue list --state open --limit 100 --json number,title --jq '.[] | select(.title == "[automation] Data refresh is unhealthy") | .number' | head -n 1)"
           review_issue_number="$(gh issue list --state open --limit 100 --json number,title --jq '.[] | select(.title == "[automation] First-party releases need review") | .number' | head -n 1)"
 
-          # A healthy source can still discover releases awaiting a human or review
-          # agent. Keep that editorial queue durable and separate from source health.
-          # Reconcile it only from the published snapshot: either this run had no
-          # semantic changes, or validation and the merge-backed publish both passed.
-          review_snapshot_ready=false
+          # Positive alerts are persisted immediately after first-party discovery.
+          # Only close the queue when that source's state (rather than every other
+          # benchmark source) is already on main or passed merge-backed publication.
+          review_snapshot_published=false
           if [[ "$FIRST_PARTY_RELEASE_OUTCOME" == "success" && "$DETECT_OUTCOME" == "success" ]]; then
-            if [[ "$SNAPSHOT_CHANGED" == "false" || ( "$SNAPSHOT_CHANGED" == "true" && "$VALIDATION_OUTCOME" == "success" && "$PUBLISH_OUTCOME" == "success" ) ]]; then
-              review_snapshot_ready=true
+            if [[ "$FIRST_PARTY_CHANGED" == "false" || ( "$FIRST_PARTY_CHANGED" == "true" && "$PUBLISH_OUTCOME" == "success" ) ]]; then
+              review_snapshot_published=true
             fi
           fi
 
-          if [[ "$review_snapshot_ready" == "true" && -f "$FIRST_PARTY_RELEASE_PATH" ]]; then
+          if [[ -f "$FIRST_PARTY_RELEASE_PATH" ]]; then
             review_count="$(jq '[.candidates[] | select(.status == "needs-review")] | length' "$FIRST_PARTY_RELEASE_PATH")"
-            if [[ "$review_count" -gt 0 ]]; then
-              review_lines="$(jq -r '[.candidates[] | select(.status == "needs-review")] | sort_by(.firstSeenAt) | reverse | .[:25][] | "- [\(.namedModels | join(" + "))](\(.canonicalUrl)) — \(.providerName); first seen \(.firstSeenAt)."' "$FIRST_PARTY_RELEASE_PATH")"
-              printf -v review_body 'First-party provider sources contain %s release candidates awaiting disposition. Confirmed releases may be published; non-release announcements should be marked `not-a-release`. Sitemap timestamps remain discovery metadata, not official release dates.\n\n%s\n\nSource run: %s' \
-                "$review_count" "$review_lines" "$run_url"
-              if [[ -z "$review_issue_number" ]]; then
-                gh issue create --title "$RELEASE_REVIEW_ISSUE_TITLE" --body "$review_body"
-              else
-                gh issue edit "$review_issue_number" --body "$review_body"
+            review_queue_resolved=false
+            if [[ "$review_count" -eq 0 && "$review_snapshot_published" == "true" && -n "$review_issue_number" ]]; then
+              review_issue_body="$(gh issue view "$review_issue_number" --json body --jq '.body')"
+              review_issue_comments="$(gh api --paginate "repos/${GITHUB_REPOSITORY}/issues/${review_issue_number}/comments?per_page=100" --jq '.[].body')"
+              review_issue_body="${review_issue_body}"$'\n'"${review_issue_comments}"
+              review_url_count=0
+              review_queue_resolved=true
+              while IFS= read -r review_url; do
+                [[ -z "$review_url" ]] && continue
+                review_url_count=$((review_url_count + 1))
+                if ! jq -e --arg url "$review_url" 'any(.candidates[]; .canonicalUrl == $url and .status != "needs-review")' "$FIRST_PARTY_RELEASE_PATH" >/dev/null; then
+                  review_queue_resolved=false
+                  break
+                fi
+              done < <(printf '%s\n' "$review_issue_body" | sed -nE 's|^- <!-- aicharts:first-party-release-candidate --> .*\((https://[^)]+)\) — .*$|\1|p')
+              if [[ "$review_url_count" -eq 0 ]]; then
+                review_queue_resolved=false
               fi
-            elif [[ -n "$review_issue_number" ]]; then
-              gh issue close "$review_issue_number" --comment "All first-party release candidates have a reviewed disposition as of ${run_url}."
             fi
-          elif [[ -n "$review_issue_number" ]]; then
-            echo "First-party review issue left unchanged because this run did not prove a published release-radar snapshot."
+
+            if [[ "$review_queue_resolved" == "true" ]]; then
+              gh issue close "$review_issue_number" --comment "Every candidate retained in this review queue has a published disposition as of ${run_url}."
+            elif [[ "$review_count" -eq 0 && -n "$review_issue_number" ]]; then
+              echo "First-party review issue left open because this run did not prove a published disposition for every queued URL."
+            fi
           fi
 
           if [[ "$unhealthy" == "true" ]]; then

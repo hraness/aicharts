@@ -33,6 +33,7 @@ import { formatDeepSweEvidenceScore } from "@/lib/deep-swe-evidence";
 import {
   FIRST_PARTY_RELEASE_HIGHLIGHTS,
   FIRST_PARTY_RELEASE_RADAR,
+  FIRST_PARTY_RELEASE_SOURCE_SUMMARY,
 } from "@/lib/first-party-release-collection";
 import { markdownForPath, modelCardMarkdown } from "@/lib/site-markdown";
 import {
@@ -183,9 +184,14 @@ describe("public model cards", () => {
     }
     if (FIRST_PARTY_RELEASE_HIGHLIGHTS.length > 0) {
       expect(markup).toContain("First-party release radar");
-      expect(markup).toContain("New releases found at the provider source");
-      expect(markup).toContain("configured provider sources");
-      expect(markup).toContain("A sitemap change is discovery evidence");
+      expect(markup).toContain("New releases found at first-party sources");
+      expect(markup).toContain(`${FIRST_PARTY_RELEASE_SOURCE_SUMMARY.labCount} labs`);
+      expect(markup).toContain(
+        `${FIRST_PARTY_RELEASE_SOURCE_SUMMARY.sourceCount} first-party sources`,
+      );
+      expect(markup).toContain("first observed");
+      expect(markup).not.toContain("source changed");
+      expect(markup).toContain("A newly observed canonical URL is discovery evidence");
     }
     expect(MODEL_RELEASE_RADAR_HIGHLIGHTS[0]).toBe(
       MODEL_RELEASES_AWAITING_BENCHMARK[0],
