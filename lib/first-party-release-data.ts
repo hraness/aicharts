@@ -21,6 +21,15 @@ export const FIRST_PARTY_RELEASE_SOURCE_DEFINITIONS = [
     providerName: "OpenAI",
     url: "https://openai.com/sitemap.xml/release/",
   },
+  {
+    canonicalHost: "research.meta.ai",
+    id: "meta-research-sitemap",
+    minimumCandidateCount: 4,
+    minimumEntryCount: 6,
+    providerId: "meta",
+    providerName: "Meta",
+    url: "https://research.meta.ai/sitemap.xml",
+  },
 ] as const;
 
 export const FIRST_PARTY_RELEASE_PUBLICATION_POLICY = "discovery-only" as const;
@@ -31,8 +40,12 @@ export type FirstPartyReleaseSourceDefinition =
 export type FirstPartyReleaseSourceId = FirstPartyReleaseSourceDefinition["id"];
 export type FirstPartyReleaseProviderId = FirstPartyReleaseSourceDefinition["providerId"];
 
-const providerIdSchema = z.enum(["anthropic", "openai"]);
-const sourceIdSchema = z.enum(["anthropic-sitemap", "openai-release-sitemap"]);
+const providerIdSchema = z.enum(["anthropic", "meta", "openai"]);
+const sourceIdSchema = z.enum([
+  "anthropic-sitemap",
+  "meta-research-sitemap",
+  "openai-release-sitemap",
+]);
 const timestampSchema = z.string().datetime({ offset: true });
 const calendarDateSchema = z.string().refine(isIsoCalendarDate, "Expected an ISO calendar date.");
 const reviewStatusSchema = z.enum(["needs-review", "confirmed-release", "not-a-release"]);
@@ -109,10 +122,16 @@ function isSortedUnique(values: readonly string[]): boolean {
   ));
 }
 
-const firstPartyReleaseRadarSchema = firstPartyReleaseRadarBaseSchema.superRefine((radar, context) => {
-  const sourceById = new Map<FirstPartyReleaseSourceId, FirstPartyReleaseSourceSnapshot>();
+function firstPartyReleaseRadarSchemaFor(
+  sourceCompleteness: "configured" | "historical",
+) {
+  return firstPartyReleaseRadarBaseSchema.superRefine((radar, context) => {
+    const sourceById = new Map<FirstPartyReleaseSourceId, FirstPartyReleaseSourceSnapshot>();
 
-  if (radar.sources.length !== FIRST_PARTY_RELEASE_SOURCE_DEFINITIONS.length) {
+  if (
+    sourceCompleteness === "configured"
+    && radar.sources.length !== FIRST_PARTY_RELEASE_SOURCE_DEFINITIONS.length
+  ) {
     context.addIssue({
       code: "custom",
       message: "First-party release radar must contain every configured provider source exactly once.",
@@ -120,21 +139,34 @@ const firstPartyReleaseRadarSchema = firstPartyReleaseRadarBaseSchema.superRefin
     });
   }
 
+  let previousDefinitionIndex = -1;
   radar.sources.forEach((source, index) => {
-    const definition = FIRST_PARTY_RELEASE_SOURCE_DEFINITIONS[index];
+    const definitionIndex = FIRST_PARTY_RELEASE_SOURCE_DEFINITIONS.findIndex(
+      item => item.id === source.id,
+    );
+    const definition = sourceCompleteness === "configured"
+      ? FIRST_PARTY_RELEASE_SOURCE_DEFINITIONS[index]
+      : FIRST_PARTY_RELEASE_SOURCE_DEFINITIONS[definitionIndex];
     if (
       definition === undefined
       || source.id !== definition.id
       || source.providerId !== definition.providerId
       || source.providerName !== definition.providerName
       || source.url !== definition.url
+      || (
+        sourceCompleteness === "historical"
+        && (definitionIndex < 0 || definitionIndex <= previousDefinitionIndex)
+      )
     ) {
       context.addIssue({
         code: "custom",
-        message: "First-party sources must match their configured identities in canonical order.",
+        message: sourceCompleteness === "configured"
+          ? "First-party sources must match their configured identities in canonical order."
+          : "Historical first-party sources must match configured identities in canonical order.",
         path: ["sources", index],
       });
     }
+    if (definitionIndex >= 0) previousDefinitionIndex = definitionIndex;
     if (
       definition !== undefined
       && source.health.shape.uniqueEntryCount < definition.minimumEntryCount
@@ -303,7 +335,11 @@ const firstPartyReleaseRadarSchema = firstPartyReleaseRadarBaseSchema.superRefin
       });
     }
   });
-});
+  });
+}
+
+const firstPartyReleaseRadarSchema = firstPartyReleaseRadarSchemaFor("configured");
+const previousFirstPartyReleaseRadarSchema = firstPartyReleaseRadarSchemaFor("historical");
 
 export type FirstPartyReleaseSourceSnapshot = z.infer<typeof sourceSnapshotSchema>;
 export type FirstPartyReleaseCandidate = z.infer<typeof releaseCandidateSchema>;
@@ -561,13 +597,51 @@ function openAiModels(pathname: string): string[] {
   return [];
 }
 
+const metaFamilies = ["code", "glimmer", "image", "spark"] as const;
+const metaFamilyPattern = metaFamilies.join("|");
+
+function metaFamilyDisplayName(family: string): string {
+  return `${family[0]?.toUpperCase() ?? ""}${family.slice(1).toLowerCase()}`;
+}
+
+function metaModelName(family: string, major?: string, minor?: string): string {
+  const name = `Muse ${metaFamilyDisplayName(family)}`;
+  if (major === undefined) return name;
+  return `${name} ${major}${minor === undefined ? "" : `.${minor}`}`;
+}
+
+function metaReleaseSlug(pathname: string): string | null {
+  const slug = pathname.replace(/^\//u, "").replace(/\/$/u, "");
+  if (slug.startsWith("blog/")) return slug.slice("blog/".length);
+  if (slug.startsWith("ai/models/")) return slug.slice("ai/models/".length);
+  return null;
+}
+
+function metaModels(pathname: string): string[] {
+  const route = metaReleaseSlug(pathname);
+  if (route === null) return [];
+  const models: string[] = [];
+  const familyMentions = new RegExp(
+    `(?:^|-)muse-(${metaFamilyPattern})(?:-(\\d+)(?:-(\\d+))?)?(?=-|$)`,
+    "gu",
+  );
+  for (const match of route.matchAll(familyMentions)) {
+    if (match[1] !== undefined) {
+      models.push(metaModelName(match[1], match[2], match[3]));
+    }
+  }
+  return sortedUnique(models);
+}
+
 /** Extracts conservative provider-model names from provider-owned release URL slugs. */
 export function namedModelsForProviderUrl(
   providerId: FirstPartyReleaseProviderId,
   canonicalUrl: string,
 ): readonly string[] {
   const pathname = new URL(canonicalUrl).pathname.toLowerCase();
-  return providerId === "anthropic" ? anthropicModels(pathname) : openAiModels(pathname);
+  if (providerId === "anthropic") return anthropicModels(pathname);
+  if (providerId === "meta") return metaModels(pathname);
+  return openAiModels(pathname);
 }
 
 function unresolvedAnnouncementName(
@@ -575,6 +649,13 @@ function unresolvedAnnouncementName(
   canonicalUrl: string,
 ): string | null {
   const pathname = new URL(canonicalUrl).pathname.toLowerCase();
+  if (providerId === "meta") {
+    const route = metaReleaseSlug(pathname);
+    if (route === null) return null;
+    const releaseSlug = route.replace(/^(?:announcing|introducing|previewing)-/u, "");
+    if (!/^muse-/u.test(releaseSlug) || !/\d/u.test(releaseSlug)) return null;
+    return `Unresolved announcement: ${openAiVariantName(route)}`;
+  }
   const slug = pathname.replace(/^\/(?:news\/|index\/)?/u, "").replace(/\/$/u, "");
   if (providerId === "anthropic") {
     const releaseSlug = slug.replace(/^introducing-/u, "");
@@ -751,6 +832,14 @@ export function deriveFirstPartyReleaseRadar(
 
 export function parseFirstPartyReleaseRadar(value: unknown): Result<FirstPartyReleaseRadar, z.ZodError> {
   return parseResult(firstPartyReleaseRadarSchema, value);
+}
+
+/** Reads a durable ledger that may predate a newly configured provider source. */
+export function parsePreviousFirstPartyReleaseRadar(
+  value: unknown,
+): Result<FirstPartyReleaseRadar, z.ZodError> {
+  const current = parseFirstPartyReleaseRadar(value);
+  return current.ok ? current : parseResult(previousFirstPartyReleaseRadarSchema, value);
 }
 
 export function validateFirstPartyReleaseReplacement(
