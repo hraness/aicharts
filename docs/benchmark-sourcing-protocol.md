@@ -113,13 +113,14 @@ Release discovery and benchmark publication are different operations:
 This separation prevents an aggregator omission from hiding a release without
 letting an ambiguous announcement silently alter public model history.
 
-The active first-party registry covers 19 labs: Anthropic, OpenAI, Google
-DeepMind, Meta, xAI, Mistral AI, Cohere, DeepSeek, Z.ai, Moonshot AI/Kimi,
-Alibaba/Qwen, MiniMax, ByteDance Seed, Microsoft AI, NVIDIA Nemotron, Amazon
-Nova, Baidu ERNIE, Tencent Hunyuan, and Xiaomi MiMo. A lab can own more than one
-source, so public summaries report a distinct lab count and a separate source
-count. Source definitions, host constraints, and minimum safe shapes remain
-executable contracts in the refresh code and tests.
+The active first-party registry covers 23 labs across 28 sources: Anthropic,
+OpenAI, Google DeepMind, Meta, xAI, Mistral AI, Cohere, DeepSeek, Z.ai,
+Moonshot AI/Kimi, Alibaba/Qwen, MiniMax, ByteDance Seed, Microsoft AI, NVIDIA
+Nemotron, Amazon Nova, Baidu ERNIE, Tencent Hunyuan, Xiaomi MiMo, AI21 Labs,
+IBM Granite, Ai2, and StepFun. A lab can own more than one source, so public
+summaries report a distinct lab count and a separate source count. Source
+definitions, host constraints, and minimum safe shapes remain executable
+contracts in the refresh code and tests.
 
 ### Active first-party coverage
 
@@ -144,6 +145,10 @@ executable contracts in the refresh code and tests.
 | Baidu ERNIE | [English blog sitemap](https://ernie.baidu.com/blog/en/sitemap.xml) | English model-release posts with relative URLs resolved against the first-party host. |
 | Tencent Hunyuan | [Tencent sitemap index](https://www.tencent.com/sitemap_index.xml) | Hunyuan and Tencent HY model-release posts across all post sitemap children. |
 | Xiaomi MiMo | [MiMo sitemap](https://mimo.mi.com/sitemap.xml) | English model-release news URLs; locale variants are excluded. |
+| AI21 Labs | [Blog post sitemap](https://www.ai21.com/post-sitemap.xml) | Jamba and Jurassic launch posts, including an exact mapping for the non-announcement Jamba 1.7 release mention; SDK, integration, and comparison posts are excluded. |
+| IBM Granite | [IBM Research current sitemap shard](https://research.ibm.com/sitemap-0.xml) | Granite-specific model-release posts. Candidate rows require dates even though unrelated sitemap rows may omit them. |
+| Ai2 | [Ai2 sitemap](https://allenai.org/sitemap.xml) | Model-release posts for OLMo, Molmo, Tülu, SERA, and related open-model families, with exact mappings for high-signal launch slugs that omit a model version. |
+| StepFun | [English platform documentation sitemap](https://platform.stepfun.ai/docs/sitemap.xml) and [China platform documentation sitemap](https://platform.stepfun.com/docs/sitemap.xml) | Exact model-detail pages under the English and Chinese model namespaces. The China source adds the explicitly named, unversioned Step Explore model; router, category, quickstart, cookbook, and mobile-agent pages are excluded. Both lanes are URL-delta coverage. |
 
 Discovery is based on canonical URL deltas. A canonical announcement URL that
 was not in the durable ledger creates a candidate. Sitemap `lastmod` values and
@@ -154,12 +159,30 @@ and can update a candidate's parsed model names, presence, and last-changed
 marker. They do not rewrite its original source-modified date, first-seen time,
 identity, source ownership, or reviewed status.
 
+StepFun's dated [Step Edge announcement](https://static.stepfun.com/blog/step-edge/)
+demonstrates the remaining provider-side discovery limit: the official static
+site sitemap does not enumerate its `/blog/*` microsites. Step Edge therefore
+remains a targeted manual/watchlist check instead of being presented as strict
+automated coverage. The mutable platform overview and sitemap timestamps may
+corroborate a review, but cannot supply an official release date by themselves.
+
 Active discovery does not guarantee chart admission. Modality-specific labs and
 publishers with broad or noisy announcement surfaces remain on the source
 watchlist until their releases add a distinct comparable signal. That watchlist
 currently includes Apple Foundation Models, Black Forest Labs/FLUX, Runway,
-Stability AI, ElevenLabs, AI21 Labs, Perplexity/Sonar, LG EXAONE, Naver
-HyperCLOVA, 01.AI, Sakana AI, and TII/MBZUAI.
+Stability AI, ElevenLabs, Perplexity/Sonar, LG EXAONE, Naver HyperCLOVA,
+01.AI, Sakana AI, and TII/MBZUAI. Perplexity's
+[official changelog](https://docs.perplexity.ai/docs/resources/changelog.md)
+mixes Sonar lifecycle events with platform and third-party model changes, while
+[01.AI's sitemap](https://www.01.ai/sitemap.xml) currently exposes corporate
+pages rather than a usable model-release history. Both stay under review for a
+narrower first-party surface. Huawei/Pangu also remains on the watchlist:
+its [MaaS release bulletin](https://support.huaweicloud.com/bulletin-maas/bulletin-maas-0001.md)
+is a structured but mixed catalog whose rows mostly announce third-party model
+availability, while Huawei's broad corporate sitemap omits machine-readable
+dates. Adding Pangu requires a source-specific bulletin adapter that admits only
+Huawei-owned model rows and keeps model-version dates distinct from release
+dates.
 
 ## Observation envelope
 
@@ -232,7 +255,9 @@ release-review alert.
 The remediation restores build parity, monitors the multi-lab first-party
 registry, detects canonical URL additions across each lab's official sources,
 and preserves a durable manual-review queue. OpenRouter remains the secondary
-identity layer. Release-review alerts run independently from benchmark imports,
-and Terminal-Bench 4 stays a separate owner-sourced dataset. A later outage can
-therefore preserve one source at its previous retrieval time without erasing its
-history or hiding a candidate found by a healthy source.
+identity layer. An off-minute hourly release lane runs both discovery layers and
+the review alert independently from the four-hour benchmark lane; the heavier
+Artificial Analysis import remains daily. Terminal-Bench 4 stays a separate
+owner-sourced dataset. A later outage can therefore preserve one source at its
+previous retrieval time without erasing its history or hiding a candidate found
+by a healthy source.

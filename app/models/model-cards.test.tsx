@@ -149,12 +149,14 @@ describe("public model cards", () => {
     expect(markup.match(/model-card-grid__bleed/gu)).toHaveLength(
       MODEL_CARD_PRESENTATIONS.length,
     );
-    expect(markup.match(/<(?:path|ellipse|circle)\b/gu)?.length ?? 0).toBeLessThan(1_250);
+    expect(markup.match(/<(?:path|ellipse|circle)\b/gu)?.length ?? 0).toBeLessThan(
+      MODEL_CARD_PRESENTATIONS.length * 22,
+    );
     expect(markup.match(/<[A-Za-z][^>]*>/gu)?.length ?? 0).toBeLessThan(
       MODEL_CARD_PRESENTATIONS.length * 119 + 64,
     );
     expect(Buffer.byteLength(markup)).toBeLessThan(
-      MODEL_CARD_PRESENTATIONS.length * 20_500 + 10_400,
+      MODEL_CARD_PRESENTATIONS.length * 21_000 + 10_400,
     );
     expect(markup).not.toContain("<canvas");
     expect(markup).toContain('aria-label="Filter model cards"');

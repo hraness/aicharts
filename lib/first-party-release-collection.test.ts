@@ -27,7 +27,7 @@ describe("first-party release publication", () => {
     });
   });
 
-  test("keeps Meta research discovery in the checked ledger without publishing it", () => {
+  test("keeps Meta research discovery in the checked ledger with explicit review states", () => {
     const source = FIRST_PARTY_RELEASE_RADAR.sources.find(item => item.id === "meta-research-sitemap");
     const museSpark = FIRST_PARTY_RELEASE_RADAR.candidates.filter(candidate => (
       candidate.providerId === "meta"
@@ -42,7 +42,32 @@ describe("first-party release publication", () => {
     expect(museSpark.some(candidate => (
       candidate.canonicalUrl.includes("muse-spark")
     ))).toBeTrue();
-    expect(museSpark.every(candidate => candidate.status === "needs-review")).toBeTrue();
+    const reviewedMuse = museSpark.find(candidate => (
+      candidate.id === "meta:/blog/introducing-muse-spark-1-3"
+    ));
+    expect(reviewedMuse).toMatchObject({
+      status: "confirmed-release",
+    });
+    expect(Date.parse(reviewedMuse?.lastChangedAt ?? "")).toBeGreaterThan(
+      Date.parse(reviewedMuse?.firstSeenAt ?? ""),
+    );
+  });
+
+  test("publishes the reviewed Gemini and Muse September candidates", () => {
+    const publishedIds = new Set(
+      confirmedFirstPartyReleases(FIRST_PARTY_RELEASE_RADAR).map(candidate => candidate.id),
+    );
+    for (const id of [
+      "google:/models/model-cards/gemini-3-8-flash/",
+      "meta:/blog/introducing-muse-spark-1-3",
+    ]) {
+      const candidate = FIRST_PARTY_RELEASE_RADAR.candidates.find(item => item.id === id);
+      expect(candidate).toMatchObject({ status: "confirmed-release" });
+      expect(Date.parse(candidate?.lastChangedAt ?? "")).toBeGreaterThan(
+        Date.parse(candidate?.firstSeenAt ?? ""),
+      );
+      expect(publishedIds.has(id)).toBeTrue();
+    }
   });
 
   test("keeps a reviewed release visible when sitemap membership changes", () => {

@@ -3,9 +3,9 @@ import { err, ok, type Result } from "./result";
 import { parseResult, z } from "./schema";
 
 const PROVIDER_IDS = [
-  "alibaba_cloud", "amazon", "anthropic", "baidu", "bytedance", "cohere",
-  "deepseek", "google", "meta", "microsoft", "minimax", "mistral",
-  "moonshot_ai", "nvidia", "openai", "tencent", "xai", "xiaomi", "z_ai",
+  "ai2", "ai21", "alibaba_cloud", "amazon", "anthropic", "baidu", "bytedance", "cohere",
+  "deepseek", "google", "ibm", "meta", "microsoft", "minimax", "mistral",
+  "moonshot_ai", "nvidia", "openai", "stepfun", "tencent", "xai", "xiaomi", "z_ai",
 ] as const;
 
 export type FirstPartyReleaseProviderId = (typeof PROVIDER_IDS)[number];
@@ -176,6 +176,36 @@ export const FIRST_PARTY_RELEASE_SOURCE_DEFINITIONS = [
     format: "sitemap-urlset", id: "xiaomi-mimo-sitemap", minimumCandidateCount: 3,
     minimumEntryCount: 100, providerId: "xiaomi", providerName: "Xiaomi MiMo",
     url: "https://mimo.mi.com/sitemap.xml",
+  },
+  {
+    allowRelativeUrls: false, canonicalHost: "www.ai21.com", datePolicy: "all",
+    format: "sitemap-urlset", id: "ai21-post-sitemap", minimumCandidateCount: 9,
+    minimumEntryCount: 100, providerId: "ai21", providerName: "AI21 Labs",
+    url: "https://www.ai21.com/post-sitemap.xml",
+  },
+  {
+    allowRelativeUrls: false, canonicalHost: "research.ibm.com", datePolicy: "candidates",
+    format: "sitemap-urlset", id: "ibm-granite-sitemap", minimumCandidateCount: 4,
+    minimumEntryCount: 4_000, providerId: "ibm", providerName: "IBM Granite",
+    url: "https://research.ibm.com/sitemap-0.xml",
+  },
+  {
+    allowRelativeUrls: false, canonicalHost: "allenai.org", datePolicy: "all",
+    format: "sitemap-urlset", id: "ai2-model-sitemap", minimumCandidateCount: 20,
+    minimumEntryCount: 250, providerId: "ai2", providerName: "Ai2",
+    url: "https://allenai.org/sitemap.xml",
+  },
+  {
+    allowRelativeUrls: false, canonicalHost: "platform.stepfun.ai", datePolicy: "candidates",
+    format: "sitemap-urlset", id: "stepfun-model-sitemap", minimumCandidateCount: 5,
+    minimumEntryCount: 50, providerId: "stepfun", providerName: "StepFun",
+    url: "https://platform.stepfun.ai/docs/sitemap.xml",
+  },
+  {
+    allowRelativeUrls: false, canonicalHost: "platform.stepfun.com", datePolicy: "candidates",
+    format: "sitemap-urlset", id: "stepfun-china-model-sitemap", minimumCandidateCount: 8,
+    minimumEntryCount: 100, providerId: "stepfun", providerName: "StepFun",
+    url: "https://platform.stepfun.com/docs/sitemap.xml",
   },
 ] as const satisfies readonly SourceContract[];
 
@@ -982,6 +1012,104 @@ function anthropicModels(url: URL): string[] {
   return sortedUnique(models);
 }
 
+const ai21ExactModelRoutes = {
+  "announcing-ai21-studio-and-jurassic-1": ["Jurassic 1"],
+  "announcing-jamba": ["Jamba"],
+  "announcing-jamba-instruct": ["Jamba Instruct"],
+  "announcing-jamba-model-family": ["Jamba 1.5 Large", "Jamba 1.5 Mini"],
+  "grounding-bedrock-enterprise-ai": ["Jamba 1.7 Large", "Jamba 1.7 Mini"],
+  "introducing-j1-grande": ["Jurassic 1 Grande"],
+  "introducing-j2": ["Jurassic 2"],
+  "introducing-jamba-1-6": ["Jamba 1.6 Large", "Jamba 1.6 Mini"],
+  "introducing-jamba2": ["Jamba 2 3B", "Jamba 2 Mini"],
+} as const satisfies Readonly<Record<string, readonly string[]>>;
+
+function ai21Models(url: URL): string[] {
+  const slug = url.pathname.match(/^\/blog\/([^/]+)\/?$/u)?.[1]?.toLowerCase();
+  if (slug === undefined) return [];
+  const exactModels = ai21ExactModelRoutes[slug as keyof typeof ai21ExactModelRoutes];
+  if (exactModels !== undefined) return [...exactModels];
+  const route = slug.replace(/^(?:announcing|introducing)-/u, "");
+  const reasoning = route.match(/^jamba-reasoning-(\d+)b$/u);
+  if (reasoning?.[1] !== undefined) return [`Jamba Reasoning ${reasoning[1]}B`];
+  const attachedVersion = route.match(/^jamba(\d+)(?:-(mini|large|preview))?$/u);
+  if (attachedVersion?.[1] !== undefined) {
+    return [`Jamba ${attachedVersion[1]}${attachedVersion[2] === undefined ? "" : ` ${titleToken(attachedVersion[2])}`}`];
+  }
+  const dottedVersion = route.match(/^jamba-(\d+)-(\d+)(?:-(mini|large|preview))?$/u);
+  if (dottedVersion?.[1] !== undefined && dottedVersion[2] !== undefined) {
+    return [`Jamba ${dottedVersion[1]}.${dottedVersion[2]}${dottedVersion[3] === undefined ? "" : ` ${titleToken(dottedVersion[3])}`}`];
+  }
+  return [];
+}
+
+const ibmExactModelRoutes = {
+  "granite-4-1-ai-foundation-models": ["IBM Granite 4.1"],
+  "granite-code-models-open-source": ["IBM Granite Code"],
+  "granite-vlm": ["IBM Granite Vision 3.1 2B Preview"],
+  "ibm-granite-guardian-5b-3b": ["IBM Granite Guardian 3.2 3B", "IBM Granite Guardian 3.2 5B"],
+} as const satisfies Readonly<Record<string, readonly string[]>>;
+
+function ibmModels(url: URL): string[] {
+  const slug = url.pathname.match(/^\/blog\/([^/]+)\/?$/u)?.[1]?.toLowerCase();
+  if (slug === undefined) return [];
+  const exactModels = ibmExactModelRoutes[slug as keyof typeof ibmExactModelRoutes];
+  if (exactModels !== undefined) return [...exactModels];
+  const version = slug.match(/^(?:introducing-)?granite-(\d+)(?:-(\d+))?(?:-ai-foundation-models)?$/u);
+  return version?.[1] === undefined
+    ? []
+    : [`IBM Granite ${version[1]}${version[2] === undefined ? "" : `.${version[2]}`}`];
+}
+
+const ai2ExactModelRoutes = {
+  "bolmo": ["BOLMo"],
+  "dr-tulu": ["DR Tülu"],
+  "flexolmo": ["FlexOLMo"],
+  "hello-olmo-a-truly-open-llm-43f7e7359222": ["OLMo 7B"],
+  "molmo": ["Molmo"],
+  "molmo-motion": ["Molmo Motion"],
+  "molmobot": ["MolmoBot"],
+  "molmopoint": ["MolmoPoint 8B", "MolmoPoint GUI 8B", "MolmoPoint Vid 4B"],
+  "olmo": ["OLMo"],
+  "olmo-open-language-model-87ccfc95f580": ["OLMo"],
+  "olmoasr": ["OLMoASR"],
+  "olmocr": ["OLMoCR"],
+  "olmoe-app": ["OLMoE"],
+  "olmoe-an-open-small-and-state-of-the-art-mixture-of-experts-model-c258432d0514": ["OLMoE"],
+  "olmohybrid": ["OLMoHybrid"],
+  "open-coding-agents": ["SERA 8B", "SERA 14B", "SERA 32B"],
+  "tulu-3-technical": ["Tülu 3"],
+} as const satisfies Readonly<Record<string, readonly string[]>>;
+
+function ai2Models(url: URL): string[] {
+  const slug = url.pathname.match(/^\/blog\/([^/]+)\/?$/u)?.[1]?.toLowerCase();
+  if (slug === undefined) return [];
+  const exactModels = ai2ExactModelRoutes[slug as keyof typeof ai2ExactModelRoutes];
+  if (exactModels !== undefined) return [...exactModels];
+  const olmo = slug.match(/^olmo(\d+)(?:-(\d+)b)?$/u);
+  if (olmo?.[1] !== undefined) return [`OLMo ${olmo[1]}${olmo[2] === undefined ? "" : ` ${olmo[2]}B`}`];
+  const dottedOlmo = slug.match(/^olmo-(\d+)-(\d+)-(\d+)b(?:-|$)/u);
+  if (dottedOlmo?.[1] !== undefined && dottedOlmo[2] !== undefined && dottedOlmo[3] !== undefined) {
+    return [`OLMo ${dottedOlmo[1]}.${dottedOlmo[2]} ${dottedOlmo[3]}B`];
+  }
+  const olmoCr = slug.match(/^olmocr-(\d+)$/u);
+  if (olmoCr?.[1] !== undefined) return [`OLMoCR ${olmoCr[1]}`];
+  const olmoEarth = slug.match(/^olmoearth-v(\d+)-(\d+)$/u);
+  if (olmoEarth?.[1] !== undefined && olmoEarth[2] !== undefined) return [`OLMoEarth v${olmoEarth[1]}.${olmoEarth[2]}`];
+  const molmo = slug.match(/^(molmo|molmoact|molmobot|molmopoint|molmospaces|molmoweb)(\d+)$/u);
+  if (molmo?.[1] !== undefined && molmo[2] !== undefined) {
+    const family = new Map([
+      ["molmo", "Molmo"], ["molmoact", "MolmoAct"], ["molmobot", "MolmoBot"],
+      ["molmopoint", "MolmoPoint"], ["molmospaces", "MolmoSpaces"], ["molmoweb", "MolmoWeb"],
+    ]).get(molmo[1]);
+    return family === undefined ? [] : [`${family} ${molmo[2]}`];
+  }
+  const tulu = slug.match(/^tulu-(\d+)(?:-(\d+)b)?$/u);
+  return tulu?.[1] === undefined
+    ? []
+    : [`Tülu ${tulu[1]}${tulu[2] === undefined ? "" : ` ${tulu[2]}B`}`];
+}
+
 const ignoredOpenAiSuffixTokens = new Set([
   "baselines", "benchmark", "card", "eval", "evals", "evaluation", "evaluations", "model-spec",
   "paper", "report", "reports", "release", "research", "safe", "completions", "spec", "system", "technical",
@@ -1202,6 +1330,18 @@ function xiaomiModels(url: URL): string[] {
   return slug === undefined ? [] : [`MiMo ${displaySlug(slug).replace(/^V(?=\d)/u, "v")}`];
 }
 
+function stepfunModels(url: URL): string[] {
+  const slug = url.pathname.match(/^\/docs\/(?:en|zh)\/guides\/models\/([^/]+)\/?$/u)?.[1]?.toLowerCase();
+  if (
+    slug === undefined
+    || /-(?:cookbook|mobile-agent|quickstart)$/u.test(slug)
+    || /^step-router(?:-|$)/u.test(slug)
+  ) return [];
+  if (slug === "step-explore") return ["Step Explore"];
+  if (!/^(?:step|stepaudio)-/u.test(slug) || !/\d/u.test(slug)) return [];
+  return [displaySlug(slug).replace(/^Stepaudio\b/u, "StepAudio")];
+}
+
 function namedModelsForProviderText(providerId: FirstPartyReleaseProviderId, value: string): readonly string[] {
   const text = value.replace(/[–—]/gu, "-").trim();
   if (providerId === "openai") return sortedUnique([...text.matchAll(/\bGPT-\d+(?:\.\d+)?(?:\s+(?:Astra|Cyber|Instant|Luna|Max|Mini|Pro|Sol|Spark|Terra))?/gu)].map(match => match[0] ?? "").filter(Boolean));
@@ -1228,10 +1368,12 @@ function namedModelsForProviderText(providerId: FirstPartyReleaseProviderId, val
 }
 
 const providerModelExtractors = {
+  ai2: ai2Models, ai21: ai21Models,
   alibaba_cloud: qwenModels, amazon: amazonModels, anthropic: anthropicModels, baidu: baiduModels,
   bytedance: bytedanceModels, cohere: cohereModels, deepseek: deepSeekModels, google: googleModels,
-  meta: metaModels, microsoft: microsoftModels, minimax: minimaxModels, mistral: mistralModels,
-  moonshot_ai: kimiModels, nvidia: nvidiaModels, openai: openAiModels, tencent: tencentModels,
+  ibm: ibmModels, meta: metaModels, microsoft: microsoftModels, minimax: minimaxModels, mistral: mistralModels,
+  moonshot_ai: kimiModels, nvidia: nvidiaModels, openai: openAiModels, stepfun: stepfunModels,
+  tencent: tencentModels,
   xai: xaiModels, xiaomi: xiaomiModels, z_ai: zaiModels,
 } satisfies Readonly<Record<FirstPartyReleaseProviderId, (url: URL) => string[]>>;
 
@@ -1361,6 +1503,37 @@ function unresolvedAnnouncementNameForSource(
     case "xiaomi-mimo-sitemap": {
       const releaseSlug = url.pathname.match(/^\/docs\/en-US\/news\/(?:latest|previous-news)\/([^/]+)-release\/?$/u)?.[1];
       return releaseSlug !== undefined && /\d/u.test(releaseSlug) ? unresolvedName(releaseSlug) : null;
+    }
+    case "ai21-post-sitemap": {
+      const blogSlug = url.pathname.match(/^\/blog\/([^/]+)\/?$/u)?.[1];
+      return blogSlug !== undefined && hasVersion && /^(?:announcing|introducing)-/u.test(blogSlug)
+        && !/(?:connector|maestro|sdk|studio|tool|qwen|mistral)/u.test(blogSlug)
+        ? unresolvedName(blogSlug)
+        : null;
+    }
+    case "ibm-granite-sitemap": {
+      const blogSlug = url.pathname.match(/^\/blog\/([^/]+)\/?$/u)?.[1];
+      return blogSlug !== undefined && hasVersion && /^(?:announcing|introducing)-/u.test(blogSlug)
+        && /(?:foundation-model|llm|model)/u.test(blogSlug)
+        ? unresolvedName(blogSlug)
+        : null;
+    }
+    case "ai2-model-sitemap": {
+      const blogSlug = url.pathname.match(/^\/blog\/([^/]+)\/?$/u)?.[1];
+      return blogSlug !== undefined && hasVersion
+        && /(?:^|-)(?:announce|introducing|launch|model|release)(?:-|$)/u.test(blogSlug)
+        ? unresolvedName(blogSlug)
+        : null;
+    }
+    case "stepfun-model-sitemap":
+    case "stepfun-china-model-sitemap": {
+      const locale = sourceId === "stepfun-model-sitemap" ? "en" : "zh";
+      const modelSlug = url.pathname.match(new RegExp(`^/docs/${locale}/guides/models/([^/]+)/?$`, "u"))?.[1];
+      return modelSlug !== undefined && hasVersion
+        && !/-(?:cookbook|mobile-agent|quickstart)$/u.test(modelSlug)
+        && !/^step-router(?:-|$)/u.test(modelSlug)
+        ? unresolvedName(modelSlug)
+        : null;
     }
   }
 }

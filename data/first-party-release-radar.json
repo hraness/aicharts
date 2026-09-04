@@ -666,6 +666,23 @@
     {
       "candidateDate": "2026-09-03",
       "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://platform.stepfun.com/docs/zh/guides/models/step-explore",
+      "firstSeenAt": "2026-09-04T00:41:05.019Z",
+      "id": "stepfun:/docs/zh/guides/models/step-explore",
+      "lastChangedAt": "2026-09-04T00:41:05.019Z",
+      "namedModels": [
+        "Step Explore"
+      ],
+      "providerId": "stepfun",
+      "providerName": "StepFun",
+      "sourceId": "stepfun-china-model-sitemap",
+      "sourceModifiedAt": "2026-09-03T05:02:30.226Z",
+      "sourcePresence": "present",
+      "status": "needs-review"
+    },
+    {
+      "candidateDate": "2026-09-03",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
       "canonicalUrl": "https://www.anthropic.com/claude-corps",
       "firstSeenAt": "2026-09-02T15:52:38.032Z",
       "id": "anthropic:/claude-corps",
@@ -841,7 +858,7 @@
       "canonicalUrl": "https://deepmind.google/models/model-cards/gemini-3-8-flash/",
       "firstSeenAt": "2026-09-03T23:30:02.890Z",
       "id": "google:/models/model-cards/gemini-3-8-flash/",
-      "lastChangedAt": "2026-09-03T23:30:02.890Z",
+      "lastChangedAt": "2026-09-03T23:57:08.000Z",
       "namedModels": [
         "Gemini 3.8 Flash"
       ],
@@ -850,7 +867,7 @@
       "sourceId": "google-deepmind-sitemap",
       "sourceModifiedAt": "2026-09-02T00:00:00.000Z",
       "sourcePresence": "present",
-      "status": "needs-review"
+      "status": "confirmed-release"
     },
     {
       "candidateDate": "2026-09-02",
@@ -875,7 +892,7 @@
       "canonicalUrl": "https://research.meta.ai/blog/introducing-muse-spark-1-3",
       "firstSeenAt": "2026-09-03T00:52:14.778Z",
       "id": "meta:/blog/introducing-muse-spark-1-3",
-      "lastChangedAt": "2026-09-03T00:52:14.778Z",
+      "lastChangedAt": "2026-09-03T23:57:08.000Z",
       "namedModels": [
         "Muse Spark 1.3"
       ],
@@ -884,7 +901,7 @@
       "sourceId": "meta-research-sitemap",
       "sourceModifiedAt": "2026-09-02T00:00:00.000Z",
       "sourcePresence": "present",
-      "status": "needs-review"
+      "status": "confirmed-release"
     },
     {
       "candidateDate": "2026-09-01",
@@ -968,6 +985,23 @@
       "providerName": "Moonshot AI",
       "sourceId": "kimi-docs-sitemap",
       "sourceModifiedAt": "2026-08-31T14:59:59.823Z",
+      "sourcePresence": "present",
+      "status": "needs-review"
+    },
+    {
+      "candidateDate": "2026-08-31",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://research.ibm.com/blog/introducing-granite-4-2",
+      "firstSeenAt": "2026-09-04T00:15:52.131Z",
+      "id": "ibm:/blog/introducing-granite-4-2",
+      "lastChangedAt": "2026-09-04T00:15:52.131Z",
+      "namedModels": [
+        "IBM Granite 4.2"
+      ],
+      "providerId": "ibm",
+      "providerName": "IBM Granite",
+      "sourceId": "ibm-granite-sitemap",
+      "sourceModifiedAt": "2026-08-31T14:05:27.222Z",
       "sourcePresence": "present",
       "status": "needs-review"
     },
@@ -1514,6 +1548,74 @@
       "sourceModifiedAt": "2026-08-13T23:55:03.780Z",
       "sourcePresence": "present",
       "status": "confirmed-release"
+    },
+    {
+      "candidateDate": "2026-08-13",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://platform.stepfun.ai/docs/en/guides/models/stepaudio-2.5-chat",
+      "firstSeenAt": "2026-09-04T00:15:52.131Z",
+      "id": "stepfun:/docs/en/guides/models/stepaudio-2.5-chat",
+      "lastChangedAt": "2026-09-04T00:15:52.131Z",
+      "namedModels": [
+        "StepAudio 2.5 Chat"
+      ],
+      "providerId": "stepfun",
+      "providerName": "StepFun",
+      "sourceId": "stepfun-model-sitemap",
+      "sourceModifiedAt": "2026-08-13T07:09:57.953Z",
+      "sourcePresence": "present",
+      "status": "needs-review"
+    },
+    {
+      "candidateDate": "2026-08-13",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://platform.stepfun.ai/docs/en/guides/models/stepaudio-2.5-realtime",
+      "firstSeenAt": "2026-09-04T00:15:52.131Z",
+      "id": "stepfun:/docs/en/guides/models/stepaudio-2.5-realtime",
+      "lastChangedAt": "2026-09-04T00:15:52.131Z",
+      "namedModels": [
+        "StepAudio 2.5 Realtime"
+      ],
+      "providerId": "stepfun",
+      "providerName": "StepFun",
+      "sourceId": "stepfun-model-sitemap",
+      "sourceModifiedAt": "2026-08-13T07:09:57.951Z",
+      "sourcePresence": "present",
+      "status": "needs-review"
+    },
+    {
+      "candidateDate": "2026-08-13",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://platform.stepfun.ai/docs/en/guides/models/stepaudio-2.5-asr",
+      "firstSeenAt": "2026-09-04T00:15:52.131Z",
+      "id": "stepfun:/docs/en/guides/models/stepaudio-2.5-asr",
+      "lastChangedAt": "2026-09-04T00:15:52.131Z",
+      "namedModels": [
+        "StepAudio 2.5 ASR"
+      ],
+      "providerId": "stepfun",
+      "providerName": "StepFun",
+      "sourceId": "stepfun-model-sitemap",
+      "sourceModifiedAt": "2026-08-13T07:09:57.948Z",
+      "sourcePresence": "present",
+      "status": "needs-review"
+    },
+    {
+      "candidateDate": "2026-08-13",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://platform.stepfun.ai/docs/en/guides/models/stepaudio-2.5-tts",
+      "firstSeenAt": "2026-09-04T00:15:52.131Z",
+      "id": "stepfun:/docs/en/guides/models/stepaudio-2.5-tts",
+      "lastChangedAt": "2026-09-04T00:15:52.131Z",
+      "namedModels": [
+        "StepAudio 2.5 TTS"
+      ],
+      "providerId": "stepfun",
+      "providerName": "StepFun",
+      "sourceId": "stepfun-model-sitemap",
+      "sourceModifiedAt": "2026-08-13T07:09:57.916Z",
+      "sourcePresence": "present",
+      "status": "needs-review"
     },
     {
       "candidateDate": "2026-08-13",
@@ -2103,6 +2205,23 @@
     {
       "candidateDate": "2026-07-22",
       "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://platform.stepfun.com/docs/zh/guides/models/step-3.5-flash",
+      "firstSeenAt": "2026-09-04T00:41:05.019Z",
+      "id": "stepfun:/docs/zh/guides/models/step-3.5-flash",
+      "lastChangedAt": "2026-09-04T00:41:05.019Z",
+      "namedModels": [
+        "Step 3.5 Flash"
+      ],
+      "providerId": "stepfun",
+      "providerName": "StepFun",
+      "sourceId": "stepfun-china-model-sitemap",
+      "sourceModifiedAt": "2026-07-22T10:02:09.731Z",
+      "sourcePresence": "present",
+      "status": "needs-review"
+    },
+    {
+      "candidateDate": "2026-07-22",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
       "canonicalUrl": "https://www.anthropic.com/news/claude-opus-4-8",
       "firstSeenAt": "2026-09-02T13:54:58.398Z",
       "id": "anthropic:/news/claude-opus-4-8",
@@ -2510,6 +2629,23 @@
       "status": "needs-review"
     },
     {
+      "candidateDate": "2026-07-06",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://allenai.org/blog/olmocr",
+      "firstSeenAt": "2026-09-04T00:28:54.195Z",
+      "id": "ai2:/blog/olmocr",
+      "lastChangedAt": "2026-09-04T00:28:54.195Z",
+      "namedModels": [
+        "OLMoCR"
+      ],
+      "providerId": "ai2",
+      "providerName": "Ai2",
+      "sourceId": "ai2-model-sitemap",
+      "sourceModifiedAt": "2026-07-06T17:37:28.000Z",
+      "sourcePresence": "present",
+      "status": "needs-review"
+    },
+    {
       "candidateDate": "2026-07-03",
       "candidateDateMeaning": "provider-sitemap-lastmod",
       "canonicalUrl": "https://mistral.ai/news/leanstral-1-5/",
@@ -2592,6 +2728,40 @@
       "providerName": "Google DeepMind",
       "sourceId": "google-deepmind-sitemap",
       "sourceModifiedAt": "2026-06-30T00:00:00.000Z",
+      "sourcePresence": "present",
+      "status": "needs-review"
+    },
+    {
+      "candidateDate": "2026-06-29",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://allenai.org/blog/olmoearth-v1-1",
+      "firstSeenAt": "2026-09-04T00:15:52.131Z",
+      "id": "ai2:/blog/olmoearth-v1-1",
+      "lastChangedAt": "2026-09-04T00:15:52.131Z",
+      "namedModels": [
+        "OLMoEarth v1.1"
+      ],
+      "providerId": "ai2",
+      "providerName": "Ai2",
+      "sourceId": "ai2-model-sitemap",
+      "sourceModifiedAt": "2026-06-29T15:57:09.000Z",
+      "sourcePresence": "present",
+      "status": "needs-review"
+    },
+    {
+      "candidateDate": "2026-06-29",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://platform.stepfun.com/docs/zh/guides/models/stepaudio-2.5-asr",
+      "firstSeenAt": "2026-09-04T00:41:05.019Z",
+      "id": "stepfun:/docs/zh/guides/models/stepaudio-2.5-asr",
+      "lastChangedAt": "2026-09-04T00:41:05.019Z",
+      "namedModels": [
+        "StepAudio 2.5 ASR"
+      ],
+      "providerId": "stepfun",
+      "providerName": "StepFun",
+      "sourceId": "stepfun-china-model-sitemap",
+      "sourceModifiedAt": "2026-06-29T06:51:30.939Z",
       "sourcePresence": "present",
       "status": "needs-review"
     },
@@ -2694,6 +2864,23 @@
       "providerName": "ByteDance Seed",
       "sourceId": "bytedance-seed-sitemap",
       "sourceModifiedAt": "2026-06-24T08:19:22.000Z",
+      "sourcePresence": "present",
+      "status": "needs-review"
+    },
+    {
+      "candidateDate": "2026-06-19",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://allenai.org/blog/molmo-motion",
+      "firstSeenAt": "2026-09-04T00:15:52.131Z",
+      "id": "ai2:/blog/molmo-motion",
+      "lastChangedAt": "2026-09-04T00:15:52.131Z",
+      "namedModels": [
+        "Molmo Motion"
+      ],
+      "providerId": "ai2",
+      "providerName": "Ai2",
+      "sourceId": "ai2-model-sitemap",
+      "sourceModifiedAt": "2026-06-19T20:22:20.000Z",
       "sourcePresence": "present",
       "status": "needs-review"
     },
@@ -2954,6 +3141,23 @@
     },
     {
       "candidateDate": "2026-06-01",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://allenai.org/blog/molmo2",
+      "firstSeenAt": "2026-09-04T00:15:52.131Z",
+      "id": "ai2:/blog/molmo2",
+      "lastChangedAt": "2026-09-04T00:15:52.131Z",
+      "namedModels": [
+        "Molmo 2"
+      ],
+      "providerId": "ai2",
+      "providerName": "Ai2",
+      "sourceId": "ai2-model-sitemap",
+      "sourceModifiedAt": "2026-06-01T17:13:32.000Z",
+      "sourcePresence": "present",
+      "status": "needs-review"
+    },
+    {
+      "candidateDate": "2026-06-01",
       "candidateDateMeaning": "provider-published-date",
       "canonicalUrl": "https://docs.qwencloud.com/changelog/models#june-1-2026-qwen3-7-plus-qwen3-7-plus-2026-05-26",
       "firstSeenAt": "2026-09-03T23:30:02.890Z",
@@ -3007,6 +3211,40 @@
     {
       "candidateDate": "2026-05-29",
       "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://platform.stepfun.com/docs/zh/guides/models/step-3.7-flash",
+      "firstSeenAt": "2026-09-04T00:41:05.019Z",
+      "id": "stepfun:/docs/zh/guides/models/step-3.7-flash",
+      "lastChangedAt": "2026-09-04T00:41:05.019Z",
+      "namedModels": [
+        "Step 3.7 Flash"
+      ],
+      "providerId": "stepfun",
+      "providerName": "StepFun",
+      "sourceId": "stepfun-china-model-sitemap",
+      "sourceModifiedAt": "2026-05-29T15:37:50.735Z",
+      "sourcePresence": "present",
+      "status": "needs-review"
+    },
+    {
+      "candidateDate": "2026-05-29",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://platform.stepfun.ai/docs/en/guides/models/step-3.7-flash",
+      "firstSeenAt": "2026-09-04T00:15:52.131Z",
+      "id": "stepfun:/docs/en/guides/models/step-3.7-flash",
+      "lastChangedAt": "2026-09-04T00:15:52.131Z",
+      "namedModels": [
+        "Step 3.7 Flash"
+      ],
+      "providerId": "stepfun",
+      "providerName": "StepFun",
+      "sourceId": "stepfun-model-sitemap",
+      "sourceModifiedAt": "2026-05-29T15:37:23.613Z",
+      "sourcePresence": "present",
+      "status": "needs-review"
+    },
+    {
+      "candidateDate": "2026-05-29",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
       "canonicalUrl": "https://seed.bytedance.com/blog/deeper-thinking-more-accurate-generation-introducing-seedream-5-0-lite",
       "firstSeenAt": "2026-09-03T23:30:02.890Z",
       "id": "bytedance:/blog/deeper-thinking-more-accurate-generation-introducing-seedream-5-0-lite",
@@ -3018,6 +3256,40 @@
       "providerName": "ByteDance Seed",
       "sourceId": "bytedance-seed-sitemap",
       "sourceModifiedAt": "2026-05-29T09:06:23.000Z",
+      "sourcePresence": "present",
+      "status": "needs-review"
+    },
+    {
+      "candidateDate": "2026-05-28",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://allenai.org/blog/molmoact2",
+      "firstSeenAt": "2026-09-04T00:15:52.131Z",
+      "id": "ai2:/blog/molmoact2",
+      "lastChangedAt": "2026-09-04T00:15:52.131Z",
+      "namedModels": [
+        "MolmoAct 2"
+      ],
+      "providerId": "ai2",
+      "providerName": "Ai2",
+      "sourceId": "ai2-model-sitemap",
+      "sourceModifiedAt": "2026-05-28T16:04:28.000Z",
+      "sourcePresence": "present",
+      "status": "needs-review"
+    },
+    {
+      "candidateDate": "2026-05-28",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://platform.stepfun.ai/docs/en/guides/models/step-3.5-flash",
+      "firstSeenAt": "2026-09-04T00:15:52.131Z",
+      "id": "stepfun:/docs/en/guides/models/step-3.5-flash",
+      "lastChangedAt": "2026-09-04T00:15:52.131Z",
+      "namedModels": [
+        "Step 3.5 Flash"
+      ],
+      "providerId": "stepfun",
+      "providerName": "StepFun",
+      "sourceId": "stepfun-model-sitemap",
+      "sourceModifiedAt": "2026-05-28T14:09:23.938Z",
       "sourcePresence": "present",
       "status": "needs-review"
     },
@@ -3467,6 +3739,23 @@
       "status": "needs-review"
     },
     {
+      "candidateDate": "2026-05-18",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://research.ibm.com/blog/granite-4-1-ai-foundation-models",
+      "firstSeenAt": "2026-09-04T00:15:52.131Z",
+      "id": "ibm:/blog/granite-4-1-ai-foundation-models",
+      "lastChangedAt": "2026-09-04T00:15:52.131Z",
+      "namedModels": [
+        "IBM Granite 4.1"
+      ],
+      "providerId": "ibm",
+      "providerName": "IBM Granite",
+      "sourceId": "ibm-granite-sitemap",
+      "sourceModifiedAt": "2026-05-18T18:05:35.349Z",
+      "sourcePresence": "present",
+      "status": "needs-review"
+    },
+    {
       "candidateDate": "2026-05-12",
       "candidateDateMeaning": "provider-index-lastmod",
       "canonicalUrl": "https://about.fb.com/news/2026/04/introducing-muse-spark-meta-superintelligence-labs",
@@ -3484,6 +3773,40 @@
       "status": "needs-review"
     },
     {
+      "candidateDate": "2026-05-11",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://platform.stepfun.ai/docs/en/guides/models/step-image-edit-2",
+      "firstSeenAt": "2026-09-04T00:15:52.131Z",
+      "id": "stepfun:/docs/en/guides/models/step-image-edit-2",
+      "lastChangedAt": "2026-09-04T00:15:52.131Z",
+      "namedModels": [
+        "Step Image Edit 2"
+      ],
+      "providerId": "stepfun",
+      "providerName": "StepFun",
+      "sourceId": "stepfun-model-sitemap",
+      "sourceModifiedAt": "2026-05-11T08:20:08.527Z",
+      "sourcePresence": "present",
+      "status": "needs-review"
+    },
+    {
+      "candidateDate": "2026-05-09",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://platform.stepfun.com/docs/zh/guides/models/stepaudio-2.5-chat",
+      "firstSeenAt": "2026-09-04T00:41:05.019Z",
+      "id": "stepfun:/docs/zh/guides/models/stepaudio-2.5-chat",
+      "lastChangedAt": "2026-09-04T00:41:05.019Z",
+      "namedModels": [
+        "StepAudio 2.5 Chat"
+      ],
+      "providerId": "stepfun",
+      "providerName": "StepFun",
+      "sourceId": "stepfun-china-model-sitemap",
+      "sourceModifiedAt": "2026-05-09T07:36:16.800Z",
+      "sourcePresence": "present",
+      "status": "needs-review"
+    },
+    {
       "candidateDate": "2026-05-09",
       "candidateDateMeaning": "provider-sitemap-lastmod",
       "canonicalUrl": "https://ernie.baidu.com/blog/posts/ernie-5.1-0508-release/",
@@ -3497,6 +3820,74 @@
       "providerName": "Baidu",
       "sourceId": "baidu-ernie-sitemap",
       "sourceModifiedAt": "2026-05-09T00:00:00.000Z",
+      "sourcePresence": "present",
+      "status": "needs-review"
+    },
+    {
+      "candidateDate": "2026-05-08",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://platform.stepfun.com/docs/zh/guides/models/stepaudio-2.5-realtime",
+      "firstSeenAt": "2026-09-04T00:41:05.019Z",
+      "id": "stepfun:/docs/zh/guides/models/stepaudio-2.5-realtime",
+      "lastChangedAt": "2026-09-04T00:41:05.019Z",
+      "namedModels": [
+        "StepAudio 2.5 Realtime"
+      ],
+      "providerId": "stepfun",
+      "providerName": "StepFun",
+      "sourceId": "stepfun-china-model-sitemap",
+      "sourceModifiedAt": "2026-05-08T11:19:51.576Z",
+      "sourcePresence": "present",
+      "status": "needs-review"
+    },
+    {
+      "candidateDate": "2026-05-07",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://platform.stepfun.com/docs/zh/guides/models/stepaudio-2.5-tts",
+      "firstSeenAt": "2026-09-04T00:41:05.019Z",
+      "id": "stepfun:/docs/zh/guides/models/stepaudio-2.5-tts",
+      "lastChangedAt": "2026-09-04T00:41:05.019Z",
+      "namedModels": [
+        "StepAudio 2.5 TTS"
+      ],
+      "providerId": "stepfun",
+      "providerName": "StepFun",
+      "sourceId": "stepfun-china-model-sitemap",
+      "sourceModifiedAt": "2026-05-07T08:26:13.290Z",
+      "sourcePresence": "present",
+      "status": "needs-review"
+    },
+    {
+      "candidateDate": "2026-05-06",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://platform.stepfun.com/docs/zh/guides/models/step-image-edit-2",
+      "firstSeenAt": "2026-09-04T00:41:05.019Z",
+      "id": "stepfun:/docs/zh/guides/models/step-image-edit-2",
+      "lastChangedAt": "2026-09-04T00:41:05.019Z",
+      "namedModels": [
+        "Step Image Edit 2"
+      ],
+      "providerId": "stepfun",
+      "providerName": "StepFun",
+      "sourceId": "stepfun-china-model-sitemap",
+      "sourceModifiedAt": "2026-05-06T06:50:55.752Z",
+      "sourcePresence": "present",
+      "status": "needs-review"
+    },
+    {
+      "candidateDate": "2026-05-03",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://allenai.org/blog/olmocr-2",
+      "firstSeenAt": "2026-09-04T00:15:52.131Z",
+      "id": "ai2:/blog/olmocr-2",
+      "lastChangedAt": "2026-09-04T00:15:52.131Z",
+      "namedModels": [
+        "OLMoCR 2"
+      ],
+      "providerId": "ai2",
+      "providerName": "Ai2",
+      "sourceId": "ai2-model-sitemap",
+      "sourceModifiedAt": "2026-05-03T16:14:52.000Z",
       "sourcePresence": "present",
       "status": "needs-review"
     },
@@ -3760,6 +4151,59 @@
     {
       "candidateDate": "2026-04-15",
       "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://www.ai21.com/blog/introducing-jamba2/",
+      "firstSeenAt": "2026-09-04T00:15:52.131Z",
+      "id": "ai21:/blog/introducing-jamba2/",
+      "lastChangedAt": "2026-09-04T00:27:29.088Z",
+      "namedModels": [
+        "Jamba 2 3B",
+        "Jamba 2 Mini"
+      ],
+      "providerId": "ai21",
+      "providerName": "AI21 Labs",
+      "sourceId": "ai21-post-sitemap",
+      "sourceModifiedAt": "2026-04-15T07:26:14.000Z",
+      "sourcePresence": "present",
+      "status": "needs-review"
+    },
+    {
+      "candidateDate": "2026-04-15",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://www.ai21.com/blog/introducing-jamba-1-6/",
+      "firstSeenAt": "2026-09-04T00:15:52.131Z",
+      "id": "ai21:/blog/introducing-jamba-1-6/",
+      "lastChangedAt": "2026-09-04T00:27:29.088Z",
+      "namedModels": [
+        "Jamba 1.6 Large",
+        "Jamba 1.6 Mini"
+      ],
+      "providerId": "ai21",
+      "providerName": "AI21 Labs",
+      "sourceId": "ai21-post-sitemap",
+      "sourceModifiedAt": "2026-04-15T07:25:39.000Z",
+      "sourcePresence": "present",
+      "status": "needs-review"
+    },
+    {
+      "candidateDate": "2026-04-15",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://www.ai21.com/blog/introducing-jamba-reasoning-3b/",
+      "firstSeenAt": "2026-09-04T00:15:52.131Z",
+      "id": "ai21:/blog/introducing-jamba-reasoning-3b/",
+      "lastChangedAt": "2026-09-04T00:15:52.131Z",
+      "namedModels": [
+        "Jamba Reasoning 3B"
+      ],
+      "providerId": "ai21",
+      "providerName": "AI21 Labs",
+      "sourceId": "ai21-post-sitemap",
+      "sourceModifiedAt": "2026-04-15T07:25:24.000Z",
+      "sourcePresence": "present",
+      "status": "needs-review"
+    },
+    {
+      "candidateDate": "2026-04-15",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
       "canonicalUrl": "https://deepmind.google/models/model-cards/gemini-3-1-flash-audio/",
       "firstSeenAt": "2026-09-03T23:30:02.890Z",
       "id": "google:/models/model-cards/gemini-3-1-flash-audio/",
@@ -3949,6 +4393,127 @@
     {
       "candidateDate": "2026-03-25",
       "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://www.ai21.com/blog/announcing-ai21-studio-and-jurassic-1/",
+      "firstSeenAt": "2026-09-04T00:15:52.131Z",
+      "id": "ai21:/blog/announcing-ai21-studio-and-jurassic-1/",
+      "lastChangedAt": "2026-09-04T00:15:52.131Z",
+      "namedModels": [
+        "Jurassic 1"
+      ],
+      "providerId": "ai21",
+      "providerName": "AI21 Labs",
+      "sourceId": "ai21-post-sitemap",
+      "sourceModifiedAt": "2026-03-25T11:17:19.000Z",
+      "sourcePresence": "present",
+      "status": "needs-review"
+    },
+    {
+      "candidateDate": "2026-03-25",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://www.ai21.com/blog/introducing-j1-grande/",
+      "firstSeenAt": "2026-09-04T00:15:52.131Z",
+      "id": "ai21:/blog/introducing-j1-grande/",
+      "lastChangedAt": "2026-09-04T00:15:52.131Z",
+      "namedModels": [
+        "Jurassic 1 Grande"
+      ],
+      "providerId": "ai21",
+      "providerName": "AI21 Labs",
+      "sourceId": "ai21-post-sitemap",
+      "sourceModifiedAt": "2026-03-25T11:17:17.000Z",
+      "sourcePresence": "present",
+      "status": "needs-review"
+    },
+    {
+      "candidateDate": "2026-03-25",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://www.ai21.com/blog/introducing-j2/",
+      "firstSeenAt": "2026-09-04T00:15:52.131Z",
+      "id": "ai21:/blog/introducing-j2/",
+      "lastChangedAt": "2026-09-04T00:15:52.131Z",
+      "namedModels": [
+        "Jurassic 2"
+      ],
+      "providerId": "ai21",
+      "providerName": "AI21 Labs",
+      "sourceId": "ai21-post-sitemap",
+      "sourceModifiedAt": "2026-03-25T11:17:13.000Z",
+      "sourcePresence": "present",
+      "status": "needs-review"
+    },
+    {
+      "candidateDate": "2026-03-25",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://www.ai21.com/blog/announcing-jamba/",
+      "firstSeenAt": "2026-09-04T00:15:52.131Z",
+      "id": "ai21:/blog/announcing-jamba/",
+      "lastChangedAt": "2026-09-04T00:15:52.131Z",
+      "namedModels": [
+        "Jamba"
+      ],
+      "providerId": "ai21",
+      "providerName": "AI21 Labs",
+      "sourceId": "ai21-post-sitemap",
+      "sourceModifiedAt": "2026-03-25T11:16:59.000Z",
+      "sourcePresence": "present",
+      "status": "needs-review"
+    },
+    {
+      "candidateDate": "2026-03-25",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://www.ai21.com/blog/announcing-jamba-instruct/",
+      "firstSeenAt": "2026-09-04T00:15:52.131Z",
+      "id": "ai21:/blog/announcing-jamba-instruct/",
+      "lastChangedAt": "2026-09-04T00:15:52.131Z",
+      "namedModels": [
+        "Jamba Instruct"
+      ],
+      "providerId": "ai21",
+      "providerName": "AI21 Labs",
+      "sourceId": "ai21-post-sitemap",
+      "sourceModifiedAt": "2026-03-25T11:16:57.000Z",
+      "sourcePresence": "present",
+      "status": "needs-review"
+    },
+    {
+      "candidateDate": "2026-03-25",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://www.ai21.com/blog/announcing-jamba-model-family/",
+      "firstSeenAt": "2026-09-04T00:15:52.131Z",
+      "id": "ai21:/blog/announcing-jamba-model-family/",
+      "lastChangedAt": "2026-09-04T00:27:29.088Z",
+      "namedModels": [
+        "Jamba 1.5 Large",
+        "Jamba 1.5 Mini"
+      ],
+      "providerId": "ai21",
+      "providerName": "AI21 Labs",
+      "sourceId": "ai21-post-sitemap",
+      "sourceModifiedAt": "2026-03-25T11:16:52.000Z",
+      "sourcePresence": "present",
+      "status": "needs-review"
+    },
+    {
+      "candidateDate": "2026-03-25",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://www.ai21.com/blog/grounding-bedrock-enterprise-ai/",
+      "firstSeenAt": "2026-09-04T00:27:29.088Z",
+      "id": "ai21:/blog/grounding-bedrock-enterprise-ai/",
+      "lastChangedAt": "2026-09-04T00:27:29.088Z",
+      "namedModels": [
+        "Jamba 1.7 Large",
+        "Jamba 1.7 Mini"
+      ],
+      "providerId": "ai21",
+      "providerName": "AI21 Labs",
+      "sourceId": "ai21-post-sitemap",
+      "sourceModifiedAt": "2026-03-25T11:16:41.000Z",
+      "sourcePresence": "present",
+      "status": "needs-review"
+    },
+    {
+      "candidateDate": "2026-03-25",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
       "canonicalUrl": "https://deepmind.google/models/model-cards/lyria-3/",
       "firstSeenAt": "2026-09-03T23:30:02.890Z",
       "id": "google:/models/model-cards/lyria-3/",
@@ -3960,6 +4525,59 @@
       "providerName": "Google DeepMind",
       "sourceId": "google-deepmind-sitemap",
       "sourceModifiedAt": "2026-03-25T00:00:00.000Z",
+      "sourcePresence": "present",
+      "status": "needs-review"
+    },
+    {
+      "candidateDate": "2026-03-20",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://allenai.org/blog/molmobot",
+      "firstSeenAt": "2026-09-04T00:28:54.195Z",
+      "id": "ai2:/blog/molmobot",
+      "lastChangedAt": "2026-09-04T00:28:54.195Z",
+      "namedModels": [
+        "MolmoBot"
+      ],
+      "providerId": "ai2",
+      "providerName": "Ai2",
+      "sourceId": "ai2-model-sitemap",
+      "sourceModifiedAt": "2026-03-20T14:55:24.000Z",
+      "sourcePresence": "present",
+      "status": "needs-review"
+    },
+    {
+      "candidateDate": "2026-03-20",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://allenai.org/blog/olmohybrid",
+      "firstSeenAt": "2026-09-04T00:15:52.131Z",
+      "id": "ai2:/blog/olmohybrid",
+      "lastChangedAt": "2026-09-04T00:15:52.131Z",
+      "namedModels": [
+        "OLMoHybrid"
+      ],
+      "providerId": "ai2",
+      "providerName": "Ai2",
+      "sourceId": "ai2-model-sitemap",
+      "sourceModifiedAt": "2026-03-20T14:53:27.000Z",
+      "sourcePresence": "present",
+      "status": "needs-review"
+    },
+    {
+      "candidateDate": "2026-03-20",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://allenai.org/blog/molmopoint",
+      "firstSeenAt": "2026-09-04T00:28:54.195Z",
+      "id": "ai2:/blog/molmopoint",
+      "lastChangedAt": "2026-09-04T00:28:54.195Z",
+      "namedModels": [
+        "MolmoPoint 8B",
+        "MolmoPoint GUI 8B",
+        "MolmoPoint Vid 4B"
+      ],
+      "providerId": "ai2",
+      "providerName": "Ai2",
+      "sourceId": "ai2-model-sitemap",
+      "sourceModifiedAt": "2026-03-20T14:51:09.000Z",
       "sourcePresence": "present",
       "status": "needs-review"
     },
@@ -4049,6 +4667,23 @@
       "status": "needs-review"
     },
     {
+      "candidateDate": "2026-02-09",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://allenai.org/blog/dr-tulu",
+      "firstSeenAt": "2026-09-04T00:15:52.131Z",
+      "id": "ai2:/blog/dr-tulu",
+      "lastChangedAt": "2026-09-04T00:15:52.131Z",
+      "namedModels": [
+        "DR Tülu"
+      ],
+      "providerId": "ai2",
+      "providerName": "Ai2",
+      "sourceId": "ai2-model-sitemap",
+      "sourceModifiedAt": "2026-02-09T17:09:08.000Z",
+      "sourcePresence": "present",
+      "status": "needs-review"
+    },
+    {
       "candidateDate": "2026-02-06",
       "candidateDateMeaning": "provider-sitemap-lastmod",
       "canonicalUrl": "https://ernie.baidu.com/blog/posts/ernie5.0/",
@@ -4081,6 +4716,25 @@
       "sourceModifiedAt": "2026-02-04T17:29:42.000Z",
       "sourcePresence": "present",
       "status": "not-a-release"
+    },
+    {
+      "candidateDate": "2026-02-03",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://allenai.org/blog/open-coding-agents",
+      "firstSeenAt": "2026-09-04T00:28:54.195Z",
+      "id": "ai2:/blog/open-coding-agents",
+      "lastChangedAt": "2026-09-04T00:41:05.019Z",
+      "namedModels": [
+        "SERA 14B",
+        "SERA 32B",
+        "SERA 8B"
+      ],
+      "providerId": "ai2",
+      "providerName": "Ai2",
+      "sourceId": "ai2-model-sitemap",
+      "sourceModifiedAt": "2026-02-03T17:40:47.000Z",
+      "sourcePresence": "present",
+      "status": "needs-review"
     },
     {
       "candidateDate": "2026-02-03",
@@ -4151,6 +4805,142 @@
       "status": "not-a-release"
     },
     {
+      "candidateDate": "2026-01-20",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://allenai.org/blog/molmo",
+      "firstSeenAt": "2026-09-04T00:15:52.131Z",
+      "id": "ai2:/blog/molmo",
+      "lastChangedAt": "2026-09-04T00:15:52.131Z",
+      "namedModels": [
+        "Molmo"
+      ],
+      "providerId": "ai2",
+      "providerName": "Ai2",
+      "sourceId": "ai2-model-sitemap",
+      "sourceModifiedAt": "2026-01-20T17:04:28.000Z",
+      "sourcePresence": "present",
+      "status": "needs-review"
+    },
+    {
+      "candidateDate": "2026-01-20",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://allenai.org/blog/olmo2",
+      "firstSeenAt": "2026-09-04T00:15:52.131Z",
+      "id": "ai2:/blog/olmo2",
+      "lastChangedAt": "2026-09-04T00:15:52.131Z",
+      "namedModels": [
+        "OLMo 2"
+      ],
+      "providerId": "ai2",
+      "providerName": "Ai2",
+      "sourceId": "ai2-model-sitemap",
+      "sourceModifiedAt": "2026-01-20T16:52:35.000Z",
+      "sourcePresence": "present",
+      "status": "needs-review"
+    },
+    {
+      "candidateDate": "2026-01-20",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://allenai.org/blog/olmo2-32b",
+      "firstSeenAt": "2026-09-04T00:15:52.131Z",
+      "id": "ai2:/blog/olmo2-32b",
+      "lastChangedAt": "2026-09-04T00:15:52.131Z",
+      "namedModels": [
+        "OLMo 2 32B"
+      ],
+      "providerId": "ai2",
+      "providerName": "Ai2",
+      "sourceId": "ai2-model-sitemap",
+      "sourceModifiedAt": "2026-01-20T16:49:41.000Z",
+      "sourcePresence": "present",
+      "status": "needs-review"
+    },
+    {
+      "candidateDate": "2026-01-20",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://allenai.org/blog/flexolmo",
+      "firstSeenAt": "2026-09-04T00:15:52.131Z",
+      "id": "ai2:/blog/flexolmo",
+      "lastChangedAt": "2026-09-04T00:15:52.131Z",
+      "namedModels": [
+        "FlexOLMo"
+      ],
+      "providerId": "ai2",
+      "providerName": "Ai2",
+      "sourceId": "ai2-model-sitemap",
+      "sourceModifiedAt": "2026-01-20T16:47:21.000Z",
+      "sourcePresence": "present",
+      "status": "needs-review"
+    },
+    {
+      "candidateDate": "2026-01-20",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://allenai.org/blog/olmoe-app",
+      "firstSeenAt": "2026-09-04T00:15:52.131Z",
+      "id": "ai2:/blog/olmoe-app",
+      "lastChangedAt": "2026-09-04T00:15:52.131Z",
+      "namedModels": [
+        "OLMoE"
+      ],
+      "providerId": "ai2",
+      "providerName": "Ai2",
+      "sourceId": "ai2-model-sitemap",
+      "sourceModifiedAt": "2026-01-20T16:13:18.000Z",
+      "sourcePresence": "present",
+      "status": "needs-review"
+    },
+    {
+      "candidateDate": "2026-01-20",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://allenai.org/blog/tulu-3-technical",
+      "firstSeenAt": "2026-09-04T00:15:52.131Z",
+      "id": "ai2:/blog/tulu-3-technical",
+      "lastChangedAt": "2026-09-04T00:15:52.131Z",
+      "namedModels": [
+        "Tülu 3"
+      ],
+      "providerId": "ai2",
+      "providerName": "Ai2",
+      "sourceId": "ai2-model-sitemap",
+      "sourceModifiedAt": "2026-01-20T16:07:12.000Z",
+      "sourcePresence": "present",
+      "status": "needs-review"
+    },
+    {
+      "candidateDate": "2026-01-20",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://allenai.org/blog/tulu-3-405b",
+      "firstSeenAt": "2026-09-04T00:15:52.131Z",
+      "id": "ai2:/blog/tulu-3-405b",
+      "lastChangedAt": "2026-09-04T00:15:52.131Z",
+      "namedModels": [
+        "Tülu 3 405B"
+      ],
+      "providerId": "ai2",
+      "providerName": "Ai2",
+      "sourceId": "ai2-model-sitemap",
+      "sourceModifiedAt": "2026-01-20T16:05:41.000Z",
+      "sourcePresence": "present",
+      "status": "needs-review"
+    },
+    {
+      "candidateDate": "2026-01-20",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://allenai.org/blog/tulu-3",
+      "firstSeenAt": "2026-09-04T00:15:52.131Z",
+      "id": "ai2:/blog/tulu-3",
+      "lastChangedAt": "2026-09-04T00:15:52.131Z",
+      "namedModels": [
+        "Tülu 3"
+      ],
+      "providerId": "ai2",
+      "providerName": "Ai2",
+      "sourceId": "ai2-model-sitemap",
+      "sourceModifiedAt": "2026-01-20T16:04:45.000Z",
+      "sourcePresence": "present",
+      "status": "needs-review"
+    },
+    {
       "candidateDate": "2026-01-19",
       "candidateDateMeaning": "provider-published-date",
       "canonicalUrl": "https://docs.z.ai/release-notes/new-released#2026-01-19-glm-4-7-flash",
@@ -4164,6 +4954,23 @@
       "providerName": "Z.ai",
       "sourceId": "zai-release-notes",
       "sourceModifiedAt": "2026-01-19T00:00:00.000Z",
+      "sourcePresence": "present",
+      "status": "needs-review"
+    },
+    {
+      "candidateDate": "2026-01-16",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://allenai.org/blog/olmoasr",
+      "firstSeenAt": "2026-09-04T00:15:52.131Z",
+      "id": "ai2:/blog/olmoasr",
+      "lastChangedAt": "2026-09-04T00:15:52.131Z",
+      "namedModels": [
+        "OLMoASR"
+      ],
+      "providerId": "ai2",
+      "providerName": "Ai2",
+      "sourceId": "ai2-model-sitemap",
+      "sourceModifiedAt": "2026-01-16T21:24:17.000Z",
       "sourcePresence": "present",
       "status": "needs-review"
     },
@@ -4283,6 +5090,40 @@
       "providerName": "MiniMax",
       "sourceId": "minimax-model-releases",
       "sourceModifiedAt": "2025-12-22T00:00:00.000Z",
+      "sourcePresence": "present",
+      "status": "needs-review"
+    },
+    {
+      "candidateDate": "2025-12-19",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://allenai.org/blog/olmo3",
+      "firstSeenAt": "2026-09-04T00:15:52.131Z",
+      "id": "ai2:/blog/olmo3",
+      "lastChangedAt": "2026-09-04T00:15:52.131Z",
+      "namedModels": [
+        "OLMo 3"
+      ],
+      "providerId": "ai2",
+      "providerName": "Ai2",
+      "sourceId": "ai2-model-sitemap",
+      "sourceModifiedAt": "2025-12-19T03:20:18.000Z",
+      "sourcePresence": "present",
+      "status": "needs-review"
+    },
+    {
+      "candidateDate": "2025-12-15",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://allenai.org/blog/bolmo",
+      "firstSeenAt": "2026-09-04T00:15:52.131Z",
+      "id": "ai2:/blog/bolmo",
+      "lastChangedAt": "2026-09-04T00:15:52.131Z",
+      "namedModels": [
+        "BOLMo"
+      ],
+      "providerId": "ai2",
+      "providerName": "Ai2",
+      "sourceId": "ai2-model-sitemap",
+      "sourceModifiedAt": "2025-12-15T17:00:59.000Z",
       "sourcePresence": "present",
       "status": "needs-review"
     },
@@ -4555,6 +5396,74 @@
       "providerName": "MiniMax",
       "sourceId": "minimax-model-releases",
       "sourceModifiedAt": "2025-10-27T00:00:00.000Z",
+      "sourcePresence": "present",
+      "status": "needs-review"
+    },
+    {
+      "candidateDate": "2025-10-17",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://allenai.org/blog/olmo-open-language-model-87ccfc95f580",
+      "firstSeenAt": "2026-09-04T00:15:52.131Z",
+      "id": "ai2:/blog/olmo-open-language-model-87ccfc95f580",
+      "lastChangedAt": "2026-09-04T00:17:59.295Z",
+      "namedModels": [
+        "OLMo"
+      ],
+      "providerId": "ai2",
+      "providerName": "Ai2",
+      "sourceId": "ai2-model-sitemap",
+      "sourceModifiedAt": "2025-10-17T19:54:18.000Z",
+      "sourcePresence": "present",
+      "status": "needs-review"
+    },
+    {
+      "candidateDate": "2025-10-17",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://allenai.org/blog/hello-olmo-a-truly-open-llm-43f7e7359222",
+      "firstSeenAt": "2026-09-04T00:28:54.195Z",
+      "id": "ai2:/blog/hello-olmo-a-truly-open-llm-43f7e7359222",
+      "lastChangedAt": "2026-09-04T00:28:54.195Z",
+      "namedModels": [
+        "OLMo 7B"
+      ],
+      "providerId": "ai2",
+      "providerName": "Ai2",
+      "sourceId": "ai2-model-sitemap",
+      "sourceModifiedAt": "2025-10-17T19:53:54.000Z",
+      "sourcePresence": "present",
+      "status": "needs-review"
+    },
+    {
+      "candidateDate": "2025-10-17",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://allenai.org/blog/olmo-1-7-7b-a-24-point-improvement-on-mmlu-92b43f7d269d",
+      "firstSeenAt": "2026-09-04T00:17:59.295Z",
+      "id": "ai2:/blog/olmo-1-7-7b-a-24-point-improvement-on-mmlu-92b43f7d269d",
+      "lastChangedAt": "2026-09-04T00:17:59.295Z",
+      "namedModels": [
+        "OLMo 1.7 7B"
+      ],
+      "providerId": "ai2",
+      "providerName": "Ai2",
+      "sourceId": "ai2-model-sitemap",
+      "sourceModifiedAt": "2025-10-17T19:51:16.000Z",
+      "sourcePresence": "present",
+      "status": "needs-review"
+    },
+    {
+      "candidateDate": "2025-10-17",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://allenai.org/blog/olmoe-an-open-small-and-state-of-the-art-mixture-of-experts-model-c258432d0514",
+      "firstSeenAt": "2026-09-04T00:15:52.131Z",
+      "id": "ai2:/blog/olmoe-an-open-small-and-state-of-the-art-mixture-of-experts-model-c258432d0514",
+      "lastChangedAt": "2026-09-04T00:17:59.295Z",
+      "namedModels": [
+        "OLMoE"
+      ],
+      "providerId": "ai2",
+      "providerName": "Ai2",
+      "sourceId": "ai2-model-sitemap",
+      "sourceModifiedAt": "2025-10-17T19:48:16.000Z",
       "sourcePresence": "present",
       "status": "needs-review"
     },
@@ -5104,6 +6013,41 @@
       "status": "needs-review"
     },
     {
+      "candidateDate": "2025-02-28",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://research.ibm.com/blog/ibm-granite-guardian-5b-3b",
+      "firstSeenAt": "2026-09-04T00:15:52.131Z",
+      "id": "ibm:/blog/ibm-granite-guardian-5b-3b",
+      "lastChangedAt": "2026-09-04T00:15:52.131Z",
+      "namedModels": [
+        "IBM Granite Guardian 3.2 3B",
+        "IBM Granite Guardian 3.2 5B"
+      ],
+      "providerId": "ibm",
+      "providerName": "IBM Granite",
+      "sourceId": "ibm-granite-sitemap",
+      "sourceModifiedAt": "2025-02-28T14:55:20.617Z",
+      "sourcePresence": "present",
+      "status": "needs-review"
+    },
+    {
+      "candidateDate": "2025-02-27",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://research.ibm.com/blog/granite-vlm",
+      "firstSeenAt": "2026-09-04T00:15:52.131Z",
+      "id": "ibm:/blog/granite-vlm",
+      "lastChangedAt": "2026-09-04T00:15:52.131Z",
+      "namedModels": [
+        "IBM Granite Vision 3.1 2B Preview"
+      ],
+      "providerId": "ibm",
+      "providerName": "IBM Granite",
+      "sourceId": "ibm-granite-sitemap",
+      "sourceModifiedAt": "2025-02-27T17:01:43.086Z",
+      "sourcePresence": "present",
+      "status": "needs-review"
+    },
+    {
       "candidateDate": "2025-02-26",
       "candidateDateMeaning": "provider-sitemap-lastmod",
       "canonicalUrl": "https://www.anthropic.com/news/claude-and-alexa-plus",
@@ -5151,6 +6095,23 @@
       "providerName": "MiniMax",
       "sourceId": "minimax-model-releases",
       "sourceModifiedAt": "2025-02-11T00:00:00.000Z",
+      "sourcePresence": "present",
+      "status": "needs-review"
+    },
+    {
+      "candidateDate": "2025-01-21",
+      "candidateDateMeaning": "provider-sitemap-lastmod",
+      "canonicalUrl": "https://research.ibm.com/blog/granite-code-models-open-source",
+      "firstSeenAt": "2026-09-04T00:15:52.131Z",
+      "id": "ibm:/blog/granite-code-models-open-source",
+      "lastChangedAt": "2026-09-04T00:15:52.131Z",
+      "namedModels": [
+        "IBM Granite Code"
+      ],
+      "providerId": "ibm",
+      "providerName": "IBM Granite",
+      "sourceId": "ibm-granite-sitemap",
+      "sourceModifiedAt": "2025-01-21T13:57:38.405Z",
       "sourcePresence": "present",
       "status": "needs-review"
     },
@@ -5573,7 +6534,7 @@
       "id": "anthropic-sitemap",
       "providerId": "anthropic",
       "providerName": "Anthropic",
-      "retrievedAt": "2026-09-03T23:33:21.719Z",
+      "retrievedAt": "2026-09-04T00:41:05.019Z",
       "url": "https://www.anthropic.com/sitemap.xml"
     },
     {
@@ -5595,7 +6556,7 @@
       "id": "openai-release-sitemap",
       "providerId": "openai",
       "providerName": "OpenAI",
-      "retrievedAt": "2026-09-03T23:33:21.719Z",
+      "retrievedAt": "2026-09-04T00:41:05.019Z",
       "url": "https://openai.com/sitemap.xml/release/"
     },
     {
@@ -5617,7 +6578,7 @@
       "id": "meta-research-sitemap",
       "providerId": "meta",
       "providerName": "Meta",
-      "retrievedAt": "2026-09-03T23:33:21.719Z",
+      "retrievedAt": "2026-09-04T00:41:05.019Z",
       "url": "https://research.meta.ai/sitemap.xml"
     },
     {
@@ -5639,7 +6600,7 @@
       "id": "openai-safety-sitemap",
       "providerId": "openai",
       "providerName": "OpenAI",
-      "retrievedAt": "2026-09-03T23:33:21.719Z",
+      "retrievedAt": "2026-09-04T00:41:05.019Z",
       "url": "https://openai.com/sitemap.xml/safety/"
     },
     {
@@ -5661,7 +6622,7 @@
       "id": "openai-model-catalog",
       "providerId": "openai",
       "providerName": "OpenAI",
-      "retrievedAt": "2026-09-03T23:33:21.719Z",
+      "retrievedAt": "2026-09-04T00:41:05.019Z",
       "url": "https://developers.openai.com/api/docs/models/all.md"
     },
     {
@@ -5683,7 +6644,7 @@
       "id": "meta-newsroom-index",
       "providerId": "meta",
       "providerName": "Meta",
-      "retrievedAt": "2026-09-03T23:33:21.719Z",
+      "retrievedAt": "2026-09-04T00:41:05.019Z",
       "url": "https://about.fb.com/llms.txt"
     },
     {
@@ -5705,7 +6666,7 @@
       "id": "google-deepmind-sitemap",
       "providerId": "google",
       "providerName": "Google DeepMind",
-      "retrievedAt": "2026-09-03T23:33:21.719Z",
+      "retrievedAt": "2026-09-04T00:41:05.019Z",
       "url": "https://deepmind.google/sitemap.xml"
     },
     {
@@ -5727,7 +6688,7 @@
       "id": "xai-release-notes",
       "providerId": "xai",
       "providerName": "xAI",
-      "retrievedAt": "2026-09-03T23:33:21.719Z",
+      "retrievedAt": "2026-09-04T00:41:05.019Z",
       "url": "https://docs.x.ai/developers/release-notes.md"
     },
     {
@@ -5749,7 +6710,7 @@
       "id": "mistral-site-sitemap",
       "providerId": "mistral",
       "providerName": "Mistral AI",
-      "retrievedAt": "2026-09-03T23:33:21.719Z",
+      "retrievedAt": "2026-09-04T00:41:05.019Z",
       "url": "https://mistral.ai/sitemap-0.xml"
     },
     {
@@ -5771,7 +6732,7 @@
       "id": "cohere-docs-sitemap",
       "providerId": "cohere",
       "providerName": "Cohere",
-      "retrievedAt": "2026-09-03T23:33:21.719Z",
+      "retrievedAt": "2026-09-04T00:41:05.019Z",
       "url": "https://docs.cohere.com/sitemap.xml"
     },
     {
@@ -5793,7 +6754,7 @@
       "id": "deepseek-site-sitemap",
       "providerId": "deepseek",
       "providerName": "DeepSeek",
-      "retrievedAt": "2026-09-03T23:33:21.719Z",
+      "retrievedAt": "2026-09-04T00:41:05.019Z",
       "url": "https://www.deepseek.com/sitemap.xml"
     },
     {
@@ -5815,7 +6776,7 @@
       "id": "deepseek-api-sitemap",
       "providerId": "deepseek",
       "providerName": "DeepSeek",
-      "retrievedAt": "2026-09-03T23:33:21.719Z",
+      "retrievedAt": "2026-09-04T00:41:05.019Z",
       "url": "https://api-docs.deepseek.com/updates/"
     },
     {
@@ -5837,7 +6798,7 @@
       "id": "zai-release-notes",
       "providerId": "z_ai",
       "providerName": "Z.ai",
-      "retrievedAt": "2026-09-03T23:33:21.719Z",
+      "retrievedAt": "2026-09-04T00:41:05.019Z",
       "url": "https://docs.z.ai/release-notes/new-released.md"
     },
     {
@@ -5859,7 +6820,7 @@
       "id": "kimi-docs-sitemap",
       "providerId": "moonshot_ai",
       "providerName": "Moonshot AI",
-      "retrievedAt": "2026-09-03T23:33:21.719Z",
+      "retrievedAt": "2026-09-04T00:41:05.019Z",
       "url": "https://platform.kimi.com/docs/sitemap.xml"
     },
     {
@@ -5881,7 +6842,7 @@
       "id": "qwen-model-releases",
       "providerId": "alibaba_cloud",
       "providerName": "Alibaba Qwen",
-      "retrievedAt": "2026-09-03T23:33:21.719Z",
+      "retrievedAt": "2026-09-04T00:41:05.019Z",
       "url": "https://docs.qwencloud.com/changelog/models.md"
     },
     {
@@ -5903,7 +6864,7 @@
       "id": "minimax-model-releases",
       "providerId": "minimax",
       "providerName": "MiniMax",
-      "retrievedAt": "2026-09-03T23:33:21.719Z",
+      "retrievedAt": "2026-09-04T00:41:05.019Z",
       "url": "https://platform.minimax.io/docs/release-notes/models.md"
     },
     {
@@ -5925,7 +6886,7 @@
       "id": "bytedance-seed-sitemap",
       "providerId": "bytedance",
       "providerName": "ByteDance Seed",
-      "retrievedAt": "2026-09-03T23:33:21.719Z",
+      "retrievedAt": "2026-09-04T00:41:05.019Z",
       "url": "https://seed.bytedance.com/sitemap.xml"
     },
     {
@@ -5947,7 +6908,7 @@
       "id": "microsoft-model-sitemap",
       "providerId": "microsoft",
       "providerName": "Microsoft AI",
-      "retrievedAt": "2026-09-03T23:33:21.719Z",
+      "retrievedAt": "2026-09-04T00:41:05.019Z",
       "url": "https://microsoft.ai/model-sitemap.xml"
     },
     {
@@ -5969,7 +6930,7 @@
       "id": "nvidia-nemotron-rss",
       "providerId": "nvidia",
       "providerName": "NVIDIA",
-      "retrievedAt": "2026-09-03T23:33:21.719Z",
+      "retrievedAt": "2026-09-04T00:41:05.019Z",
       "url": "https://blogs.nvidia.com/blog/tag/nemotron/feed/"
     },
     {
@@ -5991,7 +6952,7 @@
       "id": "amazon-nova-rss",
       "providerId": "amazon",
       "providerName": "Amazon",
-      "retrievedAt": "2026-09-03T23:33:21.719Z",
+      "retrievedAt": "2026-09-04T00:41:05.019Z",
       "url": "https://aws.amazon.com/blogs/aws/category/artificial-intelligence/amazon-machine-learning/amazon-bedrock/amazon-nova/feed/"
     },
     {
@@ -6013,7 +6974,7 @@
       "id": "baidu-ernie-sitemap",
       "providerId": "baidu",
       "providerName": "Baidu",
-      "retrievedAt": "2026-09-03T23:33:21.719Z",
+      "retrievedAt": "2026-09-04T00:41:05.019Z",
       "url": "https://ernie.baidu.com/blog/en/sitemap.xml"
     },
     {
@@ -6035,7 +6996,7 @@
       "id": "tencent-post-sitemaps",
       "providerId": "tencent",
       "providerName": "Tencent",
-      "retrievedAt": "2026-09-03T23:33:21.719Z",
+      "retrievedAt": "2026-09-04T00:41:05.019Z",
       "url": "https://www.tencent.com/sitemap_index.xml"
     },
     {
@@ -6057,8 +7018,118 @@
       "id": "xiaomi-mimo-sitemap",
       "providerId": "xiaomi",
       "providerName": "Xiaomi MiMo",
-      "retrievedAt": "2026-09-03T23:33:21.719Z",
+      "retrievedAt": "2026-09-04T00:41:05.019Z",
       "url": "https://mimo.mi.com/sitemap.xml"
+    },
+    {
+      "health": {
+        "contentType": "text/xml",
+        "httpStatus": 200,
+        "shape": {
+          "byteLength": 82868,
+          "candidateCount": 10,
+          "canonicalHostEntryCount": 134,
+          "datedEntryCount": 134,
+          "duplicateEntryCount": 0,
+          "entryCount": 134,
+          "rootElement": "urlset",
+          "uniqueEntryCount": 134
+        },
+        "status": "healthy"
+      },
+      "id": "ai21-post-sitemap",
+      "providerId": "ai21",
+      "providerName": "AI21 Labs",
+      "retrievedAt": "2026-09-04T00:41:05.019Z",
+      "url": "https://www.ai21.com/post-sitemap.xml"
+    },
+    {
+      "health": {
+        "contentType": "application/xml",
+        "httpStatus": 200,
+        "shape": {
+          "byteLength": 929497,
+          "candidateCount": 5,
+          "canonicalHostEntryCount": 5000,
+          "datedEntryCount": 4040,
+          "duplicateEntryCount": 0,
+          "entryCount": 5000,
+          "rootElement": "urlset",
+          "uniqueEntryCount": 5000
+        },
+        "status": "healthy"
+      },
+      "id": "ibm-granite-sitemap",
+      "providerId": "ibm",
+      "providerName": "IBM Granite",
+      "retrievedAt": "2026-09-04T00:41:05.019Z",
+      "url": "https://research.ibm.com/sitemap-0.xml"
+    },
+    {
+      "health": {
+        "contentType": "application/xml",
+        "httpStatus": 200,
+        "shape": {
+          "byteLength": 50896,
+          "candidateCount": 26,
+          "canonicalHostEntryCount": 287,
+          "datedEntryCount": 287,
+          "duplicateEntryCount": 1,
+          "entryCount": 287,
+          "rootElement": "urlset",
+          "uniqueEntryCount": 286
+        },
+        "status": "healthy"
+      },
+      "id": "ai2-model-sitemap",
+      "providerId": "ai2",
+      "providerName": "Ai2",
+      "retrievedAt": "2026-09-04T00:41:05.019Z",
+      "url": "https://allenai.org/sitemap.xml"
+    },
+    {
+      "health": {
+        "contentType": "text/xml",
+        "httpStatus": 200,
+        "shape": {
+          "byteLength": 9994,
+          "candidateCount": 7,
+          "canonicalHostEntryCount": 66,
+          "datedEntryCount": 66,
+          "duplicateEntryCount": 0,
+          "entryCount": 66,
+          "rootElement": "urlset",
+          "uniqueEntryCount": 66
+        },
+        "status": "healthy"
+      },
+      "id": "stepfun-model-sitemap",
+      "providerId": "stepfun",
+      "providerName": "StepFun",
+      "retrievedAt": "2026-09-04T00:41:05.019Z",
+      "url": "https://platform.stepfun.ai/docs/sitemap.xml"
+    },
+    {
+      "health": {
+        "contentType": "text/xml",
+        "httpStatus": 200,
+        "shape": {
+          "byteLength": 17454,
+          "candidateCount": 8,
+          "canonicalHostEntryCount": 116,
+          "datedEntryCount": 116,
+          "duplicateEntryCount": 0,
+          "entryCount": 116,
+          "rootElement": "urlset",
+          "uniqueEntryCount": 116
+        },
+        "status": "healthy"
+      },
+      "id": "stepfun-china-model-sitemap",
+      "providerId": "stepfun",
+      "providerName": "StepFun",
+      "retrievedAt": "2026-09-04T00:41:05.019Z",
+      "url": "https://platform.stepfun.com/docs/sitemap.xml"
     }
   ]
 }
