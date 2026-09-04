@@ -292,14 +292,14 @@
     },
     {
       "costUsdPerTask": {
-        "answer": 0.2455334975288508,
-        "cacheRead": 0.430780055260716,
-        "cacheWrite": 0.43137609678856903,
-        "input": 0.9234845570866372,
+        "answer": 0.24681936116521444,
+        "cacheRead": 0.43281484989616104,
+        "cacheWrite": 0.4332283002091424,
+        "input": 0.9273715551426556,
         "nonCacheInput": 0.06132840503735221,
-        "output": 0.7437798831351404,
-        "reasoning": 0.49824638560628953,
-        "total": 1.6672644402217776
+        "output": 0.7467229740442313,
+        "reasoning": 0.4999036128790168,
+        "total": 1.674094529186887
       },
       "creator": {
         "id": "e67e56e3-15cd-43db-b679-da4660a69f41",
@@ -316,9 +316,9 @@
       "intelligenceIndex": 61.2161067377315,
       "name": "GPT-6 Astra (max)",
       "outputTokensPerTask": {
-        "answer": 4910.669950577016,
-        "reasoning": 9964.927712125791,
-        "total": 14875.597662702807
+        "answer": 4936.387223304288,
+        "reasoning": 9998.072257580336,
+        "total": 14934.459480884623
       },
       "release": {
         "name": "GPT-6 Astra",
@@ -520,14 +520,14 @@
     },
     {
       "costUsdPerTask": {
-        "answer": 0.17710438991028785,
-        "cacheRead": 0.29275219931967456,
-        "cacheWrite": 0.2993488768119884,
-        "input": 0.653369494301104,
+        "answer": 0.17821248081937877,
+        "cacheRead": 0.2937027378324797,
+        "cacheWrite": 0.3001866794928334,
+        "input": 0.655157835494754,
         "nonCacheInput": 0.06126841816944101,
-        "output": 0.30511470324154183,
-        "reasoning": 0.12801031333125396,
-        "total": 0.9584841975426457
+        "output": 0.30702293051426915,
+        "reasoning": 0.12881044969489033,
+        "total": 0.9621807660090231
       },
       "creator": {
         "id": "e67e56e3-15cd-43db-b679-da4660a69f41",
@@ -544,9 +544,9 @@
       "intelligenceIndex": 60.3349859597706,
       "name": "GPT-6 Astra (high)",
       "outputTokensPerTask": {
-        "answer": 3542.087798205758,
-        "reasoning": 2560.20626662508,
-        "total": 6102.294064830838
+        "answer": 3564.2496163875758,
+        "reasoning": 2576.208993897807,
+        "total": 6140.458610285383
       },
       "release": {
         "name": "GPT-6 Astra",
@@ -1344,14 +1344,14 @@
     },
     {
       "costUsdPerTask": {
-        "answer": 0.17729283575764793,
-        "cacheRead": 0.41270558875309865,
-        "cacheWrite": 0.27942831354178654,
-        "input": 0.7535380449881357,
+        "answer": 0.17792460848492064,
+        "cacheRead": 0.41301107806037146,
+        "cacheWrite": 0.2798147767463316,
+        "input": 0.7542299974999535,
         "nonCacheInput": 0.06140414269325053,
-        "output": 0.17729283575764793,
+        "output": 0.17792460848492064,
         "reasoning": 0,
-        "total": 0.9308308807457836
+        "total": 0.932154605984874
       },
       "creator": {
         "id": "e67e56e3-15cd-43db-b679-da4660a69f41",
@@ -1364,9 +1364,9 @@
       "intelligenceIndex": 55.340346794842,
       "name": "GPT-6 Astra (Non-reasoning)",
       "outputTokensPerTask": {
-        "answer": 3545.8567151529587,
+        "answer": 3558.4921696984134,
         "reasoning": 0,
-        "total": 3545.8567151529587
+        "total": 3558.4921696984134
       },
       "release": {
         "name": "GPT-6 Astra",
@@ -2024,14 +2024,14 @@
     },
     {
       "costUsdPerTask": {
-        "answer": 0.0028361320391954523,
-        "cacheRead": 0.007763853466916305,
-        "cacheWrite": 0.0028590448524085017,
-        "input": 0.011365348000821283,
+        "answer": 0.002899065766468179,
+        "cacheRead": 0.007969276083170851,
+        "cacheWrite": 0.0028992281444085027,
+        "input": 0.01161095390907583,
         "nonCacheInput": 0.0007424496814964767,
-        "output": 0.015433698825343416,
-        "reasoning": 0.012597566786147962,
-        "total": 0.0267990468261647
+        "output": 0.01564251518897978,
+        "reasoning": 0.012743449422511597,
+        "total": 0.027253469098055608
       },
       "creator": {
         "id": "5db3af1a-e372-4c62-98bd-f6027eeaf990",
@@ -2044,9 +2044,9 @@
       "intelligenceIndex": 49.0952270697929,
       "name": "Agnes 2.5 Pro Beta",
       "outputTokensPerTask": {
-        "answer": 9453.773463984842,
-        "reasoning": 41991.88928715989,
-        "total": 51445.66275114473
+        "answer": 9663.552554893933,
+        "reasoning": 42478.16474170534,
+        "total": 52141.71729659927
       },
       "release": {
         "name": "Agnes 2.5 Pro Beta",
@@ -4843,7 +4843,7 @@
     "method": "public-next-flight",
     "methodologyUrl": "https://artificialanalysis.ai/methodology/intelligence-benchmarking",
     "name": "Artificial Analysis",
-    "retrievedAt": "2026-09-04T04:20:25.846Z",
+    "retrievedAt": "2026-09-04T12:43:07.560Z",
     "sourceClass": "benchmark-publisher",
     "termsUrl": "https://artificialanalysis.ai/docs/legal/Terms-of-Use.pdf",
     "url": "https://artificialanalysis.ai/models"
