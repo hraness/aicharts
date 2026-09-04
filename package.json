@@ -84,7 +84,7 @@
     "posthog-node": "5.51.4",
     "react": "19.2.8",
     "react-dom": "19.2.8",
-    "zod": "^4.4.3"
+    "zod": "^4.5.4"
   },
   "devDependencies": {
     "@types/bun": "^1.3.14",
