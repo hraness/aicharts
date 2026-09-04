@@ -1741,7 +1741,7 @@
         "slug": "low"
       },
       "id": "f6db039b-0f3b-485c-9d7f-982988e44f26",
-      "intelligenceIndex": 51.749209404077,
+      "intelligenceIndex": 51.758609404077,
       "name": "Gemini 3.8 Flash (low)",
       "outputTokensPerTask": {
         "answer": 12961.938504438083,
@@ -4730,14 +4730,14 @@
     },
     {
       "costUsdPerTask": {
-        "answer": 0.0008658059063358164,
+        "answer": 0.0008920424489520533,
         "cacheRead": 0,
-        "cacheWrite": 0.008594722442058486,
-        "input": 0.009706227871578956,
-        "nonCacheInput": 0.0011115054295204698,
-        "output": 0.0008658059063358164,
+        "cacheWrite": 0.009072207022172846,
+        "input": 0.01024546275333334,
+        "nonCacheInput": 0.0011732557311604959,
+        "output": 0.0008920424489520533,
         "reasoning": 0,
-        "total": 0.010572033777914776
+        "total": 0.011137505202285396
       },
       "creator": {
         "id": "e1694725-0192-4e54-b1b8-c97e816c6cbe",
@@ -4843,7 +4843,7 @@
     "method": "public-next-flight",
     "methodologyUrl": "https://artificialanalysis.ai/methodology/intelligence-benchmarking",
     "name": "Artificial Analysis",
-    "retrievedAt": "2026-09-04T12:43:07.560Z",
+    "retrievedAt": "2026-09-04T18:58:55.465Z",
     "sourceClass": "benchmark-publisher",
     "termsUrl": "https://artificialanalysis.ai/docs/legal/Terms-of-Use.pdf",
     "url": "https://artificialanalysis.ai/models"
