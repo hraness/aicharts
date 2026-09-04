@@ -3,7 +3,7 @@
   "source": {
     "method": "models-api",
     "name": "OpenRouter",
-    "retrievedAt": "2026-09-03T23:51:37.281Z",
+    "retrievedAt": "2026-09-04T22:26:50.646Z",
     "timestampMeaning": "source-added-at",
     "url": "https://openrouter.ai/api/v1/models?sort=newest"
   },
@@ -28,6 +28,18 @@
     "windowDays": 90
   },
   "observedListings": [
+    {
+      "id": "openai/gpt-6-astra",
+      "model": "GPT-6 Astra",
+      "providerId": "openai",
+      "sourceAddedAt": "2026-09-04T20:13:58.000Z"
+    },
+    {
+      "id": "openai/gpt-6-astra-pro",
+      "model": "GPT-6 Astra Pro",
+      "providerId": "openai",
+      "sourceAddedAt": "2026-09-04T20:13:55.000Z"
+    },
     {
       "id": "meta/muse-spark-1.3-contributor",
       "model": "Muse Spark 1.3 Contributor",
@@ -258,6 +270,48 @@
     }
   ],
   "releases": [
+    {
+      "capabilities": {
+        "inputModalities": [
+          "file",
+          "image",
+          "text"
+        ],
+        "outputModalities": [
+          "text"
+        ],
+        "supportsTools": true
+      },
+      "canonicalSlug": "openai/gpt-6-astra-20260903",
+      "id": "openai/gpt-6-astra",
+      "model": "GPT-6 Astra",
+      "modelUrl": "https://openrouter.ai/openai/gpt-6-astra",
+      "providerId": "openai",
+      "providerName": "OpenAI",
+      "sourceAddedAt": "2026-09-04T20:13:58.000Z",
+      "status": "benchmarked"
+    },
+    {
+      "capabilities": {
+        "inputModalities": [
+          "file",
+          "image",
+          "text"
+        ],
+        "outputModalities": [
+          "text"
+        ],
+        "supportsTools": true
+      },
+      "canonicalSlug": "openai/gpt-6-astra-pro-20260903",
+      "id": "openai/gpt-6-astra-pro",
+      "model": "GPT-6 Astra Pro",
+      "modelUrl": "https://openrouter.ai/openai/gpt-6-astra-pro",
+      "providerId": "openai",
+      "providerName": "OpenAI",
+      "sourceAddedAt": "2026-09-04T20:13:55.000Z",
+      "status": "awaiting-benchmark"
+    },
     {
       "capabilities": {
         "inputModalities": [
