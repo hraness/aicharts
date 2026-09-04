@@ -27,7 +27,7 @@ import {
 } from "@/lib/deep-swe-evidence";
 import {
   FIRST_PARTY_RELEASE_HIGHLIGHTS,
-  FIRST_PARTY_RELEASE_RADAR,
+  FIRST_PARTY_RELEASE_SOURCE_SUMMARY,
 } from "@/lib/first-party-release-collection";
 import { modelCardArtDirection } from "@/lib/model-card-art-direction";
 import { modelCardReleaseAccessibleLabel } from "@/lib/model-card-presentation";
@@ -121,9 +121,9 @@ export default function ModelCardsPage() {
         >
           <div className="model-release-radar__heading">
             <p>First-party release radar</p>
-            <h2 id="first-party-release-radar-title">New releases found at the provider source</h2>
+            <h2 id="first-party-release-radar-title">New releases found at first-party sources</h2>
             <small>
-              {FIRST_PARTY_RELEASE_RADAR.sources.length} configured provider sources · reviewed URL evidence
+              {FIRST_PARTY_RELEASE_SOURCE_SUMMARY.labCount} labs · {FIRST_PARTY_RELEASE_SOURCE_SUMMARY.sourceCount} first-party sources · reviewed URL evidence
             </small>
           </div>
           <ul>
@@ -143,9 +143,9 @@ export default function ModelCardsPage() {
                   <span>
                     <strong>{release.namedModels.join(" and ")}</strong>
                     <small>
-                      {release.providerName} · source changed{" "}
-                      <time dateTime={release.sourceModifiedAt}>
-                        {formatUpdateDate(release.sourceModifiedAt)}
+                      {release.providerName} · first observed{" "}
+                      <time dateTime={release.firstSeenAt}>
+                        {formatUpdateDate(release.firstSeenAt)}
                       </time>
                     </small>
                   </span>
@@ -155,10 +155,11 @@ export default function ModelCardsPage() {
             ))}
           </ul>
           <p className="model-release-radar__note">
-            Provider sitemaps supply announcement candidates before an aggregator
-            may list every model. A sitemap change is discovery evidence, not an
-            official release date or a benchmark score; reviewed dates and scores
-            keep their own sources.
+            Lab-owned release sources supply announcement candidates before an
+            aggregator may list every model. A newly observed canonical URL is
+            discovery evidence. Source timestamps and later edits are not official
+            release dates or benchmark scores; reviewed dates and scores keep their
+            own sources.
           </p>
         </section>
       )}

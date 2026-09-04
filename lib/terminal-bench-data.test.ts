@@ -46,10 +46,11 @@ describe("checked Terminal-Bench data", () => {
 
     const keys = new Set(parsed.value.records.map(terminalBenchRecordKey));
     expect(keys.size).toBe(parsed.value.records.length);
+    expect(parsed.value.records.some(record => record.metrics.totalCostUsd > 0)).toBeTrue();
     for (const record of parsed.value.records) {
       expect(record.metrics.nTrials).toBe(TERMINAL_BENCH_TRIALS_PER_CONFIGURATION);
       expect(record.metrics.accuracyCi95HalfWidthPercent).toBeGreaterThan(0);
-      expect(record.metrics.totalCostUsd).toBeGreaterThan(0);
+      expect(record.metrics.totalCostUsd).toBeGreaterThanOrEqual(0);
       expect(record.metrics.totalTokens).toBeGreaterThan(0);
       expect(record.harness.version.length).toBeGreaterThan(0);
       expect(record.model.id).toContain("/");

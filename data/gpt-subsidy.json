@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-09-02T00:18:05.898Z",
+  "generatedAt": "2026-09-04T00:17:47.593Z",
   "observations": [
     {
       "id": "trailing-7d-2026-07-25",
@@ -781,6 +781,46 @@
       },
       "subscriptionAdjustedMultiple": null,
       "status": "settled"
+    },
+    {
+      "id": "trailing-7d-2026-09-02",
+      "observedAt": "2026-09-02T23:59:59.999Z",
+      "periodStartedAt": "2026-08-27T00:00:00.000Z",
+      "periodEndsAt": "2026-09-02T23:59:59.999Z",
+      "tokens": {
+        "uncachedInput": 1158419040,
+        "cachedInput": 37877586560,
+        "output": 89923981,
+        "total": 39125929581
+      },
+      "trailingSevenDayApiEquivalentUsd": 19252.682775480007,
+      "accountAttribution": {
+        "status": "unavailable",
+        "distinctObservedAccounts": null,
+        "coverage": 0
+      },
+      "subscriptionAdjustedMultiple": null,
+      "status": "settled"
+    },
+    {
+      "id": "trailing-7d-2026-09-03",
+      "observedAt": "2026-09-03T23:59:59.999Z",
+      "periodStartedAt": "2026-08-28T00:00:00.000Z",
+      "periodEndsAt": "2026-09-03T23:59:59.999Z",
+      "tokens": {
+        "uncachedInput": 1138300721,
+        "cachedInput": 33780967552,
+        "output": 76637302,
+        "total": 34995905575
+      },
+      "trailingSevenDayApiEquivalentUsd": 17067.753632719992,
+      "accountAttribution": {
+        "status": "unavailable",
+        "distinctObservedAccounts": null,
+        "coverage": 0
+      },
+      "subscriptionAdjustedMultiple": null,
+      "status": "settled"
     }
   ],
   "plan": {
@@ -839,15 +879,15 @@
   "title": "Subsidy for ChatGPT Pro 20x subscription",
   "currency": "USD",
   "periodSummary": {
-    "startedAt": "2026-08-02T00:00:00.000Z",
-    "endedAt": "2026-09-01T23:59:59.999Z",
+    "startedAt": "2026-08-04T00:00:00.000Z",
+    "endedAt": "2026-09-03T23:59:59.999Z",
     "days": 31,
     "tokens": {
-      "uncachedInput": 4607639424,
-      "cachedInput": 142389909504,
-      "output": 318821402,
-      "total": 147316370330
+      "uncachedInput": 4864853602,
+      "cachedInput": 146128843904,
+      "output": 325424852,
+      "total": 151319122358
     },
-    "apiEquivalentUsd": 71467.08718081017
+    "apiEquivalentUsd": 73054.66410713016
   }
 }

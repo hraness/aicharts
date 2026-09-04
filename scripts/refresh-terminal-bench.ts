@@ -34,6 +34,7 @@ const LEADERBOARD_DEFINITION_PATH = `${LEADERBOARD_PATH}/leaderboard.yaml`;
 const SUBMISSIONS_PATH = `${LEADERBOARD_PATH}/submissions`;
 const SOURCE_COMMIT_URL = `${REPOSITORY_API_URL}/commits?sha=main&path=${LEADERBOARD_PATH}&per_page=1`;
 const GITHUB_USER_AGENT = "aicharts-terminal-bench-refresh/1.0 (+https://aicharts.io)";
+const HARBOR_JOB_URL_PREFIX = "https://hub.harborframework.com/jobs/";
 
 const sourceCommitResponseSchema = z.array(z.object({
   commit: z.object({
@@ -54,6 +55,11 @@ const labeledLinkSchema = z.object({
   label: z.string().min(1),
   url: credentialFreeHttpsUrlSchema,
 });
+
+const sourceJobSchema = z.union([
+  credentialFreeHttpsUrlSchema,
+  z.string().uuid().transform(jobId => `${HARBOR_JOB_URL_PREFIX}${jobId}`),
+]);
 
 const sourceSubmissionSchema = z.object({
   disqualified_trials: z.array(z.unknown()).length(0),
@@ -87,7 +93,7 @@ const sourceSubmissionSchema = z.object({
     model_name: z.string().regex(/^[a-z0-9][a-z0-9._-]*\/[a-z0-9][a-z0-9._-]*$/u),
     reasoning_effort: z.string().min(1).nullable(),
   }),
-  source_jobs: z.array(credentialFreeHttpsUrlSchema).min(1),
+  source_jobs: z.array(sourceJobSchema).min(1),
   trials: z.array(z.string().min(1)).length(TERMINAL_BENCH_TRIALS_PER_CONFIGURATION),
 }).superRefine((submission, context) => {
   const expectedAccuracy = submission.metrics.successes / submission.metrics.n_trials * 100;
