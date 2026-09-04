@@ -43,6 +43,7 @@ jobs:
       BENCHMARK_PATH: data/coding-agents.json
       DEEP_SWE_PATH: data/deep-swe-evidence.json
       FIRST_PARTY_RELEASE_PATH: data/first-party-release-radar.json
+      INTELLIGENCE_PATH: data/artificial-analysis-intelligence.json
       # Cloudflare's documented always-pass public test key. Production uses
       # the hostname-restricted live key; this job only proves the build.
       NEXT_PUBLIC_HRANESS_MAILING_TURNSTILE_SITEKEY: 1x00000000000000000000AA
@@ -153,6 +154,11 @@ jobs:
         if: steps.dependencies.outcome == 'success' && env.RUN_AAI_REFRESH == 'true'
         continue-on-error: true
         run: bun run data:refresh
+      - name: Refresh Artificial Analysis Intelligence efficiency snapshot
+        id: intelligence
+        if: steps.dependencies.outcome == 'success' && env.RUN_BENCHMARK_REFRESH == 'true'
+        continue-on-error: true
+        run: bun run aa-intelligence:refresh
       - name: Reconcile release statuses from the available checked snapshots
         id: release_reconcile
         if: steps.dependencies.outcome == 'success' && (env.RUN_RELEASE_REFRESH == 'true' || env.RUN_BENCHMARK_REFRESH == 'true')
@@ -192,7 +198,7 @@ jobs:
           fi
 
           while IFS= read -r changed_file; do
-            if [[ "$changed_file" != "$BENCHMARK_PATH" && "$changed_file" != "$DEEP_SWE_PATH" && "$changed_file" != "$FIRST_PARTY_RELEASE_PATH" && "$changed_file" != "$RELEASE_RADAR_PATH" && "$changed_file" != "$TERMINAL_BENCH_PATH" && "$changed_file" != "$TERMINAL_BENCH_SCIENCE_PATH" ]]; then
+            if [[ "$changed_file" != "$BENCHMARK_PATH" && "$changed_file" != "$DEEP_SWE_PATH" && "$changed_file" != "$FIRST_PARTY_RELEASE_PATH" && "$changed_file" != "$INTELLIGENCE_PATH" && "$changed_file" != "$RELEASE_RADAR_PATH" && "$changed_file" != "$TERMINAL_BENCH_PATH" && "$changed_file" != "$TERMINAL_BENCH_SCIENCE_PATH" ]]; then
               echo "Refresh changed unexpected file: ${changed_file}"
               exit 1
             fi
@@ -211,6 +217,9 @@ jobs:
                 ;;
               "$FIRST_PARTY_RELEASE_PATH")
                 semantic_filter='del(.sources[].retrievedAt)'
+                ;;
+              "$INTELLIGENCE_PATH")
+                semantic_filter='del(.source.retrievedAt)'
                 ;;
               "$DEEP_SWE_PATH")
                 semantic_filter='walk(if type == "object" then del(.attemptedAt, .retrievedAt) else . end) | del(.identitySource.status)'
@@ -260,12 +269,12 @@ jobs:
         run: |
           git config user.name "0thernet"
           git config user.email "894119+0thernet@users.noreply.github.com"
-          git add -- "$BENCHMARK_PATH" "$DEEP_SWE_PATH" "$FIRST_PARTY_RELEASE_PATH" "$RELEASE_RADAR_PATH" "$TERMINAL_BENCH_PATH" "$TERMINAL_BENCH_SCIENCE_PATH"
+          git add -- "$BENCHMARK_PATH" "$DEEP_SWE_PATH" "$FIRST_PARTY_RELEASE_PATH" "$INTELLIGENCE_PATH" "$RELEASE_RADAR_PATH" "$TERMINAL_BENCH_PATH" "$TERMINAL_BENCH_SCIENCE_PATH"
           git commit -m "chore: refresh model data"
           git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:refs/heads/${REFRESH_BRANCH}"
 
           run_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
-          printf -v pr_body 'Automated model-data refresh from %s.\n\nAll six checked snapshots were validated with `bun run check` before this PR was created. Required CI is dispatched explicitly because pull-request checks created by `GITHUB_TOKEN` otherwise wait for manual approval.' "$run_url"
+          printf -v pr_body 'Automated model-data refresh from %s.\n\nAll seven checked snapshots were validated with `bun run check` before this PR was created. Required CI is dispatched explicitly because pull-request checks created by `GITHUB_TOKEN` otherwise wait for manual approval.' "$run_url"
           pr_url="$(gh pr create --base main --head "$REFRESH_BRANCH" --title "chore: refresh model data" --body "$pr_body")"
           echo "pr_url=${pr_url}" >> "$GITHUB_OUTPUT"
 
@@ -326,6 +335,7 @@ jobs:
           FIRST_PARTY_REVIEW_OUTCOME: ${{ steps.first_party_review.outcome }}
           GH_REPO: ${{ github.repository }}
           GH_TOKEN: ${{ github.token }}
+          INTELLIGENCE_OUTCOME: ${{ steps.intelligence.outcome }}
           PUBLISH_CI_RUN_URL: ${{ steps.publish.outputs.ci_run_url }}
           PUBLISH_OUTCOME: ${{ steps.publish.outcome }}
           PUBLISH_PR_URL: ${{ steps.publish.outputs.pr_url }}
@@ -361,10 +371,12 @@ jobs:
               if [[ "$RELEASE_OUTCOME" != "skipped" ]]; then unhealthy=true; fi
             fi
             if [[ "$RUN_BENCHMARK_REFRESH" == "true" ]]; then
+              if [[ "$INTELLIGENCE_OUTCOME" != "success" ]]; then unhealthy=true; fi
               if [[ "$DEEP_SWE_OUTCOME" != "success" ]]; then unhealthy=true; fi
               if [[ "$TERMINAL_BENCH_OUTCOME" != "success" ]]; then unhealthy=true; fi
               if [[ "$TERMINAL_BENCH_SCIENCE_OUTCOME" != "success" ]]; then unhealthy=true; fi
             else
+              if [[ "$INTELLIGENCE_OUTCOME" != "skipped" ]]; then unhealthy=true; fi
               if [[ "$DEEP_SWE_OUTCOME" != "skipped" ]]; then unhealthy=true; fi
               if [[ "$TERMINAL_BENCH_OUTCOME" != "skipped" ]]; then unhealthy=true; fi
               if [[ "$TERMINAL_BENCH_SCIENCE_OUTCOME" != "skipped" ]]; then unhealthy=true; fi
@@ -387,6 +399,7 @@ jobs:
             echo "| Node setup | ${SETUP_NODE_OUTCOME} |"
             echo "| Dependencies | ${DEPENDENCIES_OUTCOME} |"
             echo "| Artificial Analysis | ${BENCHMARK_OUTCOME} |"
+            echo "| AA Intelligence efficiency | ${INTELLIGENCE_OUTCOME} |"
             echo "| OpenRouter | ${RELEASE_OUTCOME} |"
             echo "| First-party release sources | ${FIRST_PARTY_RELEASE_OUTCOME} |"
             echo "| First-party review alert | ${FIRST_PARTY_REVIEW_OUTCOME} |"
@@ -406,6 +419,9 @@ jobs:
             fi
             if [[ -f "$BENCHMARK_PATH" ]]; then
               jq -r '"- Benchmark snapshot: \(.records | length) configurations across \([.records[].providerId] | unique | length) providers; retrieved \(.source.retrievedAt)."' "$BENCHMARK_PATH"
+            fi
+            if [[ -f "$INTELLIGENCE_PATH" ]]; then
+              jq -r '"- AA Intelligence Index v\(.benchmark.version): \(.selection.measuredCompleteRecordCount) current measured configurations; \(.selection.positiveCostRecordCount) with positive comparable cost; retrieved \(.source.retrievedAt)."' "$INTELLIGENCE_PATH"
             fi
             if [[ -f "$RELEASE_RADAR_PATH" ]]; then
               jq -r '"- Release radar: \(.releases | length) tracked; \([.releases[] | select(.status == "awaiting-benchmark")] | length) awaiting complete coverage; retrieved \(.source.retrievedAt)."' "$RELEASE_RADAR_PATH"
@@ -468,14 +484,14 @@ jobs:
           fi
 
           if [[ "$unhealthy" == "true" ]]; then
-            printf -v issue_body 'The scheduled model-data refresh is unhealthy. Valid updates publish only after the normal pull-request gate has passed; failed sources remain on their last-known-good snapshots.\n\n- Run: %s\n- Mode: `%s`\n- OpenRouter: `%s`\n- First-party releases: `%s`\n- Artificial Analysis: `%s`\n- Direct DeepSWE: `%s`\n- Terminal-Bench 4: `%s`\n- Terminal-Bench-Science 0.1: `%s`\n- Radar reconciliation: `%s`\n- Validation: `%s`\n- Publication: `%s`\n- Update PR: %s\n- Required CI: %s\n\nThis issue is updated on repeated failures and closes automatically after a healthy full refresh.' \
-              "$run_url" "$REFRESH_MODE" "$RELEASE_OUTCOME" "$FIRST_PARTY_RELEASE_OUTCOME" "$BENCHMARK_OUTCOME" "$DEEP_SWE_OUTCOME" "$TERMINAL_BENCH_OUTCOME" "$TERMINAL_BENCH_SCIENCE_OUTCOME" "$RELEASE_RECONCILE_OUTCOME" "$VALIDATION_OUTCOME" "$PUBLISH_OUTCOME" "${PUBLISH_PR_URL:-not created}" "${PUBLISH_CI_RUN_URL:-not dispatched}"
+            printf -v issue_body 'The scheduled model-data refresh is unhealthy. Valid updates publish only after the normal pull-request gate has passed; failed sources remain on their last-known-good snapshots.\n\n- Run: %s\n- Mode: `%s`\n- OpenRouter: `%s`\n- First-party releases: `%s`\n- Artificial Analysis coding agents: `%s`\n- AA Intelligence efficiency: `%s`\n- Direct DeepSWE: `%s`\n- Terminal-Bench 4: `%s`\n- Terminal-Bench-Science 0.1: `%s`\n- Radar reconciliation: `%s`\n- Validation: `%s`\n- Publication: `%s`\n- Update PR: %s\n- Required CI: %s\n\nThis issue is updated on repeated failures and closes automatically after a healthy full refresh.' \
+              "$run_url" "$REFRESH_MODE" "$RELEASE_OUTCOME" "$FIRST_PARTY_RELEASE_OUTCOME" "$BENCHMARK_OUTCOME" "$INTELLIGENCE_OUTCOME" "$DEEP_SWE_OUTCOME" "$TERMINAL_BENCH_OUTCOME" "$TERMINAL_BENCH_SCIENCE_OUTCOME" "$RELEASE_RECONCILE_OUTCOME" "$VALIDATION_OUTCOME" "$PUBLISH_OUTCOME" "${PUBLISH_PR_URL:-not created}" "${PUBLISH_CI_RUN_URL:-not dispatched}"
             if [[ -z "$issue_number" ]]; then
               gh issue create --title "$REFRESH_ISSUE_TITLE" --body "$issue_body"
             else
               gh issue edit "$issue_number" --body "$issue_body"
             fi
-            echo "::error title=Model data refresh unhealthy::OpenRouter=${RELEASE_OUTCOME}; first-party releases=${FIRST_PARTY_RELEASE_OUTCOME}; Artificial Analysis=${BENCHMARK_OUTCOME}; Direct DeepSWE=${DEEP_SWE_OUTCOME}; Terminal-Bench 4=${TERMINAL_BENCH_OUTCOME}; Terminal-Bench-Science 0.1=${TERMINAL_BENCH_SCIENCE_OUTCOME}; reconciliation=${RELEASE_RECONCILE_OUTCOME}; validation=${VALIDATION_OUTCOME}; publication=${PUBLISH_OUTCOME}."
+            echo "::error title=Model data refresh unhealthy::OpenRouter=${RELEASE_OUTCOME}; first-party releases=${FIRST_PARTY_RELEASE_OUTCOME}; Artificial Analysis coding agents=${BENCHMARK_OUTCOME}; AA Intelligence efficiency=${INTELLIGENCE_OUTCOME}; Direct DeepSWE=${DEEP_SWE_OUTCOME}; Terminal-Bench 4=${TERMINAL_BENCH_OUTCOME}; Terminal-Bench-Science 0.1=${TERMINAL_BENCH_SCIENCE_OUTCOME}; reconciliation=${RELEASE_RECONCILE_OUTCOME}; validation=${VALIDATION_OUTCOME}; publication=${PUBLISH_OUTCOME}."
             exit 1
           fi
 

@@ -1,3 +1,4 @@
+import type { ArtificialAnalysisIntelligenceSnapshot } from "./artificial-analysis-intelligence-data";
 import type { TerminalBenchSnapshot } from "./terminal-bench-data";
 import type { TerminalBenchScienceSnapshot } from "./terminal-bench-science-data";
 
@@ -11,6 +12,62 @@ function publisherNode(publisher: DatasetPublisher) {
     "@type": "Organization",
     name: publisher.name,
     url: new URL("/", publisher.origin).toString(),
+  } as const;
+}
+
+export function artificialAnalysisIntelligenceDatasetJsonLd(
+  snapshot: ArtificialAnalysisIntelligenceSnapshot,
+  publisher: DatasetPublisher,
+) {
+  const pageUrl = new URL(
+    "/data#artificial-analysis-intelligence",
+    publisher.origin,
+  ).toString();
+  return {
+    "@context": "https://schema.org",
+    "@id": pageUrl,
+    "@type": "Dataset",
+    citation: snapshot.source.citation,
+    creator: {
+      "@type": "Organization",
+      name: snapshot.source.name,
+      url: new URL("/", snapshot.source.url).toString(),
+    },
+    dateModified: snapshot.source.retrievedAt,
+    description:
+      `${snapshot.benchmark.name} ${snapshot.benchmark.version} model-configuration efficiency snapshot with `
+      + `${snapshot.records.length} measured score-and-output configurations and `
+      + `${snapshot.selection.positiveCostRecordCount} configurations in the identical positive-cost chart cohort.`,
+    distribution: {
+      "@type": "DataDownload",
+      contentUrl: new URL(
+        "/data/artificial-analysis-intelligence.json",
+        publisher.origin,
+      ).toString(),
+      encodingFormat: "application/json",
+    },
+    identifier: "aicharts-artificial-analysis-intelligence-v4-1-1",
+    isAccessibleForFree: true,
+    isBasedOn: snapshot.source.url,
+    keywords: [
+      "Artificial Analysis Intelligence Index",
+      "AI model efficiency",
+      "AI model output tokens",
+      "AI model benchmark cost",
+    ],
+    license: snapshot.source.termsUrl,
+    measurementTechnique: snapshot.source.methodologyUrl,
+    name: `${snapshot.benchmark.name} ${snapshot.benchmark.version} efficiency snapshot`,
+    publisher: publisherNode(publisher),
+    url: pageUrl,
+    variableMeasured: [
+      { "@type": "PropertyValue", name: "Intelligence Index", unitText: "index points" },
+      { "@type": "PropertyValue", name: "Answer output tokens per task", unitText: "tokens" },
+      { "@type": "PropertyValue", name: "Reasoning output tokens per task", unitText: "tokens" },
+      { "@type": "PropertyValue", name: "Total output tokens per task", unitText: "tokens" },
+      { "@type": "PropertyValue", name: "Cost per task", unitText: "USD" },
+    ],
+    version: snapshot.benchmark.version,
   } as const;
 }
 

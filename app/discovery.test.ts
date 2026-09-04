@@ -1,10 +1,12 @@
 import { describe, expect, test } from "bun:test";
 
+import artificialAnalysisIntelligenceData from "@/data/artificial-analysis-intelligence.json";
 import codingAgentData from "@/data/coding-agents.json";
 import gptSubsidyData from "@/data/gpt-subsidy.json";
 import terminalBenchData from "@/data/terminal-bench.json";
 import terminalBenchScienceData from "@/data/terminal-bench-science.json";
 import { parseCodingAgentSnapshot } from "@/lib/coding-agent-data";
+import { parseArtificialAnalysisIntelligenceSnapshot } from "@/lib/artificial-analysis-intelligence-data";
 import { FIRST_PARTY_RELEASE_HIGHLIGHTS } from "@/lib/first-party-release-collection";
 import {
   CODING_AGENT_DATASET_PATH,
@@ -35,10 +37,15 @@ describe("public search discovery", () => {
       terminalBenchScienceData,
     );
     if (!terminalBenchScience.ok) throw terminalBenchScience.error;
+    const intelligence = parseArtificialAnalysisIntelligenceSnapshot(
+      artificialAnalysisIntelligenceData,
+    );
+    if (!intelligence.ok) throw intelligence.error;
     const benchmarkPortfolioModifiedAt = [
       datasetModifiedAt,
       terminalBench.value.source.retrievedAt,
       terminalBenchScience.value.source.retrievedAt,
+      intelligence.value.source.retrievedAt,
     ].sort((left, right) => Date.parse(right) - Date.parse(left))[0];
     if (benchmarkPortfolioModifiedAt === undefined) {
       throw new Error("Expected benchmark portfolio freshness.");

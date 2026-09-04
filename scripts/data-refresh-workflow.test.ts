@@ -183,6 +183,7 @@ async function executeWorkflowShell(
         GITHUB_RUN_ID: "12345",
         GITHUB_SERVER_URL: "https://github.com",
         GITHUB_STEP_SUMMARY: summaryPath,
+        INTELLIGENCE_OUTCOME: "success",
         PATH: `${fakeBin}:${process.env.PATH ?? ""}`,
         PUBLISH_OUTCOME: "skipped",
         REFRESH_MODE: "discovery",
@@ -259,6 +260,7 @@ describe("scheduled model-data refresh", () => {
     expect(String(step("deep_swe").if)).toContain("env.RUN_BENCHMARK_REFRESH == 'true'");
     expect(String(step("terminal_bench").if)).toContain("env.RUN_BENCHMARK_REFRESH == 'true'");
     expect(String(step("terminal_bench_science").if)).toContain("env.RUN_BENCHMARK_REFRESH == 'true'");
+    expect(String(step("intelligence").if)).toContain("env.RUN_BENCHMARK_REFRESH == 'true'");
     expect(String(step("release_reconcile").if)).toContain("env.RUN_RELEASE_REFRESH == 'true'");
     expect(String(step("release_reconcile").if)).toContain("env.RUN_BENCHMARK_REFRESH == 'true'");
     expect(aaiRefresh).not.toContain("23 * * * *");
@@ -304,6 +306,10 @@ describe("scheduled model-data refresh", () => {
       env: { GITHUB_TOKEN: "${{ github.token }}" },
       run: "bun run terminal-bench-science:refresh",
     });
+    expect(step("intelligence")).toMatchObject({
+      "continue-on-error": true,
+      run: "bun run aa-intelligence:refresh",
+    });
     expect(String(step("release_reconcile").if)).toContain("steps.dependencies.outcome == 'success'");
     expect(steps.indexOf(step("first_party_releases"))).toBeLessThan(
       steps.indexOf(step("first_party_review")),
@@ -314,17 +320,19 @@ describe("scheduled model-data refresh", () => {
     expect(steps.indexOf(step("release_radar"))).toBeLessThan(
       steps.indexOf(step("benchmark")),
     );
-    expect(steps.indexOf(step("benchmark"))).toBeLessThan(steps.indexOf(step("release_reconcile")));
+    expect(steps.indexOf(step("benchmark"))).toBeLessThan(steps.indexOf(step("intelligence")));
+    expect(steps.indexOf(step("intelligence"))).toBeLessThan(steps.indexOf(step("release_reconcile")));
     expect(steps.indexOf(step("release_reconcile"))).toBeLessThan(steps.indexOf(step("deep_swe")));
   });
 
-  test("publishes only the six owned snapshots through the protected-branch contract", () => {
+  test("publishes only the seven owned snapshots through the protected-branch contract", () => {
     const publish = String(step("publish").run);
     expect(refresh["timeout-minutes"]).toBe(45);
     expect(refresh.env).toMatchObject({
       BENCHMARK_PATH: "data/coding-agents.json",
       DEEP_SWE_PATH: "data/deep-swe-evidence.json",
       FIRST_PARTY_RELEASE_PATH: "data/first-party-release-radar.json",
+      INTELLIGENCE_PATH: "data/artificial-analysis-intelligence.json",
       REFRESH_BRANCH: "automation/model-data-refresh-${{ github.run_id }}-${{ github.run_attempt }}",
       RELEASE_RADAR_PATH: "data/model-release-radar.json",
       REQUIRED_CHECK_CONTEXT: "Required",
@@ -334,6 +342,7 @@ describe("scheduled model-data refresh", () => {
     expect(String(step("snapshot").run)).toContain('"$BENCHMARK_PATH"');
     expect(String(step("snapshot").run)).toContain('"$DEEP_SWE_PATH"');
     expect(String(step("snapshot").run)).toContain('"$FIRST_PARTY_RELEASE_PATH"');
+    expect(String(step("snapshot").run)).toContain('"$INTELLIGENCE_PATH"');
     expect(String(step("snapshot").run)).toContain('"$RELEASE_RADAR_PATH"');
     expect(String(step("snapshot").run)).toContain('"$TERMINAL_BENCH_PATH"');
     expect(String(step("snapshot").run)).toContain('"$TERMINAL_BENCH_SCIENCE_PATH"');
@@ -347,7 +356,7 @@ describe("scheduled model-data refresh", () => {
       if: "steps.validation.outcome == 'success' && steps.snapshot.outputs.changed == 'true'",
     });
     expect(publish).toContain(
-      'git add -- "$BENCHMARK_PATH" "$DEEP_SWE_PATH" "$FIRST_PARTY_RELEASE_PATH" "$RELEASE_RADAR_PATH" "$TERMINAL_BENCH_PATH" "$TERMINAL_BENCH_SCIENCE_PATH"',
+      'git add -- "$BENCHMARK_PATH" "$DEEP_SWE_PATH" "$FIRST_PARTY_RELEASE_PATH" "$INTELLIGENCE_PATH" "$RELEASE_RADAR_PATH" "$TERMINAL_BENCH_PATH" "$TERMINAL_BENCH_SCIENCE_PATH"',
     );
     expect(publish).toContain('"HEAD:refs/heads/${REFRESH_BRANCH}"');
     expect(publish).toContain('gh pr create --base main');
@@ -373,6 +382,7 @@ describe("scheduled model-data refresh", () => {
     expect(publish).not.toContain("HEAD:main");
     expect(ciWorkflow.on).toHaveProperty("workflow_dispatch");
     expect(ciWorkflow.on?.pull_request?.["paths-ignore"]).toEqual([
+      "data/artificial-analysis-intelligence.json",
       "data/coding-agents.json",
       "data/deep-swe-evidence.json",
       "data/first-party-release-radar.json",
@@ -424,6 +434,8 @@ describe("scheduled model-data refresh", () => {
     expect(String(health?.run)).toContain("First-party review alert");
     expect(String(health?.run)).toContain("Terminal-Bench 4");
     expect(String(health?.run)).toContain("Terminal-Bench-Science 0.1");
+    expect(String(health?.run)).toContain("AA Intelligence efficiency");
+    expect(String(health?.run)).toContain("$INTELLIGENCE_OUTCOME");
     expect(String(health?.run)).toContain("$TERMINAL_BENCH_SCIENCE_OUTCOME");
     expect(String(health?.run)).toContain(
       '[[ "$RUN_AAI_REFRESH" == "true" && "$BENCHMARK_OUTCOME" != "success" ]]',
@@ -480,6 +492,29 @@ describe("scheduled model-data refresh", () => {
     expect(result.stdout).toContain("::error title=Model data refresh unhealthy");
   });
 
+  test("treats the Intelligence efficiency source as an independent benchmark health gate", async () => {
+    const health = steps.find(candidate => candidate.name === "Report health and manage the durable alert");
+    const result = await executeWorkflowShell(String(health?.run), {
+      candidates: [reviewCandidate(
+        "https://lab.example/releases/model-a",
+        "Model A",
+        "needs-review",
+      )],
+      extraEnvironment: {
+        FAKE_HEALTH_ISSUE_NUMBER: "109",
+        INTELLIGENCE_OUTCOME: "failure",
+        REFRESH_MODE: "benchmarks",
+      },
+      issueBody: "",
+    });
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toBe("");
+    expect(result.log).toContain("ACTION:edit");
+    expect(result.log).toContain("AA Intelligence efficiency: `failure`");
+    expect(result.stdout).toContain("AA Intelligence efficiency=failure");
+  });
+
   test("executes full no-change recovery without claiming skipped validation passed", async () => {
     const health = steps.find(candidate => candidate.name === "Report health and manage the durable alert");
     const result = await executeWorkflowShell(String(health?.run), {
@@ -521,6 +556,7 @@ describe("scheduled model-data refresh", () => {
           DEEP_SWE_OUTCOME: "skipped",
           FAKE_HEALTH_ISSUE_NUMBER: "109",
           REFRESH_MODE: "releases",
+          INTELLIGENCE_OUTCOME: "skipped",
           RUN_BENCHMARK_REFRESH: "false",
           TERMINAL_BENCH_OUTCOME: "skipped",
           TERMINAL_BENCH_SCIENCE_OUTCOME: "skipped",

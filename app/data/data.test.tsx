@@ -2,7 +2,9 @@ import { describe, expect, test } from "bun:test";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
+import artificialAnalysisIntelligenceData from "@/data/artificial-analysis-intelligence.json";
 import codingAgentData from "@/data/coding-agents.json";
+import { parseArtificialAnalysisIntelligenceSnapshot } from "@/lib/artificial-analysis-intelligence-data";
 import {
   parseCodingAgentSnapshot,
   type BenchmarkMetric,
@@ -18,6 +20,7 @@ import {
 } from "@/lib/coding-agent-dataset";
 import { BENCHMARK_DATA_DESCRIPTION } from "@/lib/benchmark-portfolio";
 import {
+  artificialAnalysisIntelligenceDatasetJsonLd,
   terminalBenchDatasetJsonLd,
   terminalBenchScienceDatasetJsonLd,
 } from "@/lib/benchmark-dataset-json-ld";
@@ -28,13 +31,25 @@ import { parseTerminalBenchScienceSnapshot } from "@/lib/terminal-bench-science-
 import { INDEXABLE_ROBOTS } from "@hraness/web-discovery";
 
 import { searchSite } from "../site";
-import { GET, dynamic } from "./coding-agents.json/route";
+import {
+  GET as getArtificialAnalysisIntelligenceJson,
+  dynamic as intelligenceDynamic,
+} from "./artificial-analysis-intelligence.json/route";
+import {
+  GET as getCodingAgentJson,
+  dynamic as codingAgentDynamic,
+} from "./coding-agents.json/route";
 import DataLayout from "./layout";
 import CodingAgentDatasetPage, { metadata } from "./page";
 
 const parsed = parseCodingAgentSnapshot(codingAgentData);
 if (!parsed.ok) throw parsed.error;
 const snapshot = parsed.value;
+const parsedIntelligence = parseArtificialAnalysisIntelligenceSnapshot(
+  artificialAnalysisIntelligenceData,
+);
+if (!parsedIntelligence.ok) throw parsedIntelligence.error;
+const intelligence = parsedIntelligence.value;
 const parsedTerminalBench = parseTerminalBenchSnapshot(terminalBenchData);
 if (!parsedTerminalBench.ok) throw parsedTerminalBench.error;
 const terminalBench = parsedTerminalBench.value;
@@ -51,7 +66,7 @@ function renderedJsonLd(markup: string, id: string): unknown {
   return JSON.parse(script?.[1] ?? "null") as unknown;
 }
 
-describe("coding-agent dataset surface", () => {
+describe("benchmark dataset surface", () => {
   test("publishes canonical, indexable page metadata", () => {
     expect(metadata).toMatchObject({
       title: "Benchmark Data and Method | AI Charts",
@@ -117,6 +132,7 @@ describe("coding-agent dataset surface", () => {
     expect(markup).toContain("<h1>Benchmark data and method</h1>");
     expect(markup).toContain(BENCHMARK_DATA_DESCRIPTION);
     expect(markup).toContain("Artificial Analysis coding agents");
+    expect(markup).toContain("Artificial Analysis Intelligence");
     expect(markup).toContain('aria-label="Dataset downloads"');
     expect(markup).toContain("Download checked snapshots");
     expect(markup).toContain('id="terminal-bench-4"');
@@ -131,6 +147,27 @@ describe("coding-agent dataset surface", () => {
     expect(markup).toContain(terminalBenchScience.source.releaseDoiUrl);
     expect(markup).toContain(terminalBenchScience.source.leaderboardUpdatedAt);
     expect(markup).toContain("Owner-published aggregate and per-domain cost fields");
+    expect(markup).toContain('id="artificial-analysis-intelligence"');
+    expect(markup).toContain(
+      `Artificial Analysis Intelligence Index v${intelligence.benchmark.version}`,
+    );
+    expect(markup).toContain(
+      'href="/data/artificial-analysis-intelligence.json"',
+    );
+    expect(markup).toContain(intelligence.source.retrievedAt);
+    expect(markup).toContain(intelligence.source.url);
+    expect(markup).toContain(intelligence.source.methodologyUrl);
+    expect(markup).toContain(intelligence.source.termsUrl);
+    expect(markup).toContain("GDPval-AA v2 · 20%");
+    expect(markup).toContain("τ³-Banking · 14%");
+    expect(markup).toContain("Terminal-Bench v2.1 · 16%");
+    expect(markup).toContain("AA-Omniscience · 12%");
+    expect(markup).toContain("answer plus reasoning tokens only");
+    expect(markup).toContain("not the coding-agent chart");
+    expect(markup).toContain("complete cost breakdown but a reported zero total");
+    expect(markup).toContain("Rows with incomplete cost are excluded");
+    expect(markup).toContain("frontier classification is AI Charts analysis");
+    expect(markup).toContain("every four hours");
     expect(markup).toContain('id="source"');
     expect(markup).toContain('id="benchmarks"');
     expect(markup).toContain('id="leaders"');
@@ -147,7 +184,7 @@ describe("coding-agent dataset surface", () => {
       'href="' + CODING_AGENT_DATASET_DOWNLOAD_PATH + '"',
     );
     expect(markup).toContain("AI Charts does not recalculate");
-    expect(markup).toContain("not a real-time mirror");
+    expect(markup).toContain("real-time mirror");
 
     for (const definition of CODING_AGENT_BENCHMARK_DEFINITIONS) {
       expect(markup).toContain(definition.label);
@@ -249,11 +286,15 @@ describe("coding-agent dataset surface", () => {
     ]);
   });
 
-  test("describes all three visible dataset downloads in structured data", () => {
+  test("describes all four visible dataset downloads in structured data", () => {
     const markup = renderToStaticMarkup(createElement(CodingAgentDatasetPage));
     const terminal = terminalBenchDatasetJsonLd(terminalBench, searchSite);
     const science = terminalBenchScienceDatasetJsonLd(
       terminalBenchScience,
+      searchSite,
+    );
+    const intelligenceDataset = artificialAnalysisIntelligenceDatasetJsonLd(
+      intelligence,
       searchSite,
     );
 
@@ -262,6 +303,7 @@ describe("coding-agent dataset surface", () => {
         codingAgentDatasetJsonLd(snapshot, searchSite),
         terminal,
         science,
+        intelligenceDataset,
       ]);
 
     expect(terminal).toMatchObject({
@@ -284,13 +326,40 @@ describe("coding-agent dataset surface", () => {
       },
       version: terminalBenchScience.benchmark.version,
     });
+    expect(intelligenceDataset).toMatchObject({
+      "@type": "Dataset",
+      "@id": "https://aicharts.io/data#artificial-analysis-intelligence",
+      citation: intelligence.source.citation,
+      creator: {
+        name: intelligence.source.name,
+        url: "https://artificialanalysis.ai/",
+      },
+      dateModified: intelligence.source.retrievedAt,
+      distribution: {
+        contentUrl:
+          "https://aicharts.io/data/artificial-analysis-intelligence.json",
+        encodingFormat: "application/json",
+      },
+      isBasedOn: intelligence.source.url,
+      license: intelligence.source.termsUrl,
+      measurementTechnique: intelligence.source.methodologyUrl,
+      version: intelligence.benchmark.version,
+    });
+    expect(intelligenceDataset.variableMeasured.map(variable => variable.name))
+      .toEqual([
+        "Intelligence Index",
+        "Answer output tokens per task",
+        "Reasoning output tokens per task",
+        "Total output tokens per task",
+        "Cost per task",
+      ]);
   });
 });
 
 describe("coding-agent JSON download", () => {
   test("serves the checked snapshot with download and freshness headers", async () => {
-    expect(dynamic).toBe("force-static");
-    const response = GET();
+    expect(codingAgentDynamic).toBe("force-static");
+    const response = getCodingAgentJson();
     const body: unknown = await response.json();
     const downloaded = parseCodingAgentSnapshot(body);
 
@@ -308,5 +377,29 @@ describe("coding-agent JSON download", () => {
     expect(response.headers.get("X-Content-Type-Options")).toBe("nosniff");
     expect(downloaded.ok).toBe(true);
     if (downloaded.ok) expect(downloaded.value).toEqual(snapshot);
+  });
+});
+
+describe("Artificial Analysis Intelligence JSON download", () => {
+  test("serves the checked snapshot with download and freshness headers", async () => {
+    expect(intelligenceDynamic).toBe("force-static");
+    const response = getArtificialAnalysisIntelligenceJson();
+    const body: unknown = await response.json();
+    const downloaded = parseArtificialAnalysisIntelligenceSnapshot(body);
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("Content-Type")).toBe(
+      "application/json; charset=utf-8",
+    );
+    expect(response.headers.get("Content-Disposition")).toBe(
+      'attachment; filename="aicharts-artificial-analysis-intelligence.json"',
+    );
+    expect(response.headers.get("Cache-Control")).toContain("s-maxage=3600");
+    expect(response.headers.get("Last-Modified")).toBe(
+      new Date(intelligence.source.retrievedAt).toUTCString(),
+    );
+    expect(response.headers.get("X-Content-Type-Options")).toBe("nosniff");
+    expect(downloaded.ok).toBe(true);
+    if (downloaded.ok) expect(downloaded.value).toEqual(intelligence);
   });
 });

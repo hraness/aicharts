@@ -56,6 +56,7 @@ export type AnalyticsDestinationId =
   | "ask-ai:perplexity"
   | "asset:download"
   | "asset:model-card-png"
+  | "dataset:artificial-analysis-intelligence"
   | "dataset:coding-agents"
   | "dataset:terminal-bench-4"
   | "dataset:terminal-bench-science-0-1"
@@ -228,6 +229,7 @@ function isDestinationId(value: unknown): value is AnalyticsDestinationId {
     "ask-ai:perplexity",
     "asset:download",
     "asset:model-card-png",
+    "dataset:artificial-analysis-intelligence",
     "dataset:coding-agents",
     "dataset:terminal-bench-4",
     "dataset:terminal-bench-science-0-1",
@@ -303,6 +305,12 @@ function internalDestination(pathname: string): Pick<
   AnalyticsLinkClassification,
   "destination_id" | "destination_kind"
 > {
+  if (pathname === "/data/artificial-analysis-intelligence.json") {
+    return {
+      destination_id: "dataset:artificial-analysis-intelligence",
+      destination_kind: "dataset",
+    };
+  }
   if (pathname === "/data/coding-agents.json") {
     return { destination_id: "dataset:coding-agents", destination_kind: "dataset" };
   }
