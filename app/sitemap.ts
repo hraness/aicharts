@@ -87,7 +87,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   ].sort((left, right) => Date.parse(right) - Date.parse(left))[0] ?? datasetModifiedAt;
   const modelCollectionModifiedAt = [
     datasetModifiedAt,
-    ...FIRST_PARTY_RELEASE_HIGHLIGHTS.map(release => release.sourceModifiedAt),
+    ...FIRST_PARTY_RELEASE_HIGHLIGHTS.map(release => release.firstSeenAt),
   ].sort((left, right) => Date.parse(right) - Date.parse(left))[0] ?? datasetModifiedAt;
   const parsedSubsidy = parseGptSubsidySnapshot(gptSubsidyData);
   if (!parsedSubsidy.ok) {

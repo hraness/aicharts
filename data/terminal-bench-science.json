@@ -268,6 +268,87 @@
     {
       "harness": {
         "display": {
+          "label": "mini-SWE-agent",
+          "url": "https://mini-swe-agent.com/latest/"
+        },
+        "organization": {
+          "label": "SWE-agent",
+          "url": "https://github.com/SWE-agent"
+        },
+        "version": null
+      },
+      "id": "409f68a6-d6a4-43c9-adb8-63679dc17a45",
+      "metrics": {
+        "domains": {
+          "earth": {
+            "nTrials": 24,
+            "passes": 3,
+            "resolutionRatePercent": 12.5,
+            "standardErrorPercent": 6.750771560841522,
+            "totalCostUsd": 117.57938257500001,
+            "totalTokens": 1055679015
+          },
+          "engineering": {
+            "nTrials": 27,
+            "passes": 3,
+            "resolutionRatePercent": 11.11111111111111,
+            "standardErrorPercent": 6.04812282168686,
+            "totalCostUsd": 70.25994607499999,
+            "totalTokens": 520230489
+          },
+          "life": {
+            "nTrials": 57,
+            "passes": 8,
+            "resolutionRatePercent": 14.035087719298245,
+            "standardErrorPercent": 4.600772407769725,
+            "totalCostUsd": 129.486532875,
+            "totalTokens": 947480980
+          },
+          "mathematical": {
+            "nTrials": 51,
+            "passes": 0,
+            "resolutionRatePercent": 0,
+            "standardErrorPercent": 0,
+            "totalCostUsd": 510.9776022,
+            "totalTokens": 5225589584
+          },
+          "physical": {
+            "nTrials": 51,
+            "passes": 12,
+            "resolutionRatePercent": 23.52941176470588,
+            "standardErrorPercent": 5.939743109381191,
+            "totalCostUsd": 288.6729866250001,
+            "totalTokens": 2750669844
+          }
+        },
+        "nTrials": 210,
+        "passes": 26,
+        "resolutionRatePercent": 12.380952380952381,
+        "standardErrorPercent": 2.2728283787427124,
+        "totalCostUsd": 1116.97645035,
+        "totalTokens": 10499649912
+      },
+      "model": {
+        "display": {
+          "label": "Gemini 3.8 Flash",
+          "url": "https://ai.google.dev/gemini-api/docs/models/gemini-3.8-flash"
+        },
+        "organization": {
+          "label": "Google DeepMind",
+          "url": "https://deepmind.google/"
+        },
+        "version": null
+      },
+      "rank": 4,
+      "reasoningEffort": "high",
+      "releaseDate": "2026-09-02",
+      "safeguardMode": null,
+      "sourceUpdatedAt": "2026-09-03T09:13:25.326394+00:00",
+      "sourceUrl": "https://hub.harborframework.com/datasets/terminal-bench-science/terminal-bench-science/0.1.0/leaderboards/v0-1-eval/rows/409f68a6-d6a4-43c9-adb8-63679dc17a45"
+    },
+    {
+      "harness": {
+        "display": {
           "label": "Claude Code",
           "url": "https://claude.com/product/claude-code"
         },
@@ -339,7 +420,7 @@
         },
         "version": null
       },
-      "rank": 4,
+      "rank": 5,
       "reasoningEffort": "max",
       "releaseDate": "2026-05-28",
       "safeguardMode": null,
@@ -420,7 +501,7 @@
         },
         "version": null
       },
-      "rank": 5,
+      "rank": 6,
       "reasoningEffort": "max",
       "releaseDate": "2026-07-09",
       "safeguardMode": null,
@@ -501,7 +582,7 @@
         },
         "version": null
       },
-      "rank": 6,
+      "rank": 7,
       "reasoningEffort": "max",
       "releaseDate": "2026-08-14",
       "safeguardMode": null,
@@ -582,7 +663,7 @@
         },
         "version": null
       },
-      "rank": 7,
+      "rank": 8,
       "reasoningEffort": "max",
       "releaseDate": "2026-07-16",
       "safeguardMode": null,
@@ -663,12 +744,93 @@
         },
         "version": null
       },
-      "rank": 8,
+      "rank": 9,
       "reasoningEffort": "xhigh",
       "releaseDate": "2026-08-12",
       "safeguardMode": null,
       "sourceUpdatedAt": "2026-08-30T05:21:48.859178+00:00",
       "sourceUrl": "https://hub.harborframework.com/datasets/terminal-bench-science/terminal-bench-science/0.1.0/leaderboards/v0-1-eval/rows/231bc6c3-8f2b-455e-8c87-5a08ec200b05"
+    },
+    {
+      "harness": {
+        "display": {
+          "label": "mini-SWE-agent",
+          "url": "https://mini-swe-agent.com/latest/"
+        },
+        "organization": {
+          "label": "SWE-agent",
+          "url": "https://github.com/SWE-agent"
+        },
+        "version": null
+      },
+      "id": "5a71d088-1bfd-4bbe-a65a-973a4fffd50f",
+      "metrics": {
+        "domains": {
+          "earth": {
+            "nTrials": 24,
+            "passes": 0,
+            "resolutionRatePercent": 0,
+            "standardErrorPercent": 0,
+            "totalCostUsd": 63.50667502499999,
+            "totalTokens": 503645605
+          },
+          "engineering": {
+            "nTrials": 27,
+            "passes": 2,
+            "resolutionRatePercent": 7.4074074074074066,
+            "standardErrorPercent": 5.040102351405716,
+            "totalCostUsd": 56.408736075,
+            "totalTokens": 377209430
+          },
+          "life": {
+            "nTrials": 57,
+            "passes": 5,
+            "resolutionRatePercent": 8.771929824561402,
+            "standardErrorPercent": 3.746919739866593,
+            "totalCostUsd": 100.54085647500003,
+            "totalTokens": 704804016
+          },
+          "mathematical": {
+            "nTrials": 51,
+            "passes": 1,
+            "resolutionRatePercent": 1.9607843137254901,
+            "standardErrorPercent": 1.9414657705424987,
+            "totalCostUsd": 585.3949539000001,
+            "totalTokens": 5702475089
+          },
+          "physical": {
+            "nTrials": 51,
+            "passes": 4,
+            "resolutionRatePercent": 7.8431372549019605,
+            "standardErrorPercent": 3.7646418038888574,
+            "totalCostUsd": 490.735906425,
+            "totalTokens": 4734943451
+          }
+        },
+        "nTrials": 210,
+        "passes": 12,
+        "resolutionRatePercent": 5.714285714285714,
+        "standardErrorPercent": 1.6017483159468233,
+        "totalCostUsd": 1296.5871279,
+        "totalTokens": 12023077591
+      },
+      "model": {
+        "display": {
+          "label": "Gemini 3.7 Flash",
+          "url": "https://ai.google.dev/gemini-api/docs/models/gemini-3.7-flash"
+        },
+        "organization": {
+          "label": "Google DeepMind",
+          "url": "https://deepmind.google/"
+        },
+        "version": null
+      },
+      "rank": 10,
+      "reasoningEffort": "high",
+      "releaseDate": "2026-08-13",
+      "safeguardMode": null,
+      "sourceUpdatedAt": "2026-09-03T09:13:10.360986+00:00",
+      "sourceUrl": "https://hub.harborframework.com/datasets/terminal-bench-science/terminal-bench-science/0.1.0/leaderboards/v0-1-eval/rows/5a71d088-1bfd-4bbe-a65a-973a4fffd50f"
     },
     {
       "harness": {
@@ -744,7 +906,7 @@
         },
         "version": null
       },
-      "rank": 9,
+      "rank": 11,
       "reasoningEffort": "max",
       "releaseDate": "2026-07-09",
       "safeguardMode": null,
@@ -760,7 +922,7 @@
     "leaderboardId": "9a545a14-78d0-44b4-9003-afe062522a47",
     "leaderboardName": "v0-1-eval",
     "leaderboardPackage": "terminal-bench-science/terminal-bench-science",
-    "leaderboardUpdatedAt": "2026-08-30T05:21:48.859178+00:00",
+    "leaderboardUpdatedAt": "2026-09-03T09:13:25.326394+00:00",
     "leaderboardUrl": "https://hub.harborframework.com/datasets/terminal-bench-science/terminal-bench-science/0.1.0?leaderboard=v0-1-eval&tab=leaderboard",
     "method": "version-pinned-release-owner-leaderboard-api",
     "name": "Terminal-Bench-Science and Harbor Framework",
@@ -773,7 +935,7 @@
     "releaseTag": "v0.1.0",
     "releaseUrl": "https://github.com/harbor-framework/terminal-bench-science/releases/tag/v0.1.0",
     "repositoryUrl": "https://github.com/harbor-framework/terminal-bench-science",
-    "retrievedAt": "2026-09-02T14:45:48.712Z",
+    "retrievedAt": "2026-09-03T21:56:20.716Z",
     "sourceClass": "benchmark-owner"
   }
 }

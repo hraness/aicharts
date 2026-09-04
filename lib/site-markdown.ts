@@ -35,7 +35,7 @@ import {
 } from "./coding-agent-dataset";
 import {
   FIRST_PARTY_RELEASE_HIGHLIGHTS,
-  FIRST_PARTY_RELEASE_RADAR,
+  FIRST_PARTY_RELEASE_SOURCE_SUMMARY,
 } from "./first-party-release-collection";
 import {
   FULL_SNAPSHOT_COLUMNS,
@@ -468,10 +468,10 @@ function modelCardsMarkdown(): string {
     "",
     "## First-party release radar",
     "",
-    `${FIRST_PARTY_RELEASE_RADAR.sources.length} provider-owned sources supply durable announcement candidates. Sitemap last-modified values are discovery evidence, not official release dates or benchmark scores.`,
+    `${FIRST_PARTY_RELEASE_SOURCE_SUMMARY.labCount} labs across ${FIRST_PARTY_RELEASE_SOURCE_SUMMARY.sourceCount} first-party sources supply durable announcement candidates. Previously unseen canonical URLs create candidates; mutable source timestamps are secondary change evidence, not official release dates or benchmark scores.`,
     "",
     ...FIRST_PARTY_RELEASE_HIGHLIGHTS.map(release => (
-      `- [${release.namedModels.join(" and ")}](${release.canonicalUrl}). ${release.providerName}; source changed ${formatUpdateDate(release.sourceModifiedAt)}.`
+      `- [${release.namedModels.join(" and ")}](${release.canonicalUrl}). ${release.providerName}; first observed ${formatUpdateDate(release.firstSeenAt)}.`
     )),
     "",
     "## Benchmark coverage radar",
