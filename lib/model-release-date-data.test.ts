@@ -40,6 +40,35 @@ describe("official model release dates", () => {
     });
   });
 
+  test("pins the four reviewed September releases to provider-owned evidence", () => {
+    expect(modelReleaseDateForCanonicalId("anthropic/claude-fable-5.1")).toMatchObject({
+      basis: "announcement",
+      releasedOn: "2026-09-01",
+      stage: "general-availability",
+      sources: [{ url: "https://www.anthropic.com/claude-fable-and-mythos-5-1" }],
+      status: "verified",
+    });
+    expect(modelReleaseDateForCanonicalId("google/gemini-3.8-flash")).toMatchObject({
+      basis: "model-index",
+      releasedOn: "2026-09-02",
+      stage: "public-release",
+      sources: [{ url: "https://ai.google.dev/gemini-api/docs/deprecations" }],
+      status: "verified",
+    });
+    expect(modelReleaseDateForCanonicalId("meta/muse-spark-1.3")).toMatchObject({
+      releasedOn: "2026-09-02",
+      stage: "public-release",
+      sources: [{ url: "https://research.meta.ai/blog/introducing-muse-spark-1-3" }],
+      status: "verified",
+    });
+    expect(modelReleaseDateForCanonicalId("openai/gpt-6-astra")).toMatchObject({
+      releasedOn: "2026-09-03",
+      stage: "public-release",
+      sources: [{ url: "https://openai.com/index/gpt-6-astra/" }],
+      status: "verified",
+    });
+  });
+
   test("rejects timestamps, impossible dates, and post-verification dates", () => {
     const fixture = checkedFixture();
     expect(parseModelReleaseDates([{

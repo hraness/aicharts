@@ -30,6 +30,7 @@ const expectedGatewayByCanonicalId = {
   "alibaba/qwen3.7-plus": "alibaba/qwen3.7-plus",
   "alibaba/qwen3.8-max": "alibaba/qwen3.8-max",
   "anthropic/claude-fable-5": "anthropic/claude-fable-5",
+  "anthropic/claude-fable-5.1": null,
   "anthropic/claude-opus-4.6": "anthropic/claude-opus-4.6",
   "anthropic/claude-opus-4.7": "anthropic/claude-opus-4.7",
   "anthropic/claude-opus-4.8": "anthropic/claude-opus-4.8",
@@ -45,8 +46,10 @@ const expectedGatewayByCanonicalId = {
   "google/gemini-3.1-pro": null,
   "google/gemini-3.6-flash": "google/gemini-3.6-flash",
   "google/gemini-3.7-flash": "google/gemini-3.7-flash",
+  "google/gemini-3.8-flash": null,
   "meta/muse-spark-1.1": "meta/muse-spark-1.1",
   "meta/muse-spark-1.2": "meta/muse-spark-1.2",
+  "meta/muse-spark-1.3": null,
   "moonshotai/kimi-k2.6": "moonshotai/kimi-k2.6",
   "moonshotai/kimi-k3": "moonshotai/kimi-k3",
   "openai/gpt-5.4": "openai/gpt-5.4",
@@ -54,6 +57,7 @@ const expectedGatewayByCanonicalId = {
   "openai/gpt-5.6-luna": "openai/gpt-5.6-luna",
   "openai/gpt-5.6-sol": "openai/gpt-5.6-sol",
   "openai/gpt-5.6-terra": "openai/gpt-5.6-terra",
+  "openai/gpt-6-astra": null,
   "spacexai/grok-4.5": "spacexai/grok-4.5",
   "zai/glm-5.1": "zai/glm-5.1",
   "zai/glm-5.2": "zai/glm-5.2",
@@ -273,6 +277,32 @@ describe("model-card catalog boundary", () => {
       }
     }
     expect(resolveModelCardCatalogEntry("OPENAI_OPAL-ALPHA")).toBeUndefined();
+  });
+
+  test("binds the September upstream aliases to stable family identities and routes", () => {
+    const expected = [
+      ["anthropic_claude-fable-5-1", "anthropic/claude-fable-5.1", "fable"],
+      ["google_skimaki_ai-studio", "google/gemini-3.8-flash", "gemini"],
+      ["openai_vega-alpha", "openai/gpt-6-astra", "gpt"],
+      ["meta_goofy-glacier135", "meta/muse-spark-1.3", "muse-spark"],
+      ["meta_joyful-jello138", "meta/muse-spark-1.3", "muse-spark"],
+    ] as const;
+
+    for (const [alias, canonicalModelId, familyId] of expected) {
+      expect(resolveModelCardCatalogEntry(alias)).toMatchObject({
+        canonicalModelId,
+        emblemIdentity: { familyId },
+      });
+    }
+    expect(variants.filter(variant => (
+      expected.some(([, canonicalModelId]) => canonicalModelId === variant.canonicalModelId)
+    )).map(variant => variant.path)).toEqual([
+      "/models/anthropic/claude-fable-5.1/max",
+      "/models/google/gemini-3.8-flash/high",
+      "/models/meta/muse-spark-1.3/xhigh",
+      "/models/meta/muse-spark-1.3/max",
+      "/models/openai/gpt-6-astra/max",
+    ]);
   });
 });
 

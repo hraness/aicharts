@@ -3,7 +3,7 @@
   "source": {
     "name": "Artificial Analysis",
     "url": "https://artificialanalysis.ai/agents/coding-agents/",
-    "retrievedAt": "2026-09-02T15:52:38.224Z",
+    "retrievedAt": "2026-09-03T23:51:29.091Z",
     "method": "next-flight",
     "benchmarkDatasets": {
       "deepSwe": "deep-swe",
@@ -12,6 +12,91 @@
     }
   },
   "updates": [
+    {
+      "id": "[\"model-added\",\"2026-09-03T23:51:29.091Z\",\"[\\\"Claude Code\\\",\\\"anthropic\\\",\\\"Fable 5.1 (with fallback)\\\"]\"]",
+      "detectedAt": "2026-09-03T23:51:29.091Z",
+      "agent": "Claude Code",
+      "model": "Fable 5.1 (with fallback)",
+      "providerId": "anthropic",
+      "providerName": "Anthropic",
+      "setting": "max",
+      "benchmarks": {
+        "aaIndex": 70.43078467074591,
+        "deepSwe": 66.07669616519169,
+        "terminalBench": 88.7640449438202,
+        "sweAtlas": 56.4516129032258
+      },
+      "kind": "model-added",
+      "variantCount": 1
+    },
+    {
+      "id": "[\"model-added\",\"2026-09-03T23:51:29.091Z\",\"[\\\"Muse Code\\\",\\\"meta\\\",\\\"Muse Spark 1.3\\\"]\"]",
+      "detectedAt": "2026-09-03T23:51:29.091Z",
+      "agent": "Muse Code",
+      "model": "Muse Spark 1.3",
+      "providerId": "meta",
+      "providerName": "Meta",
+      "setting": "max",
+      "benchmarks": {
+        "aaIndex": 67.97281481220126,
+        "deepSwe": 68.141592920354,
+        "terminalBench": 83.8951310861423,
+        "sweAtlas": 51.88172043010751
+      },
+      "kind": "model-added",
+      "variantCount": 2
+    },
+    {
+      "id": "[\"model-added\",\"2026-09-03T23:51:29.091Z\",\"[\\\"Codex\\\",\\\"openai\\\",\\\"GPT-6 Astra\\\"]\"]",
+      "detectedAt": "2026-09-03T23:51:29.091Z",
+      "agent": "Codex",
+      "model": "GPT-6 Astra",
+      "providerId": "openai",
+      "providerName": "OpenAI",
+      "setting": "max",
+      "benchmarks": {
+        "aaIndex": 66.9713903153459,
+        "deepSwe": 66.9616519174042,
+        "terminalBench": 83.1460674157303,
+        "sweAtlas": 50.8064516129032
+      },
+      "kind": "model-added",
+      "variantCount": 1
+    },
+    {
+      "id": "[\"model-added\",\"2026-09-03T23:51:29.091Z\",\"[\\\"Opencode\\\",\\\"google\\\",\\\"Gemini 3.8 Flash\\\"]\"]",
+      "detectedAt": "2026-09-03T23:51:29.091Z",
+      "agent": "Opencode",
+      "model": "Gemini 3.8 Flash",
+      "providerId": "google",
+      "providerName": "Google",
+      "setting": "high",
+      "benchmarks": {
+        "aaIndex": 61.15009143224124,
+        "deepSwe": 61.6519174041298,
+        "terminalBench": 83.8951310861423,
+        "sweAtlas": 37.9032258064516
+      },
+      "kind": "model-added",
+      "variantCount": 1
+    },
+    {
+      "id": "[\"model-added\",\"2026-09-03T23:51:29.091Z\",\"[\\\"Antigravity SDK\\\",\\\"google\\\",\\\"Gemini 3.8 Flash\\\"]\"]",
+      "detectedAt": "2026-09-03T23:51:29.091Z",
+      "agent": "Antigravity SDK",
+      "model": "Gemini 3.8 Flash",
+      "providerId": "google",
+      "providerName": "Google",
+      "setting": "high",
+      "benchmarks": {
+        "aaIndex": 59.0851412183529,
+        "deepSwe": 60.7669616519174,
+        "terminalBench": 81.2734082397004,
+        "sweAtlas": 35.2150537634409
+      },
+      "kind": "model-added",
+      "variantCount": 1
+    },
     {
       "id": "[\"variant-added\",\"2026-09-02T15:52:38.224Z\",\"[\\\"Claude Code\\\",\\\"anthropic\\\",\\\"Fable 5 (with fallback)\\\"]\"]",
       "detectedAt": "2026-09-02T15:52:38.224Z",
@@ -193,11 +278,37 @@
         "sweAtlas": 27.1505376344086
       },
       "economics": {
-        "costUsd": 1.3963169171922545,
+        "costUsd": 1.396316917192255,
         "durationSeconds": 384.96212576687134
       },
       "usage": {
         "totalTokens": 15113684.865953416
+      }
+    },
+    {
+      "id": "1afff2f22142173eb582a4f397146d2d",
+      "agent": "Antigravity SDK",
+      "model": "Gemini 3.8 Flash",
+      "modelLabel": "Gemini 3.8 Flash (high)",
+      "providerId": "google",
+      "providerName": "Google",
+      "seriesId": "Antigravity SDK v0.1.12:google_skimaki_ai-studio",
+      "seriesLabel": "Antigravity SDK · Gemini 3.8 Flash",
+      "setting": "high",
+      "settingRank": 4,
+      "completeIndex": true,
+      "benchmarks": {
+        "aaIndex": 59.0851412183529,
+        "deepSwe": 60.7669616519174,
+        "terminalBench": 81.2734082397004,
+        "sweAtlas": 35.2150537634409
+      },
+      "economics": {
+        "costUsd": 2.0089751539110456,
+        "durationSeconds": 457.93049693251515
+      },
+      "usage": {
+        "totalTokens": 19759750.71472392
       }
     },
     {
@@ -223,7 +334,7 @@
         "durationSeconds": 1072.5318353783239
       },
       "usage": {
-        "totalTokens": 9942165.52862986
+        "totalTokens": 9942165.528629865
       }
     },
     {
@@ -265,8 +376,8 @@
       "settingRank": 3,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 63.1955648502461,
-        "deepSwe": 63.7168141592921,
+        "aaIndex": 63.195564850246065,
+        "deepSwe": 63.716814159292,
         "terminalBench": 86.8913857677903,
         "sweAtlas": 38.978494623655905
       },
@@ -317,8 +428,8 @@
       "settingRank": 5,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 66.01695603875118,
-        "deepSwe": 65.1917404129793,
+        "aaIndex": 66.0169560387512,
+        "deepSwe": 65.1917404129794,
         "terminalBench": 86.8913857677903,
         "sweAtlas": 45.9677419354839
       },
@@ -354,6 +465,32 @@
       },
       "usage": {
         "totalTokens": 13868659.998977493
+      }
+    },
+    {
+      "id": "00e90cdd8aa9e65f0690d5ae7891911c",
+      "agent": "Claude Code",
+      "model": "Fable 5.1 (with fallback)",
+      "modelLabel": "Fable 5.1 (max) (with fallback)",
+      "providerId": "anthropic",
+      "providerName": "Anthropic",
+      "seriesId": "Claude Code:anthropic_claude-fable-5-1",
+      "seriesLabel": "Claude Code · Fable 5.1 (with fallback)",
+      "setting": "max",
+      "settingRank": 6,
+      "completeIndex": true,
+      "benchmarks": {
+        "aaIndex": 70.43078467074591,
+        "deepSwe": 66.07669616519169,
+        "terminalBench": 88.7640449438202,
+        "sweAtlas": 56.4516129032258
+      },
+      "economics": {
+        "costUsd": 9.18323802607361,
+        "durationSeconds": 1438.8667842535776
+      },
+      "usage": {
+        "totalTokens": 7135668.150306755
       }
     },
     {
@@ -401,7 +538,7 @@
         "sweAtlas": 29.032258064516096
       },
       "economics": {
-        "costUsd": 6.657531358159516,
+        "costUsd": 6.657531358159519,
         "durationSeconds": 1507.044470347651
       },
       "usage": {
@@ -447,13 +584,13 @@
       "settingRank": 3,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 42.38927717743627,
+        "aaIndex": 42.3892771774363,
         "deepSwe": 27.433628318584102,
-        "terminalBench": 77.1535580524344,
+        "terminalBench": 77.1535580524345,
         "sweAtlas": 22.5806451612903
       },
       "economics": {
-        "costUsd": 1.8006617447341524,
+        "costUsd": 1.8006617447341489,
         "durationSeconds": 399.3926789366056
       },
       "usage": {
@@ -480,7 +617,7 @@
       },
       "economics": {
         "costUsd": 5.915424259100206,
-        "durationSeconds": 950.312358895707
+        "durationSeconds": 950.3123588957067
       },
       "usage": {
         "totalTokens": 16129723.114519438
@@ -499,14 +636,14 @@
       "settingRank": 2,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 49.04379267565557,
+        "aaIndex": 49.0437926756556,
         "deepSwe": 41.0029498525074,
-        "terminalBench": 77.9026217228464,
+        "terminalBench": 77.9026217228465,
         "sweAtlas": 28.2258064516129
       },
       "economics": {
-        "costUsd": 2.1825946797034774,
-        "durationSeconds": 516.6536431492841
+        "costUsd": 2.1825946797034743,
+        "durationSeconds": 516.6536431492839
       },
       "usage": {
         "totalTokens": 5214050.029652352
@@ -532,7 +669,7 @@
       },
       "economics": {
         "costUsd": 3.3038416339468313,
-        "durationSeconds": 722.922882413088
+        "durationSeconds": 722.9228824130884
       },
       "usage": {
         "totalTokens": 7827354.369120649
@@ -551,9 +688,9 @@
       "settingRank": 4,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 57.576366681243066,
+        "aaIndex": 57.576366681243044,
         "deepSwe": 51.622418879056,
-        "terminalBench": 82.3970037453184,
+        "terminalBench": 82.3970037453183,
         "sweAtlas": 38.7096774193548
       },
       "economics": {
@@ -577,14 +714,14 @@
       "settingRank": 5,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 59.071812175973335,
+        "aaIndex": 59.07181217597331,
         "deepSwe": 51.327433628318595,
-        "terminalBench": 83.1460674157304,
+        "terminalBench": 83.1460674157303,
         "sweAtlas": 42.741935483871
       },
       "economics": {
         "costUsd": 5.665366469580767,
-        "durationSeconds": 1065.6153854805739
+        "durationSeconds": 1065.6153854805707
       },
       "usage": {
         "totalTokens": 13628306.242331294
@@ -609,7 +746,7 @@
         "sweAtlas": 46.7741935483871
       },
       "economics": {
-        "costUsd": 7.724725797009217,
+        "costUsd": 7.7247257970092145,
         "durationSeconds": 1386.6877980572617
       },
       "usage": {
@@ -681,14 +818,14 @@
       "settingRank": 3,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 64.0684745695058,
-        "deepSwe": 62.8318584070797,
+        "aaIndex": 64.06847456950577,
+        "deepSwe": 62.8318584070796,
         "terminalBench": 85.0187265917603,
         "sweAtlas": 44.3548387096774
       },
       "economics": {
         "costUsd": 3.1718671924846644,
-        "durationSeconds": 730.924389570552
+        "durationSeconds": 730.9243895705524
       },
       "usage": {
         "totalTokens": 7999358.108384448
@@ -717,7 +854,7 @@
         "durationSeconds": 842.8052382413097
       },
       "usage": {
-        "totalTokens": 9911366.34969326
+        "totalTokens": 9911366.349693263
       }
     },
     {
@@ -739,11 +876,11 @@
         "sweAtlas": 54.838709677419395
       },
       "economics": {
-        "costUsd": 8.170783921523505,
+        "costUsd": 8.170783921523503,
         "durationSeconds": 1421.879982617586
       },
       "usage": {
-        "totalTokens": 21565879.138036806
+        "totalTokens": 21565879.138036843
       }
     },
     {
@@ -769,7 +906,7 @@
         "durationSeconds": 1451.329194274025
       },
       "usage": {
-        "totalTokens": 23699428.05214722
+        "totalTokens": 23699428.052147225
       }
     },
     {
@@ -817,11 +954,11 @@
         "sweAtlas": 48.1182795698925
       },
       "economics": {
-        "costUsd": 3.2306109660020437,
+        "costUsd": 3.2306109660020477,
         "durationSeconds": 1792.1471809815948
       },
       "usage": {
-        "totalTokens": 12503741.564417187
+        "totalTokens": 12503741.564417152
       }
     },
     {
@@ -869,7 +1006,7 @@
         "sweAtlas": 38.7096774193548
       },
       "economics": {
-        "costUsd": 0.05949917044417178,
+        "costUsd": 0.05949917044417176,
         "durationSeconds": 868.3750143149272
       },
       "usage": {
@@ -895,11 +1032,11 @@
         "sweAtlas": 49.193548387096804
       },
       "economics": {
-        "costUsd": 0.09081146755368105,
-        "durationSeconds": 743.5829417177918
+        "costUsd": 0.09081146755368102,
+        "durationSeconds": 743.5829417177914
       },
       "usage": {
-        "totalTokens": 12713750.95194274
+        "totalTokens": 12713750.951942736
       }
     },
     {
@@ -922,7 +1059,7 @@
       },
       "economics": {
         "costUsd": 2.6525358742331258,
-        "durationSeconds": 386.30447648261713
+        "durationSeconds": 386.3044764826176
       },
       "usage": {
         "totalTokens": 6885560.579754606
@@ -941,8 +1078,8 @@
       "settingRank": 5,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 61.03327520587843,
-        "deepSwe": 64.30678466076691,
+        "aaIndex": 61.03327520587847,
+        "deepSwe": 64.30678466076701,
         "terminalBench": 82.7715355805243,
         "sweAtlas": 36.021505376344095
       },
@@ -951,7 +1088,7 @@
         "durationSeconds": 614.9898987730061
       },
       "usage": {
-        "totalTokens": 12150851.179959083
+        "totalTokens": 12150851.179959117
       }
     },
     {
@@ -974,7 +1111,7 @@
       },
       "economics": {
         "costUsd": 0.06947505231083852,
-        "durationSeconds": 131.81620961145202
+        "durationSeconds": 131.81620961145208
       },
       "usage": {
         "totalTokens": 3549957.210633946
@@ -1000,10 +1137,10 @@
       },
       "economics": {
         "costUsd": 0.03893760139059304,
-        "durationSeconds": 100.02603374233121
+        "durationSeconds": 100.02603374233118
       },
       "usage": {
-        "totalTokens": 1435665.8445807758
+        "totalTokens": 1435665.8445807756
       }
     },
     {
@@ -1078,7 +1215,7 @@
       },
       "economics": {
         "costUsd": 0.23590978378323102,
-        "durationSeconds": 413.89877096114486
+        "durationSeconds": 413.8987709611452
       },
       "usage": {
         "totalTokens": 12806609.005112467
@@ -1149,9 +1286,9 @@
       "settingRank": 2,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 55.234518085621644,
+        "aaIndex": 55.23451808562161,
         "deepSwe": 53.392330383480804,
-        "terminalBench": 77.9026217228465,
+        "terminalBench": 77.9026217228464,
         "sweAtlas": 34.4086021505376
       },
       "economics": {
@@ -1201,13 +1338,13 @@
       "settingRank": 4,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 64.11644486641197,
+        "aaIndex": 64.116444866412,
         "deepSwe": 64.8967551622419,
-        "terminalBench": 82.0224719101123,
+        "terminalBench": 82.0224719101124,
         "sweAtlas": 45.4301075268817
       },
       "economics": {
-        "costUsd": 3.000466998773008,
+        "costUsd": 3.0004669987730046,
         "durationSeconds": 369.9402760736197
       },
       "usage": {
@@ -1259,7 +1396,7 @@
         "sweAtlas": 43.279569892473106
       },
       "economics": {
-        "costUsd": 4.995463274846626,
+        "costUsd": 4.995463274846623,
         "durationSeconds": 613.70177198364
       },
       "usage": {
@@ -1279,9 +1416,9 @@
       "settingRank": 1,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 23.091968966853067,
+        "aaIndex": 23.0919689668531,
         "deepSwe": 13.2743362831858,
-        "terminalBench": 37.4531835205992,
+        "terminalBench": 37.453183520599296,
         "sweAtlas": 18.5483870967742
       },
       "economics": {
@@ -1315,7 +1452,7 @@
         "durationSeconds": 154.81494989775024
       },
       "usage": {
-        "totalTokens": 1657646.8445807784
+        "totalTokens": 1657646.8445807747
       }
     },
     {
@@ -1337,11 +1474,11 @@
         "sweAtlas": 28.763440860215102
       },
       "economics": {
-        "costUsd": 0.6699985707566459,
+        "costUsd": 0.6699985707566464,
         "durationSeconds": 240.094656441718
       },
       "usage": {
-        "totalTokens": 3164606.548057262
+        "totalTokens": 3164606.548057258
       }
     },
     {
@@ -1363,11 +1500,11 @@
         "sweAtlas": 31.182795698924696
       },
       "economics": {
-        "costUsd": 1.140926299999998,
+        "costUsd": 1.1409262999999978,
         "durationSeconds": 358.7396482617588
       },
       "usage": {
-        "totalTokens": 5600275.774028634
+        "totalTokens": 5600275.774028629
       }
     },
     {
@@ -1409,17 +1546,43 @@
       "settingRank": 6,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 60.4201036172669,
+        "aaIndex": 60.420103617266875,
         "deepSwe": 66.9616519174041,
-        "terminalBench": 78.2771535580525,
+        "terminalBench": 78.2771535580524,
         "sweAtlas": 36.021505376344095
       },
       "economics": {
         "costUsd": 1.9300146631901811,
-        "durationSeconds": 491.02065439672793
+        "durationSeconds": 491.0206543967283
       },
       "usage": {
         "totalTokens": 9630511.582822077
+      }
+    },
+    {
+      "id": "a5c6e50fb69d2c0370ef8c6038045308",
+      "agent": "Codex",
+      "model": "GPT-6 Astra",
+      "modelLabel": "GPT-6 Astra (max)",
+      "providerId": "openai",
+      "providerName": "OpenAI",
+      "seriesId": "Codex:openai_vega-alpha",
+      "seriesLabel": "Codex · GPT-6 Astra",
+      "setting": "max",
+      "settingRank": 6,
+      "completeIndex": true,
+      "benchmarks": {
+        "aaIndex": 66.9713903153459,
+        "deepSwe": 66.9616519174042,
+        "terminalBench": 83.1460674157303,
+        "sweAtlas": 50.8064516129032
+      },
+      "economics": {
+        "costUsd": 4.71732943060445,
+        "durationSeconds": 1609.0898164621678
+      },
+      "usage": {
+        "totalTokens": 4035764.689496801
       }
     },
     {
@@ -1441,11 +1604,11 @@
         "sweAtlas": 31.18279569892475
       },
       "economics": {
-        "costUsd": 0.08505141359918199,
+        "costUsd": 0.08505141359918207,
         "durationSeconds": 625.1976421267894
       },
       "usage": {
-        "totalTokens": 3705076.4698364004
+        "totalTokens": 3705076.469836404
       }
     },
     {
@@ -1487,8 +1650,8 @@
       "settingRank": 3,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 47.08693600598453,
-        "deepSwe": 37.1681415929203,
+        "aaIndex": 47.08693600598457,
+        "deepSwe": 37.1681415929204,
         "terminalBench": 76.4044943820225,
         "sweAtlas": 27.688172043010802
       },
@@ -1513,8 +1676,8 @@
       "settingRank": 3,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 46.6554082589455,
-        "deepSwe": 31.5634218289085,
+        "aaIndex": 46.655408258945535,
+        "deepSwe": 31.5634218289086,
         "terminalBench": 74.53183520599251,
         "sweAtlas": 33.8709677419355
       },
@@ -1523,7 +1686,7 @@
         "durationSeconds": 826.6777535787322
       },
       "usage": {
-        "totalTokens": 5728865.180470352
+        "totalTokens": 5728865.180470356
       }
     },
     {
@@ -1598,10 +1761,10 @@
       },
       "economics": {
         "costUsd": 2.4389824437627774,
-        "durationSeconds": 929.185109406954
+        "durationSeconds": 929.1851094069543
       },
       "usage": {
-        "totalTokens": 3598867.582822087
+        "totalTokens": 3598867.5828220835
       }
     },
     {
@@ -1624,7 +1787,7 @@
       },
       "economics": {
         "costUsd": 3.081635541610427,
-        "durationSeconds": 1447.3730531697347
+        "durationSeconds": 1447.3730531697342
       },
       "usage": {
         "totalTokens": 10383196.737883452
@@ -1643,8 +1806,8 @@
       "settingRank": 5,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 61.6404415975891,
-        "deepSwe": 58.1120943952803,
+        "aaIndex": 61.64044159758908,
+        "deepSwe": 58.1120943952802,
         "terminalBench": 81.6479400749064,
         "sweAtlas": 45.1612903225806
       },
@@ -1654,6 +1817,58 @@
       },
       "usage": {
         "totalTokens": 19963139.084867075
+      }
+    },
+    {
+      "id": "0232b19507397d295bd4786194f2695a",
+      "agent": "Muse Code",
+      "model": "Muse Spark 1.3",
+      "modelLabel": "Muse Spark 1.3 (xhigh)",
+      "providerId": "meta",
+      "providerName": "Meta",
+      "seriesId": "Muse Code 1.0.2 RC:meta_joyful-jello138",
+      "seriesLabel": "Muse Code · Muse Spark 1.3",
+      "setting": "xhigh",
+      "settingRank": 5,
+      "completeIndex": true,
+      "benchmarks": {
+        "aaIndex": 64.17750364143022,
+        "deepSwe": 66.9616519174041,
+        "terminalBench": 82.0224719101124,
+        "sweAtlas": 43.5483870967742
+      },
+      "economics": {
+        "costUsd": 1.7227440546523525,
+        "durationSeconds": 769.975962167688
+      },
+      "usage": {
+        "totalTokens": 14778910.193251522
+      }
+    },
+    {
+      "id": "bd6d5da83c0937956da4ccdc57fc3058",
+      "agent": "Muse Code",
+      "model": "Muse Spark 1.3",
+      "modelLabel": "Muse Spark 1.3 (max)",
+      "providerId": "meta",
+      "providerName": "Meta",
+      "seriesId": "Muse Code 1.0.2 RC:meta_goofy-glacier135",
+      "seriesLabel": "Muse Code · Muse Spark 1.3",
+      "setting": "max",
+      "settingRank": 6,
+      "completeIndex": true,
+      "benchmarks": {
+        "aaIndex": 67.97281481220126,
+        "deepSwe": 68.141592920354,
+        "terminalBench": 83.8951310861423,
+        "sweAtlas": 51.88172043010751
+      },
+      "economics": {
+        "costUsd": null,
+        "durationSeconds": 1475.134529652353
+      },
+      "usage": {
+        "totalTokens": 14209353.299226658
       }
     },
     {
@@ -1679,7 +1894,7 @@
         "durationSeconds": 626.0057290388545
       },
       "usage": {
-        "totalTokens": 13020159.542944789
+        "totalTokens": 13020159.542944785
       }
     },
     {
@@ -1709,6 +1924,32 @@
       }
     },
     {
+      "id": "6ce3ce2d49662bcad51a30a67c078f00",
+      "agent": "Opencode",
+      "model": "Gemini 3.8 Flash",
+      "modelLabel": "Gemini 3.8 Flash (high)",
+      "providerId": "google",
+      "providerName": "Google",
+      "seriesId": "Opencode:google_skimaki_ai-studio",
+      "seriesLabel": "Opencode · Gemini 3.8 Flash",
+      "setting": "high",
+      "settingRank": 4,
+      "completeIndex": true,
+      "benchmarks": {
+        "aaIndex": 61.15009143224124,
+        "deepSwe": 61.6519174041298,
+        "terminalBench": 83.8951310861423,
+        "sweAtlas": 37.9032258064516
+      },
+      "economics": {
+        "costUsd": 2.037777941104297,
+        "durationSeconds": 711.0750562372187
+      },
+      "usage": {
+        "totalTokens": 27777783.860940695
+      }
+    },
+    {
       "id": "e347a66c457b5dca0bf4ed67c15afc5f",
       "agent": "Opencode",
       "model": "Muse Spark 1.1",
@@ -1721,14 +1962,14 @@
       "settingRank": 5,
       "completeIndex": true,
       "benchmarks": {
-        "aaIndex": 54.92139250715367,
+        "aaIndex": 54.921392507153634,
         "deepSwe": 54.2772861356932,
-        "terminalBench": 77.1535580524345,
+        "terminalBench": 77.1535580524344,
         "sweAtlas": 33.3333333333333
       },
       "economics": {
         "costUsd": 1.4352184351738262,
-        "durationSeconds": 761.3780071574632
+        "durationSeconds": 761.3780071574635
       },
       "usage": {
         "totalTokens": 12289527.214723915
@@ -1753,11 +1994,11 @@
         "sweAtlas": 44.0860215053763
       },
       "economics": {
-        "costUsd": 1.914379785695295,
+        "costUsd": 1.9143797856952987,
         "durationSeconds": 1064.7406922290384
       },
       "usage": {
-        "totalTokens": 16350688.074539876
+        "totalTokens": 16350688.074539877
       }
     },
     {
@@ -1779,7 +2020,7 @@
         "sweAtlas": 36.021505376344095
       },
       "economics": {
-        "costUsd": 2.9428409855572575,
+        "costUsd": 2.942840985557261,
         "durationSeconds": 752.2755521472382
       },
       "usage": {

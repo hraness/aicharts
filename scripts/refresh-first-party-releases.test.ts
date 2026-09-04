@@ -49,6 +49,9 @@ const nvidia = sourceDefinition("nvidia-nemotron-rss");
 const amazon = sourceDefinition("amazon-nova-rss");
 const baidu = sourceDefinition("baidu-ernie-sitemap");
 const deepseekApi = sourceDefinition("deepseek-api-sitemap");
+const ibm = sourceDefinition("ibm-granite-sitemap");
+const stepfun = sourceDefinition("stepfun-model-sitemap");
+const stepfunChina = sourceDefinition("stepfun-china-model-sitemap");
 
 function sitemap(entries: readonly Readonly<{ lastmod?: string; url: string }>[]): string {
   return [
@@ -386,6 +389,84 @@ function fixtureFor(definition: FirstPartyReleaseSourceDefinition): SourceFixtur
         `https://mimo.mi.com/docs/en-US/news/latest/v2-${index + 5}-tts-release/`
       ))),
     };
+    case "ai21-post-sitemap": return {
+      contentType: "text/xml",
+      text: standardSitemapFixture(definition, [
+        "https://www.ai21.com/blog/announcing-jamba/",
+        "https://www.ai21.com/blog/announcing-jamba-instruct/",
+        "https://www.ai21.com/blog/announcing-jamba-model-family/",
+        "https://www.ai21.com/blog/grounding-bedrock-enterprise-ai/",
+        "https://www.ai21.com/blog/introducing-jamba-reasoning-3b/",
+        "https://www.ai21.com/blog/introducing-jamba-1-6/",
+        "https://www.ai21.com/blog/introducing-jamba2/",
+        "https://www.ai21.com/blog/announcing-ai21-studio-and-jurassic-1/",
+        "https://www.ai21.com/blog/introducing-j1-grande/",
+        "https://www.ai21.com/blog/introducing-j2/",
+      ]),
+    };
+    case "ibm-granite-sitemap": return {
+      contentType: "application/xml",
+      text: standardSitemapFixture(definition, [
+        "https://research.ibm.com/blog/introducing-granite-4-2",
+        "https://research.ibm.com/blog/granite-4-1-ai-foundation-models",
+        "https://research.ibm.com/blog/granite-vlm",
+        "https://research.ibm.com/blog/granite-code-models-open-source",
+      ]),
+    };
+    case "ai2-model-sitemap": return {
+      contentType: "application/xml",
+      text: standardSitemapFixture(definition, [
+        "https://allenai.org/blog/bolmo",
+        "https://allenai.org/blog/dr-tulu",
+        "https://allenai.org/blog/flexolmo",
+        "https://allenai.org/blog/hello-olmo-a-truly-open-llm-43f7e7359222",
+        "https://allenai.org/blog/molmo",
+        "https://allenai.org/blog/molmo-motion",
+        "https://allenai.org/blog/molmo2",
+        "https://allenai.org/blog/molmoact2",
+        "https://allenai.org/blog/molmobot",
+        "https://allenai.org/blog/molmopoint",
+        "https://allenai.org/blog/olmo-1-7-7b-a-24-point-improvement-on-mmlu-92b43f7d269d",
+        "https://allenai.org/blog/olmo-open-language-model-87ccfc95f580",
+        "https://allenai.org/blog/olmo2",
+        "https://allenai.org/blog/olmo2-32b",
+        "https://allenai.org/blog/olmo3",
+        "https://allenai.org/blog/olmoasr",
+        "https://allenai.org/blog/olmocr",
+        "https://allenai.org/blog/olmocr-2",
+        "https://allenai.org/blog/olmoe-an-open-small-and-state-of-the-art-mixture-of-experts-model-c258432d0514",
+        "https://allenai.org/blog/olmoe-app",
+        "https://allenai.org/blog/olmoearth-v1-1",
+        "https://allenai.org/blog/olmohybrid",
+        "https://allenai.org/blog/open-coding-agents",
+        "https://allenai.org/blog/tulu-3",
+        "https://allenai.org/blog/tulu-3-405b",
+        "https://allenai.org/blog/tulu-3-technical",
+      ]),
+    };
+    case "stepfun-model-sitemap": return {
+      contentType: "text/xml",
+      text: standardSitemapFixture(definition, [
+        "https://platform.stepfun.ai/docs/en/guides/models/step-3.5-flash",
+        "https://platform.stepfun.ai/docs/en/guides/models/step-3.7-flash",
+        "https://platform.stepfun.ai/docs/en/guides/models/step-image-edit-2",
+        "https://platform.stepfun.ai/docs/en/guides/models/stepaudio-2.5-asr",
+        "https://platform.stepfun.ai/docs/en/guides/models/stepaudio-2.5-chat",
+      ]),
+    };
+    case "stepfun-china-model-sitemap": return {
+      contentType: "text/xml",
+      text: standardSitemapFixture(definition, [
+        "https://platform.stepfun.com/docs/zh/guides/models/step-3.5-flash",
+        "https://platform.stepfun.com/docs/zh/guides/models/step-3.7-flash",
+        "https://platform.stepfun.com/docs/zh/guides/models/step-explore",
+        "https://platform.stepfun.com/docs/zh/guides/models/step-image-edit-2",
+        "https://platform.stepfun.com/docs/zh/guides/models/stepaudio-2.5-asr",
+        "https://platform.stepfun.com/docs/zh/guides/models/stepaudio-2.5-chat",
+        "https://platform.stepfun.com/docs/zh/guides/models/stepaudio-2.5-realtime",
+        "https://platform.stepfun.com/docs/zh/guides/models/stepaudio-2.5-tts",
+      ]),
+    };
   }
 }
 
@@ -426,9 +507,9 @@ function configuredObservations(): readonly FirstPartyReleaseSourceObservation[]
 
 describe("first-party release URL recognition", () => {
   test("keeps the tracked lab registry broad and its legacy source prefix stable", () => {
-    expect(FIRST_PARTY_RELEASE_SOURCE_DEFINITIONS).toHaveLength(23);
+    expect(FIRST_PARTY_RELEASE_SOURCE_DEFINITIONS).toHaveLength(28);
     expect(new Set(FIRST_PARTY_RELEASE_SOURCE_DEFINITIONS.map(source => source.providerId)).size)
-      .toBe(19);
+      .toBe(23);
     expect(FIRST_PARTY_RELEASE_SOURCE_DEFINITIONS.slice(0, 3).map(source => source.id)).toEqual([
       "anthropic-sitemap",
       "openai-release-sitemap",
@@ -438,6 +519,16 @@ describe("first-party release URL recognition", () => {
 
   test("recognizes an official model-release route for every tracked provider", () => {
     const cases = [
+      {
+        expectedIdentity: /^OLMo 3$/u,
+        providerId: "ai2",
+        url: "https://allenai.org/blog/olmo3",
+      },
+      {
+        expectedIdentity: /^Jamba 2 3B$/u,
+        providerId: "ai21",
+        url: "https://www.ai21.com/blog/introducing-jamba2/",
+      },
       {
         expectedIdentity: /Qwen3/u,
         providerId: "alibaba_cloud",
@@ -479,6 +570,11 @@ describe("first-party release URL recognition", () => {
         url: "https://deepmind.google/models/model-cards/gemini-3-8-pro/",
       },
       {
+        expectedIdentity: /^IBM Granite 4\.2$/u,
+        providerId: "ibm",
+        url: "https://research.ibm.com/blog/introducing-granite-4-2",
+      },
+      {
         expectedIdentity: /Muse Spark 1\.3/u,
         providerId: "meta",
         url: "https://about.fb.com/news/2026/09/introducing-muse-spark-1-3/",
@@ -512,6 +608,11 @@ describe("first-party release URL recognition", () => {
         expectedIdentity: /GPT-6 Astra/u,
         providerId: "openai",
         url: "https://developers.openai.com/api/docs/models/gpt-6-astra",
+      },
+      {
+        expectedIdentity: /^StepAudio 2\.5 Realtime$/u,
+        providerId: "stepfun",
+        url: "https://platform.stepfun.ai/docs/en/guides/models/stepaudio-2.5-realtime",
       },
       {
         expectedIdentity: /Tencent HY4 Preview/u,
@@ -560,6 +661,55 @@ describe("first-party release URL recognition", () => {
       "anthropic",
       "https://www.anthropic.com/claude-fable-and-mythos-5-1",
     )).toEqual(["Claude Fable 5.1", "Claude Mythos 5.1"]);
+  });
+
+  test("uses specific model identities for the new lab-owned sitemap routes", () => {
+    expect(namedModelsForProviderUrl(
+      "ai21",
+      "https://www.ai21.com/blog/announcing-jamba-model-family/",
+    )).toEqual(["Jamba 1.5 Large", "Jamba 1.5 Mini"]);
+    expect(namedModelsForProviderUrl(
+      "ai21",
+      "https://www.ai21.com/blog/grounding-bedrock-enterprise-ai/",
+    )).toEqual(["Jamba 1.7 Large", "Jamba 1.7 Mini"]);
+    expect(namedModelsForProviderUrl(
+      "ai21",
+      "https://www.ai21.com/blog/introducing-jamba2/",
+    )).toEqual(["Jamba 2 3B", "Jamba 2 Mini"]);
+    expect(namedModelsForProviderUrl(
+      "ibm",
+      "https://research.ibm.com/blog/ibm-granite-guardian-5b-3b",
+    )).toEqual(["IBM Granite Guardian 3.2 3B", "IBM Granite Guardian 3.2 5B"]);
+    expect(namedModelsForProviderUrl(
+      "ibm",
+      "https://research.ibm.com/blog/granite-4-3-ai-foundation-models",
+    )).toEqual(["IBM Granite 4.3"]);
+    expect(namedModelsForProviderUrl(
+      "ai2",
+      "https://allenai.org/blog/tulu-3-405b",
+    )).toEqual(["Tülu 3 405B"]);
+    const ai2ExactCases = [
+      ["https://allenai.org/blog/open-coding-agents", ["SERA 8B", "SERA 14B", "SERA 32B"]],
+      ["https://allenai.org/blog/molmobot", ["MolmoBot"]],
+      ["https://allenai.org/blog/molmopoint", ["MolmoPoint 8B", "MolmoPoint GUI 8B", "MolmoPoint Vid 4B"]],
+      ["https://allenai.org/blog/olmocr", ["OLMoCR"]],
+      ["https://allenai.org/blog/hello-olmo-a-truly-open-llm-43f7e7359222", ["OLMo 7B"]],
+    ] as const;
+    for (const [url, expected] of ai2ExactCases) {
+      expect(namedModelsForProviderUrl("ai2", url)).toEqual(expected);
+    }
+    expect(namedModelsForProviderUrl(
+      "stepfun",
+      "https://platform.stepfun.com/docs/zh/guides/models/step-explore",
+    )).toEqual(["Step Explore"]);
+    expect(namedModelsForProviderUrl(
+      "stepfun",
+      "https://platform.stepfun.com/docs/zh/guides/models/step-4.1-pro",
+    )).toEqual(["Step 4.1 Pro"]);
+    expect(namedModelsForProviderUrl(
+      "stepfun",
+      "https://platform.stepfun.com/docs/zh/guides/models/stepaudio-3.1-asr",
+    )).toEqual(["StepAudio 3.1 ASR"]);
   });
 
   test("uses reviewed exact identities for irregular Anthropic model-release routes", () => {
@@ -742,6 +892,8 @@ describe("first-party release URL recognition", () => {
 
   test("routes an unknown family from every tracked lab's high-signal surface into review", () => {
     const cases = [
+      ["ai2-model-sitemap", "https://allenai.org/blog/introducing-aurora-1-model"],
+      ["ai21-post-sitemap", "https://www.ai21.com/blog/introducing-aurora-1"],
       ["qwen-model-releases", "https://docs.qwencloud.com/changelog/models#september-3-2026-alibaba-aurora-1"],
       ["amazon-nova-rss", "https://aws.amazon.com/blogs/aws/introducing-amazon-aurora-1-model/"],
       ["anthropic-sitemap", "https://www.anthropic.com/news/claude-lyric-6-0"],
@@ -750,6 +902,7 @@ describe("first-party release URL recognition", () => {
       ["cohere-docs-sitemap", "https://docs.cohere.com/changelog/aurora-1-model-launch"],
       ["deepseek-site-sitemap", "https://www.deepseek.com/en/news/aurora-1-release/"],
       ["google-deepmind-sitemap", "https://deepmind.google/models/model-cards/aurora-1/"],
+      ["ibm-granite-sitemap", "https://research.ibm.com/blog/introducing-aurora-1-foundation-model"],
       ["meta-research-sitemap", "https://research.meta.ai/blog/introducing-muse-lyric-2-0"],
       ["microsoft-model-sitemap", "https://microsoft.ai/models/aurora-1/"],
       ["minimax-model-releases", "https://platform.minimax.io/docs/release-notes/models#sep-3-2026-aurora-1"],
@@ -757,13 +910,14 @@ describe("first-party release URL recognition", () => {
       ["kimi-docs-sitemap", "https://platform.kimi.com/docs/guide/aurora-1-quickstart"],
       ["nvidia-nemotron-rss", "https://blogs.nvidia.com/blog/introducing-aurora-1-model/"],
       ["openai-model-catalog", "https://developers.openai.com/api/docs/models/aurora-1"],
+      ["stepfun-model-sitemap", "https://platform.stepfun.ai/docs/en/guides/models/aurora-1"],
       ["tencent-post-sitemaps", "https://www.tencent.com/tencent-releases-aurora-1-model/"],
       ["xai-release-notes", "https://docs.x.ai/developers/release-notes#aurora-1-is-live"],
       ["xiaomi-mimo-sitemap", "https://mimo.mi.com/docs/en-US/news/latest/aurora-1-release"],
       ["zai-release-notes", "https://docs.z.ai/release-notes/new-released#2026-09-03-aurora-1"],
     ] as const;
 
-    expect(new Set(cases.map(([sourceId]) => sourceDefinition(sourceId).providerId)).size).toBe(19);
+    expect(new Set(cases.map(([sourceId]) => sourceDefinition(sourceId).providerId)).size).toBe(23);
     for (const [sourceId, url] of cases) {
       expect(releaseCandidateNamesForSourceUrl(sourceId, url), `${sourceId} silently dropped ${url}`)
         .toHaveLength(1);
@@ -771,6 +925,10 @@ describe("first-party release URL recognition", () => {
     expect(releaseCandidateNamesForSourceUrl(
       "deepseek-api-sitemap",
       "https://api-docs.deepseek.com/updates/#2026-09-03-deepseek-aurora-1-release",
+    )).toHaveLength(1);
+    expect(releaseCandidateNamesForSourceUrl(
+      "stepfun-china-model-sitemap",
+      "https://platform.stepfun.com/docs/zh/guides/models/aurora-1",
     )).toHaveLength(1);
   });
 
@@ -804,6 +962,9 @@ describe("first-party release URL recognition", () => {
       "https://api-docs.deepseek.com/updates/#2024-08-02-api-launches-context-caching-on-disk-technology",
     )).toEqual([]);
     const nonReleaseUrls = [
+      ["ai2-model-sitemap", "https://allenai.org/blog/olmo-eval"],
+      ["ai21-post-sitemap", "https://www.ai21.com/blog/jamba-3b-vs-qwen3-4b/"],
+      ["ai21-post-sitemap", "https://www.ai21.com/blog/introducing-ai21s-python-sdk-2-0-for-a-simplified-developer-experience/"],
       ["cohere-docs-sitemap", "https://docs.cohere.com/changelog/aya-expanse-on-whatsapp"],
       ["cohere-docs-sitemap", "https://docs.cohere.com/changelog/commandr-082024-ft"],
       ["mistral-site-sitemap", "https://mistral.ai/news/mistral-x-humain/"],
@@ -811,7 +972,14 @@ describe("first-party release URL recognition", () => {
       ["mistral-site-sitemap", "https://mistral.ai/news/mistral-vibe-2-0/"],
       ["kimi-docs-sitemap", "https://platform.kimi.com/docs/guide/kimi-k3-tool-calling-best-practice"],
       ["kimi-docs-sitemap", "https://platform.kimi.com/docs/guide/use-kimi-k3-to-setup-agent"],
+      ["ibm-granite-sitemap", "https://research.ibm.com/blog/granite-vision-ocr-leaderboard"],
       ["nvidia-nemotron-rss", "https://blogs.nvidia.com/blog/palantir-secure-ai-us-agencies-nemotron-open-models/"],
+      ["stepfun-model-sitemap", "https://platform.stepfun.ai/docs/en/guides/models/step-3.7-flash-quickstart"],
+      ["stepfun-china-model-sitemap", "https://platform.stepfun.com/docs/zh/guides/models/step-3.7-flash-cookbook"],
+      ["stepfun-china-model-sitemap", "https://platform.stepfun.com/docs/zh/guides/models/step-3.7-flash-mobile-agent"],
+      ["stepfun-china-model-sitemap", "https://platform.stepfun.com/docs/zh/guides/models/step-3.7-flash-quickstart"],
+      ["stepfun-china-model-sitemap", "https://platform.stepfun.com/docs/zh/guides/models/step-router"],
+      ["stepfun-china-model-sitemap", "https://platform.stepfun.com/docs/zh/guides/models/overview"],
       ["amazon-nova-rss", "https://aws.amazon.com/blogs/aws/aws-weekly-review-amazon-nova-sonic-and-more/"],
       ["xai-release-notes", "https://docs.x.ai/developers/release-notes#agent-tools-adapt-to-grok-4-1-fast-models-and-tool-prices-dropped"],
     ] as const;
@@ -1086,6 +1254,29 @@ describe("first-party release source adapters", () => {
       fetched(candidateMissingDate),
       observedAt,
     ).ok).toBeFalse();
+  });
+
+  test("requires dates on IBM and StepFun candidates without requiring dates on unrelated rows", () => {
+    for (const definition of [ibm, stepfun, stepfunChina]) {
+      const fixture = fixtureFor(definition);
+      const parsed = parseProviderSitemap(definition, fixture.text);
+      expect(parsed.ok).toBeTrue();
+      if (!parsed.ok) continue;
+      expect(parsed.value.datedEntryCount).toBe(definition.minimumCandidateCount);
+
+      const observed = observeFirstPartyReleaseSource(
+        definition,
+        fetched(fixture.text, fixture.contentType),
+        observedAt,
+      );
+      expect(observed.ok).toBeTrue();
+      const candidateMissingDate = fixture.text.replace(/<lastmod>[^<]+<\/lastmod>/u, "");
+      expect(observeFirstPartyReleaseSource(
+        definition,
+        fetched(candidateMissingDate, fixture.contentType),
+        observedAt,
+      ).ok).toBeFalse();
+    }
   });
 
   test("validates a complete observation set across every configured source shape", () => {
@@ -1541,6 +1732,9 @@ describe("first-party release refresh transaction", () => {
       && candidate.namedModels.includes("Muse Spark 1.3")
       && candidate.status === "needs-review"
     ))).toBeTrue();
+    for (const model of ["Jamba 2 Mini", "IBM Granite 4.2", "OLMo 3", "Step 3.7 Flash"]) {
+      expect(result.value.candidates.some(candidate => candidate.namedModels.includes(model))).toBeTrue();
+    }
   });
 
   test("adds newly configured sources without dropping prior review statuses", async () => {

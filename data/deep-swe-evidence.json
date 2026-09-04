@@ -10,17 +10,17 @@
     },
     "method": "leaderboard-artifact",
     "name": "DataCurve DeepSWE",
-    "retrievedAt": "2026-09-02T15:52:38.593Z",
+    "retrievedAt": "2026-09-03T23:51:38.233Z",
     "scope": "Every DeepSWE rollout across imported Pier jobs, grouped by configuration (harness + model + reasoning effort)",
     "taskCount": 113,
     "unit": "pass@1 is attempt pass rate over scored rollout attempts. pass@4 is tasks with at least one passing rollout divided by tasks attempted. Context-window failures and agent timeouts are scored failures; provider/verifier/network errors are excluded. Efficiency aggregates are over every scored attempt.",
     "url": "https://deepswe.datacurve.ai/artifacts/v1.1/leaderboard-live.json"
   },
   "identitySource": {
-    "attemptedAt": "2026-09-02T15:52:38.460Z",
+    "attemptedAt": "2026-09-03T23:51:37.363Z",
     "method": "exact-semantic-model-id",
     "name": "OpenRouter",
-    "retrievedAt": "2026-09-02T15:52:38.533Z",
+    "retrievedAt": "2026-09-03T23:51:37.645Z",
     "status": "available",
     "url": "https://openrouter.ai/api/v1/models?sort=newest"
   },
@@ -46,7 +46,7 @@
         "modelId": "qwen/qwen3.8-max",
         "resolver": {
           "name": "OpenRouter",
-          "retrievedAt": "2026-09-02T15:52:38.533Z",
+          "retrievedAt": "2026-09-03T23:51:37.645Z",
           "url": "https://openrouter.ai/api/v1/models?sort=newest"
         },
         "source": "openrouter"
@@ -71,7 +71,7 @@
         "modelId": "anthropic/claude-fable-5",
         "resolver": {
           "name": "OpenRouter",
-          "retrievedAt": "2026-09-02T15:52:38.533Z",
+          "retrievedAt": "2026-09-03T23:51:37.645Z",
           "url": "https://openrouter.ai/api/v1/models?sort=newest"
         },
         "source": "openrouter"
@@ -96,7 +96,7 @@
         "modelId": "anthropic/claude-fable-5",
         "resolver": {
           "name": "OpenRouter",
-          "retrievedAt": "2026-09-02T15:52:38.533Z",
+          "retrievedAt": "2026-09-03T23:51:37.645Z",
           "url": "https://openrouter.ai/api/v1/models?sort=newest"
         },
         "source": "openrouter"
@@ -121,7 +121,7 @@
         "modelId": "anthropic/claude-fable-5",
         "resolver": {
           "name": "OpenRouter",
-          "retrievedAt": "2026-09-02T15:52:38.533Z",
+          "retrievedAt": "2026-09-03T23:51:37.645Z",
           "url": "https://openrouter.ai/api/v1/models?sort=newest"
         },
         "source": "openrouter"
@@ -146,7 +146,7 @@
         "modelId": "anthropic/claude-fable-5",
         "resolver": {
           "name": "OpenRouter",
-          "retrievedAt": "2026-09-02T15:52:38.533Z",
+          "retrievedAt": "2026-09-03T23:51:37.645Z",
           "url": "https://openrouter.ai/api/v1/models?sort=newest"
         },
         "source": "openrouter"
@@ -171,7 +171,7 @@
         "modelId": "anthropic/claude-fable-5",
         "resolver": {
           "name": "OpenRouter",
-          "retrievedAt": "2026-09-02T15:52:38.533Z",
+          "retrievedAt": "2026-09-03T23:51:37.645Z",
           "url": "https://openrouter.ai/api/v1/models?sort=newest"
         },
         "source": "openrouter"
@@ -196,7 +196,7 @@
         "modelId": "anthropic/claude-opus-4.8",
         "resolver": {
           "name": "OpenRouter",
-          "retrievedAt": "2026-09-02T15:52:38.533Z",
+          "retrievedAt": "2026-09-03T23:51:37.645Z",
           "url": "https://openrouter.ai/api/v1/models?sort=newest"
         },
         "source": "openrouter"
@@ -221,7 +221,7 @@
         "modelId": "anthropic/claude-opus-4.8",
         "resolver": {
           "name": "OpenRouter",
-          "retrievedAt": "2026-09-02T15:52:38.533Z",
+          "retrievedAt": "2026-09-03T23:51:37.645Z",
           "url": "https://openrouter.ai/api/v1/models?sort=newest"
         },
         "source": "openrouter"
@@ -246,7 +246,7 @@
         "modelId": "anthropic/claude-opus-4.8",
         "resolver": {
           "name": "OpenRouter",
-          "retrievedAt": "2026-09-02T15:52:38.533Z",
+          "retrievedAt": "2026-09-03T23:51:37.645Z",
           "url": "https://openrouter.ai/api/v1/models?sort=newest"
         },
         "source": "openrouter"
@@ -271,7 +271,7 @@
         "modelId": "anthropic/claude-opus-4.8",
         "resolver": {
           "name": "OpenRouter",
-          "retrievedAt": "2026-09-02T15:52:38.533Z",
+          "retrievedAt": "2026-09-03T23:51:37.645Z",
           "url": "https://openrouter.ai/api/v1/models?sort=newest"
         },
         "source": "openrouter"
@@ -296,7 +296,7 @@
         "modelId": "anthropic/claude-opus-4.8",
         "resolver": {
           "name": "OpenRouter",
-          "retrievedAt": "2026-09-02T15:52:38.533Z",
+          "retrievedAt": "2026-09-03T23:51:37.645Z",
           "url": "https://openrouter.ai/api/v1/models?sort=newest"
         },
         "source": "openrouter"
@@ -321,7 +321,7 @@
         "modelId": "anthropic/claude-opus-5",
         "resolver": {
           "name": "OpenRouter",
-          "retrievedAt": "2026-09-02T15:52:38.533Z",
+          "retrievedAt": "2026-09-03T23:51:37.645Z",
           "url": "https://openrouter.ai/api/v1/models?sort=newest"
         },
         "source": "openrouter"
@@ -346,7 +346,7 @@
         "modelId": "anthropic/claude-opus-5",
         "resolver": {
           "name": "OpenRouter",
-          "retrievedAt": "2026-09-02T15:52:38.533Z",
+          "retrievedAt": "2026-09-03T23:51:37.645Z",
           "url": "https://openrouter.ai/api/v1/models?sort=newest"
         },
         "source": "openrouter"
@@ -371,7 +371,7 @@
         "modelId": "anthropic/claude-opus-5",
         "resolver": {
           "name": "OpenRouter",
-          "retrievedAt": "2026-09-02T15:52:38.533Z",
+          "retrievedAt": "2026-09-03T23:51:37.645Z",
           "url": "https://openrouter.ai/api/v1/models?sort=newest"
         },
         "source": "openrouter"
@@ -396,7 +396,7 @@
         "modelId": "anthropic/claude-opus-5",
         "resolver": {
           "name": "OpenRouter",
-          "retrievedAt": "2026-09-02T15:52:38.533Z",
+          "retrievedAt": "2026-09-03T23:51:37.645Z",
           "url": "https://openrouter.ai/api/v1/models?sort=newest"
         },
         "source": "openrouter"
@@ -421,7 +421,7 @@
         "modelId": "anthropic/claude-opus-5",
         "resolver": {
           "name": "OpenRouter",
-          "retrievedAt": "2026-09-02T15:52:38.533Z",
+          "retrievedAt": "2026-09-03T23:51:37.645Z",
           "url": "https://openrouter.ai/api/v1/models?sort=newest"
         },
         "source": "openrouter"
@@ -446,7 +446,7 @@
         "modelId": "anthropic/claude-sonnet-4.6",
         "resolver": {
           "name": "OpenRouter",
-          "retrievedAt": "2026-09-02T15:52:38.533Z",
+          "retrievedAt": "2026-09-03T23:51:37.645Z",
           "url": "https://openrouter.ai/api/v1/models?sort=newest"
         },
         "source": "openrouter"
@@ -471,7 +471,7 @@
         "modelId": "anthropic/claude-sonnet-5",
         "resolver": {
           "name": "OpenRouter",
-          "retrievedAt": "2026-09-02T15:52:38.533Z",
+          "retrievedAt": "2026-09-03T23:51:37.645Z",
           "url": "https://openrouter.ai/api/v1/models?sort=newest"
         },
         "source": "openrouter"
@@ -496,7 +496,7 @@
         "modelId": "anthropic/claude-sonnet-5",
         "resolver": {
           "name": "OpenRouter",
-          "retrievedAt": "2026-09-02T15:52:38.533Z",
+          "retrievedAt": "2026-09-03T23:51:37.645Z",
           "url": "https://openrouter.ai/api/v1/models?sort=newest"
         },
         "source": "openrouter"
@@ -521,7 +521,7 @@
         "modelId": "anthropic/claude-sonnet-5",
         "resolver": {
           "name": "OpenRouter",
-          "retrievedAt": "2026-09-02T15:52:38.533Z",
+          "retrievedAt": "2026-09-03T23:51:37.645Z",
           "url": "https://openrouter.ai/api/v1/models?sort=newest"
         },
         "source": "openrouter"
@@ -546,7 +546,7 @@
         "modelId": "anthropic/claude-sonnet-5",
         "resolver": {
           "name": "OpenRouter",
-          "retrievedAt": "2026-09-02T15:52:38.533Z",
+          "retrievedAt": "2026-09-03T23:51:37.645Z",
           "url": "https://openrouter.ai/api/v1/models?sort=newest"
         },
         "source": "openrouter"
@@ -571,7 +571,7 @@
         "modelId": "anthropic/claude-sonnet-5",
         "resolver": {
           "name": "OpenRouter",
-          "retrievedAt": "2026-09-02T15:52:38.533Z",
+          "retrievedAt": "2026-09-03T23:51:37.645Z",
           "url": "https://openrouter.ai/api/v1/models?sort=newest"
         },
         "source": "openrouter"
@@ -596,7 +596,7 @@
         "modelId": "deepseek/deepseek-v4-flash",
         "resolver": {
           "name": "OpenRouter",
-          "retrievedAt": "2026-09-02T15:52:38.533Z",
+          "retrievedAt": "2026-09-03T23:51:37.645Z",
           "url": "https://openrouter.ai/api/v1/models?sort=newest"
         },
         "source": "openrouter"
@@ -621,7 +621,7 @@
         "modelId": "deepseek/deepseek-v4-pro",
         "resolver": {
           "name": "OpenRouter",
-          "retrievedAt": "2026-09-02T15:52:38.533Z",
+          "retrievedAt": "2026-09-03T23:51:37.645Z",
           "url": "https://openrouter.ai/api/v1/models?sort=newest"
         },
         "source": "openrouter"
@@ -646,7 +646,7 @@
         "modelId": "google/gemini-3.1-pro-preview",
         "resolver": {
           "name": "OpenRouter",
-          "retrievedAt": "2026-09-02T15:52:38.533Z",
+          "retrievedAt": "2026-09-03T23:51:37.645Z",
           "url": "https://openrouter.ai/api/v1/models?sort=newest"
         },
         "source": "openrouter"
@@ -671,7 +671,7 @@
         "modelId": "google/gemini-3.5-flash",
         "resolver": {
           "name": "OpenRouter",
-          "retrievedAt": "2026-09-02T15:52:38.533Z",
+          "retrievedAt": "2026-09-03T23:51:37.645Z",
           "url": "https://openrouter.ai/api/v1/models?sort=newest"
         },
         "source": "openrouter"
@@ -696,7 +696,7 @@
         "modelId": "google/gemini-3.6-flash",
         "resolver": {
           "name": "OpenRouter",
-          "retrievedAt": "2026-09-02T15:52:38.533Z",
+          "retrievedAt": "2026-09-03T23:51:37.645Z",
           "url": "https://openrouter.ai/api/v1/models?sort=newest"
         },
         "source": "openrouter"
@@ -721,7 +721,7 @@
         "modelId": "google/gemini-3.7-flash",
         "resolver": {
           "name": "OpenRouter",
-          "retrievedAt": "2026-09-02T15:52:38.533Z",
+          "retrievedAt": "2026-09-03T23:51:37.645Z",
           "url": "https://openrouter.ai/api/v1/models?sort=newest"
         },
         "source": "openrouter"
@@ -746,7 +746,7 @@
         "modelId": "google/gemini-3.7-flash",
         "resolver": {
           "name": "OpenRouter",
-          "retrievedAt": "2026-09-02T15:52:38.533Z",
+          "retrievedAt": "2026-09-03T23:51:37.645Z",
           "url": "https://openrouter.ai/api/v1/models?sort=newest"
         },
         "source": "openrouter"
@@ -771,7 +771,7 @@
         "modelId": "google/gemini-3.7-flash",
         "resolver": {
           "name": "OpenRouter",
-          "retrievedAt": "2026-09-02T15:52:38.533Z",
+          "retrievedAt": "2026-09-03T23:51:37.645Z",
           "url": "https://openrouter.ai/api/v1/models?sort=newest"
         },
         "source": "openrouter"
@@ -796,7 +796,7 @@
         "modelId": "google/gemini-3.8-flash",
         "resolver": {
           "name": "OpenRouter",
-          "retrievedAt": "2026-09-02T15:52:38.533Z",
+          "retrievedAt": "2026-09-03T23:51:37.645Z",
           "url": "https://openrouter.ai/api/v1/models?sort=newest"
         },
         "source": "openrouter"
@@ -821,7 +821,7 @@
         "modelId": "google/gemini-3.8-flash",
         "resolver": {
           "name": "OpenRouter",
-          "retrievedAt": "2026-09-02T15:52:38.533Z",
+          "retrievedAt": "2026-09-03T23:51:37.645Z",
           "url": "https://openrouter.ai/api/v1/models?sort=newest"
         },
         "source": "openrouter"
@@ -846,7 +846,7 @@
         "modelId": "meta/muse-spark-1.1",
         "resolver": {
           "name": "OpenRouter",
-          "retrievedAt": "2026-09-02T15:52:38.533Z",
+          "retrievedAt": "2026-09-03T23:51:37.645Z",
           "url": "https://openrouter.ai/api/v1/models?sort=newest"
         },
         "source": "openrouter"
@@ -871,7 +871,7 @@
         "modelId": "meta/muse-spark-1.2",
         "resolver": {
           "name": "OpenRouter",
-          "retrievedAt": "2026-09-02T15:52:38.533Z",
+          "retrievedAt": "2026-09-03T23:51:37.645Z",
           "url": "https://openrouter.ai/api/v1/models?sort=newest"
         },
         "source": "openrouter"
@@ -896,7 +896,7 @@
         "modelId": "moonshotai/kimi-k2.7-code",
         "resolver": {
           "name": "OpenRouter",
-          "retrievedAt": "2026-09-02T15:52:38.533Z",
+          "retrievedAt": "2026-09-03T23:51:37.645Z",
           "url": "https://openrouter.ai/api/v1/models?sort=newest"
         },
         "source": "openrouter"
@@ -921,7 +921,7 @@
         "modelId": "moonshotai/kimi-k3",
         "resolver": {
           "name": "OpenRouter",
-          "retrievedAt": "2026-09-02T15:52:38.533Z",
+          "retrievedAt": "2026-09-03T23:51:37.645Z",
           "url": "https://openrouter.ai/api/v1/models?sort=newest"
         },
         "source": "openrouter"
@@ -946,7 +946,7 @@
         "modelId": "openai/gpt-5.4",
         "resolver": {
           "name": "OpenRouter",
-          "retrievedAt": "2026-09-02T15:52:38.533Z",
+          "retrievedAt": "2026-09-03T23:51:37.645Z",
           "url": "https://openrouter.ai/api/v1/models?sort=newest"
         },
         "source": "openrouter"
@@ -971,7 +971,7 @@
         "modelId": "openai/gpt-5.5",
         "resolver": {
           "name": "OpenRouter",
-          "retrievedAt": "2026-09-02T15:52:38.533Z",
+          "retrievedAt": "2026-09-03T23:51:37.645Z",
           "url": "https://openrouter.ai/api/v1/models?sort=newest"
         },
         "source": "openrouter"
@@ -996,7 +996,7 @@
         "modelId": "openai/gpt-5.5",
         "resolver": {
           "name": "OpenRouter",
-          "retrievedAt": "2026-09-02T15:52:38.533Z",
+          "retrievedAt": "2026-09-03T23:51:37.645Z",
           "url": "https://openrouter.ai/api/v1/models?sort=newest"
         },
         "source": "openrouter"
@@ -1021,7 +1021,7 @@
         "modelId": "openai/gpt-5.5",
         "resolver": {
           "name": "OpenRouter",
-          "retrievedAt": "2026-09-02T15:52:38.533Z",
+          "retrievedAt": "2026-09-03T23:51:37.645Z",
           "url": "https://openrouter.ai/api/v1/models?sort=newest"
         },
         "source": "openrouter"
@@ -1046,7 +1046,7 @@
         "modelId": "openai/gpt-5.5",
         "resolver": {
           "name": "OpenRouter",
-          "retrievedAt": "2026-09-02T15:52:38.533Z",
+          "retrievedAt": "2026-09-03T23:51:37.645Z",
           "url": "https://openrouter.ai/api/v1/models?sort=newest"
         },
         "source": "openrouter"
@@ -1071,7 +1071,7 @@
         "modelId": "openai/gpt-5.6-luna",
         "resolver": {
           "name": "OpenRouter",
-          "retrievedAt": "2026-09-02T15:52:38.533Z",
+          "retrievedAt": "2026-09-03T23:51:37.645Z",
           "url": "https://openrouter.ai/api/v1/models?sort=newest"
         },
         "source": "openrouter"
@@ -1096,7 +1096,7 @@
         "modelId": "openai/gpt-5.6-luna",
         "resolver": {
           "name": "OpenRouter",
-          "retrievedAt": "2026-09-02T15:52:38.533Z",
+          "retrievedAt": "2026-09-03T23:51:37.645Z",
           "url": "https://openrouter.ai/api/v1/models?sort=newest"
         },
         "source": "openrouter"
@@ -1121,7 +1121,7 @@
         "modelId": "openai/gpt-5.6-luna",
         "resolver": {
           "name": "OpenRouter",
-          "retrievedAt": "2026-09-02T15:52:38.533Z",
+          "retrievedAt": "2026-09-03T23:51:37.645Z",
           "url": "https://openrouter.ai/api/v1/models?sort=newest"
         },
         "source": "openrouter"
@@ -1146,7 +1146,7 @@
         "modelId": "openai/gpt-5.6-luna",
         "resolver": {
           "name": "OpenRouter",
-          "retrievedAt": "2026-09-02T15:52:38.533Z",
+          "retrievedAt": "2026-09-03T23:51:37.645Z",
           "url": "https://openrouter.ai/api/v1/models?sort=newest"
         },
         "source": "openrouter"
@@ -1171,7 +1171,7 @@
         "modelId": "openai/gpt-5.6-luna",
         "resolver": {
           "name": "OpenRouter",
-          "retrievedAt": "2026-09-02T15:52:38.533Z",
+          "retrievedAt": "2026-09-03T23:51:37.645Z",
           "url": "https://openrouter.ai/api/v1/models?sort=newest"
         },
         "source": "openrouter"
@@ -1196,7 +1196,7 @@
         "modelId": "openai/gpt-5.6-sol",
         "resolver": {
           "name": "OpenRouter",
-          "retrievedAt": "2026-09-02T15:52:38.533Z",
+          "retrievedAt": "2026-09-03T23:51:37.645Z",
           "url": "https://openrouter.ai/api/v1/models?sort=newest"
         },
         "source": "openrouter"
@@ -1221,7 +1221,7 @@
         "modelId": "openai/gpt-5.6-sol",
         "resolver": {
           "name": "OpenRouter",
-          "retrievedAt": "2026-09-02T15:52:38.533Z",
+          "retrievedAt": "2026-09-03T23:51:37.645Z",
           "url": "https://openrouter.ai/api/v1/models?sort=newest"
         },
         "source": "openrouter"
@@ -1246,7 +1246,7 @@
         "modelId": "openai/gpt-5.6-sol",
         "resolver": {
           "name": "OpenRouter",
-          "retrievedAt": "2026-09-02T15:52:38.533Z",
+          "retrievedAt": "2026-09-03T23:51:37.645Z",
           "url": "https://openrouter.ai/api/v1/models?sort=newest"
         },
         "source": "openrouter"
@@ -1271,7 +1271,7 @@
         "modelId": "openai/gpt-5.6-sol",
         "resolver": {
           "name": "OpenRouter",
-          "retrievedAt": "2026-09-02T15:52:38.533Z",
+          "retrievedAt": "2026-09-03T23:51:37.645Z",
           "url": "https://openrouter.ai/api/v1/models?sort=newest"
         },
         "source": "openrouter"
@@ -1296,7 +1296,7 @@
         "modelId": "openai/gpt-5.6-sol",
         "resolver": {
           "name": "OpenRouter",
-          "retrievedAt": "2026-09-02T15:52:38.533Z",
+          "retrievedAt": "2026-09-03T23:51:37.645Z",
           "url": "https://openrouter.ai/api/v1/models?sort=newest"
         },
         "source": "openrouter"
@@ -1321,7 +1321,7 @@
         "modelId": "openai/gpt-5.6-terra",
         "resolver": {
           "name": "OpenRouter",
-          "retrievedAt": "2026-09-02T15:52:38.533Z",
+          "retrievedAt": "2026-09-03T23:51:37.645Z",
           "url": "https://openrouter.ai/api/v1/models?sort=newest"
         },
         "source": "openrouter"
@@ -1346,7 +1346,7 @@
         "modelId": "openai/gpt-5.6-terra",
         "resolver": {
           "name": "OpenRouter",
-          "retrievedAt": "2026-09-02T15:52:38.533Z",
+          "retrievedAt": "2026-09-03T23:51:37.645Z",
           "url": "https://openrouter.ai/api/v1/models?sort=newest"
         },
         "source": "openrouter"
@@ -1371,7 +1371,7 @@
         "modelId": "openai/gpt-5.6-terra",
         "resolver": {
           "name": "OpenRouter",
-          "retrievedAt": "2026-09-02T15:52:38.533Z",
+          "retrievedAt": "2026-09-03T23:51:37.645Z",
           "url": "https://openrouter.ai/api/v1/models?sort=newest"
         },
         "source": "openrouter"
@@ -1396,7 +1396,7 @@
         "modelId": "openai/gpt-5.6-terra",
         "resolver": {
           "name": "OpenRouter",
-          "retrievedAt": "2026-09-02T15:52:38.533Z",
+          "retrievedAt": "2026-09-03T23:51:37.645Z",
           "url": "https://openrouter.ai/api/v1/models?sort=newest"
         },
         "source": "openrouter"
@@ -1421,7 +1421,7 @@
         "modelId": "openai/gpt-5.6-terra",
         "resolver": {
           "name": "OpenRouter",
-          "retrievedAt": "2026-09-02T15:52:38.533Z",
+          "retrievedAt": "2026-09-03T23:51:37.645Z",
           "url": "https://openrouter.ai/api/v1/models?sort=newest"
         },
         "source": "openrouter"
@@ -1446,7 +1446,7 @@
         "modelId": "x-ai/grok-4.5",
         "resolver": {
           "name": "OpenRouter",
-          "retrievedAt": "2026-09-02T15:52:38.533Z",
+          "retrievedAt": "2026-09-03T23:51:37.645Z",
           "url": "https://openrouter.ai/api/v1/models?sort=newest"
         },
         "source": "openrouter"
@@ -1471,7 +1471,7 @@
         "modelId": "x-ai/grok-4.6",
         "resolver": {
           "name": "OpenRouter",
-          "retrievedAt": "2026-09-02T15:52:38.533Z",
+          "retrievedAt": "2026-09-03T23:51:37.645Z",
           "url": "https://openrouter.ai/api/v1/models?sort=newest"
         },
         "source": "openrouter"
@@ -1496,7 +1496,7 @@
         "modelId": "x-ai/grok-4.6",
         "resolver": {
           "name": "OpenRouter",
-          "retrievedAt": "2026-09-02T15:52:38.533Z",
+          "retrievedAt": "2026-09-03T23:51:37.645Z",
           "url": "https://openrouter.ai/api/v1/models?sort=newest"
         },
         "source": "openrouter"
@@ -1521,7 +1521,7 @@
         "modelId": "x-ai/grok-4.6",
         "resolver": {
           "name": "OpenRouter",
-          "retrievedAt": "2026-09-02T15:52:38.533Z",
+          "retrievedAt": "2026-09-03T23:51:37.645Z",
           "url": "https://openrouter.ai/api/v1/models?sort=newest"
         },
         "source": "openrouter"
@@ -1546,7 +1546,7 @@
         "modelId": "x-ai/grok-4.6",
         "resolver": {
           "name": "OpenRouter",
-          "retrievedAt": "2026-09-02T15:52:38.533Z",
+          "retrievedAt": "2026-09-03T23:51:37.645Z",
           "url": "https://openrouter.ai/api/v1/models?sort=newest"
         },
         "source": "openrouter"
@@ -1571,7 +1571,7 @@
         "modelId": "z-ai/glm-5.2",
         "resolver": {
           "name": "OpenRouter",
-          "retrievedAt": "2026-09-02T15:52:38.533Z",
+          "retrievedAt": "2026-09-03T23:51:37.645Z",
           "url": "https://openrouter.ai/api/v1/models?sort=newest"
         },
         "source": "openrouter"
@@ -1596,7 +1596,7 @@
         "modelId": "z-ai/glm-5.2",
         "resolver": {
           "name": "OpenRouter",
-          "retrievedAt": "2026-09-02T15:52:38.533Z",
+          "retrievedAt": "2026-09-03T23:51:37.645Z",
           "url": "https://openrouter.ai/api/v1/models?sort=newest"
         },
         "source": "openrouter"
@@ -1621,7 +1621,7 @@
         "modelId": "z-ai/glm-5.3",
         "resolver": {
           "name": "OpenRouter",
-          "retrievedAt": "2026-09-02T15:52:38.533Z",
+          "retrievedAt": "2026-09-03T23:51:37.645Z",
           "url": "https://openrouter.ai/api/v1/models?sort=newest"
         },
         "source": "openrouter"
@@ -1646,7 +1646,7 @@
         "modelId": "z-ai/glm-5.3-flash",
         "resolver": {
           "name": "OpenRouter",
-          "retrievedAt": "2026-09-02T15:52:38.533Z",
+          "retrievedAt": "2026-09-03T23:51:37.645Z",
           "url": "https://openrouter.ai/api/v1/models?sort=newest"
         },
         "source": "openrouter"

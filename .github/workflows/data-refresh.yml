@@ -2,17 +2,25 @@ name: AI Charts data refresh
 
 on:
   schedule:
+    # Release announcements are time-sensitive and cheap to discover. Keep this
+    # off the top of the hour, where scheduled GitHub Actions are most delayed.
+    - cron: "23 * * * *"
+    # Benchmark owners update less often and are polled on the established lane.
     - cron: "17 */4 * * *"
+    # The heavier Artificial Analysis import remains daily.
     - cron: "43 10 * * *"
   workflow_dispatch:
     inputs:
       mode:
-        description: Refresh OpenRouter and direct DeepSWE only, or include the heavier AAI snapshot.
+        description: Run releases only, benchmarks only, full with AAI, or legacy discovery (releases + benchmarks).
         required: true
         default: full
         type: choice
         options:
           - full
+          - releases
+          - benchmarks
+          # Backward-compatible alias for the former non-AAI combined refresh.
           - discovery
 
 permissions:
@@ -38,13 +46,15 @@ jobs:
       # Cloudflare's documented always-pass public test key. Production uses
       # the hostname-restricted live key; this job only proves the build.
       NEXT_PUBLIC_HRANESS_MAILING_TURNSTILE_SITEKEY: 1x00000000000000000000AA
-      REFRESH_MODE: ${{ ((github.event_name == 'schedule' && github.event.schedule == '43 10 * * *') || (github.event_name == 'workflow_dispatch' && inputs.mode == 'full')) && 'full' || 'discovery' }}
+      REFRESH_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.mode || github.event.schedule == '23 * * * *' && 'releases' || github.event.schedule == '17 */4 * * *' && 'benchmarks' || github.event.schedule == '43 10 * * *' && 'full' || 'full' }}
       REFRESH_BRANCH: automation/model-data-refresh-${{ github.run_id }}-${{ github.run_attempt }}
       RELEASE_RADAR_PATH: data/model-release-radar.json
       REQUIRED_CHECK_CONTEXT: Required
       REFRESH_ISSUE_TITLE: "[automation] Data refresh is unhealthy"
       RELEASE_REVIEW_ISSUE_TITLE: "[automation] First-party releases need review"
+      RUN_BENCHMARK_REFRESH: ${{ (github.event_name == 'schedule' && (github.event.schedule == '17 */4 * * *' || github.event.schedule == '43 10 * * *')) || (github.event_name == 'workflow_dispatch' && (inputs.mode == 'full' || inputs.mode == 'benchmarks' || inputs.mode == 'discovery')) }}
       RUN_AAI_REFRESH: ${{ (github.event_name == 'schedule' && github.event.schedule == '43 10 * * *') || (github.event_name == 'workflow_dispatch' && inputs.mode == 'full') }}
+      RUN_RELEASE_REFRESH: ${{ (github.event_name == 'schedule' && (github.event.schedule == '23 * * * *' || github.event.schedule == '43 10 * * *')) || (github.event_name == 'workflow_dispatch' && (inputs.mode == 'full' || inputs.mode == 'releases' || inputs.mode == 'discovery')) }}
       TERMINAL_BENCH_PATH: data/terminal-bench.json
       TERMINAL_BENCH_SCIENCE_PATH: data/terminal-bench-science.json
     steps:
@@ -83,12 +93,12 @@ jobs:
           exit 1
       - name: Refresh first-party model-release candidates
         id: first_party_releases
-        if: steps.dependencies.outcome == 'success'
+        if: steps.dependencies.outcome == 'success' && env.RUN_RELEASE_REFRESH == 'true'
         continue-on-error: true
         run: bun run first-party-releases:refresh
       - name: Persist first-party release review alert
         id: first_party_review
-        if: always() && steps.dependencies.outcome == 'success'
+        if: always() && steps.dependencies.outcome == 'success' && env.RUN_RELEASE_REFRESH == 'true'
         continue-on-error: true
         env:
           GH_REPO: ${{ github.repository }}
@@ -135,7 +145,7 @@ jobs:
           fi
       - name: Refresh model-release radar from OpenRouter
         id: release_radar
-        if: steps.dependencies.outcome == 'success'
+        if: steps.dependencies.outcome == 'success' && env.RUN_RELEASE_REFRESH == 'true'
         continue-on-error: true
         run: bun run releases:refresh
       - name: Refresh benchmark snapshot from Artificial Analysis
@@ -145,24 +155,24 @@ jobs:
         run: bun run data:refresh
       - name: Reconcile release statuses from the available checked snapshots
         id: release_reconcile
-        if: steps.dependencies.outcome == 'success'
+        if: steps.dependencies.outcome == 'success' && (env.RUN_RELEASE_REFRESH == 'true' || env.RUN_BENCHMARK_REFRESH == 'true')
         continue-on-error: true
         run: bun run releases:reconcile
       - name: Refresh direct DeepSWE early evidence
         id: deep_swe
-        if: steps.dependencies.outcome == 'success'
+        if: steps.dependencies.outcome == 'success' && env.RUN_BENCHMARK_REFRESH == 'true'
         continue-on-error: true
         run: bun run deepswe:refresh
       - name: Refresh official Terminal-Bench 4 snapshot
         id: terminal_bench
-        if: steps.dependencies.outcome == 'success'
+        if: steps.dependencies.outcome == 'success' && env.RUN_BENCHMARK_REFRESH == 'true'
         continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: bun run terminal-bench:refresh
       - name: Refresh official Terminal-Bench-Science 0.1 snapshot
         id: terminal_bench_science
-        if: steps.dependencies.outcome == 'success'
+        if: steps.dependencies.outcome == 'success' && env.RUN_BENCHMARK_REFRESH == 'true'
         continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -323,6 +333,8 @@ jobs:
           RELEASE_RECONCILE_OUTCOME: ${{ steps.release_reconcile.outcome }}
           REFRESH_MODE: ${{ env.REFRESH_MODE }}
           RUN_AAI_REFRESH: ${{ env.RUN_AAI_REFRESH }}
+          RUN_BENCHMARK_REFRESH: ${{ env.RUN_BENCHMARK_REFRESH }}
+          RUN_RELEASE_REFRESH: ${{ env.RUN_RELEASE_REFRESH }}
           SETUP_BUN_OUTCOME: ${{ steps.setup_bun.outcome }}
           SETUP_NODE_OUTCOME: ${{ steps.setup_node.outcome }}
           SNAPSHOT_CHANGED: ${{ steps.snapshot.outputs.changed }}
@@ -339,13 +351,25 @@ jobs:
           if [[ "$DEPENDENCIES_OUTCOME" == "success" ]]; then
             if [[ "$RUN_AAI_REFRESH" == "true" && "$BENCHMARK_OUTCOME" != "success" ]]; then unhealthy=true; fi
             if [[ "$RUN_AAI_REFRESH" != "true" && "$BENCHMARK_OUTCOME" != "skipped" ]]; then unhealthy=true; fi
-            if [[ "$DEEP_SWE_OUTCOME" != "success" ]]; then unhealthy=true; fi
-            if [[ "$FIRST_PARTY_RELEASE_OUTCOME" != "success" ]]; then unhealthy=true; fi
-            if [[ "$FIRST_PARTY_RELEASE_OUTCOME" == "success" && "$FIRST_PARTY_REVIEW_OUTCOME" != "success" ]]; then unhealthy=true; fi
-            if [[ "$RELEASE_OUTCOME" != "success" ]]; then unhealthy=true; fi
+            if [[ "$RUN_RELEASE_REFRESH" == "true" ]]; then
+              if [[ "$FIRST_PARTY_RELEASE_OUTCOME" != "success" ]]; then unhealthy=true; fi
+              if [[ "$FIRST_PARTY_RELEASE_OUTCOME" == "success" && "$FIRST_PARTY_REVIEW_OUTCOME" != "success" ]]; then unhealthy=true; fi
+              if [[ "$RELEASE_OUTCOME" != "success" ]]; then unhealthy=true; fi
+            else
+              if [[ "$FIRST_PARTY_RELEASE_OUTCOME" != "skipped" ]]; then unhealthy=true; fi
+              if [[ "$FIRST_PARTY_REVIEW_OUTCOME" != "skipped" ]]; then unhealthy=true; fi
+              if [[ "$RELEASE_OUTCOME" != "skipped" ]]; then unhealthy=true; fi
+            fi
+            if [[ "$RUN_BENCHMARK_REFRESH" == "true" ]]; then
+              if [[ "$DEEP_SWE_OUTCOME" != "success" ]]; then unhealthy=true; fi
+              if [[ "$TERMINAL_BENCH_OUTCOME" != "success" ]]; then unhealthy=true; fi
+              if [[ "$TERMINAL_BENCH_SCIENCE_OUTCOME" != "success" ]]; then unhealthy=true; fi
+            else
+              if [[ "$DEEP_SWE_OUTCOME" != "skipped" ]]; then unhealthy=true; fi
+              if [[ "$TERMINAL_BENCH_OUTCOME" != "skipped" ]]; then unhealthy=true; fi
+              if [[ "$TERMINAL_BENCH_SCIENCE_OUTCOME" != "skipped" ]]; then unhealthy=true; fi
+            fi
             if [[ "$RELEASE_RECONCILE_OUTCOME" != "success" ]]; then unhealthy=true; fi
-            if [[ "$TERMINAL_BENCH_OUTCOME" != "success" ]]; then unhealthy=true; fi
-            if [[ "$TERMINAL_BENCH_SCIENCE_OUTCOME" != "success" ]]; then unhealthy=true; fi
             if [[ "$DETECT_OUTCOME" != "success" ]]; then unhealthy=true; fi
             if [[ "$SNAPSHOT_CHANGED" == "true" && "$VALIDATION_OUTCOME" != "success" ]]; then unhealthy=true; fi
             if [[ "$SNAPSHOT_CHANGED" == "true" && "$PUBLISH_OUTCOME" != "success" ]]; then unhealthy=true; fi
@@ -456,7 +480,7 @@ jobs:
           fi
 
           if [[ -n "$issue_number" && "$RUN_AAI_REFRESH" == "true" ]]; then
-            gh issue close "$issue_number" --comment "Recovered in ${run_url}. All sources refreshed and validation passed."
+            gh issue close "$issue_number" --comment "Recovered in ${run_url}. All required source checks and applicable validation and publication gates passed."
           elif [[ -n "$issue_number" ]]; then
-            echo "A healthy discovery run leaves the alert open until a full AAI refresh also passes."
+            echo "A healthy non-full run leaves the alert open until a full AAI refresh also passes."
           fi
