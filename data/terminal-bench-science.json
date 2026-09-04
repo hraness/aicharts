@@ -922,7 +922,7 @@
     "leaderboardId": "9a545a14-78d0-44b4-9003-afe062522a47",
     "leaderboardName": "v0-1-eval",
     "leaderboardPackage": "terminal-bench-science/terminal-bench-science",
-    "leaderboardUpdatedAt": "2026-09-03T09:13:25.326394+00:00",
+    "leaderboardUpdatedAt": "2026-09-04T18:07:28.264353+00:00",
     "leaderboardUrl": "https://hub.harborframework.com/datasets/terminal-bench-science/terminal-bench-science/0.1.0?leaderboard=v0-1-eval&tab=leaderboard",
     "method": "version-pinned-release-owner-leaderboard-api",
     "name": "Terminal-Bench-Science and Harbor Framework",
@@ -935,7 +935,7 @@
     "releaseTag": "v0.1.0",
     "releaseUrl": "https://github.com/harbor-framework/terminal-bench-science/releases/tag/v0.1.0",
     "repositoryUrl": "https://github.com/harbor-framework/terminal-bench-science",
-    "retrievedAt": "2026-09-03T21:56:20.716Z",
+    "retrievedAt": "2026-09-04T18:59:01.281Z",
     "sourceClass": "benchmark-owner"
   }
 }
