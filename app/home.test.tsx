@@ -83,18 +83,20 @@ describe("homepage canonical content", () => {
     }
   });
 
-  test("mounts the benchmark portfolio before the source-specific interactive chart", async () => {
+  test("mounts the benchmark portfolio before separate model and coding-agent source views", async () => {
     const source = await Bun.file(new URL("./page.tsx", import.meta.url)).text();
     const markup = renderToStaticMarkup(createElement(Home));
     const portfolioAt = source.indexOf("<HomeBenchmarkPortfolio");
+    const intelligenceAt = source.indexOf("<HomeIntelligenceEfficiency");
     const resourcesAt = source.indexOf("<HomeEditorialResources");
     const explorerAt = source.indexOf("<CodingAgentExplorer");
     const explorerEndAt = source.indexOf("</CodingAgentExplorer>");
     const loadingAt = source.indexOf("Loading chart");
 
     expect(portfolioAt).toBeGreaterThan(-1);
+    expect(intelligenceAt).toBeGreaterThan(portfolioAt);
     expect(explorerAt).toBeLessThan(portfolioAt);
-    expect(resourcesAt).toBeGreaterThan(portfolioAt);
+    expect(resourcesAt).toBeGreaterThan(intelligenceAt);
     expect(explorerEndAt).toBeGreaterThan(resourcesAt);
     expect(loadingAt).toBe(-1);
     expect(source).toContain("heading: site.domain");
@@ -107,6 +109,7 @@ describe("homepage canonical content", () => {
     const mainAt = markup.indexOf('<main class="chart-page-canvas"');
     const orientationAt = markup.indexOf('class="chart-orientation"');
     const renderedPortfolioAt = markup.indexOf('class="home-benchmark-portfolio"');
+    const renderedIntelligenceAt = markup.indexOf('class="intelligence-efficiency"');
     const chartFamilyAt = markup.indexOf('class="chart-family-intro"');
     const chartAt = markup.indexOf('class="chart-scroll"');
     const renderedResourcesAt = markup.indexOf('class="home-editorial"');
@@ -116,7 +119,8 @@ describe("homepage canonical content", () => {
     expect(mainAt).toBeGreaterThan(headerAt);
     expect(orientationAt).toBeGreaterThan(mainAt);
     expect(renderedPortfolioAt).toBeGreaterThan(orientationAt);
-    expect(chartFamilyAt).toBeGreaterThan(renderedPortfolioAt);
+    expect(renderedIntelligenceAt).toBeGreaterThan(renderedPortfolioAt);
+    expect(chartFamilyAt).toBeGreaterThan(renderedIntelligenceAt);
     expect(chartAt).toBeGreaterThan(chartFamilyAt);
     expect(renderedResourcesAt).toBeGreaterThan(chartAt);
     expect(mainEndAt).toBeGreaterThan(renderedResourcesAt);
@@ -127,6 +131,9 @@ describe("homepage canonical content", () => {
     expect(markup).toContain("Five benchmark roles, one coding standard");
     expect(markup).toContain("Terminal-Bench 4.0.0 snapshot");
     expect(markup).toContain("Terminal-Bench-Science 0.1.0 snapshot");
+    expect(markup).toContain("Artificial Analysis Intelligence Index v4.1.1");
+    expect(markup).toContain("Output tokens are answer plus reasoning");
+    expect(markup).toContain("Coding-agent source view");
     expect(markup).toContain("GPT-5.6 Sol");
     expect(markup).toContain("Scientific workflows");
     expect(markup).toContain("This source still reports Terminal-Bench v2.1");

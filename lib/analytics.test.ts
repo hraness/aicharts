@@ -68,6 +68,16 @@ describe("delegated link classification", () => {
     expect(classifyAnalyticsLink({
       currentUrl,
       download: false,
+      href: "/data/artificial-analysis-intelligence.json?raw=true",
+    })?.properties).toEqual({
+      destination_id: "dataset:artificial-analysis-intelligence",
+      destination_kind: "dataset",
+      link_kind: "download",
+      surface: "models_gallery",
+    });
+    expect(classifyAnalyticsLink({
+      currentUrl,
+      download: false,
       href: "/llms.txt",
     })?.properties.destination_id).toBe("resource:llms");
     expect(classifyAnalyticsLink({

@@ -11,7 +11,7 @@ export interface BenchmarkPortfolioItem {
 }
 
 export const BENCHMARK_DATA_DESCRIPTION =
-  "Versioned benchmark data and sourcing methods for Terminal-Bench 4, Terminal-Bench-Science, and the Artificial Analysis coding-agent snapshot.";
+  "Versioned data and sourcing for Terminal-Bench 4, Terminal-Bench-Science, Artificial Analysis Intelligence efficiency, and coding-agent benchmarks.";
 
 export const CORE_BENCHMARK_PORTFOLIO = [
   {

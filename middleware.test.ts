@@ -74,6 +74,7 @@ describe("markdown content negotiation", () => {
 
   test("leaves every non-HTML public representation untouched", () => {
     const representations = [
+      ["/data/artificial-analysis-intelligence.json", "application/json"],
       ["/data/coding-agents.json", "application/json"],
       ["/data/terminal-bench-4.json", "application/json"],
       ["/data/terminal-bench-science-0-1.json", "application/json"],

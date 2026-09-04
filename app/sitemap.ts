@@ -1,10 +1,12 @@
 import type { MetadataRoute } from "next";
 
+import artificialAnalysisIntelligenceData from "@/data/artificial-analysis-intelligence.json";
 import codingAgentData from "@/data/coding-agents.json";
 import gptSubsidyData from "@/data/gpt-subsidy.json";
 import terminalBenchData from "@/data/terminal-bench.json";
 import terminalBenchScienceData from "@/data/terminal-bench-science.json";
 import { parseCodingAgentSnapshot } from "@/lib/coding-agent-data";
+import { parseArtificialAnalysisIntelligenceSnapshot } from "@/lib/artificial-analysis-intelligence-data";
 import {
   FIRST_PARTY_RELEASE_HIGHLIGHTS,
 } from "@/lib/first-party-release-collection";
@@ -80,10 +82,20 @@ export default function sitemap(): MetadataRoute.Sitemap {
       { cause: parsedTerminalBenchScience.error },
     );
   }
+  const parsedIntelligence = parseArtificialAnalysisIntelligenceSnapshot(
+    artificialAnalysisIntelligenceData,
+  );
+  if (!parsedIntelligence.ok) {
+    throw new Error(
+      `Checked Artificial Analysis Intelligence snapshot is invalid: ${parsedIntelligence.error.message}`,
+      { cause: parsedIntelligence.error },
+    );
+  }
   const benchmarkPortfolioModifiedAt = [
     datasetModifiedAt,
     parsedTerminalBench.value.source.retrievedAt,
     parsedTerminalBenchScience.value.source.retrievedAt,
+    parsedIntelligence.value.source.retrievedAt,
   ].sort((left, right) => Date.parse(right) - Date.parse(left))[0] ?? datasetModifiedAt;
   const modelCollectionModifiedAt = [
     datasetModifiedAt,

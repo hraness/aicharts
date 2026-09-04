@@ -43,6 +43,21 @@ share a comparison series. AutomationBench remains on the watchlist because
 its cross-application workflow signal overlaps the selected professional-work
 and computer-use axes.
 
+Artificial Analysis Intelligence Index v4.1.1 is a separate source-specific
+model view, not a sixth portfolio role or a composite created by AI Charts. The
+owner index weights Agents at 34% (GDPval-AA v2 20%, τ³-Banking 14%), Coding
+at 24% (Terminal-Bench v2.1 16%, SciCode 8%), Scientific Reasoning at 24%
+(Humanity's Last Exam 12%, GPQA Diamond 6%, CritPt 6%), and General at 18%
+(AA-LCR 6%, AA-Omniscience 12%). The efficiency chart pairs that owner score
+with its model-level weighted output-token and cost measures per Intelligence
+Index task. Those output tokens include answer and reasoning tokens only; they
+must not be compared as though they were the coding-agent dataset's total
+tokens, which also cover input traffic.
+Rows with a complete cost breakdown but a reported zero total remain in the
+checked JSON with cost normalized to unavailable; rows with incomplete cost are
+excluded. Both displayed panels omit the complete zero-total rows so output-token
+and cost frontiers use the same positive-cost cohort.
+
 ## Cross-release comparison rule
 
 OpenAI's [GPT-6 Astra release](https://openai.com/index/gpt-6-astra/)
@@ -82,6 +97,7 @@ because their task files differ.
 | Rename the current Terminal-Bench 2.1 field to 4.0 | Fails | Very high | Misleading | Rejected. The scores come from different exams. |
 | Add every benchmark as a nullable field on each coding-agent row | Weak | High | Low | Rejected. Sources use different models, harnesses, efforts, and trial counts. |
 | Replace the current Artificial Analysis snapshot | Loses useful cost, time, and token observations | High | Medium | Rejected. The source-specific chart still answers a distinct trade-off question. |
+| Fold Intelligence Index efficiency into the five-role portfolio | Hides an owner-defined composite among distinct roles | Medium | Low | Rejected. Keep it as a separate source-specific model view. |
 | Keep separate checked datasets behind a shared benchmark registry | Strong | Low | High | Chosen. Each family owns its schema, version, source, and presentation. |
 
 ## Release discovery layers
@@ -221,6 +237,14 @@ as separate observations.
   retention boundary, duplicate-key checks, an exact-version assertion, and a
   last-known-good checked snapshot.
 - Timestamp-only polls do not create commits or change public freshness.
+- The lightweight Artificial Analysis model snapshot is checked every four
+  hours from the public model-page Flight payload, with its public Dataset
+  JSON-LD used as an independent source-shape cross-check. The heavier
+  coding-agent import remains daily.
+- Refresh automation owns seven checked snapshots: the two release radars,
+  Terminal-Bench, Terminal-Bench-Science, Artificial Analysis Intelligence,
+  Artificial Analysis coding agents, and direct DeepSWE evidence. It cannot
+  write the manually reviewed official-release-date ledger.
 - First-party sources degrade independently. When one source is unavailable or
   changes shape, the refresh retains that source's last-known-good snapshot and
   candidates and continues processing healthy sources. The preserved retrieval
@@ -256,8 +280,9 @@ The remediation restores build parity, monitors the multi-lab first-party
 registry, detects canonical URL additions across each lab's official sources,
 and preserves a durable manual-review queue. OpenRouter remains the secondary
 identity layer. An off-minute hourly release lane runs both discovery layers and
-the review alert independently from the four-hour benchmark lane; the heavier
-Artificial Analysis import remains daily. Terminal-Bench 4 stays a separate
-owner-sourced dataset. A later outage can therefore preserve one source at its
-previous retrieval time without erasing its history or hiding a candidate found
-by a healthy source.
+the review alert independently from the four-hour benchmark lane. The lightweight
+Artificial Analysis Intelligence model snapshot runs in that four-hour lane;
+the heavier Artificial Analysis coding-agent import remains daily. Terminal-Bench
+4 stays a separate owner-sourced dataset. A later outage can therefore preserve
+one source at its previous retrieval time without erasing its history or hiding
+a candidate found by a healthy source.

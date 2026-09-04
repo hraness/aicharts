@@ -6,6 +6,7 @@ on:
     # Ignoring the redundant event avoids GitHub's approval-required run for PRs
     # opened by GITHUB_TOKEN while the dispatched Required check remains mandatory.
     paths-ignore:
+      - data/artificial-analysis-intelligence.json
       - data/coding-agents.json
       - data/deep-swe-evidence.json
       - data/first-party-release-radar.json

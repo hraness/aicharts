@@ -10,11 +10,13 @@ import {
   notFoundRecoveryLinks,
   site,
 } from "@/app/site";
+import artificialAnalysisIntelligenceData from "@/data/artificial-analysis-intelligence.json";
 import codingAgentData from "@/data/coding-agents.json";
 import gptSubsidyData from "@/data/gpt-subsidy.json";
 import terminalBenchData from "@/data/terminal-bench.json";
 import terminalBenchScienceData from "@/data/terminal-bench-science.json";
 
+import { parseArtificialAnalysisIntelligenceSnapshot } from "./artificial-analysis-intelligence-data";
 import { parseCodingAgentSnapshot } from "./coding-agent-data";
 import { BENCHMARK_DATA_DESCRIPTION } from "./benchmark-portfolio";
 import { codingAgentDatasetSummary } from "./coding-agent-dataset";
@@ -44,6 +46,11 @@ import {
 const parsed = parseCodingAgentSnapshot(codingAgentData);
 if (!parsed.ok) throw parsed.error;
 const snapshot = parsed.value;
+const parsedIntelligence = parseArtificialAnalysisIntelligenceSnapshot(
+  artificialAnalysisIntelligenceData,
+);
+if (!parsedIntelligence.ok) throw parsedIntelligence.error;
+const intelligence = parsedIntelligence.value;
 const parsedSubsidy = parseGptSubsidySnapshot(gptSubsidyData);
 if (!parsedSubsidy.ok) throw parsedSubsidy.error;
 const latestSubsidy = latestGptSubsidyObservation(parsedSubsidy.value);
@@ -67,6 +74,12 @@ describe("homepage document", () => {
     expect(text).toContain(String(codingAgentDatasetSummary(snapshot).recordCount));
     expect(text).toContain("Terminal-Bench 4.0.0 is the coding standard");
     expect(text).toContain("Terminal-Bench-Science 0.1.0 adds a separate scientific-workflow view");
+    expect(text).toContain(
+      `Artificial Analysis Intelligence Index v${intelligence.benchmark.version}`,
+    );
+    expect(text).toContain(
+      `${intelligence.selection.positiveCostRecordCount}-configuration positive-cost cohort`,
+    );
     expect(text).toContain("source-specific interactive chart");
     expect(text).toContain("Benchmark data and method");
     expect(text).toContain("Machine-readable site guide");
@@ -89,6 +102,11 @@ describe("markdown representations", () => {
     expect(home.body).toContain("## Terminal-Bench 4.0.0 snapshot");
     expect(home.body).toContain("| Model | Agent configuration | Accuracy | 95% interval | Trials | Evaluation cost |");
     expect(home.body).toContain("CursorBench 3.2");
+    expect(home.body).toContain(
+      `## Artificial Analysis Intelligence Index v${intelligence.benchmark.version} efficiency`,
+    );
+    expect(home.body).toContain("output-only tokens per Index task");
+    expect(home.body).toContain("/data/artificial-analysis-intelligence.json");
     expect(home.body).toContain("## Terminal-Bench-Science 0.1.0 snapshot");
     expect(home.body).toContain("| Model | Harness configuration | Resolution rate | Standard error | Trials | Evaluation cost |");
     expect(home.body).toContain("## Model and benchmark analysis");
@@ -116,6 +134,16 @@ describe("markdown representations", () => {
     );
     expect(data.body).toContain("/data/terminal-bench-science-0-1.json");
     expect(data.body).toContain("per-domain costs are retained independently");
+    expect(data.body).toContain(
+      `## Artificial Analysis Intelligence Index v${intelligence.benchmark.version} efficiency`,
+    );
+    expect(data.body).toContain("GDPval-AA v2 20%");
+    expect(data.body).toContain("τ³-Banking 14%");
+    expect(data.body).toContain("answer plus reasoning tokens only");
+    expect(data.body).toContain("omitted from both displayed panels");
+    expect(data.body).toContain("frontier classification is AI Charts analysis");
+    expect(data.body).toContain(intelligence.source.methodologyUrl);
+    expect(data.body).toContain(intelligence.source.termsUrl);
     expect(data.body).toContain(snapshot.source.url);
     expect(data.body).toContain("## All configurations");
     expect(data.body).toContain("| Model | Agent | Provider | Setting | AA Index | DeepSWE | Terminal-Bench v2.1 | SWE-Atlas-QnA | Cost |");
@@ -221,7 +249,13 @@ describe("agent instruction file", () => {
     expect(guide).toContain("Do not treat AI Charts as a live API, ranker, or production SLA");
     expect(guide).toContain("/data/terminal-bench-4.json");
     expect(guide).toContain("/data/terminal-bench-science-0-1.json");
+    expect(guide).toContain("/data/artificial-analysis-intelligence.json");
     expect(guide).toContain("/data/coding-agents.json");
+    expect(guide).toContain("four JSON downloads");
+    expect(guide).toContain(
+      `${intelligence.selection.positiveCostRecordCount}-configuration positive-cost cohort`,
+    );
+    expect(guide).toContain("answer plus reasoning tokens");
     expect(guide).toContain("Accept: text/markdown");
     expect(guide).toContain("It does not expose OAuth, GraphQL, MCP, or commerce endpoints.");
   });

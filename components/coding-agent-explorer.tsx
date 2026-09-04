@@ -929,8 +929,9 @@ export function CodingAgentExplorer({
           <p>
             A five-role benchmark portfolio covers terminal engineering, scientific workflows,
             professional work, computer use, and broad expert reasoning. Checked score
-            views are added without mixing versions or systems; the source-specific coding
-            chart remains below for cost, speed, and token trade-offs.
+            views are added without mixing versions or systems. The model-level Intelligence
+            efficiency view and the coding-agent chart below keep their own units, cohorts,
+            and provenance.
           </p>
         </div>
         <dl aria-label="Benchmark selection and boundaries" className="chart-orientation__facts">
@@ -951,11 +952,13 @@ export function CodingAgentExplorer({
       {overview}
       <section aria-labelledby="coding-agent-chart-title" className="chart-family-intro">
         <div>
-          <p className="chart-family-intro__eyebrow">Interactive source view</p>
+          <p className="chart-family-intro__eyebrow">Coding-agent source view</p>
           <h2 id="coding-agent-chart-title">Artificial Analysis coding-agent trade-offs</h2>
         </div>
         <p>
           Explore {snapshotSummary.recordCount} measured model-agent configurations across {snapshotSummary.modelCount} models and {snapshotSummary.providerCount} providers. This source still reports Terminal-Bench v2.1, so its values stay separate from the Terminal-Bench 4 standard above.
+          Its token axis is total task usage for the named coding-agent configuration, not the
+          output-only model measure in the Intelligence view.
         </p>
         <p className="chart-family-intro__evidence">
           <time dateTime={snapshot.source.retrievedAt}>{retrievedAt}</time>
