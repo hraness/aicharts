@@ -47,17 +47,6 @@ describe("page analytics context", () => {
     });
   });
 
-  test("classifies the GPT subsidy history without retaining URL details", () => {
-    expect(pageAnalyticsContext(
-      "https://aicharts.io/gpt-subsidy?source=private#history",
-    )).toMatchObject({
-      canonical_path: "/gpt-subsidy",
-      content_group: "ai_comparison",
-      content_id: "gpt-subsidy",
-      page_kind: "gpt_subsidy",
-    });
-  });
-
   test("classifies the model-card gallery and hides individual card slugs", () => {
     expect(pageAnalyticsContext("/models")).toMatchObject({
       canonical_path: "/models",

@@ -28,7 +28,6 @@ export const ANALYTICS_SURFACES = [
   "models_gallery",
   "model_release_radar",
   "model_card",
-  "gpt_subsidy",
   "error_recovery",
 ] as const;
 
@@ -202,7 +201,6 @@ function defaultSurface(pageKind: AnalyticsPageKind): AnalyticsSurface {
   if (pageKind === "benchmark_data") return "data_document";
   if (pageKind === "blog_article") return "blog_article";
   if (pageKind === "blog_index") return "blog_index";
-  if (pageKind === "gpt_subsidy") return "gpt_subsidy";
   if (pageKind === "model_card") return "model_card";
   if (pageKind === "model_cards") return "models_gallery";
   return "site";
@@ -228,7 +226,6 @@ function isContentId(value: unknown): value is AnalyticsContentId {
     value === "home"
     || value === "blog:index"
     || value === "data:index"
-    || value === "gpt-subsidy"
     || value === "models:index"
     || value === "other"
   ) return true;
@@ -301,7 +298,7 @@ function isDestinationOverride(
   if (kind === "repository") return id === "external:github";
   if (kind === "section") return id === "section";
   if (kind === "site_page") {
-    return ["home", "blog:index", "data:index", "gpt-subsidy", "models:index"].includes(id);
+    return ["home", "blog:index", "data:index", "models:index"].includes(id);
   }
   if (kind === "site_resource") return id.startsWith("resource:");
   if (kind === "social") return id.startsWith("social:");

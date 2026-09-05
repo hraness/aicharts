@@ -2,7 +2,6 @@ import { describe, expect, test } from "bun:test";
 
 import artificialAnalysisIntelligenceData from "@/data/artificial-analysis-intelligence.json";
 import codingAgentData from "@/data/coding-agents.json";
-import gptSubsidyData from "@/data/gpt-subsidy.json";
 import terminalBenchData from "@/data/terminal-bench.json";
 import terminalBenchScienceData from "@/data/terminal-bench-science.json";
 import { parseCodingAgentSnapshot } from "@/lib/coding-agent-data";
@@ -12,10 +11,6 @@ import {
   CODING_AGENT_DATASET_PATH,
   codingAgentDatasetModifiedAt,
 } from "@/lib/coding-agent-dataset";
-import {
-  gptSubsidyPageModifiedAt,
-  parseGptSubsidySnapshot,
-} from "@/lib/gpt-subsidy-data";
 import {
   MODEL_CARD_COLLECTION_SOCIAL_IMAGE_URL,
   MODEL_CARD_PRESENTATIONS,
@@ -68,10 +63,6 @@ describe("public search discovery", () => {
       .toBe(benchmarkPortfolioModifiedAt);
     expect(entries.find(entry => entry.url.endsWith(CODING_AGENT_DATASET_PATH))?.lastModified)
       .toBe(benchmarkPortfolioModifiedAt);
-    const subsidy = parseGptSubsidySnapshot(gptSubsidyData);
-    if (!subsidy.ok) throw subsidy.error;
-    expect(entries.find(entry => entry.url.endsWith("/gpt-subsidy"))?.lastModified)
-      .toBe(gptSubsidyPageModifiedAt(subsidy.value));
     const cardEntries = entries.filter(entry => entry.url.includes("/models/"));
     const modelsEntry = entries.find(entry => entry.url.endsWith("/models"));
     expect(modelsEntry?.lastModified).toBe(modelCollectionModifiedAt);

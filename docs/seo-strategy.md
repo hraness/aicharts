@@ -162,7 +162,6 @@ The rolling 30-day PostHog checkpoint reviewed on September 2, 2026 contained 59
 | Page | Visitors | Views | Bounce rate |
 | --- | ---: | ---: | ---: |
 | `/` | 301 | 403 | 43.2% |
-| `/gpt-subsidy` | 161 | 213 | 42.3% |
 | `/data` | 55 | 55 | 84.6% |
 | `/models` | 43 | 113 | 41.5% |
 | `/blog` | 34 | 38 | 84.6% |

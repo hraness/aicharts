@@ -2,7 +2,6 @@ import { describe, expect, test } from "bun:test";
 
 import packageJson from "../package.json";
 import {
-  chatGptSubsidyChartLabel,
   homeHeading,
   notFoundRecoveryLinks,
   notFoundSearchSite,
@@ -32,7 +31,6 @@ describe("AI Charts public positioning", () => {
     expect(notFoundRecoveryLinks).toEqual([
       { href: "/", label: "Comparison chart" },
       { href: "/models", label: "Model cards" },
-      { href: "/gpt-subsidy", label: chatGptSubsidyChartLabel },
       { href: "/data", label: "Dataset" },
       { href: "/blog", label: "Benchmark analysis" },
       { href: "/llms.txt", label: "Site guide" },

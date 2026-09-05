@@ -3,7 +3,6 @@ import {
   AI_CHARTS_MODELS_URL,
   ProjectAskAiAboutThis,
 } from "@/components/project-ask-ai-about-this";
-import { chatGptSubsidyChartLabel } from "@/app/site";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
@@ -20,9 +19,6 @@ export default function ModelsLayout({ children }: Readonly<{ children: ReactNod
               <Link aria-current="page" href="/models">Cards</Link>
               <Link href="/data">Data</Link>
               <Link href="/blog">Blog</Link>
-              <Link className="model-cards-nav__optional-link" href="/gpt-subsidy">
-                {chatGptSubsidyChartLabel}
-              </Link>
             </nav>
             <ThemeMenuButton aria-label="Model card appearance" />
           </>

@@ -1,5 +1,4 @@
 import { SkipLink, ThemeMenuButton } from "@/components/ui";
-import { chatGptSubsidyChartLabel } from "@/app/site";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
@@ -19,7 +18,6 @@ export default function DataLayout({
               <Link aria-current="page" href="/data">Data</Link>
               <Link href="/models">Cards</Link>
               <Link href="/blog">Blog</Link>
-              <Link href="/gpt-subsidy">{chatGptSubsidyChartLabel}</Link>
               <Link href="/">Home</Link>
             </nav>
             <ThemeMenuButton aria-label="Dataset appearance" />

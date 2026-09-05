@@ -2,7 +2,6 @@ import type { MetadataRoute } from "next";
 
 import artificialAnalysisIntelligenceData from "@/data/artificial-analysis-intelligence.json";
 import codingAgentData from "@/data/coding-agents.json";
-import gptSubsidyData from "@/data/gpt-subsidy.json";
 import terminalBenchData from "@/data/terminal-bench.json";
 import terminalBenchScienceData from "@/data/terminal-bench-science.json";
 import { parseCodingAgentSnapshot } from "@/lib/coding-agent-data";
@@ -14,10 +13,6 @@ import {
   CODING_AGENT_DATASET_PATH,
   codingAgentDatasetModifiedAt,
 } from "@/lib/coding-agent-dataset";
-import {
-  gptSubsidyPageModifiedAt,
-  parseGptSubsidySnapshot,
-} from "@/lib/gpt-subsidy-data";
 import {
   MODEL_CARD_COLLECTION_SOCIAL_IMAGE_URL,
   MODEL_CARD_PRESENTATIONS,
@@ -101,12 +96,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     datasetModifiedAt,
     ...FIRST_PARTY_RELEASE_HIGHLIGHTS.map(release => release.firstSeenAt),
   ].sort((left, right) => Date.parse(right) - Date.parse(left))[0] ?? datasetModifiedAt;
-  const parsedSubsidy = parseGptSubsidySnapshot(gptSubsidyData);
-  if (!parsedSubsidy.ok) {
-    throw new Error(`Checked GPT subsidy snapshot is invalid: ${parsedSubsidy.error.message}`, {
-      cause: parsedSubsidy.error,
-    });
-  }
   const siteImage = absolute(searchSite.socialImage.path);
   return [
     {
@@ -122,13 +111,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: benchmarkPortfolioModifiedAt,
       priority: 0.9,
       url: absolute(CODING_AGENT_DATASET_PATH),
-    },
-    {
-      changeFrequency: "daily",
-      images: [absolute("/gpt-subsidy/opengraph-image")],
-      lastModified: gptSubsidyPageModifiedAt(parsedSubsidy.value),
-      priority: 0.9,
-      url: absolute("/gpt-subsidy"),
     },
     {
       changeFrequency: "monthly",

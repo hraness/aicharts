@@ -24,12 +24,6 @@ The site is a static-data Next.js and TypeScript application. Its benchmark snap
 
 Each checked snapshot records its source, exact version or revision, and retrieval time. The `/data` page links the Artificial Analysis Intelligence, Artificial Analysis coding-agent, Terminal-Bench 4, and Terminal-Bench-Science JSON distributions so people, search engines, and answer engines can verify what the homepage shows. AI Charts is an independent visualization and is not affiliated with the benchmark owners or model providers represented in the data.
 
-## GPT subsidy history
-
-[`/gpt-subsidy`](https://aicharts.io/gpt-subsidy) tracks the measured API-retail-equivalent value of one user’s available local Codex logs. Each daily point covers seven complete UTC days. The collector globally deduplicates parent, child-agent, active, and archived session events, values each recorded model with the checked [`gpt-subsidy-pricing.json`](data/gpt-subsidy-pricing.json) rate manifest, and publishes only aggregate token and dollar totals. The checked [`gpt-subsidy-measurement.json`](data/gpt-subsidy-measurement.json) manifest pins the parser, adapter, updater, and rolling-window constants so a methodology change cannot silently mix unlike historical points.
-
-This is a personal usage trace, not a platform-wide estimate or a representative sample of ChatGPT Pro usage. Historical session logs span account switches without durable account attribution. A separate private recorder samples keyed account fingerprints and first-party app-server plan types; those ledgers never enter Git. The publisher exposes only aggregate observation coverage and a lower-bound count of distinct accounts observed with app-server-reported Pro plan status. When that sampled evidence exists, the 31-day API-equivalent value is divided by that lower-bound account count times the checked $200 plan price, making the displayed plan-price comparison an upper bound. This is plan-status evidence, not billing verification. When it does not exist, no plan-denominated number is shown. The chart does not publish a monthly projection, quota-exhaustion estimate, or per-refill projection. API-key or otherwise API-billed usage, purchased credits, free resets, and temporary promotions still cannot be separated.
-
 ## Local development
 
 AI Charts uses [Bun 1.3.14](https://bun.sh/) and Node.js 24.
@@ -126,8 +120,8 @@ Production source maps are uploaded only when all private build settings and Ver
 - `app/` contains the App Router chart, sourced benchmark notes, metadata, error states, and product styling.
 - `components/` contains the interactive chart, model cards, update timeline, linked summaries, sharing, export, and local UI primitives.
 - `lib/` contains strict data and model-card boundaries, chart math, deterministic layout, analytics events, and property tests.
-- `data/` contains the checked benchmark, discovery radar, official model-release ledger, model-card catalog, subsidy-history, and pricing snapshots.
-- `scripts/` contains the guarded benchmark and release-radar refreshes, local subsidy collector and publisher, and deterministic color generator.
+- `data/` contains the checked benchmark, discovery radar, official model-release ledger, and model-card catalog snapshots.
+- `scripts/` contains the guarded benchmark and release-radar refreshes and deterministic color generator.
 - `styles/` contains the portable plain-publication styles used by the benchmark notes.
 - `docs/` contains the current search, measurement, and engineering strategy.
 - `.github/workflows/` contains CI and daily refresh automation.
