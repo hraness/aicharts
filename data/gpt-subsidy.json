@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-09-04T00:17:47.593Z",
+  "generatedAt": "2026-09-05T00:17:50.475Z",
   "observations": [
     {
       "id": "trailing-7d-2026-07-25",
@@ -233,7 +233,7 @@
         "output": 55093944,
         "total": 25351417495
       },
-      "trailingSevenDayApiEquivalentUsd": 13231.958998000002,
+      "trailingSevenDayApiEquivalentUsd": 13231.958998000016,
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
@@ -253,7 +253,7 @@
         "output": 58354751,
         "total": 27986923647
       },
-      "trailingSevenDayApiEquivalentUsd": 14298.20400060001,
+      "trailingSevenDayApiEquivalentUsd": 14298.204000600006,
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
@@ -273,7 +273,7 @@
         "output": 58193381,
         "total": 29107400446
       },
-      "trailingSevenDayApiEquivalentUsd": 14739.337926080016,
+      "trailingSevenDayApiEquivalentUsd": 14739.337926080005,
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
@@ -293,7 +293,7 @@
         "output": 55232641,
         "total": 28324240459
       },
-      "trailingSevenDayApiEquivalentUsd": 14269.633971600006,
+      "trailingSevenDayApiEquivalentUsd": 14269.633971599995,
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
@@ -313,7 +313,7 @@
         "output": 60109815,
         "total": 30644483795
       },
-      "trailingSevenDayApiEquivalentUsd": 15269.511154200005,
+      "trailingSevenDayApiEquivalentUsd": 15269.511154199987,
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
@@ -333,7 +333,7 @@
         "output": 59336539,
         "total": 30159122706
       },
-      "trailingSevenDayApiEquivalentUsd": 14875.913291240011,
+      "trailingSevenDayApiEquivalentUsd": 14875.913291239985,
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
@@ -353,7 +353,7 @@
         "output": 65836649,
         "total": 32591785711
       },
-      "trailingSevenDayApiEquivalentUsd": 15907.100957640012,
+      "trailingSevenDayApiEquivalentUsd": 15907.100957639994,
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
@@ -373,7 +373,7 @@
         "output": 62410399,
         "total": 32375981217
       },
-      "trailingSevenDayApiEquivalentUsd": 15519.910930800052,
+      "trailingSevenDayApiEquivalentUsd": 15519.910930800033,
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
@@ -393,7 +393,7 @@
         "output": 58142956,
         "total": 34599741924
       },
-      "trailingSevenDayApiEquivalentUsd": 16059.710642040032,
+      "trailingSevenDayApiEquivalentUsd": 16059.710642040052,
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
@@ -413,7 +413,7 @@
         "output": 56222245,
         "total": 35200351011
       },
-      "trailingSevenDayApiEquivalentUsd": 15898.067449920029,
+      "trailingSevenDayApiEquivalentUsd": 15898.067449920049,
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
@@ -433,7 +433,7 @@
         "output": 61169764,
         "total": 36891887746
       },
-      "trailingSevenDayApiEquivalentUsd": 16731.164539680038,
+      "trailingSevenDayApiEquivalentUsd": 16731.164539680052,
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
@@ -453,7 +453,7 @@
         "output": 64465809,
         "total": 37866332240
       },
-      "trailingSevenDayApiEquivalentUsd": 17193.821535720053,
+      "trailingSevenDayApiEquivalentUsd": 17193.821535720082,
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
@@ -473,7 +473,7 @@
         "output": 65493336,
         "total": 38404502480
       },
-      "trailingSevenDayApiEquivalentUsd": 17460.10184092005,
+      "trailingSevenDayApiEquivalentUsd": 17460.10184092008,
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
@@ -493,7 +493,7 @@
         "output": 63845527,
         "total": 38145544687
       },
-      "trailingSevenDayApiEquivalentUsd": 17308.880920200085,
+      "trailingSevenDayApiEquivalentUsd": 17308.88092020011,
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
@@ -513,7 +513,7 @@
         "output": 65922451,
         "total": 36666475246
       },
-      "trailingSevenDayApiEquivalentUsd": 16715.877910800045,
+      "trailingSevenDayApiEquivalentUsd": 16715.877910800067,
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
@@ -533,7 +533,7 @@
         "output": 60967102,
         "total": 29732878439
       },
-      "trailingSevenDayApiEquivalentUsd": 13840.34151252004,
+      "trailingSevenDayApiEquivalentUsd": 13840.341512520037,
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
@@ -553,7 +553,7 @@
         "output": 67582923,
         "total": 29130783009
       },
-      "trailingSevenDayApiEquivalentUsd": 14075.417912320045,
+      "trailingSevenDayApiEquivalentUsd": 14075.417912320048,
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
@@ -573,7 +573,7 @@
         "output": 75691032,
         "total": 31946612781
       },
-      "trailingSevenDayApiEquivalentUsd": 15466.030597760062,
+      "trailingSevenDayApiEquivalentUsd": 15466.030597760067,
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
@@ -593,7 +593,7 @@
         "output": 74839842,
         "total": 30761743397
       },
-      "trailingSevenDayApiEquivalentUsd": 15066.538600360049,
+      "trailingSevenDayApiEquivalentUsd": 15066.538600360047,
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
@@ -613,7 +613,7 @@
         "output": 78047648,
         "total": 31136829923
       },
-      "trailingSevenDayApiEquivalentUsd": 15353.192586680054,
+      "trailingSevenDayApiEquivalentUsd": 15353.192586680052,
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
@@ -633,7 +633,7 @@
         "output": 81510456,
         "total": 31435489338
       },
-      "trailingSevenDayApiEquivalentUsd": 15517.531198970039,
+      "trailingSevenDayApiEquivalentUsd": 15517.531198970035,
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
@@ -653,7 +653,7 @@
         "output": 80718126,
         "total": 30533479879
       },
-      "trailingSevenDayApiEquivalentUsd": 15148.265146370053,
+      "trailingSevenDayApiEquivalentUsd": 15148.265146370046,
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
@@ -673,7 +673,7 @@
         "output": 95357160,
         "total": 35323136987
       },
-      "trailingSevenDayApiEquivalentUsd": 17693.692370130073,
+      "trailingSevenDayApiEquivalentUsd": 17693.692370130062,
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
@@ -693,7 +693,7 @@
         "output": 104688726,
         "total": 38040022149
       },
-      "trailingSevenDayApiEquivalentUsd": 19061.60499313006,
+      "trailingSevenDayApiEquivalentUsd": 19061.60499313005,
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
@@ -713,7 +713,7 @@
         "output": 99904439,
         "total": 36258790133
       },
-      "trailingSevenDayApiEquivalentUsd": 18306.712870690055,
+      "trailingSevenDayApiEquivalentUsd": 18306.712870690037,
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
@@ -733,7 +733,7 @@
         "output": 99059732,
         "total": 38058663455
       },
-      "trailingSevenDayApiEquivalentUsd": 18956.924649050063,
+      "trailingSevenDayApiEquivalentUsd": 18956.924649050023,
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
@@ -753,7 +753,7 @@
         "output": 94895098,
         "total": 37577727559
       },
-      "trailingSevenDayApiEquivalentUsd": 18642.354701330045,
+      "trailingSevenDayApiEquivalentUsd": 18642.354701330012,
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
@@ -773,7 +773,7 @@
         "output": 88079489,
         "total": 36406548311
       },
-      "trailingSevenDayApiEquivalentUsd": 18124.349917880038,
+      "trailingSevenDayApiEquivalentUsd": 18124.34991788001,
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
@@ -813,7 +813,27 @@
         "output": 76637302,
         "total": 34995905575
       },
-      "trailingSevenDayApiEquivalentUsd": 17067.753632719992,
+      "trailingSevenDayApiEquivalentUsd": 17067.753632720003,
+      "accountAttribution": {
+        "status": "unavailable",
+        "distinctObservedAccounts": null,
+        "coverage": 0
+      },
+      "subscriptionAdjustedMultiple": null,
+      "status": "settled"
+    },
+    {
+      "id": "trailing-7d-2026-09-04",
+      "observedAt": "2026-09-04T23:59:59.999Z",
+      "periodStartedAt": "2026-08-29T00:00:00.000Z",
+      "periodEndsAt": "2026-09-04T23:59:59.999Z",
+      "tokens": {
+        "uncachedInput": 1095707670,
+        "cachedInput": 29854643200,
+        "output": 62840796,
+        "total": 31013191666
+      },
+      "trailingSevenDayApiEquivalentUsd": 15017.360440200022,
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
@@ -879,15 +899,15 @@
   "title": "Subsidy for ChatGPT Pro 20x subscription",
   "currency": "USD",
   "periodSummary": {
-    "startedAt": "2026-08-04T00:00:00.000Z",
-    "endedAt": "2026-09-03T23:59:59.999Z",
+    "startedAt": "2026-08-05T00:00:00.000Z",
+    "endedAt": "2026-09-04T23:59:59.999Z",
     "days": 31,
     "tokens": {
-      "uncachedInput": 4864853602,
-      "cachedInput": 146128843904,
-      "output": 325424852,
-      "total": 151319122358
+      "uncachedInput": 4964203546,
+      "cachedInput": 146050293120,
+      "output": 325430401,
+      "total": 151339927067
     },
-    "apiEquivalentUsd": 73054.66410713016
+    "apiEquivalentUsd": 72966.89382349017
   }
 }
