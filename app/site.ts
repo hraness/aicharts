@@ -25,7 +25,6 @@ export const homeHeading = "AI model and agent comparison charts";
 export const modelCardsHeading = "AI model benchmark cards";
 export const modelCardsLede =
   "Each card keeps the model, agent harness, and reasoning profile attached to its observed benchmark, cost, time, and token ranges.";
-export const chatGptSubsidyChartLabel = "ChatGPT Subsidy Chart";
 
 export const notFoundSearchSite = {
   ...searchSite,
@@ -36,7 +35,6 @@ export const notFoundSearchSite = {
 export const notFoundRecoveryLinks = [
   { href: "/", label: "Comparison chart" },
   { href: "/models", label: "Model cards" },
-  { href: "/gpt-subsidy", label: chatGptSubsidyChartLabel },
   { href: "/data", label: "Dataset" },
   { href: "/blog", label: "Benchmark analysis" },
   { href: "/llms.txt", label: "Site guide" },

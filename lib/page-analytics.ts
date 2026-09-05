@@ -8,7 +8,6 @@ export type AnalyticsPageKind =
   | "benchmark_data"
   | "blog_article"
   | "blog_index"
-  | "gpt_subsidy"
   | "model_card"
   | "model_cards"
   | "other";
@@ -18,7 +17,6 @@ export type AnalyticsCanonicalPath =
   | "/blog"
   | "/blog/[article]"
   | "/data"
-  | "/gpt-subsidy"
   | "/models"
   | "/models/[creator]/[model]/[profile]"
   | "/[other]";
@@ -27,7 +25,6 @@ export type AnalyticsContentId =
   | "blog:index"
   | `blog:${string}`
   | "data:index"
-  | "gpt-subsidy"
   | "home"
   | `model-card:${string}/${string}/${string}`
   | "models:index"
@@ -121,16 +118,6 @@ export function pageAnalyticsContext(value: unknown): PageAnalyticsContext {
       content_group: "ai_comparison",
       content_id: "data:index",
       page_kind: "benchmark_data",
-    };
-  }
-
-  if (pathname === "/gpt-subsidy") {
-    return {
-      ...shared,
-      canonical_path: "/gpt-subsidy",
-      content_group: "ai_comparison",
-      content_id: "gpt-subsidy",
-      page_kind: "gpt_subsidy",
     };
   }
 

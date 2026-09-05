@@ -12,7 +12,6 @@ import {
 } from "@/app/site";
 import artificialAnalysisIntelligenceData from "@/data/artificial-analysis-intelligence.json";
 import codingAgentData from "@/data/coding-agents.json";
-import gptSubsidyData from "@/data/gpt-subsidy.json";
 import terminalBenchData from "@/data/terminal-bench.json";
 import terminalBenchScienceData from "@/data/terminal-bench-science.json";
 
@@ -21,12 +20,6 @@ import { parseCodingAgentSnapshot } from "./coding-agent-data";
 import { BENCHMARK_DATA_DESCRIPTION } from "./benchmark-portfolio";
 import { codingAgentDatasetSummary } from "./coding-agent-dataset";
 import { formatRetrievedAt } from "./coding-agent-updates";
-import {
-  formatObservedAccountCount,
-  formatSubsidyUsd,
-  latestGptSubsidyObservation,
-  parseGptSubsidySnapshot,
-} from "./gpt-subsidy-data";
 import { directDeepSweEvidenceForRelease } from "./deep-swe-evidence-collection";
 import {
   FIRST_PARTY_RELEASE_HIGHLIGHTS,
@@ -52,9 +45,6 @@ const parsedIntelligence = parseArtificialAnalysisIntelligenceSnapshot(
 );
 if (!parsedIntelligence.ok) throw parsedIntelligence.error;
 const intelligence = parsedIntelligence.value;
-const parsedSubsidy = parseGptSubsidySnapshot(gptSubsidyData);
-if (!parsedSubsidy.ok) throw parsedSubsidy.error;
-const latestSubsidy = latestGptSubsidyObservation(parsedSubsidy.value);
 const parsedTerminalBench = parseTerminalBenchSnapshot(terminalBenchData);
 if (!parsedTerminalBench.ok) throw parsedTerminalBench.error;
 const terminalBench = parsedTerminalBench.value;
@@ -88,10 +78,9 @@ describe("homepage document", () => {
 });
 
 describe("markdown representations", () => {
-  test("serves the homepage, dataset, subsidy history, blog, and agent guide", () => {
+  test("serves the homepage, dataset, blog, and agent guide", () => {
     const home = markdownForPath("/");
     const data = markdownForPath("/data");
-    const subsidy = markdownForPath("/gpt-subsidy");
     const blog = markdownForPath("/blog");
     const guide = markdownForPath("/llms.txt");
 
@@ -172,49 +161,6 @@ describe("markdown representations", () => {
         expect(cards.body).toContain(`${evidence.identity.resolver.name} model match`);
       }
     }
-    expect(subsidy).toMatchObject({ found: true, contentType: MARKDOWN_CONTENT_TYPE });
-    expect(subsidy.body).toContain("# Subsidy for ChatGPT Pro 20x subscription");
-    expect(subsidy.body).toContain("## Calculation");
-    expect(subsidy.body).toContain("API-key or otherwise API-billed usage");
-    expect(subsidy.body).toContain(
-      `The latest measured trailing-seven-day API-retail-equivalent value is ${formatSubsidyUsd(latestSubsidy.trailingSevenDayApiEquivalentUsd)}`,
-    );
-    const accountAttribution = parsedSubsidy.value.accountPlanComparison
-      .accountAttribution;
-    if (accountAttribution.status === "partial") {
-      expect(subsidy.body).toContain(
-        formatObservedAccountCount(accountAttribution),
-      );
-      expect(subsidy.body).toContain(
-        "This is a lower bound, not an inferred subscription count",
-      );
-      if (
-        parsedSubsidy.value.accountPlanComparison.observedProPlanComparison
-          .status === "sampled"
-      ) {
-        expect(subsidy.body).toContain(
-          "The separate plan-price comparison is",
-        );
-      } else {
-        expect(subsidy.body).toContain(
-          "No plan-denominated comparison is published",
-        );
-      }
-    } else if (parsedSubsidy.value.accountPlanComparison.firstSampledAt !== null) {
-      expect(subsidy.body).toContain(
-        "No current-period sampled account count is published",
-      );
-    } else {
-      expect(subsidy.body).toContain("No sampled account count is published");
-      expect(subsidy.body).toContain(
-        "a plan-price comparison additionally requires provider-reported Pro plan status",
-      );
-    }
-    expect(subsidy.body).toContain("Reported plan status is not billing verification");
-    expect(subsidy.body).not.toContain("one-plan comparison upper bound");
-    expect(subsidy.body).toContain("No monthly projection, quota-exhaustion estimate");
-    expect(subsidy.body).not.toContain("divided by one plan");
-    expect(subsidy.body).not.toContain("307.1×");
     expect(blog.body).toContain(blogArticles[0].title);
     for (const article of blogArticles) {
       const image = blogEditorialImage(article.slug);

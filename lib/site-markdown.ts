@@ -15,7 +15,6 @@ import {
 } from "@/app/site";
 import artificialAnalysisIntelligenceData from "@/data/artificial-analysis-intelligence.json";
 import codingAgentData from "@/data/coding-agents.json";
-import gptSubsidyData from "@/data/gpt-subsidy.json";
 import terminalBenchData from "@/data/terminal-bench.json";
 import terminalBenchScienceData from "@/data/terminal-bench-science.json";
 
@@ -56,18 +55,6 @@ import {
   DEEP_SWE_LEADERBOARD_URL,
   formatDeepSweEvidenceScore,
 } from "./deep-swe-evidence";
-import {
-  GPT_SUBSIDY_DESCRIPTION,
-  formatObservedAccountCount,
-  formatObservedProPlanUpperBoundMultiple,
-  formatSampledCoverageLowerBound,
-  formatSubsidyDate,
-  formatSubsidyTokens,
-  formatSubsidyUsd,
-  latestGptSubsidyObservation,
-  parseGptSubsidySnapshot,
-  type GptSubsidySnapshot,
-} from "./gpt-subsidy-data";
 import {
   MODEL_CARD_PRESENTATIONS,
   MODEL_CARD_SNAPSHOT,
@@ -158,16 +145,6 @@ function checkedTerminalBenchScienceSnapshot(): TerminalBenchScienceSnapshot {
   return parsed.value;
 }
 
-function checkedGptSubsidySnapshot(): GptSubsidySnapshot {
-  const parsed = parseGptSubsidySnapshot(gptSubsidyData);
-  if (!parsed.ok) {
-    throw new Error(`Checked GPT subsidy snapshot is invalid: ${parsed.error.message}`, {
-      cause: parsed.error,
-    });
-  }
-  return parsed.value;
-}
-
 function absolute(path: string): string {
   return new URL(path, site.origin).toString();
 }
@@ -214,11 +191,6 @@ export function homeDocumentModel(
         href: "/models",
         label: "Model benchmark cards",
         note: "Shareable model-and-profile cards with observed benchmark, cost, time, and total-token ranges from the current snapshot.",
-      },
-      {
-        href: "/gpt-subsidy",
-        label: "ChatGPT Pro API-equivalent value",
-        note: "Historical measured values from Codex token usage and the checked August 25, 2026 API price basis. Subscription-adjusted history is unavailable.",
       },
       {
         href: CODING_AGENT_DATASET_PATH,
@@ -593,78 +565,6 @@ export function modelCardMarkdown(card: ModelCardPresentation): string {
   ]);
 }
 
-export function gptSubsidyMarkdown(
-  snapshot: GptSubsidySnapshot = checkedGptSubsidySnapshot(),
-): string {
-  const latest = latestGptSubsidyObservation(snapshot);
-  const accountComparison = snapshot.accountPlanComparison;
-  const observedProPlanComparison = accountComparison.observedProPlanComparison;
-  const coverageLabel = accountComparison.accountAttribution.status === "partial"
-    ? formatSampledCoverageLowerBound(
-      accountComparison.accountAttribution.coverage,
-    )
-    : null;
-  const accountComparisonSummary = observedProPlanComparison.status === "sampled"
-    ? `The private recorder observed ${formatObservedAccountCount(accountComparison.accountAttribution)} during ${coverageLabel} of the period. Of those, ${String(observedProPlanComparison.distinctVerifiedProAccountsLowerBound)} ${observedProPlanComparison.distinctVerifiedProAccountsLowerBound === 1 ? "account has" : "accounts have"} consistently reported Pro plan status. The separate plan-price comparison is ${formatObservedProPlanUpperBoundMultiple(observedProPlanComparison.apiEquivalentMultipleUpperBound)}, using ${formatSubsidyUsd(observedProPlanComparison.normalizedPlanValueUsd)} in observed account plan-price units. Both account counts are lower bounds, so the comparison is an upper bound.`
-    : accountComparison.accountAttribution.status === "partial"
-      ? `The private recorder observed ${formatObservedAccountCount(accountComparison.accountAttribution)} during ${coverageLabel} of the period. This is a lower bound, not an inferred subscription count. No plan-denominated comparison is published because reported plan status does not support a consistently Pro lower bound.`
-      : accountComparison.firstSampledAt !== null
-        ? "No current-period sampled account count is published. Earlier sampled attribution remains in the historical observations."
-        : "No sampled account count is published. An account count appears after the private recorder establishes positive-duration coverage; a plan-price comparison additionally requires provider-reported Pro plan status.";
-  const rows = snapshot.observations.map(observation => [
-    formatSubsidyDate(observation.observedAt),
-    `${formatSubsidyDate(observation.periodStartedAt)}–${formatSubsidyDate(observation.periodEndsAt)}`,
-    formatSubsidyTokens(observation.tokens.total),
-    formatSubsidyUsd(observation.trailingSevenDayApiEquivalentUsd),
-  ]);
-  const table = [
-    "| Observed | Period | Tokens | Trailing 7-day API value |",
-    "| --- | --- | ---: | ---: |",
-    ...rows.map(row => `| ${row.join(" | ")} |`),
-  ].join("\n");
-
-  return joinMarkdown([
-    `# ${snapshot.title}`,
-    "",
-    GPT_SUBSIDY_DESCRIPTION,
-    "",
-    `The latest measured trailing-seven-day API-retail-equivalent value is ${formatSubsidyUsd(latest.trailingSevenDayApiEquivalentUsd)}. It covers seven complete UTC days and is not projected into a monthly value.`,
-    "",
-    `Across the measured trailing ${snapshot.periodSummary.days}-day period, local Codex usage has an API-retail-equivalent value of ${formatSubsidyUsd(snapshot.periodSummary.apiEquivalentUsd)}.`,
-    "",
-    accountComparisonSummary,
-    "",
-    "This is one user's available local Codex logs on one machine. It is not a platform-wide or representative ChatGPT Pro estimate. Session logs do not durably identify which account supplied usage. API-key or otherwise API-billed usage, purchased ChatGPT credits, free or reset credits, and temporary promotions cannot be separated.",
-    "",
-    "## History",
-    "",
-    table,
-    "",
-    "No monthly projection, quota-exhaustion estimate, or per-refill projection is published. Coverage is a coarse whole-percentage lower bound; `<1%` is an explicit category, not a precise timing value. Heartbeat sampling cannot prove that every account was observed. A plan-denominated figure is omitted unless the private recorder observed account coverage and the first-party app server reported a consistently Pro plan type. Reported plan status is not billing verification. Current allowance state still cannot be joined reliably to historical session usage account by account.",
-    "",
-    "## Calculation",
-    "",
-    snapshot.methodology.formula,
-    "",
-    "The collector reads all canonical local Codex task logs, including child agents. The pinned Tokscale 4.13.0 parser globally deduplicates replayed token events. Model-specific API-price estimates come from the checked AI Charts OpenAI rate manifest, not Tokscale's pricing catalog.",
-    "",
-    "The scheduled collector task's own small Codex token usage is included in the next settled bucket.",
-    "",
-    snapshot.methodology.disclaimer,
-    "",
-    `The checked snapshot was generated ${snapshot.generatedAt}. The rate manifest was frozen ${snapshot.pricing.manifest.frozenAt} with SHA-256 ${snapshot.pricing.manifest.sha256}. Token measurement is pinned by revision ${snapshot.methodology.measurement.revision} and manifest SHA-256 ${snapshot.methodology.measurement.sha256}. Private-ledger aggregation is separately pinned by revision ${accountComparison.measurement.revision} and manifest SHA-256 ${accountComparison.measurement.sha256}. GPT-5.6 Sol is retained only as a reference price, not as the rate applied to every historical model call.`,
-    "",
-    "## Sources",
-    "",
-    ...Array.from(new Set([
-      snapshot.plan.sourceUrl,
-      snapshot.pricing.manifest.sourceUrl,
-      snapshot.pricing.referenceModel.sourceUrl,
-      ...snapshot.methodology.sourceUrls,
-    ])).map(url => `- [${new URL(url).hostname}](${url})`),
-  ]);
-}
-
 export function agentGuideMarkdown(
   snapshot: CodingAgentSnapshot = checkedSnapshot(),
 ): string {
@@ -689,7 +589,6 @@ export function agentGuideMarkdown(
     "",
     `- [Benchmark comparison](${absolute("/")}). Five benchmark roles, the current Terminal-Bench 4 owner snapshot, a general-model Intelligence efficiency chart, and a separate coding-agent scatter chart.`,
     `- [Model benchmark cards](${absolute("/models")}). Shareable cards for each model and benchmark profile, with canonical routes for cataloged identities.`,
-    `- [ChatGPT Pro API-equivalent value](${absolute("/gpt-subsidy")}). Historical estimates from measured Codex usage and the checked August 25, 2026 API price basis.`,
     `- [Dataset and methodology](${absolute(CODING_AGENT_DATASET_PATH)}). Terminal-Bench 4, Terminal-Bench-Science, Artificial Analysis Intelligence, and coding-agent provenance, version boundaries, definitions, method, and limits.`,
     `- [Terminal-Bench 4 JSON](${absolute("/data/terminal-bench-4.json")}). Machine-readable owner snapshot for the current coding standard.`,
     `- [Terminal-Bench-Science 0.1 JSON](${absolute("/data/terminal-bench-science-0-1.json")}). Machine-readable owner snapshot for scientific workflows.`,
@@ -741,9 +640,6 @@ export function markdownForPath(pathname: string): MarkdownDocument {
   }
   if (path === CODING_AGENT_DATASET_PATH) {
     return { body: datasetMarkdown(snapshot), contentType: MARKDOWN_CONTENT_TYPE, found: true };
-  }
-  if (path === "/gpt-subsidy") {
-    return { body: gptSubsidyMarkdown(), contentType: MARKDOWN_CONTENT_TYPE, found: true };
   }
   if (path === "/models") {
     return { body: modelCardsMarkdown(), contentType: MARKDOWN_CONTENT_TYPE, found: true };

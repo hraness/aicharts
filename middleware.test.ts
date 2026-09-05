@@ -65,7 +65,6 @@ describe("markdown content negotiation", () => {
       "/models/openai/gpt-5.6-sol/max",
       "/blog",
       "/blog/terminal-bench-science",
-      "/gpt-subsidy",
     ]) {
       const response = middleware(request(path, { Accept: "text/markdown" }));
       expect(response.headers.get("x-middleware-rewrite")).toContain("/api/markdown");

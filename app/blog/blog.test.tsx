@@ -791,7 +791,6 @@ describe("AI Charts blog discovery", () => {
     const expectedRoutes = [
       "https://aicharts.io/",
       "https://aicharts.io/data",
-      "https://aicharts.io/gpt-subsidy",
       "https://aicharts.io/blog",
       ...blogArticles.map(article =>
         `https://aicharts.io${blogArticlePath(article.slug)}`),

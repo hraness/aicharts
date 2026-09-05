@@ -215,15 +215,6 @@ test("shared top bars reserve sticky flow and cannot starve their title", () => 
   expect(firstRule(".model-update-timeline")).toContain("scroll-margin-block-start: calc(var(--chart-sticky-header-block-size) + .75rem)");
 });
 
-test("the subsidy plot fits its shell without forced scrolling or colliding axis chrome", () => {
-  expect(firstRule(".gpt-subsidy-chart__plot")).toContain("overflow: hidden");
-  expect(firstRule(".gpt-subsidy-chart__svg")).toContain("min-width: 0");
-  expect(firstRule(".gpt-subsidy-chart__svg")).toContain("width: 100%");
-  expect(stylesheet).not.toContain("gpt-subsidy-chart__axis-title");
-  expect(stylesheet).not.toContain("gpt-subsidy-chart__scroll-hint");
-  expect(stylesheet).not.toMatch(/\.gpt-subsidy-chart__plot\s*\{[^}]*direction:\s*rtl/u);
-});
-
 test("the local resource links are quiet at rest", () => {
   expect(stylesheet).not.toContain(".hraness-brand");
   expect(stylesheet).not.toContain(".hraness-ra-mark");

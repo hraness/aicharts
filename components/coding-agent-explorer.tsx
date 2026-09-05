@@ -1,6 +1,6 @@
 "use client";
 
-import { chatGptSubsidyChartLabel, homeHeading } from "@/app/site";
+import { homeHeading } from "@/app/site";
 import {
   Cancel01Icon,
   CopyLinkIcon,
@@ -1053,14 +1053,6 @@ export function CodingAgentExplorer({
             <LinkButton href="/models" size="compact" variant="quiet">
               Cards
             </LinkButton>
-            <LinkButton
-              className="chart-top-bar__optional-action"
-              href="/gpt-subsidy"
-              size="compact"
-              variant="quiet"
-            >
-              {chatGptSubsidyChartLabel}
-            </LinkButton>
             <ThemeMenuButton aria-label="Chart appearance" />
           </>
         )}
@@ -1532,7 +1524,6 @@ export function CodingAgentExplorer({
         <div className="chart-resource-nav__links">
           <Link href="/data">Data</Link>
           <Link href="/blog">Analysis</Link>
-          <Link href="/gpt-subsidy">{chatGptSubsidyChartLabel}</Link>
         </div>
       </nav>
       </PageCanvas>

@@ -26,7 +26,6 @@ The server request-error hook uses the same exact ingest-host approval. It retai
 | `/blog` | `/blog` | `blog:index` |
 | `/blog/{article}` | `/blog/[article]` | `blog:{article}` |
 | `/data` | `/data` | `data:index` |
-| `/gpt-subsidy` | `/gpt-subsidy` | `gpt-subsidy` |
 | `/models` | `/models` | `models:index` |
 | `/models/{creator}/{model}/{profile}` | `/models/[creator]/[model]/[profile]` | `model-card:{creator}/{model}/{profile}` |
 | any other route | `/[other]` | `other` |
@@ -62,7 +61,7 @@ Filter dimensions are `provider`, `top_only`, and `sort`. Values are a checked p
 
 The raw href, query, hash, and link text are never placed in an event. Link kinds are `anchor`, `download`, `internal`, and `outbound`. Destination kinds distinguish articles, model cards, site pages and resources, datasets, assets, sections, sources, repositories, social services, Ask-AI services, and Hraness. Unknown outbound hosts collapse to `destination_kind=source` and `destination_id=external:other`.
 
-Use the narrowest existing surface. Current surfaces are `site`, `global_header`, `global_footer`, `home_orientation`, `home_portfolio`, `benchmark_chart`, `home_editorial`, `blog_header`, `blog_index`, `blog_article`, `blog_related`, `data_document`, `models_header`, `models_gallery`, `model_release_radar`, `model_card`, `gpt_subsidy`, and `error_recovery`.
+Use the narrowest existing surface. Current surfaces are `site`, `global_header`, `global_footer`, `home_orientation`, `home_portfolio`, `benchmark_chart`, `home_editorial`, `blog_header`, `blog_index`, `blog_article`, `blog_related`, `data_document`, `models_header`, `models_gallery`, `model_release_radar`, `model_card`, and `error_recovery`.
 
 Add both destination override attributes only when the default URL classifier cannot supply a useful stable ID, normally for a named primary source:
 

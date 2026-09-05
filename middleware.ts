@@ -12,7 +12,6 @@ const NEGOTIABLE_PAGE_PATHS = new Set([
   "/",
   "/blog",
   "/data",
-  "/gpt-subsidy",
   "/models",
 ]);
 
