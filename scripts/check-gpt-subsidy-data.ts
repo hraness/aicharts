@@ -3,6 +3,11 @@ import path from "node:path";
 
 import { parseGptSubsidySnapshot } from "../lib/gpt-subsidy-data";
 import {
+  assertGptSubsidyAttributionImplementation,
+  attributionSha256,
+  parseGptSubsidyAttributionManifest,
+} from "../lib/gpt-subsidy-attribution-manifest";
+import {
   assertGptSubsidyMeasurementImplementation,
   parseGptSubsidyMeasurementManifest,
   parseGptSubsidyPricingManifest,
@@ -17,8 +22,14 @@ const defaultMeasurementPath = path.join(
   "data",
   "gpt-subsidy-measurement.json",
 );
+const defaultAttributionManifestPath = path.join(
+  repositoryRoot,
+  "data",
+  "gpt-subsidy-attribution-measurement.json",
+);
 
 type CheckOptions = Readonly<{
+  attributionManifestPath?: string;
   dataPath?: string;
   measurementPath?: string;
   pricingPath?: string;
@@ -43,10 +54,18 @@ export async function checkGptSubsidyData(
   const dataPath = options.dataPath ?? defaultDataPath;
   const pricingPath = options.pricingPath ?? defaultPricingPath;
   const measurementPath = options.measurementPath ?? defaultMeasurementPath;
-  const [dataSource, pricingSource, measurementSource] = await Promise.all([
+  const attributionManifestPath = options.attributionManifestPath
+    ?? defaultAttributionManifestPath;
+  const [
+    dataSource,
+    pricingSource,
+    measurementSource,
+    attributionManifestSource,
+  ] = await Promise.all([
     readFile(dataPath, "utf8"),
     readFile(pricingPath),
     readFile(measurementPath),
+    readFile(attributionManifestPath),
   ]);
 
   const parsedSnapshot = parseGptSubsidySnapshot(
@@ -64,13 +83,26 @@ export async function checkGptSubsidyData(
   const measurementManifest = parseGptSubsidyMeasurementManifest(
     parseJson(measurementSource.toString("utf8"), "GPT subsidy measurement manifest"),
   );
+  const attributionManifest = parseGptSubsidyAttributionManifest(
+    parseJson(
+      attributionManifestSource.toString("utf8"),
+      "GPT subsidy attribution manifest",
+    ),
+  );
   await assertGptSubsidyMeasurementImplementation(
     measurementManifest,
+    options.repositoryRoot ?? repositoryRoot,
+  );
+  await assertGptSubsidyAttributionImplementation(
+    attributionManifest,
     options.repositoryRoot ?? repositoryRoot,
   );
 
   const pricingSha256 = sha256(pricingSource);
   const measurementSha256 = sha256(measurementSource);
+  const attributionManifestSha256 = attributionSha256(
+    attributionManifestSource,
+  );
   if (parsedSnapshot.value.pricing.manifest.sha256 !== pricingSha256) {
     throw new Error(
       "GPT subsidy data claims a pricing-manifest hash that differs from the checked manifest bytes.",
@@ -89,6 +121,17 @@ export async function checkGptSubsidyData(
   ) {
     throw new Error(
       "GPT subsidy data claims a measurement basis that differs from the checked measurement manifest.",
+    );
+  }
+  const publishedAttributionMeasurement = parsedSnapshot.value
+    .accountPlanComparison.measurement;
+  if (
+    publishedAttributionMeasurement.sha256 !== attributionManifestSha256
+    || publishedAttributionMeasurement.frozenAt !== attributionManifest.frozenAt
+    || publishedAttributionMeasurement.revision !== attributionManifest.revision
+  ) {
+    throw new Error(
+      "GPT subsidy data claims an account-attribution basis that differs from the checked manifest.",
     );
   }
   const referenceModel = pricingManifest.models.find(

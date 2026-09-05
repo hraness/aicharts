@@ -16,7 +16,7 @@ Every browser event passes through `normalizedPageAnalyticsProperties` before it
 - rejects client rate-limit warning events whose SDK-generated message contains a raw path;
 - adds a bounded page classification and public `content_id`.
 
-`context_schema_version` is `3`. It versions the page properties applied to all events. `event_schema_version` is `2` for the typed product events below and `1` for SDK-generated events such as `$pageview`, `$pageleave`, and Web Vitals. These fields are deliberately separate.
+`context_schema_version` is `3`. It versions the page properties applied to all events. `event_schema_version` is `3` for the typed product events below and `1` for SDK-generated events such as `$pageview`, `$pageleave`, and Web Vitals. These fields are deliberately separate.
 
 The server request-error hook uses the same exact ingest-host approval. It retains only a standard error type plus bounded framework route fields; original exception messages and stacks never leave the server.
 
@@ -42,13 +42,13 @@ All custom events are members of `AnalyticsEventMap`. `analyticsEventPayload` re
 | `site link clicked` | `surface`, `link_kind`, `destination_kind`, `destination_id` | A public anchor was activated. |
 | `newsletter signup request submitted` | `audience=aicharts`, `surface=global_footer` | The shared footer form emitted a submit request. |
 | `content chart opened` | `source_kind`, `destination_chart` | A reader chose the current comparison from editorial content. |
-| `chart metric selected` | `axis`, `metric` | A visitor changed one chart dimension. |
-| `chart selection pinned` | `provider_id`, `selection_kind` | A visitor pinned a provider or model comparison. |
-| `chart shared` | `share_method`, `share_outcome`, `x_metric`, `y_metric` | A configured chart share action produced the stated outcome. |
+| `chart metric selected` | `chart_id`, `axis`, `metric` | A visitor changed one dimension of a named chart. |
+| `chart selection pinned` | `chart_id`, `provider_id`, `selection_kind` | A visitor pinned a provider or model comparison in a named chart. |
+| `chart shared` | `chart_id`, `share_method`, `share_outcome`, `x_metric`, `y_metric` | A configured named-chart share action produced the stated outcome. |
 | `model cards filtered` | `filter_dimension`, `filter_value`, `result_count` | A provider, Top, or New filter outcome was applied. |
 | `model card shared` | `model_id`, `profile_id`, `share_method`, `share_outcome` | A canonical model-card share action produced the stated outcome. |
 
-Filter dimensions are `provider`, `top_only`, and `sort`. Values are a checked provider ID or `all`, `enabled`/`disabled`, and `new`/`default`, respectively. Chart and model-card share outcomes distinguish `initiated`, `completed`, `cancelled`, and `downloaded` where those states apply. Record only the outcome the component actually observes.
+Filter dimensions are `provider`, `top_only`, and `sort`. Values are a checked provider ID or `all`, `enabled`/`disabled`, and `new`/`default`, respectively. Chart IDs are the bounded public surfaces `coding_agents` and `intelligence_efficiency`, so interaction funnels remain attributable without collecting labels or point text. Metric values stay native to each chart: the coding chart uses its checked X/Y vocabulary, while intelligence efficiency uses `costUsdPerTask` and `outputTokensPerTask` on its X axis. Chart and model-card share outcomes distinguish `initiated`, `completed`, `cancelled`, and `downloaded` where those states apply. Record only the outcome the component actually observes.
 
 ## Delegated link tracking
 

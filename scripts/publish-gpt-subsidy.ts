@@ -283,6 +283,13 @@ async function buildCandidate(
       cwd: temporary.worktree,
       timeoutMs: updateTimeoutMs,
     });
+    run(process.execPath, [
+      "run",
+      "scripts/enrich-gpt-subsidy-attribution.ts",
+    ], {
+      cwd: temporary.worktree,
+      timeoutMs: snapshotCheckTimeoutMs,
+    });
     checkCandidateSnapshot(temporary.worktree);
     const changed = statusPaths(run(
       "git",

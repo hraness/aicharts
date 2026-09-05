@@ -178,11 +178,14 @@ describe("markdown representations", () => {
     expect(subsidy.body).toContain(
       `The latest measured trailing-seven-day API-retail-equivalent value is ${formatSubsidyUsd(latestSubsidy.trailingSevenDayApiEquivalentUsd)}`,
     );
-    expect(subsidy.body).toContain("one-plan comparison upper bound before switched-account adjustment");
-    expect(subsidy.body).toContain("is not a subscription-adjusted multiple");
-    expect(subsidy.body).toContain("true subscription-spend-adjusted multiple is lower but unknown");
+    expect(subsidy.body).toContain("No single-subscription denominator is published");
+    expect(subsidy.body).toContain("Reported plan status is not billing verification");
+    expect(subsidy.body).toContain(
+      "sampled, provider-reported Pro plan status supports a lower-bound account count",
+    );
+    expect(subsidy.body).not.toContain("one-plan comparison upper bound");
     expect(subsidy.body).toContain("No monthly projection, quota-exhaustion estimate");
-    expect(subsidy.body).not.toContain("No monthly projection, one-plan normalization");
+    expect(subsidy.body).not.toContain("divided by one plan");
     expect(subsidy.body).not.toContain("307.1×");
     expect(blog.body).toContain(blogArticles[0].title);
     for (const article of blogArticles) {

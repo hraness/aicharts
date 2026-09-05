@@ -58,8 +58,8 @@ import {
 } from "./deep-swe-evidence";
 import {
   GPT_SUBSIDY_DESCRIPTION,
-  calculateOnePlanUpperBoundMultiple,
-  formatOnePlanUpperBoundMultiple,
+  formatObservedProPlanUpperBoundMultiple,
+  formatSampledCoverageLowerBound,
   formatSubsidyDate,
   formatSubsidyTokens,
   formatSubsidyUsd,
@@ -596,12 +596,20 @@ export function gptSubsidyMarkdown(
   snapshot: GptSubsidySnapshot = checkedGptSubsidySnapshot(),
 ): string {
   const latest = latestGptSubsidyObservation(snapshot);
-  const onePlanUpperBound = formatOnePlanUpperBoundMultiple(
-    calculateOnePlanUpperBoundMultiple(
-      snapshot.periodSummary.apiEquivalentUsd,
-      snapshot.plan.monthlyPriceUsd,
-    ),
-  );
+  const accountComparison = snapshot.accountPlanComparison;
+  const observedProPlanComparison = accountComparison.observedProPlanComparison;
+  const coverageLabel = accountComparison.accountAttribution.status === "partial"
+    ? formatSampledCoverageLowerBound(
+      accountComparison.accountAttribution.coverage,
+    )
+    : null;
+  const accountComparisonSummary = observedProPlanComparison.status === "sampled"
+    ? `The account-aware comparison is ${formatObservedProPlanUpperBoundMultiple(observedProPlanComparison.apiEquivalentMultipleUpperBound)}: the API-equivalent value divided by ${observedProPlanComparison.distinctVerifiedProAccountsLowerBound} distinct account plan-price units observed with app-server-reported Pro plan status (${formatSubsidyUsd(observedProPlanComparison.normalizedPlanValueUsd)}). Account sampling covers ${coverageLabel} of the period. The observed account count is a lower bound, so the comparison is an upper bound.`
+    : accountComparison.accountAttribution.status === "partial"
+      ? `No plan-denominated comparison is published. Account sampling covers ${coverageLabel} of the period and observed ${String(accountComparison.accountAttribution.distinctObservedAccounts)} distinct accounts, but reported plan status does not support a consistently Pro lower bound.`
+      : accountComparison.firstSampledAt !== null
+        ? "No current-period plan-denominated comparison is published. Earlier sampled attribution remains in the historical observations."
+        : "No single-subscription denominator is published. An account-aware comparison appears only when sampled, provider-reported Pro plan status supports a lower-bound account count.";
   const rows = snapshot.observations.map(observation => [
     formatSubsidyDate(observation.observedAt),
     `${formatSubsidyDate(observation.periodStartedAt)}–${formatSubsidyDate(observation.periodEndsAt)}`,
@@ -621,15 +629,17 @@ export function gptSubsidyMarkdown(
     "",
     `The latest measured trailing-seven-day API-retail-equivalent value is ${formatSubsidyUsd(latest.trailingSevenDayApiEquivalentUsd)}. It covers seven complete UTC days and is not projected into a monthly value.`,
     "",
-    `Across the measured trailing ${snapshot.periodSummary.days}-day period, local Codex usage has an API-retail-equivalent value of ${formatSubsidyUsd(snapshot.periodSummary.apiEquivalentUsd)}. Dividing that value by one ${formatSubsidyUsd(snapshot.plan.monthlyPriceUsd)} plan produces a ${onePlanUpperBound} one-plan comparison upper bound before switched-account adjustment.`,
+    `Across the measured trailing ${snapshot.periodSummary.days}-day period, local Codex usage has an API-retail-equivalent value of ${formatSubsidyUsd(snapshot.periodSummary.apiEquivalentUsd)}.`,
     "",
-    "This is one user's available local Codex logs on one machine. It is not a platform-wide or representative ChatGPT Pro estimate. The one-plan upper bound is not a subscription-adjusted multiple and does not estimate how many subscriptions supplied that usage. Historical logs span account switches without durable account attribution, so the true subscription-spend-adjusted multiple is lower but unknown. API-key or otherwise API-billed usage, purchased ChatGPT credits, free or reset credits, and temporary promotions cannot be separated.",
+    accountComparisonSummary,
+    "",
+    "This is one user's available local Codex logs on one machine. It is not a platform-wide or representative ChatGPT Pro estimate. Session logs do not durably identify which account supplied usage. API-key or otherwise API-billed usage, purchased ChatGPT credits, free or reset credits, and temporary promotions cannot be separated.",
     "",
     "## History",
     "",
     table,
     "",
-    "No monthly projection, quota-exhaustion estimate, or per-refill projection is published for this historical period. The only plan-denominated figure is the explicitly bounded trailing-period API-equivalent value divided by one plan; it is not adjusted for the unknown number of accounts or subscriptions. Current allowance state cannot be joined reliably to historical session usage across authentication, subscription, or credit-source changes.",
+    "No monthly projection, quota-exhaustion estimate, or per-refill projection is published. Coverage is a coarse whole-percentage lower bound; `<1%` is an explicit category, not a precise timing value. Heartbeat sampling cannot prove that every account was observed. A plan-denominated figure is omitted unless the private recorder observed account coverage and the first-party app server reported a consistently Pro plan type. Reported plan status is not billing verification. Current allowance state still cannot be joined reliably to historical session usage account by account.",
     "",
     "## Calculation",
     "",
@@ -641,7 +651,7 @@ export function gptSubsidyMarkdown(
     "",
     snapshot.methodology.disclaimer,
     "",
-    `The checked snapshot was generated ${snapshot.generatedAt}. The rate manifest was frozen ${snapshot.pricing.manifest.frozenAt} with SHA-256 ${snapshot.pricing.manifest.sha256}. The measurement implementation is pinned by revision ${snapshot.methodology.measurement.revision} and manifest SHA-256 ${snapshot.methodology.measurement.sha256}. GPT-5.6 Sol is retained only as a reference price, not as the rate applied to every historical model call.`,
+    `The checked snapshot was generated ${snapshot.generatedAt}. The rate manifest was frozen ${snapshot.pricing.manifest.frozenAt} with SHA-256 ${snapshot.pricing.manifest.sha256}. Token measurement is pinned by revision ${snapshot.methodology.measurement.revision} and manifest SHA-256 ${snapshot.methodology.measurement.sha256}. Private-ledger aggregation is separately pinned by revision ${accountComparison.measurement.revision} and manifest SHA-256 ${accountComparison.measurement.sha256}. GPT-5.6 Sol is retained only as a reference price, not as the rate applied to every historical model call.`,
     "",
     "## Sources",
     "",

@@ -36,6 +36,7 @@ import {
   type CSSProperties,
   type KeyboardEvent,
   type MouseEvent as ReactMouseEvent,
+  type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
@@ -54,6 +55,13 @@ import {
 } from "@/components/chart-share";
 import { OptionSpaceOverview } from "@/components/option-space-overview";
 import { captureChartEvent } from "@/lib/analytics";
+import {
+  clientPointThroughSvgBounds,
+  clientPointThroughSvgTransform,
+  isAssistiveSvgClick,
+  svgUnitsForCssPixels,
+  type SvgPointerLocation,
+} from "@/lib/svg-pointer-routing";
 import { providerColorRange, recordColor } from "@/lib/chart-colors";
 import { layoutChartLabels, type LabelPlacement } from "@/lib/chart-label-layout";
 import { placeChartTooltip } from "@/lib/chart-tooltip-layout";
@@ -79,10 +87,11 @@ import {
 } from "@/lib/chart-math";
 
 const chartWidth = 1440;
-const chartHeight = 1320;
-const plot = { top: 24, right: 1360, bottom: 1240, left: 72 } as const;
+const chartHeight = 940;
+const plot = { top: 24, right: 1360, bottom: 860, left: 72 } as const;
 const initialTooltipSize = { height: 260, width: 264 } as const;
 const refreshDelayThresholdMs = 48 * 60 * 60 * 1_000;
+const restingLabelCount = 3;
 const yMetricItems = [
   { id: "aaIndex", label: "AAI" },
   { id: "deepSwe", label: "DSWE" },
@@ -132,6 +141,7 @@ const chartSelectionBoundarySelector = [
   ".chart-point",
   ".provider-filter button",
 ].join(", ");
+const chartPointerHitRadiusCss = 24;
 
 function canResolveClosest(target: unknown): target is ClosestTarget {
   return typeof target === "object"
@@ -177,6 +187,90 @@ function pointInDirection(points: readonly PlotPoint[], index: number, key: Poin
     if (best === null || score < best.score) best = { point: candidate, score };
   }
   return best?.point ?? null;
+}
+
+/** Dense plots resolve pointer intent geometrically, independent of SVG paint order. */
+export function nearestCodingAgentPointId(
+  points: readonly Readonly<{ id: string; x: number; y: number }>[],
+  x: number,
+  y: number,
+  maximumDistance: number,
+): string | null {
+  if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(maximumDistance) || maximumDistance < 0) {
+    return null;
+  }
+  let best: Readonly<{ distanceSquared: number; id: string }> | null = null;
+  for (const point of points) {
+    const distanceSquared = (point.x - x) ** 2 + (point.y - y) ** 2;
+    if (
+      best === null
+      || distanceSquared < best.distanceSquared
+      || (distanceSquared === best.distanceSquared && point.id.localeCompare(best.id) < 0)
+    ) {
+      best = { distanceSquared, id: point.id };
+    }
+  }
+  return best !== null && best.distanceSquared <= maximumDistance ** 2 ? best.id : null;
+}
+
+/** Give an idle chart a small, deterministic reading without creating selection state. */
+export function selectRestingCodingAgentLabels<
+  T extends Readonly<{
+    record: Readonly<{ id: string; model: string }>;
+    x: number;
+    yValue: number;
+  }>,
+>(points: readonly T[]): T[] {
+  const bestByModel = new Map<string, T>();
+  for (const point of points) {
+    const current = bestByModel.get(point.record.model);
+    if (
+      current === undefined
+      || point.yValue > current.yValue
+      || (point.yValue === current.yValue && point.record.id.localeCompare(current.record.id) < 0)
+    ) {
+      bestByModel.set(point.record.model, point);
+    }
+  }
+  const ranked = Array.from(bestByModel.values())
+    .sort((left, right) => right.yValue - left.yValue || left.record.id.localeCompare(right.record.id));
+  const xValues = ranked.map(point => point.x).filter(Number.isFinite);
+  const minimumX = Math.min(...xValues);
+  const maximumX = Math.max(...xValues);
+  if (!Number.isFinite(minimumX) || !Number.isFinite(maximumX)) return ranked.slice(0, restingLabelCount);
+
+  const leftCutoff = minimumX + (maximumX - minimumX) / 3;
+  const middleCutoff = minimumX + (maximumX - minimumX) * 2 / 3;
+  const selected: T[] = [];
+  const selectFirst = (predicate: (point: T) => boolean) => {
+    const point = ranked.find(candidate => (
+      !selected.some(item => item.record.id === candidate.record.id)
+      && predicate(candidate)
+    ));
+    if (point !== undefined) selected.push(point);
+  };
+
+  selectFirst(() => true);
+  selectFirst(point => point.x <= leftCutoff);
+  selectFirst(point => point.x > leftCutoff && point.x <= middleCutoff);
+  for (const point of ranked) {
+    if (selected.length >= restingLabelCount) break;
+    if (!selected.some(item => item.record.id === point.record.id)) selected.push(point);
+  }
+  return selected;
+}
+
+function chartPointerLocation(
+  event: Readonly<{ clientX: number; clientY: number; currentTarget: SVGSVGElement }>,
+): SvgPointerLocation | null {
+  const svg = event.currentTarget;
+  const matrix = svg.getScreenCTM();
+  if (matrix !== null) {
+    const transformed = clientPointThroughSvgTransform(event.clientX, event.clientY, matrix);
+    if (transformed !== null) return transformed;
+  }
+  const bounds = svg.getBoundingClientRect();
+  return clientPointThroughSvgBounds(event.clientX, event.clientY, bounds, chartWidth, chartHeight);
 }
 
 function useHorizontalOverflow<T extends HTMLElement>() {
@@ -327,6 +421,7 @@ export function CodingAgentExplorer({
   const [pinnedPointId, setPinnedPointId] = useState<string | null>(null);
   const [pinnedProviderId, setPinnedProviderId] = useState<string | null>(null);
   const [hoveredPointId, setHoveredPointId] = useState<string | null>(null);
+  const [pointerPointId, setPointerPointId] = useState<string | null>(null);
   const [hoveredProviderId, setHoveredProviderId] = useState<string | null>(null);
   const [keyboardPointId, setKeyboardPointId] = useState<string | null>(null);
   const [refreshDelayed, setRefreshDelayed] = useState(false);
@@ -482,6 +577,12 @@ export function CodingAgentExplorer({
     };
   }, [snapshot.records, xMetric, yMetric]);
 
+  const pointerPoints = useMemo(() => chart.points.map((point) => ({
+    id: point.record.id,
+    x: point.x,
+    y: point.y,
+  })), [chart.points]);
+
   const focusablePointId = chart.points.some((point) => point.record.id === keyboardPointId)
     ? keyboardPointId
     : chart.points[0]?.record.id ?? null;
@@ -493,6 +594,7 @@ export function CodingAgentExplorer({
     : modelCardPaths[pinnedPoint.record.id] ?? null;
   const benchmarkPoint = pinnedPoint ?? (pinnedProviderId === null ? hoveredPoint : null);
   const selectedProviderId = benchmarkPoint === null ? pinnedProviderId ?? hoveredProviderId : null;
+  const isAtRest = benchmarkPoint === null && selectedProviderId === null;
   const performanceCohort = useMemo(() => (
     benchmarkPoint === null
       ? []
@@ -508,16 +610,18 @@ export function CodingAgentExplorer({
         Number(left.record.id === benchmarkPoint.record.id) - Number(right.record.id === benchmarkPoint.record.id)
       ));
     }
-    if (selectedProviderId === null) return [];
+    if (selectedProviderId === null) return selectRestingCodingAgentLabels(chart.labelPoints);
     return chart.labelPoints.filter((point) => point.record.providerId === selectedProviderId);
   }, [benchmarkPoint, chart.labelPoints, performanceCohort, selectedProviderId]);
-  const cohortLabelPlacements = useMemo(() => {
-    if (benchmarkPoint === null) return new Map<string, LabelPlacement>();
+  const visibleLabelPlacements = useMemo(() => {
+    if (visibleLabelPoints.length === 0) return new Map<string, LabelPlacement>();
     return layoutChartLabels(
-      performanceCohort.map((point) => ({
+      visibleLabelPoints.map((point, index) => ({
         height: 54,
         id: point.record.id,
-        priority: point.record.id === benchmarkPoint.record.id ? 2 : 1,
+        priority: point.record.id === benchmarkPoint?.record.id
+          ? visibleLabelPoints.length + 1
+          : visibleLabelPoints.length - index,
         width: modelLabelWidth(point.record.modelLabel),
         x: point.x,
         y: point.y,
@@ -525,7 +629,7 @@ export function CodingAgentExplorer({
       { bottom: plot.bottom - 6, left: plot.left + 6, right: plot.right - 6, top: plot.top + 6 },
       {
         offset: 18,
-        obstacles: performanceCohort.map((point) => ({
+        obstacles: visibleLabelPoints.map((point) => ({
           height: 24,
           width: 24,
           x: point.x - 12,
@@ -533,11 +637,11 @@ export function CodingAgentExplorer({
         })),
       },
     );
-  }, [benchmarkPoint, performanceCohort]);
+  }, [benchmarkPoint, visibleLabelPoints]);
   const visibleLabels = useMemo(() => visibleLabelPoints.map((point) => {
     const width = modelLabelWidth(point.record.modelLabel);
     const alignRight = point.x > plot.right - width - 20;
-    const placement = cohortLabelPlacements.get(point.record.id);
+    const placement = visibleLabelPlacements.get(point.record.id);
     return {
       height: 54,
       point,
@@ -545,7 +649,7 @@ export function CodingAgentExplorer({
       x: placement?.x ?? point.x + (alignRight ? -width - 14 : 14),
       y: placement?.y ?? point.y - 56,
     };
-  }), [cohortLabelPlacements, visibleLabelPoints]);
+  }), [visibleLabelPlacements, visibleLabelPoints]);
   const benchmarkBand = benchmarkPoint === null ? null : {
     bottom: Math.min(plot.bottom, chart.scaleY(benchmarkPoint.yValue - performanceTierRadius)),
     top: Math.max(plot.top, chart.scaleY(benchmarkPoint.yValue + performanceTierRadius)),
@@ -697,6 +801,7 @@ export function CodingAgentExplorer({
     setPinnedPointId(null);
     setPinnedProviderId(null);
     setHoveredPointId(null);
+    setPointerPointId(null);
     setHoveredProviderId(null);
   }
 
@@ -704,7 +809,11 @@ export function CodingAgentExplorer({
     if (providerId !== null && providerId !== pinnedProviderId) {
       captureChartEvent({
         name: "chart selection pinned",
-        properties: { provider_id: providerId, selection_kind: "provider" },
+        properties: {
+          chart_id: "coding_agents",
+          provider_id: providerId,
+          selection_kind: "provider",
+        },
       });
     }
     setPinnedProviderId(providerId);
@@ -734,6 +843,7 @@ export function CodingAgentExplorer({
     captureChartEvent({
       name: "chart shared",
       properties: {
+        chart_id: "coding_agents",
         share_method: "download_png",
         share_outcome: "downloaded",
         x_metric: xMetric,
@@ -759,6 +869,7 @@ export function CodingAgentExplorer({
       captureChartEvent({
         name: "chart shared",
         properties: {
+          chart_id: "coding_agents",
           share_method: "download_fallback",
           share_outcome: "downloaded",
           x_metric: xMetric,
@@ -775,6 +886,7 @@ export function CodingAgentExplorer({
       captureChartEvent({
         name: "chart shared",
         properties: {
+          chart_id: "coding_agents",
           share_method: "native_share",
           share_outcome: "completed",
           x_metric: xMetric,
@@ -789,6 +901,7 @@ export function CodingAgentExplorer({
         captureChartEvent({
           name: "chart shared",
           properties: {
+            chart_id: "coding_agents",
             share_method: "download_fallback",
             share_outcome: "downloaded",
             x_metric: xMetric,
@@ -811,6 +924,7 @@ export function CodingAgentExplorer({
     captureChartEvent({
       name: "chart shared",
       properties: {
+        chart_id: "coding_agents",
         share_method: "x",
         share_outcome: "initiated",
         x_metric: xMetric,
@@ -827,6 +941,7 @@ export function CodingAgentExplorer({
       captureChartEvent({
         name: "chart shared",
         properties: {
+          chart_id: "coding_agents",
           share_method: "copy_link",
           share_outcome: "completed",
           x_metric: xMetric,
@@ -846,21 +961,64 @@ export function CodingAgentExplorer({
     }
   }
 
+  function togglePinnedPoint(point: PlotPoint): void {
+    const nextPointId = pinnedPointId === point.record.id ? null : point.record.id;
+    if (nextPointId !== null) {
+      captureChartEvent({
+        name: "chart selection pinned",
+        properties: {
+          chart_id: "coding_agents",
+          provider_id: point.record.providerId,
+          selection_kind: "model",
+        },
+      });
+    }
+    setPinnedPointId(nextPointId);
+    setPinnedProviderId(null);
+  }
+
+  function pointForChartEvent(
+    event: Readonly<{ clientX: number; clientY: number; currentTarget: SVGSVGElement }>,
+  ): PlotPoint | null {
+    const location = chartPointerLocation(event);
+    if (location === null) return null;
+    const maximumDistance = svgUnitsForCssPixels(
+      chartPointerHitRadiusCss,
+      location.unitsPerCssPixel,
+    );
+    if (maximumDistance === null) return null;
+    const pointId = nearestCodingAgentPointId(
+      pointerPoints,
+      location.x,
+      location.y,
+      maximumDistance,
+    );
+    return pointId === null
+      ? null
+      : chart.points.find(point => point.record.id === pointId) ?? null;
+  }
+
+  function handleChartClick(event: ReactMouseEvent<SVGSVGElement>): void {
+    const point = pointForChartEvent(event);
+    if (point === null) return;
+    event.stopPropagation();
+    setKeyboardPointId(point.record.id);
+    togglePinnedPoint(point);
+  }
+
+  function handleChartPointerMove(event: ReactPointerEvent<SVGSVGElement>): void {
+    if (event.pointerType === "touch") return;
+    const point = pointForChartEvent(event);
+    if (point !== null) setHoveredProviderId(null);
+    setPointerPointId(point?.record.id ?? null);
+    setHoveredPointId(point?.record.id ?? null);
+  }
+
   function handlePointKeyDown(event: KeyboardEvent<SVGGElement>, index: number) {
     if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();
       const currentPoint = chart.points[index];
-      if (currentPoint !== undefined) {
-        const nextPointId = pinnedPointId === currentPoint.record.id ? null : currentPoint.record.id;
-        if (nextPointId !== null) {
-          captureChartEvent({
-            name: "chart selection pinned",
-            properties: { provider_id: currentPoint.record.providerId, selection_kind: "model" },
-          });
-        }
-        setPinnedPointId(nextPointId);
-        setPinnedProviderId(null);
-      }
+      if (currentPoint !== undefined) togglePinnedPoint(currentPoint);
       return;
     }
     if (!isPointNavigationKey(event.key)) return;
@@ -1009,7 +1167,10 @@ export function CodingAgentExplorer({
           label="Benchmark"
           onChange={(metric) => {
             if (metric !== yMetric) {
-              captureChartEvent({ name: "chart metric selected", properties: { axis: "y", metric } });
+              captureChartEvent({
+                name: "chart metric selected",
+                properties: { axis: "y", chart_id: "coding_agents", metric },
+              });
             }
             setYMetric(metric);
             clearSelection();
@@ -1025,13 +1186,20 @@ export function CodingAgentExplorer({
           label="Compare by"
           onChange={(metric) => {
             if (metric !== xMetric) {
-              captureChartEvent({ name: "chart metric selected", properties: { axis: "x", metric } });
+              captureChartEvent({
+                name: "chart metric selected",
+                properties: { axis: "x", chart_id: "coding_agents", metric },
+              });
             }
             setXMetric(metric);
             clearSelection();
           }}
           value={xMetric}
         />
+        <p className="chart-interaction-cue">
+          <span className="chart-interaction-cue__desktop">Hover or select a point for exact values</span>
+          <span className="chart-interaction-cue__touch">Tap points</span>
+        </p>
       </div>
 
       <div className={overflowClassName("chart-scroll-shell", chartOverflow)}>
@@ -1148,12 +1316,27 @@ export function CodingAgentExplorer({
         </div>
         <div className="chart-scroll" aria-label="Scrollable chart area" ref={chartScrollRef}>
           <div className="chart-canvas">
-          <svg aria-describedby={descriptionId} aria-label={accessibleTitle} className="benchmark-chart" ref={svgRef} role="group" viewBox={`0 0 ${chartWidth} ${chartHeight}`}>
+          <svg
+            aria-describedby={descriptionId}
+            aria-label={accessibleTitle}
+            className="benchmark-chart"
+            onClick={handleChartClick}
+            onPointerLeave={() => {
+              setPointerPointId(null);
+              setHoveredPointId(null);
+            }}
+            onPointerMove={handleChartPointerMove}
+            ref={svgRef}
+            role="group"
+            style={pointerPointId === null ? undefined : { cursor: "pointer" }}
+            viewBox={`0 0 ${chartWidth} ${chartHeight}`}
+          >
             <desc id={descriptionId}>{accessibleDescription}</desc>
 
             {chart.yTicks.map((tick) => (
-              <g className="chart-gridline" key={`y-${tick}`}>
+              <g className="chart-gridline chart-gridline-y" key={`y-${tick}`}>
                 <line x1={plot.left} x2={plot.right} y1={chart.scaleY(tick)} y2={chart.scaleY(tick)} />
+                <text textAnchor="end" x={plot.left - 12} y={chart.scaleY(tick) + 5}>{formatMetricValue(yMetric, tick)}</text>
               </g>
             ))}
             {chart.xTicks.map((tick) => (
@@ -1226,13 +1409,12 @@ export function CodingAgentExplorer({
               );
             })}
 
-            {benchmarkPoint !== null && (
-              <g aria-hidden="true" className="chart-label-leaders">
-                {performanceCohort.map((point) => {
-                  const placement = cohortLabelPlacements.get(point.record.id);
-                  if (placement === undefined) return null;
-                  const endX = Math.max(placement.x, Math.min(point.x, placement.x + placement.width));
-                  const endY = Math.max(placement.y, Math.min(point.y, placement.y + placement.height));
+            {visibleLabels.length > 0 && (
+              <g aria-hidden="true" className={`chart-label-leaders${isAtRest ? " is-resting" : ""}`}>
+                {visibleLabels.map((label) => {
+                  const { point } = label;
+                  const endX = Math.max(label.x, Math.min(point.x, label.x + label.width));
+                  const endY = Math.max(label.y, Math.min(point.y, label.y + label.height));
                   return (
                     <line
                       className="chart-label-leader"
@@ -1265,17 +1447,11 @@ export function CodingAgentExplorer({
                   onBlur={() => {
                     setHoveredPointId((current) => current === point.record.id ? null : current);
                   }}
-                  onClick={() => {
+                  onClick={event => {
+                    if (!isAssistiveSvgClick(event.detail)) return;
+                    event.stopPropagation();
                     setKeyboardPointId(point.record.id);
-                    const nextPointId = pinnedPointId === point.record.id ? null : point.record.id;
-                    if (nextPointId !== null) {
-                      captureChartEvent({
-                        name: "chart selection pinned",
-                        properties: { provider_id: point.record.providerId, selection_kind: "model" },
-                      });
-                    }
-                    setPinnedPointId(nextPointId);
-                    setPinnedProviderId(null);
+                    togglePinnedPoint(point);
                   }}
                   onFocus={() => {
                     setKeyboardPointId(point.record.id);
@@ -1283,17 +1459,12 @@ export function CodingAgentExplorer({
                     setHoveredPointId(point.record.id);
                   }}
                   onKeyDown={(event) => handlePointKeyDown(event, index)}
-                  onPointerEnter={() => {
-                    setHoveredProviderId(null);
-                    setHoveredPointId(point.record.id);
-                  }}
-                  onPointerLeave={() => setHoveredPointId((current) => current === point.record.id ? null : current)}
                   ref={(node) => {
                     if (node === null) pointRefs.current.delete(point.record.id);
                     else pointRefs.current.set(point.record.id, node);
                   }}
                   role="button"
-                  style={{ color: recordColor(point.record) }}
+                  style={{ color: recordColor(point.record), pointerEvents: "none" }}
                   tabIndex={point.record.id === focusablePointId ? 0 : -1}
                   transform={`translate(${point.x} ${point.y})`}
                 >
@@ -1309,7 +1480,7 @@ export function CodingAgentExplorer({
               return (
                 <g
                   aria-hidden="true"
-                  className="chart-model-label is-highlighted"
+                  className={`chart-model-label is-highlighted${isAtRest ? " is-resting" : ""}`}
                   key={`label-${point.record.id}`}
                   style={{ color: recordColor(point.record) }}
                   transform={`translate(${label.x} ${label.y})`}
@@ -1333,7 +1504,11 @@ export function CodingAgentExplorer({
           if (nextRecord !== undefined) {
             captureChartEvent({
               name: "chart selection pinned",
-              properties: { provider_id: nextRecord.providerId, selection_kind: "model" },
+              properties: {
+                chart_id: "coding_agents",
+                provider_id: nextRecord.providerId,
+                selection_kind: "model",
+              },
             });
           }
           setPinnedPointId(nextPointId);

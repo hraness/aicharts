@@ -105,14 +105,17 @@ async function invalidSnapshotFixture(
   const root = await mkdtemp(path.join(tmpdir(), "aicharts-publisher-snapshot-test-"));
   temporaryRoots.push(root);
   const requiredPaths = [
+    "data/gpt-subsidy-attribution-measurement.json",
     "data/gpt-subsidy-measurement.json",
     "data/gpt-subsidy-pricing.json",
+    "lib/gpt-subsidy-attribution-manifest.ts",
     "lib/gpt-subsidy-data.ts",
     "lib/gpt-subsidy-manifests.ts",
     "lib/result.ts",
     "lib/schema.ts",
     "scripts/aicharts_gpt_subsidy_ledger.rs",
     "scripts/check-gpt-subsidy-data.ts",
+    "scripts/enrich-gpt-subsidy-attribution.ts",
     "scripts/update-gpt-subsidy.ts",
   ] as const;
   for (const relativePath of requiredPaths) {

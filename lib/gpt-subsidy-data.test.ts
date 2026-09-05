@@ -2,12 +2,14 @@ import { describe, expect, test } from "bun:test";
 
 import {
   calculateApiEquivalentUsd,
-  calculateOnePlanUpperBoundMultiple,
-  formatOnePlanUpperBoundMultiple,
+  calculateObservedProPlanUpperBoundMultiple,
+  formatObservedProPlanUpperBoundMultiple,
+  formatSampledCoverageLowerBound,
   formatSubsidyRateUsd,
   formatSubsidyTokens,
   formatSubsidyUsd,
   GPT_SUBSIDY_DESCRIPTION,
+  GPT_SUBSIDY_SUB_ONE_PERCENT_COVERAGE_SENTINEL,
   GPT_SUBSIDY_TITLE,
   latestGptSubsidyObservation,
   parseGptSubsidySnapshot,
@@ -114,6 +116,32 @@ export const validGptSubsidySnapshot = {
     tokens: summaryTokens,
     apiEquivalentUsd: summaryUsd,
   },
+  accountPlanComparison: {
+    periodStartedAt: "2026-07-25T00:00:00.000Z",
+    periodEndedAt: "2026-08-24T23:59:59.999Z",
+    accountAttribution: {
+      status: "unavailable",
+      distinctObservedAccounts: null,
+      coverage: 0,
+    },
+    observedProPlanComparison: {
+      status: "unavailable",
+      distinctVerifiedProAccountsLowerBound: null,
+      normalizedPlanValueUsd: null,
+      apiEquivalentMultipleUpperBound: null,
+    },
+    firstSampledAt: null,
+    measurement: {
+      name: "AI Charts GPT subsidy account-attribution manifest",
+      schemaVersion: 1,
+      kind: "aicharts-gpt-subsidy-account-attribution",
+      revision: "2026-09-04.2",
+      sha256: "c".repeat(64),
+      frozenAt: "2026-09-04T00:00:00Z",
+      sourceUrl:
+        "https://github.com/hraness/aicharts/blob/main/data/gpt-subsidy-attribution-measurement.json",
+    },
+  },
   methodology: {
     deduplication: "tokscale-global-event-identity",
     measurement: {
@@ -134,11 +162,11 @@ export const validGptSubsidySnapshot = {
 } as const;
 
 describe("GPT subsidy snapshot", () => {
-  test("states the local-log and switched-account scope in search and social copy", () => {
+  test("states the local-log and sampled-account scope in search and social copy", () => {
     expect(GPT_SUBSIDY_DESCRIPTION).toContain("all available local Codex logs");
     expect(GPT_SUBSIDY_DESCRIPTION).toContain("one machine");
-    expect(GPT_SUBSIDY_DESCRIPTION).toContain("switched accounts");
-    expect(GPT_SUBSIDY_DESCRIPTION).toContain("account count is unavailable");
+    expect(GPT_SUBSIDY_DESCRIPTION).toContain("sampled");
+    expect(GPT_SUBSIDY_DESCRIPTION).toContain("provider-reported Pro plan status");
   });
 
   test("parses adjacent settled history and returns its latest point", () => {
@@ -157,34 +185,43 @@ describe("GPT subsidy snapshot", () => {
     }, pricing.referenceModel)).toBe(10);
   });
 
-  test("computes and formats a one-plan comparison as an explicit upper bound", () => {
-    const comparison = calculateOnePlanUpperBoundMultiple(
+  test("computes and formats a verified-account comparison as an explicit upper bound", () => {
+    const comparison = calculateObservedProPlanUpperBoundMultiple(
       62_352.961639570145,
       200,
+      4,
     );
 
-    expect(comparison).toBeCloseTo(311.7648081978507);
-    expect(formatOnePlanUpperBoundMultiple(comparison)).toBe("≤312×");
-    expect(() => calculateOnePlanUpperBoundMultiple(-1, 200)).toThrow(RangeError);
-    expect(() => calculateOnePlanUpperBoundMultiple(1, 0)).toThrow(RangeError);
+    expect(comparison).toBeCloseTo(77.9412020495);
+    expect(formatObservedProPlanUpperBoundMultiple(comparison)).toBe("≤78×");
+    expect(() => calculateObservedProPlanUpperBoundMultiple(-1, 200, 4))
+      .toThrow(RangeError);
+    expect(() => calculateObservedProPlanUpperBoundMultiple(1, 0, 4))
+      .toThrow(RangeError);
+    expect(() => calculateObservedProPlanUpperBoundMultiple(1, 200, 0))
+      .toThrow(RangeError);
   });
 
-  test("property: one-plan comparisons are finite, nonnegative, and scale linearly", () => {
+  test("property: observed-plan comparisons are finite, nonnegative, and scale linearly", () => {
     assertProperty(fc.property(
       fc.double({ min: 0, max: 1_000_000_000, noNaN: true }),
       fc.double({ min: 0.01, max: 1_000_000, noNaN: true }),
+      fc.integer({ min: 1, max: 100 }),
       fc.double({ min: 0.01, max: 100, noNaN: true }),
-      (apiEquivalentUsd, planPriceUsd, scale) => {
-        const comparison = calculateOnePlanUpperBoundMultiple(
+      (apiEquivalentUsd, planPriceUsd, accountCount, scale) => {
+        const comparison = calculateObservedProPlanUpperBoundMultiple(
           apiEquivalentUsd,
           planPriceUsd,
+          accountCount,
         );
-        const scaled = calculateOnePlanUpperBoundMultiple(
+        const scaled = calculateObservedProPlanUpperBoundMultiple(
           apiEquivalentUsd * scale,
           planPriceUsd,
+          accountCount,
         );
         const displayedUpperBound = Number(
-          formatOnePlanUpperBoundMultiple(comparison).slice(1, -1).replaceAll(",", ""),
+          formatObservedProPlanUpperBoundMultiple(comparison)
+            .slice(1, -1).replaceAll(",", ""),
         );
 
         expect(Number.isFinite(comparison)).toBeTrue();
@@ -206,18 +243,69 @@ describe("GPT subsidy snapshot", () => {
         coverage: 0.5,
       },
       {
-        status: "complete",
+        status: "partial",
         distinctObservedAccounts: 3,
-        coverage: 1,
+        coverage: 0.99,
+      },
+      {
+        status: "partial",
+        distinctObservedAccounts: 1,
+        coverage: GPT_SUBSIDY_SUB_ONE_PERCENT_COVERAGE_SENTINEL,
       },
     ] as const) {
       const parsed = parseGptSubsidySnapshot({
         ...validGptSubsidySnapshot,
+        accountPlanComparison: {
+          ...validGptSubsidySnapshot.accountPlanComparison,
+          firstSampledAt: "2026-08-25T16:00:00.000Z",
+        },
         observations: validGptSubsidySnapshot.observations.map((point, index) =>
           index === 0 ? { ...point, accountAttribution } : point),
       });
       expect(parsed.ok).toBeTrue();
     }
+
+    expect(parseGptSubsidySnapshot({
+      ...validGptSubsidySnapshot,
+      accountPlanComparison: {
+        ...validGptSubsidySnapshot.accountPlanComparison,
+        firstSampledAt: "2026-08-25T16:00:00.000Z",
+      },
+    }).ok).toBeFalse();
+
+    expect(parseGptSubsidySnapshot({
+      ...validGptSubsidySnapshot,
+      observations: validGptSubsidySnapshot.observations.map((point, index) =>
+        index === 0
+          ? {
+            ...point,
+            accountAttribution: {
+              status: "partial",
+              distinctObservedAccounts: 1,
+              coverage: 0.25,
+            },
+          }
+          : point),
+    }).ok).toBeFalse();
+
+    expect(parseGptSubsidySnapshot({
+      ...validGptSubsidySnapshot,
+      accountPlanComparison: {
+        ...validGptSubsidySnapshot.accountPlanComparison,
+        firstSampledAt: "2026-08-25T16:00:00.000Z",
+      },
+      observations: validGptSubsidySnapshot.observations.map((point, index) =>
+        index === 0
+          ? {
+            ...point,
+            accountAttribution: {
+              status: "complete",
+              distinctObservedAccounts: 1,
+              coverage: 1,
+            },
+          }
+          : point),
+    }).ok).toBeFalse();
 
     expect(parseGptSubsidySnapshot({
       ...validGptSubsidySnapshot,
@@ -238,6 +326,80 @@ describe("GPT subsidy snapshot", () => {
       ...validGptSubsidySnapshot,
       observations: validGptSubsidySnapshot.observations.map((point, index) =>
         index === 0 ? { ...point, subscriptionAdjustedMultiple: 307.1 } : point),
+    }).ok).toBeFalse();
+  });
+
+  test("formats only privacy-quantized sampled coverage", () => {
+    expect(formatSampledCoverageLowerBound(
+      GPT_SUBSIDY_SUB_ONE_PERCENT_COVERAGE_SENTINEL,
+    )).toBe("<1%");
+    expect(formatSampledCoverageLowerBound(0.42)).toBe("at least 42%");
+    expect(() => formatSampledCoverageLowerBound(0.421)).toThrow(
+      "whole-percentage lower bound",
+    );
+    expect(() => formatSampledCoverageLowerBound(1)).toThrow(
+      "whole-percentage lower bound",
+    );
+  });
+
+  test("binds the summary upper bound to sampled coverage and verified Pro accounts", () => {
+    const verifiedCount = 3;
+    const normalizedPlanValueUsd = verifiedCount
+      * validGptSubsidySnapshot.plan.monthlyPriceUsd;
+    const sampled = {
+      ...validGptSubsidySnapshot,
+      accountPlanComparison: {
+        ...validGptSubsidySnapshot.accountPlanComparison,
+        accountAttribution: {
+          status: "partial",
+          distinctObservedAccounts: 4,
+          coverage: 0.62,
+        },
+        observedProPlanComparison: {
+          status: "sampled",
+          distinctVerifiedProAccountsLowerBound: verifiedCount,
+          normalizedPlanValueUsd,
+          apiEquivalentMultipleUpperBound:
+            validGptSubsidySnapshot.periodSummary.apiEquivalentUsd
+            / normalizedPlanValueUsd,
+        },
+        firstSampledAt: "2026-08-25T16:00:00.000Z",
+      },
+    } as const;
+    expect(parseGptSubsidySnapshot(sampled).ok).toBeTrue();
+    expect(parseGptSubsidySnapshot({
+      ...sampled,
+      accountPlanComparison: {
+        ...sampled.accountPlanComparison,
+        observedProPlanComparison: {
+          ...sampled.accountPlanComparison.observedProPlanComparison,
+          distinctVerifiedProAccountsLowerBound: 5,
+        },
+      },
+    }).ok).toBeFalse();
+    expect(parseGptSubsidySnapshot({
+      ...sampled,
+      accountPlanComparison: {
+        ...sampled.accountPlanComparison,
+        observedProPlanComparison: {
+          ...sampled.accountPlanComparison.observedProPlanComparison,
+          apiEquivalentMultipleUpperBound: 1,
+        },
+      },
+    }).ok).toBeFalse();
+    expect(parseGptSubsidySnapshot({
+      ...sampled,
+      accountPlanComparison: {
+        ...sampled.accountPlanComparison,
+        periodStartedAt: "2026-07-26T00:00:00.000Z",
+      },
+    }).ok).toBeFalse();
+    expect(parseGptSubsidySnapshot({
+      ...sampled,
+      accountPlanComparison: {
+        ...sampled.accountPlanComparison,
+        firstSampledAt: "2026-09-06T00:00:00.000Z",
+      },
     }).ok).toBeFalse();
   });
 

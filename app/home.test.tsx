@@ -83,7 +83,7 @@ describe("homepage canonical content", () => {
     }
   });
 
-  test("mounts the benchmark portfolio before separate model and coding-agent source views", async () => {
+  test("places the model and coding-agent charts before the benchmark guide", async () => {
     const source = await Bun.file(new URL("./page.tsx", import.meta.url)).text();
     const markup = renderToStaticMarkup(createElement(Home));
     const portfolioAt = source.indexOf("<HomeBenchmarkPortfolio");
@@ -94,9 +94,9 @@ describe("homepage canonical content", () => {
     const loadingAt = source.indexOf("Loading chart");
 
     expect(portfolioAt).toBeGreaterThan(-1);
-    expect(intelligenceAt).toBeGreaterThan(portfolioAt);
-    expect(explorerAt).toBeLessThan(portfolioAt);
-    expect(resourcesAt).toBeGreaterThan(intelligenceAt);
+    expect(intelligenceAt).toBeGreaterThan(explorerAt);
+    expect(portfolioAt).toBeGreaterThan(intelligenceAt);
+    expect(resourcesAt).toBeGreaterThan(portfolioAt);
     expect(explorerEndAt).toBeGreaterThan(resourcesAt);
     expect(loadingAt).toBe(-1);
     expect(source).toContain("heading: site.domain");
@@ -118,17 +118,18 @@ describe("homepage canonical content", () => {
     expect(headerAt).toBeGreaterThan(-1);
     expect(mainAt).toBeGreaterThan(headerAt);
     expect(orientationAt).toBeGreaterThan(mainAt);
-    expect(renderedPortfolioAt).toBeGreaterThan(orientationAt);
-    expect(renderedIntelligenceAt).toBeGreaterThan(renderedPortfolioAt);
+    expect(renderedIntelligenceAt).toBeGreaterThan(orientationAt);
     expect(chartFamilyAt).toBeGreaterThan(renderedIntelligenceAt);
     expect(chartAt).toBeGreaterThan(chartFamilyAt);
-    expect(renderedResourcesAt).toBeGreaterThan(chartAt);
+    expect(renderedPortfolioAt).toBeGreaterThan(chartAt);
+    expect(renderedResourcesAt).toBeGreaterThan(renderedPortfolioAt);
     expect(mainEndAt).toBeGreaterThan(renderedResourcesAt);
     expect(markup).toContain(
       '<h1 id="chart-orientation-title">AI model and agent comparison charts</h1>',
     );
     expect(markup).toContain("A five-role benchmark portfolio covers terminal engineering");
     expect(markup).toContain("Five benchmark roles, one coding standard");
+    expect(markup).toContain("Comparison protocol and supplemental evidence");
     expect(markup).toContain("Terminal-Bench 4.0.0 snapshot");
     expect(markup).toContain("Terminal-Bench-Science 0.1.0 snapshot");
     expect(markup).toContain("Artificial Analysis Intelligence Index v4.1.1");

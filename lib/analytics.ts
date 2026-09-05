@@ -3,6 +3,7 @@
 import posthog from "posthog-js";
 
 import type { XMetric, YMetric } from "./chart-math";
+import type { IntelligenceEfficiencyMetric } from "./intelligence-efficiency";
 import {
   type AnalyticsContentId,
   type AnalyticsPageKind,
@@ -89,15 +90,29 @@ export type ModelCardsFilteredProperties =
     result_count: number;
   }>;
 
+export const CHART_ANALYTICS_IDS = [
+  "coding_agents",
+  "intelligence_efficiency",
+] as const;
+
+export type ChartAnalyticsId = typeof CHART_ANALYTICS_IDS[number];
+
 export interface AnalyticsEventMap {
   readonly "chart metric selected":
-    | Readonly<{ axis: "x"; metric: XMetric }>
-    | Readonly<{ axis: "y"; metric: YMetric }>;
+    | Readonly<{ axis: "x"; chart_id: "coding_agents"; metric: XMetric }>
+    | Readonly<{ axis: "y"; chart_id: "coding_agents"; metric: YMetric }>
+    | Readonly<{
+        axis: "x";
+        chart_id: "intelligence_efficiency";
+        metric: IntelligenceEfficiencyMetric;
+      }>;
   readonly "chart selection pinned": Readonly<{
+    chart_id: ChartAnalyticsId;
     provider_id: string;
     selection_kind: "model" | "provider";
   }>;
   readonly "chart shared": Readonly<{
+    chart_id: "coding_agents";
     share_method: "copy_link" | "download_fallback" | "download_png" | "native_share" | "x";
     share_outcome: "completed" | "downloaded" | "initiated";
     x_metric: XMetric;
@@ -145,8 +160,13 @@ export type ContentAnalyticsEvent = Extract<
 >;
 
 const allowedSurfaceSet = new Set<string>(ANALYTICS_SURFACES);
+const chartAnalyticsIds = new Set<string>(CHART_ANALYTICS_IDS);
 const xMetrics = new Set<string>(["costUsd", "durationMinutes", "totalTokens"]);
 const yMetrics = new Set<string>(["aaIndex", "deepSwe", "terminalBench", "sweAtlas"]);
+const intelligenceEfficiencyMetrics = new Set<string>([
+  "costUsdPerTask",
+  "outputTokensPerTask",
+]);
 const chartShareMethods = new Set<string>([
   "copy_link",
   "download_fallback",
@@ -464,16 +484,34 @@ function controlledEventProperties(event: AnalyticsEvent): Record<string, unknow
     case "chart metric selected": {
       const properties = event.properties;
       if (
-        (properties.axis === "x" && xMetrics.has(properties.metric))
-        || (properties.axis === "y" && yMetrics.has(properties.metric))
-      ) return { axis: properties.axis, metric: properties.metric };
+        (
+          properties.chart_id === "coding_agents"
+          && (
+          (properties.axis === "x" && xMetrics.has(properties.metric))
+          || (properties.axis === "y" && yMetrics.has(properties.metric))
+          )
+        )
+        || (
+          properties.chart_id === "intelligence_efficiency"
+          && properties.axis === "x"
+          && intelligenceEfficiencyMetrics.has(properties.metric)
+        )
+      ) {
+        return {
+          axis: properties.axis,
+          chart_id: properties.chart_id,
+          metric: properties.metric,
+        };
+      }
       return null;
     }
     case "chart selection pinned": {
       const properties = event.properties;
-      return isAnalyticsRouteSegment(properties.provider_id)
+      return chartAnalyticsIds.has(properties.chart_id)
+        && isAnalyticsRouteSegment(properties.provider_id)
         && (properties.selection_kind === "model" || properties.selection_kind === "provider")
         ? {
+            chart_id: properties.chart_id,
             provider_id: properties.provider_id,
             selection_kind: properties.selection_kind,
           }
@@ -481,11 +519,13 @@ function controlledEventProperties(event: AnalyticsEvent): Record<string, unknow
     }
     case "chart shared": {
       const properties = event.properties;
-      return chartShareMethods.has(properties.share_method)
+      return properties.chart_id === "coding_agents"
+        && chartShareMethods.has(properties.share_method)
         && chartShareOutcomes.has(properties.share_outcome)
         && xMetrics.has(properties.x_metric)
         && yMetrics.has(properties.y_metric)
         ? {
+            chart_id: properties.chart_id,
             share_method: properties.share_method,
             share_outcome: properties.share_outcome,
             x_metric: properties.x_metric,
@@ -579,7 +619,7 @@ export function analyticsEventPayload(event: AnalyticsEvent): Readonly<{
     name: event.name,
     properties: {
       ...properties,
-      event_schema_version: 2,
+      event_schema_version: 3,
       site_id: "aicharts",
       $process_person_profile: false,
     },
