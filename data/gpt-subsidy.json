@@ -1,12 +1,36 @@
 {
-  "schemaVersion": 2,
   "generatedAt": "2026-09-05T00:17:50.475Z",
+  "plan": {
+    "monthlyPriceUsd": 200,
+    "name": "ChatGPT Pro",
+    "advertisedUsageMultiplier": 20,
+    "observedAt": "2026-08-25T00:00:00Z",
+    "sourceUrl": "https://help.openai.com/en/articles/9793128"
+  },
+  "periodSummary": {
+    "startedAt": "2026-08-05T00:00:00.000Z",
+    "endedAt": "2026-09-04T23:59:59.999Z",
+    "apiEquivalentUsd": 72966.89382349017,
+    "days": 31,
+    "tokens": {
+      "uncachedInput": 4964203546,
+      "cachedInput": 146050293120,
+      "output": 325430401,
+      "total": 151339927067
+    }
+  },
   "observations": [
     {
       "id": "trailing-7d-2026-07-25",
-      "observedAt": "2026-07-25T23:59:59.999Z",
       "periodStartedAt": "2026-07-19T00:00:00.000Z",
       "periodEndsAt": "2026-07-25T23:59:59.999Z",
+      "accountAttribution": {
+        "status": "unavailable",
+        "distinctObservedAccounts": null,
+        "coverage": 0
+      },
+      "subscriptionAdjustedMultiple": null,
+      "observedAt": "2026-07-25T23:59:59.999Z",
       "tokens": {
         "uncachedInput": 1018408243,
         "cachedInput": 33284195200,
@@ -14,19 +38,19 @@
         "total": 34397408631
       },
       "trailingSevenDayApiEquivalentUsd": 19245.221075149995,
+      "status": "settled"
+    },
+    {
+      "id": "trailing-7d-2026-07-26",
+      "periodStartedAt": "2026-07-20T00:00:00.000Z",
+      "periodEndsAt": "2026-07-26T23:59:59.999Z",
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
         "coverage": 0
       },
       "subscriptionAdjustedMultiple": null,
-      "status": "settled"
-    },
-    {
-      "id": "trailing-7d-2026-07-26",
       "observedAt": "2026-07-26T23:59:59.999Z",
-      "periodStartedAt": "2026-07-20T00:00:00.000Z",
-      "periodEndsAt": "2026-07-26T23:59:59.999Z",
       "tokens": {
         "uncachedInput": 1014397759,
         "cachedInput": 33885757824,
@@ -34,19 +58,19 @@
         "total": 34992503892
       },
       "trailingSevenDayApiEquivalentUsd": 19424.76989354998,
+      "status": "settled"
+    },
+    {
+      "id": "trailing-7d-2026-07-27",
+      "periodStartedAt": "2026-07-21T00:00:00.000Z",
+      "periodEndsAt": "2026-07-27T23:59:59.999Z",
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
         "coverage": 0
       },
       "subscriptionAdjustedMultiple": null,
-      "status": "settled"
-    },
-    {
-      "id": "trailing-7d-2026-07-27",
       "observedAt": "2026-07-27T23:59:59.999Z",
-      "periodStartedAt": "2026-07-21T00:00:00.000Z",
-      "periodEndsAt": "2026-07-27T23:59:59.999Z",
       "tokens": {
         "uncachedInput": 955892996,
         "cachedInput": 32287043456,
@@ -54,19 +78,19 @@
         "total": 33329762512
       },
       "trailingSevenDayApiEquivalentUsd": 18440.820114349972,
+      "status": "settled"
+    },
+    {
+      "id": "trailing-7d-2026-07-28",
+      "periodStartedAt": "2026-07-22T00:00:00.000Z",
+      "periodEndsAt": "2026-07-28T23:59:59.999Z",
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
         "coverage": 0
       },
       "subscriptionAdjustedMultiple": null,
-      "status": "settled"
-    },
-    {
-      "id": "trailing-7d-2026-07-28",
       "observedAt": "2026-07-28T23:59:59.999Z",
-      "periodStartedAt": "2026-07-22T00:00:00.000Z",
-      "periodEndsAt": "2026-07-28T23:59:59.999Z",
       "tokens": {
         "uncachedInput": 821254841,
         "cachedInput": 28448210816,
@@ -74,19 +98,19 @@
         "total": 29344730794
       },
       "trailingSevenDayApiEquivalentUsd": 16136.106513549994,
+      "status": "settled"
+    },
+    {
+      "id": "trailing-7d-2026-07-29",
+      "periodStartedAt": "2026-07-23T00:00:00.000Z",
+      "periodEndsAt": "2026-07-29T23:59:59.999Z",
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
         "coverage": 0
       },
       "subscriptionAdjustedMultiple": null,
-      "status": "settled"
-    },
-    {
-      "id": "trailing-7d-2026-07-29",
       "observedAt": "2026-07-29T23:59:59.999Z",
-      "periodStartedAt": "2026-07-23T00:00:00.000Z",
-      "periodEndsAt": "2026-07-29T23:59:59.999Z",
       "tokens": {
         "uncachedInput": 677214050,
         "cachedInput": 24375533184,
@@ -94,19 +118,19 @@
         "total": 25116925718
       },
       "trailingSevenDayApiEquivalentUsd": 13708.380795070008,
+      "status": "settled"
+    },
+    {
+      "id": "trailing-7d-2026-07-30",
+      "periodStartedAt": "2026-07-24T00:00:00.000Z",
+      "periodEndsAt": "2026-07-30T23:59:59.999Z",
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
         "coverage": 0
       },
       "subscriptionAdjustedMultiple": null,
-      "status": "settled"
-    },
-    {
-      "id": "trailing-7d-2026-07-30",
       "observedAt": "2026-07-30T23:59:59.999Z",
-      "periodStartedAt": "2026-07-24T00:00:00.000Z",
-      "periodEndsAt": "2026-07-30T23:59:59.999Z",
       "tokens": {
         "uncachedInput": 624487919,
         "cachedInput": 23585439744,
@@ -114,19 +138,19 @@
         "total": 24271558141
       },
       "trailingSevenDayApiEquivalentUsd": 13143.779998190013,
+      "status": "settled"
+    },
+    {
+      "id": "trailing-7d-2026-07-31",
+      "periodStartedAt": "2026-07-25T00:00:00.000Z",
+      "periodEndsAt": "2026-07-31T23:59:59.999Z",
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
         "coverage": 0
       },
       "subscriptionAdjustedMultiple": null,
-      "status": "settled"
-    },
-    {
-      "id": "trailing-7d-2026-07-31",
       "observedAt": "2026-07-31T23:59:59.999Z",
-      "periodStartedAt": "2026-07-25T00:00:00.000Z",
-      "periodEndsAt": "2026-07-31T23:59:59.999Z",
       "tokens": {
         "uncachedInput": 516362299,
         "cachedInput": 20538405632,
@@ -134,19 +158,19 @@
         "total": 21105966835
       },
       "trailingSevenDayApiEquivalentUsd": 11280.145201800024,
+      "status": "settled"
+    },
+    {
+      "id": "trailing-7d-2026-08-01",
+      "periodStartedAt": "2026-07-26T00:00:00.000Z",
+      "periodEndsAt": "2026-08-01T23:59:59.999Z",
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
         "coverage": 0
       },
       "subscriptionAdjustedMultiple": null,
-      "status": "settled"
-    },
-    {
-      "id": "trailing-7d-2026-08-01",
       "observedAt": "2026-08-01T23:59:59.999Z",
-      "periodStartedAt": "2026-07-26T00:00:00.000Z",
-      "periodEndsAt": "2026-08-01T23:59:59.999Z",
       "tokens": {
         "uncachedInput": 409261475,
         "cachedInput": 16658967040,
@@ -154,19 +178,19 @@
         "total": 17106661655
       },
       "trailingSevenDayApiEquivalentUsd": 9010.22437664001,
+      "status": "settled"
+    },
+    {
+      "id": "trailing-7d-2026-08-02",
+      "periodStartedAt": "2026-07-27T00:00:00.000Z",
+      "periodEndsAt": "2026-08-02T23:59:59.999Z",
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
         "coverage": 0
       },
       "subscriptionAdjustedMultiple": null,
-      "status": "settled"
-    },
-    {
-      "id": "trailing-7d-2026-08-02",
       "observedAt": "2026-08-02T23:59:59.999Z",
-      "periodStartedAt": "2026-07-27T00:00:00.000Z",
-      "periodEndsAt": "2026-08-02T23:59:59.999Z",
       "tokens": {
         "uncachedInput": 369928407,
         "cachedInput": 15099273728,
@@ -174,19 +198,19 @@
         "total": 15503473993
       },
       "trailingSevenDayApiEquivalentUsd": 8113.92786364002,
+      "status": "settled"
+    },
+    {
+      "id": "trailing-7d-2026-08-03",
+      "periodStartedAt": "2026-07-28T00:00:00.000Z",
+      "periodEndsAt": "2026-08-03T23:59:59.999Z",
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
         "coverage": 0
       },
       "subscriptionAdjustedMultiple": null,
-      "status": "settled"
-    },
-    {
-      "id": "trailing-7d-2026-08-03",
       "observedAt": "2026-08-03T23:59:59.999Z",
-      "periodStartedAt": "2026-07-28T00:00:00.000Z",
-      "periodEndsAt": "2026-08-03T23:59:59.999Z",
       "tokens": {
         "uncachedInput": 446116303,
         "cachedInput": 17596695552,
@@ -194,19 +218,19 @@
         "total": 18083444911
       },
       "trailingSevenDayApiEquivalentUsd": 9502.581736120026,
+      "status": "settled"
+    },
+    {
+      "id": "trailing-7d-2026-08-04",
+      "periodStartedAt": "2026-07-29T00:00:00.000Z",
+      "periodEndsAt": "2026-08-04T23:59:59.999Z",
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
         "coverage": 0
       },
       "subscriptionAdjustedMultiple": null,
-      "status": "settled"
-    },
-    {
-      "id": "trailing-7d-2026-08-04",
       "observedAt": "2026-08-04T23:59:59.999Z",
-      "periodStartedAt": "2026-07-29T00:00:00.000Z",
-      "periodEndsAt": "2026-08-04T23:59:59.999Z",
       "tokens": {
         "uncachedInput": 498840301,
         "cachedInput": 19625710848,
@@ -214,19 +238,19 @@
         "total": 20169592239
       },
       "trailingSevenDayApiEquivalentUsd": 10612.250998760011,
+      "status": "settled"
+    },
+    {
+      "id": "trailing-7d-2026-08-05",
+      "periodStartedAt": "2026-07-30T00:00:00.000Z",
+      "periodEndsAt": "2026-08-05T23:59:59.999Z",
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
         "coverage": 0
       },
       "subscriptionAdjustedMultiple": null,
-      "status": "settled"
-    },
-    {
-      "id": "trailing-7d-2026-08-05",
       "observedAt": "2026-08-05T23:59:59.999Z",
-      "periodStartedAt": "2026-07-30T00:00:00.000Z",
-      "periodEndsAt": "2026-08-05T23:59:59.999Z",
       "tokens": {
         "uncachedInput": 627737823,
         "cachedInput": 24668585728,
@@ -234,19 +258,19 @@
         "total": 25351417495
       },
       "trailingSevenDayApiEquivalentUsd": 13231.958998000016,
+      "status": "settled"
+    },
+    {
+      "id": "trailing-7d-2026-08-06",
+      "periodStartedAt": "2026-07-31T00:00:00.000Z",
+      "periodEndsAt": "2026-08-06T23:59:59.999Z",
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
         "coverage": 0
       },
       "subscriptionAdjustedMultiple": null,
-      "status": "settled"
-    },
-    {
-      "id": "trailing-7d-2026-08-06",
       "observedAt": "2026-08-06T23:59:59.999Z",
-      "periodStartedAt": "2026-07-31T00:00:00.000Z",
-      "periodEndsAt": "2026-08-06T23:59:59.999Z",
       "tokens": {
         "uncachedInput": 702816320,
         "cachedInput": 27225752576,
@@ -254,19 +278,19 @@
         "total": 27986923647
       },
       "trailingSevenDayApiEquivalentUsd": 14298.204000600006,
+      "status": "settled"
+    },
+    {
+      "id": "trailing-7d-2026-08-07",
+      "periodStartedAt": "2026-08-01T00:00:00.000Z",
+      "periodEndsAt": "2026-08-07T23:59:59.999Z",
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
         "coverage": 0
       },
       "subscriptionAdjustedMultiple": null,
-      "status": "settled"
-    },
-    {
-      "id": "trailing-7d-2026-08-07",
       "observedAt": "2026-08-07T23:59:59.999Z",
-      "periodStartedAt": "2026-08-01T00:00:00.000Z",
-      "periodEndsAt": "2026-08-07T23:59:59.999Z",
       "tokens": {
         "uncachedInput": 713682457,
         "cachedInput": 28335524608,
@@ -274,19 +298,19 @@
         "total": 29107400446
       },
       "trailingSevenDayApiEquivalentUsd": 14739.337926080005,
+      "status": "settled"
+    },
+    {
+      "id": "trailing-7d-2026-08-08",
+      "periodStartedAt": "2026-08-02T00:00:00.000Z",
+      "periodEndsAt": "2026-08-08T23:59:59.999Z",
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
         "coverage": 0
       },
       "subscriptionAdjustedMultiple": null,
-      "status": "settled"
-    },
-    {
-      "id": "trailing-7d-2026-08-08",
       "observedAt": "2026-08-08T23:59:59.999Z",
-      "periodStartedAt": "2026-08-02T00:00:00.000Z",
-      "periodEndsAt": "2026-08-08T23:59:59.999Z",
       "tokens": {
         "uncachedInput": 682333514,
         "cachedInput": 27586674304,
@@ -294,19 +318,19 @@
         "total": 28324240459
       },
       "trailingSevenDayApiEquivalentUsd": 14269.633971599995,
+      "status": "settled"
+    },
+    {
+      "id": "trailing-7d-2026-08-09",
+      "periodStartedAt": "2026-08-03T00:00:00.000Z",
+      "periodEndsAt": "2026-08-09T23:59:59.999Z",
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
         "coverage": 0
       },
       "subscriptionAdjustedMultiple": null,
-      "status": "settled"
-    },
-    {
-      "id": "trailing-7d-2026-08-09",
       "observedAt": "2026-08-09T23:59:59.999Z",
-      "periodStartedAt": "2026-08-03T00:00:00.000Z",
-      "periodEndsAt": "2026-08-09T23:59:59.999Z",
       "tokens": {
         "uncachedInput": 752153436,
         "cachedInput": 29832220544,
@@ -314,19 +338,19 @@
         "total": 30644483795
       },
       "trailingSevenDayApiEquivalentUsd": 15269.511154199987,
+      "status": "settled"
+    },
+    {
+      "id": "trailing-7d-2026-08-10",
+      "periodStartedAt": "2026-08-04T00:00:00.000Z",
+      "periodEndsAt": "2026-08-10T23:59:59.999Z",
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
         "coverage": 0
       },
       "subscriptionAdjustedMultiple": null,
-      "status": "settled"
-    },
-    {
-      "id": "trailing-7d-2026-08-10",
       "observedAt": "2026-08-10T23:59:59.999Z",
-      "periodStartedAt": "2026-08-04T00:00:00.000Z",
-      "periodEndsAt": "2026-08-10T23:59:59.999Z",
       "tokens": {
         "uncachedInput": 760549559,
         "cachedInput": 29339236608,
@@ -334,19 +358,19 @@
         "total": 30159122706
       },
       "trailingSevenDayApiEquivalentUsd": 14875.913291239985,
+      "status": "settled"
+    },
+    {
+      "id": "trailing-7d-2026-08-11",
+      "periodStartedAt": "2026-08-05T00:00:00.000Z",
+      "periodEndsAt": "2026-08-11T23:59:59.999Z",
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
         "coverage": 0
       },
       "subscriptionAdjustedMultiple": null,
-      "status": "settled"
-    },
-    {
-      "id": "trailing-7d-2026-08-11",
       "observedAt": "2026-08-11T23:59:59.999Z",
-      "periodStartedAt": "2026-08-05T00:00:00.000Z",
-      "periodEndsAt": "2026-08-11T23:59:59.999Z",
       "tokens": {
         "uncachedInput": 888926086,
         "cachedInput": 31637022976,
@@ -354,19 +378,19 @@
         "total": 32591785711
       },
       "trailingSevenDayApiEquivalentUsd": 15907.100957639994,
+      "status": "settled"
+    },
+    {
+      "id": "trailing-7d-2026-08-12",
+      "periodStartedAt": "2026-08-06T00:00:00.000Z",
+      "periodEndsAt": "2026-08-12T23:59:59.999Z",
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
         "coverage": 0
       },
       "subscriptionAdjustedMultiple": null,
-      "status": "settled"
-    },
-    {
-      "id": "trailing-7d-2026-08-12",
       "observedAt": "2026-08-12T23:59:59.999Z",
-      "periodStartedAt": "2026-08-06T00:00:00.000Z",
-      "periodEndsAt": "2026-08-12T23:59:59.999Z",
       "tokens": {
         "uncachedInput": 1021449346,
         "cachedInput": 31292121472,
@@ -374,19 +398,19 @@
         "total": 32375981217
       },
       "trailingSevenDayApiEquivalentUsd": 15519.910930800033,
+      "status": "settled"
+    },
+    {
+      "id": "trailing-7d-2026-08-13",
+      "periodStartedAt": "2026-08-07T00:00:00.000Z",
+      "periodEndsAt": "2026-08-13T23:59:59.999Z",
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
         "coverage": 0
       },
       "subscriptionAdjustedMultiple": null,
-      "status": "settled"
-    },
-    {
-      "id": "trailing-7d-2026-08-13",
       "observedAt": "2026-08-13T23:59:59.999Z",
-      "periodStartedAt": "2026-08-07T00:00:00.000Z",
-      "periodEndsAt": "2026-08-13T23:59:59.999Z",
       "tokens": {
         "uncachedInput": 1242248568,
         "cachedInput": 33299350400,
@@ -394,19 +418,19 @@
         "total": 34599741924
       },
       "trailingSevenDayApiEquivalentUsd": 16059.710642040052,
+      "status": "settled"
+    },
+    {
+      "id": "trailing-7d-2026-08-14",
+      "periodStartedAt": "2026-08-08T00:00:00.000Z",
+      "periodEndsAt": "2026-08-14T23:59:59.999Z",
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
         "coverage": 0
       },
       "subscriptionAdjustedMultiple": null,
-      "status": "settled"
-    },
-    {
-      "id": "trailing-7d-2026-08-14",
       "observedAt": "2026-08-14T23:59:59.999Z",
-      "periodStartedAt": "2026-08-08T00:00:00.000Z",
-      "periodEndsAt": "2026-08-14T23:59:59.999Z",
       "tokens": {
         "uncachedInput": 1308452862,
         "cachedInput": 33835675904,
@@ -414,19 +438,19 @@
         "total": 35200351011
       },
       "trailingSevenDayApiEquivalentUsd": 15898.067449920049,
+      "status": "settled"
+    },
+    {
+      "id": "trailing-7d-2026-08-15",
+      "periodStartedAt": "2026-08-09T00:00:00.000Z",
+      "periodEndsAt": "2026-08-15T23:59:59.999Z",
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
         "coverage": 0
       },
       "subscriptionAdjustedMultiple": null,
-      "status": "settled"
-    },
-    {
-      "id": "trailing-7d-2026-08-15",
       "observedAt": "2026-08-15T23:59:59.999Z",
-      "periodStartedAt": "2026-08-09T00:00:00.000Z",
-      "periodEndsAt": "2026-08-15T23:59:59.999Z",
       "tokens": {
         "uncachedInput": 1385283998,
         "cachedInput": 35445433984,
@@ -434,19 +458,19 @@
         "total": 36891887746
       },
       "trailingSevenDayApiEquivalentUsd": 16731.164539680052,
+      "status": "settled"
+    },
+    {
+      "id": "trailing-7d-2026-08-16",
+      "periodStartedAt": "2026-08-10T00:00:00.000Z",
+      "periodEndsAt": "2026-08-16T23:59:59.999Z",
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
         "coverage": 0
       },
       "subscriptionAdjustedMultiple": null,
-      "status": "settled"
-    },
-    {
-      "id": "trailing-7d-2026-08-16",
       "observedAt": "2026-08-16T23:59:59.999Z",
-      "periodStartedAt": "2026-08-10T00:00:00.000Z",
-      "periodEndsAt": "2026-08-16T23:59:59.999Z",
       "tokens": {
         "uncachedInput": 1430379967,
         "cachedInput": 36371486464,
@@ -454,19 +478,19 @@
         "total": 37866332240
       },
       "trailingSevenDayApiEquivalentUsd": 17193.821535720082,
+      "status": "settled"
+    },
+    {
+      "id": "trailing-7d-2026-08-17",
+      "periodStartedAt": "2026-08-11T00:00:00.000Z",
+      "periodEndsAt": "2026-08-17T23:59:59.999Z",
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
         "coverage": 0
       },
       "subscriptionAdjustedMultiple": null,
-      "status": "settled"
-    },
-    {
-      "id": "trailing-7d-2026-08-17",
       "observedAt": "2026-08-17T23:59:59.999Z",
-      "periodStartedAt": "2026-08-11T00:00:00.000Z",
-      "periodEndsAt": "2026-08-17T23:59:59.999Z",
       "tokens": {
         "uncachedInput": 1452793208,
         "cachedInput": 36886215936,
@@ -474,19 +498,19 @@
         "total": 38404502480
       },
       "trailingSevenDayApiEquivalentUsd": 17460.10184092008,
+      "status": "settled"
+    },
+    {
+      "id": "trailing-7d-2026-08-18",
+      "periodStartedAt": "2026-08-12T00:00:00.000Z",
+      "periodEndsAt": "2026-08-18T23:59:59.999Z",
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
         "coverage": 0
       },
       "subscriptionAdjustedMultiple": null,
-      "status": "settled"
-    },
-    {
-      "id": "trailing-7d-2026-08-18",
       "observedAt": "2026-08-18T23:59:59.999Z",
-      "periodStartedAt": "2026-08-12T00:00:00.000Z",
-      "periodEndsAt": "2026-08-18T23:59:59.999Z",
       "tokens": {
         "uncachedInput": 1430413400,
         "cachedInput": 36651285760,
@@ -494,19 +518,19 @@
         "total": 38145544687
       },
       "trailingSevenDayApiEquivalentUsd": 17308.88092020011,
+      "status": "settled"
+    },
+    {
+      "id": "trailing-7d-2026-08-19",
+      "periodStartedAt": "2026-08-13T00:00:00.000Z",
+      "periodEndsAt": "2026-08-19T23:59:59.999Z",
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
         "coverage": 0
       },
       "subscriptionAdjustedMultiple": null,
-      "status": "settled"
-    },
-    {
-      "id": "trailing-7d-2026-08-19",
       "observedAt": "2026-08-19T23:59:59.999Z",
-      "periodStartedAt": "2026-08-13T00:00:00.000Z",
-      "periodEndsAt": "2026-08-19T23:59:59.999Z",
       "tokens": {
         "uncachedInput": 1307808731,
         "cachedInput": 35292744064,
@@ -514,19 +538,19 @@
         "total": 36666475246
       },
       "trailingSevenDayApiEquivalentUsd": 16715.877910800067,
+      "status": "settled"
+    },
+    {
+      "id": "trailing-7d-2026-08-20",
+      "periodStartedAt": "2026-08-14T00:00:00.000Z",
+      "periodEndsAt": "2026-08-20T23:59:59.999Z",
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
         "coverage": 0
       },
       "subscriptionAdjustedMultiple": null,
-      "status": "settled"
-    },
-    {
-      "id": "trailing-7d-2026-08-20",
       "observedAt": "2026-08-20T23:59:59.999Z",
-      "periodStartedAt": "2026-08-14T00:00:00.000Z",
-      "periodEndsAt": "2026-08-20T23:59:59.999Z",
       "tokens": {
         "uncachedInput": 985293865,
         "cachedInput": 28686617472,
@@ -534,19 +558,19 @@
         "total": 29732878439
       },
       "trailingSevenDayApiEquivalentUsd": 13840.341512520037,
+      "status": "settled"
+    },
+    {
+      "id": "trailing-7d-2026-08-21",
+      "periodStartedAt": "2026-08-15T00:00:00.000Z",
+      "periodEndsAt": "2026-08-21T23:59:59.999Z",
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
         "coverage": 0
       },
       "subscriptionAdjustedMultiple": null,
-      "status": "settled"
-    },
-    {
-      "id": "trailing-7d-2026-08-21",
       "observedAt": "2026-08-21T23:59:59.999Z",
-      "periodStartedAt": "2026-08-15T00:00:00.000Z",
-      "periodEndsAt": "2026-08-21T23:59:59.999Z",
       "tokens": {
         "uncachedInput": 981875286,
         "cachedInput": 28081324800,
@@ -554,19 +578,19 @@
         "total": 29130783009
       },
       "trailingSevenDayApiEquivalentUsd": 14075.417912320048,
+      "status": "settled"
+    },
+    {
+      "id": "trailing-7d-2026-08-22",
+      "periodStartedAt": "2026-08-16T00:00:00.000Z",
+      "periodEndsAt": "2026-08-22T23:59:59.999Z",
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
         "coverage": 0
       },
       "subscriptionAdjustedMultiple": null,
-      "status": "settled"
-    },
-    {
-      "id": "trailing-7d-2026-08-22",
       "observedAt": "2026-08-22T23:59:59.999Z",
-      "periodStartedAt": "2026-08-16T00:00:00.000Z",
-      "periodEndsAt": "2026-08-22T23:59:59.999Z",
       "tokens": {
         "uncachedInput": 1057338517,
         "cachedInput": 30813583232,
@@ -574,19 +598,19 @@
         "total": 31946612781
       },
       "trailingSevenDayApiEquivalentUsd": 15466.030597760067,
+      "status": "settled"
+    },
+    {
+      "id": "trailing-7d-2026-08-23",
+      "periodStartedAt": "2026-08-17T00:00:00.000Z",
+      "periodEndsAt": "2026-08-23T23:59:59.999Z",
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
         "coverage": 0
       },
       "subscriptionAdjustedMultiple": null,
-      "status": "settled"
-    },
-    {
-      "id": "trailing-7d-2026-08-23",
       "observedAt": "2026-08-23T23:59:59.999Z",
-      "periodStartedAt": "2026-08-17T00:00:00.000Z",
-      "periodEndsAt": "2026-08-23T23:59:59.999Z",
       "tokens": {
         "uncachedInput": 997162243,
         "cachedInput": 29689741312,
@@ -594,19 +618,19 @@
         "total": 30761743397
       },
       "trailingSevenDayApiEquivalentUsd": 15066.538600360047,
+      "status": "settled"
+    },
+    {
+      "id": "trailing-7d-2026-08-24",
+      "periodStartedAt": "2026-08-18T00:00:00.000Z",
+      "periodEndsAt": "2026-08-24T23:59:59.999Z",
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
         "coverage": 0
       },
       "subscriptionAdjustedMultiple": null,
-      "status": "settled"
-    },
-    {
-      "id": "trailing-7d-2026-08-24",
       "observedAt": "2026-08-24T23:59:59.999Z",
-      "periodStartedAt": "2026-08-18T00:00:00.000Z",
-      "periodEndsAt": "2026-08-24T23:59:59.999Z",
       "tokens": {
         "uncachedInput": 984460099,
         "cachedInput": 30074322176,
@@ -614,19 +638,19 @@
         "total": 31136829923
       },
       "trailingSevenDayApiEquivalentUsd": 15353.192586680052,
+      "status": "settled"
+    },
+    {
+      "id": "trailing-7d-2026-08-25",
+      "periodStartedAt": "2026-08-19T00:00:00.000Z",
+      "periodEndsAt": "2026-08-25T23:59:59.999Z",
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
         "coverage": 0
       },
       "subscriptionAdjustedMultiple": null,
-      "status": "settled"
-    },
-    {
-      "id": "trailing-7d-2026-08-25",
       "observedAt": "2026-08-25T23:59:59.999Z",
-      "periodStartedAt": "2026-08-19T00:00:00.000Z",
-      "periodEndsAt": "2026-08-25T23:59:59.999Z",
       "tokens": {
         "uncachedInput": 1031083010,
         "cachedInput": 30322895872,
@@ -634,19 +658,19 @@
         "total": 31435489338
       },
       "trailingSevenDayApiEquivalentUsd": 15517.531198970035,
+      "status": "settled"
+    },
+    {
+      "id": "trailing-7d-2026-08-26",
+      "periodStartedAt": "2026-08-20T00:00:00.000Z",
+      "periodEndsAt": "2026-08-26T23:59:59.999Z",
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
         "coverage": 0
       },
       "subscriptionAdjustedMultiple": null,
-      "status": "settled"
-    },
-    {
-      "id": "trailing-7d-2026-08-26",
       "observedAt": "2026-08-26T23:59:59.999Z",
-      "periodStartedAt": "2026-08-20T00:00:00.000Z",
-      "periodEndsAt": "2026-08-26T23:59:59.999Z",
       "tokens": {
         "uncachedInput": 973380761,
         "cachedInput": 29479380992,
@@ -654,19 +678,19 @@
         "total": 30533479879
       },
       "trailingSevenDayApiEquivalentUsd": 15148.265146370046,
+      "status": "settled"
+    },
+    {
+      "id": "trailing-7d-2026-08-27",
+      "periodStartedAt": "2026-08-21T00:00:00.000Z",
+      "periodEndsAt": "2026-08-27T23:59:59.999Z",
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
         "coverage": 0
       },
       "subscriptionAdjustedMultiple": null,
-      "status": "settled"
-    },
-    {
-      "id": "trailing-7d-2026-08-27",
       "observedAt": "2026-08-27T23:59:59.999Z",
-      "periodStartedAt": "2026-08-21T00:00:00.000Z",
-      "periodEndsAt": "2026-08-27T23:59:59.999Z",
       "tokens": {
         "uncachedInput": 1084285939,
         "cachedInput": 34143493888,
@@ -674,19 +698,19 @@
         "total": 35323136987
       },
       "trailingSevenDayApiEquivalentUsd": 17693.692370130062,
+      "status": "settled"
+    },
+    {
+      "id": "trailing-7d-2026-08-28",
+      "periodStartedAt": "2026-08-22T00:00:00.000Z",
+      "periodEndsAt": "2026-08-28T23:59:59.999Z",
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
         "coverage": 0
       },
       "subscriptionAdjustedMultiple": null,
-      "status": "settled"
-    },
-    {
-      "id": "trailing-7d-2026-08-28",
       "observedAt": "2026-08-28T23:59:59.999Z",
-      "periodStartedAt": "2026-08-22T00:00:00.000Z",
-      "periodEndsAt": "2026-08-28T23:59:59.999Z",
       "tokens": {
         "uncachedInput": 1146130607,
         "cachedInput": 36789202816,
@@ -694,19 +718,19 @@
         "total": 38040022149
       },
       "trailingSevenDayApiEquivalentUsd": 19061.60499313005,
+      "status": "settled"
+    },
+    {
+      "id": "trailing-7d-2026-08-29",
+      "periodStartedAt": "2026-08-23T00:00:00.000Z",
+      "periodEndsAt": "2026-08-29T23:59:59.999Z",
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
         "coverage": 0
       },
       "subscriptionAdjustedMultiple": null,
-      "status": "settled"
-    },
-    {
-      "id": "trailing-7d-2026-08-29",
       "observedAt": "2026-08-29T23:59:59.999Z",
-      "periodStartedAt": "2026-08-23T00:00:00.000Z",
-      "periodEndsAt": "2026-08-29T23:59:59.999Z",
       "tokens": {
         "uncachedInput": 1095991998,
         "cachedInput": 35062893696,
@@ -714,19 +738,19 @@
         "total": 36258790133
       },
       "trailingSevenDayApiEquivalentUsd": 18306.712870690037,
+      "status": "settled"
+    },
+    {
+      "id": "trailing-7d-2026-08-30",
+      "periodStartedAt": "2026-08-24T00:00:00.000Z",
+      "periodEndsAt": "2026-08-30T23:59:59.999Z",
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
         "coverage": 0
       },
       "subscriptionAdjustedMultiple": null,
-      "status": "settled"
-    },
-    {
-      "id": "trailing-7d-2026-08-30",
       "observedAt": "2026-08-30T23:59:59.999Z",
-      "periodStartedAt": "2026-08-24T00:00:00.000Z",
-      "periodEndsAt": "2026-08-30T23:59:59.999Z",
       "tokens": {
         "uncachedInput": 1154677643,
         "cachedInput": 36804926080,
@@ -734,19 +758,19 @@
         "total": 38058663455
       },
       "trailingSevenDayApiEquivalentUsd": 18956.924649050023,
+      "status": "settled"
+    },
+    {
+      "id": "trailing-7d-2026-08-31",
+      "periodStartedAt": "2026-08-25T00:00:00.000Z",
+      "periodEndsAt": "2026-08-31T23:59:59.999Z",
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
         "coverage": 0
       },
       "subscriptionAdjustedMultiple": null,
-      "status": "settled"
-    },
-    {
-      "id": "trailing-7d-2026-08-31",
       "observedAt": "2026-08-31T23:59:59.999Z",
-      "periodStartedAt": "2026-08-25T00:00:00.000Z",
-      "periodEndsAt": "2026-08-31T23:59:59.999Z",
       "tokens": {
         "uncachedInput": 1156324429,
         "cachedInput": 36326508032,
@@ -754,19 +778,19 @@
         "total": 37577727559
       },
       "trailingSevenDayApiEquivalentUsd": 18642.354701330012,
+      "status": "settled"
+    },
+    {
+      "id": "trailing-7d-2026-09-01",
+      "periodStartedAt": "2026-08-26T00:00:00.000Z",
+      "periodEndsAt": "2026-09-01T23:59:59.999Z",
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
         "coverage": 0
       },
       "subscriptionAdjustedMultiple": null,
-      "status": "settled"
-    },
-    {
-      "id": "trailing-7d-2026-09-01",
       "observedAt": "2026-09-01T23:59:59.999Z",
-      "periodStartedAt": "2026-08-26T00:00:00.000Z",
-      "periodEndsAt": "2026-09-01T23:59:59.999Z",
       "tokens": {
         "uncachedInput": 1033216214,
         "cachedInput": 35285252608,
@@ -774,19 +798,19 @@
         "total": 36406548311
       },
       "trailingSevenDayApiEquivalentUsd": 18124.34991788001,
+      "status": "settled"
+    },
+    {
+      "id": "trailing-7d-2026-09-02",
+      "periodStartedAt": "2026-08-27T00:00:00.000Z",
+      "periodEndsAt": "2026-09-02T23:59:59.999Z",
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
         "coverage": 0
       },
       "subscriptionAdjustedMultiple": null,
-      "status": "settled"
-    },
-    {
-      "id": "trailing-7d-2026-09-02",
       "observedAt": "2026-09-02T23:59:59.999Z",
-      "periodStartedAt": "2026-08-27T00:00:00.000Z",
-      "periodEndsAt": "2026-09-02T23:59:59.999Z",
       "tokens": {
         "uncachedInput": 1158419040,
         "cachedInput": 37877586560,
@@ -794,19 +818,19 @@
         "total": 39125929581
       },
       "trailingSevenDayApiEquivalentUsd": 19252.682775480007,
+      "status": "settled"
+    },
+    {
+      "id": "trailing-7d-2026-09-03",
+      "periodStartedAt": "2026-08-28T00:00:00.000Z",
+      "periodEndsAt": "2026-09-03T23:59:59.999Z",
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
         "coverage": 0
       },
       "subscriptionAdjustedMultiple": null,
-      "status": "settled"
-    },
-    {
-      "id": "trailing-7d-2026-09-03",
       "observedAt": "2026-09-03T23:59:59.999Z",
-      "periodStartedAt": "2026-08-28T00:00:00.000Z",
-      "periodEndsAt": "2026-09-03T23:59:59.999Z",
       "tokens": {
         "uncachedInput": 1138300721,
         "cachedInput": 33780967552,
@@ -814,19 +838,19 @@
         "total": 34995905575
       },
       "trailingSevenDayApiEquivalentUsd": 17067.753632720003,
+      "status": "settled"
+    },
+    {
+      "id": "trailing-7d-2026-09-04",
+      "periodStartedAt": "2026-08-29T00:00:00.000Z",
+      "periodEndsAt": "2026-09-04T23:59:59.999Z",
       "accountAttribution": {
         "status": "unavailable",
         "distinctObservedAccounts": null,
         "coverage": 0
       },
       "subscriptionAdjustedMultiple": null,
-      "status": "settled"
-    },
-    {
-      "id": "trailing-7d-2026-09-04",
       "observedAt": "2026-09-04T23:59:59.999Z",
-      "periodStartedAt": "2026-08-29T00:00:00.000Z",
-      "periodEndsAt": "2026-09-04T23:59:59.999Z",
       "tokens": {
         "uncachedInput": 1095707670,
         "cachedInput": 29854643200,
@@ -834,22 +858,62 @@
         "total": 31013191666
       },
       "trailingSevenDayApiEquivalentUsd": 15017.360440200022,
-      "accountAttribution": {
-        "status": "unavailable",
-        "distinctObservedAccounts": null,
-        "coverage": 0
-      },
-      "subscriptionAdjustedMultiple": null,
       "status": "settled"
     }
   ],
-  "plan": {
-    "name": "ChatGPT Pro",
-    "monthlyPriceUsd": 200,
-    "advertisedUsageMultiplier": 20,
-    "observedAt": "2026-08-25T00:00:00Z",
-    "sourceUrl": "https://help.openai.com/en/articles/9793128"
+  "accountPlanComparison": {
+    "periodStartedAt": "2026-08-05T00:00:00.000Z",
+    "periodEndedAt": "2026-09-04T23:59:59.999Z",
+    "accountAttribution": {
+      "status": "unavailable",
+      "distinctObservedAccounts": null,
+      "coverage": 0
+    },
+    "observedProPlanComparison": {
+      "status": "unavailable",
+      "distinctVerifiedProAccountsLowerBound": null,
+      "normalizedPlanValueUsd": null,
+      "apiEquivalentMultipleUpperBound": null
+    },
+    "firstSampledAt": null,
+    "measurement": {
+      "name": "AI Charts GPT subsidy account-attribution manifest",
+      "schemaVersion": 1,
+      "kind": "aicharts-gpt-subsidy-account-attribution",
+      "revision": "2026-09-04.2",
+      "sha256": "c78b12838039e6a595334492b2d10579423ede9f0657f44b3297e9e8dcf3883d",
+      "frozenAt": "2026-09-04T00:00:00Z",
+      "sourceUrl": "https://github.com/hraness/aicharts/blob/main/data/gpt-subsidy-attribution-measurement.json"
+    }
   },
+  "methodology": {
+    "sourceUrls": [
+      "https://help.openai.com/en/articles/9793128",
+      "https://learn.chatgpt.com/docs/pricing",
+      "https://github.com/hraness/aicharts/blob/main/data/gpt-subsidy-measurement.json",
+      "https://github.com/hraness/aicharts/blob/main/data/gpt-subsidy-attribution-measurement.json",
+      "https://developers.openai.com/api/docs/models/gpt-5.4",
+      "https://developers.openai.com/api/docs/models/gpt-5.4-mini",
+      "https://developers.openai.com/api/docs/models/gpt-5.6-luna",
+      "https://developers.openai.com/api/docs/models/gpt-5.6-sol",
+      "https://developers.openai.com/api/docs/models/gpt-5.6-terra",
+      "https://github.com/junhoyeo/tokscale/blob/0149a44329fb89865837dde40adb8cd9bc06bead/crates/tokscale-core/src/sessions/codex.rs#L98-L214",
+      "https://github.com/junhoyeo/tokscale/blob/0149a44329fb89865837dde40adb8cd9bc06bead/crates/tokscale-core/src/sessions/codex.rs#L518-L675"
+    ],
+    "deduplication": "tokscale-global-event-identity",
+    "measurement": {
+      "name": "AI Charts GPT subsidy measurement manifest",
+      "schemaVersion": 1,
+      "kind": "aicharts-gpt-subsidy-measurement",
+      "revision": "2026-08-25.3",
+      "sha256": "bb4cd068742b0a7b1b747457825f902090e05d30ebe9c585d9ba78ef8d542df2",
+      "frozenAt": "2026-08-25T00:00:00Z",
+      "sourceUrl": "https://github.com/hraness/aicharts/blob/main/data/gpt-subsidy-measurement.json"
+    },
+    "formula": "Each observation values every recorded model with its per-model rate from the checked August 25, 2026 AI Charts OpenAI rate manifest and sums seven settled UTC days. The v2 series does not calculate a subscription-adjusted multiple because account identity alone is not subscription-price or billing-period evidence.",
+    "disclaimer": "This is an API-retail-equivalent estimate of one user's available local Codex logs on one machine, not OpenAI's internal serving cost or an audited subsidy, and it is not a platform-wide or representative ChatGPT Pro estimate. Historical Codex logs do not retain durable account attribution, so the published historical series cannot assign usage to distinct subscriptions or calculate a subscription-adjusted multiple. API-key or otherwise API-billed usage, purchased ChatGPT credits, free or reset credits, and temporary promotions cannot be distinguished or excluded. The internal codex-auto-review alias uses the explicit GPT-5.6 Luna proxy rate. Non-token product features and fees absent from the logs are excluded."
+  },
+  "schemaVersion": 2,
   "pricing": {
     "basis": "per-model-api-retail",
     "manifest": {
@@ -870,44 +934,6 @@
       "uncachedInputPerMillionUsd": 4
     }
   },
-  "methodology": {
-    "deduplication": "tokscale-global-event-identity",
-    "measurement": {
-      "name": "AI Charts GPT subsidy measurement manifest",
-      "schemaVersion": 1,
-      "kind": "aicharts-gpt-subsidy-measurement",
-      "revision": "2026-08-25.3",
-      "sha256": "bb4cd068742b0a7b1b747457825f902090e05d30ebe9c585d9ba78ef8d542df2",
-      "frozenAt": "2026-08-25T00:00:00Z",
-      "sourceUrl": "https://github.com/hraness/aicharts/blob/main/data/gpt-subsidy-measurement.json"
-    },
-    "formula": "Each observation values every recorded model with its per-model rate from the checked August 25, 2026 AI Charts OpenAI rate manifest and sums seven settled UTC days. The v2 series does not calculate a subscription-adjusted multiple because account identity alone is not subscription-price or billing-period evidence.",
-    "disclaimer": "This is an API-retail-equivalent estimate of one user's available local Codex logs on one machine, not OpenAI's internal serving cost or an audited subsidy, and it is not a platform-wide or representative ChatGPT Pro estimate. Historical Codex logs do not retain durable account attribution, so the published historical series cannot assign usage to distinct subscriptions or calculate a subscription-adjusted multiple. API-key or otherwise API-billed usage, purchased ChatGPT credits, free or reset credits, and temporary promotions cannot be distinguished or excluded. The internal codex-auto-review alias uses the explicit GPT-5.6 Luna proxy rate. Non-token product features and fees absent from the logs are excluded.",
-    "sourceUrls": [
-      "https://help.openai.com/en/articles/9793128",
-      "https://learn.chatgpt.com/docs/pricing",
-      "https://github.com/hraness/aicharts/blob/main/data/gpt-subsidy-measurement.json",
-      "https://developers.openai.com/api/docs/models/gpt-5.4",
-      "https://developers.openai.com/api/docs/models/gpt-5.4-mini",
-      "https://developers.openai.com/api/docs/models/gpt-5.6-luna",
-      "https://developers.openai.com/api/docs/models/gpt-5.6-sol",
-      "https://developers.openai.com/api/docs/models/gpt-5.6-terra",
-      "https://github.com/junhoyeo/tokscale/blob/0149a44329fb89865837dde40adb8cd9bc06bead/crates/tokscale-core/src/sessions/codex.rs#L98-L214",
-      "https://github.com/junhoyeo/tokscale/blob/0149a44329fb89865837dde40adb8cd9bc06bead/crates/tokscale-core/src/sessions/codex.rs#L518-L675"
-    ]
-  },
   "title": "Subsidy for ChatGPT Pro 20x subscription",
-  "currency": "USD",
-  "periodSummary": {
-    "startedAt": "2026-08-05T00:00:00.000Z",
-    "endedAt": "2026-09-04T23:59:59.999Z",
-    "days": 31,
-    "tokens": {
-      "uncachedInput": 4964203546,
-      "cachedInput": 146050293120,
-      "output": 325430401,
-      "total": 151339927067
-    },
-    "apiEquivalentUsd": 72966.89382349017
-  }
+  "currency": "USD"
 }

@@ -5,8 +5,6 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { GptSubsidyChart } from "@/components/gpt-subsidy-chart";
 import gptSubsidyData from "@/data/gpt-subsidy.json";
 import {
-  calculateOnePlanUpperBoundMultiple,
-  formatOnePlanUpperBoundMultiple,
   formatSubsidyUsd,
   gptSubsidyPageModifiedAt,
   GPT_SUBSIDY_DESCRIPTION,
@@ -108,24 +106,18 @@ describe("GPT subsidy page components", () => {
   test("leads with the chart and metrics while keeping methodology in static HTML", () => {
     const markup = renderToStaticMarkup(createElement(GptSubsidyPage));
     const markdown = gptSubsidyMarkdown(snapshot);
-    const formattedUpperBound = formatOnePlanUpperBoundMultiple(
-      calculateOnePlanUpperBoundMultiple(
-        snapshot.periodSummary.apiEquivalentUsd,
-        snapshot.plan.monthlyPriceUsd,
-      ),
-    );
 
     expect(markup).toContain("<h1>ChatGPT Subsidy Chart</h1>");
     expect(markup).toContain(GPT_SUBSIDY_DESCRIPTION);
     expect(markup).toContain(
-      'aria-label="Current one-plan upper bound and API-equivalent value"',
+      'aria-label="Current API-equivalent value and observed-plan comparison"',
     );
-    expect(markup).toContain("One-plan comparison upper bound");
-    expect(markup).toContain(formattedUpperBound);
-    expect(markdown).toContain(formattedUpperBound);
-    expect(markdown).toContain("one-plan comparison upper bound before switched-account adjustment");
-    expect(markdown).toContain("does not estimate how many subscriptions supplied that usage");
-    expect(markdown).toContain("true subscription-spend-adjusted multiple is lower but unknown");
+    expect(markup).toContain("Observed Pro-plan comparison");
+    expect(markup).toContain("Not yet available");
+    expect(markdown).toContain("No single-subscription denominator is published");
+    expect(markdown).toContain(
+      "sampled, provider-reported Pro plan status supports a lower-bound account count",
+    );
     expect(markup).toContain(
       `${snapshot.periodSummary.days}-day API-equivalent value`,
     );
@@ -140,10 +132,10 @@ describe("GPT subsidy page components", () => {
     );
     expect(markup).toContain("All available local Codex usage across accounts");
     expect(markup).toContain(
-      "true subscription-spend-adjusted multiple is lower but unknown",
+      "No single-subscription assumption is used",
     );
-    expect(markup).toContain("historical account count is unavailable");
-    expect(markup).toContain("before switched-account adjustment");
+    expect(markup).toContain("Account fingerprints and plan observations stay private");
+    expect(markup).not.toContain("One-plan comparison upper bound");
     expect(markup).not.toContain("312× cheaper");
     expect(markup).not.toContain("actual subsidy");
     expect(markup).not.toContain('id="allowance-estimate"');
@@ -156,16 +148,16 @@ describe("GPT subsidy page components", () => {
     expect(markup).toContain("purchased ChatGPT credits");
     expect(markup).toContain("scheduled collector&#x27;s own small Codex token use");
     expect(markup).toContain("Trailing-seven-day API-retail-equivalent value");
-    expect(markup).toContain("Subscription-spend-adjusted multiple unavailable");
+    expect(markup).toContain("Account evidence is sampled, not reconstructed");
+    expect(markup).toContain("Reported plan status");
+    expect(markup).toContain("is not billing verification");
     expect(markup).toContain(
-      "does not estimate how many subscriptions supplied that usage",
-    );
-    expect(markup).toContain(
-      "without durable account attribution",
+      "Historical Codex logs do not retain durable account attribution",
     );
     expect(markup).toContain("prove that a weekly limit was exhausted");
     expect(markup).toContain("model-specific API-price estimates");
     expect(markup).toContain("pins the parser, adapter, rolling-window math");
+    expect(markup).toContain("pins the private-ledger aggregation rules");
     expect(markup).toContain("An unknown recorded model blocks publication");
     expect(markup).toContain("<summary>About this chart</summary>");
     expect(markup).toContain(

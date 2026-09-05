@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "kind": "aicharts-gpt-subsidy-account-attribution",
+  "revision": "2026-09-04.2",
+  "frozenAt": "2026-09-04T00:00:00Z",
+  "calendar": "UTC",
+  "accountLedgerVersion": 1,
+  "rateLimitLedgerVersion": 1,
+  "verifiedPlanType": "pro",
+  "planVerification": "all-overlapping-observations-have-only-pro-buckets",
+  "coverage": "positive-duration-account-interval-union",
+  "coverageQuantization": "whole-percentage-point-lower-bound",
+  "subOnePercentCoverageSentinel": 1e-10,
+  "maximumPublishedCoverage": 0.99,
+  "statusSemantics": "partial-means-sampled-never-complete",
+  "continuity": "private-key-epoch-and-fixed-window-monotonic-floors",
+  "implementation": {
+    "contract": {
+      "path": "lib/gpt-subsidy-attribution-manifest.ts",
+      "sha256": "a0c17dd6199091654f0a6a051ea9a7491d4d80ee64a0adc251d91bd0472fd9fe"
+    },
+    "publicContract": {
+      "path": "lib/gpt-subsidy-data.ts",
+      "sha256": "5bc2d24deb55b2ea66dd5b9ea364c12fd077134536f3f0ae51fed6aca7ebe90a"
+    },
+    "enricher": {
+      "path": "scripts/enrich-gpt-subsidy-attribution.ts",
+      "sha256": "100ac25246c086c11b4d3ad1e9fc86e0379a426d873d49842f8b9e9ba189e0f4"
+    },
+    "publisher": {
+      "path": "scripts/publish-gpt-subsidy.ts",
+      "sha256": "6428cc12a4d8264b8358e735d7060bfa991e82b26994f246be0665d587a3c9bf"
+    }
+  }
+}

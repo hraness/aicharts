@@ -181,7 +181,7 @@ describe("typed event payloads", () => {
       name: "model card shared",
       properties: {
         $process_person_profile: false,
-        event_schema_version: 2,
+        event_schema_version: 3,
         model_id: "openai/gpt-5.6-sol",
         profile_id: "max",
         share_method: "copy_link",
@@ -195,6 +195,7 @@ describe("typed event payloads", () => {
     expect(analyticsEventPayload({
       name: "chart shared",
       properties: {
+        chart_id: "coding_agents",
         share_method: "x",
         share_outcome: "initiated",
         x_metric: "costUsd",
@@ -203,17 +204,61 @@ describe("typed event payloads", () => {
     })).toMatchObject({
       name: "chart shared",
       properties: {
+        chart_id: "coding_agents",
         share_method: "x",
         share_outcome: "initiated",
       },
     });
   });
 
+  test("keeps metric vocabularies specific to each chart", () => {
+    expect(analyticsEventPayload({
+      name: "chart metric selected",
+      properties: {
+        axis: "x",
+        chart_id: "intelligence_efficiency",
+        metric: "costUsdPerTask",
+      },
+    })).toMatchObject({
+      name: "chart metric selected",
+      properties: {
+        axis: "x",
+        chart_id: "intelligence_efficiency",
+        metric: "costUsdPerTask",
+      },
+    });
+    expect(analyticsEventPayload({
+      name: "chart metric selected",
+      properties: {
+        axis: "x",
+        chart_id: "coding_agents",
+        metric: "costUsd",
+      },
+    })).not.toBeNull();
+    expect(analyticsEventPayload({
+      name: "chart metric selected",
+      properties: {
+        axis: "x",
+        chart_id: "intelligence_efficiency",
+        metric: "costUsd",
+      },
+    } as unknown as AnalyticsEvent)).toBeNull();
+  });
+
   test("rejects invalid runtime enums, identifiers, and counts", () => {
     const invalidEvents = [
       {
         name: "chart shared",
-        properties: { share_method: "email", x_metric: "costUsd", y_metric: "aaIndex" },
+        properties: {
+          chart_id: "coding_agents",
+          share_method: "email",
+          x_metric: "costUsd",
+          y_metric: "aaIndex",
+        },
+      },
+      {
+        name: "chart metric selected",
+        properties: { axis: "x", chart_id: "private", metric: "costUsd" },
       },
       {
         name: "content chart opened",

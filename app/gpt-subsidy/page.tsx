@@ -1,8 +1,8 @@
 import { GptSubsidyChart } from "@/components/gpt-subsidy-chart";
 import gptSubsidyData from "@/data/gpt-subsidy.json";
 import {
-  calculateOnePlanUpperBoundMultiple,
-  formatOnePlanUpperBoundMultiple,
+  formatObservedProPlanUpperBoundMultiple,
+  formatSampledCoverageLowerBound,
   formatSubsidyDate,
   formatSubsidyDateTime,
   formatSubsidyUsd,
@@ -82,6 +82,7 @@ function subsidyDatasetJsonLd(snapshot: GptSubsidySnapshot) {
       "Trailing-31-day API-retail-equivalent value",
       "Globally deduplicated Codex task token use",
       "Account-attribution coverage",
+      "Observed-Pro plan-price comparison upper bound",
     ],
     citation: Array.from(new Set([
       snapshot.plan.sourceUrl,
@@ -106,10 +107,16 @@ export default function GptSubsidyPage() {
     snapshot.pricing.referenceModel.sourceUrl,
     ...snapshot.methodology.sourceUrls,
   ]));
-  const onePlanUpperBound = calculateOnePlanUpperBoundMultiple(
-    snapshot.periodSummary.apiEquivalentUsd,
-    snapshot.plan.monthlyPriceUsd,
-  );
+  const accountPlanComparison = snapshot.accountPlanComparison;
+  const observedProPlanComparison = accountPlanComparison
+    .observedProPlanComparison;
+  const coverageLabel = accountPlanComparison.accountAttribution.status
+    === "partial"
+    ? formatSampledCoverageLowerBound(
+      accountPlanComparison.accountAttribution.coverage,
+    )
+    : null;
+  const hasSampledHistory = accountPlanComparison.firstSampledAt !== null;
 
   return (
     <main data-analytics-surface="gpt_subsidy" id="gpt-subsidy-content">
@@ -138,21 +145,10 @@ export default function GptSubsidyPage() {
       </header>
 
       <section
-        aria-label="Current one-plan upper bound and API-equivalent value"
+        aria-label="Current API-equivalent value and observed-plan comparison"
         className="gpt-subsidy-summary plain-publication__shell"
       >
         <div className="gpt-subsidy-summary__metric gpt-subsidy-summary__primary">
-          <h2>One-plan comparison upper bound</h2>
-          <p className="gpt-subsidy-summary__value">
-            {formatOnePlanUpperBoundMultiple(onePlanUpperBound)}
-          </p>
-          <p className="gpt-subsidy-summary__scope">
-            {snapshot.periodSummary.days}-day API value divided by one{" "}
-            {formatSubsidyUsd(snapshot.plan.monthlyPriceUsd)} plan, before
-            switched-account adjustment.
-          </p>
-        </div>
-        <div className="gpt-subsidy-summary__metric gpt-subsidy-summary__context">
           <h2>{snapshot.periodSummary.days}-day API-equivalent value</h2>
           <p className="gpt-subsidy-summary__value">
             {formatSubsidyUsd(snapshot.periodSummary.apiEquivalentUsd)}
@@ -170,9 +166,69 @@ export default function GptSubsidyPage() {
             </time>
           </p>
         </div>
+        <div className="gpt-subsidy-summary__metric gpt-subsidy-summary__context">
+          <h2>Observed Pro-plan comparison</h2>
+          <p className="gpt-subsidy-summary__value">
+            {observedProPlanComparison.status === "sampled"
+              ? formatObservedProPlanUpperBoundMultiple(
+                observedProPlanComparison.apiEquivalentMultipleUpperBound,
+              )
+              : hasSampledHistory
+                ? "Current period unavailable"
+                : "Not yet available"}
+          </p>
+          <p className="gpt-subsidy-summary__scope">
+            {observedProPlanComparison.status === "sampled"
+              ? <>
+                API value divided by{" "}
+                {observedProPlanComparison.distinctVerifiedProAccountsLowerBound}{" "}
+                account plan-price units observed with app-server-reported Pro
+                plan status ({
+                  formatSubsidyUsd(observedProPlanComparison.normalizedPlanValueUsd)
+                }).
+              </>
+              : accountPlanComparison.accountAttribution.status === "partial"
+                ? <>
+                  Account sampling covers {coverageLabel} of this period and
+                  observed {accountPlanComparison.accountAttribution
+                    .distinctObservedAccounts} distinct accounts. No
+                  plan-denominated value is shown because their reported plan
+                  status does not support a consistently Pro lower bound.
+                </>
+                : <>
+                No single-subscription assumption is used. This comparison
+                appears only after sampled account coverage and
+                provider-reported Pro plan status support a lower-bound count.
+              </>}
+          </p>
+        </div>
         <p className="gpt-subsidy-summary__note">
-          The true subscription-spend-adjusted multiple is lower but unknown
-          because historical account count is unavailable.
+          {observedProPlanComparison.status === "sampled"
+            ? <>
+              Account sampling covers {coverageLabel} of this period. The{" "}
+              {observedProPlanComparison.distinctVerifiedProAccountsLowerBound}{" "}
+              observed accounts are a lower-bound count, so the displayed
+              comparison is an upper bound. Plan status is not billing
+              verification. Coverage is a coarse lower bound and cannot prove
+              that every account was observed.
+            </>
+            : accountPlanComparison.accountAttribution.status === "partial"
+              ? <>
+                Coverage is reported only as a coarse whole-percentage lower
+                bound; it measures recorder-active time and cannot prove that
+                every account was observed. Raw account evidence stays private.
+              </>
+              : hasSampledHistory
+              ? <>
+                Earlier sampled attribution remains in the historical points;
+                the current period does not have enough sampled evidence for a
+                plan-price comparison. Raw account evidence stays private.
+              </>
+              : <>
+              Account fingerprints and plan observations stay private. The
+              publisher exposes only aggregate coverage and observed-account
+              counts when the evidence is sufficient.
+            </>}
         </p>
       </section>
 
@@ -206,19 +262,23 @@ export default function GptSubsidyPage() {
                 Available local Codex task logs, including child agents, are
                 deduplicated into daily token buckets and repriced with
                 model-specific API-price estimates from the checked manifest.
-                Each point sums seven settled days. The headline upper bound
-                divides the settled 31-day aggregate by one plan; it does not
-                estimate how many subscriptions supplied that usage.
+                Each point sums seven settled days. A separate checked
+                attribution step adds privacy-bounded account coverage to each
+                point and may compare the settled 31-day aggregate with the
+                price units of distinct accounts observed with
+                app-server-reported Pro plan status.
               </p>
               <p className="gpt-subsidy-method__boundary">
                 The line is measured local usage. It is not an allowance ledger
                 or a per-subscription subsidy multiple.
               </p>
               <p className="gpt-subsidy-summary__scope">
-                <strong>Subscription-spend-adjusted multiple unavailable.</strong>{" "}
-                Historical logs span account switches without durable account
-                attribution, so the one-plan comparison is published only as
-                an upper bound. The true multiple is lower but unknown.
+                <strong>Account evidence is sampled, not reconstructed.</strong>{" "}
+                The aggregate comparison never assumes that all usage came
+                from a single subscription. Partial sampling can miss accounts,
+                so an observed Pro account count is a lower bound and its
+                plan-price comparison is an upper bound. Reported plan status
+                is not billing verification.
               </p>
               <p>
                 Cached input is a subset of input and reasoning tokens are a
@@ -237,6 +297,13 @@ export default function GptSubsidyPage() {
                 changed measurement manifest requires the retained series to be
                 recomputed before publication.
               </p>
+              <p>
+                Attribution revision{" "}
+                <code>{accountPlanComparison.measurement.revision}</code> pins
+                the private-ledger aggregation rules. Raw account fingerprints,
+                quota buckets, and provider limit identifiers never enter the
+                checked public dataset.
+              </p>
               <p>{snapshot.methodology.disclaimer}</p>
 
               <p>
@@ -253,7 +320,8 @@ export default function GptSubsidyPage() {
                 </li>
                 <li>
                   Historical session files have no durable account attribution.
-                  Account switches, multiple subscriptions,
+                  The separate account recorder observes only bounded intervals,
+                  so account switches, multiple subscriptions,
                   API-key or otherwise API-billed usage, purchased ChatGPT
                   credits, free or reset credits, and promotions cannot be
                   separated.
@@ -261,8 +329,9 @@ export default function GptSubsidyPage() {
                 <li>
                   The line does not reconstruct allowance resets, prove that a
                   weekly limit was exhausted, or establish how much usage one
-                  subscription supplied. Historical observations publish a null
-                  subscription-adjusted multiple.
+                  subscription supplied. The comparison is omitted unless
+                  sampled account coverage and provider-reported Pro plan
+                  status support a lower-bound account count.
                 </li>
                 <li>
                   Every point uses seven complete UTC days. Open current-day

@@ -1,14 +1,20 @@
 import type { Result } from "./result";
 import { parseResult, z } from "./schema";
+import { GPT_SUBSIDY_SUB_ONE_PERCENT_COVERAGE_SENTINEL } from "./gpt-subsidy-attribution-manifest";
+
+export { GPT_SUBSIDY_SUB_ONE_PERCENT_COVERAGE_SENTINEL } from "./gpt-subsidy-attribution-manifest";
 
 export const GPT_SUBSIDY_TITLE =
   "Subsidy for ChatGPT Pro 20x subscription" as const;
 
 export const GPT_SUBSIDY_DESCRIPTION =
-  "Daily history of the measured API-retail-equivalent value of seven complete UTC days from all available local Codex logs on one machine. Usage spans switched accounts, and historical account count is unavailable.";
+  "Daily history of the measured API-retail-equivalent value of seven complete UTC days from all available local Codex logs on one machine. Account-aware plan comparisons appear only when sampled, provider-reported Pro plan status supports a lower-bound account count.";
 
 export const GPT_SUBSIDY_PAGE_CONTENT_MODIFIED_AT =
-  "2026-08-26T15:31:44.000Z" as const;
+  "2026-09-04T16:00:00.000Z" as const;
+
+export const GPT_SUBSIDY_ATTRIBUTION_MANIFEST_URL =
+  "https://github.com/hraness/aicharts/blob/main/data/gpt-subsidy-attribution-measurement.json" as const;
 
 const UTC_DAY_MILLISECONDS = 24 * 60 * 60 * 1_000;
 
@@ -34,20 +40,57 @@ const unavailableAccountAttributionSchema = z.object({
 const partialAccountAttributionSchema = z.object({
   status: z.literal("partial"),
   distinctObservedAccounts: z.number().int().positive(),
-  coverage: z.number().finite().gt(0).lt(1),
-}).strict();
-
-const completeAccountAttributionSchema = z.object({
-  status: z.literal("complete"),
-  distinctObservedAccounts: z.number().int().positive(),
-  coverage: z.literal(1),
+  coverage: z.union([
+    z.literal(GPT_SUBSIDY_SUB_ONE_PERCENT_COVERAGE_SENTINEL),
+    z.number().finite().min(0.01).max(0.99).refine(
+      value => Math.abs(value * 100 - Math.round(value * 100)) < 1e-9,
+      "Sampled coverage must be a whole-percentage lower bound",
+    ),
+  ]),
 }).strict();
 
 const accountAttributionSchema = z.discriminatedUnion("status", [
   unavailableAccountAttributionSchema,
   partialAccountAttributionSchema,
-  completeAccountAttributionSchema,
 ]);
+
+const unavailableObservedProPlanComparisonSchema = z.object({
+  status: z.literal("unavailable"),
+  distinctVerifiedProAccountsLowerBound: z.null(),
+  normalizedPlanValueUsd: z.null(),
+  apiEquivalentMultipleUpperBound: z.null(),
+}).strict();
+
+const sampledObservedProPlanComparisonSchema = z.object({
+  status: z.literal("sampled"),
+  distinctVerifiedProAccountsLowerBound: z.number().int().positive(),
+  normalizedPlanValueUsd: z.number().finite().positive(),
+  apiEquivalentMultipleUpperBound: finiteNonnegativeSchema,
+}).strict();
+
+const observedProPlanComparisonSchema = z.discriminatedUnion("status", [
+  unavailableObservedProPlanComparisonSchema,
+  sampledObservedProPlanComparisonSchema,
+]);
+
+const attributionMeasurementSchema = z.object({
+  name: z.literal("AI Charts GPT subsidy account-attribution manifest"),
+  schemaVersion: z.literal(1),
+  kind: z.literal("aicharts-gpt-subsidy-account-attribution"),
+  revision: z.string().min(1),
+  sha256: z.string().regex(/^[0-9a-f]{64}$/u),
+  frozenAt: isoDateTimeSchema,
+  sourceUrl: z.literal(GPT_SUBSIDY_ATTRIBUTION_MANIFEST_URL),
+}).strict();
+
+const accountPlanComparisonSchema = z.object({
+  periodStartedAt: isoDateTimeSchema,
+  periodEndedAt: isoDateTimeSchema,
+  accountAttribution: accountAttributionSchema,
+  observedProPlanComparison: observedProPlanComparisonSchema,
+  firstSampledAt: isoDateTimeSchema.nullable(),
+  measurement: attributionMeasurementSchema,
+}).strict();
 
 export const gptSubsidyObservationSchema = z.object({
   id: z.string().min(1),
@@ -107,6 +150,7 @@ export const gptSubsidySnapshotSchema = z.object({
   }).strict(),
   observations: z.array(gptSubsidyObservationSchema).min(31),
   periodSummary: periodSummarySchema,
+  accountPlanComparison: accountPlanComparisonSchema,
   methodology: z.object({
     deduplication: z.literal("tokscale-global-event-identity"),
     measurement: z.object({
@@ -206,6 +250,7 @@ export const gptSubsidySnapshotSchema = z.object({
   });
 
   const summary = snapshot.periodSummary;
+  const accountPlanComparison = snapshot.accountPlanComparison;
   const summaryTokenTotal = summary.tokens.uncachedInput
     + summary.tokens.cachedInput
     + summary.tokens.output;
@@ -229,6 +274,97 @@ export const gptSubsidySnapshotSchema = z.object({
       message: "The summary must end on or after it starts",
       path: ["periodSummary", "endedAt"],
     });
+  }
+  if (
+    accountPlanComparison.periodStartedAt !== summary.startedAt
+    || accountPlanComparison.periodEndedAt !== summary.endedAt
+  ) {
+    context.addIssue({
+      code: "custom",
+      message: "Account-plan comparison must cover the period summary",
+      path: ["accountPlanComparison", "periodStartedAt"],
+    });
+  }
+  const accountAttribution = accountPlanComparison.accountAttribution;
+  const observedProPlanComparison = accountPlanComparison.observedProPlanComparison;
+  const hasSampledAttribution = accountAttribution.status !== "unavailable"
+    || snapshot.observations.some(
+      observation => observation.accountAttribution.status !== "unavailable",
+    );
+  if (hasSampledAttribution && accountPlanComparison.firstSampledAt === null) {
+    context.addIssue({
+      code: "custom",
+      message: "Sampled account attribution requires its first publication time",
+      path: ["accountPlanComparison", "firstSampledAt"],
+    });
+  }
+  if (!hasSampledAttribution && accountPlanComparison.firstSampledAt !== null) {
+    context.addIssue({
+      code: "custom",
+      message: "A sampled-attribution history marker requires retained sampled evidence",
+      path: ["accountPlanComparison", "firstSampledAt"],
+    });
+  }
+  if (
+    accountPlanComparison.firstSampledAt !== null
+    && Date.parse(accountPlanComparison.firstSampledAt)
+      > Date.parse(snapshot.generatedAt)
+  ) {
+    context.addIssue({
+      code: "custom",
+      message: "Account attribution cannot first appear after snapshot generation",
+      path: ["accountPlanComparison", "firstSampledAt"],
+    });
+  }
+  if (
+    accountAttribution.status === "unavailable"
+    && observedProPlanComparison.status !== "unavailable"
+  ) {
+    context.addIssue({
+      code: "custom",
+      message: "A sampled Pro-plan comparison requires sampled account coverage",
+      path: ["accountPlanComparison", "observedProPlanComparison"],
+    });
+  }
+  if (observedProPlanComparison.status === "sampled") {
+    if (
+      accountAttribution.distinctObservedAccounts === null
+      || observedProPlanComparison.distinctVerifiedProAccountsLowerBound
+        > accountAttribution.distinctObservedAccounts
+    ) {
+      context.addIssue({
+        code: "custom",
+        message: "Pro-status account lower bound cannot exceed all distinctly observed accounts",
+        path: [
+          "accountPlanComparison",
+          "observedProPlanComparison",
+          "distinctVerifiedProAccountsLowerBound",
+        ],
+      });
+    }
+    const expectedPlanValue = observedProPlanComparison
+      .distinctVerifiedProAccountsLowerBound * snapshot.plan.monthlyPriceUsd;
+    if (observedProPlanComparison.normalizedPlanValueUsd !== expectedPlanValue) {
+      context.addIssue({
+        code: "custom",
+        message: "Observed Pro plan value must equal the Pro-status account lower bound times the plan price",
+        path: ["accountPlanComparison", "observedProPlanComparison", "normalizedPlanValueUsd"],
+      });
+    }
+    const expectedMultiple = summary.apiEquivalentUsd / expectedPlanValue;
+    if (Math.abs(
+      observedProPlanComparison.apiEquivalentMultipleUpperBound - expectedMultiple,
+    ) > Math.max(1e-9, Math.abs(expectedMultiple) * 1e-12)) {
+      context.addIssue({
+        code: "custom",
+        message: "Observed Pro upper bound must equal API value divided by normalized plan value",
+        path: [
+          "accountPlanComparison",
+          "observedProPlanComparison",
+          "apiEquivalentMultipleUpperBound",
+        ],
+      });
+    }
   }
   const latest = snapshot.observations.at(-1);
   if (latest !== undefined) {
@@ -298,9 +434,10 @@ export function calculateApiEquivalentUsd(
   ) / 1_000_000;
 }
 
-export function calculateOnePlanUpperBoundMultiple(
+export function calculateObservedProPlanUpperBoundMultiple(
   aggregateApiEquivalentUsd: number,
-  onePlanPriceUsd: number,
+  planPriceUsd: number,
+  distinctVerifiedProAccountsLowerBound: number,
 ): number {
   if (
     !Number.isFinite(aggregateApiEquivalentUsd)
@@ -310,11 +447,18 @@ export function calculateOnePlanUpperBoundMultiple(
       "Aggregate API-equivalent value must be finite and nonnegative",
     );
   }
-  if (!Number.isFinite(onePlanPriceUsd) || onePlanPriceUsd <= 0) {
-    throw new RangeError("One-plan price must be finite and positive");
+  if (!Number.isFinite(planPriceUsd) || planPriceUsd <= 0) {
+    throw new RangeError("Plan price must be finite and positive");
+  }
+  if (
+    !Number.isSafeInteger(distinctVerifiedProAccountsLowerBound)
+    || distinctVerifiedProAccountsLowerBound <= 0
+  ) {
+    throw new RangeError("Pro-status account lower bound must be a positive safe integer");
   }
 
-  return aggregateApiEquivalentUsd / onePlanPriceUsd;
+  return aggregateApiEquivalentUsd
+    / (planPriceUsd * distinctVerifiedProAccountsLowerBound);
 }
 
 export function parseGptSubsidySnapshot(
@@ -385,9 +529,26 @@ export function formatSubsidyTokens(value: number): string {
   return compactTokenFormatter.format(value);
 }
 
-export function formatOnePlanUpperBoundMultiple(value: number): string {
+export function formatSampledCoverageLowerBound(value: number): string {
+  if (value === GPT_SUBSIDY_SUB_ONE_PERCENT_COVERAGE_SENTINEL) {
+    return "<1%";
+  }
+  if (
+    !Number.isFinite(value)
+    || value < 0.01
+    || value > 0.99
+    || Math.abs(value * 100 - Math.round(value * 100)) >= 1e-9
+  ) {
+    throw new RangeError(
+      "Sampled coverage must be the checked whole-percentage lower bound",
+    );
+  }
+  return `at least ${String(Math.round(value * 100))}%`;
+}
+
+export function formatObservedProPlanUpperBoundMultiple(value: number): string {
   if (!Number.isFinite(value) || value < 0) {
-    throw new RangeError("One-plan comparison must be finite and nonnegative");
+    throw new RangeError("Observed Pro comparison must be finite and nonnegative");
   }
 
   return `≤${wholeMultipleFormatter.format(Math.ceil(value))}×`;

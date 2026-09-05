@@ -38,13 +38,37 @@ export function HomeEditorialResources({
           const article = getBlogArticle(slug);
           if (article === undefined) return null;
           const editorialImage = imageForSlug(slug);
-          return (
-            <article key={slug}>
-              {editorialImage === undefined ? null : (
-                <Link aria-label={article.title} href={blogArticlePath(slug)}>
-                  <EditorialFigure image={editorialImage} variant="card" />
+
+          if (editorialImage === undefined) {
+            return (
+              <article
+                className="home-editorial__item home-editorial__item--text"
+                key={slug}
+              >
+                <Link
+                  className="home-editorial__text-card"
+                  href={blogArticlePath(slug)}
+                >
+                  <span>{article.section ?? "Analysis"}</span>
+                  <h3>{article.title}</h3>
+                  <p>{article.dek}</p>
                 </Link>
-              )}
+              </article>
+            );
+          }
+
+          return (
+            <article
+              className="home-editorial__item home-editorial__item--image"
+              key={slug}
+            >
+              <Link
+                aria-label={article.title}
+                className="home-editorial__image-link"
+                href={blogArticlePath(slug)}
+              >
+                <EditorialFigure image={editorialImage} variant="card" />
+              </Link>
               <h3>
                 <Link href={blogArticlePath(slug)}>{article.title}</Link>
               </h3>

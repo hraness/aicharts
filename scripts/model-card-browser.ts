@@ -146,6 +146,12 @@ async function verifyChartExport(browser: Browser, baseUrl: string): Promise<voi
   try {
     await page.goto(baseUrl, { waitUntil: "domcontentloaded" });
     await settle(page);
+    const sourceChartHeight = await page.locator(".chart-canvas .benchmark-chart").evaluate((element) => {
+      if (!(element instanceof SVGSVGElement)) {
+        throw new Error("The coding-agent chart is not an SVG element.");
+      }
+      return element.viewBox.baseVal.height;
+    });
     await page.getByRole("button", { name: "Share and export chart" }).click();
     await page.getByText("Image ready to share.", { exact: true }).waitFor({
       timeout: 30_000,
@@ -167,7 +173,10 @@ async function verifyChartExport(browser: Browser, baseUrl: string): Promise<voi
       "The downloaded chart did not contain a PNG signature.",
     );
     invariant(png.readUInt32BE(16) === 1_440, "The chart PNG width changed from its export contract.");
-    invariant(png.readUInt32BE(20) > 1_320, "The chart PNG omitted its branded export header.");
+    invariant(
+      png.readUInt32BE(20) > sourceChartHeight,
+      "The chart PNG omitted its branded export header.",
+    );
     invariant(failures.length === 0, failures.join("; "));
   } finally {
     await context.close();

@@ -92,4 +92,78 @@ describe("checked GPT subsidy snapshot provenance", () => {
     await expect(checkGptSubsidyData({ repositoryRoot: root }))
       .rejects.toThrow("Measurement implementation hash drifted");
   });
+
+  test("rejects a byte-level account-attribution manifest drift", async () => {
+    const root = await mkdtemp(path.join(tmpdir(), "aicharts-subsidy-check-"));
+    temporaryRoots.push(root);
+    const attributionManifestPath = path.join(
+      root,
+      "gpt-subsidy-attribution-measurement.json",
+    );
+    const manifestSource = await readFile(path.join(
+      repositoryRoot,
+      "data",
+      "gpt-subsidy-attribution-measurement.json",
+    ), "utf8");
+    await writeFile(attributionManifestPath, `${manifestSource}\n`, "utf8");
+
+    await expect(checkGptSubsidyData({ attributionManifestPath }))
+      .rejects.toThrow("account-attribution basis");
+  });
+
+  test("rejects drift in an attribution implementation source", async () => {
+    const root = await mkdtemp(path.join(tmpdir(), "aicharts-subsidy-check-"));
+    temporaryRoots.push(root);
+    const scripts = path.join(root, "scripts");
+    const lib = path.join(root, "lib");
+    await Promise.all([
+      mkdir(scripts, { recursive: true }),
+      mkdir(lib, { recursive: true }),
+    ]);
+    const [
+      adapter,
+      updater,
+      sharedContract,
+      contract,
+      publicContract,
+      enricher,
+      publisher,
+    ] = await Promise.all([
+      readFile(path.join(
+        repositoryRoot,
+        "scripts",
+        "aicharts_gpt_subsidy_ledger.rs",
+      ), "utf8"),
+      readFile(path.join(repositoryRoot, "scripts", "update-gpt-subsidy.ts"), "utf8"),
+      readFile(path.join(repositoryRoot, "lib", "gpt-subsidy-manifests.ts"), "utf8"),
+      readFile(path.join(
+        repositoryRoot,
+        "lib",
+        "gpt-subsidy-attribution-manifest.ts",
+      ), "utf8"),
+      readFile(path.join(repositoryRoot, "lib", "gpt-subsidy-data.ts"), "utf8"),
+      readFile(path.join(
+        repositoryRoot,
+        "scripts",
+        "enrich-gpt-subsidy-attribution.ts",
+      ), "utf8"),
+      readFile(path.join(repositoryRoot, "scripts", "publish-gpt-subsidy.ts"), "utf8"),
+    ]);
+    await Promise.all([
+      writeFile(path.join(scripts, "aicharts_gpt_subsidy_ledger.rs"), adapter, "utf8"),
+      writeFile(path.join(scripts, "update-gpt-subsidy.ts"), updater, "utf8"),
+      writeFile(path.join(lib, "gpt-subsidy-manifests.ts"), sharedContract, "utf8"),
+      writeFile(path.join(lib, "gpt-subsidy-attribution-manifest.ts"), contract, "utf8"),
+      writeFile(path.join(lib, "gpt-subsidy-data.ts"), publicContract, "utf8"),
+      writeFile(
+        path.join(scripts, "enrich-gpt-subsidy-attribution.ts"),
+        `${enricher}\n`,
+        "utf8",
+      ),
+      writeFile(path.join(scripts, "publish-gpt-subsidy.ts"), publisher, "utf8"),
+    ]);
+
+    await expect(checkGptSubsidyData({ repositoryRoot: root }))
+      .rejects.toThrow("attribution implementation hash drifted");
+  });
 });

@@ -66,48 +66,81 @@ export function OptionSpaceOverview({
       minimum: range.minimum,
     }))
   ), [records, yMetric]);
+  const frontierLeader = frontierRows[0];
+  const providerLeader = providerRanges[0];
 
   return (
     <section
-      aria-label="Option space"
+      aria-labelledby="option-space-title"
       className="option-space-overview chart-selection-boundary"
     >
-      <div className="option-space-grid">
-        <article className="option-space-panel">
-          <header>
-            <h3>Efficient frontier</h3>
-            <p>
-              Models on the Pareto frontier by {xMetricLabels[xMetric]} and{" "}
-              {yMetricLabels[yMetric]}.
-            </p>
-          </header>
-          <BarListChart
-            aria-label={`${yMetricLabels[yMetric]} efficient frontier`}
-            data={frontierRows}
-            domain={[0, 100]}
-            formatValue={(value) => formatMetricValue(yMetric, value)}
-            onSelectionChange={onPinPoint}
-            selectedId={pinnedPointId}
-          />
-        </article>
+      <header className="option-space-overview__header">
+        <div>
+          <p>Option-space summary</p>
+          <h2 id="option-space-title">Efficient choices beyond the scatter plot</h2>
+        </div>
+        {frontierLeader === undefined || providerLeader === undefined ? (
+          <p className="option-space-overview__current">
+            No complete option-space rows are available for the selected axes.
+          </p>
+        ) : (
+          <p className="option-space-overview__current">
+            <strong>Current read.</strong>{" "}
+            {frontierLeader.label} reaches the highest sampled frontier score at{" "}
+            <data value={frontierLeader.value}>
+              {formatMetricValue(yMetric, frontierLeader.value)}
+            </data>
+            ; {providerRanges.length} provider ranges are available, led by {providerLeader.label}
+            {" "}at{" "}
+            <data value={providerLeader.maximum}>
+              {formatMetricValue(yMetric, providerLeader.maximum)}
+            </data>
+            .
+          </p>
+        )}
+      </header>
 
-        <article className="option-space-panel">
-          <header>
-            <h3>Provider ranges</h3>
-            <p>
-              Minimum, median, and maximum {yMetricLabels[yMetric]} by provider.
-            </p>
-          </header>
-          <RangePlotChart
-            aria-label={`${yMetricLabels[yMetric]} ranges by provider`}
-            data={providerRanges}
-            domain={[0, 100]}
-            formatValue={(value) => formatMetricValue(yMetric, value)}
-            onSelectionChange={onPinProvider}
-            selectedId={pinnedProviderId}
-          />
-        </article>
-      </div>
+      <details className="option-space-overview__details">
+        <summary>
+          Explore {frontierRows.length} frontier steps and {providerRanges.length} provider ranges
+        </summary>
+        <div className="option-space-grid">
+          <article className="option-space-panel">
+            <header>
+              <h3>Efficient frontier</h3>
+              <p>
+                Models on the Pareto frontier by {xMetricLabels[xMetric]} and{" "}
+                {yMetricLabels[yMetric]}.
+              </p>
+            </header>
+            <BarListChart
+              aria-label={`${yMetricLabels[yMetric]} efficient frontier`}
+              data={frontierRows}
+              domain={[0, 100]}
+              formatValue={(value) => formatMetricValue(yMetric, value)}
+              onSelectionChange={onPinPoint}
+              selectedId={pinnedPointId}
+            />
+          </article>
+
+          <article className="option-space-panel">
+            <header>
+              <h3>Provider ranges</h3>
+              <p>
+                Minimum, median, and maximum {yMetricLabels[yMetric]} by provider.
+              </p>
+            </header>
+            <RangePlotChart
+              aria-label={`${yMetricLabels[yMetric]} ranges by provider`}
+              data={providerRanges}
+              domain={[0, 100]}
+              formatValue={(value) => formatMetricValue(yMetric, value)}
+              onSelectionChange={onPinProvider}
+              selectedId={pinnedProviderId}
+            />
+          </article>
+        </div>
+      </details>
     </section>
   );
 }

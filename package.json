@@ -62,6 +62,7 @@
     "first-party-releases:check": "bun run scripts/refresh-first-party-releases.ts --check",
     "release-dates:check": "bun run scripts/check-model-release-dates.ts",
     "subsidy:update": "bun run scripts/update-gpt-subsidy.ts",
+    "subsidy:attribution": "bun run scripts/enrich-gpt-subsidy-attribution.ts",
     "subsidy:check": "bun run scripts/check-gpt-subsidy-data.ts",
     "subsidy:publish": "bun run scripts/publish-gpt-subsidy.ts",
     "check:generated": "bun run colors:check && bun run model-icons:check && bun run data:check && bun run aa-intelligence:check && bun run releases:check && bun run first-party-releases:check && bun run release-dates:check && bun run deepswe:check && bun run terminal-bench:check && bun run terminal-bench-science:check && bun run subsidy:check",

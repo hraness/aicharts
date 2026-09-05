@@ -73,9 +73,11 @@ describe("homepage benchmark portfolio", () => {
 
     expect(CORE_BENCHMARK_PORTFOLIO).toHaveLength(5);
     expect(html).toContain('aria-labelledby="home-benchmark-portfolio-title"');
+    expect(html).toContain('data-analytics-surface="home_portfolio"');
     expect(html).toContain("Five benchmark roles, one coding standard");
-    expect(html).toContain("Checked score views stay on their native");
-    expect(html).toContain("Terminal-Bench 4 is the coding standard");
+    expect(html).toContain("Use each signal for its own question");
+    expect(html).toContain("Terminal-Bench 4.0.0 is the coding standard");
+    expect(html).toContain("scores from different benchmarks are never blended");
     expect(html).toContain("Terminal-Bench-Science");
     expect(html).toContain("GDPval-AA");
     expect(html).toContain("OSWorld");
@@ -83,8 +85,12 @@ describe("homepage benchmark portfolio", () => {
     expect(html).toContain("Humanity’s Last Exam");
     expect(html).toContain("never mix classic HLE with HLE-Rolling");
     expect(html.match(/home-benchmark-portfolio__standard/gu)).toHaveLength(1);
+    expect(html).toContain('<details class="home-benchmark-portfolio__protocol">');
+    expect(html).toContain("Comparison protocol and supplemental evidence");
+    expect(html).not.toContain('<th scope="col">Comparison rule</th>');
     expect(html).toContain("Supplemental · closed");
     expect(html).toContain("CursorBench 3.2");
+    expect(html).toContain('data-analytics-destination-id="source:cursorbench"');
     expect(html).toContain("does not replace the public coding standard");
     expect(html).not.toContain("AutomationBench");
     expect(html).not.toContain("AA Index");
@@ -98,8 +104,12 @@ describe("homepage benchmark portfolio", () => {
     );
 
     expect(html).toContain("Terminal-Bench 4.0.0 snapshot");
+    expect(html).toContain('data-analytics-destination-id="source:terminal-bench"');
     expect(html).toContain("Official leaderboard · 66 tasks × 5 trials · abc123");
     expect(html).toContain('<time dateTime="2026-09-01T18:30:00.000Z">Sep 1, 2026</time>');
+    expect(html).toContain("Current leader");
+    expect(html).toContain("View top 2 Terminal-Bench 4 configurations");
+    expect(html).toContain('<details class="terminal-bench-snapshot__details">');
     expect(html).toContain("Highest Terminal-Bench 4 accuracy scores");
     expect(html).toContain("95% interval");
     expect(html).toContain("Evaluation cost");
@@ -109,8 +119,9 @@ describe("homepage benchmark portfolio", () => {
     expect(html.indexOf("Model A")).toBeLessThan(html.indexOf("Model B"));
     expect(html).toContain("Agent B 2.0 · high · Lab B");
     expect(html).toContain('<meter aria-hidden="true" max="100" min="0" value="44.55"></meter>');
-    expect(html).toContain("Measures");
-    expect(html).toContain("Comparison rule");
+    expect(html.indexOf("Current leader")).toBeLessThan(
+      html.indexOf('class="terminal-bench-snapshot__details"'),
+    );
   });
 
   test("does not mix an older Terminal-Bench snapshot into the standard view", () => {
@@ -140,7 +151,10 @@ describe("homepage benchmark portfolio", () => {
     );
 
     expect(html).toContain("Terminal-Bench-Science 0.1.0 snapshot");
+    expect(html).toContain('data-analytics-destination-id="source:terminal-bench-science"');
     expect(html).toContain("Owner leaderboard · 70 tasks × 3 trials");
+    expect(html).toContain("Current leader");
+    expect(html).toContain("View top 2 Terminal-Bench-Science configurations");
     expect(html).toContain("Highest Terminal-Bench-Science 0.1 resolution rates");
     expect(html).toContain("Resolution rate");
     expect(html).toContain("Standard error");

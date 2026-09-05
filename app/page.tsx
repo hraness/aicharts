@@ -61,49 +61,45 @@ export default function Home() {
         <CodingAgentExplorer
           brand={{ domain: site.domain, heading: site.domain }}
           modelCardPaths={modelCardPaths}
-          overview={(
-            <>
-              <HomeBenchmarkPortfolio
-                terminalBench={{
-                  entries: terminalBench.records.map(record => ({
-                    agent: record.harness.display.label,
-                    agentVersion: record.harness.version,
-                    confidenceInterval95: record.metrics.accuracyCi95HalfWidthPercent,
-                    id: record.id,
-                    model: record.model.display.label,
-                    organization: record.model.organization.label,
-                    reasoningEffort: record.reasoningEffort,
-                    score: record.metrics.accuracyPercent,
-                    totalCostUsd: record.metrics.totalCostUsd,
-                  })),
-                  retrievedAt: terminalBench.source.retrievedAt,
-                  sourceLabel: `${terminalBench.source.name} · ${terminalBench.benchmark.taskCount} tasks × ${terminalBench.benchmark.trialsPerTask} trials · ${terminalBench.source.repositoryCommit.slice(0, 7)}`,
-                  sourceUrl: terminalBench.source.submissionsDirectoryUrl,
-                  version: terminalBench.benchmark.version,
-                }}
-                terminalBenchScience={{
-                  entries: terminalBenchScience.records.map(record => ({
-                    harness: record.harness.display.label,
-                    id: record.id,
-                    model: record.model.display.label,
-                    organization: record.model.organization.label,
-                    rank: record.rank,
-                    reasoningEffort: record.reasoningEffort,
-                    score: record.metrics.resolutionRatePercent,
-                    standardError: record.metrics.standardErrorPercent,
-                    totalCostUsd: record.metrics.totalCostUsd,
-                  })),
-                  retrievedAt: terminalBenchScience.source.retrievedAt,
-                  sourceLabel: `${terminalBenchScience.source.name} · ${terminalBenchScience.benchmark.taskCount} tasks × ${terminalBenchScience.benchmark.trialsPerTask} trials`,
-                  sourceUrl: terminalBenchScience.source.leaderboardUrl,
-                  version: terminalBenchScience.benchmark.version,
-                }}
-              />
-              <HomeIntelligenceEfficiency snapshot={parsedIntelligence.value} />
-            </>
-          )}
+          overview={<HomeIntelligenceEfficiency snapshot={parsedIntelligence.value} />}
           snapshot={parsed.value}
         >
+          <HomeBenchmarkPortfolio
+            terminalBench={{
+              entries: terminalBench.records.map(record => ({
+                agent: record.harness.display.label,
+                agentVersion: record.harness.version,
+                confidenceInterval95: record.metrics.accuracyCi95HalfWidthPercent,
+                id: record.id,
+                model: record.model.display.label,
+                organization: record.model.organization.label,
+                reasoningEffort: record.reasoningEffort,
+                score: record.metrics.accuracyPercent,
+                totalCostUsd: record.metrics.totalCostUsd,
+              })),
+              retrievedAt: terminalBench.source.retrievedAt,
+              sourceLabel: `${terminalBench.source.name} · ${terminalBench.benchmark.taskCount} tasks × ${terminalBench.benchmark.trialsPerTask} trials · ${terminalBench.source.repositoryCommit.slice(0, 7)}`,
+              sourceUrl: terminalBench.source.submissionsDirectoryUrl,
+              version: terminalBench.benchmark.version,
+            }}
+            terminalBenchScience={{
+              entries: terminalBenchScience.records.map(record => ({
+                harness: record.harness.display.label,
+                id: record.id,
+                model: record.model.display.label,
+                organization: record.model.organization.label,
+                rank: record.rank,
+                reasoningEffort: record.reasoningEffort,
+                score: record.metrics.resolutionRatePercent,
+                standardError: record.metrics.standardErrorPercent,
+                totalCostUsd: record.metrics.totalCostUsd,
+              })),
+              retrievedAt: terminalBenchScience.source.retrievedAt,
+              sourceLabel: `${terminalBenchScience.source.name} · ${terminalBenchScience.benchmark.taskCount} tasks × ${terminalBenchScience.benchmark.trialsPerTask} trials`,
+              sourceUrl: terminalBenchScience.source.leaderboardUrl,
+              version: terminalBenchScience.benchmark.version,
+            }}
+          />
           <HomeEditorialResources />
         </CodingAgentExplorer>
       </Suspense>

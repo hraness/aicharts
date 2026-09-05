@@ -78,6 +78,11 @@ test("metric selectors reserve normal-flow space outside the plot", () => {
   expect(firstRule(".chart-metric-controls")).toContain("grid-template-columns: minmax(76px, 1fr) auto minmax(76px, 1fr)");
   expect(firstRule(".chart-metric-controls")).not.toContain("position: absolute");
   expect(firstRule(".chart-benchmark-select")).toContain("width: 76px");
+  expect(firstRule(".chart-interaction-cue")).toContain("grid-column: 3");
+  expect(firstRule(".chart-interaction-cue")).toContain("justify-self: end");
+  expect(firstRule(".chart-interaction-cue__touch")).toContain("display: none");
+  expect(stylesheet).toMatch(/@media \(max-width:\s*760px\)[\s\S]*?\.chart-interaction-cue__desktop\s*\{[^}]*display:\s*none;/u);
+  expect(stylesheet).toMatch(/@media \(hover:\s*none\), \(pointer:\s*coarse\)[\s\S]*?\.chart-interaction-cue__touch\s*\{[^}]*display:\s*inline;/u);
   expect(stylesheet).not.toContain("chart-axis-control");
   expect(stylesheet).not.toContain("rotate(-90deg)");
   expect(firstRule(".chart-export-axis-title")).toContain("visibility: hidden");
@@ -120,13 +125,32 @@ test("homepage orientation is compact, bounded, and responsive", () => {
   expect(stylesheet).toMatch(/@media \(max-width:\s*520px\)[\s\S]*?\.chart-orientation__facts > div:last-child\s*\{[^}]*grid-column:\s*1 \/ -1;/u);
 });
 
-test("homepage benchmark evidence uses paired desktop tables and readable mobile cards", () => {
+test("the image-free homepage article is an intentional responsive text card", () => {
+  const imageLink = firstRule(".home-editorial__image-link");
+  const textCard = firstRule(".home-editorial__text-card");
+
+  expect(imageLink).toContain("aspect-ratio: 16 / 9");
+  expect(textCard).toContain("background: var(--surface-raised)");
+  expect(textCard).toContain("border: 1px solid var(--grid)");
+  expect(textCard).toContain("display: grid");
+  expect(textCard).toContain("flex: 1");
+  expect(textCard).toContain("text-decoration: none");
+  expect(stylesheet).toMatch(/@media \(max-width:\s*42rem\)[\s\S]*?\.home-editorial__grid \.home-editorial__item--text\s*\{[^}]*display:\s*block;/u);
+  expect(stylesheet).not.toContain(".home-editorial__grid article > a");
+});
+
+test("homepage benchmark guide progressively discloses detail and keeps a readable mobile map", () => {
   const portfolio = firstRule(".home-benchmark-portfolio");
   const snapshots = firstRule(".home-benchmark-portfolio__snapshots");
+  const leader = firstRule(".terminal-bench-snapshot__leader");
 
   expect(portfolio).toContain("border-bottom: 1px solid var(--line)");
-  expect(portfolio).toContain("padding: clamp(20px, 3vw, 38px) var(--chart-content-inset)");
+  expect(portfolio).toContain("padding: clamp(22px, 3vw, 36px) var(--chart-content-inset)");
   expect(snapshots).toContain("grid-template-columns: repeat(2, minmax(0, 1fr))");
+  expect(leader).toContain("grid-template-columns: minmax(0, 1fr) max-content");
+  expect(stylesheet).toMatch(/\.home-benchmark-portfolio__protocol > summary,[\s\S]*?min-height:\s*var\(--interactive-target-min\);/u);
+  expect(stylesheet).toContain('.home-benchmark-portfolio__protocol[open] > summary::after');
+  expect(stylesheet).toContain(".terminal-bench-snapshot__details[open] > summary");
   expect(stylesheet).toContain(".terminal-bench-snapshot__table { min-width: 540px; }");
   expect(stylesheet).toMatch(/@media \(max-width:\s*1100px\)[\s\S]*?\.home-benchmark-portfolio__snapshots\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\);/u);
   expect(stylesheet).toMatch(/@media \(max-width:\s*760px\)[\s\S]*?\.home-benchmark-portfolio__table,[\s\S]*?\.home-benchmark-portfolio__table td\s*\{[^}]*display:\s*block;[^}]*width:\s*100%;/u);
@@ -259,6 +283,8 @@ test("the chart declares only horizontal scrolling", () => {
   expect(firstRule(".chart-app")).toContain("overflow-x: clip");
   expect(firstRule(".chart-page-canvas")).toContain("overflow-x: clip");
   expect(firstRule(".chart-scroll")).toContain("max-width: 100%");
+  expect(firstRule(".chart-canvas")).toContain("aspect-ratio: 1440 / 940");
+  expect(stylesheet).toMatch(/@media \(max-width:\s*760px\)[\s\S]*?\.chart-canvas\s*\{[^}]*min-width:\s*700px;/u);
 });
 
 test("the persistent header and resource nav omit promotional credit chrome", () => {
@@ -273,6 +299,7 @@ test("chart labels keep semantic text independent from the data-series palette",
   expect(stylesheet).not.toMatch(/\.chart-model-label-title\s*\{[^}]*fill:\s*currentColor;/su);
   expect(stylesheet).toMatch(/\.chart-watermark\s*\{[^}]*fill:\s*var\(--foreground\);/su);
   expect(stylesheet).not.toMatch(/\.chart-watermark\s*\{[^}]*opacity:/su);
+  expect(firstRule(".chart-label-leaders.is-resting .chart-label-leader")).toContain("opacity: .56");
 });
 
 test("point details escape the scroll clip and layer above chart chrome with a leader", () => {
@@ -302,11 +329,15 @@ test("chart point controls retain a theme-contrast boundary in every state", () 
   expect(stylesheet).not.toMatch(/\.chart-point\.is-dimmed\s*\{[^}]*opacity:/su);
 });
 
-test("option-space charts stay compact, complementary, and single-column on phones", () => {
+test("secondary chart evidence stays behind an accessible compact disclosure", () => {
   expect(firstRule(".option-space-overview")).toContain("border-top: 1px solid var(--grid)");
+  expect(firstRule(".option-space-overview")).toContain("display: grid");
   expect(firstRule(".option-space-overview")).toContain("clamp(18px, 2.5vw, 28px)");
   expect(stylesheet).not.toContain("option-space-header");
   expect(stylesheet).not.toContain("option-space-eyebrow");
+  expect(firstRule(".option-space-overview__details > summary,\n.model-update-timeline__history > summary")).toContain(
+    "min-height: var(--interactive-target-min)",
+  );
   expect(firstRule(".option-space-grid")).toContain(
     "grid-template-columns: repeat(2, minmax(0, 1fr))",
   );
@@ -316,4 +347,17 @@ test("option-space charts stay compact, complementary, and single-column on phon
   expect(stylesheet).toMatch(
     /@media \(max-width:\s*760px\)[\s\S]*?\.option-space-grid\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\);/u,
   );
+  expect(stylesheet).toMatch(
+    /@media \(max-width:\s*760px\)[\s\S]*?\.option-space-overview__header\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\);/u,
+  );
+});
+
+test("update history keeps its latest signal visible above a compact disclosure", () => {
+  expect(stylesheet).toMatch(
+    /\.model-update-timeline\s*\{[^}]*border-top:\s*1px solid var\(--grid\);[^}]*display:\s*grid;/u,
+  );
+  expect(firstRule(".model-update-timeline__current")).toContain("border-block: 1px solid var(--grid)");
+  expect(stylesheet).toMatch(/\.model-update-timeline__history\s*\{\s*margin-top:\s*-12px;\s*\}/u);
+  expect(stylesheet).toContain('.model-update-timeline__history > summary::after');
+  expect(stylesheet).toContain('.model-update-timeline__history[open] > summary::after');
 });

@@ -1,7 +1,11 @@
 import type { CSSProperties } from "react";
 import { providerColorRange } from "@/lib/chart-colors";
 import type { BenchmarkMetric, CodingAgentUpdate } from "@/lib/coding-agent-data";
-import { formatUpdateDate, groupUpdatesByDetection } from "@/lib/coding-agent-updates";
+import {
+  formatUpdateDate,
+  groupUpdatesByDetection,
+  latestUpdateGroup,
+} from "@/lib/coding-agent-updates";
 import { formatMetricValue, yMetricLabels } from "@/lib/chart-math";
 
 const benchmarkMetrics = ["aaIndex", "deepSwe", "terminalBench", "sweAtlas"] as const satisfies readonly BenchmarkMetric[];
@@ -53,6 +57,9 @@ export function ModelUpdateTimeline({
 }) {
   if (updates.length === 0) return null;
   const groups = groupUpdatesByDetection(updates);
+  const latest = latestUpdateGroup(updates);
+  if (latest === null) return null;
+  const latestConfigurations = latest.events.map(update => `${update.model} (${update.agent})`);
   return (
     <section aria-labelledby="model-updates-heading" className="model-update-timeline" id="model-updates">
       <header className="model-update-timeline__header">
@@ -61,32 +68,44 @@ export function ModelUpdateTimeline({
           Daily snapshot diff · checked <time dateTime={retrievedAt}>{formatUpdateDate(retrievedAt)}</time>
         </p>
       </header>
-      <ol className="model-update-groups">
-        {groups.map((group) => (
-          <li className="model-update-group" key={group.detectedAt}>
-            <time dateTime={group.detectedAt}>{formatUpdateDate(group.detectedAt)}</time>
-            <ol className="model-update-cards">
-              {group.events.map((update) => (
-                <li className="model-update-card" key={update.id} style={updateStyle(update.providerId)}>
-                  <div className="model-update-card__heading">
-                    <span>
-                      {update.kind === "model-added"
-                        ? "New model"
-                        : update.kind === "variant-added" ? "New setting" : "Benchmark change"}
-                    </span>
-                    <h3>{update.model}</h3>
-                  </div>
-                  <p>
-                    {update.agent} · {update.providerName} · {update.setting}
-                    {update.kind !== "benchmark-changed" && update.variantCount > 1 ? ` · ${update.variantCount} settings` : ""}
-                  </p>
-                  <UpdateMetrics update={update} />
-                </li>
-              ))}
-            </ol>
-          </li>
-        ))}
-      </ol>
+      <div className="model-update-timeline__current">
+        <p>
+          <strong>{latest.summary}</strong>
+          <time dateTime={latest.detectedAt}>{formatUpdateDate(latest.detectedAt)}</time>
+        </p>
+        <p>{latestConfigurations.join(" · ")}</p>
+      </div>
+      <details className="model-update-timeline__history">
+        <summary>
+          View all {updates.length} detailed updates across {groups.length} snapshots
+        </summary>
+        <ol className="model-update-groups">
+          {groups.map((group) => (
+            <li className="model-update-group" key={group.detectedAt}>
+              <time dateTime={group.detectedAt}>{formatUpdateDate(group.detectedAt)}</time>
+              <ol className="model-update-cards">
+                {group.events.map((update) => (
+                  <li className="model-update-card" key={update.id} style={updateStyle(update.providerId)}>
+                    <div className="model-update-card__heading">
+                      <span>
+                        {update.kind === "model-added"
+                          ? "New model"
+                          : update.kind === "variant-added" ? "New setting" : "Benchmark change"}
+                      </span>
+                      <h3>{update.model}</h3>
+                    </div>
+                    <p>
+                      {update.agent} · {update.providerName} · {update.setting}
+                      {update.kind !== "benchmark-changed" && update.variantCount > 1 ? ` · ${update.variantCount} settings` : ""}
+                    </p>
+                    <UpdateMetrics update={update} />
+                  </li>
+                ))}
+              </ol>
+            </li>
+          ))}
+        </ol>
+      </details>
     </section>
   );
 }

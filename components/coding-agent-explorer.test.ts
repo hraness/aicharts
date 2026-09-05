@@ -1,6 +1,21 @@
 import { describe, expect, test } from "bun:test";
 
-import { formatRetrievedAt, shouldClearChartSelection } from "./coding-agent-explorer";
+import codingAgentData from "@/data/coding-agents.json";
+import { parseCodingAgentSnapshot } from "@/lib/coding-agent-data";
+import {
+  computeDomain,
+  linearScale,
+  recordsWithMetrics,
+  xMetricValue,
+  yMetricValue,
+} from "@/lib/chart-math";
+
+import {
+  formatRetrievedAt,
+  nearestCodingAgentPointId,
+  selectRestingCodingAgentLabels,
+  shouldClearChartSelection,
+} from "./coding-agent-explorer";
 
 function clickTargetWithin(...ancestorClassNames: readonly string[]) {
   return {
@@ -156,7 +171,8 @@ test("uses the task-explicit heading while keeping the domain in compact product
 test("keeps chart chrome compact and metric labels semantic-only", async () => {
   const source = await Bun.file(new URL("./coding-agent-explorer.tsx", import.meta.url)).text();
 
-  expect(source).toContain("const plot = { top: 24, right: 1360, bottom: 1240, left: 72 }");
+  expect(source).toContain("const chartHeight = 940");
+  expect(source).toContain("const plot = { top: 24, right: 1360, bottom: 860, left: 72 }");
   expect(source).toContain('tooltip="Clear pinned selection"');
   expect(source).toContain('aria-label={label}');
   expect(source).toContain('className="chart-metric-controls chart-selection-boundary"');
@@ -169,7 +185,10 @@ test("keeps chart chrome compact and metric labels semantic-only", async () => {
   expect(source).not.toContain("chart-axis-control");
   expect(source).toContain('className="chart-axis-title chart-export-axis-title"');
   expect(source).not.toContain('className="chart-header-actions"');
-  expect(source).not.toContain('x={plot.left - 14}');
+  expect(source).toContain('x={plot.left - 12}');
+  expect(source).toContain("{formatMetricValue(yMetric, tick)}");
+  expect(source).toContain("Hover or select a point for exact values");
+  expect(source).toContain("Tap points");
   expect(source).not.toContain('tooltip="Chart controls"');
   expect(source).not.toContain('aria-label="Chart controls"');
   expect(source).not.toContain("KeyboardIcon");
@@ -179,6 +198,31 @@ test("keeps chart chrome compact and metric labels semantic-only", async () => {
   expect(source).not.toContain('className="metric-control__label"');
   expect(source).not.toContain('className="interaction-guide"');
   expect(source).not.toContain("Hover points or providers to preview</span>");
+});
+
+test("chooses a stable score-led three-label reading across the x range", () => {
+  const labels = selectRestingCodingAgentLabels([
+    { record: { id: "alpha-low", model: "alpha" }, x: 18, yValue: 64 },
+    { record: { id: "beta", model: "beta" }, x: 10, yValue: 68 },
+    { record: { id: "alpha-high", model: "alpha" }, x: 95, yValue: 70 },
+    { record: { id: "delta", model: "delta" }, x: 80, yValue: 61 },
+    { record: { id: "gamma", model: "gamma" }, x: 52, yValue: 66 },
+  ]);
+
+  expect(labels.map(label => label.record.id)).toEqual(["alpha-high", "beta", "gamma"]);
+  expect(new Set(labels.map(label => label.record.model)).size).toBe(3);
+  expect(labels.some(label => label.x <= 38.34)).toBeTrue();
+  expect(labels.some(label => label.x > 38.34 && label.x <= 66.67)).toBeTrue();
+});
+
+test("routes both resting and interaction labels through collision layout and explicit leaders", async () => {
+  const source = await Bun.file(new URL("./coding-agent-explorer.tsx", import.meta.url)).text();
+
+  expect(source).toContain("return selectRestingCodingAgentLabels(chart.labelPoints);");
+  expect(source).toContain("layoutChartLabels(");
+  expect(source).toContain("visibleLabelPoints.map((point, index)");
+  expect(source).toContain('className={`chart-label-leaders${isAtRest ? " is-resting" : ""}`}');
+  expect(source).toContain("{visibleLabels.map((label) => {");
 });
 
 test("restores hidden axis titles only in exported chart images", async () => {
@@ -244,4 +288,56 @@ test("keeps pinned selections through metric interactions", () => {
 test("still treats the unadorned canvas background as click-away space", () => {
   expect(shouldClearChartSelection(clickTargetWithin("chart-canvas"))).toBeTrue();
   expect(shouldClearChartSelection(null)).toBeTrue();
+});
+
+test("routes overlapping mobile chart centers by distance instead of SVG order", () => {
+  const parsed = parseCodingAgentSnapshot(codingAgentData);
+  expect(parsed.ok).toBeTrue();
+  if (!parsed.ok) return;
+  const visible = recordsWithMetrics(parsed.value.records, "costUsd", "deepSwe");
+  const xValues = visible.flatMap(record => xMetricValue(record, "costUsd") ?? []);
+  const yValues = visible.flatMap(record => yMetricValue(record, "deepSwe") ?? []);
+  const scaleX = linearScale(computeDomain(xValues, { paddingRatio: 0 }), [72, 1360]);
+  const scaleY = linearScale(computeDomain(yValues, { paddingRatio: 0 }), [860, 24]);
+  const points = visible.map(record => {
+    const xValue = xMetricValue(record, "costUsd");
+    const yValue = yMetricValue(record, "deepSwe");
+    if (xValue === null || yValue === null) throw new Error("Filtered metric invariant failed.");
+    return { id: record.id, record, x: scaleX(xValue), y: scaleY(yValue), yValue };
+  }).toSorted((left, right) => left.x - right.x);
+  const restingLabels = selectRestingCodingAgentLabels(points);
+  const initialPhoneViewportRight = 1440 * 390 / 700;
+  expect(restingLabels).toHaveLength(3);
+  expect(restingLabels.filter(point => point.x <= initialPhoneViewportRight).length).toBeGreaterThanOrEqual(2);
+  const composer = visible.find(record => record.agent === "Cursor CLI" && record.modelLabel === "Composer 2.5");
+  const deepSeek = visible.find(record => record.agent === "Codex" && record.modelLabel === "DeepSeek V4 Pro 0813 (max)");
+  expect(composer).toBeDefined();
+  expect(deepSeek).toBeDefined();
+  if (composer === undefined || deepSeek === undefined) return;
+  const composerPoint = points.find(point => point.id === composer.id);
+  const deepSeekPoint = points.find(point => point.id === deepSeek.id);
+  expect(composerPoint).toBeDefined();
+  expect(deepSeekPoint).toBeDefined();
+  if (composerPoint === undefined || deepSeekPoint === undefined) return;
+
+  // The 700px phone canvas used 42-unit hit circles; the later DeepSeek node
+  // covered Composer's center even though Composer was the visible tap target.
+  expect(Math.hypot(composerPoint.x - deepSeekPoint.x, composerPoint.y - deepSeekPoint.y)).toBeLessThan(42);
+  expect(points.indexOf(deepSeekPoint)).toBeGreaterThan(points.indexOf(composerPoint));
+  expect(nearestCodingAgentPointId(points, composerPoint.x, composerPoint.y, 50)).toBe(composer.id);
+  expect(nearestCodingAgentPointId(points, deepSeekPoint.x, deepSeekPoint.y, 50)).toBe(deepSeek.id);
+  expect(nearestCodingAgentPointId(points, 1440, 940, 4)).toBeNull();
+});
+
+test("keeps semantic point controls while centralizing physical pointer routing", async () => {
+  const source = await Bun.file(new URL("./coding-agent-explorer.tsx", import.meta.url)).text();
+
+  expect(source).toContain("onPointerMove={handleChartPointerMove}");
+  expect(source).toContain("onClick={handleChartClick}");
+  expect(source).toContain('role="button"');
+  expect(source).toContain('pointerEvents: "none"');
+  expect(source).toContain("isAssistiveSvgClick(event.detail)");
+  expect(source).toContain('style={pointerPointId === null ? undefined : { cursor: "pointer" }}');
+  expect(source).toMatch(/const point = pointForChartEvent\(event\);\s*if \(point === null\) return;\s*event\.stopPropagation\(\);/u);
+  expect(source).toMatch(/if \(!isAssistiveSvgClick\(event\.detail\)\) return;\s*event\.stopPropagation\(\);/u);
 });
