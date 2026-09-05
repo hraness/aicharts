@@ -1551,9 +1551,6 @@ body {
 }
 
 @media (max-width: 760px) {
-  .hraness-site-footer__inner {
-    position: static;
-  }
   .chart-page-canvas { padding: 0; }
   .chart-top-bar {
     gap: var(--space-1);
