@@ -100,7 +100,6 @@ test("provider filtering uses one responsive edge inset", () => {
 
 test("compact chart chrome shares the 12px design inset", () => {
   expect(stylesheet).toContain("--chart-compact-inset: var(--space-3, 0.75rem)");
-  expect(stylesheet).toMatch(/@media \(max-width:\s*760px\)[\s\S]*?\.chart-top-bar\s*\{[^}]*--ui-top-bar-inline-padding:\s*var\(--chart-compact-inset\);/u);
   expect(stylesheet).toMatch(/@media \(max-width:\s*760px\)[\s\S]*?\.chart-header\s*\{[^}]*padding:\s*var\(--chart-compact-inset\) var\(--chart-compact-inset\) 12px;/u);
   expect(firstRule(".chart-metric-controls")).toContain("padding: 6px var(--chart-content-inset)");
   expect(stylesheet).toMatch(/@media \(max-width:\s*760px\)[\s\S]*?\.chart-resource-nav\s*\{[^}]*padding:\s*10px var\(--chart-compact-inset\) max\(var\(--space-4\), env\(safe-area-inset-bottom\)\);/u);
@@ -108,21 +107,24 @@ test("compact chart chrome shares the 12px design inset", () => {
 
 test("homepage has no clipped discovery document", () => {
   expect(stylesheet).not.toContain(".home-document");
-  expect(firstRule(".chart-top-bar .chart-heading")).toContain("font-weight: var(--font-weight-bold)");
+  expect(stylesheet).not.toContain(".chart-top-bar");
+  expect(stylesheet).not.toContain(".chart-heading");
 });
 
-test("homepage orientation is compact, bounded, and responsive", () => {
-  const orientation = firstRule(".chart-orientation");
+test("homepage orientation is a hairline fact list on the shared section grammar", () => {
   const facts = firstRule(".chart-orientation__facts");
+  const fact = firstRule(".chart-orientation__facts > div");
 
-  expect(orientation).toContain("border-bottom: 1px solid var(--line)");
-  expect(orientation).toContain("grid-template-columns: minmax(0, 1.15fr) minmax(32rem, .85fr)");
-  expect(orientation).toContain("padding: clamp(16px, 2vw, 26px) var(--chart-content-inset)");
-  expect(facts).toContain("border: 1px solid var(--grid)");
-  expect(facts).toContain("gap: 1px");
-  expect(firstRule(".chart-orientation__facts > div")).toContain("background: var(--surface-raised)");
-  expect(stylesheet).toMatch(/@media \(max-width:\s*760px\)[\s\S]*?\.chart-orientation\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\);/u);
-  expect(stylesheet).toMatch(/@media \(max-width:\s*520px\)[\s\S]*?\.chart-orientation__facts > div:last-child\s*\{[^}]*grid-column:\s*1 \/ -1;/u);
+  expect(stylesheet).not.toMatch(/\.chart-orientation\s*\{/u);
+  expect(stylesheet).not.toContain(".chart-orientation__eyebrow");
+  expect(stylesheet).not.toContain(".chart-orientation h1");
+  expect(facts).toContain("border-block-start: 1px solid var(--hraness-marketing-line)");
+  expect(facts).toContain("display: grid");
+  expect(fact).toContain("border-block-end: 1px solid var(--hraness-marketing-line)");
+  expect(fact).not.toMatch(/background\s*:/u);
+  expect(firstRule(".chart-orientation__facts dt")).toContain("font-size: .875rem");
+  expect(firstRule(".chart-orientation__facts dt")).not.toContain("text-transform");
+  expect(firstRule(".chart-orientation__facts dd")).toContain("font-size: 1rem");
 });
 
 test("the image-free homepage article is an intentional responsive text card", () => {
@@ -208,7 +210,6 @@ test("shared top bars reserve sticky flow and cannot starve their title", () => 
   expect(actions).toContain("flex-wrap: wrap");
   expect(actions).toContain("min-inline-size: 0");
   expect(stylesheet).toMatch(/@media \(max-width:\s*520px\)[\s\S]*?\.ui-top-bar\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\);/u);
-  expect(stylesheet).toMatch(/@media \(max-width:\s*520px\)[\s\S]*?\.chart-top-bar__optional-action\s*\{[^}]*display:\s*none;/u);
   expect(stylesheet).toMatch(/@media \(hover:\s*none\), \(pointer:\s*coarse\)[\s\S]*?\.ui-top-bar :is\(a, button\)[\s\S]*?min-block-size:\s*var\(--interactive-target-min\);/u);
   expect(firstRule(".chart-top-bar")).not.toContain("position: sticky");
   expect(firstRule(".chart-page-canvas")).toContain("scroll-margin-block-start: var(--chart-sticky-header-block-size)");
@@ -224,9 +225,9 @@ test("the local resource links are quiet at rest", () => {
   );
 });
 
-test("global chart context stays dense in the sticky header", () => {
-  expect(firstRule(".chart-top-bar .ui-top-bar__actions")).toContain("gap: 2px");
-  expect(firstRule(".chart-top-bar .ui-top-bar__actions")).toContain("min-width: 0");
+test("the latest-update badge sits in the coding-agent evidence row", () => {
+  expect(firstRule(".chart-family-intro__evidence .latest-update-badge")).toContain("flex-basis: 100%");
+  expect(firstRule(".latest-update-badge span")).not.toContain("uppercase");
   expect(stylesheet).toMatch(/@media \(max-width:\s*520px\)[\s\S]*?\.latest-update-badge strong\s*\{[^}]*display:\s*none;/u);
   expect(stylesheet).not.toContain(".chart-subtitle-row");
   expect(stylesheet).not.toContain(".chart-header-content");
@@ -240,7 +241,6 @@ test("compact icon actions expand to the full touch target on mobile", () => {
 
 test("chart canvas is full bleed while its header and resource nav own safe gutters", () => {
   expect(firstRule(".chart-app")).not.toMatch(/padding\s*:/u);
-  expect(firstRule(".chart-top-bar")).not.toMatch(/padding-block\s*:/u);
   expect(stylesheet).toContain("--chart-content-inset: clamp(12px, 2vw, 28px)");
   expect(firstRule(".chart-page-canvas")).toContain("margin-inline: 0");
   expect(firstRule(".chart-page-canvas")).toContain("max-width: none");
@@ -270,7 +270,6 @@ test("the chart declares only horizontal scrolling", () => {
   expect(firstRule(".chart-scroll")).toContain("overflow-x: auto");
   expect(firstRule(".chart-scroll")).not.toContain("overflow-y:");
   expect(firstRule(".chart-app")).toContain("grid-template-columns: minmax(0, 1fr)");
-  expect(firstRule(".chart-app")).toContain("grid-template-rows: auto minmax(0, 1fr)");
   expect(firstRule(".chart-app")).toContain("overflow-x: clip");
   expect(firstRule(".chart-page-canvas")).toContain("overflow-x: clip");
   expect(firstRule(".chart-scroll")).toContain("max-width: 100%");

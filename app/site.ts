@@ -21,10 +21,12 @@ export const searchSite = {
   title: "AI Model & Agent Comparison Charts | AI Charts",
 } as const;
 
-export const homeHeading = "AI model and agent comparison charts";
-export const modelCardsHeading = "AI model benchmark cards";
+export const homeHeading = "Compare AI models on the numbers that matter";
+export const homeLede =
+  "Benchmark charts for models and coding agents that plot capability against cost, tokens, and speed. Every chart links to the published source it was read from and the date it was retrieved.";
+export const modelCardsHeading = "Every model, on a card";
 export const modelCardsLede =
-  "Each card keeps the model, agent harness, and reasoning profile attached to its observed benchmark, cost, time, and token ranges.";
+  "Shareable benchmark cards built from the same records as the charts, with the model, harness, and reasoning profile attached.";
 
 export const notFoundSearchSite = {
   ...searchSite,

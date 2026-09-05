@@ -64,10 +64,12 @@ test("links the chart to crawlable data and analysis resources", async () => {
   expect(source).toContain('<Link href="/blog">Analysis</Link>');
 });
 
-test("opts the visualization canvas into the shared full-bleed contract", async () => {
+test("renders the coding-agent view as one labelled section inside the shared page", async () => {
   const source = await Bun.file(new URL("./coding-agent-explorer.tsx", import.meta.url)).text();
 
-  expect(source).toMatch(/<PageCanvas[\s\S]*?className="chart-page-canvas"[\s\S]*?inset="none"[\s\S]*?size="full"/u);
+  expect(source).not.toContain("<PageCanvas");
+  expect(source).not.toContain("<main");
+  expect(source).toMatch(/<section\s+aria-labelledby="coding-agent-chart-title"\s+className="chart-page-canvas"\s+data-analytics-surface="benchmark_chart"\s+id="coding-agents"\s+onClick=\{handleAppClick\}\s+tabIndex=\{-1\}\s*>/u);
 });
 
 test("keeps chart export compact, discoverable, and fully named", async () => {
@@ -86,45 +88,53 @@ test("keeps chart export compact, discoverable, and fully named", async () => {
   expect(source).not.toContain("<span>Share chart</span>");
 });
 
-test("keeps the header compact without a standalone provenance action", async () => {
-  const source = await Bun.file(new URL("./coding-agent-explorer.tsx", import.meta.url)).text();
-  const topBarIndex = source.indexOf("<TopBar");
-  const themeIndex = source.indexOf('<ThemeMenuButton aria-label="Chart appearance" />');
-  const topBarClassIndex = source.indexOf('className="chart-top-bar"', topBarIndex);
-  const pageCanvasIndex = source.indexOf("<PageCanvas");
+test("leaves the site header to the shared shell with the appearance control last", async () => {
+  const [source, headerSource] = await Promise.all([
+    Bun.file(new URL("./coding-agent-explorer.tsx", import.meta.url)).text(),
+    Bun.file(new URL("./site-header.tsx", import.meta.url)).text(),
+  ]);
+  const actionsIndex = headerSource.indexOf('className="hraness-marketing-header__actions"');
+  const themeIndex = headerSource.indexOf('<ThemeMenuButton aria-label="Appearance" />');
 
+  expect(source).not.toContain("<TopBar");
+  expect(source).not.toContain("ThemeMenuButton");
   expect(source).not.toContain('tooltip="Data provenance"');
   expect(source).not.toContain('aria-label="Data provenance"');
   expect(source).not.toContain('className="chart-provenance-control');
   expect(source).not.toContain("InformationCircleIcon");
-  expect(themeIndex).toBeGreaterThan(topBarIndex);
-  expect(themeIndex).toBeLessThan(topBarClassIndex);
-  expect(source.slice(themeIndex, topBarClassIndex)).toMatch(
-    /<ThemeMenuButton aria-label="Chart appearance" \/>\s*<\/>\s*\)\}/u,
+  expect(headerSource).toContain('{ href: "/blog", label: "Blog" }');
+  expect(headerSource).toContain('{ href: "/models", label: "Cards" }');
+  expect(headerSource).toContain('{ href: "/data", label: "Data" }');
+  expect(themeIndex).toBeGreaterThan(actionsIndex);
+  expect(headerSource.slice(themeIndex)).toMatch(
+    /<ThemeMenuButton aria-label="Appearance" \/>\s*<\/div>\s*<\/div>\s*<\/header>/u,
   );
-  expect(themeIndex).toBeLessThan(pageCanvasIndex);
   expect(source).not.toContain('className="chart-subtitle-row"');
   expect(source).not.toContain('className="chart-data-status"');
 });
 
-test("keeps the compact orientation and working chart ahead of deeper evidence", async () => {
-  const source = await Bun.file(new URL("./coding-agent-explorer.tsx", import.meta.url)).text();
-  const topBarIndex = source.indexOf("<TopBar");
-  const pageCanvasIndex = source.indexOf("<PageCanvas", topBarIndex);
-  const orientationIndex = source.indexOf('className="chart-orientation"', pageCanvasIndex);
-  const chartHeaderIndex = source.indexOf('<header className="chart-header">', pageCanvasIndex);
+test("keeps the working chart ahead of deeper evidence with the orientation in the shared page", async () => {
+  const [source, orientationSource] = await Promise.all([
+    Bun.file(new URL("./coding-agent-explorer.tsx", import.meta.url)).text(),
+    Bun.file(new URL("./home-orientation.tsx", import.meta.url)).text(),
+  ]);
+  const sectionIndex = source.indexOf('className="chart-page-canvas"');
+  const introIndex = source.indexOf('<div className="chart-family-intro">', sectionIndex);
+  const chartHeaderIndex = source.indexOf('<header className="chart-header">', sectionIndex);
   const overviewIndex = source.indexOf("<OptionSpaceOverview", chartHeaderIndex);
-  const childrenIndex = source.indexOf("{children}", pageCanvasIndex);
+  const childrenIndex = source.indexOf("{children}", sectionIndex);
 
   expect(source).toContain("children: ReactNode");
-  expect(pageCanvasIndex).toBeGreaterThan(topBarIndex);
-  expect(orientationIndex).toBeGreaterThan(pageCanvasIndex);
-  expect(chartHeaderIndex).toBeGreaterThan(orientationIndex);
+  expect(source).not.toContain("chart-orientation");
+  expect(source).not.toContain("homeHeading");
+  expect(introIndex).toBeGreaterThan(sectionIndex);
+  expect(chartHeaderIndex).toBeGreaterThan(introIndex);
   expect(overviewIndex).toBeGreaterThan(chartHeaderIndex);
   expect(childrenIndex).toBeGreaterThan(overviewIndex);
   expect(source).toContain("codingAgentDatasetSummary(snapshot)");
-  expect(source).toContain('<h1 id="chart-orientation-title">{homeHeading}</h1>');
-  expect(source).toContain("A five-role benchmark portfolio covers terminal engineering, scientific workflows");
+  expect(orientationSource).toContain('headingId="chart-orientation-title"');
+  expect(orientationSource).toContain("A five-role benchmark portfolio covers terminal engineering, scientific workflows");
+  expect(orientationSource).toContain("Terminal-Bench 4.0. Major exam versions remain separate.");
   expect(source).toContain("This source still reports Terminal-Bench v2.1");
   expect(source).toContain('href={snapshot.source.url}');
   expect(source).toContain("{snapshot.source.name} source");
@@ -135,7 +145,8 @@ test("keeps the compact orientation and working chart ahead of deeper evidence",
 test("links the latest data-derived update badge to the bottom timeline", async () => {
   const source = await Bun.file(new URL("./coding-agent-explorer.tsx", import.meta.url)).text();
   const badgeIndex = source.indexOf('className="latest-update-badge chart-selection-boundary"');
-  const pageCanvasIndex = source.indexOf("<PageCanvas");
+  const evidenceIndex = source.indexOf('className="chart-family-intro__evidence"');
+  const chartHeaderIndex = source.indexOf('<header className="chart-header">');
   const overviewIndex = source.indexOf("<OptionSpaceOverview");
   const timelineIndex = source.indexOf("<ModelUpdateTimeline");
   const resourceNavIndex = source.indexOf('className="chart-resource-nav"');
@@ -144,7 +155,8 @@ test("links the latest data-derived update badge to the bottom timeline", async 
   expect(source).toContain("aria-label={`Latest update: ${latestUpdate.summary}, ${formatUpdateDate(latestUpdate.detectedAt)}`}");
   expect(source).toContain('href="#model-updates"');
   expect(source).toContain("latestUpdate.summary");
-  expect(badgeIndex).toBeLessThan(pageCanvasIndex);
+  expect(badgeIndex).toBeGreaterThan(evidenceIndex);
+  expect(badgeIndex).toBeLessThan(chartHeaderIndex);
   expect(timelineIndex).toBeGreaterThan(overviewIndex);
   expect(resourceNavIndex).toBeGreaterThan(timelineIndex);
 });
@@ -159,13 +171,18 @@ test("leaves only the selected benchmark description in the chart header", async
   expect(source).not.toContain('className="chart-title"');
 });
 
-test("uses the task-explicit heading while keeping the domain in compact product chrome", async () => {
-  const source = await Bun.file(new URL("./coding-agent-explorer.tsx", import.meta.url)).text();
+test("leaves the page heading to the hero and keeps the domain as the chart watermark", async () => {
+  const [source, pageSource] = await Promise.all([
+    Bun.file(new URL("./coding-agent-explorer.tsx", import.meta.url)).text(),
+    Bun.file(new URL("../app/page.tsx", import.meta.url)).text(),
+  ]);
 
-  expect(source).toContain('<p className="chart-heading">{brand.heading}</p>');
-  expect(source).toContain('<h1 id="chart-orientation-title">{homeHeading}</h1>');
-  expect(source.match(/<h1/gu)).toHaveLength(1);
-  expect(source).not.toContain("<h1>{brand.domain}</h1>");
+  expect(source).not.toContain("<h1");
+  expect(source).not.toContain("brand.heading");
+  expect(source).toContain("{brand.domain}");
+  expect(source).toContain('<h2 id="coding-agent-chart-title">Coding agents, plotted against cost, time, and tokens.</h2>');
+  expect(pageSource).toContain("heading={homeHeading}");
+  expect(pageSource).toContain('headingId="home-title"');
 });
 
 test("keeps chart chrome compact and metric labels semantic-only", async () => {

@@ -77,6 +77,7 @@ export function HomeIntelligenceEfficiency({
       aria-labelledby="home-intelligence-efficiency-title"
       className="intelligence-efficiency"
       data-analytics-surface="benchmark_chart"
+      id="intelligence-index"
     >
       <header className="intelligence-efficiency__header">
         <p className="intelligence-efficiency__eyebrow">General capability · model-level</p>

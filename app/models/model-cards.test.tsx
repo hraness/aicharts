@@ -76,8 +76,10 @@ describe("public model cards", () => {
   }
 
   test("keeps model-specific resources without a second site footer", () => {
-    expect(modelsLayoutSource).toContain("<TopBar");
+    expect(modelsLayoutSource).not.toContain("<TopBar");
+    expect(modelsLayoutSource).toContain("<SiteHeader");
     expect(modelsLayoutSource).toContain('className="model-cards-header"');
+    expect(modelsLayoutSource).toContain('current="/models"');
     expect(modelsLayoutSource).toContain('aria-label="Model card resources"');
     expect(modelsLayoutSource).toContain('className="model-cards-footer__links"');
     expect(modelsLayoutSource).toContain("Data and method");
@@ -122,10 +124,15 @@ describe("public model cards", () => {
 
   test("uses one delegated foil deck for the full gallery", () => {
     const markup = renderToStaticMarkup(<ModelCardsPage />);
-    expect(markup).toContain("<h1>AI model benchmark cards</h1>");
-    expect(markup).toContain('class="model-card-gallery__lede"');
     expect(markup).toContain(
-      "Each card keeps the model, agent harness, and reasoning profile attached",
+      '<h1 class="hraness-marketing-hero__heading" id="model-cards-title">Every model, on a card</h1>',
+    );
+    expect(markup).toContain('class="hraness-marketing-hero__summary model-card-gallery__lede"');
+    expect(markup).toContain(
+      "Shareable benchmark cards built from the same records as the charts",
+    );
+    expect(markup.indexOf('class="model-release-radar"')).toBeGreaterThan(
+      markup.indexOf('class="model-card-grid"'),
     );
     expect(markup).toContain("data-foil-card-deck");
     expect(markup.match(/data-foil-controller="deck"/gu)).toHaveLength(
