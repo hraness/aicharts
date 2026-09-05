@@ -14,6 +14,7 @@ import {
 import { tmpdir } from "node:os";
 import path from "node:path";
 
+import type { GptSubsidySnapshot } from "../lib/gpt-subsidy-data";
 import {
   attributionEnricherCliOptions,
   deriveAccountPlanComparison,
@@ -134,6 +135,39 @@ function runFixtureGit(repositoryRoot: string, arguments_: readonly string[]): v
   }
 }
 
+async function writeUnsampledPublicData(dataPath: string): Promise<void> {
+  const snapshot = JSON.parse(
+    await readFile(dataPath, "utf8"),
+  ) as GptSubsidySnapshot;
+  const unavailableAccountAttribution = () => ({
+    status: "unavailable" as const,
+    distinctObservedAccounts: null,
+    coverage: 0 as const,
+  });
+
+  const unsampled: GptSubsidySnapshot = {
+    ...snapshot,
+    observations: snapshot.observations.map(observation => ({
+      ...observation,
+      accountAttribution: unavailableAccountAttribution(),
+      subscriptionAdjustedMultiple: null,
+    })),
+    accountPlanComparison: {
+      ...snapshot.accountPlanComparison,
+      accountAttribution: unavailableAccountAttribution(),
+      observedProPlanComparison: {
+        status: "unavailable",
+        distinctVerifiedProAccountsLowerBound: null,
+        normalizedPlanValueUsd: null,
+        apiEquivalentMultipleUpperBound: null,
+      },
+      firstSampledAt: null,
+    },
+  };
+
+  await writeFile(dataPath, `${JSON.stringify(unsampled, null, 2)}\n`, "utf8");
+}
+
 async function privateFixture(): Promise<PrivateFixture> {
   const root = await mkdtemp(path.join(tmpdir(), "aicharts-attribution-private-"));
   roots.push(root);
@@ -168,6 +202,7 @@ async function privateFixture(): Promise<PrivateFixture> {
     await mkdir(path.dirname(target), { recursive: true });
     await copyFile(path.join(repositoryRoot, relativePath), target);
   }
+  await writeUnsampledPublicData(dataPath);
   runFixtureGit(fixtureRepositoryRoot, ["init", "--quiet"]);
   runFixtureGit(fixtureRepositoryRoot, ["add", "--all"]);
   runFixtureGit(fixtureRepositoryRoot, [
@@ -427,6 +462,7 @@ describe("GPT subsidy account attribution", () => {
     roots.push(root);
     const dataPath = path.join(root, "gpt-subsidy.json");
     await copyFile(path.join(repositoryRoot, "data", "gpt-subsidy.json"), dataPath);
+    await writeUnsampledPublicData(dataPath);
 
     const result = await enrichGptSubsidyAttribution({
       accountLedgerPath: path.join(root, "missing-state", "accounts.json"),
@@ -437,6 +473,73 @@ describe("GPT subsidy account attribution", () => {
     expect(result.attributionStatus).toBe("unavailable");
     const publicBytes = await readFile(dataPath, "utf8");
     expect(publicBytes).not.toContain("hmac-sha256");
+  });
+
+  test("publishes account aggregates before optional rate-limit sampling starts", async () => {
+    const fixture = await privateFixture();
+    await rm(fixture.rateLimitLedgerPath);
+
+    const result = await enrichFixture(fixture);
+    expect(result.attributionStatus).toBe("partial");
+    const publicBytes = await readFile(fixture.dataPath, "utf8");
+    expect(publicBytes).not.toContain(accountOne);
+    expect(publicBytes).not.toContain(accountTwo);
+    expect(publicBytes).not.toContain(keyId);
+    expect(publicBytes).not.toContain(privateLimitId);
+    const published = JSON.parse(publicBytes) as {
+      accountPlanComparison: {
+        accountAttribution: {
+          status: string;
+          distinctObservedAccounts: number | null;
+          coverage: number;
+        };
+        observedProPlanComparison: { status: string };
+      };
+    };
+    expect(published.accountPlanComparison.accountAttribution).toEqual({
+      status: "partial",
+      distinctObservedAccounts: 2,
+      coverage: 0.7,
+    });
+    expect(published.accountPlanComparison.observedProPlanComparison.status)
+      .toBe("unavailable");
+    const accountOnlyContinuity = JSON.parse(
+      await readFile(fixture.continuityPath, "utf8"),
+    ) as {
+      rateLimitLedgerCreatedAt: string | null;
+      minimumRateLimitObservationCount: number | null;
+    };
+    expect(accountOnlyContinuity).toMatchObject({
+      rateLimitLedgerCreatedAt: null,
+      minimumRateLimitObservationCount: null,
+    });
+
+    await writeFile(
+      fixture.rateLimitLedgerPath,
+      `${JSON.stringify(rateLimitLedger())}\n`,
+      { encoding: "utf8", mode: 0o600 },
+    );
+    await chmod(fixture.rateLimitLedgerPath, 0o600);
+    await enrichFixture(fixture);
+    const withPlanEvidence = JSON.parse(
+      await readFile(fixture.dataPath, "utf8"),
+    ) as {
+      accountPlanComparison: {
+        observedProPlanComparison: { status: string };
+      };
+    };
+    expect(withPlanEvidence.accountPlanComparison.observedProPlanComparison.status)
+      .toBe("sampled");
+    const completeContinuity = JSON.parse(
+      await readFile(fixture.continuityPath, "utf8"),
+    ) as {
+      rateLimitLedgerCreatedAt: string | null;
+      minimumRateLimitObservationCount: number | null;
+    };
+    expect(completeContinuity).toMatchObject({
+      rateLimitLedgerCreatedAt: rateLimitLedger().createdAt,
+      minimumRateLimitObservationCount: rateLimitLedger().observations.length,
+    });
   });
 
   test("publishes only aggregates and refuses missing state after sampling", async () => {
@@ -530,6 +633,16 @@ describe("GPT subsidy account attribution", () => {
       `${JSON.stringify({ ...rateLimitLedger(), observations: [] })}\n`,
       { encoding: "utf8", mode: 0o600 },
     );
+
+    await expect(enrichFixture(fixture)).rejects.toThrow(
+      "Private GPT subsidy attribution state is invalid",
+    );
+  });
+
+  test("rejects missing rate-limit history after its continuity is established", async () => {
+    const fixture = await privateFixture();
+    await enrichFixture(fixture);
+    await rm(fixture.rateLimitLedgerPath);
 
     await expect(enrichFixture(fixture)).rejects.toThrow(
       "Private GPT subsidy attribution state is invalid",
@@ -644,6 +757,7 @@ describe("GPT subsidy account attribution", () => {
       mode: 0o600,
     });
     await copyFile(path.join(repositoryRoot, "data", "gpt-subsidy.json"), dataPath);
+    await writeUnsampledPublicData(dataPath);
 
     await expect(enrichGptSubsidyAttribution({
       accountLedgerPath,

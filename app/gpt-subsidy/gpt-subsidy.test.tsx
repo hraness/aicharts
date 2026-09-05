@@ -5,6 +5,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { GptSubsidyChart } from "@/components/gpt-subsidy-chart";
 import gptSubsidyData from "@/data/gpt-subsidy.json";
 import {
+  formatObservedAccountCount,
   formatSubsidyUsd,
   gptSubsidyPageModifiedAt,
   GPT_SUBSIDY_DESCRIPTION,
@@ -110,14 +111,34 @@ describe("GPT subsidy page components", () => {
     expect(markup).toContain("<h1>ChatGPT Subsidy Chart</h1>");
     expect(markup).toContain(GPT_SUBSIDY_DESCRIPTION);
     expect(markup).toContain(
-      'aria-label="Current API-equivalent value and observed-plan comparison"',
+      'aria-label="Current API-equivalent value and observed account coverage"',
     );
-    expect(markup).toContain("Observed Pro-plan comparison");
-    expect(markup).toContain("Not yet available");
-    expect(markdown).toContain("No single-subscription denominator is published");
-    expect(markdown).toContain(
-      "sampled, provider-reported Pro plan status supports a lower-bound account count",
+    expect(markup).toContain("Accounts observed");
+    expect(markup).toContain(
+      formatObservedAccountCount(
+        snapshot.accountPlanComparison.accountAttribution,
+      ),
     );
+    if (snapshot.accountPlanComparison.accountAttribution.status === "partial") {
+      expect(markdown).toContain(
+        formatObservedAccountCount(
+          snapshot.accountPlanComparison.accountAttribution,
+        ),
+      );
+      expect(markup).toContain(
+        "Distinct accounts seen while the private recorder covered",
+      );
+      expect(markup).toContain("not an inferred subscription count");
+      expect(markup).toContain("Raw account evidence stays private");
+    } else {
+      expect(markdown).toContain("No sampled account count is published");
+      expect(markup).toContain(
+        "No single-subscription assumption is used",
+      );
+      expect(markup).toContain(
+        "Account fingerprints and plan observations stay private",
+      );
+    }
     expect(markup).toContain(
       `${snapshot.periodSummary.days}-day API-equivalent value`,
     );
@@ -131,10 +152,6 @@ describe("GPT subsidy page components", () => {
       ),
     );
     expect(markup).toContain("All available local Codex usage across accounts");
-    expect(markup).toContain(
-      "No single-subscription assumption is used",
-    );
-    expect(markup).toContain("Account fingerprints and plan observations stay private");
     expect(markup).not.toContain("One-plan comparison upper bound");
     expect(markup).not.toContain("312× cheaper");
     expect(markup).not.toContain("actual subsidy");
