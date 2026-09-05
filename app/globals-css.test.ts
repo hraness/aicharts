@@ -133,8 +133,8 @@ test("homepage benchmark evidence uses paired desktop tables and readable mobile
   expect(stylesheet).toMatch(/@media \(max-width:\s*760px\)[\s\S]*?\.home-benchmark-portfolio__mobile-label\s*\{[^}]*display:\s*block;/u);
 });
 
-test("the two-row phone footer stays in document flow instead of obscuring evidence", () => {
-  expect(stylesheet).toMatch(/@media \(max-width:\s*760px\)[\s\S]*?\.hraness-site-footer__inner\s*\{[^}]*position:\s*static;/u);
+test("the shared footer owns its document-flow placement at every viewport", () => {
+  expect(stylesheet).not.toContain(".hraness-site-footer__inner");
 });
 
 test("homepage leaders use one owned rule at each outer edge", () => {
