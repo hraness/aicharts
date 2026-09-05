@@ -665,9 +665,9 @@
       "periodStartedAt": "2026-08-20T00:00:00.000Z",
       "periodEndsAt": "2026-08-26T23:59:59.999Z",
       "accountAttribution": {
-        "status": "unavailable",
-        "distinctObservedAccounts": null,
-        "coverage": 0
+        "status": "partial",
+        "distinctObservedAccounts": 1,
+        "coverage": 0.05
       },
       "subscriptionAdjustedMultiple": null,
       "observedAt": "2026-08-26T23:59:59.999Z",
@@ -685,9 +685,9 @@
       "periodStartedAt": "2026-08-21T00:00:00.000Z",
       "periodEndsAt": "2026-08-27T23:59:59.999Z",
       "accountAttribution": {
-        "status": "unavailable",
-        "distinctObservedAccounts": null,
-        "coverage": 0
+        "status": "partial",
+        "distinctObservedAccounts": 2,
+        "coverage": 0.15
       },
       "subscriptionAdjustedMultiple": null,
       "observedAt": "2026-08-27T23:59:59.999Z",
@@ -705,9 +705,9 @@
       "periodStartedAt": "2026-08-22T00:00:00.000Z",
       "periodEndsAt": "2026-08-28T23:59:59.999Z",
       "accountAttribution": {
-        "status": "unavailable",
-        "distinctObservedAccounts": null,
-        "coverage": 0
+        "status": "partial",
+        "distinctObservedAccounts": 4,
+        "coverage": 0.18
       },
       "subscriptionAdjustedMultiple": null,
       "observedAt": "2026-08-28T23:59:59.999Z",
@@ -725,9 +725,9 @@
       "periodStartedAt": "2026-08-23T00:00:00.000Z",
       "periodEndsAt": "2026-08-29T23:59:59.999Z",
       "accountAttribution": {
-        "status": "unavailable",
-        "distinctObservedAccounts": null,
-        "coverage": 0
+        "status": "partial",
+        "distinctObservedAccounts": 5,
+        "coverage": 0.2
       },
       "subscriptionAdjustedMultiple": null,
       "observedAt": "2026-08-29T23:59:59.999Z",
@@ -745,9 +745,9 @@
       "periodStartedAt": "2026-08-24T00:00:00.000Z",
       "periodEndsAt": "2026-08-30T23:59:59.999Z",
       "accountAttribution": {
-        "status": "unavailable",
-        "distinctObservedAccounts": null,
-        "coverage": 0
+        "status": "partial",
+        "distinctObservedAccounts": 6,
+        "coverage": 0.31
       },
       "subscriptionAdjustedMultiple": null,
       "observedAt": "2026-08-30T23:59:59.999Z",
@@ -765,9 +765,9 @@
       "periodStartedAt": "2026-08-25T00:00:00.000Z",
       "periodEndsAt": "2026-08-31T23:59:59.999Z",
       "accountAttribution": {
-        "status": "unavailable",
-        "distinctObservedAccounts": null,
-        "coverage": 0
+        "status": "partial",
+        "distinctObservedAccounts": 6,
+        "coverage": 0.42
       },
       "subscriptionAdjustedMultiple": null,
       "observedAt": "2026-08-31T23:59:59.999Z",
@@ -785,9 +785,9 @@
       "periodStartedAt": "2026-08-26T00:00:00.000Z",
       "periodEndsAt": "2026-09-01T23:59:59.999Z",
       "accountAttribution": {
-        "status": "unavailable",
-        "distinctObservedAccounts": null,
-        "coverage": 0
+        "status": "partial",
+        "distinctObservedAccounts": 7,
+        "coverage": 0.47
       },
       "subscriptionAdjustedMultiple": null,
       "observedAt": "2026-09-01T23:59:59.999Z",
@@ -805,9 +805,9 @@
       "periodStartedAt": "2026-08-27T00:00:00.000Z",
       "periodEndsAt": "2026-09-02T23:59:59.999Z",
       "accountAttribution": {
-        "status": "unavailable",
-        "distinctObservedAccounts": null,
-        "coverage": 0
+        "status": "partial",
+        "distinctObservedAccounts": 6,
+        "coverage": 0.53
       },
       "subscriptionAdjustedMultiple": null,
       "observedAt": "2026-09-02T23:59:59.999Z",
@@ -825,9 +825,9 @@
       "periodStartedAt": "2026-08-28T00:00:00.000Z",
       "periodEndsAt": "2026-09-03T23:59:59.999Z",
       "accountAttribution": {
-        "status": "unavailable",
-        "distinctObservedAccounts": null,
-        "coverage": 0
+        "status": "partial",
+        "distinctObservedAccounts": 7,
+        "coverage": 0.53
       },
       "subscriptionAdjustedMultiple": null,
       "observedAt": "2026-09-03T23:59:59.999Z",
@@ -845,9 +845,9 @@
       "periodStartedAt": "2026-08-29T00:00:00.000Z",
       "periodEndsAt": "2026-09-04T23:59:59.999Z",
       "accountAttribution": {
-        "status": "unavailable",
-        "distinctObservedAccounts": null,
-        "coverage": 0
+        "status": "partial",
+        "distinctObservedAccounts": 5,
+        "coverage": 0.61
       },
       "subscriptionAdjustedMultiple": null,
       "observedAt": "2026-09-04T23:59:59.999Z",
@@ -865,9 +865,9 @@
     "periodStartedAt": "2026-08-05T00:00:00.000Z",
     "periodEndedAt": "2026-09-04T23:59:59.999Z",
     "accountAttribution": {
-      "status": "unavailable",
-      "distinctObservedAccounts": null,
-      "coverage": 0
+      "status": "partial",
+      "distinctObservedAccounts": 8,
+      "coverage": 0.18
     },
     "observedProPlanComparison": {
       "status": "unavailable",
@@ -875,14 +875,14 @@
       "normalizedPlanValueUsd": null,
       "apiEquivalentMultipleUpperBound": null
     },
-    "firstSampledAt": null,
+    "firstSampledAt": "2026-09-05T00:17:50.475Z",
     "measurement": {
       "name": "AI Charts GPT subsidy account-attribution manifest",
       "schemaVersion": 1,
       "kind": "aicharts-gpt-subsidy-account-attribution",
-      "revision": "2026-09-04.2",
-      "sha256": "c78b12838039e6a595334492b2d10579423ede9f0657f44b3297e9e8dcf3883d",
-      "frozenAt": "2026-09-04T00:00:00Z",
+      "revision": "2026-09-05.1",
+      "sha256": "40f4c66c8a1929670d472403573fbbd665c3dfdeddb741e6255130af4f6fd537",
+      "frozenAt": "2026-09-05T14:34:14Z",
       "sourceUrl": "https://github.com/hraness/aicharts/blob/main/data/gpt-subsidy-attribution-measurement.json"
     }
   },

@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "kind": "aicharts-gpt-subsidy-account-attribution",
-  "revision": "2026-09-04.2",
-  "frozenAt": "2026-09-04T00:00:00Z",
+  "revision": "2026-09-05.1",
+  "frozenAt": "2026-09-05T14:34:14Z",
   "calendar": "UTC",
   "accountLedgerVersion": 1,
   "rateLimitLedgerVersion": 1,
@@ -21,11 +21,11 @@
     },
     "publicContract": {
       "path": "lib/gpt-subsidy-data.ts",
-      "sha256": "5bc2d24deb55b2ea66dd5b9ea364c12fd077134536f3f0ae51fed6aca7ebe90a"
+      "sha256": "a73459bdfe2cfd874901d9f77427a97f99ab80c65419f3cf9fe74390e7d90e23"
     },
     "enricher": {
       "path": "scripts/enrich-gpt-subsidy-attribution.ts",
-      "sha256": "100ac25246c086c11b4d3ad1e9fc86e0379a426d873d49842f8b9e9ba189e0f4"
+      "sha256": "e7e4fa27355f341317414e04784b64a93e59633d2a6c18b54c26cfbd25db1117"
     },
     "publisher": {
       "path": "scripts/publish-gpt-subsidy.ts",

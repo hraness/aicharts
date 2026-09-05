@@ -232,11 +232,22 @@ const privateContinuitySchema = z.object({
   keyId: keyIdSchema,
   establishedAt: isoSchema,
   accountLedgerCreatedAt: isoSchema,
-  rateLimitLedgerCreatedAt: isoSchema,
+  rateLimitLedgerCreatedAt: isoSchema.nullable(),
   minimumAccountCount: z.number().int().nonnegative(),
   minimumAccountIntervalCount: z.number().int().nonnegative(),
-  minimumRateLimitObservationCount: z.number().int().nonnegative(),
-}).strict();
+  minimumRateLimitObservationCount: z.number().int().nonnegative().nullable(),
+}).strict().superRefine((continuity, context) => {
+  if (
+    (continuity.rateLimitLedgerCreatedAt === null)
+      !== (continuity.minimumRateLimitObservationCount === null)
+  ) {
+    context.addIssue({
+      code: "custom",
+      message: "Rate-limit continuity fields must become available together",
+      path: ["rateLimitLedgerCreatedAt"],
+    });
+  }
+});
 
 const accountAttributionSchema = z.discriminatedUnion("status", [
   z.object({
@@ -511,12 +522,20 @@ type PrivateAttributionState = Readonly<{
   rateLimitLedger: RateLimitLedger;
 }>;
 
-function parsePrivateAttributionState(
-  accountLedgerInput: unknown,
-  rateLimitLedgerInput: unknown,
-): PrivateAttributionState {
-  const accountLedger = accountLedgerSchema.parse(accountLedgerInput);
-  const rateLimitLedger = rateLimitLedgerSchema.parse(rateLimitLedgerInput);
+type OptionalRateLimitAttributionState = Readonly<{
+  accountLedger: AccountLedger;
+  rateLimitLedger: RateLimitLedger | null;
+}>;
+
+function parseAccountLedger(input: unknown): AccountLedger {
+  return accountLedgerSchema.parse(input);
+}
+
+function parseRateLimitLedger(
+  input: unknown,
+  accountLedger: AccountLedger,
+): RateLimitLedger {
+  const rateLimitLedger = rateLimitLedgerSchema.parse(input);
   if (accountLedger.keyId !== rateLimitLedger.keyId) {
     throw new TypeError("Private account ledgers use different HMAC keys.");
   }
@@ -528,6 +547,18 @@ function parsePrivateAttributionState(
   )) {
     throw new TypeError("Rate-limit observations reference an unknown private account.");
   }
+  return rateLimitLedger;
+}
+
+function parsePrivateAttributionState(
+  accountLedgerInput: unknown,
+  rateLimitLedgerInput: unknown,
+): PrivateAttributionState {
+  const accountLedger = parseAccountLedger(accountLedgerInput);
+  const rateLimitLedger = parseRateLimitLedger(
+    rateLimitLedgerInput,
+    accountLedger,
+  );
   return { accountLedger, rateLimitLedger };
 }
 
@@ -672,7 +703,7 @@ function deriveAccountPlanComparisonFromState(input: Readonly<{
   periodEndedAt: string;
   periodStartedAt: string;
   planPriceUsd: number;
-  rateLimitLedger: RateLimitLedger;
+  rateLimitLedger: RateLimitLedger | null;
 }>): PublicAccountPlanComparison {
   const rangeStart = Date.parse(input.periodStartedAt);
   const rangeEnd = endExclusive(input.periodEndedAt);
@@ -701,6 +732,18 @@ function deriveAccountPlanComparisonFromState(input: Readonly<{
       revision: input.manifest.revision,
     });
   }
+  const accountAttribution = derivedAccountAttribution.publicValue;
+  const base = unavailableComparison({
+    firstSampledAt: input.firstSampledAt ?? input.generatedAt,
+    frozenAt: input.manifest.frozenAt,
+    manifestSha256: input.manifest.sha256,
+    periodEndedAt: input.periodEndedAt,
+    periodStartedAt: input.periodStartedAt,
+    revision: input.manifest.revision,
+  });
+  if (input.rateLimitLedger === null) {
+    return { ...base, accountAttribution };
+  }
   const allOverlappingBucketsArePro = new Map<string, boolean>();
   for (const observation of input.rateLimitLedger.observations) {
     if (!derivedAccountAttribution.observedFingerprints.has(
@@ -719,15 +762,6 @@ function deriveAccountPlanComparisonFromState(input: Readonly<{
   }
   const verifiedProAccountCount = [...allOverlappingBucketsArePro.values()]
     .filter(Boolean).length;
-  const accountAttribution = derivedAccountAttribution.publicValue;
-  const base = unavailableComparison({
-    firstSampledAt: input.firstSampledAt ?? input.generatedAt,
-    frozenAt: input.manifest.frozenAt,
-    manifestSha256: input.manifest.sha256,
-    periodEndedAt: input.periodEndedAt,
-    periodStartedAt: input.periodStartedAt,
-    revision: input.manifest.revision,
-  });
   if (verifiedProAccountCount === 0) {
     return { ...base, accountAttribution };
   }
@@ -1007,10 +1041,10 @@ export async function enrichGptSubsidyAttribution(
   let observationAttributions = current.observations.map(
     () => unavailableAccountAttribution(),
   );
-  if (
-    privateLedgers.accountLedger === null
-    || privateLedgers.rateLimitLedger === null
-  ) {
+  if (privateLedgers.accountLedger === null) {
+    if (privateLedgers.rateLimitLedger !== null) {
+      throw new Error("Private GPT subsidy attribution state is invalid.");
+    }
     if (priorFirstSampledAt !== null) {
       throw new Error(
         "Private account state is missing after sampled attribution was published.",
@@ -1026,10 +1060,13 @@ export async function enrichGptSubsidyAttribution(
     });
   } else {
     try {
-      const privateState = parsePrivateAttributionState(
-        privateLedgers.accountLedger,
-        privateLedgers.rateLimitLedger,
-      );
+      const accountLedger = parseAccountLedger(privateLedgers.accountLedger);
+      const privateState: OptionalRateLimitAttributionState = {
+        accountLedger,
+        rateLimitLedger: privateLedgers.rateLimitLedger === null
+          ? null
+          : parseRateLimitLedger(privateLedgers.rateLimitLedger, accountLedger),
+      };
       const continuityPath = options.continuityPath
         ?? defaultAttributionContinuityPath;
       const privateContinuity = await readPrivateContinuity(continuityPath);
@@ -1049,9 +1086,16 @@ export async function enrichGptSubsidyAttribution(
       }
       if (
         privateContinuity !== null
+        && privateContinuity.accountLedgerCreatedAt
+          !== privateState.accountLedger.createdAt
+      ) {
+        throw new Error("Private attribution ledger epoch changed.");
+      }
+      if (
+        privateContinuity !== null
+        && privateContinuity.rateLimitLedgerCreatedAt !== null
         && (
-          privateContinuity.accountLedgerCreatedAt
-            !== privateState.accountLedger.createdAt
+          privateState.rateLimitLedger === null
           || privateContinuity.rateLimitLedgerCreatedAt
             !== privateState.rateLimitLedger.createdAt
         )
@@ -1065,6 +1109,15 @@ export async function enrichGptSubsidyAttribution(
             < privateContinuity.minimumAccountCount
           || privateState.accountLedger.intervals.length
             < privateContinuity.minimumAccountIntervalCount
+        )
+      ) {
+        throw new Error("Private attribution ledger history shrank.");
+      }
+      if (
+        privateContinuity !== null
+        && privateContinuity.minimumRateLimitObservationCount !== null
+        && (
+          privateState.rateLimitLedger === null
           || privateState.rateLimitLedger.observations.length
             < privateContinuity.minimumRateLimitObservationCount
         )
@@ -1115,12 +1168,13 @@ export async function enrichGptSubsidyAttribution(
             establishedAt: privateContinuity?.establishedAt
               ?? current.generatedAt,
             accountLedgerCreatedAt: privateState.accountLedger.createdAt,
-            rateLimitLedgerCreatedAt: privateState.rateLimitLedger.createdAt,
+            rateLimitLedgerCreatedAt:
+              privateState.rateLimitLedger?.createdAt ?? null,
             minimumAccountCount: privateState.accountLedger.accounts.length,
             minimumAccountIntervalCount:
               privateState.accountLedger.intervals.length,
             minimumRateLimitObservationCount:
-              privateState.rateLimitLedger.observations.length,
+              privateState.rateLimitLedger?.observations.length ?? null,
           },
         };
       }

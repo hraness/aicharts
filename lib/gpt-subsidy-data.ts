@@ -8,10 +8,10 @@ export const GPT_SUBSIDY_TITLE =
   "Subsidy for ChatGPT Pro 20x subscription" as const;
 
 export const GPT_SUBSIDY_DESCRIPTION =
-  "Daily history of the measured API-retail-equivalent value of seven complete UTC days from all available local Codex logs on one machine. Account-aware plan comparisons appear only when sampled, provider-reported Pro plan status supports a lower-bound account count.";
+  "Daily history of the measured API-retail-equivalent value of seven complete UTC days from one user's available local Codex logs. A private recorder adds a sampled lower-bound count of observed accounts; plan comparisons require separate provider-reported Pro status.";
 
 export const GPT_SUBSIDY_PAGE_CONTENT_MODIFIED_AT =
-  "2026-09-04T16:00:00.000Z" as const;
+  "2026-09-05T14:34:14.000Z" as const;
 
 export const GPT_SUBSIDY_ATTRIBUTION_MANIFEST_URL =
   "https://github.com/hraness/aicharts/blob/main/data/gpt-subsidy-attribution-measurement.json" as const;
@@ -552,6 +552,14 @@ export function formatObservedProPlanUpperBoundMultiple(value: number): string {
   }
 
   return `≤${wholeMultipleFormatter.format(Math.ceil(value))}×`;
+}
+
+export function formatObservedAccountCount(
+  attribution: GptSubsidySnapshot["accountPlanComparison"]["accountAttribution"],
+): string {
+  if (attribution.status === "unavailable") return "Not yet available";
+  const count = attribution.distinctObservedAccounts;
+  return `${wholeMultipleFormatter.format(count)}+ ${count === 1 ? "account" : "accounts"}`;
 }
 
 export function formatSubsidyDate(value: string): string {

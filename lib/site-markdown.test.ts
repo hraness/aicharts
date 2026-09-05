@@ -22,6 +22,7 @@ import { BENCHMARK_DATA_DESCRIPTION } from "./benchmark-portfolio";
 import { codingAgentDatasetSummary } from "./coding-agent-dataset";
 import { formatRetrievedAt } from "./coding-agent-updates";
 import {
+  formatObservedAccountCount,
   formatSubsidyUsd,
   latestGptSubsidyObservation,
   parseGptSubsidySnapshot,
@@ -178,11 +179,38 @@ describe("markdown representations", () => {
     expect(subsidy.body).toContain(
       `The latest measured trailing-seven-day API-retail-equivalent value is ${formatSubsidyUsd(latestSubsidy.trailingSevenDayApiEquivalentUsd)}`,
     );
-    expect(subsidy.body).toContain("No single-subscription denominator is published");
+    const accountAttribution = parsedSubsidy.value.accountPlanComparison
+      .accountAttribution;
+    if (accountAttribution.status === "partial") {
+      expect(subsidy.body).toContain(
+        formatObservedAccountCount(accountAttribution),
+      );
+      expect(subsidy.body).toContain(
+        "This is a lower bound, not an inferred subscription count",
+      );
+      if (
+        parsedSubsidy.value.accountPlanComparison.observedProPlanComparison
+          .status === "sampled"
+      ) {
+        expect(subsidy.body).toContain(
+          "The separate plan-price comparison is",
+        );
+      } else {
+        expect(subsidy.body).toContain(
+          "No plan-denominated comparison is published",
+        );
+      }
+    } else if (parsedSubsidy.value.accountPlanComparison.firstSampledAt !== null) {
+      expect(subsidy.body).toContain(
+        "No current-period sampled account count is published",
+      );
+    } else {
+      expect(subsidy.body).toContain("No sampled account count is published");
+      expect(subsidy.body).toContain(
+        "a plan-price comparison additionally requires provider-reported Pro plan status",
+      );
+    }
     expect(subsidy.body).toContain("Reported plan status is not billing verification");
-    expect(subsidy.body).toContain(
-      "sampled, provider-reported Pro plan status supports a lower-bound account count",
-    );
     expect(subsidy.body).not.toContain("one-plan comparison upper bound");
     expect(subsidy.body).toContain("No monthly projection, quota-exhaustion estimate");
     expect(subsidy.body).not.toContain("divided by one plan");

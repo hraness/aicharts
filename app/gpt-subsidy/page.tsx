@@ -1,6 +1,7 @@
 import { GptSubsidyChart } from "@/components/gpt-subsidy-chart";
 import gptSubsidyData from "@/data/gpt-subsidy.json";
 import {
+  formatObservedAccountCount,
   formatObservedProPlanUpperBoundMultiple,
   formatSampledCoverageLowerBound,
   formatSubsidyDate,
@@ -81,7 +82,7 @@ function subsidyDatasetJsonLd(snapshot: GptSubsidySnapshot) {
       "Trailing-seven-day API-retail-equivalent value",
       "Trailing-31-day API-retail-equivalent value",
       "Globally deduplicated Codex task token use",
-      "Account-attribution coverage",
+      "Observed account count and attribution coverage",
       "Observed-Pro plan-price comparison upper bound",
     ],
     citation: Array.from(new Set([
@@ -145,7 +146,7 @@ export default function GptSubsidyPage() {
       </header>
 
       <section
-        aria-label="Current API-equivalent value and observed-plan comparison"
+        aria-label="Current API-equivalent value and observed account coverage"
         className="gpt-subsidy-summary plain-publication__shell"
       >
         <div className="gpt-subsidy-summary__metric gpt-subsidy-summary__primary">
@@ -167,50 +168,61 @@ export default function GptSubsidyPage() {
           </p>
         </div>
         <div className="gpt-subsidy-summary__metric gpt-subsidy-summary__context">
-          <h2>Observed Pro-plan comparison</h2>
+          <h2>Accounts observed</h2>
           <p className="gpt-subsidy-summary__value">
-            {observedProPlanComparison.status === "sampled"
-              ? formatObservedProPlanUpperBoundMultiple(
-                observedProPlanComparison.apiEquivalentMultipleUpperBound,
+            {accountPlanComparison.accountAttribution.status === "partial"
+              ? formatObservedAccountCount(
+                accountPlanComparison.accountAttribution,
               )
               : hasSampledHistory
                 ? "Current period unavailable"
-                : "Not yet available"}
+                : formatObservedAccountCount(
+                  accountPlanComparison.accountAttribution,
+                )}
           </p>
           <p className="gpt-subsidy-summary__scope">
-            {observedProPlanComparison.status === "sampled"
+            {accountPlanComparison.accountAttribution.status === "partial"
               ? <>
-                API value divided by{" "}
-                {observedProPlanComparison.distinctVerifiedProAccountsLowerBound}{" "}
-                account plan-price units observed with app-server-reported Pro
-                plan status ({
-                  formatSubsidyUsd(observedProPlanComparison.normalizedPlanValueUsd)
-                }).
+                Distinct accounts seen while the private recorder covered{" "}
+                {coverageLabel} of this period. This is a lower bound, not an
+                inferred subscription count.
+                {observedProPlanComparison.status === "sampled"
+                  ? <>
+                    {" "}Provider-reported Pro status supports a separate{" "}
+                    {formatObservedProPlanUpperBoundMultiple(
+                      observedProPlanComparison.apiEquivalentMultipleUpperBound,
+                    )} plan-price comparison using{" "}
+                    {observedProPlanComparison
+                      .distinctVerifiedProAccountsLowerBound} verified account
+                    units ({formatSubsidyUsd(
+                      observedProPlanComparison.normalizedPlanValueUsd,
+                    )}).
+                  </>
+                  : <>
+                    {" "}No plan-denominated value is shown because their
+                    reported plan status does not support a consistently Pro
+                    lower bound.
+                  </>}
               </>
-              : accountPlanComparison.accountAttribution.status === "partial"
-                ? <>
-                  Account sampling covers {coverageLabel} of this period and
-                  observed {accountPlanComparison.accountAttribution
-                    .distinctObservedAccounts} distinct accounts. No
-                  plan-denominated value is shown because their reported plan
-                  status does not support a consistently Pro lower bound.
-                </>
-                : <>
-                No single-subscription assumption is used. This comparison
-                appears only after sampled account coverage and
-                provider-reported Pro plan status support a lower-bound count.
+              : <>
+                No single-subscription assumption is used. An account count
+                appears only after sampled coverage; a plan-price comparison
+                additionally requires provider-reported Pro plan status.
               </>}
           </p>
         </div>
         <p className="gpt-subsidy-summary__note">
           {observedProPlanComparison.status === "sampled"
             ? <>
-              Account sampling covers {coverageLabel} of this period. The{" "}
+              Account sampling covers {coverageLabel} of this period. Of the
+              observed-account lower bound, {" "}
               {observedProPlanComparison.distinctVerifiedProAccountsLowerBound}{" "}
-              observed accounts are a lower-bound count, so the displayed
-              comparison is an upper bound. Plan status is not billing
-              verification. Coverage is a coarse lower bound and cannot prove
-              that every account was observed.
+              {observedProPlanComparison.distinctVerifiedProAccountsLowerBound
+                === 1 ? "account has" : "accounts have"} consistently reported
+              Pro plan status. That plan-account count is also a lower bound,
+              so its displayed comparison is an upper bound. Plan status is not
+              billing verification, and sampled coverage cannot prove that
+              every account was observed.
             </>
             : accountPlanComparison.accountAttribution.status === "partial"
               ? <>

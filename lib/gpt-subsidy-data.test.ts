@@ -3,6 +3,7 @@ import { describe, expect, test } from "bun:test";
 import {
   calculateApiEquivalentUsd,
   calculateObservedProPlanUpperBoundMultiple,
+  formatObservedAccountCount,
   formatObservedProPlanUpperBoundMultiple,
   formatSampledCoverageLowerBound,
   formatSubsidyRateUsd,
@@ -163,10 +164,11 @@ export const validGptSubsidySnapshot = {
 
 describe("GPT subsidy snapshot", () => {
   test("states the local-log and sampled-account scope in search and social copy", () => {
-    expect(GPT_SUBSIDY_DESCRIPTION).toContain("all available local Codex logs");
-    expect(GPT_SUBSIDY_DESCRIPTION).toContain("one machine");
-    expect(GPT_SUBSIDY_DESCRIPTION).toContain("sampled");
-    expect(GPT_SUBSIDY_DESCRIPTION).toContain("provider-reported Pro plan status");
+    expect(GPT_SUBSIDY_DESCRIPTION).toContain(
+      "one user's available local Codex logs",
+    );
+    expect(GPT_SUBSIDY_DESCRIPTION).toContain("sampled lower-bound count");
+    expect(GPT_SUBSIDY_DESCRIPTION).toContain("provider-reported Pro status");
   });
 
   test("parses adjacent settled history and returns its latest point", () => {
@@ -525,5 +527,20 @@ describe("GPT subsidy snapshot", () => {
     expect(formatSubsidyRateUsd(0.4)).toBe("$0.40");
     expect(formatSubsidyRateUsd(20)).toBe("$20.00");
     expect(formatSubsidyTokens(3_413_874_344)).toBe("3.4B");
+    expect(formatObservedAccountCount({
+      status: "unavailable",
+      distinctObservedAccounts: null,
+      coverage: 0,
+    })).toBe("Not yet available");
+    expect(formatObservedAccountCount({
+      status: "partial",
+      distinctObservedAccounts: 1,
+      coverage: 0.25,
+    })).toBe("1+ account");
+    expect(formatObservedAccountCount({
+      status: "partial",
+      distinctObservedAccounts: 8,
+      coverage: 0.25,
+    })).toBe("8+ accounts");
   });
 });

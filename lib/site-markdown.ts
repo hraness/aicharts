@@ -58,6 +58,7 @@ import {
 } from "./deep-swe-evidence";
 import {
   GPT_SUBSIDY_DESCRIPTION,
+  formatObservedAccountCount,
   formatObservedProPlanUpperBoundMultiple,
   formatSampledCoverageLowerBound,
   formatSubsidyDate,
@@ -604,12 +605,12 @@ export function gptSubsidyMarkdown(
     )
     : null;
   const accountComparisonSummary = observedProPlanComparison.status === "sampled"
-    ? `The account-aware comparison is ${formatObservedProPlanUpperBoundMultiple(observedProPlanComparison.apiEquivalentMultipleUpperBound)}: the API-equivalent value divided by ${observedProPlanComparison.distinctVerifiedProAccountsLowerBound} distinct account plan-price units observed with app-server-reported Pro plan status (${formatSubsidyUsd(observedProPlanComparison.normalizedPlanValueUsd)}). Account sampling covers ${coverageLabel} of the period. The observed account count is a lower bound, so the comparison is an upper bound.`
+    ? `The private recorder observed ${formatObservedAccountCount(accountComparison.accountAttribution)} during ${coverageLabel} of the period. Of those, ${String(observedProPlanComparison.distinctVerifiedProAccountsLowerBound)} ${observedProPlanComparison.distinctVerifiedProAccountsLowerBound === 1 ? "account has" : "accounts have"} consistently reported Pro plan status. The separate plan-price comparison is ${formatObservedProPlanUpperBoundMultiple(observedProPlanComparison.apiEquivalentMultipleUpperBound)}, using ${formatSubsidyUsd(observedProPlanComparison.normalizedPlanValueUsd)} in observed account plan-price units. Both account counts are lower bounds, so the comparison is an upper bound.`
     : accountComparison.accountAttribution.status === "partial"
-      ? `No plan-denominated comparison is published. Account sampling covers ${coverageLabel} of the period and observed ${String(accountComparison.accountAttribution.distinctObservedAccounts)} distinct accounts, but reported plan status does not support a consistently Pro lower bound.`
+      ? `The private recorder observed ${formatObservedAccountCount(accountComparison.accountAttribution)} during ${coverageLabel} of the period. This is a lower bound, not an inferred subscription count. No plan-denominated comparison is published because reported plan status does not support a consistently Pro lower bound.`
       : accountComparison.firstSampledAt !== null
-        ? "No current-period plan-denominated comparison is published. Earlier sampled attribution remains in the historical observations."
-        : "No single-subscription denominator is published. An account-aware comparison appears only when sampled, provider-reported Pro plan status supports a lower-bound account count.";
+        ? "No current-period sampled account count is published. Earlier sampled attribution remains in the historical observations."
+        : "No sampled account count is published. An account count appears after the private recorder establishes positive-duration coverage; a plan-price comparison additionally requires provider-reported Pro plan status.";
   const rows = snapshot.observations.map(observation => [
     formatSubsidyDate(observation.observedAt),
     `${formatSubsidyDate(observation.periodStartedAt)}–${formatSubsidyDate(observation.periodEndsAt)}`,
