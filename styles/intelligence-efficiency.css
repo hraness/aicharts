@@ -11,24 +11,23 @@
 }
 
 .intelligence-efficiency__eyebrow {
-  color: var(--brand-key);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: .085em;
-  text-transform: uppercase;
+  color: var(--muted);
+  font-size: .875rem;
+  font-weight: 500;
+  letter-spacing: 0;
 }
 
 .intelligence-efficiency__header h2 {
-  font-size: clamp(1.25rem, 2vw, 1.7rem);
-  font-weight: 650;
-  letter-spacing: -.035em;
-  line-height: 1.12;
+  font-size: clamp(1.35rem, 2vw, 1.75rem);
+  font-weight: 500;
+  letter-spacing: -.012em;
+  line-height: 1.15;
   margin-top: 5px;
 }
 
 .intelligence-efficiency__dek {
   color: var(--muted);
-  font-size: 12px;
+  font-size: .95rem;
   line-height: 1.55;
   margin-top: 8px;
   max-width: 70ch;
@@ -326,7 +325,7 @@
   font-size: 9px;
   font-weight: 700;
   letter-spacing: .07em;
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 .intelligence-efficiency__inspector h4 {

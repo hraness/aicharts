@@ -825,15 +825,16 @@ describe("AI Charts blog discovery", () => {
   });
 
   test("emits a website identity and links the chart to the blog", async () => {
-    const [layoutSource, chartSource] = await Promise.all([
+    const [layoutSource, chartSource, headerSource] = await Promise.all([
       Bun.file(new URL("../layout.tsx", import.meta.url)).text(),
       Bun.file(
         new URL("../../components/coding-agent-explorer.tsx", import.meta.url),
       ).text(),
+      Bun.file(new URL("../../components/site-header.tsx", import.meta.url)).text(),
     ]);
 
     expect(layoutSource).toContain('"@type": "WebSite"');
-    expect(chartSource).toContain('<LinkButton href="/blog"');
-    expect(chartSource).toContain("Blog");
+    expect(chartSource).toContain('<Link href="/blog">Analysis</Link>');
+    expect(headerSource).toContain('{ href: "/blog", label: "Blog" }');
   });
 });

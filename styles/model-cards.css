@@ -533,7 +533,7 @@
 }
 
 .model-cards-site {
-  --model-cards-header-block-size: 64px;
+  --model-cards-header-block-size: 3.5rem;
   --model-cards-sticky-offset: var(--model-cards-header-block-size);
 
   background:
@@ -618,13 +618,10 @@
   scroll-margin-block-start: calc(var(--model-cards-sticky-offset) + .75rem);
 }
 
-.model-card-gallery__header {
-  display: grid;
-  gap: .7rem;
-  margin-block-end: clamp(1.25rem, 2.5vw, 2rem);
+.model-card-gallery__hero {
+  padding-block: clamp(2.5rem, 6vw, 4.5rem) clamp(1.5rem, 4vw, 2.5rem);
 }
 
-.model-card-gallery__header h1,
 .model-card-detail__copy h1 {
   font-size: clamp(2rem, 4vw, 4.2rem);
   letter-spacing: -.055em;
@@ -632,10 +629,7 @@
 }
 
 .model-card-gallery__lede {
-  color: var(--muted);
-  font-size: clamp(.95rem, 1.4vw, 1.1rem);
-  line-height: 1.55;
-  max-inline-size: 56rem;
+  max-inline-size: 40rem;
 }
 
 .model-card-gallery__meta,
@@ -649,19 +643,19 @@
   align-items: center;
   display: flex;
   flex-wrap: wrap;
-  font-size: .8rem;
+  justify-content: center;
   gap: .25rem .75rem;
 }
 .model-card-gallery__meta > span + span::before {
   content: "·";
   margin-inline-end: .75rem;
 }
-.model-card-gallery__header a,
+.model-card-gallery__meta a,
 .model-card-detail__facts a {
   color: inherit;
   text-decoration: none;
 }
-.model-card-gallery__header a:is(:hover, :focus-visible),
+.model-card-gallery__meta a:is(:hover, :focus-visible),
 .model-card-detail__facts a:is(:hover, :focus-visible) { color: var(--foreground); }
 
 .model-release-radar {
@@ -672,22 +666,22 @@
   display: grid;
   gap: 1rem clamp(1rem, 2.5vw, 2.25rem);
   grid-template-columns: minmax(13rem, .72fr) minmax(20rem, 1.28fr);
-  margin-block-end: 1rem;
-  padding-block: .9rem;
+  margin-block-start: clamp(2rem, 4vw, 3rem);
+  padding-block: 1.25rem;
 }
 
 .model-release-radar__heading > p {
   color: var(--muted);
-  font-size: .65rem;
-  letter-spacing: .12em;
+  font-size: .875rem;
+  font-weight: 500;
   margin-block-end: .35rem;
-  text-transform: uppercase;
 }
 
 .model-release-radar__heading h2 {
-  font-size: clamp(.95rem, 1.6vw, 1.2rem);
-  letter-spacing: -.02em;
-  line-height: 1.1;
+  font-size: clamp(1.25rem, 2vw, 1.6rem);
+  font-weight: 500;
+  letter-spacing: -.012em;
+  line-height: 1.15;
 }
 
 .model-release-radar__heading small,
@@ -1089,4 +1083,19 @@
 @media (prefers-reduced-motion: reduce) {
   .model-card-grid__link { transition: none; }
   .model-card-grid__link:hover { transform: none; }
+}
+
+@media (max-width: 48rem) {
+  .model-cards-site {
+    --model-cards-header-block-size: 5.75rem;
+  }
+}
+
+.model-card-gallery__hero .model-card-gallery__meta {
+  display: grid;
+  gap: .2rem;
+  justify-items: center;
+}
+.model-card-gallery__hero .model-card-gallery__meta > span + span::before {
+  content: none;
 }

@@ -14,7 +14,7 @@ describe("AI Charts public positioning", () => {
     expect(searchSite.title).toBe(
       "AI Model & Agent Comparison Charts | AI Charts",
     );
-    expect(homeHeading).toBe("AI model and agent comparison charts");
+    expect(homeHeading).toBe("Compare AI models on the numbers that matter");
     expect(site.description).toContain("AI models and agents");
     expect(site.description).toContain("performance, cost, speed, and token use");
     expect(site.description).not.toContain("coding");

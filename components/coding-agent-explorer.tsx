@@ -1,6 +1,5 @@
 "use client";
 
-import { homeHeading } from "@/app/site";
 import {
   Cancel01Icon,
   CopyLinkIcon,
@@ -18,12 +17,9 @@ import {
   MenuItem,
   MenuSection,
   MenuTrigger,
-  PageCanvas,
   SegmentedControl,
   TextField,
-  ThemeMenuButton,
   ToggleGroup,
-  TopBar,
   type SegmentedItem,
   type ToggleItem,
 } from "@/components/ui";
@@ -106,7 +102,6 @@ const xMetricItems = [
 
 type ChartBrand = Readonly<{
   domain: string;
-  heading: string;
 }>;
 
 type PlotPoint = {
@@ -389,13 +384,11 @@ export function CodingAgentExplorer({
   brand,
   children,
   modelCardPaths,
-  overview,
   snapshot,
 }: {
   brand: ChartBrand;
   children: ReactNode;
   modelCardPaths: Readonly<Record<string, string>>;
-  overview?: ReactNode;
   snapshot: CodingAgentSnapshot;
 }) {
   const descriptionId = useId();
@@ -1032,78 +1025,18 @@ export function CodingAgentExplorer({
 
   return (
     <div className="chart-app">
-      <TopBar
-        data-analytics-surface="global_header"
-        actions={(
-          <>
-            {latestUpdate !== null && (
-              <a
-                aria-label={`Latest update: ${latestUpdate.summary}, ${formatUpdateDate(latestUpdate.detectedAt)}`}
-                className="latest-update-badge chart-selection-boundary"
-                href="#model-updates"
-              >
-                <span>Latest</span>
-                <strong>{latestUpdate.summary}</strong>
-                <time dateTime={latestUpdate.detectedAt}>{formatUpdateDate(latestUpdate.detectedAt)}</time>
-              </a>
-            )}
-            <LinkButton href="/blog" size="compact" variant="quiet">
-              Blog
-            </LinkButton>
-            <LinkButton href="/models" size="compact" variant="quiet">
-              Cards
-            </LinkButton>
-            <ThemeMenuButton aria-label="Chart appearance" />
-          </>
-        )}
-        className="chart-top-bar"
-        title={<p className="chart-heading">{brand.heading}</p>}
-      />
-      <PageCanvas
+      <section
+        aria-labelledby="coding-agent-chart-title"
         className="chart-page-canvas"
         data-analytics-surface="benchmark_chart"
-        id="main-content"
-        inset="none"
+        id="coding-agents"
         onClick={handleAppClick}
-        size="full"
         tabIndex={-1}
       >
-      <section
-        aria-labelledby="chart-orientation-title"
-        className="chart-orientation"
-        data-analytics-surface="home_orientation"
-      >
-        <div className="chart-orientation__copy">
-          <p className="chart-orientation__eyebrow">AI benchmark portfolio</p>
-          <h1 id="chart-orientation-title">{homeHeading}</h1>
-          <p>
-            A five-role benchmark portfolio covers terminal engineering, scientific workflows,
-            professional work, computer use, and broad expert reasoning. Checked score
-            views are added without mixing versions or systems. The model-level Intelligence
-            efficiency view and the coding-agent chart below keep their own units, cohorts,
-            and provenance.
-          </p>
-        </div>
-        <dl aria-label="Benchmark selection and boundaries" className="chart-orientation__facts">
-          <div>
-            <dt>Coding standard</dt>
-            <dd>Terminal-Bench 4.0. Major exam versions remain separate.</dd>
-          </div>
-          <div>
-            <dt>Comparison rule</dt>
-            <dd>Published release, model, agent, effort, trials, uncertainty, and source stay attached. Unreported protocol fields remain missing.</dd>
-          </div>
-          <div>
-            <dt>Evidence class</dt>
-            <dd>Benchmark-owner and vendor-reported results stay distinct. Missing values remain missing.</dd>
-          </div>
-        </dl>
-      </section>
-      {overview}
-      <section aria-labelledby="coding-agent-chart-title" className="chart-family-intro">
+      <div className="chart-family-intro">
         <div>
           <p className="chart-family-intro__eyebrow">Coding-agent source view</p>
-          <h2 id="coding-agent-chart-title">Artificial Analysis coding-agent trade-offs</h2>
+          <h2 id="coding-agent-chart-title">Coding agents, plotted against cost, time, and tokens.</h2>
         </div>
         <p>
           Explore {snapshotSummary.recordCount} measured model-agent configurations across {snapshotSummary.modelCount} models and {snapshotSummary.providerCount} providers. This source still reports Terminal-Bench v2.1, so its values stay separate from the Terminal-Bench 4 standard above.
@@ -1123,8 +1056,19 @@ export function CodingAgentExplorer({
           </a>
           <Link href="/data">Method</Link>
           <a href="/data/coding-agents.json">JSON</a>
+          {latestUpdate !== null && (
+            <a
+              aria-label={`Latest update: ${latestUpdate.summary}, ${formatUpdateDate(latestUpdate.detectedAt)}`}
+              className="latest-update-badge chart-selection-boundary"
+              href="#model-updates"
+            >
+              <span>Latest</span>
+              <strong>{latestUpdate.summary}</strong>
+              <time dateTime={latestUpdate.detectedAt}>{formatUpdateDate(latestUpdate.detectedAt)}</time>
+            </a>
+          )}
         </p>
-      </section>
+      </div>
       <header className="chart-header">
         <p aria-live="polite" className="benchmark-description">
           <strong>{yMetricLabels[yMetric]}</strong> — {yMetricDescriptions[yMetric]}
@@ -1526,7 +1470,7 @@ export function CodingAgentExplorer({
           <Link href="/blog">Analysis</Link>
         </div>
       </nav>
-      </PageCanvas>
+      </section>
       {hoveredPoint !== null && tooltipLayout !== null && typeof document !== "undefined" && createPortal(
         <>
           <svg

@@ -101,18 +101,64 @@ export default function ModelCardsPage() {
       data-analytics-surface="models_gallery"
       id="model-cards-content"
     >
-      <header className="model-card-gallery__header" data-analytics-surface="models_header">
-        <h1>{modelCardsHeading}</h1>
-        <p className="model-card-gallery__lede">{modelCardsLede}</p>
-        <p className="model-card-gallery__meta">
-          <span>{MODEL_CARD_PRESENTATIONS.length} benchmark profiles across {providers.length} providers</span>
-          <span>
-            <a href={MODEL_CARD_SNAPSHOT.source.url}>{MODEL_CARD_SNAPSHOT.source.name}</a>
-            {" · retrieved "}
-            <time dateTime={MODEL_CARD_SNAPSHOT.source.retrievedAt}>{formatRetrievedAt(MODEL_CARD_SNAPSHOT.source.retrievedAt)}</time>
-          </span>
-        </p>
+      <header
+        aria-labelledby="model-cards-title"
+        className="hraness-marketing-hero model-card-gallery__hero"
+        data-align="center"
+        data-analytics-surface="models_header"
+        data-hraness-marketing="hero"
+        data-tone="paper"
+      >
+        <div className="hraness-marketing-hero__copy">
+          <p className="hraness-marketing-hero__eyebrow">Benchmark cards</p>
+          <h1 className="hraness-marketing-hero__heading" id="model-cards-title">{modelCardsHeading}</h1>
+          <p className="hraness-marketing-hero__summary model-card-gallery__lede">{modelCardsLede}</p>
+          <p className="hraness-marketing-hero__boundary model-card-gallery__meta">
+            <span>{MODEL_CARD_PRESENTATIONS.length} benchmark profiles across {providers.length} providers</span>
+            <span>
+              <a href={MODEL_CARD_SNAPSHOT.source.url}>{MODEL_CARD_SNAPSHOT.source.name}</a>
+              {" · retrieved "}
+              <time dateTime={MODEL_CARD_SNAPSHOT.source.retrievedAt}>{formatRetrievedAt(MODEL_CARD_SNAPSHOT.source.retrievedAt)}</time>
+            </span>
+          </p>
+        </div>
       </header>
+      <ModelCardGalleryFilters
+        gridId={gridId}
+        providers={providers}
+        topCount={topPaths.size}
+        totalCount={MODEL_CARD_PRESENTATIONS.length}
+      >
+        <ModelCardGalleryItems
+          className="model-card-grid"
+          id={gridId}
+          items={MODEL_CARD_PRESENTATIONS.map(card => ({
+            isTop: topPaths.has(card.path),
+            providerId: card.providerId,
+            releasedOn: card.release.status === "verified"
+              ? card.release.releasedOn
+              : null,
+          }))}
+        >
+          {MODEL_CARD_PRESENTATIONS.map(card => (
+            <Link
+              aria-label={`Open ${card.displayTitle} model card; ${card.classLabel} class. ${modelCardReleaseAccessibleLabel(card.release)}`}
+              className="model-card-grid__link"
+              href={card.path}
+              key={card.path}
+            >
+              <div className="model-card-grid__bleed">
+                <ModelCardFoilFrame
+                  foilPreset={card.foilPreset}
+                  seed={card.seed}
+                >
+                  <ModelCardFace card={card} illuminationMode="gallery" />
+                </ModelCardFoilFrame>
+              </div>
+            </Link>
+          ))}
+        </ModelCardGalleryItems>
+      </ModelCardGalleryFilters>
       {FIRST_PARTY_RELEASE_HIGHLIGHTS.length > 0 && (
         <section
           aria-labelledby="first-party-release-radar-title"
@@ -230,42 +276,6 @@ export default function ModelCardsPage() {
           </p>
         </section>
       )}
-      <ModelCardGalleryFilters
-        gridId={gridId}
-        providers={providers}
-        topCount={topPaths.size}
-        totalCount={MODEL_CARD_PRESENTATIONS.length}
-      >
-        <ModelCardGalleryItems
-          className="model-card-grid"
-          id={gridId}
-          items={MODEL_CARD_PRESENTATIONS.map(card => ({
-            isTop: topPaths.has(card.path),
-            providerId: card.providerId,
-            releasedOn: card.release.status === "verified"
-              ? card.release.releasedOn
-              : null,
-          }))}
-        >
-          {MODEL_CARD_PRESENTATIONS.map(card => (
-            <Link
-              aria-label={`Open ${card.displayTitle} model card; ${card.classLabel} class. ${modelCardReleaseAccessibleLabel(card.release)}`}
-              className="model-card-grid__link"
-              href={card.path}
-              key={card.path}
-            >
-              <div className="model-card-grid__bleed">
-                <ModelCardFoilFrame
-                  foilPreset={card.foilPreset}
-                  seed={card.seed}
-                >
-                  <ModelCardFace card={card} illuminationMode="gallery" />
-                </ModelCardFoilFrame>
-              </div>
-            </Link>
-          ))}
-        </ModelCardGalleryItems>
-      </ModelCardGalleryFilters>
     </main>
   );
 }

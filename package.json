@@ -69,7 +69,7 @@
     "kb:catalog": "bunx --bun github:hraness/kb#v0.15.2 catalog --root kb"
   },
   "dependencies": {
-    "@hraness/design-kit": "github:hraness/design-kit#v0.2.1",
+    "@hraness/design-kit": "github:hraness/design-kit#v0.4.0",
     "@hraness/site-footer": "github:hraness/site-footer#v0.4.6",
     "@hraness/ui": "github:hraness/ui#v0.4.10",
     "@hraness/vercel-delivery": "github:hraness/vercel-delivery#v0.1.2",
