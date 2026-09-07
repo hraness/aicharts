@@ -844,6 +844,87 @@
         },
         "version": null
       },
+      "id": "00b5eabf-caca-435c-b8a8-458633192aa8",
+      "metrics": {
+        "domains": {
+          "earth": {
+            "nTrials": 24,
+            "passes": 0,
+            "resolutionRatePercent": 0,
+            "standardErrorPercent": 0,
+            "totalCostUsd": 71.822495184,
+            "totalTokens": 1481972810
+          },
+          "engineering": {
+            "nTrials": 27,
+            "passes": 3,
+            "resolutionRatePercent": 11.11111111111111,
+            "standardErrorPercent": 6.04812282168686,
+            "totalCostUsd": 108.39618107999999,
+            "totalTokens": 2200281229
+          },
+          "life": {
+            "nTrials": 57,
+            "passes": 0,
+            "resolutionRatePercent": 0,
+            "standardErrorPercent": 0,
+            "totalCostUsd": 107.43456482000002,
+            "totalTokens": 2083306722
+          },
+          "mathematical": {
+            "nTrials": 51,
+            "passes": 3,
+            "resolutionRatePercent": 5.88235294117647,
+            "standardErrorPercent": 3.294776668301199,
+            "totalCostUsd": 146.126849924,
+            "totalTokens": 2672070982
+          },
+          "physical": {
+            "nTrials": 51,
+            "passes": 2,
+            "resolutionRatePercent": 3.9215686274509802,
+            "standardErrorPercent": 2.718052078759498,
+            "totalCostUsd": 140.452167108,
+            "totalTokens": 2763809854
+          }
+        },
+        "nTrials": 210,
+        "passes": 8,
+        "resolutionRatePercent": 3.8095238095238093,
+        "standardErrorPercent": 1.3209662936780717,
+        "totalCostUsd": 574.232258116,
+        "totalTokens": 11201441597
+      },
+      "model": {
+        "display": {
+          "label": "DeepSeek V4 Pro",
+          "url": "https://api-docs.deepseek.com/news/news260813/"
+        },
+        "organization": {
+          "label": "DeepSeek",
+          "url": "https://www.deepseek.com/"
+        },
+        "version": null
+      },
+      "rank": 11,
+      "reasoningEffort": "max",
+      "releaseDate": "2026-08-13",
+      "safeguardMode": null,
+      "sourceUpdatedAt": "2026-09-05T21:11:37.672969+00:00",
+      "sourceUrl": "https://hub.harborframework.com/datasets/terminal-bench-science/terminal-bench-science/0.1.0/leaderboards/v0-1-eval/rows/00b5eabf-caca-435c-b8a8-458633192aa8"
+    },
+    {
+      "harness": {
+        "display": {
+          "label": "Codex",
+          "url": "https://openai.com/codex/"
+        },
+        "organization": {
+          "label": "OpenAI",
+          "url": "https://openai.com"
+        },
+        "version": null
+      },
       "id": "7cf10b06-3e5b-4723-b98f-c679e773959b",
       "metrics": {
         "domains": {
@@ -906,7 +987,7 @@
         },
         "version": null
       },
-      "rank": 11,
+      "rank": 12,
       "reasoningEffort": "max",
       "releaseDate": "2026-07-09",
       "safeguardMode": null,
@@ -922,7 +1003,7 @@
     "leaderboardId": "9a545a14-78d0-44b4-9003-afe062522a47",
     "leaderboardName": "v0-1-eval",
     "leaderboardPackage": "terminal-bench-science/terminal-bench-science",
-    "leaderboardUpdatedAt": "2026-09-04T18:07:28.264353+00:00",
+    "leaderboardUpdatedAt": "2026-09-05T21:11:37.672969+00:00",
     "leaderboardUrl": "https://hub.harborframework.com/datasets/terminal-bench-science/terminal-bench-science/0.1.0?leaderboard=v0-1-eval&tab=leaderboard",
     "method": "version-pinned-release-owner-leaderboard-api",
     "name": "Terminal-Bench-Science and Harbor Framework",
@@ -935,7 +1016,7 @@
     "releaseTag": "v0.1.0",
     "releaseUrl": "https://github.com/harbor-framework/terminal-bench-science/releases/tag/v0.1.0",
     "repositoryUrl": "https://github.com/harbor-framework/terminal-bench-science",
-    "retrievedAt": "2026-09-04T18:59:01.281Z",
+    "retrievedAt": "2026-09-07T19:57:27.722Z",
     "sourceClass": "benchmark-owner"
   }
 }
