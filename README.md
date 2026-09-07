@@ -92,9 +92,9 @@ other Hraness audience. Its footer sends the entered email address, the
 proof to Hraness Accounts at `account.hraness.com`. Cloudflare verifies the
 anti-abuse proof. Hraness Accounts records dated consent, and Resend sends the
 confirmation and subscribed messages from `news.hraness.com`. The address is
-not subscribed until its confirmation link is used. Every message includes an
-AI Charts-specific unsubscribe link, which does not change subscriptions to
-other Hraness products.
+not subscribed until its confirmation link is used. After confirmation, each
+newsletter message includes an AI Charts-specific unsubscribe link, which does
+not change subscriptions to other Hraness products.
 
 The durable positioning, search-intent map, technical invariants, event schema, baseline, and review cadence live in [`docs/seo-strategy.md`](docs/seo-strategy.md). Search Console measures impressions, queries, clicks, click-through rate, and search position. PostHog measures acquisition and qualified engagement after a visitor arrives.
 

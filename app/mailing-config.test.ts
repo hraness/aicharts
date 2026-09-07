@@ -9,6 +9,16 @@ import {
 } from "./mailing-config";
 
 describe("AI Charts mailing configuration", () => {
+  test("documents unsubscribe scope for confirmed newsletter subscriptions", async () => {
+    const readme = (await Bun.file(new URL("../README.md", import.meta.url)).text())
+      .replace(/\s+/gu, " ");
+
+    expect(readme).toContain(
+      "After confirmation, each newsletter message includes an AI Charts-specific unsubscribe link, which does not change subscriptions to other Hraness products.",
+    );
+    expect(readme).not.toContain("Every message includes an AI Charts-specific unsubscribe link");
+  });
+
   test("binds the public widget key to the AI Charts audience", () => {
     const turnstileSitekey = "1x00000000000000000000AA";
     const mailingList = aiChartsMailingListConfig({
