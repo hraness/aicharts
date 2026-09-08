@@ -3,7 +3,7 @@
   "source": {
     "method": "models-api",
     "name": "OpenRouter",
-    "retrievedAt": "2026-09-05T05:49:48.932Z",
+    "retrievedAt": "2026-09-08T21:54:29.661Z",
     "timestampMeaning": "source-added-at",
     "url": "https://openrouter.ai/api/v1/models?sort=newest"
   },
@@ -1057,27 +1057,6 @@
       "providerName": "Moonshot AI",
       "sourceAddedAt": "2026-06-12T12:12:41.000Z",
       "status": "awaiting-benchmark"
-    },
-    {
-      "capabilities": {
-        "inputModalities": [
-          "file",
-          "image",
-          "text"
-        ],
-        "outputModalities": [
-          "text"
-        ],
-        "supportsTools": true
-      },
-      "canonicalSlug": "anthropic/claude-5-fable-20260609",
-      "id": "anthropic/claude-fable-5",
-      "model": "Claude Fable 5",
-      "modelUrl": "https://openrouter.ai/anthropic/claude-fable-5",
-      "providerId": "anthropic",
-      "providerName": "Anthropic",
-      "sourceAddedAt": "2026-06-09T12:18:35.000Z",
-      "status": "benchmarked"
     }
   ]
 }
