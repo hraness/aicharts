@@ -635,40 +635,6 @@
     },
     {
       "costUsdPerTask": {
-        "answer": 0.38148711958502396,
-        "cacheRead": 0.7082705821074367,
-        "cacheWrite": 0.40507016804370644,
-        "input": 1.3304650438493424,
-        "nonCacheInput": 0.2171242936981994,
-        "output": 0.38148711958502396,
-        "reasoning": 0,
-        "total": 1.7119521634343664
-      },
-      "creator": {
-        "id": "e67e56e3-15cd-43db-b679-da4660a69f41",
-        "name": "OpenAI",
-        "slug": "openai"
-      },
-      "detailsUrl": "https://artificialanalysis.ai/models/gpt-6-astra-non-reasoning",
-      "effort": null,
-      "id": "21a0a2f6-bc72-40d2-80db-ea4e66b02b90",
-      "intelligenceIndex": 45.1697751115741,
-      "name": "GPT-6 Astra (Non-reasoning)",
-      "outputTokensPerTask": {
-        "answer": 7629.742391700481,
-        "reasoning": 0,
-        "total": 7629.742391700481
-      },
-      "release": {
-        "name": "GPT-6 Astra",
-        "slug": "gpt-6-astra"
-      },
-      "releaseDate": "2026-09-03",
-      "shortName": "GPT-6 Astra (Non-reasoning)",
-      "slug": "gpt-6-astra-non-reasoning"
-    },
-    {
-      "costUsdPerTask": {
         "answer": 0.09341247289530265,
         "cacheRead": 0.7053631760294088,
         "cacheWrite": 0.40832584827674323,
@@ -3513,8 +3479,8 @@
   ],
   "schemaVersion": 1,
   "selection": {
-    "measuredCompleteRecordCount": 97,
-    "positiveCostRecordCount": 92,
+    "measuredCompleteRecordCount": 96,
+    "positiveCostRecordCount": 91,
     "rule": "current, non-estimated model configurations with a finite 0–100 Intelligence Index, finite positive per-task output-token total, and a complete finite nonnegative per-task cost breakdown; source cost totals at or below zero normalize to null",
     "sourceRecordCount": 644
   },
@@ -3523,7 +3489,7 @@
     "method": "public-next-flight",
     "methodologyUrl": "https://artificialanalysis.ai/methodology/intelligence-benchmarking",
     "name": "Artificial Analysis",
-    "retrievedAt": "2026-09-09T01:54:26.626Z",
+    "retrievedAt": "2026-09-09T22:33:13.151Z",
     "sourceClass": "benchmark-publisher",
     "termsUrl": "https://artificialanalysis.ai/docs/legal/Terms-of-Use.pdf",
     "url": "https://artificialanalysis.ai/models"
