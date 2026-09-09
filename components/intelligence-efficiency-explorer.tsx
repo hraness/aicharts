@@ -524,7 +524,7 @@ export function IntelligenceEfficiencyExplorer({
       <figure className="intelligence-efficiency__figure">
         <figcaption className="intelligence-efficiency__figure-header">
           <div>
-            <h3>Capability vs. resource use</h3>
+            <h3>Pareto frontier</h3>
             <p>Higher and farther left is better. Select a point for exact values.</p>
           </div>
           <div aria-label="Compare capability by" className="intelligence-efficiency__metric-control" role="group">

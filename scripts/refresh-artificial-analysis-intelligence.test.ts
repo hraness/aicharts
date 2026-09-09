@@ -138,6 +138,11 @@ function derivedSnapshot(): ArtificialAnalysisIntelligenceSnapshot {
 }
 
 describe("Artificial Analysis Intelligence refresh", () => {
+  test("accepts valid mixed-case script tags and closing whitespace in the historical parser", () => {
+    const html = sourcePage().replaceAll("<script", "<SCRIPT").replaceAll("</script>", "</ScRiPt \t\r\n>");
+    expect(extractArtificialAnalysisIntelligencePage(html).ok).toBeTrue();
+  });
+
   test("extracts a referenced public model manifest and exact JSON-LD provenance", () => {
     const extracted = extractArtificialAnalysisIntelligencePage(sourcePage());
 

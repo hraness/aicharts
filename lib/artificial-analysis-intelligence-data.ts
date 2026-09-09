@@ -181,7 +181,22 @@ export const artificialAnalysisIntelligenceSnapshotSchema = z.object({
     termsUrl: z.literal(ARTIFICIAL_ANALYSIS_TERMS_URL),
     url: z.literal(ARTIFICIAL_ANALYSIS_INTELLIGENCE_SOURCE_URL),
   }).strict(),
-}).strict().superRefine((snapshot, context) => {
+}).strict().superRefine(validateArtificialAnalysisIntelligenceCollection);
+
+export type ArtificialAnalysisIntelligenceCollection = Readonly<{
+  records: readonly ArtificialAnalysisIntelligenceRecord[];
+  selection: Readonly<{
+    measuredCompleteRecordCount: number;
+    positiveCostRecordCount: number;
+    sourceRecordCount: number;
+  }>;
+  source: Readonly<{ retrievedAt: string }>;
+}>;
+
+export function validateArtificialAnalysisIntelligenceCollection(
+  snapshot: ArtificialAnalysisIntelligenceCollection,
+  context: z.RefinementCtx,
+): void {
   if (snapshot.selection.measuredCompleteRecordCount !== snapshot.records.length) {
     context.addIssue({
       code: "custom",
@@ -245,7 +260,7 @@ export const artificialAnalysisIntelligenceSnapshotSchema = z.object({
       });
     }
   });
-});
+}
 
 export type ArtificialAnalysisIntelligenceRecord = z.infer<
   typeof artificialAnalysisIntelligenceRecordSchema
@@ -279,8 +294,8 @@ function minimumRetained(count: number): number {
 }
 
 export function validateArtificialAnalysisIntelligenceReplacement(
-  previous: ArtificialAnalysisIntelligenceSnapshot,
-  candidate: ArtificialAnalysisIntelligenceSnapshot,
+  previous: ArtificialAnalysisIntelligenceCollection,
+  candidate: ArtificialAnalysisIntelligenceCollection,
 ): Result<void, Error> {
   if (Date.parse(candidate.source.retrievedAt) < Date.parse(previous.source.retrievedAt)) {
     return err(new Error(

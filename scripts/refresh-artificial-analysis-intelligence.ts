@@ -146,13 +146,52 @@ function parseJson(value: string, context: string): Result<unknown, Error> {
   }
 }
 
+type ArtificialAnalysisScript = {
+  body: string;
+  closed: boolean;
+  type: string | null;
+};
+
+/** Use HTML tag/attribute semantics, including case, whitespace and raw-text boundaries. */
+function artificialAnalysisScripts(html: string): Result<ArtificialAnalysisScript[], Error> {
+  const scripts: ArtificialAnalysisScript[] = [];
+  let active: ArtificialAnalysisScript | null = null;
+  try {
+    new HTMLRewriter().on("script", {
+      element(element) {
+        if (element.namespaceURI !== "http://www.w3.org/1999/xhtml") return;
+        const types = [...element.attributes].filter(([name]) => name.toLowerCase() === "type");
+        if (types.length > 1 || element.selfClosing) {
+          throw new Error("Artificial Analysis script has an ambiguous type or self-closing boundary.");
+        }
+        const script: ArtificialAnalysisScript = {
+          body: "",
+          closed: false,
+          type: element.getAttribute("type")?.trim().toLowerCase() ?? null,
+        };
+        scripts.push(script);
+        active = script;
+        element.onEndTag(() => { script.closed = true; active = null; });
+      },
+      text(chunk) {
+        if (active !== null) active.body += chunk.text;
+      },
+    }).transform(html);
+  } catch (cause) {
+    return err(new Error("Could not parse Artificial Analysis script elements.", { cause }));
+  }
+  if (scripts.some(script => !script.closed)) {
+    return err(new Error("Artificial Analysis page contains an unterminated script element."));
+  }
+  return ok(scripts);
+}
+
 function flightPayloads(html: string): Result<string[], Error> {
   const payloads: string[] = [];
-  const scriptPattern = /<script(?:\s[^>]*)?>([\s\S]*?)<\/script>/gu;
-  for (const match of html.matchAll(scriptPattern)) {
-    const rawScript = match[1];
-    if (rawScript === undefined) continue;
-    const script = decodeHtmlEntities(rawScript.trim());
+  const scripts = artificialAnalysisScripts(html);
+  if (!scripts.ok) return scripts;
+  for (const element of scripts.value) {
+    const script = decodeHtmlEntities(element.body.trim());
     if (!script.startsWith(FLIGHT_PREFIX) || !script.endsWith(")")) continue;
     const parsed = parseJson(script.slice(FLIGHT_PREFIX.length, -1), "Next.js Flight script");
     if (!parsed.ok) return parsed;
@@ -246,14 +285,14 @@ function findModelManifests(records: ReadonlyMap<string, unknown>): Result<Sourc
   return ok(manifests);
 }
 
-function jsonLdValues(html: string): Result<unknown[], Error> {
+export function parseArtificialAnalysisJsonLdValues(html: string): Result<unknown[], Error> {
   const values: unknown[] = [];
-  const scriptPattern = /<script\b([^>]*)>([\s\S]*?)<\/script>/giu;
-  for (const match of html.matchAll(scriptPattern)) {
-    const attributes = match[1] ?? "";
-    if (!/\btype\s*=\s*["']application\/ld\+json["']/iu.test(attributes)) continue;
-    const body = match[2]?.trim();
-    if (body === undefined || body === "") continue;
+  const scripts = artificialAnalysisScripts(html);
+  if (!scripts.ok) return scripts;
+  for (const element of scripts.value) {
+    if (element.type !== "application/ld+json") continue;
+    const body = element.body.trim();
+    if (body === "") return err(new Error("Artificial Analysis page contains an empty JSON-LD script."));
     const parsed = parseJson(body, "JSON-LD dataset");
     if (!parsed.ok) return parsed;
     values.push(parsed.value);
@@ -272,10 +311,18 @@ function datasetCandidates(value: unknown): unknown[] {
     : graph;
 }
 
-function validateDatasetDescription(dataset: SourceDataset): Result<void, Error> {
-  const expected = `${ARTIFICIAL_ANALYSIS_INTELLIGENCE_NAME} v${ARTIFICIAL_ANALYSIS_INTELLIGENCE_VERSION} incorporates ${ARTIFICIAL_ANALYSIS_INTELLIGENCE_EVALUATIONS.length} evaluations: ${ARTIFICIAL_ANALYSIS_INTELLIGENCE_EVALUATIONS.join(", ")}`;
+export type ArtificialAnalysisIntelligencePageContract = Readonly<{
+  version: string;
+  evaluations: readonly string[];
+}>;
+
+function validateDatasetDescription(
+  dataset: SourceDataset,
+  contract: ArtificialAnalysisIntelligencePageContract,
+): Result<void, Error> {
+  const expected = `${ARTIFICIAL_ANALYSIS_INTELLIGENCE_NAME} v${contract.version} incorporates ${contract.evaluations.length} evaluations: ${contract.evaluations.join(", ")}`;
   const canonicalDescription = dataset.description.replaceAll("𝜏", "τ");
-  return canonicalDescription.startsWith(expected)
+  return (canonicalDescription === expected || canonicalDescription.startsWith(`${expected} · `))
     ? ok(undefined)
     : err(new Error(
       `Artificial Analysis Intelligence dataset version or evaluation roster changed; expected description to begin ${JSON.stringify(expected)}.`,
@@ -284,6 +331,10 @@ function validateDatasetDescription(dataset: SourceDataset): Result<void, Error>
 
 export function extractArtificialAnalysisIntelligencePage(
   html: string,
+  contract: ArtificialAnalysisIntelligencePageContract = {
+    version: ARTIFICIAL_ANALYSIS_INTELLIGENCE_VERSION,
+    evaluations: ARTIFICIAL_ANALYSIS_INTELLIGENCE_EVALUATIONS,
+  },
 ): Result<ArtificialAnalysisIntelligencePageSource, Error> {
   const payloadResult = flightPayloads(html);
   if (!payloadResult.ok) return payloadResult;
@@ -315,7 +366,7 @@ export function extractArtificialAnalysisIntelligencePage(
     return err(new Error("Artificial Analysis model manifest must stay on its credential-free HTTPS origin."));
   }
 
-  const jsonLd = jsonLdValues(html);
+  const jsonLd = parseArtificialAnalysisJsonLdValues(html);
   if (!jsonLd.ok) return jsonLd;
   const matchingDatasets = jsonLd.value.flatMap(datasetCandidates);
   if (matchingDatasets.length !== 1) {
@@ -331,7 +382,7 @@ export function extractArtificialAnalysisIntelligencePage(
     ));
   }
   const dataset = parsedDataset.value;
-  const validDescription = validateDatasetDescription(dataset);
+  const validDescription = validateDatasetDescription(dataset, contract);
   if (!validDescription.ok) return validDescription;
   if (!html.includes('href="/methodology/intelligence-benchmarking"')) {
     return err(new Error("Artificial Analysis page no longer links the expected Intelligence methodology."));
@@ -545,11 +596,9 @@ function normalizeModel(model: SourceModel): ArtificialAnalysisIntelligenceRecor
   };
 }
 
-export function deriveArtificialAnalysisIntelligenceSnapshot(
+export function deriveArtificialAnalysisIntelligenceRecords(
   payload: SourceModelsPayload,
-  page: ArtificialAnalysisIntelligencePageSource,
-  retrievedAt: string,
-): Result<ArtificialAnalysisIntelligenceSnapshot, Error> {
+): Result<ArtificialAnalysisIntelligenceRecord[], Error> {
   const selected = payload.models.filter(selectedSourceModel);
   const inconsistent = selected.find(model => !sourceSumsAreConsistent(model));
   if (inconsistent !== undefined) {
@@ -557,7 +606,17 @@ export function deriveArtificialAnalysisIntelligenceSnapshot(
       `Artificial Analysis model ${inconsistent.slug} has inconsistent token or cost component totals.`,
     ));
   }
-  const records = selected.map(normalizeModel).sort(compareArtificialAnalysisIntelligenceRecords);
+  return ok(selected.map(normalizeModel).sort(compareArtificialAnalysisIntelligenceRecords));
+}
+
+export function deriveArtificialAnalysisIntelligenceSnapshot(
+  payload: SourceModelsPayload,
+  page: ArtificialAnalysisIntelligencePageSource,
+  retrievedAt: string,
+): Result<ArtificialAnalysisIntelligenceSnapshot, Error> {
+  const derived = deriveArtificialAnalysisIntelligenceRecords(payload);
+  if (!derived.ok) return derived;
+  const records = derived.value;
   const candidate: ArtificialAnalysisIntelligenceSnapshot = {
     benchmark: {
       categoryWeightsPercent: {

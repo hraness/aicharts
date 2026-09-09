@@ -40,12 +40,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
+      ARENA_MEDIA_PATH: data/arena-media.json
+      ATLAS_AUDIO_PATH: data/benchmark-atlas-audio.json
       ATLAS_MULTIMODAL_PATH: data/benchmark-atlas-multimodal.json
       ATLAS_REASONING_PATH: data/benchmark-atlas-reasoning.json
       BENCHMARK_PATH: data/coding-agents.json
       DEEP_SWE_PATH: data/deep-swe-evidence.json
       FIRST_PARTY_RELEASE_PATH: data/first-party-release-radar.json
-      INTELLIGENCE_PATH: data/artificial-analysis-intelligence.json
+      INTELLIGENCE_PATH: data/artificial-analysis-intelligence-v4-3.json
       # Cloudflare's documented always-pass public test key. Production uses
       # the hostname-restricted live key; this job only proves the build.
       NEXT_PUBLIC_HRANESS_MAILING_TURNSTILE_SITEKEY: 1x00000000000000000000AA
@@ -156,11 +158,11 @@ jobs:
         if: steps.dependencies.outcome == 'success' && env.RUN_AAI_REFRESH == 'true'
         continue-on-error: true
         run: bun run data:refresh
-      - name: Refresh Artificial Analysis Intelligence efficiency snapshot
+      - name: Refresh Artificial Analysis Intelligence v4.3 efficiency snapshot
         id: intelligence
         if: steps.dependencies.outcome == 'success' && env.RUN_BENCHMARK_REFRESH == 'true'
         continue-on-error: true
-        run: bun run aa-intelligence:refresh
+        run: bun run aa-intelligence-v4-3:refresh
       - name: Reconcile release statuses from the available checked snapshots
         id: release_reconcile
         if: steps.dependencies.outcome == 'success' && (env.RUN_RELEASE_REFRESH == 'true' || env.RUN_BENCHMARK_REFRESH == 'true')
@@ -197,6 +199,18 @@ jobs:
         if: steps.dependencies.outcome == 'success' && env.RUN_BENCHMARK_REFRESH == 'true'
         continue-on-error: true
         run: bun run atlas:multimodal:refresh
+      - name: Refresh licensed Arena media preference cohorts
+        id: arena_media
+        if: steps.dependencies.outcome == 'success' && env.RUN_BENCHMARK_REFRESH == 'true'
+        continue-on-error: true
+        run: bun run atlas:arena-media:refresh
+      # This reproduces the reviewed immutable source. A new audio task,
+      # normalizer, source revision, or selected model requires code review.
+      - name: Recheck pinned Open ASR AMI-Cleaned cohort
+        id: atlas_audio
+        if: steps.dependencies.outcome == 'success' && env.RUN_BENCHMARK_REFRESH == 'true'
+        continue-on-error: true
+        run: bun run atlas:audio:refresh
       - name: Detect owned data changes
         id: snapshot
         if: steps.dependencies.outcome == 'success'
@@ -212,7 +226,7 @@ jobs:
           fi
 
           while IFS= read -r changed_file; do
-            if [[ "$changed_file" != "$BENCHMARK_PATH" && "$changed_file" != "$DEEP_SWE_PATH" && "$changed_file" != "$FIRST_PARTY_RELEASE_PATH" && "$changed_file" != "$INTELLIGENCE_PATH" && "$changed_file" != "$RELEASE_RADAR_PATH" && "$changed_file" != "$TERMINAL_BENCH_PATH" && "$changed_file" != "$TERMINAL_BENCH_SCIENCE_PATH" && "$changed_file" != "$ATLAS_REASONING_PATH" && "$changed_file" != "$ATLAS_MULTIMODAL_PATH" ]]; then
+            if [[ "$changed_file" != "$BENCHMARK_PATH" && "$changed_file" != "$DEEP_SWE_PATH" && "$changed_file" != "$FIRST_PARTY_RELEASE_PATH" && "$changed_file" != "$INTELLIGENCE_PATH" && "$changed_file" != "$RELEASE_RADAR_PATH" && "$changed_file" != "$TERMINAL_BENCH_PATH" && "$changed_file" != "$TERMINAL_BENCH_SCIENCE_PATH" && "$changed_file" != "$ATLAS_REASONING_PATH" && "$changed_file" != "$ATLAS_MULTIMODAL_PATH" && "$changed_file" != "$ARENA_MEDIA_PATH" && "$changed_file" != "$ATLAS_AUDIO_PATH" ]]; then
               echo "Refresh changed unexpected file: ${changed_file}"
               exit 1
             fi
@@ -235,7 +249,7 @@ jobs:
               "$FIRST_PARTY_RELEASE_PATH")
                 semantic_filter='del(.sources[].retrievedAt)'
                 ;;
-              "$INTELLIGENCE_PATH")
+              "$INTELLIGENCE_PATH"|"$ARENA_MEDIA_PATH"|"$ATLAS_AUDIO_PATH")
                 semantic_filter='del(.source.retrievedAt)'
                 ;;
               "$DEEP_SWE_PATH")
@@ -286,12 +300,12 @@ jobs:
         run: |
           git config user.name "0thernet"
           git config user.email "894119+0thernet@users.noreply.github.com"
-          git add -- "$BENCHMARK_PATH" "$DEEP_SWE_PATH" "$FIRST_PARTY_RELEASE_PATH" "$INTELLIGENCE_PATH" "$RELEASE_RADAR_PATH" "$TERMINAL_BENCH_PATH" "$TERMINAL_BENCH_SCIENCE_PATH" "$ATLAS_REASONING_PATH" "$ATLAS_MULTIMODAL_PATH"
+          git add -- "$BENCHMARK_PATH" "$DEEP_SWE_PATH" "$FIRST_PARTY_RELEASE_PATH" "$INTELLIGENCE_PATH" "$RELEASE_RADAR_PATH" "$TERMINAL_BENCH_PATH" "$TERMINAL_BENCH_SCIENCE_PATH" "$ATLAS_REASONING_PATH" "$ATLAS_MULTIMODAL_PATH" "$ARENA_MEDIA_PATH" "$ATLAS_AUDIO_PATH"
           git commit -m "chore: refresh model data"
           git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:refs/heads/${REFRESH_BRANCH}"
 
           run_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
-          printf -v pr_body 'Automated model-data refresh from %s.\n\nAll nine checked snapshots were validated with `bun run check` before this PR was created. Atlas imports retain their admitted versions and selected cohorts; they do not automatically admit new protocols or every released model. Required CI is dispatched explicitly because pull-request checks created by `GITHUB_TOKEN` otherwise wait for manual approval.' "$run_url"
+          printf -v pr_body 'Automated model-data refresh from %s.\n\nAll checked snapshots were validated with `bun run check` before this PR was created. Imports retain their admitted task, version, and scoring boundaries. Arena publishes complete overall media cohorts; Open ASR reproduces a reviewed pinned cohort. Historical Intelligence Index v4.1.1 remains unchanged. Required CI is dispatched explicitly because pull-request checks created by `GITHUB_TOKEN` otherwise wait for manual approval.' "$run_url"
           pr_url="$(gh pr create --base main --head "$REFRESH_BRANCH" --title "chore: refresh model data" --body "$pr_body")"
           echo "pr_url=${pr_url}" >> "$GITHUB_OUTPUT"
 
@@ -342,6 +356,8 @@ jobs:
       - name: Report health and manage the durable alert
         if: always()
         env:
+          ARENA_MEDIA_OUTCOME: ${{ steps.arena_media.outcome }}
+          ATLAS_AUDIO_OUTCOME: ${{ steps.atlas_audio.outcome }}
           ATLAS_MULTIMODAL_OUTCOME: ${{ steps.atlas_multimodal.outcome }}
           ATLAS_REASONING_OUTCOME: ${{ steps.atlas_reasoning.outcome }}
           BENCHMARK_OUTCOME: ${{ steps.benchmark.outcome }}
@@ -390,6 +406,8 @@ jobs:
               if [[ "$RELEASE_OUTCOME" != "skipped" ]]; then unhealthy=true; fi
             fi
             if [[ "$RUN_BENCHMARK_REFRESH" == "true" ]]; then
+              if [[ "$ARENA_MEDIA_OUTCOME" != "success" ]]; then unhealthy=true; fi
+              if [[ "$ATLAS_AUDIO_OUTCOME" != "success" ]]; then unhealthy=true; fi
               if [[ "$ATLAS_REASONING_OUTCOME" != "success" ]]; then unhealthy=true; fi
               if [[ "$ATLAS_MULTIMODAL_OUTCOME" != "success" ]]; then unhealthy=true; fi
               if [[ "$INTELLIGENCE_OUTCOME" != "success" ]]; then unhealthy=true; fi
@@ -398,6 +416,8 @@ jobs:
               if [[ "$TERMINAL_BENCH_SCIENCE_OUTCOME" != "success" ]]; then unhealthy=true; fi
             else
               if [[ "$INTELLIGENCE_OUTCOME" != "skipped" ]]; then unhealthy=true; fi
+              if [[ "$ARENA_MEDIA_OUTCOME" != "skipped" ]]; then unhealthy=true; fi
+              if [[ "$ATLAS_AUDIO_OUTCOME" != "skipped" ]]; then unhealthy=true; fi
               if [[ "$ATLAS_REASONING_OUTCOME" != "skipped" ]]; then unhealthy=true; fi
               if [[ "$ATLAS_MULTIMODAL_OUTCOME" != "skipped" ]]; then unhealthy=true; fi
               if [[ "$DEEP_SWE_OUTCOME" != "skipped" ]]; then unhealthy=true; fi
@@ -432,6 +452,8 @@ jobs:
             echo "| Terminal-Bench-Science 0.1 | ${TERMINAL_BENCH_SCIENCE_OUTCOME} |"
             echo "| Reasoning, research, and memory atlas | ${ATLAS_REASONING_OUTCOME} |"
             echo "| Multimodal atlas | ${ATLAS_MULTIMODAL_OUTCOME} |"
+            echo "| Arena media | ${ARENA_MEDIA_OUTCOME} |"
+            echo "| Pinned audio atlas | ${ATLAS_AUDIO_OUTCOME} |"
             echo "| Change boundary | ${DETECT_OUTCOME} |"
             echo "| Application validation | ${VALIDATION_OUTCOME} |"
             echo "| Update PR | ${PUBLISH_OUTCOME} |"
@@ -468,6 +490,12 @@ jobs:
                 jq -r 'to_entries[] | select(.key != "schemaVersion") | "- Atlas \(.key): \(.value.rows | length) selected source observations; retrieved \(.value.source.retrievedAt)."' "$atlas_path"
               fi
             done
+            if [[ -f "$ARENA_MEDIA_PATH" ]]; then
+              jq -r '.cohorts | to_entries[] | "- Arena \(.key): \(.value.rows | length) overall configurations; published \(.value.publishedAt)."' "$ARENA_MEDIA_PATH"
+            fi
+            if [[ -f "$ATLAS_AUDIO_PATH" ]]; then
+              jq -r '"- Open ASR AMI-Cleaned: \(.rows | length) selected configurations; pinned snapshot \(.observedAt); source revision \(.source.revision[0:7]). Recheck does not admit new evaluations."' "$ATLAS_AUDIO_PATH"
+            fi
           } >> "$GITHUB_STEP_SUMMARY"
 
           run_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
@@ -514,14 +542,14 @@ jobs:
           fi
 
           if [[ "$unhealthy" == "true" ]]; then
-            printf -v issue_body 'The scheduled model-data refresh is unhealthy. Valid updates publish only after the normal pull-request gate has passed; failed sources remain on their last-known-good snapshots.\n\n- Run: %s\n- Mode: `%s`\n- OpenRouter: `%s`\n- First-party releases: `%s`\n- Artificial Analysis coding agents: `%s`\n- AA Intelligence efficiency: `%s`\n- Direct DeepSWE: `%s`\n- Terminal-Bench 4: `%s`\n- Terminal-Bench-Science 0.1: `%s`\n- Reasoning atlas: `%s`\n- Multimodal atlas: `%s`\n- Radar reconciliation: `%s`\n- Validation: `%s`\n- Publication: `%s`\n- Update PR: %s\n- Required CI: %s\n\nThis issue is updated on repeated failures and closes automatically after a healthy full refresh.' \
-              "$run_url" "$REFRESH_MODE" "$RELEASE_OUTCOME" "$FIRST_PARTY_RELEASE_OUTCOME" "$BENCHMARK_OUTCOME" "$INTELLIGENCE_OUTCOME" "$DEEP_SWE_OUTCOME" "$TERMINAL_BENCH_OUTCOME" "$TERMINAL_BENCH_SCIENCE_OUTCOME" "$ATLAS_REASONING_OUTCOME" "$ATLAS_MULTIMODAL_OUTCOME" "$RELEASE_RECONCILE_OUTCOME" "$VALIDATION_OUTCOME" "$PUBLISH_OUTCOME" "${PUBLISH_PR_URL:-not created}" "${PUBLISH_CI_RUN_URL:-not dispatched}"
+            printf -v issue_body 'The scheduled model-data refresh is unhealthy. Valid updates publish only after the normal pull-request gate has passed; failed sources remain on their last-known-good snapshots.\n\n- Run: %s\n- Mode: `%s`\n- OpenRouter: `%s`\n- First-party releases: `%s`\n- Artificial Analysis coding agents: `%s`\n- AA Intelligence efficiency: `%s`\n- Direct DeepSWE: `%s`\n- Terminal-Bench 4: `%s`\n- Terminal-Bench-Science 0.1: `%s`\n- Reasoning atlas: `%s`\n- Multimodal atlas: `%s`\n- Arena media: `%s`\n- Pinned audio atlas: `%s`\n- Radar reconciliation: `%s`\n- Validation: `%s`\n- Publication: `%s`\n- Update PR: %s\n- Required CI: %s\n\nThis issue is updated on repeated failures and closes automatically after a healthy full refresh.' \
+              "$run_url" "$REFRESH_MODE" "$RELEASE_OUTCOME" "$FIRST_PARTY_RELEASE_OUTCOME" "$BENCHMARK_OUTCOME" "$INTELLIGENCE_OUTCOME" "$DEEP_SWE_OUTCOME" "$TERMINAL_BENCH_OUTCOME" "$TERMINAL_BENCH_SCIENCE_OUTCOME" "$ATLAS_REASONING_OUTCOME" "$ATLAS_MULTIMODAL_OUTCOME" "$ARENA_MEDIA_OUTCOME" "$ATLAS_AUDIO_OUTCOME" "$RELEASE_RECONCILE_OUTCOME" "$VALIDATION_OUTCOME" "$PUBLISH_OUTCOME" "${PUBLISH_PR_URL:-not created}" "${PUBLISH_CI_RUN_URL:-not dispatched}"
             if [[ -z "$issue_number" ]]; then
               gh issue create --title "$REFRESH_ISSUE_TITLE" --body "$issue_body"
             else
               gh issue edit "$issue_number" --body "$issue_body"
             fi
-            echo "::error title=Model data refresh unhealthy::OpenRouter=${RELEASE_OUTCOME}; first-party releases=${FIRST_PARTY_RELEASE_OUTCOME}; Artificial Analysis coding agents=${BENCHMARK_OUTCOME}; AA Intelligence efficiency=${INTELLIGENCE_OUTCOME}; Direct DeepSWE=${DEEP_SWE_OUTCOME}; Terminal-Bench 4=${TERMINAL_BENCH_OUTCOME}; Terminal-Bench-Science 0.1=${TERMINAL_BENCH_SCIENCE_OUTCOME}; Reasoning atlas=${ATLAS_REASONING_OUTCOME}; Multimodal atlas=${ATLAS_MULTIMODAL_OUTCOME}; reconciliation=${RELEASE_RECONCILE_OUTCOME}; validation=${VALIDATION_OUTCOME}; publication=${PUBLISH_OUTCOME}."
+            echo "::error title=Model data refresh unhealthy::OpenRouter=${RELEASE_OUTCOME}; first-party releases=${FIRST_PARTY_RELEASE_OUTCOME}; Artificial Analysis coding agents=${BENCHMARK_OUTCOME}; AA Intelligence efficiency=${INTELLIGENCE_OUTCOME}; Direct DeepSWE=${DEEP_SWE_OUTCOME}; Terminal-Bench 4=${TERMINAL_BENCH_OUTCOME}; Terminal-Bench-Science 0.1=${TERMINAL_BENCH_SCIENCE_OUTCOME}; Reasoning atlas=${ATLAS_REASONING_OUTCOME}; Multimodal atlas=${ATLAS_MULTIMODAL_OUTCOME}; Arena media=${ARENA_MEDIA_OUTCOME}; Pinned audio atlas=${ATLAS_AUDIO_OUTCOME}; reconciliation=${RELEASE_RECONCILE_OUTCOME}; validation=${VALIDATION_OUTCOME}; publication=${PUBLISH_OUTCOME}."
             exit 1
           fi
 

@@ -43,20 +43,25 @@ share a comparison series. AutomationBench remains on the watchlist because
 its cross-application workflow signal overlaps the selected professional-work
 and computer-use axes.
 
-Artificial Analysis Intelligence Index v4.1.1 is a separate source-specific
-model view, not a sixth portfolio role or a composite created by AI Charts. The
-owner index weights Agents at 34% (GDPval-AA v2 20%, τ³-Banking 14%), Coding
-at 24% (Terminal-Bench v2.1 16%, SciCode 8%), Scientific Reasoning at 24%
-(Humanity's Last Exam 12%, GPQA Diamond 6%, CritPt 6%), and General at 18%
-(AA-LCR 6%, AA-Omniscience 12%). The efficiency chart pairs that owner score
+Artificial Analysis Intelligence Index v4.3 leads the homepage as a separate
+model-level Pareto view, not a sixth portfolio role or a composite created by
+AI Charts. The ten-evaluation owner index weights agents 30%, coding 20%,
+scientific reasoning 20%, and general capability 30%. The efficiency chart pairs that owner score
 with its model-level weighted output-token and cost measures per Intelligence
 Index task. Those output tokens include answer and reasoning tokens only; they
 must not be compared as though they were the coding-agent dataset's total
 tokens, which also cover input traffic.
 Rows with a complete cost breakdown but a reported zero total remain in the
 checked JSON with cost normalized to unavailable; rows with incomplete cost are
-excluded. Both displayed panels omit the complete zero-total rows so output-token
+excluded. Both selectable axes omit the complete zero-total rows so output-token
 and cost frontiers use the same positive-cost cohort.
+
+The v4.3 importer pins the exact ten-evaluation roster and cross-checks every
+published Dataset JSON-LD leaderboard score against its native payload record.
+It keeps native per-task output tokens and costs; it never divides evaluation
+totals by an inferred denominator. Historical v4.1.1 data and downloads stay
+frozen, with their original nine-evaluation weights. Future index changes
+require a separate versioned admission, not a relabeled historical series.
 
 ## Cross-release comparison rule
 
@@ -292,6 +297,28 @@ March 30, 2025 systems. Fixed research-cohort counts, column order, evaluator
 checks, source URL checks, and no-disappearing-row guards protect these imports.
 OmniDocBench may admit added rows within its existing exact table contract;
 other research cohort expansions require a reviewed parser/selection change.
+
+Current Arena media uses the owner-released `lmarena-ai/leaderboard-dataset`
+under CC BY 4.0, not the separate Artificial Analysis media rankings. The four
+overall cohorts remain distinct: text-to-image, image editing, text-to-video,
+and image-to-video. One exact dataset revision binds every page and the license
+README. Keep native Bradley–Terry ratings, source interval bounds and labels,
+votes, per-track observation dates, and original model configuration names.
+Ratings are relative; use dots and intervals rather than percentage bars.
+The export lacks AutoEval and preliminary flags: disclose that absence and do
+not describe every observation as human-voted. Reject incomplete pagination,
+mixed revisions, duplicate or disappearing rows, backward dates, invalid
+intervals, and changed license contracts. Preserve attribution and the
+normalization change statement in each exported cohort.
+
+Open ASR admits ten reviewed open-weight configurations on the AMI-Cleaned
+English test, pinned to registry commit
+`ba5712d5ace8f785fa0daae1aecea8561ecd87c9` and its source checksum. Read the
+named AMI-Cleaned column, not the aggregate WER or legacy AMI column. Lower WER
+is better and may exceed 100%. Do not invent uncertainty, speed, cost, or a
+controlled-rerun claim from the current launcher documentation. Scheduled
+checks reproduce this immutable cohort; a newer source, scoring protocol,
+normalizer, or model set needs a reviewed admission change.
 
 Refresh success does not make historical paper cohorts a current-product
 ranking. Newly released models and newly cited benchmarks should enter the

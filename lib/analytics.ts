@@ -60,6 +60,7 @@ export type AnalyticsDestinationId =
   | "asset:download"
   | "asset:model-card-png"
   | "dataset:artificial-analysis-intelligence"
+  | "dataset:artificial-analysis-intelligence-v4-3"
   | "dataset:coding-agents"
   | "dataset:terminal-bench-4"
   | "dataset:terminal-bench-science-0-1"
@@ -264,6 +265,7 @@ function isDestinationId(value: unknown): value is AnalyticsDestinationId {
     "asset:download",
     "asset:model-card-png",
     "dataset:artificial-analysis-intelligence",
+    "dataset:artificial-analysis-intelligence-v4-3",
     "dataset:coding-agents",
     "dataset:terminal-bench-4",
     "dataset:terminal-bench-science-0-1",
@@ -346,6 +348,9 @@ function internalDestination(pathname: string): Pick<
   const atlasDatasetId = /^\/data\/benchmark-atlas\/([^/]+)$/u.exec(pathname)?.[1];
   if (isChartedBenchmarkAtlasId(atlasDatasetId)) {
     return { destination_id: `dataset:${atlasDatasetId}`, destination_kind: "dataset" };
+  }
+  if (pathname === "/data/artificial-analysis-intelligence-v4-3.json") {
+    return { destination_id: "dataset:artificial-analysis-intelligence-v4-3", destination_kind: "dataset" };
   }
   if (pathname === "/data/artificial-analysis-intelligence.json") {
     return {

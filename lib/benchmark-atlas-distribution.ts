@@ -3,7 +3,7 @@ import { atlasDatasetSummary, type BenchmarkAtlasDataset, type BenchmarkAtlasEnt
 import { BENCHMARK_DATA_DESCRIPTION } from "./benchmark-portfolio";
 
 export const ATLAS_CATALOG_DOWNLOAD_PATH = "/data/benchmark-atlas.json";
-export const ATLAS_CATALOG_CONTENT_UPDATED_AT = "2026-09-09T00:03:22Z";
+export const ATLAS_CATALOG_CONTENT_UPDATED_AT = "2026-09-09T02:05:18Z";
 export const ATLAS_DATA_DESCRIPTION = BENCHMARK_DATA_DESCRIPTION;
 
 export function atlasDatasetDownloadPath(benchmarkId: string): string {

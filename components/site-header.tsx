@@ -4,7 +4,8 @@ import { site } from "@/app/site";
 import { SkipLink, ThemeMenuButton } from "@/components/ui";
 
 export const SITE_HEADER_LINKS = [
-  { href: "/#explore", label: "Explore" },
+  { href: "/#intelligence-index", label: "Charts" },
+  { href: "/#explore", label: "Benchmarks" },
   { href: "/blog", label: "Blog" },
   { href: "/models", label: "Cards" },
   { href: "/data", label: "Data" },

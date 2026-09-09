@@ -167,6 +167,8 @@ async function executeWorkflowShell(
       encoding: "utf8",
       env: {
         ...process.env,
+        ARENA_MEDIA_OUTCOME: "success",
+        ATLAS_AUDIO_OUTCOME: "success",
         ATLAS_MULTIMODAL_OUTCOME: "success",
         ATLAS_REASONING_OUTCOME: "success",
         BENCHMARK_OUTCOME: "skipped",
@@ -218,6 +220,41 @@ async function executeWorkflowShell(
   };
 }
 
+async function executeSnapshotBoundary(
+  fixtures: Readonly<Record<string, Readonly<{ before: unknown; after: unknown }>>>,
+): Promise<Readonly<{ status: number | null; stdout: string; stderr: string; output: string; remaining: string[] }>> {
+  const root = await mkdtemp(path.join(tmpdir(), "aicharts-snapshot-boundary-test-"));
+  temporaryRoots.push(root);
+  const output = path.join(root, "workflow-output.txt");
+  const git = (...args: string[]) => {
+    const result = spawnSync("git", ["-c", "core.hooksPath=/dev/null", "-c", "user.name=AI Charts test", "-c", "user.email=test@example.invalid", ...args], {
+      cwd: root, encoding: "utf8", timeout: 10_000,
+    });
+    if (result.status !== 0) throw new Error(`Fixture git failed: ${result.stderr}`);
+    return result.stdout;
+  };
+  git("init", "--quiet");
+  for (const [file, fixture] of Object.entries(fixtures)) {
+    await mkdir(path.dirname(path.join(root, file)), { recursive: true });
+    await writeFile(path.join(root, file), JSON.stringify(fixture.before));
+  }
+  git("add", "--", ...Object.keys(fixtures));
+  git("commit", "--quiet", "-m", "Fixture snapshot baseline");
+  for (const [file, fixture] of Object.entries(fixtures)) await writeFile(path.join(root, file), JSON.stringify(fixture.after));
+  const paths = Object.fromEntries(Object.entries(refresh?.env ?? {}).filter(([key]) => key.endsWith("_PATH")));
+  const result = spawnSync("/bin/bash", ["-e", "-o", "pipefail", "-c", String(step("snapshot").run)], {
+    cwd: root, encoding: "utf8", env: { ...process.env, ...paths, GITHUB_OUTPUT: output }, timeout: 10_000,
+  });
+  return {
+    status: result.status, stdout: result.stdout ?? "", stderr: result.stderr ?? "",
+    output: await readFile(output, "utf8").catch((error: unknown) => {
+      if (error instanceof Error && "code" in error && error.code === "ENOENT") return "";
+      throw error;
+    }),
+    remaining: git("diff", "--name-only").trim().split("\n").filter(Boolean),
+  };
+}
+
 describe("scheduled model-data refresh", () => {
   test("separates hourly releases, four-hour benchmarks, and daily AAI", () => {
     expect(workflow.on?.schedule).toEqual([
@@ -264,6 +301,8 @@ describe("scheduled model-data refresh", () => {
     expect(String(step("terminal_bench_science").if)).toContain("env.RUN_BENCHMARK_REFRESH == 'true'");
     expect(String(step("atlas_reasoning").if)).toContain("env.RUN_BENCHMARK_REFRESH == 'true'");
     expect(String(step("atlas_multimodal").if)).toContain("env.RUN_BENCHMARK_REFRESH == 'true'");
+    expect(String(step("arena_media").if)).toContain("env.RUN_BENCHMARK_REFRESH == 'true'");
+    expect(String(step("atlas_audio").if)).toContain("env.RUN_BENCHMARK_REFRESH == 'true'");
     expect(String(step("intelligence").if)).toContain("env.RUN_BENCHMARK_REFRESH == 'true'");
     expect(String(step("release_reconcile").if)).toContain("env.RUN_RELEASE_REFRESH == 'true'");
     expect(String(step("release_reconcile").if)).toContain("env.RUN_BENCHMARK_REFRESH == 'true'");
@@ -312,10 +351,13 @@ describe("scheduled model-data refresh", () => {
     });
     expect(step("intelligence")).toMatchObject({
       "continue-on-error": true,
-      run: "bun run aa-intelligence:refresh",
+      run: "bun run aa-intelligence-v4-3:refresh",
     });
+    expect(source).not.toContain("bun run aa-intelligence:refresh");
     expect(step("atlas_reasoning")).toMatchObject({ "continue-on-error": true, run: "bun run atlas:reasoning:refresh" });
     expect(step("atlas_multimodal")).toMatchObject({ "continue-on-error": true, run: "bun run atlas:multimodal:refresh" });
+    expect(step("arena_media")).toMatchObject({ "continue-on-error": true, run: "bun run atlas:arena-media:refresh" });
+    expect(step("atlas_audio")).toMatchObject({ "continue-on-error": true, run: "bun run atlas:audio:refresh" });
     expect(String(step("release_reconcile").if)).toContain("steps.dependencies.outcome == 'success'");
     expect(steps.indexOf(step("first_party_releases"))).toBeLessThan(
       steps.indexOf(step("first_party_review")),
@@ -331,16 +373,18 @@ describe("scheduled model-data refresh", () => {
     expect(steps.indexOf(step("release_reconcile"))).toBeLessThan(steps.indexOf(step("deep_swe")));
   });
 
-  test("publishes only the nine owned snapshots through the protected-branch contract", () => {
+  test("publishes only the eleven current owned snapshots through the protected-branch contract", () => {
     const publish = String(step("publish").run);
     expect(refresh["timeout-minutes"]).toBe(45);
     expect(refresh.env).toMatchObject({
+      ARENA_MEDIA_PATH: "data/arena-media.json",
+      ATLAS_AUDIO_PATH: "data/benchmark-atlas-audio.json",
       ATLAS_MULTIMODAL_PATH: "data/benchmark-atlas-multimodal.json",
       ATLAS_REASONING_PATH: "data/benchmark-atlas-reasoning.json",
       BENCHMARK_PATH: "data/coding-agents.json",
       DEEP_SWE_PATH: "data/deep-swe-evidence.json",
       FIRST_PARTY_RELEASE_PATH: "data/first-party-release-radar.json",
-      INTELLIGENCE_PATH: "data/artificial-analysis-intelligence.json",
+      INTELLIGENCE_PATH: "data/artificial-analysis-intelligence-v4-3.json",
       REFRESH_BRANCH: "automation/model-data-refresh-${{ github.run_id }}-${{ github.run_attempt }}",
       RELEASE_RADAR_PATH: "data/model-release-radar.json",
       REQUIRED_CHECK_CONTEXT: "Required",
@@ -356,6 +400,8 @@ describe("scheduled model-data refresh", () => {
     expect(String(step("snapshot").run)).toContain('"$TERMINAL_BENCH_SCIENCE_PATH"');
     expect(String(step("snapshot").run)).toContain('"$ATLAS_REASONING_PATH"');
     expect(String(step("snapshot").run)).toContain('"$ATLAS_MULTIMODAL_PATH"');
+    expect(String(step("snapshot").run)).toContain('"$ARENA_MEDIA_PATH"');
+    expect(String(step("snapshot").run)).toContain('"$ATLAS_AUDIO_PATH"');
     expect(step("validation")).toMatchObject({
       "continue-on-error": true,
       if: "steps.snapshot.outputs.changed == 'true'",
@@ -366,7 +412,7 @@ describe("scheduled model-data refresh", () => {
       if: "steps.validation.outcome == 'success' && steps.snapshot.outputs.changed == 'true'",
     });
     expect(publish).toContain(
-      'git add -- "$BENCHMARK_PATH" "$DEEP_SWE_PATH" "$FIRST_PARTY_RELEASE_PATH" "$INTELLIGENCE_PATH" "$RELEASE_RADAR_PATH" "$TERMINAL_BENCH_PATH" "$TERMINAL_BENCH_SCIENCE_PATH" "$ATLAS_REASONING_PATH" "$ATLAS_MULTIMODAL_PATH"',
+      'git add -- "$BENCHMARK_PATH" "$DEEP_SWE_PATH" "$FIRST_PARTY_RELEASE_PATH" "$INTELLIGENCE_PATH" "$RELEASE_RADAR_PATH" "$TERMINAL_BENCH_PATH" "$TERMINAL_BENCH_SCIENCE_PATH" "$ATLAS_REASONING_PATH" "$ATLAS_MULTIMODAL_PATH" "$ARENA_MEDIA_PATH" "$ATLAS_AUDIO_PATH"',
     );
     expect(publish).toContain('"HEAD:refs/heads/${REFRESH_BRANCH}"');
     expect(publish).toContain('gh pr create --base main');
@@ -392,7 +438,9 @@ describe("scheduled model-data refresh", () => {
     expect(publish).not.toContain("HEAD:main");
     expect(ciWorkflow.on).toHaveProperty("workflow_dispatch");
     expect(ciWorkflow.on?.pull_request?.["paths-ignore"]).toEqual([
-      "data/artificial-analysis-intelligence.json",
+      "data/arena-media.json",
+      "data/artificial-analysis-intelligence-v4-3.json",
+      "data/benchmark-atlas-audio.json",
       "data/benchmark-atlas-multimodal.json",
       "data/benchmark-atlas-reasoning.json",
       "data/coding-agents.json",
@@ -424,6 +472,27 @@ describe("scheduled model-data refresh", () => {
     );
   });
 
+  test("executes current AA, Arena, and audio boundaries without admitting the historical snapshot", async () => {
+    const currentFiles = ["data/artificial-analysis-intelligence-v4-3.json", "data/arena-media.json", "data/benchmark-atlas-audio.json"];
+    const before = { source: { retrievedAt: "2026-09-04T00:00:00.000Z", revision: "same-reviewed-source" }, records: [{ score: 1 }] };
+    const polled = { ...before, source: { ...before.source, retrievedAt: "2026-09-09T00:00:00.000Z" } };
+    const timestampOnly = await executeSnapshotBoundary(Object.fromEntries(currentFiles.map(file => [file, { before, after: polled }])));
+    expect(timestampOnly.status).toBe(0);
+    expect(timestampOnly.stderr).toBe("");
+    expect(timestampOnly.remaining).toEqual([]);
+    expect(timestampOnly.output).toContain("changed=false");
+    const updated = { ...polled, records: [{ score: 2 }] };
+    const material = await executeSnapshotBoundary(Object.fromEntries(currentFiles.map(file => [file, { before, after: updated }])));
+    expect(material.status).toBe(0);
+    expect(material.stderr).toBe("");
+    expect(material.remaining).toEqual([...currentFiles].sort());
+    expect(material.output).toContain("changed=true");
+    const historical = await executeSnapshotBoundary({ "data/artificial-analysis-intelligence.json": { before, after: updated } });
+    expect(historical.status).toBe(1);
+    expect(historical.stdout).toContain("Refresh changed unexpected file: data/artificial-analysis-intelligence.json");
+    expect(historical.output).not.toContain("changed=true");
+  });
+
   test("retries transient installs and owns separate health and editorial queues", () => {
     expect(workflow.permissions).toMatchObject({
       actions: "write",
@@ -451,6 +520,12 @@ describe("scheduled model-data refresh", () => {
     expect(String(health?.run)).toContain("$TERMINAL_BENCH_SCIENCE_OUTCOME");
     expect(String(health?.run)).toContain("$ATLAS_REASONING_OUTCOME");
     expect(String(health?.run)).toContain("$ATLAS_MULTIMODAL_OUTCOME");
+    expect(String(health?.run)).toContain("$ARENA_MEDIA_OUTCOME");
+    expect(String(health?.run)).toContain("$ATLAS_AUDIO_OUTCOME");
+    expect(health?.env).toMatchObject({
+      ARENA_MEDIA_OUTCOME: "${{ steps.arena_media.outcome }}",
+      ATLAS_AUDIO_OUTCOME: "${{ steps.atlas_audio.outcome }}",
+    });
     expect(String(health?.run)).toContain(
       '[[ "$RUN_AAI_REFRESH" == "true" && "$BENCHMARK_OUTCOME" != "success" ]]',
     );
@@ -531,7 +606,7 @@ describe("scheduled model-data refresh", () => {
 
   test("persists atlas failures independently while retaining last-known-good data", async () => {
     const health = steps.find(candidate => candidate.name === "Report health and manage the durable alert");
-    for (const [outcome, label] of [["ATLAS_REASONING_OUTCOME", "Reasoning atlas"], ["ATLAS_MULTIMODAL_OUTCOME", "Multimodal atlas"]]) {
+    for (const [outcome, label] of [["ATLAS_REASONING_OUTCOME", "Reasoning atlas"], ["ATLAS_MULTIMODAL_OUTCOME", "Multimodal atlas"], ["ARENA_MEDIA_OUTCOME", "Arena media"], ["ATLAS_AUDIO_OUTCOME", "Pinned audio atlas"]]) {
       const result = await executeWorkflowShell(String(health?.run), {
         candidates: [], issueBody: "", extraEnvironment: { [outcome]: "failure", REFRESH_MODE: "benchmarks", FAKE_HEALTH_ISSUE_NUMBER: "109" },
       });
@@ -585,6 +660,8 @@ describe("scheduled model-data refresh", () => {
           DEEP_SWE_OUTCOME: "skipped",
           ATLAS_REASONING_OUTCOME: "skipped",
           ATLAS_MULTIMODAL_OUTCOME: "skipped",
+          ARENA_MEDIA_OUTCOME: "skipped",
+          ATLAS_AUDIO_OUTCOME: "skipped",
           FAKE_HEALTH_ISSUE_NUMBER: "109",
           REFRESH_MODE: "releases",
           INTELLIGENCE_OUTCOME: "skipped",

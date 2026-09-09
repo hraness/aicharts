@@ -37,7 +37,7 @@ function PointInspector({ point, dataset, compareIds, onCompare }: Readonly<{ po
 }
 
 function Ranking({ points, selectedId, dataset, onSelect }: Readonly<{ points: readonly BenchmarkAtlasPoint[]; selectedId: string; dataset: BenchmarkAtlasDataset; onSelect: (id: string) => void }>) {
-  const relative = dataset.score.unit === "Elo";
+  const relative = dataset.score.unit === "Elo" || dataset.score.unit === "Arena points";
   const minimum = dataset.score.minimum ?? (relative ? Math.floor(Math.min(...dataset.points.map(point => point.uncertainty?.lower ?? point.score)) / 50) * 50 : Math.min(0, ...dataset.points.map(point => point.score)));
   const maximum = dataset.score.maximum ?? (relative ? Math.ceil(Math.max(...dataset.points.map(point => point.uncertainty?.upper ?? point.score)) / 50) * 50 : Math.max(...dataset.points.map(point => point.score)) * 1.05);
   const extent = maximum - minimum || 1;
@@ -51,7 +51,7 @@ function Ranking({ points, selectedId, dataset, onSelect }: Readonly<{ points: r
         <span className="atlas-row__track" aria-hidden="true">{relative ? <span className="atlas-row__marker" style={{ left: `${(point.score - minimum) / extent * 100}%` }} /> : <span className="atlas-row__fill" style={{ width: `${Math.max(0, Math.min(100, (point.score - minimum) / extent * 100))}%` }} />}{point.uncertainty && <span className="atlas-row__interval" style={{ left: `${Math.max(0, (point.uncertainty.lower - minimum) / extent * 100)}%`, width: `${Math.min(100, (point.uncertainty.upper - point.uncertainty.lower) / extent * 100)}%` }} />}</span>
       </span>
     </button>)}
-    <p className="atlas-caption">{relative && `Dots use a ${minimum}–${maximum} Elo range. Elo is relative, not a percentage. `}Select a row to inspect the configuration or compare up to three. {dataset.points.some(point => point.uncertainty) ? "Whiskers show the source’s reported uncertainty." : "Uncertainty was not reported for these results."}</p>
+    <p className="atlas-caption">{relative && `Dots use a ${minimum}–${maximum} ${dataset.score.unit} range. These ratings are relative, not percentages. `}Select a row to inspect the configuration or compare up to three. {dataset.points.some(point => point.uncertainty) ? "Whiskers show the source’s reported uncertainty." : "Uncertainty was not reported for these results."}</p>
   </div>;
 }
 
@@ -110,7 +110,22 @@ function ResultsTable({ points, dataset, onSelect }: Readonly<{ points: readonly
 
 function Comparison({ dataset, points, onRemove }: Readonly<{ dataset: BenchmarkAtlasDataset; points: readonly BenchmarkAtlasPoint[]; onRemove: (id: string) => void }>) {
   if (points.length === 0) return null;
-  return <section className="atlas-comparison" aria-label="Compare selected results"><div className="atlas-comparison__heading"><h3>Your comparison</h3><span>{points.length}/3 results · same benchmark</span></div><div className="atlas-comparison__grid" style={{ "--compare-count": points.length } as CSSProperties}>{points.map(point => <div key={point.id}><button className="atlas-comparison__remove" aria-label={`Remove ${point.label} from comparison`} onClick={() => onRemove(point.id)} type="button">×</button><h4>{point.model}</h4><p>{[point.harness, point.effort].filter(Boolean).join(" · ") || point.label}</p><strong>{formatAtlasScore(point.score, dataset.score.unit)}</strong><small>{dataset.score.label}</small>{dataset.costLabel && <><b>{formatAtlasCost(point.costUsd)}</b><small>{dataset.costLabel}</small></>}</div>)}</div>{points.length === 2 && <p className="atlas-caption">Score difference: {formatAtlasScore(Math.abs(points[0].score - points[1].score), dataset.score.unit === "%" ? "points" : dataset.score.unit)} {dataset.score.unit === "%" ? "percentage points" : ""}. {points.some(point => point.uncertainty !== null) ? "Check the uncertainty intervals before treating a small gap as decisive." : "The source does not provide uncertainty for every compared result."}</p>}</section>;
+  const percentage = dataset.score.unit === "%" || dataset.score.unit === "% WER";
+  return <section className="atlas-comparison" aria-label="Compare selected results">
+    <div className="atlas-comparison__heading"><h3>Your comparison</h3><span>{points.length}/3 results · same benchmark</span></div>
+    <div className="atlas-comparison__grid" style={{ "--compare-count": points.length } as CSSProperties}>
+      {points.map(point => <div key={point.id}>
+        <button className="atlas-comparison__remove" aria-label={`Remove ${point.label} from comparison`} onClick={() => onRemove(point.id)} type="button">×</button>
+        <h4>{point.model}</h4><p>{[point.harness, point.effort].filter(Boolean).join(" · ") || point.label}</p>
+        <strong>{formatAtlasScore(point.score, dataset.score.unit)}</strong><small>{dataset.score.label}</small>
+        {dataset.costLabel && <><b>{formatAtlasCost(point.costUsd)}</b><small>{dataset.costLabel}</small></>}
+      </div>)}
+    </div>
+    {points.length === 2 && <p className="atlas-caption">
+      Score difference: {formatAtlasScore(Math.abs(points[0].score - points[1].score), percentage ? "points" : dataset.score.unit)}{percentage ? " percentage points" : ""}.{" "}
+      {points.some(point => point.uncertainty !== null) ? "Check the uncertainty intervals before treating a small gap as decisive." : "The source does not provide uncertainty for every compared result."}
+    </p>}
+  </section>;
 }
 
 export function BenchmarkAtlasExplorer({ entries, datasets }: Readonly<{ entries: readonly BenchmarkAtlasEntry[]; datasets: readonly BenchmarkAtlasDataset[] }>) {

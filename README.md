@@ -2,7 +2,7 @@
 
 [AI Charts](https://aicharts.io) is an open-source home for sourced, interactive AI benchmark charts. It compares models and agents across performance, cost, speed, and token use without collapsing those trade-offs into one rank.
 
-The homepage is a task-oriented benchmark atlas: choose coding, reasoning, research, memory, images, video, audio, or world models, then inspect the evidence relevant to that work. Charted results, source guides, and emerging evaluations are labeled separately. Older research cohorts do not masquerade as current-product rankings. Artificial Analysis Intelligence efficiency and coding-agent detail remain available as advanced source-specific comparisons.
+The homepage leads with an interactive Pareto frontier: compare model capability against output tokens or cost, then inspect the configuration behind each point. The original coding-agent charts follow. A secondary benchmark library covers coding, reasoning, research, memory, images, video, audio, and world models. Charted results, source guides, and emerging evaluations are labeled separately; older research cohorts do not masquerade as current-product rankings.
 
 ## Current benchmark portfolio
 
@@ -11,10 +11,11 @@ The site is a static-data Next.js and TypeScript application. Its benchmark snap
 - Use the official, version-pinned Terminal-Bench 4.0 snapshot as the current coding standard, with exact model, agent, effort, trial, uncertainty, cost, token, duration, and source metadata.
 - Explore native score rankings, cost trade-offs where reported, tables, and up to three selected configurations within one benchmark. Inspect exact values, uncertainty, source dates, and evaluation conditions, then share the configured view.
 - Compare checked ARC-AGI-2 and ARC-AGI-3 tracks, selected DeepResearch Bench II systems, and LongMemEval-V2 Small and Medium baselines without combining their scores.
-- Explore WISE Verified image generation, GEditBench v2 editing, VideoPhy2 human evaluation, OmniDocBench v1.6_full document parsing, and WorldScore's historical author cohort. Other image, video, audio, and world-model evaluations have source guides until their data imports are qualified.
+- Explore four separate Arena preference-rating cohorts for image generation, image editing, text-to-video, and image-to-video, with source dates, intervals, and vote counts. Compare selected open-weight speech configurations on the Open ASR AMI-Cleaned English test; lower word-error rate is better.
+- Explore WISE Verified image generation, GEditBench v2 editing, VideoPhy2 human evaluation, OmniDocBench v1.6_full document parsing, and WorldScore's historical author cohort. Other evaluations have source guides until their data imports are qualified.
 - Keep a checked, version-pinned Terminal-Bench-Science 0.1 owner snapshot—with per-domain results, uncertainty, cost, and token use—separate from GDPval-AA v2, OSWorld 2.0, and Humanity's Last Exam rather than collapsing the families into one composite score.
 - Treat CursorBench 3.2 as supplemental closed evidence for the model-plus-Cursor system, not an independently reproducible coding standard.
-- Compare the historical Artificial Analysis Intelligence Index v4.1.1 cohort with output-only tokens and cost per Index task in a separate model-level efficiency view. A newer publisher version requires separate admission, not relabeling old scores.
+- Compare Artificial Analysis Intelligence Index v4.3 with native output-only tokens and cost per Index task in the leading model-level Pareto chart. The historical v4.1.1 dataset remains separately accessible; scores are never relabeled across versions.
 - Compare Artificial Analysis's AA Index, DeepSWE, Terminal-Bench v2.1, and SWE-Atlas-QnA results.
 - Plot each result against cost, duration, or total token use.
 - Pin a model to see its nearby performance cohort, or pin a provider to inspect its range.
@@ -25,7 +26,7 @@ The site is a static-data Next.js and TypeScript application. Its benchmark snap
 - Read sourced analysis at [`/blog`](https://aicharts.io/blog), including the current [AA Index versus cost](https://aicharts.io/blog/aa-index-cost-coding-agents) snapshot analysis, [open models on coding-agent benchmarks](https://aicharts.io/blog/open-models-coding-agent-benchmarks), [how cheaper AI models can make everyday products viable](https://aicharts.io/blog/small-models-have-arrived), [Terminal-Bench-Science](https://aicharts.io/blog/terminal-bench-science), and [why a high score still needs a holdout](https://aicharts.io/blog/coding-agent-score-holdouts).
 - Inspect the current snapshot, methodology, provenance, full configuration table, and machine-readable distribution at [`/data`](https://aicharts.io/data).
 
-Each checked snapshot records its source, named version, retrieval time, and available revision or content fingerprint. The [`atlas catalog JSON`](https://aicharts.io/data/benchmark-atlas.json) links one compact JSON distribution per measured cohort; [`/data`](https://aicharts.io/data) provides all benchmark definitions, comparison rules, limitations, and the original four richer source snapshots. Source-only guides have no invented observations or dataset download. AI Charts is an independent visualization and is not affiliated with the benchmark owners or model providers represented in the data.
+Each checked snapshot records its source, named version, retrieval time, and available revision or content fingerprint. The [`atlas catalog JSON`](https://aicharts.io/data/benchmark-atlas.json) links one compact JSON distribution per measured cohort; [`/data`](https://aicharts.io/data) provides benchmark definitions, comparison rules, limitations, and richer source snapshots. Source-only guides have no invented observations or dataset download. AI Charts is an independent visualization and is not affiliated with the benchmark owners or model providers represented in the data.
 
 ## Local development
 
@@ -54,13 +55,14 @@ The [`data-refresh.yml`](.github/workflows/data-refresh.yml) workflow checks fir
 2. OpenRouter's public models API supplies a bounded 90-day identity radar and the model-ID catalog used to identify direct benchmark observations. Its listing timestamp is discovery metadata, not a claimed release date.
 3. Harbor Framework's official Terminal-Bench leaderboard repository supplies the current 4.0.0 snapshot. The importer pins one immutable commit, asserts the 4.0 leaderboard definition, and rejects duplicate configurations, incomplete trials, score arithmetic errors, version changes, or unsafe row loss.
 4. Terminal-Bench-Science's official 0.1 owner API supplies a separate scientific-workflow snapshot pinned to release `v0.1.0`, its immutable commit, and exact Harbor dataset version. The importer retains five-domain results, validates resolution-rate and binomial-error arithmetic, records unpublished protocol fields as null, and preserves aggregate and domain costs without inventing reconciliation.
-5. Artificial Analysis's public model-page Flight payload supplies a model-level Intelligence Index efficiency snapshot, with the page's public Dataset JSON-LD serving as a source-shape cross-check. The retained v4.1.1 cohort includes weighted output-only token and cost components per Index task. The four-hour checker rejects a newer benchmark version until its separate cohort is reviewed; a healthy-looking old snapshot does not establish current source health.
+5. Artificial Analysis's public model-page Flight payload supplies the current v4.3 Intelligence Index efficiency snapshot, including native weighted output-only token and cost components per Index task. The importer cross-checks the page's exact ten-evaluation roster and every public JSON-LD leaderboard score against the payload. Future index versions require separate admission; historical v4.1.1 remains frozen and checked offline.
 6. Artificial Analysis supplies the AA Index, DeepSWE, Terminal-Bench v2.1, and SWE-Atlas-QnA observations in the separate coding-agent interactive chart and cards. Terminal-Bench v2.1 remains labeled and separate from 4.0; this heavier import refreshes daily.
 7. DataCurve's official DeepSWE v1.1 artifact supplies early harness-specific pass@1 evidence. Ambiguous model matches fail closed, unmatched models remain explicit, and every observation retains its harness, effort, run count, attempts, and source provenance.
 8. The first-party and OpenRouter radars are discovery-only, and direct DeepSWE observations are early-evidence-only. Missing values remain missing. None of these sources can invent another source's score, chart point, model card, or official release date.
 9. The reasoning and multimodal atlas importers retain explicit reviewed cohorts and exact evaluation versions. Mutable publisher endpoints have checked content fingerprints, not invented commit pins. New ARC model families, changed paper cohorts, and revised evaluation protocols require a reviewed admission change; a new release is not automatically a new chart point. See [`docs/benchmark-sourcing-protocol.md`](docs/benchmark-sourcing-protocol.md) for the precise source and selection contracts.
-10. The workflow can atomically update only [`data/first-party-release-radar.json`](data/first-party-release-radar.json), [`data/model-release-radar.json`](data/model-release-radar.json), [`data/terminal-bench.json`](data/terminal-bench.json), [`data/terminal-bench-science.json`](data/terminal-bench-science.json), [`data/artificial-analysis-intelligence.json`](data/artificial-analysis-intelligence.json), [`data/coding-agents.json`](data/coding-agents.json), [`data/deep-swe-evidence.json`](data/deep-swe-evidence.json), [`data/benchmark-atlas-reasoning.json`](data/benchmark-atlas-reasoning.json), and [`data/benchmark-atlas-multimodal.json`](data/benchmark-atlas-multimodal.json). These nine automation-owned snapshots pass the full project check with the same public build key as CI before the workflow opens a dedicated pull request, dispatches required CI on its exact head, and verifies the protected squash merge. Failed importers leave their last-known-good production snapshots in place.
-11. Official card dates live in the manually reviewed [`data/model-release-dates.json`](data/model-release-dates.json) ledger, keyed by stable canonical model ID. Marketplace and sitemap timestamps never populate it or appear as official release dates.
+10. Arena media refreshes four separate overall cohorts from one owner-released CC BY 4.0 dataset revision; pagination, source dates, confidence intervals, and vote counts are checked. The Open ASR importer rechecks a reviewed immutable cohort, not an automatically expanding audio leaderboard. Both have independent failure reporting.
+11. The workflow can atomically update only its eleven allowlisted snapshots: first-party and OpenRouter release radars; Terminal-Bench and Terminal-Bench-Science; current Intelligence v4.3 and coding-agent data; direct DeepSWE evidence; reasoning and multimodal atlas data; Arena media; and Open ASR audio. Historical Intelligence v4.1.1 is not automation-owned. These snapshots pass the full project check before a dedicated pull request, required CI on its exact head, and a protected squash merge. Failed importers leave their last-known-good production snapshots in place.
+12. Official card dates live in the manually reviewed [`data/model-release-dates.json`](data/model-release-dates.json) ledger, keyed by stable canonical model ID. Marketplace and sitemap timestamps never populate it or appear as official release dates.
 
 The repository keeps default workflow-token permissions read-only and grants write capabilities only inside this workflow. GitHub's repository-level “Allow GitHub Actions to create and approve pull requests” setting must remain enabled so that the scoped token can open its data PR; the workflow never submits reviews. First-party sources refresh independently, so one outage retains that source's last-known-good slice while healthy sources continue. A new candidate updates the durable release-review issue before benchmark refreshes run. Dependency installation is retried, and any unhealthy run creates or updates a separate automation-health issue. Source-shape changes, suspicious data loss, failed required CI, and unmerged update PRs still fail closed for publication, leaving the last-known-good production snapshot in place.
 
@@ -71,12 +73,14 @@ bun run releases:refresh
 bun run first-party-releases:refresh
 bun run terminal-bench:refresh
 bun run terminal-bench-science:refresh
-bun run aa-intelligence:refresh
+bun run aa-intelligence-v4-3:refresh
 bun run data:refresh
 bun run releases:reconcile
 bun run deepswe:refresh
 bun run atlas:reasoning:refresh
 bun run atlas:multimodal:refresh
+bun run atlas:arena-media:refresh
+bun run atlas:audio:refresh
 bun run check
 ```
 

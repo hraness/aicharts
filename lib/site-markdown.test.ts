@@ -11,6 +11,7 @@ import {
   site,
 } from "@/app/site";
 import artificialAnalysisIntelligenceData from "@/data/artificial-analysis-intelligence.json";
+import currentIntelligenceData from "@/data/artificial-analysis-intelligence-v4-3.json";
 import codingAgentData from "@/data/coding-agents.json";
 import terminalBenchData from "@/data/terminal-bench.json";
 import terminalBenchScienceData from "@/data/terminal-bench-science.json";
@@ -71,10 +72,10 @@ describe("homepage document", () => {
     expect(text).toContain("Terminal-Bench 4.0.0 is the coding standard");
     expect(text).toContain("Terminal-Bench-Science 0.1.0 adds a separate scientific-workflow view");
     expect(text).toContain(
-      `Artificial Analysis Intelligence Index v${intelligence.benchmark.version}`,
+      `Artificial Analysis Intelligence Index v${currentIntelligenceData.benchmark.version}`,
     );
     expect(text).toContain(
-      `${intelligence.selection.positiveCostRecordCount}-configuration positive-cost cohort`,
+      `${currentIntelligenceData.selection.positiveCostRecordCount}-configuration positive-cost cohort`,
     );
     expect(text).toContain("source-specific interactive chart");
     expect(text).toContain("Benchmark data and method");
@@ -126,10 +127,13 @@ describe("markdown representations", () => {
     expect(home.body).toContain("| Model | Agent configuration | Accuracy | 95% interval | Trials | Evaluation cost |");
     expect(home.body).toContain("CursorBench 3.2");
     expect(home.body).toContain(
-      `## Artificial Analysis Intelligence Index v${intelligence.benchmark.version} efficiency`,
+      `## Artificial Analysis Intelligence Index v${currentIntelligenceData.benchmark.version} efficiency`,
     );
     expect(home.body).toContain("output-only tokens per Index task");
     expect(home.body).toContain("/data/artificial-analysis-intelligence.json");
+    expect(home.body).toContain("/data/artificial-analysis-intelligence-v4-3.json");
+    expect(home.body.indexOf("## Artificial Analysis Intelligence Index")).toBeLessThan(home.body.indexOf("## Explore more benchmarks"));
+    expect(home.body).not.toContain("Advanced source-specific comparisons");
     expect(home.body).toContain("## Terminal-Bench-Science 0.1.0 snapshot");
     expect(home.body).toContain("| Model | Harness configuration | Resolution rate | Standard error | Trials | Evaluation cost |");
     expect(home.body).toContain("## Model and benchmark analysis");
@@ -163,7 +167,7 @@ describe("markdown representations", () => {
     expect(data.body).toContain("GDPval-AA v2 20%");
     expect(data.body).toContain("τ³-Banking 14%");
     expect(data.body).toContain("answer plus reasoning tokens only");
-    expect(data.body).toContain("omitted from both displayed panels");
+    expect(data.body).toContain("omitted from the historical matched-resource cohort");
     expect(data.body).toContain("frontier classification is AI Charts analysis");
     expect(data.body).toContain(intelligence.source.methodologyUrl);
     expect(data.body).toContain(intelligence.source.termsUrl);
@@ -261,13 +265,29 @@ describe("agent instruction file", () => {
     expect(guide).toContain("/data/terminal-bench-science-0-1.json");
     expect(guide).toContain("/data/artificial-analysis-intelligence.json");
     expect(guide).toContain("/data/coding-agents.json");
-    expect(guide).toContain("four source JSON downloads");
+    expect(guide).toContain("Versioned source JSON downloads");
     expect(guide).toContain("/data/benchmark-atlas.json");
     expect(guide).toContain(
-      `${intelligence.selection.positiveCostRecordCount}-configuration positive-cost cohort`,
+      `${currentIntelligenceData.selection.positiveCostRecordCount}-configuration positive-cost cohort`,
     );
     expect(guide).toContain("answer plus reasoning tokens");
     expect(guide).toContain("Accept: text/markdown");
     expect(guide).toContain("It does not expose OAuth, GraphQL, MCP, or commerce endpoints.");
+  });
+
+  test("data Markdown and agent guide separate the current Pareto source from frozen v4.1.1", () => {
+    const data = markdownForPath("/data").body;
+    const guide = agentGuideMarkdown(snapshot);
+    expect(data).toContain("## Current Intelligence efficiency · v4.3");
+    expect(data).toContain("efficiency · historical frozen snapshot");
+    expect(data).toContain("This v4.1.1 snapshot is frozen and is no longer refreshed by automation");
+    const historical = data.split("efficiency · historical frozen snapshot")[1]?.split("## Artificial Analysis coding-agent")[0] ?? "";
+    expect(historical).not.toContain("every four hours");
+    for (const text of [data, guide]) {
+      expect(text).toContain("https://aicharts.io/data/artificial-analysis-intelligence-v4-3.json");
+      expect(text).toContain("https://aicharts.io/data/artificial-analysis-intelligence.json");
+      expect(text).toContain("homepage’s");
+    }
+    expect(guide).toContain("Historical v4.1.1 is frozen and must not be pooled with this version");
   });
 });

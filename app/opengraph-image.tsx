@@ -41,7 +41,7 @@ export default function Image() {
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
         <div style={{ fontSize: 76, fontWeight: 700, letterSpacing: "-4px" }}>{homeHeading}</div>
-        <div style={{ color: "#625d57", fontSize: 34 }}>Explore benchmarks for coding, reasoning, research, memory, and generative media. Understand the score and the tradeoffs.</div>
+        <div style={{ color: "#625d57", fontSize: 34 }}>Capability, cost, and token use. Explore the Pareto frontier, then go deeper with benchmarks for the task.</div>
       </div>
       <div style={{ background: site.palette.chromatic.key, height: 10, width: "100%" }} />
     </div>,
