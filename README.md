@@ -114,7 +114,11 @@ Copy [`.env.example`](.env.example) to `.env.local` to exercise configuration. T
 
 ## Deployment
 
-The production site is deployed from `main` with Vercel. The repository-level [`vercel.json`](vercel.json) pins the Bun install and build commands. Configure these environment variables in Vercel:
+The production site is deployed from `main` with Vercel. The repository-level [`vercel.json`](vercel.json) pins the Bun install and build commands. Generated `automation/model-data-refresh-<run>-<attempt>` branches skip their disposable Vercel Preview: the data-refresh workflow runs the complete application check before publishing the branch, then requires CI on that commit before merge. Production and ordinary branch previews still build. Missing or unrecognized Vercel system values also continue the build.
+
+To inspect a hosted Preview for a generated refresh, redeploy it and uncheck **Use project's Ignore Build Step** in Vercel's redeploy dialog. This is Vercel's [documented manual override](https://vercel.com/docs/project-configuration/project-settings#ignore-build-step-on-redeploy).
+
+Configure these environment variables in Vercel:
 
 | Variable | Scope | Purpose |
 | --- | --- | --- |
