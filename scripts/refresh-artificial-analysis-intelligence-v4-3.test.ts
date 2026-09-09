@@ -77,6 +77,40 @@ function derivedSnapshot(): ArtificialAnalysisIntelligenceV43Snapshot {
 }
 
 describe("Artificial Analysis Intelligence v4.3 refresh", () => {
+  test("accepts HTML script tag case and closing whitespace through both source checks", () => {
+    const payload = sourcePayload();
+    for (const close of ["</script >", "</ScRiPt\t>", "</SCRIPT\n\r\f >"]) {
+      const html = sourcePage(payload).replaceAll("<script", "<ScRiPt").replaceAll("</script>", close);
+      expect(extractArtificialAnalysisIntelligencePage(html, ARTIFICIAL_ANALYSIS_INTELLIGENCE_V43_PAGE_CONTRACT).ok).toBeTrue();
+      expect(validateArtificialAnalysisIntelligenceV43PublishedScores(html, payload).ok).toBeTrue();
+    }
+    const quotedBoundary = sourcePage(payload).replaceAll('type="application/ld+json"', 'data-note="score > cost" TYPE="APPLICATION/LD+JSON"');
+    expect(extractArtificialAnalysisIntelligencePage(quotedBoundary, ARTIFICIAL_ANALYSIS_INTELLIGENCE_V43_PAGE_CONTRACT).ok).toBeTrue();
+    expect(validateArtificialAnalysisIntelligenceV43PublishedScores(quotedBoundary, payload).ok).toBeTrue();
+  });
+
+  test("uses real script elements and exact type attributes, not lookalike tags or commented markup", () => {
+    const payload = sourcePayload();
+    const html = sourcePage(payload);
+    const jsonScript = html.slice(html.indexOf('<script type="application/ld+json">'));
+    const withDecoys = `<!-- ${jsonScript} -->${html}<script-custom type="application/ld+json">not JSON</script-custom>`;
+    expect(extractArtificialAnalysisIntelligencePage(withDecoys, ARTIFICIAL_ANALYSIS_INTELLIGENCE_V43_PAGE_CONTRACT).ok).toBeTrue();
+    expect(validateArtificialAnalysisIntelligenceV43PublishedScores(withDecoys, payload).ok).toBeTrue();
+    for (const invalid of [
+      html.replace('type="application/ld+json"', 'data-type="application/ld+json"'),
+      html.replace('type="application/ld+json"', 'type="text/plain" data-type="application/ld+json"'),
+      html.replace('type="application/ld+json"', 'type="application/ld+json" type="text/plain"'),
+      html.slice(0, -"</script>".length),
+      html.replaceAll("</script>", "</script-custom>"),
+      `${html}${jsonScript.replaceAll("</script>", "</script >")}`,
+      `${html}<script type="application/ld+json">{malformed}</script >`,
+      `${html}<script type="application/ld+json"></script >`,
+    ]) {
+      expect(extractArtificialAnalysisIntelligencePage(invalid, ARTIFICIAL_ANALYSIS_INTELLIGENCE_V43_PAGE_CONTRACT).ok).toBeFalse();
+      expect(validateArtificialAnalysisIntelligenceV43PublishedScores(invalid, payload).ok).toBeFalse();
+    }
+  });
+
   test("requires the exact new version and complete evaluation roster without weakening historical defaults", () => {
     const html = sourcePage();
     expect(extractArtificialAnalysisIntelligencePage(html, ARTIFICIAL_ANALYSIS_INTELLIGENCE_V43_PAGE_CONTRACT).ok).toBeTrue();
@@ -107,7 +141,7 @@ describe("Artificial Analysis Intelligence v4.3 refresh", () => {
     const previous = derivedSnapshot();
     const writes: ArtificialAnalysisIntelligenceV43Snapshot[] = [];
     const result = await refreshArtificialAnalysisIntelligenceV43({
-      fetchPage: async () => ok(sourcePage()),
+      fetchPage: async () => ok(sourcePage().replaceAll("</script>", "</ScRiPt \t>")),
       fetchManifest: async () => ok(await encryptPayload(sourcePayload())),
       now: () => new Date(Date.parse(previous.source.retrievedAt) + 60_000).toISOString(),
       readCommittedSnapshot: async () => ok(previous),

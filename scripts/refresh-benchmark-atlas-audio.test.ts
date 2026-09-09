@@ -100,7 +100,8 @@ describe("Open ASR AMI-Cleaned source boundary", () => {
     expect(() => extractAudioRows(`${AUDIO_CSV_HEADER}\n"unfinished`)).toThrow("unfinished quoted");
     expect(() => extractAudioRows(`${AUDIO_CSV_HEADER}\n"closed"bad`)).toThrow("after a quoted");
     expect(() => extractAudioRows(`${AUDIO_CSV_HEADER}\nmisplaced"quote`)).toThrow("misplaced quote");
-    expect(() => extractAudioRows(csv().replace("\n", "\r"))).toThrow("invalid line ending");
+    const invalidLineEnding = [AUDIO_CSV_HEADER, fixtureRows()[0].join(",")].join("\r");
+    expect(() => extractAudioRows(invalidLineEnding)).toThrow("invalid line ending");
     expect(() => extractAudioRows(`${csv()}\u0000`)).toThrow("bounded text");
     expect(() => extractAudioRows("x".repeat(60_001))).toThrow("bounded text");
   });

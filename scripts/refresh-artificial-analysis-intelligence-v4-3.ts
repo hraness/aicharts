@@ -22,6 +22,7 @@ import {
   deriveArtificialAnalysisIntelligenceRecords,
   extractArtificialAnalysisIntelligencePage,
   fetchArtificialAnalysisSourceBytes,
+  parseArtificialAnalysisJsonLdValues,
   parseArtificialAnalysisModelsPayload,
   type ArtificialAnalysisIntelligencePageSource,
 } from "./refresh-artificial-analysis-intelligence";
@@ -48,18 +49,9 @@ export function validateArtificialAnalysisIntelligenceV43PublishedScores(
   html: string,
   payload: ModelsPayload,
 ): Result<void, Error> {
-  const candidates: unknown[] = [];
-  for (const match of html.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/giu)) {
-    if (!/\btype\s*=\s*["']application\/ld\+json["']/iu.test(match[1] ?? "")) continue;
-    try {
-      const value: unknown = JSON.parse(match[2] ?? "");
-      if (isRecord(value) && value.name === ARTIFICIAL_ANALYSIS_INTELLIGENCE_NAME) {
-        candidates.push(value);
-      }
-    } catch (cause) {
-      return err(new Error("Could not read published v4.3 Intelligence scores.", { cause }));
-    }
-  }
+  const jsonLd = parseArtificialAnalysisJsonLdValues(html);
+  if (!jsonLd.ok) return jsonLd;
+  const candidates = jsonLd.value.filter(value => isRecord(value) && value.name === ARTIFICIAL_ANALYSIS_INTELLIGENCE_NAME);
   if (candidates.length !== 1) return err(new Error("Expected exactly one published v4.3 score dataset."));
   const published = publishedScoresSchema.safeParse(candidates[0]);
   if (!published.success) return err(new Error("Published v4.3 score rows changed shape.", { cause: published.error }));
