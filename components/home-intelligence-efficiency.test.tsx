@@ -123,6 +123,18 @@ const snapshot = {
 } as ArtificialAnalysisIntelligenceSnapshot;
 
 describe("homepage Intelligence efficiency view", () => {
+  test("offers every plotted model by name without relying on a dense point target", () => {
+    const html = renderToStaticMarkup(<HomeIntelligenceEfficiency snapshot={snapshot} />);
+    const picker = html.match(/<label class="intelligence-efficiency__model-picker">([\s\S]*?)<\/label>/u)?.[1];
+    expect(picker).toBeDefined();
+    expect(picker).toContain("Choose a model configuration");
+    expect(picker!.match(/<option\b/gu)).toHaveLength(records.length);
+    expect(picker).toContain('value="gpt-6-astra" selected=""');
+    for (const item of records) expect(picker).toContain(`value="${item.id}"`);
+    expect(picker!.indexOf("GPT-5.6 Sol")).toBeLessThan(picker!.indexOf("GPT-6 Astra"));
+    expect(html).toContain("Select a point or choose a model above");
+  });
+
   test("renders one accessible interactive view with the exact benchmark version", () => {
     const html = renderToStaticMarkup(<HomeIntelligenceEfficiency snapshot={snapshot} />);
 
