@@ -8,6 +8,8 @@ import terminalBenchScienceData from "@/data/terminal-bench-science.json";
 import { parseCodingAgentSnapshot } from "@/lib/coding-agent-data";
 import { codingAgentSnapshotRows } from "@/lib/coding-agent-snapshot-rows";
 import { BENCHMARK_DATA_DESCRIPTION } from "@/lib/benchmark-portfolio";
+import { ATLAS_DATASETS, ATLAS_ENTRIES } from "@/lib/benchmark-atlas-catalog";
+import { ATLAS_CATALOG_DOWNLOAD_PATH, atlasDataCatalogJsonLd, atlasDatasetDownloadPath } from "@/lib/benchmark-atlas-distribution";
 import {
   artificialAnalysisIntelligenceDatasetJsonLd,
   terminalBenchDatasetJsonLd,
@@ -144,6 +146,7 @@ export default function CodingAgentDatasetPage() {
         ]}
         id="aicharts-benchmark-datasets-structured-data"
       />
+      <JsonLdScript data={atlasDataCatalogJsonLd()} id="aicharts-benchmark-atlas-structured-data" />
 
       <header className="plain-publication__article-header plain-publication__shell">
         <Breadcrumbs
@@ -159,26 +162,20 @@ export default function CodingAgentDatasetPage() {
           {BENCHMARK_DATA_DESCRIPTION}
         </p>
         <p className="plain-publication__article-meta">
-          <span>Intelligence retrieved </span>
-          <time dateTime={intelligence.source.retrievedAt}>
-            {formatRetrievedAt(intelligence.source.retrievedAt)}
-          </time>
+          <span>{ATLAS_ENTRIES.length} benchmarks</span>
           <span aria-hidden="true"> · </span>
-          <span>Coding agents retrieved </span>
-          <time dateTime={snapshot.source.retrievedAt}>
-            {formatRetrievedAt(snapshot.source.retrievedAt)}
-          </time>
+          <span>{ATLAS_DATASETS.length} measured cohorts</span>
           <span aria-hidden="true"> · </span>
-          <span>Latest coding-agent update </span>
-          <time dateTime={modifiedAt}>{formatRetrievedAt(modifiedAt)}</time>
-          <span aria-hidden="true"> · </span>
-          <span>{summary.recordCount} coding configurations</span>
-          <span aria-hidden="true"> · </span>
-          <span>{summary.providerCount} coding providers</span>
+          <span>Source dates and comparison limits below</span>
         </p>
         <nav aria-label="Dataset downloads" className="plain-publication__download-links">
           <p>Download checked snapshots</p>
           <ul>
+            <li>
+              <a download="aicharts-benchmark-atlas.json" href={ATLAS_CATALOG_DOWNLOAD_PATH}>
+                Benchmark atlas catalog <span aria-hidden="true">↓</span>
+              </a>
+            </li>
             <li>
               <a download="aicharts-terminal-bench-4.json" href="/data/terminal-bench-4.json">
                 Terminal-Bench 4 <span aria-hidden="true">↓</span>
@@ -217,6 +214,7 @@ export default function CodingAgentDatasetPage() {
         <nav aria-label="On this page" className="plain-publication__toc">
           <p>On this page</p>
           <ol>
+            <li><a href="#benchmark-atlas">All benchmark charts and guides</a></li>
             <li><a href="#terminal-bench-4">Terminal-Bench 4 standard</a></li>
             <li><a href="#terminal-bench-science">Terminal-Bench-Science 0.1</a></li>
             <li><a href="#artificial-analysis-intelligence">Intelligence efficiency</a></li>
@@ -231,6 +229,53 @@ export default function CodingAgentDatasetPage() {
 
         <div className="plain-publication__article-main">
           <div className="plain-publication__article-body">
+            <h2 id="benchmark-atlas">Benchmark atlas: charts and source guides</h2>
+            <p>
+              The atlas covers {ATLAS_ENTRIES.length} benchmarks and {ATLAS_DATASETS.length}{" "}
+              charted evaluation cohorts. Each chart uses one source, score definition,
+              and version. A source guide explains an evaluation whose results are not
+              yet charted here. Historical research cohorts remain labeled; retrieving
+              a paper today does not mean its models were evaluated today.
+            </p>
+            <p>
+              Download the <a href={ATLAS_CATALOG_DOWNLOAD_PATH}>catalog JSON</a> to
+              discover the available benchmark IDs, comparison rules, source dates,
+              and individual dataset URLs. Each dataset download includes the same
+              observations, units, costs, uncertainty labels, and configurations used
+              by its chart. This is a checked snapshot distribution, not a live model API.
+            </p>
+            <p>
+              Cite the benchmark owner and source version when quoting measurements.
+              AI Charts publishes these chart projections; third-party measurements
+              retain their source terms. The software license does not grant a new
+              license to third-party data.
+            </p>
+            {ATLAS_ENTRIES.map(entry => {
+              const dataset = ATLAS_DATASETS.find(candidate => candidate.benchmarkId === entry.id);
+              return <details key={entry.id} id={`atlas-${entry.id}`}>
+                <summary>{entry.name} · {entry.version} · {dataset ? `${dataset.points.length} charted results` : entry.coverage === "watchlist" ? "Emerging evaluation" : "Source guide"}</summary>
+                <p>{entry.question} {entry.summary}</p>
+                <dl>
+                  <div><dt>Measure</dt><dd>{entry.measure}</dd></div>
+                  <div><dt>Comparison rule</dt><dd>{entry.comparisonRule}</dd></div>
+                  {dataset && <>
+                    <div><dt>Evaluation cohort</dt><dd>{dataset.comparabilityNote}</dd></div>
+                    <div><dt>Score</dt><dd>{dataset.score.label} ({dataset.score.unit}); {dataset.score.direction} is better.</dd></div>
+                    <div><dt>Source retrieved</dt><dd><time dateTime={dataset.source.retrievedAt}>{formatRetrievedAt(dataset.source.retrievedAt)}</time></dd></div>
+                    {dataset.observedAt && <div><dt>Source observation date</dt><dd><time dateTime={dataset.observedAt}>{formatRetrievedAt(dataset.observedAt)}</time></dd></div>}
+                    {dataset.source.revision && <div><dt>Source revision</dt><dd><code>{dataset.source.revision}</code></dd></div>}
+                    {dataset.costLabel && <div><dt>Cost basis</dt><dd>{dataset.costLabel}</dd></div>}
+                  </>}
+                </dl>
+                <ul>{entry.limitations.map(limit => <li key={limit}>{limit}</li>)}</ul>
+                <p>
+                  <Link href={`/?atlas=${entry.id}#explore`}>Explore {entry.name}</Link>{" · "}
+                  <a href={entry.source.url} data-analytics-destination-id={`source:${entry.id}`} data-analytics-destination-kind="source">{entry.source.name}</a>
+                  {entry.source.methodologyUrl && <> · <a href={entry.source.methodologyUrl} data-analytics-destination-id={`source:${entry.id}`} data-analytics-destination-kind="source">Methodology</a></>}
+                  {dataset && <> · <a download={`aicharts-${entry.id}.json`} href={atlasDatasetDownloadPath(entry.id)}>Download this dataset</a></>}
+                </p>
+              </details>;
+            })}
             <h2 id="terminal-bench-4">Terminal-Bench 4 coding standard</h2>
             <p>
               The homepage uses Terminal-Bench {terminalBench.benchmark.version}{" "}

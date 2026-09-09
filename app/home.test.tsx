@@ -4,6 +4,7 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
 import { HomeLeaders } from "@/components/home-leaders";
+import { BenchmarkAtlasExplorer } from "@/components/benchmark-atlas-explorer";
 import {
   HOME_EDITORIAL_SLUGS,
   HomeEditorialResources,
@@ -16,8 +17,11 @@ import {
   currentCodingAgentBenchmarkLeaders,
   formatBenchmarkScore,
 } from "@/lib/coding-agent-dataset";
+import { ATLAS_DATASETS, ATLAS_ENTRIES } from "@/lib/benchmark-atlas-catalog";
+import type { BenchmarkAtlasDataset, BenchmarkAtlasEntry } from "@/lib/benchmark-atlas";
 
 import Home from "./page";
+import { homeHeading, homeLede } from "./site";
 
 const parsed = parseCodingAgentSnapshot(codingAgentData);
 if (!parsed.ok) throw parsed.error;
@@ -83,103 +87,125 @@ describe("homepage canonical content", () => {
     }
   });
 
-  test("places the model and coding-agent charts before the benchmark guide", async () => {
+  test("puts the task explorer first and keeps the advanced charts available in a closed disclosure", async () => {
     const source = await Bun.file(new URL("./page.tsx", import.meta.url)).text();
     const markup = renderToStaticMarkup(createElement(Home));
-    const portfolioAt = source.indexOf("<HomeBenchmarkPortfolio");
-    const intelligenceAt = source.indexOf("<HomeIntelligenceEfficiency");
-    const resourcesAt = source.indexOf("<HomeEditorialResources");
-    const explorerAt = source.indexOf("<CodingAgentExplorer");
-    const explorerEndAt = source.indexOf("</CodingAgentExplorer>");
-    const headerAtSource = source.indexOf('<SiteHeader current="/" />');
-    const heroAt = source.indexOf("<ProductHero");
-    const frameAt = source.indexOf("<MarketingProofFrame");
-    const orientationAtSource = source.indexOf("<HomeOrientation />");
-    const closingAt = source.indexOf("<HomeClosing");
-    const loadingAt = source.indexOf("Loading chart");
-
-    expect(portfolioAt).toBeGreaterThan(-1);
-    expect(headerAtSource).toBeGreaterThan(-1);
-    expect(heroAt).toBeGreaterThan(headerAtSource);
-    expect(frameAt).toBeGreaterThan(heroAt);
-    expect(intelligenceAt).toBeGreaterThan(frameAt);
-    expect(orientationAtSource).toBeGreaterThan(intelligenceAt);
-    expect(explorerAt).toBeGreaterThan(orientationAtSource);
-    expect(portfolioAt).toBeGreaterThan(explorerAt);
-    expect(resourcesAt).toBeGreaterThan(portfolioAt);
-    expect(explorerEndAt).toBeGreaterThan(resourcesAt);
-    expect(closingAt).toBeGreaterThan(explorerEndAt);
-    expect(loadingAt).toBe(-1);
-    expect(source).toContain("brand={{ domain: site.domain }}");
-    expect(source).toContain("heading={homeHeading}");
-    expect(source).toContain("summary={homeLede}");
-    expect(source).not.toContain("HomeDocument");
-    expect(source).not.toContain("homeDocumentModel");
-    expect(existsSync(new URL("./loading.tsx", import.meta.url))).toBeFalse();
-    expect(Home.name).toBe("Home");
-
-    const headerAt = markup.indexOf('<header class="hraness-marketing-header site-header"');
-    const mainAt = markup.indexOf('<main class="hraness-marketing-page aicharts-home"');
-    const heroMarkupAt = markup.indexOf('class="hraness-marketing-hero"');
-    const frameMarkupAt = markup.indexOf('class="hraness-marketing-proof-frame aicharts-home__frame"');
-    const renderedIntelligenceAt = markup.indexOf('class="intelligence-efficiency"');
-    const orientationAt = markup.indexOf('class="hraness-marketing-section chart-orientation"');
-    const chartSectionAt = markup.indexOf('class="chart-page-canvas"');
-    const chartFamilyAt = markup.indexOf('class="chart-family-intro"');
-    const chartAt = markup.indexOf('class="chart-scroll"');
-    const renderedPortfolioAt = markup.indexOf('class="home-benchmark-portfolio"');
-    const renderedResourcesAt = markup.indexOf('class="home-editorial"');
-    const statsAt = markup.indexOf('class="hraness-marketing-stats home-stats"');
-    const questionsAt = markup.indexOf('class="hraness-marketing-questions"');
-    const makerAt = markup.indexOf('class="hraness-marketing-maker"');
-    const ctaAt = markup.indexOf('class="hraness-marketing-cta"');
+    const mainAt = markup.indexOf('<main class="atlas-home" id="main-content">');
+    const explorerAt = markup.indexOf('id="explore"');
+    const readingAt = markup.indexOf('aria-label="Make a useful comparison"');
+    const advancedAt = markup.indexOf('<details class="atlas-advanced"');
+    const intelligenceAt = markup.indexOf('class="intelligence-efficiency"');
+    const codingAt = markup.indexOf('class="chart-page-canvas"');
+    const resourcesAt = markup.indexOf('class="home-editorial"');
     const mainEndAt = markup.indexOf("</main>", mainAt);
-    const askAiAt = markup.indexOf('aria-label="Ask AI about this"');
 
-    expect(headerAt).toBeGreaterThan(-1);
-    expect(mainAt).toBeGreaterThan(headerAt);
-    expect(heroMarkupAt).toBeGreaterThan(mainAt);
-    expect(frameMarkupAt).toBeGreaterThan(heroMarkupAt);
-    expect(renderedIntelligenceAt).toBeGreaterThan(frameMarkupAt);
-    expect(orientationAt).toBeGreaterThan(renderedIntelligenceAt);
-    expect(chartSectionAt).toBeGreaterThan(orientationAt);
-    expect(chartFamilyAt).toBeGreaterThan(chartSectionAt);
-    expect(chartAt).toBeGreaterThan(chartFamilyAt);
-    expect(renderedPortfolioAt).toBeGreaterThan(chartAt);
-    expect(renderedResourcesAt).toBeGreaterThan(renderedPortfolioAt);
-    expect(statsAt).toBeGreaterThan(renderedResourcesAt);
-    expect(questionsAt).toBeGreaterThan(statsAt);
-    expect(makerAt).toBeGreaterThan(questionsAt);
-    expect(ctaAt).toBeGreaterThan(makerAt);
-    expect(mainEndAt).toBeGreaterThan(ctaAt);
-    expect(askAiAt).toBeGreaterThan(mainEndAt);
-    expect(markup).toContain(
-      '<h1 class="hraness-marketing-hero__heading" id="home-title">Compare AI models on the numbers that matter</h1>',
-    );
-    expect(markup).toContain("Every chart links to the published source it was read from");
-    expect(markup).toContain('<h2 class="hraness-marketing-section__heading" id="chart-orientation-title">Each chart keeps its own units, cohort, and source.</h2>');
-    expect(markup).toContain("Coding agents, plotted against cost, time, and tokens.");
-    expect(markup).toContain("Where does the data come from?");
-    expect(markup).toContain("Built by Ben Guo.");
+    expect(mainAt).toBeGreaterThan(markup.indexOf("site-header"));
+    expect(explorerAt).toBeGreaterThan(mainAt);
+    expect(readingAt).toBeGreaterThan(explorerAt);
+    expect(advancedAt).toBeGreaterThan(readingAt);
+    expect(intelligenceAt).toBeGreaterThan(advancedAt);
+    expect(codingAt).toBeGreaterThan(intelligenceAt);
+    expect(resourcesAt).toBeGreaterThan(codingAt);
+    expect(mainEndAt).toBeGreaterThan(resourcesAt);
+    expect(markup.indexOf('aria-label="Ask AI about this"')).toBeGreaterThan(mainEndAt);
+    expect(markup.slice(advancedAt, markup.indexOf(">", advancedAt))).not.toMatch(/\bopen(?:=|\s|$)/u);
+    expect(source.indexOf("</AdvancedCharts>")).toBeLessThan(source.indexOf("<HomeEditorialResources"));
+    expect(source).toContain("brand={{ domain: site.domain }}");
+    expect(existsSync(new URL("./loading.tsx", import.meta.url))).toBeFalse();
+    expect(markup).toContain(`<h1 id="home-title">${homeHeading}</h1>`);
+    expect(markup).toContain(homeLede);
+    expect(markup).toContain(`${ATLAS_DATASETS.length} interactive charts`);
+    expect(markup).toContain(`${ATLAS_ENTRIES.length} benchmarks`);
+    expect(markup).toContain("Compare the full setup");
+    expect(markup).toContain("Read the date and the gap");
     expect(markup).toContain('href="https://x.com/hraness"');
     expect(markup).toContain('href="https://github.com/hraness/aicharts"');
-    expect(markup).toContain("Every number here has a date and a source.");
+    expect(markup).toContain('href="/data"');
+    expect(markup).toContain('href="/models"');
     expect(markup).toContain('id="intelligence-index"');
-    expect(markup).not.toContain("ui-top-bar");
-    expect(markup).toContain("A five-role benchmark portfolio covers terminal engineering");
-    expect(markup).toContain("Five benchmark roles, one coding standard");
-    expect(markup).toContain("Comparison protocol and supplemental evidence");
     expect(markup).toContain("Terminal-Bench 4.0.0 snapshot");
     expect(markup).toContain("Terminal-Bench-Science 0.1.0 snapshot");
     expect(markup).toContain("Artificial Analysis Intelligence Index v4.1.1");
-    expect(markup).toContain("Output tokens are answer plus reasoning");
-    expect(markup).toContain("Coding-agent source view");
-    expect(markup).toContain("GPT-5.6 Sol");
-    expect(markup).toContain("Scientific workflows");
     expect(markup).toContain("This source still reports Terminal-Bench v2.1");
     expect(markup).not.toContain('class="home-document"');
+    expect(markup).not.toContain('class="hraness-marketing-hero"');
     expect(markup.match(/<h1(?:\s|>)/gu)).toHaveLength(1);
     expect(markup).toContain('<option value="deepSwe" selected="">DSWE</option>');
     expect(markup).toContain('<strong>DeepSWE</strong>');
+  });
+
+  test("server-renders named task controls, inspectable results, and source evidence before hydration", () => {
+    const markup = renderToStaticMarkup(createElement(BenchmarkAtlasExplorer, { entries: ATLAS_ENTRIES, datasets: ATLAS_DATASETS }));
+    expect(markup).toContain('aria-label="Explore AI benchmarks"');
+    expect(markup).toContain('data-analytics-surface="benchmark_atlas"');
+    expect(markup).toContain('aria-label="Choose a task"');
+    for (const task of ["Coding", "Reasoning", "Research", "Memory", "Images", "Video", "Audio", "World models", "Science", "Work", "Computer use"]) {
+      expect(markup).toContain(`type="button">${task}</button>`);
+    }
+    expect(markup).toContain('aria-label="Find a benchmark"');
+    expect(markup).toContain('type="search"');
+    expect(markup).toContain('aria-live="polite"');
+    expect(markup).toContain("Charts only");
+    expect(markup).toContain('aria-label="Chart view"');
+    expect(markup).toContain("<h2>Terminal-Bench 4</h2>");
+    expect(markup).toContain("4.0.0");
+    expect(markup).toMatch(/<data value="[\d.]+">[\d.]+%<\/data>/u);
+    const rows = [...markup.matchAll(/<button\b[^>]*class="atlas-row"[^>]*>([\s\S]*?)<\/button>/gu)];
+    expect(rows.length).toBeGreaterThan(0);
+    expect(rows.length).toBeLessThanOrEqual(8);
+    for (const row of rows) {
+      expect(row[0]).toContain('type="button"');
+      expect(row[0]).toMatch(/aria-pressed="(?:true|false)"/u);
+      expect(row[1]).toMatch(/<strong>[^<]+<\/strong>/u);
+      expect(row[1]).toMatch(/<data value="[\d.]+">/u);
+    }
+    expect(rows.filter(row => row[0].includes('aria-pressed="true"'))).toHaveLength(1);
+    expect(markup).toContain('aria-label="Selected result"');
+    expect(markup).toContain("Add to comparison");
+    expect(markup).toContain("View this result at source");
+    expect(markup).toContain('<time dateTime=');
+    expect(markup).toContain("Read the methodology");
+    expect(markup).not.toContain("Loading chart");
+  });
+
+  test("source guides do not pretend unimported scores are a ranking", () => {
+    const guide = ATLAS_ENTRIES.find(entry => entry.id === "gdpval-aa")!;
+    expect(guide.coverage).toBe("source-only");
+    const markup = renderToStaticMarkup(createElement(BenchmarkAtlasExplorer, { entries: [guide], datasets: [] }));
+    expect(markup).toContain("Comparable scores are not yet charted here");
+    expect(markup).toContain(`href="${guide.source.url}"`);
+    expect(markup).toContain("Elo");
+    expect(markup).toContain("not percent correct");
+    expect(markup).not.toContain('class="atlas-ranking"');
+    expect(markup).not.toContain('aria-label="Selected result"');
+    expect(markup).not.toContain("Cost vs. score");
+    expect(markup).not.toContain("0 results");
+  });
+
+  test("memory methods and effort-only cohorts retain every comparable result in the default ranking", () => {
+    for (const id of ["longmemeval-v2-small", "longmemeval-v2-medium", "arc-agi-3-adapter"]) {
+      const entry = ATLAS_ENTRIES.find(item => item.id === id)!;
+      const dataset = ATLAS_DATASETS.find(item => item.benchmarkId === id)!;
+      const markup = renderToStaticMarkup(createElement(BenchmarkAtlasExplorer, { entries: [entry], datasets: [dataset] }));
+      expect(markup.match(/class="atlas-row"/gu)).toHaveLength(6);
+      if (id.startsWith("longmemeval")) {
+        for (const method of ["AgentRunbook-C", "AgentRunbook-R", "Codex", "No retrieval"]) {
+          expect(markup).toContain(`<strong>${method}</strong>`);
+        }
+        expect(markup).toContain("Qwen3.5-9B reader");
+      }
+    }
+  });
+
+  test("a measured zero remains a real result while missing costs do not expose a cost chart", () => {
+    const entry: BenchmarkAtlasEntry = { ...ATLAS_ENTRIES[0], id: "test-zero", name: "Test zero", version: "1", coverage: "charted" };
+    const dataset: BenchmarkAtlasDataset = { benchmarkId: entry.id, version: entry.version, score: { label: "Accuracy", unit: "%", direction: "higher", minimum: 0, maximum: 100 }, source: { name: "Test source", url: "https://example.com/source", retrievedAt: "2026-09-08T00:00:00Z" }, configurationLabel: "Fixed setup", comparabilityNote: "Same task set", points: [{ id: "zero", label: "Zero model", model: "Zero model", provider: "Test lab", harness: null, effort: null, score: 0, costUsd: null, uncertainty: null, sourceUrl: "https://example.com/result" }] };
+    const markup = renderToStaticMarkup(createElement(BenchmarkAtlasExplorer, { entries: [entry], datasets: [dataset] }));
+    expect(markup).toContain('<data value="0">0%</data>');
+    expect(markup).toContain("Zero model");
+    expect(markup).toContain("Uncertainty was not reported");
+    expect(markup).not.toContain("Cost vs. score");
+    expect(markup).not.toContain("$0");
+    expect(renderToStaticMarkup(createElement(BenchmarkAtlasExplorer, { entries: [], datasets: [] }))).toBe("");
   });
 });

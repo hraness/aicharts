@@ -19,6 +19,8 @@ import {
   currentCodingAgentBenchmarkLeaders,
 } from "@/lib/coding-agent-dataset";
 import { BENCHMARK_DATA_DESCRIPTION } from "@/lib/benchmark-portfolio";
+import { ATLAS_DATASETS, ATLAS_ENTRIES } from "@/lib/benchmark-atlas-catalog";
+import { atlasDataCatalogJsonLd, atlasDatasetDownloadPath } from "@/lib/benchmark-atlas-distribution";
 import {
   artificialAnalysisIntelligenceDatasetJsonLd,
   terminalBenchDatasetJsonLd,
@@ -67,6 +69,19 @@ function renderedJsonLd(markup: string, id: string): unknown {
 }
 
 describe("benchmark dataset surface", () => {
+  test("renders server-reachable guides and per-cohort downloads for the whole atlas", () => {
+    const markup = renderToStaticMarkup(createElement(CodingAgentDatasetPage));
+    expect(markup).toContain('href="/data/benchmark-atlas.json"');
+    for (const entry of ATLAS_ENTRIES) {
+      expect(markup).toContain(`id="atlas-${entry.id}"`);
+      expect(markup).toContain(`href="/?atlas=${entry.id}#explore"`);
+      const href = `href="${atlasDatasetDownloadPath(entry.id)}"`;
+      if (entry.coverage === "charted") expect(markup).toContain(href);
+      else expect(markup).not.toContain(href);
+    }
+    for (const dataset of ATLAS_DATASETS) expect(markup).toContain(`dateTime="${dataset.source.retrievedAt}"`);
+    expect(renderedJsonLd(markup, "aicharts-benchmark-atlas-structured-data")).toEqual(atlasDataCatalogJsonLd());
+  });
   test("publishes canonical, indexable page metadata", () => {
     expect(metadata).toMatchObject({
       title: "Benchmark Data and Method | AI Charts",

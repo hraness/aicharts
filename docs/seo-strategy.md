@@ -2,32 +2,34 @@
 
 ## Positioning
 
-AI Charts is the umbrella product for sourced, interactive comparisons of AI models and agents. Each chart should make trade-offs visible across performance, cost, speed, token use, or another decision-relevant measure. The published views include a source-specific general-model Intelligence efficiency comparison and a separate coding-agent comparison.
+AI Charts helps readers choose the evidence relevant to their task, inspect the full evaluated configuration, and understand the trade-offs behind a score. The benchmark atlas brings coding, reasoning, research, memory, scientific work, and generative-media evaluations into one interface. The older Intelligence efficiency and coding-agent views remain available as advanced source-specific comparisons.
 
 The canonical public repository description is:
 
 > Open-source AI benchmark charts for comparing models and agents across performance, cost, speed, and token use.
 
-Do not describe AI Charts as a comprehensive catalog until the product has the data and routes to support that claim. Name the active vertical whenever copy discusses the current dataset, refresh process, or chart-specific result.
+Distinguish charted results, source guides, and emerging evaluations. A benchmark guide is useful coverage, but is not a claim that AI Charts has imported its scores. Name historical cohorts and selected samples. Do not describe every chart as current or every modality as exhaustively covered. The product adds selection guidance, approachable charts, and explicit comparison boundaries to the evidence supplied by benchmark publishers and aggregators.
 
 ## Page roles
 
 | Page | Role | Search intent | Copy contract |
 | --- | --- | --- | --- |
-| `/` | Product landing page and current comparison | AI model comparison, AI agent comparison, AI benchmark charts | Frame the general product in a server-rendered H1, show the five versioned benchmark roles and current Terminal-Bench 4 owner snapshot, then keep the Artificial Analysis Intelligence efficiency and coding-agent charts as separate, clearly labeled source-specific detail. |
-| `/data` | Dataset, methodology, and provenance | AI model benchmark data, AI coding agent benchmark data, benchmark methodology, machine-readable AI benchmark data | Describe the checked Terminal-Bench 4, Terminal-Bench-Science, Artificial Analysis Intelligence, and Artificial Analysis coding-agent snapshots in visible HTML; name each source and retrieval time, explain version boundaries and limits, and link every JSON distribution. |
+| `/` | Task-oriented benchmark atlas | AI model comparison, AI agent comparison, AI benchmark charts | Render the default chart and benchmark navigation in static HTML. Offer task filters, named configurations, native units, uncertainty, and comparable cohorts. Keep the older source-specific charts in advanced detail. |
+| `/data` | Catalog, distributions, methodology, and provenance | AI benchmark data, AI model benchmark methodology, machine-readable AI benchmark data | Render every catalog entry’s question, measure, source, exact version, comparison rules, and limitations in HTML. Charted entries link to their dataset JSON and source dates; source-only entries make no measured-result claim. |
 | `/models` | Model-card collection | AI model benchmark cards, shareable model comparison | List every current model-and-profile card in static HTML with the source snapshot date and crawlable card links. |
 | `/models/[creator]/[model]/[profile]` | Model profile card | Named AI model benchmark, cost, speed, and token use | Keep the stable canonical and Gateway identities distinct from the execution profile. Show observed ranges, source date, branded image, and method link. |
 | `/blog` | Research collection | AI model benchmarks, AI agent benchmarks, benchmark analysis | Introduce the broader editorial method and state that the first collection focuses on coding agents. |
 | `/blog/[slug]` | Evidence page | Named benchmark, method, result, limitation, or model question | Stay specific to the source. Preserve the benchmark name, observation date, configuration, limits, and primary citations. |
 
-Future chart verticals need a distinct crawlable route, canonical URL, visible heading, source disclosure, and internal links from the product and relevant research. Do not publish several routes that answer the same intent with lightly varied copy.
+Atlas filters use shareable query state on the canonical homepage; they do not create separate indexable keyword pages. The full benchmark definitions are crawlable on `/data`. Create a dedicated chart or analysis route only when it answers a distinct reader task with enough evidence to justify its own canonical page. Do not publish several routes that answer the same intent with lightly varied copy.
+
+The compact `/data/benchmark-atlas.json` catalog lists stable benchmark IDs, coverage, exact versions, source dates, and measured distribution URLs. `/data/benchmark-atlas/{benchmarkId}` publishes one charted cohort at a time. Source-only and unknown IDs return 404. These JSON resources are internally linked data distributions, not extra article pages for the sitemap. The four original source JSON routes remain available with their richer source schemas.
 
 ## Query map
 
 AI Charts targets three connected query groups:
 
-1. Umbrella discovery: `AI model comparison`, `AI agent comparison`, `AI benchmark charts`, and `LLM comparison`. The homepage benchmark portfolio distinguishes terminal engineering, scientific workflows, professional work, computer use, and broad expert reasoning without synthesizing a universal rank.
+1. Umbrella discovery: `AI model comparison`, `AI agent comparison`, `AI benchmark charts`, and `LLM comparison`. Task categories distinguish coding, reasoning, research, memory, images, video, audio, and world models without synthesizing a universal rank.
 2. Decision trade-offs: `AI model performance vs cost`, `AI model speed comparison`, `token use comparison`, and benchmark-specific cost or quality questions. The homepage's Intelligence efficiency view answers general-model score-versus-output-token and score-versus-cost questions using Artificial Analysis v4.1.1; the AA Index versus cost note answers a different question for the coding-agent snapshot with named configurations and its retrieval date. The open-models note answers whether classified open-weight rows sit with the current coding-agent AA Index leaders. The small-model economics note explains how lower inference costs can make frequent-use AI features viable and how to test whether a cheaper model meets a workload's quality bar. The Terminal-Bench-Science note explains why a scientist-set 30% peak resolution is incomplete without cost and token trade-offs. The holdout note answers why a public-suite high score still needs hidden cases.
 3. Evidence: exact benchmark and methodology searches such as MirrorCode, SWE-bench, Terminal-Bench, Terminal-Bench-Science, and questions about what a result does or does not establish.
 
@@ -59,7 +61,9 @@ Answer-engine optimization is people-first technical SEO plus evidence that anot
 
 Do not add `llms.txt` as a search shortcut, keyword variant, or substitute for visible HTML. Google does not use it for Search. A truthful `/llms.txt` agent guide is allowed when it describes existing public pages and how to request Markdown. Do not split prose into artificial fragments, publish thin keyword variants, add unsupported structured-data types, or repeat a claim only to influence generated answers. Schema helps machines interpret content; it cannot replace content a visitor can see and verify.
 
-The `/data` page is the citable boundary for the current checked benchmark snapshots. It must show each dataset name, exact version, publisher role, upstream creator and source URL, retrieval time, covered metrics, normalization method, important limits, license or notice boundary, and JSON distribution. For Artificial Analysis Intelligence, it must also name the nine evaluations and their weights, distinguish output-only tokens from coding-agent total tokens, explain the comparable cohort and unavailable-cost handling, and label the frontier as AI Charts analysis. Any `Dataset` structured data must match that visible description. AI Charts is the publisher and visualizer of normalized snapshots; it must not present itself as the creator of benchmark-owner measurements.
+The `/data` page is the citable boundary for checked benchmark snapshots. It must show each dataset name, exact version, publisher role, upstream source URL, retrieval time, covered metrics, comparison rules, important limits, license or notice boundary, and JSON distribution. Source observation dates and historical paper dates remain distinct from retrieval time. Cost labels retain the denominator: per task, full evaluation, or another source-defined basis. For Artificial Analysis Intelligence, the richer source description also names the nine evaluations and weights, distinguishes output-only tokens from coding-agent total tokens, explains unavailable costs, and labels the frontier as AI Charts analysis. `DataCatalog` and `Dataset` structured data must match the visible descriptions. AI Charts publishes and visualizes source measurements; it does not claim to have produced them.
+
+Homepage Markdown contains the same default chart and compact catalog navigation; `/data` Markdown exposes all definitions and distribution links. Query-specific browser state does not change the canonical Markdown document. `/llms.txt` describes these existing resources and protocols, not an invented realtime API. Sitemap modification dates include a checked catalog content date and meaningful snapshot changes, never the build clock or a timestamp-only source poll.
 
 These rules follow Google's [AI search optimization guide](https://developers.google.com/search/docs/fundamentals/ai-optimization-guide), [people-first content](https://developers.google.com/search/docs/fundamentals/creating-helpful-content), and [structured data](https://developers.google.com/search/docs/appearance/structured-data/sd-policies) guidance, plus OpenAI's [publisher and developer FAQ](https://help.openai.com/en/articles/12627856-publishers-and-developers-faq).
 
@@ -137,7 +141,7 @@ The pinned [AI Charts: Search & Content dashboard](https://us.posthog.com/projec
 
 ### Controlled page properties
 
-`instrumentation-client.ts` adds bounded values to every production event. `canonical_path` groups dynamic routes, while `content_id` retains a validated public article or model-card identifier so content performance remains distinguishable. `context_schema_version=3` versions that page context; `event_schema_version=2` marks typed product events and `1` marks SDK-generated page, leave, and Web Vitals events.
+`instrumentation-client.ts` adds bounded values to every production event. `canonical_path` groups dynamic routes, while `content_id` retains a validated public article or model-card identifier so content performance remains distinguishable. `context_schema_version=3` versions that page context; `event_schema_version=3` marks typed product events and `1` marks SDK-generated page, leave, and Web Vitals events.
 
 The browser rewrites automatic current, entry, and previous-page URLs to `https://aicharts.io` plus a grouped path. It reduces referrers to origins, validates acquisition domains, and removes raw external-click URLs, query-derived campaign values, query strings, and hashes. Unknown and invalid paths collapse to `/[other]` with `content_id=other`.
 
@@ -147,9 +151,7 @@ The complete property, privacy, and version contract lives in [`analytics-instru
 
 One typed allowlist covers chart and model-card interactions, filtering, sharing, content-to-chart movement, public-anchor clicks, and footer signup requests. A root delegated listener classifies every public anchor into controlled `surface`, `link_kind`, `destination_kind`, and `destination_id` properties. It never sends link text or a raw href, query, or hash.
 
-Both source-specific homepage chart families use the existing `benchmark_chart`
-analytics surface. Adding a dataset does not justify a parallel event vocabulary;
-new typed events are added only when the interaction itself is new.
+The atlas uses `benchmark_atlas` and a bounded `benchmark explored` event for benchmark choice, view changes, comparison, and sharing. Both older source-specific chart families retain `benchmark_chart`. Benchmark IDs come from the checked catalog; search text, raw query state, configuration labels, and raw URLs never enter analytics. Source and dataset links use the delegated anchor contract.
 
 `newsletter signup request submitted` records form-submit intent only. An accepted request requires an explicit shared-footer or Accounts success callback; a confirmed subscription requires Accounts provider evidence. Do not infer either state from DOM text, fetch interception, or the presence of a request event.
 

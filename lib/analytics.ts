@@ -2,6 +2,8 @@
 
 import posthog from "posthog-js";
 
+import { isBenchmarkAtlasId, isChartedBenchmarkAtlasId, type ChartedBenchmarkAtlasId } from "./benchmark-atlas-ids";
+
 import type { XMetric, YMetric } from "./chart-math";
 import type { IntelligenceEfficiencyMetric } from "./intelligence-efficiency";
 import {
@@ -18,6 +20,7 @@ export const ANALYTICS_SURFACES = [
   "home_orientation",
   "home_portfolio",
   "benchmark_chart",
+  "benchmark_atlas",
   "home_editorial",
   "blog_header",
   "blog_index",
@@ -60,6 +63,8 @@ export type AnalyticsDestinationId =
   | "dataset:coding-agents"
   | "dataset:terminal-bench-4"
   | "dataset:terminal-bench-science-0-1"
+  | "dataset:benchmark-atlas"
+  | `dataset:${ChartedBenchmarkAtlasId}`
   | "external:github"
   | "external:hraness"
   | "external:other"
@@ -96,7 +101,17 @@ export const CHART_ANALYTICS_IDS = [
 
 export type ChartAnalyticsId = typeof CHART_ANALYTICS_IDS[number];
 
+export const BENCHMARK_ATLAS_ANALYTICS_ACTIONS = [
+  "benchmark", "view", "compare", "share", "inspect", "provider", "expand", "profiles",
+] as const;
+export type BenchmarkAtlasAnalyticsAction = typeof BENCHMARK_ATLAS_ANALYTICS_ACTIONS[number];
+
 export interface AnalyticsEventMap {
+  readonly "benchmark explored": Readonly<{
+    benchmark_id: string;
+    action: BenchmarkAtlasAnalyticsAction;
+    view: "ranking" | "cost" | "table";
+  }>;
   readonly "chart metric selected":
     | Readonly<{ axis: "x"; chart_id: "coding_agents"; metric: XMetric }>
     | Readonly<{ axis: "y"; chart_id: "coding_agents"; metric: YMetric }>
@@ -159,6 +174,7 @@ export type ContentAnalyticsEvent = Extract<
 >;
 
 const allowedSurfaceSet = new Set<string>(ANALYTICS_SURFACES);
+const benchmarkAtlasActions: ReadonlySet<string> = new Set(BENCHMARK_ATLAS_ANALYTICS_ACTIONS);
 const chartAnalyticsIds = new Set<string>(CHART_ANALYTICS_IDS);
 const xMetrics = new Set<string>(["costUsd", "durationMinutes", "totalTokens"]);
 const yMetrics = new Set<string>(["aaIndex", "deepSwe", "terminalBench", "sweAtlas"]);
@@ -239,6 +255,7 @@ function isContentId(value: unknown): value is AnalyticsContentId {
 function isDestinationId(value: unknown): value is AnalyticsDestinationId {
   if (isContentId(value)) return true;
   if (typeof value !== "string") return false;
+  if (value.startsWith("dataset:") && isChartedBenchmarkAtlasId(value.slice("dataset:".length))) return true;
   return [
     "ask-ai:chatgpt",
     "ask-ai:claude",
@@ -250,6 +267,7 @@ function isDestinationId(value: unknown): value is AnalyticsDestinationId {
     "dataset:coding-agents",
     "dataset:terminal-bench-4",
     "dataset:terminal-bench-science-0-1",
+    "dataset:benchmark-atlas",
     "external:github",
     "external:hraness",
     "external:other",
@@ -322,6 +340,13 @@ function internalDestination(pathname: string): Pick<
   AnalyticsLinkClassification,
   "destination_id" | "destination_kind"
 > {
+  if (pathname === "/data/benchmark-atlas.json") {
+    return { destination_id: "dataset:benchmark-atlas", destination_kind: "dataset" };
+  }
+  const atlasDatasetId = /^\/data\/benchmark-atlas\/([^/]+)$/u.exec(pathname)?.[1];
+  if (isChartedBenchmarkAtlasId(atlasDatasetId)) {
+    return { destination_id: `dataset:${atlasDatasetId}`, destination_kind: "dataset" };
+  }
   if (pathname === "/data/artificial-analysis-intelligence.json") {
     return {
       destination_id: "dataset:artificial-analysis-intelligence",
@@ -478,6 +503,13 @@ function validCount(value: unknown): value is number {
 
 function controlledEventProperties(event: AnalyticsEvent): Record<string, unknown> | null {
   switch (event.name) {
+    case "benchmark explored": {
+      const properties = event.properties;
+      if (!isBenchmarkAtlasId(properties.benchmark_id)
+        || !benchmarkAtlasActions.has(properties.action)
+        || !["ranking", "cost", "table"].includes(properties.view)) return null;
+      return { benchmark_id: properties.benchmark_id, action: properties.action, view: properties.view };
+    }
     case "chart metric selected": {
       const properties = event.properties;
       if (

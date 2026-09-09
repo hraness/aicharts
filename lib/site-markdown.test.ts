@@ -18,6 +18,10 @@ import terminalBenchScienceData from "@/data/terminal-bench-science.json";
 import { parseArtificialAnalysisIntelligenceSnapshot } from "./artificial-analysis-intelligence-data";
 import { parseCodingAgentSnapshot } from "./coding-agent-data";
 import { BENCHMARK_DATA_DESCRIPTION } from "./benchmark-portfolio";
+import { ATLAS_DATASETS, ATLAS_ENTRIES } from "./benchmark-atlas-catalog";
+import { selectAtlasModelProfiles, sortAtlasPoints } from "./benchmark-atlas";
+import { parseAtlasView, formatAtlasScore } from "./benchmark-atlas-view";
+import { atlasDatasetDownloadPath } from "./benchmark-atlas-distribution";
 import { codingAgentDatasetSummary } from "./coding-agent-dataset";
 import { formatRetrievedAt } from "./coding-agent-updates";
 import { directDeepSweEvidenceForRelease } from "./deep-swe-evidence-collection";
@@ -32,6 +36,7 @@ import {
   AGENT_GUIDE_CONTENT_TYPE,
   MARKDOWN_CONTENT_TYPE,
   agentGuideMarkdown,
+  atlasDefaultChartMarkdown,
   homeDocumentText,
   markdownForPath,
   notFoundMarkdown,
@@ -78,6 +83,34 @@ describe("homepage document", () => {
 });
 
 describe("markdown representations", () => {
+  test("represents the actual default chart and every discoverable benchmark guide", () => {
+    const home = markdownForPath("/").body;
+    const data = markdownForPath("/data").body;
+    const state = parseAtlasView("", ATLAS_ENTRIES, ATLAS_DATASETS);
+    const dataset = ATLAS_DATASETS.find(value => value.benchmarkId === state.benchmarkId)!;
+    const defaultChart = atlasDefaultChartMarkdown();
+    expect(home).toContain(defaultChart);
+    expect(home).toContain("/data/benchmark-atlas.json");
+    for (const point of selectAtlasModelProfiles(sortAtlasPoints(dataset)).slice(0, 8)) {
+      expect(defaultChart).toContain(point.label);
+      expect(defaultChart).toContain(formatAtlasScore(point.score, dataset.score.unit));
+    }
+    for (const entry of ATLAS_ENTRIES) {
+      expect(home).toContain(`?atlas=${entry.id}#explore`);
+      expect(data).toContain(entry.question);
+      expect(data).toContain(entry.comparisonRule);
+      expect(data).toContain(entry.source.url);
+      if (entry.coverage === "charted") {
+        expect(data).toContain(atlasDatasetDownloadPath(entry.id));
+      } else {
+        expect(data).not.toContain(`${site.origin}${atlasDatasetDownloadPath(entry.id)})`);
+      }
+    }
+    for (const dataset of ATLAS_DATASETS) {
+      expect(data).toContain(formatRetrievedAt(dataset.source.retrievedAt));
+      if (dataset.costLabel) expect(data).toContain(dataset.costLabel);
+    }
+  });
   test("serves the homepage, dataset, blog, and agent guide", () => {
     const home = markdownForPath("/");
     const data = markdownForPath("/data");
@@ -223,12 +256,13 @@ describe("agent instruction file", () => {
     const guide = agentGuideMarkdown(snapshot);
     expect(guide).toContain("## When to use AI Charts");
     expect(guide).toContain("Use AI Charts when you need a sourced comparison that keeps benchmark versions and system configurations explicit");
-    expect(guide).toContain("Do not treat AI Charts as a live API, ranker, or production SLA");
+    expect(guide).toContain("Do not treat AI Charts as a live inference API, universal ranking, or production SLA");
     expect(guide).toContain("/data/terminal-bench-4.json");
     expect(guide).toContain("/data/terminal-bench-science-0-1.json");
     expect(guide).toContain("/data/artificial-analysis-intelligence.json");
     expect(guide).toContain("/data/coding-agents.json");
-    expect(guide).toContain("four JSON downloads");
+    expect(guide).toContain("four source JSON downloads");
+    expect(guide).toContain("/data/benchmark-atlas.json");
     expect(guide).toContain(
       `${intelligence.selection.positiveCostRecordCount}-configuration positive-cost cohort`,
     );

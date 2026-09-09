@@ -241,9 +241,10 @@ as separate observations.
   hours from the public model-page Flight payload, with its public Dataset
   JSON-LD used as an independent source-shape cross-check. The heavier
   coding-agent import remains daily.
-- Refresh automation owns seven checked snapshots: the two release radars,
+- Refresh automation owns nine checked snapshots: the two release radars,
   Terminal-Bench, Terminal-Bench-Science, Artificial Analysis Intelligence,
-  Artificial Analysis coding agents, and direct DeepSWE evidence. It cannot
+  Artificial Analysis coding agents, direct DeepSWE evidence, and the reasoning
+  and multimodal atlas imports. It cannot
   write the manually reviewed official-release-date ledger.
 - First-party sources degrade independently. When one source is unavailable or
   changes shape, the refresh retains that source's last-known-good snapshot and
@@ -260,6 +261,49 @@ as separate observations.
   validation and publication gates.
 - The data refresh validates the exact changed tree with the same public build
   environment as CI before it creates a pull request.
+
+### Atlas imports: maintained selections, not universal live leaderboards
+
+`bun run atlas:reasoning:refresh` and `bun run atlas:multimodal:refresh` run in
+the four-hour benchmark lane and the daily full run. Their offline `:check`
+commands are part of `check:generated`. Both outputs join the existing owned-file
+boundary, complete application gate, exact-head CI, and protected-branch PR
+publication path. A failed import retains its previous whole snapshot and opens
+the durable health issue; it does not publish a partial new cohort.
+
+The sources are mutable publisher endpoints, not commit-pinned downloads. Each
+checked source includes a retrieval timestamp and SHA-256 content fingerprint.
+That fingerprint identifies fetched bytes; it is not an upstream Git revision
+or proof that a benchmark was recently rerun. Observation dates, where the owner
+provides them, remain distinct from retrieval and page-content modification.
+
+Reasoning selection is explicit: ARC-AGI-2 admits named model groups on its
+semi-private CoT track; ARC-AGI-3 Standard and Provider Adapter remain separate.
+DeepResearch Bench II imports nine reviewed named systems; LongMemEval-V2 imports
+six paper baselines, keeping its Small and Medium datasets distinct. The
+selection constants in `scripts/refresh-benchmark-atlas-reasoning.ts` are the
+admission contract. A new release outside those groups is not automatically
+charted. A new ARC2 cost field fails closed until its denominator is reviewed.
+
+Multimodal selection preserves WISE Verified's 29-model judge-specific cohort,
+GEditBench v2's 16-model paper cohort, VideoPhy2's seven human-evaluated models,
+the exact OmniDocBench `v1.6_full` table, and WorldScore's 19 author-evaluated
+March 30, 2025 systems. Fixed research-cohort counts, column order, evaluator
+checks, source URL checks, and no-disappearing-row guards protect these imports.
+OmniDocBench may admit added rows within its existing exact table contract;
+other research cohort expansions require a reviewed parser/selection change.
+
+Refresh success does not make historical paper cohorts a current-product
+ranking. Newly released models and newly cited benchmarks should enter the
+release/source review queue, then receive an explicit catalog and data-admission
+decision. Do not loosen a failed version or cohort assertion merely to make the
+scheduled run green. Inspect the source change, preserve the old facet, revise
+the comparison policy and fixtures, and run the full gate before publishing.
+
+The public `/data/benchmark-atlas.json` catalog links bounded per-cohort JSON at
+`/data/benchmark-atlas/{benchmarkId}`. Only charted IDs have downloads; source
+guides remain useful without fabricated observations. Neither these aggregate
+measurements nor source links grant new rights to third-party data or media.
 
 ## September 2026 release-discovery incidents
 

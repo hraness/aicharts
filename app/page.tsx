@@ -1,22 +1,22 @@
-import { MarketingProofFrame, ProductHero } from "@hraness/design-kit/react/server";
 import { createPublicSiteMetadata } from "@hraness/web-discovery";
 import { Suspense } from "react";
+import Link from "next/link";
 import artificialAnalysisIntelligenceData from "@/data/artificial-analysis-intelligence.json";
 import codingAgentData from "@/data/coding-agents.json";
 import terminalBenchData from "@/data/terminal-bench.json";
 import terminalBenchScienceData from "@/data/terminal-bench-science.json";
 import { CodingAgentExplorer } from "@/components/coding-agent-explorer";
+import { AdvancedCharts } from "@/components/advanced-charts";
+import { BenchmarkAtlasExplorer } from "@/components/benchmark-atlas-explorer";
 import { HomeBenchmarkPortfolio } from "@/components/home-benchmark-portfolio";
-import { HomeClosing } from "@/components/home-closing";
 import { HomeEditorialResources } from "@/components/home-editorial-resources";
 import { HomeIntelligenceEfficiency } from "@/components/home-intelligence-efficiency";
-import { HomeOrientation } from "@/components/home-orientation";
 import { ProjectAskAiAboutThis } from "@/components/project-ask-ai-about-this";
 import { RouteLoadingState } from "@/components/route-state";
 import { SiteHeader } from "@/components/site-header";
 import { parseArtificialAnalysisIntelligenceSnapshot } from "@/lib/artificial-analysis-intelligence-data";
 import { parseCodingAgentSnapshot } from "@/lib/coding-agent-data";
-import { formatRetrievedAt } from "@/lib/coding-agent-updates";
+import { ATLAS_DATASETS, ATLAS_ENTRIES } from "@/lib/benchmark-atlas-catalog";
 import { MODEL_CARD_VARIANTS } from "@/lib/model-card-collection";
 import { parseTerminalBenchSnapshot } from "@/lib/terminal-bench-data";
 import { parseTerminalBenchScienceSnapshot } from "@/lib/terminal-bench-science-data";
@@ -64,28 +64,19 @@ export default function Home() {
   return (
     <>
       <SiteHeader current="/" />
-      <main className="hraness-marketing-page aicharts-home" data-hraness-marketing="page" id="main-content">
-        <ProductHero
-          actions={[
-            { href: "#intelligence-index", label: "Jump to the chart" },
-            { href: "/models", label: "Browse the cards" },
-          ]}
-          eyebrow="Sourced benchmark charts"
-          frame={(
-            <MarketingProofFrame
-              caption={`Retrieved ${formatRetrievedAt(intelligence.source.retrievedAt)} from the ${intelligence.source.name} public models leaderboard.`}
-              className="aicharts-home__frame"
-              title={`Intelligence Index v${intelligence.benchmark.version} · ${site.domain}`}
-            >
-              <HomeIntelligenceEfficiency snapshot={intelligence} />
-            </MarketingProofFrame>
-          )}
-          heading={homeHeading}
-          headingId="home-title"
-          name={site.name}
-          summary={homeLede}
-        />
-        <HomeOrientation />
+      <main className="atlas-home" id="main-content">
+        <header className="atlas-intro">
+          <div><h1 id="home-title">{homeHeading}</h1><p>{homeLede}</p></div>
+          <div className="atlas-intro__coverage"><strong>{ATLAS_DATASETS.length} interactive charts</strong> · {ATLAS_ENTRIES.length} benchmarks</div>
+        </header>
+        <BenchmarkAtlasExplorer entries={ATLAS_ENTRIES} datasets={ATLAS_DATASETS} />
+        <section className="atlas-reading" aria-label="Make a useful comparison">
+          <div><h2>Start with the task</h2><p>Code completion, scientific research, and image editing need different evidence. Pick the work you need done, then inspect the relevant benchmark.</p></div>
+          <div><h2>Compare the full setup</h2><p>The same model can score differently with another agent, effort level, or tool budget. Open a result to see the configuration behind the number.</p></div>
+          <div><h2>Read the date and the gap</h2><p>A leaderboard is a snapshot. Close scores may overlap within uncertainty, and older research cohorts may leave newer models untested.</p></div>
+        </section>
+        <AdvancedCharts>
+        <HomeIntelligenceEfficiency snapshot={intelligence} />
         <Suspense fallback={<RouteLoadingState />}>
           <CodingAgentExplorer
             brand={{ domain: site.domain }}
@@ -128,10 +119,11 @@ export default function Home() {
                 version: terminalBenchScience.benchmark.version,
               }}
             />
-            <HomeEditorialResources />
           </CodingAgentExplorer>
         </Suspense>
-        <HomeClosing snapshot={parsed.value} />
+        </AdvancedCharts>
+        <HomeEditorialResources />
+        <div className="atlas-footer-note"><Link href="/data">Data and sources</Link><Link href="/models">Shareable model cards</Link><a href="https://github.com/hraness/aicharts">Open-source project ↗</a><span>Built by <a href="https://x.com/hraness">Ben Guo</a></span></div>
       </main>
       <ProjectAskAiAboutThis url={site.origin} />
     </>

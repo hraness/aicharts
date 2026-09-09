@@ -44,10 +44,13 @@ All custom events are members of `AnalyticsEventMap`. `analyticsEventPayload` re
 | `chart metric selected` | `chart_id`, `axis`, `metric` | A visitor changed one dimension of a named chart. |
 | `chart selection pinned` | `chart_id`, `provider_id`, `selection_kind` | A visitor pinned a provider or model comparison in a named chart. |
 | `chart shared` | `chart_id`, `share_method`, `share_outcome`, `x_metric`, `y_metric` | A configured named-chart share action produced the stated outcome. |
+| `benchmark explored` | `benchmark_id`, `action`, `view` | A reader chose an atlas benchmark, changed its view, edited a comparison, or copied its share link. |
 | `model cards filtered` | `filter_dimension`, `filter_value`, `result_count` | A provider, Top, or New filter outcome was applied. |
 | `model card shared` | `model_id`, `profile_id`, `share_method`, `share_outcome` | A canonical model-card share action produced the stated outcome. |
 
 Filter dimensions are `provider`, `top_only`, and `sort`. Values are a checked provider ID or `all`, `enabled`/`disabled`, and `new`/`default`, respectively. Chart IDs are the bounded public surfaces `coding_agents` and `intelligence_efficiency`, so interaction funnels remain attributable without collecting labels or point text. Metric values stay native to each chart: the coding chart uses its checked X/Y vocabulary, while intelligence efficiency uses `costUsdPerTask` and `outputTokensPerTask` on its X axis. Chart and model-card share outcomes distinguish `initiated`, `completed`, `cancelled`, and `downloaded` where those states apply. Record only the outcome the component actually observes.
+
+Atlas actions are `benchmark`, `view`, `provider`, `expand`, `inspect`, `profiles`, `compare`, and `share`; views are `ranking`, `cost`, and `table`. `benchmark_id` must be a checked public catalog ID. The client-safe allowlist in `lib/benchmark-atlas-ids.ts` is checked against the catalog in regression tests; unknown or free-text IDs are rejected. The atlas uses this bounded vocabulary for every category, including source guides. A shared link is captured after the clipboard write succeeds. Search terms, URL state, selected point IDs, display labels, and free-form filters are not sent. Task and benchmark discovery remain measurable through the selected benchmark ID.
 
 ## Delegated link tracking
 
@@ -61,7 +64,9 @@ Filter dimensions are `provider`, `top_only`, and `sort`. Values are a checked p
 
 The raw href, query, hash, and link text are never placed in an event. Link kinds are `anchor`, `download`, `internal`, and `outbound`. Destination kinds distinguish articles, model cards, site pages and resources, datasets, assets, sections, sources, repositories, social services, Ask-AI services, and Hraness. Unknown outbound hosts collapse to `destination_kind=source` and `destination_id=external:other`.
 
-Use the narrowest existing surface. Current surfaces are `site`, `global_header`, `global_footer`, `home_orientation`, `home_portfolio`, `benchmark_chart`, `home_editorial`, `blog_header`, `blog_index`, `blog_article`, `blog_related`, `data_document`, `models_header`, `models_gallery`, `model_release_radar`, `model_card`, and `error_recovery`.
+Use the narrowest existing surface. Current surfaces are `site`, `global_header`, `global_footer`, `home_orientation`, `home_portfolio`, `benchmark_chart`, `benchmark_atlas`, `home_editorial`, `blog_header`, `blog_index`, `blog_article`, `blog_related`, `data_document`, `models_header`, `models_gallery`, `model_release_radar`, `model_card`, and `error_recovery`.
+
+Atlas source links use `source:{benchmarkId}` only for checked catalog IDs. The compact catalog and per-cohort JSON links are dataset destinations, not pageviews for invented editorial routes. Add their public IDs to the existing classifier when a dataset is admitted; ordinary anchors then inherit tracking from the shared boundary.
 
 Add both destination override attributes only when the default URL classifier cannot supply a useful stable ID, normally for a named primary source:
 

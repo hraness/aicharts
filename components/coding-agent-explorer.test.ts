@@ -171,7 +171,7 @@ test("leaves only the selected benchmark description in the chart header", async
   expect(source).not.toContain('className="chart-title"');
 });
 
-test("leaves the page heading to the hero and keeps the domain as the chart watermark", async () => {
+test("leaves the page heading to the task introduction and keeps the domain as the chart watermark", async () => {
   const [source, pageSource] = await Promise.all([
     Bun.file(new URL("./coding-agent-explorer.tsx", import.meta.url)).text(),
     Bun.file(new URL("../app/page.tsx", import.meta.url)).text(),
@@ -181,8 +181,8 @@ test("leaves the page heading to the hero and keeps the domain as the chart wate
   expect(source).not.toContain("brand.heading");
   expect(source).toContain("{brand.domain}");
   expect(source).toContain('<h2 id="coding-agent-chart-title">Coding agents, plotted against cost, time, and tokens.</h2>');
-  expect(pageSource).toContain("heading={homeHeading}");
-  expect(pageSource).toContain('headingId="home-title"');
+  expect(pageSource).toContain('<h1 id="home-title">{homeHeading}</h1>');
+  expect(pageSource.match(/<h1\b/gu)).toHaveLength(1);
 });
 
 test("keeps chart chrome compact and metric labels semantic-only", async () => {

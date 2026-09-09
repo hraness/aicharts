@@ -86,7 +86,6 @@ const chartWidth = 1440;
 const chartHeight = 940;
 const plot = { top: 24, right: 1360, bottom: 860, left: 72 } as const;
 const initialTooltipSize = { height: 260, width: 264 } as const;
-const refreshDelayThresholdMs = 48 * 60 * 60 * 1_000;
 const restingLabelCount = 3;
 const yMetricItems = [
   { id: "aaIndex", label: "AAI" },
@@ -417,7 +416,6 @@ export function CodingAgentExplorer({
   const [pointerPointId, setPointerPointId] = useState<string | null>(null);
   const [hoveredProviderId, setHoveredProviderId] = useState<string | null>(null);
   const [keyboardPointId, setKeyboardPointId] = useState<string | null>(null);
-  const [refreshDelayed, setRefreshDelayed] = useState(false);
   const [shareBusy, setShareBusy] = useState(false);
   const [shareImage, setShareImage] = useState<Blob | null>(null);
   const [shareImagePreparing, setShareImagePreparing] = useState(false);
@@ -426,18 +424,6 @@ export function CodingAgentExplorer({
   const [showShareUrl, setShowShareUrl] = useState(false);
   const [svgViewport, setSvgViewport] = useState<SvgViewport | null>(null);
   const [tooltipSize, setTooltipSize] = useState<{ height: number; width: number }>(initialTooltipSize);
-
-  useEffect(() => {
-    const updateFreshness = () => {
-      setRefreshDelayed(Date.now() - Date.parse(snapshot.source.retrievedAt) > refreshDelayThresholdMs);
-    };
-    const frame = window.requestAnimationFrame(updateFreshness);
-    const interval = window.setInterval(updateFreshness, 60 * 60 * 1_000);
-    return () => {
-      window.cancelAnimationFrame(frame);
-      window.clearInterval(interval);
-    };
-  }, [snapshot.source.retrievedAt]);
 
   useEffect(() => {
     const sharedView = parseChartShareView(window.location.search);
@@ -757,7 +743,7 @@ export function CodingAgentExplorer({
       void createBrandedChartPng(source, chartWidth, chartHeight, {
         context: `${yMetricLabels[yMetric]} vs ${xMetricLabels[xMetric]} · Artificial Analysis`,
         domain: brand.domain,
-        freshness: `${refreshDelayed ? "Refresh delayed" : "Auto-refreshes daily"} · Last refreshed ${retrievedAt}`,
+        freshness: `Snapshot retrieved ${retrievedAt} · Source checks scheduled daily`,
         providers: shareImageProviders,
         selection: shareImageSelection,
       }).then((image) => {
@@ -776,7 +762,7 @@ export function CodingAgentExplorer({
       cancelled = true;
       window.cancelAnimationFrame(frame);
     };
-  }, [brand.domain, refreshDelayed, retrievedAt, shareImageProviders, shareImageSelection, shareOpen, xMetric, yMetric]);
+  }, [brand.domain, retrievedAt, shareImageProviders, shareImageSelection, shareOpen, xMetric, yMetric]);
 
   function interactionState(record: CodingAgentRecord): "normal" | "highlighted" | "dimmed" {
     if (benchmarkPoint !== null) return performanceCohortIds.has(record.id) ? "highlighted" : "dimmed";

@@ -3,6 +3,7 @@ import { describe, expect, test } from "bun:test";
 import packageJson from "../package.json";
 import {
   homeHeading,
+  homeLede,
   notFoundRecoveryLinks,
   notFoundSearchSite,
   searchSite,
@@ -14,10 +15,18 @@ describe("AI Charts public positioning", () => {
     expect(searchSite.title).toBe(
       "AI Model & Agent Comparison Charts | AI Charts",
     );
-    expect(homeHeading).toBe("Compare AI models on the numbers that matter");
-    expect(site.description).toContain("AI models and agents");
-    expect(site.description).toContain("performance, cost, speed, and token use");
-    expect(site.description).not.toContain("coding");
+    expect(homeHeading).toBe("Find the right AI for the task");
+    for (const dimension of ["coding", "reasoning", "research", "memory", "images", "video", "world models"]) {
+      expect(site.description).toContain(dimension);
+    }
+    expect(site.description).toContain("published results");
+    expect(site.description).toContain("configurations");
+    expect(homeLede).toContain("Compare AI");
+    expect(homeLede).toContain("generative media");
+    expect(homeLede).toMatch(/results.*what.*mean/iu);
+    expect(homeLede).not.toMatch(/universal|definitive|best model overall/iu);
+    expect(searchSite.description).toBe(site.description);
+    expect(searchSite.origin).toBe("https://aicharts.io");
     expect(site.description.length).toBeLessThanOrEqual(160);
   });
 
