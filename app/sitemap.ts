@@ -1,4 +1,5 @@
 import type { MetadataRoute } from "next";
+import { atlasContentModifiedAt } from "@/lib/benchmark-atlas-distribution";
 
 import artificialAnalysisIntelligenceData from "@/data/artificial-analysis-intelligence.json";
 import codingAgentData from "@/data/coding-agents.json";
@@ -87,6 +88,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     );
   }
   const benchmarkPortfolioModifiedAt = [
+    atlasContentModifiedAt(),
     datasetModifiedAt,
     parsedTerminalBench.value.source.retrievedAt,
     parsedTerminalBenchScience.value.source.retrievedAt,

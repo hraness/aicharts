@@ -41,7 +41,7 @@ export default function Image() {
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
         <div style={{ fontSize: 76, fontWeight: 700, letterSpacing: "-4px" }}>{homeHeading}</div>
-        <div style={{ color: "#625d57", fontSize: 34 }}>A five-role benchmark portfolio spanning coding, science, professional work, computer use, and expert reasoning.</div>
+        <div style={{ color: "#625d57", fontSize: 34 }}>Explore benchmarks for coding, reasoning, research, memory, and generative media. Understand the score and the tradeoffs.</div>
       </div>
       <div style={{ background: site.palette.chromatic.key, height: 10, width: "100%" }} />
     </div>,

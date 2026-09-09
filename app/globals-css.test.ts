@@ -1,11 +1,34 @@
 import { expect, test } from "bun:test";
 
 const stylesheet = await Bun.file(new URL("./globals.css", import.meta.url)).text();
+const atlasStylesheet = await Bun.file(new URL("../styles/benchmark-atlas.css", import.meta.url)).text();
 
-function firstRule(selector: string): string {
+function firstRule(selector: string, css = stylesheet): string {
   const escaped = selector.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
-  return stylesheet.match(new RegExp(`${escaped}\\s*\\{(?<body>[^}]*)\\}`, "u"))?.groups?.body ?? "";
+  return css.match(new RegExp(`${escaped}\\s*\\{(?<body>[^}]*)\\}`, "u"))?.groups?.body ?? "";
 }
+
+test("atlas controls expose focus and selected state without changing the result text color", () => {
+  expect(stylesheet).toContain('@import "../styles/benchmark-atlas.css"');
+  expect(firstRule(".benchmark-atlas :focus-visible", atlasStylesheet)).toMatch(/outline:\s*2px solid/u);
+  expect(firstRule('.atlas-row[aria-pressed="true"]', atlasStylesheet)).toContain("background:");
+  expect(firstRule('.atlas-tasks button[aria-pressed="true"]', atlasStylesheet)).toContain("color: var(--background)");
+  expect(firstRule(".atlas-scatter__point:focus-visible circle:last-of-type", atlasStylesheet)).toContain("stroke: var(--foreground)");
+  expect(firstRule(".atlas-row__heading strong", atlasStylesheet)).not.toContain("text-overflow: ellipsis");
+  expect(firstRule(".atlas-row__heading strong", atlasStylesheet)).toContain("overflow-wrap: anywhere");
+  expect(firstRule(".atlas-inspector h3", atlasStylesheet)).toContain("overflow-wrap: anywhere");
+});
+
+test("atlas details remain in document flow and move below results on smaller screens", () => {
+  expect(firstRule(".atlas-results", atlasStylesheet)).toContain("display: grid");
+  expect(firstRule(".atlas-inspector", atlasStylesheet)).not.toMatch(/position:\s*(?:absolute|fixed)/u);
+  expect(atlasStylesheet).toMatch(/@media \(max-width:\s*1100px\)[\s\S]*?\.atlas-results\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)/u);
+  expect(atlasStylesheet).toMatch(/@media \(max-width:\s*720px\)[\s\S]*?\.atlas-workspace\s*\{[^}]*grid-template-columns:\s*1fr/u);
+  expect(atlasStylesheet).toMatch(/@media \(max-width:\s*720px\)[\s\S]*?\.atlas-mobile-select\s*\{[^}]*display:\s*grid/u);
+  expect(atlasStylesheet).toMatch(/@media \(max-width:\s*720px\)[\s\S]*?\.atlas-comparison__grid\s*\{[^}]*grid-template-columns:\s*1fr/u);
+  expect(firstRule(".atlas-table-scroll", atlasStylesheet)).toContain("overflow-x: auto");
+  expect(firstRule(".atlas-scatter__scroll", atlasStylesheet)).toContain("overflow-x: auto");
+});
 
 test("application resets stay below shared component styles", () => {
   const baseStart = stylesheet.indexOf("@layer base {");

@@ -8,6 +8,7 @@ const rootSocialImage = await Bun.file(new URL("./opengraph-image.tsx", import.m
 const modelImages = await Bun.file(new URL("../components/model-card-image.tsx", import.meta.url)).text();
 const chartExport = await Bun.file(new URL("../components/chart-export.ts", import.meta.url)).text();
 const chartExportFont = await Bun.file(new URL("../components/chart-export-font.ts", import.meta.url)).text();
+const atlas = await Bun.file(new URL("../styles/benchmark-atlas.css", import.meta.url)).text();
 
 test("uses the released Nebula Sans contract across web, exports, and social images", () => {
   expect(packageJson.dependencies).toMatchObject({
@@ -26,4 +27,11 @@ test("uses the released Nebula Sans contract across web, exports, and social ima
   expect(chartExport).toContain("appendEmbeddedNebulaSans(exportedSvg)");
   expect(chartExportFont).toContain('"@hraness/design-kit/fonts/nebula-sans/social"');
   expect(chartExportFont).toContain("SIL Open Font License, Version 1.1");
+});
+
+test("the atlas inherits the shared typeface and reserves monospace for numeric chart text", () => {
+  expect(atlas).toContain(".benchmark-atlas button, .benchmark-atlas input, .benchmark-atlas select { font: inherit; }");
+  expect(atlas).not.toMatch(/font-family:\s*(?:Arial|Inter|Roboto|sans-serif)/u);
+  expect(atlas).toMatch(/\.atlas-row__heading data\s*\{[^}]*font-family:\s*var\(--font-mono\)/u);
+  expect(atlas).toMatch(/\.atlas-inspector dd\s*\{[^}]*font-variant-numeric:\s*tabular-nums/u);
 });

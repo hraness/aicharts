@@ -1,5 +1,6 @@
 import { access } from "node:fs/promises";
 import { join } from "node:path";
+import { ATLAS_DATASETS } from "../lib/benchmark-atlas-catalog";
 
 import {
   chromium,
@@ -146,6 +147,7 @@ async function verifyChartExport(browser: Browser, baseUrl: string): Promise<voi
   try {
     await page.goto(baseUrl, { waitUntil: "domcontentloaded" });
     await settle(page);
+    await page.locator("#advanced-charts > summary").click();
     const sourceChartHeight = await page.locator(".chart-canvas .benchmark-chart").evaluate((element) => {
       if (!(element instanceof SVGSVGElement)) {
         throw new Error("The coding-agent chart is not an SVG element.");
@@ -177,6 +179,73 @@ async function verifyChartExport(browser: Browser, baseUrl: string): Promise<voi
       png.readUInt32BE(20) > sourceChartHeight,
       "The chart PNG omitted its branded export header.",
     );
+    invariant(failures.length === 0, failures.join("; "));
+  } finally {
+    await context.close();
+  }
+}
+
+async function verifyBenchmarkAtlas(browser: Browser, baseUrl: string): Promise<void> {
+  const context = await browser.newContext({ colorScheme: "light", viewport: { width: 1280, height: 900 } });
+  const page = await context.newPage();
+  const failures = attachDiagnostics(page, "benchmark atlas");
+  try {
+    await page.goto(baseUrl, { waitUntil: "domcontentloaded" });
+    await settle(page);
+    const atlas = page.locator("#explore");
+    invariant(await atlas.locator(".atlas-row").count() === 8, "Default ranking must show eight results, not a wall of labels.");
+    invariant(!await page.locator("#advanced-charts").evaluate(element => element.hasAttribute("open")), "Advanced charts should be collapsed on a fresh visit.");
+    await atlas.locator(".atlas-row").nth(1).click();
+    const selectedName = await atlas.locator(".atlas-row[aria-pressed=true] strong").textContent();
+    invariant(await atlas.locator(".atlas-inspector h3").textContent() === selectedName, "The inspector must identify the selected ranking row.");
+    await atlas.getByRole("button", { name: "Add to comparison", exact: true }).click();
+    await atlas.locator(".atlas-row").nth(2).click();
+    await atlas.getByRole("button", { name: "Add to comparison", exact: true }).click();
+    const sharedUrl = page.url();
+    invariant(new URL(sharedUrl).searchParams.getAll("atlasCompare").length === 2, "Comparison must persist opaque row IDs independently.");
+    await page.reload({ waitUntil: "domcontentloaded" });
+    await atlas.getByRole("region", { name: "Compare selected results" }).waitFor();
+    invariant(await atlas.locator(".atlas-comparison h4").count() === 2, "Reload lost comparison results.");
+    await atlas.getByRole("button", { name: "Cost vs. score", exact: true }).click();
+    const point = atlas.locator('.atlas-scatter__point[tabindex="0"]');
+    await point.focus();
+    await point.press("ArrowRight");
+    invariant(await atlas.locator('.atlas-scatter__point[aria-pressed="true"]').count() === 1, "Keyboard inspection must have one selected cost point.");
+    invariant(await atlas.locator('.atlas-scatter__point[tabindex="0"]').getAttribute("aria-pressed") === "true", "Cost chart focus and selection diverged.");
+    await page.goto(`${baseUrl}/?atlas=aa-intelligence&atlasView=cost`, { waitUntil: "domcontentloaded" });
+    await atlas.locator(".atlas-scatter__point").first().waitFor();
+    const expectedCosts = ATLAS_DATASETS.find(dataset => dataset.benchmarkId === "aa-intelligence")!.points.filter(point => point.costUsd !== null && point.costUsd > 0).length;
+    invariant(await atlas.locator(".atlas-scatter__point").count() === expectedCosts, "Cost view hid lower-effort configurations.");
+    await atlas.locator(".atlas-scatter__point").last().focus();
+    await atlas.locator(".atlas-scatter__point").last().press("Enter");
+    await atlas.getByRole("button", { name: "Ranking", exact: true }).click();
+    invariant(await atlas.locator('.atlas-row[aria-pressed="true"]').count() === 1, "Switching to ranking hid the selected low-ranked configuration.");
+    await atlas.getByRole("button", { name: "Show top eight", exact: true }).click();
+    invariant(await atlas.locator(".atlas-row").count() === 8, "Collapsing results did not restore the top-eight view.");
+    await atlas.getByRole("button", { name: "Memory", exact: true }).click();
+    invariant(await atlas.locator(".atlas-row").count() === 6, "Memory comparisons must retain all six systems with the fixed reader.");
+    await atlas.getByRole("button", { name: "Images", exact: true }).click();
+    invariant(await atlas.locator("h2").textContent() === "WISE Verified", "Image task did not select its chart.");
+    await atlas.getByRole("button", { name: "Audio", exact: true }).click();
+    invariant(await atlas.locator(".atlas-source-guide").count() === 1, "Uncharted audio coverage must be an explicit guide.");
+    invariant(await atlas.locator(".atlas-row").count() === 0, "Source-only guides must not invent scored rows.");
+    await page.goBack({ waitUntil: "domcontentloaded" });
+    await atlas.getByRole("heading", { name: "WISE Verified", exact: true }).waitFor();
+    invariant(await atlas.locator("h2").textContent() === "WISE Verified", "Back navigation did not restore the benchmark.");
+    await page.setViewportSize({ width: 320, height: 900 });
+    await settle(page);
+    invariant(await atlas.getByLabel("Find a benchmark", { exact: true }).isVisible(), "Mobile search must be named and visible.");
+    await atlas.locator(".atlas-mobile-select select").selectOption("geditbench-2");
+    invariant((await atlas.locator("h2").textContent())?.includes("GEditBench"), "Mobile benchmark selector did not change the chart.");
+    invariant(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), "The page overflows at 320px; chart panning must remain local.");
+    await page.emulateMedia({ colorScheme: "dark" });
+    await atlas.locator(".atlas-row").first().click();
+    invariant(await atlas.locator(".atlas-inspector").isVisible(), "Selected result is unavailable on a narrow dark viewport.");
+    const distribution = await page.request.get(`${baseUrl}/data/benchmark-atlas.json`);
+    invariant(distribution.ok(), "The benchmark catalog JSON is not available.");
+    await page.goto(`${baseUrl}/?benchmark=aaIndex&compare=costUsd#chart`, { waitUntil: "domcontentloaded" });
+    await page.locator("#advanced-charts[open]").waitFor();
+    invariant(await page.getByRole("button", { name: "Share and export chart" }).isVisible(), "Legacy shared chart links no longer reveal the exportable chart.");
     invariant(failures.length === 0, failures.join("; "));
   } finally {
     await context.close();
@@ -422,6 +491,7 @@ try {
   await waitForServer(`${baseUrl}/models`, server);
   const browser = await launchFirstAvailableBrowser(executablePaths);
   try {
+    await verifyBenchmarkAtlas(browser, baseUrl);
     await verifyChartExport(browser, baseUrl);
     await verifyInteractivePointer(browser, baseUrl);
     await verifyReducedMotion(browser, baseUrl);
@@ -436,4 +506,4 @@ try {
   if (server.exitCode === null) server.kill("SIGKILL");
 }
 
-console.log("Model-card foil browser contract passed.");
+console.log("Benchmark atlas, chart export, and model-card foil browser contracts passed.");

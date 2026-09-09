@@ -7,6 +7,8 @@ on:
     # opened by GITHUB_TOKEN while the dispatched Required check remains mandatory.
     paths-ignore:
       - data/artificial-analysis-intelligence.json
+      - data/benchmark-atlas-multimodal.json
+      - data/benchmark-atlas-reasoning.json
       - data/coding-agents.json
       - data/deep-swe-evidence.json
       - data/first-party-release-radar.json

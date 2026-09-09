@@ -7,6 +7,7 @@ import terminalBenchScienceData from "@/data/terminal-bench-science.json";
 import { parseCodingAgentSnapshot } from "@/lib/coding-agent-data";
 import { parseArtificialAnalysisIntelligenceSnapshot } from "@/lib/artificial-analysis-intelligence-data";
 import { FIRST_PARTY_RELEASE_HIGHLIGHTS } from "@/lib/first-party-release-collection";
+import { atlasContentModifiedAt } from "@/lib/benchmark-atlas-distribution";
 import {
   CODING_AGENT_DATASET_PATH,
   codingAgentDatasetModifiedAt,
@@ -37,6 +38,7 @@ describe("public search discovery", () => {
     );
     if (!intelligence.ok) throw intelligence.error;
     const benchmarkPortfolioModifiedAt = [
+      atlasContentModifiedAt(),
       datasetModifiedAt,
       terminalBench.value.source.retrievedAt,
       terminalBenchScience.value.source.retrievedAt,

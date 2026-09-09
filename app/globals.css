@@ -3,6 +3,7 @@
 @import "../styles/plain-site.css";
 @import "../styles/plain-publication.css";
 @import "../styles/model-cards.css";
+@import "../styles/benchmark-atlas.css";
 
 /* Keep application resets in the shared base layer. Unlayered resets outrank
  * every @hraness/ui component layer and silently erase control typography,

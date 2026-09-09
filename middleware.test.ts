@@ -73,6 +73,9 @@ describe("markdown content negotiation", () => {
 
   test("leaves every non-HTML public representation untouched", () => {
     const representations = [
+      ["/data/benchmark-atlas.json", "application/json"],
+      ["/data/benchmark-atlas/terminal-bench-4", "application/json"],
+      ["/data/benchmark-atlas/arc-agi-2", "application/json"],
       ["/data/artificial-analysis-intelligence.json", "application/json"],
       ["/data/coding-agents.json", "application/json"],
       ["/data/terminal-bench-4.json", "application/json"],

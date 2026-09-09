@@ -1,11 +1,13 @@
 import { describe, expect, test } from "bun:test";
 
 import {
+  BENCHMARK_ATLAS_ANALYTICS_ACTIONS,
   type AnalyticsEvent,
   analyticsEventPayload,
   classifyAnalyticsLink,
   newsletterSignupRequestEvent,
 } from "./analytics";
+import { BENCHMARK_ATLAS_IDS, CHARTED_BENCHMARK_ATLAS_IDS } from "./benchmark-atlas-ids";
 
 const currentUrl = "https://aicharts.io/models";
 
@@ -87,6 +89,52 @@ describe("delegated link classification", () => {
     })?.properties.link_kind).toBe("download");
   });
 
+  test("classifies the atlas catalog and each real cohort download without retaining URL state", () => {
+    const cases = [
+      ["/data/benchmark-atlas.json", "dataset:benchmark-atlas"],
+      ...CHARTED_BENCHMARK_ATLAS_IDS.map(id => [`/data/benchmark-atlas/${id}`, `dataset:${id}`] as const),
+    ] as const;
+    for (const [path, destinationId] of cases) {
+      const classified = classifyAnalyticsLink({
+        currentUrl: "https://aicharts.io/data?email=private@example.com",
+        href: `https://www.aicharts.io${path}?query=private-search#private-point`,
+        download: false,
+        surface: "data_document",
+      });
+      expect(classified?.properties).toEqual({ destination_id: destinationId, destination_kind: "dataset", link_kind: "download", surface: "data_document" });
+      expect(analyticsEventPayload(classified!)).not.toBeNull();
+      expect(JSON.stringify(classified)).not.toContain("private");
+    }
+  });
+
+  test("source guides, unknown cohorts, and invented .json routes cannot become dataset destinations", () => {
+    for (const href of [
+      "/data/benchmark-atlas/private-project",
+      "/data/benchmark-atlas/open-asr",
+      "/data/benchmark-atlas/wise-verified.json",
+      "/data/benchmark-atlas/wise-verified/extra",
+      "/data/benchmark-atlas/%77ise-verified",
+    ]) {
+      expect(classifyAnalyticsLink({ currentUrl, href, download: false })?.properties).toMatchObject({ destination_id: "other", destination_kind: "other", link_kind: "internal" });
+    }
+    for (const destinationId of ["dataset:private-project", "dataset:open-asr", "dataset:wise-verified.json"]) {
+      const classified = classifyAnalyticsLink({ currentUrl, href: "https://example.com/private", download: false, destinationId, destinationKind: "dataset" });
+      expect(classified?.properties).toMatchObject({ destination_id: "external:other", destination_kind: "source" });
+      expect(analyticsEventPayload({
+        name: "site link clicked",
+        properties: { destination_id: destinationId, destination_kind: "dataset", link_kind: "download", surface: "data_document" },
+      } as unknown as AnalyticsEvent)).toBeNull();
+    }
+  });
+
+  test("accepts controlled atlas dataset overrides, including the catalog", () => {
+    for (const destinationId of ["dataset:benchmark-atlas", "dataset:wise-verified", "dataset:arc-agi-3-standard"] as const) {
+      expect(classifyAnalyticsLink({
+        currentUrl, href: "/data", download: true, destinationId, destinationKind: "dataset", surface: "benchmark_atlas",
+      })?.properties).toEqual({ destination_id: destinationId, destination_kind: "dataset", link_kind: "download", surface: "benchmark_atlas" });
+    }
+  });
+
   test("classifies outbound destinations into a bounded taxonomy", () => {
     const cases = [
       ["https://github.com/hraness/aicharts/issues?q=private", undefined, "repository", "external:github"],
@@ -156,6 +204,43 @@ describe("delegated link classification", () => {
 });
 
 describe("typed event payloads", () => {
+  test("accepts only published benchmark IDs, including guides, and valid exploration actions", () => {
+    for (const benchmarkId of BENCHMARK_ATLAS_IDS) {
+      expect(analyticsEventPayload({ name: "benchmark explored", properties: { benchmark_id: benchmarkId, action: "benchmark", view: "ranking" } })).not.toBeNull();
+    }
+    for (const action of BENCHMARK_ATLAS_ANALYTICS_ACTIONS) {
+      for (const view of ["ranking", "cost", "table"] as const) {
+        expect(analyticsEventPayload({ name: "benchmark explored", properties: { benchmark_id: "terminal-bench-4", action, view } })?.properties).toMatchObject({ benchmark_id: "terminal-bench-4", action, view });
+      }
+    }
+  });
+
+  test("atlas event reconstruction discards searches, selected points, URLs, and unknown runtime keys", () => {
+    const payload = analyticsEventPayload({
+      name: "benchmark explored",
+      properties: {
+        benchmark_id: "wise-verified", action: "profiles", view: "ranking",
+        query: "private-search", point_id: "private-point", profile_value: "private-value",
+        raw_href: "https://aicharts.io/?query=private#private", model_label: "private-label",
+      },
+    } as unknown as AnalyticsEvent);
+    expect(payload).toEqual({
+      name: "benchmark explored",
+      properties: { benchmark_id: "wise-verified", action: "profiles", view: "ranking", event_schema_version: 3, site_id: "aicharts", $process_person_profile: false },
+    });
+    expect(JSON.stringify(payload)).not.toContain("private");
+  });
+
+  test("rejects valid-looking unpublished benchmark IDs and unregistered exploration controls", () => {
+    for (const benchmarkId of ["private-project", "wise-verified.json", "WISE-VERIFIED", "wise-verified?query=private", "__proto__", "", null, 123, {}]) {
+      expect(analyticsEventPayload({ name: "benchmark explored", properties: { benchmark_id: benchmarkId, action: "inspect", view: "ranking" } } as unknown as AnalyticsEvent)).toBeNull();
+    }
+    for (const action of ["search", "hover", "profiles-private", null]) {
+      expect(analyticsEventPayload({ name: "benchmark explored", properties: { benchmark_id: "wise-verified", action, view: "ranking" } } as unknown as AnalyticsEvent)).toBeNull();
+    }
+    expect(analyticsEventPayload({ name: "benchmark explored", properties: { benchmark_id: "wise-verified", action: "view", view: "private-layout" } } as unknown as AnalyticsEvent)).toBeNull();
+  });
+
   test("names newsletter intent truthfully and accepts only the product audience", () => {
     expect(newsletterSignupRequestEvent("aicharts")).toEqual({
       name: "newsletter signup request submitted",

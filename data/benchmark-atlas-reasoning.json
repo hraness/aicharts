@@ -1,0 +1,653 @@
+{
+  "schemaVersion": 1,
+  "arc2": {
+    "source": {
+      "url": "https://arcprize.org/media/data/leaderboard/v2.json",
+      "retrievedAt": "2026-09-09T00:19:36.880Z",
+      "sha256": "b5cb5ec6e8c7547c4f11a4e61e5ed7e0f28a26208f87bd16c83d1703777a2627",
+      "observedAt": "2026-09-04T14:38:06.319Z",
+      "revision": null
+    },
+    "rows": [
+      {
+        "id": "anthropic-claude-fable-5-1-high",
+        "label": "Claude Fable 5.1 (High)",
+        "model": "Claude Fable 5.1",
+        "provider": "Anthropic",
+        "effort": "High",
+        "score": 88.75,
+        "costUsd": null,
+        "sourceUrl": "https://arcprize.org/results/anthropic-claude-fable-5-1"
+      },
+      {
+        "id": "anthropic-claude-fable-5-1-low",
+        "label": "Claude Fable 5.1 (Low)",
+        "model": "Claude Fable 5.1",
+        "provider": "Anthropic",
+        "effort": "Low",
+        "score": 78.33333333333333,
+        "costUsd": null,
+        "sourceUrl": "https://arcprize.org/results/anthropic-claude-fable-5-1"
+      },
+      {
+        "id": "anthropic-claude-fable-5-1-max",
+        "label": "Claude Fable 5.1 (Max)",
+        "model": "Claude Fable 5.1",
+        "provider": "Anthropic",
+        "effort": "Max",
+        "score": 90,
+        "costUsd": null,
+        "sourceUrl": "https://arcprize.org/results/anthropic-claude-fable-5-1"
+      },
+      {
+        "id": "anthropic-claude-fable-5-1-medium",
+        "label": "Claude Fable 5.1 (Medium)",
+        "model": "Claude Fable 5.1",
+        "provider": "Anthropic",
+        "effort": "Medium",
+        "score": 86.25,
+        "costUsd": null,
+        "sourceUrl": "https://arcprize.org/results/anthropic-claude-fable-5-1"
+      },
+      {
+        "id": "anthropic-claude-fable-5-1-xhigh",
+        "label": "Claude Fable 5.1 (XHigh)",
+        "model": "Claude Fable 5.1",
+        "provider": "Anthropic",
+        "effort": "XHigh",
+        "score": 90,
+        "costUsd": null,
+        "sourceUrl": "https://arcprize.org/results/anthropic-claude-fable-5-1"
+      },
+      {
+        "id": "anthropic-claude-opus-5-high",
+        "label": "Claude Opus 5 (High)",
+        "model": "Claude Opus 5",
+        "provider": "Anthropic",
+        "effort": "High",
+        "score": 88.33,
+        "costUsd": null,
+        "sourceUrl": "https://arcprize.org/results/anthropic-claude-opus-5"
+      },
+      {
+        "id": "anthropic-claude-opus-5-max",
+        "label": "Claude Opus 5 (Max)",
+        "model": "Claude Opus 5",
+        "provider": "Anthropic",
+        "effort": "Max",
+        "score": 90.42,
+        "costUsd": null,
+        "sourceUrl": "https://arcprize.org/results/anthropic-claude-opus-5"
+      },
+      {
+        "id": "deepseek-v4-pro-0813-high",
+        "label": "DeepSeek V4 Pro 0813 (High)",
+        "model": "DeepSeek V4 Pro 0813",
+        "provider": "DeepSeek",
+        "effort": "High",
+        "score": 59.72222222222221,
+        "costUsd": null,
+        "sourceUrl": "https://arcprize.org/results/deepseek-v4-pro-0813"
+      },
+      {
+        "id": "deepseek-v4-pro-0813-low",
+        "label": "DeepSeek V4 Pro 0813 (Low)",
+        "model": "DeepSeek V4 Pro 0813",
+        "provider": "DeepSeek",
+        "effort": "Low",
+        "score": 56.25,
+        "costUsd": null,
+        "sourceUrl": "https://arcprize.org/results/deepseek-v4-pro-0813"
+      },
+      {
+        "id": "deepseek-v4-pro-0813-max",
+        "label": "DeepSeek V4 Pro 0813 (Max)",
+        "model": "DeepSeek V4 Pro 0813",
+        "provider": "DeepSeek",
+        "effort": "Max",
+        "score": 61.25000000000001,
+        "costUsd": null,
+        "sourceUrl": "https://arcprize.org/results/deepseek-v4-pro-0813"
+      },
+      {
+        "id": "deepseek-v4-pro-0813-none",
+        "label": "DeepSeek V4 Pro 0813 (None)",
+        "model": "DeepSeek V4 Pro 0813",
+        "provider": "DeepSeek",
+        "effort": "None",
+        "score": 0.8333333333333334,
+        "costUsd": null,
+        "sourceUrl": "https://arcprize.org/results/deepseek-v4-pro-0813"
+      },
+      {
+        "id": "google-gemini-3-7-flash-high",
+        "label": "Gemini 3.7 Flash (High)",
+        "model": "Gemini 3.7 Flash",
+        "provider": "Google",
+        "effort": "High",
+        "score": 84.58333333333333,
+        "costUsd": null,
+        "sourceUrl": "https://arcprize.org/results/google-gemini-3-7-flash"
+      },
+      {
+        "id": "google-gemini-3-7-flash-low",
+        "label": "Gemini 3.7 Flash (Low)",
+        "model": "Gemini 3.7 Flash",
+        "provider": "Google",
+        "effort": "Low",
+        "score": 52.916666666666664,
+        "costUsd": null,
+        "sourceUrl": "https://arcprize.org/results/google-gemini-3-7-flash"
+      },
+      {
+        "id": "google-gemini-3-7-flash-medium",
+        "label": "Gemini 3.7 Flash (Medium)",
+        "model": "Gemini 3.7 Flash",
+        "provider": "Google",
+        "effort": "Medium",
+        "score": 63.74999999999999,
+        "costUsd": null,
+        "sourceUrl": "https://arcprize.org/results/google-gemini-3-7-flash"
+      },
+      {
+        "id": "moonshot-kimi-k3-high",
+        "label": "Kimi K3 (High)",
+        "model": "Kimi K3",
+        "provider": "Moonshot AI",
+        "effort": "High",
+        "score": 55.00000000000001,
+        "costUsd": null,
+        "sourceUrl": "https://arcprize.org/results/moonshot-kimi-k3"
+      },
+      {
+        "id": "moonshot-kimi-k3-low",
+        "label": "Kimi K3 (Low)",
+        "model": "Kimi K3",
+        "provider": "Moonshot AI",
+        "effort": "Low",
+        "score": 12.36111111111111,
+        "costUsd": null,
+        "sourceUrl": "https://arcprize.org/results/moonshot-kimi-k3"
+      },
+      {
+        "id": "moonshot-kimi-k3-max",
+        "label": "Kimi K3 (Max)",
+        "model": "Kimi K3",
+        "provider": "Moonshot AI",
+        "effort": "Max",
+        "score": 60.416666666666664,
+        "costUsd": null,
+        "sourceUrl": "https://arcprize.org/results/moonshot-kimi-k3"
+      },
+      {
+        "id": "openai-gpt-5-6-sol-high",
+        "label": "GPT-5.6 Sol (High)",
+        "model": "GPT-5.6 Sol",
+        "provider": "OpenAI",
+        "effort": "High",
+        "score": 85.42,
+        "costUsd": null,
+        "sourceUrl": "https://arcprize.org/results/openai-gpt-5-6-sol"
+      },
+      {
+        "id": "openai-gpt-5-6-sol-low",
+        "label": "GPT-5.6 Sol (Low)",
+        "model": "GPT-5.6 Sol",
+        "provider": "OpenAI",
+        "effort": "Low",
+        "score": 42.5,
+        "costUsd": null,
+        "sourceUrl": "https://arcprize.org/results/openai-gpt-5-6-sol"
+      },
+      {
+        "id": "openai-gpt-5-6-sol-max",
+        "label": "GPT-5.6 Sol (Max)",
+        "model": "GPT-5.6 Sol",
+        "provider": "OpenAI",
+        "effort": "Max",
+        "score": 92.5,
+        "costUsd": null,
+        "sourceUrl": "https://arcprize.org/results/openai-gpt-5-6-sol"
+      },
+      {
+        "id": "openai-gpt-5-6-sol-medium",
+        "label": "GPT-5.6 Sol (Medium)",
+        "model": "GPT-5.6 Sol",
+        "provider": "OpenAI",
+        "effort": "Medium",
+        "score": 67.08,
+        "costUsd": null,
+        "sourceUrl": "https://arcprize.org/results/openai-gpt-5-6-sol"
+      },
+      {
+        "id": "openai-gpt-5-6-sol-xhigh",
+        "label": "GPT-5.6 Sol (XHigh)",
+        "model": "GPT-5.6 Sol",
+        "provider": "OpenAI",
+        "effort": "XHigh",
+        "score": 90,
+        "costUsd": null,
+        "sourceUrl": "https://arcprize.org/results/openai-gpt-5-6-sol"
+      },
+      {
+        "id": "openai-gpt-6-astra-high",
+        "label": "GPT-6 Astra (High)",
+        "model": "GPT-6 Astra",
+        "provider": "OpenAI",
+        "effort": "High",
+        "score": 92.08333333333333,
+        "costUsd": null,
+        "sourceUrl": "https://arcprize.org/results/openai-gpt-6-astra"
+      },
+      {
+        "id": "openai-gpt-6-astra-low",
+        "label": "GPT-6 Astra (Low)",
+        "model": "GPT-6 Astra",
+        "provider": "OpenAI",
+        "effort": "Low",
+        "score": 85.41666666666666,
+        "costUsd": null,
+        "sourceUrl": "https://arcprize.org/results/openai-gpt-6-astra"
+      },
+      {
+        "id": "openai-gpt-6-astra-max",
+        "label": "GPT-6 Astra (Max)",
+        "model": "GPT-6 Astra",
+        "provider": "OpenAI",
+        "effort": "Max",
+        "score": 95,
+        "costUsd": null,
+        "sourceUrl": "https://arcprize.org/results/openai-gpt-6-astra"
+      },
+      {
+        "id": "openai-gpt-6-astra-medium",
+        "label": "GPT-6 Astra (Medium)",
+        "model": "GPT-6 Astra",
+        "provider": "OpenAI",
+        "effort": "Medium",
+        "score": 92.08333333333333,
+        "costUsd": null,
+        "sourceUrl": "https://arcprize.org/results/openai-gpt-6-astra"
+      },
+      {
+        "id": "openai-gpt-6-astra-none",
+        "label": "GPT-6 Astra (None)",
+        "model": "GPT-6 Astra",
+        "provider": "OpenAI",
+        "effort": "None",
+        "score": 59.583333333333336,
+        "costUsd": null,
+        "sourceUrl": "https://arcprize.org/results/openai-gpt-6-astra"
+      },
+      {
+        "id": "openai-gpt-6-astra-xhigh",
+        "label": "GPT-6 Astra (XHigh)",
+        "model": "GPT-6 Astra",
+        "provider": "OpenAI",
+        "effort": "XHigh",
+        "score": 93.33333333333333,
+        "costUsd": null,
+        "sourceUrl": "https://arcprize.org/results/openai-gpt-6-astra"
+      }
+    ]
+  },
+  "arc3Standard": {
+    "source": {
+      "url": "https://arcprize.org/media/data/leaderboard/v3.json",
+      "retrievedAt": "2026-09-09T00:19:36.880Z",
+      "sha256": "d743d7a731ba6b9f102d3624d5fe82011630b90da4200ceb34bd56cf2b221e1c",
+      "observedAt": "2026-09-04T14:38:06.320Z",
+      "revision": null
+    },
+    "rows": [
+      {
+        "id": "anthropic-claude-opus-5-high",
+        "label": "Claude Opus 5 (High)",
+        "model": "Claude Opus 5",
+        "provider": "Anthropic",
+        "effort": "High",
+        "score": 30.159999999999997,
+        "costUsd": 20657.37,
+        "sourceUrl": "https://arcprize.org/results/anthropic-claude-opus-5"
+      },
+      {
+        "id": "openai-gpt-5-6-sol-high",
+        "label": "GPT-5.6 Sol (High)",
+        "model": "GPT-5.6 Sol",
+        "provider": "OpenAI",
+        "effort": "High",
+        "score": 2.15,
+        "costUsd": 15176.07,
+        "sourceUrl": "https://arcprize.org/results/openai-gpt-5-6-sol"
+      },
+      {
+        "id": "openai-gpt-5-6-sol-low",
+        "label": "GPT-5.6 Sol (Low)",
+        "model": "GPT-5.6 Sol",
+        "provider": "OpenAI",
+        "effort": "Low",
+        "score": 0.33,
+        "costUsd": 12805.6,
+        "sourceUrl": "https://arcprize.org/results/openai-gpt-5-6-sol"
+      },
+      {
+        "id": "openai-gpt-5-6-sol-max",
+        "label": "GPT-5.6 Sol (Max)",
+        "model": "GPT-5.6 Sol",
+        "provider": "OpenAI",
+        "effort": "Max",
+        "score": 7.779999999999999,
+        "costUsd": 25064.11,
+        "sourceUrl": "https://arcprize.org/results/openai-gpt-5-6-sol"
+      },
+      {
+        "id": "openai-gpt-5-6-sol-medium",
+        "label": "GPT-5.6 Sol (Medium)",
+        "model": "GPT-5.6 Sol",
+        "provider": "OpenAI",
+        "effort": "Medium",
+        "score": 1.0699999999999998,
+        "costUsd": 12971.17,
+        "sourceUrl": "https://arcprize.org/results/openai-gpt-5-6-sol"
+      },
+      {
+        "id": "openai-gpt-5-6-sol-xhigh",
+        "label": "GPT-5.6 Sol (XHigh)",
+        "model": "GPT-5.6 Sol",
+        "provider": "OpenAI",
+        "effort": "XHigh",
+        "score": 6.99,
+        "costUsd": 19216.38,
+        "sourceUrl": "https://arcprize.org/results/openai-gpt-5-6-sol"
+      },
+      {
+        "id": "openai-gpt-6-astra-high",
+        "label": "GPT-6 Astra (High)",
+        "model": "GPT-6 Astra",
+        "provider": "OpenAI",
+        "effort": "High",
+        "score": 54.81905163612231,
+        "costUsd": 40704.722830000006,
+        "sourceUrl": "https://arcprize.org/results/openai-gpt-6-astra"
+      },
+      {
+        "id": "openai-gpt-6-astra-low",
+        "label": "GPT-6 Astra (Low)",
+        "model": "GPT-6 Astra",
+        "provider": "OpenAI",
+        "effort": "Low",
+        "score": 17.452190401133805,
+        "costUsd": 38166.47030000001,
+        "sourceUrl": "https://arcprize.org/results/openai-gpt-6-astra"
+      },
+      {
+        "id": "openai-gpt-6-astra-max",
+        "label": "GPT-6 Astra (Max)",
+        "model": "GPT-6 Astra",
+        "provider": "OpenAI",
+        "effort": "Max",
+        "score": 62.71280210060628,
+        "costUsd": 26097.501720000007,
+        "sourceUrl": "https://arcprize.org/results/openai-gpt-6-astra"
+      },
+      {
+        "id": "openai-gpt-6-astra-medium",
+        "label": "GPT-6 Astra (Medium)",
+        "model": "GPT-6 Astra",
+        "provider": "OpenAI",
+        "effort": "Medium",
+        "score": 38.58757449733784,
+        "costUsd": 48090.34598999999,
+        "sourceUrl": "https://arcprize.org/results/openai-gpt-6-astra"
+      },
+      {
+        "id": "openai-gpt-6-astra-none",
+        "label": "GPT-6 Astra (None)",
+        "model": "GPT-6 Astra",
+        "provider": "OpenAI",
+        "effort": "None",
+        "score": 35.177880317424,
+        "costUsd": 49791.11317000001,
+        "sourceUrl": "https://arcprize.org/results/openai-gpt-6-astra"
+      },
+      {
+        "id": "openai-gpt-6-astra-xhigh",
+        "label": "GPT-6 Astra (XHigh)",
+        "model": "GPT-6 Astra",
+        "provider": "OpenAI",
+        "effort": "XHigh",
+        "score": 59.342954091460555,
+        "costUsd": 37317.38768,
+        "sourceUrl": "https://arcprize.org/results/openai-gpt-6-astra"
+      }
+    ]
+  },
+  "arc3Adapter": {
+    "source": {
+      "url": "https://arcprize.org/media/data/leaderboard/v3.json",
+      "retrievedAt": "2026-09-09T00:19:36.880Z",
+      "sha256": "d743d7a731ba6b9f102d3624d5fe82011630b90da4200ceb34bd56cf2b221e1c",
+      "observedAt": "2026-09-04T14:38:06.320Z",
+      "revision": null
+    },
+    "rows": [
+      {
+        "id": "openai-gpt-6-astra-high-provider-adapter",
+        "label": "GPT-6 Astra - Provider Adapter (High)",
+        "model": "GPT-6 Astra",
+        "provider": "OpenAI",
+        "effort": "High",
+        "score": 99.94571232125699,
+        "costUsd": 18816.63138,
+        "sourceUrl": "https://arcprize.org/results/openai-gpt-6-astra"
+      },
+      {
+        "id": "openai-gpt-6-astra-low-provider-adapter",
+        "label": "GPT-6 Astra - Provider Adapter (Low)",
+        "model": "GPT-6 Astra",
+        "provider": "OpenAI",
+        "effort": "Low",
+        "score": 98.02838165829648,
+        "costUsd": 21297.922310000005,
+        "sourceUrl": "https://arcprize.org/results/openai-gpt-6-astra"
+      },
+      {
+        "id": "openai-gpt-6-astra-max-provider-adapter",
+        "label": "GPT-6 Astra - Provider Adapter (Max)",
+        "model": "GPT-6 Astra",
+        "provider": "OpenAI",
+        "effort": "Max",
+        "score": 98.55074288592294,
+        "costUsd": 17331.95327,
+        "sourceUrl": "https://arcprize.org/results/openai-gpt-6-astra"
+      },
+      {
+        "id": "openai-gpt-6-astra-medium-provider-adapter",
+        "label": "GPT-6 Astra - Provider Adapter (Medium)",
+        "model": "GPT-6 Astra",
+        "provider": "OpenAI",
+        "effort": "Medium",
+        "score": 98.43861309255745,
+        "costUsd": 19284.776630000004,
+        "sourceUrl": "https://arcprize.org/results/openai-gpt-6-astra"
+      },
+      {
+        "id": "openai-gpt-6-astra-none-provider-adapter",
+        "label": "GPT-6 Astra - Provider Adapter (None)",
+        "model": "GPT-6 Astra",
+        "provider": "OpenAI",
+        "effort": "None",
+        "score": 96.72021831785531,
+        "costUsd": 23456.663940000002,
+        "sourceUrl": "https://arcprize.org/results/openai-gpt-6-astra"
+      },
+      {
+        "id": "openai-gpt-6-astra-xhigh-provider-adapter",
+        "label": "GPT-6 Astra - Provider Adapter (XHigh)",
+        "model": "GPT-6 Astra",
+        "provider": "OpenAI",
+        "effort": "XHigh",
+        "score": 98.44155844155843,
+        "costUsd": 18147.191119999996,
+        "sourceUrl": "https://arcprize.org/results/openai-gpt-6-astra"
+      }
+    ]
+  },
+  "deepResearch": {
+    "source": {
+      "url": "https://agentresearchlab.com/benchmarks/deepresearch-bench-ii/index.html",
+      "retrievedAt": "2026-09-09T00:19:36.880Z",
+      "sha256": "ba0ccb0a89ff6c8f5d3c97861b072cdb8459c27fdaef2db90e725537f2869562",
+      "observedAt": null,
+      "revision": null
+    },
+    "rows": [
+      {
+        "id": "ai21-deepresearch",
+        "label": "AI21-DeepResearch",
+        "provider": "AI21 Labs",
+        "recall": 60.35,
+        "analysis": 71,
+        "presentation": 92.89,
+        "total": 64.38
+      },
+      {
+        "id": "dalpha-deepresearch",
+        "label": "Dalpha DeepResearch",
+        "provider": "Dalpha",
+        "recall": 58.62,
+        "analysis": 61.36,
+        "presentation": 93.41,
+        "total": 61.01
+      },
+      {
+        "id": "gemini-3-pro-deep-research",
+        "label": "Gemini-3-Pro Deep Research",
+        "provider": "Google",
+        "recall": 39.09,
+        "analysis": 48.94,
+        "presentation": 91.85,
+        "total": 44.6
+      },
+      {
+        "id": "iflow-researcher",
+        "label": "iFlow-Researcher",
+        "provider": "NJU&Alibaba",
+        "recall": 54.99,
+        "analysis": 69.54,
+        "presentation": 92.56,
+        "total": 59.91
+      },
+      {
+        "id": "nvidia-aiq-nemotron-3-opus-4-6",
+        "label": "nvidia-aiq (Nemotron 3, Opus 4.6)",
+        "provider": "NVIDIA",
+        "recall": 49.23,
+        "analysis": 61.55,
+        "presentation": 93.15,
+        "total": 54.5
+      },
+      {
+        "id": "openai-gpt-o3-deep-research",
+        "label": "OpenAI-GPT-o3 Deep Research",
+        "provider": "OpenAI",
+        "recall": 39.98,
+        "analysis": 49.85,
+        "presentation": 89.16,
+        "total": 45.4
+      },
+      {
+        "id": "perplexity-research",
+        "label": "Perplexity Research",
+        "provider": "Perplexity AI",
+        "recall": 33.05,
+        "analysis": 44.47,
+        "presentation": 79.34,
+        "total": 38.58
+      },
+      {
+        "id": "tongyi-deep-research",
+        "label": "Tongyi Deep Research",
+        "provider": "Alibaba",
+        "recall": 22.95,
+        "analysis": 35.89,
+        "presentation": 86.13,
+        "total": 29.89
+      },
+      {
+        "id": "xiaoyi-deepresearch-6-0",
+        "label": "Xiaoyi DeepResearch 6.0",
+        "provider": "Huawei",
+        "recall": 53.05,
+        "analysis": 69.9,
+        "presentation": 91.12,
+        "total": 58.72
+      }
+    ]
+  },
+  "memory": {
+    "source": {
+      "url": "https://xiaowu0162.github.io/longmemeval-v2/",
+      "retrievedAt": "2026-09-09T00:19:36.880Z",
+      "sha256": "e28f0a57ce1d15df91a29027baf5ed4a39f8918ae569eaedc388fca027234011",
+      "observedAt": null,
+      "revision": "Paper baselines; evaluation code 2cc8c540bdb87fe6761629b585e727e1c4704520"
+    },
+    "rows": [
+      {
+        "id": "agentrunbook-c",
+        "label": "AgentRunbook-C",
+        "family": "Coding agent",
+        "smallAccuracy": 74.9,
+        "smallLatencySeconds": 108.3,
+        "mediumAccuracy": 70.1,
+        "mediumLatencySeconds": 139.9
+      },
+      {
+        "id": "agentrunbook-r",
+        "label": "AgentRunbook-R",
+        "family": "RAG",
+        "smallAccuracy": 58.6,
+        "smallLatencySeconds": 26.9,
+        "mediumAccuracy": 57,
+        "mediumLatencySeconds": 25.8
+      },
+      {
+        "id": "codex",
+        "label": "Codex",
+        "family": "Coding agent",
+        "smallAccuracy": 69.9,
+        "smallLatencySeconds": 177.2,
+        "mediumAccuracy": 68.7,
+        "mediumLatencySeconds": 185.8
+      },
+      {
+        "id": "no-retrieval",
+        "label": "No retrieval",
+        "family": "Reader only",
+        "smallAccuracy": 1.3,
+        "smallLatencySeconds": 0,
+        "mediumAccuracy": 1.3,
+        "mediumLatencySeconds": 0
+      },
+      {
+        "id": "rag-query-to-slice",
+        "label": "RAG: query to slice",
+        "family": "RAG",
+        "smallAccuracy": 42.8,
+        "smallLatencySeconds": 0.1,
+        "mediumAccuracy": 38.1,
+        "mediumLatencySeconds": 0.1
+      },
+      {
+        "id": "rag-query-to-slice-notes",
+        "label": "RAG: query to slice + notes",
+        "family": "RAG",
+        "smallAccuracy": 51,
+        "smallLatencySeconds": 0.2,
+        "mediumAccuracy": 45.9,
+        "mediumLatencySeconds": 0.3
+      }
+    ]
+  }
+}

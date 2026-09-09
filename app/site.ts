@@ -1,5 +1,5 @@
 export const site = {
-  description: "Compare AI models and agents with sourced benchmark charts across performance, cost, speed, and token use. Explore trade-offs, trends, and analysis.",
+  description: "Explore AI benchmark charts for coding, reasoning, research, memory, images, video, and world models. Compare published results, costs, and configurations.",
   domain: "aicharts.io",
   emoji: "◉",
   name: "AI Charts",
@@ -21,9 +21,9 @@ export const searchSite = {
   title: "AI Model & Agent Comparison Charts | AI Charts",
 } as const;
 
-export const homeHeading = "Compare AI models on the numbers that matter";
+export const homeHeading = "Find the right AI for the task";
 export const homeLede =
-  "Benchmark charts for models and coding agents that plot capability against cost, tokens, and speed. Every chart links to the published source it was read from and the date it was retrieved.";
+  "Compare AI for coding, research, memory, and generative media. See the results and what they mean.";
 export const modelCardsHeading = "Every model, on a card";
 export const modelCardsLede =
   "Shareable benchmark cards built from the same records as the charts, with the model, harness, and reasoning profile attached.";

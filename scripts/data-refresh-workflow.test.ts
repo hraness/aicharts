@@ -167,6 +167,8 @@ async function executeWorkflowShell(
       encoding: "utf8",
       env: {
         ...process.env,
+        ATLAS_MULTIMODAL_OUTCOME: "success",
+        ATLAS_REASONING_OUTCOME: "success",
         BENCHMARK_OUTCOME: "skipped",
         CHECKOUT_OUTCOME: "success",
         DEEP_SWE_OUTCOME: "success",
@@ -260,6 +262,8 @@ describe("scheduled model-data refresh", () => {
     expect(String(step("deep_swe").if)).toContain("env.RUN_BENCHMARK_REFRESH == 'true'");
     expect(String(step("terminal_bench").if)).toContain("env.RUN_BENCHMARK_REFRESH == 'true'");
     expect(String(step("terminal_bench_science").if)).toContain("env.RUN_BENCHMARK_REFRESH == 'true'");
+    expect(String(step("atlas_reasoning").if)).toContain("env.RUN_BENCHMARK_REFRESH == 'true'");
+    expect(String(step("atlas_multimodal").if)).toContain("env.RUN_BENCHMARK_REFRESH == 'true'");
     expect(String(step("intelligence").if)).toContain("env.RUN_BENCHMARK_REFRESH == 'true'");
     expect(String(step("release_reconcile").if)).toContain("env.RUN_RELEASE_REFRESH == 'true'");
     expect(String(step("release_reconcile").if)).toContain("env.RUN_BENCHMARK_REFRESH == 'true'");
@@ -310,6 +314,8 @@ describe("scheduled model-data refresh", () => {
       "continue-on-error": true,
       run: "bun run aa-intelligence:refresh",
     });
+    expect(step("atlas_reasoning")).toMatchObject({ "continue-on-error": true, run: "bun run atlas:reasoning:refresh" });
+    expect(step("atlas_multimodal")).toMatchObject({ "continue-on-error": true, run: "bun run atlas:multimodal:refresh" });
     expect(String(step("release_reconcile").if)).toContain("steps.dependencies.outcome == 'success'");
     expect(steps.indexOf(step("first_party_releases"))).toBeLessThan(
       steps.indexOf(step("first_party_review")),
@@ -325,10 +331,12 @@ describe("scheduled model-data refresh", () => {
     expect(steps.indexOf(step("release_reconcile"))).toBeLessThan(steps.indexOf(step("deep_swe")));
   });
 
-  test("publishes only the seven owned snapshots through the protected-branch contract", () => {
+  test("publishes only the nine owned snapshots through the protected-branch contract", () => {
     const publish = String(step("publish").run);
     expect(refresh["timeout-minutes"]).toBe(45);
     expect(refresh.env).toMatchObject({
+      ATLAS_MULTIMODAL_PATH: "data/benchmark-atlas-multimodal.json",
+      ATLAS_REASONING_PATH: "data/benchmark-atlas-reasoning.json",
       BENCHMARK_PATH: "data/coding-agents.json",
       DEEP_SWE_PATH: "data/deep-swe-evidence.json",
       FIRST_PARTY_RELEASE_PATH: "data/first-party-release-radar.json",
@@ -346,6 +354,8 @@ describe("scheduled model-data refresh", () => {
     expect(String(step("snapshot").run)).toContain('"$RELEASE_RADAR_PATH"');
     expect(String(step("snapshot").run)).toContain('"$TERMINAL_BENCH_PATH"');
     expect(String(step("snapshot").run)).toContain('"$TERMINAL_BENCH_SCIENCE_PATH"');
+    expect(String(step("snapshot").run)).toContain('"$ATLAS_REASONING_PATH"');
+    expect(String(step("snapshot").run)).toContain('"$ATLAS_MULTIMODAL_PATH"');
     expect(step("validation")).toMatchObject({
       "continue-on-error": true,
       if: "steps.snapshot.outputs.changed == 'true'",
@@ -356,7 +366,7 @@ describe("scheduled model-data refresh", () => {
       if: "steps.validation.outcome == 'success' && steps.snapshot.outputs.changed == 'true'",
     });
     expect(publish).toContain(
-      'git add -- "$BENCHMARK_PATH" "$DEEP_SWE_PATH" "$FIRST_PARTY_RELEASE_PATH" "$INTELLIGENCE_PATH" "$RELEASE_RADAR_PATH" "$TERMINAL_BENCH_PATH" "$TERMINAL_BENCH_SCIENCE_PATH"',
+      'git add -- "$BENCHMARK_PATH" "$DEEP_SWE_PATH" "$FIRST_PARTY_RELEASE_PATH" "$INTELLIGENCE_PATH" "$RELEASE_RADAR_PATH" "$TERMINAL_BENCH_PATH" "$TERMINAL_BENCH_SCIENCE_PATH" "$ATLAS_REASONING_PATH" "$ATLAS_MULTIMODAL_PATH"',
     );
     expect(publish).toContain('"HEAD:refs/heads/${REFRESH_BRANCH}"');
     expect(publish).toContain('gh pr create --base main');
@@ -383,6 +393,8 @@ describe("scheduled model-data refresh", () => {
     expect(ciWorkflow.on).toHaveProperty("workflow_dispatch");
     expect(ciWorkflow.on?.pull_request?.["paths-ignore"]).toEqual([
       "data/artificial-analysis-intelligence.json",
+      "data/benchmark-atlas-multimodal.json",
+      "data/benchmark-atlas-reasoning.json",
       "data/coding-agents.json",
       "data/deep-swe-evidence.json",
       "data/first-party-release-radar.json",
@@ -437,6 +449,8 @@ describe("scheduled model-data refresh", () => {
     expect(String(health?.run)).toContain("AA Intelligence efficiency");
     expect(String(health?.run)).toContain("$INTELLIGENCE_OUTCOME");
     expect(String(health?.run)).toContain("$TERMINAL_BENCH_SCIENCE_OUTCOME");
+    expect(String(health?.run)).toContain("$ATLAS_REASONING_OUTCOME");
+    expect(String(health?.run)).toContain("$ATLAS_MULTIMODAL_OUTCOME");
     expect(String(health?.run)).toContain(
       '[[ "$RUN_AAI_REFRESH" == "true" && "$BENCHMARK_OUTCOME" != "success" ]]',
     );
@@ -515,6 +529,21 @@ describe("scheduled model-data refresh", () => {
     expect(result.stdout).toContain("AA Intelligence efficiency=failure");
   });
 
+  test("persists atlas failures independently while retaining last-known-good data", async () => {
+    const health = steps.find(candidate => candidate.name === "Report health and manage the durable alert");
+    for (const [outcome, label] of [["ATLAS_REASONING_OUTCOME", "Reasoning atlas"], ["ATLAS_MULTIMODAL_OUTCOME", "Multimodal atlas"]]) {
+      const result = await executeWorkflowShell(String(health?.run), {
+        candidates: [], issueBody: "", extraEnvironment: { [outcome]: "failure", REFRESH_MODE: "benchmarks", FAKE_HEALTH_ISSUE_NUMBER: "109" },
+      });
+      expect(result.status).toBe(1);
+      expect(result.stderr).toBe("");
+      expect(result.log).toContain(`${label}: \`failure\``);
+      expect(result.log).toContain("failed sources remain on their last-known-good snapshots");
+      expect(result.stdout).toContain(`${label}=failure`);
+      expect(result.log).not.toContain("ACTION:close");
+    }
+  });
+
   test("executes full no-change recovery without claiming skipped validation passed", async () => {
     const health = steps.find(candidate => candidate.name === "Report health and manage the durable alert");
     const result = await executeWorkflowShell(String(health?.run), {
@@ -554,6 +583,8 @@ describe("scheduled model-data refresh", () => {
         candidates: [candidate],
         extraEnvironment: {
           DEEP_SWE_OUTCOME: "skipped",
+          ATLAS_REASONING_OUTCOME: "skipped",
+          ATLAS_MULTIMODAL_OUTCOME: "skipped",
           FAKE_HEALTH_ISSUE_NUMBER: "109",
           REFRESH_MODE: "releases",
           INTELLIGENCE_OUTCOME: "skipped",
