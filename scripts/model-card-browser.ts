@@ -200,12 +200,37 @@ async function verifyBenchmarkAtlas(browser: Browser, baseUrl: string): Promise<
     invariant(await page.locator("#advanced-charts").count() === 0, "Primary Pareto charts must not be hidden as advanced content.");
     const intelligence = page.locator(".intelligence-efficiency");
     invariant((await intelligence.textContent())?.includes("Intelligence Index v4.3"), "The leading Pareto chart must identify the admitted current index version.");
+    invariant(await intelligence.locator('[data-intelligence-metric="costUsdPerTask"]').getAttribute("aria-pressed") === "true", "Home must start with interpretable task cost.");
+    const modelPicker = intelligence.getByRole("combobox", { name: "Choose a model configuration", exact: true });
+    const originalModel = await modelPicker.inputValue();
+    const choices = await modelPicker.locator("option").evaluateAll(options => options.map(option => ({
+      id: (option as HTMLOptionElement).value,
+      label: option.textContent ?? "",
+    })));
+    invariant(choices.length === await intelligence.locator(".intelligence-efficiency__point-control").count(), "The named picker must include every plotted configuration.");
+    const alternateModel = choices.find(choice => choice.id !== originalModel);
+    invariant(alternateModel !== undefined, "The model picker needs an alternative configuration.");
+    await modelPicker.selectOption(alternateModel.id);
+    const pickedTitle = await intelligence.locator(".intelligence-efficiency__inspector h3").textContent();
+    invariant(pickedTitle !== null && alternateModel.label.endsWith(` · ${pickedTitle}`), "The named picker did not update the model inspector.");
+    invariant(await intelligence.locator('.intelligence-efficiency__point-control[tabindex="0"]').getAttribute("data-point-id") === alternateModel.id, "The named picker and chart keyboard target diverged.");
+    await page.setViewportSize({ width: 320, height: 900 });
+    await settle(page);
+    invariant(await modelPicker.isVisible(), "The model picker must remain available on narrow screens.");
+    invariant(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), "The model picker makes the homepage overflow at 320px.");
+    const pickerBounds = await modelPicker.boundingBox();
+    invariant(pickerBounds !== null && pickerBounds.height >= 44, "The model picker needs a touch-friendly target.");
+    await intelligence.locator('[data-intelligence-metric="outputTokensPerTask"]').click();
+    invariant(await modelPicker.inputValue() === alternateModel.id, "Changing the metric lost the named selection on mobile.");
+    invariant(await intelligence.locator(".intelligence-efficiency__inspector h3").textContent() === pickedTitle, "Changing the metric lost the selected model inspector on mobile.");
+    await intelligence.locator('[data-intelligence-metric="costUsdPerTask"]').click();
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await settle(page);
     const selectedPoint = intelligence.locator('.intelligence-efficiency__point-control[tabindex="0"]');
     await selectedPoint.focus();
     await selectedPoint.press("ArrowRight");
     await intelligence.locator('.intelligence-efficiency__point-control[tabindex="0"]').press("Enter");
     const selectedConfiguration = await intelligence.locator(".intelligence-efficiency__inspector h3").textContent();
-    invariant(await intelligence.locator('[data-intelligence-metric="costUsdPerTask"]').getAttribute("aria-pressed") === "true", "Home must start with interpretable task cost.");
     await intelligence.locator('[data-intelligence-metric="outputTokensPerTask"]').click();
     invariant(await intelligence.locator(".intelligence-efficiency__inspector h3").textContent() === selectedConfiguration, "Switching Pareto axes must preserve the selected configuration.");
     invariant(await pareto.isVisible(), "The Pareto curve disappeared after changing axes.");

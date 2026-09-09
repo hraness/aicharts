@@ -408,6 +408,10 @@ export function IntelligenceEfficiencyExplorer({
   const titleId = useId();
   const descriptionId = useId();
   const inspectorTitleId = useId();
+  const modelOptions = useMemo(() => data.toSorted((left, right) =>
+    left.creatorName.localeCompare(right.creatorName)
+      || left.name.localeCompare(right.name)
+      || left.id.localeCompare(right.id)), [data]);
 
   useEffect(() => {
     const shell = chartShellRef.current;
@@ -552,6 +556,16 @@ export function IntelligenceEfficiencyExplorer({
             <span aria-hidden="true">↖ </span>
             Higher score, {metric === "costUsdPerTask" ? "lower cost" : "fewer tokens"}
           </p>
+          <label className="intelligence-efficiency__model-picker">
+            Choose a model configuration
+            <select value={pinnedId} onChange={event => {
+              setHoveredId(null);
+              setFocusedId(null);
+              pinPoint(event.target.value);
+            }}>
+              {modelOptions.map(datum => <option key={datum.id} value={datum.id}>{datum.creatorName} · {datum.name}</option>)}
+            </select>
+          </label>
         </figcaption>
 
         <div className="intelligence-efficiency__plot" ref={chartShellRef}>
@@ -679,7 +693,7 @@ export function IntelligenceEfficiencyExplorer({
         <div className="intelligence-efficiency__chart-key">
           <span><i data-symbol="context" />Model configuration</span>
           <span><i data-symbol="frontier" />Pareto frontier · best score at each budget</span>
-          <span className="intelligence-efficiency__interaction-hint">Select a point for details</span>
+          <span className="intelligence-efficiency__interaction-hint">Select a point or choose a model above</span>
         </div>
       </figure>
 
