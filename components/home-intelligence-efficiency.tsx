@@ -90,8 +90,7 @@ export function HomeIntelligenceEfficiency({
           Artificial Analysis Intelligence Index v{snapshot.benchmark.version}
         </h2>
         <p className="intelligence-efficiency__dek">
-          Compare broad model capability with the output tokens and dollars used to produce it.
-          Every point is a published model configuration from one checked snapshot.
+          Each point is a published model configuration. Higher and farther left is better.
         </p>
       </header>
 

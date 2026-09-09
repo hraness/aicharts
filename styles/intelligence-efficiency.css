@@ -234,9 +234,9 @@
 }
 
 .intelligence-efficiency__labels line {
-  stroke: var(--line);
+  stroke: var(--muted);
   stroke-dasharray: 1.5 2;
-  stroke-width: .75;
+  stroke-width: 1;
   vector-effect: non-scaling-stroke;
 }
 

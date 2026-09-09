@@ -222,6 +222,7 @@ describe("homepage Intelligence efficiency view", () => {
     expect(css).not.toContain("overflow-x: auto");
     expect(css).not.toContain("min-width: 560px");
     expect(css).toContain(".intelligence-efficiency__point-control:focus-visible");
+    expect(css).toMatch(/\.intelligence-efficiency__labels line\s*\{[^}]*stroke:\s*var\(--muted\);[^}]*stroke-width:\s*1;/su);
   });
 
   test("keys the frontier with the same connecting line and open-circle glyph as the plot", async () => {
