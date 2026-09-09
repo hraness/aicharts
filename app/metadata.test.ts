@@ -4,6 +4,8 @@ import { INDEXABLE_ROBOTS, NOINDEX_ROBOTS } from "@hraness/web-discovery";
 import { metadata as layoutMetadata } from "./layout";
 import { metadata as notFoundMetadata } from "./not-found";
 import { metadata as homeMetadata } from "./page";
+import { metadata as codingMetadata } from "./coding/page";
+import { metadata as benchmarksMetadata } from "./benchmarks/page";
 import { homeHeading, notFoundSearchSite, searchSite, site } from "./site";
 
 describe("page metadata ownership", () => {
@@ -35,6 +37,23 @@ describe("page metadata ownership", () => {
       twitter: { card: "summary_large_image", title: searchSite.title },
     });
     expect(homeHeading).toBe("Compare AI models");
+  });
+
+  test("gives focused comparison workspaces distinct indexable identities", () => {
+    for (const [metadata, path, title] of [
+      [codingMetadata, "/coding", "Coding agent comparisons | AI Charts"],
+      [benchmarksMetadata, "/benchmarks", "AI benchmark explorer | AI Charts"],
+    ] as const) {
+      expect(metadata).toMatchObject({
+        title,
+        alternates: { canonical: `https://aicharts.io${path}` },
+        robots: INDEXABLE_ROBOTS,
+        openGraph: { type: "website", url: `https://aicharts.io${path}`, title },
+        twitter: { card: "summary_large_image", title },
+      });
+      expect(metadata.description).toBeString();
+      expect(metadata.description).not.toBe(homeMetadata.description);
+    }
   });
 
   test("gives 404 a distinct title, noindex, and no homepage canonical", () => {

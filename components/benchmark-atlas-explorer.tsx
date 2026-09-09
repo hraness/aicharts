@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useMemo, useState, useSyncExternalStore, type CSSProperties } from "react";
+import { useId, useMemo, useRef, useState, useSyncExternalStore, type CSSProperties } from "react";
 import { captureAnalyticsEvent } from "@/lib/analytics";
 import { atlasDatasetSummary, selectAtlasEntries, selectAtlasModelProfiles, sortAtlasPoints, type BenchmarkAtlasDataset, type BenchmarkAtlasEntry, type BenchmarkAtlasPoint } from "@/lib/benchmark-atlas";
 import { ATLAS_CATEGORY_LABELS, atlasViewSearch, formatAtlasCost, formatAtlasScore, parseAtlasView, type AtlasViewState } from "@/lib/benchmark-atlas-view";
@@ -16,6 +16,13 @@ function subscribe(callback: () => void) {
 function sourceDate(value: string): string {
   return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" }).format(new Date(value));
 }
+function coverageLabel(coverage: BenchmarkAtlasEntry["coverage"]): string {
+  return coverage === "charted" ? "Chart" : coverage === "watchlist" ? "Emerging" : "Guide";
+}
+
+export function benchmarkAtlasShareUrl(origin: string, state: AtlasViewState): string {
+  return `${origin}/benchmarks${atlasViewSearch(state)}#explore`;
+}
 
 function PointInspector({ point, dataset, compareIds, onCompare }: Readonly<{ point: BenchmarkAtlasPoint; dataset: BenchmarkAtlasDataset; compareIds: readonly string[]; onCompare: (id: string) => void }>) {
   const compared = compareIds.includes(point.id);
@@ -29,10 +36,10 @@ function PointInspector({ point, dataset, compareIds, onCompare }: Readonly<{ po
       {point.effort && <div><dt>Effort</dt><dd>{point.effort}</dd></div>}
       {dataset.costLabel && <div><dt>{dataset.costLabel}</dt><dd>{formatAtlasCost(point.costUsd)}</dd></div>}
       {point.uncertainty && <div><dt>{point.uncertainty.label}</dt><dd>{formatAtlasScore(point.uncertainty.lower, dataset.score.unit)}–{formatAtlasScore(point.uncertainty.upper, dataset.score.unit)}</dd></div>}
-      {point.details?.map((detail, index) => <div key={`${detail.label}-${index}`}><dt>{detail.label}</dt><dd>{detail.value}</dd></div>)}
     </dl>
     <button className="atlas-button" disabled={!compared && compareIds.length >= 3} onClick={() => onCompare(point.id)} type="button">{compared ? "Remove from comparison" : "Add to comparison"}</button>
     <a className="atlas-source-link" data-analytics-destination-id={`source:${dataset.benchmarkId}`} data-analytics-destination-kind="source" href={point.sourceUrl} target="_blank" rel="noreferrer">View this result at source ↗</a>
+    {!!point.details?.length && <details className="atlas-inspector__details"><summary>Configuration details</summary><dl>{point.details.map((detail, index) => <div key={`${detail.label}-${index}`}><dt>{detail.label}</dt><dd>{detail.value}</dd></div>)}</dl></details>}
   </aside>;
 }
 
@@ -133,15 +140,25 @@ export function BenchmarkAtlasExplorer({ entries, datasets }: Readonly<{ entries
   const state = useMemo(() => parseAtlasView(search, entries, datasets), [search, entries, datasets]);
   const [query, setQuery] = useState("");
   const [chartOnly, setChartOnly] = useState(false);
+  const [showAllBenchmarks, setShowAllBenchmarks] = useState(false);
   const [shareStatus, setShareStatus] = useState("");
+  const libraryRef = useRef<HTMLDetailsElement>(null);
+  const benchmarkSelectRef = useRef<HTMLSelectElement>(null);
   const entry = entries.find(item => item.id === state.benchmarkId) ?? entries[0];
   const dataset = datasets.find(item => item.benchmarkId === entry?.id);
   const filteredEntries = selectAtlasEntries(entries, { category: state.category, query }).filter(item => !chartOnly || item.coverage === "charted");
+  const libraryEntries = showAllBenchmarks ? filteredEntries : filteredEntries.slice(0, 8);
+  // Keep a selected deep link findable without expanding the entire library.
+  const selectedInLibrary = filteredEntries.find(item => item.id === entry?.id);
+  const visibleEntries = !showAllBenchmarks && selectedInLibrary && !libraryEntries.includes(selectedInLibrary)
+    ? [...libraryEntries.slice(0, 7), selectedInLibrary] : libraryEntries;
+  const categories = TASK_ORDER.filter(category => category === "all" || entries.some(item => item.category === category));
   const ranked = useMemo(() => dataset ? sortAtlasPoints(dataset) : [], [dataset]);
   const providerPoints = ranked.filter(point => state.provider === null || point.provider === state.provider);
   const bestByModel = selectAtlasModelProfiles(providerPoints);
   // Lower-effort configurations are often the efficient choices, so cost never deduplicates them.
   const points = state.bestPerModel && state.view !== "cost" ? bestByModel : providerPoints;
+  const groupedProfiles = state.bestPerModel && state.view !== "cost" && bestByModel.length < providerPoints.length;
   const expanded = state.expanded || points.findIndex(point => point.id === state.pointId) >= 8;
   const shown = expanded ? points : points.slice(0, 8);
   const selectable = state.view === "cost" ? points.filter(point => point.costUsd !== null && point.costUsd > 0) : points;
@@ -156,6 +173,7 @@ export function BenchmarkAtlasExplorer({ entries, datasets }: Readonly<{ entries
     setShareStatus("");
   }
   function choose(id: string, category = state.category) {
+    if (libraryRef.current) libraryRef.current.open = false;
     update({ benchmarkId: id, category, view: "ranking", pointId: null, compareIds: [], provider: null, expanded: false, bestPerModel: true });
     captureAnalyticsEvent({ name: "benchmark explored", properties: { benchmark_id: id, action: "benchmark", view: "ranking" } });
   }
@@ -175,41 +193,58 @@ export function BenchmarkAtlasExplorer({ entries, datasets }: Readonly<{ entries
     captureAnalyticsEvent({ name: "benchmark explored", properties: { benchmark_id: entry.id, action: "compare", view: state.view } });
   }
   async function share() {
-    try { await navigator.clipboard.writeText(`${window.location.origin}/` + atlasViewSearch(state) + "#explore"); setShareStatus("Link copied"); captureAnalyticsEvent({ name: "benchmark explored", properties: { benchmark_id: entry.id, action: "share", view: state.view } }); }
+    try { await navigator.clipboard.writeText(benchmarkAtlasShareUrl(window.location.origin, state)); setShareStatus("Link copied"); captureAnalyticsEvent({ name: "benchmark explored", properties: { benchmark_id: entry.id, action: "share", view: state.view } }); }
     catch { setShareStatus("Copy this page’s address to share the comparison."); }
   }
   if (!entry) return null;
   return <section className="benchmark-atlas" id="explore" aria-label="Explore AI benchmarks" data-analytics-surface="benchmark_atlas">
-    <nav className="atlas-tasks" aria-label="Choose a task">{TASK_ORDER.filter(category => category === "all" || entries.some(item => item.category === category)).map(category => <button key={category} aria-pressed={state.category === category} onClick={() => {
-      const candidates = category === "all" ? entries : entries.filter(item => item.category === category);
-      const first = candidates.find(item => item.coverage === "charted") ?? candidates[0];
-      setQuery(""); setChartOnly(false); choose(first.id, category);
-    }} type="button">{ATLAS_CATEGORY_LABELS[category]}</button>)}</nav>
+    <div className="atlas-navigation" role="group" aria-label="Choose a benchmark">
+      <label className="atlas-task-select"><span>Task</span><select aria-label="Task" value={state.category} onChange={event => {
+        const category = categories.find(value => value === event.target.value);
+        if (!category) return;
+        const candidates = category === "all" ? entries : entries.filter(item => item.category === category);
+        const first = candidates.find(item => item.coverage === "charted") ?? candidates[0];
+        if (!first) return;
+        setQuery(""); setChartOnly(false); setShowAllBenchmarks(false); choose(first.id, category);
+      }}>{categories.map(category => <option key={category} value={category}>{ATLAS_CATEGORY_LABELS[category]}</option>)}</select></label>
+      <label className="atlas-benchmark-select"><span>Benchmark</span><select aria-label="Benchmark" ref={benchmarkSelectRef} value={entry.id} onChange={event => {
+        if (filteredEntries.some(item => item.id === event.target.value)) choose(event.target.value);
+      }}>{!selectedInLibrary && <option value={entry.id}>{entry.name} {entry.version} · {coverageLabel(entry.coverage)} · Current view</option>}{filteredEntries.map(item => <option key={item.id} value={item.id}>{item.name} {item.version} · {coverageLabel(item.coverage)}</option>)}</select></label>
+      <details className="atlas-library" ref={libraryRef}>
+        <summary>Browse library{(query || chartOnly) && <span className="atlas-library__active">{filteredEntries.length} matches</span>}</summary>
+        <div className="atlas-library__content">
+          <div className="atlas-library__tools">
+            <label className="atlas-search"><span>Find a benchmark</span><input aria-label="Find a benchmark" type="search" placeholder="Name or task" value={query} onChange={event => { setQuery(event.target.value.slice(0, 160)); setShowAllBenchmarks(false); }} /></label>
+            <div className="atlas-library__filter"><span aria-live="polite">{filteredEntries.length} benchmarks</span><button type="button" aria-pressed={chartOnly} onClick={() => { setChartOnly(!chartOnly); setShowAllBenchmarks(false); }}>Charts only</button></div>
+          </div>
+          <div className="atlas-library__list">{visibleEntries.map(item => <button type="button" key={item.id} aria-pressed={entry.id === item.id} onClick={() => { choose(item.id); benchmarkSelectRef.current?.focus(); }}><span><strong>{item.name}</strong><small>{item.version}</small></span><span className={`atlas-coverage atlas-coverage--${item.coverage}`}>{coverageLabel(item.coverage)}</span></button>)}</div>
+          {filteredEntries.length > 8 && <button className="atlas-show-all atlas-library__expand" type="button" aria-expanded={showAllBenchmarks} onClick={() => setShowAllBenchmarks(!showAllBenchmarks)}>{showAllBenchmarks ? "Show fewer benchmarks" : `Show all ${filteredEntries.length} benchmarks`}<span aria-hidden="true">{showAllBenchmarks ? "−" : "+"}</span></button>}
+          {filteredEntries.length === 0 && <div className="atlas-empty"><p>No benchmarks match those filters.</p><button type="button" onClick={() => { setQuery(""); setChartOnly(false); }}>Clear search and chart filter</button></div>}
+          <p className="atlas-library__note">Charts include results you can explore here. Guides link to published evaluations; emerging benchmarks do not yet have comparable scores here.</p>
+        </div>
+      </details>
+    </div>
     <div className="atlas-workspace">
-      <aside className="atlas-library" aria-label="Benchmark library">
-        <label className="atlas-search"><span>Find a benchmark</span><input aria-label="Find a benchmark" type="search" placeholder="Search tasks or benchmarks" value={query} onChange={event => setQuery(event.target.value.slice(0, 160))} /></label>
-        <div className="atlas-library__filter"><span aria-live="polite">{filteredEntries.length} benchmarks</span><label><input type="checkbox" checked={chartOnly} onChange={event => setChartOnly(event.target.checked)} /> Charts only</label></div>
-        <label className="atlas-mobile-select">Benchmark<select value={filteredEntries.some(item => item.id === entry.id) ? entry.id : ""} onChange={event => choose(event.target.value)}><option value="" disabled>Select a benchmark</option>{filteredEntries.map(item => <option key={item.id} value={item.id}>{item.name} {item.version} {item.coverage !== "charted" ? "· Source guide" : ""}</option>)}</select></label>
-        <div className="atlas-library__list">{filteredEntries.map(item => <button type="button" key={item.id} aria-pressed={entry.id === item.id} onClick={() => choose(item.id)}><span><strong>{item.name}</strong><small>{item.version}</small></span><span className={`atlas-coverage atlas-coverage--${item.coverage}`}>{item.coverage === "charted" ? "Chart" : item.coverage === "watchlist" ? "Emerging" : "Guide"}</span></button>)}</div>
-        {filteredEntries.length === 0 && <div className="atlas-empty"><p>No benchmarks match those filters.</p><button type="button" onClick={() => { setQuery(""); setChartOnly(false); }}>Clear search and chart filter</button></div>}
-        <p className="atlas-library__note">Chart = results you can explore here.<br />Guide = what to measure and where to look.</p>
-      </aside>
       <div className="atlas-content">
         <header className="atlas-heading"><div><p className="atlas-eyebrow">{ATLAS_CATEGORY_LABELS[entry.category]} <span> / </span> {entry.version}</p><h2>{entry.name}</h2><p>{entry.question}</p></div><button className="atlas-button atlas-button--quiet" onClick={share} type="button">Copy view link ↗</button></header>
         <p className="atlas-share-status" role="status">{shareStatus}</p>
         {dataset && summary ? <>
-          <div className="atlas-context"><span><strong>{summary.configurationCount}</strong> results</span><span>{dataset.evidenceLabel ?? dataset.source.name}</span><span>{dataset.observedAt ? `Source date: ${sourceDate(dataset.observedAt)}` : `Retrieved ${sourceDate(dataset.source.retrievedAt)}`}</span></div>
+          <div className="atlas-context"><span><strong>{summary.configurationCount}</strong> configurations in source cohort</span><span>{dataset.evidenceLabel ?? dataset.source.name}</span><span>{dataset.observedAt ? `Source date: ${sourceDate(dataset.observedAt)}` : `Retrieved ${sourceDate(dataset.source.retrievedAt)}`}</span></div>
           <p className="atlas-description">{dataset.comparabilityNote}</p>
           <div className="atlas-toolbar">
             <div className="atlas-view-toggle" role="group" aria-label="Chart view">
               {(["ranking", "cost", "table"] as const).filter(view => view !== "cost" || ranked.some(point => point.costUsd !== null && point.costUsd > 0)).map(view => <button key={view} aria-pressed={state.view === view} onClick={() => changeView(view)} type="button">{view === "ranking" ? "Ranking" : view === "cost" ? "Cost vs. score" : "Table"}</button>)}
             </div>
-            <label className="atlas-provider"><span>Provider</span><select value={state.provider ?? "all"} onChange={event => { update({ ...state, provider: event.target.value === "all" ? null : event.target.value, expanded: false, pointId: null }); captureAnalyticsEvent({ name: "benchmark explored", properties: { benchmark_id: entry.id, action: "provider", view: state.view } }); }}><option value="all">All providers</option>{providers.map(value => <option key={value}>{value}</option>)}</select></label>
+            <details className="atlas-filters"><summary>Filters{(state.provider !== null || !state.bestPerModel) && <span className="atlas-filters__active">{[state.provider, !state.bestPerModel ? "All configurations" : null].filter(Boolean).join(" · ")}</span>}</summary><div className="atlas-filters__content">
+              <label className="atlas-provider"><span>Provider</span><select value={state.provider ?? "all"} onChange={event => { update({ ...state, provider: event.target.value === "all" ? null : event.target.value, expanded: false, pointId: null }); captureAnalyticsEvent({ name: "benchmark explored", properties: { benchmark_id: entry.id, action: "provider", view: state.view } }); }}><option value="all">All providers</option>{providers.map(value => <option key={value}>{value}</option>)}</select></label>
+              {state.view !== "cost" && bestByModel.length < providerPoints.length && <div className="atlas-profile-toggle"><button type="button" aria-pressed={state.bestPerModel} onClick={() => {
+                update({ ...state, bestPerModel: !state.bestPerModel, expanded: false, pointId: null });
+                captureAnalyticsEvent({ name: "benchmark explored", properties: { benchmark_id: entry.id, action: "profiles", view: state.view } });
+              }}>Best result per system</button><p>Uses each model and harness’s best-scoring configuration.</p></div>}
+              {state.view === "cost" && <p className="atlas-filters__note">All effort configurations are shown because lower effort can cost less.</p>}
+            </div></details>
           </div>
-          {state.view !== "cost" && bestByModel.length < providerPoints.length && <label className="atlas-profile-toggle"><input type="checkbox" checked={state.bestPerModel} onChange={event => {
-            update({ ...state, bestPerModel: event.target.checked, expanded: false, pointId: null });
-            captureAnalyticsEvent({ name: "benchmark explored", properties: { benchmark_id: entry.id, action: "profiles", view: state.view } });
-          }} /> Best result per system <span>Uses each model and harness’s best-scoring configuration.</span></label>}
+          {state.view !== "cost" && <p className="atlas-results-summary">Showing {shown.length}{shown.length < points.length ? ` of ${points.length}` : ""} {groupedProfiles ? "systems" : "configurations"}.{groupedProfiles && " Best-scoring configuration per model and harness."}</p>}
           <div className="atlas-results">
             <div className="atlas-results__chart">{state.view === "ranking" ? <Ranking dataset={dataset} points={shown} selectedId={selected?.id ?? ""} onSelect={select} /> : state.view === "cost" ? <CostChart dataset={dataset} points={points} selectedId={selected?.id ?? ""} onSelect={select} /> : <ResultsTable dataset={dataset} points={shown} onSelect={select} />}
               {points.length > 8 && state.view !== "cost" && <button className="atlas-show-all" type="button" onClick={() => { update({ ...state, expanded: !expanded, pointId: expanded ? null : state.pointId }, true); captureAnalyticsEvent({ name: "benchmark explored", properties: { benchmark_id: entry.id, action: "expand", view: state.view } }); }}>{expanded ? "Show top eight" : `Show all ${points.length} results`} <span aria-hidden="true">{expanded ? "−" : "+"}</span></button>}

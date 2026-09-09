@@ -41,6 +41,20 @@ describe("markdown route handler", () => {
     expect(response.headers.get("X-Robots-Tag")).toBeNull();
   });
 
+  test("preserves canonical negotiation for each focused comparison workspace", async () => {
+    for (const path of ["coding", "benchmarks"]) {
+      for (const negotiated of [false, true]) {
+        const response = await readMarkdown([path], negotiated);
+        expect(response.status).toBe(200);
+        expect(response.headers.get("Content-Type")).toBe("text/markdown; charset=utf-8");
+        expect(response.headers.get("Vary")).toBe("Accept");
+        expect(response.headers.get("Link")).toBe(`<https://aicharts.io/${path}>; rel="canonical"`);
+        expect(response.headers.get("X-Robots-Tag")).toBe(negotiated ? null : "noindex, follow");
+        expect(await response.text()).toBe(markdownForPath(`/${path}`).body);
+      }
+    }
+  });
+
   test("keeps a real 404 status and recovery body for unknown paths", async () => {
     const response = await readMarkdown(["missing-agentic-path"]);
     const expected = markdownForPath("/missing-agentic-path");

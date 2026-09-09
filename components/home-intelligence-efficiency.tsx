@@ -85,29 +85,18 @@ export function HomeIntelligenceEfficiency({
       id="intelligence-index"
     >
       <header className="intelligence-efficiency__header">
-        <p className="intelligence-efficiency__eyebrow">General capability · model-level</p>
-        <h2 id="home-intelligence-efficiency-title">
-          Artificial Analysis Intelligence Index v{snapshot.benchmark.version}
-        </h2>
-        <p className="intelligence-efficiency__dek">
-          Each point is a published model configuration. Higher and farther left is better.
+        <h2 id="home-intelligence-efficiency-title">Capability and cost</h2>
+        <p className="intelligence-efficiency__source-note">
+          <a
+            data-analytics-destination-id="source:artificial-analysis"
+            data-analytics-destination-kind="source"
+            href={snapshot.source.url}
+          >
+            Artificial Analysis Intelligence Index v{snapshot.benchmark.version}
+          </a>
+          <span>Snapshot <time dateTime={snapshot.source.retrievedAt}>{retrievalLabel}</time></span>
         </p>
       </header>
-
-      {comparison === null ? null : (
-        <p className="intelligence-efficiency__finding">
-          <strong>
-            {comparison.roundedIntelligenceScore === null
-              ? `GPT-6 Astra scores ${indexFormatter.format(comparison.astra.intelligenceIndex)} and GPT-5.6 Sol scores ${indexFormatter.format(comparison.sol.intelligenceIndex)}`
-              : `GPT-6 Astra and GPT-5.6 Sol both round to ${String(comparison.roundedIntelligenceScore)}`}
-          </strong>
-          {" at max effort. Astra generates "}
-          {relativePhrase(comparison.outputTokenReductionPercent, "fewer", "more")}
-          {" output tokens, but costs "}
-          {relativePhrase(comparison.costIncreasePercent, "more", "less")}
-          {" per task."}
-        </p>
-      )}
 
       {cohort.length === 0 ? (
         <p className="intelligence-efficiency__empty">
@@ -122,78 +111,89 @@ export function HomeIntelligenceEfficiency({
         />
       )}
 
-      <div className="intelligence-efficiency__data-links">
-        <a
-          data-analytics-destination-id="section"
-          data-analytics-destination-kind="section"
-          href={currentVersion ? "/data#atlas-aa-intelligence-4-3" : "/data#artificial-analysis-intelligence"}
-        >
-          Full data and methodology
-        </a>
-        <a
-          data-analytics-destination-id={`dataset:${datasetId}`}
-          data-analytics-destination-kind="dataset"
-          download={`aicharts-${datasetId}.json`}
-          href={`/data/${datasetId}.json`}
-        >
-          Download JSON
-        </a>
+      <div className="intelligence-efficiency__notes">
+        <details className="intelligence-efficiency__method">
+          <summary>Method &amp; data</summary>
+          <div className="intelligence-efficiency__method-body">
+            <p>
+              <strong>What the axes mean.</strong>{" "}
+              Output tokens are answer plus reasoning generated per Intelligence Index task;
+              they exclude input and cache traffic. Cost is the publisher’s estimated total task cost.
+              The horizontal axes are logarithmic, so equal spacing represents equal proportional change.
+            </p>
+            <p>
+              <strong>Cohort and frontier.</strong>{" "}
+              The source has {snapshot.selection.sourceRecordCount} records;{" "}
+              {snapshot.selection.measuredCompleteRecordCount} meet the non-estimated complete-measure rule,
+              and {cohort.length} also report a positive task cost. The curve connects configurations
+              offering the highest score at each resource budget; AI Charts derives it from this cohort.
+              No benchmark families are blended.
+            </p>
+            <p>
+              <strong>Index construction.</strong>{" "}
+              The publisher’s {snapshot.benchmark.evaluationCount}-evaluation index weights{" "}
+              {methodologySummary(snapshot)}. These model-level output observations remain separate from
+              coding-agent configurations and total-token measurements.
+            </p>
+            <p>
+              <strong>Source.</strong>{" "}
+              <a
+                data-analytics-destination-id="source:artificial-analysis-methodology"
+                data-analytics-destination-kind="source"
+                href={snapshot.source.methodologyUrl}
+              >
+                Publisher methodology
+              </a>
+              {" · "}
+              <a
+                data-analytics-destination-id="source:artificial-analysis-terms"
+                data-analytics-destination-kind="source"
+                href={snapshot.source.termsUrl}
+              >
+                Source terms
+              </a>
+              . Measurements come from the publisher’s public models leaderboard; the snapshot date is a retrieval date, not a model’s evaluation date.
+            </p>
+            <div className="intelligence-efficiency__data-links">
+              <a
+                data-analytics-destination-id="section"
+                data-analytics-destination-kind="section"
+                href={currentVersion ? "/data#atlas-aa-intelligence-4-3" : "/data#artificial-analysis-intelligence"}
+              >
+                Full data and methodology
+              </a>
+              <a
+                data-analytics-destination-id={`dataset:${datasetId}`}
+                data-analytics-destination-kind="dataset"
+                download={`aicharts-${datasetId}.json`}
+                href={`/data/${datasetId}.json`}
+              >
+                Download JSON
+              </a>
+            </div>
+          </div>
+        </details>
+        {comparison === null ? null : (
+          <details className="intelligence-efficiency__comparison">
+            <summary>Compare GPT-6 Astra and GPT-5.6 Sol</summary>
+            <p className="intelligence-efficiency__finding">
+              <strong>
+                {comparison.roundedIntelligenceScore === null
+                  ? `GPT-6 Astra scores ${indexFormatter.format(comparison.astra.intelligenceIndex)} and GPT-5.6 Sol scores ${indexFormatter.format(comparison.sol.intelligenceIndex)}`
+                  : `GPT-6 Astra and GPT-5.6 Sol both round to ${String(comparison.roundedIntelligenceScore)}`}
+              </strong>
+              {" at max effort. Astra generates "}
+              {relativePhrase(comparison.outputTokenReductionPercent, "fewer", "more")}
+              {" output tokens and costs "}
+              {relativePhrase(comparison.costIncreasePercent, "more", "less")}
+              {" per task. "}
+              <a data-analytics-destination-id="source:artificial-analysis" data-analytics-destination-kind="source" href={comparison.astra.detailsUrl}>Astra source</a>
+              {" · "}
+              <a data-analytics-destination-id="source:artificial-analysis" data-analytics-destination-kind="source" href={comparison.sol.detailsUrl}>Sol source</a>.
+            </p>
+          </details>
+        )}
       </div>
-
-      <details className="intelligence-efficiency__method">
-        <summary>Method &amp; data</summary>
-        <div className="intelligence-efficiency__method-body">
-          <p>
-            <strong>What the axes mean.</strong>{" "}
-            Output tokens are answer plus reasoning generated per Intelligence Index task;
-            they exclude input and cache traffic. Cost is the publisher’s estimated total task cost.
-            The horizontal axes are logarithmic, so equal spacing represents equal proportional change.
-          </p>
-          <p>
-            <strong>Cohort and frontier.</strong>{" "}
-            The source has {snapshot.selection.sourceRecordCount} records;{" "}
-            {snapshot.selection.measuredCompleteRecordCount} meet the non-estimated complete-measure rule,
-            and {cohort.length} also report a positive task cost. AI Charts derives each frontier from
-            configurations for which no other point is both at least as capable and less resource-intensive.
-            No benchmark families are blended.
-          </p>
-          <p>
-            <strong>Index construction.</strong>{" "}
-            The publisher’s {snapshot.benchmark.evaluationCount}-evaluation index weights{" "}
-            {methodologySummary(snapshot)}. These model-level output observations remain separate from
-            the coding-agent configurations and total-token measurement below.
-          </p>
-          <p>
-            <strong>Source.</strong>{" "}
-            <a
-              data-analytics-destination-id="source:artificial-analysis"
-              data-analytics-destination-kind="source"
-              href={snapshot.source.url}
-            >
-              {snapshot.source.name} public models leaderboard
-            </a>
-            {" · retrieved "}
-            <time dateTime={snapshot.source.retrievedAt}>{retrievalLabel}</time>
-            {" · "}
-            <a
-              data-analytics-destination-id="source:artificial-analysis-methodology"
-              data-analytics-destination-kind="source"
-              href={snapshot.source.methodologyUrl}
-            >
-              Publisher methodology
-            </a>
-            {" · "}
-            <a
-              data-analytics-destination-id="source:artificial-analysis-terms"
-              data-analytics-destination-kind="source"
-              href={snapshot.source.termsUrl}
-            >
-              Source terms
-            </a>
-            . The checked artifact records a first-party public Next.js page payload.
-          </p>
-        </div>
-      </details>
     </section>
   );
 }

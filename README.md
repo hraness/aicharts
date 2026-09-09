@@ -2,7 +2,9 @@
 
 [AI Charts](https://aicharts.io) is an open-source home for sourced, interactive AI benchmark charts. It compares models and agents across performance, cost, speed, and token use without collapsing those trade-offs into one rank.
 
-The homepage leads with an interactive Pareto frontier: compare model capability against output tokens or cost, then inspect the configuration behind each point. The original coding-agent charts follow. A secondary benchmark library covers coding, reasoning, research, memory, images, video, audio, and world models. Charted results, source guides, and emerging evaluations are labeled separately; older research cohorts do not masquerade as current-product rankings.
+The homepage leads with an interactive Pareto frontier: compare model capability against output tokens or cost, then inspect the configuration behind each point. The original coding-agent charts have a focused home at [`/coding`](https://aicharts.io/coding). The separate [`/benchmarks`](https://aicharts.io/benchmarks) library covers coding, reasoning, research, memory, images, video, audio, and world models. Charted results, source guides, and emerging evaluations are labeled separately; older research cohorts do not masquerade as current-product rankings.
+
+The primary navigation is Charts (`/`), Benchmarks (`/benchmarks`), and Notes (`/blog`). Coding comparisons, cards, and source data are linked where relevant. Legacy root chart and atlas links still resolve to their corresponding workspace; new shares use that workspace’s URL. Each canonical page also has a Markdown representation through `Accept: text/markdown`.
 
 ## Current benchmark portfolio
 

@@ -311,7 +311,7 @@ function chartLabel(datum: IntelligenceEfficiencyExplorerDatum, compact: boolean
 }
 
 function labelWidth(label: string, compact: boolean): number {
-  return Math.min(compact ? 150 : 205, Math.max(64, label.length * (compact ? 5.6 : 6.1) + 10));
+  return Math.min(compact ? 165 : 225, Math.max(64, label.length * 6.6 + 10));
 }
 
 function closestLabelEdge(
@@ -396,7 +396,7 @@ export function IntelligenceEfficiencyExplorer({
   solId: string | null;
   yDomain: NumericDomain;
 }>) {
-  const [metric, setMetric] = useState<IntelligenceEfficiencyMetric>("outputTokensPerTask");
+  const [metric, setMetric] = useState<IntelligenceEfficiencyMetric>("costUsdPerTask");
   const defaultPointId = astraId ?? data[0]?.id ?? "";
   const [pinnedId, setPinnedId] = useState(defaultPointId);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
@@ -440,7 +440,7 @@ export function IntelligenceEfficiencyExplorer({
     labeledPoints.map(point => {
       const label = chartLabel(point.datum, compact);
       return {
-        height: 19,
+        height: 22,
         id: point.id,
         priority: point.id === activeId ? 3 : point.id === astraId ? 2 : 1,
         width: labelWidth(label, compact),
@@ -523,12 +523,8 @@ export function IntelligenceEfficiencyExplorer({
     <div className="intelligence-efficiency__explorer">
       <figure className="intelligence-efficiency__figure">
         <figcaption className="intelligence-efficiency__figure-header">
-          <div>
-            <h3>Pareto frontier</h3>
-            <p>Higher and farther left is better. Select a point for exact values.</p>
-          </div>
           <div aria-label="Compare capability by" className="intelligence-efficiency__metric-control" role="group">
-            {(Object.keys(metricPresentations) as IntelligenceEfficiencyMetric[]).toReversed().map(item => (
+            {(Object.keys(metricPresentations) as IntelligenceEfficiencyMetric[]).map(item => (
               <button
                 aria-pressed={metric === item}
                 data-intelligence-metric={item}
@@ -552,6 +548,10 @@ export function IntelligenceEfficiencyExplorer({
               </button>
             ))}
           </div>
+          <p className="intelligence-efficiency__direction">
+            <span aria-hidden="true">↖ </span>
+            Higher score, {metric === "costUsdPerTask" ? "lower cost" : "fewer tokens"}
+          </p>
         </figcaption>
 
         <div className="intelligence-efficiency__plot" ref={chartShellRef}>
@@ -604,7 +604,7 @@ export function IntelligenceEfficiencyExplorer({
               <text className="intelligence-efficiency__axis-title" textAnchor="middle" x={(plot.left + plot.right) / 2} y={chartHeight - 12}>
                 {presentation.axisLabel}
               </text>
-              <text className="intelligence-efficiency__y-title" x={plot.left + 2} y={plot.top - 9}>Intelligence Index ↑</text>
+              <text className="intelligence-efficiency__y-title" x={plot.left + 2} y={plot.top - 9}>Capability ↑</text>
             </g>
 
             {pathPoints.length < 2 ? null : (
@@ -665,7 +665,7 @@ export function IntelligenceEfficiencyExplorer({
                     <text
                       className={point.id === activeId ? "intelligence-efficiency__label--active" : undefined}
                       x={roundIntelligenceChartCoordinate(placement.x + 5)}
-                      y={roundIntelligenceChartCoordinate(placement.y + 13)}
+                      y={roundIntelligenceChartCoordinate(placement.y + 15)}
                     >
                       {chartLabel(point.datum, compact)}
                     </text>
@@ -677,9 +677,9 @@ export function IntelligenceEfficiencyExplorer({
         </div>
 
         <div className="intelligence-efficiency__chart-key">
-          <span><i data-symbol="context" />Configuration</span>
-          <span><i data-symbol="frontier" />Efficiency frontier</span>
-          <span className="intelligence-efficiency__interaction-hint">Hover, focus, or tap a point · arrow keys move</span>
+          <span><i data-symbol="context" />Model configuration</span>
+          <span><i data-symbol="frontier" />Pareto frontier · best score at each budget</span>
+          <span className="intelligence-efficiency__interaction-hint">Select a point for details</span>
         </div>
       </figure>
 
@@ -688,7 +688,7 @@ export function IntelligenceEfficiencyExplorer({
           <p className="intelligence-efficiency__inspector-state">
             {activeId === pinnedId ? "Selected configuration" : "Point preview"}
           </p>
-          <h4 id={inspectorTitleId}>{activeDatum.name}</h4>
+          <h3 id={inspectorTitleId}>{activeDatum.name}</h3>
           <p className="intelligence-efficiency__inspector-meta">
             {activeDatum.creatorName} · released <time dateTime={activeDatum.releaseDate}>{activeDatum.releaseDate}</time>
           </p>
@@ -697,19 +697,19 @@ export function IntelligenceEfficiencyExplorer({
               <dt>Intelligence Index</dt>
               <dd><data value={activeDatum.intelligenceIndex}>{indexFormatter.format(activeDatum.intelligenceIndex)}</data></dd>
             </div>
-            <div className={metric === "outputTokensPerTask" ? "is-active" : undefined}>
-              <dt>Output tokens / task</dt>
-              <dd><data value={activeDatum.outputTokensPerTask}>{tokenFormatter.format(activeDatum.outputTokensPerTask)}</data></dd>
-            </div>
             <div className={metric === "costUsdPerTask" ? "is-active" : undefined}>
               <dt>Cost / task</dt>
               <dd><data value={activeDatum.costUsdPerTask}>{formatExactUsd(activeDatum.costUsdPerTask)}</data></dd>
             </div>
+            <div className={metric === "outputTokensPerTask" ? "is-active" : undefined}>
+              <dt>Output tokens / task</dt>
+              <dd><data value={activeDatum.outputTokensPerTask}>{tokenFormatter.format(activeDatum.outputTokensPerTask)}</data></dd>
+            </div>
           </dl>
           <p className="intelligence-efficiency__frontier-status">
             {isFrontier(activeDatum, metric)
-              ? `On the ${presentation.controlLabel.toLowerCase()} efficiency frontier.`
-              : `Not on the ${presentation.controlLabel.toLowerCase()} efficiency frontier.`}
+              ? `Best available score at this ${metric === "costUsdPerTask" ? "task cost" : "output-token budget"}.`
+              : `Another configuration scores at least as well using ${metric === "costUsdPerTask" ? "the same or less money" : "the same or fewer output tokens"}.`}
           </p>
           <a
             data-analytics-destination-id="source:artificial-analysis"

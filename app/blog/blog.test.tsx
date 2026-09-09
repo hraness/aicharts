@@ -534,6 +534,7 @@ describe("AI Charts benchmark notes", () => {
         expect(markup).not.toContain("Current comparison: coding agents");
       } else {
         expect(markup).toContain("Current comparison: coding agents");
+        expect(markup).toContain('href="/coding"');
       }
       for (const sourceId of article.sourceIds) {
         expect(markup).toContain(`href="${BLOG_SOURCES[sourceId].url}"`);
@@ -825,16 +826,16 @@ describe("AI Charts blog discovery", () => {
   });
 
   test("emits a website identity and links the chart to the blog", async () => {
-    const [layoutSource, chartSource, headerSource] = await Promise.all([
+    const [layoutSource, chartNavigationSource, headerSource] = await Promise.all([
       Bun.file(new URL("../layout.tsx", import.meta.url)).text(),
       Bun.file(
-        new URL("../../components/coding-agent-explorer.tsx", import.meta.url),
+        new URL("../../components/chart-navigation.tsx", import.meta.url),
       ).text(),
       Bun.file(new URL("../../components/site-header.tsx", import.meta.url)).text(),
     ]);
 
     expect(layoutSource).toContain('"@type": "WebSite"');
-    expect(chartSource).toContain('<Link href="/blog">Analysis</Link>');
-    expect(headerSource).toContain('{ href: "/blog", label: "Blog" }');
+    expect(chartNavigationSource).toContain('<Link href="/blog">Benchmark notes</Link>');
+    expect(headerSource).toContain('{ href: "/blog", label: "Notes" }');
   });
 });

@@ -4,14 +4,12 @@ import { site } from "@/app/site";
 import { SkipLink, ThemeMenuButton } from "@/components/ui";
 
 export const SITE_HEADER_LINKS = [
-  { href: "/#intelligence-index", label: "Charts" },
-  { href: "/#explore", label: "Benchmarks" },
-  { href: "/blog", label: "Blog" },
-  { href: "/models", label: "Cards" },
-  { href: "/data", label: "Data" },
+  { href: "/", label: "Charts" },
+  { href: "/benchmarks", label: "Benchmarks" },
+  { href: "/blog", label: "Notes" },
 ] as const;
 
-export type SiteHeaderPath = "/" | (typeof SITE_HEADER_LINKS)[number]["href"];
+export type SiteHeaderPath = "/coding" | "/models" | "/data" | (typeof SITE_HEADER_LINKS)[number]["href"];
 
 /**
  * The shared Hraness site header on the design-kit marketing grammar: sticky
@@ -46,7 +44,7 @@ export function SiteHeader({
           <nav aria-label="Site" className="hraness-marketing-header__nav">
             {SITE_HEADER_LINKS.map(link => (
               <Link
-                aria-current={current === link.href ? "page" : undefined}
+                aria-current={current === link.href ? "page" : current === "/coding" && link.href === "/" ? "location" : undefined}
                 href={link.href}
                 key={link.href}
               >

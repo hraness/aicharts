@@ -4,11 +4,11 @@ import {
   blogArticles,
   blogDescription,
 } from "@/app/blog/articles";
-import { HOME_EDITORIAL_SLUGS } from "@/app/blog/article-admissions";
 import { blogEditorialImage } from "@/app/blog/editorial-images";
 import {
   homeHeading,
   homeLede,
+  homeTaskLinks,
   modelCardsHeading,
   modelCardsLede,
   notFoundRecoveryLinks,
@@ -20,11 +20,7 @@ import codingAgentData from "@/data/coding-agents.json";
 import terminalBenchData from "@/data/terminal-bench.json";
 import terminalBenchScienceData from "@/data/terminal-bench-science.json";
 
-import {
-  BENCHMARK_DATA_DESCRIPTION,
-  CORE_BENCHMARK_PORTFOLIO,
-  SUPPLEMENTAL_CODING_BENCHMARK,
-} from "./benchmark-portfolio";
+import { BENCHMARK_DATA_DESCRIPTION } from "./benchmark-portfolio";
 import { ATLAS_DATASETS, ATLAS_ENTRIES } from "./benchmark-atlas-catalog";
 import { selectAtlasModelProfiles, sortAtlasPoints } from "./benchmark-atlas";
 import { ATLAS_CATEGORY_LABELS, formatAtlasCost, formatAtlasScore, parseAtlasView } from "./benchmark-atlas-view";
@@ -180,96 +176,34 @@ export function homeDocumentModel(
   snapshot: CodingAgentSnapshot = checkedSnapshot(),
 ): HomeDocumentModel {
   const summary = codingAgentDatasetSummary(snapshot);
-  const modifiedAt = codingAgentDatasetModifiedAt(snapshot);
-  const terminalBench = checkedTerminalBenchSnapshot();
-  const terminalBenchScience = checkedTerminalBenchScienceSnapshot();
   const intelligence = checkedCurrentIntelligenceSnapshot();
-  const benchmarks = CODING_AGENT_BENCHMARK_DEFINITIONS
-    .map(definition => definition.label)
-    .join(", ");
   return {
     heading: homeHeading,
     paragraphs: [
       site.description,
-      `The homepage leads with the ${intelligence.benchmark.name} v${intelligence.benchmark.version} Pareto frontier. It compares the identical ${intelligence.selection.positiveCostRecordCount}-configuration positive-cost cohort by capability, weighted output-only tokens per Index task, and cost per Index task. Inspect any point, switch the resource axis, and see which configurations deliver more capability with fewer resources.`,
-      `The benchmark atlas offers ${ATLAS_DATASETS.length} interactive charts across ${ATLAS_ENTRIES.length} benchmarks spanning coding, reasoning, research, memory, science, and generative media. Choose a task, inspect a result, and compare up to three configurations within one evaluation cohort.`,
-      `Charted benchmarks contain measured results. Source guides explain a benchmark and link to its publisher without implying that its scores are charted here. Historical research cohorts remain labeled. Each benchmark keeps its own version, score unit, and comparison rule; no universal score is calculated.`,
-      `Terminal-Bench ${terminalBench.benchmark.version} is the coding standard. The checked Harbor Framework snapshot contains ${terminalBench.records.length} model-agent configurations across ${terminalBench.benchmark.taskCount} tasks and ${terminalBench.benchmark.trialsPerTask} trials per task. It was retrieved ${formatRetrievedAt(terminalBench.source.retrievedAt)} from the immutable source commit ${terminalBench.source.repositoryCommit.slice(0, 7)}.`,
-      `Terminal-Bench-Science ${terminalBenchScience.benchmark.version} adds a separate scientific-workflow view. Its checked owner snapshot contains ${terminalBenchScience.records.length} system configurations across ${terminalBenchScience.benchmark.taskCount} tasks and ${terminalBenchScience.benchmark.trialsPerTask} trials per task, pinned to release commit ${terminalBenchScience.source.releaseCommit.slice(0, 7)}.`,
-      `The source-specific interactive chart contains ${summary.recordCount} configurations across ${summary.modelCount} models, ${summary.agentCount} agent harnesses, and ${summary.providerCount} providers. It plots ${benchmarks} against API cost, active time, or total token use from the ${snapshot.source.name} snapshot retrieved ${formatRetrievedAt(snapshot.source.retrievedAt)}. Terminal-Bench v2.1 remains labeled and separate from 4.0.`,
-      `Pin a model to see nearby scores, or pin a provider to inspect its range. The option-space panels show the cost/performance frontier and per-provider ranges for the selected axes. Values are observations of the named model, agent harness, and effort setting. They are not general ranks or production guarantees.`,
-      `The latest notable Artificial Analysis model, variant, or benchmark change was detected ${formatRetrievedAt(modifiedAt)}. AI Charts does not recalculate upstream outcomes and is not affiliated with the benchmark owners or listed providers.`,
+      `The homepage compares capability with cost or output tokens on the ${intelligence.benchmark.name} v${intelligence.benchmark.version} Pareto frontier. Both resource views use the identical ${intelligence.selection.positiveCostRecordCount}-configuration positive-cost cohort. Inspect a point to see the model, effort setting, and exact values.`,
+      "Choose a task-specific comparison in the benchmark explorer, or use the separate coding-agent charts to compare cost, time, and total tokens. Each evaluation keeps its own source, version, and configuration; no universal score is calculated.",
     ],
     links: [
       {
         href: "/#intelligence-index",
         label: "Explore the Pareto frontier",
-        note: "Compare model capability with output tokens or cost, then inspect the full configuration.",
+        note: "Capability versus output tokens or cost from the checked Intelligence Index cohort.",
       },
       {
-        href: "/#explore",
-        label: "Explore the benchmark atlas",
-        note: "Choose a task, search benchmark guides, inspect named results, and share a comparison.",
+        href: "/coding",
+        label: "Coding agent comparisons",
+        note: `${summary.recordCount} configurations with benchmark scores, cost, active time, and total tokens.`,
       },
       {
-        href: ATLAS_CATALOG_DOWNLOAD_PATH,
-        label: "Benchmark atlas catalog JSON",
-        note: "All benchmark IDs, versions, source dates, coverage, and individual measured-dataset links.",
-      },
-      {
-        href: "/models",
-        label: "Model benchmark cards",
-        note: "Shareable model-and-profile cards with observed benchmark, cost, time, and total-token ranges from the current snapshot.",
+        href: "/benchmarks",
+        label: "AI benchmark explorer",
+        note: "Browse task-specific charts and source guides across coding, reasoning, research, memory, science, and media.",
       },
       {
         href: CODING_AGENT_DATASET_PATH,
         label: "Benchmark data and method",
-        note: "All atlas benchmark definitions, measured-dataset downloads, source dates, version boundaries, and limits.",
-      },
-      {
-        href: "/data/artificial-analysis-intelligence-v4-3.json",
-        label: "Artificial Analysis Intelligence JSON",
-        note: `The checked v${intelligence.benchmark.version} model-configuration score, output-token, and cost snapshot used by the general efficiency chart.`,
-      },
-      {
-        href: "/data/terminal-bench-4.json",
-        label: "Terminal-Bench 4 JSON",
-        note: "The version-pinned owner snapshot used for the homepage coding standard.",
-      },
-      {
-        href: "/data/terminal-bench-science-0-1.json",
-        label: "Terminal-Bench-Science 0.1 JSON",
-        note: "The version-pinned owner snapshot used for the homepage scientific-workflow view.",
-      },
-      {
-        href: blogArticlePath("aa-index-cost-coding-agents"),
-        label: "AA Index versus cost",
-        note: "Leaders, the cost/performance frontier, and limits from the same checked snapshot.",
-      },
-      {
-        href: blogArticlePath("open-models-coding-agent-benchmarks"),
-        label: "Open models on coding-agent benchmarks",
-        note: "Whether classified open-weight rows sit with the current AA Index leaders, using the same checked snapshot and a SemiAnalysis catch-up essay.",
-      },
-      {
-        href: blogArticlePath("terminal-bench-science"),
-        label: "What Terminal-Bench-Science’s 30% result measures",
-        note: "Scientists selected 70 difficult workflows for Terminal-Bench-Science 0.1. The leading configuration resolved 30%; published cost and token frontiers distinguish otherwise similar results.",
-      },
-      {
-        href: blogArticlePath("small-models-have-arrived"),
-        label: "Cheaper AI models can make everyday products viable",
-        note: "How lower inference costs change frequent-use product economics and how to test the cheapest model that meets a task’s quality bar.",
-      },
-      {
-        href: blogArticlePath("coding-agent-score-holdouts"),
-        label: "Why a coding-agent high score still needs a holdout",
-        note: "Dan Luu’s FRE holdout and the checked snapshot’s named-suite scores, kept distinct from the open-models comparison.",
-      },
-      {
-        href: CODING_AGENT_DATASET_DOWNLOAD_PATH,
-        label: "JSON snapshot",
-        note: "The same versioned records the production chart uses.",
+        note: "Source dates, comparison rules, and checked dataset downloads.",
       },
       {
         href: "/blog",
@@ -279,12 +213,7 @@ export function homeDocumentModel(
       {
         href: AGENT_GUIDE_PATH,
         label: "Machine-readable site guide",
-        note: "When to use AI Charts, the public pages, and how to request Markdown.",
-      },
-      {
-        href: "/sitemap.xml",
-        label: "XML sitemap",
-        note: "Every public canonical route.",
+        note: "Public pages, data routes, and Markdown access.",
       },
     ],
   };
@@ -296,16 +225,6 @@ export function homeDocumentText(
   const document = homeDocumentModel(snapshot);
   return [document.heading, ...document.paragraphs, ...document.links.map(link => `${link.label} ${link.note}`)]
     .join(" ");
-}
-
-function benchmarkPortfolioMarkdownTable(): string {
-  return [
-    "| Signal | Benchmark | Version | What it measures | Comparison rule |",
-    "| --- | --- | --- | --- | --- |",
-    ...CORE_BENCHMARK_PORTFOLIO.map(benchmark => (
-      `| ${benchmark.signal} | [${benchmark.name}](${benchmark.sourceUrl}) | ${benchmark.version} | ${benchmark.measure} | ${benchmark.comparisonRule} |`
-    )),
-  ].join("\n");
 }
 
 function atlasMarkdownCell(value: string): string {
@@ -320,7 +239,7 @@ export function atlasCatalogMarkdownTable(): string {
       const dataset = ATLAS_DATASETS.find(candidate => candidate.benchmarkId === entry.id);
       const coverage = dataset ? `${dataset.points.length} charted results` : entry.coverage === "watchlist" ? "Emerging evaluation" : "Source guide";
       const data = dataset ? `[JSON](${absolute(atlasDatasetDownloadPath(entry.id))})` : `[Source](${entry.source.url})`;
-      return `| ${ATLAS_CATEGORY_LABELS[entry.category]} | [${atlasMarkdownCell(entry.name)}](${absolute(`/?atlas=${entry.id}#explore`)}) | ${atlasMarkdownCell(entry.version)} | ${coverage} | ${data} |`;
+      return `| ${ATLAS_CATEGORY_LABELS[entry.category]} | [${atlasMarkdownCell(entry.name)}](${absolute(`/benchmarks?atlas=${entry.id}#explore`)}) | ${atlasMarkdownCell(entry.version)} | ${coverage} | ${data} |`;
     }),
   ].join("\n");
 }
@@ -343,7 +262,7 @@ export function atlasDefaultChartMarkdown(): string {
     "| --- | ---: | ---: |",
     ...selectAtlasModelProfiles(sortAtlasPoints(dataset)).slice(0, 8).map(point => `| ${atlasMarkdownCell(point.label)} | ${formatAtlasScore(point.score, dataset.score.unit)} | ${formatAtlasCost(point.costUsd)} |`),
     "",
-    `The default view shows up to eight systems using each system’s best-scoring configuration. [Explore all ${dataset.points.length} configurations](${absolute(`/?atlas=${entry.id}&atlasProfiles=all&atlasAll=1#explore`)}) or [download this cohort](${absolute(atlasDatasetDownloadPath(entry.id))}). A rank is an ordering within this benchmark, not a universal model recommendation.`,
+    `The default view shows up to eight systems using each system’s best-scoring configuration. [Explore all ${dataset.points.length} configurations](${absolute(`/benchmarks?atlas=${entry.id}&atlasProfiles=all&atlasAll=1#explore`)}) or [download this cohort](${absolute(atlasDatasetDownloadPath(entry.id))}). A rank is an ordering within this benchmark, not a universal model recommendation.`,
   ]);
 }
 
@@ -371,32 +290,8 @@ function atlasGuidesMarkdown(): string {
   }).join("\n");
 }
 
-function terminalBenchMarkdownTable(snapshot: TerminalBenchSnapshot): string {
-  return [
-    "| Model | Agent configuration | Accuracy | 95% interval | Trials | Evaluation cost |",
-    "| --- | --- | ---: | ---: | ---: | ---: |",
-    ...snapshot.records.slice(0, 6).map(record => (
-      `| ${record.model.display.label} | ${record.harness.display.label} ${record.harness.version}; ${record.reasoningEffort} | ${record.metrics.accuracyPercent.toFixed(1)}% | ±${record.metrics.accuracyCi95HalfWidthPercent.toFixed(1)} points | ${record.metrics.nTrials} | $${record.metrics.totalCostUsd.toFixed(0)} |`
-    )),
-  ].join("\n");
-}
-
-function terminalBenchScienceMarkdownTable(
-  snapshot: TerminalBenchScienceSnapshot,
-): string {
-  return [
-    "| Model | Harness configuration | Resolution rate | Standard error | Trials | Evaluation cost |",
-    "| --- | --- | ---: | ---: | ---: | ---: |",
-    ...snapshot.records.slice(0, 6).map(record => (
-      `| ${record.model.display.label} | ${record.harness.display.label}; ${record.reasoningEffort} | ${record.metrics.resolutionRatePercent.toFixed(1)}% | ±${record.metrics.standardErrorPercent.toFixed(1)} points | ${record.metrics.nTrials} | $${record.metrics.totalCostUsd.toFixed(0)} |`
-    )),
-  ].join("\n");
-}
-
 function homeMarkdown(snapshot: CodingAgentSnapshot): string {
   const document = homeDocumentModel(snapshot);
-  const terminalBench = checkedTerminalBenchSnapshot();
-  const terminalBenchScience = checkedTerminalBenchScienceSnapshot();
   const intelligence = checkedCurrentIntelligenceSnapshot();
   return joinMarkdown([
     `# ${document.heading}`,
@@ -405,58 +300,57 @@ function homeMarkdown(snapshot: CodingAgentSnapshot): string {
     "",
     `## ${intelligence.benchmark.name} v${intelligence.benchmark.version} efficiency`,
     "",
-    `The leading Pareto chart retains ${intelligence.records.length} complete score-and-output records from the [Artificial Analysis model leaderboard](${intelligence.source.url}), retrieved ${formatRetrievedAt(intelligence.source.retrievedAt)}. The output-token and cost views compare the identical ${intelligence.selection.positiveCostRecordCount}-record cohort with positive cost, pairing the owner-published Index with weighted output-only tokens per Index task or cost per Index task. Inspect points by pointer, keyboard, or touch; select a configuration to keep its exact values visible.`,
+    `The Pareto chart compares the identical ${intelligence.selection.positiveCostRecordCount}-configuration positive-cost cohort from ${intelligence.records.length} complete score-and-output records. Switch between weighted output-only tokens per Index task and cost per Index task. Higher scores and lower resource use are better; the frontier marks configurations not dominated on both dimensions. Select a point to read its full configuration and exact values.`,
     "",
-    `The ${intelligence.benchmark.evaluationCount}-evaluation Index weights agents ${intelligence.benchmark.categoryWeightsPercent.agents}%, coding ${intelligence.benchmark.categoryWeightsPercent.coding}%, scientific reasoning ${intelligence.benchmark.categoryWeightsPercent.scientific}%, and general ${intelligence.benchmark.categoryWeightsPercent.general}%. Output tokens mean answer plus reasoning tokens, not the coding-agent chart's total tokens. AI Charts derives the displayed Pareto frontier from the checked cohort: no other configuration is both at least as capable and less resource-intensive. Historical v4.1.1 scores remain available as a separate cohort, never relabeled as v4.3.`,
+    `Source: [${intelligence.source.name}](${intelligence.source.url}), retrieved ${formatRetrievedAt(intelligence.source.retrievedAt)}. The ${intelligence.benchmark.evaluationCount}-evaluation Index keeps the publisher’s scores. Output tokens include answer and reasoning, not input and cache traffic. AI Charts derives the frontier within this checked cohort. Historical v4.1.1 remains separate and is never relabeled as v4.3.`,
     "",
-    `- [Download the current Intelligence efficiency JSON snapshot](${absolute("/data/artificial-analysis-intelligence-v4-3.json")})`,
-    `- [Historical v4.1.1 snapshot](${absolute("/data/artificial-analysis-intelligence.json")})`,
+    `[Source and method](${absolute("/data#current-intelligence-efficiency")}) · [Current v4.3 JSON](${absolute("/data/artificial-analysis-intelligence-v4-3.json")}) · [Historical v4.1.1 JSON](${absolute("/data/artificial-analysis-intelligence.json")})`,
     "",
-    "## Benchmark selection",
+    "## Explore by task",
     "",
-    benchmarkPortfolioMarkdownTable(),
+    ...homeTaskLinks.map(link => `- [${link.name}](${absolute(`/benchmarks?task=${link.task}#explore`)}). ${link.description}`),
     "",
-    `[${SUPPLEMENTAL_CODING_BENCHMARK.name} ${SUPPLEMENTAL_CODING_BENCHMARK.version}](${SUPPLEMENTAL_CODING_BENCHMARK.sourceUrl}) is supplemental closed evidence. ${SUPPLEMENTAL_CODING_BENCHMARK.measure} It does not feed a composite score.`,
+    "## More comparisons and sources",
     "",
-    `## Terminal-Bench ${terminalBench.benchmark.version} snapshot`,
+    ...document.links.filter(link => link.href !== "/#intelligence-index")
+      .map(link => `- [${link.label}](${absolute(link.href)}). ${link.note}`),
+  ]);
+}
+
+function codingMarkdown(snapshot: CodingAgentSnapshot): string {
+  const summary = codingAgentDatasetSummary(snapshot);
+  return joinMarkdown([
+    "# Coding agent comparisons",
     "",
-    `Official Harbor Framework results from [source commit ${terminalBench.source.repositoryCommit.slice(0, 7)}](${terminalBench.source.repositoryCommitUrl}), retrieved ${formatRetrievedAt(terminalBench.source.retrievedAt)}.`,
+    "Compare coding-agent benchmark scores with API cost, active time, or total token use. Each point is a model, agent harness, and effort setting—not a model in isolation.",
     "",
-    terminalBenchMarkdownTable(terminalBench),
+    `The default chart shows DeepSWE accuracy against API cost. Choose another benchmark or resource axis, inspect a point, or compare a provider’s configurations. The checked [${snapshot.source.name} coding-agents snapshot](${snapshot.source.url}) contains ${summary.recordCount} configurations across ${summary.modelCount} models and ${summary.agentCount} agent harnesses. Retrieved ${formatRetrievedAt(snapshot.source.retrievedAt)}.`,
     "",
-    `## Terminal-Bench-Science ${terminalBenchScience.benchmark.version} snapshot`,
+    "## Available benchmarks",
     "",
-    `Owner-published results from [release commit ${terminalBenchScience.source.releaseCommit.slice(0, 7)}](${terminalBenchScience.source.releaseCommitUrl}), retrieved ${formatRetrievedAt(terminalBenchScience.source.retrievedAt)} across ${terminalBenchScience.benchmark.taskCount} tasks and ${terminalBenchScience.benchmark.trialsPerTask} trials per task.`,
+    ...CODING_AGENT_BENCHMARK_DEFINITIONS.map(definition => `- ${definition.label}: ${definition.description}`),
     "",
-    terminalBenchScienceMarkdownTable(terminalBenchScience),
+    "Terminal-Bench v2.1 in this source is a legacy evaluation. Terminal-Bench 4 is the site’s current terminal-engineering standard and has a separate owner-published cohort in the benchmark explorer. Scores from the two versions are not pooled.",
     "",
-    "## Explore more benchmarks",
+    `[Terminal-Bench 4](${absolute("/benchmarks?atlas=terminal-bench-4#explore")}) · [All benchmarks](${absolute("/benchmarks")}) · [Source and method](${absolute("/data#source")}) · [Coding-agent JSON](${absolute(CODING_AGENT_DATASET_DOWNLOAD_PATH)}) · [Model cards](${absolute("/models")})`,
+  ]);
+}
+
+function benchmarksMarkdown(): string {
+  return joinMarkdown([
+    "# Explore benchmarks",
     "",
-    `${ATLAS_DATASETS.length} interactive charts across ${ATLAS_ENTRIES.length} benchmarks. Start with the task, compare the full configuration, and read the source date and uncertainty. Charts contain measured cohorts; guides link to source evaluations whose results are not charted here.`,
+    `Choose a task and compare results within one evaluation. The library has ${ATLAS_DATASETS.length} charted cohorts across ${ATLAS_ENTRIES.length} benchmarks covering coding, reasoning, research, memory, science, and media.`,
+    "",
+    "Charts contain checked observations. Source guides explain evaluations whose results are not charted here. Each cohort keeps its native score, version, system configuration, uncertainty, and source dates; no universal rank is calculated.",
     "",
     atlasDefaultChartMarkdown(),
     "",
+    "## Browse benchmarks",
+    "",
     atlasCatalogMarkdownTable(),
     "",
-    `[Read every benchmark’s definition and limits](${absolute("/data#benchmark-atlas")}) · [Download the compact catalog](${absolute(ATLAS_CATALOG_DOWNLOAD_PATH)})`,
-    "",
-    ...document.paragraphs.flatMap(paragraph => [paragraph, ""]),
-    "## Model and benchmark analysis",
-    "",
-    ...HOME_EDITORIAL_SLUGS.flatMap(slug => {
-      const article = blogArticles.find(candidate => candidate.slug === slug);
-      if (article === undefined) return [];
-      return [
-        `### [${article.title}](${absolute(blogArticlePath(article.slug))})`,
-        "",
-        ...editorialImageMarkdown(article.slug),
-        article.dek,
-        "",
-      ];
-    }),
-    "## Pages",
-    "",
-    ...document.links.map(link => `- [${link.label}](${absolute(link.href)}). ${link.note}`),
+    `[Definitions and comparison limits](${absolute("/data#benchmark-atlas")}) · [Catalog JSON](${absolute(ATLAS_CATALOG_DOWNLOAD_PATH)}) · [Capability versus resources](${absolute("/")}) · [Coding agent comparisons](${absolute("/coding")})`,
   ]);
 }
 
@@ -487,7 +381,7 @@ function datasetMarkdown(snapshot: CodingAgentSnapshot): string {
     "",
     "## Terminal-Bench 4 coding standard",
     "",
-    `The homepage uses Terminal-Bench ${terminalBench.benchmark.version} as its standard agentic terminal-engineering benchmark. The checked owner snapshot contains ${terminalBench.records.length} configurations from the official [Harbor Framework submissions](${terminalBench.source.submissionsDirectoryUrl}) at [commit ${terminalBench.source.repositoryCommit.slice(0, 7)}](${terminalBench.source.repositoryCommitUrl}), committed on ${formatRetrievedAt(terminalBench.source.repositoryCommittedAt)}, with ${terminalBench.benchmark.taskCount} tasks and ${terminalBench.benchmark.trialsPerTask} trials per task. AI Charts retrieved it on ${formatRetrievedAt(terminalBench.source.retrievedAt)}.`,
+    `Terminal-Bench ${terminalBench.benchmark.version} is the site’s standard agentic terminal-engineering benchmark, available in the [benchmark explorer](${absolute("/benchmarks?atlas=terminal-bench-4#explore")}). The checked owner snapshot contains ${terminalBench.records.length} configurations from the official [Harbor Framework submissions](${terminalBench.source.submissionsDirectoryUrl}) at [commit ${terminalBench.source.repositoryCommit.slice(0, 7)}](${terminalBench.source.repositoryCommitUrl}), committed on ${formatRetrievedAt(terminalBench.source.repositoryCommittedAt)}, with ${terminalBench.benchmark.taskCount} tasks and ${terminalBench.benchmark.trialsPerTask} trials per task. AI Charts retrieved it on ${formatRetrievedAt(terminalBench.source.retrievedAt)}.`,
     "",
     "Terminal-Bench 4 is a breaking exam generation. Its results remain separate from the Terminal-Bench v2.1 field in the Artificial Analysis dataset below. Every TB4 JSON row retains the model, agent, agent version, effort, accuracy, 95% confidence interval, trials, cost, tokens, duration, and pinned source files.",
     "",
@@ -582,7 +476,8 @@ function datasetMarkdown(snapshot: CodingAgentSnapshot): string {
     `- [Download historical Intelligence v4.1.1 JSON](${absolute("/data/artificial-analysis-intelligence.json")})`,
     `- [Download the coding-agent JSON snapshot](${absolute(CODING_AGENT_DATASET_DOWNLOAD_PATH)})`,
     `- [Artificial Analysis coding-agents source](${snapshot.source.url})`,
-    `- [Comparison chart](${absolute("/")})`,
+    `- [Coding agent chart](${absolute("/coding")})`,
+    `- [Model capability Pareto chart](${absolute("/")})`,
   ]);
 }
 
@@ -701,7 +596,7 @@ export function agentGuideMarkdown(
   return joinMarkdown([
     `# ${site.name}`,
     "",
-    `${site.description} The homepage has ${ATLAS_DATASETS.length} interactive charts across ${ATLAS_ENTRIES.length} benchmarks. Each chart keeps its native score, source, version, and comparison cohort.`,
+    `${site.description} The benchmark explorer has ${ATLAS_DATASETS.length} charted cohorts across ${ATLAS_ENTRIES.length} benchmarks. Each chart keeps its native score, source, version, and comparison cohort.`,
     "",
     "## When to use AI Charts",
     "",
@@ -715,7 +610,9 @@ export function agentGuideMarkdown(
     "",
     "## Main pages",
     "",
-    `- [AI model charts](${absolute("/")}). Start with capability versus cost or output tokens on the Pareto frontier. The benchmark library below offers task-specific results and comparisons of up to three configurations. Terminal-Bench 4 is the primary terminal-engineering standard.`,
+    `- [AI model charts](${absolute("/")}). Start with capability versus cost or output tokens on the Pareto frontier. Inspect exact model configurations in one matched resource cohort.`,
+    `- [Coding agent comparisons](${absolute("/coding")}). Compare benchmark scores with API cost, active time, or total tokens from the separate Artificial Analysis coding-agents source.`,
+    `- [AI benchmark explorer](${absolute("/benchmarks")}). Choose a task, inspect a measured cohort, or read a source guide. Terminal-Bench 4 is the current terminal-engineering standard.`,
     `- [Atlas catalog JSON](${absolute(ATLAS_CATALOG_DOWNLOAD_PATH)}). All benchmark IDs, coverage, versions, source dates, and per-cohort JSON distribution links.`,
     `- [Model benchmark cards](${absolute("/models")}). Shareable cards for each model and benchmark profile, with canonical routes for cataloged identities.`,
     `- [Dataset and methodology](${absolute(CODING_AGENT_DATASET_PATH)}). Every atlas benchmark’s provenance, version boundaries, definitions, measured distributions, and limits.`,
@@ -733,7 +630,7 @@ export function agentGuideMarkdown(
     "",
     "## How to read the site",
     "",
-    "Request `Accept: text/markdown` on HTML page URLs. Homepage Markdown describes the leading Pareto chart and includes the default library chart and links to every benchmark; `/data` Markdown includes all benchmark definitions and source details. Query parameters select interactive views, while the canonical Markdown representation describes the default view. JSON routes stay `application/json`, including `/data/benchmark-atlas.json`, `/data/benchmark-atlas/{benchmarkId}`, and the versioned source downloads. Only charted IDs have a dataset download; unknown and source-only IDs return HTTP 404.",
+    "Request `Accept: text/markdown` on HTML page URLs. `/` Markdown describes the leading Pareto chart; `/coding` describes the coding-agent comparison; `/benchmarks` includes the default library chart and links to every benchmark; `/data` includes all benchmark definitions and source details. Query parameters select interactive views, while the canonical Markdown representation describes the default view. JSON routes stay `application/json`, including `/data/benchmark-atlas.json`, `/data/benchmark-atlas/{benchmarkId}`, and the versioned source downloads. Only charted IDs have a dataset download; unknown and source-only IDs return HTTP 404.",
     "",
     "Cite the benchmark owner, exact version, model-agent configuration, and retrieval timestamp when quoting a score. AI Charts publishes normalized snapshots; it does not create the measurements.",
   ]);
@@ -767,6 +664,12 @@ export function markdownForPath(pathname: string): MarkdownDocument {
   }
   if (path === "/") {
     return { body: homeMarkdown(snapshot), contentType: MARKDOWN_CONTENT_TYPE, found: true };
+  }
+  if (path === "/coding") {
+    return { body: codingMarkdown(snapshot), contentType: MARKDOWN_CONTENT_TYPE, found: true };
+  }
+  if (path === "/benchmarks") {
+    return { body: benchmarksMarkdown(), contentType: MARKDOWN_CONTENT_TYPE, found: true };
   }
   if (path === CODING_AGENT_DATASET_PATH) {
     return { body: datasetMarkdown(snapshot), contentType: MARKDOWN_CONTENT_TYPE, found: true };

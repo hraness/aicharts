@@ -145,7 +145,7 @@ async function verifyChartExport(browser: Browser, baseUrl: string): Promise<voi
   const page = await context.newPage();
   const failures = attachDiagnostics(page, "chart export");
   try {
-    await page.goto(baseUrl, { waitUntil: "domcontentloaded" });
+    await page.goto(`${baseUrl}/coding`, { waitUntil: "domcontentloaded" });
     await settle(page);
     const sourceChartHeight = await page.locator(".chart-canvas .benchmark-chart").evaluate((element) => {
       if (!(element instanceof SVGSVGElement)) {
@@ -191,23 +191,28 @@ async function verifyBenchmarkAtlas(browser: Browser, baseUrl: string): Promise<
   try {
     await page.goto(baseUrl, { waitUntil: "domcontentloaded" });
     await settle(page);
-    const atlas = page.locator("#explore");
-    invariant(await atlas.locator(".atlas-row").count() === 8, "Default ranking must show eight results, not a wall of labels.");
+    invariant(await page.locator("#explore").count() === 0, "The default home must not stack a second benchmark workspace below the Pareto chart.");
+    invariant(await page.locator(".chart-canvas").count() === 0, "Coding must have its own focused destination rather than another homepage control wall.");
     const pareto = page.locator(".intelligence-efficiency__frontier-line");
     invariant(await pareto.isVisible(), "The original Pareto curve must be visible on a fresh visit, without a disclosure.");
     const paretoPosition = await page.locator(".intelligence-efficiency__svg").boundingBox();
     invariant(paretoPosition !== null && paretoPosition.y < 600, "The Pareto chart must lead the homepage, not be buried below the benchmark library.");
     invariant(await page.locator("#advanced-charts").count() === 0, "Primary Pareto charts must not be hidden as advanced content.");
     const intelligence = page.locator(".intelligence-efficiency");
-    invariant((await intelligence.locator("h2").textContent())?.includes("v4.3"), "The leading Pareto chart must use the admitted current index version.");
+    invariant((await intelligence.textContent())?.includes("Intelligence Index v4.3"), "The leading Pareto chart must identify the admitted current index version.");
     const selectedPoint = intelligence.locator('.intelligence-efficiency__point-control[tabindex="0"]');
     await selectedPoint.focus();
     await selectedPoint.press("ArrowRight");
     await intelligence.locator('.intelligence-efficiency__point-control[tabindex="0"]').press("Enter");
-    const selectedConfiguration = await intelligence.locator(".intelligence-efficiency__inspector h4").textContent();
-    await intelligence.locator('[data-intelligence-metric="costUsdPerTask"]').click();
-    invariant(await intelligence.locator(".intelligence-efficiency__inspector h4").textContent() === selectedConfiguration, "Switching Pareto axes must preserve the selected configuration.");
-    invariant(await pareto.isVisible(), "Cost Pareto curve disappeared after changing axes.");
+    const selectedConfiguration = await intelligence.locator(".intelligence-efficiency__inspector h3").textContent();
+    invariant(await intelligence.locator('[data-intelligence-metric="costUsdPerTask"]').getAttribute("aria-pressed") === "true", "Home must start with interpretable task cost.");
+    await intelligence.locator('[data-intelligence-metric="outputTokensPerTask"]').click();
+    invariant(await intelligence.locator(".intelligence-efficiency__inspector h3").textContent() === selectedConfiguration, "Switching Pareto axes must preserve the selected configuration.");
+    invariant(await pareto.isVisible(), "The Pareto curve disappeared after changing axes.");
+    await page.getByRole("link", { name: "Benchmarks", exact: true }).click();
+    await page.waitForURL(`${baseUrl}/benchmarks`);
+    const atlas = page.locator("#explore");
+    invariant(await atlas.locator(".atlas-row").count() === 8, "Default ranking must show eight results, not a wall of labels.");
     await atlas.locator(".atlas-row").nth(1).click();
     const selectedName = await atlas.locator(".atlas-row[aria-pressed=true] strong").textContent();
     invariant(await atlas.locator(".atlas-inspector h3").textContent() === selectedName, "The inspector must identify the selected ranking row.");
@@ -226,6 +231,7 @@ async function verifyBenchmarkAtlas(browser: Browser, baseUrl: string): Promise<
     invariant(await atlas.locator('.atlas-scatter__point[aria-pressed="true"]').count() === 1, "Keyboard inspection must have one selected cost point.");
     invariant(await atlas.locator('.atlas-scatter__point[tabindex="0"]').getAttribute("aria-pressed") === "true", "Cost chart focus and selection diverged.");
     await page.goto(`${baseUrl}/?atlas=aa-intelligence&atlasView=cost`, { waitUntil: "domcontentloaded" });
+    invariant(new URL(page.url()).pathname === "/benchmarks", "Legacy atlas links must resolve to the focused benchmark page.");
     await atlas.locator(".atlas-scatter__point").first().waitFor();
     const expectedCosts = ATLAS_DATASETS.find(dataset => dataset.benchmarkId === "aa-intelligence")!.points.filter(point => point.costUsd !== null && point.costUsd > 0).length;
     invariant(await atlas.locator(".atlas-scatter__point").count() === expectedCosts, "Cost view hid lower-effort configurations.");
@@ -238,11 +244,11 @@ async function verifyBenchmarkAtlas(browser: Browser, baseUrl: string): Promise<
     invariant(await atlas.locator('.atlas-row[aria-pressed="true"]').count() === 1, "Switching to ranking hid the selected low-ranked configuration.");
     await atlas.getByRole("button", { name: "Show top eight", exact: true }).click();
     invariant(await atlas.locator(".atlas-row").count() === 8, "Collapsing results did not restore the top-eight view.");
-    await atlas.getByRole("button", { name: "Memory", exact: true }).click();
+    await atlas.getByRole("combobox", { name: "Task", exact: true }).selectOption("memory");
     invariant(await atlas.locator(".atlas-row").count() === 6, "Memory comparisons must retain all six systems with the fixed reader.");
-    await atlas.getByRole("button", { name: "Images", exact: true }).click();
+    await atlas.getByRole("combobox", { name: "Task", exact: true }).selectOption("image");
     invariant(await atlas.locator("h2").textContent() === "Image generation · Arena", "Image task did not select its current preference chart.");
-    await atlas.getByRole("button", { name: "Audio", exact: true }).click();
+    await atlas.getByRole("combobox", { name: "Task", exact: true }).selectOption("audio");
     invariant((await atlas.locator("h2").textContent())?.includes("Open ASR"), "Audio task must offer the qualified transcription chart.");
     invariant(await atlas.locator(".atlas-row").count() === 8, "Audio chart must show the first eight selected configurations.");
     await page.goBack({ waitUntil: "domcontentloaded" });
@@ -250,8 +256,11 @@ async function verifyBenchmarkAtlas(browser: Browser, baseUrl: string): Promise<
     invariant(await atlas.locator("h2").textContent() === "Image generation · Arena", "Back navigation did not restore the benchmark.");
     await page.setViewportSize({ width: 320, height: 900 });
     await settle(page);
-    invariant(await atlas.getByLabel("Find a benchmark", { exact: true }).isVisible(), "Mobile search must be named and visible.");
-    await atlas.locator(".atlas-mobile-select select").selectOption("geditbench-2");
+    invariant(await atlas.getByRole("combobox", { name: "Benchmark", exact: true }).isVisible(), "Mobile benchmark navigation must be named and visible.");
+    await atlas.locator(".atlas-library > summary").click();
+    invariant(await atlas.getByLabel("Find a benchmark", { exact: true }).isVisible(), "Mobile search must be available in Browse library.");
+    await atlas.locator(".atlas-library > summary").click();
+    await atlas.getByRole("combobox", { name: "Benchmark", exact: true }).selectOption("geditbench-2");
     invariant((await atlas.locator("h2").textContent())?.includes("GEditBench"), "Mobile benchmark selector did not change the chart.");
     invariant(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), "The page overflows at 320px; chart panning must remain local.");
     await page.emulateMedia({ colorScheme: "dark" });
@@ -260,8 +269,18 @@ async function verifyBenchmarkAtlas(browser: Browser, baseUrl: string): Promise<
     const distribution = await page.request.get(`${baseUrl}/data/benchmark-atlas.json`);
     invariant(distribution.ok(), "The benchmark catalog JSON is not available.");
     await page.goto(`${baseUrl}/?benchmark=aaIndex&compare=costUsd#chart`, { waitUntil: "domcontentloaded" });
+    invariant(new URL(page.url()).pathname === "/coding", "Legacy coding selections must resolve to the dedicated coding chart.");
     await page.locator(".chart-canvas .benchmark-chart").waitFor();
     invariant(await page.getByRole("button", { name: "Share and export chart" }).isVisible(), "Legacy shared chart links no longer reveal the exportable chart.");
+    await page.goto(`${baseUrl}/?benchmark=aaIndex#model-updates`, { waitUntil: "domcontentloaded" });
+    await page.waitForURL(`${baseUrl}/coding?benchmark=aaIndex#model-updates`);
+    invariant(await page.locator("#model-updates").isVisible(), "Combined query and section bookmarks must retain their original fragment.");
+    await page.goto(`${baseUrl}/#chart`, { waitUntil: "domcontentloaded" });
+    await page.waitForURL(`${baseUrl}/coding#chart`);
+    invariant(await page.locator("#chart").isVisible(), "Hash-only chart bookmarks must retain their destination.");
+    await page.goto(`${baseUrl}/#explore`, { waitUntil: "domcontentloaded" });
+    await page.waitForURL(`${baseUrl}/benchmarks#explore`);
+    invariant(await page.locator("#explore").isVisible(), "Hash-only benchmark bookmarks must retain their destination.");
     invariant(failures.length === 0, failures.join("; "));
   } finally {
     await context.close();

@@ -1,12 +1,12 @@
 import type { MetadataRoute } from "next";
 import { atlasContentModifiedAt } from "@/lib/benchmark-atlas-distribution";
 
-import artificialAnalysisIntelligenceData from "@/data/artificial-analysis-intelligence.json";
+import artificialAnalysisIntelligenceData from "@/data/artificial-analysis-intelligence-v4-3.json";
 import codingAgentData from "@/data/coding-agents.json";
 import terminalBenchData from "@/data/terminal-bench.json";
 import terminalBenchScienceData from "@/data/terminal-bench-science.json";
 import { parseCodingAgentSnapshot } from "@/lib/coding-agent-data";
-import { parseArtificialAnalysisIntelligenceSnapshot } from "@/lib/artificial-analysis-intelligence-data";
+import { parseArtificialAnalysisIntelligenceV43Snapshot } from "@/lib/artificial-analysis-intelligence-v4-3-data";
 import {
   FIRST_PARTY_RELEASE_HIGHLIGHTS,
 } from "@/lib/first-party-release-collection";
@@ -78,7 +78,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       { cause: parsedTerminalBenchScience.error },
     );
   }
-  const parsedIntelligence = parseArtificialAnalysisIntelligenceSnapshot(
+  const parsedIntelligence = parseArtificialAnalysisIntelligenceV43Snapshot(
     artificialAnalysisIntelligenceData,
   );
   if (!parsedIntelligence.ok) {
@@ -87,7 +87,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
       { cause: parsedIntelligence.error },
     );
   }
+  const navigationUpdatedAt = "2026-09-09T02:50:00Z";
+  const homeModifiedAt = [navigationUpdatedAt, parsedIntelligence.value.source.retrievedAt]
+    .sort((left, right) => Date.parse(right) - Date.parse(left))[0]!;
+  const codingModifiedAt = [navigationUpdatedAt, datasetModifiedAt]
+    .sort((left, right) => Date.parse(right) - Date.parse(left))[0]!;
   const benchmarkPortfolioModifiedAt = [
+    navigationUpdatedAt,
     atlasContentModifiedAt(),
     datasetModifiedAt,
     parsedTerminalBench.value.source.retrievedAt,
@@ -103,9 +109,23 @@ export default function sitemap(): MetadataRoute.Sitemap {
     {
       changeFrequency: "daily",
       images: [siteImage],
-      lastModified: benchmarkPortfolioModifiedAt,
+      lastModified: homeModifiedAt,
       priority: 1,
       url: absolute("/"),
+    },
+    {
+      changeFrequency: "daily",
+      images: [siteImage],
+      lastModified: codingModifiedAt,
+      priority: 0.9,
+      url: absolute("/coding"),
+    },
+    {
+      changeFrequency: "daily",
+      images: [siteImage],
+      lastModified: atlasContentModifiedAt(),
+      priority: 0.9,
+      url: absolute("/benchmarks"),
     },
     {
       changeFrequency: "daily",

@@ -12,7 +12,8 @@ test("atlas controls expose focus and selected state without changing the result
   expect(stylesheet).toContain('@import "../styles/benchmark-atlas.css"');
   expect(firstRule(".benchmark-atlas :focus-visible", atlasStylesheet)).toMatch(/outline:\s*2px solid/u);
   expect(firstRule('.atlas-row[aria-pressed="true"]', atlasStylesheet)).toContain("background:");
-  expect(firstRule('.atlas-tasks button[aria-pressed="true"]', atlasStylesheet)).toContain("color: var(--background)");
+  expect(firstRule(".atlas-navigation select", atlasStylesheet)).toContain("min-height: 44px");
+  expect(firstRule(".atlas-navigation select", atlasStylesheet)).toContain("color: var(--foreground)");
   expect(firstRule(".atlas-scatter__point:focus-visible circle:last-of-type", atlasStylesheet)).toContain("stroke: var(--foreground)");
   expect(firstRule(".atlas-row__heading strong", atlasStylesheet)).not.toContain("text-overflow: ellipsis");
   expect(firstRule(".atlas-row__heading strong", atlasStylesheet)).toContain("overflow-wrap: anywhere");
@@ -23,8 +24,8 @@ test("atlas details remain in document flow and move below results on smaller sc
   expect(firstRule(".atlas-results", atlasStylesheet)).toContain("display: grid");
   expect(firstRule(".atlas-inspector", atlasStylesheet)).not.toMatch(/position:\s*(?:absolute|fixed)/u);
   expect(atlasStylesheet).toMatch(/@media \(max-width:\s*1100px\)[\s\S]*?\.atlas-results\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)/u);
-  expect(atlasStylesheet).toMatch(/@media \(max-width:\s*720px\)[\s\S]*?\.atlas-workspace\s*\{[^}]*grid-template-columns:\s*1fr/u);
-  expect(atlasStylesheet).toMatch(/@media \(max-width:\s*720px\)[\s\S]*?\.atlas-mobile-select\s*\{[^}]*display:\s*grid/u);
+  expect(atlasStylesheet).toMatch(/@media \(max-width:\s*720px\)[\s\S]*?\.atlas-navigation\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\) auto/u);
+  expect(atlasStylesheet).toMatch(/@media \(max-width:\s*720px\)[\s\S]*?\.atlas-benchmark-select\s*\{[^}]*grid-column:\s*1 \/ -1/u);
   expect(atlasStylesheet).toMatch(/@media \(max-width:\s*720px\)[\s\S]*?\.atlas-comparison__grid\s*\{[^}]*grid-template-columns:\s*1fr/u);
   expect(firstRule(".atlas-table-scroll", atlasStylesheet)).toContain("overflow-x: auto");
   expect(firstRule(".atlas-scatter__scroll", atlasStylesheet)).toContain("overflow-x: auto");

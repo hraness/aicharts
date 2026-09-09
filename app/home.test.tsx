@@ -87,25 +87,22 @@ describe("homepage canonical content", () => {
     }
   });
 
-  test("leads with the original Pareto charts and keeps the benchmark library secondary", async () => {
+  test("keeps the Pareto chart prominent and gives each other chart workspace its own destination", async () => {
     const source = await Bun.file(new URL("./page.tsx", import.meta.url)).text();
     const markup = renderToStaticMarkup(createElement(Home));
-    const mainAt = markup.indexOf('<main class="atlas-home" id="main-content">');
-    const explorerAt = markup.indexOf('id="explore"');
-    const readingAt = markup.indexOf('aria-label="Make a useful comparison"');
+    const mainAt = markup.indexOf('<main class="chart-home" id="main-content">');
     const intelligenceAt = markup.indexOf('class="intelligence-efficiency"');
-    const codingAt = markup.indexOf('class="chart-page-canvas"');
-    const resourcesAt = markup.indexOf('class="home-editorial"');
+    const discoveryAt = markup.indexOf('class="task-discovery"');
     const mainEndAt = markup.indexOf("</main>", mainAt);
 
     expect(mainAt).toBeGreaterThan(markup.indexOf("site-header"));
     expect(intelligenceAt).toBeGreaterThan(mainAt);
-    expect(intelligenceAt).toBeLessThan(explorerAt);
-    expect(codingAt).toBeGreaterThan(intelligenceAt);
-    expect(codingAt).toBeLessThan(explorerAt);
-    expect(readingAt).toBeGreaterThan(explorerAt);
-    expect(resourcesAt).toBeGreaterThan(readingAt);
-    expect(mainEndAt).toBeGreaterThan(resourcesAt);
+    expect(discoveryAt).toBeGreaterThan(intelligenceAt);
+    expect(mainEndAt).toBeGreaterThan(discoveryAt);
+    expect(markup).not.toContain('class="benchmark-atlas"');
+    expect(markup).not.toContain('class="chart-page-canvas"');
+    expect(markup).not.toContain('class="home-editorial"');
+    expect(markup).not.toContain('class="atlas-reading"');
     expect(markup.indexOf('aria-label="Ask AI about this"')).toBeGreaterThan(mainEndAt);
     expect(markup).not.toContain('id="advanced-charts"');
     expect(markup).toContain("Artificial Analysis Intelligence Index v4.3");
@@ -115,37 +112,36 @@ describe("homepage canonical content", () => {
     expect(source).not.toContain("AdvancedCharts");
     expect(markup).toContain('class="intelligence-efficiency__frontier-line"');
     expect(markup).toContain("Pareto frontier");
-    expect(source).toContain("brand={{ domain: site.domain }}");
+    expect(source).not.toContain("CodingAgentExplorer");
+    expect(source).not.toContain("BenchmarkAtlasExplorer");
+    expect(source).not.toContain("HomeBenchmarkPortfolio");
     expect(existsSync(new URL("./loading.tsx", import.meta.url))).toBeFalse();
     expect(markup).toContain(`<h1 id="home-title">${homeHeading}</h1>`);
     expect(markup).toContain(homeLede);
-    expect(markup).toContain(`${ATLAS_DATASETS.length} interactive charts`);
-    expect(markup).toContain(`${ATLAS_ENTRIES.length} benchmarks`);
-    expect(markup).toContain("Compare the full setup");
-    expect(markup).toContain("Read the date and the gap");
+    expect(markup).toContain('aria-label="Chart collection"');
+    expect(markup).toContain('href="/coding"');
+    expect(markup).toContain('href="/benchmarks"');
+    for (const task of ["coding", "reasoning", "research", "image", "video", "audio"]) {
+      expect(markup).toContain(`href="/benchmarks?task=${task}#explore"`);
+    }
     expect(markup).toContain('href="https://x.com/hraness"');
     expect(markup).toContain('href="https://github.com/hraness/aicharts"');
     expect(markup).toContain('href="/data"');
     expect(markup).toContain('href="/models"');
     expect(markup).toContain('id="intelligence-index"');
-    expect(markup).toContain("Terminal-Bench 4.0.0 snapshot");
-    expect(markup).toContain("Terminal-Bench-Science 0.1.0 snapshot");
-    expect(markup).toContain("Artificial Analysis Intelligence Index v4.3");
-    expect(markup).toContain("This source still reports Terminal-Bench v2.1");
     expect(markup).not.toContain('class="home-document"');
     expect(markup).not.toContain('class="hraness-marketing-hero"');
     expect(markup.match(/<h1(?:\s|>)/gu)).toHaveLength(1);
-    expect(markup).toContain('<option value="deepSwe" selected="">DSWE</option>');
-    expect(markup).toContain('<strong>DeepSWE</strong>');
   });
 
   test("server-renders named task controls, inspectable results, and source evidence before hydration", () => {
     const markup = renderToStaticMarkup(createElement(BenchmarkAtlasExplorer, { entries: ATLAS_ENTRIES, datasets: ATLAS_DATASETS }));
     expect(markup).toContain('aria-label="Explore AI benchmarks"');
     expect(markup).toContain('data-analytics-surface="benchmark_atlas"');
-    expect(markup).toContain('aria-label="Choose a task"');
+    expect(markup).toContain('aria-label="Task"');
+    expect(markup).toContain('aria-label="Benchmark"');
     for (const task of ["Coding", "Reasoning", "Research", "Memory", "Images", "Video", "Audio", "World models", "Science", "Work", "Computer use"]) {
-      expect(markup).toContain(`type="button">${task}</button>`);
+      expect(markup).toContain(`>${task}</option>`);
     }
     expect(markup).toContain('aria-label="Find a benchmark"');
     expect(markup).toContain('type="search"');

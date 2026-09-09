@@ -6,6 +6,7 @@ import {
 export type AnalyticsPageKind =
   | "benchmark_chart"
   | "benchmark_data"
+  | "benchmark_library"
   | "blog_article"
   | "blog_index"
   | "model_card"
@@ -14,6 +15,8 @@ export type AnalyticsPageKind =
 
 export type AnalyticsCanonicalPath =
   | "/"
+  | "/coding"
+  | "/benchmarks"
   | "/blog"
   | "/blog/[article]"
   | "/data"
@@ -22,6 +25,8 @@ export type AnalyticsCanonicalPath =
   | "/[other]";
 
 export type AnalyticsContentId =
+  | "coding:index"
+  | "benchmarks:index"
   | "blog:index"
   | `blog:${string}`
   | "data:index"
@@ -84,6 +89,16 @@ export function pageAnalyticsContext(value: unknown): PageAnalyticsContext {
       content_group: "ai_comparison",
       content_id: "home",
       page_kind: "benchmark_chart",
+    };
+  }
+
+  if (pathname === "/coding" || pathname === "/benchmarks") {
+    return {
+      ...shared,
+      canonical_path: pathname,
+      content_group: "ai_comparison",
+      content_id: pathname === "/coding" ? "coding:index" : "benchmarks:index",
+      page_kind: pathname === "/coding" ? "benchmark_chart" : "benchmark_library",
     };
   }
 

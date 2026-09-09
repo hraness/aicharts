@@ -280,7 +280,7 @@ export default function CodingAgentDatasetPage() {
                 </dl>
                 <ul>{entry.limitations.map(limit => <li key={limit}>{limit}</li>)}</ul>
                 <p>
-                  <Link href={`/?atlas=${entry.id}#explore`}>Explore {entry.name}</Link>{" · "}
+                  <Link href={`/benchmarks?atlas=${entry.id}#explore`}>Explore {entry.name}</Link>{" · "}
                   <a href={entry.source.url} data-analytics-destination-id={`source:${entry.id}`} data-analytics-destination-kind="source">{entry.source.name}</a>
                   {entry.source.methodologyUrl && <> · <a href={entry.source.methodologyUrl} data-analytics-destination-id={`source:${entry.id}`} data-analytics-destination-kind="source">Methodology</a></>}
                   {dataset && <> · <a download={`aicharts-${entry.id}.json`} href={atlasDatasetDownloadPath(entry.id)}>Download this dataset</a></>}
@@ -289,8 +289,8 @@ export default function CodingAgentDatasetPage() {
             })}
             <h2 id="terminal-bench-4">Terminal-Bench 4 coding standard</h2>
             <p>
-              The homepage uses Terminal-Bench {terminalBench.benchmark.version}{" "}
-              as its standard agentic terminal-engineering benchmark. The checked
+              Terminal-Bench {terminalBench.benchmark.version} is the site’s standard{" "}
+              agentic terminal-engineering benchmark. Explore it in the <Link href="/benchmarks?atlas=terminal-bench-4#explore">benchmark library</Link>. The checked
               snapshot contains {terminalBench.records.length} configurations from
               the official{" "}
               <a href={terminalBench.source.submissionsDirectoryUrl}>

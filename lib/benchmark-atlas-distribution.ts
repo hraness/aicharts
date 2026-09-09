@@ -3,7 +3,7 @@ import { atlasDatasetSummary, type BenchmarkAtlasDataset, type BenchmarkAtlasEnt
 import { BENCHMARK_DATA_DESCRIPTION } from "./benchmark-portfolio";
 
 export const ATLAS_CATALOG_DOWNLOAD_PATH = "/data/benchmark-atlas.json";
-export const ATLAS_CATALOG_CONTENT_UPDATED_AT = "2026-09-09T02:05:18Z";
+export const ATLAS_CATALOG_CONTENT_UPDATED_AT = "2026-09-09T02:50:00Z";
 export const ATLAS_DATA_DESCRIPTION = BENCHMARK_DATA_DESCRIPTION;
 
 export function atlasDatasetDownloadPath(benchmarkId: string): string {
@@ -31,7 +31,7 @@ export function atlasCatalogDistribution(
       const dataset = datasets.find(candidate => candidate.benchmarkId === entry.id);
       return {
         ...entry,
-        explorationUrl: `https://aicharts.io/?atlas=${entry.id}#explore`,
+        explorationUrl: `https://aicharts.io/benchmarks?atlas=${entry.id}#explore`,
         dataset: dataset === undefined ? null : {
           url: `https://aicharts.io${atlasDatasetDownloadPath(entry.id)}`,
           configurationCount: dataset.points.length,

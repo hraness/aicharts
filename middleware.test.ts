@@ -25,6 +25,8 @@ describe("markdown content negotiation", () => {
   test("rewrites explicit .md URLs regardless of Accept", () => {
     for (const [path, expected] of [
       ["/data.md", "/api/markdown/data"],
+      ["/coding.md", "/api/markdown/coding"],
+      ["/benchmarks.md", "/api/markdown/benchmarks"],
       ["/blog/terminal-bench-science.md", "/api/markdown/blog/terminal-bench-science"],
       ["/models/openai/gpt-5.6-sol/max.md", "/api/markdown/models/openai/gpt-5.6-sol/max"],
     ] as const) {
@@ -61,6 +63,8 @@ describe("markdown content negotiation", () => {
     for (const path of [
       "/",
       "/data",
+      "/coding",
+      "/benchmarks",
       "/models",
       "/models/openai/gpt-5.6-sol/max",
       "/blog",
@@ -115,5 +119,25 @@ describe("markdown content negotiation", () => {
       expect(unsupported.headers.get("x-middleware-rewrite")).toBeNull();
       expect(unsupported.status).toBe(200);
     }
+  });
+});
+
+describe("old homepage comparison links", () => {
+  test("redirects legacy chart state before negotiating its new canonical page", () => {
+    for (const accept of ["text/html", "text/markdown", "text/x-component"]) {
+      const response = middleware(request("/?atlas=arc-agi-2&atlasCompare=a&atlasCompare=b", { Accept: accept }));
+      expect(response.status).toBe(308);
+      expect(response.headers.get("location")).toBe("https://aicharts.io/benchmarks?atlas=arc-agi-2&atlasCompare=a&atlasCompare=b");
+      expect(response.headers.get("x-middleware-rewrite")).toBeNull();
+    }
+    expect(middleware(request("/?benchmark=deepSwe&compare=costUsd&point=id")).headers.get("location"))
+      .toBe("https://aicharts.io/coding?benchmark=deepSwe&compare=costUsd&point=id");
+  });
+  test("does not redirect new destinations, normal home visits, or posted content", () => {
+    for (const path of ["/", "/?utm_source=notes", "/coding?benchmark=deepSwe", "/benchmarks?atlas=arc-agi-2"]) {
+      expect(middleware(request(path)).headers.get("location")).toBeNull();
+    }
+    const post = new NextRequest("https://aicharts.io/?atlas=arc-agi-2", { method: "POST" });
+    expect(middleware(post).headers.get("location")).toBeNull();
   });
 });

@@ -215,6 +215,7 @@ export function isAnalyticsSurface(value: unknown): value is AnalyticsSurface {
 
 function defaultSurface(pageKind: AnalyticsPageKind): AnalyticsSurface {
   if (pageKind === "benchmark_chart") return "benchmark_chart";
+  if (pageKind === "benchmark_library") return "benchmark_atlas";
   if (pageKind === "benchmark_data") return "data_document";
   if (pageKind === "blog_article") return "blog_article";
   if (pageKind === "blog_index") return "blog_index";
@@ -241,6 +242,8 @@ function isCanonicalModelId(value: unknown): value is string {
 function isContentId(value: unknown): value is AnalyticsContentId {
   if (
     value === "home"
+    || value === "coding:index"
+    || value === "benchmarks:index"
     || value === "blog:index"
     || value === "data:index"
     || value === "models:index"
@@ -318,7 +321,7 @@ function isDestinationOverride(
   if (kind === "repository") return id === "external:github";
   if (kind === "section") return id === "section";
   if (kind === "site_page") {
-    return ["home", "blog:index", "data:index", "models:index"].includes(id);
+    return ["home", "coding:index", "benchmarks:index", "blog:index", "data:index", "models:index"].includes(id);
   }
   if (kind === "site_resource") return id.startsWith("resource:");
   if (kind === "social") return id.startsWith("social:");
