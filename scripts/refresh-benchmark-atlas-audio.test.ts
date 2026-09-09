@@ -3,12 +3,13 @@ import fc from "fast-check";
 import { mkdtemp, readFile, readdir, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import checked from "../data/benchmark-atlas-audio.json";
+import checkedSnapshot from "../data/benchmark-atlas-audio.json";
 import { sortAtlasPoints, validateAtlasCatalog } from "../lib/benchmark-atlas";
 import { AUDIO_ATLAS_DATASETS, AUDIO_ATLAS_ENTRIES } from "../lib/benchmark-atlas-audio";
 import { AUDIO_MODELS, AUDIO_SOURCE_REVISION, audioSnapshotSchema } from "../lib/benchmark-atlas-audio-data";
 import { AUDIO_CSV_HEADER, buildAudioSnapshot, extractAudioRows, refreshAudioSnapshot, writeAudioSnapshot } from "./refresh-benchmark-atlas-audio";
 
+const checked = audioSnapshotSchema.parse(checkedSnapshot);
 const expectedScores = [6.96, 7.02, 7.91, 8.31, 9.09, 9.42, 13.19, 13.63, 13.86, 13.88];
 const headers = AUDIO_CSV_HEADER.split(",");
 const werIndex = headers.indexOf("AMI-Cleaned WER");
@@ -31,7 +32,7 @@ function csv(rows = fixtureRows()): string {
 
 describe("Open ASR AMI-Cleaned source boundary", () => {
   test("the checked cohort preserves ten exact native observations and seven developers", () => {
-    expect(audioSnapshotSchema.safeParse(checked).success).toBe(true);
+    expect(audioSnapshotSchema.safeParse(checkedSnapshot).success).toBe(true);
     expect(checked.rows.map(row => row.wer)).toEqual(expectedScores);
     expect(checked.source.revision).toBe(AUDIO_SOURCE_REVISION);
     expect(checked.observedAt).toBe("2026-09-04");

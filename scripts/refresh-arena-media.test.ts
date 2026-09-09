@@ -14,9 +14,11 @@ const row = (index = 0): ArenaMediaRow => ({
   category: "overall", leaderboard_publish_date: "2026-09-04",
 });
 const rows = Array.from({ length: 5 }, (_, index) => row(index));
+// Source fixtures represent untrusted strings, including deliberately unsupported columns.
+type SourceFeatureFixture = { feature_idx: number; name: string; type: { dtype: string; _type: string } };
 function page(total = 5, offset = 0) {
   return {
-    features: ARENA_MEDIA_FEATURES.map(([name, dtype], feature_idx) => ({ feature_idx, name, type: { dtype, _type: "Value" } })),
+    features: ARENA_MEDIA_FEATURES.map<SourceFeatureFixture>(([name, dtype], feature_idx) => ({ feature_idx, name, type: { dtype, _type: "Value" } })),
     rows: Array.from({ length: Math.min(100, total - offset) }, (_, index) => ({ row_idx: offset + index, row: row(offset + index), truncated_cells: [] })),
     num_rows_total: total, num_rows_per_page: 100, partial: false,
   };
