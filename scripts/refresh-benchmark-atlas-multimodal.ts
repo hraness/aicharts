@@ -7,7 +7,8 @@ const OUTPUT = path.join(import.meta.dir, "..", "data", "benchmark-atlas-multimo
 const SOURCES = MULTIMODAL_SOURCE_URLS;
 
 function plain(value: string): string {
-  return value.replace(/<[^>]*>/gu, " ").replace(/&amp;/gu, "&").replace(/&nbsp;/gu, " ").replace(/\s+/gu, " ").trim();
+  // Decode the limited source entity set once; replacement text is not re-scanned.
+  return value.replace(/<[^>]*>/gu, " ").replace(/&(?:amp|nbsp);/gu, entity => entity === "&amp;" ? "&" : " ").replace(/\s+/gu, " ").trim();
 }
 function number(value: string): number {
   if (!/^\d+(?:\.\d+)?$/u.test(value)) throw new Error(`Expected a native numeric score, received ${value}.`);

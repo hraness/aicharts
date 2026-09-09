@@ -25,6 +25,21 @@ const worldRow = (label: string, evaluator = "WorldScore") => `Video,[${label}](
 const world = [worldHeader, ...Array.from({ length: 19 }, (_, index) => worldRow(`World ${index}`))].join("\n");
 
 describe("multimodal source admission", () => {
+  test.each([
+    ["Editor&nbsp;&amp;&nbsp;Co", "Editor & Co"],
+    ["Editor &amp;nbsp; Co", "Editor &nbsp; Co"],
+    ["Editor &amp;amp; Co", "Editor &amp; Co"],
+    ["Editor&nbsp;&amp;nbsp;&nbsp;&amp;amp; &#160; &#x2191; &copy; Co", "Editor &nbsp; &amp; &#160; &#x2191; &copy; Co"],
+    ["Editor<span>&amp;</span>\n&nbsp;Co", "Editor & Co"],
+  ])("HTML source labels decode supported entities once: %s", (encoded, expected) => {
+    expect(extractEditing(edit.replace("Editor 0", encoded))[0].label).toBe(expected);
+  });
+
+  test("nested entities cannot become accepted score whitespace or matching headers", () => {
+    expect(() => extractEditing(edit.replace("Visual Quality", "Visual&amp;nbsp;Quality"))).toThrow("column order");
+    expect(() => extractEditing(edit.replace("1,000 -7/+8", "1,000&amp;nbsp;-7/+8"))).toThrow("confidence interval");
+  });
+
   test("WISE refuses old judges, changed category weights, and incomplete generations", () => {
     expect(extractWise(wise)).toHaveLength(29);
     expect(() => extractWise(wise.replace("Qwen3.5-35B-A3B", "GPT-4o"))).toThrow("judge or weighting");

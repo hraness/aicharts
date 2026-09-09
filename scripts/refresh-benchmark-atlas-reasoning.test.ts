@@ -25,6 +25,23 @@ function memoryHtml() {
 }
 
 describe("reasoning atlas source contracts", () => {
+  test.each([
+    ["Lab&nbsp;&amp;&nbsp;Co", "Lab & Co"],
+    ["Lab &amp;nbsp; Co", "Lab &nbsp; Co"],
+    ["Lab &amp;amp; Co", "Lab &amp; Co"],
+    ["Lab&nbsp;&amp;nbsp;&nbsp;&amp;amp; &#160; &#x2191; &copy; Co", "Lab &nbsp; &amp; &#160; &#x2191; &copy; Co"],
+    ["Lab<span>&amp;</span>\n&nbsp;Co", "Lab & Co"],
+  ])("HTML source providers decode supported entities once: %s", (encoded, expected) => {
+    const firstProvider = checked.deepResearch.rows[0].provider;
+    const html = researchHtml().replace(`<div>${firstProvider} · Source</div>`, `<div>${encoded} · Source</div>`);
+    expect(extractResearchRows(html)[0].provider).toBe(expected);
+  });
+
+  test("nested entities cannot become accepted numeric whitespace or matching memory headers", () => {
+    expect(() => extractResearchRows(researchHtml().replace("64.38", "&amp;nbsp;64.38"))).toThrow("Malformed research score");
+    expect(() => extractMemoryRows(memoryHtml().replace("Small Overall", "Small&amp;nbsp;Overall"))).toThrow("headers changed");
+  });
+
   test("checked sources validate against the catalog without mixing cohorts", () => {
     expect(reasoningSnapshotSchema.safeParse(checked).success).toBe(true);
     expect(validateAtlasCatalog(REASONING_ATLAS_ENTRIES, REASONING_ATLAS_DATASETS).ok).toBe(true);
