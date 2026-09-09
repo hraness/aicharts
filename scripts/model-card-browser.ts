@@ -218,7 +218,10 @@ async function verifyBenchmarkAtlas(browser: Browser, baseUrl: string): Promise<
     invariant(await atlas.locator(".atlas-scatter__point").count() === expectedCosts, "Cost view hid lower-effort configurations.");
     await atlas.locator(".atlas-scatter__point").last().focus();
     await atlas.locator(".atlas-scatter__point").last().press("Enter");
+    const inspectedId = new URL(page.url()).searchParams.get("atlasPoint");
+    invariant(inspectedId !== null, "Cost keyboard selection did not persist its configuration ID.");
     await atlas.getByRole("button", { name: "Ranking", exact: true }).click();
+    invariant(new URL(page.url()).searchParams.get("atlasPoint") === inspectedId, "Switching chart view replaced the selected configuration.");
     invariant(await atlas.locator('.atlas-row[aria-pressed="true"]').count() === 1, "Switching to ranking hid the selected low-ranked configuration.");
     await atlas.getByRole("button", { name: "Show top eight", exact: true }).click();
     invariant(await atlas.locator(".atlas-row").count() === 8, "Collapsing results did not restore the top-eight view.");

@@ -197,7 +197,7 @@ export function BenchmarkAtlasExplorer({ entries, datasets }: Readonly<{ entries
           }} /> Best result per system <span>Uses each model and harness’s best-scoring configuration.</span></label>}
           <div className="atlas-results">
             <div className="atlas-results__chart">{state.view === "ranking" ? <Ranking dataset={dataset} points={shown} selectedId={selected?.id ?? ""} onSelect={select} /> : state.view === "cost" ? <CostChart dataset={dataset} points={points} selectedId={selected?.id ?? ""} onSelect={select} /> : <ResultsTable dataset={dataset} points={shown} onSelect={select} />}
-              {points.length > 8 && state.view !== "cost" && <button className="atlas-show-all" type="button" onClick={() => { update({ ...state, expanded: !expanded, pointId: expanded ? null : state.pointId }, true); captureAnalyticsEvent({ name: "benchmark explored", properties: { benchmark_id: entry.id, action: "expand", view: state.view } }); }}>{expanded ? "Show top eight" : `Show all ${points.length} results`} <span>{expanded ? "−" : "+"}</span></button>}
+              {points.length > 8 && state.view !== "cost" && <button className="atlas-show-all" type="button" onClick={() => { update({ ...state, expanded: !expanded, pointId: expanded ? null : state.pointId }, true); captureAnalyticsEvent({ name: "benchmark explored", properties: { benchmark_id: entry.id, action: "expand", view: state.view } }); }}>{expanded ? "Show top eight" : `Show all ${points.length} results`} <span aria-hidden="true">{expanded ? "−" : "+"}</span></button>}
             </div>
             {selected && <PointInspector dataset={dataset} point={selected} compareIds={state.compareIds} onCompare={compare} />}
           </div>
