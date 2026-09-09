@@ -4,6 +4,7 @@ import {
   BENCHMARK_ATLAS_ANALYTICS_ACTIONS,
   type AnalyticsEvent,
   analyticsEventPayload,
+  analyticsSurface,
   classifyAnalyticsLink,
   newsletterSignupRequestEvent,
 } from "./analytics";
@@ -43,6 +44,34 @@ describe("delegated link classification", () => {
     });
     expect(JSON.stringify([article, model])).not.toContain("private");
     expect(JSON.stringify([article, model])).not.toContain("#");
+  });
+
+  test("classifies the separate workspaces and accepts only bounded route identities", () => {
+    for (const [path, contentId, surface] of [
+      ["/coding", "coding:index", "benchmark_chart"],
+      ["/benchmarks", "benchmarks:index", "benchmark_atlas"],
+    ] as const) {
+      expect(analyticsSurface(undefined, `${path}?point=private`)).toBe(surface);
+      const event = classifyAnalyticsLink({
+        currentUrl,
+        download: false,
+        href: `${path}?atlasPoint=private#explore`,
+      });
+      expect(event?.properties).toMatchObject({
+        destination_id: contentId,
+        destination_kind: "site_page",
+        link_kind: "internal",
+      });
+      expect(JSON.stringify(event)).not.toContain("private");
+      expect(analyticsEventPayload(event!)).not.toBeNull();
+      expect(classifyAnalyticsLink({
+        currentUrl,
+        download: false,
+        href: "/",
+        destinationId: contentId,
+        destinationKind: "site_page",
+      })?.properties.destination_id).toBe(contentId);
+    }
   });
 
   test("classifies sections, downloads, resources, and canonical www links", () => {

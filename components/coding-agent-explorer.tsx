@@ -63,7 +63,7 @@ import { layoutChartLabels, type LabelPlacement } from "@/lib/chart-label-layout
 import { placeChartTooltip } from "@/lib/chart-tooltip-layout";
 import { codingAgentDatasetSummary } from "@/lib/coding-agent-dataset";
 import { codingAgentRecordKey, type CodingAgentRecord, type CodingAgentSnapshot } from "@/lib/coding-agent-data";
-import { formatRetrievedAt, formatUpdateDate, latestUpdateGroup } from "@/lib/coding-agent-updates";
+import { formatRetrievedAt } from "@/lib/coding-agent-updates";
 import {
   computeDomain,
   formatMetricValue,
@@ -88,10 +88,10 @@ const plot = { top: 24, right: 1360, bottom: 860, left: 72 } as const;
 const initialTooltipSize = { height: 260, width: 264 } as const;
 const restingLabelCount = 3;
 const yMetricItems = [
-  { id: "aaIndex", label: "AAI" },
-  { id: "deepSwe", label: "DSWE" },
-  { id: "terminalBench", label: "TB" },
-  { id: "sweAtlas", label: "SWEA" },
+  { id: "aaIndex", label: yMetricLabels.aaIndex },
+  { id: "deepSwe", label: yMetricLabels.deepSwe },
+  { id: "terminalBench", label: yMetricLabels.terminalBench },
+  { id: "sweAtlas", label: yMetricLabels.sweAtlas },
 ] satisfies readonly NativeSelectOption<YMetric>[];
 const xMetricItems = [
   { id: "costUsd", label: xMetricControlLabels.costUsd },
@@ -386,7 +386,7 @@ export function CodingAgentExplorer({
   snapshot,
 }: {
   brand: ChartBrand;
-  children: ReactNode;
+  children?: ReactNode;
   modelCardPaths: Readonly<Record<string, string>>;
   snapshot: CodingAgentSnapshot;
 }) {
@@ -701,7 +701,6 @@ export function CodingAgentExplorer({
   }, [hoveredPointId, tooltipVisible]);
   const retrievedAt = formatRetrievedAt(snapshot.source.retrievedAt);
   const snapshotSummary = codingAgentDatasetSummary(snapshot);
-  const latestUpdate = latestUpdateGroup(snapshot.updates);
   const accessibleTitle = `${yMetricLabels[yMetric]} versus ${xMetricLabels[xMetric]}`;
   const accessibleDescription = `Scatter plot comparing coding-agent models. Hover or focus a point or provider to preview it. Select a point to pin agents within ${performanceTierRadius} points of its ${yMetricLabels[yMetric]} score, or select a provider to pin its models. Use arrow keys to move between points.`;
   const shareSelectionLabel = pinnedPoint?.record.modelLabel ?? pinnedProvider?.name ?? null;
@@ -714,7 +713,7 @@ export function CodingAgentExplorer({
     xMetric,
     yMetric,
   };
-  const siteUrl = `https://${brand.domain}`;
+  const siteUrl = `https://${brand.domain}/coding`;
   const shareUrl = buildChartShareUrl(siteUrl, shareView);
   const shareFilename = chartImageFilename(shareView, shareSelectionLabel);
   const shareText = `${yMetricLabels[yMetric]} vs ${xMetricLabels[xMetric]}${shareSelectionLabel === null ? "" : ` — ${shareSelectionLabel}`} on ${brand.domain}`;
@@ -1020,39 +1019,10 @@ export function CodingAgentExplorer({
         tabIndex={-1}
       >
       <div className="chart-family-intro">
-        <div>
-          <p className="chart-family-intro__eyebrow">Coding-agent source view</p>
-          <h2 id="coding-agent-chart-title">Coding agents, plotted against cost, time, and tokens.</h2>
-        </div>
-        <p>
-          Explore {snapshotSummary.recordCount} measured model-agent configurations across {snapshotSummary.modelCount} models and {snapshotSummary.providerCount} providers. This source still reports Terminal-Bench v2.1, so its values stay separate from the Terminal-Bench 4 standard above.
-          Its token axis is total task usage for the named coding-agent configuration, not the
-          output-only model measure in the Intelligence view.
-        </p>
+        <h2 className="sr-only" id="coding-agent-chart-title">Coding-agent scatter chart</h2>
         <p className="chart-family-intro__evidence">
-          <time dateTime={snapshot.source.retrievedAt}>{retrievedAt}</time>
-          <a
-            data-analytics-destination-id="source:artificial-analysis"
-            data-analytics-destination-kind="source"
-            href={snapshot.source.url}
-            rel="noreferrer"
-            target="_blank"
-          >
-            {snapshot.source.name} source
-          </a>
-          <Link href="/data">Method</Link>
-          <a href="/data/coding-agents.json">JSON</a>
-          {latestUpdate !== null && (
-            <a
-              aria-label={`Latest update: ${latestUpdate.summary}, ${formatUpdateDate(latestUpdate.detectedAt)}`}
-              className="latest-update-badge chart-selection-boundary"
-              href="#model-updates"
-            >
-              <span>Latest</span>
-              <strong>{latestUpdate.summary}</strong>
-              <time dateTime={latestUpdate.detectedAt}>{formatUpdateDate(latestUpdate.detectedAt)}</time>
-            </a>
-          )}
+          <span>{snapshot.source.name} · {snapshotSummary.recordCount} configurations · {snapshotSummary.modelCount} models · {snapshotSummary.providerCount} providers</span>
+          <span>Snapshot <time dateTime={snapshot.source.retrievedAt}>{retrievedAt}</time></span>
         </p>
       </div>
       <header className="chart-header">
@@ -1061,27 +1031,30 @@ export function CodingAgentExplorer({
         </p>
       </header>
 
-      <div className={overflowClassName("provider-filter-shell", providerOverflow)}>
-        <ToggleGroup
-          aria-label="Highlight a provider"
-          className="provider-filter"
-          groupRef={providerFilterRef}
-          items={providerItems}
-          onChange={handleProviderChange}
-          onItemBlur={(providerId) => setHoveredProviderId((current) => current === providerId ? null : current)}
-          onItemFocus={(providerId) => {
-            setHoveredPointId(null);
-            setHoveredProviderId(providerId);
-          }}
-          onItemHoverEnd={(providerId) => setHoveredProviderId((current) => current === providerId ? null : current)}
-          onItemHoverStart={(providerId) => {
-            setHoveredPointId(null);
-            setHoveredProviderId(providerId);
-          }}
-          surfaceClassName="provider-filter-surface"
-          value={pinnedProviderId}
-        />
-      </div>
+      <details className="coding-filter chart-selection-boundary">
+        <summary>Highlight a provider{pinnedProvider === null ? null : ` · ${pinnedProvider.name}`}</summary>
+        <div className={overflowClassName("provider-filter-shell", providerOverflow)}>
+          <ToggleGroup
+            aria-label="Highlight a provider"
+            className="provider-filter"
+            groupRef={providerFilterRef}
+            items={providerItems}
+            onChange={handleProviderChange}
+            onItemBlur={(providerId) => setHoveredProviderId((current) => current === providerId ? null : current)}
+            onItemFocus={(providerId) => {
+              setHoveredPointId(null);
+              setHoveredProviderId(providerId);
+            }}
+            onItemHoverEnd={(providerId) => setHoveredProviderId((current) => current === providerId ? null : current)}
+            onItemHoverStart={(providerId) => {
+              setHoveredPointId(null);
+              setHoveredProviderId(providerId);
+            }}
+            surfaceClassName="provider-filter-surface"
+            value={pinnedProviderId}
+          />
+        </div>
+      </details>
 
       <div className="chart-metric-controls chart-selection-boundary">
         <NativeSelectField
@@ -1236,7 +1209,7 @@ export function CodingAgentExplorer({
             </Menu>
           </MenuTrigger>
         </div>
-        <div className="chart-scroll" aria-label="Scrollable chart area" ref={chartScrollRef}>
+        <div className="chart-scroll" aria-label="Scrollable chart area" id="chart" ref={chartScrollRef}>
           <div className="chart-canvas">
           <svg
             aria-describedby={descriptionId}
@@ -1419,43 +1392,69 @@ export function CodingAgentExplorer({
           </div>
         </div>
       </div>
-      <OptionSpaceOverview
-        onPinPoint={(recordId) => {
-          const nextPointId = pinnedPointId === recordId ? null : recordId;
-          const nextRecord = snapshot.records.find((record) => record.id === nextPointId);
-          if (nextRecord !== undefined) {
-            captureChartEvent({
-              name: "chart selection pinned",
-              properties: {
-                chart_id: "coding_agents",
-                provider_id: nextRecord.providerId,
-                selection_kind: "model",
-              },
-            });
-          }
-          setPinnedPointId(nextPointId);
-          setPinnedProviderId(null);
-          setHoveredPointId(null);
-          setHoveredProviderId(null);
-        }}
-        onPinProvider={(providerId) => {
-          handleProviderChange(pinnedProviderId === providerId ? null : providerId);
-          setHoveredProviderId(null);
-        }}
-        pinnedPointId={pinnedPointId}
-        pinnedProviderId={pinnedProviderId}
-        records={snapshot.records}
-        xMetric={xMetric}
-        yMetric={yMetric}
-      />
+      <details className="coding-details chart-selection-boundary">
+        <summary>Compare configurations and providers</summary>
+        <OptionSpaceOverview
+          onPinPoint={(recordId) => {
+            const nextPointId = pinnedPointId === recordId ? null : recordId;
+            const nextRecord = snapshot.records.find((record) => record.id === nextPointId);
+            if (nextRecord !== undefined) {
+              captureChartEvent({
+                name: "chart selection pinned",
+                properties: {
+                  chart_id: "coding_agents",
+                  provider_id: nextRecord.providerId,
+                  selection_kind: "model",
+                },
+              });
+            }
+            setPinnedPointId(nextPointId);
+            setPinnedProviderId(null);
+            setHoveredPointId(null);
+            setHoveredProviderId(null);
+          }}
+          onPinProvider={(providerId) => {
+            handleProviderChange(pinnedProviderId === providerId ? null : providerId);
+            setHoveredProviderId(null);
+          }}
+          pinnedPointId={pinnedPointId}
+          pinnedProviderId={pinnedProviderId}
+          records={snapshot.records}
+          xMetric={xMetric}
+          yMetric={yMetric}
+        />
+      </details>
+      <details className="coding-details chart-selection-boundary">
+        <summary>Method and data</summary>
+        <div>
+          <p>
+            Each point is a measured model-and-agent configuration from{" "}
+            <a
+              data-analytics-destination-id="source:artificial-analysis"
+              data-analytics-destination-kind="source"
+              href={snapshot.source.url}
+              rel="noreferrer"
+              target="_blank"
+            >
+              {snapshot.source.name}
+            </a>
+            . Cost, time, and total tokens describe the full task run, not just the model’s output.
+            Only configurations reporting both selected metrics appear in the chart.
+          </p>
+          <p>
+            This source reports Terminal-Bench v2.1. Its scores stay separate from{" "}
+            <Link href="/benchmarks?atlas=terminal-bench-4">Terminal-Bench 4, the current coding standard</Link>.
+            A snapshot date records retrieval, not when each model was evaluated.
+          </p>
+          <p>
+            <Link href="/data#source">Full methodology</Link>
+            {" · "}
+            <a href="/data/coding-agents.json" download="aicharts-coding-agents.json">Download JSON</a>
+          </p>
+        </div>
+      </details>
       {children}
       <ModelUpdateTimeline retrievedAt={snapshot.source.retrievedAt} updates={snapshot.updates} />
-      <nav aria-label="AI Charts resources" className="chart-resource-nav">
-        <div className="chart-resource-nav__links">
-          <Link href="/data">Data</Link>
-          <Link href="/blog">Analysis</Link>
-        </div>
-      </nav>
       </section>
       {hoveredPoint !== null && tooltipLayout !== null && typeof document !== "undefined" && createPortal(
         <>

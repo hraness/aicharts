@@ -16,7 +16,7 @@ export function TrackedChartLink({
   return (
     <Link
       className={className}
-      href="/"
+      href="/coding"
       onClick={() => captureContentEvent({
         name: "content chart opened",
         properties: {

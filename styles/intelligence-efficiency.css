@@ -2,8 +2,8 @@
   --brand-key: #805424;
   border-block: 1px solid var(--line);
   display: grid;
-  gap: clamp(14px, 1.8vw, 22px);
-  padding: clamp(24px, 3.5vw, 44px) var(--chart-content-inset);
+  gap: 18px;
+  padding: 24px var(--chart-content-inset);
 }
 
 [data-theme="dark"] .intelligence-efficiency {
@@ -12,37 +12,43 @@
 
 .intelligence-efficiency__header {
   display: grid;
-  max-width: 78ch;
-}
-
-.intelligence-efficiency__eyebrow {
-  color: var(--muted);
-  font-size: .875rem;
-  font-weight: 500;
-  letter-spacing: 0;
+  gap: 7px;
 }
 
 .intelligence-efficiency__header h2 {
-  font-size: clamp(1.35rem, 2vw, 1.75rem);
-  font-weight: 500;
-  letter-spacing: -.012em;
-  line-height: 1.15;
-  margin-top: 5px;
+  font-size: clamp(1.5rem, 2.2vw, 1.9rem);
+  font-weight: 550;
+  letter-spacing: -.025em;
+  line-height: 1.2;
+  margin: 0;
 }
 
-.intelligence-efficiency__dek {
+.intelligence-efficiency__source-note {
+  align-items: baseline;
   color: var(--muted);
-  font-size: .95rem;
-  line-height: 1.55;
-  margin-top: 8px;
-  max-width: 70ch;
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 13px;
+  gap: 4px 18px;
+  line-height: 1.5;
+}
+
+.intelligence-efficiency__source-note a {
+  color: inherit;
+  text-decoration-color: var(--line);
+  text-underline-offset: 3px;
+}
+
+.intelligence-efficiency__source-note span {
+  white-space: nowrap;
 }
 
 .intelligence-efficiency__finding {
   color: var(--muted);
-  font-size: clamp(12px, 1.15vw, 14px);
-  line-height: 1.55;
-  max-width: 90ch;
+  font-size: 14px;
+  line-height: 1.65;
+  max-width: 85ch;
+  padding-block: 4px 18px;
 }
 
 .intelligence-efficiency__finding strong {
@@ -52,11 +58,9 @@
 
 .intelligence-efficiency__explorer {
   align-items: stretch;
-  border-block: 1px solid var(--grid);
   display: grid;
-  gap: clamp(18px, 2.5vw, 36px);
-  grid-template-columns: minmax(0, 1fr) minmax(220px, 270px);
-  padding-block: clamp(15px, 2vw, 24px);
+  gap: clamp(20px, 2.5vw, 36px);
+  grid-template-columns: minmax(0, 1fr) minmax(240px, 290px);
 }
 
 .intelligence-efficiency__figure {
@@ -67,22 +71,17 @@
 .intelligence-efficiency__figure-header {
   align-items: center;
   display: flex;
-  gap: 12px 24px;
+  flex-wrap: wrap;
+  gap: 10px 20px;
   justify-content: space-between;
-  min-height: 38px;
-}
-
-.intelligence-efficiency__figure-header h3 {
-  font-size: 13px;
-  font-weight: 650;
-  letter-spacing: -.01em;
+  margin-bottom: 8px;
 }
 
 .intelligence-efficiency__figure-header p {
   color: var(--muted);
-  font-size: 9px;
-  line-height: 1.4;
-  margin-top: 2px;
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 0;
 }
 
 .intelligence-efficiency__metric-control {
@@ -102,9 +101,9 @@
   border-radius: 999px;
   color: var(--muted);
   cursor: pointer;
-  font: 650 10px/1 var(--font-sans);
-  min-height: 32px;
-  padding: 0 12px;
+  font: 550 14px/1 var(--font-sans);
+  min-height: 44px;
+  padding: 0 18px;
 }
 
 .intelligence-efficiency__metric-control button[aria-pressed="true"] {
@@ -143,7 +142,7 @@
 .intelligence-efficiency__axis text {
   fill: var(--muted);
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 12px;
 }
 
 .intelligence-efficiency__axis > line,
@@ -155,16 +154,16 @@
 
 .intelligence-efficiency__axis .intelligence-efficiency__axis-title {
   font-family: var(--font-sans);
-  font-size: 10px;
-  letter-spacing: .015em;
+  font-size: 12px;
+  letter-spacing: 0;
 }
 
 .intelligence-efficiency__axis .intelligence-efficiency__y-title {
-  fill: var(--faint);
+  fill: var(--muted);
   font-family: var(--font-sans);
-  font-size: 9px;
-  font-weight: 650;
-  letter-spacing: .025em;
+  font-size: 12px;
+  font-weight: 550;
+  letter-spacing: 0;
 }
 
 .intelligence-efficiency__frontier-line {
@@ -191,8 +190,8 @@
 }
 
 .intelligence-efficiency__point-glyph {
-  fill: var(--faint);
-  opacity: .55;
+  fill: var(--muted);
+  opacity: .8;
   pointer-events: none;
   stroke: none;
   vector-effect: non-scaling-stroke;
@@ -245,7 +244,7 @@
 .intelligence-efficiency__labels text {
   fill: var(--muted);
   font-family: var(--font-sans);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 600;
   paint-order: stroke fill;
   stroke: var(--background);
@@ -263,9 +262,10 @@
   color: var(--muted);
   display: flex;
   flex-wrap: wrap;
-  font-size: 9px;
-  gap: 7px 16px;
-  min-height: 22px;
+  font-size: 12px;
+  gap: 8px 18px;
+  line-height: 1.5;
+  padding-top: 4px;
 }
 
 .intelligence-efficiency__chart-key span {
@@ -282,9 +282,9 @@
 }
 
 .intelligence-efficiency__chart-key i[data-symbol="context"] {
-  background: var(--faint);
+  background: var(--muted);
   border-radius: 50%;
-  opacity: .7;
+  opacity: .8;
 }
 
 .intelligence-efficiency__chart-key i[data-symbol="frontier"] {
@@ -327,24 +327,24 @@
 
 .intelligence-efficiency__inspector-state {
   color: var(--brand-key);
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: .07em;
+  font-size: 12px;
+  font-weight: 550;
+  letter-spacing: 0;
   text-transform: none;
 }
 
-.intelligence-efficiency__inspector h4 {
-  font-size: clamp(1rem, 1.45vw, 1.2rem);
-  font-weight: 650;
+.intelligence-efficiency__inspector h3 {
+  font-size: clamp(1.15rem, 1.6vw, 1.4rem);
+  font-weight: 600;
   letter-spacing: -.025em;
-  line-height: 1.18;
+  line-height: 1.3;
   margin-top: 7px;
 }
 
 .intelligence-efficiency__inspector-meta {
   color: var(--muted);
-  font-size: 10px;
-  line-height: 1.45;
+  font-size: 12px;
+  line-height: 1.5;
   margin-top: 5px;
 }
 
@@ -372,30 +372,33 @@
 
 .intelligence-efficiency__inspector dt {
   color: var(--muted);
-  font-size: 9px;
-  line-height: 1.35;
+  font-size: 12px;
+  line-height: 1.45;
 }
 
 .intelligence-efficiency__inspector dd {
   color: var(--foreground);
   font-family: var(--font-mono);
-  font-size: 11px;
-  font-weight: 650;
+  font-size: 14px;
+  font-weight: 550;
   white-space: nowrap;
 }
 
 .intelligence-efficiency__frontier-status {
   color: var(--muted);
-  font-size: 9px;
-  line-height: 1.45;
+  font-size: 13px;
+  line-height: 1.5;
 }
 
 .intelligence-efficiency__inspector > a {
   color: var(--foreground);
-  font-size: 10px;
-  font-weight: 650;
-  margin-top: auto;
-  padding-top: 16px;
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  font-size: 13px;
+  font-weight: 550;
+  min-height: 44px;
+  margin-top: 12px;
   text-decoration-color: var(--line);
   text-underline-offset: 3px;
 }
@@ -404,13 +407,21 @@
   align-items: center;
   display: flex;
   flex-wrap: wrap;
-  font-size: 10px;
-  font-weight: 650;
-  gap: 8px 18px;
+  font-size: 13px;
+  font-weight: 550;
+  gap: 8px 24px;
+  grid-column: 1 / -1;
+}
+
+.intelligence-efficiency__data-links a {
+  align-items: center;
+  display: inline-flex;
+  min-height: 44px;
 }
 
 .intelligence-efficiency__data-links a,
-.intelligence-efficiency__method a {
+.intelligence-efficiency__method a,
+.intelligence-efficiency__comparison a {
   color: var(--foreground);
   text-decoration-color: var(--line);
   text-underline-offset: 3px;
@@ -420,29 +431,49 @@
 .intelligence-efficiency__data-links a:focus-visible,
 .intelligence-efficiency__method a:hover,
 .intelligence-efficiency__method a:focus-visible,
+.intelligence-efficiency__comparison a:hover,
+.intelligence-efficiency__comparison a:focus-visible,
+.intelligence-efficiency__source-note a:hover,
+.intelligence-efficiency__source-note a:focus-visible,
 .intelligence-efficiency__inspector > a:hover,
 .intelligence-efficiency__inspector > a:focus-visible {
   text-decoration-color: var(--brand-key);
 }
 
-.intelligence-efficiency__method {
+.intelligence-efficiency__notes {
   border-top: 1px solid var(--grid);
 }
 
-.intelligence-efficiency__method summary {
+.intelligence-efficiency__method summary,
+.intelligence-efficiency__comparison summary {
   align-items: center;
   color: var(--muted);
   cursor: pointer;
-  display: flex;
-  font-size: 10px;
-  font-weight: 650;
-  min-height: 42px;
-  width: max-content;
+  display: list-item;
+  font-size: 13px;
+  font-weight: 550;
+  line-height: 1.5;
+  list-style-position: inside;
+  padding-block: 12px;
+  min-height: 44px;
+  width: fit-content;
+  max-width: 100%;
 }
 
 .intelligence-efficiency__method summary:hover,
-.intelligence-efficiency__method summary:focus-visible {
+.intelligence-efficiency__method summary:focus-visible,
+.intelligence-efficiency__comparison summary:hover,
+.intelligence-efficiency__comparison summary:focus-visible {
   color: var(--foreground);
+}
+
+.intelligence-efficiency__notes summary:focus-visible,
+.intelligence-efficiency__notes a:focus-visible,
+.intelligence-efficiency__source-note a:focus-visible,
+.intelligence-efficiency__inspector > a:focus-visible {
+  border-radius: 3px;
+  outline: 2px solid var(--brand-key);
+  outline-offset: 3px;
 }
 
 .intelligence-efficiency__method-body {
@@ -454,8 +485,8 @@
 
 .intelligence-efficiency__method-body p {
   color: var(--muted);
-  font-size: 10px;
-  line-height: 1.55;
+  font-size: 14px;
+  line-height: 1.65;
   max-width: 78ch;
 }
 
@@ -469,7 +500,7 @@
 .intelligence-efficiency__empty {
   border-block: 1px solid var(--grid);
   color: var(--muted);
-  font-size: 11px;
+  font-size: 14px;
   padding-block: 18px;
 }
 
@@ -517,11 +548,7 @@
 
   .intelligence-efficiency__metric-control button { width: 100%; }
 
-  .intelligence-efficiency__grid text,
-  .intelligence-efficiency__axis text { font-size: 11px; }
-
   .intelligence-efficiency__labels text {
-    font-size: 11.5px;
     stroke-width: 4.5px;
   }
 

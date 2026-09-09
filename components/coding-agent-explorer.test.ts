@@ -1,4 +1,6 @@
 import { describe, expect, test } from "bun:test";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
 
 import codingAgentData from "@/data/coding-agents.json";
 import { parseCodingAgentSnapshot } from "@/lib/coding-agent-data";
@@ -11,11 +13,13 @@ import {
 } from "@/lib/chart-math";
 
 import {
+  CodingAgentExplorer,
   formatRetrievedAt,
   nearestCodingAgentPointId,
   selectRestingCodingAgentLabels,
   shouldClearChartSelection,
 } from "./coding-agent-explorer";
+import { buildChartShareUrl, parseChartShareView } from "./chart-share";
 
 function clickTargetWithin(...ancestorClassNames: readonly string[]) {
   return {
@@ -49,19 +53,23 @@ test("keeps the organization footer out of local chart chrome", async () => {
   const source = await Bun.file(new URL("./coding-agent-explorer.tsx", import.meta.url)).text();
 
   expect(source).not.toContain("HranessBrand");
-  expect(source).toContain('className="chart-resource-nav"');
+  expect(source).not.toContain('className="chart-resource-nav"');
   expect(source).not.toContain("by @0thernet");
   expect(source).not.toContain("https://x.com/0thernet");
   expect(source).not.toContain("Zo Computer");
   expect(source).not.toContain("zo-pegasus.svg");
 });
 
-test("links the chart to crawlable data and analysis resources", async () => {
+test("consolidates evidence links below the chart and leaves footer navigation to the route", async () => {
   const source = await Bun.file(new URL("./coding-agent-explorer.tsx", import.meta.url)).text();
-
-  expect(source).toContain('aria-label="AI Charts resources"');
-  expect(source).toContain('<Link href="/data">Data</Link>');
-  expect(source).toContain('<Link href="/blog">Analysis</Link>');
+  const methodIndex = source.indexOf("<summary>Method and data</summary>");
+  expect(methodIndex).toBeGreaterThan(source.indexOf('className="chart-scroll"'));
+  expect(source.indexOf('href={snapshot.source.url}')).toBeGreaterThan(methodIndex);
+  expect(source.indexOf('href="/data#source"')).toBeGreaterThan(methodIndex);
+  expect(source.indexOf('href="/data/coding-agents.json"')).toBeGreaterThan(methodIndex);
+  expect(source.match(/href="\/data\/coding-agents.json"/gu)).toHaveLength(1);
+  expect(source).not.toContain('aria-label="AI Charts resources"');
+  expect(source).not.toContain('href="/blog"');
 });
 
 test("renders the coding-agent view as one labelled section inside the shared page", async () => {
@@ -88,13 +96,8 @@ test("keeps chart export compact, discoverable, and fully named", async () => {
   expect(source).not.toContain("<span>Share chart</span>");
 });
 
-test("leaves the site header to the shared shell with the appearance control last", async () => {
-  const [source, headerSource] = await Promise.all([
-    Bun.file(new URL("./coding-agent-explorer.tsx", import.meta.url)).text(),
-    Bun.file(new URL("./site-header.tsx", import.meta.url)).text(),
-  ]);
-  const actionsIndex = headerSource.indexOf('className="hraness-marketing-header__actions"');
-  const themeIndex = headerSource.indexOf('<ThemeMenuButton aria-label="Appearance" />');
+test("leaves the site header and appearance controls to the shared shell", async () => {
+  const source = await Bun.file(new URL("./coding-agent-explorer.tsx", import.meta.url)).text();
 
   expect(source).not.toContain("<TopBar");
   expect(source).not.toContain("ThemeMenuButton");
@@ -102,29 +105,19 @@ test("leaves the site header to the shared shell with the appearance control las
   expect(source).not.toContain('aria-label="Data provenance"');
   expect(source).not.toContain('className="chart-provenance-control');
   expect(source).not.toContain("InformationCircleIcon");
-  expect(headerSource).toContain('{ href: "/blog", label: "Blog" }');
-  expect(headerSource).toContain('{ href: "/models", label: "Cards" }');
-  expect(headerSource).toContain('{ href: "/data", label: "Data" }');
-  expect(themeIndex).toBeGreaterThan(actionsIndex);
-  expect(headerSource.slice(themeIndex)).toMatch(
-    /<ThemeMenuButton aria-label="Appearance" \/>\s*<\/div>\s*<\/div>\s*<\/header>/u,
-  );
   expect(source).not.toContain('className="chart-subtitle-row"');
   expect(source).not.toContain('className="chart-data-status"');
 });
 
-test("keeps the working chart ahead of deeper evidence with the orientation in the shared page", async () => {
-  const [source, orientationSource] = await Promise.all([
-    Bun.file(new URL("./coding-agent-explorer.tsx", import.meta.url)).text(),
-    Bun.file(new URL("./home-orientation.tsx", import.meta.url)).text(),
-  ]);
+test("keeps the working chart ahead of optional comparison and evidence", async () => {
+  const source = await Bun.file(new URL("./coding-agent-explorer.tsx", import.meta.url)).text();
   const sectionIndex = source.indexOf('className="chart-page-canvas"');
   const introIndex = source.indexOf('<div className="chart-family-intro">', sectionIndex);
   const chartHeaderIndex = source.indexOf('<header className="chart-header">', sectionIndex);
   const overviewIndex = source.indexOf("<OptionSpaceOverview", chartHeaderIndex);
   const childrenIndex = source.indexOf("{children}", sectionIndex);
 
-  expect(source).toContain("children: ReactNode");
+  expect(source).toContain("children?: ReactNode");
   expect(source).not.toContain("chart-orientation");
   expect(source).not.toContain("homeHeading");
   expect(introIndex).toBeGreaterThan(sectionIndex);
@@ -132,33 +125,28 @@ test("keeps the working chart ahead of deeper evidence with the orientation in t
   expect(overviewIndex).toBeGreaterThan(chartHeaderIndex);
   expect(childrenIndex).toBeGreaterThan(overviewIndex);
   expect(source).toContain("codingAgentDatasetSummary(snapshot)");
-  expect(orientationSource).toContain('headingId="chart-orientation-title"');
-  expect(orientationSource).toContain("A five-role benchmark portfolio covers terminal engineering, scientific workflows");
-  expect(orientationSource).toContain("Terminal-Bench 4.0. Major exam versions remain separate.");
-  expect(source).toContain("This source still reports Terminal-Bench v2.1");
+  expect(source).not.toContain("standard above");
+  expect(source).not.toContain("chart-family-intro__eyebrow");
+  expect(source).toContain("This source reports Terminal-Bench v2.1");
+  expect(source.indexOf("This source reports Terminal-Bench v2.1")).toBeGreaterThan(overviewIndex);
+  expect(source).toContain('href="/benchmarks?atlas=terminal-bench-4"');
   expect(source).toContain('href={snapshot.source.url}');
-  expect(source).toContain("{snapshot.source.name} source");
-  expect(source).toContain('<Link href="/data">Method</Link>');
-  expect(source).toContain('<a href="/data/coding-agents.json">JSON</a>');
+  expect(source).toContain("<span>{snapshot.source.name} · {snapshotSummary.recordCount} configurations");
+  expect(source).toContain("<span>Snapshot <time");
 });
 
-test("links the latest data-derived update badge to the bottom timeline", async () => {
-  const source = await Bun.file(new URL("./coding-agent-explorer.tsx", import.meta.url)).text();
-  const badgeIndex = source.indexOf('className="latest-update-badge chart-selection-boundary"');
-  const evidenceIndex = source.indexOf('className="chart-family-intro__evidence"');
-  const chartHeaderIndex = source.indexOf('<header className="chart-header">');
+test("retains the directly addressable update timeline without an extra top badge", async () => {
+  const [source, timelineSource] = await Promise.all([
+    Bun.file(new URL("./coding-agent-explorer.tsx", import.meta.url)).text(),
+    Bun.file(new URL("./model-update-timeline.tsx", import.meta.url)).text(),
+  ]);
   const overviewIndex = source.indexOf("<OptionSpaceOverview");
   const timelineIndex = source.indexOf("<ModelUpdateTimeline");
-  const resourceNavIndex = source.indexOf('className="chart-resource-nav"');
 
-  expect(source).toContain('className="latest-update-badge chart-selection-boundary"');
-  expect(source).toContain("aria-label={`Latest update: ${latestUpdate.summary}, ${formatUpdateDate(latestUpdate.detectedAt)}`}");
-  expect(source).toContain('href="#model-updates"');
-  expect(source).toContain("latestUpdate.summary");
-  expect(badgeIndex).toBeGreaterThan(evidenceIndex);
-  expect(badgeIndex).toBeLessThan(chartHeaderIndex);
+  expect(source).not.toContain("latest-update-badge");
+  expect(timelineSource).toContain('id="model-updates"');
+  expect(timelineSource).toContain('<details className="model-update-timeline__history">');
   expect(timelineIndex).toBeGreaterThan(overviewIndex);
-  expect(resourceNavIndex).toBeGreaterThan(timelineIndex);
 });
 
 test("leaves only the selected benchmark description in the chart header", async () => {
@@ -174,14 +162,14 @@ test("leaves only the selected benchmark description in the chart header", async
 test("leaves the page heading to the task introduction and keeps the domain as the chart watermark", async () => {
   const [source, pageSource] = await Promise.all([
     Bun.file(new URL("./coding-agent-explorer.tsx", import.meta.url)).text(),
-    Bun.file(new URL("../app/page.tsx", import.meta.url)).text(),
+    Bun.file(new URL("../app/coding/page.tsx", import.meta.url)).text(),
   ]);
 
   expect(source).not.toContain("<h1");
   expect(source).not.toContain("brand.heading");
   expect(source).toContain("{brand.domain}");
-  expect(source).toContain('<h2 id="coding-agent-chart-title">Coding agents, plotted against cost, time, and tokens.</h2>');
-  expect(pageSource).toContain('<h1 id="home-title">{homeHeading}</h1>');
+  expect(source).toContain('<h2 className="sr-only" id="coding-agent-chart-title">Coding-agent scatter chart</h2>');
+  expect(pageSource).toContain("<h1>Coding agent comparisons</h1>");
   expect(pageSource.match(/<h1\b/gu)).toHaveLength(1);
 });
 
@@ -195,10 +183,10 @@ test("keeps chart chrome compact and metric labels semantic-only", async () => {
   expect(source).toContain('className="chart-metric-controls chart-selection-boundary"');
   expect(source).toContain('<NativeSelectField');
   expect(source).toContain('className="chart-benchmark-select"');
-  expect(source).toContain('label: "AAI"');
-  expect(source).toContain('label: "DSWE"');
-  expect(source).toContain('label: "TB"');
-  expect(source).toContain('label: "SWEA"');
+  expect(source).toContain("label: yMetricLabels.aaIndex");
+  expect(source).toContain("label: yMetricLabels.deepSwe");
+  expect(source).toContain("label: yMetricLabels.terminalBench");
+  expect(source).toContain("label: yMetricLabels.sweAtlas");
   expect(source).not.toContain("chart-axis-control");
   expect(source).toContain('className="chart-axis-title chart-export-axis-title"');
   expect(source).not.toContain('className="chart-header-actions"');
@@ -280,7 +268,7 @@ test("places complementary option-space views below the primary scatter chart", 
   const pinStatusIndex = source.indexOf('className="pin-status"');
   const scatterIndex = source.indexOf('className="chart-scroll"');
   const overviewIndex = source.indexOf("<OptionSpaceOverview");
-  const resourceNavIndex = source.indexOf('className="chart-resource-nav"');
+  const overviewDisclosureIndex = source.indexOf("<summary>Compare configurations and providers</summary>");
 
   expect(metricControlsIndex).toBeGreaterThan(-1);
   expect(shellIndex).toBeGreaterThan(-1);
@@ -289,9 +277,62 @@ test("places complementary option-space views below the primary scatter chart", 
   expect(scatterIndex).toBeGreaterThan(pinStatusIndex);
   expect(scatterIndex).toBeGreaterThan(-1);
   expect(overviewIndex).toBeGreaterThan(scatterIndex);
-  expect(resourceNavIndex).toBeGreaterThan(overviewIndex);
+  expect(overviewDisclosureIndex).toBeGreaterThan(scatterIndex);
+  expect(overviewIndex).toBeGreaterThan(overviewDisclosureIndex);
   expect(source).toContain("onPinPoint={(recordId)");
   expect(source).toContain("onPinProvider={(providerId)");
+});
+
+test("renders a compact source note, real chart anchor, and closed secondary controls", () => {
+  const parsed = parseCodingAgentSnapshot(codingAgentData);
+  expect(parsed.ok).toBeTrue();
+  if (!parsed.ok) return;
+  const html = renderToStaticMarkup(createElement(CodingAgentExplorer, {
+    brand: { domain: "aicharts.io" },
+    modelCardPaths: {},
+    snapshot: parsed.value,
+  }));
+  const chartIndex = html.indexOf('id="chart"');
+  const overviewIndex = html.indexOf("<summary>Compare configurations and providers</summary>");
+  const methodIndex = html.indexOf("<summary>Method and data</summary>");
+  expect(chartIndex).toBeGreaterThan(-1);
+  expect(html.match(/id="chart"/gu)).toHaveLength(1);
+  expect(html).toContain('<details class="coding-filter chart-selection-boundary">');
+  expect(html).toContain("<summary>Highlight a provider</summary>");
+  expect(html.match(/<details class="coding-details chart-selection-boundary">/gu)).toHaveLength(2);
+  expect(html).toContain('class="sr-only" id="coding-agent-chart-title"');
+  expect(html.indexOf(parsed.value.source.name)).toBeLessThan(chartIndex);
+  expect(html.indexOf(formatRetrievedAt(parsed.value.source.retrievedAt))).toBeLessThan(chartIndex);
+  expect(overviewIndex).toBeGreaterThan(chartIndex);
+  expect(methodIndex).toBeGreaterThan(overviewIndex);
+  expect(html.indexOf("This source reports Terminal-Bench v2.1")).toBeGreaterThan(methodIndex);
+  expect(html.indexOf('href="/data/coding-agents.json"')).toBeGreaterThan(methodIndex);
+  expect(html).toContain('href="/benchmarks?atlas=terminal-bench-4"');
+  expect(html).toContain('value="terminalBench">Terminal-Bench v2.1</option>');
+  expect(html).toContain('id="model-updates"');
+  expect(html).not.toContain('class="chart-resource-nav"');
+});
+
+test("generates coding-route share links without changing metric and selection round trips", async () => {
+  const source = await Bun.file(new URL("./coding-agent-explorer.tsx", import.meta.url)).text();
+  expect(source).toContain('const siteUrl = `https://${brand.domain}/coding`;');
+  const view = {
+    pointKey: "model-agent-setting",
+    providerId: null,
+    xMetric: "totalTokens" as const,
+    yMetric: "terminalBench" as const,
+  };
+  const link = new URL(buildChartShareUrl("https://aicharts.io/coding", view));
+  expect(link.pathname).toBe("/coding");
+  expect(parseChartShareView(link.search)).toEqual(view);
+  expect(source).toContain("parseChartShareView(window.location.search)");
+  expect(source).toContain("createBrandedChartPng(source, chartWidth, chartHeight");
+});
+
+test("opening provider, comparison, and method disclosures preserves a pinned selection", () => {
+  expect(shouldClearChartSelection(clickTargetWithin("coding-filter", "chart-selection-boundary"))).toBeFalse();
+  expect(shouldClearChartSelection(clickTargetWithin("coding-details", "chart-selection-boundary"))).toBeFalse();
+  expect(shouldClearChartSelection(clickTargetWithin("provider-filter"))).toBeFalse();
 });
 
 test("keeps pinned selections through metric interactions", () => {

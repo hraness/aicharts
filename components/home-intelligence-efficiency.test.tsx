@@ -1,5 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { renderToStaticMarkup } from "react-dom/server";
+import currentSnapshotJson from "@/data/artificial-analysis-intelligence-v4-3.json";
+import { parseArtificialAnalysisIntelligenceV43Snapshot } from "@/lib/artificial-analysis-intelligence-v4-3-data";
 
 import {
   ARTIFICIAL_ANALYSIS_INTELLIGENCE_CITATION,
@@ -130,20 +132,23 @@ describe("homepage Intelligence efficiency view", () => {
     expect(html.match(/role="button"/gu)).toHaveLength(127);
     expect(html.match(/tabindex="0"/gu)).toHaveLength(1);
     expect(html).toContain("Use arrow keys to move between points");
-    expect(html).toContain("Higher and farther left is better");
-    expect(html).toContain("Output tokens per task (log scale)");
+    expect(html).toContain("Higher score, lower cost");
+    expect(html).toContain("Cost per task (USD, log scale)");
     expect(html).toContain('data-intelligence-metric="outputTokensPerTask"');
     expect(html).toContain('data-intelligence-metric="costUsdPerTask"');
-    expect(html).toContain('aria-pressed="true" data-intelligence-metric="outputTokensPerTask"');
+    expect(html).toContain('aria-pressed="true" data-intelligence-metric="costUsdPerTask"');
+    expect(html).toContain('aria-pressed="false" data-intelligence-metric="outputTokensPerTask"');
     expect(html).toContain("intelligence-efficiency__point-control--astra");
     expect(html).toContain("intelligence-efficiency__point-control--sol");
-    expect(html).toContain("Efficiency frontier");
+    expect(html).toContain("Pareto frontier · best score at each budget");
   });
 
-  test("keeps the finding concise while exposing exact values in a persistent inspector", () => {
+  test("puts the chart before optional comparison copy while retaining exact inspector values", () => {
     const html = renderToStaticMarkup(<HomeIntelligenceEfficiency snapshot={snapshot} />);
 
-    expect(html).toContain("General capability · model-level");
+    expect(html).toContain("Capability and cost");
+    expect(html).not.toContain("General capability · model-level");
+    expect(html).not.toContain("intelligence-efficiency__eyebrow");
     expect(html).toContain("GPT-6 Astra and GPT-5.6 Sol both round to 61");
     expect(html).toContain("11.9% fewer output tokens");
     expect(html).toContain("75.0% more per task");
@@ -152,26 +157,38 @@ describe("homepage Intelligence efficiency view", () => {
     expect(html).toContain("14,875.6");
     expect(html).toContain("$1.67");
     expect(html).toContain("View publisher record ↗");
+    expect(html.indexOf("</svg>")).toBeLessThan(html.indexOf("intelligence-efficiency__comparison"));
+    expect(html).toContain('<details class="intelligence-efficiency__comparison"><summary>Compare GPT-6 Astra and GPT-5.6 Sol</summary>');
+    expect(html).toContain('href="https://artificialanalysis.ai/models/gpt-6-astra">Astra source</a>');
+    expect(html).toContain('href="https://artificialanalysis.ai/models/gpt-5-6-sol">Sol source</a>');
+    expect(html).not.toContain("<h4");
+    const inspector = html.slice(html.indexOf("intelligence-efficiency__inspector"));
+    expect(inspector.indexOf("Cost / task")).toBeLessThan(inspector.indexOf("Output tokens / task"));
     expect(html).not.toContain("Coding Agent Index");
     expect(html).not.toContain("AA Index");
     expect(html).not.toContain("Terminal-Bench 4");
   });
 
-  test("keeps compact data links visible and detailed provenance in one disclosure", () => {
+  test("keeps the source date visible and consolidates downloads and method below the chart", () => {
     const html = renderToStaticMarkup(<HomeIntelligenceEfficiency snapshot={snapshot} />);
 
     expect(html).toContain('href="/data#artificial-analysis-intelligence"');
     expect(html).toContain('href="/data/artificial-analysis-intelligence.json"');
     expect(html).toContain("Full data and methodology");
     expect(html).toContain("Download JSON");
-    expect(html.match(/<details/gu)).toHaveLength(1);
+    expect(html.match(/<details/gu)).toHaveLength(2);
+    expect(html).not.toMatch(/<details[^>]*\sopen(?:[=>\s])/u);
     expect(html).toContain("Method &amp; data");
     expect(html).toContain("Output tokens are answer plus reasoning generated per Intelligence Index task");
     expect(html).toContain("exclude input and cache traffic");
-    expect(html).toContain("Artificial Analysis public models leaderboard");
+    expect(html).toContain("publisher’s public models leaderboard");
     expect(html).toContain('href="https://artificialanalysis.ai/models"');
     expect(html).toContain('<time dateTime="2026-09-04T02:30:00.000Z">Sep 4, 2026</time>');
-    expect(html).toContain("first-party public Next.js page payload");
+    expect(html).toContain("snapshot date is a retrieval date, not a model’s evaluation date");
+    expect(html.indexOf('<time dateTime="2026-09-04T02:30:00.000Z">')).toBeLessThan(html.indexOf("<svg"));
+    expect(html.indexOf("</svg>")).toBeLessThan(html.indexOf("intelligence-efficiency__method"));
+    expect(html.indexOf("intelligence-efficiency__method")).toBeLessThan(html.indexOf("Download JSON"));
+    expect(html.match(/href="\/data\/artificial-analysis-intelligence.json"/gu)).toHaveLength(1);
     expect(html).toContain("The source has 127 records");
     expect(html).toContain("127 meet the non-estimated complete-measure rule");
     expect(html).toContain("127 also report a positive task cost");
@@ -182,6 +199,22 @@ describe("homepage Intelligence efficiency view", () => {
     expect(html).toContain('href="https://artificialanalysis.ai/docs/legal/Terms-of-Use.pdf"');
     expect(html).toContain('data-analytics-surface="benchmark_chart"');
     expect(html).toContain('data-analytics-destination-id="source:artificial-analysis-methodology"');
+  });
+
+  test("retains current version provenance without making the formal benchmark name the headline", () => {
+    const parsed = parseArtificialAnalysisIntelligenceV43Snapshot(currentSnapshotJson);
+    if (!parsed.ok) throw parsed.error;
+    const html = renderToStaticMarkup(<HomeIntelligenceEfficiency snapshot={parsed.value} />);
+    expect(html).toContain('<h2 id="home-intelligence-efficiency-title">Capability and cost</h2>');
+    expect(html).toContain("Artificial Analysis Intelligence Index v4.3");
+    expect(html).toContain(`dateTime="${parsed.value.source.retrievedAt}"`);
+    expect(html).toContain('href="/data/artificial-analysis-intelligence-v4-3.json"');
+    expect(html).toContain('href="/data#atlas-aa-intelligence-4-3"');
+    expect(html).not.toContain("measurement below");
+    expect(html.match(/Pareto frontier/gu)).toHaveLength(1);
+    const labels = html.slice(html.indexOf('class="intelligence-efficiency__labels"'), html.indexOf("</svg>"));
+    expect(labels.match(/<text/gu)?.length ?? 0).toBeLessThanOrEqual(3);
+    expect(html.match(/role="button"/gu)).toHaveLength(parsed.value.selection.positiveCostRecordCount);
   });
 
   test("removes the duplicated 127-row homepage table while keeping every point inspectable", () => {
@@ -222,6 +255,9 @@ describe("homepage Intelligence efficiency view", () => {
     expect(css).not.toContain("overflow-x: auto");
     expect(css).not.toContain("min-width: 560px");
     expect(css).toContain(".intelligence-efficiency__point-control:focus-visible");
+    expect(css).toMatch(/\.intelligence-efficiency__metric-control button\s*\{[^}]*font:\s*550 14px[^}]*min-height:\s*44px;/su);
+    expect(css).toContain(".intelligence-efficiency__notes summary:focus-visible");
+    expect(css).toContain('[data-theme="dark"] .intelligence-efficiency');
     expect(css).toMatch(/\.intelligence-efficiency__labels line\s*\{[^}]*stroke:\s*var\(--muted\);[^}]*stroke-width:\s*1;/su);
   });
 

@@ -1,10 +1,10 @@
 import { describe, expect, test } from "bun:test";
 
-import { articleToMarkdown, blogArticlePath, blogArticles } from "@/app/blog/articles";
-import { HOME_EDITORIAL_SLUGS } from "@/app/blog/article-admissions";
+import { articleToMarkdown, blogArticles } from "@/app/blog/articles";
 import { blogEditorialImage } from "@/app/blog/editorial-images";
 import {
   homeHeading,
+  homeTaskLinks,
   modelCardsHeading,
   modelCardsLede,
   notFoundRecoveryLinks,
@@ -69,15 +69,15 @@ describe("homepage document", () => {
     expect(text.startsWith(homeHeading)).toBeTrue();
     expect(text).toContain(site.description);
     expect(text).toContain(String(codingAgentDatasetSummary(snapshot).recordCount));
-    expect(text).toContain("Terminal-Bench 4.0.0 is the coding standard");
-    expect(text).toContain("Terminal-Bench-Science 0.1.0 adds a separate scientific-workflow view");
+    expect(text).toContain("Coding agent comparisons");
+    expect(text).toContain("AI benchmark explorer");
     expect(text).toContain(
       `Artificial Analysis Intelligence Index v${currentIntelligenceData.benchmark.version}`,
     );
     expect(text).toContain(
       `${currentIntelligenceData.selection.positiveCostRecordCount}-configuration positive-cost cohort`,
     );
-    expect(text).toContain("source-specific interactive chart");
+    expect(text).toContain("no universal score is calculated");
     expect(text).toContain("Benchmark data and method");
     expect(text).toContain("Machine-readable site guide");
   });
@@ -86,18 +86,20 @@ describe("homepage document", () => {
 describe("markdown representations", () => {
   test("represents the actual default chart and every discoverable benchmark guide", () => {
     const home = markdownForPath("/").body;
+    const library = markdownForPath("/benchmarks").body;
     const data = markdownForPath("/data").body;
     const state = parseAtlasView("", ATLAS_ENTRIES, ATLAS_DATASETS);
     const dataset = ATLAS_DATASETS.find(value => value.benchmarkId === state.benchmarkId)!;
     const defaultChart = atlasDefaultChartMarkdown();
-    expect(home).toContain(defaultChart);
-    expect(home).toContain("/data/benchmark-atlas.json");
+    expect(library).toContain(defaultChart);
+    expect(library).toContain("/data/benchmark-atlas.json");
+    expect(home).not.toContain(defaultChart);
     for (const point of selectAtlasModelProfiles(sortAtlasPoints(dataset)).slice(0, 8)) {
       expect(defaultChart).toContain(point.label);
       expect(defaultChart).toContain(formatAtlasScore(point.score, dataset.score.unit));
     }
     for (const entry of ATLAS_ENTRIES) {
-      expect(home).toContain(`?atlas=${entry.id}#explore`);
+      expect(library).toContain(`/benchmarks?atlas=${entry.id}#explore`);
       expect(data).toContain(entry.question);
       expect(data).toContain(entry.comparisonRule);
       expect(data).toContain(entry.source.url);
@@ -121,32 +123,22 @@ describe("markdown representations", () => {
     expect(home).toMatchObject({ found: true, contentType: MARKDOWN_CONTENT_TYPE });
     expect(home.body).toContain(`# ${homeHeading}`);
     expect(home.body).toContain(site.origin);
-    expect(home.body).toContain("## Benchmark selection");
-    expect(home.body).toContain("| Signal | Benchmark | Version | What it measures | Comparison rule |");
-    expect(home.body).toContain("## Terminal-Bench 4.0.0 snapshot");
-    expect(home.body).toContain("| Model | Agent configuration | Accuracy | 95% interval | Trials | Evaluation cost |");
-    expect(home.body).toContain("CursorBench 3.2");
     expect(home.body).toContain(
       `## Artificial Analysis Intelligence Index v${currentIntelligenceData.benchmark.version} efficiency`,
     );
     expect(home.body).toContain("output-only tokens per Index task");
     expect(home.body).toContain("/data/artificial-analysis-intelligence.json");
     expect(home.body).toContain("/data/artificial-analysis-intelligence-v4-3.json");
-    expect(home.body.indexOf("## Artificial Analysis Intelligence Index")).toBeLessThan(home.body.indexOf("## Explore more benchmarks"));
-    expect(home.body).not.toContain("Advanced source-specific comparisons");
-    expect(home.body).toContain("## Terminal-Bench-Science 0.1.0 snapshot");
-    expect(home.body).toContain("| Model | Harness configuration | Resolution rate | Standard error | Trials | Evaluation cost |");
-    expect(home.body).toContain("## Model and benchmark analysis");
-    for (const slug of HOME_EDITORIAL_SLUGS) {
-      const image = blogEditorialImage(slug);
-      expect(home.body).toContain(blogArticlePath(slug));
-      if (image === undefined) {
-        expect(home.body).not.toContain(`/images/blog/${slug}.webp`);
-      } else {
-        expect(home.body).toContain(image.src);
-        expect(home.body).toContain(image.caption);
-      }
+    expect(home.body).toContain("/data#current-intelligence-efficiency");
+    expect(home.body).toContain("https://aicharts.io/coding");
+    expect(home.body).toContain("https://aicharts.io/benchmarks");
+    for (const link of homeTaskLinks) {
+      expect(home.body).toContain(`[${link.name}](https://aicharts.io/benchmarks?task=${link.task}#explore)`);
+      expect(home.body).toContain(link.description);
     }
+    expect(home.body).not.toContain("## Benchmark selection");
+    expect(home.body).not.toContain("| Model | Agent configuration | Accuracy");
+    expect(home.body).not.toContain("## Model and benchmark analysis");
     expect(data.body).toContain(BENCHMARK_DATA_DESCRIPTION);
     expect(data.body).toContain("## Terminal-Bench 4 coding standard");
     expect(data.body).toContain(terminalBench.source.submissionsDirectoryUrl);
@@ -210,6 +202,35 @@ describe("markdown representations", () => {
     }
     expect(guide).toMatchObject({ found: true, contentType: AGENT_GUIDE_CONTENT_TYPE });
     expect(guide.body).toBe(agentGuideMarkdown(snapshot));
+  });
+
+  test("gives each comparison workspace its own canonical Markdown document", () => {
+    const coding = markdownForPath("/coding");
+    const library = markdownForPath("/benchmarks");
+    for (const document of [coding, library]) {
+      expect(document).toMatchObject({ found: true, contentType: MARKDOWN_CONTENT_TYPE });
+      expect(document.body).not.toContain("undefined");
+    }
+    expect(coding.body).toStartWith("# Coding agent comparisons\n");
+    expect(coding.body).toContain("DeepSWE accuracy against API cost");
+    expect(coding.body).toContain(snapshot.source.url);
+    expect(coding.body).toContain(formatRetrievedAt(snapshot.source.retrievedAt));
+    expect(coding.body).toContain("Terminal-Bench v2.1");
+    expect(coding.body).toContain("/benchmarks?atlas=terminal-bench-4#explore");
+    expect(coding.body).toContain("/data/coding-agents.json");
+    expect(coding.body).not.toContain(atlasDefaultChartMarkdown());
+    expect(library.body).toStartWith("# Explore benchmarks\n");
+    expect(library.body).toContain("Source guides explain evaluations whose results are not charted here");
+    expect(markdownForPath("/coding/")).toEqual(coding);
+    expect(markdownForPath("/benchmarks/")).toEqual(library);
+    expect(markdownForPath("/coding/private").found).toBeFalse();
+    expect(markdownForPath("/benchmarks/private").found).toBeFalse();
+    const guide = agentGuideMarkdown(snapshot);
+    expect(guide).toContain("https://aicharts.io/coding");
+    expect(guide).toContain("https://aicharts.io/benchmarks");
+    expect(guide).toContain("canonical Markdown representation describes the default view");
+    expect(guide).not.toContain("The homepage has");
+    expect(guide).not.toContain("benchmark library below");
   });
 
   test("renders each blog article from the authored blocks", () => {

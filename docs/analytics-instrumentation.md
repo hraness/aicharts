@@ -23,12 +23,16 @@ The server request-error hook uses the same exact ingest-host approval. It retai
 | Public route | `canonical_path` | `content_id` |
 | --- | --- | --- |
 | `/` | `/` | `home` |
+| `/coding` | `/coding` | `coding:index` |
+| `/benchmarks` | `/benchmarks` | `benchmarks:index` |
 | `/blog` | `/blog` | `blog:index` |
 | `/blog/{article}` | `/blog/[article]` | `blog:{article}` |
 | `/data` | `/data` | `data:index` |
 | `/models` | `/models` | `models:index` |
 | `/models/{creator}/{model}/{profile}` | `/models/[creator]/[model]/[profile]` | `model-card:{creator}/{model}/{profile}` |
 | any other route | `/[other]` | `other` |
+
+Home and `/coding` use page kind `benchmark_chart`; `/benchmarks` uses `benchmark_library`. Their default interaction surfaces are `benchmark_chart` and `benchmark_atlas`, respectively. These additive public route IDs retain schema version 3. Query-selected benchmark, point, provider, and comparison state never enters page context; old root links are resolved by navigation compatibility, not by sending their raw state to analytics.
 
 Article and model-card identifiers must appear in the small client-safe public-route allowlists, which have drift tests against the publishing registries. Unknown but syntactically valid slugs still collapse to `other`. These are public content identifiers, not visitor or account identifiers.
 

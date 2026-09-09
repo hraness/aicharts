@@ -23,7 +23,15 @@ export const searchSite = {
 
 export const homeHeading = "Compare AI models";
 export const homeLede =
-  "Capability, cost, and token use. Explore the Pareto frontier and inspect the configuration behind each point.";
+  "Understand the tradeoff between capability and cost.";
+export const homeTaskLinks = [
+  { task: "coding", name: "Coding", description: "Build, debug, and work in a terminal." },
+  { task: "reasoning", name: "Reasoning", description: "Solve unfamiliar problems." },
+  { task: "research", name: "Research", description: "Find and synthesize evidence." },
+  { task: "image", name: "Images", description: "Generate and edit images." },
+  { task: "video", name: "Video", description: "Create video from text or images." },
+  { task: "audio", name: "Audio", description: "Transcribe and understand speech." },
+] as const;
 export const modelCardsHeading = "Every model, on a card";
 export const modelCardsLede =
   "Shareable benchmark cards built from the same records as the charts, with the model, harness, and reasoning profile attached.";

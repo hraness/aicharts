@@ -85,7 +85,7 @@ describe("benchmark dataset surface", () => {
     expect(markup).toContain('href="/data/benchmark-atlas.json"');
     for (const entry of ATLAS_ENTRIES) {
       expect(markup).toContain(`id="atlas-${entry.id}"`);
-      expect(markup).toContain(`href="/?atlas=${entry.id}#explore"`);
+      expect(markup).toContain(`href="/benchmarks?atlas=${entry.id}#explore"`);
       const href = `href="${atlasDatasetDownloadPath(entry.id)}"`;
       if (entry.coverage === "charted") expect(markup).toContain(href);
       else expect(markup).not.toContain(href);

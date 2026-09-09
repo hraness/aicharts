@@ -6,11 +6,14 @@ import {
   preferredType,
 } from "@/lib/http-accept";
 import { CANONICAL_MARKDOWN_REQUEST_HEADER } from "@/lib/markdown-http";
+import { legacyChartDestination } from "@/lib/chart-navigation";
 
 const MARKDOWN_PREFIX = "/api/markdown";
 const NEGOTIABLE_PAGE_PATHS = new Set([
   "/",
   "/blog",
+  "/benchmarks",
+  "/coding",
   "/data",
   "/models",
 ]);
@@ -47,6 +50,14 @@ function markdownPath(pathname: string): string {
 
 export function middleware(request: NextRequest): Response {
   const { pathname } = request.nextUrl;
+  const destination = legacyChartDestination(pathname, request.nextUrl.search);
+  if (destination !== null && (request.method === "GET" || request.method === "HEAD")) {
+    const url = new URL(destination, request.url);
+    // Fragments never reach the server. An absent response fragment lets the
+    // browser preserve the reader's original section bookmark.
+    url.hash = "";
+    return NextResponse.redirect(url, 308);
+  }
   if (isNextDataRequest(request) || !isNegotiablePagePath(pathname)) {
     return NextResponse.next();
   }

@@ -21,9 +21,8 @@ describe("AI Charts public positioning", () => {
     }
     expect(site.description).toContain("published results");
     expect(site.description).toContain("configurations");
-    expect(homeLede).toContain("Capability, cost, and token use");
-    expect(homeLede).toContain("Pareto frontier");
-    expect(homeLede).toContain("configuration behind each point");
+    expect(homeLede).toBe("Understand the tradeoff between capability and cost.");
+    expect(homeLede.length).toBeLessThan(80);
     expect(homeLede).not.toMatch(/universal|definitive|best model overall/iu);
     expect(searchSite.description).toBe(site.description);
     expect(searchSite.origin).toBe("https://aicharts.io");

@@ -1,11 +1,11 @@
 import { describe, expect, test } from "bun:test";
 
-import artificialAnalysisIntelligenceData from "@/data/artificial-analysis-intelligence.json";
+import artificialAnalysisIntelligenceData from "@/data/artificial-analysis-intelligence-v4-3.json";
 import codingAgentData from "@/data/coding-agents.json";
 import terminalBenchData from "@/data/terminal-bench.json";
 import terminalBenchScienceData from "@/data/terminal-bench-science.json";
 import { parseCodingAgentSnapshot } from "@/lib/coding-agent-data";
-import { parseArtificialAnalysisIntelligenceSnapshot } from "@/lib/artificial-analysis-intelligence-data";
+import { parseArtificialAnalysisIntelligenceV43Snapshot } from "@/lib/artificial-analysis-intelligence-v4-3-data";
 import { FIRST_PARTY_RELEASE_HIGHLIGHTS } from "@/lib/first-party-release-collection";
 import { atlasContentModifiedAt } from "@/lib/benchmark-atlas-distribution";
 import {
@@ -33,11 +33,17 @@ describe("public search discovery", () => {
       terminalBenchScienceData,
     );
     if (!terminalBenchScience.ok) throw terminalBenchScience.error;
-    const intelligence = parseArtificialAnalysisIntelligenceSnapshot(
+    const intelligence = parseArtificialAnalysisIntelligenceV43Snapshot(
       artificialAnalysisIntelligenceData,
     );
     if (!intelligence.ok) throw intelligence.error;
+    const navigationUpdatedAt = "2026-09-09T02:50:00Z";
+    const homeModifiedAt = [navigationUpdatedAt, intelligence.value.source.retrievedAt]
+      .sort((left, right) => Date.parse(right) - Date.parse(left))[0];
+    const codingModifiedAt = [navigationUpdatedAt, datasetModifiedAt]
+      .sort((left, right) => Date.parse(right) - Date.parse(left))[0];
     const benchmarkPortfolioModifiedAt = [
+      navigationUpdatedAt,
       atlasContentModifiedAt(),
       datasetModifiedAt,
       terminalBench.value.source.retrievedAt,
@@ -62,7 +68,12 @@ describe("public search discovery", () => {
     expect(urls).not.toContain("https://aicharts.io/preview");
     expect(urls).not.toContain("https://aicharts.io/models/preview");
     expect(entries.find(entry => entry.url === "https://aicharts.io/")?.lastModified)
-      .toBe(benchmarkPortfolioModifiedAt);
+      .toBe(homeModifiedAt);
+    expect(entries.find(entry => entry.url === "https://aicharts.io/coding")?.lastModified)
+      .toBe(codingModifiedAt);
+    expect(entries.find(entry => entry.url === "https://aicharts.io/benchmarks")?.lastModified)
+      .toBe(atlasContentModifiedAt());
+    expect(urls.every(url => !url.includes("?") && !url.includes("#"))).toBeTrue();
     expect(entries.find(entry => entry.url.endsWith(CODING_AGENT_DATASET_PATH))?.lastModified)
       .toBe(benchmarkPortfolioModifiedAt);
     const cardEntries = entries.filter(entry => entry.url.includes("/models/"));

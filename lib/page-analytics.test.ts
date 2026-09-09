@@ -23,6 +23,31 @@ describe("page analytics context", () => {
     });
   });
 
+  test("separates coding and library pages without recording explorer state", () => {
+    const cases = [
+      ["/coding", "coding:index", "benchmark_chart"],
+      ["/benchmarks", "benchmarks:index", "benchmark_library"],
+    ] as const;
+    for (const [path, contentId, pageKind] of cases) {
+      const context = pageAnalyticsContext(`${path}/?atlasPoint=private&point=private#explore`);
+      expect(context).toMatchObject({
+        canonical_path: path,
+        content_group: "ai_comparison",
+        content_id: contentId,
+        page_kind: pageKind,
+      });
+      expect(JSON.stringify(context)).not.toContain("private");
+      const normalized = normalizedPageAnalyticsProperties(`${path}?search=private`, {
+        $current_url: `https://aicharts.io${path}?search=private#explore`,
+        $session_entry_url: `https://aicharts.io${path}?point=private`,
+      });
+      expect(normalized.$current_url).toBe(`https://aicharts.io${path}`);
+      expect(normalized.$session_entry_url).toBe(`https://aicharts.io${path}`);
+      expect(JSON.stringify(normalized)).not.toContain("private");
+      expect(pageAnalyticsContext(`${path}/private`).page_kind).toBe("other");
+    }
+  });
+
   test("groups admitted article slugs without sending raw paths or query strings", () => {
     const context = pageAnalyticsContext(
       "/blog/terminal-bench-science?campaign=uncontrolled#results",

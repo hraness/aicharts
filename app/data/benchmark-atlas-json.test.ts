@@ -19,7 +19,7 @@ describe("benchmark atlas distribution", () => {
     expect(JSON.stringify(catalog)).not.toContain('"points":');
     for (const entry of catalog.entries) {
       const dataset = ATLAS_DATASETS.find(value => value.benchmarkId === entry.id);
-      expect(entry.explorationUrl).toBe(`https://aicharts.io/?atlas=${entry.id}#explore`);
+      expect(entry.explorationUrl).toBe(`https://aicharts.io/benchmarks?atlas=${entry.id}#explore`);
       if (dataset === undefined) {
         expect(entry.coverage).not.toBe("charted");
         expect(entry.dataset).toBeNull();
