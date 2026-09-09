@@ -61,7 +61,8 @@
 .atlas-context { display: flex; gap: 6px 16px; flex-wrap: wrap; margin-top: 16px; font-size: 12px; line-height: 1.5; color: var(--muted); }
 .atlas-context span + span::before { content: "·"; margin-right: 14px; color: var(--line); }
 .atlas-context strong { color: var(--foreground); font-weight: 550; }
-.atlas-description { max-width: 1000px; color: var(--muted); font-size: 13px; line-height: 1.65; margin-top: 10px; }
+.atlas-description { max-width: 1000px; color: var(--muted); font-size: 13px; line-height: 1.65; margin-top: 16px; }
+.atlas-description strong { color: var(--foreground); font-weight: 550; }
 .atlas-toolbar { margin-top: 22px; padding-block: 10px; display: flex; flex-wrap: wrap; gap: 10px 20px; justify-content: space-between; align-items: center; border-top: 1px solid var(--grid); border-bottom: 1px solid var(--grid); }
 .atlas-view-toggle { display: flex; gap: 3px; }
 .atlas-view-toggle button { background: none; border: 0; padding: 10px 13px; border-radius: 4px; font-size: 13px; color: var(--muted); min-height: 44px; }

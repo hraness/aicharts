@@ -96,6 +96,9 @@ describe("benchmark library progressive disclosure", () => {
     expect(primary).toContain(">Cost vs. score</button>");
     expect(primary).toContain(">Table</button>");
     expect(primary).toContain(dataset.comparabilityNote);
+    expect(primary.indexOf('class="atlas-ranking"')).toBeLessThan(primary.indexOf(dataset.comparabilityNote));
+    expect(primary.indexOf(dataset.comparabilityNote)).toBeLessThan(primary.indexOf('class="atlas-provenance"'));
+    expect(primary.replace(/<details[\s\S]*?<\/details>/gu, "")).toContain(dataset.comparabilityNote);
     expect(primary).toContain("Source date: Sep 7, 2026");
     expect(primary).toContain("<strong>10</strong> configurations in source cohort");
     expect(primary).toContain("Showing 5 systems. Best-scoring configuration per model and harness.");
@@ -109,6 +112,18 @@ describe("benchmark library progressive disclosure", () => {
     expect(html).toContain("Showing 8 of 10 configurations.");
     expect(html).not.toContain("Best-scoring configuration per model and harness.");
     expect(html).toContain("Show all 10 results");
+  });
+
+  test("names the source's interval type instead of implying every whisker is a confidence interval", () => {
+    const renderIntervals = (labels: readonly (string | null)[]) => {
+      const points = dataset.points.slice(0, labels.length).map((point, index) => ({ ...point, model: point.id, uncertainty: labels[index] === null ? null : { label: labels[index]!, lower: point.score - 1, upper: point.score + 1 } }));
+      const html = renderToStaticMarkup(<BenchmarkAtlasExplorer entries={entries} datasets={[{ ...dataset, points }]} />);
+      return html.match(/<p class="atlas-caption">[\s\S]*?<\/p>/u)?.[0] ?? "";
+    };
+    expect(renderIntervals(["Source-reported ±1 binomial standard error"])).toContain("Whiskers: Source-reported ±1 binomial standard error.");
+    expect(renderIntervals(["95% confidence interval"])).toContain("Whiskers: 95% confidence interval.");
+    expect(renderIntervals(["95% confidence interval", "Standard error"])).toContain("different source-reported interval types");
+    expect(renderIntervals([null])).toContain("Uncertainty was not reported");
   });
 
   test("keeps identity, exact score, cost, and uncertainty visible and moves only technical detail", () => {

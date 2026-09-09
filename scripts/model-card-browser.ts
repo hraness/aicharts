@@ -268,6 +268,8 @@ async function verifyBenchmarkAtlas(browser: Browser, baseUrl: string): Promise<
     invariant(await atlas.locator(".atlas-inspector").isVisible(), "Selected result is unavailable on a narrow dark viewport.");
     const distribution = await page.request.get(`${baseUrl}/data/benchmark-atlas.json`);
     invariant(distribution.ok(), "The benchmark catalog JSON is not available.");
+    await page.goto(`${baseUrl}/benchmarks?atlas=deep-swe&atlasView=cost`, { waitUntil: "domcontentloaded" });
+    await page.getByText("Costs are measured across the AA coding suite, not separately for each test.", { exact: false }).waitFor();
     await page.goto(`${baseUrl}/?benchmark=aaIndex&compare=costUsd#chart`, { waitUntil: "domcontentloaded" });
     invariant(new URL(page.url()).pathname === "/coding", "Legacy coding selections must resolve to the dedicated coding chart.");
     await page.locator(".chart-canvas .benchmark-chart").waitFor();

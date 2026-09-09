@@ -45,6 +45,12 @@ function PointInspector({ point, dataset, compareIds, onCompare }: Readonly<{ po
 
 function Ranking({ points, selectedId, dataset, onSelect }: Readonly<{ points: readonly BenchmarkAtlasPoint[]; selectedId: string; dataset: BenchmarkAtlasDataset; onSelect: (id: string) => void }>) {
   const relative = dataset.score.unit === "Elo" || dataset.score.unit === "Arena points";
+  const uncertaintyLabels = [...new Set(points.flatMap(point => point.uncertainty ? [point.uncertainty.label] : []))];
+  const uncertaintyCaption = uncertaintyLabels.length === 1
+    ? `Whiskers: ${uncertaintyLabels[0]}.`
+    : uncertaintyLabels.length > 1
+      ? "Whiskers use different source-reported interval types. Inspect a row for its definition."
+      : "Uncertainty was not reported for these results.";
   const minimum = dataset.score.minimum ?? (relative ? Math.floor(Math.min(...dataset.points.map(point => point.uncertainty?.lower ?? point.score)) / 50) * 50 : Math.min(0, ...dataset.points.map(point => point.score)));
   const maximum = dataset.score.maximum ?? (relative ? Math.ceil(Math.max(...dataset.points.map(point => point.uncertainty?.upper ?? point.score)) / 50) * 50 : Math.max(...dataset.points.map(point => point.score)) * 1.05);
   const extent = maximum - minimum || 1;
@@ -58,7 +64,7 @@ function Ranking({ points, selectedId, dataset, onSelect }: Readonly<{ points: r
         <span className="atlas-row__track" aria-hidden="true">{relative ? <span className="atlas-row__marker" style={{ left: `${(point.score - minimum) / extent * 100}%` }} /> : <span className="atlas-row__fill" style={{ width: `${Math.max(0, Math.min(100, (point.score - minimum) / extent * 100))}%` }} />}{point.uncertainty && <span className="atlas-row__interval" style={{ left: `${Math.max(0, (point.uncertainty.lower - minimum) / extent * 100)}%`, width: `${Math.min(100, (point.uncertainty.upper - point.uncertainty.lower) / extent * 100)}%` }} />}</span>
       </span>
     </button>)}
-    <p className="atlas-caption">{relative && `Dots use a ${minimum}–${maximum} ${dataset.score.unit} range. These ratings are relative, not percentages. `}Select a row to inspect the configuration or compare up to three. {dataset.points.some(point => point.uncertainty) ? "Whiskers show the source’s reported uncertainty." : "Uncertainty was not reported for these results."}</p>
+    <p className="atlas-caption">{relative && `Dots use a ${minimum}–${maximum} ${dataset.score.unit} range. These ratings are relative, not percentages. `}Select a row to inspect the configuration or compare up to three. {uncertaintyCaption}</p>
   </div>;
 }
 
@@ -76,7 +82,7 @@ function CostChart({ points, selectedId, dataset, onSelect }: Readonly<{ points:
   const ticks = Array.from({ length: Math.min(high - low + 1, 7) }, (_, index, ) => low + (high - low) * index / Math.min(high - low, 6));
   const active = eligible.find(point => point.id === selectedId) ?? eligible[0];
   return <div className="atlas-scatter">
-    <p className="atlas-caption">{dataset.score.direction === "higher" ? "Upper left" : "Lower left"} means better performance for less cost. {eligible.length} of {points.length} results report positive costs.</p>
+    <p className="atlas-caption">{dataset.score.direction === "higher" ? "Upper left" : "Lower left"} means better performance for less cost. {eligible.length} of {points.length} results report positive costs. {dataset.costLabel === "USD per task across the AA coding suite" && "Costs are measured across the AA coding suite, not separately for each test."}</p>
     <div className="atlas-scatter__scroll" tabIndex={0} role="region" aria-label="Cost chart. Scroll horizontally on narrow screens.">
       <svg aria-labelledby={`${id}-title ${id}-desc`} role="group" viewBox="0 0 650 395" onPointerDown={event => {
         const bounds = event.currentTarget.getBoundingClientRect();
@@ -230,7 +236,6 @@ export function BenchmarkAtlasExplorer({ entries, datasets }: Readonly<{ entries
         <p className="atlas-share-status" role="status">{shareStatus}</p>
         {dataset && summary ? <>
           <div className="atlas-context"><span><strong>{summary.configurationCount}</strong> configurations in source cohort</span><span>{dataset.evidenceLabel ?? dataset.source.name}</span><span>{dataset.observedAt ? `Source date: ${sourceDate(dataset.observedAt)}` : `Retrieved ${sourceDate(dataset.source.retrievedAt)}`}</span></div>
-          <p className="atlas-description">{dataset.comparabilityNote}</p>
           <div className="atlas-toolbar">
             <div className="atlas-view-toggle" role="group" aria-label="Chart view">
               {(["ranking", "cost", "table"] as const).filter(view => view !== "cost" || ranked.some(point => point.costUsd !== null && point.costUsd > 0)).map(view => <button key={view} aria-pressed={state.view === view} onClick={() => changeView(view)} type="button">{view === "ranking" ? "Ranking" : view === "cost" ? "Cost vs. score" : "Table"}</button>)}
@@ -252,6 +257,7 @@ export function BenchmarkAtlasExplorer({ entries, datasets }: Readonly<{ entries
             {selected && <PointInspector dataset={dataset} point={selected} compareIds={state.compareIds} onCompare={compare} />}
           </div>
           <Comparison dataset={dataset} points={comparison} onRemove={compare} />
+          <p className="atlas-description"><strong>About these results.</strong> {dataset.comparabilityNote}</p>
           <div className="atlas-provenance"><a data-analytics-destination-id={`source:${entry.id}`} data-analytics-destination-kind="source" href={dataset.source.url} target="_blank" rel="noreferrer">{dataset.source.name} ↗</a><span>Retrieved <time dateTime={dataset.source.retrievedAt}>{sourceDate(dataset.source.retrievedAt)}</time></span></div>
         </> : <div className="atlas-source-guide"><p className="atlas-eyebrow">{entry.coverage === "watchlist" ? "Emerging evaluation" : "Benchmark guide"}</p><h3>{entry.measure}</h3><p>{entry.summary}</p><p className="atlas-source-guide__status">Comparable scores are not yet charted here. The source below provides the published evaluation.</p><a className="atlas-button" href={entry.source.url} data-analytics-destination-id={`source:${entry.id}`} data-analytics-destination-kind="source" target="_blank" rel="noreferrer">Explore {entry.source.name} ↗</a></div>}
         <details className="atlas-method"><summary>What this benchmark measures and how to read it</summary><div><p>{entry.summary}</p><dl><div><dt>Measure</dt><dd>{entry.measure}</dd></div><div><dt>Compare fairly</dt><dd>{entry.comparisonRule}</dd></div></dl><ul>{entry.limitations.map(limit => <li key={limit}>{limit}</li>)}</ul><a data-analytics-destination-id={`source:${entry.id}`} data-analytics-destination-kind="source" href={entry.source.methodologyUrl ?? entry.source.url} target="_blank" rel="noreferrer">Read the methodology ↗</a></div></details>
