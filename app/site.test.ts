@@ -15,15 +15,15 @@ describe("AI Charts public positioning", () => {
     expect(searchSite.title).toBe(
       "AI Model & Agent Comparison Charts | AI Charts",
     );
-    expect(homeHeading).toBe("Find the right AI for the task");
+    expect(homeHeading).toBe("Compare AI models");
     for (const dimension of ["coding", "reasoning", "research", "memory", "images", "video", "world models"]) {
       expect(site.description).toContain(dimension);
     }
     expect(site.description).toContain("published results");
     expect(site.description).toContain("configurations");
-    expect(homeLede).toContain("Compare AI");
-    expect(homeLede).toContain("generative media");
-    expect(homeLede).toMatch(/results.*what.*mean/iu);
+    expect(homeLede).toContain("Capability, cost, and token use");
+    expect(homeLede).toContain("Pareto frontier");
+    expect(homeLede).toContain("configuration behind each point");
     expect(homeLede).not.toMatch(/universal|definitive|best model overall/iu);
     expect(searchSite.description).toBe(site.description);
     expect(searchSite.origin).toBe("https://aicharts.io");
