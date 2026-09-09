@@ -34,7 +34,7 @@ describe("page metadata ownership", () => {
       },
       twitter: { card: "summary_large_image", title: searchSite.title },
     });
-    expect(homeHeading).toBe("Find the right AI for the task");
+    expect(homeHeading).toBe("Compare AI models");
   });
 
   test("gives 404 a distinct title, noindex, and no homepage canonical", () => {

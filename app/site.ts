@@ -21,9 +21,9 @@ export const searchSite = {
   title: "AI Model & Agent Comparison Charts | AI Charts",
 } as const;
 
-export const homeHeading = "Find the right AI for the task";
+export const homeHeading = "Compare AI models";
 export const homeLede =
-  "Compare AI for coding, research, memory, and generative media. See the results and what they mean.";
+  "Capability, cost, and token use. Explore the Pareto frontier and inspect the configuration behind each point.";
 export const modelCardsHeading = "Every model, on a card";
 export const modelCardsLede =
   "Shareable benchmark cards built from the same records as the charts, with the model, harness, and reasoning profile attached.";

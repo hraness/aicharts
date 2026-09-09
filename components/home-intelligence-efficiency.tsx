@@ -1,6 +1,7 @@
 import type {
   ArtificialAnalysisIntelligenceSnapshot,
 } from "@/lib/artificial-analysis-intelligence-data";
+import type { ArtificialAnalysisIntelligenceV43Snapshot } from "@/lib/artificial-analysis-intelligence-v4-3-data";
 import {
   comparableIntelligenceRecords,
   focusModelComparison,
@@ -37,7 +38,9 @@ function relativePhrase(
   return `${percentFormatter.format(Math.abs(value))}% ${value >= 0 ? positive : negative}`;
 }
 
-function methodologySummary(snapshot: ArtificialAnalysisIntelligenceSnapshot): string {
+type IntelligenceSnapshot = ArtificialAnalysisIntelligenceSnapshot | ArtificialAnalysisIntelligenceV43Snapshot;
+
+function methodologySummary(snapshot: IntelligenceSnapshot): string {
   const weights = snapshot.benchmark.categoryWeightsPercent;
   return [
     `agents ${weights.agents}%`,
@@ -49,7 +52,9 @@ function methodologySummary(snapshot: ArtificialAnalysisIntelligenceSnapshot): s
 
 export function HomeIntelligenceEfficiency({
   snapshot,
-}: Readonly<{ snapshot: ArtificialAnalysisIntelligenceSnapshot }>) {
+}: Readonly<{ snapshot: IntelligenceSnapshot }>) {
+  const currentVersion = snapshot.benchmark.version === "4.3";
+  const datasetId = currentVersion ? "artificial-analysis-intelligence-v4-3" : "artificial-analysis-intelligence";
   const cohort = comparableIntelligenceRecords(snapshot.records);
   const comparison = focusModelComparison(cohort);
   const outputFrontier = paretoMembership(cohort, "outputTokensPerTask");
@@ -122,15 +127,15 @@ export function HomeIntelligenceEfficiency({
         <a
           data-analytics-destination-id="section"
           data-analytics-destination-kind="section"
-          href="/data#artificial-analysis-intelligence"
+          href={currentVersion ? "/data#atlas-aa-intelligence-4-3" : "/data#artificial-analysis-intelligence"}
         >
           Full data and methodology
         </a>
         <a
-          data-analytics-destination-id="dataset:artificial-analysis-intelligence"
+          data-analytics-destination-id={`dataset:${datasetId}`}
           data-analytics-destination-kind="dataset"
-          download="aicharts-artificial-analysis-intelligence.json"
-          href="/data/artificial-analysis-intelligence.json"
+          download={`aicharts-${datasetId}.json`}
+          href={`/data/${datasetId}.json`}
         >
           Download JSON
         </a>

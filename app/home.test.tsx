@@ -87,29 +87,34 @@ describe("homepage canonical content", () => {
     }
   });
 
-  test("puts the task explorer first and keeps the advanced charts available in a closed disclosure", async () => {
+  test("leads with the original Pareto charts and keeps the benchmark library secondary", async () => {
     const source = await Bun.file(new URL("./page.tsx", import.meta.url)).text();
     const markup = renderToStaticMarkup(createElement(Home));
     const mainAt = markup.indexOf('<main class="atlas-home" id="main-content">');
     const explorerAt = markup.indexOf('id="explore"');
     const readingAt = markup.indexOf('aria-label="Make a useful comparison"');
-    const advancedAt = markup.indexOf('<details class="atlas-advanced"');
     const intelligenceAt = markup.indexOf('class="intelligence-efficiency"');
     const codingAt = markup.indexOf('class="chart-page-canvas"');
     const resourcesAt = markup.indexOf('class="home-editorial"');
     const mainEndAt = markup.indexOf("</main>", mainAt);
 
     expect(mainAt).toBeGreaterThan(markup.indexOf("site-header"));
-    expect(explorerAt).toBeGreaterThan(mainAt);
-    expect(readingAt).toBeGreaterThan(explorerAt);
-    expect(advancedAt).toBeGreaterThan(readingAt);
-    expect(intelligenceAt).toBeGreaterThan(advancedAt);
+    expect(intelligenceAt).toBeGreaterThan(mainAt);
+    expect(intelligenceAt).toBeLessThan(explorerAt);
     expect(codingAt).toBeGreaterThan(intelligenceAt);
-    expect(resourcesAt).toBeGreaterThan(codingAt);
+    expect(codingAt).toBeLessThan(explorerAt);
+    expect(readingAt).toBeGreaterThan(explorerAt);
+    expect(resourcesAt).toBeGreaterThan(readingAt);
     expect(mainEndAt).toBeGreaterThan(resourcesAt);
     expect(markup.indexOf('aria-label="Ask AI about this"')).toBeGreaterThan(mainEndAt);
-    expect(markup.slice(advancedAt, markup.indexOf(">", advancedAt))).not.toMatch(/\bopen(?:=|\s|$)/u);
-    expect(source.indexOf("</AdvancedCharts>")).toBeLessThan(source.indexOf("<HomeEditorialResources"));
+    expect(markup).not.toContain('id="advanced-charts"');
+    expect(markup).toContain("Artificial Analysis Intelligence Index v4.3");
+    expect(markup).toContain('href="/data/artificial-analysis-intelligence-v4-3.json"');
+    expect(markup).toContain('href="/data#atlas-aa-intelligence-4-3"');
+    expect(markup).not.toContain("both round to 61");
+    expect(source).not.toContain("AdvancedCharts");
+    expect(markup).toContain('class="intelligence-efficiency__frontier-line"');
+    expect(markup).toContain("Pareto frontier");
     expect(source).toContain("brand={{ domain: site.domain }}");
     expect(existsSync(new URL("./loading.tsx", import.meta.url))).toBeFalse();
     expect(markup).toContain(`<h1 id="home-title">${homeHeading}</h1>`);
@@ -125,7 +130,7 @@ describe("homepage canonical content", () => {
     expect(markup).toContain('id="intelligence-index"');
     expect(markup).toContain("Terminal-Bench 4.0.0 snapshot");
     expect(markup).toContain("Terminal-Bench-Science 0.1.0 snapshot");
-    expect(markup).toContain("Artificial Analysis Intelligence Index v4.1.1");
+    expect(markup).toContain("Artificial Analysis Intelligence Index v4.3");
     expect(markup).toContain("This source still reports Terminal-Bench v2.1");
     expect(markup).not.toContain('class="home-document"');
     expect(markup).not.toContain('class="hraness-marketing-hero"');
@@ -180,6 +185,27 @@ describe("homepage canonical content", () => {
     expect(markup).not.toContain('aria-label="Selected result"');
     expect(markup).not.toContain("Cost vs. score");
     expect(markup).not.toContain("0 results");
+  });
+
+  test("media ratings use relative dots and audio ranks fewer errors first", () => {
+    for (const id of ["image-arena", "image-edit-arena", "video-arena", "image-to-video-arena"]) {
+      const entry = ATLAS_ENTRIES.find(value => value.id === id)!;
+      const dataset = ATLAS_DATASETS.find(value => value.benchmarkId === id)!;
+      const markup = renderToStaticMarkup(createElement(BenchmarkAtlasExplorer, { entries: [entry], datasets: [dataset] }));
+      expect(markup).toContain('class="atlas-row__marker"');
+      expect(markup).not.toContain('class="atlas-row__fill"');
+      expect(markup).toContain("Arena points");
+      expect(markup).toContain("relative, not percentages");
+      expect(markup).toContain("CC BY 4.0");
+    }
+    const entry = ATLAS_ENTRIES.find(value => value.id === "open-asr-ami-cleaned")!;
+    const dataset = ATLAS_DATASETS.find(value => value.benchmarkId === entry.id)!;
+    const markup = renderToStaticMarkup(createElement(BenchmarkAtlasExplorer, { entries: [entry], datasets: [dataset] }));
+    expect(markup).toContain("lower is better");
+    const values = [...markup.matchAll(/<data value="([\d.]+)">/gu)].map(match => Number(match[1]));
+    expect(values).toHaveLength(8);
+    expect(values).toEqual(values.toSorted((left, right) => left - right));
+    expect(markup).not.toContain("Cost vs. score");
   });
 
   test("memory methods and effort-only cohorts retain every comparable result in the default ranking", () => {

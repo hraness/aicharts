@@ -69,6 +69,17 @@ function renderedJsonLd(markup: string, id: string): unknown {
 }
 
 describe("benchmark dataset surface", () => {
+  test("current Pareto download and frozen historical dataset have separate labels and refresh claims", () => {
+    const markup = renderToStaticMarkup(createElement(CodingAgentDatasetPage));
+    expect(markup).toContain('id="current-intelligence-efficiency"');
+    expect(markup).toContain("Current Intelligence efficiency · v4.3");
+    expect(markup).toContain('href="/data/artificial-analysis-intelligence-v4-3.json"');
+    expect(markup).toContain("Historical Intelligence v4.1.1 · frozen snapshot");
+    expect(markup).toContain("is frozen and is no longer refreshed by automation");
+    const historical = markup.split('id="artificial-analysis-intelligence"')[1]?.split('id="source"')[0] ?? "";
+    expect(historical).not.toContain("every four hours");
+    expect(historical).toContain("not the current homepage dataset");
+  });
   test("renders server-reachable guides and per-cohort downloads for the whole atlas", () => {
     const markup = renderToStaticMarkup(createElement(CodingAgentDatasetPage));
     expect(markup).toContain('href="/data/benchmark-atlas.json"');

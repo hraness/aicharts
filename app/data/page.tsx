@@ -2,6 +2,7 @@ import { Breadcrumbs } from "@/components/ui";
 import { CodingAgentLeadersTable } from "@/components/coding-agent-leaders-table";
 import { CodingAgentSnapshotTable } from "@/components/coding-agent-snapshot-table";
 import artificialAnalysisIntelligenceData from "@/data/artificial-analysis-intelligence.json";
+import currentIntelligenceData from "@/data/artificial-analysis-intelligence-v4-3.json";
 import codingAgentData from "@/data/coding-agents.json";
 import terminalBenchData from "@/data/terminal-bench.json";
 import terminalBenchScienceData from "@/data/terminal-bench-science.json";
@@ -16,6 +17,7 @@ import {
   terminalBenchScienceDatasetJsonLd,
 } from "@/lib/benchmark-dataset-json-ld";
 import { parseArtificialAnalysisIntelligenceSnapshot } from "@/lib/artificial-analysis-intelligence-data";
+import { parseArtificialAnalysisIntelligenceV43Snapshot } from "@/lib/artificial-analysis-intelligence-v4-3-data";
 import {
   CODING_AGENT_BENCHMARK_DEFINITIONS,
   CODING_AGENT_DATASET_DOWNLOAD_PATH,
@@ -127,6 +129,9 @@ export default function CodingAgentDatasetPage() {
     );
   }
   const intelligence = parsedIntelligence.value;
+  const parsedCurrentIntelligence = parseArtificialAnalysisIntelligenceV43Snapshot(currentIntelligenceData);
+  if (!parsedCurrentIntelligence.ok) throw new Error("Invalid checked current Intelligence snapshot", { cause: parsedCurrentIntelligence.error });
+  const currentIntelligence = parsedCurrentIntelligence.value;
   const modifiedAt = codingAgentDatasetModifiedAt(snapshot);
   const summary = codingAgentDatasetSummary(snapshot);
   const leaders = currentCodingAgentBenchmarkLeaders(snapshot);
@@ -190,11 +195,16 @@ export default function CodingAgentDatasetPage() {
               </a>
             </li>
             <li>
+              <a download="aicharts-artificial-analysis-intelligence-v4-3.json" href="/data/artificial-analysis-intelligence-v4-3.json">
+                Current Intelligence v{currentIntelligence.benchmark.version} <span aria-hidden="true">↓</span>
+              </a>
+            </li>
+            <li>
               <a
                 download="aicharts-artificial-analysis-intelligence.json"
                 href="/data/artificial-analysis-intelligence.json"
               >
-                Artificial Analysis Intelligence v{intelligence.benchmark.version}{" "}
+                Historical Intelligence v{intelligence.benchmark.version} (frozen){" "}
                 <span aria-hidden="true">↓</span>
               </a>
             </li>
@@ -217,7 +227,8 @@ export default function CodingAgentDatasetPage() {
             <li><a href="#benchmark-atlas">All benchmark charts and guides</a></li>
             <li><a href="#terminal-bench-4">Terminal-Bench 4 standard</a></li>
             <li><a href="#terminal-bench-science">Terminal-Bench-Science 0.1</a></li>
-            <li><a href="#artificial-analysis-intelligence">Intelligence efficiency</a></li>
+            <li><a href="#current-intelligence-efficiency">Current Intelligence efficiency</a></li>
+            <li><a href="#artificial-analysis-intelligence">Historical v4.1.1 snapshot</a></li>
             <li><a href="#source">Source and refresh</a></li>
             <li><a href="#benchmarks">Benchmark definitions</a></li>
             <li><a href="#leaders">Current leaders</a></li>
@@ -358,18 +369,42 @@ export default function CodingAgentDatasetPage() {
               Download Terminal-Bench-Science 0.1 JSON <span aria-hidden="true">↓</span>
             </a>
 
-            <h2 id="artificial-analysis-intelligence">
-              Artificial Analysis Intelligence efficiency
+            <h2 id="current-intelligence-efficiency">
+              Current Intelligence efficiency · v{currentIntelligence.benchmark.version}
             </h2>
             <p>
-              This separate model-level view pairs the owner-published{" "}
+              The homepage’s Pareto chart uses Artificial Analysis Intelligence Index v{currentIntelligence.benchmark.version}.
+              Its output-token and cost views compare the identical {currentIntelligence.selection.positiveCostRecordCount}-configuration
+              positive-cost cohort from {currentIntelligence.records.length} complete score-and-output records.
+              Output tokens include answer and reasoning; task cost also includes input and cache traffic.
+            </p>
+            <p>
+              This {currentIntelligence.benchmark.evaluationCount}-evaluation version weights agents{" "}
+              {currentIntelligence.benchmark.categoryWeightsPercent.agents}%, coding{" "}
+              {currentIntelligence.benchmark.categoryWeightsPercent.coding}%, scientific reasoning{" "}
+              {currentIntelligence.benchmark.categoryWeightsPercent.scientific}%, and general capability{" "}
+              {currentIntelligence.benchmark.categoryWeightsPercent.general}%.
+              The source is checked every four hours. Version, evaluation roster, source identities,
+              native measures, and retention must pass validation before an update is published.
+              Retrieved <time dateTime={currentIntelligence.source.retrievedAt}>{formatRetrievedAt(currentIntelligence.source.retrievedAt)}</time>.
+            </p>
+            <p>
+              <a href="/data/artificial-analysis-intelligence-v4-3.json" download="aicharts-artificial-analysis-intelligence-v4-3.json">Download current Intelligence v4.3 JSON</a>{" "}
+              · <a href="#atlas-aa-intelligence-4-3">Full v4.3 comparison rules and limitations</a>.
+              Keep these results separate from the frozen v4.1.1 snapshot below; its evaluation roster and weights differ.
+            </p>
+
+            <h2 id="artificial-analysis-intelligence">
+              Historical Intelligence v{intelligence.benchmark.version} · frozen snapshot
+            </h2>
+            <p>
+              This retained historical dataset pairs the owner-published{" "}
               {`${intelligence.benchmark.name} v${intelligence.benchmark.version} score`} with
               weighted output tokens and cost per Intelligence Index
-              task. It is neither a sixth role in the five-benchmark portfolio nor
-              a composite created by AI Charts. The checked snapshot retains{" "}
+              task. It is not the current homepage dataset. The frozen snapshot retains{" "}
               {intelligence.records.length} measured score-and-output records from{" "}
-              {intelligence.selection.sourceRecordCount} source records. Both
-              displayed panels use the same{" "}
+              {intelligence.selection.sourceRecordCount} source records. Its historical
+              matched-resource comparison uses the same{" "}
               {intelligence.selection.positiveCostRecordCount}-record cohort with
               positive comparable cost.
             </p>
@@ -395,25 +430,21 @@ export default function CodingAgentDatasetPage() {
               A source row with a complete cost breakdown but a reported zero total
               is stored as unavailable, never converted into a free-model value.
               Rows with incomplete cost are excluded. Complete zero-total rows remain
-              in the JSON but are omitted from both displayed panels so the token and
-              cost views use an identical cohort.
+              in the JSON but are omitted from the historical matched-resource cohort.
             </p>
             <p>
               The comparable cohort follows the checked rule:{" "}
-              {`${intelligence.selection.rule}.`} AI Charts derives each visible
-              Pareto frontier from that stored
-              cohort: a frontier point is not dominated by another record with an
+              {`${intelligence.selection.rule}.`} In a Pareto frontier for that stored
+              cohort, a frontier point is not dominated by another record with an
               equal-or-higher Intelligence score and equal-or-lower output-token or
               positive-cost value. Artificial Analysis publishes the measurements;
               the frontier classification is AI Charts analysis.
             </p>
             <p>
-              The refresh reads the public model-page payload and cross-checks the
-              page&apos;s public Dataset structured metadata every four hours. It
-              validates the exact v{intelligence.benchmark.version} boundary,
-              joined record identities, complete output-token components, and safe
-              cohort retention before replacing the checked snapshot. AI Charts
-              retrieved this snapshot on{" "}
+              This v{intelligence.benchmark.version} snapshot is frozen and is no longer
+              refreshed by automation. The current v{currentIntelligence.benchmark.version} dataset
+              above has a separate versioned source contract and download. AI Charts
+              retrieved this historical snapshot on{" "}
               <time dateTime={intelligence.source.retrievedAt}>
                 {formatRetrievedAt(intelligence.source.retrievedAt)}
               </time>.
@@ -430,7 +461,7 @@ export default function CodingAgentDatasetPage() {
               download="aicharts-artificial-analysis-intelligence.json"
               href="/data/artificial-analysis-intelligence.json"
             >
-              Download Intelligence efficiency JSON <span aria-hidden="true">↓</span>
+              Download historical v4.1.1 JSON <span aria-hidden="true">↓</span>
             </a>
 
             <h2 id="source">Artificial Analysis coding-agent source and refresh</h2>
@@ -565,9 +596,9 @@ export default function CodingAgentDatasetPage() {
                 source evaluation. They are not price or latency guarantees.
               </li>
               <li>
-                The Intelligence snapshot is checked every four hours and the
-                coding-agent snapshot daily; neither is a real-time mirror. Use
-                the relevant retrieval timestamp when citing a value.
+                The current v4.3 Intelligence snapshot is checked every four hours and the
+                coding-agent snapshot daily; neither is a real-time mirror. The historical
+                v4.1.1 snapshot is frozen. Use the relevant version and retrieval timestamp when citing a value.
               </li>
             </ul>
 
@@ -591,13 +622,17 @@ export default function CodingAgentDatasetPage() {
             <h2 id="dataset-links-title">Dataset links</h2>
             <ol>
               <li>
-                <a href="/data/artificial-analysis-intelligence.json">
-                  Download the Intelligence efficiency JSON snapshot
+                <a href="/data/artificial-analysis-intelligence-v4-3.json">
+                  Download the current Intelligence v4.3 JSON snapshot
                 </a>
                 <span>
                   Model-level Intelligence score, output-only tokens, comparable
                   cost, source method, version, and retrieval time.
                 </span>
+              </li>
+              <li>
+                <a href="/data/artificial-analysis-intelligence.json">Historical Intelligence v4.1.1 JSON</a>
+                <span>Frozen earlier cohort; not refreshed or comparable with the current index scale.</span>
               </li>
               <li>
                 <a href={intelligence.source.url}>
@@ -609,8 +644,8 @@ export default function CodingAgentDatasetPage() {
                 </span>
               </li>
               <li>
-                <a href="https://github.com/hraness/aicharts/blob/main/scripts/refresh-artificial-analysis-intelligence.ts">
-                  Intelligence refresh and normalization source code
+                <a href="https://github.com/hraness/aicharts/blob/main/scripts/refresh-artificial-analysis-intelligence-v4-3.ts">
+                  Current Intelligence refresh and normalization source code
                 </a>
                 <span>
                   The public parser, source cross-checks, normalization rules,

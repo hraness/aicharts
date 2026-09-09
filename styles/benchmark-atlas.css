@@ -4,6 +4,14 @@
 .atlas-intro p { max-width: 760px; color: var(--muted); font-size: 15px; line-height: 1.5; margin-top: 12px; }
 .atlas-intro__coverage { color: var(--muted); font-size: 12px; flex-shrink: 0; text-align: right; line-height: 1.7; }
 .atlas-intro__coverage strong { color: var(--foreground); font-weight: 600; }
+.pareto-intro { padding-block: 24px 22px; }
+.pareto-intro h1 { font-size: clamp(25px, 3vw, 36px); }
+.pareto-intro p { margin-top: 8px; max-width: 900px; }
+.atlas-home > .intelligence-efficiency { --chart-content-inset: 0px; scroll-margin-top: 72px; padding-block: 24px; }
+.benchmark-library-heading { display: flex; align-items: end; justify-content: space-between; gap: 16px; margin-top: 38px; padding-block: 24px; border-top: 1px solid var(--line); }
+.benchmark-library-heading h2 { font-size: clamp(24px, 3vw, 32px); font-weight: 550; letter-spacing: -.03em; }
+.benchmark-library-heading p { color: var(--muted); font-size: 13px; line-height: 1.5; margin-top: 8px; }
+.benchmark-library-heading strong { color: var(--foreground); font-weight: 550; }
 .benchmark-atlas { --atlas-accent: #246457; --atlas-tint: #e2eee7; --atlas-bar: #70a08d; scroll-margin-top: 72px; border-bottom: 1px solid var(--grid); }
 [data-theme="dark"] .benchmark-atlas { --atlas-accent: #9dc9b5; --atlas-tint: #24342e; --atlas-bar: #658a77; }
 .benchmark-atlas button, .benchmark-atlas input, .benchmark-atlas select { font: inherit; }
@@ -138,10 +146,6 @@
 .atlas-reading { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; padding-block: 34px; border-bottom: 1px solid var(--grid); }
 .atlas-reading h2 { font-weight: 550; font-size: 15px; margin-bottom: 8px; }
 .atlas-reading p { font-size: 13px; line-height: 1.6; color: var(--muted); }
-.atlas-advanced { border-bottom: 1px solid var(--grid); margin-block: 0 32px; }
-.atlas-advanced > summary { cursor: pointer; padding-block: 24px; font-size: 15px; font-weight: 550; }
-.atlas-advanced > summary span { display: inline-block; font-size: 12px; color: var(--muted); margin-left: 16px; font-weight: 400; }
-.atlas-advanced[open] > summary { border-bottom: 1px solid var(--grid); margin-bottom: 24px; }
 .atlas-footer-note { margin-top: 28px; font-size: 12px; color: var(--muted); display: flex; flex-wrap: wrap; gap: 12px 24px; }
 @media (max-width: 1100px) {
   .atlas-workspace { grid-template-columns: 200px minmax(0, 1fr); }
@@ -196,5 +200,6 @@
   .atlas-source-guide { padding: 20px; }
   .atlas-source-guide h3 { font-size: 21px; }
   .atlas-reading { grid-template-columns: 1fr; gap: 24px; padding-block: 28px; }
-  .atlas-advanced > summary span { display: block; margin: 8px 0 0; }
+  .benchmark-library-heading { display: block; margin-top: 24px; }
+  .pareto-intro { padding-block: 18px; }
 }

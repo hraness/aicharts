@@ -272,10 +272,18 @@ function datasetCandidates(value: unknown): unknown[] {
     : graph;
 }
 
-function validateDatasetDescription(dataset: SourceDataset): Result<void, Error> {
-  const expected = `${ARTIFICIAL_ANALYSIS_INTELLIGENCE_NAME} v${ARTIFICIAL_ANALYSIS_INTELLIGENCE_VERSION} incorporates ${ARTIFICIAL_ANALYSIS_INTELLIGENCE_EVALUATIONS.length} evaluations: ${ARTIFICIAL_ANALYSIS_INTELLIGENCE_EVALUATIONS.join(", ")}`;
+export type ArtificialAnalysisIntelligencePageContract = Readonly<{
+  version: string;
+  evaluations: readonly string[];
+}>;
+
+function validateDatasetDescription(
+  dataset: SourceDataset,
+  contract: ArtificialAnalysisIntelligencePageContract,
+): Result<void, Error> {
+  const expected = `${ARTIFICIAL_ANALYSIS_INTELLIGENCE_NAME} v${contract.version} incorporates ${contract.evaluations.length} evaluations: ${contract.evaluations.join(", ")}`;
   const canonicalDescription = dataset.description.replaceAll("𝜏", "τ");
-  return canonicalDescription.startsWith(expected)
+  return (canonicalDescription === expected || canonicalDescription.startsWith(`${expected} · `))
     ? ok(undefined)
     : err(new Error(
       `Artificial Analysis Intelligence dataset version or evaluation roster changed; expected description to begin ${JSON.stringify(expected)}.`,
@@ -284,6 +292,10 @@ function validateDatasetDescription(dataset: SourceDataset): Result<void, Error>
 
 export function extractArtificialAnalysisIntelligencePage(
   html: string,
+  contract: ArtificialAnalysisIntelligencePageContract = {
+    version: ARTIFICIAL_ANALYSIS_INTELLIGENCE_VERSION,
+    evaluations: ARTIFICIAL_ANALYSIS_INTELLIGENCE_EVALUATIONS,
+  },
 ): Result<ArtificialAnalysisIntelligencePageSource, Error> {
   const payloadResult = flightPayloads(html);
   if (!payloadResult.ok) return payloadResult;
@@ -331,7 +343,7 @@ export function extractArtificialAnalysisIntelligencePage(
     ));
   }
   const dataset = parsedDataset.value;
-  const validDescription = validateDatasetDescription(dataset);
+  const validDescription = validateDatasetDescription(dataset, contract);
   if (!validDescription.ok) return validDescription;
   if (!html.includes('href="/methodology/intelligence-benchmarking"')) {
     return err(new Error("Artificial Analysis page no longer links the expected Intelligence methodology."));
@@ -545,11 +557,9 @@ function normalizeModel(model: SourceModel): ArtificialAnalysisIntelligenceRecor
   };
 }
 
-export function deriveArtificialAnalysisIntelligenceSnapshot(
+export function deriveArtificialAnalysisIntelligenceRecords(
   payload: SourceModelsPayload,
-  page: ArtificialAnalysisIntelligencePageSource,
-  retrievedAt: string,
-): Result<ArtificialAnalysisIntelligenceSnapshot, Error> {
+): Result<ArtificialAnalysisIntelligenceRecord[], Error> {
   const selected = payload.models.filter(selectedSourceModel);
   const inconsistent = selected.find(model => !sourceSumsAreConsistent(model));
   if (inconsistent !== undefined) {
@@ -557,7 +567,17 @@ export function deriveArtificialAnalysisIntelligenceSnapshot(
       `Artificial Analysis model ${inconsistent.slug} has inconsistent token or cost component totals.`,
     ));
   }
-  const records = selected.map(normalizeModel).sort(compareArtificialAnalysisIntelligenceRecords);
+  return ok(selected.map(normalizeModel).sort(compareArtificialAnalysisIntelligenceRecords));
+}
+
+export function deriveArtificialAnalysisIntelligenceSnapshot(
+  payload: SourceModelsPayload,
+  page: ArtificialAnalysisIntelligencePageSource,
+  retrievedAt: string,
+): Result<ArtificialAnalysisIntelligenceSnapshot, Error> {
+  const derived = deriveArtificialAnalysisIntelligenceRecords(payload);
+  if (!derived.ok) return derived;
+  const records = derived.value;
   const candidate: ArtificialAnalysisIntelligenceSnapshot = {
     benchmark: {
       categoryWeightsPercent: {
