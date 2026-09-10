@@ -24,6 +24,7 @@ export default function Home() {
         <p>{homeLede}</p>
       </header>
       <ChartNavigation current="/" />
+      <HomeIntelligenceEfficiency snapshot={parsed.value} />
       <section aria-labelledby="home-calculator-title" className="home-calculator" data-analytics-surface="home_calculator">
         <div className="home-calculator__copy">
           <h2 id="home-calculator-title">Subscription vs API vs GPUs</h2>
@@ -31,7 +32,6 @@ export default function Home() {
         </div>
         <Link className="home-calculator__cta" href="/calculator">Open the calculator <span aria-hidden="true">↗</span></Link>
       </section>
-      <HomeIntelligenceEfficiency snapshot={parsed.value} />
       <section className="task-discovery" aria-labelledby="task-discovery-title">
         <header><h2 id="task-discovery-title">What do you want to do?</h2><Link href="/benchmarks">All benchmarks <span aria-hidden="true">↗</span></Link></header>
         <div className="task-discovery__links">

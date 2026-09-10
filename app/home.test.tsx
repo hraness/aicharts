@@ -97,10 +97,11 @@ describe("homepage canonical content", () => {
     const mainEndAt = markup.indexOf("</main>", mainAt);
 
     expect(mainAt).toBeGreaterThan(markup.indexOf("site-header"));
-    // The calculator callout sits above the fold without displacing the chart.
-    expect(calculatorAt).toBeGreaterThan(mainAt);
-    expect(intelligenceAt).toBeGreaterThan(calculatorAt);
-    expect(discoveryAt).toBeGreaterThan(intelligenceAt);
+    // The Pareto chart leads (the browser contract holds its fold position);
+    // the calculator callout follows it, ahead of the task links.
+    expect(intelligenceAt).toBeGreaterThan(mainAt);
+    expect(calculatorAt).toBeGreaterThan(intelligenceAt);
+    expect(discoveryAt).toBeGreaterThan(calculatorAt);
     expect(mainEndAt).toBeGreaterThan(discoveryAt);
     expect(markup).toContain('data-analytics-surface="home_calculator"');
     expect(markup).toContain("Subscription vs API vs GPUs");
