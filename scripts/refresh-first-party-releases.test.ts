@@ -1246,7 +1246,7 @@ describe("first-party release source adapters", () => {
     });
     expect(indexObservation.candidates).toContainEqual({
       candidateDateMeaning: "first-observed",
-      canonicalUrl: "https://cognition.com/blog#swe-2",
+      canonicalUrl: "https://cognition.com/blog/swe-2",
       namedModels: ["SWE-2"],
       sourceModifiedAt: null,
     });
@@ -1259,10 +1259,23 @@ describe("first-party release source adapters", () => {
     expect(first.candidates.find(candidate => candidate.namedModels.includes("SWE-2")))
       .toMatchObject({
         candidateDateMeaning: "first-observed",
+        canonicalUrl: "https://cognition.com/blog/swe-2",
         firstSeenAt: observedAt,
         sourceId: "cognition-blog-index",
         status: "needs-review",
       });
+    expect(first.candidates.find(candidate => (
+      candidate.canonicalUrl === "https://cognition.com/blog/swe-1-7"
+    ))).toMatchObject({
+      candidateDateMeaning: "provider-sitemap-lastmod",
+      sourceId: "cognition-sitemap",
+    });
+    expect(first.candidates.filter(candidate => candidate.providerId === "cognition"))
+      .toHaveLength(5);
+    expect(first.sources.find(source => source.id === "cognition-sitemap")?.health.shape.candidateCount)
+      .toBe(4);
+    expect(first.sources.find(source => source.id === "cognition-blog-index")?.health.shape.candidateCount)
+      .toBe(1);
 
     const caughtUp = observeFirstPartyReleaseSource(
       cognitionSitemap,
@@ -1280,13 +1293,72 @@ describe("first-party release source adapters", () => {
       first,
       "2026-09-10T18:00:00.000Z",
     );
-    expect(second.candidates.find(candidate => (
+    const laterSwe2 = second.candidates.filter(candidate => (
       candidate.canonicalUrl === "https://cognition.com/blog/swe-2"
-    ))).toMatchObject({ sourceId: "cognition-sitemap", status: "needs-review" });
-    expect(second.candidates.find(candidate => (
-      candidate.canonicalUrl === "https://cognition.com/blog#swe-2"
-    ))).toMatchObject({ firstSeenAt: observedAt, sourceId: "cognition-blog-index" });
+    ));
+    expect(laterSwe2).toHaveLength(1);
+    expect(laterSwe2[0]).toMatchObject({
+      candidateDateMeaning: "first-observed",
+      firstSeenAt: observedAt,
+      sourceId: "cognition-blog-index",
+      sourcePresence: "present",
+      status: "needs-review",
+    });
+    expect(second.sources.find(source => source.id === "cognition-sitemap")?.health.shape.candidateCount)
+      .toBe(4);
     expect(validateFirstPartyReleaseReplacement(first, second).ok).toBeTrue();
+  });
+
+  test("retires legacy Cognition blog-index fragment candidates as missing without deleting them", () => {
+    const sitemapObservation = observation(cognitionSitemap, fixtureFor(cognitionSitemap).text);
+    const indexObservation = observation(
+      cognitionBlogIndex,
+      cognitionBlogIndexHtml(),
+      "text/html; charset=utf-8",
+    );
+    const first = deriveFirstPartyReleaseRadar(
+      [sitemapObservation, indexObservation],
+      emptyFirstPartyReleaseRadar(),
+      observedAt,
+    );
+    const prior: FirstPartyReleaseRadar = {
+      ...first,
+      candidates: [
+        ...first.candidates,
+        {
+          candidateDate: observedAt.slice(0, 10),
+          candidateDateMeaning: "first-observed",
+          canonicalUrl: "https://cognition.com/blog#swe-1-7",
+          firstSeenAt: observedAt,
+          id: "cognition:/blog#swe-1-7",
+          lastChangedAt: observedAt,
+          namedModels: ["SWE-1.7"],
+          providerId: "cognition",
+          providerName: "Cognition",
+          sourceId: "cognition-blog-index",
+          sourceModifiedAt: observedAt,
+          sourcePresence: "present",
+          status: "needs-review",
+        },
+      ],
+    };
+    const next = deriveFirstPartyReleaseRadar(
+      [sitemapObservation, indexObservation],
+      prior,
+      "2026-09-10T18:00:00.000Z",
+    );
+    expect(next.candidates.find(candidate => (
+      candidate.canonicalUrl === "https://cognition.com/blog#swe-1-7"
+    ))).toMatchObject({
+      firstSeenAt: observedAt,
+      lastChangedAt: "2026-09-10T18:00:00.000Z",
+      sourcePresence: "missing",
+      status: "needs-review",
+    });
+    expect(next.candidates.find(candidate => (
+      candidate.canonicalUrl === "https://cognition.com/blog/swe-1-7"
+    ))).toMatchObject({ sourceId: "cognition-sitemap", sourcePresence: "present" });
+    expect(validateFirstPartyReleaseReplacement(prior, next).ok).toBeTrue();
   });
 
   test("fails closed when Cognition's blog index stops being a link-rich HTML document", () => {
