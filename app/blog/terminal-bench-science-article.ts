@@ -111,6 +111,7 @@ export function createTerminalBenchScienceArticle(
   const terminalLeader = requireLeader(leaders, "terminalBench");
   const updatedAt = latestCalendarDate(
     TERMINAL_BENCH_SCIENCE_ARTICLE_PUBLISHED_AT,
+    "2026-09-10",
     utcCalendarDate(snapshot.source.retrievedAt),
     utcCalendarDate(codingAgentDatasetModifiedAt(snapshot)),
   );
@@ -120,7 +121,7 @@ export function createTerminalBenchScienceArticle(
     slug: TERMINAL_BENCH_SCIENCE_ARTICLE_SLUG,
     title: "What Terminal-Bench-Science’s 30% result measures",
     dek:
-      "Terminal-Bench-Science accepted 70 of 920 proposed research workflows. Its leading configuration resolved 30%; the published cost and token frontiers show why that score is only one part of the result.",
+      "Scientists accepted 70 of 920 proposed workflows. The leading configuration resolved 30 percent; cost and token frontiers show why that rate is incomplete.",
     focusPhrase: "Terminal-Bench-Science",
     seoDescription:
       "See what Terminal-Bench-Science 0.1’s 30% result covers, how 70 tasks were selected, and how cost and token use change the model comparison.",
@@ -184,7 +185,7 @@ export function createTerminalBenchScienceArticle(
       paragraph(
         `“${TERMINAL_BENCH_SCIENCE.quotes.strongestResolvesThirty}” The suite is calibrated to sit `,
         TERMINAL_BENCH_SCIENCE.reported.hardnessGap,
-        " below Terminal-Bench 3.0 for every model evaluated on both. Because reviewers excluded workflows that frontier systems already solved easily, 30% describes performance on a deliberately difficult accepted set. It should not be read as a success rate for arbitrary laboratory work or as evidence that one model can replace a scientist.",
+        " below Terminal-Bench 3.0 for every model evaluated on both. Because reviewers excluded workflows that frontier systems already solved at high rates, 30% describes performance on a deliberately difficult accepted set. It should not be read as a success rate for arbitrary laboratory work or as evidence that one model can replace a scientist.",
       ),
       heading("Cost and tokens change the comparison"),
       paragraph(
@@ -232,7 +233,7 @@ export function createTerminalBenchScienceArticle(
         "How to use the result",
         "Use resolution to compare completion on this accepted task set. Use the published cost and token frontiers to find configurations that improve one of those resources without giving up more resolution than your work can tolerate.",
       ),
-      heading("How it relates to AI Charts"),
+      heading("How this score differs from the coding-agent chart"),
       paragraph(
         "The ",
         { href: "/", text: "AI Charts homepage" },

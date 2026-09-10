@@ -107,6 +107,7 @@ export function createCodingAgentScoreHoldoutsArticle(
   const sweAtlasLeader = requireLeader(leaders, "sweAtlas");
   const updatedAt = latestCalendarDate(
     HOLDOUT_ARTICLE_PUBLISHED_AT,
+    "2026-09-10",
     utcCalendarDate(snapshot.source.retrievedAt),
     utcCalendarDate(codingAgentDatasetModifiedAt(snapshot)),
   );
@@ -116,7 +117,7 @@ export function createCodingAgentScoreHoldoutsArticle(
     slug: HOLDOUT_ARTICLE_SLUG,
     title: "Why a coding-agent high score still needs a holdout",
     dek:
-      "Dan Luu’s FRE experiment shows a public-suite win can fail a holdout. The current coding-agent snapshot still needs those hidden cases beside each high score.",
+      "Dan Luu’s FRE loop won a public regex suite and then failed a holdout. A high coding-agent score still needs cases the optimizer could not see.",
     focusPhrase: "coding agent holdout benchmark",
     seoDescription:
       "Dan Luu’s FRE experiment shows a public-suite win can fail a holdout. The current snapshot still needs hidden tests beside each high coding-agent score.",

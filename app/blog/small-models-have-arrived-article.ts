@@ -12,7 +12,7 @@ import {
 
 export const SMALL_MODELS_ARTICLE_SLUG = "small-models-have-arrived" as const;
 export const SMALL_MODELS_ARTICLE_PUBLISHED_AT = "2026-08-28" as const;
-export const SMALL_MODELS_ARTICLE_UPDATED_AT = "2026-08-31" as const;
+export const SMALL_MODELS_ARTICLE_UPDATED_AT = "2026-09-10" as const;
 
 export const FRENCH_OWEN_SMALL_MODELS = {
   publishedOn: "August 26, 2026",
@@ -40,12 +40,12 @@ export function createSmallModelsHaveArrivedArticle(): BlogArticle {
   return {
     authorshipDisclosure: BLOG_AUTHORSHIP_DISCLOSURE,
     slug: SMALL_MODELS_ARTICLE_SLUG,
-    title: "Cheaper AI models can make everyday products viable",
+    title: "GPT-5.6 Luna made one daily news page cost about $0.10",
     dek:
-      "Lower inference costs can turn a promising demo into a sustainable feature. The practical goal is to use the cheapest model that meets the task’s quality bar.",
+      "French-Owen reports about $0.10 per run versus about $1 with earlier Sonnet-class models, from one person’s experiment.",
     focusPhrase: "small AI models",
     seoDescription:
-      "Small AI models can cut inference costs enough to support frequent-use products. Learn how to compare quality, speed, and total cost for your task.",
+      "French-Owen reports GPT-5.6 Luna built a daily news page for about $0.10. See how to test whether a cheaper model meets a written quality bar.",
     keywords: [
       "small AI models",
       "cheap AI models",
@@ -65,7 +65,7 @@ export function createSmallModelsHaveArrivedArticle(): BlogArticle {
     relatedSlugs: ["aa-index-cost-coding-agents"],
     body: [
       paragraph(
-        "A lower-cost AI model can change a product as soon as it meets the quality bar for a repeated task at a sustainable price. Inference is the work of running a trained model to produce an answer, and every use adds to a product’s inference bill. In an ",
+        "A lower-cost model changes a product only when it meets a written quality bar for a repeated task at a price the product can carry. Inference is the work of running a trained model to produce an answer, and every use adds to that bill. In an ",
         { href: BLOG_SOURCES.calvinFrenchOwenSmallModels.url, text: `essay published ${FRENCH_OWEN_SMALL_MODELS.publishedOn}` },
         `, software founder Calvin French-Owen reports that GPT-5.6 Luna built his personalized daily news page for about ${FRENCH_OWEN_SMALL_MODELS.reported.newsEvalLuna} per run. Earlier, more expensive models that he describes as Sonnet class cost him roughly ${FRENCH_OWEN_SMALL_MODELS.reported.newsEvalSonnet} for the same prompt. At one run a day, that difference is about $3 versus $30 over 30 days, before the rest of the product’s costs.`,
       ),
@@ -106,7 +106,7 @@ export function createSmallModelsHaveArrivedArticle(): BlogArticle {
       ),
       heading("Why a tenfold cost drop matters"),
       paragraph(
-        "A product pays the model cost every time a person uses an AI feature. Frequent use multiplies a small per-run difference quickly. French-Owen’s daily-news example makes that multiplication easy to see:",
+        "A product pays the model cost every time a person uses an AI feature. Frequent use multiplies a small per-run difference. French-Owen’s daily-news figures show the scale:",
       ),
       table(
         "Illustrative model cost for one run a day over 30 days",
@@ -180,12 +180,12 @@ export function createSmallModelsHaveArrivedArticle(): BlogArticle {
       paragraph(
         "Run this evaluation again after a model, prompt, tool, or the kinds of inputs people send have changed. The best choice can move as prices and capabilities change. A dated result is evidence for that configuration and workload, not a permanent rank for the model.",
       ),
-      heading("What has actually arrived"),
+      heading("What the sources establish"),
       paragraph(
-        "French-Owen’s experiment supports a narrow and useful conclusion: GPT-5.6 Luna produced results he considered acceptable for several substantial, repeated tasks at prices that changed how he thought about products. OpenAI’s pricing and description confirm that Luna is intended for cost-sensitive, high-volume work. Neither source establishes equal quality across models or guarantees that a particular consumer product will succeed.",
+        "French-Owen’s experiment supports a narrow conclusion: GPT-5.6 Luna produced results he considered acceptable for several substantial, repeated tasks at prices that changed how he thought about products. OpenAI’s pricing and description confirm that Luna is intended for cost-sensitive, high-volume work. Neither source establishes equal quality across models or guarantees that a particular consumer product will succeed.",
       ),
       paragraph(
-        "The practical shift is a larger range of viable choices. Teams can reserve expensive models for work that benefits from their capability and use cheaper models where speed, repetition, and cost matter more. The opportunity begins only when a lower-cost model passes the product’s own test.",
+        "The usable change is a wider set of priced options. Reserve an expensive model for work that needs its capability. Use a cheaper model where speed, repetition, and cost matter more, and only after it passes the product’s own test.",
       ),
       paragraph(
         "A later note asks a different cost question. ",

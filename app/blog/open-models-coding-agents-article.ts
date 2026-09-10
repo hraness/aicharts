@@ -151,6 +151,7 @@ export function createOpenModelsCodingAgentsArticle(
 
   const updatedAt = latestCalendarDate(
     OPEN_MODELS_ARTICLE_PUBLISHED_AT,
+    "2026-09-10",
     utcCalendarDate(snapshot.source.retrievedAt),
     utcCalendarDate(codingAgentDatasetModifiedAt(snapshot)),
   );
@@ -160,12 +161,12 @@ export function createOpenModelsCodingAgentsArticle(
   return {
     authorshipDisclosure: BLOG_AUTHORSHIP_DISCLOSURE,
     slug: OPEN_MODELS_ARTICLE_SLUG,
-    title: "Are open models catching up on coding-agent benchmarks?",
+    title: "Open models closed SemiAnalysis composites, not this table",
     dek:
-      "SemiAnalysis reports a shrinking open-versus-closed gap on era-specific composites. The current coding-agent snapshot answers a narrower question: named model, harness, setting, and cost.",
+      "SemiAnalysis’s faster catch-up describes era composites. Closed configurations still lead AA Index in this coding-agent snapshot.",
     focusPhrase: "open models coding agent benchmarks",
     seoDescription:
-      "SemiAnalysis reports faster open-model catch-up on era composites. This coding-agent snapshot shows a different gap once harness, AA Index, and cost are named.",
+      "SemiAnalysis reports faster open-model catch-up on era composites. Closed configurations still lead AA Index in this coding-agent snapshot.",
     keywords: [
       "open models",
       "coding agent benchmark",

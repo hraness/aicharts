@@ -196,6 +196,7 @@
   margin-bottom: 0.75rem;
   overflow: hidden;
   background: var(--plain-surface);
+  border: 1px solid var(--plain-line);
 }
 
 .plain-site.plain-publication .plain-publication__entry-image img {
@@ -365,6 +366,7 @@
   width: 100%;
   height: auto;
   background: var(--plain-surface);
+  border: 1px solid var(--plain-line);
 }
 
 .plain-site.plain-publication .plain-publication__editorial-figure figcaption {
