@@ -19,6 +19,8 @@ Before opening a pull request, run:
 bun run check
 ```
 
+The complete gate requires the Rust toolchain and components pinned in `rust-toolchain.toml`. With rustup installed, `rustup show active-toolchain` installs the pinned toolchain on first use. The usage crates are local-only; tests must use synthetic fixtures and must never read a contributor's sessions or credentials.
+
 ## Data changes
 
 Do not hand-edit `data/coding-agents.json`. Run `bun run data:refresh`, inspect the diff, and include only a snapshot change supported by the guarded refresh script. Do not weaken retention or coverage checks merely to accept an unexpected upstream shape.
