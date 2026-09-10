@@ -124,7 +124,7 @@ export function createSmallModelsHaveArrivedArticle(): BlogArticle {
       ),
       heading("Start with the cheapest model that meets the requirement"),
       paragraph(
-        "French-Owen says he still chooses the most capable and expensive models for difficult coding work. That preference does not conflict with his enthusiasm for Luna. The two model tiers serve different jobs. A frontier model, meaning the highest-capability tier available at the time, can be worth its higher price when the task is unusually difficult or a mistake is expensive. A lower-cost model can be the better choice for work that is frequent, well specified, and easy to check.",
+        "French-Owen says he still chooses the most capable and expensive models for difficult coding work. That preference does not conflict with his enthusiasm for Luna. The two model tiers serve different jobs. A frontier model, meaning the highest-capability tier available at the time, can be worth its higher price when the task is unusually difficult or a mistake is expensive. A lower-cost model can be the better choice for work that is frequent, well specified, and checkable against a written rule.",
       ),
       paragraph(
         "The useful decision rule is to choose the least expensive model that reliably clears the requirement for a specific task. A tool that sorts support requests, a personalized digest, and a large code migration have different success criteria. Testing them as one category hides the trade-off that matters.",

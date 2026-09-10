@@ -279,7 +279,7 @@ const mirrorCodeArticle = {
       "MirrorCode provides evidence that leading coding agents can sustain autonomous work across complete software projects. The strongest systems can finish a meaningful share of difficult reimplementation tasks under large budgets. Near-solves such as gotree show that strict completion can understate the amount of working functionality produced.",
     ),
     paragraph(
-      "The benchmark does not establish that an agent can maintain an evolving production system, collaborate with a team, resolve ambiguous product requirements, or leave code that remains easy to change. Its question is narrower: can the agent reproduce a complete program's externally tested behavior?",
+      "The benchmark does not establish that an agent can maintain an evolving production system, collaborate with a team, resolve ambiguous product requirements, or leave code that remains maintainable. Its question is narrower: can the agent reproduce a complete program's externally tested behavior?",
     ),
     paragraph(
       "Read MirrorCode as a measure of project-scale completion. It does not answer whether the same agent can maintain an evolving production codebase.",
