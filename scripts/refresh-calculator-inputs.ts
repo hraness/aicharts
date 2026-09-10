@@ -74,21 +74,28 @@ async function postJson(
   return err(new Error(`Could not query ${sourceName} after 3 attempts.`, { cause: lastError }));
 }
 
+const htmlEntityReplacements: Readonly<Record<string, string>> = {
+  "&#x27;": "'",
+  "&amp;": "&",
+  "&gt;": ">",
+  "&lt;": "<",
+  "&nbsp;": " ",
+  "&quot;": '"',
+};
+
 function decodeHtmlEntities(html: string): string {
-  return html
-    .replaceAll("&quot;", '"')
-    .replaceAll("&#x27;", "'")
-    .replaceAll("&amp;", "&")
-    .replaceAll("&lt;", "<")
-    .replaceAll("&gt;", ">")
-    .replaceAll("&nbsp;", " ");
+  // One pass with a callback so a literal `&amp;lt;` cannot double-unescape.
+  return html.replaceAll(
+    /&(?:#x27|amp|gt|lt|nbsp|quot);/gu,
+    entity => htmlEntityReplacements[entity] ?? entity,
+  );
 }
 
 function stripHtmlTags(html: string): string {
   return decodeHtmlEntities(
     html
-      .replaceAll(/<script[\s\S]*?<\/script>/gu, " ")
-      .replaceAll(/<style[\s\S]*?<\/style>/gu, " ")
+      .replaceAll(/<script[\s\S]*?<\/script>/giu, " ")
+      .replaceAll(/<style[\s\S]*?<\/style>/giu, " ")
       .replaceAll(/<[^>]+>/gu, "\n"),
   );
 }
