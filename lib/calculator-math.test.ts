@@ -99,6 +99,7 @@ describe("calculator math golden case (N=1, 40x, 100% utilization, 50% cache, 4:
     expect(unitsRequired(443.63, 45)).toBe(10);
     expect(unitsRequired(105.63, 45)).toBe(3);
     expect(unitsRequired(0, 45)).toBe(1);
+    expect(unitsRequired(99_999.99999999983, 999.9999999999982)).toBe(100);
   });
 
   test("depreciates ten street-price RTX 5090s to about 2,225 dollars a month with power", () => {
