@@ -21,6 +21,10 @@ Hardware purchase prices, throughput profiles, the plan price, the OpenAI list-f
 
 The subsidy anchor records the SemiAnalysis June 2026 stress-test method, its published ceilings (ChatGPT Pro 20x about $14,000, Claude Max 20x about $8,000), and a `lastVerifiedOn` date. When re-verifying, search for a newer public re-run of the stress test and update `reverificationNote` with what was found.
 
+## Share links and the live favicon
+
+Knob state is encoded in the query string by `lib/calculator-share.ts`. Only knobs that differ from `DEFAULT_CALCULATOR_KNOBS` are written, so `/calculator` stays canonical and a shared link carries exactly the changed assumptions: `seats`, `subsidy`, `util`, `cache`, `mix`, `ultra`, `amortize`, `sol`, `deepseek`, `duty`, and `profile`. Parsing is fail-soft per knob: malformed or out-of-range numbers clamp to the knob bounds, unknown enum values and profile ids fall back to defaults, and unrelated parameters are preserved. The explorer writes the URL with `replaceState` after a short debounce so knob drags never hit Safari's history rate limit. `lib/calculator-favicon.ts` renders the headline API-equivalent monthly figure (for example `$14k`) into an SVG data URI and swaps it into the page's icon link while the calculator is mounted, so the tab shows the current scenario.
+
 ## Validation
 
-`bun run calculator:check` validates the committed snapshot offline and is part of `check:generated`. Narrow tests: `bun test lib/calculator-inputs-data.test.ts lib/calculator-math.test.ts lib/calculator-math.property.test.ts scripts/refresh-calculator-inputs.test.ts`.
+`bun run calculator:check` validates the committed snapshot offline and is part of `check:generated`. Narrow tests: `bun test lib/calculator-inputs-data.test.ts lib/calculator-math.test.ts lib/calculator-math.property.test.ts lib/calculator-share.test.ts lib/calculator-favicon.test.ts scripts/refresh-calculator-inputs.test.ts`.

@@ -1,7 +1,7 @@
 "use client";
 
 import { Knob, NativeSelectField, type NativeSelectOption } from "@hraness/ui";
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 
 import type { CalculatorInputsSnapshot } from "@/lib/calculator-inputs-data";
 import {
@@ -14,6 +14,8 @@ import {
   type DutyCycle,
   type SolRateBasis,
 } from "@/lib/calculator-math";
+import { calculatorFaviconHref } from "@/lib/calculator-favicon";
+import { calculatorKnobsEqual, calculatorKnobsFromSearch, calculatorKnobsSearch } from "@/lib/calculator-share";
 import { openAiEffortColors, providerColor } from "@/lib/chart-colors";
 import { captureAnalyticsEvent, type CalculatorAnalyticsControl } from "@/lib/analytics";
 import { SegmentedControl } from "@/components/ui";
@@ -154,6 +156,47 @@ export function CalculatorExplorer({
 }: Readonly<{ snapshot: CalculatorInputsSnapshot }>) {
   const [knobs, setKnobs] = useState<CalculatorKnobs>(DEFAULT_CALCULATOR_KNOBS);
   const scenario = useMemo(() => computeCalculatorScenario(snapshot, knobs), [knobs, snapshot]);
+  const profileIds = useMemo(() => snapshot.hardware.profiles.map(profile => profile.id), [snapshot]);
+
+  // The URL is the shareable state: read it on load and on history navigation.
+  useEffect(() => {
+    const readUrl = () => {
+      const next = calculatorKnobsFromSearch(window.location.search, profileIds);
+      setKnobs(current => (calculatorKnobsEqual(current, next) ? current : next));
+    };
+    readUrl();
+    window.addEventListener("popstate", readUrl);
+    return () => window.removeEventListener("popstate", readUrl);
+  }, [profileIds]);
+
+  // Write knobs back after a short pause so knob drags do not spam history
+  // (Safari rate-limits replaceState), and only when the query actually changes.
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      const search = calculatorKnobsSearch(knobs, window.location.search);
+      const nextUrl = `${window.location.pathname}${search === "" ? "" : `?${search}`}${window.location.hash}`;
+      const currentUrl = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+      if (nextUrl !== currentUrl) window.history.replaceState(window.history.state, "", nextUrl);
+    }, 250);
+    return () => window.clearTimeout(timer);
+  }, [knobs]);
+
+  // The tab icon shows the headline monthly figure for the current scenario.
+  useEffect(() => {
+    const links = [...document.querySelectorAll<HTMLLinkElement>("link[rel~=\"icon\"]")];
+    if (links.length === 0) return;
+    const originals = links.map(link => [link, link.href, link.type] as const);
+    for (const link of links) {
+      link.href = calculatorFaviconHref(scenario.spendUsd);
+      link.type = "image/svg+xml";
+    }
+    return () => {
+      for (const [link, href, type] of originals) {
+        link.href = href;
+        link.type = type;
+      }
+    };
+  }, [scenario.spendUsd]);
 
   const setKnob = (partial: Partial<CalculatorKnobs>) => {
     setKnobs(current => ({ ...current, ...partial }));
