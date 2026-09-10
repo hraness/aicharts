@@ -9,6 +9,7 @@ import {
   computeCalculatorScenario,
   DEFAULT_CALCULATOR_KNOBS,
   POWER_USER_HOURS_PER_WEEK,
+  usefulLifeCheckpointMonths,
   type CalculatorKnobs,
   type DeepSeekWindow,
   type DutyCycle,
@@ -223,7 +224,10 @@ export function CalculatorExplorer({
   const stickerColor = openAiEffortColors.none;
   const cachedInputColor = openAiEffortColors.max;
   const outputColor = openAiEffortColors.medium;
-  const powerColor = `color-mix(in oklab, ${nvidiaColor} 45%, var(--secondary))`;
+  // Depreciation keeps the solid NVIDIA green; electricity is a neutral diagonal
+  // hatch so the two ownership segments stay distinct in both themes.
+  const powerBase = "color-mix(in oklab, var(--foreground) 58%, var(--background))";
+  const powerFill = `repeating-linear-gradient(135deg, ${powerBase} 0 4px, color-mix(in oklab, var(--foreground) 16%, var(--background)) 4px 8px)`;
   const rentalColor = `color-mix(in oklab, ${nvidiaColor} 60%, var(--foreground) 12%)`;
 
   const solBasisLabel = knobs.solRateBasis === "current"
@@ -286,7 +290,7 @@ export function CalculatorExplorer({
       label: "Home hardware",
       segments: [
         { color: nvidiaColor, id: "depreciation", label: "Depreciation", valueUsd: scenario.home.depreciationMonthlyUsd },
-        { color: powerColor, id: "power", label: "Electricity", valueUsd: scenario.home.electricityMonthlyUsd },
+        { color: powerFill, id: "power", label: "Electricity", valueUsd: scenario.home.electricityMonthlyUsd },
       ],
     },
     {
@@ -305,7 +309,7 @@ export function CalculatorExplorer({
       label: `Buy ${scenario.home.gpuCount}x ${homeGpuName}`,
       segments: [
         { color: nvidiaColor, id: "depreciation", label: "Depreciation", valueUsd: scenario.home.depreciationMonthlyUsd },
-        { color: powerColor, id: "power", label: "Electricity", valueUsd: scenario.home.electricityMonthlyUsd },
+        { color: powerFill, id: "power", label: "Electricity", valueUsd: scenario.home.electricityMonthlyUsd },
       ],
     },
     {
@@ -315,6 +319,30 @@ export function CalculatorExplorer({
       segments: [{ color: rentalColor, id: "rental", label: "Rental", valueUsd: scenario.rental.monthlyUsd }],
     },
   ];
+
+  // Ownership cost accrues linearly, so quarter marks of the useful life show
+  // the depreciation and electricity stacks growing toward the full-life total.
+  const accrualRows: readonly CostBarRow[] = usefulLifeCheckpointMonths(knobs.amortizationMonths)
+    .map(month => ({
+      annotation: month === knobs.amortizationMonths ? homeUpfrontAnnotation : undefined,
+      detail: `${formatUsd(scenario.rental.monthlyUsd * month)} rented over the same months`,
+      id: `month-${month}`,
+      label: `Month ${month}`,
+      segments: [
+        {
+          color: nvidiaColor,
+          id: "depreciation",
+          label: "Depreciation",
+          valueUsd: scenario.home.depreciationMonthlyUsd * month,
+        },
+        {
+          color: powerFill,
+          id: "power",
+          label: "Electricity",
+          valueUsd: scenario.home.electricityMonthlyUsd * month,
+        },
+      ],
+    }));
 
   const solDetailRows: readonly CostBarRow[] = [
     {
@@ -515,11 +543,23 @@ export function CalculatorExplorer({
         <CostBarChart aria-label="Home hardware versus rental cost" rows={structureRows} />
         <p className="calculator-legend">
           <Swatch color={nvidiaColor} /> Depreciation
-          <Swatch color={powerColor} /> Electricity
+          <Swatch color={powerFill} /> Electricity
           <Swatch color={rentalColor} /> Rental
         </p>
         <p className="calculator-chart__note">
           {`Owning depreciates the ${formatUsd(scenario.home.upfrontUsd)} purchase straight-line over ${knobs.amortizationMonths} months to a ${knobs.residualValuePercent}% resale value, plus grid electricity at ${formatCents(scenario.home.electricityCentsPerKwh)}/kWh. Set the electricity knob to the energy rate on your utility bill or a public tariff sheet; the presets span cheap hydro to island rates.`}
+        </p>
+      </section>
+
+      <section aria-labelledby="calculator-accrual-heading" className="calculator-chart">
+        <h2 id="calculator-accrual-heading">Ownership cost over the useful life</h2>
+        <p className="calculator-chart__context">
+          {`Cumulative cost of owning at each quarter of the ${knobs.amortizationMonths}-month useful life. Owning accrues ${formatUsd(scenario.home.totalMonthlyUsd * knobs.amortizationMonths)} by the end; renting the same throughput accrues ${formatUsd(scenario.rental.monthlyUsd * knobs.amortizationMonths)}.`}
+        </p>
+        <CostBarChart aria-label="Cumulative ownership cost over the useful life" rows={accrualRows} />
+        <p className="calculator-legend">
+          <Swatch color={nvidiaColor} /> Depreciation
+          <Swatch color={powerFill} /> Electricity
         </p>
       </section>
 

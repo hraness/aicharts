@@ -44,13 +44,23 @@ describe("calculator share codec", () => {
   test("only changed knobs are written, with short stable keys", () => {
     const search = calculatorKnobsSearch({
       ...DEFAULT_CALCULATOR_KNOBS,
-      dutyCycle: "continuous",
+      dutyCycle: "powerUser",
       hardwareProfileId: "dgx-spark-moe",
       seats: 5,
       solRateBasis: "list",
       subsidyMultiple: 70,
     });
-    expect(search).toBe("seats=5&subsidy=70&sol=list&duty=continuous&profile=dgx-spark-moe");
+    expect(search).toBe("seats=5&subsidy=70&sol=list&duty=powerUser&profile=dgx-spark-moe");
+  });
+
+  test("the blended DeepSeek window and 24/7 duty cycle are the unwritten defaults", () => {
+    expect(calculatorKnobsSearch({
+      ...DEFAULT_CALCULATOR_KNOBS,
+      deepSeekWindow: "blended",
+      dutyCycle: "continuous",
+    })).toBe("");
+    expect(calculatorKnobsFromSearch("", profileIds).deepSeekWindow).toBe("blended");
+    expect(calculatorKnobsFromSearch("", profileIds).dutyCycle).toBe("continuous");
   });
 
   test("unrelated parameters survive and stale knob keys are replaced", () => {
