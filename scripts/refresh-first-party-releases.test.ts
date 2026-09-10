@@ -52,6 +52,8 @@ const deepseekApi = sourceDefinition("deepseek-api-sitemap");
 const ibm = sourceDefinition("ibm-granite-sitemap");
 const stepfun = sourceDefinition("stepfun-model-sitemap");
 const stepfunChina = sourceDefinition("stepfun-china-model-sitemap");
+const cognitionSitemap = sourceDefinition("cognition-sitemap");
+const cognitionBlogIndex = sourceDefinition("cognition-blog-index");
 
 function sitemap(entries: readonly Readonly<{ lastmod?: string; url: string }>[]): string {
   return [
@@ -314,6 +316,27 @@ function metaNewsroomMarkdown(): string {
   ].join("\n");
 }
 
+function cognitionBlogIndexHtml(): string {
+  const definition = sourceDefinition("cognition-blog-index");
+  const posts = [
+    "swe-1-7", "swe-1-6-preview", "swe-1-6", "swe-1-5",
+    "swe-bench-technical-report", "swe-check-10x-faster", "swe-grep",
+    "devin-2", "factoring-rsa-260", "series-e",
+  ];
+  const fillerPosts = Array.from({
+    length: definition.minimumEntryCount - posts.length - 1,
+  }, (_, index) => `product-update-${index}`);
+  return [
+    "<!DOCTYPE html><html><body><main>",
+    '<a class="hero" href="https://cognition.com/blog/swe-2"><h2>Introducing SWE-2</h2></a>',
+    "<ul>",
+    ...["swe-2", ...posts, ...fillerPosts].map(slug => (
+      `<li><a class="group" href="/blog/${slug}"><h2>Post ${slug}</h2></a></li>`
+    )),
+    "</ul></main></body></html>",
+  ].join("\n");
+}
+
 type SourceFixture = Readonly<{ contentType: string; text: string }>;
 
 function fixtureFor(definition: FirstPartyReleaseSourceDefinition): SourceFixture {
@@ -467,6 +490,19 @@ function fixtureFor(definition: FirstPartyReleaseSourceDefinition): SourceFixtur
         "https://platform.stepfun.com/docs/zh/guides/models/stepaudio-2.5-tts",
       ]),
     };
+    case "cognition-sitemap": return {
+      contentType: "application/xml",
+      text: standardSitemapFixture(definition, [
+        "https://cognition.com/blog/swe-1-5",
+        "https://cognition.com/blog/swe-1-6",
+        "https://cognition.com/blog/swe-1-6-preview",
+        "https://cognition.com/blog/swe-1-7",
+      ]),
+    };
+    case "cognition-blog-index": return {
+      contentType: "text/html",
+      text: cognitionBlogIndexHtml(),
+    };
   }
 }
 
@@ -507,9 +543,9 @@ function configuredObservations(): readonly FirstPartyReleaseSourceObservation[]
 
 describe("first-party release URL recognition", () => {
   test("keeps the tracked lab registry broad and its legacy source prefix stable", () => {
-    expect(FIRST_PARTY_RELEASE_SOURCE_DEFINITIONS).toHaveLength(28);
+    expect(FIRST_PARTY_RELEASE_SOURCE_DEFINITIONS).toHaveLength(30);
     expect(new Set(FIRST_PARTY_RELEASE_SOURCE_DEFINITIONS.map(source => source.providerId)).size)
-      .toBe(23);
+      .toBe(24);
     expect(FIRST_PARTY_RELEASE_SOURCE_DEFINITIONS.slice(0, 3).map(source => source.id)).toEqual([
       "anthropic-sitemap",
       "openai-release-sitemap",
@@ -553,6 +589,11 @@ describe("first-party release URL recognition", () => {
         expectedIdentity: /Seedance 2\.0/u,
         providerId: "bytedance",
         url: "https://seed.bytedance.com/blog/introducing-seedance-2-0",
+      },
+      {
+        expectedIdentity: /^SWE-1\.7$/u,
+        providerId: "cognition",
+        url: "https://cognition.com/blog/swe-1-7",
       },
       {
         expectedIdentity: /Command A Vision/u,
@@ -899,6 +940,7 @@ describe("first-party release URL recognition", () => {
       ["anthropic-sitemap", "https://www.anthropic.com/news/claude-lyric-6-0"],
       ["baidu-ernie-sitemap", "https://ernie.baidu.com/blog/posts/aurora-1-release/"],
       ["bytedance-seed-sitemap", "https://seed.bytedance.com/blog/introducing-aurora-1"],
+      ["cognition-sitemap", "https://cognition.com/blog/swe-3-aurora"],
       ["cohere-docs-sitemap", "https://docs.cohere.com/changelog/aurora-1-model-launch"],
       ["deepseek-site-sitemap", "https://www.deepseek.com/en/news/aurora-1-release/"],
       ["google-deepmind-sitemap", "https://deepmind.google/models/model-cards/aurora-1/"],
@@ -917,7 +959,7 @@ describe("first-party release URL recognition", () => {
       ["zai-release-notes", "https://docs.z.ai/release-notes/new-released#2026-09-03-aurora-1"],
     ] as const;
 
-    expect(new Set(cases.map(([sourceId]) => sourceDefinition(sourceId).providerId)).size).toBe(23);
+    expect(new Set(cases.map(([sourceId]) => sourceDefinition(sourceId).providerId)).size).toBe(24);
     for (const [sourceId, url] of cases) {
       expect(releaseCandidateNamesForSourceUrl(sourceId, url), `${sourceId} silently dropped ${url}`)
         .toHaveLength(1);
@@ -930,6 +972,10 @@ describe("first-party release URL recognition", () => {
       "stepfun-china-model-sitemap",
       "https://platform.stepfun.com/docs/zh/guides/models/aurora-1",
     )).toHaveLength(1);
+    expect(releaseCandidateNamesForSourceUrl(
+      "cognition-blog-index",
+      "https://cognition.com/blog#swe-3-aurora",
+    )).toEqual(["Unresolved announcement: SWE 3 Aurora"]);
   });
 
   test("keeps catalog integrations and corporate-number noise out of lab-owned candidates", () => {
@@ -965,6 +1011,13 @@ describe("first-party release URL recognition", () => {
       ["ai2-model-sitemap", "https://allenai.org/blog/olmo-eval"],
       ["ai21-post-sitemap", "https://www.ai21.com/blog/jamba-3b-vs-qwen3-4b/"],
       ["ai21-post-sitemap", "https://www.ai21.com/blog/introducing-ai21s-python-sdk-2-0-for-a-simplified-developer-experience/"],
+      ["cognition-sitemap", "https://cognition.com/blog/swe-bench-technical-report"],
+      ["cognition-sitemap", "https://cognition.com/blog/swe-check-10x-faster"],
+      ["cognition-sitemap", "https://cognition.com/blog/swe-grep"],
+      ["cognition-sitemap", "https://cognition.com/blog/devin-2"],
+      ["cognition-sitemap", "https://cognition.com/blog/factoring-rsa-260"],
+      ["cognition-sitemap", "https://cognition.com/blog/series-e"],
+      ["cognition-blog-index", "https://cognition.com/blog#swe-check-10x-faster"],
       ["cohere-docs-sitemap", "https://docs.cohere.com/changelog/aya-expanse-on-whatsapp"],
       ["cohere-docs-sitemap", "https://docs.cohere.com/changelog/commandr-082024-ft"],
       ["mistral-site-sitemap", "https://mistral.ai/news/mistral-x-humain/"],
@@ -1139,6 +1192,111 @@ describe("first-party release source adapters", () => {
     );
     expect(renumbered.candidates.find(candidate => candidate.namedModels.includes("DeepSeek R1-0528")))
       .toMatchObject({ canonicalUrl: firstAlias?.canonicalUrl });
+  });
+
+  test("names Cognition SWE releases from post URLs and index fragments without admitting tooling posts", () => {
+    const releases = [
+      ["swe-2", "SWE-2"],
+      ["swe-1-7", "SWE-1.7"],
+      ["swe-1-6-preview", "SWE-1.6 Preview"],
+      ["swe-1-5", "SWE-1.5"],
+    ] as const;
+    for (const [slug, model] of releases) {
+      expect(namedModelsForProviderUrl("cognition", `https://cognition.com/blog/${slug}`))
+        .toEqual([model]);
+      expect(namedModelsForProviderUrl("cognition", `https://cognition.com/blog#${slug}`))
+        .toEqual([model]);
+    }
+    const nonModelSlugs = [
+      "swe-bench-technical-report", "swe-check-10x-faster", "swe-grep",
+      "devin-2", "devin-2-1", "factoring-rsa-260", "series-e", "dec-24-product-update",
+    ];
+    for (const slug of nonModelSlugs) {
+      expect(namedModelsForProviderUrl("cognition", `https://cognition.com/blog/${slug}`))
+        .toEqual([]);
+    }
+    expect(namedModelsForProviderUrl("cognition", "https://cognition.com/blog")).toEqual([]);
+    expect(namedModelsForProviderUrl("cognition", "https://cognition.com")).toEqual([]);
+  });
+
+  test("discovers SWE-2 from Cognition's blog index while the lagging sitemap still omits it", () => {
+    const sitemapObservation = observation(
+      cognitionSitemap,
+      fixtureFor(cognitionSitemap).text,
+    );
+    const indexObservation = observation(
+      cognitionBlogIndex,
+      cognitionBlogIndexHtml(),
+      "text/html; charset=utf-8",
+    );
+
+    expect(sitemapObservation.candidates.some(candidate => (
+      candidate.namedModels.includes("SWE-2")
+    ))).toBeFalse();
+    expect(sitemapObservation.candidates).toContainEqual({
+      candidateDateMeaning: "provider-sitemap-lastmod",
+      canonicalUrl: "https://cognition.com/blog/swe-1-7",
+      namedModels: ["SWE-1.7"],
+      sourceModifiedAt: "2026-08-04T00:00:00.000Z",
+    });
+    expect(indexObservation.source.health.shape).toMatchObject({
+      candidateCount: 5,
+      duplicateEntryCount: 1,
+      rootElement: "html-index",
+    });
+    expect(indexObservation.candidates).toContainEqual({
+      candidateDateMeaning: "first-observed",
+      canonicalUrl: "https://cognition.com/blog#swe-2",
+      namedModels: ["SWE-2"],
+      sourceModifiedAt: null,
+    });
+
+    const first = deriveFirstPartyReleaseRadar(
+      [sitemapObservation, indexObservation],
+      emptyFirstPartyReleaseRadar(),
+      observedAt,
+    );
+    expect(first.candidates.find(candidate => candidate.namedModels.includes("SWE-2")))
+      .toMatchObject({
+        candidateDateMeaning: "first-observed",
+        firstSeenAt: observedAt,
+        sourceId: "cognition-blog-index",
+        status: "needs-review",
+      });
+
+    const caughtUp = observeFirstPartyReleaseSource(
+      cognitionSitemap,
+      fetched(fixtureFor(cognitionSitemap).text.replace(
+        "</urlset>",
+        "<url><loc>https://cognition.com/blog/swe-2</loc><lastmod>2026-09-10</lastmod></url></urlset>",
+      )),
+      "2026-09-10T18:00:00.000Z",
+    );
+    expect(caughtUp.ok).toBeTrue();
+    if (!caughtUp.ok) throw caughtUp.error;
+    const caughtUpSitemap = caughtUp.value;
+    const second = deriveFirstPartyReleaseRadar(
+      [caughtUpSitemap, indexObservation],
+      first,
+      "2026-09-10T18:00:00.000Z",
+    );
+    expect(second.candidates.find(candidate => (
+      candidate.canonicalUrl === "https://cognition.com/blog/swe-2"
+    ))).toMatchObject({ sourceId: "cognition-sitemap", status: "needs-review" });
+    expect(second.candidates.find(candidate => (
+      candidate.canonicalUrl === "https://cognition.com/blog#swe-2"
+    ))).toMatchObject({ firstSeenAt: observedAt, sourceId: "cognition-blog-index" });
+    expect(validateFirstPartyReleaseReplacement(first, second).ok).toBeTrue();
+  });
+
+  test("fails closed when Cognition's blog index stops being a link-rich HTML document", () => {
+    expect(parseProviderSitemap(cognitionBlogIndex, "not html at all").ok).toBeFalse();
+    expect(parseProviderSitemap(
+      cognitionBlogIndex,
+      '<!DOCTYPE html><html><body><a href="/blog/swe-2">SWE-2</a></body></html>',
+    ).ok).toBeFalse();
+    expect(sourceAcceptsContentType(cognitionBlogIndex, "text/html; charset=utf-8")).toBeTrue();
+    expect(sourceAcceptsContentType(cognitionBlogIndex, "application/xhtml+xml")).toBeFalse();
   });
 
   test("parses every release-note Markdown shape with stable fragment identities", () => {

@@ -134,11 +134,11 @@ Release discovery and benchmark publication are different operations:
 This separation prevents an aggregator omission from hiding a release without
 letting an ambiguous announcement silently alter public model history.
 
-The active first-party registry covers 23 labs across 28 sources: Anthropic,
-OpenAI, Google DeepMind, Meta, xAI, Mistral AI, Cohere, DeepSeek, Z.ai,
-Moonshot AI/Kimi, Alibaba/Qwen, MiniMax, ByteDance Seed, Microsoft AI, NVIDIA
-Nemotron, Amazon Nova, Baidu ERNIE, Tencent Hunyuan, Xiaomi MiMo, AI21 Labs,
-IBM Granite, Ai2, and StepFun. A lab can own more than one source, so public
+The active first-party registry covers 24 labs across 30 sources: Anthropic,
+OpenAI, Google DeepMind, Meta, xAI, Mistral AI, Cognition, Cohere, DeepSeek,
+Z.ai, Moonshot AI/Kimi, Alibaba/Qwen, MiniMax, ByteDance Seed, Microsoft AI,
+NVIDIA Nemotron, Amazon Nova, Baidu ERNIE, Tencent Hunyuan, Xiaomi MiMo, AI21
+Labs, IBM Granite, Ai2, and StepFun. A lab can own more than one source, so public
 summaries report a distinct lab count and a separate source count. Source
 definitions, host constraints, and minimum safe shapes remain executable
 contracts in the refresh code and tests.
@@ -170,6 +170,7 @@ contracts in the refresh code and tests.
 | IBM Granite | [IBM Research current sitemap shard](https://research.ibm.com/sitemap-0.xml) | Granite-specific model-release posts. Candidate rows require dates even though unrelated sitemap rows may omit them. |
 | Ai2 | [Ai2 sitemap](https://allenai.org/sitemap.xml) | Model-release posts for OLMo, Molmo, Tülu, SERA, and related open-model families, with exact mappings for high-signal launch slugs that omit a model version. |
 | StepFun | [English platform documentation sitemap](https://platform.stepfun.ai/docs/sitemap.xml) and [China platform documentation sitemap](https://platform.stepfun.com/docs/sitemap.xml) | Exact model-detail pages under the English and Chinese model namespaces. The China source adds the explicitly named, unversioned Step Explore model; router, category, quickstart, cookbook, and mobile-agent pages are excluded. Both lanes are URL-delta coverage. |
+| Cognition | [Site sitemap](https://cognition.com/sitemap.xml) and [blog index](https://cognition.com/blog) | SWE model-release posts under the blog namespace; SWE-bench, SWE-Check, SWE-grep, Devin product, and corporate posts are excluded. The sitemap lags the blog index by days for new posts, so the index is a second discovery surface whose candidates are stable fragments of the index URL, leaving the sitemap the sole owner of canonical post URLs. |
 
 Discovery is based on canonical URL deltas. A canonical announcement URL that
 was not in the durable ledger creates a candidate. Sitemap `lastmod` values and
