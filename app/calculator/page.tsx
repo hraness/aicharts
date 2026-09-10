@@ -17,7 +17,7 @@ import "@/styles/calculator.css";
 
 export const metadata = createPublicSiteMetadata({
   ...searchSite,
-  title: "AI cost calculator | AI Charts",
+  title: "Subscription vs API vs GPUs | AI Charts",
   description: "Compare the monthly cost of a fully used ChatGPT Pro seat against OpenAI API rates, DeepSeek Flash, home GPUs, and rented GPUs at the same token volume.",
 }, { canonicalPath: "/calculator" });
 
@@ -50,8 +50,8 @@ export default function CalculatorPage() {
     <SiteHeader current="/calculator" />
     <main className="chart-home calculator-home" id="main-content">
       <header className="chart-page-intro">
-        <h1>AI cost calculator</h1>
-        <p>One fully used ChatGPT Pro 20x seat implies a monthly token volume. This page prices that same volume five ways: the subscription sticker, the {inputs.openAiApiPricing.modelName} API, the {inputs.deepSeekApiPricing.modelVersion} API, GPUs you buy, and GPUs you rent.</p>
+        <h1>Subscription vs API vs GPUs</h1>
+        <p>One fully used ChatGPT Pro 20x seat implies a monthly token volume. This calculator prices that same volume five ways: the subscription sticker, the {inputs.openAiApiPricing.modelName} API, the {inputs.deepSeekApiPricing.modelVersion} API, GPUs you buy, and GPUs you rent.</p>
         <p className="chart-page-intro__coverage">Rates as of {formatDate(ratesAsOf)}.</p>
       </header>
       <CalculatorExplorer snapshot={inputs} />

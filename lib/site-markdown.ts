@@ -26,7 +26,6 @@ import { namedSubsidyCeiling } from "./calculator-inputs-data";
 import {
   computeCalculatorScenario,
   DEFAULT_CALCULATOR_KNOBS,
-  POWER_USER_HOURS_PER_WEEK,
 } from "./calculator-math";
 import { ATLAS_DATASETS, ATLAS_ENTRIES } from "./benchmark-atlas-catalog";
 import { selectAtlasModelProfiles, sortAtlasPoints } from "./benchmark-atlas";
@@ -357,7 +356,7 @@ function calculatorMarkdown(): string {
   const homeGpu = inputs.hardware.gpus.find(gpu => gpu.id === scenario.profile.gpuId);
   const rentalGpu = inputs.hardware.gpus.find(gpu => gpu.id === scenario.profile.rental.gpuId);
   return joinMarkdown([
-    "# AI cost calculator",
+    "# Subscription vs API vs GPUs",
     "",
     `One fully used ChatGPT Pro 20x seat implies a monthly token volume. The calculator prices that same volume five ways: the subscription sticker, the ${inputs.openAiApiPricing.modelName} API, the ${inputs.deepSeekApiPricing.modelVersion} API, GPUs you buy, and GPUs you rent. Knobs cover seats, the subsidy multiple, utilization, cache-hit rate, token mix, DeepSeek pricing window, duty cycle, hardware profile, useful life, resale value, and the electricity rate.`,
     "",
@@ -369,11 +368,11 @@ function calculatorMarkdown(): string {
     "",
     `- ${inputs.plan.name} sticker: ${usd(scenario.stickerUsd)}`,
     `- ${inputs.openAiApiPricing.modelName} API: ${usd(scenario.sol.breakdown.totalUsd)} (${usd(scenario.sol.otherBasisUsd)} at list rates)`,
-    `- ${inputs.deepSeekApiPricing.modelVersion} API: ${usd(scenario.deepSeek.offPeakUsd)} off-peak, ${usd(scenario.deepSeek.peakUsd)} peak, ${usd(scenario.deepSeek.blendedUsd)} blended`,
-    `- Home hardware (${scenario.home.gpuCount}x ${homeGpu?.name ?? scenario.profile.gpuId}, ${POWER_USER_HOURS_PER_WEEK} h/week): ${usd(scenario.home.totalMonthlyUsd)} a month (${usd(scenario.home.depreciationMonthlyUsd)} straight-line depreciation over ${DEFAULT_CALCULATOR_KNOBS.amortizationMonths} months + ${usd(scenario.home.electricityMonthlyUsd)} electricity at ${scenario.home.electricityCentsPerKwh} cents per kWh), ${usd(scenario.home.upfrontUsd)} up front`,
+    `- ${inputs.deepSeekApiPricing.modelVersion} API: ${usd(scenario.deepSeek.blendedUsd)} blended (default), ${usd(scenario.deepSeek.offPeakUsd)} off-peak, ${usd(scenario.deepSeek.peakUsd)} peak`,
+    `- Home hardware (${scenario.home.gpuCount}x ${homeGpu?.name ?? scenario.profile.gpuId}, 24/7): ${usd(scenario.home.totalMonthlyUsd)} a month (${usd(scenario.home.depreciationMonthlyUsd)} straight-line depreciation over ${DEFAULT_CALCULATOR_KNOBS.amortizationMonths} months + ${usd(scenario.home.electricityMonthlyUsd)} electricity at ${scenario.home.electricityCentsPerKwh} cents per kWh), ${usd(scenario.home.upfrontUsd)} up front`,
     `- Rented GPUs (${scenario.rental.gpuCount}x ${rentalGpu?.name ?? scenario.profile.rental.gpuId}): ${usd(scenario.rental.monthlyUsd)} a month`,
     "",
-    `Fleet sizing counts decode only: the default load needs about ${Math.round(scenario.requiredTps)} aggregate decode tokens per second on the ${POWER_USER_HOURS_PER_WEEK}-hour-a-week duty cycle. Throughput profiles are single-stream figures labeled measured, published band, or bandwidth estimate.`,
+    `Fleet sizing counts decode only: the default load needs about ${Math.round(scenario.requiredTps)} aggregate decode tokens per second on the 24/7 duty cycle. Throughput profiles are single-stream figures labeled measured, published band, or bandwidth estimate.`,
     "",
     "## Sources",
     "",
@@ -664,7 +663,7 @@ export function agentGuideMarkdown(
     `- [AI model charts](${absolute("/")}). Start with capability versus cost or output tokens on the Pareto frontier. Inspect exact model configurations in one matched resource cohort.`,
     `- [Coding agent comparisons](${absolute("/coding")}). Compare benchmark scores with API cost, active time, or total tokens from the separate Artificial Analysis coding-agents source.`,
     `- [AI benchmark explorer](${absolute("/benchmarks")}). Choose a task, inspect a measured cohort, or read a source guide. Terminal-Bench 4 is the current terminal-engineering standard.`,
-    `- [AI cost calculator](${absolute("/calculator")}). Price one fully used ChatGPT Pro seat's token volume at OpenAI and DeepSeek API rates, on purchased GPUs, and on rented GPUs, with sourced assumptions.`,
+    `- [Subscription vs API vs GPUs](${absolute("/calculator")}). Price one fully used ChatGPT Pro seat's token volume at OpenAI and DeepSeek API rates, on purchased GPUs, and on rented GPUs, with sourced assumptions.`,
     `- [Atlas catalog JSON](${absolute(ATLAS_CATALOG_DOWNLOAD_PATH)}). All benchmark IDs, coverage, versions, source dates, and per-cohort JSON distribution links.`,
     `- [Model benchmark cards](${absolute("/models")}). Shareable cards for each model and benchmark profile, with canonical routes for cataloged identities.`,
     `- [Dataset and methodology](${absolute(CODING_AGENT_DATASET_PATH)}). Every atlas benchmark’s provenance, version boundaries, definitions, measured distributions, and limits.`,

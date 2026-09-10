@@ -41,11 +41,12 @@ describe("focused chart destinations", () => {
   });
   test("the calculator page renders knobs, cost bars, and server-side provenance", () => {
     const html = renderToStaticMarkup(createElement(CalculatorPage));
-    expect(html).toContain("<h1>AI cost calculator</h1>");
+    expect(html).toContain("<h1>Subscription vs API vs GPUs</h1>");
     expect(html).toContain('class="calculator-explorer"');
     expect(html).toContain("Monthly cost by path");
+    expect(html).toContain("Ownership cost over the useful life");
     expect(html.match(/class="hraness-knob[" ]/gu)?.length).toBeGreaterThanOrEqual(9);
-    expect(html.match(/class="calculator-bars"/gu)).toHaveLength(3);
+    expect(html.match(/class="calculator-bars"/gu)).toHaveLength(4);
     // The default 40x anchor: one seat implies $8,000 of API-equivalent monthly spend.
     expect(html).toContain("$8,000");
     // Owning is priced as explicit depreciation plus a configurable electricity rate.

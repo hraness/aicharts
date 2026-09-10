@@ -18,6 +18,7 @@ import {
   rentalMonthlyCostUsd,
   requiredDecodeTps,
   unitsRequired,
+  usefulLifeCheckpointMonths,
 } from "./calculator-math";
 
 const defaultMix = { cacheHitRate: 0.5, inputTokensPerOutputToken: 4 } as const;
@@ -136,6 +137,7 @@ describe("calculator math golden case (N=1, 40x, 100% utilization, 50% cache, 4:
   test("prices the same fleet at Hawaii's 52.72 cents per kWh when the knob overrides the US average", () => {
     const scenario = computeCalculatorScenario(goldenSnapshot, {
       ...DEFAULT_CALCULATOR_KNOBS,
+      dutyCycle: "powerUser",
       electricityCentsPerKwh: 52.72,
     });
     expect(scenario.home.electricityCentsPerKwh).toBe(52.72);
@@ -145,7 +147,10 @@ describe("calculator math golden case (N=1, 40x, 100% utilization, 50% cache, 4:
   });
 
   test("follows the snapshot's US residential average when the electricity knob is null", () => {
-    const scenario = computeCalculatorScenario(goldenSnapshot, DEFAULT_CALCULATOR_KNOBS);
+    const scenario = computeCalculatorScenario(goldenSnapshot, {
+      ...DEFAULT_CALCULATOR_KNOBS,
+      dutyCycle: "powerUser",
+    });
     expect(DEFAULT_CALCULATOR_KNOBS.electricityCentsPerKwh).toBeNull();
     expect(scenario.home.electricityCentsPerKwh).toBe(goldenSnapshot.electricity.usResidentialCentsPerKwh);
     expect(scenario.home.electricityMonthlyUsd).toBeCloseTo(183.42, 1);
@@ -165,12 +170,19 @@ describe("calculator math golden case (N=1, 40x, 100% utilization, 50% cache, 4:
     expect(scenario.stickerUsd).toBe(200);
     expect(scenario.sol.breakdown.totalUsd).toBeCloseTo(8_000, 6);
     expect(scenario.deepSeek.offPeakUsd).toBeCloseTo(251.67, 2);
-    expect(scenario.deepSeek.selectedUsd).toBe(scenario.deepSeek.offPeakUsd);
+    // The default window is blended: off-peak x (1 + 35/168).
+    expect(scenario.deepSeek.selectedUsd).toBe(scenario.deepSeek.blendedUsd);
+    expect(scenario.deepSeek.selectedUsd).toBeCloseTo(304.10, 2);
     expect(scenario.profile.id).toBe("rtx-5090-dense-32b");
-    expect(scenario.home.unitCount).toBe(10);
-    expect(scenario.home.gpuCount).toBe(10);
-    expect(scenario.home.totalMonthlyUsd).toBeCloseTo(2_225.08, 1);
-    expect(scenario.rental.monthlyUsd).toBeCloseTo(939.21, 1);
+    // The default 24/7 duty cycle needs 3 cards instead of the power-user 10.
+    expect(scenario.hoursPerMonth).toBeCloseTo(730.5, 2);
+    expect(scenario.home.unitCount).toBe(3);
+    expect(scenario.home.gpuCount).toBe(3);
+    expect(scenario.home.upfrontUsd).toBe(14_700);
+    expect(scenario.home.depreciationMonthlyUsd).toBeCloseTo(612.50, 2);
+    expect(scenario.home.electricityMonthlyUsd).toBeCloseTo(231.10, 1);
+    expect(scenario.home.totalMonthlyUsd).toBeCloseTo(843.60, 1);
+    expect(scenario.rental.monthlyUsd).toBeCloseTo(1_183.41, 1);
     // Valuing the same promo-implied volume at list rates costs more.
     expect(scenario.sol.otherBasis).toBe("list");
     expect(scenario.sol.otherBasisUsd).toBeCloseTo(8_000 * 41 / 28.8, 1);
@@ -189,6 +201,11 @@ describe("calculator math golden case (N=1, 40x, 100% utilization, 50% cache, 4:
 });
 
 describe("calculator defaults", () => {
+  test("defaults to the blended DeepSeek window and the 24/7 duty cycle", () => {
+    expect(DEFAULT_CALCULATOR_KNOBS.deepSeekWindow).toBe("blended");
+    expect(DEFAULT_CALCULATOR_KNOBS.dutyCycle).toBe("continuous");
+  });
+
   test("keeps the default subsidy knob equal to the snapshot's documented default", () => {
     expect(DEFAULT_CALCULATOR_KNOBS.subsidyMultiple)
       .toBe(CALCULATOR_INPUTS.subsidyAnchor.defaultMultiple);
@@ -278,6 +295,7 @@ describe("calculator knob clamping", () => {
   test("uses the H100 rental path for profiles whose model cannot live in consumer VRAM", () => {
     const scenario = computeCalculatorScenario(goldenSnapshot, {
       ...DEFAULT_CALCULATOR_KNOBS,
+      dutyCycle: "powerUser",
       hardwareProfileId: "dgx-spark-dense-70b",
     });
     expect(scenario.profile.rental.gpuId).toBe("h100-sxm");
@@ -294,12 +312,38 @@ describe("duty cycles", () => {
   });
 
   test("needs fewer units on the continuous duty cycle for the same volume", () => {
-    const powerUser = computeCalculatorScenario(goldenSnapshot, DEFAULT_CALCULATOR_KNOBS);
+    const powerUser = computeCalculatorScenario(goldenSnapshot, {
+      ...DEFAULT_CALCULATOR_KNOBS,
+      dutyCycle: "powerUser",
+    });
     const continuous = computeCalculatorScenario(goldenSnapshot, {
       ...DEFAULT_CALCULATOR_KNOBS,
       dutyCycle: "continuous",
     });
+    expect(powerUser.home.unitCount).toBe(10);
     expect(continuous.home.unitCount).toBeLessThan(powerUser.home.unitCount);
     expect(continuous.home.unitCount).toBe(3);
+  });
+});
+
+describe("useful-life checkpoints", () => {
+  test("marks the quarters of the default 24-month life", () => {
+    expect(usefulLifeCheckpointMonths(24)).toEqual([6, 12, 18, 24]);
+    expect(usefulLifeCheckpointMonths(6)).toEqual([2, 3, 5, 6]);
+  });
+
+  test("always ends exactly at the useful life with ascending whole months", () => {
+    const bounds = CALCULATOR_KNOB_BOUNDS.amortizationMonths;
+    for (let months = bounds.min; months <= bounds.max; months += 1) {
+      const checkpoints = usefulLifeCheckpointMonths(months);
+      expect(checkpoints.at(-1)).toBe(months);
+      expect(checkpoints.length).toBeGreaterThanOrEqual(1);
+      expect(checkpoints.length).toBeLessThanOrEqual(4);
+      for (const [index, month] of checkpoints.entries()) {
+        expect(Number.isInteger(month)).toBe(true);
+        expect(month).toBeGreaterThanOrEqual(1);
+        if (index > 0) expect(month).toBeGreaterThan(checkpoints[index - 1]!);
+      }
+    }
   });
 });

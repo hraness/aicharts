@@ -63,8 +63,8 @@ export const CALCULATOR_KNOB_BOUNDS = {
 export const DEFAULT_CALCULATOR_KNOBS: CalculatorKnobs = {
   amortizationMonths: 24,
   cacheHitPercent: 50,
-  deepSeekWindow: "offPeak",
-  dutyCycle: "powerUser",
+  deepSeekWindow: "blended",
+  dutyCycle: "continuous",
   electricityCentsPerKwh: null,
   hardwareProfileId: "rtx-5090-dense-32b",
   inputTokensPerOutputToken: 4,
@@ -226,6 +226,15 @@ export function requiredDecodeTps(outputTokensPerMonth: number, hoursPerMonth: n
 
 export function unitsRequired(requiredTps: number, unitDecodeTps: number): number {
   return Math.max(1, Math.ceil(requiredTps / unitDecodeTps));
+}
+
+/**
+ * Quarter marks of the useful life for the cumulative ownership chart: four
+ * ascending whole months that always end exactly at the useful life.
+ */
+export function usefulLifeCheckpointMonths(amortizationMonths: number): readonly number[] {
+  const marks = [0.25, 0.5, 0.75, 1].map(fraction => Math.round(amortizationMonths * fraction));
+  return [...new Set(marks)].filter(month => month >= 1);
 }
 
 export interface HomeHardwareCost {
