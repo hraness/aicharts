@@ -63,6 +63,7 @@ export function HomeIntelligenceEfficiency({
     costUsdPerTask: record.costUsdPerTask?.total ?? 0,
     creatorId: record.creator.id,
     creatorName: record.creator.name,
+    creatorSlug: record.creator.slug,
     detailsUrl: record.detailsUrl,
     id: record.id,
     intelligenceIndex: record.intelligenceIndex,

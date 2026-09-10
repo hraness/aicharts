@@ -19,6 +19,8 @@ import {
   type NumericDomain,
 } from "@/lib/intelligence-efficiency";
 import { captureChartEvent } from "@/lib/analytics";
+import { providerBrand } from "@/lib/provider-brand";
+import { OptionGridPicker, type OptionGridPickerItem } from "@/components/option-grid-picker";
 import {
   clientPointThroughSvgBounds,
   clientPointThroughSvgTransform,
@@ -31,6 +33,7 @@ export type IntelligenceEfficiencyExplorerDatum = Readonly<{
   costUsdPerTask: number;
   creatorId: string;
   creatorName: string;
+  creatorSlug: string;
   detailsUrl: string;
   id: string;
   intelligenceIndex: number;
@@ -408,10 +411,21 @@ export function IntelligenceEfficiencyExplorer({
   const titleId = useId();
   const descriptionId = useId();
   const inspectorTitleId = useId();
-  const modelOptions = useMemo(() => data.toSorted((left, right) =>
+  const modelOptions = useMemo<readonly OptionGridPickerItem[]>(() => data.toSorted((left, right) =>
     left.creatorName.localeCompare(right.creatorName)
       || left.name.localeCompare(right.name)
-      || left.id.localeCompare(right.id)), [data]);
+      || left.id.localeCompare(right.id)).map(datum => {
+    const brand = providerBrand(datum.creatorName, datum.creatorSlug);
+    return {
+      chipColor: brand.chipColor,
+      description: datum.creatorName,
+      glyphColor: brand.glyphColor,
+      iconUrl: brand.iconUrl,
+      id: datum.id,
+      label: datum.name,
+      monogram: brand.monogram,
+    };
+  }), [data]);
 
   useEffect(() => {
     const shell = chartShellRef.current;
@@ -556,16 +570,19 @@ export function IntelligenceEfficiencyExplorer({
             <span aria-hidden="true">↖ </span>
             Higher score, {metric === "costUsdPerTask" ? "lower cost" : "fewer tokens"}
           </p>
-          <label className="intelligence-efficiency__model-picker">
-            Choose a model configuration
-            <select value={pinnedId} onChange={event => {
+          <OptionGridPicker
+            className="intelligence-efficiency__model-picker"
+            label="Choose a model configuration"
+            onChange={pointId => {
               setHoveredId(null);
               setFocusedId(null);
-              pinPoint(event.target.value);
-            }}>
-              {modelOptions.map(datum => <option key={datum.id} value={datum.id}>{datum.creatorName} · {datum.name}</option>)}
-            </select>
-          </label>
+              pinPoint(pointId);
+            }}
+            options={modelOptions}
+            searchLabel="Search model configurations"
+            searchPlaceholder="Model or provider"
+            value={pinnedId}
+          />
         </figcaption>
 
         <div className="intelligence-efficiency__plot" ref={chartShellRef}>

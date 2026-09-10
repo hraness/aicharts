@@ -125,14 +125,28 @@ const snapshot = {
 describe("homepage Intelligence efficiency view", () => {
   test("offers every plotted model by name without relying on a dense point target", () => {
     const html = renderToStaticMarkup(<HomeIntelligenceEfficiency snapshot={snapshot} />);
-    const picker = html.match(/<label class="intelligence-efficiency__model-picker">([\s\S]*?)<\/label>/u)?.[1];
+    expect(html).not.toContain("<select");
+    const picker = html.match(/<div class="option-picker intelligence-efficiency__model-picker">[\s\S]*?<p aria-live="polite"/u)?.[0];
     expect(picker).toBeDefined();
     expect(picker).toContain("Choose a model configuration");
-    expect(picker!.match(/<option\b/gu)).toHaveLength(records.length);
-    expect(picker).toContain('value="gpt-6-astra" selected=""');
-    for (const item of records) expect(picker).toContain(`value="${item.id}"`);
-    expect(picker!.indexOf("GPT-5.6 Sol")).toBeLessThan(picker!.indexOf("GPT-6 Astra"));
+    expect(picker).toContain('aria-haspopup="dialog"');
+    expect(picker).toContain('aria-label="Search model configurations"');
+    const grid = html.match(/role="listbox"[\s\S]*?<\/figcaption>/u)?.[0] ?? "";
+    expect(grid.match(/role="option"/gu)).toHaveLength(records.length);
+    for (const item of records) expect(grid).toContain(`<strong>${item.name}</strong>`);
+    const selected = grid.match(/<div aria-selected="true"[\s\S]*?<\/div>/u)?.[0] ?? "";
+    expect(selected).toContain("GPT-6 Astra (max)");
+    expect(grid.match(/aria-selected="true"/gu)).toHaveLength(1);
+    expect(grid.indexOf("GPT-5.6 Sol")).toBeLessThan(grid.indexOf("GPT-6 Astra"));
     expect(html).toContain("Select a point or choose a model above");
+  });
+
+  test("labels each model option with its provider identity for search and scanning", () => {
+    const html = renderToStaticMarkup(<HomeIntelligenceEfficiency snapshot={snapshot} />);
+    const grid = html.match(/role="listbox"[\s\S]*?<\/figcaption>/u)?.[0] ?? "";
+    expect(grid).toContain("<small>Example Lab</small>");
+    expect(grid).toContain("--option-picker-chip:#6f6962");
+    expect(grid).toContain(">EL<");
   });
 
   test("renders one accessible interactive view with the exact benchmark version", () => {
@@ -329,6 +343,7 @@ describe("homepage Intelligence efficiency view", () => {
       costUsdPerTask: item.costUsdPerTask?.total ?? 0,
       creatorId: item.creator.id,
       creatorName: item.creator.name,
+      creatorSlug: item.creator.slug,
       detailsUrl: item.detailsUrl,
       id: item.id,
       intelligenceIndex: item.intelligenceIndex,
