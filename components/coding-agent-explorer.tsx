@@ -16,7 +16,8 @@ import {
   subscribeLocationSearch,
 } from "@/lib/selection-url";
 import { OptionGridPicker, type OptionGridPickerItem } from "@/components/option-grid-picker";
-import { codingBenchmarkGlyph } from "@/components/picker-glyphs";
+import { codingBenchmarkGlyph, xMetricGlyph } from "@/components/picker-glyphs";
+import { ProviderBrandLabel } from "@/components/provider-brand-mark";
 import {
   Icon,
   IconButton,
@@ -137,9 +138,9 @@ function resolveCodingSelection(
 }
 
 const xMetricItems = [
-  { id: "costUsd", label: xMetricControlLabels.costUsd },
-  { id: "durationMinutes", label: xMetricControlLabels.durationMinutes },
-  { id: "totalTokens", label: xMetricControlLabels.totalTokens },
+  { id: "costUsd", label: xMetricControlLabels.costUsd, leading: xMetricGlyph("costUsd") },
+  { id: "durationMinutes", label: xMetricControlLabels.durationMinutes, leading: xMetricGlyph("durationMinutes") },
+  { id: "totalTokens", label: xMetricControlLabels.totalTokens, leading: xMetricGlyph("totalTokens") },
 ] satisfies readonly SegmentedItem<XMetric>[];
 
 type ChartBrand = Readonly<{
@@ -1535,7 +1536,12 @@ export function CodingAgentExplorer({
             role="status"
             style={{ left: tooltipLayout.x, top: tooltipLayout.y }}
           >
-            <span style={providerStyle(hoveredPoint.record.providerId)}><i /> {hoveredPoint.record.providerName}</span>
+            <span style={providerStyle(hoveredPoint.record.providerId)}>
+              <ProviderBrandLabel
+                displayName={hoveredPoint.record.providerName}
+                identities={[hoveredPoint.record.providerId]}
+              />
+            </span>
             <strong>{hoveredPoint.record.model}</strong>
             <small>{hoveredPoint.record.agent} / {hoveredPoint.record.setting}</small>
             <dl>

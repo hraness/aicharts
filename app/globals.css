@@ -228,11 +228,21 @@ body {
   border-radius: 10px;
 }
 .ui-segmented-control__item {
+  align-items: center;
   background: transparent;
   border: 0;
   border-radius: 7px;
   color: var(--muted);
+  display: inline-flex;
+  gap: 5px;
 }
+.ui-segmented-control__leading {
+  display: grid;
+  flex: none;
+  line-height: 0;
+  place-items: center;
+}
+.ui-segmented-control__leading svg { display: block; }
 .ui-segmented-control__item:hover { color: var(--foreground); }
 .ui-segmented-control__item[data-selected] {
   background: var(--foreground);
@@ -266,6 +276,13 @@ body {
 }
 .ui-chart-row:hover { background: var(--secondary); }
 .ui-chart-row__copy { display: grid; min-width: 0; }
+.ui-chart-row__identity {
+  align-items: center;
+  display: flex;
+  gap: 6px;
+  min-width: 0;
+}
+.ui-chart-row__identity .provider-brand-mark { flex: none; }
 .ui-chart-row__copy strong { font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ui-chart-row__copy small { color: var(--muted); font-size: 9px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ui-chart-row__value { font-family: var(--font-mono); font-size: 10px; }
@@ -1000,6 +1017,12 @@ body {
   min-height: 28px;
   padding: 4px 7px;
   white-space: nowrap;
+}
+.chart-tooltip .provider-brand-mark i.option-picker__glyph {
+  background: var(--option-picker-glyph, currentcolor);
+  border-radius: 0;
+  height: 10px;
+  width: 10px;
 }
 .share-control {
   align-items: center;

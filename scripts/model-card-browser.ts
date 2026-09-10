@@ -129,6 +129,42 @@ async function settle(page: Page): Promise<void> {
   });
 }
 
+function boxCenter(box: Readonly<{ height: number; y: number }>): number {
+  return box.y + box.height / 2;
+}
+
+async function assertCompactPickerAlignment(
+  picker: Locator,
+  optionName: string,
+): Promise<void> {
+  const trigger = picker.locator(".option-picker__trigger");
+  await trigger.click();
+  const option = picker.getByRole("option", { name: optionName, exact: true });
+  const pickerBox = await picker.boundingBox();
+  const triggerMark = await trigger.locator(".option-picker__leading, .option-picker__chip").first().boundingBox();
+  const optionMark = await option.locator(".option-picker__leading, .option-picker__chip").first().boundingBox();
+  const triggerText = await trigger.locator(".option-picker__value strong").boundingBox();
+  const optionText = await option.locator(".option-picker__copy strong").boundingBox();
+  invariant(pickerBox !== null, "The compact picker needs a layout box.");
+  invariant(triggerMark !== null && optionMark !== null, "Compact picker rows need a leading icon.");
+  invariant(triggerText !== null && optionText !== null, "Compact picker rows need a visible label.");
+  const triggerInset = triggerMark.x - pickerBox.x;
+  const optionInset = optionMark.x - pickerBox.x;
+  invariant(
+    Math.abs(triggerInset - optionInset) <= 2,
+    `Trigger and list icons must share a left edge (trigger ${triggerInset.toFixed(1)}px, option ${optionInset.toFixed(1)}px).`,
+  );
+  invariant(
+    Math.abs(boxCenter(triggerMark) - boxCenter(triggerText)) <= 3,
+    "The closed trigger icon and label must share a vertical center.",
+  );
+  invariant(
+    Math.abs(boxCenter(optionMark) - boxCenter(optionText)) <= 3,
+    "Open list icons and labels must share a vertical center.",
+  );
+  await trigger.click();
+}
+
 async function openModels(page: Page, baseUrl: string): Promise<Locator> {
   await page.goto(`${baseUrl}/models`, { waitUntil: "domcontentloaded" });
   const frame = page.locator(".model-card-frame").first();
@@ -147,6 +183,14 @@ async function verifyChartExport(browser: Browser, baseUrl: string): Promise<voi
   try {
     await page.goto(`${baseUrl}/coding`, { waitUntil: "domcontentloaded" });
     await settle(page);
+    const benchmarkPicker = page.locator(".chart-benchmark-select");
+    await assertCompactPickerAlignment(benchmarkPicker, "DeepSWE");
+    for (const metric of ["Cost", "Time", "Tokens"] as const) {
+      invariant(
+        await page.getByRole("radio", { name: metric, exact: true }).locator("svg").count() === 1,
+        `The ${metric} compare-by control needs a scannable icon.`,
+      );
+    }
     const sourceChartHeight = await page.locator(".chart-canvas .benchmark-chart").evaluate((element) => {
       if (!(element instanceof SVGSVGElement)) {
         throw new Error("The coding-agent chart is not an SVG element.");
@@ -277,6 +321,11 @@ async function verifyBenchmarkAtlas(browser: Browser, baseUrl: string): Promise<
     await atlas.getByRole("button", { name: "Show top eight", exact: true }).click();
     invariant(await atlas.locator(".atlas-row").count() === 8, "Collapsing results did not restore the top-eight view.");
     const taskPicker = atlas.locator(".atlas-task-select");
+    await assertCompactPickerAlignment(taskPicker, "All tasks");
+    invariant(
+      await atlas.locator(".atlas-row .provider-brand-mark").count() === await atlas.locator(".atlas-row").count(),
+      "Ranking rows must show a vendor mark beside the lab name.",
+    );
     await taskPicker.locator(".option-picker__trigger").click();
     await taskPicker.getByRole("option", { name: "Memory", exact: true }).click();
     invariant(await atlas.locator(".atlas-row").count() === 6, "Memory comparisons must retain all six systems with the fixed reader.");

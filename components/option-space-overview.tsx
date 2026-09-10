@@ -6,6 +6,7 @@ import {
   type BarListChartDatum,
   type RangePlotChartDatum,
 } from "@/components/ui";
+import { ProviderBrandMark } from "@/components/provider-brand-mark";
 import { useMemo } from "react";
 
 import { providerColor, recordColor } from "@/lib/chart-colors";
@@ -52,6 +53,12 @@ export function OptionSpaceOverview({
         detail: `${record.providerName} · ${formatMetricValue(xMetric, xValue)}`,
         id: record.id,
         label: record.modelLabel,
+        leading: (
+          <ProviderBrandMark
+            displayName={record.providerName}
+            identities={[record.providerId]}
+          />
+        ),
         value: yValue,
       }))
   ), [frontier, xMetric]);
@@ -61,6 +68,12 @@ export function OptionSpaceOverview({
       detail: `${String(range.count)} ${range.count === 1 ? "option" : "options"} · median ${formatMetricValue(yMetric, range.median)}`,
       id: range.providerId,
       label: range.providerName,
+      leading: (
+        <ProviderBrandMark
+          displayName={range.providerName}
+          identities={[range.providerId]}
+        />
+      ),
       maximum: range.maximum,
       median: range.median,
       minimum: range.minimum,

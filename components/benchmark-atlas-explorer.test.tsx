@@ -109,6 +109,8 @@ describe("benchmark library progressive disclosure", () => {
     expect(primary).toContain(">Ranking</button>");
     expect(primary).toContain(">Cost vs. score</button>");
     expect(primary).toContain(">Table</button>");
+    expect(html).toContain("provider-brand-mark");
+    expect(html).toContain("atlas-row__profile-rest");
     expect(primary).toContain(dataset.comparabilityNote);
     expect(primary.indexOf('class="atlas-ranking"')).toBeLessThan(primary.indexOf(dataset.comparabilityNote));
     expect(primary.indexOf(dataset.comparabilityNote)).toBeLessThan(primary.indexOf('class="atlas-provenance"'));
