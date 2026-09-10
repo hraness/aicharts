@@ -3,7 +3,7 @@
   "source": {
     "method": "models-api",
     "name": "OpenRouter",
-    "retrievedAt": "2026-09-05T05:49:48.932Z",
+    "retrievedAt": "2026-09-10T18:31:42.524Z",
     "timestampMeaning": "source-added-at",
     "url": "https://openrouter.ai/api/v1/models?sort=newest"
   },
@@ -28,6 +28,12 @@
     "windowDays": 90
   },
   "observedListings": [
+    {
+      "id": "deepseek/deepseek-v4.1-flash",
+      "model": "DeepSeek V4.1 Flash",
+      "providerId": "deepseek",
+      "sourceAddedAt": "2026-09-10T06:21:25.000Z"
+    },
     {
       "id": "openai/gpt-6-astra",
       "model": "GPT-6 Astra",
@@ -276,6 +282,26 @@
     }
   ],
   "releases": [
+    {
+      "capabilities": {
+        "inputModalities": [
+          "image",
+          "text"
+        ],
+        "outputModalities": [
+          "text"
+        ],
+        "supportsTools": true
+      },
+      "canonicalSlug": "deepseek/deepseek-v4.1-flash-20260910",
+      "id": "deepseek/deepseek-v4.1-flash",
+      "model": "DeepSeek V4.1 Flash",
+      "modelUrl": "https://openrouter.ai/deepseek/deepseek-v4.1-flash",
+      "providerId": "deepseek",
+      "providerName": "DeepSeek",
+      "sourceAddedAt": "2026-09-10T06:21:25.000Z",
+      "status": "awaiting-benchmark"
+    },
     {
       "capabilities": {
         "inputModalities": [
@@ -1036,47 +1062,6 @@
       "providerId": "z_ai",
       "providerName": "Z.ai",
       "sourceAddedAt": "2026-06-16T17:45:30.000Z",
-      "status": "benchmarked"
-    },
-    {
-      "capabilities": {
-        "inputModalities": [
-          "image",
-          "text"
-        ],
-        "outputModalities": [
-          "text"
-        ],
-        "supportsTools": true
-      },
-      "canonicalSlug": "moonshotai/kimi-k2.7-code-20260612",
-      "id": "moonshotai/kimi-k2.7-code",
-      "model": "Kimi K2.7 Code",
-      "modelUrl": "https://openrouter.ai/moonshotai/kimi-k2.7-code",
-      "providerId": "moonshot_ai",
-      "providerName": "Moonshot AI",
-      "sourceAddedAt": "2026-06-12T12:12:41.000Z",
-      "status": "awaiting-benchmark"
-    },
-    {
-      "capabilities": {
-        "inputModalities": [
-          "file",
-          "image",
-          "text"
-        ],
-        "outputModalities": [
-          "text"
-        ],
-        "supportsTools": true
-      },
-      "canonicalSlug": "anthropic/claude-5-fable-20260609",
-      "id": "anthropic/claude-fable-5",
-      "model": "Claude Fable 5",
-      "modelUrl": "https://openrouter.ai/anthropic/claude-fable-5",
-      "providerId": "anthropic",
-      "providerName": "Anthropic",
-      "sourceAddedAt": "2026-06-09T12:18:35.000Z",
       "status": "benchmarked"
     }
   ]
