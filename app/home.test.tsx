@@ -91,14 +91,22 @@ describe("homepage canonical content", () => {
     const source = await Bun.file(new URL("./page.tsx", import.meta.url)).text();
     const markup = renderToStaticMarkup(createElement(Home));
     const mainAt = markup.indexOf('<main class="chart-home" id="main-content">');
+    const calculatorAt = markup.indexOf('class="home-calculator"');
     const intelligenceAt = markup.indexOf('class="intelligence-efficiency"');
     const discoveryAt = markup.indexOf('class="task-discovery"');
     const mainEndAt = markup.indexOf("</main>", mainAt);
 
     expect(mainAt).toBeGreaterThan(markup.indexOf("site-header"));
+    // The Pareto chart leads (the browser contract holds its fold position);
+    // the calculator callout follows it, ahead of the task links.
     expect(intelligenceAt).toBeGreaterThan(mainAt);
-    expect(discoveryAt).toBeGreaterThan(intelligenceAt);
+    expect(calculatorAt).toBeGreaterThan(intelligenceAt);
+    expect(discoveryAt).toBeGreaterThan(calculatorAt);
     expect(mainEndAt).toBeGreaterThan(discoveryAt);
+    expect(markup).toContain('data-analytics-surface="home_calculator"');
+    expect(markup).toContain("Subscription vs API vs GPUs");
+    expect(markup).toContain('href="/calculator"');
+    expect(markup).toContain("Open the calculator");
     expect(markup).not.toContain('class="benchmark-atlas"');
     expect(markup).not.toContain('class="chart-page-canvas"');
     expect(markup).not.toContain('class="home-editorial"');

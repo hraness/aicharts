@@ -238,7 +238,7 @@ describe("markdown representations", () => {
   test("describes the calculator's default scenario with sourced as-of dates", () => {
     const calculator = markdownForPath("/calculator");
     expect(calculator).toMatchObject({ found: true, contentType: MARKDOWN_CONTENT_TYPE });
-    expect(calculator.body).toStartWith("# ChatGPT Pro vs API vs GPUs you buy or rent\n");
+    expect(calculator.body).toStartWith("# Subscription vs API vs GPUs\n");
     expect(calculator.body).not.toContain("undefined");
     expect(calculator.body).toContain("## Default scenario (1 seat, 40x subsidy, 100% utilization, 50% cache hits, 4:1 mix)");
     expect(calculator.body).toContain(CALCULATOR_INPUTS.openAiApiPricing.source.url);
