@@ -3,8 +3,8 @@ import { err, ok, type Result } from "./result";
 import { parseResult, z } from "./schema";
 
 const PROVIDER_IDS = [
-  "ai2", "ai21", "alibaba_cloud", "amazon", "anthropic", "baidu", "bytedance", "cohere",
-  "deepseek", "google", "ibm", "meta", "microsoft", "minimax", "mistral",
+  "ai2", "ai21", "alibaba_cloud", "amazon", "anthropic", "baidu", "bytedance", "cognition",
+  "cohere", "deepseek", "google", "ibm", "meta", "microsoft", "minimax", "mistral",
   "moonshot_ai", "nvidia", "openai", "stepfun", "tencent", "xai", "xiaomi", "z_ai",
 ] as const;
 
@@ -15,6 +15,7 @@ type SourceContract = Readonly<{
   canonicalHost: string;
   datePolicy: "all" | "candidates" | "ignore";
   format:
+    | "html-cognition-blog-index"
     | "html-deepseek-updates"
     | "markdown-meta-index"
     | "markdown-minimax-releases"
@@ -207,6 +208,21 @@ export const FIRST_PARTY_RELEASE_SOURCE_DEFINITIONS = [
     minimumEntryCount: 100, providerId: "stepfun", providerName: "StepFun",
     url: "https://platform.stepfun.com/docs/sitemap.xml",
   },
+  {
+    allowRelativeUrls: false, canonicalHost: "cognition.com", datePolicy: "all",
+    format: "sitemap-urlset", id: "cognition-sitemap", minimumCandidateCount: 3,
+    minimumEntryCount: 100, providerId: "cognition", providerName: "Cognition",
+    url: "https://cognition.com/sitemap.xml",
+  },
+  // Cognition's sitemap lags the blog index by days for new posts, so the index
+  // is a second discovery surface. Its candidates use stable fragments of the
+  // index URL, keeping the sitemap the sole owner of canonical post URLs.
+  {
+    allowRelativeUrls: true, canonicalHost: "cognition.com", datePolicy: "ignore",
+    format: "html-cognition-blog-index", id: "cognition-blog-index", minimumCandidateCount: 4,
+    minimumEntryCount: 75, providerId: "cognition", providerName: "Cognition",
+    url: "https://cognition.com/blog",
+  },
 ] as const satisfies readonly SourceContract[];
 
 export const FIRST_PARTY_RELEASE_PUBLICATION_POLICY = "discovery-only" as const;
@@ -229,7 +245,8 @@ const candidateDateMeaningSchema = z.enum([
   "first-observed", "provider-index-lastmod", "provider-published-date", "provider-sitemap-lastmod",
 ]);
 const sourceRootElementSchema = z.enum([
-  "html-release-notes", "markdown-index", "markdown-release-notes", "rss", "sitemapindex", "urlset",
+  "html-index", "html-release-notes", "markdown-index", "markdown-release-notes", "rss",
+  "sitemapindex", "urlset",
 ]);
 
 const sourceHealthSchema = z.object({
@@ -308,6 +325,7 @@ function sourceDefinitionForId(id: FirstPartyReleaseSourceId): FirstPartyRelease
 }
 
 function sourceRootElement(definition: FirstPartyReleaseSourceDefinition) {
+  if (definition.format === "html-cognition-blog-index") return "html-index" as const;
   if (definition.format === "html-deepseek-updates") return "html-release-notes" as const;
   if (definition.format === "rss") return "rss" as const;
   if (definition.format === "sitemap-index") return "sitemapindex" as const;
@@ -331,12 +349,12 @@ export function sourceAcceptsContentType(
       "text/xml",
     ]).has(normalized);
   }
-  if (definition.format === "html-deepseek-updates") return normalized === "text/html";
+  if (definition.format.startsWith("html-")) return normalized === "text/html";
   return new Set(["text/markdown", "text/plain", "text/x-markdown"]).has(normalized);
 }
 
 function sourceAllowsCandidateFragment(definition: FirstPartyReleaseSourceDefinition): boolean {
-  return definition.format === "html-deepseek-updates"
+  return definition.format.startsWith("html-")
     || (definition.format.startsWith("markdown-")
       && definition.format !== "markdown-meta-index"
       && definition.format !== "markdown-openai-catalog");
@@ -709,6 +727,27 @@ function parseDeepSeekUpdates(definition: FirstPartyReleaseSourceDefinition, htm
   return finalizedMarkdownEntries(definition, rawEntries, rawEntries.length);
 }
 
+function parseCognitionBlogIndex(definition: FirstPartyReleaseSourceDefinition, html: string): Result<ParsedProviderSitemap, Error> {
+  if (!/^<!doctype html>/iu.test(html) || !/<html(?:\s|>)/iu.test(html) || !/<\/html>/iu.test(html)) {
+    return err(new Error(`${definition.id} is no longer an HTML document.`));
+  }
+  const anchors = [...html.matchAll(/<a\b[^>]*\bhref="([^"]*)"/gu)];
+  if (anchors.length === 0) return err(new Error(`${definition.id} contains no links.`));
+  const rawEntries: SitemapEntry[] = [];
+  for (const anchor of anchors) {
+    const href = anchor[1];
+    if (href === undefined) return err(new Error(`${definition.id} contains an empty link target.`));
+    const slug = decodeXmlText(href).match(/^(?:https:\/\/cognition\.com)?\/blog\/([a-z0-9-]+)$/u)?.[1];
+    if (slug === undefined) continue;
+    rawEntries.push({
+      candidateDateMeaning: "first-observed",
+      lastModifiedAt: null,
+      url: releaseNoteUrl(definition, slug),
+    });
+  }
+  return finalizedMarkdownEntries(definition, rawEntries, 0);
+}
+
 function stableFragment(value: string): string {
   return value.normalize("NFKD").toLowerCase().replace(/[^a-z0-9]+/gu, "-").replace(/^-+|-+$/gu, "").slice(0, 120);
 }
@@ -938,6 +977,7 @@ function parseXaiReleases(definition: FirstPartyReleaseSourceDefinition, markdow
 
 /** Parses the strict provider-owned source subset used by the discovery ledger. */
 export function parseProviderSitemap(definition: FirstPartyReleaseSourceDefinition, source: string): Result<ParsedProviderSitemap, Error> {
+  if (definition.format === "html-cognition-blog-index") return parseCognitionBlogIndex(definition, source);
   if (definition.format === "html-deepseek-updates") return parseDeepSeekUpdates(definition, source);
   if (definition.format === "rss") return parseRss(definition, source);
   if (definition.format === "markdown-openai-catalog") return parseOpenAiCatalog(definition, source);
@@ -962,7 +1002,7 @@ function titleToken(token: string): string {
   const exact: Readonly<Record<string, string>> = {
     ai: "AI", api: "API", asr: "ASR", audio: "Audio", code: "Code", er: "ER", flash: "Flash", gpt: "GPT",
     image: "Image", mini: "Mini", mt: "MT", omni: "Omni", preview: "Preview", pro: "Pro",
-    realtime: "Realtime", tts: "TTS", vl: "VL", vlm: "VLM",
+    realtime: "Realtime", swe: "SWE", tts: "TTS", vl: "VL", vlm: "VLM",
   };
   return exact[token] ?? `${token[0]?.toUpperCase() ?? ""}${token.slice(1)}`;
 }
@@ -1198,6 +1238,28 @@ function mistralModels(url: URL): string[] {
   return [displaySlug(slug).replace(/^Ocr/u, "OCR")];
 }
 
+/**
+ * Returns the Cognition blog-post slug for a canonical post URL or a stable
+ * blog-index fragment URL, the two shapes the Cognition sources emit.
+ */
+function cognitionBlogSlug(url: URL): string | null {
+  const pathSlug = url.pathname.match(/^\/blog\/([^/]+)\/?$/u)?.[1];
+  if (pathSlug !== undefined) return pathSlug.toLowerCase();
+  return /^\/blog\/?$/u.test(url.pathname) && url.hash.length > 1
+    ? decodeURIComponent(url.hash.slice(1)).toLowerCase()
+    : null;
+}
+
+const cognitionNonModelSwePattern = /^swe-(?:bench|check|grep)(?:-|$)/u;
+
+function cognitionModels(url: URL): string[] {
+  const slug = cognitionBlogSlug(url);
+  const match = slug?.match(/^swe-(\d+)(?:-(\d+))?(?:-(preview))?$/u);
+  if (match?.[1] === undefined) return [];
+  const version = `${match[1]}${match[2] === undefined ? "" : `.${match[2]}`}`;
+  return [`SWE-${version}${match[3] === undefined ? "" : " Preview"}`];
+}
+
 function cohereModels(url: URL): string[] {
   const slug = url.pathname.match(/^\/changelog\/([^/]+)\/?$/u)?.[1];
   if (slug === undefined || /retir|deprecat|fine-tun|(?:^|-)ft(?:-|$)|whatsapp|bedrock|azure|oci|sagemaker|sdk|api-release/u.test(slug)) return [];
@@ -1370,7 +1432,8 @@ function namedModelsForProviderText(providerId: FirstPartyReleaseProviderId, val
 const providerModelExtractors = {
   ai2: ai2Models, ai21: ai21Models,
   alibaba_cloud: qwenModels, amazon: amazonModels, anthropic: anthropicModels, baidu: baiduModels,
-  bytedance: bytedanceModels, cohere: cohereModels, deepseek: deepSeekModels, google: googleModels,
+  bytedance: bytedanceModels, cognition: cognitionModels, cohere: cohereModels,
+  deepseek: deepSeekModels, google: googleModels,
   ibm: ibmModels, meta: metaModels, microsoft: microsoftModels, minimax: minimaxModels, mistral: mistralModels,
   moonshot_ai: kimiModels, nvidia: nvidiaModels, openai: openAiModels, stepfun: stepfunModels,
   tencent: tencentModels,
@@ -1533,6 +1596,14 @@ function unresolvedAnnouncementNameForSource(
         && !/-(?:cookbook|mobile-agent|quickstart)$/u.test(modelSlug)
         && !/^step-router(?:-|$)/u.test(modelSlug)
         ? unresolvedName(modelSlug)
+        : null;
+    }
+    case "cognition-sitemap":
+    case "cognition-blog-index": {
+      const blogSlug = cognitionBlogSlug(url);
+      return blogSlug !== null && /^swe-/u.test(blogSlug) && /\d/u.test(blogSlug)
+        && !cognitionNonModelSwePattern.test(blogSlug)
+        ? unresolvedName(blogSlug)
         : null;
     }
   }
