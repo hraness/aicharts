@@ -79,7 +79,13 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
             type="application/ld+json"
           />
           {children}
-          <HranessSiteFooter mailingList={aiChartsMailingListConfig()} />
+          <HranessSiteFooter
+            mailingList={aiChartsMailingListConfig()}
+            social={{
+              x: { href: "https://x.com/aichartsio", label: "AI Charts on X" },
+              github: { href: "https://github.com/hraness/aicharts", label: "AI Charts on GitHub" },
+            }}
+          />
           <AnalyticsBoundary />
         </DesignThemeProvider>
       </body>
