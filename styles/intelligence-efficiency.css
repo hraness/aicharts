@@ -86,6 +86,7 @@
 }
 
 .intelligence-efficiency__model-picker.option-picker {
+  align-self: stretch;
   flex: 1 0 100%;
   margin-block: 4px 8px;
 }
