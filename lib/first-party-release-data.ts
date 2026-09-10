@@ -215,8 +215,9 @@ export const FIRST_PARTY_RELEASE_SOURCE_DEFINITIONS = [
     url: "https://cognition.com/sitemap.xml",
   },
   // Cognition's sitemap lags the blog index by days for new posts, so the index
-  // is a second discovery surface. Its candidates use stable fragments of the
-  // index URL, keeping the sitemap the sole owner of canonical post URLs.
+  // is a second discovery surface over the same canonical post URLs. Its claims
+  // defer to the durable ledger owner, so early index discovery never conflicts
+  // with the sitemap's dated evidence for posts the sitemap saw first.
   {
     allowRelativeUrls: true, canonicalHost: "cognition.com", datePolicy: "ignore",
     format: "html-cognition-blog-index", id: "cognition-blog-index", minimumCandidateCount: 4,
@@ -224,6 +225,15 @@ export const FIRST_PARTY_RELEASE_SOURCE_DEFINITIONS = [
     url: "https://cognition.com/blog",
   },
 ] as const satisfies readonly SourceContract[];
+
+/**
+ * Secondary discovery surfaces that watch the same canonical URL space as an
+ * authoritative same-provider source. Their candidate claims yield to the
+ * durable ledger owner and to same-refresh claims from exclusive sources, so
+ * early discovery never transfers or duplicates candidate ownership. Every
+ * source outside this set owns its candidate URLs exclusively.
+ */
+const DEFERRING_CANDIDATE_SOURCE_IDS: ReadonlySet<string> = new Set(["cognition-blog-index"]);
 
 export const FIRST_PARTY_RELEASE_PUBLICATION_POLICY = "discovery-only" as const;
 export const FIRST_PARTY_RELEASE_REVIEW_POLICY = "manual-review-required" as const;
@@ -400,7 +410,14 @@ function firstPartyReleaseRadarSchemaFor(sourceCompleteness: "configured" | "his
       if (definition !== undefined && source.health.shape.uniqueEntryCount < definition.minimumEntryCount) {
         context.addIssue({ code: "custom", message: `${source.id} is below its minimum safe unique-entry count.`, path: ["sources", index, "health", "shape", "uniqueEntryCount"] });
       }
-      if (definition !== undefined && source.health.shape.candidateCount < definition.minimumCandidateCount) {
+      if (
+        definition !== undefined
+        // A deferring source's contributed count is structurally small because
+        // the exclusive same-provider source owns most of the shared URL space;
+        // its minimum guards raw extraction at observation time instead.
+        && !DEFERRING_CANDIDATE_SOURCE_IDS.has(definition.id)
+        && source.health.shape.candidateCount < definition.minimumCandidateCount
+      ) {
         context.addIssue({ code: "custom", message: `${source.id} is below its minimum safe release-candidate count.`, path: ["sources", index, "health", "shape", "candidateCount"] });
       }
       if (definition !== undefined && !sourceAcceptsContentType(definition, source.health.contentType)) {
@@ -742,7 +759,7 @@ function parseCognitionBlogIndex(definition: FirstPartyReleaseSourceDefinition, 
     rawEntries.push({
       candidateDateMeaning: "first-observed",
       lastModifiedAt: null,
-      url: releaseNoteUrl(definition, slug),
+      url: `https://${definition.canonicalHost}/blog/${slug}`,
     });
   }
   return finalizedMarkdownEntries(definition, rawEntries, 0);
@@ -1702,16 +1719,48 @@ export function deriveFirstPartyReleaseRadar(
   const previousByUrl = new Map(previous.candidates.map(candidate => [candidate.canonicalUrl, candidate]));
   const currentCandidateUrls = new Set<string>();
   const currentEntries = new Map(observations.flatMap(observation => observation.entries.map(entry => [`${observation.source.id}\0${entry.url}`, entry] as const)));
+
+  // Candidate ownership is durable and exclusive: the first source to record a
+  // URL keeps it. Deferring secondary surfaces may re-observe an owned URL
+  // without failing the refresh; competing exclusive claims stay hard errors.
+  const claimantsByUrl = new Map<string, FirstPartyReleaseSourceId[]>();
+  for (const observation of observations) {
+    for (const current of observation.candidates) {
+      const claimants = claimantsByUrl.get(current.canonicalUrl) ?? [];
+      claimants.push(observation.source.id);
+      claimantsByUrl.set(current.canonicalUrl, claimants);
+    }
+  }
   const ownerByUrl = new Map<string, FirstPartyReleaseSourceId>();
+  for (const [url, claimants] of claimantsByUrl) {
+    const priorOwner = previousByUrl.get(url)?.sourceId;
+    if (priorOwner !== undefined) {
+      const transferring = claimants.some(id => (
+        id !== priorOwner
+        && !DEFERRING_CANDIDATE_SOURCE_IDS.has(id)
+        && !DEFERRING_CANDIDATE_SOURCE_IDS.has(priorOwner)
+      ));
+      if (transferring) throw new Error(`First-party candidate ${url} changed source ownership.`);
+      ownerByUrl.set(url, priorOwner);
+      continue;
+    }
+    const exclusive = claimants.filter(id => !DEFERRING_CANDIDATE_SOURCE_IDS.has(id));
+    if (exclusive.length > 1 || (exclusive.length === 0 && claimants.length > 1)) {
+      const conflict = exclusive.length > 1 ? exclusive : claimants;
+      throw new Error(`First-party sources ${conflict[0]} and ${conflict[1]} overlap candidate ${url}.`);
+    }
+    const owner = exclusive[0] ?? claimants[0];
+    if (owner !== undefined) ownerByUrl.set(url, owner);
+  }
+
+  const ownedCandidateCounts = new Map<FirstPartyReleaseSourceId, number>();
   const candidates: FirstPartyReleaseCandidate[] = [];
   for (const observation of observations) {
     for (const current of observation.candidates) {
-      const owner = ownerByUrl.get(current.canonicalUrl);
-      if (owner !== undefined && owner !== observation.source.id) throw new Error(`First-party sources ${owner} and ${observation.source.id} overlap candidate ${current.canonicalUrl}.`);
-      ownerByUrl.set(current.canonicalUrl, observation.source.id);
+      if (ownerByUrl.get(current.canonicalUrl) !== observation.source.id) continue;
+      ownedCandidateCounts.set(observation.source.id, (ownedCandidateCounts.get(observation.source.id) ?? 0) + 1);
       currentCandidateUrls.add(current.canonicalUrl);
       const existing = previousByUrl.get(current.canonicalUrl);
-      if (existing !== undefined && existing.sourceId !== observation.source.id) throw new Error(`First-party candidate ${current.canonicalUrl} changed source ownership.`);
       const sourceModifiedAt = existing?.sourceModifiedAt
         ?? current.sourceModifiedAt
         ?? normalizedObservedAt;
@@ -1742,7 +1791,18 @@ export function deriveFirstPartyReleaseRadar(
   const priorSources = new Map(previous.sources.map(source => [source.id, source]));
   const sources = FIRST_PARTY_RELEASE_SOURCE_DEFINITIONS.flatMap(definition => {
     const current = currentSources.get(definition.id);
-    if (current !== undefined) return [current];
+    // Health reports the candidates a source contributes after ownership
+    // resolution; for exclusive sources this equals its observed candidates.
+    if (current !== undefined) return [{
+      ...current,
+      health: {
+        ...current.health,
+        shape: {
+          ...current.health.shape,
+          candidateCount: ownedCandidateCounts.get(definition.id) ?? 0,
+        },
+      },
+    }];
     const prior = retainedSourceIds.has(definition.id) ? priorSources.get(definition.id) : undefined;
     return prior === undefined ? [] : [prior];
   });
