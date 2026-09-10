@@ -8,7 +8,15 @@ import {
   Image01Icon,
   Share08Icon,
 } from "@hugeicons/core-free-icons";
-import { NativeSelectField, type NativeSelectOption } from "@hraness/ui";
+import { providerBrand } from "@/lib/provider-brand";
+import {
+  readLocationSearch,
+  replaceLocationSearch,
+  serverLocationSearch,
+  subscribeLocationSearch,
+} from "@/lib/selection-url";
+import { OptionGridPicker, type OptionGridPickerItem } from "@/components/option-grid-picker";
+import { codingBenchmarkGlyph } from "@/components/picker-glyphs";
 import {
   Icon,
   IconButton,
@@ -29,6 +37,7 @@ import {
   useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
   type CSSProperties,
   type KeyboardEvent,
   type MouseEvent as ReactMouseEvent,
@@ -43,6 +52,7 @@ import {
   buildChartShareUrl,
   chartImageFilename,
   chartImageShareData,
+  chartViewSearch,
   DEFAULT_CHART_X_METRIC,
   DEFAULT_CHART_Y_METRIC,
   parseChartShareView,
@@ -92,7 +102,40 @@ const yMetricItems = [
   { id: "deepSwe", label: yMetricLabels.deepSwe },
   { id: "terminalBench", label: yMetricLabels.terminalBench },
   { id: "sweAtlas", label: yMetricLabels.sweAtlas },
-] satisfies readonly NativeSelectOption<YMetric>[];
+] as const satisfies readonly Readonly<{ id: YMetric; label: string }>[];
+
+function resolveCodingSelection(
+  search: string,
+  records: readonly CodingAgentRecord[],
+  providerIds: ReadonlySet<string>,
+): Readonly<{
+  pinnedPointId: string | null;
+  pinnedProviderId: string | null;
+  xMetric: XMetric;
+  yMetric: YMetric;
+}> {
+  const sharedView = parseChartShareView(search);
+  const xMetric = sharedView.xMetric ?? DEFAULT_CHART_X_METRIC;
+  const yMetric = sharedView.yMetric ?? DEFAULT_CHART_Y_METRIC;
+  const sharedPoint = sharedView.pointKey === null
+    ? null
+    : records.find(record => codingAgentRecordKey(record) === sharedView.pointKey) ?? null;
+  const sharedProviderId = sharedView.providerId !== null && providerIds.has(sharedView.providerId)
+    ? sharedView.providerId
+    : null;
+  if (
+    sharedPoint !== null
+    && xMetricValue(sharedPoint, xMetric) !== null
+    && yMetricValue(sharedPoint, yMetric) !== null
+  ) {
+    return { pinnedPointId: sharedPoint.id, pinnedProviderId: null, xMetric, yMetric };
+  }
+  if (sharedProviderId !== null) {
+    return { pinnedPointId: null, pinnedProviderId: sharedProviderId, xMetric, yMetric };
+  }
+  return { pinnedPointId: null, pinnedProviderId: null, xMetric, yMetric };
+}
+
 const xMetricItems = [
   { id: "costUsd", label: xMetricControlLabels.costUsd },
   { id: "durationMinutes", label: xMetricControlLabels.durationMinutes },
@@ -402,16 +445,33 @@ export function CodingAgentExplorer({
     for (const record of snapshot.records) unique.set(record.providerId, { id: record.providerId, name: record.providerName });
     return Array.from(unique.values()).sort((left, right) => left.name.localeCompare(right.name));
   }, [snapshot.records]);
-  const providerItems = useMemo<readonly ToggleItem<string>[]>(() => providers.map((provider) => ({
-    id: provider.id,
-    label: provider.name,
-    leading: <i aria-hidden="true" />,
-    style: providerStyle(provider.id),
-  })), [providers]);
-  const [xMetric, setXMetric] = useState<XMetric>(DEFAULT_CHART_X_METRIC);
-  const [yMetric, setYMetric] = useState<YMetric>(DEFAULT_CHART_Y_METRIC);
-  const [pinnedPointId, setPinnedPointId] = useState<string | null>(null);
-  const [pinnedProviderId, setPinnedProviderId] = useState<string | null>(null);
+  const providerItems = useMemo<readonly ToggleItem<string>[]>(() => providers.map((provider) => {
+    const brand = providerBrand(provider.name, provider.id);
+    const glyphStyle = brand.iconUrl === null
+      ? undefined
+      : { "--option-picker-icon": `url("${brand.iconUrl}")` } as CSSProperties;
+    return {
+      id: provider.id,
+      label: provider.name,
+      leading: brand.iconUrl === null
+        ? <i aria-hidden="true" />
+        : <i aria-hidden="true" className="provider-filter__brand" style={glyphStyle} />,
+      style: providerStyle(provider.id),
+    };
+  }), [providers]);
+  const yMetricPickerItems = useMemo<readonly OptionGridPickerItem[]>(() => yMetricItems.map(item => ({
+    id: item.id,
+    keywords: [item.id],
+    label: item.label,
+    leading: codingBenchmarkGlyph(item.id),
+  })), []);
+  const search = useSyncExternalStore(subscribeLocationSearch, readLocationSearch, serverLocationSearch);
+  const providerIds = useMemo(() => new Set(providers.map(provider => provider.id)), [providers]);
+  const selection = useMemo(
+    () => resolveCodingSelection(search, snapshot.records, providerIds),
+    [providerIds, search, snapshot.records],
+  );
+  const { pinnedPointId, pinnedProviderId, xMetric, yMetric } = selection;
   const [hoveredPointId, setHoveredPointId] = useState<string | null>(null);
   const [pointerPointId, setPointerPointId] = useState<string | null>(null);
   const [hoveredProviderId, setHoveredProviderId] = useState<string | null>(null);
@@ -425,34 +485,26 @@ export function CodingAgentExplorer({
   const [svgViewport, setSvgViewport] = useState<SvgViewport | null>(null);
   const [tooltipSize, setTooltipSize] = useState<{ height: number; width: number }>(initialTooltipSize);
 
-  useEffect(() => {
-    const sharedView = parseChartShareView(window.location.search);
-    const nextXMetric = sharedView.xMetric ?? DEFAULT_CHART_X_METRIC;
-    const nextYMetric = sharedView.yMetric ?? DEFAULT_CHART_Y_METRIC;
-    const sharedPoint = sharedView.pointKey === null
+  function writeSelection(view: ChartShareView): void {
+    replaceLocationSearch(chartViewSearch(window.location.search, view));
+  }
+
+  function selectionView(
+    nextPointId: string | null,
+    nextProviderId: string | null,
+    nextXMetric = xMetric,
+    nextYMetric = yMetric,
+  ): ChartShareView {
+    const pinnedRecord = nextPointId === null
       ? null
-      : snapshot.records.find((record) => codingAgentRecordKey(record) === sharedView.pointKey) ?? null;
-    const sharedProviderId = sharedView.providerId !== null
-      && providers.some((provider) => provider.id === sharedView.providerId)
-      ? sharedView.providerId
-      : null;
-    const frame = window.requestAnimationFrame(() => {
-      if (sharedView.xMetric !== null) setXMetric(sharedView.xMetric);
-      if (sharedView.yMetric !== null) setYMetric(sharedView.yMetric);
-      if (
-        sharedPoint !== null
-        && xMetricValue(sharedPoint, nextXMetric) !== null
-        && yMetricValue(sharedPoint, nextYMetric) !== null
-      ) {
-        setPinnedPointId(sharedPoint.id);
-        setPinnedProviderId(null);
-      } else if (sharedProviderId !== null) {
-        setPinnedProviderId(sharedProviderId);
-        setPinnedPointId(null);
-      }
-    });
-    return () => window.cancelAnimationFrame(frame);
-  }, [providers, snapshot.records]);
+      : snapshot.records.find(record => record.id === nextPointId) ?? null;
+    return {
+      pointKey: pinnedRecord === null ? null : codingAgentRecordKey(pinnedRecord),
+      providerId: nextProviderId,
+      xMetric: nextXMetric,
+      yMetric: nextYMetric,
+    };
+  }
 
   useEffect(() => {
     const svg = svgRef.current;
@@ -504,14 +556,18 @@ export function CodingAgentExplorer({
           && hoveredProviderId === null
       ) return;
       event.preventDefault();
-      setPinnedPointId(null);
-      setPinnedProviderId(null);
+      writeSelection({
+        pointKey: null,
+        providerId: null,
+        xMetric,
+        yMetric,
+      });
       setHoveredPointId(null);
       setHoveredProviderId(null);
     };
     window.addEventListener("keydown", clearOnEscape);
     return () => window.removeEventListener("keydown", clearOnEscape);
-  }, [hoveredPointId, hoveredProviderId, pinnedPointId, pinnedProviderId, shareOpen]);
+  }, [hoveredPointId, hoveredProviderId, pinnedPointId, pinnedProviderId, shareOpen, xMetric, yMetric]);
 
   const chart = useMemo(() => {
     const visible = recordsWithMetrics(snapshot.records, xMetric, yMetric);
@@ -776,8 +832,7 @@ export function CodingAgentExplorer({
   }
 
   function clearSelection() {
-    setPinnedPointId(null);
-    setPinnedProviderId(null);
+    writeSelection(selectionView(null, null));
     setHoveredPointId(null);
     setPointerPointId(null);
     setHoveredProviderId(null);
@@ -794,8 +849,7 @@ export function CodingAgentExplorer({
         },
       });
     }
-    setPinnedProviderId(providerId);
-    setPinnedPointId(null);
+    writeSelection(selectionView(null, providerId));
     setHoveredPointId(null);
   }
 
@@ -951,8 +1005,7 @@ export function CodingAgentExplorer({
         },
       });
     }
-    setPinnedPointId(nextPointId);
-    setPinnedProviderId(null);
+    writeSelection(selectionView(nextPointId, null));
   }
 
   function pointForChartEvent(
@@ -1057,23 +1110,26 @@ export function CodingAgentExplorer({
       </details>
 
       <div className="chart-metric-controls chart-selection-boundary">
-        <NativeSelectField
+        <OptionGridPicker
           className="chart-benchmark-select"
           label="Benchmark"
-          onChange={(metric) => {
-            if (metric !== yMetric) {
+          layout="list"
+          onChange={metric => {
+            if (!yMetricItems.some(item => item.id === metric)) return;
+            const nextMetric = metric as YMetric;
+            if (nextMetric !== yMetric) {
               captureChartEvent({
                 name: "chart metric selected",
-                properties: { axis: "y", chart_id: "coding_agents", metric },
+                properties: { axis: "y", chart_id: "coding_agents", metric: nextMetric },
               });
             }
-            setYMetric(metric);
-            clearSelection();
+            writeSelection(selectionView(null, null, xMetric, nextMetric));
+            setHoveredPointId(null);
+            setPointerPointId(null);
+            setHoveredProviderId(null);
           }}
-          options={yMetricItems}
-          showLabel={false}
-          size="compact"
-          surface="pane"
+          options={yMetricPickerItems}
+          searchLabel="Search benchmarks"
           value={yMetric}
         />
         <MetricControl
@@ -1086,8 +1142,10 @@ export function CodingAgentExplorer({
                 properties: { axis: "x", chart_id: "coding_agents", metric },
               });
             }
-            setXMetric(metric);
-            clearSelection();
+            writeSelection(selectionView(null, null, metric, yMetric));
+            setHoveredPointId(null);
+            setPointerPointId(null);
+            setHoveredProviderId(null);
           }}
           value={xMetric}
         />
@@ -1408,8 +1466,7 @@ export function CodingAgentExplorer({
                 },
               });
             }
-            setPinnedPointId(nextPointId);
-            setPinnedProviderId(null);
+            writeSelection(selectionView(nextPointId, null));
             setHoveredPointId(null);
             setHoveredProviderId(null);
           }}

@@ -6,6 +6,7 @@ import { atlasDatasetSummary, selectAtlasEntries, selectAtlasModelProfiles, sort
 import { ATLAS_CATEGORY_LABELS, atlasViewSearch, formatAtlasCost, formatAtlasScore, parseAtlasView, type AtlasViewState } from "@/lib/benchmark-atlas-view";
 import { providerBrand } from "@/lib/provider-brand";
 import { OptionGridPicker, type OptionGridPickerItem } from "@/components/option-grid-picker";
+import { atlasTaskGlyph, chartLineGlyph } from "@/components/picker-glyphs";
 
 const TASK_ORDER = ["all", "coding", "reasoning", "research", "memory", "image", "video", "audio", "world", "science", "work", "computer-use", "general"] as const;
 const snapshot = () => window.location.search;
@@ -207,18 +208,31 @@ export function BenchmarkAtlasExplorer({ entries, datasets }: Readonly<{ entries
   if (!entry) return null;
   return <section className="benchmark-atlas" id="explore" aria-label="Explore AI benchmarks" data-analytics-surface="benchmark_atlas">
     <div className="atlas-navigation" role="group" aria-label="Choose a benchmark">
-      <label className="atlas-task-select"><span>Task</span><select aria-label="Task" value={state.category} onChange={event => {
-        const category = categories.find(value => value === event.target.value);
-        if (!category) return;
-        const candidates = category === "all" ? entries : entries.filter(item => item.category === category);
-        const first = candidates.find(item => item.coverage === "charted") ?? candidates[0];
-        if (!first) return;
-        setQuery(""); setChartOnly(false); setShowAllBenchmarks(false); choose(first.id, category);
-      }}>{categories.map(category => <option key={category} value={category}>{ATLAS_CATEGORY_LABELS[category]}</option>)}</select></label>
+      <OptionGridPicker
+        className="atlas-task-select"
+        label="Task"
+        layout="list"
+        onChange={id => {
+          const category = categories.find(value => value === id);
+          if (!category) return;
+          const candidates = category === "all" ? entries : entries.filter(item => item.category === category);
+          const first = candidates.find(item => item.coverage === "charted") ?? candidates[0];
+          if (!first) return;
+          setQuery(""); setChartOnly(false); setShowAllBenchmarks(false); choose(first.id, category);
+        }}
+        options={categories.map(category => ({
+          id: category,
+          keywords: [category],
+          label: ATLAS_CATEGORY_LABELS[category],
+          leading: atlasTaskGlyph(category),
+        }))}
+        searchLabel="Search tasks"
+        value={state.category}
+      />
       <OptionGridPicker
         className="atlas-benchmark-select"
         label="Benchmark"
-        minimumOptionWidth={210}
+        minimumOptionWidth={168}
         onChange={id => {
           if (id !== entry.id && filteredEntries.some(item => item.id === id)) choose(id);
         }}
@@ -228,12 +242,14 @@ export function BenchmarkAtlasExplorer({ entries, datasets }: Readonly<{ entries
             id: entry.id,
             keywords: [...entry.tags, ATLAS_CATEGORY_LABELS[entry.category]],
             label: `${entry.name} ${entry.version}`,
+            leading: chartLineGlyph(),
           }]),
           ...filteredEntries.map(item => ({
             description: coverageLabel(item.coverage),
             id: item.id,
             keywords: [...item.tags, ATLAS_CATEGORY_LABELS[item.category]],
             label: `${item.name} ${item.version}`,
+            leading: chartLineGlyph(),
           })),
         ]}
         searchLabel="Search benchmarks"

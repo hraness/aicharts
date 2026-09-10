@@ -9,6 +9,7 @@ export type PickerOption = Readonly<{
   id: string;
   keywords?: readonly string[];
   label: string;
+  qualifier?: string;
 }>;
 
 export type PickerNavigationKey =
@@ -44,9 +45,25 @@ function foldedText(text: string): string {
 function pickerHaystack(option: PickerOption): string {
   return foldedText([
     option.label,
+    option.qualifier ?? "",
     option.description ?? "",
     ...(option.keywords ?? []),
   ].join(" "));
+}
+
+/**
+ * Moves a single trailing parenthetical onto a quieter second line so the
+ * meaningful suffix of a long model name stays readable in a compact cell.
+ * Nested or mid-label parentheses stay on the primary line.
+ */
+export function splitPickerLabel(name: string): Readonly<{ label: string; qualifier?: string }> {
+  const trimmed = name.trim();
+  const match = /^(?<label>.+?)\s*\((?<qualifier>[^()]*)\)\s*$/u.exec(trimmed);
+  const label = match?.groups?.label?.trim() ?? "";
+  const qualifier = match?.groups?.qualifier?.trim() ?? "";
+  return label.length === 0 || qualifier.length === 0
+    ? { label: trimmed }
+    : { label, qualifier };
 }
 
 function isWordStart(haystack: string, index: number): boolean {

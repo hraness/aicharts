@@ -22,7 +22,7 @@
 .calculator-mode { display: grid; gap: 5px; justify-items: start; }
 .calculator-mode__label { color: var(--muted); font-size: 11px; }
 .calculator-mode .ui-segmented-control { display: inline-flex; gap: 2px; padding: 2px; }
-.calculator-profile-select { width: 250px; max-width: 100%; }
+.calculator-profile-select { --option-picker-accent: var(--brand-key); width: 250px; max-width: 100%; }
 
 .calculator-chart { padding-block: 22px 10px; }
 .calculator-chart h2, .calculator-load h2 {

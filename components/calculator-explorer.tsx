@@ -1,6 +1,8 @@
 "use client";
 
-import { Knob, NativeSelectField, type NativeSelectOption } from "@hraness/ui";
+import { Knob } from "@hraness/ui";
+import { OptionGridPicker, type OptionGridPickerItem } from "@/components/option-grid-picker";
+import { hardwareProfileGlyph } from "@/components/picker-glyphs";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 
 import type { CalculatorInputsSnapshot } from "@/lib/calculator-inputs-data";
@@ -214,8 +216,13 @@ export function CalculatorExplorer({
   const gpuNames = useMemo(() => new Map(
     snapshot.hardware.gpus.map(gpu => [gpu.id, gpu.name] as const),
   ), [snapshot]);
-  const profileOptions: readonly NativeSelectOption<string>[] = useMemo(() => (
-    snapshot.hardware.profiles.map(profile => ({ id: profile.id, label: profile.name }))
+  const profileOptions: readonly OptionGridPickerItem[] = useMemo(() => (
+    snapshot.hardware.profiles.map(profile => ({
+      description: profile.modelClass,
+      id: profile.id,
+      label: profile.name,
+      leading: hardwareProfileGlyph(),
+    }))
   ), [snapshot]);
 
   const openaiColor = providerColor("openai");
@@ -508,13 +515,13 @@ export function CalculatorExplorer({
               value={knobs.dutyCycle}
             />
           </div>
-          <NativeSelectField
+          <OptionGridPicker
             className="calculator-profile-select"
             label="Hardware profile"
+            layout="list"
             onChange={hardwareProfileId => selectKnob({ hardwareProfileId }, "hardware_profile")}
             options={profileOptions}
-            size="compact"
-            surface="pane"
+            searchLabel="Search hardware profiles"
             value={knobs.hardwareProfileId}
           />
         </div>
