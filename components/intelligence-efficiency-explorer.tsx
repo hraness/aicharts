@@ -20,6 +20,12 @@ import {
 } from "@/lib/intelligence-efficiency";
 import { captureChartEvent } from "@/lib/analytics";
 import { providerBrand } from "@/lib/provider-brand";
+import {
+  intelligenceShareSearch,
+  parseIntelligenceShareView,
+  type IntelligenceShareView,
+} from "@/lib/intelligence-share";
+import { replaceLocationSearch } from "@/lib/selection-url";
 import { OptionGridPicker, type OptionGridPickerItem } from "@/components/option-grid-picker";
 import {
   clientPointThroughSvgBounds,
@@ -42,6 +48,7 @@ export type IntelligenceEfficiencyExplorerDatum = Readonly<{
   name: string;
   outputTokensPerTask: number;
   releaseDate: string;
+  slug: string;
 }>;
 
 type ExplorerPoint = Readonly<{
@@ -401,11 +408,16 @@ export function IntelligenceEfficiencyExplorer({
 }>) {
   const [metric, setMetric] = useState<IntelligenceEfficiencyMetric>("costUsdPerTask");
   const defaultPointId = astraId ?? data[0]?.id ?? "";
+  const defaultShare = useMemo<IntelligenceShareView>(() => ({
+    metric: "costUsdPerTask",
+    pinnedId: defaultPointId,
+  }), [defaultPointId]);
   const [pinnedId, setPinnedId] = useState(defaultPointId);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [focusedId, setFocusedId] = useState<string | null>(null);
   const [rovingId, setRovingId] = useState(defaultPointId);
   const [chartWidth, setChartWidth] = useState(DEFAULT_CHART_WIDTH);
+  const [urlReady, setUrlReady] = useState(false);
   const chartShellRef = useRef<HTMLDivElement>(null);
   const pointRefs = useRef<Map<string, SVGGElement>>(new Map());
   const titleId = useId();
@@ -422,10 +434,35 @@ export function IntelligenceEfficiencyExplorer({
       glyphColor: brand.glyphColor,
       iconUrl: brand.iconUrl,
       id: datum.id,
+      keywords: [datum.slug, datum.creatorSlug],
       label: datum.name,
       monogram: brand.monogram,
     };
   }), [data]);
+
+  useEffect(() => {
+    const apply = (search: string) => {
+      const shared = parseIntelligenceShareView(search, data, defaultShare);
+      setMetric(shared.metric);
+      setPinnedId(shared.pinnedId);
+      setRovingId(shared.pinnedId);
+    };
+    apply(window.location.search);
+    setUrlReady(true);
+    const onPopState = () => apply(window.location.search);
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, [data, defaultShare]);
+
+  useEffect(() => {
+    if (!urlReady) return;
+    replaceLocationSearch(intelligenceShareSearch(
+      { metric, pinnedId },
+      data,
+      defaultShare,
+      window.location.search,
+    ));
+  }, [data, defaultShare, metric, pinnedId, urlReady]);
 
   useEffect(() => {
     const shell = chartShellRef.current;

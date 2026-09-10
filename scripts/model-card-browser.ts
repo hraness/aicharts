@@ -211,7 +211,7 @@ async function verifyBenchmarkAtlas(browser: Browser, baseUrl: string): Promise<
     invariant(await modelChoices.count() === await intelligence.locator(".intelligence-efficiency__point-control").count(), "The named picker must include every plotted configuration.");
     invariant(await modelPicker.locator('[aria-selected="true"]').count() === 1, "The picker must mark exactly the pinned configuration as selected.");
     const alternateOption = modelPicker.locator('[role="option"][aria-selected="false"]').first();
-    const alternateModel = await alternateOption.locator("strong").textContent();
+    const alternateModel = await alternateOption.getAttribute("title");
     invariant(alternateModel !== null, "The model picker needs an alternative configuration.");
     await modelSearch.fill(alternateModel);
     invariant(await modelChoices.count() < 90, "Search must narrow the dense model grid.");
@@ -276,11 +276,15 @@ async function verifyBenchmarkAtlas(browser: Browser, baseUrl: string): Promise<
     invariant(await atlas.locator('.atlas-row[aria-pressed="true"]').count() === 1, "Switching to ranking hid the selected low-ranked configuration.");
     await atlas.getByRole("button", { name: "Show top eight", exact: true }).click();
     invariant(await atlas.locator(".atlas-row").count() === 8, "Collapsing results did not restore the top-eight view.");
-    await atlas.getByRole("combobox", { name: "Task", exact: true }).selectOption("memory");
+    const taskPicker = atlas.locator(".atlas-task-select");
+    await taskPicker.locator(".option-picker__trigger").click();
+    await taskPicker.getByRole("option", { name: "Memory", exact: true }).click();
     invariant(await atlas.locator(".atlas-row").count() === 6, "Memory comparisons must retain all six systems with the fixed reader.");
-    await atlas.getByRole("combobox", { name: "Task", exact: true }).selectOption("image");
+    await taskPicker.locator(".option-picker__trigger").click();
+    await taskPicker.getByRole("option", { name: "Images", exact: true }).click();
     invariant(await atlas.locator("h2").textContent() === "Image generation · Arena", "Image task did not select its current preference chart.");
-    await atlas.getByRole("combobox", { name: "Task", exact: true }).selectOption("audio");
+    await taskPicker.locator(".option-picker__trigger").click();
+    await taskPicker.getByRole("option", { name: "Audio", exact: true }).click();
     invariant((await atlas.locator("h2").textContent())?.includes("Open ASR"), "Audio task must offer the qualified transcription chart.");
     invariant(await atlas.locator(".atlas-row").count() === 8, "Audio chart must show the first eight selected configurations.");
     await page.goBack({ waitUntil: "domcontentloaded" });
@@ -291,7 +295,7 @@ async function verifyBenchmarkAtlas(browser: Browser, baseUrl: string): Promise<
     const benchmarkPicker = atlas.locator(".atlas-benchmark-select");
     const benchmarkTrigger = benchmarkPicker.locator(".option-picker__trigger");
     invariant(await benchmarkTrigger.isVisible(), "Mobile benchmark navigation must be named and visible.");
-    invariant(await atlas.locator(".atlas-navigation select").count() === 1, "Only the short task list should remain a native select.");
+    invariant(await atlas.locator(".atlas-navigation select").count() === 0, "Task and benchmark navigation must use the shared picker, not a native select.");
     await atlas.locator(".atlas-library > summary").click();
     invariant(await atlas.getByLabel("Find a benchmark", { exact: true }).isVisible(), "Mobile search must be available in Browse library.");
     await atlas.locator(".atlas-library > summary").click();

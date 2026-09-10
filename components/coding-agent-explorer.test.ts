@@ -181,8 +181,9 @@ test("keeps chart chrome compact and metric labels semantic-only", async () => {
   expect(source).toContain('tooltip="Clear pinned selection"');
   expect(source).toContain('aria-label={label}');
   expect(source).toContain('className="chart-metric-controls chart-selection-boundary"');
-  expect(source).toContain('<NativeSelectField');
+  expect(source).toContain("<OptionGridPicker");
   expect(source).toContain('className="chart-benchmark-select"');
+  expect(source).not.toContain("<NativeSelectField");
   expect(source).toContain("label: yMetricLabels.aaIndex");
   expect(source).toContain("label: yMetricLabels.deepSwe");
   expect(source).toContain("label: yMetricLabels.terminalBench");
@@ -308,7 +309,8 @@ test("renders a compact source note, real chart anchor, and closed secondary con
   expect(html.indexOf("This source reports Terminal-Bench v2.1")).toBeGreaterThan(methodIndex);
   expect(html.indexOf('href="/data/coding-agents.json"')).toBeGreaterThan(methodIndex);
   expect(html).toContain('href="/benchmarks?atlas=terminal-bench-4"');
-  expect(html).toContain('value="terminalBench">Terminal-Bench v2.1</option>');
+  expect(html).toContain('class="option-picker option-picker--list chart-benchmark-select"');
+  expect(html).toContain("<strong>Terminal-Bench v2.1</strong>");
   expect(html).toContain('id="model-updates"');
   expect(html).not.toContain('class="chart-resource-nav"');
 });
@@ -325,7 +327,8 @@ test("generates coding-route share links without changing metric and selection r
   const link = new URL(buildChartShareUrl("https://aicharts.io/coding", view));
   expect(link.pathname).toBe("/coding");
   expect(parseChartShareView(link.search)).toEqual(view);
-  expect(source).toContain("parseChartShareView(window.location.search)");
+  expect(source).toContain("parseChartShareView(search)");
+  expect(source).toContain("replaceLocationSearch(chartViewSearch(window.location.search");
   expect(source).toContain("createBrandedChartPng(source, chartWidth, chartHeight");
 });
 

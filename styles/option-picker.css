@@ -6,30 +6,30 @@
   color: var(--muted);
   display: grid;
   font-size: 12px;
-  gap: 8px;
+  gap: 6px;
   min-width: 0;
   position: relative;
 }
 
 .option-picker__label {
   font-weight: 550;
-  line-height: 1.4;
+  line-height: 1.3;
 }
 
 /* Section stylesheets qualify controls as ".section button"; the extra
  * ".option-picker" ancestor keeps these control rules authoritative. */
 .option-picker .option-picker__trigger {
-  align-items: center;
+  align-items: flex-start;
   background: var(--surface, var(--background));
   border: 1px solid var(--line);
   border-radius: 8px;
   color: var(--foreground);
   display: flex;
-  font-size: 14px;
-  gap: 10px;
+  font-size: 13px;
+  gap: 8px;
   min-height: 44px;
   min-width: 0;
-  padding: 8px 12px;
+  padding: 7px 10px;
   text-align: left;
   width: 100%;
 }
@@ -40,30 +40,51 @@
 
 .option-picker .option-picker__trigger:focus-visible,
 .option-picker .option-picker__search:focus-visible,
-.option-picker .option-picker__empty button:focus-visible {
+.option-picker .option-picker__empty button:focus-visible,
+.option-picker__grid:focus-visible {
   outline: 2px solid var(--option-picker-accent, var(--foreground));
   outline-offset: 2px;
 }
 
 .option-picker__value {
-  align-items: baseline;
-  display: flex;
-  gap: 8px;
+  display: grid;
+  flex: 1;
+  gap: 1px;
   min-width: 0;
+}
+
+.option-picker__value strong,
+.option-picker__copy strong {
+  color: var(--foreground);
+  display: -webkit-box;
+  font-weight: 550;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  line-height: 1.3;
   overflow: hidden;
+  overflow-wrap: anywhere;
+  white-space: normal;
 }
 
 .option-picker__value strong {
-  font-weight: 550;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  font-size: 13px;
 }
 
-.option-picker__value small {
+.option-picker__value small,
+.option-picker__copy small {
   color: var(--muted);
-  flex: none;
-  font-size: 12px;
+  font-size: 11px;
+  line-height: 1.3;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+
+.option-picker__copy small {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
 }
 
 /* CSS chevron keeps the chart sections' one-SVG contract intact. */
@@ -73,6 +94,7 @@
   content: "";
   flex: none;
   height: 7px;
+  margin-block: 8px 0;
   margin-left: auto;
   transform: rotate(45deg) translateY(-2px);
   width: 7px;
@@ -84,14 +106,18 @@
   border-radius: 10px;
   box-shadow: var(--elevation-overlay, 0 18px 54px rgb(33 25 18 / 20%));
   display: grid;
-  gap: 8px;
+  gap: 6px;
   left: 0;
   max-width: calc(100vw - 24px);
-  padding: 10px;
+  padding: 8px;
   position: absolute;
   top: calc(100% + 6px);
-  width: max(100%, min(520px, 82vw));
+  width: max(100%, min(560px, 86vw));
   z-index: 120;
+}
+
+.option-picker--list .option-picker__panel {
+  width: max(100%, min(280px, 86vw));
 }
 
 .option-picker__panel[hidden] {
@@ -106,7 +132,7 @@
   font-size: 14px;
   min-height: 40px;
   min-width: 0;
-  padding: 8px 10px;
+  padding: 7px 10px;
   width: 100%;
 }
 
@@ -116,30 +142,39 @@
 
 .option-picker__status {
   color: var(--muted);
-  font-size: 12px;
-  line-height: 1.4;
+  font-size: 11px;
+  line-height: 1.35;
   margin: 0;
   padding-inline: 2px;
 }
 
 .option-picker__grid {
   display: grid;
-  gap: 4px;
-  max-height: min(46vh, 380px);
+  gap: 3px;
+  max-height: min(52vh, 420px);
   overflow-y: auto;
   overscroll-behavior: contain;
-  padding: 2px;
+  padding: 1px;
   scroll-padding-block: 6px;
 }
 
+.option-picker--list .option-picker__grid {
+  max-height: min(56vh, 460px);
+}
+
 .option-picker__option {
-  align-items: center;
+  align-items: flex-start;
   border-radius: 6px;
   cursor: pointer;
   display: flex;
-  gap: 8px;
+  gap: 7px;
   min-width: 0;
-  padding: 6px 8px;
+  padding: 5px 7px;
+}
+
+.option-picker--list .option-picker__option {
+  align-items: center;
+  padding: 7px 8px;
 }
 
 .option-picker__option[data-active] {
@@ -157,49 +192,53 @@
 
 .option-picker__copy {
   display: grid;
+  gap: 1px;
   min-width: 0;
 }
 
 .option-picker__copy strong {
-  color: var(--foreground);
-  font-size: 13px;
-  font-weight: 550;
-  line-height: 1.35;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  font-size: 12px;
 }
 
-.option-picker__copy small {
-  color: var(--muted);
-  font-size: 11px;
-  line-height: 1.35;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.option-picker__qualifier {
+  color: color-mix(in srgb, var(--muted) 82%, var(--foreground));
+}
+
+.option-picker__chip,
+.option-picker__leading {
+  border-radius: 5px;
+  display: grid;
+  flex: none;
+  height: 20px;
+  margin-top: 1px;
+  place-items: center;
+  width: 20px;
+}
+
+.option-picker--list .option-picker__chip,
+.option-picker--list .option-picker__leading {
+  margin-top: 0;
 }
 
 .option-picker__chip {
   background: var(--option-picker-chip, var(--muted));
-  border-radius: 6px;
   color: var(--option-picker-glyph, #f7f6f2);
-  display: grid;
-  flex: none;
-  font-size: 9px;
+  font-size: 8px;
   font-weight: 650;
-  height: 22px;
   letter-spacing: .02em;
-  place-items: center;
-  width: 22px;
+}
+
+.option-picker__leading {
+  color: var(--foreground);
 }
 
 .option-picker__glyph {
   background-color: currentcolor;
   display: block;
-  height: 14px;
+  height: 12px;
   mask: var(--option-picker-icon) center / contain no-repeat;
   -webkit-mask: var(--option-picker-icon) center / contain no-repeat;
-  width: 14px;
+  width: 12px;
 }
 
 .option-picker__empty {

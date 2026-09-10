@@ -23,7 +23,9 @@ describe("legacy chart navigation", () => {
     }
   });
   test("does not redirect ordinary home visits, new routes, or unrelated fragments", () => {
-    for (const value of ["", "?utm_source=notes", "?q=memory"]) expect(legacyChartDestination("/", value, "#intelligence-index")).toBeNull();
+    for (const value of ["", "?utm_source=notes", "?q=memory", "?model=claude-fable-5-1&resource=tokens"]) {
+      expect(legacyChartDestination("/", value, "#intelligence-index")).toBeNull();
+    }
     for (const path of ["/coding", "/benchmarks", "/data", "/api/markdown", "//evil.example"]) expect(legacyChartDestination(path, "?atlas=a")).toBeNull();
     for (const invalid of [null, undefined, 3, {}, []]) {
       expect(legacyChartDestination(invalid, "?atlas=a")).toBeNull();

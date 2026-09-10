@@ -55,15 +55,18 @@ describe("benchmark library progressive disclosure", () => {
     expect(parseAtlasView(new URL(url).search, entries, [dataset])).toEqual(state);
     expect(new URL(url).pathname).toBe("/benchmarks");
   });
-  test("keeps the short task select native and moves benchmarks into the searchable picker", () => {
+  test("moves task and benchmark navigation into the shared compact picker", () => {
     const html = render();
-    expect(html).toContain('aria-label="Task"');
-    expect(html).toContain('value="all" selected="">All tasks</option>');
-    expect(html).toContain('value="coding">Coding</option>');
-    expect(html).toContain('value="audio">Audio</option>');
-    expect(html).not.toContain('value="world">');
-    expect(html.match(/<select/gu)).toHaveLength(1);
-    const navigation = html.match(/<div class="option-picker atlas-benchmark-select">[\s\S]*?<details class="atlas-library"/u)?.[0] ?? "";
+    expect(html).not.toContain("<select");
+    const task = html.match(/<div class="option-picker option-picker--list atlas-task-select">[\s\S]*?<div class="option-picker option-picker--grid atlas-benchmark-select">/u)?.[0] ?? "";
+    expect(task).toContain(">Task</span>");
+    expect(task).toContain('aria-label="Task"');
+    expect(task).toContain("<strong>All tasks</strong>");
+    expect(task).toContain("<strong>Coding</strong>");
+    expect(task).toContain("<strong>Audio</strong>");
+    expect(task).not.toContain("<strong>World models</strong>");
+    expect(task).not.toContain('role="combobox"');
+    const navigation = html.match(/<div class="option-picker option-picker--grid atlas-benchmark-select">[\s\S]*?<details class="atlas-library"/u)?.[0] ?? "";
     expect(navigation).toContain(">Benchmark</span>");
     expect(navigation).toContain('aria-label="Benchmark"');
     expect(navigation).toContain('aria-label="Search benchmarks"');
@@ -174,7 +177,8 @@ describe("benchmark library progressive disclosure", () => {
     const rule = (selector: string) => css.slice(css.indexOf(`${selector} {`)).split("}")[0];
     expect(rule(".atlas-workspace")).toContain("min-width: 0");
     expect(rule(".atlas-workspace")).not.toContain("grid-template-columns");
-    expect(rule(".atlas-navigation select")).toContain("min-height: 44px");
+    expect(css).not.toContain(".atlas-navigation select");
+    expect(rule(".atlas-task-select, .atlas-benchmark-select")).toContain("min-width: 0");
     expect(rule(".atlas-library > summary")).toContain("min-height: 44px");
     expect(rule(".atlas-view-toggle button")).toContain("min-height: 44px");
     expect(rule(".atlas-filters summary")).toContain("min-height: 44px");

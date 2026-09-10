@@ -1,7 +1,8 @@
 "use client";
 
 import { FoilCardDeck } from "@hraness/design-kit/react";
-import { NativeSelectField, type NativeSelectOption } from "@hraness/ui";
+import { OptionGridPicker, type OptionGridPickerItem } from "@/components/option-grid-picker";
+import { providerBrand } from "@/lib/provider-brand";
 import { useSearchParams } from "next/navigation";
 import {
   Children,
@@ -175,12 +176,20 @@ export function ModelCardGalleryFilters({
 }>) {
   const [filter, setFilter] = useState<ModelCardFilterState>(DEFAULT_MODEL_CARD_FILTER);
   const providerIds = useMemo(() => providers.map(provider => provider.id), [providers]);
-  const providerOptions = useMemo<readonly NativeSelectOption<string>[]>(() => [
-    { id: "", label: `All providers · ${totalCount}` },
-    ...providers.map(provider => ({
-      id: provider.id,
-      label: `${provider.name} · ${provider.count}`,
-    })),
+  const providerOptions = useMemo<readonly OptionGridPickerItem[]>(() => [
+    { description: `${totalCount} cards`, id: "", label: "All providers" },
+    ...providers.map(provider => {
+      const brand = providerBrand(provider.name, provider.id);
+      return {
+        chipColor: brand.chipColor,
+        description: `${provider.count} ${provider.count === 1 ? "card" : "cards"}`,
+        glyphColor: brand.glyphColor,
+        iconUrl: brand.iconUrl,
+        id: provider.id,
+        label: provider.name,
+        monogram: brand.monogram,
+      };
+    }),
   ], [providers, totalCount]);
   const newDefinitionId = useId();
   const topDefinitionId = useId();
@@ -228,8 +237,7 @@ export function ModelCardGalleryFilters({
           <ModelCardFilterURLSync onChange={syncFilterFromURL} providerIds={providerIds} />
         </Suspense>
         <div className="model-card-gallery__filters" style={style}>
-          <NativeSelectField
-            aria-controls={gridId}
+          <OptionGridPicker
             className="model-card-gallery__provider-filter"
             label="Provider"
             onChange={nextProviderId => {
@@ -250,7 +258,8 @@ export function ModelCardGalleryFilters({
               });
             }}
             options={providerOptions}
-            showLabel={false}
+            searchLabel="Search providers"
+            searchPlaceholder="Provider name"
             value={providerId}
           />
           <button

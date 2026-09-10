@@ -160,7 +160,7 @@ describe("public model cards", () => {
       MODEL_CARD_PRESENTATIONS.length * 22,
     );
     expect(markup.match(/<[A-Za-z][^>]*>/gu)?.length ?? 0).toBeLessThan(
-      MODEL_CARD_PRESENTATIONS.length * 119 + 64,
+      MODEL_CARD_PRESENTATIONS.length * 119 + 160,
     );
     expect(Buffer.byteLength(markup)).toBeLessThan(
       MODEL_CARD_PRESENTATIONS.length * 21_000 + 10_400,
@@ -261,10 +261,11 @@ describe("public model cards", () => {
     expect(modelsPageSource).toContain("topPaths.has(card.path)");
   });
 
-  test("uses shared centered select geometry instead of a baseline chevron glyph", () => {
+  test("uses the shared option picker instead of a baseline chevron glyph", () => {
     expect(modelsPageSource).toContain('card.release.status === "verified"');
-    expect(modelCardsStyles).toContain(".model-card-gallery__provider-filter .hraness-field__select");
-    expect(modelCardsStyles).toContain("background-color: transparent");
+    expect(modelCardsStyles).toContain(".model-card-gallery__provider-filter");
+    expect(modelCardsStyles).toContain("--option-picker-accent");
+    expect(modelCardsStyles).not.toContain(".model-card-gallery__provider-filter .hraness-field__select");
     expect(modelCardsStyles).not.toContain("model-card-gallery__select-shell");
     expect(modelCardsStyles).not.toContain('content: "⌄"');
     expect(modelCardsStyles).not.toContain("model-card-gallery__filter-count");

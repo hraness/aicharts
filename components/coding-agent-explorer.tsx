@@ -8,7 +8,10 @@ import {
   Image01Icon,
   Share08Icon,
 } from "@hugeicons/core-free-icons";
-import { NativeSelectField, type NativeSelectOption } from "@hraness/ui";
+import { providerBrand } from "@/lib/provider-brand";
+import { replaceLocationSearch } from "@/lib/selection-url";
+import { OptionGridPicker, type OptionGridPickerItem } from "@/components/option-grid-picker";
+import { codingBenchmarkGlyph } from "@/components/picker-glyphs";
 import {
   Icon,
   IconButton,
@@ -43,6 +46,7 @@ import {
   buildChartShareUrl,
   chartImageFilename,
   chartImageShareData,
+  chartViewSearch,
   DEFAULT_CHART_X_METRIC,
   DEFAULT_CHART_Y_METRIC,
   parseChartShareView,
@@ -92,7 +96,7 @@ const yMetricItems = [
   { id: "deepSwe", label: yMetricLabels.deepSwe },
   { id: "terminalBench", label: yMetricLabels.terminalBench },
   { id: "sweAtlas", label: yMetricLabels.sweAtlas },
-] satisfies readonly NativeSelectOption<YMetric>[];
+] as const satisfies readonly Readonly<{ id: YMetric; label: string }>[];
 const xMetricItems = [
   { id: "costUsd", label: xMetricControlLabels.costUsd },
   { id: "durationMinutes", label: xMetricControlLabels.durationMinutes },
@@ -402,12 +406,26 @@ export function CodingAgentExplorer({
     for (const record of snapshot.records) unique.set(record.providerId, { id: record.providerId, name: record.providerName });
     return Array.from(unique.values()).sort((left, right) => left.name.localeCompare(right.name));
   }, [snapshot.records]);
-  const providerItems = useMemo<readonly ToggleItem<string>[]>(() => providers.map((provider) => ({
-    id: provider.id,
-    label: provider.name,
-    leading: <i aria-hidden="true" />,
-    style: providerStyle(provider.id),
-  })), [providers]);
+  const providerItems = useMemo<readonly ToggleItem<string>[]>(() => providers.map((provider) => {
+    const brand = providerBrand(provider.name, provider.id);
+    const glyphStyle = brand.iconUrl === null
+      ? undefined
+      : { "--option-picker-icon": `url("${brand.iconUrl}")` } as CSSProperties;
+    return {
+      id: provider.id,
+      label: provider.name,
+      leading: brand.iconUrl === null
+        ? <i aria-hidden="true" />
+        : <i aria-hidden="true" className="provider-filter__brand" style={glyphStyle} />,
+      style: providerStyle(provider.id),
+    };
+  }), [providers]);
+  const yMetricPickerItems = useMemo<readonly OptionGridPickerItem[]>(() => yMetricItems.map(item => ({
+    id: item.id,
+    keywords: [item.id],
+    label: item.label,
+    leading: codingBenchmarkGlyph(item.id),
+  })), []);
   const [xMetric, setXMetric] = useState<XMetric>(DEFAULT_CHART_X_METRIC);
   const [yMetric, setYMetric] = useState<YMetric>(DEFAULT_CHART_Y_METRIC);
   const [pinnedPointId, setPinnedPointId] = useState<string | null>(null);
@@ -420,23 +438,24 @@ export function CodingAgentExplorer({
   const [shareImage, setShareImage] = useState<Blob | null>(null);
   const [shareImagePreparing, setShareImagePreparing] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
+  const [urlReady, setUrlReady] = useState(false);
   const [shareStatus, setShareStatus] = useState("");
   const [showShareUrl, setShowShareUrl] = useState(false);
   const [svgViewport, setSvgViewport] = useState<SvgViewport | null>(null);
   const [tooltipSize, setTooltipSize] = useState<{ height: number; width: number }>(initialTooltipSize);
 
   useEffect(() => {
-    const sharedView = parseChartShareView(window.location.search);
-    const nextXMetric = sharedView.xMetric ?? DEFAULT_CHART_X_METRIC;
-    const nextYMetric = sharedView.yMetric ?? DEFAULT_CHART_Y_METRIC;
-    const sharedPoint = sharedView.pointKey === null
-      ? null
-      : snapshot.records.find((record) => codingAgentRecordKey(record) === sharedView.pointKey) ?? null;
-    const sharedProviderId = sharedView.providerId !== null
-      && providers.some((provider) => provider.id === sharedView.providerId)
-      ? sharedView.providerId
-      : null;
-    const frame = window.requestAnimationFrame(() => {
+    const apply = (search: string) => {
+      const sharedView = parseChartShareView(search);
+      const nextXMetric = sharedView.xMetric ?? DEFAULT_CHART_X_METRIC;
+      const nextYMetric = sharedView.yMetric ?? DEFAULT_CHART_Y_METRIC;
+      const sharedPoint = sharedView.pointKey === null
+        ? null
+        : snapshot.records.find((record) => codingAgentRecordKey(record) === sharedView.pointKey) ?? null;
+      const sharedProviderId = sharedView.providerId !== null
+        && providers.some((provider) => provider.id === sharedView.providerId)
+        ? sharedView.providerId
+        : null;
       if (sharedView.xMetric !== null) setXMetric(sharedView.xMetric);
       if (sharedView.yMetric !== null) setYMetric(sharedView.yMetric);
       if (
@@ -450,8 +469,12 @@ export function CodingAgentExplorer({
         setPinnedProviderId(sharedProviderId);
         setPinnedPointId(null);
       }
-    });
-    return () => window.cancelAnimationFrame(frame);
+    };
+    apply(window.location.search);
+    setUrlReady(true);
+    const onPopState = () => apply(window.location.search);
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
   }, [providers, snapshot.records]);
 
   useEffect(() => {
@@ -715,6 +738,16 @@ export function CodingAgentExplorer({
   };
   const siteUrl = `https://${brand.domain}/coding`;
   const shareUrl = buildChartShareUrl(siteUrl, shareView);
+
+  useEffect(() => {
+    if (!urlReady) return;
+    replaceLocationSearch(chartViewSearch(window.location.search, {
+      pointKey: shareView.pointKey,
+      providerId: shareView.providerId,
+      xMetric: shareView.xMetric,
+      yMetric: shareView.yMetric,
+    }));
+  }, [shareView.pointKey, shareView.providerId, shareView.xMetric, shareView.yMetric, urlReady]);
   const shareFilename = chartImageFilename(shareView, shareSelectionLabel);
   const shareText = `${yMetricLabels[yMetric]} vs ${xMetricLabels[xMetric]}${shareSelectionLabel === null ? "" : ` — ${shareSelectionLabel}`} on ${brand.domain}`;
   const shareIntent = xPostIntentUrl(shareText, shareUrl);
@@ -1057,23 +1090,24 @@ export function CodingAgentExplorer({
       </details>
 
       <div className="chart-metric-controls chart-selection-boundary">
-        <NativeSelectField
+        <OptionGridPicker
           className="chart-benchmark-select"
           label="Benchmark"
-          onChange={(metric) => {
-            if (metric !== yMetric) {
+          layout="list"
+          onChange={metric => {
+            if (!yMetricItems.some(item => item.id === metric)) return;
+            const nextMetric = metric as YMetric;
+            if (nextMetric !== yMetric) {
               captureChartEvent({
                 name: "chart metric selected",
-                properties: { axis: "y", chart_id: "coding_agents", metric },
+                properties: { axis: "y", chart_id: "coding_agents", metric: nextMetric },
               });
             }
-            setYMetric(metric);
+            setYMetric(nextMetric);
             clearSelection();
           }}
-          options={yMetricItems}
-          showLabel={false}
-          size="compact"
-          surface="pane"
+          options={yMetricPickerItems}
+          searchLabel="Search benchmarks"
           value={yMetric}
         />
         <MetricControl
