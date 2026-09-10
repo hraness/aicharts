@@ -169,7 +169,8 @@ describe("public model cards", () => {
     expect(markup).toContain('aria-label="Filter model cards"');
     expect(markup).toContain('aria-label="Show only cost and AA Index Pareto-frontier cards"');
     expect(markup).toContain('aria-label="Sort model cards by official release date"');
-    expect(markup).toContain(`All providers · ${MODEL_CARD_PRESENTATIONS.length}`);
+    expect(markup).toContain("All providers");
+    expect(markup).toContain(`${MODEL_CARD_PRESENTATIONS.length} cards`);
     expect(markup).toContain(`${MODEL_CARD_TOP_PATHS.length} cards · Cost ↓ · AAI ↑`);
     expect(markup).toContain("Newest releases first");
     expect(markup).not.toContain(`${MODEL_CARD_PRESENTATIONS.length} of ${MODEL_CARD_PRESENTATIONS.length} cards`);

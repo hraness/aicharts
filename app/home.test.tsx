@@ -148,8 +148,9 @@ describe("homepage canonical content", () => {
     expect(markup).toContain('data-analytics-surface="benchmark_atlas"');
     expect(markup).toContain('aria-label="Task"');
     expect(markup).toContain('aria-label="Benchmark"');
+    expect(markup).toContain('class="option-picker option-picker--list atlas-task-select"');
     for (const task of ["Coding", "Reasoning", "Research", "Memory", "Images", "Video", "Audio", "World models", "Science", "Work", "Computer use"]) {
-      expect(markup).toContain(`>${task}</option>`);
+      expect(markup).toContain(`<strong>${task}</strong>`);
     }
     expect(markup).toContain('aria-label="Find a benchmark"');
     expect(markup).toContain('type="search"');
