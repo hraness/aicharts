@@ -4,6 +4,8 @@ import { useId, useMemo, useRef, useState, useSyncExternalStore, type CSSPropert
 import { captureAnalyticsEvent } from "@/lib/analytics";
 import { atlasDatasetSummary, selectAtlasEntries, selectAtlasModelProfiles, sortAtlasPoints, type BenchmarkAtlasDataset, type BenchmarkAtlasEntry, type BenchmarkAtlasPoint } from "@/lib/benchmark-atlas";
 import { ATLAS_CATEGORY_LABELS, atlasViewSearch, formatAtlasCost, formatAtlasScore, parseAtlasView, type AtlasViewState } from "@/lib/benchmark-atlas-view";
+import { providerBrand } from "@/lib/provider-brand";
+import { OptionGridPicker, type OptionGridPickerItem } from "@/components/option-grid-picker";
 
 const TASK_ORDER = ["all", "coding", "reasoning", "research", "memory", "image", "video", "audio", "world", "science", "work", "computer-use", "general"] as const;
 const snapshot = () => window.location.search;
@@ -149,7 +151,7 @@ export function BenchmarkAtlasExplorer({ entries, datasets }: Readonly<{ entries
   const [showAllBenchmarks, setShowAllBenchmarks] = useState(false);
   const [shareStatus, setShareStatus] = useState("");
   const libraryRef = useRef<HTMLDetailsElement>(null);
-  const benchmarkSelectRef = useRef<HTMLSelectElement>(null);
+  const benchmarkSelectRef = useRef<HTMLButtonElement>(null);
   const entry = entries.find(item => item.id === state.benchmarkId) ?? entries[0];
   const dataset = datasets.find(item => item.benchmarkId === entry?.id);
   const filteredEntries = selectAtlasEntries(entries, { category: state.category, query }).filter(item => !chartOnly || item.coverage === "charted");
@@ -213,9 +215,34 @@ export function BenchmarkAtlasExplorer({ entries, datasets }: Readonly<{ entries
         if (!first) return;
         setQuery(""); setChartOnly(false); setShowAllBenchmarks(false); choose(first.id, category);
       }}>{categories.map(category => <option key={category} value={category}>{ATLAS_CATEGORY_LABELS[category]}</option>)}</select></label>
-      <label className="atlas-benchmark-select"><span>Benchmark</span><select aria-label="Benchmark" ref={benchmarkSelectRef} value={entry.id} onChange={event => {
-        if (filteredEntries.some(item => item.id === event.target.value)) choose(event.target.value);
-      }}>{!selectedInLibrary && <option value={entry.id}>{entry.name} {entry.version} · {coverageLabel(entry.coverage)} · Current view</option>}{filteredEntries.map(item => <option key={item.id} value={item.id}>{item.name} {item.version} · {coverageLabel(item.coverage)}</option>)}</select></label>
+      <OptionGridPicker
+        className="atlas-benchmark-select"
+        label="Benchmark"
+        minimumOptionWidth={210}
+        onChange={id => {
+          if (id !== entry.id && filteredEntries.some(item => item.id === id)) choose(id);
+        }}
+        options={[
+          ...(selectedInLibrary ? [] : [{
+            description: `${coverageLabel(entry.coverage)} · Current view`,
+            id: entry.id,
+            keywords: [...entry.tags, ATLAS_CATEGORY_LABELS[entry.category]],
+            label: `${entry.name} ${entry.version}`,
+          }]),
+          ...filteredEntries.map(item => ({
+            description: coverageLabel(item.coverage),
+            id: item.id,
+            keywords: [...item.tags, ATLAS_CATEGORY_LABELS[item.category]],
+            label: `${item.name} ${item.version}`,
+          })),
+        ]}
+        searchLabel="Search benchmarks"
+        searchPlaceholder="Benchmark name or task"
+        triggerRef={element => {
+          benchmarkSelectRef.current = element;
+        }}
+        value={entry.id}
+      />
       <details className="atlas-library" ref={libraryRef}>
         <summary>Browse library{(query || chartOnly) && <span className="atlas-library__active">{filteredEntries.length} matches</span>}</summary>
         <div className="atlas-library__content">
@@ -241,7 +268,33 @@ export function BenchmarkAtlasExplorer({ entries, datasets }: Readonly<{ entries
               {(["ranking", "cost", "table"] as const).filter(view => view !== "cost" || ranked.some(point => point.costUsd !== null && point.costUsd > 0)).map(view => <button key={view} aria-pressed={state.view === view} onClick={() => changeView(view)} type="button">{view === "ranking" ? "Ranking" : view === "cost" ? "Cost vs. score" : "Table"}</button>)}
             </div>
             <details className="atlas-filters"><summary>Filters{(state.provider !== null || !state.bestPerModel) && <span className="atlas-filters__active">{[state.provider, !state.bestPerModel ? "All configurations" : null].filter(Boolean).join(" · ")}</span>}</summary><div className="atlas-filters__content">
-              <label className="atlas-provider"><span>Provider</span><select value={state.provider ?? "all"} onChange={event => { update({ ...state, provider: event.target.value === "all" ? null : event.target.value, expanded: false, pointId: null }); captureAnalyticsEvent({ name: "benchmark explored", properties: { benchmark_id: entry.id, action: "provider", view: state.view } }); }}><option value="all">All providers</option>{providers.map(value => <option key={value}>{value}</option>)}</select></label>
+              <OptionGridPicker
+                className="atlas-provider"
+                label="Provider"
+                onChange={id => {
+                  const provider = id === "all" ? null : id;
+                  if (provider === state.provider) return;
+                  update({ ...state, provider, expanded: false, pointId: null });
+                  captureAnalyticsEvent({ name: "benchmark explored", properties: { benchmark_id: entry.id, action: "provider", view: state.view } });
+                }}
+                options={[
+                  { id: "all", label: "All providers" } satisfies OptionGridPickerItem,
+                  ...providers.map(value => {
+                    const brand = providerBrand(value);
+                    return {
+                      chipColor: brand.chipColor,
+                      glyphColor: brand.glyphColor,
+                      iconUrl: brand.iconUrl,
+                      id: value,
+                      label: value,
+                      monogram: brand.monogram,
+                    };
+                  }),
+                ]}
+                searchLabel="Search providers"
+                searchPlaceholder="Provider name"
+                value={state.provider ?? "all"}
+              />
               {state.view !== "cost" && bestByModel.length < providerPoints.length && <div className="atlas-profile-toggle"><button type="button" aria-pressed={state.bestPerModel} onClick={() => {
                 update({ ...state, bestPerModel: !state.bestPerModel, expanded: false, pointId: null });
                 captureAnalyticsEvent({ name: "benchmark explored", properties: { benchmark_id: entry.id, action: "profiles", view: state.view } });

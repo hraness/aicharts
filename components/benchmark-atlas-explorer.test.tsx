@@ -55,18 +55,24 @@ describe("benchmark library progressive disclosure", () => {
     expect(parseAtlasView(new URL(url).search, entries, [dataset])).toEqual(state);
     expect(new URL(url).pathname).toBe("/benchmarks");
   });
-  test("uses labelled native task and benchmark navigation while retaining all coverage states", () => {
+  test("keeps the short task select native and moves benchmarks into the searchable picker", () => {
     const html = render();
     expect(html).toContain('aria-label="Task"');
-    expect(html).toContain('aria-label="Benchmark"');
     expect(html).toContain('value="all" selected="">All tasks</option>');
     expect(html).toContain('value="coding">Coding</option>');
     expect(html).toContain('value="audio">Audio</option>');
     expect(html).not.toContain('value="world">');
-    const navigation = html.match(/<select aria-label="Benchmark"[\s\S]*?<\/select>/u)?.[0] ?? "";
-    expect(navigation.match(/<option /gu)).toHaveLength(entries.length);
-    expect(navigation).toContain("Benchmark 9 1.0 · Guide");
-    expect(navigation).toContain("Benchmark 10 1.0 · Emerging");
+    expect(html.match(/<select/gu)).toHaveLength(1);
+    const navigation = html.match(/<div class="option-picker atlas-benchmark-select">[\s\S]*?<details class="atlas-library"/u)?.[0] ?? "";
+    expect(navigation).toContain(">Benchmark</span>");
+    expect(navigation).toContain('aria-label="Benchmark"');
+    expect(navigation).toContain('aria-label="Search benchmarks"');
+    expect(navigation).toContain('role="combobox"');
+    expect(navigation.match(/role="option"/gu)).toHaveLength(entries.length);
+    expect(navigation).toContain("<strong>Benchmark 9 1.0</strong><small>Guide</small>");
+    expect(navigation).toContain("<strong>Benchmark 10 1.0</strong><small>Emerging</small>");
+    const selected = navigation.match(/<div aria-selected="true"[\s\S]*?<\/div>/u)?.[0] ?? "";
+    expect(selected).toContain("Benchmark 0 1.0");
     expect(html).not.toContain('<nav class="atlas-tasks"');
   });
 
@@ -89,6 +95,11 @@ describe("benchmark library progressive disclosure", () => {
     expect(filters).not.toContain(" open=");
     expect(filters).toContain("Provider");
     expect(filters).toContain("All providers");
+    expect(filters).not.toContain("<select");
+    expect(filters).toContain('aria-label="Search providers"');
+    expect(filters.match(/role="option"/gu)).toHaveLength(3);
+    expect(filters).toContain("<strong>First lab</strong>");
+    expect(filters).toContain("<strong>Second lab</strong>");
     expect(filters).toContain("Best result per system");
     const primary = html.replace(filters, "");
     expect(primary).toContain('role="group" aria-label="Chart view"');
@@ -169,6 +180,9 @@ describe("benchmark library progressive disclosure", () => {
     expect(rule(".atlas-filters summary")).toContain("min-height: 44px");
     expect(rule(".atlas-comparison__remove")).toContain("width: 44px; height: 44px");
     expect(rule(".benchmark-atlas :focus-visible")).toContain("outline: 2px");
+    expect(rule(".benchmark-atlas")).toContain("--option-picker-accent: var(--atlas-accent)");
+    expect(rule(".atlas-provider .option-picker__panel")).toContain("width: min(560px, calc(100vw - 32px))");
+    expect(css).not.toContain(".atlas-provider select");
     expect(rule(".atlas-scatter__scroll")).toContain("overflow-x: auto");
     expect(css).toMatch(/@media \(max-width: 720px\)[\s\S]*?\.atlas-benchmark-select \{ grid-column: 1 \/ -1; grid-row: 2;/u);
     expect(css).not.toContain(".atlas-mobile-select");
