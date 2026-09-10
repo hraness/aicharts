@@ -398,4 +398,13 @@ describe("homepage Intelligence efficiency view", () => {
     expect(shouldPreviewIntelligencePointer("mouse")).toBeTrue();
     expect(shouldPreviewIntelligencePointer("pen")).toBeTrue();
   });
+
+  test("hydrates Intelligence selection from the encoded address bar", async () => {
+    const source = await Bun.file(
+      new URL("./intelligence-efficiency-explorer.tsx", import.meta.url),
+    ).text();
+    expect(source).toContain("useSyncExternalStore(subscribeLocationSearch, readLocationSearch, serverLocationSearch)");
+    expect(source).toContain("parseIntelligenceShareView(search, data, defaultShare)");
+    expect(source).toContain("replaceLocationSearch(intelligenceShareSearch(next, data, defaultShare, window.location.search))");
+  });
 });

@@ -6,6 +6,7 @@ import {
   useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
   type KeyboardEvent,
   type PointerEvent as ReactPointerEvent,
 } from "react";
@@ -25,7 +26,12 @@ import {
   parseIntelligenceShareView,
   type IntelligenceShareView,
 } from "@/lib/intelligence-share";
-import { replaceLocationSearch } from "@/lib/selection-url";
+import {
+  readLocationSearch,
+  replaceLocationSearch,
+  serverLocationSearch,
+  subscribeLocationSearch,
+} from "@/lib/selection-url";
 import { OptionGridPicker, type OptionGridPickerItem } from "@/components/option-grid-picker";
 import {
   clientPointThroughSvgBounds,
@@ -406,18 +412,19 @@ export function IntelligenceEfficiencyExplorer({
   solId: string | null;
   yDomain: NumericDomain;
 }>) {
-  const [metric, setMetric] = useState<IntelligenceEfficiencyMetric>("costUsdPerTask");
   const defaultPointId = astraId ?? data[0]?.id ?? "";
   const defaultShare = useMemo<IntelligenceShareView>(() => ({
     metric: "costUsdPerTask",
     pinnedId: defaultPointId,
   }), [defaultPointId]);
-  const [pinnedId, setPinnedId] = useState(defaultPointId);
+  const search = useSyncExternalStore(subscribeLocationSearch, readLocationSearch, serverLocationSearch);
+  const shared = parseIntelligenceShareView(search, data, defaultShare);
+  const metric = shared.metric;
+  const pinnedId = shared.pinnedId;
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [focusedId, setFocusedId] = useState<string | null>(null);
   const [rovingId, setRovingId] = useState(defaultPointId);
   const [chartWidth, setChartWidth] = useState(DEFAULT_CHART_WIDTH);
-  const [urlReady, setUrlReady] = useState(false);
   const chartShellRef = useRef<HTMLDivElement>(null);
   const pointRefs = useRef<Map<string, SVGGElement>>(new Map());
   const titleId = useId();
@@ -440,29 +447,9 @@ export function IntelligenceEfficiencyExplorer({
     };
   }), [data]);
 
-  useEffect(() => {
-    const apply = (search: string) => {
-      const shared = parseIntelligenceShareView(search, data, defaultShare);
-      setMetric(shared.metric);
-      setPinnedId(shared.pinnedId);
-      setRovingId(shared.pinnedId);
-    };
-    apply(window.location.search);
-    setUrlReady(true);
-    const onPopState = () => apply(window.location.search);
-    window.addEventListener("popstate", onPopState);
-    return () => window.removeEventListener("popstate", onPopState);
-  }, [data, defaultShare]);
-
-  useEffect(() => {
-    if (!urlReady) return;
-    replaceLocationSearch(intelligenceShareSearch(
-      { metric, pinnedId },
-      data,
-      defaultShare,
-      window.location.search,
-    ));
-  }, [data, defaultShare, metric, pinnedId, urlReady]);
+  function writeShare(next: IntelligenceShareView): void {
+    replaceLocationSearch(intelligenceShareSearch(next, data, defaultShare, window.location.search));
+  }
 
   useEffect(() => {
     const shell = chartShellRef.current;
@@ -527,7 +514,7 @@ export function IntelligenceEfficiencyExplorer({
   const presentation = metricPresentations[metric];
 
   function pinPoint(pointId: string): void {
-    setPinnedId(pointId);
+    writeShare({ metric, pinnedId: pointId });
     setRovingId(pointId);
     const point = data.find(datum => datum.id === pointId);
     if (point !== undefined) {
@@ -595,7 +582,7 @@ export function IntelligenceEfficiencyExplorer({
                       },
                     });
                   }
-                  setMetric(item);
+                  writeShare({ metric: item, pinnedId });
                 }}
                 type="button"
               >

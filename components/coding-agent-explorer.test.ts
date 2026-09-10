@@ -328,6 +328,7 @@ test("generates coding-route share links without changing metric and selection r
   expect(link.pathname).toBe("/coding");
   expect(parseChartShareView(link.search)).toEqual(view);
   expect(source).toContain("parseChartShareView(search)");
+  expect(source).toContain("useSyncExternalStore(subscribeLocationSearch, readLocationSearch, serverLocationSearch)");
   expect(source).toContain("replaceLocationSearch(chartViewSearch(window.location.search");
   expect(source).toContain("createBrandedChartPng(source, chartWidth, chartHeight");
 });
