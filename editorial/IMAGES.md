@@ -27,7 +27,7 @@ a registered image must remain image-free across all of those representations.
 Keep the reviewed 1536×864 WebP at `public/images/blog/<slug>.webp`. Alt text
 describes the visible composition. The caption explains the editorial
 distinction without overstating evidence. Record dimensions, bytes, hashes,
-prompt digest, and immutable Atet receipt/job paths in
+prompt digest, and immutable generator receipt/job paths in
 `editorial/images.manifest.json`.
 
 The focused discovery tests must validate manifest metadata against the typed
@@ -37,11 +37,22 @@ checks, but they do not prove that the live corpus remains optional.
 
 ## Generation boundary
 
-Use the installed `editorial-image-seo` skill and the repository's linked
-Vercel project. Paid calls use the skill's pinned
-`@hraness/atet@3.1.2` helper, one image per prompt. Never use a global Atet
-checkout, never auto-retry an ambiguous paid result, and never overwrite the
-provider artifact. Prompts and receipts stay in ignored `artifacts/atet/`.
+For new images, build Slopcamera from its [source-install guide](https://github.com/hraness/slopcamera/blob/main/docs/how-to/use-current-source.md) and retain the reviewed 40-character commit. Keep `SLOPCAMERA_SOURCE_ROOT` bound to that unchanged build, then run from this repository's linked Vercel workspace. Preserve the reviewed OpenAI settings by saving this non-secret JSON as `artifacts/slopcamera/provider-options.json`:
+
+```json
+{"openai":{"quality":"medium","outputFormat":"webp","outputCompression":88}}
+```
+
+```sh
+vercel env run -- bun "$SLOPCAMERA_SOURCE_ROOT/apps/desktop/dist/cli/main.js" ai image generate \
+  --model openai/gpt-image-2 --prompt-file <prompt-file> \
+  --count 1 --max-per-call 1 --size 1536x864 \
+  --provider-options artifacts/slopcamera/provider-options.json --timeout 300s --json
+```
+
+Vercel injects credentials only into that child. Do not use a global binary, automatically retry an ambiguous paid result, or overwrite a provider artifact. Keep new prompts and receipts in ignored `artifacts/slopcamera/`.
+
+Existing credits, manifest generator `@hraness/atet@3.1.2`, and `artifacts/atet/` receipt paths describe historical artwork and remain unchanged. Before accepting a new batch, extend the typed registry and manifest to retain its actual Slopcamera source commit and per-image provenance; do not insert new output under the historical generator declaration.
 
 Review each original at full size and together in a 384×216 contact sheet.
 Reject accidental text, distorted forms, fake data, repeated compositions,
