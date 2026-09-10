@@ -3,6 +3,7 @@ import { CALCULATOR_INPUTS } from "./calculator-inputs-collection";
 import { goldenCalculatorSnapshot } from "./calculator-golden-fixture";
 import {
   apiCostBreakdownUsd,
+  CALCULATOR_KNOB_BOUNDS,
   CONTINUOUS_HOURS_PER_MONTH,
   clampCalculatorKnobs,
   computeCalculatorScenario,
@@ -99,19 +100,55 @@ describe("calculator math golden case (N=1, 40x, 100% utilization, 50% cache, 4:
     expect(unitsRequired(0, 45)).toBe(1);
   });
 
-  test("amortizes ten street-price RTX 5090s to about 2,225 dollars a month with power", () => {
+  test("depreciates ten street-price RTX 5090s to about 2,225 dollars a month with power", () => {
     const home = homeHardwareMonthlyCostUsd({
       amortizationMonths: 24,
       electricityUsdPerKwh: 0.1834,
       hoursPerMonth: POWER_USER_HOURS_PER_MONTH,
+      residualValuePercent: 0,
       unitCount: 10,
       unitPriceUsd: 4_900,
       unitTdpWatts: 575,
     });
     expect(home.upfrontUsd).toBe(49_000);
-    expect(home.capexMonthlyUsd).toBeCloseTo(2_041.67, 2);
+    expect(home.depreciationMonthlyUsd).toBeCloseTo(2_041.67, 2);
+    expect(home.residualValueUsd).toBe(0);
     expect(home.electricityMonthlyUsd).toBeCloseTo(183.42, 1);
     expect(home.totalMonthlyUsd).toBeCloseTo(2_225.08, 1);
+  });
+
+  test("a 20% resale value cuts the monthly depreciation to 1,633.33 dollars", () => {
+    const home = homeHardwareMonthlyCostUsd({
+      amortizationMonths: 24,
+      electricityUsdPerKwh: 0.1834,
+      hoursPerMonth: POWER_USER_HOURS_PER_MONTH,
+      residualValuePercent: 20,
+      unitCount: 10,
+      unitPriceUsd: 4_900,
+      unitTdpWatts: 575,
+    });
+    // 49,000 x 80% over 24 months; the 9,800 residual is a resale recovery, not a cost.
+    expect(home.depreciationMonthlyUsd).toBeCloseTo(1_633.33, 2);
+    expect(home.residualValueUsd).toBe(9_800);
+    expect(home.totalMonthlyUsd).toBeCloseTo(1_633.33 + 183.42, 1);
+  });
+
+  test("prices the same fleet at Hawaii's 52.72 cents per kWh when the knob overrides the US average", () => {
+    const scenario = computeCalculatorScenario(goldenSnapshot, {
+      ...DEFAULT_CALCULATOR_KNOBS,
+      electricityCentsPerKwh: 52.72,
+    });
+    expect(scenario.home.electricityCentsPerKwh).toBe(52.72);
+    // 10 units x 0.575 kW x 173.93 h x $0.5272 per kWh.
+    expect(scenario.home.electricityMonthlyUsd).toBeCloseTo(527.25, 1);
+    expect(scenario.home.depreciationMonthlyUsd).toBeCloseTo(2_041.67, 2);
+  });
+
+  test("follows the snapshot's US residential average when the electricity knob is null", () => {
+    const scenario = computeCalculatorScenario(goldenSnapshot, DEFAULT_CALCULATOR_KNOBS);
+    expect(DEFAULT_CALCULATOR_KNOBS.electricityCentsPerKwh).toBeNull();
+    expect(scenario.home.electricityCentsPerKwh).toBe(goldenSnapshot.electricity.usResidentialCentsPerKwh);
+    expect(scenario.home.electricityMonthlyUsd).toBeCloseTo(183.42, 1);
   });
 
   test("rents ten RTX 5090s for about 939 dollars a month of power-user hours", () => {
@@ -162,6 +199,18 @@ describe("calculator defaults", () => {
       profile => profile.id === DEFAULT_CALCULATOR_KNOBS.hardwareProfileId,
     )).toBe(true);
   });
+
+  test("keeps the snapshot's US average and every electricity preset inside the knob band", () => {
+    const bounds = CALCULATOR_KNOB_BOUNDS.electricityCentsPerKwh;
+    const rates = [
+      CALCULATOR_INPUTS.electricity.usResidentialCentsPerKwh,
+      ...CALCULATOR_INPUTS.electricity.residentialPresets.map(preset => preset.centsPerKwh),
+    ];
+    for (const rate of rates) {
+      expect(rate).toBeGreaterThanOrEqual(bounds.min);
+      expect(rate).toBeLessThanOrEqual(bounds.max);
+    }
+  });
 });
 
 describe("calculator knob clamping", () => {
@@ -170,7 +219,9 @@ describe("calculator knob clamping", () => {
       ...DEFAULT_CALCULATOR_KNOBS,
       amortizationMonths: 500,
       cacheHitPercent: 120,
+      electricityCentsPerKwh: 400,
       inputTokensPerOutputToken: 0,
+      residualValuePercent: 90,
       seats: -3,
       subsidyMultiple: 7,
       ultraMultiple: 99,
@@ -178,11 +229,21 @@ describe("calculator knob clamping", () => {
     });
     expect(clamped.amortizationMonths).toBe(60);
     expect(clamped.cacheHitPercent).toBe(95);
+    expect(clamped.electricityCentsPerKwh).toBe(60);
     expect(clamped.inputTokensPerOutputToken).toBe(1);
+    expect(clamped.residualValuePercent).toBe(50);
     expect(clamped.seats).toBe(1);
     expect(clamped.subsidyMultiple).toBe(10);
     expect(clamped.ultraMultiple).toBe(10);
     expect(clamped.utilizationPercent).toBe(5);
+  });
+
+  test("keeps a null electricity knob null and clamps a too-cheap explicit rate up", () => {
+    expect(clampCalculatorKnobs(DEFAULT_CALCULATOR_KNOBS).electricityCentsPerKwh).toBeNull();
+    expect(clampCalculatorKnobs({
+      ...DEFAULT_CALCULATOR_KNOBS,
+      electricityCentsPerKwh: 0.1,
+    }).electricityCentsPerKwh).toBe(1);
   });
 
   test("treats non-finite knob values as the lower bound", () => {

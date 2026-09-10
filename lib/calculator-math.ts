@@ -23,12 +23,17 @@ export type DeepSeekWindow = "offPeak" | "peak" | "blended";
 export type DutyCycle = "powerUser" | "continuous";
 
 export interface CalculatorKnobs {
+  /** Useful life of the purchased hardware; depreciation spreads over these months. */
   readonly amortizationMonths: number;
   readonly cacheHitPercent: number;
   readonly deepSeekWindow: DeepSeekWindow;
   readonly dutyCycle: DutyCycle;
+  /** Residential grid rate in cents per kWh; null follows the checked snapshot's US average. */
+  readonly electricityCentsPerKwh: number | null;
   readonly hardwareProfileId: string;
   readonly inputTokensPerOutputToken: number;
+  /** Expected resale value at the end of the useful life, as a percent of the purchase price. */
+  readonly residualValuePercent: number;
   readonly seats: number;
   readonly solRateBasis: SolRateBasis;
   readonly subsidyMultiple: number;
@@ -36,10 +41,19 @@ export interface CalculatorKnobs {
   readonly utilizationPercent: number;
 }
 
+/**
+ * The electricity band covers plausible residential grid rates worldwide:
+ * GlobalPetrolPrices' 2023 through Q2 2026 household averages run from under
+ * 1 cent (Iran, Ethiopia) to about 47 cents (Bermuda), and the EIA June 2026
+ * Hawaii residential average is 52.72 cents. Sources are dated in
+ * docs/calculator-data.md.
+ */
 export const CALCULATOR_KNOB_BOUNDS = {
   amortizationMonths: { min: 6, max: 60, step: 6 },
   cacheHitPercent: { min: 0, max: 95, step: 5 },
+  electricityCentsPerKwh: { min: 1, max: 60, step: 0.5 },
   inputTokensPerOutputToken: { min: 1, max: 10, step: 1 },
+  residualValuePercent: { min: 0, max: 50, step: 5 },
   seats: { min: 1, max: 100, step: 1 },
   subsidyMultiple: { min: 10, max: 100, step: 5 },
   ultraMultiple: { min: 1, max: 10, step: 1 },
@@ -51,8 +65,10 @@ export const DEFAULT_CALCULATOR_KNOBS: CalculatorKnobs = {
   cacheHitPercent: 50,
   deepSeekWindow: "offPeak",
   dutyCycle: "powerUser",
+  electricityCentsPerKwh: null,
   hardwareProfileId: "rtx-5090-dense-32b",
   inputTokensPerOutputToken: 4,
+  residualValuePercent: 0,
   seats: 1,
   solRateBasis: "current",
   subsidyMultiple: 40,
@@ -70,10 +86,14 @@ export function clampCalculatorKnobs(knobs: CalculatorKnobs): CalculatorKnobs {
     ...knobs,
     amortizationMonths: Math.round(clampNumber(knobs.amortizationMonths, CALCULATOR_KNOB_BOUNDS.amortizationMonths)),
     cacheHitPercent: clampNumber(knobs.cacheHitPercent, CALCULATOR_KNOB_BOUNDS.cacheHitPercent),
+    electricityCentsPerKwh: knobs.electricityCentsPerKwh === null
+      ? null
+      : clampNumber(knobs.electricityCentsPerKwh, CALCULATOR_KNOB_BOUNDS.electricityCentsPerKwh),
     inputTokensPerOutputToken: clampNumber(
       knobs.inputTokensPerOutputToken,
       CALCULATOR_KNOB_BOUNDS.inputTokensPerOutputToken,
     ),
+    residualValuePercent: clampNumber(knobs.residualValuePercent, CALCULATOR_KNOB_BOUNDS.residualValuePercent),
     seats: Math.round(clampNumber(knobs.seats, CALCULATOR_KNOB_BOUNDS.seats)),
     subsidyMultiple: clampNumber(knobs.subsidyMultiple, CALCULATOR_KNOB_BOUNDS.subsidyMultiple),
     ultraMultiple: clampNumber(knobs.ultraMultiple, CALCULATOR_KNOB_BOUNDS.ultraMultiple),
@@ -209,30 +229,41 @@ export function unitsRequired(requiredTps: number, unitDecodeTps: number): numbe
 }
 
 export interface HomeHardwareCost {
-  readonly capexMonthlyUsd: number;
+  /** Straight-line depreciation per month: purchase price less residual, over the useful life. */
+  readonly depreciationMonthlyUsd: number;
   readonly electricityMonthlyUsd: number;
+  /** Expected resale value at the end of the useful life; not a monthly cost. */
+  readonly residualValueUsd: number;
   readonly totalMonthlyUsd: number;
   readonly upfrontUsd: number;
 }
 
+/**
+ * Ownership cost is straight-line depreciation plus electricity. The purchase
+ * price, less the expected residual value, spreads evenly over the useful-life
+ * months; the residual (default 0) is what a resale at end of life recovers.
+ */
 export function homeHardwareMonthlyCostUsd(args: {
   readonly amortizationMonths: number;
   readonly electricityUsdPerKwh: number;
   readonly hoursPerMonth: number;
+  readonly residualValuePercent: number;
   readonly unitCount: number;
   readonly unitPriceUsd: number;
   readonly unitTdpWatts: number;
 }): HomeHardwareCost {
   const upfrontUsd = args.unitCount * args.unitPriceUsd;
-  const capexMonthlyUsd = upfrontUsd / args.amortizationMonths;
+  const residualValueUsd = upfrontUsd * (args.residualValuePercent / 100);
+  const depreciationMonthlyUsd = (upfrontUsd - residualValueUsd) / args.amortizationMonths;
   const electricityMonthlyUsd = args.unitCount
     * (args.unitTdpWatts / 1_000)
     * args.hoursPerMonth
     * args.electricityUsdPerKwh;
   return {
-    capexMonthlyUsd,
+    depreciationMonthlyUsd,
     electricityMonthlyUsd,
-    totalMonthlyUsd: capexMonthlyUsd + electricityMonthlyUsd,
+    residualValueUsd,
+    totalMonthlyUsd: depreciationMonthlyUsd + electricityMonthlyUsd,
     upfrontUsd,
   };
 }
@@ -254,6 +285,8 @@ export interface CalculatorScenario {
     readonly selectedUsd: number;
   };
   readonly home: HomeHardwareCost & {
+    /** Effective grid rate in cents per kWh after the knob or snapshot default. */
+    readonly electricityCentsPerKwh: number;
     readonly gpuCount: number;
     readonly unitCount: number;
   };
@@ -318,10 +351,13 @@ export function computeCalculatorScenario(
     throw new Error(`Hardware profile ${profile.id} has no purchasable GPU; the checked snapshot guards this.`);
   }
   const homeUnits = unitsRequired(requiredTps, profile.unitDecodeTps);
+  const electricityCentsPerKwh = knobs.electricityCentsPerKwh
+    ?? snapshot.electricity.usResidentialCentsPerKwh;
   const home = homeHardwareMonthlyCostUsd({
     amortizationMonths: knobs.amortizationMonths,
-    electricityUsdPerKwh: snapshot.electricity.usResidentialCentsPerKwh / 100,
+    electricityUsdPerKwh: electricityCentsPerKwh / 100,
     hoursPerMonth,
+    residualValuePercent: knobs.residualValuePercent,
     unitCount: homeUnits,
     unitPriceUsd: homeGpu.purchase.usd * profile.gpusPerUnit,
     unitTdpWatts: homeGpu.tdpWatts * profile.gpusPerUnit,
@@ -346,6 +382,7 @@ export function computeCalculatorScenario(
     },
     home: {
       ...home,
+      electricityCentsPerKwh,
       gpuCount: homeUnits * profile.gpusPerUnit,
       unitCount: homeUnits,
     },

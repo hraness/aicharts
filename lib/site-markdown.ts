@@ -359,7 +359,7 @@ function calculatorMarkdown(): string {
   return joinMarkdown([
     "# AI cost calculator",
     "",
-    `One fully used ChatGPT Pro 20x seat implies a monthly token volume. The calculator prices that same volume five ways: the subscription sticker, the ${inputs.openAiApiPricing.modelName} API, the ${inputs.deepSeekApiPricing.modelVersion} API, GPUs you buy, and GPUs you rent. Knobs cover seats, the subsidy multiple, utilization, cache-hit rate, token mix, DeepSeek pricing window, duty cycle, hardware profile, and amortization.`,
+    `One fully used ChatGPT Pro 20x seat implies a monthly token volume. The calculator prices that same volume five ways: the subscription sticker, the ${inputs.openAiApiPricing.modelName} API, the ${inputs.deepSeekApiPricing.modelVersion} API, GPUs you buy, and GPUs you rent. Knobs cover seats, the subsidy multiple, utilization, cache-hit rate, token mix, DeepSeek pricing window, duty cycle, hardware profile, useful life, resale value, and the electricity rate.`,
     "",
     `The anchor is the [SemiAnalysis ${formatUpdateDate(anchor.methodPublishedOn)} stress test](${anchor.methodSourceUrl}), which valued a maxed ChatGPT Pro 20x seat at about ${usd(proCeiling.apiEquivalentUsdPerMonth)} of API-equivalent usage a month (${proCeiling.impliedMultiple}x its price) and Claude Max 20x at about ${usd(maxCeiling.apiEquivalentUsdPerMonth)} (${maxCeiling.impliedMultiple}x). The default uses the more conservative ${anchor.defaultMultiple}x. These are API retail equivalents, not provider serving costs, and open-weight models on the local paths are not ${inputs.openAiApiPricing.modelName}.`,
     "",
@@ -370,7 +370,7 @@ function calculatorMarkdown(): string {
     `- ${inputs.plan.name} sticker: ${usd(scenario.stickerUsd)}`,
     `- ${inputs.openAiApiPricing.modelName} API: ${usd(scenario.sol.breakdown.totalUsd)} (${usd(scenario.sol.otherBasisUsd)} at list rates)`,
     `- ${inputs.deepSeekApiPricing.modelVersion} API: ${usd(scenario.deepSeek.offPeakUsd)} off-peak, ${usd(scenario.deepSeek.peakUsd)} peak, ${usd(scenario.deepSeek.blendedUsd)} blended`,
-    `- Home hardware (${scenario.home.gpuCount}x ${homeGpu?.name ?? scenario.profile.gpuId}, ${POWER_USER_HOURS_PER_WEEK} h/week): ${usd(scenario.home.totalMonthlyUsd)} a month over ${DEFAULT_CALCULATOR_KNOBS.amortizationMonths} months, ${usd(scenario.home.upfrontUsd)} up front`,
+    `- Home hardware (${scenario.home.gpuCount}x ${homeGpu?.name ?? scenario.profile.gpuId}, ${POWER_USER_HOURS_PER_WEEK} h/week): ${usd(scenario.home.totalMonthlyUsd)} a month (${usd(scenario.home.depreciationMonthlyUsd)} straight-line depreciation over ${DEFAULT_CALCULATOR_KNOBS.amortizationMonths} months + ${usd(scenario.home.electricityMonthlyUsd)} electricity at ${scenario.home.electricityCentsPerKwh} cents per kWh), ${usd(scenario.home.upfrontUsd)} up front`,
     `- Rented GPUs (${scenario.rental.gpuCount}x ${rentalGpu?.name ?? scenario.profile.rental.gpuId}): ${usd(scenario.rental.monthlyUsd)} a month`,
     "",
     `Fleet sizing counts decode only: the default load needs about ${Math.round(scenario.requiredTps)} aggregate decode tokens per second on the ${POWER_USER_HOURS_PER_WEEK}-hour-a-week duty cycle. Throughput profiles are single-stream figures labeled measured, published band, or bandwidth estimate.`,

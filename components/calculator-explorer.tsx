@@ -49,6 +49,10 @@ function formatTps(value: number): string {
   }).format(value);
 }
 
+function formatCents(value: number): string {
+  return `${new Intl.NumberFormat("en-US", { maximumFractionDigits: 1 }).format(value)}¢`;
+}
+
 type CostBarSegment = Readonly<{
   color: string;
   id: string;
@@ -236,6 +240,26 @@ export function CalculatorExplorer({
     ? "24/7"
     : `${POWER_USER_HOURS_PER_WEEK} h/week`;
 
+  // The preset control mirrors the knob: null follows the snapshot's US average,
+  // an explicit value selects the matching preset or reads as a custom rate.
+  const US_AVERAGE_PRESET_ID = "us-average";
+  const electricityPresetId = knobs.electricityCentsPerKwh === null
+    ? US_AVERAGE_PRESET_ID
+    : snapshot.electricity.residentialPresets.find(
+      preset => preset.centsPerKwh === knobs.electricityCentsPerKwh,
+    )?.id ?? "custom";
+  const electricityPresetItems = [
+    { cents: snapshot.electricity.usResidentialCentsPerKwh, id: US_AVERAGE_PRESET_ID, label: "US avg" },
+    ...snapshot.electricity.residentialPresets.map(preset => ({
+      cents: preset.centsPerKwh,
+      id: preset.id,
+      label: preset.label,
+    })),
+  ].sort((left, right) => left.cents - right.cents);
+  const homeUpfrontAnnotation = knobs.residualValuePercent > 0
+    ? `${formatUsd(scenario.home.upfrontUsd)} up front, ${formatUsd(scenario.home.residualValueUsd)} resale`
+    : `${formatUsd(scenario.home.upfrontUsd)} up front`;
+
   const pathRows: readonly CostBarRow[] = [
     {
       detail: `${knobs.seats} seat${knobs.seats === 1 ? "" : "s"} at ${formatUsd(snapshot.plan.monthlyPriceUsd)}`,
@@ -256,12 +280,12 @@ export function CalculatorExplorer({
       segments: [{ color: deepseekColor, id: "deepseek", label: "DeepSeek API", valueUsd: scenario.deepSeek.selectedUsd }],
     },
     {
-      annotation: `${formatUsd(scenario.home.upfrontUsd)} up front`,
+      annotation: homeUpfrontAnnotation,
       detail: `${scenario.home.gpuCount}x ${homeGpuName} over ${knobs.amortizationMonths} months, ${dutyLabel}`,
       id: "home",
       label: "Home hardware",
       segments: [
-        { color: nvidiaColor, id: "capex", label: "Hardware", valueUsd: scenario.home.capexMonthlyUsd },
+        { color: nvidiaColor, id: "depreciation", label: "Depreciation", valueUsd: scenario.home.depreciationMonthlyUsd },
         { color: powerColor, id: "power", label: "Electricity", valueUsd: scenario.home.electricityMonthlyUsd },
       ],
     },
@@ -275,12 +299,12 @@ export function CalculatorExplorer({
 
   const structureRows: readonly CostBarRow[] = [
     {
-      annotation: `${formatUsd(scenario.home.upfrontUsd)} up front`,
-      detail: `${formatUsd(scenario.home.capexMonthlyUsd)} hardware + ${formatUsd(scenario.home.electricityMonthlyUsd)} electricity`,
+      annotation: homeUpfrontAnnotation,
+      detail: `${formatUsd(scenario.home.depreciationMonthlyUsd)} depreciation + ${formatUsd(scenario.home.electricityMonthlyUsd)} electricity`,
       id: "home",
       label: `Buy ${scenario.home.gpuCount}x ${homeGpuName}`,
       segments: [
-        { color: nvidiaColor, id: "capex", label: "Hardware", valueUsd: scenario.home.capexMonthlyUsd },
+        { color: nvidiaColor, id: "depreciation", label: "Depreciation", valueUsd: scenario.home.depreciationMonthlyUsd },
         { color: powerColor, id: "power", label: "Electricity", valueUsd: scenario.home.electricityMonthlyUsd },
       ],
     },
@@ -368,10 +392,26 @@ export function CalculatorExplorer({
           <CalculatorKnob
             bounds={CALCULATOR_KNOB_BOUNDS.amortizationMonths}
             control="amortization_months"
-            label="Amortize"
+            label="Useful life"
             onChange={amortizationMonths => setKnob({ amortizationMonths })}
             renderValue={value => `${value} mo`}
             value={knobs.amortizationMonths}
+          />
+          <CalculatorKnob
+            bounds={CALCULATOR_KNOB_BOUNDS.residualValuePercent}
+            control="resale_value"
+            label="Resale value"
+            onChange={residualValuePercent => setKnob({ residualValuePercent })}
+            renderValue={value => `${value}%`}
+            value={knobs.residualValuePercent}
+          />
+          <CalculatorKnob
+            bounds={CALCULATOR_KNOB_BOUNDS.electricityCentsPerKwh}
+            control="electricity_rate"
+            label="Electricity"
+            onChange={electricityCentsPerKwh => setKnob({ electricityCentsPerKwh })}
+            renderValue={value => `${formatCents(value)}/kWh`}
+            value={scenario.home.electricityCentsPerKwh}
           />
         </div>
         <div className="calculator-controls__modes">
@@ -406,6 +446,25 @@ export function CalculatorExplorer({
               ]}
               onChange={deepSeekWindow => selectKnob({ deepSeekWindow }, "deepseek_window")}
               value={knobs.deepSeekWindow}
+            />
+          </div>
+          <div className="calculator-mode">
+            <span aria-hidden="true" className="calculator-mode__label">Electricity rate</span>
+            <SegmentedControl<string>
+              aria-label="Electricity rate"
+              className="chart-segmented-control"
+              items={electricityPresetItems.map(item => ({
+                id: item.id,
+                label: `${item.label} ${formatCents(item.cents)}`,
+              }))}
+              onChange={(presetId) => {
+                const preset = electricityPresetItems.find(item => item.id === presetId);
+                if (preset === undefined) return;
+                selectKnob({
+                  electricityCentsPerKwh: presetId === US_AVERAGE_PRESET_ID ? null : preset.cents,
+                }, "electricity_preset");
+              }}
+              value={electricityPresetId}
             />
           </div>
           <div className="calculator-mode">
@@ -455,9 +514,12 @@ export function CalculatorExplorer({
         </p>
         <CostBarChart aria-label="Home hardware versus rental cost" rows={structureRows} />
         <p className="calculator-legend">
-          <Swatch color={nvidiaColor} /> Hardware (amortized)
+          <Swatch color={nvidiaColor} /> Depreciation
           <Swatch color={powerColor} /> Electricity
           <Swatch color={rentalColor} /> Rental
+        </p>
+        <p className="calculator-chart__note">
+          {`Owning depreciates the ${formatUsd(scenario.home.upfrontUsd)} purchase straight-line over ${knobs.amortizationMonths} months to a ${knobs.residualValuePercent}% resale value, plus grid electricity at ${formatCents(scenario.home.electricityCentsPerKwh)}/kWh. Set the electricity knob to the energy rate on your utility bill or a public tariff sheet; the presets span cheap hydro to island rates.`}
         </p>
       </section>
 

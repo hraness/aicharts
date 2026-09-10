@@ -106,11 +106,36 @@ const deepSeekApiPricingSchema = z.object({
   }
 });
 
+/** Curated one-tap regional rates; ids "us-average" and "custom" are reserved for the UI. */
+const RESERVED_ELECTRICITY_PRESET_IDS = ["us-average", "custom"] as const;
+
+const electricityPresetSchema = z.object({
+  asOf: isoDateSchema,
+  centsPerKwh: z.number().finite().min(0.5).max(100),
+  id: identifierSchema,
+  label: z.string().min(1),
+  sourceName: z.string().min(1),
+  sourceUrl: credentialFreeHttpsUrlSchema,
+}).strict();
+
 const electricitySchema = z.object({
   period: isoMonthSchema,
+  residentialPresets: z.array(electricityPresetSchema).min(1),
   source: retrievedSourceSchema,
   usResidentialCentsPerKwh: z.number().finite().min(2).max(100),
-}).strict();
+}).strict().superRefine((electricity, context) => {
+  const seen = new Set<string>();
+  electricity.residentialPresets.forEach((preset, index) => {
+    if (seen.has(preset.id) || RESERVED_ELECTRICITY_PRESET_IDS.some(reserved => reserved === preset.id)) {
+      context.addIssue({
+        code: "custom",
+        message: `Electricity preset id ${preset.id} is a duplicate or reserved.`,
+        path: ["residentialPresets", index, "id"],
+      });
+    }
+    seen.add(preset.id);
+  });
+});
 
 const rentalOfferSchema = z.object({
   gpuId: identifierSchema,
@@ -303,6 +328,8 @@ export type CalculatorDeepSeekPricing = CalculatorInputsSnapshot["deepSeekApiPri
 export type CalculatorHardwareGpu = CalculatorInputsSnapshot["hardware"]["gpus"][number];
 export type CalculatorHardwareProfile = CalculatorInputsSnapshot["hardware"]["profiles"][number];
 export type CalculatorRentalOffer = CalculatorInputsSnapshot["gpuRental"]["offers"][number];
+export type CalculatorElectricityPreset =
+  CalculatorInputsSnapshot["electricity"]["residentialPresets"][number];
 export type PerMillionTokenRates = z.infer<typeof perMillionTokenRatesSchema>;
 
 export function parseCalculatorInputsSnapshot(
@@ -399,10 +426,11 @@ export function validateCalculatorInputsReplacement(
     JSON.stringify(previous.hardware) === JSON.stringify(candidate.hardware)
     && JSON.stringify(previous.subsidyAnchor) === JSON.stringify(candidate.subsidyAnchor)
     && JSON.stringify(previous.plan) === JSON.stringify(candidate.plan)
-    && JSON.stringify(previous.openAiApiPricing.listFallback) === JSON.stringify(candidate.openAiApiPricing.listFallback);
+    && JSON.stringify(previous.openAiApiPricing.listFallback) === JSON.stringify(candidate.openAiApiPricing.listFallback)
+    && JSON.stringify(previous.electricity.residentialPresets) === JSON.stringify(candidate.electricity.residentialPresets);
   if (!curatedUnchanged) {
     return err(new Error(
-      "Curated sections (hardware, subsidy anchor, plan, list fallback) changed; route those edits through review.",
+      "Curated sections (hardware, subsidy anchor, plan, list fallback, electricity presets) changed; route those edits through review.",
     ));
   }
   return ok(undefined);

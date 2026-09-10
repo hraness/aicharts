@@ -22,6 +22,32 @@
   },
   "electricity": {
     "period": "2026-06",
+    "residentialPresets": [
+      {
+        "asOf": "2026-09-10",
+        "centsPerKwh": 8.1,
+        "id": "quebec-hydro",
+        "label": "Québec hydro",
+        "sourceName": "Hydro-Québec Rate D second-tier energy price, 11.142¢ CAD effective April 1, 2026, at 0.724 USD/CAD on September 10, 2026",
+        "sourceUrl": "https://www.hydroquebec.com/residential/customer-space/rates/rate-d.html"
+      },
+      {
+        "asOf": "2026-09-10",
+        "centsPerKwh": 40.6,
+        "id": "germany",
+        "label": "Germany",
+        "sourceName": "GlobalPetrolPrices residential electricity average for Germany, 2023 through Q2 2026",
+        "sourceUrl": "https://www.globalpetrolprices.com/electricity_prices/"
+      },
+      {
+        "asOf": "2026-09-10",
+        "centsPerKwh": 52.72,
+        "id": "hawaii",
+        "label": "Hawaii",
+        "sourceName": "EIA Electric Power Monthly, Table 5.6.A, Hawaii residential average for June 2026",
+        "sourceUrl": "https://www.eia.gov/electricity/monthly/epm_table_grapher.php?t=epmt_5_6_a"
+      }
+    ],
     "source": {
       "name": "EIA Electric Power Monthly, Table 5.6.A",
       "retrievedAt": "2026-09-10T14:32:21.997Z",

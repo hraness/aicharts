@@ -92,6 +92,29 @@ describe("calculator inputs schema", () => {
     expect(parseCalculatorInputsSnapshot(broken).ok).toBe(false);
   });
 
+  test("rejects duplicate or reserved electricity preset ids", () => {
+    const duplicate = mutated((clone) => {
+      clone.electricity.residentialPresets[1]!.id = clone.electricity.residentialPresets[0]!.id;
+    });
+    expect(parseCalculatorInputsSnapshot(duplicate).ok).toBe(false);
+    // "us-average" is the UI's follow-the-snapshot option and "custom" its free-input state.
+    for (const reserved of ["us-average", "custom"]) {
+      const collision = mutated((clone) => {
+        clone.electricity.residentialPresets[0]!.id = reserved;
+      });
+      expect(parseCalculatorInputsSnapshot(collision).ok).toBe(false);
+    }
+  });
+
+  test("cites every electricity preset with a dated source", () => {
+    const snapshot = checkedSnapshot();
+    expect(snapshot.electricity.residentialPresets.length).toBeGreaterThanOrEqual(3);
+    for (const preset of snapshot.electricity.residentialPresets) {
+      expect(preset.sourceUrl.startsWith("https://")).toBe(true);
+      expect(Number.isNaN(Date.parse(preset.asOf))).toBe(false);
+    }
+  });
+
   test("requires both named subsidy ceilings the copy quotes", () => {
     const broken = mutated((clone) => {
       clone.subsidyAnchor.publishedCeilings = clone.subsidyAnchor.publishedCeilings
@@ -173,6 +196,15 @@ describe("calculator inputs replacement guards", () => {
     const previous = checkedSnapshot();
     const candidate = structuredClone(previous);
     candidate.hardware.gpus[0]!.purchase!.usd = 1;
+    const result = validateCalculatorInputsReplacement(previous, candidate);
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error.message).toContain("Curated");
+  });
+
+  test("rejects automated edits to the curated electricity presets", () => {
+    const previous = checkedSnapshot();
+    const candidate = structuredClone(previous);
+    candidate.electricity.residentialPresets[0]!.centsPerKwh = 1;
     const result = validateCalculatorInputsReplacement(previous, candidate);
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.error.message).toContain("Curated");
