@@ -12,6 +12,7 @@ const iconPackagePaths = {
   gemini: "@lobehub/icons-static-svg/icons/gemini.svg",
   meta: "@lobehub/icons-static-svg/icons/meta.svg",
   moonshot: "@lobehub/icons-static-svg/icons/moonshot.svg",
+  nvidia: "@lobehub/icons-static-svg/icons/nvidia.svg",
   openai: "@lobehub/icons-static-svg/icons/openai.svg",
   xai: "@lobehub/icons-static-svg/icons/xai.svg",
   zai: "@lobehub/icons-static-svg/icons/zai.svg",
