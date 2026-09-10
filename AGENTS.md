@@ -40,6 +40,7 @@
 - Treat network, file, URL, and query-string values as `unknown` until an owned schema or predicate narrows them.
 - Prefer explicit `Result` values for recoverable domain failures and reserve throwing for invalid checked-in invariants.
 - Update `data/coding-agents.json` only through `bun run data:refresh`; preserve duplicate, retention, stable-key, metric-coverage, material-change, and bounded-history guards.
+- Update the live pricing sections of `data/calculator-inputs.json` only through `bun run calculator:refresh`; curated hardware, plan, and subsidy sections change through reviewed edits with dated citations per `docs/calculator-data.md`.
 - Regenerate `lib/chart-colors.generated.ts` through the checked iWantHue script. Do not hand-edit generated files.
 - Keep pointer, keyboard, focus, and touch behavior equivalent. Preserve semantic landmarks, accessible names, visible focus, and responsive horizontal chart panning.
 - Give every ordinary themed page exactly one shared icon-menu appearance control as the final action in its header. Do not put appearance controls in footers, content, or fallback action rows.
