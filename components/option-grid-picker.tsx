@@ -8,6 +8,7 @@ import {
   useState,
   type CSSProperties,
   type KeyboardEvent,
+  type ReactNode,
 } from "react";
 
 import {
@@ -15,6 +16,7 @@ import {
   isPickerNavigationKey,
   pickerColumnCount,
   pickerNavigationIndex,
+  splitPickerLabel,
   type PickerOption,
 } from "@/lib/option-picker";
 
@@ -24,17 +26,25 @@ export type OptionGridPickerItem = PickerOption & Readonly<{
   chipColor?: string;
   glyphColor?: string;
   iconUrl?: string | null;
+  leading?: ReactNode;
   monogram?: string;
 }>;
+
+export type OptionGridPickerLayout = "grid" | "list";
 
 type ChipStyle = CSSProperties & Readonly<{ "--option-picker-chip": string; "--option-picker-glyph": string }>;
 type GlyphStyle = CSSProperties & Readonly<{ "--option-picker-icon": string }>;
 
-const OPTION_GAP = 4;
-const MAX_COLUMNS = 4;
+const OPTION_GAP = 3;
+const MAX_COLUMNS = 5;
+const DEFAULT_GRID_OPTION_WIDTH = 148;
 
 function OptionChip({ option }: Readonly<{ option: OptionGridPickerItem }>) {
-  if (option.chipColor === undefined) return null;
+  if (option.chipColor === undefined) {
+    return option.leading === undefined
+      ? null
+      : <span aria-hidden="true" className="option-picker__leading">{option.leading}</span>;
+  }
   const chipStyle: ChipStyle = {
     "--option-picker-chip": option.chipColor,
     "--option-picker-glyph": option.glyphColor ?? "#f7f6f2",
@@ -54,35 +64,58 @@ function OptionChip({ option }: Readonly<{ option: OptionGridPickerItem }>) {
   );
 }
 
+function optionCopy(option: OptionGridPickerItem): Readonly<{
+  description?: string;
+  label: string;
+  qualifier?: string;
+}> {
+  if (option.qualifier !== undefined) {
+    return {
+      description: option.description,
+      label: option.label,
+      qualifier: option.qualifier === "" ? undefined : option.qualifier,
+    };
+  }
+  const split = splitPickerLabel(option.label);
+  return { description: option.description, label: split.label, qualifier: split.qualifier };
+}
+
 /**
  * Compact searchable replacement for long native model, configuration, and
  * provider selects. The trigger opens a panel whose search input keeps real
  * focus while arrow keys move a virtually focused option through the grid;
  * Enter picks it, Escape returns to the trigger, and pointer or touch selects
- * directly. The full option grid is server-rendered so every choice stays in
- * the document, and the search filter runs through `filterPickerOptions`.
+ * directly. Short option sets can use the list layout without a search field;
+ * the listbox then owns keyboard focus. The full option set is server-rendered
+ * so every choice stays in the document, and the search filter runs through
+ * `filterPickerOptions`.
  */
 export function OptionGridPicker({
   className = "",
   label,
-  minimumOptionWidth = 180,
+  layout = "grid",
+  minimumOptionWidth = DEFAULT_GRID_OPTION_WIDTH,
   onChange,
   options,
   searchLabel,
   searchPlaceholder,
+  showSearch,
   triggerRef,
   value,
 }: Readonly<{
   className?: string;
   label: string;
+  layout?: OptionGridPickerLayout;
   minimumOptionWidth?: number;
   onChange: (id: string) => void;
   options: readonly OptionGridPickerItem[];
   searchLabel: string;
   searchPlaceholder?: string;
+  showSearch?: boolean;
   triggerRef?: (element: HTMLButtonElement | null) => void;
   value: string;
 }>) {
+  const searchable = showSearch ?? layout === "grid";
   const baseId = useId();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -98,6 +131,7 @@ export function OptionGridPicker({
   const listId = `${baseId}-list`;
   const activeOption = activeIndex >= 0 ? filtered[activeIndex] : undefined;
   const activeOptionDomId = activeOption === undefined ? undefined : `${baseId}-option-${String(activeIndex)}`;
+  const resolvedColumns = layout === "list" ? 1 : columns;
 
   function close(returnFocus: boolean): void {
     setOpen(false);
@@ -115,9 +149,15 @@ export function OptionGridPicker({
     onChange(id);
   }
 
+  function moveActive(key: string): void {
+    if (!isPickerNavigationKey(key)) return;
+    setActiveIndex(pickerNavigationIndex(key, activeIndex, filtered.length, resolvedColumns));
+  }
+
   useEffect(() => {
     if (!open) return;
-    searchRef.current?.focus();
+    if (searchable) searchRef.current?.focus();
+    else gridRef.current?.focus();
     const closeOnOutsidePress = (event: PointerEvent) => {
       if (!containerRef.current?.contains(event.target as Node)) setOpen(false);
     };
@@ -133,11 +173,11 @@ export function OptionGridPicker({
       document.removeEventListener("pointerdown", closeOnOutsidePress);
       window.removeEventListener("keydown", closeOnEscape);
     };
-  }, [open]);
+  }, [open, searchable]);
 
   useEffect(() => {
     const grid = gridRef.current;
-    if (!open || grid === null || typeof ResizeObserver === "undefined") return;
+    if (!open || layout === "list" || grid === null || typeof ResizeObserver === "undefined") return;
     const updateColumns = (width: number) => {
       setColumns(pickerColumnCount(width, minimumOptionWidth, OPTION_GAP, MAX_COLUMNS));
     };
@@ -148,7 +188,7 @@ export function OptionGridPicker({
     });
     observer.observe(grid);
     return () => observer.disconnect();
-  }, [minimumOptionWidth, open]);
+  }, [layout, minimumOptionWidth, open]);
 
   useEffect(() => {
     if (!open || activeOptionDomId === undefined) return;
@@ -158,7 +198,7 @@ export function OptionGridPicker({
   function handleSearchKeyDown(event: KeyboardEvent<HTMLInputElement>): void {
     if (isPickerNavigationKey(event.key)) {
       event.preventDefault();
-      setActiveIndex(pickerNavigationIndex(event.key, activeIndex, filtered.length, columns));
+      moveActive(event.key);
       return;
     }
     if (event.key === "Enter") {
@@ -169,8 +209,20 @@ export function OptionGridPicker({
     if (event.key === "Tab") setOpen(false);
   }
 
+  function handleGridKeyDown(event: KeyboardEvent<HTMLDivElement>): void {
+    if (isPickerNavigationKey(event.key)) {
+      event.preventDefault();
+      moveActive(event.key);
+      return;
+    }
+    if (event.key === "Enter") {
+      event.preventDefault();
+      if (activeOption !== undefined) select(activeOption.id);
+    }
+  }
+
   return (
-    <div className={`option-picker ${className}`.trim()} ref={containerRef}>
+    <div className={`option-picker option-picker--${layout} ${className}`.trim()} ref={containerRef}>
       <span className="option-picker__label" id={`${baseId}-label`}>{label}</span>
       <button
         aria-expanded={open}
@@ -185,6 +237,7 @@ export function OptionGridPicker({
           localTriggerRef.current = element;
           triggerRef?.(element);
         }}
+        title={selected?.label}
         type="button"
       >
         {selected === null ? null : <OptionChip option={selected} />}
@@ -194,30 +247,38 @@ export function OptionGridPicker({
         </span>
       </button>
       <div aria-label={label} className="option-picker__panel" hidden={!open} role="dialog">
-        <input
-          aria-activedescendant={open ? activeOptionDomId : undefined}
-          aria-autocomplete="list"
-          aria-controls={listId}
-          aria-expanded={open}
-          aria-label={searchLabel}
-          autoComplete="off"
-          className="option-picker__search"
-          onChange={event => {
-            setQuery(event.target.value);
-            setActiveIndex(0);
-          }}
-          onKeyDown={handleSearchKeyDown}
-          placeholder={searchPlaceholder}
-          ref={searchRef}
-          role="combobox"
-          type="search"
-          value={query}
-        />
-        <p aria-live="polite" className="option-picker__status">
-          {filtered.length === options.length
-            ? `${String(options.length)} options`
-            : `${String(filtered.length)} of ${String(options.length)} options`}
-        </p>
+        {searchable
+          ? (
+              <input
+                aria-activedescendant={open ? activeOptionDomId : undefined}
+                aria-autocomplete="list"
+                aria-controls={listId}
+                aria-expanded={open}
+                aria-label={searchLabel}
+                autoComplete="off"
+                className="option-picker__search"
+                onChange={event => {
+                  setQuery(event.target.value);
+                  setActiveIndex(0);
+                }}
+                onKeyDown={handleSearchKeyDown}
+                placeholder={searchPlaceholder}
+                ref={searchRef}
+                role="combobox"
+                type="search"
+                value={query}
+              />
+            )
+          : null}
+        {searchable
+          ? (
+              <p aria-live="polite" className="option-picker__status">
+                {filtered.length === options.length
+                  ? `${String(options.length)} options`
+                  : `${String(filtered.length)} of ${String(options.length)} options`}
+              </p>
+            )
+          : null}
         {filtered.length === 0 ? (
           <div className="option-picker__empty">
             <p>No matches for “{query.trim()}”.</p>
@@ -234,33 +295,41 @@ export function OptionGridPicker({
           </div>
         ) : (
           <div
+            aria-activedescendant={searchable || !open ? undefined : activeOptionDomId}
             aria-labelledby={`${baseId}-label`}
             className="option-picker__grid"
             id={listId}
+            onKeyDown={searchable ? undefined : handleGridKeyDown}
             ref={gridRef}
             role="listbox"
-            style={{ gridTemplateColumns: `repeat(${String(columns)}, minmax(0, 1fr))` }}
+            style={layout === "list" ? undefined : { gridTemplateColumns: `repeat(${String(columns)}, minmax(0, 1fr))` }}
+            tabIndex={searchable ? undefined : 0}
           >
-            {filtered.map((option, index) => (
-              <div
-                aria-selected={option.id === value}
-                className="option-picker__option"
-                data-active={index === activeIndex || undefined}
-                id={`${baseId}-option-${String(index)}`}
-                key={option.id}
-                onClick={() => select(option.id)}
-                onMouseMove={() => {
-                  if (index !== activeIndex) setActiveIndex(index);
-                }}
-                role="option"
-              >
-                <OptionChip option={option} />
-                <span className="option-picker__copy">
-                  <strong>{option.label}</strong>
-                  {option.description === undefined ? null : <small>{option.description}</small>}
-                </span>
-              </div>
-            ))}
+            {filtered.map((option, index) => {
+              const copy = optionCopy(option);
+              return (
+                <div
+                  aria-selected={option.id === value}
+                  className="option-picker__option"
+                  data-active={index === activeIndex || undefined}
+                  id={`${baseId}-option-${String(index)}`}
+                  key={option.id}
+                  onClick={() => select(option.id)}
+                  onMouseMove={() => {
+                    if (index !== activeIndex) setActiveIndex(index);
+                  }}
+                  role="option"
+                  title={option.label}
+                >
+                  <OptionChip option={option} />
+                  <span className="option-picker__copy">
+                    <strong>{copy.label}</strong>
+                    {copy.qualifier === undefined ? null : <small className="option-picker__qualifier">{copy.qualifier}</small>}
+                    {copy.description === undefined ? null : <small>{copy.description}</small>}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

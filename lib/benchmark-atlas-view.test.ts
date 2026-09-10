@@ -28,6 +28,26 @@ describe("benchmark explorer URLs", () => {
     const data = { ...dataset, points: ["a", "b", "c", "d"].map(point) };
     expect(parseAtlasView("?atlasCompare=a&atlasCompare=a&atlasCompare=x&atlasCompare=b&atlasCompare=c&atlasCompare=d", [entry], [data]).compareIds).toEqual(["a", "b", "c"]);
   });
+  test("encodes provider display names that contain spaces, parentheses, and commas", () => {
+    const provider = "Moonshot AI (Kimi), Lab";
+    const data = { ...dataset, points: [{ ...point("row-1"), provider }] };
+    const state = {
+      benchmarkId: entry.id,
+      bestPerModel: true,
+      category: "coding" as const,
+      compareIds: ["row-1"],
+      expanded: false,
+      pointId: "row-1",
+      provider,
+      view: "ranking" as const,
+    };
+    const search = atlasViewSearch(state);
+    const url = new URL(`https://aicharts.io/benchmarks${search}#explore`);
+    expect(url.href).not.toContain(" ");
+    expect(url.searchParams.get("atlasProvider")).toBe(provider);
+    expect(parseAtlasView(url.search, [entry], [data])).toEqual(state);
+  });
+
   test("preserves the unit and percentage precision", () => {
     expect(formatAtlasScore(65.72, "%")).toBe("65.72%");
     expect(formatAtlasScore(1234.5, "Elo")).toBe("1,234.5 Elo");

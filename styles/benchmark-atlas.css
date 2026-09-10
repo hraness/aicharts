@@ -17,9 +17,9 @@
 .benchmark-atlas button, .benchmark-atlas input, .benchmark-atlas select { font: inherit; }
 .benchmark-atlas button { color: inherit; }
 .benchmark-atlas :focus-visible { outline: 2px solid var(--atlas-accent); outline-offset: 3px; }
-.atlas-navigation { display: grid; grid-template-columns: minmax(140px, 180px) minmax(0, 1fr) auto; align-items: end; gap: 16px; padding-bottom: 24px; border-bottom: 1px solid var(--grid); }
-.atlas-task-select, .atlas-benchmark-select { display: grid; gap: 8px; min-width: 0; font-size: 12px; color: var(--muted); }
-.atlas-navigation select { width: 100%; min-width: 0; min-height: 44px; padding: 10px 28px 10px 12px; border: 1px solid var(--line); border-radius: 5px; background: var(--background); color: var(--foreground); font-size: 14px; }
+.atlas-navigation { display: grid; grid-template-columns: minmax(148px, 200px) minmax(0, 1fr) auto; align-items: end; gap: 12px; padding-bottom: 24px; border-bottom: 1px solid var(--grid); }
+.atlas-task-select, .atlas-benchmark-select { display: grid; gap: 6px; min-width: 0; font-size: 12px; color: var(--muted); }
+.atlas-task-select .option-picker__panel { width: max(100%, min(260px, 86vw)); }
 .atlas-workspace { min-width: 0; }
 .atlas-library { min-width: 0; }
 .atlas-library > summary { width: fit-content; min-height: 44px; padding: 11px 13px; border: 1px solid var(--grid); border-radius: 5px; font-size: 13px; line-height: 1.5; cursor: pointer; }

@@ -6,6 +6,7 @@ import {
   useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
   type KeyboardEvent,
   type PointerEvent as ReactPointerEvent,
 } from "react";
@@ -20,6 +21,17 @@ import {
 } from "@/lib/intelligence-efficiency";
 import { captureChartEvent } from "@/lib/analytics";
 import { providerBrand } from "@/lib/provider-brand";
+import {
+  intelligenceShareSearch,
+  parseIntelligenceShareView,
+  type IntelligenceShareView,
+} from "@/lib/intelligence-share";
+import {
+  readLocationSearch,
+  replaceLocationSearch,
+  serverLocationSearch,
+  subscribeLocationSearch,
+} from "@/lib/selection-url";
 import { OptionGridPicker, type OptionGridPickerItem } from "@/components/option-grid-picker";
 import {
   clientPointThroughSvgBounds,
@@ -42,6 +54,7 @@ export type IntelligenceEfficiencyExplorerDatum = Readonly<{
   name: string;
   outputTokensPerTask: number;
   releaseDate: string;
+  slug: string;
 }>;
 
 type ExplorerPoint = Readonly<{
@@ -399,9 +412,15 @@ export function IntelligenceEfficiencyExplorer({
   solId: string | null;
   yDomain: NumericDomain;
 }>) {
-  const [metric, setMetric] = useState<IntelligenceEfficiencyMetric>("costUsdPerTask");
   const defaultPointId = astraId ?? data[0]?.id ?? "";
-  const [pinnedId, setPinnedId] = useState(defaultPointId);
+  const defaultShare = useMemo<IntelligenceShareView>(() => ({
+    metric: "costUsdPerTask",
+    pinnedId: defaultPointId,
+  }), [defaultPointId]);
+  const search = useSyncExternalStore(subscribeLocationSearch, readLocationSearch, serverLocationSearch);
+  const shared = parseIntelligenceShareView(search, data, defaultShare);
+  const metric = shared.metric;
+  const pinnedId = shared.pinnedId;
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [focusedId, setFocusedId] = useState<string | null>(null);
   const [rovingId, setRovingId] = useState(defaultPointId);
@@ -422,10 +441,15 @@ export function IntelligenceEfficiencyExplorer({
       glyphColor: brand.glyphColor,
       iconUrl: brand.iconUrl,
       id: datum.id,
+      keywords: [datum.slug, datum.creatorSlug],
       label: datum.name,
       monogram: brand.monogram,
     };
   }), [data]);
+
+  function writeShare(next: IntelligenceShareView): void {
+    replaceLocationSearch(intelligenceShareSearch(next, data, defaultShare, window.location.search));
+  }
 
   useEffect(() => {
     const shell = chartShellRef.current;
@@ -490,7 +514,7 @@ export function IntelligenceEfficiencyExplorer({
   const presentation = metricPresentations[metric];
 
   function pinPoint(pointId: string): void {
-    setPinnedId(pointId);
+    writeShare({ metric, pinnedId: pointId });
     setRovingId(pointId);
     const point = data.find(datum => datum.id === pointId);
     if (point !== undefined) {
@@ -558,7 +582,7 @@ export function IntelligenceEfficiencyExplorer({
                       },
                     });
                   }
-                  setMetric(item);
+                  writeShare({ metric: item, pinnedId });
                 }}
                 type="button"
               >

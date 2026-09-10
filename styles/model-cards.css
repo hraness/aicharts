@@ -768,39 +768,9 @@
 }
 
 .model-card-gallery__provider-filter {
+  --option-picker-accent: var(--model-card-filter-color, var(--foreground));
   flex: 1 1 14rem;
-  max-inline-size: 20rem;
-}
-
-.model-card-gallery__provider-filter .hraness-field__control {
-  background-color: color-mix(in oklch, var(--secondary) 52%, transparent);
-  border-color: var(--grid);
-  border-radius: .65rem;
-  min-block-size: 2.75rem;
-  display: grid;
-  position: relative;
-}
-
-.model-card-gallery__provider-filter .hraness-field__control::before {
-  background: var(--model-card-filter-color);
-  block-size: .45rem;
-  box-shadow: 0 0 .55rem color-mix(in srgb, var(--model-card-filter-color) 52%, transparent);
-  content: "";
-  inline-size: .45rem;
-  inset-inline-start: .85rem;
-  pointer-events: none;
-  position: absolute;
-  transform: rotate(45deg);
-  z-index: 1;
-}
-
-.model-card-gallery__provider-filter .hraness-field__select {
-  background-color: transparent;
-  color: var(--foreground);
-  font: inherit;
-  font-size: .82rem;
-  min-block-size: 2.75rem;
-  padding-inline-start: 2rem;
+  max-inline-size: 22rem;
 }
 
 .model-card-gallery__scope-filter {

@@ -1183,6 +1183,15 @@ body {
   height: 7px;
   width: 16px;
 }
+.provider-filter .ui-toggle-group__item i.provider-filter__brand {
+  background-color: var(--provider-color);
+  background-image: none;
+  border-radius: 4px;
+  height: 16px;
+  mask: var(--option-picker-icon) center / 11px no-repeat;
+  -webkit-mask: var(--option-picker-icon) center / 11px no-repeat;
+  width: 16px;
+}
 .provider-filter .ui-toggle-group__item[data-hovered] { opacity: 1; }
 .provider-filter .ui-toggle-group__item[data-selected] {
   text-decoration: underline;
@@ -1219,20 +1228,17 @@ body {
   align-items: center;
   display: grid;
   gap: 8px;
-  grid-template-columns: minmax(76px, 1fr) auto minmax(76px, 1fr);
+  grid-template-columns: minmax(168px, 1fr) auto minmax(76px, 1fr);
   min-height: 44px;
   padding: 6px var(--chart-content-inset);
 }
 .chart-benchmark-select {
+  --option-picker-accent: var(--brand-key);
   font-size: 11px;
-  font-weight: 650;
   grid-column: 1;
   justify-self: start;
-  width: 76px;
-}
-.chart-benchmark-select .hraness-field__select {
-  background-position: calc(100% - 10px) 50%, calc(100% - 7px) 50%;
-  padding-inline: 8px 24px;
+  min-width: 0;
+  width: min(220px, 100%);
 }
 .chart-metric-controls .metric-control--x {
   grid-column: 2;

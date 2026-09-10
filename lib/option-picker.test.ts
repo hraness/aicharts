@@ -5,6 +5,7 @@ import {
   isPickerNavigationKey,
   pickerColumnCount,
   pickerNavigationIndex,
+  splitPickerLabel,
   type PickerOption,
 } from "./option-picker";
 
@@ -59,6 +60,32 @@ describe("picker fuzzy filtering", () => {
   test("keeps the caller's order for equally strong matches", () => {
     const matched = filterPickerOptions(options, "gpt").map(option => option.id);
     expect(matched).toEqual(["astra-max", "sol-high"]);
+  });
+});
+
+describe("picker label wrapping", () => {
+  test("moves a trailing parenthetical onto a quieter qualifier line", () => {
+    expect(splitPickerLabel("Claude Sonnet 5 (Adaptive Reasoning, Low Effort)")).toEqual({
+      label: "Claude Sonnet 5",
+      qualifier: "Adaptive Reasoning, Low Effort",
+    });
+    expect(splitPickerLabel("GPT-6 Astra (max)")).toEqual({
+      label: "GPT-6 Astra",
+      qualifier: "max",
+    });
+  });
+
+  test("leaves names without a trailing group, and nested parentheses, intact", () => {
+    expect(splitPickerLabel("Nemotron 3 Super 120B A12B")).toEqual({
+      label: "Nemotron 3 Super 120B A12B",
+    });
+    expect(splitPickerLabel("Model (inner) still open (outer)")).toEqual({
+      label: "Model (inner) still open",
+      qualifier: "outer",
+    });
+    expect(splitPickerLabel("Nested (Adaptive (Max))")).toEqual({
+      label: "Nested (Adaptive (Max))",
+    });
   });
 });
 
