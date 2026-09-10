@@ -1,34 +1,4 @@
 {
-  "schemaVersion": 1,
-  "plan": {
-    "asOf": "2026-09-10",
-    "id": "chatgpt-pro-20x",
-    "monthlyPriceUsd": 200,
-    "name": "ChatGPT Pro 20x",
-    "sourceUrl": "https://openai.com/chatgpt/pricing/"
-  },
-  "openAiApiPricing": {
-    "current": {
-      "cachedInputPerMillion": 0.4,
-      "inputPerMillion": 4,
-      "outputPerMillion": 20
-    },
-    "currentBasis": "promotional",
-    "listFallback": {
-      "cachedInputPerMillion": 0.5,
-      "inputPerMillion": 5,
-      "outputPerMillion": 30
-    },
-    "listFallbackDocumentedOn": "2026-08-21",
-    "modelId": "gpt-5.6-sol",
-    "modelName": "GPT-5.6 Sol",
-    "promoGuaranteedThrough": "2026-11-21",
-    "source": {
-      "name": "OpenAI API pricing",
-      "retrievedAt": "2026-09-10T14:05:00Z",
-      "url": "https://developers.openai.com/api/docs/pricing"
-    }
-  },
   "deepSeekApiPricing": {
     "modelId": "deepseek-flash",
     "modelVersion": "DeepSeek-V4.1-Flash",
@@ -46,7 +16,7 @@
     "peakHoursUtc": "Monday through Friday, 01:00-04:00 and 06:00-10:00 UTC",
     "source": {
       "name": "DeepSeek API pricing",
-      "retrievedAt": "2026-09-10T13:58:00Z",
+      "retrievedAt": "2026-09-10T14:32:21.997Z",
       "url": "https://api-docs.deepseek.com/quick_start/pricing"
     }
   },
@@ -54,7 +24,7 @@
     "period": "2026-06",
     "source": {
       "name": "EIA Electric Power Monthly, Table 5.6.A",
-      "retrievedAt": "2026-09-10T14:00:00Z",
+      "retrievedAt": "2026-09-10T14:32:21.997Z",
       "url": "https://www.eia.gov/electricity/monthly/epm_table_grapher.php?t=epmt_5_6_a"
     },
     "usResidentialCentsPerKwh": 18.34
@@ -69,18 +39,18 @@
       },
       {
         "gpuId": "rtx-4090",
-        "offerCount": 15,
-        "usdPerHour": 0.6
+        "offerCount": 11,
+        "usdPerHour": 0.43
       },
       {
         "gpuId": "h100-sxm",
-        "offerCount": 4,
-        "usdPerHour": 3.47
+        "offerCount": 3,
+        "usdPerHour": 3.82
       }
     ],
     "source": {
       "name": "Vast.ai marketplace",
-      "retrievedAt": "2026-09-10T14:02:00Z",
+      "retrievedAt": "2026-09-10T14:32:21.997Z",
       "url": "https://console.vast.ai/api/v0/bundles/"
     }
   },
@@ -270,6 +240,36 @@
     ],
     "refreshNote": "Purchase prices and throughput profiles are curated with dated citations. TODO: automate an MSRP/street price feed and a benchmark feed; until then, update these through reviewed snapshot edits, not the automated refresh."
   },
+  "openAiApiPricing": {
+    "current": {
+      "cachedInputPerMillion": 0.4,
+      "inputPerMillion": 4,
+      "outputPerMillion": 20
+    },
+    "currentBasis": "promotional",
+    "listFallback": {
+      "cachedInputPerMillion": 0.5,
+      "inputPerMillion": 5,
+      "outputPerMillion": 30
+    },
+    "listFallbackDocumentedOn": "2026-08-21",
+    "modelId": "gpt-5.6-sol",
+    "modelName": "GPT-5.6 Sol",
+    "promoGuaranteedThrough": "2026-11-21",
+    "source": {
+      "name": "OpenAI API pricing",
+      "retrievedAt": "2026-09-10T14:32:21.997Z",
+      "url": "https://developers.openai.com/api/docs/pricing"
+    }
+  },
+  "plan": {
+    "asOf": "2026-09-10",
+    "id": "chatgpt-pro-20x",
+    "monthlyPriceUsd": 200,
+    "name": "ChatGPT Pro 20x",
+    "sourceUrl": "https://openai.com/chatgpt/pricing/"
+  },
+  "schemaVersion": 1,
   "subsidyAnchor": {
     "defaultMultiple": 40,
     "lastVerifiedOn": "2026-09-10",

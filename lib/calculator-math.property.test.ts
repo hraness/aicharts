@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { assertProperty, fc } from "./property-test";
 import { CALCULATOR_INPUTS } from "./calculator-inputs-collection";
+import { goldenCalculatorSnapshot } from "./calculator-golden-fixture";
 import {
   apiCostBreakdownUsd,
   computeCalculatorScenario,
@@ -131,11 +132,12 @@ describe("calculator math laws", () => {
   });
 
   test("DeepSeek off-peak stays cheaper than Sol for the same volume across the knob space", () => {
+    const goldenSnapshot = goldenCalculatorSnapshot();
     assertProperty(fc.property(
       fc.double({ min: 0, max: 0.95, noNaN: true }),
       fc.double({ min: 1, max: 10, noNaN: true }),
       (cacheHitRate, ratio) => {
-        const scenario = computeCalculatorScenario(CALCULATOR_INPUTS, {
+        const scenario = computeCalculatorScenario(goldenSnapshot, {
           ...DEFAULT_CALCULATOR_KNOBS,
           cacheHitPercent: cacheHitRate * 100,
           inputTokensPerOutputToken: ratio,

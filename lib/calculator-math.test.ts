@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { CALCULATOR_INPUTS } from "./calculator-inputs-collection";
+import { goldenCalculatorSnapshot } from "./calculator-golden-fixture";
 import {
   apiCostBreakdownUsd,
   CONTINUOUS_HOURS_PER_MONTH,
@@ -24,6 +25,8 @@ const solPromoRates = {
   inputPerMillion: 4,
   outputPerMillion: 20,
 } as const;
+
+const goldenSnapshot = goldenCalculatorSnapshot();
 
 describe("calculator math golden case (N=1, 40x, 100% utilization, 50% cache, 4:1 mix)", () => {
   test("values one maxed seat at 8,000 dollars of API-equivalent spend", () => {
@@ -61,7 +64,7 @@ describe("calculator math golden case (N=1, 40x, 100% utilization, 50% cache, 4:
 
   test("prices the same volume at 251.67 dollars on DeepSeek Flash off-peak rates", () => {
     const volume = monthlyTokenVolume(8_000, solPromoRates, defaultMix);
-    const offPeak = deepSeekRateCard(CALCULATOR_INPUTS.deepSeekApiPricing, "offPeak");
+    const offPeak = deepSeekRateCard(goldenSnapshot.deepSeekApiPricing, "offPeak");
     // 4 x (0.5 x $0.15 + 0.5 x $0.003) + $0.60 = $0.906 per 1M output tokens.
     expect(costPerMillionOutputTokensUsd(offPeak, defaultMix)).toBeCloseTo(0.906, 10);
     expect(apiCostBreakdownUsd(volume, offPeak).totalUsd).toBeCloseTo(251.67, 2);
@@ -71,11 +74,11 @@ describe("calculator math golden case (N=1, 40x, 100% utilization, 50% cache, 4:
     const volume = monthlyTokenVolume(8_000, solPromoRates, defaultMix);
     const peakUsd = apiCostBreakdownUsd(
       volume,
-      deepSeekRateCard(CALCULATOR_INPUTS.deepSeekApiPricing, "peak"),
+      deepSeekRateCard(goldenSnapshot.deepSeekApiPricing, "peak"),
     ).totalUsd;
     const blendedUsd = apiCostBreakdownUsd(
       volume,
-      deepSeekRateCard(CALCULATOR_INPUTS.deepSeekApiPricing, "blended"),
+      deepSeekRateCard(goldenSnapshot.deepSeekApiPricing, "blended"),
     ).totalUsd;
     expect(peakUsd).toBeCloseTo(503.33, 2);
     // Off-peak x (1 + 35/168) because peak is exactly double off-peak.
@@ -120,7 +123,7 @@ describe("calculator math golden case (N=1, 40x, 100% utilization, 50% cache, 4:
   });
 
   test("assembles the default scenario from the checked snapshot", () => {
-    const scenario = computeCalculatorScenario(CALCULATOR_INPUTS, DEFAULT_CALCULATOR_KNOBS);
+    const scenario = computeCalculatorScenario(goldenSnapshot, DEFAULT_CALCULATOR_KNOBS);
     expect(scenario.spendUsd).toBe(8_000);
     expect(scenario.stickerUsd).toBe(200);
     expect(scenario.sol.breakdown.totalUsd).toBeCloseTo(8_000, 6);
@@ -137,7 +140,7 @@ describe("calculator math golden case (N=1, 40x, 100% utilization, 50% cache, 4:
   });
 
   test("prices the list-basis valuation at 8,000 dollars by construction on list rates", () => {
-    const scenario = computeCalculatorScenario(CALCULATOR_INPUTS, {
+    const scenario = computeCalculatorScenario(goldenSnapshot, {
       ...DEFAULT_CALCULATOR_KNOBS,
       solRateBasis: "list",
     });
@@ -180,7 +183,7 @@ describe("calculator knob clamping", () => {
   });
 
   test("scales spend with seats, utilization, and the Ultra multiplier", () => {
-    const scenario = computeCalculatorScenario(CALCULATOR_INPUTS, {
+    const scenario = computeCalculatorScenario(goldenSnapshot, {
       ...DEFAULT_CALCULATOR_KNOBS,
       seats: 3,
       ultraMultiple: 2,
@@ -191,7 +194,7 @@ describe("calculator knob clamping", () => {
   });
 
   test("falls back to the first profile when the profile id is unknown", () => {
-    const scenario = computeCalculatorScenario(CALCULATOR_INPUTS, {
+    const scenario = computeCalculatorScenario(goldenSnapshot, {
       ...DEFAULT_CALCULATOR_KNOBS,
       hardwareProfileId: "not-a-profile",
     });
@@ -199,7 +202,7 @@ describe("calculator knob clamping", () => {
   });
 
   test("uses the H100 rental path for profiles whose model cannot live in consumer VRAM", () => {
-    const scenario = computeCalculatorScenario(CALCULATOR_INPUTS, {
+    const scenario = computeCalculatorScenario(goldenSnapshot, {
       ...DEFAULT_CALCULATOR_KNOBS,
       hardwareProfileId: "dgx-spark-dense-70b",
     });
@@ -217,8 +220,8 @@ describe("duty cycles", () => {
   });
 
   test("needs fewer units on the continuous duty cycle for the same volume", () => {
-    const powerUser = computeCalculatorScenario(CALCULATOR_INPUTS, DEFAULT_CALCULATOR_KNOBS);
-    const continuous = computeCalculatorScenario(CALCULATOR_INPUTS, {
+    const powerUser = computeCalculatorScenario(goldenSnapshot, DEFAULT_CALCULATOR_KNOBS);
+    const continuous = computeCalculatorScenario(goldenSnapshot, {
       ...DEFAULT_CALCULATOR_KNOBS,
       dutyCycle: "continuous",
     });
