@@ -44,15 +44,21 @@ describe("focused chart destinations", () => {
     expect(html).toContain("<h1>AI cost calculator</h1>");
     expect(html).toContain('class="calculator-explorer"');
     expect(html).toContain("Monthly cost by path");
-    expect(html.match(/class="hraness-knob[" ]/gu)?.length).toBeGreaterThanOrEqual(7);
+    expect(html.match(/class="hraness-knob[" ]/gu)?.length).toBeGreaterThanOrEqual(9);
     expect(html.match(/class="calculator-bars"/gu)).toHaveLength(3);
     // The default 40x anchor: one seat implies $8,000 of API-equivalent monthly spend.
     expect(html).toContain("$8,000");
+    // Owning is priced as explicit depreciation plus a configurable electricity rate.
+    expect(html).toContain("Depreciation");
+    expect(html).toContain("Electricity rate");
     // Provenance is server-rendered with dated citations for every live source.
     expect(html).toContain(CALCULATOR_INPUTS.openAiApiPricing.source.url);
     expect(html).toContain(CALCULATOR_INPUTS.deepSeekApiPricing.source.url);
     expect(html).toContain(CALCULATOR_INPUTS.electricity.source.url);
     expect(html).toContain(CALCULATOR_INPUTS.subsidyAnchor.methodSourceUrl);
+    for (const preset of CALCULATOR_INPUTS.electricity.residentialPresets) {
+      expect(html).toContain(preset.sourceUrl);
+    }
     expect(html).toContain("Assumptions and limits");
     expect(html).not.toContain('class="benchmark-atlas"');
     expect(html).not.toContain('class="intelligence-efficiency"');

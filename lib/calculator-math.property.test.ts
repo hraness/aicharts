@@ -97,11 +97,16 @@ describe("calculator math laws", () => {
       cacheHitPercent: fc.double({ min: -50, max: 200, noNaN: true }),
       deepSeekWindow: fc.constantFrom<DeepSeekWindow>("offPeak", "peak", "blended"),
       dutyCycle: fc.constantFrom<DutyCycle>("powerUser", "continuous"),
+      electricityCentsPerKwh: fc.oneof(
+        fc.constant(null),
+        fc.double({ min: -50, max: 500, noNaN: true }),
+      ),
       hardwareProfileId: fc.oneof(
         fc.constantFrom(...CALCULATOR_INPUTS.hardware.profiles.map(profile => profile.id)),
         fc.constant("unknown-profile"),
       ),
       inputTokensPerOutputToken: fc.double({ min: -5, max: 100, noNaN: true }),
+      residualValuePercent: fc.double({ min: -50, max: 200, noNaN: true }),
       seats: fc.double({ min: -10, max: 10_000, noNaN: true }),
       solRateBasis: fc.constantFrom<SolRateBasis>("current", "list"),
       subsidyMultiple: fc.double({ min: -10, max: 1_000, noNaN: true }),
@@ -116,6 +121,9 @@ describe("calculator math laws", () => {
         scenario.sol.breakdown.totalUsd,
         scenario.sol.otherBasisUsd,
         scenario.deepSeek.selectedUsd,
+        scenario.home.depreciationMonthlyUsd,
+        scenario.home.electricityMonthlyUsd,
+        scenario.home.residualValueUsd,
         scenario.home.totalMonthlyUsd,
         scenario.home.upfrontUsd,
         scenario.rental.monthlyUsd,
@@ -129,6 +137,65 @@ describe("calculator math laws", () => {
       expect(scenario.home.unitCount).toBeGreaterThanOrEqual(1);
       expect(scenario.rental.unitCount).toBeGreaterThanOrEqual(1);
     }));
+  });
+
+  test("a higher resale value never raises the monthly ownership cost", () => {
+    const goldenSnapshot = goldenCalculatorSnapshot();
+    assertProperty(fc.property(
+      fc.double({ min: 0, max: 50, noNaN: true }),
+      fc.double({ min: 0, max: 50, noNaN: true }),
+      (residualA, residualB) => {
+        const [lower, higher] = residualA <= residualB ? [residualA, residualB] : [residualB, residualA];
+        const atLower = computeCalculatorScenario(goldenSnapshot, {
+          ...DEFAULT_CALCULATOR_KNOBS,
+          residualValuePercent: lower,
+        });
+        const atHigher = computeCalculatorScenario(goldenSnapshot, {
+          ...DEFAULT_CALCULATOR_KNOBS,
+          residualValuePercent: higher,
+        });
+        expect(atHigher.home.totalMonthlyUsd).toBeLessThanOrEqual(atLower.home.totalMonthlyUsd + 1e-9);
+        expect(atHigher.home.electricityMonthlyUsd).toBeCloseTo(atLower.home.electricityMonthlyUsd, 6);
+      },
+    ));
+  });
+
+  test("depreciation plus residual always reconciles to the purchase price", () => {
+    const goldenSnapshot = goldenCalculatorSnapshot();
+    assertProperty(fc.property(
+      fc.double({ min: 0, max: 50, noNaN: true }),
+      fc.integer({ min: 6, max: 60 }),
+      (residualValuePercent, amortizationMonths) => {
+        const scenario = computeCalculatorScenario(goldenSnapshot, {
+          ...DEFAULT_CALCULATOR_KNOBS,
+          amortizationMonths,
+          residualValuePercent,
+        });
+        const depreciatedTotal = scenario.home.depreciationMonthlyUsd * amortizationMonths;
+        expect(depreciatedTotal + scenario.home.residualValueUsd).toBeCloseTo(scenario.home.upfrontUsd, 5);
+      },
+    ));
+  });
+
+  test("a higher electricity rate never lowers the monthly ownership cost", () => {
+    const goldenSnapshot = goldenCalculatorSnapshot();
+    assertProperty(fc.property(
+      fc.double({ min: 1, max: 60, noNaN: true }),
+      fc.double({ min: 1, max: 60, noNaN: true }),
+      (rateA, rateB) => {
+        const [lower, higher] = rateA <= rateB ? [rateA, rateB] : [rateB, rateA];
+        const atLower = computeCalculatorScenario(goldenSnapshot, {
+          ...DEFAULT_CALCULATOR_KNOBS,
+          electricityCentsPerKwh: lower,
+        });
+        const atHigher = computeCalculatorScenario(goldenSnapshot, {
+          ...DEFAULT_CALCULATOR_KNOBS,
+          electricityCentsPerKwh: higher,
+        });
+        expect(atHigher.home.totalMonthlyUsd).toBeGreaterThanOrEqual(atLower.home.totalMonthlyUsd - 1e-9);
+        expect(atHigher.home.depreciationMonthlyUsd).toBeCloseTo(atLower.home.depreciationMonthlyUsd, 6);
+      },
+    ));
   });
 
   test("DeepSeek off-peak stays cheaper than Sol for the same volume across the knob space", () => {

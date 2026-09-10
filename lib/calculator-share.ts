@@ -17,11 +17,15 @@ const NUMERIC_PARAMS = {
   amortizationMonths: "amortize",
   cacheHitPercent: "cache",
   inputTokensPerOutputToken: "mix",
+  residualValuePercent: "resale",
   seats: "seats",
   subsidyMultiple: "subsidy",
   ultraMultiple: "ultra",
   utilizationPercent: "util",
-} as const satisfies Record<keyof typeof CALCULATOR_KNOB_BOUNDS, string>;
+} as const satisfies Record<Exclude<keyof typeof CALCULATOR_KNOB_BOUNDS, "electricityCentsPerKwh">, string>;
+
+/** The electricity knob is nullable (null follows the snapshot), so it has its own codec path. */
+const ELECTRICITY_PARAM = "kwh";
 
 const SOL_RATE_BASES: readonly SolRateBasis[] = ["current", "list"];
 const DEEPSEEK_WINDOWS: readonly DeepSeekWindow[] = ["offPeak", "peak", "blended"];
@@ -29,6 +33,7 @@ const DUTY_CYCLES: readonly DutyCycle[] = ["powerUser", "continuous"];
 
 export const CALCULATOR_PARAM_KEYS = [
   ...Object.values(NUMERIC_PARAMS),
+  ELECTRICITY_PARAM,
   "sol",
   "deepseek",
   "duty",
@@ -47,6 +52,13 @@ function readOneOf<T extends string>(params: URLSearchParams, key: string, allow
   return allowed.find(value => value === raw) ?? fallback;
 }
 
+function readNullableNumber(params: URLSearchParams, key: string): number | null {
+  const raw = params.get(key);
+  if (raw === null || raw.trim() === "") return null;
+  const value = Number(raw);
+  return Number.isFinite(value) ? value : null;
+}
+
 /** Parse knobs from a query string; unknown, malformed, or out-of-range values fall back per knob. */
 export function calculatorKnobsFromSearch(search: string, profileIds: readonly string[]): CalculatorKnobs {
   const params = new URLSearchParams(search);
@@ -57,10 +69,12 @@ export function calculatorKnobsFromSearch(search: string, profileIds: readonly s
     cacheHitPercent: readNumber(params, NUMERIC_PARAMS.cacheHitPercent, defaults.cacheHitPercent),
     deepSeekWindow: readOneOf(params, "deepseek", DEEPSEEK_WINDOWS, defaults.deepSeekWindow),
     dutyCycle: readOneOf(params, "duty", DUTY_CYCLES, defaults.dutyCycle),
+    electricityCentsPerKwh: readNullableNumber(params, ELECTRICITY_PARAM),
     hardwareProfileId: requestedProfile !== null && profileIds.includes(requestedProfile)
       ? requestedProfile
       : defaults.hardwareProfileId,
     inputTokensPerOutputToken: readNumber(params, NUMERIC_PARAMS.inputTokensPerOutputToken, defaults.inputTokensPerOutputToken),
+    residualValuePercent: readNumber(params, NUMERIC_PARAMS.residualValuePercent, defaults.residualValuePercent),
     seats: readNumber(params, NUMERIC_PARAMS.seats, defaults.seats),
     solRateBasis: readOneOf(params, "sol", SOL_RATE_BASES, defaults.solRateBasis),
     subsidyMultiple: readNumber(params, NUMERIC_PARAMS.subsidyMultiple, defaults.subsidyMultiple),
@@ -77,6 +91,7 @@ export function calculatorKnobsSearch(knobs: CalculatorKnobs, currentSearch = ""
   for (const [knob, key] of Object.entries(NUMERIC_PARAMS) as [keyof typeof NUMERIC_PARAMS, string][]) {
     if (knobs[knob] !== defaults[knob]) params.set(key, String(knobs[knob]));
   }
+  if (knobs.electricityCentsPerKwh !== null) params.set(ELECTRICITY_PARAM, String(knobs.electricityCentsPerKwh));
   if (knobs.solRateBasis !== defaults.solRateBasis) params.set("sol", knobs.solRateBasis);
   if (knobs.deepSeekWindow !== defaults.deepSeekWindow) params.set("deepseek", knobs.deepSeekWindow);
   if (knobs.dutyCycle !== defaults.dutyCycle) params.set("duty", knobs.dutyCycle);

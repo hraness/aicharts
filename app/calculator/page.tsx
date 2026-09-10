@@ -9,6 +9,7 @@ import {
   namedSubsidyCeiling,
   parseCalculatorInputsSnapshot,
 } from "@/lib/calculator-inputs-data";
+import { CALCULATOR_KNOB_BOUNDS } from "@/lib/calculator-math";
 import { searchSite } from "@/app/site";
 
 import "@/styles/chart-home.css";
@@ -62,6 +63,9 @@ export default function CalculatorPage() {
         <p>
           The subsidy value converts to tokens at the selected GPT-5.6 Sol rates with the chosen input-to-output mix and cache-hit rate. Every other path then prices that same token volume. Hardware and rental paths convert the month&rsquo;s output tokens into an aggregate decode rate over the selected duty cycle, and size a fleet of whole units against each profile&rsquo;s single-stream decode figure.
         </p>
+        <p>
+          Owning hardware costs depreciation plus electricity. Depreciation is straight-line: the purchase price, less the resale-value knob&rsquo;s residual (default 0%), spreads evenly over the useful-life knob&rsquo;s months. Electricity multiplies each unit&rsquo;s rated power draw by the duty-cycle hours and the electricity knob&rsquo;s rate. The rate defaults to the EIA United States residential average and adjusts from {CALCULATOR_KNOB_BOUNDS.electricityCentsPerKwh.min}&cent; to {CALCULATOR_KNOB_BOUNDS.electricityCentsPerKwh.max}&cent; per kWh, a band that covers residential grid rates worldwide: <a href="https://www.globalpetrolprices.com/electricity_prices/" rel="noopener noreferrer">GlobalPetrolPrices</a> household averages for 2023 through Q2 2026 run from under 1&cent; in subsidized markets (Iran, Ethiopia) to about 47&cent; in Bermuda, and Hawaii&rsquo;s June 2026 average is 52.72&cent; (checked September 10, 2026). Use the presets or your utility bill&rsquo;s energy rate to set a local figure.
+        </p>
         <h3>Sources</h3>
         <ul>
           <li>
@@ -76,6 +80,11 @@ export default function CalculatorPage() {
           <li>
             <a href={inputs.electricity.source.url} rel="noopener noreferrer">{inputs.electricity.source.name}</a>: United States residential average of {inputs.electricity.usResidentialCentsPerKwh} cents per kWh for {formatMonth(inputs.electricity.period)}. Retrieved {formatDate(inputs.electricity.source.retrievedAt)}.
           </li>
+          {inputs.electricity.residentialPresets.map(preset => (
+            <li key={preset.id}>
+              <a href={preset.sourceUrl} rel="noopener noreferrer">{preset.label} electricity preset</a>: {preset.centsPerKwh} cents per kWh. {preset.sourceName}. Checked {formatDate(preset.asOf)}.
+            </li>
+          ))}
           <li>
             <a href="https://vast.ai" rel="noopener noreferrer">{inputs.gpuRental.source.name}</a>: {inputs.gpuRental.methodology} Retrieved {formatDate(inputs.gpuRental.source.retrievedAt)}.
           </li>
@@ -99,6 +108,8 @@ export default function CalculatorPage() {
           <li>The SemiAnalysis figures are API-retail equivalents, not OpenAI&rsquo;s serving costs. OpenAI does not lose the full sticker gap on a maxed seat.</li>
           <li>Fleet sizing counts decode only. Prefill (input processing) is excluded, which flatters the local paths on input-heavy mixes.</li>
           <li>Throughput profiles are single-stream, order-of-magnitude figures. Batched serving raises aggregate throughput well beyond them.</li>
+          <li>Depreciation assumes no residual value unless the resale-value knob sets one, and ignores financing, taxes, and disposal costs. Used-GPU prices vary too much to promise a recovery.</li>
+          <li>Electricity assumes grid supply at one flat residential rate. There is no on-site solar or other self-generation, no time-of-use optimization, and no cooling overhead beyond the GPUs&rsquo; rated draw.</li>
           <li>Home hardware costs exclude the host system, cooling, networking, and failures; rental costs exclude storage, egress, and interruptions.</li>
           <li>Multi-agent workflows multiply token volume. The Ultra knob scales the implied volume up to 10 times.</li>
         </ul>

@@ -20,8 +20,13 @@ const knobsArbitrary: fc.Arbitrary<CalculatorKnobs> = fc.record({
   cacheHitPercent: steps(CALCULATOR_KNOB_BOUNDS.cacheHitPercent),
   deepSeekWindow: fc.constantFrom("offPeak", "peak", "blended"),
   dutyCycle: fc.constantFrom("powerUser", "continuous"),
+  electricityCentsPerKwh: fc.oneof(
+    fc.constant(null),
+    steps(CALCULATOR_KNOB_BOUNDS.electricityCentsPerKwh),
+  ),
   hardwareProfileId: fc.constantFrom(...profileIds),
   inputTokensPerOutputToken: steps(CALCULATOR_KNOB_BOUNDS.inputTokensPerOutputToken),
+  residualValuePercent: steps(CALCULATOR_KNOB_BOUNDS.residualValuePercent),
   seats: steps(CALCULATOR_KNOB_BOUNDS.seats),
   solRateBasis: fc.constantFrom("current", "list"),
   subsidyMultiple: steps(CALCULATOR_KNOB_BOUNDS.subsidyMultiple),
@@ -68,6 +73,16 @@ describe("calculator share codec", () => {
     });
   });
 
+  test("the electricity knob follows the snapshot unless the link sets a rate", () => {
+    expect(calculatorKnobsFromSearch("", profileIds).electricityCentsPerKwh).toBeNull();
+    expect(calculatorKnobsFromSearch("?kwh=", profileIds).electricityCentsPerKwh).toBeNull();
+    expect(calculatorKnobsFromSearch("?kwh=abc", profileIds).electricityCentsPerKwh).toBeNull();
+    expect(calculatorKnobsFromSearch("?kwh=52.72", profileIds).electricityCentsPerKwh).toBe(52.72);
+    expect(calculatorKnobsFromSearch("?kwh=999", profileIds).electricityCentsPerKwh).toBe(60);
+    expect(calculatorKnobsSearch({ ...DEFAULT_CALCULATOR_KNOBS, electricityCentsPerKwh: 8.1 })).toBe("kwh=8.1");
+    expect(calculatorKnobsSearch({ ...DEFAULT_CALCULATOR_KNOBS, residualValuePercent: 20 })).toBe("resale=20");
+  });
+
   test("a profile id is only accepted when the snapshot defines it", () => {
     expect(calculatorKnobsFromSearch("?profile=dgx-spark-moe", profileIds).hardwareProfileId).toBe("dgx-spark-moe");
     expect(calculatorKnobsFromSearch("?profile=dgx-spark-moe", []).hardwareProfileId).toBe(DEFAULT_CALCULATOR_KNOBS.hardwareProfileId);
@@ -87,6 +102,11 @@ describe("calculator share codec", () => {
       const parsed = calculatorKnobsFromSearch(`?${query}`, profileIds);
       for (const [key, bounds] of Object.entries(CALCULATOR_KNOB_BOUNDS)) {
         const value = parsed[key as keyof typeof CALCULATOR_KNOB_BOUNDS];
+        // The electricity knob alone may be null: it then follows the snapshot.
+        if (value === null) {
+          expect(key).toBe("electricityCentsPerKwh");
+          continue;
+        }
         expect(value).toBeGreaterThanOrEqual(bounds.min);
         expect(value).toBeLessThanOrEqual(bounds.max);
       }
