@@ -35,6 +35,7 @@ function formatUsd(value: number): string {
 }
 
 function formatTokens(value: number): string {
+  if (value >= 1e12) return `${(value / 1e12).toFixed(2)}T`;
   if (value >= 1e9) return `${(value / 1e9).toFixed(2)}B`;
   if (value >= 1e6) return `${(value / 1e6).toFixed(0)}M`;
   return new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 }).format(value);
@@ -274,7 +275,7 @@ export function CalculatorExplorer({
       <section aria-label="Calculator assumptions" className="calculator-controls">
         <div className="calculator-controls__knobs">
           <CalculatorKnob
-            bounds={{ max: 100, min: 1, step: 1 }}
+            bounds={CALCULATOR_KNOB_BOUNDS.seats}
             control="seats"
             label="Seats"
             onChange={seats => setKnob({ seats })}
@@ -332,9 +333,9 @@ export function CalculatorExplorer({
         </div>
         <div className="calculator-controls__modes">
           <div className="calculator-mode">
-            <span className="calculator-mode__label" id="calculator-sol-basis-label">Sol rates</span>
+            <span aria-hidden="true" className="calculator-mode__label">Sol rates</span>
             <SegmentedControl<SolRateBasis>
-              aria-label="Sol API rate basis"
+              aria-label="Sol rates"
               className="chart-segmented-control"
               items={[
                 {
@@ -351,9 +352,9 @@ export function CalculatorExplorer({
             />
           </div>
           <div className="calculator-mode">
-            <span className="calculator-mode__label">DeepSeek window</span>
+            <span aria-hidden="true" className="calculator-mode__label">DeepSeek window</span>
             <SegmentedControl<DeepSeekWindow>
-              aria-label="DeepSeek pricing window"
+              aria-label="DeepSeek window"
               className="chart-segmented-control"
               items={[
                 { id: "offPeak", label: "Off-peak" },
@@ -365,7 +366,7 @@ export function CalculatorExplorer({
             />
           </div>
           <div className="calculator-mode">
-            <span className="calculator-mode__label">Duty cycle</span>
+            <span aria-hidden="true" className="calculator-mode__label">Duty cycle</span>
             <SegmentedControl<DutyCycle>
               aria-label="Duty cycle"
               className="chart-segmented-control"

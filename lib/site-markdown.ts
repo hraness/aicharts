@@ -22,6 +22,7 @@ import terminalBenchScienceData from "@/data/terminal-bench-science.json";
 
 import { BENCHMARK_DATA_DESCRIPTION } from "./benchmark-portfolio";
 import { CALCULATOR_INPUTS } from "./calculator-inputs-collection";
+import { namedSubsidyCeiling } from "./calculator-inputs-data";
 import {
   computeCalculatorScenario,
   DEFAULT_CALCULATOR_KNOBS,
@@ -351,14 +352,16 @@ function calculatorMarkdown(): string {
     style: "currency",
   }).format(value);
   const anchor = inputs.subsidyAnchor;
+  const proCeiling = namedSubsidyCeiling(anchor, "ChatGPT Pro 20x");
+  const maxCeiling = namedSubsidyCeiling(anchor, "Claude Max 20x");
   const homeGpu = inputs.hardware.gpus.find(gpu => gpu.id === scenario.profile.gpuId);
   const rentalGpu = inputs.hardware.gpus.find(gpu => gpu.id === scenario.profile.rental.gpuId);
   return joinMarkdown([
     "# AI cost calculator",
     "",
-    "One fully used ChatGPT Pro 20x seat implies a monthly token volume. The calculator prices that same volume five ways: the subscription sticker, the GPT-5.6 Sol API, the DeepSeek V4.1-Flash API, GPUs you buy, and GPUs you rent. Knobs cover seats, the subsidy multiple, utilization, cache-hit rate, token mix, DeepSeek pricing window, duty cycle, hardware profile, and amortization.",
+    `One fully used ChatGPT Pro 20x seat implies a monthly token volume. The calculator prices that same volume five ways: the subscription sticker, the ${inputs.openAiApiPricing.modelName} API, the ${inputs.deepSeekApiPricing.modelVersion} API, GPUs you buy, and GPUs you rent. Knobs cover seats, the subsidy multiple, utilization, cache-hit rate, token mix, DeepSeek pricing window, duty cycle, hardware profile, and amortization.`,
     "",
-    `The anchor is the [SemiAnalysis ${formatUpdateDate(anchor.methodPublishedOn)} stress test](${anchor.methodSourceUrl}), which valued a maxed ChatGPT Pro 20x seat at about ${usd(anchor.publishedCeilings[0]?.apiEquivalentUsdPerMonth ?? 14_000)} of API-equivalent usage a month (70x its price) and Claude Max 20x at about ${usd(anchor.publishedCeilings[1]?.apiEquivalentUsdPerMonth ?? 8_000)} (40x). The default uses the more conservative ${anchor.defaultMultiple}x. These are API retail equivalents, not provider serving costs, and open-weight models on the local paths are not GPT-5.6 Sol.`,
+    `The anchor is the [SemiAnalysis ${formatUpdateDate(anchor.methodPublishedOn)} stress test](${anchor.methodSourceUrl}), which valued a maxed ChatGPT Pro 20x seat at about ${usd(proCeiling.apiEquivalentUsdPerMonth)} of API-equivalent usage a month (${proCeiling.impliedMultiple}x its price) and Claude Max 20x at about ${usd(maxCeiling.apiEquivalentUsdPerMonth)} (${maxCeiling.impliedMultiple}x). The default uses the more conservative ${anchor.defaultMultiple}x. These are API retail equivalents, not provider serving costs, and open-weight models on the local paths are not ${inputs.openAiApiPricing.modelName}.`,
     "",
     `## Default scenario (${DEFAULT_CALCULATOR_KNOBS.seats} seat, ${anchor.defaultMultiple}x subsidy, ${DEFAULT_CALCULATOR_KNOBS.utilizationPercent}% utilization, ${DEFAULT_CALCULATOR_KNOBS.cacheHitPercent}% cache hits, ${DEFAULT_CALCULATOR_KNOBS.inputTokensPerOutputToken}:1 mix)`,
     "",

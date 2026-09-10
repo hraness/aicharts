@@ -70,7 +70,15 @@ const deepSeekWindowRatesSchema = z.object({
   cacheHitInputPerMillion: positiveFiniteSchema,
   cacheMissInputPerMillion: positiveFiniteSchema,
   outputPerMillion: positiveFiniteSchema,
-}).strict();
+}).strict().superRefine((rates, context) => {
+  if (rates.cacheHitInputPerMillion >= rates.cacheMissInputPerMillion) {
+    context.addIssue({
+      code: "custom",
+      message: "A cache hit must be cheaper than a cache miss.",
+      path: ["cacheHitInputPerMillion"],
+    });
+  }
+});
 
 const deepSeekApiPricingSchema = z.object({
   modelId: z.literal("deepseek-flash"),
@@ -185,6 +193,8 @@ const subsidyCeilingSchema = z.object({
   plan: z.string().min(1),
 }).strict();
 
+const NAMED_SUBSIDY_CEILING_PLANS = ["ChatGPT Pro 20x", "Claude Max 20x"] as const;
+
 const subsidyAnchorSchema = z.object({
   defaultMultiple: z.number().finite().min(10).max(100),
   lastVerifiedOn: isoDateSchema,
@@ -195,7 +205,19 @@ const subsidyAnchorSchema = z.object({
   reverificationNote: z.string().min(1),
   secondarySourceName: z.string().min(1),
   secondarySourceUrl: credentialFreeHttpsUrlSchema,
-}).strict();
+}).strict().superRefine((anchor, context) => {
+  // The page and Markdown copy quote both named ceilings; keep them present so
+  // a reviewed edit cannot silently blank the method paragraph.
+  for (const plan of NAMED_SUBSIDY_CEILING_PLANS) {
+    if (!anchor.publishedCeilings.some(ceiling => ceiling.plan === plan)) {
+      context.addIssue({
+        code: "custom",
+        message: `Subsidy anchor must retain the published ${plan} ceiling.`,
+        path: ["publishedCeilings"],
+      });
+    }
+  }
+});
 
 const planSchema = z.object({
   asOf: isoDateSchema,
@@ -287,6 +309,21 @@ export function parseCalculatorInputsSnapshot(
   value: unknown,
 ): Result<CalculatorInputsSnapshot, z.ZodError> {
   return parseResult(calculatorInputsSnapshotSchema, value);
+}
+
+export type CalculatorSubsidyCeiling =
+  CalculatorInputsSnapshot["subsidyAnchor"]["publishedCeilings"][number];
+
+/** The schema guarantees both named ceilings, so absence is a checked-in invariant failure. */
+export function namedSubsidyCeiling(
+  anchor: CalculatorInputsSnapshot["subsidyAnchor"],
+  plan: (typeof NAMED_SUBSIDY_CEILING_PLANS)[number],
+): CalculatorSubsidyCeiling {
+  const ceiling = anchor.publishedCeilings.find(candidate => candidate.plan === plan);
+  if (ceiling === undefined) {
+    throw new Error(`Checked subsidy anchor is missing the published ${plan} ceiling.`);
+  }
+  return ceiling;
 }
 
 /** Latest source retrieval or curated as-of date; drives the page's sitemap `lastmod`. */

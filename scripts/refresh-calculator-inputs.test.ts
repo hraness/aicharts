@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import calculatorInputsData from "../data/calculator-inputs.json";
-import { parseCalculatorInputsSnapshot, type CalculatorInputsSnapshot } from "../lib/calculator-inputs-data";
+import { goldenCalculatorSnapshot } from "../lib/calculator-golden-fixture";
+import type { CalculatorInputsSnapshot } from "../lib/calculator-inputs-data";
 import { err, ok } from "../lib/result";
 import {
   parseDeepSeekFlashRates,
@@ -9,12 +9,6 @@ import {
   refreshCalculatorInputs,
   rentalOfferFromVastResponse,
 } from "./refresh-calculator-inputs";
-
-function committedSnapshot(): CalculatorInputsSnapshot {
-  const parsed = parseCalculatorInputsSnapshot(calculatorInputsData);
-  if (!parsed.ok) throw new Error(parsed.error.message);
-  return parsed.value;
-}
 
 const openAiPromoPage = `
 <html><body><script>self.__next_f.push([1,"rows: [[0,&quot;gpt-5.6-sol&quot;],[0,4],[0,0.4],[0,5],[0,20]],[1,[[0,&quot;gpt-5.6-terra&quot;],[0,2],[0,0.2],[0,2.5],[0,12]]]"])</script>
@@ -169,7 +163,10 @@ describe("calculator inputs refresh flow", () => {
         },
         now: () => "2026-09-11T10:00:00.000Z",
         postJson: () => Promise.resolve(ok(vastResponse(overrides.vastPrices ?? [0.5, 0.55, 0.6]))),
-        readCommittedInputs: () => Promise.resolve(ok(committedSnapshot())),
+        // The previous snapshot must be the frozen golden fixture, not the live
+        // committed file: replacement-guard ratios in this test must never move
+        // when the daily refresh updates real market rates.
+        readCommittedInputs: () => Promise.resolve(ok(goldenCalculatorSnapshot())),
         writeCommittedInputs: (snapshot: CalculatorInputsSnapshot) => {
           written.push(snapshot);
           return Promise.resolve();
@@ -184,7 +181,7 @@ describe("calculator inputs refresh flow", () => {
     expect(result.ok).toBe(true);
     expect(written).toHaveLength(1);
     const refreshed = written[0]!;
-    const previous = committedSnapshot();
+    const previous = goldenCalculatorSnapshot();
     expect(refreshed.openAiApiPricing.source.retrievedAt).toBe("2026-09-11T10:00:00.000Z");
     expect(refreshed.gpuRental.offers.every(offer => offer.usdPerHour === 0.55)).toBe(true);
     expect(refreshed.hardware).toEqual(previous.hardware);

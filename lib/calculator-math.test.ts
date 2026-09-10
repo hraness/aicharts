@@ -151,6 +151,19 @@ describe("calculator math golden case (N=1, 40x, 100% utilization, 50% cache, 4:
   });
 });
 
+describe("calculator defaults", () => {
+  test("keeps the default subsidy knob equal to the snapshot's documented default", () => {
+    expect(DEFAULT_CALCULATOR_KNOBS.subsidyMultiple)
+      .toBe(CALCULATOR_INPUTS.subsidyAnchor.defaultMultiple);
+  });
+
+  test("defaults to a hardware profile that exists in the checked snapshot", () => {
+    expect(CALCULATOR_INPUTS.hardware.profiles.some(
+      profile => profile.id === DEFAULT_CALCULATOR_KNOBS.hardwareProfileId,
+    )).toBe(true);
+  });
+});
+
 describe("calculator knob clamping", () => {
   test("clamps out-of-range knobs into their documented bounds", () => {
     const clamped = clampCalculatorKnobs({

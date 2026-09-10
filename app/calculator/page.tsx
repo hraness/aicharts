@@ -6,6 +6,7 @@ import { ChartPageFooter } from "@/components/chart-navigation";
 import { SiteHeader } from "@/components/site-header";
 import {
   calculatorInputsModifiedAt,
+  namedSubsidyCeiling,
   parseCalculatorInputsSnapshot,
 } from "@/lib/calculator-inputs-data";
 import { searchSite } from "@/app/site";
@@ -41,22 +42,22 @@ export default function CalculatorPage() {
   const inputs = parsed.value;
   const ratesAsOf = calculatorInputsModifiedAt(inputs);
   const anchor = inputs.subsidyAnchor;
-  const proCeiling = anchor.publishedCeilings.find(ceiling => ceiling.plan === "ChatGPT Pro 20x");
-  const maxCeiling = anchor.publishedCeilings.find(ceiling => ceiling.plan === "Claude Max 20x");
+  const proCeiling = namedSubsidyCeiling(anchor, "ChatGPT Pro 20x");
+  const maxCeiling = namedSubsidyCeiling(anchor, "Claude Max 20x");
 
   return <>
     <SiteHeader current="/calculator" />
     <main className="chart-home calculator-home" id="main-content">
       <header className="chart-page-intro">
         <h1>AI cost calculator</h1>
-        <p>One fully used ChatGPT Pro 20x seat implies a monthly token volume. This page prices that same volume five ways: the subscription sticker, the GPT-5.6 Sol API, the DeepSeek V4.1-Flash API, GPUs you buy, and GPUs you rent.</p>
+        <p>One fully used ChatGPT Pro 20x seat implies a monthly token volume. This page prices that same volume five ways: the subscription sticker, the {inputs.openAiApiPricing.modelName} API, the {inputs.deepSeekApiPricing.modelVersion} API, GPUs you buy, and GPUs you rent.</p>
         <p className="chart-page-intro__coverage">Rates as of {formatDate(ratesAsOf)}.</p>
       </header>
       <CalculatorExplorer snapshot={inputs} />
       <section aria-labelledby="calculator-method-heading" className="calculator-provenance">
         <h2 id="calculator-method-heading">Method</h2>
         <p>
-          The anchor is a <a href={anchor.methodSourceUrl} rel="noopener noreferrer">{formatDate(anchor.methodPublishedOn)} SemiAnalysis stress test</a>: the firm bought each OpenAI and Anthropic subscription tier, ran long-horizon coding and agent tasks until weekly limits were exhausted, and valued the consumed tokens at public API rates. A maxed ChatGPT Pro 20x seat reached about ${proCeiling?.apiEquivalentUsdPerMonth.toLocaleString("en-US")} of API-equivalent usage ({proCeiling?.impliedMultiple} times its price), and Claude Max 20x reached about ${maxCeiling?.apiEquivalentUsdPerMonth.toLocaleString("en-US")} ({maxCeiling?.impliedMultiple} times). The calculator defaults to the more conservative {anchor.defaultMultiple} times; the subsidy knob covers 10 to 100 times.
+          The anchor is a <a href={anchor.methodSourceUrl} rel="noopener noreferrer">{formatDate(anchor.methodPublishedOn)} SemiAnalysis stress test</a>: the firm bought each OpenAI and Anthropic subscription tier, ran long-horizon coding and agent tasks until weekly limits were exhausted, and valued the consumed tokens at public API rates. A maxed ChatGPT Pro 20x seat reached about ${proCeiling.apiEquivalentUsdPerMonth.toLocaleString("en-US")} of API-equivalent usage ({proCeiling.impliedMultiple} times its price), and Claude Max 20x reached about ${maxCeiling.apiEquivalentUsdPerMonth.toLocaleString("en-US")} ({maxCeiling.impliedMultiple} times). The calculator defaults to the more conservative {anchor.defaultMultiple} times; the subsidy knob covers 10 to 100 times.
         </p>
         <p>
           The subsidy value converts to tokens at the selected GPT-5.6 Sol rates with the chosen input-to-output mix and cache-hit rate. Every other path then prices that same token volume. Hardware and rental paths convert the month&rsquo;s output tokens into an aggregate decode rate over the selected duty cycle, and size a fleet of whole units against each profile&rsquo;s single-stream decode figure.

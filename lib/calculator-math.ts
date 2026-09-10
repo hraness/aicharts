@@ -40,7 +40,7 @@ export const CALCULATOR_KNOB_BOUNDS = {
   amortizationMonths: { min: 6, max: 60, step: 6 },
   cacheHitPercent: { min: 0, max: 95, step: 5 },
   inputTokensPerOutputToken: { min: 1, max: 10, step: 1 },
-  seats: { min: 1, max: 1_000, step: 1 },
+  seats: { min: 1, max: 100, step: 1 },
   subsidyMultiple: { min: 10, max: 100, step: 5 },
   ultraMultiple: { min: 1, max: 10, step: 1 },
   utilizationPercent: { min: 5, max: 100, step: 5 },

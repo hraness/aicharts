@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import calculatorInputsData from "@/data/calculator-inputs.json";
 import {
   calculatorInputsModifiedAt,
+  namedSubsidyCeiling,
   parseCalculatorInputsSnapshot,
   validateCalculatorInputsReplacement,
   type CalculatorInputsSnapshot,
@@ -81,6 +82,25 @@ describe("calculator inputs schema", () => {
       clone.hardware.profiles[1]!.id = clone.hardware.profiles[0]!.id;
     });
     expect(parseCalculatorInputsSnapshot(broken).ok).toBe(false);
+  });
+
+  test("rejects a DeepSeek cache hit that is not cheaper than a cache miss", () => {
+    const broken = mutated((clone) => {
+      clone.deepSeekApiPricing.offPeak.cacheHitInputPerMillion = clone.deepSeekApiPricing.offPeak.cacheMissInputPerMillion;
+      clone.deepSeekApiPricing.peak.cacheHitInputPerMillion = clone.deepSeekApiPricing.peak.cacheMissInputPerMillion;
+    });
+    expect(parseCalculatorInputsSnapshot(broken).ok).toBe(false);
+  });
+
+  test("requires both named subsidy ceilings the copy quotes", () => {
+    const broken = mutated((clone) => {
+      clone.subsidyAnchor.publishedCeilings = clone.subsidyAnchor.publishedCeilings
+        .filter(ceiling => ceiling.plan !== "Claude Max 20x");
+    });
+    expect(parseCalculatorInputsSnapshot(broken).ok).toBe(false);
+    const snapshot = checkedSnapshot();
+    expect(namedSubsidyCeiling(snapshot.subsidyAnchor, "ChatGPT Pro 20x").impliedMultiple).toBe(70);
+    expect(namedSubsidyCeiling(snapshot.subsidyAnchor, "Claude Max 20x").impliedMultiple).toBe(40);
   });
 });
 
