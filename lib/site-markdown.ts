@@ -356,7 +356,7 @@ function calculatorMarkdown(): string {
   const homeGpu = inputs.hardware.gpus.find(gpu => gpu.id === scenario.profile.gpuId);
   const rentalGpu = inputs.hardware.gpus.find(gpu => gpu.id === scenario.profile.rental.gpuId);
   return joinMarkdown([
-    "# ChatGPT Pro vs API vs GPUs you buy or rent",
+    "# Subscription vs API vs GPUs",
     "",
     `One fully used ChatGPT Pro 20x seat implies a monthly token volume. The calculator prices that same volume five ways: the subscription sticker, the ${inputs.openAiApiPricing.modelName} API, the ${inputs.deepSeekApiPricing.modelVersion} API, GPUs you buy, and GPUs you rent. Knobs cover seats, the subsidy multiple, utilization, cache-hit rate, token mix, DeepSeek pricing window, duty cycle, hardware profile, useful life, resale value, and the electricity rate.`,
     "",
@@ -663,7 +663,7 @@ export function agentGuideMarkdown(
     `- [AI model charts](${absolute("/")}). Start with capability versus cost or output tokens on the Pareto frontier. Inspect exact model configurations in one matched resource cohort.`,
     `- [Coding agent comparisons](${absolute("/coding")}). Compare benchmark scores with API cost, active time, or total tokens from the separate Artificial Analysis coding-agents source.`,
     `- [AI benchmark explorer](${absolute("/benchmarks")}). Choose a task, inspect a measured cohort, or read a source guide. Terminal-Bench 4 is the current terminal-engineering standard.`,
-    `- [ChatGPT Pro vs API vs GPUs you buy or rent](${absolute("/calculator")}). Price one fully used ChatGPT Pro seat's token volume at OpenAI and DeepSeek API rates, on purchased GPUs, and on rented GPUs, with sourced assumptions.`,
+    `- [Subscription vs API vs GPUs](${absolute("/calculator")}). Price one fully used ChatGPT Pro seat's token volume at OpenAI and DeepSeek API rates, on purchased GPUs, and on rented GPUs, with sourced assumptions.`,
     `- [Atlas catalog JSON](${absolute(ATLAS_CATALOG_DOWNLOAD_PATH)}). All benchmark IDs, coverage, versions, source dates, and per-cohort JSON distribution links.`,
     `- [Model benchmark cards](${absolute("/models")}). Shareable cards for each model and benchmark profile, with canonical routes for cataloged identities.`,
     `- [Dataset and methodology](${absolute(CODING_AGENT_DATASET_PATH)}). Every atlas benchmark’s provenance, version boundaries, definitions, measured distributions, and limits.`,

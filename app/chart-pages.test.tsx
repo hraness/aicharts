@@ -41,7 +41,7 @@ describe("focused chart destinations", () => {
   });
   test("the calculator page renders knobs, cost bars, and server-side provenance", () => {
     const html = renderToStaticMarkup(createElement(CalculatorPage));
-    expect(html).toContain("<h1>ChatGPT Pro vs API vs GPUs you buy or rent</h1>");
+    expect(html).toContain("<h1>Subscription vs API vs GPUs</h1>");
     expect(html).toContain('class="calculator-explorer"');
     expect(html).toContain("Monthly cost by path");
     expect(html).toContain("Ownership cost over the useful life");
