@@ -27,6 +27,7 @@ describe("page analytics context", () => {
     const cases = [
       ["/coding", "coding:index", "benchmark_chart"],
       ["/benchmarks", "benchmarks:index", "benchmark_library"],
+      ["/calculator", "calculator:index", "benchmark_chart"],
     ] as const;
     for (const [path, contentId, pageKind] of cases) {
       const context = pageAnalyticsContext(`${path}/?atlasPoint=private&point=private#explore`);

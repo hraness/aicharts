@@ -11,6 +11,7 @@ on:
       - data/benchmark-atlas-audio.json
       - data/benchmark-atlas-multimodal.json
       - data/benchmark-atlas-reasoning.json
+      - data/calculator-inputs.json
       - data/coding-agents.json
       - data/deep-swe-evidence.json
       - data/first-party-release-radar.json

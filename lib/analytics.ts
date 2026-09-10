@@ -107,11 +107,29 @@ export const BENCHMARK_ATLAS_ANALYTICS_ACTIONS = [
 ] as const;
 export type BenchmarkAtlasAnalyticsAction = typeof BENCHMARK_ATLAS_ANALYTICS_ACTIONS[number];
 
+export const CALCULATOR_ANALYTICS_CONTROLS = [
+  "amortization_months",
+  "cache_hit",
+  "deepseek_window",
+  "duty_cycle",
+  "hardware_profile",
+  "seats",
+  "sol_rate_basis",
+  "subsidy_multiple",
+  "token_mix",
+  "ultra_multiple",
+  "utilization",
+] as const;
+export type CalculatorAnalyticsControl = typeof CALCULATOR_ANALYTICS_CONTROLS[number];
+
 export interface AnalyticsEventMap {
   readonly "benchmark explored": Readonly<{
     benchmark_id: string;
     action: BenchmarkAtlasAnalyticsAction;
     view: "ranking" | "cost" | "table";
+  }>;
+  readonly "calculator adjusted": Readonly<{
+    control: CalculatorAnalyticsControl;
   }>;
   readonly "chart metric selected":
     | Readonly<{ axis: "x"; chart_id: "coding_agents"; metric: XMetric }>
@@ -176,6 +194,7 @@ export type ContentAnalyticsEvent = Extract<
 
 const allowedSurfaceSet = new Set<string>(ANALYTICS_SURFACES);
 const benchmarkAtlasActions: ReadonlySet<string> = new Set(BENCHMARK_ATLAS_ANALYTICS_ACTIONS);
+const calculatorControls: ReadonlySet<string> = new Set(CALCULATOR_ANALYTICS_CONTROLS);
 const chartAnalyticsIds = new Set<string>(CHART_ANALYTICS_IDS);
 const xMetrics = new Set<string>(["costUsd", "durationMinutes", "totalTokens"]);
 const yMetrics = new Set<string>(["aaIndex", "deepSwe", "terminalBench", "sweAtlas"]);
@@ -242,6 +261,7 @@ function isCanonicalModelId(value: unknown): value is string {
 function isContentId(value: unknown): value is AnalyticsContentId {
   if (
     value === "home"
+    || value === "calculator:index"
     || value === "coding:index"
     || value === "benchmarks:index"
     || value === "blog:index"
@@ -321,7 +341,7 @@ function isDestinationOverride(
   if (kind === "repository") return id === "external:github";
   if (kind === "section") return id === "section";
   if (kind === "site_page") {
-    return ["home", "coding:index", "benchmarks:index", "blog:index", "data:index", "models:index"].includes(id);
+    return ["home", "calculator:index", "coding:index", "benchmarks:index", "blog:index", "data:index", "models:index"].includes(id);
   }
   if (kind === "site_resource") return id.startsWith("resource:");
   if (kind === "social") return id.startsWith("social:");
@@ -517,6 +537,12 @@ function controlledEventProperties(event: AnalyticsEvent): Record<string, unknow
         || !benchmarkAtlasActions.has(properties.action)
         || !["ranking", "cost", "table"].includes(properties.view)) return null;
       return { benchmark_id: properties.benchmark_id, action: properties.action, view: properties.view };
+    }
+    case "calculator adjusted": {
+      const properties = event.properties;
+      return calculatorControls.has(properties.control)
+        ? { control: properties.control }
+        : null;
     }
     case "chart metric selected": {
       const properties = event.properties;

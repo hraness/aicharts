@@ -21,6 +21,13 @@ import terminalBenchData from "@/data/terminal-bench.json";
 import terminalBenchScienceData from "@/data/terminal-bench-science.json";
 
 import { BENCHMARK_DATA_DESCRIPTION } from "./benchmark-portfolio";
+import { CALCULATOR_INPUTS } from "./calculator-inputs-collection";
+import { namedSubsidyCeiling } from "./calculator-inputs-data";
+import {
+  computeCalculatorScenario,
+  DEFAULT_CALCULATOR_KNOBS,
+  POWER_USER_HOURS_PER_WEEK,
+} from "./calculator-math";
 import { ATLAS_DATASETS, ATLAS_ENTRIES } from "./benchmark-atlas-catalog";
 import { selectAtlasModelProfiles, sortAtlasPoints } from "./benchmark-atlas";
 import { ATLAS_CATEGORY_LABELS, formatAtlasCost, formatAtlasScore, parseAtlasView } from "./benchmark-atlas-view";
@@ -336,6 +343,50 @@ function codingMarkdown(snapshot: CodingAgentSnapshot): string {
   ]);
 }
 
+function calculatorMarkdown(): string {
+  const inputs = CALCULATOR_INPUTS;
+  const scenario = computeCalculatorScenario(inputs, DEFAULT_CALCULATOR_KNOBS);
+  const usd = (value: number) => new Intl.NumberFormat("en-US", {
+    currency: "USD",
+    maximumFractionDigits: value >= 100 ? 0 : 2,
+    style: "currency",
+  }).format(value);
+  const anchor = inputs.subsidyAnchor;
+  const proCeiling = namedSubsidyCeiling(anchor, "ChatGPT Pro 20x");
+  const maxCeiling = namedSubsidyCeiling(anchor, "Claude Max 20x");
+  const homeGpu = inputs.hardware.gpus.find(gpu => gpu.id === scenario.profile.gpuId);
+  const rentalGpu = inputs.hardware.gpus.find(gpu => gpu.id === scenario.profile.rental.gpuId);
+  return joinMarkdown([
+    "# AI cost calculator",
+    "",
+    `One fully used ChatGPT Pro 20x seat implies a monthly token volume. The calculator prices that same volume five ways: the subscription sticker, the ${inputs.openAiApiPricing.modelName} API, the ${inputs.deepSeekApiPricing.modelVersion} API, GPUs you buy, and GPUs you rent. Knobs cover seats, the subsidy multiple, utilization, cache-hit rate, token mix, DeepSeek pricing window, duty cycle, hardware profile, and amortization.`,
+    "",
+    `The anchor is the [SemiAnalysis ${formatUpdateDate(anchor.methodPublishedOn)} stress test](${anchor.methodSourceUrl}), which valued a maxed ChatGPT Pro 20x seat at about ${usd(proCeiling.apiEquivalentUsdPerMonth)} of API-equivalent usage a month (${proCeiling.impliedMultiple}x its price) and Claude Max 20x at about ${usd(maxCeiling.apiEquivalentUsdPerMonth)} (${maxCeiling.impliedMultiple}x). The default uses the more conservative ${anchor.defaultMultiple}x. These are API retail equivalents, not provider serving costs, and open-weight models on the local paths are not ${inputs.openAiApiPricing.modelName}.`,
+    "",
+    `## Default scenario (${DEFAULT_CALCULATOR_KNOBS.seats} seat, ${anchor.defaultMultiple}x subsidy, ${DEFAULT_CALCULATOR_KNOBS.utilizationPercent}% utilization, ${DEFAULT_CALCULATOR_KNOBS.cacheHitPercent}% cache hits, ${DEFAULT_CALCULATOR_KNOBS.inputTokensPerOutputToken}:1 mix)`,
+    "",
+    `The implied volume is about ${(scenario.volume.totalTokens / 1e9).toFixed(2)}B tokens a month, valued at ${usd(scenario.spendUsd)} on ${inputs.openAiApiPricing.modelName} ${inputs.openAiApiPricing.currentBasis} rates ($${inputs.openAiApiPricing.current.inputPerMillion} input / $${inputs.openAiApiPricing.current.cachedInputPerMillion} cached / $${inputs.openAiApiPricing.current.outputPerMillion} output per 1M tokens).`,
+    "",
+    `- ${inputs.plan.name} sticker: ${usd(scenario.stickerUsd)}`,
+    `- ${inputs.openAiApiPricing.modelName} API: ${usd(scenario.sol.breakdown.totalUsd)} (${usd(scenario.sol.otherBasisUsd)} at list rates)`,
+    `- ${inputs.deepSeekApiPricing.modelVersion} API: ${usd(scenario.deepSeek.offPeakUsd)} off-peak, ${usd(scenario.deepSeek.peakUsd)} peak, ${usd(scenario.deepSeek.blendedUsd)} blended`,
+    `- Home hardware (${scenario.home.gpuCount}x ${homeGpu?.name ?? scenario.profile.gpuId}, ${POWER_USER_HOURS_PER_WEEK} h/week): ${usd(scenario.home.totalMonthlyUsd)} a month over ${DEFAULT_CALCULATOR_KNOBS.amortizationMonths} months, ${usd(scenario.home.upfrontUsd)} up front`,
+    `- Rented GPUs (${scenario.rental.gpuCount}x ${rentalGpu?.name ?? scenario.profile.rental.gpuId}): ${usd(scenario.rental.monthlyUsd)} a month`,
+    "",
+    `Fleet sizing counts decode only: the default load needs about ${Math.round(scenario.requiredTps)} aggregate decode tokens per second on the ${POWER_USER_HOURS_PER_WEEK}-hour-a-week duty cycle. Throughput profiles are single-stream figures labeled measured, published band, or bandwidth estimate.`,
+    "",
+    "## Sources",
+    "",
+    `- [${inputs.openAiApiPricing.source.name}](${inputs.openAiApiPricing.source.url}), retrieved ${formatRetrievedAt(inputs.openAiApiPricing.source.retrievedAt)}`,
+    `- [${inputs.deepSeekApiPricing.source.name}](${inputs.deepSeekApiPricing.source.url}), retrieved ${formatRetrievedAt(inputs.deepSeekApiPricing.source.retrievedAt)}`,
+    `- [${inputs.electricity.source.name}](${inputs.electricity.source.url}): ${inputs.electricity.usResidentialCentsPerKwh} cents per kWh United States residential average, retrieved ${formatRetrievedAt(inputs.electricity.source.retrievedAt)}`,
+    `- [${inputs.gpuRental.source.name}](https://vast.ai): ${inputs.gpuRental.methodology} Retrieved ${formatRetrievedAt(inputs.gpuRental.source.retrievedAt)}`,
+    `- [SemiAnalysis method](${anchor.methodSourceUrl}), published ${formatUpdateDate(anchor.methodPublishedOn)}, last verified ${formatUpdateDate(anchor.lastVerifiedOn)}`,
+    "",
+    `[Interactive calculator](${absolute("/calculator")}) · [Dataset and method](${absolute(CODING_AGENT_DATASET_PATH)})`,
+  ]);
+}
+
 function benchmarksMarkdown(): string {
   return joinMarkdown([
     "# Explore benchmarks",
@@ -613,6 +664,7 @@ export function agentGuideMarkdown(
     `- [AI model charts](${absolute("/")}). Start with capability versus cost or output tokens on the Pareto frontier. Inspect exact model configurations in one matched resource cohort.`,
     `- [Coding agent comparisons](${absolute("/coding")}). Compare benchmark scores with API cost, active time, or total tokens from the separate Artificial Analysis coding-agents source.`,
     `- [AI benchmark explorer](${absolute("/benchmarks")}). Choose a task, inspect a measured cohort, or read a source guide. Terminal-Bench 4 is the current terminal-engineering standard.`,
+    `- [AI cost calculator](${absolute("/calculator")}). Price one fully used ChatGPT Pro seat's token volume at OpenAI and DeepSeek API rates, on purchased GPUs, and on rented GPUs, with sourced assumptions.`,
     `- [Atlas catalog JSON](${absolute(ATLAS_CATALOG_DOWNLOAD_PATH)}). All benchmark IDs, coverage, versions, source dates, and per-cohort JSON distribution links.`,
     `- [Model benchmark cards](${absolute("/models")}). Shareable cards for each model and benchmark profile, with canonical routes for cataloged identities.`,
     `- [Dataset and methodology](${absolute(CODING_AGENT_DATASET_PATH)}). Every atlas benchmark’s provenance, version boundaries, definitions, measured distributions, and limits.`,
@@ -630,7 +682,7 @@ export function agentGuideMarkdown(
     "",
     "## How to read the site",
     "",
-    "Request `Accept: text/markdown` on HTML page URLs. `/` Markdown describes the leading Pareto chart; `/coding` describes the coding-agent comparison; `/benchmarks` includes the default library chart and links to every benchmark; `/data` includes all benchmark definitions and source details. Query parameters select interactive views, while the canonical Markdown representation describes the default view. JSON routes stay `application/json`, including `/data/benchmark-atlas.json`, `/data/benchmark-atlas/{benchmarkId}`, and the versioned source downloads. Only charted IDs have a dataset download; unknown and source-only IDs return HTTP 404.",
+    "Request `Accept: text/markdown` on HTML page URLs. `/` Markdown describes the leading Pareto chart; `/coding` describes the coding-agent comparison; `/benchmarks` includes the default library chart and links to every benchmark; `/calculator` describes the default cost scenario with its sources; `/data` includes all benchmark definitions and source details. Query parameters select interactive views, while the canonical Markdown representation describes the default view. JSON routes stay `application/json`, including `/data/benchmark-atlas.json`, `/data/benchmark-atlas/{benchmarkId}`, and the versioned source downloads. Only charted IDs have a dataset download; unknown and source-only IDs return HTTP 404.",
     "",
     "Cite the benchmark owner, exact version, model-agent configuration, and retrieval timestamp when quoting a score. AI Charts publishes normalized snapshots; it does not create the measurements.",
   ]);
@@ -670,6 +722,9 @@ export function markdownForPath(pathname: string): MarkdownDocument {
   }
   if (path === "/benchmarks") {
     return { body: benchmarksMarkdown(), contentType: MARKDOWN_CONTENT_TYPE, found: true };
+  }
+  if (path === "/calculator") {
+    return { body: calculatorMarkdown(), contentType: MARKDOWN_CONTENT_TYPE, found: true };
   }
   if (path === CODING_AGENT_DATASET_PATH) {
     return { body: datasetMarkdown(snapshot), contentType: MARKDOWN_CONTENT_TYPE, found: true };

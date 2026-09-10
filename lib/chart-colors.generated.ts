@@ -9,6 +9,7 @@ export const providerColors = {
   google: "#69c06a",
   meta: "#d6aa3c",
   moonshot_ai: "#abb73e",
+  nvidia: "#76b900",
   openai: "#3b9cff",
   xai: "#e58b69",
   z_ai: "#e58d32",

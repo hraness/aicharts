@@ -1,0 +1,297 @@
+{
+  "deepSeekApiPricing": {
+    "modelId": "deepseek-flash",
+    "modelVersion": "DeepSeek-V4.1-Flash",
+    "offPeak": {
+      "cacheHitInputPerMillion": 0.003,
+      "cacheMissInputPerMillion": 0.15,
+      "outputPerMillion": 0.6
+    },
+    "peak": {
+      "cacheHitInputPerMillion": 0.006,
+      "cacheMissInputPerMillion": 0.3,
+      "outputPerMillion": 1.2
+    },
+    "peakHoursPerWeek": 35,
+    "peakHoursUtc": "Monday through Friday, 01:00-04:00 and 06:00-10:00 UTC",
+    "source": {
+      "name": "DeepSeek API pricing",
+      "retrievedAt": "2026-09-10T14:32:21.997Z",
+      "url": "https://api-docs.deepseek.com/quick_start/pricing"
+    }
+  },
+  "electricity": {
+    "period": "2026-06",
+    "source": {
+      "name": "EIA Electric Power Monthly, Table 5.6.A",
+      "retrievedAt": "2026-09-10T14:32:21.997Z",
+      "url": "https://www.eia.gov/electricity/monthly/epm_table_grapher.php?t=epmt_5_6_a"
+    },
+    "usResidentialCentsPerKwh": 18.34
+  },
+  "gpuRental": {
+    "methodology": "Median hourly ask of the cheapest verified single-GPU on-demand offers (up to 20 per SKU) on the Vast.ai marketplace at retrieval time.",
+    "offers": [
+      {
+        "gpuId": "rtx-5090",
+        "offerCount": 20,
+        "usdPerHour": 0.54
+      },
+      {
+        "gpuId": "rtx-4090",
+        "offerCount": 11,
+        "usdPerHour": 0.43
+      },
+      {
+        "gpuId": "h100-sxm",
+        "offerCount": 3,
+        "usdPerHour": 3.82
+      }
+    ],
+    "source": {
+      "name": "Vast.ai marketplace",
+      "retrievedAt": "2026-09-10T14:32:21.997Z",
+      "url": "https://console.vast.ai/api/v0/bundles/"
+    }
+  },
+  "hardware": {
+    "gpus": [
+      {
+        "id": "rtx-5090",
+        "name": "NVIDIA GeForce RTX 5090",
+        "providerId": "nvidia",
+        "purchase": {
+          "asOf": "2026-09-01",
+          "kind": "street",
+          "sourceName": "TechSpot US retail price tracking (via TweakTown)",
+          "sourceUrl": "https://www.tweaktown.com/news/113385/gpu-prices-are-now-28-percent-above-msrp-on-average-rtx-5090-explodes-to-136-percent-above-msrp/index.html",
+          "usd": 4900
+        },
+        "tdpWatts": 575
+      },
+      {
+        "id": "rtx-4090",
+        "name": "NVIDIA GeForce RTX 4090",
+        "providerId": "nvidia",
+        "purchase": {
+          "asOf": "2026-09-05",
+          "kind": "used-market",
+          "sourceName": "Get PC Parts eBay sold-listing tracking",
+          "sourceUrl": "https://www.getpcparts.com/market-prices/gpu-graphics-cards/rtx-4090",
+          "usd": 2400
+        },
+        "tdpWatts": 450
+      },
+      {
+        "id": "dgx-spark",
+        "name": "NVIDIA DGX Spark",
+        "providerId": "nvidia",
+        "purchase": {
+          "asOf": "2026-02-23",
+          "kind": "msrp",
+          "sourceName": "NVIDIA DGX Spark price change announcement",
+          "sourceUrl": "https://forums.developer.nvidia.com/t/2-23-2026-price-change-announcement/361713",
+          "usd": 4699
+        },
+        "tdpWatts": 240
+      },
+      {
+        "id": "h100-sxm",
+        "name": "NVIDIA H100 SXM",
+        "providerId": "nvidia",
+        "purchase": null,
+        "tdpWatts": 700
+      }
+    ],
+    "profiles": [
+      {
+        "gpuId": "rtx-5090",
+        "gpusPerUnit": 1,
+        "id": "rtx-5090-moe",
+        "modelClass": "Small and mid MoE models that fit in 32 GB",
+        "name": "RTX 5090, mid MoE",
+        "note": "LMSYS measured 205 tok/s decode on GPT-OSS 20B (MXFP4); 120 tok/s is a conservative mid-band figure for small and mid MoE models that fit in 32 GB.",
+        "rental": {
+          "gpuId": "rtx-5090",
+          "gpusPerUnit": 1,
+          "unitDecodeTps": 120,
+          "unitDecodeTpsBasis": "published-band"
+        },
+        "sourceName": "LMSYS DGX Spark in-depth review",
+        "sourceObservedOn": "2025-10-13",
+        "sourceUrl": "https://www.lmsys.org/blog/2025-10-13-nvidia-dgx-spark/",
+        "unitDecodeTps": 120,
+        "unitDecodeTpsBasis": "published-band"
+      },
+      {
+        "gpuId": "rtx-5090",
+        "gpusPerUnit": 1,
+        "id": "rtx-5090-dense-32b",
+        "modelClass": "Dense ~32B (Q4-FP8)",
+        "name": "RTX 5090, dense ~32B",
+        "note": "Single-stream decode is memory-bandwidth bound: roughly bandwidth divided by bytes read per token. 45 tok/s sits in the 40-55 band community reports show for quantized ~32B dense models on 1.79 TB/s GDDR7.",
+        "rental": {
+          "gpuId": "rtx-5090",
+          "gpusPerUnit": 1,
+          "unitDecodeTps": 45,
+          "unitDecodeTpsBasis": "bandwidth-estimate"
+        },
+        "sourceName": "Enverge DGX Spark prefill-versus-decode analysis (bandwidth method)",
+        "sourceObservedOn": "2026-09-10",
+        "sourceUrl": "https://spark.enverge.ai/blog/dgx-spark-prefill-vs-decode",
+        "unitDecodeTps": 45,
+        "unitDecodeTpsBasis": "bandwidth-estimate"
+      },
+      {
+        "gpuId": "rtx-5090",
+        "gpusPerUnit": 1,
+        "id": "rtx-5090-70b-offload",
+        "modelClass": "Dense 70B (Q4) with CPU offload",
+        "name": "RTX 5090, 70B offload",
+        "note": "A 70B model does not fit in 32 GB, so layers spill to system RAM and decode drops to the 15-20 tok/s band. The rental comparison uses an H100 SXM, which hosts 70B FP8 fully in 80 GB HBM3 at an estimated 40 tok/s (3.35 TB/s over ~70 GB read per token).",
+        "rental": {
+          "gpuId": "h100-sxm",
+          "gpusPerUnit": 1,
+          "unitDecodeTps": 40,
+          "unitDecodeTpsBasis": "bandwidth-estimate"
+        },
+        "sourceName": "Enverge DGX Spark prefill-versus-decode analysis (bandwidth method)",
+        "sourceObservedOn": "2026-09-10",
+        "sourceUrl": "https://spark.enverge.ai/blog/dgx-spark-prefill-vs-decode",
+        "unitDecodeTps": 18,
+        "unitDecodeTpsBasis": "bandwidth-estimate"
+      },
+      {
+        "gpuId": "rtx-4090",
+        "gpusPerUnit": 1,
+        "id": "rtx-4090-dense-32b",
+        "modelClass": "Dense ~32B (Q4)",
+        "name": "RTX 4090, dense ~32B",
+        "note": "Same bandwidth method as the RTX 5090 dense profile, scaled to the RTX 4090's 1.01 TB/s GDDR6X; sits slightly below the 5090 band.",
+        "rental": {
+          "gpuId": "rtx-4090",
+          "gpusPerUnit": 1,
+          "unitDecodeTps": 35,
+          "unitDecodeTpsBasis": "bandwidth-estimate"
+        },
+        "sourceName": "Enverge DGX Spark prefill-versus-decode analysis (bandwidth method)",
+        "sourceObservedOn": "2026-09-10",
+        "sourceUrl": "https://spark.enverge.ai/blog/dgx-spark-prefill-vs-decode",
+        "unitDecodeTps": 35,
+        "unitDecodeTpsBasis": "bandwidth-estimate"
+      },
+      {
+        "gpuId": "rtx-5090",
+        "gpusPerUnit": 2,
+        "id": "dual-rtx-5090-70b",
+        "modelClass": "Dense 70B (FP8) across two cards",
+        "name": "2x RTX 5090, dense 70B",
+        "note": "Two cards hold 70B FP8 fully in 64 GB VRAM with tensor parallelism; 30 tok/s is a bandwidth-method estimate, not a measured benchmark. The rental comparison uses an H100 SXM at an estimated 40 tok/s.",
+        "rental": {
+          "gpuId": "h100-sxm",
+          "gpusPerUnit": 1,
+          "unitDecodeTps": 40,
+          "unitDecodeTpsBasis": "bandwidth-estimate"
+        },
+        "sourceName": "Enverge DGX Spark prefill-versus-decode analysis (bandwidth method)",
+        "sourceObservedOn": "2026-09-10",
+        "sourceUrl": "https://spark.enverge.ai/blog/dgx-spark-prefill-vs-decode",
+        "unitDecodeTps": 30,
+        "unitDecodeTpsBasis": "bandwidth-estimate"
+      },
+      {
+        "gpuId": "dgx-spark",
+        "gpusPerUnit": 1,
+        "id": "dgx-spark-moe",
+        "modelClass": "GPT-OSS 120B (MXFP4 MoE)",
+        "name": "DGX Spark, 120B MoE",
+        "note": "LMSYS measured about 50 tok/s decode for GPT-OSS 120B on SGLang. The rental comparison uses an H100 SXM at an estimated 150 tok/s for the same MoE class (only ~5B active parameters are read per token).",
+        "rental": {
+          "gpuId": "h100-sxm",
+          "gpusPerUnit": 1,
+          "unitDecodeTps": 150,
+          "unitDecodeTpsBasis": "bandwidth-estimate"
+        },
+        "sourceName": "LMSYS: Optimizing GPT-OSS on NVIDIA DGX Spark",
+        "sourceObservedOn": "2025-11-03",
+        "sourceUrl": "https://www.lmsys.org/blog/2025-11-03-gpt-oss-on-nvidia-dgx-spark/",
+        "unitDecodeTps": 50,
+        "unitDecodeTpsBasis": "measured"
+      },
+      {
+        "gpuId": "dgx-spark",
+        "gpusPerUnit": 1,
+        "id": "dgx-spark-dense-70b",
+        "modelClass": "Llama 3.1 70B (FP8, dense)",
+        "name": "DGX Spark, dense 70B",
+        "note": "LMSYS measured 2.7 tok/s decode at batch 1; the Spark holds the model but its 273 GB/s memory bandwidth caps dense-70B decode. Capacity is not speed. The rental comparison uses an H100 SXM at an estimated 40 tok/s.",
+        "rental": {
+          "gpuId": "h100-sxm",
+          "gpusPerUnit": 1,
+          "unitDecodeTps": 40,
+          "unitDecodeTpsBasis": "bandwidth-estimate"
+        },
+        "sourceName": "LMSYS DGX Spark in-depth review",
+        "sourceObservedOn": "2025-10-13",
+        "sourceUrl": "https://www.lmsys.org/blog/2025-10-13-nvidia-dgx-spark/",
+        "unitDecodeTps": 2.7,
+        "unitDecodeTpsBasis": "measured"
+      }
+    ],
+    "refreshNote": "Purchase prices and throughput profiles are curated with dated citations. TODO: automate an MSRP/street price feed and a benchmark feed; until then, update these through reviewed snapshot edits, not the automated refresh."
+  },
+  "openAiApiPricing": {
+    "current": {
+      "cachedInputPerMillion": 0.4,
+      "inputPerMillion": 4,
+      "outputPerMillion": 20
+    },
+    "currentBasis": "promotional",
+    "listFallback": {
+      "cachedInputPerMillion": 0.5,
+      "inputPerMillion": 5,
+      "outputPerMillion": 30
+    },
+    "listFallbackDocumentedOn": "2026-08-21",
+    "modelId": "gpt-5.6-sol",
+    "modelName": "GPT-5.6 Sol",
+    "promoGuaranteedThrough": "2026-11-21",
+    "source": {
+      "name": "OpenAI API pricing",
+      "retrievedAt": "2026-09-10T14:32:21.997Z",
+      "url": "https://developers.openai.com/api/docs/pricing"
+    }
+  },
+  "plan": {
+    "asOf": "2026-09-10",
+    "id": "chatgpt-pro-20x",
+    "monthlyPriceUsd": 200,
+    "name": "ChatGPT Pro 20x",
+    "sourceUrl": "https://openai.com/chatgpt/pricing/"
+  },
+  "schemaVersion": 1,
+  "subsidyAnchor": {
+    "defaultMultiple": 40,
+    "lastVerifiedOn": "2026-09-10",
+    "methodPublishedOn": "2026-06-10",
+    "methodSourceName": "SemiAnalysis subscription stress test",
+    "methodSourceUrl": "https://x.com/SemiAnalysis_/status/2064815042374074396",
+    "publishedCeilings": [
+      {
+        "apiEquivalentUsdPerMonth": 14000,
+        "impliedMultiple": 70,
+        "monthlyPriceUsd": 200,
+        "plan": "ChatGPT Pro 20x"
+      },
+      {
+        "apiEquivalentUsdPerMonth": 8000,
+        "impliedMultiple": 40,
+        "monthlyPriceUsd": 200,
+        "plan": "Claude Max 20x"
+      }
+    ],
+    "reverificationNote": "No public re-run of the June 2026 stress test was found as of the verification date; later reporting indicates OpenAI tightened Pro usage limits, so the published ceiling may no longer be reachable.",
+    "secondarySourceName": "TechSpot coverage of the SemiAnalysis findings",
+    "secondarySourceUrl": "https://www.techspot.com/news/112759-openai-anthropic-cant-afford-have-everyone-use-ai.html"
+  }
+}

@@ -12,6 +12,7 @@ export const lobeModelIconKeys = [
   "gemini",
   "meta",
   "moonshot",
+  "nvidia",
   "openai",
   "xai",
   "zai",
