@@ -16,7 +16,7 @@
     "peakHoursUtc": "Monday through Friday, 01:00-04:00 and 06:00-10:00 UTC",
     "source": {
       "name": "DeepSeek API pricing",
-      "retrievedAt": "2026-09-10T14:32:21.997Z",
+      "retrievedAt": "2026-09-10T22:35:19.036Z",
       "url": "https://api-docs.deepseek.com/quick_start/pricing"
     }
   },
@@ -50,7 +50,7 @@
     ],
     "source": {
       "name": "EIA Electric Power Monthly, Table 5.6.A",
-      "retrievedAt": "2026-09-10T14:32:21.997Z",
+      "retrievedAt": "2026-09-10T22:35:19.036Z",
       "url": "https://www.eia.gov/electricity/monthly/epm_table_grapher.php?t=epmt_5_6_a"
     },
     "usResidentialCentsPerKwh": 18.34
@@ -65,18 +65,18 @@
       },
       {
         "gpuId": "rtx-4090",
-        "offerCount": 11,
-        "usdPerHour": 0.43
+        "offerCount": 15,
+        "usdPerHour": 0.67
       },
       {
         "gpuId": "h100-sxm",
-        "offerCount": 3,
-        "usdPerHour": 3.82
+        "offerCount": 4,
+        "usdPerHour": 5.28
       }
     ],
     "source": {
       "name": "Vast.ai marketplace",
-      "retrievedAt": "2026-09-10T14:32:21.997Z",
+      "retrievedAt": "2026-09-10T22:35:19.036Z",
       "url": "https://console.vast.ai/api/v0/bundles/"
     }
   },
@@ -284,7 +284,7 @@
     "promoGuaranteedThrough": "2026-11-21",
     "source": {
       "name": "OpenAI API pricing",
-      "retrievedAt": "2026-09-10T14:32:21.997Z",
+      "retrievedAt": "2026-09-10T22:35:19.036Z",
       "url": "https://developers.openai.com/api/docs/pricing"
     }
   },
