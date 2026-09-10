@@ -33,6 +33,7 @@ import {
   subscribeLocationSearch,
 } from "@/lib/selection-url";
 import { OptionGridPicker, type OptionGridPickerItem } from "@/components/option-grid-picker";
+import { intelligenceMetricGlyph } from "@/components/picker-glyphs";
 import {
   clientPointThroughSvgBounds,
   clientPointThroughSvgTransform,
@@ -586,6 +587,7 @@ export function IntelligenceEfficiencyExplorer({
                 }}
                 type="button"
               >
+                {intelligenceMetricGlyph(item)}
                 {metricPresentations[item].controlLabel}
               </button>
             ))}

@@ -118,7 +118,14 @@ describe("option grid picker", () => {
     expect(css).toMatch(/\.option-picker__grid\s*\{[^}]*overflow-y:\s*auto;/su);
     expect(css).toMatch(/\.option-picker__option\[data-active\]\s*\{[^}]*outline:\s*2px solid/su);
     expect(css).toMatch(/\.option-picker__value strong,[\s\S]*?line-clamp:\s*2;/u);
+    expect(css).toMatch(/\.option-picker--list \.option-picker__panel\s*\{[^}]*padding:\s*4px 1px;/su);
     expect(css).toMatch(/\.option-picker--list \.option-picker__panel\s*\{[^}]*width:\s*max\(100%, min\(280px, 86vw\)\);/su);
+    expect(css).toContain("--option-picker-row-inline: 10px");
+    expect(css).toMatch(/\.option-picker \.option-picker__trigger\s*\{[^}]*align-items:\s*center;/su);
+    expect(css).toMatch(/\.option-picker \.option-picker__trigger\s*\{[^}]*padding:\s*7px var\(--option-picker-row-inline\);/su);
+    expect(css).toMatch(/\.option-picker__option\s*\{[^}]*align-items:\s*center;/su);
+    expect(css).toMatch(/\.option-picker--list \.option-picker__option\s*\{[^}]*padding:\s*7px var\(--option-picker-row-inline\);/su);
+    expect(css).toMatch(/\.option-picker__leading svg,[\s\S]*?display:\s*block;/u);
     expect(css).not.toMatch(/\.option-picker__copy strong\s*\{[^}]*white-space:\s*nowrap;/su);
     expect(css).toMatch(/@media \(hover: none\), \(pointer: coarse\)[\s\S]*?\.option-picker__option\s*\{[^}]*min-height:\s*var\(--interactive-target-min, 44px\);/u);
   });

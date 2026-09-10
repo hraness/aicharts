@@ -158,7 +158,7 @@ describe("homepage Intelligence efficiency view", () => {
     const html = renderToStaticMarkup(<HomeIntelligenceEfficiency snapshot={snapshot} />);
 
     expect(html).toContain("Artificial Analysis Intelligence Index v4.1.1");
-    expect(html.match(/<svg/gu)).toHaveLength(1);
+    expect(html.match(/<svg/gu)).toHaveLength(3);
     expect(html.match(/role="group"/gu)).toHaveLength(2);
     expect(html.match(/role="button"/gu)).toHaveLength(127);
     expect(html.match(/tabindex="0"/gu)).toHaveLength(1);
@@ -243,7 +243,8 @@ describe("homepage Intelligence efficiency view", () => {
     expect(html).toContain('href="/data#atlas-aa-intelligence-4-3"');
     expect(html).not.toContain("measurement below");
     expect(html.match(/Pareto frontier/gu)).toHaveLength(1);
-    const labels = html.slice(html.indexOf('class="intelligence-efficiency__labels"'), html.indexOf("</svg>"));
+    const chartSvg = html.match(/<svg[^>]*class="intelligence-efficiency__svg"[\s\S]*?<\/svg>/u)?.[0] ?? "";
+    const labels = chartSvg.slice(chartSvg.indexOf('class="intelligence-efficiency__labels"'));
     expect(labels.match(/<text/gu)?.length ?? 0).toBeLessThanOrEqual(3);
     expect(html.match(/role="button"/gu)).toHaveLength(parsed.value.selection.positiveCostRecordCount);
   });
@@ -325,7 +326,7 @@ describe("homepage Intelligence efficiency view", () => {
 
   test("quantizes rendered SVG geometry so hydration cannot expose math-library tails", () => {
     const html = renderToStaticMarkup(<HomeIntelligenceEfficiency snapshot={snapshot} />);
-    const svg = html.match(/<svg[\s\S]*?<\/svg>/u)?.[0];
+    const svg = html.match(/<svg[^>]*class="intelligence-efficiency__svg"[\s\S]*?<\/svg>/u)?.[0];
     expect(svg).toBeDefined();
 
     const geometryValues = [...(svg ?? "").matchAll(
