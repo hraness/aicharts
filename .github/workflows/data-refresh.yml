@@ -291,9 +291,14 @@ jobs:
           fi
 
           echo "changed=true" >> "$GITHUB_OUTPUT"
+      - name: Install pinned Rust toolchain for changed data
+        id: usage_toolchain
+        if: steps.snapshot.outputs.changed == 'true'
+        continue-on-error: true
+        run: rustup show active-toolchain
       - name: Validate updated application
         id: validation
-        if: steps.snapshot.outputs.changed == 'true'
+        if: steps.snapshot.outputs.changed == 'true' && steps.usage_toolchain.outcome == 'success'
         continue-on-error: true
         run: bun run check
       - name: Publish the validated update through required CI

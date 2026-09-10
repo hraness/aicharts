@@ -409,9 +409,15 @@ describe("scheduled model-data refresh", () => {
     expect(String(step("snapshot").run)).toContain('"$ATLAS_AUDIO_PATH"');
     expect(step("validation")).toMatchObject({
       "continue-on-error": true,
-      if: "steps.snapshot.outputs.changed == 'true'",
+      if: "steps.snapshot.outputs.changed == 'true' && steps.usage_toolchain.outcome == 'success'",
       run: "bun run check",
     });
+    expect(step("usage_toolchain")).toMatchObject({
+      "continue-on-error": true,
+      if: "steps.snapshot.outputs.changed == 'true'",
+      run: "rustup show active-toolchain",
+    });
+    expect(steps.indexOf(step("usage_toolchain"))).toBeLessThan(steps.indexOf(step("validation")));
     expect(step("publish")).toMatchObject({
       "continue-on-error": true,
       if: "steps.validation.outcome == 'success' && steps.snapshot.outputs.changed == 'true'",

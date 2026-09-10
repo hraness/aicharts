@@ -10,3 +10,4 @@ artifacts/atet/
 artifacts/slopcamera/
 *.log
 *.tsbuildinfo
+/target/

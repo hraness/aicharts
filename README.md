@@ -47,7 +47,11 @@ Run the complete local gate before opening a pull request:
 bun run check
 ```
 
-That validates generated files and the checked data contract, runs strict TypeScript and ESLint, executes example and property tests, and creates a production build.
+The complete gate also requires Rust 1.97.1 with rustfmt and Clippy, pinned in `rust-toolchain.toml`. It validates generated files and the checked data contract, checks the local usage workspace, runs strict TypeScript and ESLint, executes example and property tests, and verifies the production build in a browser. The website's ordinary development/build commands do not invoke Rust.
+
+## Local usage foundation
+
+The Rust workspace contains an early local-only Codex/Claude Code usage reader, a closed numeric wire format and matching TypeScript validation/rollups. It does not enable sign-in, uploads, a public leaderboard or background collection. See [the local usage guide](docs/usage-local.md) for explicit source selection, private namespace keys and current measurement limitations.
 
 ## Data refresh
 
