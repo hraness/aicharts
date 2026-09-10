@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 
 import {
   BENCHMARK_ATLAS_ANALYTICS_ACTIONS,
+  CALCULATOR_ANALYTICS_CONTROLS,
   type AnalyticsEvent,
   analyticsEventPayload,
   analyticsSurface,
@@ -268,6 +269,25 @@ describe("typed event payloads", () => {
       expect(analyticsEventPayload({ name: "benchmark explored", properties: { benchmark_id: "wise-verified", action, view: "ranking" } } as unknown as AnalyticsEvent)).toBeNull();
     }
     expect(analyticsEventPayload({ name: "benchmark explored", properties: { benchmark_id: "wise-verified", action: "view", view: "private-layout" } } as unknown as AnalyticsEvent)).toBeNull();
+  });
+
+  test("accepts only registered calculator controls and drops runtime knob values", () => {
+    for (const control of CALCULATOR_ANALYTICS_CONTROLS) {
+      expect(analyticsEventPayload({ name: "calculator adjusted", properties: { control } })?.properties)
+        .toMatchObject({ control });
+    }
+    const payload = analyticsEventPayload({
+      name: "calculator adjusted",
+      properties: { control: "subsidy_multiple", value: 70, seats: 3, raw_state: "private" },
+    } as unknown as AnalyticsEvent);
+    expect(payload).toEqual({
+      name: "calculator adjusted",
+      properties: { control: "subsidy_multiple", event_schema_version: 3, site_id: "aicharts", $process_person_profile: false },
+    });
+    expect(JSON.stringify(payload)).not.toContain("private");
+    for (const control of ["knob", "subsidy_multiple2", "", null, 42, {}]) {
+      expect(analyticsEventPayload({ name: "calculator adjusted", properties: { control } } as unknown as AnalyticsEvent)).toBeNull();
+    }
   });
 
   test("names newsletter intent truthfully and accepts only the product audience", () => {

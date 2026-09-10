@@ -4,6 +4,7 @@ import { INDEXABLE_ROBOTS, NOINDEX_ROBOTS } from "@hraness/web-discovery";
 import { metadata as layoutMetadata } from "./layout";
 import { metadata as notFoundMetadata } from "./not-found";
 import { metadata as homeMetadata } from "./page";
+import { metadata as calculatorMetadata } from "./calculator/page";
 import { metadata as codingMetadata } from "./coding/page";
 import { metadata as benchmarksMetadata } from "./benchmarks/page";
 import { homeHeading, notFoundSearchSite, searchSite, site } from "./site";
@@ -43,6 +44,7 @@ describe("page metadata ownership", () => {
     for (const [metadata, path, title] of [
       [codingMetadata, "/coding", "Coding agent comparisons | AI Charts"],
       [benchmarksMetadata, "/benchmarks", "AI benchmark explorer | AI Charts"],
+      [calculatorMetadata, "/calculator", "AI cost calculator | AI Charts"],
     ] as const) {
       expect(metadata).toMatchObject({
         title,

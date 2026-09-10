@@ -27,6 +27,7 @@ describe("markdown content negotiation", () => {
       ["/data.md", "/api/markdown/data"],
       ["/coding.md", "/api/markdown/coding"],
       ["/benchmarks.md", "/api/markdown/benchmarks"],
+      ["/calculator.md", "/api/markdown/calculator"],
       ["/blog/terminal-bench-science.md", "/api/markdown/blog/terminal-bench-science"],
       ["/models/openai/gpt-5.6-sol/max.md", "/api/markdown/models/openai/gpt-5.6-sol/max"],
     ] as const) {
@@ -65,6 +66,7 @@ describe("markdown content negotiation", () => {
       "/data",
       "/coding",
       "/benchmarks",
+      "/calculator",
       "/models",
       "/models/openai/gpt-5.6-sol/max",
       "/blog",

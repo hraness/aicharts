@@ -17,6 +17,7 @@ import terminalBenchData from "@/data/terminal-bench.json";
 import terminalBenchScienceData from "@/data/terminal-bench-science.json";
 
 import { parseArtificialAnalysisIntelligenceSnapshot } from "./artificial-analysis-intelligence-data";
+import { CALCULATOR_INPUTS } from "./calculator-inputs-collection";
 import { parseCodingAgentSnapshot } from "./coding-agent-data";
 import { BENCHMARK_DATA_DESCRIPTION } from "./benchmark-portfolio";
 import { ATLAS_DATASETS, ATLAS_ENTRIES } from "./benchmark-atlas-catalog";
@@ -228,9 +229,27 @@ describe("markdown representations", () => {
     const guide = agentGuideMarkdown(snapshot);
     expect(guide).toContain("https://aicharts.io/coding");
     expect(guide).toContain("https://aicharts.io/benchmarks");
+    expect(guide).toContain("https://aicharts.io/calculator");
     expect(guide).toContain("canonical Markdown representation describes the default view");
     expect(guide).not.toContain("The homepage has");
     expect(guide).not.toContain("benchmark library below");
+  });
+
+  test("describes the calculator's default scenario with sourced as-of dates", () => {
+    const calculator = markdownForPath("/calculator");
+    expect(calculator).toMatchObject({ found: true, contentType: MARKDOWN_CONTENT_TYPE });
+    expect(calculator.body).toStartWith("# AI cost calculator\n");
+    expect(calculator.body).not.toContain("undefined");
+    expect(calculator.body).toContain("## Default scenario (1 seat, 40x subsidy, 100% utilization, 50% cache hits, 4:1 mix)");
+    expect(calculator.body).toContain(CALCULATOR_INPUTS.openAiApiPricing.source.url);
+    expect(calculator.body).toContain(CALCULATOR_INPUTS.deepSeekApiPricing.source.url);
+    expect(calculator.body).toContain(CALCULATOR_INPUTS.subsidyAnchor.methodSourceUrl);
+    expect(calculator.body).toContain(
+      formatRetrievedAt(CALCULATOR_INPUTS.openAiApiPricing.source.retrievedAt),
+    );
+    expect(calculator.body).toContain("not provider serving costs");
+    expect(markdownForPath("/calculator/")).toEqual(calculator);
+    expect(markdownForPath("/calculator/private").found).toBeFalse();
   });
 
   test("renders each blog article from the authored blocks", () => {
