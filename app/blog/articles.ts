@@ -179,12 +179,12 @@ export function table(
 const mirrorCodeArticle = {
   authorshipDisclosure: BLOG_AUTHORSHIP_DISCLOSURE,
   slug: "mirrorcode-coding-agent-benchmark",
-  title: "MirrorCode: how far can coding agents work on their own?",
+  title: "MirrorCode scores complete-program reimplementation",
   dek:
-    "MirrorCode tests whether a coding agent can reimplement a complete program under strict end-to-end tests and project-scale resource budgets.",
+    "Epoch AI and METR hide the original source and grade a replacement on held-out tests under project-scale budgets.",
   focusPhrase: "MirrorCode coding agent benchmark",
   seoDescription:
-    "MirrorCode tests whether coding agents can reimplement complete programs. Learn how the benchmark works, what current results show, and its main limits.",
+    "MirrorCode asks an agent to rebuild a complete program under held-out tests and project-scale budgets. See what the dated leaderboard can and cannot show.",
   keywords: [
     "MirrorCode",
     "coding agent benchmark",
@@ -194,7 +194,7 @@ const mirrorCodeArticle = {
     "METR",
   ],
   publishedAt: "2026-08-04",
-  updatedAt: "2026-08-05",
+  updatedAt: "2026-09-10",
   sourceIds: ["mirrorCode", "mirrorCodePaper"],
   relatedSlugs: [],
   body: [
@@ -279,10 +279,10 @@ const mirrorCodeArticle = {
       "MirrorCode provides evidence that leading coding agents can sustain autonomous work across complete software projects. The strongest systems can finish a meaningful share of difficult reimplementation tasks under large budgets. Near-solves such as gotree show that strict completion can understate the amount of working functionality produced.",
     ),
     paragraph(
-      "The benchmark does not establish that an agent can maintain an evolving production system, collaborate with a team, resolve ambiguous product requirements, or leave code that remains easy to change. Its question is narrower: can the agent reproduce a complete program's externally tested behavior?",
+      "The benchmark does not establish that an agent can maintain an evolving production system, collaborate with a team, resolve ambiguous product requirements, or leave code that remains maintainable. Its question is narrower: can the agent reproduce a complete program's externally tested behavior?",
     ),
     paragraph(
-      "That makes MirrorCode a measure of project-scale completion rather than a general claim about maintaining an evolving production codebase.",
+      "Read MirrorCode as a measure of project-scale completion. It does not answer whether the same agent can maintain an evolving production codebase.",
     ),
   ],
 } as const satisfies BlogArticle;

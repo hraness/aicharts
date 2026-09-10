@@ -6,15 +6,23 @@ recognize without depicting invented benchmark values.
 
 ## Visual system
 
-Use warm ivory paper, charcoal ink, cobalt blue, coral red, pale mint, fine
-screenprint grain, and crisp modular forms. When an article genuinely benefits
-from an image, give it a distinct, center-safe silhouette that remains legible
-at 320 px wide.
+Use a near-charcoal ground that matches the dark AI Charts theme (`#12100f`),
+not cream or ivory paper. Keep the palette monochrome or duotone. Allowed
+inks are the site’s dark-theme tokens only: warm ivory foreground (`#f5f2ed`),
+raised charcoal (`#1d1a18`), the warm key (`#d0a77c`), and the cool highlight
+(`#8fb0ff`). Give each image one accent at most. Prefer fewer, larger forms
+and a calm composition that stays readable after a center-safe Open Graph crop.
+
+When an article genuinely benefits from an image, give it a distinct silhouette
+that remains legible at 320 px wide. The picture should make the article’s
+evidence boundary easier to recognize. It is not a data plot and must not
+depict invented scores.
 
 Do not use text, numbers, axes, fake charts, UI screenshots, model or provider
-logos, watermarks, robots, brains, or brand marks. A conceptual banner is not
-a data visualization. Quantitative interstitials must be built from checked
-data with repository-native chart code.
+logos, watermarks, robots, brains, or brand marks. Do not reuse the retired
+cream isometric screenprint (cobalt, coral, and mint on warm paper).
+Quantitative interstitials must be built from checked data with
+repository-native chart code.
 
 ## Source of truth
 
@@ -31,9 +39,11 @@ prompt digest, and immutable generator receipt/job paths in
 `editorial/images.manifest.json`.
 
 The focused discovery tests must validate manifest metadata against the typed
-registry and the exact binary, and exercise both a registered article and a
-real admitted image-free article. Injected `undefined` records are useful unit
-checks, but they do not prove that the live corpus remains optional.
+registry and the exact binary. A registered image is optional per article.
+When the live corpus still has an admitted image-free article, exercise that
+route. When every live article is registered, prove the image-free path with
+injected `undefined` records so rendering, Open Graph, Atom, sitemap, and
+Markdown stay optional.
 
 ## Generation boundary
 

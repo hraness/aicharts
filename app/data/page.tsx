@@ -519,20 +519,19 @@ export default function CodingAgentDatasetPage() {
               For AA Index versus mean API cost, including the cost/performance
               frontier, see{" "}
               <Link href="/blog/aa-index-cost-coding-agents">
-                AA Index versus cost for coding agents
+                highest AA Index and lowest cost pick different agents
               </Link>
               . For whether classified open-weight rows sit with those leaders,
               see{" "}
               <Link href="/blog/open-models-coding-agent-benchmarks">
-                open models on coding-agent benchmarks
+                open models closed SemiAnalysis composites, not this table
               </Link>
-              . For how lower inference costs change frequent-use product
-              economics, see{" "}
+              . For how a cheaper model changed one daily news page, see{" "}
               <Link href="/blog/small-models-have-arrived">
-                cheaper AI models can make everyday products viable
+                GPT-5.6 Luna made one daily news page cost about $0.10
               </Link>
-              . For what a 30% Terminal-Bench-Science result measures—and how
-              cost and token use change the comparison—see{" "}
+              . For what a 30% Terminal-Bench-Science result measures, and how
+              cost and token use change the comparison, see{" "}
               <Link href="/blog/terminal-bench-science">
                 What Terminal-Bench-Science’s 30% result measures
               </Link>

@@ -23,12 +23,19 @@ test("renders an intentional text card when an admitted article has no image", (
   expect(occurrences(markup, "home-editorial__item--text")).toBe(1);
   expect(occurrences(markup, "home-editorial__item--image")).toBe(2);
   expect(occurrences(markup, "home-editorial__image-link")).toBe(2);
+  expect(occurrences(markup, "home-editorial__copy")).toBe(2);
   expect(markup).toContain(
     'class="home-editorial__text-card" href="/blog/small-models-have-arrived"',
   );
   expect(markup).toContain(`<span>${article.section}</span>`);
   expect(markup).toContain(`<h3>${article.title}</h3>`);
   expect(markup).toContain(`<p>${article.dek}</p>`);
+  for (const slug of HOME_EDITORIAL_SLUGS) {
+    const card = getBlogArticle(slug);
+    expect(card).toBeDefined();
+    if (card === undefined) continue;
+    expect(markup).toContain(`<p>${card.dek}</p>`);
+  }
   expect(markup).not.toContain('rel="preload"');
 });
 

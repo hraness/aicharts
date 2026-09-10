@@ -149,7 +149,7 @@ describe("AI Charts benchmark notes", () => {
         expect(article.updatedAt >= article.publishedAt).toBeTrue();
       } else if (article.slug === "mirrorcode-coding-agent-benchmark") {
         expect(article.publishedAt).toBe("2026-08-04");
-        expect(article.updatedAt).toBe("2026-08-05");
+        expect(article.updatedAt >= article.publishedAt).toBeTrue();
         expect(articleToMarkdown(article)).toContain("captured August 5, 2026 UTC");
       } else {
         throw new Error(`Unhandled blog article date assertion: ${article.slug}`);
@@ -310,7 +310,7 @@ describe("AI Charts benchmark notes", () => {
     );
     const markdown = articleToMarkdown(article);
 
-    expect(article.title).toBe("Cheaper AI models can make everyday products viable");
+    expect(article.title).toBe("GPT-5.6 Luna made one daily news page cost about $0.10");
     expect(article.sourceIds).toEqual([
       "calvinFrenchOwenSmallModels",
       "openAiGpt56Luna",
