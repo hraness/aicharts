@@ -15,6 +15,7 @@ export type AnalyticsPageKind =
 
 export type AnalyticsCanonicalPath =
   | "/"
+  | "/calculator"
   | "/coding"
   | "/benchmarks"
   | "/blog"
@@ -25,6 +26,7 @@ export type AnalyticsCanonicalPath =
   | "/[other]";
 
 export type AnalyticsContentId =
+  | "calculator:index"
   | "coding:index"
   | "benchmarks:index"
   | "blog:index"
@@ -99,6 +101,16 @@ export function pageAnalyticsContext(value: unknown): PageAnalyticsContext {
       content_group: "ai_comparison",
       content_id: pathname === "/coding" ? "coding:index" : "benchmarks:index",
       page_kind: pathname === "/coding" ? "benchmark_chart" : "benchmark_library",
+    };
+  }
+
+  if (pathname === "/calculator") {
+    return {
+      ...shared,
+      canonical_path: "/calculator",
+      content_group: "ai_comparison",
+      content_id: "calculator:index",
+      page_kind: "benchmark_chart",
     };
   }
 

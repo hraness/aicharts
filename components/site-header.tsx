@@ -9,7 +9,7 @@ export const SITE_HEADER_LINKS = [
   { href: "/blog", label: "Notes" },
 ] as const;
 
-export type SiteHeaderPath = "/coding" | "/models" | "/data" | (typeof SITE_HEADER_LINKS)[number]["href"];
+export type SiteHeaderPath = "/calculator" | "/coding" | "/models" | "/data" | (typeof SITE_HEADER_LINKS)[number]["href"];
 
 /**
  * The shared Hraness site header on the design-kit marketing grammar: sticky
