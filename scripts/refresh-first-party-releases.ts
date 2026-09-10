@@ -178,7 +178,7 @@ function urlBlocksFromSitemapShard(
 }
 
 function acceptHeader(definition: FirstPartyReleaseSourceDefinition): string {
-  if (definition.format === "html-deepseek-updates") return "text/html";
+  if (definition.format.startsWith("html-")) return "text/html";
   if (definition.format === "rss") return "application/rss+xml,application/xml;q=0.9,text/xml;q=0.8";
   if (definition.format.startsWith("sitemap-")) return "application/xml,text/xml;q=0.9";
   // xAI's Markdown endpoint returns a false 404 when text/markdown is the
