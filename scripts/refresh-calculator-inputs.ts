@@ -94,8 +94,8 @@ function decodeHtmlEntities(html: string): string {
 function stripHtmlTags(html: string): string {
   return decodeHtmlEntities(
     html
-      .replaceAll(/<script[\s\S]*?<\/script>/giu, " ")
-      .replaceAll(/<style[\s\S]*?<\/style>/giu, " ")
+      .replaceAll(/<script\b[^>]*>[\s\S]*?<\/script\s*>/giu, " ")
+      .replaceAll(/<style\b[^>]*>[\s\S]*?<\/style\s*>/giu, " ")
       .replaceAll(/<[^>]+>/gu, "\n"),
   );
 }
