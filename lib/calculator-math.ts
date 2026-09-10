@@ -225,7 +225,9 @@ export function requiredDecodeTps(outputTokensPerMonth: number, hoursPerMonth: n
 }
 
 export function unitsRequired(requiredTps: number, unitDecodeTps: number): number {
-  return Math.max(1, Math.ceil(requiredTps / unitDecodeTps));
+  const ratio = requiredTps / unitDecodeTps;
+  const relativeEpsilon = Number.EPSILON * Math.max(1, Math.abs(ratio)) * 8;
+  return Math.max(1, Math.ceil(ratio - relativeEpsilon));
 }
 
 /**

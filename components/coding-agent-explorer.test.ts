@@ -58,6 +58,8 @@ test("keeps the organization footer out of local chart chrome", async () => {
   expect(source).not.toContain("https://x.com/0thernet");
   expect(source).not.toContain("Zo Computer");
   expect(source).not.toContain("zo-pegasus.svg");
+  expect(source).toContain("xMetricGlyph");
+  expect(source).toContain("ProviderBrandLabel");
 });
 
 test("consolidates evidence links below the chart and leaves footer navigation to the route", async () => {
@@ -311,6 +313,10 @@ test("renders a compact source note, real chart anchor, and closed secondary con
   expect(html).toContain('href="/benchmarks?atlas=terminal-bench-4"');
   expect(html).toContain('class="option-picker option-picker--list chart-benchmark-select"');
   expect(html).toContain("<strong>Terminal-Bench v2.1</strong>");
+  expect(html).toContain('class="ui-segmented-control__leading"');
+  expect(html).toContain(">Cost</button>");
+  expect(html).toContain(">Time</button>");
+  expect(html).toContain(">Tokens</button>");
   expect(html).toContain('id="model-updates"');
   expect(html).not.toContain('class="chart-resource-nav"');
 });

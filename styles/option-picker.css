@@ -3,6 +3,9 @@
  * comes from theme variables so light and dark render from one ruleset. */
 
 .option-picker {
+  --option-picker-mark: 16px;
+  --option-picker-row-gap: 8px;
+  --option-picker-row-inline: 10px;
   color: var(--muted);
   display: grid;
   font-size: 12px;
@@ -19,17 +22,17 @@
 /* Section stylesheets qualify controls as ".section button"; the extra
  * ".option-picker" ancestor keeps these control rules authoritative. */
 .option-picker .option-picker__trigger {
-  align-items: flex-start;
+  align-items: center;
   background: var(--surface, var(--background));
   border: 1px solid var(--line);
   border-radius: 8px;
   color: var(--foreground);
   display: flex;
   font-size: 13px;
-  gap: 8px;
+  gap: var(--option-picker-row-gap);
   min-height: 44px;
   min-width: 0;
-  padding: 7px 10px;
+  padding: 7px var(--option-picker-row-inline);
   text-align: left;
   width: 100%;
 }
@@ -93,8 +96,9 @@
   border-right: 1.5px solid var(--muted);
   content: "";
   flex: none;
+  align-self: center;
   height: 7px;
-  margin-block: 8px 0;
+  margin-block: 0;
   margin-left: auto;
   transform: rotate(45deg) translateY(-2px);
   width: 7px;
@@ -117,6 +121,7 @@
 }
 
 .option-picker--list .option-picker__panel {
+  padding: 4px 1px;
   width: max(100%, min(280px, 86vw));
 }
 
@@ -160,21 +165,21 @@
 
 .option-picker--list .option-picker__grid {
   max-height: min(56vh, 460px);
+  padding: 0;
 }
 
 .option-picker__option {
-  align-items: flex-start;
+  align-items: center;
   border-radius: 6px;
   cursor: pointer;
   display: flex;
-  gap: 7px;
+  gap: var(--option-picker-row-gap);
   min-width: 0;
   padding: 5px 7px;
 }
 
 .option-picker--list .option-picker__option {
-  align-items: center;
-  padding: 7px 8px;
+  padding: 7px var(--option-picker-row-inline);
 }
 
 .option-picker__option[data-active] {
@@ -209,15 +214,16 @@
   border-radius: 5px;
   display: grid;
   flex: none;
-  height: 20px;
-  margin-top: 1px;
+  height: var(--option-picker-mark);
+  line-height: 0;
+  margin-top: 0;
   place-items: center;
-  width: 20px;
+  width: var(--option-picker-mark);
 }
 
-.option-picker--list .option-picker__chip,
-.option-picker--list .option-picker__leading {
-  margin-top: 0;
+.option-picker--list .option-picker__copy strong,
+.option-picker--list .option-picker__value strong {
+  line-height: var(--option-picker-mark);
 }
 
 .option-picker__chip {
@@ -232,6 +238,11 @@
   color: var(--foreground);
 }
 
+.option-picker__leading svg,
+.option-picker__chip svg {
+  display: block;
+}
+
 .option-picker__glyph {
   background-color: currentcolor;
   display: block;
@@ -239,6 +250,45 @@
   mask: var(--option-picker-icon) center / contain no-repeat;
   -webkit-mask: var(--option-picker-icon) center / contain no-repeat;
   width: 12px;
+}
+
+.provider-brand-mark {
+  background: var(--option-picker-chip, var(--muted));
+  border-radius: 4px;
+  color: var(--option-picker-glyph, #f7f6f2);
+  display: grid;
+  flex: none;
+  font-size: 7px;
+  font-weight: 650;
+  height: 14px;
+  letter-spacing: .02em;
+  line-height: 0;
+  place-items: center;
+  width: 14px;
+}
+
+.provider-brand-mark--chip {
+  border-radius: 5px;
+  font-size: 8px;
+  height: var(--option-picker-mark, 16px);
+  width: var(--option-picker-mark, 16px);
+}
+
+.provider-brand-mark .option-picker__glyph {
+  height: 10px;
+  width: 10px;
+}
+
+.provider-brand-mark--chip .option-picker__glyph {
+  height: 12px;
+  width: 12px;
+}
+
+.provider-brand-label {
+  align-items: center;
+  display: inline-flex;
+  gap: 6px;
+  min-width: 0;
 }
 
 .option-picker__empty {
