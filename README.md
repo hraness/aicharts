@@ -51,7 +51,7 @@ The complete gate also requires Rust 1.97.1 with rustfmt and Clippy, pinned in `
 
 ## Local usage foundation
 
-The Rust workspace contains an early local-only Codex/Claude Code usage reader, a closed numeric wire format and matching TypeScript validation/rollups. It does not enable sign-in, uploads, a public leaderboard or background collection. See [the local usage guide](docs/usage-local.md) for explicit source selection, private namespace keys and current measurement limitations.
+The Rust workspace contains a local-only Codex/Claude Code usage reader, a closed numeric wire format, a private numeric SQLite ledger and matching TypeScript validation/rollups. Explicit collection can retain measurements across restarts with atomic source checkpoints and a read-only pending-queue preview. It does not enable sign-in, uploads, a public leaderboard or background collection. See [the local usage guide](docs/usage-local.md) for explicit source selection, private namespace keys and current measurement/recovery limitations.
 
 ## Data refresh
 
