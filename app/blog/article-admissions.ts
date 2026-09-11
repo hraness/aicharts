@@ -51,6 +51,56 @@ export const HOME_EDITORIAL_SLUGS = [
 ] as const satisfies readonly BlogSlug[];
 
 export const BLOG_ARTICLE_ADMISSIONS = {
+  "devin-fusion-cost-saving": {
+    canonicalOwner: blogArticlePath("devin-fusion-cost-saving"),
+    decision: "keep",
+    evidenceOwner: EVIDENCE_OWNER,
+    evidenceType: "primary-source-synthesis",
+    harmIfWrong:
+      "A vendor's headline saving could be quoted as an independent, configuration-free result, or compared numerically with chart rows measured under a different index version.",
+    hostFit:
+      "Cognition's headline chart is drawn on the Artificial Analysis coding-agent index that powers the AI Charts chart, and the checked snapshot already stores the named lead models and an earlier Devin CLI configuration.",
+    humanReviewedOn: null,
+    lifecycleState: "indexable",
+    nearestUrls: [
+      {
+        distinction:
+          "The AA Index page derives a cost frontier from checked single-model rows; this page reconstructs a vendor's multi-model harness claim and states why the checked rows cannot yet test it.",
+        url: blogArticlePath("aa-index-cost-coding-agents"),
+      },
+      {
+        distinction:
+          "The small-models page decides when one cheaper model is adequate for a product feature; this page examines a lead-and-sidekick pairing whose saving depends on delegation.",
+        url: blogArticlePath("small-models-have-arrived"),
+      },
+    ],
+    originalContribution:
+      "A reconstruction of which comparison produces the 39% figure from the announcement's accessible chart data, a reconciliation of six differently configured Fusion percentages across three dated Cognition posts, and a dated statement of what the checked snapshot stores for the named lead models.",
+    overlapDecision:
+      "Keep separately: no current route explains a multi-model harness cost claim or reconciles its published percentages by comparator, benchmark, model pair, and date.",
+    primaryEvidence:
+      "Cognition's three Fusion posts own every reported score, cost, and percentage; the checked Artificial Analysis snapshot owns the single-model baseline rows and their retrieval date.",
+    primarySourceIds: [
+      "cognitionFusionDesktopCli",
+      "cognitionDevinFusion",
+      "devinFable51",
+      "artificialAnalysisCodingAgents",
+    ],
+    readerJob:
+      "Understand which comparison produces Devin Fusion's 39% saving, what score that comparison gave up, and how to read the other Fusion percentages Cognition has published.",
+    reassessOn: "2026-10-16",
+    reviewedBy: REVIEWED_BY,
+    reviewedOn: "2026-09-11",
+    scores: {
+      factualConfidence: 2,
+      hostFit: 2,
+      maintenanceValue: 1,
+      originalEvidence: 1,
+      readerUtility: 2,
+      voiceIntegrity: 2,
+    },
+    sourceCheckedOn: "2026-09-11",
+  },
   "terminal-bench-science": {
     canonicalOwner: blogArticlePath("terminal-bench-science"),
     decision: "keep",
