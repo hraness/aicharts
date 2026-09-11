@@ -1,6 +1,6 @@
 # Local Codex and Claude Code usage
 
-The usage CLI is local-only. It reads explicitly selected JSONL files, projects metadata into numeric measurements, deduplicates supported copied records, and prints a summary or exact wire dry-run. Explicit initialization also enables a private numeric ledger with restart-safe checkpoints and a local pending queue. It has no networking code, login, public upload, background service or transcript cache. AI Charts' live website is unchanged.
+The usage CLI is local-only. It reads explicitly selected JSONL files, projects metadata into numeric measurements, deduplicates supported copied records, and prints a summary or exact wire dry-run. Explicit initialization also enables a private numeric ledger with restart-safe checkpoints and a local pending queue. It has no networking code, login, public upload, background service or transcript cache. Public benchmark pages and the calculator do not require usage collection. The separate [browser identity boundary](usage-identity.md) is disabled by default and does not enroll devices or transmit measurements.
 
 ## Build and run
 

@@ -118,6 +118,11 @@ function attachDiagnostics(page: Page, label: string): string[] {
     if (message.type() === "error") failures.push(`${label} console: ${message.text()}`);
   });
   page.on("pageerror", error => failures.push(`${label} page: ${error.message}`));
+  page.on("requestfailed", request => {
+    // Identify the failing resource without logging query capabilities or bodies.
+    const url = new URL(request.url());
+    console.error(`${label} request: ${request.resourceType()} ${url.origin}${url.pathname} ${request.failure()?.errorText ?? "request-failed"}`);
+  });
   return failures;
 }
 
