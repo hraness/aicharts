@@ -11,6 +11,8 @@ cargo build --locked -p aicharts-cli
 ./target/debug/aicharts --help
 ```
 
+`aicharts --version` prints the Cargo package version. `aicharts --version --json` returns schema version 1, operation `version`, that version, compile-time OS/architecture, `sourceCommit: null`, and `provenance: "unverified"`. These commands do not read source files, keys, state, or runtime configuration. They do not establish release provenance or a signed installation. Only those exact argument orders are accepted; combining the literal `--version` token with another command fails before file access. To name a file literally `--version`, use an explicit path such as `./--version`.
+
 On macOS/Linux, create a private namespace key at a new path outside the repository. Choose an existing private directory; the command does not create parent directories or overwrite an existing file:
 
 ```sh

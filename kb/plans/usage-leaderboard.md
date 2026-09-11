@@ -118,6 +118,8 @@ No phase may edit a convergence file simultaneously. Workers submit required man
 
 ## Phase 6: Background worker and menu app
 
+CLI release prerequisite: the side-effect-free `--version` and `--version --json` implementation is integrated byte-for-byte from the independently accepted isolated candidate. It uses compile-time Cargo version and OS/architecture, with null source commit and explicitly unverified provenance. Mixed flags fail before other command dispatch, and synthetic process tests cover spoofed environment metadata and unchanged local canaries. The three source/test hashes and Cargo inputs match the reviewed candidate. The earlier candidate's 24 unit/four integration tests and strict Clippy/format checks passed; final repository validation and protected delivery are still required for this integration. No package publication, signing, installation, daemon or upload is enabled.
+
 - **Status:** Not started
 - **Depends on:** 1, 2, 3
 - **Objective:** explicit installation enables reliable low-overhead sync and a clear optional tray UI.
