@@ -2,6 +2,9 @@
 use super::*;
 use aicharts_protocol::admission as wire;
 
+#[path = "prefix_tests.rs"]
+mod prefix_tests;
+
 const OCCURRENCE_KEY: [u8; 32] = [0x43; 32];
 const BINDING: SenderBinding = SenderBinding {
     account_id: [0x11; 16],

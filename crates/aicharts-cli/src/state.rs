@@ -6,6 +6,8 @@ use std::path::PathBuf;
 enum Command {
     Init,
     Collect,
+    CollectPrefix,
+    PrefixEnable,
     Status,
     Outbox,
 }
@@ -26,6 +28,8 @@ fn parse_options(args: &[String]) -> Result<Options, &'static str> {
     let command = match args.first().map(String::as_str) {
         Some("init") => Command::Init,
         Some("collect") => Command::Collect,
+        Some("collect-prefix") => Command::CollectPrefix,
+        Some("prefix-enable") => Command::PrefixEnable,
         Some("status") => Command::Status,
         Some("outbox") => Command::Outbox,
         _ => return Err("invalid_command"),
@@ -42,10 +46,19 @@ fn parse_options(args: &[String]) -> Result<Options, &'static str> {
     let mut i = 1;
     while i < args.len() {
         match args[i].as_str() {
-            "--json" if matches!(command, Command::Collect | Command::Status) && !json => {
+            "--json"
+                if matches!(
+                    command,
+                    Command::Collect | Command::CollectPrefix | Command::Status
+                ) && !json =>
+            {
                 json = true
             }
-            "--rescan" if command == Command::Collect && !rescan => rescan = true,
+            "--rescan"
+                if matches!(command, Command::Collect | Command::CollectPrefix) && !rescan =>
+            {
+                rescan = true
+            }
             "--dry-run" if command == Command::Outbox && !dry_run => dry_run = true,
             flag @ ("--state-dir" | "--key-file" | "--codex" | "--claude" | "--limit"
             | "--after" | "--revision") => {
@@ -57,13 +70,15 @@ fn parse_options(args: &[String]) -> Result<Options, &'static str> {
                 match flag {
                     "--state-dir" if directory.is_none() => directory = Some(PathBuf::from(value)),
                     "--key-file" if key.is_none() => key = Some(PathBuf::from(value)),
-                    "--codex" if command == Command::Collect => {
+                    "--codex" if matches!(command, Command::Collect | Command::CollectPrefix) => {
                         sources.push((aicharts_protocol::Provider::Codex, PathBuf::from(value)))
                     }
-                    "--claude" if command == Command::Collect => sources.push((
-                        aicharts_protocol::Provider::ClaudeCode,
-                        PathBuf::from(value),
-                    )),
+                    "--claude" if matches!(command, Command::Collect | Command::CollectPrefix) => {
+                        sources.push((
+                            aicharts_protocol::Provider::ClaudeCode,
+                            PathBuf::from(value),
+                        ))
+                    }
                     "--limit" if command == Command::Outbox && limit.is_none() => {
                         let parsed = value.parse::<usize>().map_err(|_| "invalid_page_limit")?;
                         if !(1..=256).contains(&parsed) {
@@ -74,7 +89,10 @@ fn parse_options(args: &[String]) -> Result<Options, &'static str> {
                     "--after" if command == Command::Outbox && after.is_none() => {
                         after = Some(parse_id(value)?)
                     }
-                    "--revision" if command == Command::Outbox && revision.is_none() => {
+                    "--revision"
+                        if matches!(command, Command::Outbox | Command::PrefixEnable)
+                            && revision.is_none() =>
+                    {
                         revision = Some(value.parse::<u64>().map_err(|_| "invalid_revision")?)
                     }
                     _ => return Err("invalid_option"),
@@ -90,7 +108,10 @@ fn parse_options(args: &[String]) -> Result<Options, &'static str> {
     if after.is_some() && revision.is_none() {
         return Err("pagination_revision_required");
     }
-    if command == Command::Collect && sources.is_empty() {
+    if command == Command::PrefixEnable && revision.is_none() {
+        return Err("migration_revision_required");
+    }
+    if matches!(command, Command::Collect | Command::CollectPrefix) && sources.is_empty() {
         return Err("explicit_source_required");
     }
     if sources.len() > super::MAX_FILES {
@@ -148,7 +169,9 @@ pub(super) fn run(args: &[String]) -> Result<String, &'static str> {
 pub(crate) mod unix {
     use super::{hex, Command, Options};
     use aicharts_core::parse_reader;
-    use aicharts_ledger::{Ledger, LedgerStatus, SourceScan, SourceStamp};
+    use aicharts_ledger::{
+        Ledger, LedgerIdentity, LedgerStatus, PrefixScan, SourceScan, SourceStamp,
+    };
     use aicharts_protocol::Provider;
     use hmac::{Hmac, Mac};
     use sha2::Sha256;
@@ -210,16 +233,27 @@ pub(crate) mod unix {
         ledger: &mut Ledger,
         options: &Options,
         key: &[u8; 32],
-    ) -> Result<(aicharts_ledger::ImportReport, u64, u64, u64), &'static str> {
-        let snapshot = ledger.snapshot().map_err(|error| error.code())?;
+    ) -> Result<(aicharts_ledger::ImportReport, u64, u64, u64, u64), &'static str> {
+        let prefix_mode = options.command == Command::CollectPrefix;
+        let snapshot = ledger.prefix_snapshot().map_err(|error| error.code())?;
+        // Validate the explicit mode before visiting any source. Empty commits
+        // validate layout/revision without advancing state or migrating it.
+        if prefix_mode {
+            ledger.commit_prefix_scans(snapshot.revision, vec![])
+        } else {
+            ledger.commit_scans(snapshot.revision, vec![])
+        }
+        .map_err(|error| error.code())?;
         let mut visited = 0;
         let mut seen = BTreeSet::new();
         let mut total_files = 0u64;
         let mut skipped = 0u64;
+        let mut deferred = 0u64;
         let mut bytes_scanned = 0u64;
         let mut lines_read = 0u64;
         let mut retained = 0usize;
         let mut scans = vec![];
+        let mut prefix_scans = vec![];
         let mut verification = vec![];
         for (provider, path) in &options.sources {
             let mut files = vec![];
@@ -238,8 +272,20 @@ pub(crate) mod unix {
                 let mut file = crate::open_regular(&path).map_err(|_| "source_read_failed")?;
                 let before = stamp(&file.metadata().map_err(|_| "source_metadata_failed")?)?;
                 verify_path(&path, &canonical, &before)?;
-                if !options.rescan && snapshot.checkpoints.get(&source_id) == Some(&before) {
+                let checkpoint = snapshot.checkpoints.get(&source_id);
+                if !options.rescan
+                    && checkpoint.is_some_and(|old| {
+                        old.stamp == before && (!prefix_mode || old.prefix.is_some())
+                    })
+                {
                     skipped += 1;
+                    if prefix_mode
+                        && checkpoint
+                            .and_then(|old| old.prefix)
+                            .is_some_and(|prefix| prefix.bytes < before.bytes)
+                    {
+                        deferred += 1;
+                    }
                     verification.push((path, canonical, before));
                     continue;
                 }
@@ -251,7 +297,7 @@ pub(crate) mod unix {
                 }
                 // A physical snapshot ends at a newline. Accepting an unfinished
                 // append can checkpoint an event before its final fields arrive.
-                if before.bytes != 0 {
+                if !prefix_mode && before.bytes != 0 {
                     file.seek(SeekFrom::End(-1))
                         .map_err(|_| "source_read_failed")?;
                     let mut last = [0; 1];
@@ -263,12 +309,37 @@ pub(crate) mod unix {
                     file.seek(SeekFrom::Start(0))
                         .map_err(|_| "source_read_failed")?;
                 }
-                let collection = parse_reader(
-                    BufReader::new((&mut file).take(before.bytes)),
-                    *provider,
-                    key,
-                )
-                .map_err(|_| "source_parse_failed")?;
+                let previous = checkpoint.and_then(|old| old.prefix);
+                let (collection, complete) = if prefix_mode {
+                    if checkpoint.is_some_and(|old| {
+                        old.stamp.device != before.device
+                            || old.stamp.inode != before.inode
+                            || before.bytes
+                                < old.prefix.map_or(old.stamp.bytes, |prefix| prefix.bytes)
+                    }) {
+                        return Err("ledger_source_history_changed");
+                    }
+                    let (collection, prefix) = crate::prefix::collect_prefix(
+                        &mut file,
+                        &source_id,
+                        key,
+                        key,
+                        before.bytes,
+                        previous,
+                        *provider,
+                    )?;
+                    (collection, Some(prefix))
+                } else {
+                    (
+                        parse_reader(
+                            BufReader::new((&mut file).take(before.bytes)),
+                            *provider,
+                            key,
+                        )
+                        .map_err(|_| "source_parse_failed")?,
+                        None,
+                    )
+                };
                 if stamp(&file.metadata().map_err(|_| "source_metadata_failed")?)? != before {
                     return Err("source_changed_during_scan");
                 }
@@ -287,11 +358,42 @@ pub(crate) mod unix {
                 if retained > aicharts_core::MAX_MEASUREMENTS {
                     return Err("retained_measurement_limit");
                 }
-                scans.push(SourceScan {
-                    source_id,
-                    stamp: before,
-                    collection,
-                });
+                if let Some(complete) = complete {
+                    if complete.bytes < before.bytes {
+                        deferred += 1;
+                    }
+                    // A nonempty historical baseline must reach conservation
+                    // validation, never silently disappear behind tail deferral.
+                    if complete.bytes == 0
+                        && previous.is_none()
+                        && checkpoint.is_some_and(|old| old.stamp.bytes != 0)
+                    {
+                        return Err("source_partial_tail");
+                    }
+                    // New and previously empty unwitnessed sources wait for
+                    // their first complete line before establishing a witness.
+                    if complete.bytes != 0 || previous.is_some() {
+                        // An unfinished append cannot advance the durable stamp.
+                        // Still submit the replay so unchanged bytes must yield
+                        // exactly the prior canonical numeric frame set.
+                        let stamp = checkpoint
+                            .filter(|old| old.prefix == Some(complete))
+                            .map_or(before, |old| old.stamp);
+                        prefix_scans.push(PrefixScan {
+                            source_id,
+                            stamp,
+                            previous,
+                            complete,
+                            collection,
+                        });
+                    }
+                } else {
+                    scans.push(SourceScan {
+                        source_id,
+                        stamp: before,
+                        collection,
+                    });
+                }
                 verification.push((path, canonical, before));
             }
         }
@@ -303,10 +405,13 @@ pub(crate) mod unix {
         for (path, canonical, expected) in &verification {
             verify_path(path, canonical, expected)?;
         }
-        let report = ledger
-            .commit_scans(snapshot.revision, scans)
-            .map_err(|error| error.code())?;
-        Ok((report, skipped, lines_read, bytes_scanned))
+        let report = if prefix_mode {
+            ledger.commit_prefix_scans(snapshot.revision, prefix_scans)
+        } else {
+            ledger.commit_scans(snapshot.revision, scans)
+        }
+        .map_err(|error| error.code())?;
+        Ok((report, skipped, deferred, lines_read, bytes_scanned))
     }
 
     fn status_json(status: &LedgerStatus) -> serde_json::Value {
@@ -333,11 +438,20 @@ pub(crate) mod unix {
                 "Private local ledger initialized. No sources read; nothing uploaded.\n".to_owned(),
             );
         }
+        if options.command == Command::PrefixEnable {
+            Ledger::migrate_complete_prefix(
+                &options.directory,
+                &LedgerIdentity::Legacy(&key),
+                options.revision.ok_or("migration_revision_required")?,
+            )
+            .map_err(|error| error.code())?;
+            return Ok("Completed-prefix collection enabled locally. No sources read; nothing uploaded. Use collect-prefix for this ledger.\n".to_owned());
+        }
         let mut ledger = Ledger::open(&options.directory, &key).map_err(|error| error.code())?;
         match options.command {
-            Command::Init => unreachable!(),
-            Command::Collect => {
-                let (report, skipped, lines_read, bytes_scanned) =
+            Command::Init | Command::PrefixEnable => unreachable!(),
+            Command::Collect | Command::CollectPrefix => {
+                let (report, skipped, deferred, lines_read, bytes_scanned) =
                     collect(&mut ledger, &options, &key)?;
                 let status = ledger.status().map_err(|error| error.code())?;
                 if options.json {
@@ -346,9 +460,17 @@ pub(crate) mod unix {
                     output["sourcesUpdated"] = report.sources_updated.into();
                     output["occurrencesChanged"] = report.occurrences_changed.into();
                     output["sourcesSkipped"] = skipped.into();
+                    if options.command == Command::CollectPrefix {
+                        output["sourcesWithDeferredTail"] = deferred.into();
+                    }
                     output["linesRead"] = lines_read.into();
                     output["bytesScanned"] = bytes_scanned.into();
-                    output["scanMode"] = "full_changed_source_snapshot".into();
+                    output["scanMode"] = if options.command == Command::CollectPrefix {
+                        "full_changed_source_complete_prefix"
+                    } else {
+                        "full_changed_source_snapshot"
+                    }
+                    .into();
                     json(&output)
                 } else {
                     let warnings = status
@@ -357,7 +479,12 @@ pub(crate) mod unix {
                         .map(|warning| warning.code())
                         .collect::<Vec<_>>()
                         .join(", ");
-                    Ok(format!("Import committed at revision {}; current ledger revision {}. Nothing uploaded.\nSources updated: {}; unchanged skipped: {skipped}\nPhysical lines read: {lines_read}; bytes scanned: {bytes_scanned}\nObserved tokens: {}; pending records: {}\nCoverage: partial; prompt counts, activity and model pricing unavailable.\nWarnings: {warnings}\n", report.revision,status.revision,report.sources_updated,status.tokens,status.pending_records))
+                    let deferred_note = if options.command == Command::CollectPrefix {
+                        format!("Sources with unfinished tails deferred: {deferred}\n")
+                    } else {
+                        String::new()
+                    };
+                    Ok(format!("Import committed at revision {}; current ledger revision {}. Nothing uploaded.\nSources updated: {}; unchanged skipped: {skipped}\n{deferred_note}Physical lines read: {lines_read}; bytes scanned: {bytes_scanned}\nObserved tokens: {}; pending records: {}\nCoverage: partial; prompt counts, activity and model pricing unavailable.\nWarnings: {warnings}\n", report.revision,status.revision,report.sources_updated,status.tokens,status.pending_records))
                 }
             }
             Command::Status => {
