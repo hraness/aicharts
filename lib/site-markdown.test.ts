@@ -261,14 +261,12 @@ describe("markdown representations", () => {
       expect(document.body).toContain(`# ${article.title}`);
       expect(document.body).toContain(article.dek);
       expect(document.body).toContain(article.authorshipDisclosure);
-      if (image === undefined) {
-        expect(article.slug).toBe("small-models-have-arrived");
-        expect(document.body).not.toContain(`/images/blog/${article.slug}.webp`);
-      } else {
-        expect(document.body).toContain(image.src);
-        expect(document.body).toContain(image.caption);
-        expect(document.body).toContain(image.credit);
-      }
+      expect(image).toBeDefined();
+      if (image === undefined) continue;
+      expect(document.body).toContain(image.src);
+      expect(document.body).toContain(image.caption);
+      expect(document.body).toContain(image.credit);
+      expect(articleToMarkdown(article)).not.toContain("/images/blog/");
     }
   });
 
