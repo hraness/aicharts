@@ -261,8 +261,10 @@ describe("markdown representations", () => {
       expect(document.body).toContain(`# ${article.title}`);
       expect(document.body).toContain(article.dek);
       expect(document.body).toContain(article.authorshipDisclosure);
-      expect(image).toBeDefined();
-      if (image === undefined) continue;
+      if (image === undefined) {
+        expect(document.body).not.toContain("/images/blog/");
+        continue;
+      }
       expect(document.body).toContain(image.src);
       expect(document.body).toContain(image.caption);
       expect(document.body).toContain(image.credit);

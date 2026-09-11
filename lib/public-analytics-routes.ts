@@ -5,6 +5,7 @@
  * every other route-shaped value collapses to the shared `other` bucket.
  */
 export const PUBLIC_BLOG_SLUGS = [
+  "devin-fusion-cost-saving",
   "terminal-bench-science",
   "small-models-have-arrived",
   "coding-agent-score-holdouts",

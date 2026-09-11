@@ -46,6 +46,12 @@ import {
 } from "./articles";
 import { BLOG_ARTICLE_ADMISSIONS } from "./article-admissions";
 import {
+  DEVIN_FUSION,
+  createDevinFusionCostSavingArticle,
+  fusionSnapshotRecords,
+  leadModelBaselines,
+} from "./devin-fusion-cost-saving-article";
+import {
   FRENCH_OWEN_SMALL_MODELS,
   OPENAI_GPT_56_LUNA,
 } from "./small-models-have-arrived-article";
@@ -138,7 +144,10 @@ describe("AI Charts benchmark notes", () => {
       expect(articleToMarkdown(article)).not.toContain("/images/blog/");
       expect(article.authorshipDisclosure).toBe(BLOG_AUTHORSHIP_DISCLOSURE);
       expect(articleToMarkdown(article)).toContain(BLOG_AUTHORSHIP_DISCLOSURE);
-      if (article.slug === "terminal-bench-science") {
+      if (article.slug === "devin-fusion-cost-saving") {
+        expect(article.publishedAt).toBe("2026-09-11");
+        expect(article.updatedAt >= article.publishedAt).toBeTrue();
+      } else if (article.slug === "terminal-bench-science") {
         expect(article.publishedAt).toBe("2026-08-31");
         expect(article.updatedAt >= article.publishedAt).toBeTrue();
       } else if (article.slug === "small-models-have-arrived") {
@@ -411,6 +420,128 @@ describe("AI Charts benchmark notes", () => {
     }
   });
 
+  test("reconstructs the Devin Fusion claim from Cognition's posts and the checked snapshot", () => {
+    const parsed = parseCodingAgentSnapshot(codingAgentData);
+    if (!parsed.ok) throw parsed.error;
+    const article = getBlogArticle("devin-fusion-cost-saving");
+    expect(article).toBeDefined();
+    if (article === undefined) return;
+
+    const markup = renderToStaticMarkup(
+      createElement(ArticleBody, { blocks: article.body }),
+    );
+    const markdown = articleToMarkdown(article);
+
+    expect(article.title).toBe("What Devin Fusion’s 39% saving measures");
+    expect(article.sourceIds).toEqual([
+      "cognitionFusionDesktopCli",
+      "cognitionDevinFusion",
+      "devinFable51",
+      "artificialAnalysisCodingAgents",
+    ]);
+    expect(blogEditorialImage(article.slug)).toBeUndefined();
+    for (const sourceId of article.sourceIds) {
+      expect(markup).toContain(BLOG_SOURCES[sourceId].url);
+    }
+    expect(markup).toContain(formatRetrievedAt(parsed.value.source.retrievedAt));
+    expect(markdown).toContain(DEVIN_FUSION.headline);
+    expect(markdown).toContain(DEVIN_FUSION.headlineIndex);
+    for (const point of DEVIN_FUSION.headlinePoints) {
+      expect(markup).toContain(point.configuration);
+      expect(markup).toContain(point.indexScore);
+      expect(markup).toContain(point.costUsd);
+    }
+    expect(markdown).toContain("39% lower");
+    expect(markdown).toContain("36% lower");
+    for (const row of DEVIN_FUSION.benchmarkComparisons) {
+      expect(markup).toContain(row.benchmark);
+      expect(markup).toContain(row.leadFable);
+      expect(markup).toContain(row.fusionFable);
+      expect(markup).toContain(row.leadAstra);
+      expect(markup).toContain(row.fusionAstra);
+    }
+    for (const row of DEVIN_FUSION.sidekickComparisons) {
+      expect(markup).toContain(row.sidekick);
+      expect(markup).toContain(row.fusionResult);
+    }
+    expect(markdown).toContain(DEVIN_FUSION.earlier.augustFusionCost);
+    expect(markdown).toContain(DEVIN_FUSION.earlier.septemberFusionCost);
+    for (const configuration of DEVIN_FUSION.artificialAnalysisListing.configurations) {
+      expect(markdown).toContain(configuration);
+    }
+    expect(markdown).not.toContain("refresh");
+    expect(markdown).not.toContain("schema");
+    expect(markdown).not.toContain("—");
+
+    const baselines = leadModelBaselines(parsed.value.records)
+      .map(baseline => baseline.record)
+      .filter(record => record !== undefined);
+    expect(baselines.length).toBeGreaterThanOrEqual(2);
+    for (const record of baselines) {
+      expect(markup).toContain(record.model);
+      expect(markup).toContain(record.agent);
+      expect(markup).toContain(formatSnapshotScore(record.benchmarks.aaIndex));
+      expect(markup).toContain(formatSnapshotCostUsd(record.economics.costUsd));
+    }
+
+    const fusionRecords = fusionSnapshotRecords(parsed.value.records);
+    if (fusionRecords.length === 0) {
+      expect(markdown).toContain("does not include a Fusion configuration");
+      expect(markdown).not.toContain("Fusion configurations in the AI Charts snapshot");
+    } else {
+      expect(markdown).toContain("Fusion configurations in the AI Charts snapshot");
+      expect(markdown).not.toContain("does not include a Fusion configuration");
+    }
+  });
+
+  test("states the Fusion snapshot status from the records it is given", () => {
+    const parsed = parseCodingAgentSnapshot(codingAgentData);
+    if (!parsed.ok) throw parsed.error;
+    const template = parsed.value.records[0];
+    const fusionRecord = {
+      ...template,
+      id: "fusion-fable-sidekick",
+      agent: "Devin Fusion CLI",
+      model: "Claude Fable 5.1 + SWE-2",
+      modelLabel: "Claude Fable 5.1 XHigh + SWE-2 Medium",
+      providerId: "cognition",
+      providerName: "Cognition",
+      seriesId: "Devin Fusion CLI:cognition_fusion",
+      seriesLabel: "Devin Fusion CLI · Claude Fable 5.1 + SWE-2",
+      setting: "xhigh",
+      settingRank: 5,
+      benchmarks: { aaIndex: 61.7, deepSwe: 63.1, terminalBench: 56.1, sweAtlas: 65.9 },
+      economics: { costUsd: 7.9, durationSeconds: 900 },
+      usage: { totalTokens: 6_000_000 },
+    };
+    const withoutFusion = createDevinFusionCostSavingArticle({
+      ...parsed.value,
+      records: parsed.value.records.filter(record => !record.agent.includes("Fusion")),
+    });
+    const withFusion = createDevinFusionCostSavingArticle({
+      ...parsed.value,
+      records: [...parsed.value.records, fusionRecord],
+    });
+    const without = articleToMarkdown(withoutFusion);
+    const withRows = articleToMarkdown(withFusion);
+
+    expect(without).toContain("does not include a Fusion configuration");
+    expect(without).not.toContain("Fusion configurations in the AI Charts snapshot");
+    expect(withRows).toContain("includes one Fusion configuration");
+    expect(withRows).toContain("Fusion configurations in the AI Charts snapshot");
+    expect(withRows).toContain("Claude Fable 5.1 + SWE-2");
+    expect(withRows).toContain("61.7");
+    expect(withRows).toContain("$7.90");
+    expect(withRows).not.toContain("does not include a Fusion configuration");
+
+    const leadOnly = createDevinFusionCostSavingArticle({
+      ...parsed.value,
+      records: parsed.value.records.filter(record => record.agent === "Devin CLI"),
+    });
+    expect(articleToMarkdown(leadOnly))
+      .toContain("does not store enough of the lead models");
+  });
+
   test("derives the holdout note from fetched Luu quotes and the checked snapshot", () => {
     const parsed = parseCodingAgentSnapshot(codingAgentData);
     if (!parsed.ok) throw parsed.error;
@@ -486,6 +617,9 @@ describe("AI Charts benchmark notes", () => {
     expect(markup).toContain(`href="${BLOG_SOURCES.calvinFrenchOwenSmallModels.url}"`);
     expect(markup).toContain(`href="${BLOG_SOURCES.openAiGpt56Luna.url}"`);
     expect(markup).toContain(`href="${BLOG_SOURCES.terminalBenchScienceAnnouncement.url}"`);
+    expect(markup).toContain(`href="${BLOG_SOURCES.cognitionFusionDesktopCli.url}"`);
+    expect(markup).toContain(`href="${BLOG_SOURCES.cognitionDevinFusion.url}"`);
+    expect(markup).toContain(`href="${BLOG_SOURCES.devinFable51.url}"`);
   });
 
   test("renders the index, static routes, breadcrumbs, dates, and sources", async () => {
@@ -495,12 +629,19 @@ describe("AI Charts benchmark notes", () => {
     expect(indexMarkup).toContain("The first collection focuses on coding agents.");
     expect(indexMarkup).toContain("Explore the coding-agent chart");
     expect(indexMarkup).toContain("Method");
-    expect(indexMarkup.match(/rel="preload"/gu)).toHaveLength(1);
+    // Only the first card may preload its image; an image-free lead card
+    // preloads nothing rather than promoting a below-fold image.
+    const leadImage = blogEditorialImage(blogArticles[0].slug);
+    expect(indexMarkup.match(/rel="preload"/gu) ?? [])
+      .toHaveLength(leadImage === undefined ? 0 : 1);
     for (const article of blogArticles) {
       expect(indexMarkup).toContain(`href="${blogArticlePath(article.slug)}"`);
       const editorialImage = blogEditorialImage(article.slug);
-      expect(editorialImage).toBeDefined();
-      if (editorialImage !== undefined) {
+      if (editorialImage === undefined) {
+        expect(indexMarkup).not.toContain(
+          encodeURIComponent(`/images/blog/${article.slug}.webp`),
+        );
+      } else {
         expect(indexMarkup).toContain(
           encodeURIComponent(editorialImage.src),
         );
@@ -519,7 +660,10 @@ describe("AI Charts benchmark notes", () => {
       expect(markup).toContain(`dateTime="${article.publishedAt}"`);
       expect(markup).toContain("By AI Charts · AI-assisted");
       expect(markup).toContain(article.authorshipDisclosure);
-      if (editorialImage !== undefined) {
+      if (editorialImage === undefined) {
+        expect(markup).not.toContain("<figure");
+        expect(markup).not.toContain(`/images/blog/${article.slug}.webp`);
+      } else {
         expect(markup).toContain(editorialImage.caption);
         expect(markup).toContain(editorialImage.alt);
       }
@@ -617,11 +761,15 @@ describe("AI Charts blog discovery", () => {
   });
 
   test("validates each registered editorial image against the manifest and binary", async () => {
-    expect(blogEditorialImages.map(image => image.slug).sort())
-      .toEqual([...BLOG_SLUGS].sort());
+    // The registry is intentionally partial: every registered slug must be a
+    // live article, but a live article may remain image-free.
+    const registeredSlugs = blogEditorialImages.map(image => image.slug).sort();
+    expect(new Set(registeredSlugs).size).toBe(registeredSlugs.length);
     for (const slug of Object.keys(BLOG_EDITORIAL_IMAGES)) {
       expect(BLOG_SLUGS as readonly string[]).toContain(slug);
     }
+    const imageFreeSlugs = BLOG_SLUGS.filter(slug => blogEditorialImage(slug) === undefined);
+    expect(imageFreeSlugs).toEqual(["devin-fusion-cost-saving"]);
     expect(new Set(blogEditorialImages.map(image => image.sha256)).size)
       .toBe(blogEditorialImages.length);
 

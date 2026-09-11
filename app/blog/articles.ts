@@ -2,6 +2,7 @@ import { site } from "../site";
 import { PUBLIC_BLOG_SLUGS } from "@/lib/public-analytics-routes";
 import { createAaIndexCostArticle } from "./aa-index-cost-article";
 import { createCodingAgentScoreHoldoutsArticle } from "./coding-agent-score-holdouts-article";
+import { createDevinFusionCostSavingArticle } from "./devin-fusion-cost-saving-article";
 import { createOpenModelsCodingAgentsArticle } from "./open-models-coding-agents-article";
 import { createSmallModelsHaveArrivedArticle } from "./small-models-have-arrived-article";
 import { createTerminalBenchScienceArticle } from "./terminal-bench-science-article";
@@ -121,6 +122,30 @@ export const BLOG_SOURCES = {
     publication: "Terminal-Bench-Science",
     title: "Terminal-Bench-Science 0.1",
     url: "https://www.terminal-bench-science.ai/announcement",
+    year: 2026,
+  },
+  cognitionFusionDesktopCli: {
+    note:
+      "The September 11, 2026 announcement reports the headline Artificial Analysis Coding Agent Index v1.5 comparison, the five-benchmark lead-versus-Fusion table, the sidekick price comparison, and the recommended Fable 5.1 and SWE-2 pairing.",
+    publication: "Cognition",
+    title: "Introducing Fusion in Devin Desktop & CLI",
+    url: "https://cognition.com/blog/local-fusion",
+    year: 2026,
+  },
+  cognitionDevinFusion: {
+    note:
+      "The June 29, 2026 post introduces the lead-and-sidekick architecture, reports the initial 35% FrontierCode cost reduction, the later up-to-60% figure with data updated August 7, 2026, and the 41% Fable 5 result.",
+    publication: "Cognition",
+    title: "Devin Fusion: Frontier Performance at 60% Lower Cost",
+    url: "https://cognition.com/blog/devin-fusion",
+    year: 2026,
+  },
+  devinFable51: {
+    note:
+      "The August 31, 2026 post reports Fable 5.1 and Devin Fusion cost per task on FrontierCode 1.1 Extended at the medium thinking level without naming the Fusion sidekick.",
+    publication: "Devin",
+    title: "Fable 5.1 in Devin and Why It’s Cheaper than Opus 5",
+    url: "https://devin.ai/blog/fable-5-1",
     year: 2026,
   },
 } as const satisfies Record<string, BlogSource>;
@@ -288,6 +313,7 @@ const mirrorCodeArticle = {
 } as const satisfies BlogArticle;
 
 export const blogArticles = [
+  createDevinFusionCostSavingArticle(),
   createTerminalBenchScienceArticle(),
   createSmallModelsHaveArrivedArticle(),
   createCodingAgentScoreHoldoutsArticle(),
