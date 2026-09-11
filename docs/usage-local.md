@@ -17,7 +17,7 @@ On macOS/Linux, create a private namespace key at a new path outside the reposit
 ./target/debug/aicharts keygen --output /absolute/private/directory/aicharts.key
 ```
 
-Retain this key securely. It determines the opaque IDs used for deduplication; replacing it changes those IDs. It is not a provider token and is never included in a frame. The current CLI checks Unix permission bits and creates keys with mode 0600. Credential-vault storage, shared-device recovery and namespace rotation are not implemented. Windows key generation remains disabled until its credential-storage path is qualified; this is not a claim of a completed cross-platform installer.
+Retain this key securely. It determines the opaque IDs used for deduplication; replacing it changes those IDs. It is not a provider token and is never included in a frame. The current CLI checks Unix permission bits and creates keys with mode 0600. The separate [credential custody library](../crates/aicharts-custody/README.md) is not connected to these commands: live vault access, shared-device recovery and namespace rotation remain unqualified. Windows key generation remains disabled until its credential-storage path is qualified; this is not a claim of a completed cross-platform installer.
 
 Read one selected source or directory; repeat source flags to combine files. Neither key bytes nor source paths are printed:
 
@@ -74,7 +74,54 @@ If `nextAfter` is non-null, use it as `--after` together with the returned `ledg
 
 The [ledger contract](../crates/aicharts-ledger/README.md) describes atomicity, source-history checks and recovery boundaries. Do not delete a journal, reset a corrupt database or replace a lost namespace key as an automatic repair. Preserve the private state for diagnosis. Shadow preparation changes identity only in a new ledger; it cannot recover a corrupt database or missing native history.
 
-The library's explicit split-key schema-2 migration adds [bounded sender custody](usage-admission-v1.md): one immutable 1–256-operation batch, exact terminal receipts, conditional acknowledgment that preserves newer corrections, and persistent conflict/revocation gates. It performs no networking and is not exposed by a CLI sending or receipt-import command. Ordinary opens and inspection never perform that migration. Accepted receipt bytes must eventually come from the owned authenticated transport, not a local file or an arbitrary caller.
+The library's explicit split-key sender migration adds [bounded sender custody](usage-admission-v1.md): one immutable 1–256-operation batch, exact terminal receipts, conditional acknowledgment that preserves newer corrections, and persistent conflict/revocation gates. It performs no networking and is not exposed by a CLI sending or receipt-import command. Ordinary opens and inspection never perform that migration. Accepted receipt bytes must eventually come from the owned authenticated transport, not a local file or an arbitrary caller.
+
+## Collect completed lines from a live source
+
+First inspect the current local revision with `status`. Explicitly enable prefix
+checkpoints using that revision, without reading sources or changing identities:
+
+```sh
+./target/debug/aicharts prefix-enable --state-dir /absolute/private/directory/aicharts-state --key-file /absolute/private/directory/aicharts.key --revision 0
+./target/debug/aicharts collect-prefix --state-dir /absolute/private/directory/aicharts-state --key-file /absolute/private/directory/aicharts.key --codex /absolute/path/to/sessions --claude /absolute/path/to/projects --json
+```
+
+Replace `0` with the observed revision. Migration preserves measurements, pending
+records and revisions; a stale first migration fails. It is additive, not an
+automatic repair. The old `collect` command refuses a prefix-enabled ledger
+before reading sources. `status`, `outbox` and read-only reindex inspection do
+not migrate it. Reindex still requires complete newline-terminated sources.
+
+`collect-prefix` replays the full LF-terminated prefix, not just appended bytes.
+An unfinished JSON or UTF-8 suffix waits for its terminating newline. The CLI
+reports `sourcesWithDeferredTail`; no numeric measurement or checkpoint is
+created from that suffix. New and historically empty sources wait for their
+first complete line. A nonempty migrated source with no complete line fails
+instead of bypassing history conservation. Existing unwitnessed sources must
+replay even when their metadata matches a legacy checkpoint.
+
+Each witness is a local HMAC-SHA256 over a fixed domain, keyed source ID,
+completed-byte length and exact completed bytes. The old witness is verified
+over the same bytes delivered to the parser before admitting an extension.
+Rewriting ignored content or reordering retained records therefore fails on
+rescan even when numeric totals are unchanged. The HMAC and source IDs never
+enter summaries, outbox frames or network formats; internal hash state is not
+serialized. This local content-derived integrity metadata is not a transcript
+copy, provider attestation, or proof against a user who controls their key/state.
+
+An unchanged witnessed source may use the metadata fast path. `--rescan` forces
+rehashing; metadata equality alone is not cryptographic integrity evidence. A
+changed suffix without another complete line is verified but cannot advance its
+durable stamp. Uncommitted suffix shrink is allowed only on the same file and
+never below the previous completed prefix. Complete-prefix rewrites, rotation,
+removed measurements and continuously changing source snapshots fail closed.
+The entire multi-source import remains atomic. Recovery from a corrupt ledger
+or intentionally corrected history still requires a separate reviewed workflow.
+
+The existing 256 MiB snapshot limit bounds reverse newline discovery as well as
+the replay; `bytesScanned` reports the selected observed snapshot sizes, not
+physical I/O amplification. Prefix mode can read part of a snapshot twice while
+finding its last newline and replaying it. No daemon is activated by migration.
 
 ## Prepare an account-bound shadow
 
@@ -106,7 +153,7 @@ The CLI accepts at most 2,048 source files, visits at most 20,000 directory entr
 
 Persistent state additionally caps 2,048 retained sources, 100,000 unique occurrences and 200,000 source-to-occurrence associations. Its main SQLite file is capped at 256 MiB; journal space is additional. Hitting a retained-state cap requires a future reviewed retention/export path, not deleting state or silently reminting a namespace. No unbounded history claim is made.
 
-A malformed or partially written trailing record fails the scan with a fixed error. Retry after the source writer completes; no checkpoint has been advanced and no server state has changed. Standard error never includes source content or paths. Internal bugs are still possible; a passed test suite is not a security audit.
+A malformed complete record fails the scan with a fixed error. Legacy persistent collection and reindex also reject unfinished tails; explicitly enabled prefix collection defers them as described above. Retry after the source writer completes; rejected imports advance no checkpoint or server state. Standard error never includes source content or paths. Internal bugs are still possible; a passed test suite is not a security audit.
 
 ## Privacy and validation
 
@@ -118,6 +165,7 @@ Run focused checks during development:
 cargo test --locked -p aicharts-protocol
 cargo test --locked -p aicharts-core
 cargo test --locked -p aicharts-ledger
+cargo test --locked -p aicharts-custody
 cargo test --locked -p aicharts-cli
 bun test lib/usage
 ```

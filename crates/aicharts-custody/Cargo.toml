@@ -1,0 +1,18 @@
+[package]
+name = "aicharts-custody"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+zeroize = { version = "=1.9.0", default-features = false, features = ["alloc"] }
+sha2.workspace = true
+
+[target.'cfg(target_os = "macos")'.dependencies]
+security-framework = { version = "=3.7.0", default-features = false }
+core-foundation = "=0.10.1"

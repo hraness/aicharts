@@ -192,7 +192,8 @@ impl Ledger {
             .transaction_with_behavior(TransactionBehavior::Immediate)?;
         crate::storage::validate_schema(&tx, &ledger.namespace, false)?;
         crate::validate_relations_in(&tx)?;
-        if crate::storage::schema_version(&tx)? == 2 {
+        let version = crate::storage::schema_version(&tx)?;
+        if crate::storage::has_sender(version) {
             if validate(&tx)?.binding != *binding {
                 return Err(Error::SenderBindingMismatch);
             }
@@ -207,7 +208,15 @@ impl Ledger {
         }
         tx.execute("INSERT INTO sender_binding(singleton,account_id,device_id,generation,namespace_version,allocated_sequence,settled_sequence) VALUES(1,?1,?2,?3,1,0,0)",
             params![binding.account_id.as_slice(), binding.device_id.as_slice(), binding.generation.as_slice()])?;
-        tx.pragma_update(None, "user_version", 2)?;
+        tx.pragma_update(
+            None,
+            "user_version",
+            if crate::storage::has_prefix(version) {
+                4
+            } else {
+                2
+            },
+        )?;
         crate::storage::validate_schema(&tx, &ledger.namespace, false)?;
         crate::validate_relations_in(&tx)?;
         before_commit()?;
@@ -513,7 +522,7 @@ fn checked_state(
 ) -> Result<(State, AuditStamp)> {
     let stamp = AuditStamp::read(connection)?;
     crate::storage::validate_schema(connection, namespace, false)?;
-    if crate::storage::schema_version(connection)? != 2 {
+    if !crate::storage::has_sender(crate::storage::schema_version(connection)?) {
         return Err(Error::SenderNotEnabled);
     }
     let state = if previous == Some(stamp) {
@@ -732,7 +741,7 @@ fn validate_selected(connection: &Connection, selected: &BTreeSet<Id>) -> Result
 }
 
 fn validate_inner(connection: &Connection, selected: Option<&BTreeSet<Id>>) -> Result<State> {
-    if crate::storage::schema_version(connection)? != 2 {
+    if !crate::storage::has_sender(crate::storage::schema_version(connection)?) {
         return Err(Error::SenderNotEnabled);
     }
     for (name, cap) in [

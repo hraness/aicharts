@@ -1,5 +1,7 @@
 #![forbid(unsafe_code)]
 
+#[cfg(unix)]
+mod prefix;
 mod reindex;
 mod state;
 
@@ -21,6 +23,8 @@ const HELP: &str = "AI Charts Usage — local-only foundation
   aicharts keygen --output PATH
   aicharts init --state-dir DIR --key-file PATH
   aicharts collect --state-dir DIR --key-file PATH [--codex FILE_OR_DIR] [--claude FILE_OR_DIR] [--rescan] [--json]
+  aicharts prefix-enable --state-dir DIR --key-file PATH --revision N
+  aicharts collect-prefix --state-dir DIR --key-file PATH [--codex FILE_OR_DIR] [--claude FILE_OR_DIR] [--rescan] [--json]
   aicharts status --state-dir DIR --key-file PATH [--json]
   aicharts outbox --dry-run --state-dir DIR --key-file PATH [--limit 1..256] [--after ID --revision N]
   aicharts reindex-plan --dry-run --state-dir OLD --key-file PATH [--codex FILE_OR_DIR] [--claude FILE_OR_DIR] [--json]
@@ -33,6 +37,10 @@ it does not contact any service. Key files contain exactly 32 private random byt
 keygen creates a new mode-0600 file on Unix and never overwrites an existing file.
 Persistent commands are Unix-only and require explicit initialization. collect
 rescans changed sources from the beginning; unchanged metadata skips parsing.
+prefix-enable explicitly adds local completed-prefix integrity metadata. Then use
+collect-prefix: it fully replays completed lines and defers an unfinished tail.
+Metadata skipping is a reliability optimization, not tamper attestation; --rescan
+rehashes every retained prefix. Neither command uploads content or enables sending.
 outbox is a read-only preview. No acknowledgement or sending is enabled.
 reindex-plan inspects existing state without recovery or writes and rereads explicit
 sources. reindex-prepare creates a new account-key-bound shadow only when every old
@@ -363,7 +371,7 @@ fn run(args: &[String]) -> Result<String, &'static str> {
     }
     if matches!(
         args.first().map(String::as_str),
-        Some("init" | "collect" | "status" | "outbox")
+        Some("init" | "collect" | "prefix-enable" | "collect-prefix" | "status" | "outbox")
     ) {
         return state::run(args);
     }
