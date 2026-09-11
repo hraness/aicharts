@@ -244,7 +244,10 @@ impl Guard {
             "unix-excl",
         )?;
         connection.busy_timeout(std::time::Duration::ZERO)?;
-        connection.set_limit(Limit::SQLITE_LIMIT_LENGTH, 8192)?;
+        connection.set_limit(
+            Limit::SQLITE_LIMIT_LENGTH,
+            crate::storage::MAX_SQLITE_VALUE_BYTES,
+        )?;
         connection.set_limit(Limit::SQLITE_LIMIT_SQL_LENGTH, 8192)?;
         connection.set_limit(Limit::SQLITE_LIMIT_ATTACHED, 0)?;
         // This is connection-local, not BEGIN EXCLUSIVE or a write. Setting it

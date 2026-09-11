@@ -74,6 +74,8 @@ If `nextAfter` is non-null, use it as `--after` together with the returned `ledg
 
 The [ledger contract](../crates/aicharts-ledger/README.md) describes atomicity, source-history checks and recovery boundaries. Do not delete a journal, reset a corrupt database or replace a lost namespace key as an automatic repair. Preserve the private state for diagnosis. Shadow preparation changes identity only in a new ledger; it cannot recover a corrupt database or missing native history.
 
+The library's explicit split-key schema-2 migration adds [bounded sender custody](usage-admission-v1.md): one immutable 1–256-operation batch, exact terminal receipts, conditional acknowledgment that preserves newer corrections, and persistent conflict/revocation gates. It performs no networking and is not exposed by a CLI sending or receipt-import command. Ordinary opens and inspection never perform that migration. Accepted receipt bytes must eventually come from the owned authenticated transport, not a local file or an arbitrary caller.
+
 ## Prepare an account-bound shadow
 
 Keep the existing ledger, its key and all pending records. Account occurrence IDs must be derived again from native metadata with the account namespace; hashing old opaque IDs would not deduplicate another machine's copies.

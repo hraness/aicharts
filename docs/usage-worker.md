@@ -1,6 +1,6 @@
 # Usage Worker boundaries
 
-The Usage Worker contains internal device-pairing, account-enrollment and numeric blob-staging primitives. Its public handler always returns a fixed, private `503`. It has no deployment command, public browser approval route, upload authorization, accepted-usage index or query endpoint. The application has a dormant server-only authentication coordinator, but no production Worker connection. Tests use synthetic local bindings; no live Worker or R2 bucket is provisioned by this source slice.
+The Usage Worker contains internal device-pairing, account-enrollment, numeric staging and immutable batch/journal object primitives. Its public handler always returns a fixed, private `503`. It has no deployment command, public browser approval route, upload authorization, accepted-usage index or query endpoint. The application has a dormant server-only authentication coordinator, but no production Worker connection. Tests use synthetic local bindings; no live Worker or R2 bucket is provisioned by this source slice.
 
 ## Storage split
 
@@ -49,6 +49,8 @@ The staging adapter accepts only the v1 binary media type `application/vnd.aicha
 Objects use account-scoped, content-addressed keys. Conditional creation prevents overwrites. Repeated or uncertain writes require bounded readback of the exact canonical bytes and derived metadata. Fixed error codes do not reflect request data. A receipt explicitly says `staged` and `accepted: false`; staged objects cannot feed rankings, billing, private analytics or an acknowledgment that deletes a local outbox entry.
 
 The fixed numeric protocol excludes free-form chat fields, unknown fields and trailing data. It cannot prove honest measurement or prevent a malicious client from encoding information in numeric counters or fixed-width identifiers. Encryption protects transport or storage confidentiality; it does not establish those stronger privacy or anti-gaming claims.
+
+The separate [admission batch contract](usage-admission-v1.md) wraps up to 256 exact single-Usage frames or tombstone operations with fixed sequence/predecessor fields. Its internal R2 helpers conditionally store one bounded batch object and one exact terminal-journal object, with full byte/checksum/metadata readback. Journal keys are revision-addressed to reject forks. These helpers require authenticated durable caller custody; they do not authenticate, decide acceptance, publish subject heads or settle a local ledger. A journal's structural validity is not receipt provenance. The public handler and existing staging behavior remain unchanged.
 
 ## Validation and activation
 

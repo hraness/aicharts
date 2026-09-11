@@ -9,6 +9,7 @@ use crate::{Error, LedgerIdentity, Result};
 
 const APPLICATION_ID: i32 = 0x4149434c;
 const MAX_DATABASE_BYTES: u64 = 256 * 1024 * 1024;
+pub(super) const MAX_SQLITE_VALUE_BYTES: i32 = 262_144;
 const TABLES: [(&str, &str); 5] = [
     ("meta", "CREATE TABLE meta(singleton INTEGER PRIMARY KEY CHECK(singleton=1), namespace BLOB NOT NULL CHECK(length(namespace)=32), revision INTEGER NOT NULL CHECK(revision>=0)) STRICT"),
     ("sources", "CREATE TABLE sources(id BLOB PRIMARY KEY CHECK(length(id)=32), stamp BLOB NOT NULL CHECK(length(stamp)=48), warnings INTEGER NOT NULL CHECK(warnings>=0 AND warnings<16384)) STRICT"),
@@ -103,7 +104,7 @@ fn connect(path: &Path) -> Result<Connection> {
             | OpenFlags::SQLITE_OPEN_NO_MUTEX,
     )?;
     connection.busy_timeout(Duration::ZERO)?;
-    connection.set_limit(Limit::SQLITE_LIMIT_LENGTH, 8192)?;
+    connection.set_limit(Limit::SQLITE_LIMIT_LENGTH, MAX_SQLITE_VALUE_BYTES)?;
     connection.set_limit(Limit::SQLITE_LIMIT_SQL_LENGTH, 8192)?;
     connection.set_limit(Limit::SQLITE_LIMIT_ATTACHED, 0)?;
     connection.execute_batch("PRAGMA trusted_schema=OFF; PRAGMA foreign_keys=ON; PRAGMA temp_store=MEMORY; PRAGMA synchronous=EXTRA; PRAGMA fullfsync=ON;")?;
@@ -185,29 +186,48 @@ pub(super) fn validate_schema(
 ) -> Result<()> {
     let application_id: i32 =
         connection.pragma_query_value(None, "application_id", |r| r.get(0))?;
-    let version: i32 = connection.pragma_query_value(None, "user_version", |r| r.get(0))?;
+    let version = schema_version(connection)?;
     let mode: String = connection.pragma_query_value(None, "journal_mode", |r| r.get(0))?;
     let page_size: i64 = connection.pragma_query_value(None, "page_size", |r| r.get(0))?;
     if readonly && mode != "delete" {
         return Err(Error::RecoveryRequired);
     }
-    if application_id != APPLICATION_ID || version != 1 || mode != "delete" || page_size != 4096 {
+    if application_id != APPLICATION_ID || mode != "delete" || page_size != 4096 {
         return Err(Error::InvalidState);
     }
     let mut count = 0;
     let mut statement = connection
-        .prepare("SELECT name,sql,type FROM sqlite_schema WHERE sql IS NOT NULL LIMIT 7")?;
+        .prepare("SELECT name,sql,type FROM sqlite_schema WHERE sql IS NOT NULL LIMIT 13")?;
     let mut rows = statement.query([])?;
     while let Some(row) = rows.next()? {
         count += 1;
         let name: String = row.get(0)?;
         let sql: String = row.get(1)?;
         let kind: String = row.get(2)?;
-        if kind != "table" || !TABLES.iter().any(|(n, s)| name == *n && sql == *s) {
+        if kind != "table"
+            || !TABLES
+                .iter()
+                .chain(
+                    if version == 2 {
+                        crate::sender::TABLES.as_slice()
+                    } else {
+                        &[]
+                    }
+                    .iter(),
+                )
+                .any(|(n, s)| name == *n && sql == *s)
+        {
             return Err(Error::InvalidState);
         }
     }
-    if count != TABLES.len() {
+    if count
+        != TABLES.len()
+            + if version == 2 {
+                crate::sender::TABLES.len()
+            } else {
+                0
+            }
+    {
         return Err(Error::InvalidState);
     }
     drop(rows);
@@ -220,6 +240,14 @@ pub(super) fn validate_schema(
         return Err(Error::WrongNamespace);
     }
     Ok(())
+}
+
+pub(super) fn schema_version(connection: &Connection) -> Result<u32> {
+    let version: u32 = connection.pragma_query_value(None, "user_version", |r| r.get(0))?;
+    if !matches!(version, 1 | 2) {
+        return Err(Error::InvalidState);
+    }
+    Ok(version)
 }
 
 #[cfg(not(unix))]

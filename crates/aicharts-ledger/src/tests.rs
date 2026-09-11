@@ -12,6 +12,9 @@ use std::process::Command;
 const KEY: [u8; 32] = [0x7b; 32];
 const PRIVATE: &str = "PRIVATE_LEDGER_CANARY_d83e09";
 
+#[path = "sender_tests.rs"]
+mod sender_tests;
+
 struct Fixture(PathBuf);
 impl Fixture {
     fn new() -> Self {
