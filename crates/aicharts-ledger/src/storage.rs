@@ -208,8 +208,16 @@ pub(super) fn validate_schema(
             || !TABLES
                 .iter()
                 .chain(
-                    if version == 2 {
+                    if has_sender(version) {
                         crate::sender::TABLES.as_slice()
+                    } else {
+                        &[]
+                    }
+                    .iter(),
+                )
+                .chain(
+                    if has_prefix(version) {
+                        crate::prefix::TABLES.as_slice()
                     } else {
                         &[]
                     }
@@ -222,8 +230,13 @@ pub(super) fn validate_schema(
     }
     if count
         != TABLES.len()
-            + if version == 2 {
+            + if has_sender(version) {
                 crate::sender::TABLES.len()
+            } else {
+                0
+            }
+            + if has_prefix(version) {
+                crate::prefix::TABLES.len()
             } else {
                 0
             }
@@ -244,10 +257,18 @@ pub(super) fn validate_schema(
 
 pub(super) fn schema_version(connection: &Connection) -> Result<u32> {
     let version: u32 = connection.pragma_query_value(None, "user_version", |r| r.get(0))?;
-    if !matches!(version, 1 | 2) {
+    if !matches!(version, 1..=4) {
         return Err(Error::InvalidState);
     }
     Ok(version)
+}
+
+pub(super) const fn has_sender(version: u32) -> bool {
+    matches!(version, 2 | 4)
+}
+
+pub(super) const fn has_prefix(version: u32) -> bool {
+    matches!(version, 3 | 4)
 }
 
 #[cfg(not(unix))]

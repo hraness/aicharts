@@ -2,10 +2,12 @@
 #![forbid(unsafe_code)]
 
 mod inspection;
+mod prefix;
 mod sender;
 mod storage;
 
 pub use inspection::ReadOnlyLedger;
+pub use prefix::{CompletePrefix, PrefixScan, PrefixSnapshot, SourceCheckpoint};
 pub use sender::{BatchSettlement, FrozenBatch, SenderBinding, SenderStatus, SettledBatch};
 
 use std::collections::{BTreeMap, BTreeSet};
@@ -41,6 +43,8 @@ pub enum Error {
     InvalidReceipt,
     ReconciliationRequired,
     DeviceRevoked,
+    PrefixNotEnabled,
+    CompletePrefixRequired,
 }
 impl Error {
     pub const fn code(self) -> &'static str {
@@ -62,6 +66,8 @@ impl Error {
             Self::InvalidReceipt => "ledger_receipt_rejected",
             Self::ReconciliationRequired => "ledger_reconciliation_required",
             Self::DeviceRevoked => "ledger_device_revoked",
+            Self::PrefixNotEnabled => "ledger_prefix_not_enabled",
+            Self::CompletePrefixRequired => "ledger_complete_prefix_required",
         }
     }
 }
@@ -232,6 +238,15 @@ impl Ledger {
         scans: Vec<SourceScan>,
         before_commit: F,
     ) -> Result<ImportReport> {
+        self.commit_mode_with(expected_revision, scans, None, before_commit)
+    }
+    fn commit_mode_with<F: FnOnce() -> Result<()>>(
+        &mut self,
+        expected_revision: u64,
+        scans: Vec<SourceScan>,
+        prefixes: Option<BTreeMap<SourceId, prefix::Update>>,
+        before_commit: F,
+    ) -> Result<ImportReport> {
         self.sender_audit.set(None);
         if scans.len() > MAX_SOURCES {
             return Err(Error::Limit);
@@ -258,7 +273,13 @@ impl Ledger {
         let tx = self
             .connection
             .transaction_with_behavior(TransactionBehavior::Immediate)?;
-        if storage::schema_version(&tx)? == 2 {
+        let version = storage::schema_version(&tx)?;
+        match (storage::has_prefix(version), prefixes.is_some()) {
+            (true, false) => return Err(Error::CompletePrefixRequired),
+            (false, true) => return Err(Error::PrefixNotEnabled),
+            _ => {}
+        }
+        if storage::has_sender(version) || storage::has_prefix(version) {
             storage::validate_schema(&tx, &self.namespace, false)?;
             validate_relations_in(&tx)?;
         }
@@ -280,6 +301,9 @@ impl Ledger {
         let mut changed = BTreeSet::new();
         let mut sources_updated = 0;
         for scan in scans {
+            let prefix_update = prefixes
+                .as_ref()
+                .and_then(|entries| entries.get(&scan.source_id));
             let stamp = scan.stamp.encode()?;
             let mask = warning_mask(&scan.collection.warnings);
             let old_source: Option<(Vec<u8>, i64)> = tx
@@ -289,11 +313,25 @@ impl Ledger {
                     |row| Ok((row.get(0)?, row.get(1)?)),
                 )
                 .optional()?;
+            let previous_prefix = if let Some(update) = prefix_update {
+                let previous = if old_source.is_some() {
+                    prefix::read(&tx, &scan.source_id)?
+                } else {
+                    None
+                };
+                update.check(previous, scan.stamp)?;
+                previous
+            } else {
+                None
+            };
+            let unchanged_prefix =
+                prefix_update.is_some_and(|update| previous_prefix == Some(update.complete));
             if let Some((old, _)) = &old_source {
                 let old = SourceStamp::decode(old)?;
+                let minimum_bytes = previous_prefix.map_or(old.bytes, |prefix| prefix.bytes);
                 if old.device != scan.stamp.device
                     || old.inode != scan.stamp.inode
-                    || old.bytes > scan.stamp.bytes
+                    || minimum_bytes > scan.stamp.bytes
                 {
                     return Err(Error::SourceHistoryChanged);
                 }
@@ -312,16 +350,24 @@ impl Ledger {
                 let id: Id = id.try_into().map_err(|_| Error::InvalidState)?;
                 let old: Vec<u8> = row.get(1)?;
                 let new = records.get(&id).ok_or(Error::SourceHistoryChanged)?;
-                if merge_frames(&old, new)? != *new {
+                if (unchanged_prefix && old != *new) || merge_frames(&old, new)? != *new {
                     return Err(Error::SourceHistoryChanged);
                 }
             }
+            if unchanged_prefix && previous_count != records.len() {
+                return Err(Error::SourceHistoryChanged);
+            }
             drop(old_rows);
             drop(old_statement);
-            let source_changed = old_source
-                .as_ref()
-                .is_none_or(|(old, warnings)| old != &stamp || *warnings != mask as i64);
+            let source_changed = prefix_update
+                .is_some_and(|update| previous_prefix != Some(update.complete))
+                || old_source
+                    .as_ref()
+                    .is_none_or(|(old, warnings)| old != &stamp || *warnings != mask as i64);
             tx.execute("INSERT INTO sources(id,stamp,warnings) VALUES(?1,?2,?3) ON CONFLICT(id) DO UPDATE SET stamp=excluded.stamp,warnings=excluded.warnings", params![scan.source_id.as_slice(), stamp, mask as i64])?;
+            if let Some(update) = prefix_update {
+                prefix::write(&tx, &scan.source_id, update.complete)?;
+            }
             let mut association_changed = false;
             for (id, frame) in records {
                 let old: Option<Vec<u8>> = tx
@@ -544,7 +590,7 @@ fn validate_relations(connection: &Connection) -> Result<()> {
     validate_relations_in(&tx)
 }
 fn validate_relations_in(tx: &Connection) -> Result<()> {
-    let sender = if storage::schema_version(tx)? == 2 {
+    let sender = if storage::has_sender(storage::schema_version(tx)?) {
         Some(sender::validate(tx)?)
     } else {
         None
@@ -555,6 +601,9 @@ fn validate_relations_with(
     tx: &Connection,
     accepted: Option<&BTreeMap<Id, sender::Accepted>>,
 ) -> Result<()> {
+    if storage::has_prefix(storage::schema_version(tx)?) {
+        prefix::validate(tx)?;
+    }
     let quick: String = tx.query_row("PRAGMA quick_check(1)", [], |row| row.get(0))?;
     if quick != "ok" {
         return Err(Error::InvalidState);

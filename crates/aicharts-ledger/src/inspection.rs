@@ -8,6 +8,7 @@ use crate::{Error, InventoryRecord, LedgerIdentity, LedgerSnapshot, LedgerStatus
 pub struct ReadOnlyLedger {
     guard: Guard,
     snapshot: LedgerSnapshot,
+    prefix_snapshot: crate::PrefixSnapshot,
     status: LedgerStatus,
     inventory: Vec<InventoryRecord>,
 }
@@ -33,6 +34,7 @@ impl ReadOnlyLedger {
         crate::storage::validate_schema(&tx, &guard.namespace, true)?;
         crate::validate_relations_in(&tx)?;
         let snapshot = crate::snapshot(&tx)?;
+        let prefix_snapshot = crate::prefix::snapshot(&tx)?;
         let status = crate::status(&tx)?;
         let inventory = inventory(&tx, snapshot.revision)?;
         guard.ensure_paths()?;
@@ -45,6 +47,7 @@ impl ReadOnlyLedger {
         Ok(Self {
             guard,
             snapshot,
+            prefix_snapshot,
             status,
             inventory,
         })
@@ -61,6 +64,10 @@ impl ReadOnlyLedger {
 
     pub fn snapshot(&self) -> &LedgerSnapshot {
         &self.snapshot
+    }
+    /// Local-only integrity metadata, never upload or status output.
+    pub fn prefix_snapshot(&self) -> &crate::PrefixSnapshot {
+        &self.prefix_snapshot
     }
     pub fn status(&self) -> &LedgerStatus {
         &self.status
