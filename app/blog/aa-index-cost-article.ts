@@ -82,6 +82,7 @@ export function createAaIndexCostArticle(
   )).length;
   const updatedAt = latestCalendarDate(
     AA_INDEX_COST_ARTICLE_PUBLISHED_AT,
+    "2026-09-10",
     utcCalendarDate(snapshot.source.retrievedAt),
     utcCalendarDate(codingAgentDatasetModifiedAt(snapshot)),
   );
@@ -89,12 +90,12 @@ export function createAaIndexCostArticle(
   return {
     authorshipDisclosure: BLOG_AUTHORSHIP_DISCLOSURE,
     slug: AA_INDEX_COST_ARTICLE_SLUG,
-    title: "AA Index versus cost for coding agents",
+    title: "Highest AA Index and lowest cost pick different agents",
     dek:
-      "The checked Artificial Analysis snapshot shows which coding-agent configurations lead on AA Index and how those scores trade off against mean API cost per task.",
+      "The checked snapshot keeps a configuration on the frontier only when nothing cheaper scores at least as well on AA Index.",
     focusPhrase: "coding agent AA Index vs cost",
     seoDescription:
-      "Checked Artificial Analysis snapshot: coding-agent AA Index leaders, mean API cost, the cost/performance frontier, and the limits of those scores.",
+      "In the checked Artificial Analysis snapshot, the highest AA Index and the lowest mean task cost belong to different coding-agent configurations.",
     keywords: [
       "AA Index",
       "coding agent cost",
@@ -111,7 +112,7 @@ export function createAaIndexCostArticle(
       paragraph(
         "The current AI Charts coding-agent comparison is a checked snapshot of the public ",
         { href: BLOG_SOURCES.artificialAnalysisCodingAgents.url, text: "Artificial Analysis coding-agents page" },
-        ". This note answers one question from that snapshot: which named model, agent harness, and effort settings lead on AA Index, and what mean API cost per task those configurations report.",
+        ". This note answers one question from that snapshot: which named model, agent harness, and effort settings lead on AA Index, and which of those rows remain undominated once mean API cost per task is included.",
       ),
       paragraph(
         `AI Charts retrieved the snapshot on ${retrievedAt}. The dataset contains ${summary.recordCount} model-agent configurations across ${summary.modelCount} models, ${summary.agentCount} agent harnesses, and ${summary.providerCount} providers. ${comparableCount} of those configurations report both an AA Index and a mean API cost. The values below are copied from that snapshot. AI Charts does not recalculate Artificial Analysis scores.`,
@@ -195,7 +196,7 @@ export function createAaIndexCostArticle(
         "Derived, not sourced",
         "AA Index per dollar and the frontier are AI Charts views of the checked snapshot. Cite Artificial Analysis for the underlying score and cost, and cite this page only for the derived comparison.",
       ),
-      heading("How to use these numbers"),
+      heading("When to use this snapshot"),
       paragraph(
         "Use this note when you need a sourced answer to a cost and quality question on the current coding-agent snapshot. Open the ",
         { href: "/", text: "comparison chart" },

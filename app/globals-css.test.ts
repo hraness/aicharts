@@ -156,6 +156,8 @@ test("the image-free homepage article is an intentional responsive text card", (
   const textCard = firstRule(".home-editorial__text-card");
 
   expect(imageLink).toContain("aspect-ratio: 16 / 9");
+  expect(imageLink).toContain("border: 1px solid var(--grid)");
+  expect(imageLink).toContain("background: var(--surface-raised)");
   expect(textCard).toContain("background: var(--surface-raised)");
   expect(textCard).toContain("border: 1px solid var(--grid)");
   expect(textCard).toContain("display: grid");

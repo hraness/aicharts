@@ -10,6 +10,7 @@ import {
   HomeEditorialResources,
 } from "@/components/home-editorial-resources";
 import { BLOG_ARTICLE_ADMISSIONS } from "@/app/blog/article-admissions";
+import { getBlogArticle } from "@/app/blog/articles";
 import { blogEditorialImage } from "@/app/blog/editorial-images";
 import codingAgentData from "@/data/coding-agents.json";
 import { parseCodingAgentSnapshot } from "@/lib/coding-agent-data";
@@ -72,6 +73,11 @@ describe("homepage canonical content", () => {
         );
       } else {
         expect(markup).toContain(encodeURIComponent(image.src));
+        const card = getBlogArticle(slug);
+        expect(card).toBeDefined();
+        if (card !== undefined) {
+          expect(markup).toContain(`<p>${card.dek}</p>`);
+        }
       }
     }
 
