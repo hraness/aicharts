@@ -1,5 +1,5 @@
 [workspace]
-members = ["crates/aicharts-protocol", "crates/aicharts-core", "crates/aicharts-ledger", "crates/aicharts-cli", "crates/aicharts-custody"]
+members = ["crates/aicharts-protocol", "crates/aicharts-core", "crates/aicharts-ledger", "crates/aicharts-cli", "crates/aicharts-custody", "crates/aicharts-platform-acl"]
 resolver = "2"
 
 [workspace.package]
@@ -14,6 +14,7 @@ aicharts-protocol = { path = "crates/aicharts-protocol" }
 aicharts-core = { path = "crates/aicharts-core" }
 aicharts-ledger = { path = "crates/aicharts-ledger" }
 aicharts-custody = { path = "crates/aicharts-custody" }
+aicharts-platform-acl = { path = "crates/aicharts-platform-acl" }
 rusqlite = { version = "0.40.2", features = ["bundled", "limits"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"

@@ -11,6 +11,12 @@ mod tests;
 #[cfg_attr(not(test), allow(dead_code))]
 pub(crate) mod engine;
 
+// Real descriptor I/O is privately qualified; anchor discovery and the public
+// Path facade remain closed. No caller can inject this backend through the API.
+#[cfg(target_os = "macos")]
+#[cfg_attr(not(test), allow(dead_code))]
+mod macos;
+
 use crate::{RecordIdentity, SecretRecord, Vault};
 use sha2::{Digest, Sha256};
 use std::{fmt, path::Path};

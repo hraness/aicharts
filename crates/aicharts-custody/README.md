@@ -123,15 +123,55 @@ the original prepared entry. Reconciliation never inserts. An explicit install
 may reuse the original record while still prepared, but cannot recreate a missing
 verified item. A verified marker alone never releases a secret.
 
-These tests model candidate writes, synchronization, publication, reply loss,
-restart, and concurrent changes through private in-memory ports. They do not
-prove filesystem atomicity, permissions, crash durability, or operating-system
-locking. A production adapter remains blocked on reviewed descriptor-bound ACL
-checks, owner/mode/link validation, nofollow path handling, stable lock custody,
-atomic publication, and native synchronization qualification. The path-only
-[exacl interface](https://docs.rs/exacl/latest/exacl/fn.getfacl.html) does not supply
-that descriptor-bound contract. No unsafe shim or new filesystem dependency is
-included here.
+Private in-memory tests model candidate writes, synchronization, publication,
+reply loss, restart, and concurrent changes. A separate private macOS adapter
+uses `rustix` descriptor operations and the narrow
+[ACL inspection boundary](../aicharts-platform-acl/README.md). Its tests use only
+disposable directories and synthetic records, with a fake vault. The public
+`ReferenceStore` remains closed; trusted anchor discovery and the path-based
+interface are not implemented.
+
+The adapter accepts an already trusted, owned directory descriptor. It requires
+current-user ownership, mode 0700, no ACL entries, and writable local APFS with
+ownership enforcement. It creates or opens the fixed `references-v1` child and
+checks that this name still resolves to its pinned descriptor before and after
+operations. It never resolves user paths, follows symbolic links, repairs modes
+or ACLs, or adopts a partially initialized directory.
+
+The child contains only `references.lock`, `references.current`, and optionally
+`references.pending`. Files must be regular, mode 0600, have one link, and have
+no ACL entries. The permanent empty lock is never replaced. Each operation
+acquires its own nonblocking exclusive descriptor lock and checks the lock's
+name-to-inode binding; error and unwind paths release it. The current file may
+legitimately change between operations. Within a durability barrier, its exact
+inode and bytes stay pinned through directory synchronization and final readback.
+
+Current and pending files share an `AICM` envelope: a 64-byte header, the existing
+canonical `AICF` payload, and a 32-byte checksum, capped at 41,152 bytes. The header
+retains the original expected token, its presence flag, payload length, version
+1, and reserved zeros. Its checksum domain is
+`aicharts:credential-reference-file:v1\0`. Initialization requires an absent
+predecessor and an empty revision-zero payload; every later payload has exactly
+the next revision. This retains the predecessor but does not independently prove
+the replaced file's history. Neither format contains secret record bodies.
+
+New pending files are checked while empty, written once, and read back exactly.
+An existing complete pending file is reusable only for the identical original
+candidate. A partial or different file is preserved and refused. A complete
+initial pending file can resume the identical initialization; an empty directory
+or missing lock cannot. Publication renames pending to current once, with
+no-replace semantics for initial creation. File and directory `fsync` operations
+are followed by `F_FULLFSYNC` on the same device, with no weaker fallback.
+[Apple documents the full synchronization guarantee](https://raw.githubusercontent.com/apple-oss-distributions/xnu/main/bsd/man/man2/fcntl.2).
+
+Reads, writes, interrupt retries, and directory enumeration have fixed work
+bounds. Native disk operations do not have a guaranteed wall-clock timeout.
+The locks coordinate cooperating processes; descriptor and metadata checks
+conservatively refuse observed replacement. They do not prevent arbitrary
+same-user or root mutation, detect coordinated backup rollback, certify that a
+folder is not synchronized externally, or prove physical power-loss behavior.
+No daemon, credential-store, or public filesystem activation follows from these
+private tests.
 
 The manifest has no server receipt, device-active flag, approved account choice,
 upload sequence, local measurement, source path, or free-form string. Enrollment
