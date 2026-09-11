@@ -6,6 +6,7 @@ import {
   type SuiteOidcRelyingParty,
   type SuiteOidcRelyingPartyOptions,
 } from "@hraness/suite-accounts/oidc-rp";
+import { createPairingAuthentication, type UsagePairingIntent } from "./pairing-auth";
 
 const binding = Object.freeze({
   authMode: "oidc-rp",
@@ -38,6 +39,8 @@ type UsageAuthOptions = Readonly<{
   fetch?: SuiteOidcRelyingPartyOptions["fetch"];
   now?: SuiteOidcRelyingPartyOptions["now"];
   randomBytes?: SuiteOidcRelyingPartyOptions["randomBytes"];
+  /** Future authenticated server transport. Never resolve from browser JSON. */
+  pairingIntent?: (intentId: string) => UsagePairingIntent;
 }>;
 
 function processEnvironment(): UsageAuthEnvironment {
@@ -57,7 +60,7 @@ function processEnvironment(): UsageAuthEnvironment {
   };
 }
 
-function relyingParty(options: UsageAuthOptions): SuiteOidcRelyingParty | null {
+function configuredSecret(options: UsageAuthOptions): string | null {
   try {
     // Read the kill switch and deployment identity anew for every request.
     const environment = (options.environment ?? processEnvironment)();
@@ -75,15 +78,29 @@ function relyingParty(options: UsageAuthOptions): SuiteOidcRelyingParty | null {
 
     const configuration = createSuiteAccountsClientConfiguration(binding);
     if (!configuration.ok) return null;
+    return environment.SUITE_OIDC_COOKIE_SECRET;
+  } catch {
+    return null;
+  }
+}
 
+function relyingParty(options: UsageAuthOptions, watchConfiguration = false): SuiteOidcRelyingParty | null {
+  try {
+    const cookieSecret = configuredSecret(options);
+    if (cookieSecret === null) return null;
     // The SDK owns secret validation, cookie encryption, PKCE, state, nonce,
     // provider endpoints, token validation, refresh rotation, and CSRF checks.
     return createSuiteOidcRelyingParty({
       consumer: binding.consumer,
       environment: binding.environment,
-      cookieSecret: environment.SUITE_OIDC_COOKIE_SECRET,
+      cookieSecret,
       receiptKeyVersion: "identity-v1",
-      fetch: options.fetch,
+      fetch: watchConfiguration ? async (input, init) => {
+        // Stop new pairing provider requests when disabled or rotated during a
+        // prior await. This does not cancel an already dispatched request.
+        if (configuredSecret(options) !== cookieSecret) throw new Error("Usage authentication unavailable.");
+        return (options.fetch ?? globalThis.fetch)(input, init);
+      } : options.fetch,
       now: options.now,
       randomBytes: options.randomBytes,
     });
@@ -132,7 +149,26 @@ function routeMethod(pathname: string): "GET" | "POST" | null {
 
 /** Server-only composition; injected dependencies are for synthetic tests. */
 export function createUsageAuthServer(options: UsageAuthOptions = {}) {
+  const pairing = createPairingAuthentication({
+    authority: () => {
+      const cookieSecret = configuredSecret(options);
+      const party = relyingParty(options, true);
+      return cookieSecret === null || party === null ? null : {
+        party, current: () => configuredSecret(options) === cookieSecret,
+      };
+    },
+    resolve: options.pairingIntent,
+    now: options.now ?? Date.now,
+  });
   return Object.freeze({
+    async startPairingAuthentication(request: Request, input: unknown): Promise<Response> {
+      return privateResponse(await pairing.start(request, input), request);
+    },
+
+    async completePairingAuthentication(request: Request): Promise<Response> {
+      return privateResponse(await pairing.complete(request), request);
+    },
+
     async handle(request: Request): Promise<Response> {
       let response: Response;
       try {
