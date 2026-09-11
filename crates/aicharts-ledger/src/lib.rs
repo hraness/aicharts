@@ -1,10 +1,12 @@
-//! Private local numeric state. No source opening, networking, or upload acknowledgment.
+//! Private local numeric state and explicit numeric sender custody. No source opening or networking.
 #![forbid(unsafe_code)]
 
 mod inspection;
+mod sender;
 mod storage;
 
 pub use inspection::ReadOnlyLedger;
+pub use sender::{BatchSettlement, FrozenBatch, SenderBinding, SenderStatus, SettledBatch};
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::Path;
@@ -33,6 +35,12 @@ pub enum Error {
     StaleRevision,
     SourceHistoryChanged,
     RecoveryRequired,
+    SenderNotEnabled,
+    SenderBindingMismatch,
+    UploadInFlight,
+    InvalidReceipt,
+    ReconciliationRequired,
+    DeviceRevoked,
 }
 impl Error {
     pub const fn code(self) -> &'static str {
@@ -48,6 +56,12 @@ impl Error {
             Self::StaleRevision => "ledger_changed_retry",
             Self::SourceHistoryChanged => "ledger_source_history_changed",
             Self::RecoveryRequired => "ledger_recovery_required",
+            Self::SenderNotEnabled => "ledger_sender_not_enabled",
+            Self::SenderBindingMismatch => "ledger_sender_binding_mismatch",
+            Self::UploadInFlight => "ledger_upload_in_flight",
+            Self::InvalidReceipt => "ledger_receipt_rejected",
+            Self::ReconciliationRequired => "ledger_reconciliation_required",
+            Self::DeviceRevoked => "ledger_device_revoked",
         }
     }
 }
@@ -175,6 +189,8 @@ pub struct InventoryRecord {
 
 pub struct Ledger {
     connection: Connection,
+    namespace: [u8; 32],
+    sender_audit: std::cell::Cell<Option<sender::AuditStamp>>,
 }
 impl Ledger {
     pub fn initialize(dir: &Path, key: &[u8; 32]) -> Result<Self> {
@@ -183,6 +199,8 @@ impl Ledger {
     pub fn initialize_with_identity(dir: &Path, identity: &LedgerIdentity<'_>) -> Result<Self> {
         Ok(Self {
             connection: storage::initialize(dir, identity)?,
+            namespace: storage::namespace(identity)?,
+            sender_audit: std::cell::Cell::new(None),
         })
     }
     pub fn open(dir: &Path, key: &[u8; 32]) -> Result<Self> {
@@ -191,6 +209,8 @@ impl Ledger {
     pub fn open_with_identity(dir: &Path, identity: &LedgerIdentity<'_>) -> Result<Self> {
         Ok(Self {
             connection: storage::open(dir, identity)?,
+            namespace: storage::namespace(identity)?,
+            sender_audit: std::cell::Cell::new(None),
         })
     }
     pub fn snapshot(&self) -> Result<LedgerSnapshot> {
@@ -212,6 +232,7 @@ impl Ledger {
         scans: Vec<SourceScan>,
         before_commit: F,
     ) -> Result<ImportReport> {
+        self.sender_audit.set(None);
         if scans.len() > MAX_SOURCES {
             return Err(Error::Limit);
         }
@@ -237,6 +258,10 @@ impl Ledger {
         let tx = self
             .connection
             .transaction_with_behavior(TransactionBehavior::Immediate)?;
+        if storage::schema_version(&tx)? == 2 {
+            storage::validate_schema(&tx, &self.namespace, false)?;
+            validate_relations_in(&tx)?;
+        }
         let current = revision(&tx)?;
         if current != expected_revision {
             return Err(Error::StaleRevision);
@@ -519,6 +544,17 @@ fn validate_relations(connection: &Connection) -> Result<()> {
     validate_relations_in(&tx)
 }
 fn validate_relations_in(tx: &Connection) -> Result<()> {
+    let sender = if storage::schema_version(tx)? == 2 {
+        Some(sender::validate(tx)?)
+    } else {
+        None
+    };
+    validate_relations_with(tx, sender.as_ref().map(|state| &state.accepted))
+}
+fn validate_relations_with(
+    tx: &Connection,
+    accepted: Option<&BTreeMap<Id, sender::Accepted>>,
+) -> Result<()> {
     let quick: String = tx.query_row("PRAGMA quick_check(1)", [], |row| row.get(0))?;
     if quick != "ok" {
         return Err(Error::InvalidState);
@@ -562,6 +598,7 @@ fn validate_relations_in(tx: &Connection) -> Result<()> {
     let mut statement = tx.prepare("SELECT m.id,m.frame,m.revision,o.frame,o.revision FROM measurements m LEFT JOIN outbox o ON m.id=o.id ORDER BY m.id LIMIT 100001")?;
     let mut rows = statement.query([])?;
     let mut count = 0;
+    let mut pending_count = 0;
     while let Some(row) = rows.next()? {
         count += 1;
         let id: Vec<u8> = row.get(0)?;
@@ -570,16 +607,34 @@ fn validate_relations_in(tx: &Connection) -> Result<()> {
         let row_revision = unsigned(row.get(2)?)?;
         let pending_frame: Option<Vec<u8>> = row.get(3)?;
         let pending_revision: Option<i64> = row.get(4)?;
+        let pending =
+            pending_frame.as_ref() == Some(&frame) && pending_revision == Some(row_revision as i64);
+        let acknowledged = accepted
+            .as_ref()
+            .and_then(|entries| entries.get(&id))
+            .is_some_and(|entry| {
+                entry.local_revision == row_revision && entry.frame.as_slice() == frame
+            });
+        if pending {
+            pending_count += 1;
+        }
         if row_revision == 0
             || row_revision > current
             || merged.remove(&id).as_ref() != Some(&frame)
-            || pending_frame.as_ref() != Some(&frame)
-            || pending_revision != Some(row_revision as i64)
+            || if accepted.is_some() {
+                pending == acknowledged
+            } else {
+                !pending
+            }
+            || (!pending && (pending_frame.is_some() || pending_revision.is_some()))
         {
             return Err(Error::InvalidState);
         }
     }
-    if !merged.is_empty() || count != table_count(tx, "outbox")? {
+    if !merged.is_empty()
+        || pending_count != table_count(tx, "outbox")?
+        || count != table_count(tx, "measurements")?
+    {
         return Err(Error::InvalidState);
     }
     Ok(())

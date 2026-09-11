@@ -6,6 +6,8 @@
 
 #![forbid(unsafe_code)]
 
+pub mod admission;
+
 use std::fmt;
 
 pub type Id = [u8; 16];
