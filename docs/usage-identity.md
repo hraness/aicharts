@@ -58,6 +58,8 @@ The current server account accessor verifies the existing account against live u
 
 Pairing needs durable, bounded state, not an in-memory map in a serverless route. The design must handle expiration, guess limits, response loss, concurrent approval, account confirmation in the terminal and revocation at final ingestion admission. Upload credentials must not retrieve profile data or recover the account's deduplication namespace. A fresh browser-approved pairing is required for namespace recovery.
 
+The dormant [Usage Worker primitives](usage-worker.md) implement internal pairing transitions through terminal confirmation and numeric-only R2 staging. They have no browser trust adapter, enrollment or accepted-usage path. Signed `auth_time` and a typed, intent-bound SDK completion remain prerequisites; the current SDK's `prompt=login` parameter and session accessor cannot substitute for them.
+
 The current local namespace key determines both occurrence IDs and source-checkpoint IDs. Replacing it with an account key silently would break the private ledger and could count history twice. Keep ranked upload disabled until a reviewed migration or explicit reindex preserves history and pending revisions under the stable account namespace. Retain the original ledger and key until the replacement is verified; automatic reset or silent namespace reminting is not recovery.
 
 Enrollment, device credential custody, shared social/avatar profiles and remote measurement storage remain separate implementation work. The existing private Accounts profile includes fields that must not be copied to a public leaderboard. A future public profile requires an explicit bounded projection and publishing consent.

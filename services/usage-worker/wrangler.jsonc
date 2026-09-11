@@ -1,0 +1,18 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "aicharts-usage-local-only",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-10",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": false,
+  "preview_urls": false,
+  "send_metrics": false,
+  "observability": { "enabled": false },
+  "durable_objects": {
+    "bindings": [{ "name": "PAIRINGS", "class_name": "PairingIntent" }]
+  },
+  "exports": {
+    "PairingIntent": { "type": "durable-object", "storage": "sqlite" }
+  },
+  "r2_buckets": [{ "binding": "STAGING", "bucket_name": "aicharts-usage-local-only" }]
+}

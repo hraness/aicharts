@@ -21,6 +21,8 @@ bun run check
 
 The complete gate requires the Rust toolchain and components pinned in `rust-toolchain.toml`, plus a C compiler for bundled SQLite. With rustup installed, `rustup show active-toolchain` installs the pinned toolchain on first use. The usage crates are local-only; tests must use synthetic fixtures and must never read a contributor's sessions, state or credentials. Never reset a real usage ledger to make a test pass.
 
+The complete gate also runs `bun run usage:worker:check`: generated Cloudflare runtime types, separate strict TypeScript checking, and synthetic tests in local `workerd`. Node.js 24 and loopback access are required. No Cloudflare login or remote resources are needed. The runner excludes provider credentials and refuses `.env*` or `.dev.vars*` files in `services/usage-worker/`. Worker tests use `*.worker.ts` and their own runner; ordinary `bun test .` continues to own the existing tests. See [Usage Worker boundaries](docs/usage-worker.md) before changing pairing or staging.
+
 ## Data changes
 
 Do not hand-edit `data/coding-agents.json`. Run `bun run data:refresh`, inspect the diff, and include only a snapshot change supported by the guarded refresh script. Do not weaken retention or coverage checks merely to accept an unexpected upstream shape.
