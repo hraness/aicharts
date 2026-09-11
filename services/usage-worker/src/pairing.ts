@@ -1,10 +1,12 @@
 import { DurableObject } from "cloudflare:workers";
+import { enrollmentHex, enrollmentRandom, parseEnrollmentProof, parseEnrollmentReservation, type EnrollmentReservation } from "./enrollment-contract";
 
 /** Dormant internal RPC primitives, not an authenticated HTTP API. */
 export type PairingError =
   | "invalid_input" | "not_initialized" | "conflict" | "unauthorized"
   | "expired" | "throttled" | "attempt_limit" | "invalid_transition"
-  | "authentication_not_fresh" | "storage_invalid" | "clock_regressed";
+  | "authentication_not_fresh" | "storage_invalid" | "clock_regressed"
+  | "not_reserved" | "recovery_required";
 export type PairingResult<T> = { ok: true; value: T } | { ok: false; error: PairingError };
 export type PairingStatus = "pending" | "browser-approved" | "terminal-confirmed" | "denied" | "expired";
 export type PairingView = {
@@ -24,12 +26,13 @@ type Attempt = {
   id: string; nonceCommitment: string; contextCommitment: string;
   startedAtMs: number; authentication: Authentication | null;
 };
-type State = {
+type LegacyState = {
   intentId: string; pollCommitment: string; uploadCommitment: string;
   createdAtMs: number; expiresAtMs: number; observedAtMs: number; nextPollAtMs: number;
   failedAttempts: number; browserAttempts: number; status: PairingStatus;
   attempt: Attempt | null; approvedAccountId: string | null;
 };
+type State = LegacyState & { enrollment: EnrollmentReservation | null };
 type BrowserProof = { intentId: string; attemptId: string; browserNonce: string; contextToken: string };
 type BrowserDigests = { nonce: string; context: string };
 
@@ -40,7 +43,8 @@ export const MAX_BROWSER_ATTEMPTS = 4;
 const MAX_TIME = 8_640_000_000_000_000;
 const MAX_PAYLOAD = 8_192;
 const SCHEMA_SQL = "CREATE TABLE pairing_state (id INTEGER PRIMARY KEY CHECK (id = 1), schema_version INTEGER NOT NULL, revision INTEGER NOT NULL CHECK (revision >= 0), payload TEXT CHECK (payload IS NULL OR length(payload) <= 8192))";
-const STATE_KEYS = ["intentId", "pollCommitment", "uploadCommitment", "createdAtMs", "expiresAtMs", "observedAtMs", "nextPollAtMs", "failedAttempts", "browserAttempts", "status", "attempt", "approvedAccountId"];
+const LEGACY_STATE_KEYS = ["intentId", "pollCommitment", "uploadCommitment", "createdAtMs", "expiresAtMs", "observedAtMs", "nextPollAtMs", "failedAttempts", "browserAttempts", "status", "attempt", "approvedAccountId"];
+const STATE_KEYS = [...LEGACY_STATE_KEYS, "enrollment"];
 const BROWSER_KEYS = ["intentId", "attemptId", "browserNonce", "contextToken"];
 const ok = <T>(value: T): PairingResult<T> => ({ ok: true, value });
 const err = (error: PairingError): PairingResult<never> => ({ ok: false, error });
@@ -115,8 +119,8 @@ async function browserDigests(value: BrowserProof): Promise<BrowserDigests> {
   };
 }
 
-function validState(value: unknown): value is State {
-  if (!exact(value, STATE_KEYS) || !hex(value.intentId) || !hex(value.pollCommitment) || !hex(value.uploadCommitment)
+function validLegacyState(value: unknown): value is LegacyState {
+  if (!exact(value, LEGACY_STATE_KEYS) || !hex(value.intentId) || !hex(value.pollCommitment) || !hex(value.uploadCommitment)
     || value.pollCommitment === value.uploadCommitment || !isTime(value.createdAtMs) || !isTime(value.expiresAtMs)
     || value.expiresAtMs - value.createdAtMs !== PAIRING_TTL_MS || !isTime(value.observedAtMs)
     || value.observedAtMs < value.createdAtMs || !isTime(value.nextPollAtMs)
@@ -148,6 +152,21 @@ function validState(value: unknown): value is State {
     || (value.attempt as Attempt).authentication?.accountId !== value.approvedAccountId)) return false;
   if (value.status === "pending" && value.approvedAccountId !== null) return false;
   return true;
+}
+
+function validState(value: unknown): value is State {
+  if (!exact(value, STATE_KEYS)) return false;
+  const { enrollment, ...legacy } = value;
+  if (!validLegacyState(legacy)) return false;
+  if (enrollment === null) return true;
+  const reserved = parseEnrollmentReservation(enrollment);
+  const authentication = legacy.attempt?.authentication;
+  return reserved !== null && legacy.status === "terminal-confirmed" && authentication !== null && authentication !== undefined
+    && reserved.intentId === legacy.intentId && reserved.accountId === legacy.approvedAccountId
+    && reserved.accountId === authentication.accountId && reserved.pollCommitment === legacy.pollCommitment
+    && reserved.uploadCommitment === legacy.uploadCommitment && reserved.reservedAtMs >= authentication.recordedAtMs
+    && reserved.reservedAtMs <= legacy.observedAtMs
+    && reserved.expiresAtMs === Math.min(legacy.expiresAtMs, authentication.sessionExpiresAtMs);
 }
 
 function view(state: State, now: number): PairingView {
@@ -194,7 +213,8 @@ function matchesBrowser(state: State, input: BrowserProof, proof: BrowserDigests
  * DTO validation does not authenticate those facts. Never forward browser JSON
  * to it. contextToken is only a product capability bound inside the
  * SDK-sealed transaction context, not proof that OIDC has run by itself.
- * There is no enrollment, credential activation, namespace recovery, or PITR API.
+ * Enrollment reservations are immutable proof for the separate account owner,
+ * not credential activation, namespace recovery, or a PITR API.
  */
 export class PairingIntent extends DurableObject<Env> {
   #healthy = true;
@@ -208,9 +228,10 @@ export class PairingIntent extends DurableObject<Env> {
           ctx.storage.sql.exec(SCHEMA_SQL);
           // workerd restricts PRAGMAs, including user_version. Version the owned
           // row explicitly, in the same transaction as schema initialization.
-          ctx.storage.sql.exec("INSERT INTO pairing_state (id, schema_version, revision, payload) VALUES (1, 1, 0, NULL)");
+          ctx.storage.sql.exec("INSERT INTO pairing_state (id, schema_version, revision, payload) VALUES (1, 2, 0, NULL)");
         }
         this.#assertSchema();
+        this.#migrateLegacyState();
       });
     } catch { this.#healthy = false; }
   }
@@ -225,13 +246,38 @@ export class PairingIntent extends DurableObject<Env> {
       || objects[0]?.type !== "table" || objects[0]?.name !== "pairing_state" || objects[0]?.sql !== SCHEMA_SQL) throw new Error("storage_invalid");
   }
 
-  #transaction<T>(run: (state: State | null, now: number) => { state: State | null; result: PairingResult<T> }): PairingResult<T> {
+  /** Add one nullable field only after validating every retained v1 invariant. */
+  #migrateLegacyState(): void {
+    const rows = this.ctx.storage.sql.exec("SELECT id, schema_version, revision, payload FROM pairing_state LIMIT 2").toArray();
+    const row = rows[0];
+    if (rows.length !== 1 || row?.id !== 1 || (row.schema_version !== 1 && row.schema_version !== 2)
+      || typeof row.revision !== "number" || !Number.isSafeInteger(row.revision)
+      || row.revision < 0 || row.revision >= Number.MAX_SAFE_INTEGER) throw new Error("storage_invalid");
+    if (row.schema_version === 2) return;
+    let payload: string | null = null;
+    if (row.payload === null) {
+      if (row.revision !== 0) throw new Error("storage_invalid");
+    } else {
+      if (typeof row.payload !== "string" || row.payload.length > MAX_PAYLOAD || row.revision === 0) throw new Error("storage_invalid");
+      const legacy: unknown = JSON.parse(row.payload);
+      if (!validLegacyState(legacy)) throw new Error("storage_invalid");
+      const state: State = { ...legacy, enrollment: null };
+      if (!validState(state)) throw new Error("storage_invalid");
+      payload = JSON.stringify(state);
+      if (payload.length > MAX_PAYLOAD) throw new Error("storage_invalid");
+    }
+    // Constructor calls this inside the same synchronous SQLite transaction.
+    // Preserve revision, authentication, decisions, commitments and timestamps.
+    this.ctx.storage.sql.exec("UPDATE pairing_state SET schema_version = 2, payload = ? WHERE id = 1", payload);
+  }
+
+  #transaction<T>(run: (state: State | null, now: number) => { state: State | null; result: PairingResult<T> }, minimumObservedAtMs = 0): PairingResult<T> {
     try {
       return this.ctx.storage.transactionSync(() => {
         this.#assertSchema();
         const rows = this.ctx.storage.sql.exec("SELECT id, schema_version, revision, payload FROM pairing_state LIMIT 2").toArray();
         const row = rows[0];
-        if (rows.length !== 1 || row?.id !== 1 || row.schema_version !== 1 || typeof row.revision !== "number"
+        if (rows.length !== 1 || row?.id !== 1 || row.schema_version !== 2 || typeof row.revision !== "number"
           || !Number.isSafeInteger(row.revision) || row.revision < 0 || row.revision >= Number.MAX_SAFE_INTEGER) return err("storage_invalid");
         let state: State | null = null;
         if (row.payload !== null) {
@@ -241,7 +287,8 @@ export class PairingIntent extends DurableObject<Env> {
           state = parsed;
         } else if (row.revision !== 0) return err("storage_invalid");
         const now = Date.now();
-        if (!isTime(now) || now > MAX_TIME - PAIRING_TTL_MS || (state !== null && now < state.observedAtMs)) return err("clock_regressed");
+        if (!isTime(now) || now > MAX_TIME - PAIRING_TTL_MS || now < minimumObservedAtMs
+          || (state !== null && now < state.observedAtMs)) return err("clock_regressed");
         if (state !== null) state.observedAtMs = now;
         const outcome = run(state, now);
         if (outcome.state !== null) {
@@ -255,12 +302,12 @@ export class PairingIntent extends DurableObject<Env> {
     } catch { return err("storage_invalid"); }
   }
 
-  #existing<T>(intentId: string, run: (state: State, now: number) => PairingResult<T>): PairingResult<T> {
+  #existing<T>(intentId: string, run: (state: State, now: number) => PairingResult<T>, minimumObservedAtMs = 0): PairingResult<T> {
     return this.#transaction((state, now) => {
       if (state === null) return { state, result: err("not_initialized") };
       if (state.intentId !== intentId) return { state, result: err("unauthorized") };
       return { state, result: run(state, now) };
-    });
+    }, minimumObservedAtMs);
   }
 
   async initialize(input: unknown): Promise<PairingResult<{ expiresAtMs: number }>> {
@@ -277,7 +324,7 @@ export class PairingIntent extends DurableObject<Env> {
       const created: State = {
         intentId, pollCommitment: poll, uploadCommitment, createdAtMs: now,
         expiresAtMs: now + PAIRING_TTL_MS, observedAtMs: now, nextPollAtMs: now,
-        failedAttempts: 0, browserAttempts: 0, status: "pending", attempt: null, approvedAccountId: null,
+        failedAttempts: 0, browserAttempts: 0, status: "pending", attempt: null, approvedAccountId: null, enrollment: null,
       };
       return { state: created, result: ok({ expiresAtMs: created.expiresAtMs }) };
     });
@@ -386,6 +433,51 @@ export class PairingIntent extends DurableObject<Env> {
       state.status = "terminal-confirmed";
       return ok(view(state, now));
     });
+  }
+
+  /** Create/replay a reservation only while the original confirmed grant is live. */
+  async reserveEnrollment(input: unknown): Promise<PairingResult<EnrollmentReservation>> {
+    return await this.#enrollmentReservation(input, true);
+  }
+
+  /** Existing-only reconciliation. Expired receipt readback is not a new grant. */
+  async readEnrollmentReservation(input: unknown): Promise<PairingResult<EnrollmentReservation>> {
+    return await this.#enrollmentReservation(input, false);
+  }
+
+  async #enrollmentReservation(input: unknown, reserve: boolean): Promise<PairingResult<EnrollmentReservation>> {
+    try {
+      const startedAtMs = Date.now();
+      if (!isTime(startedAtMs) || startedAtMs > MAX_TIME - PAIRING_TTL_MS) return err("clock_regressed");
+      const owned = parseEnrollmentProof(input);
+      if (owned === null) return err("invalid_input");
+      const generation: unknown = this.env.USAGE_ENROLLMENT_GENERATION;
+      if (!enrollmentHex(generation)) return err("recovery_required");
+      if (!this.ctx.id.equals(this.env.PAIRINGS.idFromName(owned.intentId))) return err("unauthorized");
+      const poll = await digest("poll", owned.intentId, owned.pollSecret);
+      const afterPollAtMs = Date.now();
+      if (!isTime(afterPollAtMs) || afterPollAtMs < startedAtMs) return err("clock_regressed");
+      const upload = await digest("upload", owned.intentId, owned.uploadSecret);
+      const afterUploadAtMs = Date.now();
+      if (!isTime(afterUploadAtMs) || afterUploadAtMs < afterPollAtMs) return err("clock_regressed");
+      return this.#existing(owned.intentId, (state, now) => {
+        if (this.env.USAGE_ENROLLMENT_GENERATION !== generation) return err("recovery_required");
+        if (!same(state.pollCommitment, poll) || !same(state.uploadCommitment, upload)) return err("unauthorized");
+        if (state.enrollment !== null && state.enrollment.recoveryGeneration !== generation) return err("recovery_required");
+        if (!reserve) return state.enrollment === null ? err("not_reserved") : ok(state.enrollment);
+        if (expired(state, now)) return err("expired");
+        if (state.status !== "terminal-confirmed") return err("invalid_transition");
+        const authentication = state.attempt!.authentication!;
+        const expiresAtMs = Math.min(state.expiresAtMs, authentication.sessionExpiresAtMs);
+        if (expiresAtMs <= now) return err("expired");
+        if (state.enrollment === null) state.enrollment = Object.freeze({
+          schemaVersion: 1, intentId: state.intentId, accountId: authentication.accountId,
+          reservationId: enrollmentRandom(), pollCommitment: state.pollCommitment, uploadCommitment: state.uploadCommitment,
+          recoveryGeneration: generation, reservedAtMs: now, expiresAtMs,
+        });
+        return ok(state.enrollment);
+      }, afterUploadAtMs);
+    } catch { return err("storage_invalid"); }
   }
 
 }

@@ -14,6 +14,7 @@ const OTHER_ACCOUNT = `acct_${"bb".repeat(16)}`;
 const NOW = Date.UTC(2026, 8, 10, 12, 0, 0, 456);
 const stub = () => env.PAIRINGS.getByName(ID);
 const pollInput = { intentId: ID, pollSecret: POLL };
+const enrollmentInput = { ...pollInput, uploadSecret: UPLOAD };
 
 beforeEach(() => { vi.useFakeTimers({ toFake: ["Date"] }); vi.setSystemTime(NOW); });
 afterEach(async () => { vi.useRealTimers(); await reset(); });
@@ -47,6 +48,32 @@ async function retainedPayload(): Promise<unknown> {
   const value = await runInDurableObject(stub(), (_instance, state) => state.storage.sql.exec("SELECT payload FROM pairing_state").one().payload);
   if (typeof value !== "string") throw new Error("synthetic state missing");
   return JSON.parse(value) as unknown;
+}
+
+function fixtureRecord(value: unknown): Record<string, unknown> {
+  if (value === null || typeof value !== "object" || Array.isArray(value)) throw new Error("synthetic record missing");
+  return value as Record<string, unknown>;
+}
+
+async function retainedRow() {
+  return await runInDurableObject(stub(), (_instance, state) => state.storage.sql.exec("SELECT schema_version, revision, payload FROM pairing_state").one());
+}
+
+async function legacyFixture() {
+  const legacy = Object.fromEntries(Object.entries(fixtureRecord(await retainedPayload())).filter(([key]) => key !== "enrollment"));
+  await runInDurableObject(stub(), (_instance, state) => state.storage.sql.exec("UPDATE pairing_state SET schema_version = 1, payload = ?", JSON.stringify(legacy)).toArray());
+  return { legacy, row: await retainedRow() };
+}
+
+async function confirmed(authenticationExpiresAtMs = NOW + PAIRING_TTL_MS) {
+  await initialize();
+  const proof = await browser();
+  expect(await stub().recordVerifiedAuthentication({ ...proof, accountId: ACCOUNT,
+    authTimeMs: Math.floor(NOW / 1_000) * 1_000, sessionExpiresAtMs: authenticationExpiresAtMs,
+  })).toEqual({ ok: true, value: { recorded: true } });
+  expect((await stub().decideBrowser(decisionInput(proof))).ok).toBe(true);
+  expect((await stub().confirm({ ...pollInput, accountId: ACCOUNT })).ok).toBe(true);
+  return proof;
 }
 
 describe("internal pairing lifecycle, with no credential activation", () => {
@@ -417,10 +444,10 @@ describe("internal pairing lifecycle, with no credential activation", () => {
 
   test("unknown schema and missing initialized row are not regenerated", async () => {
     await initialize();
-    await runInDurableObject(stub(), (_instance, state) => state.storage.sql.exec("UPDATE pairing_state SET schema_version = 2").toArray());
+    await runInDurableObject(stub(), (_instance, state) => state.storage.sql.exec("UPDATE pairing_state SET schema_version = 3").toArray());
     await abortAllDurableObjects();
     expect(await stub().poll(pollInput)).toEqual({ ok: false, error: "storage_invalid" });
-    await runInDurableObject(stub(), (_instance, state) => { state.storage.sql.exec("UPDATE pairing_state SET schema_version = 1"); state.storage.sql.exec("DELETE FROM pairing_state"); });
+    await runInDurableObject(stub(), (_instance, state) => { state.storage.sql.exec("UPDATE pairing_state SET schema_version = 2"); state.storage.sql.exec("DELETE FROM pairing_state"); });
     await abortAllDurableObjects();
     expect(await stub().poll(pollInput)).toEqual({ ok: false, error: "storage_invalid" });
   });
@@ -469,5 +496,297 @@ describe("internal pairing lifecycle, with no credential activation", () => {
     expect(await stub().poll(pollInput)).toEqual({ ok: false, error: "storage_invalid" });
     const after = await runInDurableObject(stub(), (_instance, state) => state.storage.sql.exec("SELECT payload FROM pairing_state").one().payload);
     expect(after).toBe(before);
+  });
+});
+
+describe("immutable internal enrollment reservations", () => {
+  test("readback never creates a reservation and reserve requires terminal confirmation", async () => {
+    expect(await stub().reserveEnrollment(enrollmentInput)).toEqual({ ok: false, error: "not_initialized" });
+    expect(await stub().readEnrollmentReservation(enrollmentInput)).toEqual({ ok: false, error: "not_initialized" });
+    await initialize();
+    expect(await stub().readEnrollmentReservation(enrollmentInput)).toEqual({ ok: false, error: "not_reserved" });
+    expect(await stub().reserveEnrollment(enrollmentInput)).toEqual({ ok: false, error: "invalid_transition" });
+    const { proof } = await authenticated();
+    expect(await stub().reserveEnrollment(enrollmentInput)).toEqual({ ok: false, error: "invalid_transition" });
+    expect((await stub().decideBrowser(decisionInput(proof))).ok).toBe(true);
+    expect(await stub().reserveEnrollment(enrollmentInput)).toEqual({ ok: false, error: "invalid_transition" });
+    expect((await stub().decideBrowser(decisionInput(proof, "deny"))).ok).toBe(true);
+    expect(await stub().reserveEnrollment(enrollmentInput)).toEqual({ ok: false, error: "invalid_transition" });
+    expect(fixtureRecord(await retainedPayload()).enrollment).toBeNull();
+  });
+
+  test("concurrent live reservations retain one exact grant across lost replies and eviction", async () => {
+    const proof = await confirmed();
+    const results = await Promise.all(Array.from({ length: 4 }, () => stub().reserveEnrollment(enrollmentInput)));
+    const first = results[0];
+    if (first === undefined || !first.ok) throw new Error("synthetic reservation failed");
+    for (const result of results) expect(result).toEqual(first);
+    expect(first.value).toEqual({
+      schemaVersion: 1, intentId: ID, accountId: ACCOUNT, reservationId: expect.stringMatching(/^[0-9a-f]{64}$/u),
+      pollCommitment: expect.stringMatching(/^[0-9a-f]{64}$/u), uploadCommitment: expect.stringMatching(/^[0-9a-f]{64}$/u),
+      recoveryGeneration: env.USAGE_ENROLLMENT_GENERATION, reservedAtMs: NOW, expiresAtMs: NOW + PAIRING_TTL_MS,
+    });
+    expect(first.value.reservationId).not.toBe("0".repeat(64));
+    // Simulate a committed RPC whose response is lost, then reconcile by read.
+    const lostReply = async () => { await stub().reserveEnrollment(enrollmentInput); throw new Error("synthetic lost reply"); };
+    await expect(lostReply()).rejects.toThrow("synthetic lost reply");
+    await abortAllDurableObjects();
+    vi.setSystemTime(NOW + 45_000);
+    expect(await stub().readEnrollmentReservation(enrollmentInput)).toEqual(first);
+    expect(await stub().reserveEnrollment(enrollmentInput)).toEqual(first);
+    await evictDurableObject(stub());
+    expect(await stub().readEnrollmentReservation(enrollmentInput)).toEqual(first);
+    const retained = JSON.stringify(await retainedPayload());
+    for (const secret of [POLL, UPLOAD, NONCE, proof.contextToken, "transcript-canary"]) {
+      expect(JSON.stringify(first)).not.toContain(secret);
+      expect(retained).not.toContain(secret);
+    }
+    expect((await env.STAGING.list()).objects).toEqual([]);
+  });
+
+  test.each([60_000, PAIRING_TTL_MS, PAIRING_TTL_MS + 60_000])("deadline is the original minimum for authentication lifetime %i", async lifetime => {
+    await confirmed(NOW + lifetime);
+    const result = await stub().reserveEnrollment(enrollmentInput);
+    if (!result.ok) throw new Error("synthetic reservation failed");
+    const deadline = NOW + Math.min(lifetime, PAIRING_TTL_MS);
+    expect(result.value.expiresAtMs).toBe(deadline);
+    vi.setSystemTime(deadline - 1);
+    expect(await stub().reserveEnrollment(enrollmentInput)).toEqual(result);
+    vi.setSystemTime(deadline);
+    expect(await stub().reserveEnrollment(enrollmentInput)).toEqual({ ok: false, error: "expired" });
+    expect(await stub().readEnrollmentReservation(enrollmentInput)).toEqual(result);
+    await abortAllDurableObjects();
+    vi.setSystemTime(deadline + PAIRING_TTL_MS);
+    expect(await stub().readEnrollmentReservation(enrollmentInput)).toEqual(result);
+    expect(await stub().reserveEnrollment(enrollmentInput)).toEqual({ ok: false, error: "expired" });
+  });
+
+  test("an expired unreserved intent can never use readback to mint a grant", async () => {
+    await confirmed(NOW + 20_000);
+    vi.setSystemTime(NOW + 20_000);
+    expect(await stub().reserveEnrollment(enrollmentInput)).toEqual({ ok: false, error: "expired" });
+    expect(await stub().readEnrollmentReservation(enrollmentInput)).toEqual({ ok: false, error: "not_reserved" });
+    expect(fixtureRecord(await retainedPayload()).enrollment).toBeNull();
+  });
+
+  test("expiry is checked at the synchronous commit after secret hashing", async () => {
+    await confirmed(NOW + 20_000);
+    await runInDurableObject(stub(), async instance => {
+      const pending = instance.reserveEnrollment(enrollmentInput);
+      vi.setSystemTime(NOW + 20_000);
+      expect(await pending).toEqual({ ok: false, error: "expired" });
+    });
+    expect(fixtureRecord(await retainedPayload()).enrollment).toBeNull();
+  });
+
+  test.each(["first hash", "second hash", "commit"] as const)("a regressed clock at %s cannot mutate or disclose a reservation", async boundary => {
+    await confirmed();
+    expect((await stub().reserveEnrollment(enrollmentInput)).ok).toBe(true);
+    const before = await retainedRow();
+    await runInDurableObject(stub(), async instance => {
+      // Every mocked time is later than persisted observedAtMs; only the
+      // operation's own monotonic floor can detect this regression.
+      for (const readback of [false, true]) {
+        const stable = NOW + 20_000;
+        const regressed = stable - 1;
+        const samples = boundary === "first hash" ? [stable, regressed]
+          : boundary === "second hash" ? [stable, stable, regressed]
+          : [stable, stable, stable, regressed];
+        const clock = vi.spyOn(Date, "now").mockImplementation(() => samples.shift() ?? regressed);
+        try {
+          expect(await (readback ? instance.readEnrollmentReservation(enrollmentInput) : instance.reserveEnrollment(enrollmentInput)))
+            .toEqual({ ok: false, error: "clock_regressed" });
+        } finally { clock.mockRestore(); }
+      }
+    });
+    expect(await retainedRow()).toEqual(before);
+  });
+
+  test("an entry after expiry cannot regress through hashing into a live reservation", async () => {
+    await confirmed(NOW + 20_000);
+    const before = await retainedRow();
+    await runInDurableObject(stub(), async instance => {
+      vi.setSystemTime(NOW + 20_000);
+      const pending = instance.reserveEnrollment(enrollmentInput);
+      vi.setSystemTime(NOW + 19_999);
+      expect(await pending).toEqual({ ok: false, error: "clock_regressed" });
+    });
+    expect(await retainedRow()).toEqual(before);
+  });
+
+  test("both original independent preimages are required without consuming the guessing budget", async () => {
+    await confirmed();
+    const first = await stub().reserveEnrollment(enrollmentInput);
+    if (!first.ok) throw new Error("synthetic reservation failed");
+    for (const change of [{ pollSecret: OTHER }, { uploadSecret: OTHER }, { pollSecret: UPLOAD, uploadSecret: POLL },
+      { pollSecret: first.value.pollCommitment }, { uploadSecret: first.value.uploadCommitment }]) {
+      const input = { ...enrollmentInput, ...change };
+      expect(await stub().reserveEnrollment(input)).toEqual({ ok: false, error: "unauthorized" });
+      expect(await stub().readEnrollmentReservation(input)).toEqual({ ok: false, error: "unauthorized" });
+    }
+    expect(fixtureRecord(await retainedPayload()).failedAttempts).toBe(0);
+    expect(await stub().readEnrollmentReservation(enrollmentInput)).toEqual(first);
+  });
+
+  test("a fully confirmed intent cannot reserve through an aliased Durable Object", async () => {
+    const alternate = env.PAIRINGS.getByName(OTHER);
+    const commitment = await uploadSecretCommitment(ID, UPLOAD);
+    if (!commitment.ok) throw new Error("synthetic commitment failed");
+    expect((await alternate.initialize({ ...pollInput, uploadCommitment: commitment.value })).ok).toBe(true);
+    const attempt = await alternate.beginBrowserAttempt({ intentId: ID, browserNonce: NONCE });
+    if (!attempt.ok) throw new Error("synthetic attempt failed");
+    const proof = { intentId: ID, browserNonce: NONCE, attemptId: attempt.value.attemptId, contextToken: attempt.value.contextToken };
+    expect((await alternate.recordVerifiedAuthentication({ ...proof, accountId: ACCOUNT, authTimeMs: Math.floor(NOW / 1_000) * 1_000, sessionExpiresAtMs: NOW + PAIRING_TTL_MS })).ok).toBe(true);
+    expect((await alternate.decideBrowser(decisionInput(proof))).ok).toBe(true);
+    expect((await alternate.confirm({ ...pollInput, accountId: ACCOUNT })).ok).toBe(true);
+    expect(await alternate.reserveEnrollment(enrollmentInput)).toEqual({ ok: false, error: "unauthorized" });
+    expect(await alternate.readEnrollmentReservation(enrollmentInput)).toEqual({ ok: false, error: "unauthorized" });
+  });
+
+  test("foreign DTOs cannot supply account, generation, transcript or malformed secrets", async () => {
+    await confirmed();
+    const before = await retainedRow();
+    const inputs: unknown[] = [null, [], {}, "transcript-canary", { ...enrollmentInput, accountId: ACCOUNT },
+      { ...enrollmentInput, recoveryGeneration: OTHER }, { ...enrollmentInput, chat: "transcript-canary" },
+      { ...enrollmentInput, uploadSecret: POLL }, ...[undefined, 1, "0".repeat(64), "A".repeat(64), "a".repeat(65)]
+        .flatMap(value => ["intentId", "pollSecret", "uploadSecret"].map(key => ({ ...enrollmentInput, [key]: value })))];
+    for (const input of inputs) {
+      expect(await stub().reserveEnrollment(input)).toEqual({ ok: false, error: "invalid_input" });
+      expect(await stub().readEnrollmentReservation(input)).toEqual({ ok: false, error: "invalid_input" });
+    }
+    expect(await retainedRow()).toEqual(before);
+  });
+
+  test("reservation inputs are snapshotted before await without invoking accessors", async () => {
+    await confirmed();
+    await runInDurableObject(stub(), async instance => {
+      let getterCalls = 0;
+      const accessor = Object.defineProperty({ ...enrollmentInput }, "uploadSecret", { get() { getterCalls++; return UPLOAD; } });
+      const proxy = new Proxy({}, { ownKeys() { throw new Error("synthetic proxy trap"); } });
+      expect(await instance.reserveEnrollment(accessor)).toEqual({ ok: false, error: "invalid_input" });
+      expect(await instance.readEnrollmentReservation(proxy)).toEqual({ ok: false, error: "invalid_input" });
+      expect(getterCalls).toBe(0);
+      const input = { ...enrollmentInput };
+      const pending = instance.reserveEnrollment(input);
+      input.intentId = OTHER;
+      input.pollSecret = OTHER;
+      input.uploadSecret = OTHER;
+      expect(await pending).toMatchObject({ ok: true, value: { intentId: ID, accountId: ACCOUNT } });
+      const readInput = { ...enrollmentInput };
+      const readback = instance.readEnrollmentReservation(readInput);
+      readInput.pollSecret = OTHER;
+      expect(await readback).toMatchObject({ ok: true, value: { intentId: ID, accountId: ACCOUNT } });
+    });
+  });
+
+  test("missing, malformed or mid-hash changed server generations refuse without a grant", async () => {
+    await confirmed();
+    await runInDurableObject(stub(), async instance => {
+      const instanceEnv = fixtureRecord(Reflect.get(instance, "env"));
+      const original = instanceEnv.USAGE_ENROLLMENT_GENERATION;
+      try {
+        for (const generation of [undefined, "", "0".repeat(64), "A".repeat(64), 1]) {
+          instanceEnv.USAGE_ENROLLMENT_GENERATION = generation;
+          expect(await instance.reserveEnrollment(enrollmentInput)).toEqual({ ok: false, error: "recovery_required" });
+          expect(await instance.readEnrollmentReservation(enrollmentInput)).toEqual({ ok: false, error: "recovery_required" });
+        }
+        instanceEnv.USAGE_ENROLLMENT_GENERATION = original;
+        const pending = instance.reserveEnrollment(enrollmentInput);
+        instanceEnv.USAGE_ENROLLMENT_GENERATION = OTHER;
+        expect(await pending).toEqual({ ok: false, error: "recovery_required" });
+      } finally { instanceEnv.USAGE_ENROLLMENT_GENERATION = original; }
+    });
+    expect(fixtureRecord(await retainedPayload()).enrollment).toBeNull();
+  });
+
+  test("a generation rotation cannot refresh or reissue an existing reservation", async () => {
+    await confirmed();
+    const first = await stub().reserveEnrollment(enrollmentInput);
+    expect(first.ok).toBe(true);
+    await runInDurableObject(stub(), async instance => {
+      const instanceEnv = fixtureRecord(Reflect.get(instance, "env"));
+      const original = instanceEnv.USAGE_ENROLLMENT_GENERATION;
+      try {
+        instanceEnv.USAGE_ENROLLMENT_GENERATION = OTHER;
+        expect(await instance.reserveEnrollment(enrollmentInput)).toEqual({ ok: false, error: "recovery_required" });
+        expect(await instance.readEnrollmentReservation(enrollmentInput)).toEqual({ ok: false, error: "recovery_required" });
+      } finally { instanceEnv.USAGE_ENROLLMENT_GENERATION = original; }
+    });
+    expect(await stub().readEnrollmentReservation(enrollmentInput)).toEqual(first);
+  });
+
+  test("seeded expiry orderings preserve immutable reserve and existing-only semantics", async () => {
+    await fc.assert(fc.asyncProperty(fc.integer({ min: 1, max: PAIRING_TTL_MS + 100_000 }), fc.integer({ min: 0, max: PAIRING_TTL_MS * 2 }), async (lifetime, elapsed) => {
+      await reset();
+      vi.setSystemTime(NOW);
+      await confirmed(NOW + lifetime);
+      const first = await stub().reserveEnrollment(enrollmentInput);
+      if (!first.ok) throw new Error("synthetic reservation failed");
+      vi.setSystemTime(NOW + elapsed);
+      expect(await stub().readEnrollmentReservation(enrollmentInput)).toEqual(first);
+      expect(await stub().reserveEnrollment(enrollmentInput)).toEqual(elapsed < Math.min(lifetime, PAIRING_TTL_MS)
+        ? first : { ok: false, error: "expired" });
+    }), { numRuns: 40, seed: 901 });
+  });
+});
+
+describe("validated additive pairing schema migration", () => {
+  test.each(["pending", "authenticated", "browser-approved", "terminal-confirmed", "denied", "expired"] as const)("v1 %s state retains every field and revision", async status => {
+    await initialize();
+    if (status !== "pending" && status !== "expired") {
+      const { proof } = await authenticated();
+      if (status !== "authenticated") expect((await stub().decideBrowser(decisionInput(proof, status === "denied" ? "deny" : "approve"))).ok).toBe(true);
+      if (status === "terminal-confirmed") expect((await stub().confirm({ ...pollInput, accountId: ACCOUNT })).ok).toBe(true);
+    }
+    if (status === "expired") {
+      vi.setSystemTime(NOW + PAIRING_TTL_MS);
+      expect(await stub().poll(pollInput)).toEqual({ ok: false, error: "expired" });
+    }
+    const before = await legacyFixture();
+    await abortAllDurableObjects();
+    const migrated = await retainedRow();
+    expect(migrated.schema_version).toBe(2);
+    expect(migrated.revision).toBe(before.row.revision);
+    expect(await retainedPayload()).toEqual({ ...before.legacy, enrollment: null });
+    expect(await stub().readEnrollmentReservation(enrollmentInput)).toEqual({ ok: false, error: "not_reserved" });
+    if (status === "terminal-confirmed") expect((await stub().reserveEnrollment(enrollmentInput)).ok).toBe(true);
+  });
+
+  test("the uninitialized v1 row migrates without creating an intent or revision", async () => {
+    expect(await stub().poll(pollInput)).toEqual({ ok: false, error: "not_initialized" });
+    await runInDurableObject(stub(), (_instance, state) => state.storage.sql.exec("UPDATE pairing_state SET schema_version = 1").toArray());
+    await abortAllDurableObjects();
+    expect(await retainedRow()).toEqual({ schema_version: 2, revision: 0, payload: null });
+    expect(await stub().readEnrollmentReservation(enrollmentInput)).toEqual({ ok: false, error: "not_initialized" });
+  });
+
+  test.each(["malformed", "extra-field", "invalid-auth", "zero-revision", "null-with-revision"] as const)("corrupt v1 %s is not reset or migrated", async corruption => {
+    await confirmed();
+    const { legacy } = await legacyFixture();
+    await runInDurableObject(stub(), (_instance, state) => {
+      if (corruption === "malformed") state.storage.sql.exec("UPDATE pairing_state SET payload = ?", "{");
+      if (corruption === "extra-field") state.storage.sql.exec("UPDATE pairing_state SET payload = ?", JSON.stringify({ ...legacy, chat: "transcript-canary" }));
+      if (corruption === "invalid-auth") state.storage.sql.exec("UPDATE pairing_state SET payload = ?", JSON.stringify({ ...legacy, attempt: null }));
+      if (corruption === "zero-revision") state.storage.sql.exec("UPDATE pairing_state SET revision = 0");
+      if (corruption === "null-with-revision") state.storage.sql.exec("UPDATE pairing_state SET payload = NULL");
+    });
+    const before = await retainedRow();
+    await abortAllDurableObjects();
+    expect(await stub().readEnrollmentReservation(enrollmentInput)).toEqual({ ok: false, error: "storage_invalid" });
+    expect(await stub().reserveEnrollment(enrollmentInput)).toEqual({ ok: false, error: "storage_invalid" });
+    expect(await retainedRow()).toEqual(before);
+  });
+
+  test.each([{ accountId: OTHER_ACCOUNT }, { intentId: OTHER }, { pollCommitment: OTHER }, { uploadCommitment: OTHER },
+    { reservedAtMs: NOW - 1 }, { expiresAtMs: NOW + PAIRING_TTL_MS + 1 }, { schemaVersion: 2 }])("corrupt v2 reservation binding %j fails closed without resetting", async change => {
+    await confirmed();
+    expect((await stub().reserveEnrollment(enrollmentInput)).ok).toBe(true);
+    const payload = fixtureRecord(await retainedPayload());
+    const enrollment = fixtureRecord(payload.enrollment);
+    await runInDurableObject(stub(), (_instance, state) => state.storage.sql.exec("UPDATE pairing_state SET payload = ?", JSON.stringify({ ...payload, enrollment: { ...enrollment, ...change } })).toArray());
+    const before = await retainedRow();
+    await abortAllDurableObjects();
+    expect(await stub().readEnrollmentReservation(enrollmentInput)).toEqual({ ok: false, error: "storage_invalid" });
+    expect(await retainedRow()).toEqual(before);
   });
 });
