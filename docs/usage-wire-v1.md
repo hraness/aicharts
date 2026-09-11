@@ -65,4 +65,6 @@ The pure day rollup accepts separately established coverage; coverage is not inf
 
 ## Privacy evidence and limits
 
+Daily average turn runtime, tokens, and tool calls use a separate [local terminal-turn projection](usage-turns.md). AICU records do not establish turn completion or tool dispatch. Existing collectors therefore leave turn averages unavailable; the turn projection does not change these bytes or the admitted single-Usage profile.
+
 Fixtures are synthetic. Content-value substitutions preserve measurement output; byte cursors may differ if string length changes. Skip content values rather than storing transcript representations. Malformed/deep/oversized input must fail with bounded, non-reflecting errors. The numeric wire cannot prevent deliberate steganography, prove human authorship or authenticate counters. Neither this crate nor separate process names establish OS-enforced isolation.

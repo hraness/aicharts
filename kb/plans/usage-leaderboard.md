@@ -58,6 +58,8 @@ No phase may edit a convergence file simultaneously. Workers submit required man
 
 ## Phase 0: Production contracts
 
+The 11 September addition requests daily average turn length in elapsed runtime, tokens, and tool calls. Adopt completed root turns, direct-only token/tool attribution, whole-turn terminal UTC-day assignment, independent exact sum/eligible-count pairs, and explicit unknown/partial coverage. Aborted turns stay separate; EOF, role labels and session activity cannot establish completion or human authorship. A separate local terminal-turn projection and pure daily rollup are implemented in `lib/usage/turns.ts` and integrated into daily rollup output, with no AICU/admission/collector changes. The 22 focused turn/rollup tests pass, including weighted means, zero versus unknown, ambiguous cohorts, root/child separation, duplicate refusal, corrected-head recomputation, midnight, bounds and exact sums above 2^53. The new source still requires independent review and final repository validation; real metrics await qualified lifecycle, turn membership and dispatch evidence. Current contract: `docs/usage-turns.md`.
+
 - **Status:** Partial
 - **Depends on:** none
 - **Objective:** versioned measurement, identity, privacy and query contracts with representative fixtures.

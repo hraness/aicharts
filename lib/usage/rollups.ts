@@ -1,4 +1,5 @@
 import { err, ok, type Result } from "../result";
+import { rollupTurnDay, type TurnDayRollup, type TurnError } from "./turns";
 import {
   compareIds, DAY_MS, totalTokens, validatePolicy, validateUsageBatch,
   type Batch, type Id, type IntervalKind, type Policy, type Prompt, type Usage, type WireError,
@@ -33,8 +34,9 @@ export type DayRollup = Readonly<{
   activity15Minutes: readonly WindowRollup[];
   concurrency16Minutes: readonly WindowRollup[];
   hours: readonly WindowRollup[];
+  turns: TurnDayRollup;
 }>;
-export type RollupError = WireError | "invalid_rollup_input" | "invalid_coverage" | "conflicting_occurrence" | "conflicting_execution";
+export type RollupError = WireError | TurnError | "invalid_rollup_input" | "invalid_coverage" | "conflicting_occurrence" | "conflicting_execution";
 
 const idKey = (value: Id): string => Array.from(value, byte => byte.toString(16).padStart(2, "0")).join("");
 const sameId = (left: Id, right: Id): boolean => compareIds(left, right) === 0;
@@ -148,7 +150,7 @@ function windowRollup(window: Span, index: IndexedSeries): WindowRollup {
 }
 
 /** Pure, bounded rollup. It neither establishes coverage nor authenticates counters. */
-export function rollupUsageDay(batches: readonly Batch[], policy: Policy, coverage: readonly Coverage[] = []): Result<DayRollup, RollupError> {
+export function rollupUsageDay(batches: readonly Batch[], policy: Policy, coverage: readonly Coverage[] = [], terminalTurns?: unknown): Result<DayRollup, RollupError> {
   if (!validatePolicy(policy)) return err("invalid_policy");
   if (!Array.isArray(batches) || batches.length === 0 || batches.length > MAX_ROLLUP_RECORDS) return err("invalid_rollup_input");
   if (!Array.isArray(coverage) || coverage.length > MAX_ROLLUP_RECORDS) return err("invalid_coverage");
@@ -212,8 +214,11 @@ export function rollupUsageDay(batches: readonly Batch[], policy: Policy, covera
   };
   const windows = (sizeMs: number): WindowRollup[] => Array.from({ length: Math.ceil(DAY_MS / sizeMs) }, (_, indexOfWindow) =>
     windowRollup({ startMs: indexOfWindow * sizeMs, endMs: Math.min((indexOfWindow + 1) * sizeMs, DAY_MS) }, index));
+  // The legacy typed batch boundary admits -0 as day zero; keep that validity.
+  const turns = rollupTurnDay(utcDay === 0 ? 0 : utcDay!, terminalTurns);
+  if (!turns.ok) return turns;
   return ok({
     utcDay: utcDay!, day: windowRollup({ startMs: 0, endMs: DAY_MS }, index),
-    activity15Minutes: windows(ACTIVITY_WINDOW_MS), concurrency16Minutes: windows(CONCURRENCY_WINDOW_MS), hours: windows(3_600_000),
+    activity15Minutes: windows(ACTIVITY_WINDOW_MS), concurrency16Minutes: windows(CONCURRENCY_WINDOW_MS), hours: windows(3_600_000), turns: turns.value,
   });
 }
