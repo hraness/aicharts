@@ -96,7 +96,7 @@ There is no public receipt-import command. The future owned authenticated transp
 
 Batch objects are account/generation-scoped and content-addressed. Journal objects use the account/generation and a fixed-width journal revision, so two competing terminal decisions at the same revision conflict. Helpers own canonical bytes before asynchronous work, use conditional creation and check exact bytes, size, checksum and metadata during bounded readback. A lost write or readback returns a fixed failure; an identical later call reconciles the existing immutable object. These helpers do not decide or publish acceptance.
 
-The authenticated account Durable Object must still implement this ordering:
+The dormant authenticated account Durable Object implements this ordering internally:
 
 ```text
 reserve exact batch → verify immutable batch → final device/CAS check
@@ -106,7 +106,9 @@ reserve exact batch → verify immutable batch → final device/CAS check
 
 Keep prior accepted heads visible until publication. A device revoked before the irreversible decision must be rejected. Revocation after that decision must not alter or strand its terminal journal. The journal-persistence fence therefore checks recovery availability, not whether the device remains active. Later decisions must wait behind any unpublished predecessor.
 
-Account-journal revisions must be separate from enrollment's ordinary observation revision. Enrollment, device revocation and account deletion also need immutable ordered control events for recovery; batch receipts alone cannot restore those facts. General restore remains globally closed until an externally known high-water mark, contiguous journal prefix and all pending predecessors reconcile. Object absence or unchanged generation is not permission to reopen. No backend acceptance or restore qualification is claimed here.
+Account-journal revisions are separate from enrollment's ordinary observation revision. Its schema-3 SQL index and immutable policy enforce the narrower imported profile, account/day/revision capacities, exact retries and bounded startup integrity audit documented in [Usage Worker boundaries](usage-worker.md). This does not change the generic codec or native sender wire semantics.
+
+Enrollment, device revocation and account deletion still need immutable ordered control events for recovery; batch receipts alone cannot restore those facts. General restore remains globally closed until an externally known high-water mark, contiguous journal prefix and all pending predecessors reconcile. Object absence or unchanged generation is not permission to reopen. No public upload, live backend acceptance or restore qualification is claimed here.
 
 ## Evidence
 
