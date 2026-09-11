@@ -11,7 +11,7 @@ use security_framework::item::{
 use security_framework::os::macos::keychain::{
     KeychainUserInteractionLock, SecKeychain, SecPreferencesDomain,
 };
-use std::sync::{Mutex, TryLockError};
+use std::sync::{Mutex, MutexGuard, TryLockError};
 use zeroize::Zeroizing;
 
 static VAULT_OPERATION: Mutex<()> = Mutex::new(());
@@ -62,6 +62,106 @@ fn suppress_for<C: UiControl, T>(control: &C, f: impl FnOnce() -> Result<T>) -> 
 
 struct MacStore {
     keychain: SecKeychain,
+}
+
+// Field order releases the concrete keychain, restores UI policy, and finally
+// releases the process lock. No caller can select a different keychain mid-call.
+pub(crate) struct NativeSession {
+    store: MacStore,
+    _no_ui: Option<KeychainUserInteractionLock>,
+    _operation: MutexGuard<'static, ()>,
+}
+
+impl NativeSession {
+    fn select() -> RawResult<Self> {
+        Self::select_with(|| {
+            SecKeychain::default_for_domain(SecPreferencesDomain::User)
+                .map_err(|error| read_error(error.code()))
+        })
+    }
+
+    fn select_with(select: impl FnOnce() -> RawResult<SecKeychain>) -> RawResult<Self> {
+        let operation = match VAULT_OPERATION.try_lock() {
+            Ok(value) => value,
+            Err(TryLockError::WouldBlock) => return Err(RawError::Busy),
+            Err(TryLockError::Poisoned(_)) => return Err(RawError::Unavailable),
+        };
+        let allowed = SecKeychain::user_interaction_allowed().map_err(|_| RawError::Unavailable)?;
+        let no_ui = if allowed {
+            Some(SecKeychain::disable_user_interaction().map_err(|_| RawError::Unavailable)?)
+        } else {
+            None
+        };
+        let keychain = select()?;
+        Ok(Self {
+            store: MacStore { keychain },
+            _no_ui: no_ui,
+            _operation: operation,
+        })
+    }
+
+    #[cfg(test)]
+    pub(crate) fn fixture(keychain: SecKeychain) -> RawResult<Self> {
+        Self::select_with(|| Ok(keychain))
+    }
+}
+
+#[cfg(test)]
+pub(crate) fn fixture_ui<T>(f: impl FnOnce() -> Result<T>) -> Result<T> {
+    let _operation = VAULT_OPERATION.try_lock().map_err(|_| Error::Busy)?;
+    suppress_for(&NativeUi, f)
+}
+
+impl RawStore for NativeSession {
+    fn read(&mut self, reference: &CredentialRef) -> RawResult<Zeroizing<Vec<u8>>> {
+        self.store.read(reference)
+    }
+    fn add(&mut self, reference: &CredentialRef, bytes: &[u8]) -> RawResult<()> {
+        self.store.add(reference, bytes)
+    }
+}
+
+pub(crate) struct LazyStore<F, S> {
+    factory: F,
+    session: Option<S>,
+    failed: Option<RawError>,
+}
+impl LazyStore<fn() -> RawResult<NativeSession>, NativeSession> {
+    pub(crate) fn native() -> Self {
+        Self::new(NativeSession::select)
+    }
+}
+impl<F: FnMut() -> RawResult<S>, S: RawStore> LazyStore<F, S> {
+    pub(crate) fn new(factory: F) -> Self {
+        Self {
+            factory,
+            session: None,
+            failed: None,
+        }
+    }
+    fn session(&mut self) -> RawResult<&mut S> {
+        if let Some(error) = self.failed {
+            return Err(error);
+        }
+        if self.session.is_none() {
+            match (self.factory)() {
+                Ok(value) => self.session = Some(value),
+                Err(error) => {
+                    self.failed = Some(error);
+                    return Err(error);
+                }
+            }
+        }
+        self.session.as_mut().ok_or(RawError::Unavailable)
+    }
+}
+impl<F: FnMut() -> RawResult<S>, S: RawStore> RawStore for LazyStore<F, S> {
+    fn read(&mut self, reference: &CredentialRef) -> RawResult<Zeroizing<Vec<u8>>> {
+        self.session()?.read(reference)
+    }
+    fn add(&mut self, reference: &CredentialRef, bytes: &[u8]) -> RawResult<()> {
+        self.session()?.add(reference, bytes)
+    }
 }
 
 impl RawStore for MacStore {
@@ -148,6 +248,63 @@ mod tests {
     use super::*;
     use std::cell::RefCell;
     use std::rc::Rc;
+
+    struct FakeSession(Rc<RefCell<Vec<&'static str>>>);
+    impl RawStore for FakeSession {
+        fn read(&mut self, _: &CredentialRef) -> RawResult<Zeroizing<Vec<u8>>> {
+            self.0.borrow_mut().push("read");
+            Err(RawError::Missing)
+        }
+        fn add(&mut self, _: &CredentialRef, _: &[u8]) -> RawResult<()> {
+            self.0.borrow_mut().push("add");
+            Ok(())
+        }
+    }
+    impl Drop for FakeSession {
+        fn drop(&mut self) {
+            self.0.borrow_mut().push("drop");
+        }
+    }
+
+    #[test]
+    fn lazy_session_is_pure_until_first_io_and_stays_pinned_until_drop() {
+        let events = Rc::new(RefCell::new(Vec::new()));
+        let observed = events.clone();
+        let mut lazy = LazyStore::new(move || {
+            observed.borrow_mut().push("select");
+            Ok(FakeSession(observed.clone()))
+        });
+        assert!(events.borrow().is_empty());
+        let reference = CredentialRef::new([1; 32], [2; 32], crate::Purpose::Checkpoint).unwrap();
+        assert!(matches!(lazy.read(&reference), Err(RawError::Missing)));
+        assert!(lazy.add(&reference, &[1]).is_ok());
+        assert!(matches!(lazy.read(&reference), Err(RawError::Missing)));
+        assert_eq!(*events.borrow(), ["select", "read", "add", "read"]);
+        drop(lazy);
+        assert_eq!(*events.borrow(), ["select", "read", "add", "read", "drop"]);
+    }
+
+    #[test]
+    fn failed_lazy_selection_is_not_retried_or_remapped_to_missing() {
+        for error in [
+            RawError::Busy,
+            RawError::InteractionRequired,
+            RawError::AccessDenied,
+            RawError::Unavailable,
+        ] {
+            let calls = std::cell::Cell::new(0);
+            let mut lazy = LazyStore::new(|| -> RawResult<FakeSession> {
+                calls.set(calls.get() + 1);
+                Err(error)
+            });
+            let reference =
+                CredentialRef::new([1; 32], [2; 32], crate::Purpose::Checkpoint).unwrap();
+            assert!(lazy.read(&reference).err() == Some(error));
+            assert!(lazy.add(&reference, &[1]).err() == Some(error));
+            assert_eq!(calls.get(), 1);
+        }
+        assert_eq!(RawError::Busy.fixed(), Error::Busy);
+    }
 
     #[derive(Default)]
     struct UiState {

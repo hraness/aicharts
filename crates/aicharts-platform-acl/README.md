@@ -5,6 +5,12 @@ access-control entries. It accepts an absent or empty ACL and rejects every
 entry, including deny-only and inheritance-only entries. Other Unix targets
 return `Unsupported`. Errors contain only fixed codes.
 
+`require_deny_only_acl(BorrowedFd)` is a separate traversal-ancestor predicate.
+It accepts absent or empty ACLs, or at most 128 entries all tagged DENY. Any
+ALLOW entry is rejected regardless of its principal, permissions or inheritance
+flags; unknown tags and incomplete inspection fail closed. It does not replace
+`require_no_acl` for private directories, files or newly created children.
+
 The Rust interface borrows its descriptor. A small C shim uses the macOS SDK's
 native types, validates the security properties returned alongside descriptor
 metadata, and frees its copied ACL. It does not reopen a pathname, move the
@@ -28,8 +34,10 @@ credential stores.
 
 ## Native boundary
 
-The C result is `0` for no entries, `1` for an entry, `2` for an unavailable
-inspection, and `3` for an unsupported operation. Rust rejects unknown results.
+The C result is `0` when the selected predicate passes, `1` for a forbidden entry,
+`2` for an unavailable inspection, and `3` for an unsupported operation. Rust
+rejects unknown results. The strict predicate's original no-entry behavior is
+unchanged; the ancestor predicate additionally checks each native entry tag.
 
 The shim requires present owner, group, and mode properties that match the
 native `stat` output before accepting an absent ACL. This catches an allocation

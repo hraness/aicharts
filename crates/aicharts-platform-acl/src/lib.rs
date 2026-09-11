@@ -50,6 +50,24 @@ pub fn require_no_acl(fd: std::os::fd::BorrowedFd<'_>) -> Result<(), AclError> {
     }
 }
 
+/// Require an absent, empty, or exclusively DENY macOS ACL for traversal.
+///
+/// This is not the private-storage policy: final private directories and files
+/// must still use `require_no_acl`. No principal or effective-access inference
+/// is made; even an allow entry for the current owner is rejected.
+#[cfg(unix)]
+pub fn require_deny_only_acl(fd: std::os::fd::BorrowedFd<'_>) -> Result<(), AclError> {
+    #[cfg(target_os = "macos")]
+    {
+        macos::require_deny_only_acl(fd)
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = fd;
+        Err(AclError::Unsupported)
+    }
+}
+
 #[cfg(any(target_os = "macos", test))]
 fn decode_status(status: std::ffi::c_int) -> Result<(), AclError> {
     match status {

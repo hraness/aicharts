@@ -10,8 +10,8 @@ use std::{
     time::{SystemTime, UNIX_EPOCH},
 };
 
-use super::{fault_case, set_fixture_acl};
-use crate::{require_no_acl, AclError};
+use super::{deny_fault_case, fault_case, set_fixture_acl};
+use crate::{require_deny_only_acl, require_no_acl, AclError};
 
 static NEXT_FIXTURE: AtomicU64 = AtomicU64::new(0);
 
@@ -112,6 +112,47 @@ fn native_faults_preserve_closed_status_and_exact_cleanup() {
             0,
             "{name}: invalid call or freed borrowed pointer"
         );
+        // The shared ownership/property/error checks retain the same behavior
+        // under the traversal policy for all original scenarios.
+        assert_eq!(
+            deny_fault_case(scenario),
+            packed,
+            "{name}: traversal ownership path"
+        );
+    }
+}
+
+#[test]
+fn deny_only_iteration_is_bounded_and_never_accepts_unknown_or_allow_entries() {
+    for (scenario, status) in [
+        (36, 0),
+        (37, 0),
+        (38, 2),
+        (39, 1),
+        (40, 2),
+        (41, 2),
+        (42, 2),
+        (43, 2),
+        (44, 2),
+        (45, 2),
+    ] {
+        let packed = deny_fault_case(scenario);
+        assert_eq!(packed & 255, status, "scenario {scenario}");
+        assert_eq!((packed >> 8) & 255, 1);
+        assert_eq!((packed >> 16) & 255, 1);
+        assert_eq!(packed >> 24, 0);
+    }
+}
+
+#[test]
+fn real_deny_only_ancestor_policy_is_distinct_from_private_storage_policy() {
+    for (kind, accepted) in [(0, true), (1, false), (2, true), (3, false)] {
+        let fixture = Fixture::new();
+        let directory = fixture.directory();
+        set_fixture_acl(directory.as_fd(), kind);
+        assert_eq!(require_deny_only_acl(directory.as_fd()).is_ok(), accepted);
+        assert_eq!(require_no_acl(directory.as_fd()).is_ok(), kind == 0);
+        assert!(directory.metadata().unwrap().is_dir());
     }
 }
 

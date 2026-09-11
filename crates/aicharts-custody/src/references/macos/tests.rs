@@ -155,6 +155,58 @@ fn acl(path: &Path, rule: &str) {
 }
 
 #[test]
+fn existing_only_initialization_recovery_preserves_exact_initial_intent() {
+    let fixture = Fixture::new();
+    let mut storage = fixture.create();
+    fail_once(&mut storage, Phase::CandidateFullySynced);
+    assert!(engine::initialize(&mut storage, INSTALLATION).is_err());
+    drop(storage);
+    let pending = stdfs::read(fixture.at(PENDING)).unwrap();
+    let mut storage = fixture.open();
+    assert!(engine::reconcile_initialization(&mut storage, [99; 32]).is_err());
+    assert_eq!(stdfs::read(fixture.at(PENDING)).unwrap(), pending);
+    assert!(!fixture.at(CURRENT).exists());
+    let recovered = engine::reconcile_initialization(&mut storage, INSTALLATION).unwrap();
+    assert_eq!(recovered.revision, 0);
+    assert_eq!(
+        engine::reconcile_initialization(&mut storage, INSTALLATION).unwrap(),
+        recovered
+    );
+    let prepared = engine::prepare(&mut storage, &recovered.token(), &record(1)).unwrap();
+    assert_eq!(
+        engine::reconcile_initialization(&mut storage, INSTALLATION),
+        Err(Error::Conflict)
+    );
+    assert_eq!(engine::snapshot(&mut storage).unwrap(), prepared);
+}
+
+#[test]
+fn lazy_factory_is_never_entered_before_manifest_and_durability_refusals() {
+    for phase in [
+        Phase::BeforeCommittedSync,
+        Phase::CommittedFileSynced,
+        Phase::BeforeDirectorySync,
+        Phase::DirectoryFullySynced,
+    ] {
+        let fixture = Fixture::new();
+        let (mut storage, initial) = fixture.initialized();
+        let secret = record(1);
+        let prepared = engine::prepare(&mut storage, &initial.token(), &secret).unwrap();
+        let calls = std::rc::Rc::new(std::cell::Cell::new(0));
+        let count = calls.clone();
+        let mut vault = crate::macos::LazyStore::new(move || {
+            count.set(count.get() + 1);
+            Ok(FakeVault::default())
+        });
+        assert!(engine::install(&mut storage, &initial.token(), &secret, &mut vault).is_err());
+        assert_eq!(calls.get(), 0);
+        fail_once(&mut storage, phase);
+        assert!(engine::install(&mut storage, &prepared.token(), &secret, &mut vault).is_err());
+        assert_eq!(calls.get(), 0);
+    }
+}
+
+#[test]
 fn envelope_roundtrip_has_exact_frozen_header_and_owned_payload() {
     let value = initial();
     let bytes = envelope::encode(&value).unwrap();

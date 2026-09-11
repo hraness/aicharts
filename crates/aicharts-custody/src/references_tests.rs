@@ -310,6 +310,10 @@ fn public_store_factories_are_closed_before_any_path_or_native_access() {
     );
     assert_eq!(ReferenceStore::open_existing(path).err(), Some(closed()));
     assert_eq!(ReferenceStore::inspect_existing(path).err(), Some(closed()));
+    assert_eq!(
+        ReferenceStore::reconcile_initialization(path, INSTALLATION).err(),
+        Some(closed())
+    );
     // Even a unit-constructed facade cannot bypass the factory fence.
     let mut store = ReferenceStore { _private: () };
     let mut disk = FakeFs::default();
