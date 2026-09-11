@@ -1,4 +1,5 @@
 export { PairingIntent } from "./pairing";
+export { AccountEnrollment } from "./enrollment";
 
 /** No network adapter is admitted until browser freshness and enrollment exist. */
 export default {

@@ -5,7 +5,7 @@
 - `components/` – interactive scatter chart, update timeline, linked summaries, sharing, export, and UI primitives.
 - `lib/` – strict data and update boundaries, chart math, layout, analytics, usage wire/rollup contracts, and property tests.
 - `crates/` and `fixtures/usage/` – local-only Rust usage measurement, bounded binary protocol, and synthetic cross-language fixtures.
-- `services/usage-worker/` – dormant pairing and numeric staging primitives with local Cloudflare runtime tests; no deployed usage service.
+- `services/usage-worker/` – dormant pairing, account enrollment and numeric staging primitives with local Cloudflare runtime tests; no deployed usage service.
 - `data/` – deterministic checked-in benchmark snapshot.
 - `scripts/` – guarded snapshot refresh and generated color workflows.
 - `styles/` – portable plain-site and publication styling for the benchmark notes.

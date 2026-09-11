@@ -17,5 +17,7 @@ test("every public path and method remains unavailable without creating durable 
     }
   }
   expect(await listDurableObjectIds(env.PAIRINGS)).toEqual([]);
+  expect(await listDurableObjectIds(env.ACCOUNT_ENROLLMENTS)).toEqual([]);
   expect((await env.STAGING.list()).objects).toEqual([]);
+  expect((await env.CONTROL.list()).objects).toEqual([]);
 });

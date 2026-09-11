@@ -34,6 +34,7 @@ export function workerToolCommands(args: readonly string[]): readonly (readonly 
   if (args.length === 1 && args[0] === "types") return [types];
   if (args.length === 1 && args[0] === "test") return [test];
   if (args.length === 1 && args[0] === "test-pairing") return [[...test, "test/pairing.worker.ts"]];
+  if (args.length === 1 && args[0] === "test-enrollment") return [[...test, "test/enrollment.worker.ts"]];
   if (args.length === 1 && args[0] === "test-staging") return [[...test, "test/staging.worker.ts"]];
   if (args.length === 1 && args[0] === "check") return [types, ["node", `${root}node_modules/typescript/bin/tsc`, "--project", "tsconfig.json"], test];
   return null;
@@ -42,7 +43,7 @@ export function workerToolCommands(args: readonly string[]): readonly (readonly 
 async function main(): Promise<number> {
   const commands = workerToolCommands(process.argv.slice(2));
   if (!commands) {
-    console.error("usage-worker-tools: expected types, test, test-pairing, test-staging or check (no extra arguments)");
+    console.error("usage-worker-tools: expected types, test, test-pairing, test-enrollment, test-staging or check (no extra arguments)");
     return 2;
   }
   // Pinned Wrangler prefers this legacy path over XDG, even with telemetry off.
