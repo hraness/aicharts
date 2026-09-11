@@ -41,6 +41,9 @@
     "test:browser": "bun run ./scripts/model-card-browser.ts",
     "test:property": "bun test ./lib/*.property.test.ts",
     "usage:check": "cargo fmt --all -- --check && cargo clippy --workspace --all-targets --locked -- -D warnings && cargo test --workspace --locked",
+    "usage:worker:types": "bun run scripts/usage-worker-tools.ts types",
+    "usage:worker:test": "bun run scripts/usage-worker-tools.ts test",
+    "usage:worker:check": "bun run scripts/usage-worker-tools.ts check",
     "typecheck": "tsc --noEmit",
     "colors:generate": "bun run scripts/generate-chart-colors.ts",
     "colors:check": "bun run scripts/generate-chart-colors.ts --check",
@@ -75,7 +78,7 @@
     "first-party-releases:check": "bun run scripts/refresh-first-party-releases.ts --check",
     "release-dates:check": "bun run scripts/check-model-release-dates.ts",
     "check:generated": "bun run colors:check && bun run model-icons:check && bun run data:check && bun run calculator:check && bun run aa-intelligence:check && bun run aa-intelligence-v4-3:check && bun run releases:check && bun run first-party-releases:check && bun run release-dates:check && bun run deepswe:check && bun run terminal-bench:check && bun run terminal-bench-science:check && bun run atlas:reasoning:check && bun run atlas:multimodal:check && bun run atlas:audio:check && bun run atlas:arena-media:check",
-    "check": "bun run check:generated && bun run usage:check && bun run typecheck && bun run lint && bun run test && bun run build && bun run test:browser",
+    "check": "bun run check:generated && bun run usage:check && bun run usage:worker:check && bun run typecheck && bun run lint && bun run test && bun run build && bun run test:browser",
     "kb:refresh": "bunx --bun github:hraness/kb#v0.15.2 refresh --root kb",
     "kb:check:lane": "bunx --bun github:hraness/kb#v0.15.2 check --root kb --no-catalog",
     "kb:check": "bunx --bun github:hraness/kb#v0.15.2 check --root kb && bunx --bun github:hraness/kb#v0.15.2 agents check --root kb --repo .",
@@ -101,6 +104,7 @@
     "zod": "^4.5.4"
   },
   "devDependencies": {
+    "@cloudflare/vitest-plugin": "1.1.7",
     "@types/bun": "^1.3.14",
     "@types/node": "^24.10.0",
     "@types/react": "^19.2.14",
@@ -111,6 +115,8 @@
     "iwanthue": "2.1.0",
     "playwright-core": "1.62.1",
     "typescript": "^6.0.3",
+    "vitest": "4.1.11",
+    "wrangler": "4.131.0",
     "yaml": "2.9.0"
   }
 }

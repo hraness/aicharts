@@ -11,3 +11,5 @@ artifacts/slopcamera/
 *.log
 *.tsbuildinfo
 /target/
+services/usage-worker/.wrangler/
+services/usage-worker/worker-configuration.d.ts
