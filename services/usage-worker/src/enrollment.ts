@@ -18,9 +18,10 @@ export type EnrollmentReceipt = Readonly<{
 }>;
 export type EnrollmentView = Readonly<{ receipt: EnrollmentReceipt; deviceState: "active" | "revoked" }>;
 type Device = { reservation: EnrollmentReservation; deviceId: string; enrolledAtMs: number; revokedAtMs: number | null };
+type GenesisCompletion = { mode: "original" | "fresh-recovery"; intentId: string; reservationId: string; completedAtMs: number };
 type State = {
   accountId: string; generation: string; observedAtMs: number; phase: "pending" | "active";
-  anchor: NamespaceAnchor; devices: Device[];
+  anchor: NamespaceAnchor; devices: Device[]; genesisCompletion: GenesisCompletion | null;
 };
 type Operation = { proof: EnrollmentProof; grant: EnrollmentReservation; generation: string; observed: number };
 export const MAX_ENROLLED_DEVICES = 128; // Includes revoked receipts; never evict identity to reclaim a slot.
@@ -40,8 +41,10 @@ function sameGrant(left: EnrollmentReservation, right: EnrollmentReservation): b
     && left.reservedAtMs === right.reservedAtMs && left.expiresAtMs === right.expiresAtMs;
 }
 
-function validState(value: unknown): value is State {
-  const state = enrollmentSnapshot(value, ["accountId", "generation", "observedAtMs", "phase", "anchor", "devices"]);
+// legacy=true is used only by the additive constructor migration. No legacy
+// shape is admitted to an operation before deriving and validating completion.
+function validState(value: unknown, legacy = false): value is State {
+  const state = enrollmentSnapshot(value, ["accountId", "generation", "observedAtMs", "phase", "anchor", "devices", ...(legacy ? [] : ["genesisCompletion"])]);
   if (state === null || !enrollmentAccount(state.accountId) || !enrollmentHex(state.generation) || !enrollmentTime(state.observedAtMs)
     || (state.phase !== "pending" && state.phase !== "active") || !Array.isArray(state.devices)
     || state.devices.length > MAX_ENROLLED_DEVICES || (state.phase === "pending") !== (state.devices.length === 0)) return false;
@@ -64,8 +67,23 @@ function validState(value: unknown): value is State {
     intentIds.add(grant.intentId);
     deviceIds.add(device.deviceId);
   }
-  return state.phase === "pending" || (state.devices as Device[]).some(device =>
+  if (legacy) return state.phase === "pending" || (state.devices as Device[]).some(device =>
     device.reservation.intentId === anchor.intentId && device.reservation.reservationId === anchor.reservationId);
+  if (state.phase === "pending") return state.genesisCompletion === null;
+  const completion = enrollmentSnapshot(state.genesisCompletion, ["mode", "intentId", "reservationId", "completedAtMs"]);
+  if (completion === null || (completion.mode !== "original" && completion.mode !== "fresh-recovery")
+    || !enrollmentHex(completion.intentId) || !enrollmentHex(completion.reservationId) || !enrollmentTime(completion.completedAtMs)) return false;
+  const original = completion.intentId === anchor.intentId && completion.reservationId === anchor.reservationId;
+  const anchorCreatedAtMs = anchor.createdAtMs;
+  if ((completion.mode === "original") !== original || (completion.mode === "fresh-recovery" && completion.intentId === anchor.intentId)) return false;
+  if (completion.mode === "fresh-recovery" && (state.devices as Device[]).some(device => device.reservation.intentId === anchor.intentId)) return false;
+  return (state.devices as Device[]).some(device => device.reservation.intentId === completion.intentId
+    && device.reservation.reservationId === completion.reservationId && device.enrolledAtMs === completion.completedAtMs
+    && (completion.mode !== "fresh-recovery" || device.reservation.reservedAtMs >= anchorCreatedAtMs));
+}
+
+function supersededGenesis(state: State, grant: EnrollmentReservation): boolean {
+  return state.genesisCompletion?.mode === "fresh-recovery" && state.anchor.intentId === grant.intentId;
 }
 
 function receipt(device: Device): EnrollmentReceipt {
@@ -118,9 +136,10 @@ export class AccountEnrollment extends DurableObject<Env> {
       ctx.storage.transactionSync(() => {
         if (this.#objects().length === 0) {
           ctx.storage.sql.exec(SCHEMA_SQL);
-          ctx.storage.sql.exec("INSERT INTO account_enrollment (id, schema_version, revision, payload) VALUES (1, 1, 0, NULL)");
+          ctx.storage.sql.exec("INSERT INTO account_enrollment (id, schema_version, revision, payload) VALUES (1, 2, 0, NULL)");
         }
         this.#schema();
+        this.#migrate();
       });
     } catch { this.#healthy = false; }
   }
@@ -137,6 +156,29 @@ export class AccountEnrollment extends DurableObject<Env> {
     const value: unknown = this.env.USAGE_ENROLLMENT_GENERATION;
     return enrollmentHex(value) ? value : null;
   }
+  #migrate(): void {
+    const rows = this.ctx.storage.sql.exec("SELECT id, schema_version, revision, payload FROM account_enrollment LIMIT 2").toArray();
+    const row = rows[0];
+    if (rows.length !== 1 || row?.id !== 1 || (row.schema_version !== 1 && row.schema_version !== 2)
+      || typeof row.revision !== "number" || !Number.isSafeInteger(row.revision) || row.revision < 0 || row.revision >= Number.MAX_SAFE_INTEGER) throw new Error("storage_invalid");
+    if (row.schema_version === 2) return;
+    let payload: string | null = null;
+    if (row.payload !== null) {
+      if (typeof row.payload !== "string" || row.payload.length > MAX_PAYLOAD || row.revision === 0) throw new Error("storage_invalid");
+      const parsed: unknown = JSON.parse(row.payload);
+      if (!validState(parsed, true) || !this.ctx.id.equals(this.env.ACCOUNT_ENROLLMENTS.idFromName(enrollmentAccountName(parsed.accountId)))) throw new Error("storage_invalid");
+      const origin = parsed.devices.find(device => device.reservation.intentId === parsed.anchor.intentId && device.reservation.reservationId === parsed.anchor.reservationId);
+      const migrated: State = { ...parsed, genesisCompletion: origin === undefined ? null : {
+        mode: "original", intentId: origin.reservation.intentId, reservationId: origin.reservation.reservationId, completedAtMs: origin.enrolledAtMs,
+      } };
+      if (!validState(migrated)) throw new Error("storage_invalid");
+      payload = JSON.stringify(migrated);
+      if (payload.length > MAX_PAYLOAD) throw new Error("storage_invalid");
+    } else if (row.revision !== 0) throw new Error("storage_invalid");
+    // Preserve all receipts, the exact namespace and the operation revision. An
+    // older binary fails closed on schema 2; rollback must not strip this field.
+    this.ctx.storage.sql.exec("UPDATE account_enrollment SET schema_version = 2, payload = ? WHERE id = 1", payload);
+  }
   #transaction<T>(operation: Operation, run: (state: State | null, now: number) => { state: State | null; result: EnrollmentResult<T> }): EnrollmentResult<T> {
     try {
       return this.ctx.storage.transactionSync(() => {
@@ -144,7 +186,7 @@ export class AccountEnrollment extends DurableObject<Env> {
         if (this.#generation() !== operation.generation) return err("recovery_required");
         const rows = this.ctx.storage.sql.exec("SELECT id, schema_version, revision, payload FROM account_enrollment LIMIT 2").toArray();
         const row = rows[0];
-        if (rows.length !== 1 || row?.id !== 1 || row.schema_version !== 1 || typeof row.revision !== "number"
+        if (rows.length !== 1 || row?.id !== 1 || row.schema_version !== 2 || typeof row.revision !== "number"
           || !Number.isSafeInteger(row.revision) || row.revision < 0 || row.revision >= Number.MAX_SAFE_INTEGER) return err("storage_invalid");
         let state: State | null = null;
         if (row.payload !== null) {
@@ -239,10 +281,11 @@ export class AccountEnrollment extends DurableObject<Env> {
       }
       const prepared = this.#transaction(operation, (state, now) => {
         if (now >= grant.expiresAtMs) return { state, result: err("expired") };
-        if (state === null) state = { accountId: grant.accountId, generation, observedAtMs: now, phase: "pending", devices: [],
+        if (state === null) state = { accountId: grant.accountId, generation, observedAtMs: now, phase: "pending", devices: [], genesisCompletion: null,
           anchor: { accountId: grant.accountId, generation, namespaceKey: enrollmentRandom(), intentId: grant.intentId,
             reservationId: grant.reservationId, createdAtMs: now } };
         if (state.accountId !== grant.accountId) return { state, result: err("unauthorized") };
+        if (supersededGenesis(state, grant)) return { state, result: err("recovery_required") };
         if (state.phase === "pending" && (state.anchor.intentId !== grant.intentId || state.anchor.reservationId !== grant.reservationId)) return { state, result: err("recovery_required") };
         return { state, result: ok({ anchor: Object.freeze({ ...state.anchor }), phase: state.phase }) };
       });
@@ -263,11 +306,57 @@ export class AccountEnrollment extends DurableObject<Env> {
         const existing = this.#existing(state, grant);
         if (!existing.ok) return { state, result: existing };
         if (existing.value !== null) return { state, result: ok(view(existing.value)) };
+        if (supersededGenesis(state, grant)) return { state, result: err("recovery_required") };
         if (now >= grant.expiresAtMs) return { state, result: err("expired") };
         if (state.devices.length >= MAX_ENROLLED_DEVICES) return { state, result: err("limit") };
         if (state.devices.some(device => device.deviceId === deviceId)) return { state, result: err("conflict") };
         const device: Device = { reservation: grant, deviceId, enrolledAtMs: now, revokedAtMs: null };
+        if (state.phase === "pending") state.genesisCompletion = { mode: "original", intentId: grant.intentId, reservationId: grant.reservationId, completedAtMs: now };
         state.devices.push(device);
+        state.phase = "active";
+        return { state, result: ok(view(device)) };
+      });
+    } catch { return err("storage_unavailable"); }
+  }
+
+  /** Explicit same-account fresh reservation may finish retained pending genesis.
+   * It never adopts an orphan anchor, remints a namespace, or enrolls the expired
+   * original credential. This is not a general backup/restore operation. */
+  async recoverPendingEnrollment(input: unknown): Promise<EnrollmentResult<EnrollmentView>> {
+    try {
+      const resolved = await this.#operation(input);
+      if (!resolved.ok) return resolved;
+      const operation = resolved.value;
+      const { grant } = operation;
+      const prepared = this.#transaction<{ completed: EnrollmentView } | { anchor: NamespaceAnchor }>(operation, (state, now) => {
+        if (state === null || state.accountId !== grant.accountId) return { state, result: err("recovery_required") };
+        const existing = this.#existing(state, grant);
+        if (!existing.ok) return { state, result: existing };
+        // Exact recovery readback is non-secret, including after expiry/revocation.
+        if (state.genesisCompletion?.mode === "fresh-recovery" && state.genesisCompletion.intentId === grant.intentId
+          && state.genesisCompletion.reservationId === grant.reservationId && existing.value !== null) return { state, result: ok({ completed: view(existing.value) }) };
+        if (now >= grant.expiresAtMs) return { state, result: err("expired") };
+        if (state.phase !== "pending" || state.anchor.intentId === grant.intentId || grant.reservedAtMs < state.anchor.createdAtMs) return { state, result: err("recovery_required") };
+        return { state, result: ok({ anchor: Object.freeze({ ...state.anchor }) }) };
+      });
+      if (!prepared.ok) return prepared;
+      if ("completed" in prepared.value) return ok(prepared.value.completed);
+      const original = prepared.value.anchor;
+      try { await ensureNamespaceAnchor(this.env.CONTROL, original, () => this.#closed(operation, true) === null); }
+      catch { return err(this.#closed(operation, true) ?? "storage_unavailable"); }
+      const closed = this.#closed(operation, true);
+      if (closed !== null) return err(closed);
+      return this.#transaction<EnrollmentView>(operation, (state, now) => {
+        if (state === null || !sameNamespaceAnchor(state.anchor, original)) return { state, result: err("recovery_required") };
+        const existing = this.#existing(state, grant);
+        if (!existing.ok) return { state, result: existing };
+        if (state.genesisCompletion?.mode === "fresh-recovery" && state.genesisCompletion.intentId === grant.intentId
+          && state.genesisCompletion.reservationId === grant.reservationId && existing.value !== null) return { state, result: ok(view(existing.value)) };
+        if (now >= grant.expiresAtMs) return { state, result: err("expired") };
+        if (state.phase !== "pending" || state.anchor.intentId === grant.intentId || grant.reservedAtMs < state.anchor.createdAtMs) return { state, result: err("recovery_required") };
+        const device: Device = { reservation: grant, deviceId: deviceIdFor(grant), enrolledAtMs: now, revokedAtMs: null };
+        state.devices.push(device);
+        state.genesisCompletion = { mode: "fresh-recovery", intentId: grant.intentId, reservationId: grant.reservationId, completedAtMs: now };
         state.phase = "active";
         return { state, result: ok(view(device)) };
       });

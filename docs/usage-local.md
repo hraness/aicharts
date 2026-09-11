@@ -72,11 +72,35 @@ Preview the local pending queue without acknowledging or transmitting anything:
 
 If `nextAfter` is non-null, use it as `--after` together with the returned `ledgerRevision` as `--revision` on the next invocation. The page limit is 1 through 256. A changed ledger invalidates pagination; restart from the first page. Entries contain canonical numeric frames and local revisions only. This queue is not the remote upload protocol or a provider attestation. There is no sending or acknowledgment command.
 
-The [ledger contract](../crates/aicharts-ledger/README.md) describes atomicity, source-history checks and recovery boundaries. Do not delete a journal, reset a corrupt database or replace a lost namespace key as an automatic repair. Preserve the private state for diagnosis; there is no supported migration/recovery command yet.
+The [ledger contract](../crates/aicharts-ledger/README.md) describes atomicity, source-history checks and recovery boundaries. Do not delete a journal, reset a corrupt database or replace a lost namespace key as an automatic repair. Preserve the private state for diagnosis. Shadow preparation changes identity only in a new ledger; it cannot recover a corrupt database or missing native history.
+
+## Prepare an account-bound shadow
+
+Keep the existing ledger, its key and all pending records. Account occurrence IDs must be derived again from native metadata with the account namespace; hashing old opaque IDs would not deduplicate another machine's copies.
+
+Inspect coverage with the legacy key and explicit sources:
+
+```sh
+./target/debug/aicharts reindex-plan --dry-run --state-dir /absolute/private/directory/aicharts-state --key-file /absolute/private/directory/aicharts.key --codex /absolute/path/to/sessions --claude /absolute/path/to/projects --json
+```
+
+This command uses a separate read-only inspection API. It refuses journal, WAL and shared-memory sidecars rather than recovering or modifying them, and closes the database before parsing sources. It rereads every selected source regardless of unchanged checkpoints and compares exact normalized frames against the legacy measurement inventory. `matchedOccurrences`, `missingOccurrences`, `conflictingOccurrences` and `newOccurrences` describe coverage; equal totals alone do not establish a match. The output contains no source paths, keys or measurement frames.
+
+Missing native history cannot be recovered from opaque IDs. Recover the missing sources before preparing a shadow. If current streaming records differ from the retained legacy values, collect those supported updates into the old ledger and rerun the plan. Conflicting or missing measurements block preparation before a target is created. Source logs must be stable and newline-terminated for both commands.
+
+For development with an explicitly supplied private account-namespace key, choose a new shadow directory whose parent exists:
+
+```sh
+./target/debug/aicharts reindex-prepare --state-dir /absolute/private/directory/aicharts-state --key-file /absolute/private/directory/aicharts.key --shadow-dir /absolute/private/directory/aicharts-shadow --occurrence-key-file /absolute/private/directory/account-namespace.key --codex /absolute/path/to/sessions --claude /absolute/path/to/projects --json
+```
+
+Production enrollment and native credential custody remain unfinished. Do not generate a replacement namespace for ranked history or treat a supplied key as authenticated account ownership. Preparation binds the new ledger to both the retained local checkpoint key and the occurrence key at namespace version 1. Existing legacy commands deliberately cannot open that split-key ledger. There is no active-ledger promotion or live upload command yet.
+
+Preparation validates old coverage, rereads the same physical sources under the new occurrence key and writes only to the new directory. It rechecks source stability and the old ledger after writing. Neither command changes old database content, its outbox, key or application state; ordinary reads can update filesystem access times. A late race or interrupted initialization can leave a separate incomplete shadow. Preserve it for inspection and choose a different explicit target for a retry; the command never overwrites, cleans up or promotes it automatically. Read-only revision checks are not an atomic promotion fence.
 
 ## Limits and failure behavior
 
-The CLI accepts at most 2,048 source files, visits at most 20,000 directory entries to depth 16, and reads at most a 256 MiB source snapshot per invocation. Each file is bounded to its observed initial size, so newly appended data waits for another scan. Readers cap physical lines at 1 MiB, nesting at 64, source lines at 100,000 and merged unique measurements at 100,000. The CLI additionally caps retained per-file measurements at 100,000 before merging; copied records count against this work budget even when subsequently deduplicated. Limits fail explicitly, not by returning silently truncated totals. Narrow the selected source range when a scan limit is reached.
+The CLI accepts at most 2,048 source files, visits at most 20,000 directory entries to depth 16, and reads at most a 256 MiB source snapshot per pass. Shadow preparation makes two passes, one per occurrence key. Each file is bounded to its observed initial size, so newly appended data waits for another scan. Readers cap physical lines at 1 MiB, nesting at 64, source lines at 100,000 and merged unique measurements at 100,000. The CLI additionally caps retained per-file measurements at 100,000 before merging; copied records count against this work budget even when subsequently deduplicated. Limits fail explicitly, not by returning silently truncated totals. Narrow the selected source range when a scan limit is reached.
 
 Persistent state additionally caps 2,048 retained sources, 100,000 unique occurrences and 200,000 source-to-occurrence associations. Its main SQLite file is capped at 256 MiB; journal space is additional. Hitting a retained-state cap requires a future reviewed retention/export path, not deleting state or silently reminting a namespace. No unbounded history claim is made.
 

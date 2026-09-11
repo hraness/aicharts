@@ -31,6 +31,16 @@ Implementation began from AI Charts `f9ac128` on `codex/usage-foundation-2026091
 
 ## Phase map
 
+### Continuous completion target
+
+The user requested continuous execution through a usable, polished end-to-end release on 11 September 2026. Intermediate source merges are checkpoints, not stopping points. Continue implementation, independent review, relevant validation, protected delivery and live qualification until the requested product works or a material decision, missing authority or unavoidable interactive authentication blocks further safe progress. Do not claim comparative superiority, formal correctness, cross-platform support or absence of covert channels beyond the evidence actually established.
+
+Current orchestration step: validate and deliver non-destructive account-namespace reindexing and explicit retained-genesis recovery, then continue authenticated admission and native credential/sender work. The integrator owns CLI implementation, Worker recovery, convergence files and delivery. Bounded workers own the standalone native ledger API, independent CLI integration tests and read-only contract review. No private sessions or credentials are needed for this step. The managed baseline tool still refuses the pre-existing mixed legacy/current markers; preserve that guard and continue unaffected work.
+
+Frozen next admission contract: the account-owned Durable Object orders acceptance and revocation. Uploads carry the enrolled device proof, durable per-device sequence and canonical payload hash, never the polling secret or namespace key. Reserve, stage and validate before a final revocation check freezes a receipt-pending decision; make its immutable receipt durable before accepted visibility or acknowledgment. Explicit corrections replace/tombstone occurrence keys with expected predecessors and can decrease totals. Whole-day replacement from one device is prohibited because other devices and unavailable historical sources may own additional records. A contiguous immutable account journal must preserve acceptance, correction, revocation and deletion through externally fenced restore.
+
+The launch audit also requires complete-prefix source checkpoints before automatic sync, native vault custody and separately tested reader/uploader capabilities. Existing imported frames lack model/account/auth/prompt/interval evidence; preserve unknown values until an additive end-to-end measurement contract is qualified. Resolve the 65,536-record rollup versus 100,000-occurrence ledger ceiling explicitly before admission. Existing calculator pricing is not a Vercel AI Gateway usage catalog, and current plan observations must not be applied to unidentified historical usage.
+
 Paths below are proposed new module scopes, not claims that those modules exist today. Keep Rust and worker code product-owned in the AI Charts repository initially; a separate shared package requires demonstrated consumers.
 
 | Phase | Deliverable | Depends on | Owned write scope | Parallel opportunity |
@@ -58,7 +68,7 @@ No phase may edit a convergence file simultaneously. Workers submit required man
 
 ## Phase 1: Shared identity and profile authority
 
-- **Status:** Partial: browser registration, dormant server boundary, fresh-authentication coordination, browser custody and explicit live-account approval delivered. Internal account-enrollment source is implemented; public/CLI integration, qualified recovery and profile extensions remain unfinished.
+- **Status:** Partial: browser registration, dormant server boundary, fresh-authentication coordination, browser custody and explicit live-account approval delivered. Internal account-enrollment source is implemented; explicit retained-genesis recovery is under validation. Public/CLI integration, live recovery qualification and profile extensions remain unfinished.
 - **Depends on:** 0
 - **Objective:** one Hraness identity works for web and device enrollment, with shared social/avatar profile.
 - **Scope:** authority registration of AI Charts; supported CLI authorization flow; compatible SDK consumer/profile changes; GitHub normalization; avatar upload/finalize/delete; explicit public projection without email.
@@ -68,7 +78,7 @@ No phase may edit a convergence file simultaneously. Workers submit required man
 
 ## Phase 2: Local collector
 
-- **Status:** Partial
+- **Status:** Partial: strict local-only collection and ledger delivered; explicit split-key shadow reindex is under validation. Incremental complete-prefix collection, credential custody, richer measurements and installation qualification remain unfinished.
 - **Depends on:** 0
 - **Objective:** `aicharts usage` and `upload --dry-run` produce correct content-free measurements for Codex/Claude locally.
 - **Scope:** selective readers, installed-version capability probes, incremental cursors, native identity/lineage normalization, numeric local ledger, account observations and exact dry-run projection. Live hooks/OTel ingestion remain local and opt-in.
@@ -229,3 +239,9 @@ The selected namespace design uses a 160-byte immutable R2 anchor plus account-o
 Independent review tightened clock monotonicity across asynchronous work, exact persisted device-ID derivation and retention of the genesis receipt. Real DO-to-DO testing exposed the runtime's added disposal symbol; the repair handles it only on the trusted RPC response, leaving external proofs and nested reservation DTOs exact, and disposes immediate and late replies. Synthetic tests cover real local DO/R2 calls, lost conditional-write responses, retries, revocation, expiry, generation changes, corruption and privacy projections. Focused and aggregate receipts will be recorded after convergence; source review does not establish live recovery or provider qualification. The supported baseline check still refuses pre-existing mixed HRA/Oompa markers; no manual marker repair or guard bypass occurred.
 
 The parallel local-ledger audit found that `Ledger::open` is read-write and can recover a hot rollback journal, even when used for status. A genuinely read-only reindex plan needs an explicit inspection path that refuses recovery-required state. The next local slice should preserve the old database, outbox and key; re-read selected native sources into a separately created shadow ledger; and bind both local-checkpoint and account-occurrence keys. Existing opaque IDs cannot reconstruct the native account-scoped identities. Missing sources must remain unresolved, never silently acknowledged. No Rust files, personal sources, credentials, daemon settings or provider resources were changed in this enrollment slice.
+
+### 2026-09-11 — enrollment delivered; continuous end-to-end completion
+
+Internal account enrollment [PR 176](https://github.com/hraness/aicharts/pull/176) merged as `6facfd51ba07bcd50a36ad87380cc7e8c8f15aa3`, with exact reviewed/merged tree equality. Independent source, test and documentation review passed. The full local gate passed 91 Rust, 200 Worker and 971 Bun tests, generated contracts, strict TypeScript, lint, the 244-page build and browser checks. [Exact-head CI](https://github.com/hraness/aicharts/actions/runs/34616251031), [CodeQL](https://github.com/hraness/aicharts/actions/runs/34616246378), protected integration and [post-merge CodeQL](https://github.com/hraness/aicharts/actions/runs/34616769172) passed. Production identity and nine read-only canonical probes passed; auth and usage activation remained disabled. The [sanitized delivery receipt](https://github.com/hraness/aicharts/pull/176#issuecomment-5636879641) retains public evidence without provider identifiers or proof material.
+
+Work continues on `codex/usage-e2e-20260911` from that exact merge. Preserve the current native key/database/outbox while preparing account-scoped replacements; do not inspect private sources merely to author or test the implementation. After the reindex boundary, close enrollment/recovery and authenticated admission, then integrate the requested dashboard, shared profiles, benchmark/private-usage skill and opt-in background installer. Qualification must prove actual sign-in, upload/retry/revocation/deletion and a recoverable installation on each advertised platform before enabling the corresponding capability. Existing benchmark/calculator data and unrelated Accounts work remain protected throughout.

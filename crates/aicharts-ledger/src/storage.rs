@@ -5,7 +5,7 @@ use hmac::{Hmac, Mac};
 use rusqlite::{limits::Limit, Connection, OpenFlags};
 use sha2::Sha256;
 
-use crate::{Error, Result};
+use crate::{Error, LedgerIdentity, Result};
 
 const APPLICATION_ID: i32 = 0x4149434c;
 const MAX_DATABASE_BYTES: u64 = 256 * 1024 * 1024;
@@ -17,17 +17,41 @@ const TABLES: [(&str, &str); 5] = [
     ("outbox", "CREATE TABLE outbox(id BLOB PRIMARY KEY REFERENCES measurements(id), revision INTEGER NOT NULL CHECK(revision>0), frame BLOB NOT NULL CHECK(length(frame)=136)) STRICT"),
 ];
 
-fn namespace(key: &[u8; 32]) -> Result<[u8; 32]> {
+pub(super) fn namespace(identity: &LedgerIdentity<'_>) -> Result<[u8; 32]> {
+    let key = match identity {
+        LedgerIdentity::Legacy(key) => *key,
+        LedgerIdentity::SplitKeys {
+            checkpoint,
+            occurrence,
+            namespace_version,
+        } => {
+            if **occurrence == [0; 32] || *namespace_version != 1 {
+                return Err(Error::WrongNamespace);
+            }
+            *checkpoint
+        }
+    };
     if *key == [0; 32] {
         return Err(Error::WrongNamespace);
     }
     let mut mac = Hmac::<Sha256>::new_from_slice(key).map_err(|_| Error::WrongNamespace)?;
-    mac.update(b"aicharts-local-ledger-namespace-v1\0");
+    match identity {
+        LedgerIdentity::Legacy(_) => mac.update(b"aicharts-local-ledger-namespace-v1\0"),
+        LedgerIdentity::SplitKeys {
+            occurrence,
+            namespace_version,
+            ..
+        } => {
+            mac.update(b"aicharts-local-ledger-split-v1\0");
+            mac.update(&namespace_version.to_le_bytes());
+            mac.update(*occurrence);
+        }
+    }
     Ok(mac.finalize().into_bytes().into())
 }
 
 #[cfg(unix)]
-fn private_state_path(dir: &Path) -> Result<PathBuf> {
+pub(super) fn private_state_path(dir: &Path) -> Result<PathBuf> {
     // Resolve only the existing parent. SQLite's NOFOLLOW also rejects ancestor
     // links (including macOS /tmp); the final state directory remains unfollowed.
     let name = dir.file_name().ok_or(Error::PrivateStateRequired)?;
@@ -40,7 +64,7 @@ fn private_state_path(dir: &Path) -> Result<PathBuf> {
 }
 
 #[cfg(unix)]
-fn private_file(path: &Path, directory: bool) -> Result<()> {
+pub(super) fn private_file(path: &Path, directory: bool) -> Result<()> {
     use std::os::unix::fs::MetadataExt;
     let meta = std::fs::symlink_metadata(path).map_err(|_| Error::PrivateStateRequired)?;
     if meta.file_type().is_symlink()
@@ -87,9 +111,9 @@ fn connect(path: &Path) -> Result<Connection> {
 }
 
 #[cfg(unix)]
-pub(super) fn initialize(dir: &Path, key: &[u8; 32]) -> Result<Connection> {
+pub(super) fn initialize(dir: &Path, identity: &LedgerIdentity<'_>) -> Result<Connection> {
     use std::os::unix::fs::{DirBuilderExt, OpenOptionsExt};
-    let fingerprint = namespace(key)?;
+    let fingerprint = namespace(identity)?;
     let resolved = private_state_path(dir)?;
     let dir = resolved.as_path();
     // Explicit initialization never adopts a pre-existing directory or database.
@@ -136,17 +160,37 @@ pub(super) fn initialize(dir: &Path, key: &[u8; 32]) -> Result<Connection> {
 }
 
 #[cfg(unix)]
-pub(super) fn open(dir: &Path, key: &[u8; 32]) -> Result<Connection> {
-    let expected = namespace(key)?;
+pub(super) fn open(dir: &Path, identity: &LedgerIdentity<'_>) -> Result<Connection> {
+    let expected = namespace(identity)?;
     let resolved = private_state_path(dir)?;
     let dir = resolved.as_path();
     validate_paths(dir)?;
     let connection = connect(&dir.join("usage.sqlite3"))?;
+    validate_schema(&connection, &expected, false)?;
+    // The cap is a connection-local setting. Reapply only after validating this
+    // owned schema and namespace; it does not migrate or delete existing data.
+    let cap: i64 = connection.query_row("PRAGMA max_page_count=65536", [], |row| row.get(0))?;
+    if cap != 65536 {
+        return Err(Error::Limit);
+    }
+    validate_paths(dir)?;
+    crate::validate_relations(&connection)?;
+    Ok(connection)
+}
+
+pub(super) fn validate_schema(
+    connection: &Connection,
+    expected: &[u8; 32],
+    readonly: bool,
+) -> Result<()> {
     let application_id: i32 =
         connection.pragma_query_value(None, "application_id", |r| r.get(0))?;
     let version: i32 = connection.pragma_query_value(None, "user_version", |r| r.get(0))?;
     let mode: String = connection.pragma_query_value(None, "journal_mode", |r| r.get(0))?;
     let page_size: i64 = connection.pragma_query_value(None, "page_size", |r| r.get(0))?;
+    if readonly && mode != "delete" {
+        return Err(Error::RecoveryRequired);
+    }
     if application_id != APPLICATION_ID || version != 1 || mode != "delete" || page_size != 4096 {
         return Err(Error::InvalidState);
     }
@@ -175,22 +219,14 @@ pub(super) fn open(dir: &Path, key: &[u8; 32]) -> Result<Connection> {
     if fingerprint.as_slice() != expected {
         return Err(Error::WrongNamespace);
     }
-    // The cap is a connection-local setting. Reapply only after validating this
-    // owned schema and namespace; it does not migrate or delete existing data.
-    let cap: i64 = connection.query_row("PRAGMA max_page_count=65536", [], |row| row.get(0))?;
-    if cap != 65536 {
-        return Err(Error::Limit);
-    }
-    validate_paths(dir)?;
-    crate::validate_relations(&connection)?;
-    Ok(connection)
+    Ok(())
 }
 
 #[cfg(not(unix))]
-pub(super) fn initialize(_dir: &Path, _key: &[u8; 32]) -> Result<Connection> {
+pub(super) fn initialize(_dir: &Path, _identity: &LedgerIdentity<'_>) -> Result<Connection> {
     Err(Error::UnsupportedPlatform)
 }
 #[cfg(not(unix))]
-pub(super) fn open(_dir: &Path, _key: &[u8; 32]) -> Result<Connection> {
+pub(super) fn open(_dir: &Path, _identity: &LedgerIdentity<'_>) -> Result<Connection> {
     Err(Error::UnsupportedPlatform)
 }

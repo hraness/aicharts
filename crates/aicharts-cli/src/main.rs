@@ -1,5 +1,6 @@
 #![forbid(unsafe_code)]
 
+mod reindex;
 mod state;
 
 use std::fs::{self, File, OpenOptions};
@@ -22,6 +23,8 @@ const HELP: &str = "AI Charts Usage — local-only foundation
   aicharts collect --state-dir DIR --key-file PATH [--codex FILE_OR_DIR] [--claude FILE_OR_DIR] [--rescan] [--json]
   aicharts status --state-dir DIR --key-file PATH [--json]
   aicharts outbox --dry-run --state-dir DIR --key-file PATH [--limit 1..256] [--after ID --revision N]
+  aicharts reindex-plan --dry-run --state-dir OLD --key-file PATH [--codex FILE_OR_DIR] [--claude FILE_OR_DIR] [--json]
+  aicharts reindex-prepare --state-dir OLD --key-file PATH --shadow-dir NEW --occurrence-key-file PATH [--codex FILE_OR_DIR] [--claude FILE_OR_DIR] [--json]
 
 Sources may be repeated. Directories scan .jsonl files and skip symlink entries.
 Final source files must be regular files; this is not an OS source sandbox.
@@ -31,6 +34,9 @@ keygen creates a new mode-0600 file on Unix and never overwrites an existing fil
 Persistent commands are Unix-only and require explicit initialization. collect
 rescans changed sources from the beginning; unchanged metadata skips parsing.
 outbox is a read-only preview. No acknowledgement or sending is enabled.
+reindex-plan inspects existing state without recovery or writes and rereads explicit
+sources. reindex-prepare creates a new account-key-bound shadow only when every old
+measurement is exactly covered. Neither command changes or promotes the old state.
 No account sign-in, upload, daemon, key recovery or OS sandbox is implemented yet.
 Keep your key private and retain it: changing it changes occurrence identities.
 ";
@@ -348,6 +354,12 @@ fn render(collection: &Collection, mode: Mode, json: bool) -> Result<String, &'s
 fn run(args: &[String]) -> Result<String, &'static str> {
     if args.is_empty() || args == ["--help"] || args == ["-h"] {
         return Ok(HELP.to_owned());
+    }
+    if matches!(
+        args.first().map(String::as_str),
+        Some("reindex-plan" | "reindex-prepare")
+    ) {
+        return reindex::run(args);
     }
     if matches!(
         args.first().map(String::as_str),

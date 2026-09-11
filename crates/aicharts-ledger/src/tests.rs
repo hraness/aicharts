@@ -734,6 +734,12 @@ fn process_death_before_commit_recovers_without_partial_checkpoint_or_pending() 
     assert!(!journal
         .windows(PRIVATE.len())
         .any(|window| window == PRIVATE.as_bytes()));
+    let before_inspection = directory_image(&f.dir());
+    assert_eq!(
+        ReadOnlyLedger::open(&f.dir(), &LedgerIdentity::Legacy(&KEY)).err(),
+        Some(Error::RecoveryRequired)
+    );
+    assert_eq!(directory_image(&f.dir()), before_inspection);
     let mut recovered = f.open();
     assert_eq!(summary(&recovered), (1, 1, 1, 1, 130, 10));
     assert_eq!(
@@ -744,4 +750,452 @@ fn process_death_before_commit_recovers_without_partial_checkpoint_or_pending() 
         .commit_scans(1, vec![scan(1, 200, vec![usage(1, 20), usage(2, 30)])])
         .unwrap();
     assert_eq!(summary(&recovered), (2, 1, 2, 2, 290, 50));
+}
+
+// Exclude access times: reading can update atime without changing application
+// state. Assert bytes, inode, mode, mtime/ctime and directory membership instead.
+fn directory_image(dir: &Path) -> BTreeMap<String, (Vec<u8>, Vec<u64>)> {
+    use std::os::unix::fs::MetadataExt;
+    let mut result = BTreeMap::new();
+    for path in std::iter::once(dir.to_owned()).chain(
+        fs::read_dir(dir)
+            .unwrap()
+            .map(|entry| entry.unwrap().path()),
+    ) {
+        let meta = fs::symlink_metadata(&path).unwrap();
+        let bytes = if meta.is_file() {
+            fs::read(&path).unwrap()
+        } else {
+            vec![]
+        };
+        result.insert(
+            path.file_name().unwrap().to_string_lossy().into_owned(),
+            (
+                bytes,
+                vec![
+                    meta.dev(),
+                    meta.ino(),
+                    u64::from(meta.mode()),
+                    meta.len(),
+                    meta.nlink(),
+                    meta.mtime() as u64,
+                    meta.mtime_nsec() as u64,
+                    meta.ctime() as u64,
+                    meta.ctime_nsec() as u64,
+                ],
+            ),
+        );
+    }
+    result
+}
+
+#[test]
+fn explicit_split_binding_preserves_legacy_and_binds_both_independent_keys() {
+    use hmac::{Hmac, Mac};
+    use sha2::Sha256;
+    let f = Fixture::new();
+    drop(f.initialize());
+    let before = directory_image(&f.dir());
+    let legacy = LedgerIdentity::Legacy(&KEY);
+    let mut original = Hmac::<Sha256>::new_from_slice(&KEY).unwrap();
+    original.update(b"aicharts-local-ledger-namespace-v1\0");
+    assert_eq!(
+        crate::storage::namespace(&legacy).unwrap().as_slice(),
+        original.finalize().into_bytes().as_slice()
+    );
+    let occurrence = [0x43; 32];
+    let split = LedgerIdentity::SplitKeys {
+        checkpoint: &KEY,
+        occurrence: &occurrence,
+        namespace_version: 1,
+    };
+    assert_eq!(
+        ReadOnlyLedger::open(&f.dir(), &split).err(),
+        Some(Error::WrongNamespace)
+    );
+    assert_eq!(directory_image(&f.dir()), before);
+    let target = f.0.join("shadow");
+    let mut shadow = Ledger::initialize_with_identity(&target, &split).unwrap();
+    shadow
+        .commit_scans(0, vec![scan(1, 100, vec![usage(1, 10)])])
+        .unwrap();
+    drop(shadow);
+    let owned = ReadOnlyLedger::open(&target, &split).unwrap();
+    assert_eq!(owned.status().tokens, 130);
+    assert_eq!(owned.snapshot().checkpoints[&[1; 32]], stamp(100));
+    drop(Ledger::open_with_identity(&target, &split).unwrap());
+    assert_eq!(
+        Ledger::open(&target, &KEY).err(),
+        Some(Error::WrongNamespace)
+    );
+    for identity in [
+        LedgerIdentity::SplitKeys {
+            checkpoint: &[2; 32],
+            occurrence: &occurrence,
+            namespace_version: 1,
+        },
+        LedgerIdentity::SplitKeys {
+            checkpoint: &KEY,
+            occurrence: &[3; 32],
+            namespace_version: 1,
+        },
+        LedgerIdentity::SplitKeys {
+            checkpoint: &KEY,
+            occurrence: &occurrence,
+            namespace_version: 0,
+        },
+        LedgerIdentity::SplitKeys {
+            checkpoint: &KEY,
+            occurrence: &occurrence,
+            namespace_version: 2,
+        },
+        LedgerIdentity::SplitKeys {
+            checkpoint: &[0; 32],
+            occurrence: &occurrence,
+            namespace_version: 1,
+        },
+        LedgerIdentity::SplitKeys {
+            checkpoint: &KEY,
+            occurrence: &[0; 32],
+            namespace_version: 1,
+        },
+    ] {
+        assert_eq!(
+            ReadOnlyLedger::open(&target, &identity).err(),
+            Some(Error::WrongNamespace)
+        );
+        let invalid_target = f.0.join("must-not-create");
+        if crate::storage::namespace(&identity).is_err() {
+            assert_eq!(
+                Ledger::initialize_with_identity(&invalid_target, &identity).err(),
+                Some(Error::WrongNamespace)
+            );
+            assert!(!invalid_target.exists());
+        }
+    }
+    let persisted = fs::read(target.join("usage.sqlite3")).unwrap();
+    for key in [&KEY, &occurrence] {
+        assert!(!persisted.windows(32).any(|window| window == key));
+    }
+    assert_eq!(directory_image(&f.dir()), before);
+}
+
+#[test]
+fn readonly_inventory_is_exact_owned_and_never_acknowledges_or_locks_state() {
+    let f = Fixture::new();
+    let mut writer = f.initialize();
+    writer
+        .commit_scans(0, vec![scan(1, 100, vec![usage(2, 20), usage(1, 10)])])
+        .unwrap();
+    let before = directory_image(&f.dir());
+    let view = ReadOnlyLedger::open(&f.dir(), &LedgerIdentity::Legacy(&KEY)).unwrap();
+    assert_eq!(view.snapshot().revision, 1);
+    assert_eq!(view.status().revision, 1);
+    assert_eq!(view.status().pending_records, 2);
+    assert_eq!(view.inventory().len(), 2);
+    for (index, item) in view.inventory().iter().enumerate() {
+        let identity = index as u8 + 1;
+        assert_eq!(item.id, [identity; 16]);
+        assert_eq!(item.revision, 1);
+        assert_eq!(item.frame, frame(usage(identity, u64::from(identity) * 10)));
+    }
+    view.ensure_unchanged().unwrap();
+    assert_eq!(directory_image(&f.dir()), before);
+    // An owned view cannot retain SQLite read locks through a caller's parse.
+    writer
+        .commit_scans(1, vec![scan(1, 200, vec![usage(1, 15), usage(2, 20)])])
+        .unwrap();
+    assert_eq!(view.ensure_unchanged(), Err(Error::StaleRevision));
+    assert_eq!(view.status().output_tokens, 30);
+    assert_eq!(view.inventory()[0].frame, frame(usage(1, 10)));
+    assert_eq!(writer.status().unwrap().pending_records, 2);
+}
+
+#[test]
+fn readonly_absent_wrong_key_schema_and_corruption_preserve_every_byte() {
+    let missing = Fixture::new();
+    assert_eq!(
+        ReadOnlyLedger::open(&missing.dir(), &LedgerIdentity::Legacy(&KEY)).err(),
+        Some(Error::PrivateStateRequired)
+    );
+    assert!(!missing.dir().exists());
+    for sql in [
+        "PRAGMA user_version=2",
+        "PRAGMA application_id=123",
+        "CREATE TABLE unexpected(data TEXT)",
+        "DELETE FROM meta",
+        "UPDATE meta SET revision=-1",
+        "DELETE FROM outbox",
+        "UPDATE measurements SET id=zeroblob(16)",
+    ] {
+        let f = Fixture::new();
+        let mut ledger = f.initialize();
+        ledger
+            .commit_scans(0, vec![scan(1, 100, vec![usage(1, 10)])])
+            .unwrap();
+        drop(ledger);
+        f.raw()
+            .execute_batch(&format!("PRAGMA ignore_check_constraints=ON; {sql}"))
+            .unwrap();
+        let before = directory_image(&f.dir());
+        assert!(
+            ReadOnlyLedger::open(&f.dir(), &LedgerIdentity::Legacy(&KEY)).is_err(),
+            "accepted {sql}"
+        );
+        assert_eq!(directory_image(&f.dir()), before, "changed {sql}");
+    }
+    let f = Fixture::new();
+    drop(f.initialize());
+    let before = directory_image(&f.dir());
+    assert_eq!(
+        ReadOnlyLedger::open(&f.dir(), &LedgerIdentity::Legacy(&[9; 32])).err(),
+        Some(Error::WrongNamespace)
+    );
+    assert_eq!(directory_image(&f.dir()), before);
+}
+
+#[test]
+fn readonly_rejects_all_sidecars_including_empty_foreign_and_linked_files() {
+    use std::os::unix::fs::symlink;
+    for name in [
+        "usage.sqlite3-journal",
+        "usage.sqlite3-wal",
+        "usage.sqlite3-shm",
+    ] {
+        for bytes in [vec![], vec![0x5a; 2048]] {
+            let f = Fixture::new();
+            drop(f.initialize());
+            fs::write(f.dir().join(name), bytes).unwrap();
+            let before = directory_image(&f.dir());
+            assert_eq!(
+                ReadOnlyLedger::open(&f.dir(), &LedgerIdentity::Legacy(&KEY)).err(),
+                Some(Error::RecoveryRequired)
+            );
+            assert_eq!(directory_image(&f.dir()), before);
+        }
+        let f = Fixture::new();
+        drop(f.initialize());
+        symlink(f.0.join("missing-target"), f.dir().join(name)).unwrap();
+        assert_eq!(
+            ReadOnlyLedger::open(&f.dir(), &LedgerIdentity::Legacy(&KEY)).err(),
+            Some(Error::RecoveryRequired)
+        );
+        assert!(!f.0.join("missing-target").exists());
+        assert!(fs::symlink_metadata(f.dir().join(name))
+            .unwrap()
+            .is_symlink());
+    }
+}
+
+#[test]
+fn readonly_foreign_wal_header_never_creates_wal_shm_or_recovers() {
+    let foreign = Fixture::new();
+    drop(foreign.initialize());
+    let writer = foreign.raw();
+    writer.execute_batch("PRAGMA journal_mode=WAL; CREATE TABLE foreign_table(data BLOB); INSERT INTO foreign_table VALUES(zeroblob(100));").unwrap();
+    assert!(foreign.dir().join("usage.sqlite3-wal").exists());
+    let f = Fixture::new();
+    drop(f.initialize());
+    // A copied WAL-mode main file without sidecars is deliberately unsupported.
+    fs::write(f.database(), fs::read(foreign.database()).unwrap()).unwrap();
+    let before = directory_image(&f.dir());
+    let result = ReadOnlyLedger::open(&f.dir(), &LedgerIdentity::Legacy(&KEY));
+    assert_eq!(directory_image(&f.dir()), before);
+    assert!(!f.dir().join("usage.sqlite3-shm").exists());
+    assert!(!f.dir().join("usage.sqlite3-wal").exists());
+    // Bundled SQLite may refuse the unsupported WAL header at its POSIX lock
+    // step before journal-mode validation. Both paths remain fixed failures.
+    assert!(matches!(
+        result.err(),
+        Some(Error::RecoveryRequired | Error::Storage)
+    ));
+}
+
+#[test]
+fn readonly_revision_guard_refuses_replacement_rotation_permissions_and_late_journal() {
+    for mutation in 0..4 {
+        let f = Fixture::new();
+        drop(f.initialize());
+        let view = ReadOnlyLedger::open(&f.dir(), &LedgerIdentity::Legacy(&KEY)).unwrap();
+        match mutation {
+            0 => {
+                let replacement = f.0.join("replacement");
+                fs::copy(f.database(), &replacement).unwrap();
+                fs::rename(replacement, f.database()).unwrap();
+            }
+            1 => f
+                .raw()
+                .execute_batch("UPDATE meta SET namespace=zeroblob(32)")
+                .unwrap(),
+            2 => fs::set_permissions(f.database(), fs::Permissions::from_mode(0o644)).unwrap(),
+            _ => fs::write(f.dir().join("usage.sqlite3-journal"), b"owned-race").unwrap(),
+        }
+        let before = directory_image(&f.dir());
+        assert!(view.ensure_unchanged().is_err());
+        assert_eq!(directory_image(&f.dir()), before);
+    }
+}
+
+#[test]
+fn readonly_preopen_races_fail_without_opening_or_cleaning_new_state() {
+    let f = Fixture::new();
+    drop(f.initialize());
+    let mut changed = None;
+    let result = ReadOnlyLedger::open_with(&f.dir(), &LedgerIdentity::Legacy(&KEY), || {
+        fs::write(f.dir().join("usage.sqlite3-wal"), b"foreign").unwrap();
+        changed = Some(directory_image(&f.dir()));
+        Ok(())
+    });
+    assert_eq!(result.err(), Some(Error::RecoveryRequired));
+    assert_eq!(directory_image(&f.dir()), changed.unwrap());
+}
+
+#[test]
+fn readonly_preserves_busy_writer_without_recovery() {
+    let f = Fixture::new();
+    drop(f.initialize());
+    let writer = f.raw();
+    writer.execute_batch("BEGIN EXCLUSIVE").unwrap();
+    let before = directory_image(&f.dir());
+    assert_eq!(
+        ReadOnlyLedger::open(&f.dir(), &LedgerIdentity::Legacy(&KEY)).err(),
+        Some(Error::Busy)
+    );
+    assert_eq!(directory_image(&f.dir()), before);
+    writer.execute_batch("ROLLBACK").unwrap();
+    ReadOnlyLedger::open(&f.dir(), &LedgerIdentity::Legacy(&KEY)).unwrap();
+}
+
+#[test]
+fn readonly_connection_itself_cannot_write_even_without_the_public_guard() {
+    let f = Fixture::new();
+    drop(f.initialize());
+    let before = directory_image(&f.dir());
+    let connection =
+        crate::inspection::readonly_connection_for_test(&f.dir(), &LedgerIdentity::Legacy(&KEY))
+            .unwrap();
+    assert!(connection.is_readonly("main").unwrap());
+    assert_eq!(
+        connection
+            .pragma_query_value(None, "query_only", |row| row.get::<_, i32>(0))
+            .unwrap(),
+        1
+    );
+    assert_eq!(
+        connection
+            .pragma_query_value(None, "locking_mode", |row| row.get::<_, String>(0))
+            .unwrap(),
+        "exclusive"
+    );
+    // Disabling a connection-local guard cannot turn the OS/SQLite handle into
+    // a writer. This internal test access is absent from the public API.
+    connection.pragma_update(None, "query_only", false).unwrap();
+    let error = connection
+        .execute("UPDATE meta SET revision=1", [])
+        .unwrap_err();
+    assert_eq!(
+        error.sqlite_error_code(),
+        Some(rusqlite::ErrorCode::ReadOnly)
+    );
+    drop(connection);
+    assert_eq!(directory_image(&f.dir()), before);
+}
+
+#[test]
+fn readonly_connection_rejects_wal_raced_after_open_before_first_database_read() {
+    let f = Fixture::new();
+    drop(f.initialize());
+    let connection =
+        crate::inspection::readonly_connection_for_test(&f.dir(), &LedgerIdentity::Legacy(&KEY))
+            .unwrap();
+    // Deterministically change the mode after opening the read-only connection
+    // but before its first database access; normal path guards would also fail.
+    f.raw().execute_batch("PRAGMA journal_mode=WAL").unwrap();
+    assert!(!f.dir().join("usage.sqlite3-wal").exists());
+    assert!(!f.dir().join("usage.sqlite3-shm").exists());
+    let before = directory_image(&f.dir());
+    let result = crate::storage::validate_schema(
+        &connection,
+        &crate::storage::namespace(&LedgerIdentity::Legacy(&KEY)).unwrap(),
+        true,
+    );
+    drop(connection);
+    assert_eq!(directory_image(&f.dir()), before);
+    assert!(matches!(
+        result,
+        Err(Error::Storage | Error::RecoveryRequired)
+    ));
+}
+
+#[test]
+fn readonly_handle_never_recovers_a_hot_journal_raced_after_open() {
+    let f = Fixture::new();
+    let mut ledger = f.initialize();
+    ledger
+        .commit_scans(0, vec![scan(1, 100, vec![usage(1, 10)])])
+        .unwrap();
+    drop(ledger);
+    let connection =
+        crate::inspection::readonly_connection_for_test(&f.dir(), &LedgerIdentity::Legacy(&KEY))
+            .unwrap();
+    let child = Command::new(std::env::current_exe().unwrap())
+        .args(["--exact", "tests::process_death_child", "--nocapture"])
+        .env("AICHARTS_LEDGER_TEST_CRASH_DIR", f.dir())
+        .output()
+        .unwrap();
+    assert_eq!(
+        child.status.code(),
+        Some(73),
+        "{}",
+        String::from_utf8_lossy(&child.stderr)
+    );
+    let journal = fs::read(f.dir().join("usage.sqlite3-journal")).unwrap();
+    assert!(journal.len() > 512);
+    assert_eq!(
+        &journal[..8],
+        &[0xd9, 0xd5, 0x05, 0xf9, 0x20, 0xa1, 0x63, 0xd7]
+    );
+    let before = directory_image(&f.dir());
+    let error = connection
+        .pragma_query_value(None, "application_id", |row| row.get::<_, i32>(0))
+        .unwrap_err();
+    assert_eq!(
+        error.sqlite_extended_error_code(),
+        Some(rusqlite::ffi::SQLITE_READONLY_ROLLBACK)
+    );
+    assert_eq!(Error::from(error), Error::RecoveryRequired);
+    drop(connection);
+    assert_eq!(directory_image(&f.dir()), before);
+    // The original writer recovery remains a distinct, explicit path.
+    assert_eq!(summary(&f.open()), (1, 1, 1, 1, 130, 10));
+}
+
+#[test]
+fn readonly_guard_refuses_parent_alias_retargeting_and_unsafe_final_paths() {
+    let f = Fixture::new();
+    drop(f.initialize());
+    let other = Fixture::new();
+    drop(other.initialize());
+    let alias = f.0.join("parent-alias");
+    std::os::unix::fs::symlink(&f.0, &alias).unwrap();
+    let requested = alias.join("state");
+    let view = ReadOnlyLedger::open(&requested, &LedgerIdentity::Legacy(&KEY)).unwrap();
+    fs::remove_file(&alias).unwrap();
+    std::os::unix::fs::symlink(&other.0, &alias).unwrap();
+    let before = directory_image(&other.dir());
+    assert_eq!(view.ensure_unchanged(), Err(Error::StaleRevision));
+    assert_eq!(directory_image(&other.dir()), before);
+    let final_alias = f.0.join("state-alias");
+    std::os::unix::fs::symlink(f.dir(), &final_alias).unwrap();
+    assert_eq!(
+        ReadOnlyLedger::open(&final_alias, &LedgerIdentity::Legacy(&KEY)).err(),
+        Some(Error::PrivateStateRequired)
+    );
+    fs::hard_link(f.database(), f.0.join("database-hardlink")).unwrap();
+    let before = directory_image(&f.dir());
+    assert_eq!(
+        ReadOnlyLedger::open(&f.dir(), &LedgerIdentity::Legacy(&KEY)).err(),
+        Some(Error::PrivateStateRequired)
+    );
+    assert_eq!(directory_image(&f.dir()), before);
 }

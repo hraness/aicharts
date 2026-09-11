@@ -1,7 +1,10 @@
 //! Private local numeric state. No source opening, networking, or upload acknowledgment.
 #![forbid(unsafe_code)]
 
+mod inspection;
 mod storage;
+
+pub use inspection::ReadOnlyLedger;
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::Path;
@@ -29,6 +32,7 @@ pub enum Error {
     Limit,
     StaleRevision,
     SourceHistoryChanged,
+    RecoveryRequired,
 }
 impl Error {
     pub const fn code(self) -> &'static str {
@@ -43,6 +47,7 @@ impl Error {
             Self::Limit => "ledger_limit_reached",
             Self::StaleRevision => "ledger_changed_retry",
             Self::SourceHistoryChanged => "ledger_source_history_changed",
+            Self::RecoveryRequired => "ledger_recovery_required",
         }
     }
 }
@@ -59,6 +64,12 @@ impl From<rusqlite::Error> for Error {
                 Self::Busy
             }
             Some(rusqlite::ErrorCode::DiskFull | rusqlite::ErrorCode::TooBig) => Self::Limit,
+            Some(rusqlite::ErrorCode::ReadOnly)
+                if error.sqlite_extended_error_code()
+                    == Some(rusqlite::ffi::SQLITE_READONLY_ROLLBACK) =>
+            {
+                Self::RecoveryRequired
+            }
             _ => Self::Storage,
         }
     }
@@ -144,40 +155,47 @@ pub struct PendingPage {
     pub next_after: Option<Id>,
 }
 
+/// Key binding for a ledger, not an account credential or upload authorization.
+/// Split identities are explicit new-ledger bindings; they never rekey old state.
+pub enum LedgerIdentity<'a> {
+    Legacy(&'a [u8; 32]),
+    SplitKeys {
+        checkpoint: &'a [u8; 32],
+        occurrence: &'a [u8; 32],
+        namespace_version: u32,
+    },
+}
+
+/// Exact normalized occurrence data, independent of pending-upload membership.
+pub struct InventoryRecord {
+    pub id: Id,
+    pub revision: u64,
+    pub frame: Vec<u8>,
+}
+
 pub struct Ledger {
     connection: Connection,
 }
 impl Ledger {
     pub fn initialize(dir: &Path, key: &[u8; 32]) -> Result<Self> {
+        Self::initialize_with_identity(dir, &LedgerIdentity::Legacy(key))
+    }
+    pub fn initialize_with_identity(dir: &Path, identity: &LedgerIdentity<'_>) -> Result<Self> {
         Ok(Self {
-            connection: storage::initialize(dir, key)?,
+            connection: storage::initialize(dir, identity)?,
         })
     }
     pub fn open(dir: &Path, key: &[u8; 32]) -> Result<Self> {
+        Self::open_with_identity(dir, &LedgerIdentity::Legacy(key))
+    }
+    pub fn open_with_identity(dir: &Path, identity: &LedgerIdentity<'_>) -> Result<Self> {
         Ok(Self {
-            connection: storage::open(dir, key)?,
+            connection: storage::open(dir, identity)?,
         })
     }
     pub fn snapshot(&self) -> Result<LedgerSnapshot> {
         let tx = self.connection.unchecked_transaction()?;
-        let revision = revision(&tx)?;
-        let mut checkpoints = BTreeMap::new();
-        let mut statement = tx.prepare("SELECT id,stamp FROM sources ORDER BY id LIMIT 2049")?;
-        let mut rows = statement.query([])?;
-        while let Some(row) = rows.next()? {
-            let id: Vec<u8> = row.get(0)?;
-            checkpoints.insert(
-                id.try_into().map_err(|_| Error::InvalidState)?,
-                SourceStamp::decode(&row.get::<_, Vec<u8>>(1)?)?,
-            );
-        }
-        if checkpoints.len() > MAX_SOURCES {
-            return Err(Error::InvalidState);
-        }
-        Ok(LedgerSnapshot {
-            revision,
-            checkpoints,
-        })
+        snapshot(&tx)
     }
     /// Admit complete source snapshots atomically. Missing sources are retained.
     /// This is not a byte-tail parser or the server's future correction protocol.
@@ -331,50 +349,7 @@ impl Ledger {
     }
     pub fn status(&self) -> Result<LedgerStatus> {
         let tx = self.connection.unchecked_transaction()?;
-        enforce_counts(&tx)?;
-        let mut tokens = 0u64;
-        let mut output_tokens = 0u64;
-        let current_revision = revision(&tx)?;
-        let mut statement =
-            tx.prepare("SELECT id,frame,revision FROM measurements ORDER BY id LIMIT 100001")?;
-        let mut rows = statement.query([])?;
-        while let Some(row) = rows.next()? {
-            let id: Vec<u8> = row.get(0)?;
-            let batch = checked_frame(&row.get::<_, Vec<u8>>(1)?)?;
-            let usage = &batch.usage[0];
-            let record_revision = unsigned(row.get::<_, i64>(2)?)?;
-            if usage.id.as_slice() != id
-                || record_revision == 0
-                || record_revision > current_revision
-            {
-                return Err(Error::InvalidState);
-            }
-            tokens = tokens
-                .checked_add(usage.tokens.total().map_err(|_| Error::InvalidState)?)
-                .ok_or(Error::Limit)?;
-            output_tokens = output_tokens
-                .checked_add(usage.tokens.output)
-                .ok_or(Error::Limit)?;
-        }
-        let mut mask = 0;
-        let mut statement = tx.prepare("SELECT warnings FROM sources LIMIT 2049")?;
-        for row in statement.query_map([], |row| row.get::<_, i64>(0))? {
-            mask |= unsigned(row?)?;
-        }
-        let usage_occurrences = table_count(&tx, "measurements")?;
-        let mut warnings = warnings(mask)?;
-        if usage_occurrences == 0 {
-            warnings.push(Warning::NoUsageMeasurements);
-        }
-        Ok(LedgerStatus {
-            revision: revision(&tx)?,
-            sources: table_count(&tx, "sources")?,
-            usage_occurrences,
-            pending_records: table_count(&tx, "outbox")?,
-            tokens,
-            output_tokens,
-            warnings,
-        })
+        status(&tx)
     }
     pub fn pending(
         &self,
@@ -390,46 +365,120 @@ impl Ledger {
         if expected_revision.is_some_and(|r| r != ledger_revision) {
             return Err(Error::StaleRevision);
         }
-        let mut statement = tx.prepare("SELECT o.id,o.revision,o.frame,m.frame,m.revision FROM outbox o LEFT JOIN measurements m ON m.id=o.id WHERE o.id>?1 ORDER BY o.id LIMIT ?2")?;
-        let mut rows = statement.query(params![
-            after.unwrap_or([0; 16]).as_slice(),
-            (limit + 1) as i64
-        ])?;
-        let mut entries = Vec::new();
-        while let Some(row) = rows.next()? {
-            let id: Vec<u8> = row.get(0)?;
-            let id: Id = id.try_into().map_err(|_| Error::InvalidState)?;
-            let record_revision = unsigned(row.get::<_, i64>(1)?)?;
-            let frame: Vec<u8> = row.get(2)?;
-            let batch = checked_frame(&frame)?;
-            let measured_frame: Option<Vec<u8>> = row.get(3)?;
-            let measured_revision: Option<i64> = row.get(4)?;
-            if batch.usage[0].id != id
-                || record_revision == 0
-                || record_revision > ledger_revision
-                || measured_frame.as_ref() != Some(&frame)
-                || measured_revision != Some(record_revision as i64)
-            {
-                return Err(Error::InvalidState);
-            }
-            entries.push(PendingRecord {
-                id,
-                revision: record_revision,
-                frame,
-            });
-        }
-        let next_after = if entries.len() > limit {
-            entries.truncate(limit);
-            entries.last().map(|e| e.id)
-        } else {
-            None
-        };
-        Ok(PendingPage {
-            ledger_revision,
-            entries,
-            next_after,
-        })
+        pending_page(&tx, after, limit, ledger_revision)
     }
+}
+
+fn snapshot(connection: &Connection) -> Result<LedgerSnapshot> {
+    let revision = revision(connection)?;
+    let mut checkpoints = BTreeMap::new();
+    let mut statement =
+        connection.prepare("SELECT id,stamp FROM sources ORDER BY id LIMIT 2049")?;
+    let mut rows = statement.query([])?;
+    while let Some(row) = rows.next()? {
+        let id: Vec<u8> = row.get(0)?;
+        checkpoints.insert(
+            id.try_into().map_err(|_| Error::InvalidState)?,
+            SourceStamp::decode(&row.get::<_, Vec<u8>>(1)?)?,
+        );
+    }
+    if checkpoints.len() > MAX_SOURCES {
+        return Err(Error::InvalidState);
+    }
+    Ok(LedgerSnapshot {
+        revision,
+        checkpoints,
+    })
+}
+
+fn status(tx: &Connection) -> Result<LedgerStatus> {
+    enforce_counts(tx)?;
+    let mut tokens = 0u64;
+    let mut output_tokens = 0u64;
+    let current_revision = revision(tx)?;
+    let mut statement =
+        tx.prepare("SELECT id,frame,revision FROM measurements ORDER BY id LIMIT 100001")?;
+    let mut rows = statement.query([])?;
+    while let Some(row) = rows.next()? {
+        let id: Vec<u8> = row.get(0)?;
+        let batch = checked_frame(&row.get::<_, Vec<u8>>(1)?)?;
+        let usage = &batch.usage[0];
+        let record_revision = unsigned(row.get::<_, i64>(2)?)?;
+        if usage.id.as_slice() != id || record_revision == 0 || record_revision > current_revision {
+            return Err(Error::InvalidState);
+        }
+        tokens = tokens
+            .checked_add(usage.tokens.total().map_err(|_| Error::InvalidState)?)
+            .ok_or(Error::Limit)?;
+        output_tokens = output_tokens
+            .checked_add(usage.tokens.output)
+            .ok_or(Error::Limit)?;
+    }
+    let mut mask = 0;
+    let mut statement = tx.prepare("SELECT warnings FROM sources LIMIT 2049")?;
+    for row in statement.query_map([], |row| row.get::<_, i64>(0))? {
+        mask |= unsigned(row?)?;
+    }
+    let usage_occurrences = table_count(tx, "measurements")?;
+    let mut warnings = warnings(mask)?;
+    if usage_occurrences == 0 {
+        warnings.push(Warning::NoUsageMeasurements);
+    }
+    Ok(LedgerStatus {
+        revision: revision(tx)?,
+        sources: table_count(tx, "sources")?,
+        usage_occurrences,
+        pending_records: table_count(tx, "outbox")?,
+        tokens,
+        output_tokens,
+        warnings,
+    })
+}
+fn pending_page(
+    tx: &Connection,
+    after: Option<Id>,
+    limit: usize,
+    ledger_revision: u64,
+) -> Result<PendingPage> {
+    let mut statement = tx.prepare("SELECT o.id,o.revision,o.frame,m.frame,m.revision FROM outbox o LEFT JOIN measurements m ON m.id=o.id WHERE o.id>?1 ORDER BY o.id LIMIT ?2")?;
+    let mut rows = statement.query(params![
+        after.unwrap_or([0; 16]).as_slice(),
+        (limit + 1) as i64
+    ])?;
+    let mut entries = Vec::new();
+    while let Some(row) = rows.next()? {
+        let id: Vec<u8> = row.get(0)?;
+        let id: Id = id.try_into().map_err(|_| Error::InvalidState)?;
+        let record_revision = unsigned(row.get::<_, i64>(1)?)?;
+        let frame: Vec<u8> = row.get(2)?;
+        let batch = checked_frame(&frame)?;
+        let measured_frame: Option<Vec<u8>> = row.get(3)?;
+        let measured_revision: Option<i64> = row.get(4)?;
+        if batch.usage[0].id != id
+            || record_revision == 0
+            || record_revision > ledger_revision
+            || measured_frame.as_ref() != Some(&frame)
+            || measured_revision != Some(record_revision as i64)
+        {
+            return Err(Error::InvalidState);
+        }
+        entries.push(PendingRecord {
+            id,
+            revision: record_revision,
+            frame,
+        });
+    }
+    let next_after = if entries.len() > limit {
+        entries.truncate(limit);
+        entries.last().map(|e| e.id)
+    } else {
+        None
+    };
+    Ok(PendingPage {
+        ledger_revision,
+        entries,
+        next_after,
+    })
 }
 
 fn revision(connection: &Connection) -> Result<u64> {
@@ -467,6 +516,9 @@ fn enforce_counts(connection: &Connection) -> Result<()> {
 /// a valid frame stored under the wrong ID or a queue inconsistent with the ledger.
 fn validate_relations(connection: &Connection) -> Result<()> {
     let tx = connection.unchecked_transaction()?;
+    validate_relations_in(&tx)
+}
+fn validate_relations_in(tx: &Connection) -> Result<()> {
     let quick: String = tx.query_row("PRAGMA quick_check(1)", [], |row| row.get(0))?;
     if quick != "ok" {
         return Err(Error::InvalidState);
@@ -475,8 +527,8 @@ fn validate_relations(connection: &Connection) -> Result<()> {
     if check.query([])?.next()?.is_some() {
         return Err(Error::InvalidState);
     }
-    enforce_counts(&tx)?;
-    let current = revision(&tx)?;
+    enforce_counts(tx)?;
+    let current = revision(tx)?;
     let mut statement = tx.prepare("SELECT id,stamp,warnings FROM sources LIMIT 2049")?;
     let mut rows = statement.query([])?;
     while let Some(row) = rows.next()? {
@@ -527,7 +579,7 @@ fn validate_relations(connection: &Connection) -> Result<()> {
             return Err(Error::InvalidState);
         }
     }
-    if !merged.is_empty() || count != table_count(&tx, "outbox")? {
+    if !merged.is_empty() || count != table_count(tx, "outbox")? {
         return Err(Error::InvalidState);
     }
     Ok(())

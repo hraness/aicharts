@@ -1,4 +1,5 @@
 import { env } from "cloudflare:workers";
+import { createHash } from "node:crypto";
 import { abortAllDurableObjects, reset, runInDurableObject } from "cloudflare:test";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { enrollmentAccountName, type EnrollmentProof } from "../src/enrollment-contract";
@@ -153,6 +154,247 @@ function pairingReplies(change: (result: unknown) => unknown | Promise<unknown>)
     },
   });
 }
+
+async function pendingGenesis(committed = true) {
+  const reservation = await reserved(proof, ACCOUNT, NOW + 30_000);
+  const result = await runInDurableObject(accountStub(), async instance => {
+    const bucket = bucketReplies({ put: async (target, args) => {
+      if (committed) await target.put(...args);
+      throw new Error("private-provider-failure-canary");
+    } });
+    const restore = replaceEnvironment(instance, original => ({ ...original, CONTROL: bucket }));
+    try { return await instance.enroll(proof); } finally { restore(); }
+  });
+  expect(result).toEqual({ ok: false, error: "storage_unavailable" });
+  expect(await accountPayload()).toMatchObject({ phase: "pending", genesisCompletion: null, devices: [] });
+  return reservation;
+}
+
+describe("explicit retained-genesis recovery", () => {
+  test.each([true, false])("fresh recovery keeps the namespace when anchor committed=%s", async committed => {
+    const origin = await pendingGenesis(committed);
+    const pending = await accountPayload();
+    const original = committed ? await anchor() : null;
+    vi.setSystemTime(origin.expiresAtMs);
+    const fresh = { ...proof, intentId: SECOND_ID };
+    const reservation = await reserved(fresh);
+    expect(await accountStub().enroll(fresh)).toEqual({ ok: false, error: "recovery_required" });
+    const recovered = success(await accountStub().recoverPendingEnrollment(fresh));
+    privateProjection(recovered);
+    expect(recovered.receipt).toMatchObject({ intentId: SECOND_ID, reservationId: reservation.reservationId });
+    expect(await accountPayload()).toMatchObject({ phase: "active", anchor: pending.anchor,
+      genesisCompletion: { mode: "fresh-recovery", intentId: SECOND_ID, reservationId: reservation.reservationId, completedAtMs: origin.expiresAtMs },
+      devices: [expect.objectContaining({ deviceId: recovered.receipt.deviceId })] });
+    if (original !== null) expect(await anchor()).toEqual(original);
+    const namespace = success(await accountStub().namespaceForEnrollment(fresh));
+    expect(namespace.namespaceKey).toBe((pending.anchor as { namespaceKey: string }).namespaceKey);
+    expect(await accountStub().enroll(proof)).toEqual({ ok: false, error: "expired" });
+    expect((await accountStub().namespaceForEnrollment(proof)).ok).toBe(false);
+    vi.setSystemTime(reservation.expiresAtMs);
+    await abortAllDurableObjects();
+    expect(success(await accountStub().recoverPendingEnrollment(fresh))).toEqual(recovered);
+    expect(await accountStub().namespaceForEnrollment(fresh)).toEqual({ ok: false, error: "expired" });
+    success(await accountStub().revokeEnrollment(fresh));
+    expect(success(await accountStub().recoverPendingEnrollment(fresh))).toEqual({ receipt: recovered.receipt, deviceState: "revoked" });
+  });
+
+  test("recovery never initializes empty state or adopts an orphan anchor", async () => {
+    await reserved();
+    expect(await accountStub().recoverPendingEnrollment(proof)).toEqual({ ok: false, error: "recovery_required" });
+    expect(await accountRow()).toMatchObject({ revision: 0, payload: null });
+    expect((await env.CONTROL.list()).objects).toEqual([]);
+    success(await accountStub().enroll(proof));
+    const original = await anchor();
+    await runInDurableObject(accountStub(), (_instance, state) => state.storage.sql.exec("DROP TABLE account_enrollment").toArray());
+    await abortAllDurableObjects();
+    expect(await accountStub().recoverPendingEnrollment(proof)).toEqual({ ok: false, error: "recovery_required" });
+    expect(await accountRow()).toMatchObject({ revision: 0, payload: null });
+    expect(await anchor()).toEqual(original);
+  });
+
+  test("original proof, unrelated account and expired fresh proof cannot recover", async () => {
+    const origin = await pendingGenesis();
+    const original = await anchor();
+    expect(await accountStub().recoverPendingEnrollment(proof)).toEqual({ ok: false, error: "recovery_required" });
+    const fresh = { ...proof, intentId: SECOND_ID };
+    const reservation = await reserved(fresh);
+    expect(await accountStub(OTHER_ACCOUNT).recoverPendingEnrollment(fresh)).toEqual({ ok: false, error: "unauthorized" });
+    vi.setSystemTime(Math.max(origin.expiresAtMs, reservation.expiresAtMs));
+    expect(await accountStub().recoverPendingEnrollment(fresh)).toEqual({ ok: false, error: "expired" });
+    expect(await accountPayload()).toMatchObject({ phase: "pending", genesisCompletion: null, devices: [] });
+    expect(await anchor()).toEqual(original);
+  });
+
+  test("lost recovery anchor reply reconciles without a replacement or duplicate device", async () => {
+    await pendingGenesis(false);
+    const pending = await accountPayload();
+    const fresh = { ...proof, intentId: SECOND_ID };
+    await reserved(fresh);
+    const failed = await runInDurableObject(accountStub(), async instance => {
+      const bucket = bucketReplies({ put: async (target, args) => { await target.put(...args); throw new Error("private-provider-failure-canary"); } });
+      const restore = replaceEnvironment(instance, original => ({ ...original, CONTROL: bucket }));
+      try { return await instance.recoverPendingEnrollment(fresh); } finally { restore(); }
+    });
+    expect(failed).toEqual({ ok: false, error: "storage_unavailable" });
+    const original = await anchor();
+    expect(await accountPayload()).toMatchObject({ phase: "pending", devices: [], anchor: pending.anchor });
+    await abortAllDurableObjects();
+    const recovered = success(await accountStub().recoverPendingEnrollment(fresh));
+    expect(success(await accountStub().recoverPendingEnrollment(fresh))).toEqual(recovered);
+    expect(await anchor()).toEqual(original);
+    expect(await accountPayload()).toMatchObject({ devices: [expect.objectContaining({ deviceId: recovered.receipt.deviceId })] });
+  });
+
+  test.each(["expiry", "generation", "clock"] as const)("%s during recovery anchor I/O leaves genesis pending", async fault => {
+    await pendingGenesis();
+    const fresh = { ...proof, intentId: SECOND_ID };
+    const reservation = await reserved(fresh);
+    const original = await anchor();
+    const result = await runInDurableObject(accountStub(), async instance => {
+      const owned = instance as unknown as { env: Env };
+      const bucket = bucketReplies({ get: async (target, key) => {
+        const response = await target.get(key);
+        if (fault === "expiry") vi.setSystemTime(reservation.expiresAtMs);
+        else if (fault === "clock") vi.setSystemTime(NOW - 1);
+        else owned.env = withGeneration(owned.env, "88".repeat(32));
+        return response;
+      } });
+      const restore = replaceEnvironment(instance, originalEnv => ({ ...originalEnv, CONTROL: bucket }));
+      try { return await instance.recoverPendingEnrollment(fresh); } finally { restore(); }
+    });
+    expect(result).toEqual({ ok: false, error: fault === "expiry" ? "expired" : fault === "clock" ? "clock_regressed" : "recovery_required" });
+    expect(await accountPayload()).toMatchObject({ phase: "pending", genesisCompletion: null, devices: [] });
+    expect(await anchor()).toEqual(original);
+  });
+
+  test("fresh recovery supersedes an original enrollment still awaiting anchor I/O", async () => {
+    await reserved();
+    const fresh = { ...proof, intentId: SECOND_ID };
+    await reserved(fresh);
+    await runInDurableObject(accountStub(), async instance => {
+      let signal: () => void = () => { throw new Error("uninitialized barrier"); };
+      let release: () => void = () => { throw new Error("uninitialized barrier"); };
+      const entered = new Promise<void>(resolve => { signal = resolve; });
+      const released = new Promise<void>(resolve => { release = resolve; });
+      const bucket = bucketReplies({ put: async (target, args) => { const response = await target.put(...args); signal(); await released; return response; } });
+      const restore = replaceEnvironment(instance, original => ({ ...original, CONTROL: bucket }));
+      const original = instance.enroll(proof);
+      await entered;
+      // Recovery sees already persisted exact bytes, so no second put is needed.
+      try {
+        const winner = success(await instance.recoverPendingEnrollment(fresh));
+        release();
+        expect(await original).toEqual({ ok: false, error: "recovery_required" });
+        expect(winner.receipt.intentId).toBe(SECOND_ID);
+      } finally { release(); await original; restore(); }
+    });
+    expect(await accountPayload()).toMatchObject({ genesisCompletion: { mode: "fresh-recovery" }, devices: [expect.objectContaining({ reservation: expect.objectContaining({ intentId: SECOND_ID }) })] });
+  });
+
+  test("original completion winning a race is never overwritten by recovery", async () => {
+    await pendingGenesis();
+    const fresh = { ...proof, intentId: SECOND_ID };
+    await reserved(fresh);
+    await runInDurableObject(accountStub(), async instance => {
+      let signal: () => void = () => { throw new Error("uninitialized barrier"); };
+      let release: () => void = () => { throw new Error("uninitialized barrier"); };
+      const entered = new Promise<void>(resolve => { signal = resolve; });
+      const released = new Promise<void>(resolve => { release = resolve; });
+      let first = true;
+      const bucket = bucketReplies({ get: async (target, key) => {
+        const response = await target.get(key);
+        if (first) { first = false; signal(); await released; }
+        return response;
+      } });
+      const restore = replaceEnvironment(instance, original => ({ ...original, CONTROL: bucket }));
+      const recovery = instance.recoverPendingEnrollment(fresh);
+      await entered;
+      try {
+        success(await instance.enroll(proof));
+        release();
+        expect(await recovery).toEqual({ ok: false, error: "recovery_required" });
+      } finally { release(); await recovery; restore(); }
+    });
+    expect(await accountPayload()).toMatchObject({ genesisCompletion: { mode: "original", intentId: ID },
+      devices: [expect.objectContaining({ reservation: expect.objectContaining({ intentId: ID }) })] });
+  });
+
+  test("a reservation made before pending genesis is not fresh recovery authority", async () => {
+    const fresh = { ...proof, intentId: SECOND_ID };
+    await reserved(fresh);
+    vi.setSystemTime(NOW + 1_000);
+    await pendingGenesis();
+    const before = await accountPayload();
+    const original = await anchor();
+    expect(await accountStub().recoverPendingEnrollment(fresh)).toEqual({ ok: false, error: "recovery_required" });
+    expect(await accountPayload()).toMatchObject({ phase: "pending", genesisCompletion: null, anchor: before.anchor, devices: [] });
+    expect(await anchor()).toEqual(original);
+  });
+
+  test("two fresh recoveries commit exactly one completion", async () => {
+    await pendingGenesis();
+    const first = { ...proof, intentId: SECOND_ID };
+    const second = { ...proof, intentId: "ff".repeat(32) };
+    await reserved(first);
+    await reserved(second);
+    const results = await Promise.all([accountStub().recoverPendingEnrollment(first), accountStub().recoverPendingEnrollment(second)]);
+    expect(results.filter(result => result.ok)).toHaveLength(1);
+    expect(results.filter(result => !result.ok)).toEqual([{ ok: false, error: "recovery_required" }]);
+    const payload = await accountPayload();
+    expect(payload.devices).toHaveLength(1);
+    expect(payload.genesisCompletion).toMatchObject({ mode: "fresh-recovery" });
+  });
+
+  test.each(["empty", "pending", "active", "revoked", "multiple"] as const)("schema1 %s migrates additively without changing prior fields or revision", async phase => {
+    if (phase === "empty") { await accountRow(); }
+    else if (phase === "pending") await pendingGenesis();
+    else {
+      await reserved(); success(await accountStub().enroll(proof));
+      if (phase === "revoked") success(await accountStub().revokeEnrollment(proof));
+      if (phase === "multiple") {
+        const fresh = { ...proof, intentId: SECOND_ID };
+        await reserved(fresh); success(await accountStub().enroll(fresh));
+      }
+    }
+    const before = await accountRow();
+    const legacy = typeof before.payload === "string" ? JSON.parse(before.payload) as Record<string, unknown> : null;
+    if (legacy !== null) delete legacy.genesisCompletion;
+    await runInDurableObject(accountStub(), (_instance, state) => state.storage.sql.exec("UPDATE account_enrollment SET schema_version = 1, payload = ?", legacy === null ? null : JSON.stringify(legacy)).toArray());
+    await abortAllDurableObjects();
+    const after = await accountRow();
+    expect(after).toMatchObject({ schema_version: 2, revision: before.revision });
+    if (legacy === null) expect(after.payload).toBeNull();
+    else {
+      const payload = await accountPayload();
+      expect(payload.genesisCompletion).toEqual(phase === "pending" ? null : { mode: "original", intentId: ID, reservationId: (legacy.anchor as { reservationId: string }).reservationId, completedAtMs: NOW });
+      delete payload.genesisCompletion;
+      expect(payload).toEqual(legacy);
+    }
+  });
+
+  test.each(["mode", "time", "missing", "superseded device"] as const)("corrupt recovery completion %s cannot release namespace or be repaired", async corruption => {
+    const origin = await pendingGenesis();
+    const fresh = { ...proof, intentId: SECOND_ID };
+    await reserved(fresh);
+    success(await accountStub().recoverPendingEnrollment(fresh));
+    const payload = await accountPayload();
+    const completion = payload.genesisCompletion as Record<string, unknown>;
+    if (corruption === "mode") completion.mode = "original";
+    else if (corruption === "time") completion.completedAtMs = NOW - 1;
+    else if (corruption === "missing") payload.genesisCompletion = null;
+    else (payload.devices as unknown[]).push({ reservation: origin,
+      deviceId: createHash("sha256").update(["aicharts:enrollment:v1", "device", ACCOUNT, ID, origin.reservationId].join("\0")).digest("hex"),
+      enrolledAtMs: NOW, revokedAtMs: null });
+    const corrupted = JSON.stringify(payload);
+    await runInDurableObject(accountStub(), (_instance, state) => state.storage.sql.exec("UPDATE account_enrollment SET payload = ?", corrupted).toArray());
+    await abortAllDurableObjects();
+    for (const input of [proof, fresh]) {
+      for (const method of ["enroll", "recoverPendingEnrollment", "namespaceForEnrollment", "revokeEnrollment"] as const)
+        expect(await accountStub()[method](input)).toEqual({ ok: false, error: "storage_invalid" });
+    }
+    expect((await accountRow()).payload).toBe(corrupted);
+  });
+});
 
 describe("dormant account enrollment with real local pairing and R2", () => {
   test("a confirmed terminal is not an enrollment reservation", async () => {
@@ -534,7 +776,7 @@ describe("dormant account enrollment with real local pairing and R2", () => {
     expect(await accountStub().enroll(proof)).toEqual({ ok: false, error: "recovery_required" });
     expect((await accountStub().namespaceForEnrollment(proof)).ok).toBe(false);
     expect((await accountStub().revokeEnrollment(proof)).ok).toBe(false);
-    expect(await accountRow()).toMatchObject({ schema_version: 1, revision: 0, payload: null });
+    expect(await accountRow()).toMatchObject({ schema_version: 2, revision: 0, payload: null });
     expect(await anchor()).toEqual(original);
   });
 
@@ -583,7 +825,7 @@ describe("dormant account enrollment with real local pairing and R2", () => {
     await runInDurableObject(accountStub(), (_instance, state) => {
       switch (corruption) {
         case "malformed payload": state.storage.sql.exec("UPDATE account_enrollment SET payload = ?", '{"chat":"transcript-canary"}'); break;
-        case "future schema": state.storage.sql.exec("UPDATE account_enrollment SET schema_version = 2"); break;
+        case "future schema": state.storage.sql.exec("UPDATE account_enrollment SET schema_version = 3"); break;
         case "missing row": state.storage.sql.exec("DELETE FROM account_enrollment"); break;
         case "extra table": state.storage.sql.exec("CREATE TABLE unexpected_account_state (marker INTEGER)"); break;
         case "extra index": state.storage.sql.exec("CREATE INDEX unexpected_account_index ON account_enrollment (revision)"); break;
