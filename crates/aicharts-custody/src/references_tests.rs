@@ -533,6 +533,101 @@ fn initialize_never_adopts_or_overwrites_existing_or_invalid_state() {
 }
 
 #[test]
+fn initialization_reconciliation_reestablishes_durability_without_republication() {
+    let mut fs = FakeFs::default();
+    let initial = fs.initialize();
+    let bytes = fs.bytes();
+    fs.0.borrow_mut().events.clear();
+    assert_eq!(
+        engine::reconcile_initialization(&mut fs, INSTALLATION).unwrap(),
+        initial
+    );
+    assert_eq!(fs.bytes(), bytes);
+    let disk = fs.0.borrow();
+    assert!(disk.events.contains(&Event::SyncCommitted));
+    assert!(disk.events.contains(&Event::SyncDirectory));
+    assert!(!disk.events.contains(&Event::Stage));
+    assert!(!disk.events.contains(&Event::Publish));
+    assert!(disk.candidate.is_none());
+    drop(disk);
+    fs.release_ok();
+}
+
+#[test]
+fn initialization_reconciliation_preserves_original_intent_across_uncertainty() {
+    for (event, effect) in [
+        (Event::SyncCandidate, Effect::Before),
+        (Event::Publish, Effect::Before),
+        (Event::Publish, Effect::After),
+        (Event::SyncDirectory, Effect::Before),
+    ] {
+        let mut fs = FakeFs::default();
+        fs.fault(event, 1, effect);
+        assert!(engine::initialize(&mut fs, INSTALLATION).is_err());
+        fs.release_ok();
+        let prior_bytes = fs.bytes();
+        let prior_candidate = fs.0.borrow().candidate.clone();
+        let mut restart = fs.clone();
+        assert!(engine::reconcile_initialization(&mut restart, [12; 32]).is_err());
+        assert_eq!(restart.bytes(), prior_bytes);
+        assert!(restart.0.borrow().candidate == prior_candidate);
+        restart.release_ok();
+        let recovered = engine::reconcile_initialization(&mut restart, INSTALLATION).unwrap();
+        assert_eq!(recovered.installation, INSTALLATION);
+        assert_eq!(recovered.revision, 0);
+        assert!(recovered.entries.is_empty());
+        if let Some(candidate) = prior_candidate {
+            assert_eq!(restart.bytes().as_deref(), Some(candidate.bytes.as_slice()));
+        } else {
+            assert_eq!(restart.bytes(), prior_bytes);
+        }
+        restart.release_ok();
+    }
+}
+
+#[test]
+fn initialization_reconciliation_refuses_advanced_invalid_or_changed_state() {
+    let mut fs = FakeFs::default();
+    assert_eq!(
+        engine::reconcile_initialization(&mut fs, [0; 32]).err(),
+        Some(Error::InvalidInstallation)
+    );
+    assert!(fs.0.borrow().events.is_empty());
+    let advanced = fs.prepared(&record(1, Purpose::Checkpoint, 41));
+    let bytes = fs.bytes();
+    assert_eq!(
+        engine::reconcile_initialization(&mut fs, INSTALLATION).err(),
+        Some(Error::Conflict)
+    );
+    assert_eq!(fs.bytes(), bytes);
+    fs.release_ok();
+
+    let mut initial = FakeFs::default();
+    initial.initialize();
+    let bytes = initial.bytes();
+    initial.fault(Event::SyncCommitted, 1, Effect::Before);
+    assert_eq!(
+        engine::reconcile_initialization(&mut initial, INSTALLATION).err(),
+        Some(Error::StorageUnavailable)
+    );
+    assert_eq!(initial.bytes(), bytes);
+    initial.release_ok();
+    initial.0.borrow_mut().on_sync_committed = Some(codec::encode(&advanced));
+    assert_eq!(
+        engine::reconcile_initialization(&mut initial, INSTALLATION).err(),
+        Some(Error::StaleSnapshot)
+    );
+    assert_eq!(initial.bytes(), Some(codec::encode(&advanced)));
+    initial.release_ok();
+
+    initial.0.borrow_mut().committed = Some(vec![99; 96]);
+    let corrupt = initial.bytes();
+    assert!(engine::reconcile_initialization(&mut initial, INSTALLATION).is_err());
+    assert_eq!(initial.bytes(), corrupt);
+    initial.release_ok();
+}
+
+#[test]
 fn stale_token_fails_before_stage_or_vault_effects_in_all_operations() {
     let mut fs = FakeFs::default();
     let empty = fs.initialize();
