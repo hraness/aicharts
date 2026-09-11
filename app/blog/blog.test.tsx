@@ -60,6 +60,9 @@ import {
   BLOG_EDITORIAL_IMAGES,
   EDITORIAL_IMAGE_HEIGHT,
   EDITORIAL_IMAGE_WIDTH,
+  SLOPCAMERA_PACKAGE,
+  SLOPCAMERA_SOURCE_COMMIT,
+  SLOPCAMERA_VERSION,
   blogEditorialImage,
   blogEditorialImages,
 } from "./editorial-images";
@@ -73,7 +76,9 @@ import {
   breadcrumbJsonLd,
 } from "./seo";
 
-const IMAGE_FREE_SLUG = "small-models-have-arrived" as const;
+function imageLessLookup(): undefined {
+  return undefined;
+}
 
 describe("AI Charts benchmark notes", () => {
   test("uses the shared publication shell with chart discovery", () => {
@@ -130,6 +135,7 @@ describe("AI Charts benchmark notes", () => {
       expect(article.seoDescription.trim()).toBe(article.seoDescription);
       expect(articleToMarkdown(article)).toContain(`# ${article.title}`);
       expect(articleToMarkdown(article)).toContain(article.dek);
+      expect(articleToMarkdown(article)).not.toContain("/images/blog/");
       expect(article.authorshipDisclosure).toBe(BLOG_AUTHORSHIP_DISCLOSURE);
       expect(articleToMarkdown(article)).toContain(BLOG_AUTHORSHIP_DISCLOSURE);
       if (article.slug === "terminal-bench-science") {
@@ -493,14 +499,10 @@ describe("AI Charts benchmark notes", () => {
     for (const article of blogArticles) {
       expect(indexMarkup).toContain(`href="${blogArticlePath(article.slug)}"`);
       const editorialImage = blogEditorialImage(article.slug);
+      expect(editorialImage).toBeDefined();
       if (editorialImage !== undefined) {
         expect(indexMarkup).toContain(
           encodeURIComponent(editorialImage.src),
-        );
-      } else {
-        expect(article.slug).toBe(IMAGE_FREE_SLUG);
-        expect(indexMarkup).not.toContain(
-          encodeURIComponent(`/images/blog/${article.slug}.webp`),
         );
       }
 
@@ -520,9 +522,6 @@ describe("AI Charts benchmark notes", () => {
       if (editorialImage !== undefined) {
         expect(markup).toContain(editorialImage.caption);
         expect(markup).toContain(editorialImage.alt);
-      } else {
-        expect(article.slug).toBe(IMAGE_FREE_SLUG);
-        expect(markup).not.toContain("<figure");
       }
       if ("nextStep" in article && article.nextStep !== undefined) {
         expect(markup).toContain(article.nextStep.title);
@@ -611,18 +610,15 @@ describe("AI Charts blog discovery", () => {
       expect(metadata.robots).toEqual(INDEXABLE_ROBOTS);
     }
 
-    const imageLessArticle = getBlogArticle(IMAGE_FREE_SLUG);
-    expect(imageLessArticle).toBeDefined();
-    if (imageLessArticle === undefined) return;
-    const imageLess = blogArticleMetadata(imageLessArticle);
+    const imageLess = blogArticleMetadata(blogArticles[0], null);
     expect(imageLess.openGraph).not.toHaveProperty("images");
     expect(imageLess.twitter).toMatchObject({ card: "summary" });
     expect(imageLess.twitter).not.toHaveProperty("images");
   });
 
-  test("validates each registered editorial image without requiring one per article", async () => {
-    expect(blogEditorialImage(IMAGE_FREE_SLUG)).toBeUndefined();
-    expect(blogEditorialImages.length).toBeLessThan(blogArticles.length);
+  test("validates each registered editorial image against the manifest and binary", async () => {
+    expect(blogEditorialImages.map(image => image.slug).sort())
+      .toEqual([...BLOG_SLUGS].sort());
     for (const slug of Object.keys(BLOG_EDITORIAL_IMAGES)) {
       expect(BLOG_SLUGS as readonly string[]).toContain(slug);
     }
@@ -636,6 +632,12 @@ describe("AI Charts blog discovery", () => {
       expect(image.alt.trim()).toBe(image.alt);
       expect(image.caption.trim()).toBe(image.caption);
       expect(image.sha256).toMatch(/^[a-f0-9]{64}$/u);
+      expect(image.credit).toContain("Slopcamera");
+      expect(image.provenance.package).toBe(SLOPCAMERA_PACKAGE);
+      if (image.provenance.package === SLOPCAMERA_PACKAGE) {
+        expect(image.provenance.sourceCommit).toBe(SLOPCAMERA_SOURCE_COMMIT);
+        expect(image.provenance.version).toBe(SLOPCAMERA_VERSION);
+      }
 
       const file = Bun.file(new URL(`../../public${image.src}`, import.meta.url));
       expect(await file.exists()).toBeTrue();
@@ -644,7 +646,12 @@ describe("AI Charts blog discovery", () => {
       expect(hasher.digest("hex")).toBe(image.sha256);
     }
 
-    expect(editorialImageManifest.generator.package).toBe("@hraness/atet@3.1.2");
+    expect(editorialImageManifest.generator.package).toBe(SLOPCAMERA_PACKAGE);
+    expect(editorialImageManifest.generator.version).toBe(SLOPCAMERA_VERSION);
+    expect(editorialImageManifest.generator.sourceCommit)
+      .toBe(SLOPCAMERA_SOURCE_COMMIT);
+    expect(editorialImageManifest.historicalGenerator.package)
+      .toBe("@hraness/atet@3.1.2");
     expect(editorialImageManifest.images.map(entry => entry.slug).sort())
       .toEqual(blogEditorialImages.map(image => image.slug).sort());
     for (const image of blogEditorialImages) {
@@ -659,6 +666,9 @@ describe("AI Charts blog discovery", () => {
       expect(entry.promptSha256).toBe(image.provenance.promptSha256);
       expect(entry.receiptPath.endsWith(image.provenance.receipt)).toBeTrue();
       expect(entry.jobPath.endsWith(image.provenance.job)).toBeTrue();
+      expect(entry.generator.package).toBe(SLOPCAMERA_PACKAGE);
+      expect(entry.generator.version).toBe(SLOPCAMERA_VERSION);
+      expect(entry.generator.sourceCommit).toBe(SLOPCAMERA_SOURCE_COMMIT);
       const file = Bun.file(new URL(`../../public${image.src}`, import.meta.url));
       expect(entry.master.bytes).toBe(file.size);
     }
@@ -681,19 +691,7 @@ describe("AI Charts blog discovery", () => {
         expect(xml).toContain(image.caption);
       }
     }
-    const imageFreeArticle = getBlogArticle(IMAGE_FREE_SLUG);
-    expect(imageFreeArticle).toBeDefined();
-    if (imageFreeArticle === undefined) return;
-    const imageFreeUrl = `https://aicharts.io${blogArticlePath(IMAGE_FREE_SLUG)}`;
-    const imageFreeStart = xml.indexOf(`<id>${imageFreeUrl}</id>`);
-    const imageFreeEnd = xml.indexOf("</entry>", imageFreeStart);
-    const imageFreeEntry = xml.slice(imageFreeStart, imageFreeEnd);
-    expect(imageFreeStart).toBeGreaterThan(-1);
-    expect(imageFreeEntry).not.toContain('rel="enclosure"');
-    expect(imageFreeEntry).not.toContain(`/images/blog/${IMAGE_FREE_SLUG}.webp`);
-    expect(imageFreeEntry).toContain("AI-assisted editorial workflow");
-    expect(imageFreeEntry).toContain("Prepared with AI assistance");
-    const imageLessFeed = atomFeed(() => undefined);
+    const imageLessFeed = atomFeed(imageLessLookup);
     expect(imageLessFeed.match(/<entry>/gu)).toHaveLength(blogArticles.length);
     expect(imageLessFeed).not.toContain('rel="enclosure"');
     expect(imageLessFeed).not.toContain("&lt;figure&gt;");
@@ -742,19 +740,11 @@ describe("AI Charts blog discovery", () => {
       expect(structured).not.toHaveProperty("aggregateRating");
     }
 
-    const imageLessCollection = blogCollectionJsonLd(() => undefined);
+    const imageLessCollection = blogCollectionJsonLd(imageLessLookup);
     for (const item of imageLessCollection.mainEntity.itemListElement) {
       expect(item).not.toHaveProperty("image");
     }
     expect(blogArticleJsonLd(blogArticles[0], null)).not.toHaveProperty("image");
-    const liveImageFree = getBlogArticle(IMAGE_FREE_SLUG);
-    expect(liveImageFree).toBeDefined();
-    if (liveImageFree !== undefined) {
-      expect(blogArticleJsonLd(liveImageFree)).not.toHaveProperty("image");
-      const liveItem = collection.mainEntity.itemListElement.find(item =>
-        item.url.endsWith(blogArticlePath(IMAGE_FREE_SLUG)));
-      expect(liveItem).not.toHaveProperty("image");
-    }
 
     const smallModels = getBlogArticle("small-models-have-arrived");
     expect(smallModels).toBeDefined();
@@ -816,13 +806,9 @@ describe("AI Charts blog discovery", () => {
         ]);
       }
     }
-    for (const entry of blogSitemapEntries(() => undefined)) {
+    for (const entry of blogSitemapEntries(imageLessLookup)) {
       expect(entry).not.toHaveProperty("images");
     }
-    const liveImageFree = entries.find(entry =>
-      entry.url.endsWith(blogArticlePath(IMAGE_FREE_SLUG)));
-    expect(liveImageFree).toBeDefined();
-    expect(liveImageFree).not.toHaveProperty("images");
   });
 
   test("emits a website identity and links the chart to the blog", async () => {

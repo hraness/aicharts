@@ -62,7 +62,7 @@ vercel env run -- bun "$SLOPCAMERA_SOURCE_ROOT/apps/desktop/dist/cli/main.js" ai
 
 Vercel injects credentials only into that child. Do not use a global binary, automatically retry an ambiguous paid result, or overwrite a provider artifact. Keep new prompts and receipts in ignored `artifacts/slopcamera/`.
 
-Existing credits, manifest generator `@hraness/atet@3.1.2`, and `artifacts/atet/` receipt paths describe historical artwork and remain unchanged. Before accepting a new batch, extend the typed registry and manifest to retain its actual Slopcamera source commit and per-image provenance; do not insert new output under the historical generator declaration.
+Existing credits, manifest generator `@hraness/atet@3.1.2`, and `artifacts/atet/` receipt paths describe the retired cream isometric batch. Live registered masters use Slopcamera at the reviewed source commit, with per-image package, version, receipt, and job paths. Do not insert new output under the historical Atet generator declaration.
 
 Review each original at full size and together in a 384×216 contact sheet.
 Reject accidental text, distorted forms, fake data, repeated compositions,

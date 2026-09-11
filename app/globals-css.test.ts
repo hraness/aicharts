@@ -151,7 +151,7 @@ test("homepage orientation is a hairline fact list on the shared section grammar
   expect(firstRule(".chart-orientation__facts dd")).toContain("font-size: 1rem");
 });
 
-test("the image-free homepage article is an intentional responsive text card", () => {
+test("the image-free homepage card remains available when a curated article has no image", () => {
   const imageLink = firstRule(".home-editorial__image-link");
   const textCard = firstRule(".home-editorial__text-card");
 

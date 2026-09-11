@@ -66,18 +66,13 @@ describe("homepage canonical content", () => {
     for (const slug of HOME_EDITORIAL_SLUGS) {
       expect(markup).toContain(`href="/blog/${slug}"`);
       const image = blogEditorialImage(slug);
-      if (image === undefined) {
-        expect(slug).toBe("small-models-have-arrived");
-        expect(markup).not.toContain(
-          encodeURIComponent(`/images/blog/${slug}.webp`),
-        );
-      } else {
-        expect(markup).toContain(encodeURIComponent(image.src));
-        const card = getBlogArticle(slug);
-        expect(card).toBeDefined();
-        if (card !== undefined) {
-          expect(markup).toContain(`<p>${card.dek}</p>`);
-        }
+      expect(image).toBeDefined();
+      if (image === undefined) continue;
+      expect(markup).toContain(encodeURIComponent(image.src));
+      const card = getBlogArticle(slug);
+      expect(card).toBeDefined();
+      if (card !== undefined) {
+        expect(markup).toContain(`<p>${card.dek}</p>`);
       }
     }
 

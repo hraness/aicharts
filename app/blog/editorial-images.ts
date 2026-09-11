@@ -3,19 +3,41 @@ import type { BlogSlug } from "./articles";
 export const EDITORIAL_IMAGE_WIDTH = 1536;
 export const EDITORIAL_IMAGE_HEIGHT = 864;
 export const EDITORIAL_IMAGE_CREDIT =
+  "AI Charts editorial illustration · Slopcamera with GPT Image 2";
+export const ATET_EDITORIAL_IMAGE_CREDIT =
   "AI Charts editorial illustration · Atet with GPT Image 2";
+export const ATET_PACKAGE = "@hraness/atet@3.1.2";
+export const SLOPCAMERA_PACKAGE = "@hraness/slopcamera";
+export const SLOPCAMERA_VERSION = "3.2.5";
+export const SLOPCAMERA_SOURCE_COMMIT =
+  "66b4322030f4de24f4d5b6d0c2515c109259f901";
+
+export type AtetEditorialProvenance = Readonly<{
+  job: `gateway_${string}.json`;
+  package: typeof ATET_PACKAGE;
+  promptSha256: string;
+  receipt: `${string}/receipt.json`;
+}>;
+
+export type SlopcameraEditorialProvenance = Readonly<{
+  job: `gateway_${string}.json`;
+  package: typeof SLOPCAMERA_PACKAGE;
+  promptSha256: string;
+  receipt: `${string}/receipt.json`;
+  sourceCommit: typeof SLOPCAMERA_SOURCE_COMMIT;
+  version: typeof SLOPCAMERA_VERSION;
+}>;
+
+export type EditorialImageProvenance =
+  | AtetEditorialProvenance
+  | SlopcameraEditorialProvenance;
 
 export type BlogEditorialImage<Slug extends BlogSlug = BlogSlug> = Readonly<{
   alt: string;
   caption: string;
-  credit: typeof EDITORIAL_IMAGE_CREDIT;
+  credit: typeof EDITORIAL_IMAGE_CREDIT | typeof ATET_EDITORIAL_IMAGE_CREDIT;
   height: typeof EDITORIAL_IMAGE_HEIGHT;
-  provenance: Readonly<{
-    job: `gateway_${string}.json`;
-    package: "@hraness/atet@3.1.2";
-    promptSha256: string;
-    receipt: `${string}/receipt.json`;
-  }>;
+  provenance: EditorialImageProvenance;
   sha256: string;
   slug: Slug;
   socialSrc: `/images/blog/${Slug}.webp`;
@@ -44,9 +66,11 @@ function image<Slug extends BlogSlug>(
     height: EDITORIAL_IMAGE_HEIGHT,
     provenance: {
       job,
-      package: "@hraness/atet@3.1.2",
+      package: SLOPCAMERA_PACKAGE,
       promptSha256,
       receipt,
+      sourceCommit: SLOPCAMERA_SOURCE_COMMIT,
+      version: SLOPCAMERA_VERSION,
     },
     sha256,
     slug,
@@ -59,48 +83,57 @@ function image<Slug extends BlogSlug>(
 export const BLOG_EDITORIAL_IMAGES = {
   "terminal-bench-science": image(
     "terminal-bench-science",
-    "Paper-cutout hands hold a high charcoal measuring beam while a compact cobalt apparatus reaches only partway, with coral and mint weights on a low tray.",
+    "A dark circular well sits under a brass-marked measuring beam on a tall stand, with four small brass weights on a round tray.",
     "Scientists set the task set; this illustration separates completion, evaluation cost, and token use. It is not a data plot.",
-    "25b0982fb419a0e7caa8551c1521950a70ae10ac84d12d8cd765c705015f4541",
-    "a233bd9a0784c0f26b90201a57e315b9d642a0f3b285256a204e25041df14be3",
-    "20260831T132600000Z-image-25b0982f-tbs/receipt.json",
-    "gateway_db4be239e6db4bae5aa62a424e6e6a4c.json",
+    "22e027068d7b6ec00916f4020bd5978bb37cdd42ddad9db8c141732b3898768b",
+    "826a45b4469a95b6aa1692a976c503dc870421345784dce7279fae06e4b8a743",
+    "20260910T235909311Z-image-b0beab7d-9f1/receipt.json",
+    "gateway_360f56e67b5543029b3ff5923545f9d6.json",
   ),
   "coding-agent-score-holdouts": image(
     "coding-agent-score-holdouts",
-    "A modular testing path passes an open gate while an unresolved branch waits behind a folded screen.",
+    "A pale path splits: one branch enters a lit arched doorway with an open brass gate, and the other disappears behind a folded black screen.",
     "Public-suite success does not establish performance on cases the optimizer could not see.",
-    "93d3936c6f6af202ea3da59def3563ba184a21779942e7fa7161cd92956667d5",
-    "febeb1a517412083a71e2bd9527f96d90cec32da5d975312a45244a8ced78562",
-    "20260829T045554012Z-image-79298e96-a51/receipt.json",
-    "gateway_9346b1f302c942cd98baad3406be272b.json",
+    "0a8c5cd5d0ea2030e8ac5a101c74c3654d70aa7089140d5a86ddf237027bbd3f",
+    "a697a3a392f8d50cfa07a44fb100b07aa00d1a4e9643218308a31e2be88477e2",
+    "20260910T235934359Z-image-d86ec47b-e72/receipt.json",
+    "gateway_80e4fbb62d4d4986ace6978e80624d86.json",
   ),
   "open-models-coding-agent-benchmarks": image(
     "open-models-coding-agent-benchmarks",
-    "Several modular systems combine inner cores, tool frames, and adjustable outer rings on one testing surface.",
+    "A dark rounded core sits inside a gold lattice frame with four open loops.",
     "Each result belongs to a complete model, harness, and setting configuration.",
-    "bd86b36cda57755c74e7e7c08c04dd7e5d4ac21a4771bd6eb6696dba9fdb2270",
-    "bde3d211d39a01393e6118edb2a6a101f15eac042f0fff1d87fde21f68e540be",
-    "20260829T045629124Z-image-9eb375f4-52e/receipt.json",
-    "gateway_18c21b758a5a476294bdde88c1b45935.json",
+    "e54bd9c65521a0663942ec94ff02e6d89adfafba059d2837bfef7b42cce18dd3",
+    "397dc4004579b3db53a32be2a87946e3f9a6158863a18dba6de9b6b81c095357",
+    "20260910T235959491Z-image-66c52b1b-7e7/receipt.json",
+    "gateway_b499bbfcfc3246adb97038e8cc0bebe8.json",
   ),
   "aa-index-cost-coding-agents": image(
     "aa-index-cost-coding-agents",
-    "Computational modules sit between a dark resource tray and a rising blue capability scaffold.",
+    "Mixed blocks, cylinders, and a thin brass frame sit on a dark tray; one cube glows cool blue.",
     "Cost and benchmark performance form trade-offs, not one universal ranking; the illustration is not a data plot.",
-    "59dff83d9eb1a1ce7ebc46d10bc4a11712b260f38ed5e7123944763b98011fc4",
-    "0dbf95c4d09574546dff3dc815f4137ea6bf065595f56f0b3168977daca357ad",
-    "20260829T045702332Z-image-bde652f9-edb/receipt.json",
-    "gateway_8d52216479e2468d8c685877699be66d.json",
+    "eb52d610171b0e344c2d3b45b5ad53901ccf8853522fe93261183738e806a8f3",
+    "b604f426935f8db93c12e6331619a0b43a16caebe290ad24eca5b8fb89439ba3",
+    "20260911T000022840Z-image-1cd1d625-7d6/receipt.json",
+    "gateway_7723f4fb52d544cbb4db54c88e01f4d2.json",
   ),
   "mirrorcode-coding-agent-benchmark": image(
     "mirrorcode-coding-agent-benchmark",
-    "A hidden machine and a newly assembled machine receive the same inputs and return almost matching physical outputs.",
+    "A closed black box and an open assembled machine return matching white geometric outputs.",
     "Behavioral reimplementation is judged by outputs, including held-out tests the agent cannot inspect.",
-    "1a4823c8de472b1edcb48d5a8ebf7a893c7aad2d26ea52be6cedecb6df331331",
-    "489c252eef19475feb415cfee029ba1d0edbb48bbd85b6c2556d331e1036877f",
-    "20260829T045733333Z-image-0903f6a9-912/receipt.json",
-    "gateway_e99b616d49ae40a9b656442b726178ed.json",
+    "63f633f21319870eec947d1986266e3aa60c50949d5d8c386064e934088f44cd",
+    "641259195975f0a03db9088bbe9edf9c51e28ca79406446b1fab7271fb397171",
+    "20260911T000050534Z-image-500cd108-717/receipt.json",
+    "gateway_3d2f6d52a6e1436db973791cee47f312.json",
+  ),
+  "small-models-have-arrived": image(
+    "small-models-have-arrived",
+    "A small pale cube with a brass pin sits on a short track of circular stations beside a large dark block.",
+    "A lower inference cost matters only for a repeated task that still meets a written quality bar. This illustration is not a cost plot.",
+    "c13df141e34055cbe2b77ab577716bce1b5e4c4199c8e0575a7f4d92ea66f584",
+    "fe677680fbcdc340cfd5e0083d2e91c8163464a5fef249d634f5a75c37ede2a8",
+    "20260911T000116830Z-image-e23527ec-438/receipt.json",
+    "gateway_3d2ac2f152574a2dafa6d5f5341f3b60.json",
   ),
 } as const satisfies EditorialImageRecord;
 
