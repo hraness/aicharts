@@ -1,6 +1,6 @@
 # Usage Worker boundaries
 
-The Usage Worker contains internal device-pairing and numeric blob-staging primitives. Its public handler always returns a fixed, private `503`. It has no deployment command, browser adapter, account enrollment, upload authorization, accepted-usage index or query endpoint. Tests use synthetic local bindings; no live Worker or R2 bucket is provisioned by this source slice.
+The Usage Worker contains internal device-pairing and numeric blob-staging primitives. Its public handler always returns a fixed, private `503`. It has no deployment command, public browser approval route, account enrollment, upload authorization, accepted-usage index or query endpoint. The application has a dormant server-only authentication coordinator, but no production Worker connection. Tests use synthetic local bindings; no live Worker or R2 bucket is provisioned by this source slice.
 
 ## Storage split
 
@@ -12,9 +12,9 @@ Cloudflare recommends SQLite-backed [Durable Object class exports](https://devel
 
 The internal lifecycle ends at terminal confirmation. That state does not create an account namespace, enroll a device or activate its committed upload credential. The short-lived polling secret and the future upload secret have distinct hash domains and must be independent. Persisted state contains commitments, bounded opaque identifiers, timestamps and counters, never OAuth bearers or transcript fields.
 
-The browser attempt has a random context capability and nonce binding. A future server-only SDK adapter must carry that context inside the sealed OIDC transaction and return a verified account with signed `auth_time`. `prompt=login`, a recent token `iat`, a callback response or the existing product session are not sufficient freshness evidence. Browser-carried authorization parameters can be altered without changing the transaction's state or PKCE challenge. Ordinary login and refresh must never produce pairing approval.
+The browser attempt has a random context capability and nonce commitment. The server-only coordinator in `lib/usage/pairing-auth.ts` carries the exact proof inside the SDK's sealed transaction, consumes the verified account and signed `auth_time` internally, and calls only `recordVerifiedAuthentication`. Its narrow server transport port is unconfigured in production. `prompt=login`, a recent token `iat`, a callback response or the existing product session are not sufficient freshness evidence. Ordinary login and refresh cannot produce pairing authentication or approval.
 
-Only the future trusted adapter may record verified authentication. Internal method validation checks its bounded DTO and timestamp relationships; it cannot verify an OAuth signature or manufacture trust from a caller-supplied timestamp. A separate same-origin, CSRF-protected approval POST must recheck the live account and consume the same browser-bound attempt. The CLI must display and explicitly confirm the approved account before enrollment. No public route currently calls these methods.
+Only the trusted coordinator may record verified authentication through a future qualified server transport. Internal method validation checks its bounded DTO and timestamp relationships; it cannot verify an OAuth signature or manufacture trust from a caller-supplied timestamp. The coordinator maps the SDK's earliest transaction/token expiry to `sessionExpiresAtMs` and withholds its continuation when recording fails or becomes uncertain. Durable recording is idempotent for identical live evidence but never grants consent. A separate same-origin, CSRF-protected approval POST must recheck the live account and consume the same browser-bound attempt. Browser nonce cookie custody is still unimplemented. The CLI must display and explicitly confirm the approved account before enrollment. No public route currently calls these methods.
 
 ## Numeric staging
 
@@ -32,7 +32,7 @@ Local restart helpers preserve Durable Object storage across instance teardown. 
 
 Before activation, complete and independently review:
 
-- Fresh intent-bound SDK completion, browser CSRF/live-account checks, human-code routing and pre-creation abuse limits.
+- Authenticated coordinator-to-Worker transport, real fresh-authentication qualification, browser nonce custody, CSRF/live-account approval checks, human-code routing and pre-creation abuse limits.
 - Account-owned enrollment, terminal account confirmation, credential custody, stable namespace recovery and explicit local-ledger reindex. Retain original ledger keys and pending history.
 - Authenticated admission, per-account deduplication, correction semantics and final-commit revocation checks. An R2 write alone never commits visibility.
 - An external recovery fence, immutable receipts and tombstones, bounded reconciliation and credential invalidation after restore. Restored object state must not independently authorize reopening.

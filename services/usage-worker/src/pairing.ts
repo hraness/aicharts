@@ -154,10 +154,11 @@ function matchesBrowser(state: State, input: BrowserProof, proof: BrowserDigests
 
 /**
  * Internal-only durable state through account-selection confirmation.
- * recordVerifiedAuthentication accepts facts from a FUTURE trusted SDK adapter;
+ * recordVerifiedAuthentication accepts facts from the server-only SDK coordinator
+ * through a future qualified transport.
  * DTO validation does not authenticate those facts. Never forward browser JSON
- * to it. contextToken is only a product capability to bind inside the future
- * SDK-sealed transaction context, not proof that OIDC has run.
+ * to it. contextToken is only a product capability bound inside the
+ * SDK-sealed transaction context, not proof that OIDC has run by itself.
  * There is no enrollment, credential activation, namespace recovery, or PITR API.
  */
 export class PairingIntent extends DurableObject<Env> {
