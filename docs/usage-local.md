@@ -1,10 +1,10 @@
 # Local Codex and Claude Code usage
 
-The usage CLI is a local-only foundation. It reads explicitly selected JSONL files, projects metadata into numeric measurements, deduplicates supported copied records, and prints a summary or exact wire dry-run. It has no networking code, login, public upload, background service or persistent session cache. AI Charts' live website is unchanged.
+The usage CLI is local-only. It reads explicitly selected JSONL files, projects metadata into numeric measurements, deduplicates supported copied records, and prints a summary or exact wire dry-run. Explicit initialization also enables a private numeric ledger with restart-safe checkpoints and a local pending queue. It has no networking code, login, public upload, background service or transcript cache. AI Charts' live website is unchanged.
 
 ## Build and run
 
-Install the Rust toolchain pinned in `rust-toolchain.toml`. From the repository:
+Install the Rust toolchain pinned in `rust-toolchain.toml` and a C compiler for the bundled SQLite dependency. From the repository:
 
 ```sh
 cargo build --locked -p aicharts-cli
@@ -41,21 +41,57 @@ Token totals are **observed, partial historical usage**, not provider billing st
 
 All omissions are reported with fixed warning codes. The parser's detailed code and limits are documented in [`crates/aicharts-core/README.md`](../crates/aicharts-core/README.md). Source formats change; current evidence is synthetic compatibility tests, not a universal installed-version qualification.
 
+## Save measurements locally
+
+On macOS/Linux, initialize a new state directory outside the repository using your existing namespace key. Its parent must already exist. Keep it on a private local filesystem, not a network share or synchronized cloud folder:
+
+```sh
+./target/debug/aicharts init --state-dir /absolute/private/directory/aicharts-state --key-file /absolute/private/directory/aicharts.key
+```
+
+The new directory has mode 0700 and its database has mode 0600. Initialization refuses an existing directory. A failed initialization can leave an incomplete directory; it is never automatically overwritten. Keep the key: a different key cannot open this ledger, and a missing directory is not silently recreated by collection.
+
+Collect explicit sources and inspect retained totals after a restart:
+
+```sh
+./target/debug/aicharts collect --state-dir /absolute/private/directory/aicharts-state --key-file /absolute/private/directory/aicharts.key --codex /absolute/path/to/sessions --claude /absolute/path/to/projects --json
+./target/debug/aicharts status --state-dir /absolute/private/directory/aicharts-state --key-file /absolute/private/directory/aicharts.key --json
+```
+
+Unchanged file metadata skips source parsing. Changed sources are read again from the beginning; `--rescan` forces this for unchanged files too. `linesRead`, `bytesScanned` and `sourcesSkipped` describe that invocation. This is a source-snapshot checkpoint, not byte-tail resumption. Metadata skips are not tamper evidence. The ledger also validates its bounded numeric state on open, so a no-change scan still performs local integrity work.
+
+All selected changed sources must parse and remain stable before one transaction saves checkpoints, deduplicated measurements and pending candidates together. A partial final line, malformed source, conflicting occurrence, stale concurrent writer or exceeded limit leaves that import uncommitted. Persistent collection requires a final newline. Retry after the source writer completes. An omitted source remains retained; truncation, replacement at the same canonical path or disappearing previously observed occurrences fail with a fixed error instead of deleting history. Automatic rotation migration, explicit deletion and decreasing corrections are not implemented.
+
+Compatible Claude streaming updates replace the local pending value rather than add another occurrence. An older separate copy cannot lower the latest observed value. A successful result is still partial historical measurement, not a billing statement or proof against forged usage. If another collector commits before the summary is read, `committedRevision` identifies this import and `ledgerRevision` identifies the later summary snapshot.
+
+Preview the local pending queue without acknowledging or transmitting anything:
+
+```sh
+./target/debug/aicharts outbox --dry-run --state-dir /absolute/private/directory/aicharts-state --key-file /absolute/private/directory/aicharts.key --limit 64
+```
+
+If `nextAfter` is non-null, use it as `--after` together with the returned `ledgerRevision` as `--revision` on the next invocation. The page limit is 1 through 256. A changed ledger invalidates pagination; restart from the first page. Entries contain canonical numeric frames and local revisions only. This queue is not the remote upload protocol or a provider attestation. There is no sending or acknowledgment command.
+
+The [ledger contract](../crates/aicharts-ledger/README.md) describes atomicity, source-history checks and recovery boundaries. Do not delete a journal, reset a corrupt database or replace a lost namespace key as an automatic repair. Preserve the private state for diagnosis; there is no supported migration/recovery command yet.
+
 ## Limits and failure behavior
 
-The CLI accepts at most 2,048 source files, visits at most 20,000 directory entries to depth 16, and reads at most a 256 MiB source snapshot per invocation. Each file is bounded to its observed initial size, so newly appended data waits for another scan. Readers cap physical lines at 1 MiB, nesting at 64, source lines at 100,000 and merged unique measurements at 100,000. The CLI additionally caps retained per-file measurements at 100,000 before merging; copied records count against this work budget even when subsequently deduplicated. Limits fail explicitly, not by returning silently truncated totals. Narrow the selected source range when a limit is reached; automatic incremental cursors and a durable numeric outbox are future work.
+The CLI accepts at most 2,048 source files, visits at most 20,000 directory entries to depth 16, and reads at most a 256 MiB source snapshot per invocation. Each file is bounded to its observed initial size, so newly appended data waits for another scan. Readers cap physical lines at 1 MiB, nesting at 64, source lines at 100,000 and merged unique measurements at 100,000. The CLI additionally caps retained per-file measurements at 100,000 before merging; copied records count against this work budget even when subsequently deduplicated. Limits fail explicitly, not by returning silently truncated totals. Narrow the selected source range when a scan limit is reached.
 
-A malformed or partially written trailing record fails the scan with a fixed error. Retry after the source writer completes; no cursor has been advanced and no server state has changed. Standard error never includes source content or paths. Internal bugs are still possible; a passed test suite is not a security audit.
+Persistent state additionally caps 2,048 retained sources, 100,000 unique occurrences and 200,000 source-to-occurrence associations. Its main SQLite file is capped at 256 MiB; journal space is additional. Hitting a retained-state cap requires a future reviewed retention/export path, not deleting state or silently reminting a namespace. No unbounded history claim is made.
+
+A malformed or partially written trailing record fails the scan with a fixed error. Retry after the source writer completes; no checkpoint has been advanced and no server state has changed. Standard error never includes source content or paths. Internal bugs are still possible; a passed test suite is not a security audit.
 
 ## Privacy and validation
 
-The source projections contain no prompt/response bodies, titles, paths, model names, tool arguments or attachments. Skipping fields still requires scanning their bytes. Numeric IDs use a private keyed hash of bounded native identity metadata, not of conversation content. Numeric protocols do not prevent a malicious client from encoding arbitrary information in numbers, and valid counters are not provider-attested counters.
+The source projections contain no prompt/response bodies, titles, paths, model names, tool arguments or attachments. Skipping fields still requires scanning their bytes. Occurrence IDs use a private keyed hash of bounded native identity metadata, not of conversation content. Persistent local source checkpoint IDs additionally use a separate keyed hash of canonical path and provider; they are not included in pending frames. Neither raw paths nor keys are persisted. Numeric protocols do not prevent a malicious client from encoding arbitrary information in numbers, and valid counters are not provider-attested counters. The local ledger is private by filesystem permissions, not encrypted or OS-sandboxed.
 
 Run focused checks during development:
 
 ```sh
 cargo test --locked -p aicharts-protocol
 cargo test --locked -p aicharts-core
+cargo test --locked -p aicharts-ledger
 cargo test --locked -p aicharts-cli
 bun test lib/usage
 ```

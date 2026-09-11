@@ -1,5 +1,7 @@
 #![forbid(unsafe_code)]
 
+mod state;
+
 use std::fs::{self, File, OpenOptions};
 use std::io::{self, BufReader, Read, Write};
 use std::path::{Path, PathBuf};
@@ -16,12 +18,19 @@ const HELP: &str = "AI Charts Usage — local-only foundation
   aicharts usage --key-file PATH [--codex FILE_OR_DIR] [--claude FILE_OR_DIR] [--json]
   aicharts upload --dry-run --key-file PATH [--codex FILE_OR_DIR] [--claude FILE_OR_DIR]
   aicharts keygen --output PATH
+  aicharts init --state-dir DIR --key-file PATH
+  aicharts collect --state-dir DIR --key-file PATH [--codex FILE_OR_DIR] [--claude FILE_OR_DIR] [--rescan] [--json]
+  aicharts status --state-dir DIR --key-file PATH [--json]
+  aicharts outbox --dry-run --state-dir DIR --key-file PATH [--limit 1..256] [--after ID --revision N]
 
 Sources may be repeated. Directories scan .jsonl files and skip symlink entries.
 Final source files must be regular files; this is not an OS source sandbox.
 usage prints numeric summaries. upload --dry-run prints canonical frames as hex JSON;
 it does not contact any service. Key files contain exactly 32 private random bytes.
 keygen creates a new mode-0600 file on Unix and never overwrites an existing file.
+Persistent commands are Unix-only and require explicit initialization. collect
+rescans changed sources from the beginning; unchanged metadata skips parsing.
+outbox is a read-only preview. No acknowledgement or sending is enabled.
 No account sign-in, upload, daemon, key recovery or OS sandbox is implemented yet.
 Keep your key private and retain it: changing it changes occurrence identities.
 ";
@@ -339,6 +348,12 @@ fn render(collection: &Collection, mode: Mode, json: bool) -> Result<String, &'s
 fn run(args: &[String]) -> Result<String, &'static str> {
     if args.is_empty() || args == ["--help"] || args == ["-h"] {
         return Ok(HELP.to_owned());
+    }
+    if matches!(
+        args.first().map(String::as_str),
+        Some("init" | "collect" | "status" | "outbox")
+    ) {
+        return state::run(args);
     }
     let options = options(args)?;
     if options.mode == Mode::Keygen {
