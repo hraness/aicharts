@@ -53,6 +53,8 @@ The complete gate also requires Rust 1.97.1 with rustfmt and Clippy, pinned in `
 
 The Rust workspace contains a local-only Codex/Claude Code usage reader, a closed numeric wire format, a private numeric SQLite ledger and matching TypeScript validation/rollups. Explicit collection can retain measurements across restarts with atomic source checkpoints and a read-only pending-queue preview. It does not enable sign-in, uploads, a public leaderboard or background collection. See [the local usage guide](docs/usage-local.md) for explicit source selection, private namespace keys and current measurement/recovery limitations.
 
+The website also includes a server-only Hraness Accounts adapter behind an explicit, default-off production control. It has no login UI or device enrollment. The [identity design and activation contract](docs/usage-identity.md) separates verified package installation from live sign-in qualification; publishing this source does not enable usage uploads.
+
 ## Data refresh
 
 The [`data-refresh.yml`](.github/workflows/data-refresh.yml) workflow checks first-party release sources and OpenRouter discovery hourly, off the top of the hour. It checks Terminal-Bench 4, Terminal-Bench-Science 0.1, direct DeepSWE evidence, the lightweight Artificial Analysis Intelligence model snapshot, and the reasoning and multimodal atlas imports every four hours, then adds the heavier Artificial Analysis coding-agent import to one daily full run at 10:43 UTC. Manual runs can select release-only, benchmark-only, or full refreshes; the legacy `discovery` mode remains a combined non-AAI alias. Poll-metadata-only checks remain visible in Actions without creating a data pull request. It treats each importer as a separate failure domain:

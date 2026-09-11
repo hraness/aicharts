@@ -84,6 +84,7 @@
   "dependencies": {
     "@hraness/design-kit": "github:hraness/design-kit#v0.4.0",
     "@hraness/site-footer": "github:hraness/site-footer#v0.7.0",
+    "@hraness/suite-accounts": "github:hraness/suite-accounts#v0.5.5",
     "@hraness/ui": "github:hraness/ui#v0.4.10",
     "@hraness/vercel-delivery": "github:hraness/vercel-delivery#v0.1.2",
     "@hraness/web-discovery": "github:hraness/web-discovery#v0.2.0",
@@ -96,6 +97,7 @@
     "posthog-node": "5.51.4",
     "react": "19.2.8",
     "react-dom": "19.2.8",
+    "server-only": "0.0.1",
     "zod": "^4.5.4"
   },
   "devDependencies": {
