@@ -1,5 +1,6 @@
 #![forbid(unsafe_code)]
 
+mod inspect;
 #[cfg(unix)]
 mod prefix;
 mod reindex;
@@ -26,6 +27,7 @@ const HELP: &str = "AI Charts Usage — local-only foundation
   aicharts prefix-enable --state-dir DIR --key-file PATH --revision N
   aicharts collect-prefix --state-dir DIR --key-file PATH [--codex FILE_OR_DIR] [--claude FILE_OR_DIR] [--rescan] [--json]
   aicharts status --state-dir DIR --key-file PATH [--json]
+  aicharts inspect --state-dir DIR --key-file PATH [--occurrence-key-file PATH] [--json]
   aicharts outbox --dry-run --state-dir DIR --key-file PATH [--limit 1..256] [--after ID --revision N]
   aicharts reindex-plan --dry-run --state-dir OLD --key-file PATH [--codex FILE_OR_DIR] [--claude FILE_OR_DIR] [--json]
   aicharts reindex-prepare --state-dir OLD --key-file PATH --shadow-dir NEW --occurrence-key-file PATH [--codex FILE_OR_DIR] [--claude FILE_OR_DIR] [--json]
@@ -41,7 +43,10 @@ prefix-enable explicitly adds local completed-prefix integrity metadata. Then us
 collect-prefix: it fully replays completed lines and defers an unfinished tail.
 Metadata skipping is a reliability optimization, not tamper attestation; --rescan
 rehashes every retained prefix. Neither command uploads content or enables sending.
-outbox is a read-only preview. No acknowledgement or sending is enabled.
+outbox never acknowledges or sends; ordinary state opening can recover SQLite.
+inspect reads only an existing ledger without source scanning, recovery or writes.
+An explicit occurrence key selects the existing split-key namespace version 1;
+omitting it selects legacy identity. Neither option migrates or rekeys state.
 reindex-plan inspects existing state without recovery or writes and rereads explicit
 sources. reindex-prepare creates a new account-key-bound shadow only when every old
 measurement is exactly covered. Neither command changes or promotes the old state.
@@ -362,6 +367,9 @@ fn render(collection: &Collection, mode: Mode, json: bool) -> Result<String, &'s
 fn run(args: &[String]) -> Result<String, &'static str> {
     if args.is_empty() || args == ["--help"] || args == ["-h"] {
         return Ok(HELP.to_owned());
+    }
+    if args.first().map(String::as_str) == Some("inspect") {
+        return inspect::run(args);
     }
     if matches!(
         args.first().map(String::as_str),

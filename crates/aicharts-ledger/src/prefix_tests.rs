@@ -77,6 +77,53 @@ const SENDER: [&str; 6] = [
 ];
 
 #[test]
+fn codex_reasoning_coverage_only_replay_preserves_prefix_frames_and_sender_custody() {
+    for sender in [false, true] {
+        let (_fixture, mut ledger) = migrated(sender);
+        baseline(&mut ledger);
+        if sender {
+            ledger.freeze_upload_batch(2, &[id(1)]).unwrap();
+        }
+        let prefix = ledger.prefix_snapshot().unwrap();
+        let preserved = ["measurements", "source_usage", "outbox", "source_prefixes"];
+        let numeric = table_image(&ledger.connection, &preserved);
+        let custody = sender.then(|| table_image(&ledger.connection, &SENDER));
+        let mut scan = prefix_scan(
+            1,
+            100,
+            Some(witness(80, 1)),
+            witness(80, 1),
+            (1..=3).map(|n| record(n, 10)).collect(),
+        );
+        scan.collection.warnings.push(Warning::UnmeasuredReasoning);
+        let report = ledger
+            .commit_prefix_scans(prefix.revision, vec![scan])
+            .unwrap();
+        assert_eq!(
+            (
+                report.revision,
+                report.sources_updated,
+                report.occurrences_changed
+            ),
+            (prefix.revision + 1, 1, 0)
+        );
+        assert!(ledger
+            .status()
+            .unwrap()
+            .warnings
+            .contains(&Warning::UnmeasuredReasoning));
+        assert_eq!(
+            ledger.prefix_snapshot().unwrap().checkpoints,
+            prefix.checkpoints
+        );
+        assert_eq!(table_image(&ledger.connection, &preserved), numeric);
+        if let Some(custody) = custody {
+            assert_eq!(table_image(&ledger.connection, &SENDER), custody);
+        }
+    }
+}
+
+#[test]
 fn legacy_key_migration_preserves_binding_and_explicit_baseline_rows() {
     let f = Fixture::new();
     let mut ledger = f.initialize();

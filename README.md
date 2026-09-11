@@ -47,13 +47,19 @@ Run the complete local gate before opening a pull request:
 bun run check
 ```
 
-The complete gate also requires Rust 1.97.1 with rustfmt and Clippy, pinned in `rust-toolchain.toml`. It validates generated files and the checked data contract, checks the local usage workspace, runs strict TypeScript and ESLint, executes example and property tests, and verifies the production build in a browser. The website's ordinary development/build commands do not invoke Rust.
+The complete gate also requires Rust 1.97.1 with rustfmt and Clippy, pinned in `rust-toolchain.toml`. It validates generated files and the checked data contract, checks the local usage workspace and AI Charts skill helper, runs strict TypeScript and ESLint, executes example and property tests, and verifies the production build in a browser. The website's ordinary development/build commands do not invoke Rust.
 
 ## Local usage foundation
 
-The Rust workspace contains a local-only Codex/Claude Code usage reader, a closed numeric wire format, a private numeric SQLite ledger and matching TypeScript validation/rollups. Explicit collection can retain measurements across restarts with atomic source checkpoints and a read-only pending-queue preview. It does not enable sign-in, uploads, a public leaderboard or background collection. See [the local usage guide](docs/usage-local.md) for explicit source selection, private namespace keys and current measurement/recovery limitations.
+The Rust workspace contains a local-only Codex/Claude Code usage reader, a closed numeric wire format, a private numeric SQLite ledger and matching TypeScript validation/rollups. Explicit collection can retain measurements across restarts with atomic source checkpoints and a pending-queue preview. The separate `inspect` command reads retained numeric totals without source scanning, writes or SQLite recovery. It does not enable sign-in, uploads, a public leaderboard or background collection. See [the local usage guide](docs/usage-local.md) for explicit source selection, private namespace keys and current measurement/recovery limitations.
 
 The website also includes a server-only Hraness Accounts adapter behind an explicit, default-off production control. It has no login UI or device enrollment. The [identity design and activation contract](docs/usage-identity.md) separates verified package installation from live sign-in qualification; publishing this source does not enable usage uploads.
+
+## AI Charts agent skill
+
+The portable [AI Charts skill](skills/aicharts/SKILL.md) retrieves one public benchmark cohort at a time with its version, units, configuration, source and coverage intact. Its dependency-free Node.js helper makes anonymous requests only to `aicharts.io`, bounds response sizes and pagination, and never opens local usage data. A separate local mode can explain a supplied numeric summary or use an already available reviewed `aicharts inspect` binary for an explicitly selected ledger. It never collects source logs or uploads usage.
+
+The skill lives at `skills/aicharts`; load or install that directory through your agent's supported skill workflow. The source command is documented in the local usage guide; this repository does not yet distribute a signed native installer. The skill does not install a runtime, obtain keys or enable background collection.
 
 ## Data refresh
 
