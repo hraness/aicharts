@@ -1,0 +1,4 @@
+interface:
+  display_name: "AI Charts"
+  short_description: "Compare benchmark cohorts and explain local usage"
+  default_prompt: "Use $aicharts to select a relevant benchmark cohort and explain its measurements with source, version, units and limitations intact."

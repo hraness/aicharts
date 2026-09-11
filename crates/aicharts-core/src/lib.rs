@@ -431,6 +431,9 @@ fn parse_codex<R: BufRead>(
             out.warn(Warning::CodexMissingCumulative);
             continue;
         };
+        if total.reasoning_output_tokens.is_none() {
+            out.warn(Warning::UnmeasuredReasoning);
+        }
         let Some(total) = CodexCounters::from_usage(&total)? else {
             out.warn(Warning::MissingUsageCounters);
             continue;
@@ -447,6 +450,13 @@ fn parse_codex<R: BufRead>(
             delta
         } else {
             previous = Some(total);
+            if info
+                .last_token_usage
+                .as_ref()
+                .is_some_and(|usage| usage.reasoning_output_tokens.is_none())
+            {
+                out.warn(Warning::UnmeasuredReasoning);
+            }
             let last = info
                 .last_token_usage
                 .as_ref()

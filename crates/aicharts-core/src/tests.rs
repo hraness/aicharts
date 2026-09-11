@@ -495,3 +495,103 @@ fn per_day_batches_split_at_protocol_limit_and_remain_sorted() {
     assert!(ids.windows(2).all(|pair| pair[0] < pair[1]));
     packets(&collection);
 }
+
+#[test]
+fn codex_reasoning_missing_and_null_fields_warn_without_changing_usage_bytes() {
+    let rows = [
+        codex_row(1, 10, 3, 5, 0, true),
+        codex_row(2, 25, 5, 12, 0, true),
+    ];
+    let complete = parse(&codex_source(&rows), Provider::Codex);
+    assert!(!complete.warnings.contains(&Warning::UnmeasuredReasoning));
+    // Both counters consulted initially, then only subsequent cumulative totals.
+    for mask in 1..8 {
+        for null in [false, true] {
+            let mut values: Vec<serde_json::Value> = rows
+                .iter()
+                .map(|row| serde_json::from_str(row).unwrap())
+                .collect();
+            for (bit, row, field) in [
+                (1, 0, "total_token_usage"),
+                (2, 0, "last_token_usage"),
+                (4, 1, "total_token_usage"),
+            ] {
+                if mask & bit != 0 {
+                    let usage = values[row]["payload"]["info"][field]
+                        .as_object_mut()
+                        .unwrap();
+                    if null {
+                        usage.insert("reasoning_output_tokens".into(), serde_json::Value::Null);
+                    } else {
+                        usage.remove("reasoning_output_tokens");
+                    }
+                }
+            }
+            let source = codex_source(&values.iter().map(ToString::to_string).collect::<Vec<_>>());
+            let partial = parse(&source, Provider::Codex);
+            assert_eq!(packets(&partial), packets(&complete));
+            assert_eq!(partial.lines_read, complete.lines_read);
+            let mut expected = complete.warnings.clone();
+            expected.push(Warning::UnmeasuredReasoning);
+            expected.sort();
+            assert_eq!(partial.warnings, expected);
+        }
+    }
+}
+
+#[test]
+fn codex_reasoning_absent_baseline_warns_even_without_a_first_usage() {
+    let rows = [
+        codex_row(1, 10, 3, 5, 0, false),
+        codex_row(2, 25, 5, 12, 3, false),
+    ];
+    let complete = parse(&codex_source(&rows), Provider::Codex);
+    let mut partial_rows = rows.clone();
+    partial_rows[0] = partial_rows[0].replace(",\"reasoning_output_tokens\":0", "");
+    let partial = parse(&codex_source(&partial_rows), Provider::Codex);
+    assert!(partial.warnings.contains(&Warning::UnmeasuredReasoning));
+    assert_eq!(packets(&partial), packets(&complete));
+    assert_eq!(partial.batches[0].usage[0].tokens.reasoning_output, 3);
+}
+
+#[test]
+fn codex_reasoning_ignored_last_usage_does_not_invent_missing_coverage() {
+    let mut second: serde_json::Value =
+        serde_json::from_str(&codex_row(2, 25, 5, 12, 3, true)).unwrap();
+    second["payload"]["info"]["last_token_usage"]
+        .as_object_mut()
+        .unwrap()
+        .remove("reasoning_output_tokens");
+    let collection = parse(
+        &codex_source(&[codex_row(1, 10, 3, 5, 2, true), second.to_string()]),
+        Provider::Codex,
+    );
+    assert!(!collection.warnings.contains(&Warning::UnmeasuredReasoning));
+    assert_eq!(
+        collection.batches[0]
+            .usage
+            .iter()
+            .map(|usage| usage.tokens.reasoning_output)
+            .sum::<u64>(),
+        3
+    );
+}
+
+#[test]
+fn codex_reasoning_warning_merges_once_and_stays_a_fixed_code() {
+    let source = codex_source(&[codex_row(1, 10, 3, 5, 0, true)])
+        .replace(",\"reasoning_output_tokens\":0", "");
+    let first = parse(&source, Provider::Codex);
+    let expected = packets(&first);
+    let merged = merge_collections(vec![first, parse(&source, Provider::Codex)]).unwrap();
+    assert_eq!(packets(&merged), expected);
+    assert_eq!(
+        merged
+            .warnings
+            .iter()
+            .filter(|warning| **warning == Warning::UnmeasuredReasoning)
+            .count(),
+        1
+    );
+    assert_eq!(Warning::UnmeasuredReasoning.code(), "unmeasured_reasoning");
+}

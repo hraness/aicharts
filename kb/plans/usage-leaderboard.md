@@ -108,7 +108,7 @@ No phase may edit a convergence file simultaneously. Workers submit required man
 
 ## Phase 5: AI Charts skill
 
-- **Status:** Not started
+- **Status:** In progress; public benchmark retrieval and local-only numeric inspection implemented, not yet packaged or delivered
 - **Depends on:** 2, 3
 - **Objective:** an agent efficiently gets sourced benchmark answers and private usage summaries without touching raw sessions.
 - **Scope:** portable skill instructions, bounded JSON CLI query commands, public snapshot cache/ETags and read-only personal query authorization. Use the skill-creator workflow when authoring the actual skill.
@@ -293,3 +293,13 @@ The owner-controlled private R2 resources are now provisioned, with public URLs 
 Authenticated admission will first remain internal to the existing account object. Reserve one bounded account-wide flight, freeze its irreversible terminal decision after immutable batch readback, and publish all accepted heads only after the exact revision-addressed journal is verified. Retain original device-upload commitments and separate journal revisions from enrollment revisions. Unknown state, conflicting immutable objects, exhausted capacity and restored state without an external recovery fence must stay closed. This source work does not yet exist in the object helpers.
 
 The current collector supplies partial token totals, not the requested full metric set. It emits unknown model/account/authentication attribution and no qualified human-prompt or execution intervals. Complete-prefix profile 1 must retain its exact replay semantics. Add source-qualified local observations in a separate versioned step before extending ledger/admission data: preserve unknown origin, unavailable coverage and clock uncertainty instead of inferring human prompts or active agents from transcript text. Existing rollup helpers can compute covered intervals, but no production collection path supplies that evidence yet.
+
+### 2026-09-11: source-free inspection and benchmark skill
+
+The continuation on `codex/usage-inspection-skill-20260911` adds a separate `inspect` CLI command over the existing `ReadOnlyLedger` API. It validates all options before file access, selects legacy or explicit split-key identity without guessing, refuses recovery sidecars and returns only a numeric summary. Revision and token totals remain decimal strings. The snapshot is rechecked before rendering; no source paths, IDs, witnesses, frames or keys enter its output. Synthetic tests cover all four ledger layouts, retained frozen uploads, unchanged bytes/directory entries/nanosecond metadata, unsafe paths, wrong keys and fixed errors. Ordinary access timestamps may change; hostile-owner isolation and rollback resistance are not claimed.
+
+Codex sources with absent or null examined reasoning counters now receive the existing `unmeasured_reasoning` warning. Numeric fallback, occurrence identities, complete-prefix profile and wire bytes remain unchanged. Warning-only replay may update warning metadata and the ledger revision but preserves exact prefix witnesses, measurements and sender state. Metadata-skipped sources do not acquire retroactive warnings until a later reread. Focused red/green collector and ledger regressions and independent source review passed.
+
+The portable `skills/aicharts` entry point separates anonymous public benchmark discovery from explicit local inspection. Its dependency-free helper bounds origin, bytes, pages and schema, preserves configuration/units/version/source/coverage, and checks catalog/dataset correspondence. It hashes fetched bytes for consistency, not source authentication or atomic publication. Independent review found a fetched top-level property collision with helper provenance; strict envelope keys and explicit projections repair it, with red/green collision and exact-hash controls. The helper never reads local usage. Fresh local mode requires an already available reviewed inspect binary, selected private state and key paths; it does not install, collect, recover, enroll or upload.
+
+No remote personal query, hourly usage, model-price attribution, benchmark cache or signed native distribution is introduced. Public usage routes and native custody remain closed. Candidate-focused tests and review are complete; root-owned integration, repository/KB gates, exact-head CI and production readback remain required before delivery. The existing mixed HRA/Oompa baseline markers remain a supported-tool refusal rather than a manual repair.

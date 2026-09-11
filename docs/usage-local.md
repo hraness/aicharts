@@ -76,6 +76,24 @@ The [ledger contract](../crates/aicharts-ledger/README.md) describes atomicity, 
 
 The library's explicit split-key sender migration adds [bounded sender custody](usage-admission-v1.md): one immutable 1–256-operation batch, exact terminal receipts, conditional acknowledgment that preserves newer corrections, and persistent conflict/revocation gates. It performs no networking and is not exposed by a CLI sending or receipt-import command. Ordinary opens and inspection never perform that migration. Accepted receipt bytes must eventually come from the owned authenticated transport, not a local file or an arbitrary caller.
 
+Use `inspect` when you need a source-free summary without recovery. `status` and `outbox --dry-run` use the ordinary ledger opener, which can recover a SQLite rollback journal; neither is the dedicated no-recovery inspector.
+
+## Inspect retained totals without writes
+
+With an existing private ledger and its original key, run:
+
+```sh
+./target/debug/aicharts inspect --state-dir /absolute/private/directory/aicharts-state --key-file /absolute/private/directory/aicharts.key --json
+```
+
+For an existing account-bound split-key ledger, also supply `--occurrence-key-file` with the corresponding private key path. Omitting this option selects legacy identity; supplying it selects namespace version 1. The command does not guess keys, migrate a ledger or change identity. Never paste key bytes into an agent conversation.
+
+`inspect` uses `ReadOnlyLedger` on supported macOS/Linux local filesystems. It validates the existing ledger, closes its read-only transaction, and checks identity and revision again immediately before rendering. It reads no Codex/Claude sources, makes no network calls, creates no state, and refuses any journal, WAL or shared-memory sidecar instead of repairing it. Preserve state on an error; do not remove a sidecar or substitute a writer. Ordinary reads can update access timestamps. This bounded snapshot is not a continuing lock, rollback proof or defense against hostile same-user modification.
+
+JSON contains exactly `schemaVersion: 1`, `operation: "inspect"`, `access: "read_only"`, `coverage: "partial"`, decimal-string `revision`, `tokens` and `outputTokens`, numeric `sources`, `usageOccurrences` and `pendingRecords`, fixed-code `warnings`, and `unavailable: ["prompts", "activity", "pricing"]`. It contains no paths, keys, occurrence IDs, source witnesses or frames. These totals describe persisted partial observations, not fresh source collection, a bill or accepted remote uploads. Missing coverage warnings are not retroactively added to an old ledger by inspection.
+
+The [AI Charts skill](../skills/aicharts/SKILL.md) can interpret this summary separately from its public benchmark lookup. The native command must already be available in a reviewed local binary; the skill does not build or install it automatically.
+
 ## Collect completed lines from a live source
 
 First inspect the current local revision with `status`. Explicitly enable prefix
