@@ -145,7 +145,7 @@ pub(super) fn run(args: &[String]) -> Result<String, &'static str> {
 }
 
 #[cfg(unix)]
-mod unix {
+pub(crate) mod unix {
     use super::{hex, Command, Options};
     use aicharts_core::parse_reader;
     use aicharts_ledger::{Ledger, LedgerStatus, SourceScan, SourceStamp};
@@ -160,7 +160,7 @@ mod unix {
         path::Path,
     };
 
-    fn source_id(key: &[u8; 32], path: &Path, provider: Provider) -> [u8; 32] {
+    pub(crate) fn source_id(key: &[u8; 32], path: &Path, provider: Provider) -> [u8; 32] {
         let mut mac = Hmac::<Sha256>::new_from_slice(key).expect("HMAC accepts every key length");
         mac.update(b"aicharts-local-source-v1\0");
         mac.update(&[match provider {
@@ -173,7 +173,7 @@ mod unix {
         mac.finalize().into_bytes().into()
     }
 
-    fn stamp(metadata: &fs::Metadata) -> Result<SourceStamp, &'static str> {
+    pub(crate) fn stamp(metadata: &fs::Metadata) -> Result<SourceStamp, &'static str> {
         if !metadata.is_file() {
             return Err("source_not_regular");
         }
@@ -190,7 +190,7 @@ mod unix {
         })
     }
 
-    fn verify_path(
+    pub(crate) fn verify_path(
         path: &Path,
         canonical: &Path,
         expected: &SourceStamp,
