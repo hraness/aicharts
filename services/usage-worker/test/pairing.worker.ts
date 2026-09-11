@@ -1,6 +1,7 @@
 import { env } from "cloudflare:workers";
 import { abortAllDurableObjects, evictDurableObject, reset, runInDurableObject } from "cloudflare:test";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import fc from "fast-check";
 import { MAX_BROWSER_ATTEMPTS, MAX_FAILED_ATTEMPTS, PAIRING_TTL_MS, POLL_INTERVAL_MS, uploadSecretCommitment } from "../src/pairing";
 
 const ID = "11".repeat(32);
@@ -36,6 +37,16 @@ async function authenticated() {
   const authentication = { ...proof, accountId: ACCOUNT, authTimeMs: Math.floor(NOW / 1_000) * 1_000, sessionExpiresAtMs: NOW + PAIRING_TTL_MS };
   expect(await stub().recordVerifiedAuthentication(authentication)).toEqual({ ok: true, value: { recorded: true } });
   return { proof, authentication };
+}
+
+function decisionInput(proof: Awaited<ReturnType<typeof browser>>, decision: "approve" | "deny" = "approve") {
+  return { ...proof, accountId: ACCOUNT, liveSessionExpiresAtMs: NOW + PAIRING_TTL_MS, decision };
+}
+
+async function retainedPayload(): Promise<unknown> {
+  const value = await runInDurableObject(stub(), (_instance, state) => state.storage.sql.exec("SELECT payload FROM pairing_state").one().payload);
+  if (typeof value !== "string") throw new Error("synthetic state missing");
+  return JSON.parse(value) as unknown;
 }
 
 describe("internal pairing lifecycle, with no credential activation", () => {
@@ -111,17 +122,17 @@ describe("internal pairing lifecycle, with no credential activation", () => {
     for (let index = 1; index < MAX_BROWSER_ATTEMPTS; index++) await browser();
     await abortAllDurableObjects();
     expect(await stub().beginBrowserAttempt({ intentId: ID, browserNonce: NONCE })).toEqual({ ok: false, error: "attempt_limit" });
-    expect(await stub().deny(first)).toEqual({ ok: false, error: "unauthorized" });
+    expect(await stub().decideBrowser(decisionInput(first, "deny"))).toEqual({ ok: false, error: "unauthorized" });
   });
 
   test("no authentication, a switched account or another browser cannot approve", async () => {
     await initialize();
     const proof = await browser();
-    expect(await stub().approve({ ...proof, accountId: ACCOUNT })).toEqual({ ok: false, error: "invalid_transition" });
+    expect(await stub().decideBrowser(decisionInput(proof))).toEqual({ ok: false, error: "invalid_transition" });
     const { proof: active } = await authenticated();
-    expect(await stub().approve({ ...active, accountId: OTHER_ACCOUNT })).toEqual({ ok: false, error: "unauthorized" });
-    expect(await stub().approve({ ...active, browserNonce: OTHER, accountId: ACCOUNT })).toEqual({ ok: false, error: "unauthorized" });
-    expect(await stub().approve({ ...active, contextToken: OTHER, accountId: ACCOUNT })).toEqual({ ok: false, error: "unauthorized" });
+    expect(await stub().decideBrowser({ ...decisionInput(active), accountId: OTHER_ACCOUNT })).toEqual({ ok: false, error: "unauthorized" });
+    expect(await stub().decideBrowser({ ...decisionInput(active), browserNonce: OTHER })).toEqual({ ok: false, error: "unauthorized" });
+    expect(await stub().decideBrowser({ ...decisionInput(active), contextToken: OTHER })).toEqual({ ok: false, error: "unauthorized" });
   });
 
   test("authentication records require fresh integer-second auth_time and live expiry", async () => {
@@ -153,17 +164,17 @@ describe("internal pairing lifecycle, with no credential activation", () => {
   test("approval and account confirmation survive lost replies and restart", async () => {
     await initialize();
     const { proof } = await authenticated();
-    const approve = { ...proof, accountId: ACCOUNT };
-    const first = await stub().approve(approve);
+    const approve = decisionInput(proof);
+    const first = await stub().decideBrowser(approve);
     expect(first.ok && first.value.state).toBe("browser-approved");
     await abortAllDurableObjects();
-    expect(await stub().approve(approve)).toEqual(first);
+    expect(await stub().decideBrowser(approve)).toEqual(first);
     expect(await stub().confirm({ ...pollInput, accountId: OTHER_ACCOUNT })).toEqual({ ok: false, error: "unauthorized" });
     const confirmed = await stub().confirm({ ...pollInput, accountId: ACCOUNT });
     expect(confirmed.ok && confirmed.value.state).toBe("terminal-confirmed");
     await evictDurableObject(stub());
     expect(await stub().confirm({ ...pollInput, accountId: ACCOUNT })).toEqual(confirmed);
-    expect(await stub().deny(proof)).toEqual({ ok: false, error: "invalid_transition" });
+    expect(await stub().decideBrowser(decisionInput(proof, "deny"))).toEqual({ ok: false, error: "invalid_transition" });
     expect((await env.STAGING.list()).objects).toEqual([]);
     expect(JSON.stringify(confirmed)).not.toMatch(/credential|namespace|token|secret/i);
   });
@@ -172,19 +183,216 @@ describe("internal pairing lifecycle, with no credential activation", () => {
     await initialize();
     const proof = await browser();
     expect((await stub().recordVerifiedAuthentication({ ...proof, accountId: ACCOUNT, authTimeMs: Math.floor(NOW / 1_000) * 1_000, sessionExpiresAtMs: NOW + 10_000 })).ok).toBe(true);
-    expect((await stub().approve({ ...proof, accountId: ACCOUNT })).ok).toBe(true);
+    expect((await stub().decideBrowser(decisionInput(proof))).ok).toBe(true);
     vi.setSystemTime(NOW + 10_000);
-    expect(await stub().approve({ ...proof, accountId: ACCOUNT })).toEqual({ ok: false, error: "authentication_not_fresh" });
+    expect(await stub().decideBrowser(decisionInput(proof))).toEqual({ ok: false, error: "authentication_not_fresh" });
     expect(await stub().confirm({ ...pollInput, accountId: ACCOUNT })).toEqual({ ok: false, error: "authentication_not_fresh" });
   });
 
   test("denial is terminal and cannot be overwritten by a raced approval", async () => {
     await initialize();
     const { proof } = await authenticated();
-    expect((await stub().deny(proof)).ok).toBe(true);
+    expect((await stub().decideBrowser(decisionInput(proof, "deny"))).ok).toBe(true);
     await abortAllDurableObjects();
-    expect(await stub().approve({ ...proof, accountId: ACCOUNT })).toEqual({ ok: false, error: "invalid_transition" });
+    expect(await stub().decideBrowser(decisionInput(proof))).toEqual({ ok: false, error: "invalid_transition" });
     expect(await stub().confirm({ ...pollInput, accountId: ACCOUNT })).toEqual({ ok: false, error: "invalid_transition" });
+  });
+
+  test("browser readback projects only the current attempt's recorded account and expiry", async () => {
+    await initialize();
+    const proof = await browser();
+    const pending = { state: "pending", expiresAtMs: NOW + PAIRING_TTL_MS, accountId: null, authenticationExpiresAtMs: null };
+    expect(await stub().browserStatus(proof)).toEqual({ ok: true, value: pending });
+    await stub().recordVerifiedAuthentication({ ...proof, accountId: ACCOUNT, authTimeMs: Math.floor(NOW / 1_000) * 1_000, sessionExpiresAtMs: NOW + 60_000 });
+    const recorded = { ...pending, accountId: ACCOUNT, authenticationExpiresAtMs: NOW + 60_000 };
+    expect(await stub().browserStatus(proof)).toEqual({ ok: true, value: recorded });
+    await abortAllDurableObjects();
+    expect(await stub().browserStatus(proof)).toEqual({ ok: true, value: recorded });
+    expect(await retainedPayload()).toMatchObject({ status: "pending", failedAttempts: 0, approvedAccountId: null });
+    expect(JSON.stringify(recorded)).not.toMatch(/nonce|proof|commitment|secret|token|credential|namespace/i);
+    expect((await env.STAGING.list()).objects).toEqual([]);
+  });
+
+  test("uninitialized and stale browser readback cannot reveal another account or exhaust guesses", async () => {
+    const missing = { intentId: ID, attemptId: OTHER, browserNonce: NONCE, contextToken: OTHER };
+    expect(await stub().browserStatus(missing)).toEqual({ ok: false, error: "not_initialized" });
+    await initialize();
+    const { proof: stale } = await authenticated();
+    const { proof: current } = await authenticated();
+    for (let index = 0; index <= MAX_FAILED_ATTEMPTS; index++) {
+      expect(await stub().browserStatus(stale)).toEqual({ ok: false, error: "unauthorized" });
+      expect(await stub().decideBrowser(decisionInput(stale, index % 2 === 0 ? "approve" : "deny"))).toEqual({ ok: false, error: "unauthorized" });
+    }
+    for (const change of [{ intentId: OTHER }, { attemptId: OTHER }, { browserNonce: OTHER }, { contextToken: OTHER }]) {
+      expect(await stub().browserStatus({ ...current, ...change })).toEqual({ ok: false, error: "unauthorized" });
+    }
+    expect(await retainedPayload()).toMatchObject({ status: "pending", failedAttempts: 0, approvedAccountId: null });
+    expect((await stub().decideBrowser(decisionInput(current))).ok).toBe(true);
+  });
+
+  test.each(["approve", "deny"] as const)("%s requires recorded authentication and the same live account without spending guesses", async decision => {
+    await initialize();
+    const proof = await browser();
+    expect(await stub().decideBrowser(decisionInput(proof, decision))).toEqual({ ok: false, error: "invalid_transition" });
+    const { proof: current } = await authenticated();
+    for (let index = 0; index <= MAX_FAILED_ATTEMPTS; index++) {
+      expect(await stub().decideBrowser({ ...decisionInput(current, decision), accountId: OTHER_ACCOUNT })).toEqual({ ok: false, error: "unauthorized" });
+    }
+    expect(await retainedPayload()).toMatchObject({ status: "pending", failedAttempts: 0, approvedAccountId: null });
+    expect((await stub().decideBrowser(decisionInput(current, decision))).ok).toBe(true);
+  });
+
+  test.each(["approve", "deny"] as const)("%s rechecks both independent session deadlines at the durable commit", async decision => {
+    for (const limit of ["recorded", "live"] as const) {
+      await reset();
+      vi.setSystemTime(NOW);
+      await initialize();
+      const proof = await browser();
+      const expiresAtMs = NOW + 10_000;
+      await stub().recordVerifiedAuthentication({
+        ...proof, accountId: ACCOUNT, authTimeMs: Math.floor(NOW / 1_000) * 1_000,
+        sessionExpiresAtMs: limit === "recorded" ? expiresAtMs : NOW + PAIRING_TTL_MS,
+      });
+      const input = { ...decisionInput(proof, decision), liveSessionExpiresAtMs: limit === "live" ? expiresAtMs : NOW + PAIRING_TTL_MS };
+      // The caller obtained a live session before transport/hash work. Advance
+      // time only after the actual DO method has entered its async hash boundary.
+      const result = await runInDurableObject(stub(), async instance => {
+        const operation = instance.decideBrowser(input);
+        vi.setSystemTime(expiresAtMs);
+        return await operation;
+      });
+      expect(result).toEqual({ ok: false, error: "authentication_not_fresh" });
+      expect(await retainedPayload()).toMatchObject({ status: "pending", failedAttempts: 0, approvedAccountId: null });
+    }
+  });
+
+  test.each(["approve", "deny"] as const)("%s rejects expired live-session inputs without changing a prior decision", async decision => {
+    await initialize();
+    const { proof } = await authenticated();
+    expect((await stub().decideBrowser(decisionInput(proof))).ok).toBe(true);
+    for (const liveSessionExpiresAtMs of [NOW - 1, NOW]) {
+      expect(await stub().decideBrowser({ ...decisionInput(proof, decision), liveSessionExpiresAtMs })).toEqual({ ok: false, error: "authentication_not_fresh" });
+    }
+    expect(await retainedPayload()).toMatchObject({ status: "browser-approved", approvedAccountId: ACCOUNT, failedAttempts: 0 });
+  });
+
+  test.each(["approve", "deny"] as const)("%s reply loss is reconciled by readback and exact live replay", async decision => {
+    await initialize();
+    const { proof } = await authenticated();
+    const input = decisionInput(proof, decision);
+    await expect((async () => {
+      const committed = await stub().decideBrowser(input);
+      expect(committed.ok).toBe(true);
+      throw new Error("synthetic reply lost after commit");
+    })()).rejects.toThrow("synthetic reply lost after commit");
+    await abortAllDurableObjects();
+    const expected = { ok: true, value: { state: decision === "approve" ? "browser-approved" : "denied", expiresAtMs: NOW + PAIRING_TTL_MS, accountId: ACCOUNT, authenticationExpiresAtMs: NOW + PAIRING_TTL_MS } };
+    expect(await stub().browserStatus(proof)).toEqual(expected);
+    expect(await stub().decideBrowser(input)).toEqual(expected);
+    if (decision === "deny") expect(await stub().decideBrowser(decisionInput(proof))).toEqual({ ok: false, error: "invalid_transition" });
+    expect((await env.STAGING.list()).objects).toEqual([]);
+  });
+
+  test("terminal confirmation survives browser approval replay and rejects browser denial", async () => {
+    await initialize();
+    const { proof } = await authenticated();
+    await stub().decideBrowser(decisionInput(proof));
+    await stub().confirm({ ...pollInput, accountId: ACCOUNT });
+    const expected = { ok: true, value: { state: "terminal-confirmed", expiresAtMs: NOW + PAIRING_TTL_MS, accountId: ACCOUNT, authenticationExpiresAtMs: NOW + PAIRING_TTL_MS } };
+    expect(await stub().browserStatus(proof)).toEqual(expected);
+    expect(await stub().decideBrowser(decisionInput(proof))).toEqual(expected);
+    expect(await stub().decideBrowser(decisionInput(proof, "deny"))).toEqual({ ok: false, error: "invalid_transition" });
+    vi.setSystemTime(NOW + PAIRING_TTL_MS);
+    expect(await stub().browserStatus(proof)).toEqual(expected);
+    expect(await stub().decideBrowser(decisionInput(proof))).toEqual({ ok: false, error: "expired" });
+  });
+
+  test("expired readback preserves recorded evidence but cannot approve or deny", async () => {
+    await initialize();
+    const { proof } = await authenticated();
+    vi.setSystemTime(NOW + PAIRING_TTL_MS);
+    expect(await stub().browserStatus(proof)).toEqual({ ok: true, value: { state: "expired", expiresAtMs: NOW + PAIRING_TTL_MS, accountId: ACCOUNT, authenticationExpiresAtMs: NOW + PAIRING_TTL_MS } });
+    for (const decision of ["approve", "deny"] as const) {
+      expect(await stub().decideBrowser(decisionInput(proof, decision))).toEqual({ ok: false, error: "expired" });
+    }
+    await abortAllDurableObjects();
+    vi.setSystemTime(NOW);
+    expect(await stub().browserStatus(proof)).toEqual({ ok: false, error: "clock_regressed" });
+  });
+
+  test("concurrent opposing decisions cannot resurrect a denied attempt", async () => {
+    await initialize();
+    const { proof } = await authenticated();
+    const decisions = await Promise.all([stub().decideBrowser(decisionInput(proof)), stub().decideBrowser(decisionInput(proof, "deny"))]);
+    expect(decisions[1].ok).toBe(true);
+    expect(await stub().browserStatus(proof)).toMatchObject({ ok: true, value: { state: "denied", accountId: ACCOUNT } });
+    expect(await stub().decideBrowser(decisionInput(proof))).toEqual({ ok: false, error: "invalid_transition" });
+  });
+
+  test("decision ordering follows the terminal state law for arbitrary replay sequences", async () => {
+    await fc.assert(fc.asyncProperty(fc.array(fc.constantFrom("approve" as const, "deny" as const, "confirm" as const), { minLength: 1, maxLength: 12 }), async sequence => {
+      await reset();
+      vi.setSystemTime(NOW);
+      await initialize();
+      const { proof } = await authenticated();
+      let expected: "pending" | "browser-approved" | "terminal-confirmed" | "denied" = "pending";
+      for (const action of sequence) {
+        const previous = expected;
+        if (action === "deny" && expected !== "terminal-confirmed") expected = "denied";
+        if (action === "approve" && expected === "pending") expected = "browser-approved";
+        if (action === "confirm" && expected === "browser-approved") expected = "terminal-confirmed";
+        const permitted = action === "deny" ? previous !== "terminal-confirmed"
+          : action === "approve" ? previous !== "denied"
+          : previous === "browser-approved" || previous === "terminal-confirmed";
+        const result = action === "confirm" ? await stub().confirm({ ...pollInput, accountId: ACCOUNT })
+          : await stub().decideBrowser(decisionInput(proof, action));
+        expect(result.ok).toBe(permitted);
+        expect(await stub().browserStatus(proof)).toMatchObject({ ok: true, value: { state: expected } });
+      }
+    }), { numRuns: 50, seed: 411 });
+  });
+
+  test("foreign browser DTOs are closed and cannot add transcript fields or omit live evidence", async () => {
+    await initialize();
+    const { proof } = await authenticated();
+    const before = await retainedPayload();
+    for (const input of [null, [], "transcript-canary", {}, { ...proof, accountId: ACCOUNT }, { ...proof, chat: "transcript-canary" }]) {
+      expect(await stub().browserStatus(input)).toEqual({ ok: false, error: "invalid_input" });
+    }
+    for (const input of [null, [], proof, { ...decisionInput(proof), chat: "transcript-canary" }, ...[
+      { decision: "maybe" }, { decision: undefined }, { accountId: OTHER }, { liveSessionExpiresAtMs: undefined },
+      { liveSessionExpiresAtMs: "123" }, { liveSessionExpiresAtMs: NaN }, { liveSessionExpiresAtMs: Infinity },
+      { liveSessionExpiresAtMs: -1 }, { liveSessionExpiresAtMs: NOW + 0.5 },
+    ].map(change => ({ ...decisionInput(proof), ...change }))]) {
+      expect(await stub().decideBrowser(input)).toEqual({ ok: false, error: "invalid_input" });
+    }
+    expect(await retainedPayload()).toEqual(before);
+  });
+
+  test("browser DTO snapshots survive caller mutation and reject accessors without invoking them", async () => {
+    await initialize();
+    const { proof } = await authenticated();
+    await runInDurableObject(stub(), async instance => {
+      let getterCalls = 0;
+      const accessor = Object.defineProperty({ ...decisionInput(proof) }, "accountId", { get() { getterCalls++; return ACCOUNT; } });
+      const proxy = new Proxy({}, { ownKeys() { throw new Error("synthetic proxy trap"); } });
+      expect(await instance.decideBrowser(accessor)).toEqual({ ok: false, error: "invalid_input" });
+      expect(await instance.browserStatus(proxy)).toEqual({ ok: false, error: "invalid_input" });
+      expect(getterCalls).toBe(0);
+      const input = decisionInput(proof);
+      const operation = instance.decideBrowser(input);
+      input.accountId = OTHER_ACCOUNT;
+      input.liveSessionExpiresAtMs = NOW;
+      input.decision = "deny";
+      input.contextToken = OTHER;
+      expect(await operation).toMatchObject({ ok: true, value: { state: "browser-approved", accountId: ACCOUNT } });
+      const statusInput = { ...proof };
+      const status = instance.browserStatus(statusInput);
+      statusInput.attemptId = OTHER;
+      expect(await status).toMatchObject({ ok: true, value: { state: "browser-approved", accountId: ACCOUNT } });
+      expect("approve" in instance).toBe(false);
+      expect("deny" in instance).toBe(false);
+    });
   });
 
   test("extra transcript fields and malformed capability shapes are rejected without persistence", async () => {
@@ -234,7 +442,7 @@ describe("internal pairing lifecycle, with no credential activation", () => {
     await abortAllDurableObjects();
     const after = await runInDurableObject(stub(), (_instance, state) => state.storage.sql.exec("SELECT schema_version, revision, payload FROM pairing_state").one());
     expect(after).toEqual(before);
-    expect((await stub().approve({ ...proof, accountId: ACCOUNT })).ok).toBe(true);
+    expect((await stub().decideBrowser(decisionInput(proof))).ok).toBe(true);
   });
 
   test("unexpected preexisting schema blocks bootstrap without adding a pairing row", async () => {

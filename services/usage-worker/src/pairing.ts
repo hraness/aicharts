@@ -13,6 +13,12 @@ export type PairingView = {
   pollAfterMs: number;
   approvedAccountId: string | null;
 };
+export type BrowserPairingView = {
+  state: PairingStatus;
+  expiresAtMs: number;
+  accountId: string | null;
+  authenticationExpiresAtMs: number | null;
+};
 type Authentication = { accountId: string; authTimeMs: number; sessionExpiresAtMs: number; recordedAtMs: number };
 type Attempt = {
   id: string; nonceCommitment: string; contextCommitment: string;
@@ -82,6 +88,26 @@ function browserInput(value: unknown, extra: readonly string[] = []): value is B
   return exact(value, [...BROWSER_KEYS, ...extra]) && BROWSER_KEYS.every(key => hex(value[key]));
 }
 
+/** Own only data properties before hashing or another asynchronous boundary. */
+function browserSnapshot(value: unknown, extra: readonly string[] = []): (BrowserProof & Record<string, unknown>) | null {
+  try {
+    if (value === null || typeof value !== "object" || Array.isArray(value)) return null;
+    const prototype: unknown = Object.getPrototypeOf(value);
+    if (prototype !== Object.prototype && prototype !== null) return null;
+    const descriptors = Object.getOwnPropertyDescriptors(value);
+    const keys = [...BROWSER_KEYS, ...extra];
+    const own = Reflect.ownKeys(descriptors);
+    if (own.length !== keys.length || own.some(key => typeof key !== "string" || !keys.includes(key))) return null;
+    const result: Record<string, unknown> = {};
+    for (const key of keys) {
+      const descriptor = descriptors[key];
+      if (descriptor === undefined || !("value" in descriptor)) return null;
+      result[key] = descriptor.value as unknown;
+    }
+    return BROWSER_KEYS.every(key => hex(result[key])) ? result as BrowserProof & Record<string, unknown> : null;
+  } catch { return null; }
+}
+
 async function browserDigests(value: BrowserProof): Promise<BrowserDigests> {
   return {
     nonce: await digest("browser-nonce", value.intentId, value.browserNonce),
@@ -129,6 +155,15 @@ function view(state: State, now: number): PairingView {
     state: state.status, expiresAtMs: state.expiresAtMs,
     pollAfterMs: Math.max(0, state.nextPollAtMs - now),
     approvedAccountId: state.status === "browser-approved" || state.status === "terminal-confirmed" ? state.approvedAccountId : null,
+  };
+}
+
+function browserView(state: State): BrowserPairingView {
+  const authentication = state.attempt?.authentication;
+  return {
+    state: state.status, expiresAtMs: state.expiresAtMs,
+    accountId: authentication?.accountId ?? null,
+    authenticationExpiresAtMs: authentication?.sessionExpiresAtMs ?? null,
   };
 }
 
@@ -296,22 +331,45 @@ export class PairingIntent extends DurableObject<Env> {
     });
   }
 
-  async approve(input: unknown): Promise<PairingResult<PairingView>> {
-    if (!browserInput(input, ["accountId"]) || !account(input.accountId)) return err("invalid_input");
-    const proof = await browserDigests(input);
-    return this.#existing(input.intentId, (state, now) => {
+  /** Trusted readback, not consent or an authorization grant, even after expiry. */
+  async browserStatus(input: unknown): Promise<PairingResult<BrowserPairingView>> {
+    const owned = browserSnapshot(input);
+    if (owned === null) return err("invalid_input");
+    const proof = await browserDigests(owned);
+    return this.#existing(owned.intentId, (state, now) => {
+      if (!matchesBrowser(state, owned, proof)) return err("unauthorized");
+      expired(state, now);
+      return ok(browserView(state));
+    });
+  }
+
+  /** Live account/session facts come only from the trusted server coordinator. */
+  async decideBrowser(input: unknown): Promise<PairingResult<BrowserPairingView>> {
+    const owned = browserSnapshot(input, ["accountId", "liveSessionExpiresAtMs", "decision"]);
+    if (owned === null || !account(owned.accountId) || !isTime(owned.liveSessionExpiresAtMs)
+      || (owned.decision !== "approve" && owned.decision !== "deny")) return err("invalid_input");
+    const { accountId, liveSessionExpiresAtMs, decision } = owned;
+    const proof = await browserDigests(owned);
+    return this.#existing(owned.intentId, (state, now) => {
+      // Stale browser tabs and lost-reply readbacks must not spend the terminal's
+      // guessing budget or deny the current browser attempt.
+      if (!matchesBrowser(state, owned, proof)) return err("unauthorized");
       if (expired(state, now)) return err("expired");
-      if (!matchesBrowser(state, input, proof)) return failedProof(state);
-      if (state.status === "denied" || state.status === "expired") return err("invalid_transition");
       const authentication = state.attempt!.authentication;
       if (authentication === null) return err("invalid_transition");
-      if (authentication.accountId !== input.accountId) return failedProof(state);
-      if (authentication.sessionExpiresAtMs <= now) return err("authentication_not_fresh");
-      if (state.status === "pending") {
-        state.status = "browser-approved";
-        state.approvedAccountId = authentication.accountId;
+      if (authentication.accountId !== accountId) return err("unauthorized");
+      if (authentication.sessionExpiresAtMs <= now || liveSessionExpiresAtMs <= now) return err("authentication_not_fresh");
+      if (decision === "approve") {
+        if (state.status === "denied" || state.status === "expired") return err("invalid_transition");
+        if (state.status === "pending") {
+          state.status = "browser-approved";
+          state.approvedAccountId = authentication.accountId;
+        }
+      } else {
+        if (state.status === "terminal-confirmed" || state.status === "expired") return err("invalid_transition");
+        state.status = "denied";
       }
-      return ok(view(state, now));
+      return ok(browserView(state));
     });
   }
 
@@ -330,15 +388,4 @@ export class PairingIntent extends DurableObject<Env> {
     });
   }
 
-  async deny(input: unknown): Promise<PairingResult<PairingView>> {
-    if (!browserInput(input)) return err("invalid_input");
-    const proof = await browserDigests(input);
-    return this.#existing(input.intentId, (state, now) => {
-      if (expired(state, now)) return err("expired");
-      if (!matchesBrowser(state, input, proof)) return failedProof(state);
-      if (state.status === "terminal-confirmed" || state.status === "expired") return err("invalid_transition");
-      state.status = "denied";
-      return ok(view(state, now));
-    });
-  }
 }
