@@ -5,6 +5,7 @@ mod inspect;
 mod prefix;
 mod reindex;
 mod state;
+mod version;
 
 use std::fs::{self, File, OpenOptions};
 use std::io::{self, BufReader, Read, Write};
@@ -19,6 +20,7 @@ const MAX_ENTRIES: usize = 20_000;
 const MAX_SOURCE_BYTES: u64 = 256 * 1_024 * 1_024;
 const HELP: &str = "AI Charts Usage — local-only foundation
 
+  aicharts --version [--json]
   aicharts usage --key-file PATH [--codex FILE_OR_DIR] [--claude FILE_OR_DIR] [--json]
   aicharts upload --dry-run --key-file PATH [--codex FILE_OR_DIR] [--claude FILE_OR_DIR]
   aicharts keygen --output PATH
@@ -33,6 +35,7 @@ const HELP: &str = "AI Charts Usage — local-only foundation
   aicharts reindex-prepare --state-dir OLD --key-file PATH --shadow-dir NEW --occurrence-key-file PATH [--codex FILE_OR_DIR] [--claude FILE_OR_DIR] [--json]
 
 Sources may be repeated. Directories scan .jsonl files and skip symlink entries.
+Version reports compiler metadata only, with no verified release provenance.
 Final source files must be regular files; this is not an OS source sandbox.
 usage prints numeric summaries. upload --dry-run prints canonical frames as hex JSON;
 it does not contact any service. Key files contain exactly 32 private random bytes.
@@ -365,6 +368,10 @@ fn render(collection: &Collection, mode: Mode, json: bool) -> Result<String, &'s
 }
 
 fn run(args: &[String]) -> Result<String, &'static str> {
+    // Reserve the identity flag before any command can interpret it as a path.
+    if args.iter().any(|arg| arg == "--version") {
+        return version::run(args);
+    }
     if args.is_empty() || args == ["--help"] || args == ["-h"] {
         return Ok(HELP.to_owned());
     }
