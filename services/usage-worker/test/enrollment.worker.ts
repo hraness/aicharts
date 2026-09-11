@@ -6,6 +6,22 @@ import { enrollmentAccountName, type EnrollmentProof } from "../src/enrollment-c
 import type { EnrollmentView } from "../src/enrollment";
 import { PAIRING_TTL_MS, uploadSecretCommitment } from "../src/pairing";
 
+// Exact local fixture reset only. Dropping just enrollment in schema3 now means
+// corrupt partial state, not the completely empty restore these tests exercise.
+function removeSyntheticAdmissionTables(sql: SqlStorage): void {
+  sql.exec("DROP TABLE usage_admission_control");
+  sql.exec("DROP TABLE usage_admission_devices");
+  sql.exec("DROP TABLE usage_admission_pending");
+  sql.exec("DROP TABLE usage_admission_heads");
+  sql.exec("DROP TABLE usage_admission_days");
+}
+async function eraseSyntheticAccount() {
+  await runInDurableObject(accountStub(), (_instance, state) => {
+    removeSyntheticAdmissionTables(state.storage.sql);
+    state.storage.sql.exec("DROP TABLE account_enrollment");
+  });
+}
+
 let ID = "11".repeat(32);
 const POLL = "22".repeat(32);
 const UPLOAD = "33".repeat(32);
@@ -205,7 +221,7 @@ describe("explicit retained-genesis recovery", () => {
     expect((await env.CONTROL.list()).objects).toEqual([]);
     success(await accountStub().enroll(proof));
     const original = await anchor();
-    await runInDurableObject(accountStub(), (_instance, state) => state.storage.sql.exec("DROP TABLE account_enrollment").toArray());
+    await eraseSyntheticAccount();
     await abortAllDurableObjects();
     expect(await accountStub().recoverPendingEnrollment(proof)).toEqual({ ok: false, error: "recovery_required" });
     expect(await accountRow()).toMatchObject({ revision: 0, payload: null });
@@ -359,10 +375,13 @@ describe("explicit retained-genesis recovery", () => {
     const before = await accountRow();
     const legacy = typeof before.payload === "string" ? JSON.parse(before.payload) as Record<string, unknown> : null;
     if (legacy !== null) delete legacy.genesisCompletion;
-    await runInDurableObject(accountStub(), (_instance, state) => state.storage.sql.exec("UPDATE account_enrollment SET schema_version = 1, payload = ?", legacy === null ? null : JSON.stringify(legacy)).toArray());
+    await runInDurableObject(accountStub(), (_instance, state) => {
+      removeSyntheticAdmissionTables(state.storage.sql);
+      state.storage.sql.exec("UPDATE account_enrollment SET schema_version = 1, payload = ?", legacy === null ? null : JSON.stringify(legacy));
+    });
     await abortAllDurableObjects();
     const after = await accountRow();
-    expect(after).toMatchObject({ schema_version: 2, revision: before.revision });
+    expect(after).toMatchObject({ schema_version: 3, revision: before.revision });
     if (legacy === null) expect(after.payload).toBeNull();
     else {
       const payload = await accountPayload();
@@ -771,12 +790,12 @@ describe("dormant account enrollment with real local pairing and R2", () => {
     await reserved();
     success(await accountStub().enroll(proof));
     const original = await anchor();
-    await runInDurableObject(accountStub(), (_instance, state) => state.storage.sql.exec("DROP TABLE account_enrollment").toArray());
+    await eraseSyntheticAccount();
     await abortAllDurableObjects();
     expect(await accountStub().enroll(proof)).toEqual({ ok: false, error: "recovery_required" });
     expect((await accountStub().namespaceForEnrollment(proof)).ok).toBe(false);
     expect((await accountStub().revokeEnrollment(proof)).ok).toBe(false);
-    expect(await accountRow()).toMatchObject({ schema_version: 2, revision: 0, payload: null });
+    expect(await accountRow()).toMatchObject({ schema_version: 3, revision: 0, payload: null });
     expect(await anchor()).toEqual(original);
   });
 
@@ -801,7 +820,7 @@ describe("dormant account enrollment with real local pairing and R2", () => {
     success(await accountStub().enroll(proof));
     const original = await anchor();
     await env.CONTROL.delete(original.key);
-    await runInDurableObject(accountStub(), (_instance, state) => state.storage.sql.exec("DROP TABLE account_enrollment").toArray());
+    await eraseSyntheticAccount();
     await abortAllDurableObjects();
     // Neither store can prove that an erased account was previously enrolled.
     // Restore must disable the independently managed generation before traffic;
@@ -825,7 +844,7 @@ describe("dormant account enrollment with real local pairing and R2", () => {
     await runInDurableObject(accountStub(), (_instance, state) => {
       switch (corruption) {
         case "malformed payload": state.storage.sql.exec("UPDATE account_enrollment SET payload = ?", '{"chat":"transcript-canary"}'); break;
-        case "future schema": state.storage.sql.exec("UPDATE account_enrollment SET schema_version = 3"); break;
+        case "future schema": state.storage.sql.exec("UPDATE account_enrollment SET schema_version = 4"); break;
         case "missing row": state.storage.sql.exec("DELETE FROM account_enrollment"); break;
         case "extra table": state.storage.sql.exec("CREATE TABLE unexpected_account_state (marker INTEGER)"); break;
         case "extra index": state.storage.sql.exec("CREATE INDEX unexpected_account_index ON account_enrollment (revision)"); break;
@@ -1012,7 +1031,7 @@ describe("dormant account enrollment with real local pairing and R2", () => {
     expect(await anchor()).toEqual(original);
   });
 
-  test("existing receipt readback rejects an operation-clock regression above the persisted floor", async () => {
+  test("existing receipt readback persists its successful observation then rejects clock regression", async () => {
     await reserved();
     success(await accountStub().enroll(proof));
     const before = await accountRow();
@@ -1029,7 +1048,12 @@ describe("dormant account enrollment with real local pairing and R2", () => {
     vi.restoreAllMocks();
     vi.setSystemTime(NOW + 1_000);
     expect(result).toEqual({ ok: false, error: "clock_regressed" });
-    expect(await accountRow()).toEqual(before);
+    if (typeof before.payload !== "string" || typeof before.revision !== "number") throw new Error("synthetic missing account");
+    expect(await accountRow()).toEqual({ ...before, revision: before.revision + 1,
+      payload: JSON.stringify({ ...JSON.parse(before.payload) as Record<string, unknown>, observedAtMs: NOW + 1_000 }) });
+    await runInDurableObject(accountStub(), (_instance, state) => {
+      expect(state.storage.sql.exec("SELECT observed_at_ms FROM usage_admission_control").one().observed_at_ms).toBe(NOW + 1_000);
+    });
   });
 
   test("extra symbols, accessors and invalid RPC disposal descriptors never widen the grant schema", async () => {

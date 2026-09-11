@@ -1,5 +1,9 @@
 import { DurableObject } from "cloudflare:workers";
 import { createHash } from "node:crypto";
+import { AccountAdmission, type AdmissionObservation } from "./account-admission";
+import { AdmissionFault } from "./admission-policy";
+import { ADMISSION_SCHEMA } from "./admission-schema";
+import { AdmissionState } from "./admission-state";
 import {
   enrollmentAccount, enrollmentAccountName, enrollmentHex, enrollmentRandom,
   enrollmentSnapshot, enrollmentTime, parseEnrollmentProof, parseEnrollmentReservation,
@@ -125,7 +129,7 @@ function disposeReply(value: unknown): void {
 
 /**
  * Dormant account-owned enrollment. Proofs resolve the real PairingIntent; caller
- * account IDs or reservation DTOs never select authority. No upload API exists.
+ * account IDs or reservation DTOs never select authority. Public upload stays closed.
  * Restore requires a separately fenced, qualified reconciliation procedure.
  */
 export class AccountEnrollment extends DurableObject<Env> {
@@ -138,19 +142,27 @@ export class AccountEnrollment extends DurableObject<Env> {
           ctx.storage.sql.exec(SCHEMA_SQL);
           ctx.storage.sql.exec("INSERT INTO account_enrollment (id, schema_version, revision, payload) VALUES (1, 2, 0, NULL)");
         }
+        if (this.#objects().length === 1) {
+          this.#schema(true);
+          this.#migrate();
+          const { state } = this.#stored(2);
+          new AdmissionState(ctx.storage.sql).initialize(state);
+          ctx.storage.sql.exec("UPDATE account_enrollment SET schema_version = 3 WHERE id = 1");
+        }
         this.#schema();
-        this.#migrate();
+        new AdmissionState(ctx.storage.sql).audit(this.#stored(3).state);
       });
     } catch { this.#healthy = false; }
   }
 
   #objects(): Record<string, SqlStorageValue>[] {
-    return this.ctx.storage.sql.exec("SELECT type, name, sql FROM sqlite_schema WHERE name NOT GLOB '_cf_*' AND name NOT GLOB 'sqlite_*' AND name != '__cf_kv' LIMIT 3").toArray();
+    return this.ctx.storage.sql.exec("SELECT type, name, sql FROM sqlite_schema WHERE name NOT GLOB '_cf_*' AND name NOT GLOB 'sqlite_*' AND name != '__cf_kv' LIMIT 7").toArray();
   }
-  #schema(): void {
+  #schema(legacy = false): void {
     const objects = this.#objects();
-    if (!this.#healthy || objects.length !== 1 || objects[0]?.type !== "table" || objects[0]?.name !== "account_enrollment"
-      || objects[0]?.sql !== SCHEMA_SQL) throw new Error("storage_invalid");
+    const expected: Record<string, string> = { account_enrollment: SCHEMA_SQL, ...(legacy ? {} : ADMISSION_SCHEMA) };
+    if (!this.#healthy || objects.length !== Object.keys(expected).length || objects.some(object => object.type !== "table"
+      || typeof object.name !== "string" || !Object.hasOwn(expected, object.name) || object.sql !== expected[object.name])) throw new Error("storage_invalid");
   }
   #generation(): string | null {
     const value: unknown = this.env.USAGE_ENROLLMENT_GENERATION;
@@ -179,46 +191,58 @@ export class AccountEnrollment extends DurableObject<Env> {
     // older binary fails closed on schema 2; rollback must not strip this field.
     this.ctx.storage.sql.exec("UPDATE account_enrollment SET schema_version = 2, payload = ? WHERE id = 1", payload);
   }
-  #transaction<T>(operation: Operation, run: (state: State | null, now: number) => { state: State | null; result: EnrollmentResult<T> }): EnrollmentResult<T> {
+  #stored(version: 2 | 3): { revision: number; state: State | null } {
+    const rows = this.ctx.storage.sql.exec("SELECT id, schema_version, revision, payload FROM account_enrollment LIMIT 2").toArray();
+    const row = rows[0];
+    if (rows.length !== 1 || row?.id !== 1 || row.schema_version !== version || typeof row.revision !== "number"
+      || !Number.isSafeInteger(row.revision) || row.revision < 0 || row.revision >= Number.MAX_SAFE_INTEGER) throw new AdmissionFault();
+    let state: State | null = null;
+    if (row.payload !== null) {
+      if (typeof row.payload !== "string" || row.payload.length > MAX_PAYLOAD || row.revision === 0) throw new AdmissionFault();
+      const parsed: unknown = JSON.parse(row.payload);
+      if (!validState(parsed) || !this.ctx.id.equals(this.env.ACCOUNT_ENROLLMENTS.idFromName(enrollmentAccountName(parsed.accountId)))) throw new AdmissionFault();
+      state = parsed;
+    } else if (row.revision !== 0) throw new AdmissionFault();
+    return { revision: row.revision, state };
+  }
+  #transaction<T>(operation: AdmissionObservation, run: (state: State | null, now: number) => { state: State | null; result: EnrollmentResult<T> }): EnrollmentResult<T> {
     try {
       return this.ctx.storage.transactionSync(() => {
         this.#schema();
         if (this.#generation() !== operation.generation) return err("recovery_required");
-        const rows = this.ctx.storage.sql.exec("SELECT id, schema_version, revision, payload FROM account_enrollment LIMIT 2").toArray();
-        const row = rows[0];
-        if (rows.length !== 1 || row?.id !== 1 || row.schema_version !== 2 || typeof row.revision !== "number"
-          || !Number.isSafeInteger(row.revision) || row.revision < 0 || row.revision >= Number.MAX_SAFE_INTEGER) return err("storage_invalid");
-        let state: State | null = null;
-        if (row.payload !== null) {
-          if (typeof row.payload !== "string" || row.payload.length > MAX_PAYLOAD || row.revision === 0) return err("storage_invalid");
-          const parsed: unknown = JSON.parse(row.payload);
-          if (!validState(parsed)) return err("storage_invalid");
-          state = parsed;
-          if (state.generation !== operation.generation) return err("recovery_required");
-          if (!this.ctx.id.equals(this.env.ACCOUNT_ENROLLMENTS.idFromName(enrollmentAccountName(state.accountId)))) return err("storage_invalid");
-        } else if (row.revision !== 0) return err("storage_invalid");
+        const { revision, state } = this.#stored(3);
+        if (state !== null && state.generation !== operation.generation) return err("recovery_required");
+        const admission = new AdmissionState(this.ctx.storage.sql), control = admission.control();
+        const beforeDevices = new Set(state?.devices.map(device => device.deviceId) ?? []);
         const now = Date.now();
-        if (!enrollmentTime(now) || now < operation.observed || (state !== null && now < state.observedAtMs)) return err("clock_regressed");
+        if (!enrollmentTime(now) || now < operation.observed || now < control.observed || (state !== null && now < state.observedAtMs)) return err("clock_regressed");
         operation.observed = now;
         if (state !== null) state.observedAtMs = now;
+        admission.observe(now);
         const outcome = run(state, now);
         if (outcome.state !== null) {
           if (!validState(outcome.state)) throw new Error("storage_invalid");
           const payload = JSON.stringify(outcome.state);
           if (payload.length > MAX_PAYLOAD) throw new Error("storage_invalid");
-          this.ctx.storage.sql.exec("UPDATE account_enrollment SET revision = ?, payload = ? WHERE id = 1", row.revision + 1, payload);
+          for (const device of outcome.state.devices) if (!beforeDevices.has(device.deviceId)) admission.addDevice(device.deviceId);
+          this.ctx.storage.sql.exec("UPDATE account_enrollment SET revision = ?, payload = ? WHERE id = 1", revision + 1, payload);
         }
         return outcome.result;
       });
-    } catch { return err("storage_invalid"); }
+    } catch (error) { return err(error instanceof AdmissionFault ? error.code : "storage_invalid"); }
   }
 
   #closed(operation: Operation, live: boolean): EnrollmentError | null {
-    const now = Date.now();
-    if (this.#generation() !== operation.generation) return "recovery_required";
-    if (!enrollmentTime(now) || now < operation.observed) return "clock_regressed";
-    operation.observed = now;
-    return live && now >= operation.grant.expiresAtMs ? "expired" : null;
+    const observed = this.#transaction(operation, (state, now) => ({ state, result: ok(now) }));
+    if (!observed.ok) return observed.error;
+    return live && observed.value >= operation.grant.expiresAtMs ? "expired" : null;
+  }
+
+  /** Dormant internal RPC. Authentication is the retained upload commitment;
+   * fixed errors are not acceptance and public index.ts remains unavailable. */
+  async admitBatch(input: unknown): Promise<EnrollmentResult<Uint8Array>> {
+    const admission = new AdmissionState(this.ctx.storage.sql);
+    return new AccountAdmission(this.env, admission, (observation, run) => this.#transaction(observation, (state, now) => ({ state, result: ok(run(state, now)) }))).admit(input);
   }
 
   async #operation(input: unknown): Promise<EnrollmentResult<Operation>> {
