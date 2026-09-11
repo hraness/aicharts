@@ -18,7 +18,9 @@ enum test_scenario {
     QUERY_UNEXPECTED, ITERATOR_UNSUPPORTED, STALE_ERRNO_SUCCESS,
     METADATA_QUERY_FAILURE, STAT_ENOENT, ACL_READ_ENOENT,
     GROUP_READ_FAILURE, MODE_READ_FAILURE, ACL_FREE_FAILURE,
-    QUERY_UNSUPPORTED, ACL_READ_UNSUPPORTED, VALIDATE_UNSUPPORTED
+    QUERY_UNSUPPORTED, ACL_READ_UNSUPPORTED, VALIDATE_UNSUPPORTED,
+    DENY_ONE, DENY_MAX, DENY_OVERFLOW, DENY_THEN_ALLOW, UNKNOWN_TAG,
+    TAG_FAILURE, TAG_UNEXPECTED, NEXT_FAILURE, NEXT_UNEXPECTED, DENY_FREE_FAILURE
 };
 
 static _Thread_local struct {
@@ -28,6 +30,7 @@ static _Thread_local struct {
     unsigned int bad_call;
     int populated;
     int validated;
+    unsigned int entry_index;
     uint64_t security_tag;
     uint64_t acl_tag;
     uint64_t entry_tag;
@@ -145,8 +148,10 @@ static int fake_acl_valid(acl_t acl) {
 }
 
 static int fake_acl_get_entry(acl_t acl, int index, acl_entry_t *entry) {
-    if (acl != (acl_t)&fixture.acl_tag || index != ACL_FIRST_ENTRY || !fixture.validated)
+    if (acl != (acl_t)&fixture.acl_tag || (index != ACL_FIRST_ENTRY && index != ACL_NEXT_ENTRY) || !fixture.validated)
         fixture.bad_call = 1;
+    if (index == ACL_FIRST_ENTRY) fixture.entry_index = 0;
+    else fixture.entry_index++;
     if (fixture.scenario == EMPTY_ACL) {
         errno = EINVAL;
         return -1;
@@ -159,8 +164,24 @@ static int fake_acl_get_entry(acl_t acl, int index, acl_entry_t *entry) {
         errno = EINVAL;
         return 1;
     }
+    if (index == ACL_NEXT_ENTRY && fixture.scenario == NEXT_FAILURE) { errno = ENOMEM; return -1; }
+    if (index == ACL_NEXT_ENTRY && fixture.scenario == NEXT_UNEXPECTED) { errno = EINVAL; return 1; }
+    unsigned int count = fixture.scenario == DENY_MAX ? ACL_MAX_ENTRIES
+        : fixture.scenario == DENY_OVERFLOW ? ACL_MAX_ENTRIES + 1
+        : fixture.scenario == DENY_THEN_ALLOW ? 2 : 1;
+    if (fixture.entry_index >= count) { errno = EINVAL; return -1; }
     *entry = fixture.scenario == NULL_ENTRY ? NULL : (acl_entry_t)&fixture.entry_tag;
     if (fixture.scenario == STALE_ERRNO_SUCCESS) errno = EINVAL;
+    return 0;
+}
+
+static int fake_acl_get_tag_type(acl_entry_t entry, acl_tag_t *tag) {
+    if (entry != (acl_entry_t)&fixture.entry_tag || !fixture.validated) fixture.bad_call = 1;
+    if (fixture.scenario == TAG_FAILURE) { errno = EIO; return -1; }
+    if (fixture.scenario == TAG_UNEXPECTED) { errno = EIO; return 1; }
+    *tag = fixture.scenario == UNKNOWN_TAG ? ACL_UNDEFINED_TAG
+        : fixture.scenario >= DENY_ONE && !(fixture.scenario == DENY_THEN_ALLOW && fixture.entry_index == 1)
+        ? ACL_EXTENDED_DENY : ACL_EXTENDED_ALLOW;
     return 0;
 }
 
@@ -168,7 +189,7 @@ static int fake_acl_free(void *object) {
     fixture.acl_frees += 1;
     if (object != &fixture.acl_tag) fixture.bad_call = 1;
     errno = EINVAL;
-    return fixture.scenario == ACL_FREE_FAILURE ? -1 : 0;
+    return fixture.scenario == ACL_FREE_FAILURE || fixture.scenario == DENY_FREE_FAILURE ? -1 : 0;
 }
 
 static void fake_filesec_free(filesec_t security) {
@@ -178,23 +199,28 @@ static void fake_filesec_free(filesec_t security) {
 }
 
 static int fake_check_fd(int fd);
+static int fake_check_deny_fd(int fd);
 #define aicharts_macos_check_acl_fd fake_check_fd
+#define aicharts_macos_check_deny_only_acl_fd fake_check_deny_fd
 #define filesec_init fake_filesec_init
 #define fstatx_np fake_fstatx_np
 #define filesec_query_property fake_filesec_query_property
 #define filesec_get_property fake_filesec_get_property
 #define acl_valid fake_acl_valid
 #define acl_get_entry fake_acl_get_entry
+#define acl_get_tag_type fake_acl_get_tag_type
 #define acl_free fake_acl_free
 #define filesec_free fake_filesec_free
 #include "acl.c"
 #undef aicharts_macos_check_acl_fd
+#undef aicharts_macos_check_deny_only_acl_fd
 #undef filesec_init
 #undef fstatx_np
 #undef filesec_query_property
 #undef filesec_get_property
 #undef acl_valid
 #undef acl_get_entry
+#undef acl_get_tag_type
 #undef acl_free
 #undef filesec_free
 
@@ -204,6 +230,15 @@ uint32_t aicharts_macos_acl_test_run(int scenario) {
     if (scenario < NO_ACL || scenario > VALIDATE_UNSUPPORTED) return 0xff000002;
     fixture.scenario = scenario;
     const unsigned int result = (unsigned int)fake_check_fd(77);
+    return (result & 255) | (fixture.security_frees << 8)
+        | (fixture.acl_frees << 16) | (fixture.bad_call << 24);
+}
+
+uint32_t aicharts_macos_acl_test_deny_run(int scenario) {
+    memset(&fixture, 0, sizeof(fixture));
+    if (scenario < NO_ACL || scenario > DENY_FREE_FAILURE) return 0xff000002;
+    fixture.scenario = scenario;
+    const unsigned int result = (unsigned int)fake_check_deny_fd(77);
     return (result & 255) | (fixture.security_frees << 8)
         | (fixture.acl_frees << 16) | (fixture.bad_call << 24);
 }

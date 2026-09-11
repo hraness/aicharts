@@ -1,5 +1,6 @@
 //! Descriptor-only private persistence. The caller supplies the trusted anchor;
 //! this module neither discovers paths nor activates the public store facade.
+mod anchor;
 mod envelope;
 #[cfg(test)]
 mod tests;
@@ -75,6 +76,7 @@ enum Phase {
 }
 
 pub(super) struct MacStorage {
+    anchor_chain: Option<anchor::TrustedAnchor>,
     anchor: OwnedFd,
     directory: OwnedFd,
     anchor_identity: Identity,
@@ -255,14 +257,40 @@ fn bounded_write(
 }
 
 impl MacStorage {
+    #[cfg(test)]
+    pub(super) fn fail_next_committed_sync(&mut self) {
+        let mut fired = false;
+        self.hook = Some(Box::new(move |phase| {
+            if !fired && phase == Phase::BeforeCommittedSync {
+                fired = true;
+                Err(Error::StorageUnavailable)
+            } else {
+                Ok(())
+            }
+        }));
+    }
+    #[cfg(test)]
+    pub(super) fn validate_anchor(path: &std::path::Path) -> Result<()> {
+        anchor::TrustedAnchor::open_existing(path).map(|_| ())
+    }
     pub(super) fn create_new_at(anchor: OwnedFd) -> Result<Self> {
-        Self::construct(anchor, true)
+        Self::construct(anchor, true, None)
     }
     pub(super) fn open_existing_at(anchor: OwnedFd) -> Result<Self> {
-        Self::construct(anchor, false)
+        Self::construct(anchor, false, None)
     }
 
-    fn construct(anchor: OwnedFd, create: bool) -> Result<Self> {
+    pub(super) fn from_path(path: &std::path::Path, create: bool) -> Result<Self> {
+        let chain = anchor::TrustedAnchor::open_existing(path)?;
+        let descriptor = chain.descriptor()?;
+        Self::construct(descriptor, create, Some(chain))
+    }
+
+    fn construct(
+        anchor: OwnedFd,
+        create: bool,
+        chain: Option<anchor::TrustedAnchor>,
+    ) -> Result<Self> {
         let uid = rustix::process::geteuid().as_raw();
         if rustix::process::getuid().as_raw() != uid {
             return Err(Error::RecoveryRequired);
@@ -270,6 +298,9 @@ impl MacStorage {
         let fd_flags = io::fcntl_getfd(&anchor).map_err(unavailable)?;
         io::fcntl_setfd(&anchor, fd_flags | FdFlags::CLOEXEC).map_err(unavailable)?;
         let anchor_stat = checked_fd(&anchor, uid, true)?;
+        if let Some(chain) = chain.as_ref() {
+            chain.revalidate()?;
+        }
         if create {
             fs::mkdirat(&anchor, DIRECTORY, Mode::from_raw_mode(0o700)).map_err(|error| {
                 if error == Errno::EXIST {
@@ -282,6 +313,9 @@ impl MacStorage {
         let directory =
             open_named(&anchor, DIRECTORY, uid, true, OFlags::RDONLY)?.ok_or(Error::Missing)?;
         let directory_stat = checked_fd(&directory, uid, true)?;
+        if let Some(chain) = chain.as_ref() {
+            chain.revalidate()?;
+        }
         let lock = if create {
             // The directory is checked before child creation; the empty child is
             // checked before any payload can be written anywhere in this store.
@@ -304,6 +338,7 @@ impl MacStorage {
             return Err(Error::RecoveryRequired);
         }
         let mut storage = Self {
+            anchor_chain: chain,
             anchor,
             directory,
             anchor_identity: Identity::of(&anchor_stat),
@@ -332,6 +367,9 @@ impl MacStorage {
         Ok(())
     }
     fn edges(&self) -> Result<()> {
+        if let Some(chain) = self.anchor_chain.as_ref() {
+            chain.revalidate()?;
+        }
         let anchor = checked_fd(&self.anchor, self.uid, true)?;
         let directory = checked_fd(&self.directory, self.uid, true)?;
         if Identity::of(&anchor) != self.anchor_identity
@@ -350,6 +388,9 @@ impl MacStorage {
                 return Err(Error::RecoveryRequired);
             }
             binding(&self.directory, LOCK, &observed)?;
+        }
+        if let Some(chain) = self.anchor_chain.as_ref() {
+            chain.revalidate()?;
         }
         Ok(())
     }

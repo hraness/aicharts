@@ -16,6 +16,9 @@ pub(crate) mod engine;
 #[cfg(target_os = "macos")]
 #[cfg_attr(not(test), allow(dead_code))]
 mod macos;
+#[cfg(target_os = "macos")]
+#[allow(dead_code)]
+mod qualified;
 
 use crate::{RecordIdentity, SecretRecord, Vault};
 use sha2::{Digest, Sha256};
@@ -183,6 +186,10 @@ fn closed() -> Error {
 }
 
 impl ReferenceStore {
+    /// Exact initialization recovery is reserved behind the same admission fence.
+    pub fn reconcile_initialization(_path: &Path, _installation: [u8; 32]) -> Result<Self> {
+        Err(closed())
+    }
     pub fn initialize_new(_path: &Path, _installation: [u8; 32]) -> Result<Self> {
         Err(closed())
     }

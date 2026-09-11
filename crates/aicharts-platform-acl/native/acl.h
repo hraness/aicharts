@@ -8,5 +8,6 @@
 #define AICHARTS_ACL_UNSUPPORTED 3
 
 int aicharts_macos_check_acl_fd(int fd);
+int aicharts_macos_check_deny_only_acl_fd(int fd);
 
 #endif

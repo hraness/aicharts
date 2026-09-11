@@ -1,12 +1,14 @@
 # Usage Worker boundaries
 
-The Usage Worker contains internal device-pairing, account-enrollment, numeric staging and immutable batch/journal object primitives. Its public handler always returns a fixed, private `503`. It has no deployment command, public browser approval route, upload authorization, accepted-usage index or query endpoint. The application has a dormant server-only authentication coordinator, but no production Worker connection. Tests use synthetic local bindings; no live Worker or R2 bucket is provisioned by this source slice.
+The Usage Worker contains internal device-pairing, account-enrollment, numeric staging and immutable batch/journal object primitives. Its public handler always returns a fixed, private `503`. It has no deployment command, public browser approval route, upload authorization, accepted-usage index or query endpoint. The application has a dormant server-only authentication coordinator, but no production Worker connection. Tests use synthetic local bindings.
 
 ## Storage split
 
 Pairing and enrollment require transactional, durable control state. SQLite-backed Durable Objects provide that state without adding a separate SQL service. Private R2 holds compact measurement frames and a separate fixed-size account namespace anchor. Pairing and account enrollment have separate objects; deduplication and accepted-usage indexing are not implemented yet.
 
 Cloudflare recommends SQLite-backed [Durable Object class exports](https://developers.cloudflare.com/durable-objects/reference/durable-objects-migrations/). The local configuration declares `PairingIntent` and `AccountEnrollment`, separate `STAGING` and `CONTROL` R2 bindings, and a synthetic recovery-generation value. It disables public Worker/Preview URLs and observability and contains no production account, route or remote test binding. It is a local fixture configuration, not a qualified deployment target.
+
+Private Standard R2 buckets `aicharts-usage-records` and `aicharts-usage-control` were provisioned on 2026-09-11 in the existing owner-controlled account. Readback confirmed disabled public development URLs and no custom domains. These buckets have no deployed Worker bindings or qualified service authority, and provisioning uploaded no objects. The separate shared-profile media bucket belongs to Accounts. Do not deploy the local fixture configuration against these resources; production identity, bindings, recovery and live data checks remain required below.
 
 ## Pairing authority
 

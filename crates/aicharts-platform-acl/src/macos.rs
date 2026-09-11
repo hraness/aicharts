@@ -7,6 +7,14 @@ use crate::{decode_status, AclError};
 
 unsafe extern "C" {
     fn aicharts_macos_check_acl_fd(fd: std::ffi::c_int) -> std::ffi::c_int;
+    fn aicharts_macos_check_deny_only_acl_fd(fd: std::ffi::c_int) -> std::ffi::c_int;
+}
+
+pub(super) fn require_deny_only_acl(fd: BorrowedFd<'_>) -> Result<(), AclError> {
+    // SAFETY: same synchronous borrowed-descriptor contract as require_no_acl.
+    // Native iteration is bounded, reads only an owned ACL copy, and exposes no
+    // native pointer, principal or descriptor through its fixed status result.
+    decode_status(unsafe { aicharts_macos_check_deny_only_acl_fd(fd.as_raw_fd()) })
 }
 
 pub(super) fn require_no_acl(fd: BorrowedFd<'_>) -> Result<(), AclError> {
@@ -21,7 +29,14 @@ pub(super) fn require_no_acl(fd: BorrowedFd<'_>) -> Result<(), AclError> {
 #[link(name = "aicharts_acl_test", kind = "static")]
 unsafe extern "C" {
     fn aicharts_macos_acl_test_run(scenario: std::ffi::c_int) -> u32;
+    fn aicharts_macos_acl_test_deny_run(scenario: std::ffi::c_int) -> u32;
     fn aicharts_macos_acl_test_set(fd: std::ffi::c_int, kind: std::ffi::c_int) -> std::ffi::c_int;
+}
+
+#[cfg(test)]
+fn deny_fault_case(scenario: std::ffi::c_int) -> u32 {
+    // SAFETY: test-only integer runner owns thread-local synthetic native objects.
+    unsafe { aicharts_macos_acl_test_deny_run(scenario) }
 }
 
 #[cfg(test)]

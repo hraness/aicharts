@@ -135,6 +135,41 @@ pub(crate) fn snapshot<S: Storage>(storage: &mut S) -> Result<ManifestSnapshot> 
     locked(storage, read)
 }
 
+/// Existing storage only. A retained exact initial pending envelope can be
+/// resumed, but advanced state is never adopted as an initialization receipt.
+pub(crate) fn reconcile_initialization<S: Storage>(
+    storage: &mut S,
+    installation: [u8; 32],
+) -> Result<ManifestSnapshot> {
+    if installation == [0; 32] {
+        return Err(Error::InvalidInstallation);
+    }
+    locked(storage, |storage| {
+        match storage.read_committed(super::MAX_MANIFEST_BYTES)? {
+            Some(bytes) => {
+                let current = codec::decode(&bytes)?;
+                if current.installation != installation {
+                    return Err(Error::InvalidInstallation);
+                }
+                if current.revision != 0 || !current.entries.is_empty() {
+                    return Err(Error::Conflict);
+                }
+                durable_checked(storage, &current.token())?;
+                Ok(current)
+            }
+            None => commit(
+                storage,
+                None,
+                &ManifestSnapshot {
+                    installation,
+                    revision: 0,
+                    entries: vec![],
+                },
+            ),
+        }
+    })
+}
+
 pub(crate) fn prepare<S: Storage>(
     storage: &mut S,
     expected: &ManifestToken,

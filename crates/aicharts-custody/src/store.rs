@@ -21,6 +21,7 @@ pub(crate) enum RawError {
     Unavailable,
     Invalid,
     Unknown,
+    Busy,
 }
 
 impl RawError {
@@ -33,6 +34,7 @@ impl RawError {
             Self::Unavailable => Error::Unavailable,
             Self::Invalid => Error::InvalidRecord,
             Self::Unknown => Error::OutcomeUnknown,
+            Self::Busy => Error::Busy,
         }
     }
 }

@@ -3,7 +3,7 @@
 This library supplies immutable, typed secret records, a noninteractive macOS
 Keychain adapter, and a dormant reference-manifest state machine. It is not
 connected to the CLI, enrollment, uploads, or a daemon. Ordinary tests use
-in-memory fakes and do not access a user's keychain.
+in-memory fakes and owned disposable filesystem fixtures, never a user's keychain.
 
 ## Boundary
 
@@ -128,8 +128,8 @@ reply loss, restart, and concurrent changes. A separate private macOS adapter
 uses `rustix` descriptor operations and the narrow
 [ACL inspection boundary](../aicharts-platform-acl/README.md). Its tests use only
 disposable directories and synthetic records, with a fake vault. The public
-`ReferenceStore` remains closed; trusted anchor discovery and the path-based
-interface are not implemented.
+`ReferenceStore` remains closed. The private explicit-path integration candidate
+and its separately ignored Keychain qualification do not activate that facade.
 
 The adapter accepts an already trusted, owned directory descriptor. It requires
 current-user ownership, mode 0700, no ACL entries, and writable local APFS with
@@ -137,6 +137,17 @@ ownership enforcement. It creates or opens the fixed `references-v1` child and
 checks that this name still resolves to its pinned descriptor before and after
 operations. It never resolves user paths, follows symbolic links, repairs modes
 or ACLs, or adopts a partially initialized directory.
+
+The separate private path entry accepts an existing absolute anchor, capped at
+1,023 bytes and 64 components of at most 255 bytes each. It rejects symbolic
+links, empty components, `.` and `..`; it does not expand `HOME`, discover a
+fallback, create ancestors or repair permissions. Descriptors from `/` through
+the anchor remain pinned, and parent/name bindings are rechecked at storage
+checkpoints. Ancestors must be root- or current-user-owned directories without
+group/other write permission, on local APFS with ownership enforced. Only absent,
+empty or deny-only ancestor ACLs pass. The final anchor retains the stricter
+current-user, mode-0700, no-ACL, writable-filesystem rule. A read-only root volume
+does not relax the actual write-anchor requirements.
 
 The child contains only `references.lock`, `references.current`, and optionally
 `references.pending`. Files must be regular, mode 0600, have one link, and have
@@ -163,6 +174,13 @@ or missing lock cannot. Publication renames pending to current once, with
 no-replace semantics for initial creation. File and directory `fsync` operations
 are followed by `F_FULLFSYNC` on the same device, with no weaker fallback.
 [Apple documents the full synchronization guarantee](https://raw.githubusercontent.com/apple-oss-distributions/xnu/main/bsd/man/man2/fcntl.2).
+
+The private existing-only `reconcile_initialization` path requires the original
+installation and either its exact initial pending envelope or an empty
+revision-zero current manifest. It reestablishes durability for a committed
+retry. A differing installation or advanced manifest is not an initialization
+receipt; missing or partial state is preserved. The corresponding public method
+remains behind the same closed facade.
 
 Reads, writes, interrupt retries, and directory enumeration have fixed work
 bounds. Native disk operations do not have a guaranteed wall-clock timeout.
@@ -198,6 +216,13 @@ settings change is requested. Locked or consent-required access pauses with a
 fixed error. This coordination assumes no unrelated code changes process-wide
 Keychain UI policy outside this crate.
 
+The private reference integration uses a lazy vault session. Construction makes
+no native call. Only after the manifest's filesystem durability barrier does its
+first vault operation acquire the process mutex, suppress UI and select one
+keychain. It retains that session through readback, preserving filesystem-to-vault
+lock order. Failed selection is retained for the operation, never retried or
+treated as a missing item.
+
 This uses the file-based compatibility keychain. It does not claim Data Protection
 Keychain accessibility classes, app-group entitlements, Secure Enclave protection,
 or OS-enforced reader/uploader separation. The file-based keychain is not iCloud
@@ -230,8 +255,22 @@ guard the absence of secret debug/clone traits. macOS-only pure tests check nati
 error classification, result projection, synthetic UI guard behavior, and mutex
 refusal before any native call.
 
-These tests do not qualify a live keychain, a signed application, a LaunchAgent,
-an executable upgrade, or a full credential recovery flow. A later separately
-admitted disposable-keychain test must prove native create/readback, consent and
-locked behavior without modifying the user's normal keychain. Signed CLI and
-LaunchAgent artifact qualification must precede claims of unattended support.
+The separately ignored `disposable_keychain_reference_roundtrip` test is an
+explicit native qualification candidate, not part of ordinary checks. Its parent
+validates an explicitly supplied existing private parent before creating one
+owned fixture. A bounded child creates a concrete private keychain with synthetic records and no
+password in argv or environment; it never selects the default keychain or edits
+search lists. It tests exact readback, conflicts, reopening, lost insertion replies,
+and noninteractive refusal while that fixture is locked. Only the exact fixture
+is unlocked with its synthetic in-memory password. Cleanup removes the parent's
+owned directory after child exit and identity revalidation. Its exact child
+process group is retained through timeout cleanup, including a fixture-lock
+subprocess. An uncertain process-custody result preserves the fixture. It does
+not call `delete-keychain`, whose implementation also saves keychain preferences.
+Full fixture paths containing `/login.keychain` are refused before creation,
+matching [Apple's private-keychain registration distinction](https://raw.githubusercontent.com/apple-oss-distributions/Security/main/OSX/libsecurity_keychain/lib/StorageManager.cpp).
+
+This ignored test has not established signed-application, LaunchAgent, executable
+upgrade, user-consent or full credential-recovery qualification. Its presence is
+not a live-test receipt. Signed CLI and LaunchAgent artifact qualification must
+precede claims of unattended support.

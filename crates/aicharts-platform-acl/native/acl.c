@@ -32,7 +32,7 @@ static int complete_stat_properties(filesec_t security, const struct stat *statu
         ? AICHARTS_ACL_CLEAR : AICHARTS_ACL_UNAVAILABLE;
 }
 
-int aicharts_macos_check_acl_fd(int fd) {
+static int check_acl_fd(int fd, int deny_only) {
     struct stat status = {0};
     filesec_t security = filesec_init();
     acl_t acl = NULL;
@@ -66,11 +66,22 @@ int aicharts_macos_check_acl_fd(int fd) {
     }
     /* Darwin returns zero for an entry, unlike Linux. With this fresh,
      * validated copy and fixed FIRST index, EINVAL means an empty ACL. */
-    const int found = acl_get_entry(acl, ACL_FIRST_ENTRY, &entry);
-    const int entry_error = errno;
-    if (found == 0) result = entry == NULL ? AICHARTS_ACL_UNAVAILABLE : AICHARTS_ACL_PRESENT;
-    else if (found == -1 && entry_error == EINVAL) result = AICHARTS_ACL_CLEAR;
-    else result = native_failure(entry_error);
+    for (unsigned int index = 0; index <= ACL_MAX_ENTRIES; ++index) {
+        entry = NULL;
+        const int found = acl_get_entry(acl, index == 0 ? ACL_FIRST_ENTRY : ACL_NEXT_ENTRY, &entry);
+        const int entry_error = errno;
+        if (found == -1 && entry_error == EINVAL) {
+            result = AICHARTS_ACL_CLEAR;
+            break;
+        }
+        if (found != 0) { result = native_failure(entry_error); break; }
+        if (entry == NULL || index == ACL_MAX_ENTRIES) { result = AICHARTS_ACL_UNAVAILABLE; break; }
+        if (!deny_only) { result = AICHARTS_ACL_PRESENT; break; }
+        acl_tag_t tag = ACL_UNDEFINED_TAG;
+        if (acl_get_tag_type(entry, &tag) != 0) { result = native_failure(errno); break; }
+        if (tag == ACL_EXTENDED_ALLOW) { result = AICHARTS_ACL_PRESENT; break; }
+        if (tag != ACL_EXTENDED_DENY) { result = AICHARTS_ACL_UNAVAILABLE; break; }
+    }
 done:
     /* Capture/classify errors before cleanup, which may change errno. Entries
      * borrow storage from acl; only the owned ACL copy is freed. */
@@ -79,3 +90,6 @@ done:
     filesec_free(security);
     return result;
 }
+
+int aicharts_macos_check_acl_fd(int fd) { return check_acl_fd(fd, 0); }
+int aicharts_macos_check_deny_only_acl_fd(int fd) { return check_acl_fd(fd, 1); }
