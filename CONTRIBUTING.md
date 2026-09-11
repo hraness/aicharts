@@ -19,7 +19,7 @@ Before opening a pull request, run:
 bun run check
 ```
 
-The complete gate requires the Rust toolchain and components pinned in `rust-toolchain.toml`. With rustup installed, `rustup show active-toolchain` installs the pinned toolchain on first use. The usage crates are local-only; tests must use synthetic fixtures and must never read a contributor's sessions or credentials.
+The complete gate requires the Rust toolchain and components pinned in `rust-toolchain.toml`, plus a C compiler for bundled SQLite. With rustup installed, `rustup show active-toolchain` installs the pinned toolchain on first use. The usage crates are local-only; tests must use synthetic fixtures and must never read a contributor's sessions, state or credentials. Never reset a real usage ledger to make a test pass.
 
 ## Data changes
 
