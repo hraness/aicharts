@@ -7,6 +7,7 @@ import type { UsageAuthEnvironment } from "./auth-server";
 // server code directly, without replacing the SDK or its cryptographic checks.
 mock.module("server-only", () => ({}));
 const { createUsageAuthServer, handleUsageAuth } = await import("./auth-server");
+const { sealPairingCustody } = await import("./pairing-custody");
 
 const origin = "https://aicharts.io";
 const issuer = "https://account.hraness.com";
@@ -35,9 +36,23 @@ const intentId = "1a".repeat(32);
 const browserNonce = "2b".repeat(32);
 const attemptId = "3c".repeat(32);
 const contextToken = "4d".repeat(32);
-const pairingInput = { intentId, browserNonce };
+const pairingInput = { intentId };
 const pairingAttempt = { attemptId, contextToken, startedAtMs: nowMs, expiresAtMs: nowMs + 300_000 };
 const pairingStartRequest = () => request("/api/suite-auth/start", { headers: { "sec-fetch-site": "same-origin" } });
+const pairingCookieName = "__Host-aicharts-usage-pairing";
+// These tests run sequentially. Each fixture resets its synthetic cookie
+// canaries so every shared view/error assertion checks current browser custody.
+const cookieCanaries = new Set<string>();
+type BrowserView = {
+  state: "pending" | "browser-approved" | "terminal-confirmed" | "denied" | "expired";
+  expiresAtMs: number;
+  accountId: string | null;
+  authenticationExpiresAtMs: number | null;
+};
+const verifiedBrowserView: BrowserView = {
+  state: "pending", expiresAtMs: pairingAttempt.expiresAtMs,
+  accountId, authenticationExpiresAtMs: pairingAttempt.expiresAtMs,
+};
 
 function request(path: string, init: RequestInit = {}): Request {
   return new Request(new URL(path, origin), init);
@@ -56,12 +71,53 @@ function base64url(value: string | ArrayBuffer): string {
   return Buffer.from(typeof value === "string" ? value : new Uint8Array(value)).toString("base64url");
 }
 
-function cookieFrom(response: Response, name: "session" | "transaction"): string {
+function cookieFrom(response: Response, name: "session" | "transaction" | "pairing"): string {
+  const prefix = name === "pairing" ? pairingCookieName : `__Host-hraness-suite-oidc-${name}`;
   const value = response.headers.getSetCookie().find(cookie =>
-    cookie.startsWith(`__Host-hraness-suite-oidc-${name}=`),
+    cookie.startsWith(`${prefix}=`),
   );
   if (value === undefined) throw new Error(`Missing synthetic ${name} cookie.`);
-  return value.split(";", 1)[0];
+  const cookie = value.split(";", 1)[0];
+  cookieCanaries.add(cookie.slice(cookie.indexOf("=") + 1));
+  return cookie;
+}
+
+function approvalRequest(cookie: string, body?: unknown): Request {
+  return request("/api/usage/pairing", body === undefined
+    ? { headers: { cookie, "sec-fetch-site": "same-origin" } }
+    : { method: "POST", headers: { cookie, origin, "sec-fetch-site": "same-origin", "content-type": "application/json" }, body: JSON.stringify(body) });
+}
+
+function withCookie(original: Request, cookie: string): Request {
+  const headers = new Headers(original.headers);
+  headers.set("cookie", cookie);
+  return new Request(original, { headers });
+}
+
+async function approvalProjection(response: Response) {
+  expect(response.status).toBe(200);
+  assertPrivate(response);
+  expect(response.headers.has("set-cookie")).toBe(false);
+  expect(response.headers.has("location")).toBe(false);
+  const value: unknown = await response.json();
+  const visible = `${JSON.stringify(value)} ${JSON.stringify([...response.headers])}`;
+  for (const canary of cookieCanaries) expect(visible).not.toContain(canary);
+  if (value === null || typeof value !== "object" || Array.isArray(value)
+    || !("schemaVersion" in value) || value.schemaVersion !== 1
+    || !("state" in value) || typeof value.state !== "string"
+    || !("accountId" in value) || typeof value.accountId !== "string"
+    || !("expiresAtMs" in value) || typeof value.expiresAtMs !== "number"
+    || !("csrfToken" in value) || typeof value.csrfToken !== "string") throw new Error("Expected a bounded approval projection.");
+  expect(Object.keys(value).sort()).toEqual(["schemaVersion", "state", "accountId", "expiresAtMs", "csrfToken"].sort());
+  expect(["pending", "browser-approved", "terminal-confirmed", "denied"]).toContain(value.state);
+  expect(value.accountId).toMatch(/^acct_[0-9a-f]{32}$/u);
+  expect(Number.isSafeInteger(value.expiresAtMs) && value.expiresAtMs > 0).toBe(true);
+  expect(value.csrfToken).toMatch(/^[0-9a-f]{64}$/u);
+  expect(value.csrfToken).not.toBe("0".repeat(64));
+  return {
+    value: { schemaVersion: value.schemaVersion, state: value.state, accountId: value.accountId, expiresAtMs: value.expiresAtMs, csrfToken: value.csrfToken },
+    csrfToken: value.csrfToken,
+  };
 }
 
 async function assertPairingFailure(response: Response, code?: "UNAVAILABLE" | "REJECTED" | "FAILED", status?: number): Promise<void> {
@@ -70,6 +126,8 @@ async function assertPairingFailure(response: Response, code?: "UNAVAILABLE" | "
   expect(response.headers.has("location")).toBe(false);
   for (const cookie of response.headers.getSetCookie()) expect(cookie).toContain("Max-Age=0");
   const body = await response.text();
+  const visible = `${body} ${JSON.stringify([...response.headers])}`;
+  for (const canary of cookieCanaries) expect(visible).not.toContain(canary);
   if (code !== undefined) expect(JSON.parse(body)).toEqual({ error: { code: `USAGE_PAIRING_AUTH_${code}` }, schemaVersion: 1 });
   for (const canary of [secret, intentId, browserNonce, attemptId, contextToken, providerSubject, accountId,
     "synthetic-code", "synthetic-private-provider-failure", "private-durable-reply", "synthetic-reader@example.com"]) {
@@ -86,6 +144,7 @@ function deferred<T>() {
 
 /** Synthetic provider transport; the real SDK verifies these ES256 tokens. */
 async function fixture(options: { pairing?: boolean } = {}) {
+  cookieCanaries.clear();
   const keys = await crypto.subtle.generateKey({ name: "ECDSA", namedCurve: "P-256" }, true, ["sign", "verify"]);
   const publicKey = await crypto.subtle.exportKey("jwk", keys.publicKey);
   const kid = "synthetic-accounts-key-1";
@@ -103,13 +162,24 @@ async function fixture(options: { pairing?: boolean } = {}) {
   let accessTokenOverrides: Record<string, unknown> = {};
   let providerEffect: (url: string) => void | Promise<void> = () => {};
   let randomEffect: (length: number) => void = () => {};
+  let ownedNonce = "";
+  let latestCustody = "";
+  let browserView: BrowserView = { ...verifiedBrowserView, accountId: null, authenticationExpiresAtMs: null };
   let beginEffect: (input: unknown) => unknown | Promise<unknown> = () => ({ ok: true, value: { ...pairingAttempt } });
-  let recordEffect: (input: unknown) => unknown | Promise<unknown> = () => ({ ok: true, value: { recorded: true } });
+  let recordEffect: (input: unknown) => unknown | Promise<unknown> = () => { browserView = { ...verifiedBrowserView }; return { ok: true, value: { recorded: true } }; };
+  let statusEffect: (input: unknown) => unknown | Promise<unknown> = () => ({ ok: true, value: { ...browserView } });
+  let decisionEffect: (input: unknown) => unknown | Promise<unknown> = input => {
+    if (input === null || typeof input !== "object" || !("decision" in input)) throw new Error("Expected an owned decision DTO.");
+    browserView = { ...browserView, state: input.decision === "approve" ? "browser-approved" : "denied" };
+    return { ok: true, value: { ...browserView } };
+  };
   const calls: string[] = [];
   const tokenBodies: URLSearchParams[] = [];
   const resolvedIntents: string[] = [];
   const begun: unknown[] = [];
   const recorded: unknown[] = [];
+  const statusReads: unknown[] = [];
+  const decisions: unknown[] = [];
 
   async function sign(payload: Record<string, unknown>): Promise<string> {
     const input = `${base64url(JSON.stringify({ alg: "ES256", kid, typ: "JWT" }))}.${base64url(JSON.stringify({
@@ -128,8 +198,15 @@ async function fixture(options: { pairing?: boolean } = {}) {
     ...(options.pairing ? { pairingIntent: (id: string) => {
       resolvedIntents.push(id);
       return {
-        beginBrowserAttempt: async (input: unknown) => { begun.push(input); return beginEffect(input); },
+        beginBrowserAttempt: async (input: unknown) => {
+          begun.push(input);
+          if (input === null || typeof input !== "object" || !("browserNonce" in input) || typeof input.browserNonce !== "string") throw new Error("Expected the server-generated nonce.");
+          ownedNonce = input.browserNonce;
+          return beginEffect(input);
+        },
         recordVerifiedAuthentication: async (input: unknown) => { recorded.push(input); return recordEffect(input); },
+        browserStatus: async (input: unknown) => { statusReads.push(input); return statusEffect(input); },
+        decideBrowser: async (input: unknown) => { decisions.push(input); return decisionEffect(input); },
       };
     } } : {}),
     fetch: async (input, init) => {
@@ -208,7 +285,9 @@ async function fixture(options: { pairing?: boolean } = {}) {
   }
 
   async function startPairing(input: unknown = pairingInput) {
-    return captureStart(await server.startPairingAuthentication(pairingStartRequest(), input));
+    const started = captureStart(await server.startPairingAuthentication(pairingStartRequest(), input));
+    latestCustody = cookieFrom(started.response, "pairing");
+    return started;
   }
 
   async function startUnrelatedContext(context: string) {
@@ -217,13 +296,15 @@ async function fixture(options: { pairing?: boolean } = {}) {
       receiptKeyVersion: "identity-v1", now: () => clockMs,
       fetch: async () => { throw new Error("Fresh start must not contact a provider."); },
     });
-    return captureStart(await authority.startFreshAuthentication(pairingStartRequest(), { context, expiresAtMs: nowMs + 300_000 }));
+    const response = await authority.startFreshAuthentication(pairingStartRequest(), { context, expiresAtMs: nowMs + 300_000 });
+    if (latestCustody !== "") response.headers.append("set-cookie", latestCustody);
+    return captureStart(response);
   }
 
   function callback(started: { response: Response; authorization: URL }) {
     return request(`/api/suite-auth/callback?code=synthetic-code&state=${started.authorization.searchParams.get("state")}`, {
       headers: {
-        cookie: cookieFrom(started.response, "transaction"),
+        cookie: started.response.headers.getSetCookie().map(cookie => cookie.split(";", 1)[0]).join("; "),
         "sec-fetch-site": "cross-site", "sec-fetch-mode": "navigate", "sec-fetch-dest": "document",
       },
     });
@@ -235,9 +316,21 @@ async function fixture(options: { pairing?: boolean } = {}) {
     return { response, cookie: cookieFrom(response, "session") };
   }
 
+  async function pairedLogin() {
+    const started = await startPairing();
+    const response = await server.completePairingAuthentication(callback(started));
+    expect(response.status).toBe(200);
+    return { started, response, cookie: `${cookieFrom(response, "session")}; ${cookieFrom(started.response, "pairing")}` };
+  }
+
+  function proof() {
+    return { intentId, attemptId, browserNonce: ownedNonce, contextToken };
+  }
+
   return {
-    server, calls, tokenBodies, start, login, startPairing, startUnrelatedContext, callback,
-    resolvedIntents, begun, recorded,
+    server, calls, tokenBodies, start, login, startPairing, startUnrelatedContext, callback, pairedLogin, proof,
+    resolvedIntents, begun, recorded, statusReads, decisions,
+    browserNonce: () => ownedNonce,
     secrets: () => [secret, accessToken, refreshToken, providerSubject, "synthetic-reader@example.com"],
     environment: (value: UsageAuthEnvironment) => { environment = value; },
     time: (value: number) => { clockMs = value; },
@@ -249,6 +342,9 @@ async function fixture(options: { pairing?: boolean } = {}) {
     randomEffect: (effect: typeof randomEffect) => { randomEffect = effect; },
     beginEffect: (effect: typeof beginEffect) => { beginEffect = effect; },
     recordEffect: (effect: typeof recordEffect) => { recordEffect = effect; },
+    statusEffect: (effect: typeof statusEffect) => { statusEffect = effect; },
+    decisionEffect: (effect: typeof decisionEffect) => { decisionEffect = effect; },
+    browserView: (value: BrowserView) => { browserView = value; },
   };
 }
 
@@ -513,13 +609,15 @@ describe("dormant intent-bound pairing authentication", () => {
   test("records only the sealed attempt and signed account facts before returning the SDK continuation", async () => {
     const f = await fixture({ pairing: true });
     const started = await f.startPairing();
-    expect(f.begun).toEqual([pairingInput]);
+    expect(f.begun).toEqual([{ ...pairingInput, browserNonce: f.browserNonce() }]);
+    expect(f.browserNonce()).toMatch(/^[0-9a-f]{64}$/u);
+    expect(f.browserNonce()).not.toBe("0".repeat(64));
     expect(f.resolvedIntents).toEqual([intentId]);
     expect(f.calls).toEqual([]);
     expect(f.recorded).toEqual([]);
     expect(started.authorization.searchParams.get("prompt")).toBe("login");
     expect(started.authorization.searchParams.get("max_age")).toBe("0");
-    for (const value of [intentId, browserNonce, attemptId, contextToken]) {
+    for (const value of [intentId, f.browserNonce(), attemptId, contextToken]) {
       expect(started.authorization.href).not.toContain(value);
       expect(started.response.headers.get("set-cookie")).not.toContain(value);
     }
@@ -527,14 +625,14 @@ describe("dormant intent-bound pairing authentication", () => {
     expect(response.status).toBe(200);
     expect(f.resolvedIntents).toEqual([intentId, intentId]);
     expect(f.recorded).toEqual([{
-      ...pairingInput, attemptId, contextToken, accountId,
+      ...f.proof(), accountId,
       authTimeMs: nowMs, sessionExpiresAtMs: pairingAttempt.expiresAtMs,
     }]);
     expect(Object.isFrozen(f.begun[0])).toBe(true);
     expect(Object.isFrozen(f.recorded[0])).toBe(true);
     const cookie = cookieFrom(response, "session");
     const body = await response.text();
-    for (const value of [...f.secrets(), intentId, browserNonce, attemptId, contextToken, accountId]) {
+    for (const value of [...f.secrets(), intentId, f.browserNonce(), attemptId, contextToken, accountId]) {
       expect(body).not.toContain(value);
       expect(response.headers.get("set-cookie")).not.toContain(value);
     }
@@ -596,10 +694,10 @@ describe("dormant intent-bound pairing authentication", () => {
   test("invalid start DTOs cannot invoke getters, select an intent or reflect input", async () => {
     const f = await fixture({ pairing: true });
     let getterCalls = 0;
-    const getter = Object.defineProperty({ browserNonce }, "intentId", { enumerable: true, get: () => { getterCalls++; return intentId; } });
+    const getter = Object.defineProperty({}, "intentId", { enumerable: true, get: () => { getterCalls++; return intentId; } });
     const invalid: unknown[] = [
       null, undefined, false, 1, "private-durable-reply", [], [pairingInput], {},
-      { intentId }, { browserNonce }, { ...pairingInput, accountId },
+      { intentId, browserNonce }, { browserNonce }, { ...pairingInput, accountId },
       { ...pairingInput, [Symbol("private")]: "private-durable-reply" },
       Object.create(pairingInput), new Date(nowMs), getter,
       ...["", "0".repeat(64), "A".repeat(64), "f".repeat(63), "f".repeat(65), "g".repeat(64), null, 17].flatMap(value =>
@@ -614,8 +712,7 @@ describe("dormant intent-bound pairing authentication", () => {
 
   test("arbitrary untrusted start values remain total and cannot reach the durable port", async () => {
     const f = await fixture({ pairing: true });
-    const malformed = fc.anything().filter(value => value === null || typeof value !== "object"
-      || !Object.hasOwn(value, "intentId") || !Object.hasOwn(value, "browserNonce"));
+    const malformed = fc.anything().filter(value => value === null || typeof value !== "object" || !Object.hasOwn(value, "intentId"));
     await fc.assert(fc.asyncProperty(malformed, async value => {
       await assertPairingFailure(await f.server.startPairingAuthentication(pairingStartRequest(), { ...pairingInput, unexpected: value }), "REJECTED", 400);
       await assertPairingFailure(await f.server.startPairingAuthentication(pairingStartRequest(), value), "REJECTED", 400);
@@ -642,13 +739,13 @@ describe("dormant intent-bound pairing authentication", () => {
     const mutable = { ...pairingInput };
     f.beginEffect(() => {
       mutable.intentId = "5e".repeat(32);
-      mutable.browserNonce = "6f".repeat(32);
+      Object.assign(mutable, { browserNonce: "6f".repeat(32) });
       return { ok: true, value: { ...pairingAttempt } };
     });
     const response = await f.server.completePairingAuthentication(f.callback(await f.startPairing(mutable)));
     expect(response.status).toBe(200);
-    expect(f.begun).toEqual([pairingInput]);
-    expect(f.recorded).toEqual([{ ...pairingInput, attemptId, contextToken, accountId, authTimeMs: nowMs, sessionExpiresAtMs: pairingAttempt.expiresAtMs }]);
+    expect(f.begun).toEqual([{ ...pairingInput, browserNonce: f.browserNonce() }]);
+    expect(f.recorded).toEqual([{ ...f.proof(), accountId, authTimeMs: nowMs, sessionExpiresAtMs: pairingAttempt.expiresAtMs }]);
   });
 
   test("waits for a single durable start reply before issuing a transaction cookie", async () => {
@@ -774,6 +871,7 @@ describe("dormant intent-bound pairing authentication", () => {
 
   test("a valid signature on unrelated or malformed action context cannot select a durable intent", async () => {
     const f = await fixture({ pairing: true });
+    await f.startPairing();
     const contexts = [
       "another_product_context_" + "A".repeat(100),
       "aicharts_pairing_v2_" + "A".repeat(171),
@@ -786,8 +884,8 @@ describe("dormant intent-bound pairing authentication", () => {
       await assertPairingFailure(await f.server.completePairingAuthentication(f.callback(started)), "FAILED", 503);
     }
     expect(f.calls).toHaveLength(contexts.length * 3);
-    expect(f.resolvedIntents).toEqual([]);
-    expect(f.begun).toEqual([]);
+    expect(f.resolvedIntents).toEqual([intentId]);
+    expect(f.begun).toHaveLength(1);
     expect(f.recorded).toEqual([]);
   });
 
@@ -824,7 +922,7 @@ describe("dormant intent-bound pairing authentication", () => {
       if (source === "access-token") f.accessToken({ exp: earliest / 1_000 });
       const response = await f.server.completePairingAuthentication(f.callback(await f.startPairing()));
       expect(response.status).toBe(200);
-      expect(f.recorded).toEqual([{ ...pairingInput, attemptId, contextToken, accountId, authTimeMs: nowMs, sessionExpiresAtMs: earliest }]);
+      expect(f.recorded).toEqual([{ ...f.proof(), accountId, authTimeMs: nowMs, sessionExpiresAtMs: earliest }]);
     }
   });
 
@@ -982,9 +1080,14 @@ describe("dormant intent-bound pairing authentication", () => {
   test("arbitrary valid opaque identifiers survive the sealed SDK round trip without text disclosure", async () => {
     const f = await fixture({ pairing: true });
     const opaque = fc.uint8Array({ minLength: 32, maxLength: 32 }).filter(bytes => bytes.some(value => value !== 0)).map(bytes => Buffer.from(bytes).toString("hex"));
-    await fc.assert(fc.asyncProperty(opaque, opaque, opaque, opaque, async (intentId, browserNonce, attemptId, contextToken) => {
+    const nonces = new Set<string>();
+    await fc.assert(fc.asyncProperty(opaque, opaque, opaque, async (intentId, attemptId, contextToken) => {
       f.beginEffect(() => ({ ok: true, value: { ...pairingAttempt, attemptId, contextToken } }));
-      const started = await f.startPairing({ intentId, browserNonce });
+      const started = await f.startPairing({ intentId });
+      const browserNonce = f.browserNonce();
+      expect(browserNonce).toMatch(/^[0-9a-f]{64}$/u);
+      expect(nonces.has(browserNonce)).toBe(false);
+      nonces.add(browserNonce);
       const response = await f.server.completePairingAuthentication(f.callback(started));
       expect(response.status).toBe(200);
       expect(f.recorded.at(-1)).toEqual({ intentId, browserNonce, attemptId, contextToken, accountId, authTimeMs: nowMs, sessionExpiresAtMs: pairingAttempt.expiresAtMs });
@@ -998,5 +1101,617 @@ describe("dormant intent-bound pairing authentication", () => {
     expect(f.begun).toHaveLength(200);
     expect(f.recorded).toHaveLength(200);
     expect(f.tokenBodies).toHaveLength(200);
+  });
+});
+
+describe("browser-held pairing custody and explicit approval", () => {
+  test("issues a separate bounded encrypted Host cookie with server-owned nonce custody", async () => {
+    const f = await fixture({ pairing: true });
+    const first = await f.startPairing();
+    const firstNonce = f.browserNonce();
+    const custody = first.response.headers.getSetCookie().find(value => value.startsWith(`${pairingCookieName}=`))!;
+    expect(first.response.headers.getSetCookie()).toHaveLength(2);
+    for (const flag of ["HttpOnly", "Secure", "SameSite=Lax", "Path=/"]) expect(custody).toContain(flag);
+    expect(custody).not.toContain("Domain=");
+    expect(custody.length).toBeLessThan(4_096);
+    for (const value of [secret, intentId, firstNonce, attemptId, contextToken]) expect(custody).not.toContain(value);
+    const second = await f.startPairing();
+    expect(f.browserNonce()).not.toBe(firstNonce);
+    expect(cookieFrom(second.response, "pairing")).not.toBe(cookieFrom(first.response, "pairing"));
+    expect(f.calls).toEqual([]);
+  });
+
+  test("invalid or repeated generated tokens fail before creating a durable browser attempt", async () => {
+    for (const randomBytes of [
+      () => new Uint8Array(0),
+      (length: number) => new Uint8Array(length),
+      (length: number) => new Uint8Array(length).fill(1),
+    ]) {
+      let resolved = 0;
+      const server = createUsageAuthServer({
+        environment: () => ready, now: () => nowMs, randomBytes,
+        pairingIntent: () => { resolved++; throw new Error("Unexpected durable resolution."); },
+        fetch: async () => { throw new Error("Unexpected provider call."); },
+      });
+      await assertPairingFailure(await server.startPairingAuthentication(pairingStartRequest(), pairingInput), "FAILED", 503);
+      expect(resolved).toBe(0);
+    }
+  });
+
+  test("missing, malformed or duplicate custody cookies fail before exchanging an OAuth code", async () => {
+    const f = await fixture({ pairing: true });
+    const started = await f.startPairing();
+    const transaction = cookieFrom(started.response, "transaction");
+    const custody = cookieFrom(started.response, "pairing");
+    const value = custody.slice(custody.indexOf("=") + 1);
+    const changed = `${value[0] === "A" ? "B" : "A"}${value.slice(1)}`;
+    const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+    const noncanonical = `${value.slice(0, -1)}${alphabet[alphabet.indexOf(value.at(-1)!) + 1]}`;
+    expect(Buffer.from(noncanonical, "base64url")).toEqual(Buffer.from(value, "base64url"));
+    for (const header of [
+      transaction,
+      `${transaction}; ${pairingCookieName}=`,
+      `${transaction}; ${pairingCookieName}=private-durable-reply`,
+      `${transaction}; ${pairingCookieName}=${changed}`,
+      `${transaction}; ${pairingCookieName}=${value}=`,
+      `${transaction}; ${pairingCookieName}=${noncanonical}`,
+      `${transaction}; ${custody}; ${custody}`,
+      `${transaction}; ${custody}; ${pairingCookieName}=conflicting-value`,
+      `${transaction}; ${pairingCookieName}=${"A".repeat(4_097)}`,
+    ]) await assertPairingFailure(await f.server.completePairingAuthentication(withCookie(f.callback(started), header)), "REJECTED", 403);
+    expect(f.calls).toEqual([]);
+    expect(f.recorded).toEqual([]);
+    expect(f.resolvedIntents).toEqual([intentId]);
+  });
+
+  test("an SDK transaction cannot be relabeled as pairing custody", async () => {
+    const f = await fixture({ pairing: true });
+    const started = await f.startPairing();
+    const transaction = cookieFrom(started.response, "transaction");
+    const relabeled = `${pairingCookieName}=${transaction.slice(transaction.indexOf("=") + 1)}`;
+    await assertPairingFailure(await f.server.completePairingAuthentication(withCookie(f.callback(started), `${transaction}; ${relabeled}`)), "REJECTED", 403);
+    expect(f.calls).toEqual([]);
+    expect(f.recorded).toEqual([]);
+  });
+
+  test("a valid custody cookie from another attempt cannot bind this signed completion", async () => {
+    const f = await fixture({ pairing: true });
+    const first = await f.startPairing();
+    const firstNonce = f.browserNonce();
+    const second = await f.startPairing();
+    expect(f.browserNonce()).not.toBe(firstNonce);
+    const mixed = `${cookieFrom(second.response, "transaction")}; ${cookieFrom(first.response, "pairing")}`;
+    await assertPairingFailure(await f.server.completePairingAuthentication(withCookie(f.callback(second), mixed)), "FAILED", 503);
+    expect(f.recorded).toEqual([]);
+    expect(f.resolvedIntents).toEqual([intentId, intentId]);
+  });
+
+  test("the final durable-record await cannot outlive a shorter authenticated custody deadline", async () => {
+    const f = await fixture({ pairing: true });
+    const started = await f.startPairing();
+    const custodyExpiresAtMs = nowMs + 60_000;
+    // Exercise two independently authenticated lifetimes with the same proof:
+    // the SDK transaction remains live after this shorter custody expires.
+    const sealed = await sealPairingCustody({
+      ...f.proof(), csrfToken: "7e".repeat(32), issuedAtMs: nowMs, expiresAtMs: custodyExpiresAtMs,
+    }, secret, length => crypto.getRandomValues(new Uint8Array(length)));
+    cookieCanaries.add(sealed);
+    f.recordEffect(() => { f.time(custodyExpiresAtMs); return { ok: true, value: { recorded: true } }; });
+    const cookie = `${cookieFrom(started.response, "transaction")}; ${pairingCookieName}=${sealed}`;
+    await assertPairingFailure(await f.server.completePairingAuthentication(withCookie(f.callback(started), cookie)), "FAILED", 503);
+    expect(f.recorded).toEqual([{ ...f.proof(), accountId, authTimeMs: nowMs, sessionExpiresAtMs: pairingAttempt.expiresAtMs }]);
+    expect(f.tokenBodies).toHaveLength(1);
+  });
+
+  test("callback input cannot override the owned proof and cannot approve the attempt", async () => {
+    const f = await fixture({ pairing: true });
+    const started = await f.startPairing();
+    const callback = f.callback(started);
+    const url = new URL(callback.url);
+    for (const [key, value] of Object.entries({ intentId: "5e".repeat(32), browserNonce, accountId: "acct_018f1f7a7a367ccdbd5d706d4dc5c019", decision: "approve" })) url.searchParams.set(key, value);
+    const response = await f.server.completePairingAuthentication(new Request(url, callback));
+    expect(response.status).toBe(200);
+    expect(f.recorded).toEqual([{ ...f.proof(), accountId, authTimeMs: nowMs, sessionExpiresAtMs: pairingAttempt.expiresAtMs }]);
+    expect(f.decisions).toEqual([]);
+    expect(response.headers.getSetCookie().some(value => value.startsWith(`${pairingCookieName}=`))).toBe(false);
+  });
+
+  test("read exposes only the live account, deadline, state and per-attempt CSRF token", async () => {
+    const f = await fixture({ pairing: true });
+    const { cookie } = await f.pairedLogin();
+    const result = await approvalProjection(await f.server.readPairingApproval(approvalRequest(cookie)));
+    expect(result.value).toEqual({ schemaVersion: 1, state: "pending", accountId, expiresAtMs: pairingAttempt.expiresAtMs, csrfToken: result.csrfToken });
+    expect(result.csrfToken).not.toBe(f.browserNonce());
+    expect(f.statusReads).toEqual([f.proof()]);
+    expect(Object.isFrozen(f.statusReads[0])).toBe(true);
+    expect(f.calls.filter(url => url === endpoints.userInfo)).toHaveLength(1);
+    expect(f.decisions).toEqual([]);
+    const visible = JSON.stringify(result.value);
+    for (const value of [...f.secrets(), intentId, attemptId, contextToken, f.browserNonce()]) expect(visible).not.toContain(value);
+  });
+
+  test("a valid explicit approve or deny POST sends only the owned proof and live account facts", async () => {
+    for (const decision of ["approve", "deny"] as const) {
+      const f = await fixture({ pairing: true });
+      const { cookie } = await f.pairedLogin();
+      const read = await approvalProjection(await f.server.readPairingApproval(approvalRequest(cookie)));
+      const decided = await approvalProjection(await f.server.decidePairingApproval(approvalRequest(cookie, { decision, csrfToken: read.csrfToken })));
+      expect(decided.value).toEqual({ schemaVersion: 1, state: decision === "approve" ? "browser-approved" : "denied", accountId, expiresAtMs: pairingAttempt.expiresAtMs, csrfToken: read.csrfToken });
+      expect(f.decisions).toEqual([{ ...f.proof(), accountId, liveSessionExpiresAtMs: nowMs + 600_000, decision }]);
+      expect(Object.isFrozen(f.decisions[0])).toBe(true);
+      expect(f.recorded).toHaveLength(1);
+      expect(f.begun).toHaveLength(1);
+      expect(f.calls.filter(url => url === endpoints.userInfo)).toHaveLength(2);
+    }
+  });
+
+  test("ordinary sign-in without the paired browser cookie cannot read or decide an intent", async () => {
+    const f = await fixture({ pairing: true });
+    const { cookie } = await f.login();
+    const before = f.calls.length;
+    await assertPairingFailure(await f.server.readPairingApproval(approvalRequest(cookie)), "REJECTED", 403);
+    await assertPairingFailure(await f.server.decidePairingApproval(approvalRequest(cookie, { decision: "approve", csrfToken: browserNonce })), "REJECTED", 403);
+    expect(f.calls).toHaveLength(before);
+    expect(f.statusReads).toEqual([]);
+    expect(f.decisions).toEqual([]);
+  });
+
+  test("a pairing cookie without a live signed-in session cannot expose approval state", async () => {
+    const f = await fixture({ pairing: true });
+    const started = await f.startPairing();
+    await assertPairingFailure(await f.server.readPairingApproval(approvalRequest(cookieFrom(started.response, "pairing"))), "REJECTED", 403);
+    expect(f.statusReads).toEqual([]);
+    expect(f.calls).toEqual([]);
+    expect(f.decisions).toEqual([]);
+  });
+
+  test("approval endpoints enforce exact origins, methods, paths and metadata before any provider work", async () => {
+    const f = await fixture({ pairing: true });
+    const { cookie } = await f.pairedLogin();
+    const before = f.calls.length;
+    const readHeaders = { cookie, "sec-fetch-site": "same-origin" };
+    const postHeaders = { ...readHeaders, origin, "content-type": "application/json" };
+    const body = JSON.stringify({ decision: "approve", csrfToken: browserNonce });
+    const reads = [
+      request("/api/usage/pairing", { headers: { cookie } }),
+      ...["same-site", "cross-site", "none"].map(site => request("/api/usage/pairing", { headers: { cookie, "sec-fetch-site": site } })),
+      request("/api/usage/pairing", { headers: { ...readHeaders, origin: "https://foreign.example" } }),
+      ...["pairing/", "%70airing", "pairing?intentId=private", "pairing#private", "other"].map(path => request(`/api/usage/${path}`, { headers: readHeaders })),
+      new Request("https://foreign.example/api/usage/pairing", { headers: { ...readHeaders, "x-forwarded-host": "aicharts.io" } }),
+      request("/api/usage/pairing", { method: "POST", headers: readHeaders }),
+    ];
+    const posts = [
+      request("/api/usage/pairing", { headers: readHeaders }),
+      request("/api/usage/pairing", { method: "PUT", headers: postHeaders, body }),
+      request("/api/usage/pairing", { method: "POST", headers: readHeaders, body }),
+      request("/api/usage/pairing", { method: "POST", headers: { ...postHeaders, origin: "https://foreign.example" }, body }),
+      request("/api/usage/pairing", { method: "POST", headers: { ...postHeaders, "sec-fetch-site": "cross-site" }, body }),
+      request("/api/usage/pairing?decision=approve", { method: "POST", headers: postHeaders, body }),
+      new Request("https://aicharts-preview.vercel.app/api/usage/pairing", { method: "POST", headers: { ...postHeaders, "x-forwarded-host": "aicharts.io" }, body }),
+    ];
+    for (const invalid of reads) await assertPairingFailure(await f.server.readPairingApproval(invalid), "REJECTED", 403);
+    for (const invalid of posts) await assertPairingFailure(await f.server.decidePairingApproval(invalid), "REJECTED", 403);
+    expect(f.calls).toHaveLength(before);
+    expect(f.statusReads).toEqual([]);
+    expect(f.decisions).toEqual([]);
+  });
+
+  test("malformed decision bodies cannot add account facts or reach any provider or durable operation", async () => {
+    const f = await fixture({ pairing: true });
+    const { cookie } = await f.pairedLogin();
+    const { csrfToken } = await approvalProjection(await f.server.readPairingApproval(approvalRequest(cookie)));
+    const before = { provider: f.calls.length, reads: f.statusReads.length };
+    for (const body of [
+      null, false, 1, [], "approve", {}, { decision: "approve" }, { csrfToken },
+      { decision: "confirm", csrfToken }, { decision: "Approve", csrfToken },
+      { decision: "approve", csrfToken, accountId }, { decision: "approve", csrfToken, ...f.proof() },
+      ...["", "0".repeat(64), "A".repeat(64), "f".repeat(63), "f".repeat(65), 1, null].map(value => ({ decision: "approve", csrfToken: value })),
+    ]) await assertPairingFailure(await f.server.decidePairingApproval(approvalRequest(cookie, body)), "REJECTED", 400);
+    for (const body of ["", "{", "{\"decision\":\"approve\",\"csrfToken\":\"private\"}", "[\"approve\"]"]) {
+      await assertPairingFailure(await f.server.decidePairingApproval(request("/api/usage/pairing", { method: "POST", headers: { cookie, origin, "sec-fetch-site": "same-origin", "content-type": "application/json" }, body })), "REJECTED", 400);
+    }
+    expect(f.calls).toHaveLength(before.provider);
+    expect(f.statusReads).toHaveLength(before.reads);
+    expect(f.decisions).toEqual([]);
+  });
+
+  test("incorrect or stale per-attempt CSRF tokens fail before live account lookup", async () => {
+    const f = await fixture({ pairing: true });
+    const first = await f.pairedLogin();
+    const firstRead = await approvalProjection(await f.server.readPairingApproval(approvalRequest(first.cookie)));
+    const second = await f.pairedLogin();
+    const secondRead = await approvalProjection(await f.server.readPairingApproval(approvalRequest(second.cookie)));
+    expect(firstRead.csrfToken).not.toBe(secondRead.csrfToken);
+    const before = { provider: f.calls.length, reads: f.statusReads.length };
+    for (const csrfToken of [firstRead.csrfToken, browserNonce]) {
+      await assertPairingFailure(await f.server.decidePairingApproval(approvalRequest(second.cookie, { decision: "approve", csrfToken })), "REJECTED", 403);
+    }
+    expect(f.calls).toHaveLength(before.provider);
+    expect(f.statusReads).toHaveLength(before.reads);
+    expect(f.decisions).toEqual([]);
+  });
+
+  test("rejects oversized, non-JSON and invalid UTF-8 bodies without trusting Content-Length", async () => {
+    const f = await fixture({ pairing: true });
+    const { cookie } = await f.pairedLogin();
+    const { csrfToken } = await approvalProjection(await f.server.readPairingApproval(approvalRequest(cookie)));
+    const headers = { cookie, origin, "sec-fetch-site": "same-origin", "content-type": "application/json" };
+    const before = { provider: f.calls.length, reads: f.statusReads.length };
+    const valid = JSON.stringify({ decision: "approve", csrfToken });
+    for (const [body, extra] of [
+      [valid.padEnd(513, " "), {}],
+      [valid.padEnd(513, " "), { "content-length": "1" }],
+      [valid, { "content-length": "513" }],
+      [valid, { "content-type": "text/plain" }],
+      [valid, { "content-type": "application/x-www-form-urlencoded" }],
+      [new Uint8Array([0xff, 0xfe, 0xfd]), {}],
+    ] as const) {
+      await assertPairingFailure(await f.server.decidePairingApproval(request("/api/usage/pairing", { method: "POST", headers: { ...headers, ...extra }, body })), "REJECTED", 400);
+    }
+    expect(f.calls).toHaveLength(before.provider);
+    expect(f.statusReads).toHaveLength(before.reads);
+    expect(f.decisions).toEqual([]);
+  });
+
+  test("bounded stream reading stops after the body crosses 512 bytes", async () => {
+    const f = await fixture({ pairing: true });
+    const { cookie } = await f.pairedLogin();
+    let pulled = 0;
+    let cancelled = 0;
+    const body = new ReadableStream<Uint8Array>({
+      pull(controller) { pulled++; controller.enqueue(new Uint8Array(300).fill(32)); },
+      cancel() { cancelled++; },
+    });
+    await assertPairingFailure(await f.server.decidePairingApproval(request("/api/usage/pairing", {
+      method: "POST", headers: { cookie, origin, "sec-fetch-site": "same-origin", "content-type": "application/json", "content-length": "1" }, body,
+    })), "REJECTED", 400);
+    expect(pulled).toBeLessThanOrEqual(3);
+    expect(cancelled).toBe(1);
+    expect(f.statusReads).toEqual([]);
+    expect(f.decisions).toEqual([]);
+  });
+
+  test("an immediately available empty-chunk stream is refused and cancelled without spinning", async () => {
+    const f = await fixture({ pairing: true });
+    const { cookie } = await f.pairedLogin();
+    const before = f.calls.length;
+    let pulled = 0;
+    let cancelled = 0;
+    const body = new ReadableStream<Uint8Array>({
+      pull(controller) {
+        pulled++;
+        if (pulled > 10) throw new Error("Empty request chunks were not bounded.");
+        controller.enqueue(new Uint8Array(0));
+      },
+      cancel() { cancelled++; },
+    });
+    await assertPairingFailure(await f.server.decidePairingApproval(request("/api/usage/pairing", {
+      method: "POST", headers: { cookie, origin, "sec-fetch-site": "same-origin", "content-type": "application/json" }, body,
+    })), "REJECTED", 400);
+    expect(pulled).toBeLessThanOrEqual(2);
+    expect(cancelled).toBe(1);
+    expect(f.calls).toHaveLength(before);
+    expect(f.statusReads).toEqual([]);
+    expect(f.decisions).toEqual([]);
+  });
+
+  test("canonical decision parsing rejects duplicate keys, alternate encodings and compressed input", async () => {
+    const f = await fixture({ pairing: true });
+    const { cookie } = await f.pairedLogin();
+    const { csrfToken } = await approvalProjection(await f.server.readPairingApproval(approvalRequest(cookie)));
+    const before = { provider: f.calls.length, reads: f.statusReads.length };
+    const headers = { cookie, origin, "sec-fetch-site": "same-origin", "content-type": "application/json" };
+    const canonical = JSON.stringify({ decision: "approve", csrfToken });
+    const bodies = [
+      ` ${canonical}`, `${canonical}\n`, JSON.stringify({ csrfToken, decision: "approve" }),
+      `{"decision":"deny","decision":"approve","csrfToken":"${csrfToken}"}`,
+      `{"decision":"approve","csrfToken":"${browserNonce}","csrfToken":"${csrfToken}"}`,
+      canonical.replace("decision", "\\u0064ecision"),
+    ];
+    for (const body of bodies) await assertPairingFailure(await f.server.decidePairingApproval(request("/api/usage/pairing", { method: "POST", headers, body })), "REJECTED", 400);
+    const invalidHeaders: readonly Readonly<Record<string, string>>[] = [
+      { "content-encoding": "gzip" }, { "content-encoding": "identity" },
+      { "content-type": "application/json; charset=utf-8" },
+      ...["-1", "+1", "01", "1e2", "Infinity", "513"].map(value => ({ "content-length": value })),
+    ];
+    for (const extra of invalidHeaders) {
+      const invalid = new Headers({ ...headers, ...extra });
+      await assertPairingFailure(await f.server.decidePairingApproval(request("/api/usage/pairing", { method: "POST", headers: invalid, body: canonical })), "REJECTED", 400);
+    }
+    expect(f.calls).toHaveLength(before.provider);
+    expect(f.statusReads).toHaveLength(before.reads);
+    expect(f.decisions).toEqual([]);
+  });
+
+  test("a stalled request body times out and cancels without a provider call or durable mutation", async () => {
+    const f = await fixture({ pairing: true });
+    const { cookie } = await f.pairedLogin();
+    const before = f.calls.length;
+    let cancelled = 0;
+    const body = new ReadableStream<Uint8Array>({ cancel() { cancelled++; } });
+    await assertPairingFailure(await f.server.decidePairingApproval(request("/api/usage/pairing", {
+      method: "POST", headers: { cookie, origin, "sec-fetch-site": "same-origin", "content-type": "application/json" }, body,
+    })), "REJECTED", 400);
+    expect(cancelled).toBe(1);
+    expect(f.calls).toHaveLength(before);
+    expect(f.statusReads).toEqual([]);
+    expect(f.decisions).toEqual([]);
+  }, 10_000);
+
+  test("a request-body failure remains private and never triggers live account lookup", async () => {
+    const f = await fixture({ pairing: true });
+    const { cookie } = await f.pairedLogin();
+    const before = f.calls.length;
+    const body = new ReadableStream<Uint8Array>({ start(controller) { controller.error(new Error("private-durable-reply")); } });
+    await assertPairingFailure(await f.server.decidePairingApproval(request("/api/usage/pairing", {
+      method: "POST", headers: { cookie, origin, "sec-fetch-site": "same-origin", "content-type": "application/json" }, body,
+    })), "REJECTED", 400);
+    expect(f.calls).toHaveLength(before);
+    expect(f.statusReads).toEqual([]);
+    expect(f.decisions).toEqual([]);
+  });
+
+  test("configuration or deadline changes while reading a decision body prevent later provider work", async () => {
+    for (const change of [
+      (f: Awaited<ReturnType<typeof fixture>>) => f.time(pairingAttempt.expiresAtMs),
+      (f: Awaited<ReturnType<typeof fixture>>) => f.time(nowMs + 50),
+      (f: Awaited<ReturnType<typeof fixture>>) => f.environment({ ...ready, AICHARTS_USAGE_AUTH_ENABLED: "0" }),
+      (f: Awaited<ReturnType<typeof fixture>>) => f.environment({ ...ready, SUITE_OIDC_COOKIE_SECRET: "synthetic-rotated-cookie-secret-not-for-deployment-0002" }),
+    ]) {
+      const f = await fixture({ pairing: true });
+      const { cookie } = await f.pairedLogin();
+      const { csrfToken } = await approvalProjection(await f.server.readPairingApproval(approvalRequest(cookie)));
+      f.time(nowMs + 100);
+      const before = { provider: f.calls.length, reads: f.statusReads.length };
+      const content = new TextEncoder().encode(JSON.stringify({ decision: "approve", csrfToken }));
+      const entered = deferred<void>();
+      const release = deferred<void>();
+      let pulls = 0;
+      const body = new ReadableStream<Uint8Array>({
+        async pull(controller) {
+          pulls++;
+          if (pulls === 1) controller.enqueue(content.subarray(0, 20));
+          else {
+            entered.resolve();
+            await release.promise;
+            controller.enqueue(content.subarray(20));
+            controller.close();
+          }
+        },
+      });
+      const pending = f.server.decidePairingApproval(request("/api/usage/pairing", {
+        method: "POST", headers: { cookie, origin, "sec-fetch-site": "same-origin", "content-type": "application/json" }, body,
+      }));
+      await entered.promise;
+      change(f);
+      release.resolve();
+      await assertPairingFailure(await pending, "FAILED", 503);
+      expect(f.calls).toHaveLength(before.provider);
+      expect(f.statusReads).toHaveLength(before.reads);
+      expect(f.decisions).toEqual([]);
+    }
+  });
+
+  test("changed, revoked or unavailable live accounts cannot read or approve recorded authentication", async () => {
+    for (const change of [
+      (f: Awaited<ReturnType<typeof fixture>>) => f.userInfo({ suite_account_id: "acct_018f1f7a7a367ccdbd5d706d4dc5c019" }),
+      (f: Awaited<ReturnType<typeof fixture>>) => f.userInfo({ suite_client_id: "hraness:soundfish:production:v1" }),
+      (f: Awaited<ReturnType<typeof fixture>>) => f.userInfo({ sub: "changed-synthetic-subject" }),
+      (f: Awaited<ReturnType<typeof fixture>>) => f.fail(endpoints.userInfo),
+    ]) {
+      const f = await fixture({ pairing: true });
+      const { cookie } = await f.pairedLogin();
+      const { csrfToken } = await approvalProjection(await f.server.readPairingApproval(approvalRequest(cookie)));
+      const before = f.statusReads.length;
+      change(f);
+      await assertPairingFailure(await f.server.readPairingApproval(approvalRequest(cookie)), "REJECTED", 403);
+      await assertPairingFailure(await f.server.decidePairingApproval(approvalRequest(cookie, { decision: "approve", csrfToken })), "REJECTED", 403);
+      expect(f.statusReads).toHaveLength(before);
+      expect(f.decisions).toEqual([]);
+    }
+  });
+
+  test("unrecorded, expired or different durable accounts cannot expose approval state", async () => {
+    for (const value of [
+      { ...verifiedBrowserView, accountId: null, authenticationExpiresAtMs: null },
+      { ...verifiedBrowserView, accountId: "acct_018f1f7a7a367ccdbd5d706d4dc5c019" },
+      { ...verifiedBrowserView, state: "expired" },
+      { ...verifiedBrowserView, authenticationExpiresAtMs: nowMs },
+    ]) {
+      const f = await fixture({ pairing: true });
+      const { cookie } = await f.pairedLogin();
+      f.statusEffect(() => ({ ok: true, value }));
+      await assertPairingFailure(await f.server.readPairingApproval(approvalRequest(cookie)));
+      expect(f.statusReads).toHaveLength(1);
+      expect(f.decisions).toEqual([]);
+    }
+  });
+
+  test("strict durable status shape rejects extra fields, getters and malformed time or state", async () => {
+    const f = await fixture({ pairing: true });
+    const { cookie } = await f.pairedLogin();
+    let getterCalls = 0;
+    const malformed: unknown[] = [
+      undefined, null, false, {}, { ok: false, error: "private-durable-reply" },
+      { ok: true, value: verifiedBrowserView, extra: true },
+      { ok: true, value: { ...verifiedBrowserView, csrfToken: browserNonce } },
+      { ok: true, value: { ...verifiedBrowserView, state: "enrolled" } },
+      { ok: true, value: Object.defineProperty({ ...verifiedBrowserView }, "accountId", { enumerable: true, get: () => { getterCalls++; return accountId; } }) },
+      ...[-1, NaN, Infinity, nowMs + 0.5].flatMap(time => [
+        { ok: true, value: { ...verifiedBrowserView, expiresAtMs: time } },
+        { ok: true, value: { ...verifiedBrowserView, authenticationExpiresAtMs: time } },
+      ]),
+    ];
+    for (const value of malformed) {
+      f.statusEffect(() => value);
+      await assertPairingFailure(await f.server.readPairingApproval(approvalRequest(cookie)), "FAILED", 503);
+    }
+    expect(getterCalls).toBe(0);
+    expect(f.decisions).toEqual([]);
+  });
+
+  test("readback accepts only recorded lifecycle states without deciding or enrolling", async () => {
+    const f = await fixture({ pairing: true });
+    const { cookie } = await f.pairedLogin();
+    for (const state of ["pending", "browser-approved", "terminal-confirmed", "denied"] as const) {
+      f.browserView({ ...verifiedBrowserView, state });
+      const result = await approvalProjection(await f.server.readPairingApproval(approvalRequest(cookie)));
+      expect(result.value).toMatchObject({ state, accountId });
+    }
+    expect(f.decisions).toEqual([]);
+    expect(f.recorded).toHaveLength(1);
+  });
+
+  test("reported approval expiry is the earliest shared intent deadline, live session or authentication expiry", async () => {
+    for (const source of ["intent", "session", "authentication"] as const) {
+      const f = await fixture({ pairing: true });
+      const earlier = nowMs + 60_000;
+      if (source === "intent") f.beginEffect(() => ({ ok: true, value: { ...pairingAttempt, expiresAtMs: earlier } }));
+      if (source === "session") f.accessToken({ exp: earlier / 1_000 });
+      const { cookie } = await f.pairedLogin();
+      f.browserView({
+        ...verifiedBrowserView,
+        expiresAtMs: source === "intent" ? earlier : pairingAttempt.expiresAtMs,
+        authenticationExpiresAtMs: source === "authentication" ? earlier : pairingAttempt.expiresAtMs,
+      });
+      const result = await approvalProjection(await f.server.readPairingApproval(approvalRequest(cookie)));
+      expect(result.value).toMatchObject({ expiresAtMs: earlier });
+    }
+  });
+
+  test("durable readback cannot shorten or extend the cookie's immutable intent lifetime", async () => {
+    const f = await fixture({ pairing: true });
+    const { cookie } = await f.pairedLogin();
+    for (const expiresAtMs of [nowMs + 60_000, pairingAttempt.expiresAtMs + 1]) {
+      f.statusEffect(() => ({ ok: true, value: { ...verifiedBrowserView, expiresAtMs } }));
+      await assertPairingFailure(await f.server.readPairingApproval(approvalRequest(cookie)), "FAILED", 503);
+    }
+    expect(f.decisions).toEqual([]);
+  });
+
+  test("disabled or rotated configuration fences approval and leaves no durable decisions", async () => {
+    for (const change of [
+      { AICHARTS_USAGE_AUTH_ENABLED: "0" }, { VERCEL_ENV: "preview" },
+      { NEXT_PUBLIC_HRANESS_VERCEL_PREVIEW_ORIGIN: "https://preview.vercel.app" },
+      { SUITE_OIDC_COOKIE_SECRET: "synthetic-rotated-cookie-secret-not-for-deployment-0002" },
+    ]) {
+      const f = await fixture({ pairing: true });
+      const { cookie } = await f.pairedLogin();
+      const { csrfToken } = await approvalProjection(await f.server.readPairingApproval(approvalRequest(cookie)));
+      const before = { provider: f.calls.length, reads: f.statusReads.length };
+      f.environment({ ...ready, ...change });
+      await assertPairingFailure(await f.server.readPairingApproval(approvalRequest(cookie)));
+      await assertPairingFailure(await f.server.decidePairingApproval(approvalRequest(cookie, { decision: "approve", csrfToken })));
+      expect(f.calls).toHaveLength(before.provider);
+      expect(f.statusReads).toHaveLength(before.reads);
+      expect(f.decisions).toEqual([]);
+    }
+  });
+
+  test("expiry, observed-clock regression and rotation during status read prevent disclosure or decisions", async () => {
+    for (const boundary of ["provider", "status"] as const) {
+      for (const change of [
+        (f: Awaited<ReturnType<typeof fixture>>) => f.time(pairingAttempt.expiresAtMs),
+        (f: Awaited<ReturnType<typeof fixture>>) => f.time(nowMs + 50),
+        (f: Awaited<ReturnType<typeof fixture>>) => f.environment({ ...ready, AICHARTS_USAGE_AUTH_ENABLED: "0" }),
+        (f: Awaited<ReturnType<typeof fixture>>) => f.environment({ ...ready, SUITE_OIDC_COOKIE_SECRET: "synthetic-rotated-cookie-secret-not-for-deployment-0002" }),
+      ]) {
+        const f = await fixture({ pairing: true });
+        const { cookie } = await f.pairedLogin();
+        f.time(nowMs + 100);
+        if (boundary === "provider") f.providerEffect(url => { if (url === endpoints.userInfo) change(f); });
+        else f.statusEffect(() => { change(f); return { ok: true, value: { ...verifiedBrowserView } }; });
+        await assertPairingFailure(await f.server.readPairingApproval(approvalRequest(cookie)));
+        expect(f.statusReads).toHaveLength(boundary === "provider" ? 0 : 1);
+        expect(f.decisions).toEqual([]);
+      }
+    }
+  });
+
+  test("uncertain decision replies retain custody for explicit readback and never retry the mutation", async () => {
+    const f = await fixture({ pairing: true });
+    const { cookie } = await f.pairedLogin();
+    const read = await approvalProjection(await f.server.readPairingApproval(approvalRequest(cookie)));
+    f.decisionEffect(() => {
+      f.browserView({ ...verifiedBrowserView, state: "browser-approved" });
+      throw new Error("private-durable-reply");
+    });
+    const uncertain = await f.server.decidePairingApproval(approvalRequest(cookie, { decision: "approve", csrfToken: read.csrfToken }));
+    expect(uncertain.headers.has("set-cookie")).toBe(false);
+    await assertPairingFailure(uncertain, "FAILED", 503);
+    expect(f.decisions).toHaveLength(1);
+    const reconciled = await approvalProjection(await f.server.readPairingApproval(approvalRequest(cookie)));
+    expect(reconciled.value).toMatchObject({ state: "browser-approved", csrfToken: read.csrfToken });
+    expect(f.decisions).toHaveLength(1);
+    expect(f.recorded).toHaveLength(1);
+  });
+
+  test("malformed or contradictory decision readback never claims success", async () => {
+    for (const decision of ["approve", "deny"] as const) {
+      for (const value of [
+        undefined,
+        { ok: false, error: "private-durable-reply" },
+        { ok: true, value: { ...verifiedBrowserView, state: decision === "approve" ? "denied" : "browser-approved" } },
+        { ok: true, value: { ...verifiedBrowserView, state: "pending" } },
+        { ok: true, value: { ...verifiedBrowserView, state: decision === "approve" ? "browser-approved" : "denied", accountId: "acct_018f1f7a7a367ccdbd5d706d4dc5c019" } },
+        { ok: true, value: { ...verifiedBrowserView, state: decision === "approve" ? "browser-approved" : "denied", extra: true } },
+      ]) {
+        const f = await fixture({ pairing: true });
+        const { cookie } = await f.pairedLogin();
+        const { csrfToken } = await approvalProjection(await f.server.readPairingApproval(approvalRequest(cookie)));
+        f.decisionEffect(() => value);
+        await assertPairingFailure(await f.server.decidePairingApproval(approvalRequest(cookie, { decision, csrfToken })), "FAILED", 503);
+        expect(f.decisions).toHaveLength(1);
+      }
+    }
+  });
+
+  test("deadline, configuration or clock changes after a committed decision suppress its response", async () => {
+    for (const change of [
+      (f: Awaited<ReturnType<typeof fixture>>) => f.time(pairingAttempt.expiresAtMs),
+      (f: Awaited<ReturnType<typeof fixture>>) => f.time(nowMs + 50),
+      (f: Awaited<ReturnType<typeof fixture>>) => f.environment({ ...ready, AICHARTS_USAGE_AUTH_ENABLED: "0" }),
+      (f: Awaited<ReturnType<typeof fixture>>) => f.environment({ ...ready, SUITE_OIDC_COOKIE_SECRET: "synthetic-rotated-cookie-secret-not-for-deployment-0002" }),
+    ]) {
+      const f = await fixture({ pairing: true });
+      const { cookie } = await f.pairedLogin();
+      const { csrfToken } = await approvalProjection(await f.server.readPairingApproval(approvalRequest(cookie)));
+      f.time(nowMs + 100);
+      f.decisionEffect(() => { change(f); return { ok: true, value: { ...verifiedBrowserView, state: "browser-approved" } }; });
+      const response = await f.server.decidePairingApproval(approvalRequest(cookie, { decision: "approve", csrfToken }));
+      expect(response.headers.has("set-cookie")).toBe(false);
+      await assertPairingFailure(response, "FAILED", 503);
+      expect(f.decisions).toHaveLength(1);
+    }
+  });
+
+  test("arbitrary body fields and custody bytes cannot become an approval", async () => {
+    const f = await fixture({ pairing: true });
+    const { cookie, started } = await f.pairedLogin();
+    const { csrfToken } = await approvalProjection(await f.server.readPairingApproval(approvalRequest(cookie)));
+    const before = { provider: f.calls.length, reads: f.statusReads.length };
+    await fc.assert(fc.asyncProperty(fc.jsonValue(), fc.uint8Array({ maxLength: 300 }), async (value, bytes) => {
+      await assertPairingFailure(await f.server.decidePairingApproval(approvalRequest(cookie, { decision: "approve", csrfToken, unknown: value })), "REJECTED", 400);
+      const transaction = cookieFrom(started.response, "transaction");
+      const malformed = `${transaction}; ${pairingCookieName}=${Buffer.from(bytes).toString("base64url")}`;
+      await assertPairingFailure(await f.server.completePairingAuthentication(withCookie(f.callback(started), malformed)), "REJECTED", 403);
+    }), { numRuns: 200 });
+    expect(f.calls).toHaveLength(before.provider);
+    expect(f.statusReads).toHaveLength(before.reads);
+    expect(f.decisions).toEqual([]);
+  });
+
+  test("public route dispatch still does not expose pairing read, decision or enrollment", async () => {
+    const f = await fixture({ pairing: true });
+    for (const path of ["/api/usage/pairing", "/api/usage/enroll", "/api/suite-auth/pairing", "/api/suite-auth/approve"]) {
+      for (const method of ["GET", "POST"] as const) {
+        const response = await f.server.handle(request(path, { method }));
+        expect(response.status).toBe(404);
+        assertPrivate(response);
+      }
+    }
+    expect(f.calls).toEqual([]);
+    expect(f.resolvedIntents).toEqual([]);
+    expect(f.decisions).toEqual([]);
   });
 });

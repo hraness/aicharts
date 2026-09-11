@@ -154,11 +154,12 @@ export function createUsageAuthServer(options: UsageAuthOptions = {}) {
       const cookieSecret = configuredSecret(options);
       const party = relyingParty(options, true);
       return cookieSecret === null || party === null ? null : {
-        party, current: () => configuredSecret(options) === cookieSecret,
+        party, cookieSecret, current: () => configuredSecret(options) === cookieSecret,
       };
     },
     resolve: options.pairingIntent,
     now: options.now ?? Date.now,
+    randomBytes: options.randomBytes ?? (length => crypto.getRandomValues(new Uint8Array(length))),
   });
   return Object.freeze({
     async startPairingAuthentication(request: Request, input: unknown): Promise<Response> {
@@ -167,6 +168,14 @@ export function createUsageAuthServer(options: UsageAuthOptions = {}) {
 
     async completePairingAuthentication(request: Request): Promise<Response> {
       return privateResponse(await pairing.complete(request), request);
+    },
+
+    async readPairingApproval(request: Request): Promise<Response> {
+      return privateResponse(await pairing.read(request), request);
+    },
+
+    async decidePairingApproval(request: Request): Promise<Response> {
+      return privateResponse(await pairing.decide(request), request);
     },
 
     async handle(request: Request): Promise<Response> {
