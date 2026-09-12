@@ -23,7 +23,7 @@ The complete gate requires the Rust toolchain and components pinned in `rust-too
 
 The complete gate also runs `bun run usage:worker:check`: generated Cloudflare runtime types, separate strict TypeScript checking, and synthetic tests in local `workerd`. Node.js 24 and loopback access are required. No Cloudflare login or remote resources are needed. The runner excludes provider credentials and refuses `.env*` or `.dev.vars*` files in `services/usage-worker/`. Worker tests use `*.worker.ts` and their own runner; ordinary `bun test .` continues to own the existing tests. See [Usage Worker boundaries](docs/usage-worker.md) before changing pairing or staging.
 
-`bun run release:archive:check` and `bun run release:manifest:check` check the memory-only release formats with Node.js 24 and synthetic fixtures. Both are included in the complete gate and do not extract files, execute payloads, or publish a release. Keep their `.check.mjs` corpora under the explicit Node runner. See [Release archive bytes](docs/usage-release-archives.md) and [Release manifest matching](docs/usage-release-manifest.md) for inventory, size, ownership, and trust constraints.
+`bun run release:archive:check`, `bun run release:manifest:check` and `bun run release:build:check` check the memory-only release formats with Node.js 24 and synthetic fixtures. All three are included in the complete gate and do not extract files, execute payloads, or publish a release. Keep their `.check.mjs` corpora under the explicit Node runner. See [Release archive bytes](docs/usage-release-archives.md), [Release manifest matching](docs/usage-release-manifest.md) and [BUILD matching](docs/usage-release-build.md) for inventory, size, ownership, and trust constraints.
 
 ## Data changes
 

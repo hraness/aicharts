@@ -81,6 +81,8 @@ Manifest input is capped at 1 MiB and checksums at 4 KiB before copying or match
 
 `BUILD.json` inventory entries are mandatory, `0o644`, at most 16 KiB, and independently hashed. Their bodies are not inputs and are not parsed. Even a non-JSON body can have matching metadata. Separate gates must validate BUILD contents and executable bindings, licenses, self-contained guides, complete source-copy provenance, compatibility, immutable assets, and authenticated release attestations.
 
+The separate [BUILD matcher](usage-release-build.md) checks canonical body contents against independent expectations and the admitted file inventory. The joining caller still owns actual executable-byte binding and consistent source/runner facts; the manifest matcher does not invoke that check automatically.
+
 ## Verification
 
 Run `bun run release:manifest:check` with the repository's Node.js 24 runtime. The complete repository gate invokes it explicitly. Keep `manifest.check.mjs` outside Bun's broad test discovery. Synthetic tests cover exact encodings, invalid shapes, size and path boundaries, output ownership, checksum binding, and layout parity with real in-memory archives. Passing tests establish only these codec properties on the tested runtime, not a release-ready distribution.
