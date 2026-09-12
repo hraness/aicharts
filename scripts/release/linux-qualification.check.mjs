@@ -36,5 +36,6 @@ test("qualification refuses incomplete, wrong-profile and noncanonical reports",
 
 test("qualification refuses unsupported dependencies and oversized reports", () => {
   assert.deepEqual(encodeLinuxQualificationReport({ ...input, target: { ...input.target, dynamicDependencies: ["/tmp/lib.so"] } }), { ok: false, error: "invalid_report" });
+  assert.deepEqual(encodeLinuxQualificationReport({ ...input, target: { ...input.target, dynamicDependencies: [] } }), { ok: false, error: "invalid_report" });
   assert.deepEqual(validateLinuxQualificationReport(new Uint8Array(65 * 1024)), { ok: false, error: "limit_exceeded" });
 });
