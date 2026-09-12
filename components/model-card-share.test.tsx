@@ -22,7 +22,17 @@ describe("ModelCardShare", () => {
     expect(markup).toContain("card.png?v=snapshot");
     expect(markup.match(/data-size="compact"/gu)).toHaveLength(5);
     expect(markup).not.toContain('data-size="default"');
-    expect(markup).toMatch(/class="hraness-button hraness-copy-button"[^>]*data-size="compact"[^>]*data-variant="quiet"/u);
+    const copyButton = markup.match(/<span\b[^>]*class="([^"]*\bhraness-copy-button\b[^"]*)"[^>]*>(<button\b[^>]*>)/u);
+    expect(copyButton).not.toBeNull();
+    if (copyButton === null) throw new Error("The copy action must remain a shared button");
+    const copyClasses = copyButton[1].split(/\s+/u);
+    expect(copyClasses).toContain("hraness-button");
+    expect(copyClasses).toContain("hraness-copy-button");
+    expect(copyClasses.some((className) => /^x[a-zA-Z0-9_-]+$/u.test(className))).toBe(true);
+    expect(copyButton[0]).toContain('data-size="compact"');
+    expect(copyButton[0]).toContain('data-variant="quiet"');
+    expect(copyButton[2]).toContain('data-slot="button-control"');
+    expect(copyButton[2]).not.toContain('disabled=""');
     expect(markup).not.toContain("Share image");
   });
 
