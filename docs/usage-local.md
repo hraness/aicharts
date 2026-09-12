@@ -43,6 +43,26 @@ Token totals are **observed, partial historical usage**, not provider billing st
 
 All omissions are reported with fixed warning codes. The parser's detailed code and limits are documented in [`crates/aicharts-core/README.md`](../crates/aicharts-core/README.md). Source formats change; current evidence is synthetic compatibility tests, not a universal installed-version qualification.
 
+## Inspect observed daily turn runtime
+
+With an existing private namespace key and explicitly selected Codex files, run:
+
+```sh
+./target/debug/aicharts turns --codex /absolute/path/to/session.jsonl --occurrence-key-file /absolute/private/directory/aicharts.key --json
+```
+
+Repeat `--codex FILE` to combine selected files. This macOS/Linux command accepts regular files only, not directories, default paths, or Claude files. It creates no key, opens no ledger, and uploads nothing. Use `aicharts turns --help` for the argument contract. Malformed options fail before file access.
+
+Daily output identifies `sourceProfile: 2` and separates completed and aborted root turns. Each cohort contains `observedTurns`, `runtimeEligibleTurns`, and decimal-string `runtimeMsSum`; divide the sum by the eligible count for the observed runtime mean. A zero eligible count means unavailable, not a zero-length turn. Text output preserves the exact ratio. Completed means a provider-declared non-aborted terminal, including terminal errors; it does not establish task success.
+
+Each cohort also contains `observedSubtotals.responseTokens` and `observedSubtotals.requestedCalls`. These sum explicitly owned response-token reports and supported raw call requests. Each metric has its own decimal-string `sum`, `observations`, `turnsWithEvidence`, and exact `subtotalMean` ratio. The denominator counts distinct turns with evidence for that metric. An explicit zero-token report contributes evidence; no call record does not prove zero calls. With no evidence, the metric has zero sum/counts and a null mean. Requested calls can include denied, failed, or interrupted requests and do not establish execution. Complete `tokens` and dispatched `toolCalls` remain null, as do population means; human origin, account, pricing, and complete coverage stay unknown.
+
+Runtime uses the provider's reported elapsed milliseconds, not subtraction of log timestamps. The terminal's UTC day receives the whole turn. Old records without explicit root attribution, ambiguous starts, missing durations, and declared fork/subagent history do not produce a fabricated average. See [Daily turn measurements](usage-turns.md) for the independent generic rollup and Codex reader contracts.
+
+The command preopens at most 2,048 selected files and refuses a combined snapshot larger than 256 MiB before parsing. Across those inputs it admits at most 100,000 physical records and 65,536 combined raw observations: lifecycle events, response-usage records, and supported call requests. Copies and complete selected records with missing fields consume the observation budget before deduplication. `rawObservations` reports that work count. Reads stop at each captured file length; unfinished non-LF tails remain deferred and unclassified. Key/file identity and metadata are checked again before any output. Observed changes refuse the whole result without partial JSON. These are metadata checks, not an atomic snapshot or protection against a same-user attacker; a rewrite without an observable metadata change may evade them. Ordinary reads can update access timestamps.
+
+JSON identifies this as operation `turns`, access `read_only`, `localOnly: true`, `uploaded: false`, scope `root_direct`, coverage `partial`, and `enumerationComplete: false`. It contains bounded counters, numeric UTC days, exact runtime sums, qualified observed subtotals, and fixed diagnostics. It contains no paths, native identities, keys, source text, or frames. The unpublished reader's `profileVersion` and `rawLifecycleRecords` keys are replaced by `sourceProfile` and `rawObservations`; ordinary usage, inspect, and ledger JSON are unchanged. `uploaded: false` describes this invocation only; it says nothing about another process's prior uploads. The results are not persisted or automatically supplied to the TypeScript rollup, wire protocol, or a dashboard.
+
 ## Save measurements locally
 
 On macOS/Linux, initialize a new state directory outside the repository using your existing namespace key. Its parent must already exist. Keep it on a private local filesystem, not a network share or synchronized cloud folder:

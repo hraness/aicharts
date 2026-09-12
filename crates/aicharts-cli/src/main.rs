@@ -5,6 +5,7 @@ mod inspect;
 mod prefix;
 mod reindex;
 mod state;
+mod turns;
 mod version;
 
 use std::fs::{self, File, OpenOptions};
@@ -21,6 +22,7 @@ const MAX_SOURCE_BYTES: u64 = 256 * 1_024 * 1_024;
 const HELP: &str = "AI Charts Usage — local-only foundation
 
   aicharts --version [--json]
+  aicharts turns --codex FILE [--codex FILE ...] --occurrence-key-file KEY [--json]
   aicharts usage --key-file PATH [--codex FILE_OR_DIR] [--claude FILE_OR_DIR] [--json]
   aicharts upload --dry-run --key-file PATH [--codex FILE_OR_DIR] [--claude FILE_OR_DIR]
   aicharts keygen --output PATH
@@ -35,6 +37,9 @@ const HELP: &str = "AI Charts Usage — local-only foundation
   aicharts reindex-prepare --state-dir OLD --key-file PATH --shadow-dir NEW --occurrence-key-file PATH [--codex FILE_OR_DIR] [--claude FILE_OR_DIR] [--json]
 
 Sources may be repeated. Directories scan .jsonl files and skip symlink entries.
+turns requires explicit regular files instead; it never scans directories. It
+reports runtime and partial response-token/requested-call subtotals.
+Complete token totals and dispatched tool calls remain unknown. Nothing is uploaded.
 Version reports compiler metadata only, with no verified release provenance.
 Final source files must be regular files; this is not an OS source sandbox.
 usage prints numeric summaries. upload --dry-run prints canonical frames as hex JSON;
@@ -375,6 +380,9 @@ fn run(args: &[String]) -> Result<String, &'static str> {
     if args.is_empty() || args == ["--help"] || args == ["-h"] {
         return Ok(HELP.to_owned());
     }
+    if args.first().map(String::as_str) == Some("turns") {
+        return turns::run(args);
+    }
     if args.first().map(String::as_str) == Some("inspect") {
         return inspect::run(args);
     }
@@ -465,6 +473,10 @@ mod tests {
 
     #[test]
     fn help_does_not_read_source_data() {
-        assert!(run(&args(&["--help"])).unwrap().contains("local-only"));
+        let help = run(&args(&["--help"])).unwrap();
+        assert!(help.contains("local-only"));
+        assert!(help.contains("partial response-token/requested-call subtotals"));
+        assert!(help.contains("Complete token totals and dispatched tool calls remain unknown"));
+        assert!(!help.contains("partial observed runtime with unknown tokens/tools"));
     }
 }
