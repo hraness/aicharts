@@ -147,6 +147,20 @@ export default function sitemap(): MetadataRoute.Sitemap {
       url: absolute("/calculator"),
     },
     {
+      changeFrequency: "monthly",
+      images: [siteImage],
+      lastModified: navigationUpdatedAt,
+      priority: 0.7,
+      url: absolute("/usage"),
+    },
+    {
+      changeFrequency: "monthly",
+      images: [siteImage],
+      lastModified: navigationUpdatedAt,
+      priority: 0.6,
+      url: absolute("/leaderboard"),
+    },
+    {
       changeFrequency: "daily",
       images: [siteImage],
       lastModified: benchmarkPortfolioModifiedAt,

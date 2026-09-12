@@ -82,6 +82,10 @@ describe("public search discovery", () => {
     if (!calculatorInputs.ok) throw calculatorInputs.error;
     expect(entries.find(entry => entry.url === "https://aicharts.io/calculator")?.lastModified)
       .toBe(calculatorInputsModifiedAt(calculatorInputs.value));
+    expect(entries.find(entry => entry.url === "https://aicharts.io/usage")?.lastModified)
+      .toBe(navigationUpdatedAt);
+    expect(entries.find(entry => entry.url === "https://aicharts.io/leaderboard")?.lastModified)
+      .toBe(navigationUpdatedAt);
     expect(urls.every(url => !url.includes("?") && !url.includes("#"))).toBeTrue();
     expect(entries.find(entry => entry.url.endsWith(CODING_AGENT_DATASET_PATH))?.lastModified)
       .toBe(benchmarkPortfolioModifiedAt);
