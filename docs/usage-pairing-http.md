@@ -1,6 +1,6 @@
 # Pairing HTTP adapters
 
-AI Charts contains dormant server and Worker adapters for the four [pairing transport operations](usage-pairing-transport.md). They are not connected to the production authentication resolver or default Worker entrypoint. The fixed target, `https://usage.aicharts.io/internal/pairing`, is planned configuration, not an observed live endpoint. Creating a factory does not enable browser pairing, enrollment or uploads.
+AI Charts contains dormant server and Worker adapters for the four [pairing transport operations](usage-pairing-transport.md). `createPairingCoordinator()` now composes the actual request-owned OIDC verifier with the Worker handler, but the composition is not connected to the production authentication resolver or default Worker entrypoint. The fixed target, `https://usage.aicharts.io/internal/pairing`, is planned configuration, not an observed live endpoint. Creating a factory does not enable browser pairing, enrollment or uploads.
 
 ## Binding and authority
 

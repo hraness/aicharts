@@ -1,6 +1,6 @@
 # Coordinator identity verification
 
-`lib/usage/oidc/usage-oidc-verifier.ts` provides a request-owned verifier for the expected AI Charts production workload identity. No production handler constructs or calls it. Dormant [pairing HTTP adapters](usage-pairing-http.md) define the structural verifier port and a public request-context token binding. Production transport, user authorization and activation still require separate integration and qualification; the existing sign-in routes remain disabled.
+`lib/usage/oidc/usage-oidc-verifier.ts` provides a request-owned verifier for the expected AI Charts production workload identity. The dormant `createPairingCoordinator()` composition constructs it once per Worker isolate and passes it to the pairing HTTP handler; no production handler imports that composition. Dormant [pairing HTTP adapters](usage-pairing-http.md) define the structural verifier port and a public request-context token binding. Production transport, user authorization and activation still require separate integration and qualification; the existing sign-in routes remain disabled.
 
 ## Expected identity
 
