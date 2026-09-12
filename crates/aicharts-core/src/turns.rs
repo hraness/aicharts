@@ -5,6 +5,7 @@
 //! errors. Runtime is the provider's independent elapsed milliseconds, not epoch
 //! subtraction, active work, task success, or a complete population measurement.
 
+mod container;
 mod observations;
 mod reader;
 mod schema;
@@ -12,9 +13,7 @@ mod schema;
 use crate::{keyed_id, MAX_LINES};
 use aicharts_protocol::Id;
 use hmac::{Hmac, Mac};
-use schema::{
-    AppendTime, Entry, Field, HistoryMode, Kind, Number, Object, Payload, Source, ThreadSource,
-};
+use schema::{AppendTime, Entry, Field, Kind, Number, Object, Payload};
 use sha2::Sha256;
 use std::{
     collections::{BTreeMap, BTreeSet},
@@ -40,7 +39,10 @@ pub enum TurnError {
     SourceLimit,
     ObservationLimit,
     MissingSession,
-    SessionIdentityChanged,
+    SessionTreeMismatch,
+    MetadataSessionConflict,
+    ContainerIdentityAmbiguous,
+    InheritedObservationOwnership,
     UnsupportedHistory,
     ConflictingEvidence,
     KeyNamespaceMismatch,
@@ -60,7 +62,10 @@ impl TurnError {
             Self::SourceLimit => "turn_source_limit",
             Self::ObservationLimit => "turn_observation_limit",
             Self::MissingSession => "turn_missing_session",
-            Self::SessionIdentityChanged => "turn_session_identity_changed",
+            Self::SessionTreeMismatch => "turn_session_tree_mismatch",
+            Self::MetadataSessionConflict => "turn_metadata_session_conflict",
+            Self::ContainerIdentityAmbiguous => "turn_container_identity_ambiguous",
+            Self::InheritedObservationOwnership => "turn_inherited_observation_ownership",
             Self::UnsupportedHistory => "turn_unsupported_history",
             Self::ConflictingEvidence => "turn_conflicting_evidence",
             Self::KeyNamespaceMismatch => "turn_key_namespace_mismatch",
@@ -143,6 +148,7 @@ pub enum TurnDiagnostic {
     MissingResponseTotal,
     UnownedCall,
     UnsupportedResponseItem,
+    InheritedMetadataOnly,
 }
 impl TurnDiagnostic {
     pub const fn code(self) -> &'static str {
@@ -170,6 +176,7 @@ impl TurnDiagnostic {
             Self::MissingResponseTotal => "missing_response_total",
             Self::UnownedCall => "unowned_call",
             Self::UnsupportedResponseItem => "unsupported_response_item",
+            Self::InheritedMetadataOnly => "inherited_metadata_only",
         }
     }
 }
@@ -178,6 +185,10 @@ impl TurnDiagnostic {
 struct ThreadEvidence {
     excluded: bool,
     unknown_session: bool,
+    session: Option<Id>,
+    shared_session_shape: bool,
+    inherited_history: bool,
+    has_selected_observations: bool,
 }
 
 #[derive(Clone, PartialEq, Eq, PartialOrd, Ord)]
@@ -385,7 +396,7 @@ pub fn parse_codex_turns_with_limits<R: BufRead>(
     let mut out = empty(key_namespace(occurrence_key));
     out.budget.sources = 1;
     let mut source = reader::Budget::new(reader, limits.bytes);
-    let mut session = None;
+    let mut container = container::Container::default();
     loop {
         if out.budget.lines == limits.physical_records {
             if reader::has_bytes(&mut source)? {
@@ -414,11 +425,7 @@ pub fn parse_codex_turns_with_limits<R: BufRead>(
                     let Object::Value(payload) = entry.payload else {
                         return Err(TurnError::MalformedRecord);
                     };
-                    let thread = metadata(&payload, occurrence_key, &mut out)?;
-                    if session.is_some_and(|old| old != thread) {
-                        return Err(TurnError::SessionIdentityChanged);
-                    }
-                    session = Some(thread);
+                    container.metadata(&payload, occurrence_key, &mut out)?;
                 }
                 Kind::EventMsg => {
                     if let Object::Value(payload) = entry.payload {
@@ -427,7 +434,10 @@ pub fn parse_codex_turns_with_limits<R: BufRead>(
                             Kind::Started | Kind::Complete | Kind::TurnAborted
                         ) {
                             charge_observation(&mut out, limits)?;
-                            let thread = session.ok_or(TurnError::MissingSession)?;
+                            validate_lifecycle(&payload)?;
+                            let thread = container
+                                .observe(&mut out)?
+                                .ok_or(TurnError::MissingSession)?;
                             lifecycle(payload, entry.timestamp, thread, occurrence_key, &mut out)?;
                         }
                     }
@@ -439,6 +449,8 @@ pub fn parse_codex_turns_with_limits<R: BufRead>(
                         Object::Missing | Object::Null => Payload::default(),
                         Object::Invalid => return Err(TurnError::MalformedRecord),
                     };
+                    observations::validate_token(&payload)?;
+                    let session = container.observe(&mut out)?;
                     let turn = out.observations.token(
                         &payload,
                         session,
@@ -458,6 +470,8 @@ pub fn parse_codex_turns_with_limits<R: BufRead>(
                     Object::Value(payload) => {
                         if observations::is_call(payload.kind) {
                             charge_observation(&mut out, limits)?;
+                            observations::validate_call(&payload)?;
+                            let session = container.observe(&mut out)?;
                             let turn = out.observations.call(
                                 &payload,
                                 session,
@@ -479,6 +493,7 @@ pub fn parse_codex_turns_with_limits<R: BufRead>(
     }
     out.budget.bytes = source.bytes;
     out.observations.validate_roots(&out.turns)?;
+    container.finish(&mut out)?;
     Ok(out)
 }
 
@@ -492,41 +507,16 @@ fn charge_observation(out: &mut TurnCollection, limits: TurnReadLimits) -> Resul
     })
 }
 
-fn metadata(payload: &Payload, key: &[u8; 32], out: &mut TurnCollection) -> Result<Id, TurnError> {
-    let Field::Value(id) = &payload.id else {
-        return Err(TurnError::MalformedRecord);
-    };
-    match &payload.session_id {
-        Field::Missing => {}
-        Field::Value(session) if session == id => {}
-        Field::Value(_) => return Err(TurnError::SessionIdentityChanged),
-        _ => return Err(TurnError::MalformedRecord),
-    }
-    if matches!(payload.parent_thread_id, Field::Invalid)
-        || matches!(payload.forked_from_id, Field::Invalid)
-        || matches!(payload.thread_source, Field::Invalid)
-        || payload.source == Some(Source::Invalid)
+fn validate_lifecycle(payload: &Payload) -> Result<(), TurnError> {
+    if matches!(payload.turn_id, Field::Invalid)
+        || matches!(payload.root_turn_id, Field::Invalid)
+        || matches!(payload.started_at, Field::Invalid)
+        || matches!(payload.completed_at, Field::Invalid)
+        || matches!(payload.duration_ms, Field::Invalid)
     {
         return Err(TurnError::MalformedRecord);
     }
-    if matches!(
-        payload.history_mode,
-        Field::Invalid | Field::Null | Field::Value(HistoryMode::Unknown)
-    ) {
-        return Err(TurnError::UnsupportedHistory);
-    }
-    let excluded = matches!(payload.parent_thread_id, Field::Value(_))
-        || matches!(payload.forked_from_id, Field::Value(_))
-        || payload.forked_from_ordinal_exclusive.is_some()
-        || payload.subagent_history_start_ordinal.is_some()
-        || payload.history_base.is_some()
-        || payload.source == Some(Source::Excluded)
-        || payload.thread_source == Field::Value(ThreadSource::Excluded);
-    let thread = keyed_id(key, b"codex-turn-thread-v1", &[id.0.as_bytes()]);
-    let evidence = out.threads.entry(thread).or_default();
-    evidence.excluded |= excluded;
-    evidence.unknown_session |= matches!(payload.session_id, Field::Missing);
-    Ok(thread)
+    Ok(())
 }
 
 fn lifecycle(
@@ -536,14 +526,7 @@ fn lifecycle(
     key: &[u8; 32],
     out: &mut TurnCollection,
 ) -> Result<(), TurnError> {
-    if matches!(payload.turn_id, Field::Invalid)
-        || matches!(payload.root_turn_id, Field::Invalid)
-        || matches!(payload.started_at, Field::Invalid)
-        || matches!(payload.completed_at, Field::Invalid)
-        || matches!(payload.duration_ms, Field::Invalid)
-    {
-        return Err(TurnError::MalformedRecord);
-    }
+    validate_lifecycle(&payload)?;
     let Field::Value(native) = payload.turn_id else {
         out.diagnostics.insert(TurnDiagnostic::MissingTurnIdentity);
         return Ok(());
@@ -606,15 +589,16 @@ pub fn merge_turn_collections(collections: &[TurnCollection]) -> Result<TurnColl
         out.observations.merge(&collection.observations)?;
         out.diagnostics.extend(&collection.diagnostics);
         for (id, incoming) in &collection.threads {
-            let current = out.threads.entry(*id).or_default();
-            current.excluded |= incoming.excluded;
-            current.unknown_session |= incoming.unknown_session;
+            out.threads.entry(*id).or_default().merge(incoming)?;
         }
         for (id, incoming) in &collection.turns {
             out.turns.entry(*id).or_default().merge(incoming)?;
         }
     }
     out.observations.validate_roots(&out.turns)?;
+    for thread in out.threads.values() {
+        thread.validate_ownership()?;
+    }
     Ok(out)
 }
 
@@ -763,3 +747,6 @@ mod limits_tests;
 
 #[cfg(test)]
 mod observations_tests;
+
+#[cfg(test)]
+mod container_tests;

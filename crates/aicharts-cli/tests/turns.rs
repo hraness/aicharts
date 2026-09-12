@@ -171,7 +171,7 @@ fn observed_runtime_json_is_exact_numeric_only_and_inputs_unchanged() {
     f.write("source", source().as_bytes());
     let key = image(&f.0.join("key"));
     let original = image(&f.0.join("source"));
-    let result = f.json(&[
+    let output = f.run(&[
         "turns",
         "--codex",
         "source",
@@ -179,24 +179,99 @@ fn observed_runtime_json_is_exact_numeric_only_and_inputs_unchanged() {
         "key",
         "--json",
     ]);
+    assert!(output.status.success());
+    assert!(output.stderr.is_empty());
+    let expected = json!({
+        "schemaVersion":1,"operation":"turns","access":"read_only","localOnly":true,"uploaded":false,
+        "provider":"codex","sourceProfile":2,"scope":"root_direct","coverage":"partial",
+        "enumerationComplete":false,"origin":"unknown","account":"unknown","runtimeBasis":"provider_reported",
+        "terminalTimePrecisionMs":1000,"sourcesRead":1,"linesRead":3,"bytesScanned":source().len(),
+        "rawObservations":2,"partialSources":0,"unclassifiedTerminalTurns":0,"undatedRootTurns":0,"excludedThreads":0,
+        "days":[{"utcDay":2,"completed":{"observedTurns":1,"runtimeEligibleTurns":1,"runtimeMsSum":"1537",
+                "observedSubtotals":subtotals(("0",0,0),("0",0,0))},
+            "aborted":{"observedTurns":0,"runtimeEligibleTurns":0,"runtimeMsSum":"0",
+                "observedSubtotals":subtotals(("0",0,0),("0",0,0))}}],
+        "tokens":null,"toolCalls":null,"diagnostics":["partial_history","unknown_session","unknown_origin","unmeasured_tokens","unmeasured_tools","partial_observations"],
+        "unavailable":["tokens","tool_calls","pricing"]
+    });
     assert_eq!(
-        result,
-        json!({
-            "schemaVersion":1,"operation":"turns","access":"read_only","localOnly":true,"uploaded":false,
-            "provider":"codex","sourceProfile":2,"scope":"root_direct","coverage":"partial",
-            "enumerationComplete":false,"origin":"unknown","account":"unknown","runtimeBasis":"provider_reported",
-            "terminalTimePrecisionMs":1000,"sourcesRead":1,"linesRead":3,"bytesScanned":source().len(),
-            "rawObservations":2,"partialSources":0,"unclassifiedTerminalTurns":0,"undatedRootTurns":0,"excludedThreads":0,
-            "days":[{"utcDay":2,"completed":{"observedTurns":1,"runtimeEligibleTurns":1,"runtimeMsSum":"1537",
-                    "observedSubtotals":subtotals(("0",0,0),("0",0,0))},
-                "aborted":{"observedTurns":0,"runtimeEligibleTurns":0,"runtimeMsSum":"0",
-                    "observedSubtotals":subtotals(("0",0,0),("0",0,0))}}],
-            "tokens":null,"toolCalls":null,"diagnostics":["partial_history","unknown_session","unknown_origin","unmeasured_tokens","unmeasured_tools","partial_observations"],
-            "unavailable":["tokens","tool_calls","pricing"]
-        })
+        output.stdout,
+        serde_json::to_string_pretty(&expected).unwrap().as_bytes()
     );
     assert_eq!(image(&f.0.join("key")), key);
     assert_eq!(image(&f.0.join("source")), original);
+}
+
+#[test]
+fn container_compatibility_emits_only_exclusion_or_fixed_failure_without_writes() {
+    let mut child = metadata();
+    child["payload"]["session_id"] = json!("synthetic-root");
+    child["payload"]["parent_thread_id"] = json!("synthetic-middle");
+    let mut copied = metadata();
+    copied["payload"]["forked_from_id"] = json!("synthetic-parent");
+    let parent = json!({"type":"session_meta","payload":{
+        "id":"synthetic-parent","session_id":"synthetic-parent","source":"cli"
+    }});
+    let mut mismatch = metadata();
+    mismatch["payload"]["session_id"] = json!("synthetic-root");
+    let mut conflicting_child = child.clone();
+    conflicting_child["payload"]["session_id"] = json!("synthetic-other-root");
+    let cases = [
+        (
+            vec![
+                child.clone(),
+                start("t", "1970-01-01T00:00:00Z"),
+                terminal("t", "task_complete", json!(0), 1),
+            ],
+            None,
+        ),
+        (vec![copied.clone(), parent.clone()], None),
+        (vec![mismatch], Some("turn_session_tree_mismatch")),
+        (
+            vec![child, conflicting_child],
+            Some("turn_metadata_session_conflict"),
+        ),
+        (
+            vec![metadata(), parent.clone()],
+            Some("turn_container_identity_ambiguous"),
+        ),
+        (
+            vec![copied, parent, start("t", "1970-01-01T00:00:00Z")],
+            Some("turn_inherited_observation_ownership"),
+        ),
+    ];
+    for (rows, expected_error) in cases {
+        let fixture = Fixture::new();
+        fixture.write("source", json_lines(&rows).as_bytes());
+        let key = image(&fixture.0.join("key"));
+        let source = image(&fixture.0.join("source"));
+        let output = fixture.run(&[
+            "turns",
+            "--codex",
+            "source",
+            "--occurrence-key-file",
+            "key",
+            "--json",
+        ]);
+        if let Some(code) = expected_error {
+            assert!(!output.status.success());
+            assert!(output.stdout.is_empty());
+            assert_eq!(output.stderr, format!("aicharts: {code}\n").as_bytes());
+        } else {
+            assert!(output.status.success());
+            assert!(output.stderr.is_empty());
+            let value: Value = serde_json::from_slice(&output.stdout).unwrap();
+            assert_eq!(value["days"], json!([]));
+            assert_eq!(value["excludedThreads"], 1);
+            assert_eq!(value["sourceProfile"], 2);
+            assert_eq!(value["coverage"], "partial");
+            assert_eq!(value["tokens"], Value::Null);
+            assert_eq!(value["toolCalls"], Value::Null);
+        }
+        assert_eq!(image(&fixture.0.join("key")), key);
+        assert_eq!(image(&fixture.0.join("source")), source);
+        assert_eq!(fs::read_dir(&fixture.0).unwrap().count(), 2);
+    }
 }
 
 #[test]
