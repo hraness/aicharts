@@ -24,6 +24,7 @@ import type { AnalyticsSurface } from "@/lib/analytics";
 export type SegmentedItem<Value extends string> = Readonly<{
   id: Value;
   label: ReactNode;
+  leading?: ReactNode;
 }>;
 
 export type ToggleItem<Value extends string> = Readonly<{
@@ -38,6 +39,7 @@ export type BarListChartDatum = Readonly<{
   detail: string;
   id: string;
   label: string;
+  leading?: ReactNode;
   value: number;
 }>;
 
@@ -46,6 +48,7 @@ export type RangePlotChartDatum = Readonly<{
   detail: string;
   id: string;
   label: string;
+  leading?: ReactNode;
   maximum: number;
   median: number;
   minimum: number;
@@ -320,6 +323,9 @@ export function SegmentedControl<Value extends string>({
           role="radio"
           type="button"
         >
+          {item.leading === undefined
+            ? null
+            : <span aria-hidden="true" className="ui-segmented-control__leading">{item.leading}</span>}
           {item.label}
         </button>
       ))}
@@ -440,7 +446,13 @@ export function BarListChart({
           onClick={() => onSelectionChange(row.id)}
           type="button"
         >
-          <span className="ui-chart-row__copy"><strong>{row.label}</strong><small>{row.detail}</small></span>
+          <span className="ui-chart-row__copy">
+            <span className="ui-chart-row__identity">
+              {row.leading}
+              <strong>{row.label}</strong>
+            </span>
+            <small>{row.detail}</small>
+          </span>
           <span className="ui-bar-list-chart__track">
             <i style={{ background: row.color, width: `${clampPercent(row.value, domain)}%` }} />
           </span>
@@ -481,7 +493,13 @@ export function RangePlotChart({
             onClick={() => onSelectionChange(row.id)}
             type="button"
           >
-            <span className="ui-chart-row__copy"><strong>{row.label}</strong><small>{row.detail}</small></span>
+            <span className="ui-chart-row__copy">
+              <span className="ui-chart-row__identity">
+                {row.leading}
+                <strong>{row.label}</strong>
+              </span>
+              <small>{row.detail}</small>
+            </span>
             <span className="ui-range-plot-chart__track">
               <i style={{ background: row.color, left: `${minimum}%`, width: `${Math.max(1, maximum - minimum)}%` }} />
               <b style={{ background: row.color, left: `${median}%` }} />

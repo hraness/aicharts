@@ -46,6 +46,12 @@ import {
 } from "./articles";
 import { BLOG_ARTICLE_ADMISSIONS } from "./article-admissions";
 import {
+  DEVIN_FUSION,
+  createDevinFusionCostSavingArticle,
+  fusionSnapshotRecords,
+  leadModelBaselines,
+} from "./devin-fusion-cost-saving-article";
+import {
   FRENCH_OWEN_SMALL_MODELS,
   OPENAI_GPT_56_LUNA,
 } from "./small-models-have-arrived-article";
@@ -60,6 +66,9 @@ import {
   BLOG_EDITORIAL_IMAGES,
   EDITORIAL_IMAGE_HEIGHT,
   EDITORIAL_IMAGE_WIDTH,
+  SLOPCAMERA_PACKAGE,
+  SLOPCAMERA_SOURCE_COMMIT,
+  SLOPCAMERA_VERSION,
   blogEditorialImage,
   blogEditorialImages,
 } from "./editorial-images";
@@ -73,7 +82,9 @@ import {
   breadcrumbJsonLd,
 } from "./seo";
 
-const IMAGE_FREE_SLUG = "small-models-have-arrived" as const;
+function imageLessLookup(): undefined {
+  return undefined;
+}
 
 describe("AI Charts benchmark notes", () => {
   test("uses the shared publication shell with chart discovery", () => {
@@ -130,9 +141,13 @@ describe("AI Charts benchmark notes", () => {
       expect(article.seoDescription.trim()).toBe(article.seoDescription);
       expect(articleToMarkdown(article)).toContain(`# ${article.title}`);
       expect(articleToMarkdown(article)).toContain(article.dek);
+      expect(articleToMarkdown(article)).not.toContain("/images/blog/");
       expect(article.authorshipDisclosure).toBe(BLOG_AUTHORSHIP_DISCLOSURE);
       expect(articleToMarkdown(article)).toContain(BLOG_AUTHORSHIP_DISCLOSURE);
-      if (article.slug === "terminal-bench-science") {
+      if (article.slug === "devin-fusion-cost-saving") {
+        expect(article.publishedAt).toBe("2026-09-11");
+        expect(article.updatedAt >= article.publishedAt).toBeTrue();
+      } else if (article.slug === "terminal-bench-science") {
         expect(article.publishedAt).toBe("2026-08-31");
         expect(article.updatedAt >= article.publishedAt).toBeTrue();
       } else if (article.slug === "small-models-have-arrived") {
@@ -149,7 +164,7 @@ describe("AI Charts benchmark notes", () => {
         expect(article.updatedAt >= article.publishedAt).toBeTrue();
       } else if (article.slug === "mirrorcode-coding-agent-benchmark") {
         expect(article.publishedAt).toBe("2026-08-04");
-        expect(article.updatedAt).toBe("2026-08-05");
+        expect(article.updatedAt >= article.publishedAt).toBeTrue();
         expect(articleToMarkdown(article)).toContain("captured August 5, 2026 UTC");
       } else {
         throw new Error(`Unhandled blog article date assertion: ${article.slug}`);
@@ -310,7 +325,7 @@ describe("AI Charts benchmark notes", () => {
     );
     const markdown = articleToMarkdown(article);
 
-    expect(article.title).toBe("Cheaper AI models can make everyday products viable");
+    expect(article.title).toBe("GPT-5.6 Luna made one daily news page cost about $0.10");
     expect(article.sourceIds).toEqual([
       "calvinFrenchOwenSmallModels",
       "openAiGpt56Luna",
@@ -405,6 +420,128 @@ describe("AI Charts benchmark notes", () => {
     }
   });
 
+  test("reconstructs the Devin Fusion claim from Cognition's posts and the checked snapshot", () => {
+    const parsed = parseCodingAgentSnapshot(codingAgentData);
+    if (!parsed.ok) throw parsed.error;
+    const article = getBlogArticle("devin-fusion-cost-saving");
+    expect(article).toBeDefined();
+    if (article === undefined) return;
+
+    const markup = renderToStaticMarkup(
+      createElement(ArticleBody, { blocks: article.body }),
+    );
+    const markdown = articleToMarkdown(article);
+
+    expect(article.title).toBe("What Devin Fusion’s 39% saving measures");
+    expect(article.sourceIds).toEqual([
+      "cognitionFusionDesktopCli",
+      "cognitionDevinFusion",
+      "devinFable51",
+      "artificialAnalysisCodingAgents",
+    ]);
+    expect(blogEditorialImage(article.slug)).toBeUndefined();
+    for (const sourceId of article.sourceIds) {
+      expect(markup).toContain(BLOG_SOURCES[sourceId].url);
+    }
+    expect(markup).toContain(formatRetrievedAt(parsed.value.source.retrievedAt));
+    expect(markdown).toContain(DEVIN_FUSION.headline);
+    expect(markdown).toContain(DEVIN_FUSION.headlineIndex);
+    for (const point of DEVIN_FUSION.headlinePoints) {
+      expect(markup).toContain(point.configuration);
+      expect(markup).toContain(point.indexScore);
+      expect(markup).toContain(point.costUsd);
+    }
+    expect(markdown).toContain("39% lower");
+    expect(markdown).toContain("36% lower");
+    for (const row of DEVIN_FUSION.benchmarkComparisons) {
+      expect(markup).toContain(row.benchmark);
+      expect(markup).toContain(row.leadFable);
+      expect(markup).toContain(row.fusionFable);
+      expect(markup).toContain(row.leadAstra);
+      expect(markup).toContain(row.fusionAstra);
+    }
+    for (const row of DEVIN_FUSION.sidekickComparisons) {
+      expect(markup).toContain(row.sidekick);
+      expect(markup).toContain(row.fusionResult);
+    }
+    expect(markdown).toContain(DEVIN_FUSION.earlier.augustFusionCost);
+    expect(markdown).toContain(DEVIN_FUSION.earlier.septemberFusionCost);
+    for (const configuration of DEVIN_FUSION.artificialAnalysisListing.configurations) {
+      expect(markdown).toContain(configuration);
+    }
+    expect(markdown).not.toContain("refresh");
+    expect(markdown).not.toContain("schema");
+    expect(markdown).not.toContain("—");
+
+    const baselines = leadModelBaselines(parsed.value.records)
+      .map(baseline => baseline.record)
+      .filter(record => record !== undefined);
+    expect(baselines.length).toBeGreaterThanOrEqual(2);
+    for (const record of baselines) {
+      expect(markup).toContain(record.model);
+      expect(markup).toContain(record.agent);
+      expect(markup).toContain(formatSnapshotScore(record.benchmarks.aaIndex));
+      expect(markup).toContain(formatSnapshotCostUsd(record.economics.costUsd));
+    }
+
+    const fusionRecords = fusionSnapshotRecords(parsed.value.records);
+    if (fusionRecords.length === 0) {
+      expect(markdown).toContain("does not include a Fusion configuration");
+      expect(markdown).not.toContain("Fusion configurations in the AI Charts snapshot");
+    } else {
+      expect(markdown).toContain("Fusion configurations in the AI Charts snapshot");
+      expect(markdown).not.toContain("does not include a Fusion configuration");
+    }
+  });
+
+  test("states the Fusion snapshot status from the records it is given", () => {
+    const parsed = parseCodingAgentSnapshot(codingAgentData);
+    if (!parsed.ok) throw parsed.error;
+    const template = parsed.value.records[0];
+    const fusionRecord = {
+      ...template,
+      id: "fusion-fable-sidekick",
+      agent: "Devin Fusion CLI",
+      model: "Claude Fable 5.1 + SWE-2",
+      modelLabel: "Claude Fable 5.1 XHigh + SWE-2 Medium",
+      providerId: "cognition",
+      providerName: "Cognition",
+      seriesId: "Devin Fusion CLI:cognition_fusion",
+      seriesLabel: "Devin Fusion CLI · Claude Fable 5.1 + SWE-2",
+      setting: "xhigh",
+      settingRank: 5,
+      benchmarks: { aaIndex: 61.7, deepSwe: 63.1, terminalBench: 56.1, sweAtlas: 65.9 },
+      economics: { costUsd: 7.9, durationSeconds: 900 },
+      usage: { totalTokens: 6_000_000 },
+    };
+    const withoutFusion = createDevinFusionCostSavingArticle({
+      ...parsed.value,
+      records: parsed.value.records.filter(record => !record.agent.includes("Fusion")),
+    });
+    const withFusion = createDevinFusionCostSavingArticle({
+      ...parsed.value,
+      records: [...parsed.value.records, fusionRecord],
+    });
+    const without = articleToMarkdown(withoutFusion);
+    const withRows = articleToMarkdown(withFusion);
+
+    expect(without).toContain("does not include a Fusion configuration");
+    expect(without).not.toContain("Fusion configurations in the AI Charts snapshot");
+    expect(withRows).toContain("includes one Fusion configuration");
+    expect(withRows).toContain("Fusion configurations in the AI Charts snapshot");
+    expect(withRows).toContain("Claude Fable 5.1 + SWE-2");
+    expect(withRows).toContain("61.7");
+    expect(withRows).toContain("$7.90");
+    expect(withRows).not.toContain("does not include a Fusion configuration");
+
+    const leadOnly = createDevinFusionCostSavingArticle({
+      ...parsed.value,
+      records: parsed.value.records.filter(record => record.agent === "Devin CLI"),
+    });
+    expect(articleToMarkdown(leadOnly))
+      .toContain("does not store enough of the lead models");
+  });
+
   test("derives the holdout note from fetched Luu quotes and the checked snapshot", () => {
     const parsed = parseCodingAgentSnapshot(codingAgentData);
     if (!parsed.ok) throw parsed.error;
@@ -480,6 +617,9 @@ describe("AI Charts benchmark notes", () => {
     expect(markup).toContain(`href="${BLOG_SOURCES.calvinFrenchOwenSmallModels.url}"`);
     expect(markup).toContain(`href="${BLOG_SOURCES.openAiGpt56Luna.url}"`);
     expect(markup).toContain(`href="${BLOG_SOURCES.terminalBenchScienceAnnouncement.url}"`);
+    expect(markup).toContain(`href="${BLOG_SOURCES.cognitionFusionDesktopCli.url}"`);
+    expect(markup).toContain(`href="${BLOG_SOURCES.cognitionDevinFusion.url}"`);
+    expect(markup).toContain(`href="${BLOG_SOURCES.devinFable51.url}"`);
   });
 
   test("renders the index, static routes, breadcrumbs, dates, and sources", async () => {
@@ -489,18 +629,21 @@ describe("AI Charts benchmark notes", () => {
     expect(indexMarkup).toContain("The first collection focuses on coding agents.");
     expect(indexMarkup).toContain("Explore the coding-agent chart");
     expect(indexMarkup).toContain("Method");
-    expect(indexMarkup.match(/rel="preload"/gu)).toHaveLength(1);
+    // Only the first card may preload its image; an image-free lead card
+    // preloads nothing rather than promoting a below-fold image.
+    const leadImage = blogEditorialImage(blogArticles[0].slug);
+    expect(indexMarkup.match(/rel="preload"/gu) ?? [])
+      .toHaveLength(leadImage === undefined ? 0 : 1);
     for (const article of blogArticles) {
       expect(indexMarkup).toContain(`href="${blogArticlePath(article.slug)}"`);
       const editorialImage = blogEditorialImage(article.slug);
-      if (editorialImage !== undefined) {
-        expect(indexMarkup).toContain(
-          encodeURIComponent(editorialImage.src),
-        );
-      } else {
-        expect(article.slug).toBe(IMAGE_FREE_SLUG);
+      if (editorialImage === undefined) {
         expect(indexMarkup).not.toContain(
           encodeURIComponent(`/images/blog/${article.slug}.webp`),
+        );
+      } else {
+        expect(indexMarkup).toContain(
+          encodeURIComponent(editorialImage.src),
         );
       }
 
@@ -517,12 +660,12 @@ describe("AI Charts benchmark notes", () => {
       expect(markup).toContain(`dateTime="${article.publishedAt}"`);
       expect(markup).toContain("By AI Charts · AI-assisted");
       expect(markup).toContain(article.authorshipDisclosure);
-      if (editorialImage !== undefined) {
+      if (editorialImage === undefined) {
+        expect(markup).not.toContain("<figure");
+        expect(markup).not.toContain(`/images/blog/${article.slug}.webp`);
+      } else {
         expect(markup).toContain(editorialImage.caption);
         expect(markup).toContain(editorialImage.alt);
-      } else {
-        expect(article.slug).toBe(IMAGE_FREE_SLUG);
-        expect(markup).not.toContain("<figure");
       }
       if ("nextStep" in article && article.nextStep !== undefined) {
         expect(markup).toContain(article.nextStep.title);
@@ -611,21 +754,22 @@ describe("AI Charts blog discovery", () => {
       expect(metadata.robots).toEqual(INDEXABLE_ROBOTS);
     }
 
-    const imageLessArticle = getBlogArticle(IMAGE_FREE_SLUG);
-    expect(imageLessArticle).toBeDefined();
-    if (imageLessArticle === undefined) return;
-    const imageLess = blogArticleMetadata(imageLessArticle);
+    const imageLess = blogArticleMetadata(blogArticles[0], null);
     expect(imageLess.openGraph).not.toHaveProperty("images");
     expect(imageLess.twitter).toMatchObject({ card: "summary" });
     expect(imageLess.twitter).not.toHaveProperty("images");
   });
 
-  test("validates each registered editorial image without requiring one per article", async () => {
-    expect(blogEditorialImage(IMAGE_FREE_SLUG)).toBeUndefined();
-    expect(blogEditorialImages.length).toBeLessThan(blogArticles.length);
+  test("validates each registered editorial image against the manifest and binary", async () => {
+    // The registry is intentionally partial: every registered slug must be a
+    // live article, but a live article may remain image-free.
+    const registeredSlugs = blogEditorialImages.map(image => image.slug).sort();
+    expect(new Set(registeredSlugs).size).toBe(registeredSlugs.length);
     for (const slug of Object.keys(BLOG_EDITORIAL_IMAGES)) {
       expect(BLOG_SLUGS as readonly string[]).toContain(slug);
     }
+    const imageFreeSlugs = BLOG_SLUGS.filter(slug => blogEditorialImage(slug) === undefined);
+    expect(imageFreeSlugs).toEqual(["devin-fusion-cost-saving"]);
     expect(new Set(blogEditorialImages.map(image => image.sha256)).size)
       .toBe(blogEditorialImages.length);
 
@@ -636,6 +780,12 @@ describe("AI Charts blog discovery", () => {
       expect(image.alt.trim()).toBe(image.alt);
       expect(image.caption.trim()).toBe(image.caption);
       expect(image.sha256).toMatch(/^[a-f0-9]{64}$/u);
+      expect(image.credit).toContain("Slopcamera");
+      expect(image.provenance.package).toBe(SLOPCAMERA_PACKAGE);
+      if (image.provenance.package === SLOPCAMERA_PACKAGE) {
+        expect(image.provenance.sourceCommit).toBe(SLOPCAMERA_SOURCE_COMMIT);
+        expect(image.provenance.version).toBe(SLOPCAMERA_VERSION);
+      }
 
       const file = Bun.file(new URL(`../../public${image.src}`, import.meta.url));
       expect(await file.exists()).toBeTrue();
@@ -644,7 +794,12 @@ describe("AI Charts blog discovery", () => {
       expect(hasher.digest("hex")).toBe(image.sha256);
     }
 
-    expect(editorialImageManifest.generator.package).toBe("@hraness/atet@3.1.2");
+    expect(editorialImageManifest.generator.package).toBe(SLOPCAMERA_PACKAGE);
+    expect(editorialImageManifest.generator.version).toBe(SLOPCAMERA_VERSION);
+    expect(editorialImageManifest.generator.sourceCommit)
+      .toBe(SLOPCAMERA_SOURCE_COMMIT);
+    expect(editorialImageManifest.historicalGenerator.package)
+      .toBe("@hraness/atet@3.1.2");
     expect(editorialImageManifest.images.map(entry => entry.slug).sort())
       .toEqual(blogEditorialImages.map(image => image.slug).sort());
     for (const image of blogEditorialImages) {
@@ -659,6 +814,9 @@ describe("AI Charts blog discovery", () => {
       expect(entry.promptSha256).toBe(image.provenance.promptSha256);
       expect(entry.receiptPath.endsWith(image.provenance.receipt)).toBeTrue();
       expect(entry.jobPath.endsWith(image.provenance.job)).toBeTrue();
+      expect(entry.generator.package).toBe(SLOPCAMERA_PACKAGE);
+      expect(entry.generator.version).toBe(SLOPCAMERA_VERSION);
+      expect(entry.generator.sourceCommit).toBe(SLOPCAMERA_SOURCE_COMMIT);
       const file = Bun.file(new URL(`../../public${image.src}`, import.meta.url));
       expect(entry.master.bytes).toBe(file.size);
     }
@@ -681,19 +839,7 @@ describe("AI Charts blog discovery", () => {
         expect(xml).toContain(image.caption);
       }
     }
-    const imageFreeArticle = getBlogArticle(IMAGE_FREE_SLUG);
-    expect(imageFreeArticle).toBeDefined();
-    if (imageFreeArticle === undefined) return;
-    const imageFreeUrl = `https://aicharts.io${blogArticlePath(IMAGE_FREE_SLUG)}`;
-    const imageFreeStart = xml.indexOf(`<id>${imageFreeUrl}</id>`);
-    const imageFreeEnd = xml.indexOf("</entry>", imageFreeStart);
-    const imageFreeEntry = xml.slice(imageFreeStart, imageFreeEnd);
-    expect(imageFreeStart).toBeGreaterThan(-1);
-    expect(imageFreeEntry).not.toContain('rel="enclosure"');
-    expect(imageFreeEntry).not.toContain(`/images/blog/${IMAGE_FREE_SLUG}.webp`);
-    expect(imageFreeEntry).toContain("AI-assisted editorial workflow");
-    expect(imageFreeEntry).toContain("Prepared with AI assistance");
-    const imageLessFeed = atomFeed(() => undefined);
+    const imageLessFeed = atomFeed(imageLessLookup);
     expect(imageLessFeed.match(/<entry>/gu)).toHaveLength(blogArticles.length);
     expect(imageLessFeed).not.toContain('rel="enclosure"');
     expect(imageLessFeed).not.toContain("&lt;figure&gt;");
@@ -742,19 +888,11 @@ describe("AI Charts blog discovery", () => {
       expect(structured).not.toHaveProperty("aggregateRating");
     }
 
-    const imageLessCollection = blogCollectionJsonLd(() => undefined);
+    const imageLessCollection = blogCollectionJsonLd(imageLessLookup);
     for (const item of imageLessCollection.mainEntity.itemListElement) {
       expect(item).not.toHaveProperty("image");
     }
     expect(blogArticleJsonLd(blogArticles[0], null)).not.toHaveProperty("image");
-    const liveImageFree = getBlogArticle(IMAGE_FREE_SLUG);
-    expect(liveImageFree).toBeDefined();
-    if (liveImageFree !== undefined) {
-      expect(blogArticleJsonLd(liveImageFree)).not.toHaveProperty("image");
-      const liveItem = collection.mainEntity.itemListElement.find(item =>
-        item.url.endsWith(blogArticlePath(IMAGE_FREE_SLUG)));
-      expect(liveItem).not.toHaveProperty("image");
-    }
 
     const smallModels = getBlogArticle("small-models-have-arrived");
     expect(smallModels).toBeDefined();
@@ -816,13 +954,9 @@ describe("AI Charts blog discovery", () => {
         ]);
       }
     }
-    for (const entry of blogSitemapEntries(() => undefined)) {
+    for (const entry of blogSitemapEntries(imageLessLookup)) {
       expect(entry).not.toHaveProperty("images");
     }
-    const liveImageFree = entries.find(entry =>
-      entry.url.endsWith(blogArticlePath(IMAGE_FREE_SLUG)));
-    expect(liveImageFree).toBeDefined();
-    expect(liveImageFree).not.toHaveProperty("images");
   });
 
   test("emits a website identity and links the chart to the blog", async () => {

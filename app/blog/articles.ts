@@ -2,6 +2,7 @@ import { site } from "../site";
 import { PUBLIC_BLOG_SLUGS } from "@/lib/public-analytics-routes";
 import { createAaIndexCostArticle } from "./aa-index-cost-article";
 import { createCodingAgentScoreHoldoutsArticle } from "./coding-agent-score-holdouts-article";
+import { createDevinFusionCostSavingArticle } from "./devin-fusion-cost-saving-article";
 import { createOpenModelsCodingAgentsArticle } from "./open-models-coding-agents-article";
 import { createSmallModelsHaveArrivedArticle } from "./small-models-have-arrived-article";
 import { createTerminalBenchScienceArticle } from "./terminal-bench-science-article";
@@ -123,6 +124,30 @@ export const BLOG_SOURCES = {
     url: "https://www.terminal-bench-science.ai/announcement",
     year: 2026,
   },
+  cognitionFusionDesktopCli: {
+    note:
+      "The September 11, 2026 announcement reports the headline Artificial Analysis Coding Agent Index v1.5 comparison, the five-benchmark lead-versus-Fusion table, the sidekick price comparison, and the recommended Fable 5.1 and SWE-2 pairing.",
+    publication: "Cognition",
+    title: "Introducing Fusion in Devin Desktop & CLI",
+    url: "https://cognition.com/blog/local-fusion",
+    year: 2026,
+  },
+  cognitionDevinFusion: {
+    note:
+      "The June 29, 2026 post introduces the lead-and-sidekick architecture, reports the initial 35% FrontierCode cost reduction, the later up-to-60% figure with data updated August 7, 2026, and the 41% Fable 5 result.",
+    publication: "Cognition",
+    title: "Devin Fusion: Frontier Performance at 60% Lower Cost",
+    url: "https://cognition.com/blog/devin-fusion",
+    year: 2026,
+  },
+  devinFable51: {
+    note:
+      "The August 31, 2026 post reports Fable 5.1 and Devin Fusion cost per task on FrontierCode 1.1 Extended at the medium thinking level without naming the Fusion sidekick.",
+    publication: "Devin",
+    title: "Fable 5.1 in Devin and Why It’s Cheaper than Opus 5",
+    url: "https://devin.ai/blog/fable-5-1",
+    year: 2026,
+  },
 } as const satisfies Record<string, BlogSource>;
 
 export type BlogSourceId = keyof typeof BLOG_SOURCES;
@@ -179,12 +204,12 @@ export function table(
 const mirrorCodeArticle = {
   authorshipDisclosure: BLOG_AUTHORSHIP_DISCLOSURE,
   slug: "mirrorcode-coding-agent-benchmark",
-  title: "MirrorCode: how far can coding agents work on their own?",
+  title: "MirrorCode scores complete-program reimplementation",
   dek:
-    "MirrorCode tests whether a coding agent can reimplement a complete program under strict end-to-end tests and project-scale resource budgets.",
+    "Epoch AI and METR hide the original source and grade a replacement on held-out tests under project-scale budgets.",
   focusPhrase: "MirrorCode coding agent benchmark",
   seoDescription:
-    "MirrorCode tests whether coding agents can reimplement complete programs. Learn how the benchmark works, what current results show, and its main limits.",
+    "MirrorCode asks an agent to rebuild a complete program under held-out tests and project-scale budgets. See what the dated leaderboard can and cannot show.",
   keywords: [
     "MirrorCode",
     "coding agent benchmark",
@@ -194,7 +219,7 @@ const mirrorCodeArticle = {
     "METR",
   ],
   publishedAt: "2026-08-04",
-  updatedAt: "2026-08-05",
+  updatedAt: "2026-09-10",
   sourceIds: ["mirrorCode", "mirrorCodePaper"],
   relatedSlugs: [],
   body: [
@@ -279,15 +304,16 @@ const mirrorCodeArticle = {
       "MirrorCode provides evidence that leading coding agents can sustain autonomous work across complete software projects. The strongest systems can finish a meaningful share of difficult reimplementation tasks under large budgets. Near-solves such as gotree show that strict completion can understate the amount of working functionality produced.",
     ),
     paragraph(
-      "The benchmark does not establish that an agent can maintain an evolving production system, collaborate with a team, resolve ambiguous product requirements, or leave code that remains easy to change. Its question is narrower: can the agent reproduce a complete program's externally tested behavior?",
+      "The benchmark does not establish that an agent can maintain an evolving production system, collaborate with a team, resolve ambiguous product requirements, or leave code that remains maintainable. Its question is narrower: can the agent reproduce a complete program's externally tested behavior?",
     ),
     paragraph(
-      "That makes MirrorCode a measure of project-scale completion rather than a general claim about maintaining an evolving production codebase.",
+      "Read MirrorCode as a measure of project-scale completion. It does not answer whether the same agent can maintain an evolving production codebase.",
     ),
   ],
 } as const satisfies BlogArticle;
 
 export const blogArticles = [
+  createDevinFusionCostSavingArticle(),
   createTerminalBenchScienceArticle(),
   createSmallModelsHaveArrivedArticle(),
   createCodingAgentScoreHoldoutsArticle(),

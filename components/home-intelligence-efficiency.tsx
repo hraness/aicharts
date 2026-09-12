@@ -63,6 +63,7 @@ export function HomeIntelligenceEfficiency({
     costUsdPerTask: record.costUsdPerTask?.total ?? 0,
     creatorId: record.creator.id,
     creatorName: record.creator.name,
+    creatorSlug: record.creator.slug,
     detailsUrl: record.detailsUrl,
     id: record.id,
     intelligenceIndex: record.intelligenceIndex,
@@ -71,6 +72,7 @@ export function HomeIntelligenceEfficiency({
     name: record.name,
     outputTokensPerTask: record.outputTokensPerTask.total,
     releaseDate: record.releaseDate,
+    slug: record.slug,
   }));
   const retrievedAt = new Date(snapshot.source.retrievedAt);
   const retrievalLabel = Number.isNaN(retrievedAt.valueOf())

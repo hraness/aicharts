@@ -161,15 +161,18 @@ describe("model-card gallery filters", () => {
     );
 
     expect(markup).toContain('aria-label="Filter model cards"');
-    expect(markup).toContain('data-slot="native-select-field"');
-    expect(markup).toContain('class="hraness-field__label hraness-visually-hidden"');
-    expect(markup).toContain('>Provider</label>');
-    expect(markup).not.toContain('<span>Provider</span>');
+    expect(markup).not.toContain("<select");
+    expect(markup).toContain('class="option-picker option-picker--grid model-card-gallery__provider-filter"');
+    expect(markup).toContain(">Provider</span>");
+    expect(markup).toContain('aria-label="Search providers"');
+    expect(markup).not.toContain("data-slot=\"native-select-field\"");
     expect(markup).toContain('aria-label="Show only cost and AA Index Pareto-frontier cards"');
     expect(markup).toContain('aria-label="Sort model cards by official release date"');
     expect(markup.match(/aria-pressed="false"/gu)).toHaveLength(2);
-    expect(markup).toContain("All providers · 3");
-    expect(markup).toContain("One · 2");
+    expect(markup).toContain("All providers");
+    expect(markup).toContain("3 cards");
+    expect(markup).toContain("<strong>One</strong>");
+    expect(markup).toContain("2 cards");
     expect(markup).toContain("1 card · Cost ↓ · AAI ↑");
     expect(markup).toContain("Newest releases first");
     expect(markup).not.toContain("3 of 3 cards");

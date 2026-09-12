@@ -125,21 +125,40 @@ const snapshot = {
 describe("homepage Intelligence efficiency view", () => {
   test("offers every plotted model by name without relying on a dense point target", () => {
     const html = renderToStaticMarkup(<HomeIntelligenceEfficiency snapshot={snapshot} />);
-    const picker = html.match(/<label class="intelligence-efficiency__model-picker">([\s\S]*?)<\/label>/u)?.[1];
+    expect(html).not.toContain("<select");
+    const picker = html.match(/<div class="option-picker option-picker--grid intelligence-efficiency__model-picker">[\s\S]*?<p aria-live="polite"/u)?.[0];
     expect(picker).toBeDefined();
     expect(picker).toContain("Choose a model configuration");
-    expect(picker!.match(/<option\b/gu)).toHaveLength(records.length);
-    expect(picker).toContain('value="gpt-6-astra" selected=""');
-    for (const item of records) expect(picker).toContain(`value="${item.id}"`);
-    expect(picker!.indexOf("GPT-5.6 Sol")).toBeLessThan(picker!.indexOf("GPT-6 Astra"));
+    expect(picker).toContain('aria-haspopup="dialog"');
+    expect(picker).toContain('aria-label="Search model configurations"');
+    const grid = html.match(/role="listbox"[\s\S]*?<\/figcaption>/u)?.[0] ?? "";
+    expect(grid.match(/role="option"/gu)).toHaveLength(records.length);
+    for (const item of records) {
+      const shortName = item.name.replace(/\s*\([^)]*\)\s*$/u, "");
+      expect(grid).toContain(`<strong>${shortName}</strong>`);
+      expect(grid).toContain(`title="${item.name}"`);
+    }
+    const selected = grid.match(/<div aria-selected="true"[\s\S]*?<\/div>/u)?.[0] ?? "";
+    expect(selected).toContain("GPT-6 Astra");
+    expect(selected).toContain("max");
+    expect(grid.match(/aria-selected="true"/gu)).toHaveLength(1);
+    expect(grid.indexOf("GPT-5.6 Sol")).toBeLessThan(grid.indexOf("GPT-6 Astra"));
     expect(html).toContain("Select a point or choose a model above");
+  });
+
+  test("labels each model option with its provider identity for search and scanning", () => {
+    const html = renderToStaticMarkup(<HomeIntelligenceEfficiency snapshot={snapshot} />);
+    const grid = html.match(/role="listbox"[\s\S]*?<\/figcaption>/u)?.[0] ?? "";
+    expect(grid).toContain("<small>Example Lab</small>");
+    expect(grid).toContain("--option-picker-chip:#6f6962");
+    expect(grid).toContain(">EL<");
   });
 
   test("renders one accessible interactive view with the exact benchmark version", () => {
     const html = renderToStaticMarkup(<HomeIntelligenceEfficiency snapshot={snapshot} />);
 
     expect(html).toContain("Artificial Analysis Intelligence Index v4.1.1");
-    expect(html.match(/<svg/gu)).toHaveLength(1);
+    expect(html.match(/<svg/gu)).toHaveLength(3);
     expect(html.match(/role="group"/gu)).toHaveLength(2);
     expect(html.match(/role="button"/gu)).toHaveLength(127);
     expect(html.match(/tabindex="0"/gu)).toHaveLength(1);
@@ -224,7 +243,8 @@ describe("homepage Intelligence efficiency view", () => {
     expect(html).toContain('href="/data#atlas-aa-intelligence-4-3"');
     expect(html).not.toContain("measurement below");
     expect(html.match(/Pareto frontier/gu)).toHaveLength(1);
-    const labels = html.slice(html.indexOf('class="intelligence-efficiency__labels"'), html.indexOf("</svg>"));
+    const chartSvg = html.match(/<svg[^>]*class="intelligence-efficiency__svg"[\s\S]*?<\/svg>/u)?.[0] ?? "";
+    const labels = chartSvg.slice(chartSvg.indexOf('class="intelligence-efficiency__labels"'));
     expect(labels.match(/<text/gu)?.length ?? 0).toBeLessThanOrEqual(3);
     expect(html.match(/role="button"/gu)).toHaveLength(parsed.value.selection.positiveCostRecordCount);
   });
@@ -306,7 +326,7 @@ describe("homepage Intelligence efficiency view", () => {
 
   test("quantizes rendered SVG geometry so hydration cannot expose math-library tails", () => {
     const html = renderToStaticMarkup(<HomeIntelligenceEfficiency snapshot={snapshot} />);
-    const svg = html.match(/<svg[\s\S]*?<\/svg>/u)?.[0];
+    const svg = html.match(/<svg[^>]*class="intelligence-efficiency__svg"[\s\S]*?<\/svg>/u)?.[0];
     expect(svg).toBeDefined();
 
     const geometryValues = [...(svg ?? "").matchAll(
@@ -329,6 +349,7 @@ describe("homepage Intelligence efficiency view", () => {
       costUsdPerTask: item.costUsdPerTask?.total ?? 0,
       creatorId: item.creator.id,
       creatorName: item.creator.name,
+      creatorSlug: item.creator.slug,
       detailsUrl: item.detailsUrl,
       id: item.id,
       intelligenceIndex: item.intelligenceIndex,
@@ -337,6 +358,7 @@ describe("homepage Intelligence efficiency view", () => {
       name: item.name,
       outputTokensPerTask: item.outputTokensPerTask.total,
       releaseDate: item.releaseDate,
+      slug: item.slug,
     }));
     const mobile = projectIntelligenceExplorerGeometry(
       chartData,
@@ -376,5 +398,14 @@ describe("homepage Intelligence efficiency view", () => {
     expect(shouldPreviewIntelligencePointer("touch")).toBeFalse();
     expect(shouldPreviewIntelligencePointer("mouse")).toBeTrue();
     expect(shouldPreviewIntelligencePointer("pen")).toBeTrue();
+  });
+
+  test("hydrates Intelligence selection from the encoded address bar", async () => {
+    const source = await Bun.file(
+      new URL("./intelligence-efficiency-explorer.tsx", import.meta.url),
+    ).text();
+    expect(source).toContain("useSyncExternalStore(subscribeLocationSearch, readLocationSearch, serverLocationSearch)");
+    expect(source).toContain("parseIntelligenceShareView(search, data, defaultShare)");
+    expect(source).toContain("replaceLocationSearch(intelligenceShareSearch(next, data, defaultShare, window.location.search))");
   });
 });

@@ -69,9 +69,12 @@ export function HomeEditorialResources({
               >
                 <EditorialFigure image={editorialImage} variant="card" />
               </Link>
-              <h3>
-                <Link href={blogArticlePath(slug)}>{article.title}</Link>
-              </h3>
+              <div className="home-editorial__copy">
+                <h3>
+                  <Link href={blogArticlePath(slug)}>{article.title}</Link>
+                </h3>
+                <p>{article.dek}</p>
+              </div>
             </article>
           );
         })}

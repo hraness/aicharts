@@ -12,6 +12,7 @@ const providerIds = [
   "google",
   "meta",
   "moonshot_ai",
+  "nvidia",
   "openai",
   "xai",
   "z_ai",
@@ -28,6 +29,8 @@ const pinnedProviderColors = {
   google: "#69c06a",
   meta: "#d6aa3c",
   moonshot_ai: "#abb73e",
+  // NVIDIA brand green; reviewed against the palette's uniqueness and lightness floors.
+  nvidia: "#76b900",
   openai: "#3b9cff",
   xai: "#e58b69",
   z_ai: "#e58d32",

@@ -38,7 +38,36 @@ describe("AI Charts mailing configuration", () => {
     expect(html).toContain('data-action="mailing_aicharts"');
     expect(html).toContain('aria-label="Hraness on X"');
     expect(html).toContain('aria-label="Hraness on GitHub"');
+    expect(html).toContain('href="https://www.linkedin.com/company/hraness"');
+    expect(html).toContain('href="https://substack.com/@hraness"');
+    expect(html).toContain('href="https://hraness.com/"');
+    expect(html).not.toContain("bsky.app");
+    expect(html).not.toContain("Bluesky");
     expect(html).not.toContain('name="audience" type="hidden" value="hraness"');
+  });
+
+  test("retargets X and GitHub to the AI Charts profiles", () => {
+    const html = renderToStaticMarkup(createElement(HranessSiteFooter, {
+      mailingList: aiChartsMailingListConfig({
+        [AICHARTS_MAILING_TURNSTILE_SITEKEY_ENV]: "1x00000000000000000000AA",
+      }),
+      social: {
+        x: { href: "https://x.com/aichartsio", label: "AI Charts on X" },
+        github: { href: "https://github.com/hraness/aicharts", label: "AI Charts on GitHub" },
+      },
+    }));
+
+    expect(html).toContain('href="https://x.com/aichartsio"');
+    expect(html).toContain('aria-label="AI Charts on X"');
+    expect(html).toContain('href="https://github.com/hraness/aicharts"');
+    expect(html).toContain('aria-label="AI Charts on GitHub"');
+    expect(html).toContain('href="https://www.linkedin.com/company/hraness"');
+    expect(html).toContain('href="https://substack.com/@hraness"');
+    expect(html).toContain('href="https://hraness.com/"');
+    expect(html).not.toContain('href="https://x.com/hraness"');
+    expect(html).not.toContain('href="https://github.com/hraness"');
+    expect(html).not.toContain("bsky.app");
+    expect(html).not.toContain("Bluesky");
   });
 
   test("fails closed on missing or malformed public widget keys", () => {

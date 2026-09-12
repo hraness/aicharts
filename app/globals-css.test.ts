@@ -12,8 +12,8 @@ test("atlas controls expose focus and selected state without changing the result
   expect(stylesheet).toContain('@import "../styles/benchmark-atlas.css"');
   expect(firstRule(".benchmark-atlas :focus-visible", atlasStylesheet)).toMatch(/outline:\s*2px solid/u);
   expect(firstRule('.atlas-row[aria-pressed="true"]', atlasStylesheet)).toContain("background:");
-  expect(firstRule(".atlas-navigation select", atlasStylesheet)).toContain("min-height: 44px");
-  expect(firstRule(".atlas-navigation select", atlasStylesheet)).toContain("color: var(--foreground)");
+  expect(atlasStylesheet).not.toContain(".atlas-navigation select");
+  expect(firstRule(".atlas-task-select, .atlas-benchmark-select", atlasStylesheet)).toContain("min-width: 0");
   expect(firstRule(".atlas-scatter__point:focus-visible circle:last-of-type", atlasStylesheet)).toContain("stroke: var(--foreground)");
   expect(firstRule(".atlas-row__heading strong", atlasStylesheet)).not.toContain("text-overflow: ellipsis");
   expect(firstRule(".atlas-row__heading strong", atlasStylesheet)).toContain("overflow-wrap: anywhere");
@@ -99,9 +99,9 @@ test("metric selectors reserve normal-flow space outside the plot", () => {
   expect(stylesheet).toContain('@import "@hraness/site-footer/styles.css"');
   expect(stylesheet).not.toContain('@import "@hraness/ui/components.css"');
   expect(firstRule(".chart-metric-controls")).toContain("display: grid");
-  expect(firstRule(".chart-metric-controls")).toContain("grid-template-columns: minmax(76px, 1fr) auto minmax(76px, 1fr)");
+  expect(firstRule(".chart-metric-controls")).toContain("grid-template-columns: minmax(168px, 1fr) auto minmax(76px, 1fr)");
   expect(firstRule(".chart-metric-controls")).not.toContain("position: absolute");
-  expect(firstRule(".chart-benchmark-select")).toContain("width: 76px");
+  expect(firstRule(".chart-benchmark-select")).toContain("width: min(220px, 100%)");
   expect(firstRule(".chart-interaction-cue")).toContain("grid-column: 3");
   expect(firstRule(".chart-interaction-cue")).toContain("justify-self: end");
   expect(firstRule(".chart-interaction-cue__touch")).toContain("display: none");
@@ -151,11 +151,13 @@ test("homepage orientation is a hairline fact list on the shared section grammar
   expect(firstRule(".chart-orientation__facts dd")).toContain("font-size: 1rem");
 });
 
-test("the image-free homepage article is an intentional responsive text card", () => {
+test("the image-free homepage card remains available when a curated article has no image", () => {
   const imageLink = firstRule(".home-editorial__image-link");
   const textCard = firstRule(".home-editorial__text-card");
 
   expect(imageLink).toContain("aspect-ratio: 16 / 9");
+  expect(imageLink).toContain("border: 1px solid var(--grid)");
+  expect(imageLink).toContain("background: var(--surface-raised)");
   expect(textCard).toContain("background: var(--surface-raised)");
   expect(textCard).toContain("border: 1px solid var(--grid)");
   expect(textCard).toContain("display: grid");

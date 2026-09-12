@@ -13,6 +13,7 @@ const NEGOTIABLE_PAGE_PATHS = new Set([
   "/",
   "/blog",
   "/benchmarks",
+  "/calculator",
   "/coding",
   "/data",
   "/models",

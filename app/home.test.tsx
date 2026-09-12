@@ -10,6 +10,7 @@ import {
   HomeEditorialResources,
 } from "@/components/home-editorial-resources";
 import { BLOG_ARTICLE_ADMISSIONS } from "@/app/blog/article-admissions";
+import { getBlogArticle } from "@/app/blog/articles";
 import { blogEditorialImage } from "@/app/blog/editorial-images";
 import codingAgentData from "@/data/coding-agents.json";
 import { parseCodingAgentSnapshot } from "@/lib/coding-agent-data";
@@ -65,13 +66,13 @@ describe("homepage canonical content", () => {
     for (const slug of HOME_EDITORIAL_SLUGS) {
       expect(markup).toContain(`href="/blog/${slug}"`);
       const image = blogEditorialImage(slug);
-      if (image === undefined) {
-        expect(slug).toBe("small-models-have-arrived");
-        expect(markup).not.toContain(
-          encodeURIComponent(`/images/blog/${slug}.webp`),
-        );
-      } else {
-        expect(markup).toContain(encodeURIComponent(image.src));
+      expect(image).toBeDefined();
+      if (image === undefined) continue;
+      expect(markup).toContain(encodeURIComponent(image.src));
+      const card = getBlogArticle(slug);
+      expect(card).toBeDefined();
+      if (card !== undefined) {
+        expect(markup).toContain(`<p>${card.dek}</p>`);
       }
     }
 
@@ -91,14 +92,22 @@ describe("homepage canonical content", () => {
     const source = await Bun.file(new URL("./page.tsx", import.meta.url)).text();
     const markup = renderToStaticMarkup(createElement(Home));
     const mainAt = markup.indexOf('<main class="chart-home" id="main-content">');
+    const calculatorAt = markup.indexOf('class="home-calculator"');
     const intelligenceAt = markup.indexOf('class="intelligence-efficiency"');
     const discoveryAt = markup.indexOf('class="task-discovery"');
     const mainEndAt = markup.indexOf("</main>", mainAt);
 
     expect(mainAt).toBeGreaterThan(markup.indexOf("site-header"));
+    // The Pareto chart leads (the browser contract holds its fold position);
+    // the calculator callout follows it, ahead of the task links.
     expect(intelligenceAt).toBeGreaterThan(mainAt);
-    expect(discoveryAt).toBeGreaterThan(intelligenceAt);
+    expect(calculatorAt).toBeGreaterThan(intelligenceAt);
+    expect(discoveryAt).toBeGreaterThan(calculatorAt);
     expect(mainEndAt).toBeGreaterThan(discoveryAt);
+    expect(markup).toContain('data-analytics-surface="home_calculator"');
+    expect(markup).toContain("Subscription vs API vs GPUs");
+    expect(markup).toContain('href="/calculator"');
+    expect(markup).toContain("Open the calculator");
     expect(markup).not.toContain('class="benchmark-atlas"');
     expect(markup).not.toContain('class="chart-page-canvas"');
     expect(markup).not.toContain('class="home-editorial"');
@@ -140,8 +149,9 @@ describe("homepage canonical content", () => {
     expect(markup).toContain('data-analytics-surface="benchmark_atlas"');
     expect(markup).toContain('aria-label="Task"');
     expect(markup).toContain('aria-label="Benchmark"');
+    expect(markup).toContain('class="option-picker option-picker--list atlas-task-select"');
     for (const task of ["Coding", "Reasoning", "Research", "Memory", "Images", "Video", "Audio", "World models", "Science", "Work", "Computer use"]) {
-      expect(markup).toContain(`>${task}</option>`);
+      expect(markup).toContain(`<strong>${task}</strong>`);
     }
     expect(markup).toContain('aria-label="Find a benchmark"');
     expect(markup).toContain('type="search"');

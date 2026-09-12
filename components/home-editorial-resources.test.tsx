@@ -13,22 +13,27 @@ function occurrences(markup: string, fragment: string): number {
   return markup.split(fragment).length - 1;
 }
 
-test("renders an intentional text card when an admitted article has no image", () => {
+test("renders an imaged card for every curated homepage article", () => {
   const markup = renderToStaticMarkup(createElement(HomeEditorialResources));
-  const article = getBlogArticle("small-models-have-arrived");
 
-  expect(article).toBeDefined();
-  if (article === undefined) return;
-
-  expect(occurrences(markup, "home-editorial__item--text")).toBe(1);
-  expect(occurrences(markup, "home-editorial__item--image")).toBe(2);
-  expect(occurrences(markup, "home-editorial__image-link")).toBe(2);
-  expect(markup).toContain(
-    'class="home-editorial__text-card" href="/blog/small-models-have-arrived"',
+  expect(occurrences(markup, "home-editorial__item--text")).toBe(0);
+  expect(occurrences(markup, "home-editorial__item--image")).toBe(
+    HOME_EDITORIAL_SLUGS.length,
   );
-  expect(markup).toContain(`<span>${article.section}</span>`);
-  expect(markup).toContain(`<h3>${article.title}</h3>`);
-  expect(markup).toContain(`<p>${article.dek}</p>`);
+  expect(occurrences(markup, "home-editorial__image-link")).toBe(
+    HOME_EDITORIAL_SLUGS.length,
+  );
+  expect(occurrences(markup, "home-editorial__copy")).toBe(
+    HOME_EDITORIAL_SLUGS.length,
+  );
+  expect(markup).not.toContain("home-editorial__text-card");
+  for (const slug of HOME_EDITORIAL_SLUGS) {
+    const card = getBlogArticle(slug);
+    expect(card).toBeDefined();
+    if (card === undefined) continue;
+    expect(markup).toContain(`<p>${card.dek}</p>`);
+    expect(markup).toContain(`href="/blog/${slug}"`);
+  }
   expect(markup).not.toContain('rel="preload"');
 });
 

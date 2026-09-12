@@ -1,9 +1,14 @@
 import { describe, expect, test } from "bun:test";
 
 import artificialAnalysisIntelligenceData from "@/data/artificial-analysis-intelligence-v4-3.json";
+import calculatorInputsData from "@/data/calculator-inputs.json";
 import codingAgentData from "@/data/coding-agents.json";
 import terminalBenchData from "@/data/terminal-bench.json";
 import terminalBenchScienceData from "@/data/terminal-bench-science.json";
+import {
+  calculatorInputsModifiedAt,
+  parseCalculatorInputsSnapshot,
+} from "@/lib/calculator-inputs-data";
 import { parseCodingAgentSnapshot } from "@/lib/coding-agent-data";
 import { parseArtificialAnalysisIntelligenceV43Snapshot } from "@/lib/artificial-analysis-intelligence-v4-3-data";
 import { FIRST_PARTY_RELEASE_HIGHLIGHTS } from "@/lib/first-party-release-collection";
@@ -73,6 +78,10 @@ describe("public search discovery", () => {
       .toBe(codingModifiedAt);
     expect(entries.find(entry => entry.url === "https://aicharts.io/benchmarks")?.lastModified)
       .toBe(atlasContentModifiedAt());
+    const calculatorInputs = parseCalculatorInputsSnapshot(calculatorInputsData);
+    if (!calculatorInputs.ok) throw calculatorInputs.error;
+    expect(entries.find(entry => entry.url === "https://aicharts.io/calculator")?.lastModified)
+      .toBe(calculatorInputsModifiedAt(calculatorInputs.value));
     expect(urls.every(url => !url.includes("?") && !url.includes("#"))).toBeTrue();
     expect(entries.find(entry => entry.url.endsWith(CODING_AGENT_DATASET_PATH))?.lastModified)
       .toBe(benchmarkPortfolioModifiedAt);

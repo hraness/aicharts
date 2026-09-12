@@ -2,10 +2,15 @@ import type { MetadataRoute } from "next";
 import { atlasContentModifiedAt } from "@/lib/benchmark-atlas-distribution";
 
 import artificialAnalysisIntelligenceData from "@/data/artificial-analysis-intelligence-v4-3.json";
+import calculatorInputsData from "@/data/calculator-inputs.json";
 import codingAgentData from "@/data/coding-agents.json";
 import terminalBenchData from "@/data/terminal-bench.json";
 import terminalBenchScienceData from "@/data/terminal-bench-science.json";
 import { parseCodingAgentSnapshot } from "@/lib/coding-agent-data";
+import {
+  calculatorInputsModifiedAt,
+  parseCalculatorInputsSnapshot,
+} from "@/lib/calculator-inputs-data";
 import { parseArtificialAnalysisIntelligenceV43Snapshot } from "@/lib/artificial-analysis-intelligence-v4-3-data";
 import {
   FIRST_PARTY_RELEASE_HIGHLIGHTS,
@@ -87,6 +92,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
       { cause: parsedIntelligence.error },
     );
   }
+  const parsedCalculatorInputs = parseCalculatorInputsSnapshot(calculatorInputsData);
+  if (!parsedCalculatorInputs.ok) {
+    throw new Error(
+      `Checked calculator inputs are invalid: ${parsedCalculatorInputs.error.message}`,
+      { cause: parsedCalculatorInputs.error },
+    );
+  }
   const navigationUpdatedAt = "2026-09-09T02:50:00Z";
   const homeModifiedAt = [navigationUpdatedAt, parsedIntelligence.value.source.retrievedAt]
     .sort((left, right) => Date.parse(right) - Date.parse(left))[0]!;
@@ -126,6 +138,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: atlasContentModifiedAt(),
       priority: 0.9,
       url: absolute("/benchmarks"),
+    },
+    {
+      changeFrequency: "daily",
+      images: [siteImage],
+      lastModified: calculatorInputsModifiedAt(parsedCalculatorInputs.value),
+      priority: 0.8,
+      url: absolute("/calculator"),
     },
     {
       changeFrequency: "daily",

@@ -45,6 +45,7 @@ jobs:
       ATLAS_MULTIMODAL_PATH: data/benchmark-atlas-multimodal.json
       ATLAS_REASONING_PATH: data/benchmark-atlas-reasoning.json
       BENCHMARK_PATH: data/coding-agents.json
+      CALCULATOR_PATH: data/calculator-inputs.json
       DEEP_SWE_PATH: data/deep-swe-evidence.json
       FIRST_PARTY_RELEASE_PATH: data/first-party-release-radar.json
       INTELLIGENCE_PATH: data/artificial-analysis-intelligence-v4-3.json
@@ -211,6 +212,13 @@ jobs:
         if: steps.dependencies.outcome == 'success' && env.RUN_BENCHMARK_REFRESH == 'true'
         continue-on-error: true
         run: bun run atlas:audio:refresh
+      # Live pricing sections only; curated hardware, plan, and subsidy sections
+      # are guarded byte for byte and change through code review.
+      - name: Refresh calculator pricing inputs
+        id: calculator
+        if: steps.dependencies.outcome == 'success' && env.RUN_BENCHMARK_REFRESH == 'true'
+        continue-on-error: true
+        run: bun run calculator:refresh
       - name: Detect owned data changes
         id: snapshot
         if: steps.dependencies.outcome == 'success'
@@ -226,7 +234,7 @@ jobs:
           fi
 
           while IFS= read -r changed_file; do
-            if [[ "$changed_file" != "$BENCHMARK_PATH" && "$changed_file" != "$DEEP_SWE_PATH" && "$changed_file" != "$FIRST_PARTY_RELEASE_PATH" && "$changed_file" != "$INTELLIGENCE_PATH" && "$changed_file" != "$RELEASE_RADAR_PATH" && "$changed_file" != "$TERMINAL_BENCH_PATH" && "$changed_file" != "$TERMINAL_BENCH_SCIENCE_PATH" && "$changed_file" != "$ATLAS_REASONING_PATH" && "$changed_file" != "$ATLAS_MULTIMODAL_PATH" && "$changed_file" != "$ARENA_MEDIA_PATH" && "$changed_file" != "$ATLAS_AUDIO_PATH" ]]; then
+            if [[ "$changed_file" != "$BENCHMARK_PATH" && "$changed_file" != "$CALCULATOR_PATH" && "$changed_file" != "$DEEP_SWE_PATH" && "$changed_file" != "$FIRST_PARTY_RELEASE_PATH" && "$changed_file" != "$INTELLIGENCE_PATH" && "$changed_file" != "$RELEASE_RADAR_PATH" && "$changed_file" != "$TERMINAL_BENCH_PATH" && "$changed_file" != "$TERMINAL_BENCH_SCIENCE_PATH" && "$changed_file" != "$ATLAS_REASONING_PATH" && "$changed_file" != "$ATLAS_MULTIMODAL_PATH" && "$changed_file" != "$ARENA_MEDIA_PATH" && "$changed_file" != "$ATLAS_AUDIO_PATH" ]]; then
               echo "Refresh changed unexpected file: ${changed_file}"
               exit 1
             fi
@@ -237,7 +245,7 @@ jobs:
           # source health remains visible in this run.
           while IFS= read -r changed_file; do
             case "$changed_file" in
-              "$ATLAS_REASONING_PATH"|"$ATLAS_MULTIMODAL_PATH")
+              "$ATLAS_REASONING_PATH"|"$ATLAS_MULTIMODAL_PATH"|"$CALCULATOR_PATH")
                 semantic_filter='walk(if type == "object" then del(.retrievedAt) else . end)'
                 ;;
               "$BENCHMARK_PATH")
@@ -283,9 +291,14 @@ jobs:
           fi
 
           echo "changed=true" >> "$GITHUB_OUTPUT"
+      - name: Install pinned Rust toolchain for changed data
+        id: usage_toolchain
+        if: steps.snapshot.outputs.changed == 'true'
+        continue-on-error: true
+        run: rustup show active-toolchain
       - name: Validate updated application
         id: validation
-        if: steps.snapshot.outputs.changed == 'true'
+        if: steps.snapshot.outputs.changed == 'true' && steps.usage_toolchain.outcome == 'success'
         continue-on-error: true
         run: bun run check
       - name: Publish the validated update through required CI
@@ -300,7 +313,7 @@ jobs:
         run: |
           git config user.name "0thernet"
           git config user.email "894119+0thernet@users.noreply.github.com"
-          git add -- "$BENCHMARK_PATH" "$DEEP_SWE_PATH" "$FIRST_PARTY_RELEASE_PATH" "$INTELLIGENCE_PATH" "$RELEASE_RADAR_PATH" "$TERMINAL_BENCH_PATH" "$TERMINAL_BENCH_SCIENCE_PATH" "$ATLAS_REASONING_PATH" "$ATLAS_MULTIMODAL_PATH" "$ARENA_MEDIA_PATH" "$ATLAS_AUDIO_PATH"
+          git add -- "$BENCHMARK_PATH" "$CALCULATOR_PATH" "$DEEP_SWE_PATH" "$FIRST_PARTY_RELEASE_PATH" "$INTELLIGENCE_PATH" "$RELEASE_RADAR_PATH" "$TERMINAL_BENCH_PATH" "$TERMINAL_BENCH_SCIENCE_PATH" "$ATLAS_REASONING_PATH" "$ATLAS_MULTIMODAL_PATH" "$ARENA_MEDIA_PATH" "$ATLAS_AUDIO_PATH"
           git commit -m "chore: refresh model data"
           git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:refs/heads/${REFRESH_BRANCH}"
 
@@ -361,6 +374,7 @@ jobs:
           ATLAS_MULTIMODAL_OUTCOME: ${{ steps.atlas_multimodal.outcome }}
           ATLAS_REASONING_OUTCOME: ${{ steps.atlas_reasoning.outcome }}
           BENCHMARK_OUTCOME: ${{ steps.benchmark.outcome }}
+          CALCULATOR_OUTCOME: ${{ steps.calculator.outcome }}
           CHECKOUT_OUTCOME: ${{ steps.checkout.outcome }}
           DEPENDENCIES_OUTCOME: ${{ steps.dependencies.outcome }}
           DEEP_SWE_OUTCOME: ${{ steps.deep_swe.outcome }}
@@ -410,6 +424,7 @@ jobs:
               if [[ "$ATLAS_AUDIO_OUTCOME" != "success" ]]; then unhealthy=true; fi
               if [[ "$ATLAS_REASONING_OUTCOME" != "success" ]]; then unhealthy=true; fi
               if [[ "$ATLAS_MULTIMODAL_OUTCOME" != "success" ]]; then unhealthy=true; fi
+              if [[ "$CALCULATOR_OUTCOME" != "success" ]]; then unhealthy=true; fi
               if [[ "$INTELLIGENCE_OUTCOME" != "success" ]]; then unhealthy=true; fi
               if [[ "$DEEP_SWE_OUTCOME" != "success" ]]; then unhealthy=true; fi
               if [[ "$TERMINAL_BENCH_OUTCOME" != "success" ]]; then unhealthy=true; fi
@@ -420,6 +435,7 @@ jobs:
               if [[ "$ATLAS_AUDIO_OUTCOME" != "skipped" ]]; then unhealthy=true; fi
               if [[ "$ATLAS_REASONING_OUTCOME" != "skipped" ]]; then unhealthy=true; fi
               if [[ "$ATLAS_MULTIMODAL_OUTCOME" != "skipped" ]]; then unhealthy=true; fi
+              if [[ "$CALCULATOR_OUTCOME" != "skipped" ]]; then unhealthy=true; fi
               if [[ "$DEEP_SWE_OUTCOME" != "skipped" ]]; then unhealthy=true; fi
               if [[ "$TERMINAL_BENCH_OUTCOME" != "skipped" ]]; then unhealthy=true; fi
               if [[ "$TERMINAL_BENCH_SCIENCE_OUTCOME" != "skipped" ]]; then unhealthy=true; fi
@@ -454,6 +470,7 @@ jobs:
             echo "| Multimodal atlas | ${ATLAS_MULTIMODAL_OUTCOME} |"
             echo "| Arena media | ${ARENA_MEDIA_OUTCOME} |"
             echo "| Pinned audio atlas | ${ATLAS_AUDIO_OUTCOME} |"
+            echo "| Calculator inputs | ${CALCULATOR_OUTCOME} |"
             echo "| Change boundary | ${DETECT_OUTCOME} |"
             echo "| Application validation | ${VALIDATION_OUTCOME} |"
             echo "| Update PR | ${PUBLISH_OUTCOME} |"
@@ -495,6 +512,9 @@ jobs:
             fi
             if [[ -f "$ATLAS_AUDIO_PATH" ]]; then
               jq -r '"- Open ASR AMI-Cleaned: \(.rows | length) selected configurations; pinned snapshot \(.observedAt); source revision \(.source.revision[0:7]). Recheck does not admit new evaluations."' "$ATLAS_AUDIO_PATH"
+            fi
+            if [[ -f "$CALCULATOR_PATH" ]]; then
+              jq -r '"- Calculator inputs: Sol \(.openAiApiPricing.currentBasis) $\(.openAiApiPricing.current.inputPerMillion)/$\(.openAiApiPricing.current.outputPerMillion) per 1M; Flash off-peak $\(.deepSeekApiPricing.offPeak.cacheMissInputPerMillion)/$\(.deepSeekApiPricing.offPeak.outputPerMillion); \(.gpuRental.offers | length) rental SKUs; retrieved \(.openAiApiPricing.source.retrievedAt)."' "$CALCULATOR_PATH"
             fi
           } >> "$GITHUB_STEP_SUMMARY"
 
@@ -542,14 +562,14 @@ jobs:
           fi
 
           if [[ "$unhealthy" == "true" ]]; then
-            printf -v issue_body 'The scheduled model-data refresh is unhealthy. Valid updates publish only after the normal pull-request gate has passed; failed sources remain on their last-known-good snapshots.\n\n- Run: %s\n- Mode: `%s`\n- OpenRouter: `%s`\n- First-party releases: `%s`\n- Artificial Analysis coding agents: `%s`\n- AA Intelligence efficiency: `%s`\n- Direct DeepSWE: `%s`\n- Terminal-Bench 4: `%s`\n- Terminal-Bench-Science 0.1: `%s`\n- Reasoning atlas: `%s`\n- Multimodal atlas: `%s`\n- Arena media: `%s`\n- Pinned audio atlas: `%s`\n- Radar reconciliation: `%s`\n- Validation: `%s`\n- Publication: `%s`\n- Update PR: %s\n- Required CI: %s\n\nThis issue is updated on repeated failures and closes automatically after a healthy full refresh.' \
-              "$run_url" "$REFRESH_MODE" "$RELEASE_OUTCOME" "$FIRST_PARTY_RELEASE_OUTCOME" "$BENCHMARK_OUTCOME" "$INTELLIGENCE_OUTCOME" "$DEEP_SWE_OUTCOME" "$TERMINAL_BENCH_OUTCOME" "$TERMINAL_BENCH_SCIENCE_OUTCOME" "$ATLAS_REASONING_OUTCOME" "$ATLAS_MULTIMODAL_OUTCOME" "$ARENA_MEDIA_OUTCOME" "$ATLAS_AUDIO_OUTCOME" "$RELEASE_RECONCILE_OUTCOME" "$VALIDATION_OUTCOME" "$PUBLISH_OUTCOME" "${PUBLISH_PR_URL:-not created}" "${PUBLISH_CI_RUN_URL:-not dispatched}"
+            printf -v issue_body 'The scheduled model-data refresh is unhealthy. Valid updates publish only after the normal pull-request gate has passed; failed sources remain on their last-known-good snapshots.\n\n- Run: %s\n- Mode: `%s`\n- OpenRouter: `%s`\n- First-party releases: `%s`\n- Artificial Analysis coding agents: `%s`\n- AA Intelligence efficiency: `%s`\n- Direct DeepSWE: `%s`\n- Terminal-Bench 4: `%s`\n- Terminal-Bench-Science 0.1: `%s`\n- Reasoning atlas: `%s`\n- Multimodal atlas: `%s`\n- Arena media: `%s`\n- Pinned audio atlas: `%s`\n- Calculator inputs: `%s`\n- Radar reconciliation: `%s`\n- Validation: `%s`\n- Publication: `%s`\n- Update PR: %s\n- Required CI: %s\n\nThis issue is updated on repeated failures and closes automatically after a healthy full refresh.' \
+              "$run_url" "$REFRESH_MODE" "$RELEASE_OUTCOME" "$FIRST_PARTY_RELEASE_OUTCOME" "$BENCHMARK_OUTCOME" "$INTELLIGENCE_OUTCOME" "$DEEP_SWE_OUTCOME" "$TERMINAL_BENCH_OUTCOME" "$TERMINAL_BENCH_SCIENCE_OUTCOME" "$ATLAS_REASONING_OUTCOME" "$ATLAS_MULTIMODAL_OUTCOME" "$ARENA_MEDIA_OUTCOME" "$ATLAS_AUDIO_OUTCOME" "$CALCULATOR_OUTCOME" "$RELEASE_RECONCILE_OUTCOME" "$VALIDATION_OUTCOME" "$PUBLISH_OUTCOME" "${PUBLISH_PR_URL:-not created}" "${PUBLISH_CI_RUN_URL:-not dispatched}"
             if [[ -z "$issue_number" ]]; then
               gh issue create --title "$REFRESH_ISSUE_TITLE" --body "$issue_body"
             else
               gh issue edit "$issue_number" --body "$issue_body"
             fi
-            echo "::error title=Model data refresh unhealthy::OpenRouter=${RELEASE_OUTCOME}; first-party releases=${FIRST_PARTY_RELEASE_OUTCOME}; Artificial Analysis coding agents=${BENCHMARK_OUTCOME}; AA Intelligence efficiency=${INTELLIGENCE_OUTCOME}; Direct DeepSWE=${DEEP_SWE_OUTCOME}; Terminal-Bench 4=${TERMINAL_BENCH_OUTCOME}; Terminal-Bench-Science 0.1=${TERMINAL_BENCH_SCIENCE_OUTCOME}; Reasoning atlas=${ATLAS_REASONING_OUTCOME}; Multimodal atlas=${ATLAS_MULTIMODAL_OUTCOME}; Arena media=${ARENA_MEDIA_OUTCOME}; Pinned audio atlas=${ATLAS_AUDIO_OUTCOME}; reconciliation=${RELEASE_RECONCILE_OUTCOME}; validation=${VALIDATION_OUTCOME}; publication=${PUBLISH_OUTCOME}."
+            echo "::error title=Model data refresh unhealthy::OpenRouter=${RELEASE_OUTCOME}; first-party releases=${FIRST_PARTY_RELEASE_OUTCOME}; Artificial Analysis coding agents=${BENCHMARK_OUTCOME}; AA Intelligence efficiency=${INTELLIGENCE_OUTCOME}; Direct DeepSWE=${DEEP_SWE_OUTCOME}; Terminal-Bench 4=${TERMINAL_BENCH_OUTCOME}; Terminal-Bench-Science 0.1=${TERMINAL_BENCH_SCIENCE_OUTCOME}; Reasoning atlas=${ATLAS_REASONING_OUTCOME}; Multimodal atlas=${ATLAS_MULTIMODAL_OUTCOME}; Arena media=${ARENA_MEDIA_OUTCOME}; Pinned audio atlas=${ATLAS_AUDIO_OUTCOME}; Calculator inputs=${CALCULATOR_OUTCOME}; reconciliation=${RELEASE_RECONCILE_OUTCOME}; validation=${VALIDATION_OUTCOME}; publication=${PUBLISH_OUTCOME}."
             exit 1
           fi
 

@@ -118,6 +118,11 @@ function attachDiagnostics(page: Page, label: string): string[] {
     if (message.type() === "error") failures.push(`${label} console: ${message.text()}`);
   });
   page.on("pageerror", error => failures.push(`${label} page: ${error.message}`));
+  page.on("requestfailed", request => {
+    // Identify the failing resource without logging query capabilities or bodies.
+    const url = new URL(request.url());
+    console.error(`${label} request: ${request.resourceType()} ${url.origin}${url.pathname} ${request.failure()?.errorText ?? "request-failed"}`);
+  });
   return failures;
 }
 
@@ -127,6 +132,42 @@ async function settle(page: Page): Promise<void> {
     await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
     await new Promise<void>(resolve => requestAnimationFrame(() => resolve()));
   });
+}
+
+function boxCenter(box: Readonly<{ height: number; y: number }>): number {
+  return box.y + box.height / 2;
+}
+
+async function assertCompactPickerAlignment(
+  picker: Locator,
+  optionName: string,
+): Promise<void> {
+  const trigger = picker.locator(".option-picker__trigger");
+  await trigger.click();
+  const option = picker.getByRole("option", { name: optionName, exact: true });
+  const pickerBox = await picker.boundingBox();
+  const triggerMark = await trigger.locator(".option-picker__leading, .option-picker__chip").first().boundingBox();
+  const optionMark = await option.locator(".option-picker__leading, .option-picker__chip").first().boundingBox();
+  const triggerText = await trigger.locator(".option-picker__value strong").boundingBox();
+  const optionText = await option.locator(".option-picker__copy strong").boundingBox();
+  invariant(pickerBox !== null, "The compact picker needs a layout box.");
+  invariant(triggerMark !== null && optionMark !== null, "Compact picker rows need a leading icon.");
+  invariant(triggerText !== null && optionText !== null, "Compact picker rows need a visible label.");
+  const triggerInset = triggerMark.x - pickerBox.x;
+  const optionInset = optionMark.x - pickerBox.x;
+  invariant(
+    Math.abs(triggerInset - optionInset) <= 2,
+    `Trigger and list icons must share a left edge (trigger ${triggerInset.toFixed(1)}px, option ${optionInset.toFixed(1)}px).`,
+  );
+  invariant(
+    Math.abs(boxCenter(triggerMark) - boxCenter(triggerText)) <= 3,
+    "The closed trigger icon and label must share a vertical center.",
+  );
+  invariant(
+    Math.abs(boxCenter(optionMark) - boxCenter(optionText)) <= 3,
+    "Open list icons and labels must share a vertical center.",
+  );
+  await trigger.click();
 }
 
 async function openModels(page: Page, baseUrl: string): Promise<Locator> {
@@ -147,6 +188,14 @@ async function verifyChartExport(browser: Browser, baseUrl: string): Promise<voi
   try {
     await page.goto(`${baseUrl}/coding`, { waitUntil: "domcontentloaded" });
     await settle(page);
+    const benchmarkPicker = page.locator(".chart-benchmark-select");
+    await assertCompactPickerAlignment(benchmarkPicker, "DeepSWE");
+    for (const metric of ["Cost", "Time", "Tokens"] as const) {
+      invariant(
+        await page.getByRole("radio", { name: metric, exact: true }).locator("svg").count() === 1,
+        `The ${metric} compare-by control needs a scannable icon.`,
+      );
+    }
     const sourceChartHeight = await page.locator(".chart-canvas .benchmark-chart").evaluate((element) => {
       if (!(element instanceof SVGSVGElement)) {
         throw new Error("The coding-agent chart is not an SVG element.");
@@ -201,27 +250,34 @@ async function verifyBenchmarkAtlas(browser: Browser, baseUrl: string): Promise<
     const intelligence = page.locator(".intelligence-efficiency");
     invariant((await intelligence.textContent())?.includes("Intelligence Index v4.3"), "The leading Pareto chart must identify the admitted current index version.");
     invariant(await intelligence.locator('[data-intelligence-metric="costUsdPerTask"]').getAttribute("aria-pressed") === "true", "Home must start with interpretable task cost.");
-    const modelPicker = intelligence.getByRole("combobox", { name: "Choose a model configuration", exact: true });
-    const originalModel = await modelPicker.inputValue();
-    const choices = await modelPicker.locator("option").evaluateAll(options => options.map(option => ({
-      id: (option as HTMLOptionElement).value,
-      label: option.textContent ?? "",
-    })));
-    invariant(choices.length === await intelligence.locator(".intelligence-efficiency__point-control").count(), "The named picker must include every plotted configuration.");
-    const alternateModel = choices.find(choice => choice.id !== originalModel);
-    invariant(alternateModel !== undefined, "The model picker needs an alternative configuration.");
-    await modelPicker.selectOption(alternateModel.id);
+    invariant(await intelligence.locator("select").count() === 0, "The dense model list must not fall back to a native select.");
+    const modelPicker = intelligence.locator(".intelligence-efficiency__model-picker");
+    const modelTrigger = modelPicker.locator(".option-picker__trigger");
+    await modelTrigger.click();
+    const modelSearch = modelPicker.getByRole("combobox", { name: "Search model configurations", exact: true });
+    invariant(await modelSearch.evaluate(element => element === document.activeElement), "Opening the model picker must focus its search input.");
+    const modelChoices = modelPicker.getByRole("option");
+    invariant(await modelChoices.count() === await intelligence.locator(".intelligence-efficiency__point-control").count(), "The named picker must include every plotted configuration.");
+    invariant(await modelPicker.locator('[aria-selected="true"]').count() === 1, "The picker must mark exactly the pinned configuration as selected.");
+    const alternateOption = modelPicker.locator('[role="option"][aria-selected="false"]').first();
+    const alternateModel = await alternateOption.getAttribute("title");
+    invariant(alternateModel !== null, "The model picker needs an alternative configuration.");
+    await modelSearch.fill(alternateModel);
+    invariant(await modelChoices.count() < 90, "Search must narrow the dense model grid.");
+    await modelSearch.press("Enter");
+    invariant(await modelPicker.getByRole("dialog").isHidden(), "Selecting a configuration must close the picker panel.");
     const pickedTitle = await intelligence.locator(".intelligence-efficiency__inspector h3").textContent();
-    invariant(pickedTitle !== null && alternateModel.label.endsWith(` · ${pickedTitle}`), "The named picker did not update the model inspector.");
-    invariant(await intelligence.locator('.intelligence-efficiency__point-control[tabindex="0"]').getAttribute("data-point-id") === alternateModel.id, "The named picker and chart keyboard target diverged.");
+    invariant(pickedTitle === alternateModel, "The named picker did not update the model inspector.");
+    const rovingLabel = await intelligence.locator('.intelligence-efficiency__point-control[tabindex="0"]').getAttribute("aria-label");
+    invariant(rovingLabel !== null && rovingLabel.startsWith(`${pickedTitle},`), "The named picker and chart keyboard target diverged.");
     await page.setViewportSize({ width: 320, height: 900 });
     await settle(page);
-    invariant(await modelPicker.isVisible(), "The model picker must remain available on narrow screens.");
+    invariant(await modelTrigger.isVisible(), "The model picker must remain available on narrow screens.");
     invariant(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), "The model picker makes the homepage overflow at 320px.");
-    const pickerBounds = await modelPicker.boundingBox();
+    const pickerBounds = await modelTrigger.boundingBox();
     invariant(pickerBounds !== null && pickerBounds.height >= 44, "The model picker needs a touch-friendly target.");
     await intelligence.locator('[data-intelligence-metric="outputTokensPerTask"]').click();
-    invariant(await modelPicker.inputValue() === alternateModel.id, "Changing the metric lost the named selection on mobile.");
+    invariant((await modelTrigger.textContent())?.includes(pickedTitle), "Changing the metric lost the named selection on mobile.");
     invariant(await intelligence.locator(".intelligence-efficiency__inspector h3").textContent() === pickedTitle, "Changing the metric lost the selected model inspector on mobile.");
     await intelligence.locator('[data-intelligence-metric="costUsdPerTask"]').click();
     await page.setViewportSize({ width: 1280, height: 900 });
@@ -269,11 +325,20 @@ async function verifyBenchmarkAtlas(browser: Browser, baseUrl: string): Promise<
     invariant(await atlas.locator('.atlas-row[aria-pressed="true"]').count() === 1, "Switching to ranking hid the selected low-ranked configuration.");
     await atlas.getByRole("button", { name: "Show top eight", exact: true }).click();
     invariant(await atlas.locator(".atlas-row").count() === 8, "Collapsing results did not restore the top-eight view.");
-    await atlas.getByRole("combobox", { name: "Task", exact: true }).selectOption("memory");
+    const taskPicker = atlas.locator(".atlas-task-select");
+    await assertCompactPickerAlignment(taskPicker, "All tasks");
+    invariant(
+      await atlas.locator(".atlas-row .provider-brand-mark").count() === await atlas.locator(".atlas-row").count(),
+      "Ranking rows must show a vendor mark beside the lab name.",
+    );
+    await taskPicker.locator(".option-picker__trigger").click();
+    await taskPicker.getByRole("option", { name: "Memory", exact: true }).click();
     invariant(await atlas.locator(".atlas-row").count() === 6, "Memory comparisons must retain all six systems with the fixed reader.");
-    await atlas.getByRole("combobox", { name: "Task", exact: true }).selectOption("image");
+    await taskPicker.locator(".option-picker__trigger").click();
+    await taskPicker.getByRole("option", { name: "Images", exact: true }).click();
     invariant(await atlas.locator("h2").textContent() === "Image generation · Arena", "Image task did not select its current preference chart.");
-    await atlas.getByRole("combobox", { name: "Task", exact: true }).selectOption("audio");
+    await taskPicker.locator(".option-picker__trigger").click();
+    await taskPicker.getByRole("option", { name: "Audio", exact: true }).click();
     invariant((await atlas.locator("h2").textContent())?.includes("Open ASR"), "Audio task must offer the qualified transcription chart.");
     invariant(await atlas.locator(".atlas-row").count() === 8, "Audio chart must show the first eight selected configurations.");
     await page.goBack({ waitUntil: "domcontentloaded" });
@@ -281,11 +346,16 @@ async function verifyBenchmarkAtlas(browser: Browser, baseUrl: string): Promise<
     invariant(await atlas.locator("h2").textContent() === "Image generation · Arena", "Back navigation did not restore the benchmark.");
     await page.setViewportSize({ width: 320, height: 900 });
     await settle(page);
-    invariant(await atlas.getByRole("combobox", { name: "Benchmark", exact: true }).isVisible(), "Mobile benchmark navigation must be named and visible.");
+    const benchmarkPicker = atlas.locator(".atlas-benchmark-select");
+    const benchmarkTrigger = benchmarkPicker.locator(".option-picker__trigger");
+    invariant(await benchmarkTrigger.isVisible(), "Mobile benchmark navigation must be named and visible.");
+    invariant(await atlas.locator(".atlas-navigation select").count() === 0, "Task and benchmark navigation must use the shared picker, not a native select.");
     await atlas.locator(".atlas-library > summary").click();
     invariant(await atlas.getByLabel("Find a benchmark", { exact: true }).isVisible(), "Mobile search must be available in Browse library.");
     await atlas.locator(".atlas-library > summary").click();
-    await atlas.getByRole("combobox", { name: "Benchmark", exact: true }).selectOption("geditbench-2");
+    await benchmarkTrigger.click();
+    await benchmarkPicker.getByRole("combobox", { name: "Search benchmarks", exact: true }).fill("GEditBench");
+    await benchmarkPicker.getByRole("option").first().click();
     invariant((await atlas.locator("h2").textContent())?.includes("GEditBench"), "Mobile benchmark selector did not change the chart.");
     invariant(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), "The page overflows at 320px; chart panning must remain local.");
     await page.emulateMedia({ colorScheme: "dark" });

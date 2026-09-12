@@ -2,6 +2,7 @@ import {
   formatBenchmarkScore,
   type CodingAgentBenchmarkLeader,
 } from "@/lib/coding-agent-dataset";
+import { ProviderBrandLabel } from "@/components/provider-brand-mark";
 
 export function CodingAgentLeadersTable({
   caption,
@@ -34,7 +35,12 @@ export function CodingAgentLeadersTable({
               <th scope="row">{leader.definition.label}</th>
               <td>{leader.record.model}</td>
               <td>{leader.record.agent}</td>
-              <td>{leader.record.providerName}</td>
+              <td>
+                <ProviderBrandLabel
+                  displayName={leader.record.providerName}
+                  identities={[leader.record.providerId]}
+                />
+              </td>
               <td>{leader.record.setting}</td>
               <td>{formatBenchmarkScore(leader.value)}</td>
             </tr>

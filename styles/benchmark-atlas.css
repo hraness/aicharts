@@ -12,14 +12,14 @@
 .benchmark-library-heading h2 { font-size: clamp(24px, 3vw, 32px); font-weight: 550; letter-spacing: -.03em; }
 .benchmark-library-heading p { color: var(--muted); font-size: 13px; line-height: 1.5; margin-top: 8px; }
 .benchmark-library-heading strong { color: var(--foreground); font-weight: 550; }
-.benchmark-atlas { --atlas-accent: #246457; --atlas-tint: #e2eee7; --atlas-bar: #70a08d; scroll-margin-top: 72px; border-bottom: 1px solid var(--grid); }
+.benchmark-atlas { --atlas-accent: #246457; --atlas-tint: #e2eee7; --atlas-bar: #70a08d; --option-picker-accent: var(--atlas-accent); scroll-margin-top: 72px; border-bottom: 1px solid var(--grid); }
 [data-theme="dark"] .benchmark-atlas { --atlas-accent: #9dc9b5; --atlas-tint: #24342e; --atlas-bar: #658a77; }
 .benchmark-atlas button, .benchmark-atlas input, .benchmark-atlas select { font: inherit; }
 .benchmark-atlas button { color: inherit; }
 .benchmark-atlas :focus-visible { outline: 2px solid var(--atlas-accent); outline-offset: 3px; }
-.atlas-navigation { display: grid; grid-template-columns: minmax(140px, 180px) minmax(0, 1fr) auto; align-items: end; gap: 16px; padding-bottom: 24px; border-bottom: 1px solid var(--grid); }
-.atlas-task-select, .atlas-benchmark-select { display: grid; gap: 8px; min-width: 0; font-size: 12px; color: var(--muted); }
-.atlas-navigation select { width: 100%; min-width: 0; min-height: 44px; padding: 10px 28px 10px 12px; border: 1px solid var(--line); border-radius: 5px; background: var(--background); color: var(--foreground); font-size: 14px; }
+.atlas-navigation { display: grid; grid-template-columns: minmax(148px, 200px) minmax(0, 1fr) auto; align-items: end; gap: 12px; padding-bottom: 24px; border-bottom: 1px solid var(--grid); }
+.atlas-task-select, .atlas-benchmark-select { display: grid; gap: 6px; min-width: 0; font-size: 12px; color: var(--muted); }
+.atlas-task-select .option-picker__panel { width: max(100%, min(260px, 86vw)); }
 .atlas-workspace { min-width: 0; }
 .atlas-library { min-width: 0; }
 .atlas-library > summary { width: fit-content; min-height: 44px; padding: 11px 13px; border: 1px solid var(--grid); border-radius: 5px; font-size: 13px; line-height: 1.5; cursor: pointer; }
@@ -65,7 +65,8 @@
 .atlas-description strong { color: var(--foreground); font-weight: 550; }
 .atlas-toolbar { margin-top: 22px; padding-block: 10px; display: flex; flex-wrap: wrap; gap: 10px 20px; justify-content: space-between; align-items: center; border-top: 1px solid var(--grid); border-bottom: 1px solid var(--grid); }
 .atlas-view-toggle { display: flex; gap: 3px; }
-.atlas-view-toggle button { background: none; border: 0; padding: 10px 13px; border-radius: 4px; font-size: 13px; color: var(--muted); min-height: 44px; }
+.atlas-view-toggle button { align-items: center; background: none; border: 0; display: inline-flex; gap: 6px; padding: 10px 13px; border-radius: 4px; font-size: 13px; color: var(--muted); min-height: 44px; }
+.atlas-view-toggle button svg { display: block; }
 .atlas-view-toggle button[aria-pressed="true"] { color: var(--foreground); background: var(--secondary); font-weight: 550; }
 .atlas-filters { min-width: 0; font-size: 13px; }
 .atlas-filters summary { min-height: 44px; padding: 12px 8px; cursor: pointer; line-height: 1.5; }
@@ -73,7 +74,8 @@
 .atlas-filters__active { color: var(--atlas-accent); margin-left: 10px; overflow-wrap: anywhere; }
 .atlas-filters__content { display: flex; align-items: start; flex-wrap: wrap; gap: 18px 32px; padding: 10px 0 14px; }
 .atlas-provider { display: grid; gap: 8px; min-width: 0; max-width: 100%; font-size: 12px; color: var(--muted); }
-.atlas-provider select { padding: 10px 28px 10px 12px; border: 1px solid var(--line); border-radius: 5px; background-color: var(--background); color: var(--foreground); max-width: 100%; min-width: 180px; min-height: 44px; font-size: 13px; }
+.atlas-provider.option-picker { min-width: min(260px, 100%); }
+.atlas-provider .option-picker__panel { width: min(560px, calc(100vw - 32px)); }
 .atlas-profile-toggle { min-width: 0; max-width: 390px; padding-top: 24px; }
 .atlas-profile-toggle p, .atlas-filters__note { color: var(--muted); font-size: 12px; line-height: 1.5; margin-top: 8px; }
 .atlas-results-summary { color: var(--muted); font-size: 12px; line-height: 1.5; margin-top: 18px; }
@@ -89,7 +91,8 @@
 .atlas-row__heading { display: flex; align-items: start; justify-content: space-between; gap: 16px; }
 .atlas-row__heading strong { font-size: 15px; font-weight: 550; line-height: 1.35; overflow-wrap: anywhere; }
 .atlas-row__heading data { font-family: var(--font-mono); font-size: 14px; font-weight: 550; white-space: nowrap; }
-.atlas-row__profile { display: block; color: var(--muted); font-size: 12px; line-height: 1.5; margin-top: 4px; overflow-wrap: anywhere; }
+.atlas-row__profile { align-items: center; color: var(--muted); display: flex; flex-wrap: wrap; font-size: 12px; gap: 6px; line-height: 1.5; margin-top: 4px; overflow-wrap: anywhere; }
+.atlas-row__profile-rest { min-width: 0; }
 .atlas-row__track { display: block; width: 100%; height: 5px; background: color-mix(in srgb, var(--grid), transparent 60%); position: relative; margin-top: 9px; border-radius: 1px; }
 .atlas-row__fill { display: block; height: 100%; border-radius: 1px; background: var(--atlas-bar); }
 .atlas-row__marker { position: absolute; top: -1px; width: 7px; height: 7px; border-radius: 50%; transform: translateX(-50%); background: var(--atlas-accent); }
@@ -100,6 +103,8 @@
 .atlas-inspector { min-width: 0; border-left: 1px solid var(--grid); padding: 24px 0 24px 24px; align-self: start; }
 .atlas-inspector h3 { font-size: 21px; line-height: 1.25; font-weight: 550; letter-spacing: -.025em; overflow-wrap: anywhere; margin-top: 10px; }
 .atlas-inspector__provider { color: var(--muted); font-size: 13px; margin-top: 6px; }
+.atlas-table small.provider-brand-label,
+.atlas-comparison__provider { color: var(--muted); display: inline-flex; font-size: 12px; margin-top: 4px; }
 .atlas-inspector dl { margin-block: 18px; }
 .atlas-inspector dl > div { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 5px 12px; border-top: 1px solid var(--grid); padding-block: 10px; font-size: 13px; line-height: 1.5; }
 .atlas-inspector dt { color: var(--muted); }

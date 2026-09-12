@@ -6,6 +6,7 @@ import {
   useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
   type KeyboardEvent,
   type PointerEvent as ReactPointerEvent,
 } from "react";
@@ -19,6 +20,20 @@ import {
   type NumericDomain,
 } from "@/lib/intelligence-efficiency";
 import { captureChartEvent } from "@/lib/analytics";
+import { providerBrand } from "@/lib/provider-brand";
+import {
+  intelligenceShareSearch,
+  parseIntelligenceShareView,
+  type IntelligenceShareView,
+} from "@/lib/intelligence-share";
+import {
+  readLocationSearch,
+  replaceLocationSearch,
+  serverLocationSearch,
+  subscribeLocationSearch,
+} from "@/lib/selection-url";
+import { OptionGridPicker, type OptionGridPickerItem } from "@/components/option-grid-picker";
+import { intelligenceMetricGlyph } from "@/components/picker-glyphs";
 import {
   clientPointThroughSvgBounds,
   clientPointThroughSvgTransform,
@@ -31,6 +46,7 @@ export type IntelligenceEfficiencyExplorerDatum = Readonly<{
   costUsdPerTask: number;
   creatorId: string;
   creatorName: string;
+  creatorSlug: string;
   detailsUrl: string;
   id: string;
   intelligenceIndex: number;
@@ -39,6 +55,7 @@ export type IntelligenceEfficiencyExplorerDatum = Readonly<{
   name: string;
   outputTokensPerTask: number;
   releaseDate: string;
+  slug: string;
 }>;
 
 type ExplorerPoint = Readonly<{
@@ -396,9 +413,15 @@ export function IntelligenceEfficiencyExplorer({
   solId: string | null;
   yDomain: NumericDomain;
 }>) {
-  const [metric, setMetric] = useState<IntelligenceEfficiencyMetric>("costUsdPerTask");
   const defaultPointId = astraId ?? data[0]?.id ?? "";
-  const [pinnedId, setPinnedId] = useState(defaultPointId);
+  const defaultShare = useMemo<IntelligenceShareView>(() => ({
+    metric: "costUsdPerTask",
+    pinnedId: defaultPointId,
+  }), [defaultPointId]);
+  const search = useSyncExternalStore(subscribeLocationSearch, readLocationSearch, serverLocationSearch);
+  const shared = parseIntelligenceShareView(search, data, defaultShare);
+  const metric = shared.metric;
+  const pinnedId = shared.pinnedId;
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [focusedId, setFocusedId] = useState<string | null>(null);
   const [rovingId, setRovingId] = useState(defaultPointId);
@@ -408,10 +431,26 @@ export function IntelligenceEfficiencyExplorer({
   const titleId = useId();
   const descriptionId = useId();
   const inspectorTitleId = useId();
-  const modelOptions = useMemo(() => data.toSorted((left, right) =>
+  const modelOptions = useMemo<readonly OptionGridPickerItem[]>(() => data.toSorted((left, right) =>
     left.creatorName.localeCompare(right.creatorName)
       || left.name.localeCompare(right.name)
-      || left.id.localeCompare(right.id)), [data]);
+      || left.id.localeCompare(right.id)).map(datum => {
+    const brand = providerBrand(datum.creatorName, datum.creatorSlug);
+    return {
+      chipColor: brand.chipColor,
+      description: datum.creatorName,
+      glyphColor: brand.glyphColor,
+      iconUrl: brand.iconUrl,
+      id: datum.id,
+      keywords: [datum.slug, datum.creatorSlug],
+      label: datum.name,
+      monogram: brand.monogram,
+    };
+  }), [data]);
+
+  function writeShare(next: IntelligenceShareView): void {
+    replaceLocationSearch(intelligenceShareSearch(next, data, defaultShare, window.location.search));
+  }
 
   useEffect(() => {
     const shell = chartShellRef.current;
@@ -476,7 +515,7 @@ export function IntelligenceEfficiencyExplorer({
   const presentation = metricPresentations[metric];
 
   function pinPoint(pointId: string): void {
-    setPinnedId(pointId);
+    writeShare({ metric, pinnedId: pointId });
     setRovingId(pointId);
     const point = data.find(datum => datum.id === pointId);
     if (point !== undefined) {
@@ -544,10 +583,11 @@ export function IntelligenceEfficiencyExplorer({
                       },
                     });
                   }
-                  setMetric(item);
+                  writeShare({ metric: item, pinnedId });
                 }}
                 type="button"
               >
+                {intelligenceMetricGlyph(item)}
                 {metricPresentations[item].controlLabel}
               </button>
             ))}
@@ -556,16 +596,19 @@ export function IntelligenceEfficiencyExplorer({
             <span aria-hidden="true">↖ </span>
             Higher score, {metric === "costUsdPerTask" ? "lower cost" : "fewer tokens"}
           </p>
-          <label className="intelligence-efficiency__model-picker">
-            Choose a model configuration
-            <select value={pinnedId} onChange={event => {
+          <OptionGridPicker
+            className="intelligence-efficiency__model-picker"
+            label="Choose a model configuration"
+            onChange={pointId => {
               setHoveredId(null);
               setFocusedId(null);
-              pinPoint(event.target.value);
-            }}>
-              {modelOptions.map(datum => <option key={datum.id} value={datum.id}>{datum.creatorName} · {datum.name}</option>)}
-            </select>
-          </label>
+              pinPoint(pointId);
+            }}
+            options={modelOptions}
+            searchLabel="Search model configurations"
+            searchPlaceholder="Model or provider"
+            value={pinnedId}
+          />
         </figcaption>
 
         <div className="intelligence-efficiency__plot" ref={chartShellRef}>

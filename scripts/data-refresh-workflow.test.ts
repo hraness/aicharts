@@ -172,6 +172,7 @@ async function executeWorkflowShell(
         ATLAS_MULTIMODAL_OUTCOME: "success",
         ATLAS_REASONING_OUTCOME: "success",
         BENCHMARK_OUTCOME: "skipped",
+        CALCULATOR_OUTCOME: "success",
         CHECKOUT_OUTCOME: "success",
         DEEP_SWE_OUTCOME: "success",
         DEPENDENCIES_OUTCOME: "success",
@@ -303,6 +304,7 @@ describe("scheduled model-data refresh", () => {
     expect(String(step("atlas_multimodal").if)).toContain("env.RUN_BENCHMARK_REFRESH == 'true'");
     expect(String(step("arena_media").if)).toContain("env.RUN_BENCHMARK_REFRESH == 'true'");
     expect(String(step("atlas_audio").if)).toContain("env.RUN_BENCHMARK_REFRESH == 'true'");
+    expect(String(step("calculator").if)).toContain("env.RUN_BENCHMARK_REFRESH == 'true'");
     expect(String(step("intelligence").if)).toContain("env.RUN_BENCHMARK_REFRESH == 'true'");
     expect(String(step("release_reconcile").if)).toContain("env.RUN_RELEASE_REFRESH == 'true'");
     expect(String(step("release_reconcile").if)).toContain("env.RUN_BENCHMARK_REFRESH == 'true'");
@@ -358,6 +360,7 @@ describe("scheduled model-data refresh", () => {
     expect(step("atlas_multimodal")).toMatchObject({ "continue-on-error": true, run: "bun run atlas:multimodal:refresh" });
     expect(step("arena_media")).toMatchObject({ "continue-on-error": true, run: "bun run atlas:arena-media:refresh" });
     expect(step("atlas_audio")).toMatchObject({ "continue-on-error": true, run: "bun run atlas:audio:refresh" });
+    expect(step("calculator")).toMatchObject({ "continue-on-error": true, run: "bun run calculator:refresh" });
     expect(String(step("release_reconcile").if)).toContain("steps.dependencies.outcome == 'success'");
     expect(steps.indexOf(step("first_party_releases"))).toBeLessThan(
       steps.indexOf(step("first_party_review")),
@@ -373,7 +376,7 @@ describe("scheduled model-data refresh", () => {
     expect(steps.indexOf(step("release_reconcile"))).toBeLessThan(steps.indexOf(step("deep_swe")));
   });
 
-  test("publishes only the eleven current owned snapshots through the protected-branch contract", () => {
+  test("publishes only the twelve current owned snapshots through the protected-branch contract", () => {
     const publish = String(step("publish").run);
     expect(refresh["timeout-minutes"]).toBe(45);
     expect(refresh.env).toMatchObject({
@@ -382,6 +385,7 @@ describe("scheduled model-data refresh", () => {
       ATLAS_MULTIMODAL_PATH: "data/benchmark-atlas-multimodal.json",
       ATLAS_REASONING_PATH: "data/benchmark-atlas-reasoning.json",
       BENCHMARK_PATH: "data/coding-agents.json",
+      CALCULATOR_PATH: "data/calculator-inputs.json",
       DEEP_SWE_PATH: "data/deep-swe-evidence.json",
       FIRST_PARTY_RELEASE_PATH: "data/first-party-release-radar.json",
       INTELLIGENCE_PATH: "data/artificial-analysis-intelligence-v4-3.json",
@@ -392,6 +396,7 @@ describe("scheduled model-data refresh", () => {
       TERMINAL_BENCH_SCIENCE_PATH: "data/terminal-bench-science.json",
     });
     expect(String(step("snapshot").run)).toContain('"$BENCHMARK_PATH"');
+    expect(String(step("snapshot").run)).toContain('"$CALCULATOR_PATH"');
     expect(String(step("snapshot").run)).toContain('"$DEEP_SWE_PATH"');
     expect(String(step("snapshot").run)).toContain('"$FIRST_PARTY_RELEASE_PATH"');
     expect(String(step("snapshot").run)).toContain('"$INTELLIGENCE_PATH"');
@@ -404,15 +409,21 @@ describe("scheduled model-data refresh", () => {
     expect(String(step("snapshot").run)).toContain('"$ATLAS_AUDIO_PATH"');
     expect(step("validation")).toMatchObject({
       "continue-on-error": true,
-      if: "steps.snapshot.outputs.changed == 'true'",
+      if: "steps.snapshot.outputs.changed == 'true' && steps.usage_toolchain.outcome == 'success'",
       run: "bun run check",
     });
+    expect(step("usage_toolchain")).toMatchObject({
+      "continue-on-error": true,
+      if: "steps.snapshot.outputs.changed == 'true'",
+      run: "rustup show active-toolchain",
+    });
+    expect(steps.indexOf(step("usage_toolchain"))).toBeLessThan(steps.indexOf(step("validation")));
     expect(step("publish")).toMatchObject({
       "continue-on-error": true,
       if: "steps.validation.outcome == 'success' && steps.snapshot.outputs.changed == 'true'",
     });
     expect(publish).toContain(
-      'git add -- "$BENCHMARK_PATH" "$DEEP_SWE_PATH" "$FIRST_PARTY_RELEASE_PATH" "$INTELLIGENCE_PATH" "$RELEASE_RADAR_PATH" "$TERMINAL_BENCH_PATH" "$TERMINAL_BENCH_SCIENCE_PATH" "$ATLAS_REASONING_PATH" "$ATLAS_MULTIMODAL_PATH" "$ARENA_MEDIA_PATH" "$ATLAS_AUDIO_PATH"',
+      'git add -- "$BENCHMARK_PATH" "$CALCULATOR_PATH" "$DEEP_SWE_PATH" "$FIRST_PARTY_RELEASE_PATH" "$INTELLIGENCE_PATH" "$RELEASE_RADAR_PATH" "$TERMINAL_BENCH_PATH" "$TERMINAL_BENCH_SCIENCE_PATH" "$ATLAS_REASONING_PATH" "$ATLAS_MULTIMODAL_PATH" "$ARENA_MEDIA_PATH" "$ATLAS_AUDIO_PATH"',
     );
     expect(publish).toContain('"HEAD:refs/heads/${REFRESH_BRANCH}"');
     expect(publish).toContain('gh pr create --base main');
@@ -443,6 +454,7 @@ describe("scheduled model-data refresh", () => {
       "data/benchmark-atlas-audio.json",
       "data/benchmark-atlas-multimodal.json",
       "data/benchmark-atlas-reasoning.json",
+      "data/calculator-inputs.json",
       "data/coding-agents.json",
       "data/deep-swe-evidence.json",
       "data/first-party-release-radar.json",
@@ -472,8 +484,8 @@ describe("scheduled model-data refresh", () => {
     );
   });
 
-  test("executes current AA, Arena, and audio boundaries without admitting the historical snapshot", async () => {
-    const currentFiles = ["data/artificial-analysis-intelligence-v4-3.json", "data/arena-media.json", "data/benchmark-atlas-audio.json"];
+  test("executes current AA, Arena, audio, and calculator boundaries without admitting the historical snapshot", async () => {
+    const currentFiles = ["data/artificial-analysis-intelligence-v4-3.json", "data/arena-media.json", "data/benchmark-atlas-audio.json", "data/calculator-inputs.json"];
     const before = { source: { retrievedAt: "2026-09-04T00:00:00.000Z", revision: "same-reviewed-source" }, records: [{ score: 1 }] };
     const polled = { ...before, source: { ...before.source, retrievedAt: "2026-09-09T00:00:00.000Z" } };
     const timestampOnly = await executeSnapshotBoundary(Object.fromEntries(currentFiles.map(file => [file, { before, after: polled }])));
@@ -522,9 +534,11 @@ describe("scheduled model-data refresh", () => {
     expect(String(health?.run)).toContain("$ATLAS_MULTIMODAL_OUTCOME");
     expect(String(health?.run)).toContain("$ARENA_MEDIA_OUTCOME");
     expect(String(health?.run)).toContain("$ATLAS_AUDIO_OUTCOME");
+    expect(String(health?.run)).toContain("$CALCULATOR_OUTCOME");
     expect(health?.env).toMatchObject({
       ARENA_MEDIA_OUTCOME: "${{ steps.arena_media.outcome }}",
       ATLAS_AUDIO_OUTCOME: "${{ steps.atlas_audio.outcome }}",
+      CALCULATOR_OUTCOME: "${{ steps.calculator.outcome }}",
     });
     expect(String(health?.run)).toContain(
       '[[ "$RUN_AAI_REFRESH" == "true" && "$BENCHMARK_OUTCOME" != "success" ]]',
@@ -606,7 +620,7 @@ describe("scheduled model-data refresh", () => {
 
   test("persists atlas failures independently while retaining last-known-good data", async () => {
     const health = steps.find(candidate => candidate.name === "Report health and manage the durable alert");
-    for (const [outcome, label] of [["ATLAS_REASONING_OUTCOME", "Reasoning atlas"], ["ATLAS_MULTIMODAL_OUTCOME", "Multimodal atlas"], ["ARENA_MEDIA_OUTCOME", "Arena media"], ["ATLAS_AUDIO_OUTCOME", "Pinned audio atlas"]]) {
+    for (const [outcome, label] of [["ATLAS_REASONING_OUTCOME", "Reasoning atlas"], ["ATLAS_MULTIMODAL_OUTCOME", "Multimodal atlas"], ["ARENA_MEDIA_OUTCOME", "Arena media"], ["ATLAS_AUDIO_OUTCOME", "Pinned audio atlas"], ["CALCULATOR_OUTCOME", "Calculator inputs"]]) {
       const result = await executeWorkflowShell(String(health?.run), {
         candidates: [], issueBody: "", extraEnvironment: { [outcome]: "failure", REFRESH_MODE: "benchmarks", FAKE_HEALTH_ISSUE_NUMBER: "109" },
       });
@@ -662,6 +676,7 @@ describe("scheduled model-data refresh", () => {
           ATLAS_MULTIMODAL_OUTCOME: "skipped",
           ARENA_MEDIA_OUTCOME: "skipped",
           ATLAS_AUDIO_OUTCOME: "skipped",
+          CALCULATOR_OUTCOME: "skipped",
           FAKE_HEALTH_ISSUE_NUMBER: "109",
           REFRESH_MODE: "releases",
           INTELLIGENCE_OUTCOME: "skipped",
