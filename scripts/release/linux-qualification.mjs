@@ -87,7 +87,7 @@ function toolchain(value) {
 }
 
 function dependencies(value) {
-  if (!Array.isArray(value) || value.length > 16 || Object.getPrototypeOf(value) !== Array.prototype) fail();
+  if (!Array.isArray(value) || value.length < 1 || value.length > 16 || Object.getPrototypeOf(value) !== Array.prototype) fail("invalid_report");
   const out = [...value];
   let previous = "";
   for (const dependency of out) {
