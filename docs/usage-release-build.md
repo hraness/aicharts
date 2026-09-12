@@ -47,7 +47,7 @@ Caps bound admitted body copying and encoding. Metadata reflection still depends
 
 ## Joining the release formats
 
-Establish and hash the final executable first. Then encode BUILD, derive its independent file-inventory entry, assemble and validate the archives, encode the manifest from measured archive/inventory facts, and generate checksums. BUILD intentionally contains no self hash, archive hash, manifest hash or attestation.
+The [memory-only release assembler](usage-release-assembly.md) owns this join. It establishes the executable and lock hashes from supplied byte snapshots, encodes BUILD, derives independent file inventories, assembles and validates the archives, and generates the manifest and checksums. BUILD intentionally contains no self hash, archive hash, manifest hash or attestation. The assembler still relies on externally established source and build facts.
 
 The joining caller must verify that the CLI BUILD executable hash equals both the independently checked `bin/aicharts` inventory hash and the actual archived executable bytes. It must bind source, version, runner and toolchain values across all artifacts. A valid manifest inventory alone cannot validate a BUILD body; even a non-JSON file can have consistent size/hash metadata.
 
