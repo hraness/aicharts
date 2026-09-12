@@ -2,6 +2,8 @@
 
 `scripts/release/git-source.mjs` reads the complete regular-file inventory of an explicitly selected local Git commit and tree for [release assembly](usage-release-assembly.md). It verifies raw Git object hashes and reconciles the full tree graph before returning bytes. This establishes internal consistency with the supplied object identities, not authenticated repository origin, approved release provenance or executable correspondence.
 
+The release boundary also contains `scripts/release/hydrate-source.mjs`. It copies a checked source inventory into a new child of an already-owned mode-0700 scratch parent for a later Linux build. Hydration owns all source bytes before filesystem effects, creates only absent paths, refuses symlinks and collisions, rechecks complete membership and metadata, and returns only a frozen numeric inventory. It has no overwrite, cleanup, compiler, network, environment, provenance or publication interface. Run `bun run release:source:hydrate:check`; focused evidence is a local Node filesystem qualification, not Linux executable or notice qualification.
+
 ## API and result
 
 ```js
