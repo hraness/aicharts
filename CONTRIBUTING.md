@@ -25,6 +25,10 @@ The complete gate also runs `bun run usage:worker:check`: generated Cloudflare r
 
 `bun run release:archive:check`, `bun run release:manifest:check`, `bun run release:build:check`, and `bun run release:assemble:check` check the memory-only release formats and their assembly with Node.js 24 and synthetic fixtures. All four are included in the complete gate and do not extract files, execute payloads, or publish a release. Keep their `.check.mjs` corpora under the explicit Node runner. See [Release archive bytes](docs/usage-release-archives.md), [Release manifest matching](docs/usage-release-manifest.md), [BUILD matching](docs/usage-release-build.md), and [Release assembly](docs/usage-release-assembly.md) for inventory, size, ownership, and trust constraints.
 
+`bun run release:source:check` separately checks the [exact Git source reader](docs/usage-release-source.md) with Node.js 24, trusted `/usr/bin/git` and disposable synthetic repositories. It is also included in the complete gate. These tests read raw local Git objects; they do not fetch source, execute archive contents or establish release provenance. Keep real contributor files and credentials outside the fixtures.
+
+The [pairing HTTP adapters](docs/usage-pairing-http.md) remain dormant. Their public Vercel binding is tested with synthetic request context and mocked network/lifetime effects. Preserve registration-before-work, fixed capability-body limits and uncertain-write reconciliation; passing synthetic tests does not authorize a production resolver, Worker route or provider-token exercise.
+
 ## Data changes
 
 Do not hand-edit `data/coding-agents.json`. Run `bun run data:refresh`, inspect the diff, and include only a snapshot change supported by the guarded refresh script. Do not weaken retention or coverage checks merely to accept an unexpected upstream shape.

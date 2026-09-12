@@ -1,6 +1,6 @@
 # Pairing transport bytes
 
-`lib/usage/pairing-transport-contract.ts` defines the memory-only request and result format for a future authenticated AI Charts server-to-Worker transport. It performs no network request, authentication, dispatch or persistence. The production resolver remains absent and the default Worker remains unavailable. This format carries pairing capabilities, not usage measurements; never log its bodies.
+`lib/usage/pairing-transport-contract.ts` defines the memory-only request and result format used by the dormant [pairing HTTP adapters](usage-pairing-http.md). The codec performs no network request, authentication, dispatch or persistence. The production resolver remains absent and the default Worker remains unavailable. This format carries pairing capabilities, not usage measurements; never log its bodies.
 
 ## Exact operations
 
@@ -42,7 +42,7 @@ The byte caps bound admitted parsing and serialization, not arbitrary JavaScript
 
 ## Integration and validation
 
-The future transport must authenticate workload identity before selecting a Durable Object, use fixed routing, bound body streams and deadlines, and dispose real Worker RPC results. It must bind the requested intent to the selected resolver. None of those behaviors is provided by this codec. Browser authentication facts must still come from the validated Accounts completion, not browser-submitted claims. A valid payload is not authorization.
+The dormant HTTP adapters implement workload verification before Durable Object selection, fixed routing, bounded body streams and deadlines, intent binding and RPC-reply disposal. These are adapter behaviors, not codec guarantees. Local real-RPC composition passes with synthetic authority; live provider qualification and production integration remain incomplete. Browser authentication facts must still come from the validated Accounts completion, not browser-submitted claims. A valid payload is not authorization.
 
 No automatic mutation retry follows from encoding. A lost response may follow a committed operation; starting another authentication attempt is not proof that the previous one failed. The existing [identity and custody rules](usage-identity.md#device-enrollment-boundary) continue to govern reconciliation. Status can advance durable expiry state and is not a storage-read-only operation.
 

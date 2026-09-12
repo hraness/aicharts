@@ -25,10 +25,12 @@ describe("local-only Worker tool boundary", () => {
     expect(workerToolCommands(["types"])).toHaveLength(1);
     expect(workerToolCommands(["test"])).toHaveLength(1);
     expect(workerToolCommands(["test-pairing"])?.[0].at(-1)).toBe("test/pairing.worker.ts");
+    expect(workerToolCommands(["test-pairing-http"])?.[0].at(-1)).toBe("test/pairing-http.worker.ts");
     expect(workerToolCommands(["test-enrollment"])?.[0].at(-1)).toBe("test/enrollment.worker.ts");
     expect(workerToolCommands(["test-admission"])?.[0].at(-1)).toBe("test/admission.worker.ts");
     expect(workerToolCommands(["test-staging"])?.[0].at(-1)).toBe("test/staging.worker.ts");
     expect(workerToolCommands(["test-pairing", "--remote"])).toBeNull();
+    expect(workerToolCommands(["test-pairing-http", "--remote"])).toBeNull();
     expect(workerToolCommands(["test-enrollment", "--remote"])).toBeNull();
     expect(workerToolCommands(["test-admission", "--remote"])).toBeNull();
     expect(JSON.stringify(workerToolCommands(["check"]))).not.toContain("deploy");

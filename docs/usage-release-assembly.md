@@ -27,7 +27,7 @@ The profile fixes Rust `1.97.1`, packaging Node major 24, target `x86_64-unknown
 
 Versions, UTC commit time and identity fields follow the manifest's scalar rules. The source must include the root Cargo and Bun locks, workspace and CLI Cargo manifests, Rust toolchain, LICENSE, NOTICE and all mapped distribution/skill files. Mandatory source members have mode 0644; other regular source members may have mode 0644 or 0755. Every supplied file is preserved in the source archive. Unsupported paths, links, modes, duplicate names and case-fold or file/parent collisions are refused.
 
-The external source reader must prove exhaustive membership of the selected Git tree, including nonmandatory files. This module cannot detect an omitted arbitrary file or prove that supplied bytes belong to a claimed commit. It does not parse the source manifests to verify the inherited Cargo version. The executable and complete third-party notice buffers must be nonempty, but nonempty bytes do not prove an executable or sufficient license coverage.
+The separate [exact Git source reader](usage-release-source.md) supplies exhaustive membership of the selected local Git tree, including nonmandatory files, after raw-object and full-graph checks. Assembly itself cannot detect an omitted arbitrary file or prove that supplied bytes belong to a claimed commit. Neither module authenticates source provenance, and assembly does not parse the source manifests to verify the inherited Cargo version. The executable and complete third-party notice buffers must be nonempty, but nonempty bytes do not prove an executable or sufficient license coverage.
 
 ## Fixed payloads
 
@@ -67,4 +67,4 @@ Failure is `{ok:false,error}` with a fixed `invalid_input`, `invalid_source`, `i
 
 Run `bun run release:assemble:check` under Node.js 24. The synthetic join tests exercise the actual codecs, complete inventories, ownership, derived bindings and refusal limits without running an executable. The repository's full gate includes this check.
 
-Exact Git membership, Linux ELF/runtime compatibility, complete notices, authenticated immutable acquisition and safe installation remain separate release requirements. The distribution guides retain draft status until that acquisition procedure exists. Assembly does not enable authentication, enrollment, uploads, background collection, native credential custody or automatic updates.
+Exact local Git membership is supplied through the separate source-reader boundary. Authenticated source selection, Linux ELF/runtime compatibility, complete notices, authenticated immutable acquisition and safe installation remain separate release requirements. The distribution guides retain draft status until that acquisition procedure exists. Assembly does not enable authentication, enrollment, uploads, background collection, native credential custody or automatic updates.

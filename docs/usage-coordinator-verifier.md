@@ -1,6 +1,6 @@
 # Coordinator identity verification
 
-`lib/usage/oidc/usage-oidc-verifier.ts` provides a request-owned verifier for the expected AI Charts production workload identity. No production handler constructs or calls it. Token acquisition, authenticated transport, user authorization and activation are separate unfinished integrations; the existing sign-in routes remain disabled.
+`lib/usage/oidc/usage-oidc-verifier.ts` provides a request-owned verifier for the expected AI Charts production workload identity. No production handler constructs or calls it. Dormant [pairing HTTP adapters](usage-pairing-http.md) define the structural verifier port and a public request-context token binding. Production transport, user authorization and activation still require separate integration and qualification; the existing sign-in routes remain disabled.
 
 ## Expected identity
 
@@ -29,7 +29,7 @@ finish() -> void
 
 Only one verification attempt is permitted per scope, including malformed attempts. Success returns an opaque empty frozen object; its authority exists only in that scope's private metadata. Copies, serialized values and other scopes' handles fail. Results never contain tokens, claims, key IDs, expiry values or upstream errors.
 
-The handler must recheck `isCurrent` and its separate activation/user-authority fences before protected work and after intervening awaits. Call `finish()` in an outer `finally` before returning a normal response. Do not capture the scope or authority in a response stream or background authenticated operation. Verification does not bind a request body, authorize an Accounts user or enable dispatch.
+The handler must recheck `isCurrent` and its separate activation/user-authority fences before protected work and after intervening awaits. Close the scope before returning a normal response and on refusal or timeout; the dormant pairing adapter registers `finish()` with its request-owned cleanup for this purpose. Do not capture the scope or authority in a response stream or background authenticated operation. Verification does not bind a request body, authorize an Accounts user or enable dispatch.
 
 The actual work and cleanup promise is registered with the supplied context before its deferred work starts. Registration failure prevents I/O. Global state holds completed public keys and bounded numerical gates only; pending promises, tokens, contexts, controllers, streams, timers and handles stay request-local. Callers never wait on another request's pending fetch.
 
