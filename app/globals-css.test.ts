@@ -3,6 +3,13 @@ import { expect, test } from "bun:test";
 const stylesheet = await Bun.file(new URL("./globals.css", import.meta.url)).text();
 const atlasStylesheet = await Bun.file(new URL("../styles/benchmark-atlas.css", import.meta.url)).text();
 
+test("the complete released StyleX entry precedes application styles", () => {
+  expect(stylesheet.trimStart()).toStartWith('@import "@hraness/design-kit/styles.css";');
+  expect(stylesheet.match(/@import "@hraness\/design-kit\/styles\.css"/gu)).toHaveLength(1);
+  expect(stylesheet).not.toMatch(/@import\s+["'](?:tailwindcss|@hraness\/design-kit\/(?:product-marketing|tokens|components)\.css)["']/u);
+  expect(stylesheet).not.toMatch(/@(?:tailwind|apply)\b/u);
+});
+
 function firstRule(selector: string, css = stylesheet): string {
   const escaped = selector.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
   return css.match(new RegExp(`${escaped}\\s*\\{(?<body>[^}]*)\\}`, "u"))?.groups?.body ?? "";
