@@ -6,6 +6,8 @@ import { SkipLink, ThemeMenuButton } from "@/components/ui";
 export const SITE_HEADER_LINKS = [
   { href: "/", label: "Charts" },
   { href: "/benchmarks", label: "Benchmarks" },
+  { href: "/usage", label: "Usage" },
+  { href: "/leaderboard", label: "Leaderboard" },
   { href: "/blog", label: "Notes" },
 ] as const;
 
