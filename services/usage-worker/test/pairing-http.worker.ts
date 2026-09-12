@@ -2,6 +2,7 @@ import { env } from "cloudflare:workers";
 import { createExecutionContext, waitOnExecutionContext, reset } from "cloudflare:test";
 import { afterEach, expect, test } from "vitest";
 import { createPairingHttpHandler, type PairingHttpEnvironment, type PairingHttpVerifier } from "../src/pairing-http";
+import { createPairingCoordinator } from "../src/pairing-coordinator";
 import { PAIRING_TTL_MS, uploadSecretCommitment } from "../src/pairing";
 import { decodePairingTransportResponse, encodePairingTransportRequest, type PairingTransportOperation } from "../../../lib/usage/pairing-transport-contract";
 import { PAIRING_HTTP_URL, PAIRING_HTTP_MEDIA } from "../../../lib/usage/pairing-http-contract";
@@ -11,6 +12,10 @@ const ACCOUNT = `acct_${"aa".repeat(16)}`;
 afterEach(async () => { await reset(); });
 
 test("real namespace is assignable and four pairing operations cross the owned RPC disposal boundary", async () => {
+  // The production composition is constructible in the real Worker graph. Its
+  // factory is dormant: construction performs no request or namespace lookup.
+  const coordinator = createPairingCoordinator();
+  expect(typeof coordinator).toBe("function");
   // Compile-time proof against the generated, actual namespace—not a type cast.
   const actual: PairingHttpEnvironment = env;
   expect(actual.PAIRINGS).toBe(env.PAIRINGS);

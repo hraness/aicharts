@@ -5,8 +5,11 @@ export interface RequestLifetime {
   waitUntil(promise: Promise<void>): void;
 }
 
+type VerifierFetchInit = RequestInit & Readonly<{ credentials: "omit" }>;
+type VerificationKeyAlgorithm = Readonly<{ name: string; modulusLength: number; hash?: Readonly<{ name: string }> }>;
+
 export interface VerifierDependencies {
-  fetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response>;
+  fetch(input: RequestInfo | URL, init?: VerifierFetchInit): Promise<Response>;
   now(): number;
   setTimeout(callback: () => void, milliseconds: number): unknown;
   clearTimeout(handle: unknown): void;
@@ -231,7 +234,7 @@ export function createUsageOidcVerifier(dependencies: VerifierDependencies) {
                 const jwk = owned.keys[index]!;
                 const key = await resolver({ alg: "RS256", kid: jwk.kid });
                 checkFlight();
-                const algorithm = key.algorithm as RsaHashedKeyAlgorithm;
+                const algorithm = key.algorithm as VerificationKeyAlgorithm;
                 if (key.type !== "public" || algorithm.name !== "RSASSA-PKCS1-v1_5" || algorithm.hash?.name !== "SHA-256" || !Number.isInteger(algorithm.modulusLength) || algorithm.modulusLength < 2048 || algorithm.modulusLength > 4096 || Math.ceil(algorithm.modulusLength / 8) !== owned.lengths[index] || key.usages.length !== 1 || key.usages[0] !== "verify") throw unavailable;
                 keys.set(jwk.kid!, Object.freeze({ key, signatureBytes: owned.lengths[index]! }));
               }
