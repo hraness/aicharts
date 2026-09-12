@@ -94,6 +94,50 @@ fn insert<T: Clone + PartialEq>(
     }
 }
 
+/// Validate selected values before container ownership can refuse a record.
+/// Missing evidence stays distinct from malformed evidence; no owner is stored.
+pub(super) fn validate_token(payload: &Payload) -> Result<Field<u64>, TurnError> {
+    for field in [
+        &payload.thread_id,
+        &payload.session_id,
+        &payload.turn_id,
+        &payload.root_turn_id,
+        &payload.response_id,
+    ] {
+        native(field)?;
+    }
+    match &payload.usage {
+        Object::Value(usage) => match usage.total_tokens {
+            Field::Value(Number::Unsigned(value)) if value <= MAX_RESPONSE_TOTAL => {
+                Ok(Field::Value(value))
+            }
+            Field::Missing => Ok(Field::Missing),
+            Field::Null => Ok(Field::Null),
+            _ => Err(TurnError::MalformedRecord),
+        },
+        Object::Missing => Ok(Field::Missing),
+        Object::Null => Ok(Field::Null),
+        Object::Invalid => Err(TurnError::MalformedRecord),
+    }
+}
+
+pub(super) fn validate_call(payload: &Payload) -> Result<(), TurnError> {
+    let kind = call_kind(payload.kind).expect("caller selected a supported call");
+    native(if matches!(kind, CallKind::Web | CallKind::Image) {
+        &payload.id
+    } else {
+        &payload.call_id
+    })?;
+    match &payload.internal_chat_message_metadata_passthrough {
+        Object::Value(stamp) => {
+            native(&stamp.turn_id)?;
+        }
+        Object::Missing | Object::Null => {}
+        Object::Invalid => return Err(TurnError::MalformedRecord),
+    }
+    Ok(())
+}
+
 impl Observations {
     pub(super) fn token(
         &mut self,
@@ -102,28 +146,7 @@ impl Observations {
         key: &[u8; 32],
         diagnostics: &mut BTreeSet<TurnDiagnostic>,
     ) -> Result<Option<Owner>, TurnError> {
-        for field in [
-            &payload.thread_id,
-            &payload.session_id,
-            &payload.turn_id,
-            &payload.root_turn_id,
-            &payload.response_id,
-        ] {
-            native(field)?;
-        }
-        let total = match &payload.usage {
-            Object::Value(usage) => match usage.total_tokens {
-                Field::Value(Number::Unsigned(value)) if value <= MAX_RESPONSE_TOTAL => {
-                    Field::Value(value)
-                }
-                Field::Missing => Field::Missing,
-                Field::Null => Field::Null,
-                _ => return Err(TurnError::MalformedRecord),
-            },
-            Object::Missing => Field::Missing,
-            Object::Null => Field::Null,
-            Object::Invalid => return Err(TurnError::MalformedRecord),
-        };
+        let total = validate_token(payload)?;
         if !matches!(total, Field::Value(_)) {
             diagnostics.insert(TurnDiagnostic::MissingResponseTotal);
         }
@@ -161,6 +184,7 @@ impl Observations {
         key: &[u8; 32],
         diagnostics: &mut BTreeSet<TurnDiagnostic>,
     ) -> Result<Option<Owner>, TurnError> {
+        validate_call(payload)?;
         let kind = call_kind(payload.kind).expect("caller selected a supported call");
         let hosted = matches!(kind, CallKind::Web | CallKind::Image);
         // The optional response-item ID of a function/custom call is not its

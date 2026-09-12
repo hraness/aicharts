@@ -208,7 +208,7 @@ fn partial_sources_join_only_after_each_source_binds_its_own_thread() {
     changed["payload"]["id"] = json!("other-thread");
     assert_eq!(
         error(&lines(&[header(), start(), changed, end()])),
-        TurnError::SessionIdentityChanged
+        TurnError::ContainerIdentityAmbiguous
     );
 }
 
@@ -223,7 +223,7 @@ fn optional_session_id_stays_unknown_and_present_id_is_checked() {
     known["payload"]["session_id"] = Value::Null;
     assert_eq!(error(&lines(&[known.clone()])), TurnError::MalformedRecord);
     known["payload"]["session_id"] = json!("other");
-    assert_eq!(error(&lines(&[known])), TurnError::SessionIdentityChanged);
+    assert_eq!(error(&lines(&[known])), TurnError::SessionTreeMismatch);
 }
 
 #[test]

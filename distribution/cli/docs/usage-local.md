@@ -37,6 +37,8 @@ Repeat `--codex FILE` to combine selected files. `turns` accepts neither directo
 
 A root turn is one provider-defined turn of the primary agent, not a session, message, API request, or child-agent turn. The result uses `sourceProfile: 2` and `scope: "root_direct"`. Child tokens and calls are excluded. A root turn does not establish that a human sent a prompt; origin and account remain unknown.
 
+The first valid file header fixes its thread. A declared child may share its parent's root-session ID and remains excluded. A declared copied-history file with foreign headers or a shared root-session ID is accepted only without selected observations, with `inherited_metadata_only` and `unsupported_ancestry` diagnostics. Mixed metadata containing selected observations is refused; a later header never switches ownership. Preserve refused sources. A failed requested file or merge produces no partial summary and does not modify logs.
+
 Daily `completed` and `aborted` cohorts stay separate. Each whole turn belongs to its terminal’s UTC day, including turns crossing midnight. “Completed” means a provider-declared non-aborted terminal, which can include an error; it does not mean the task succeeded. Open or undated turns have no daily average.
 
 Each metric has its own denominator:

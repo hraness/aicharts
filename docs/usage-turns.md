@@ -20,6 +20,23 @@ Input omissions, historical starts without explicit root attribution, declared f
 
 The combined ceiling is 65,536 raw lifecycle/usage/supported-call observations across all selected sources. `rawObservations` counts them before deduplication, including complete selected records with missing fields. Incomplete non-LF tails remain deferred and unclassified under the inherited byte/physical-record limits. Malformed or duplicate selected keys fail closed. Names, prompts, arguments, outputs, and other ignored content are not retained or used for identity, attribution, or metric values. Byte/line/depth bookkeeping and limit failures still depend on input shape; fixed errors never echo content.
 
+### Container identity and refusals
+
+The first valid session header fixes the file's canonical thread. A later header never changes which thread owns observations. Codex can give a descendant thread the same root-session ID as its parent; the reader accepts that distinction only with explicit ancestry and excludes the child from root measurements. A missing root-session ID remains unknown. Repeated explicit values for one metadata thread must agree, including canonical evidence merged across files.
+
+Declared copied-history files are more limited. They may contain ancestor headers after the canonical inherited-history declaration only when there are no selected lifecycle, response-usage, or supported-call observations. Those ancestor headers cannot exclude an independent parent's file. For an observation-free file, `inherited_metadata_only` is added when it contains a foreign header, or its own canonical evidence combines a distinct shared root-session ID with inherited history. This diagnostic is not synthesized from flags first combined across files. These accepted metadata-only shapes also receive `unsupported_ancestry`; other ancestry exclusions can report `unsupported_ancestry` alone.
+
+Mixed metadata with any selected observation refuses, even when the observation has missing IDs or precedes the later header. Shared-session inherited history also refuses selected observations when its ancestry is learned in another file. Selected malformed fields still fail their own checks before an ownership refusal. Existing equal-ID, single-header fork exclusions are unchanged; they are not proof of general copied-record ownership.
+
+| Fixed error | Meaning |
+| --- | --- |
+| `turn_session_tree_mismatch` | A metadata thread differs from its explicit root session without supported exclusion evidence. |
+| `turn_metadata_session_conflict` | Repeated explicit root-session values for one metadata thread disagree. |
+| `turn_container_identity_ambiguous` | A foreign header appears without the canonical thread's prior inherited-history declaration. |
+| `turn_inherited_observation_ownership` | A mixed-metadata or shared-session inherited shape contains selected observations whose ownership is unsupported. |
+
+These replace the independent turn reader's `turn_session_identity_changed` error; the ordinary historical collector is unchanged. Preserve the source when a shape is refused. The command does not repair logs, skip a failed requested file, or return a partial summary. This compatibility change retains `sourceProfile: 2`, existing measured-root output, metric denominators, and all resource limits. Synthetic shape tests establish these rules, not compatibility with every installed provider release.
+
 The following generic projection remains separate. It accepts its own exact numeric observations and calculates elapsed runtime from qualified boundary timestamps. No conversion currently fabricates those timestamps from provider durations, and no CLI output is automatically fed into it. Observed response totals and requested calls cannot populate its complete-token/dispatched-call fields. An eventual persistence/transport adapter must preserve the measurement basis, independent denominators, and partial-coverage distinction.
 
 ## What a turn measures
