@@ -28,9 +28,6 @@
 .task-discovery__links span span { display: block; font-size: 13px; color: var(--muted); line-height: 1.5; margin-top: 5px; }
 .task-discovery__links > a > span:last-child { color: var(--muted); }
 .task-discovery__links > a:hover strong { text-decoration: underline; text-underline-offset: 4px; }
-.chart-page-footer { display: flex; flex-wrap: wrap; gap: 12px 26px; color: var(--muted); font-size: 12px; padding-block: 28px 8px; }
-.chart-page-footer a { text-underline-offset: 4px; }
-.chart-page-footer > span { margin-left: auto; }
 .coding-home .chart-app { margin-inline: 0; }
 .coding-home .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
 .coding-home .chart-benchmark-select { width: 190px; flex: 0 1 190px; max-width: 100%; }
@@ -69,6 +66,4 @@
   .task-discovery > header { align-items: start; }
   .task-discovery h2 { font-size: 19px; max-width: 13ch; }
   .task-discovery__links > a { align-items: start; gap: 8px; }
-  .chart-page-footer { gap: 14px 22px; }
-  .chart-page-footer > span { flex-basis: 100%; margin-left: 0; }
 }

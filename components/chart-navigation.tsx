@@ -1,4 +1,5 @@
 import Link from "next/link";
+import "@/styles/chart-footer.css";
 
 export function ChartNavigation({ current }: Readonly<{ current: "/" | "/coding" }>) {
   return <nav className="chart-navigation" aria-label="Chart collection" data-analytics-surface="benchmark_chart">

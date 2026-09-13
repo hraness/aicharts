@@ -121,9 +121,8 @@ test("metric selectors reserve normal-flow space outside the plot", () => {
 
 test("provider filtering uses one responsive edge inset", () => {
   expect(firstRule(".provider-filter-shell")).not.toMatch(/padding\s*:/u);
-  expect(firstRule(
-    ".provider-filter-surface.ui-toggle-group__surface:is([data-hovered], [data-focus-within], [data-pressed])",
-  )).toContain("--jelly-fill: transparent");
+  expect(firstRule(".provider-filter-surface.ui-toggle-group__surface")).toContain("background: transparent");
+  expect(firstRule(".provider-filter-surface.ui-toggle-group__surface")).toContain("border-radius: 8px");
   expect(stylesheet).toMatch(/\.provider-filter\s*\{[^}]*padding-inline:\s*clamp\(12px, 2vw, 24px\);[^}]*scroll-padding-inline:\s*clamp\(12px, 2vw, 24px\);/su);
   expect(stylesheet).not.toMatch(/\.provider-filter\s*\{[^}]*border(?:-[a-z-]+)?:/su);
   expect(stylesheet).not.toMatch(/@media \(max-width:\s*760px\)[\s\S]*?\.provider-filter\s*\{[^}]*padding:/u);
@@ -284,8 +283,10 @@ test("chart canvas is full bleed while its header and resource nav own safe gutt
 
 test("share export floats over the chart with a quiet bounded surface", () => {
   expect(stylesheet).not.toContain(".share-label");
-  expect(firstRule(".share-trigger.ui-surface")).toContain("--jelly-color-border-default: transparent");
-  expect(firstRule(".share-trigger.ui-surface")).toContain("--jelly-fill: color-mix(in oklch, var(--surface-raised) 92%, transparent)");
+  expect(firstRule(".share-trigger.ui-surface")).toContain("background: color-mix(in oklch, var(--surface-raised) 92%, transparent)");
+  expect(firstRule(".share-trigger.ui-surface")).toContain("color: var(--foreground)");
+  expect(firstRule(".share-trigger.ui-surface:hover,\n.ui-menu-trigger:has(> .share-menu-popover) > .share-trigger.ui-surface")).toContain("background: var(--surface-active)");
+  expect(stylesheet).not.toContain("--jelly-");
   expect(firstRule(".share-control")).toContain("position: absolute");
   expect(firstRule(".share-control")).toContain("right: var(--chart-content-inset)");
   expect(firstRule(".share-control")).toContain("top: var(--chart-compact-inset)");
