@@ -374,6 +374,24 @@ test("incomplete notices retain diagnostic evidence without successful receipt o
   assert.ok(fs.readdirSync(join(f.input.outputDirectory, "evidence")).some(name => name.includes("cargo-build")));
 });
 
+test("unknown native diagnostics preserve only fixed categories in the failed summary", async t => {
+  let accessorCalls = 0;
+  for (const category of ["build_script_links", "generated_archive_load", "scratch_load", "system_library", "SYNTHETIC_PRIVATE_PATH", null]) {
+    const f = fixture(t), result = { ok: false, error: "notices_unknown_native", path: "SYNTHETIC_PRIVATE_PATH" };
+    if (category === null) Object.defineProperty(result, "nativeCategory", { get() { accessorCalls++; throw new Error("SYNTHETIC_PRIVATE_PATH"); } });
+    else result.nativeCategory = category;
+    f.host.collectNotices = async () => result;
+    assert.equal((await internals.runWith(f.input, f.host)).error, "notices_incomplete");
+    const summary = JSON.parse(fs.readFileSync(join(f.input.outputDirectory, "summary.json")));
+    assert.deepEqual(summary.diagnostic, { module: "notices", code: "notices_unknown_native",
+      ...(["build_script_links", "generated_archive_load", "scratch_load", "system_library"].includes(category) ? { nativeCategory: category } : {}) });
+    assert.equal(JSON.stringify(summary).includes("SYNTHETIC_PRIVATE_PATH"), false);
+    assert.equal(fs.existsSync(join(f.input.outputDirectory, "qualification.json")), false);
+    assert.equal(fs.existsSync(join(f.input.outputDirectory, "assets")), false);
+  }
+  assert.equal(accessorCalls, 0);
+});
+
 test("module diagnostics retain only fixed allowlisted codes", async t => {
   for (const code of ["git_failed", "SYNTHETIC_PRIVATE_ERROR_PATH"]) {
     const f = fixture(t); f.host.readSource = () => ({ ok: false, error: code });

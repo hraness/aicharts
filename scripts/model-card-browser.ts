@@ -1,6 +1,7 @@
 import { access } from "node:fs/promises";
 import { join } from "node:path";
 import { ATLAS_DATASETS } from "../lib/benchmark-atlas-catalog";
+import { verifyUsageDashboard } from "./usage-browser";
 
 import {
   chromium,
@@ -614,7 +615,7 @@ const server = Bun.spawn([
   String(port),
 ], {
   cwd: repository,
-  env: { ...process.env, NODE_ENV: "production" },
+  env: { ...process.env, NODE_ENV: "production", AICHARTS_USAGE_AUTH_ENABLED: "0", AICHARTS_USAGE_PRIVATE_READ_ENABLED: "0" },
   stderr: "inherit",
   stdout: "inherit",
 });
@@ -629,6 +630,7 @@ try {
     await verifyReducedMotion(browser, baseUrl);
     await verifyReducedTransparency(browser, baseUrl);
     await verifyForcedColors(browser, baseUrl);
+    await verifyUsageDashboard(browser, baseUrl, repository, hostname, await reservePort());
   } finally {
     await browser.close();
   }

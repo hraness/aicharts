@@ -2,7 +2,7 @@ import { expect, test } from "bun:test";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
-test("Vercel binds fresh private sessions and its real default stays closed with auth disabled", () => {
+test("Vercel binds fresh private sessions, both default fences and missing-session outcomes", () => {
   // Public-module mocks and synthetic context stay in a sanitized child process.
   const fixture = fileURLToPath(new URL("../../fixtures/usage/vercel-private-days.fixture.ts", import.meta.url));
   const result = spawnSync(process.execPath, ["--no-env-file", "--no-install", fixture], {
@@ -11,5 +11,5 @@ test("Vercel binds fresh private sessions and its real default stays closed with
   });
   expect(result.error).toBeUndefined(); expect(result.signal).toBeNull(); expect(result.status).toBe(0);
   expect(result.stderr).toBe("");
-  expect(result.stdout).toBe('{"ok":true,"phase":"default-auth-disabled","fetches":2,"registrations":5,"reads":3,"finishes":3}');
+  expect(result.stdout).toBe('{"ok":true,"phase":"default-missing-session","fetches":2,"registrations":5,"reads":3,"finishes":3}');
 });

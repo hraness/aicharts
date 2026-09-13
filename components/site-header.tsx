@@ -30,7 +30,7 @@ export function SiteHeader({
   skipLabel?: string;
   skipTarget?: string;
 }>) {
-  const headerClassName = ["hraness-marketing-header", "site-header", className]
+  const headerClassName = ["hraness-marketing-header", "hraness-material-chrome", "site-header", className]
     .filter((value): value is string => value !== undefined)
     .join(" ");
   return (
@@ -42,7 +42,7 @@ export function SiteHeader({
         data-hraness-marketing="header"
       >
         <div className="hraness-marketing-header__inner">
-          <Link className="hraness-marketing-header__brand" href="/">{site.domain}</Link>
+          <Link className="hraness-marketing-header__brand" href="/"><span aria-hidden="true">📈</span> {site.domain}</Link>
           <nav aria-label="Site" className="hraness-marketing-header__nav">
             {SITE_HEADER_LINKS.map(link => (
               <Link

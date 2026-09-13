@@ -4,8 +4,11 @@ import Link from "next/link";
 import { ChartPageFooter } from "@/components/chart-navigation";
 import { SiteHeader } from "@/components/site-header";
 import { searchSite } from "@/app/site";
+import { DailyUsageDashboard } from "@/components/usage/daily-dashboard";
+import { usagePageConfiguration } from "@/lib/usage/private-days-page";
 
 import "@/styles/usage.css";
+import "@/styles/usage-dashboard.css";
 
 export const metadata = createPublicSiteMetadata({
   ...searchSite,
@@ -19,7 +22,15 @@ const metrics = [
   ["Hourly", "Throughput", "Messages, tokens per second, and concurrent agents without transcript data."],
 ] as const;
 
-export default function UsagePage() {
+export default async function UsagePage() {
+  const configuration = await usagePageConfiguration();
+  if (configuration.available) return <>
+    <SiteHeader current="/usage" />
+    <main className="usage-home" id="main-content">
+      <DailyUsageDashboard key={configuration.todayUtcDay} todayUtcDay={configuration.todayUtcDay} />
+      <ChartPageFooter />
+    </main>
+  </>;
   return <>
     <SiteHeader current="/usage" />
     <main className="usage-home" id="main-content">

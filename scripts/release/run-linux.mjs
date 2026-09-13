@@ -11,6 +11,7 @@ import { hydrateReleaseSource } from "./hydrate-source.mjs";
 import { assembleLinuxRelease } from "./assemble.mjs";
 import { validateArchive } from "./archive.mjs";
 import { encodeLinuxQualificationReport, validateLinuxQualificationReport } from "./linux-qualification.mjs";
+import { linuxNativeDiagnostic } from "./linux-notices.mjs";
 
 const MiB = 1024 * 1024;
 const TARGET = "x86_64-unknown-linux-gnu";
@@ -343,7 +344,12 @@ async function runWith(value, host = HOST) {
     const summary = { schemaVersion: 1, operation: "linux-qualification", checksPassed: false, profile: "linux-cli-v1", source: { commit: input.commit, tree: input.expectedTree }, runner, stages: [], compatibility: { cpuEvidence: "baseline_build_policy_and_native_smoke", universalBaselineExecutionProven: false }, error: null };
     context = { input, directories, summary, logBytes: 0, smokeCalls: 0, smokeMillis: 0 };
     const moduleResult = (module, result, code) => {
-      if (!result?.ok) { summary.diagnostic = { module, code: MODULE_ERRORS[module].has(result?.error) ? result.error : "unclassified_module_failure" }; fail(code); }
+      if (!result?.ok) {
+        summary.diagnostic = { module, code: MODULE_ERRORS[module].has(result?.error) ? result.error : "unclassified_module_failure" };
+        const category = module === "notices" ? linuxNativeDiagnostic(result) : null;
+        if (category !== null) summary.diagnostic.nativeCategory = category;
+        fail(code);
+      }
       return result.value;
     };
     const stage = name => { need(summary.stages.length < 64, "deadline_exceeded"); need(host.now() - started < CAPS.deadline, "deadline_exceeded"); summary.stages.push(name); host.progress(name); };

@@ -1,0 +1,31 @@
+/* Shared enclosure paint only. Benchmark hues, plot geometry, local exports,
+ * and private usage surfaces retain their own semantics and behavior. */
+[data-hraness-material="lantern"] .site-header.hraness-material-chrome {
+  --hraness-marketing-header-background: var(--hraness-material-chrome-paint);
+  --hraness-marketing-header-backdrop: var(--hraness-material-chrome-blur);
+  border-block-end-color: var(--hraness-material-seam);
+}
+
+[data-hraness-material="lantern"] .plain-header.hraness-material-chrome {
+  --surface: var(--plain-background);
+  background: var(--hraness-material-chrome-paint);
+  border-block-end: 1px solid var(--hraness-material-seam);
+}
+
+[data-hraness-material="lantern"] .plain-header.hraness-material-chrome .plain-header__inner {
+  border-block-end: 0;
+}
+
+[data-hraness-material="lantern"] .ui-top-bar.hraness-material-chrome {
+  background: var(--hraness-material-chrome-paint);
+  border-block-end-color: var(--hraness-material-seam);
+}
+
+[data-hraness-material="lantern"] :is(.share-trigger.ui-surface, .ui-menu-popover) {
+  box-shadow: var(--hraness-material-lift);
+}
+
+[data-hraness-material="lantern"] .ui-field__input {
+  box-shadow: var(--hraness-material-inset);
+  caret-color: var(--hraness-material-focus);
+}

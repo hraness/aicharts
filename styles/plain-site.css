@@ -310,13 +310,6 @@ body.plain-site > main {
   padding-left: max(var(--plain-shell-gutter), env(safe-area-inset-left));
 }
 
-.plain-footer:has(.ui-jelly-surface) {
-  padding-top: var(--space-6);
-  padding-right: max(var(--plain-shell-gutter), var(--space-6), env(safe-area-inset-right));
-  padding-bottom: max(var(--space-6), env(safe-area-inset-bottom));
-  padding-left: max(var(--plain-shell-gutter), var(--space-6), env(safe-area-inset-left));
-}
-
 .plain-site main:has(> .design-gallery[data-design-gallery-nested="true"]) {
   padding-inline: max(var(--plain-shell-gutter), var(--space-6));
 }

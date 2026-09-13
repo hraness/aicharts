@@ -1,0 +1,70 @@
+.usage-daily { padding-block-end: 3rem; }
+.usage-daily__heading { align-items: baseline; display: flex; flex-wrap: wrap; gap: 1rem 2rem; justify-content: space-between; margin-block-end: 2rem; }
+.usage-daily__heading h1 { font-size: 2.5rem; letter-spacing: -.035em; line-height: 1.1; }
+.usage-daily__heading p { color: var(--muted); margin-block-start: .6rem; max-inline-size: 65ch; }
+.usage-daily__privacy { color: var(--muted); font-size: .8rem; }
+.usage-daily__controls { align-items: end; border-block: 1px solid var(--grid); display: flex; flex-wrap: wrap; gap: 1rem; padding-block: 1.25rem; }
+.usage-daily__controls label { display: grid; font-size: .8rem; font-weight: 600; gap: .4rem; }
+.usage-daily__controls input { background: var(--background); border: 1px solid var(--muted); border-radius: .35rem; caret-color: var(--foreground); color: var(--foreground); font: inherit; font-variant-numeric: tabular-nums; min-block-size: 2.75rem; min-inline-size: 10.5rem; padding: .55rem .65rem; }
+.usage-daily__controls input:hover { border-color: var(--foreground); }
+.usage-daily__controls input[aria-invalid="true"] { outline: 1px solid var(--warning); }
+.usage-daily__controls > span { color: var(--muted); font-size: .8rem; margin-block-end: .75rem; margin-inline-start: auto; }
+.usage-daily button { cursor: pointer; font-family: inherit; }
+.usage-daily .usage-button--quiet { background: var(--background); }
+.usage-daily button:disabled { cursor: wait; opacity: .5; transform: none; }
+.usage-daily :is(button, input, a, summary, [tabindex]):focus-visible { outline: 2px solid var(--foreground); outline-offset: 4px; }
+.usage-daily ::selection { background: var(--foreground); color: var(--background); }
+.usage-daily__range { font-size: .875rem; font-weight: 600; margin-block: 1.5rem 1rem; }
+.usage-daily__coverage { border-bottom: 1px solid var(--grid); color: var(--muted); font-size: .85rem; padding-block-end: 1.5rem; }
+.usage-daily__coverage strong { color: var(--foreground); font-weight: 600; }
+.usage-daily__coverage p { max-inline-size: 75ch; }
+.usage-daily__coverage p + p { margin-block-start: .5rem; }
+.usage-daily__totals { border-bottom: 1px solid var(--grid); display: grid; gap: 2rem; grid-template-columns: repeat(2, minmax(0, 1fr)); padding-block: 1.75rem; }
+.usage-daily__totals h2 { align-items: center; display: flex; font-size: 1.05rem; gap: .6rem; margin-block-end: 1rem; }
+.usage-daily__key { background: var(--foreground); block-size: .65rem; display: inline-block; inline-size: .65rem; }
+.usage-daily__key--claudeCode { background: transparent; border: 1px solid var(--foreground); }
+.usage-daily__totals dl { display: grid; gap: .75rem; }
+.usage-daily__totals dl > div { align-items: baseline; display: flex; gap: 1rem; justify-content: space-between; }
+.usage-daily__totals dt { color: var(--muted); font-size: .85rem; }
+.usage-daily__totals dd { font-size: 1.1rem; font-variant-numeric: tabular-nums; font-weight: 600; overflow-wrap: anywhere; text-align: end; }
+.usage-daily__figure { margin-block: 2rem; }
+.usage-daily__figure figcaption { align-items: baseline; display: flex; flex-wrap: wrap; font-size: .95rem; gap: .5rem 1rem; justify-content: space-between; }
+.usage-daily__figure figcaption span { color: var(--muted); font-size: .8rem; }
+.usage-daily__plot { align-items: end; border-bottom: 1px solid var(--muted); display: flex; gap: .4rem; height: 10rem; margin-block-start: 1.5rem; }
+.usage-daily__day { align-items: end; display: flex; flex: 1; gap: 2px; height: 100%; min-inline-size: 0; }
+.usage-daily__bar { background: var(--foreground); display: block; flex: 1; min-inline-size: 0; }
+.usage-daily__bar--claudeCode { background: var(--surface-raised); box-shadow: inset 0 0 0 1px var(--foreground); }
+.usage-daily__axis { color: var(--muted); display: flex; font-size: .75rem; justify-content: space-between; margin-block-start: .6rem; }
+.usage-daily__details { border-block: 1px solid var(--grid); margin-block: 2rem 1rem; }
+.usage-daily__details summary { cursor: pointer; font-weight: 600; padding-block: 1rem; }
+.usage-daily__details summary span { color: var(--muted); font-size: .8rem; font-weight: 400; margin-inline-start: .75rem; }
+.usage-daily__table-scroll { overflow-x: auto; scrollbar-color: var(--muted) var(--background); }
+.usage-daily table { border-collapse: collapse; font-size: .8rem; font-variant-numeric: tabular-nums; inline-size: 100%; min-inline-size: 44rem; }
+.usage-daily table caption { color: var(--muted); font-size: .8rem; padding-block: .25rem 1rem; text-align: start; }
+.usage-daily :is(th, td) { padding: .65rem .75rem; text-align: end; white-space: nowrap; }
+.usage-daily th { font-weight: 500; }
+.usage-daily :is(th:first-child, th[scope="row"]) { text-align: start; }
+.usage-daily thead { background: var(--surface-raised); }
+.usage-daily th[scope="rowgroup"] { vertical-align: top; }
+.usage-daily__row-start { border-top: 1px solid var(--grid); }
+.usage-daily__notice { padding-block: 2.5rem 3rem; }
+.usage-daily__notice h2 { font-size: 1.4rem; letter-spacing: -.02em; }
+.usage-daily__notice p { color: var(--muted); margin-block: .75rem 1.5rem; max-inline-size: 65ch; }
+.usage-daily__hint { color: var(--muted); font-size: .8rem; margin-block-start: .75rem; max-inline-size: 75ch; }
+.usage-daily__error { color: var(--foreground); font-size: .875rem; margin-block-start: 1rem; }
+.usage-daily__loading { display: grid; gap: 1rem; padding-block: 1rem 3rem; }
+.usage-daily__loading span { background: var(--surface-raised); block-size: 2.5rem; }
+.usage-daily__loading span:nth-child(2) { inline-size: 75%; }
+.usage-daily__loading span:nth-child(3) { inline-size: 50%; }
+.usage-daily__announcement { block-size: 1px; clip-path: inset(50%); inline-size: 1px; overflow: hidden; position: absolute; white-space: nowrap; }
+@media (max-width: 700px) {
+  .usage-daily__heading h1 { font-size: 2rem; }
+  .usage-daily__totals { gap: 1.75rem; grid-template-columns: 1fr; }
+  .usage-daily__totals section + section { border-top: 1px solid var(--grid); padding-block-start: 1.5rem; }
+  .usage-daily__controls { gap: .75rem; }
+  .usage-daily__controls label { flex: 1 1 42%; min-inline-size: 0; }
+  .usage-daily__controls input { inline-size: 100%; min-inline-size: 0; }
+  .usage-daily__controls > span { flex-basis: 100%; margin: .25rem 0 0; }
+  .usage-daily__details summary span { display: block; margin-block-start: .25rem; margin-inline-start: 1rem; }
+  .usage-daily__plot { gap: 2px; height: 8rem; }
+}
