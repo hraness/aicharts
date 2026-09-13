@@ -10,6 +10,10 @@ import { promisify, types } from "node:util";
 
 const exec = promisify(execFile);
 const MiB = 1024 * 1024;
+// Ubuntu's package database can be cold on a fresh hosted runner. Keep each
+// ownership/version query bounded while allowing startup slower than the old
+// five-second cap; the qualification's overall deadline remains authoritative.
+const DPKG_QUERY_TIMEOUT_MS = 30_000;
 // Shared assembled-output ceiling; individual reads and section totals remain
 // independently bounded below.
 export const LINUX_NOTICES_MAX_BYTES = 64 * MiB;
@@ -254,7 +258,7 @@ function nativeOwner(basename) {
 }
 async function dpkg(args) {
   try {
-    const { stdout } = await exec("/usr/bin/dpkg-query", args, { encoding: "utf8", timeout: 5000, maxBuffer: MiB, env: { PATH: "/usr/bin:/bin", LC_ALL: "C" }, windowsHide: true });
+    const { stdout } = await exec("/usr/bin/dpkg-query", args, { encoding: "utf8", timeout: DPKG_QUERY_TIMEOUT_MS, maxBuffer: MiB, env: { PATH: "/usr/bin:/bin", LC_ALL: "C" }, windowsHide: true });
     return stdout;
   } catch (error) {
     if (error?.code === "ERR_CHILD_PROCESS_STDIO_MAXBUFFER") missingSystem("package_query_output_limit");
