@@ -1,5 +1,4 @@
 import { afterEach, describe, expect, test } from "bun:test";
-import { watch } from "node:fs";
 import { chmod, lstat, mkdir, mkdtemp, readFile, realpath, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -270,17 +269,16 @@ describe("one explicit private service attempt", () => {
   test("a factory resolving during timeout persistence has one cleanup owner and never fetches", async () => {
     const { manifest } = transcript(2), path = await seed(manifest);
     const lateFactory = Promise.withResolvers<QualificationPlatform>(), disposal = Promise.withResolvers<void>(), disposing = Promise.withResolvers<void>();
-    let factoryStarted = false, released = false, fetches = 0, disposals = 0;
+    let fetches = 0, disposals = 0;
     const platform: QualificationPlatform = { env: { QUALIFICATION: { fetch: async () => { fetches++; throw new Error("unexpected"); } } },
       dispose: async () => { disposals++; disposing.resolve(); await disposal.promise; } };
-    const watcher = watch(path, { persistent: false }, (_event, name) => {
-      // The first temporary manifest created after factory startup is the
-      // timeout result. Resolve while that durable save is still in progress,
-      // so the late factory and outer finally both reach cleanup.
-      if (factoryStarted && !released && name?.startsWith(".manifest-")) { released = true; lateFactory.resolve(platform); }
-    });
-    const pending = dispatchQualificationStep(path, { factory: async () => { factoryStarted = true; return await lateFactory.promise; },
-      now, verifySource: false, deadlineMs: 10 });
+    const pending = dispatchQualificationStep(path, { factory: async () => await lateFactory.promise,
+      now, verifySource: false, deadlineMs: 10, afterOutcomePersisted: async () => {
+        // Resolve after the timeout result is durable but before final cleanup.
+        // The late factory and the finally path must share one disposal owner.
+        lateFactory.resolve(platform);
+        await disposing.promise;
+      } });
     const timeout = Promise.withResolvers<never>(), timer = setTimeout(() => timeout.reject(new Error("test_factory_not_released")), 1000);
     let result: QualificationManifest;
     try {
@@ -288,7 +286,7 @@ describe("one explicit private service attempt", () => {
       await new Promise(resolve => setTimeout(resolve, 25));
       expect(fetches).toBe(0); expect(disposals).toBe(1);
       expect((await loadQualification(path, false)).steps.at(-1)?.state).toBe("ambiguous");
-    } finally { clearTimeout(timer); watcher.close(); lateFactory.resolve(platform); disposal.resolve(); result = await pending; }
+    } finally { clearTimeout(timer); lateFactory.resolve(platform); disposal.resolve(); result = await pending; }
     expect(result.steps.at(-1)?.state).toBe("ambiguous"); expect(disposals).toBe(1);
   });
   test("monotonic deadline and civil expiry or rollback close acceptance even before the timer runs", async () => {
