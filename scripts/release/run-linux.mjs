@@ -216,27 +216,71 @@ function recheckSource(directory, files, host) {
   walk(); need(found === expected.size, "source_changed");
 }
 function compareVersion(a, b) { const left = a.split(".").map(Number), right = b.split(".").map(Number); for (let i = 0; i < Math.max(left.length, right.length); i++) { const value = (left[i] ?? 0) - (right[i] ?? 0); if (value !== 0) return value; } return 0; }
+// Failure-only projection of the already capped readelf outputs. Unknown names,
+// paths, headers and tool text are never copied. These observations do not grant
+// compatibility: special version markers are observable but still refused below.
+const diagnosticVersion = name => /^(?:GLIBC|GCC)_[0-9]{1,3}(?:\.[0-9]{1,3}){1,2}$/u.test(name)
+  || name === "GLIBC_PRIVATE" || name === "GLIBC_ABI_DT_RELR";
+function elfObservations(output, library, version) {
+  const needed = [...output.dynamic.matchAll(/\(NEEDED\)\s+Shared library: \[([^\]]+)\]/gu)].map(match => match[1]);
+  const files = [...output.versions.matchAll(/\bFile: ([A-Za-z0-9_.+-]+)\s+Cnt:/gu)].map(match => match[1]);
+  const names = [...output.versions.matchAll(/\bName: ([A-Za-z0-9_.+-]+)\s+Flags:/gu)].map(match => match[1]);
+  const versions = [...new Set(names.filter(diagnosticVersion))];
+  return {
+    neededCountCappedAt17: Math.min(needed.length, 17),
+    knownNeeded: [...new Set(needed.filter(name => SYSTEM_LIBRARIES.has(name)))].sort(order),
+    unknownNeededCountCappedAt17: Math.min(needed.filter(name => !SYSTEM_LIBRARIES.has(name)).length, 17),
+    duplicateNeededCountCappedAt17: Math.min(needed.length - new Set(needed).size, 17),
+    versionFileCountCappedAt17: Math.min(files.length, 17),
+    knownVersionFiles: [...new Set(files.filter(name => SYSTEM_LIBRARIES.has(name)))].sort(order),
+    unknownVersionFileCountCappedAt17: Math.min(files.filter(name => !SYSTEM_LIBRARIES.has(name)).length, 17),
+    versionNameCountCappedAt65: Math.min(names.length, 65),
+    versionNames: versions.slice(0, 64).sort(order),
+    unknownVersionNameCountCappedAt65: Math.min(names.filter(name => !diagnosticVersion(name)).length, 65),
+    versionNamesTruncated: versions.length > 64,
+    rejectedLibrary: library === null ? null : SYSTEM_LIBRARIES.has(library) ? library : "other",
+    rejectedVersion: version === null ? null : diagnosticVersion(version) ? version : "other",
+  };
+}
+class ElfFailure extends Failure {
+  constructor(error, code, output, library, version) {
+    super(error);
+    this.diagnostic = { module: "elf", code, observed: elfObservations(output, library, version) };
+  }
+}
 function inspectElf(binary, output) {
-  need(binary.length >= 64 && binary.subarray(0, 7).equals(Buffer.from([0x7f, 0x45, 0x4c, 0x46, 2, 1, 1])) && binary.readUInt16LE(16) === 3 && binary.readUInt16LE(18) === 62, "elf_invalid");
-  need(/Class:\s+ELF64/u.test(output.header) && /Data:\s+2's complement, little endian/u.test(output.header) && /Machine:\s+Advanced Micro Devices X86-64/u.test(output.header), "elf_invalid");
+  const check = (condition, error, code, library = null, version = null) => { if (!condition) throw new ElfFailure(error, code, output, library, version); };
+  check(binary.length >= 64 && binary.subarray(0, 7).equals(Buffer.from([0x7f, 0x45, 0x4c, 0x46, 2, 1, 1])) && binary.readUInt16LE(16) === 3 && binary.readUInt16LE(18) === 62, "elf_invalid", "binary_identity");
+  check(/Class:\s+ELF64/u.test(output.header) && /Data:\s+2's complement, little endian/u.test(output.header) && /Machine:\s+Advanced Micro Devices X86-64/u.test(output.header), "elf_invalid", "header_identity");
   const interpreters = [...output.program.matchAll(/\[Requesting program interpreter: ([^\]]+)\]/gu)].map(match => match[1]);
-  need(interpreters.length === 1 && interpreters[0] === INTERPRETER && (output.program.match(/^\s*INTERP\s/gmu) ?? []).length === 1, "elf_invalid");
+  check(interpreters.length === 1 && interpreters[0] === INTERPRETER && (output.program.match(/^\s*INTERP\s/gmu) ?? []).length === 1, "elf_invalid", "interpreter");
   const stacks = output.program.split("\n").filter(line => /^\s*GNU_STACK\s/u.test(line));
-  need(stacks.length === 1 && /\sRW\s/u.test(stacks[0]) && !/\sRWE\s/u.test(stacks[0]), "elf_invalid");
-  need(!/\((?:RPATH|RUNPATH|TEXTREL)\)|\bTEXTREL\b/u.test(output.dynamic), "elf_invalid");
+  check(stacks.length === 1 && /\sRW\s/u.test(stacks[0]) && !/\sRWE\s/u.test(stacks[0]), "elf_invalid", "stack");
+  check(!/\((?:RPATH|RUNPATH|TEXTREL)\)|\bTEXTREL\b/u.test(output.dynamic), "elf_invalid", "dynamic_search_path");
   const dependencies = [...output.dynamic.matchAll(/\(NEEDED\)\s+Shared library: \[([^\]]+)\]/gu)].map(match => match[1]).sort(order);
-  need(dependencies.length >= 1 && dependencies.length <= 16 && new Set(dependencies).size === dependencies.length && dependencies.every(item => SYSTEM_LIBRARIES.has(item) && item !== "ld-linux-x86-64.so.2"), "runtime_invalid");
+  check(dependencies.length >= 1 && dependencies.length <= 16, "runtime_invalid", "dependency_count");
+  check(new Set(dependencies).size === dependencies.length, "runtime_invalid", "duplicate_dependency");
+  for (const library of dependencies) {
+    check(SYSTEM_LIBRARIES.has(library), "runtime_invalid", "unsupported_dependency", library);
+    check(library !== "ld-linux-x86-64.so.2", "runtime_invalid", "direct_interpreter_dependency", library);
+  }
   const required = new Map(); let library = null;
   for (const line of output.versions.split("\n")) {
     const file = /\bFile: ([A-Za-z0-9_.+-]+)\s+Cnt:/u.exec(line);
-    if (file) { library = file[1]; need(dependencies.includes(library), "runtime_invalid"); }
+    if (file) { library = file[1]; check(dependencies.includes(library), "runtime_invalid", "version_file_not_needed", library); }
     const name = /\bName: ([A-Za-z0-9_.+-]+)\s+Flags:/u.exec(line);
-    if (name) { need(library && /^(?:GLIBC|GCC)_[0-9]+(?:\.[0-9]+){1,2}$/u.test(name[1]), "runtime_invalid"); if (!required.has(library)) required.set(library, new Set()); required.get(library).add(name[1]); }
+    if (name) {
+      check(library, "runtime_invalid", "version_without_file", library, name[1]);
+      check(/^(?:GLIBC|GCC)_[0-9]+(?:\.[0-9]+){1,2}$/u.test(name[1]), "runtime_invalid", "unsupported_version", library, name[1]);
+      if (!required.has(library)) required.set(library, new Set()); required.get(library).add(name[1]);
+    }
   }
   const glibc = [...required.values()].flatMap(set => [...set]).filter(name => name.startsWith("GLIBC_")).map(name => name.slice(6)).sort(compareVersion);
-  need(glibc.length > 0 && compareVersion(glibc.at(-1), "2.35") <= 0, "runtime_invalid");
+  check(glibc.length > 0, "runtime_invalid", "missing_glibc_requirement");
+  check(compareVersion(glibc.at(-1), "2.35") <= 0, "runtime_invalid", "glibc_floor", null, "GLIBC_" + glibc.at(-1));
   const isa = [...output.notes.matchAll(/x86 ISA needed:\s*([^\n]+)/gu)].map(match => match[1].trim());
-  need(isa.length <= 1 && isa.every(value => value === "x86-64-baseline"), "elf_invalid");
+  check(isa.length <= 1, "elf_invalid", "isa_note_count");
+  check(isa.every(value => value === "x86-64-baseline"), "elf_invalid", "unsupported_isa_note");
   return { dependencies, required, maxGlibc: glibc.at(-1), isa: isa[0] ?? null };
 }
 function resolveLibraries(text, direct, host) {
@@ -346,7 +390,9 @@ async function runWith(value, host = HOST) {
     const linkMapBytes = host.readFile(mapPath, CAPS.map);
     const elf = {};
     for (const [name, flag] of [["header", "--file-header"], ["program", "--program-headers"], ["dynamic", "--dynamic"], ["versions", "--version-info"], ["notes", "--notes"]]) elf[name] = (await command("elf-" + name, "/usr/bin/readelf", ["--wide", flag, executable])).stdout.toString("utf8");
-    const measured = inspectElf(binary, elf);
+    let measured;
+    try { measured = inspectElf(binary, elf); }
+    catch (error) { if (error instanceof ElfFailure) summary.diagnostic = error.diagnostic; throw error; }
     const runtimeEnv = { PATH: "/usr/bin:/bin", LANG: "C", LC_ALL: "C", TZ: "UTC", TMPDIR: directories.tmp, LD_BIND_NOW: "1" };
     const resolved = await command("runtime-libraries", INTERPRETER, ["--list", executable], { env: runtimeEnv });
     const dynamicLibraries = resolveLibraries(resolved.stdout.toString("utf8"), measured.dependencies, host);

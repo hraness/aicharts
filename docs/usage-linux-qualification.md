@@ -20,6 +20,8 @@ Cargo fetches the locked public dependencies into a fresh private cache. Compila
 
 Success retains the assembler's five exact files under `assets/`, `qualification.json` and a bounded `summary.json`. A failed job retains no successful qualification artifact; its bounded summary identifies the failing stage. The workflow uploads only those explicit outputs for seven days, never caches, private build evidence or the entire scratch directory. These public-repository artifacts are temporary test results, not immutable GitHub Releases or installation authority.
 
+An ELF refusal also records a fixed predicate code and bounded observations: recognized system-library names, numeric version requirements, and counts or redaction markers for unsupported values. This summary does not include arbitrary tool output, unknown names, paths or compiler diagnostics. These observations explain a refusal; they do not relax the compatibility policy or establish a successful run.
+
 The receipt stays in private staging until archive and installation checks finish. The final create-only receipt and successful job outcome establish completion; the diagnostic summary is not a substitute. Failed scratch may contain partial assets, which the successful-artifact upload step does not select.
 
 ## Measured compatibility and attribution
@@ -29,6 +31,8 @@ The runner fixes GCC 11, GNU bfd, Rust 1.97.1 and the x86-64 compiler baseline. 
 `scripts/release/linux-notices.mjs` joins Cargo's actual compiler-artifact messages with the GNU bfd map and installed runtime libraries. The checked mapping in `distribution/cli/linux-notices.json` binds selected registry package versions, package checksums and original notice hashes. Unknown compiled packages, native inputs or missing notices refuse qualification. The collector includes the bundled SQLite statement, Rust copyright and runtime license material, and the owning Ubuntu packages' notices and referenced common licenses. A hashed Cargo linker output must contain the same bytes as the executable supplied to assembly.
 
 This is a checked attribution policy, not a general license scanner or legal certification. The mapping may contain packages not built for this target; only the actual build selects application dependencies. Some retained toolchain and build-time notices are deliberately broader than the linked binary. A compiler, lockfile or target change needs renewed qualification and any corresponding reviewed mapping update.
+
+For Rust 1.97.1, require both installed copyright reports and the complete installed REUSE license directory, including the MIT, Apache-2.0 and Unicode-3.0 texts. The [distribution recipe](https://github.com/rust-lang/rust/blob/1.97.1/src/bootstrap/src/core/build_steps/dist.rs) installs these under `share/doc/rust`. The legacy `COPYRIGHT`, `LICENSE-MIT` and `LICENSE-APACHE` files belong to the archive's [non-installed overlay](https://github.com/rust-lang/rust/blob/1.97.1/src/bootstrap/src/utils/tarball.rs), not its installed component; the collector does not require them from the sysroot. Selected standard-library source notices and native package attribution remain mandatory.
 
 Run the focused source checks with:
 
