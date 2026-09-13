@@ -1,0 +1,19 @@
+{
+  "$schema": "../../../node_modules/wrangler/config-schema.json",
+  "name": "aicharts-usage-qualification-driver-closed",
+  "compatibility_date": "2026-09-10",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": false,
+  "preview_urls": false,
+  "send_metrics": false,
+  "observability": { "enabled": false },
+  // Node getPlatformProxy only. No driver Worker is deployed or served over HTTP.
+  // The root driver must select the exact private target and remote:true only
+  // after account, resource and source validation.
+  "services": [{
+    "binding": "QUALIFICATION",
+    "service": "aicharts-usage-synthetic-qualification-unconfigured",
+    "entrypoint": "SyntheticQualification",
+    "remote": false
+  }]
+}
