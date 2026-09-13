@@ -157,9 +157,9 @@ test("map paths never accept relative paths or shell-like whitespace", () => {
   }
 });
 
-test("bfd retains absolute GCC dot segments and rustc hidden temp directories", () => {
+test("bfd retains absolute GCC dot segments before system attribution", () => {
   const f = fixture();
-  f.loads.push("/usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu/Scrt1.o", "/fixture/tmp/.rustcAb9/symbols.o");
+  f.loads.push("/usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu/Scrt1.o");
   const result = planLinuxNotices(f.update());
   assert.equal(result.ok, true);
   assert.ok(result.value.loads.some(filename => filename.includes("/../")));
@@ -227,6 +227,71 @@ async function diskFixture(fn, { ring = false } = {}) {
 function crateArchive(f, pkg) {
   return path.join(f.input.cargoHomeDirectory, "registry/cache", path.basename(path.dirname(path.dirname(pkg.manifest_path))), `${pkg.name}-${pkg.version}.crate`);
 }
+
+test("pinned rustc symbols object uses the exact measured link output parent", async () => {
+  for (const hashed of [false, true]) {
+    await diskFixture(async f => {
+      const executable = f.input.executablePath;
+      const output = hashed ? path.join(path.dirname(executable), "deps/aicharts-0123456789abcdef") : executable;
+      await mkdir(path.dirname(output), { recursive: true });
+      await writeFile(executable, "Synthetic matching linker output\n");
+      if (hashed) await writeFile(output, "Synthetic matching linker output\n");
+      f.loads.push(`${path.dirname(output)}/rustcAz09xY/symbols.o`);
+      const input = f.update();
+      input.linkMapBytes = Buffer.from(input.linkMapBytes.toString().replace(`OUTPUT(${executable} `, `OUTPUT(${output} `));
+      // This minimal fixture stops at the next gate; the complete Ubuntu join
+      // below proves successful attribution with the same generated object.
+      assert.deepEqual(await collectLinuxNotices(input), { ok: false, error: "notices_rust_missing" });
+    });
+  }
+});
+
+test("rustc symbol attribution rejects other outputs, aliases and unrecognized objects", async () => {
+  for (const hashed of [false, true]) {
+    await diskFixture(async f => {
+      const executable = f.input.executablePath;
+      const output = hashed ? path.join(path.dirname(executable), "deps/aicharts-0123456789abcdef") : executable;
+      const directory = path.dirname(output);
+      await mkdir(directory, { recursive: true });
+      await writeFile(executable, "Synthetic matching linker output\n");
+      if (hashed) await writeFile(output, "Synthetic matching linker output\n");
+      const cases = [
+        [`${hashed ? path.dirname(executable) : path.join(directory, "deps")}/rustcAz09xY/symbols.o`, "unknown_load"],
+        [`${directory}-other/rustcAz09xY/symbols.o`, "unknown_load"],
+        [`${directory}/other-output/rustcAz09xY/symbols.o`, "unknown_load"],
+        [`${directory}/rustcAz09xY/nested/symbols.o`, "unknown_load"],
+        [`${directory}/./rustcAz09xY/symbols.o`, "unknown_load"],
+        [`${directory}/../${path.basename(directory)}/rustcAz09xY/symbols.o`, "unknown_load"],
+        [`${directory}/rustcAz09xY/../rustcAz09xY/symbols.o`, "unknown_load"],
+        [`${directory}//rustcAz09xY/symbols.o`, "unknown_load"],
+        [`${directory}/rustcAz09xY/symbol.o`, "unknown_load"],
+        [`${directory}/rustcAz09xY/symbols.o.extra`, "unknown_load"],
+        [`${directory}/rustcAz09xY/unrecognized.o`, "unknown_load"],
+        [`${directory}/rustcAz09xY/symbols.a`, "generated_archive_load"],
+        [`${directory}/symbols.o`, "unknown_load"],
+        [`${directory}/aicharts-0123456789abcdef.rcgu.o`, "unknown_load"],
+        [`${directory}/.rustcAz09xY/symbols.o`, "unknown_load"],
+        [`${directory}/rustc/symbols.o`, "unknown_load"],
+        [`${directory}/rustcAz09x/symbols.o`, "unknown_load"],
+        [`${directory}/rustcAz09xY0/symbols.o`, "unknown_load"],
+        [`${directory}/rustcAz09x-/symbols.o`, "unknown_load"],
+        [`${directory}/rustcAz09x_/symbols.o`, "unknown_load"],
+        [`${directory}/rustcAz09xé/symbols.o`, "unknown_load"],
+        [`${directory}/rustcAz09xY.extra/symbols.o`, "unknown_load"],
+        [`${f.input.sourceDirectory}/rustcAz09xY/symbols.o`, "unknown_load"],
+        [`${f.input.scratchDirectory}/rustcAz09xY/symbols.o`, "scratch_load"],
+        [`${f.input.scratchDirectory}/.rustcAz09xY/symbols.o`, "scratch_load"],
+      ];
+      for (const [file, category] of cases) {
+        f.loads.push(file);
+        const input = f.update();
+        input.linkMapBytes = Buffer.from(input.linkMapBytes.toString().replace(`OUTPUT(${executable} `, `OUTPUT(${output} `));
+        assert.deepEqual(await collectLinuxNotices(input), { ok: false, error: "notices_unknown_native", nativeCategory: category }, file);
+        f.loads.pop();
+      }
+    });
+  }
+});
 
 test("collector admits only exact regular native outputs, whether bundled or directly loaded", async () => {
   await diskFixture(async f => {
@@ -427,7 +492,7 @@ test("complete synthetic Ubuntu filesystem and dpkg join emits deterministic not
     // package path. A same-basename but different target is never sufficient.
     f.loads[4] = "/usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu/Scrt1.o";
     const nativeArchives = planLinuxNotices(f.input).value.nativeArchives;
-    f.loads.push(...nativeArchives.map(archive => archive.file), "/usr/lib/x86_64-linux-gnu/libutil.a");
+    f.loads.push(...nativeArchives.map(archive => archive.file), "/usr/lib/x86_64-linux-gnu/libutil.a", `${path.dirname(f.input.executablePath)}/rustcAz09xY/symbols.o`);
     f.update();
     const docFiles = new Map();
     for (const pkg of ["libgcc-11-dev", "libc6-dev", "libc6"]) {
