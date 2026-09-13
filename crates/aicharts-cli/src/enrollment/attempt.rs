@@ -1,10 +1,19 @@
 //! Dormant nonsecret attempt observations and private persistence primitives.
-//! There is no production store constructor, network dispatch, reference/vault
-//! effect or authority here. Decoding facts does not authenticate their history.
+//! The macOS store constructors remain private and uncalled; there is no public
+//! activation, network dispatch, reference/vault effect or authority here.
+//! Decoding facts does not authenticate their history.
 
 mod record;
 mod storage;
 
+#[cfg(target_os = "macos")]
+mod disk;
+#[cfg(target_os = "macos")]
+mod macos;
+
+#[cfg(all(test, target_os = "macos"))]
+#[path = "attempt/disk_tests.rs"]
+mod disk_tests;
 #[cfg(test)]
 #[path = "attempt/record_tests.rs"]
 mod record_tests;
