@@ -147,6 +147,23 @@ impl Request {
     }
 }
 
+/// Fixed projections used by the private attempt sequencer. These expose only
+/// identifiers and commitments; the proof preimages remain borrow-only inside
+/// the request codec.
+pub(super) fn request_intent_id(request: &Request) -> Id {
+    request.proof().intent_id
+}
+pub(super) fn request_poll_commitment(request: &Request) -> Id {
+    commitment(
+        b"poll",
+        &request.proof().intent_id,
+        &request.proof().poll_secret,
+    )
+}
+pub(super) fn request_upload_commitment(request: &Request) -> Option<Id> {
+    request.upload_commitment()
+}
+
 #[derive(PartialEq, Eq, Clone)]
 pub(super) struct Reservation {
     pub(super) intent_id: Id,
@@ -200,7 +217,7 @@ impl PairingState {
         }
     }
 }
-#[derive(PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
 pub(super) struct PairingView {
     pub(super) state: PairingState,
     pub(super) expires_at_ms: u64,
