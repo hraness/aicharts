@@ -236,9 +236,27 @@ mod native {
     }
 
     fn cohort_json(cohort: &RuntimeCohort) -> serde_json::Value {
+        let runtime_average = (cohort.runtime_eligible_turns != 0).then(|| {
+            serde_json::json!({
+                "numerator":cohort.runtime_ms_sum.to_string(),
+                "denominator":cohort.runtime_eligible_turns,
+                "basis":"provider_reported_runtime_ms",
+                "coverage":"partial"
+            })
+        });
         serde_json::json!({ "observedTurns":cohort.observed_turns,
             "runtimeEligibleTurns":cohort.runtime_eligible_turns,
             "runtimeMsSum":cohort.runtime_ms_sum.to_string(),
+            "averageTurnLength":{
+                "runtimeMs":runtime_average,
+                "tokens":null,
+                "toolCalls":null,
+                "observedSubtotals":{
+                    "responseTokens":observed_metric_json(&cohort.observed_subtotals.response_tokens,"observed_response_total"),
+                    "requestedCalls":observed_metric_json(&cohort.observed_subtotals.requested_calls,"observed_requested_calls")
+                },
+                "coverage":"partial"
+            },
             "observedSubtotals":{
                 "responseTokens":observed_metric_json(&cohort.observed_subtotals.response_tokens,"observed_response_total"),
                 "requestedCalls":observed_metric_json(&cohort.observed_subtotals.requested_calls,"observed_requested_calls")
@@ -295,6 +313,7 @@ mod native {
                     };
                     text.push_str(&format!("UTC day {} {label}: {} observed turns; {} runtime-eligible; observed average {average}.\n",
                         day.utc_day,cohort.observed_turns,cohort.runtime_eligible_turns));
+                    text.push_str("Average turn length: runtime uses provider-reported milliseconds; complete tokens and dispatched tool calls are unavailable; observed response-token/requested-call subtotals are partial.\n");
                     for (label, metric) in [
                         (
                             "Response tokens",
