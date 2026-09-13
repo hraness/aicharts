@@ -1,6 +1,6 @@
-# Terminal enrollment wire
+# Terminal enrollment wire and transport
 
-The dormant terminal enrollment codecs and Worker HTTP factory connect six terminal operations to the existing pairing and account Durable Objects. They do not add a CLI command, public Worker route, credential store, browser approval flow or upload authority.
+The dormant terminal enrollment codecs, native HTTPS adapter and Worker HTTP factory connect six terminal operations to the existing pairing and account Durable Objects. The native adapter has no production constructor. This source adds no CLI command, public Worker route, credential store, browser approval flow or upload authority.
 
 The TypeScript client codec and Rust `enrollment::contract` share independently authored literal vectors in `fixtures/usage/terminal-enrollment-v1.json`. Both own canonical bytes and validate replies against retained observations. The separate server codec validates authoritative RPC results without accepting or manufacturing client context.
 
@@ -31,7 +31,23 @@ Each reply must match its request operation and intent. Poll and confirm retain 
 
 The server may truncate reservation expiry to the earlier authentication expiry. The terminal still checks that the reservation falls within its independently retained original pairing lifetime. The server does not reconstruct original pairing creation from this truncated reservation: `PairingIntent` already audits that history.
 
-Expired initialization, reservation and enrollment readback is observational and does not renew a grant. Namespace success requires the pinned active receipt and a live reservation. The terminal codec's time sample does not replace the monotonic transport deadline or clock history that a later transport/custody implementation must own. Rust secret-bearing request, namespace and wire-byte wrappers provide explicit borrows without Debug or general serialization.
+Expired initialization, reservation and enrollment readback is observational and does not renew a grant. Namespace success requires the pinned active receipt and live original pairing and reservation expiries. The native adapter owns each exchange's fresh clock observations and monotonic deadline; durable clock history across restarts remains part of the later custody join. Rust secret-bearing request, namespace and wire-byte wrappers provide explicit borrows without Debug or general serialization. They do not promise erasure of transient copies.
+
+## Dormant native HTTPS exchange
+
+`enrollment::https::HttpsEnrollment::exchange_once` borrows the typed request and retained context, validates them before DNS and encodes the request once. It sends those canonical bytes in one synchronous exchange to the fixed enrollment URL. It neither changes the caller's context nor persists request or response bodies. The returned `AcceptedEnrollment` contains a fresh `observed_at_ms` and the checked domain result; it is not a custody receipt or upload grant.
+
+The transport uses the pinned Rustls/WebPKI roots, certificate and hostname verification, and SNI. It has no caller-supplied URL or roots, proxy, redirect, automatic retry or reusable idle connection. Requests set the exact media headers, Content-Length and `Connection: close`; they carry no cookies, browser Origin or authorization header. Proof preimages remain inside the canonical operation body. Test-only roots, loopback routing and clocks are unavailable in production builds.
+
+One attempt has a 20-second monotonic deadline. Configured stage timeouts are three seconds for DNS and sending request headers, five seconds for connection and each body direction, and 15 seconds for response headers, each capped by the remaining overall budget. Checks around blocking work, response cleanup and decoding reject late acceptance without restarting that budget. Blocking operating-system or TLS work is not preemptible. The shared DNS resolver retains its single process-wide permit until the OS lookup finishes, including after caller timeout; it receives only the fixed service hostname and port and keeps at most 16 addresses.
+
+The first wall-clock observation must not precede the retained context time. Subsequent observations reject wall-clock or monotonic regression. Decoding uses a fresh wall time after response and agent cleanup, and the final result carries the later checked observation. Confirm success must precede the original pairing expiry. Namespace success must also precede the retained reservation expiry. Both wall time and a monotonic deadline derived from the original expiry enforce these success-only fences; domain errors and expired initialize/reserve/enroll observations do not become live grants.
+
+Only a final HTTP/1.1 200 response enters domain decoding. It requires one exact `application/json; charset=utf-8` media value and one canonical positive Content-Length of at most 2,048, matching the complete decoded body. Empty, duplicated or alternate numeric lengths, compression, transfer encoding, Location, Set-Cookie, trailers and upgrades are refused. ureq is configured with a 16 KiB response-header limit; the adapter also limits the final response to 64 header fields. HTTP 503 becomes the fixed transport `Unavailable` error; other non-200 statuses become `InvalidResponse`, without reading or draining their bodies. Transport failures remain distinct from checked domain errors, and a failure after dispatch may follow a remote commit.
+
+These framing checks apply to the final message exposed by pinned ureq. The dependency consumes informational 1xx responses internally. Its Content-Length EOF is a message boundary, not socket EOF or proof that no further bytes were sent. The adapter closes the connection without waiting for peer FIN, including after rejection or codec failure; it does not inspect bytes beyond that decoded message. Chunked and close-delimited replies remain unsupported.
+
+The transport asserts at compile time that the existing all-profile `log` macro suppression remains enabled, because dependency traces can include raw bodies. The enrollment and upload TLS fixtures share one process-global test logger owner and retain it through server cleanup. Their synthetic capture records only whether a log call occurred, never its payload.
 
 ## Authoritative Worker dispatch
 
@@ -43,10 +59,18 @@ Enroll and namespace first read and validate the authoritative reservation, deri
 
 The adapter retains the exact source-specific pairing error sets and the current enrollment error union. Before account dispatch, checked `invalid_input` and `not_initialized` reservation-read failures map to `storage_unavailable`, matching the account operation. Other reachable read errors retain their exact mappings. Unknown shapes or impossible operation errors become operational 503.
 
-## Request lifetime and remaining qualification
+## Worker lifetime and remaining qualification
 
-Each request has a 10-second total budget, five-second body/direct-RPC stages and one of eight outstanding-work slots. The factory registers its terminal work before reading bytes or dispatching RPCs. Slots remain held until actual body/RPC cleanup settles, including late outcomes. Each raw RPC envelope is owned, validated and copied before its once-only disposal; raw then-accessors do not participate in the adapter's promise resolution.
+Each Worker request has a 10-second total budget, five-second body/direct-RPC stages and one of eight outstanding-work slots. The factory registers its terminal work before reading bytes or dispatching RPCs. Slots remain held until actual body/RPC cleanup settles, including late outcomes. Each raw RPC envelope is owned, validated and copied before its once-only disposal; raw then-accessors do not participate in the adapter's promise resolution.
 
 Captured generation, abort state, clock progression, deadlines and validated success expiry are checked through response delivery. Timeout never starts a later reserve/account operation. It does not cancel a committed mutation, prove a global recovery barrier, or authorize retry, credential replacement or recovery fallback.
 
-Focused source validation consists of the client/server codec and HTTP tests, the Rust enrollment tests, and `bun run scripts/usage-worker-tools.ts test-terminal-enrollment`. The real workerd suite exercises the existing DOs, auth-truncated reservations, exact replay, revocation and restart. Local fixtures do not establish live Accounts authority, native HTTPS framing, operating-system credential custody, arbitrary restore, a public service or product activation. Follow [Usage Worker boundaries](usage-worker.md#validation-and-activation) and the [private Cloudflare procedure](usage-cloudflare-qualification.md) for their separate gates.
+Focused source validation consists of the client/server codec and HTTP tests, the Rust enrollment tests, and `bun run scripts/usage-worker-tools.ts test-terminal-enrollment`. For the native TLS and shared logger cases, run:
+
+```text
+cargo test --locked -p aicharts-cli --bin aicharts -- enrollment::https:: upload::https::
+```
+
+Follow the host scheduler requirements for native and aggregate checks. The local TLS fixtures cover the frozen vectors, trust refusal, framing and size bounds, lost replies, clock/expiry checks, cleanup and logging. The real workerd suite separately exercises the existing DOs, auth-truncated reservations, exact replay, revocation and restart. Neither fixture connects the native adapter to a deployed Worker.
+
+Durable attempt persistence, original credential references, operating-system custody, explicit terminal account selection and the sealed production constructor remain unfinished. Local fixtures do not establish live Accounts authority, actual edge framing, process-death enrollment recovery, arbitrary restore, a public service or product activation. Follow [Usage Worker boundaries](usage-worker.md#validation-and-activation) and the [private Cloudflare procedure](usage-cloudflare-qualification.md) for their separate gates.

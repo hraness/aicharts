@@ -10,6 +10,9 @@ import { promisify, types } from "node:util";
 
 const exec = promisify(execFile);
 const MiB = 1024 * 1024;
+// Shared assembled-output ceiling; individual reads and section totals remain
+// independently bounded below.
+export const LINUX_NOTICES_MAX_BYTES = 64 * MiB;
 const TARGET = "x86_64-unknown-linux-gnu";
 const REGISTRY = "registry+https://github.com/rust-lang/crates.io-index";
 const ERRORS = new Set(["notices_invalid_input", "notices_limit", "notices_build_incomplete", "notices_unmapped_crate", "notices_crate_changed", "notices_unknown_native", "notices_rust_missing", "notices_system_missing", "notices_source_changed"]);
@@ -472,7 +475,7 @@ export async function collectLinuxNotices(input) {
     const chunks = [Buffer.from(heading)];
     for (const [label, bytes] of [...sections].sort(([a], [b]) => compare(a, b))) chunks.push(Buffer.from(`\n===== ${label} =====\nSHA-256: ${digest(bytes)}\n\n`), bytes, Buffer.from("\n"));
     const bytes = Buffer.concat(chunks);
-    if (bytes.length > 64 * MiB) fail("notices_limit");
+    if (bytes.length > LINUX_NOTICES_MAX_BYTES) fail("notices_limit");
     return { ok: true, value: { bytes, sha256: digest(bytes), components: sections.size } };
   } catch (error) { return failure(error, "notices_invalid_input"); }
 }
