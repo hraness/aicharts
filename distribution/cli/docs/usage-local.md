@@ -49,6 +49,8 @@ Each metric has its own denominator:
 | Response-token subtotal | `observedSubtotals.responseTokens.sum` | That metric’s `turnsWithEvidence` |
 | Requested-call subtotal | `observedSubtotals.requestedCalls.sum` | That metric’s `turnsWithEvidence` |
 
+The explicit `averageTurnLength` object repeats these day/cohort ratios for machine consumers. Its `runtimeMs` is `{ numerator, denominator, basis: "provider_reported_runtime_ms", coverage: "partial" }` or `null`; `tokens` and `toolCalls` remain `null`, while nested `observedSubtotals` retain the partial response-token/requested-call evidence.
+
 Runtime uses the provider’s reported elapsed milliseconds, not subtraction of log timestamps. Missing durations or ambiguous timing leave runtime unavailable for that turn. Divide `runtimeMsSum` by `runtimeEligibleTurns` only when the count is nonzero; a zero eligible count means unavailable, not a zero-length turn.
 
 Response-token subtotals sum explicitly owned response usage reports. Requested-call subtotals count supported raw requests, including requests that may be denied, fail, or be interrupted. They do not establish dispatched or successful tool calls. Exact copies deduplicate; conflicting selected evidence refuses the result.

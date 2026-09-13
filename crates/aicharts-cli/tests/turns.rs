@@ -80,6 +80,21 @@ fn subtotals(tokens: (&str, u64, u64), calls: (&str, u64, u64)) -> Value {
     })
 }
 
+fn average_turn_length(
+    runtime: Option<(&str, u64)>,
+    tokens: (&str, u64, u64),
+    calls: (&str, u64, u64),
+) -> Value {
+    json!({
+        "runtimeMs":runtime.map(|(numerator,denominator)|json!({
+            "numerator":numerator,"denominator":denominator,
+            "basis":"provider_reported_runtime_ms","coverage":"partial"
+        })).unwrap_or(Value::Null),
+        "tokens":null,"toolCalls":null,
+        "observedSubtotals":subtotals(tokens,calls),"coverage":"partial"
+    })
+}
+
 struct Fixture(PathBuf);
 impl Fixture {
     fn new() -> Self {
@@ -188,8 +203,10 @@ fn observed_runtime_json_is_exact_numeric_only_and_inputs_unchanged() {
         "terminalTimePrecisionMs":1000,"sourcesRead":1,"linesRead":3,"bytesScanned":source().len(),
         "rawObservations":2,"partialSources":0,"unclassifiedTerminalTurns":0,"undatedRootTurns":0,"excludedThreads":0,
         "days":[{"utcDay":2,"completed":{"observedTurns":1,"runtimeEligibleTurns":1,"runtimeMsSum":"1537",
+                "averageTurnLength":average_turn_length(Some(("1537",1)),("0",0,0),("0",0,0)),
                 "observedSubtotals":subtotals(("0",0,0),("0",0,0))},
             "aborted":{"observedTurns":0,"runtimeEligibleTurns":0,"runtimeMsSum":"0",
+                "averageTurnLength":average_turn_length(None,("0",0,0),("0",0,0)),
                 "observedSubtotals":subtotals(("0",0,0),("0",0,0))}}],
         "tokens":null,"toolCalls":null,"diagnostics":["partial_history","unknown_session","unknown_origin","unmeasured_tokens","unmeasured_tools","partial_observations"],
         "unavailable":["tokens","tool_calls","pricing"]
