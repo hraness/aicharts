@@ -88,6 +88,8 @@ On macOS/Linux, initialize a new state directory outside the repository using yo
 
 The new directory has mode 0700 and its database has mode 0600. Initialization refuses an existing directory. A failed initialization can leave an incomplete directory; it is never automatically overwritten. Keep the key: a different key cannot open this ledger, and a missing directory is not silently recreated by collection.
 
+The foreground `daemon` runner uses the same collector and ledger. It retries only transient `ledger_busy_retry` and `ledger_changed_retry` results, three times by default with bounded 1/2/4-second delays; `--retry-attempts 0..8` changes that bound. Source changes, partial tails, malformed input, invalid state, and other fixed errors stop the process for supervisor-visible recovery.
+
 Collect explicit sources and inspect retained totals after a restart:
 
 ```sh

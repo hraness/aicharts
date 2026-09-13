@@ -97,3 +97,5 @@ Use global `./bin/aicharts --help` for their exact syntax before choosing an adv
 | `reindex-prepare` | Creates a separate split-key shadow only after exact old-history coverage. It never promotes or overwrites old state; a failure can leave an incomplete shadow. |
 
 Keep summaries and frames private if they reveal your usage. Source projections exclude prompt and response bodies, titles, tool arguments, and attachments, but the process still reads source bytes and runs with your user permissions. Numeric formats do not establish genuine provider usage or eliminate covert encoding. Nothing here enables a background service or uploads measurements. Sharing output with an agent or another application is a separate disclosure.
+
+The foreground daemon retries only the fixed transient ledger results `ledger_busy_retry` and `ledger_changed_retry`, three times by default with bounded 1/2/4-second delays. Use `--retry-attempts 0..8` to select the retry count. Source changes, partial tails, malformed input, invalid state, and all other errors stop the process so a supervisor can surface them rather than loop over a permanent failure.
