@@ -341,37 +341,8 @@ fn verified_tls_sends_one_exact_bounded_request_and_receives_correlated_journal(
 
 #[test]
 fn enabled_logger_cannot_observe_synthetic_bearer_or_batch_during_tls_exchange() {
-    struct CaptureLogger(Mutex<Vec<String>>);
-    impl log::Log for CaptureLogger {
-        fn enabled(&self, _: &log::Metadata<'_>) -> bool {
-            true
-        }
-
-        fn log(&self, record: &log::Record<'_>) {
-            self.0.lock().unwrap().push(record.args().to_string());
-        }
-
-        fn flush(&self) {}
-    }
-    static CAPTURE: CaptureLogger = CaptureLogger(Mutex::new(Vec::new()));
-
-    log::set_logger(&CAPTURE).expect("synthetic logger must be installed once");
-    log::set_max_level(log::LevelFilter::Trace);
-    assert_eq!(log::max_level(), log::LevelFilter::Trace);
-    let probe = log::Record::builder()
-        .args(format_args!("synthetic-log-sink-probe"))
-        .level(log::Level::Trace)
-        .target("aicharts.upload.synthetic")
-        .build();
-    assert!(log::logger().enabled(probe.metadata()));
-    // Direct delivery bypasses the compile-time macro filter, proving this is a
-    // live capture sink before exercising the dependencies' real logging paths.
-    log::logger().log(&probe);
-    assert_eq!(
-        CAPTURE.0.lock().unwrap().as_slice(),
-        ["synthetic-log-sink-probe"]
-    );
-    CAPTURE.0.lock().unwrap().clear();
+    // Declared before the server so capture ownership outlives its Drop join.
+    let capture = crate::transport_test_log::capture();
 
     let request = request();
     let sent_bytes = request.canonical_batch().to_vec();
@@ -392,10 +363,7 @@ fn enabled_logger_cannot_observe_synthetic_bearer_or_batch_during_tls_exchange()
         .unwrap();
     assert_eq!(body.bytes, expected);
     drop(server);
-    assert!(
-        CAPTURE.0.lock().unwrap().is_empty(),
-        "dependency logging must remain disabled through TLS exchange and cleanup"
-    );
+    capture.assert_empty();
 }
 
 #[test]

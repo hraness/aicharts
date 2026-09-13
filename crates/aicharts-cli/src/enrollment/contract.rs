@@ -640,7 +640,7 @@ fn valid_receipt(reservation: &Reservation, now: u64, receipt: &Receipt) -> bool
         && receipt.enrolled_at_ms < reservation.expires_at_ms
         && receipt.enrolled_at_ms <= now
 }
-fn valid_context(request: &Request, context: &Context) -> bool {
+pub(super) fn valid_context(request: &Request, context: &Context) -> bool {
     if !request.valid()
         || !time(context.now_ms)
         || context.confirmed_account_id.is_some_and(|id| !nonzero(&id))

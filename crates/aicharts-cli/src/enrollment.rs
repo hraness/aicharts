@@ -1,6 +1,7 @@
-//! Dormant terminal enrollment bytes and retained-context validation only.
-//! No transport, CLI command, filesystem, credential custody or activation lives
-//! here. A decoded response is not authentication or permission to upload.
+//! Dormant terminal enrollment codec and once-only HTTPS exchange. There is no
+//! production transport constructor, CLI command, filesystem, credential custody
+//! or activation here. A returned observation is not permission to upload.
 #![allow(dead_code)]
 
 pub(super) mod contract;
+mod https;

@@ -9,12 +9,13 @@ import { hydrateReleaseSource } from "./hydrate-source.mjs";
 import { assembleLinuxRelease } from "./assemble.mjs";
 import { validateArchive } from "./archive.mjs";
 import { validateLinuxQualificationReport } from "./linux-qualification.mjs";
+import { LINUX_NOTICES_MAX_BYTES } from "./linux-notices.mjs";
 
 // Private source-only seam. The shipped runner has no effects override. Fake
 // compiler/smoke facts exercise orchestration, never actual Linux qualification.
 const script = new URL("./run-linux.mjs", import.meta.url);
 const runtime = fs.readFileSync(script, "utf8").replace(/from "(\.\/[^"]+)"/gu, (_, relative) => "from " + JSON.stringify(new URL(relative, script).href));
-const internals = await import("data:text/javascript;base64," + Buffer.from(runtime + "\nexport { runWith, argumentsToInput, workflow, minimalEnvironment, inspectElf, resolveLibraries, compilerArtifact, execute, readRegular, prepareOutput, recheckSource, compareVersion };\n").toString("base64"));
+const internals = await import("data:text/javascript;base64," + Buffer.from(runtime + "\nexport { runWith, argumentsToInput, workflow, minimalEnvironment, inspectElf, resolveLibraries, compilerArtifact, execute, readRegular, prepareOutput, recheckSource, compareVersion, noticeOutputDiagnostic };\n").toString("base64"));
 const TARGET = "x86_64-unknown-linux-gnu";
 const RUST_COMMIT = "8bab26f4f68e0e26f0bb7960be334d5b520ea452";
 const SYSROOT = "/home/runner/.rustup/toolchains/1.97.1-" + TARGET;
@@ -361,6 +362,74 @@ test("synthetic orchestration crosses real source hydration, archive validation 
   assert.equal(f.calls.filter(call => call.args[0] === "fetch").length, 1);
   assert.equal(f.notices.length, 1); assert.ok(f.notices[0].dynamicLibraries.some(library => library.soname === "ld-linux-x86-64.so.2"));
   assert.equal(sha(fs.readFileSync(join(f.input.outputDirectory, "install/aicharts-0.1.0-" + TARGET + "/bin/aicharts"))), sha(elfBytes()));
+});
+
+test("complete synthetic notices above 16 MiB cross runner assembly and installed-byte verification", async t => {
+  const f = fixture(t), section = Buffer.alloc(8 * 1024 * 1024, 0x4e);
+  const data = Buffer.concat([bytes("SYNTHETIC TEST ONLY: not qualified licenses\n"),
+    bytes("\n===== Synthetic section one =====\nSHA-256: " + sha(section) + "\n\n"), section,
+    bytes("\n===== Synthetic section two =====\nSHA-256: " + sha(section) + "\n\n"), section, bytes("\n")]);
+  const expected = { bytes: data.length, sha256: sha(data) };
+  assert.ok(data.length > 16 * 1024 * 1024 && data.length < LINUX_NOTICES_MAX_BYTES);
+  f.host.collectNotices = async () => ok({ bytes: data, sha256: expected.sha256, components: 2 });
+  assert.equal((await internals.runWith(f.input, f.host)).ok, true);
+  const report = validateLinuxQualificationReport(fs.readFileSync(join(f.input.outputDirectory, "qualification.json")));
+  assert.equal(report.ok, true);
+  assert.deepEqual(report.value.value.notices, { complete: true, ...expected });
+  assert.equal(report.value.value.smoke.invocations, 16);
+  const manifest = JSON.parse(fs.readFileSync(join(f.input.outputDirectory, "assets/release-manifest.json")));
+  const cli = manifest.assets.find(asset => asset.kind === "cli");
+  const installed = fs.readFileSync(join(f.input.outputDirectory, "install", cli.root, "THIRD_PARTY_LICENSES.txt"));
+  assert.equal(installed.length, expected.bytes); assert.equal(sha(installed), expected.sha256);
+  const summary = JSON.parse(fs.readFileSync(join(f.input.outputDirectory, "summary.json")));
+  assert.equal(summary.checksPassed, true); assert.deepEqual(summary.notices, expected);
+});
+
+async function assertNoticeOutputRefused(f, reason, count) {
+  assert.deepEqual(await internals.runWith(f.input, f.host), { ok: false, error: "notices_incomplete" });
+  assert.equal(f.stages.includes("assembly"), false);
+  assert.equal(f.calls.some(call => call.executable.includes("/install/")), false);
+  assert.deepEqual(fs.readdirSync(join(f.input.outputDirectory, "install")), []);
+  assert.equal(fs.existsSync(join(f.input.outputDirectory, "qualification.json")), false);
+  assert.equal(fs.existsSync(join(f.input.outputDirectory, "assets")), false);
+  const summary = JSON.parse(fs.readFileSync(join(f.input.outputDirectory, "summary.json")));
+  assert.equal(summary.checksPassed, false); assert.equal(summary.error, "notices_incomplete");
+  assert.deepEqual(summary.diagnostic, { module: "notices", code: "notices_output_invalid", reason, bytesCappedAtLimitPlusOne: count });
+  assert.equal(JSON.stringify(summary).includes("SYNTHETIC_PRIVATE_NOTICE"), false);
+  assert.equal(JSON.stringify(summary).includes(f.root), false);
+}
+
+test("shared notice bound accepts exactly 64 MiB and refuses larger output before assembly", async t => {
+  assert.equal(LINUX_NOTICES_MAX_BYTES, 64 * 1024 * 1024);
+  // One allocation and a pure gate check cover the exact boundary; only the
+  // smaller above-16-MiB fixture performs full archive assembly and installation.
+  const data = Buffer.alloc(LINUX_NOTICES_MAX_BYTES + 2, 0x4e);
+  const boundary = data.subarray(0, LINUX_NOTICES_MAX_BYTES);
+  assert.equal(internals.noticeOutputDiagnostic({ bytes: boundary, sha256: sha(boundary) }), null);
+  const f = fixture(t);
+  f.host.collectNotices = async () => ok({ bytes: data, sha256: sha(data), components: 1 });
+  await assertNoticeOutputRefused(f, "byte_limit", LINUX_NOTICES_MAX_BYTES + 1);
+});
+
+test("empty, malformed and mismatched notice outputs retain only safe refusal evidence", async t => {
+  let accessorCalls = 0;
+  const privateText = "SYNTHETIC_PRIVATE_NOTICE", data = bytes(privateText);
+  const accessor = key => Object.defineProperty({ bytes: data }, key, { configurable: true, get() { accessorCalls++; throw new Error(privateText); } });
+  const proxy = new Proxy({}, { getOwnPropertyDescriptor() { accessorCalls++; throw new Error(privateText); } });
+  for (const [value, reason, count] of [
+    [null, "wrong_type", null],
+    [{ bytes: privateText }, "wrong_type", null],
+    [{ bytes: new Uint8Array(data) }, "wrong_type", null],
+    [accessor("bytes"), "wrong_type", null],
+    [proxy, "wrong_type", null],
+    [{ bytes: Buffer.alloc(0), sha256: sha(Buffer.alloc(0)) }, "empty", 0],
+    [{ bytes: data, sha256: privateText }, "hash_mismatch", data.length],
+    [accessor("sha256"), "hash_mismatch", data.length],
+  ]) {
+    const f = fixture(t); f.host.collectNotices = async () => ok(value);
+    await assertNoticeOutputRefused(f, reason, count);
+  }
+  assert.equal(accessorCalls, 0);
 });
 
 test("incomplete notices retain diagnostic evidence without successful receipt or assets", async t => {

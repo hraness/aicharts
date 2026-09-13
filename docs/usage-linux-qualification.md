@@ -6,9 +6,11 @@ This is qualification infrastructure, not an authenticated public release. A wor
 
 ## Latest hosted result
 
-The [13 September run 34763938565](https://github.com/hraness/aicharts/actions/runs/34763938565) used PR 212 merge `01b49c5a7e1226452f7147ca15ef9d6c449bde03`, tree `a4cfb30e5a878c0d91259267d3d2983ec9bbd569`, on Ubuntu image `20260907.292.1`. Exact source/build checks, ELF/runtime validation and all 14 CLI smokes passed. Notice collection then refused `notices_invalid_input`, reported by the runner as `notices_incomplete`, before archive assembly and installation. There is no successful qualification artifact from this run.
+The [13 September run 34775435194](https://github.com/hraness/aicharts/actions/runs/34775435194) used PR 214 merge `77d295b0c5b31062ed7edff9795e418afa5d35c1`, tree `efce53a8830f9255dcc3ac21bb33bddd7c360d38`, on Ubuntu image `20260907.292.1`. Exact source/build checks, ELF/runtime validation and all 14 CLI smokes passed. Notice collection returned success, then the runner rejected its output as `notices_incomplete` before archive assembly and installation. There is no successful qualification artifact from this run.
 
-The retained summary does not identify the failing notice bytes. The Ubuntu GCC 11.4 copyright text uses unquoted common-license paths followed by a sentence period, which the previous collector treated as part of the filename. The collector now parses the closed basename set and punctuation rules below; its complete local notice fixture passes. The exact hosted copyright input was not retained, so this is a reproduced source defect, not proof of the run's sole failure. Renew qualification from the next protected-main merge after the complete integration gate passes.
+The retained summary has no collector failure diagnostic or output size. Tracing that revision's successful collector return identifies a limit mismatch: the collector constructs and hashes a nonempty Buffer of up to 64 MiB, but the next runner predicate caps it at 16 MiB. The runner now consumes the collector's shared final-output bound. Individual section limits, source attribution, hash verification and the archive's size limits remain enforced. Renew qualification from the next protected-main merge after the complete integration gate passes; the exact hosted byte count and successful assembly still need that run.
+
+The [previous run 34763938565](https://github.com/hraness/aicharts/actions/runs/34763938565) stopped earlier with `notices_invalid_input`. Its source repair handles Ubuntu GCC copyright references ending with an unquoted sentence period. The closed common-license basename and punctuation rules below remain in force.
 
 ## Run one qualification
 
@@ -30,6 +32,8 @@ An ELF refusal also records a fixed predicate code and bounded observations: rec
 
 Native notice refusals can include a source-owned `nativeCategory` for build-script identity/links/paths, generated archives, linker inputs, Rust libraries or system/runtime attribution. Only the fixed category allowlist crosses into the summary; arbitrary package names, paths and tool output remain excluded. `unknown_load` can include an unrecognized object inside the Cargo target directory; it does not establish that the input came from an external path.
 
+The runner checks successful collector output before assembly. A refusal records `notices_output_invalid` with one fixed reason: `wrong_type`, `empty`, `byte_limit` or `hash_mismatch`. Its byte count saturates at 64 MiB plus one, or is null when the value is not a Buffer. Notice contents, supplied hashes and paths are absent from this diagnostic.
+
 The receipt stays in private staging until archive and installation checks finish. The final create-only receipt and successful job outcome establish completion; the diagnostic summary is not a substitute. Failed scratch may contain partial assets, which the successful-artifact upload step does not select.
 
 ## Measured compatibility and attribution
@@ -39,6 +43,8 @@ The runner fixes GCC 11, GNU bfd, Rust 1.97.1 and the x86-64 compiler baseline. 
 The fixed glibc loader may also be a direct `DT_NEEDED` dependency. glibc's [libc linker script](https://sourceware.org/legacy-ml/libc-alpha/2013-05/msg00231.html) includes the loader through `AS_NEEDED`; [GNU ld](https://sourceware.org/binutils/docs/ld/Options.html) can retain that dependency when it resolves required symbols. The resolved `ld-linux-x86-64.so.2` must match the canonical `/lib64/ld-linux-x86-64.so.2` interpreter, and its requested symbol versions must exist in that exact runtime. The same runtime hash, notices and archive dependency inventory checks apply.
 
 `scripts/release/linux-notices.mjs` joins Cargo's actual compiler-artifact messages with the GNU bfd map and installed runtime libraries. The checked mapping in `distribution/cli/linux-notices.json` binds selected registry package versions, package checksums and original notice hashes. Unknown compiled packages, native inputs or missing notices refuse qualification. The collector includes the bundled SQLite statement, Rust copyright and runtime license material, and the owning Ubuntu packages' notices and referenced common licenses. A hashed Cargo linker output must contain the same bytes as the executable supplied to assembly.
+
+Retained sections are capped at 16 MiB each and 48 MiB combined. The collector and runner share a 64 MiB bound for the final formatted notice bundle. The runner verifies the complete buffer's SHA-256 before assembly, whose independent archive limits still apply. Notices are never truncated to fit a size limit.
 
 Pinned Rust's [linker implementation](https://github.com/rust-lang/rust/blob/8bab26f4f68e0e26f0bb7960be334d5b520ea452/compiler/rustc_codegen_ssa/src/back/link.rs) creates its temporary directory under `output.parent()` and writes `symbols.o` there. Its pinned `tempfile` 3.23.0 builder appends six ASCII alphanumeric characters to `rustc`. The collector therefore accepts only `rustc[A-Za-z0-9]{6}/symbols.o` directly beneath the measured GNU `OUTPUT` parent, preserving the original normalized spelling. Other output directories, extra path depth, dot-segment aliases, hidden directories and unknown objects remain refused. The former scratch-root exception is removed.
 

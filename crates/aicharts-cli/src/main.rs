@@ -9,6 +9,8 @@ mod prefix;
 mod reindex;
 mod state;
 mod transport_dns;
+#[cfg(test)]
+mod transport_test_log;
 mod turns;
 mod upload;
 mod version;

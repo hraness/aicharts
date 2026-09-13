@@ -11,7 +11,7 @@ import { hydrateReleaseSource } from "./hydrate-source.mjs";
 import { assembleLinuxRelease } from "./assemble.mjs";
 import { validateArchive } from "./archive.mjs";
 import { encodeLinuxQualificationReport, validateLinuxQualificationReport } from "./linux-qualification.mjs";
-import { linuxNativeDiagnostic } from "./linux-notices.mjs";
+import { LINUX_NOTICES_MAX_BYTES, linuxNativeDiagnostic } from "./linux-notices.mjs";
 
 const MiB = 1024 * 1024;
 const TARGET = "x86_64-unknown-linux-gnu";
@@ -20,7 +20,7 @@ const RUST_COMMIT = "8bab26f4f68e0e26f0bb7960be334d5b520ea452";
 const INTERPRETER = "/lib64/ld-linux-x86-64.so.2";
 const INTERPRETER_SONAME = path.basename(INTERPRETER);
 const SYSTEM_LIBRARIES = new Set([INTERPRETER_SONAME, "libc.so.6", "libm.so.6", "libgcc_s.so.1", "libpthread.so.0", "librt.so.1", "libdl.so.2", "libutil.so.1", "libresolv.so.2"]);
-const CAPS = Object.freeze({ deadline: 20 * 60_000, build: 12 * 60_000, logs: 32 * MiB, diagnostic: MiB, map: 8 * MiB, notices: 16 * MiB, binary: 64 * MiB, metadata: 8 * MiB });
+const CAPS = Object.freeze({ deadline: 20 * 60_000, build: 12 * 60_000, logs: 32 * MiB, diagnostic: MiB, map: 8 * MiB, notices: LINUX_NOTICES_MAX_BYTES, binary: 64 * MiB, metadata: 8 * MiB });
 const ERRORS = new Set(["invalid_input", "unsupported_host", "invalid_workflow", "unsupported_destination", "destination_exists", "source_failed", "source_changed", "unsupported_source", "toolchain_failed", "toolchain_mismatch", "process_failed", "process_timeout", "process_output_limit", "process_custody_failed", "deadline_exceeded", "build_failed", "artifact_invalid", "elf_invalid", "runtime_invalid", "smoke_failed", "notices_incomplete", "assembly_failed", "install_failed", "write_failed"]);
 const MODULE_ERRORS = Object.freeze({
   source: new Set(["invalid_input", "unsupported_repository", "repository_changed", "missing_object", "invalid_object", "invalid_source", "limit_exceeded", "git_failed", "deadline_exceeded"]),
@@ -33,6 +33,21 @@ class Failure extends Error { constructor(code) { super(code); this.code = code;
 const fail = code => { throw new Failure(code); };
 const need = (condition, code) => { if (!condition) fail(code); };
 const checked = (result, code) => { if (!result?.ok) fail(code); return result.value; };
+
+function noticeOutputDiagnostic(value) {
+  // Emit only source-owned reasons and a saturating count, never notice text,
+  // hashes, paths, package identities or accessor-provided diagnostics.
+  const refused = (reason, count = null) => ({ module: "notices", code: "notices_output_invalid", reason, bytesCappedAtLimitPlusOne: count });
+  if (!value || typeof value !== "object" || types.isProxy(value)) return refused("wrong_type");
+  const bytes = Object.getOwnPropertyDescriptor(value, "bytes")?.value;
+  if (types.isProxy(bytes) || !types.isUint8Array(bytes) || !Buffer.isBuffer(bytes)) return refused("wrong_type");
+  const count = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(Uint8Array.prototype), "byteLength").get.call(bytes);
+  if (count === 0) return refused("empty", 0);
+  if (count > CAPS.notices) return refused("byte_limit", CAPS.notices + 1);
+  const expected = Object.getOwnPropertyDescriptor(value, "sha256")?.value;
+  if (typeof expected !== "string" || sha(bytes) !== expected) return refused("hash_mismatch", count);
+  return null;
+}
 
 function exact(value, keys) {
   need(value && typeof value === "object" && !types.isProxy(value), "invalid_input");
@@ -450,7 +465,8 @@ async function runWith(value, host = HOST) {
     for (const entry of fs.readdirSync(path.join(directories.smoke, "state"))) { const bytes = host.readFile(path.join(directories.smoke, "state", entry), 32 * MiB); need(!bytes.includes(CANARY) && !bytes.includes(key), "smoke_failed"); }
     stage("notices");
     const notices = moduleResult("notices", await host.collectNotices({ sourceDirectory: directories.source, cargoHomeDirectory: directories.cargo, targetDirectory: directories.target, sysrootDirectory: sysroot, scratchDirectory: directories.tmp, cargoMetadataBytes: metadata.stdout, cargoMessagesBytes: build.stdout, linkMapBytes, dynamicLibraries: dynamicLibraries.map(({ soname, path }) => ({ soname, path })), executablePath: executable }), "notices_incomplete");
-    need(Buffer.isBuffer(notices.bytes) && notices.bytes.length > 0 && notices.bytes.length <= CAPS.notices && sha(notices.bytes) === notices.sha256, "notices_incomplete");
+    const noticeDiagnostic = noticeOutputDiagnostic(notices);
+    if (noticeDiagnostic !== null) { summary.diagnostic = noticeDiagnostic; fail("notices_incomplete"); }
     stage("source-recheck");
     need(inventoryHash(moduleResult("source", host.readSource({ repositoryDirectory: input.repositoryDirectory, commit: input.commit, expectedTree: input.expectedTree }), "source_failed").sourceFiles) === sourceHash, "source_changed");
     recheckSource(directories.source, source.sourceFiles, host);
