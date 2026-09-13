@@ -10,6 +10,8 @@ use std::time::Duration;
 const DEFAULT_INTERVAL_SECONDS: u64 = 15 * 60;
 const MIN_INTERVAL_SECONDS: u64 = 60;
 const MAX_INTERVAL_SECONDS: u64 = 24 * 60 * 60;
+const DEFAULT_RETRY_ATTEMPTS: u8 = 3;
+const MAX_RETRY_ATTEMPTS: u8 = 8;
 
 #[derive(Debug)]
 struct Options {
@@ -17,6 +19,7 @@ struct Options {
     key_file: PathBuf,
     sources: Vec<(aicharts_protocol::Provider, PathBuf)>,
     interval_seconds: u64,
+    retry_attempts: u8,
     once: bool,
     json: bool,
 }
@@ -30,6 +33,8 @@ fn parse_options(args: &[String]) -> Result<Options, &'static str> {
     let mut sources = Vec::new();
     let mut interval_seconds = DEFAULT_INTERVAL_SECONDS;
     let mut interval_set = false;
+    let mut retry_attempts = DEFAULT_RETRY_ATTEMPTS;
+    let mut retry_set = false;
     let mut once = false;
     let mut json = false;
     let mut i = 1;
@@ -38,7 +43,7 @@ fn parse_options(args: &[String]) -> Result<Options, &'static str> {
             "--once" if !once => once = true,
             "--json" if once && !json => json = true,
             flag @ ("--state-dir" | "--key-file" | "--codex" | "--claude"
-            | "--interval-seconds") => {
+            | "--interval-seconds" | "--retry-attempts") => {
                 i += 1;
                 let value = args
                     .get(i)
@@ -63,6 +68,13 @@ fn parse_options(args: &[String]) -> Result<Options, &'static str> {
                         }
                         interval_set = true;
                     }
+                    "--retry-attempts" if !retry_set => {
+                        retry_attempts = value.parse().map_err(|_| "invalid_retry_attempts")?;
+                        if retry_attempts > MAX_RETRY_ATTEMPTS {
+                            return Err("invalid_retry_attempts");
+                        }
+                        retry_set = true;
+                    }
                     _ => return Err("invalid_option"),
                 }
             }
@@ -82,9 +94,29 @@ fn parse_options(args: &[String]) -> Result<Options, &'static str> {
         key_file: key_file.ok_or("key_required")?,
         sources,
         interval_seconds,
+        retry_attempts,
         once,
         json,
     })
+}
+
+fn retryable(error: &'static str) -> bool {
+    matches!(error, "ledger_busy_retry" | "ledger_changed_retry")
+}
+
+fn collect(options: &Options, args: &[String]) -> Result<String, &'static str> {
+    let mut attempt = 0u8;
+    loop {
+        match super::state::run(args) {
+            Ok(output) => return Ok(output),
+            Err(error) if retryable(error) && attempt < options.retry_attempts => {
+                let seconds = 1u64 << attempt.min(3);
+                std::thread::sleep(Duration::from_secs(seconds));
+                attempt += 1;
+            }
+            Err(error) => return Err(error),
+        }
+    }
 }
 
 fn collect_args(options: &Options) -> Vec<String> {
@@ -122,10 +154,10 @@ pub(super) fn run(args: &[String]) -> Result<String, &'static str> {
     {
         let collect_args = collect_args(&options);
         if options.once {
-            return super::state::run(&collect_args);
+            return collect(&options, &collect_args);
         }
         loop {
-            let output = super::state::run(&collect_args)?;
+            let output = collect(&options, &collect_args)?;
             println!("{output}");
             std::thread::sleep(Duration::from_secs(options.interval_seconds));
         }
@@ -173,6 +205,7 @@ mod tests {
         assert!(options.once);
         assert!(options.json);
         assert_eq!(options.interval_seconds, 60);
+        assert_eq!(options.retry_attempts, DEFAULT_RETRY_ATTEMPTS);
         assert_eq!(collect_args(&options)[0], "collect");
         assert!(!collect_args(&options).contains(&"--once".to_owned()));
     }
@@ -208,5 +241,28 @@ mod tests {
             .unwrap_err(),
             "invalid_option"
         );
+        assert_eq!(
+            parse_options(&args(&[
+                "daemon",
+                "--state-dir",
+                "state",
+                "--key-file",
+                "key",
+                "--codex",
+                "source",
+                "--retry-attempts",
+                "9"
+            ]))
+            .unwrap_err(),
+            "invalid_retry_attempts"
+        );
+    }
+
+    #[test]
+    fn retries_only_bounded_transient_ledger_results() {
+        assert!(retryable("ledger_busy_retry"));
+        assert!(retryable("ledger_changed_retry"));
+        assert!(!retryable("source_partial_tail"));
+        assert!(!retryable("ledger_invalid_state_do_not_reset"));
     }
 }
