@@ -7,6 +7,7 @@ import {
   type SuiteOidcRelyingPartyOptions,
 } from "@hraness/suite-accounts/oidc-rp";
 import { createPairingAuthentication, type UsagePairingIntent } from "./pairing-auth";
+import { pairingCookieName, pairingSetCookie } from "./pairing-custody";
 
 const binding = Object.freeze({
   authMode: "oidc-rp",
@@ -32,6 +33,13 @@ export type UsageAuthEnvironment = Readonly<{
 export type UsageAccountSession = Readonly<{
   suiteAccountId: string;
   expiresAtMs: number;
+}>;
+
+/** One request's live read and authority checks; contains no browser credentials. */
+export type UsageAccountSessionScope = Readonly<{
+  read(): Promise<UsageAccountSession | null>;
+  current(): boolean;
+  finish(): void;
 }>;
 
 type UsageAuthOptions = Readonly<{
@@ -109,6 +117,67 @@ function relyingParty(options: UsageAuthOptions, watchConfiguration = false): Su
   }
 }
 
+function beginAccountSession(request: Request, options: UsageAuthOptions): UsageAccountSessionScope | null {
+  try {
+    const cookieSecret = configuredSecret(options);
+    const requestOrigin = new URL(request.url).origin;
+    if (cookieSecret === null || requestOrigin !== binding.origin) return null;
+    // The SDK reads only request metadata here. Snapshot it without cloning or
+    // consuming the product's body; retain the original origin and abort fence.
+    const ownedRequest = new Request(request.url, { headers: request.headers });
+    const signal = request.signal;
+    const now = options.now ?? Date.now;
+    const fetcher = options.fetch ?? globalThis.fetch;
+    const validTime = (value: number) => Number.isSafeInteger(value) && !Object.is(value, -0)
+      && value >= 0 && value <= 8_640_000_000_000_000;
+    let open = true, readStarted = false, observed = 0;
+    let expiresAtMs: number | null = null;
+    const finish = () => { open = false; };
+    const current = () => {
+      if (!open) return false;
+      try {
+        const sampled = now();
+        if (!validTime(sampled) || sampled < observed || (expiresAtMs !== null && sampled >= expiresAtMs)
+          || signal.aborted || new URL(request.url).origin !== requestOrigin
+          || configuredSecret(options) !== cookieSecret) {
+          finish(); return false;
+        }
+        observed = sampled;
+        return open;
+      } catch { finish(); return false; }
+    };
+    if (!current()) return null;
+    const authority = createSuiteOidcRelyingParty({
+      consumer: binding.consumer, environment: binding.environment, cookieSecret,
+      receiptKeyVersion: "identity-v1", randomBytes: options.randomBytes,
+      now: () => {
+        if (!current()) throw new Error("Usage account session unavailable.");
+        return observed;
+      },
+      fetch: async (input, init) => {
+        if (!current()) throw new Error("Usage account session unavailable.");
+        // Do not reject a response after dispatch: let the SDK consume its body
+        // and clean up. The read below fences the eventual session projection.
+        return fetcher(input, init);
+      },
+    });
+    return Object.freeze({
+      current, finish,
+      async read(): Promise<UsageAccountSession | null> {
+        if (readStarted || !current()) return null;
+        readStarted = true;
+        try {
+          const session = await authority.serverAccountSession(ownedRequest);
+          if (session === null) { finish(); return null; }
+          expiresAtMs = session.accessTokenExpiresAtMs;
+          if (!validTime(expiresAtMs) || !current()) { finish(); return null; }
+          return Object.freeze({ suiteAccountId: session.suiteAccountId, expiresAtMs });
+        } catch { finish(); return null; }
+      },
+    });
+  } catch { return null; }
+}
+
 function errorResponse(code: string, status: number, allow?: string): Response {
   return Response.json({ error: { code }, schemaVersion: 1 }, {
     status,
@@ -147,6 +216,24 @@ function routeMethod(pathname: string): "GET" | "POST" | null {
   }
 }
 
+function callbackMode(request: Request): "ordinary" | "pairing" | "rejected" {
+  const header = request.headers.get("cookie");
+  if (header === null) return "ordinary";
+  if (header.length > 16_384) return "rejected";
+  let pairing = false;
+  for (const part of header.split(";")) {
+    const equals = part.indexOf("=");
+    const name = (equals < 0 ? part : part.slice(0, equals)).trim();
+    if (name !== pairingCookieName) continue;
+    if (pairing || equals < 0) return "rejected";
+    pairing = true;
+  }
+  // Presence selects a path, not authority. The pairing coordinator validates
+  // custody before exchange; each SDK completion rejects the other transaction
+  // version before provider work. Missing or invalid custody cannot fall back.
+  return pairing ? "pairing" : "ordinary";
+}
+
 /** Server-only composition; injected dependencies are for synthetic tests. */
 export function createUsageAuthServer(options: UsageAuthOptions = {}) {
   const pairing = createPairingAuthentication({
@@ -162,6 +249,10 @@ export function createUsageAuthServer(options: UsageAuthOptions = {}) {
     randomBytes: options.randomBytes ?? (length => crypto.getRandomValues(new Uint8Array(length))),
   });
   return Object.freeze({
+    beginAccountSession(request: Request): UsageAccountSessionScope | null {
+      return beginAccountSession(request, options);
+    },
+
     async startPairingAuthentication(request: Request, input: unknown): Promise<Response> {
       return privateResponse(await pairing.start(request, input), request);
     },
@@ -193,6 +284,16 @@ export function createUsageAuthServer(options: UsageAuthOptions = {}) {
             response = errorResponse("USAGE_AUTH_ROUTE_NOT_FOUND", 404);
           } else if (request.method !== method) {
             response = errorResponse("USAGE_AUTH_METHOD_NOT_ALLOWED", 405, method);
+          } else if (url.pathname === "/api/suite-auth/callback") {
+            const mode = callbackMode(request);
+            response = mode === "pairing" ? await pairing.complete(request)
+              : mode === "ordinary" ? await authority.callback(request)
+                : errorResponse("USAGE_AUTH_REQUEST_REJECTED", 403);
+          } else if (url.pathname === "/api/suite-auth/start") {
+            response = await authority.start(request);
+            // Both modes replace the same SDK transaction cookie. Only an
+            // admitted ordinary start cancels the browser's pairing custody.
+            if (response.status === 302) response.headers.append("set-cookie", pairingSetCookie("", 0));
           } else {
             response = await authority.handle(request);
           }
@@ -225,3 +326,4 @@ export function createUsageAuthServer(options: UsageAuthOptions = {}) {
 const server = createUsageAuthServer();
 export const handleUsageAuth = server.handle;
 export const usageAccountSession = server.accountSession;
+export const beginUsageAccountSession = server.beginAccountSession;

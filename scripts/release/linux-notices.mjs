@@ -214,7 +214,7 @@ export async function collectLinuxNotices(input) {
       mapped.set(key, item);
     }
     const sections = new Map();
-    let total = 0;
+    let total = 0, archiveTotal = 0;
     function add(label, bytes) {
       text(label, 512);
       utf8(bytes);
@@ -236,8 +236,18 @@ export async function collectLinuxNotices(input) {
       if (pkg.source !== REGISTRY || !item || item.license !== pkg.license || pkg.license_file !== null) fail("notices_unmapped_crate");
       const directory = path.dirname(pkg.manifest_path);
       if (!inside(path.join(cargoHome, "registry/src"), directory) || await realpath(directory) !== directory || path.basename(directory) !== `${pkg.name}-${pkg.version}`) fail("notices_crate_changed");
-      const checksums = json(await read(path.join(directory, ".cargo-checksum.json"), MiB, "notices_crate_changed"), MiB);
-      if (checksums.package !== item.checksum) fail("notices_crate_changed");
+      const parts = path.relative(path.join(cargoHome, "registry/src"), directory).split(path.sep);
+      if (parts.length !== 2 || !/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/u.test(parts[0])) fail("notices_crate_changed");
+      // Registry packages are extracted from this cached archive. Cargo's
+      // .cargo-checksum.json belongs to vendored directory sources instead.
+      // Hash the actual package bytes against the source-owned registry checksum.
+      const cache = path.join(cargoHome, "registry/cache", parts[0]);
+      try { if (await realpath(cache) !== cache) fail("notices_crate_changed"); }
+      catch { fail("notices_crate_changed"); }
+      const archive = await read(path.join(cache, `${pkg.name}-${pkg.version}.crate`), 8 * MiB, "notices_crate_changed");
+      archiveTotal += archive.length;
+      if (archiveTotal > 64 * MiB) fail("notices_limit");
+      if (digest(archive) !== item.checksum) fail("notices_crate_changed");
       if (!array(item.files, 16).length) fail("notices_unmapped_crate");
       for (const file of item.files) {
         if (!LICENSE_FILE.test(relative(file.path)) || !HASH.test(file.sha256)) fail("notices_unmapped_crate");

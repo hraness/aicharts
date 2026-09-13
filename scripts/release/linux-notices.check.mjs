@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { mkdtemp, mkdir, writeFile, rm, readFile } from "node:fs/promises";
+import { mkdtemp, mkdir, writeFile, rm, readFile, symlink } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -135,9 +135,11 @@ async function diskFixture(fn) {
       await mkdir(dir, { recursive: true });
       const body = Buffer.from(`Synthetic ${pkg.name} notice fixture\n`);
       const file = pkg.name === "unicode-ident" ? "LICENSE-UNICODE" : "LICENSE";
-      const checksum = digest(Buffer.from(pkg.name));
+      const archive = Buffer.from(`Synthetic cached archive for ${pkg.name} ${pkg.version}\n`);
+      const checksum = digest(archive);
       await writeFile(`${dir}/${file}`, body);
-      await writeFile(`${dir}/.cargo-checksum.json`, encode({ files: {}, package: checksum }));
+      await mkdir(path.dirname(crateArchive(f, pkg)), { recursive: true });
+      await writeFile(crateArchive(f, pkg), archive);
       policy.packages.push({ name: pkg.name, version: pkg.version, checksum, license: pkg.license, files: [{ path: file, sha256: digest(body) }] });
       if (pkg.name === "libsqlite3-sys") {
         await mkdir(`${dir}/sqlite3`);
@@ -149,6 +151,18 @@ async function diskFixture(fn) {
     await fn(f, policy, async () => writeFile(policyPath, encode(policy)));
   } finally { await rm(directory, { recursive: true, force: true }); }
 }
+
+function crateArchive(f, pkg) {
+  return path.join(f.input.cargoHomeDirectory, "registry/cache", path.basename(path.dirname(path.dirname(pkg.manifest_path))), `${pkg.name}-${pkg.version}.crate`);
+}
+
+test("collector validates Cargo registry archives without a vendored checksum file", async () => {
+  await diskFixture(async f => {
+    // Ordinary registry extraction has the cached .crate archive, not the
+    // .cargo-checksum.json file that Cargo writes for a vendored directory.
+    assert.deepEqual(await collectLinuxNotices(f.input), { ok: false, error: "notices_rust_missing" });
+  });
+});
 
 test("collector refuses unmapped crate instead of admitting nonempty notice bytes", async () => {
   await diskFixture(async (f, policy, save) => {
@@ -163,9 +177,30 @@ test("collector binds registry notice bytes and package checksum to owned mappin
     assert.equal((await collectLinuxNotices(f.input)).error, "notices_crate_changed");
   });
   await diskFixture(async (f) => {
-    await writeFile(path.join(path.dirname(f.packages[1].manifest_path), ".cargo-checksum.json"), encode({ package: "0".repeat(64) }));
+    await writeFile(crateArchive(f, f.packages[1]), "altered cached archive\n");
     assert.equal((await collectLinuxNotices(f.input)).error, "notices_crate_changed");
   });
+});
+
+test("missing, empty, oversized and symlinked cached archives remain closed", async () => {
+  for (const mode of ["missing", "empty", "oversized", "file-link", "directory-link"]) {
+    await diskFixture(async f => {
+      const archive = crateArchive(f, f.packages[1]), bytes = await readFile(archive);
+      await rm(archive);
+      if (mode === "empty") await writeFile(archive, Buffer.alloc(0));
+      if (mode === "oversized") await writeFile(archive, Buffer.alloc(8 * 1024 * 1024 + 1));
+      if (mode === "file-link") {
+        const target = path.join(f.input.scratchDirectory, "same-archive");
+        await writeFile(target, bytes); await symlink(target, archive);
+      }
+      if (mode === "directory-link") {
+        const target = path.join(f.input.scratchDirectory, "same-registry");
+        await mkdir(target); await writeFile(path.join(target, path.basename(archive)), bytes);
+        await rm(path.dirname(archive), { recursive: true }); await symlink(target, path.dirname(archive));
+      }
+      assert.equal((await collectLinuxNotices(f.input)).error, "notices_crate_changed", mode);
+    });
+  }
 });
 
 test("collector refuses unmapped native LOAD before any dpkg query", async () => {
