@@ -67,22 +67,15 @@ fn create_initialize_reopen_and_read_durable_on_real_apfs() {
 }
 
 #[test]
-fn explicit_path_constructor_retains_the_anchor_chain() {
+fn explicit_path_constructor_rejects_untrusted_syntax_before_effects() {
     with_anchor(|path| {
         let initial = initial_record();
-        MacStorage::validate_anchor(path).expect("validate explicit anchor");
-        let mut storage = MacStorage::create_new(path, &initial).expect("create by path");
-        let durable = storage::initialize(&mut storage, &initial).expect("initialize");
-        let token = durable.token();
-        assert!(token == storage::inspect(&mut storage).expect("inspect").token());
-        drop(storage);
-        let mut reopened = MacStorage::open_existing(path).expect("reopen by path");
-        assert!(
-            token
-                == storage::read_durable(&mut reopened, token)
-                    .expect("durable read")
-                    .token()
+        let invalid = path.join("nested/../anchor");
+        assert_eq!(
+            MacStorage::create_new(&invalid, &initial).err(),
+            Some(Error::RecoveryRequired)
         );
+        assert!(!path.join("enrollment-attempt-v1").exists());
     });
 }
 
