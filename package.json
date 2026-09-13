@@ -95,7 +95,7 @@
     "kb:catalog": "bunx --bun github:hraness/kb#v0.15.2 catalog --root kb"
   },
   "dependencies": {
-    "@hraness/design-kit": "github:hraness/design-kit#v0.6.3",
+    "@hraness/design-kit": "github:hraness/design-kit#v0.8.0",
     "@hraness/site-footer": "github:hraness/site-footer#v0.7.0",
     "@hraness/suite-accounts": "github:hraness/suite-accounts#v0.6.0",
     "@hraness/ui": "github:hraness/ui#v0.5.13",
