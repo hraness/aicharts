@@ -86,6 +86,33 @@ impl Fixture {
         args.extend_from_slice(extra);
         self.json(&args)
     }
+    fn daemon_args<'a>(complete_prefix: bool) -> Vec<&'a str> {
+        let mut args = vec![
+            "daemon",
+            "--once",
+            "--json",
+            "--retry-attempts",
+            "0",
+            "--state-dir",
+            "state",
+            "--key-file",
+            "private.key",
+        ];
+        if complete_prefix {
+            args.push("--complete-prefix");
+        }
+        args
+    }
+    fn daemon(&self, complete_prefix: bool, sources: &[&str]) -> Value {
+        let mut args = Self::daemon_args(complete_prefix);
+        args.extend_from_slice(sources);
+        self.json(&args)
+    }
+    fn fail_daemon(&self, complete_prefix: bool, sources: &[&str], code: &str) {
+        let mut args = Self::daemon_args(complete_prefix);
+        args.extend_from_slice(sources);
+        self.fail(&args, code);
+    }
     fn status(&self) -> Value {
         self.json(&[
             "status",
@@ -182,6 +209,163 @@ fn source(request: &str, output: u64) -> Vec<u8> {
     (serde_json::json!({"type":"assistant","requestId":request,"sessionId":"session_a","timestamp":"2026-09-10T10:00:00Z",
         "cwd":PRIVATE,"message":{"id":"message_a","content":[{"type":"text","text":PRIVATE}],
             "usage":{"input_tokens":100,"output_tokens":output,"cache_read_input_tokens":50,"cache_creation_input_tokens":0}}}).to_string()+"\n").into_bytes()
+}
+
+#[test]
+fn daemon_mode_is_explicit_before_source_io_and_never_migrates_state() {
+    let f = Fixture::new();
+    let missing = ["--claude", "nonexistent_PRIVATE_PREFIX_STATE_CANARY_71ac9"];
+    let legacy = f.state_bytes();
+    f.fail_daemon(true, &missing, "ledger_prefix_not_enabled");
+    assert_eq!(f.state_bytes(), legacy);
+    f.enable(0);
+    let enabled = f.state_bytes();
+    f.fail_daemon(false, &missing, "ledger_complete_prefix_required");
+    assert_eq!(f.state_bytes(), enabled);
+}
+
+#[test]
+fn daemon_default_keeps_snapshot_mode_and_refuses_unfinished_tail() {
+    let f = Fixture::new();
+    f.write(source("request_a", 20));
+    let first = f.daemon(false, &["--claude", SOURCE]);
+    assert_eq!(first["scanMode"], "full_changed_source_snapshot");
+    assert!(first.get("sourcesWithDeferredTail").is_none());
+    assert_eq!(first["tokens"], "170");
+    let before = f.state_bytes();
+    f.append(b"{");
+    f.fail_daemon(false, &["--claude", SOURCE], "source_partial_tail");
+    assert_eq!(f.state_bytes(), before);
+}
+
+#[test]
+fn daemon_claude_tail_completion_across_processes_counts_once_and_keeps_private_state() {
+    let f = Fixture::new();
+    f.enable(0);
+    f.write(source("request_a", 20));
+    let first = f.daemon(true, &["--claude", SOURCE]);
+    assert_eq!(first["scanMode"], "full_changed_source_complete_prefix");
+    assert_eq!(first["tokens"], "170");
+    let checkpoint = f.checkpoint();
+    let before = f.state_bytes();
+    let pending = f.outbox();
+    let second = source("request_b", 30);
+    // A valid JSON object is not committed until its physical newline arrives.
+    f.append(&second[..second.len() - 1]);
+    for _ in 0..2 {
+        let partial = f.daemon(true, &["--claude", SOURCE]);
+        assert_eq!(partial["ledgerRevision"], 1);
+        assert_eq!(partial["tokens"], "170");
+        assert_eq!(partial["sourcesWithDeferredTail"], 1);
+        assert_eq!(partial["sourcesUpdated"], 0);
+        assert_eq!(partial["occurrencesChanged"], 0);
+        assert_eq!(f.checkpoint(), checkpoint);
+        assert_eq!(f.outbox(), pending);
+        assert_eq!(f.state_bytes(), before);
+    }
+    f.append(b"\n");
+    let complete = f.daemon(true, &["--claude", SOURCE]);
+    assert_eq!(complete["tokens"], "350");
+    assert_eq!(complete["usageOccurrences"], 2);
+    assert_eq!(complete["pendingRecords"], 2);
+    assert_eq!(complete["occurrencesChanged"], 1);
+    assert_eq!(complete["sourcesWithDeferredTail"], 0);
+    assert_eq!(complete["ledgerRevision"], 2);
+    let before = f.state_bytes();
+    let pending = f.outbox();
+    let restart = f.daemon(true, &["--claude", SOURCE]);
+    assert_eq!(restart["tokens"], "350");
+    assert_eq!(restart["sourcesSkipped"], 1);
+    assert_eq!(restart["occurrencesChanged"], 0);
+    assert_eq!(restart["bytesScanned"], 0);
+    assert_eq!(f.outbox(), pending);
+    assert_eq!(f.state_bytes(), before);
+    let mac: String = checkpoint
+        .prefix
+        .unwrap()
+        .mac
+        .iter()
+        .map(|byte| format!("{byte:02x}"))
+        .collect();
+    let path = f.0.join(SOURCE).to_string_lossy().into_owned();
+    for output in [first, complete, restart] {
+        assert_eq!(output["localOnly"], true);
+        assert_eq!(output["uploaded"], false);
+        let text = output.to_string();
+        for forbidden in [PRIVATE, &path, &mac, "prefix_mac", "source_id"] {
+            assert!(!text.contains(forbidden));
+        }
+    }
+    let key = fs::read(f.0.join("private.key")).unwrap();
+    for bytes in before.values() {
+        for forbidden in [PRIVATE.as_bytes(), path.as_bytes(), key.as_slice()] {
+            assert!(!bytes
+                .windows(forbidden.len())
+                .any(|window| window == forbidden));
+        }
+    }
+}
+
+#[test]
+fn daemon_codex_tail_completion_replays_cumulative_chain_without_double_counting() {
+    let f = Fixture::new();
+    f.enable(0);
+    f.write(concat!(
+        "{\"type\":\"session_meta\",\"payload\":{\"id\":\"session_a\"}}\n",
+        "{\"type\":\"event_msg\",\"timestamp\":\"2026-09-10T10:00:00Z\",\"payload\":{\"type\":\"token_count\",\"info\":{\"total_token_usage\":{\"input_tokens\":10,\"output_tokens\":5},\"last_token_usage\":{\"input_tokens\":10,\"output_tokens\":5}}}}\n"
+    ));
+    let first = f.daemon(true, &["--codex", SOURCE]);
+    assert_eq!(first["tokens"], "15");
+    let next = b"{\"type\":\"event_msg\",\"timestamp\":\"2026-09-10T10:00:01Z\",\"payload\":{\"type\":\"token_count\",\"info\":{\"total_token_usage\":{\"input_tokens\":30,\"output_tokens\":15},\"last_token_usage\":{\"input_tokens\":20,\"output_tokens\":10}}}}\n";
+    let split = next.len() / 2;
+    let before = f.state_bytes();
+    f.append(&next[..split]);
+    let partial = f.daemon(true, &["--codex", SOURCE]);
+    assert_eq!(partial["tokens"], "15");
+    assert_eq!(partial["sourcesWithDeferredTail"], 1);
+    assert_eq!(f.state_bytes(), before);
+    f.append(&next[split..]);
+    let complete = f.daemon(true, &["--codex", SOURCE]);
+    assert_eq!(complete["tokens"], "45");
+    assert_eq!(complete["usageOccurrences"], 2);
+    assert_eq!(complete["linesRead"], 3);
+    assert_eq!(complete["sourcesWithDeferredTail"], 0);
+    let before = f.state_bytes();
+    let restart = f.daemon(true, &["--codex", SOURCE]);
+    assert_eq!(restart["tokens"], "45");
+    assert_eq!(restart["occurrencesChanged"], 0);
+    assert_eq!(f.state_bytes(), before);
+}
+
+#[test]
+fn daemon_bad_completed_line_or_changed_retained_prefix_aborts_all_selected_sources() {
+    for rewrite in [false, true] {
+        let f = Fixture::new();
+        f.enable(0);
+        let original = source("request_a", 20);
+        f.write(&original);
+        f.daemon(true, &["--claude", SOURCE]);
+        let before = f.state_bytes();
+        let pending = f.outbox();
+        let checkpoint = f.checkpoint();
+        let code = if rewrite {
+            // Equal numeric usage cannot excuse changed historical source bytes.
+            f.write(
+                String::from_utf8(original)
+                    .unwrap()
+                    .replace(PRIVATE, "PRIVATE_PREFIX_STATE_CANARY_71ad0"),
+            );
+            "source_history_changed"
+        } else {
+            f.append(format!("{{\"{PRIVATE}\":\n").as_bytes());
+            "source_parse_failed"
+        };
+        fs::write(f.0.join("new.jsonl"), source("request_b", 30)).unwrap();
+        f.fail_daemon(true, &["--claude", "new.jsonl", "--claude", SOURCE], code);
+        assert_eq!(f.checkpoint(), checkpoint);
+        assert_eq!(f.outbox(), pending);
+        assert_eq!(f.state_bytes(), before);
+    }
 }
 
 #[test]
