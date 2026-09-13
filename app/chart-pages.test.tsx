@@ -5,7 +5,6 @@ import BenchmarksPage, { metadata as benchmarksMetadata } from "./benchmarks/pag
 import CalculatorPage, { metadata as calculatorMetadata } from "./calculator/page";
 import CodingPage, { metadata as codingMetadata } from "./coding/page";
 import LeaderboardPage, { metadata as leaderboardMetadata } from "./leaderboard/page";
-import UsagePage, { metadata as usageMetadata } from "./usage/page";
 import { ATLAS_DATASETS, ATLAS_ENTRIES } from "@/lib/benchmark-atlas-catalog";
 import { CALCULATOR_INPUTS } from "@/lib/calculator-inputs-collection";
 
@@ -69,15 +68,9 @@ describe("focused chart destinations", () => {
     expect(html.match(/<h1(?:\s|>)/gu)).toHaveLength(1);
     expect(calculatorMetadata.alternates?.canonical).toBe("https://aicharts.io/calculator");
   });
-  test("the usage page makes local-only measurement and coverage explicit", () => {
-    const html = renderToStaticMarkup(createElement(UsagePage));
-    expect(html).toContain("Your AI work, measured without your words.");
-    expect(html).toContain("Remote sync is not enabled yet.");
-    expect(html).toContain("aicharts usage --key-file ./aicharts.key --codex ./sessions");
-    expect(html).toContain("No transcript storage");
-    expect(html).toContain('aria-current="page" href="/usage"');
-    expect(usageMetadata.alternates?.canonical).toBe("https://aicharts.io/usage");
-  });
+  // Usage now needs a real Next request scope. Its copy, current navigation and
+  // canonical metadata assertions live in scripts/usage-browser.ts instead of
+  // depending on another Bun test's global server-only mock.
   test("the leaderboard page keeps publishing paused until evidence is qualified", () => {
     const html = renderToStaticMarkup(createElement(LeaderboardPage));
     expect(html).toContain("A leaderboard that shows its receipts.");

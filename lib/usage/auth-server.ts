@@ -20,6 +20,7 @@ const binding = Object.freeze({
 
 export type UsageAuthEnvironment = Readonly<{
   AICHARTS_USAGE_AUTH_ENABLED?: unknown;
+  AICHARTS_USAGE_PRIVATE_READ_ENABLED?: unknown;
   VERCEL?: unknown;
   VERCEL_ENV?: unknown;
   VERCEL_TARGET_ENV?: unknown;
@@ -34,10 +35,13 @@ export type UsageAccountSession = Readonly<{
   suiteAccountId: string;
   expiresAtMs: number;
 }>;
+export type UsageAccountSessionRead = Readonly<{ kind: "authenticated"; value: UsageAccountSession }>
+  | Readonly<{ kind: "authentication_required" }> | Readonly<{ kind: "unavailable" }>;
 
 /** One request's live read and authority checks; contains no browser credentials. */
 export type UsageAccountSessionScope = Readonly<{
   read(): Promise<UsageAccountSession | null>;
+  readOutcome(): Promise<UsageAccountSessionRead>;
   current(): boolean;
   finish(): void;
 }>;
@@ -57,6 +61,7 @@ function processEnvironment(): UsageAuthEnvironment {
   const environment = process.env;
   return {
     AICHARTS_USAGE_AUTH_ENABLED: environment.AICHARTS_USAGE_AUTH_ENABLED,
+    AICHARTS_USAGE_PRIVATE_READ_ENABLED: environment.AICHARTS_USAGE_PRIVATE_READ_ENABLED,
     VERCEL: environment.VERCEL,
     VERCEL_ENV: environment.VERCEL_ENV,
     VERCEL_TARGET_ENV: environment.VERCEL_TARGET_ENV,
@@ -92,6 +97,19 @@ function configuredSecret(options: UsageAuthOptions): string | null {
   }
 }
 
+function configuredPrivateReadSecret(options: UsageAuthOptions): string | null {
+  try {
+    const environment = (options.environment ?? processEnvironment)();
+    if (environment.AICHARTS_USAGE_PRIVATE_READ_ENABLED !== "1") return null;
+    const secret = configuredSecret({ ...options, environment: () => environment });
+    if (secret === null || secret.length > 1_024) return null;
+    // The pinned SDK requires 32–1024 UTF-8 bytes. This effect-free readiness
+    // check cannot create its asynchronous cookie key outside a request owner.
+    const bytes = new TextEncoder().encode(secret).byteLength;
+    return bytes >= 32 && bytes <= 1_024 ? secret : null;
+  } catch { return null; }
+}
+
 function relyingParty(options: UsageAuthOptions, watchConfiguration = false): SuiteOidcRelyingParty | null {
   try {
     const cookieSecret = configuredSecret(options);
@@ -117,9 +135,10 @@ function relyingParty(options: UsageAuthOptions, watchConfiguration = false): Su
   }
 }
 
-function beginAccountSession(request: Request, options: UsageAuthOptions): UsageAccountSessionScope | null {
+function beginAccountSession(request: Request, options: UsageAuthOptions, privateRead = false): UsageAccountSessionScope | null {
   try {
-    const cookieSecret = configuredSecret(options);
+    const configuration = () => privateRead ? configuredPrivateReadSecret(options) : configuredSecret(options);
+    const cookieSecret = configuration();
     const requestOrigin = new URL(request.url).origin;
     if (cookieSecret === null || requestOrigin !== binding.origin) return null;
     // The SDK reads only request metadata here. Snapshot it without cloning or
@@ -130,7 +149,7 @@ function beginAccountSession(request: Request, options: UsageAuthOptions): Usage
     const fetcher = options.fetch ?? globalThis.fetch;
     const validTime = (value: number) => Number.isSafeInteger(value) && !Object.is(value, -0)
       && value >= 0 && value <= 8_640_000_000_000_000;
-    let open = true, readStarted = false, observed = 0;
+    let open = true, readStarted = false, providerAttempted = false, observed = 0;
     let expiresAtMs: number | null = null;
     const finish = () => { open = false; };
     const current = () => {
@@ -139,7 +158,7 @@ function beginAccountSession(request: Request, options: UsageAuthOptions): Usage
         const sampled = now();
         if (!validTime(sampled) || sampled < observed || (expiresAtMs !== null && sampled >= expiresAtMs)
           || signal.aborted || new URL(request.url).origin !== requestOrigin
-          || configuredSecret(options) !== cookieSecret) {
+          || configuration() !== cookieSecret) {
           finish(); return false;
         }
         observed = sampled;
@@ -158,21 +177,37 @@ function beginAccountSession(request: Request, options: UsageAuthOptions): Usage
         if (!current()) throw new Error("Usage account session unavailable.");
         // Do not reject a response after dispatch: let the SDK consume its body
         // and clean up. The read below fences the eventual session projection.
+        providerAttempted = true;
         return fetcher(input, init);
       },
     });
+    const unavailable = (): UsageAccountSessionRead => Object.freeze({ kind: "unavailable" });
+    const readOutcome = async (): Promise<UsageAccountSessionRead> => {
+      if (readStarted || !current()) return unavailable();
+      readStarted = true;
+      try {
+        const session = await authority.serverAccountSession(ownedRequest);
+        if (!current()) return unavailable();
+        if (session === null) {
+          if (providerAttempted) { finish(); return unavailable(); }
+          // No valid local session and no provider attempt. Keep the configuration
+          // fence current until the request owner delivers this negative outcome.
+          return Object.freeze({ kind: "authentication_required" });
+        }
+        expiresAtMs = session.accessTokenExpiresAtMs;
+        if (!validTime(expiresAtMs) || !current()) { finish(); return unavailable(); }
+        return Object.freeze({ kind: "authenticated", value: Object.freeze({ suiteAccountId: session.suiteAccountId, expiresAtMs }) });
+      } catch { finish(); return unavailable(); }
+    };
     return Object.freeze({
-      current, finish,
+      current, finish, readOutcome,
       async read(): Promise<UsageAccountSession | null> {
+        // Preserve the original accessor's repeated-read and null-and-close
+        // behavior. Both entry points share one attempt, including during awaits.
         if (readStarted || !current()) return null;
-        readStarted = true;
-        try {
-          const session = await authority.serverAccountSession(ownedRequest);
-          if (session === null) { finish(); return null; }
-          expiresAtMs = session.accessTokenExpiresAtMs;
-          if (!validTime(expiresAtMs) || !current()) { finish(); return null; }
-          return Object.freeze({ suiteAccountId: session.suiteAccountId, expiresAtMs });
-        } catch { finish(); return null; }
+        const result = await readOutcome();
+        if (result.kind === "authenticated") return result.value;
+        finish(); return null;
       },
     });
   } catch { return null; }
@@ -253,6 +288,11 @@ export function createUsageAuthServer(options: UsageAuthOptions = {}) {
       return beginAccountSession(request, options);
     },
 
+    privateReadAvailable(): boolean { return configuredPrivateReadSecret(options) !== null; },
+    beginPrivateReadSession(request: Request): UsageAccountSessionScope | null {
+      return beginAccountSession(request, options, true);
+    },
+
     async startPairingAuthentication(request: Request, input: unknown): Promise<Response> {
       return privateResponse(await pairing.start(request, input), request);
     },
@@ -327,3 +367,5 @@ const server = createUsageAuthServer();
 export const handleUsageAuth = server.handle;
 export const usageAccountSession = server.accountSession;
 export const beginUsageAccountSession = server.beginAccountSession;
+export const usagePrivateReadAvailable = server.privateReadAvailable;
+export const beginUsagePrivateReadSession = server.beginPrivateReadSession;

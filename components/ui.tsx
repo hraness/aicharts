@@ -287,7 +287,7 @@ export function TopBar({
 }>) {
   return (
     <header
-      className={`ui-top-bar ${className}`.trim()}
+      className={`ui-top-bar ${isSticky ? "hraness-material-chrome " : ""}${className}`.trim()}
       data-analytics-surface={analyticsSurface}
       data-sticky={isSticky || undefined}
     >

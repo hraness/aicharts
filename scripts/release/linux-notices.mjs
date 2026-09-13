@@ -21,6 +21,28 @@ const HASH = /^[0-9a-f]{64}$/u;
 const CRATE = /^[A-Za-z0-9_-]+$/u;
 const VERSION = /^[0-9]+\.[0-9]+\.[0-9]+(?:[+.-][A-Za-z0-9.+-]+)?$/u;
 const LICENSE_FILE = /^(?:LICENSE|LICENCE|COPYING|COPYRIGHT|NOTICE)(?:[.-][A-Za-z0-9_.-]+)?$/iu;
+const NATIVE_CATEGORIES = new Set(["build_script_provider", "build_script_links", "build_script_path", "generated_archive", "generated_archive_load", "artifact_path", "load_path", "scratch_load", "unknown_load", "rust_library", "system_library", "system_path", "runtime_library"]);
+const NATIVE_PROVIDERS = new Map([
+  ["libsqlite3-sys@0.38.2", { links: "sqlite3", libraries: ["sqlite3"] }],
+  // ring builds its test archive even for ordinary release library builds.
+  ["ring@0.17.14", { links: "ring_core_0_17_14_", libraries: ["ring_core_0_17_14_", "ring_core_0_17_14__test"] }],
+]);
+const RING_NESTED_LICENSES = new Set(["src/polyfill/once_cell/LICENSE-APACHE", "src/polyfill/once_cell/LICENSE-MIT"]);
+class NativeFailure { constructor(category) { this.category = category; } }
+const unknownNative = category => { throw new NativeFailure(category); };
+function failure(error, fallback) {
+  return error instanceof NativeFailure
+    ? { ok: false, error: "notices_unknown_native", nativeCategory: error.category }
+    : { ok: false, error: ERRORS.has(error) ? error : fallback };
+}
+
+/** Only fixed source-owned categories may cross into a runner summary. */
+export function linuxNativeDiagnostic(result) {
+  if (!result || typeof result !== "object" || types.isProxy(result)) return null;
+  const code = Object.getOwnPropertyDescriptor(result, "error")?.value;
+  const category = Object.getOwnPropertyDescriptor(result, "nativeCategory")?.value;
+  return code === "notices_unknown_native" && NATIVE_CATEGORIES.has(category) ? category : null;
+}
 
 function array(value, max) {
   if (!Array.isArray(value) || types.isProxy(value) || value.length > max) fail("notices_invalid_input");
@@ -37,7 +59,7 @@ function absolute(value) {
 }
 function linkerPath(value) {
   text(value);
-  if (!path.isAbsolute(value) || /\s/u.test(value)) fail("notices_unknown_native");
+  if (!path.isAbsolute(value) || /\s/u.test(value)) unknownNative("load_path");
   return value; // GNU bfd preserves GCC's ../ segments; resolve before system use.
 }
 function owned(value, max) {
@@ -81,6 +103,13 @@ async function read(file, max, code, prefixOnly = false) {
   finally { await handle?.close(); }
 }
 
+async function canonicalFile(file, code) {
+  try {
+    const parent = path.dirname(file);
+    if (await realpath(parent) !== parent || await realpath(file) !== file) fail(code);
+  } catch { fail(code); }
+}
+
 /** Parse the measured evidence without executing tools or interpreting file content as commands. */
 export function planLinuxNotices(input) {
   try {
@@ -121,17 +150,29 @@ export function planLinuxNotices(input) {
       } else if (message.reason !== "compiler-message") fail("notices_build_incomplete");
     }
     if (!finished || executable !== absolute(input.executablePath) || compiled.size === 0) fail("notices_build_incomplete");
-    let sqlite = false;
+    const nativeArchives = [], nativePackages = new Set(), target = absolute(input.targetDirectory);
     for (const script of scripts) {
       const pkg = compiled.get(script.package_id);
       if (!pkg) fail("notices_build_incomplete");
-      const links = array(script.linked_libs, 32);
-      if (links.length) {
-        if (pkg.name !== "libsqlite3-sys" || links.length !== 1 || links[0] !== "static=sqlite3") fail("notices_unknown_native");
-        sqlite = true;
-      }
+      const links = array(script.linked_libs, 32), paths = array(script.linked_paths, 32);
+      const provider = NATIVE_PROVIDERS.get(`${pkg.name}@${pkg.version}`);
+      if (!links.length && !paths.length && !provider) continue;
+      if (!provider || pkg.source !== REGISTRY || pkg.links !== provider.links) unknownNative("build_script_provider");
+      if (nativePackages.has(pkg.id)) fail("notices_build_incomplete");
+      if (!links.length) fail("notices_build_incomplete");
+      const expected = provider.libraries.map(name => `static=${name}`);
+      if (links.length !== expected.length || new Set(links).size !== expected.length || links.some(link => !expected.includes(link))) unknownNative("build_script_links");
+      let outDirectory;
+      try { outDirectory = absolute(script.out_dir); } catch { unknownNative("build_script_path"); }
+      const relativeOut = path.relative(target, outDirectory);
+      const prefix = `${TARGET}/release/build/${pkg.name}-`;
+      if (!relativeOut.startsWith(prefix) || !/^[0-9a-f]{16}\/out$/u.test(relativeOut.slice(prefix.length))
+        || paths.length !== 1 || paths[0] !== `native=${outDirectory}`) unknownNative("build_script_path");
+      nativePackages.add(pkg.id);
+      for (const name of provider.libraries) nativeArchives.push({ packageId: pkg.id, outDirectory, file: path.join(outDirectory, `lib${name}.a`) });
     }
-    if (!sqlite) fail("notices_build_incomplete");
+    if (![...nativePackages].some(id => compiled.get(id).name === "libsqlite3-sys")
+      || [...compiled.values()].some(pkg => NATIVE_PROVIDERS.has(`${pkg.name}@${pkg.version}`) && !nativePackages.has(pkg.id))) fail("notices_build_incomplete");
     const map = utf8(owned(input.linkMapBytes, 32 * MiB));
     const outputs = [...map.matchAll(/^OUTPUT\((\S+) elf64-x86-64\)$/gmu)];
     if (!map.includes("Linker script and memory map\n") || outputs.length !== 1) fail("notices_build_incomplete");
@@ -141,18 +182,20 @@ export function planLinuxNotices(input) {
     for (const line of map.split("\n")) {
       if (!line.startsWith("LOAD ")) continue;
       const filename = line.slice(5);
-      if (/\s/u.test(filename)) fail("notices_unknown_native");
+      if (/\s/u.test(filename)) unknownNative("load_path");
       loads.add(linkerPath(filename));
     }
     if (!loads.size || loads.size > 1024) fail("notices_build_incomplete");
-    return { ok: true, value: { compiled: [...compiled.values()], artifactFiles: files, loads: [...loads].sort(compare), executable, linkOutput } };
-  } catch (error) { return { ok: false, error: ERRORS.has(error) ? error : "notices_invalid_input" }; }
+    return { ok: true, value: { compiled: [...compiled.values()], artifactFiles: files, nativeArchives, loads: [...loads].sort(compare), executable, linkOutput } };
+  } catch (error) { return failure(error, "notices_invalid_input"); }
 }
 
 const RUST_CRATES = new Set("std panic_unwind panic_abort object memchr addr2line gimli rustc_demangle std_detect hashbrown rustc_std_workspace_alloc unwind cfg_if libc alloc rustc_std_workspace_core core compiler_builtins adler2 miniz_oxide proc_macro test rustc_literal_escaper".split(" "));
 const RUST_VENDOR = new Set("object memchr addr2line gimli rustc_demangle hashbrown cfg_if libc adler2 miniz_oxide rustc_literal_escaper".split(" "));
 const GCC_DEV = new Set(["crtbegin.o", "crtbeginS.o", "crtend.o", "crtendS.o", "libgcc.a", "libgcc_eh.a", "libgcc_s.so"]);
-const GLIBC_DEV = new Set(["crt1.o", "Scrt1.o", "crti.o", "crtn.o", "libc.so", "libc_nonshared.a", "libm.so", "libm-2.35.a", "libmvec.so", "libpthread.a", "libdl.a", "librt.a"]);
+// glibc 2.34 retained empty libutil.a for -lutil compatibility; Jammy's
+// libc6-dev owns it. It still needs the exact resolved dpkg attribution below.
+const GLIBC_DEV = new Set(["crt1.o", "Scrt1.o", "crti.o", "crtn.o", "libc.so", "libc_nonshared.a", "libm.so", "libm-2.35.a", "libmvec.so", "libpthread.a", "libdl.a", "librt.a", "libutil.a"]);
 const GLIBC_RUNTIME = new Set(["libc.so.6", "libm.so.6", "libmvec.so.1", "libpthread.so.0", "libdl.so.2", "librt.so.1", "ld-linux-x86-64.so.2"]);
 
 function nativeOwner(basename) {
@@ -160,7 +203,7 @@ function nativeOwner(basename) {
   if (basename === "libgcc_s.so.1") return /^libgcc-s1(?::amd64)?$/u;
   if (GLIBC_DEV.has(basename)) return /^libc6-dev(?::amd64)?$/u;
   if (GLIBC_RUNTIME.has(basename)) return /^libc6(?::amd64)?$/u;
-  fail("notices_unknown_native");
+  unknownNative("system_library");
 }
 async function dpkg(args) {
   try {
@@ -249,9 +292,16 @@ export async function collectLinuxNotices(input) {
       if (archiveTotal > 64 * MiB) fail("notices_limit");
       if (digest(archive) !== item.checksum) fail("notices_crate_changed");
       if (!array(item.files, 16).length) fail("notices_unmapped_crate");
+      if (pkg.name === "ring" && pkg.version === "0.17.14"
+        && [...RING_NESTED_LICENSES].some(name => !item.files.some(file => file.path === name))) fail("notices_unmapped_crate");
       for (const file of item.files) {
-        if (!LICENSE_FILE.test(relative(file.path)) || !HASH.test(file.sha256)) fail("notices_unmapped_crate");
-        const bytes = await read(path.join(directory, file.path), MiB, "notices_crate_changed");
+        const relativeFile = relative(file.path);
+        if (!(LICENSE_FILE.test(relativeFile) || (pkg.name === "ring" && pkg.version === "0.17.14" && RING_NESTED_LICENSES.has(relativeFile)))
+          || !HASH.test(file.sha256)) fail("notices_unmapped_crate");
+        const filename = path.join(directory, relativeFile);
+        await canonicalFile(filename, "notices_crate_changed");
+        const bytes = await read(filename, MiB, "notices_crate_changed");
+        await canonicalFile(filename, "notices_crate_changed");
         if (digest(bytes) !== file.sha256) fail("notices_crate_changed");
         add(`Cargo ${pkg.name} ${pkg.version} (${pkg.license}) / ${file.path}`, bytes);
       }
@@ -264,21 +314,44 @@ export async function collectLinuxNotices(input) {
         add(`SQLite ${sqliteVersion} amalgamation public-domain statement (bundled by ${pkg.name} ${pkg.version})`, Buffer.from(blessing + "\n"));
       }
     }
+    const generated = new Set();
+    let nativeTotal = 0;
+    for (const archive of plan.value.nativeArchives) {
+      try {
+        if (await realpath(archive.outDirectory) !== archive.outDirectory || !(await lstat(archive.outDirectory)).isDirectory()
+          || await realpath(archive.file) !== archive.file) unknownNative("generated_archive");
+        const bytes = await read(archive.file, 32 * MiB, "notices_unknown_native");
+        nativeTotal += bytes.length;
+        if (nativeTotal > 64 * MiB) fail("notices_limit");
+        // Thin archives can refer outside the admitted output; only ordinary ar
+        // output from the pinned build scripts is admitted. No decompression.
+        if (bytes.subarray(0, 8).toString("ascii") !== "!<arch>\n"
+          || await realpath(archive.outDirectory) !== archive.outDirectory || await realpath(archive.file) !== archive.file) unknownNative("generated_archive");
+        generated.add(archive.file);
+      } catch (error) {
+        if (error === "notices_source_changed" || error === "notices_limit") throw error;
+        unknownNative("generated_archive");
+      }
+    }
     const system = new Map(), rustLoads = new Set();
     for (const file of plan.value.loads) {
+      if (generated.has(file)) continue;
       if (plan.value.artifactFiles.has(file)) {
-        if (!inside(target, file)) fail("notices_unknown_native");
+        if (!inside(target, file) || path.extname(file) !== ".rlib") unknownNative("artifact_path");
         continue;
       }
       if (inside(path.join(sysroot, "lib/rustlib", TARGET, "lib"), file)) {
         const name = path.basename(file).match(/^lib([a-z0-9_]+)-[0-9a-f]+\.rlib$/u)?.[1];
-        if (!RUST_CRATES.has(name)) fail("notices_unknown_native");
+        if (!RUST_CRATES.has(name)) unknownNative("rust_library");
         rustLoads.add(name);
         continue;
       }
       // These are generated by rustc, not third-party native link providers.
       if (inside(target, file) && /^aicharts-[0-9a-f]+\.[A-Za-z0-9_.-]+\.rcgu\.o$/u.test(path.basename(file))) continue;
       if (inside(scratch, file) && /^\.?rustc[A-Za-z0-9]+\/symbols\.o$/u.test(path.relative(scratch, file))) continue;
+      if (inside(target, file) && path.extname(file) === ".a") unknownNative("generated_archive_load");
+      if (inside(scratch, file)) unknownNative("scratch_load");
+      if (!/^\/(?:usr\/)?lib(?:64)?\//u.test(file)) unknownNative("unknown_load");
       system.set(file, nativeOwner(path.basename(file)));
     }
     if (!rustLoads.has("std") || !rustLoads.has("compiler_builtins")) fail("notices_build_incomplete");
@@ -287,7 +360,7 @@ export async function collectLinuxNotices(input) {
     const sonames = new Set();
     for (const library of dynamic) {
       text(library.soname, 128); absolute(library.path);
-      if (sonames.has(library.soname) || (!GLIBC_RUNTIME.has(library.soname) && library.soname !== "libgcc_s.so.1")) fail("notices_unknown_native");
+      if (sonames.has(library.soname) || (!GLIBC_RUNTIME.has(library.soname) && library.soname !== "libgcc_s.so.1")) unknownNative("runtime_library");
       sonames.add(library.soname);
       system.set(library.path, nativeOwner(library.soname));
     }
@@ -339,11 +412,11 @@ export async function collectLinuxNotices(input) {
     if (system.size > 32) fail("notices_limit");
     const ownershipCache = new Map();
     for (const [filename, ownerPattern] of system) {
-      if (!/^\/(?:usr\/)?lib(?:64)?\/[A-Za-z0-9_+./-]+$/u.test(filename)) fail("notices_unknown_native");
+      if (!/^\/(?:usr\/)?lib(?:64)?\/[A-Za-z0-9_+./-]+$/u.test(filename)) unknownNative("system_path");
       const resolved = await realpath(filename);
-      if (!/^\/(?:usr\/)?lib(?:64)?\//u.test(resolved)) fail("notices_unknown_native");
+      if (!/^\/(?:usr\/)?lib(?:64)?\//u.test(resolved)) unknownNative("system_path");
       const owner = ownershipCache.get(resolved) ?? await packageOwner(filename, resolved, ownerPattern);
-      if (!ownerPattern.test(owner)) fail("notices_unknown_native");
+      if (!ownerPattern.test(owner)) unknownNative("system_library");
       ownershipCache.set(resolved, owner);
       if (packages.has(owner)) continue;
       const fields = (await dpkg(["-W", "-f=${binary:Package}\t${Version}\t${Status}\n", owner])).trimEnd().split("\t");
@@ -369,5 +442,5 @@ export async function collectLinuxNotices(input) {
     const bytes = Buffer.concat(chunks);
     if (bytes.length > 64 * MiB) fail("notices_limit");
     return { ok: true, value: { bytes, sha256: digest(bytes), components: sections.size } };
-  } catch (error) { return { ok: false, error: ERRORS.has(error) ? error : "notices_invalid_input" }; }
+  } catch (error) { return failure(error, "notices_invalid_input"); }
 }

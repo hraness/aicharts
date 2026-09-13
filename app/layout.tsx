@@ -70,7 +70,7 @@ const structuredData = [
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (
-    <html data-theme="light" lang="en" style={brandTheme} suppressHydrationWarning>
+    <html data-hraness-material="lantern" data-theme="light" lang="en" style={brandTheme} suppressHydrationWarning>
       <body>
         <DesignThemeProvider storageKey="aicharts-theme">
           <ThemeColorSync darkColor="#12100f" lightColor="#f8f7f4" />

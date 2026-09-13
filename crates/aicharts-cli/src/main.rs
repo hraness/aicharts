@@ -2,6 +2,7 @@
 
 mod daemon;
 mod inspect;
+mod intro;
 #[cfg(unix)]
 mod prefix;
 mod reindex;
@@ -11,7 +12,7 @@ mod upload;
 mod version;
 
 use std::fs::{self, File, OpenOptions};
-use std::io::{self, BufReader, Read, Write};
+use std::io::{self, BufReader, IsTerminal, Read, Write};
 use std::path::{Path, PathBuf};
 
 use aicharts_core::{merge_collections, parse_reader, Collection, Warning};
@@ -435,7 +436,22 @@ fn main() {
     };
     match run(&args) {
         Ok(output) => {
-            if io::stdout().lock().write_all(output.as_bytes()).is_err() {
+            let stdout = io::stdout();
+            let intro = if args.is_empty() || args == ["--help"] || args == ["-h"] {
+                let term = std::env::var("TERM").ok();
+                let columns = std::env::var("COLUMNS")
+                    .ok()
+                    .and_then(|value| value.parse().ok());
+                intro::terminal_intro(stdout.is_terminal(), term.as_deref(), columns)
+            } else {
+                ""
+            };
+            let mut writer = stdout.lock();
+            if writer
+                .write_all(intro.as_bytes())
+                .and_then(|()| writer.write_all(output.as_bytes()))
+                .is_err()
+            {
                 std::process::exit(1);
             }
         }

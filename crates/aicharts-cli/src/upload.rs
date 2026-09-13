@@ -1,5 +1,5 @@
-//! Dormant one-flight orchestration. There is no CLI command or production
-//! transport implementation. The ledger alone owns sequence, retry and receipt
+//! Dormant one-flight orchestration. There is no enabled CLI upload command or
+//! enrolled transport constructor. The ledger alone owns sequence, retry and receipt
 //! state; this module never migrates, rebases or clears an uncertain flight.
 #![cfg_attr(not(all(test, unix)), allow(dead_code))]
 
@@ -7,9 +7,11 @@ use aicharts_ledger::{BatchSettlement, FrozenBatch, Ledger, SenderBinding};
 use aicharts_protocol::{admission as wire, Id, Policy, Registry};
 use std::fmt;
 
+mod https;
+
 /// Only a future reviewed adapter inside this module may implement the port.
 /// An injected ordinary callback or a file containing valid bytes is not receipt
-/// authority. The only implementation in this slice is a synthetic test fixture.
+/// authority. The HTTPS implementation has no enrolled production constructor.
 mod trusted {
     pub trait Sealed {}
 }
@@ -19,8 +21,12 @@ mod trusted {
 /// polling secret. A successful return attests the entire response came from the
 /// fixed authenticated service and passed transport status/framing/EOF checks.
 ///
-/// This synchronous seam makes one exchange, without spawning or retrying work.
-/// A real adapter must separately bound DNS, connection, TLS, reads and cleanup.
+/// This synchronous seam makes one HTTP exchange, without an HTTP worker or retry.
+/// The HTTPS adapter separately bounds DNS, connection, TLS, reads and cleanup;
+/// its sole possible background task is one process-wide OS DNS lookup, whose
+/// permit remains held until the OS returns even after the caller times out.
+/// Its monotonic deadline refuses late success; blocking OS/TLS operations are
+/// not preemptible and may return later than their configured timeout.
 /// Neither a borrowed buffer nor an error can cancel an already committed remote
 /// decision, and this module makes no wall-clock or generic cancellation claim.
 pub(super) trait AuthenticatedTransport: trusted::Sealed {

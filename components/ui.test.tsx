@@ -8,7 +8,8 @@ test("TopBar owns sticky document-flow behavior by default", () => {
     <TopBar actions={<a href="/data">Data</a>} title={<strong>aicharts.io</strong>} />,
   );
 
-  expect(markup).toContain('class="ui-top-bar"');
+  const headerClasses = markup.match(/^<header\b[^>]*\sclass="([^"]*)"/u)?.[1].split(/\s+/u);
+  expect(headerClasses).toContain("ui-top-bar");
   expect(markup).toContain('data-sticky="true"');
   expect(markup).toContain('class="ui-top-bar__title"');
   expect(markup).toContain('class="ui-top-bar__actions"');
