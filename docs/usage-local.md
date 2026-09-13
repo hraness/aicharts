@@ -31,6 +31,17 @@ Read one selected source or directory; repeat source flags to combine files. Nei
 
 `upload --dry-run` prints JSON containing hexadecimal canonical numeric frames. This JSON is a local inspection format, not an accepted HTTP request body. The actual [wire contract](usage-wire-v1.md) has no string fields. `upload` without `--dry-run` fails before reading any sources. No command searches a home directory automatically or modifies Codex/Claude configuration.
 
+## Foreground daemon runner
+
+`daemon` repeats the existing local `collect` command in one foreground process. It requires the same explicit state directory, private key and Codex/Claude source paths; it does not discover paths, install a service, read credentials, or contact a server. The default interval is 15 minutes and is bounded to 60 seconds through 24 hours. Use `--once` for a single supervised pass or smoke test:
+
+```sh
+./bin/aicharts daemon --once --state-dir /private/aicharts-state \
+  --key-file /private/aicharts.key --codex /private/codex-sessions --json
+```
+
+Without `--once`, the process prints each local collection result and sleeps between passes. A failed pass exits with a fixed error so an eventual qualified OS service can apply its own restart/backoff policy. This runner is local persistence only: its ledger remains `uploaded: false`, and the separate upload/authentication boundary remains disabled.
+
 Directory traversal selects `.jsonl` files, skips observed symlink entries, and rejects a symlink supplied as a source. Unix final-file opens use no-follow/nonblocking flags and check file identity. This is not descriptor-rooted traversal or an OS sandbox: parent-directory replacement and malicious local processes are outside this initial confinement claim. The source reader and uploader have not been isolated into separately sandboxed processes; no uploader exists yet.
 
 ## Interpreting the result
