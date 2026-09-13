@@ -7,7 +7,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
-import { collectLinuxNotices, planLinuxNotices, linuxNativeDiagnostic } from "./linux-notices.mjs";
+import { collectLinuxNotices, planLinuxNotices, linuxNativeDiagnostic, linuxSystemDiagnostic } from "./linux-notices.mjs";
 
 const digest = bytes => createHash("sha256").update(bytes).digest("hex");
 const encode = value => Buffer.from(JSON.stringify(value));
@@ -51,6 +51,19 @@ function addRing(f) {
     target: { name: "ring", kind: ["lib"] }, profile: { test: false }, executable: null,
     filenames: [`${f.input.targetDirectory}/x86_64-unknown-linux-gnu/release/deps/libring-abc123.rlib`] },
   { reason: "build-script-executed", package_id: pkg.id, linked_libs: ["static=ring_core_0_17_14_", "static=ring_core_0_17_14__test"], linked_paths: [`native=${out_dir}`], out_dir });
+  f.update();
+  return pkg;
+}
+
+function addCustody(f, changes = {}) {
+  const pkg = { id: "path+file:///source/aicharts-custody#0.1.0", name: "aicharts-custody", version: "0.1.0", source: null,
+    license: "MIT", license_file: null, manifest_path: `${f.input.sourceDirectory}/crates/aicharts-custody/Cargo.toml`, ...changes };
+  const target = pkg.name.replaceAll("-", "_");
+  const filename = `${f.input.targetDirectory}/x86_64-unknown-linux-gnu/release/deps/lib${target}-abcdef123.rlib`;
+  f.packages.push(pkg);
+  f.messages.splice(-1, 0, { reason: "compiler-artifact", package_id: pkg.id, manifest_path: pkg.manifest_path,
+    target: { name: target, kind: ["lib"] }, profile: { test: false }, executable: null, filenames: [filename] });
+  f.loads.push(filename);
   f.update();
   return pkg;
 }
@@ -101,6 +114,18 @@ test("native diagnostic projection does not invoke accessors or retain arbitrary
   assert.equal(linuxNativeDiagnostic({ error: "notices_invalid_input", nativeCategory: "system_library" }), null);
   assert.equal(linuxNativeDiagnostic({ error: "notices_unknown_native", get nativeCategory() { calls++; return "system_library"; } }), null);
   assert.equal(linuxNativeDiagnostic(new Proxy({}, { getOwnPropertyDescriptor() { calls++; throw new Error("PRIVATE_CANARY"); } })), null);
+  assert.equal(calls, 0);
+});
+
+test("system diagnostic projection retains only fixed failure locations without reading accessors", () => {
+  let calls = 0;
+  assert.equal(linuxSystemDiagnostic({ error: "notices_system_missing", systemCategory: "package_query_terminated", output: "PRIVATE_CANARY" }), "package_query_terminated");
+  assert.equal(linuxSystemDiagnostic({ error: "notices_system_missing", systemCategory: "PRIVATE_CANARY" }), null);
+  assert.equal(linuxSystemDiagnostic({ error: "notices_invalid_input", systemCategory: "package_record" }), null);
+  assert.equal(linuxSystemDiagnostic(Object.create({ error: "notices_system_missing", systemCategory: "package_record" })), null);
+  assert.equal(linuxSystemDiagnostic({ error: "notices_system_missing", get systemCategory() { calls++; throw new Error("PRIVATE_CANARY"); } }), null);
+  assert.equal(linuxSystemDiagnostic({ get error() { calls++; throw new Error("PRIVATE_CANARY"); }, systemCategory: "package_record" }), null);
+  assert.equal(linuxSystemDiagnostic(new Proxy({}, { getOwnPropertyDescriptor() { calls++; throw new Error("PRIVATE_CANARY"); } })), null);
   assert.equal(calls, 0);
 });
 
@@ -367,6 +392,25 @@ test("collector validates Cargo registry archives without a vendored checksum fi
   });
 });
 
+test("custody attribution rejects unknown or renamed workspace crates, foreign sources and paths, and changed licenses", async () => {
+  const cases = [
+    ["unknown workspace crate", () => ({ name: "unreviewed-workspace" }), "notices_unmapped_crate"],
+    ["renamed product crate", () => ({ name: "aicharts-custody-renamed" }), "notices_unmapped_crate"],
+    ["registry source", () => ({ source: registry }), "notices_unmapped_crate"],
+    ["foreign source", () => ({ source: "git+https://example.invalid/PRIVATE_CANARY" }), "notices_unmapped_crate"],
+    ["foreign manifest", f => ({ manifest_path: `${f.input.scratchDirectory}/aicharts-custody/Cargo.toml` }), "notices_unmapped_crate"],
+    ["sibling manifest", f => ({ manifest_path: `${f.input.sourceDirectory}-other/crates/aicharts-custody/Cargo.toml` }), "notices_unmapped_crate"],
+    ["noncanonical manifest", f => ({ manifest_path: `${f.input.sourceDirectory}/crates/./aicharts-custody/Cargo.toml` }), "notices_invalid_input"],
+    ["changed license", () => ({ license: "Apache-2.0" }), "notices_unmapped_crate"],
+  ];
+  for (const [label, changes, error] of cases) {
+    await diskFixture(async f => {
+      addCustody(f, changes(f));
+      assert.deepEqual(await collectLinuxNotices(f.input), { ok: false, error }, label);
+    });
+  }
+});
+
 test("collector refuses unmapped crate instead of admitting nonempty notice bytes", async () => {
   await diskFixture(async (f, policy, save) => {
     policy.packages = []; await save();
@@ -466,6 +510,7 @@ test("complete synthetic Ubuntu filesystem and dpkg join emits deterministic not
   const actual = await import("node:fs/promises");
   const { mock } = await import("node:test");
   await diskFixture(async f => {
+    addCustody(f);
     const sysroot = f.input.sysrootDirectory;
     // Rust 1.97.1 installs generated HTML and REUSE texts. The legacy COPYRIGHT,
     // LICENSE-MIT and LICENSE-APACHE files exist only in its tarball overlay.
@@ -512,20 +557,33 @@ test("complete synthetic Ubuntu filesystem and dpkg join emits deterministic not
     }
     const commonLookups = [], gccCommonLookups = [];
     let queries = 0, mutateNative = false, mutateCommon = false, commonFault = null, copyrightSource = null;
+    let queryFault = null, recordFault = false, copyrightFault = null;
     mock.module("node:child_process", { namedExports: { execFile: (file, args, options, callback) => {
       assert.equal(file, "/usr/bin/dpkg-query");
       assert.deepEqual(options.env, { PATH: "/usr/bin:/bin", LC_ALL: "C" });
       assert.equal(options.timeout, 5000);
       queries += 1;
+      if (queryFault !== null) {
+        const error = new Error("PRIVATE_CANARY package query output");
+        if (queryFault === "terminated") error.killed = true;
+        if (queryFault === "output_limit") error.code = "ERR_CHILD_PROCESS_STDIO_MAXBUFFER";
+        callback(error);
+        return;
+      }
       let stdout;
       if (args[0] === "-S") {
         assert.equal(args.length, 2);
-        assert.ok(virtual.has(args[1]));
-        stdout = `${virtual.get(args[1])}: ${args[1]}\n`;
+        // Ubuntu runners may expose /lib as a symlink to /usr/lib. The
+        // collector deliberately queries that equivalent spelling, so the
+        // synthetic owner map must accept both names while returning the
+        // queried path verbatim.
+        const virtualPath = virtual.has(args[1]) ? args[1] : args[1].replace(/^\/lib\//u, "/usr/lib/");
+        assert.ok(virtual.has(virtualPath));
+        stdout = `${virtual.get(virtualPath)}: ${args[1]}\n`;
       } else {
         assert.equal(args[0], "-W");
         assert.equal(args[1], "-f=${binary:Package}\t${Version}\t${Status}\n");
-        stdout = `${args[2]}\t11.4.0-test\tinstall ok installed\n`;
+        stdout = recordFault ? "PRIVATE_CANARY invalid package record\n" : `${args[2]}\t11.4.0-test\tinstall ok installed\n`;
       }
       callback(null, { stdout });
     } } });
@@ -533,6 +591,7 @@ test("complete synthetic Ubuntu filesystem and dpkg join emits deterministic not
       ...actual,
       realpath: async file => {
         if (docFiles.has(file) && file.startsWith("/usr/share/doc/")) copyrightSource = file;
+        if (file.startsWith("/usr/share/doc/") && copyrightFault === "outside") return "/usr/share/doc-other/PRIVATE_CANARY";
         if (file.startsWith(commonPrefix)) {
           commonLookups.push(file);
           if (copyrightSource === "/usr/share/doc/libgcc-11-dev/copyright") gccCommonLookups.push(file);
@@ -543,7 +602,10 @@ test("complete synthetic Ubuntu filesystem and dpkg join emits deterministic not
         }
         return virtual.has(path.normalize(file)) ? path.normalize(file) : docFiles.has(file) ? file : actual.realpath(file);
       },
-      lstat: (file, options) => actual.lstat(docFiles.get(file) ?? file, options),
+      lstat: (file, options) => {
+        if (file.startsWith("/usr/share/doc/") && copyrightFault === "read") throw new Error("PRIVATE_CANARY copyright read failure");
+        return actual.lstat(docFiles.get(file) ?? file, options);
+      },
       open: async (file, flags) => {
         const handle = await actual.open(docFiles.get(file) ?? file, flags);
         const nativeChange = file === nativeArchives[0].file && mutateNative;
@@ -569,6 +631,7 @@ test("complete synthetic Ubuntu filesystem and dpkg join emits deterministic not
       assert.equal(first.value.sha256, digest(first.value.bytes));
       const body = first.value.bytes.toString();
       assert.match(body, /SQLite 3\.53\.2 amalgamation/u);
+      assert.doesNotMatch(body, /===== Cargo aicharts-custody /u);
       for (const name of ringLicenses) assert.ok(body.includes(`Cargo ring 0.17.14 (Apache-2.0 AND ISC) / ${name}`));
       assert.match(body, /Rust REUSE license \/ Unicode-3\.0\.txt/u);
       for (const name of rustNotices) assert.ok(body.includes(`Synthetic Rust notice: ${name}\n`));
@@ -586,6 +649,26 @@ test("complete synthetic Ubuntu filesystem and dpkg join emits deterministic not
       // Per collection: five file owners, the deliberately missed GCC spelling,
       // and three package records. Shared libc6 ownership is queried only once.
       assert.equal(queries, 18);
+      // Failure provenance survives the actual collector boundary without raw
+      // package names, arguments, subprocess messages or filesystem paths.
+      const expectSystem = async category => {
+        const result = await collect(f.input);
+        assert.deepEqual(result, { ok: false, error: "notices_system_missing", systemCategory: category });
+        assert.equal(JSON.stringify(result).includes("PRIVATE_CANARY"), false);
+      };
+      for (const [fault, category] of [["query", "package_query"], ["terminated", "package_query_terminated"], ["output_limit", "package_query_output_limit"]]) {
+        queryFault = fault;
+        await expectSystem(category);
+      }
+      queryFault = null;
+      recordFault = true;
+      await expectSystem("package_record");
+      recordFault = false;
+      for (const [fault, category] of [["outside", "copyright_path"], ["read", "copyright_read"]]) {
+        copyrightFault = fault;
+        await expectSystem(category);
+      }
+      copyrightFault = null;
       for (const name of ["GPL", "GPL-3", "LGPL"]) {
         assert.ok(body.includes(`===== Ubuntu common license / ${name} =====\n`));
         assert.ok(body.includes(`Synthetic common ${name} license fixture\n`));
@@ -595,6 +678,16 @@ test("complete synthetic Ubuntu filesystem and dpkg join emits deterministic not
       const gccBytes = await readFile(gccCopyright);
       const setReferences = references => writeFile(gccCopyright, `Synthetic GCC copyright\nGCC Runtime Library Exception\n${references}`);
       try {
+        await writeFile(gccCopyright, "Synthetic GCC copyright without required exception\n");
+        await expectSystem("gcc_exception");
+        for (const [reference, category] of [
+          [`prefix${commonPrefix}GPL`, "common_reference_prefix"],
+          [`'${commonPrefix}GPL\"`, "common_reference_delimiter"],
+          [`${commonPrefix}PRIVATE_CANARY`, "common_reference_name"],
+        ]) {
+          await setReferences(reference);
+          await expectSystem(category);
+        }
         // All known names retain one full text under every admitted quoting or
         // sentence form, regardless of duplicate/reversed source references.
         const formats = [
@@ -640,13 +733,13 @@ test("complete synthetic Ubuntu filesystem and dpkg join emits deterministic not
           // Other admitted packages may precede GCC in the sorted LOAD map.
           // The malformed document itself must cause no common-license lookup.
           const before = gccCommonLookups.length;
-          assert.deepEqual(await collect(f.input), { ok: false, error: "notices_system_missing" }, reference);
+          assert.equal((await collect(f.input)).error, "notices_system_missing", reference);
           assert.deepEqual(gccCommonLookups.slice(before), [], reference);
         }
         await setReferences(`${commonPrefix}GPL`);
         for (const fault of ["missing", "outside", "sibling"]) {
           commonFault = fault;
-          assert.deepEqual(await collect(f.input), { ok: false, error: "notices_system_missing" });
+          await expectSystem("common_license_path");
         }
         commonFault = null;
         const commonFile = docFiles.get(`${commonPrefix}GPL`), commonBytes = await readFile(commonFile);
@@ -654,7 +747,7 @@ test("complete synthetic Ubuntu filesystem and dpkg join emits deterministic not
           await writeFile(commonFile, Buffer.from([0xc3, 0x28]));
           assert.deepEqual(await collect(f.input), { ok: false, error: "notices_invalid_input" });
           await writeFile(commonFile, Buffer.alloc(1024 * 1024 + 1, 0x20));
-          assert.deepEqual(await collect(f.input), { ok: false, error: "notices_system_missing" });
+          await expectSystem("common_license_read");
           await writeFile(commonFile, commonBytes);
           mutateCommon = true;
           assert.deepEqual(await collect(f.input), { ok: false, error: "notices_source_changed" });
@@ -662,7 +755,7 @@ test("complete synthetic Ubuntu filesystem and dpkg join emits deterministic not
       } finally { commonFault = null; await writeFile(gccCopyright, gccBytes); }
       // A permitted stub name cannot substitute another Ubuntu owner's file.
       virtual.set("/usr/lib/x86_64-linux-gnu/libutil.a", "libgcc-11-dev:amd64");
-      assert.equal((await collect(f.input)).error, "notices_system_missing");
+      await expectSystem("package_owner");
       virtual.set("/usr/lib/x86_64-linux-gnu/libutil.a", "libc6-dev:amd64");
       mutateNative = true;
       const beforeNative = queries;

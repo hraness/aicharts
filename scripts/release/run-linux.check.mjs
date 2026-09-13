@@ -461,6 +461,29 @@ test("unknown native diagnostics preserve only fixed categories in the failed su
   assert.equal(accessorCalls, 0);
 });
 
+test("system notice failures retain only fixed locations and cannot assemble or install", async t => {
+  let accessorCalls = 0, effects = 0;
+  const admitted = ["package_query", "package_query_terminated", "package_query_output_limit", "package_owner", "package_record", "copyright_path", "copyright_read", "gcc_exception", "common_reference_prefix", "common_reference_delimiter", "common_reference_name", "common_license_path", "common_license_read"];
+  for (const category of [...admitted, "SYNTHETIC_PRIVATE_PATH", null]) {
+    const f = fixture(t), result = { ok: false, error: "notices_system_missing", output: "SYNTHETIC_PRIVATE_PATH" };
+    if (category === null) Object.defineProperty(result, "systemCategory", { get() { accessorCalls++; throw new Error("SYNTHETIC_PRIVATE_PATH"); } });
+    else result.systemCategory = category;
+    f.host.collectNotices = async () => result;
+    f.host.assemble = () => { effects++; throw new Error("assembly must not run"); };
+    assert.deepEqual(await internals.runWith(f.input, f.host), { ok: false, error: "notices_incomplete" });
+    const summary = JSON.parse(fs.readFileSync(join(f.input.outputDirectory, "summary.json")));
+    assert.deepEqual(summary.diagnostic, { module: "notices", code: "notices_system_missing",
+      ...(admitted.includes(category) ? { systemCategory: category } : {}) });
+    assert.equal(summary.stages.at(-1), "notices");
+    assert.equal(JSON.stringify(summary).includes("SYNTHETIC_PRIVATE_PATH"), false);
+    assert.equal(fs.existsSync(join(f.input.outputDirectory, "qualification.json")), false);
+    assert.equal(fs.existsSync(join(f.input.outputDirectory, "assets")), false);
+    assert.equal(f.calls.some(call => call.executable.startsWith(join(f.input.outputDirectory, "install") + "/")), false);
+  }
+  assert.equal(effects, 0);
+  assert.equal(accessorCalls, 0);
+});
+
 test("module diagnostics retain only fixed allowlisted codes", async t => {
   for (const code of ["git_failed", "SYNTHETIC_PRIVATE_ERROR_PATH"]) {
     const f = fixture(t); f.host.readSource = () => ({ ok: false, error: code });

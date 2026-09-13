@@ -12,6 +12,7 @@ path = "src/main.rs"
 
 [dependencies]
 aicharts-core.workspace = true
+aicharts-custody.workspace = true
 aicharts-protocol.workspace = true
 aicharts-ledger.workspace = true
 hmac.workspace = true
