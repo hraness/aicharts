@@ -1,6 +1,6 @@
 # Usage Worker boundaries
 
-The Usage Worker contains internal device pairing, account enrollment, numeric staging and authenticated batch admission. Its public handler always returns a fixed, private `503`. It has no deployment command, public browser approval or upload route, or query endpoint. The application has a dormant server-only authentication coordinator, but no production Worker connection. Tests use synthetic local bindings; internal source behavior is not live activation.
+The Usage Worker contains internal device pairing, account enrollment, numeric staging, authenticated batch admission and a private daily projection. Its public handler always returns a fixed, private `503`. It has no deployment command, public browser approval or upload route, or public query endpoint. The application has a dormant server-only authentication coordinator, but no production Worker connection. Tests use synthetic local bindings; internal source behavior is not live activation.
 
 ## Storage split
 
@@ -68,7 +68,29 @@ Admission and enrollment share a durable observation floor; clock regression clo
 
 The dormant limits are 128 lifetime device identities, 100,000 retained subjects including tombstones, 65,536 live Usage heads per UTC day, one flight and 4,096 terminal journal revisions including rejections. Capacity is checked before reservation; net day changes permit corrections and tombstones without transient over-counting. Full capacity still permits exact replay and self-revocation. At most 8,192 immutable admission objects carry 613,449,728 payload bytes per account/generation; the namespace anchor is additional. SQL binary payload is bounded to 51,320,072 bytes, excluding metadata, indexes and physical SQLite allocation. These are implementation ceilings, not purchased capacity, operational cost qualification or an unlimited-history promise.
 
-A future rollup must use only unique current live heads grouped by UTC day, never rejected requests, superseded history or tombstones. The 65,536 daily limit matches the current rollup input ceiling; importing 100,000 live occurrences on one day is intentionally unavailable until a separately reviewed expansion. No rollup query or leaderboard is activated by admission source.
+The private daily projection below uses only unique current live heads grouped by UTC day, never rejected requests, superseded history or tombstones. The 65,536 daily limit matches the current rollup input ceiling; importing 100,000 live occurrences on one day is intentionally unavailable until a separately reviewed expansion. No public query or leaderboard is activated by admission source.
+
+## Dormant private daily query
+
+`AccountEnrollment.readImportedDays` accepts a strictly validated account/session assertion and a contiguous range of at most 31 UTC days. It is a trusted-coordinator RPC: its DTO establishes syntax, not authentication. A future HTTP adapter must verify the production workload before body processing or account-object selection, and derive the account and expiry from the application's live server session. Browser callers must never receive native device upload credentials.
+
+The response reports current imported Codex and Claude Code occurrence counts, accounted tokens and output tokens by day. Token sums use exact integers serialized as canonical decimal strings; reasoning tokens already included in output are not added again. The fixed `imported-tokens-v1` profile and `partial` coverage do not imply complete history, known models, prices, subscriptions, prompts, intervals or turn measurements. Empty days remain explicit. The journal revision and commit time identify the snapshot; rejected or duplicate submissions can advance that revision without changing totals.
+
+The query streams at most 100,000 retained heads into at most 62 provider/day cells and validates selected heads against the retained day counts. Its owned response is bounded to 16 KiB. Only published live heads contribute: corrections can decrease totals or move a measurement between days/providers, while tombstones and uncertain pending admission do not contribute. The query checks canonical account binding, active enrollment, current recovery generation, quarantine, durable clock floors and session expiry before and after reading. Exact namespace-anchor readback precedes the final synchronous snapshot. Revoked devices do not erase previously accepted account records or prevent the account owner from reading them.
+
+Query transactions preserve already initialized SQL and R2 state, including enrollment and admission clocks. First access to an absent object still performs the existing constructor's schema and initial-row setup; existing constructor migrations are unchanged. This read path does not qualify an administrative restore or missing-object recovery.
+
+`bun run scripts/usage-worker-tools.ts test-private-days` runs the focused local Worker suite. It covers exact large totals, corrected and deleted records, pending publication, credential/account boundaries, expiry, clock regression, generation/anchor changes, corruption, restart and initialized-state preservation. The contract tests also reject extra fields, accessors, sparse arrays and noncanonical integers. No public route, authenticated application query or dashboard is enabled by this slice.
+
+## Dormant admission HTTP
+
+`createAdmissionHttpHandler` composes the existing account admission method with the fixed planned `POST https://usage.aicharts.io/v1/batches` route. The default Worker does not import it. Requests require `application/vnd.aicharts.usage-batch-v1`, an exact `Accept: application/vnd.aicharts.usage-journal-v1` header and the enrolled device's upload bearer. Cookies and content encoding are refused. A canonical optional content length must match the bounded stream; batches cannot exceed 82,024 bytes. Framing and canonical batch validation precede account selection. The account object verifies the device credential, account, generation and namespace authority.
+
+Only an owned terminal journal correlated with every operation in the submitted batch can produce HTTP 200. A terminal rejection journal also uses 200 so the sender can settle its consumed sequence range correctly; 200 alone is not acceptance of every measurement. The adapter returns fixed 400, 401, 409 or 503 failures for invalid framing, missing or incorrect device authority, blocked uploads and operational failure. Failure bodies contain no request data or credential. Responses are private and non-cacheable.
+
+The adapter registers request lifetime before body acquisition, admits at most eight unsettled operations per isolate, and applies a 15-second overall deadline and a 10-second RPC deadline. Timeout does not cancel a committed durable decision. Capacity remains held until actual stream cancellation or RPC settlement and reply disposal finish. Retrying the same frozen batch can recover its exact terminal journal after a lost reply or object restart. These limits do not qualify fleet-wide abuse controls or paid capacity.
+
+`bun run scripts/usage-worker-tools.ts test-admission-http` runs the focused local Worker contract. It covers actual committed RPC reply loss and restart replay, concurrent retries, expired pairing grants, revocation, cross-account/device denial, maximum frames, malformed bodies, delayed clocks and reply disposal. The full Worker gate also includes this suite. Synthetic credentials and local R2/DO fixtures establish these tested behaviors; native transport, production binding and live upload qualification remain required before activation.
 
 ## Validation and activation
 
