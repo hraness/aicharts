@@ -36,6 +36,7 @@ export function workerToolCommands(args: readonly string[]): readonly (readonly 
   if (args.length === 1 && args[0] === "test-pairing") return [[...test, "test/pairing.worker.ts"]];
   if (args.length === 1 && args[0] === "test-pairing-http") return [[...test, "test/pairing-http.worker.ts"]];
   if (args.length === 1 && args[0] === "test-enrollment") return [[...test, "test/enrollment.worker.ts"]];
+  if (args.length === 1 && args[0] === "test-terminal-enrollment") return [[...test, "test/terminal-enrollment.worker.ts"]];
   if (args.length === 1 && args[0] === "test-admission") return [[...test, "test/admission.worker.ts"]];
   if (args.length === 1 && args[0] === "test-admission-http") return [[...test, "test/admission-http.worker.ts"]];
   if (args.length === 1 && args[0] === "test-private-days") return [[...test, "test/private-days.worker.ts"]];
@@ -49,7 +50,7 @@ export function workerToolCommands(args: readonly string[]): readonly (readonly 
 async function main(): Promise<number> {
   const commands = workerToolCommands(process.argv.slice(2));
   if (!commands) {
-    console.error("usage-worker-tools: expected types, test, test-pairing, test-pairing-http, test-enrollment, test-admission, test-admission-http, test-private-days, test-private-days-http, test-synthetic-qualification, test-staging or check (no extra arguments)");
+    console.error("usage-worker-tools: expected types, test, test-pairing, test-pairing-http, test-enrollment, test-terminal-enrollment, test-admission, test-admission-http, test-private-days, test-private-days-http, test-synthetic-qualification, test-staging or check (no extra arguments)");
     return 2;
   }
   // Pinned Wrangler prefers this legacy path over XDG, even with telemetry off.

@@ -314,7 +314,7 @@ async function saveManifest(path: string, manifest: QualificationManifest): Prom
 
 /** Hash the bounded local source set; no Git, credentials or provider command runs here. */
 async function sourceDigest(): Promise<string> {
-  const files = ["Cargo.lock", "bun.lock", "package.json", "scripts/usage-cloudflare-qualification.ts", "fixtures/usage/cloudflare-qualification.ts",
+  const files = ["Cargo.lock", "bun.lock", "package.json", "lib/result.ts", "scripts/usage-cloudflare-node.mjs", "scripts/usage-cloudflare-qualification.ts", "fixtures/usage/cloudflare-qualification.ts",
     "services/usage-worker/qualification/wrangler.driver.jsonc", "services/usage-worker/qualification/wrangler.service.jsonc"];
   async function collect(subdirectory: string, depth = 0): Promise<void> {
     requireThat(depth <= 4 && files.length <= 256);

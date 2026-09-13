@@ -497,13 +497,21 @@ test("complete synthetic Ubuntu filesystem and dpkg join emits deterministic not
     const docFiles = new Map();
     for (const pkg of ["libgcc-11-dev", "libc6-dev", "libc6"]) {
       const file = `${f.input.sourceDirectory}/${pkg}.copyright`;
-      await writeFile(file, `${pkg} synthetic copyright\nGCC Runtime Library Exception\n/usr/share/common-licenses/GPL-3\n`);
+      // Ubuntu's GCC copyright has these unquoted sentence-terminal periods:
+      // https://changelogs.ubuntu.com/changelogs/pool/main/g/gcc-11/gcc-11_11.4.0-1ubuntu1~22.04.3/copyright
+      const gccProse = pkg === "libgcc-11-dev" ? "Full text: /usr/share/common-licenses/GPL.\nFull text: /usr/share/common-licenses/LGPL.\n" : "";
+      await writeFile(file, `${pkg} synthetic copyright\nGCC Runtime Library Exception\n/usr/share/common-licenses/GPL-3\n${gccProse}`);
       docFiles.set(`/usr/share/doc/${pkg}/copyright`, file);
     }
-    const common = `${f.input.sourceDirectory}/GPL-3`;
-    await writeFile(common, "Synthetic common GPL-3 license fixture\n");
-    docFiles.set("/usr/share/common-licenses/GPL-3", common);
-    let queries = 0, mutateNative = false;
+    const commonNames = ["Apache-2.0", "Artistic", "BSD", "CC0-1.0", "GFDL", "GFDL-1.2", "GFDL-1.3", "GPL", "GPL-1", "GPL-2", "GPL-3", "LGPL", "LGPL-2", "LGPL-2.1", "LGPL-3", "MPL-1.1", "MPL-2.0"];
+    const commonPrefix = "/usr/share/common-licenses/";
+    for (const name of commonNames) {
+      const common = `${f.input.sourceDirectory}/${name}`;
+      await writeFile(common, `Synthetic common ${name} license fixture\n`);
+      docFiles.set(`${commonPrefix}${name}`, common);
+    }
+    const commonLookups = [], gccCommonLookups = [];
+    let queries = 0, mutateNative = false, mutateCommon = false, commonFault = null, copyrightSource = null;
     mock.module("node:child_process", { namedExports: { execFile: (file, args, options, callback) => {
       assert.equal(file, "/usr/bin/dpkg-query");
       assert.deepEqual(options.env, { PATH: "/usr/bin:/bin", LC_ALL: "C" });
@@ -523,16 +531,30 @@ test("complete synthetic Ubuntu filesystem and dpkg join emits deterministic not
     } } });
     mock.module("node:fs/promises", { namedExports: {
       ...actual,
-      realpath: async file => virtual.has(path.normalize(file)) ? path.normalize(file) : docFiles.has(file) ? file : actual.realpath(file),
+      realpath: async file => {
+        if (docFiles.has(file) && file.startsWith("/usr/share/doc/")) copyrightSource = file;
+        if (file.startsWith(commonPrefix)) {
+          commonLookups.push(file);
+          if (copyrightSource === "/usr/share/doc/libgcc-11-dev/copyright") gccCommonLookups.push(file);
+          if (commonFault === "missing" || !docFiles.has(file)) throw new Error("PRIVATE_CANARY missing fixture");
+          if (commonFault === "outside") return `${f.input.sourceDirectory}/GPL`;
+          if (commonFault === "sibling") return "/usr/share/common-licenses-other/GPL";
+          return file;
+        }
+        return virtual.has(path.normalize(file)) ? path.normalize(file) : docFiles.has(file) ? file : actual.realpath(file);
+      },
       lstat: (file, options) => actual.lstat(docFiles.get(file) ?? file, options),
       open: async (file, flags) => {
         const handle = await actual.open(docFiles.get(file) ?? file, flags);
-        if (file !== nativeArchives[0].file || !mutateNative) return handle;
+        const nativeChange = file === nativeArchives[0].file && mutateNative;
+        const commonChange = file === `${commonPrefix}GPL` && mutateCommon;
+        if (!nativeChange && !commonChange) return handle;
         return {
           stat: options => handle.stat(options), close: () => handle.close(),
           read: async (...args) => {
             const result = await handle.read(...args);
-            if (mutateNative) { mutateNative = false; await actual.writeFile(file, "!<arch>\nchanged after open\n"); }
+            if (nativeChange && mutateNative) { mutateNative = false; await actual.writeFile(file, "!<arch>\nchanged after open\n"); }
+            if (commonChange && mutateCommon) { mutateCommon = false; await actual.writeFile(docFiles.get(file), "PRIVATE_CANARY changed after open\n"); }
             return result;
           },
         };
@@ -564,6 +586,80 @@ test("complete synthetic Ubuntu filesystem and dpkg join emits deterministic not
       // Per collection: five file owners, the deliberately missed GCC spelling,
       // and three package records. Shared libc6 ownership is queried only once.
       assert.equal(queries, 18);
+      for (const name of ["GPL", "GPL-3", "LGPL"]) {
+        assert.ok(body.includes(`===== Ubuntu common license / ${name} =====\n`));
+        assert.ok(body.includes(`Synthetic common ${name} license fixture\n`));
+      }
+      assert.equal(commonLookups.some(file => file.endsWith(".")), false);
+      const gccCopyright = docFiles.get("/usr/share/doc/libgcc-11-dev/copyright");
+      const gccBytes = await readFile(gccCopyright);
+      const setReferences = references => writeFile(gccCopyright, `Synthetic GCC copyright\nGCC Runtime Library Exception\n${references}`);
+      try {
+        // All known names retain one full text under every admitted quoting or
+        // sentence form, regardless of duplicate/reversed source references.
+        const formats = [
+          name => `${commonPrefix}${name}`,
+          name => `${commonPrefix}${name}.`,
+          name => `'${commonPrefix}${name}'`,
+          name => `"${commonPrefix}${name}"`,
+          name => "`" + commonPrefix + name + "`",
+          name => "`" + commonPrefix + name + "'",
+        ];
+        for (const format of formats) {
+          await setReferences([...commonNames].reverse().flatMap(name => [format(name), format(name)]).join("\n"));
+          const result = await collect(f.input);
+          assert.equal(result.ok, true, JSON.stringify(result));
+          const notices = result.value.bytes.toString();
+          for (const name of commonNames) {
+            assert.equal(notices.split(`===== Ubuntu common license / ${name} =====\n`).length - 1, 1);
+            assert.ok(notices.includes(`Synthetic common ${name} license fixture\n`));
+          }
+        }
+        for (const whitespace of [" ", "\t", "\n", "\r", "\f", "\v"]) {
+          await setReferences(`${commonPrefix}LGPL-2.1.${whitespace}Next sentence.`);
+          const result = await collect(f.input);
+          assert.equal(result.ok, true, JSON.stringify(result));
+          assert.ok(result.value.bytes.includes(Buffer.from("===== Ubuntu common license / LGPL-2.1 =====\n")));
+        }
+        const malformed = [
+          commonPrefix, `${commonPrefix}PRIVATE_CANARY`, `${commonPrefix}GPL..`,
+          `${commonPrefix}./GPL`, `${commonPrefix}../GPL`, `${commonPrefix}subdir/GPL`,
+          `${commonPrefix}GPL/PRIVATE_CANARY`, `${commonPrefix}GPL/../LGPL`, `${commonPrefix}GPL./`,
+          `${commonPrefix}GPL-3.extra`, `${commonPrefix}GPL-3+extra`, `${commonPrefix}GPL-3%2fextra`,
+          `${commonPrefix}GPL-3?extra`, `${commonPrefix}GPL-3#extra`, `${commonPrefix}GPL-3\\extra`,
+          `${commonPrefix}GPL.,`, `${commonPrefix}GPL.)`, `${commonPrefix}GPL.\u00a0`,
+          `${commonPrefix}GPL-3\u00a0`, `${commonPrefix}GPL.'`, `${commonPrefix}GPL"`,
+          `"${commonPrefix}GPL'`, `'${commonPrefix}GPL"`, `"${commonPrefix}GPL\n"`,
+          `/tmp${commonPrefix}GPL`, `prefix${commonPrefix}GPL`,
+        ];
+        for (const name of commonNames) {
+          malformed.push(`'${commonPrefix}${name}.'`, `"${commonPrefix}${name}."`, "`" + commonPrefix + name + ".'", `${commonPrefix}${name}/PRIVATE_CANARY`);
+        }
+        for (const reference of malformed) {
+          await setReferences(reference);
+          // Other admitted packages may precede GCC in the sorted LOAD map.
+          // The malformed document itself must cause no common-license lookup.
+          const before = gccCommonLookups.length;
+          assert.deepEqual(await collect(f.input), { ok: false, error: "notices_system_missing" }, reference);
+          assert.deepEqual(gccCommonLookups.slice(before), [], reference);
+        }
+        await setReferences(`${commonPrefix}GPL`);
+        for (const fault of ["missing", "outside", "sibling"]) {
+          commonFault = fault;
+          assert.deepEqual(await collect(f.input), { ok: false, error: "notices_system_missing" });
+        }
+        commonFault = null;
+        const commonFile = docFiles.get(`${commonPrefix}GPL`), commonBytes = await readFile(commonFile);
+        try {
+          await writeFile(commonFile, Buffer.from([0xc3, 0x28]));
+          assert.deepEqual(await collect(f.input), { ok: false, error: "notices_invalid_input" });
+          await writeFile(commonFile, Buffer.alloc(1024 * 1024 + 1, 0x20));
+          assert.deepEqual(await collect(f.input), { ok: false, error: "notices_system_missing" });
+          await writeFile(commonFile, commonBytes);
+          mutateCommon = true;
+          assert.deepEqual(await collect(f.input), { ok: false, error: "notices_source_changed" });
+        } finally { mutateCommon = false; await writeFile(commonFile, commonBytes); }
+      } finally { commonFault = null; await writeFile(gccCopyright, gccBytes); }
       // A permitted stub name cannot substitute another Ubuntu owner's file.
       virtual.set("/usr/lib/x86_64-linux-gnu/libutil.a", "libgcc-11-dev:amd64");
       assert.equal((await collect(f.input)).error, "notices_system_missing");

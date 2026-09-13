@@ -24,6 +24,10 @@ Only the trusted coordinator may record verified authentication through a future
 
 The application implements protected cookie custody, same-origin and CSRF checks, and a fresh live-account check for each approval read or decision. These server-only methods still have no public route or qualified transport. The CLI must display and explicitly confirm the approved account before enrollment. Neither browser approval nor terminal confirmation creates a namespace or grants upload access.
 
+## Terminal enrollment adapter
+
+The dormant [terminal enrollment wire](usage-terminal-enrollment.md) connects six canonical terminal operations to the existing pairing and account methods. Separate client and server codecs validate retained terminal observations and authoritative RPC results. The HTTP factory derives account routing from a checked reservation, refuses browser Origin before dispatch and retains success expiry through final response delivery. It is absent from the default Worker entrypoint; native credential custody, HTTPS enrollment and public activation remain unfinished.
+
 ## Internal account enrollment
 
 `reserveEnrollment` creates one immutable reservation only for a live, terminal-confirmed intent in its canonical Pairing object. It binds the confirmed account, both secret commitments, a random reservation ID, the current recovery generation and the earliest intent/authentication deadline. Exact live retries return the original reservation. `readEnrollmentReservation` verifies both preimages and returns an existing reservation after expiry without renewing it. Pairing storage uses a fully validated, additive schema-v1-to-v2 migration; unknown or corrupt state remains untouched. Older v1-only code refuses the migrated row. Preserve that refusal during rollback; never reset or strip enrollment state to reopen an older implementation.
