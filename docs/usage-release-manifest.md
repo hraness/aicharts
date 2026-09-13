@@ -67,7 +67,7 @@ Exactly three assets are emitted, sorted by name. Each is `{ name, kind, target,
 
 The CLI inventory has exactly seven files: `bin/aicharts`, `BUILD.json`, `LICENSE`, `NOTICE.md`, `THIRD_PARTY_LICENSES.txt`, `docs/usage-install.md`, and `docs/usage-local.md`. Only the executable is `0o755`; the rest are `0o644`.
 
-The skill inventory has exactly nine files: `SKILL.md`, `agents/openai.yaml`, `references/benchmarks.md`, `references/local-usage.md`, `scripts/atlas.mjs`, `scripts/atlas.check.mjs`, `BUILD.json`, `LICENSE`, and `NOTICE.md`. All are `0o644`.
+The skill inventory has exactly 11 files: `SKILL.md`, `agents/openai.yaml`, `references/benchmarks.md`, `references/local-usage.md`, `references/local-turns.md`, `references/local-operations.md`, `scripts/atlas.mjs`, `scripts/atlas.check.mjs`, `BUILD.json`, `LICENSE`, and `NOTICE.md`. All are `0o644`.
 
 Source inventory preserves supplied `0o644` or `0o755` modes and may contain empty files. No unsupported source file is silently excluded. Paths follow the restricted ASCII and representable USTAR name/prefix rules in [Release archive bytes](usage-release-archives.md), including the 256-byte full-path ceiling and collision checks.
 

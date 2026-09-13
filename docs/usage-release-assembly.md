@@ -43,7 +43,7 @@ The CLI archive contains exactly seven files:
 | `docs/usage-install.md` | Source `distribution/cli/docs/usage-install.md` |
 | `docs/usage-local.md` | Source `distribution/cli/docs/usage-local.md` |
 
-All other CLI members use mode 0644. The nine-file skill archive contains generated BUILD, the same LICENSE/distribution NOTICE, and the six existing files under `skills/aicharts/`, all mode 0644. Neither archive acquires extra files from the source inventory. The exhaustive source archive retains the website NOTICE at its original path; the distribution NOTICE does not replace it.
+All other CLI members use mode 0644. The 11-file skill archive contains generated BUILD, the same LICENSE/distribution NOTICE, and the eight existing files under `skills/aicharts/`, including the local-turns and local-operations references, all mode 0644. Neither archive acquires extra files from the source inventory. A regression check resolves the packaged Markdown links against archive members. The exhaustive source archive retains the website NOTICE at its original path; the distribution NOTICE does not replace it.
 
 ## Byte flow and limits
 

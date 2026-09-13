@@ -13,7 +13,7 @@ const PROFILE = "linux-skill-v1";
 const WORKFLOW = ".github/workflows/cli-release.yml";
 const VERSION = /^(0|[1-9][0-9]{0,8})\.(0|[1-9][0-9]{0,8})\.(0|[1-9][0-9]{0,8})$/;
 const CLI_FILES = Object.freeze(["BUILD.json", "LICENSE", "NOTICE.md", "THIRD_PARTY_LICENSES.txt", "bin/aicharts", "docs/usage-install.md", "docs/usage-local.md"]);
-const SKILL_FILES = Object.freeze(["BUILD.json", "LICENSE", "NOTICE.md", "SKILL.md", "agents/openai.yaml", "references/benchmarks.md", "references/local-usage.md", "scripts/atlas.check.mjs", "scripts/atlas.mjs"]);
+const SKILL_FILES = Object.freeze(["BUILD.json", "LICENSE", "NOTICE.md", "SKILL.md", "agents/openai.yaml", "references/benchmarks.md", "references/local-operations.md", "references/local-turns.md", "references/local-usage.md", "scripts/atlas.check.mjs", "scripts/atlas.mjs"]);
 const DISABLED = Object.freeze(["authentication", "enrollment", "upload", "backgroundCollection", "nativeCustody", "autoUpdate"]);
 const LIMITS = Object.freeze({
   cli: Object.freeze({ compressed: 64 * 1024 * 1024, expanded: 128 * 1024 * 1024, files: 16 }),

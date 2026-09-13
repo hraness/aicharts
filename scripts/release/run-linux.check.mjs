@@ -1,0 +1,298 @@
+import assert from "node:assert/strict";
+import { createHash } from "node:crypto";
+import * as fs from "node:fs";
+import { tmpdir } from "node:os";
+import { dirname, join } from "node:path";
+import { test } from "node:test";
+import { runLinuxRelease } from "./run-linux.mjs";
+import { hydrateReleaseSource } from "./hydrate-source.mjs";
+import { assembleLinuxRelease } from "./assemble.mjs";
+import { validateArchive } from "./archive.mjs";
+import { validateLinuxQualificationReport } from "./linux-qualification.mjs";
+
+// Private source-only seam. The shipped runner has no effects override. Fake
+// compiler/smoke facts exercise orchestration, never actual Linux qualification.
+const script = new URL("./run-linux.mjs", import.meta.url);
+const runtime = fs.readFileSync(script, "utf8").replace(/from "(\.\/[^"]+)"/gu, (_, relative) => "from " + JSON.stringify(new URL(relative, script).href));
+const internals = await import("data:text/javascript;base64," + Buffer.from(runtime + "\nexport { runWith, argumentsToInput, workflow, minimalEnvironment, inspectElf, compilerArtifact, execute, readRegular, prepareOutput, recheckSource, compareVersion };\n").toString("base64"));
+const TARGET = "x86_64-unknown-linux-gnu";
+const RUST_COMMIT = "8bab26f4f68e0e26f0bb7960be334d5b520ea452";
+const SYSROOT = "/home/runner/.rustup/toolchains/1.97.1-" + TARGET;
+const INTERPRETER = "/lib64/ld-linux-x86-64.so.2";
+const SHA = "1".repeat(40), TREE = "2".repeat(40);
+const sha = bytes => createHash("sha256").update(bytes).digest("hex");
+const bytes = value => Buffer.from(value);
+const ok = value => ({ ok: true, value });
+const result = (text = "", status = 0, error = "") => ({ status, stdout: bytes(text), stderr: bytes(error) });
+const env = () => ({ GITHUB_ACTIONS: "true", GITHUB_REPOSITORY: "hraness/aicharts", GITHUB_REF: "refs/heads/main", GITHUB_SHA: SHA,
+  GITHUB_WORKFLOW_REF: "hraness/aicharts/.github/workflows/cli-release.yml@refs/heads/main", GITHUB_RUN_ID: "9007199254740993", GITHUB_RUN_ATTEMPT: "1", ImageOS: "ubuntu22", ImageVersion: "20260907.12.1", GITHUB_TOKEN: "SYNTHETIC_NEVER_FORWARD", RUSTFLAGS: "SYNTHETIC_NEVER_FORWARD", LD_PRELOAD: "SYNTHETIC_NEVER_FORWARD" });
+const elfBytes = () => { const value = Buffer.alloc(128); value.set([0x7f, 0x45, 0x4c, 0x46, 2, 1, 1]); value.writeUInt16LE(3, 16); value.writeUInt16LE(62, 18); return value; };
+function elfOutput() {
+  return {
+    header: "ELF Header:\n  Class: ELF64\n  Data: 2's complement, little endian\n  Machine: Advanced Micro Devices X86-64\n",
+    program: " INTERP 0x01 0x01 0x01 0x01 0x01 R 0x1\n [Requesting program interpreter: " + INTERPRETER + "]\n GNU_STACK 0x00 0x00 0x00 0x00 0x00 RW 0x10\n",
+    dynamic: "Dynamic section:\n 0x01 (NEEDED) Shared library: [libgcc_s.so.1]\n 0x01 (NEEDED) Shared library: [libc.so.6]\n",
+    versions: "Version needs section '.gnu.version_r':\n 0x00: Version: 1 File: libgcc_s.so.1 Cnt: 1\n 0x01: Name: GCC_3.0 Flags: none Version: 2\n 0x02: Version: 1 File: libc.so.6 Cnt: 2\n 0x03: Name: GLIBC_2.2.5 Flags: none Version: 3\n 0x04: Name: GLIBC_2.34 Flags: none Version: 4\n",
+    notes: "Properties: x86 ISA needed: x86-64-baseline\n",
+  };
+}
+function fixture(t) {
+  const root = fs.mkdtempSync(join(fs.realpathSync(tmpdir()), "aicharts-linux-runner-test-"));
+  fs.chmodSync(root, 0o700);
+  t.after(() => { assert.equal(fs.lstatSync(root).isSymbolicLink(), false); fs.rmSync(root, { recursive: true }); });
+  const repositoryDirectory = join(root, "repository"); fs.mkdirSync(repositoryDirectory, { mode: 0o700 });
+  const outputDirectory = join(root, "result");
+  const input = { repositoryDirectory, commit: SHA, expectedTree: TREE, outputDirectory };
+  const paths = ["LICENSE", "NOTICE.md", "Cargo.lock", "bun.lock", "Cargo.toml", "crates/aicharts-cli/Cargo.toml", "rust-toolchain.toml", "distribution/NOTICE.md", "distribution/cli/docs/usage-install.md", "distribution/cli/docs/usage-local.md", "skills/aicharts/SKILL.md", "skills/aicharts/agents/openai.yaml", "skills/aicharts/references/benchmarks.md", "skills/aicharts/references/local-usage.md", "skills/aicharts/references/local-turns.md", "skills/aicharts/references/local-operations.md", "skills/aicharts/scripts/atlas.mjs", "skills/aicharts/scripts/atlas.check.mjs"];
+  const sourceFiles = paths.sort().map(path => ({ path, mode: 0o644, bytes: bytes("synthetic public source: " + path + "\n") }));
+  sourceFiles.find(file => file.path === "Cargo.toml").bytes = bytes("[workspace.package]\nversion = \"0.1.0\"\n");
+  sourceFiles.find(file => file.path === "crates/aicharts-cli/Cargo.toml").bytes = bytes("[package]\nname = \"aicharts-cli\"\nversion.workspace = true\n");
+  sourceFiles.find(file => file.path === "Cargo.lock").bytes = bytes("version = 4\n");
+  const source = { source: { commit: SHA, tree: TREE, commitTime: "2026-09-11T12:00:00Z" }, sourceFiles };
+  const calls = [], stages = [], notices = [];
+  const output = elfOutput();
+  let collected = false;
+  const host = {
+    platform: "linux", arch: "x64", nodeMajor: 24, env: env(), now: () => performance.now(),
+    readFile: (file, maximum, executable) => {
+      if (file === "/etc/os-release") return bytes("ID=ubuntu\nVERSION_ID=\"22.04\"\n");
+      if (file.startsWith(SYSROOT) || file.startsWith("/usr/bin/") || file.startsWith("/usr/lib/x86_64-linux-gnu/")) return bytes("synthetic tool/runtime bytes");
+      return internals.readRegular(file, maximum, executable);
+    },
+    realpath: file => file === INTERPRETER ? "/usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2" : file.replace(/^\/lib\/x86_64-linux-gnu\//u, "/usr/lib/x86_64-linux-gnu/"),
+    progress: stage => stages.push(stage), readSource: value => { assert.deepEqual(value, { repositoryDirectory, commit: SHA, expectedTree: TREE }); return ok(source); },
+    hydrate: hydrateReleaseSource, assemble: assembleLinuxRelease, validateArchive,
+    collectNotices: async input => { notices.push(input); const data = bytes("SYNTHETIC TEST ONLY: not qualified licenses\n"); return ok({ bytes: data, sha256: sha(data), components: 1 }); },
+    execute: async (executable, args, options) => {
+      calls.push({ executable, args: [...args], options });
+      assert.equal(options.env.GITHUB_TOKEN, undefined); assert.equal(options.env.LD_PRELOAD, undefined);
+      assert.ok(options.timeoutMs > 0); assert.ok(options.maxBytes <= 32 * 1024 * 1024);
+      if (executable.endsWith("/rustup")) return result(SYSROOT + "/bin/" + args.at(-1) + "\n");
+      if (executable.endsWith("/rustc")) return args[0] === "--print" ? result(SYSROOT + "\n") : result("rustc 1.97.1 (8bab26f4f 2026-07-14)\nrelease: 1.97.1\ncommit-hash: " + RUST_COMMIT + "\nhost: " + TARGET + "\n");
+      if (executable === "/usr/bin/gcc-11") return result("11.4.0\n");
+      if (executable === "/usr/bin/ld.bfd") return result("GNU ld (GNU Binutils for Ubuntu) 2.38\n");
+      if (executable.endsWith("/bun")) return result("1.3.14\n");
+      if (executable.endsWith("/cargo")) {
+        if (args[0] === "--version") return result("cargo 1.97.1 (c980f4866 2026-07-06)\n");
+        if (args[0] === "fetch") return result();
+        const sourceDirectory = join(outputDirectory, "source");
+        if (args[0] === "metadata") return result(JSON.stringify({ packages: [{ name: "aicharts-cli", id: "path+aicharts-cli#0.1.0", version: "0.1.0", manifest_path: join(sourceDirectory, "crates/aicharts-cli/Cargo.toml") }] }));
+        assert.equal(args[0], "rustc");
+        const artifact = join(outputDirectory, "target", TARGET, "release/aicharts");
+        fs.mkdirSync(dirname(artifact), { recursive: true }); fs.writeFileSync(artifact, elfBytes(), { mode: 0o755 });
+        const map = args.at(-1).slice("link-arg=-Wl,-Map=".length); fs.writeFileSync(map, "LOAD synthetic\n");
+        return result(JSON.stringify({ reason: "compiler-artifact", package_id: "path+aicharts-cli#0.1.0", target: { name: "aicharts", kind: ["bin"] }, profile: { test: false }, executable: artifact, fresh: false }) + "\n" + JSON.stringify({ reason: "build-finished", success: true }) + "\n");
+      }
+      if (executable === "/usr/bin/readelf") {
+        if (args.at(-1).startsWith("/usr/lib/")) return result("Version definition section:\nName: GCC_3.0\nName: GLIBC_2.2.5\nName: GLIBC_2.34\nVersion needs section\n");
+        const key = new Map([["--file-header", "header"], ["--program-headers", "program"], ["--dynamic", "dynamic"], ["--version-info", "versions"], ["--notes", "notes"]]).get(args[1]);
+        assert.ok(key); return result(output[key]);
+      }
+      if (executable === INTERPRETER) return result(" linux-vdso.so.1 (0x123)\n libgcc_s.so.1 => /lib/x86_64-linux-gnu/libgcc_s.so.1 (0x456)\n libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x789)\n " + INTERPRETER + " (0xabc)\n");
+      assert.ok(executable.endsWith("/aicharts")); assert.equal(options.env.PATH, "/usr/bin:/bin");
+      assert.equal(options.env.CARGO_HOME, undefined); assert.equal(options.env.RUSTC, undefined);
+      assert.equal(options.cwd, join(outputDirectory, "smoke"));
+      const response = value => result(JSON.stringify(value));
+      if (args[0] === "--version") return response({ schemaVersion: 1, operation: "version", version: "0.1.0", provenance: "unverified", build: { os: "linux", arch: "x86_64", sourceCommit: null } });
+      if (args[0] === "--help") return result("synthetic help --complete-prefix\n");
+      if (args[0] === "keygen") { const file = join(options.cwd, "key"); if (fs.existsSync(file)) return result("", 2, "aicharts: key_create_failed\n"); fs.writeFileSync(file, Buffer.alloc(32, 7), { mode: 0o600 }); return result("Key created\n"); }
+      if (args[0] === "usage") return args.includes("bad.jsonl") ? result("", 2, "aicharts: source_parse_failed\n") : response({ tokens: "185" });
+      if (args[0] === "init") { fs.mkdirSync(join(options.cwd, "state"), { mode: 0o700 }); fs.writeFileSync(join(options.cwd, "state/usage.sqlite3"), "synthetic empty numeric state", { mode: 0o600 }); return result("Initialized\n"); }
+      if (args[0] === "collect") { const skip = collected; collected = true; fs.writeFileSync(join(options.cwd, "state/usage.sqlite3"), "synthetic measured numeric state"); return response({ tokens: "185", usageOccurrences: 2, uploaded: false, ledgerRevision: 1, sourcesSkipped: skip ? 2 : 0, occurrencesChanged: skip ? 0 : 2 }); }
+      if (args[0] === "inspect") return response({ tokens: "185" });
+      if (args[0] === "prefix-enable") return result("Prefix enabled\n");
+      if (args[0] === "daemon") return response({ tokens: "185", scanMode: "full_changed_source_complete_prefix", sourcesWithDeferredTail: 0 });
+      if (args[0] === "turns") return response({ days: [{ utcDay: 2, completed: { runtimeMsSum: "1537", runtimeEligibleTurns: 1 } }], uploaded: false });
+      if (args[0] === "upload") return args.includes("--dry-run") ? response({ uploaded: false, frames: [{ hex: "00" }] }) : result("", 2, "aicharts: upload_not_enabled_use_dry_run\n");
+      assert.fail("unexpected synthetic executable argv");
+    },
+  };
+  return { root, input, host, calls, stages, source, output, notices };
+}
+
+test("entrypoint and public effect interface are closed before source or output access", async t => {
+  const f = fixture(t);
+  const args = ["--repository", f.input.repositoryDirectory, "--commit", SHA, "--tree", TREE, "--output", f.input.outputDirectory];
+  assert.deepEqual({ ...internals.argumentsToInput(args) }, f.input);
+  for (const invalid of [args.slice(0, -1), [...args, "--publish"], ["--unknown", ...args.slice(1)], ["--output", "x", ...args.slice(2)]]) assert.throws(() => internals.argumentsToInput(invalid));
+  let touched = false;
+  const accessor = { ...f.input }; Object.defineProperty(accessor, "commit", { enumerable: true, get() { touched = true; return SHA; } });
+  for (const invalid of [null, [], { ...f.input, publish: true }, accessor, new Proxy(f.input, {})]) assert.equal((await internals.runWith(invalid, f.host)).error, "invalid_input");
+  assert.equal(touched, false); assert.equal(fs.existsSync(f.input.outputDirectory), false);
+  if (process.platform !== "linux" || process.arch !== "x64") assert.equal((await runLinuxRelease(f.input)).error, "unsupported_host");
+});
+
+test("governed workflow and measured host conditions refuse without effects", async t => {
+  const f = fixture(t);
+  for (const [key, value] of [["GITHUB_ACTIONS", "false"], ["GITHUB_REPOSITORY", "elsewhere/repo"], ["GITHUB_REF", "refs/heads/topic"], ["GITHUB_SHA", TREE], ["GITHUB_WORKFLOW_REF", "hraness/aicharts/.github/workflows/other.yml@refs/heads/main"], ["GITHUB_RUN_ID", "01"], ["GITHUB_RUN_ATTEMPT", "0"], ["ImageVersion", "today"]]) {
+    const changed = { ...f.host, env: { ...f.host.env, [key]: value } };
+    assert.equal((await internals.runWith(f.input, changed)).ok, false);
+    assert.equal(fs.existsSync(f.input.outputDirectory), false);
+  }
+  assert.equal((await internals.runWith(f.input, { ...f.host, readFile: () => bytes("ID=ubuntu\nVERSION_ID=\"24.04\"\n") })).error, "unsupported_host");
+  assert.equal(f.calls.length, 0);
+});
+
+test("output is create-new and requires a nonsymlink private owned parent", t => {
+  const f = fixture(t);
+  fs.mkdirSync(f.input.outputDirectory);
+  assert.throws(() => internals.prepareOutput(f.input.outputDirectory), { code: "destination_exists" });
+  const shared = join(f.root, "shared"); fs.mkdirSync(shared, { mode: 0o755 }); fs.chmodSync(shared, 0o755);
+  assert.throws(() => internals.prepareOutput(join(shared, "result")), { code: "unsupported_destination" });
+  const link = join(f.root, "linked"); fs.symlinkSync(shared, link);
+  assert.throws(() => internals.prepareOutput(join(link, "result")), { code: "unsupported_destination" });
+});
+
+test("minimal compiler environment fixes baseline and excludes inherited secrets and overrides", () => {
+  const dirs = { source: "/owned/source", cargo: "/owned/cargo", tmp: "/owned/tmp" };
+  const selected = internals.minimalEnvironment(dirs, SYSROOT + "/bin/rustc");
+  for (const forbidden of ["GITHUB_TOKEN", "RUSTFLAGS", "LD_PRELOAD", "RUSTC_WRAPPER", "CARGO_REGISTRIES_CRATES_IO_TOKEN", "HOME", "LIBSQLITE3_SYS_USE_PKG_CONFIG"]) assert.equal(Object.hasOwn(selected, forbidden), false);
+  const flags = selected.CARGO_ENCODED_RUSTFLAGS.split("\x1f");
+  for (const expected of ["target-cpu=x86-64", "linker=/usr/bin/gcc-11", "linker-features=-lld", "link-self-contained=-linker", "link-arg=-fuse-ld=bfd"]) assert.ok(flags.includes(expected));
+  assert.equal(flags.some(value => value.includes("native")), false); assert.ok(selected.CFLAGS.startsWith("-march=x86-64 -mtune=generic"));
+});
+
+test("ELF policy discriminates architecture, interpreter, dependency, stack, version and ISA failures", () => {
+  const good = internals.inspectElf(elfBytes(), elfOutput());
+  assert.deepEqual(good.dependencies, ["libc.so.6", "libgcc_s.so.1"]); assert.equal(good.maxGlibc, "2.34");
+  assert.equal(internals.compareVersion("2.9", "2.35") < 0, true);
+  assert.equal(internals.inspectElf(elfBytes(), { ...elfOutput(), notes: "" }).isa, null);
+  const wrongArch = elfBytes(); wrongArch.writeUInt16LE(183, 18);
+  assert.throws(() => internals.inspectElf(wrongArch, elfOutput()), { code: "elf_invalid" });
+  for (const mutate of [
+    value => { value.program = value.program.replace(INTERPRETER, "/tmp/loader"); },
+    value => { value.program = value.program.replace(" RW ", " RWE "); },
+    value => { value.dynamic += " (RUNPATH) Library runpath: [/tmp]\n"; },
+    value => { value.dynamic = value.dynamic.replace("libc.so.6", "libssl.so.3"); },
+    value => { value.dynamic += " (NEEDED) Shared library: [libc.so.6]\n"; },
+    value => { value.versions = value.versions.replace("GLIBC_2.34", "GLIBC_2.36"); },
+    value => { value.versions = value.versions.replace("GLIBC_2.34", "GLIBC_PRIVATE"); },
+    value => { value.notes = value.notes.replace("x86-64-baseline", "x86-64-v2"); },
+  ]) { const value = elfOutput(); mutate(value); assert.throws(() => internals.inspectElf(elfBytes(), value)); }
+});
+
+test("Cargo final-artifact selection binds package, fresh single build and exact output", () => {
+  const dirs = { source: "/owned/source", target: "/owned/target" };
+  const metadata = bytes(JSON.stringify({ packages: [{ name: "aicharts-cli", id: "cli", version: "0.1.0", manifest_path: dirs.source + "/crates/aicharts-cli/Cargo.toml" }] }));
+  const artifact = { reason: "compiler-artifact", package_id: "cli", target: { name: "aicharts", kind: ["bin"] }, profile: { test: false }, executable: dirs.target + "/" + TARGET + "/release/aicharts", fresh: false };
+  const messages = value => bytes(JSON.stringify(value) + "\n" + JSON.stringify({ reason: "build-finished", success: true }) + "\n");
+  assert.equal(internals.compilerArtifact(metadata, messages(artifact), dirs, "0.1.0"), artifact.executable);
+  for (const altered of [{ ...artifact, fresh: true }, { ...artifact, executable: "/tmp/other" }, { ...artifact, profile: { test: true } }, { ...artifact, package_id: "other" }]) assert.throws(() => internals.compilerArtifact(metadata, messages(altered), dirs, "0.1.0"));
+});
+
+test("synthetic orchestration crosses real source hydration, archive validation and create-new install", async t => {
+  const f = fixture(t);
+  assert.equal((await internals.runWith(f.input, f.host)).ok, true);
+  const actual = fs.readdirSync(join(f.input.outputDirectory, "assets")).sort();
+  assert.deepEqual(actual, ["SHA256SUMS", "aicharts-0.1.0-" + TARGET + ".tar.gz", "aicharts-skill-0.1.0.tar.gz", "aicharts-source-0.1.0.tar.gz", "release-manifest.json"].sort());
+  const report = validateLinuxQualificationReport(fs.readFileSync(join(f.input.outputDirectory, "qualification.json")));
+  assert.equal(report.ok, true); assert.equal(report.value.value.smoke.invocations, 16);
+  const summary = JSON.parse(fs.readFileSync(join(f.input.outputDirectory, "summary.json")));
+  assert.equal(summary.checksPassed, true); assert.equal(Object.hasOwn(summary, "qualified"), false);
+  assert.equal(JSON.stringify(summary).includes(f.root), false); assert.equal(summary.compatibility.universalBaselineExecutionProven, false);
+  const builds = f.calls.filter(call => call.args[0] === "rustc"); assert.equal(builds.length, 1);
+  assert.ok(builds[0].args.includes("--frozen")); assert.ok(builds[0].args.at(-1).startsWith("link-arg=-Wl,-Map="));
+  const metadata = f.calls.find(call => call.args[0] === "metadata"); assert.ok(metadata.args.includes("--offline")); assert.equal(metadata.args.at(-1), TARGET);
+  assert.equal(f.calls.filter(call => call.args[0] === "fetch").length, 1);
+  assert.equal(f.notices.length, 1); assert.ok(f.notices[0].dynamicLibraries.some(library => library.soname === "ld-linux-x86-64.so.2"));
+  assert.equal(sha(fs.readFileSync(join(f.input.outputDirectory, "install/aicharts-0.1.0-" + TARGET + "/bin/aicharts"))), sha(elfBytes()));
+});
+
+test("incomplete notices retain diagnostic evidence without successful receipt or assets", async t => {
+  const f = fixture(t); f.host.collectNotices = async () => ({ ok: false, error: "notices_rust_missing" });
+  const outcome = await internals.runWith(f.input, f.host); assert.deepEqual(outcome, { ok: false, error: "notices_incomplete" });
+  assert.equal(fs.existsSync(join(f.input.outputDirectory, "qualification.json")), false);
+  assert.equal(fs.existsSync(join(f.input.outputDirectory, "assets")), false);
+  const summary = JSON.parse(fs.readFileSync(join(f.input.outputDirectory, "summary.json")));
+  assert.equal(summary.error, "notices_incomplete");
+  assert.deepEqual(summary.diagnostic, { module: "notices", code: "notices_rust_missing" });
+  assert.ok(fs.readdirSync(join(f.input.outputDirectory, "evidence")).some(name => name.includes("cargo-build")));
+});
+
+test("module diagnostics retain only fixed allowlisted codes", async t => {
+  for (const code of ["git_failed", "SYNTHETIC_PRIVATE_ERROR_PATH"]) {
+    const f = fixture(t); f.host.readSource = () => ({ ok: false, error: code });
+    assert.equal((await internals.runWith(f.input, f.host)).error, "source_failed");
+    const summary = JSON.parse(fs.readFileSync(join(f.input.outputDirectory, "summary.json")));
+    assert.deepEqual(summary.diagnostic, { module: "source", code: code === "git_failed" ? code : "unclassified_module_failure" });
+    assert.equal(JSON.stringify(summary).includes("SYNTHETIC_PRIVATE_ERROR_PATH"), false);
+    assert.equal(f.calls.length, 0);
+  }
+});
+
+test("post-smoke installed binary or BUILD mutation cannot receive qualification", async t => {
+  for (const member of ["bin/aicharts", "BUILD.json"]) {
+    const f = fixture(t); const original = f.host.execute;
+    f.host.execute = async (executable, args, options) => {
+      const observed = await original(executable, args, options);
+      if (executable.includes("/install/") && args[0] === "--help") {
+        const root = dirname(dirname(executable));
+        assert.equal(fs.existsSync(join(root, member)), true);
+        fs.appendFileSync(join(root, member), "mutation after successful smoke");
+      }
+      return observed;
+    };
+    assert.equal((await internals.runWith(f.input, f.host)).error, "install_failed");
+    assert.equal(fs.existsSync(join(f.input.outputDirectory, "qualification.json")), false);
+    assert.equal(fs.existsSync(join(f.input.outputDirectory, "assets")), false);
+  }
+});
+
+test("source mutation after compilation refuses before assembly", async t => {
+  const f = fixture(t); const original = f.host.progress;
+  f.host.progress = stage => { original(stage); if (stage === "source-recheck") fs.writeFileSync(join(f.input.outputDirectory, "source/extra.txt"), "unexpected source member"); };
+  assert.equal((await internals.runWith(f.input, f.host)).error, "source_changed");
+  assert.equal(fs.existsSync(join(f.input.outputDirectory, "assets")), false);
+  assert.equal(fs.existsSync(join(f.input.outputDirectory, "qualification.json")), false);
+});
+
+test("bad notice hash and post-assembly corruption cannot be installed or qualified", async t => {
+  for (const corruption of ["notice", "archive"]) {
+    const f = fixture(t);
+    if (corruption === "notice") f.host.collectNotices = async () => ok({ bytes: bytes("notice"), sha256: "0".repeat(64), components: 1 });
+    else f.host.assemble = input => { const value = assembleLinuxRelease(input); assert.equal(value.ok, true); value.value.files.find(file => file.name.endsWith(TARGET + ".tar.gz")).bytes[20] ^= 1; return value; };
+    assert.equal((await internals.runWith(f.input, f.host)).ok, false);
+    assert.equal(fs.existsSync(join(f.input.outputDirectory, "qualification.json")), false);
+  }
+});
+
+test("wrong toolchain stops before dependency fetch or compilation", async t => {
+  const f = fixture(t); const original = f.host.execute;
+  f.host.execute = async (executable, args, options) => executable.endsWith("/bun") ? result("1.3.15\n") : original(executable, args, options);
+  assert.equal((await internals.runWith(f.input, f.host)).error, "toolchain_mismatch");
+  assert.equal(f.calls.some(call => ["fetch", "rustc"].includes(call.args[0])), false);
+});
+
+test("failed build records bounded public-source stage logs and cannot reach smoke", async t => {
+  const f = fixture(t); const original = f.host.execute;
+  f.host.execute = async (executable, args, options) => args[0] === "rustc" ? result("", 101, "synthetic compile failure\n") : original(executable, args, options);
+  assert.equal((await internals.runWith(f.input, f.host)).error, "build_failed");
+  assert.equal(f.stages.some(stage => stage.startsWith("smoke-")), false);
+  assert.equal(fs.existsSync(join(f.input.outputDirectory, "qualification.json")), false);
+});
+
+test("final receipt is create-only and never overwrites a competing destination", async t => {
+  const f = fixture(t); const original = f.host.progress;
+  f.host.progress = stage => { original(stage); if (stage === "persist-assets") fs.writeFileSync(join(f.input.outputDirectory, "qualification.json"), "occupied"); };
+  assert.equal((await internals.runWith(f.input, f.host)).ok, false);
+  assert.equal(fs.readFileSync(join(f.input.outputDirectory, "qualification.json"), "utf8"), "occupied");
+  assert.equal(Object.hasOwn(JSON.parse(fs.readFileSync(join(f.input.outputDirectory, "summary.json"))), "qualified"), false);
+});
+
+test("regular-file readers refuse links and source recheck refuses extra membership", t => {
+  const f = fixture(t); const file = join(f.root, "file"); fs.writeFileSync(file, "abc"); fs.symlinkSync(file, join(f.root, "link"));
+  assert.equal(internals.readRegular(file, 3).toString(), "abc");
+  assert.throws(() => internals.readRegular(join(f.root, "link"), 3), { code: "artifact_invalid" });
+  assert.throws(() => internals.readRegular(file, 2), { code: "artifact_invalid" });
+  const root = join(f.root, "hydrated"); assert.equal(hydrateReleaseSource({ destinationDirectory: root, sourceFiles: [{ path: "file", mode: 0o644, bytes: bytes("abc") }] }).ok, true);
+  internals.recheckSource(root, [{ path: "file", mode: 0o644, bytes: bytes("abc") }], f.host);
+  fs.mkdirSync(join(root, "unexpected")); assert.throws(() => internals.recheckSource(root, [{ path: "file", mode: 0o644, bytes: bytes("abc") }], f.host), { code: "source_changed" });
+});
+
+test("real bounded child capture preserves status and refuses excess output and deadlines", async t => {
+  const f = fixture(t); const options = { cwd: f.root, env: { PATH: "/usr/bin:/bin", LANG: "C", LC_ALL: "C" }, timeoutMs: 2000, maxBytes: 64 };
+  const success = await internals.execute(process.execPath, ["-e", "process.stdout.write('ok'); process.stderr.write('diagnostic'); process.exitCode = 7"], options);
+  assert.equal(success.status, 7); assert.equal(success.stdout.toString(), "ok"); assert.equal(success.stderr.toString(), "diagnostic");
+  await assert.rejects(internals.execute(process.execPath, ["-e", "process.stdout.write('x'.repeat(1024)); setInterval(() => {}, 1000)"], options), { code: "process_output_limit" });
+  await assert.rejects(internals.execute(process.execPath, ["-e", "setInterval(() => {}, 1000)"], { ...options, timeoutMs: 100 }), { code: "process_timeout" });
+});

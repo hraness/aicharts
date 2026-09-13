@@ -1,12 +1,15 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
+import { readFileSync } from "node:fs";
+import { posix } from "node:path";
 import { test } from "node:test";
 import { assembleLinuxRelease } from "./assemble.mjs";
 import { buildArchive, validateArchive } from "./archive.mjs";
 import { encodeBuild, validateBuild } from "./build.mjs";
 import { parseManifest, parseChecksums } from "./manifest.mjs";
 
-// All payloads are synthetic. No executable is run and no source tree is read.
+// Payloads are synthetic except the explicitly selected public skill Markdown
+// in the packaged-link regression. No executable or skill script is run.
 const sha = (bytes) => createHash("sha256").update(bytes).digest("hex");
 const order = (a, b) => a < b ? -1 : a > b ? 1 : 0;
 const good = (result) => {
@@ -20,6 +23,7 @@ const REQUIRED = [
   "distribution/NOTICE.md", "distribution/cli/docs/usage-install.md",
   "distribution/cli/docs/usage-local.md", "skills/aicharts/SKILL.md",
   "skills/aicharts/agents/openai.yaml", "skills/aicharts/references/benchmarks.md",
+  "skills/aicharts/references/local-operations.md", "skills/aicharts/references/local-turns.md",
   "skills/aicharts/references/local-usage.md", "skills/aicharts/scripts/atlas.mjs",
   "skills/aicharts/scripts/atlas.check.mjs",
 ];
@@ -84,7 +88,7 @@ function expectedPayloads(input) {
     ],
     skill: [
       build("skill"), mapped("LICENSE", "LICENSE"), mapped("NOTICE.md", "distribution/NOTICE.md"),
-      ...["SKILL.md", "agents/openai.yaml", "references/benchmarks.md", "references/local-usage.md", "scripts/atlas.mjs", "scripts/atlas.check.mjs"]
+      ...["SKILL.md", "agents/openai.yaml", "references/benchmarks.md", "references/local-operations.md", "references/local-turns.md", "references/local-usage.md", "scripts/atlas.mjs", "scripts/atlas.check.mjs"]
         .map((path) => mapped(path, `skills/aicharts/${path}`)),
     ],
     source: input.sourceFiles,
@@ -160,13 +164,49 @@ test("complete synthetic join binds every source member, both BUILDs and four ch
   const input = fixture();
   const joined = verifyJoin(input);
   assert.equal(joined.archived.cli.files.length, 7);
-  assert.equal(joined.archived.skill.files.length, 9);
+  assert.equal(joined.archived.skill.files.length, 11);
   assert.equal(joined.archived.source.files.length, input.sourceFiles.length);
   assert.equal(joined.archived.source.files.find((file) => file.path === "scripts/release/assemble.mjs").mode, 0o755);
   assert.notDeepEqual(joined.archived.source.files.find((file) => file.path === "NOTICE.md").bytes,
     joined.archived.cli.files.find((file) => file.path === "NOTICE.md").bytes);
   assert.deepEqual(joined.manifest.disabledCapabilities,
     ["authentication", "enrollment", "upload", "backgroundCollection", "nativeCustody", "autoUpdate"]);
+});
+
+function missingPackagedLinks(files) {
+  const members = new Map(files.map((file) => [file.path, file]));
+  const missing = [];
+  for (const file of files.filter((file) => file.path.endsWith(".md"))) {
+    // The skill's inline destinations are deliberately simple. Refuse new
+    // whitespace/title syntax rather than silently skipping an unchecked link.
+    for (const [, destination] of file.bytes.toString("utf8").matchAll(/\]\(([^)\r\n]+)\)/gu)) {
+      assert.equal(/\s/u.test(destination), false, `unsupported link in ${file.path}`);
+      if (/^(?:[a-z][a-z0-9+.-]*:|\/\/|#)/iu.test(destination)) continue;
+      const path = decodeURIComponent(destination.split("#")[0]);
+      const target = posix.normalize(posix.join(posix.dirname(file.path), path));
+      assert.equal(posix.isAbsolute(path) || target === ".." || target.startsWith("../") || path.includes("?"), false);
+      if (!members.has(target) || members.get(target).bytes.length === 0) missing.push(`${file.path} -> ${target}`);
+    }
+  }
+  return missing.sort(order);
+}
+
+test("packaged skill relative links resolve only to nonempty archive members", () => {
+  const input = fixture();
+  for (const path of ["SKILL.md", "references/benchmarks.md", "references/local-usage.md", "references/local-turns.md", "references/local-operations.md"]) {
+    const full = `skills/aicharts/${path}`;
+    const bytes = readFileSync(new URL(`../../${full}`, import.meta.url));
+    const existing = selected(input, full);
+    if (existing) existing.bytes = bytes;
+    else input.sourceFiles.push({ path: full, mode: 0o644, bytes });
+  }
+  const files = verifyJoin(input).archived.skill.files;
+  assert.deepEqual(missingPackagedLinks(files), []);
+  for (const target of ["references/local-turns.md", "references/local-operations.md"]) {
+    // Reproduce the old omission even while the corresponding repo file exists.
+    assert.deepEqual(missingPackagedLinks(files.filter((file) => file.path !== target)), [`SKILL.md -> ${target}`]);
+    assert.deepEqual(missingPackagedLinks(files.map((file) => file.path === target ? { ...file, bytes: Buffer.alloc(0) } : file)), [`SKILL.md -> ${target}`]);
+  }
 });
 
 const CANARY = "SYNTHETIC_REJECTED_TEXT_31bb";
@@ -249,6 +289,8 @@ test("executable, notice, locks and selected documents change only their proper 
     { path: "distribution/NOTICE.md", changed: ["cli", "skill", "source"], build: [] },
     { path: "distribution/cli/docs/usage-local.md", changed: ["cli", "source"], build: [] },
     { path: "skills/aicharts/SKILL.md", changed: ["skill", "source"], build: [] },
+    { path: "skills/aicharts/references/local-operations.md", changed: ["skill", "source"], build: [] },
+    { path: "skills/aicharts/references/local-turns.md", changed: ["skill", "source"], build: [] },
     { path: "NOTICE.md", changed: ["source"], build: [] },
     { path: "extras/nonmandatory.txt", changed: ["source"], build: [] },
   ];
