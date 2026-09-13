@@ -1,13 +1,13 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
-import { mkdtemp, mkdir, writeFile, rm, readFile, symlink } from "node:fs/promises";
+import { mkdtemp, mkdir, writeFile, rm, readFile, symlink, truncate, rename } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
-import { collectLinuxNotices, planLinuxNotices } from "./linux-notices.mjs";
+import { collectLinuxNotices, planLinuxNotices, linuxNativeDiagnostic } from "./linux-notices.mjs";
 
 const digest = bytes => createHash("sha256").update(bytes).digest("hex");
 const encode = value => Buffer.from(JSON.stringify(value));
@@ -19,14 +19,15 @@ function fixture(directory = root) {
   const executablePath = `${targetDirectory}/x86_64-unknown-linux-gnu/release/aicharts`;
   const packages = [
     { id: "path+file:///source/aicharts-cli#0.1.0", name: "aicharts-cli", version: "0.1.0", source: null, license: "MIT", license_file: null, manifest_path: `${sourceDirectory}/crates/aicharts-cli/Cargo.toml` },
-    { id: "registry+https://github.com/rust-lang/crates.io-index#libsqlite3-sys@0.38.2", name: "libsqlite3-sys", version: "0.38.2", source: registry, license: "MIT", license_file: null, manifest_path: `${cargoHomeDirectory}/registry/src/index-fixture/libsqlite3-sys-0.38.2/Cargo.toml` },
+    { id: "registry+https://github.com/rust-lang/crates.io-index#libsqlite3-sys@0.38.2", name: "libsqlite3-sys", version: "0.38.2", source: registry, license: "MIT", license_file: null, links: "sqlite3", manifest_path: `${cargoHomeDirectory}/registry/src/index-fixture/libsqlite3-sys-0.38.2/Cargo.toml` },
     { id: "registry+https://github.com/rust-lang/crates.io-index#unicode-ident@1.0.24", name: "unicode-ident", version: "1.0.24", source: registry, license: "(MIT OR Apache-2.0) AND Unicode-3.0", license_file: null, manifest_path: `${cargoHomeDirectory}/registry/src/index-fixture/unicode-ident-1.0.24/Cargo.toml` },
   ];
   const messages = packages.map(pkg => ({ reason: "compiler-artifact", package_id: pkg.id, manifest_path: pkg.manifest_path,
     target: { name: pkg.name === "aicharts-cli" ? "aicharts" : pkg.name.replaceAll("-", "_"), kind: pkg.name === "aicharts-cli" ? ["bin"] : ["lib"] },
     profile: { test: false }, filenames: pkg.name === "aicharts-cli" ? [executablePath] : [`${targetDirectory}/release/deps/lib${pkg.name.replaceAll("-", "_")}-123abc.rlib`],
     executable: pkg.name === "aicharts-cli" ? executablePath : null }));
-  messages.push({ reason: "build-script-executed", package_id: packages[1].id, linked_libs: ["static=sqlite3"] });
+  const out_dir = `${targetDirectory}/x86_64-unknown-linux-gnu/release/build/libsqlite3-sys-0123456789abcdef/out`;
+  messages.push({ reason: "build-script-executed", package_id: packages[1].id, linked_libs: ["static=sqlite3"], linked_paths: [`native=${out_dir}`], out_dir });
   messages.push({ reason: "build-finished", success: true });
   const loads = [messages[1].filenames[0], `${sysrootDirectory}/lib/rustlib/x86_64-unknown-linux-gnu/lib/libstd-abc.rlib`, `${sysrootDirectory}/lib/rustlib/x86_64-unknown-linux-gnu/lib/libcompiler_builtins-def.rlib`, "/usr/lib/gcc/x86_64-linux-gnu/11/crtbeginS.o", "/usr/lib/x86_64-linux-gnu/Scrt1.o"];
   const input = { sourceDirectory, cargoHomeDirectory, targetDirectory, sysrootDirectory, scratchDirectory, executablePath,
@@ -39,6 +40,69 @@ function fixture(directory = root) {
   }
   return { input: update(), packages, messages, loads, update };
 }
+
+const ringLicenses = ["LICENSE", "LICENSE-BoringSSL", "LICENSE-other-bits", "src/polyfill/once_cell/LICENSE-APACHE", "src/polyfill/once_cell/LICENSE-MIT"];
+function addRing(f) {
+  const pkg = { id: `${registry}#ring@0.17.14`, name: "ring", version: "0.17.14", source: registry, license: "Apache-2.0 AND ISC", license_file: null,
+    links: "ring_core_0_17_14_", manifest_path: `${f.input.cargoHomeDirectory}/registry/src/index-fixture/ring-0.17.14/Cargo.toml` };
+  const out_dir = `${f.input.targetDirectory}/x86_64-unknown-linux-gnu/release/build/ring-fedcba9876543210/out`;
+  f.packages.push(pkg);
+  f.messages.splice(-1, 0, { reason: "compiler-artifact", package_id: pkg.id, manifest_path: pkg.manifest_path,
+    target: { name: "ring", kind: ["lib"] }, profile: { test: false }, executable: null,
+    filenames: [`${f.input.targetDirectory}/x86_64-unknown-linux-gnu/release/deps/libring-abc123.rlib`] },
+  { reason: "build-script-executed", package_id: pkg.id, linked_libs: ["static=ring_core_0_17_14_", "static=ring_core_0_17_14__test"], linked_paths: [`native=${out_dir}`], out_dir });
+  f.update();
+  return pkg;
+}
+
+test("pinned SQLite and Ring build outputs join exact Cargo metadata without requiring direct LOAD", () => {
+  const f = fixture(); addRing(f);
+  const result = planLinuxNotices(f.input);
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.value.nativeArchives.map(value => path.basename(value.file)), ["libsqlite3.a", "libring_core_0_17_14_.a", "libring_core_0_17_14__test.a"]);
+  for (const archive of result.value.nativeArchives) {
+    assert.ok(f.packages.some(pkg => pkg.id === archive.packageId));
+    assert.equal(path.dirname(archive.file), archive.outDirectory);
+    assert.equal(result.value.loads.includes(archive.file), false);
+  }
+});
+
+test("native attribution refuses substituted providers, link modes, names, duplicates and search paths", () => {
+  const cases = [
+    [f => { f.packages.at(-1).version = "0.17.15"; }, "build_script_provider"],
+    [f => { f.packages.at(-1).source = null; }, "build_script_provider"],
+    [f => { f.packages.at(-1).links = "PRIVATE_CANARY"; }, "build_script_provider"],
+    [f => { f.messages.at(-2).linked_libs[0] = "dylib=ring_core_0_17_14_"; }, "build_script_links"],
+    [f => { f.messages.at(-2).linked_libs[0] = "static:+whole-archive=ring_core_0_17_14_"; }, "build_script_links"],
+    [f => { f.messages.at(-2).linked_libs[1] = "static=ring_core_0_17_14_"; }, "build_script_links"],
+    [f => { f.messages.at(-2).linked_libs.push("static=PRIVATE_CANARY"); }, "build_script_links"],
+    [f => { f.messages.at(-2).linked_paths.push("native=/PRIVATE_CANARY"); }, "build_script_path"],
+    [f => { f.messages.at(-2).linked_paths = [f.messages.at(-2).out_dir]; }, "build_script_path"],
+    [f => { f.messages.at(-2).out_dir += "/../out"; }, "build_script_path"],
+    [f => { const script = f.messages.at(-2); script.out_dir = script.out_dir.replace("ring-", "other-"); script.linked_paths = [`native=${script.out_dir}`]; }, "build_script_path"],
+    [f => { const script = f.messages.at(-2); script.out_dir = script.out_dir.replace("x86_64-unknown-linux-gnu/release", "release"); script.linked_paths = [`native=${script.out_dir}`]; }, "build_script_path"],
+  ];
+  for (const [mutate, category] of cases) {
+    const f = fixture(); addRing(f); mutate(f);
+    const result = planLinuxNotices(f.update());
+    assert.deepEqual(result, { ok: false, error: "notices_unknown_native", nativeCategory: category });
+    assert.equal(JSON.stringify(result).includes("PRIVATE_CANARY"), false);
+  }
+  const f = fixture(); addRing(f); f.messages.splice(-1, 0, { ...f.messages.at(-2) });
+  assert.equal(planLinuxNotices(f.update()).error, "notices_build_incomplete");
+  f.messages.splice(-3, 2);
+  assert.equal(planLinuxNotices(f.update()).error, "notices_build_incomplete");
+});
+
+test("native diagnostic projection does not invoke accessors or retain arbitrary fields", () => {
+  let calls = 0;
+  assert.equal(linuxNativeDiagnostic({ error: "notices_unknown_native", nativeCategory: "system_library", path: "PRIVATE_CANARY" }), "system_library");
+  assert.equal(linuxNativeDiagnostic({ error: "notices_unknown_native", nativeCategory: "PRIVATE_CANARY" }), null);
+  assert.equal(linuxNativeDiagnostic({ error: "notices_invalid_input", nativeCategory: "system_library" }), null);
+  assert.equal(linuxNativeDiagnostic({ error: "notices_unknown_native", get nativeCategory() { calls++; return "system_library"; } }), null);
+  assert.equal(linuxNativeDiagnostic(new Proxy({}, { getOwnPropertyDescriptor() { calls++; throw new Error("PRIVATE_CANARY"); } })), null);
+  assert.equal(calls, 0);
+});
 
 test("actual-message shape joins package identities, executable and bfd map", () => {
   const f = fixture(), result = planLinuxNotices(f.input);
@@ -120,13 +184,14 @@ test("bounded JSON failures produce fixed diagnostics without echoing input", ()
   assert.equal(planLinuxNotices(f.input).error, "notices_limit");
 });
 
-async function diskFixture(fn) {
+async function diskFixture(fn, { ring = false } = {}) {
   const temporary = await mkdtemp(path.join(os.tmpdir(), "aicharts-notices-"));
   // macOS /var is a symlink; the collector takes canonical runner-owned roots.
   const { realpath } = await import("node:fs/promises");
   const directory = await realpath(temporary);
   try {
     const f = fixture(directory);
+    if (ring) addRing(f);
     for (const key of ["sourceDirectory", "cargoHomeDirectory", "targetDirectory", "sysrootDirectory", "scratchDirectory"]) await mkdir(f.input[key], { recursive: true });
     await mkdir(`${f.input.sourceDirectory}/distribution/cli`, { recursive: true });
     const policy = { schemaVersion: 1, registry, packages: [] };
@@ -134,17 +199,24 @@ async function diskFixture(fn) {
       const dir = path.dirname(pkg.manifest_path);
       await mkdir(dir, { recursive: true });
       const body = Buffer.from(`Synthetic ${pkg.name} notice fixture\n`);
-      const file = pkg.name === "unicode-ident" ? "LICENSE-UNICODE" : "LICENSE";
+      const names = pkg.name === "ring" ? ringLicenses : [pkg.name === "unicode-ident" ? "LICENSE-UNICODE" : "LICENSE"];
       const archive = Buffer.from(`Synthetic cached archive for ${pkg.name} ${pkg.version}\n`);
       const checksum = digest(archive);
-      await writeFile(`${dir}/${file}`, body);
+      for (const file of names) {
+        await mkdir(path.dirname(`${dir}/${file}`), { recursive: true });
+        await writeFile(`${dir}/${file}`, body);
+      }
       await mkdir(path.dirname(crateArchive(f, pkg)), { recursive: true });
       await writeFile(crateArchive(f, pkg), archive);
-      policy.packages.push({ name: pkg.name, version: pkg.version, checksum, license: pkg.license, files: [{ path: file, sha256: digest(body) }] });
+      policy.packages.push({ name: pkg.name, version: pkg.version, checksum, license: pkg.license, files: names.map(file => ({ path: file, sha256: digest(body) })) });
       if (pkg.name === "libsqlite3-sys") {
         await mkdir(`${dir}/sqlite3`);
         await writeFile(`${dir}/sqlite3/sqlite3.c`, "** version 3.53.2.\n/*\n** 2001 September 15\n** The author disclaims copyright\n** May you share freely, never taking more than you give.\n*/\n");
       }
+    }
+    for (const script of f.messages.filter(message => message.reason === "build-script-executed")) {
+      await mkdir(script.out_dir, { recursive: true });
+      for (const name of script.linked_libs) await writeFile(`${script.out_dir}/lib${name.slice(7)}.a`, "!<arch>\n");
     }
     const policyPath = `${f.input.sourceDirectory}/distribution/cli/linux-notices.json`;
     await writeFile(policyPath, encode(policy));
@@ -155,6 +227,72 @@ async function diskFixture(fn) {
 function crateArchive(f, pkg) {
   return path.join(f.input.cargoHomeDirectory, "registry/cache", path.basename(path.dirname(path.dirname(pkg.manifest_path))), `${pkg.name}-${pkg.version}.crate`);
 }
+
+test("collector admits only exact regular native outputs, whether bundled or directly loaded", async () => {
+  await diskFixture(async f => {
+    const archives = planLinuxNotices(f.input).value.nativeArchives;
+    assert.equal((await collectLinuxNotices(f.input)).error, "notices_rust_missing");
+    f.loads.push(...archives.map(archive => archive.file));
+    assert.equal((await collectLinuxNotices(f.update())).error, "notices_rust_missing");
+    for (const alias of [archives[0].file.replace("/out/", "/out/../out/"), path.join(archives[0].outDirectory, "libunreviewed.a"), path.join(f.input.scratchDirectory, ".rustcAb9/libsqlite3.a")]) {
+      f.loads.push(alias);
+      const result = await collectLinuxNotices(f.update());
+      assert.equal(result.error, "notices_unknown_native");
+      assert.equal(result.nativeCategory, alias.includes(".rustc") ? "scratch_load" : "generated_archive_load");
+      f.loads.pop();
+    }
+    const other = path.join(archives[0].outDirectory, "libunreviewed.a");
+    f.messages[1].filenames.push(other); f.loads.push(other);
+    assert.deepEqual(await collectLinuxNotices(f.update()), { ok: false, error: "notices_unknown_native", nativeCategory: "artifact_path" });
+  }, { ring: true });
+});
+
+test("missing, thin, empty, oversized and aliased native archives stay closed", async () => {
+  for (const mode of ["missing", "thin", "empty", "oversized", "file-link", "directory-link"]) {
+    await diskFixture(async f => {
+      const archive = planLinuxNotices(f.input).value.nativeArchives[0], bytes = await readFile(archive.file);
+      await rm(archive.file);
+      if (mode === "thin") await writeFile(archive.file, "!<thin>\n");
+      if (mode === "empty") await writeFile(archive.file, "");
+      if (mode === "oversized") { await writeFile(archive.file, bytes); await truncate(archive.file, 32 * 1024 * 1024 + 1); }
+      if (mode === "file-link") {
+        const other = path.join(f.input.scratchDirectory, "same-native.a"); await writeFile(other, bytes); await symlink(other, archive.file);
+      }
+      if (mode === "directory-link") {
+        const other = path.join(f.input.scratchDirectory, "same-output"); await mkdir(other);
+        await writeFile(path.join(other, path.basename(archive.file)), bytes);
+        await rm(archive.outDirectory, { recursive: true }); await symlink(other, archive.outDirectory);
+      }
+      assert.deepEqual(await collectLinuxNotices(f.input), { ok: false, error: "notices_unknown_native", nativeCategory: "generated_archive" }, mode);
+    });
+  }
+  await diskFixture(async f => {
+    for (const archive of planLinuxNotices(f.input).value.nativeArchives) await truncate(archive.file, 22 * 1024 * 1024);
+    assert.equal((await collectLinuxNotices(f.input)).error, "notices_limit");
+  }, { ring: true });
+});
+
+test("Ring nested notices are exact, mandatory, hash-bound and free of file or parent aliases", async () => {
+  for (const mode of ["omitted", "changed", "missing", "file-link", "parent-link", "other-path", "other-package"]) {
+    await diskFixture(async (f, policy, save) => {
+      const pkg = f.packages.find(pkg => pkg.name === "ring"), mapped = policy.packages.find(pkg => pkg.name === "ring");
+      const relative = ringLicenses[3], file = path.join(path.dirname(pkg.manifest_path), relative), bytes = await readFile(file);
+      if (mode === "omitted") mapped.files = mapped.files.filter(value => value.path !== relative);
+      if (mode === "changed") await writeFile(file, "changed notice\n");
+      if (mode === "missing") await rm(file);
+      if (mode === "file-link") {
+        const other = path.join(f.input.scratchDirectory, "same-notice"); await writeFile(other, bytes); await rm(file); await symlink(other, file);
+      }
+      if (mode === "parent-link") {
+        const other = path.join(f.input.scratchDirectory, "same-licenses"); await rename(path.dirname(file), other); await symlink(other, path.dirname(file));
+      }
+      if (mode === "other-path") mapped.files.push({ path: "src/other/LICENSE-MIT", sha256: digest(bytes) });
+      if (mode === "other-package") policy.packages[0].files.push({ path: relative, sha256: digest(bytes) });
+      await save();
+      assert.equal((await collectLinuxNotices(f.input)).error, ["omitted", "other-path", "other-package"].includes(mode) ? "notices_unmapped_crate" : "notices_crate_changed", mode);
+    }, { ring: true });
+  }
+});
 
 test("collector validates Cargo registry archives without a vendored checksum file", async () => {
   await diskFixture(async f => {
@@ -239,10 +377,16 @@ test("source mapping is unique, pinned and covers SQLite and Unicode notices", a
     assert.equal(seen.has(id), false); seen.add(id);
     assert.match(pkg.checksum, /^[0-9a-f]{64}$/u);
     assert.ok(pkg.files.length > 0);
-    for (const file of pkg.files) { assert.match(file.sha256, /^[0-9a-f]{64}$/u); assert.equal(file.path.includes("/"), false); }
+    for (const file of pkg.files) {
+      assert.match(file.sha256, /^[0-9a-f]{64}$/u);
+      if (file.path.includes("/")) {
+        assert.equal(id, "ring@0.17.14"); assert.ok(ringLicenses.slice(3).includes(file.path));
+      }
+    }
   }
   assert.ok(seen.has("libsqlite3-sys@0.38.2"));
   assert.ok(policy.packages.find(pkg => pkg.name === "unicode-ident").files.some(file => file.path === "LICENSE-UNICODE"));
+  assert.deepEqual(policy.packages.find(pkg => pkg.name === "ring" && pkg.version === "0.17.14").files.map(file => file.path).sort(), [...ringLicenses].sort());
 });
 
 test("complete synthetic Ubuntu filesystem and dpkg join emits deterministic notices", async () => {
@@ -275,12 +419,15 @@ test("complete synthetic Ubuntu filesystem and dpkg join emits deterministic not
     const virtual = new Map([
       ["/usr/lib/gcc/x86_64-linux-gnu/11/crtbeginS.o", "libgcc-11-dev:amd64"],
       ["/usr/lib/x86_64-linux-gnu/Scrt1.o", "libc6-dev:amd64"],
+      ["/usr/lib/x86_64-linux-gnu/libutil.a", "libc6-dev:amd64"],
       ["/lib/x86_64-linux-gnu/libc.so.6", "libc6:amd64"],
       ["/lib64/ld-linux-x86-64.so.2", "libc6:amd64"],
     ]);
     // The filesystem resolves GCC's spelling, while dpkg records the canonical
     // package path. A same-basename but different target is never sufficient.
     f.loads[4] = "/usr/lib/gcc/x86_64-linux-gnu/11/../../../x86_64-linux-gnu/Scrt1.o";
+    const nativeArchives = planLinuxNotices(f.input).value.nativeArchives;
+    f.loads.push(...nativeArchives.map(archive => archive.file), "/usr/lib/x86_64-linux-gnu/libutil.a");
     f.update();
     const docFiles = new Map();
     for (const pkg of ["libgcc-11-dev", "libc6-dev", "libc6"]) {
@@ -291,7 +438,7 @@ test("complete synthetic Ubuntu filesystem and dpkg join emits deterministic not
     const common = `${f.input.sourceDirectory}/GPL-3`;
     await writeFile(common, "Synthetic common GPL-3 license fixture\n");
     docFiles.set("/usr/share/common-licenses/GPL-3", common);
-    let queries = 0;
+    let queries = 0, mutateNative = false;
     mock.module("node:child_process", { namedExports: { execFile: (file, args, options, callback) => {
       assert.equal(file, "/usr/bin/dpkg-query");
       assert.deepEqual(options.env, { PATH: "/usr/bin:/bin", LC_ALL: "C" });
@@ -313,7 +460,18 @@ test("complete synthetic Ubuntu filesystem and dpkg join emits deterministic not
       ...actual,
       realpath: async file => virtual.has(path.normalize(file)) ? path.normalize(file) : docFiles.has(file) ? file : actual.realpath(file),
       lstat: (file, options) => actual.lstat(docFiles.get(file) ?? file, options),
-      open: (file, flags) => actual.open(docFiles.get(file) ?? file, flags),
+      open: async (file, flags) => {
+        const handle = await actual.open(docFiles.get(file) ?? file, flags);
+        if (file !== nativeArchives[0].file || !mutateNative) return handle;
+        return {
+          stat: options => handle.stat(options), close: () => handle.close(),
+          read: async (...args) => {
+            const result = await handle.read(...args);
+            if (mutateNative) { mutateNative = false; await actual.writeFile(file, "!<arch>\nchanged after open\n"); }
+            return result;
+          },
+        };
+      },
     } });
     try {
       // Fresh module instance sees owned fakes. Production exports have no effect
@@ -324,6 +482,7 @@ test("complete synthetic Ubuntu filesystem and dpkg join emits deterministic not
       assert.equal(first.value.sha256, digest(first.value.bytes));
       const body = first.value.bytes.toString();
       assert.match(body, /SQLite 3\.53\.2 amalgamation/u);
+      for (const name of ringLicenses) assert.ok(body.includes(`Cargo ring 0.17.14 (Apache-2.0 AND ISC) / ${name}`));
       assert.match(body, /Rust REUSE license \/ Unicode-3\.0\.txt/u);
       for (const name of rustNotices) assert.ok(body.includes(`Synthetic Rust notice: ${name}\n`));
       for (const name of rustSourceNotices) assert.ok(body.includes(`Synthetic Rust source notice: ${name}\n`));
@@ -337,7 +496,18 @@ test("complete synthetic Ubuntu filesystem and dpkg join emits deterministic not
       assert.deepEqual(second.value.bytes, first.value.bytes);
       assert.equal(second.value.sha256, first.value.sha256);
       assert.equal(second.value.components, first.value.components);
-      assert.ok(queries > 0 && queries <= 16);
+      // Per collection: five file owners, the deliberately missed GCC spelling,
+      // and three package records. Shared libc6 ownership is queried only once.
+      assert.equal(queries, 18);
+      // A permitted stub name cannot substitute another Ubuntu owner's file.
+      virtual.set("/usr/lib/x86_64-linux-gnu/libutil.a", "libgcc-11-dev:amd64");
+      assert.equal((await collect(f.input)).error, "notices_system_missing");
+      virtual.set("/usr/lib/x86_64-linux-gnu/libutil.a", "libc6-dev:amd64");
+      mutateNative = true;
+      const beforeNative = queries;
+      assert.equal((await collect(f.input)).error, "notices_source_changed");
+      assert.equal(queries, beforeNative);
+      await writeFile(nativeArchives[0].file, "!<arch>\n");
       // Removing an installed required notice still fails before system queries;
       // archive-only legacy files are not substitutes for these actual texts.
       const requiredFiles = [
@@ -353,5 +523,5 @@ test("complete synthetic Ubuntu filesystem and dpkg join emits deterministic not
         } finally { await writeFile(filename, bytes); }
       }
     } finally { mock.restoreAll(); }
-  });
+  }, { ring: true });
 });

@@ -24,6 +24,7 @@ const ready: UsageAuthEnvironment = {
   NEXT_PUBLIC_SITE_URL: origin,
   SUITE_OIDC_COOKIE_SECRET: secret,
 };
+const privateReady: UsageAuthEnvironment = { ...ready, AICHARTS_USAGE_PRIVATE_READ_ENABLED: "1" };
 const endpoints = {
   discovery: `${issuer}/.well-known/openid-configuration`,
   authorize: `${issuer}/api/auth/oauth2/authorize`,
@@ -2281,5 +2282,135 @@ describe("browser-held pairing custody and explicit approval", () => {
     expect(f.calls).toEqual([]);
     expect(f.resolvedIntents).toEqual([]);
     expect(f.decisions).toEqual([]);
+  });
+});
+
+describe("finite private-read Accounts outcomes", () => {
+  test("availability is effect-free and requires both flags, exact production identity and bounded secret bytes", () => {
+    for (const change of [
+      { AICHARTS_USAGE_PRIVATE_READ_ENABLED: undefined }, { AICHARTS_USAGE_PRIVATE_READ_ENABLED: "0" },
+      { AICHARTS_USAGE_PRIVATE_READ_ENABLED: true }, { AICHARTS_USAGE_AUTH_ENABLED: "0" },
+      { VERCEL_ENV: "preview" }, { VERCEL: "0" }, { VERCEL_TARGET_ENV: "preview" },
+      { NEXT_PUBLIC_SITE_URL: "https://foreign.example" }, { NEXT_PUBLIC_VERCEL_SURFACE_ORIGIN: "" },
+      { NEXT_PUBLIC_HRANESS_VERCEL_SURFACE_ORIGIN: "" }, { NEXT_PUBLIC_HRANESS_VERCEL_PREVIEW_ORIGIN: "" },
+      { SUITE_OIDC_COOKIE_SECRET: "short" }, { SUITE_OIDC_COOKIE_SECRET: "😀".repeat(257) },
+    ]) {
+      let calls = 0;
+      const server = createUsageAuthServer({ environment: () => ({ ...privateReady, ...change }),
+        fetch: async () => { calls++; throw new Error("PRIVATE_CANARY"); }, now: () => nowMs });
+      expect(server.privateReadAvailable()).toBe(false);
+      expect(server.beginPrivateReadSession(request("/private"))).toBeNull(); expect(calls).toBe(0);
+    }
+    for (const secret of ["x".repeat(32), "😀".repeat(256)]) {
+      const server = createUsageAuthServer({ environment: () => ({ ...privateReady, SUITE_OIDC_COOKIE_SECRET: secret }) });
+      expect(server.privateReadAvailable()).toBe(true);
+    }
+  });
+
+  test("normal missing or expired sessions produce a fenced negative without provider work", async () => {
+    const f = await fixture(), { cookie } = await f.login();
+    f.calls.length = 0; f.environment(privateReady);
+    for (const incoming of [request("/private"), request("/private", { headers: { cookie: "__Host-hraness-suite-oidc-session=forged" } })]) {
+      const scope = f.server.beginPrivateReadSession(incoming)!;
+      expect(await scope.readOutcome()).toEqual({ kind: "authentication_required" });
+      expect(scope.current()).toBe(true); expect(await scope.read()).toBeNull();
+      expect(await scope.readOutcome()).toEqual({ kind: "unavailable" });
+      expect(scope.current()).toBe(true); scope.finish(); expect(scope.current()).toBe(false);
+    }
+    f.time(nowMs + 600_000);
+    const expired = f.server.beginPrivateReadSession(request("/private", { headers: { cookie } }))!;
+    expect(await expired.readOutcome()).toEqual({ kind: "authentication_required" }); expired.finish();
+    expect(f.calls).toEqual([]);
+  });
+
+  test("legacy reads keep null-and-close behavior and both read entry points share one attempt", async () => {
+    const f = await fixture(), { cookie } = await f.login(); f.environment(privateReady); f.calls.length = 0;
+    const missing = f.server.beginPrivateReadSession(request("/private"))!;
+    expect(await missing.read()).toBeNull(); expect(missing.current()).toBe(false);
+    expect(await missing.readOutcome()).toEqual({ kind: "unavailable" });
+    for (const first of ["read", "readOutcome"] as const) {
+      const scope = f.server.beginPrivateReadSession(request("/private", { headers: { cookie } }))!;
+      const pending = scope[first]();
+      if (first === "read") expect(await scope.readOutcome()).toEqual({ kind: "unavailable" });
+      else expect(await scope.read()).toBeNull();
+      const session = { suiteAccountId: accountId, expiresAtMs: nowMs + 600_000 };
+      expect(await pending).toEqual(first === "read" ? session : { kind: "authenticated", value: session });
+      expect(scope.current()).toBe(true); scope.finish();
+    }
+    expect(f.calls).toEqual([endpoints.userInfo, endpoints.userInfo]);
+  });
+
+  test("provider failures and live identity rejection are unavailable, never declared signed out", async () => {
+    for (const mode of ["failure", "mismatch"] as const) {
+      const f = await fixture(), { cookie } = await f.login(); f.environment(privateReady); f.calls.length = 0;
+      if (mode === "failure") f.fail(endpoints.userInfo); else f.userInfo({ suite_account_id: `acct_${"a".repeat(32)}` });
+      const scope = f.server.beginPrivateReadSession(request("/private", { headers: { cookie } }))!;
+      expect(await scope.readOutcome()).toEqual({ kind: "unavailable" }); expect(scope.current()).toBe(false);
+      expect(f.calls).toEqual([endpoints.userInfo]);
+      if (mode === "mismatch") expect(f.userInfoResponses.at(-1)!.bodyUsed).toBe(true);
+    }
+  });
+
+  test("both flags and rotation fence negative outcomes and stop new provider work", async () => {
+    for (const change of [{ AICHARTS_USAGE_PRIVATE_READ_ENABLED: "0" }, { AICHARTS_USAGE_AUTH_ENABLED: "0" },
+      { SUITE_OIDC_COOKIE_SECRET: `${secret}-rotated` }]) {
+      const f = await fixture(), { cookie } = await f.login(); f.environment(privateReady); f.calls.length = 0;
+      const missing = f.server.beginPrivateReadSession(request("/private"))!;
+      expect(await missing.readOutcome()).toEqual({ kind: "authentication_required" });
+      f.environment({ ...privateReady, ...change }); expect(missing.current()).toBe(false);
+      f.environment(privateReady); expect(missing.current()).toBe(false);
+      const scope = f.server.beginPrivateReadSession(request("/private", { headers: { cookie } }))!;
+      const pending = scope.readOutcome(); f.environment({ ...privateReady, ...change });
+      expect(await pending).toEqual({ kind: "unavailable" }); expect(scope.current()).toBe(false);
+      expect(f.calls).toEqual([]);
+    }
+  });
+
+  test("a private-read flag change during userinfo permits cleanup and suppresses the result", async () => {
+    const f = await fixture(), { cookie } = await f.login(); f.environment(privateReady); f.calls.length = 0;
+    f.providerEffect(url => { if (url === endpoints.userInfo) f.environment({ ...privateReady, AICHARTS_USAGE_PRIVATE_READ_ENABLED: "0" }); });
+    const scope = f.server.beginPrivateReadSession(request("/private", { headers: { cookie } }))!;
+    expect(await scope.readOutcome()).toEqual({ kind: "unavailable" }); expect(scope.current()).toBe(false);
+    expect(f.calls).toEqual([endpoints.userInfo]); expect(f.userInfoResponses.at(-1)!.bodyUsed).toBe(true);
+  });
+
+  test("the public route and transport share exactly one real Accounts read", async () => {
+    const { createPrivateDaysTransport } = await import("./private-days-transport");
+    const { createPrivateDaysPublicHandler } = await import("./private-days-route");
+    const { decodePrivateDaysHttpRequest, PRIVATE_DAYS_HTTP_URL } = await import("./private-days-http-contract");
+    const f = await fixture(), { cookie } = await f.login(); f.environment(privateReady); f.calls.length = 0;
+    let contexts = 0, queries = 0; const terminals: Promise<void>[] = [];
+    const transport = createPrivateDaysTransport({ available: f.server.privateReadAvailable, beginSession: f.server.beginPrivateReadSession,
+      now: () => nowMs, setTimeout, clearTimeout, registerLifetime: promise => { terminals.push(promise); },
+      getContext: () => { contexts++; return { headers: { "x-vercel-oidc-token": "a.b.c" } }; },
+      fetch: async (input, init) => {
+        queries++; expect(input).toBe(PRIVATE_DAYS_HTTP_URL);
+        expect(decodePrivateDaysHttpRequest(init?.body)).toEqual({ schemaVersion: 1, accountId, sessionExpiresAtMs: nowMs + 600_000, firstUtcDay: 7, dayCount: 1 });
+        expect(new Headers(init?.headers).has("cookie")).toBe(false);
+        const response = new Response('{"schemaVersion":1,"result":{"ok":false,"error":"not_enrolled"}}', {
+          headers: { "content-type": "application/json; charset=utf-8" },
+        });
+        Object.defineProperty(response, "url", { value: input }); return response;
+      },
+    });
+    const handle = createPrivateDaysPublicHandler({ available: f.server.privateReadAvailable, query: transport });
+    const incoming = (withCookie = true) => request("/api/usage/days?firstUtcDay=7&dayCount=1", {
+      headers: { accept: "application/json", "sec-fetch-site": "same-origin", ...(withCookie ? { cookie } : {}) },
+    });
+    const accepted = await handle(incoming()); await Promise.all(terminals);
+    expect(accepted.status).toBe(200); expect(await accepted.json()).toEqual({ schemaVersion: 1, state: "not_enrolled" });
+    expect(accepted.headers.has("set-cookie")).toBe(false); expect(f.calls).toEqual([endpoints.userInfo]); expect(queries).toBe(1);
+    f.calls.length = 0;
+    const absent = await handle(incoming(false)); await Promise.all(terminals);
+    expect(absent.status).toBe(401); expect(await absent.json()).toEqual({ schemaVersion: 1, error: { code: "authentication_required" } });
+    expect(f.calls).toEqual([]); expect(queries).toBe(1);
+    f.fail(endpoints.userInfo);
+    const unavailable = await handle(incoming()); await Promise.all(terminals);
+    expect(unavailable.status).toBe(503); expect(await unavailable.json()).toEqual({ schemaVersion: 1, error: { code: "unavailable" } });
+    expect(f.calls).toEqual([endpoints.userInfo]); expect(queries).toBe(1);
+    f.calls.length = 0; const beforeContexts = contexts;
+    f.environment({ ...privateReady, AICHARTS_USAGE_PRIVATE_READ_ENABLED: "0" });
+    expect((await handle(incoming())).status).toBe(503); expect(contexts).toBe(beforeContexts);
+    expect(f.calls).toEqual([]); expect(queries).toBe(1);
   });
 });

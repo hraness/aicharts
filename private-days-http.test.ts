@@ -55,18 +55,19 @@ function worker(options: { current?: () => boolean; verifyError?: "unauthorized"
   } } };
   return { time, ctx, handle: (request: Request) => handle(request, env, ctx), counts: () => ({ selected, verified, finished, disposed }) };
 }
-function client(options: { context?: () => unknown; read?: () => Promise<unknown>; current?: () => boolean;
+function client(options: { available?: () => boolean; context?: () => unknown; read?: () => Promise<unknown>; outcome?: () => Promise<unknown>; current?: () => boolean;
   fetch?: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response>; register?: (task: Promise<void>) => void } = {}) {
   const time = clock(), ctx = lifetime(), calls: RequestInit[] = []; let contexts = 0, sessions = 0, reads = 0, finished = 0;
   const browser = new Request("https://aicharts.io/usage/me");
-  const queryDays = createPrivateDaysTransport({ ...time,
+  const queryDays = createPrivateDaysTransport({ ...time, available: options.available ?? (() => true),
     getContext() { contexts++; return options.context ? options.context() : { headers: { "x-vercel-oidc-token": "a.b.c" } }; },
     registerLifetime: options.register ?? (task => { ctx.waitUntil(task); }),
     beginSession(actual) {
       expect(actual).toBe(browser); expect(ctx.tasks.length > 0 || options.register !== undefined).toBe(true); sessions++;
       let open = true;
       return { current: () => open && (options.current?.() ?? true), finish() { expect(open).toBe(true); open = false; finished++; },
-        read() { reads++; return options.read?.() ?? Promise.resolve({ suiteAccountId: ACCOUNT, expiresAtMs: 50_000 }); } };
+        read() { throw new Error("Legacy accessor must not be called by transport."); },
+        async readOutcome() { reads++; return options.outcome ? options.outcome() : { kind: "authenticated", value: await (options.read?.() ?? Promise.resolve({ suiteAccountId: ACCOUNT, expiresAtMs: 50_000 })) }; } };
     },
     async fetch(input, init) { calls.push(init!); return options.fetch ? options.fetch(input, init) : response(); },
   });
@@ -77,7 +78,7 @@ test("actual accepted verifier is assignable and dormant factories acquire no au
   const accepts = (verifier: ReturnType<typeof createUsageOidcVerifier>): PrivateDaysHttpDependencies["verifier"] => verifier;
   expect(typeof accepts).toBe("function");
   let calls = 0; const forbidden = () => { calls++; throw new Error("PRIVATE_CANARY"); };
-  expect(typeof createPrivateDaysTransport({ now: Date.now, setTimeout, clearTimeout, getContext: forbidden, fetch: forbidden, registerLifetime: forbidden, beginSession: forbidden })).toBe("function");
+  expect(typeof createPrivateDaysTransport({ available: forbidden, now: Date.now, setTimeout, clearTimeout, getContext: forbidden, fetch: forbidden, registerLifetime: forbidden, beginSession: forbidden })).toBe("function");
   expect(typeof createPrivateDaysHttpHandler({ now: Date.now, setTimeout, clearTimeout, verifier: { beginRequest: forbidden } })).toBe("function");
   expect(calls).toBe(0);
 });
@@ -87,7 +88,7 @@ test("client derives fresh account/expiry and crosses the exact Worker boundary"
     expect(url).toBe(PRIVATE_DAYS_HTTP_URL); expect(JSON.parse(new TextDecoder().decode(init!.body as Uint8Array))).toEqual(query);
     const reply = await w.handle(new Request(url, init)); Object.defineProperty(reply, "url", { value: url }); return reply;
   } });
-  expect(await c.run()).toEqual(result); await Promise.all([c.ctx.drain(), w.ctx.drain()]);
+  expect(await c.run()).toEqual({ kind: "query", result }); await Promise.all([c.ctx.drain(), w.ctx.drain()]);
   expect(c.calls[0]).toMatchObject({ method: "POST", credentials: "omit", cache: "no-store", redirect: "manual",
     headers: { authorization: "Bearer a.b.c", "content-type": "application/json", accept: "application/json" } });
   expect(c.counts()).toEqual({ contexts: 1, sessions: 1, reads: 1, finished: 1 });
@@ -98,36 +99,69 @@ test("invalid product fields fail before request context or live session lookup"
   const c = client();
   for (const input of [{ ...range, accountId: ACCOUNT }, { ...range, sessionExpiresAtMs: 100_000 }, { ...range, uploadSecret: "PRIVATE_CANARY" },
     { firstUtcDay: 0, dayCount: 32 }, { get firstUtcDay() { throw new Error("PRIVATE_CANARY"); }, dayCount: 1 }]) {
-    await expect(c.run(input)).rejects.toThrow("private_days_transport_unavailable");
+    await expect(c.run(input)).resolves.toEqual({ kind: "unavailable" });
   }
   expect(c.counts()).toEqual({ contexts: 0, sessions: 0, reads: 0, finished: 0 }); expect(c.calls).toHaveLength(0);
+});
+
+test("disabled private reads never acquire context, lifetime or a live session", async () => {
+  for (const available of [() => false, () => { throw new Error("PRIVATE_CANARY"); }]) {
+    const c = client({ available }); expect(await c.run()).toEqual({ kind: "unavailable" });
+    expect(c.counts()).toEqual({ contexts: 0, sessions: 0, reads: 0, finished: 0 }); expect(c.calls).toHaveLength(0);
+    expect(c.ctx.tasks).toHaveLength(0); expect(c.time.count()).toBe(0);
+  }
+});
+
+test("a finite missing-session outcome stays fenced and cannot dispatch a Worker query", async () => {
+  for (const changed of [false, true]) {
+    let enabled = true;
+    const c = client({ available: () => enabled, outcome: async () => { if (changed) enabled = false; return { kind: "authentication_required" }; } });
+    expect(await c.run()).toEqual({ kind: changed ? "unavailable" : "authentication_required" });
+    await c.ctx.drain(); expect(c.calls).toHaveLength(0); expect(c.counts().reads).toBe(1); expect(c.counts().finished).toBe(1);
+  }
+  for (const value of [null, { kind: "authentication_required", accountId: ACCOUNT }, { kind: "unavailable" }, { kind: "signed_out" }]) {
+    const c = client({ outcome: async () => value }); expect(await c.run()).toEqual({ kind: "unavailable" });
+    await c.ctx.drain(); expect(c.calls).toHaveLength(0);
+  }
+});
+
+test("the private-read fence closes after session or Worker await", async () => {
+  for (const stage of ["session", "worker"] as const) {
+    let enabled = true;
+    const c = client({ available: () => enabled,
+      read: async () => { if (stage === "session") enabled = false; return { suiteAccountId: ACCOUNT, expiresAtMs: 50_000 }; },
+      fetch: async () => { enabled = false; return response(); },
+    });
+    expect(await c.run()).toEqual({ kind: "unavailable" }); await c.ctx.drain();
+    expect(c.calls).toHaveLength(stage === "session" ? 0 : 1);
+  }
 });
 
 for (const context of [null, {}, { headers: {} }, { headers: { "x-vercel-oidc-token": "a..c" } },
   Object.create({ headers: { "x-vercel-oidc-token": "a.b.c" } }), { headers: { get "x-vercel-oidc-token"() { throw new Error("PRIVATE_CANARY"); } } }]) {
   test("missing or inherited platform context has no credential fallback", async () => {
-    const c = client({ context: () => context }); await expect(c.run()).rejects.toThrow("private_days_transport_unavailable");
+    const c = client({ context: () => context }); await expect(c.run()).resolves.toEqual({ kind: "unavailable" });
     expect(c.counts().sessions).toBe(0); expect(c.calls).toHaveLength(0);
   });
 }
 
 test("lifetime registration precedes session I/O and its refusal is effect-free", async () => {
   const tasks: Promise<void>[] = [], c = client({ register: task => { tasks.push(task); throw new Error("PRIVATE_CANARY"); } });
-  await expect(c.run()).rejects.toThrow("private_days_transport_unavailable"); await Promise.all(tasks);
+  await expect(c.run()).resolves.toEqual({ kind: "unavailable" }); await Promise.all(tasks);
   expect(c.counts().sessions).toBe(0); expect(c.calls).toHaveLength(0);
 });
 
 for (const session of [null, { suiteAccountId: ACCOUNT, expiresAtMs: 10_000 }, { suiteAccountId: ACCOUNT, expiresAtMs: 50_000, email: "PRIVATE_CANARY" },
   { get suiteAccountId() { throw new Error("PRIVATE_CANARY"); }, expiresAtMs: 50_000 }]) {
   test("absent, expired or malformed live sessions never dispatch", async () => {
-    const c = client({ read: async () => session }); await expect(c.run()).rejects.toThrow("private_days_transport_unavailable");
+    const c = client({ read: async () => session }); await expect(c.run()).resolves.toEqual({ kind: "unavailable" });
     await c.ctx.drain(); expect(c.calls).toHaveLength(0); expect(c.counts().finished).toBe(1);
   });
 }
 
 test("authority changes after live session lookup prevent dispatch", async () => {
   let current = true; const c = client({ current: () => current, read: async () => { current = false; return { suiteAccountId: ACCOUNT, expiresAtMs: 50_000 }; } });
-  await expect(c.run()).rejects.toThrow("private_days_transport_unavailable"); await c.ctx.drain(); expect(c.calls).toHaveLength(0);
+  await expect(c.run()).resolves.toEqual({ kind: "unavailable" }); await c.ctx.drain(); expect(c.calls).toHaveLength(0);
 });
 
 for (const change of ["fence", "expiry", "clock"] as const) test(`${change} after fetch invalidates the private result`, async () => {
@@ -136,14 +170,14 @@ for (const change of ["fence", "expiry", "clock"] as const) test(`${change} afte
     else c.time.move(change === "expiry" ? 50_000 : 9_999, false);
     return response();
   } });
-  await expect(c.run()).rejects.toThrow("private_days_transport_unavailable"); await c.ctx.drain();
+  await expect(c.run()).resolves.toEqual({ kind: "unavailable" }); await c.ctx.drain();
 });
 
 test("a timed-out live session retains capacity until its actual work settles", async () => {
   const resolve: ((value: unknown) => void)[] = [], c = client({ read: () => new Promise(done => { resolve.push(done); }) });
-  const pending = Array.from({ length: 8 }, () => c.run().catch(error => error)); await tick();
-  c.time.move(15_000); expect((await Promise.all(pending)).every(error => error instanceof Error)).toBe(true);
-  await expect(c.run()).rejects.toThrow("private_days_transport_unavailable"); expect(c.counts().reads).toBe(8);
+  const pending = Array.from({ length: 8 }, () => c.run()); await tick();
+  c.time.move(15_000); expect((await Promise.all(pending)).every(outcome => outcome.kind === "unavailable")).toBe(true);
+  await expect(c.run()).resolves.toEqual({ kind: "unavailable" }); expect(c.counts().reads).toBe(8);
   for (const done of resolve) done({ suiteAccountId: ACCOUNT, expiresAtMs: 50_000 });
   await c.ctx.drain(); expect(c.calls).toHaveLength(0); expect(c.counts().finished).toBe(8);
 });
@@ -196,9 +230,8 @@ for (const options of [{ status: 302 }, { url: PRIVATE_DAYS_HTTP_URL + "/other" 
   { headers: { "set-cookie": "PRIVATE_CANARY" } }, { headers: { location: "https://private.invalid" } }, { headers: { "content-length": "16385" } },
   { body: new Uint8Array(16_385) }, { body: '{"PRIVATE_CANARY":true}' }] as Parameters<typeof response>[0][]) {
   test("client refuses substituted, malformed or oversized HTTP replies with a fixed error", async () => {
-    const c = client({ fetch: async () => response(options) }); let caught: unknown;
-    try { await c.run(); } catch (error) { caught = error; }
-    expect((caught as Error).message).toBe("private_days_transport_unavailable"); expect(Object.hasOwn(caught as object, "cause")).toBe(false);
+    const c = client({ fetch: async () => response(options) });
+    expect(await c.run()).toEqual({ kind: "unavailable" });
     await c.ctx.drain();
   });
 }

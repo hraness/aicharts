@@ -4,6 +4,12 @@ The nonpublishing `Qualify Linux CLI` workflow joins exact Git source reading, a
 
 This is qualification infrastructure, not an authenticated public release. A workflow definition or a passing local test does not establish that its Linux run passed. Keep public download instructions disabled until the actual run and separate provenance/acquisition gates pass.
 
+## Latest hosted result
+
+The [13 September run 34747553925](https://github.com/hraness/aicharts/actions/runs/34747553925) used PR 210 merge `b2af609f58d3a1b76276120efaac0f9e8e045d5d`, tree `b69a59a73fcb20881cfa5232cf38300dc7cc395c`, on Ubuntu image `20260907.292.1`. Exact source/build checks, ELF/runtime validation and all 14 CLI smokes passed. Notice collection then refused `notices_unknown_native`, reported by the runner as `notices_incomplete`, before archive assembly and installation. There is no successful qualification artifact from this run.
+
+The retained summary does not identify the offending GNU `LOAD` input. The current candidate admits the narrow glibc `libutil.a` compatibility input under existing `libc6-dev` ownership checks and adds fixed native diagnostic categories for the next refusal. It also maps the new pinned HTTPS dependency graph and ring's generated archives/notices. These source changes do not prove which input failed or that the hosted notice gate is repaired. Renew qualification from the next protected-main merge after the complete integration gate passes.
+
 ## Run one qualification
 
 Dispatch `.github/workflows/cli-release.yml` on the canonical repository's protected `main`. It has read-only repository permission, no production secrets and no publication job. The workflow checks out its exact event commit, installs the fixed toolchain, and creates a private scratch parent before running:
@@ -22,6 +28,8 @@ Success retains the assembler's five exact files under `assets/`, `qualification
 
 An ELF refusal also records a fixed predicate code and bounded observations: recognized system-library names, numeric version requirements, and counts or redaction markers for unsupported values. This summary does not include arbitrary tool output, unknown names, paths or compiler diagnostics. These observations explain a refusal; they do not relax the compatibility policy or establish a successful run.
 
+Native notice refusals can include a source-owned `nativeCategory` for build-script identity/links/paths, generated archives, linker inputs, Rust libraries or system/runtime attribution. Only the fixed category allowlist crosses into the summary; arbitrary package names, paths and tool output remain excluded. The earlier run above predates these categories and cannot be diagnosed more precisely from its summary.
+
 The receipt stays in private staging until archive and installation checks finish. The final create-only receipt and successful job outcome establish completion; the diagnostic summary is not a substitute. Failed scratch may contain partial assets, which the successful-artifact upload step does not select.
 
 ## Measured compatibility and attribution
@@ -31,6 +39,8 @@ The runner fixes GCC 11, GNU bfd, Rust 1.97.1 and the x86-64 compiler baseline. 
 The fixed glibc loader may also be a direct `DT_NEEDED` dependency. glibc's [libc linker script](https://sourceware.org/legacy-ml/libc-alpha/2013-05/msg00231.html) includes the loader through `AS_NEEDED`; [GNU ld](https://sourceware.org/binutils/docs/ld/Options.html) can retain that dependency when it resolves required symbols. The resolved `ld-linux-x86-64.so.2` must match the canonical `/lib64/ld-linux-x86-64.so.2` interpreter, and its requested symbol versions must exist in that exact runtime. The same runtime hash, notices and archive dependency inventory checks apply.
 
 `scripts/release/linux-notices.mjs` joins Cargo's actual compiler-artifact messages with the GNU bfd map and installed runtime libraries. The checked mapping in `distribution/cli/linux-notices.json` binds selected registry package versions, package checksums and original notice hashes. Unknown compiled packages, native inputs or missing notices refuse qualification. The collector includes the bundled SQLite statement, Rust copyright and runtime license material, and the owning Ubuntu packages' notices and referenced common licenses. A hashed Cargo linker output must contain the same bytes as the executable supplied to assembly.
+
+The HTTPS dependency addition pins `ureq` 3.4.1 with Rustls only and `log` 0.4.34 with all-profile macro suppression; the [native transport contract](usage-admission-v1.md#native-https-transport) records the privacy reason and canary. Attribution now recognizes only the exact native providers `libsqlite3-sys` 0.38.2 and `ring` 0.17.14, their required links and bounded Cargo output paths. Both ring archives are required, including its test archive emitted by ordinary library builds. Generated inputs must be canonical regular ordinary `ar` files, capped at 32 MiB each and 64 MiB together; thin archives and unrecognized generated loads refuse. Ring's root license and both nested `src/polyfill/once_cell` license texts remain hash-pinned. The added `libutil.a` name still requires canonical system resolution and `libc6-dev` package attribution; it does not admit arbitrary static libraries.
 
 The package checksum is the SHA-256 of the matching cached `.crate` archive under `registry/cache`, using the same registry directory and package/version as the compiled source under `registry/src`. [Cargo's cache layout](https://doc.rust-lang.org/cargo/guide/cargo-home.html) and [registry checksum contract](https://doc.rust-lang.org/cargo/reference/registry-index.html) define those inputs. `.cargo-checksum.json` belongs to [vendored directory sources](https://doc.rust-lang.org/cargo/reference/source-replacement.html#directory-sources); ordinary registry downloads need not contain it. The collector requires canonical cache paths, regular no-follow reads, at most 8 MiB per archive and 64 MiB total, and the pinned archive and notice-file hashes. It does not decompress the archive or replace the clean, locked Cargo build with a source audit.
 

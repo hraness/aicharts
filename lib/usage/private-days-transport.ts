@@ -10,21 +10,26 @@ import {
 } from "./pairing-http-contract";
 import { pairingHttpWork, type PairingHttpEffects } from "./pairing-http-work";
 
-/** Trusted request-owned port: read() must verify the live Accounts session.
+/** Trusted request-owned port: readOutcome() verifies the live Accounts session.
  * current() fences the exact configuration/authority across awaits; finish()
  * invalidates the scope without authorizing retries. No default port is installed. */
 export interface PrivateDaysSessionScope {
   read(): Promise<unknown>;
+  readOutcome(): Promise<unknown>;
   current(): boolean;
   finish(): void;
 }
 export interface PrivateDaysTransportDependencies extends PairingHttpEffects {
+  available(): boolean;
   fetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response>;
   getContext(): unknown;
   registerLifetime(terminal: Promise<void>): void;
   beginSession(request: Request): PrivateDaysSessionScope | null;
 }
+export type PrivateDaysTransportOutcome = Readonly<{ kind: "query"; result: PrivateDaysQueryResult }>
+  | Readonly<{ kind: "authentication_required" }> | Readonly<{ kind: "unavailable" }>;
 const unavailable = () => new Error("private_days_transport_unavailable");
+const failed = (): PrivateDaysTransportOutcome => Object.freeze({ kind: "unavailable" });
 function ownValue(value: unknown, key: string): unknown {
   if (value === null || typeof value !== "object") return undefined;
   const descriptor = Object.getOwnPropertyDescriptor(value, key);
@@ -33,11 +38,12 @@ function ownValue(value: unknown, key: string): unknown {
 
 /** Only the range comes from product input. No browser-supplied account or expiry. */
 export function createPrivateDaysTransport(dependencies: PrivateDaysTransportDependencies) {
-  const { fetch: fetcher, getContext, registerLifetime, beginSession, now, setTimeout, clearTimeout } = dependencies;
+  const { fetch: fetcher, getContext, registerLifetime, beginSession, available, now, setTimeout, clearTimeout } = dependencies;
   const effects = Object.freeze({ now, setTimeout, clearTimeout });
   let outstanding = 0;
-  return async (request: Request, input: unknown): Promise<PrivateDaysQueryResult> => {
+  return async (request: Request, input: unknown): Promise<PrivateDaysTransportOutcome> => {
     try {
+      if (available() !== true) return failed();
       const startedAt = now(), range = parsePrivateDaysRange(input);
       if (range === null || request.signal.aborted) throw unavailable();
       // Capture only the actual platform request context, before the first await.
@@ -50,20 +56,24 @@ export function createPrivateDaysTransport(dependencies: PrivateDaysTransportDep
         if (!Number.isSafeInteger(current) || Object.is(current, -0) || current < 0 || current < observed || current > 8_640_000_000_000_000) throw unavailable();
         observed = current; return current;
       };
-      const result = await pairingHttpWork({ ...effects, now: sample }, PAIRING_HTTP_CLIENT_MS, registerLifetime, () => null, () => { outstanding--; }, async work => {
+      const result = await pairingHttpWork<PrivateDaysTransportOutcome>({ ...effects, now: sample }, PAIRING_HTTP_CLIENT_MS, registerLifetime, failed, () => { outstanding--; }, async work => {
         const session = beginSession(request);
         if (session === null) throw unavailable();
         work.onStop(() => { session.finish(); });
         let query: PrivateDaysRequestV1 | null = null;
         const guard = () => {
           work.guard();
-          if (request.signal.aborted || session.current() !== true || (query !== null && sample() >= query.sessionExpiresAtMs)) throw unavailable();
+          if (request.signal.aborted || available() !== true || session.current() !== true || (query !== null && sample() >= query.sessionExpiresAtMs)) throw unavailable();
           work.guard();
         };
         guard();
-        const raw = await work.stage(PAIRING_HTTP_STAGE_MS, () => session.read());
+        const raw = await work.stage(PAIRING_HTTP_STAGE_MS, () => session.readOutcome());
         guard();
-        const account = privateDaysSnapshot(raw, ["suiteAccountId", "expiresAtMs"]);
+        const negative = privateDaysSnapshot(raw, ["kind"]);
+        if (negative?.kind === "authentication_required") { guard(); return Object.freeze({ kind: "authentication_required" }); }
+        const authenticated = privateDaysSnapshot(raw, ["kind", "value"]);
+        if (authenticated?.kind !== "authenticated") throw unavailable();
+        const account = privateDaysSnapshot(authenticated.value, ["suiteAccountId", "expiresAtMs"]);
         if (account === null) throw unavailable();
         query = parsePrivateDaysRequest({ schemaVersion: 1, accountId: account.suiteAccountId,
           sessionExpiresAtMs: account.expiresAtMs, firstUtcDay: range.firstUtcDay, dayCount: range.dayCount });
@@ -88,11 +98,10 @@ export function createPrivateDaysTransport(dependencies: PrivateDaysTransportDep
           guard();
           const domain = decodePrivateDaysHttpResponse(bytes, captured);
           if (domain === null) throw unavailable();
-          guard(); return domain;
+          guard(); return Object.freeze({ kind: "query", result: domain });
         } finally { if (!reading) await pairingHttpDiscard(response); }
       }, startedAt);
-      if (result === null) throw unavailable();
       return result;
-    } catch { throw unavailable(); }
+    } catch { return failed(); }
   };
 }

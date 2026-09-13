@@ -40,10 +40,7 @@ globalThis.fetch = (async (input: RequestInfo | URL, init?: RequestInit) => {
   Object.defineProperty(response, "url", { value: input }); return response;
 }) as typeof fetch;
 async function refused(operation: () => Promise<unknown>) {
-  let thrown: unknown;
-  try { await operation(); } catch (error) { thrown = error; }
-  assert.ok(thrown instanceof Error); assert.equal(thrown.message, "private_days_transport_unavailable");
-  assert.equal(thrown.cause, undefined);
+  assert.deepEqual(await operation(), { kind: "unavailable" });
 }
 
 try {
@@ -57,18 +54,19 @@ try {
     events.push("session"); assert.equal(incoming, request);
     let open = true;
     return Object.freeze({
-      async read() { reads++; events.push("read"); if (revokeOnRead) authorityCurrent = false;
-        return Object.freeze({ suiteAccountId: expectedAccount, expiresAtMs }); },
+      async read() { throw new Error("Legacy accessor must not be used."); },
+      async readOutcome() { reads++; events.push("read"); if (revokeOnRead) authorityCurrent = false;
+        return Object.freeze({ kind: "authenticated", value: Object.freeze({ suiteAccountId: expectedAccount, expiresAtMs }) }); },
       current() { return open && authorityCurrent; },
       finish() { assert.equal(open, true); open = false; finishes++; },
     });
-  });
+  }, () => true);
   assert.equal(contexts + fetches + registrations + reads + finishes, 0);
   phase = "request-context-and-fresh-session";
   for (const [token, account] of [["a.b.c", `acct_${"a".repeat(32)}`], ["d.e.f", `acct_${"b".repeat(32)}`]]) {
     expectedToken = token; expectedAccount = account;
     context = { headers: { "x-vercel-oidc-token": token } }; events.length = 0;
-    assert.equal(JSON.stringify(await client(request, range)), '{"ok":false,"error":"not_enrolled"}');
+    assert.equal(JSON.stringify(await client(request, range)), '{"kind":"query","result":{"ok":false,"error":"not_enrolled"}}');
     await terminals.at(-1);
   }
   assert.equal(contexts, 2); assert.equal(fetches, 2); assert.equal(reads, 2); assert.equal(finishes, 2);
@@ -100,8 +98,21 @@ try {
     NEXT_PUBLIC_SITE_URL: "https://aicharts.io", SUITE_OIDC_COOKIE_SECRET: "synthetic-private-days-cookie-secret-not-for-deployment-0001" });
   context = { headers: { "x-vercel-oidc-token": "a.b.c" } }; events.length = 0;
   await refused(() => defaultClient(request, range)); await terminals.at(-1);
-  assert.deepEqual(events, ["context", "register"]);
-  assert.equal(fetches, 2); assert.equal(reads, 3); assert.equal(finishes, 3); assert.equal(registrations, 5);
+  assert.deepEqual(events, []);
+  assert.equal(fetches, 2); assert.equal(reads, 3); assert.equal(finishes, 3); assert.equal(registrations, 4);
+
+  phase = "default-private-read-disabled";
+  process.env.AICHARTS_USAGE_AUTH_ENABLED = "1";
+  await refused(() => defaultClient(request, range));
+  process.env.AICHARTS_USAGE_PRIVATE_READ_ENABLED = "0";
+  await refused(() => defaultClient(request, range));
+  assert.deepEqual(events, []); assert.equal(registrations, 4); assert.equal(fetches, 2);
+
+  phase = "default-missing-session";
+  process.env.AICHARTS_USAGE_PRIVATE_READ_ENABLED = "1";
+  assert.deepEqual(await defaultClient(request, range), { kind: "authentication_required" });
+  await terminals.at(-1);
+  assert.deepEqual(events, ["context", "register"]); assert.equal(registrations, 5); assert.equal(fetches, 2);
   await Promise.all(terminals); ok = true;
 } catch { /* Only bounded phase evidence crosses the isolated child boundary. */ }
 finally {
@@ -109,7 +120,7 @@ finally {
   if (previousContext === undefined) delete globals[contextKey];
   else Object.defineProperty(globals, contextKey, previousContext);
   delete process.env.VERCEL_OIDC_TOKEN;
-  for (const key of ["AICHARTS_USAGE_AUTH_ENABLED", "VERCEL", "VERCEL_ENV", "NEXT_PUBLIC_SITE_URL", "SUITE_OIDC_COOKIE_SECRET"]) delete process.env[key];
+  for (const key of ["AICHARTS_USAGE_AUTH_ENABLED", "AICHARTS_USAGE_PRIVATE_READ_ENABLED", "VERCEL", "VERCEL_ENV", "NEXT_PUBLIC_SITE_URL", "SUITE_OIDC_COOKIE_SECRET"]) delete process.env[key];
 }
 process.stdout.write(JSON.stringify({ ok, phase, fetches, registrations, reads, finishes }));
 process.exitCode = ok ? 0 : 1;

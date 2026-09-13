@@ -125,7 +125,9 @@ describe("benchmark dataset surface", () => {
     expect(markup).toContain('href="/blog"');
     expect(markup).toContain('href="/"');
     expect(markup.match(/data-presentation="menu"/gu)).toHaveLength(1);
-    const headerStart = markup.indexOf('<header class="plain-header"');
+    const header = [...markup.matchAll(/<header\b[^>]*\sclass="([^"]*)"[^>]*>/gu)]
+      .find(([, classes]) => classes.split(/\s+/u).includes("plain-header"));
+    const headerStart = header?.index ?? -1;
     const headerEnd = markup.indexOf("</header>", headerStart);
     const actionsStart = markup.indexOf(
       'class="plain-header__actions"',
