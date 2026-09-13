@@ -561,7 +561,7 @@ test("complete synthetic Ubuntu filesystem and dpkg join emits deterministic not
     mock.module("node:child_process", { namedExports: { execFile: (file, args, options, callback) => {
       assert.equal(file, "/usr/bin/dpkg-query");
       assert.deepEqual(options.env, { PATH: "/usr/bin:/bin", LC_ALL: "C" });
-      assert.equal(options.timeout, 5000);
+      assert.equal(options.timeout, 30_000);
       queries += 1;
       if (queryFault !== null) {
         const error = new Error("PRIVATE_CANARY package query output");
