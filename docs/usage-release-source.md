@@ -20,9 +20,11 @@ Failures return only a fixed code: `invalid_input`, `unsupported_repository`, `r
 
 ## Supported repository boundary
 
-The reader targets POSIX hosts with trusted `/usr/bin/git` and supports an existing normal SHA-1 checkout. Both the selected checkout directory and its real `.git` directory must be owned by the current user. It checks original path components and selected metadata without accepting symlinks. Linked worktrees, `.git` indirection files, bare repositories, alternates, grafts, worktree configuration, partial/promisor stores and unsupported configuration are refused. It does not repair, clone or adopt a repository.
+The reader targets POSIX hosts with trusted `/usr/bin/git` and supports an existing normal SHA-1 checkout. Both the selected checkout directory and its real `.git` directory must be owned by the current user. It checks original path components and selected metadata without accepting symlinks. Linked worktrees, `.git` indirection files, bare repositories, alternates, grafts, active or unrecognized worktree configuration, partial/promisor stores and unsupported configuration are refused. It does not repair, clone or adopt a repository.
 
 Local configuration is parsed before the first Git process. Only the fixed ordinary repository fields, optional exact `origin` URL for `hraness/aicharts`, standard fetch mapping, `main` tracking fields and disabled automatic-maintenance settings are admitted. Includes, custom hooks, arbitrary remotes and other configuration are refused. A matching configured remote is not origin authentication.
+
+One inactive `config.worktree` form is admitted: a bounded regular file containing exactly `core.sparseCheckout=false`, `core.sparseCheckoutCone=false` and `index.sparse=false`. Git's sparse-checkout cleanup can leave this file after the checkout action removes `extensions.worktreeConfig`. The main configuration still rejects that extension, so Git cannot activate the file. Missing, enabled, duplicate or additional settings are refused before Git runs. The reader checks the file's metadata and full bytes again before returning; it never deletes or rewrites checkout configuration to pass preflight.
 
 A shallow normal checkout is supported when the selected commit and every reachable tree/blob object are present locally. Parent history is not needed for this source inventory. A missing selected object fails closed without fetching. This does not waive a separate repository gate that requires complete Git history.
 
@@ -45,7 +47,7 @@ Before return, the reader rechecks its observed directory and Git metadata, incl
 | Commit / commit headers | 1 MiB / 64 KiB |
 | Individual tree / aggregate unique trees | 1 MiB / 4 MiB |
 | Recursive listing | 3 MiB |
-| Local configuration | 64 KiB and 256 lines |
+| Each local configuration file | 64 KiB and 256 lines |
 | Pack-directory entries | 1,024 |
 | Git processes | At most six; 15 seconds each, capped by remaining time |
 | Total elapsed budget | 50 seconds, checked throughout the operation |

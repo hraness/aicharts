@@ -28,6 +28,26 @@ const mixArbitrary = fc.record({
 
 const spendArbitrary = fc.double({ min: 1, max: 10_000_000, noNaN: true });
 
+// Aggregate seed -1365318893: one ULP is 0.00000762939453125 tokens here,
+// already larger than toBeCloseTo(..., 5)'s fixed 0.000005 threshold.
+const tokenPartitionRegression = {
+  spend: 266361.6942354667,
+  rates: { cachedInputPerMillion: 0.001, inputPerMillion: 1, outputPerMillion: 9.315700790085847 },
+  mix: { cacheHitRate: 0.1636827348813723, inputTokensPerOutputToken: 2.288866236338236 },
+} as const;
+
+function withinOneNonnegativeUlp(actual: number, expected: number): boolean {
+  if (!Number.isFinite(actual) || !Number.isFinite(expected) || actual < 0 || expected < 0) return false;
+  if (actual === expected) return true;
+  // Positive binary64 encodings are ordered. Comparing adjacent encodings avoids
+  // a decimal tolerance that is too tight at large scales or too loose at small ones.
+  const bits = new DataView(new ArrayBuffer(16));
+  bits.setFloat64(0, actual);
+  bits.setFloat64(8, expected);
+  const distance = bits.getBigUint64(0) - bits.getBigUint64(8);
+  return distance >= -1n && distance <= 1n;
+}
+
 describe("calculator math laws", () => {
   test("pricing the implied volume on the valuation rates returns the spend", () => {
     assertProperty(fc.property(spendArbitrary, rateArbitrary, mixArbitrary, (spend, rates, mix) => {
@@ -40,10 +60,39 @@ describe("calculator math laws", () => {
   test("token volume components always reconcile", () => {
     assertProperty(fc.property(spendArbitrary, rateArbitrary, mixArbitrary, (spend, rates, mix) => {
       const volume = monthlyTokenVolume(spend, rates, mix);
-      expect(volume.cachedInputTokens + volume.missedInputTokens).toBeCloseTo(volume.inputTokens, 5);
-      expect(volume.inputTokens + volume.outputTokens).toBeCloseTo(volume.totalTokens, 5);
+      // For 0 <= cached <= input, rounded (input - cached) + cached can differ
+      // from input by at most one representable binary64 step.
+      expect(volume.cachedInputTokens).toBeGreaterThanOrEqual(0);
+      expect(volume.cachedInputTokens).toBeLessThanOrEqual(volume.inputTokens);
+      expect(volume.missedInputTokens).toBeGreaterThanOrEqual(0);
+      expect(withinOneNonnegativeUlp(volume.cachedInputTokens + volume.missedInputTokens, volume.inputTokens)).toBe(true);
+      // Both sides use the same addition, with no intervening rounding step.
+      expect(volume.inputTokens + volume.outputTokens).toBe(volume.totalTokens);
       expect(volume.outputTokens).toBeGreaterThan(0);
-    }));
+    }), { examples: [[tokenPartitionRegression.spend, tokenPartitionRegression.rates, tokenPartitionRegression.mix]] });
+  });
+
+  test("token reconciliation accepts one binary step but rejects material and nonfinite discrepancies", () => {
+    const { spend, rates, mix } = tokenPartitionRegression;
+    const volume = monthlyTokenVolume(spend, rates, mix);
+    const recombined = volume.cachedInputTokens + volume.missedInputTokens;
+    expect(recombined - volume.inputTokens).toBe(2 ** -17);
+    expect(withinOneNonnegativeUlp(recombined, volume.inputTokens)).toBe(true);
+    expect(withinOneNonnegativeUlp(volume.inputTokens + 2 ** -16, volume.inputTokens)).toBe(false);
+    for (const total of [1, volume.inputTokens, 1e14]) {
+      expect(withinOneNonnegativeUlp(total, total)).toBe(true);
+      expect(withinOneNonnegativeUlp(total + 1, total)).toBe(false);
+    }
+    // Adjacent representable steps differ in size on either side of a power of two.
+    expect(withinOneNonnegativeUlp(1 + Number.EPSILON, 1)).toBe(true);
+    expect(withinOneNonnegativeUlp(1 - Number.EPSILON / 2, 1)).toBe(true);
+    expect(withinOneNonnegativeUlp(1 + 2 * Number.EPSILON, 1)).toBe(false);
+    expect(withinOneNonnegativeUlp(1 - Number.EPSILON, 1)).toBe(false);
+    for (const invalid of [NaN, Infinity, -Infinity, -1]) {
+      expect(withinOneNonnegativeUlp(invalid, invalid)).toBe(false);
+      expect(withinOneNonnegativeUlp(invalid, 1)).toBe(false);
+      expect(withinOneNonnegativeUlp(1, invalid)).toBe(false);
+    }
   });
 
   test("a higher cache-hit rate never raises the cost of one million output tokens", () => {
