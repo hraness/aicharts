@@ -41,7 +41,7 @@ function inputRecord(value) {
   return out;
 }
 
-function parseConfig(bytes) {
+function parseConfig(bytes, inactiveWorktree = false) {
   if (bytes.length > LIMITS.config) fail("limit_exceeded");
   for (let index = 0; index < bytes.length; index++) {
     const byte = bytes[index];
@@ -60,7 +60,10 @@ function parseConfig(bytes) {
     const header = /^\[([A-Za-z]+)(?:[ \t]+"([^"]+)")?\]$/.exec(line);
     if (header) {
       const base = header[1].toLowerCase(), sub = header[2];
-      if ((base === "core" || base === "gc" || base === "maintenance") && sub === undefined) section = base;
+      if (inactiveWorktree) {
+        if ((base === "core" || base === "index") && sub === undefined) section = base;
+        else fail("unsupported_repository");
+      } else if ((base === "core" || base === "gc" || base === "maintenance") && sub === undefined) section = base;
       else if (base === "remote" && sub === "origin") section = "remote.origin";
       else if (base === "branch" && sub === "main") section = "branch.main";
       else fail("unsupported_repository");
@@ -70,7 +73,8 @@ function parseConfig(bytes) {
     if (!entry || !section) fail("unsupported_repository");
     const key = section + "." + entry[1].toLowerCase(), value = entry[2].replace(/[ \t]+$/, "");
     if (found.has(key)) fail("unsupported_repository");
-    const allowed = key === "core.repositoryformatversion" ? value === "0"
+    const allowed = inactiveWorktree ? ["core.sparsecheckout", "core.sparsecheckoutcone", "index.sparse"].includes(key) && value === "false"
+      : key === "core.repositoryformatversion" ? value === "0"
       : key === "core.bare" ? value === "false"
       : ["core.filemode", "core.logallrefupdates", "core.ignorecase", "core.precomposeunicode"].includes(key) ? /^(true|false)$/.test(value)
       : key === "remote.origin.url" ? /^https:\/\/github\.com\/hraness\/aicharts(?:\.git)?$/.test(value)
@@ -82,7 +86,9 @@ function parseConfig(bytes) {
     if (!allowed) fail("unsupported_repository");
     found.set(key, value);
   }
-  if (found.get("core.repositoryformatversion") !== "0" || found.get("core.bare") !== "false") fail("unsupported_repository");
+  if (inactiveWorktree) {
+    if (found.size !== 3) fail("unsupported_repository");
+  } else if (found.get("core.repositoryformatversion") !== "0" || found.get("core.bare") !== "false") fail("unsupported_repository");
 }
 
 const identity = (stat) => (stat.isDirectory()
@@ -119,8 +125,9 @@ function metadata(repositoryDirectory) {
   const pack = inspect(git + "/objects/pack", "directory", true);
   inspect(git + "/HEAD", "file");
   const configStat = inspect(git + "/config", "file");
+  const inactiveWorktreeStat = inspect(git + "/config.worktree", "file", true);
   inspect(git + "/shallow", "file", true);
-  for (const relative of ["commondir", "config.worktree", "info/grafts", "objects/info/alternates", "objects/info/http-alternates"]) {
+  for (const relative of ["commondir", "info/grafts", "objects/info/alternates", "objects/info/http-alternates"]) {
     const path = git + "/" + relative;
     try { lstatSync(path); }
     catch (error) {
@@ -143,23 +150,31 @@ function metadata(repositoryDirectory) {
       }
     } finally { handle.closeSync(); }
   }
-  if (configStat.size > BigInt(LIMITS.config)) fail("limit_exceeded");
-  const fd = openSync(git + "/config", constants.O_RDONLY | constants.O_NOFOLLOW);
-  let config;
-  try {
-    if (identity(fstatSync(fd, { bigint: true })) !== identity(configStat)) fail("repository_changed");
-    const buffer = Buffer.alloc(LIMITS.config + 1);
-    let used = 0, read;
-    while (used < buffer.length && (read = readSync(fd, buffer, used, buffer.length - used, used)) > 0) used += read;
-    if (used > LIMITS.config) fail("limit_exceeded");
-    if (identity(fstatSync(fd, { bigint: true })) !== identity(configStat)) fail("repository_changed");
-    config = Buffer.from(buffer.subarray(0, used));
-  } finally { closeSync(fd); }
+  function readConfiguration(path, stat) {
+    if (stat.size > BigInt(LIMITS.config)) fail("limit_exceeded");
+    const fd = openSync(path, constants.O_RDONLY | constants.O_NOFOLLOW);
+    try {
+      if (identity(fstatSync(fd, { bigint: true })) !== identity(stat)) fail("repository_changed");
+      const buffer = Buffer.alloc(LIMITS.config + 1);
+      let used = 0, read;
+      while (used < buffer.length && (read = readSync(fd, buffer, used, buffer.length - used, used)) > 0) used += read;
+      if (used > LIMITS.config) fail("limit_exceeded");
+      if (identity(fstatSync(fd, { bigint: true })) !== identity(stat)) fail("repository_changed");
+      return Buffer.from(buffer.subarray(0, used));
+    } finally { closeSync(fd); }
+  }
+  const config = readConfiguration(git + "/config", configStat);
   parseConfig(config);
-  return { directory, git, config, records: [...records].sort(([a], [b]) => compare(a, b)) };
+  // Git sparse-checkout disable leaves these three false settings behind. The
+  // common configuration above still forbids extensions.worktreeConfig, so this
+  // narrow residue is inactive; no arbitrary worktree configuration is admitted.
+  const inactiveWorktree = inactiveWorktreeStat ? readConfiguration(git + "/config.worktree", inactiveWorktreeStat) : null;
+  if (inactiveWorktree !== null) parseConfig(inactiveWorktree, true);
+  return { directory, git, config, inactiveWorktree, records: [...records].sort(([a], [b]) => compare(a, b)) };
 }
 function sameMetadata(before, after) {
   return before.directory === after.directory && before.config.equals(after.config)
+    && (before.inactiveWorktree === null ? after.inactiveWorktree === null : after.inactiveWorktree !== null && before.inactiveWorktree.equals(after.inactiveWorktree))
     && before.records.length === after.records.length
     && before.records.every(([path, stat], index) => path === after.records[index][0] && stat === after.records[index][1]);
 }

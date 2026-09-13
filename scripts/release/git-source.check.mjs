@@ -32,6 +32,7 @@ function refuses(operation, expected) {
   assert.throws(operation, (error) => { bad(error, expected); return true; });
 }
 const CONFIG = "[core]\n\trepositoryformatversion = 0\n\tbare = false\n";
+const INACTIVE_WORKTREE_CONFIG = "[core]\n\tsparseCheckout = false\n\tsparseCheckoutCone = false\n[index]\n\tsparse = false\n";
 const PERSON = "Synthetic Fixture <fixture@example.invalid>";
 const EPOCH = 1_789_128_000;
 const bodyOfCommit = (tree, extra = "", epoch = String(EPOCH), offset = "+1230") => Buffer.from(
@@ -189,6 +190,50 @@ test("real shallow selected-object completeness succeeds without parent history"
   assertGraph(repo, readGitSource(repo.input));
 });
 
+test("real checkout sparse-disable cleanup admits only its inactive worktree residue", (t) => {
+  const repo = fixture(t, [file("plain.txt", "synthetic checkout source\n")]);
+  // The pinned checkout action runs this exact cleanup pair. Git leaves the
+  // three false settings in config.worktree after disabling the extension.
+  // Observed in run 34734735758; Git v2.55.0 sparse-checkout.c:set_config.
+  for (const args of [["sparse-checkout", "disable"], ["config", "--local", "--unset-all", "extensions.worktreeConfig"]]) {
+    const result = spawnSync("/usr/bin/git", args, { cwd: repo.directory, env: { ...ENV }, shell: false,
+      encoding: "buffer", timeout: 15_000, killSignal: "SIGKILL", maxBuffer: 4096 });
+    assert.equal(result.error, undefined); assert.equal(result.status, 0); assert.equal(result.signal, null);
+    assert.equal(result.stderr.length, 0, result.stderr.toString());
+  }
+  const configuration = readFileSync(repo.git + "/config"), residue = readFileSync(repo.git + "/config.worktree");
+  assert.equal(configuration.toString().includes("worktreeConfig"), false);
+  assert.equal(residue.toString(), INACTIVE_WORKTREE_CONFIG);
+  assertGraph(repo, readGitSource(repo.input));
+  assert.deepEqual(readFileSync(repo.git + "/config"), configuration);
+  assert.deepEqual(readFileSync(repo.git + "/config.worktree"), residue);
+});
+
+test("inactive worktree configuration remains a closed three-false-setting boundary", (t) => {
+  const repo = fixture(t);
+  for (const text of [INACTIVE_WORKTREE_CONFIG, INACTIVE_WORKTREE_CONFIG.replaceAll("\n", "\r\n")]) {
+    writeFileSync(repo.git + "/config.worktree", text);
+    const fake = fakeGit(repo);
+    assertGraph(repo, readWith(repo.input, fake.run)); assert.equal(fake.calls.length, 6);
+    assert.equal(readFileSync(repo.git + "/config.worktree", "utf8"), text);
+  }
+  for (const text of ["", ...["sparseCheckout", "sparseCheckoutCone", "sparse"].flatMap(key => [
+    INACTIVE_WORKTREE_CONFIG.replace(key + " = false", key + " = true"),
+    INACTIVE_WORKTREE_CONFIG.replace("\t" + key + " = false\n", ""),
+  ]), INACTIVE_WORKTREE_CONFIG + "\tsparse = false\n", INACTIVE_WORKTREE_CONFIG + "[core]\nworktree = /synthetic/canary\n",
+  INACTIVE_WORKTREE_CONFIG + "[include]\npath = /synthetic/canary\n", INACTIVE_WORKTREE_CONFIG + "[includeIf \"gitdir:x\"]\npath = /synthetic/canary\n",
+  INACTIVE_WORKTREE_CONFIG + "[extensions]\nworktreeConfig = true\n", INACTIVE_WORKTREE_CONFIG.replace("false", "\"false\""),
+  INACTIVE_WORKTREE_CONFIG + "#\n".repeat(LIMITS.configLines), INACTIVE_WORKTREE_CONFIG + "#".repeat(LIMITS.config)]) {
+    writeFileSync(repo.git + "/config.worktree", text);
+    const fake = fakeGit(repo); bad(readWith(repo.input, fake.run)); assert.equal(fake.calls.length, 0);
+  }
+  writeFileSync(repo.git + "/config.worktree", INACTIVE_WORKTREE_CONFIG);
+  for (const value of ["true", "false"]) {
+    writeFileSync(repo.git + "/config", CONFIG + "[extensions]\nworktreeConfig = " + value + "\n");
+    const fake = fakeGit(repo); bad(readWith(repo.input, fake.run), "unsupported_repository"); assert.equal(fake.calls.length, 0);
+  }
+});
+
 test("real missing commit/tree/blob objects fail in ordinary and shallow stores without a fetch", (t) => {
   for (const shallow of [false, true]) for (const kind of ["commit", "tree", "blob"]) {
     const repo = fixture(t), selected = kind === "commit" ? repo.input.commit
@@ -250,6 +295,8 @@ test("unsupported metadata and local canary configuration refuse before the firs
     (repo) => { symlinkSync("/synthetic/forbidden", repo.git + "/objects/info"); },
     (repo) => { rmSync(repo.git + "/HEAD"); symlinkSync("/synthetic/forbidden", repo.git + "/HEAD"); },
     (repo) => { rmSync(repo.git + "/config"); symlinkSync("/synthetic/forbidden", repo.git + "/config"); },
+    (repo) => { symlinkSync("/synthetic/forbidden", repo.git + "/config.worktree"); },
+    (repo) => { mkdirSync(repo.git + "/config.worktree"); },
     (repo) => { symlinkSync("/synthetic/forbidden", repo.git + "/shallow"); },
     (repo) => { writeFileSync(repo.git + "/config", CONFIG + "[include]\npath = /synthetic/forbidden\n"); },
     (repo) => { writeFileSync(repo.git + "/config", CONFIG + "[filter \"canary\"]\nsmudge = /synthetic/forbidden\n"); },
@@ -475,11 +522,24 @@ test("global elapsed deadline and per-child timeout shrink without sleeps or ret
 test("metadata changes before return invalidate the complete source graph", (t) => {
   for (const mutate of [
     (repo) => writeFileSync(repo.git + "/config", CONFIG + "# changed\n"),
+    (repo) => writeFileSync(repo.git + "/config.worktree", INACTIVE_WORKTREE_CONFIG),
     (repo) => writeFileSync(repo.git + "/HEAD", "ref: refs/heads/other\n"),
     (repo) => writeFileSync(repo.git + "/shallow", repo.input.commit + "\n"),
     (repo) => { mkdirSync(repo.git + "/objects/pack"); writeFileSync(repo.git + "/objects/pack/added.promisor", ""); },
   ]) {
     const repo = fixture(t), fake = fakeGit(repo, (result, stage) => { if (stage === 6) mutate(repo); return result; });
+    bad(readWith(repo.input, fake.run), "repository_changed"); assert.equal(fake.calls.length, 6);
+  }
+});
+
+test("inactive worktree residue is rechecked for byte change, removal and replacement", (t) => {
+  for (const mutate of [
+    path => writeFileSync(path, INACTIVE_WORKTREE_CONFIG + "# changed\n"),
+    path => rmSync(path),
+    path => { rmSync(path); symlinkSync("/synthetic/forbidden", path); },
+  ]) {
+    const repo = fixture(t); writeFileSync(repo.git + "/config.worktree", INACTIVE_WORKTREE_CONFIG);
+    const fake = fakeGit(repo, (result, stage) => { if (stage === 6) mutate(repo.git + "/config.worktree"); return result; });
     bad(readWith(repo.input, fake.run), "repository_changed"); assert.equal(fake.calls.length, 6);
   }
 });
