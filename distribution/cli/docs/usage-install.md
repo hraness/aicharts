@@ -1,6 +1,6 @@
 # Run the Linux CLI
 
-AI Charts measures selected Codex and Claude Code usage locally. Its separate `turns` command reports observed Codex daily runtime and partial token and requested-call subtotals. The CLI does not provide account sign-in, enrollment, upload, background collection, native credential storage, a tray application, or automatic updates.
+AI Charts measures selected Codex and Claude Code usage locally. Its separate `turns` command reports observed Codex daily runtime and partial token and requested-call subtotals. The foreground `daemon` command can repeat the existing local collector, but it never uploads or installs an OS service. The CLI does not provide account sign-in, enrollment, native credential storage, a tray application, or automatic updates.
 
 Publication status: this is a first-release guide draft. No CLI release or authenticated download and verification procedure is available from this guide. Do not treat an archive, its checksums, or this guide alone as a verified release.
 
