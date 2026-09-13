@@ -5,10 +5,15 @@ use aicharts_ledger::FrozenBatch;
 use aicharts_protocol::{Policy, Registry};
 use rustls::pki_types::{CertificateDer, PrivateKeyDer, PrivatePkcs8KeyDer};
 use rustls::{ServerConfig, ServerConnection, StreamOwned};
-use std::io::Write;
+use std::io::{self, Write};
 use std::net::{Shutdown, SocketAddr, TcpListener, TcpStream};
-use std::sync::{Arc, Mutex};
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{mpsc, Arc, Mutex};
+use std::thread;
+use ureq::http::Uri;
 use ureq::tls::Certificate;
+use ureq::unversioned::resolver::{ResolvedSocketAddrs, Resolver};
+use ureq::unversioned::transport::NextTimeout;
 
 const CA: &[u8] = include_bytes!("fixtures/ca.der");
 const CERT: &[u8] = include_bytes!("fixtures/server.der");
@@ -654,58 +659,6 @@ fn production_configuration_has_fixed_authority_and_no_ambient_transport_policy(
         config.tls_config().root_certs(),
         RootCerts::WebPki
     ));
-    let timeout = NextTimeout {
-        after: Duration::from_millis(10).into(),
-        reason: ureq::Timeout::Resolve,
-    };
-    for uri in [
-        "http://usage.aicharts.io/v1/batches",
-        "https://other.test/v1/batches",
-        "https://usage.aicharts.io:444/v1/batches",
-    ] {
-        assert!(BoundedResolver
-            .resolve(&uri.parse().unwrap(), config, timeout)
-            .is_err());
-    }
-    assert!(!DNS_BUSY.load(Ordering::Acquire));
-}
-
-#[test]
-fn timed_out_dns_retains_its_permit_until_actual_worker_completion() {
-    static BUSY: AtomicBool = AtomicBool::new(false);
-    let (release, hold) = mpsc::sync_channel(1);
-    let pending = start_lookup(&BUSY, move || {
-        hold.recv_timeout(Duration::from_secs(2)).unwrap();
-        Err(io::Error::from(io::ErrorKind::NotFound))
-    })
-    .unwrap();
-    assert!(matches!(
-        pending.result.recv_timeout(Duration::from_millis(10)),
-        Err(mpsc::RecvTimeoutError::Timeout)
-    ));
-    assert!(BUSY.load(Ordering::Acquire));
-    let calls = Arc::new(std::sync::atomic::AtomicUsize::new(0));
-    let count = calls.clone();
-    assert!(start_lookup(&BUSY, move || {
-        count.fetch_add(1, Ordering::SeqCst);
-        Ok(BoundedResolver.empty())
-    })
-    .is_err());
-    assert_eq!(calls.load(Ordering::SeqCst), 0);
-    // Discarded caller delivery cannot release the worker-owned permit early.
-    drop(pending.result);
-    assert!(BUSY.load(Ordering::Acquire));
-    release.send(()).unwrap();
-    pending.worker.join().unwrap();
-    assert!(!BUSY.load(Ordering::Acquire));
-    let next = start_lookup(&BUSY, || Err(io::Error::from(io::ErrorKind::NotFound))).unwrap();
-    assert!(next
-        .result
-        .recv_timeout(Duration::from_secs(1))
-        .unwrap()
-        .is_err());
-    next.worker.join().unwrap();
-    assert!(!BUSY.load(Ordering::Acquire));
 }
 
 #[test]
@@ -755,19 +708,6 @@ fn late_framed_eof_cannot_turn_received_bytes_into_success() {
         ),
         Err(TransportError::Uncertain)
     );
-}
-
-#[test]
-fn address_limit_does_not_consume_or_schedule_more_than_sixteen_results() {
-    let count = std::cell::Cell::new(0);
-    let addresses = std::iter::repeat_with(|| {
-        count.set(count.get() + 1);
-        "127.0.0.1:443".parse().unwrap()
-    });
-    let result = bounded_addresses(addresses).unwrap();
-    assert_eq!(result.len(), 16);
-    assert_eq!(count.get(), 16);
-    assert!(bounded_addresses(std::iter::empty()).is_err());
 }
 
 #[test]

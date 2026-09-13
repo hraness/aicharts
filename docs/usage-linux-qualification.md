@@ -6,9 +6,9 @@ This is qualification infrastructure, not an authenticated public release. A wor
 
 ## Latest hosted result
 
-The [13 September run 34750346949](https://github.com/hraness/aicharts/actions/runs/34750346949) used PR 211 merge `e9eb359bfad3b4fe15a79b95a0425781faf5887f`, tree `828d35fff59a946116ad8d65169baa428d256042`, on Ubuntu image `20260907.292.1`. Exact source/build checks, ELF/runtime validation and all 14 CLI smokes passed. Notice collection then refused `notices_unknown_native` with native category `unknown_load`, reported by the runner as `notices_incomplete`, before archive assembly and installation. There is no successful qualification artifact from this run.
+The [13 September run 34763938565](https://github.com/hraness/aicharts/actions/runs/34763938565) used PR 212 merge `01b49c5a7e1226452f7147ca15ef9d6c449bde03`, tree `a4cfb30e5a878c0d91259267d3d2983ec9bbd569`, on Ubuntu image `20260907.292.1`. Exact source/build checks, ELF/runtime validation and all 14 CLI smokes passed. Notice collection then refused `notices_invalid_input`, reported by the runner as `notices_incomplete`, before archive assembly and installation. There is no successful qualification artifact from this run.
 
-The retained summary does not identify the offending GNU `LOAD` input. Source review found that pinned Rust writes `symbols.o` beside the measured linker output, while the previous collector recognized a different scratch-directory shape. The collector now admits only the producer's exact path described below. This repair does not establish which input failed or that hosted qualification succeeds. Renew qualification from the next protected-main merge after the complete integration gate passes.
+The retained summary does not identify the failing notice bytes. The Ubuntu GCC 11.4 copyright text uses unquoted common-license paths followed by a sentence period, which the previous collector treated as part of the filename. The collector now parses the closed basename set and punctuation rules below; its complete local notice fixture passes. The exact hosted copyright input was not retained, so this is a reproduced source defect, not proof of the run's sole failure. Renew qualification from the next protected-main merge after the complete integration gate passes.
 
 ## Run one qualification
 
@@ -59,6 +59,8 @@ bun test scripts/release/workflow.test.ts
 ```
 
 These synthetic and local process tests do not impersonate a GitHub run or establish the Ubuntu package layout. The real main-only workflow supplies that evidence.
+
+The common-license reference parser admits only the 17 basenames shipped by Ubuntu Jammy's [base-files package](https://packages.ubuntu.com/jammy/amd64/base-files/filelist). It preserves version dots such as `LGPL-2.1`. An unquoted reference may end with one sentence period immediately before ASCII whitespace or end of input; a quoted reference requires its matching closing delimiter. Empty or unknown names, doubled periods, path/query/encoded suffixes and a period inside quoted text are refused before that package's common-license lookup. Every admitted path still requires canonical resolution inside `/usr/share/common-licenses` and a bounded regular-file read.
 
 ## Report contract
 

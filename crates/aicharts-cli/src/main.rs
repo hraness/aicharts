@@ -1,12 +1,14 @@
 #![forbid(unsafe_code)]
 
 mod daemon;
+mod enrollment;
 mod inspect;
 mod intro;
 #[cfg(unix)]
 mod prefix;
 mod reindex;
 mod state;
+mod transport_dns;
 mod turns;
 mod upload;
 mod version;

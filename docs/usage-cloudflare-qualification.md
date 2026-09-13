@@ -6,9 +6,13 @@ The checked source is qualification infrastructure. A local test or successful b
 
 ## Establish the run target
 
-Use the exact reviewed and validated source commit with the locked dependencies and installed Wrangler 4.131.0. The driver hashes a bounded source set and rechecks it whenever a run is loaded. The operator separately verifies that this source belongs to the recorded commit; a caller-provided SHA or deployment receipt does not authenticate itself.
+Use the exact reviewed and validated source commit with the locked dependencies, native Node 24.2 or later within Node 24, and installed Wrangler 4.131.0. Run the driver with `--experimental-transform-types` and the checked `scripts/usage-cloudflare-node.mjs` import hook, as shown below. The hook requires both `registerHooks` and `import.meta.main` before entry. The installed Wrangler runtime does not support Bun. Node's [TypeScript transformation](https://nodejs.org/docs/latest-v24.x/api/typescript.html#type-stripping) is required for the source parameter property; the hook maps only the exact reviewed extensionless import edges and delegates all other resolution to Node. It preserves original source files and `import.meta.url`.
+
+The driver hashes a bounded source set, including the Node hook, and rechecks it whenever a run is loaded. The operator separately verifies that this source belongs to the recorded commit; a caller-provided SHA or deployment receipt does not authenticate itself.
 
 Confirm the owner-controlled Cloudflare account, authority, current Workers and R2 plans, included usage and capacity before deployment. Reuse the private Standard buckets `aicharts-usage-records` and `aicharts-usage-control`. Verify their identity and location, disabled development URLs, absent custom domains and the absence of the new run's exact synthetic object prefixes. Do not change a subscription, public binding or existing data to make qualification pass.
+
+Before any remote `getPlatformProxy` call, verify that the same account authentication includes the required Workers Scripts authority, such as the supported OAuth scope `workers_scripts:write`, and read the account's existing Workers subdomain. A 403 or authentication error does not establish absence. Installed Wrangler can register an account subdomain when none exists and creates a remote preview session for remote bindings; setup effects may precede a usable proxy or cleanup handle. Confirm the existing subdomain or separately review account setup before invoking that path. These provider setup effects are separate from the target service's disabled public URLs.
 
 Confirm that `aicharts-usage-synthetic-qualification` is absent before the first deployment. The initial deployment creates its two SQLite Durable Object namespaces. Later checkpoints must preserve the same Worker name, class names and namespace IDs. Inspect the generated configuration and provider dry run before each deployment; source templates are intentionally unconfigured and must not be deployed directly.
 
@@ -21,7 +25,7 @@ The source-derived successful-path budget is 25 R2 Class A operations, including
 Create a user-owned mode-0600 target JSON file outside tracked source, with exactly `accountId`, `workerName`, `recordsBucket` and `controlBucket`. Use the verified account ID and the fixed names above. Keep the run directory absent and its parent canonical. Then run from the repository:
 
 ```text
-bun run scripts/usage-cloudflare-qualification.ts prepare ABSENT_RUN_DIRECTORY EXACT_SOURCE_SHA ABSOLUTE_PRIVATE_TARGET_JSON
+node --experimental-transform-types --import ./scripts/usage-cloudflare-node.mjs ./scripts/usage-cloudflare-qualification.ts prepare ABSENT_RUN_DIRECTORY EXACT_SOURCE_SHA ABSOLUTE_PRIVATE_TARGET_JSON
 ```
 
 The driver creates a mode-0700 directory with a mode-0600 canonical manifest and three configurations: `wrangler.driver.json`, `wrangler.generation-one.json` and `wrangler.generation-two.json`. It never adopts an existing run directory. The frozen run expires after 24 hours and contains two distinct recovery generations. Keep these files private: the manifest retains synthetic browser capabilities and exact response evidence needed for reconciliation.
@@ -47,9 +51,9 @@ Each deployment is a separate operator action. The driver never deploys or promo
 Use these commands for each recorded receipt and step:
 
 ```text
-bun run scripts/usage-cloudflare-qualification.ts record-deployment ABSOLUTE_RUN_DIRECTORY ABSOLUTE_PRIVATE_RECEIPT_JSON
-bun run scripts/usage-cloudflare-qualification.ts step ABSOLUTE_RUN_DIRECTORY
-bun run scripts/usage-cloudflare-qualification.ts summary ABSOLUTE_RUN_DIRECTORY
+node --experimental-transform-types --import ./scripts/usage-cloudflare-node.mjs ./scripts/usage-cloudflare-qualification.ts record-deployment ABSOLUTE_RUN_DIRECTORY ABSOLUTE_PRIVATE_RECEIPT_JSON
+node --experimental-transform-types --import ./scripts/usage-cloudflare-node.mjs ./scripts/usage-cloudflare-qualification.ts step ABSOLUTE_RUN_DIRECTORY
+node --experimental-transform-types --import ./scripts/usage-cloudflare-node.mjs ./scripts/usage-cloudflare-qualification.ts summary ABSOLUTE_RUN_DIRECTORY
 ```
 
 The mode-0600 receipt file must be directly inside the run directory. `DeploymentReceipt` in `scripts/usage-cloudflare-qualification.ts` defines its exact fields: phase, source/run/config digests, account and Worker, deployment/version IDs, both namespace IDs, both buckets, verification time and the required private settings. Read these facts from the provider and exact local files before recording them. The driver checks consistency, distinct deployment/version IDs, unchanged namespaces, checkpoint order and 100% traffic; it does not query the provider to authenticate the receipt. Preserve that distinction in the final evidence.
@@ -63,7 +67,7 @@ The driver durably records exact request bytes before dispatch and retains `prep
 A timeout or lost response can follow a committed Durable Object operation. Inspect the private manifest and the owned process state before retrying. After reconciling an ambiguous idempotent step, use:
 
 ```text
-bun run scripts/usage-cloudflare-qualification.ts retry ABSOLUTE_RUN_DIRECTORY
+node --experimental-transform-types --import ./scripts/usage-cloudflare-node.mjs ./scripts/usage-cloudflare-qualification.ts retry ABSOLUTE_RUN_DIRECTORY
 ```
 
 The driver reuses the retained request bytes and permits at most three explicit attempts for that step. It never retries automatically. An ambiguous `begin` operation stops the run because it creates a random browser capability that cannot be recovered by repeating the request. Preserve the failed run and its evidence; a replacement run needs a new identifier and separately verified target state.
@@ -80,7 +84,7 @@ Local source checks are:
 
 ```text
 bun run scripts/usage-worker-tools.ts test-synthetic-qualification
-bun test scripts/usage-cloudflare-qualification.test.ts scripts/usage-worker-tools.test.ts
+bun test scripts/usage-cloudflare-qualification.test.ts scripts/usage-cloudflare-node.test.ts scripts/usage-worker-tools.test.ts
 ```
 
 The full repository gate includes the Worker suite, driver tests, types and lint. Follow the host scheduler requirements for runtime, bundling and aggregate checks.

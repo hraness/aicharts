@@ -94,6 +94,8 @@ Legacy local namespace keys determine both occurrence IDs and source-checkpoint 
 
 The internal enrollment primitive requires both original secret preimages and resolves a durable reservation itself. It preserves one account namespace in a fixed immutable R2 anchor, records device/receipt state atomically and cannot reactivate a revoked receipt. Namespace readback requires live pairing authority, not merely a committed receipt. Explicit fresh-reservation recovery can finish retained pending genesis without enrolling its expired original credential. Public/CLI integration, credential custody and live recovery qualification remain unfinished; the internal methods are not a live device service. [Usage Worker boundaries](usage-worker.md#internal-account-enrollment) owns the exact recovery limits.
 
+The dormant [terminal enrollment adapter](usage-terminal-enrollment.md) now provides canonical bytes for initialization, polling, explicit account confirmation, reservation, enrollment and namespace readback. Its Worker factory routes account operations only through the authoritative reservation. The TypeScript and Rust client codecs retain correlation and expiry checks; neither supplies native credential custody or an active login command.
+
 Shared social/avatar profiles and accepted remote measurement storage remain separate implementation work. The existing private Accounts profile includes fields that must not be copied to a public leaderboard. A future public profile requires an explicit bounded projection and publishing consent.
 
 ## Validation contract

@@ -13,21 +13,16 @@ use super::{
     trusted, wire, AuthenticatedTransport, JournalBody, SenderBinding, TransportError,
     UploadRequest,
 };
-use std::io::{self, Read};
-use std::net::{SocketAddr, ToSocketAddrs};
-use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::mpsc;
-use std::thread;
+use crate::transport_dns::UsageResolver;
+use std::io::Read;
 use std::time::{Duration, Instant};
 use ureq::config::Config;
-use ureq::http::{HeaderMap, HeaderValue, Uri};
+use ureq::http::{HeaderMap, HeaderValue};
 use ureq::tls::{RootCerts, TlsConfig, TlsProvider};
-use ureq::unversioned::resolver::{ResolvedSocketAddrs, Resolver};
-use ureq::unversioned::transport::{DefaultConnector, NextTimeout};
+use ureq::unversioned::transport::DefaultConnector;
 use ureq::Agent;
 
 const URL: &str = "https://usage.aicharts.io/v1/batches";
-const HOST: &str = "usage.aicharts.io";
 const BATCH_MEDIA: &str = "application/vnd.aicharts.usage-batch-v1";
 const JOURNAL_MEDIA: &str = "application/vnd.aicharts.usage-journal-v1";
 const TOTAL: Duration = Duration::from_secs(20);
@@ -38,101 +33,6 @@ const BODY: Duration = Duration::from_secs(5);
 const HEADER_BYTES: usize = 16 * 1024;
 const HEADER_COUNT: usize = 64;
 const IO_BYTES: usize = 8 * 1024;
-const ADDRESS_COUNT: usize = 16;
-
-// Independent adapter instances must not accumulate timed-out OS resolver work.
-static DNS_BUSY: AtomicBool = AtomicBool::new(false);
-
-struct DnsPermit(&'static AtomicBool);
-
-impl Drop for DnsPermit {
-    fn drop(&mut self) {
-        self.0.store(false, Ordering::Release);
-    }
-}
-
-struct Lookup {
-    result: mpsc::Receiver<io::Result<ResolvedSocketAddrs>>,
-    worker: thread::JoinHandle<()>,
-}
-
-fn start_lookup(
-    busy: &'static AtomicBool,
-    lookup: impl FnOnce() -> io::Result<ResolvedSocketAddrs> + Send + 'static,
-) -> io::Result<Lookup> {
-    busy.compare_exchange(false, true, Ordering::Acquire, Ordering::Relaxed)
-        .map_err(|_| io::Error::from(io::ErrorKind::WouldBlock))?;
-    let permit = DnsPermit(busy);
-    let (send, result) = mpsc::sync_channel(1);
-    let worker = thread::Builder::new()
-        .name("aicharts-upload-dns".into())
-        .spawn(move || {
-            let _permit = permit;
-            let _ = send.send(lookup());
-        })?;
-    Ok(Lookup { result, worker })
-}
-
-#[derive(Debug)]
-struct BoundedResolver;
-
-fn bounded_addresses(
-    addresses: impl Iterator<Item = SocketAddr>,
-) -> io::Result<ResolvedSocketAddrs> {
-    let mut addrs = BoundedResolver.empty();
-    for addr in addresses.take(ADDRESS_COUNT) {
-        addrs.push(addr);
-    }
-    if addrs.is_empty() {
-        return Err(io::Error::from(io::ErrorKind::NotFound));
-    }
-    Ok(addrs)
-}
-
-impl Resolver for BoundedResolver {
-    fn resolve(
-        &self,
-        uri: &Uri,
-        _: &Config,
-        timeout: NextTimeout,
-    ) -> Result<ResolvedSocketAddrs, ureq::Error> {
-        if uri.scheme_str() != Some("https")
-            || uri.host() != Some(HOST)
-            || uri.port_u16().unwrap_or(443) != 443
-        {
-            return Err(io::Error::from(io::ErrorKind::InvalidInput).into());
-        }
-        let budget = (*timeout.after).min(RESOLVE);
-        if budget.is_zero() {
-            return Err(ureq::Error::Timeout(timeout.reason));
-        }
-        let pending = start_lookup(&DNS_BUSY, || {
-            // The OS resolver receives only this literal public hostname. It has
-            // no token, binding, request bytes or HTTP callback to run after timeout.
-            bounded_addresses((HOST, 443).to_socket_addrs()?)
-        })?;
-        match pending.result.recv_timeout(budget) {
-            Ok(result) => {
-                // The result is available only after lookup returns. Join this
-                // completed work before permitting an ordinary successful return.
-                pending
-                    .worker
-                    .join()
-                    .map_err(|_| io::Error::other("upload_dns_failed"))?;
-                result.map_err(Into::into)
-            }
-            Err(mpsc::RecvTimeoutError::Timeout) => {
-                // Dropping the handle does not cancel DNS. The worker still owns
-                // the global permit until actual completion; no retry is queued.
-                Err(ureq::Error::Timeout(timeout.reason))
-            }
-            Err(mpsc::RecvTimeoutError::Disconnected) => {
-                let _ = pending.worker.join();
-                Err(io::Error::other("upload_dns_failed").into())
-            }
-        }
-    }
-}
 
 struct Deadline {
     end: Instant,
@@ -200,7 +100,7 @@ impl HttpsTransport {
         Agent::with_parts(
             configuration(remaining, RootCerts::WebPki),
             DefaultConnector::default(),
-            BoundedResolver,
+            UsageResolver,
         )
     }
 

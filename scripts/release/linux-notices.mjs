@@ -21,6 +21,10 @@ const HASH = /^[0-9a-f]{64}$/u;
 const CRATE = /^[A-Za-z0-9_-]+$/u;
 const VERSION = /^[0-9]+\.[0-9]+\.[0-9]+(?:[+.-][A-Za-z0-9.+-]+)?$/u;
 const LICENSE_FILE = /^(?:LICENSE|LICENCE|COPYING|COPYRIGHT|NOTICE)(?:[.-][A-Za-z0-9_.-]+)?$/iu;
+// The fixed Ubuntu Jammy base-files package owns these common license names:
+// https://packages.ubuntu.com/jammy/amd64/base-files/filelist
+const COMMON_LICENSES = new Set(["Apache-2.0", "Artistic", "BSD", "CC0-1.0", "GFDL", "GFDL-1.2", "GFDL-1.3", "GPL", "GPL-1", "GPL-2", "GPL-3", "LGPL", "LGPL-2", "LGPL-2.1", "LGPL-3", "MPL-1.1", "MPL-2.0"]);
+const ASCII_SPACE = /^[\t\n\v\f\r ]$/u;
 const NATIVE_CATEGORIES = new Set(["build_script_provider", "build_script_links", "build_script_path", "generated_archive", "generated_archive_load", "artifact_path", "load_path", "scratch_load", "unknown_load", "rust_library", "system_library", "system_path", "runtime_library"]);
 const NATIVE_PROVIDERS = new Map([
   ["libsqlite3-sys@0.38.2", { links: "sqlite3", libraries: ["sqlite3"] }],
@@ -76,6 +80,27 @@ function relative(value) {
   text(value);
   if (path.isAbsolute(value) || value.split("/").some(part => !part || part === "." || part === "..")) fail("notices_invalid_input");
   return value;
+}
+
+function commonLicenseNames(body) {
+  const names = new Set();
+  for (const match of body.matchAll(/\/usr\/share\/common-licenses\/([^\t\n\v\f\r '"`]*)/gu)) {
+    const before = body[match.index - 1] ?? "", after = body[match.index + match[0].length] ?? "";
+    const quoted = before === "'" || before === '"' || before === "`";
+    if (before && !quoted && !ASCII_SPACE.test(before)) fail("notices_system_missing");
+    let name = match[1];
+    if (quoted) {
+      if (before === "`" ? after !== "`" && after !== "'" : after !== before) fail("notices_system_missing");
+    } else {
+      if (after && !ASCII_SPACE.test(after)) fail("notices_system_missing");
+      // GCC prose ends bare GPL/LGPL references with a sentence period. Only
+      // one unquoted terminal period is punctuation; version dots stay intact.
+      if (name.endsWith(".")) name = name.slice(0, -1);
+    }
+    if (!COMMON_LICENSES.has(name)) fail("notices_system_missing");
+    names.add(name);
+  }
+  return names;
 }
 
 async function read(file, max, code, prefixOnly = false) {
@@ -433,9 +458,11 @@ export async function collectLinuxNotices(input) {
       add(`Ubuntu package ${owner} ${fields[1]} / copyright`, bytes);
       const body = utf8(bytes);
       if (owner.startsWith("libgcc") && !body.includes("GCC Runtime Library Exception")) fail("notices_system_missing");
-      const common = new Set([...body.matchAll(/\/usr\/share\/common-licenses\/([A-Za-z0-9_.-]+)/gu)].map(match => match[1]));
+      const common = commonLicenseNames(body);
       for (const name of [...common].sort(compare)) {
-        const filename = await realpath(`/usr/share/common-licenses/${name}`);
+        let filename;
+        try { filename = await realpath(`/usr/share/common-licenses/${name}`); }
+        catch { fail("notices_system_missing"); }
         if (!inside("/usr/share/common-licenses", filename)) fail("notices_system_missing");
         add(`Ubuntu common license / ${name}`, await read(filename, MiB, "notices_system_missing"));
       }
