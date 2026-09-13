@@ -5,6 +5,14 @@
 mod record;
 mod storage;
 
+#[cfg(target_os = "macos")]
+mod disk;
+#[cfg(target_os = "macos")]
+mod macos;
+
+#[cfg(all(test, target_os = "macos"))]
+#[path = "attempt/disk_tests.rs"]
+mod disk_tests;
 #[cfg(test)]
 #[path = "attempt/record_tests.rs"]
 mod record_tests;

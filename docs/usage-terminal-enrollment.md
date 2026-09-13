@@ -1,6 +1,6 @@
 # Terminal enrollment wire and transport
 
-The dormant terminal enrollment codecs, native HTTPS adapter and Worker HTTP factory connect six terminal operations to the existing pairing and account Durable Objects. A private attempt record and persistence core retain local observations separately from those exchanges. The native adapter has no production constructor. This source adds no CLI command, public Worker route, operating-system credential store, browser approval flow or upload authority.
+The dormant terminal enrollment codecs, native HTTPS adapter and Worker HTTP factory connect six terminal operations to the existing pairing and account Durable Objects. A private attempt record and persistence core retain local observations separately from those exchanges. The macOS adapter has private path and descriptor constructors, but no caller, CLI command or activation path. This source adds no public Worker route, operating-system credential store, browser approval flow or upload authority.
 
 The TypeScript client codec and Rust `enrollment::contract` share independently authored literal vectors in `fixtures/usage/terminal-enrollment-v1.json`. Both own canonical bytes and validate replies against retained observations. The separate server codec validates authoritative RPC results without accepting or manufacturing client context.
 
@@ -51,7 +51,7 @@ The transport asserts at compile time that the existing all-profile `log` macro 
 
 ## Private attempt records and persistence
 
-The private `enrollment::attempt` modules define a canonical nonsecret record and compare-and-publish storage core. No production storage adapter or public constructor exists. Decoding a coherent record does not authenticate its history, verify current vault contents or authorize a request.
+The private `enrollment::attempt` modules define a canonical nonsecret record, compare-and-publish storage core and a macOS-only APFS adapter. The adapter is private and uncalled: it provides explicit path and already-open-directory constructors for a later sequencer, while the current CLI exposes no construction or activation command. Decoding a coherent record does not authenticate its history, verify current vault contents or authorize a request.
 
 Records use at most 4,096 ASCII JSON bytes in fixed field order. The schema keeps the installation and intent, original typed pairing identity and complete `RecordIntent` commitment, a distinct reserved namespace item ID, poll/upload commitments, original pairing expiry, last pairing view and observation time, explicit account choice, complete reservation and enrollment receipt, namespace identity/commitment and original acceptance time, progress, fixed failure and a durable clock floor. It contains no secret preimages, request/response bodies, browser proof, upload sequence or upload grant. A polled approved account remains separate from an explicit chosen and confirmed account. Original credential bindings, initialized expiry, chosen account/time, reservation, receipt fields and namespace pin/time remain fixed once recorded. Pairing observations may advance, and device state may move from active to revoked, never back.
 
@@ -63,13 +63,15 @@ The storage port requires a stable private directory and lock, bounded committed
 
 Every failure from publication dispatch through final readback returns `OutcomeUnknown`, including an error whose port claims publication had no effect. `inspect` is observational. Explicit `read_durable` requires the expected token, committed-file synchronization, directory synchronization and another exact-token read; visible bytes alone do not establish durability. The returned snapshot does not retain a lock or confer network or custody authority.
 
-The focused synthetic record and storage checks run with:
+On macOS, the adapter keeps a fixed `enrollment-attempt-v1` directory containing only an empty `attempt.lock`, `attempt.current` and optional `attempt.pending`, all with strict ownership and modes. It walks explicit absolute anchors without following symlinks, retains every descriptor/name edge, requires local writable APFS with ownership enforcement and rejects ACLs, replacements and unknown entries. Candidate files use a fixed `AIAT` envelope with the canonical record, predecessor revision/digest facts and a domain-separated SHA-256 trailer. Staging, file and directory synchronization, one conditional rename and exact inode/byte readback precede a durable result. A constructor or interrupted publication never adopts, repairs, deletes or remints state; reconciliation remains explicit in the core.
+
+The focused synthetic record, storage and macOS adapter checks run with:
 
 ```text
 cargo test --locked -p aicharts-cli --bin aicharts enrollment::attempt
 ```
 
-These tests use literal canonical vectors, typed synthetic secret-record commitments and an in-memory fault model. They cover uncertain publication, explicit restart reconciliation, stale predecessor races and retained namespace flights. They do not qualify an operating-system persistence backend or a process-death recovery path.
+These tests use literal canonical vectors, typed synthetic secret-record commitments, an in-memory fault model and disposable real APFS directories. They cover uncertain publication, explicit restart reconciliation, stale predecessor races, retained namespace flights, path-anchor retention, strict envelope corruption refusal, reopen/durable readback and a synchronization failure. The 39 macOS-focused cases pass with warnings denied. They do not qualify a process-death recovery path, hostile same-user filesystem isolation or a production enrollment sequencer.
 
 ## Authoritative Worker dispatch
 
