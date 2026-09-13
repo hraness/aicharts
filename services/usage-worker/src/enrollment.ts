@@ -3,7 +3,8 @@ import { createHash } from "node:crypto";
 import { AccountAdmission, type AdmissionObservation } from "./account-admission";
 import { AdmissionFault } from "./admission-policy";
 import { ADMISSION_SCHEMA } from "./admission-schema";
-import { AdmissionState } from "./admission-state";
+import { AdmissionState, type AdmissionControl } from "./admission-state";
+import { parsePrivateDaysRequest, type PrivateDaysRequestV1, type PrivateDaysV1 } from "../../../lib/usage/private-days-contract";
 import {
   enrollmentAccount, enrollmentAccountName, enrollmentHex, enrollmentRandom,
   enrollmentSnapshot, enrollmentTime, parseEnrollmentProof, parseEnrollmentReservation,
@@ -243,6 +244,61 @@ export class AccountEnrollment extends DurableObject<Env> {
   async admitBatch(input: unknown): Promise<EnrollmentResult<Uint8Array>> {
     const admission = new AdmissionState(this.ctx.storage.sql);
     return new AccountAdmission(this.env, admission, (observation, run) => this.#transaction(observation, (state, now) => ({ state, result: ok(run(state, now)) }))).admit(input);
+  }
+
+  /** Unlike #transaction, this helper never advances clocks or enrollment state. */
+  #privateDaysSnapshot<T>(request: PrivateDaysRequestV1, observation: AdmissionObservation,
+    read: (state: State, admission: AdmissionState, control: AdmissionControl) => T): EnrollmentResult<T> {
+    try {
+      return this.ctx.storage.transactionSync(() => {
+        this.#schema();
+        if (!this.ctx.id.equals(this.env.ACCOUNT_ENROLLMENTS.idFromName(enrollmentAccountName(request.accountId)))) return err("unauthorized");
+        if (this.#generation() !== observation.generation) return err("recovery_required");
+        const { state } = this.#stored(3);
+        if (state === null) return err("not_enrolled");
+        if (state.accountId !== request.accountId) return err("unauthorized");
+        if (state.generation !== observation.generation) return err("recovery_required");
+        if (state.phase !== "active") return err("not_enrolled");
+        const admission = new AdmissionState(this.ctx.storage.sql), control = admission.control();
+        if (control.quarantined) return err("recovery_required");
+        const checkTime = (): EnrollmentError | null => {
+          const now = Date.now();
+          if (!enrollmentTime(now) || Object.is(now, -0) || now < observation.observed || now < control.observed || now < state.observedAtMs) return "clock_regressed";
+          observation.observed = now;
+          return now >= request.sessionExpiresAtMs ? "expired" : null;
+        };
+        const before = checkTime();
+        if (before !== null) return err(before);
+        const value = read(state, admission, control);
+        const after = checkTime();
+        if (after !== null) return err(after);
+        if (this.#generation() !== observation.generation) return err("recovery_required");
+        return ok(value);
+      });
+    } catch (error) { return err(error instanceof AdmissionFault ? error.code : "storage_invalid"); }
+  }
+
+  /** Dormant trusted-coordinator RPC. The DTO establishes syntax, not user auth.
+   * Future HTTP dispatch must verify workload identity and assert a live account. */
+  async readImportedDays(input: unknown): Promise<EnrollmentResult<PrivateDaysV1>> {
+    try {
+      const request = parsePrivateDaysRequest(input);
+      if (request === null) return err("invalid_input");
+      const generation = this.#generation(), observed = Date.now();
+      if (generation === null) return err("recovery_required");
+      if (!enrollmentTime(observed) || Object.is(observed, -0)) return err("clock_regressed");
+      const observation = { generation, observed };
+      const original = this.#privateDaysSnapshot(request, observation, state => Object.freeze({ ...state.anchor }));
+      if (!original.ok) return original;
+      let external: NamespaceAnchor | null = null, unavailable = false;
+      try { external = await readNamespaceAnchor(this.env.CONTROL, request.accountId); }
+      catch { unavailable = true; }
+      return this.#privateDaysSnapshot(request, observation, (state, admission, control) => {
+        if (unavailable) throw new AdmissionFault("storage_unavailable");
+        if (external === null || !sameNamespaceAnchor(external, original.value) || !sameNamespaceAnchor(state.anchor, original.value)) throw new AdmissionFault("recovery_required");
+        return admission.readImportedDays(state, request, control);
+      });
+    } catch { return err("storage_unavailable"); }
   }
 
   async #operation(input: unknown): Promise<EnrollmentResult<Operation>> {

@@ -17,7 +17,8 @@ const TARGET = "x86_64-unknown-linux-gnu";
 const RUST = "1.97.1";
 const RUST_COMMIT = "8bab26f4f68e0e26f0bb7960be334d5b520ea452";
 const INTERPRETER = "/lib64/ld-linux-x86-64.so.2";
-const SYSTEM_LIBRARIES = new Set(["ld-linux-x86-64.so.2", "libc.so.6", "libm.so.6", "libgcc_s.so.1", "libpthread.so.0", "librt.so.1", "libdl.so.2", "libutil.so.1", "libresolv.so.2"]);
+const INTERPRETER_SONAME = path.basename(INTERPRETER);
+const SYSTEM_LIBRARIES = new Set([INTERPRETER_SONAME, "libc.so.6", "libm.so.6", "libgcc_s.so.1", "libpthread.so.0", "librt.so.1", "libdl.so.2", "libutil.so.1", "libresolv.so.2"]);
 const CAPS = Object.freeze({ deadline: 20 * 60_000, build: 12 * 60_000, logs: 32 * MiB, diagnostic: MiB, map: 8 * MiB, notices: 16 * MiB, binary: 64 * MiB, metadata: 8 * MiB });
 const ERRORS = new Set(["invalid_input", "unsupported_host", "invalid_workflow", "unsupported_destination", "destination_exists", "source_failed", "source_changed", "unsupported_source", "toolchain_failed", "toolchain_mismatch", "process_failed", "process_timeout", "process_output_limit", "process_custody_failed", "deadline_exceeded", "build_failed", "artifact_invalid", "elf_invalid", "runtime_invalid", "smoke_failed", "notices_incomplete", "assembly_failed", "install_failed", "write_failed"]);
 const MODULE_ERRORS = Object.freeze({
@@ -262,8 +263,10 @@ function inspectElf(binary, output) {
   check(new Set(dependencies).size === dependencies.length, "runtime_invalid", "duplicate_dependency");
   for (const library of dependencies) {
     check(SYSTEM_LIBRARIES.has(library), "runtime_invalid", "unsupported_dependency", library);
-    check(library !== "ld-linux-x86-64.so.2", "runtime_invalid", "direct_interpreter_dependency", library);
   }
+  // glibc's libc.so linker script includes the loader through AS_NEEDED, so its
+  // exact SONAME may be direct. Resolution below must bind it to INTERPRETER;
+  // its version requirements still receive the ordinary per-library checks.
   const required = new Map(); let library = null;
   for (const line of output.versions.split("\n")) {
     const file = /\bFile: ([A-Za-z0-9_.+-]+)\s+Cnt:/u.exec(line);
@@ -288,14 +291,15 @@ function resolveLibraries(text, direct, host) {
   for (const line of text.split("\n").filter(line => line.trim())) {
     if (/^\s*linux-vdso\.so\.1 \(0x[0-9a-f]+\)\s*$/u.test(line)) continue;
     let match = /^\s*([A-Za-z0-9_.+-]+) => (\/[^\s]+) \(0x[0-9a-f]+\)\s*$/u.exec(line);
-    if (!match) { const loader = /^\s*(\/[^\s]+) \(0x[0-9a-f]+\)\s*$/u.exec(line); need(loader && loader[1] === INTERPRETER, "runtime_invalid"); match = [null, "ld-linux-x86-64.so.2", loader[1]]; }
+    if (!match) { const loader = /^\s*(\/[^\s]+) \(0x[0-9a-f]+\)\s*$/u.exec(line); need(loader && loader[1] === INTERPRETER, "runtime_invalid"); match = [null, INTERPRETER_SONAME, loader[1]]; }
     need(SYSTEM_LIBRARIES.has(match[1]) && !libraries.has(match[1]) && libraries.size < 16, "runtime_invalid");
     const resolved = host.realpath(match[2]);
     need(/^\/(?:usr\/)?lib(?:64|\/x86_64-linux-gnu)\/[A-Za-z0-9_.+-]+$/u.test(resolved), "runtime_invalid");
+    need(match[1] !== INTERPRETER_SONAME || resolved === host.realpath(INTERPRETER), "runtime_invalid");
     const bytes = host.readFile(resolved, 32 * MiB);
     libraries.set(match[1], { soname: match[1], path: resolved, bytes: bytes.length, sha256: sha(bytes) });
   }
-  need(libraries.has("ld-linux-x86-64.so.2") && direct.every(name => libraries.has(name)), "runtime_invalid");
+  need(libraries.has(INTERPRETER_SONAME) && direct.every(name => libraries.has(name)), "runtime_invalid");
   return [...libraries.values()].sort((a, b) => order(a.soname, b.soname));
 }
 function compilerArtifact(metadataBytes, messagesBytes, directories, version) {
@@ -445,7 +449,10 @@ async function runWith(value, host = HOST) {
     need(inventoryHash(moduleResult("source", host.readSource({ repositoryDirectory: input.repositoryDirectory, commit: input.commit, expectedTree: input.expectedTree }), "source_failed").sourceFiles) === sourceHash, "source_changed");
     recheckSource(directories.source, source.sourceFiles, host);
     need(sha(host.readFile(executable, CAPS.binary, true)) === binaryHash && sha(host.readFile(smokeBinary, CAPS.binary, true)) === binaryHash, "artifact_invalid");
-    for (const library of dynamicLibraries) need(sha(host.readFile(library.path, 32 * MiB)) === library.sha256, "runtime_invalid");
+    for (const library of dynamicLibraries) {
+      need(library.soname !== INTERPRETER_SONAME || host.realpath(INTERPRETER) === library.path, "runtime_invalid");
+      need(sha(host.readFile(library.path, 32 * MiB)) === library.sha256, "runtime_invalid");
+    }
     const target = { triple: TARGET, os: "linux", arch: "x86_64", osFloor: "ubuntu-22.04", libcFloor: "glibc-2.35", cpuBaseline: "x86-64", runnerLabel: runner.label, runnerImageVersion: runner.imageVersion, cCompiler: summary.toolchain.cCompiler, dynamicDependencies: measured.dependencies };
     stage("assembly");
     const assembled = checked(host.assemble({ version, source: source.source, run: { runId: runner.runId, runAttempt: runner.runAttempt }, toolchain: { rustChannel: RUST, nodeMajor: 24, bunVersion }, target, sourceFiles: source.sourceFiles, executableBytes: binary, thirdPartyLicenseBytes: notices.bytes }), "assembly_failed");

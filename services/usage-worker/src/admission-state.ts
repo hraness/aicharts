@@ -1,11 +1,13 @@
 import { admissionHex, equalAdmissionBytes, MAX_ADMISSION_TIMESTAMP, type AdmissionBatch, type AdmissionJournal } from "../../../lib/usage/admission";
 import {
-  AdmissionFault, auditReceiptHead, batchAccount, decideAdmission, freezeAdmission, lastSequence,
+  ADMISSION_POLICY_V1, AdmissionFault, auditReceiptHead, batchAccount, decideAdmission, freezeAdmission, lastSequence,
   MAX_ADMISSION_DAY_HEADS, MAX_ADMISSION_HEADS, MAX_ADMISSION_REVISIONS, operationDay, isZeroHash,
   ownedAdmissionBatch, ownedAdmissionJournal, ownedAdmissionOperation, requireAdmission, timestampsAtMost,
   type AdmissionHead, type AdmissionDecision,
 } from "./admission-policy";
 import { ADMISSION_SCHEMA } from "./admission-schema";
+import { parsePrivateDaysRequest, parsePrivateDaysValue, type PrivateDaysRequestV1, type PrivateDaysV1 } from "../../../lib/usage/private-days-contract";
+import { decodeUsageBatch, totalTokens } from "../../../lib/usage/wire";
 
 export type AdmissionAuthority = {
   accountId: string; generation: string; observedAtMs: number; phase: "pending" | "active";
@@ -131,6 +133,39 @@ export class AdmissionState {
     if (rows.length === 0) return 0;
     requireAdmission(rows[0].utc_day === day && integer(rows[0].live_count, 1, MAX_ADMISSION_DAY_HEADS));
     return rows[0].live_count;
+  }
+
+  /** One caller-owned synchronous snapshot. Only published current heads count. */
+  readImportedDays(authority: AdmissionAuthority, request: PrivateDaysRequestV1, control = this.control()): PrivateDaysV1 {
+    const query = parsePrivateDaysRequest(request);
+    requireAdmission(query && authority.phase === "active" && authority.accountId === query.accountId && !control.quarantined);
+    const empty = () => ({ usageOccurrences: 0, accounted: 0n, output: 0n });
+    const days = Array.from({ length: query.dayCount }, (_, index) => ({ utcDay: query.firstUtcDay + index, codex: empty(), claudeCode: empty() }));
+    let count = 0;
+    for (const row of this.sql.exec("SELECT occurrence_id, operation, journal_revision, utc_day FROM usage_admission_heads WHERE utc_day >= ? AND utc_day < ? ORDER BY occurrence_id LIMIT 100001",
+      query.firstUtcDay, query.firstUtcDay + query.dayCount)) {
+      requireAdmission(++count <= MAX_ADMISSION_HEADS && count <= control.live);
+      const head = this.#head(row, authority, control);
+      requireAdmission(head.day !== null && head.operation.action === 1);
+      const frame = decodeUsageBatch(head.operation.frame, ADMISSION_POLICY_V1);
+      requireAdmission(frame.ok);
+      const usage = frame.value.usage[0], tokens = totalTokens(usage.tokens), day = days[head.day - query.firstUtcDay];
+      requireAdmission(tokens.ok && day && day.utcDay === head.day);
+      const provider = usage.provider === 1 ? day.codex : day.claudeCode;
+      provider.usageOccurrences += 1; provider.accounted += tokens.value; provider.output += usage.tokens.output;
+      requireAdmission(day.codex.usageOccurrences + day.claudeCode.usageOccurrences <= MAX_ADMISSION_DAY_HEADS);
+    }
+    const cells = days.map(day => {
+      requireAdmission(day.codex.usageOccurrences + day.claudeCode.usageOccurrences === this.dayCount(day.utcDay));
+      const totals = (provider: ReturnType<typeof empty>) => ({ usageOccurrences: provider.usageOccurrences,
+        observedAccountedTokens: provider.accounted.toString(), observedOutputTokens: provider.output.toString() });
+      return { utcDay: day.utcDay, codex: totals(day.codex), claudeCode: totals(day.claudeCode) };
+    });
+    const result = parsePrivateDaysValue(query, { schemaVersion: 1, measurementProfile: "imported-tokens-v1", coverage: "partial",
+      journalRevision: control.revision, journalCommittedAtMs: control.revision === 0 ? null : control.committed,
+      firstUtcDay: query.firstUtcDay, days: cells });
+    requireAdmission(result);
+    return result;
   }
 
   /** Net changes, not per-member intermediate counts; no mutation before caps. */

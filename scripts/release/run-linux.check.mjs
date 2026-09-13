@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import * as fs from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, join } from "node:path";
+import { basename, dirname, join } from "node:path";
 import { test } from "node:test";
 import { runLinuxRelease } from "./run-linux.mjs";
 import { hydrateReleaseSource } from "./hydrate-source.mjs";
@@ -14,11 +14,14 @@ import { validateLinuxQualificationReport } from "./linux-qualification.mjs";
 // compiler/smoke facts exercise orchestration, never actual Linux qualification.
 const script = new URL("./run-linux.mjs", import.meta.url);
 const runtime = fs.readFileSync(script, "utf8").replace(/from "(\.\/[^"]+)"/gu, (_, relative) => "from " + JSON.stringify(new URL(relative, script).href));
-const internals = await import("data:text/javascript;base64," + Buffer.from(runtime + "\nexport { runWith, argumentsToInput, workflow, minimalEnvironment, inspectElf, compilerArtifact, execute, readRegular, prepareOutput, recheckSource, compareVersion };\n").toString("base64"));
+const internals = await import("data:text/javascript;base64," + Buffer.from(runtime + "\nexport { runWith, argumentsToInput, workflow, minimalEnvironment, inspectElf, resolveLibraries, compilerArtifact, execute, readRegular, prepareOutput, recheckSource, compareVersion };\n").toString("base64"));
 const TARGET = "x86_64-unknown-linux-gnu";
 const RUST_COMMIT = "8bab26f4f68e0e26f0bb7960be334d5b520ea452";
 const SYSROOT = "/home/runner/.rustup/toolchains/1.97.1-" + TARGET;
 const INTERPRETER = "/lib64/ld-linux-x86-64.so.2";
+const LOADER = "ld-linux-x86-64.so.2";
+const RESOLVED_LOADER = "/usr/lib/x86_64-linux-gnu/" + LOADER;
+const OBSERVED_DEPENDENCIES = [LOADER, "libc.so.6", "libgcc_s.so.1", "libm.so.6"];
 const SHA = "1".repeat(40), TREE = "2".repeat(40);
 const sha = bytes => createHash("sha256").update(bytes).digest("hex");
 const bytes = value => Buffer.from(value);
@@ -51,6 +54,16 @@ function fixture(t) {
   const source = { source: { commit: SHA, tree: TREE, commitTime: "2026-09-11T12:00:00Z" }, sourceFiles };
   const calls = [], stages = [], notices = [];
   const output = elfOutput();
+  const versions = names => "Version definition section:\n" + names.map(name => "Name: " + name + "\n").join("") + "Version needs section\n";
+  const runtime = {
+    listing: " linux-vdso.so.1 (0x123)\n libgcc_s.so.1 => /lib/x86_64-linux-gnu/libgcc_s.so.1 (0x456)\n libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x789)\n " + INTERPRETER + " (0xabc)\n",
+    definitions: {
+      [LOADER]: versions(["GLIBC_2.2.5", "GLIBC_2.3"]),
+      "libc.so.6": versions(["GLIBC_2.2.5", "GLIBC_2.3", "GLIBC_2.34"]),
+      "libgcc_s.so.1": versions(["GCC_3.0"]),
+      "libm.so.6": versions(["GLIBC_2.2.5", "GLIBC_2.29"]),
+    },
+  };
   let collected = false;
   const host = {
     platform: "linux", arch: "x64", nodeMajor: 24, env: env(), now: () => performance.now(),
@@ -59,7 +72,7 @@ function fixture(t) {
       if (file.startsWith(SYSROOT) || file.startsWith("/usr/bin/") || file.startsWith("/usr/lib/x86_64-linux-gnu/")) return bytes("synthetic tool/runtime bytes");
       return internals.readRegular(file, maximum, executable);
     },
-    realpath: file => file === INTERPRETER ? "/usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2" : file.replace(/^\/lib\/x86_64-linux-gnu\//u, "/usr/lib/x86_64-linux-gnu/"),
+    realpath: file => file === INTERPRETER ? RESOLVED_LOADER : file.replace(/^\/lib\/x86_64-linux-gnu\//u, "/usr/lib/x86_64-linux-gnu/"),
     progress: stage => stages.push(stage), readSource: value => { assert.deepEqual(value, { repositoryDirectory, commit: SHA, expectedTree: TREE }); return ok(source); },
     hydrate: hydrateReleaseSource, assemble: assembleLinuxRelease, validateArchive,
     collectNotices: async input => { notices.push(input); const data = bytes("SYNTHETIC TEST ONLY: not qualified licenses\n"); return ok({ bytes: data, sha256: sha(data), components: 1 }); },
@@ -84,11 +97,11 @@ function fixture(t) {
         return result(JSON.stringify({ reason: "compiler-artifact", package_id: "path+aicharts-cli#0.1.0", target: { name: "aicharts", kind: ["bin"] }, profile: { test: false }, executable: artifact, fresh: false }) + "\n" + JSON.stringify({ reason: "build-finished", success: true }) + "\n");
       }
       if (executable === "/usr/bin/readelf") {
-        if (args.at(-1).startsWith("/usr/lib/")) return result("Version definition section:\nName: GCC_3.0\nName: GLIBC_2.2.5\nName: GLIBC_2.34\nVersion needs section\n");
+        if (args.at(-1).startsWith("/usr/lib/")) { assert.ok(Object.hasOwn(runtime.definitions, basename(args.at(-1)))); return result(runtime.definitions[basename(args.at(-1))]); }
         const key = new Map([["--file-header", "header"], ["--program-headers", "program"], ["--dynamic", "dynamic"], ["--version-info", "versions"], ["--notes", "notes"]]).get(args[1]);
         assert.ok(key); return result(output[key]);
       }
-      if (executable === INTERPRETER) return result(" linux-vdso.so.1 (0x123)\n libgcc_s.so.1 => /lib/x86_64-linux-gnu/libgcc_s.so.1 (0x456)\n libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x789)\n " + INTERPRETER + " (0xabc)\n");
+      if (executable === INTERPRETER) return result(runtime.listing);
       assert.ok(executable.endsWith("/aicharts")); assert.equal(options.env.PATH, "/usr/bin:/bin");
       assert.equal(options.env.CARGO_HOME, undefined); assert.equal(options.env.RUSTC, undefined);
       assert.equal(options.cwd, join(outputDirectory, "smoke"));
@@ -107,8 +120,94 @@ function fixture(t) {
       assert.fail("unexpected synthetic executable argv");
     },
   };
-  return { root, input, host, calls, stages, source, output, notices };
+  return { root, input, host, calls, stages, source, output, notices, runtime };
 }
+
+// The hosted failure observed these four direct SONAMEs, including the glibc
+// loader. Synthetic public version needs preserve its measured <= 2.34 floor.
+function directLoaderFixture(t, named = false) {
+  const f = fixture(t);
+  f.output.dynamic += " (NEEDED) Shared library: [" + LOADER + "]\n (NEEDED) Shared library: [libm.so.6]\n";
+  f.output.versions += "File: " + LOADER + " Cnt: 1\nName: GLIBC_2.3 Flags: none\nFile: libm.so.6 Cnt: 1\nName: GLIBC_2.29 Flags: none\n";
+  f.runtime.listing += " libm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0xdef)\n";
+  if (named) f.runtime.listing = f.runtime.listing.replace(" " + INTERPRETER + " (", " " + LOADER + " => /lib/x86_64-linux-gnu/" + LOADER + " (");
+  return f;
+}
+
+test("direct glibc loader dependency crosses exact runtime resolution, notices and archive assembly", async t => {
+  for (const named of [false, true]) {
+    const f = directLoaderFixture(t, named);
+    assert.equal((await internals.runWith(f.input, f.host)).ok, true);
+    const report = validateLinuxQualificationReport(fs.readFileSync(join(f.input.outputDirectory, "qualification.json")));
+    assert.equal(report.ok, true); assert.deepEqual(report.value.value.target.dynamicDependencies, OBSERVED_DEPENDENCIES);
+    const manifest = JSON.parse(fs.readFileSync(join(f.input.outputDirectory, "assets/release-manifest.json")));
+    assert.equal(manifest.targets.length, 1); assert.deepEqual(manifest.targets[0].dynamicDependencies, OBSERVED_DEPENDENCIES);
+    assert.equal(f.notices.length, 1);
+    assert.deepEqual(f.notices[0].dynamicLibraries, OBSERVED_DEPENDENCIES.map(soname => ({ soname, path: "/usr/lib/x86_64-linux-gnu/" + soname })));
+    assert.equal(f.calls.filter(call => call.executable === INTERPRETER && call.args[0] === "--list").length, 1);
+    assert.equal(f.calls.filter(call => call.executable === "/usr/bin/readelf" && call.args[1] === "--version-info" && call.args.at(-1) === RESOLVED_LOADER).length, 1);
+    const cli = manifest.assets.find(asset => asset.kind === "cli");
+    assert.equal(cli.files.some(file => file.path.includes(".so")), false);
+    assert.equal(sha(fs.readFileSync(join(f.input.outputDirectory, "install", cli.root, "bin/aicharts"))), sha(elfBytes()));
+    assert.equal(fs.existsSync(join(f.input.outputDirectory, "install", cli.root, "THIRD_PARTY_LICENSES.txt")), true);
+  }
+});
+
+test("loader resolution requires the fixed interpreter and every direct library within system paths", t => {
+  const f = directLoaderFixture(t), listing = f.runtime.listing;
+  for (const invalid of [
+    listing.replace(" " + INTERPRETER + " (0xabc)\n", ""),
+    listing.replace(INTERPRETER, "/tmp/" + LOADER),
+    listing.replace(INTERPRETER, LOADER + " => /lib/x86_64-linux-gnu/libc.so.6"),
+    listing.replace(INTERPRETER, "ld-linux-aarch64.so.1 => " + INTERPRETER),
+    listing + " " + INTERPRETER + " (0xabc)\n",
+    listing.replace(" libm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0xdef)\n", ""),
+    listing.replace("/lib/x86_64-linux-gnu/libm.so.6", "/tmp/libm.so.6"),
+    listing.replace("/lib/x86_64-linux-gnu/libm.so.6", "relative/libm.so.6"),
+    listing.replace("libm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0xdef)", "libm.so.6 => not found"),
+  ]) assert.throws(() => internals.resolveLibraries(invalid, OBSERVED_DEPENDENCIES, f.host), { code: "runtime_invalid" });
+  const changed = { ...f.host, realpath: file => file === INTERPRETER ? "/tmp/" + LOADER : f.host.realpath(file) };
+  assert.throws(() => internals.resolveLibraries(listing, OBSERVED_DEPENDENCIES, changed), { code: "runtime_invalid" });
+});
+
+test("direct loader version needs retain private-marker, unsupported-version and glibc-floor refusal", t => {
+  const f = directLoaderFixture(t);
+  for (const version of ["GLIBC_PRIVATE", "GLIBC_ABI_DT_RELR", "LLVM_1.0", "GLIBC_2.36"]) {
+    const output = { ...f.output, versions: f.output.versions.replace("Name: GLIBC_2.3 Flags:", "Name: " + version + " Flags:") };
+    assert.throws(() => internals.inspectElf(elfBytes(), output), error => {
+      assert.equal(error.code, "runtime_invalid");
+      assert.equal(error.diagnostic.code, version === "GLIBC_2.36" ? "glibc_floor" : "unsupported_version");
+      return true;
+    });
+  }
+});
+
+test("each direct library must itself define every requested version before smoke or assembly", async t => {
+  for (const [soname, version] of [[LOADER, "GLIBC_2.3"], ["libc.so.6", "GLIBC_2.34"], ["libgcc_s.so.1", "GCC_3.0"], ["libm.so.6", "GLIBC_2.29"]]) {
+    const f = directLoaderFixture(t);
+    // Other libraries, and this library's needs section, cannot supply a
+    // missing definition. libc deliberately still defines the loader version.
+    f.runtime.definitions[soname] = f.runtime.definitions[soname].replace("Name: " + version + "\n", "") + "Name: " + version + "\n";
+    assert.deepEqual(await internals.runWith(f.input, f.host), { ok: false, error: "runtime_invalid" });
+    assert.equal(f.stages.at(-1), "runtime-versions-" + soname);
+    assert.equal(f.notices.length, 0);
+    for (const name of ["qualification.json", "assets"]) assert.equal(fs.existsSync(join(f.input.outputDirectory, name)), false);
+  }
+});
+
+test("a changed fixed interpreter binding refuses before final assembly", async t => {
+  const f = directLoaderFixture(t), original = f.host.progress;
+  f.host.progress = stage => {
+    original(stage);
+    if (stage === "source-recheck") {
+      const realpath = f.host.realpath;
+      f.host.realpath = file => file === INTERPRETER ? "/usr/lib/x86_64-linux-gnu/libc.so.6" : realpath(file);
+    }
+  };
+  assert.deepEqual(await internals.runWith(f.input, f.host), { ok: false, error: "runtime_invalid" });
+  assert.equal(f.stages.at(-1), "source-recheck");
+  for (const name of ["qualification.json", "assets"]) assert.equal(fs.existsSync(join(f.input.outputDirectory, name)), false);
+});
 
 test("entrypoint and public effect interface are closed before source or output access", async t => {
   const f = fixture(t);
@@ -174,7 +273,8 @@ test("ELF policy discriminates architecture, interpreter, dependency, stack, ver
     ["runtime_invalid", "dependency_count", value => { value.dynamic = " (NEEDED) Shared library: [libc.so.6]\n".repeat(17); }],
     ["runtime_invalid", "duplicate_dependency", value => { value.dynamic += " (NEEDED) Shared library: [libc.so.6]\n"; }],
     ["runtime_invalid", "unsupported_dependency", value => { value.dynamic = value.dynamic.replace("libc.so.6", "libssl.so.3"); }],
-    ["runtime_invalid", "direct_interpreter_dependency", value => { value.dynamic += " (NEEDED) Shared library: [ld-linux-x86-64.so.2]\n"; }],
+    ["runtime_invalid", "unsupported_dependency", value => { value.dynamic += " (NEEDED) Shared library: [ld-linux-aarch64.so.1]\n"; }],
+    ["runtime_invalid", "unsupported_dependency", value => { value.dynamic += " (NEEDED) Shared library: [" + INTERPRETER + "]\n"; }],
     ["runtime_invalid", "version_file_not_needed", value => { value.versions = value.versions.replace("File: libc.so.6", "File: libm.so.6"); }],
     ["runtime_invalid", "version_without_file", value => { value.versions = "Name: GLIBC_2.34 Flags: none\n"; }],
     ["runtime_invalid", "unsupported_version", value => { value.versions = value.versions.replace("GLIBC_2.34", "GLIBC_PRIVATE"); }],
@@ -184,8 +284,8 @@ test("ELF policy discriminates architecture, interpreter, dependency, stack, ver
     ["elf_invalid", "isa_note_count", value => { value.notes += value.notes; }],
     ["elf_invalid", "unsupported_isa_note", value => { value.notes = value.notes.replace("x86-64-baseline", "x86-64-v2"); }],
   ]) { const value = elfOutput(); mutate(value); refuses(elfBytes(), value, broadCode, predicate); }
-  // Earlier checks still win. Dependency order remains the original sorted
-  // short-circuit order, not a new preference for the suspected loader case.
+  // The legitimate loader does not excuse another unknown dependency or let
+  // dependency validation precede the existing binary/search-path checks.
   const combined = elfOutput(); combined.dynamic += " (NEEDED) Shared library: [ld-linux-x86-64.so.2]\n (NEEDED) Shared library: [a-unknown]\n";
   refuses(elfBytes(), combined, "runtime_invalid", "unsupported_dependency");
   combined.dynamic += " (RUNPATH) [/tmp]\n";
@@ -227,7 +327,7 @@ test("ELF failure summary retains a safe precise predicate but cannot qualify or
   assert.deepEqual(await internals.runWith(f.input, f.host), { ok: false, error: "runtime_invalid" });
   const summaryBytes = fs.readFileSync(join(f.input.outputDirectory, "summary.json")), summary = JSON.parse(summaryBytes);
   assert.equal(summary.checksPassed, false); assert.equal(summary.error, "runtime_invalid");
-  assert.equal(summary.diagnostic.module, "elf"); assert.equal(summary.diagnostic.code, "direct_interpreter_dependency");
+  assert.equal(summary.diagnostic.module, "elf"); assert.equal(summary.diagnostic.code, "version_file_not_needed");
   assert.deepEqual(summary.diagnostic.observed.knownNeeded, ["ld-linux-x86-64.so.2", "libc.so.6", "libgcc_s.so.1"]);
   assert.equal(summary.diagnostic.observed.unknownVersionFileCountCappedAt17, 1);
   assert.equal(summary.diagnostic.observed.unknownVersionNameCountCappedAt65, 1);
