@@ -427,8 +427,9 @@ export async function readQualificationResponse(response: Response, run: Qualifi
 }
 
 type AttemptOptions = { retry?: boolean; factory?: QualificationPlatformFactory; now?: () => number;
-  monotonicNow?: () => number; deadlineMs?: number; verifySource?: boolean };
-/** Injection is for local tests. The CLI never accepts a factory, timeout or source-check override. */
+  monotonicNow?: () => number; deadlineMs?: number; verifySource?: boolean;
+  afterOutcomePersisted?: () => Promise<void> };
+/** Injection is for local tests. The CLI never accepts a factory, timeout, persistence hook or source-check override. */
 export async function dispatchQualificationStep(path: string, options: AttemptOptions = {}): Promise<QualificationManifest> {
   return await withRunLock(path, async () => {
     const manifest = await loadQualification(path, options.verifySource ?? true), now = options.now ?? Date.now;
@@ -492,6 +493,7 @@ export async function dispatchQualificationStep(path: string, options: AttemptOp
       // Persist before cleanup, which can itself be interrupted. A late response
       // never changes the retained result or causes another request.
       await saveManifest(path, manifest);
+      await options.afterOutcomePersisted?.();
       await disposePlatform();
     }
     return manifest;
