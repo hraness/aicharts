@@ -58,6 +58,24 @@ test("response is owned, deeply frozen, range-bound and excludes arbitrary data"
   expect(parsePrivateDaysValue(request, { ...value(), accountId: request.accountId })).toBeNull();
 });
 
+test("response sizing never invokes inherited object or array JSON hooks", () => {
+  for (const prototype of [Object.prototype, Array.prototype]) for (const throwing of [false, true]) {
+    const source = value({ ...request, dayCount: 31 }), query = { ...request, dayCount: 31 };
+    const descriptor = Object.getOwnPropertyDescriptor(prototype, "toJSON");
+    let calls = 0, parsed: PrivateDaysV1 | null = null;
+    try {
+      Object.defineProperty(prototype, "toJSON", { configurable: true, value() {
+        calls++; if (throwing) throw new Error("SYNTHETIC_PRIVATE_CANARY"); return "SYNTHETIC_PRIVATE_CANARY";
+      } });
+      parsed = parsePrivateDaysValue(query, source);
+    } finally {
+      if (descriptor === undefined) Reflect.deleteProperty(prototype, "toJSON");
+      else Object.defineProperty(prototype, "toJSON", descriptor);
+    }
+    expect(calls).toBe(0); expect(parsed).toEqual(source); expect(parsed?.days.map(day => day.utcDay)).toHaveLength(31);
+  }
+});
+
 test("canonical totals preserve values above 2^53 and current provider token limits", () => {
   const query = { ...request, dayCount: 31 }, source = value(query);
   source.journalRevision = 4_096;

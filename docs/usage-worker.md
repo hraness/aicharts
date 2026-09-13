@@ -72,7 +72,7 @@ The private daily projection below uses only unique current live heads grouped b
 
 ## Dormant private daily query
 
-`AccountEnrollment.readImportedDays` accepts a strictly validated account/session assertion and a contiguous range of at most 31 UTC days. It is a trusted-coordinator RPC: its DTO establishes syntax, not authentication. A future HTTP adapter must verify the production workload before body processing or account-object selection, and derive the account and expiry from the application's live server session. Browser callers must never receive native device upload credentials.
+`AccountEnrollment.readImportedDays` accepts a strictly validated account/session assertion and a contiguous range of at most 31 UTC days. It is a trusted-coordinator RPC: its DTO establishes syntax, not authentication. The dormant HTTP adapter below verifies the production workload before body processing or account-object selection and derives the account and expiry from the application's live server session. Browser callers must never receive native device upload credentials.
 
 The response reports current imported Codex and Claude Code occurrence counts, accounted tokens and output tokens by day. Token sums use exact integers serialized as canonical decimal strings; reasoning tokens already included in output are not added again. The fixed `imported-tokens-v1` profile and `partial` coverage do not imply complete history, known models, prices, subscriptions, prompts, intervals or turn measurements. Empty days remain explicit. The journal revision and commit time identify the snapshot; rejected or duplicate submissions can advance that revision without changing totals.
 
@@ -81,6 +81,16 @@ The query streams at most 100,000 retained heads into at most 62 provider/day ce
 Query transactions preserve already initialized SQL and R2 state, including enrollment and admission clocks. First access to an absent object still performs the existing constructor's schema and initial-row setup; existing constructor migrations are unchanged. This read path does not qualify an administrative restore or missing-object recovery.
 
 `bun run scripts/usage-worker-tools.ts test-private-days` runs the focused local Worker suite. It covers exact large totals, corrected and deleted records, pending publication, credential/account boundaries, expiry, clock regression, generation/anchor changes, corruption, restart and initialized-state preservation. The contract tests also reject extra fields, accessors, sparse arrays and noncanonical integers. No public route, authenticated application query or dashboard is enabled by this slice.
+
+## Dormant private query HTTP
+
+`createPrivateDaysCoordinator` composes the existing production-workload verifier with fixed `POST https://usage.aicharts.io/internal/usage/days`. Workload verification precedes body consumption and canonical account-object selection. Requests require JSON media/accept headers, no cookies or content encoding, and at most 256 canonical ASCII bytes. Domain success or a bounded domain refusal travels in a correlated HTTP 200 envelope; malformed framing, workload refusal and operational failure use fixed 400, 401 or 503 responses. All responses are private and non-cacheable.
+
+`createVercelPrivateDaysTransport` captures the current public Vercel request-context token and composes the live `beginUsageAccountSession` scope. Product input contains only the date range. The transport derives account/expiry from one live Accounts read, rechecks authority across awaits, and never forwards browser cookies or OAuth bearers to the Worker. The Worker independently repeats session expiry and workload checks before and after its RPC. Constructing either factory performs no request and installs no application or Worker route.
+
+The client and Worker register their existing work promises before I/O, allow eight unsettled requests per instance, and apply 15-second client, 10-second Worker and five-second stage deadlines. Capacity remains held until underlying work and cleanup settle; timeouts do not promise cancellation of dispatched RPC work. RPC replies are disposed after ownership and correlation checks. The response cap is 16 KiB. Exact ASCII size counting and a complete owned JSON projection prevent inherited `Object` or `Array` serialization hooks from changing or inspecting the emitted record. Consumers receive ordinary frozen DTO arrays.
+
+`bun run scripts/usage-worker-tools.ts test-private-days-http` verifies the actual local RPC boundary. Focused Bun tests cover the codec, session fences, framing, timeout/disposal behavior and isolated public Vercel helper binding. These synthetic tests do not qualify live identity, platform disconnect behavior, fleet-wide abuse controls, paid capacity or production recovery. The default Worker remains disabled.
 
 ## Dormant admission HTTP
 
@@ -100,7 +110,7 @@ Local restart helpers preserve Durable Object storage across instance teardown. 
 
 Before activation, complete and independently review:
 
-- Authenticated coordinator-to-Worker transport, explicit ordinary/fresh callback dispatch, public approval UI/routes, real fresh-authentication and approval qualification, human-code routing and pre-creation abuse limits. Keep the implemented cookie, CSRF and live-account checks intact.
+- Production integration of the dormant coordinator transports and callback dispatch, public approval UI/routes, real fresh-authentication and approval qualification, human-code routing and pre-creation abuse limits. Keep the implemented cookie, CSRF and live-account checks intact.
 - Public/CLI integration of account-owned enrollment and terminal account confirmation, private credential custody, qualified namespace recovery and explicit local-ledger reindex. Retain original ledger keys and pending history.
 - Public authenticated upload transport, source-to-native-to-server integration, admission capacity/cost qualification and accepted-head query/materialization. The internal engine does not qualify these operational paths. An R2 write alone never commits visibility.
 - An external recovery fence, immutable receipts and tombstones, bounded reconciliation and credential invalidation after restore. Restored object state must not independently authorize reopening.

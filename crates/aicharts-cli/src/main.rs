@@ -8,6 +8,7 @@ mod prefix;
 mod reindex;
 mod state;
 mod turns;
+mod upload;
 mod version;
 
 use std::fs::{self, File, OpenOptions};

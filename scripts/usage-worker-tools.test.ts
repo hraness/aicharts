@@ -30,6 +30,7 @@ describe("local-only Worker tool boundary", () => {
     expect(workerToolCommands(["test-admission"])?.[0].at(-1)).toBe("test/admission.worker.ts");
     expect(workerToolCommands(["test-admission-http"])?.[0].at(-1)).toBe("test/admission-http.worker.ts");
     expect(workerToolCommands(["test-private-days"])?.[0].at(-1)).toBe("test/private-days.worker.ts");
+    expect(workerToolCommands(["test-private-days-http"])?.[0].at(-1)).toBe("test/private-days-http.worker.ts");
     expect(workerToolCommands(["test-staging"])?.[0].at(-1)).toBe("test/staging.worker.ts");
     expect(workerToolCommands(["test-pairing", "--remote"])).toBeNull();
     expect(workerToolCommands(["test-pairing-http", "--remote"])).toBeNull();
@@ -37,6 +38,7 @@ describe("local-only Worker tool boundary", () => {
     expect(workerToolCommands(["test-admission", "--remote"])).toBeNull();
     expect(workerToolCommands(["test-admission-http", "--remote"])).toBeNull();
     expect(workerToolCommands(["test-private-days", "--remote"])).toBeNull();
+    expect(workerToolCommands(["test-private-days-http", "--remote"])).toBeNull();
     expect(JSON.stringify(workerToolCommands(["check"]))).not.toContain("deploy");
   });
   test("refuses environment files without reading their contents", () => {

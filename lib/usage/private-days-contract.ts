@@ -69,6 +69,18 @@ function providerTotals(value: unknown, provider: 1 | 2): ProviderImportedTotals
     observedAccountedTokens: total.toString(), observedOutputTokens: output.toString() });
 }
 
+/** Validated fields are ASCII; count canonical JSON bytes without serialization hooks. */
+function responseBytes(value: PrivateDaysV1): number {
+  const providerBytes = (cell: ProviderImportedTotals) =>
+    '{"usageOccurrences":,"observedAccountedTokens":"","observedOutputTokens":""}'.length
+    + String(cell.usageOccurrences).length + cell.observedAccountedTokens.length + cell.observedOutputTokens.length;
+  let size = '{"schemaVersion":1,"measurementProfile":"imported-tokens-v1","coverage":"partial","journalRevision":,"journalCommittedAtMs":,"firstUtcDay":,"days":[]}'.length
+    + String(value.journalRevision).length + String(value.journalCommittedAtMs).length + String(value.firstUtcDay).length;
+  for (const day of value.days) size += '{"utcDay":,"codex":,"claudeCode":}'.length
+    + String(day.utcDay).length + providerBytes(day.codex) + providerBytes(day.claudeCode);
+  return size + value.days.length - 1;
+}
+
 /** Copy and validate a complete response against its request; never truncate. */
 export function parsePrivateDaysValue(request: unknown, value: unknown): PrivateDaysV1 | null {
   try {
@@ -99,7 +111,6 @@ export function parsePrivateDaysValue(request: unknown, value: unknown): Private
     const result: PrivateDaysV1 = Object.freeze({ schemaVersion: 1, measurementProfile: "imported-tokens-v1", coverage: "partial",
       journalRevision: input.journalRevision, journalCommittedAtMs: input.journalCommittedAtMs as number | null,
       firstUtcDay: query.firstUtcDay, days: Object.freeze(days) });
-    // Every owned field is ASCII and bounded before serialization.
-    return JSON.stringify(result).length <= PRIVATE_DAYS_MAX_RESPONSE_BYTES ? result : null;
+    return responseBytes(result) <= PRIVATE_DAYS_MAX_RESPONSE_BYTES ? result : null;
   } catch { return null; }
 }
