@@ -248,6 +248,17 @@ cargo test --locked -p aicharts-custody
 cargo clippy --locked -p aicharts-custody --all-targets -- -D warnings
 ```
 
+The explicitly admitted disposable Keychain qualification passed on 13 September
+2026 through mac-native scheduler run `82d9227ab30d645a386575e9ea7e9e4c`. It
+created and reopened one fresh file-based keychain under a strict, task-owned
+APFS parent, verified immutable reference readback, lost-reply reconciliation,
+locked-access refusal and cleanup identity, then removed only that fixture. It
+did not select the login or system keychain, enumerate a user's vault, change
+search lists or retain a credential. The qualification proves this bounded
+mechanism on this host; it does not establish hostile-process isolation,
+Secure Enclave/Data Protection guarantees, signed application behavior,
+installation, upgrade or live enrollment authority.
+
 Tests exercise strict record bounds and offsets, purpose/binding confusion,
 private projections, create-only races, failed writes/readbacks, and explicit
 restart reconciliation against retained in-memory state. Compile-fail doctests
