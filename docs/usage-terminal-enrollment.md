@@ -51,7 +51,7 @@ The transport asserts at compile time that the existing all-profile `log` macro 
 
 ## Private attempt records and persistence
 
-The private `enrollment::attempt` modules define a canonical nonsecret record, compare-and-publish storage core and a macOS-only APFS adapter. The adapter is private and uncalled: it provides explicit path and already-open-directory constructors for a later sequencer, while the current CLI exposes no construction or activation command. Decoding a coherent record does not authenticate its history, verify current vault contents or authorize a request.
+The private `enrollment::attempt` modules define a canonical nonsecret record, compare-and-publish storage core and a macOS-only APFS adapter. The adapter is private and uncalled: it provides path constructors for a later sequencer, while test-only descriptor entry points exercise already-open directories. The current CLI exposes no construction or activation command. Decoding a coherent record does not authenticate its history, verify current vault contents or authorize a request.
 
 Records use at most 4,096 ASCII JSON bytes in fixed field order. The schema keeps the installation and intent, original typed pairing identity and complete `RecordIntent` commitment, a distinct reserved namespace item ID, poll/upload commitments, original pairing expiry, last pairing view and observation time, explicit account choice, complete reservation and enrollment receipt, namespace identity/commitment and original acceptance time, progress, fixed failure and a durable clock floor. It contains no secret preimages, request/response bodies, browser proof, upload sequence or upload grant. A polled approved account remains separate from an explicit chosen and confirmed account. Original credential bindings, initialized expiry, chosen account/time, reservation, receipt fields and namespace pin/time remain fixed once recorded. Pairing observations may advance, and device state may move from active to revoked, never back.
 
@@ -71,7 +71,7 @@ The focused synthetic record, storage and macOS adapter checks run with:
 cargo test --locked -p aicharts-cli --bin aicharts enrollment::attempt
 ```
 
-These tests use literal canonical vectors, typed synthetic secret-record commitments, an in-memory fault model and disposable real APFS directories. They cover uncertain publication, explicit restart reconciliation, stale predecessor races, retained namespace flights, path-anchor retention, strict envelope corruption refusal, reopen/durable readback and a synchronization failure. The 39 macOS-focused cases pass with warnings denied. They do not qualify a process-death recovery path, hostile same-user filesystem isolation or a production enrollment sequencer.
+These tests use literal canonical vectors, typed synthetic secret-record commitments, an in-memory fault model and disposable real APFS directories. They cover uncertain publication, explicit restart reconciliation, stale predecessor races, retained namespace flights, path-anchor retention, strict envelope corruption refusal, reopen/durable readback and a synchronization failure. The 40 macOS-focused cases pass with warnings denied. They do not qualify a process-death recovery path, hostile same-user filesystem isolation or a production enrollment sequencer.
 
 ## Authoritative Worker dispatch
 

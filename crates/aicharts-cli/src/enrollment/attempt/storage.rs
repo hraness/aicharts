@@ -1,5 +1,5 @@
-//! Private compare-and-publish core. Only synthetic memory ports implement this
-//! trait here; no production constructor, path facade or backend injection exists.
+//! Private compare-and-publish core. The macOS port implements this trait behind
+//! private, uncalled constructors; no public backend injection or activation exists.
 
 use super::{
     record::{self, CanonicalBytes, Record, Token},
@@ -13,7 +13,7 @@ pub(super) struct Candidate {
     pub(super) bytes: CanonicalBytes,
 }
 
-/// The future adapter must own one stable lock and pinned private directory;
+/// A native adapter owns one stable lock and pinned private directory; it must
 /// reject symlinks, excess bytes and ACL changes; create an immutable stage;
 /// reuse only an exactly identical stage; and perform one atomic publication.
 /// A lock error owns no lock. Stage/sync errors never authorize stage deletion.

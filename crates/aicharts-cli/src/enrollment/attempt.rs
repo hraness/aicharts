@@ -1,6 +1,7 @@
 //! Dormant nonsecret attempt observations and private persistence primitives.
-//! There is no production store constructor, network dispatch, reference/vault
-//! effect or authority here. Decoding facts does not authenticate their history.
+//! The macOS store constructors remain private and uncalled; there is no public
+//! activation, network dispatch, reference/vault effect or authority here.
+//! Decoding facts does not authenticate their history.
 
 mod record;
 mod storage;

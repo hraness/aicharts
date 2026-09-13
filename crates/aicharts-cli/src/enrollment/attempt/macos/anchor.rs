@@ -101,7 +101,7 @@ impl TrustedAnchor {
         Self::walk(root, names, uid)
     }
 
-    fn walk(root: OwnedFd, names: Vec<OsString>, uid: u32) -> Result<Self> {
+    pub(super) fn walk(root: OwnedFd, names: Vec<OsString>, uid: u32) -> Result<Self> {
         let root_stat = checked_ancestor(&root, uid)?;
         let mut value = Self {
             root,
@@ -183,7 +183,13 @@ impl TrustedAnchor {
                 checked_ancestor(&node.fd, self.uid)?
             };
             let named =
-                fs::statat(parent, &node.name, AtFlags::SYMLINK_NOFOLLOW).map_err(unavailable)?;
+                fs::statat(parent, &node.name, AtFlags::SYMLINK_NOFOLLOW).map_err(|error| {
+                    if error == Errno::NOENT {
+                        Error::RecoveryRequired
+                    } else {
+                        unavailable(error)
+                    }
+                })?;
             if Identity::of(&observed) != node.identity || !same_observation(&observed, &named) {
                 return Err(Error::RecoveryRequired);
             }

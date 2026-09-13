@@ -4,6 +4,7 @@ use crate::enrollment::attempt::{
     storage, Error,
 };
 use std::{
+    ffi::OsString,
     fs,
     os::unix::fs::PermissionsExt,
     path::{Path, PathBuf},
@@ -29,12 +30,20 @@ fn anchor_path() -> PathBuf {
         ))
 }
 
+struct Anchor(PathBuf);
+
+impl Drop for Anchor {
+    fn drop(&mut self) {
+        let _ = fs::remove_dir_all(&self.0);
+    }
+}
+
 fn with_anchor(test: impl FnOnce(&Path)) {
     let path = anchor_path();
     fs::create_dir(&path).expect("create disposable anchor");
     fs::set_permissions(&path, fs::Permissions::from_mode(0o700)).expect("set anchor mode");
-    test(&path);
-    fs::remove_dir_all(path).expect("remove disposable anchor");
+    let anchor = Anchor(path);
+    test(&anchor.0);
 }
 
 fn create(path: &Path, initial: &crate::enrollment::attempt::record::Record) -> MacStorage {
@@ -89,6 +98,36 @@ fn invalid_initial_is_rejected_before_any_store_creation() {
             Some(Error::InvalidRecord)
         );
         assert!(!path.join("enrollment-attempt-v1").exists());
+    });
+}
+
+#[test]
+fn descriptor_path_chain_rejects_replacement_after_construction() {
+    with_anchor(|path| {
+        let parent = path.join("parent");
+        let anchor = parent.join("anchor");
+        fs::create_dir(&parent).expect("create parent");
+        fs::set_permissions(&parent, fs::Permissions::from_mode(0o700)).expect("set parent mode");
+        fs::create_dir(&anchor).expect("create nested anchor");
+        fs::set_permissions(&anchor, fs::Permissions::from_mode(0o700)).expect("set anchor mode");
+        let chain = super::anchor::TrustedAnchor::walk(
+            fs::File::open(path).expect("open fixture root").into(),
+            vec![OsString::from("parent"), OsString::from("anchor")],
+            rustix::process::geteuid().as_raw(),
+        )
+        .expect("walk retained chain");
+        let mut storage = MacStorage::construct(
+            chain.descriptor().expect("anchor descriptor"),
+            true,
+            Some(chain),
+        )
+        .expect("construct storage");
+        storage::initialize(&mut storage, &initial_record()).expect("initialize");
+        fs::rename(&parent, path.join("moved-parent")).expect("replace parent path");
+        assert_eq!(
+            storage::inspect(&mut storage).err(),
+            Some(Error::RecoveryRequired)
+        );
     });
 }
 
