@@ -4,6 +4,7 @@
 //! Decoding facts does not authenticate their history.
 
 mod record;
+mod sequencer;
 mod storage;
 
 #[cfg(target_os = "macos")]

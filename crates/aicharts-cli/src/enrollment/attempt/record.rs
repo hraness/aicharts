@@ -107,7 +107,7 @@ pub(super) enum AccountChoice {
 }
 
 impl AccountChoice {
-    fn account(self) -> Option<AccountId> {
+    pub(super) fn account(self) -> Option<AccountId> {
         match self {
             Self::Unchosen => None,
             Self::Chosen { account_id, .. } | Self::Confirmed { account_id, .. } => {
@@ -115,7 +115,7 @@ impl AccountChoice {
             }
         }
     }
-    fn chosen_at(self) -> Option<u64> {
+    pub(super) fn chosen_at(self) -> Option<u64> {
         match self {
             Self::Unchosen => None,
             Self::Chosen { chosen_at_ms, .. } | Self::Confirmed { chosen_at_ms, .. } => {
@@ -123,7 +123,7 @@ impl AccountChoice {
             }
         }
     }
-    fn confirmed(self) -> Option<AccountId> {
+    pub(super) fn confirmed(self) -> Option<AccountId> {
         match self {
             Self::Confirmed { account_id, .. } => Some(account_id),
             _ => None,
@@ -131,7 +131,7 @@ impl AccountChoice {
     }
 }
 
-#[derive(PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
 pub(super) struct PairingObservation {
     pub(super) observed_at_ms: u64,
     pub(super) view: PairingView,
@@ -170,7 +170,7 @@ pub(super) enum LastFailure {
     OutcomeUnknown,
 }
 
-#[derive(PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
 pub(super) struct Record {
     pub(super) revision: u64,
     pub(super) installation_id: Id,
