@@ -573,8 +573,13 @@ test("complete synthetic Ubuntu filesystem and dpkg join emits deterministic not
       let stdout;
       if (args[0] === "-S") {
         assert.equal(args.length, 2);
-        assert.ok(virtual.has(args[1]));
-        stdout = `${virtual.get(args[1])}: ${args[1]}\n`;
+        // Ubuntu runners may expose /lib as a symlink to /usr/lib. The
+        // collector deliberately queries that equivalent spelling, so the
+        // synthetic owner map must accept both names while returning the
+        // queried path verbatim.
+        const virtualPath = virtual.has(args[1]) ? args[1] : args[1].replace(/^\/lib\//u, "/usr/lib/");
+        assert.ok(virtual.has(virtualPath));
+        stdout = `${virtual.get(virtualPath)}: ${args[1]}\n`;
       } else {
         assert.equal(args[0], "-W");
         assert.equal(args[1], "-f=${binary:Package}\t${Version}\t${Status}\n");
