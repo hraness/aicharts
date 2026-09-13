@@ -289,7 +289,7 @@ test("bounded arbitrary input corpus never throws or leaks supplied strings", ()
 });
 
 const CLI = ["bin/aicharts", "BUILD.json", "LICENSE", "NOTICE.md", "THIRD_PARTY_LICENSES.txt", "docs/usage-install.md", "docs/usage-local.md"];
-const SKILL = ["SKILL.md", "agents/openai.yaml", "references/benchmarks.md", "references/local-usage.md", "scripts/atlas.mjs", "scripts/atlas.check.mjs", "BUILD.json", "LICENSE", "NOTICE.md"];
+const SKILL = ["SKILL.md", "agents/openai.yaml", "references/benchmarks.md", "references/local-operations.md", "references/local-turns.md", "references/local-usage.md", "scripts/atlas.mjs", "scripts/atlas.check.mjs", "BUILD.json", "LICENSE", "NOTICE.md"];
 const caps = { maxCompressedBytes: 1024 * 1024, maxExpandedBytes: 4 * 1024 * 1024, maxFileBytes: 1024 * 1024, maxFiles: 32, maxEntries: 64, maxExpansionRatio: 4096 };
 function archive(root, files) {
   const mtime = 1789128000;

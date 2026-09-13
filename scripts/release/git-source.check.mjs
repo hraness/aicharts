@@ -506,6 +506,7 @@ test("the complete synthetic source joins the real assembler without executing a
   const required = ["LICENSE", "NOTICE.md", "Cargo.lock", "bun.lock", "Cargo.toml", "crates/aicharts-cli/Cargo.toml", "rust-toolchain.toml",
     "distribution/NOTICE.md", "distribution/cli/docs/usage-install.md", "distribution/cli/docs/usage-local.md",
     "skills/aicharts/SKILL.md", "skills/aicharts/agents/openai.yaml", "skills/aicharts/references/benchmarks.md",
+    "skills/aicharts/references/local-operations.md", "skills/aicharts/references/local-turns.md",
     "skills/aicharts/references/local-usage.md", "skills/aicharts/scripts/atlas.mjs", "skills/aicharts/scripts/atlas.check.mjs"];
   const repo = fixture(t, [...required.map((path) => file(path, "Synthetic required source: " + path + "\n")), ...controls()]);
   const selected = assertGraph(repo, readGitSource(repo.input));

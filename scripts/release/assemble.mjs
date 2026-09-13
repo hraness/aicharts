@@ -22,6 +22,8 @@ const SKILL = Object.freeze([
   ["SKILL.md", "skills/aicharts/SKILL.md"],
   ["agents/openai.yaml", "skills/aicharts/agents/openai.yaml"],
   ["references/benchmarks.md", "skills/aicharts/references/benchmarks.md"],
+  ["references/local-operations.md", "skills/aicharts/references/local-operations.md"],
+  ["references/local-turns.md", "skills/aicharts/references/local-turns.md"],
   ["references/local-usage.md", "skills/aicharts/references/local-usage.md"],
   ["scripts/atlas.mjs", "skills/aicharts/scripts/atlas.mjs"],
   ["scripts/atlas.check.mjs", "skills/aicharts/scripts/atlas.check.mjs"],

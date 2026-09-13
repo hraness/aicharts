@@ -176,8 +176,13 @@ describe("workflow action supply chain", () => {
     expect(auditWorkflowSet(await repositoryWorkflowSources())).toEqual([
       "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
       "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+      "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
       "actions/setup-node@820762786026740c76f36085b0efc47a31fe5020",
       "actions/setup-node@820762786026740c76f36085b0efc47a31fe5020",
+      "actions/setup-node@820762786026740c76f36085b0efc47a31fe5020",
+      "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
+      "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02",
+      "oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6",
       "oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6",
       "oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6",
     ]);
