@@ -29,6 +29,7 @@ const LICENSE_FILE = /^(?:LICENSE|LICENCE|COPYING|COPYRIGHT|NOTICE)(?:[.-][A-Za-
 const COMMON_LICENSES = new Set(["Apache-2.0", "Artistic", "BSD", "CC0-1.0", "GFDL", "GFDL-1.2", "GFDL-1.3", "GPL", "GPL-1", "GPL-2", "GPL-3", "LGPL", "LGPL-2", "LGPL-2.1", "LGPL-3", "MPL-1.1", "MPL-2.0"]);
 const ASCII_SPACE = /^[\t\n\v\f\r ]$/u;
 const NATIVE_CATEGORIES = new Set(["build_script_provider", "build_script_links", "build_script_path", "generated_archive", "generated_archive_load", "artifact_path", "load_path", "scratch_load", "unknown_load", "rust_library", "system_library", "system_path", "runtime_library"]);
+const SYSTEM_CATEGORIES = new Set(["package_query", "package_query_terminated", "package_query_output_limit", "package_owner", "package_record", "copyright_path", "copyright_read", "gcc_exception", "common_reference_prefix", "common_reference_delimiter", "common_reference_name", "common_license_path", "common_license_read"]);
 const NATIVE_PROVIDERS = new Map([
   ["libsqlite3-sys@0.38.2", { links: "sqlite3", libraries: ["sqlite3"] }],
   // ring builds its test archive even for ordinary release library builds.
@@ -36,11 +37,13 @@ const NATIVE_PROVIDERS = new Map([
 ]);
 const RING_NESTED_LICENSES = new Set(["src/polyfill/once_cell/LICENSE-APACHE", "src/polyfill/once_cell/LICENSE-MIT"]);
 class NativeFailure { constructor(category) { this.category = category; } }
+class SystemFailure { constructor(category) { this.category = category; } }
 const unknownNative = category => { throw new NativeFailure(category); };
+const missingSystem = category => { throw new SystemFailure(category); };
 function failure(error, fallback) {
-  return error instanceof NativeFailure
-    ? { ok: false, error: "notices_unknown_native", nativeCategory: error.category }
-    : { ok: false, error: ERRORS.has(error) ? error : fallback };
+  if (error instanceof NativeFailure) return { ok: false, error: "notices_unknown_native", nativeCategory: error.category };
+  if (error instanceof SystemFailure) return { ok: false, error: "notices_system_missing", systemCategory: error.category };
+  return { ok: false, error: ERRORS.has(error) ? error : fallback };
 }
 
 /** Only fixed source-owned categories may cross into a runner summary. */
@@ -49,6 +52,14 @@ export function linuxNativeDiagnostic(result) {
   const code = Object.getOwnPropertyDescriptor(result, "error")?.value;
   const category = Object.getOwnPropertyDescriptor(result, "nativeCategory")?.value;
   return code === "notices_unknown_native" && NATIVE_CATEGORIES.has(category) ? category : null;
+}
+
+/** Failure location only: never package identities, file contents or subprocess output. */
+export function linuxSystemDiagnostic(result) {
+  if (!result || typeof result !== "object" || types.isProxy(result)) return null;
+  const code = Object.getOwnPropertyDescriptor(result, "error")?.value;
+  const category = Object.getOwnPropertyDescriptor(result, "systemCategory")?.value;
+  return code === "notices_system_missing" && SYSTEM_CATEGORIES.has(category) ? category : null;
 }
 
 function array(value, max) {
@@ -90,17 +101,17 @@ function commonLicenseNames(body) {
   for (const match of body.matchAll(/\/usr\/share\/common-licenses\/([^\t\n\v\f\r '"`]*)/gu)) {
     const before = body[match.index - 1] ?? "", after = body[match.index + match[0].length] ?? "";
     const quoted = before === "'" || before === '"' || before === "`";
-    if (before && !quoted && !ASCII_SPACE.test(before)) fail("notices_system_missing");
+    if (before && !quoted && !ASCII_SPACE.test(before)) missingSystem("common_reference_prefix");
     let name = match[1];
     if (quoted) {
-      if (before === "`" ? after !== "`" && after !== "'" : after !== before) fail("notices_system_missing");
+      if (before === "`" ? after !== "`" && after !== "'" : after !== before) missingSystem("common_reference_delimiter");
     } else {
-      if (after && !ASCII_SPACE.test(after)) fail("notices_system_missing");
+      if (after && !ASCII_SPACE.test(after)) missingSystem("common_reference_delimiter");
       // GCC prose ends bare GPL/LGPL references with a sentence period. Only
       // one unquoted terminal period is punctuation; version dots stay intact.
       if (name.endsWith(".")) name = name.slice(0, -1);
     }
-    if (!COMMON_LICENSES.has(name)) fail("notices_system_missing");
+    if (!COMMON_LICENSES.has(name)) missingSystem("common_reference_name");
     names.add(name);
   }
   return names;
@@ -136,6 +147,14 @@ async function canonicalFile(file, code) {
     const parent = path.dirname(file);
     if (await realpath(parent) !== parent || await realpath(file) !== file) fail(code);
   } catch { fail(code); }
+}
+
+async function readSystem(file, max, category) {
+  try { return await read(file, max, "notices_system_missing"); }
+  catch (error) {
+    if (error === "notices_system_missing") missingSystem(category);
+    throw error; // Keep source-change and other existing failure codes intact.
+  }
 }
 
 /** Parse the measured evidence without executing tools or interpreting file content as commands. */
@@ -237,7 +256,11 @@ async function dpkg(args) {
   try {
     const { stdout } = await exec("/usr/bin/dpkg-query", args, { encoding: "utf8", timeout: 5000, maxBuffer: MiB, env: { PATH: "/usr/bin:/bin", LC_ALL: "C" }, windowsHide: true });
     return stdout;
-  } catch { fail("notices_system_missing"); }
+  } catch (error) {
+    if (error?.code === "ERR_CHILD_PROCESS_STDIO_MAXBUFFER") missingSystem("package_query_output_limit");
+    if (error?.killed === true) missingSystem("package_query_terminated");
+    missingSystem("package_query");
+  }
 }
 async function packageOwner(filename, resolved, expected) {
   const candidates = new Set([filename, path.normalize(filename), resolved]);
@@ -245,6 +268,7 @@ async function packageOwner(filename, resolved, expected) {
     if (candidate.startsWith("/usr/lib/")) candidates.add(candidate.slice(4));
     else if (candidate.startsWith("/lib/")) candidates.add(`/usr${candidate}`);
   }
+  let queryFailure = null;
   for (const candidate of candidates) {
     try {
       if (await realpath(candidate) !== resolved) continue;
@@ -253,9 +277,14 @@ async function packageOwner(filename, resolved, expected) {
       const separator = ownership[0].indexOf(": ");
       const owner = ownership[0].slice(0, separator);
       if (separator >= 0 && ownership[0].slice(separator + 2) === candidate && expected.test(owner)) return owner;
-    } catch { /* Only fixed equivalent aliases may be tried after a miss. */ }
+    } catch (error) {
+      // Preserve existing equivalent-alias attempts. Retain only a fixed query
+      // failure if none of those aliases establishes the required owner.
+      if (error instanceof SystemFailure && (queryFailure === null || error.category !== "package_query")) queryFailure = error;
+    }
   }
-  fail("notices_system_missing");
+  if (queryFailure !== null) throw queryFailure;
+  missingSystem("package_owner");
 }
 
 /** Reads only build dependencies, source-owned notice mapping, Rust sysroot, and admitted system notices. */
@@ -300,7 +329,7 @@ export async function collectLinuxNotices(input) {
     }
     for (const pkg of plan.value.compiled.sort((a, b) => compare(a.name + a.version, b.name + b.version))) {
       if (pkg.source === null) {
-        if (!inside(source, pkg.manifest_path) || !/^aicharts-(?:cli|core|ledger|protocol)$/u.test(pkg.name) || pkg.license !== "MIT") fail("notices_unmapped_crate");
+        if (!inside(source, pkg.manifest_path) || !/^aicharts-(?:cli|core|custody|ledger|protocol)$/u.test(pkg.name) || pkg.license !== "MIT") fail("notices_unmapped_crate");
         continue; // Project LICENSE is a separate mandatory archive member.
       }
       const item = mapped.get(`${pkg.name}@${pkg.version}`);
@@ -453,21 +482,21 @@ export async function collectLinuxNotices(input) {
       ownershipCache.set(resolved, owner);
       if (packages.has(owner)) continue;
       const fields = (await dpkg(["-W", "-f=${binary:Package}\t${Version}\t${Status}\n", owner])).trimEnd().split("\t");
-      if (fields.length !== 3 || fields[0] !== owner || fields[2] !== "install ok installed" || !/^[A-Za-z0-9:.+~_-]+$/u.test(fields[1])) fail("notices_system_missing");
+      if (fields.length !== 3 || fields[0] !== owner || fields[2] !== "install ok installed" || !/^[A-Za-z0-9:.+~_-]+$/u.test(fields[1])) missingSystem("package_record");
       packages.set(owner, fields[1]);
       const copyright = await realpath(`/usr/share/doc/${owner.split(":")[0]}/copyright`);
-      if (!inside("/usr/share/doc", copyright)) fail("notices_system_missing");
-      const bytes = await read(copyright, 4 * MiB, "notices_system_missing");
+      if (!inside("/usr/share/doc", copyright)) missingSystem("copyright_path");
+      const bytes = await readSystem(copyright, 4 * MiB, "copyright_read");
       add(`Ubuntu package ${owner} ${fields[1]} / copyright`, bytes);
       const body = utf8(bytes);
-      if (owner.startsWith("libgcc") && !body.includes("GCC Runtime Library Exception")) fail("notices_system_missing");
+      if (owner.startsWith("libgcc") && !body.includes("GCC Runtime Library Exception")) missingSystem("gcc_exception");
       const common = commonLicenseNames(body);
       for (const name of [...common].sort(compare)) {
         let filename;
         try { filename = await realpath(`/usr/share/common-licenses/${name}`); }
-        catch { fail("notices_system_missing"); }
-        if (!inside("/usr/share/common-licenses", filename)) fail("notices_system_missing");
-        add(`Ubuntu common license / ${name}`, await read(filename, MiB, "notices_system_missing"));
+        catch { missingSystem("common_license_path"); }
+        if (!inside("/usr/share/common-licenses", filename)) missingSystem("common_license_path");
+        add(`Ubuntu common license / ${name}`, await readSystem(filename, MiB, "common_license_read"));
       }
     }
     if (![...packages.keys()].some(name => name.startsWith("libgcc-11-dev")) || ![...packages.keys()].some(name => name.startsWith("libc6-dev"))) fail("notices_build_incomplete");

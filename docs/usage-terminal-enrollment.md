@@ -1,6 +1,6 @@
 # Terminal enrollment wire and transport
 
-The dormant terminal enrollment codecs, native HTTPS adapter and Worker HTTP factory connect six terminal operations to the existing pairing and account Durable Objects. The native adapter has no production constructor. This source adds no CLI command, public Worker route, credential store, browser approval flow or upload authority.
+The dormant terminal enrollment codecs, native HTTPS adapter and Worker HTTP factory connect six terminal operations to the existing pairing and account Durable Objects. A private attempt record and persistence core retain local observations separately from those exchanges. The native adapter has no production constructor. This source adds no CLI command, public Worker route, operating-system credential store, browser approval flow or upload authority.
 
 The TypeScript client codec and Rust `enrollment::contract` share independently authored literal vectors in `fixtures/usage/terminal-enrollment-v1.json`. Both own canonical bytes and validate replies against retained observations. The separate server codec validates authoritative RPC results without accepting or manufacturing client context.
 
@@ -25,7 +25,7 @@ The HTTP factory requires one canonical positive Content-Length matching the com
 
 ## Retained terminal observations
 
-Client context contains acceptance-time `nowMs`, the original initialized expiry, the explicitly confirmed account, the accepted reservation and the accepted enrollment receipt/device state, as applicable. These are validation inputs, not authentication or capabilities. Durable retention and credential references belong to a later native custody join.
+Client context contains acceptance-time `nowMs`, the original initialized expiry, the explicitly confirmed account, the accepted reservation and the accepted enrollment receipt/device state, as applicable. These are validation inputs, not authentication or capabilities. The private attempt schema records these facts and original credential references; operational sequencing and operating-system persistence still require the native custody join.
 
 Each reply must match its request operation and intent. Poll and confirm retain the original pairing expiry. Poll success has a 5,000 ms delay; confirm permits 0–5,000 ms and must match the chosen account. Reservations bind both proof commitments, account, reservation ID, generation and interval. Later replies must preserve the complete reservation and receipt, including the derived device ID. An observed revoked device cannot become active again.
 
@@ -48,6 +48,28 @@ Only a final HTTP/1.1 200 response enters domain decoding. It requires one exact
 These framing checks apply to the final message exposed by pinned ureq. The dependency consumes informational 1xx responses internally. Its Content-Length EOF is a message boundary, not socket EOF or proof that no further bytes were sent. The adapter closes the connection without waiting for peer FIN, including after rejection or codec failure; it does not inspect bytes beyond that decoded message. Chunked and close-delimited replies remain unsupported.
 
 The transport asserts at compile time that the existing all-profile `log` macro suppression remains enabled, because dependency traces can include raw bodies. The enrollment and upload TLS fixtures share one process-global test logger owner and retain it through server cleanup. Their synthetic capture records only whether a log call occurred, never its payload.
+
+## Private attempt records and persistence
+
+The private `enrollment::attempt` modules define a canonical nonsecret record and compare-and-publish storage core. No production storage adapter or public constructor exists. Decoding a coherent record does not authenticate its history, verify current vault contents or authorize a request.
+
+Records use at most 4,096 ASCII JSON bytes in fixed field order. The schema keeps the installation and intent, original typed pairing identity and complete `RecordIntent` commitment, a distinct reserved namespace item ID, poll/upload commitments, original pairing expiry, last pairing view and observation time, explicit account choice, complete reservation and enrollment receipt, namespace identity/commitment and original acceptance time, progress, fixed failure and a durable clock floor. It contains no secret preimages, request/response bodies, browser proof, upload sequence or upload grant. A polled approved account remains separate from an explicit chosen and confirmed account. Original credential bindings, initialized expiry, chosen account/time, reservation, receipt fields and namespace pin/time remain fixed once recorded. Pairing observations may advance, and device state may move from active to revoked, never back.
+
+One retained flight records its operation, ordinal, prepared revision/time, last attempted time, dispatch count and canonical request/context digests. The record permits at most 128 flights, three explicit dispatches per flight and revision 1,024. Successor checks preserve a retained flight's identity and digests; they do not execute requests or prove that the recorded dispatch occurred. The eventual sequencer must supply checked observations and revalidate live authority before effects.
+
+A namespace response adds its original pin in `NamespacePlanned` while retaining the same dispatched flight. Local custody then advances through `NamespacePrepared` to `NamespaceCustodyVerified`; only that final transition clears the flight. The pin, original acceptance time and dispatch facts remain unchanged during these local steps. Existing accepted material can finish local custody after expiry without acquiring a fresh namespace grant. The core performs none of the reference or vault operations represented by those states.
+
+The storage port requires a stable private directory and lock, bounded committed reads, immutable staging, file synchronization, conditional atomic publication and directory synchronization. `initialize` requires absence. `compare_and_publish` binds the predecessor's revision and canonical digest, checks that exact predecessor before and after staging, publishes once, synchronizes the directory and verifies the exact committed candidate bytes before returning a durable snapshot. A staged candidate may be reused only when it is identical; the core never deletes, adopts or repairs a pending stage automatically.
+
+Every failure from publication dispatch through final readback returns `OutcomeUnknown`, including an error whose port claims publication had no effect. `inspect` is observational. Explicit `read_durable` requires the expected token, committed-file synchronization, directory synchronization and another exact-token read; visible bytes alone do not establish durability. The returned snapshot does not retain a lock or confer network or custody authority.
+
+The focused synthetic record and storage checks run with:
+
+```text
+cargo test --locked -p aicharts-cli --bin aicharts enrollment::attempt
+```
+
+These tests use literal canonical vectors, typed synthetic secret-record commitments and an in-memory fault model. They cover uncertain publication, explicit restart reconciliation, stale predecessor races and retained namespace flights. They do not qualify an operating-system persistence backend or a process-death recovery path.
 
 ## Authoritative Worker dispatch
 
@@ -73,4 +95,4 @@ cargo test --locked -p aicharts-cli --bin aicharts -- enrollment::https:: upload
 
 Follow the host scheduler requirements for native and aggregate checks. The local TLS fixtures cover the frozen vectors, trust refusal, framing and size bounds, lost replies, clock/expiry checks, cleanup and logging. The real workerd suite separately exercises the existing DOs, auth-truncated reservations, exact replay, revocation and restart. Neither fixture connects the native adapter to a deployed Worker.
 
-Durable attempt persistence, original credential references, operating-system custody, explicit terminal account selection and the sealed production constructor remain unfinished. Local fixtures do not establish live Accounts authority, actual edge framing, process-death enrollment recovery, arbitrary restore, a public service or product activation. Follow [Usage Worker boundaries](usage-worker.md#validation-and-activation) and the [private Cloudflare procedure](usage-cloudflare-qualification.md) for their separate gates.
+Operational enrollment sequencing, operating-system attempt and credential-reference persistence, actual credential custody, explicit terminal account selection and the sealed production constructor remain unfinished. Local fixtures do not establish live Accounts authority, actual edge framing, process-death enrollment recovery, arbitrary restore, a public service or product activation. Follow [Usage Worker boundaries](usage-worker.md#validation-and-activation) and the [private Cloudflare procedure](usage-cloudflare-qualification.md) for their separate gates.

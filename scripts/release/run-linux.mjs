@@ -11,7 +11,7 @@ import { hydrateReleaseSource } from "./hydrate-source.mjs";
 import { assembleLinuxRelease } from "./assemble.mjs";
 import { validateArchive } from "./archive.mjs";
 import { encodeLinuxQualificationReport, validateLinuxQualificationReport } from "./linux-qualification.mjs";
-import { LINUX_NOTICES_MAX_BYTES, linuxNativeDiagnostic } from "./linux-notices.mjs";
+import { LINUX_NOTICES_MAX_BYTES, linuxNativeDiagnostic, linuxSystemDiagnostic } from "./linux-notices.mjs";
 
 const MiB = 1024 * 1024;
 const TARGET = "x86_64-unknown-linux-gnu";
@@ -363,6 +363,8 @@ async function runWith(value, host = HOST) {
         summary.diagnostic = { module, code: MODULE_ERRORS[module].has(result?.error) ? result.error : "unclassified_module_failure" };
         const category = module === "notices" ? linuxNativeDiagnostic(result) : null;
         if (category !== null) summary.diagnostic.nativeCategory = category;
+        const systemCategory = module === "notices" ? linuxSystemDiagnostic(result) : null;
+        if (systemCategory !== null) summary.diagnostic.systemCategory = systemCategory;
         fail(code);
       }
       return result.value;

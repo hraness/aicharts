@@ -31,7 +31,7 @@ pub(super) enum Operation {
 }
 
 impl Operation {
-    fn name(self) -> &'static str {
+    pub(super) fn name(self) -> &'static str {
         match self {
             Self::Initialize => "initialize",
             Self::Poll => "poll",
@@ -41,7 +41,7 @@ impl Operation {
             Self::Namespace => "namespaceForEnrollment",
         }
     }
-    fn parse(value: &Value) -> Option<Self> {
+    pub(super) fn parse(value: &Value) -> Option<Self> {
         match value.as_str()? {
             "initialize" => Some(Self::Initialize),
             "poll" => Some(Self::Poll),
@@ -237,7 +237,7 @@ pub(super) enum DomainError {
     Limit,
 }
 impl DomainError {
-    fn name(self) -> &'static str {
+    pub(super) fn name(self) -> &'static str {
         match self {
             Self::InvalidInput => "invalid_input",
             Self::StorageInvalid => "storage_invalid",
@@ -258,7 +258,7 @@ impl DomainError {
             Self::Limit => "limit",
         }
     }
-    fn parse(value: &Value) -> Option<Self> {
+    pub(super) fn parse(value: &Value) -> Option<Self> {
         Some(match value.as_str()? {
             "invalid_input" => Self::InvalidInput,
             "storage_invalid" => Self::StorageInvalid,
@@ -280,7 +280,7 @@ impl DomainError {
             _ => return None,
         })
     }
-    fn allowed(self, operation: Operation) -> bool {
+    pub(super) fn allowed(self, operation: Operation) -> bool {
         if matches!(
             self,
             Self::InvalidInput | Self::StorageInvalid | Self::ClockRegressed
@@ -467,7 +467,7 @@ fn parse_request(value: &Value) -> Option<Request> {
     };
     request.valid().then_some(request)
 }
-fn parse_reservation(value: &Value) -> Option<Reservation> {
+pub(super) fn parse_reservation(value: &Value) -> Option<Reservation> {
     let item = object(
         value,
         &[
@@ -520,7 +520,7 @@ fn parse_receipt(value: &Value) -> Option<Receipt> {
         enrolled_at_ms: number(&item["enrolledAtMs"])?,
     })
 }
-fn parse_enrollment(value: &Value) -> Option<Enrollment> {
+pub(super) fn parse_enrollment(value: &Value) -> Option<Enrollment> {
     let item = object(value, &["receipt", "deviceState"])?;
     let device_state = match item["deviceState"].as_str()? {
         "active" => DeviceState::Active,
@@ -630,7 +630,7 @@ fn valid_reservation(request: &Request, context: &Context, reservation: &Reserva
         && reservation.reserved_at_ms <= context.now_ms
         && reservation.expires_at_ms <= expires
 }
-fn valid_receipt(reservation: &Reservation, now: u64, receipt: &Receipt) -> bool {
+pub(super) fn valid_receipt(reservation: &Reservation, now: u64, receipt: &Receipt) -> bool {
     receipt.account_id == reservation.account_id
         && receipt.intent_id == reservation.intent_id
         && receipt.reservation_id == reservation.reservation_id
