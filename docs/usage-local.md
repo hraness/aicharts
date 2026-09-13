@@ -33,14 +33,26 @@ Read one selected source or directory; repeat source flags to combine files. Nei
 
 ## Foreground daemon runner
 
-`daemon` repeats the existing local `collect` command in one foreground process. It requires the same explicit state directory, private key and Codex/Claude source paths; it does not discover paths, install a service, read credentials, or contact a server. The default interval is 15 minutes and is bounded to 60 seconds through 24 hours. Use `--once` for a single supervised pass or smoke test:
+`daemon` repeats the existing local `collect` command in one foreground process. It requires the same explicit state directory, private key and Codex/Claude source paths; it does not discover paths, install a service, read provider credentials, or contact a server. The default interval is 15 minutes and is bounded to 60 seconds through 24 hours. Use `--once` for a single supervised pass or smoke test:
 
 ```sh
-./bin/aicharts daemon --once --state-dir /private/aicharts-state \
-  --key-file /private/aicharts.key --codex /private/codex-sessions --json
+./target/debug/aicharts daemon --once --state-dir /absolute/private/aicharts-state \
+  --key-file /absolute/private/aicharts.key --codex /absolute/path/to/codex-sessions --json
 ```
 
 Without `--once`, the process prints each local collection result and sleeps between passes. A failed pass exits with a fixed error so an eventual qualified OS service can apply its own restart/backoff policy. This runner is local persistence only: its ledger remains `uploaded: false`, and the separate upload/authentication boundary remains disabled.
+
+For live logs and an already [prefix-enabled ledger](#collect-completed-lines-from-a-live-source), add `--complete-prefix`:
+
+```sh
+./target/debug/aicharts daemon --once --complete-prefix \
+  --state-dir /absolute/private/aicharts-state --key-file /absolute/private/aicharts.key \
+  --codex /absolute/path/to/codex-sessions --claude /absolute/path/to/claude-projects --json
+```
+
+This selects `collect-prefix` on every pass and retry. Complete lines are imported; a stable unfinished suffix waits for its newline. JSON reports `scanMode: "full_changed_source_complete_prefix"` and `sourcesWithDeferredTail`. Prefix replay, history checks, atomic imports and metadata skips are unchanged. This is full-prefix replay, not byte-tail resumption. A file changing during the scan can still fail; prefix mode does not make every live-source race recoverable.
+
+Choose the mode explicitly. Without `--complete-prefix`, the daemon retains legacy collection and refuses a prefix-enabled ledger with `ledger_complete_prefix_required`. With it, a legacy ledger refuses with `ledger_prefix_not_enabled`. Both mode checks occur before source traversal. The daemon never initializes, migrates, resets, or automatically switches a ledger; migration remains the separate revision-guarded `prefix-enable` command.
 
 Directory traversal selects `.jsonl` files, skips observed symlink entries, and rejects a symlink supplied as a source. Unix final-file opens use no-follow/nonblocking flags and check file identity. This is not descriptor-rooted traversal or an OS sandbox: parent-directory replacement and malicious local processes are outside this initial confinement claim. The source reader and uploader have not been isolated into separately sandboxed processes; no uploader exists yet.
 
@@ -88,7 +100,7 @@ On macOS/Linux, initialize a new state directory outside the repository using yo
 
 The new directory has mode 0700 and its database has mode 0600. Initialization refuses an existing directory. A failed initialization can leave an incomplete directory; it is never automatically overwritten. Keep the key: a different key cannot open this ledger, and a missing directory is not silently recreated by collection.
 
-The foreground `daemon` runner uses the same collector and ledger. It retries only transient `ledger_busy_retry` and `ledger_changed_retry` results, three times by default with bounded 1/2/4-second delays; `--retry-attempts 0..8` changes that bound. Source changes, partial tails, malformed input, invalid state, and other fixed errors stop the process for supervisor-visible recovery.
+The foreground `daemon` runner uses the same collector and ledger. It retries only transient `ledger_busy_retry` and `ledger_changed_retry` results, three times by default with bounded 1/2/4-second delays; `--retry-attempts 0..8` changes that bound. Source changes, malformed input, invalid state, and other fixed errors stop the process for supervisor-visible recovery. Legacy mode also stops on a partial tail; explicit complete-prefix mode defers a stable unfinished suffix without treating it as an error.
 
 Collect explicit sources and inspect retained totals after a restart:
 

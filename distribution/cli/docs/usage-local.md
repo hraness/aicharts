@@ -91,6 +91,7 @@ Use global `./bin/aicharts --help` for their exact syntax before choosing an adv
 | --- | --- |
 | `status` | Reads through the ordinary ledger opener, which can recover SQLite. Use `inspect` for no-recovery inspection. |
 | `prefix-enable`, then `collect-prefix` | Explicitly adds local prefix checkpoints; collection can defer an unfinished tail. Use the observed revision for migration. Old `collect` refuses a prefix-enabled ledger. |
+| `daemon --once [--complete-prefix]` | Runs one local collection pass. Without `--once`, repeats in the foreground. Explicit `--complete-prefix` requires an already prefix-enabled ledger and defers stable unfinished tails; it never migrates state. |
 | `upload --dry-run` | Rereads selected sources and prints hexadecimal numeric frames locally. It contacts no service; ordinary `upload` is disabled. |
 | `outbox --dry-run` | Pages pending frames without sending or acknowledging them. Its ordinary ledger opener can recover SQLite. |
 | `reindex-plan --dry-run` | Inspects old state and rereads selected sources to compare complete history. |
@@ -98,4 +99,12 @@ Use global `./bin/aicharts --help` for their exact syntax before choosing an adv
 
 Keep summaries and frames private if they reveal your usage. Source projections exclude prompt and response bodies, titles, tool arguments, and attachments, but the process still reads source bytes and runs with your user permissions. Numeric formats do not establish genuine provider usage or eliminate covert encoding. Nothing here enables a background service or uploads measurements. Sharing output with an agent or another application is a separate disclosure.
 
-The foreground daemon retries only the fixed transient ledger results `ledger_busy_retry` and `ledger_changed_retry`, three times by default with bounded 1/2/4-second delays. Use `--retry-attempts 0..8` to select the retry count. Source changes, partial tails, malformed input, invalid state, and all other errors stop the process so a supervisor can surface them rather than loop over a permanent failure.
+The foreground daemon retries only the fixed transient ledger results `ledger_busy_retry` and `ledger_changed_retry`, three times by default with bounded 1/2/4-second delays. Use `--retry-attempts 0..8` to select the retry count. Source changes, malformed input, invalid state, and all other errors stop the process. Legacy mode stops on partial tails too; explicit complete-prefix mode defers a stable unfinished suffix until its newline arrives. It still replays complete prefixes and checks retained history, rather than resuming at a byte offset.
+
+After explicitly enabling prefix checkpoints at the observed revision, run a supervised pass with:
+
+```text
+./bin/aicharts daemon --once --complete-prefix --state-dir STATE --key-file KEY --codex SOURCE --json
+```
+
+Repeat provider flags for Claude or additional sources. The JSON is the selected collector’s existing summary, including `scanMode: "full_changed_source_complete_prefix"` and `sourcesWithDeferredTail`. Omit `--once` and `--json` for the foreground loop. The default interval is 15 minutes; `--interval-seconds` accepts 60 through 86,400. A mode mismatch refuses before source traversal: `ledger_prefix_not_enabled` for prefix mode on legacy state, or `ledger_complete_prefix_required` for legacy mode on prefix state. No mode installs a service, guesses a migration, or uploads data.

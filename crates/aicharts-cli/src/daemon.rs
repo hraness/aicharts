@@ -20,6 +20,7 @@ struct Options {
     sources: Vec<(aicharts_protocol::Provider, PathBuf)>,
     interval_seconds: u64,
     retry_attempts: u8,
+    complete_prefix: bool,
     once: bool,
     json: bool,
 }
@@ -35,11 +36,13 @@ fn parse_options(args: &[String]) -> Result<Options, &'static str> {
     let mut interval_set = false;
     let mut retry_attempts = DEFAULT_RETRY_ATTEMPTS;
     let mut retry_set = false;
+    let mut complete_prefix = false;
     let mut once = false;
     let mut json = false;
     let mut i = 1;
     while i < args.len() {
         match args[i].as_str() {
+            "--complete-prefix" if !complete_prefix => complete_prefix = true,
             "--once" if !once => once = true,
             "--json" if once && !json => json = true,
             flag @ ("--state-dir" | "--key-file" | "--codex" | "--claude"
@@ -95,6 +98,7 @@ fn parse_options(args: &[String]) -> Result<Options, &'static str> {
         sources,
         interval_seconds,
         retry_attempts,
+        complete_prefix,
         once,
         json,
     })
@@ -121,7 +125,12 @@ fn collect(options: &Options, args: &[String]) -> Result<String, &'static str> {
 
 fn collect_args(options: &Options) -> Vec<String> {
     let mut args = vec![
-        "collect".to_owned(),
+        if options.complete_prefix {
+            "collect-prefix"
+        } else {
+            "collect"
+        }
+        .to_owned(),
         "--state-dir".to_owned(),
         options.state_dir.to_string_lossy().into_owned(),
         "--key-file".to_owned(),
@@ -264,5 +273,34 @@ mod tests {
         assert!(retryable("ledger_changed_retry"));
         assert!(!retryable("source_partial_tail"));
         assert!(!retryable("ledger_invalid_state_do_not_reset"));
+    }
+
+    #[test]
+    fn complete_prefix_is_explicit_and_projects_only_the_selected_collector() {
+        let base = args(&[
+            "daemon",
+            "--once",
+            "--state-dir",
+            "state",
+            "--key-file",
+            "key",
+            "--codex",
+            "codex.jsonl",
+            "--claude",
+            "claude",
+            "--json",
+        ]);
+        let legacy = collect_args(&parse_options(&base).unwrap());
+        assert_eq!(legacy[0], "collect");
+        let mut selected = base.clone();
+        selected.push("--complete-prefix".to_owned());
+        let prefix = collect_args(&parse_options(&selected).unwrap());
+        assert_eq!(prefix[0], "collect-prefix");
+        assert_eq!(prefix[1..], legacy[1..]);
+        let mut prefix_first = base;
+        prefix_first.insert(1, "--complete-prefix".to_owned());
+        assert_eq!(collect_args(&parse_options(&prefix_first).unwrap()), prefix);
+        selected.push("--complete-prefix".to_owned());
+        assert_eq!(parse_options(&selected).unwrap_err(), "invalid_option");
     }
 }

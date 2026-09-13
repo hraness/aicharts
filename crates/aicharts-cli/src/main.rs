@@ -33,7 +33,7 @@ const HELP: &str = "AI Charts Usage — local-only foundation
   aicharts collect-prefix --state-dir DIR --key-file PATH [--codex FILE_OR_DIR] [--claude FILE_OR_DIR] [--rescan] [--json]
   aicharts status --state-dir DIR --key-file PATH [--json]
   aicharts inspect --state-dir DIR --key-file PATH [--occurrence-key-file PATH] [--json]
-  aicharts daemon --once --state-dir DIR --key-file PATH [--codex FILE_OR_DIR] [--claude FILE_OR_DIR] [--interval-seconds N] [--retry-attempts N] [--json]
+  aicharts daemon [--once] [--complete-prefix] --state-dir DIR --key-file PATH [--codex FILE_OR_DIR] [--claude FILE_OR_DIR] [--interval-seconds N] [--retry-attempts N] [--json]
   aicharts outbox --dry-run --state-dir DIR --key-file PATH [--limit 1..256] [--after ID --revision N]
   aicharts reindex-plan --dry-run --state-dir OLD --key-file PATH [--codex FILE_OR_DIR] [--claude FILE_OR_DIR] [--json]
   aicharts reindex-prepare --state-dir OLD --key-file PATH --shadow-dir NEW --occurrence-key-file PATH [--codex FILE_OR_DIR] [--claude FILE_OR_DIR] [--json]
@@ -61,8 +61,11 @@ reindex-plan inspects existing state without recovery or writes and rereads expl
 sources. reindex-prepare creates a new account-key-bound shadow only when every old
 measurement is exactly covered. Neither command changes or promotes the old state.
 daemon runs the existing local collector in the foreground; --once performs one
-pass for smoke/tests, while the default repeats every 15 minutes. It retries
-only bounded transient ledger busy/change results (three attempts by default;
+pass for smoke/tests. --json requires a preceding --once. The default waits 15
+minutes after each pass. --complete-prefix selects collect-prefix for an already
+prefix-enabled ledger; it defers stable unfinished tails and never migrates state.
+Omitting it retains collect. A ledger mode mismatch fails before reading sources.
+It retries only bounded transient ledger busy/change results (three retries by default;
 --retry-attempts accepts 0..8) before returning a fixed error. It never
 uploads or installs an OS service. No account sign-in, upload, daemon installation,
 key recovery or OS sandbox
