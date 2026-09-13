@@ -282,7 +282,9 @@ export async function collectLinuxNotices(input) {
       system.set(library.path, nativeOwner(library.soname));
     }
     if (!sonames.has("ld-linux-x86-64.so.2") || !sonames.has("libc.so.6")) fail("notices_build_incomplete");
-    for (const name of ["COPYRIGHT", "COPYRIGHT.html", "COPYRIGHT-library.html", "LICENSE-MIT", "LICENSE-APACHE"]) {
+    // Rust 1.97.1 dist.rs installs these generated notices. Its tarball.rs puts
+    // legacy COPYRIGHT/LICENSE-MIT/LICENSE-APACHE only in non-installed overlay.
+    for (const name of ["COPYRIGHT.html", "COPYRIGHT-library.html"]) {
       add(`Rust toolchain / ${name}`, await read(path.join(sysroot, "share/doc/rust", name), 16 * MiB, "notices_rust_missing"));
     }
     // Rust 1.97.1 dist.rs ships its complete REUSE license-text directory here.

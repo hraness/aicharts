@@ -223,12 +223,16 @@ test("complete synthetic Ubuntu filesystem and dpkg join emits deterministic not
   const { mock } = await import("node:test");
   await diskFixture(async f => {
     const sysroot = f.input.sysrootDirectory;
-    for (const name of ["COPYRIGHT", "COPYRIGHT.html", "COPYRIGHT-library.html", "LICENSE-MIT", "LICENSE-APACHE", "licenses/MIT.txt", "licenses/Apache-2.0.txt", "licenses/Unicode-3.0.txt"]) {
+    // Rust 1.97.1 installs generated HTML and REUSE texts. The legacy COPYRIGHT,
+    // LICENSE-MIT and LICENSE-APACHE files exist only in its tarball overlay.
+    const rustNotices = ["COPYRIGHT.html", "COPYRIGHT-library.html", "licenses/MIT.txt", "licenses/Apache-2.0.txt", "licenses/Unicode-3.0.txt"];
+    for (const name of rustNotices) {
       const filename = `${sysroot}/share/doc/rust/${name}`;
       await mkdir(path.dirname(filename), { recursive: true });
       await writeFile(filename, `Synthetic Rust notice: ${name}\n`);
     }
-    for (const name of ["compiler-builtins/LICENSE.txt", "stdarch/LICENSE-MIT", "backtrace/LICENSE-MIT", "backtrace/LICENSE-APACHE", "vendor/libc-0.2.185/LICENSE-MIT"]) {
+    const rustSourceNotices = ["compiler-builtins/LICENSE.txt", "stdarch/LICENSE-MIT", "backtrace/LICENSE-MIT", "backtrace/LICENSE-APACHE"];
+    for (const name of [...rustSourceNotices, "vendor/libc-0.2.185/LICENSE-MIT"]) {
       const filename = `${sysroot}/lib/rustlib/src/rust/library/${name}`;
       await mkdir(path.dirname(filename), { recursive: true });
       await writeFile(filename, `Synthetic Rust source notice: ${name}\n`);
@@ -286,6 +290,9 @@ test("complete synthetic Ubuntu filesystem and dpkg join emits deterministic not
       const body = first.value.bytes.toString();
       assert.match(body, /SQLite 3\.53\.2 amalgamation/u);
       assert.match(body, /Rust REUSE license \/ Unicode-3\.0\.txt/u);
+      for (const name of rustNotices) assert.ok(body.includes(`Synthetic Rust notice: ${name}\n`));
+      for (const name of rustSourceNotices) assert.ok(body.includes(`Synthetic Rust source notice: ${name}\n`));
+      assert.doesNotMatch(body, /===== Rust toolchain \/ (?:COPYRIGHT|LICENSE-MIT|LICENSE-APACHE) =====/u);
       assert.match(body, /Ubuntu package libgcc-11-dev:amd64/u);
       assert.match(body, /Ubuntu common license \/ GPL-3/u);
       assert.equal(body.includes(f.input.sourceDirectory), false);
@@ -296,6 +303,20 @@ test("complete synthetic Ubuntu filesystem and dpkg join emits deterministic not
       assert.equal(second.value.sha256, first.value.sha256);
       assert.equal(second.value.components, first.value.components);
       assert.ok(queries > 0 && queries <= 16);
+      // Removing an installed required notice still fails before system queries;
+      // archive-only legacy files are not substitutes for these actual texts.
+      const requiredFiles = [
+        ...rustNotices.map(name => `${sysroot}/share/doc/rust/${name}`),
+        ...rustSourceNotices.map(name => `${sysroot}/lib/rustlib/src/rust/library/${name}`),
+      ];
+      for (const filename of requiredFiles) {
+        const bytes = await readFile(filename), before = queries;
+        await rm(filename);
+        try {
+          assert.deepEqual(await collect(f.input), { ok: false, error: "notices_rust_missing" });
+          assert.equal(queries, before);
+        } finally { await writeFile(filename, bytes); }
+      }
     } finally { mock.restoreAll(); }
   });
 });

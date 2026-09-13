@@ -158,17 +158,82 @@ test("ELF policy discriminates architecture, interpreter, dependency, stack, ver
   assert.equal(internals.compareVersion("2.9", "2.35") < 0, true);
   assert.equal(internals.inspectElf(elfBytes(), { ...elfOutput(), notes: "" }).isa, null);
   const wrongArch = elfBytes(); wrongArch.writeUInt16LE(183, 18);
-  assert.throws(() => internals.inspectElf(wrongArch, elfOutput()), { code: "elf_invalid" });
-  for (const mutate of [
-    value => { value.program = value.program.replace(INTERPRETER, "/tmp/loader"); },
-    value => { value.program = value.program.replace(" RW ", " RWE "); },
-    value => { value.dynamic += " (RUNPATH) Library runpath: [/tmp]\n"; },
-    value => { value.dynamic = value.dynamic.replace("libc.so.6", "libssl.so.3"); },
-    value => { value.dynamic += " (NEEDED) Shared library: [libc.so.6]\n"; },
-    value => { value.versions = value.versions.replace("GLIBC_2.34", "GLIBC_2.36"); },
-    value => { value.versions = value.versions.replace("GLIBC_2.34", "GLIBC_PRIVATE"); },
-    value => { value.notes = value.notes.replace("x86-64-baseline", "x86-64-v2"); },
-  ]) { const value = elfOutput(); mutate(value); assert.throws(() => internals.inspectElf(elfBytes(), value)); }
+  const refuses = (binary, value, broadCode, predicate) => assert.throws(() => internals.inspectElf(binary, value), error => {
+    assert.equal(error.code, broadCode); assert.equal(error.diagnostic.module, "elf"); assert.equal(error.diagnostic.code, predicate); return true;
+  });
+  refuses(wrongArch, elfOutput(), "elf_invalid", "binary_identity");
+  refuses(Buffer.alloc(2), elfOutput(), "elf_invalid", "binary_identity");
+  for (const [broadCode, predicate, mutate] of [
+    ["elf_invalid", "header_identity", value => { value.header = "unknown header"; }],
+    ["elf_invalid", "interpreter", value => { value.program = value.program.replace(INTERPRETER, "/tmp/loader"); }],
+    ["elf_invalid", "interpreter", value => { value.program += " INTERP extra\n"; }],
+    ["elf_invalid", "stack", value => { value.program = value.program.replace(" RW ", " RWE "); }],
+    ["elf_invalid", "stack", value => { value.program += " GNU_STACK RW\n"; }],
+    ...["RPATH", "RUNPATH", "TEXTREL"].map(tag => ["elf_invalid", "dynamic_search_path", value => { value.dynamic += " (" + tag + ") [/tmp]\n"; }]),
+    ["runtime_invalid", "dependency_count", value => { value.dynamic = ""; }],
+    ["runtime_invalid", "dependency_count", value => { value.dynamic = " (NEEDED) Shared library: [libc.so.6]\n".repeat(17); }],
+    ["runtime_invalid", "duplicate_dependency", value => { value.dynamic += " (NEEDED) Shared library: [libc.so.6]\n"; }],
+    ["runtime_invalid", "unsupported_dependency", value => { value.dynamic = value.dynamic.replace("libc.so.6", "libssl.so.3"); }],
+    ["runtime_invalid", "direct_interpreter_dependency", value => { value.dynamic += " (NEEDED) Shared library: [ld-linux-x86-64.so.2]\n"; }],
+    ["runtime_invalid", "version_file_not_needed", value => { value.versions = value.versions.replace("File: libc.so.6", "File: libm.so.6"); }],
+    ["runtime_invalid", "version_without_file", value => { value.versions = "Name: GLIBC_2.34 Flags: none\n"; }],
+    ["runtime_invalid", "unsupported_version", value => { value.versions = value.versions.replace("GLIBC_2.34", "GLIBC_PRIVATE"); }],
+    ["runtime_invalid", "unsupported_version", value => { value.versions = value.versions.replace("GLIBC_2.34", "GLIBC_ABI_DT_RELR"); }],
+    ["runtime_invalid", "missing_glibc_requirement", value => { value.versions = value.versions.replaceAll("GLIBC_", "GCC_"); }],
+    ["runtime_invalid", "glibc_floor", value => { value.versions = value.versions.replace("GLIBC_2.34", "GLIBC_2.36"); }],
+    ["elf_invalid", "isa_note_count", value => { value.notes += value.notes; }],
+    ["elf_invalid", "unsupported_isa_note", value => { value.notes = value.notes.replace("x86-64-baseline", "x86-64-v2"); }],
+  ]) { const value = elfOutput(); mutate(value); refuses(elfBytes(), value, broadCode, predicate); }
+  // Earlier checks still win. Dependency order remains the original sorted
+  // short-circuit order, not a new preference for the suspected loader case.
+  const combined = elfOutput(); combined.dynamic += " (NEEDED) Shared library: [ld-linux-x86-64.so.2]\n (NEEDED) Shared library: [a-unknown]\n";
+  refuses(elfBytes(), combined, "runtime_invalid", "unsupported_dependency");
+  combined.dynamic += " (RUNPATH) [/tmp]\n";
+  refuses(elfBytes(), combined, "elf_invalid", "dynamic_search_path");
+  refuses(wrongArch, combined, "elf_invalid", "binary_identity");
+});
+
+test("ELF diagnostic projection caps observations and never copies arbitrary tool strings", () => {
+  const canary = "SYNTHETIC_PRIVATE_ELF_STRING", value = elfOutput();
+  value.header += canary; value.program += "/private/" + canary; value.notes += canary;
+  value.dynamic += (" (NEEDED) Shared library: [" + canary + "]\n").repeat(100);
+  value.versions += ("File: " + canary + " Cnt: 1\nName: " + canary + " Flags: none\n").repeat(100);
+  value.versions += "Name: GLIBC_" + "9".repeat(10000) + ".1 Flags: none\nName: GLIBC_PRIVATE Flags: none\nName: GLIBC_ABI_DT_RELR Flags: none\n";
+  for (let i = 0; i < 100; i++) value.versions += "Name: GLIBC_2." + i + " Flags: none\n";
+  assert.throws(() => internals.inspectElf(elfBytes(), value), error => {
+    const diagnostic = error.diagnostic, observed = diagnostic.observed;
+    assert.equal(diagnostic.code, "dependency_count");
+    assert.deepEqual(Object.keys(diagnostic).sort(), ["code", "module", "observed"]);
+    assert.deepEqual(observed.knownNeeded, ["libc.so.6", "libgcc_s.so.1"]);
+    assert.equal(observed.neededCountCappedAt17, 17); assert.equal(observed.unknownNeededCountCappedAt17, 17);
+    assert.equal(observed.duplicateNeededCountCappedAt17, 17);
+    assert.deepEqual(observed.knownVersionFiles, ["libc.so.6", "libgcc_s.so.1"]);
+    assert.equal(observed.versionFileCountCappedAt17, 17); assert.equal(observed.unknownVersionFileCountCappedAt17, 17);
+    assert.equal(observed.versionNameCountCappedAt65, 65); assert.equal(observed.unknownVersionNameCountCappedAt65, 65);
+    assert.equal(observed.versionNames.length, 64); assert.equal(observed.versionNamesTruncated, true);
+    for (const special of ["GLIBC_PRIVATE", "GLIBC_ABI_DT_RELR"]) assert.ok(observed.versionNames.includes(special));
+    for (const name of observed.versionNames) assert.match(name, /^(?:(?:GLIBC|GCC)_[0-9]{1,3}(?:\.[0-9]{1,3}){1,2}|GLIBC_PRIVATE|GLIBC_ABI_DT_RELR)$/u);
+    const json = JSON.stringify(diagnostic);
+    assert.equal(json.includes(canary), false); assert.equal(json.includes("/private/"), false); assert.equal(json.includes("9".repeat(100)), false);
+    assert.ok(Buffer.byteLength(json) < 2500); return true;
+  });
+});
+
+test("ELF failure summary retains a safe precise predicate but cannot qualify or reach runtime smoke", async t => {
+  const f = fixture(t), canary = "SYNTHETIC_PRIVATE_ELF_STRING";
+  f.output.dynamic += " (NEEDED) Shared library: [ld-linux-x86-64.so.2]\n";
+  f.output.versions += "File: " + canary + " Cnt: 1\nName: " + canary + " Flags: none\n";
+  for (const key of Object.keys(f.output)) f.output[key] += "\n/private/" + canary + "\n";
+  assert.deepEqual(await internals.runWith(f.input, f.host), { ok: false, error: "runtime_invalid" });
+  const summaryBytes = fs.readFileSync(join(f.input.outputDirectory, "summary.json")), summary = JSON.parse(summaryBytes);
+  assert.equal(summary.checksPassed, false); assert.equal(summary.error, "runtime_invalid");
+  assert.equal(summary.diagnostic.module, "elf"); assert.equal(summary.diagnostic.code, "direct_interpreter_dependency");
+  assert.deepEqual(summary.diagnostic.observed.knownNeeded, ["ld-linux-x86-64.so.2", "libc.so.6", "libgcc_s.so.1"]);
+  assert.equal(summary.diagnostic.observed.unknownVersionFileCountCappedAt17, 1);
+  assert.equal(summary.diagnostic.observed.unknownVersionNameCountCappedAt65, 1);
+  for (const privateText of [canary, f.root, "SYNTHETIC_NEVER_FORWARD"]) assert.equal(summaryBytes.includes(privateText), false);
+  assert.equal(f.stages.at(-1), "elf-notes"); assert.equal(f.notices.length, 0);
+  for (const file of ["qualification.json", "assets"]) assert.equal(fs.existsSync(join(f.input.outputDirectory, file)), false);
 });
 
 test("Cargo final-artifact selection binds package, fresh single build and exact output", () => {
