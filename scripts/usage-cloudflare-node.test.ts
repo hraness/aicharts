@@ -6,7 +6,7 @@ const repository = new URL("../", import.meta.url);
 const loader = new URL("./usage-cloudflare-node.mjs", import.meta.url).href;
 const sourceUrl = (relative: string): string => new URL(relative, repository).href;
 const options = { cwd: fileURLToPath(repository), encoding: "utf8" as const, timeout: 10_000,
-  maxBuffer: 65_536, env: { PATH: process.env.PATH ?? "/usr/bin:/bin" } };
+  maxBuffer: 65_536, env: { PATH: process.env.PATH ?? "/usr/bin:/bin", NODE_ENV: "test" as const } };
 
 test("native Node imports the full qualification graph and transforms its parameter property", () => {
   const program = `
