@@ -2,11 +2,12 @@ import { describe, expect, mock, test } from "bun:test";
 import { createSuiteOidcRelyingParty } from "@hraness/suite-accounts/oidc-rp";
 import { fc } from "../property-test";
 import type { UsageAuthEnvironment } from "./auth-server";
+import type { PrivateDaysTransportDependencies } from "./private-days-transport";
 
 // Next enforces this import boundary in the application build. Bun tests run
 // server code directly, without replacing the SDK or its cryptographic checks.
 mock.module("server-only", () => ({}));
-const { createUsageAuthServer, handleUsageAuth } = await import("./auth-server");
+const { createUsageAuthServer, handleUsageAuth, beginUsageAccountSession } = await import("./auth-server");
 const { sealPairingCustody } = await import("./pairing-custody");
 
 const origin = "https://aicharts.io";
@@ -94,6 +95,22 @@ function withCookie(original: Request, cookie: string): Request {
   return new Request(original, { headers });
 }
 
+// Apply these fixed-origin, Path=/ cookies as a browser would, including
+// deletion. Sending a Max-Age=0 Set-Cookie value back would invent custody.
+function browserCookies(...responses: Response[]): string {
+  const values = new Map<string, string>();
+  for (const response of responses) {
+    for (const header of response.headers.getSetCookie()) {
+      const [cookie, ...attributes] = header.split(";");
+      const equals = cookie.indexOf("=");
+      const name = cookie.slice(0, equals);
+      if (attributes.some(value => value.trim().toLowerCase() === "max-age=0")) values.delete(name);
+      else values.set(name, cookie.slice(equals + 1));
+    }
+  }
+  return [...values].map(([name, value]) => `${name}=${value}`).join("; ");
+}
+
 async function approvalProjection(response: Response) {
   expect(response.status).toBe(200);
   assertPrivate(response);
@@ -175,6 +192,7 @@ async function fixture(options: { pairing?: boolean } = {}) {
   };
   const calls: string[] = [];
   const tokenBodies: URLSearchParams[] = [];
+  const userInfoResponses: Response[] = [];
   const resolvedIntents: string[] = [];
   const begun: unknown[] = [];
   const recorded: unknown[] = [];
@@ -258,11 +276,13 @@ async function fixture(options: { pairing?: boolean } = {}) {
       }
       if (url === endpoints.userInfo) {
         expect(new Headers(init?.headers).get("authorization")).toBe(`Bearer ${accessToken}`);
-        return Response.json({
+        const response = Response.json({
           email: "synthetic-reader@example.com", email_verified: true,
           sub: providerSubject, suite_account_id: accountId, suite_client_id: clientId,
           ...profile, ...userInfoOverrides,
         });
+        userInfoResponses.push(response);
+        return response;
       }
       if (url === endpoints.revoke) {
         expect(new URLSearchParams(String(init?.body)).get("token")).toBe(refreshToken);
@@ -280,8 +300,10 @@ async function fixture(options: { pairing?: boolean } = {}) {
     return { response, authorization };
   }
 
-  async function start() {
-    return captureStart(await server.handle(request("/api/suite-auth/start?return_to=%2F", { headers: { "sec-fetch-site": "same-origin" } })));
+  async function start(cookie?: string) {
+    return captureStart(await server.handle(request("/api/suite-auth/start?return_to=%2F", {
+      headers: { "sec-fetch-site": "same-origin", ...(cookie === undefined ? {} : { cookie }) },
+    })));
   }
 
   async function startPairing(input: unknown = pairingInput) {
@@ -304,7 +326,7 @@ async function fixture(options: { pairing?: boolean } = {}) {
   function callback(started: { response: Response; authorization: URL }) {
     return request(`/api/suite-auth/callback?code=synthetic-code&state=${started.authorization.searchParams.get("state")}`, {
       headers: {
-        cookie: started.response.headers.getSetCookie().map(cookie => cookie.split(";", 1)[0]).join("; "),
+        cookie: browserCookies(started.response),
         "sec-fetch-site": "cross-site", "sec-fetch-mode": "navigate", "sec-fetch-dest": "document",
       },
     });
@@ -328,7 +350,7 @@ async function fixture(options: { pairing?: boolean } = {}) {
   }
 
   return {
-    server, calls, tokenBodies, start, login, startPairing, startUnrelatedContext, callback, pairedLogin, proof,
+    server, calls, tokenBodies, userInfoResponses, start, login, startPairing, startUnrelatedContext, callback, pairedLogin, proof,
     resolvedIntents, begun, recorded, statusReads, decisions,
     browserNonce: () => ownedNonce,
     secrets: () => [secret, accessToken, refreshToken, providerSubject, "synthetic-reader@example.com"],
@@ -605,6 +627,552 @@ describe("dormant AI Charts browser authentication", () => {
   });
 });
 
+describe("request-owned live account session scope", () => {
+  test("reads one live account into an owned token-free projection and closes explicitly", async () => {
+    const f = await fixture();
+    const { cookie } = await f.login();
+    f.calls.length = 0;
+    const begin: PrivateDaysTransportDependencies["beginSession"] = f.server.beginAccountSession;
+    const scope = begin(request("/private?accountId=attacker", { headers: { cookie } }));
+    expect(scope).not.toBeNull();
+    expect(Object.isFrozen(scope)).toBe(true);
+    expect(scope!.current()).toBe(true);
+    expect(f.calls).toEqual([]);
+    const session = await scope!.read();
+    expect(session).toEqual({ suiteAccountId: accountId, expiresAtMs: nowMs + 600_000 });
+    expect(Object.isFrozen(session)).toBe(true);
+    expect(f.calls).toEqual([endpoints.userInfo]);
+    expect(f.userInfoResponses[0].bodyUsed).toBe(true);
+    const visible = JSON.stringify(session);
+    for (const value of f.secrets()) expect(visible).not.toContain(value);
+    expect(scope!.current()).toBe(true);
+    expect(await scope!.read()).toBeNull();
+    expect(f.calls).toEqual([endpoints.userInfo]);
+    scope!.finish();
+    scope!.finish();
+    expect(scope!.current()).toBe(false);
+    expect(await scope!.read()).toBeNull();
+    expect(f.calls).toEqual([endpoints.userInfo]);
+  });
+
+  test("the default begin export stays dormant and no disabled configuration admits a scope", () => {
+    expect(typeof beginUsageAccountSession).toBe("function");
+    expect(beginUsageAccountSession(request("https://foreign.example/private"))).toBeNull();
+    for (const change of [
+      { AICHARTS_USAGE_AUTH_ENABLED: "0" }, { VERCEL: "0" }, { VERCEL_ENV: "preview" },
+      { VERCEL_TARGET_ENV: "preview" }, { NEXT_PUBLIC_SITE_URL: "https://other.example" },
+      { NEXT_PUBLIC_VERCEL_SURFACE_ORIGIN: "" }, { NEXT_PUBLIC_HRANESS_VERCEL_SURFACE_ORIGIN: "" },
+      { NEXT_PUBLIC_HRANESS_VERCEL_PREVIEW_ORIGIN: "" }, { SUITE_OIDC_COOKIE_SECRET: "invalid" },
+    ]) {
+      let calls = 0;
+      const server = createUsageAuthServer({
+        environment: () => ({ ...ready, ...change }), now: () => nowMs,
+        fetch: async () => { calls++; throw new Error("Unexpected disabled request."); },
+      });
+      expect(server.beginAccountSession(request("/private"))).toBeNull();
+      expect(calls).toBe(0);
+    }
+  });
+
+  test("rejects noncanonical request origins and captures the initiating browser credentials", async () => {
+    const f = await fixture();
+    const { cookie } = await f.login();
+    f.calls.length = 0;
+    for (const foreign of ["http://aicharts.io", "https://www.aicharts.io", "https://aicharts-change.vercel.app", "https://aicharts.io.evil.example"]) {
+      expect(f.server.beginAccountSession(new Request(`${foreign}/private`, {
+        headers: { cookie, host: "aicharts.io", "x-forwarded-host": "aicharts.io", "x-forwarded-proto": "https" },
+      }))).toBeNull();
+    }
+    const original = request("/private", { headers: { cookie, "sec-fetch-site": "same-origin" } });
+    const scope = f.server.beginAccountSession(original)!;
+    original.headers.set("cookie", "__Host-hraness-suite-oidc-session=forged");
+    expect(await scope.read()).toEqual({ suiteAccountId: accountId, expiresAtMs: nowMs + 600_000 });
+    expect(f.calls).toEqual([endpoints.userInfo]);
+    Object.defineProperty(original, "url", { configurable: true, value: "https://foreign.example/private" });
+    expect(scope.current()).toBe(false);
+    Object.defineProperty(original, "url", { value: `${origin}/private` });
+    expect(scope.current()).toBe(false);
+  });
+
+  test("missing, forged or cross-site sessions never reach userinfo or become current authority", async () => {
+    const f = await fixture();
+    const { cookie } = await f.login();
+    f.calls.length = 0;
+    const rejectedHeaders: Record<string, string>[] = [
+      {}, { cookie: "__Host-hraness-suite-oidc-session=forged" },
+      { cookie, "sec-fetch-site": "cross-site" },
+      { cookie: `${cookie}; ${cookie}` },
+    ];
+    for (const headers of rejectedHeaders) {
+      const scope = f.server.beginAccountSession(request("/private", { headers }))!;
+      expect(await scope.read()).toBeNull();
+      expect(scope.current()).toBe(false);
+      expect(await scope.read()).toBeNull();
+    }
+    expect(f.calls).toEqual([]);
+  });
+
+  test("duplicate reads cannot issue a second live request or interfere with the admitted read", async () => {
+    const f = await fixture();
+    const { cookie } = await f.login();
+    f.calls.length = 0;
+    const entered = deferred<void>(), release = deferred<void>();
+    f.providerEffect(async url => { if (url === endpoints.userInfo) { entered.resolve(); await release.promise; } });
+    const scope = f.server.beginAccountSession(request("/private", { headers: { cookie } }))!;
+    const first = scope.read();
+    await entered.promise;
+    expect(await scope.read()).toBeNull();
+    expect(scope.current()).toBe(true);
+    expect(f.calls).toEqual([endpoints.userInfo]);
+    release.resolve();
+    expect(await first).toEqual({ suiteAccountId: accountId, expiresAtMs: nowMs + 600_000 });
+    expect(await scope.read()).toBeNull();
+    expect(f.calls).toEqual([endpoints.userInfo]);
+    scope.finish();
+  });
+
+  test("finish before read blocks dispatch and finish during await permits cleanup without authority", async () => {
+    const f = await fixture();
+    const { cookie } = await f.login();
+    f.calls.length = 0;
+    const unopened = f.server.beginAccountSession(request("/private", { headers: { cookie } }))!;
+    unopened.finish();
+    expect(unopened.current()).toBe(false);
+    expect(await unopened.read()).toBeNull();
+    expect(f.calls).toEqual([]);
+    const entered = deferred<void>(), release = deferred<void>();
+    f.providerEffect(async url => { if (url === endpoints.userInfo) { entered.resolve(); await release.promise; } });
+    const scope = f.server.beginAccountSession(request("/private", { headers: { cookie } }))!;
+    let settled = false;
+    const pending = scope.read().then(value => { settled = true; return value; });
+    await entered.promise;
+    scope.finish();
+    expect(scope.current()).toBe(false);
+    expect(await scope.read()).toBeNull();
+    expect(settled).toBe(false);
+    expect(f.calls).toEqual([endpoints.userInfo]);
+    release.resolve();
+    expect(await pending).toBeNull();
+    expect(f.userInfoResponses[0].bodyUsed).toBe(true);
+    expect(f.calls).toEqual([endpoints.userInfo]);
+  });
+
+  test("closure during SDK cookie work stops userinfo before it is dispatched", async () => {
+    const f = await fixture();
+    const { cookie } = await f.login();
+    f.calls.length = 0;
+    const scope = f.server.beginAccountSession(request("/private", { headers: { cookie } }))!;
+    const pending = scope.read();
+    scope.finish();
+    expect(await pending).toBeNull();
+    expect(f.calls).toEqual([]);
+  });
+
+  test("rotation or disablement during SDK cookie work stops the first provider dispatch", async () => {
+    for (const change of [{ AICHARTS_USAGE_AUTH_ENABLED: "0" }, { SUITE_OIDC_COOKIE_SECRET: `${secret}-rotated` }]) {
+      const f = await fixture();
+      const { cookie } = await f.login();
+      f.calls.length = 0;
+      const scope = f.server.beginAccountSession(request("/private", { headers: { cookie } }))!;
+      const pending = scope.read();
+      f.environment({ ...ready, ...change });
+      expect(await pending).toBeNull();
+      f.environment(ready);
+      expect(scope.current()).toBe(false);
+      expect(f.calls).toEqual([]);
+    }
+  });
+
+  test("session reads neither consume a product body nor trust its account claims", async () => {
+    const f = await fixture();
+    const { cookie } = await f.login();
+    f.calls.length = 0;
+    const body = JSON.stringify({ suiteAccountId: "acct_" + "ef".repeat(16), expiresAtMs: nowMs + 3_600_000 });
+    const original = request("/private", { method: "POST", headers: { cookie }, body });
+    const scope = f.server.beginAccountSession(original)!;
+    expect(await scope.read()).toEqual({ suiteAccountId: accountId, expiresAtMs: nowMs + 600_000 });
+    expect(original.bodyUsed).toBe(false);
+    expect(await original.text()).toBe(body);
+    expect(f.calls).toEqual([endpoints.userInfo]);
+    scope.finish();
+  });
+
+  test("every production fence and secret rotation permanently invalidates an observed scope", async () => {
+    const f = await fixture();
+    const { cookie } = await f.login();
+    f.calls.length = 0;
+    for (const change of [
+      { AICHARTS_USAGE_AUTH_ENABLED: "0" }, { VERCEL: "0" }, { VERCEL_ENV: "preview" },
+      { VERCEL_TARGET_ENV: "preview" }, { NEXT_PUBLIC_SITE_URL: "https://foreign.example" },
+      { NEXT_PUBLIC_VERCEL_SURFACE_ORIGIN: "" }, { NEXT_PUBLIC_HRANESS_VERCEL_SURFACE_ORIGIN: "" },
+      { NEXT_PUBLIC_HRANESS_VERCEL_PREVIEW_ORIGIN: "" }, { SUITE_OIDC_COOKIE_SECRET: `${secret}-rotated` },
+    ]) {
+      const scope = f.server.beginAccountSession(request("/private", { headers: { cookie } }))!;
+      f.environment({ ...ready, ...change });
+      expect(scope.current()).toBe(false);
+      f.environment(ready);
+      expect(scope.current()).toBe(false);
+      expect(await scope.read()).toBeNull();
+    }
+    expect(f.calls).toEqual([]);
+  });
+
+  test("configuration changes during a live request suppress its result after body cleanup", async () => {
+    for (const change of [{ AICHARTS_USAGE_AUTH_ENABLED: "0" }, { SUITE_OIDC_COOKIE_SECRET: `${secret}-rotated` }]) {
+      const f = await fixture();
+      const { cookie } = await f.login();
+      f.calls.length = 0;
+      const scope = f.server.beginAccountSession(request("/private", { headers: { cookie } }))!;
+      f.providerEffect(url => { if (url === endpoints.userInfo) f.environment({ ...ready, ...change }); });
+      expect(await scope.read()).toBeNull();
+      expect(scope.current()).toBe(false);
+      f.environment(ready);
+      expect(scope.current()).toBe(false);
+      expect(await scope.read()).toBeNull();
+      expect(f.userInfoResponses[0].bodyUsed).toBe(true);
+      expect(f.calls).toEqual([endpoints.userInfo]);
+    }
+  });
+
+  test("verified expiry fences current synchronously and cannot recover when time is reset", async () => {
+    const f = await fixture();
+    f.accessToken({ exp: Math.floor(nowMs / 1_000) + 60 });
+    const { cookie } = await f.login();
+    f.calls.length = 0;
+    const scope = f.server.beginAccountSession(request("/private", { headers: { cookie } }))!;
+    expect(await scope.read()).toEqual({ suiteAccountId: accountId, expiresAtMs: nowMs + 60_000 });
+    f.time(nowMs + 59_999);
+    expect(scope.current()).toBe(true);
+    f.time(nowMs + 60_000);
+    expect(scope.current()).toBe(false);
+    f.time(nowMs);
+    expect(scope.current()).toBe(false);
+    expect(f.calls).toEqual([endpoints.userInfo]);
+  });
+
+  test("expiry or clock regression during userinfo cannot return the SDK's earlier session view", async () => {
+    for (const observed of [nowMs + 60_000, nowMs - 1, Number.NaN, Number.POSITIVE_INFINITY, -0]) {
+      const f = await fixture();
+      f.accessToken({ exp: Math.floor(nowMs / 1_000) + 60 });
+      const { cookie } = await f.login();
+      f.calls.length = 0;
+      const scope = f.server.beginAccountSession(request("/private", { headers: { cookie } }))!;
+      f.providerEffect(url => { if (url === endpoints.userInfo) f.time(observed); });
+      expect(await scope.read()).toBeNull();
+      expect(scope.current()).toBe(false);
+      f.time(nowMs);
+      expect(scope.current()).toBe(false);
+      expect(f.userInfoResponses[0].bodyUsed).toBe(true);
+      expect(f.calls).toEqual([endpoints.userInfo]);
+    }
+  });
+
+  test("invalid clocks and request aborts fence scopes before any live request", async () => {
+    const f = await fixture();
+    const { cookie } = await f.login();
+    f.calls.length = 0;
+    for (const invalid of [Number.NaN, Number.POSITIVE_INFINITY, -1, -0, 1.5, 8_640_000_000_000_001]) {
+      f.time(invalid);
+      expect(f.server.beginAccountSession(request("/private", { headers: { cookie } }))).toBeNull();
+    }
+    f.time(nowMs);
+    const controller = new AbortController();
+    const original = request("/private", { headers: { cookie }, signal: controller.signal });
+    const scope = f.server.beginAccountSession(original)!;
+    controller.abort();
+    expect(scope.current()).toBe(false);
+    expect(await scope.read()).toBeNull();
+    expect(f.server.beginAccountSession(original)).toBeNull();
+    expect(f.calls).toEqual([]);
+  });
+
+  test("an abort during userinfo allows body cleanup but never returns account authority", async () => {
+    const f = await fixture();
+    const { cookie } = await f.login();
+    f.calls.length = 0;
+    const controller = new AbortController();
+    const scope = f.server.beginAccountSession(request("/private", { headers: { cookie }, signal: controller.signal }))!;
+    f.providerEffect(url => { if (url === endpoints.userInfo) controller.abort(); });
+    expect(await scope.read()).toBeNull();
+    expect(scope.current()).toBe(false);
+    expect(f.userInfoResponses[0].bodyUsed).toBe(true);
+    expect(f.calls).toEqual([endpoints.userInfo]);
+  });
+
+  test("later clock observations form a floor before and after the live session read", async () => {
+    const f = await fixture();
+    const { cookie } = await f.login();
+    f.calls.length = 0;
+    for (const readFirst of [false, true]) {
+      f.time(nowMs);
+      const scope = f.server.beginAccountSession(request("/private", { headers: { cookie } }))!;
+      if (readFirst) expect(await scope.read()).not.toBeNull();
+      f.time(nowMs + 1_000);
+      expect(scope.current()).toBe(true);
+      f.time(nowMs + 999);
+      expect(scope.current()).toBe(false);
+      f.time(nowMs + 2_000);
+      expect(scope.current()).toBe(false);
+      expect(await scope.read()).toBeNull();
+    }
+    expect(f.calls).toEqual([endpoints.userInfo]);
+  });
+
+  test("live denial or provider failure closes the scope without affecting ordinary accountSession", async () => {
+    const f = await fixture();
+    const { cookie } = await f.login();
+    const original = request("/private", { headers: { cookie } });
+    f.calls.length = 0;
+    f.userInfo({ suite_account_id: "acct_" + "ef".repeat(16) });
+    const denied = f.server.beginAccountSession(original)!;
+    expect(await denied.read()).toBeNull();
+    expect(denied.current()).toBe(false);
+    expect(await denied.read()).toBeNull();
+    f.userInfo({});
+    f.fail(endpoints.userInfo);
+    const failed = f.server.beginAccountSession(original)!;
+    expect(await failed.read()).toBeNull();
+    expect(failed.current()).toBe(false);
+    f.fail(null);
+    expect(await failed.read()).toBeNull();
+    expect(f.calls).toEqual([endpoints.userInfo, endpoints.userInfo]);
+    expect(await f.server.accountSession(original)).toEqual({ suiteAccountId: accountId, expiresAtMs: nowMs + 600_000 });
+    expect(await f.server.accountSession(original)).toEqual({ suiteAccountId: accountId, expiresAtMs: nowMs + 600_000 });
+    expect(f.calls).toEqual([endpoints.userInfo, endpoints.userInfo, endpoints.userInfo, endpoints.userInfo]);
+  });
+});
+
+describe("explicit ordinary and pairing callback dispatch", () => {
+  test("dispatches owned fresh custody once and records authentication without approving", async () => {
+    const f = await fixture({ pairing: true });
+    const started = await f.startPairing();
+    const response = await f.server.handle(f.callback(started));
+    expect(response.status).toBe(200);
+    expect(f.tokenBodies).toHaveLength(1);
+    expect(f.calls).toEqual([endpoints.discovery, endpoints.token, endpoints.jwks]);
+    expect(f.recorded).toEqual([{
+      ...f.proof(), accountId, authTimeMs: nowMs, sessionExpiresAtMs: pairingAttempt.expiresAtMs,
+    }]);
+    expect(f.resolvedIntents).toEqual([intentId, intentId]);
+    expect(f.statusReads).toEqual([]);
+    expect(f.decisions).toEqual([]);
+    expect(cookieFrom(response, "session")).toStartWith("__Host-hraness-suite-oidc-session=");
+    const visible = `${await response.text()} ${JSON.stringify([...response.headers])}`;
+    for (const value of [...f.secrets(), intentId, f.browserNonce(), attemptId, contextToken, accountId]) {
+      expect(visible).not.toContain(value);
+    }
+    assertPrivate(response);
+  });
+
+  test("ordinary callbacks retain one SDK exchange with or without a pairing resolver", async () => {
+    for (const pairing of [false, true]) {
+      const f = await fixture({ pairing });
+      const response = await f.server.handle(f.callback(await f.start()));
+      expect(response.status).toBe(200);
+      expect(f.tokenBodies).toHaveLength(1);
+      expect(f.calls).toEqual([endpoints.discovery, endpoints.token, endpoints.jwks]);
+      expect(f.resolvedIntents).toEqual([]);
+      expect(f.recorded).toEqual([]);
+      expect(f.decisions).toEqual([]);
+      assertPrivate(response);
+    }
+  });
+
+  test("opposite transaction modes fail before exchange without retrying the other path", async () => {
+    const f = await fixture({ pairing: true });
+    const paired = await f.startPairing();
+    const custody = cookieFrom(paired.response, "pairing");
+    await assertPairingFailure(await f.server.handle(withCookie(f.callback(paired), cookieFrom(paired.response, "transaction"))));
+    const ordinary = await f.start();
+    await assertPairingFailure(await f.server.handle(withCookie(f.callback(ordinary), `${cookieFrom(ordinary.response, "transaction")}; ${custody}`)));
+    expect(f.calls).toEqual([]);
+    expect(f.tokenBodies).toEqual([]);
+    expect(f.resolvedIntents).toEqual([intentId]);
+    expect(f.recorded).toEqual([]);
+    expect(f.decisions).toEqual([]);
+  });
+
+  test("malformed, tampered, duplicate or expired custody never becomes ordinary login", async () => {
+    for (const mode of ["ordinary", "fresh"] as const) {
+      const f = await fixture({ pairing: true });
+      const paired = await f.startPairing();
+      const custody = cookieFrom(paired.response, "pairing");
+      const value = custody.slice(custody.indexOf("=") + 1);
+      const changed = `${value[0] === "A" ? "B" : "A"}${value.slice(1)}`;
+      const expired = await sealPairingCustody({
+        ...f.proof(), csrfToken: "7e".repeat(32), issuedAtMs: nowMs - 300_000, expiresAtMs: nowMs,
+      }, secret, length => crypto.getRandomValues(new Uint8Array(length)));
+      const future = await sealPairingCustody({
+        ...f.proof(), csrfToken: "7e".repeat(32), issuedAtMs: nowMs + 1, expiresAtMs: nowMs + 300_000,
+      }, secret, length => crypto.getRandomValues(new Uint8Array(length)));
+      cookieCanaries.add(expired);
+      cookieCanaries.add(future);
+      const started = mode === "fresh" ? paired : await f.start();
+      const transaction = cookieFrom(started.response, "transaction");
+      for (const candidate of [
+        pairingCookieName,
+        `${pairingCookieName}=`,
+        `${pairingCookieName}=private-durable-reply`,
+        `${pairingCookieName}=${changed}`,
+        `${pairingCookieName}=${value}=`,
+        `${pairingCookieName}=${expired}`,
+        `${pairingCookieName}=${future}`,
+        `${custody}; ${custody}`,
+        `${custody}; ${pairingCookieName}`,
+        `${pairingCookieName}; ${custody}`,
+        `${custody}; ${pairingCookieName}=conflict`,
+        `${pairingCookieName}=${"A".repeat(4_097)}`,
+        `${custody}; unrelated=${"A".repeat(16_384)}`,
+      ]) await assertPairingFailure(await f.server.handle(withCookie(f.callback(started), `${transaction}; ${candidate}`)));
+      expect(f.calls).toEqual([]);
+      expect(f.tokenBodies).toEqual([]);
+      expect(f.resolvedIntents).toEqual([intentId]);
+      expect(f.recorded).toEqual([]);
+      expect(f.decisions).toEqual([]);
+    }
+  });
+
+  test("ambiguous custody markers fail for either cookie order and surrounding whitespace", async () => {
+    const f = await fixture({ pairing: true });
+    const started = await f.startPairing();
+    const transaction = cookieFrom(started.response, "transaction");
+    const custody = cookieFrom(started.response, "pairing");
+    await fc.assert(fc.asyncProperty(
+      fc.boolean(), fc.boolean(), fc.constantFrom("", " ", "\t"),
+      async (reverse, bare, whitespace) => {
+        const duplicate = `${whitespace}${pairingCookieName}${whitespace}${bare ? "" : "=invalid"}`;
+        const pair = reverse ? [duplicate, custody] : [custody, duplicate];
+        await assertPairingFailure(await f.server.handle(withCookie(f.callback(started), [transaction, ...pair].join("; "))));
+      },
+    ), { numRuns: 50 });
+    expect(f.calls).toEqual([]);
+    expect(f.recorded).toEqual([]);
+  });
+
+  test("unrelated cookie names do not opt an ordinary transaction into pairing", async () => {
+    const f = await fixture({ pairing: true });
+    const started = await f.start();
+    const cookies = `${cookieFrom(started.response, "transaction")}; ${pairingCookieName}-other=invalid; unrelated=${pairingCookieName}`;
+    const response = await f.server.handle(withCookie(f.callback(started), cookies));
+    expect(response.status).toBe(200);
+    expect(f.tokenBodies).toHaveLength(1);
+    expect(f.resolvedIntents).toEqual([]);
+    expect(f.recorded).toEqual([]);
+    expect(f.decisions).toEqual([]);
+    assertPrivate(response);
+  });
+
+  test("missing resolver and disabled configuration cannot exchange a selected fresh callback", async () => {
+    const f = await fixture({ pairing: true });
+    const started = await f.startPairing();
+    const noResolver = createUsageAuthServer({
+      environment: () => ready, now: () => nowMs,
+      fetch: async () => { throw new Error("Unexpected provider request without pairing authority."); },
+    });
+    await assertPairingFailure(await noResolver.handle(f.callback(started)), "UNAVAILABLE", 503);
+    f.environment({ ...ready, AICHARTS_USAGE_AUTH_ENABLED: "0" });
+    const disabled = await f.server.handle(f.callback(started));
+    expect(disabled.status).toBe(503);
+    expect(await disabled.json()).toEqual(unavailable);
+    expect(disabled.headers.has("set-cookie")).toBe(false);
+    expect(f.calls).toEqual([]);
+    expect(f.resolvedIntents).toEqual([intentId]);
+    expect(f.recorded).toEqual([]);
+  });
+
+  test("a lost durable authentication reply never retries the OAuth code or creates consent", async () => {
+    const f = await fixture({ pairing: true });
+    const started = await f.startPairing();
+    f.recordEffect(() => { throw new Error("private-durable-reply"); });
+    await assertPairingFailure(await f.server.handle(f.callback(started)), "FAILED", 503);
+    expect(f.tokenBodies).toHaveLength(1);
+    expect(f.calls).toEqual([endpoints.discovery, endpoints.token, endpoints.jwks]);
+    expect(f.recorded).toHaveLength(1);
+    expect(f.decisions).toEqual([]);
+    expect(f.statusReads).toEqual([]);
+  });
+
+  test("a provider rejection is returned without ordinary fallback or durable authentication", async () => {
+    const f = await fixture({ pairing: true });
+    const started = await f.startPairing();
+    f.idToken({ auth_time: Math.floor(nowMs / 1_000) - 1 });
+    await assertPairingFailure(await f.server.handle(f.callback(started)));
+    expect(f.tokenBodies).toHaveLength(1);
+    expect(f.calls).toEqual([endpoints.discovery, endpoints.token, endpoints.jwks]);
+    expect(f.recorded).toEqual([]);
+    expect(f.decisions).toEqual([]);
+  });
+
+  test("an admitted ordinary start replaces the shared transaction and expires pairing custody", async () => {
+    const f = await fixture({ pairing: true });
+    const paired = await f.startPairing();
+    const ordinary = await f.start(browserCookies(paired.response));
+    const expiry = ordinary.response.headers.getSetCookie().find(value => value.startsWith(`${pairingCookieName}=`));
+    expect(expiry).toBe(`${pairingCookieName}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`);
+    expect(ordinary.authorization.searchParams.has("max_age")).toBe(false);
+    expect(cookieFrom(ordinary.response, "transaction")).not.toBe(cookieFrom(paired.response, "transaction"));
+    const cookies = browserCookies(paired.response, ordinary.response);
+    expect(cookies).not.toContain(pairingCookieName);
+    await assertPairingFailure(await f.server.handle(withCookie(f.callback(paired), cookies)));
+    expect(f.calls).toEqual([]);
+    const response = await f.server.handle(withCookie(f.callback(ordinary), cookies));
+    expect(response.status).toBe(200);
+    expect(f.tokenBodies).toHaveLength(1);
+    expect(f.resolvedIntents).toEqual([intentId]);
+    expect(f.recorded).toEqual([]);
+    expect(f.decisions).toEqual([]);
+    assertPrivate(ordinary.response);
+    assertPrivate(response);
+  });
+
+  test("an ordinary start clears invalid custody without requiring a pairing resolver", async () => {
+    const f = await fixture();
+    const started = await f.start(`${pairingCookieName}=invalid; ${pairingCookieName}=duplicate`);
+    expect(started.response.headers.getSetCookie()).toHaveLength(2);
+    expect(started.response.headers.getSetCookie()).toContain(`${pairingCookieName}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`);
+    expect(f.calls).toEqual([]);
+    expect((await f.server.handle(f.callback(started))).status).toBe(200);
+    expect(f.tokenBodies).toHaveLength(1);
+    expect(f.resolvedIntents).toEqual([]);
+    expect(f.decisions).toEqual([]);
+  });
+
+  test("a rejected or failed ordinary start preserves the existing pairing browser custody", async () => {
+    const f = await fixture({ pairing: true });
+    const paired = await f.startPairing();
+    const cookie = browserCookies(paired.response);
+    for (const invalid of [
+      request("/api/suite-auth/start", { headers: { cookie, "sec-fetch-site": "cross-site" } }),
+      request("/api/suite-auth/start?return_to=%2F%2Fforeign.example", { headers: { cookie, "sec-fetch-site": "same-origin" } }),
+      request("/api/suite-auth/start", { method: "POST", headers: { cookie, origin } }),
+      new Request("https://foreign.example/api/suite-auth/start", { headers: { cookie, origin } }),
+    ]) {
+      const response = await f.server.handle(invalid);
+      expect(response.status).toBeGreaterThanOrEqual(400);
+      expect(response.headers.has("set-cookie")).toBe(false);
+      expect(browserCookies(paired.response, response)).toBe(cookie);
+      assertPrivate(response);
+    }
+    f.randomEffect(() => { throw new Error("private-durable-reply"); });
+    const failed = await f.server.handle(withCookie(pairingStartRequest(), cookie));
+    expect(failed.status).toBe(503);
+    expect(failed.headers.has("set-cookie")).toBe(false);
+    expect(browserCookies(paired.response, failed)).toBe(cookie);
+    f.randomEffect(() => {});
+    f.environment({ ...ready, AICHARTS_USAGE_AUTH_ENABLED: "0" });
+    const disabled = await f.server.handle(withCookie(pairingStartRequest(), cookie));
+    expect(disabled.status).toBe(503);
+    expect(disabled.headers.has("set-cookie")).toBe(false);
+    expect(browserCookies(paired.response, disabled)).toBe(cookie);
+    expect(f.calls).toEqual([]);
+    f.environment(ready);
+    expect((await f.server.handle(f.callback(paired))).status).toBe(200);
+    expect(f.tokenBodies).toHaveLength(1);
+    expect(f.recorded).toHaveLength(1);
+    expect(f.decisions).toEqual([]);
+  });
+});
+
 describe("dormant intent-bound pairing authentication", () => {
   test("records only the sealed attempt and signed account facts before returning the SDK continuation", async () => {
     const f = await fixture({ pairing: true });
@@ -837,9 +1405,9 @@ describe("dormant intent-bound pairing authentication", () => {
     expect(f.recorded).toEqual([]);
   });
 
-  test("generic callback refuses a fresh transaction before contacting the provider", async () => {
+  test("callback dispatch does not expose additional pairing start or approval routes", async () => {
     const f = await fixture({ pairing: true });
-    await assertPairingFailure(await f.server.handle(f.callback(await f.startPairing())));
+    await f.startPairing();
     expect(f.calls).toEqual([]);
     expect(f.recorded).toEqual([]);
     for (const path of ["pairing", "pairing/start", "pairing/callback", "approve", "confirm", "enroll"]) {
