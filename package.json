@@ -94,6 +94,9 @@
     "kb:check": "bunx --bun github:hraness/kb#v0.15.2 check --root kb && bunx --bun github:hraness/kb#v0.15.2 agents check --root kb --repo .",
     "kb:catalog": "bunx --bun github:hraness/kb#v0.15.2 catalog --root kb",
     "menubar": "bun run scripts/menubar.ts",
+    "menubar:install": "bun run scripts/menubar.ts install",
+    "menubar:uninstall": "bun run scripts/menubar.ts uninstall",
+    "menubar:status": "bun run scripts/menubar.ts status",
     "menubar:build": "bun run scripts/menubar-build.ts",
     "outputs": "bun -e 'const {mkdirSync}=require(\"node:fs\");const p=require(\"node:path\").join(process.cwd(),\"outputs\");mkdirSync(p,{recursive:true});console.log(p)'"
   },

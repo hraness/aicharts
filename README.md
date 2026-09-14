@@ -7,13 +7,17 @@ AI Charts includes an unbundled macOS menu-bar companion for the repository's
 
 ```sh
 bun run menubar:build
+bun run menubar:install
 bun run menubar
 ```
 
-The launcher never compiles on startup. It passes this checkout's `outputs/`
-directory to the prebuilt `aicharts-menubar` binary; a second invocation exits
-through the binary's per-output-directory lock. No app bundle, signing, or
-notarization is part of this companion.
+`menubar:install` copies the release-built companion to
+`~/Library/Application Support/AI Charts/bin/aicharts-menubar` atomically. The
+launcher never compiles on startup: it uses that installed copy when present,
+or a prebuilt checkout binary otherwise. A second invocation exits through the
+binary's per-output-directory lock. Use `bun run menubar:uninstall` to remove
+the installed copy. No app bundle, signing, or notarization is part of this
+companion.
 
 [AI Charts](https://aicharts.io) is an open-source home for sourced, interactive AI benchmark charts. It compares models and agents across performance, cost, speed, and token use without collapsing those trade-offs into one rank.
 
