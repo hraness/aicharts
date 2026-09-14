@@ -906,6 +906,10 @@ pub(super) mod tests {
                 ..Disk::default()
             })))
         }
+
+        pub(crate) fn fail_next_sync(&self) {
+            self.0.borrow_mut().sync_error = Some(Error::StorageUnavailable);
+        }
     }
 
     impl Storage for Memory {
