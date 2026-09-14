@@ -20,7 +20,8 @@ use crate::enrollment::contract::{
     Request, Success,
 };
 use aicharts_custody::{
-    references::RecordIntent, CredentialRef, NamespaceBinding, Purpose, Secret32, SecretRecord,
+    references::{RecordIntent, ReferenceStore},
+    CredentialRef, NamespaceBinding, Purpose, Secret32, SecretRecord, Vault,
 };
 use sha2::{Digest, Sha256};
 
@@ -116,6 +117,166 @@ fn current_token(record: &Record, expected: Token) -> Result<()> {
         return Err(Error::StaleSnapshot);
     }
     Ok(())
+}
+
+fn secret_matches_pin(secret: &SecretRecord, pin: &Pin) -> bool {
+    let intent = RecordIntent::from_record(secret);
+    intent.identity() == &pin.identity && intent.commitment() == pin.commitment.as_bytes()
+}
+
+fn complete_custody<S: Storage>(
+    storage: &mut S,
+    expected: Token,
+    current: &Record,
+    next: &Record,
+    install: impl FnOnce() -> Result<()>,
+) -> Result<DurableSnapshot> {
+    current_token(current, expected)?;
+    if current.revision == MAX_REVISION {
+        return Err(Error::Limit);
+    }
+    record::successor(current, next)?;
+    // A caller-owned record is only an observation. Require the exact durable
+    // predecessor before custody, then compare it again when publishing. A
+    // concurrent change after this read cannot authorize a different secret.
+    storage::read_durable(storage, expected)?;
+    install()?;
+    storage::compare_and_publish(storage, expected, next)
+}
+
+/// Persist the pairing secret's nonsecret custody state before enrollment can
+/// dispatch. The secret is checked against the original typed identity and
+/// commitment; its bytes never enter the attempt record.
+pub(super) fn prepare_pairing_custody<S: Storage>(
+    storage: &mut S,
+    expected: Token,
+    current: &Record,
+    secret: &SecretRecord,
+    prepared_at_ms: u64,
+) -> Result<DurableSnapshot> {
+    record::validate(current)?;
+    current_token(current, expected)?;
+    if current.progress != Progress::PairingPlanned
+        || current.flight.is_some()
+        || !secret_matches_pin(secret, &current.pairing)
+    {
+        return Err(Error::Conflict);
+    }
+    checked_time(prepared_at_ms, current.clock_floor_ms)?;
+    let mut next = current.clone();
+    next.revision = next.revision.checked_add(1).ok_or(Error::Limit)?;
+    next.clock_floor_ms = prepared_at_ms;
+    next.progress = Progress::PairingPrepared;
+    next.last_failure = None;
+    storage::compare_and_publish(storage, expected, &next)
+}
+
+/// Complete pairing custody through the sealed reference-store API. The
+/// reference manifest and vault must both acknowledge the exact original
+/// secret before the attempt becomes dispatchable. A stale attempt snapshot
+/// is reported after custody work and is reconciled by repeating this same
+/// identity-bound operation; the reference store itself is idempotent.
+pub(super) fn complete_pairing_custody<S: Storage>(
+    storage: &mut S,
+    expected: Token,
+    current: &Record,
+    secret: &SecretRecord,
+    references: &mut ReferenceStore,
+    vault: &mut Vault,
+) -> Result<DurableSnapshot> {
+    record::validate(current)?;
+    current_token(current, expected)?;
+    if current.progress != Progress::PairingPrepared
+        || current.flight.is_some()
+        || !secret_matches_pin(secret, &current.pairing)
+    {
+        return Err(Error::Conflict);
+    }
+    let mut next = current.clone();
+    next.revision = next.revision.checked_add(1).ok_or(Error::Limit)?;
+    next.progress = Progress::PairingCustodyVerified;
+    next.last_failure = None;
+    complete_custody(storage, expected, current, &next, || {
+        let manifest = references.snapshot().map_err(|_| Error::Custody)?;
+        let prepared = references
+            .prepare(&manifest.token(), secret)
+            .map_err(|_| Error::Custody)?;
+        references
+            .install_prepared(&prepared.token(), secret, vault)
+            .map_err(|_| Error::Custody)?;
+        Ok(())
+    })
+}
+
+/// Persist the namespace secret's nonsecret custody state after a checked
+/// namespace response. The accepted namespace pin and retained flight remain
+/// unchanged while the reference operation is prepared.
+pub(super) fn prepare_namespace_custody<S: Storage>(
+    storage: &mut S,
+    expected: Token,
+    current: &Record,
+    secret: &SecretRecord,
+    prepared_at_ms: u64,
+) -> Result<DurableSnapshot> {
+    record::validate(current)?;
+    current_token(current, expected)?;
+    let namespace = current.namespace.as_ref().ok_or(Error::Conflict)?;
+    if current.progress != Progress::NamespacePlanned
+        || current
+            .flight
+            .as_ref()
+            .is_none_or(|flight| flight.operation != Operation::Namespace || flight.dispatches == 0)
+        || !secret_matches_pin(secret, &namespace.pin)
+    {
+        return Err(Error::Conflict);
+    }
+    checked_time(prepared_at_ms, current.clock_floor_ms)?;
+    let mut next = current.clone();
+    next.revision = next.revision.checked_add(1).ok_or(Error::Limit)?;
+    next.clock_floor_ms = prepared_at_ms;
+    next.progress = Progress::NamespacePrepared;
+    next.last_failure = None;
+    storage::compare_and_publish(storage, expected, &next)
+}
+
+/// Complete namespace custody through the sealed reference-store API. The
+/// original accepted secret is read back by the store before this transition
+/// clears the retained namespace flight.
+pub(super) fn complete_namespace_custody<S: Storage>(
+    storage: &mut S,
+    expected: Token,
+    current: &Record,
+    secret: &SecretRecord,
+    references: &mut ReferenceStore,
+    vault: &mut Vault,
+) -> Result<DurableSnapshot> {
+    record::validate(current)?;
+    current_token(current, expected)?;
+    let namespace = current.namespace.as_ref().ok_or(Error::Conflict)?;
+    if current.progress != Progress::NamespacePrepared
+        || current
+            .flight
+            .as_ref()
+            .is_none_or(|flight| flight.operation != Operation::Namespace || flight.dispatches == 0)
+        || !secret_matches_pin(secret, &namespace.pin)
+    {
+        return Err(Error::Conflict);
+    }
+    let mut next = current.clone();
+    next.revision = next.revision.checked_add(1).ok_or(Error::Limit)?;
+    next.progress = Progress::NamespaceCustodyVerified;
+    next.flight = None;
+    next.last_failure = None;
+    complete_custody(storage, expected, current, &next, || {
+        let manifest = references.snapshot().map_err(|_| Error::Custody)?;
+        let prepared = references
+            .prepare(&manifest.token(), secret)
+            .map_err(|_| Error::Custody)?;
+        references
+            .install_prepared(&prepared.token(), secret, vault)
+            .map_err(|_| Error::Custody)?;
+        Ok(())
+    })
 }
 
 fn request_matches_record(record: &Record, request: &Request) -> bool {
@@ -568,6 +729,7 @@ pub(super) fn settle_response<S: Storage>(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::enrollment::attempt::record_tests;
     use crate::enrollment::attempt::record_tests::{copy, enrolled_record, initial_record, TIME};
     use crate::enrollment::contract::Id;
     use std::cell::RefCell;
@@ -578,6 +740,9 @@ mod tests {
         committed: Option<Vec<u8>>,
         candidate: Option<storage::Candidate>,
         locked: bool,
+        sync_error: Option<Error>,
+        file_synced: bool,
+        directory_synced: bool,
     }
     #[derive(Clone, Default)]
     struct Memory(Rc<RefCell<Disk>>);
@@ -608,6 +773,11 @@ mod tests {
             Ok(self.0.borrow().committed.clone())
         }
         fn sync_committed(&mut self) -> Result<()> {
+            let mut disk = self.0.borrow_mut();
+            if let Some(error) = disk.sync_error {
+                return Err(error);
+            }
+            disk.file_synced = true;
             Ok(())
         }
         fn stage(&mut self, candidate: &storage::Candidate) -> Result<()> {
@@ -629,6 +799,7 @@ mod tests {
             Ok(())
         }
         fn sync_directory(&mut self) -> Result<()> {
+            self.0.borrow_mut().directory_synced = true;
             Ok(())
         }
     }
@@ -706,6 +877,248 @@ mod tests {
             TIME + 3,
         )
         .is_ok());
+    }
+
+    #[test]
+    fn pairing_custody_preparation_binds_the_original_typed_secret() {
+        let mut record = record_tests::initial_record();
+        let secret = SecretRecord::pairing(
+            record.pairing.identity.reference().clone(),
+            record.intent_id,
+            Secret32::new([0x22; 32]).unwrap(),
+            Secret32::new([0x33; 32]).unwrap(),
+        )
+        .unwrap();
+        record.pairing = Pin::from_intent(&RecordIntent::from_record(&secret)).unwrap();
+        let mut storage = Memory::with(&record);
+        let prepared = prepare_pairing_custody(
+            &mut storage,
+            record::token(&record).unwrap(),
+            &record,
+            &secret,
+            TIME + 1,
+        )
+        .unwrap();
+        assert_eq!(prepared.record().progress, Progress::PairingPrepared);
+        assert!(prepared.record().flight.is_none());
+        let bytes = record::encode(prepared.record()).unwrap();
+        assert!(!bytes
+            .as_bytes()
+            .windows(32)
+            .any(|window| window == [0x22; 32]));
+        assert!(!bytes
+            .as_bytes()
+            .windows(32)
+            .any(|window| window == [0x33; 32]));
+        for preimage in ["22".repeat(32), "33".repeat(32)] {
+            assert!(!bytes
+                .as_bytes()
+                .windows(preimage.len())
+                .any(|window| window == preimage.as_bytes()));
+        }
+
+        let wrong = SecretRecord::pairing(
+            prepared.record().pairing.identity.reference().clone(),
+            prepared.record().intent_id,
+            Secret32::new([0x22; 32]).unwrap(),
+            Secret32::new([0x34; 32]).unwrap(),
+        )
+        .unwrap();
+        let mut storage = Memory::with(&record);
+        let original = storage.0.borrow().committed.clone();
+        assert_eq!(
+            prepare_pairing_custody(
+                &mut storage,
+                record::token(&record).unwrap(),
+                &record,
+                &wrong,
+                TIME + 2,
+            )
+            .err(),
+            Some(Error::Conflict)
+        );
+        assert_eq!(storage.0.borrow().committed, original);
+        assert!(storage.0.borrow().candidate.is_none());
+        assert_eq!(
+            prepare_pairing_custody(
+                &mut storage,
+                record::token(&record).unwrap(),
+                &record,
+                &secret,
+                TIME - 1,
+            )
+            .err(),
+            Some(Error::ClockRegressed)
+        );
+    }
+
+    #[test]
+    fn namespace_custody_preparation_retains_the_flight_and_pin() {
+        let mut record = record_tests::namespace_flow()[3].clone();
+        let identity = record.namespace.as_ref().unwrap().pin.identity.clone();
+        let secret = SecretRecord::namespace(
+            identity.reference().clone(),
+            identity.namespace_binding().unwrap().clone(),
+            Secret32::new([0x77; 32]).unwrap(),
+        )
+        .unwrap();
+        record.namespace.as_mut().unwrap().pin =
+            Pin::from_intent(&RecordIntent::from_record(&secret)).unwrap();
+        let original_pin = record.namespace.clone().unwrap();
+        let original_flight = record.flight.clone().unwrap();
+        let mut storage = Memory::with(&record);
+        let prepared = prepare_namespace_custody(
+            &mut storage,
+            record::token(&record).unwrap(),
+            &record,
+            &secret,
+            TIME + 6_000,
+        )
+        .unwrap();
+        assert_eq!(prepared.record().progress, Progress::NamespacePrepared);
+        assert!(prepared.record().namespace == Some(original_pin));
+        assert!(prepared.record().flight == Some(original_flight));
+        assert!(prepared.record().flight.as_ref().unwrap().dispatches > 0);
+
+        let wrong = SecretRecord::namespace(
+            identity.reference().clone(),
+            identity.namespace_binding().unwrap().clone(),
+            Secret32::new([0x78; 32]).unwrap(),
+        )
+        .unwrap();
+        let mut storage = Memory::with(&record);
+        let original = storage.0.borrow().committed.clone();
+        assert_eq!(
+            prepare_namespace_custody(
+                &mut storage,
+                record::token(&record).unwrap(),
+                &record,
+                &wrong,
+                TIME + 6_000,
+            )
+            .err(),
+            Some(Error::Conflict)
+        );
+        assert_eq!(storage.0.borrow().committed, original);
+        assert!(storage.0.borrow().candidate.is_none());
+    }
+
+    fn custody_steps() -> [(Record, Record); 2] {
+        let mut pairing = initial_record();
+        pairing.revision = 1;
+        pairing.progress = Progress::PairingPrepared;
+        let mut verified = pairing.clone();
+        verified.revision = 2;
+        verified.progress = Progress::PairingCustodyVerified;
+        let namespace = record_tests::namespace_flow();
+        [
+            (pairing, verified),
+            (namespace[4].clone(), namespace[5].clone()),
+        ]
+    }
+
+    #[test]
+    fn custody_completion_requires_durable_current_state_before_the_effect() {
+        for (current, next) in custody_steps() {
+            let token = record::token(&current).unwrap();
+            let mut stale = Memory::with(&next);
+            assert_eq!(
+                complete_custody(&mut stale, token, &current, &next, || {
+                    panic!("stale attempt reached custody")
+                })
+                .err(),
+                Some(Error::StaleSnapshot)
+            );
+            let mut unsynced = Memory::with(&current);
+            unsynced.0.borrow_mut().sync_error = Some(Error::StorageUnavailable);
+            assert_eq!(
+                complete_custody(&mut unsynced, token, &current, &next, || {
+                    panic!("undurable attempt reached custody")
+                })
+                .err(),
+                Some(Error::StorageUnavailable)
+            );
+            let mut exhausted = current.clone();
+            exhausted.revision = MAX_REVISION;
+            let mut impossible = next.clone();
+            impossible.revision = MAX_REVISION + 1;
+            let mut storage = Memory::with(&exhausted);
+            assert_eq!(
+                complete_custody(
+                    &mut storage,
+                    record::token(&exhausted).unwrap(),
+                    &exhausted,
+                    &impossible,
+                    || panic!("exhausted attempt reached custody"),
+                )
+                .err(),
+                Some(Error::Limit)
+            );
+        }
+    }
+
+    #[test]
+    fn custody_failure_retains_progress_and_success_publishes_after_durability() {
+        for (current, next) in custody_steps() {
+            let mut storage = Memory::with(&current);
+            let original = storage.0.borrow().committed.clone();
+            let token = record::token(&current).unwrap();
+            assert_eq!(
+                complete_custody(&mut storage, token, &current, &next, || Err(Error::Custody))
+                    .err(),
+                Some(Error::Custody)
+            );
+            assert_eq!(storage.0.borrow().committed, original);
+            assert!(storage.0.borrow().candidate.is_none());
+            let observed = storage.clone();
+            let completed = complete_custody(&mut storage, token, &current, &next, || {
+                let disk = observed.0.borrow();
+                assert!(disk.file_synced && disk.directory_synced);
+                assert_eq!(disk.committed, original);
+                Ok(())
+            })
+            .unwrap();
+            assert!(completed.record() == &next);
+            assert!(completed.record().flight.is_none());
+        }
+    }
+
+    #[test]
+    fn custody_completion_detects_a_post_effect_race_and_allows_explicit_reconciliation() {
+        for (current, next) in custody_steps() {
+            let mut storage = Memory::with(&current);
+            let raced_storage = storage.clone();
+            let mut raced = current.clone();
+            raced.revision += 1;
+            record::successor(&current, &raced).unwrap();
+            let raced_bytes = record::encode(&raced).unwrap().as_bytes().to_vec();
+            assert_eq!(
+                complete_custody(
+                    &mut storage,
+                    record::token(&current).unwrap(),
+                    &current,
+                    &next,
+                    || {
+                        raced_storage.0.borrow_mut().committed = Some(raced_bytes.clone());
+                        Ok(())
+                    },
+                )
+                .err(),
+                Some(Error::StaleSnapshot)
+            );
+            assert_eq!(storage.0.borrow().committed, Some(raced_bytes));
+            assert!(storage.0.borrow().candidate.is_none());
+            let mut reconciled = next;
+            reconciled.revision = raced.revision + 1;
+            assert!(complete_custody(
+                &mut storage,
+                record::token(&raced).unwrap(),
+                &raced,
+                &reconciled,
+                || Ok(()),
+            )
+            .is_ok());
+        }
     }
 
     #[test]
