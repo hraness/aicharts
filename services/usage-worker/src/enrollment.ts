@@ -22,6 +22,14 @@ export type EnrollmentReceipt = Readonly<{
   deviceId: string; enrolledAtMs: number; namespaceVersion: 1;
 }>;
 export type EnrollmentView = Readonly<{ receipt: EnrollmentReceipt; deviceState: "active" | "revoked" }>;
+/** Nonsecret, account-owned control snapshot for a trusted coordinator.
+ * Namespace keys, credential preimages and source content are deliberately absent. */
+export type EnrollmentStatus = Readonly<{
+  schemaVersion: 1; accountId: string; generation: string; phase: "pending" | "active";
+  stateRevision: number; admissionRevision: number; admissionCommittedAtMs: number | null;
+  admissionObservedAtMs: number; headCount: number; liveCount: number; quarantined: boolean;
+  devices: readonly EnrollmentView[];
+}>;
 type Device = { reservation: EnrollmentReservation; deviceId: string; enrolledAtMs: number; revokedAtMs: number | null };
 type GenesisCompletion = { mode: "original" | "fresh-recovery"; intentId: string; reservationId: string; completedAtMs: number };
 type State = {
@@ -474,6 +482,36 @@ export class AccountEnrollment extends DurableObject<Env> {
           namespaceKey: state.anchor.namespaceKey, receipt: receipt(existing.value) })) };
       });
     } catch { return err("storage_unavailable"); }
+  }
+
+  /** Trusted internal read of durable account control. This is intentionally
+   * separate from namespaceForEnrollment: it exposes only reconciliation
+   * metadata and device receipt state, never a namespace key or secret. */
+  async readEnrollmentStatus(input: unknown): Promise<EnrollmentResult<EnrollmentStatus>> {
+    try {
+      const resolved = await this.#operation(input);
+      if (!resolved.ok) return resolved;
+      const operation = resolved.value;
+      return this.ctx.storage.transactionSync(() => {
+        this.#schema();
+        if (this.#generation() !== operation.generation) return err("recovery_required");
+        const { revision: stateRevision, state } = this.#stored(3);
+        if (state === null || state.accountId !== operation.grant.accountId) return err("not_enrolled");
+        const existing = this.#existing(state, operation.grant);
+        if (!existing.ok) return existing;
+        if (existing.value === null) return err("not_enrolled");
+        const control = new AdmissionState(this.ctx.storage.sql).control();
+        const now = Date.now();
+        if (!enrollmentTime(now) || Object.is(now, -0) || now < operation.observed || now < state.observedAtMs || now < control.observed) return err("clock_regressed");
+        if (control.quarantined) return err("recovery_required");
+        return ok(Object.freeze({ schemaVersion: 1 as const, accountId: state.accountId, generation: state.generation,
+          phase: state.phase, stateRevision, admissionRevision: control.revision,
+          admissionCommittedAtMs: control.revision === 0 ? null : control.committed,
+          admissionObservedAtMs: control.observed, headCount: control.heads, liveCount: control.live,
+          quarantined: control.quarantined,
+          devices: Object.freeze(state.devices.map(device => view(device))) }));
+      });
+    } catch (error) { return err(error instanceof AdmissionFault ? error.code : "storage_invalid"); }
   }
 
   /** Exact original proof can revoke only its own existing device, never enroll one. */
