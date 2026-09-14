@@ -1,5 +1,20 @@
 # AI Charts
 
+## Menu-bar companion
+
+AI Charts includes an unbundled macOS menu-bar companion for the repository's
+`outputs/` directory. Build it explicitly, then run the foreground singleton:
+
+```sh
+bun run menubar:build
+bun run menubar
+```
+
+The launcher never compiles on startup. It passes this checkout's `outputs/`
+directory to the prebuilt `aicharts-menubar` binary; a second invocation exits
+through the binary's per-output-directory lock. No app bundle, signing, or
+notarization is part of this companion.
+
 [AI Charts](https://aicharts.io) is an open-source home for sourced, interactive AI benchmark charts. It compares models and agents across performance, cost, speed, and token use without collapsing those trade-offs into one rank.
 
 The homepage leads with an interactive Pareto frontier: compare model capability against output tokens or cost, then inspect the configuration behind each point. The original coding-agent charts have a focused home at [`/coding`](https://aicharts.io/coding). The separate [`/benchmarks`](https://aicharts.io/benchmarks) library covers coding, reasoning, research, memory, images, video, audio, and world models. Charted results, source guides, and emerging evaluations are labeled separately; older research cohorts do not masquerade as current-product rankings.

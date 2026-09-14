@@ -6,7 +6,8 @@
 //! user can open a result straight from the menu bar. The binary holds no
 //! authority of its own — it only reads that directory.
 //!
-//! Runs unbundled: `bun run menubar` builds and spawns this executable.
+//! Runs unbundled: `bun run menubar:build` builds it and `bun run menubar`
+//! launches the prebuilt executable in the foreground.
 
 use std::fs::{File, OpenOptions};
 use std::os::unix::io::AsRawFd;
