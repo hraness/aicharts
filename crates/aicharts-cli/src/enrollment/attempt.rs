@@ -1,7 +1,7 @@
 //! Dormant nonsecret attempt observations and private persistence primitives.
-//! The macOS store constructors remain private and uncalled; there is no public
-//! activation, network dispatch, reference/vault effect or authority here.
-//! Decoding facts does not authenticate their history.
+//! Custody handoff functions validate typed secret records and persist only
+//! nonsecret progress. The CLI still has no caller or production constructor;
+//! decoding facts does not authenticate their history.
 
 mod record;
 mod sequencer;
@@ -43,6 +43,7 @@ enum Error {
     StorageUnavailable,
     RecoveryRequired,
     OutcomeUnknown,
+    Custody,
 }
 
 impl Error {
@@ -59,6 +60,7 @@ impl Error {
             Self::StorageUnavailable => "attempt_storage_unavailable",
             Self::RecoveryRequired => "attempt_recovery_required",
             Self::OutcomeUnknown => "attempt_outcome_unknown",
+            Self::Custody => "attempt_custody",
         }
     }
 }
