@@ -27,6 +27,41 @@ impl super::session::CustodyPort for FakeCustody {
     ) -> Result<()> {
         Ok(())
     }
+    fn reconcile_namespace(
+        &mut self,
+        _record: &super::record::Record,
+        _secret: &SecretRecord,
+    ) -> Result<()> {
+        Ok(())
+    }
+}
+
+struct FailingCustody {
+    calls: usize,
+}
+impl super::session::CustodyPort for FailingCustody {
+    fn verify_pairing(
+        &mut self,
+        _record: &super::record::Record,
+        _secret: &SecretRecord,
+    ) -> Result<()> {
+        Ok(())
+    }
+    fn install_namespace(
+        &mut self,
+        _record: &super::record::Record,
+        _secret: &SecretRecord,
+    ) -> Result<()> {
+        Ok(())
+    }
+    fn reconcile_namespace(
+        &mut self,
+        _record: &super::record::Record,
+        _secret: &SecretRecord,
+    ) -> Result<()> {
+        self.calls += 1;
+        Err(Error::OutcomeUnknown)
+    }
 }
 struct FakeExchange {
     competitor: Option<Memory>,
@@ -286,4 +321,163 @@ fn retained_dispatched_flight_requires_explicit_reconstruction() {
         })
     ));
     assert!(!exchange.busy_seen);
+}
+
+#[test]
+fn namespace_reconciliation_clears_retained_flight_without_exchange() {
+    let mut record = super::record_tests::namespace_flow()[3].clone();
+    let identity = record.namespace.as_ref().unwrap().pin.identity.clone();
+    let secret = SecretRecord::namespace(
+        identity.reference().clone(),
+        identity.namespace_binding().unwrap().clone(),
+        Secret32::new([0x77; 32]).unwrap(),
+    )
+    .unwrap();
+    record.namespace.as_mut().unwrap().pin =
+        super::record::Pin::from_intent(&RecordIntent::from_record(&secret)).unwrap();
+    let token = record::token(&record).unwrap();
+    let memory = Memory::with(&record);
+    let retained = memory.clone();
+    let mut custody = FakeCustody;
+    HeldAttempt::open(memory, token)
+        .unwrap()
+        .reconcile_namespace(&secret, &mut custody, super::record_tests::TIME + 6_000)
+        .ok()
+        .expect("namespace custody should reconcile");
+    let mut observed = retained;
+    let final_state = storage::inspect(&mut observed).unwrap();
+    assert_eq!(
+        final_state.record().progress,
+        super::record::Progress::NamespaceCustodyVerified
+    );
+    assert!(final_state.record().flight.is_none());
+}
+
+#[test]
+fn namespace_custody_failure_leaves_prepared_flight_for_recovery() {
+    let mut record = super::record_tests::namespace_flow()[3].clone();
+    let identity = record.namespace.as_ref().unwrap().pin.identity.clone();
+    let secret = SecretRecord::namespace(
+        identity.reference().clone(),
+        identity.namespace_binding().unwrap().clone(),
+        Secret32::new([0x77; 32]).unwrap(),
+    )
+    .unwrap();
+    record.namespace.as_mut().unwrap().pin =
+        super::record::Pin::from_intent(&RecordIntent::from_record(&secret)).unwrap();
+    let token = record::token(&record).unwrap();
+    let memory = Memory::with(&record);
+    let retained = memory.clone();
+    let mut custody = FailingCustody { calls: 0 };
+    let result = HeldAttempt::open(memory, token)
+        .unwrap()
+        .reconcile_namespace(&secret, &mut custody, super::record_tests::TIME + 6_000);
+    assert!(matches!(
+        result,
+        Err(super::session::OperationFailure {
+            error: Error::OutcomeUnknown,
+            ..
+        })
+    ));
+    assert_eq!(custody.calls, 1);
+    let mut observed = retained;
+    let state = storage::inspect(&mut observed).unwrap();
+    assert_eq!(
+        state.record().progress,
+        super::record::Progress::NamespacePrepared
+    );
+    assert!(state.record().flight.is_some());
+}
+
+#[test]
+fn already_verified_namespace_still_requires_fresh_custody_proof() {
+    let mut record = super::record_tests::namespace_flow()[5].clone();
+    let identity = record.namespace.as_ref().unwrap().pin.identity.clone();
+    let secret = SecretRecord::namespace(
+        identity.reference().clone(),
+        identity.namespace_binding().unwrap().clone(),
+        Secret32::new([0x77; 32]).unwrap(),
+    )
+    .unwrap();
+    record.namespace.as_mut().unwrap().pin =
+        super::record::Pin::from_intent(&RecordIntent::from_record(&secret)).unwrap();
+    let token = record::token(&record).unwrap();
+    let memory = Memory::with(&record);
+    let mut custody = FailingCustody { calls: 0 };
+    let result = HeldAttempt::open(memory, token)
+        .unwrap()
+        .reconcile_namespace(&secret, &mut custody, super::record_tests::TIME + 8_000);
+    assert!(matches!(
+        result,
+        Err(super::session::OperationFailure {
+            error: Error::OutcomeUnknown,
+            ..
+        })
+    ));
+    assert_eq!(custody.calls, 1);
+}
+
+#[test]
+fn wrong_namespace_secret_refuses_before_custody_and_preserves_record() {
+    let record = super::record_tests::namespace_flow()[3].clone();
+    let token = record::token(&record).unwrap();
+    let memory = Memory::with(&record);
+    let retained = memory.clone();
+    let identity = record.namespace.as_ref().unwrap().pin.identity.clone();
+    let wrong = SecretRecord::namespace(
+        identity.reference().clone(),
+        identity.namespace_binding().unwrap().clone(),
+        Secret32::new([0x78; 32]).unwrap(),
+    )
+    .unwrap();
+    let mut custody = FailingCustody { calls: 0 };
+    let result = HeldAttempt::open(memory, token)
+        .unwrap()
+        .reconcile_namespace(&wrong, &mut custody, super::record_tests::TIME + 6_000);
+    assert!(matches!(
+        result,
+        Err(super::session::OperationFailure {
+            error: Error::Custody,
+            ..
+        })
+    ));
+    assert_eq!(custody.calls, 0);
+    let mut observed = retained;
+    assert!(storage::inspect(&mut observed).unwrap().token() == token);
+}
+
+#[test]
+fn refresh_failure_refuses_custody_and_preserves_flight() {
+    let mut record = super::record_tests::namespace_flow()[3].clone();
+    let identity = record.namespace.as_ref().unwrap().pin.identity.clone();
+    let secret = SecretRecord::namespace(
+        identity.reference().clone(),
+        identity.namespace_binding().unwrap().clone(),
+        Secret32::new([0x77; 32]).unwrap(),
+    )
+    .unwrap();
+    record.namespace.as_mut().unwrap().pin =
+        super::record::Pin::from_intent(&RecordIntent::from_record(&secret)).unwrap();
+    let token = record::token(&record).unwrap();
+    let memory = Memory::with(&record);
+    let retained = memory.clone();
+    let held = HeldAttempt::open(memory, token).unwrap();
+    retained.fail_next_sync();
+    let mut custody = FailingCustody { calls: 0 };
+    let result = held.reconcile_namespace(&secret, &mut custody, super::record_tests::TIME + 6_000);
+    assert!(matches!(
+        result,
+        Err(super::session::OperationFailure {
+            error: Error::StorageUnavailable,
+            ..
+        })
+    ));
+    assert_eq!(custody.calls, 0);
+    let mut observed = retained;
+    let state = storage::inspect(&mut observed).unwrap();
+    assert_eq!(
+        state.record().progress,
+        super::record::Progress::NamespacePlanned
+    );
+    assert!(state.record().flight.is_some());
 }

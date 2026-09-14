@@ -95,6 +95,34 @@ impl CustodyPort for SealedCustody<'_> {
             .map_err(custody_error)?;
         Ok(())
     }
+
+    fn reconcile_namespace(&mut self, _record: &Record, secret: &SecretRecord) -> Result<()> {
+        let expected_intent = RecordIntent::from_record(secret);
+        let manifest = self.references.snapshot().map_err(custody_error)?;
+        let entry = manifest
+            .entries()
+            .iter()
+            .find(|entry| entry.intent().identity() == secret.identity())
+            .ok_or(Error::RecoveryRequired)?;
+        if entry.intent() != &expected_intent {
+            return Err(Error::Custody);
+        }
+        let mut token = manifest.token();
+        if entry.state() == ReferenceState::Prepared {
+            token = self
+                .references
+                .reconcile_prepared(&token, secret.identity(), self.vault)
+                .map_err(custody_error)?
+                .token();
+        }
+        let resolved = self
+            .references
+            .resolve_verified(&token, secret.identity(), self.vault)
+            .map_err(custody_error)?;
+        (RecordIntent::from_record(&resolved) == expected_intent)
+            .then_some(())
+            .ok_or(Error::Custody)
+    }
 }
 
 /// Ports are private and intentionally operation-scoped. Implementations must
@@ -102,6 +130,7 @@ impl CustodyPort for SealedCustody<'_> {
 pub(super) trait CustodyPort {
     fn verify_pairing(&mut self, record: &Record, secret: &SecretRecord) -> Result<()>;
     fn install_namespace(&mut self, record: &Record, secret: &SecretRecord) -> Result<()>;
+    fn reconcile_namespace(&mut self, record: &Record, secret: &SecretRecord) -> Result<()>;
 }
 
 pub(super) trait ExchangePort {
@@ -434,6 +463,106 @@ impl<S: Storage> HeldAttempt<S> {
             }
         }
         Ok(accepted)
+    }
+
+    /// Finish a retained namespace flight after restart. This path performs no
+    /// HTTPS and never dispatches again: the caller supplies the original
+    /// namespace `SecretRecord`, custody is freshly reconciled, and only then
+    /// is the retained attempt flight cleared. The caller retains ownership of
+    /// that non-Clone secret across every error for explicit retry/recovery.
+    #[allow(clippy::result_large_err)]
+    pub(super) fn reconcile_namespace<C: CustodyPort>(
+        mut self,
+        secret: &SecretRecord,
+        custody: &mut C,
+        prepared_at_ms: u64,
+    ) -> std::result::Result<(), OperationFailure> {
+        let fail = |error| OperationFailure {
+            error,
+            namespace_secret: None,
+            transport: None,
+        };
+        let Some(namespace) = self.current.namespace.as_ref() else {
+            return Err(fail(Error::RecoveryRequired));
+        };
+        let intent = RecordIntent::from_record(secret);
+        if intent.identity() != &namespace.pin.identity
+            || intent.commitment() != namespace.pin.commitment.as_bytes()
+        {
+            return Err(OperationFailure {
+                error: Error::Custody,
+                namespace_secret: None,
+                transport: None,
+            });
+        }
+        if let Err(error) = self.refresh_durable() {
+            return Err(fail(error));
+        }
+        if self.current.progress == super::record::Progress::NamespaceCustodyVerified {
+            if let Err(error) = custody.reconcile_namespace(self.record(), secret) {
+                self.invalidate();
+                return Err(OperationFailure {
+                    error,
+                    namespace_secret: None,
+                    transport: None,
+                });
+            }
+            if let Err(error) = self.refresh_durable() {
+                return Err(OperationFailure {
+                    error,
+                    namespace_secret: None,
+                    transport: None,
+                });
+            }
+            return Ok(());
+        }
+        if self.current.progress == super::record::Progress::NamespacePlanned {
+            let next = match super::sequencer::prepare_namespace_custody_record(
+                self.token,
+                self.record(),
+                secret,
+                prepared_at_ms,
+            ) {
+                Ok(next) => next,
+                Err(error) => {
+                    return Err(OperationFailure {
+                        error,
+                        namespace_secret: None,
+                        transport: None,
+                    })
+                }
+            };
+            if let Err(error) = self.publish(&next) {
+                return Err(OperationFailure {
+                    error,
+                    namespace_secret: None,
+                    transport: None,
+                });
+            }
+        }
+        let next = match super::sequencer::complete_namespace_custody_record(
+            self.token,
+            self.record(),
+            secret,
+        ) {
+            Ok(next) => next,
+            Err(error) => {
+                return Err(OperationFailure {
+                    error,
+                    namespace_secret: None,
+                    transport: None,
+                })
+            }
+        };
+        if let Err(error) = custody.reconcile_namespace(self.record(), secret) {
+            self.invalidate();
+            return Err(OperationFailure {
+                error,
+                namespace_secret: None,
+                transport: None,
+            });
+        }
+        self.publish(&next).map_err(fail)
     }
 }
 

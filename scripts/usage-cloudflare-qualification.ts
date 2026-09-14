@@ -477,8 +477,9 @@ export async function dispatchQualificationStep(path: string, options: AttemptOp
       platform = await (options.factory ?? installedPlatform)(join(path, configNames.driver));
       if (controller.signal.aborted) { void disposePlatform().catch(() => {}); fail(); }
       acceptanceOpen();
+      const body = qualificationBytes(record.requestHex);
       const response = await platform.env.QUALIFICATION.fetch(QUALIFICATION_URL, { method: "POST", redirect: "error", signal: controller.signal,
-        headers: { accept: "application/json", "content-type": "application/json" }, body: qualificationBytes(record.requestHex) });
+        headers: { accept: "application/json", "content-type": "application/json", "content-length": String(body.byteLength) }, body });
       if (controller.signal.aborted) { void response.body?.cancel().catch(() => {}); fail(); }
       try { acceptanceOpen(); } catch (error) { void response.body?.cancel().catch(() => {}); throw error; }
       const result = await readQualificationResponse(response, manifest.run, request, controller.signal);

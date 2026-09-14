@@ -33,12 +33,21 @@ function receipt(manifest) {
 function targetScript(mode) {
   return `let count = 0; export default { async fetch(request) {
     count++; if (new URL(request.url).pathname === "/count") return Response.json({ count });
+    const forbidden = ["authorization", "cookie", "origin", "content-encoding", "transfer-encoding"];
+    const body = new Uint8Array(await request.arrayBuffer());
+    const validEnvelope = request.url === "https://aicharts-usage-qualification.invalid/v1/run" && request.method === "POST"
+      && request.headers.get("content-type") === "application/json" && request.headers.get("accept") === "application/json"
+      && forbidden.every(name => !request.headers.has(name)) && request.headers.get("content-length") === String(body.byteLength);
+    if (!validEnvelope) return Response.json({ accepted: false, transferEncoding: request.headers.get("transfer-encoding"), contentLength: request.headers.get("content-length"), bodyLength: body.byteLength }, { status: 400 });
     if (${JSON.stringify(mode)} === "redirect" && new URL(request.url).pathname !== "/follow")
       return new Response(null, { status: 302, headers: { location: "https://synthetic.invalid/follow" } });
-    const input = await request.json();
+    const requestText = new TextDecoder().decode(body);
+    const input = JSON.parse(requestText);
+    if (requestText !== JSON.stringify({ schemaVersion: 1, runId: input.runId, stage: "inspect" }))
+      return Response.json({ accepted: false, canonical: false }, { status: 400 });
     const value = { objects: [] };
-    const body = JSON.stringify({ schemaVersion: 1, runId: input.runId, stage: input.stage, ok: true, value });
-    return new Response(body, { headers: {
+    const replyBody = JSON.stringify({ schemaVersion: 1, runId: input.runId, stage: input.stage, ok: true, value });
+    return new Response(replyBody, { headers: {
       "content-type": "application/json; charset=utf-8", "cache-control": "private, no-store",
       "x-content-type-options": "nosniff", "referrer-policy": "no-referrer", "x-robots-tag": "noindex, nofollow",
     } });
@@ -67,6 +76,12 @@ async function run(mode) {
     await recordQualificationDeployment(path, receipt(manifest), false);
     const calls = [];
     const platform = await runtime.getBindings("driver");
+    const controlBody = new TextEncoder().encode("{\"control\":true}");
+    const control = await platform.QUALIFICATION.fetch("https://aicharts-usage-qualification.invalid/v1/run", {
+      method: "POST", redirect: "error", headers: { accept: "application/json", "content-type": "application/json" }, body: controlBody,
+    });
+    assert.equal(control.status, 400);
+    assert.deepEqual(await control.json(), { accepted: false, transferEncoding: "chunked", contentLength: null, bodyLength: controlBody.byteLength });
     const factory = async () => ({ env: { QUALIFICATION: {
       fetch: (input, init) => {
         calls.push({ input, init, signalOpen: init.signal?.aborted === false });
@@ -80,8 +95,8 @@ async function run(mode) {
     assert.equal(calls[0].init.redirect, "error");
     assert.ok(calls[0].init.signal instanceof AbortSignal);
     assert.equal(calls[0].signalOpen, true);
-    assert.deepEqual(calls[0].init.headers, { accept: "application/json", "content-type": "application/json" });
     assert.ok(calls[0].init.body instanceof Uint8Array);
+    assert.deepEqual(calls[0].init.headers, { accept: "application/json", "content-type": "application/json", "content-length": String(calls[0].init.body.byteLength) });
     assert.equal(Buffer.from(calls[0].init.body).toString("hex"), result.steps[0].requestHex);
     if (mode === "success") {
       assert.equal(result.steps[0].state, "complete");
@@ -89,7 +104,7 @@ async function run(mode) {
       assert.equal(result.steps[0].state, "ambiguous");
       assert.equal(calls.length, 1, "redirect response must not trigger a second service request");
     }
-    assert.deepEqual(await (await platform.QUALIFICATION.fetch("https://synthetic.invalid/count")).json(), { count: 2 });
+    assert.deepEqual(await (await platform.QUALIFICATION.fetch("https://synthetic.invalid/count")).json(), { count: 3 });
   } finally {
     try { await cleanup(); }
     finally { process.removeListener("SIGTERM", terminate); }
