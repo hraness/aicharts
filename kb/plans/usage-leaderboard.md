@@ -684,3 +684,45 @@ likewise exercised by the synthetic boundary.
 Result: `AICHARTS_USAGE_AUTH_ENABLED` remains enabled on production. Private
 reads, pairing, enrollment, admission, Worker, upload and query flags all
 remain unset; public usage activation is not established by this evidence.
+
+### 2026-09-14 — external restore fence delivered and merged
+
+The closed-restore precondition shipped in
+[PR 245](https://github.com/hraness/aicharts/pull/245), merged as
+`7320dbab702707b28980d15feb8b2d9bc5bb0ee8` after exact-head `Check`, `Required`,
+all four CodeQL analyses and Vercel passed. Two commits on
+`codex/usage-restore-fence-20260914`:
+
+- `db5559f` — a separately-bound `RESTORE_FENCES` durable object holding a
+  per-account `{generation, restoreEpoch, workerVersion, phase, established}`
+  record in its own store, so it survives an account-object + R2 restore.
+  Append-only monotonic epoch, open/closed phase, bounded TTL leases, a
+  close→drain→publish barrier and idempotent publish reconciliation. Eight
+  focused durable-object tests.
+- `860518f` — account wiring: schema 3→4 records `fenceEpoch` in durable
+  state; every mutating operation (`enroll`, `recoverPendingEnrollment`,
+  `revokeEnrollment`, `namespaceForEnrollment`, `admitBatch`) acquires a lease
+  after identity is known and releases it in `finally` with the exact commit
+  outcome; the transaction re-checks generation and epoch inside
+  `transactionSync`, refuses a wiped-but-established genesis and fails closed
+  on a stale recorded epoch with `recovery_required`. Pure reads
+  (`readEnrollmentStatus`, `readImportedDays`) stay unfenced. Four account↔fence
+  integration tests prove wipe-survival, stale-epoch, the closed barrier and
+  establish-on-commit.
+
+Local verification on the exact tree: `usage-worker-tools.ts test` 388/388
+pass (14 files), `usage-worker-tools.ts check` typecheck clean, and the full
+`bun run check` gate green (cargo fmt/clippy/test, worker checks, release
+checks, typecheck, lint, 1454 lib tests, `next build`, `test:browser`).
+
+Result: the enrollment-activation closed-restore precondition is met in source
+on `main`. Still open inside the fence subsystem: an operator
+close→drain→restore→publish driver, which needs an authenticated control
+channel and so depends on the `usage.aicharts.io` route/deployment
+architecture. The worker remains undeployed and dormant — no route, no
+enrollment command, no private reads, no public usage. The next source slice
+is the dormant native enrollment activation seam: a CLI `enroll` driver that
+mints the genesis pairing `SecretRecord`/`Record` and drives `HeldAttempt`
+through `Initialize → browser pairing_url → Poll → choose_account → Confirm →
+Reserve → Enroll → Namespace → reconcile_namespace`, plus `Mode::Enroll` and
+custody/transport wiring — all `pub(super)` today.
