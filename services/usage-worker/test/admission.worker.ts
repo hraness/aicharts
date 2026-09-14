@@ -169,6 +169,19 @@ describe("dormant account admission", () => {
     expect(await upload(device, value)).toEqual({ ok: false, error: "storage_invalid" });
   });
 
+  test("a regressing immutable journal timestamp fails the restart audit", async () => {
+    const device = await enroll(), first = batch(device), firstBytes = success(await upload(device, first));
+    vi.setSystemTime(NOW + 10);
+    const correction = batch(device, 2, [{ id: 1, expected: first.operations[0].operationHash, output: 1n, day: DAY - 1 }]);
+    const secondBytes = success(await upload(device, correction));
+    const regressed = freezeAdmission(correction, { status: 1, receipts: [{ outcome: 2, headOperationHash: correction.operations[0].operationHash }] }, 2, NOW - 1);
+    expect(secondBytes).not.toEqual(regressed.bytes);
+    await runInDurableObject(stub(), (_instance, state) => state.storage.sql.exec(
+      "UPDATE usage_admission_journal SET journal = ?, committed_at_ms = ? WHERE revision = 2", regressed.bytes, NOW - 1).toArray());
+    await abortAllDurableObjects();
+    expect(await upload(device, correction)).toEqual({ ok: false, error: "storage_invalid" });
+  });
+
   test("expired enrollment grant is not routine upload authority; polling is never called", async () => {
     const device = await enroll(), value = batch(device);
     vi.setSystemTime(NOW + PAIRING_TTL_MS + 1);
