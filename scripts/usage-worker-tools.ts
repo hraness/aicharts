@@ -41,6 +41,7 @@ export function workerToolCommands(args: readonly string[]): readonly (readonly 
   if (args.length === 1 && args[0] === "test-admission-http") return [[...test, "test/admission-http.worker.ts"]];
   if (args.length === 1 && args[0] === "test-private-days") return [[...test, "test/private-days.worker.ts"]];
   if (args.length === 1 && args[0] === "test-private-days-http") return [[...test, "test/private-days-http.worker.ts"]];
+  if (args.length === 1 && args[0] === "test-restore-fence") return [[...test, "test/restore-fence.worker.ts"]];
   if (args.length === 1 && args[0] === "test-synthetic-qualification") return [[...test, "test/synthetic-qualification.worker.ts"]];
   if (args.length === 1 && args[0] === "test-staging") return [[...test, "test/staging.worker.ts"]];
   if (args.length === 1 && args[0] === "check") return [types, ["node", `${root}node_modules/typescript/bin/tsc`, "--project", "tsconfig.json"], test];

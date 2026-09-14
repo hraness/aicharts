@@ -1,13 +1,17 @@
 import { admissionHex, equalAdmissionBytes, type AdmissionBatch } from "../../../lib/usage/admission";
 import { ensureAdmissionBatchObject, ensureAdmissionJournalObject, type AdmissionObjectError } from "./admission-objects";
-import { ADMISSION_POLICY_V1, AdmissionFault, batchAccount, ownedAdmissionBatch, timestampsAtMost, type AdmissionFailure } from "./admission-policy";
+import { ADMISSION_POLICY_V1, AdmissionFault, batchAccount, timestampsAtMost, type AdmissionFailure } from "./admission-policy";
 import { AdmissionState, type AdmissionAuthority, type AdmissionPending } from "./admission-state";
-import { enrollmentHex, enrollmentSnapshot, enrollmentTime } from "./enrollment-contract";
+import { enrollmentTime } from "./enrollment-contract";
 import type { EnrollmentResult } from "./enrollment";
 import { readNamespaceAnchor, sameNamespaceAnchor, type NamespaceAnchor } from "./namespace-anchor";
 import { uploadSecretCommitment } from "./pairing";
+import type { FenceObservation } from "./restore-fence";
 
-export type AdmissionObservation = { generation: string; observed: number };
+// `committed` is a mutable, request-scoped cell: the owning account transaction
+// sets it when it durably writes, so the restore-fence lease can be released
+// with the exact commit outcome. `fence` is null for a non-mutating read.
+export type AdmissionObservation = { generation: string; observed: number; fence: FenceObservation | null; committed: boolean };
 export type AdmissionOwner = AdmissionAuthority & { anchor: NamespaceAnchor };
 export type AdmissionTransaction = <T>(observation: AdmissionObservation, run: (state: AdmissionOwner | null, now: number) => T) => EnrollmentResult<T>;
 type Flight = { kind: "pending"; pending: AdmissionPending } | { kind: "settled"; bytes: Uint8Array };
@@ -115,22 +119,21 @@ export class AccountAdmission {
     throw new AdmissionFault(error === "invalid_input" ? "storage_invalid" : "storage_unavailable");
   }
 
-  async admit(input: unknown): Promise<EnrollmentResult<Uint8Array>> {
+  /** `request` is the owned, fully decoded admission request the caller parsed
+   * before the restore-fence lease await — decoding here instead would re-read a
+   * mutable `input.batch` after the await and break mutation resistance. */
+  async admit(request: { uploadSecret: string; batch: AdmissionBatch }, fence: FenceObservation | null): Promise<EnrollmentResult<Uint8Array>> {
     try {
-      const dto = enrollmentSnapshot(input, ["uploadSecret", "batch"]);
-      if (!dto || !enrollmentHex(dto.uploadSecret)) return { ok: false, error: "invalid_input" };
-      let batch: AdmissionBatch;
-      try { batch = ownedAdmissionBatch(dto.batch); }
-      catch { return { ok: false, error: "invalid_input" }; }
+      const { uploadSecret, batch } = request;
       const observed = Date.now();
       if (!enrollmentTime(observed)) throw new AdmissionFault("clock_regressed");
-      const observation = { generation: admissionHex(batch.generation), observed };
+      const observation = { generation: admissionHex(batch.generation), observed, fence, committed: false };
       const original = this.#run(observation, batch, authority => {
         const device = authority.devices.find(device => device.deviceId === admissionHex(batch.deviceId));
         if (!device) throw new AdmissionFault("unauthorized");
         return { intentId: device.reservation.intentId, commitment: device.reservation.uploadCommitment, anchor: { ...authority.anchor } };
       });
-      const commitment = await uploadSecretCommitment(original.intentId, dto.uploadSecret);
+      const commitment = await uploadSecretCommitment(original.intentId, uploadSecret);
       if (!commitment.ok || !sameCommitment(original.commitment, commitment.value)) throw new AdmissionFault("unauthorized");
       this.#run(observation, batch, authority => {
         const device = authority.devices.find(device => device.deviceId === admissionHex(batch.deviceId));

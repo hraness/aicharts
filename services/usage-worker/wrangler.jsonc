@@ -9,17 +9,20 @@
   "send_metrics": false,
   "observability": { "enabled": false },
   "vars": {
-    "USAGE_ENROLLMENT_GENERATION": "1111111111111111111111111111111111111111111111111111111111111111"
+    "USAGE_ENROLLMENT_GENERATION": "1111111111111111111111111111111111111111111111111111111111111111",
+    "USAGE_WORKER_VERSION": "2222222222222222222222222222222222222222222222222222222222222222"
   },
   "durable_objects": {
     "bindings": [
       { "name": "PAIRINGS", "class_name": "PairingIntent" },
-      { "name": "ACCOUNT_ENROLLMENTS", "class_name": "AccountEnrollment" }
+      { "name": "ACCOUNT_ENROLLMENTS", "class_name": "AccountEnrollment" },
+      { "name": "RESTORE_FENCES", "class_name": "RestoreFence" }
     ]
   },
   "exports": {
     "PairingIntent": { "type": "durable-object", "storage": "sqlite" },
-    "AccountEnrollment": { "type": "durable-object", "storage": "sqlite" }
+    "AccountEnrollment": { "type": "durable-object", "storage": "sqlite" },
+    "RestoreFence": { "type": "durable-object", "storage": "sqlite" }
   },
   "r2_buckets": [
     { "binding": "STAGING", "bucket_name": "aicharts-usage-local-only" },

@@ -1,7 +1,8 @@
 import { DurableObject } from "cloudflare:workers";
 import { createHash } from "node:crypto";
+import { type AdmissionBatch } from "../../../lib/usage/admission";
 import { AccountAdmission, type AdmissionObservation } from "./account-admission";
-import { AdmissionFault } from "./admission-policy";
+import { AdmissionFault, batchAccount, ownedAdmissionBatch } from "./admission-policy";
 import { ADMISSION_SCHEMA } from "./admission-schema";
 import { AdmissionState, type AdmissionControl } from "./admission-state";
 import { parsePrivateDaysRequest, type PrivateDaysRequestV1, type PrivateDaysV1 } from "../../../lib/usage/private-days-contract";
@@ -13,6 +14,10 @@ import {
 import {
   ensureNamespaceAnchor, enrollmentStorageCall, readNamespaceAnchor, sameNamespaceAnchor, type NamespaceAnchor,
 } from "./namespace-anchor";
+import {
+  RESTORE_FENCE_GENESIS_EPOCH, RESTORE_FENCE_LEASE_TTL_MS, restoreFenceName,
+  type FenceObservation, type RestoreFenceLease,
+} from "./restore-fence";
 
 export type EnrollmentError = "invalid_input" | "unavailable" | "unauthorized" | "not_reserved" | "not_enrolled"
   | "expired" | "conflict" | "recovery_required" | "revoked" | "storage_invalid" | "storage_unavailable" | "clock_regressed" | "limit";
@@ -34,9 +39,20 @@ type Device = { reservation: EnrollmentReservation; deviceId: string; enrolledAt
 type GenesisCompletion = { mode: "original" | "fresh-recovery"; intentId: string; reservationId: string; completedAtMs: number };
 type State = {
   accountId: string; generation: string; observedAtMs: number; phase: "pending" | "active";
-  anchor: NamespaceAnchor; devices: Device[]; genesisCompletion: GenesisCompletion | null;
+  // The restore epoch this state last committed under. `null` marks a
+  // migrated pre-fence payload that adopts the authoritative epoch on first
+  // fenced contact; a real epoch must match the fence's or the account is
+  // stale (restored) and must refuse recovery_required.
+  fenceEpoch: number | null; anchor: NamespaceAnchor; devices: Device[]; genesisCompletion: GenesisCompletion | null;
 };
-type Operation = { proof: EnrollmentProof; grant: EnrollmentReservation; generation: string; observed: number };
+// `fence`/`leaseToken`/`committed` are the request-scoped restore-fence
+// context: `fence` is the authoritative epoch/established the lease pinned,
+// `leaseToken` the one-time release handle, `committed` the mutable cell the
+// transaction sets when it durably writes. All null/false for a read.
+type Operation = {
+  proof: EnrollmentProof; grant: EnrollmentReservation; generation: string; observed: number;
+  fence: FenceObservation | null; leaseToken: string | null; committed: boolean;
+};
 export const MAX_ENROLLED_DEVICES = 128; // Includes revoked receipts; never evict identity to reclaim a slot.
 const MAX_PAYLOAD = 131_072;
 const SCHEMA_SQL = "CREATE TABLE account_enrollment (id INTEGER PRIMARY KEY CHECK (id = 1), schema_version INTEGER NOT NULL, revision INTEGER NOT NULL CHECK (revision >= 0), payload TEXT CHECK (payload IS NULL OR length(payload) <= 131072))";
@@ -56,11 +72,15 @@ function sameGrant(left: EnrollmentReservation, right: EnrollmentReservation): b
 
 // legacy=true is used only by the additive constructor migration. No legacy
 // shape is admitted to an operation before deriving and validating completion.
-function validState(value: unknown, legacy = false): value is State {
-  const state = enrollmentSnapshot(value, ["accountId", "generation", "observedAtMs", "phase", "anchor", "devices", ...(legacy ? [] : ["genesisCompletion"])]);
+// fence=false reads the schema-version-2/3 payload, which predates the
+// restore-epoch field; fence=true reads and admits only the current schema-4
+// shape. Both flags exist solely so additive migrations can load older rows.
+function validState(value: unknown, legacy = false, fence = true): value is State {
+  const state = enrollmentSnapshot(value, ["accountId", "generation", "observedAtMs", "phase", ...(fence ? ["fenceEpoch"] : []), "anchor", "devices", ...(legacy ? [] : ["genesisCompletion"])]);
   if (state === null || !enrollmentAccount(state.accountId) || !enrollmentHex(state.generation) || !enrollmentTime(state.observedAtMs)
     || (state.phase !== "pending" && state.phase !== "active") || !Array.isArray(state.devices)
     || state.devices.length > MAX_ENROLLED_DEVICES || (state.phase === "pending") !== (state.devices.length === 0)) return false;
+  if (fence && !(state.fenceEpoch === null || (typeof state.fenceEpoch === "number" && Number.isSafeInteger(state.fenceEpoch) && state.fenceEpoch >= 0))) return false;
   const anchor = enrollmentSnapshot(state.anchor, ["accountId", "namespaceKey", "intentId", "reservationId", "generation", "createdAtMs"]);
   if (anchor === null || anchor.accountId !== state.accountId || anchor.generation !== state.generation
     || !enrollmentHex(anchor.namespaceKey) || !enrollmentHex(anchor.intentId) || !enrollmentHex(anchor.reservationId)
@@ -159,7 +179,8 @@ export class AccountEnrollment extends DurableObject<Env> {
           ctx.storage.sql.exec("UPDATE account_enrollment SET schema_version = 3 WHERE id = 1");
         }
         this.#schema();
-        new AdmissionState(ctx.storage.sql).audit(this.#stored(3).state);
+        this.#migrateFence();
+        new AdmissionState(ctx.storage.sql).audit(this.#stored(4).state);
       });
     } catch { this.#healthy = false; }
   }
@@ -187,12 +208,12 @@ export class AccountEnrollment extends DurableObject<Env> {
     if (row.payload !== null) {
       if (typeof row.payload !== "string" || row.payload.length > MAX_PAYLOAD || row.revision === 0) throw new Error("storage_invalid");
       const parsed: unknown = JSON.parse(row.payload);
-      if (!validState(parsed, true) || !this.ctx.id.equals(this.env.ACCOUNT_ENROLLMENTS.idFromName(enrollmentAccountName(parsed.accountId)))) throw new Error("storage_invalid");
+      if (!validState(parsed, true, false) || !this.ctx.id.equals(this.env.ACCOUNT_ENROLLMENTS.idFromName(enrollmentAccountName(parsed.accountId)))) throw new Error("storage_invalid");
       const origin = parsed.devices.find(device => device.reservation.intentId === parsed.anchor.intentId && device.reservation.reservationId === parsed.anchor.reservationId);
       const migrated: State = { ...parsed, genesisCompletion: origin === undefined ? null : {
         mode: "original", intentId: origin.reservation.intentId, reservationId: origin.reservation.reservationId, completedAtMs: origin.enrolledAtMs,
       } };
-      if (!validState(migrated)) throw new Error("storage_invalid");
+      if (!validState(migrated, false, false)) throw new Error("storage_invalid");
       payload = JSON.stringify(migrated);
       if (payload.length > MAX_PAYLOAD) throw new Error("storage_invalid");
     } else if (row.revision !== 0) throw new Error("storage_invalid");
@@ -200,7 +221,29 @@ export class AccountEnrollment extends DurableObject<Env> {
     // older binary fails closed on schema 2; rollback must not strip this field.
     this.ctx.storage.sql.exec("UPDATE account_enrollment SET schema_version = 2, payload = ? WHERE id = 1", payload);
   }
-  #stored(version: 2 | 3): { revision: number; state: State | null } {
+  /** Additive schema-3→4 migration: begin recording the restore epoch. A
+   * pre-fence payload adopts the epoch on first fenced contact (`fenceEpoch`
+   * stays `null`); a pending (null-payload) account records it at genesis. An
+   * older binary fails closed on schema 4; rollback must not strip the field. */
+  #migrateFence(): void {
+    const rows = this.ctx.storage.sql.exec("SELECT id, schema_version, revision, payload FROM account_enrollment LIMIT 2").toArray();
+    const row = rows[0];
+    if (rows.length !== 1 || row?.id !== 1) throw new Error("storage_invalid");
+    if (row.schema_version === 4) return;
+    if (row.schema_version !== 3) throw new Error("storage_invalid");
+    let payload = row.payload;
+    if (payload !== null) {
+      if (typeof payload !== "string" || payload.length > MAX_PAYLOAD) throw new Error("storage_invalid");
+      const parsed: unknown = JSON.parse(payload);
+      if (!validState(parsed, false, false)) throw new Error("storage_invalid");
+      const migrated: State = { ...parsed, fenceEpoch: null };
+      if (!validState(migrated)) throw new Error("storage_invalid");
+      payload = JSON.stringify(migrated);
+      if (payload.length > MAX_PAYLOAD) throw new Error("storage_invalid");
+    }
+    this.ctx.storage.sql.exec("UPDATE account_enrollment SET schema_version = 4, payload = ? WHERE id = 1", payload);
+  }
+  #stored(version: 2 | 3 | 4): { revision: number; state: State | null } {
     const rows = this.ctx.storage.sql.exec("SELECT id, schema_version, revision, payload FROM account_enrollment LIMIT 2").toArray();
     const row = rows[0];
     if (rows.length !== 1 || row?.id !== 1 || row.schema_version !== version || typeof row.revision !== "number"
@@ -209,7 +252,8 @@ export class AccountEnrollment extends DurableObject<Env> {
     if (row.payload !== null) {
       if (typeof row.payload !== "string" || row.payload.length > MAX_PAYLOAD || row.revision === 0) throw new AdmissionFault();
       const parsed: unknown = JSON.parse(row.payload);
-      if (!validState(parsed) || !this.ctx.id.equals(this.env.ACCOUNT_ENROLLMENTS.idFromName(enrollmentAccountName(parsed.accountId)))) throw new AdmissionFault();
+      // version < 4 rows predate the restore-epoch field; version 4 requires it.
+      if (!validState(parsed, false, version === 4) || !this.ctx.id.equals(this.env.ACCOUNT_ENROLLMENTS.idFromName(enrollmentAccountName(parsed.accountId)))) throw new AdmissionFault();
       state = parsed;
     } else if (row.revision !== 0) throw new AdmissionFault();
     return { revision: row.revision, state };
@@ -219,8 +263,17 @@ export class AccountEnrollment extends DurableObject<Env> {
       return this.ctx.storage.transactionSync(() => {
         this.#schema();
         if (this.#generation() !== operation.generation) return err("recovery_required");
-        const { revision, state } = this.#stored(3);
+        const { revision, state } = this.#stored(4);
         if (state !== null && state.generation !== operation.generation) return err("recovery_required");
+        const fence = operation.fence;
+        if (fence !== null) {
+          // A wiped-but-established account cannot silently re-run genesis, and a
+          // recorded epoch that disagrees with the fence is a stale restore —
+          // only an operator publish may reopen it. A `null` fenceEpoch is a
+          // migrated pre-fence payload that adopts the authoritative epoch.
+          if (state === null) { if (fence.established) return err("recovery_required"); }
+          else if (state.fenceEpoch !== null && state.fenceEpoch !== fence.epoch) return err("recovery_required");
+        }
         const admission = new AdmissionState(this.ctx.storage.sql), control = admission.control();
         const beforeDevices = new Set(state?.devices.map(device => device.deviceId) ?? []);
         const now = Date.now();
@@ -230,15 +283,72 @@ export class AccountEnrollment extends DurableObject<Env> {
         admission.observe(now);
         const outcome = run(state, now);
         if (outcome.state !== null) {
+          // Pin the committed state to the epoch the lease observed so a later
+          // restore to an older payload reads back a stale epoch and refuses.
+          if (fence !== null) outcome.state.fenceEpoch = fence.epoch;
           if (!validState(outcome.state)) throw new Error("storage_invalid");
           const payload = JSON.stringify(outcome.state);
           if (payload.length > MAX_PAYLOAD) throw new Error("storage_invalid");
           for (const device of outcome.state.devices) if (!beforeDevices.has(device.deviceId)) admission.addDevice(device.deviceId);
           this.ctx.storage.sql.exec("UPDATE account_enrollment SET revision = ?, payload = ? WHERE id = 1", revision + 1, payload);
+          operation.committed = true;
         }
         return outcome.result;
       });
     } catch (error) { return err(error instanceof AdmissionFault ? error.code : "storage_invalid"); }
+  }
+
+  /** The Worker deployment version this account object is running under. */
+  #workerVersion(): string | null {
+    const value: unknown = this.env.USAGE_WORKER_VERSION;
+    return enrollmentHex(value) ? value : null;
+  }
+  /** Best-effort read of the recorded restore epoch for the assertOpen epoch
+   * match; the transaction re-checks the lease authoritatively, so this only
+   * filters the fence's early refusal. */
+  #fenceHint(): number {
+    try { return this.#stored(4).state?.fenceEpoch ?? RESTORE_FENCE_GENESIS_EPOCH; }
+    catch { return RESTORE_FENCE_GENESIS_EPOCH; }
+  }
+  /** Acquire a provider-operation lease from the external restore fence. The
+   * fence is a separate store; the returned epoch/established are authoritative
+   * and cross-checked against durable state inside the transaction. */
+  async #fenceAcquire(accountId: string, generation: string): Promise<EnrollmentResult<{ fence: FenceObservation; token: string }>> {
+    const workerVersion = this.#workerVersion();
+    if (workerVersion === null) return err("recovery_required");
+    const stub = this.env.RESTORE_FENCES.getByName(restoreFenceName(accountId));
+    const input = { accountId, generation, epoch: this.#fenceHint(), workerVersion, leaseMs: RESTORE_FENCE_LEASE_TTL_MS };
+    let raw: unknown;
+    try { raw = await stub.assertOpen(input); } catch { return err("storage_unavailable"); }
+    try {
+      const reply = rpcSnapshot(raw, ["ok", "value"]);
+      // The nested lease carries no transport disposal marker; only the outer
+      // reply does, so it is parsed with the plain exact-key snapshot.
+      const lease = reply?.ok === true ? enrollmentSnapshot(reply.value, ["token", "epoch", "established", "deadlineMs"]) : null;
+      if (lease !== null) {
+        if (!enrollmentHex(lease.token) || typeof lease.epoch !== "number" || !Number.isSafeInteger(lease.epoch)
+          || lease.epoch < RESTORE_FENCE_GENESIS_EPOCH || (lease.established !== true && lease.established !== false)
+          || typeof lease.deadlineMs !== "number") return err("storage_unavailable");
+        return ok({ fence: Object.freeze({ epoch: lease.epoch, established: lease.established }), token: lease.token });
+      }
+      const failure = rpcSnapshot(raw, ["ok", "error"]);
+      if (failure?.ok === false) {
+        const code = failure.error;
+        return err(code === "recovery_required" || code === "clock_regressed" || code === "unauthorized" || code === "limit" ? code : "storage_invalid");
+      }
+      return err("storage_unavailable");
+    } finally { disposeReply(raw); }
+  }
+  /** Release the lease with the exact commit outcome. A lost or failed release
+   * leaves the lease to expire by TTL — it never masks the operation result,
+   * and the recorded epoch remains authoritative. */
+  async #fenceSettle(accountId: string, token: string | null, committed: boolean): Promise<void> {
+    if (token === null) return;
+    try {
+      const raw: unknown = await this.env.RESTORE_FENCES.getByName(restoreFenceName(accountId))
+        .release({ accountId, token, committed });
+      disposeReply(raw);
+    } catch { /* A failed release leaves the lease to expire; the epoch record is authoritative. */ }
   }
 
   #closed(operation: Operation, live: boolean): EnrollmentError | null {
@@ -250,8 +360,28 @@ export class AccountEnrollment extends DurableObject<Env> {
   /** Dormant internal RPC. Authentication is the retained upload commitment;
    * fixed errors are not acceptance and public index.ts remains unavailable. */
   async admitBatch(input: unknown): Promise<EnrollmentResult<Uint8Array>> {
-    const admission = new AdmissionState(this.ctx.storage.sql);
-    return new AccountAdmission(this.env, admission, (observation, run) => this.#transaction(observation, (state, now) => ({ state, result: ok(run(state, now)) }))).admit(input);
+    // Decode the batch to owned bytes before the restore-fence lease await so a
+    // later mutation of `input` cannot alter the admitted snapshot; the account
+    // is derived from the owned batch, not a re-read of the request.
+    const dto = enrollmentSnapshot(input, ["uploadSecret", "batch"]);
+    if (dto === null || !enrollmentHex(dto.uploadSecret)) return err("invalid_input");
+    const uploadSecret = dto.uploadSecret;
+    let batch: AdmissionBatch;
+    try { batch = ownedAdmissionBatch(dto.batch); } catch { return err("invalid_input"); }
+    const accountId = batchAccount(batch);
+    const generation = this.#generation();
+    if (generation === null) return err("recovery_required");
+    const acquired = await this.#fenceAcquire(accountId, generation);
+    if (!acquired.ok) return acquired;
+    let committed = false;
+    try {
+      const admission = new AdmissionState(this.ctx.storage.sql);
+      return await new AccountAdmission(this.env, admission, (observation, run) => {
+        const result = this.#transaction(observation, (state, now) => ({ state, result: ok(run(state, now)) }));
+        committed ||= observation.committed;
+        return result;
+      }).admit({ uploadSecret, batch }, acquired.value.fence);
+    } finally { await this.#fenceSettle(accountId, acquired.value.token, committed); }
   }
 
   /** Unlike #transaction, this helper never advances clocks or enrollment state. */
@@ -262,7 +392,7 @@ export class AccountEnrollment extends DurableObject<Env> {
         this.#schema();
         if (!this.ctx.id.equals(this.env.ACCOUNT_ENROLLMENTS.idFromName(enrollmentAccountName(request.accountId)))) return err("unauthorized");
         if (this.#generation() !== observation.generation) return err("recovery_required");
-        const { state } = this.#stored(3);
+        const { state } = this.#stored(4);
         if (state === null) return err("not_enrolled");
         if (state.accountId !== request.accountId) return err("unauthorized");
         if (state.generation !== observation.generation) return err("recovery_required");
@@ -295,7 +425,7 @@ export class AccountEnrollment extends DurableObject<Env> {
       const generation = this.#generation(), observed = Date.now();
       if (generation === null) return err("recovery_required");
       if (!enrollmentTime(observed) || Object.is(observed, -0)) return err("clock_regressed");
-      const observation = { generation, observed };
+      const observation: AdmissionObservation = { generation, observed, fence: null, committed: false };
       const original = this.#privateDaysSnapshot(request, observation, state => Object.freeze({ ...state.anchor }));
       if (!original.ok) return original;
       let external: NamespaceAnchor | null = null, unavailable = false;
@@ -309,7 +439,7 @@ export class AccountEnrollment extends DurableObject<Env> {
     } catch { return err("storage_unavailable"); }
   }
 
-  async #operation(input: unknown): Promise<EnrollmentResult<Operation>> {
+  async #operation(input: unknown, fenced: boolean): Promise<EnrollmentResult<Operation>> {
     const proof = parseEnrollmentProof(input);
     if (proof === null) return err("invalid_input");
     const generation = this.#generation();
@@ -334,9 +464,22 @@ export class AccountEnrollment extends DurableObject<Env> {
     } finally { disposeReply(raw); }
     if (grant.intentId !== proof.intentId || grant.recoveryGeneration !== generation) return err("recovery_required");
     if (!this.ctx.id.equals(this.env.ACCOUNT_ENROLLMENTS.idFromName(enrollmentAccountName(grant.accountId)))) return err("unauthorized");
-    const operation = { proof, grant, generation, observed: Math.max(before, grant.reservedAtMs) };
+    // Only mutating operations hold a provider-operation lease. Acquired once
+    // the account is known; the caller releases it in a finally so a lost reply
+    // still settles the drain barrier.
+    let fence: FenceObservation | null = null, leaseToken: string | null = null;
+    if (fenced) {
+      const acquired = await this.#fenceAcquire(grant.accountId, generation);
+      if (!acquired.ok) return acquired;
+      fence = acquired.value.fence;
+      leaseToken = acquired.value.token;
+    }
+    const operation: Operation = { proof, grant, generation, observed: Math.max(before, grant.reservedAtMs), fence, leaseToken, committed: false };
     const closed = this.#closed(operation, false);
-    if (closed !== null) return err(closed);
+    if (closed !== null) {
+      if (leaseToken !== null) await this.#fenceSettle(grant.accountId, leaseToken, operation.committed);
+      return err(closed);
+    }
     return ok(operation);
   }
 
@@ -349,9 +492,16 @@ export class AccountEnrollment extends DurableObject<Env> {
 
   async enroll(input: unknown): Promise<EnrollmentResult<EnrollmentView>> {
     try {
-      const resolved = await this.#operation(input);
+      const resolved = await this.#operation(input, true);
       if (!resolved.ok) return resolved;
       const operation = resolved.value;
+      try { return await this.#enrollOperation(operation); }
+      finally { await this.#fenceSettle(operation.grant.accountId, operation.leaseToken, operation.committed); }
+    } catch { return err("storage_unavailable"); }
+  }
+
+  async #enrollOperation(operation: Operation): Promise<EnrollmentResult<EnrollmentView>> {
+    try {
       const { grant, generation } = operation;
       const observed = this.#transaction(operation, state => ({ state, result: this.#existing(state, grant) }));
       if (!observed.ok) return observed;
@@ -369,7 +519,7 @@ export class AccountEnrollment extends DurableObject<Env> {
       }
       const prepared = this.#transaction(operation, (state, now) => {
         if (now >= grant.expiresAtMs) return { state, result: err("expired") };
-        if (state === null) state = { accountId: grant.accountId, generation, observedAtMs: now, phase: "pending", devices: [], genesisCompletion: null,
+        if (state === null) state = { accountId: grant.accountId, generation, observedAtMs: now, phase: "pending", fenceEpoch: null, devices: [], genesisCompletion: null,
           anchor: { accountId: grant.accountId, generation, namespaceKey: enrollmentRandom(), intentId: grant.intentId,
             reservationId: grant.reservationId, createdAtMs: now } };
         if (state.accountId !== grant.accountId) return { state, result: err("unauthorized") };
@@ -412,9 +562,16 @@ export class AccountEnrollment extends DurableObject<Env> {
    * original credential. This is not a general backup/restore operation. */
   async recoverPendingEnrollment(input: unknown): Promise<EnrollmentResult<EnrollmentView>> {
     try {
-      const resolved = await this.#operation(input);
+      const resolved = await this.#operation(input, true);
       if (!resolved.ok) return resolved;
       const operation = resolved.value;
+      try { return await this.#recoverOperation(operation); }
+      finally { await this.#fenceSettle(operation.grant.accountId, operation.leaseToken, operation.committed); }
+    } catch { return err("storage_unavailable"); }
+  }
+
+  async #recoverOperation(operation: Operation): Promise<EnrollmentResult<EnrollmentView>> {
+    try {
       const { grant } = operation;
       const prepared = this.#transaction<{ completed: EnrollmentView } | { anchor: NamespaceAnchor }>(operation, (state, now) => {
         if (state === null || state.accountId !== grant.accountId) return { state, result: err("recovery_required") };
@@ -455,32 +612,34 @@ export class AccountEnrollment extends DurableObject<Env> {
     schemaVersion: 1; namespaceVersion: 1; namespaceKey: string; receipt: EnrollmentReceipt;
   }>>> {
     try {
-      const resolved = await this.#operation(input);
+      const resolved = await this.#operation(input, true);
       if (!resolved.ok) return resolved;
       const operation = resolved.value;
-      let closed = this.#closed(operation, true);
-      if (closed !== null) return err(closed);
-      const found = this.#transaction<{ anchor: NamespaceAnchor }>(operation, state => {
-        const existing = this.#existing(state, operation.grant);
-        if (!existing.ok) return { state, result: existing };
-        if (state === null || existing.value === null) return { state, result: err("not_enrolled") };
-        if (existing.value.revokedAtMs !== null) return { state, result: err("revoked") };
-        return { state, result: ok({ anchor: Object.freeze({ ...state.anchor }) }) };
-      });
-      if (!found.ok) return found;
-      const external = await readNamespaceAnchor(this.env.CONTROL, operation.grant.accountId);
-      if (external === null || !sameNamespaceAnchor(external, found.value.anchor)) return err("recovery_required");
-      closed = this.#closed(operation, true);
-      if (closed !== null) return err(closed);
-      return this.#transaction<Readonly<{ schemaVersion: 1; namespaceVersion: 1; namespaceKey: string; receipt: EnrollmentReceipt }>>(operation, (state, now) => {
-        const existing = this.#existing(state, operation.grant);
-        if (!existing.ok) return { state, result: existing };
-        if (state === null || existing.value === null || !sameNamespaceAnchor(state.anchor, found.value.anchor)) return { state, result: err("not_enrolled") };
-        if (existing.value.revokedAtMs !== null) return { state, result: err("revoked") };
-        if (now >= operation.grant.expiresAtMs) return { state, result: err("expired") };
-        return { state, result: ok(Object.freeze({ schemaVersion: 1 as const, namespaceVersion: 1 as const,
-          namespaceKey: state.anchor.namespaceKey, receipt: receipt(existing.value) })) };
-      });
+      try {
+        let closed = this.#closed(operation, true);
+        if (closed !== null) return err(closed);
+        const found = this.#transaction<{ anchor: NamespaceAnchor }>(operation, state => {
+          const existing = this.#existing(state, operation.grant);
+          if (!existing.ok) return { state, result: existing };
+          if (state === null || existing.value === null) return { state, result: err("not_enrolled") };
+          if (existing.value.revokedAtMs !== null) return { state, result: err("revoked") };
+          return { state, result: ok({ anchor: Object.freeze({ ...state.anchor }) }) };
+        });
+        if (!found.ok) return found;
+        const external = await readNamespaceAnchor(this.env.CONTROL, operation.grant.accountId);
+        if (external === null || !sameNamespaceAnchor(external, found.value.anchor)) return err("recovery_required");
+        closed = this.#closed(operation, true);
+        if (closed !== null) return err(closed);
+        return this.#transaction<Readonly<{ schemaVersion: 1; namespaceVersion: 1; namespaceKey: string; receipt: EnrollmentReceipt }>>(operation, (state, now) => {
+          const existing = this.#existing(state, operation.grant);
+          if (!existing.ok) return { state, result: existing };
+          if (state === null || existing.value === null || !sameNamespaceAnchor(state.anchor, found.value.anchor)) return { state, result: err("not_enrolled") };
+          if (existing.value.revokedAtMs !== null) return { state, result: err("revoked") };
+          if (now >= operation.grant.expiresAtMs) return { state, result: err("expired") };
+          return { state, result: ok(Object.freeze({ schemaVersion: 1 as const, namespaceVersion: 1 as const,
+            namespaceKey: state.anchor.namespaceKey, receipt: receipt(existing.value) })) };
+        });
+      } finally { await this.#fenceSettle(operation.grant.accountId, operation.leaseToken, operation.committed); }
     } catch { return err("storage_unavailable"); }
   }
 
@@ -489,13 +648,13 @@ export class AccountEnrollment extends DurableObject<Env> {
    * metadata and device receipt state, never a namespace key or secret. */
   async readEnrollmentStatus(input: unknown): Promise<EnrollmentResult<EnrollmentStatus>> {
     try {
-      const resolved = await this.#operation(input);
+      const resolved = await this.#operation(input, false);
       if (!resolved.ok) return resolved;
       const operation = resolved.value;
       return this.ctx.storage.transactionSync(() => {
         this.#schema();
         if (this.#generation() !== operation.generation) return err("recovery_required");
-        const { revision: stateRevision, state } = this.#stored(3);
+        const { revision: stateRevision, state } = this.#stored(4);
         if (state === null || state.accountId !== operation.grant.accountId) return err("not_enrolled");
         const existing = this.#existing(state, operation.grant);
         if (!existing.ok) return existing;
@@ -517,17 +676,19 @@ export class AccountEnrollment extends DurableObject<Env> {
   /** Exact original proof can revoke only its own existing device, never enroll one. */
   async revokeEnrollment(input: unknown): Promise<EnrollmentResult<EnrollmentView>> {
     try {
-      const resolved = await this.#operation(input);
+      const resolved = await this.#operation(input, true);
       if (!resolved.ok) return resolved;
       const operation = resolved.value;
-      const { grant } = operation;
-      return this.#transaction<EnrollmentView>(operation, (state, now) => {
-        const existing = this.#existing(state, grant);
-        if (!existing.ok) return { state, result: existing };
-        if (existing.value === null) return { state, result: err("not_enrolled") };
-        existing.value.revokedAtMs ??= now;
-        return { state, result: ok(view(existing.value)) };
-      });
+      try {
+        const { grant } = operation;
+        return this.#transaction<EnrollmentView>(operation, (state, now) => {
+          const existing = this.#existing(state, grant);
+          if (!existing.ok) return { state, result: existing };
+          if (existing.value === null) return { state, result: err("not_enrolled") };
+          existing.value.revokedAtMs ??= now;
+          return { state, result: ok(view(existing.value)) };
+        });
+      } finally { await this.#fenceSettle(operation.grant.accountId, operation.leaseToken, operation.committed); }
     } catch { return err("storage_unavailable"); }
   }
 }
