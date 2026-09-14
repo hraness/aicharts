@@ -214,7 +214,8 @@ describe("one explicit private service attempt", () => {
     const { manifest, service } = transcript(3), path = await seed(manifest); let calls = 0, disposals = 0;
     const factory: QualificationPlatformFactory = async configPath => {
       expect(configPath).toBe(join(path, "wrangler.driver.json"));
-      return { env: { QUALIFICATION: { fetch: async request => {
+      return { env: { QUALIFICATION: { fetch: async (input, init) => {
+        const request = new Request(input, init);
         calls++; const saved = await loadQualification(path, false), pending = saved.steps.at(-1)!;
         expect(pending.state).toBe("dispatched"); expect(pending.attemptCount).toBe(1);
         expect(request.url).toBe(QUALIFICATION_URL); expect(request.method).toBe("POST"); expect(request.redirect).toBe("error");
@@ -238,7 +239,8 @@ describe("one explicit private service attempt", () => {
   });
   test("interrupted dispatched state becomes ambiguous on resume and only the same permitted request can be explicitly retried", async () => {
     const { manifest, service } = transcript(3); appendPending(manifest, "dispatched"); const originalBytes = manifest.steps.at(-1)!.requestHex, path = await seed(manifest); let calls = 0;
-    const factory: QualificationPlatformFactory = async () => ({ env: { QUALIFICATION: { fetch: async request => {
+    const factory: QualificationPlatformFactory = async () => ({ env: { QUALIFICATION: { fetch: async (input, init) => {
+      const request = new Request(input, init);
       calls++; expect(Buffer.from(await request.text()).toString("hex")).toBe(originalBytes); return response(service.reply(service.request(3)));
     } } }, dispose: async () => {} });
     expect(qualificationSummary(await loadQualification(path, false)).state).toBe("ambiguous");

@@ -210,6 +210,11 @@ export class AdmissionState {
     const control = this.control(), { batch, journal } = pending;
     requireAdmission(pending.phase === 2 && journal && pending.predecessor === control.revision);
     const heads = this.heads(batch, authority, control), projection = this.projection(batch, journal, heads, control);
+    // The account journal is append-only. It is written in the same SQL
+    // transaction as the projections below, so a lost object reply or any
+    // later failure rolls the immutable receipt back with the mutable views.
+    this.sql.exec("INSERT INTO usage_admission_journal (revision, batch, journal, committed_at_ms) VALUES (?, ?, ?, ?)",
+      journal.accountJournalRevision, batch.bytes, journal.bytes, journal.committedAtMs);
     if (journal.status === 1) batch.operations.forEach((operation, index) => {
       if (journal.receipts[index].outcome > 3) return;
       this.sql.exec("INSERT INTO usage_admission_heads (occurrence_id, operation, journal_revision, utc_day) VALUES (?, ?, ?, ?) ON CONFLICT(occurrence_id) DO UPDATE SET operation = excluded.operation, journal_revision = excluded.journal_revision, utc_day = excluded.utc_day",
@@ -229,6 +234,21 @@ export class AdmissionState {
   audit(authority: AdmissionAuthority | null): void {
     const control = this.control();
     requireAdmission(control.observed >= (authority?.observedAtMs ?? 0));
+    // Every committed revision must have exactly one immutable batch/receipt
+    // pair. Missing, duplicated, reordered, or rewritten rows fail closed;
+    // restore tooling can then consume this contiguous prefix under its own
+    // external fence without trusting the mutable head projection.
+    let journalRows = 0, previousJournalTime = 0;
+    for (const row of this.sql.exec("SELECT revision, batch, journal, committed_at_ms FROM usage_admission_journal ORDER BY revision LIMIT 4097")) {
+      requireAdmission(++journalRows <= MAX_ADMISSION_REVISIONS && row.revision === journalRows
+        && integer(row.committed_at_ms, 0, MAX_ADMISSION_TIMESTAMP) && row.committed_at_ms >= previousJournalTime);
+      const batch = ownedAdmissionBatch(bytes(row.batch)), journal = ownedAdmissionJournal(bytes(row.journal), batch);
+      requireAdmission(authority !== null && journal.accountJournalRevision === row.revision
+        && journal.committedAtMs === row.committed_at_ms && journal.committedAtMs <= control.committed
+        && sameAccount(batch, authority));
+      previousJournalTime = row.committed_at_ms;
+    }
+    requireAdmission(journalRows === control.revision);
     const devices = new Map<string, { sequence: number; first: number; revision: number }>();
     const latestRevisions = new Set<number>();
     const latestTimes: { revision: number; time: number }[] = [];

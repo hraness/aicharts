@@ -1,6 +1,7 @@
 use super::MacStorage;
 use crate::enrollment::attempt::{
     record_tests::{copy, initial_record},
+    session::HeldAttempt,
     storage, Error,
 };
 use std::{
@@ -168,5 +169,26 @@ fn durability_failure_does_not_claim_a_durable_snapshot() {
             storage::read_durable(&mut storage, durable.token()).err(),
             Some(Error::StorageUnavailable)
         );
+    });
+}
+
+#[test]
+fn held_attempt_uses_real_apfs_lock_across_reopen() {
+    with_anchor(|path| {
+        let initial = initial_record();
+        let mut storage = create(path, &initial);
+        let durable = storage::initialize(&mut storage, &initial).expect("initialize");
+        let token = durable.token();
+        drop(storage);
+
+        let competitor = open(path);
+        let held = HeldAttempt::open(open(path), token).expect("held open");
+        assert_eq!(
+            HeldAttempt::open(competitor, token).err(),
+            Some(Error::Busy)
+        );
+        drop(held);
+        let mut reopened = open(path);
+        assert!(storage::read_durable(&mut reopened, token).unwrap().token() == token);
     });
 }

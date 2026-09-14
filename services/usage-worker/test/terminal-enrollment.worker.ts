@@ -104,8 +104,11 @@ function terminal() {
 
 test("new factory and real binding types remain dormant beside the unchanged default 503", async () => {
   const t = terminal(); expect(t.calls).toHaveLength(0); expect(t.selected).toHaveLength(0);
-  const response = worker.fetch(); expect(response.status).toBe(503);
-  expect(await response.text()).toBe('{"error":"usage_service_unavailable"}');
+  const ctx = createExecutionContext();
+  try {
+    const response = await worker.fetch(new Request("https://usage.aicharts.io/"), env, ctx);
+    expect(response.status).toBe(503); expect(await response.text()).toBe('{"error":"usage_service_unavailable"}');
+  } finally { await waitOnExecutionContext(ctx); }
 });
 
 test("six operations cross real RPC disposal with auth-truncated reservation and no auxiliary poll", async () => {
@@ -156,6 +159,27 @@ test("exact reservation, receipt and namespace survive local object restart", as
   expect(await t.reserve()).toEqual(enrolled.reservation); expect(await t.enroll()).toEqual(enrolled);
   expect(success(await t.call("namespaceForEnrollment", t.proof))).toEqual(namespace);
   expect((await env.CONTROL.list()).objects).toHaveLength(1);
+});
+
+test("account-owned status exposes durable control metadata without namespace material", async () => {
+  const t = terminal(); const enrolled = await t.ready();
+  const status = success(await env.ACCOUNT_ENROLLMENTS.getByName(enrollmentAccountName(t.accountId)).readEnrollmentStatus(t.proof));
+  expect(status).toMatchObject({ schemaVersion: 1, accountId: t.accountId, phase: "active",
+    admissionRevision: 0, admissionCommittedAtMs: null, headCount: 0, liveCount: 0, quarantined: false });
+  expect(status.stateRevision).toBeGreaterThan(0);
+  expect(status.devices).toHaveLength(1);
+  expect(status.devices[0]).toEqual({ receipt: enrolled.enrollment.receipt, deviceState: "active" });
+  expect(JSON.stringify(status)).not.toContain("namespaceKey");
+  await abortAllDurableObjects();
+  const reopened = success(await env.ACCOUNT_ENROLLMENTS.getByName(enrollmentAccountName(t.accountId)).readEnrollmentStatus(t.proof));
+  expect(reopened).toMatchObject({ accountId: status.accountId, generation: status.generation, phase: status.phase,
+    admissionRevision: status.admissionRevision, admissionCommittedAtMs: status.admissionCommittedAtMs,
+    admissionObservedAtMs: status.admissionObservedAtMs, headCount: status.headCount, liveCount: status.liveCount,
+    quarantined: false });
+  expect(reopened.stateRevision).toBeGreaterThan(status.stateRevision);
+  success(await env.ACCOUNT_ENROLLMENTS.getByName(enrollmentAccountName(t.accountId)).revokeEnrollment(t.proof));
+  const revoked = success(await env.ACCOUNT_ENROLLMENTS.getByName(enrollmentAccountName(t.accountId)).readEnrollmentStatus(t.proof));
+  expect(revoked.devices[0].deviceState).toBe("revoked");
 });
 
 test("wrong proof cannot select an account, and unknown intents preserve read error mapping", async () => {

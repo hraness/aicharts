@@ -1,5 +1,5 @@
 // Exact SQL is the migration manifest, not an auto-repair recipe. Preserve the
-// prior enrollment table verbatim and create these five tables atomically.
+// prior enrollment table verbatim and create these six tables atomically.
 export const ADMISSION_SCHEMA = Object.freeze({
   usage_admission_control: `CREATE TABLE usage_admission_control (
   id INTEGER PRIMARY KEY CHECK (id = 1),
@@ -37,4 +37,12 @@ export const ADMISSION_SCHEMA = Object.freeze({
   utc_day INTEGER PRIMARY KEY CHECK (utc_day BETWEEN 0 AND 4294967295),
   live_count INTEGER NOT NULL CHECK (live_count BETWEEN 1 AND 65536)
 )`,
+  // One immutable row per committed account revision. Keeping the exact batch
+  // beside its receipt makes externally fenced restore independently auditable.
+  usage_admission_journal: `CREATE TABLE usage_admission_journal (
+  revision INTEGER PRIMARY KEY CHECK (revision BETWEEN 1 AND 4096),
+  batch BLOB NOT NULL CHECK (typeof(batch) = 'blob' AND length(batch) BETWEEN 288 AND 82024),
+  journal BLOB NOT NULL CHECK (typeof(journal) = 'blob' AND length(journal) BETWEEN 424 AND 67744),
+  committed_at_ms INTEGER NOT NULL CHECK (committed_at_ms BETWEEN 0 AND 8640000000000000)
+) WITHOUT ROWID`,
 });

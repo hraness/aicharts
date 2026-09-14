@@ -3,8 +3,10 @@
 //! nonsecret progress. The CLI still has no caller or production constructor;
 //! decoding facts does not authenticate their history.
 
+mod coordinator;
 mod record;
 mod sequencer;
+mod session;
 mod storage;
 
 #[cfg(target_os = "macos")]
@@ -12,12 +14,18 @@ mod disk;
 #[cfg(target_os = "macos")]
 mod macos;
 
+#[cfg(test)]
+#[path = "attempt/coordinator_tests.rs"]
+mod coordinator_tests;
 #[cfg(all(test, target_os = "macos"))]
 #[path = "attempt/disk_tests.rs"]
 mod disk_tests;
 #[cfg(test)]
 #[path = "attempt/record_tests.rs"]
 mod record_tests;
+#[cfg(test)]
+#[path = "attempt/session_tests.rs"]
+mod session_tests;
 #[cfg(test)]
 #[path = "attempt/storage_tests.rs"]
 mod storage_tests;

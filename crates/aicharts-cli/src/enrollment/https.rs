@@ -1,5 +1,6 @@
-//! Dormant, once-only terminal enrollment HTTPS. Construction remains private;
-//! no product command or credential-custody path can create this adapter yet.
+//! Dormant, once-only terminal enrollment HTTPS. Construction remains sealed
+//! inside the private coordinator; no product command or credential-custody
+//! path can activate this adapter yet.
 //!
 //! Timeouts bound I/O and acceptance, not OS/TLS preemption. The shared resolver
 //! may retain one blocked OS worker after timeout, holding its process-wide
@@ -157,6 +158,17 @@ fn configuration(remaining: Duration, roots: RootCerts) -> Config {
 }
 
 impl HttpsEnrollment {
+    /// Sealed construction for the private coordinator. No caller outside the
+    /// dormant enrollment module can create a transport, and construction
+    /// performs no network or credential operation.
+    pub(super) fn sealed() -> Self {
+        Self {
+            _construction: (),
+            #[cfg(test)]
+            fixture: None,
+        }
+    }
+
     fn agent(&self, remaining: Duration) -> Agent {
         #[cfg(test)]
         if let Some(fixture) = &self.fixture {
@@ -198,11 +210,24 @@ impl HttpsEnrollment {
         request: &Request,
         context: &Context,
     ) -> Result<AcceptedEnrollment, TransportError> {
+        self.exchange_once_with_floor(request, context, context.now_ms)
+    }
+
+    /// Exchange using a fresh retained clock floor independent of the frozen
+    /// request context timestamp. A rollback is rejected before agent creation
+    /// (and therefore before DNS or any socket work); the floor is never
+    /// clamped to the context timestamp.
+    pub(super) fn exchange_once_with_floor(
+        &mut self,
+        request: &Request,
+        context: &Context,
+        clock_floor_ms: u64,
+    ) -> Result<AcceptedEnrollment, TransportError> {
         // Invalid retained observations must never cause even DNS dispatch.
         if !contract::valid_context(request, context) {
             return Err(TransportError::InvalidRequest);
         }
-        let mut attempt = Attempt::new(self.observe()?, context.now_ms, self.budget())?;
+        let mut attempt = Attempt::new(self.observe()?, clock_floor_ms, self.budget())?;
         let bytes =
             contract::encode_request(request).map_err(|_| TransportError::InvalidRequest)?;
         let agent = self.agent(attempt.check(self.observe()?)?);
