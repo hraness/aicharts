@@ -1,19 +1,16 @@
-//! Bounded nonsecret reference custody. Public constructors remain closed before
-//! filesystem or Keychain access. Only private test fixtures construct a facade
-//! with the backend that implements the reserved instance operations.
+//! Bounded nonsecret reference custody below an explicit existing trust anchor.
+//! macOS constructors use the private descriptor-pinned filesystem adapter and
+//! never select a Keychain. Other platforms remain unsupported.
 //! These records establish neither enrollment nor upload authorization.
 
 mod codec;
+#[cfg_attr(not(test), allow(dead_code))]
+pub(crate) mod engine;
 #[cfg(test)]
 #[path = "../references_tests.rs"]
 mod tests;
-// The reviewed state machine is compiled but deliberately has no production
-// adapter until descriptor-bound permission/ACL persistence is qualified.
-#[cfg_attr(not(test), allow(dead_code))]
-pub(crate) mod engine;
 
-// Real descriptor I/O is privately qualified; public Path constructors remain
-// closed. No caller can inject this backend through the public API.
+// No caller can inject a filesystem backend through the public API.
 #[cfg(target_os = "macos")]
 #[cfg_attr(not(test), allow(dead_code))]
 mod macos;
@@ -171,9 +168,11 @@ impl ManifestSnapshot {
     }
 }
 
-/// Reserved facade for a future qualified private filesystem adapter.
-/// No constructor succeeds in this source slice, including on macOS. There is
-/// no public backend injection, byte import, verification setter, or fallback.
+/// Local reference persistence below a caller-supplied existing absolute path.
+/// On macOS every path component is pinned and checked, and the private anchor
+/// contains the fixed `references-v1` child. Constructors never discover, create,
+/// adopt, or repair the anchor. Other platforms return `UnsupportedPlatform`.
+/// There is no public backend injection, byte import, or verification setter.
 pub struct ReferenceStore {
     #[cfg(target_os = "macos")]
     qualified: Option<qualified::QualifiedStore>,
@@ -202,19 +201,54 @@ impl ReferenceStore {
         }
     }
 
-    /// Exact initialization recovery is reserved behind the same admission fence.
+    /// Reconcile only the original nonzero installation's empty initial manifest.
+    /// Storage must already exist. An exact retained initial candidate can be
+    /// published; a different candidate or advanced committed state is refused.
     pub fn reconcile_initialization(_path: &Path, _installation: [u8; 32]) -> Result<Self> {
+        #[cfg(target_os = "macos")]
+        return Ok(Self {
+            qualified: Some(qualified::QualifiedStore::reconcile_initialization(
+                _path,
+                _installation,
+            )?),
+        });
+        #[cfg(not(target_os = "macos"))]
         Err(closed())
     }
+    /// Create the fixed child and durably publish an empty initial manifest.
+    /// The nonzero installation is checked before filesystem access. The anchor
+    /// must already exist; existing or partial child storage is never adopted.
     pub fn initialize_new(_path: &Path, _installation: [u8; 32]) -> Result<Self> {
+        #[cfg(target_os = "macos")]
+        return Ok(Self {
+            qualified: Some(qualified::QualifiedStore::initialize_new(
+                _path,
+                _installation,
+            )?),
+        });
+        #[cfg(not(target_os = "macos"))]
         Err(closed())
     }
+    /// Open and observe an existing committed manifest without recovery or sync.
+    /// Successful construction proves neither durability nor current vault state.
     pub fn open_existing(_path: &Path) -> Result<Self> {
+        #[cfg(target_os = "macos")]
+        return Ok(Self {
+            qualified: Some(qualified::QualifiedStore::open_existing(_path)?),
+        });
+        #[cfg(not(target_os = "macos"))]
         Err(closed())
     }
+    /// Observe an existing committed manifest without publication or recovery.
+    /// The returned snapshot is neither durable evidence nor current vault proof.
     pub fn inspect_existing(_path: &Path) -> Result<ManifestSnapshot> {
+        #[cfg(target_os = "macos")]
+        return qualified::QualifiedStore::inspect_existing(_path);
+        #[cfg(not(target_os = "macos"))]
         Err(closed())
     }
+    /// Observe the committed manifest. Credential operations reestablish their
+    /// own required durability and exact vault readback under the operation lock.
     pub fn snapshot(&mut self) -> Result<ManifestSnapshot> {
         #[cfg(target_os = "macos")]
         return self.backend()?.snapshot();

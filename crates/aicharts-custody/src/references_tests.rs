@@ -302,7 +302,8 @@ fn changed_snapshot(current: &ManifestSnapshot) -> Vec<u8> {
 }
 
 #[test]
-fn public_store_factories_are_closed_before_any_path_or_native_access() {
+#[cfg(not(target_os = "macos"))]
+fn unsupported_store_factories_fail_before_any_path_access() {
     let path = Path::new("/aicharts-synthetic-never-open/canary");
     assert_eq!(
         ReferenceStore::initialize_new(path, INSTALLATION).err(),
@@ -314,7 +315,10 @@ fn public_store_factories_are_closed_before_any_path_or_native_access() {
         ReferenceStore::reconcile_initialization(path, INSTALLATION).err(),
         Some(closed())
     );
-    // Even a unit-constructed facade cannot bypass the factory fence.
+}
+
+#[test]
+fn a_facade_without_a_backend_cannot_access_storage_or_a_vault() {
     let mut store = ReferenceStore {
         #[cfg(target_os = "macos")]
         qualified: None,

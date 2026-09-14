@@ -36,7 +36,7 @@ The live driver disables Wrangler logging and application environment loading. D
 
 ## Run the three checkpoints
 
-Each deployment is a separate operator action. The driver never deploys or promotes a Worker. Use the installed Wrangler CLI and the exact generated service configuration, then inspect the provider's active deployment, version, bindings and URL settings.
+Each deployment is a separate operator action. The driver never deploys or promotes a Worker. Record deployment intent before invoking the CLI and reconcile provider state after every outcome. Wrangler can internally retry an upload up to three times, so one CLI invocation does not prove one provider write. Do not repeat an uncertain deployment without inspecting its active state. Run the installed Wrangler CLI from the validated private run directory with the exact account and generated service configuration. Wrangler loads `.env` and `.env.local` from its working directory even when the driver environment-loading flags are disabled; the checked run directory forbids those files. Pass `--experimental-provision=false` so a missing named R2 binding cannot trigger bucket creation; `--experimental-auto-create=false` alone is insufficient. Then inspect the provider's active deployment, version, bindings and URL settings.
 
 1. Deploy `wrangler.generation-one.json` as the initial private service after the target and bundle checks pass.
 2. Record a verified initial deployment receipt as described below.

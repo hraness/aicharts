@@ -1,6 +1,6 @@
 # Pairing transport bytes
 
-`lib/usage/pairing-transport-contract.ts` defines the memory-only request and result format used by the dormant [pairing HTTP adapters](usage-pairing-http.md). The codec performs no network request, authentication, dispatch or persistence. The production resolver remains absent and the default Worker remains unavailable. This format carries pairing capabilities, not usage measurements; never log its bodies.
+`lib/usage/pairing-transport-contract.ts` defines the memory-only request and result format used by the guarded [pairing HTTP adapters](usage-pairing-http.md). The codec performs no network request, authentication, dispatch or persistence. The production resolver is installed behind the independent disabled pairing flag; the default Worker remains unavailable. This format carries pairing capabilities, not usage measurements; never log its bodies.
 
 ## Exact operations
 

@@ -24,23 +24,27 @@ function ownValue(input: unknown, key: string): unknown {
 }
 
 /** Dormant trusted server port. This module installs no resolver or provider binding. */
-export function createPairingTransport(dependencies: PairingTransportDependencies): (intentId: string) => UsagePairingIntent {
+export function createPairingTransport(dependencies: PairingTransportDependencies): (intentId: string, current?: () => boolean) => UsagePairingIntent {
   const { fetch: fetcher, getContext, registerLifetime, now, setTimeout, clearTimeout } = dependencies;
-  const effects = Object.freeze({ now, setTimeout, clearTimeout });
   let outstanding = 0;
 
-  return (intentId: string) => {
+  return (intentId: string, current: () => boolean = () => true) => {
     if (typeof intentId !== "string" || intentId.length !== 64 || !/^[0-9a-f]{64}$/u.test(intentId) || intentId === "0".repeat(64)) throw unavailable();
 
     async function invoke(operation: PairingTransportOperation, input: unknown): Promise<unknown> {
       try {
-        const startedAt = now();
+        // One request fence travels through the shared factory; creating an
+        // intent port does not reset its outstanding-operation capacity.
+        const effects = Object.freeze({ setTimeout, clearTimeout, now() { if (!current()) throw unavailable(); return now(); } });
+        const startedAt = effects.now();
         const encoded = encodePairingTransportRequest({ schemaVersion: 1, operation, input });
         if (!encoded.ok) throw unavailable();
         const decoded = decodePairingTransportRequest(encoded.value);
         if (!decoded.ok || decoded.value.input.intentId !== intentId) throw unavailable();
         const request = decoded.value;
+        effects.now();
         const token = ownValue(ownValue(getContext(), "headers"), "x-vercel-oidc-token");
+        effects.now();
         if (!pairingHttpToken(token) || outstanding >= PAIRING_HTTP_CAPACITY) throw unavailable();
         outstanding++;
         const result = await pairingHttpWork(effects, PAIRING_HTTP_CLIENT_MS, registerLifetime, () => null, () => { outstanding--; }, async work => {

@@ -1,5 +1,4 @@
-//! Private integration candidate. The public facade stays guarded until the
-//! exact source and disposable native mechanism have been admitted.
+//! Private join between explicit-path reference persistence and lazy vault use.
 use super::{engine, macos::MacStorage, Error, ManifestSnapshot, ManifestToken, Result};
 use crate::{RecordIdentity, SecretRecord, Vault};
 use std::path::Path;
@@ -22,6 +21,10 @@ impl QualifiedStore {
         let mut storage = MacStorage::from_path(path, false)?;
         engine::snapshot(&mut storage)?;
         Ok(Self { storage })
+    }
+    pub(super) fn inspect_existing(path: &Path) -> Result<ManifestSnapshot> {
+        let mut storage = MacStorage::from_path(path, false)?;
+        engine::snapshot(&mut storage)
     }
 
     pub(super) fn reconcile_initialization(path: &Path, installation: [u8; 32]) -> Result<Self> {
@@ -77,6 +80,8 @@ impl QualifiedStore {
     }
 }
 
+#[cfg(test)]
+mod constructor_tests;
 #[cfg(test)]
 mod live_tests;
 

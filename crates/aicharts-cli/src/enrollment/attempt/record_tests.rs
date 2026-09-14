@@ -89,6 +89,7 @@ pub(super) fn flight_record() -> Record {
         ordinal: 1,
         prepared_revision: 3,
         prepared_at_ms: TIME,
+        context_now_ms: TIME,
         last_attempt_at_ms: None,
         dispatches: 0,
         request_sha: Commitment::new([0x81; 32]).unwrap(),
@@ -511,6 +512,7 @@ fn successor_refuses_reminting_changed_receipts_choice_reset_and_regressions() {
         }) as fn(&mut Record),
         |v| v.flight.as_mut().unwrap().context_sha = Commitment::new([9; 32]).unwrap(),
         |v| v.flight.as_mut().unwrap().prepared_at_ms -= 1,
+        |v| v.flight.as_mut().unwrap().context_now_ms -= 1,
         |v| v.flight.as_mut().unwrap().prepared_revision -= 1,
         |v| v.flight = None,
     ] {
@@ -532,6 +534,7 @@ fn namespace_acceptance_times_and_sticky_pins_cannot_be_refreshed_by_late_retrie
         ordinal: pending.flights_started,
         prepared_revision: pending.revision,
         prepared_at_ms: pending.clock_floor_ms,
+        context_now_ms: pending.clock_floor_ms,
         last_attempt_at_ms: None,
         dispatches: 0,
         request_sha: Commitment::new([0x81; 32]).unwrap(),
@@ -623,6 +626,7 @@ fn full_optional_record_at_counter_and_clock_limits_remains_bounded() {
         ordinal: MAX_FLIGHTS,
         prepared_revision: MAX_REVISION - u64::from(MAX_DISPATCHES),
         prepared_at_ms: TIME + 4_100,
+        context_now_ms: TIME + 4_000,
         last_attempt_at_ms: Some(TIME + 4_900),
         dispatches: MAX_DISPATCHES,
         request_sha: Commitment::new([0x81; 32]).unwrap(),
@@ -638,6 +642,20 @@ fn full_optional_record_at_counter_and_clock_limits_remains_bounded() {
     let mut zero_clock = initial_record();
     zero_clock.clock_floor_ms = 0;
     assert!(record::encode(&zero_clock).is_ok());
+}
+
+#[test]
+fn original_context_time_is_required_and_cannot_follow_preparation() {
+    let mut value = flight_record();
+    let bytes = record::encode(&value).unwrap();
+    let old_shape = std::str::from_utf8(bytes.as_bytes())
+        .unwrap()
+        .replace(",\"contextNowMs\":1789300800000", "");
+    assert!(record::decode(old_shape.as_bytes()).is_err());
+    value.flight.as_mut().unwrap().context_now_ms += 1;
+    assert_eq!(record::validate(&value), Err(Error::InvalidRecord));
+    value.flight.as_mut().unwrap().context_now_ms = u64::MAX;
+    assert_eq!(record::validate(&value), Err(Error::InvalidRecord));
 }
 
 #[test]
@@ -668,6 +686,7 @@ pub(super) fn namespace_flow() -> Vec<Record> {
         ordinal: 5,
         prepared_revision: 20,
         prepared_at_ms: TIME + 4_100,
+        context_now_ms: TIME + 4_000,
         last_attempt_at_ms: None,
         dispatches: 0,
         request_sha: Commitment::new([0x81; 32]).unwrap(),
@@ -705,7 +724,7 @@ pub(super) fn namespace_flow() -> Vec<Record> {
 #[test]
 fn namespace_response_pin_and_local_custody_steps_retain_the_original_flight_until_completion() {
     let flow = namespace_flow();
-    let literal_flight = br#"{"operation":"namespaceForEnrollment","ordinal":5,"preparedRevision":20,"preparedAtMs":1789300804100,"lastAttemptAtMs":1789300804200,"dispatches":1,"requestSHA":"8181818181818181818181818181818181818181818181818181818181818181","contextSHA":"8282828282828282828282828282828282828282828282828282828282828282"}"#;
+    let literal_flight = br#"{"operation":"namespaceForEnrollment","ordinal":5,"preparedRevision":20,"preparedAtMs":1789300804100,"contextNowMs":1789300804000,"lastAttemptAtMs":1789300804200,"dispatches":1,"requestSHA":"8181818181818181818181818181818181818181818181818181818181818181","contextSHA":"8282828282828282828282828282828282828282828282828282828282828282"}"#;
     for pair in flow.windows(2) {
         assert_eq!(record::successor(&pair[0], &pair[1]), Ok(()));
     }

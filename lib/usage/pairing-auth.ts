@@ -5,8 +5,9 @@ import {
   openPairingCustody, pairingHex as hex, pairingSetCookie, pairingTime as time,
   randomPairingToken, sealPairingCustody, type PairingCustody, type PairingProof as Proof,
 } from "./pairing-custody";
+import { encodePairingPublicReply, parsePairingDecision, PAIRING_PAGE_PATH, PAIRING_PUBLIC_MEDIA } from "./pairing-public";
 
-/** Trusted server transport only. No production resolver is installed yet. */
+/** Trusted server transport only; the public composition requires both flags. */
 export type UsagePairingIntent = Readonly<{
   beginBrowserAttempt(input: unknown): Promise<unknown>;
   recordVerifiedAuthentication(input: unknown): Promise<unknown>;
@@ -15,8 +16,8 @@ export type UsagePairingIntent = Readonly<{
 }>;
 
 type Options = Readonly<{
-  authority: () => Readonly<{ party: SuiteOidcRelyingParty; current: () => boolean; cookieSecret: string }> | null;
-  resolve?: (intentId: string) => UsagePairingIntent;
+  authority: (request: Request) => Readonly<{ party: SuiteOidcRelyingParty; current: () => boolean; cookieSecret: string }> | null;
+  resolve?: (intentId: string, current: () => boolean) => UsagePairingIntent;
   now: () => number;
   randomBytes: (length: number) => Uint8Array;
 }>;
@@ -100,14 +101,7 @@ async function decisionBody(request: Request): Promise<Readonly<{ decision: "app
       size += next.value.byteLength;
     }
     if (declared !== null && size !== Number(declared)) return null;
-    const value: unknown = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes.subarray(0, size)));
-    const parsed = snapshot(value, ["decision", "csrfToken"]);
-    // A canonical body also rejects duplicate or escaped member names that a
-    // generic JSON parser would silently collapse into the last value.
-    if (parsed === null || (parsed.decision !== "approve" && parsed.decision !== "deny") || !hex(parsed.csrfToken)) return null;
-    const canonical = JSON.stringify({ decision: parsed.decision, csrfToken: parsed.csrfToken });
-    if (Buffer.from(bytes.subarray(0, size)).toString("utf8") !== canonical) return null;
-    return Object.freeze({ decision: parsed.decision, csrfToken: parsed.csrfToken });
+    return parsePairingDecision(bytes.subarray(0, size));
   } catch { return null; }
   finally {
     clearTimeout(timer);
@@ -143,7 +137,8 @@ function decode(context: string): Proof | null {
 }
 
 function failure(code: "UNAVAILABLE" | "REJECTED" | "FAILED", status: number): Response {
-  return Response.json({ error: { code: `USAGE_PAIRING_AUTH_${code}` }, schemaVersion: 1 }, { status });
+  return new Response(encodePairingPublicReply({ error: { code: `USAGE_PAIRING_AUTH_${code}` }, schemaVersion: 1 }),
+    { status, headers: { "content-type": PAIRING_PUBLIC_MEDIA } });
 }
 
 function validStartRequest(request: Request): boolean {
@@ -168,7 +163,7 @@ export function createPairingAuthentication(options: Options) {
   return Object.freeze({
     async start(request: Request, input: unknown): Promise<Response> {
       try {
-        const operation = options.authority();
+        const operation = options.authority(request);
         if (operation === null || options.resolve === undefined) return failure("UNAVAILABLE", 503);
         const { party: authority, current, cookieSecret } = operation;
         if (!validStartRequest(request)) return failure("REJECTED", 403);
@@ -180,7 +175,7 @@ export function createPairingAuthentication(options: Options) {
         if (browserNonce === csrfToken) return failure("FAILED", 503);
         const before = options.now();
         if (!time(before)) return failure("FAILED", 503);
-        const intent = options.resolve(intentId);
+        const intent = options.resolve(intentId, current);
         const result = await intent.beginBrowserAttempt(Object.freeze({ intentId, browserNonce }));
         const attempt = snapshot(valueOf(result), ["attemptId", "contextToken", "startedAtMs", "expiresAtMs"]);
         if (attempt === null || !hex(attempt.attemptId) || !hex(attempt.contextToken)
@@ -189,9 +184,15 @@ export function createPairingAuthentication(options: Options) {
         const afterBegin = liveTime(Math.max(before, attempt.startedAtMs), attempt.expiresAtMs, current);
         if (afterBegin === null) return failure("FAILED", 503);
         const proof = Object.freeze({ intentId, browserNonce, attemptId: attempt.attemptId, contextToken: attempt.contextToken });
-        const response = await authority.startFreshAuthentication(request, {
+        // The browser cannot choose this continuation. The SDK seals it into
+        // the fresh transaction while the public start remains query-free.
+        const freshRequest = new Request(`${origin}/api/suite-auth/start?return_to=${encodeURIComponent(PAIRING_PAGE_PATH)}`, {
+          method: "GET", headers: request.headers, signal: request.signal,
+        });
+        const response = await authority.startFreshAuthentication(freshRequest, {
           context: encode(proof), expiresAtMs: attempt.expiresAtMs,
         });
+        if (liveTime(afterBegin, attempt.expiresAtMs, current) === null) return failure("FAILED", 503);
         if (response.status !== 302) return response;
         const custody = Object.freeze({ ...proof, csrfToken, issuedAtMs: afterBegin, expiresAtMs: attempt.expiresAtMs });
         const sealed = await sealPairingCustody(custody, cookieSecret, options.randomBytes);
@@ -209,7 +210,7 @@ export function createPairingAuthentication(options: Options) {
 
     async complete(request: Request): Promise<Response> {
       try {
-        const operation = options.authority();
+        const operation = options.authority(request);
         if (operation === null || options.resolve === undefined) return failure("UNAVAILABLE", 503);
         const { party: authority, current, cookieSecret } = operation;
         const before = options.now();
@@ -219,6 +220,7 @@ export function createPairingAuthentication(options: Options) {
         const afterOpen = liveTime(Math.max(before, custody.issuedAtMs), custody.expiresAtMs, current);
         if (afterOpen === null) return failure("FAILED", 503);
         const result = await authority.completeFreshAuthentication(request);
+        if (liveTime(afterOpen, custody.expiresAtMs, current) === null) return failure("FAILED", 503);
         if (result.kind === "rejected") return result.response;
         const authentication = result.authentication;
         const proof = decode(authentication.context);
@@ -227,7 +229,7 @@ export function createPairingAuthentication(options: Options) {
         if (proof === null || fields.some(field => proof[field] !== custody[field]) || beforeRecord === null) return failure("FAILED", 503);
         // Signed authentication alone does not consume the durable attempt. Its
         // owner rechecks commitments, supersession, expiry and exact-fact retry.
-        const intent = options.resolve(proof.intentId);
+        const intent = options.resolve(proof.intentId, current);
         const recorded = await intent.recordVerifiedAuthentication(Object.freeze({
           ...proof, accountId: authentication.suiteAccountId,
           authTimeMs: authentication.authenticatedAtMs,
@@ -249,7 +251,7 @@ export function createPairingAuthentication(options: Options) {
 
   async function approval(request: Request, deciding: boolean): Promise<Response> {
     try {
-      const operation = options.authority();
+      const operation = options.authority(request);
       if (operation === null || options.resolve === undefined) return failure("UNAVAILABLE", 503);
       const { party: authority, current, cookieSecret } = operation;
       if (!exactApprovalRequest(request, deciding ? "POST" : "GET")) return failure("REJECTED", 403);
@@ -270,7 +272,7 @@ export function createPairingAuthentication(options: Options) {
       observed = liveTime(observed, deadline, current);
       if (observed === null) return failure("FAILED", 503);
       const proof = proofOf(custody);
-      const intent = options.resolve(proof.intentId);
+      const intent = options.resolve(proof.intentId, current);
       let view = parseView(await intent.browserStatus(proof));
       observed = liveTime(observed, deadline, current);
       if (observed === null || view === null || view.expiresAtMs !== custody.expiresAtMs) return failure("FAILED", 503);
@@ -292,8 +294,10 @@ export function createPairingAuthentication(options: Options) {
       }
       // Keep encrypted custody until its original expiry so explicit readback
       // can reconcile a committed decision whose response was lost.
-      return Response.json({ schemaVersion: 1, state: view.state, accountId: view.accountId,
+      const bytes = encodePairingPublicReply({ schemaVersion: 1, state: view.state, accountId: view.accountId,
         expiresAtMs: deadline, csrfToken: custody.csrfToken });
+      if (bytes === null || liveTime(observed, deadline, current) === null) return failure("FAILED", 503);
+      return new Response(bytes, { headers: { "content-type": PAIRING_PUBLIC_MEDIA } });
     } catch { return failure("FAILED", 503); }
   }
 }

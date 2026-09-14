@@ -151,6 +151,7 @@ pub(super) struct Flight {
     pub(super) ordinal: u16,
     pub(super) prepared_revision: u64,
     pub(super) prepared_at_ms: u64,
+    pub(super) context_now_ms: u64,
     pub(super) last_attempt_at_ms: Option<u64>,
     pub(super) dispatches: u8,
     pub(super) request_sha: Commitment,
@@ -364,6 +365,7 @@ pub(super) fn validate(value: &Record) -> Result<()> {
             || flight.prepared_revision > value.revision
             || u64::from(flight.ordinal) > flight.prepared_revision
             || !observed(flight.prepared_at_ms, value.clock_floor_ms)
+            || flight.context_now_ms > flight.prepared_at_ms
             || flight.dispatches > MAX_DISPATCHES
             || value.revision - flight.prepared_revision < u64::from(flight.dispatches)
             || (flight.dispatches == 0) != flight.last_attempt_at_ms.is_none()
@@ -508,6 +510,7 @@ pub(super) fn successor(previous: &Record, next: &Record) -> Result<()> {
                 || old.ordinal != new.ordinal
                 || old.prepared_revision != new.prepared_revision
                 || old.prepared_at_ms != new.prepared_at_ms
+                || old.context_now_ms != new.context_now_ms
                 || old.request_sha != new.request_sha
                 || old.context_sha != new.context_sha
                 || new.dispatches < old.dispatches
@@ -743,6 +746,7 @@ fn parse_flight(value: &Value) -> Option<Flight> {
             "ordinal",
             "preparedRevision",
             "preparedAtMs",
+            "contextNowMs",
             "lastAttemptAtMs",
             "dispatches",
             "requestSHA",
@@ -754,6 +758,7 @@ fn parse_flight(value: &Value) -> Option<Flight> {
         ordinal: integer(&value["ordinal"])?.try_into().ok()?,
         prepared_revision: integer(&value["preparedRevision"])?,
         prepared_at_ms: integer(&value["preparedAtMs"])?,
+        context_now_ms: integer(&value["contextNowMs"])?,
         last_attempt_at_ms: optional(&value["lastAttemptAtMs"], integer)?,
         dispatches: integer(&value["dispatches"])?.try_into().ok()?,
         request_sha: commitment(&value["requestSHA"])?,
@@ -999,6 +1004,8 @@ impl Writer {
         self.number(flight.prepared_revision);
         self.raw(b",\"preparedAtMs\":");
         self.number(flight.prepared_at_ms);
+        self.raw(b",\"contextNowMs\":");
+        self.number(flight.context_now_ms);
         self.raw(b",\"lastAttemptAtMs\":");
         self.optional(flight.last_attempt_at_ms.as_ref(), |out, time| {
             out.number(*time)

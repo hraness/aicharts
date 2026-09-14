@@ -3,6 +3,7 @@ import { resolve } from "node:path";
 import type { Browser, Locator, Page, Route } from "playwright-core";
 import { encodePrivateDaysPublicResponse, parsePrivateDaysPublicSearch, privateDaysPublicStatus,
   PRIVATE_DAYS_PUBLIC_MEDIA, type PrivateDaysPublicReply, type PrivateDaysRange } from "../lib/usage/private-days-public";
+import { verifyUsagePairing } from "./usage-pairing-browser";
 
 function invariant(value: unknown, message: string): asserts value {
   if (!value) throw new Error(message);
@@ -76,6 +77,7 @@ export async function verifyUsageDashboard(browser: Browser, disabledBaseUrl: st
   const environment: NodeJS.ProcessEnv = { ...process.env, NODE_ENV: "production", VERCEL: "1", VERCEL_ENV: "production", VERCEL_TARGET_ENV: "production",
     VERCEL_DEPLOYMENT_ID: "dpl_SYNTHETICUsageBrowser", VERCEL_PROJECT_ID: "prj_SYNTHETICUsageBrowser", VERCEL_GIT_COMMIT_SHA: "0".repeat(40),
     NEXT_PUBLIC_SITE_URL: "https://aicharts.io", AICHARTS_USAGE_AUTH_ENABLED: "1", AICHARTS_USAGE_PRIVATE_READ_ENABLED: "1",
+    AICHARTS_USAGE_PAIRING_ENABLED: "1",
     SUITE_OIDC_COOKIE_SECRET: "synthetic-browser-fixture-not-a-production-secret" };
   for (const key of ["NEXT_PUBLIC_VERCEL_SURFACE_ORIGIN", "NEXT_PUBLIC_HRANESS_VERCEL_SURFACE_ORIGIN", "NEXT_PUBLIC_HRANESS_VERCEL_PREVIEW_ORIGIN", "POSTHOG_API_KEY", "VERCEL_OIDC_TOKEN"]) delete environment[key];
   const server = Bun.spawn([process.execPath, "run", "start", "--", "--hostname", hostname, "--port", String(port)], {
@@ -181,6 +183,7 @@ export async function verifyUsageDashboard(browser: Browser, disabledBaseUrl: st
         invariant(!blockedOrigins.has("https://account.hraness.com") && !blockedOrigins.has("https://usage.aicharts.io"), "Synthetic UI checks must not attempt account or usage-provider access.");
       } finally { await context.close(); }
     }
+    await verifyUsagePairing(browser, disabledBaseUrl, baseUrl, captureDirectory);
   } finally {
     server.kill("SIGTERM");
     await Promise.race([server.exited, Bun.sleep(5_000)]);
