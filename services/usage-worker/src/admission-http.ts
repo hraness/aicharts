@@ -73,7 +73,8 @@ function domainFailure(error: unknown): Response {
  * credential proof remains inside the DO and may follow durable observation.
  * An outward timeout is uncertain, not cancellation of a committed decision.
  * Per-isolate custody bounds are not fleet abuse/capacity qualification.
- * The production index does not import this factory. */
+ * The production index routes to this factory only behind explicit activation
+ * fences; its default state remains the fixed private 503. */
 export function createAdmissionHttpHandler(dependencies: PairingHttpEffects) {
   const { now, setTimeout, clearTimeout } = dependencies;
   const effects = Object.freeze({ now, setTimeout, clearTimeout });

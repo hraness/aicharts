@@ -104,8 +104,11 @@ function terminal() {
 
 test("new factory and real binding types remain dormant beside the unchanged default 503", async () => {
   const t = terminal(); expect(t.calls).toHaveLength(0); expect(t.selected).toHaveLength(0);
-  const response = worker.fetch(); expect(response.status).toBe(503);
-  expect(await response.text()).toBe('{"error":"usage_service_unavailable"}');
+  const ctx = createExecutionContext();
+  try {
+    const response = await worker.fetch(new Request("https://usage.aicharts.io/"), env, ctx);
+    expect(response.status).toBe(503); expect(await response.text()).toBe('{"error":"usage_service_unavailable"}');
+  } finally { await waitOnExecutionContext(ctx); }
 });
 
 test("six operations cross real RPC disposal with auth-truncated reservation and no auxiliary poll", async () => {

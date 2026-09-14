@@ -89,7 +89,7 @@ These tests use literal canonical vectors, typed synthetic secret-record commitm
 
 ## Authoritative Worker dispatch
 
-The factory remains absent from the default Worker entrypoint. Initialize, poll and confirm select `PAIRINGS.getByName(intentId)` and each perform one RPC. Confirm's account input is an explicit confirmation choice, never an account-object routing key.
+The production router includes the factory only behind its explicit worker and enrollment fences; the default Worker remains the fixed private `503`. Initialize, poll and confirm select `PAIRINGS.getByName(intentId)` and each perform one RPC. Confirm's account input is an explicit confirmation choice, never an account-object routing key.
 
 Reserve first calls `readEnrollmentReservation`. Only the checked `not_reserved` result permits exactly one reserve call. Existing reservation readback therefore survives a lost response or expired grant without creating new credentials or extending the original interval. Malformed or unknown results never synthesize absence.
 

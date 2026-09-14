@@ -230,8 +230,11 @@ test("oversized, trailing and transcript-shaped bodies are refused before accoun
 });
 
 test("production handler remains unavailable and exposes no admission route", async () => {
-  const response = production.fetch(); expect(response.status).toBe(503);
-  expect(await response.json()).toEqual({ error: "usage_service_unavailable" });
+  const ctx = createExecutionContext();
+  try {
+    const response = await production.fetch(new Request("https://usage.aicharts.io/"), env, ctx);
+    expect(response.status).toBe(503); expect(await response.json()).toEqual({ error: "usage_service_unavailable" });
+  } finally { await waitOnExecutionContext(ctx); }
 });
 
 function disposedReply(value: object, dispose: () => void): object {
