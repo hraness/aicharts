@@ -383,7 +383,7 @@ export async function recordQualificationDeployment(path: string, value: unknown
   });
 }
 
-export type QualificationPlatform = { env: { QUALIFICATION: { fetch(request: Request): Promise<Response> } }; dispose(): Promise<void> };
+export type QualificationPlatform = { env: { QUALIFICATION: { fetch(input: string | URL, init?: RequestInit): Promise<Response> } }; dispose(): Promise<void> };
 export type QualificationPlatformFactory = (configPath: string) => Promise<QualificationPlatform>;
 async function installedPlatform(configPath: string): Promise<QualificationPlatform> {
   // No .env, .dev.vars, inherited application vars, public listener or deployed
@@ -477,8 +477,8 @@ export async function dispatchQualificationStep(path: string, options: AttemptOp
       platform = await (options.factory ?? installedPlatform)(join(path, configNames.driver));
       if (controller.signal.aborted) { void disposePlatform().catch(() => {}); fail(); }
       acceptanceOpen();
-      const response = await platform.env.QUALIFICATION.fetch(new Request(QUALIFICATION_URL, { method: "POST", redirect: "error", signal: controller.signal,
-        headers: { accept: "application/json", "content-type": "application/json" }, body: qualificationBytes(record.requestHex) }));
+      const response = await platform.env.QUALIFICATION.fetch(QUALIFICATION_URL, { method: "POST", redirect: "error", signal: controller.signal,
+        headers: { accept: "application/json", "content-type": "application/json" }, body: qualificationBytes(record.requestHex) });
       if (controller.signal.aborted) { void response.body?.cancel().catch(() => {}); fail(); }
       try { acceptanceOpen(); } catch (error) { void response.body?.cancel().catch(() => {}); throw error; }
       const result = await readQualificationResponse(response, manifest.run, request, controller.signal);

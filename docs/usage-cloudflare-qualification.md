@@ -16,6 +16,8 @@ Before any remote `getPlatformProxy` call, verify that the same account authenti
 
 Confirm that `aicharts-usage-synthetic-qualification` is absent before the first deployment. The initial deployment creates its two SQLite Durable Object namespaces. Later checkpoints must preserve the same Worker name, class names and namespace IDs. Inspect the generated configuration and provider dry run before each deployment; source templates are intentionally unconfigured and must not be deployed directly.
 
+An aborted run can require corrected source and a fresh run identifier. If it completed no mutating stage, preserve its private manifest and receipts, inspect its exact prefixes and anchor, and require empty storage before replacing its dedicated qualification configuration. Match the existing Worker version, bindings, namespace IDs and private routing against the retained deployment evidence immediately before replacement. Record the expected previous deployment and the new source/run/config digests in a separate immutable intent. Preserve the Worker, both namespaces, buckets and all previous evidence. Unexpected provider identity or populated old-run storage requires a separately reviewed continuation; do not delete or reset it to satisfy the empty-prefix check.
+
 The sequence has 41 service requests across three deployment checkpoints. Each request has a 2 KiB input and 16 KiB response cap. Its normal path leaves one 160-byte namespace anchor, three immutable batch objects and three terminal journals. The workload is synthetic and bound to one random run identifier; the driver retains server-issued reservations and browser capabilities as evidence. The existing buckets may contain other data; every inspection is confined to the run's exact prefixes. Free-plan CPU, actual service-binding behavior and deployed persistence need live evidence.
 
 The source-derived successful-path budget is 25 R2 Class A operations, including 18 bounded prefix lists, 104 R2 GETs and 56 Durable Object RPCs including nested calls. The explicit retry cap allows at most 119 service attempts; conservatively tripling the storage work bounds it to 75 Class A operations, 312 GETs and 164 RPCs. The retained seven objects total 3,152 body bytes. These bounds exclude provider setup APIs and response/list metadata. The largest expected stage has 22 downstream operations, with nested RPCs counted; this count does not establish CPU fit or future capacity for real usage.
@@ -31,6 +33,8 @@ node --experimental-transform-types --import ./scripts/usage-cloudflare-node.mjs
 The driver creates a mode-0700 directory with a mode-0600 canonical manifest and three configurations: `wrangler.driver.json`, `wrangler.generation-one.json` and `wrangler.generation-two.json`. It never adopts an existing run directory. The frozen run expires after 24 hours and contains two distinct recovery generations. Keep these files private: the manifest retains synthetic browser capabilities and exact response evidence needed for reconciliation.
 
 The generated service configurations bind only the verified account, fixed Worker, two existing buckets, two Durable Object classes, frozen run and selected generation. Both public URL controls, observability and telemetry remain disabled. The driver configuration contains only the remote named service binding. `getPlatformProxy` supplies that binding locally; the driver is never deployed and opens no public application listener.
+
+The Node driver calls the service binding with the fixed URL and an explicit options object containing its method, headers, signal and owned canonical bytes. Node's native `Request` object is not compatible with the installed proxy's request class. The binding uses manual redirect behavior; the driver separately rejects redirected replies and every Location header before accepting evidence. Local Node binding tests exercise the actual dispatch and reply checks without provider authentication.
 
 The live driver disables Wrangler logging and application environment loading. Do not place `.env` or `.dev.vars` files in the run directory. Use the supported existing Wrangler account authentication; do not copy credentials into a fixture, command argument, source file or public receipt. Keep deployment command output private because provider tooling can display configuration variables.
 
@@ -72,6 +76,10 @@ node --experimental-transform-types --import ./scripts/usage-cloudflare-node.mjs
 
 The driver reuses the retained request bytes and permits at most three explicit attempts for that step. It never retries automatically. An ambiguous `begin` operation stops the run because it creates a random browser capability that cannot be recovered by repeating the request. Preserve the failed run and its evidence; a replacement run needs a new identifier and separately verified target state.
 
+A source repair invalidates the old source digest even if the uncertain request was only an inspection. Do not edit the retained manifest, substitute a factory or disable source verification to continue it. Preserve the failed run, complete the corrected source's delivery gates, then prepare a fresh private run and separately reconcile its deployment target as described above.
+
+The replacement procedure uses a create-only private packet that pins the corrected source commit and digest, the fresh run digest, the expected active deployment and both existing Durable Object namespace IDs, plus the retained old receipt hash. Native Node 24 readback, prefix reconciliation, initial intent preparation, deployment acceptance and the three bounded phase drivers consume that packet. The packet and every readback are mode-0600; provider reads use a selected authentication environment and bounded response streams. Before and after snapshots must match the expected phase and active version; an uncertain deployment remains preserved for reconciliation and is never manually retried.
+
 The driver rejects acceptance after a 20-second monotonic deadline, run expiry or clock rollback observed during an attempt. The Worker applies its own 15-second guard and the underlying storage operations retain their narrower bounds. These guards reject late success; they do not preempt a committed RPC or prove cancellation of platform work. Keep one owner of the live process and its cleanup.
 
 ## Interpret and retain the result
@@ -84,7 +92,7 @@ Local source checks are:
 
 ```text
 bun run scripts/usage-worker-tools.ts test-synthetic-qualification
-bun test scripts/usage-cloudflare-qualification.test.ts scripts/usage-cloudflare-node.test.ts scripts/usage-worker-tools.test.ts
+bun test scripts/usage-cloudflare-qualification.test.ts scripts/usage-cloudflare-node.test.ts scripts/usage-cloudflare-node-binding.test.ts scripts/usage-worker-tools.test.ts
 ```
 
 The full repository gate includes the Worker suite, driver tests, types and lint. Follow the host scheduler requirements for runtime, bundling and aggregate checks.

@@ -317,6 +317,21 @@ fn raw_exchange(raw: Vec<u8>) -> Result<AcceptedEnrollment, TransportError> {
 }
 
 #[test]
+fn explicit_fresh_clock_floor_rejects_rollback_before_dns() {
+    let (request, context, _) = parts("initialize-success");
+    let adapter = transport("127.0.0.1:1".parse().unwrap(), context.now_ms);
+    let calls = adapter.fixture.as_ref().unwrap().resolver.calls.clone();
+    let mut adapter = adapter;
+    assert_eq!(
+        adapter
+            .exchange_once_with_floor(&request, &context, context.now_ms + 1)
+            .err(),
+        Some(TransportError::ClockInvalid)
+    );
+    assert_eq!(calls.load(Ordering::SeqCst), 0);
+}
+
+#[test]
 fn all_frozen_vectors_cross_verified_tls_with_exact_borrowed_request_bytes() {
     assert_eq!(vectors().len(), 25);
     for vector in vectors() {
