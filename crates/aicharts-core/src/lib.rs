@@ -6,6 +6,7 @@
 
 mod reader;
 mod schema;
+pub mod sessions;
 pub mod turns;
 
 use aicharts_protocol::{AuthMode, Batch, Evidence, Id, Provider, Tokens, Usage};

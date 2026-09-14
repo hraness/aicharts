@@ -552,4 +552,35 @@ PR 233 (`798def7`) was squash-merged as `be09db6f48bb017b76339fc90db10cd83545a08
 
 PR 235 was squash-merged as `6ca7acf500b87124e0d63cc776b267432f5f87e4` after protected Check, Required, CodeQL, language analyses, Vercel and auto-merge checks passed. Schema 3 now adds a sixth exact SQL table, `usage_admission_journal`, with one immutable batch and terminal-journal byte pair per committed account revision. Publication inserts that pair in the same transaction as heads, day counts, device sequences and control state; restart audit requires a contiguous prefix, exact canonical decoding, account/generation binding and commit-time ordering, so missing or rewritten history fails closed without repair. Admission and enrollment Worker coverage passed 375 tests, including restart replay and missing-revision refusal. Exact production deployment `dpl_E3wXGGw7FXthiyTMG7g7QhAyub5G` was READY and the canonical 21 probes passed; private log SHA256 is `df696b29994e0479181cf343c5adccd9deeb8f5363d072471a3b7460762fea0f`. Public usage routes and activation flags remain closed; this is a source and local qualification boundary, not live admission or restore qualification.
 
-PR 237 was squash-merged as `f93888ca7b23d53bd0c9cb3a45b68a25a8296036` after protected Check, Required, CodeQL, language analyses, Vercel and auto-merge checks passed. Admission restart audit now rejects journal commit timestamps that regress by revision, preserving the temporal order needed for externally fenced reconciliation; the regression suite passed 56 focused admission tests, and the merged-tree aggregate gate passed with log SHA256 `1f7624059c65cc4875fdbfb57134cdc25307a79c5edc4e55e67ff1346be4bd0b`. Exact production deployment `dpl_FAkx9dESxW38Da7LcwGbqpXjns98` was READY and the canonical 21 probes passed; private log SHA256 is `9a995ce2d93d8b8a3510a1bf1a56d92192d5d66e13aee7ba3319e816e285531f`. Public usage routes and activation flags remain closed.
+PR 237 was squash-merged as `f93888ca7b23d53bd0c9cb3a45b68a25a8296036` after protected Check, Required, CodeQL, language analyses, Vercel and auto-merge checks passed. Admission restart audit now rejects journal commit timestamps that regress by revision, preserving the temporal order needed for externally fenced reconciliation; the regression suite passed 56 focused admission tests. The previously recorded aggregate-gate hash belongs to the preceding admission-journal delivery and is not evidence for this change, so no aggregate log is attributed here. Exact production deployment `dpl_FAkx9dESxW38Da7LcwGbqpXjns98` was READY and the canonical 21 probes passed; private log SHA256 is `9a995ce2d93d8b8a3510a1bf1a56d92192d5d66e13aee7ba3319e816e285531f`. Public usage routes and activation flags remain closed.
+
+### 2026-09-14 — local conversation and session utilization
+
+The session candidate adds a separate numeric `session-observations-v1` report,
+an explicit native historical export, a loopback Claude OTLP monitor and the
+local `/usage/sessions` viewer. Existing collector arithmetic remains
+authoritative for cumulative Codex counts and copied Claude revisions. Supported
+Claude subagents retain separate executions within the same conversation.
+Historical Codex response models and phase timing remain unknown. Instrumented
+request tags are distinguished from response models, and request duration never
+becomes streaming evidence. The five time states are Inference, Reply wait,
+Approval wait, Tool wait and Unknown. Session-weighted and elapsed union shares
+retain unknown time; concurrent inference is counted once for net share.
+
+Focused Rust validation passed ten session cases under scheduler
+`8b30a1813c97181115895072fca0c7c7`. A native synthetic export through scheduler
+`6e8224fa9bae171431e912cb48a17dcc` supplies the checked cross-language fixture.
+Twenty focused TypeScript tests passed with 568 assertions. Independent review
+accepted the collector join and monitor after malformed-parent rejection and
+key-buffer cleanup repairs. The joined candidate still requires the full
+application gate, visual verification, protected delivery and production proof.
+Current operational semantics are maintained in
+[session usage](../../docs/usage-sessions.md).
+
+Public Accounts discovery is reachable, but live browser authentication,
+native custody/enrollment, external restore fencing and production upload/query
+qualification remain unfinished. The production configuration change for the
+cookie secret and canonical site URL was rejected by automatic review and is
+pending explicit owner approval; no mutation occurred. The
+[activation runbook](../../docs/usage-activation.md) separates these remaining
+requirements from the local session feature.

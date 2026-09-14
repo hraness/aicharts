@@ -2,6 +2,7 @@ import { access } from "node:fs/promises";
 import { join } from "node:path";
 import { ATLAS_DATASETS } from "../lib/benchmark-atlas-catalog";
 import { verifyUsageDashboard } from "./usage-browser";
+import { verifyUsageSessions } from "./usage-sessions-browser";
 
 import {
   chromium,
@@ -631,6 +632,7 @@ try {
     await verifyReducedTransparency(browser, baseUrl);
     await verifyForcedColors(browser, baseUrl);
     await verifyUsageDashboard(browser, baseUrl, repository, hostname, await reservePort());
+    await verifyUsageSessions(browser, baseUrl);
   } finally {
     await browser.close();
   }

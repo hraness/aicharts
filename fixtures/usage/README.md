@@ -7,3 +7,10 @@
 - Interval: execution/account `02`/`03` repeated; `[1,000,2,000)`ms; Codex/agent work/live; clock uncertainty 5ms.
 
 Both Rust and TypeScript must decode these values and encode the exact same bytes. No fixture is copied from a private session or credential.
+
+## Session report fixture
+
+`session-history-v1.json` is synthetic output from the native `sessions`
+command with a 32-byte key filled with byte 9. The core projection test checks
+its exact serialization, and the browser parser test checks its token totals
+and unknown timing. No real session identifiers or content are included.

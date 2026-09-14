@@ -33,6 +33,13 @@ Read one selected source or directory; repeat source flags to combine files. Nei
 
 ## Foreground daemon runner
 
+For per-session model mix and time coverage, use the separate
+[`sessions` report and local browser viewer](usage-sessions.md). Historical files provide bounded numeric token
+observations only; they do not establish streaming, inference, or wait intervals. Copied complete records
+are reconciled by their keyed native identities; partial tails remain deferred
+until a terminating newline, and copied or forked subagent histories are not
+reconstructed as new root usage.
+
 `daemon` repeats the existing local `collect` command in one foreground process. It requires the same explicit state directory, private key and Codex/Claude source paths; it does not discover paths, install a service, read provider credentials, or contact a server. The default interval is 15 minutes and is bounded to 60 seconds through 24 hours. Use `--once` for a single supervised pass or smoke test:
 
 ```sh
@@ -60,7 +67,7 @@ Directory traversal selects `.jsonl` files, skips observed symlink entries, and 
 
 Token totals are **observed, partial historical usage**, not provider billing statements. JSON token counters are decimal strings so clients do not lose integer precision. Model IDs, API-versus-subscription attribution and account ownership remain unknown; no estimated prices are invented. `promptOccurrences: null` and unavailable activity coverage are intentional, not a zero-prompt/idle-day claim.
 
-- Codex uses cumulative deltas. A bounded first `last_token_usage` can count the last request while preceding unobserved cumulative history stays omitted. Missing baseline and counter regressions produce warnings. Declared fork history is unsupported, not newly earned usage. Copied complete records deduplicate; arbitrary partially overlapping/forked histories may conflict and require future lineage-aware reconciliation.
+- Codex uses cumulative deltas. A bounded first `last_token_usage` can count the last request while preceding unobserved cumulative history stays omitted. Missing baseline and counter regressions produce warnings. Declared fork history is unsupported, not newly earned usage. Copied complete records deduplicate; arbitrary partially overlapping/forked histories may conflict and require future lineage-aware reconciliation. Partial tails remain deferred until a complete newline; no incomplete suffix contributes numeric usage.
 - Claude uses native request/message identities and compatible monotonic streaming revisions. Positive cache creation without an explicit 5-minute/1-hour split is omitted with `claude_cache_ttl_unknown`, rather than assigned an invented price category.
 - Human prompt counts and activity/concurrency are not reconstructed from conversation text. The TypeScript rollup engine can calculate 15-minute activity and independent 16-minute concurrency from explicit interval/coverage inputs; historical token logs do not provide those inputs reliably.
 
