@@ -37,6 +37,12 @@ export type RestoreFenceView = Readonly<{ record: RestoreFenceRecord | null; inF
  * epoch because a closed fence cannot publish while any lease is outstanding. */
 export type RestoreFenceLease = Readonly<{ token: string; epoch: number; established: boolean; deadlineMs: number }>;
 
+/** The authoritative values a granted lease observed, handed to the account
+ * object's transaction so it can cross-check its own recorded epoch and refuse
+ * a wiped-but-established genesis. Shared with the admission boundary without
+ * importing the account object. */
+export type FenceObservation = Readonly<{ epoch: number; established: boolean }>;
+
 export const RESTORE_FENCE_GENESIS_EPOCH = 0;
 export const RESTORE_FENCE_LEASE_TTL_MS = 30_000;
 export const RESTORE_FENCE_MAX_LEASES = 64;

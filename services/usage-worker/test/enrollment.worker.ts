@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { enrollmentAccountName, type EnrollmentProof } from "../src/enrollment-contract";
 import type { EnrollmentView } from "../src/enrollment";
 import { PAIRING_TTL_MS, uploadSecretCommitment } from "../src/pairing";
+import { restoreFenceName, type RestoreFenceResult, type RestoreFenceView } from "../src/restore-fence";
 
 // Exact local fixture reset only. Dropping just enrollment in schema3 now means
 // corrupt partial state, not the completely empty restore these tests exercise.
@@ -375,19 +376,20 @@ describe("explicit retained-genesis recovery", () => {
     }
     const before = await accountRow();
     const legacy = typeof before.payload === "string" ? JSON.parse(before.payload) as Record<string, unknown> : null;
-    if (legacy !== null) delete legacy.genesisCompletion;
+    if (legacy !== null) { delete legacy.genesisCompletion; delete legacy.fenceEpoch; }
     await runInDurableObject(accountStub(), (_instance, state) => {
       removeSyntheticAdmissionTables(state.storage.sql);
       state.storage.sql.exec("UPDATE account_enrollment SET schema_version = 1, payload = ?", legacy === null ? null : JSON.stringify(legacy));
     });
     await abortAllDurableObjects();
     const after = await accountRow();
-    expect(after).toMatchObject({ schema_version: 3, revision: before.revision });
+    expect(after).toMatchObject({ schema_version: 4, revision: before.revision });
     if (legacy === null) expect(after.payload).toBeNull();
     else {
       const payload = await accountPayload();
       expect(payload.genesisCompletion).toEqual(phase === "pending" ? null : { mode: "original", intentId: ID, reservationId: (legacy.anchor as { reservationId: string }).reservationId, completedAtMs: NOW });
       delete payload.genesisCompletion;
+      delete payload.fenceEpoch;
       expect(payload).toEqual(legacy);
     }
   });
@@ -796,7 +798,7 @@ describe("dormant account enrollment with real local pairing and R2", () => {
     expect(await accountStub().enroll(proof)).toEqual({ ok: false, error: "recovery_required" });
     expect((await accountStub().namespaceForEnrollment(proof)).ok).toBe(false);
     expect((await accountStub().revokeEnrollment(proof)).ok).toBe(false);
-    expect(await accountRow()).toMatchObject({ schema_version: 3, revision: 0, payload: null });
+    expect(await accountRow()).toMatchObject({ schema_version: 4, revision: 0, payload: null });
     expect(await anchor()).toEqual(original);
   });
 
@@ -845,7 +847,7 @@ describe("dormant account enrollment with real local pairing and R2", () => {
     await runInDurableObject(accountStub(), (_instance, state) => {
       switch (corruption) {
         case "malformed payload": state.storage.sql.exec("UPDATE account_enrollment SET payload = ?", '{"chat":"transcript-canary"}'); break;
-        case "future schema": state.storage.sql.exec("UPDATE account_enrollment SET schema_version = 4"); break;
+        case "future schema": state.storage.sql.exec("UPDATE account_enrollment SET schema_version = 5"); break;
         case "missing row": state.storage.sql.exec("DELETE FROM account_enrollment"); break;
         case "extra table": state.storage.sql.exec("CREATE TABLE unexpected_account_state (marker INTEGER)"); break;
         case "extra index": state.storage.sql.exec("CREATE INDEX unexpected_account_index ON account_enrollment (revision)"); break;
@@ -1039,7 +1041,9 @@ describe("dormant account enrollment with real local pairing and R2", () => {
     vi.setSystemTime(NOW + 1_000);
     const pairings = pairingReplies(result => {
       let reads = 0;
-      vi.spyOn(Date, "now").mockImplementation(() => ++reads === 1 ? NOW + 1_000 : NOW + 500);
+      // The restore-fence lease consumes the first Date.now for its deadline;
+      // the account's first observation commit is the second read.
+      vi.spyOn(Date, "now").mockImplementation(() => ++reads === 2 ? NOW + 1_000 : NOW + 500);
       return result;
     });
     const result = await runInDurableObject(accountStub(), async instance => {
@@ -1206,5 +1210,72 @@ describe("dormant account enrollment with real local pairing and R2", () => {
     expect((await accountStub().namespaceForEnrollment(freshProof)).ok).toBe(false);
     expect(await accountPayload()).toMatchObject({ phase: "pending", devices: [], anchor: pending.anchor });
     expect(await anchor()).toEqual(original);
+  });
+});
+
+describe("external restore fence integration", () => {
+  const GENERATION = env.USAGE_ENROLLMENT_GENERATION;
+  const VERSION = env.USAGE_WORKER_VERSION;
+  const fenceStub = (accountId = ACCOUNT) => env.RESTORE_FENCES.getByName(restoreFenceName(accountId)) as unknown as {
+    read(input: unknown): Promise<RestoreFenceResult<RestoreFenceView>>;
+    close(input: unknown): Promise<RestoreFenceResult<RestoreFenceView>>;
+    publish(input: unknown): Promise<RestoreFenceResult<RestoreFenceView>>;
+  };
+  const fenceView = async (accountId = ACCOUNT) => {
+    const result = await fenceStub(accountId).read({ accountId, generation: GENERATION });
+    if (!result.ok) throw new Error(`synthetic fence read: ${result.error}`);
+    return result.value;
+  };
+  const fenceCall = async <T>(result: Promise<RestoreFenceResult<T>>) => {
+    const value = await result;
+    if (!value.ok) throw new Error(`synthetic fence call: ${value.error}`);
+    return value.value;
+  };
+
+  test("the first durable commit establishes the account on the fence", async () => {
+    await reserved();
+    expect((await fenceView()).record).toBeNull();
+    success(await accountStub().enroll(proof));
+    expect((await fenceView()).record?.established).toBe(true);
+  });
+
+  test("an established account survives an account-object wipe on the external fence", async () => {
+    await reserved();
+    success(await accountStub().enroll(proof));
+    // The fence is a separately-owned store: it recorded establishment
+    // independently of the account object's durable row.
+    expect((await fenceView()).record?.established).toBe(true);
+    await eraseSyntheticAccount();
+    await abortAllDurableObjects();
+    // The account store is empty again, but the external fence still reports the
+    // account was established — a wiped object cannot silently re-run genesis.
+    expect(await accountRow()).toMatchObject({ revision: 0, payload: null });
+    expect((await fenceView()).record?.established).toBe(true);
+    expect(await accountStub().enroll(proof)).toEqual({ ok: false, error: "recovery_required" });
+  });
+
+  test("a restored account at a stale epoch refuses fenced operations", async () => {
+    await reserved();
+    success(await accountStub().enroll(proof));
+    // An operator closes the drained epoch and republishes after restoring both
+    // stores; the account still records epoch 0 while the fence now serves 1.
+    await fenceCall(fenceStub().close({ accountId: ACCOUNT, generation: GENERATION, epoch: 0, workerVersion: VERSION }));
+    await fenceCall(fenceStub().publish({ accountId: ACCOUNT, generation: GENERATION, epoch: 1, workerVersion: VERSION }));
+    await reserved({ ...proof, intentId: SECOND_ID });
+    expect(await accountStub().enroll({ ...proof, intentId: SECOND_ID })).toEqual({ ok: false, error: "recovery_required" });
+    expect(await accountStub().revokeEnrollment(proof)).toEqual({ ok: false, error: "recovery_required" });
+    expect((await accountPayload()).fenceEpoch).toBe(0);
+  });
+
+  test("a closed fence blocks every mutating operation until an operator republishes", async () => {
+    await reserved();
+    success(await accountStub().enroll(proof));
+    await fenceCall(fenceStub().close({ accountId: ACCOUNT, generation: GENERATION, epoch: 0, workerVersion: VERSION }));
+    await reserved({ ...proof, intentId: SECOND_ID });
+    expect(await accountStub().enroll({ ...proof, intentId: SECOND_ID })).toEqual({ ok: false, error: "recovery_required" });
+    expect(await accountStub().revokeEnrollment(proof)).toEqual({ ok: false, error: "recovery_required" });
+    expect(await accountStub().recoverPendingEnrollment({ ...proof, intentId: SECOND_ID })).toEqual({ ok: false, error: "recovery_required" });
+    // The committed account data is preserved and unchanged by the refused traffic.
+    expect(await accountPayload()).toMatchObject({ phase: "active" });
   });
 });
