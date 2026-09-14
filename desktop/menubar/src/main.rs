@@ -17,6 +17,8 @@ use std::time::Duration;
 use desktop_foundation::outputs::OutputsSection;
 use desktop_foundation::{Host, MenuModel, MenuNode, Options};
 
+const STATUS_MARK: &str = "AI";
+
 /// The outputs directory agents write into: `AICHARTS_OUTPUTS`, an explicit
 /// `--outputs <dir>` argument, or `outputs/` under the working directory
 /// (the launch script runs from the repository root).
@@ -62,7 +64,7 @@ impl Host for AiChartsHost {
         nodes.push(MenuNode::Separator);
         nodes.push(MenuNode::quit("Quit AI Charts"));
         MenuModel {
-            title: Some("AI Charts".to_owned()),
+            title: Some(STATUS_MARK.to_owned()),
             tooltip: Some("AI Charts — agent outputs".to_owned()),
             icon: None,
             nodes,
