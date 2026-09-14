@@ -2,7 +2,7 @@ import { chmod, mkdir, mkdtemp, rm, stat } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, test } from "bun:test";
-import { installMenubar, installedMenubarBinary, menubarBinary, runMenubar, uninstallMenubar } from "./menubar.ts";
+import { installMenubar, installedMenubarBinary, menubarBinary, runMenubar, uninstallMenubar } from "./menubar";
 
 test("production launcher refuses to build when the companion is absent", async () => {
   const root = await mkdtemp(join(tmpdir(), "aicharts-menubar-"));
