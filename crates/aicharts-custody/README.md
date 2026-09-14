@@ -2,8 +2,9 @@
 
 This library supplies immutable, typed secret records, a noninteractive macOS
 Keychain adapter, and a dormant reference-manifest state machine. It is not
-connected to the CLI, enrollment, uploads, or a daemon. Ordinary tests use
-in-memory fakes and owned disposable filesystem fixtures, never a user's keychain.
+connected to an enabled CLI enrollment, upload, or daemon command. Ordinary tests
+use in-memory fakes and owned disposable filesystem fixtures, never a user's
+keychain.
 
 ## Boundary
 
@@ -65,12 +66,20 @@ terminal acknowledgment; custody must not duplicate that authority.
 
 ## Dormant reference manifest
 
-`references::ReferenceStore` is deliberately closed. On macOS, every constructor
-and operation returns `references_backend_unqualified` before filesystem or vault
-access. Other platforms return `references_unsupported_platform`. There is no
-public fake backend, raw-byte import, verification setter, or permission-bit-only
-fallback. The internal state machine has deterministic tests; it does not yet
-provide a usable filesystem store.
+The public `references::ReferenceStore` constructors and `inspect_existing` remain
+closed. On macOS, they return `references_backend_unqualified` before filesystem
+or vault access. Other platforms return `references_unsupported_platform`. There
+is no public backend injection, raw-byte import, verification setter, or
+permission-bit-only fallback.
+
+Only private macOS `cfg(test)` fixtures construct a facade backed by
+`QualifiedStore`. Its `snapshot` and `prepare` methods run the persistence engine;
+`install_prepared`, `reconcile_prepared`, and `resolve_verified` also use the
+supplied `Vault`. Each custody operation owns one lazy session, selected only
+after the engine checks the filesystem guards, committed durability and exact
+token. That session stays pinned across insertion and readback and is released
+before the method returns. A refusal before vault work selects no session. These
+instance methods do not open a production constructor or CLI activation path.
 
 The manifest binds one nonzero installation to at most 256 retained references.
 Each entry contains the exact `RecordIdentity`, a commitment to the complete
@@ -127,9 +136,10 @@ Private in-memory tests model candidate writes, synchronization, publication,
 reply loss, restart, and concurrent changes. A separate private macOS adapter
 uses `rustix` descriptor operations and the narrow
 [ACL inspection boundary](../aicharts-platform-acl/README.md). Its tests use only
-disposable directories and synthetic records, with a fake vault. The public
-`ReferenceStore` remains closed. The private explicit-path integration candidate
-and its separately ignored Keychain qualification do not activate that facade.
+disposable directories and synthetic records, with a fake vault. Ordinary facade
+tests exercise the real instance methods against that APFS adapter and a private
+in-memory vault factory. Private explicit-path constructors and the separately
+ignored Keychain fixture do not expose public construction.
 
 The adapter accepts an already trusted, owned directory descriptor. It requires
 current-user ownership, mode 0700, no ACL entries, and writable local APFS with
@@ -180,7 +190,7 @@ installation and either its exact initial pending envelope or an empty
 revision-zero current manifest. It reestablishes durability for a committed
 retry. A differing installation or advanced manifest is not an initialization
 receipt; missing or partial state is preserved. The corresponding public method
-remains behind the same closed facade.
+remains closed before filesystem or vault access.
 
 Reads, writes, interrupt retries, and directory enumeration have fixed work
 bounds. Native disk operations do not have a guaranteed wall-clock timeout.
@@ -248,16 +258,17 @@ cargo test --locked -p aicharts-custody
 cargo clippy --locked -p aicharts-custody --all-targets -- -D warnings
 ```
 
-The explicitly admitted disposable Keychain qualification passed on 13 September
-2026 through mac-native scheduler run `82d9227ab30d645a386575e9ea7e9e4c`. It
-created and reopened one fresh file-based keychain under a strict, task-owned
-APFS parent, verified immutable reference readback, lost-reply reconciliation,
-locked-access refusal and cleanup identity, then removed only that fixture. It
-did not select the login or system keychain, enumerate a user's vault, change
-search lists or retain a credential. The qualification proves this bounded
-mechanism on this host; it does not establish hostile-process isolation,
-Secure Enclave/Data Protection guarantees, signed application behavior,
-installation, upgrade or live enrollment authority.
+The facade's disposable Keychain qualification passed on 13 September 2026 through
+mac-native scheduler run `ab43b0aa0bdcadddf85bb6ea146698cc` (one test passed, 118
+filtered). The private fixture exercised the exact `ReferenceStore` methods with
+pairing and namespace records in one fresh file-based keychain under a strict,
+task-owned APFS parent. It verified immutable readback, reopening, lost-reply
+reconciliation, locked-access refusal and cleanup identity. Only the owned
+fixture was removed, and the exact parent was empty afterward. The run did not
+select the login or system keychain, enumerate a user's vault, change search
+lists or retain a credential. The earlier run
+`82d9227ab30d645a386575e9ea7e9e4c` remains evidence for the mechanism before the
+facade join.
 
 Tests exercise strict record bounds and offsets, purpose/binding confusion,
 private projections, create-only races, failed writes/readbacks, and explicit
@@ -266,14 +277,22 @@ guard the absence of secret debug/clone traits. macOS-only pure tests check nati
 error classification, result projection, synthetic UI guard behavior, and mutex
 refusal before any native call.
 
+The current ordinary custody run passed 117 tests, with two explicit native
+qualification tests ignored; four doctests and scoped Clippy also passed. The
+facade cases use disposable APFS directories and an in-memory vault to check pairing and
+namespace records, one session per custody operation, refusal before selection,
+lost-reply reconciliation and preservation of verified references.
+
 The separately ignored `disposable_keychain_reference_roundtrip` test is an
 explicit native qualification candidate, not part of ordinary checks. Its parent
 validates an explicitly supplied existing private parent before creating one
-owned fixture. A bounded child creates a concrete private keychain with synthetic records and no
-password in argv or environment; it never selects the default keychain or edits
-search lists. It tests exact readback, conflicts, reopening, lost insertion replies,
-and noninteractive refusal while that fixture is locked. Only the exact fixture
-is unlocked with its synthetic in-memory password. Cleanup removes the parent's
+owned fixture. A bounded child creates a concrete private keychain with synthetic
+records and no password in argv or environment; it never selects the default
+keychain or edits search lists. The child now calls the exact `ReferenceStore`
+instance methods with pairing and namespace records. It tests exact readback,
+conflicts, reopening, lost insertion replies, and noninteractive refusal while
+that fixture is locked. Only the exact fixture is unlocked with its synthetic
+in-memory password. Cleanup removes the parent's
 owned directory after child exit and identity revalidation. Its exact child
 process group is retained through timeout cleanup, including a fixture-lock
 subprocess. An uncertain process-custody result preserves the fixture. It does
@@ -281,7 +300,10 @@ not call `delete-keychain`, whose implementation also saves keychain preferences
 Full fixture paths containing `/login.keychain` are refused before creation,
 matching [Apple's private-keychain registration distinction](https://raw.githubusercontent.com/apple-oss-distributions/Security/main/OSX/libsecurity_keychain/lib/StorageManager.cpp).
 
-This ignored test has not established signed-application, LaunchAgent, executable
-upgrade, user-consent or full credential-recovery qualification. Its presence is
-not a live-test receipt. Signed CLI and LaunchAgent artifact qualification must
-precede claims of unattended support.
+This receipt qualifies the explicit disposable fixture on this host. Default
+User-domain keychain selection, hostile-process isolation, Secure Enclave/Data
+Protection guarantees, signed-application and LaunchAgent behavior, installation,
+upgrade, user consent, full credential recovery and live enrollment remain
+unqualified. Public reference-store constructors and CLI activation remain closed.
+Signed CLI and LaunchAgent artifact qualification must precede claims of
+unattended support.

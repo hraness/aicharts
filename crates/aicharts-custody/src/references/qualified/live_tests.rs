@@ -1,10 +1,11 @@
 //! Explicit ignored qualification. Only synthetic records and a fresh private
 //! keychain are admitted; never select, unlock, enumerate or delete a user vault.
+use super::super::ReferenceStore;
 use super::*;
 use crate::{
     macos::{fixture_ui, NativeSession},
-    store::{self, RawError, RawResult, RawStore},
-    CredentialRef, InsertOutcome, Purpose, Secret32,
+    store::{RawError, RawResult, RawStore},
+    CredentialRef, InsertOutcome, NamespaceBinding, Purpose, Secret32,
 };
 use security_framework::os::macos::keychain::{CreateOptions, SecKeychain};
 use std::{
@@ -342,19 +343,34 @@ fn disposable_keychain_reference_roundtrip() {
     assert!(matches!(outcome, Ok(true)), "qualification_child_failed");
 }
 
-fn record(item: u8, secret: u8) -> SecretRecord {
-    SecretRecord::checkpoint(
-        CredentialRef::new(INSTALLATION, [item; 32], Purpose::Checkpoint).unwrap(),
+fn pairing_record(secret: u8) -> SecretRecord {
+    SecretRecord::pairing(
+        CredentialRef::new(INSTALLATION, [1; 32], Purpose::Pairing).unwrap(),
+        [91; 32],
         Secret32::new([secret; 32]).unwrap(),
+        Secret32::new([secret + 1; 32]).unwrap(),
     )
     .unwrap()
 }
 
-struct LostReply<'a> {
-    store: &'a mut dyn RawStore,
+fn namespace_record() -> SecretRecord {
+    SecretRecord::namespace(
+        CredentialRef::new(INSTALLATION, [2; 32], Purpose::Namespace).unwrap(),
+        NamespaceBinding::new([83; 16], [89; 32], 1).unwrap(),
+        Secret32::new([79; 32]).unwrap(),
+    )
+    .unwrap()
+}
+
+fn fixture_vault(keychain: SecKeychain) -> Vault {
+    Vault::fixture(move || NativeSession::fixture(keychain.clone()))
+}
+
+struct LostReply<S> {
+    store: S,
     lose: bool,
 }
-impl RawStore for LostReply<'_> {
+impl<S: RawStore> RawStore for LostReply<S> {
     fn read(&mut self, reference: &CredentialRef) -> RawResult<Zeroizing<Vec<u8>>> {
         self.store.read(reference)
     }
@@ -395,32 +411,25 @@ fn disposable_keychain_child() {
         .create(&reference_path)
         .map_err(|_| "qualification_reference_create_failed")
         .unwrap();
-    let mut refs = QualifiedStore::initialize_new(&reference_path, INSTALLATION).unwrap();
+    let mut refs = ReferenceStore::fixture(
+        QualifiedStore::initialize_new(&reference_path, INSTALLATION).unwrap(),
+    );
     let initial = refs.snapshot().unwrap();
-    let original = record(1, 73);
+    let original = pairing_record(73);
     let prepared = refs.prepare(&initial.token(), &original).unwrap();
-    let selections = std::cell::Cell::new(0);
-    let mut no_native = LazyStore::new(|| -> RawResult<NativeSession> {
-        selections.set(selections.get() + 1);
+    let selections = std::rc::Rc::new(std::cell::Cell::new(0));
+    let selected = selections.clone();
+    let mut no_native = Vault::fixture(move || -> RawResult<NativeSession> {
+        selected.set(selected.get() + 1);
         Err(RawError::Unavailable)
     });
     assert_eq!(
-        engine::install(
-            &mut refs.storage,
-            &initial.token(),
-            &original,
-            &mut no_native
-        ),
+        refs.install_prepared(&initial.token(), &original, &mut no_native),
         Err(Error::StaleSnapshot)
     );
-    refs.storage.fail_next_committed_sync();
+    refs.backend().unwrap().storage.fail_next_committed_sync();
     assert_eq!(
-        engine::install(
-            &mut refs.storage,
-            &prepared.token(),
-            &original,
-            &mut no_native
-        ),
+        refs.install_prepared(&prepared.token(), &original, &mut no_native),
         Err(Error::StorageUnavailable)
     );
     assert_eq!(
@@ -439,69 +448,53 @@ fn disposable_keychain_child() {
     })
     .map_err(|_| "qualification_keychain_create_failed")
     .unwrap();
-    let mut vault = LazyStore::new(|| NativeSession::fixture(keychain.clone()));
-    let verified =
-        engine::install(&mut refs.storage, &prepared.token(), &original, &mut vault).unwrap();
+    let mut vault = fixture_vault(keychain.clone());
+    let verified = refs
+        .install_prepared(&prepared.token(), &original, &mut vault)
+        .unwrap();
     assert_eq!(
-        store::insert_immutable(&mut vault, &original),
+        vault.insert_immutable(&original),
         Ok(InsertOutcome::AlreadyPresent)
     );
     assert_eq!(
-        store::insert_immutable(&mut vault, &record(1, 74)),
+        vault.insert_immutable(&pairing_record(75)),
         Err(crate::Error::Conflict)
     );
-    let wrong_purpose = RecordIdentity::pairing(
-        CredentialRef::new(INSTALLATION, [1; 32], Purpose::Pairing).unwrap(),
-        [91; 32],
+    let wrong_purpose = RecordIdentity::checkpoint(
+        CredentialRef::new(INSTALLATION, [1; 32], Purpose::Checkpoint).unwrap(),
     )
     .unwrap();
-    assert!(store::read_exact(&mut vault, &wrong_purpose).err() == Some(crate::Error::Missing));
-    assert!(engine::resolve(
-        &mut refs.storage,
-        &verified.token(),
-        original.identity(),
-        &mut vault
-    )
-    .is_ok());
+    assert!(vault.read_exact(&wrong_purpose).err() == Some(crate::Error::Missing));
+    assert!(refs
+        .resolve_verified(&verified.token(), original.identity(), &mut vault)
+        .is_ok());
     drop(vault);
     drop(refs);
 
     let reopened =
         fixture_ui(|| SecKeychain::open(&keychain_path).map_err(|_| crate::Error::Unavailable))
             .unwrap();
-    let mut refs = QualifiedStore::open_existing(&reference_path).unwrap();
-    let mut vault = LazyStore::new(|| NativeSession::fixture(reopened.clone()));
-    assert!(engine::resolve(
-        &mut refs.storage,
-        &verified.token(),
-        original.identity(),
-        &mut vault
-    )
-    .is_ok());
-    let pending = record(2, 79);
+    let mut refs = ReferenceStore::fixture(QualifiedStore::open_existing(&reference_path).unwrap());
+    let mut vault = fixture_vault(reopened.clone());
+    assert!(refs
+        .resolve_verified(&verified.token(), original.identity(), &mut vault)
+        .is_ok());
+    let pending = namespace_record();
     let before_loss = refs.prepare(&verified.token(), &pending).unwrap();
-    let mut lost = LostReply {
-        store: &mut vault,
-        lose: true,
-    };
+    let lost_keychain = reopened.clone();
+    let mut lost = Vault::fixture(move || {
+        NativeSession::fixture(lost_keychain.clone()).map(|store| LostReply { store, lose: true })
+    });
     assert_eq!(
-        engine::install(&mut refs.storage, &before_loss.token(), &pending, &mut lost),
+        refs.install_prepared(&before_loss.token(), &pending, &mut lost),
         Err(Error::Custody(crate::Error::OutcomeUnknown))
     );
-    let recovered = engine::reconcile(
-        &mut refs.storage,
-        &before_loss.token(),
-        pending.identity(),
-        &mut vault,
-    )
-    .unwrap();
-    assert!(engine::resolve(
-        &mut refs.storage,
-        &recovered.token(),
-        pending.identity(),
-        &mut vault
-    )
-    .is_ok());
+    let recovered = refs
+        .reconcile_prepared(&before_loss.token(), pending.identity(), &mut vault)
+        .unwrap();
+    assert!(refs
+        .resolve_verified(&recovered.token(), pending.identity(), &mut vault)
+        .is_ok());
     drop(vault);
 
     // The absolute explicit argument avoids security's name/search-list lookup.
@@ -518,14 +511,10 @@ fn disposable_keychain_child() {
         wait_bounded(&mut lock, 5),
         "qualification_fixture_lock_failed"
     );
-    let mut locked = LazyStore::new(|| NativeSession::fixture(reopened.clone()));
-    let error = engine::resolve(
-        &mut refs.storage,
-        &recovered.token(),
-        original.identity(),
-        &mut locked,
-    )
-    .err();
+    let mut locked = fixture_vault(reopened.clone());
+    let error = refs
+        .resolve_verified(&recovered.token(), original.identity(), &mut locked)
+        .err();
     assert!(
         matches!(
             error,
@@ -543,19 +532,15 @@ fn disposable_keychain_child() {
             .map_err(|_| crate::Error::Unavailable)
     })
     .unwrap();
-    let mut final_store = LazyStore::new(|| NativeSession::fixture(unlocked.clone()));
-    assert!(engine::resolve(
-        &mut refs.storage,
-        &recovered.token(),
-        original.identity(),
-        &mut final_store
-    )
-    .is_ok());
+    let mut final_store = fixture_vault(unlocked.clone());
+    assert!(refs
+        .resolve_verified(&recovered.token(), original.identity(), &mut final_store)
+        .is_ok());
     drop(final_store);
     // The nonsecret reference directory must never contain either raw record.
     for name in ["references.lock", "references.current"] {
         let bytes = fs::read(reference_path.join("references-v1").join(name)).unwrap();
-        for secret in [[73; 32], [79; 32]] {
+        for secret in [[73; 32], [74; 32], [79; 32]] {
             assert!(!bytes.windows(32).any(|window| window == secret));
         }
     }

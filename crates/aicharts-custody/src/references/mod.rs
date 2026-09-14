@@ -1,5 +1,6 @@
-//! Bounded nonsecret reference custody. The persistence backend is not qualified;
-//! every public store operation fails before filesystem or Keychain access.
+//! Bounded nonsecret reference custody. Public constructors remain closed before
+//! filesystem or Keychain access. Only private test fixtures construct a facade
+//! with the backend that implements the reserved instance operations.
 //! These records establish neither enrollment nor upload authorization.
 
 mod codec;
@@ -11,8 +12,8 @@ mod tests;
 #[cfg_attr(not(test), allow(dead_code))]
 pub(crate) mod engine;
 
-// Real descriptor I/O is privately qualified; anchor discovery and the public
-// Path facade remain closed. No caller can inject this backend through the API.
+// Real descriptor I/O is privately qualified; public Path constructors remain
+// closed. No caller can inject this backend through the public API.
 #[cfg(target_os = "macos")]
 #[cfg_attr(not(test), allow(dead_code))]
 mod macos;
@@ -174,6 +175,9 @@ impl ManifestSnapshot {
 /// No constructor succeeds in this source slice, including on macOS. There is
 /// no public backend injection, byte import, verification setter, or fallback.
 pub struct ReferenceStore {
+    #[cfg(target_os = "macos")]
+    qualified: Option<qualified::QualifiedStore>,
+    #[cfg(not(target_os = "macos"))]
     _private: (),
 }
 
@@ -186,6 +190,18 @@ fn closed() -> Error {
 }
 
 impl ReferenceStore {
+    #[cfg(target_os = "macos")]
+    fn backend(&mut self) -> Result<&mut qualified::QualifiedStore> {
+        self.qualified.as_mut().ok_or_else(closed)
+    }
+
+    #[cfg(all(test, target_os = "macos"))]
+    fn fixture(backend: qualified::QualifiedStore) -> Self {
+        Self {
+            qualified: Some(backend),
+        }
+    }
+
     /// Exact initialization recovery is reserved behind the same admission fence.
     pub fn reconcile_initialization(_path: &Path, _installation: [u8; 32]) -> Result<Self> {
         Err(closed())
@@ -200,6 +216,9 @@ impl ReferenceStore {
         Err(closed())
     }
     pub fn snapshot(&mut self) -> Result<ManifestSnapshot> {
+        #[cfg(target_os = "macos")]
+        return self.backend()?.snapshot();
+        #[cfg(not(target_os = "macos"))]
         Err(closed())
     }
     pub fn prepare(
@@ -207,6 +226,9 @@ impl ReferenceStore {
         _expected: &ManifestToken,
         _record: &SecretRecord,
     ) -> Result<ManifestSnapshot> {
+        #[cfg(target_os = "macos")]
+        return self.backend()?.prepare(_expected, _record);
+        #[cfg(not(target_os = "macos"))]
         Err(closed())
     }
     pub fn install_prepared(
@@ -215,6 +237,9 @@ impl ReferenceStore {
         _record: &SecretRecord,
         _vault: &mut Vault,
     ) -> Result<ManifestSnapshot> {
+        #[cfg(target_os = "macos")]
+        return self.backend()?.install_prepared(_expected, _record, _vault);
+        #[cfg(not(target_os = "macos"))]
         Err(closed())
     }
     pub fn reconcile_prepared(
@@ -223,6 +248,11 @@ impl ReferenceStore {
         _identity: &RecordIdentity,
         _vault: &mut Vault,
     ) -> Result<ManifestSnapshot> {
+        #[cfg(target_os = "macos")]
+        return self
+            .backend()?
+            .reconcile_prepared(_expected, _identity, _vault);
+        #[cfg(not(target_os = "macos"))]
         Err(closed())
     }
     pub fn resolve_verified(
@@ -231,6 +261,11 @@ impl ReferenceStore {
         _identity: &RecordIdentity,
         _vault: &mut Vault,
     ) -> Result<SecretRecord> {
+        #[cfg(target_os = "macos")]
+        return self
+            .backend()?
+            .resolve_verified(_expected, _identity, _vault);
+        #[cfg(not(target_os = "macos"))]
         Err(closed())
     }
 }

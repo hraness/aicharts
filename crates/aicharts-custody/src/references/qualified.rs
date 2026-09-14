@@ -1,7 +1,7 @@
 //! Private integration candidate. The public facade stays guarded until the
 //! exact source and disposable native mechanism have been admitted.
 use super::{engine, macos::MacStorage, Error, ManifestSnapshot, ManifestToken, Result};
-use crate::{macos::LazyStore, RecordIdentity, SecretRecord};
+use crate::{RecordIdentity, SecretRecord, Vault};
 use std::path::Path;
 
 pub(super) struct QualifiedStore {
@@ -43,33 +43,42 @@ impl QualifiedStore {
     ) -> Result<ManifestSnapshot> {
         engine::prepare(&mut self.storage, expected, record)
     }
-    pub(super) fn install(
+    pub(super) fn install_prepared(
         &mut self,
         expected: &ManifestToken,
         record: &SecretRecord,
+        vault: &mut Vault,
     ) -> Result<ManifestSnapshot> {
         // Construction is pure. The first native call happens only when the
         // engine reaches its vault port after durable_checked under the FS lock.
-        let mut vault = LazyStore::native();
-        engine::install(&mut self.storage, expected, record, &mut vault)
+        vault.with_lazy_store(|session| {
+            engine::install(&mut self.storage, expected, record, session)
+        })
     }
-    pub(super) fn reconcile(
+    pub(super) fn reconcile_prepared(
         &mut self,
         expected: &ManifestToken,
         identity: &RecordIdentity,
+        vault: &mut Vault,
     ) -> Result<ManifestSnapshot> {
-        let mut vault = LazyStore::native();
-        engine::reconcile(&mut self.storage, expected, identity, &mut vault)
+        vault.with_lazy_store(|session| {
+            engine::reconcile(&mut self.storage, expected, identity, session)
+        })
     }
-    pub(super) fn resolve(
+    pub(super) fn resolve_verified(
         &mut self,
         expected: &ManifestToken,
         identity: &RecordIdentity,
+        vault: &mut Vault,
     ) -> Result<SecretRecord> {
-        let mut vault = LazyStore::native();
-        engine::resolve(&mut self.storage, expected, identity, &mut vault)
+        vault.with_lazy_store(|session| {
+            engine::resolve(&mut self.storage, expected, identity, session)
+        })
     }
 }
 
 #[cfg(test)]
 mod live_tests;
+
+#[cfg(test)]
+mod tests;
