@@ -49,7 +49,9 @@
     "kb:refresh": "bunx --bun github:hraness/kb#v0.15.2 refresh --root kb",
     "kb:check:lane": "bunx --bun github:hraness/kb#v0.15.2 check --root kb --no-catalog",
     "kb:check": "bunx --bun github:hraness/kb#v0.15.2 check --root kb && bunx --bun github:hraness/kb#v0.15.2 agents check --root kb --repo .",
-    "kb:catalog": "bunx --bun github:hraness/kb#v0.15.2 catalog --root kb"
+    "kb:catalog": "bunx --bun github:hraness/kb#v0.15.2 catalog --root kb",
+    "menubar": "bun run scripts/menubar.ts",
+    "outputs": "bun -e 'const {mkdirSync}=require(\"node:fs\");const p=require(\"node:path\").join(process.cwd(),\"outputs\");mkdirSync(p,{recursive:true});console.log(p)'"
   },
   "dependencies": {
     "@hugeicons/core-free-icons": "^4.2.2",
