@@ -5,6 +5,7 @@ import {
   extractSourceRows,
   mergeSnapshotUpdates,
   normalizeSourceRows,
+  reconcileSnapshotSeriesIds,
   validateSnapshotUpdate,
 } from "./refresh-coding-agents";
 
@@ -28,7 +29,7 @@ function sourceRow(index: number, model = `Model ${index}`) {
     indexScore: 0.75,
     evals: [
       { datasetIndexName: "deep-swe", mean: { reward: 0.62 } },
-      { datasetIndexName: "terminal-bench-v2", mean: { reward: 0.81 } },
+      { datasetIndexName: "terminal-bench-v2.1", mean: { reward: 0.81 } },
       { datasetIndexName: "swe-atlas-qna", mean: { reward: 0.7 } },
     ],
     mean: {
@@ -98,6 +99,11 @@ describe("Artificial Analysis Flight extraction", () => {
     const prime = snapshot.records.find(({ id }) => id === "row-0");
 
     expect(snapshot.source).toEqual({
+      benchmarkDatasets: {
+        deepSwe: "deep-swe",
+        terminalBench: "terminal-bench-v2.1",
+        sweAtlas: "swe-atlas-qna",
+      },
       name: "Artificial Analysis",
       url: "https://artificialanalysis.ai/agents/coding-agents/",
       retrievedAt: "2026-07-17T16:29:07.106Z",
@@ -116,7 +122,7 @@ describe("Artificial Analysis Flight extraction", () => {
     expect(prime?.usage.totalTokens).toBe(1_000_000);
   });
 
-  test("rejects duplicate stable rows and substantial row-count regressions", () => {
+  test("rejects duplicate stable rows, duplicate semantic observations, and substantial row-count regressions", () => {
     const previous = normalizedSnapshot(10);
     const duplicate = normalizedSnapshot(10);
     const first = duplicate.records[0];
@@ -130,6 +136,26 @@ describe("Artificial Analysis Flight extraction", () => {
     expect(duplicateResult.ok).toBe(false);
     if (!duplicateResult.ok) expect(duplicateResult.error.message).toContain("duplicate series/setting");
 
+    const semanticDuplicate = normalizedSnapshot(10);
+    const semanticFirst = semanticDuplicate.records[0];
+    const semanticSecond = semanticDuplicate.records[1];
+    expect(semanticFirst).toBeDefined();
+    expect(semanticSecond).toBeDefined();
+    if (semanticFirst === undefined || semanticSecond === undefined) return;
+    semanticDuplicate.records[1] = {
+      ...semanticSecond,
+      agent: semanticFirst.agent,
+      model: semanticFirst.model,
+      providerId: semanticFirst.providerId,
+      setting: semanticFirst.setting,
+    };
+
+    const semanticDuplicateResult = validateSnapshotUpdate(previous, semanticDuplicate);
+    expect(semanticDuplicateResult.ok).toBe(false);
+    if (!semanticDuplicateResult.ok) {
+      expect(semanticDuplicateResult.error.message).toContain("duplicate semantic observation");
+    }
+
     const truncatedResult = validateSnapshotUpdate(previous, {
       ...normalizedSnapshot(7),
       source: previous.source,
@@ -138,10 +164,29 @@ describe("Artificial Analysis Flight extraction", () => {
     if (!truncatedResult.ok) expect(truncatedResult.error.message).toContain("dropped from 10 to 7 rows");
 
     const replaced = normalizedSnapshot(10);
-    replaced.records = replaced.records.map((record, index) => ({ ...record, seriesId: `replacement-${index}` }));
+    replaced.records = replaced.records.map((record, index) => ({
+      ...record,
+      model: `Replacement ${index}`,
+      seriesId: `replacement-${index}`,
+    }));
     const replacedResult = validateSnapshotUpdate(previous, replaced);
     expect(replacedResult.ok).toBe(false);
     if (!replacedResult.ok) expect(replacedResult.error.message).toContain("stable series/setting keys");
+  });
+
+  test("reconciles upstream series slug churn without fabricating model-added events", () => {
+    const previous = normalizedSnapshot(10);
+    const candidate = normalizedSnapshot(10);
+    candidate.source = { ...candidate.source, retrievedAt: "2026-07-18T16:29:07.106Z" };
+    candidate.records = candidate.records.map((record, index) => ({
+      ...record,
+      seriesId: `public-slug-${index}`,
+    }));
+
+    expect(validateSnapshotUpdate(previous, candidate)).toEqual({ ok: true, value: undefined });
+    expect(deriveSnapshotUpdates(previous, candidate)).toEqual([]);
+    expect(reconcileSnapshotSeriesIds(previous, candidate).records.map(record => record.seriesId))
+      .toEqual(previous.records.map(record => record.seriesId));
   });
 
   test("rejects substantial chart-metric coverage regressions", () => {
@@ -234,6 +279,61 @@ describe("Artificial Analysis Flight extraction", () => {
       kind: "benchmark-changed",
       model: "Model 0",
     });
+  });
+
+  test("does not report scores from a benchmark-version migration as ordinary changes", () => {
+    const previous = normalizedSnapshot(10);
+    previous.source = {
+      ...previous.source,
+      benchmarkDatasets: {
+        ...previous.source.benchmarkDatasets,
+        terminalBench: "terminal-bench-v2",
+      },
+    };
+    const candidate = normalizedSnapshot(10);
+    candidate.source = { ...candidate.source, retrievedAt: "2026-07-18T16:29:07.106Z" };
+    const first = candidate.records[0];
+    expect(first).toBeDefined();
+    if (first === undefined) return;
+    candidate.records[0] = {
+      ...first,
+      benchmarks: {
+        ...first.benchmarks,
+        aaIndex: 88,
+        deepSwe: 70,
+        terminalBench: 92,
+      },
+    };
+    previous.updates = [{
+      id: "legacy-terminal-benchmark-event",
+      agent: "Codex CLI",
+      benchmarks: previous.records[0]?.benchmarks ?? {
+        aaIndex: null,
+        deepSwe: null,
+        sweAtlas: null,
+        terminalBench: null,
+      },
+      detectedAt: "2026-07-17T16:29:07.106Z",
+      kind: "model-added",
+      model: "Model 0",
+      providerId: "openai",
+      providerName: "OpenAI",
+      setting: "default",
+      variantCount: 1,
+    }];
+
+    expect(deriveSnapshotUpdates(previous, candidate)).toMatchObject([{
+      changes: [{ current: 70, metric: "deepSwe", previous: 62 }],
+      kind: "benchmark-changed",
+    }]);
+    const merged = mergeSnapshotUpdates(previous, candidate);
+    expect(merged.updates).toHaveLength(1);
+    expect(merged.updates[0]).toMatchObject({
+      detectedAt: candidate.source.retrievedAt,
+      kind: "benchmark-changed",
+    });
+    expect(merged.updates.some(({ id }) => id === "legacy-terminal-benchmark-event"))
+      .toBeFalse();
   });
 
   test("keeps prior history when a refresh has no notable changes", () => {

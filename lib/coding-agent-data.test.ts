@@ -3,6 +3,7 @@ import { assertProperty, fc } from "./property-test";
 import {
   codingAgentSnapshotSchema,
   parseCodingAgentSnapshot,
+  parseRefreshCodingAgentSnapshot,
   type CodingAgentRecord,
   type CodingAgentSnapshot,
 } from "./coding-agent-data";
@@ -33,8 +34,13 @@ const validRecord: CodingAgentRecord = {
 };
 
 const validSnapshot: CodingAgentSnapshot = {
-  schemaVersion: 2,
+  schemaVersion: 3,
   source: {
+    benchmarkDatasets: {
+      deepSwe: "deep-swe",
+      terminalBench: "terminal-bench-v2.1",
+      sweAtlas: "swe-atlas-qna",
+    },
     name: "Artificial Analysis",
     url: "https://artificialanalysis.ai/agents/coding-agents/",
     retrievedAt: "2026-07-17T16:29:07.106Z",
@@ -58,6 +64,43 @@ const validSnapshot: CodingAgentSnapshot = {
 describe("coding-agent snapshot boundary", () => {
   test("accepts the owned snapshot contract", () => {
     expect(parseCodingAgentSnapshot(validSnapshot)).toEqual({ ok: true, value: validSnapshot });
+  });
+
+  test("upgrades the checked v2 snapshot with explicit legacy benchmark identities", () => {
+    const legacySnapshot = {
+      ...validSnapshot,
+      schemaVersion: 2,
+      source: {
+        name: validSnapshot.source.name,
+        url: validSnapshot.source.url,
+        retrievedAt: validSnapshot.source.retrievedAt,
+        method: validSnapshot.source.method,
+      },
+    };
+
+    expect(parseCodingAgentSnapshot(legacySnapshot).ok).toBe(false);
+    const parsed = parseRefreshCodingAgentSnapshot(legacySnapshot);
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    expect(parsed.value.schemaVersion).toBe(3);
+    expect(parsed.value.source.benchmarkDatasets.terminalBench).toBe("terminal-bench-v2");
+  });
+
+  test("rejects unreviewed benchmark identities at the public snapshot boundary", () => {
+    const futureSnapshot = {
+      ...validSnapshot,
+      source: {
+        ...validSnapshot.source,
+        benchmarkDatasets: {
+          ...validSnapshot.source.benchmarkDatasets,
+          terminalBench: "terminal-bench-v3",
+        },
+      },
+    };
+    const parsed = parseCodingAgentSnapshot(futureSnapshot);
+
+    expect(parsed.ok).toBe(false);
+    expect(parseRefreshCodingAgentSnapshot(futureSnapshot).ok).toBe(true);
   });
 
   test("rejects unknown fields at top-level and nested boundaries", () => {
@@ -110,5 +153,6 @@ test("property: snapshot parsing is total over arbitrary JSON", () => {
   assertProperty(fc.property(fc.jsonValue(), (value) => {
     expect(() => codingAgentSnapshotSchema.safeParse(value)).not.toThrow();
     expect(() => parseCodingAgentSnapshot(value)).not.toThrow();
+    expect(() => parseRefreshCodingAgentSnapshot(value)).not.toThrow();
   }));
 });

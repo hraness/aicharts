@@ -1,5 +1,5 @@
 export const site = {
-  description: "Compare AI models and agents with sourced benchmark charts across performance, cost, speed, and token use. Explore trade-offs, trends, and analysis.",
+  description: "Explore AI benchmark charts for coding, reasoning, research, memory, images, video, and world models. Compare published results, costs, and configurations.",
   domain: "aicharts.io",
   emoji: "◉",
   name: "AI Charts",
@@ -20,3 +20,33 @@ export const searchSite = {
   },
   title: "AI Model & Agent Comparison Charts | AI Charts",
 } as const;
+
+export const homeHeading = "Compare AI models";
+export const homeLede =
+  "Understand the tradeoff between capability and cost.";
+export const homeTaskLinks = [
+  { task: "coding", name: "Coding", description: "Build, debug, and work in a terminal." },
+  { task: "reasoning", name: "Reasoning", description: "Solve unfamiliar problems." },
+  { task: "research", name: "Research", description: "Find and synthesize evidence." },
+  { task: "image", name: "Images", description: "Generate and edit images." },
+  { task: "video", name: "Video", description: "Create video from text or images." },
+  { task: "audio", name: "Audio", description: "Transcribe and understand speech." },
+] as const;
+export const modelCardsHeading = "Every model, on a card";
+export const modelCardsLede =
+  "Shareable benchmark cards built from the same records as the charts, with the model, harness, and reasoning profile attached.";
+
+export const notFoundSearchSite = {
+  ...searchSite,
+  description: "This page does not exist. Return to the chart.",
+  title: "Page not found | AI Charts",
+} as const;
+
+export const notFoundRecoveryLinks = [
+  { href: "/", label: "Comparison chart" },
+  { href: "/models", label: "Model cards" },
+  { href: "/data", label: "Dataset" },
+  { href: "/blog", label: "Benchmark analysis" },
+  { href: "/llms.txt", label: "Site guide" },
+  { href: "/sitemap.xml", label: "Sitemap" },
+] as const;

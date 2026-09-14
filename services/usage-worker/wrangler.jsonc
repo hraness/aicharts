@@ -1,0 +1,28 @@
+{
+  "$schema": "../../node_modules/wrangler/config-schema.json",
+  "name": "aicharts-usage-local-only",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-10",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": false,
+  "preview_urls": false,
+  "send_metrics": false,
+  "observability": { "enabled": false },
+  "vars": {
+    "USAGE_ENROLLMENT_GENERATION": "1111111111111111111111111111111111111111111111111111111111111111"
+  },
+  "durable_objects": {
+    "bindings": [
+      { "name": "PAIRINGS", "class_name": "PairingIntent" },
+      { "name": "ACCOUNT_ENROLLMENTS", "class_name": "AccountEnrollment" }
+    ]
+  },
+  "exports": {
+    "PairingIntent": { "type": "durable-object", "storage": "sqlite" },
+    "AccountEnrollment": { "type": "durable-object", "storage": "sqlite" }
+  },
+  "r2_buckets": [
+    { "binding": "STAGING", "bucket_name": "aicharts-usage-local-only" },
+    { "binding": "CONTROL", "bucket_name": "aicharts-usage-control-local-only" }
+  ]
+}

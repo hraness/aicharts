@@ -19,6 +19,16 @@ Before opening a pull request, run:
 bun run check
 ```
 
+The complete gate requires the Rust toolchain and components pinned in `rust-toolchain.toml`, plus a C compiler for bundled SQLite. With rustup installed, `rustup show active-toolchain` installs the pinned toolchain on first use. The usage crates are local-only; tests must use synthetic fixtures and must never read a contributor's sessions, state or credentials. Never reset a real usage ledger to make a test pass.
+
+The complete gate also runs `bun run usage:worker:check`: generated Cloudflare runtime types, separate strict TypeScript checking, and synthetic tests in local `workerd`. Node.js 24 and loopback access are required. No Cloudflare login or remote resources are needed. The runner excludes provider credentials and refuses `.env*` or `.dev.vars*` files in `services/usage-worker/`. Worker tests use `*.worker.ts` and their own runner; ordinary `bun test .` continues to own the existing tests. See [Usage Worker boundaries](docs/usage-worker.md) before changing pairing or staging.
+
+`bun run release:archive:check`, `bun run release:manifest:check`, `bun run release:build:check`, and `bun run release:assemble:check` check the memory-only release formats and their assembly with Node.js 24 and synthetic fixtures. All four are included in the complete gate and do not extract files, execute payloads, or publish a release. Keep their `.check.mjs` corpora under the explicit Node runner. See [Release archive bytes](docs/usage-release-archives.md), [Release manifest matching](docs/usage-release-manifest.md), [BUILD matching](docs/usage-release-build.md), and [Release assembly](docs/usage-release-assembly.md) for inventory, size, ownership, and trust constraints.
+
+`bun run release:source:check` separately checks the [exact Git source reader](docs/usage-release-source.md) with Node.js 24, trusted `/usr/bin/git` and disposable synthetic repositories. It is also included in the complete gate. These tests read raw local Git objects; they do not fetch source, execute archive contents or establish release provenance. Keep real contributor files and credentials outside the fixtures.
+
+The [pairing HTTP adapters](docs/usage-pairing-http.md) and browser routes remain behind an independent disabled pairing flag. Their Vercel binding is tested with synthetic request context and mocked network/lifetime effects. Preserve registration-before-work, captured authority checks, fixed capability-body limits and uncertain-write reconciliation. Synthetic tests do not establish live Accounts or Worker authority; activation requires the documented qualification.
+
 ## Data changes
 
 Do not hand-edit `data/coding-agents.json`. Run `bun run data:refresh`, inspect the diff, and include only a snapshot change supported by the guarded refresh script. Do not weaken retention or coverage checks merely to accept an unexpected upstream shape.

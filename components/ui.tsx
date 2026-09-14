@@ -1,5 +1,6 @@
 "use client";
 
+import { ThemeMenuButton as DesignThemeMenuButton } from "@hraness/design-kit/react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   Children,
@@ -18,9 +19,12 @@ import {
   type Ref,
 } from "react";
 
+import type { AnalyticsSurface } from "@/lib/analytics";
+
 export type SegmentedItem<Value extends string> = Readonly<{
   id: Value;
   label: ReactNode;
+  leading?: ReactNode;
 }>;
 
 export type ToggleItem<Value extends string> = Readonly<{
@@ -35,6 +39,7 @@ export type BarListChartDatum = Readonly<{
   detail: string;
   id: string;
   label: string;
+  leading?: ReactNode;
   value: number;
 }>;
 
@@ -43,6 +48,7 @@ export type RangePlotChartDatum = Readonly<{
   detail: string;
   id: string;
   label: string;
+  leading?: ReactNode;
   maximum: number;
   median: number;
   minimum: number;
@@ -267,12 +273,24 @@ export function PageCanvas({
 }
 
 export function TopBar({
+  "data-analytics-surface": analyticsSurface,
   actions,
   className = "",
+  isSticky = true,
   title,
-}: Readonly<{ actions?: ReactNode; className?: string; title: ReactNode }>) {
+}: Readonly<{
+  actions?: ReactNode;
+  className?: string;
+  "data-analytics-surface"?: AnalyticsSurface;
+  isSticky?: boolean;
+  title: ReactNode;
+}>) {
   return (
-    <header className={`ui-top-bar ${className}`.trim()}>
+    <header
+      className={`ui-top-bar ${isSticky ? "hraness-material-chrome " : ""}${className}`.trim()}
+      data-analytics-surface={analyticsSurface}
+      data-sticky={isSticky || undefined}
+    >
       <div className="ui-top-bar__title">{title}</div>
       {actions !== undefined && <div className="ui-top-bar__actions">{actions}</div>}
     </header>
@@ -305,6 +323,9 @@ export function SegmentedControl<Value extends string>({
           role="radio"
           type="button"
         >
+          {item.leading === undefined
+            ? null
+            : <span aria-hidden="true" className="ui-segmented-control__leading">{item.leading}</span>}
           {item.label}
         </button>
       ))}
@@ -362,52 +383,12 @@ export function ToggleGroup<Value extends string>({
   );
 }
 
-function applyTheme(theme: "dark" | "light" | "system") {
-  const resolved = theme === "system"
-    ? window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
-    : theme;
-  document.documentElement.dataset.theme = resolved;
-  document.documentElement.style.colorScheme = resolved;
-  document.querySelector('meta[name="theme-color"]')?.setAttribute(
-    "content",
-    resolved === "dark" ? "#12100f" : "#f8f7f4",
-  );
-}
-
-export function ThemeToggle({ "aria-label": ariaLabel }: Readonly<{
+export function ThemeMenuButton({
+  "aria-label": ariaLabel,
+}: Readonly<{
   "aria-label": string;
-  presentation?: "menu";
-  size?: "compact";
 }>) {
-  const [theme, setTheme] = useState<"dark" | "light" | "system">("system");
-
-  useEffect(() => {
-    const stored = window.localStorage.getItem("aicharts-theme");
-    const next = stored === "dark" || stored === "light" ? stored : "system";
-    applyTheme(next);
-    const frame = window.requestAnimationFrame(() => setTheme(next));
-    const media = window.matchMedia("(prefers-color-scheme: dark)");
-    const updateSystem = () => { if (next === "system") applyTheme("system"); };
-    media.addEventListener("change", updateSystem);
-    return () => {
-      window.cancelAnimationFrame(frame);
-      media.removeEventListener("change", updateSystem);
-    };
-  }, []);
-
-  const cycle = () => {
-    const next = theme === "system" ? "light" : theme === "light" ? "dark" : "system";
-    setTheme(next);
-    if (next === "system") window.localStorage.removeItem("aicharts-theme");
-    else window.localStorage.setItem("aicharts-theme", next);
-    applyTheme(next);
-  };
-
-  return (
-    <button aria-label={ariaLabel} className="ui-theme-toggle" onClick={cycle} title={`Appearance: ${theme}`} type="button">
-      <span aria-hidden="true">{theme === "dark" ? "◐" : theme === "light" ? "○" : "◒"}</span>
-    </button>
-  );
+  return <DesignThemeMenuButton aria-label={ariaLabel} />;
 }
 
 export function TextField({
@@ -465,7 +446,13 @@ export function BarListChart({
           onClick={() => onSelectionChange(row.id)}
           type="button"
         >
-          <span className="ui-chart-row__copy"><strong>{row.label}</strong><small>{row.detail}</small></span>
+          <span className="ui-chart-row__copy">
+            <span className="ui-chart-row__identity">
+              {row.leading}
+              <strong>{row.label}</strong>
+            </span>
+            <small>{row.detail}</small>
+          </span>
           <span className="ui-bar-list-chart__track">
             <i style={{ background: row.color, width: `${clampPercent(row.value, domain)}%` }} />
           </span>
@@ -506,7 +493,13 @@ export function RangePlotChart({
             onClick={() => onSelectionChange(row.id)}
             type="button"
           >
-            <span className="ui-chart-row__copy"><strong>{row.label}</strong><small>{row.detail}</small></span>
+            <span className="ui-chart-row__copy">
+              <span className="ui-chart-row__identity">
+                {row.leading}
+                <strong>{row.label}</strong>
+              </span>
+              <small>{row.detail}</small>
+            </span>
             <span className="ui-range-plot-chart__track">
               <i style={{ background: row.color, left: `${minimum}%`, width: `${Math.max(1, maximum - minimum)}%` }} />
               <b style={{ background: row.color, left: `${median}%` }} />
@@ -519,20 +512,18 @@ export function RangePlotChart({
   );
 }
 
-export function HranessBrand({ className = "" }: Readonly<{ className?: string }>) {
-  return <a aria-label="hraness" className={className} href="https://hraness.com" rel="noreferrer">Hraness</a>;
-}
-
 export function LinkButton({
   children,
+  className = "",
   href,
 }: Readonly<{
   children: ReactNode;
+  className?: string;
   href: string;
   size?: "compact";
   variant?: "quiet";
 }>) {
-  return <a className="ui-link-button" href={href}>{children}</a>;
+  return <a className={`ui-link-button ${className}`.trim()} href={href}>{children}</a>;
 }
 
 export function SkipLink({ children, href }: Readonly<{ children: ReactNode; href: string }>) {

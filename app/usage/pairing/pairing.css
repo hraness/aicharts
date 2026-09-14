@@ -1,0 +1,22 @@
+.usage-pairing { width: min(100%, 42rem); margin: clamp(2.5rem, 7vw, 6rem) auto 5rem; }
+.usage-pairing h1 { margin: 0; font-size: clamp(2rem, 5vw, 3rem); line-height: 1.1; letter-spacing: -0.035em; font-weight: 600; }
+.usage-pairing__intro { max-width: 35rem; margin: 1.25rem 0 2.5rem; font-size: 1.125rem; line-height: 1.65; color: var(--muted); }
+.usage-pairing__body { border-top: 1px solid var(--grid); padding-top: 2rem; min-height: 12rem; }
+.usage-pairing h2 { font-size: 1.2rem; font-weight: 600; line-height: 1.45; margin: 0 0 0.75rem; }
+.usage-pairing__body p { margin: 0 0 1.5rem; max-width: 36rem; line-height: 1.7; }
+.usage-pairing__actions { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+.usage-pairing .usage-button { min-height: 44px; cursor: pointer; }
+.usage-pairing .usage-button--quiet { background: var(--background); color: var(--foreground); }
+.usage-pairing .usage-button:focus-visible { outline: 2px solid var(--foreground); outline-offset: 4px; }
+.usage-pairing .usage-button:disabled { cursor: wait; opacity: 0.65; }
+.usage-pairing__account { margin: 0 0 2rem; }
+.usage-pairing__account dt { font-size: 0.875rem; color: var(--muted); margin-bottom: 0.5rem; }
+.usage-pairing__account dd { margin: 0; overflow-wrap: anywhere; line-height: 1.5; }
+.usage-pairing__account code { font-family: var(--font-mono); font-size: clamp(0.8rem, 2.4vw, 1rem); }
+.usage-pairing__body .usage-pairing__expiry { margin: 1.75rem 0 0; color: var(--muted); font-size: 0.875rem; }
+.usage-pairing__privacy { margin-top: 2.5rem; padding-top: 1.5rem; border-top: 1px solid var(--grid); }
+.usage-pairing__privacy h2 { font-size: 0.9375rem; }
+.usage-pairing__privacy p { margin: 0; color: var(--muted); font-size: 0.9375rem; line-height: 1.7; }
+@media (max-width: 480px) {
+  .usage-pairing__actions .usage-button { flex: 1 1 auto; }
+}

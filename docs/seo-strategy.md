@@ -2,32 +2,39 @@
 
 ## Positioning
 
-AI Charts is the umbrella product for sourced, interactive comparisons of AI models and agents. Each chart should make trade-offs visible across performance, cost, speed, token use, or another decision-relevant measure. The current coding-agent comparison is the first published chart.
+AI Charts leads with capability-versus-resource Pareto charts: readers can see the trade-off, inspect a configuration, and switch between cost and token use. The original coding-agent charts remain directly accessible. A secondary benchmark library brings coding, reasoning, research, memory, scientific work, and generative-media evaluations into the same interface without replacing that chart-led foundation.
 
 The canonical public repository description is:
 
 > Open-source AI benchmark charts for comparing models and agents across performance, cost, speed, and token use.
 
-Do not describe AI Charts as a comprehensive catalog until the product has the data and routes to support that claim. Name the active vertical whenever copy discusses the current dataset, refresh process, or chart-specific result.
+Distinguish charted results, source guides, and emerging evaluations. A benchmark guide is useful coverage, but is not a claim that AI Charts has imported its scores. Name historical cohorts and selected samples. Do not describe every chart as current or every modality as exhaustively covered. The product adds selection guidance, approachable charts, and explicit comparison boundaries to the evidence supplied by benchmark publishers and aggregators.
 
 ## Page roles
 
 | Page | Role | Search intent | Copy contract |
 | --- | --- | --- | --- |
-| `/` | Product landing page and current comparison | AI model comparison, AI agent comparison, AI benchmark charts | Frame the general product, then make the current coding-agent dataset clear through chart labels, sources, and context. |
-| `/data` | Dataset, methodology, and provenance | AI coding agent benchmark data, benchmark methodology, machine-readable AI benchmark data | Describe the checked snapshot in visible HTML, name its upstream source and retrieval time, explain normalization and limits, and link the JSON distribution. |
+| `/` | Capability-versus-resource Pareto chart | AI model comparison, AI model performance vs cost | Keep the default Intelligence Pareto chart visible, its source version and date clear, and the page short. Offer direct task links; do not stack the coding workspace and library beneath it. |
+| `/coding` | Coding-agent comparison workspace | AI coding agent comparison, coding benchmark cost and token use | Keep the original source-specific chart and axes accessible. Name each model, harness, and effort setting. Link the legacy Terminal-Bench v2.1 field to the separate current TB4 cohort without pooling scores. |
+| `/benchmarks` | Task-oriented benchmark library | AI benchmark explorer, named AI benchmark comparisons | Offer task filters, named configurations, native units, uncertainty, and comparable cohorts in one workspace. Distinguish measured results from source guides. |
+| `/calculator` | Interactive subscription-versus-API-versus-GPU cost calculator | ChatGPT Pro subscription value, AI API cost comparison, run AI locally cost | Anchor every path to one implied token volume, keep the subsidy method and its dates cited, and state that API-retail equivalents are not provider serving costs and open-weight local models are not the subscription model. |
+| `/data` | Catalog, distributions, methodology, and provenance | AI benchmark data, AI model benchmark methodology, machine-readable AI benchmark data | Render every catalog entry’s question, measure, source, exact version, comparison rules, and limitations in HTML. Charted entries link to their dataset JSON and source dates; source-only entries make no measured-result claim. |
+| `/models` | Model-card collection | AI model benchmark cards, shareable model comparison | List every current model-and-profile card in static HTML with the source snapshot date and crawlable card links. |
+| `/models/[creator]/[model]/[profile]` | Model profile card | Named AI model benchmark, cost, speed, and token use | Keep the stable canonical and Gateway identities distinct from the execution profile. Show observed ranges, source date, branded image, and method link. |
 | `/blog` | Research collection | AI model benchmarks, AI agent benchmarks, benchmark analysis | Introduce the broader editorial method and state that the first collection focuses on coding agents. |
 | `/blog/[slug]` | Evidence page | Named benchmark, method, result, limitation, or model question | Stay specific to the source. Preserve the benchmark name, observation date, configuration, limits, and primary citations. |
 
-Future chart verticals need a distinct crawlable route, canonical URL, visible heading, source disclosure, and internal links from the product and relevant research. Do not publish several routes that answer the same intent with lightly varied copy.
+Atlas filters use shareable query state on canonical `/benchmarks`; coding chart state uses `/coding`. They do not create separate indexable keyword pages. Legacy root query and hash links forward to the corresponding workspace, while new links use its canonical path. The full benchmark definitions are crawlable on `/data`. Create a dedicated chart or analysis route only when it answers a distinct reader task with enough evidence to justify its own canonical page. Do not publish several routes that answer the same intent with lightly varied copy.
+
+The compact `/data/benchmark-atlas.json` catalog lists stable benchmark IDs, coverage, exact versions, source dates, and measured distribution URLs. `/data/benchmark-atlas/{benchmarkId}` publishes one charted cohort at a time. Source-only and unknown IDs return 404. These JSON resources are internally linked data distributions, not extra article pages for the sitemap. Original source JSON routes remain available with their richer schemas; current Intelligence v4.3 has a separate versioned download from historical v4.1.1.
 
 ## Query map
 
 AI Charts targets three connected query groups:
 
-1. Umbrella discovery: `AI model comparison`, `AI agent comparison`, `AI benchmark charts`, and `LLM comparison`.
-2. Decision trade-offs: `AI model performance vs cost`, `AI model speed comparison`, `token use comparison`, and benchmark-specific cost or quality questions.
-3. Evidence: exact benchmark and methodology searches such as MirrorCode, SlopCodeBench, SWE-bench, Terminal-Bench, and questions about what a result does or does not establish.
+1. Umbrella discovery: `AI model comparison`, `AI agent comparison`, `AI benchmark charts`, and `LLM comparison`. Task categories distinguish coding, reasoning, research, memory, images, video, audio, and world models without synthesizing a universal rank.
+2. Decision trade-offs: `AI model performance vs cost`, `AI model speed comparison`, `token use comparison`, and benchmark-specific cost or quality questions. The homepage's Intelligence efficiency view answers general-model score-versus-output-token and score-versus-cost questions using Artificial Analysis v4.3; the AA Index versus cost note answers a different question for the coding-agent snapshot with named configurations and its retrieval date. The open-models note answers whether classified open-weight rows sit with the current coding-agent AA Index leaders, and keeps SemiAnalysis era composites separate from that table. The small-model economics note uses French-Owen's reported $0.10 news-page cost to show how to test whether a cheaper model meets a workload's quality bar. The Terminal-Bench-Science note explains why a scientist-set 30% peak resolution is incomplete without cost and token trade-offs. The holdout note answers why a public-suite high score still needs hidden cases.
+3. Evidence: exact benchmark and methodology searches such as MirrorCode, SWE-bench, Terminal-Bench, Terminal-Bench-Science, and questions about what a result does or does not establish.
 
 The product and collection pages carry umbrella language. Chart pages and research articles earn narrower searches through original visualization, primary sources, reported configurations, dates, and explicit limits. Exact benchmark names must not be replaced with generic keyword variants.
 
@@ -36,12 +43,18 @@ The product and collection pages carry umbrella language. Chart pages and resear
 Every indexable research page must:
 
 - answer one identifiable search intent in its title, heading, introduction, and body;
+- make its thesis, key evidence, terms, and limits understandable without requiring another article, digest, or internal project context;
 - cite the paper or maintained primary source for material claims;
+- use a secondary source only when it adds distinct evidence or analysis;
 - distinguish reported facts from AI Charts analysis;
+- label anecdotes, controlled evaluations, official specifications, and forecasts accurately;
+- avoid invented conflicts or consequences that no source supports;
 - attach observation dates and named configurations to changing results;
 - keep limitations near the claims they qualify;
 - add a useful internal link to the relevant chart and related evidence;
 - provide analysis or presentation that is meaningfully more useful than repeating a source abstract.
+
+Public research pages must not narrate repository structure, source-ingestion mechanics, data-field bookkeeping, editorial decisions, citation strategy, search strategy, or the order in which the analysis was produced. Connect a source to an AI Charts dataset only when that relationship helps answer the article's central question and the evidence supports it. Before publication, a fresh reader should be able to state the conclusion, the evidence behind it, and its limits after one pass.
 
 Update a page when its underlying result changes materially. Do not change a publication date to simulate freshness. Remove or consolidate a page when it no longer provides a distinct answer.
 
@@ -49,9 +62,11 @@ Update a page when its underlying result changes materially. Do not change a pub
 
 Answer-engine optimization is people-first technical SEO plus evidence that another system can inspect and cite. Google's AI search guidance says the same foundational Search requirements apply to AI features. OpenAI likewise requires its search crawler to be allowed before a site can appear in ChatGPT search. AI Charts therefore makes its useful content available in static or server-rendered HTML, uses descriptive headings and crawlable links, identifies primary sources, and publishes a machine-readable copy of the data behind the visible chart.
 
-Do not create an `llms.txt` file for search visibility. Google does not use it for Search. Do not split prose into artificial fragments, publish thin keyword variants, add unsupported structured-data types, or repeat a claim only to influence generated answers. Schema helps machines interpret content; it cannot replace content a visitor can see and verify.
+Do not add `llms.txt` as a search shortcut, keyword variant, or substitute for visible HTML. Google does not use it for Search. A truthful `/llms.txt` agent guide is allowed when it describes existing public pages and how to request Markdown. Do not split prose into artificial fragments, publish thin keyword variants, add unsupported structured-data types, or repeat a claim only to influence generated answers. Schema helps machines interpret content; it cannot replace content a visitor can see and verify.
 
-The `/data` page is the citable boundary for the current coding-agent snapshot. It must show the dataset name, description, publisher role, upstream creator and source URL, retrieval time, covered metrics, normalization method, important limits, license or notice boundary, and a link to the JSON distribution. Any `Dataset` structured data must match that visible description. AI Charts is the publisher and visualizer of the normalized snapshot; it must not present itself as the creator of Artificial Analysis measurements.
+The `/data` page is the citable boundary for checked benchmark snapshots. It must show each dataset name, exact version, publisher role, upstream source URL, retrieval time, covered metrics, comparison rules, important limits, license or notice boundary, and JSON distribution. Source observation dates and historical paper dates remain distinct from retrieval time. Cost labels retain the denominator: per task, full evaluation, or another source-defined basis. For Artificial Analysis Intelligence, name the version-specific evaluations and weights, distinguish output-only tokens from coding-agent total tokens, explain unavailable costs, and label the frontier as AI Charts analysis. `DataCatalog` and `Dataset` structured data must match visible descriptions. AI Charts publishes and visualizes source measurements; it does not claim to have produced them.
+
+Homepage Markdown describes the primary Pareto chart; `/coding` describes its source-specific comparison; `/benchmarks` includes the default library chart and compact catalog navigation; `/data` exposes all definitions and distribution links. Query-specific browser state does not change the canonical Markdown document. `/llms.txt` describes these existing resources and protocols, not an invented realtime API. Sitemap modification dates follow each page’s own content: the current Intelligence snapshot for home, coding-agent changes for `/coding`, and checked catalog content and cohort dates for `/benchmarks`. Authored page changes also count; build clocks and timestamp-only source polls do not.
 
 These rules follow Google's [AI search optimization guide](https://developers.google.com/search/docs/fundamentals/ai-optimization-guide), [people-first content](https://developers.google.com/search/docs/fundamentals/creating-helpful-content), and [structured data](https://developers.google.com/search/docs/appearance/structured-data/sd-policies) guidance, plus OpenAI's [publisher and developer FAQ](https://help.openai.com/en/articles/12627856-publishers-and-developers-faq).
 
@@ -61,7 +76,9 @@ The repository tests and build must preserve:
 
 - one canonical HTTPS URL for every indexable page;
 - descriptive, page-specific titles and meta descriptions;
+- homepage-owned identity, including explicit indexable robots, so 404 responses keep a distinct title, noindex, and no homepage canonical;
 - crawlable HTML links between the chart, collection, and evidence pages;
+- stable canonical routes for cataloged model cards, deterministic provisional routes for uncatalogued arrivals, profile-specific titles, downloadable branded images, and dedicated 1200×630 social previews;
 - a sitemap containing every public canonical route and its social image;
 - static or server-rendered primary content and provenance that do not depend on client JavaScript to become meaningful;
 - `WebSite`, `WebApplication`, `Dataset`, `CollectionPage`, `BlogPosting`, and breadcrumb structured data only where the visible page supports those types;
@@ -69,7 +86,7 @@ The repository tests and build must preserve:
 - truthful Open Graph and X card copy that matches the page role;
 - permanent redirects from retired `codingchart.com` routes to the matching `aicharts.io` routes;
 - an allowed `OAI-SearchBot` user agent and no CDN rule that silently blocks it;
-- a crawlable `/data` page and stable JSON distribution whose data and timestamps match the chart;
+- a crawlable `/data` page and stable JSON distributions whose data and timestamps match the charts;
 - static source and observation data so an upstream outage cannot remove indexable content.
 
 These rules follow Google's guidance on [descriptive title links](https://developers.google.com/search/docs/appearance/title-link), [helpful people-first content](https://developers.google.com/search/docs/fundamentals/creating-helpful-content), and [crawlable internal links](https://developers.google.com/search/docs/crawling-indexing/links-crawlable).
@@ -81,7 +98,7 @@ Search Console setup is part of production ownership, not an optional launch tas
 1. Add and verify Domain properties for `aicharts.io` and the retired `codingchart.com` domain with DNS TXT records. Keep both properties verified while the migration is being evaluated.
 2. Confirm every old path resolves through a direct `301` redirect to the matching `https://aicharts.io` path. Search Console's Change of Address validator requires `301` specifically. Avoid redirect chains and do not redirect unrelated pages to the homepage.
 3. Use Search Console's Change of Address tool for the move from `codingchart.com` to `aicharts.io` after both properties are verified and the redirects are live.
-4. Submit `https://aicharts.io/sitemap.xml` in the new property. Keep the sitemap listed in `robots.txt`, inspect the homepage, `/data`, `/blog`, and each evidence page, then watch indexing and migration errors.
+4. Submit `https://aicharts.io/sitemap.xml` in the new property. Keep the sitemap listed in `robots.txt`, inspect the homepage, `/coding`, `/benchmarks`, `/data`, `/blog`, and each evidence page, then watch indexing and migration errors.
 5. In the new property, confirm Settings → Search generative AI includes the site. Inclusion is the default, but the production owner must verify it rather than infer it from ordinary Search traffic. Review the Generative AI performance report when the property has enough impressions for Google to expose it.
 6. Keep redirects, both domain registrations, and old-property verification in place for at least one year. Do not remove them merely because the new domain has begun receiving impressions.
 
@@ -113,7 +130,7 @@ Search Console is authoritative before arrival:
 - average search position;
 - indexing and sitemap health.
 
-PostHog is authoritative after arrival:
+PostHog provides directional product analytics after arrival:
 
 - pageviews by `traffic_channel`, `$search_engine`, and controlled `canonical_path`;
 - visits to the chart and research collection;
@@ -123,39 +140,44 @@ PostHog is authoritative after arrival:
 
 Google documents why [Search Console and analytics measure different systems](https://developers.google.com/search/docs/monitor-debug/google-analytics-search-console). Query and ranking conclusions must therefore come from Search Console, not referrer data alone.
 
-The pinned [AI Charts: Search & Content dashboard](https://us.posthog.com/project/543694/dashboard/1995999) contains weekly acquisition channels, organic search engines, landing pages, and qualified chart interactions over a rolling 90 days. Add `content chart opened` to that dashboard only after the first production event verifies its live schema.
+The pinned [AI Charts: Search & Content dashboard](https://us.posthog.com/project/543694/dashboard/1995999) contains weekly acquisition channels, organic search engines, landing pages, and qualified interactions over a rolling 90 days. Search Console remains authoritative for queries, rankings, impressions, and search clicks; PostHog can undercount browsers that block its analytics client or ingest requests.
 
 ### Controlled page properties
 
-`instrumentation-client.ts` adds these bounded values to every production event:
+`instrumentation-client.ts` adds bounded values to every production event. `canonical_path` groups dynamic routes, while `content_id` retains a validated public article or model-card identifier so content performance remains distinguishable. `context_schema_version=3` versions that page context; `event_schema_version=3` marks typed product events and `1` marks SDK-generated page, leave, and Web Vitals events.
 
-| Property | Allowed values |
-| --- | --- |
-| `site_id` | `aicharts` |
-| `canonical_domain` | `aicharts.io` |
-| `analytics_schema_version` | `2` |
-| `canonical_path` | `/`, `/data`, `/blog`, `/blog/[article]`, `/[other]` |
-| `page_kind` | `benchmark_chart`, `benchmark_data`, `blog_index`, `blog_article`, `other` |
-| `content_group` | `ai_comparison`, `benchmark_research`, `site` |
+The browser rewrites automatic current, entry, and previous-page URLs to `https://aicharts.io` plus a grouped path. It reduces referrers to origins, validates acquisition domains, and removes raw external-click URLs, query-derived campaign values, query strings, and hashes. Unknown and invalid paths collapse to `/[other]` with `content_id=other`.
 
-The grouped article path deliberately avoids sending slugs, URLs, query strings, free-form text, identities, or persistent identifiers.
+The complete property, privacy, and version contract lives in [`analytics-instrumentation.md`](analytics-instrumentation.md).
 
 ### Product events
 
-| Event | Controlled properties | Qualified behavior |
-| --- | --- | --- |
-| `content chart opened` | `source_kind`, `destination_chart` | A reader chooses to move from research into the current comparison. |
-| `chart metric selected` | `axis`, `metric` | A visitor changes a comparison dimension. |
-| `chart selection pinned` | `provider_id`, `selection_kind` | A visitor focuses a model or provider for closer comparison. |
-| `chart shared` | `share_method`, `x_metric`, `y_metric` | A visitor exports or shares a configured chart. |
+One typed allowlist covers chart and model-card interactions, filtering, sharing, content-to-chart movement, public-anchor clicks, and footer signup requests. A root delegated listener classifies every public anchor into controlled `surface`, `link_kind`, `destination_kind`, and `destination_id` properties. It never sends link text or a raw href, query, or hash.
 
-PostHog remains cookieless, memory-only, and person-profile-free. The implementation follows PostHog's guidance for [custom events](https://posthog.com/docs/libraries/js/usage) and uses `before_send` only to add controlled first-party context without removing required internal properties.
+The atlas uses `benchmark_atlas` and a bounded `benchmark explored` event for benchmark choice, view changes, comparison, and sharing. Home and `/coding` retain page kind `benchmark_chart`, with content IDs `home` and `coding:index`. `/benchmarks` has page kind `benchmark_library`, content ID `benchmarks:index`, and default surface `benchmark_atlas`. Benchmark IDs come from the checked catalog; search text, raw query state, configuration labels, and raw URLs never enter analytics. Source and dataset links use the delegated anchor contract.
+
+`newsletter signup request submitted` records form-submit intent only. An accepted request requires an explicit shared-footer or Accounts success callback; a confirmed subscription requires Accounts provider evidence. Do not infer either state from DOM text, fetch interception, or the presence of a request event.
+
+PostHog remains cookieless, memory-only, and person-profile-free. Feature code captures only through `lib/analytics.ts`; a repository guard rejects direct PostHog imports and capture calls outside the adapter and framework entrypoints.
 
 ## Baseline
 
-The 30-day window from July 15 through August 14, 2026 UTC contained 31 pageviews: 25 direct, 5 organic search, and 1 internal. The organic visits reported Bing for 4 pageviews and Google for 1. The only observed canonical paths were `/` with 25 pageviews and `/blog` with 6. Visitors recorded 7 metric selections and 5 pinned comparisons.
+The rolling 30-day PostHog checkpoint reviewed on September 2, 2026 contained 594 visitors, 994 views, and 629 sessions, with a 2 minute 29 second average session and 53% bounce rate. This is directional product analytics, not Search Console truth. PostHog's reverse-proxy warning estimates that ad blocking may still suppress 10–25% of traffic.
 
-This is a continuity baseline, not evidence that the broader positioning is working. The sample is small, and its page events still carry the predecessor `codingchart.com` canonical-domain value. The first useful AI Charts measurement checkpoint begins when production events report `canonical_domain = aicharts.io` and `site_id = aicharts`.
+| Page | Visitors | Views | Bounce rate |
+| --- | ---: | ---: | ---: |
+| `/` | 301 | 403 | 43.2% |
+| `/data` | 55 | 55 | 84.6% |
+| `/models` | 43 | 113 | 41.5% |
+| `/blog` | 34 | 38 | 84.6% |
+| `/blog/terminal-bench-science` | 21 | 28 | 57.1% |
+| `/blog/aa-index-cost-coding-agents` | 10 | 10 | 100% |
+
+The channel report showed 348 direct visitors and 619 views, 119 Organic Social visitors and 201 views, 101 Referral visitors and 143 views, 27 Organic Search visitors and 28 views, and 2 AI visitors and 2 views. Visitors can appear in more than one channel. Identified search-engine traffic included 14 Bing views and 12 Google views.
+
+Aggregate Web Vitals were healthy overall: INP 113 ms, LCP 2.08 s, FCP 2.45 s, and CLS 0. There were no configured conversion goals, production mailing events, or subscriber-warehouse table available to this review, so the checkpoint cannot answer how many readers requested, accepted, or confirmed a newsletter subscription.
+
+The literal 404 `/some-path-that-does-not-exist` had 12 one-view visitors—8 direct and 4 attributed to Bing—with no outbound events, repository link, or current search result. Treat it as likely synthetic or stale-index noise, not a landing page to optimize. Grouping it under `/[other]` is intentional.
 
 ## Review cadence
 

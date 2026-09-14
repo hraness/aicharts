@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import type { CodingAgentRecord } from "./coding-agent-data";
 import {
   computeParetoFrontier,
+  computeParetoSet,
   providerPerformanceRanges,
   sampleFrontierLadder,
 } from "./option-space";
@@ -48,6 +49,22 @@ describe("Pareto frontier", () => {
       "costUsd",
       "aaIndex",
     ).map(({ record: item }) => item.id)).toEqual(["cheap", "knee", "peak"]);
+  });
+
+  test("preserves exact nondominated ties and excludes missing comparisons", () => {
+    const tiedOne = record("tie-one", "one", 2, 60);
+    const tiedTwo = record("tie-two", "two", 2, 60);
+    const dominated = record("dominated", "three", 3, 55);
+    const missingCost = {
+      ...record("missing", "four", 1, 90),
+      economics: { costUsd: null, durationSeconds: 60 },
+    };
+
+    expect(computeParetoSet(
+      [dominated, tiedTwo, missingCost, tiedOne],
+      "costUsd",
+      "aaIndex",
+    ).map(({ record: item }) => item.id)).toEqual(["tie-one", "tie-two"]);
   });
 
   test("samples a compact ladder without losing either frontier edge", () => {

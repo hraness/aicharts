@@ -5,7 +5,6 @@ import {
 import type { ImageResponse } from "next/og";
 
 import { site } from "../site";
-import type { BlogArticle } from "./articles";
 
 export const BLOG_IMAGE_SIZE = socialImageSize;
 
@@ -22,13 +21,6 @@ function renderBlogImage({
     eyebrow: "AI Charts benchmark analysis",
     theme: { accent: site.palette.chromatic.key },
     title,
-  });
-}
-
-export function renderBlogArticleImage(article: BlogArticle): ImageResponse {
-  return renderBlogImage({
-    description: article.dek,
-    title: article.title,
   });
 }
 

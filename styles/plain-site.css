@@ -29,7 +29,7 @@
 
   background: var(--plain-background);
   color: var(--plain-foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-text);
   font-size: 1rem;
   line-height: 1.55;
   margin: 0;
@@ -103,11 +103,17 @@ body.plain-site > main {
 :where(.plain-header a, .plain-page a, .plain-footer a) {
   color: var(--plain-link);
   overflow-wrap: anywhere;
+  text-decoration: none;
   text-decoration-thickness: 1px;
   text-underline-offset: 0.15em;
 }
 
-:where(.plain-header a:hover, .plain-page a:hover, .plain-footer a:hover) {
+:where(
+  .plain-header a:is(:hover, :focus-visible),
+  .plain-page a:is(:hover, :focus-visible),
+  .plain-footer a:is(:hover, :focus-visible)
+) {
+  text-decoration: underline;
   text-decoration-thickness: 2px;
 }
 
@@ -180,6 +186,7 @@ body.plain-site > main {
   text-transform: none;
 }
 
+.plain-header__actions,
 .plain-nav,
 .plain-footer__links {
   align-items: center;
@@ -200,7 +207,7 @@ body.plain-site > main {
   min-block-size: var(--plain-link-target-min);
   min-inline-size: var(--plain-link-target-min);
   padding: 0;
-  text-decoration: underline;
+  text-decoration: none;
   text-transform: none;
 }
 
@@ -301,13 +308,6 @@ body.plain-site > main {
   padding-right: max(var(--plain-shell-gutter), env(safe-area-inset-right));
   padding-bottom: max(1.25rem, env(safe-area-inset-bottom));
   padding-left: max(var(--plain-shell-gutter), env(safe-area-inset-left));
-}
-
-.plain-footer:has(.ui-jelly-surface) {
-  padding-top: var(--space-6);
-  padding-right: max(var(--plain-shell-gutter), var(--space-6), env(safe-area-inset-right));
-  padding-bottom: max(var(--space-6), env(safe-area-inset-bottom));
-  padding-left: max(var(--plain-shell-gutter), var(--space-6), env(safe-area-inset-left));
 }
 
 .plain-site main:has(> .design-gallery[data-design-gallery-nested="true"]) {

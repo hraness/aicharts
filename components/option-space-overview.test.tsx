@@ -33,7 +33,7 @@ function record(
   };
 }
 
-test("the option-space summary keeps two complementary linked views", () => {
+test("the option-space summary keeps the current signal visible and details server-rendered", () => {
   const html = renderToStaticMarkup(
     <OptionSpaceOverview
       onPinPoint={() => undefined}
@@ -51,7 +51,14 @@ test("the option-space summary keeps two complementary linked views", () => {
     />,
   );
 
-  expect(html).toContain('aria-label="Option space"');
+  expect(html).toContain('aria-labelledby="option-space-title"');
+  expect(html).toContain('id="option-space-title"');
+  expect(html).toContain("Efficient choices beyond the scatter plot");
+  expect(html).toContain("Current read.");
+  expect(html).toContain("peak reaches the highest sampled frontier score at");
+  expect(html).toContain("3 provider ranges are available, led by THREE");
+  expect(html).toContain("<details");
+  expect(html).toContain("Explore 3 frontier steps and 3 provider ranges");
   expect(html).toContain("Efficient frontier");
   expect(html).toContain("Provider ranges");
   expect(html).not.toContain("Benchmark profiles");

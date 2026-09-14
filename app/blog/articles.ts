@@ -1,7 +1,13 @@
-export const BLOG_SLUGS = [
-  "mirrorcode-coding-agent-benchmark",
-  "slopcodebench-long-horizon-coding-agents",
-] as const;
+import { site } from "../site";
+import { PUBLIC_BLOG_SLUGS } from "@/lib/public-analytics-routes";
+import { createAaIndexCostArticle } from "./aa-index-cost-article";
+import { createCodingAgentScoreHoldoutsArticle } from "./coding-agent-score-holdouts-article";
+import { createDevinFusionCostSavingArticle } from "./devin-fusion-cost-saving-article";
+import { createOpenModelsCodingAgentsArticle } from "./open-models-coding-agents-article";
+import { createSmallModelsHaveArrivedArticle } from "./small-models-have-arrived-article";
+import { createTerminalBenchScienceArticle } from "./terminal-bench-science-article";
+
+export const BLOG_SLUGS = PUBLIC_BLOG_SLUGS;
 
 export const blogDescription =
   "Sourced analysis of AI model and agent benchmarks: what each evaluation measures, what the results show, and where the evidence stops.";
@@ -70,49 +76,124 @@ export const BLOG_SOURCES = {
     url: "https://arxiv.org/abs/2606.30182",
     year: 2026,
   },
-  slopCodeBench: {
+  artificialAnalysisCodingAgents: {
     note:
-      "The paper defines SlopCodeBench, reports the 15-agent evaluation, calibrates its two static quality measures, and analyzes prompt interventions and limitations.",
-    publication: "arXiv",
-    title: "SlopCodeBench: Benchmarking How Coding Agents Degrade Over Long-Horizon Iterative Tasks",
-    url: "https://arxiv.org/abs/2603.24755",
+      "The public coding-agents comparison is the upstream source of the checked AI Charts snapshot. Model names, agent harnesses, settings, AA Index scores, and mean API costs are Artificial Analysis measurements.",
+    publication: "Artificial Analysis",
+    title: "Coding Agents",
+    url: "https://artificialanalysis.ai/agents/coding-agents/",
+    year: 2026,
+  },
+  semiAnalysisOpenModels: {
+    note:
+      "The August 21, 2026 essay reports era-specific open-versus-closed composites, catch-up intervals, and the limits of public-benchmark scores.",
+    publication: "SemiAnalysis",
+    title: "Are Open Models Catching Up?",
+    url: "https://newsletter.semianalysis.com/p/are-open-models-catching-up",
+    year: 2026,
+  },
+  danLuuBenchpocalypse: {
+    note:
+      "The essay reports the FRE regex-engine loop, the rebar-versus-holdout gap, later interface and haystack cheats, and the claim that the same problem applies to AI software.",
+    publication: "Dan Luu",
+    title: "The benchmarkpocalypse",
+    url: "https://danluu.com/benchpocalypse/",
+    year: 2026,
+  },
+  calvinFrenchOwenSmallModels: {
+    note:
+      "The August 26, 2026 essay reports GPT-5.6 Luna speed and costs from French-Owen’s research and personalized-news experiments.",
+    publication: "calv.info",
+    title: "Small Models Have Arrived",
+    url: "https://calv.info/small-models-have-arrived",
+    year: 2026,
+  },
+  openAiGpt56Luna: {
+    note:
+      "The official model page describes GPT-5.6 Luna as a cost-sensitive, high-volume model and lists its current token prices and additional cost conditions.",
+    publication: "OpenAI",
+    title: "GPT-5.6 Luna Model",
+    url: "https://developers.openai.com/api/docs/models/gpt-5.6-luna",
+    year: 2026,
+  },
+  terminalBenchScienceAnnouncement: {
+    note:
+      "Steven Dillmann’s announcement defines Terminal-Bench-Science 0.1, reports the 70-task funnel, named resolution rates, cost and token frontiers, and the living-benchmark roadmap.",
+    publication: "Terminal-Bench-Science",
+    title: "Terminal-Bench-Science 0.1",
+    url: "https://www.terminal-bench-science.ai/announcement",
+    year: 2026,
+  },
+  cognitionFusionDesktopCli: {
+    note:
+      "The September 11, 2026 announcement reports the headline Artificial Analysis Coding Agent Index v1.5 comparison, the five-benchmark lead-versus-Fusion table, the sidekick price comparison, and the recommended Fable 5.1 and SWE-2 pairing.",
+    publication: "Cognition",
+    title: "Introducing Fusion in Devin Desktop & CLI",
+    url: "https://cognition.com/blog/local-fusion",
+    year: 2026,
+  },
+  cognitionDevinFusion: {
+    note:
+      "The June 29, 2026 post introduces the lead-and-sidekick architecture, reports the initial 35% FrontierCode cost reduction, the later up-to-60% figure with data updated August 7, 2026, and the 41% Fable 5 result.",
+    publication: "Cognition",
+    title: "Devin Fusion: Frontier Performance at 60% Lower Cost",
+    url: "https://cognition.com/blog/devin-fusion",
+    year: 2026,
+  },
+  devinFable51: {
+    note:
+      "The August 31, 2026 post reports Fable 5.1 and Devin Fusion cost per task on FrontierCode 1.1 Extended at the medium thinking level without naming the Fusion sidekick.",
+    publication: "Devin",
+    title: "Fable 5.1 in Devin and Why It’s Cheaper than Opus 5",
+    url: "https://devin.ai/blog/fable-5-1",
     year: 2026,
   },
 } as const satisfies Record<string, BlogSource>;
 
 export type BlogSourceId = keyof typeof BLOG_SOURCES;
 
+export const BLOG_AUTHORSHIP_DISCLOSURE =
+  "Prepared with AI assistance from the cited primary sources and checked site data. AI Charts did not independently rerun the reported benchmarks.";
+
 export interface BlogArticle {
+  readonly authorshipDisclosure: typeof BLOG_AUTHORSHIP_DISCLOSURE;
   readonly body: readonly BlogBlock[];
   readonly dek: string;
   readonly focusPhrase: string;
   readonly keywords: readonly string[];
+  readonly nextStep?: Readonly<{
+    description: string;
+    links: readonly Readonly<{ href: `/${string}`; label: string }>[];
+    title: string;
+  }>;
   readonly publishedAt: string;
   readonly relatedSlugs: readonly BlogSlug[];
+  readonly section?: string;
   readonly seoDescription: string;
+  readonly showChartCta?: boolean;
   readonly slug: BlogSlug;
   readonly sourceIds: readonly BlogSourceId[];
   readonly title: string;
   readonly updatedAt: string;
 }
 
-function paragraph(...content: InlinePart[]): BlogBlock {
+export function paragraph(...content: InlinePart[]): BlogBlock {
   return { content, type: "paragraph" };
 }
 
-function heading(text: string, level: 2 | 3 = 2): BlogBlock {
+export function heading(text: string, level: 2 | 3 = 2): BlogBlock {
   return { level, text, type: "heading" };
 }
 
-function callout(label: string, ...content: InlinePart[]): BlogBlock {
+export function callout(label: string, ...content: InlinePart[]): BlogBlock {
   return { content, label, type: "callout" };
 }
 
-function list(...items: readonly InlineContent[]): BlogBlock {
+export function list(...items: readonly InlineContent[]): BlogBlock {
   return { items, style: "unordered", type: "list" };
 }
 
-function table(
+export function table(
   caption: string,
   columns: readonly string[],
   rows: readonly (readonly InlineContent[])[],
@@ -121,13 +202,14 @@ function table(
 }
 
 const mirrorCodeArticle = {
+  authorshipDisclosure: BLOG_AUTHORSHIP_DISCLOSURE,
   slug: "mirrorcode-coding-agent-benchmark",
-  title: "MirrorCode: how far can coding agents work on their own?",
+  title: "MirrorCode scores complete-program reimplementation",
   dek:
-    "MirrorCode tests whether a coding agent can reimplement a complete program under strict end-to-end tests and project-scale resource budgets.",
+    "Epoch AI and METR hide the original source and grade a replacement on held-out tests under project-scale budgets.",
   focusPhrase: "MirrorCode coding agent benchmark",
   seoDescription:
-    "MirrorCode tests whether coding agents can reimplement complete programs. Learn how the benchmark works, what current results show, and its main limits.",
+    "MirrorCode asks an agent to rebuild a complete program under held-out tests and project-scale budgets. See what the dated leaderboard can and cannot show.",
   keywords: [
     "MirrorCode",
     "coding agent benchmark",
@@ -137,9 +219,9 @@ const mirrorCodeArticle = {
     "METR",
   ],
   publishedAt: "2026-08-04",
-  updatedAt: "2026-08-04",
+  updatedAt: "2026-09-10",
   sourceIds: ["mirrorCode", "mirrorCodePaper"],
-  relatedSlugs: ["slopcodebench-long-horizon-coding-agents"],
+  relatedSlugs: [],
   body: [
     paragraph(
       { href: BLOG_SOURCES.mirrorCode.url, text: "MirrorCode" },
@@ -222,146 +304,22 @@ const mirrorCodeArticle = {
       "MirrorCode provides evidence that leading coding agents can sustain autonomous work across complete software projects. The strongest systems can finish a meaningful share of difficult reimplementation tasks under large budgets. Near-solves such as gotree show that strict completion can understate the amount of working functionality produced.",
     ),
     paragraph(
-      "The benchmark does not establish that an agent can maintain an evolving production system, collaborate with a team, resolve ambiguous product requirements, or leave code that remains easy to change. Its question is narrower: can the agent reproduce a complete program's externally tested behavior?",
+      "The benchmark does not establish that an agent can maintain an evolving production system, collaborate with a team, resolve ambiguous product requirements, or leave code that remains maintainable. Its question is narrower: can the agent reproduce a complete program's externally tested behavior?",
     ),
     paragraph(
-      "That makes MirrorCode a measure of project-scale completion. The ",
-      { href: "/blog/slopcodebench-long-horizon-coding-agents", text: "SlopCodeBench results" },
-      " cover a complementary question: what happens to correctness and code structure as an agent repeatedly extends its own work. Reading both separates finishing a large specification from preserving software quality over time.",
-    ),
-  ],
-} as const satisfies BlogArticle;
-
-const slopCodeBenchArticle = {
-  slug: "slopcodebench-long-horizon-coding-agents",
-  title: "SlopCodeBench: coding agents degrade on long tasks",
-  dek:
-    "SlopCodeBench follows agents as they repeatedly extend their own code, measuring correctness, cost, structural erosion, and verbosity at each checkpoint.",
-  focusPhrase: "SlopCodeBench long-horizon coding agents",
-  seoDescription:
-    "SlopCodeBench follows agents through repeated code changes. Its results show low strict pass rates, rising code erosion, verbosity, and cost.",
-  keywords: [
-    "SlopCodeBench",
-    "long-horizon coding agents",
-    "coding agent benchmark",
-    "AI code quality",
-    "structural erosion",
-    "agentic software engineering",
-  ],
-  publishedAt: "2026-08-04",
-  updatedAt: "2026-08-04",
-  sourceIds: ["slopCodeBench"],
-  relatedSlugs: ["mirrorcode-coding-agent-benchmark"],
-  body: [
-    paragraph(
-      { href: BLOG_SOURCES.slopCodeBench.url, text: "SlopCodeBench" },
-      " measures how coding agents behave when they repeatedly extend software they previously wrote. The May 2026 paper evaluates 15 coding agents on 36 problems containing 196 checkpoints. Each checkpoint adds requirements to the agent's existing workspace, exposing how early design choices affect later work.",
-    ),
-    paragraph(
-      "No evaluated agent completed every checkpoint of any problem. GPT-5.5 achieved the highest strict checkpoint solve rate at 14.8%. The paper also reports that its two targeted code-quality measures deteriorated during most trajectories while average cost per checkpoint rose as projects progressed.",
-    ),
-    heading("What SlopCodeBench measures"),
-    paragraph(
-      "Each problem begins with an empty workspace. The agent receives a specification, implements it, and carries that implementation into the next checkpoint. Later requirements can reward a flexible initial design or expose shortcuts embedded in earlier code. Problems contain three to eight checkpoints.",
-    ),
-    paragraph(
-      "One example begins as a command-line source search tool with exact and regular-expression matching. Later checkpoints add languages, structural pattern matching, selectors, and automatic fixes. An early architecture organized around one language and one matching mode becomes part of the next checkpoint's starting state.",
-    ),
-    paragraph(
-      "Specifications describe observable command-line or API behavior. They do not prescribe internal interfaces, structure, or architecture. Test suites remain hidden, including held-out cases beyond the examples in the specification. The task design is language-agnostic, although the paper evaluates only Python implementations because of experimental cost.",
-    ),
-    callout(
-      "Workspace persists, conversation does not",
-      "Each checkpoint starts in a fresh container with the previous workspace but no prior conversation context. The agent must understand and modify the code it left behind rather than relying on conversational memory.",
-    ),
-    heading("How correctness is scored"),
-    paragraph(
-      "A strict solve requires the workspace to pass the current checkpoint's tests and regression tests from earlier checkpoints. An isolated solve excludes earlier regression tests, helping distinguish failure on the new requirement from damage inherited from prior work. A core solve counts behavior explicitly described or demonstrated by the specification.",
-    ),
-    table(
-      "Selected SlopCodeBench results",
-      ["Measure", "Reported result"],
-      [
-        [["Problems completed end to end"], ["0 of 36"]],
-        [["Best strict checkpoint solve rate"], ["14.8%, GPT-5.5"]],
-        [["Best isolated checkpoint solve rate"], ["28.1%, GPT-5.5"]],
-        [["Core pass rate, early to late"], ["64.6% to 35.5%"]],
-        [["Mean cost per checkpoint, early to late"], ["2.2× increase"]],
-      ],
-    ),
-    paragraph(
-      "Across the evaluated configurations, core correctness fell from 64.6% near the beginning of a problem to 35.5% at the end. Error-handling correctness fell from 80.1% to 62.2%. Mean cost per checkpoint increased 2.2 times, while the proportion of lines changed declined from 97.4% early in a project to 29.5% late in the project.",
-    ),
-    paragraph(
-      "This combination describes agents spending more while making increasingly localized changes to larger inherited workspaces. It does not by itself identify the cause of each failure, but it shows why a single final pass rate misses important trajectory behavior.",
-    ),
-    heading("How the paper measures code quality"),
-    paragraph(
-      "The authors define two static measures for following code changes across checkpoints: structural erosion and verbosity.",
-    ),
-    list(
-      [
-        { emphasis: "strong", text: "Structural erosion" },
-        " is the share of a codebase's cyclomatic-complexity mass concentrated in functions whose complexity exceeds 10. The score rises when more control-flow complexity accumulates inside already-complex functions.",
-      ],
-      [
-        { emphasis: "strong", text: "Verbosity" },
-        " is the proportion of source lines affected by structural duplication or one of 137 targeted AST rules. The rules identify patterns such as unnecessary intermediates, redundant checks, and avoidable constructions.",
-      ],
-    ),
-    paragraph(
-      "These metrics cover concentrated complexity, duplication, and particular redundant patterns. They are not complete measures of maintainability, architecture, readability, or long-term development cost. A high score does not prove that software is unusable, and a low score does not prove that its design is sound.",
-    ),
-    heading("Quality deteriorates during iteration"),
-    paragraph(
-      "Structural erosion increased in 77% of agent trajectories and verbosity increased in 75.5%. The average number of functions with cyclomatic complexity of at least 10 rose from 3.6 to 23.7. Mean maximum cyclomatic complexity increased from 27.5 to 69.0. Structural duplication grew by 96%, while the density of other AST-rule violations changed by only 0.3%.",
-    ),
-    paragraph(
-      "The duplication result suggests that much of the measured verbosity came from copying and extending existing structures rather than introducing new categories of violation. Iteration made small structural choices accumulate.",
-    ),
-    heading("Comparison with open-source Python repositories"),
-    paragraph(
-      "The paper calibrates its measures against 473 open-source Python repositories and 13,667 sampled commits. Agent checkpoints averaged 0.44 verbosity and 0.68 erosion. The repository panel averaged 0.19 verbosity and 0.34 erosion. Under the paper's definitions, agent code was 2.3 times more verbose and 2.0 times more eroded.",
-    ),
-    paragraph(
-      "The trajectory comparison produced a larger gap. Agent verbosity grew about seven times faster per checkpoint than the median rate in the repository histories, while erosion grew about five times faster.",
-    ),
-    callout(
-      "Calibration is not a matched experiment",
-      "The repository panel provides a reference distribution, not a controlled comparison of equivalent tasks. Human commits reflect code review, team practices, project maturity, and development processes that differ from the benchmark environment.",
-    ),
-    heading("Prompting improves the starting point"),
-    paragraph(
-      "The researchers tested an anti-slop prompt and a plan-first prompt on GPT-5.3 Codex, GPT-5.4, and GPT-5.5. The anti-slop prompt reduced average verbosity by 27.5% to 35.6%, depending on the model, and reduced erosion by 34.3% to 57.6%. The improvement usually changed the level at which code started, not the rate at which it degraded across checkpoints.",
-    ),
-    paragraph(
-      "The interventions introduced trade-offs. Anti-slop prompting reduced average strict correctness by 2.4 percentage points, while plan-first prompting reduced it by 3.6 points. Across the tested configurations, the modified prompts raised average cost per checkpoint by 12.1%.",
-    ),
-    heading("Limits on the result"),
-    paragraph(
-      "SlopCodeBench evaluates one implementation language, a fixed set of hand-authored problems, and a particular snapshot of models and native agent harnesses. Results can change with model updates, tools, context management, or different checkpoint designs. Hidden tests measure only the behavior encoded by the benchmark authors.",
-    ),
-    paragraph(
-      "The quality measures are targeted static indicators, and the open-source calibration is not a matched maintenance study. These limits do not erase the observed trajectory, but they constrain claims about production codebases or maintainability as a whole.",
-    ),
-    heading("How to interpret SlopCodeBench"),
-    paragraph(
-      "SlopCodeBench identifies a gap between satisfying a current specification and preserving a codebase's capacity to absorb later changes. Current agents can pass individual checkpoints, but their prior design choices often become liabilities as requirements accumulate.",
-    ),
-    paragraph(
-      "The benchmark supports evaluating coding agents as maintainers of evolving software, with correctness, cost, regression behavior, and structural change considered together. It does not establish a universal limit on autonomous development. It provides evidence that iterative degradation remains a distinct weakness under these long-horizon conditions.",
-    ),
-    paragraph(
-      "For a complementary view of project-scale completion, read the ",
-      { href: "/blog/mirrorcode-coding-agent-benchmark", text: "MirrorCode benchmark summary" },
-      ". MirrorCode asks whether an agent can reproduce a complete program under strict behavioral tests, while SlopCodeBench asks what happens as the agent repeatedly changes the code it chose to build.",
+      "Read MirrorCode as a measure of project-scale completion. It does not answer whether the same agent can maintain an evolving production codebase.",
     ),
   ],
 } as const satisfies BlogArticle;
 
 export const blogArticles = [
+  createDevinFusionCostSavingArticle(),
+  createTerminalBenchScienceArticle(),
+  createSmallModelsHaveArrivedArticle(),
+  createCodingAgentScoreHoldoutsArticle(),
+  createOpenModelsCodingAgentsArticle(),
+  createAaIndexCostArticle(),
   mirrorCodeArticle,
-  slopCodeBenchArticle,
 ] as const satisfies readonly BlogArticle[];
 
 export function blogArticlePath(slug: BlogSlug): `/blog/${BlogSlug}` {
@@ -370,6 +328,10 @@ export function blogArticlePath(slug: BlogSlug): `/blog/${BlogSlug}` {
 
 export function getBlogArticle(slug: string): BlogArticle | undefined {
   return blogArticles.find(article => article.slug === slug);
+}
+
+export function blogArticleSection(article: BlogArticle): string {
+  return article.section ?? "Coding agent benchmarks";
 }
 
 export function headingId(text: string): string {
@@ -381,8 +343,109 @@ export function headingId(text: string): string {
     .replace(/^-|-$/gu, "");
 }
 
-function inlineText(content: InlineContent): string {
+export function inlineText(content: InlineContent): string {
   return content.map(part => typeof part === "string" ? part : part.text).join(" ");
+}
+
+export function inlineMarkdown(content: InlineContent): string {
+  return content.map((part) => {
+    if (typeof part === "string") return part;
+    let text = part.text;
+    if (part.emphasis === "strong") text = `**${text}**`;
+    if (part.emphasis === "em") text = `*${text}*`;
+    if (part.href !== undefined) text = `[${text}](${part.href})`;
+    return text;
+  }).join("");
+}
+
+export type BlogArticleMarkdownImage = Readonly<{
+  alt: string;
+  caption: string;
+  credit: string;
+  src: string;
+}>;
+
+export function articleToMarkdown(
+  article: BlogArticle,
+  editorialImage?: BlogArticleMarkdownImage,
+): string {
+  const published = article.publishedAt === article.updatedAt
+    ? article.publishedAt
+    : `${article.publishedAt}, updated ${article.updatedAt}`;
+  const blocks = article.body.map((block) => {
+    if (block.type === "heading") {
+      return `${"#".repeat(block.level)} ${block.text}`;
+    }
+    if (block.type === "paragraph") return inlineMarkdown(block.content);
+    if (block.type === "callout") {
+      return `> **${block.label}**\n>\n> ${inlineMarkdown(block.content)}`;
+    }
+    if (block.type === "list") {
+      const marker = block.style === "ordered" ? "1." : "-";
+      return block.items.map(item => `${marker} ${inlineMarkdown(item)}`).join("\n");
+    }
+    const header = `| ${block.columns.join(" | ")} |`;
+    const divider = `| ${block.columns.map(() => "---").join(" | ")} |`;
+    const rows = block.rows.map(row => `| ${row.map(inlineMarkdown).join(" | ")} |`);
+    return [`*${block.caption}*`, header, divider, ...rows].join("\n");
+  });
+  const sources = article.sourceIds.map((sourceId) => {
+    const source = BLOG_SOURCES[sourceId];
+    return `- [${source.title}](${source.url}). ${source.publication}, ${source.year}. ${source.note}`;
+  });
+  const nextStep = article.nextStep === undefined
+    ? article.showChartCta === false
+      ? []
+      : [
+          "## Current comparison: coding agents",
+          "",
+          "The interactive chart shows the current source snapshot across benchmark performance, cost, speed, and token use.",
+          "",
+          `[Explore chart](${site.origin}/)`,
+          "",
+        ]
+    : [
+        `## ${article.nextStep.title}`,
+        "",
+        article.nextStep.description,
+        "",
+        ...article.nextStep.links.map(link => (
+          `- [${link.label}](${new URL(link.href, site.origin)})`
+        )),
+        "",
+      ];
+  const relatedLinks = article.relatedSlugs.map((slug) => {
+    const relatedArticle = getBlogArticle(slug);
+    if (relatedArticle === undefined) {
+      throw new Error(`Unknown related blog article: ${slug}`);
+    }
+    return `- [${relatedArticle.title}](${site.origin}${blogArticlePath(slug)})`;
+  });
+  return [
+    `# ${article.title}`,
+    "",
+    article.dek,
+    "",
+    `Published ${published}.`,
+    "",
+    article.authorshipDisclosure,
+    "",
+    ...(editorialImage === undefined ? [] : [
+      `![${editorialImage.alt}](${new URL(editorialImage.src, site.origin)})`,
+      "",
+      `*${editorialImage.caption} ${editorialImage.credit}*`,
+      "",
+    ]),
+    ...blocks.flatMap(block => [block, ""]),
+    ...nextStep,
+    ...(sources.length === 0 ? [] : ["## Sources", "", ...sources, ""]),
+    "Reported results apply to the named source, workload, configuration, and observation date. They do not establish performance on every task or product.",
+    "",
+    "## Related analysis",
+    "",
+    ...relatedLinks,
+    "",
+  ].join("\n");
 }
 
 function blockText(block: BlogBlock): string {

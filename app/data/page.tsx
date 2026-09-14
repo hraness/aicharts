@@ -1,9 +1,25 @@
 import { Breadcrumbs } from "@/components/ui";
+import { CodingAgentLeadersTable } from "@/components/coding-agent-leaders-table";
+import { CodingAgentSnapshotTable } from "@/components/coding-agent-snapshot-table";
+import artificialAnalysisIntelligenceData from "@/data/artificial-analysis-intelligence.json";
+import currentIntelligenceData from "@/data/artificial-analysis-intelligence-v4-3.json";
 import codingAgentData from "@/data/coding-agents.json";
+import terminalBenchData from "@/data/terminal-bench.json";
+import terminalBenchScienceData from "@/data/terminal-bench-science.json";
 import { parseCodingAgentSnapshot } from "@/lib/coding-agent-data";
+import { codingAgentSnapshotRows } from "@/lib/coding-agent-snapshot-rows";
+import { BENCHMARK_DATA_DESCRIPTION } from "@/lib/benchmark-portfolio";
+import { ATLAS_DATASETS, ATLAS_ENTRIES } from "@/lib/benchmark-atlas-catalog";
+import { ATLAS_CATALOG_DOWNLOAD_PATH, atlasDataCatalogJsonLd, atlasDatasetDownloadPath } from "@/lib/benchmark-atlas-distribution";
+import {
+  artificialAnalysisIntelligenceDatasetJsonLd,
+  terminalBenchDatasetJsonLd,
+  terminalBenchScienceDatasetJsonLd,
+} from "@/lib/benchmark-dataset-json-ld";
+import { parseArtificialAnalysisIntelligenceSnapshot } from "@/lib/artificial-analysis-intelligence-data";
+import { parseArtificialAnalysisIntelligenceV43Snapshot } from "@/lib/artificial-analysis-intelligence-v4-3-data";
 import {
   CODING_AGENT_BENCHMARK_DEFINITIONS,
-  CODING_AGENT_DATASET_DESCRIPTION,
   CODING_AGENT_DATASET_DOWNLOAD_PATH,
   CODING_AGENT_DATASET_PATH,
   codingAgentDatasetJsonLd,
@@ -11,17 +27,20 @@ import {
   codingAgentDatasetSummary,
   currentCodingAgentBenchmarkLeaders,
 } from "@/lib/coding-agent-dataset";
+import { parseTerminalBenchSnapshot } from "@/lib/terminal-bench-data";
+import { parseTerminalBenchScienceSnapshot } from "@/lib/terminal-bench-science-data";
 import { createPublicSiteMetadata } from "@hraness/web-discovery";
 import { JsonLdScript } from "@hraness/web-discovery/json-ld";
 import type { Metadata } from "next";
+import Link from "next/link";
 
 import { searchSite } from "../site";
 
 const dataSearchSite = {
   ...searchSite,
-  description: CODING_AGENT_DATASET_DESCRIPTION,
-  socialTitle: "Coding Agent Benchmark Dataset | AI Charts",
-  title: "Coding Agent Benchmark Dataset | AI Charts",
+  description: BENCHMARK_DATA_DESCRIPTION,
+  socialTitle: "Benchmark Data and Method | AI Charts",
+  title: "Benchmark Data and Method | AI Charts",
 } as const;
 
 export const metadata: Metadata = createPublicSiteMetadata(
@@ -43,9 +62,32 @@ function formatRetrievedAt(value: string): string {
   return retrievedAtFormatter.format(new Date(value));
 }
 
-function formatScore(value: number): string {
-  return value.toFixed(1);
-}
+const intelligenceEvaluationWeights = [
+  {
+    category: "Agents",
+    evaluations: ["GDPval-AA v2 · 20%", "τ³-Banking · 14%"],
+    weight: 34,
+  },
+  {
+    category: "Coding",
+    evaluations: ["Terminal-Bench v2.1 · 16%", "SciCode · 8%"],
+    weight: 24,
+  },
+  {
+    category: "Scientific Reasoning",
+    evaluations: [
+      "Humanity's Last Exam · 12%",
+      "GPQA Diamond · 6%",
+      "CritPt · 6%",
+    ],
+    weight: 24,
+  },
+  {
+    category: "General",
+    evaluations: ["AA-LCR · 6%", "AA-Omniscience · 12%"],
+    weight: 18,
+  },
+] as const;
 
 export default function CodingAgentDatasetPage() {
   const input: unknown = codingAgentData;
@@ -57,16 +99,59 @@ export default function CodingAgentDatasetPage() {
     );
   }
   const snapshot = parsed.value;
+  const parsedTerminalBench = parseTerminalBenchSnapshot(terminalBenchData);
+  if (!parsedTerminalBench.ok) {
+    throw new Error(
+      "Checked Terminal-Bench snapshot is invalid: " + parsedTerminalBench.error.message,
+      { cause: parsedTerminalBench.error },
+    );
+  }
+  const terminalBench = parsedTerminalBench.value;
+  const parsedTerminalBenchScience = parseTerminalBenchScienceSnapshot(
+    terminalBenchScienceData,
+  );
+  if (!parsedTerminalBenchScience.ok) {
+    throw new Error(
+      "Checked Terminal-Bench-Science snapshot is invalid: "
+        + parsedTerminalBenchScience.error.message,
+      { cause: parsedTerminalBenchScience.error },
+    );
+  }
+  const terminalBenchScience = parsedTerminalBenchScience.value;
+  const parsedIntelligence = parseArtificialAnalysisIntelligenceSnapshot(
+    artificialAnalysisIntelligenceData,
+  );
+  if (!parsedIntelligence.ok) {
+    throw new Error(
+      "Checked Artificial Analysis Intelligence snapshot is invalid: "
+        + parsedIntelligence.error.message,
+      { cause: parsedIntelligence.error },
+    );
+  }
+  const intelligence = parsedIntelligence.value;
+  const parsedCurrentIntelligence = parseArtificialAnalysisIntelligenceV43Snapshot(currentIntelligenceData);
+  if (!parsedCurrentIntelligence.ok) throw new Error("Invalid checked current Intelligence snapshot", { cause: parsedCurrentIntelligence.error });
+  const currentIntelligence = parsedCurrentIntelligence.value;
   const modifiedAt = codingAgentDatasetModifiedAt(snapshot);
   const summary = codingAgentDatasetSummary(snapshot);
   const leaders = currentCodingAgentBenchmarkLeaders(snapshot);
 
   return (
-    <main className="plain-publication__article" id="data-content">
+    <main
+      className="plain-publication__article"
+      data-analytics-surface="data_document"
+      id="data-content"
+    >
       <JsonLdScript
-        data={codingAgentDatasetJsonLd(snapshot, searchSite)}
-        id="aicharts-coding-agent-dataset-structured-data"
+        data={[
+          codingAgentDatasetJsonLd(snapshot, searchSite),
+          terminalBenchDatasetJsonLd(terminalBench, searchSite),
+          terminalBenchScienceDatasetJsonLd(terminalBenchScience, searchSite),
+          artificialAnalysisIntelligenceDatasetJsonLd(intelligence, searchSite),
+        ]}
+        id="aicharts-benchmark-datasets-structured-data"
       />
+      <JsonLdScript data={atlasDataCatalogJsonLd()} id="aicharts-benchmark-atlas-structured-data" />
 
       <header className="plain-publication__article-header plain-publication__shell">
         <Breadcrumbs
@@ -77,39 +162,77 @@ export default function CodingAgentDatasetPage() {
             { id: "data", label: "Data" },
           ]}
         />
-        <h1>Coding-agent benchmark dataset</h1>
+        <h1>Benchmark data and method</h1>
         <p className="plain-publication__article-dek">
-          {CODING_AGENT_DATASET_DESCRIPTION}
+          {BENCHMARK_DATA_DESCRIPTION}
         </p>
         <p className="plain-publication__article-meta">
-          <span>Last retrieved </span>
-          <time dateTime={snapshot.source.retrievedAt}>
-            {formatRetrievedAt(snapshot.source.retrievedAt)}
-          </time>
+          <span>{ATLAS_ENTRIES.length} benchmarks</span>
           <span aria-hidden="true"> · </span>
-          <span>Latest notable update </span>
-          <time dateTime={modifiedAt}>{formatRetrievedAt(modifiedAt)}</time>
+          <span>{ATLAS_DATASETS.length} measured cohorts</span>
           <span aria-hidden="true"> · </span>
-          <span>{summary.recordCount} configurations</span>
-          <span aria-hidden="true"> · </span>
-          <span>{summary.providerCount} providers</span>
+          <span>Source dates and comparison limits below</span>
         </p>
-        <a
-          className="plain-publication__primary-link"
-          download="aicharts-coding-agent-benchmarks.json"
-          href={CODING_AGENT_DATASET_DOWNLOAD_PATH}
-        >
-          Download JSON <span aria-hidden="true">↓</span>
-        </a>
+        <nav aria-label="Dataset downloads" className="plain-publication__download-links">
+          <p>Download checked snapshots</p>
+          <ul>
+            <li>
+              <a download="aicharts-benchmark-atlas.json" href={ATLAS_CATALOG_DOWNLOAD_PATH}>
+                Benchmark atlas catalog <span aria-hidden="true">↓</span>
+              </a>
+            </li>
+            <li>
+              <a download="aicharts-terminal-bench-4.json" href="/data/terminal-bench-4.json">
+                Terminal-Bench 4 <span aria-hidden="true">↓</span>
+              </a>
+            </li>
+            <li>
+              <a
+                download="aicharts-terminal-bench-science-0-1.json"
+                href="/data/terminal-bench-science-0-1.json"
+              >
+                Terminal-Bench-Science 0.1 <span aria-hidden="true">↓</span>
+              </a>
+            </li>
+            <li>
+              <a download="aicharts-artificial-analysis-intelligence-v4-3.json" href="/data/artificial-analysis-intelligence-v4-3.json">
+                Current Intelligence v{currentIntelligence.benchmark.version} <span aria-hidden="true">↓</span>
+              </a>
+            </li>
+            <li>
+              <a
+                download="aicharts-artificial-analysis-intelligence.json"
+                href="/data/artificial-analysis-intelligence.json"
+              >
+                Historical Intelligence v{intelligence.benchmark.version} (frozen){" "}
+                <span aria-hidden="true">↓</span>
+              </a>
+            </li>
+            <li>
+              <a
+                download="aicharts-coding-agent-benchmarks.json"
+                href={CODING_AGENT_DATASET_DOWNLOAD_PATH}
+              >
+                Artificial Analysis coding agents <span aria-hidden="true">↓</span>
+              </a>
+            </li>
+          </ul>
+        </nav>
       </header>
 
       <div className="plain-publication__article-layout plain-publication__shell">
         <nav aria-label="On this page" className="plain-publication__toc">
           <p>On this page</p>
           <ol>
+            <li><a href="#benchmark-atlas">All benchmark charts and guides</a></li>
+            <li><a href="#terminal-bench-4">Terminal-Bench 4 standard</a></li>
+            <li><a href="#terminal-bench-science">Terminal-Bench-Science 0.1</a></li>
+            <li><a href="#current-intelligence-efficiency">Current Intelligence efficiency</a></li>
+            <li><a href="#artificial-analysis-intelligence">Historical v4.1.1 snapshot</a></li>
             <li><a href="#source">Source and refresh</a></li>
             <li><a href="#benchmarks">Benchmark definitions</a></li>
             <li><a href="#leaders">Current leaders</a></li>
+            <li><a href="#configurations">All configurations</a></li>
             <li><a href="#method">Normalization method</a></li>
             <li><a href="#limitations">Limitations</a></li>
           </ol>
@@ -117,7 +240,231 @@ export default function CodingAgentDatasetPage() {
 
         <div className="plain-publication__article-main">
           <div className="plain-publication__article-body">
-            <h2 id="source">Source and refresh</h2>
+            <h2 id="benchmark-atlas">Benchmark atlas: charts and source guides</h2>
+            <p>
+              The atlas covers {ATLAS_ENTRIES.length} benchmarks and {ATLAS_DATASETS.length}{" "}
+              charted evaluation cohorts. Each chart uses one source, score definition,
+              and version. A source guide explains an evaluation whose results are not
+              yet charted here. Historical research cohorts remain labeled; retrieving
+              a paper today does not mean its models were evaluated today.
+            </p>
+            <p>
+              Download the <a href={ATLAS_CATALOG_DOWNLOAD_PATH}>catalog JSON</a> to
+              discover the available benchmark IDs, comparison rules, source dates,
+              and individual dataset URLs. Each dataset download includes the same
+              observations, units, costs, uncertainty labels, and configurations used
+              by its chart. This is a checked snapshot distribution, not a live model API.
+            </p>
+            <p>
+              Cite the benchmark owner and source version when quoting measurements.
+              AI Charts publishes these chart projections; third-party measurements
+              retain their source terms. The software license does not grant a new
+              license to third-party data.
+            </p>
+            {ATLAS_ENTRIES.map(entry => {
+              const dataset = ATLAS_DATASETS.find(candidate => candidate.benchmarkId === entry.id);
+              return <details key={entry.id} id={`atlas-${entry.id}`}>
+                <summary>{entry.name} · {entry.version} · {dataset ? `${dataset.points.length} charted results` : entry.coverage === "watchlist" ? "Emerging evaluation" : "Source guide"}</summary>
+                <p>{entry.question} {entry.summary}</p>
+                <dl>
+                  <div><dt>Measure</dt><dd>{entry.measure}</dd></div>
+                  <div><dt>Comparison rule</dt><dd>{entry.comparisonRule}</dd></div>
+                  {dataset && <>
+                    <div><dt>Evaluation cohort</dt><dd>{dataset.comparabilityNote}</dd></div>
+                    <div><dt>Score</dt><dd>{dataset.score.label} ({dataset.score.unit}); {dataset.score.direction} is better.</dd></div>
+                    <div><dt>Source retrieved</dt><dd><time dateTime={dataset.source.retrievedAt}>{formatRetrievedAt(dataset.source.retrievedAt)}</time></dd></div>
+                    {dataset.observedAt && <div><dt>Source observation date</dt><dd><time dateTime={dataset.observedAt}>{formatRetrievedAt(dataset.observedAt)}</time></dd></div>}
+                    {dataset.source.revision && <div><dt>Source revision</dt><dd><code>{dataset.source.revision}</code></dd></div>}
+                    {dataset.costLabel && <div><dt>Cost basis</dt><dd>{dataset.costLabel}</dd></div>}
+                  </>}
+                </dl>
+                <ul>{entry.limitations.map(limit => <li key={limit}>{limit}</li>)}</ul>
+                <p>
+                  <Link href={`/benchmarks?atlas=${entry.id}#explore`}>Explore {entry.name}</Link>{" · "}
+                  <a href={entry.source.url} data-analytics-destination-id={`source:${entry.id}`} data-analytics-destination-kind="source">{entry.source.name}</a>
+                  {entry.source.methodologyUrl && <> · <a href={entry.source.methodologyUrl} data-analytics-destination-id={`source:${entry.id}`} data-analytics-destination-kind="source">Methodology</a></>}
+                  {dataset && <> · <a download={`aicharts-${entry.id}.json`} href={atlasDatasetDownloadPath(entry.id)}>Download this dataset</a></>}
+                </p>
+              </details>;
+            })}
+            <h2 id="terminal-bench-4">Terminal-Bench 4 coding standard</h2>
+            <p>
+              Terminal-Bench {terminalBench.benchmark.version} is the site’s standard{" "}
+              agentic terminal-engineering benchmark. Explore it in the <Link href="/benchmarks?atlas=terminal-bench-4#explore">benchmark library</Link>. The checked
+              snapshot contains {terminalBench.records.length} configurations from
+              the official{" "}
+              <a href={terminalBench.source.submissionsDirectoryUrl}>
+                Harbor Framework submissions
+              </a>
+              {" "}at{" "}
+              <a href={terminalBench.source.repositoryCommitUrl}>
+                commit {terminalBench.source.repositoryCommit.slice(0, 7)}
+              </a>
+              , committed on{" "}
+              <time dateTime={terminalBench.source.repositoryCommittedAt}>
+                {formatRetrievedAt(terminalBench.source.repositoryCommittedAt)}
+              </time>
+              , with {terminalBench.benchmark.taskCount} tasks and{" "}
+              {terminalBench.benchmark.trialsPerTask} trials per task. AI Charts
+              retrieved this owner snapshot on{" "}
+              <time dateTime={terminalBench.source.retrievedAt}>
+                {formatRetrievedAt(terminalBench.source.retrievedAt)}
+              </time>.
+            </p>
+            <p>
+              Terminal-Bench 4 is a breaking exam generation. Its scores remain
+              separate from the Terminal-Bench v2.1 field in the Artificial
+              Analysis dataset below. Every TB4 row retains its model, agent,
+              agent version, effort, accuracy, 95% confidence interval, trials,
+              cost, tokens, duration, and pinned source files.
+            </p>
+            <a
+              className="plain-publication__primary-link"
+              download="aicharts-terminal-bench-4.json"
+              href="/data/terminal-bench-4.json"
+            >
+              Download Terminal-Bench 4 JSON <span aria-hidden="true">↓</span>
+            </a>
+
+            <h2 id="terminal-bench-science">Terminal-Bench-Science 0.1</h2>
+            <p>
+              The checked scientific-workflow snapshot published by{" "}
+              <a href={terminalBenchScience.source.repositoryUrl}>
+                {terminalBenchScience.source.name}
+              </a>
+              {" "}contains{" "}
+              {terminalBenchScience.records.length} owner-published system
+              configurations across {terminalBenchScience.benchmark.taskCount} tasks
+              and {terminalBenchScience.benchmark.trialsPerTask} trials per task. It is
+              pinned to the exact{" "}
+              <a href={terminalBenchScience.source.releaseCommitUrl}>
+                v0.1.0 release commit {terminalBenchScience.source.releaseCommit.slice(0, 7)}
+              </a>
+              . The release has the persistent citation{" "}
+              <a href={terminalBenchScience.source.releaseDoiUrl}>
+                {terminalBenchScience.source.releaseDoiUrl}
+              </a>
+              , and the owner leaderboard was updated on{" "}
+              <time dateTime={terminalBenchScience.source.leaderboardUpdatedAt}>
+                {formatRetrievedAt(terminalBenchScience.source.leaderboardUpdatedAt)}
+              </time>
+              . AI Charts retrieved it on{" "}
+              <time dateTime={terminalBenchScience.source.retrievedAt}>
+                {formatRetrievedAt(terminalBenchScience.source.retrievedAt)}
+              </time>.
+            </p>
+            <p>
+              Every row keeps the named model, harness, reasoning effort, resolution
+              rate, binomial standard error, trial count, evaluation cost, token use,
+              and owner-published source link. Terminal-Bench-Science remains separate
+              from general terminal engineering and does not feed a composite score.
+              Owner-published aggregate and per-domain cost fields are retained
+              independently and are not forced to reconcile.
+            </p>
+            <a
+              className="plain-publication__primary-link"
+              download="aicharts-terminal-bench-science-0-1.json"
+              href="/data/terminal-bench-science-0-1.json"
+            >
+              Download Terminal-Bench-Science 0.1 JSON <span aria-hidden="true">↓</span>
+            </a>
+
+            <h2 id="current-intelligence-efficiency">
+              Current Intelligence efficiency · v{currentIntelligence.benchmark.version}
+            </h2>
+            <p>
+              The homepage’s Pareto chart uses Artificial Analysis Intelligence Index v{currentIntelligence.benchmark.version}.
+              Its output-token and cost views compare the identical {currentIntelligence.selection.positiveCostRecordCount}-configuration
+              positive-cost cohort from {currentIntelligence.records.length} complete score-and-output records.
+              Output tokens include answer and reasoning; task cost also includes input and cache traffic.
+            </p>
+            <p>
+              This {currentIntelligence.benchmark.evaluationCount}-evaluation version weights agents{" "}
+              {currentIntelligence.benchmark.categoryWeightsPercent.agents}%, coding{" "}
+              {currentIntelligence.benchmark.categoryWeightsPercent.coding}%, scientific reasoning{" "}
+              {currentIntelligence.benchmark.categoryWeightsPercent.scientific}%, and general capability{" "}
+              {currentIntelligence.benchmark.categoryWeightsPercent.general}%.
+              The source is checked every four hours. Version, evaluation roster, source identities,
+              native measures, and retention must pass validation before an update is published.
+              Retrieved <time dateTime={currentIntelligence.source.retrievedAt}>{formatRetrievedAt(currentIntelligence.source.retrievedAt)}</time>.
+            </p>
+            <p>
+              <a href="/data/artificial-analysis-intelligence-v4-3.json" download="aicharts-artificial-analysis-intelligence-v4-3.json">Download current Intelligence v4.3 JSON</a>{" "}
+              · <a href="#atlas-aa-intelligence-4-3">Full v4.3 comparison rules and limitations</a>.
+              Keep these results separate from the frozen v4.1.1 snapshot below; its evaluation roster and weights differ.
+            </p>
+
+            <h2 id="artificial-analysis-intelligence">
+              Historical Intelligence v{intelligence.benchmark.version} · frozen snapshot
+            </h2>
+            <p>
+              This retained historical dataset pairs the owner-published{" "}
+              {`${intelligence.benchmark.name} v${intelligence.benchmark.version} score`} with
+              weighted output tokens and cost per Intelligence Index
+              task. It is not the current homepage dataset. The frozen snapshot retains{" "}
+              {intelligence.records.length} measured score-and-output records from{" "}
+              {intelligence.selection.sourceRecordCount} source records. Its historical
+              matched-resource comparison uses the same{" "}
+              {intelligence.selection.positiveCostRecordCount}-record cohort with
+              positive comparable cost.
+            </p>
+            <p>
+              The Index combines {intelligence.benchmark.evaluationCount}{" "}
+              evaluations. Its four owner-defined category weights and constituent
+              evaluation weights are:
+            </p>
+            <ul>
+              {intelligenceEvaluationWeights.map(group => (
+                <li key={group.category}>
+                  <strong>{group.category} · {group.weight}%:</strong>{" "}
+                  {group.evaluations.join("; ")}.
+                </li>
+              ))}
+            </ul>
+            <p>
+              Output tokens here mean answer plus reasoning tokens only, weighted
+              by each evaluation&apos;s Index weight and divided by its task count.
+              They are not the coding-agent chart&apos;s total tokens, which also
+              include input traffic. Cost is the owner&apos;s weighted per-task sum of
+              available input, cache, reasoning, and answer/output components.
+              A source row with a complete cost breakdown but a reported zero total
+              is stored as unavailable, never converted into a free-model value.
+              Rows with incomplete cost are excluded. Complete zero-total rows remain
+              in the JSON but are omitted from the historical matched-resource cohort.
+            </p>
+            <p>
+              The comparable cohort follows the checked rule:{" "}
+              {`${intelligence.selection.rule}.`} In a Pareto frontier for that stored
+              cohort, a frontier point is not dominated by another record with an
+              equal-or-higher Intelligence score and equal-or-lower output-token or
+              positive-cost value. Artificial Analysis publishes the measurements;
+              the frontier classification is AI Charts analysis.
+            </p>
+            <p>
+              This v{intelligence.benchmark.version} snapshot is frozen and is no longer
+              refreshed by automation. The current v{currentIntelligence.benchmark.version} dataset
+              above has a separate versioned source contract and download. AI Charts
+              retrieved this historical snapshot on{" "}
+              <time dateTime={intelligence.source.retrievedAt}>
+                {formatRetrievedAt(intelligence.source.retrievedAt)}
+              </time>.
+            </p>
+            <p>
+              Read the owner&apos;s{" "}
+              <a href={intelligence.source.methodologyUrl}>Index methodology</a>,{" "}
+              <a href={intelligence.source.url}>model leaderboard</a>, and{" "}
+              <a href={intelligence.source.termsUrl}>terms of use</a>. Citation:{" "}
+              {intelligence.source.citation}.
+            </p>
+            <a
+              className="plain-publication__primary-link"
+              download="aicharts-artificial-analysis-intelligence.json"
+              href="/data/artificial-analysis-intelligence.json"
+            >
+              Download historical v4.1.1 JSON <span aria-hidden="true">↓</span>
+            </a>
+
+            <h2 id="source">Artificial Analysis coding-agent source and refresh</h2>
             <p>
               The source is the public{" "}
               <a href={snapshot.source.url}>
@@ -164,33 +511,51 @@ export default function CodingAgentDatasetPage() {
               one row per benchmark. They are observations of the named model,
               agent harness, and effort setting rather than general model ranks.
             </p>
-            <div className="plain-publication__table-scroll">
-              <table className="plain-publication__table">
-                <caption>Highest score by benchmark in the current snapshot</caption>
-                <thead>
-                  <tr>
-                    <th scope="col">Benchmark</th>
-                    <th scope="col">Model</th>
-                    <th scope="col">Agent</th>
-                    <th scope="col">Provider</th>
-                    <th scope="col">Setting</th>
-                    <th scope="col">Score</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {leaders.map(leader => (
-                    <tr key={leader.definition.id}>
-                      <th scope="row">{leader.definition.label}</th>
-                      <td>{leader.record.model}</td>
-                      <td>{leader.record.agent}</td>
-                      <td>{leader.record.providerName}</td>
-                      <td>{leader.record.setting}</td>
-                      <td>{formatScore(leader.value)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <CodingAgentLeadersTable
+              caption="Highest score by benchmark in the current snapshot"
+              leaders={leaders}
+            />
+            <p>
+              For AA Index versus mean API cost, including the cost/performance
+              frontier, see{" "}
+              <Link href="/blog/aa-index-cost-coding-agents">
+                highest AA Index and lowest cost pick different agents
+              </Link>
+              . For whether classified open-weight rows sit with those leaders,
+              see{" "}
+              <Link href="/blog/open-models-coding-agent-benchmarks">
+                open models closed SemiAnalysis composites, not this table
+              </Link>
+              . For how a cheaper model changed one daily news page, see{" "}
+              <Link href="/blog/small-models-have-arrived">
+                GPT-5.6 Luna made one daily news page cost about $0.10
+              </Link>
+              . For what a 30% Terminal-Bench-Science result measures, and how
+              cost and token use change the comparison, see{" "}
+              <Link href="/blog/terminal-bench-science">
+                What Terminal-Bench-Science’s 30% result measures
+              </Link>
+              . For why a public-suite high score still needs a holdout, see{" "}
+              <Link href="/blog/coding-agent-score-holdouts">
+                why a coding-agent high score still needs a holdout
+              </Link>
+              .
+            </p>
+
+            <h2 id="configurations">All configurations</h2>
+            <p>
+              Every model-agent configuration in the retrieved snapshot, with
+              AA Index, component scores, and mean API cost per task. Missing
+              values are stored as empty in the source and shown as a dash.
+            </p>
+            <CodingAgentSnapshotTable
+              caption={`All ${summary.recordCount} model-agent configurations in the ${snapshot.source.name} snapshot retrieved ${formatRetrievedAt(snapshot.source.retrievedAt)}`}
+              className="plain-publication__table-scroll"
+              id="coding-agent-snapshot"
+              rows={codingAgentSnapshotRows(snapshot.records)}
+              tableClassName="plain-publication__table"
+              variant="full"
+            />
 
             <h2 id="method">Normalization method</h2>
             <p>
@@ -216,6 +581,11 @@ export default function CodingAgentDatasetPage() {
                 not affiliated with Artificial Analysis or the listed providers.
               </li>
               <li>
+                The Intelligence efficiency view is an owner-defined, primarily
+                English-language aggregate. Its category weights emphasize agentic
+                tasks, and it does not establish performance for every use case.
+              </li>
+              <li>
                 Scores depend on the named model, agent harness, effort setting,
                 task set, and evaluation version. They do not establish results
                 for every software repository or production workflow.
@@ -225,8 +595,9 @@ export default function CodingAgentDatasetPage() {
                 source evaluation. They are not price or latency guarantees.
               </li>
               <li>
-                This is a daily checked snapshot, not a real-time mirror. Use the
-                retrieval timestamp when citing a value.
+                The current v4.3 Intelligence snapshot is checked every four hours and the
+                coding-agent snapshot daily; neither is a real-time mirror. The historical
+                v4.1.1 snapshot is frozen. Use the relevant version and retrieval timestamp when citing a value.
               </li>
             </ul>
 
@@ -250,8 +621,39 @@ export default function CodingAgentDatasetPage() {
             <h2 id="dataset-links-title">Dataset links</h2>
             <ol>
               <li>
+                <a href="/data/artificial-analysis-intelligence-v4-3.json">
+                  Download the current Intelligence v4.3 JSON snapshot
+                </a>
+                <span>
+                  Model-level Intelligence score, output-only tokens, comparable
+                  cost, source method, version, and retrieval time.
+                </span>
+              </li>
+              <li>
+                <a href="/data/artificial-analysis-intelligence.json">Historical Intelligence v4.1.1 JSON</a>
+                <span>Frozen earlier cohort; not refreshed or comparable with the current index scale.</span>
+              </li>
+              <li>
+                <a href={intelligence.source.url}>
+                  Artificial Analysis model leaderboard
+                </a>
+                <span>
+                  The upstream model comparison; its public structured data is a
+                  source-shape cross-check rather than the full snapshot source.
+                </span>
+              </li>
+              <li>
+                <a href="https://github.com/hraness/aicharts/blob/main/scripts/refresh-artificial-analysis-intelligence-v4-3.ts">
+                  Current Intelligence refresh and normalization source code
+                </a>
+                <span>
+                  The public parser, source cross-checks, normalization rules,
+                  and replacement guards.
+                </span>
+              </li>
+              <li>
                 <a href={CODING_AGENT_DATASET_DOWNLOAD_PATH}>
-                  Download the current JSON snapshot
+                  Download the coding-agent JSON snapshot
                 </a>
                 <span>
                   Versioned records, provenance, retrieval time, and bounded

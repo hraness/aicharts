@@ -1,0 +1,41 @@
+name: Codex task auto-merge
+
+on:
+  pull_request_target:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+
+# This trusted-base workflow never checks out or executes pull-request code.
+# Auto-merge still leaves every branch-protection check and review in force.
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  enable-auto-merge:
+    if: >-
+      github.event.pull_request.base.ref == 'main'
+      && github.event.pull_request.head.repo.full_name == github.repository
+      && startsWith(github.event.pull_request.head.ref, 'codex/')
+      && github.event.pull_request.draft == false
+      && contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.pull_request.author_association)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Enable protected squash auto-merge for this exact head
+        env:
+          GH_REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+        shell: bash
+        run: |
+          gh pr merge "$PR_URL" \
+            --repo "$GH_REPO" \
+            --match-head-commit "$PR_HEAD_SHA" \
+            --auto \
+            --squash \
+            --delete-branch

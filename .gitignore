@@ -6,7 +6,12 @@
 .vercel/
 coverage/
 node_modules/
+artifacts/atet/
+artifacts/slopcamera/
 *.log
 *.tsbuildinfo
 /outputs/
 /desktop/target/
+/target/
+services/usage-worker/.wrangler/
+services/usage-worker/worker-configuration.d.ts

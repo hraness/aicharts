@@ -3,6 +3,8 @@ import { JsonLdScript } from "@hraness/web-discovery/json-ld";
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { EditorialFigure } from "./editorial-figure";
+import { blogEditorialImage } from "./editorial-images";
 import {
   articleReadingMinutes,
   blogArticlePath,
@@ -30,7 +32,11 @@ function formatDate(date: string): string {
 
 export default function BlogIndex() {
   return (
-    <main className="plain-publication__index" id="blog-content">
+    <main
+      className="plain-publication__index"
+      data-analytics-surface="blog_index"
+      id="blog-content"
+    >
       <JsonLdScript
         data={[
           blogCollectionJsonLd(),
@@ -43,7 +49,7 @@ export default function BlogIndex() {
       />
 
       <div className="plain-publication__shell plain-publication__index-content">
-        <header className="plain-publication__hero">
+        <header className="plain-publication__hero" data-analytics-surface="blog_header">
           <h1>AI model and agent benchmark analysis</h1>
           <p>
             {blogDescription} The first collection focuses on coding agents.
@@ -62,11 +68,26 @@ export default function BlogIndex() {
         >
           <div className="plain-publication__section-heading">
             <h2 id="benchmark-articles">Articles</h2>
-            <p>{blogArticles.length} sourced benchmark summaries</p>
+            <p>{blogArticles.length} sourced analysis articles</p>
           </div>
           <div className="plain-publication__article-list">
-            {blogArticles.map(article => (
-              <article className="plain-publication__entry" key={article.slug}>
+            {blogArticles.map((article, index) => {
+              const editorialImage = blogEditorialImage(article.slug);
+              return (
+                <article className="plain-publication__entry" key={article.slug}>
+                  {editorialImage === undefined ? null : (
+                    <Link
+                      aria-label={article.title}
+                      className="plain-publication__entry-image"
+                      href={blogArticlePath(article.slug)}
+                    >
+                      <EditorialFigure
+                        image={editorialImage}
+                        preload={index === 0}
+                        variant="card"
+                      />
+                    </Link>
+                  )}
                 <h3>
                   <Link href={blogArticlePath(article.slug)}>
                     {article.title}
@@ -80,8 +101,9 @@ export default function BlogIndex() {
                   <span aria-hidden="true"> · </span>
                   <span>{articleReadingMinutes(article)} min read</span>
                 </p>
-              </article>
-            ))}
+                </article>
+              );
+            })}
           </div>
         </section>
 
@@ -94,8 +116,8 @@ export default function BlogIndex() {
             <div>
               <h3>Sources</h3>
               <p>
-                Each note starts with the benchmark paper or maintained source
-                page. Material claims link to those primary sources.
+                Each note starts with primary or first-party evidence. Material
+                claims link directly to those sources.
               </p>
             </div>
             <div>

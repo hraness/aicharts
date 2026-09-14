@@ -1,0 +1,33 @@
+[package]
+name = "aicharts-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[[bin]]
+name = "aicharts"
+path = "src/main.rs"
+
+[dependencies]
+aicharts-core.workspace = true
+aicharts-custody.workspace = true
+aicharts-protocol.workspace = true
+aicharts-ledger.workspace = true
+hmac.workspace = true
+sha2.workspace = true
+serde_json.workspace = true
+getrandom.workspace = true
+ureq.workspace = true
+log.workspace = true
+
+[dev-dependencies]
+rustls = { version = "=0.23.44", default-features = false, features = ["ring", "std", "tls12"] }
+
+[target.'cfg(unix)'.dependencies]
+libc.workspace = true
+
+[target.'cfg(target_os = "macos")'.dependencies]
+aicharts-platform-acl.workspace = true
+rustix = { version = "=1.1.4", features = ["fs", "process"] }

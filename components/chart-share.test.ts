@@ -3,6 +3,9 @@ import {
   buildChartShareUrl,
   chartImageFilename,
   chartImageShareData,
+  chartViewSearch,
+  DEFAULT_CHART_X_METRIC,
+  DEFAULT_CHART_Y_METRIC,
   parseChartShareView,
   xPostIntentUrl,
   type ChartShareView,
@@ -17,6 +20,11 @@ const defaultView: ChartShareView = {
 };
 
 describe("chart sharing", () => {
+  test("defines the unfiltered homepage as DeepSWE versus cost", () => {
+    expect(DEFAULT_CHART_X_METRIC).toBe("costUsd");
+    expect(DEFAULT_CHART_Y_METRIC).toBe("deepSwe");
+  });
+
   test("serializes the selected metrics and exactly one pinned item", () => {
     expect(codingAgentRecordKey({ seriesId: "agent/model", setting: "max" })).toBe("[\"agent/model\",\"max\"]");
     const url = buildChartShareUrl("https://aicharts.io/old?ignored=true#chart", {
@@ -62,6 +70,34 @@ describe("chart sharing", () => {
     expect(intent.origin + intent.pathname).toBe("https://x.com/intent/tweet");
     expect(intent.searchParams.get("text")).toBe("AA Index vs cost");
     expect(intent.searchParams.get("url")).toBe("https://aicharts.io/?point=a/b");
+  });
+
+  test("encodes configuration keys and omits default metrics from the address bar", () => {
+    const pointKey = codingAgentRecordKey({ seriesId: "agent/model (max)", setting: "low, high" });
+    const search = chartViewSearch("utm=keep", {
+      pointKey,
+      providerId: "ignored",
+      xMetric: DEFAULT_CHART_X_METRIC,
+      yMetric: "aaIndex",
+    });
+    const parsed = new URL(`https://aicharts.io/coding?${search}`);
+    expect(parsed.searchParams.get("utm")).toBe("keep");
+    expect(parsed.searchParams.get("benchmark")).toBe("aaIndex");
+    expect(parsed.searchParams.get("compare")).toBeNull();
+    expect(parsed.searchParams.get("point")).toBe(pointKey);
+    expect(search).not.toContain(" ");
+    expect(parseChartShareView(`?${search}`)).toEqual({
+      pointKey,
+      providerId: null,
+      xMetric: null,
+      yMetric: "aaIndex",
+    });
+    expect(chartViewSearch("", defaultView)).toBe("benchmark=aaIndex");
+    expect(chartViewSearch("", {
+      ...defaultView,
+      xMetric: DEFAULT_CHART_X_METRIC,
+      yMetric: DEFAULT_CHART_Y_METRIC,
+    })).toBe("");
   });
 
   test("shares exactly one image without accompanying text or links", () => {

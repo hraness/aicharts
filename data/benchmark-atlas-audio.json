@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "version": "AMI-Cleaned · English test · 2026-09-04",
+  "observedAt": "2026-09-04",
+  "source": {
+    "url": "https://huggingface.co/datasets/hf-audio/open-asr-leaderboard-results/raw/ba5712d5ace8f785fa0daae1aecea8561ecd87c9/english_short_latest.csv",
+    "revision": "ba5712d5ace8f785fa0daae1aecea8561ecd87c9",
+    "sha256": "07f02da66f62ea16ee6999163109544e8ffccc5476fd4b73149bc21b1e987451",
+    "retrievedAt": "2026-09-09T01:53:06.273Z"
+  },
+  "task": {
+    "dataset": "hf-audio/open-asr-leaderboard",
+    "configuration": "ami_cleaned",
+    "split": "test",
+    "language": "English",
+    "metricColumn": "AMI-Cleaned WER",
+    "unit": "% WER"
+  },
+  "rows": [
+    {
+      "modelId": "ibm-granite/granite-speech-4.1-2b-nar",
+      "wer": 6.96
+    },
+    {
+      "modelId": "CohereLabs/cohere-transcribe-03-2026",
+      "wer": 7.02
+    },
+    {
+      "modelId": "nvidia/canary-qwen-2.5b",
+      "wer": 7.91
+    },
+    {
+      "modelId": "Qwen/Qwen3-ASR-1.7B-hf",
+      "wer": 8.31
+    },
+    {
+      "modelId": "nvidia/parakeet-tdt-0.6b-v2",
+      "wer": 9.09
+    },
+    {
+      "modelId": "nvidia/parakeet-tdt-0.6b-v3",
+      "wer": 9.42
+    },
+    {
+      "modelId": "mistralai/Voxtral-Small-24B-2507",
+      "wer": 13.19
+    },
+    {
+      "modelId": "openai/whisper-large-v3",
+      "wer": 13.63
+    },
+    {
+      "modelId": "facebook/omniASR-LLM-7B-v2",
+      "wer": 13.86
+    },
+    {
+      "modelId": "openai/whisper-large-v3-turbo",
+      "wer": 13.88
+    }
+  ]
+}

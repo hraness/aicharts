@@ -1,6 +1,7 @@
+import { nebulaSansSocialFonts } from "@hraness/design-kit/fonts/nebula-sans/social";
 import { ImageResponse } from "next/og";
 
-import { searchSite, site } from "./site";
+import { homeHeading, searchSite, site } from "./site";
 
 export const alt = searchSite.socialImage.alt;
 export const contentType = "image/png";
@@ -15,7 +16,7 @@ export default function Image() {
         color: "#1c1917",
         display: "flex",
         flexDirection: "column",
-        fontFamily: "Arial, sans-serif",
+        fontFamily: "Nebula Sans",
         height: "100%",
         justifyContent: "space-between",
         padding: "72px 82px",
@@ -39,11 +40,11 @@ export default function Image() {
         <span>{site.domain}</span>
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
-        <div style={{ fontSize: 76, fontWeight: 700, letterSpacing: "-4px" }}>Compare AI models and agents</div>
-        <div style={{ color: "#625d57", fontSize: 34 }}>Explore sourced benchmarks across performance, cost, speed, and token use.</div>
+        <div style={{ fontSize: 76, fontWeight: 700, letterSpacing: "-4px" }}>{homeHeading}</div>
+        <div style={{ color: "#625d57", fontSize: 34 }}>Capability, cost, and token use. Explore the Pareto frontier, then go deeper with benchmarks for the task.</div>
       </div>
       <div style={{ background: site.palette.chromatic.key, height: 10, width: "100%" }} />
     </div>,
-    size,
+    { ...size, fonts: [...nebulaSansSocialFonts()] },
   );
 }

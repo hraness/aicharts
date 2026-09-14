@@ -1,8 +1,16 @@
+import {
+  DesignThemeProvider,
+  ThemeColorSync,
+} from "@hraness/design-kit/react";
+import { HranessSiteFooter } from "@hraness/site-footer/react";
 import type { Metadata, Viewport } from "next";
 import type { CSSProperties, ReactNode } from "react";
 
+import { AnalyticsBoundary } from "@/components/analytics-boundary";
+
 import "./globals.css";
-import { searchSite, site } from "./site";
+import { aiChartsMailingListConfig } from "./mailing-config";
+import { site } from "./site";
 
 type BrandThemeStyle = CSSProperties & Readonly<{
   "--brand-highlight": string;
@@ -20,29 +28,15 @@ const brandTheme: BrandThemeStyle = {
 
 export const metadata: Metadata = {
   metadataBase: new URL(site.origin),
-  title: searchSite.title,
-  description: searchSite.description,
-  alternates: { canonical: "/" },
   applicationName: site.name,
-  openGraph: {
-    type: "website",
-    url: "/",
-    siteName: site.name,
-    title: searchSite.title,
-    description: searchSite.description,
-    images: [{ url: searchSite.socialImage.path, alt: searchSite.socialImage.alt }],
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: searchSite.title,
-    description: searchSite.description,
-    images: [searchSite.socialImage.path],
-  },
 };
 
 export const viewport: Viewport = {
   colorScheme: "light dark",
-  themeColor: "#f8f7f4",
+  themeColor: [
+    { color: "#f8f7f4", media: "(prefers-color-scheme: light)" },
+    { color: "#12100f", media: "(prefers-color-scheme: dark)" },
+  ],
 };
 
 const websiteId = `${site.origin}/#website`;
@@ -76,18 +70,24 @@ const structuredData = [
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (
-    <html data-theme="light" lang="en" style={brandTheme} suppressHydrationWarning>
+    <html data-hraness-material="lantern" data-theme="light" lang="en" style={brandTheme} suppressHydrationWarning>
       <body>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: "try{const t=localStorage.getItem('aicharts-theme');const d=t==='dark'||(t!==\"light\"&&matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.dataset.theme=d?'dark':'light';document.documentElement.style.colorScheme=d?'dark':'light'}catch{}",
-          }}
-        />
-        <script
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replaceAll("<", "\\u003c") }}
-          type="application/ld+json"
-        />
-        {children}
+        <DesignThemeProvider storageKey="aicharts-theme">
+          <ThemeColorSync darkColor="#12100f" lightColor="#f8f7f4" />
+          <script
+            dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replaceAll("<", "\\u003c") }}
+            type="application/ld+json"
+          />
+          {children}
+          <HranessSiteFooter
+            mailingList={aiChartsMailingListConfig()}
+            social={{
+              x: { href: "https://x.com/aichartsio", label: "AI Charts on X" },
+              github: { href: "https://github.com/hraness/aicharts", label: "AI Charts on GitHub" },
+            }}
+          />
+          <AnalyticsBoundary />
+        </DesignThemeProvider>
       </body>
     </html>
   );

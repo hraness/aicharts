@@ -6,9 +6,18 @@ import {
   Download01Icon,
   ExternalLinkIcon,
   Image01Icon,
-  InformationCircleIcon,
   Share08Icon,
 } from "@hugeicons/core-free-icons";
+import { providerBrand } from "@/lib/provider-brand";
+import {
+  readLocationSearch,
+  replaceLocationSearch,
+  serverLocationSearch,
+  subscribeLocationSearch,
+} from "@/lib/selection-url";
+import { OptionGridPicker, type OptionGridPickerItem } from "@/components/option-grid-picker";
+import { codingBenchmarkGlyph, xMetricGlyph } from "@/components/picker-glyphs";
+import { ProviderBrandLabel } from "@/components/provider-brand-mark";
 import {
   Icon,
   IconButton,
@@ -17,15 +26,11 @@ import {
   MenuItem,
   MenuSection,
   MenuTrigger,
-  PageCanvas,
   SegmentedControl,
   TextField,
-  ThemeToggle,
   ToggleGroup,
-  TopBar,
   type SegmentedItem,
   type ToggleItem,
-  HranessBrand,
 } from "@/components/ui";
 import {
   useEffect,
@@ -33,9 +38,12 @@ import {
   useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
   type CSSProperties,
   type KeyboardEvent,
   type MouseEvent as ReactMouseEvent,
+  type PointerEvent as ReactPointerEvent,
+  type ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
@@ -45,17 +53,28 @@ import {
   buildChartShareUrl,
   chartImageFilename,
   chartImageShareData,
+  chartViewSearch,
+  DEFAULT_CHART_X_METRIC,
+  DEFAULT_CHART_Y_METRIC,
   parseChartShareView,
   xPostIntentUrl,
   type ChartShareView,
 } from "@/components/chart-share";
 import { OptionSpaceOverview } from "@/components/option-space-overview";
 import { captureChartEvent } from "@/lib/analytics";
+import {
+  clientPointThroughSvgBounds,
+  clientPointThroughSvgTransform,
+  isAssistiveSvgClick,
+  svgUnitsForCssPixels,
+  type SvgPointerLocation,
+} from "@/lib/svg-pointer-routing";
 import { providerColorRange, recordColor } from "@/lib/chart-colors";
 import { layoutChartLabels, type LabelPlacement } from "@/lib/chart-label-layout";
 import { placeChartTooltip } from "@/lib/chart-tooltip-layout";
+import { codingAgentDatasetSummary } from "@/lib/coding-agent-dataset";
 import { codingAgentRecordKey, type CodingAgentRecord, type CodingAgentSnapshot } from "@/lib/coding-agent-data";
-import { formatRetrievedAt, formatUpdateDate, latestUpdateGroup } from "@/lib/coding-agent-updates";
+import { formatRetrievedAt } from "@/lib/coding-agent-updates";
 import {
   computeDomain,
   formatMetricValue,
@@ -75,20 +94,53 @@ import {
 } from "@/lib/chart-math";
 
 const chartWidth = 1440;
-const chartHeight = 1320;
-const plot = { top: 24, right: 1360, bottom: 1240, left: 72 } as const;
+const chartHeight = 940;
+const plot = { top: 24, right: 1360, bottom: 860, left: 72 } as const;
 const initialTooltipSize = { height: 260, width: 264 } as const;
-const refreshDelayThresholdMs = 48 * 60 * 60 * 1_000;
+const restingLabelCount = 3;
 const yMetricItems = [
   { id: "aaIndex", label: yMetricLabels.aaIndex },
   { id: "deepSwe", label: yMetricLabels.deepSwe },
   { id: "terminalBench", label: yMetricLabels.terminalBench },
   { id: "sweAtlas", label: yMetricLabels.sweAtlas },
-] satisfies readonly SegmentedItem<YMetric>[];
+] as const satisfies readonly Readonly<{ id: YMetric; label: string }>[];
+
+function resolveCodingSelection(
+  search: string,
+  records: readonly CodingAgentRecord[],
+  providerIds: ReadonlySet<string>,
+): Readonly<{
+  pinnedPointId: string | null;
+  pinnedProviderId: string | null;
+  xMetric: XMetric;
+  yMetric: YMetric;
+}> {
+  const sharedView = parseChartShareView(search);
+  const xMetric = sharedView.xMetric ?? DEFAULT_CHART_X_METRIC;
+  const yMetric = sharedView.yMetric ?? DEFAULT_CHART_Y_METRIC;
+  const sharedPoint = sharedView.pointKey === null
+    ? null
+    : records.find(record => codingAgentRecordKey(record) === sharedView.pointKey) ?? null;
+  const sharedProviderId = sharedView.providerId !== null && providerIds.has(sharedView.providerId)
+    ? sharedView.providerId
+    : null;
+  if (
+    sharedPoint !== null
+    && xMetricValue(sharedPoint, xMetric) !== null
+    && yMetricValue(sharedPoint, yMetric) !== null
+  ) {
+    return { pinnedPointId: sharedPoint.id, pinnedProviderId: null, xMetric, yMetric };
+  }
+  if (sharedProviderId !== null) {
+    return { pinnedPointId: null, pinnedProviderId: sharedProviderId, xMetric, yMetric };
+  }
+  return { pinnedPointId: null, pinnedProviderId: null, xMetric, yMetric };
+}
+
 const xMetricItems = [
-  { id: "costUsd", label: xMetricControlLabels.costUsd },
-  { id: "durationMinutes", label: xMetricControlLabels.durationMinutes },
-  { id: "totalTokens", label: xMetricControlLabels.totalTokens },
+  { id: "costUsd", label: xMetricControlLabels.costUsd, leading: xMetricGlyph("costUsd") },
+  { id: "durationMinutes", label: xMetricControlLabels.durationMinutes, leading: xMetricGlyph("durationMinutes") },
+  { id: "totalTokens", label: xMetricControlLabels.totalTokens, leading: xMetricGlyph("totalTokens") },
 ] satisfies readonly SegmentedItem<XMetric>[];
 
 type ChartBrand = Readonly<{
@@ -127,6 +179,7 @@ const chartSelectionBoundarySelector = [
   ".chart-point",
   ".provider-filter button",
 ].join(", ");
+const chartPointerHitRadiusCss = 24;
 
 function canResolveClosest(target: unknown): target is ClosestTarget {
   return typeof target === "object"
@@ -172,6 +225,90 @@ function pointInDirection(points: readonly PlotPoint[], index: number, key: Poin
     if (best === null || score < best.score) best = { point: candidate, score };
   }
   return best?.point ?? null;
+}
+
+/** Dense plots resolve pointer intent geometrically, independent of SVG paint order. */
+export function nearestCodingAgentPointId(
+  points: readonly Readonly<{ id: string; x: number; y: number }>[],
+  x: number,
+  y: number,
+  maximumDistance: number,
+): string | null {
+  if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(maximumDistance) || maximumDistance < 0) {
+    return null;
+  }
+  let best: Readonly<{ distanceSquared: number; id: string }> | null = null;
+  for (const point of points) {
+    const distanceSquared = (point.x - x) ** 2 + (point.y - y) ** 2;
+    if (
+      best === null
+      || distanceSquared < best.distanceSquared
+      || (distanceSquared === best.distanceSquared && point.id.localeCompare(best.id) < 0)
+    ) {
+      best = { distanceSquared, id: point.id };
+    }
+  }
+  return best !== null && best.distanceSquared <= maximumDistance ** 2 ? best.id : null;
+}
+
+/** Give an idle chart a small, deterministic reading without creating selection state. */
+export function selectRestingCodingAgentLabels<
+  T extends Readonly<{
+    record: Readonly<{ id: string; model: string }>;
+    x: number;
+    yValue: number;
+  }>,
+>(points: readonly T[]): T[] {
+  const bestByModel = new Map<string, T>();
+  for (const point of points) {
+    const current = bestByModel.get(point.record.model);
+    if (
+      current === undefined
+      || point.yValue > current.yValue
+      || (point.yValue === current.yValue && point.record.id.localeCompare(current.record.id) < 0)
+    ) {
+      bestByModel.set(point.record.model, point);
+    }
+  }
+  const ranked = Array.from(bestByModel.values())
+    .sort((left, right) => right.yValue - left.yValue || left.record.id.localeCompare(right.record.id));
+  const xValues = ranked.map(point => point.x).filter(Number.isFinite);
+  const minimumX = Math.min(...xValues);
+  const maximumX = Math.max(...xValues);
+  if (!Number.isFinite(minimumX) || !Number.isFinite(maximumX)) return ranked.slice(0, restingLabelCount);
+
+  const leftCutoff = minimumX + (maximumX - minimumX) / 3;
+  const middleCutoff = minimumX + (maximumX - minimumX) * 2 / 3;
+  const selected: T[] = [];
+  const selectFirst = (predicate: (point: T) => boolean) => {
+    const point = ranked.find(candidate => (
+      !selected.some(item => item.record.id === candidate.record.id)
+      && predicate(candidate)
+    ));
+    if (point !== undefined) selected.push(point);
+  };
+
+  selectFirst(() => true);
+  selectFirst(point => point.x <= leftCutoff);
+  selectFirst(point => point.x > leftCutoff && point.x <= middleCutoff);
+  for (const point of ranked) {
+    if (selected.length >= restingLabelCount) break;
+    if (!selected.some(item => item.record.id === point.record.id)) selected.push(point);
+  }
+  return selected;
+}
+
+function chartPointerLocation(
+  event: Readonly<{ clientX: number; clientY: number; currentTarget: SVGSVGElement }>,
+): SvgPointerLocation | null {
+  const svg = event.currentTarget;
+  const matrix = svg.getScreenCTM();
+  if (matrix !== null) {
+    const transformed = clientPointThroughSvgTransform(event.clientX, event.clientY, matrix);
+    if (transformed !== null) return transformed;
+  }
+  const bounds = svg.getBoundingClientRect();
+  return clientPointThroughSvgBounds(event.clientX, event.clientY, bounds, chartWidth, chartHeight);
 }
 
 function useHorizontalOverflow<T extends HTMLElement>() {
@@ -262,23 +399,21 @@ function PointGlyph({ color, shape }: { color: string; shape: number }) {
 }
 
 function MetricControl<T extends string>({
-  axis,
   items,
   label,
   onChange,
   value,
 }: {
-  axis: "x" | "y";
   items: readonly SegmentedItem<T>[];
   label: string;
   onChange: (value: T) => void;
   value: T;
 }) {
   return (
-    <div className={`metric-control metric-control--${axis}`}>
+    <div className="metric-control metric-control--x">
       <SegmentedControl
         aria-label={label}
-        className={`chart-segmented-control chart-segmented-control--${axis}`}
+        className="chart-segmented-control chart-segmented-control--x"
         items={items}
         onChange={onChange}
         size="compact"
@@ -288,7 +423,17 @@ function MetricControl<T extends string>({
   );
 }
 
-export function CodingAgentExplorer({ brand, snapshot }: { brand: ChartBrand; snapshot: CodingAgentSnapshot }) {
+export function CodingAgentExplorer({
+  brand,
+  children,
+  modelCardPaths,
+  snapshot,
+}: {
+  brand: ChartBrand;
+  children?: ReactNode;
+  modelCardPaths: Readonly<Record<string, string>>;
+  snapshot: CodingAgentSnapshot;
+}) {
   const descriptionId = useId();
   const pointRefs = useRef(new Map<string, SVGGElement>());
   const shareInputRef = useRef<HTMLInputElement>(null);
@@ -301,20 +446,37 @@ export function CodingAgentExplorer({ brand, snapshot }: { brand: ChartBrand; sn
     for (const record of snapshot.records) unique.set(record.providerId, { id: record.providerId, name: record.providerName });
     return Array.from(unique.values()).sort((left, right) => left.name.localeCompare(right.name));
   }, [snapshot.records]);
-  const providerItems = useMemo<readonly ToggleItem<string>[]>(() => providers.map((provider) => ({
-    id: provider.id,
-    label: provider.name,
-    leading: <i aria-hidden="true" />,
-    style: providerStyle(provider.id),
-  })), [providers]);
-  const [xMetric, setXMetric] = useState<XMetric>("costUsd");
-  const [yMetric, setYMetric] = useState<YMetric>("aaIndex");
-  const [pinnedPointId, setPinnedPointId] = useState<string | null>(null);
-  const [pinnedProviderId, setPinnedProviderId] = useState<string | null>(null);
+  const providerItems = useMemo<readonly ToggleItem<string>[]>(() => providers.map((provider) => {
+    const brand = providerBrand(provider.name, provider.id);
+    const glyphStyle = brand.iconUrl === null
+      ? undefined
+      : { "--option-picker-icon": `url("${brand.iconUrl}")` } as CSSProperties;
+    return {
+      id: provider.id,
+      label: provider.name,
+      leading: brand.iconUrl === null
+        ? <i aria-hidden="true" />
+        : <i aria-hidden="true" className="provider-filter__brand" style={glyphStyle} />,
+      style: providerStyle(provider.id),
+    };
+  }), [providers]);
+  const yMetricPickerItems = useMemo<readonly OptionGridPickerItem[]>(() => yMetricItems.map(item => ({
+    id: item.id,
+    keywords: [item.id],
+    label: item.label,
+    leading: codingBenchmarkGlyph(item.id),
+  })), []);
+  const search = useSyncExternalStore(subscribeLocationSearch, readLocationSearch, serverLocationSearch);
+  const providerIds = useMemo(() => new Set(providers.map(provider => provider.id)), [providers]);
+  const selection = useMemo(
+    () => resolveCodingSelection(search, snapshot.records, providerIds),
+    [providerIds, search, snapshot.records],
+  );
+  const { pinnedPointId, pinnedProviderId, xMetric, yMetric } = selection;
   const [hoveredPointId, setHoveredPointId] = useState<string | null>(null);
+  const [pointerPointId, setPointerPointId] = useState<string | null>(null);
   const [hoveredProviderId, setHoveredProviderId] = useState<string | null>(null);
   const [keyboardPointId, setKeyboardPointId] = useState<string | null>(null);
-  const [refreshDelayed, setRefreshDelayed] = useState(false);
   const [shareBusy, setShareBusy] = useState(false);
   const [shareImage, setShareImage] = useState<Blob | null>(null);
   const [shareImagePreparing, setShareImagePreparing] = useState(false);
@@ -324,46 +486,26 @@ export function CodingAgentExplorer({ brand, snapshot }: { brand: ChartBrand; sn
   const [svgViewport, setSvgViewport] = useState<SvgViewport | null>(null);
   const [tooltipSize, setTooltipSize] = useState<{ height: number; width: number }>(initialTooltipSize);
 
-  useEffect(() => {
-    const updateFreshness = () => {
-      setRefreshDelayed(Date.now() - Date.parse(snapshot.source.retrievedAt) > refreshDelayThresholdMs);
-    };
-    const frame = window.requestAnimationFrame(updateFreshness);
-    const interval = window.setInterval(updateFreshness, 60 * 60 * 1_000);
-    return () => {
-      window.cancelAnimationFrame(frame);
-      window.clearInterval(interval);
-    };
-  }, [snapshot.source.retrievedAt]);
+  function writeSelection(view: ChartShareView): void {
+    replaceLocationSearch(chartViewSearch(window.location.search, view));
+  }
 
-  useEffect(() => {
-    const sharedView = parseChartShareView(window.location.search);
-    const nextXMetric = sharedView.xMetric ?? "costUsd";
-    const nextYMetric = sharedView.yMetric ?? "aaIndex";
-    const sharedPoint = sharedView.pointKey === null
+  function selectionView(
+    nextPointId: string | null,
+    nextProviderId: string | null,
+    nextXMetric = xMetric,
+    nextYMetric = yMetric,
+  ): ChartShareView {
+    const pinnedRecord = nextPointId === null
       ? null
-      : snapshot.records.find((record) => codingAgentRecordKey(record) === sharedView.pointKey) ?? null;
-    const sharedProviderId = sharedView.providerId !== null
-      && providers.some((provider) => provider.id === sharedView.providerId)
-      ? sharedView.providerId
-      : null;
-    const frame = window.requestAnimationFrame(() => {
-      if (sharedView.xMetric !== null) setXMetric(sharedView.xMetric);
-      if (sharedView.yMetric !== null) setYMetric(sharedView.yMetric);
-      if (
-        sharedPoint !== null
-        && xMetricValue(sharedPoint, nextXMetric) !== null
-        && yMetricValue(sharedPoint, nextYMetric) !== null
-      ) {
-        setPinnedPointId(sharedPoint.id);
-        setPinnedProviderId(null);
-      } else if (sharedProviderId !== null) {
-        setPinnedProviderId(sharedProviderId);
-        setPinnedPointId(null);
-      }
-    });
-    return () => window.cancelAnimationFrame(frame);
-  }, [providers, snapshot.records]);
+      : snapshot.records.find(record => record.id === nextPointId) ?? null;
+    return {
+      pointKey: pinnedRecord === null ? null : codingAgentRecordKey(pinnedRecord),
+      providerId: nextProviderId,
+      xMetric: nextXMetric,
+      yMetric: nextYMetric,
+    };
+  }
 
   useEffect(() => {
     const svg = svgRef.current;
@@ -415,14 +557,18 @@ export function CodingAgentExplorer({ brand, snapshot }: { brand: ChartBrand; sn
           && hoveredProviderId === null
       ) return;
       event.preventDefault();
-      setPinnedPointId(null);
-      setPinnedProviderId(null);
+      writeSelection({
+        pointKey: null,
+        providerId: null,
+        xMetric,
+        yMetric,
+      });
       setHoveredPointId(null);
       setHoveredProviderId(null);
     };
     window.addEventListener("keydown", clearOnEscape);
     return () => window.removeEventListener("keydown", clearOnEscape);
-  }, [hoveredPointId, hoveredProviderId, pinnedPointId, pinnedProviderId, shareOpen]);
+  }, [hoveredPointId, hoveredProviderId, pinnedPointId, pinnedProviderId, shareOpen, xMetric, yMetric]);
 
   const chart = useMemo(() => {
     const visible = recordsWithMetrics(snapshot.records, xMetric, yMetric);
@@ -467,14 +613,24 @@ export function CodingAgentExplorer({ brand, snapshot }: { brand: ChartBrand; sn
     };
   }, [snapshot.records, xMetric, yMetric]);
 
+  const pointerPoints = useMemo(() => chart.points.map((point) => ({
+    id: point.record.id,
+    x: point.x,
+    y: point.y,
+  })), [chart.points]);
+
   const focusablePointId = chart.points.some((point) => point.record.id === keyboardPointId)
     ? keyboardPointId
     : chart.points[0]?.record.id ?? null;
   const pinnedPoint = chart.points.find((point) => point.record.id === pinnedPointId) ?? null;
   const hoveredPoint = chart.points.find((point) => point.record.id === hoveredPointId) ?? null;
   const pinnedProvider = providers.find((provider) => provider.id === pinnedProviderId) ?? null;
+  const pinnedCardPath = pinnedPoint === null
+    ? null
+    : modelCardPaths[pinnedPoint.record.id] ?? null;
   const benchmarkPoint = pinnedPoint ?? (pinnedProviderId === null ? hoveredPoint : null);
   const selectedProviderId = benchmarkPoint === null ? pinnedProviderId ?? hoveredProviderId : null;
+  const isAtRest = benchmarkPoint === null && selectedProviderId === null;
   const performanceCohort = useMemo(() => (
     benchmarkPoint === null
       ? []
@@ -490,16 +646,18 @@ export function CodingAgentExplorer({ brand, snapshot }: { brand: ChartBrand; sn
         Number(left.record.id === benchmarkPoint.record.id) - Number(right.record.id === benchmarkPoint.record.id)
       ));
     }
-    if (selectedProviderId === null) return [];
+    if (selectedProviderId === null) return selectRestingCodingAgentLabels(chart.labelPoints);
     return chart.labelPoints.filter((point) => point.record.providerId === selectedProviderId);
   }, [benchmarkPoint, chart.labelPoints, performanceCohort, selectedProviderId]);
-  const cohortLabelPlacements = useMemo(() => {
-    if (benchmarkPoint === null) return new Map<string, LabelPlacement>();
+  const visibleLabelPlacements = useMemo(() => {
+    if (visibleLabelPoints.length === 0) return new Map<string, LabelPlacement>();
     return layoutChartLabels(
-      performanceCohort.map((point) => ({
+      visibleLabelPoints.map((point, index) => ({
         height: 54,
         id: point.record.id,
-        priority: point.record.id === benchmarkPoint.record.id ? 2 : 1,
+        priority: point.record.id === benchmarkPoint?.record.id
+          ? visibleLabelPoints.length + 1
+          : visibleLabelPoints.length - index,
         width: modelLabelWidth(point.record.modelLabel),
         x: point.x,
         y: point.y,
@@ -507,7 +665,7 @@ export function CodingAgentExplorer({ brand, snapshot }: { brand: ChartBrand; sn
       { bottom: plot.bottom - 6, left: plot.left + 6, right: plot.right - 6, top: plot.top + 6 },
       {
         offset: 18,
-        obstacles: performanceCohort.map((point) => ({
+        obstacles: visibleLabelPoints.map((point) => ({
           height: 24,
           width: 24,
           x: point.x - 12,
@@ -515,11 +673,11 @@ export function CodingAgentExplorer({ brand, snapshot }: { brand: ChartBrand; sn
         })),
       },
     );
-  }, [benchmarkPoint, performanceCohort]);
+  }, [benchmarkPoint, visibleLabelPoints]);
   const visibleLabels = useMemo(() => visibleLabelPoints.map((point) => {
     const width = modelLabelWidth(point.record.modelLabel);
     const alignRight = point.x > plot.right - width - 20;
-    const placement = cohortLabelPlacements.get(point.record.id);
+    const placement = visibleLabelPlacements.get(point.record.id);
     return {
       height: 54,
       point,
@@ -527,7 +685,7 @@ export function CodingAgentExplorer({ brand, snapshot }: { brand: ChartBrand; sn
       x: placement?.x ?? point.x + (alignRight ? -width - 14 : 14),
       y: placement?.y ?? point.y - 56,
     };
-  }), [cohortLabelPlacements, visibleLabelPoints]);
+  }), [visibleLabelPlacements, visibleLabelPoints]);
   const benchmarkBand = benchmarkPoint === null ? null : {
     bottom: Math.min(plot.bottom, chart.scaleY(benchmarkPoint.yValue - performanceTierRadius)),
     top: Math.max(plot.top, chart.scaleY(benchmarkPoint.yValue + performanceTierRadius)),
@@ -599,7 +757,7 @@ export function CodingAgentExplorer({ brand, snapshot }: { brand: ChartBrand; sn
     return () => observer.disconnect();
   }, [hoveredPointId, tooltipVisible]);
   const retrievedAt = formatRetrievedAt(snapshot.source.retrievedAt);
-  const latestUpdate = latestUpdateGroup(snapshot.updates);
+  const snapshotSummary = codingAgentDatasetSummary(snapshot);
   const accessibleTitle = `${yMetricLabels[yMetric]} versus ${xMetricLabels[xMetric]}`;
   const accessibleDescription = `Scatter plot comparing coding-agent models. Hover or focus a point or provider to preview it. Select a point to pin agents within ${performanceTierRadius} points of its ${yMetricLabels[yMetric]} score, or select a provider to pin its models. Use arrow keys to move between points.`;
   const shareSelectionLabel = pinnedPoint?.record.modelLabel ?? pinnedProvider?.name ?? null;
@@ -612,7 +770,7 @@ export function CodingAgentExplorer({ brand, snapshot }: { brand: ChartBrand; sn
     xMetric,
     yMetric,
   };
-  const siteUrl = `https://${brand.domain}`;
+  const siteUrl = `https://${brand.domain}/coding`;
   const shareUrl = buildChartShareUrl(siteUrl, shareView);
   const shareFilename = chartImageFilename(shareView, shareSelectionLabel);
   const shareText = `${yMetricLabels[yMetric]} vs ${xMetricLabels[xMetric]}${shareSelectionLabel === null ? "" : ` — ${shareSelectionLabel}`} on ${brand.domain}`;
@@ -641,7 +799,7 @@ export function CodingAgentExplorer({ brand, snapshot }: { brand: ChartBrand; sn
       void createBrandedChartPng(source, chartWidth, chartHeight, {
         context: `${yMetricLabels[yMetric]} vs ${xMetricLabels[xMetric]} · Artificial Analysis`,
         domain: brand.domain,
-        freshness: `${refreshDelayed ? "Refresh delayed" : "Auto-refreshes daily"} · Last refreshed ${retrievedAt}`,
+        freshness: `Snapshot retrieved ${retrievedAt} · Source checks scheduled daily`,
         providers: shareImageProviders,
         selection: shareImageSelection,
       }).then((image) => {
@@ -660,7 +818,7 @@ export function CodingAgentExplorer({ brand, snapshot }: { brand: ChartBrand; sn
       cancelled = true;
       window.cancelAnimationFrame(frame);
     };
-  }, [brand.domain, refreshDelayed, retrievedAt, shareImageProviders, shareImageSelection, shareOpen, xMetric, yMetric]);
+  }, [brand.domain, retrievedAt, shareImageProviders, shareImageSelection, shareOpen, xMetric, yMetric]);
 
   function interactionState(record: CodingAgentRecord): "normal" | "highlighted" | "dimmed" {
     if (benchmarkPoint !== null) return performanceCohortIds.has(record.id) ? "highlighted" : "dimmed";
@@ -675,9 +833,9 @@ export function CodingAgentExplorer({ brand, snapshot }: { brand: ChartBrand; sn
   }
 
   function clearSelection() {
-    setPinnedPointId(null);
-    setPinnedProviderId(null);
+    writeSelection(selectionView(null, null));
     setHoveredPointId(null);
+    setPointerPointId(null);
     setHoveredProviderId(null);
   }
 
@@ -685,11 +843,14 @@ export function CodingAgentExplorer({ brand, snapshot }: { brand: ChartBrand; sn
     if (providerId !== null && providerId !== pinnedProviderId) {
       captureChartEvent({
         name: "chart selection pinned",
-        properties: { provider_id: providerId, selection_kind: "provider" },
+        properties: {
+          chart_id: "coding_agents",
+          provider_id: providerId,
+          selection_kind: "provider",
+        },
       });
     }
-    setPinnedProviderId(providerId);
-    setPinnedPointId(null);
+    writeSelection(selectionView(null, providerId));
     setHoveredPointId(null);
   }
 
@@ -714,7 +875,13 @@ export function CodingAgentExplorer({ brand, snapshot }: { brand: ChartBrand; sn
     setShareStatus("PNG downloaded.");
     captureChartEvent({
       name: "chart shared",
-      properties: { share_method: "download_png", x_metric: xMetric, y_metric: yMetric },
+      properties: {
+        chart_id: "coding_agents",
+        share_method: "download_png",
+        share_outcome: "downloaded",
+        x_metric: xMetric,
+        y_metric: yMetric,
+      },
     });
   }
 
@@ -734,7 +901,13 @@ export function CodingAgentExplorer({ brand, snapshot }: { brand: ChartBrand; sn
       setShareStatus("This browser cannot share image files, so the PNG was downloaded instead.");
       captureChartEvent({
         name: "chart shared",
-        properties: { share_method: "download_fallback", x_metric: xMetric, y_metric: yMetric },
+        properties: {
+          chart_id: "coding_agents",
+          share_method: "download_fallback",
+          share_outcome: "downloaded",
+          x_metric: xMetric,
+          y_metric: yMetric,
+        },
       });
       return;
     }
@@ -745,7 +918,13 @@ export function CodingAgentExplorer({ brand, snapshot }: { brand: ChartBrand; sn
       setShareStatus("Chart shared.");
       captureChartEvent({
         name: "chart shared",
-        properties: { share_method: "native_share", x_metric: xMetric, y_metric: yMetric },
+        properties: {
+          chart_id: "coding_agents",
+          share_method: "native_share",
+          share_outcome: "completed",
+          x_metric: xMetric,
+          y_metric: yMetric,
+        },
       });
     } catch (error: unknown) {
       if (isShareCancellation(error)) setShareStatus("Image ready to share.");
@@ -754,7 +933,13 @@ export function CodingAgentExplorer({ brand, snapshot }: { brand: ChartBrand; sn
         setShareStatus("Sharing was unavailable, so the PNG was downloaded instead.");
         captureChartEvent({
           name: "chart shared",
-          properties: { share_method: "download_fallback", x_metric: xMetric, y_metric: yMetric },
+          properties: {
+            chart_id: "coding_agents",
+            share_method: "download_fallback",
+            share_outcome: "downloaded",
+            x_metric: xMetric,
+            y_metric: yMetric,
+          },
         });
       }
     } finally {
@@ -771,7 +956,13 @@ export function CodingAgentExplorer({ brand, snapshot }: { brand: ChartBrand; sn
     }
     captureChartEvent({
       name: "chart shared",
-      properties: { share_method: "x", x_metric: xMetric, y_metric: yMetric },
+      properties: {
+        chart_id: "coding_agents",
+        share_method: "x",
+        share_outcome: "initiated",
+        x_metric: xMetric,
+        y_metric: yMetric,
+      },
     });
   }
 
@@ -782,7 +973,13 @@ export function CodingAgentExplorer({ brand, snapshot }: { brand: ChartBrand; sn
     if (copied) {
       captureChartEvent({
         name: "chart shared",
-        properties: { share_method: "copy_link", x_metric: xMetric, y_metric: yMetric },
+        properties: {
+          chart_id: "coding_agents",
+          share_method: "copy_link",
+          share_outcome: "completed",
+          x_metric: xMetric,
+          y_metric: yMetric,
+        },
       });
     }
   }
@@ -797,21 +994,63 @@ export function CodingAgentExplorer({ brand, snapshot }: { brand: ChartBrand; sn
     }
   }
 
+  function togglePinnedPoint(point: PlotPoint): void {
+    const nextPointId = pinnedPointId === point.record.id ? null : point.record.id;
+    if (nextPointId !== null) {
+      captureChartEvent({
+        name: "chart selection pinned",
+        properties: {
+          chart_id: "coding_agents",
+          provider_id: point.record.providerId,
+          selection_kind: "model",
+        },
+      });
+    }
+    writeSelection(selectionView(nextPointId, null));
+  }
+
+  function pointForChartEvent(
+    event: Readonly<{ clientX: number; clientY: number; currentTarget: SVGSVGElement }>,
+  ): PlotPoint | null {
+    const location = chartPointerLocation(event);
+    if (location === null) return null;
+    const maximumDistance = svgUnitsForCssPixels(
+      chartPointerHitRadiusCss,
+      location.unitsPerCssPixel,
+    );
+    if (maximumDistance === null) return null;
+    const pointId = nearestCodingAgentPointId(
+      pointerPoints,
+      location.x,
+      location.y,
+      maximumDistance,
+    );
+    return pointId === null
+      ? null
+      : chart.points.find(point => point.record.id === pointId) ?? null;
+  }
+
+  function handleChartClick(event: ReactMouseEvent<SVGSVGElement>): void {
+    const point = pointForChartEvent(event);
+    if (point === null) return;
+    event.stopPropagation();
+    setKeyboardPointId(point.record.id);
+    togglePinnedPoint(point);
+  }
+
+  function handleChartPointerMove(event: ReactPointerEvent<SVGSVGElement>): void {
+    if (event.pointerType === "touch") return;
+    const point = pointForChartEvent(event);
+    if (point !== null) setHoveredProviderId(null);
+    setPointerPointId(point?.record.id ?? null);
+    setHoveredPointId(point?.record.id ?? null);
+  }
+
   function handlePointKeyDown(event: KeyboardEvent<SVGGElement>, index: number) {
     if (event.key === "Enter" || event.key === " ") {
       event.preventDefault();
       const currentPoint = chart.points[index];
-      if (currentPoint !== undefined) {
-        const nextPointId = pinnedPointId === currentPoint.record.id ? null : currentPoint.record.id;
-        if (nextPointId !== null) {
-          captureChartEvent({
-            name: "chart selection pinned",
-            properties: { provider_id: currentPoint.record.providerId, selection_kind: "model" },
-          });
-        }
-        setPinnedPointId(nextPointId);
-        setPinnedProviderId(null);
-      }
+      if (currentPoint !== undefined) togglePinnedPoint(currentPoint);
       return;
     }
     if (!isPointNavigationKey(event.key)) return;
@@ -825,109 +1064,107 @@ export function CodingAgentExplorer({ brand, snapshot }: { brand: ChartBrand; sn
 
   return (
     <div className="chart-app">
-      <TopBar
-        actions={(
-          <>
-            {latestUpdate !== null && (
-              <a
-                aria-label={`Latest update: ${latestUpdate.summary}, ${formatUpdateDate(latestUpdate.detectedAt)}`}
-                className="latest-update-badge chart-selection-boundary"
-                href="#model-updates"
-              >
-                <span>Latest</span>
-                <strong>{latestUpdate.summary}</strong>
-                <time dateTime={latestUpdate.detectedAt}>{formatUpdateDate(latestUpdate.detectedAt)}</time>
-              </a>
-            )}
-            <div className="chart-provenance-control chart-selection-boundary">
-              <MenuTrigger>
-                <IconButton
-                  aria-label="Data provenance"
-                  size="compact"
-                  tooltip="Data provenance"
-                >
-                  <Icon icon={InformationCircleIcon} size={18} strokeWidth={1.75} />
-                </IconButton>
-                <Menu
-                  aria-label="Data provenance"
-                  className="share-menu provenance-menu chart-selection-boundary"
-                  placement="bottom end"
-                  popoverClassName="share-menu-popover provenance-menu-popover chart-selection-boundary"
-                >
-                  <MenuSection
-                    title={(
-                      <div className="share-menu-heading provenance-menu-heading">
-                        <strong>Data provenance</strong>
-                        <span className={`refresh-cadence${refreshDelayed ? " is-delayed" : ""}`}>
-                          <i aria-hidden="true" /> {refreshDelayed ? "Refresh delayed" : "Auto-refreshes daily"}
-                        </span>
-                        <span>Last refreshed <time dateTime={snapshot.source.retrievedAt}>{retrievedAt}</time></span>
-                      </div>
-                    )}
-                  >
-                    <MenuItem
-                      href={snapshot.source.url}
-                      id="data-source"
-                      leading={<Icon icon={ExternalLinkIcon} size={17} strokeWidth={1.75} />}
-                      rel="noreferrer"
-                      target="_blank"
-                      textValue="Open Artificial Analysis source"
-                    >
-                      Open Artificial Analysis source
-                    </MenuItem>
-                  </MenuSection>
-                </Menu>
-              </MenuTrigger>
-            </div>
-            <LinkButton href="/blog" size="compact" variant="quiet">
-              Blog
-            </LinkButton>
-            <ThemeToggle aria-label="Chart appearance" />
-          </>
-        )}
-        className="chart-top-bar"
-        title={<h1>{brand.domain}</h1>}
-      />
-      <PageCanvas
+      <section
+        aria-labelledby="coding-agent-chart-title"
         className="chart-page-canvas"
-        id="main-content"
-        inset="none"
+        data-analytics-surface="benchmark_chart"
+        id="coding-agents"
         onClick={handleAppClick}
-        size="full"
         tabIndex={-1}
       >
+      <div className="chart-family-intro">
+        <h2 className="sr-only" id="coding-agent-chart-title">Coding-agent scatter chart</h2>
+        <p className="chart-family-intro__evidence">
+          <span>{snapshot.source.name} · {snapshotSummary.recordCount} configurations · {snapshotSummary.modelCount} models · {snapshotSummary.providerCount} providers</span>
+          <span>Snapshot <time dateTime={snapshot.source.retrievedAt}>{retrievedAt}</time></span>
+        </p>
+      </div>
       <header className="chart-header">
         <p aria-live="polite" className="benchmark-description">
           <strong>{yMetricLabels[yMetric]}</strong> — {yMetricDescriptions[yMetric]}
         </p>
       </header>
 
-      <div className={overflowClassName("provider-filter-shell", providerOverflow)}>
-        <ToggleGroup
-          aria-label="Highlight a provider"
-          className="provider-filter"
-          groupRef={providerFilterRef}
-          items={providerItems}
-          onChange={handleProviderChange}
-          onItemBlur={(providerId) => setHoveredProviderId((current) => current === providerId ? null : current)}
-          onItemFocus={(providerId) => {
+      <details className="coding-filter chart-selection-boundary">
+        <summary>Highlight a provider{pinnedProvider === null ? null : ` · ${pinnedProvider.name}`}</summary>
+        <div className={overflowClassName("provider-filter-shell", providerOverflow)}>
+          <ToggleGroup
+            aria-label="Highlight a provider"
+            className="provider-filter"
+            groupRef={providerFilterRef}
+            items={providerItems}
+            onChange={handleProviderChange}
+            onItemBlur={(providerId) => setHoveredProviderId((current) => current === providerId ? null : current)}
+            onItemFocus={(providerId) => {
+              setHoveredPointId(null);
+              setHoveredProviderId(providerId);
+            }}
+            onItemHoverEnd={(providerId) => setHoveredProviderId((current) => current === providerId ? null : current)}
+            onItemHoverStart={(providerId) => {
+              setHoveredPointId(null);
+              setHoveredProviderId(providerId);
+            }}
+            surfaceClassName="provider-filter-surface"
+            value={pinnedProviderId}
+          />
+        </div>
+      </details>
+
+      <div className="chart-metric-controls chart-selection-boundary">
+        <OptionGridPicker
+          className="chart-benchmark-select"
+          label="Benchmark"
+          layout="list"
+          onChange={metric => {
+            if (!yMetricItems.some(item => item.id === metric)) return;
+            const nextMetric = metric as YMetric;
+            if (nextMetric !== yMetric) {
+              captureChartEvent({
+                name: "chart metric selected",
+                properties: { axis: "y", chart_id: "coding_agents", metric: nextMetric },
+              });
+            }
+            writeSelection(selectionView(null, null, xMetric, nextMetric));
             setHoveredPointId(null);
-            setHoveredProviderId(providerId);
+            setPointerPointId(null);
+            setHoveredProviderId(null);
           }}
-          onItemHoverEnd={(providerId) => setHoveredProviderId((current) => current === providerId ? null : current)}
-          onItemHoverStart={(providerId) => {
-            setHoveredPointId(null);
-            setHoveredProviderId(providerId);
-          }}
-          surfaceClassName="provider-filter-surface"
-          value={pinnedProviderId}
+          options={yMetricPickerItems}
+          searchLabel="Search benchmarks"
+          value={yMetric}
         />
+        <MetricControl
+          items={xMetricItems}
+          label="Compare by"
+          onChange={(metric) => {
+            if (metric !== xMetric) {
+              captureChartEvent({
+                name: "chart metric selected",
+                properties: { axis: "x", chart_id: "coding_agents", metric },
+              });
+            }
+            writeSelection(selectionView(null, null, metric, yMetric));
+            setHoveredPointId(null);
+            setPointerPointId(null);
+            setHoveredProviderId(null);
+          }}
+          value={xMetric}
+        />
+        <p className="chart-interaction-cue">
+          <span className="chart-interaction-cue__desktop">Hover or select a point for exact values</span>
+          <span className="chart-interaction-cue__touch">Tap points</span>
+        </p>
       </div>
 
       <div className={overflowClassName("chart-scroll-shell", chartOverflow)}>
         {(pinnedPoint !== null || pinnedProvider !== null) && (
           <div className="pin-status">
             <span aria-live="polite"><strong>Pinned</strong> {pinnedPoint?.record.modelLabel ?? pinnedProvider?.name}</span>
+            {pinnedCardPath !== null && (
+              <LinkButton href={pinnedCardPath} size="compact" variant="quiet">
+                View card
+              </LinkButton>
+            )}
             <IconButton
               aria-label="Clear pinned selection"
               onPress={clearSelection}
@@ -938,36 +1175,6 @@ export function CodingAgentExplorer({ brand, snapshot }: { brand: ChartBrand; sn
             </IconButton>
           </div>
         )}
-        <div className="chart-axis-control chart-axis-control--y chart-selection-boundary">
-          <MetricControl
-            axis="y"
-            items={yMetricItems}
-            label="Benchmark"
-            onChange={(metric) => {
-              if (metric !== yMetric) {
-                captureChartEvent({ name: "chart metric selected", properties: { axis: "y", metric } });
-              }
-              setYMetric(metric);
-              clearSelection();
-            }}
-            value={yMetric}
-          />
-        </div>
-        <div className="chart-axis-control chart-axis-control--x chart-selection-boundary">
-          <MetricControl
-            axis="x"
-            items={xMetricItems}
-            label="Compare by"
-            onChange={(metric) => {
-              if (metric !== xMetric) {
-                captureChartEvent({ name: "chart metric selected", properties: { axis: "x", metric } });
-              }
-              setXMetric(metric);
-              clearSelection();
-            }}
-            value={xMetric}
-          />
-        </div>
         <div className="share-control chart-selection-boundary">
           <MenuTrigger isOpen={shareOpen} onOpenChange={handleShareOpenChange}>
             <IconButton
@@ -1061,14 +1268,29 @@ export function CodingAgentExplorer({ brand, snapshot }: { brand: ChartBrand; sn
             </Menu>
           </MenuTrigger>
         </div>
-        <div className="chart-scroll" aria-label="Scrollable chart area" ref={chartScrollRef}>
+        <div className="chart-scroll" aria-label="Scrollable chart area" id="chart" ref={chartScrollRef}>
           <div className="chart-canvas">
-          <svg aria-describedby={descriptionId} aria-label={accessibleTitle} className="benchmark-chart" ref={svgRef} role="group" viewBox={`0 0 ${chartWidth} ${chartHeight}`}>
+          <svg
+            aria-describedby={descriptionId}
+            aria-label={accessibleTitle}
+            className="benchmark-chart"
+            onClick={handleChartClick}
+            onPointerLeave={() => {
+              setPointerPointId(null);
+              setHoveredPointId(null);
+            }}
+            onPointerMove={handleChartPointerMove}
+            ref={svgRef}
+            role="group"
+            style={pointerPointId === null ? undefined : { cursor: "pointer" }}
+            viewBox={`0 0 ${chartWidth} ${chartHeight}`}
+          >
             <desc id={descriptionId}>{accessibleDescription}</desc>
 
             {chart.yTicks.map((tick) => (
-              <g className="chart-gridline" key={`y-${tick}`}>
+              <g className="chart-gridline chart-gridline-y" key={`y-${tick}`}>
                 <line x1={plot.left} x2={plot.right} y1={chart.scaleY(tick)} y2={chart.scaleY(tick)} />
+                <text textAnchor="end" x={plot.left - 12} y={chart.scaleY(tick) + 5}>{formatMetricValue(yMetric, tick)}</text>
               </g>
             ))}
             {chart.xTicks.map((tick) => (
@@ -1141,13 +1363,12 @@ export function CodingAgentExplorer({ brand, snapshot }: { brand: ChartBrand; sn
               );
             })}
 
-            {benchmarkPoint !== null && (
-              <g aria-hidden="true" className="chart-label-leaders">
-                {performanceCohort.map((point) => {
-                  const placement = cohortLabelPlacements.get(point.record.id);
-                  if (placement === undefined) return null;
-                  const endX = Math.max(placement.x, Math.min(point.x, placement.x + placement.width));
-                  const endY = Math.max(placement.y, Math.min(point.y, placement.y + placement.height));
+            {visibleLabels.length > 0 && (
+              <g aria-hidden="true" className={`chart-label-leaders${isAtRest ? " is-resting" : ""}`}>
+                {visibleLabels.map((label) => {
+                  const { point } = label;
+                  const endX = Math.max(label.x, Math.min(point.x, label.x + label.width));
+                  const endY = Math.max(label.y, Math.min(point.y, label.y + label.height));
                   return (
                     <line
                       className="chart-label-leader"
@@ -1180,17 +1401,11 @@ export function CodingAgentExplorer({ brand, snapshot }: { brand: ChartBrand; sn
                   onBlur={() => {
                     setHoveredPointId((current) => current === point.record.id ? null : current);
                   }}
-                  onClick={() => {
+                  onClick={event => {
+                    if (!isAssistiveSvgClick(event.detail)) return;
+                    event.stopPropagation();
                     setKeyboardPointId(point.record.id);
-                    const nextPointId = pinnedPointId === point.record.id ? null : point.record.id;
-                    if (nextPointId !== null) {
-                      captureChartEvent({
-                        name: "chart selection pinned",
-                        properties: { provider_id: point.record.providerId, selection_kind: "model" },
-                      });
-                    }
-                    setPinnedPointId(nextPointId);
-                    setPinnedProviderId(null);
+                    togglePinnedPoint(point);
                   }}
                   onFocus={() => {
                     setKeyboardPointId(point.record.id);
@@ -1198,17 +1413,12 @@ export function CodingAgentExplorer({ brand, snapshot }: { brand: ChartBrand; sn
                     setHoveredPointId(point.record.id);
                   }}
                   onKeyDown={(event) => handlePointKeyDown(event, index)}
-                  onPointerEnter={() => {
-                    setHoveredProviderId(null);
-                    setHoveredPointId(point.record.id);
-                  }}
-                  onPointerLeave={() => setHoveredPointId((current) => current === point.record.id ? null : current)}
                   ref={(node) => {
                     if (node === null) pointRefs.current.delete(point.record.id);
                     else pointRefs.current.set(point.record.id, node);
                   }}
                   role="button"
-                  style={{ color: recordColor(point.record) }}
+                  style={{ color: recordColor(point.record), pointerEvents: "none" }}
                   tabIndex={point.record.id === focusablePointId ? 0 : -1}
                   transform={`translate(${point.x} ${point.y})`}
                 >
@@ -1224,7 +1434,7 @@ export function CodingAgentExplorer({ brand, snapshot }: { brand: ChartBrand; sn
               return (
                 <g
                   aria-hidden="true"
-                  className="chart-model-label is-highlighted"
+                  className={`chart-model-label is-highlighted${isAtRest ? " is-resting" : ""}`}
                   key={`label-${point.record.id}`}
                   style={{ color: recordColor(point.record) }}
                   transform={`translate(${label.x} ${label.y})`}
@@ -1241,40 +1451,69 @@ export function CodingAgentExplorer({ brand, snapshot }: { brand: ChartBrand; sn
           </div>
         </div>
       </div>
-      <OptionSpaceOverview
-        onPinPoint={(recordId) => {
-          const nextPointId = pinnedPointId === recordId ? null : recordId;
-          const nextRecord = snapshot.records.find((record) => record.id === nextPointId);
-          if (nextRecord !== undefined) {
-            captureChartEvent({
-              name: "chart selection pinned",
-              properties: { provider_id: nextRecord.providerId, selection_kind: "model" },
-            });
-          }
-          setPinnedPointId(nextPointId);
-          setPinnedProviderId(null);
-          setHoveredPointId(null);
-          setHoveredProviderId(null);
-        }}
-        onPinProvider={(providerId) => {
-          handleProviderChange(pinnedProviderId === providerId ? null : providerId);
-          setHoveredProviderId(null);
-        }}
-        pinnedPointId={pinnedPointId}
-        pinnedProviderId={pinnedProviderId}
-        records={snapshot.records}
-        xMetric={xMetric}
-        yMetric={yMetric}
-      />
+      <details className="coding-details chart-selection-boundary">
+        <summary>Compare configurations and providers</summary>
+        <OptionSpaceOverview
+          onPinPoint={(recordId) => {
+            const nextPointId = pinnedPointId === recordId ? null : recordId;
+            const nextRecord = snapshot.records.find((record) => record.id === nextPointId);
+            if (nextRecord !== undefined) {
+              captureChartEvent({
+                name: "chart selection pinned",
+                properties: {
+                  chart_id: "coding_agents",
+                  provider_id: nextRecord.providerId,
+                  selection_kind: "model",
+                },
+              });
+            }
+            writeSelection(selectionView(nextPointId, null));
+            setHoveredPointId(null);
+            setHoveredProviderId(null);
+          }}
+          onPinProvider={(providerId) => {
+            handleProviderChange(pinnedProviderId === providerId ? null : providerId);
+            setHoveredProviderId(null);
+          }}
+          pinnedPointId={pinnedPointId}
+          pinnedProviderId={pinnedProviderId}
+          records={snapshot.records}
+          xMetric={xMetric}
+          yMetric={yMetric}
+        />
+      </details>
+      <details className="coding-details chart-selection-boundary">
+        <summary>Method and data</summary>
+        <div>
+          <p>
+            Each point is a measured model-and-agent configuration from{" "}
+            <a
+              data-analytics-destination-id="source:artificial-analysis"
+              data-analytics-destination-kind="source"
+              href={snapshot.source.url}
+              rel="noreferrer"
+              target="_blank"
+            >
+              {snapshot.source.name}
+            </a>
+            . Cost, time, and total tokens describe the full task run, not just the model’s output.
+            Only configurations reporting both selected metrics appear in the chart.
+          </p>
+          <p>
+            This source reports Terminal-Bench v2.1. Its scores stay separate from{" "}
+            <Link href="/benchmarks?atlas=terminal-bench-4">Terminal-Bench 4, the current coding standard</Link>.
+            A snapshot date records retrieval, not when each model was evaluated.
+          </p>
+          <p>
+            <Link href="/data#source">Full methodology</Link>
+            {" · "}
+            <a href="/data/coding-agents.json" download="aicharts-coding-agents.json">Download JSON</a>
+          </p>
+        </div>
+      </details>
+      {children}
       <ModelUpdateTimeline retrievedAt={snapshot.source.retrievedAt} updates={snapshot.updates} />
-      <footer className="chart-footer">
-        <nav aria-label="AI Charts resources" className="chart-footer-links">
-          <Link href="/data">Data</Link>
-          <Link href="/blog">Analysis</Link>
-        </nav>
-        <HranessBrand className="chart-footer-hraness" />
-      </footer>
-      </PageCanvas>
+      </section>
       {hoveredPoint !== null && tooltipLayout !== null && typeof document !== "undefined" && createPortal(
         <>
           <svg
@@ -1297,7 +1536,12 @@ export function CodingAgentExplorer({ brand, snapshot }: { brand: ChartBrand; sn
             role="status"
             style={{ left: tooltipLayout.x, top: tooltipLayout.y }}
           >
-            <span style={providerStyle(hoveredPoint.record.providerId)}><i /> {hoveredPoint.record.providerName}</span>
+            <span style={providerStyle(hoveredPoint.record.providerId)}>
+              <ProviderBrandLabel
+                displayName={hoveredPoint.record.providerName}
+                identities={[hoveredPoint.record.providerId]}
+              />
+            </span>
             <strong>{hoveredPoint.record.model}</strong>
             <small>{hoveredPoint.record.agent} / {hoveredPoint.record.setting}</small>
             <dl>

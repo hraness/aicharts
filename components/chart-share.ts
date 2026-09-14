@@ -3,6 +3,9 @@ import type { XMetric, YMetric } from "@/lib/chart-math";
 const xMetrics = ["costUsd", "durationMinutes", "totalTokens"] as const satisfies readonly XMetric[];
 const yMetrics = ["aaIndex", "deepSwe", "terminalBench", "sweAtlas"] as const satisfies readonly YMetric[];
 
+export const DEFAULT_CHART_X_METRIC: XMetric = "costUsd";
+export const DEFAULT_CHART_Y_METRIC: YMetric = "deepSwe";
+
 export type ChartShareView = {
   pointKey: string | null;
   providerId: string | null;
@@ -55,6 +58,23 @@ export function parseChartShareView(search: string): ParsedChartShareView {
     xMetric: isXMetric(xMetric) ? xMetric : null,
     yMetric: isYMetric(yMetric) ? yMetric : null,
   };
+}
+
+const CHART_SHARE_PARAM_KEYS = ["benchmark", "compare", "point", "provider"] as const;
+
+/**
+ * Address-bar codec for the coding chart. Defaults stay off the URL so
+ * `/coding` remains canonical; non-default metrics and the pinned
+ * configuration or provider are written through `URLSearchParams`.
+ */
+export function chartViewSearch(currentSearch: string, view: ChartShareView): string {
+  const params = new URLSearchParams(currentSearch);
+  for (const key of CHART_SHARE_PARAM_KEYS) params.delete(key);
+  if (view.yMetric !== DEFAULT_CHART_Y_METRIC) params.set("benchmark", view.yMetric);
+  if (view.xMetric !== DEFAULT_CHART_X_METRIC) params.set("compare", view.xMetric);
+  if (view.pointKey !== null) params.set("point", view.pointKey);
+  else if (view.providerId !== null) params.set("provider", view.providerId);
+  return params.toString();
 }
 
 export function chartImageFilename(view: ChartShareView, selectionLabel: string | null): string {

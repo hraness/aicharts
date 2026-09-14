@@ -1,0 +1,305 @@
+//! Bounded nonsecret reference custody below an explicit existing trust anchor.
+//! macOS constructors use the private descriptor-pinned filesystem adapter and
+//! never select a Keychain. Other platforms remain unsupported.
+//! These records establish neither enrollment nor upload authorization.
+
+mod codec;
+#[cfg_attr(not(test), allow(dead_code))]
+pub(crate) mod engine;
+#[cfg(test)]
+#[path = "../references_tests.rs"]
+mod tests;
+
+// No caller can inject a filesystem backend through the public API.
+#[cfg(target_os = "macos")]
+#[cfg_attr(not(test), allow(dead_code))]
+mod macos;
+#[cfg(target_os = "macos")]
+#[allow(dead_code)]
+mod qualified;
+
+use crate::{RecordIdentity, SecretRecord, Vault};
+use sha2::{Digest, Sha256};
+use std::{fmt, path::Path};
+
+pub const MAX_ENTRIES: usize = 256;
+pub const MAX_MANIFEST_BYTES: usize = 64 + MAX_ENTRIES * 160 + 32;
+pub type Result<T> = std::result::Result<T, Error>;
+
+/// Fixed failures contain no filesystem paths, item references, or native text.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Error {
+    BackendUnqualified,
+    UnsupportedPlatform,
+    InvalidManifest,
+    InvalidInstallation,
+    Missing,
+    Conflict,
+    StaleSnapshot,
+    PendingOperation,
+    NotPrepared,
+    NotVerified,
+    Limit,
+    Busy,
+    StorageUnavailable,
+    RecoveryRequired,
+    OutcomeUnknown,
+    Custody(crate::Error),
+}
+
+impl Error {
+    pub const fn code(self) -> &'static str {
+        match self {
+            Self::BackendUnqualified => "references_backend_unqualified",
+            Self::UnsupportedPlatform => "references_unsupported_platform",
+            Self::InvalidManifest => "references_invalid_manifest",
+            Self::InvalidInstallation => "references_invalid_installation",
+            Self::Missing => "references_missing",
+            Self::Conflict => "references_conflict",
+            Self::StaleSnapshot => "references_stale_snapshot",
+            Self::PendingOperation => "references_pending_operation",
+            Self::NotPrepared => "references_not_prepared",
+            Self::NotVerified => "references_not_verified",
+            Self::Limit => "references_limit",
+            Self::Busy => "references_busy",
+            Self::StorageUnavailable => "references_storage_unavailable",
+            Self::RecoveryRequired => "references_recovery_required",
+            Self::OutcomeUnknown => "references_outcome_unknown",
+            Self::Custody(error) => error.code(),
+        }
+    }
+}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.code())
+    }
+}
+impl std::error::Error for Error {}
+
+/// Local observation only. Neither state is a server grant or current vault proof.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ReferenceState {
+    Prepared,
+    CustodyVerified,
+}
+
+/// Nonsecret original intent. Construction hashes the complete private record;
+/// it does not retain or serialize secret material.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct RecordIntent {
+    identity: RecordIdentity,
+    commitment: [u8; 32],
+}
+
+impl RecordIntent {
+    pub fn from_record(record: &SecretRecord) -> Self {
+        let bytes = record.encode();
+        let mut digest = Sha256::new();
+        digest.update(b"aicharts:custody-record:v1\0");
+        digest.update(bytes.as_slice());
+        Self {
+            identity: record.identity().clone(),
+            commitment: digest.finalize().into(),
+        }
+    }
+
+    pub fn identity(&self) -> &RecordIdentity {
+        &self.identity
+    }
+
+    /// This is a high-entropy-secret commitment, not an authentication signature.
+    pub fn commitment(&self) -> &[u8; 32] {
+        &self.commitment
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ReferenceEntry {
+    intent: RecordIntent,
+    state: ReferenceState,
+}
+impl ReferenceEntry {
+    pub fn intent(&self) -> &RecordIntent {
+        &self.intent
+    }
+    pub fn state(&self) -> ReferenceState {
+        self.state
+    }
+}
+
+/// Compare-and-publish guard for one exact canonical committed manifest.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct ManifestToken {
+    revision: u64,
+    digest: [u8; 32],
+}
+impl ManifestToken {
+    pub fn revision(&self) -> u64 {
+        self.revision
+    }
+    pub fn digest(&self) -> &[u8; 32] {
+        &self.digest
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ManifestSnapshot {
+    installation: [u8; 32],
+    revision: u64,
+    entries: Vec<ReferenceEntry>,
+}
+impl ManifestSnapshot {
+    pub fn installation_id(&self) -> &[u8; 32] {
+        &self.installation
+    }
+    pub fn entries(&self) -> &[ReferenceEntry] {
+        &self.entries
+    }
+    pub fn token(&self) -> ManifestToken {
+        let bytes = codec::encode(self);
+        let mut digest = Sha256::new();
+        digest.update(b"aicharts:credential-manifest-token:v1\0");
+        digest.update(bytes);
+        ManifestToken {
+            revision: self.revision,
+            digest: digest.finalize().into(),
+        }
+    }
+}
+
+/// Local reference persistence below a caller-supplied existing absolute path.
+/// On macOS every path component is pinned and checked, and the private anchor
+/// contains the fixed `references-v1` child. Constructors never discover, create,
+/// adopt, or repair the anchor. Other platforms return `UnsupportedPlatform`.
+/// There is no public backend injection, byte import, or verification setter.
+pub struct ReferenceStore {
+    #[cfg(target_os = "macos")]
+    qualified: Option<qualified::QualifiedStore>,
+    #[cfg(not(target_os = "macos"))]
+    _private: (),
+}
+
+fn closed() -> Error {
+    if cfg!(target_os = "macos") {
+        Error::BackendUnqualified
+    } else {
+        Error::UnsupportedPlatform
+    }
+}
+
+impl ReferenceStore {
+    #[cfg(target_os = "macos")]
+    fn backend(&mut self) -> Result<&mut qualified::QualifiedStore> {
+        self.qualified.as_mut().ok_or_else(closed)
+    }
+
+    #[cfg(all(test, target_os = "macos"))]
+    fn fixture(backend: qualified::QualifiedStore) -> Self {
+        Self {
+            qualified: Some(backend),
+        }
+    }
+
+    /// Reconcile only the original nonzero installation's empty initial manifest.
+    /// Storage must already exist. An exact retained initial candidate can be
+    /// published; a different candidate or advanced committed state is refused.
+    pub fn reconcile_initialization(_path: &Path, _installation: [u8; 32]) -> Result<Self> {
+        #[cfg(target_os = "macos")]
+        return Ok(Self {
+            qualified: Some(qualified::QualifiedStore::reconcile_initialization(
+                _path,
+                _installation,
+            )?),
+        });
+        #[cfg(not(target_os = "macos"))]
+        Err(closed())
+    }
+    /// Create the fixed child and durably publish an empty initial manifest.
+    /// The nonzero installation is checked before filesystem access. The anchor
+    /// must already exist; existing or partial child storage is never adopted.
+    pub fn initialize_new(_path: &Path, _installation: [u8; 32]) -> Result<Self> {
+        #[cfg(target_os = "macos")]
+        return Ok(Self {
+            qualified: Some(qualified::QualifiedStore::initialize_new(
+                _path,
+                _installation,
+            )?),
+        });
+        #[cfg(not(target_os = "macos"))]
+        Err(closed())
+    }
+    /// Open and observe an existing committed manifest without recovery or sync.
+    /// Successful construction proves neither durability nor current vault state.
+    pub fn open_existing(_path: &Path) -> Result<Self> {
+        #[cfg(target_os = "macos")]
+        return Ok(Self {
+            qualified: Some(qualified::QualifiedStore::open_existing(_path)?),
+        });
+        #[cfg(not(target_os = "macos"))]
+        Err(closed())
+    }
+    /// Observe an existing committed manifest without publication or recovery.
+    /// The returned snapshot is neither durable evidence nor current vault proof.
+    pub fn inspect_existing(_path: &Path) -> Result<ManifestSnapshot> {
+        #[cfg(target_os = "macos")]
+        return qualified::QualifiedStore::inspect_existing(_path);
+        #[cfg(not(target_os = "macos"))]
+        Err(closed())
+    }
+    /// Observe the committed manifest. Credential operations reestablish their
+    /// own required durability and exact vault readback under the operation lock.
+    pub fn snapshot(&mut self) -> Result<ManifestSnapshot> {
+        #[cfg(target_os = "macos")]
+        return self.backend()?.snapshot();
+        #[cfg(not(target_os = "macos"))]
+        Err(closed())
+    }
+    pub fn prepare(
+        &mut self,
+        _expected: &ManifestToken,
+        _record: &SecretRecord,
+    ) -> Result<ManifestSnapshot> {
+        #[cfg(target_os = "macos")]
+        return self.backend()?.prepare(_expected, _record);
+        #[cfg(not(target_os = "macos"))]
+        Err(closed())
+    }
+    pub fn install_prepared(
+        &mut self,
+        _expected: &ManifestToken,
+        _record: &SecretRecord,
+        _vault: &mut Vault,
+    ) -> Result<ManifestSnapshot> {
+        #[cfg(target_os = "macos")]
+        return self.backend()?.install_prepared(_expected, _record, _vault);
+        #[cfg(not(target_os = "macos"))]
+        Err(closed())
+    }
+    pub fn reconcile_prepared(
+        &mut self,
+        _expected: &ManifestToken,
+        _identity: &RecordIdentity,
+        _vault: &mut Vault,
+    ) -> Result<ManifestSnapshot> {
+        #[cfg(target_os = "macos")]
+        return self
+            .backend()?
+            .reconcile_prepared(_expected, _identity, _vault);
+        #[cfg(not(target_os = "macos"))]
+        Err(closed())
+    }
+    pub fn resolve_verified(
+        &mut self,
+        _expected: &ManifestToken,
+        _identity: &RecordIdentity,
+        _vault: &mut Vault,
+    ) -> Result<SecretRecord> {
+        #[cfg(target_os = "macos")]
+        return self
+            .backend()?
+            .resolve_verified(_expected, _identity, _vault);
+        #[cfg(not(target_os = "macos"))]
+        Err(closed())
+    }
+}

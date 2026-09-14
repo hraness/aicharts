@@ -1,11 +1,71 @@
 import { expect, test } from "bun:test";
 
 const stylesheet = await Bun.file(new URL("./globals.css", import.meta.url)).text();
+const atlasStylesheet = await Bun.file(new URL("../styles/benchmark-atlas.css", import.meta.url)).text();
 
-function firstRule(selector: string): string {
+test("the complete released StyleX entry precedes application styles", () => {
+  expect(stylesheet.trimStart()).toStartWith('@import "@hraness/design-kit/styles.css";');
+  expect(stylesheet.match(/@import "@hraness\/design-kit\/styles\.css"/gu)).toHaveLength(1);
+  expect(stylesheet).not.toMatch(/@import\s+["'](?:tailwindcss|@hraness\/design-kit\/(?:product-marketing|tokens|components)\.css)["']/u);
+  expect(stylesheet).not.toMatch(/@(?:tailwind|apply)\b/u);
+});
+
+function firstRule(selector: string, css = stylesheet): string {
   const escaped = selector.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
-  return stylesheet.match(new RegExp(`${escaped}\\s*\\{(?<body>[^}]*)\\}`, "u"))?.groups?.body ?? "";
+  return css.match(new RegExp(`${escaped}\\s*\\{(?<body>[^}]*)\\}`, "u"))?.groups?.body ?? "";
 }
+
+test("atlas controls expose focus and selected state without changing the result text color", () => {
+  expect(stylesheet).toContain('@import "../styles/benchmark-atlas.css"');
+  expect(firstRule(".benchmark-atlas :focus-visible", atlasStylesheet)).toMatch(/outline:\s*2px solid/u);
+  expect(firstRule('.atlas-row[aria-pressed="true"]', atlasStylesheet)).toContain("background:");
+  expect(atlasStylesheet).not.toContain(".atlas-navigation select");
+  expect(firstRule(".atlas-task-select, .atlas-benchmark-select", atlasStylesheet)).toContain("min-width: 0");
+  expect(firstRule(".atlas-scatter__point:focus-visible circle:last-of-type", atlasStylesheet)).toContain("stroke: var(--foreground)");
+  expect(firstRule(".atlas-row__heading strong", atlasStylesheet)).not.toContain("text-overflow: ellipsis");
+  expect(firstRule(".atlas-row__heading strong", atlasStylesheet)).toContain("overflow-wrap: anywhere");
+  expect(firstRule(".atlas-inspector h3", atlasStylesheet)).toContain("overflow-wrap: anywhere");
+});
+
+test("atlas details remain in document flow and move below results on smaller screens", () => {
+  expect(firstRule(".atlas-results", atlasStylesheet)).toContain("display: grid");
+  expect(firstRule(".atlas-inspector", atlasStylesheet)).not.toMatch(/position:\s*(?:absolute|fixed)/u);
+  expect(atlasStylesheet).toMatch(/@media \(max-width:\s*1100px\)[\s\S]*?\.atlas-results\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)/u);
+  expect(atlasStylesheet).toMatch(/@media \(max-width:\s*720px\)[\s\S]*?\.atlas-navigation\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\) auto/u);
+  expect(atlasStylesheet).toMatch(/@media \(max-width:\s*720px\)[\s\S]*?\.atlas-benchmark-select\s*\{[^}]*grid-column:\s*1 \/ -1/u);
+  expect(atlasStylesheet).toMatch(/@media \(max-width:\s*720px\)[\s\S]*?\.atlas-comparison__grid\s*\{[^}]*grid-template-columns:\s*1fr/u);
+  expect(firstRule(".atlas-table-scroll", atlasStylesheet)).toContain("overflow-x: auto");
+  expect(firstRule(".atlas-scatter__scroll", atlasStylesheet)).toContain("overflow-x: auto");
+});
+
+test("application resets stay below shared component styles", () => {
+  const baseStart = stylesheet.indexOf("@layer base {");
+  const baseEnd = stylesheet.indexOf("\n}\n\n:root", baseStart);
+  const baseLayer = stylesheet.slice(baseStart, baseEnd + 2);
+  const unlayeredStyles = stylesheet.slice(baseEnd + 2);
+
+  expect(baseStart).toBeGreaterThan(0);
+  expect(baseEnd).toBeGreaterThan(baseStart);
+  expect(baseLayer).toContain("button, input, select, textarea { font: inherit; }");
+  expect(baseLayer).toContain("input, select, textarea { color: inherit; }");
+  expect(baseLayer).toContain("button:not(:disabled) { cursor: pointer; }");
+  expect(baseLayer).toMatch(/a, button, input,[\s\S]*?padding:\s*0;/u);
+  expect(unlayeredStyles).not.toMatch(/button,\s*input\s*\{[^}]*font:/u);
+  expect(unlayeredStyles).not.toMatch(/button\s*\{[^}]*cursor:/u);
+  expect(unlayeredStyles).not.toMatch(/\na\s*\{[^}]*color:\s*inherit;/u);
+});
+
+test("native select menus inherit the application theme", () => {
+  const baseStart = stylesheet.indexOf("@layer base {");
+  const baseEnd = stylesheet.indexOf("\n}\n\n:root", baseStart);
+  const baseLayer = stylesheet.slice(baseStart, baseEnd + 2);
+
+  expect(firstRule(":root")).toContain("color-scheme: light");
+  expect(firstRule(':root[data-theme="dark"]')).toContain("color-scheme: dark");
+  expect(baseLayer).toContain(":where(select) { color-scheme: inherit; }");
+  expect(baseLayer).toMatch(/:where\(select > option, select > optgroup, select > optgroup > option\)\s*\{[^}]*background-color:\s*var\(--popover\);[^}]*color:\s*var\(--foreground\);/su);
+  expect(baseLayer).toContain(":where(select option:disabled) { color: var(--muted); }");
+});
 
 test("share-link fallback leaves geometry, focus, and paint to the shared field", () => {
   const field = stylesheet.match(
@@ -41,27 +101,28 @@ test("chart collections retain shared paint geometry and target sizes", () => {
   expect(stylesheet).not.toContain("interaction-guide");
 });
 
-test("metric selectors replace the axis labels without consuming header space", () => {
+test("metric selectors reserve normal-flow space outside the plot", () => {
   expect(stylesheet).not.toContain("chart-header-actions");
-  expect(stylesheet).not.toContain("chart-controls");
-  expect(firstRule(".chart-axis-control")).toContain("position: absolute");
-  expect(firstRule(".chart-axis-control--x")).toContain("bottom: 5px");
-  expect(firstRule(".chart-axis-control--y")).toContain("top: 47.88%");
-  expect(firstRule(".chart-axis-control--y")).toContain(
-    "left: calc(env(safe-area-inset-left) + 40px)",
-  );
-  expect(firstRule(".chart-axis-control--y .metric-control")).toContain("rotate(-90deg)");
+  expect(stylesheet).toContain('@import "@hraness/site-footer/styles.css"');
+  expect(stylesheet).not.toContain('@import "@hraness/ui/components.css"');
+  expect(firstRule(".chart-metric-controls")).toContain("display: grid");
+  expect(firstRule(".chart-metric-controls")).toContain("grid-template-columns: minmax(168px, 1fr) auto minmax(76px, 1fr)");
+  expect(firstRule(".chart-metric-controls")).not.toContain("position: absolute");
+  expect(firstRule(".chart-benchmark-select")).toContain("width: min(220px, 100%)");
+  expect(firstRule(".chart-interaction-cue")).toContain("grid-column: 3");
+  expect(firstRule(".chart-interaction-cue")).toContain("justify-self: end");
+  expect(firstRule(".chart-interaction-cue__touch")).toContain("display: none");
+  expect(stylesheet).toMatch(/@media \(max-width:\s*760px\)[\s\S]*?\.chart-interaction-cue__desktop\s*\{[^}]*display:\s*none;/u);
+  expect(stylesheet).toMatch(/@media \(hover:\s*none\), \(pointer:\s*coarse\)[\s\S]*?\.chart-interaction-cue__touch\s*\{[^}]*display:\s*inline;/u);
+  expect(stylesheet).not.toContain("chart-axis-control");
+  expect(stylesheet).not.toContain("rotate(-90deg)");
   expect(firstRule(".chart-export-axis-title")).toContain("visibility: hidden");
-  expect(stylesheet).not.toMatch(
-    /@media \(max-width:\s*760px\)[\s\S]*?\.chart-axis-control--y\s*\{/u,
-  );
 });
 
 test("provider filtering uses one responsive edge inset", () => {
   expect(firstRule(".provider-filter-shell")).not.toMatch(/padding\s*:/u);
-  expect(firstRule(
-    ".provider-filter-surface.ui-toggle-group__surface:is([data-hovered], [data-focus-within], [data-pressed])",
-  )).toContain("--jelly-fill: transparent");
+  expect(firstRule(".provider-filter-surface.ui-toggle-group__surface")).toContain("background: transparent");
+  expect(firstRule(".provider-filter-surface.ui-toggle-group__surface")).toContain("border-radius: 8px");
   expect(stylesheet).toMatch(/\.provider-filter\s*\{[^}]*padding-inline:\s*clamp\(12px, 2vw, 24px\);[^}]*scroll-padding-inline:\s*clamp\(12px, 2vw, 24px\);/su);
   expect(stylesheet).not.toMatch(/\.provider-filter\s*\{[^}]*border(?:-[a-z-]+)?:/su);
   expect(stylesheet).not.toMatch(/@media \(max-width:\s*760px\)[\s\S]*?\.provider-filter\s*\{[^}]*padding:/u);
@@ -69,41 +130,163 @@ test("provider filtering uses one responsive edge inset", () => {
 
 test("compact chart chrome shares the 12px design inset", () => {
   expect(stylesheet).toContain("--chart-compact-inset: var(--space-3, 0.75rem)");
-  expect(stylesheet).toMatch(/@media \(max-width:\s*760px\)[\s\S]*?\.chart-top-bar\s*\{[^}]*padding-inline:\s*var\(--chart-compact-inset\);/u);
   expect(stylesheet).toMatch(/@media \(max-width:\s*760px\)[\s\S]*?\.chart-header\s*\{[^}]*padding:\s*var\(--chart-compact-inset\) var\(--chart-compact-inset\) 12px;/u);
-  expect(stylesheet).not.toMatch(/@media \(max-width:\s*760px\)[\s\S]*?\.chart-axis-control--y\s*\{/u);
-  expect(stylesheet).toMatch(/@media \(max-width:\s*760px\)[\s\S]*?\.chart-footer\s*\{[^}]*padding:\s*10px var\(--chart-compact-inset\) max\(var\(--space-4\), env\(safe-area-inset-bottom\)\);/u);
+  expect(firstRule(".chart-metric-controls")).toContain("padding: 6px var(--chart-content-inset)");
+  expect(stylesheet).toMatch(/@media \(max-width:\s*760px\)[\s\S]*?\.chart-resource-nav\s*\{[^}]*padding:\s*10px var\(--chart-compact-inset\) max\(var\(--space-4\), env\(safe-area-inset-bottom\)\);/u);
 });
 
-test("global chart context stays dense in the sticky header", () => {
-  expect(firstRule(".chart-top-bar .ui-top-bar__actions")).toContain("gap: 2px");
-  expect(firstRule(".chart-top-bar .ui-top-bar__actions")).toContain("min-width: 0");
+test("homepage has no clipped discovery document", () => {
+  expect(stylesheet).not.toContain(".home-document");
+  expect(stylesheet).not.toContain(".chart-top-bar");
+  expect(stylesheet).not.toContain(".chart-heading");
+});
+
+test("homepage orientation is a hairline fact list on the shared section grammar", () => {
+  const facts = firstRule(".chart-orientation__facts");
+  const fact = firstRule(".chart-orientation__facts > div");
+
+  expect(stylesheet).not.toMatch(/\.chart-orientation\s*\{/u);
+  expect(stylesheet).not.toContain(".chart-orientation__eyebrow");
+  expect(stylesheet).not.toContain(".chart-orientation h1");
+  expect(facts).toContain("border-block-start: 1px solid var(--hraness-marketing-line)");
+  expect(facts).toContain("display: grid");
+  expect(fact).toContain("border-block-end: 1px solid var(--hraness-marketing-line)");
+  expect(fact).not.toMatch(/background\s*:/u);
+  expect(firstRule(".chart-orientation__facts dt")).toContain("font-size: .875rem");
+  expect(firstRule(".chart-orientation__facts dt")).not.toContain("text-transform");
+  expect(firstRule(".chart-orientation__facts dd")).toContain("font-size: 1rem");
+});
+
+test("the image-free homepage card remains available when a curated article has no image", () => {
+  const imageLink = firstRule(".home-editorial__image-link");
+  const textCard = firstRule(".home-editorial__text-card");
+
+  expect(imageLink).toContain("aspect-ratio: 16 / 9");
+  expect(imageLink).toContain("border: 1px solid var(--grid)");
+  expect(imageLink).toContain("background: var(--surface-raised)");
+  expect(textCard).toContain("background: var(--surface-raised)");
+  expect(textCard).toContain("border: 1px solid var(--grid)");
+  expect(textCard).toContain("display: grid");
+  expect(textCard).toContain("flex: 1");
+  expect(textCard).toContain("text-decoration: none");
+  expect(stylesheet).toMatch(/@media \(max-width:\s*42rem\)[\s\S]*?\.home-editorial__grid \.home-editorial__item--text\s*\{[^}]*display:\s*block;/u);
+  expect(stylesheet).not.toContain(".home-editorial__grid article > a");
+});
+
+test("homepage benchmark guide progressively discloses detail and keeps a readable mobile map", () => {
+  const portfolio = firstRule(".home-benchmark-portfolio");
+  const snapshots = firstRule(".home-benchmark-portfolio__snapshots");
+  const leader = firstRule(".terminal-bench-snapshot__leader");
+
+  expect(portfolio).toContain("border-bottom: 1px solid var(--line)");
+  expect(portfolio).toContain("padding: clamp(22px, 3vw, 36px) var(--chart-content-inset)");
+  expect(snapshots).toContain("grid-template-columns: repeat(2, minmax(0, 1fr))");
+  expect(leader).toContain("grid-template-columns: minmax(0, 1fr) max-content");
+  expect(stylesheet).toMatch(/\.home-benchmark-portfolio__protocol > summary,[\s\S]*?min-height:\s*var\(--interactive-target-min\);/u);
+  expect(stylesheet).toContain('.home-benchmark-portfolio__protocol[open] > summary::after');
+  expect(stylesheet).toContain(".terminal-bench-snapshot__details[open] > summary");
+  expect(stylesheet).toContain(".terminal-bench-snapshot__table { min-width: 540px; }");
+  expect(stylesheet).toMatch(/@media \(max-width:\s*1100px\)[\s\S]*?\.home-benchmark-portfolio__snapshots\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\);/u);
+  expect(stylesheet).toMatch(/@media \(max-width:\s*760px\)[\s\S]*?\.home-benchmark-portfolio__table,[\s\S]*?\.home-benchmark-portfolio__table td\s*\{[^}]*display:\s*block;[^}]*width:\s*100%;/u);
+  expect(stylesheet).toMatch(/@media \(max-width:\s*760px\)[\s\S]*?\.home-benchmark-portfolio__mobile-label\s*\{[^}]*display:\s*block;/u);
+});
+
+test("the shared footer owns its document-flow placement at every viewport", () => {
+  expect(stylesheet).not.toContain(".hraness-site-footer__inner");
+});
+
+test("homepage leaders use one owned rule at each outer edge", () => {
+  const leaders = firstRule(".home-leaders");
+  const tableScroll = firstRule(".home-leaders .plain-publication__table-scroll");
+  const table = firstRule(".home-leaders .plain-publication__table");
+  const tableHead = firstRule(".home-leaders .plain-publication__table thead th");
+
+  expect(firstRule(".ui-top-bar")).toContain("border-bottom: 1px solid var(--grid)");
+  expect(leaders).not.toMatch(/display\s*:\s*none/u);
+  expect(leaders).not.toMatch(/clip\s*:/u);
+  expect(leaders).toContain("border-bottom: 1px solid var(--line)");
+  expect(leaders).not.toMatch(/border-(?:top|block-start)\s*:/u);
+  expect(leaders).toContain("padding: 0 var(--chart-content-inset)");
+  expect(tableScroll).toContain("border: 0");
+  expect(tableScroll).not.toMatch(/border-block\s*:/u);
+  expect(tableScroll).toContain("max-width: 100%");
+  expect(tableScroll).toContain("overflow-x: auto");
+  expect(table).toContain("border-collapse: collapse");
+  expect(table).toContain("min-width: 40rem");
+  expect(tableHead).toContain("border-top: 0");
+  expect(stylesheet).toMatch(/\.home-leaders \.plain-publication__table th,[\s\S]*?\.home-leaders \.plain-publication__table td\s*\{[^}]*border-top:\s*1px solid var\(--line\);/u);
+  expect(firstRule(".home-leaders .plain-publication__table caption")).toContain("clip: rect(0, 0, 0, 0)");
+  expect(stylesheet).not.toContain(".home-leaders h1");
+  expect(stylesheet).not.toContain(".home-leaders h2");
+  expect(stylesheet).not.toContain(".home-leaders p");
+});
+
+test("shared top bars reserve sticky flow and cannot starve their title", () => {
+  const topBar = firstRule(".ui-top-bar");
+  const sticky = firstRule(".ui-top-bar[data-sticky]");
+  const title = firstRule(".ui-top-bar__title");
+  const actions = firstRule(".ui-top-bar__actions");
+
+  expect(topBar).toContain("background: var(--background)");
+  expect(topBar).toContain("grid-template-columns: minmax(0, max-content) minmax(0, 1fr)");
+  expect(topBar).toContain("isolation: isolate");
+  expect(topBar).toContain("padding-block: var(--ui-top-bar-block-padding, .5rem)");
+  expect(sticky).toContain("position: sticky");
+  expect(sticky).toContain("inset-block-start: 0");
+  expect(title).toContain("min-inline-size: 0");
+  expect(title).toContain("max-inline-size: min(42vw, 28rem)");
+  expect(title).toContain("overflow: hidden");
+  expect(title).toContain("text-overflow: ellipsis");
+  expect(title).toContain("overflow-wrap: normal");
+  expect(title).toContain("white-space: nowrap");
+  expect(actions).toContain("flex-wrap: wrap");
+  expect(actions).toContain("min-inline-size: 0");
+  expect(stylesheet).toMatch(/@media \(max-width:\s*520px\)[\s\S]*?\.ui-top-bar\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\);/u);
+  expect(stylesheet).toMatch(/@media \(hover:\s*none\), \(pointer:\s*coarse\)[\s\S]*?\.ui-top-bar :is\(a, button\)[\s\S]*?min-block-size:\s*var\(--interactive-target-min\);/u);
+  expect(firstRule(".chart-top-bar")).not.toContain("position: sticky");
+  expect(firstRule(".chart-page-canvas")).toContain("scroll-margin-block-start: var(--chart-sticky-header-block-size)");
+  expect(firstRule(".model-update-timeline")).toContain("scroll-margin-block-start: calc(var(--chart-sticky-header-block-size) + .75rem)");
+});
+
+test("the local resource links are quiet at rest", () => {
+  expect(stylesheet).not.toContain(".hraness-brand");
+  expect(stylesheet).not.toContain(".hraness-ra-mark");
+  expect(firstRule(".chart-resource-nav__links a")).toContain("text-decoration: none");
+  expect(firstRule(".chart-resource-nav__links a:hover,\n.chart-resource-nav__links a:focus-visible")).toContain(
+    "text-decoration: underline",
+  );
+});
+
+test("the latest-update badge sits in the coding-agent evidence row", () => {
+  expect(firstRule(".chart-family-intro__evidence .latest-update-badge")).toContain("flex-basis: 100%");
+  expect(firstRule(".latest-update-badge span")).not.toContain("uppercase");
   expect(stylesheet).toMatch(/@media \(max-width:\s*520px\)[\s\S]*?\.latest-update-badge strong\s*\{[^}]*display:\s*none;/u);
   expect(stylesheet).not.toContain(".chart-subtitle-row");
   expect(stylesheet).not.toContain(".chart-header-content");
 });
 
 test("compact icon actions expand to the full touch target on mobile", () => {
-  expect(stylesheet).toMatch(/@media \(max-width:\s*760px\)[\s\S]*?\.chart-provenance-control \.ui-icon-button\[data-size="compact"\],[\s\S]*?\.share-trigger\.ui-icon-button\[data-size="compact"\]\s*\{[^}]*width:\s*var\(--interactive-target-min\);[^}]*height:\s*var\(--interactive-target-min\);[^}]*flex-basis:\s*var\(--interactive-target-min\);/u);
-  expect(stylesheet).toMatch(/\.chart-provenance-control \.ui-icon-button\[data-size="compact"\] > \.ui-icon-button__control,[\s\S]*?\.share-trigger\.ui-icon-button\[data-size="compact"\] > \.ui-icon-button__control\s*\{[^}]*width:\s*var\(--interactive-target-min\);[^}]*height:\s*var\(--interactive-target-min\);/u);
+  expect(stylesheet).not.toContain("chart-provenance-control");
+  expect(stylesheet).toMatch(/@media \(max-width:\s*760px\)[\s\S]*?\.share-trigger\.ui-icon-button\[data-size="compact"\]\s*\{[^}]*width:\s*var\(--interactive-target-min\);[^}]*height:\s*var\(--interactive-target-min\);[^}]*flex-basis:\s*var\(--interactive-target-min\);/u);
   expect(stylesheet).toMatch(/\.share-trigger\.ui-icon-button\[data-size="compact"\] > \.ui-icon-button__control\s*\{[^}]*width:\s*var\(--interactive-target-min\);[^}]*height:\s*var\(--interactive-target-min\);/u);
 });
 
-test("chart canvas is full bleed while its header and footer own safe gutters", () => {
+test("chart canvas is full bleed while its header and resource nav own safe gutters", () => {
   expect(firstRule(".chart-app")).not.toMatch(/padding\s*:/u);
-  expect(firstRule(".chart-top-bar")).not.toMatch(/padding-block\s*:/u);
   expect(stylesheet).toContain("--chart-content-inset: clamp(12px, 2vw, 28px)");
   expect(firstRule(".chart-page-canvas")).toContain("margin-inline: 0");
   expect(firstRule(".chart-page-canvas")).toContain("max-width: none");
   expect(firstRule(".chart-page-canvas")).toContain("padding: 0");
   expect(firstRule(".chart-header")).toContain("padding: clamp(12px, 1.5vw, 18px) var(--chart-content-inset) 16px");
-  expect(firstRule(".chart-footer")).toContain("padding: 10px var(--chart-content-inset) max(var(--space-4), env(safe-area-inset-bottom))");
+  expect(firstRule(".chart-resource-nav")).toContain("padding: 10px var(--chart-content-inset) max(var(--space-4), env(safe-area-inset-bottom))");
 });
 
 test("share export floats over the chart with a quiet bounded surface", () => {
   expect(stylesheet).not.toContain(".share-label");
-  expect(firstRule(".share-trigger.ui-surface")).toContain("--jelly-color-border-default: transparent");
-  expect(firstRule(".share-trigger.ui-surface")).toContain("--jelly-fill: color-mix(in oklch, var(--surface-raised) 92%, transparent)");
+  expect(firstRule(".share-trigger.ui-surface")).toContain("background: color-mix(in oklch, var(--surface-raised) 92%, transparent)");
+  expect(firstRule(".share-trigger.ui-surface")).toContain("color: var(--foreground)");
+  expect(firstRule(".share-trigger.ui-surface:hover,\n.ui-menu-trigger:has(> .share-menu-popover) > .share-trigger.ui-surface")).toContain("background: var(--surface-active)");
+  expect(stylesheet).not.toContain("--jelly-");
   expect(firstRule(".share-control")).toContain("position: absolute");
   expect(firstRule(".share-control")).toContain("right: var(--chart-content-inset)");
   expect(firstRule(".share-control")).toContain("top: var(--chart-compact-inset)");
@@ -120,12 +303,15 @@ test("chart guidance does not reserve a help row or card stack", () => {
 test("the chart declares only horizontal scrolling", () => {
   expect(firstRule(".chart-scroll")).toContain("overflow-x: auto");
   expect(firstRule(".chart-scroll")).not.toContain("overflow-y:");
+  expect(firstRule(".chart-app")).toContain("grid-template-columns: minmax(0, 1fr)");
   expect(firstRule(".chart-app")).toContain("overflow-x: clip");
   expect(firstRule(".chart-page-canvas")).toContain("overflow-x: clip");
   expect(firstRule(".chart-scroll")).toContain("max-width: 100%");
+  expect(firstRule(".chart-canvas")).toContain("aspect-ratio: 1440 / 940");
+  expect(stylesheet).toMatch(/@media \(max-width:\s*760px\)[\s\S]*?\.chart-canvas\s*\{[^}]*min-width:\s*700px;/u);
 });
 
-test("the persistent header and footer omit promotional credit chrome", () => {
+test("the persistent header and resource nav omit promotional credit chrome", () => {
   expect(stylesheet).not.toContain("chart-attribution");
   expect(stylesheet).not.toContain("chart-top-bar-actions");
   expect(stylesheet).not.toContain("chart-footer-credit");
@@ -137,6 +323,7 @@ test("chart labels keep semantic text independent from the data-series palette",
   expect(stylesheet).not.toMatch(/\.chart-model-label-title\s*\{[^}]*fill:\s*currentColor;/su);
   expect(stylesheet).toMatch(/\.chart-watermark\s*\{[^}]*fill:\s*var\(--foreground\);/su);
   expect(stylesheet).not.toMatch(/\.chart-watermark\s*\{[^}]*opacity:/su);
+  expect(firstRule(".chart-label-leaders.is-resting .chart-label-leader")).toContain("opacity: .56");
 });
 
 test("point details escape the scroll clip and layer above chart chrome with a leader", () => {
@@ -166,11 +353,15 @@ test("chart point controls retain a theme-contrast boundary in every state", () 
   expect(stylesheet).not.toMatch(/\.chart-point\.is-dimmed\s*\{[^}]*opacity:/su);
 });
 
-test("option-space charts stay compact, complementary, and single-column on phones", () => {
+test("secondary chart evidence stays behind an accessible compact disclosure", () => {
   expect(firstRule(".option-space-overview")).toContain("border-top: 1px solid var(--grid)");
+  expect(firstRule(".option-space-overview")).toContain("display: grid");
   expect(firstRule(".option-space-overview")).toContain("clamp(18px, 2.5vw, 28px)");
   expect(stylesheet).not.toContain("option-space-header");
   expect(stylesheet).not.toContain("option-space-eyebrow");
+  expect(firstRule(".option-space-overview__details > summary,\n.model-update-timeline__history > summary")).toContain(
+    "min-height: var(--interactive-target-min)",
+  );
   expect(firstRule(".option-space-grid")).toContain(
     "grid-template-columns: repeat(2, minmax(0, 1fr))",
   );
@@ -180,4 +371,17 @@ test("option-space charts stay compact, complementary, and single-column on phon
   expect(stylesheet).toMatch(
     /@media \(max-width:\s*760px\)[\s\S]*?\.option-space-grid\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\);/u,
   );
+  expect(stylesheet).toMatch(
+    /@media \(max-width:\s*760px\)[\s\S]*?\.option-space-overview__header\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\);/u,
+  );
+});
+
+test("update history keeps its latest signal visible above a compact disclosure", () => {
+  expect(stylesheet).toMatch(
+    /\.model-update-timeline\s*\{[^}]*border-top:\s*1px solid var\(--grid\);[^}]*display:\s*grid;/u,
+  );
+  expect(firstRule(".model-update-timeline__current")).toContain("border-block: 1px solid var(--grid)");
+  expect(stylesheet).toMatch(/\.model-update-timeline__history\s*\{\s*margin-top:\s*-12px;\s*\}/u);
+  expect(stylesheet).toContain('.model-update-timeline__history > summary::after');
+  expect(stylesheet).toContain('.model-update-timeline__history[open] > summary::after');
 });

@@ -2,11 +2,33 @@ name: AI Charts data refresh
 
 on:
   schedule:
+    # Release announcements are time-sensitive and cheap to discover. Keep this
+    # off the top of the hour, where scheduled GitHub Actions are most delayed.
+    - cron: "23 * * * *"
+    # Benchmark owners update less often and are polled on the established lane.
+    - cron: "17 */4 * * *"
+    # The heavier Artificial Analysis import remains daily.
     - cron: "43 10 * * *"
   workflow_dispatch:
+    inputs:
+      mode:
+        description: Run releases only, benchmarks only, full with AAI, or legacy discovery (releases + benchmarks).
+        required: true
+        default: full
+        type: choice
+        options:
+          - full
+          - releases
+          - benchmarks
+          # Backward-compatible alias for the former non-AAI combined refresh.
+          - discovery
 
 permissions:
+  actions: write
   contents: write
+  issues: write
+  pull-requests: write
+  statuses: write
 
 concurrency:
   group: aicharts-data-refresh
@@ -14,56 +36,545 @@ concurrency:
 
 jobs:
   refresh:
-    name: Refresh Artificial Analysis snapshot
+    name: Refresh benchmark and release data
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 45
     env:
-      SNAPSHOT_PATH: data/coding-agents.json
+      ARENA_MEDIA_PATH: data/arena-media.json
+      ATLAS_AUDIO_PATH: data/benchmark-atlas-audio.json
+      ATLAS_MULTIMODAL_PATH: data/benchmark-atlas-multimodal.json
+      ATLAS_REASONING_PATH: data/benchmark-atlas-reasoning.json
+      BENCHMARK_PATH: data/coding-agents.json
+      CALCULATOR_PATH: data/calculator-inputs.json
+      DEEP_SWE_PATH: data/deep-swe-evidence.json
+      FIRST_PARTY_RELEASE_PATH: data/first-party-release-radar.json
+      INTELLIGENCE_PATH: data/artificial-analysis-intelligence-v4-3.json
+      # Cloudflare's documented always-pass public test key. Production uses
+      # the hostname-restricted live key; this job only proves the build.
+      NEXT_PUBLIC_HRANESS_MAILING_TURNSTILE_SITEKEY: 1x00000000000000000000AA
+      REFRESH_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.mode || github.event.schedule == '23 * * * *' && 'releases' || github.event.schedule == '17 */4 * * *' && 'benchmarks' || github.event.schedule == '43 10 * * *' && 'full' || 'full' }}
+      REFRESH_BRANCH: automation/model-data-refresh-${{ github.run_id }}-${{ github.run_attempt }}
+      RELEASE_RADAR_PATH: data/model-release-radar.json
+      REQUIRED_CHECK_CONTEXT: Required
+      REFRESH_ISSUE_TITLE: "[automation] Data refresh is unhealthy"
+      RELEASE_REVIEW_ISSUE_TITLE: "[automation] First-party releases need review"
+      RUN_BENCHMARK_REFRESH: ${{ (github.event_name == 'schedule' && (github.event.schedule == '17 */4 * * *' || github.event.schedule == '43 10 * * *')) || (github.event_name == 'workflow_dispatch' && (inputs.mode == 'full' || inputs.mode == 'benchmarks' || inputs.mode == 'discovery')) }}
+      RUN_AAI_REFRESH: ${{ (github.event_name == 'schedule' && github.event.schedule == '43 10 * * *') || (github.event_name == 'workflow_dispatch' && inputs.mode == 'full') }}
+      RUN_RELEASE_REFRESH: ${{ (github.event_name == 'schedule' && (github.event.schedule == '23 * * * *' || github.event.schedule == '43 10 * * *')) || (github.event_name == 'workflow_dispatch' && (inputs.mode == 'full' || inputs.mode == 'releases' || inputs.mode == 'discovery')) }}
+      TERMINAL_BENCH_PATH: data/terminal-bench.json
+      TERMINAL_BENCH_SCIENCE_PATH: data/terminal-bench-science.json
     steps:
       # Scheduled and manual runs always execute trusted default-branch code.
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - id: checkout
+        continue-on-error: true
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
           ref: main
-      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+      - id: setup_bun
+        if: steps.checkout.outcome == 'success'
+        continue-on-error: true
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
           bun-version: 1.3.14
-      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+      - id: setup_node
+        if: steps.checkout.outcome == 'success'
+        continue-on-error: true
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version-file: .nvmrc
-      - name: Install frozen dependencies
-        run: bun install --frozen-lockfile
-      - name: Refresh snapshot from Artificial Analysis
+      - name: Install frozen dependencies with retries
+        id: dependencies
+        if: steps.setup_bun.outcome == 'success' && steps.setup_node.outcome == 'success'
+        continue-on-error: true
+        shell: bash
+        run: |
+          for attempt in 1 2 3; do
+            if bun install --frozen-lockfile; then
+              exit 0
+            fi
+            echo "Dependency installation attempt ${attempt} failed."
+            if [[ "$attempt" -lt 3 ]]; then sleep $((attempt * 5)); fi
+          done
+          exit 1
+      - name: Refresh first-party model-release candidates
+        id: first_party_releases
+        if: steps.dependencies.outcome == 'success' && env.RUN_RELEASE_REFRESH == 'true'
+        continue-on-error: true
+        run: bun run first-party-releases:refresh
+      - name: Persist first-party release review alert
+        id: first_party_review
+        if: always() && steps.dependencies.outcome == 'success' && env.RUN_RELEASE_REFRESH == 'true'
+        continue-on-error: true
+        env:
+          GH_REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          review_count="$(jq '[.candidates[] | select(.status == "needs-review")] | length' "$FIRST_PARTY_RELEASE_PATH")"
+          if [[ "$review_count" -eq 0 ]]; then
+            echo "First-party release sources have no candidates awaiting review."
+            exit 0
+          fi
+
+          run_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          review_issue_number="$(gh issue list --state open --limit 100 --json number,title --jq '.[] | select(.title == "[automation] First-party releases need review") | .number' | head -n 1)"
+          review_rows="$(jq -r '[.candidates[] | select(.status == "needs-review")] | sort_by(.firstSeenAt) | reverse | .[] | [.canonicalUrl, "- <!-- aicharts:first-party-release-candidate --> [\(.namedModels | join(" + "))](\(.canonicalUrl)) — \(.providerName); first seen \(.firstSeenAt)."] | @tsv' "$FIRST_PARTY_RELEASE_PATH")"
+          review_lines="$(printf '%s\n' "$review_rows" | cut -f2-)"
+          printf -v review_body 'First-party provider sources contain %s release candidates awaiting disposition. Confirmed releases may be published; non-release announcements should be marked `not-a-release`. Sitemap timestamps remain discovery metadata, not official release dates. Queue entries are append-only until their dispositions are published.\n\n%s\n\nSource run: %s' \
+            "$review_count" "$review_lines" "$run_url"
+          if [[ -z "$review_issue_number" ]]; then
+            gh issue create --title "$RELEASE_REVIEW_ISSUE_TITLE" --body "$review_body"
+          else
+            review_issue_body="$(gh issue view "$review_issue_number" --json body --jq '.body')"
+            review_issue_comments="$(gh api --paginate "repos/${GITHUB_REPOSITORY}/issues/${review_issue_number}/comments?per_page=100" --jq '.[].body')"
+            review_history="${review_issue_body}"$'\n'"${review_issue_comments}"
+            review_history_urls="$(
+              printf '%s\n' "$review_history" | sed -nE 's|^- <!-- aicharts:first-party-release-candidate --> .*\((https://[^)]+)\) — .*$|\1|p'
+            )"
+            new_review_lines=""
+            new_review_count=0
+            while IFS=$'\t' read -r review_url review_line; do
+              [[ -z "$review_url" ]] && continue
+              if ! grep -Fxq -- "$review_url" <<< "$review_history_urls"; then
+                new_review_lines+="${review_line}"$'\n'
+                new_review_count=$((new_review_count + 1))
+              fi
+            done <<< "$review_rows"
+            if [[ "$new_review_count" -gt 0 ]]; then
+              printf -v review_comment '%s newly observed candidates were appended to this durable queue (%s currently await review).\n\n%s\nSource run: %s' \
+                "$new_review_count" "$review_count" "$new_review_lines" "$run_url"
+              gh issue comment "$review_issue_number" --body "$review_comment"
+            else
+              echo "Every current first-party review candidate is already retained in the durable issue history."
+            fi
+          fi
+      - name: Refresh model-release radar from OpenRouter
+        id: release_radar
+        if: steps.dependencies.outcome == 'success' && env.RUN_RELEASE_REFRESH == 'true'
+        continue-on-error: true
+        run: bun run releases:refresh
+      - name: Refresh benchmark snapshot from Artificial Analysis
+        id: benchmark
+        if: steps.dependencies.outcome == 'success' && env.RUN_AAI_REFRESH == 'true'
+        continue-on-error: true
         run: bun run data:refresh
-      - name: Detect refreshed snapshot
+      - name: Refresh Artificial Analysis Intelligence v4.3 efficiency snapshot
+        id: intelligence
+        if: steps.dependencies.outcome == 'success' && env.RUN_BENCHMARK_REFRESH == 'true'
+        continue-on-error: true
+        run: bun run aa-intelligence-v4-3:refresh
+      - name: Reconcile release statuses from the available checked snapshots
+        id: release_reconcile
+        if: steps.dependencies.outcome == 'success' && (env.RUN_RELEASE_REFRESH == 'true' || env.RUN_BENCHMARK_REFRESH == 'true')
+        continue-on-error: true
+        run: bun run releases:reconcile
+      - name: Refresh direct DeepSWE early evidence
+        id: deep_swe
+        if: steps.dependencies.outcome == 'success' && env.RUN_BENCHMARK_REFRESH == 'true'
+        continue-on-error: true
+        run: bun run deepswe:refresh
+      - name: Refresh official Terminal-Bench 4 snapshot
+        id: terminal_bench
+        if: steps.dependencies.outcome == 'success' && env.RUN_BENCHMARK_REFRESH == 'true'
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: bun run terminal-bench:refresh
+      - name: Refresh official Terminal-Bench-Science 0.1 snapshot
+        id: terminal_bench_science
+        if: steps.dependencies.outcome == 'success' && env.RUN_BENCHMARK_REFRESH == 'true'
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: bun run terminal-bench-science:refresh
+      # Refresh admitted versions and selected cohorts only. A new benchmark
+      # version, protocol, or model outside those contracts requires code review.
+      - name: Refresh checked reasoning, research, and memory cohorts
+        id: atlas_reasoning
+        if: steps.dependencies.outcome == 'success' && env.RUN_BENCHMARK_REFRESH == 'true'
+        continue-on-error: true
+        run: bun run atlas:reasoning:refresh
+      - name: Refresh checked image, video, document, and world cohorts
+        id: atlas_multimodal
+        if: steps.dependencies.outcome == 'success' && env.RUN_BENCHMARK_REFRESH == 'true'
+        continue-on-error: true
+        run: bun run atlas:multimodal:refresh
+      - name: Refresh licensed Arena media preference cohorts
+        id: arena_media
+        if: steps.dependencies.outcome == 'success' && env.RUN_BENCHMARK_REFRESH == 'true'
+        continue-on-error: true
+        run: bun run atlas:arena-media:refresh
+      # This reproduces the reviewed immutable source. A new audio task,
+      # normalizer, source revision, or selected model requires code review.
+      - name: Recheck pinned Open ASR AMI-Cleaned cohort
+        id: atlas_audio
+        if: steps.dependencies.outcome == 'success' && env.RUN_BENCHMARK_REFRESH == 'true'
+        continue-on-error: true
+        run: bun run atlas:audio:refresh
+      # Live pricing sections only; curated hardware, plan, and subsidy sections
+      # are guarded byte for byte and change through code review.
+      - name: Refresh calculator pricing inputs
+        id: calculator
+        if: steps.dependencies.outcome == 'success' && env.RUN_BENCHMARK_REFRESH == 'true'
+        continue-on-error: true
+        run: bun run calculator:refresh
+      - name: Detect owned data changes
         id: snapshot
+        if: steps.dependencies.outcome == 'success'
+        continue-on-error: true
         shell: bash
         run: |
           changed_files="$(git diff --name-only)"
           if [[ -z "$changed_files" ]]; then
+            echo "first_party_changed=false" >> "$GITHUB_OUTPUT"
             echo "changed=false" >> "$GITHUB_OUTPUT"
-            echo "Artificial Analysis data is unchanged."
+            echo "Checked benchmark and release data are unchanged."
             exit 0
           fi
 
-          if [[ "$changed_files" != "$SNAPSHOT_PATH" ]]; then
-            echo "Refresh changed an unexpected file set:"
-            printf '%s\n' "$changed_files"
-            exit 1
+          while IFS= read -r changed_file; do
+            if [[ "$changed_file" != "$BENCHMARK_PATH" && "$changed_file" != "$CALCULATOR_PATH" && "$changed_file" != "$DEEP_SWE_PATH" && "$changed_file" != "$FIRST_PARTY_RELEASE_PATH" && "$changed_file" != "$INTELLIGENCE_PATH" && "$changed_file" != "$RELEASE_RADAR_PATH" && "$changed_file" != "$TERMINAL_BENCH_PATH" && "$changed_file" != "$TERMINAL_BENCH_SCIENCE_PATH" && "$changed_file" != "$ATLAS_REASONING_PATH" && "$changed_file" != "$ATLAS_MULTIMODAL_PATH" && "$changed_file" != "$ARENA_MEDIA_PATH" && "$changed_file" != "$ATLAS_AUDIO_PATH" ]]; then
+              echo "Refresh changed unexpected file: ${changed_file}"
+              exit 1
+            fi
+          done <<< "$changed_files"
+
+          # Frequent source checks should publish evidence changes, not clocks.
+          # Restore an owned snapshot when its only differences are poll metadata;
+          # source health remains visible in this run.
+          while IFS= read -r changed_file; do
+            case "$changed_file" in
+              "$ATLAS_REASONING_PATH"|"$ATLAS_MULTIMODAL_PATH"|"$CALCULATOR_PATH")
+                semantic_filter='walk(if type == "object" then del(.retrievedAt) else . end)'
+                ;;
+              "$BENCHMARK_PATH")
+                semantic_filter='del(.source.retrievedAt)'
+                ;;
+              "$RELEASE_RADAR_PATH")
+                semantic_filter='del(.source.retrievedAt)'
+                ;;
+              "$FIRST_PARTY_RELEASE_PATH")
+                semantic_filter='del(.sources[].retrievedAt)'
+                ;;
+              "$INTELLIGENCE_PATH"|"$ARENA_MEDIA_PATH"|"$ATLAS_AUDIO_PATH")
+                semantic_filter='del(.source.retrievedAt)'
+                ;;
+              "$DEEP_SWE_PATH")
+                semantic_filter='walk(if type == "object" then del(.attemptedAt, .retrievedAt) else . end) | del(.identitySource.status)'
+                ;;
+              "$TERMINAL_BENCH_PATH")
+                semantic_filter='del(.source.retrievedAt)'
+                ;;
+              "$TERMINAL_BENCH_SCIENCE_PATH")
+                semantic_filter='del(.source.retrievedAt)'
+                ;;
+            esac
+            previous_semantic="$(git show "HEAD:${changed_file}" | jq -cS "$semantic_filter")"
+            current_semantic="$(jq -cS "$semantic_filter" "$changed_file")"
+            if [[ "$previous_semantic" == "$current_semantic" ]]; then
+              git restore --source=HEAD -- "$changed_file"
+              echo "Ignored timestamp-only refresh for ${changed_file}."
+            fi
+          done <<< "$changed_files"
+
+          changed_files="$(git diff --name-only)"
+          if git diff --quiet -- "$FIRST_PARTY_RELEASE_PATH"; then
+            echo "first_party_changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "first_party_changed=true" >> "$GITHUB_OUTPUT"
+          fi
+          if [[ -z "$changed_files" ]]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "Source checks succeeded without publishable data changes."
+            exit 0
           fi
 
           echo "changed=true" >> "$GITHUB_OUTPUT"
+      - name: Install pinned Rust toolchain for changed data
+        id: usage_toolchain
+        if: steps.snapshot.outputs.changed == 'true'
+        continue-on-error: true
+        run: rustup show active-toolchain
       - name: Validate updated application
-        if: steps.snapshot.outputs.changed == 'true'
+        id: validation
+        if: steps.snapshot.outputs.changed == 'true' && steps.usage_toolchain.outcome == 'success'
+        continue-on-error: true
         run: bun run check
-      - name: Commit and publish updated snapshot
-        if: steps.snapshot.outputs.changed == 'true'
+      - name: Publish the validated update through required CI
+        id: publish
+        if: steps.validation.outcome == 'success' && steps.snapshot.outputs.changed == 'true'
+        continue-on-error: true
         env:
+          GH_REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
           GITHUB_TOKEN: ${{ github.token }}
         shell: bash
         run: |
           git config user.name "0thernet"
           git config user.email "894119+0thernet@users.noreply.github.com"
-          git add -- "$SNAPSHOT_PATH"
-          git commit -m "chore: refresh benchmark data"
-          git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" HEAD:main
+          git add -- "$BENCHMARK_PATH" "$CALCULATOR_PATH" "$DEEP_SWE_PATH" "$FIRST_PARTY_RELEASE_PATH" "$INTELLIGENCE_PATH" "$RELEASE_RADAR_PATH" "$TERMINAL_BENCH_PATH" "$TERMINAL_BENCH_SCIENCE_PATH" "$ATLAS_REASONING_PATH" "$ATLAS_MULTIMODAL_PATH" "$ARENA_MEDIA_PATH" "$ATLAS_AUDIO_PATH"
+          git commit -m "chore: refresh model data"
+          git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:refs/heads/${REFRESH_BRANCH}"
+
+          run_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          printf -v pr_body 'Automated model-data refresh from %s.\n\nAll checked snapshots were validated with `bun run check` before this PR was created. Imports retain their admitted task, version, and scoring boundaries. Arena publishes complete overall media cohorts; Open ASR reproduces a reviewed pinned cohort. Historical Intelligence Index v4.1.1 remains unchanged. Required CI is dispatched explicitly because pull-request checks created by `GITHUB_TOKEN` otherwise wait for manual approval.' "$run_url"
+          pr_url="$(gh pr create --base main --head "$REFRESH_BRANCH" --title "chore: refresh model data" --body "$pr_body")"
+          echo "pr_url=${pr_url}" >> "$GITHUB_OUTPUT"
+
+          head_sha="$(git rev-parse HEAD)"
+          gh workflow run ci.yml --ref "$REFRESH_BRANCH"
+
+          ci_run_id=""
+          for lookup_attempt in {1..30}; do
+            ci_run_id="$(gh run list --workflow ci.yml --branch "$REFRESH_BRANCH" --commit "$head_sha" --event workflow_dispatch --limit 1 --json databaseId --jq '.[0].databaseId')"
+            if [[ -n "$ci_run_id" ]]; then break; fi
+            sleep 2
+          done
+          if [[ -z "$ci_run_id" ]]; then
+            echo "Required CI run was not registered for ${head_sha}."
+            exit 1
+          fi
+
+          ci_run_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${ci_run_id}"
+          echo "ci_run_url=${ci_run_url}" >> "$GITHUB_OUTPUT"
+          gh run watch "$ci_run_id" --exit-status
+
+          # workflow_dispatch check runs are attached to the commit but omitted
+          # from a pull request's merge rollup. Attest to the exact successful run
+          # with the same GitHub Actions integration and required context.
+          gh api --method POST "repos/${GITHUB_REPOSITORY}/statuses/${head_sha}" \
+            -f state=success \
+            -f context="$REQUIRED_CHECK_CONTEXT" \
+            -f description="Exact-head CI passed for this generated data refresh" \
+            -f target_url="$ci_run_url"
+          gh pr merge "$pr_url" --auto --squash --delete-branch
+
+          pr_state="OPEN"
+          for merge_attempt in {1..60}; do
+            pr_state="$(gh pr view "$pr_url" --json state --jq '.state')"
+            if [[ "$pr_state" == "MERGED" ]]; then break; fi
+            if [[ "$pr_state" == "CLOSED" ]]; then break; fi
+            if [[ "$merge_attempt" -lt 60 ]]; then sleep 5; fi
+          done
+          pr_state="$(gh pr view "$pr_url" --json state --jq '.state')"
+          if [[ "$pr_state" != "MERGED" ]]; then
+            gh pr merge "$pr_url" --disable-auto || true
+            pr_state="$(gh pr view "$pr_url" --json state --jq '.state')"
+          fi
+          if [[ "$pr_state" != "MERGED" ]]; then
+            echo "Update PR finished publication in unexpected state: ${pr_state}."
+            exit 1
+          fi
+      - name: Report health and manage the durable alert
+        if: always()
+        env:
+          ARENA_MEDIA_OUTCOME: ${{ steps.arena_media.outcome }}
+          ATLAS_AUDIO_OUTCOME: ${{ steps.atlas_audio.outcome }}
+          ATLAS_MULTIMODAL_OUTCOME: ${{ steps.atlas_multimodal.outcome }}
+          ATLAS_REASONING_OUTCOME: ${{ steps.atlas_reasoning.outcome }}
+          BENCHMARK_OUTCOME: ${{ steps.benchmark.outcome }}
+          CALCULATOR_OUTCOME: ${{ steps.calculator.outcome }}
+          CHECKOUT_OUTCOME: ${{ steps.checkout.outcome }}
+          DEPENDENCIES_OUTCOME: ${{ steps.dependencies.outcome }}
+          DEEP_SWE_OUTCOME: ${{ steps.deep_swe.outcome }}
+          DETECT_OUTCOME: ${{ steps.snapshot.outcome }}
+          FIRST_PARTY_CHANGED: ${{ steps.snapshot.outputs.first_party_changed }}
+          FIRST_PARTY_RELEASE_OUTCOME: ${{ steps.first_party_releases.outcome }}
+          FIRST_PARTY_REVIEW_OUTCOME: ${{ steps.first_party_review.outcome }}
+          GH_REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
+          INTELLIGENCE_OUTCOME: ${{ steps.intelligence.outcome }}
+          PUBLISH_CI_RUN_URL: ${{ steps.publish.outputs.ci_run_url }}
+          PUBLISH_OUTCOME: ${{ steps.publish.outcome }}
+          PUBLISH_PR_URL: ${{ steps.publish.outputs.pr_url }}
+          RELEASE_OUTCOME: ${{ steps.release_radar.outcome }}
+          RELEASE_RECONCILE_OUTCOME: ${{ steps.release_reconcile.outcome }}
+          REFRESH_MODE: ${{ env.REFRESH_MODE }}
+          RUN_AAI_REFRESH: ${{ env.RUN_AAI_REFRESH }}
+          RUN_BENCHMARK_REFRESH: ${{ env.RUN_BENCHMARK_REFRESH }}
+          RUN_RELEASE_REFRESH: ${{ env.RUN_RELEASE_REFRESH }}
+          SETUP_BUN_OUTCOME: ${{ steps.setup_bun.outcome }}
+          SETUP_NODE_OUTCOME: ${{ steps.setup_node.outcome }}
+          SNAPSHOT_CHANGED: ${{ steps.snapshot.outputs.changed }}
+          TERMINAL_BENCH_OUTCOME: ${{ steps.terminal_bench.outcome }}
+          TERMINAL_BENCH_SCIENCE_OUTCOME: ${{ steps.terminal_bench_science.outcome }}
+          VALIDATION_OUTCOME: ${{ steps.validation.outcome }}
+        shell: bash
+        run: |
+          unhealthy=false
+          for outcome in "$CHECKOUT_OUTCOME" "$SETUP_BUN_OUTCOME" "$SETUP_NODE_OUTCOME" "$DEPENDENCIES_OUTCOME"; do
+            if [[ "$outcome" != "success" ]]; then unhealthy=true; fi
+          done
+
+          if [[ "$DEPENDENCIES_OUTCOME" == "success" ]]; then
+            if [[ "$RUN_AAI_REFRESH" == "true" && "$BENCHMARK_OUTCOME" != "success" ]]; then unhealthy=true; fi
+            if [[ "$RUN_AAI_REFRESH" != "true" && "$BENCHMARK_OUTCOME" != "skipped" ]]; then unhealthy=true; fi
+            if [[ "$RUN_RELEASE_REFRESH" == "true" ]]; then
+              if [[ "$FIRST_PARTY_RELEASE_OUTCOME" != "success" ]]; then unhealthy=true; fi
+              if [[ "$FIRST_PARTY_RELEASE_OUTCOME" == "success" && "$FIRST_PARTY_REVIEW_OUTCOME" != "success" ]]; then unhealthy=true; fi
+              if [[ "$RELEASE_OUTCOME" != "success" ]]; then unhealthy=true; fi
+            else
+              if [[ "$FIRST_PARTY_RELEASE_OUTCOME" != "skipped" ]]; then unhealthy=true; fi
+              if [[ "$FIRST_PARTY_REVIEW_OUTCOME" != "skipped" ]]; then unhealthy=true; fi
+              if [[ "$RELEASE_OUTCOME" != "skipped" ]]; then unhealthy=true; fi
+            fi
+            if [[ "$RUN_BENCHMARK_REFRESH" == "true" ]]; then
+              if [[ "$ARENA_MEDIA_OUTCOME" != "success" ]]; then unhealthy=true; fi
+              if [[ "$ATLAS_AUDIO_OUTCOME" != "success" ]]; then unhealthy=true; fi
+              if [[ "$ATLAS_REASONING_OUTCOME" != "success" ]]; then unhealthy=true; fi
+              if [[ "$ATLAS_MULTIMODAL_OUTCOME" != "success" ]]; then unhealthy=true; fi
+              if [[ "$CALCULATOR_OUTCOME" != "success" ]]; then unhealthy=true; fi
+              if [[ "$INTELLIGENCE_OUTCOME" != "success" ]]; then unhealthy=true; fi
+              if [[ "$DEEP_SWE_OUTCOME" != "success" ]]; then unhealthy=true; fi
+              if [[ "$TERMINAL_BENCH_OUTCOME" != "success" ]]; then unhealthy=true; fi
+              if [[ "$TERMINAL_BENCH_SCIENCE_OUTCOME" != "success" ]]; then unhealthy=true; fi
+            else
+              if [[ "$INTELLIGENCE_OUTCOME" != "skipped" ]]; then unhealthy=true; fi
+              if [[ "$ARENA_MEDIA_OUTCOME" != "skipped" ]]; then unhealthy=true; fi
+              if [[ "$ATLAS_AUDIO_OUTCOME" != "skipped" ]]; then unhealthy=true; fi
+              if [[ "$ATLAS_REASONING_OUTCOME" != "skipped" ]]; then unhealthy=true; fi
+              if [[ "$ATLAS_MULTIMODAL_OUTCOME" != "skipped" ]]; then unhealthy=true; fi
+              if [[ "$CALCULATOR_OUTCOME" != "skipped" ]]; then unhealthy=true; fi
+              if [[ "$DEEP_SWE_OUTCOME" != "skipped" ]]; then unhealthy=true; fi
+              if [[ "$TERMINAL_BENCH_OUTCOME" != "skipped" ]]; then unhealthy=true; fi
+              if [[ "$TERMINAL_BENCH_SCIENCE_OUTCOME" != "skipped" ]]; then unhealthy=true; fi
+            fi
+            if [[ "$RELEASE_RECONCILE_OUTCOME" != "success" ]]; then unhealthy=true; fi
+            if [[ "$DETECT_OUTCOME" != "success" ]]; then unhealthy=true; fi
+            if [[ "$SNAPSHOT_CHANGED" == "true" && "$VALIDATION_OUTCOME" != "success" ]]; then unhealthy=true; fi
+            if [[ "$SNAPSHOT_CHANGED" == "true" && "$PUBLISH_OUTCOME" != "success" ]]; then unhealthy=true; fi
+          fi
+
+          {
+            echo "## Model data refresh"
+            echo
+            echo "- Refresh mode: ${REFRESH_MODE}."
+            echo
+            echo "| Stage | Outcome |"
+            echo "| --- | --- |"
+            echo "| Checkout | ${CHECKOUT_OUTCOME} |"
+            echo "| Bun setup | ${SETUP_BUN_OUTCOME} |"
+            echo "| Node setup | ${SETUP_NODE_OUTCOME} |"
+            echo "| Dependencies | ${DEPENDENCIES_OUTCOME} |"
+            echo "| Artificial Analysis | ${BENCHMARK_OUTCOME} |"
+            echo "| AA Intelligence efficiency | ${INTELLIGENCE_OUTCOME} |"
+            echo "| OpenRouter | ${RELEASE_OUTCOME} |"
+            echo "| First-party release sources | ${FIRST_PARTY_RELEASE_OUTCOME} |"
+            echo "| First-party review alert | ${FIRST_PARTY_REVIEW_OUTCOME} |"
+            echo "| Radar reconciliation | ${RELEASE_RECONCILE_OUTCOME} |"
+            echo "| Direct DeepSWE evidence | ${DEEP_SWE_OUTCOME} |"
+            echo "| Terminal-Bench 4 | ${TERMINAL_BENCH_OUTCOME} |"
+            echo "| Terminal-Bench-Science 0.1 | ${TERMINAL_BENCH_SCIENCE_OUTCOME} |"
+            echo "| Reasoning, research, and memory atlas | ${ATLAS_REASONING_OUTCOME} |"
+            echo "| Multimodal atlas | ${ATLAS_MULTIMODAL_OUTCOME} |"
+            echo "| Arena media | ${ARENA_MEDIA_OUTCOME} |"
+            echo "| Pinned audio atlas | ${ATLAS_AUDIO_OUTCOME} |"
+            echo "| Calculator inputs | ${CALCULATOR_OUTCOME} |"
+            echo "| Change boundary | ${DETECT_OUTCOME} |"
+            echo "| Application validation | ${VALIDATION_OUTCOME} |"
+            echo "| Update PR | ${PUBLISH_OUTCOME} |"
+            echo
+            if [[ -n "$PUBLISH_PR_URL" ]]; then
+              echo "- Update PR: ${PUBLISH_PR_URL}."
+            fi
+            if [[ -n "$PUBLISH_CI_RUN_URL" ]]; then
+              echo "- Required CI: ${PUBLISH_CI_RUN_URL}."
+            fi
+            if [[ -f "$BENCHMARK_PATH" ]]; then
+              jq -r '"- Benchmark snapshot: \(.records | length) configurations across \([.records[].providerId] | unique | length) providers; retrieved \(.source.retrievedAt)."' "$BENCHMARK_PATH"
+            fi
+            if [[ -f "$INTELLIGENCE_PATH" ]]; then
+              jq -r '"- AA Intelligence Index v\(.benchmark.version): \(.selection.measuredCompleteRecordCount) current measured configurations; \(.selection.positiveCostRecordCount) with positive comparable cost; retrieved \(.source.retrievedAt)."' "$INTELLIGENCE_PATH"
+            fi
+            if [[ -f "$RELEASE_RADAR_PATH" ]]; then
+              jq -r '"- Release radar: \(.releases | length) tracked; \([.releases[] | select(.status == "awaiting-benchmark")] | length) awaiting complete coverage; retrieved \(.source.retrievedAt)."' "$RELEASE_RADAR_PATH"
+            fi
+            if [[ -f "$DEEP_SWE_PATH" ]]; then
+              jq -r '"- Direct DeepSWE: \(.records | length) configurations across \([.records[].sourceModel] | unique | length) models; \(.unmatchedModels | length) unmatched; generated \(.source.generatedAt)."' "$DEEP_SWE_PATH"
+            fi
+            if [[ -f "$FIRST_PARTY_RELEASE_PATH" ]]; then
+              jq -r '"- First-party release radar: \(.candidates | length) durable candidates; \([.candidates[] | select(.status == "needs-review")] | length) need review; \(.sources | length) provider sources represented."' "$FIRST_PARTY_RELEASE_PATH"
+            fi
+            if [[ -f "$TERMINAL_BENCH_PATH" ]]; then
+              jq -r '"- Terminal-Bench \(.benchmark.version): \(.records | length) configurations; source commit \(.source.repositoryCommit[0:7]); retrieved \(.source.retrievedAt)."' "$TERMINAL_BENCH_PATH"
+            fi
+            if [[ -f "$TERMINAL_BENCH_SCIENCE_PATH" ]]; then
+              jq -r '"- Terminal-Bench-Science \(.benchmark.version): \(.records | length) configurations across \(.benchmark.taskCount) tasks; source commit \(.source.releaseCommit[0:7]); retrieved \(.source.retrievedAt)."' "$TERMINAL_BENCH_SCIENCE_PATH"
+            fi
+            for atlas_path in "$ATLAS_REASONING_PATH" "$ATLAS_MULTIMODAL_PATH"; do
+              if [[ -f "$atlas_path" ]]; then
+                jq -r 'to_entries[] | select(.key != "schemaVersion") | "- Atlas \(.key): \(.value.rows | length) selected source observations; retrieved \(.value.source.retrievedAt)."' "$atlas_path"
+              fi
+            done
+            if [[ -f "$ARENA_MEDIA_PATH" ]]; then
+              jq -r '.cohorts | to_entries[] | "- Arena \(.key): \(.value.rows | length) overall configurations; published \(.value.publishedAt)."' "$ARENA_MEDIA_PATH"
+            fi
+            if [[ -f "$ATLAS_AUDIO_PATH" ]]; then
+              jq -r '"- Open ASR AMI-Cleaned: \(.rows | length) selected configurations; pinned snapshot \(.observedAt); source revision \(.source.revision[0:7]). Recheck does not admit new evaluations."' "$ATLAS_AUDIO_PATH"
+            fi
+            if [[ -f "$CALCULATOR_PATH" ]]; then
+              jq -r '"- Calculator inputs: Sol \(.openAiApiPricing.currentBasis) $\(.openAiApiPricing.current.inputPerMillion)/$\(.openAiApiPricing.current.outputPerMillion) per 1M; Flash off-peak $\(.deepSeekApiPricing.offPeak.cacheMissInputPerMillion)/$\(.deepSeekApiPricing.offPeak.outputPerMillion); \(.gpuRental.offers | length) rental SKUs; retrieved \(.openAiApiPricing.source.retrievedAt)."' "$CALCULATOR_PATH"
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          run_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}"
+          issue_number="$(gh issue list --state open --limit 100 --json number,title --jq '.[] | select(.title == "[automation] Data refresh is unhealthy") | .number' | head -n 1)"
+          review_issue_number="$(gh issue list --state open --limit 100 --json number,title --jq '.[] | select(.title == "[automation] First-party releases need review") | .number' | head -n 1)"
+
+          # Positive alerts are persisted immediately after first-party discovery.
+          # Only close the queue when that source's state (rather than every other
+          # benchmark source) is already on main or passed merge-backed publication.
+          review_snapshot_published=false
+          if [[ "$FIRST_PARTY_RELEASE_OUTCOME" == "success" && "$DETECT_OUTCOME" == "success" ]]; then
+            if [[ "$FIRST_PARTY_CHANGED" == "false" || ( "$FIRST_PARTY_CHANGED" == "true" && "$PUBLISH_OUTCOME" == "success" ) ]]; then
+              review_snapshot_published=true
+            fi
+          fi
+
+          if [[ -f "$FIRST_PARTY_RELEASE_PATH" ]]; then
+            review_count="$(jq '[.candidates[] | select(.status == "needs-review")] | length' "$FIRST_PARTY_RELEASE_PATH")"
+            review_queue_resolved=false
+            if [[ "$review_count" -eq 0 && "$review_snapshot_published" == "true" && -n "$review_issue_number" ]]; then
+              review_issue_body="$(gh issue view "$review_issue_number" --json body --jq '.body')"
+              review_issue_comments="$(gh api --paginate "repos/${GITHUB_REPOSITORY}/issues/${review_issue_number}/comments?per_page=100" --jq '.[].body')"
+              review_issue_body="${review_issue_body}"$'\n'"${review_issue_comments}"
+              review_url_count=0
+              review_queue_resolved=true
+              while IFS= read -r review_url; do
+                [[ -z "$review_url" ]] && continue
+                review_url_count=$((review_url_count + 1))
+                if ! jq -e --arg url "$review_url" 'any(.candidates[]; .canonicalUrl == $url and .status != "needs-review")' "$FIRST_PARTY_RELEASE_PATH" >/dev/null; then
+                  review_queue_resolved=false
+                  break
+                fi
+              done < <(printf '%s\n' "$review_issue_body" | sed -nE 's|^- <!-- aicharts:first-party-release-candidate --> .*\((https://[^)]+)\) — .*$|\1|p')
+              if [[ "$review_url_count" -eq 0 ]]; then
+                review_queue_resolved=false
+              fi
+            fi
+
+            if [[ "$review_queue_resolved" == "true" ]]; then
+              gh issue close "$review_issue_number" --comment "Every candidate retained in this review queue has a published disposition as of ${run_url}."
+            elif [[ "$review_count" -eq 0 && -n "$review_issue_number" ]]; then
+              echo "First-party review issue left open because this run did not prove a published disposition for every queued URL."
+            fi
+          fi
+
+          if [[ "$unhealthy" == "true" ]]; then
+            printf -v issue_body 'The scheduled model-data refresh is unhealthy. Valid updates publish only after the normal pull-request gate has passed; failed sources remain on their last-known-good snapshots.\n\n- Run: %s\n- Mode: `%s`\n- OpenRouter: `%s`\n- First-party releases: `%s`\n- Artificial Analysis coding agents: `%s`\n- AA Intelligence efficiency: `%s`\n- Direct DeepSWE: `%s`\n- Terminal-Bench 4: `%s`\n- Terminal-Bench-Science 0.1: `%s`\n- Reasoning atlas: `%s`\n- Multimodal atlas: `%s`\n- Arena media: `%s`\n- Pinned audio atlas: `%s`\n- Calculator inputs: `%s`\n- Radar reconciliation: `%s`\n- Validation: `%s`\n- Publication: `%s`\n- Update PR: %s\n- Required CI: %s\n\nThis issue is updated on repeated failures and closes automatically after a healthy full refresh.' \
+              "$run_url" "$REFRESH_MODE" "$RELEASE_OUTCOME" "$FIRST_PARTY_RELEASE_OUTCOME" "$BENCHMARK_OUTCOME" "$INTELLIGENCE_OUTCOME" "$DEEP_SWE_OUTCOME" "$TERMINAL_BENCH_OUTCOME" "$TERMINAL_BENCH_SCIENCE_OUTCOME" "$ATLAS_REASONING_OUTCOME" "$ATLAS_MULTIMODAL_OUTCOME" "$ARENA_MEDIA_OUTCOME" "$ATLAS_AUDIO_OUTCOME" "$CALCULATOR_OUTCOME" "$RELEASE_RECONCILE_OUTCOME" "$VALIDATION_OUTCOME" "$PUBLISH_OUTCOME" "${PUBLISH_PR_URL:-not created}" "${PUBLISH_CI_RUN_URL:-not dispatched}"
+            if [[ -z "$issue_number" ]]; then
+              gh issue create --title "$REFRESH_ISSUE_TITLE" --body "$issue_body"
+            else
+              gh issue edit "$issue_number" --body "$issue_body"
+            fi
+            echo "::error title=Model data refresh unhealthy::OpenRouter=${RELEASE_OUTCOME}; first-party releases=${FIRST_PARTY_RELEASE_OUTCOME}; Artificial Analysis coding agents=${BENCHMARK_OUTCOME}; AA Intelligence efficiency=${INTELLIGENCE_OUTCOME}; Direct DeepSWE=${DEEP_SWE_OUTCOME}; Terminal-Bench 4=${TERMINAL_BENCH_OUTCOME}; Terminal-Bench-Science 0.1=${TERMINAL_BENCH_SCIENCE_OUTCOME}; Reasoning atlas=${ATLAS_REASONING_OUTCOME}; Multimodal atlas=${ATLAS_MULTIMODAL_OUTCOME}; Arena media=${ARENA_MEDIA_OUTCOME}; Pinned audio atlas=${ATLAS_AUDIO_OUTCOME}; Calculator inputs=${CALCULATOR_OUTCOME}; reconciliation=${RELEASE_RECONCILE_OUTCOME}; validation=${VALIDATION_OUTCOME}; publication=${PUBLISH_OUTCOME}."
+            exit 1
+          fi
+
+          if [[ -n "$issue_number" && "$RUN_AAI_REFRESH" == "true" ]]; then
+            gh issue close "$issue_number" --comment "Recovered in ${run_url}. All required source checks and applicable validation and publication gates passed."
+          elif [[ -n "$issue_number" ]]; then
+            echo "A healthy non-full run leaves the alert open until a full AAI refresh also passes."
+          fi
