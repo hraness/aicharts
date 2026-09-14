@@ -621,3 +621,20 @@ Worker flags — remain unset.
   platform `VERCEL=1`/`VERCEL_ENV=production`/`VERCEL_TARGET_ENV=production`
   apply on the production deployment. Secret values were never read or
   recorded.
+
+Execution update: the env-bearing redeploy `dpl_ExTBMUHNtuquBtLWr2T56U67sjkt`
+activated the fence as designed — `/api/suite-auth/start` redirects to Accounts
+with exact client/callback/PKCE binding while `/api/usage/days` and
+`/api/usage/pairing` stayed `503`. Live login then reached the callback but
+returned `OIDC_TOKEN_INVALID` (`502`). A direct PKCE/state/nonce replay against
+Accounts produced structurally valid tokens — correct issuer, audience pair,
+`azp`, `suite_client_id`, `suite_account_id`, nonce echo and JWKS `kid` — so
+the failure was not client registration or token custody. The isolated cause is
+a Suite Accounts SDK revision skew: Accounts `v0.9.3` stamps
+`suite_entitlements.catalogRevision` `hraness-suite-v4` (with the new
+`suite.community`/`suite.pro` feature identifiers), while the pinned consumer
+`v0.6.0` accepts only `cclrte-suite-v3` and the `suite.paid`/`suite.believer`
+set; `parseEntitlements` therefore fails closed inside
+`verifiedSessionFromAccessToken`. The repair is the reviewed package bump to
+`v0.9.3`, whose verification code is byte-identical for every other check on
+this path; the deferred evidence entry below records the rerun outcome.
