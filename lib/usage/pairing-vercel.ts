@@ -3,7 +3,8 @@ import { getContext } from "@vercel/oidc";
 import { after } from "next/server";
 import { createPairingTransport } from "./pairing-transport";
 
-/** Explicit, dormant server binding. Creating it does not install an auth resolver. */
+/** Shared server transport; creating it has no request effects. Each resolved
+ * production intent supplies its coordinator's live configuration/abort fence. */
 export function createVercelPairingTransport() {
   return createPairingTransport({
     getContext,

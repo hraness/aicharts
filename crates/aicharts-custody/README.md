@@ -1,7 +1,7 @@
 # AI Charts credential custody
 
 This library supplies immutable, typed secret records, a noninteractive macOS
-Keychain adapter, and a dormant reference-manifest state machine. It is not
+Keychain adapter, and explicit macOS reference-manifest persistence. It is not
 connected to an enabled CLI enrollment, upload, or daemon command. Ordinary tests
 use in-memory fakes and owned disposable filesystem fixtures, never a user's
 keychain.
@@ -66,20 +66,28 @@ terminal acknowledgment; custody must not duplicate that authority.
 
 ## Dormant reference manifest
 
-The public `references::ReferenceStore` constructors and `inspect_existing` remain
-closed. On macOS, they return `references_backend_unqualified` before filesystem
-or vault access. Other platforms return `references_unsupported_platform`. There
-is no public backend injection, raw-byte import, verification setter, or
-permission-bit-only fallback.
+On macOS, `references::ReferenceStore` accepts a caller-supplied existing absolute
+trust anchor through the descriptor, ownership, ACL and APFS checks below.
+`initialize_new` requires a nonzero installation before effects and creates only
+the absent fixed `references-v1` child. It never creates ancestors or adopts,
+repairs or replaces existing state. `reconcile_initialization` accepts only the
+original empty initial intent and its exact retained candidate. Partial, foreign
+or advanced state remains untouched. Other platforms return
+`references_unsupported_platform`; there is no permission-bit-only fallback.
 
-Only private macOS `cfg(test)` fixtures construct a facade backed by
-`QualifiedStore`. Its `snapshot` and `prepare` methods run the persistence engine;
-`install_prepared`, `reconcile_prepared`, and `resolve_verified` also use the
-supplied `Vault`. Each custody operation owns one lazy session, selected only
-after the engine checks the filesystem guards, committed durability and exact
-token. That session stays pinned across insertion and readback and is released
-before the method returns. A refusal before vault work selects no session. These
-instance methods do not open a production constructor or CLI activation path.
+`open_existing` and `inspect_existing` observe committed bytes without recovery,
+synchronization or vault selection. A coherent manifest or retained verified
+marker does not establish durable storage, current credential custody or an
+authenticated history. Each `install_prepared`, `reconcile_prepared` and
+`resolve_verified` operation establishes its required durability and exact vault
+readback under the existing locks.
+
+The facade uses `QualifiedStore` and the supplied `Vault`. Each custody operation
+owns one lazy session, selected only after filesystem guards, committed durability
+and exact-token checks. It stays pinned across insertion and readback and is
+released before return. A refusal before vault work selects no session. Public
+backend injection, raw-byte import and verification setters remain absent. These
+explicit library APIs do not install or enable a CLI enrollment command.
 
 The manifest binds one nonzero installation to at most 256 retained references.
 Each entry contains the exact `RecordIdentity`, a commitment to the complete
@@ -138,8 +146,8 @@ uses `rustix` descriptor operations and the narrow
 [ACL inspection boundary](../aicharts-platform-acl/README.md). Its tests use only
 disposable directories and synthetic records, with a fake vault. Ordinary facade
 tests exercise the real instance methods against that APFS adapter and a private
-in-memory vault factory. Private explicit-path constructors and the separately
-ignored Keychain fixture do not expose public construction.
+in-memory vault factory. Direct public-constructor tests separately check exact
+path admission, observational open/inspection and initialization reconciliation.
 
 The adapter accepts an already trusted, owned directory descriptor. It requires
 current-user ownership, mode 0700, no ACL entries, and writable local APFS with
@@ -189,8 +197,8 @@ The private existing-only `reconcile_initialization` path requires the original
 installation and either its exact initial pending envelope or an empty
 revision-zero current manifest. It reestablishes durability for a committed
 retry. A differing installation or advanced manifest is not an initialization
-receipt; missing or partial state is preserved. The corresponding public method
-remains closed before filesystem or vault access.
+receipt; missing or partial state is preserved. The public reconciliation method
+uses this same existing-state boundary without vault access.
 
 Reads, writes, interrupt retries, and directory enumeration have fixed work
 bounds. Native disk operations do not have a guaranteed wall-clock timeout.
@@ -277,11 +285,13 @@ guard the absence of secret debug/clone traits. macOS-only pure tests check nati
 error classification, result projection, synthetic UI guard behavior, and mutex
 refusal before any native call.
 
-The current ordinary custody run passed 117 tests, with two explicit native
+The current ordinary custody run passed 127 tests, with two explicit native
 qualification tests ignored; four doctests and scoped Clippy also passed. The
 facade cases use disposable APFS directories and an in-memory vault to check pairing and
 namespace records, one session per custody operation, refusal before selection,
-lost-reply reconciliation and preservation of verified references.
+lost-reply reconciliation and preservation of verified references. Ten direct
+public-constructor cases cover strict absolute anchors, installation validation,
+observational reads, exact initialization recovery and state preservation.
 
 The separately ignored `disposable_keychain_reference_roundtrip` test is an
 explicit native qualification candidate, not part of ordinary checks. Its parent
@@ -304,6 +314,7 @@ This receipt qualifies the explicit disposable fixture on this host. Default
 User-domain keychain selection, hostile-process isolation, Secure Enclave/Data
 Protection guarantees, signed-application and LaunchAgent behavior, installation,
 upgrade, user consent, full credential recovery and live enrollment remain
-unqualified. Public reference-store constructors and CLI activation remain closed.
+unqualified. Explicit library construction does not enable a CLI command or
+establish those default-use and unattended guarantees.
 Signed CLI and LaunchAgent artifact qualification must precede claims of
 unattended support.

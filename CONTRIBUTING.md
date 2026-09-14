@@ -27,7 +27,7 @@ The complete gate also runs `bun run usage:worker:check`: generated Cloudflare r
 
 `bun run release:source:check` separately checks the [exact Git source reader](docs/usage-release-source.md) with Node.js 24, trusted `/usr/bin/git` and disposable synthetic repositories. It is also included in the complete gate. These tests read raw local Git objects; they do not fetch source, execute archive contents or establish release provenance. Keep real contributor files and credentials outside the fixtures.
 
-The [pairing HTTP adapters](docs/usage-pairing-http.md) remain dormant. Their public Vercel binding is tested with synthetic request context and mocked network/lifetime effects. Preserve registration-before-work, fixed capability-body limits and uncertain-write reconciliation; passing synthetic tests does not authorize a production resolver, Worker route or provider-token exercise.
+The [pairing HTTP adapters](docs/usage-pairing-http.md) and browser routes remain behind an independent disabled pairing flag. Their Vercel binding is tested with synthetic request context and mocked network/lifetime effects. Preserve registration-before-work, captured authority checks, fixed capability-body limits and uncertain-write reconciliation. Synthetic tests do not establish live Accounts or Worker authority; activation requires the documented qualification.
 
 ## Data changes
 

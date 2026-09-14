@@ -19,6 +19,7 @@ const nowMs = 1_800_000_300_000;
 const secret = "synthetic-cookie-secret-not-for-deployment-0001";
 const ready: UsageAuthEnvironment = {
   AICHARTS_USAGE_AUTH_ENABLED: "1",
+  AICHARTS_USAGE_PAIRING_ENABLED: "1",
   VERCEL: "1",
   VERCEL_ENV: "production",
   NEXT_PUBLIC_SITE_URL: origin,
@@ -351,7 +352,7 @@ async function fixture(options: { pairing?: boolean } = {}) {
   }
 
   return {
-    server, calls, tokenBodies, userInfoResponses, start, login, startPairing, startUnrelatedContext, callback, pairedLogin, proof,
+    server, calls, tokenBodies, userInfoResponses, start, login, startPairing, startUnrelatedContext, callback, pairedLogin, proof, captureStart,
     resolvedIntents, begun, recorded, statusReads, decisions,
     browserNonce: () => ownedNonce,
     secrets: () => [secret, accessToken, refreshToken, providerSubject, "synthetic-reader@example.com"],
@@ -1224,6 +1225,7 @@ describe("dormant intent-bound pairing authentication", () => {
     const started = await f.startPairing();
     for (const changed of [
       { AICHARTS_USAGE_AUTH_ENABLED: "0" }, { AICHARTS_USAGE_AUTH_ENABLED: undefined },
+      { AICHARTS_USAGE_PAIRING_ENABLED: "0" }, { AICHARTS_USAGE_PAIRING_ENABLED: undefined },
       { VERCEL: "0" }, { VERCEL_ENV: "preview" }, { VERCEL_ENV: "development" },
       { VERCEL_TARGET_ENV: "preview" }, { NEXT_PUBLIC_SITE_URL: "https://aicharts.io/" },
       { NEXT_PUBLIC_VERCEL_SURFACE_ORIGIN: "https://preview.vercel.app" },
@@ -2282,6 +2284,86 @@ describe("browser-held pairing custody and explicit approval", () => {
     expect(f.calls).toEqual([]);
     expect(f.resolvedIntents).toEqual([]);
     expect(f.decisions).toEqual([]);
+  });
+});
+
+describe("guarded browser pairing route composition", () => {
+  test("pairing needs its own flag while ordinary sign-in remains available", async () => {
+    const f = await fixture({ pairing: true });
+    for (const value of [undefined, null, false, "0", "true", 1]) {
+      f.environment({ ...ready, AICHARTS_USAGE_PAIRING_ENABLED: value });
+      expect(f.server.pairingAvailable()).toBe(false);
+      expect(f.server.beginPairingRequest(pairingStartRequest())).toBeNull();
+      await assertPairingFailure(await f.server.startPairingAuthentication(pairingStartRequest(), pairingInput), "UNAVAILABLE", 503);
+      await assertPairingFailure(await f.server.readPairingApproval(approvalRequest("private")), "UNAVAILABLE", 503);
+      await assertPairingFailure(await f.server.decidePairingApproval(approvalRequest("private", {})), "UNAVAILABLE", 503);
+    }
+    expect(f.calls).toEqual([]); expect(f.begun).toEqual([]); expect(f.resolvedIntents).toEqual([]);
+    expect((await f.start()).response.status).toBe(302);
+  });
+
+  test("a request fence retains configuration, clock and abort refusal without SDK work", async () => {
+    const f = await fixture({ pairing: true });
+    const held = f.server.beginPairingRequest(pairingStartRequest())!;
+    expect(held()).toBe(true);
+    f.environment({ ...ready, SUITE_OIDC_COOKIE_SECRET: `${secret}-rotated` });
+    expect(held()).toBe(false); f.environment(ready); expect(held()).toBe(false);
+    const time = f.server.beginPairingRequest(pairingStartRequest())!;
+    f.time(nowMs - 1); expect(time()).toBe(false); f.time(nowMs); expect(time()).toBe(false);
+    const controller = new AbortController();
+    const abort = f.server.beginPairingRequest(new Request(pairingStartRequest(), { signal: controller.signal }))!;
+    controller.abort(); expect(abort()).toBe(false);
+    expect(f.calls).toEqual([]); expect(f.resolvedIntents).toEqual([]);
+  });
+
+  test("disabling pairing during provider work stops the next dispatch and durable recording", async () => {
+    const f = await fixture({ pairing: true }), started = await f.startPairing();
+    f.providerEffect(async url => { if (url === endpoints.discovery) f.environment({ ...ready, AICHARTS_USAGE_PAIRING_ENABLED: "0" }); });
+    expect((await f.server.handle(f.callback(started))).status).toBe(503);
+    expect(f.calls).toEqual([endpoints.discovery]); expect(f.recorded).toEqual([]);
+  });
+
+  test("the pairing flag fences awaited start, authentication and approval replies", async () => {
+    for (const phase of ["start", "record", "status", "decide"] as const) {
+      const f = await fixture({ pairing: true });
+      const close = () => { f.environment({ ...ready, AICHARTS_USAGE_PAIRING_ENABLED: "0" }); };
+      if (phase === "start") {
+        f.beginEffect(async () => { close(); return { ok: true, value: pairingAttempt }; });
+        await assertPairingFailure(await f.server.startPairingAuthentication(pairingStartRequest(), pairingInput), "FAILED", 503);
+      } else if (phase === "record") {
+        const started = await f.startPairing(); f.recordEffect(async () => { close(); return { ok: true, value: { recorded: true } }; });
+        await assertPairingFailure(await f.server.handle(f.callback(started)), "FAILED", 503);
+      } else {
+        const { cookie } = await f.pairedLogin();
+        const approval = await approvalProjection(await f.server.readPairingApproval(approvalRequest(cookie)));
+        if (phase === "status") f.statusEffect(async () => { close(); return { ok: true, value: verifiedBrowserView }; });
+        else f.decisionEffect(async () => { close(); return { ok: true, value: { ...verifiedBrowserView, state: "browser-approved" } }; });
+        await assertPairingFailure(await f.server.decidePairingApproval(approvalRequest(cookie, { decision: "approve", csrfToken: approval.csrfToken })), "FAILED", 503);
+        expect(f.decisions).toHaveLength(phase === "status" ? 0 : 1);
+      }
+    }
+  });
+
+  test("a canonical native form starts fresh login, returns to approval and requires a separate decision", async () => {
+    const { createPairingRoutes } = await import("./pairing-route");
+    const f = await fixture({ pairing: true }), terminal: Promise<void>[] = [];
+    const routes = createPairingRoutes({ begin: f.server.beginPairingRequest,
+      start: f.server.startPairingAuthentication, read: f.server.readPairingApproval, decide: f.server.decidePairingApproval,
+      now: () => nowMs, setTimeout: (callback, ms) => setTimeout(callback, ms), clearTimeout: timer => clearTimeout(timer as ReturnType<typeof setTimeout>),
+      registerLifetime: promise => { terminal.push(promise); } });
+    const first = await routes.start(request("/api/usage/pairing/start", { method: "POST",
+      headers: { origin, "sec-fetch-site": "same-origin", "content-type": "application/x-www-form-urlencoded" }, body: `intentId=${intentId}` }));
+    const started = f.captureStart(first), completed = await f.server.handle(f.callback(started));
+    expect(completed.status).toBe(200);
+    expect(await completed.text()).toContain('location.replace("/usage/pairing")');
+    expect(f.decisions).toEqual([]);
+    const cookie = browserCookies(first, completed);
+    const read = await approvalProjection(await routes.approval(approvalRequest(cookie)));
+    expect(read.value.state).toBe("pending"); expect(f.calls.filter(url => url === endpoints.userInfo)).toHaveLength(1);
+    const approved = await approvalProjection(await routes.approval(approvalRequest(cookie, { decision: "approve", csrfToken: read.csrfToken })));
+    expect(approved.value.state).toBe("browser-approved"); expect(f.begun).toHaveLength(1); expect(f.recorded).toHaveLength(1); expect(f.decisions).toHaveLength(1);
+    expect(f.calls.filter(url => url === endpoints.userInfo)).toHaveLength(2);
+    await Promise.all(terminal);
   });
 });
 

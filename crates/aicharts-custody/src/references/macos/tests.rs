@@ -278,7 +278,7 @@ fn envelope_requires_initial_or_exact_next_revision_and_retains_predecessor() {
 }
 
 #[test]
-fn real_apfs_initialize_prepare_reopen_and_private_facade_stays_closed() {
+fn real_apfs_initialize_prepare_reopen_and_public_facade_rejects_unsafe_ancestor() {
     let f = Fixture::new();
     let (mut storage, initial) = f.initialized();
     assert!(storage.active_lock.is_none());
@@ -304,11 +304,11 @@ fn real_apfs_initialize_prepare_reopen_and_private_facade_stays_closed() {
     );
     assert_eq!(
         crate::references::ReferenceStore::open_existing(&f.dir()).err(),
-        Some(Error::BackendUnqualified)
+        Some(Error::RecoveryRequired)
     );
     assert_eq!(
         crate::references::ReferenceStore::initialize_new(&f.dir(), INSTALLATION).err(),
-        Some(Error::BackendUnqualified)
+        Some(Error::RecoveryRequired)
     );
 }
 

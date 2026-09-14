@@ -1,5 +1,5 @@
 //! Descriptor-only private persistence. The caller supplies the trusted anchor;
-//! this module neither discovers paths nor activates the public store facade.
+//! the public facade reaches this adapter through the explicit-path boundary.
 mod anchor;
 mod envelope;
 #[cfg(test)]

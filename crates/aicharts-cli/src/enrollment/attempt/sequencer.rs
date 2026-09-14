@@ -358,12 +358,77 @@ fn check_flight(
     let context_sha = context_digest(context)?;
     let flight = record.flight.as_ref().ok_or(Error::Missing)?;
     if flight.operation != request.operation()
+        || flight.context_now_ms != context.now_ms
         || flight.request_sha != request_sha
         || flight.context_sha != context_sha
     {
         return Err(Error::Conflict);
     }
     Ok((request_sha, context_sha))
+}
+
+/// Reconstruct only one retained flight from its exact local observation and
+/// original typed pairing custody. This does no I/O and establishes neither
+/// current vault contents nor permission to dispatch. The original context time
+/// remains frozen; dispatch and acceptance still require fresh observations.
+pub(super) fn reconstruct_flight(
+    current: &Record,
+    expected: Token,
+    secret: &SecretRecord,
+) -> Result<(Request, Context)> {
+    record::validate(current)?;
+    current_token(current, expected)?;
+    let flight = current.flight.as_ref().ok_or(Error::Missing)?;
+    if !secret_matches_pin(secret, &current.pairing) {
+        return Err(Error::Custody);
+    }
+    let proof = secret
+        .with_pairing_secrets(|poll, upload| -> Result<_> {
+            Ok(contract::EnrollmentProof {
+                pairing: contract::PollProof {
+                    intent_id: current.intent_id,
+                    poll_secret: contract::Secret32::from_bytes(*poll).ok_or(Error::Custody)?,
+                },
+                upload_secret: contract::Secret32::from_bytes(*upload).ok_or(Error::Custody)?,
+            })
+        })
+        .map_err(|_| Error::Custody)??;
+    // Check both commitments even when the retained operation sends only the
+    // polling proof. Reuse the canonical codec's commitment projections.
+    let both = Request::Reserve(proof);
+    if !request_matches_record(current, &both) {
+        return Err(Error::Custody);
+    }
+    let Request::Reserve(proof) = both else {
+        return Err(Error::InvalidRecord);
+    };
+    let request = match flight.operation {
+        Operation::Initialize => Request::Initialize {
+            proof: proof.pairing,
+            upload_commitment: *current.upload_commitment.as_bytes(),
+        },
+        Operation::Poll => Request::Poll(proof.pairing),
+        Operation::Confirm => Request::Confirm {
+            proof: proof.pairing,
+            account_id: current
+                .account_choice
+                .account()
+                .ok_or(Error::InvalidRecord)?,
+        },
+        Operation::Reserve => Request::Reserve(proof),
+        Operation::Enroll => Request::Enroll(proof),
+        Operation::Namespace => Request::Namespace(proof),
+    };
+    let context = Context {
+        now_ms: flight.context_now_ms,
+        initialized_expires_at_ms: current.initialized_expires_at_ms,
+        confirmed_account_id: current.account_choice.confirmed(),
+        reservation: current.reservation.clone(),
+        enrollment: current.enrollment.clone(),
+    };
+    check_call(current, expected, &request, &context)?;
+    check_flight(current, &request, &context)?;
+    Ok((request, context))
 }
 
 /// Choose one account before confirmation. The account is fixed by the first
@@ -436,6 +501,7 @@ pub(super) fn prepare_flight<S: Storage>(
         ordinal: next.flights_started,
         prepared_revision: next.revision,
         prepared_at_ms,
+        context_now_ms: context.now_ms,
         last_attempt_at_ms: None,
         dispatches: 0,
         request_sha,
@@ -486,6 +552,7 @@ pub(super) fn dispatch_flight<S: Storage>(
         ordinal: old.ordinal,
         prepared_revision: old.prepared_revision,
         prepared_at_ms: old.prepared_at_ms,
+        context_now_ms: old.context_now_ms,
         last_attempt_at_ms: Some(attempted_at_ms),
         dispatches: old.dispatches + 1,
         request_sha,
@@ -745,10 +812,10 @@ mod tests {
         directory_synced: bool,
     }
     #[derive(Clone, Default)]
-    struct Memory(Rc<RefCell<Disk>>);
+    pub(super) struct Memory(Rc<RefCell<Disk>>);
 
     impl Memory {
-        fn with(record: &Record) -> Self {
+        pub(super) fn with(record: &Record) -> Self {
             Self(Rc::new(RefCell::new(Disk {
                 committed: Some(record::encode(record).unwrap().as_bytes().to_vec()),
                 ..Disk::default()
@@ -839,6 +906,26 @@ mod tests {
             reservation: None,
             enrollment: None,
         }
+    }
+
+    #[test]
+    fn prepared_flight_retains_original_context_time_after_serialization() {
+        let current = initialized_record();
+        let mut storage = Memory::with(&current);
+        let original = empty_context();
+        let prepared = prepare_flight(
+            &mut storage,
+            record::token(&current).unwrap(),
+            &current,
+            &initialize_request(),
+            &original,
+            TIME + 1,
+        )
+        .unwrap();
+        let bytes = record::encode(prepared.record()).unwrap();
+        let text = std::str::from_utf8(bytes.as_bytes()).unwrap();
+        assert!(text.contains("\"contextNowMs\":1789300800000"));
+        assert!(text.contains("\"preparedAtMs\":1789300800001"));
     }
 
     #[test]
@@ -1303,3 +1390,7 @@ mod tests {
         );
     }
 }
+
+#[cfg(test)]
+#[path = "reconstruction_tests.rs"]
+mod reconstruction_tests;

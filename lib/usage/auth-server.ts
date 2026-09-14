@@ -20,6 +20,7 @@ const binding = Object.freeze({
 
 export type UsageAuthEnvironment = Readonly<{
   AICHARTS_USAGE_AUTH_ENABLED?: unknown;
+  AICHARTS_USAGE_PAIRING_ENABLED?: unknown;
   AICHARTS_USAGE_PRIVATE_READ_ENABLED?: unknown;
   VERCEL?: unknown;
   VERCEL_ENV?: unknown;
@@ -51,8 +52,8 @@ type UsageAuthOptions = Readonly<{
   fetch?: SuiteOidcRelyingPartyOptions["fetch"];
   now?: SuiteOidcRelyingPartyOptions["now"];
   randomBytes?: SuiteOidcRelyingPartyOptions["randomBytes"];
-  /** Future authenticated server transport. Never resolve from browser JSON. */
-  pairingIntent?: (intentId: string) => UsagePairingIntent;
+  /** Trusted server transport. The current fence must survive lazy binding. */
+  pairingIntent?: (intentId: string, current: () => boolean) => UsagePairingIntent;
 }>;
 
 function processEnvironment(): UsageAuthEnvironment {
@@ -61,6 +62,7 @@ function processEnvironment(): UsageAuthEnvironment {
   const environment = process.env;
   return {
     AICHARTS_USAGE_AUTH_ENABLED: environment.AICHARTS_USAGE_AUTH_ENABLED,
+    AICHARTS_USAGE_PAIRING_ENABLED: environment.AICHARTS_USAGE_PAIRING_ENABLED,
     AICHARTS_USAGE_PRIVATE_READ_ENABLED: environment.AICHARTS_USAGE_PRIVATE_READ_ENABLED,
     VERCEL: environment.VERCEL,
     VERCEL_ENV: environment.VERCEL_ENV,
@@ -110,9 +112,20 @@ function configuredPrivateReadSecret(options: UsageAuthOptions): string | null {
   } catch { return null; }
 }
 
-function relyingParty(options: UsageAuthOptions, watchConfiguration = false): SuiteOidcRelyingParty | null {
+function configuredPairingSecret(options: UsageAuthOptions): string | null {
   try {
-    const cookieSecret = configuredSecret(options);
+    const environment = (options.environment ?? processEnvironment)();
+    if (environment.AICHARTS_USAGE_PAIRING_ENABLED !== "1") return null;
+    const secret = configuredSecret({ ...options, environment: () => environment });
+    if (secret === null || secret.length > 1_024) return null;
+    const size = new TextEncoder().encode(secret).byteLength;
+    return size >= 32 && size <= 1_024 ? secret : null;
+  } catch { return null; }
+}
+
+function relyingParty(options: UsageAuthOptions, watchConfiguration = false, pairingRequest?: Request): SuiteOidcRelyingParty | null {
+  try {
+    const cookieSecret = pairingRequest === undefined ? configuredSecret(options) : configuredPairingSecret(options);
     if (cookieSecret === null) return null;
     // The SDK owns secret validation, cookie encryption, PKCE, state, nonce,
     // provider endpoints, token validation, refresh rotation, and CSRF checks.
@@ -124,7 +137,8 @@ function relyingParty(options: UsageAuthOptions, watchConfiguration = false): Su
       fetch: watchConfiguration ? async (input, init) => {
         // Stop new pairing provider requests when disabled or rotated during a
         // prior await. This does not cancel an already dispatched request.
-        if (configuredSecret(options) !== cookieSecret) throw new Error("Usage authentication unavailable.");
+        if (pairingRequest === undefined ? configuredSecret(options) !== cookieSecret
+          : pairingRequest.signal.aborted || configuredPairingSecret(options) !== cookieSecret) throw new Error("Usage authentication unavailable.");
         return (options.fetch ?? globalThis.fetch)(input, init);
       } : options.fetch,
       now: options.now,
@@ -272,11 +286,12 @@ function callbackMode(request: Request): "ordinary" | "pairing" | "rejected" {
 /** Server-only composition; injected dependencies are for synthetic tests. */
 export function createUsageAuthServer(options: UsageAuthOptions = {}) {
   const pairing = createPairingAuthentication({
-    authority: () => {
-      const cookieSecret = configuredSecret(options);
-      const party = relyingParty(options, true);
+    authority: request => {
+      const cookieSecret = configuredPairingSecret(options);
+      if (request.signal.aborted || cookieSecret === null) return null;
+      const party = relyingParty(options, true, request);
       return cookieSecret === null || party === null ? null : {
-        party, cookieSecret, current: () => configuredSecret(options) === cookieSecret,
+        party, cookieSecret, current: () => !request.signal.aborted && configuredPairingSecret(options) === cookieSecret,
       };
     },
     resolve: options.pairingIntent,
@@ -284,6 +299,21 @@ export function createUsageAuthServer(options: UsageAuthOptions = {}) {
     randomBytes: options.randomBytes ?? (length => crypto.getRandomValues(new Uint8Array(length))),
   });
   return Object.freeze({
+    pairingAvailable(): boolean { return configuredPairingSecret(options) !== null; },
+    beginPairingRequest(request: Request): (() => boolean) | null {
+      const secret = configuredPairingSecret(options);
+      if (secret === null || request.signal.aborted) return null;
+      let previous = 0, open = true;
+      const current = () => {
+        try {
+          const now = (options.now ?? Date.now)();
+          if (!open || request.signal.aborted || configuredPairingSecret(options) !== secret
+            || !Number.isSafeInteger(now) || Object.is(now, -0) || now < previous || now > 8_640_000_000_000_000) return open = false;
+          previous = now; return true;
+        } catch { return open = false; }
+      };
+      return current() ? current : null;
+    },
     beginAccountSession(request: Request): UsageAccountSessionScope | null {
       return beginAccountSession(request, options);
     },
@@ -363,8 +393,32 @@ export function createUsageAuthServer(options: UsageAuthOptions = {}) {
   });
 }
 
-const server = createUsageAuthServer();
+// The request-context transport is loaded only after pairing admission. Its one
+// module-owned factory keeps capacity accounting shared across requests; it
+// retains no account, token, request or pending operation in this binding.
+let productionPairingTransport: ((intentId: string, current?: () => boolean) => UsagePairingIntent) | undefined;
+function productionPairingIntent(intentId: string, current: () => boolean): UsagePairingIntent {
+  async function invoke(method: keyof UsagePairingIntent, input: unknown): Promise<unknown> {
+    if (!current() || configuredPairingSecret({}) === null) throw new Error("pairing_transport_unavailable");
+    const binding = await import("./pairing-vercel");
+    if (!current() || configuredPairingSecret({}) === null) throw new Error("pairing_transport_unavailable");
+    productionPairingTransport ??= binding.createVercelPairingTransport();
+    return productionPairingTransport(intentId, current)[method](input);
+  }
+  return Object.freeze({
+    beginBrowserAttempt: (input: unknown) => invoke("beginBrowserAttempt", input),
+    recordVerifiedAuthentication: (input: unknown) => invoke("recordVerifiedAuthentication", input),
+    browserStatus: (input: unknown) => invoke("browserStatus", input),
+    decideBrowser: (input: unknown) => invoke("decideBrowser", input),
+  });
+}
+const server = createUsageAuthServer({ pairingIntent: productionPairingIntent });
 export const handleUsageAuth = server.handle;
+export const usagePairingAvailable = server.pairingAvailable;
+export const beginUsagePairingRequest = server.beginPairingRequest;
+export const startUsagePairingAuthentication = server.startPairingAuthentication;
+export const readUsagePairingApproval = server.readPairingApproval;
+export const decideUsagePairingApproval = server.decidePairingApproval;
 export const usageAccountSession = server.accountSession;
 export const beginUsageAccountSession = server.beginAccountSession;
 export const usagePrivateReadAvailable = server.privateReadAvailable;

@@ -1,5 +1,5 @@
-//! Dormant persistence algorithm. Private ports are exercised by deterministic
-//! fakes, not a production filesystem or Keychain adapter.
+//! Reference persistence algorithm shared by the strict macOS adapter and
+//! deterministic fault-model fixtures.
 use super::{
     codec, Error, ManifestSnapshot, ManifestToken, RecordIntent, ReferenceEntry, ReferenceState,
     Result,
@@ -12,7 +12,7 @@ pub(crate) struct Candidate {
     pub(crate) bytes: Vec<u8>,
 }
 
-/// Future adapter contract: one pinned private directory and stable lock for the
+/// Adapter contract: one pinned private directory and stable lock for the
 /// complete guard lifetime; bounded nofollow reads; create-only immutable stage;
 /// only exact identical stage reuse; one atomic publication. Existing state is
 /// never repaired, deleted, or adopted. The adapter must validate native ACLs.
