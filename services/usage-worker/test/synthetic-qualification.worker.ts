@@ -1,5 +1,5 @@
 import { env } from "cloudflare:workers";
-import { abortAllDurableObjects, reset, runInDurableObject } from "cloudflare:test";
+import { abortAllDurableObjects, createExecutionContext, reset, runInDurableObject, waitOnExecutionContext } from "cloudflare:test";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import {
   encodeQualificationJson, parseQualificationAttempt, parseQualificationReply, parseQualificationRequest, parseQualificationRun,
@@ -119,9 +119,12 @@ async function generation(value: string) {
 
 test("both entrypoint defaults remain the existing private 503", async () => {
   for (const target of [production, privateDefault]) {
-    const response = target.fetch();
-    expect(response.status).toBe(503);
-    expect(await response.json()).toEqual({ error: "usage_service_unavailable" });
+    const ctx = createExecutionContext();
+    try {
+      const response = await target.fetch(new Request("https://usage.aicharts.io/"), env, ctx);
+      expect(response.status).toBe(503);
+      expect(await response.json()).toEqual({ error: "usage_service_unavailable" });
+    } finally { await waitOnExecutionContext(ctx); }
   }
 });
 

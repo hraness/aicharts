@@ -13,6 +13,13 @@ use aicharts_custody::{references::RecordIntent, CredentialRef, Purpose, Secret3
 
 struct FakeCustody;
 impl super::session::CustodyPort for FakeCustody {
+    fn install_pairing(
+        &mut self,
+        _record: &super::record::Record,
+        _secret: &SecretRecord,
+    ) -> Result<()> {
+        Ok(())
+    }
     fn verify_pairing(
         &mut self,
         _record: &super::record::Record,
@@ -40,6 +47,13 @@ struct FailingCustody {
     calls: usize,
 }
 impl super::session::CustodyPort for FailingCustody {
+    fn install_pairing(
+        &mut self,
+        _record: &super::record::Record,
+        _secret: &SecretRecord,
+    ) -> Result<()> {
+        Ok(())
+    }
     fn verify_pairing(
         &mut self,
         _record: &super::record::Record,

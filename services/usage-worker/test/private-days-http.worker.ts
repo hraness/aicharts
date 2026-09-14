@@ -85,8 +85,11 @@ afterEach(async () => {
 
 test("actual coordinator stays dormant and the default Worker remains unavailable", async () => {
   expect(typeof createPrivateDaysCoordinator()).toBe("function");
-  const response = worker.fetch();
-  expect(response.status).toBe(503); expect(await response.text()).toBe('{"error":"usage_service_unavailable"}');
+  const ctx = createExecutionContext();
+  try {
+    const response = await worker.fetch(new Request("https://usage.aicharts.io/"), env, ctx);
+    expect(response.status).toBe(503); expect(await response.text()).toBe('{"error":"usage_service_unavailable"}');
+  } finally { await waitOnExecutionContext(ctx); }
 });
 
 test("accepted Codex and Claude numeric heads cross real RPC disposal into a private daily response", async () => {

@@ -46,6 +46,25 @@ pub(super) struct SealedCustody<'a> {
 
 #[cfg(target_os = "macos")]
 impl CustodyPort for SealedCustody<'_> {
+    fn install_pairing(&mut self, _record: &Record, secret: &SecretRecord) -> Result<()> {
+        let manifest = self.references.snapshot().map_err(custody_error)?;
+        let prepared = self
+            .references
+            .prepare(&manifest.token(), secret)
+            .map_err(custody_error)?;
+        let installed = self
+            .references
+            .install_prepared(&prepared.token(), secret, self.vault)
+            .map_err(custody_error)?;
+        let resolved = self
+            .references
+            .resolve_verified(&installed.token(), secret.identity(), self.vault)
+            .map_err(custody_error)?;
+        (RecordIntent::from_record(&resolved) == RecordIntent::from_record(secret))
+            .then_some(())
+            .ok_or(Error::Custody)
+    }
+
     fn verify_pairing(&mut self, record: &Record, secret: &SecretRecord) -> Result<()> {
         let intent = RecordIntent::from_record(secret);
         if intent.identity() != &record.pairing.identity
@@ -128,6 +147,7 @@ impl CustodyPort for SealedCustody<'_> {
 /// Ports are private and intentionally operation-scoped. Implementations must
 /// release reference/vault locks before returning so HTTP never nests custody.
 pub(super) trait CustodyPort {
+    fn install_pairing(&mut self, record: &Record, secret: &SecretRecord) -> Result<()>;
     fn verify_pairing(&mut self, record: &Record, secret: &SecretRecord) -> Result<()>;
     fn install_namespace(&mut self, record: &Record, secret: &SecretRecord) -> Result<()>;
     fn reconcile_namespace(&mut self, record: &Record, secret: &SecretRecord) -> Result<()>;
@@ -224,6 +244,122 @@ impl<S: Storage> HeldAttempt<S> {
                 Err(error)
             }
         }
+    }
+
+    /// Durably transition a newly initialized attempt through pairing custody
+    /// while retaining the same attempt lock. The sealed verifier performs
+    /// its own short reference/vault session; no outer vault guard is held.
+    pub(super) fn complete_pairing<C: CustodyPort>(
+        &mut self,
+        secret: &SecretRecord,
+        custody: &mut C,
+        observed_at_ms: u64,
+    ) -> Result<()> {
+        self.usable()?;
+        if self.current.progress != super::record::Progress::PairingPlanned
+            || self.current.flight.is_some()
+        {
+            return Err(Error::Conflict);
+        }
+        if observed_at_ms < self.current.clock_floor_ms
+            || observed_at_ms > crate::enrollment::contract::MAX_TIME_MS
+        {
+            return Err(Error::ClockRegressed);
+        }
+        let intent = aicharts_custody::references::RecordIntent::from_record(secret);
+        if intent.identity() != &self.current.pairing.identity
+            || intent.commitment() != self.current.pairing.commitment.as_bytes()
+        {
+            return Err(Error::Custody);
+        }
+        let mut prepared = self.current.clone();
+        prepared.revision = prepared.revision.checked_add(1).ok_or(Error::Limit)?;
+        prepared.clock_floor_ms = observed_at_ms;
+        prepared.progress = super::record::Progress::PairingPrepared;
+        prepared.last_failure = None;
+        self.publish(&prepared)?;
+        let mut verified = self.current.clone();
+        verified.revision = verified.revision.checked_add(1).ok_or(Error::Limit)?;
+        verified.progress = super::record::Progress::PairingCustodyVerified;
+        verified.last_failure = None;
+        // Validate the complete successor before crossing the external
+        // custody boundary; malformed state must produce zero vault effects.
+        super::record::successor(&prepared, &verified)?;
+        if let Err(error) = custody.install_pairing(self.record(), secret) {
+            self.invalidate();
+            return Err(error);
+        }
+        self.publish(&verified)
+    }
+
+    /// Recover a pairing whose durable state is already PairingPrepared after
+    /// an interrupted custody write. The original secret is required; no
+    /// insertion or reminting is attempted, and the verifier must prove the
+    /// exact existing entry before the final transition.
+    pub(super) fn reconcile_pairing<C: CustodyPort>(
+        mut self,
+        secret: &SecretRecord,
+        custody: &mut C,
+    ) -> Result<()> {
+        self.usable()?;
+        if self.current.progress != super::record::Progress::PairingPrepared
+            || self.current.flight.is_some()
+        {
+            return Err(Error::RecoveryRequired);
+        }
+        let intent = aicharts_custody::references::RecordIntent::from_record(secret);
+        if intent.identity() != &self.current.pairing.identity
+            || intent.commitment() != self.current.pairing.commitment.as_bytes()
+        {
+            return Err(Error::Custody);
+        }
+        let mut verified = self.current.clone();
+        verified.revision = verified.revision.checked_add(1).ok_or(Error::Limit)?;
+        verified.progress = super::record::Progress::PairingCustodyVerified;
+        verified.last_failure = None;
+        super::record::successor(&self.current, &verified)?;
+        if let Err(error) = custody.verify_pairing(self.record(), secret) {
+            self.invalidate();
+            return Err(error);
+        }
+        self.publish(&verified)
+    }
+
+    /// Record one explicit account choice under the held lock. The caller
+    /// must provide the fresh browser-approved account; choices are sticky and
+    /// cannot be replaced while a flight or confirmation is in progress.
+    pub(super) fn choose_account(&mut self, account_id: [u8; 16], chosen_at_ms: u64) -> Result<()> {
+        self.usable()?;
+        if self.current.progress != super::record::Progress::Initialized
+            || self.current.flight.is_some()
+            || self.current.account_choice != super::record::AccountChoice::Unchosen
+            || account_id.iter().all(|byte| *byte == 0)
+        {
+            return Err(Error::Conflict);
+        }
+        if chosen_at_ms < self.current.clock_floor_ms
+            || chosen_at_ms > crate::enrollment::contract::MAX_TIME_MS
+        {
+            return Err(Error::ClockRegressed);
+        }
+        if chosen_at_ms
+            >= self
+                .current
+                .initialized_expires_at_ms
+                .ok_or(Error::Conflict)?
+        {
+            return Err(Error::InvalidSuccessor);
+        }
+        let mut next = self.current.clone();
+        next.revision = next.revision.checked_add(1).ok_or(Error::Limit)?;
+        next.clock_floor_ms = chosen_at_ms;
+        next.account_choice = super::record::AccountChoice::Chosen {
+            account_id,
+            chosen_at_ms,
+        };
+        next.last_failure = None;
+        super::record::successor(&self.current, &next)?;
+        self.publish(&next)
     }
 
     /// Publish one exact successor under the already-held lock. Successful

@@ -1,5 +1,6 @@
-//! Dormant, once-only terminal enrollment HTTPS. Construction remains private;
-//! no product command or credential-custody path can create this adapter yet.
+//! Dormant, once-only terminal enrollment HTTPS. Construction remains sealed
+//! inside the private coordinator; no product command or credential-custody
+//! path can activate this adapter yet.
 //!
 //! Timeouts bound I/O and acceptance, not OS/TLS preemption. The shared resolver
 //! may retain one blocked OS worker after timeout, holding its process-wide
@@ -157,6 +158,17 @@ fn configuration(remaining: Duration, roots: RootCerts) -> Config {
 }
 
 impl HttpsEnrollment {
+    /// Sealed construction for the private coordinator. No caller outside the
+    /// dormant enrollment module can create a transport, and construction
+    /// performs no network or credential operation.
+    pub(super) fn sealed() -> Self {
+        Self {
+            _construction: (),
+            #[cfg(test)]
+            fixture: None,
+        }
+    }
+
     fn agent(&self, remaining: Duration) -> Agent {
         #[cfg(test)]
         if let Some(fixture) = &self.fixture {
