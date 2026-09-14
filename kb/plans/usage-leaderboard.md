@@ -607,10 +607,12 @@ production Vercel environment. All other usage flags —
 `AICHARTS_USAGE_PRIVATE_READ_ENABLED`, pairing, enrollment, admission and
 Worker flags — remain unset.
 
-- Commit under qualification: `6c9a74d1e5016cd3321a13572976e81101d44f9f`
-- Production deployment: to be filled after the env-bearing redeploy below
-- Test Accounts user: `delivered@resend.dev` (Resend's deliverable test sink;
-  a fresh suite account is created by first email-code sign-in)
+- Commit under qualification: `b563a536a6166ac275880dfb6b17ba53be62ebee`
+  (the initial `6c9a74d` attempt surfaced the SDK skew below)
+- Production deployment: `dpl_4D4t3FHQwAUw6ipnvjvvRVcJt794`
+- Test Accounts user: unique `delivered+aicharts-qual-<timestamp>@resend.dev`
+  sinks (Resend's deliverable test domain; a fresh suite account is created by
+  first email-code sign-in, and each address has a bounded send quota)
 - Window start: 2026-09-14T19:30Z
 - Rollback deadline: 2026-09-15T19:30Z — on failure the auth flag is unset and
   the fixed private `503` response is re-verified; on pass the flag remains
@@ -638,3 +640,47 @@ set; `parseEntitlements` therefore fails closed inside
 `verifiedSessionFromAccessToken`. The repair is the reviewed package bump to
 `v0.9.3`, whose verification code is byte-identical for every other check on
 this path; the deferred evidence entry below records the rerun outcome.
+
+### 2026-09-14 — live Accounts browser authentication qualified
+
+The SDK alignment shipped in
+[PR 243](https://github.com/hraness/aicharts/pull/243), merged as
+`b563a536a6166ac275880dfb6b17ba53be62ebee` after exact-head `Check`, `Required`,
+all four CodeQL analyses and Vercel passed. Production
+`dpl_4D4t3FHQwAUw6ipnvjvvRVcJt794` carries that merge; all 14 canonical probes
+passed with the delivery proof bound to the exact commit — pages `200`,
+`/api/suite-auth/start` `302` with the exact authorize parameters and
+`HttpOnly`/`Secure`/`Lax` transaction cookie, `/api/usage/days` and
+`/api/usage/pairing` still `503`.
+
+A clean Playwright context then completed the full runbook at
+`https://aicharts.io/usage` with a fresh Resend test account:
+
+- same-origin initiation reached `account.hraness.com`; the six-digit email
+  code was retrieved from Resend delivery evidence and the callback returned
+  with `code`+`state`, landing on `https://aicharts.io/` with no OAuth
+  parameters left in the URL
+- `/api/suite-auth/session` reported `signed_in` with an opaque
+  `acct_[0-9a-f]{32}` suite account — no email or provider subject in the
+  browser view; the session cookie is host-only `HttpOnly`/`Secure`/`Lax` with
+  a future ~7-day expiry
+- a bearer scan found no access or refresh token in HTML, `document.cookie`,
+  web storage, the session JSON, or any request URL/body
+- `/api/usage/days` answered `503` while authenticated — private reads stayed
+  fenced
+- `POST /api/suite-auth/refresh` returned `200` with the session still
+  `signed_in` (rotation); `POST /api/suite-auth/sign-out` returned `200`,
+  reported `signed_out` and cleared the auth cookies
+- replaying the consumed callback and a malformed `code`/`state` callback each
+  refused without creating a session
+
+Cross-site initiation was refused with `403` before redirect in a separate
+probe (`Sec-Fetch-Site` none/cross-site rejected, same-origin admitted). A
+foreign host cannot reach the function in production — the deployment URL is
+SSO-gated and `www` `308`s at the edge — so the in-function wrong-origin `403`
+remains covered by the synthetic contract suite. Expired-transaction refusal is
+likewise exercised by the synthetic boundary.
+
+Result: `AICHARTS_USAGE_AUTH_ENABLED` remains enabled on production. Private
+reads, pairing, enrollment, admission, Worker, upload and query flags all
+remain unset; public usage activation is not established by this evidence.
