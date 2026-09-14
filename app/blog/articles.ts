@@ -4,6 +4,7 @@ import { createAaIndexCostArticle } from "./aa-index-cost-article";
 import { createCodingAgentScoreHoldoutsArticle } from "./coding-agent-score-holdouts-article";
 import { createDevinFusionCostSavingArticle } from "./devin-fusion-cost-saving-article";
 import { createOpenModelsCodingAgentsArticle } from "./open-models-coding-agents-article";
+import { createRealSweArticle } from "./real-swe-private-enterprise-benchmark-article";
 import { createSmallModelsHaveArrivedArticle } from "./small-models-have-arrived-article";
 import { createTerminalBenchScienceArticle } from "./terminal-bench-science-article";
 
@@ -146,6 +147,30 @@ export const BLOG_SOURCES = {
     publication: "Devin",
     title: "Fable 5.1 in Devin and Why It’s Cheaper than Opus 5",
     url: "https://devin.ai/blog/fable-5-1",
+    year: 2026,
+  },
+  specificLabsRealSwe: {
+    note:
+      "The September 2026 benchmark page owns the eight-pair leaderboard, the pass@1 definition, the ten-task sample table, the failure taxonomy counts, the instruction and files-edited medians, the cost and token estimates, and the evaluation setup.",
+    publication: "Specific Labs",
+    title: "Introducing Real-SWE",
+    url: "https://withspecific.com/benchmarks/real-swe",
+    year: 2026,
+  },
+  googleAntigravityCliTransition: {
+    note:
+      "The May 19, 2026 announcement states that Gemini CLI is transitioning to Antigravity CLI, sets June 18, 2026 as the date consumer access would stop serving requests, and keeps Gemini CLI available to enterprise licenses and paid API keys.",
+    publication: "Google Developers Blog",
+    title: "An important update: Transitioning Gemini CLI to Antigravity CLI",
+    url: "https://developers.googleblog.com/an-important-update-transitioning-gemini-cli-to-antigravity-cli/",
+    year: 2026,
+  },
+  hackerNewsRealSwe: {
+    note:
+      "The September 12, 2026 discussion records practitioner objections to non-reproducible private tasks, replies defending the trade against gaming, the call to measure contamination, and the Gemini CLI versus Antigravity harness dispute.",
+    publication: "Hacker News",
+    title: "Real-SWE: Benchmarking AI models on private, real-world, enterprise codebases",
+    url: "https://news.ycombinator.com/item?id=49676820",
     year: 2026,
   },
 } as const satisfies Record<string, BlogSource>;
@@ -313,6 +338,7 @@ const mirrorCodeArticle = {
 } as const satisfies BlogArticle;
 
 export const blogArticles = [
+  createRealSweArticle(),
   createDevinFusionCostSavingArticle(),
   createTerminalBenchScienceArticle(),
   createSmallModelsHaveArrivedArticle(),
