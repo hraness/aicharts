@@ -146,6 +146,29 @@ describe("dormant account admission", () => {
     expect(await snapshot()).toEqual(before);
   });
 
+  test("committed revisions retain a contiguous immutable receipt journal", async () => {
+    const device = await enroll(), first = batch(device), firstBytes = success(await upload(device, first));
+    const correction = batch(device, 2, [{ id: 1, expected: first.operations[0].operationHash, output: 1n, day: DAY - 1 }]);
+    const secondBytes = success(await upload(device, correction));
+    const rows = await runInDurableObject(stub(), (_instance, state) => state.storage.sql.exec(
+      "SELECT revision, batch, journal, committed_at_ms FROM usage_admission_journal ORDER BY revision").toArray());
+    expect(rows.map(row => row.revision)).toEqual([1, 2]);
+    expect(new Uint8Array(rows[0].batch as ArrayBuffer)).toEqual(first.bytes);
+    expect(new Uint8Array(rows[0].journal as ArrayBuffer)).toEqual(firstBytes);
+    expect(new Uint8Array(rows[1].batch as ArrayBuffer)).toEqual(correction.bytes);
+    expect(new Uint8Array(rows[1].journal as ArrayBuffer)).toEqual(secondBytes);
+    await abortAllDurableObjects();
+    expect(success(await upload(device, correction))).toEqual(secondBytes);
+  });
+
+  test("a missing immutable revision fails the restart audit without repair", async () => {
+    const device = await enroll(), value = batch(device);
+    success(await upload(device, value));
+    await runInDurableObject(stub(), (_instance, state) => state.storage.sql.exec("DELETE FROM usage_admission_journal WHERE revision = 1").toArray());
+    await abortAllDurableObjects();
+    expect(await upload(device, value)).toEqual({ ok: false, error: "storage_invalid" });
+  });
+
   test("expired enrollment grant is not routine upload authority; polling is never called", async () => {
     const device = await enroll(), value = batch(device);
     vi.setSystemTime(NOW + PAIRING_TTL_MS + 1);
