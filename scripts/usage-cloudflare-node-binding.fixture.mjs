@@ -3,18 +3,16 @@ import { mkdtemp, realpath, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
-import { registerHooks } from "node:module";
-import { Miniflare, convertV4MiniflareOptions } from "/Users/bg/Documents/Codex/2026-09-02/i-w/work/aicharts-admission/node_modules/miniflare/dist/src/index.js";
+import { createRequire } from "node:module";
 
-const root = "/Users/bg/Documents/Codex/2026-09-13/res/work/aicharts-terminal-integration";
-registerHooks({ resolve(specifier, context, nextResolve) {
-  if (specifier.startsWith(".") && !specifier.endsWith(".ts") && context.parentURL?.startsWith(pathToFileURL(root).href))
-    return nextResolve(new URL(`${specifier}.ts`, context.parentURL).href, context, nextResolve);
-  return nextResolve(specifier, context, nextResolve);
-} });
+// Resolve the runtime belonging to this repository's pinned Wrangler install.
+// The tracked Node import hook owns only the driver's admitted source edges.
+const require = createRequire(import.meta.url);
+const wranglerRequire = createRequire(require.resolve("wrangler/package.json"));
+const { Miniflare, convertV4MiniflareOptions } = await import(pathToFileURL(wranglerRequire.resolve("miniflare")).href);
 const { dispatchQualificationStep, prepareQualification, qualificationConfigs, recordQualificationDeployment, QUALIFICATION_TARGET } =
-  await import(`${pathToFileURL(join(root, "scripts/usage-cloudflare-qualification.ts"))}`);
-const { qualificationDigest } = await import(`${pathToFileURL(join(root, "fixtures/usage/cloudflare-qualification.ts"))}`);
+  await import(new URL("./usage-cloudflare-qualification.ts", import.meta.url));
+const { qualificationDigest } = await import(new URL("../fixtures/usage/cloudflare-qualification.ts", import.meta.url));
 
 const sourceSha = "b".repeat(40);
 const accountId = "a".repeat(32);
@@ -50,13 +48,21 @@ function targetScript(mode) {
 async function run(mode) {
   const parent = await realpath(await mkdtemp(join(tmpdir(), "aicharts-node-binding-parent-")));
   const path = join(parent, "run");
-  const runtime = new Miniflare(convertV4MiniflareOptions({ cf: false, workers: [
-    { name: "driver", compatibilityDate: "2026-09-10", modules: true,
-      script: "export default { fetch() { return new Response(null, { status: 503 }); } };",
-      serviceBindings: { QUALIFICATION: "target" } },
-    { name: "target", compatibilityDate: "2026-09-10", modules: true, script: targetScript(mode) },
-  ] }));
+  let runtime;
+  let cleanupPromise;
+  const cleanup = () => cleanupPromise ??= (async () => {
+    try { await runtime?.dispose(); }
+    finally { await rm(parent, { recursive: true, force: true }); }
+  })();
+  const terminate = () => { void cleanup().finally(() => process.exit(143)); };
+  process.once("SIGTERM", terminate);
   try {
+    runtime = new Miniflare(convertV4MiniflareOptions({ cf: false, workers: [
+      { name: "driver", compatibilityDate: "2026-09-10", modules: true,
+        script: "export default { fetch() { return new Response(null, { status: 503 }); } };",
+        serviceBindings: { QUALIFICATION: "target" } },
+      { name: "target", compatibilityDate: "2026-09-10", modules: true, script: targetScript(mode) },
+    ] }));
     const manifest = await prepareQualification(path, sourceSha, { accountId, ...QUALIFICATION_TARGET });
     await recordQualificationDeployment(path, receipt(manifest), false);
     const calls = [];
@@ -79,15 +85,14 @@ async function run(mode) {
     assert.equal(Buffer.from(calls[0].init.body).toString("hex"), result.steps[0].requestHex);
     if (mode === "success") {
       assert.equal(result.steps[0].state, "complete");
-      assert.equal((await platform.QUALIFICATION.fetch("https://synthetic.invalid/count")).status, 200);
     } else {
       assert.equal(result.steps[0].state, "ambiguous");
       assert.equal(calls.length, 1, "redirect response must not trigger a second service request");
-      assert.deepEqual(await (await platform.QUALIFICATION.fetch("https://synthetic.invalid/count")).json(), { count: 2 });
     }
+    assert.deepEqual(await (await platform.QUALIFICATION.fetch("https://synthetic.invalid/count")).json(), { count: 2 });
   } finally {
-    await runtime.dispose();
-    await rm(parent, { recursive: true, force: true });
+    try { await cleanup(); }
+    finally { process.removeListener("SIGTERM", terminate); }
   }
 }
 

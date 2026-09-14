@@ -12,6 +12,7 @@ use super::{
         self, AccountChoice, Commitment, Flight, LastFailure, NamespacePin, Pin, Progress, Record,
         Token,
     },
+    session::HeldAttempt,
     storage::{self, DurableSnapshot, Storage},
     Error, Result, MAX_DISPATCHES, MAX_FLIGHTS, MAX_REVISION,
 };
@@ -144,6 +145,26 @@ fn complete_custody<S: Storage>(
     storage::compare_and_publish(storage, expected, next)
 }
 
+/// Held-lock variant used by the private orchestrator. The predecessor is
+/// durably refreshed, custody runs while the attempt lock is held, and only a
+/// successful exact publication advances the held observation.
+pub(super) fn complete_custody_held<S: Storage>(
+    held: &mut HeldAttempt<S>,
+    next: &Record,
+    install: impl FnOnce() -> Result<()>,
+) -> Result<()> {
+    held.refresh_durable()?;
+    record::validate(next)?;
+    record::successor(held.record(), next)?;
+    if let Err(error) = install() {
+        // A vault/reference operation may have committed before losing its
+        // reply. Force drop/reopen and explicit reconciliation before retry.
+        held.invalidate();
+        return Err(error);
+    }
+    held.publish(next)
+}
+
 /// Persist the pairing secret's nonsecret custody state before enrollment can
 /// dispatch. The secret is checked against the original typed identity and
 /// commitment; its bytes never enter the attempt record.
@@ -218,6 +239,16 @@ pub(super) fn prepare_namespace_custody<S: Storage>(
     secret: &SecretRecord,
     prepared_at_ms: u64,
 ) -> Result<DurableSnapshot> {
+    let next = prepare_namespace_custody_record(expected, current, secret, prepared_at_ms)?;
+    storage::compare_and_publish(storage, expected, &next)
+}
+
+pub(super) fn prepare_namespace_custody_record(
+    expected: Token,
+    current: &Record,
+    secret: &SecretRecord,
+    prepared_at_ms: u64,
+) -> Result<Record> {
     record::validate(current)?;
     current_token(current, expected)?;
     let namespace = current.namespace.as_ref().ok_or(Error::Conflict)?;
@@ -236,7 +267,7 @@ pub(super) fn prepare_namespace_custody<S: Storage>(
     next.clock_floor_ms = prepared_at_ms;
     next.progress = Progress::NamespacePrepared;
     next.last_failure = None;
-    storage::compare_and_publish(storage, expected, &next)
+    Ok(next)
 }
 
 /// Complete namespace custody through the sealed reference-store API. The
@@ -250,6 +281,24 @@ pub(super) fn complete_namespace_custody<S: Storage>(
     references: &mut ReferenceStore,
     vault: &mut Vault,
 ) -> Result<DurableSnapshot> {
+    let next = complete_namespace_custody_record(expected, current, secret)?;
+    complete_custody(storage, expected, current, &next, || {
+        let manifest = references.snapshot().map_err(|_| Error::Custody)?;
+        let prepared = references
+            .prepare(&manifest.token(), secret)
+            .map_err(|_| Error::Custody)?;
+        references
+            .install_prepared(&prepared.token(), secret, vault)
+            .map_err(|_| Error::Custody)?;
+        Ok(())
+    })
+}
+
+pub(super) fn complete_namespace_custody_record(
+    expected: Token,
+    current: &Record,
+    secret: &SecretRecord,
+) -> Result<Record> {
     record::validate(current)?;
     current_token(current, expected)?;
     let namespace = current.namespace.as_ref().ok_or(Error::Conflict)?;
@@ -267,16 +316,7 @@ pub(super) fn complete_namespace_custody<S: Storage>(
     next.progress = Progress::NamespaceCustodyVerified;
     next.flight = None;
     next.last_failure = None;
-    complete_custody(storage, expected, current, &next, || {
-        let manifest = references.snapshot().map_err(|_| Error::Custody)?;
-        let prepared = references
-            .prepare(&manifest.token(), secret)
-            .map_err(|_| Error::Custody)?;
-        references
-            .install_prepared(&prepared.token(), secret, vault)
-            .map_err(|_| Error::Custody)?;
-        Ok(())
-    })
+    Ok(next)
 }
 
 fn request_matches_record(record: &Record, request: &Request) -> bool {
@@ -476,6 +516,17 @@ pub(super) fn prepare_flight<S: Storage>(
     context: &Context,
     prepared_at_ms: u64,
 ) -> Result<DurableSnapshot> {
+    let next = prepare_flight_record(expected, current, request, context, prepared_at_ms)?;
+    storage::compare_and_publish(storage, expected, &next)
+}
+
+pub(super) fn prepare_flight_record(
+    expected: Token,
+    current: &Record,
+    request: &Request,
+    context: &Context,
+    prepared_at_ms: u64,
+) -> Result<Record> {
     check_call(current, expected, request, context)?;
     if current.flight.is_some() {
         return Err(Error::Busy);
@@ -508,7 +559,7 @@ pub(super) fn prepare_flight<S: Storage>(
         context_sha,
     });
     next.last_failure = None;
-    storage::compare_and_publish(storage, expected, &next)
+    Ok(next)
 }
 
 /// Record one explicit dispatch. Every network retry must pass the same
@@ -521,6 +572,17 @@ pub(super) fn dispatch_flight<S: Storage>(
     context: &Context,
     attempted_at_ms: u64,
 ) -> Result<DurableSnapshot> {
+    let next = dispatch_flight_record(expected, current, request, context, attempted_at_ms)?;
+    storage::compare_and_publish(storage, expected, &next)
+}
+
+pub(super) fn dispatch_flight_record(
+    expected: Token,
+    current: &Record,
+    request: &Request,
+    context: &Context,
+    attempted_at_ms: u64,
+) -> Result<Record> {
     check_call(current, expected, request, context)?;
     let (request_sha, context_sha) = check_flight(current, request, context)?;
     let old = current.flight.as_ref().ok_or(Error::Missing)?;
@@ -559,7 +621,7 @@ pub(super) fn dispatch_flight<S: Storage>(
         context_sha,
     });
     next.last_failure = None;
-    storage::compare_and_publish(storage, expected, &next)
+    Ok(next)
 }
 
 fn failure<S: Storage>(
@@ -643,6 +705,21 @@ fn namespace_pin(
     namespace: &contract::Namespace,
     accepted_at_ms: u64,
 ) -> Result<NamespacePin> {
+    let secret = namespace_secret_record(record, namespace)?;
+    let intent = RecordIntent::from_record(&secret);
+    Ok(NamespacePin {
+        pin: Pin::from_intent(&intent)?,
+        accepted_at_ms,
+    })
+}
+
+/// Materialize the accepted namespace key before settlement can consume or
+/// borrow the response. The returned non-Clone secret is owned by the private
+/// orchestrator until custody verification completes; no key is persisted.
+pub(super) fn namespace_secret_record(
+    record: &Record,
+    namespace: &contract::Namespace,
+) -> Result<SecretRecord> {
     let reservation = record.reservation.as_ref().ok_or(Error::InvalidSuccessor)?;
     let reference = CredentialRef::new(
         record.installation_id,
@@ -658,11 +735,7 @@ fn namespace_pin(
         Secret32::new(*namespace.namespace_key.as_bytes()).map_err(|_| Error::InvalidSuccessor)?,
     )
     .map_err(|_| Error::InvalidSuccessor)?;
-    let intent = RecordIntent::from_record(&secret);
-    Ok(NamespacePin {
-        pin: Pin::from_intent(&intent)?,
-        accepted_at_ms,
-    })
+    Ok(secret)
 }
 
 /// Settle one checked domain response. Domain errors remain fixed failure
@@ -677,6 +750,18 @@ pub(super) fn settle_response<S: Storage>(
     observed_at_ms: u64,
     result: &DomainResult,
 ) -> Result<DurableSnapshot> {
+    let next = settle_response_record(expected, current, request, context, observed_at_ms, result)?;
+    storage::compare_and_publish(storage, expected, &next)
+}
+
+pub(super) fn settle_response_record(
+    expected: Token,
+    current: &Record,
+    request: &Request,
+    context: &Context,
+    observed_at_ms: u64,
+    result: &DomainResult,
+) -> Result<Record> {
     check_call(current, expected, request, context)?;
     check_flight(current, request, context)?;
     if current
@@ -790,11 +875,11 @@ pub(super) fn settle_response<S: Storage>(
             _ => return Err(Error::InvalidSuccessor),
         },
     }
-    storage::compare_and_publish(storage, expected, &next)
+    Ok(next)
 }
 
 #[cfg(test)]
-mod tests {
+pub(super) mod tests {
     use super::*;
     use crate::enrollment::attempt::record_tests;
     use crate::enrollment::attempt::record_tests::{copy, enrolled_record, initial_record, TIME};
@@ -812,10 +897,10 @@ mod tests {
         directory_synced: bool,
     }
     #[derive(Clone, Default)]
-    pub(super) struct Memory(Rc<RefCell<Disk>>);
+    pub(crate) struct Memory(Rc<RefCell<Disk>>);
 
     impl Memory {
-        pub(super) fn with(record: &Record) -> Self {
+        pub(crate) fn with(record: &Record) -> Self {
             Self(Rc::new(RefCell::new(Disk {
                 committed: Some(record::encode(record).unwrap().as_bytes().to_vec()),
                 ..Disk::default()
@@ -884,7 +969,7 @@ mod tests {
         }
         id
     }
-    fn initialize_request() -> Request {
+    pub(crate) fn initialize_request() -> Request {
         Request::Initialize {
             proof: proof(),
             upload_commitment: fixed_id(
@@ -892,13 +977,13 @@ mod tests {
             ),
         }
     }
-    fn initialized_record() -> Record {
+    pub(crate) fn initialized_record() -> Record {
         let mut record = initial_record();
         record.revision = 2;
         record.progress = Progress::PairingCustodyVerified;
         record
     }
-    fn empty_context() -> Context {
+    pub(crate) fn empty_context() -> Context {
         Context {
             now_ms: TIME,
             initialized_expires_at_ms: None,

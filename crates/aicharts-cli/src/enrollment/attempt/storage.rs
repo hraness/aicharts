@@ -132,6 +132,40 @@ fn commit<S: Storage>(
     Ok(DurableSnapshot(snapshot))
 }
 
+/// Durable reconciliation for a caller-owned lock. This deliberately does not
+/// acquire or release a lock; `HeldAttempt` uses it to keep one attempt lock
+/// across the complete private operation.
+pub(super) fn read_durable_unlocked<S: Storage>(
+    storage: &mut S,
+    expected: Token,
+) -> Result<DurableSnapshot> {
+    checked(storage, expected)?;
+    storage.sync_committed()?;
+    storage.sync_directory()?;
+    let exact = checked(storage, expected)?;
+    Ok(DurableSnapshot(exact))
+}
+
+pub(super) fn compare_and_publish_unlocked<S: Storage>(
+    storage: &mut S,
+    expected: Token,
+    next: &Record,
+) -> Result<DurableSnapshot> {
+    record::validate(next)?;
+    if expected.revision() == super::MAX_REVISION {
+        return Err(Error::Limit);
+    }
+    if next.revision != expected.revision() + 1 {
+        return Err(Error::InvalidSuccessor);
+    }
+    let candidate = Candidate {
+        expected: Some(expected),
+        next: record::token(next)?,
+        bytes: record::encode(next)?,
+    };
+    commit(storage, &candidate, next)
+}
+
 pub(super) fn initialize<S: Storage>(storage: &mut S, initial: &Record) -> Result<DurableSnapshot> {
     record::initial(initial)?;
     let candidate = Candidate {
@@ -153,13 +187,7 @@ pub(super) fn read_durable<S: Storage>(
     storage: &mut S,
     expected: Token,
 ) -> Result<DurableSnapshot> {
-    locked(storage, |storage| {
-        checked(storage, expected)?;
-        storage.sync_committed()?;
-        storage.sync_directory()?;
-        let exact = checked(storage, expected)?;
-        Ok(DurableSnapshot(exact))
-    })
+    locked(storage, |storage| read_durable_unlocked(storage, expected))
 }
 
 pub(super) fn compare_and_publish<S: Storage>(
@@ -167,6 +195,8 @@ pub(super) fn compare_and_publish<S: Storage>(
     expected: Token,
     next: &Record,
 ) -> Result<DurableSnapshot> {
+    // Preserve the public wrapper's pre-effect validation: malformed or
+    // exhausted successors must not even attempt to acquire the storage lock.
     record::validate(next)?;
     if expected.revision() == super::MAX_REVISION {
         return Err(Error::Limit);
@@ -174,10 +204,7 @@ pub(super) fn compare_and_publish<S: Storage>(
     if next.revision != expected.revision() + 1 {
         return Err(Error::InvalidSuccessor);
     }
-    let candidate = Candidate {
-        expected: Some(expected),
-        next: record::token(next)?,
-        bytes: record::encode(next)?,
-    };
-    locked(storage, |storage| commit(storage, &candidate, next))
+    locked(storage, |storage| {
+        compare_and_publish_unlocked(storage, expected, next)
+    })
 }
