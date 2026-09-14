@@ -1,5 +1,6 @@
 export { PairingIntent } from "./pairing";
 export { AccountEnrollment } from "./enrollment";
+export { RestoreFence } from "./restore-fence";
 import { productionRouter } from "./production";
 
 /** Routes remain closed until each production activation fence is explicit. */
