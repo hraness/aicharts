@@ -572,10 +572,22 @@ Focused Rust validation passed ten session cases under scheduler
 `6e8224fa9bae171431e912cb48a17dcc` supplies the checked cross-language fixture.
 Twenty focused TypeScript tests passed with 568 assertions. Independent review
 accepted the collector join and monitor after malformed-parent rejection and
-key-buffer cleanup repairs. The joined candidate still requires the full
-application gate, visual verification, protected delivery and production proof.
-Current operational semantics are maintained in
+key-buffer cleanup repairs. Current operational semantics are maintained in
 [session usage](../../docs/usage-sessions.md).
+
+PR 241 was squash-merged as `85b93eed30349ea1a29e63ce474b86725877cafb` after
+protected Check, Required, CodeQL, language analyses, Vercel and auto-merge
+checks passed. The full aggregate gate on the delivered tree passed under
+scheduler label `devin-aicharts-session-utilization-check`, including the
+rendered desktop and mobile session-view contracts; private log SHA256 is
+`17862f3eecfbf0da713ddc02ca852eed444abc61c5668fa4ea9997c30de23602`. Exact
+production deployment `dpl_9oifPvAf7UFSVKh14H433fN4mME2` was READY and the
+canonical 14 probes passed, including `/usage/sessions` live with noindex and
+all dormant usage endpoints still closed; private log SHA256 is
+`c380d15ce2934d7f1074b569dec0bdc7d625a76a3a03c0a7440f22cc34ebcd67`. PR 240
+delivered the menu-bar companion install contract as `8b14e96` after the same
+protected checks and is covered by the same production deployment. Public
+usage routes and activation flags remain closed.
 
 Public Accounts discovery is reachable, but live browser authentication,
 native custody/enrollment, external restore fencing and production upload/query
