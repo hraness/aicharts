@@ -51,6 +51,66 @@ export const HOME_EDITORIAL_SLUGS = [
 ] as const satisfies readonly BlogSlug[];
 
 export const BLOG_ARTICLE_ADMISSIONS = {
+  "real-swe-private-enterprise-benchmark": {
+    canonicalOwner: blogArticlePath("real-swe-private-enterprise-benchmark"),
+    decision: "keep",
+    evidenceOwner: EVIDENCE_OWNER,
+    evidenceType: "primary-source-synthesis",
+    harmIfWrong:
+      "A private-task aggregate could be quoted as a general enterprise capability ranking, compared numerically with public-suite scores, or attributed to a model rather than to its model and harness pair.",
+    hostFit:
+      "AI Charts publishes configuration-aware benchmark interpretation and already stores several of the same model and harness names in its checked coding-agent snapshot, so it can place the private-task ranking beside the chart without merging the two scales.",
+    humanReviewedOn: null,
+    lifecycleState: "indexable",
+    nearestUrls: [
+      {
+        distinction:
+          "The holdout page asks whether a public-suite score generalizes to cases the optimizer could not see; this page explains a benchmark whose tasks are private by provenance and scored per model and harness pair.",
+        url: blogArticlePath("coding-agent-score-holdouts"),
+      },
+      {
+        distinction:
+          "MirrorCode measures complete-program reimplementation of public software under large budgets; this page measures scoped changes to licensed private production code under an eight-run pass@1 protocol.",
+        url: blogArticlePath("mirrorcode-coding-agent-benchmark"),
+      },
+      {
+        distinction:
+          "The AA Index and open-models pages analyze the checked Artificial Analysis snapshot; this page analyzes a separate primary source and uses the snapshot only for same-name rows.",
+        url: blogArticlePath("aa-index-cost-coding-agents"),
+      },
+      {
+        distinction:
+          "The Devin Fusion page reconstructs a vendor's multi-model harness cost claim; this page explains an independent evaluator's private-task leaderboard and failure taxonomy.",
+        url: blogArticlePath("devin-fusion-cost-saving"),
+      },
+    ],
+    originalContribution:
+      "A reconciliation of the leaderboard rates with the published 640-rollout task table, derived failure-category totals showing missed requirements as the largest bucket, named per-task rank inversions, the Gemini CLI versus Antigravity harness boundary sourced to Google's own transition notice, and a derived same-name overlap table against the checked snapshot that refuses numeric comparison.",
+    overlapDecision:
+      "Keep separately: no current route explains private-task provenance, model and harness pair scoring, or a failure taxonomy, and fewer than a third of its headings or claims overlap any existing article.",
+    primaryEvidence:
+      "Specific Labs' benchmark page owns every rate, count, cost, and quote; Google's developer blog owns the Gemini CLI transition; the Hacker News thread owns the practitioner reactions; the checked Artificial Analysis snapshot owns the same-name comparison rows and their retrieval date.",
+    primarySourceIds: [
+      "specificLabsRealSwe",
+      "googleAntigravityCliTransition",
+      "hackerNewsRealSwe",
+      "artificialAnalysisCodingAgents",
+    ],
+    readerJob:
+      "Understand what Real-SWE's 38.8% top resolve rate measures for model and harness pairs on private enterprise code, and read that ranking beside the AI Charts coding-agent snapshot without merging the two scales.",
+    reassessOn: "2026-10-19",
+    reviewedBy: REVIEWED_BY,
+    reviewedOn: "2026-09-14",
+    scores: {
+      factualConfidence: 2,
+      hostFit: 2,
+      maintenanceValue: 1,
+      originalEvidence: 2,
+      readerUtility: 2,
+      voiceIntegrity: 2,
+    },
+    sourceCheckedOn: "2026-09-14",
+  },
   "devin-fusion-cost-saving": {
     canonicalOwner: blogArticlePath("devin-fusion-cost-saving"),
     decision: "keep",

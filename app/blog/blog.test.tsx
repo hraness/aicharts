@@ -52,6 +52,16 @@ import {
   leadModelBaselines,
 } from "./devin-fusion-cost-saving-article";
 import {
+  REAL_SWE,
+  REAL_SWE_CONFIGURATIONS,
+  createRealSweArticle,
+  realSweChartOverlaps,
+  realSweFailedRolloutTotal,
+  realSweFailureTotals,
+  realSwePassTotals,
+  spellCount,
+} from "./real-swe-private-enterprise-benchmark-article";
+import {
   FRENCH_OWEN_SMALL_MODELS,
   OPENAI_GPT_56_LUNA,
 } from "./small-models-have-arrived-article";
@@ -146,7 +156,11 @@ describe("AI Charts benchmark notes", () => {
       expect(articleToMarkdown(article)).not.toContain("/images/blog/");
       expect(article.authorshipDisclosure).toBe(BLOG_AUTHORSHIP_DISCLOSURE);
       expect(articleToMarkdown(article)).toContain(BLOG_AUTHORSHIP_DISCLOSURE);
-      if (article.slug === "devin-fusion-cost-saving") {
+      if (article.slug === "real-swe-private-enterprise-benchmark") {
+        expect(article.publishedAt).toBe("2026-09-14");
+        expect(article.updatedAt >= article.publishedAt).toBeTrue();
+        expect(articleToMarkdown(article)).toContain("captured September 14, 2026 UTC");
+      } else if (article.slug === "devin-fusion-cost-saving") {
         expect(article.publishedAt).toBe("2026-09-11");
         expect(article.updatedAt >= article.publishedAt).toBeTrue();
       } else if (article.slug === "terminal-bench-science") {
@@ -422,6 +436,168 @@ describe("AI Charts benchmark notes", () => {
     }
   });
 
+  test("reconciles the Real-SWE leaderboard with its published task table and taxonomy", () => {
+    const parsed = parseCodingAgentSnapshot(codingAgentData);
+    if (!parsed.ok) throw parsed.error;
+    const article = getBlogArticle("real-swe-private-enterprise-benchmark");
+    expect(article).toBeDefined();
+    if (article === undefined) return;
+
+    const markup = renderToStaticMarkup(
+      createElement(ArticleBody, { blocks: article.body }),
+    );
+    const markdown = articleToMarkdown(article);
+
+    expect(article.title).toBe("What Real-SWE’s 38.8% on private enterprise code measures");
+    expect(article.sourceIds).toEqual([
+      "specificLabsRealSwe",
+      "googleAntigravityCliTransition",
+      "hackerNewsRealSwe",
+      "artificialAnalysisCodingAgents",
+    ]);
+    expect(blogEditorialImage(article.slug)).toBeUndefined();
+    for (const sourceId of article.sourceIds) {
+      expect(markup).toContain(BLOG_SOURCES[sourceId].url);
+    }
+    expect(markup).toContain(formatRetrievedAt(parsed.value.source.retrievedAt));
+    for (const quote of Object.values(REAL_SWE.quotes)) {
+      expect(markdown).toContain(quote);
+    }
+    expect(markdown).not.toContain("—");
+    expect(markdown).not.toContain("refresh");
+    expect(markdown).not.toContain("schema");
+
+    // Every leaderboard rate is the pass count over 80 rollouts from the
+    // published task table, within the half-point that rounding can move
+    // (0.051 keeps an exact 0.05 difference clear of floating-point error).
+    const { modelCount, perModel, runsPerTask, taskCount, total } = REAL_SWE.rollouts as Readonly<
+      Record<"modelCount" | "perModel" | "runsPerTask" | "taskCount" | "total", number>
+    >;
+    expect(total).toBe(modelCount * taskCount * runsPerTask);
+    expect(perModel).toBe(taskCount * runsPerTask);
+    expect(REAL_SWE.tasks).toHaveLength(REAL_SWE.rollouts.taskCount);
+    expect(REAL_SWE.leaderboard).toHaveLength(REAL_SWE.rollouts.modelCount);
+    const passTotals = realSwePassTotals();
+    REAL_SWE.leaderboard.forEach((entry, index) => {
+      const passes = passTotals[index];
+      expect(passes).toBeDefined();
+      if (passes === undefined) return;
+      const published = Number.parseFloat(entry.resolution);
+      expect(Math.abs((passes / REAL_SWE.rollouts.perModel) * 100 - published))
+        .toBeLessThanOrEqual(0.051);
+      expect(markup).toContain(entry.model);
+      expect(markup).toContain(entry.harness);
+      expect(markup).toContain(entry.resolution);
+      expect(markup).toContain(entry.costUsd);
+      expect(markdown).toContain(`${entry.model} · ${entry.harness}`);
+    });
+    for (const task of REAL_SWE.tasks) {
+      const passes = task.passes.reduce((total, value) => total + value, 0);
+      const rollouts = task.passes.length * REAL_SWE.rollouts.runsPerTask;
+      expect(Math.abs((passes / rollouts) * 100 - Number.parseFloat(task.resolution)))
+        .toBeLessThanOrEqual(0.051);
+      expect(markdown).toContain(task.name);
+      expect(markup).toContain(task.resolution);
+    }
+    expect(REAL_SWE.tasks.filter(task => Number.parseFloat(task.resolution) < 15))
+      .toHaveLength(REAL_SWE.tasksBelowFifteenPercent);
+
+    // Failed rollouts per model are the complement of passes, and each
+    // model's category counts sum to its failed total.
+    REAL_SWE.failureProfiles.forEach((profile, index) => {
+      const passes = passTotals[index];
+      expect(passes).toBeDefined();
+      if (passes === undefined) return;
+      expect(profile.model).toBe(REAL_SWE.leaderboard[index]?.model ?? "");
+      expect(profile.failedRollouts).toBe(REAL_SWE.rollouts.perModel - passes);
+      expect(profile.counts.reduce((total, value) => total + value, 0))
+        .toBe(profile.failedRollouts);
+    });
+    const failureTotals = realSweFailureTotals();
+    const failedTotal = realSweFailedRolloutTotal();
+    expect(failedTotal).toBe(REAL_SWE.rollouts.total - passTotals.reduce((a, b) => a + b, 0));
+    expect(failureTotals.reduce((a, b) => a + b, 0)).toBe(failedTotal);
+    const [, missedTotal] = failureTotals;
+    expect(missedTotal).toBe(Math.max(...failureTotals));
+    expect(markdown).toContain(`missed requirement accounts for ${missedTotal}`);
+    expect(markdown).toContain(`Across the ${failedTotal} failed rollouts`);
+    // The published per-model shares are counts over that model's failures.
+    const grok = REAL_SWE.failureProfiles.find(profile => profile.model === "Grok 4.6");
+    expect(grok).toBeDefined();
+    if (grok !== undefined) {
+      expect(((grok.counts[1] / grok.failedRollouts) * 100).toFixed(1))
+        .toBe(REAL_SWE.failureShares.grokMissedRequirement.replace("%", ""));
+    }
+
+    const overlaps = realSweChartOverlaps(parsed.value.records);
+    expect(overlaps.map(overlap => overlap.configuration)).toEqual(REAL_SWE_CONFIGURATIONS);
+    const present = overlaps.filter(overlap => overlap.record !== undefined);
+    expect(present.length).toBeGreaterThanOrEqual(2);
+    for (const overlap of present) {
+      const record = overlap.record;
+      if (record === undefined) continue;
+      expect(markup).toContain(`${record.model} · ${record.agent} · ${record.setting}`);
+      expect(markup).toContain(formatSnapshotScore(record.benchmarks.aaIndex));
+      expect(markup).toContain(formatSnapshotCostUsd(record.economics.costUsd));
+    }
+    if (present.length < overlaps.length) {
+      expect(markdown).toContain("Not in the snapshot");
+    }
+    // Gemini CLI is a harness the snapshot does not pair with Gemini 3.8 Flash.
+    const geminiOverlap = overlaps.find(overlap =>
+      overlap.configuration.model === "Gemini 3.8 Flash");
+    expect(geminiOverlap?.record?.agent ?? "Gemini CLI").toBe("Gemini CLI");
+  });
+
+  test("states the Real-SWE snapshot overlap from the records it is given", () => {
+    const parsed = parseCodingAgentSnapshot(codingAgentData);
+    if (!parsed.ok) throw parsed.error;
+    const none = createRealSweArticle({ ...parsed.value, records: [] });
+    const noneMarkdown = articleToMarkdown(none);
+    expect(noneMarkdown).toContain("stores none of the eight Real-SWE model and harness names");
+    expect(noneMarkdown).not.toContain("Real-SWE pairs beside same-name rows");
+
+    const codexOnly = createRealSweArticle({
+      ...parsed.value,
+      records: parsed.value.records.filter(record => record.agent === "Codex"),
+    });
+    const codexMarkdown = articleToMarkdown(codexOnly);
+    expect(codexMarkdown).toContain("stores two of the eight Real-SWE model and harness names");
+    expect(codexMarkdown).toContain("Six pairs have no same-name row in the snapshot");
+    expect(codexMarkdown).toContain("Real-SWE pairs beside same-name rows");
+    expect(codexMarkdown).toContain("GPT-6 Astra · Codex ·");
+    expect(codexMarkdown).toContain("GPT-5.6 Sol · Codex ·");
+    expect(codexMarkdown).toContain("Not in the snapshot");
+    expect(codexMarkdown).toContain("Fable 5.1 in Claude Code");
+    expect(codexMarkdown).not.toContain("stores none of the eight");
+
+    const template = parsed.value.records[0];
+    const everyPair = createRealSweArticle({
+      ...parsed.value,
+      records: REAL_SWE_CONFIGURATIONS.map((configuration, index) => ({
+        ...template,
+        agent: configuration.harness === "Codex CLI"
+          ? "Codex"
+          : configuration.harness === "Kimi Code" ? "Kimi Code CLI" : configuration.harness,
+        id: `real-swe-${index}`,
+        model: configuration.model,
+        modelLabel: configuration.model,
+        setting: "max",
+        settingRank: 5,
+      })),
+    });
+    const everyMarkdown = articleToMarkdown(everyPair);
+    expect(everyMarkdown).toContain("Every Real-SWE pair has a same-name row in the snapshot.");
+    expect(everyMarkdown).not.toContain("Not in the snapshot");
+    expect(everyMarkdown).toContain("Gemini 3.8 Flash · Gemini CLI · max");
+
+    expect(spellCount(0)).toBe("zero");
+    expect(spellCount(9)).toBe("nine");
+    expect(spellCount(10)).toBe("10");
+    expect(() => spellCount(-1)).toThrow(RangeError);
+    expect(() => spellCount(1.5)).toThrow(RangeError);
+  });
+
   test("reconstructs the Devin Fusion claim from Cognition's posts and the checked snapshot", () => {
     const parsed = parseCodingAgentSnapshot(codingAgentData);
     if (!parsed.ok) throw parsed.error;
@@ -622,6 +798,9 @@ describe("AI Charts benchmark notes", () => {
     expect(markup).toContain(`href="${BLOG_SOURCES.cognitionFusionDesktopCli.url}"`);
     expect(markup).toContain(`href="${BLOG_SOURCES.cognitionDevinFusion.url}"`);
     expect(markup).toContain(`href="${BLOG_SOURCES.devinFable51.url}"`);
+    expect(markup).toContain(`href="${BLOG_SOURCES.specificLabsRealSwe.url}"`);
+    expect(markup).toContain(`href="${BLOG_SOURCES.googleAntigravityCliTransition.url}"`);
+    expect(markup).toContain(`href="${BLOG_SOURCES.hackerNewsRealSwe.url}"`);
   });
 
   test("renders the index, static routes, breadcrumbs, dates, and sources", async () => {
@@ -771,7 +950,10 @@ describe("AI Charts blog discovery", () => {
       expect(BLOG_SLUGS as readonly string[]).toContain(slug);
     }
     const imageFreeSlugs = BLOG_SLUGS.filter(slug => blogEditorialImage(slug) === undefined);
-    expect(imageFreeSlugs).toEqual(["devin-fusion-cost-saving"]);
+    expect(imageFreeSlugs).toEqual([
+      "real-swe-private-enterprise-benchmark",
+      "devin-fusion-cost-saving",
+    ]);
     expect(new Set(blogEditorialImages.map(image => image.sha256)).size)
       .toBe(blogEditorialImages.length);
 
