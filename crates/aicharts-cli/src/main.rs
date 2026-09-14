@@ -7,6 +7,7 @@ mod intro;
 #[cfg(unix)]
 mod prefix;
 mod reindex;
+mod sessions;
 mod state;
 mod transport_dns;
 #[cfg(test)]
@@ -30,6 +31,7 @@ const HELP: &str = "AI Charts Usage — local-only foundation
 
   aicharts --version [--json]
   aicharts turns --codex FILE [--codex FILE ...] --occurrence-key-file KEY [--json]
+  aicharts sessions --occurrence-key-file KEY [--codex FILE ...] [--claude FILE ...] [--json]
   aicharts usage --key-file PATH [--codex FILE_OR_DIR] [--claude FILE_OR_DIR] [--json]
   aicharts upload --dry-run --key-file PATH [--codex FILE_OR_DIR] [--claude FILE_OR_DIR]
   aicharts keygen --output PATH
@@ -399,6 +401,9 @@ fn run(args: &[String]) -> Result<String, &'static str> {
     }
     if args.first().map(String::as_str) == Some("turns") {
         return turns::run(args);
+    }
+    if args.first().map(String::as_str) == Some("sessions") {
+        return sessions::run(args);
     }
     if args.first().map(String::as_str) == Some("inspect") {
         return inspect::run(args);

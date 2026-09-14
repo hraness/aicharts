@@ -1,0 +1,605 @@
+//! Local session projection. Token arithmetic and copied-record resolution are
+//! owned by the established usage collector; this module only joins metadata.
+use crate::{Collection, Warning};
+use aicharts_protocol::{Id, Provider};
+use serde::{
+    de::{self, IgnoredAny, Visitor},
+    Deserialize, Deserializer, Serialize,
+};
+use std::{collections::BTreeMap, fmt, io::BufRead};
+
+pub const PROFILE: &str = "session-observations-v1";
+pub const MAX_SOURCE_BYTES: u64 = 256 * 1024 * 1024;
+pub const MAX_LINES: u64 = 100_000;
+pub const MAX_SESSIONS: usize = 2_000;
+pub const MAX_RECORDS: usize = 50_000;
+const MAX_EPOCH_MS: u64 = 8_640_000_000_000_000;
+const MAX_WINDOW_MS: u64 = 366 * 86_400_000;
+
+#[derive(Deserialize)]
+struct Entry {
+    #[serde(rename = "type", default)]
+    kind: crate::schema::Kind,
+    #[serde(rename = "requestId")]
+    request_id: Option<crate::schema::NativeId>,
+    #[serde(rename = "sessionId")]
+    session_id: Option<crate::schema::NativeId>,
+    #[serde(rename = "agentId")]
+    agent_id: Option<crate::schema::NativeId>,
+    #[serde(rename = "isSidechain", default)]
+    is_sidechain: bool,
+    #[serde(default, deserialize_with = "crate::schema::metadata_object")]
+    message: Option<Message>,
+}
+#[derive(Deserialize)]
+struct Message {
+    id: Option<crate::schema::NativeId>,
+    model: Option<ModelLabel>,
+    usage: Option<IgnoredAny>,
+}
+
+#[derive(Deserialize)]
+struct CodexEntry {
+    #[serde(rename = "type", default)]
+    kind: crate::schema::Kind,
+    timestamp: Option<crate::schema::Timestamp>,
+    #[serde(default, deserialize_with = "crate::schema::metadata_object")]
+    payload: Option<CodexPayload>,
+}
+#[derive(Deserialize)]
+struct CodexPayload {
+    #[serde(rename = "type", default)]
+    kind: crate::schema::Kind,
+    id: Option<crate::schema::NativeId>,
+    /// Session metadata carries the requested model. It is never treated as
+    /// proof of the effective response model.
+    /// Outer `None` means the field was omitted (retain the prior setting);
+    /// `Some(None)` is an explicit null and clears attribution.
+    model: Option<Option<RequestModel>>,
+}
+struct RequestModel(Option<&'static str>);
+impl<'de> Deserialize<'de> for RequestModel {
+    fn deserialize<D: Deserializer<'de>>(decoder: D) -> Result<Self, D::Error> {
+        struct Label;
+        impl Visitor<'_> for Label {
+            type Value = RequestModel;
+            fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
+                f.write_str("a model identifier")
+            }
+            fn visit_str<E: de::Error>(self, value: &str) -> Result<Self::Value, E> {
+                Ok(RequestModel(
+                    MODELS
+                        .iter()
+                        .copied()
+                        .find(|m| m.starts_with("gpt-") && *m == value),
+                ))
+            }
+        }
+        decoder.deserialize_str(Label)
+    }
+}
+struct ModelLabel(Option<&'static str>);
+impl<'de> Deserialize<'de> for ModelLabel {
+    fn deserialize<D: Deserializer<'de>>(decoder: D) -> Result<Self, D::Error> {
+        struct Label;
+        impl Visitor<'_> for Label {
+            type Value = ModelLabel;
+            fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
+                f.write_str("a model identifier")
+            }
+            fn visit_str<E: de::Error>(self, value: &str) -> Result<Self::Value, E> {
+                // Unknown strings are never copied or retained as model labels.
+                Ok(ModelLabel(
+                    MODELS
+                        .iter()
+                        .copied()
+                        .find(|m| m.starts_with("claude-") && *m == value),
+                ))
+            }
+        }
+        decoder.deserialize_str(Label)
+    }
+}
+#[derive(Clone, PartialEq, Eq)]
+struct OccurrenceMetadata {
+    execution: Id,
+    conversation: Option<Id>,
+    model: Option<&'static str>,
+    basis: &'static str,
+}
+#[derive(Default)]
+pub struct Metadata {
+    occurrences: BTreeMap<Id, OccurrenceMetadata>,
+    request_models: BTreeMap<Id, Option<&'static str>>,
+}
+
+/// Read only provider occurrence ownership and allowlisted model metadata. A
+/// Codex model is request attribution; it is never effective response proof.
+pub fn scan_metadata<R: BufRead>(
+    mut reader: R,
+    provider: Provider,
+    key: &[u8; 32],
+) -> Result<Metadata, &'static str> {
+    let mut out = Metadata::default();
+    let mut lines = 0u64;
+    if provider == Provider::Codex {
+        let mut execution = None;
+        let mut requested_model = None;
+        let mut model_observed = false;
+        while let Some(record) =
+            crate::reader::next_record::<_, CodexEntry>(&mut reader).map_err(|e| e.code())?
+        {
+            lines += 1;
+            if lines > MAX_LINES {
+                return Err("record_limit");
+            }
+            let Some(entry) = record else {
+                continue;
+            };
+            let Some(payload) = entry.payload else {
+                continue;
+            };
+            if entry.kind == crate::schema::Kind::SessionMeta {
+                if let Some(id) = payload.id {
+                    execution = Some(crate::keyed_id(key, b"codex-execution", &[id.0.as_bytes()]));
+                }
+                if let Some(model) = payload.model {
+                    requested_model = model.and_then(|value| value.0);
+                    model_observed = true;
+                }
+                continue;
+            }
+            if entry.kind != crate::schema::Kind::EventMsg
+                || payload.kind != crate::schema::Kind::TokenCount
+                || execution.is_none()
+            {
+                continue;
+            }
+            let Some((day, offset)) = crate::timestamp(entry.timestamp.as_ref()) else {
+                continue;
+            };
+            let execution_id = execution.unwrap();
+            let day_bytes = day.to_le_bytes();
+            let offset_bytes = offset.to_le_bytes();
+            let id = crate::keyed_id(
+                key,
+                b"codex-usage",
+                &[&execution_id, &day_bytes, &offset_bytes],
+            );
+            if model_observed {
+                match out.request_models.get(&id) {
+                    Some(old) if old != &requested_model => return Err("conflicting_occurrence"),
+                    _ => {
+                        out.request_models.insert(id, requested_model);
+                    }
+                }
+                if out.request_models.len() > MAX_RECORDS {
+                    return Err("record_limit");
+                }
+            }
+        }
+        return Ok(out);
+    }
+    let mut lines = 0;
+    while let Some(record) =
+        crate::reader::next_record::<_, Entry>(&mut reader).map_err(|e| e.code())?
+    {
+        lines += 1;
+        if lines > MAX_LINES {
+            return Err("record_limit");
+        }
+        let Some(entry) = record else {
+            continue;
+        };
+        if entry.kind != crate::schema::Kind::Assistant {
+            continue;
+        }
+        let Some(message) = entry.message else {
+            continue;
+        };
+        let (Some(request), Some(message_id), Some(_)) =
+            (entry.request_id, message.id, message.usage)
+        else {
+            continue;
+        };
+        let id = crate::keyed_id(
+            key,
+            b"claude-usage",
+            &[request.0.as_bytes(), message_id.0.as_bytes()],
+        );
+        let Some(session) = entry.session_id else {
+            continue;
+        };
+        let execution = if entry.is_sidechain {
+            let Some(agent) = entry.agent_id else {
+                continue;
+            };
+            crate::keyed_id(
+                key,
+                b"claude-subagent",
+                &[session.0.as_bytes(), agent.0.as_bytes()],
+            )
+        } else {
+            crate::keyed_id(key, b"claude-execution", &[session.0.as_bytes()])
+        };
+        let value = OccurrenceMetadata {
+            execution,
+            conversation: Some(crate::keyed_id(
+                key,
+                b"claude-conversation",
+                &[session.0.as_bytes()],
+            )),
+            model: message.model.and_then(|m| m.0),
+            basis: "response",
+        };
+        if out.occurrences.get(&id).is_some_and(|old| old != &value) {
+            return Err("conflicting_occurrence");
+        }
+        out.occurrences.insert(id, value);
+        if out.occurrences.len() > MAX_RECORDS {
+            return Err("record_limit");
+        }
+    }
+    Ok(out)
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SessionUsage {
+    id: String,
+    at_ms: u64,
+    model: Option<&'static str>,
+    model_basis: &'static str,
+    input_tokens: u64,
+    cache_read_tokens: u64,
+    cache_write_tokens: u64,
+    output_tokens: u64,
+    reasoning_tokens: Option<u64>,
+}
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Window {
+    start_ms: u64,
+    end_ms: u64,
+}
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SessionObservation {
+    provider: &'static str,
+    session_id: String,
+    conversation_id: Option<String>,
+    window: Window,
+    source: &'static str,
+    usage: Vec<SessionUsage>,
+    spans: [(); 0],
+}
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SessionReport {
+    schema_version: u8,
+    profile: &'static str,
+    pub sessions: Vec<SessionObservation>,
+}
+fn hex(id: Id) -> String {
+    id.iter().map(|b| format!("{b:02x}")).collect()
+}
+
+/// Keep daily token normalization authoritative, including cumulative baselines,
+/// older copied Claude revisions, subagent identity and unknown cache TTLs.
+pub fn join_sources(sources: Vec<(Collection, Metadata)>) -> Result<SessionReport, &'static str> {
+    let mut metadata = BTreeMap::new();
+    let mut reasoning_known = BTreeMap::new();
+    let mut collections = Vec::new();
+    let mut rows = 0usize;
+    let mut lines = 0u64;
+    for (collection, projection) in sources {
+        lines = lines
+            .checked_add(collection.lines_read)
+            .filter(|n| *n <= MAX_LINES)
+            .ok_or("record_limit")?;
+        let known = !collection.warnings.contains(&Warning::UnmeasuredReasoning);
+        for batch in &collection.batches {
+            for usage in &batch.usage {
+                rows += 1;
+                if rows > MAX_RECORDS {
+                    return Err("record_limit");
+                }
+                reasoning_known
+                    .entry(usage.id)
+                    .and_modify(|value| *value = *value && known)
+                    .or_insert(known);
+                if let Some(value) = projection.occurrences.get(&usage.id) {
+                    if value.execution != usage.execution_id
+                        || metadata.get(&usage.id).is_some_and(|old| old != value)
+                    {
+                        return Err("conflicting_occurrence");
+                    }
+                    metadata.insert(usage.id, value.clone());
+                }
+                if let Some(model) = projection.request_models.get(&usage.id) {
+                    let value = OccurrenceMetadata {
+                        execution: usage.execution_id,
+                        conversation: None,
+                        model: *model,
+                        basis: "request",
+                    };
+                    if metadata.get(&usage.id).is_some_and(|old| old != &value) {
+                        return Err("conflicting_occurrence");
+                    }
+                    metadata.insert(usage.id, value);
+                }
+            }
+        }
+        collections.push(collection);
+    }
+    let collected = crate::merge_collections(collections).map_err(|e| e.code())?;
+    let mut sessions: BTreeMap<(u8, Id), SessionObservation> = BTreeMap::new();
+    for batch in collected.batches {
+        for usage in batch.usage {
+            if usage.execution_id == [0; 16] {
+                continue;
+            }
+            let at_ms = batch.utc_day as u64 * 86_400_000 + usage.offset_ms as u64;
+            if at_ms > MAX_EPOCH_MS {
+                return Err("invalid_window");
+            }
+            let meta = metadata.get(&usage.id);
+            let model = meta.and_then(|m| m.model);
+            let model_basis = meta.map(|m| m.basis).unwrap_or("unknown");
+            let conversation = meta.and_then(|m| m.conversation).map(hex);
+            let record = SessionUsage {
+                id: hex(usage.id),
+                at_ms,
+                model,
+                model_basis,
+                input_tokens: usage.tokens.input_uncached,
+                cache_read_tokens: usage.tokens.cache_read,
+                cache_write_tokens: usage.tokens.cache_write_5m + usage.tokens.cache_write_1h,
+                output_tokens: usage.tokens.output,
+                reasoning_tokens: reasoning_known
+                    .get(&usage.id)
+                    .copied()
+                    .unwrap_or(false)
+                    .then_some(usage.tokens.reasoning_output),
+            };
+            let session = sessions
+                .entry((usage.provider as u8, usage.execution_id))
+                .or_insert_with(|| SessionObservation {
+                    provider: if usage.provider == Provider::Codex {
+                        "codex"
+                    } else {
+                        "claude_code"
+                    },
+                    session_id: hex(usage.execution_id),
+                    conversation_id: conversation.clone(),
+                    window: Window {
+                        start_ms: at_ms,
+                        end_ms: at_ms,
+                    },
+                    source: "history",
+                    usage: Vec::new(),
+                    spans: [],
+                });
+            if session.conversation_id != conversation {
+                return Err("conflicting_occurrence");
+            }
+            session.window.start_ms = session.window.start_ms.min(at_ms);
+            session.window.end_ms = session.window.end_ms.max(at_ms);
+            if session.window.end_ms - session.window.start_ms > MAX_WINDOW_MS {
+                return Err("invalid_window");
+            }
+            session.usage.push(record);
+            if sessions.len() > MAX_SESSIONS {
+                return Err("session_limit");
+            }
+        }
+    }
+    Ok(SessionReport {
+        schema_version: 1,
+        profile: PROFILE,
+        sessions: sessions.into_values().collect(),
+    })
+}
+
+const MODELS: &[&str] = &[
+    "gpt-5",
+    "gpt-5-mini",
+    "gpt-5-nano",
+    "gpt-5-codex",
+    "gpt-5.1",
+    "gpt-5.1-codex",
+    "gpt-5.1-codex-mini",
+    "gpt-5.1-codex-max",
+    "gpt-5.2",
+    "gpt-5.2-codex",
+    "gpt-5.3-codex",
+    "gpt-5.3-codex-spark",
+    "gpt-5.4",
+    "gpt-5.4-mini",
+    "gpt-5.4-nano",
+    "gpt-5.5",
+    "gpt-5.6-sol",
+    "gpt-5.6-terra",
+    "gpt-5.6-luna",
+    "gpt-6-astra",
+    "claude-opus-4-1-20250805",
+    "claude-opus-4-5-20251101",
+    "claude-opus-4-6",
+    "claude-opus-4-7",
+    "claude-sonnet-4-20250514",
+    "claude-sonnet-4-5-20250929",
+    "claude-sonnet-4-6",
+    "claude-haiku-4-5-20251001",
+];
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::io::Cursor;
+    const KEY: [u8; 32] = [9; 32];
+    fn source(text: &str, provider: Provider) -> (Collection, Metadata) {
+        (
+            crate::parse_reader(Cursor::new(text), provider, &KEY).unwrap(),
+            scan_metadata(Cursor::new(text), provider, &KEY).unwrap(),
+        )
+    }
+    fn claude(output: u64, model: &str, suffix: &str) -> String {
+        format!(
+            r#"{{"type":"assistant","timestamp":"2026-01-01T00:00:0{suffix}Z","requestId":"req","sessionId":"session","message":{{"id":"msg","model":"{model}","content":"PRIVATE_DO_NOT_RETAIN","usage":{{"input_tokens":10,"cache_read_input_tokens":100,"output_tokens":{output}}}}}}}
+"#
+        )
+    }
+    #[test]
+    fn copied_and_older_claude_revisions_keep_cache_and_unknown_reasoning() {
+        let newer = claude(4, "claude-sonnet-4-6", "2");
+        let older = claude(2, "claude-sonnet-4-6", "1");
+        let report = join_sources(vec![
+            source(&newer, Provider::ClaudeCode),
+            source(&older, Provider::ClaudeCode),
+            source(&newer, Provider::ClaudeCode),
+        ])
+        .unwrap();
+        let s = &report.sessions[0];
+        assert_eq!(report.sessions.len(), 1);
+        assert_eq!(s.usage.len(), 1);
+        assert_eq!(s.usage[0].input_tokens, 10);
+        assert_eq!(s.usage[0].cache_read_tokens, 100);
+        assert_eq!(s.usage[0].output_tokens, 4);
+        assert_eq!(s.usage[0].reasoning_tokens, None);
+        assert_eq!(s.usage[0].model_basis, "response");
+        assert!(s.conversation_id.is_some());
+        let bytes = serde_json::to_string(&report).unwrap();
+        assert_eq!(
+            bytes,
+            include_str!("../../../fixtures/usage/session-history-v1.json").trim()
+        );
+        assert!(!bytes.contains("PRIVATE_DO_NOT_RETAIN"));
+        assert!(!bytes.contains("\"req\"") && !bytes.contains("\"session\""));
+    }
+    #[test]
+    fn codex_cumulative_snapshots_are_increments_not_repeated_totals() {
+        let mut text =
+            "{\"type\":\"session_meta\",\"payload\":{\"id\":\"native\",\"model\":\"gpt-5.5\"}}\n"
+                .to_owned();
+        for (i, total) in [100, 200, 300].iter().enumerate() {
+            text.push_str(&format!(r#"{{"type":"event_msg","timestamp":"2026-01-01T00:00:0{i}Z","payload":{{"type":"token_count","info":{{"total_token_usage":{{"input_tokens":{total},"output_tokens":0}},"last_token_usage":{{"input_tokens":100,"output_tokens":0}}}}}}}}
+"#));
+        }
+        let report = join_sources(vec![
+            source(&text, Provider::Codex),
+            source(&text, Provider::Codex),
+        ])
+        .unwrap();
+        assert_eq!(
+            report.sessions[0]
+                .usage
+                .iter()
+                .map(|u| u.input_tokens)
+                .sum::<u64>(),
+            300
+        );
+        assert!(report.sessions[0]
+            .usage
+            .iter()
+            .all(|u| u.model == Some("gpt-5.5")
+                && u.model_basis == "request"
+                && u.reasoning_tokens.is_none()));
+        assert_eq!(
+            report.sessions[0].window.end_ms - report.sessions[0].window.start_ms,
+            2_000
+        );
+    }
+    #[test]
+    fn no_clock_or_unknown_execution_creates_no_invented_session() {
+        let text = "{\"type\":\"session_meta\",\"payload\":{\"id\":\"s\"}}\n";
+        assert!(join_sources(vec![source(text, Provider::Codex)])
+            .unwrap()
+            .sessions
+            .is_empty());
+        let text = claude(4, "claude-sonnet-4-6", "1").replace(",\"sessionId\":\"session\"", "");
+        assert!(join_sources(vec![source(&text, Provider::ClaudeCode)])
+            .unwrap()
+            .sessions
+            .is_empty());
+    }
+    #[test]
+    fn response_model_conflicts_fail_and_custom_labels_are_discarded() {
+        let first = claude(2, "claude-sonnet-4-6", "1");
+        let second = claude(4, "claude-opus-4-6", "2");
+        assert!(join_sources(vec![
+            source(&first, Provider::ClaudeCode),
+            source(&second, Provider::ClaudeCode)
+        ])
+        .is_err());
+        let report = join_sources(vec![source(
+            &claude(4, "PRIVATE_MODEL", "1"),
+            Provider::ClaudeCode,
+        )])
+        .unwrap();
+        assert!(report.sessions[0].usage[0].model.is_none());
+        assert!(!serde_json::to_string(&report)
+            .unwrap()
+            .contains("PRIVATE_MODEL"));
+    }
+    #[test]
+    fn subagent_is_a_separate_session_in_the_same_conversation() {
+        let root = claude(2, "claude-sonnet-4-6", "1");
+        let child = claude(4, "claude-opus-4-6", "2")
+            .replace("\"req\"", "\"child-req\"")
+            .replace(
+                "\"sessionId\":\"session\"",
+                "\"sessionId\":\"session\",\"agentId\":\"agent\",\"isSidechain\":true",
+            );
+        let report = join_sources(vec![
+            source(&root, Provider::ClaudeCode),
+            source(&child, Provider::ClaudeCode),
+        ])
+        .unwrap();
+        assert_eq!(report.sessions.len(), 2);
+        assert_ne!(report.sessions[0].session_id, report.sessions[1].session_id);
+        assert_eq!(
+            report.sessions[0].conversation_id,
+            report.sessions[1].conversation_id
+        );
+    }
+    #[test]
+    fn metadata_clock_and_unrelated_payload_cannot_expand_token_window() {
+        let text = format!(
+            "{}{}",
+            claude(2, "claude-sonnet-4-6", "1"),
+            "{\"type\":\"user\",\"timestamp\":\"2099-01-01T00:00:00Z\",\"content\":\"private\"}\n"
+        );
+        let report = join_sources(vec![source(&text, Provider::ClaudeCode)]).unwrap();
+        assert_eq!(
+            report.sessions[0].window.start_ms,
+            report.sessions[0].window.end_ms
+        );
+    }
+    #[test]
+    fn codex_request_model_changes_bind_to_following_occurrences() {
+        let text = concat!(
+            "{\"type\":\"session_meta\",\"payload\":{\"id\":\"native\",\"model\":\"gpt-5.5\"}}\n",
+            "{\"type\":\"event_msg\",\"timestamp\":\"2026-01-01T00:00:01Z\",\"payload\":{\"type\":\"token_count\",\"info\":{\"total_token_usage\":{\"input_tokens\":100,\"output_tokens\":0},\"last_token_usage\":{\"input_tokens\":100,\"output_tokens\":0}}}}\n",
+            "{\"type\":\"session_meta\",\"payload\":{\"id\":\"native\",\"model\":\"gpt-5.6-sol\"}}\n",
+            "{\"type\":\"event_msg\",\"timestamp\":\"2026-01-01T00:00:02Z\",\"payload\":{\"type\":\"token_count\",\"info\":{\"total_token_usage\":{\"input_tokens\":200,\"output_tokens\":0},\"last_token_usage\":{\"input_tokens\":100,\"output_tokens\":0}}}}\n",
+        );
+        let report = join_sources(vec![source(text, Provider::Codex)]).unwrap();
+        assert_eq!(report.sessions[0].usage.len(), 2);
+        assert_eq!(report.sessions[0].usage[0].model, Some("gpt-5.5"));
+        assert_eq!(report.sessions[0].usage[1].model, Some("gpt-5.6-sol"));
+        assert!(report.sessions[0]
+            .usage
+            .iter()
+            .all(|u| u.model_basis == "request"));
+    }
+    #[test]
+    fn codex_missing_request_model_stays_unknown() {
+        let text = concat!(
+            "{\"type\":\"session_meta\",\"payload\":{\"id\":\"native\"}}\n",
+            "{\"type\":\"event_msg\",\"timestamp\":\"2026-01-01T00:00:01Z\",\"payload\":{\"type\":\"token_count\",\"info\":{\"total_token_usage\":{\"input_tokens\":100,\"output_tokens\":0},\"last_token_usage\":{\"input_tokens\":100,\"output_tokens\":0}}}}\n",
+        );
+        let report = join_sources(vec![source(text, Provider::Codex)]).unwrap();
+        assert_eq!(report.sessions[0].usage[0].model, None);
+        assert_eq!(report.sessions[0].usage[0].model_basis, "unknown");
+    }
+}

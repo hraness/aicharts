@@ -9,7 +9,7 @@ use std::{fmt, marker::PhantomData};
 
 // Non-target records can use the same field name for a string, array or null.
 // Skip those values rather than buffering an untagged serde_json::Value tree.
-fn metadata_object<'de, D, T>(decoder: D) -> Result<Option<T>, D::Error>
+pub(crate) fn metadata_object<'de, D, T>(decoder: D) -> Result<Option<T>, D::Error>
 where
     D: Deserializer<'de>,
     T: Deserialize<'de>,

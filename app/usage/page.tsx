@@ -28,6 +28,7 @@ export default async function UsagePage() {
     <SiteHeader current="/usage" />
     <main className="usage-home" id="main-content">
       <DailyUsageDashboard key={configuration.todayUtcDay} todayUtcDay={configuration.todayUtcDay} />
+      <p><Link className="usage-inline-link" href="/usage/sessions">Inspect local sessions and model mix</Link></p>
       <ChartPageFooter />
     </main>
   </>;
@@ -40,7 +41,7 @@ export default async function UsagePage() {
           <h1 id="usage-title">Your AI work, measured without your words.</h1>
           <p className="usage-hero__lede">A local-first dashboard for Codex and Claude Code. It keeps transcripts out of the product and makes every unknown visible.</p>
           <div className="usage-hero__actions">
-            <Link className="usage-button usage-button--primary" href="/data">Read the data contract <span aria-hidden="true">↗</span></Link>
+            <Link className="usage-button usage-button--primary" href="/usage/sessions">Inspect session usage <span aria-hidden="true">↗</span></Link>
             <Link className="usage-button usage-button--quiet" href="/leaderboard">See the public boundary <span aria-hidden="true">↗</span></Link>
           </div>
         </div>
