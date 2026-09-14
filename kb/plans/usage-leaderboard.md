@@ -596,3 +596,28 @@ cookie secret and canonical site URL was rejected by automatic review and is
 pending explicit owner approval; no mutation occurred. The
 [activation runbook](../../docs/usage-activation.md) separates these remaining
 requirements from the local session feature.
+
+### 2026-09-14 — bounded Accounts browser authentication qualification intent
+
+Following the [activation runbook](../../docs/usage-activation.md), this entry
+records the bounded qualification intent before any provider mutation. The
+owner explicitly approved adding `NEXT_PUBLIC_SITE_URL`,
+`AICHARTS_USAGE_AUTH_ENABLED` and the private `SUITE_OIDC_COOKIE_SECRET` to the
+production Vercel environment. All other usage flags —
+`AICHARTS_USAGE_PRIVATE_READ_ENABLED`, pairing, enrollment, admission and
+Worker flags — remain unset.
+
+- Commit under qualification: `6c9a74d1e5016cd3321a13572976e81101d44f9f`
+- Production deployment: to be filled after the env-bearing redeploy below
+- Test Accounts user: `delivered@resend.dev` (Resend's deliverable test sink;
+  a fresh suite account is created by first email-code sign-in)
+- Window start: 2026-09-14T19:30Z
+- Rollback deadline: 2026-09-15T19:30Z — on failure the auth flag is unset and
+  the fixed private `503` response is re-verified; on pass the flag remains
+  enabled while private reads, pairing and collection stay fenced
+- Preconditions verified: production env inventory contains only the existing
+  PostHog/Turnstile entries; all three Preview surface markers are absent;
+  `NEXT_PUBLIC_SITE_URL` was absent and is set to `https://aicharts.io`;
+  platform `VERCEL=1`/`VERCEL_ENV=production`/`VERCEL_TARGET_ENV=production`
+  apply on the production deployment. Secret values were never read or
+  recorded.
