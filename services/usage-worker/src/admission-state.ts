@@ -238,14 +238,15 @@ export class AdmissionState {
     // pair. Missing, duplicated, reordered, or rewritten rows fail closed;
     // restore tooling can then consume this contiguous prefix under its own
     // external fence without trusting the mutable head projection.
-    let journalRows = 0;
+    let journalRows = 0, previousJournalTime = 0;
     for (const row of this.sql.exec("SELECT revision, batch, journal, committed_at_ms FROM usage_admission_journal ORDER BY revision LIMIT 4097")) {
       requireAdmission(++journalRows <= MAX_ADMISSION_REVISIONS && row.revision === journalRows
-        && integer(row.committed_at_ms, 0, MAX_ADMISSION_TIMESTAMP));
+        && integer(row.committed_at_ms, 0, MAX_ADMISSION_TIMESTAMP) && row.committed_at_ms >= previousJournalTime);
       const batch = ownedAdmissionBatch(bytes(row.batch)), journal = ownedAdmissionJournal(bytes(row.journal), batch);
       requireAdmission(authority !== null && journal.accountJournalRevision === row.revision
         && journal.committedAtMs === row.committed_at_ms && journal.committedAtMs <= control.committed
         && sameAccount(batch, authority));
+      previousJournalTime = row.committed_at_ms;
     }
     requireAdmission(journalRows === control.revision);
     const devices = new Map<string, { sequence: number; first: number; revision: number }>();
