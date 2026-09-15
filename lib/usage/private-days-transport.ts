@@ -83,7 +83,7 @@ export function createPrivateDaysTransport(dependencies: PrivateDaysTransportDep
         const controller = new AbortController(); work.onStop(() => { controller.abort(); });
         guard();
         const response = await fetcher(PRIVATE_DAYS_HTTP_URL, { method: "POST",
-          headers: { "content-type": "application/json", accept: "application/json", authorization: `Bearer ${token}` },
+          headers: { "content-type": "application/json", accept: "application/json", "accept-encoding": "identity", authorization: `Bearer ${token}` },
           body: encoded, redirect: "manual", credentials: "omit", cache: "no-store", signal: controller.signal,
         });
         let reading = false;

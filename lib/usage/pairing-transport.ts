@@ -52,7 +52,7 @@ export function createPairingTransport(dependencies: PairingTransportDependencie
           work.onStop(() => { controller.abort(); });
           work.guard();
           const response = await fetcher(PAIRING_HTTP_URL, {
-            method: "POST", headers: { "content-type": "application/json", accept: "application/json", authorization: `Bearer ${token}` },
+            method: "POST", headers: { "content-type": "application/json", accept: "application/json", "accept-encoding": "identity", authorization: `Bearer ${token}` },
             body: new Uint8Array(encoded.value), redirect: "manual", credentials: "omit", cache: "no-store", signal: controller.signal,
           });
           let reading = false;
