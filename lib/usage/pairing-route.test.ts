@@ -86,6 +86,18 @@ test("origin, exact URL and framing refuse before consuming a stream or resolvin
   expect(pulls).toBe(0); expect(f.terminal).toHaveLength(0); expect(f.counts().starts).toBe(0);
 });
 
+test("a start navigation may serialize Origin as null while a public fetch POST may not", async () => {
+  const f = fixture();
+  // A top-level form POST navigation serializes Origin as "null"; Sec-Fetch-Site
+  // carries the same-origin assertion, so the start must accept it.
+  const started = await f.start(incoming(true, { headers: { origin: "null", cookie: "synthetic-cookie", "content-length": "73" } }));
+  expect(started.status).toBe(302); expect(started.headers.get("location")).toContain("https://account.hraness.com/");
+  // A same-origin public fetch always sends the real Origin; null is refused.
+  expect((await f.approval(incoming(false, { method: "POST", headers: { origin: "null" } }))).status).toBe(403);
+  expect((await f.approval(incoming(false, { headers: { origin: "null" } }))).status).toBe(200);
+  await f.join();
+});
+
 test("noncanonical form and decision bytes cannot begin authentication or call approval", async () => {
   const f = fixture();
   for (const body of [`intentId=${intent}&`, `intentId=${intent}&accountId=PRIVATE_CANARY`, `intentId=${"0".repeat(64)}`, `IntentId=${intent}`, `intentId=${intent}\n`, `\ufeffintentId=${intent}`]) {

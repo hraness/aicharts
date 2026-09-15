@@ -45,7 +45,13 @@ export function createPairingRoutes(dependencies: PairingRouteDependencies) {
     try {
       if (request.url !== (starting ? PAIRING_START_URL : PAIRING_PUBLIC_URL)) return refused(403);
       const origin = request.headers.get("origin");
-      if (request.headers.get("sec-fetch-site") !== "same-origin" || (request.method === "POST" ? origin !== "https://aicharts.io" : origin !== null && origin !== "https://aicharts.io")) return refused(403);
+      // A start is a top-level form navigation: the browser serializes Origin as
+      // "null" on a POST navigation, so Sec-Fetch-Site carries its same-origin
+      // assertion. A public POST is a same-origin fetch and always sends the real
+      // Origin; a public GET may omit Origin entirely.
+      if (request.headers.get("sec-fetch-site") !== "same-origin"
+        || (request.method === "POST" && !starting ? origin !== "https://aicharts.io"
+          : origin !== null && origin !== "null" && origin !== "https://aicharts.io")) return refused(403);
       if (request.headers.has("authorization") || request.headers.has("content-encoding") || request.headers.has("transfer-encoding")) return refused(400);
       expected = pairingHttpLength(request.headers, starting ? PAIRING_FORM_BYTES : PAIRING_PUBLIC_MAX_BYTES);
       if (request.method === "GET") {
