@@ -7,6 +7,7 @@ import { verifyUsageSessions } from "./usage-sessions-browser";
 import {
   chromium,
   type Browser,
+  type BrowserContext,
   type Locator,
   type Page,
 } from "playwright-core";
@@ -125,7 +126,32 @@ function attachDiagnostics(page: Page, label: string): string[] {
     const url = new URL(request.url());
     console.error(`${label} request: ${request.resourceType()} ${url.origin}${url.pathname} ${request.failure()?.errorText ?? "request-failed"}`);
   });
+  page.on("response", response => {
+    if (response.status() >= 400) console.error(`${label} response: ${response.status()} ${new URL(response.url()).origin}${new URL(response.url()).pathname}`);
+  });
   return failures;
+}
+
+// The shared footer progressively enrolls mailing signups and asks Accounts
+// whether cookie consent applies. Both calls are production-only and
+// hostname-allowlisted, so the loopback verifier answers at the boundary:
+// enrollment is declined and consent is reported not required.
+async function stubAccountBoundary(context: BrowserContext): Promise<void> {
+  await context.route("https://account.hraness.com/**", route => {
+    const request = route.request();
+    const url = new URL(request.url());
+    if (request.method() === "GET" && url.pathname === "/api/consent/region") {
+      return route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({ region: null, required: false }),
+      });
+    }
+    if (request.method() === "POST" && url.pathname === "/api/mailing/experiment") {
+      return route.fulfill({ status: 204 });
+    }
+    return route.abort();
+  });
 }
 
 async function settle(page: Page): Promise<void> {
@@ -185,6 +211,7 @@ async function verifyChartExport(browser: Browser, baseUrl: string): Promise<voi
     colorScheme: "dark",
     viewport: { height: 900, width: 1_280 },
   });
+  await stubAccountBoundary(context);
   const page = await context.newPage();
   const failures = attachDiagnostics(page, "chart export");
   try {
@@ -237,6 +264,7 @@ async function verifyChartExport(browser: Browser, baseUrl: string): Promise<voi
 
 async function verifyBenchmarkAtlas(browser: Browser, baseUrl: string): Promise<void> {
   const context = await browser.newContext({ colorScheme: "light", viewport: { width: 1280, height: 900 } });
+  await stubAccountBoundary(context);
   const page = await context.newPage();
   const failures = attachDiagnostics(page, "benchmark atlas");
   try {
@@ -436,6 +464,7 @@ async function verifyInteractivePointer(browser: Browser, baseUrl: string): Prom
     colorScheme: "dark",
     viewport: { height: 900, width: 1_280 },
   });
+  await stubAccountBoundary(context);
   const page = await context.newPage();
   const failures = attachDiagnostics(page, "interactive");
   try {
@@ -486,6 +515,7 @@ async function verifyReducedMotion(browser: Browser, baseUrl: string): Promise<v
     reducedMotion: "reduce",
     viewport: { height: 900, width: 1_280 },
   });
+  await stubAccountBoundary(context);
   const page = await context.newPage();
   const failures = attachDiagnostics(page, "reduced motion");
   try {
@@ -524,6 +554,7 @@ async function verifyReducedTransparency(browser: Browser, baseUrl: string): Pro
     colorScheme: "dark",
     viewport: { height: 900, width: 1_280 },
   });
+  await stubAccountBoundary(context);
   const page = await context.newPage();
   const failures = attachDiagnostics(page, "reduced transparency");
   const session = await context.newCDPSession(page);
@@ -565,6 +596,7 @@ async function verifyForcedColors(browser: Browser, baseUrl: string): Promise<vo
     forcedColors: "active",
     viewport: { height: 900, width: 1_280 },
   });
+  await stubAccountBoundary(context);
   const page = await context.newPage();
   const failures = attachDiagnostics(page, "forced colors");
   try {
