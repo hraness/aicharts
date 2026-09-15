@@ -25,6 +25,19 @@ export async function verifyUsageSessions(browser: Browser, baseUrl: string): Pr
     await context.route("**/*", async route => {
       const request = route.request(), url = new URL(request.url());
       if (interaction && request.method() !== "GET") effects++;
+      if (url.origin === "https://account.hraness.com") {
+        // The shared footer's consent and mailing-enrollment calls are
+        // production-only and hostname-allowlisted; answer the two boundary
+        // routes synthetically while other Accounts access stays blocked.
+        if (request.method() === "GET" && url.pathname === "/api/consent/region") {
+          await route.fulfill({ status: 200, contentType: "application/json", body: '{"region":null,"required":false}' });
+          return;
+        }
+        if (request.method() === "POST" && url.pathname === "/api/mailing/experiment") {
+          await route.fulfill({ status: 204 });
+          return;
+        }
+      }
       if (url.origin !== baseUrl) { await route.abort(); return; }
       if (interaction && url.pathname.startsWith("/api/")) effects++;
       await route.continue();

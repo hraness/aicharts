@@ -104,6 +104,19 @@ export async function verifyUsageDashboard(browser: Browser, disabledBaseUrl: st
       let heldArrived: (() => void) | undefined;
       await context.route("**/*", async route => {
         const url = new URL(route.request().url());
+        if (url.origin === "https://account.hraness.com") {
+          // The shared footer's consent and mailing-enrollment calls are
+          // production-only and hostname-allowlisted; answer the two boundary
+          // routes synthetically while other Accounts access stays blocked.
+          if (route.request().method() === "GET" && url.pathname === "/api/consent/region") {
+            await route.fulfill({ status: 200, contentType: "application/json", body: '{"region":null,"required":false}' });
+            return;
+          }
+          if (route.request().method() === "POST" && url.pathname === "/api/mailing/experiment") {
+            await route.fulfill({ status: 204 });
+            return;
+          }
+        }
         if (url.origin !== baseUrl) { blockedOrigins.add(url.origin); await route.abort(); return; }
         if (url.pathname !== "/api/usage/days") { await route.continue(); return; }
         requests++;

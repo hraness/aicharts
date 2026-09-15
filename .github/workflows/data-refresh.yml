@@ -49,9 +49,6 @@ jobs:
       DEEP_SWE_PATH: data/deep-swe-evidence.json
       FIRST_PARTY_RELEASE_PATH: data/first-party-release-radar.json
       INTELLIGENCE_PATH: data/artificial-analysis-intelligence-v4-3.json
-      # Cloudflare's documented always-pass public test key. Production uses
-      # the hostname-restricted live key; this job only proves the build.
-      NEXT_PUBLIC_HRANESS_MAILING_TURNSTILE_SITEKEY: 1x00000000000000000000AA
       REFRESH_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.mode || github.event.schedule == '23 * * * *' && 'releases' || github.event.schedule == '17 */4 * * *' && 'benchmarks' || github.event.schedule == '43 10 * * *' && 'full' || 'full' }}
       REFRESH_BRANCH: automation/model-data-refresh-${{ github.run_id }}-${{ github.run_attempt }}
       RELEASE_RADAR_PATH: data/model-release-radar.json
