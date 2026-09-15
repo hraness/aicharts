@@ -15,8 +15,9 @@ import dormant from "./index";
 // Separate private configuration only. The normal index never imports this file.
 export { PairingIntent } from "./pairing";
 export { AccountEnrollment } from "./enrollment";
+export { RestoreFence } from "./restore-fence";
 export default dormant;
-export type SyntheticQualificationEnvironment = Pick<Env, "PAIRINGS" | "ACCOUNT_ENROLLMENTS" | "STAGING" | "CONTROL"> & {
+export type SyntheticQualificationEnvironment = Pick<Env, "PAIRINGS" | "ACCOUNT_ENROLLMENTS" | "RESTORE_FENCES" | "STAGING" | "CONTROL"> & {
   USAGE_ENROLLMENT_GENERATION?: unknown; AICHARTS_USAGE_SYNTHETIC_RUN?: unknown;
 };
 class QualificationFault extends Error {

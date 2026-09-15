@@ -192,9 +192,10 @@ const closedService = {
   $schema: "../../../node_modules/wrangler/config-schema.json", name: "aicharts-usage-synthetic-qualification-closed", main: "../src/synthetic-qualification.ts",
   compatibility_date: "2026-09-10", compatibility_flags: ["nodejs_compat"], workers_dev: false, preview_urls: false,
   send_metrics: false, observability: { enabled: false }, vars: { USAGE_ENROLLMENT_GENERATION: "" },
-  durable_objects: { bindings: [{ name: "PAIRINGS", class_name: "PairingIntent" }, { name: "ACCOUNT_ENROLLMENTS", class_name: "AccountEnrollment" }] },
+  durable_objects: { bindings: [{ name: "PAIRINGS", class_name: "PairingIntent" }, { name: "ACCOUNT_ENROLLMENTS", class_name: "AccountEnrollment" },
+    { name: "RESTORE_FENCES", class_name: "RestoreFence" }] },
   exports: { SyntheticQualification: { type: "worker" }, PairingIntent: { type: "durable-object", storage: "sqlite" },
-    AccountEnrollment: { type: "durable-object", storage: "sqlite" } }, r2_buckets: [],
+    AccountEnrollment: { type: "durable-object", storage: "sqlite" }, RestoreFence: { type: "durable-object", storage: "sqlite" } }, r2_buckets: [],
 };
 
 export function qualificationConfigs(run: QualificationRun, accountId: string): Readonly<Record<"driver" | "generationOne" | "generationTwo", string>> {

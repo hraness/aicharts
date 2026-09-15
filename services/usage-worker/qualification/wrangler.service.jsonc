@@ -14,13 +14,15 @@
   "durable_objects": {
     "bindings": [
       { "name": "PAIRINGS", "class_name": "PairingIntent" },
-      { "name": "ACCOUNT_ENROLLMENTS", "class_name": "AccountEnrollment" }
+      { "name": "ACCOUNT_ENROLLMENTS", "class_name": "AccountEnrollment" },
+      { "name": "RESTORE_FENCES", "class_name": "RestoreFence" }
     ]
   },
   "exports": {
     "SyntheticQualification": { "type": "worker" },
     "PairingIntent": { "type": "durable-object", "storage": "sqlite" },
-    "AccountEnrollment": { "type": "durable-object", "storage": "sqlite" }
+    "AccountEnrollment": { "type": "durable-object", "storage": "sqlite" },
+    "RestoreFence": { "type": "durable-object", "storage": "sqlite" }
   },
   "r2_buckets": []
 }
