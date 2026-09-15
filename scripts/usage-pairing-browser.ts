@@ -38,6 +38,19 @@ export async function verifyUsagePairing(browser: Browser, disabledBaseUrl: stri
     const origins = new Set<string>();
     await disabled.route("**/*", async route => {
       const url = new URL(route.request().url());
+      if (url.origin === "https://account.hraness.com") {
+        // The shared footer's consent and mailing-enrollment calls are
+        // production-only and hostname-allowlisted; answer the two boundary
+        // routes synthetically while other Accounts access stays blocked.
+        if (route.request().method() === "GET" && url.pathname === "/api/consent/region") {
+          await route.fulfill({ status: 200, contentType: "application/json", body: '{"region":null,"required":false}' });
+          return;
+        }
+        if (route.request().method() === "POST" && url.pathname === "/api/mailing/experiment") {
+          await route.fulfill({ status: 204 });
+          return;
+        }
+      }
       if (url.origin !== disabledBaseUrl) { origins.add(url.origin); await route.abort(); return; }
       if (url.pathname.startsWith("/api/usage/pairing")) effects++;
       await route.continue();
@@ -62,6 +75,19 @@ export async function verifyUsagePairing(browser: Browser, disabledBaseUrl: stri
     await context.route("**/*", async route => {
       const request = route.request(), url = new URL(request.url());
       invariant(!request.url().includes(intent) && !request.url().includes(csrf), "Pairing identifiers must not enter request URLs.");
+      if (url.origin === "https://account.hraness.com") {
+        // The shared footer's consent and mailing-enrollment calls are
+        // production-only and hostname-allowlisted; answer the two boundary
+        // routes synthetically while other Accounts access stays blocked.
+        if (request.method() === "GET" && url.pathname === "/api/consent/region") {
+          await route.fulfill({ status: 200, contentType: "application/json", body: '{"region":null,"required":false}' });
+          return;
+        }
+        if (request.method() === "POST" && url.pathname === "/api/mailing/experiment") {
+          await route.fulfill({ status: 204 });
+          return;
+        }
+      }
       if (url.origin !== baseUrl) { origins.add(url.origin); await route.abort(); return; }
       if (url.pathname === "/api/usage/pairing/start") {
         starts++;

@@ -271,7 +271,7 @@ describe("scheduled model-data refresh", () => {
       type: "choice",
     });
     expect(refresh.env?.NEXT_PUBLIC_HRANESS_MAILING_TURNSTILE_SITEKEY)
-      .toBe("1x00000000000000000000AA");
+      .toBeUndefined();
     expect(String(refresh.env?.REFRESH_MODE)).toContain("github.event.schedule == '23 * * * *'");
     expect(String(refresh.env?.REFRESH_MODE)).toContain("github.event.schedule == '17 */4 * * *'");
     expect(String(refresh.env?.REFRESH_MODE)).toContain("github.event.schedule == '43 10 * * *'");
