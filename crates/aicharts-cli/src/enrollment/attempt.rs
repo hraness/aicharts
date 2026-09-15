@@ -1,13 +1,16 @@
 //! Dormant nonsecret attempt observations and private persistence primitives.
 //! Custody handoff functions validate typed secret records and persist only
-//! nonsecret progress. The CLI still has no caller or production constructor;
-//! decoding facts does not authenticate their history.
+//! nonsecret progress. The `enroll` command's pairing driver is the only
+//! caller; decoding facts does not authenticate their history.
 
 mod coordinator;
 mod record;
 mod sequencer;
 mod session;
 mod storage;
+
+#[cfg(target_os = "macos")]
+pub(super) use coordinator::{run_pairing, PairingOutcome};
 
 #[cfg(target_os = "macos")]
 mod disk;
@@ -39,7 +42,7 @@ type Result<T> = std::result::Result<T, Error>;
 
 /// Fixed local failures contain no record, identifier, path or native message.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum Error {
+pub(super) enum Error {
     InvalidRecord,
     InvalidSuccessor,
     ClockRegressed,
@@ -55,7 +58,7 @@ enum Error {
 }
 
 impl Error {
-    const fn code(self) -> &'static str {
+    pub(super) const fn code(self) -> &'static str {
         match self {
             Self::InvalidRecord => "attempt_invalid_record",
             Self::InvalidSuccessor => "attempt_invalid_successor",
