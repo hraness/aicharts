@@ -1,6 +1,7 @@
 #![forbid(unsafe_code)]
 
 mod daemon;
+mod enroll;
 mod enrollment;
 mod inspect;
 mod intro;
@@ -42,6 +43,7 @@ const HELP: &str = "AI Charts Usage — local-only foundation
   aicharts status --state-dir DIR --key-file PATH [--json]
   aicharts inspect --state-dir DIR --key-file PATH [--occurrence-key-file PATH] [--json]
   aicharts daemon [--once] [--complete-prefix] --state-dir DIR --key-file PATH [--codex FILE_OR_DIR] [--claude FILE_OR_DIR] [--interval-seconds N] [--retry-attempts N] [--json]
+  aicharts enroll --state-dir DIR
   aicharts outbox --dry-run --state-dir DIR --key-file PATH [--limit 1..256] [--after ID --revision N]
   aicharts reindex-plan --dry-run --state-dir OLD --key-file PATH [--codex FILE_OR_DIR] [--claude FILE_OR_DIR] [--json]
   aicharts reindex-prepare --state-dir OLD --key-file PATH --shadow-dir NEW --occurrence-key-file PATH [--codex FILE_OR_DIR] [--claude FILE_OR_DIR] [--json]
@@ -75,7 +77,10 @@ prefix-enabled ledger; it defers stable unfinished tails and never migrates stat
 Omitting it retains collect. A ledger mode mismatch fails before reading sources.
 It retries only bounded transient ledger busy/change results (three retries by default;
 --retry-attempts accepts 0..8) before returning a fixed error. It never
-uploads or installs an OS service. No account sign-in, upload, daemon installation,
+uploads or installs an OS service.
+enroll pairs this installation with an AI Charts account through local macOS
+credential custody and one explicit browser approval; it never uploads and only
+prepares the option to upload later. No account sign-in, upload, daemon installation,
 key recovery or OS sandbox
 is implemented yet.
 Keep your key private and retain it: changing it changes occurrence identities.
@@ -410,6 +415,9 @@ fn run(args: &[String]) -> Result<String, &'static str> {
     }
     if args.first().map(String::as_str) == Some("daemon") {
         return daemon::run(args);
+    }
+    if args.first().map(String::as_str) == Some("enroll") {
+        return enroll::run(args);
     }
     if matches!(
         args.first().map(String::as_str),

@@ -164,6 +164,16 @@ pub(super) fn request_upload_commitment(request: &Request) -> Option<Id> {
     request.upload_commitment()
 }
 
+/// Commitment pair a fresh genesis record pins against the retained pairing
+/// secrets. Derived with the same fixed domain as the wire proof projections,
+/// so the durable record and every later request share one commitment scheme.
+pub(super) fn pairing_commitments(intent_id: &Id, poll: &Secret32, upload: &Secret32) -> (Id, Id) {
+    (
+        commitment(b"poll", intent_id, poll),
+        commitment(b"upload", intent_id, upload),
+    )
+}
+
 #[derive(PartialEq, Eq, Clone)]
 pub(super) struct Reservation {
     pub(super) intent_id: Id,

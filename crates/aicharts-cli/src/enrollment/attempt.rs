@@ -12,6 +12,8 @@ mod storage;
 #[cfg(target_os = "macos")]
 mod disk;
 #[cfg(target_os = "macos")]
+pub(super) mod drive;
+#[cfg(target_os = "macos")]
 mod macos;
 
 #[cfg(test)]
@@ -20,6 +22,9 @@ mod coordinator_tests;
 #[cfg(all(test, target_os = "macos"))]
 #[path = "attempt/disk_tests.rs"]
 mod disk_tests;
+#[cfg(all(test, target_os = "macos"))]
+#[path = "attempt/drive_tests.rs"]
+mod drive_tests;
 #[cfg(test)]
 #[path = "attempt/record_tests.rs"]
 mod record_tests;
@@ -39,7 +44,7 @@ type Result<T> = std::result::Result<T, Error>;
 
 /// Fixed local failures contain no record, identifier, path or native message.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-enum Error {
+pub(super) enum Error {
     InvalidRecord,
     InvalidSuccessor,
     ClockRegressed,
@@ -55,7 +60,7 @@ enum Error {
 }
 
 impl Error {
-    const fn code(self) -> &'static str {
+    pub(super) const fn code(self) -> &'static str {
         match self {
             Self::InvalidRecord => "attempt_invalid_record",
             Self::InvalidSuccessor => "attempt_invalid_successor",
