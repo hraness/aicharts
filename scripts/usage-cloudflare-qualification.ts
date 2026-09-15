@@ -200,10 +200,11 @@ const closedService = {
 
 export function qualificationConfigs(run: QualificationRun, accountId: string): Readonly<Record<"driver" | "generationOne" | "generationTwo", string>> {
   requireThat(typeof accountId === "string" && /^[0-9a-f]{32}$/u.test(accountId) && !/^0+$/u.test(accountId));
+  const workerVersion = qualificationDigest(`aicharts:synthetic-qualification:v1\0${run.runId}\0worker-version`);
   const service = (generation: string) => JSON.stringify({ ...closedService,
     $schema: join(root, "node_modules/wrangler/config-schema.json"), account_id: accountId,
     name: QUALIFICATION_TARGET.workerName, main: join(root, "services/usage-worker/src/synthetic-qualification.ts"),
-    vars: { USAGE_ENROLLMENT_GENERATION: generation, AICHARTS_USAGE_SYNTHETIC_RUN: JSON.stringify(run) },
+    vars: { USAGE_ENROLLMENT_GENERATION: generation, AICHARTS_USAGE_SYNTHETIC_RUN: JSON.stringify(run), USAGE_WORKER_VERSION: workerVersion },
     r2_buckets: [{ binding: "STAGING", bucket_name: QUALIFICATION_TARGET.recordsBucket }, { binding: "CONTROL", bucket_name: QUALIFICATION_TARGET.controlBucket }],
   });
   return { driver: JSON.stringify({ ...closedDriver, $schema: join(root, "node_modules/wrangler/config-schema.json"),
