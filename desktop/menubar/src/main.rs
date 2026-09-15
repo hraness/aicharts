@@ -16,7 +16,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use desktop_foundation::outputs::OutputsSection;
-use desktop_foundation::{Host, MenuModel, MenuNode, Options};
+use desktop_foundation::{AccessibilityMetadata, Host, MenuItem, MenuModel, MenuNode, Options};
 
 const STATUS_MARK: &str = "AI";
 
@@ -63,7 +63,15 @@ impl Host for AiChartsHost {
         let mut nodes = vec![MenuNode::disabled("AI Charts Outputs"), MenuNode::Separator];
         nodes.extend(self.outputs.nodes());
         nodes.push(MenuNode::Separator);
-        nodes.push(MenuNode::quit("Quit AI Charts"));
+        nodes.push(MenuNode::interactive(
+            MenuItem::action(desktop_foundation::QUIT_ACTION_ID, "Quit AI Charts")
+                .with_shortcut("CmdOrCtrl+Q")
+                .with_accessibility(AccessibilityMetadata {
+                    label: Some("Quit AI Charts".to_owned()),
+                    value: None,
+                    hint: Some("Exit the AI Charts menu bar companion".to_owned()),
+                }),
+        ));
         MenuModel {
             title: Some(STATUS_MARK.to_owned()),
             tooltip: Some("AI Charts — agent outputs".to_owned()),
@@ -89,7 +97,10 @@ fn main() {
     let outputs = OutputsSection::new(dir);
     let _ = std::fs::create_dir_all(outputs.dir());
     let host = Arc::new(AiChartsHost { outputs });
-    let options = Options { refresh: Duration::from_secs(3), companion_window: false };
+    let options = Options {
+        refresh: Duration::from_secs(3),
+        companion_window: false,
+    };
     if let Err(error) = desktop_foundation::run(tauri::generate_context!(), host, options, |b| b) {
         eprintln!("aicharts-menubar: {error}");
         std::process::exit(1);
