@@ -726,3 +726,53 @@ mints the genesis pairing `SecretRecord`/`Record` and drives `HeldAttempt`
 through `Initialize → browser pairing_url → Poll → choose_account → Confirm →
 Reserve → Enroll → Namespace → reconcile_namespace`, plus `Mode::Enroll` and
 custody/transport wiring — all `pub(super)` today.
+
+### 2026-09-15 — native enrollment activation seam delivered and merged
+
+The dormant enrollment subsystem was wired to a real terminal driver in
+[PR 247](https://github.com/hraness/aicharts/pull/247), squash-merged as
+`c76ba9e28a540dd8586272c5edc892276beb7eb0` after exact-head `Check`, `Required`,
+all four CodeQL analyses and Vercel passed. One commit `ae38a80` on
+`codex/usage-enroll-20260914` adds only the activation seam the sealed
+attempt/custody/HTTPS pieces deliberately withheld:
+
+- `attempt/drive.rs` — a pure `drive()` sequencer over an `AttemptOps` seam
+  orders the once-only handshake `Initialize → browser pairing → Poll →
+  choose_account → Confirm → Reserve → Enroll → Namespace`. `MacOps` backs the
+  seam with a freshly reopened `NativeEnrollment` (attempt + `SealedCustody` +
+  `HttpsEnrollment::sealed()`) per effect, so no attempt lock is held across a
+  browser or account wait.
+- Genesis `mint` produces one `SecretRecord::pairing` and a
+  `record::initial`-valid `Record` whose `poll_commitment`/`upload_commitment`
+  derive via the new `contract::pairing_commitments` — the same fixed
+  `poll`/`upload` domains as the wire proof projections.
+- `begin()` resume reloads the exact retained secret from custody via
+  `Vault::read_exact(pairing.identity)` and never remints; a fresh anchor
+  creates a mode-0700 dir and initializes storage before custody effects so an
+  interrupted start leaves durable recovery evidence. `PairingPlanned`,
+  `NamespacePlanned`/`NamespacePrepared` and any retained dispatched flight
+  refuse closed; an existing anchor is only inspected, never recreated,
+  adopted or repaired.
+- `enrollment::enroll(dir, &mut dyn EnrollIo)` is the single `pub(crate)`
+  seam; `EnrollIo` supplies clock/one-time URL/paced waits/step lines and
+  `EnrollOutcome` carries only nonsecret `account_id`/`device_id`/
+  `namespace_item_id`. `enroll.rs` parses `--state-dir`, prints pairing status
+  to stderr, emits nonsecret facts on stdout, and non-macOS returns
+  `enroll_requires_qualified_macos_custody`.
+
+Local verification on the exact tree: `drive_tests.rs` scripted-`AttemptOps`
+state-machine tests (full handshake order, bounded poll loop, denied/expired
+refusal, `PairingPrepared` reconcile, resume from `Confirmed` and
+already-chosen, recovery-required states, domain-error mapping, `mint` genesis
+validity and commitment binding) — 10 tests; `bun run usage:check` cargo
+fmt/clippy/workspace green (276 cli tests); the full `bun run check` gate
+green (388 usage-worker tests, 1454 lib tests, typecheck, lint, `next build`,
+all browser contracts).
+
+Result: the native enrollment activation seam exists in source on `main` — a
+real `aicharts enroll --state-dir DIR` driver with crash-safe sequencing and
+qualified macOS custody. It has not been run live: pairing, admission,
+private reads, the production Worker and `usage.aicharts.io` remain undeployed
+and dormant, and no public usage is activated. Live enrollment qualification
+(real Keychain custody + HTTPS pairing + bounded admission + private query) is
+the remaining source-independent step and stays gated on the DNS/route work.
