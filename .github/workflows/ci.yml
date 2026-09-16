@@ -51,13 +51,27 @@ jobs:
       - name: Check application
         run: bun run check
 
+  menubar:
+    name: Menubar
+    runs-on: macos-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install pinned Rust toolchain
+        run: rustup show active-toolchain
+      - name: Build aicharts-menubar
+        run: cargo build --release --locked --manifest-path desktop/Cargo.toml
+
   required:
     name: Required
     if: always()
-    needs: [check]
+    needs: [check, menubar]
     runs-on: ubuntu-latest
     steps:
       - name: Require every blocking job
         env:
           CHECK_RESULT: ${{ needs.check.result }}
-        run: test "$CHECK_RESULT" = success
+          MENUBAR_RESULT: ${{ needs.menubar.result }}
+        run: test "$CHECK_RESULT" = success && test "$MENUBAR_RESULT" = success
