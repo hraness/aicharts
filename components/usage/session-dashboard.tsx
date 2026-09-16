@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { SESSION_PHASES, SESSION_REPORT_MAX_BYTES, type SessionPhase, type SessionReport } from "@/lib/usage/session-contract";
 import { decodeSessionReport, summarizeSessions, type SessionSummary } from "@/lib/usage/sessions";
+import { decodeCompactionEvents, joinCompactionEvents, type CompactionEvent, type SessionCompactions } from "@/lib/usage/compaction";
 import { SESSION_EXAMPLE } from "@/lib/usage/session-example";
 
 const labels: Record<SessionPhase, string> = { inference: "Inference", reply_wait: "Reply wait", approval_wait: "Approval wait", tool_wait: "Tool wait", unknown: "Unknown" };
@@ -73,6 +74,7 @@ export function SessionDashboard() {
   const canFollow = useSyncExternalStore(subscribeCapabilities, fileFollowingSupported, serverCapabilities);
   const [updated, setUpdated] = useState<number | null>(null);
   const [limit, setLimit] = useState(100);
+  const [compactionEvents, setCompactionEvents] = useState<readonly CompactionEvent[] | null>(null);
   const sequence = useRef(0);
   useEffect(() => () => { sequence.current++; }, []);
 
@@ -116,6 +118,12 @@ export function SessionDashboard() {
   };
   const filtered = useMemo(() => report === null ? null : { ...report, sessions: report.sessions.filter(s => scope === "all" || (scope.startsWith("conversation:") ? `${s.provider}:${s.conversationId}` === scope.slice(13) : s.provider === scope)) }, [report, scope]);
   const summary = useMemo(() => filtered === null ? null : summarizeSessions(filtered), [filtered]);
+  const compactions = useMemo(() => filtered === null || compactionEvents === null ? null : joinCompactionEvents(filtered, compactionEvents), [filtered, compactionEvents]);
+  const compactionBySession = useMemo(() => {
+    const map = new Map<string, SessionCompactions>();
+    for (const s of compactions?.sessions ?? []) map.set(`${s.session.provider}${s.session.sessionId}`, s);
+    return map;
+  }, [compactions]);
   const sorted = useMemo(() => [...(summary?.sessions ?? [])].sort((a, b) => b.session.window.endMs - a.session.window.endMs || a.session.sessionId.localeCompare(b.session.sessionId)), [summary]);
   const detail = sorted.find(s => `${s.session.provider}:${s.session.sessionId}` === selected) ?? sorted[0];
   const conversations = [...new Set(report?.sessions.flatMap(s => s.conversationId === null ? [] : [`${s.provider}:${s.conversationId}`]) ?? [])].sort();
@@ -132,6 +140,16 @@ export function SessionDashboard() {
       {canFollow && <button className="usage-button usage-button--quiet" type="button" onClick={() => void follow()}>Follow a report</button>}
       {following && <button className="usage-button usage-button--quiet" type="button" onClick={() => { ++sequence.current; setFollowing(null); }}>Stop following</button>}
       <button className="usage-button usage-button--quiet" type="button" onClick={() => { ++sequence.current; setFollowing(null); setReport(SESSION_EXAMPLE); setExample(true); setError(null); setLoading(false); setScope("all"); setSelected(null); setUpdated(null); }}>Explore an example</button>
+      <label className="usage-button usage-button--quiet usage-sessions__file">Add compaction events
+        <input type="file" accept=".jsonl,application/x-ndjson" onChange={e => {
+          const f = e.currentTarget.files?.[0]; e.currentTarget.value = ""; if (!f) return;
+          void f.text().then(text => {
+            const result = decodeCompactionEvents(text);
+            setCompactionEvents(result === null ? null : result.events);
+            if (result === null) setError("Open a valid gobstopper events log (events.jsonl), up to 8 MiB.");
+          });
+        }} />
+      </label>
     </div>
     <p className="usage-sessions__privacy">The report stays in this browser tab. Opening it does not upload it or save it to your account.</p>
     {error && <p className="usage-sessions__notice" role="alert">{error}</p>}
@@ -155,6 +173,11 @@ export function SessionDashboard() {
         <div><dt>Observed concurrency</dt><dd>{summary.phaseMs.inference === 0 && summary.phaseMs.unknown > 0 ? "Unknown" : `${summary.meanInferenceConcurrency?.toFixed(2) ?? "—"} mean · ${summary.peakInferenceConcurrency} peak`}</dd><p>Observed simultaneous inference sessions. Missing intervals may increase these values.</p></div>
         <div><dt>Unclassified session time</dt><dd>{duration(summary.phaseMs.unknown)}</dd><p>Unknown time remains in the denominator.</p></div>
       </dl>}
+      {summary && compactions !== null && <dl className="usage-sessions__aggregate">
+        <div><dt>Compactions applied</dt><dd>{numbers.format(compactions.applied)}</dd><p>Provider or transcript compactions observed in the events log.</p></div>
+        <div><dt>Tokens reclaimed</dt><dd>{numbers.format(compactions.estReclaimedTokens)}</dd><p>Estimated context tokens reclaimed by applied compactions.</p></div>
+        {compactions.unmatchedEvents.length > 0 && <div><dt>Unmatched events</dt><dd>{numbers.format(compactions.unmatchedEvents.length)}</dd><p>Compaction events naming no session in this report.</p></div>}
+      </dl>}
       <p className="usage-daily__hint">A ≥ value is the observed minimum; missing timing prevents an exact share. Streaming is observed application activity, not a measurement of GPU utilization. Elapsed windows exclude gaps when no selected session is observed.</p>
       {summary && summary.models.length > 0 && <details className="usage-daily__details">
         <summary>Model mix across this selection <span>{numbers.format(summary.accountedTokens)} observed tokens · {numbers.format(summary.outputTokens)} output</span></summary>
@@ -167,11 +190,15 @@ export function SessionDashboard() {
       </details>}
       {sorted.length === 0 ? <p className="usage-sessions__notice">No sessions in this selection.</p> : <>
         <div className="usage-daily__table-scroll" role="region" aria-label="Session list" tabIndex={0}><table className="usage-sessions__table">
-          <caption>Select a session to inspect its model mix and time breakdown. Token coverage is partial.</caption><thead><tr><th scope="col">Session</th><th scope="col">Last observation (UTC)</th><th scope="col">Observed tokens</th><th scope="col">Output</th><th scope="col">Inference</th><th scope="col">Window</th></tr></thead>
-          <tbody>{sorted.slice(0, limit).map(value => <tr key={`${value.session.provider}:${value.session.sessionId}`} aria-selected={value === detail}>
+          <caption>Select a session to inspect its model mix and time breakdown. Token coverage is partial.</caption><thead><tr><th scope="col">Session</th><th scope="col">Last observation (UTC)</th><th scope="col">Observed tokens</th><th scope="col">Output</th><th scope="col">Inference</th>{compactions !== null && <th scope="col">Compactions</th>}<th scope="col">Window</th></tr></thead>
+          <tbody>{sorted.slice(0, limit).map(value => {
+            const c = compactionBySession.get(`${value.session.provider}${value.session.sessionId}`);
+            return <tr key={`${value.session.provider}:${value.session.sessionId}`} aria-selected={value === detail}>
             <th scope="row"><button className="usage-sessions__select" type="button" aria-pressed={value === detail} onClick={() => setSelected(`${value.session.provider}:${value.session.sessionId}`)}>{provider(value.session.provider)} <span>{shortId(value.session.sessionId)}</span></button></th>
-            <td>{clock.format(value.session.window.endMs)}</td><td>{numbers.format(value.accountedTokens)}</td><td>{numbers.format(value.outputTokens)}</td><td>{reading(value.inferencePct, value.observedInferencePct)}</td><td>{duration(value.windowMs)}</td>
-          </tr>)}</tbody></table></div>
+            <td>{clock.format(value.session.window.endMs)}</td><td>{numbers.format(value.accountedTokens)}</td><td>{numbers.format(value.outputTokens)}</td><td>{reading(value.inferencePct, value.observedInferencePct)}</td>
+            {compactions !== null && <td>{c === undefined || c.events.length === 0 ? "—" : `${numbers.format(c.applied)} applied · ${numbers.format(c.estReclaimedTokens)} reclaimed`}</td>}
+            <td>{duration(value.windowMs)}</td>
+          </tr>; })}</tbody></table></div>
         {sorted.length > limit && <button className="usage-button usage-button--quiet" type="button" onClick={() => setLimit(n => n + 100)}>Show more sessions</button>}
         {detail && <SessionDetail value={detail} />}
       </>}
