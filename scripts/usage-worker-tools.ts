@@ -45,6 +45,7 @@ export function workerToolCommands(args: readonly string[]): readonly (readonly 
   if (args.length === 1 && args[0] === "test-leaderboard") return [[...test, "test/leaderboard.worker.ts"]];
   if (args.length === 1 && args[0] === "test-leaderboard-http") return [[...test, "test/leaderboard-http.worker.ts"]];
   if (args.length === 1 && args[0] === "test-restore-fence") return [[...test, "test/restore-fence.worker.ts"]];
+  if (args.length === 1 && args[0] === "test-restore-fence-control") return [[...test, "test/restore-fence-control.worker.ts"]];
   if (args.length === 1 && args[0] === "test-synthetic-qualification") return [[...test, "test/synthetic-qualification.worker.ts"]];
   if (args.length === 1 && args[0] === "test-staging") return [[...test, "test/staging.worker.ts"]];
   if (args.length === 1 && args[0] === "check") return [types, ["node", `${root}node_modules/typescript/bin/tsc`, "--project", "tsconfig.json"], test];
@@ -54,7 +55,7 @@ export function workerToolCommands(args: readonly string[]): readonly (readonly 
 async function main(): Promise<number> {
   const commands = workerToolCommands(process.argv.slice(2));
   if (!commands) {
-    console.error("usage-worker-tools: expected types, test, test-pairing, test-pairing-http, test-enrollment, test-terminal-enrollment, test-admission, test-admission-http, test-private-days, test-private-days-http, test-consent-http, test-leaderboard, test-leaderboard-http, test-synthetic-qualification, test-staging or check (no extra arguments)");
+    console.error("usage-worker-tools: expected types, test, test-pairing, test-pairing-http, test-enrollment, test-terminal-enrollment, test-admission, test-admission-http, test-private-days, test-private-days-http, test-consent-http, test-leaderboard, test-leaderboard-http, test-restore-fence, test-restore-fence-control, test-synthetic-qualification, test-staging or check (no extra arguments)");
     return 2;
   }
   // Pinned Wrangler prefers this legacy path over XDG, even with telemetry off.
