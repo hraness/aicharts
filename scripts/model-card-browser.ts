@@ -401,13 +401,13 @@ async function verifyBenchmarkAtlas(browser: Browser, baseUrl: string): Promise<
     invariant(await page.getByRole("button", { name: "Share and export chart" }).isVisible(), "Legacy shared chart links no longer reveal the exportable chart.");
     await page.goto(`${baseUrl}/?benchmark=aaIndex#model-updates`, { waitUntil: "domcontentloaded" });
     await page.waitForURL(`${baseUrl}/coding?benchmark=aaIndex#model-updates`);
-    invariant(await page.locator("#model-updates").isVisible(), "Combined query and section bookmarks must retain their original fragment.");
+    await page.locator("#model-updates").waitFor().catch(() => invariant(false, "Combined query and section bookmarks must retain their original fragment."));
     await page.goto(`${baseUrl}/#chart`, { waitUntil: "domcontentloaded" });
     await page.waitForURL(`${baseUrl}/coding#chart`);
-    invariant(await page.locator("#chart").isVisible(), "Hash-only chart bookmarks must retain their destination.");
+    await page.locator("#chart").waitFor().catch(() => invariant(false, "Hash-only chart bookmarks must retain their destination."));
     await page.goto(`${baseUrl}/#explore`, { waitUntil: "domcontentloaded" });
     await page.waitForURL(`${baseUrl}/benchmarks#explore`);
-    invariant(await page.locator("#explore").isVisible(), "Hash-only benchmark bookmarks must retain their destination.");
+    await page.locator("#explore").waitFor().catch(() => invariant(false, "Hash-only benchmark bookmarks must retain their destination."));
     invariant(failures.length === 0, failures.join("; "));
   } finally {
     await context.close();
