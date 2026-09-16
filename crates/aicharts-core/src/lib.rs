@@ -392,13 +392,22 @@ fn parse_codex<R: BufRead>(
     let mut previous: Option<CodexCounters> = None;
     let mut stopped = false;
     let mut forked = false;
-    while let Some(record) = reader::next_record::<_, CodexEntry>(reader)? {
+    loop {
+        let next = reader::next_record::<_, CodexEntry>(reader)?;
+        if matches!(next, reader::Next::End) {
+            break;
+        }
         out.lines_read += 1;
         if out.lines_read > MAX_LINES {
             return Err(Error::RecordLimit);
         }
-        let Some(record) = record else {
-            continue;
+        let record = match next {
+            reader::Next::Parsed(record) => record,
+            reader::Next::Oversized => {
+                out.warn(Warning::UnsupportedRecords);
+                continue;
+            }
+            _ => continue,
         };
         let Some(payload) = record.payload else {
             out.warn(Warning::UnsupportedRecords);
@@ -513,13 +522,22 @@ fn parse_claude<R: BufRead>(
     out: &mut Accumulator,
 ) -> Result<(), Error> {
     out.warn(Warning::UnmeasuredReasoning);
-    while let Some(record) = reader::next_record::<_, ClaudeEntry>(reader)? {
+    loop {
+        let next = reader::next_record::<_, ClaudeEntry>(reader)?;
+        if matches!(next, reader::Next::End) {
+            break;
+        }
         out.lines_read += 1;
         if out.lines_read > MAX_LINES {
             return Err(Error::RecordLimit);
         }
-        let Some(record) = record else {
-            continue;
+        let record = match next {
+            reader::Next::Parsed(record) => record,
+            reader::Next::Oversized => {
+                out.warn(Warning::UnsupportedRecords);
+                continue;
+            }
+            _ => continue,
         };
         if record.kind != Kind::Assistant {
             continue;

@@ -100,6 +100,7 @@ impl Fixture {
                         ],
                         lines_read: 1,
                     },
+                    allows_rewrite: false,
                 }],
             )
             .unwrap();

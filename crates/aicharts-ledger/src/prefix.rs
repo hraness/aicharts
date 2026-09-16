@@ -182,6 +182,9 @@ impl Ledger {
                 source_id: scan.source_id,
                 stamp: scan.stamp,
                 collection: scan.collection,
+                // Prefix replay only carries completed JSONL tails; a
+                // rewritable whole-document source never enters this path.
+                allows_rewrite: false,
             });
         }
         self.commit_mode_with(expected_revision, sources, Some(prefixes), before_commit)

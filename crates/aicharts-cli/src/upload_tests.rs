@@ -122,6 +122,7 @@ fn scan(bytes: u64, usage: Vec<Usage>) -> SourceScan {
             warnings: vec![],
             lines_read: 1,
         },
+        allows_rewrite: false,
     }
 }
 

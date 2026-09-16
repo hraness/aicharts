@@ -396,12 +396,54 @@ fn deep_unknown_values_fail_before_recursion_or_reflection() {
 }
 
 #[test]
-fn oversized_unknown_string_fails_without_a_line_sized_copy() {
-    let source = format!("{{\"private\":\"{}\"}}", "x".repeat(MAX_LINE_BYTES));
-    assert_eq!(
-        parse_reader(Cursor::new(source), Provider::ClaudeCode, &KEY).unwrap_err(),
-        Error::LineTooLarge
+fn oversized_records_are_bounded_skips_not_source_failures() {
+    // An over-cap physical line is drained without a line-sized copy and the
+    // source stays alive; the skip surfaces as a bounded warning only.
+    let giant = format!(
+        "{{\"type\":\"compacted\",\"payload\":{{\"blob\":\"{}\"}}}}",
+        "x".repeat(MAX_LINE_BYTES)
     );
+    let source = codex_source(&[
+        codex_row(1, 10, 5, 4, 2, true),
+        giant,
+        codex_row(2, 30, 9, 12, 3, false),
+    ]);
+    let collection = parse(&source, Provider::Codex);
+    assert_eq!(collection.lines_read, 4);
+    assert!(collection.warnings.contains(&Warning::UnsupportedRecords));
+    assert_eq!(collection.batches[0].usage.len(), 2);
+    assert_eq!(
+        collection.batches[0]
+            .usage
+            .iter()
+            .map(|v| v.tokens.input_uncached)
+            .sum::<u64>(),
+        21
+    );
+    packets(&collection);
+}
+
+#[test]
+fn an_oversized_final_line_drains_to_eof() {
+    let giant = format!("{{\"private\":\"{}\"}}", "x".repeat(MAX_LINE_BYTES));
+    let source = format!("{}\n{}", claude_row("request-1", 10, 2, 1), giant);
+    let collection = parse(&source, Provider::ClaudeCode);
+    assert_eq!(collection.lines_read, 2);
+    assert!(collection.warnings.contains(&Warning::UnsupportedRecords));
+    assert_eq!(collection.batches[0].usage.len(), 1);
+    assert_eq!(collection.batches[0].usage[0].tokens.output, 2);
+}
+
+#[test]
+fn a_line_at_the_exact_cap_still_parses() {
+    // MAX_LINE_BYTES counts the full physical line including its newline.
+    let mut row = claude_row("request-1", 10, 2, 1);
+    let pad = MAX_LINE_BYTES - row.len() - 10;
+    row = format!("{{\"pad\":\"{}\",{}", "p".repeat(pad), &row[1..]);
+    assert_eq!(row.len() + 1, MAX_LINE_BYTES);
+    let collection = parse(&format!("{row}\n"), Provider::ClaudeCode);
+    assert_eq!(collection.batches[0].usage.len(), 1);
+    assert!(!collection.warnings.contains(&Warning::UnsupportedRecords));
 }
 
 #[test]
