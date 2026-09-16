@@ -318,7 +318,7 @@ describe("numeric-only private R2 staging", () => {
     ["empty", () => new Uint8Array()],
     ["bad magic", (value: Uint8Array) => { value[0] = 0; return value; }],
     ["reserved field", (value: Uint8Array) => { value[6] = 1; return value; }],
-    ["unknown provider", (value: Uint8Array) => { value[76] = 3; return value; }],
+    ["unknown provider", (value: Uint8Array) => { value[76] = 4; return value; }],
     ["forbidden context tier", (value: Uint8Array) => { value[84] = 1; return value; }],
     ["wrong registry", (value: Uint8Array) => { value[20] = 2; return value; }],
     ["zero occurrence ID", (value: Uint8Array) => { value.fill(0, 24, 40); return value; }],

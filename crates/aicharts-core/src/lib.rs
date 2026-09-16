@@ -16,13 +16,16 @@ use sha2::Sha256;
 use std::{
     collections::{BTreeMap, BTreeSet},
     fmt,
-    io::BufRead,
+    io::{BufRead, Read},
 };
 use time::{format_description::well_known::Rfc3339, OffsetDateTime};
 
 pub use reader::{MAX_DEPTH, MAX_LINE_BYTES};
 pub const MAX_LINES: u64 = 100_000;
 pub const MAX_MEASUREMENTS: usize = 100_000;
+/// One ATIF transcript is a whole JSON document; this bounds a single file,
+/// not the multi-source byte total the CLI applies above it.
+pub const MAX_DOC_BYTES: u64 = 64 * 1024 * 1024;
 const TOKEN_LIMIT: u64 = 1_000_000_000_000;
 const DAY_MS: u64 = 86_400_000;
 
@@ -69,6 +72,7 @@ pub enum Warning {
     CodexCumulativeRegression,
     CodexMissingCumulative,
     ClaudeCacheTtlUnknown,
+    DevinTotalsMismatch,
     UnknownExecution,
     UnknownModels,
     UnmeasuredActivity,
@@ -88,6 +92,7 @@ impl Warning {
             Self::CodexCumulativeRegression => "codex_cumulative_regression",
             Self::CodexMissingCumulative => "codex_missing_cumulative",
             Self::ClaudeCacheTtlUnknown => "claude_cache_ttl_unknown",
+            Self::DevinTotalsMismatch => "devin_totals_mismatch",
             Self::UnknownExecution => "unknown_execution",
             Self::UnknownModels => "unknown_models",
             Self::UnmeasuredActivity => "unmeasured_activity",
@@ -216,6 +221,7 @@ pub fn parse_reader<R: BufRead>(
     match provider {
         Provider::Codex => parse_codex(&mut reader, namespace_key, &mut out)?,
         Provider::ClaudeCode => parse_claude(&mut reader, namespace_key, &mut out)?,
+        Provider::Devin => parse_devin(&mut reader, namespace_key, &mut out)?,
     }
     Ok(out.finish())
 }
@@ -586,6 +592,127 @@ fn parse_claude<R: BufRead>(
             day,
             make_usage(id, execution_id, offset, Provider::ClaudeCode, tokens),
         )?;
+    }
+    Ok(())
+}
+
+/// Read one bounded ATIF document. The transcript is a single pretty-printed
+/// JSON object, so the JSONL line machinery does not apply; serde's recursion
+/// limit bounds nesting and the byte cap bounds size.
+pub(crate) fn read_atif<R: BufRead>(reader: &mut R) -> Result<AtifDocument, Error> {
+    let mut bytes = Vec::new();
+    reader
+        .by_ref()
+        .take(MAX_DOC_BYTES + 1)
+        .read_to_end(&mut bytes)
+        .map_err(|_| Error::ReadFailed)?;
+    if bytes.len() as u64 > MAX_DOC_BYTES {
+        return Err(Error::LineTooLarge);
+    }
+    serde_json::from_slice(&bytes).map_err(|_| Error::MalformedRecord)
+}
+
+/// Key one measured request. `step` is the transcript's own step identifier
+/// when present, otherwise the step's position inside the document.
+pub(crate) fn devin_usage_id(key: &[u8; 32], execution: &Id, step: &[u8]) -> Id {
+    keyed_id(key, b"devin-usage", &[&execution[..], step])
+}
+
+fn parse_devin<R: BufRead>(
+    reader: &mut R,
+    key: &[u8; 32],
+    out: &mut Accumulator,
+) -> Result<(), Error> {
+    out.warn(Warning::UnmeasuredReasoning);
+    let document = read_atif(reader)?;
+    out.lines_read += 1;
+    if !document
+        .schema_version
+        .is_some_and(|version| version.0.starts_with("ATIF-v1."))
+    {
+        return Err(Error::MalformedRecord);
+    }
+    if document
+        .agent
+        .and_then(|agent| agent.name)
+        .is_none_or(|name| name.0 != "devin")
+    {
+        // A missing or foreign agent name under the Devin source flag is a
+        // pointed-at-wrong-source error, never provider usage.
+        return Err(Error::MalformedRecord);
+    }
+    let Some(session_id) = document.session_id else {
+        out.warn(Warning::MissingIdentity);
+        return Ok(());
+    };
+    let execution_id = keyed_id(key, b"devin-execution", &[session_id.0.as_bytes()]);
+    let mut totals = [0u64; 3];
+    for (index, step) in document.steps.iter().enumerate() {
+        if step.source != StepSource::Agent {
+            continue;
+        }
+        let Some(metrics) = &step.metrics else {
+            out.warn(Warning::MissingUsageCounters);
+            continue;
+        };
+        let (Some(prompt), Some(output)) = (metrics.prompt_tokens, metrics.completion_tokens)
+        else {
+            out.warn(Warning::MissingUsageCounters);
+            continue;
+        };
+        let cached = metrics.cached_tokens.unwrap_or(0);
+        let tokens = bounded(Tokens {
+            input_uncached: prompt.checked_sub(cached).ok_or(Error::InvalidCounters)?,
+            cache_read: cached,
+            cache_write_5m: 0,
+            cache_write_1h: 0,
+            output,
+            reasoning_output: 0,
+        })?;
+        totals[0] = totals[0]
+            .checked_add(prompt)
+            .ok_or(Error::InvalidCounters)?;
+        totals[1] = totals[1]
+            .checked_add(output)
+            .ok_or(Error::InvalidCounters)?;
+        totals[2] = totals[2]
+            .checked_add(cached)
+            .ok_or(Error::InvalidCounters)?;
+        if !any_tokens(&tokens) {
+            continue;
+        }
+        let Some((day, offset)) = timestamp(step.timestamp.as_ref()) else {
+            out.warn(Warning::MissingTimestamp);
+            continue;
+        };
+        let step_key = step
+            .step_id
+            .as_ref()
+            .map_or_else(|| index.to_string(), |id| id.0.clone());
+        out.add(
+            day,
+            make_usage(
+                devin_usage_id(key, &execution_id, step_key.as_bytes()),
+                execution_id,
+                offset,
+                Provider::Devin,
+                tokens,
+            ),
+        )?;
+    }
+    if let Some(final_metrics) = &document.final_metrics {
+        let declared = [
+            final_metrics.total_prompt_tokens.unwrap_or(0),
+            final_metrics.total_completion_tokens.unwrap_or(0),
+            final_metrics.total_cached_tokens.unwrap_or(0),
+        ];
+        if declared != totals
+            || final_metrics
+                .total_steps
+                .is_some_and(|steps| steps != document.steps.len() as u64)
+        {
+            out.warn(Warning::DevinTotalsMismatch);
+        }
     }
     Ok(())
 }

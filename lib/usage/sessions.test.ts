@@ -47,6 +47,14 @@ describe("session report privacy boundary", () => {
       expect(parseSessionReport(report({ ...s, usage: [{ ...usage, ...patch }] }))).toBeNull();
     }
   });
+  test("devin sessions admit only allowlisted response models", () => {
+    const usage = { id: ident(51), atMs: 10, model: "swe-2-max", modelBasis: "response" as const, inputTokens: 10, cacheReadTokens: 3, cacheWriteTokens: 0, outputTokens: 4, reasoningTokens: null };
+    const s = { ...session(), provider: "devin" as const, usage: [usage] };
+    expect(parseSessionReport(report(s))).not.toBeNull();
+    for (const patch of [{ model: "gpt-5.5" }, { model: "claude-opus-4-6" }, { model: "custom-private-model" }]) {
+      expect(parseSessionReport(report({ ...s, usage: [{ ...usage, ...patch }] }))).toBeNull();
+    }
+  });
 });
 
 describe("measured session time", () => {

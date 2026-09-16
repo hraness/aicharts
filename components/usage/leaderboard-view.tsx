@@ -41,7 +41,7 @@ export function LeaderboardView({ available, snapshot }: LeaderboardViewProps) {
       <div className="usage-hero__copy">
         <p className="usage-hero__eyebrow">Public usage · opt in</p>
         <h1 id="leaderboard-title">A leaderboard that shows its receipts.</h1>
-        <p className="usage-hero__lede">Ranked by total observed accounted tokens over the trailing {LEADERBOARD_WINDOW_DAYS} UTC days, across Codex and Claude Code. Coverage, freshness, and consent sit beside every result.</p>
+        <p className="usage-hero__lede">Ranked by total observed accounted tokens over the trailing {LEADERBOARD_WINDOW_DAYS} UTC days, across Codex, Claude Code and Devin. Coverage, freshness, and consent sit beside every result.</p>
         <div className="usage-hero__actions"><Link className="usage-button usage-button--primary" href="/usage">Explore personal analytics <span aria-hidden="true">↗</span></Link></div>
       </div>
       {live

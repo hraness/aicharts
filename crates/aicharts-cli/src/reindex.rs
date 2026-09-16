@@ -32,7 +32,8 @@ fn parse_options(args: &[String]) -> Result<Options, &'static str> {
             | "--shadow-dir"
             | "--occurrence-key-file"
             | "--codex"
-            | "--claude") => {
+            | "--claude"
+            | "--devin") => {
                 i += 1;
                 let value = args
                     .get(i)
@@ -48,6 +49,7 @@ fn parse_options(args: &[String]) -> Result<Options, &'static str> {
                     }
                     "--codex" => sources.push((Provider::Codex, path)),
                     "--claude" => sources.push((Provider::ClaudeCode, path)),
+                    "--devin" => sources.push((Provider::Devin, path)),
                     _ => return Err("invalid_option"),
                 }
             }
@@ -137,7 +139,7 @@ mod unix {
         let mut seen = BTreeSet::new();
         for (provider, root) in &options.sources {
             let mut files = vec![];
-            crate::source_files(root, 0, &mut files, &mut visited)?;
+            crate::source_files(root, *provider, 0, &mut files, &mut visited)?;
             files.sort();
             for path in files {
                 let canonical = fs::canonicalize(&path).map_err(|_| "source_metadata_failed")?;

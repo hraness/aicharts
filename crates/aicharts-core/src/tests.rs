@@ -595,3 +595,244 @@ fn codex_reasoning_warning_merges_once_and_stays_a_fixed_code() {
     );
     assert_eq!(Warning::UnmeasuredReasoning.code(), "unmeasured_reasoning");
 }
+
+fn atif(steps: &str, extra_top: &str) -> String {
+    format!(
+        r#"{{"schema_version":"ATIF-v1.7","session_id":"atif-session-1","agent":{{"name":"devin","model_name":"agent"}}{extra_top},"steps":[{steps}]}}"#
+    )
+}
+
+fn atif_step(id: &str, second: u32, prompt: u64, cached: u64, output: u64) -> String {
+    format!(
+        r#"{{"step_id":{id},"source":"agent","timestamp":"2026-09-15T10:00:{second:02}Z","metrics":{{"prompt_tokens":{prompt},"completion_tokens":{output},"cached_tokens":{cached}}}}}"#
+    )
+}
+
+#[test]
+fn devin_atif_steps_become_bounded_usage_with_keyed_identities() {
+    let collection = parse(
+        &atif(
+            &[
+                r#"{"step_id":0,"source":"user","timestamp":"2026-09-15T10:00:00Z","message":{"content":"PRIVATE_DO_NOT_RETAIN"}}"#,
+                atif_step("1", 5, 1000, 400, 200).as_str(),
+                atif_step("\"2\"", 12, 500, 0, 100).as_str(),
+                r#"{"step_id":3,"source":"system","timestamp":"2026-09-15T10:00:20Z"}"#,
+            ]
+            .join(","),
+            "",
+        ),
+        Provider::Devin,
+    );
+    assert_eq!(collection.batches.len(), 1);
+    let usage = &collection.batches[0].usage;
+    assert_eq!(usage.len(), 2);
+    assert!(usage.iter().all(|u| u.provider == Provider::Devin));
+    assert_eq!(
+        usage.iter().map(|u| u.tokens.input_uncached).sum::<u64>(),
+        1100
+    );
+    assert_eq!(usage.iter().map(|u| u.tokens.cache_read).sum::<u64>(), 400);
+    assert_eq!(usage.iter().map(|u| u.tokens.output).sum::<u64>(), 300);
+    assert!(usage.iter().all(|u| u.tokens.cache_write_5m == 0
+        && u.tokens.cache_write_1h == 0
+        && u.tokens.reasoning_output == 0));
+    assert!(usage.iter().all(|u| u.execution_id != [0; 16]));
+    assert_eq!(
+        usage
+            .iter()
+            .map(|u| u.execution_id)
+            .collect::<BTreeSet<_>>()
+            .len(),
+        1
+    );
+    assert!(collection.warnings.contains(&Warning::UnmeasuredReasoning));
+    assert!(!collection.warnings.contains(&Warning::DevinTotalsMismatch));
+    packets(&collection);
+}
+
+#[test]
+fn devin_rejects_malformed_oversized_foreign_and_unsupported_documents() {
+    for (source, error) in [
+        ("{".to_owned(), Error::MalformedRecord),
+        ("not json".to_owned(), Error::MalformedRecord),
+        (
+            atif("", "").replace("ATIF-v1.7", "ATIF-v2.0"),
+            Error::MalformedRecord,
+        ),
+        (
+            atif("", "").replace("ATIF-v1.7", "OTHER"),
+            Error::MalformedRecord,
+        ),
+        (
+            atif("", "").replace("\"devin\"", "\"other-agent\""),
+            Error::MalformedRecord,
+        ),
+        (
+            atif("", "").replace(r#""agent":{"name":"devin","model_name":"agent"},"#, ""),
+            Error::MalformedRecord,
+        ),
+        (
+            atif("", "").replace(r#""schema_version":"ATIF-v1.7","#, ""),
+            Error::MalformedRecord,
+        ),
+    ] {
+        assert_eq!(
+            parse_reader(Cursor::new(source.as_bytes()), Provider::Devin, &KEY).err(),
+            Some(error),
+            "{source}"
+        );
+    }
+    struct Endless;
+    impl Read for Endless {
+        fn read(&mut self, buffer: &mut [u8]) -> io::Result<usize> {
+            buffer.fill(b' ');
+            Ok(buffer.len())
+        }
+    }
+    assert_eq!(
+        parse_reader(BufReader::new(Endless), Provider::Devin, &KEY).err(),
+        Some(Error::LineTooLarge)
+    );
+}
+
+#[test]
+fn devin_missing_session_identity_warns_and_yields_no_usage() {
+    let source =
+        atif(&atif_step("1", 5, 100, 10, 20), "").replace(r#""session_id":"atif-session-1","#, "");
+    let collection = parse(&source, Provider::Devin);
+    assert!(collection.batches.is_empty());
+    assert!(collection.warnings.contains(&Warning::MissingIdentity));
+}
+
+#[test]
+fn devin_counter_and_timestamp_faults_fail_closed_or_warn() {
+    // Cached tokens can never exceed prompt tokens.
+    assert_eq!(
+        parse_reader(
+            Cursor::new(atif(&atif_step("1", 5, 100, 200, 20), "").into_bytes()),
+            Provider::Devin,
+            &KEY
+        )
+        .err(),
+        Some(Error::InvalidCounters)
+    );
+    // A counter beyond the wire token limit is invalid, never clamped.
+    assert_eq!(
+        parse_reader(
+            Cursor::new(atif(&atif_step("1", 5, 2_000_000_000_000, 0, 20), "").into_bytes()),
+            Provider::Devin,
+            &KEY
+        )
+        .err(),
+        Some(Error::InvalidCounters)
+    );
+    let missing = parse(
+        &atif(
+            &[
+                r#"{"step_id":1,"source":"agent","timestamp":"2026-09-15T10:00:05Z","metrics":{"completion_tokens":5}}"#,
+                r#"{"step_id":2,"source":"agent","timestamp":"not-a-time","metrics":{"prompt_tokens":7,"completion_tokens":3}}"#,
+                r#"{"step_id":3,"source":"agent","timestamp":"2026-09-15T10:00:09Z"}"#,
+            ]
+            .join(","),
+            "",
+        ),
+        Provider::Devin,
+    );
+    assert!(missing.batches.is_empty());
+    assert!(missing.warnings.contains(&Warning::MissingUsageCounters));
+    assert!(missing.warnings.contains(&Warning::MissingTimestamp));
+}
+
+#[test]
+fn devin_final_metrics_mismatch_warns_but_does_not_change_usage() {
+    let steps = atif_step("1", 5, 100, 10, 20);
+    let good = parse(
+        &atif(
+            &steps,
+            r#","final_metrics":{"total_prompt_tokens":100,"total_completion_tokens":20,"total_cached_tokens":10,"total_steps":1}"#,
+        ),
+        Provider::Devin,
+    );
+    assert!(!good.warnings.contains(&Warning::DevinTotalsMismatch));
+    for final_metrics in [
+        r#","final_metrics":{"total_prompt_tokens":101,"total_completion_tokens":20,"total_cached_tokens":10}"#,
+        r#","final_metrics":{"total_prompt_tokens":100,"total_completion_tokens":20,"total_cached_tokens":10,"total_steps":2}"#,
+    ] {
+        let collection = parse(&atif(&steps, final_metrics), Provider::Devin);
+        assert!(collection.warnings.contains(&Warning::DevinTotalsMismatch));
+        assert_eq!(collection.batches[0].usage.len(), 1);
+        assert_eq!(collection.batches[0].usage[0].tokens.input_uncached, 90);
+    }
+}
+
+#[test]
+fn devin_duplicate_step_ids_merge_like_revisions_and_conflicts_fail() {
+    let merged = parse(
+        &atif(
+            &[
+                atif_step("1", 5, 100, 10, 20),
+                atif_step("1", 9, 150, 10, 25),
+            ]
+            .join(","),
+            "",
+        ),
+        Provider::Devin,
+    );
+    assert_eq!(merged.batches[0].usage.len(), 1);
+    assert_eq!(merged.batches[0].usage[0].tokens.input_uncached, 140);
+    assert_eq!(merged.batches[0].usage[0].tokens.output, 25);
+    assert_eq!(merged.batches[0].usage[0].offset_ms, 36_009_000);
+    // Same step identity with incomparable counters — more cache, less output —
+    // is a conflict, not a revision.
+    let conflicted = parse_reader(
+        Cursor::new(
+            atif(
+                &[
+                    atif_step("1", 5, 100, 10, 20),
+                    atif_step("1", 9, 150, 60, 10),
+                ]
+                .join(","),
+                "",
+            )
+            .into_bytes(),
+        ),
+        Provider::Devin,
+        &KEY,
+    );
+    assert_eq!(conflicted.err(), Some(Error::ConflictingOccurrence));
+}
+
+#[test]
+fn devin_usage_identity_is_stable_and_namespace_scoped() {
+    let source = atif(&atif_step("1", 5, 100, 10, 20), "");
+    let first = parse(&source, Provider::Devin);
+    let second = parse(&source, Provider::Devin);
+    assert_eq!(packets(&first), packets(&second));
+    let other = parse_reader(Cursor::new(source.as_bytes()), Provider::Devin, &[8; 32]).unwrap();
+    assert_ne!(first.batches[0].usage[0].id, other.batches[0].usage[0].id);
+    let renamed = parse(
+        &source.replace("atif-session-1", "atif-session-2"),
+        Provider::Devin,
+    );
+    assert_ne!(
+        first.batches[0].usage[0].execution_id,
+        renamed.batches[0].usage[0].execution_id
+    );
+}
+
+#[test]
+fn devin_fixture_parses_and_keeps_no_transcript_content() {
+    let source = include_str!("../../../fixtures/usage/atif-devin-v1.json");
+    let collection = parse(source, Provider::Devin);
+    let usage = &collection.batches[0].usage;
+    assert_eq!(usage.len(), 2);
+    assert_eq!(
+        usage.iter().map(|u| u.tokens.input_uncached).sum::<u64>(),
+        1100
+    );
+    assert_eq!(usage.iter().map(|u| u.tokens.cache_read).sum::<u64>(), 400);
+    assert_eq!(usage.iter().map(|u| u.tokens.output).sum::<u64>(), 300);
+    assert!(!collection.warnings.contains(&Warning::DevinTotalsMismatch));
+    let debug = format!("{collection:?}");
+    assert!(!debug.contains("synthetic prompt") && !debug.contains("synthetic response"));
+}

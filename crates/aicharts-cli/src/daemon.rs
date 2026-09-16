@@ -45,7 +45,7 @@ fn parse_options(args: &[String]) -> Result<Options, &'static str> {
             "--complete-prefix" if !complete_prefix => complete_prefix = true,
             "--once" if !once => once = true,
             "--json" if once && !json => json = true,
-            flag @ ("--state-dir" | "--key-file" | "--codex" | "--claude"
+            flag @ ("--state-dir" | "--key-file" | "--codex" | "--claude" | "--devin"
             | "--interval-seconds" | "--retry-attempts") => {
                 i += 1;
                 let value = args
@@ -62,6 +62,9 @@ fn parse_options(args: &[String]) -> Result<Options, &'static str> {
                         aicharts_protocol::Provider::ClaudeCode,
                         PathBuf::from(value),
                     )),
+                    "--devin" => {
+                        sources.push((aicharts_protocol::Provider::Devin, PathBuf::from(value)))
+                    }
                     "--interval-seconds" if !interval_set => {
                         interval_seconds = value.parse().map_err(|_| "invalid_interval")?;
                         if !(MIN_INTERVAL_SECONDS..=MAX_INTERVAL_SECONDS)
@@ -140,6 +143,7 @@ fn collect_args(options: &Options) -> Vec<String> {
         args.push(match provider {
             aicharts_protocol::Provider::Codex => "--codex".to_owned(),
             aicharts_protocol::Provider::ClaudeCode => "--claude".to_owned(),
+            aicharts_protocol::Provider::Devin => "--devin".to_owned(),
         });
         args.push(path.to_string_lossy().into_owned());
     }

@@ -50,7 +50,7 @@ export function parsePrivateDaysPublicReply(value: unknown, range?: unknown): Pr
 function projection(body: PrivateDaysPublicReply): object {
   if (!("value" in body)) return body;
   const value = body.value;
-  const days = value.days.map(day => owned({ utcDay: day.utcDay, codex: owned(day.codex), claudeCode: owned(day.claudeCode) }));
+  const days = value.days.map(day => owned({ utcDay: day.utcDay, codex: owned(day.codex), claudeCode: owned(day.claudeCode), devin: owned(day.devin) }));
   Object.setPrototypeOf(days, null);
   return owned({ schemaVersion: 1, state: "ready", value: owned({ schemaVersion: 1,
     measurementProfile: value.measurementProfile, coverage: value.coverage, journalRevision: value.journalRevision,

@@ -152,7 +152,7 @@ export function qualificationFixture(run: QualificationRun, deviceId: string): R
 
 export function qualificationExpectedDays(run: QualificationRun, revision: 1 | 2 | 3, committedAtMs: number): PrivateDaysV1 {
   const zero = () => ({ usageOccurrences: 0, observedAccountedTokens: "0", observedOutputTokens: "0" });
-  const days = Array.from({ length: 3 }, (_, index) => ({ utcDay: run.firstUtcDay + index, codex: zero(), claudeCode: zero() }));
+  const days = Array.from({ length: 3 }, (_, index) => ({ utcDay: run.firstUtcDay + index, codex: zero(), claudeCode: zero(), devin: zero() }));
   days[revision === 1 ? 1 : 0].codex = { usageOccurrences: 1, observedAccountedTokens: revision === 1 ? "15" : "11", observedOutputTokens: revision === 1 ? "5" : "1" };
   if (revision < 3) days[2].claudeCode = { usageOccurrences: 1, observedAccountedTokens: "34", observedOutputTokens: "7" };
   return { schemaVersion: 1, measurementProfile: "imported-tokens-v1", coverage: "partial", journalRevision: revision, journalCommittedAtMs: committedAtMs, firstUtcDay: run.firstUtcDay, days };

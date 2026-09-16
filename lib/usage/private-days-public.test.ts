@@ -9,7 +9,7 @@ const range = { firstUtcDay: 10, dayCount: 2 };
 const totals = () => ({ usageOccurrences: 0, observedAccountedTokens: "0", observedOutputTokens: "0" });
 const value = (query = range) => ({ schemaVersion: 1, measurementProfile: "imported-tokens-v1", coverage: "partial",
   journalRevision: 0, journalCommittedAtMs: null, firstUtcDay: query.firstUtcDay,
-  days: Array.from({ length: query.dayCount }, (_, index) => ({ utcDay: query.firstUtcDay + index, codex: totals(), claudeCode: totals() })) } satisfies PrivateDaysV1);
+  days: Array.from({ length: query.dayCount }, (_, index) => ({ utcDay: query.firstUtcDay + index, codex: totals(), claudeCode: totals(), devin: totals() })) } satisfies PrivateDaysV1);
 const ready = (): PrivateDaysPublicReply => ({ schemaVersion: 1, state: "ready", value: value() });
 const bytes = (text: string) => new TextEncoder().encode(text);
 

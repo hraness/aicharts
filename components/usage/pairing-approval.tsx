@@ -45,7 +45,7 @@ export function PairingApprovalPanel({ view, read, decide, navigating }: Readonl
                     </> : null}
     </div>
     <aside className="usage-pairing__privacy" aria-label="What connecting allows">
-      <h2>Numeric usage only</h2><p>The collector is designed for numeric Codex and Claude Code measurements. Prompts, responses and session transcripts stay out of uploads. Public sharing is a separate choice.</p>
+      <h2>Numeric usage only</h2><p>The collector is designed for numeric Codex, Claude Code and Devin measurements. Prompts, responses and session transcripts stay out of uploads. Public sharing is a separate choice.</p>
     </aside>
   </section>;
 }

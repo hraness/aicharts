@@ -100,6 +100,7 @@ impl<'de> Deserialize<'de> for ModelLabel {
         decoder.deserialize_str(Label)
     }
 }
+
 #[derive(Clone, PartialEq, Eq)]
 struct OccurrenceMetadata {
     execution: Id,
@@ -122,6 +123,52 @@ pub fn scan_metadata<R: BufRead>(
 ) -> Result<Metadata, &'static str> {
     let mut out = Metadata::default();
     let mut lines = 0u64;
+    if provider == Provider::Devin {
+        let document = crate::read_atif(&mut reader).map_err(|e| e.code())?;
+        if !document
+            .schema_version
+            .is_some_and(|version| version.0.starts_with("ATIF-v1."))
+            || document
+                .agent
+                .and_then(|agent| agent.name)
+                .is_none_or(|name| name.0 != "devin")
+        {
+            return Err("malformed_record");
+        }
+        let Some(session_id) = document.session_id else {
+            return Ok(out);
+        };
+        let execution = crate::keyed_id(key, b"devin-execution", &[session_id.0.as_bytes()]);
+        let conversation = crate::keyed_id(key, b"devin-conversation", &[session_id.0.as_bytes()]);
+        for (index, step) in document.steps.iter().enumerate() {
+            if step.source != crate::schema::StepSource::Agent || step.metrics.is_none() {
+                continue;
+            }
+            let step_key = step
+                .step_id
+                .as_ref()
+                .map_or_else(|| index.to_string(), |id| id.0.clone());
+            let value = OccurrenceMetadata {
+                execution,
+                conversation: Some(conversation),
+                model: step
+                    .extra
+                    .as_ref()
+                    .and_then(|extra| extra.generation_model.as_ref())
+                    .and_then(|model| DEVIN_MODELS.iter().copied().find(|m| *m == model.0)),
+                basis: "response",
+            };
+            let id = crate::devin_usage_id(key, &execution, step_key.as_bytes());
+            if out.occurrences.get(&id).is_some_and(|old| old != &value) {
+                return Err("conflicting_occurrence");
+            }
+            out.occurrences.insert(id, value);
+            if out.occurrences.len() > MAX_RECORDS {
+                return Err("record_limit");
+            }
+        }
+        return Ok(out);
+    }
     if provider == Provider::Codex {
         let mut execution = None;
         let mut requested_model = None;
@@ -365,10 +412,10 @@ pub fn join_sources(sources: Vec<(Collection, Metadata)>) -> Result<SessionRepor
             let session = sessions
                 .entry((usage.provider as u8, usage.execution_id))
                 .or_insert_with(|| SessionObservation {
-                    provider: if usage.provider == Provider::Codex {
-                        "codex"
-                    } else {
-                        "claude_code"
+                    provider: match usage.provider {
+                        Provider::Codex => "codex",
+                        Provider::ClaudeCode => "claude_code",
+                        Provider::Devin => "devin",
                     },
                     session_id: hex(usage.execution_id),
                     conversation_id: conversation.clone(),
@@ -431,6 +478,9 @@ const MODELS: &[&str] = &[
     "claude-sonnet-4-6",
     "claude-haiku-4-5-20251001",
 ];
+
+/// Response-model slugs Devin steps report under `extra.generation_model`.
+const DEVIN_MODELS: &[&str] = &["gpt-6-astra-high", "gpt-6-astra-max", "swe-2-max"];
 
 #[cfg(test)]
 mod tests {
@@ -601,5 +651,56 @@ mod tests {
         let report = join_sources(vec![source(text, Provider::Codex)]).unwrap();
         assert_eq!(report.sessions[0].usage[0].model, None);
         assert_eq!(report.sessions[0].usage[0].model_basis, "unknown");
+    }
+    fn atif(session: &str, generation_model: &str) -> String {
+        format!(
+            "{{\"schema_version\":\"ATIF-v1.7\",\"session_id\":\"{session}\",\"agent\":{{\"name\":\"devin\"}},\"steps\":[{{\"step_id\":1,\"source\":\"agent\",\"timestamp\":\"2026-09-15T10:00:05Z\",\"extra\":{{\"generation_model\":\"{generation_model}\"}},\"message\":{{\"content\":\"PRIVATE_DO_NOT_RETAIN\"}},\"metrics\":{{\"prompt_tokens\":100,\"completion_tokens\":20,\"cached_tokens\":10}}}}]}}"
+        )
+    }
+    #[test]
+    fn devin_allowlisted_response_models_and_identity_join_without_content() {
+        let known = atif("atif-native", "swe-2-max");
+        let unknown = atif("atif-other", "PRIVATE_MODEL");
+        let report = join_sources(vec![
+            source(&known, Provider::Devin),
+            source(&unknown, Provider::Devin),
+            source(&known, Provider::Devin),
+        ])
+        .unwrap();
+        assert_eq!(report.sessions.len(), 2);
+        let attributed = report
+            .sessions
+            .iter()
+            .find(|s| s.usage[0].model.is_some())
+            .unwrap();
+        let unattributed = report
+            .sessions
+            .iter()
+            .find(|s| s.usage[0].model.is_none())
+            .unwrap();
+        assert_eq!(attributed.provider, "devin");
+        assert_eq!(attributed.usage.len(), 1);
+        assert_eq!(attributed.usage[0].model, Some("swe-2-max"));
+        assert_eq!(attributed.usage[0].model_basis, "response");
+        assert_eq!(attributed.usage[0].input_tokens, 90);
+        assert_eq!(attributed.usage[0].cache_read_tokens, 10);
+        assert_eq!(attributed.usage[0].output_tokens, 20);
+        assert_eq!(attributed.usage[0].reasoning_tokens, None);
+        assert!(attributed.conversation_id.is_some());
+        assert_eq!(unattributed.usage[0].model_basis, "response");
+        let bytes = serde_json::to_string(&report).unwrap();
+        assert!(!bytes.contains("PRIVATE_DO_NOT_RETAIN"));
+        assert!(!bytes.contains("PRIVATE_MODEL"));
+        assert!(!bytes.contains("atif-native") && !bytes.contains("atif-other"));
+    }
+    #[test]
+    fn devin_foreign_or_unsupported_documents_fail_before_metadata() {
+        for text in [
+            atif("atif-native", "swe-2-max").replace("\"devin\"", "\"other-agent\""),
+            atif("atif-native", "swe-2-max").replace("ATIF-v1.7", "ATIF-v2.0"),
+            "{not json".to_owned(),
+        ] {
+            assert!(scan_metadata(Cursor::new(&text), Provider::Devin, &KEY).is_err());
+        }
     }
 }

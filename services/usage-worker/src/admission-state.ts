@@ -140,7 +140,7 @@ export class AdmissionState {
     const query = parsePrivateDaysRequest(request);
     requireAdmission(query && authority.phase === "active" && authority.accountId === query.accountId && !control.quarantined);
     const empty = () => ({ usageOccurrences: 0, accounted: 0n, output: 0n });
-    const days = Array.from({ length: query.dayCount }, (_, index) => ({ utcDay: query.firstUtcDay + index, codex: empty(), claudeCode: empty() }));
+    const days = Array.from({ length: query.dayCount }, (_, index) => ({ utcDay: query.firstUtcDay + index, codex: empty(), claudeCode: empty(), devin: empty() }));
     let count = 0;
     for (const row of this.sql.exec("SELECT occurrence_id, operation, journal_revision, utc_day FROM usage_admission_heads WHERE utc_day >= ? AND utc_day < ? ORDER BY occurrence_id LIMIT 100001",
       query.firstUtcDay, query.firstUtcDay + query.dayCount)) {
@@ -151,15 +151,15 @@ export class AdmissionState {
       requireAdmission(frame.ok);
       const usage = frame.value.usage[0], tokens = totalTokens(usage.tokens), day = days[head.day - query.firstUtcDay];
       requireAdmission(tokens.ok && day && day.utcDay === head.day);
-      const provider = usage.provider === 1 ? day.codex : day.claudeCode;
+      const provider = usage.provider === 1 ? day.codex : usage.provider === 3 ? day.devin : day.claudeCode;
       provider.usageOccurrences += 1; provider.accounted += tokens.value; provider.output += usage.tokens.output;
-      requireAdmission(day.codex.usageOccurrences + day.claudeCode.usageOccurrences <= MAX_ADMISSION_DAY_HEADS);
+      requireAdmission(day.codex.usageOccurrences + day.claudeCode.usageOccurrences + day.devin.usageOccurrences <= MAX_ADMISSION_DAY_HEADS);
     }
     const cells = days.map(day => {
-      requireAdmission(day.codex.usageOccurrences + day.claudeCode.usageOccurrences === this.dayCount(day.utcDay));
+      requireAdmission(day.codex.usageOccurrences + day.claudeCode.usageOccurrences + day.devin.usageOccurrences === this.dayCount(day.utcDay));
       const totals = (provider: ReturnType<typeof empty>) => ({ usageOccurrences: provider.usageOccurrences,
         observedAccountedTokens: provider.accounted.toString(), observedOutputTokens: provider.output.toString() });
-      return { utcDay: day.utcDay, codex: totals(day.codex), claudeCode: totals(day.claudeCode) };
+      return { utcDay: day.utcDay, codex: totals(day.codex), claudeCode: totals(day.claudeCode), devin: totals(day.devin) };
     });
     const result = parsePrivateDaysValue(query, { schemaVersion: 1, measurementProfile: "imported-tokens-v1", coverage: "partial",
       journalRevision: control.revision, journalCommittedAtMs: control.revision === 0 ? null : control.committed,

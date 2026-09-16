@@ -10,11 +10,11 @@ type View = { kind: "loading" } | { kind: "unavailable" } | { kind: "invalid_dat
 const number = new Intl.NumberFormat("en-US");
 const date = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
 const time = new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short", timeZone: "UTC" });
-const providers = [{ key: "codex", name: "Codex" }, { key: "claudeCode", name: "Claude Code" }] as const;
+const providers = [{ key: "codex", name: "Codex" }, { key: "claudeCode", name: "Claude Code" }, { key: "devin", name: "Devin" }] as const;
 const formattedDay = (day: number) => date.format(new Date(day * 86_400_000));
 const tokens = (value: string) => number.format(BigInt(value));
 
-function summed(value: PrivateDaysV1, key: "codex" | "claudeCode"): ProviderImportedTotals {
+function summed(value: PrivateDaysV1, key: "codex" | "claudeCode" | "devin"): ProviderImportedTotals {
   let total = 0n, output = 0n, count = 0;
   for (const day of value.days) {
     total += BigInt(day[key].observedAccountedTokens);
@@ -52,10 +52,10 @@ function Measurements({ value }: Readonly<{ value: PrivateDaysV1 }>) {
       <h2>No observations in these dates</h2>
       <p>Your account is connected, but this range has no accepted token records. Try other dates or check your local collector.</p>
     </div> : <figure className="usage-daily__figure">
-      <figcaption><strong>Observed tokens by day</strong><span>Codex solid · Claude Code outlined</span></figcaption>
+      <figcaption><strong>Observed tokens by day</strong><span>Codex solid · Claude Code outlined · Devin muted</span></figcaption>
       <div className="usage-daily__plot" aria-hidden="true">
         {value.days.map(day => <div className="usage-daily__day" key={day.utcDay}
-          title={`${formattedDay(day.utcDay)}: Codex ${tokens(day.codex.observedAccountedTokens)}; Claude Code ${tokens(day.claudeCode.observedAccountedTokens)}`}>
+          title={`${formattedDay(day.utcDay)}: ${providers.map(provider => `${provider.name} ${tokens(day[provider.key].observedAccountedTokens)}`).join("; ")}`}>
           {providers.map(provider => <span className={`usage-daily__bar usage-daily__bar--${provider.key}`} key={provider.key}
             style={{ height: height(day[provider.key].observedAccountedTokens) }} />)}
         </div>)}
@@ -70,7 +70,7 @@ function Measurements({ value }: Readonly<{ value: PrivateDaysV1 }>) {
           <caption>Observed token records, {formattedDay(value.firstUtcDay)}–{formattedDay(value.firstUtcDay + value.days.length - 1)}. Coverage is partial.</caption>
           <thead><tr><th scope="col">UTC day</th><th scope="col">Provider</th><th scope="col">Observed tokens</th><th scope="col">Output tokens</th><th scope="col">Usage records</th></tr></thead>
           {value.days.map(day => <tbody key={day.utcDay}>{providers.map((provider, index) => <tr key={provider.key} className={index === 0 ? "usage-daily__row-start" : undefined}>
-            {index === 0 && <th scope="rowgroup" rowSpan={2}><time dateTime={utcDayInput(day.utcDay)}>{formattedDay(day.utcDay)}</time></th>}
+            {index === 0 && <th scope="rowgroup" rowSpan={providers.length}><time dateTime={utcDayInput(day.utcDay)}>{formattedDay(day.utcDay)}</time></th>}
             <th scope="row">{provider.name}</th><td>{tokens(day[provider.key].observedAccountedTokens)}</td><td>{tokens(day[provider.key].observedOutputTokens)}</td><td>{number.format(day[provider.key].usageOccurrences)}</td>
           </tr>)}</tbody>)}
         </table>
@@ -139,7 +139,7 @@ export function DailyUsageDashboard({ todayUtcDay }: Readonly<{ todayUtcDay: num
   const value = reply !== null && "state" in reply && reply.state === "ready" ? reply.value : null;
   return <section className="usage-daily" aria-labelledby="daily-usage-title">
     <header className="usage-daily__heading">
-      <div><h1 id="daily-usage-title">Your daily usage</h1><p>Codex and Claude Code, with coverage attached to every total.</p></div>
+      <div><h1 id="daily-usage-title">Your daily usage</h1><p>Codex, Claude Code and Devin, with coverage attached to every total.</p></div>
       <span className="usage-daily__privacy">Private to your account</span>
     </header>
     <form className="usage-daily__controls" onSubmit={submit} aria-label="Usage date range">

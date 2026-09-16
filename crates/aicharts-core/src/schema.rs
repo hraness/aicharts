@@ -174,3 +174,138 @@ pub(crate) struct ClaudeCacheCreation {
     pub ephemeral_5m_input_tokens: Option<u64>,
     pub ephemeral_1h_input_tokens: Option<u64>,
 }
+
+// ATIF transcripts are one whole JSON document per file, not JSONL. Only the
+// session, step identity, clock and counter fields below are retained; every
+// message, reasoning, observation, tool call and tool-definition payload stays
+// uninspected in IgnoredAny.
+pub(crate) struct AtifVersion(pub String);
+impl<'de> Deserialize<'de> for AtifVersion {
+    fn deserialize<D: Deserializer<'de>>(decoder: D) -> Result<Self, D::Error> {
+        struct Version;
+        impl Visitor<'_> for Version {
+            type Value = AtifVersion;
+            fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
+                f.write_str("an ATIF schema version")
+            }
+            fn visit_str<E: de::Error>(self, value: &str) -> Result<AtifVersion, E> {
+                if value.len() > 64 || !value.starts_with("ATIF-v") {
+                    return Err(E::custom("invalid_schema_version"));
+                }
+                Ok(AtifVersion(value.to_owned()))
+            }
+        }
+        decoder.deserialize_str(Version)
+    }
+}
+
+/// Step identifiers arrive as strings in v1.7; a numeric form is accepted so a
+/// schema revision never silently re-keys a session's history.
+pub(crate) struct StepId(pub String);
+impl<'de> Deserialize<'de> for StepId {
+    fn deserialize<D: Deserializer<'de>>(decoder: D) -> Result<Self, D::Error> {
+        struct Step;
+        impl<'de> Visitor<'de> for Step {
+            type Value = StepId;
+            fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
+                f.write_str("a bounded step identifier")
+            }
+            fn visit_str<E: de::Error>(self, value: &str) -> Result<StepId, E> {
+                if value.is_empty()
+                    || value.len() > 256
+                    || !value
+                        .bytes()
+                        .all(|b| b.is_ascii_alphanumeric() || b == b'_' || b == b'-')
+                {
+                    return Err(E::custom("invalid_identifier"));
+                }
+                Ok(StepId(value.to_owned()))
+            }
+            fn visit_u64<E: de::Error>(self, value: u64) -> Result<StepId, E> {
+                Ok(StepId(value.to_string()))
+            }
+        }
+        decoder.deserialize_any(Step)
+    }
+}
+
+/// A bounded agent identifier used only to verify the transcript belongs to the
+/// provider the caller named.
+pub(crate) struct AgentName(pub String);
+impl<'de> Deserialize<'de> for AgentName {
+    fn deserialize<D: Deserializer<'de>>(decoder: D) -> Result<Self, D::Error> {
+        struct Name;
+        impl Visitor<'_> for Name {
+            type Value = AgentName;
+            fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
+                f.write_str("an agent name")
+            }
+            fn visit_str<E: de::Error>(self, value: &str) -> Result<AgentName, E> {
+                if value.is_empty() || value.len() > 64 {
+                    return Err(E::custom("invalid_agent_name"));
+                }
+                Ok(AgentName(value.to_owned()))
+            }
+        }
+        decoder.deserialize_str(Name)
+    }
+}
+
+#[derive(Default, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub(crate) enum StepSource {
+    Agent,
+    #[default]
+    #[serde(other)]
+    Other,
+}
+
+/// The response model a step reports under `extra.generation_model`. Retention
+/// stays behind the model allowlist in `sessions`.
+#[derive(Deserialize)]
+pub(crate) struct AtifExtra {
+    pub generation_model: Option<NativeId>,
+}
+
+#[derive(Deserialize)]
+pub(crate) struct AtifMetrics {
+    pub prompt_tokens: Option<u64>,
+    pub completion_tokens: Option<u64>,
+    pub cached_tokens: Option<u64>,
+}
+
+#[derive(Deserialize)]
+pub(crate) struct AtifStep {
+    pub step_id: Option<StepId>,
+    pub timestamp: Option<Timestamp>,
+    #[serde(default)]
+    pub source: StepSource,
+    pub metrics: Option<AtifMetrics>,
+    #[serde(default, deserialize_with = "metadata_object")]
+    pub extra: Option<AtifExtra>,
+}
+
+#[derive(Deserialize)]
+pub(crate) struct AtifAgent {
+    pub name: Option<AgentName>,
+}
+
+#[derive(Deserialize)]
+pub(crate) struct AtifFinalMetrics {
+    pub total_prompt_tokens: Option<u64>,
+    pub total_completion_tokens: Option<u64>,
+    pub total_cached_tokens: Option<u64>,
+    pub total_steps: Option<u64>,
+}
+
+#[derive(Deserialize)]
+pub(crate) struct AtifDocument {
+    pub schema_version: Option<AtifVersion>,
+    pub session_id: Option<NativeId>,
+    #[serde(default, deserialize_with = "metadata_object")]
+    pub agent: Option<AtifAgent>,
+    #[serde(default)]
+    pub steps: Vec<AtifStep>,
+    #[serde(default, deserialize_with = "metadata_object")]
+    pub final_metrics: Option<AtifFinalMetrics>,
+}

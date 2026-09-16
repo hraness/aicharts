@@ -1,7 +1,7 @@
 //! Explicit, local session snapshots. No account, ledger, provider config or network.
 use aicharts_protocol::Provider;
 use std::path::PathBuf;
-const HELP: &str = "AI Charts sessions — local, read-only\n\n  aicharts sessions --occurrence-key-file KEY [--codex FILE ...] [--claude FILE ...] [--json]\n\nExplicit regular files only. Exports known session token observations and\nqualified response-model labels, without transcript content. Historical timing\nis unknown. An unfinished final JSONL record is deferred. Nothing is uploaded.\n";
+const HELP: &str = "AI Charts sessions — local, read-only\n\n  aicharts sessions --occurrence-key-file KEY [--codex FILE ...] [--claude FILE ...] [--devin FILE ...] [--json]\n\nExplicit regular files only. Exports known session token observations and\nqualified response-model labels, without transcript content. Historical timing\nis unknown. An unfinished final JSONL record is deferred; a Devin ATIF source\nis one whole document and parses completely or not at all. Nothing is uploaded.\n";
 struct Options {
     sources: Vec<(Provider, PathBuf)>,
     key: PathBuf,
@@ -18,7 +18,7 @@ fn options(args: &[String]) -> Result<Options, &'static str> {
     while let Some(flag) = args.next() {
         match flag.as_str() {
             "--json" if !json => json = true,
-            "--codex" | "--claude" | "--occurrence-key-file" => {
+            "--codex" | "--claude" | "--devin" | "--occurrence-key-file" => {
                 let value = args
                     .next()
                     .filter(|s| !s.is_empty() && !s.starts_with("--"))
@@ -33,10 +33,10 @@ fn options(args: &[String]) -> Result<Options, &'static str> {
                         return Err("too_many_sources");
                     }
                     sources.push((
-                        if flag == "--codex" {
-                            Provider::Codex
-                        } else {
-                            Provider::ClaudeCode
+                        match flag.as_str() {
+                            "--codex" => Provider::Codex,
+                            "--claude" => Provider::ClaudeCode,
+                            _ => Provider::Devin,
                         },
                         PathBuf::from(value),
                     ));
@@ -116,7 +116,12 @@ mod native {
             crate::state::unix::verify_path(&self.original, &self.canonical, &self.stamp)
                 .map_err(|_| "source_changed_during_scan")
         }
-        fn complete_prefix(&mut self) -> Result<u64, &'static str> {
+        fn complete_prefix(&mut self, provider: Provider) -> Result<u64, &'static str> {
+            // A whole-document source has no line boundary; completeness is the
+            // document's own parse, not an LF-terminated prefix.
+            if provider == Provider::Devin {
+                return Ok(self.stamp.bytes);
+            }
             // Fixed scratch only for the unfinished suffix, not a retained line.
             let mut end = self.stamp.bytes;
             let mut scanned = 0usize;
@@ -200,7 +205,7 @@ mod native {
         let mut lines = 0;
         let mut records = 0;
         for (provider, source) in &mut sources {
-            let prefix = source.complete_prefix()?;
+            let prefix = source.complete_prefix(*provider)?;
             source
                 .file
                 .seek(SeekFrom::Start(0))
@@ -216,7 +221,7 @@ mod native {
             if lines > sessions::MAX_LINES || records > sessions::MAX_RECORDS {
                 return Err("record_limit");
             }
-            let metadata = if *provider == Provider::ClaudeCode {
+            let metadata = if matches!(*provider, Provider::ClaudeCode | Provider::Devin) {
                 source
                     .file
                     .seek(SeekFrom::Start(0))
@@ -282,11 +287,14 @@ mod native {
                     .unwrap();
             }
             fn options(&self, files: &[&str]) -> Options {
+                self.options_as(Provider::ClaudeCode, files)
+            }
+            fn options_as(&self, provider: Provider, files: &[&str]) -> Options {
                 Options {
                     key: self.path.join("key"),
                     sources: files
                         .iter()
-                        .map(|f| (Provider::ClaudeCode, self.path.join(f)))
+                        .map(|f| (provider, self.path.join(f)))
                         .collect(),
                     json: true,
                 }
@@ -298,6 +306,7 @@ mod native {
             }
         }
         const ROW: &[u8] = b"{\"type\":\"assistant\",\"timestamp\":\"2026-01-01T00:00:00Z\",\"sessionId\":\"s\",\"requestId\":\"r\",\"message\":{\"id\":\"m\",\"model\":\"claude-sonnet-4-6\",\"usage\":{\"input_tokens\":2,\"output_tokens\":3}}}\n";
+        const ATIF: &[u8] = br#"{"schema_version":"ATIF-v1.7","session_id":"atif-native","agent":{"name":"devin"},"steps":[{"step_id":1,"source":"agent","timestamp":"2026-01-01T00:00:00Z","extra":{"generation_model":"swe-2-max"},"metrics":{"prompt_tokens":10,"completion_tokens":3,"cached_tokens":2}}],"final_metrics":{"total_prompt_tokens":10,"total_completion_tokens":3,"total_cached_tokens":2,"total_steps":1}}"#;
         #[test]
         fn copies_and_unfinished_tail_export_one_complete_usage() {
             let f = Fixture::new();
@@ -311,6 +320,31 @@ mod native {
             assert_eq!(json["sessions"][0]["usage"].as_array().unwrap().len(), 1);
             assert_eq!(json["sessions"][0]["usage"][0]["modelBasis"], "response");
             assert!(!result.contains("INCOMPLETE"));
+        }
+        #[test]
+        fn devin_whole_document_exports_without_a_newline_tail() {
+            let f = Fixture::new();
+            f.write("a.json", ATIF);
+            let result = capture(f.options_as(Provider::Devin, &["a.json"]))
+                .unwrap()
+                .finish()
+                .unwrap();
+            let json: serde_json::Value = serde_json::from_str(&result).unwrap();
+            assert_eq!(json["sessions"].as_array().unwrap().len(), 1);
+            assert_eq!(json["sessions"][0]["provider"], "devin");
+            let usage = &json["sessions"][0]["usage"];
+            assert_eq!(usage.as_array().unwrap().len(), 1);
+            assert_eq!(usage[0]["model"], "swe-2-max");
+            assert_eq!(usage[0]["inputTokens"], 8);
+            assert_eq!(usage[0]["cacheReadTokens"], 2);
+            assert_eq!(usage[0]["outputTokens"], 3);
+            assert!(!result.contains("atif-native"));
+        }
+        #[test]
+        fn devin_partial_document_refuses_instead_of_deferring() {
+            let f = Fixture::new();
+            f.write("a.json", &ATIF[..ATIF.len() - 2]);
+            assert!(capture(f.options_as(Provider::Devin, &["a.json"])).is_err());
         }
         #[test]
         fn a_previous_source_replaced_after_capture_prevents_all_output() {

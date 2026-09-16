@@ -17,6 +17,7 @@ umask 077
   --occurrence-key-file /absolute/private/aicharts.key \
   --codex /absolute/path/to/session.jsonl \
   --claude /absolute/path/to/another-session.jsonl \
+  --devin /absolute/path/to/atif-session.json \
   --json > /absolute/private/sessions.json
 ```
 
@@ -28,15 +29,20 @@ deduplicated without revealing native identifiers. Keep the key stable.
 
 Historical token accounting follows the existing collector: cumulative Codex
 snapshots are not separate token purchases, and Claude cache reads are not
-subtracted from its already uncached input field. Reasoning is a subset of
-output and is never added twice. Missing reasoning detail remains unknown.
+subtracted from its already uncached input field. Devin ATIF sources are
+complete documents rather than lines: only `agent` steps contribute, and
+`final_metrics` disagreement surfaces `devin_totals_mismatch`. Reasoning is a
+subset of output and is never added twice. Missing reasoning detail remains
+unknown.
 
 An actual response model may populate a reviewed display allowlist. Custom or
 unsupported model labels become unknown. Codex's requested turn model does
 not prove its actual response model. When the native history contains an
 allowlisted session model, the report records it as `Request tag`; if the
 setting is absent or changes ambiguously, model attribution remains unknown.
-The response usage record in the reviewed
+Devin steps carry an effective response-model tag in `extra.generation_model`;
+the report records an allowlisted value as `Response` attribution and discards
+any other label. The response usage record in the reviewed
 [Codex protocol](https://github.com/openai/codex/blob/4d205c7a4dc36b719679a0356a45b23133732265/codex-rs/protocol/src/protocol.rs)
 does not contain an effective model identifier.
 

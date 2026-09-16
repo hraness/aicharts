@@ -45,7 +45,16 @@ fn begin(key: &[u8; 32], source_id: &[u8; 32], bytes: u64) -> Digest {
     mac
 }
 
-fn completed_bytes<R: Read + Seek>(reader: &mut R, observed: u64) -> Result<u64, &'static str> {
+fn completed_bytes<R: Read + Seek>(
+    reader: &mut R,
+    observed: u64,
+    provider: Provider,
+) -> Result<u64, &'static str> {
+    // A whole-document source is complete exactly at its observed end; only a
+    // changed document can shorten or alter it, which the prefix MAC refuses.
+    if provider == Provider::Devin {
+        return Ok(observed);
+    }
     let mut buffer = [0; BUFFER_BYTES];
     let mut end = observed;
     while end != 0 {
@@ -124,7 +133,7 @@ fn collect_reader<R: Read + Seek>(
     if previous.is_some_and(|prefix| prefix.bytes > observed_bytes) {
         return Err("source_history_changed");
     }
-    let complete = completed_bytes(reader, observed_bytes)?;
+    let complete = completed_bytes(reader, observed_bytes, provider)?;
     if previous.is_some_and(|prefix| prefix.bytes > complete) {
         return Err("source_history_changed");
     }
@@ -151,11 +160,15 @@ fn collect_reader<R: Read + Seek>(
         return Err("source_read_failed");
     }
     let collection = parsed.map_err(|_| "source_parse_failed")?;
-    if replay.read != complete || (complete != 0 && replay.last != Some(b'\n')) {
+    if replay.read != complete
+        || (provider != Provider::Devin && complete != 0 && replay.last != Some(b'\n'))
+    {
         return Err("source_changed_during_scan");
     }
     if let Some(previous) = previous {
-        if (previous.bytes != 0 && replay.old_boundary != Some(b'\n'))
+        if (provider != Provider::Devin
+            && previous.bytes != 0
+            && replay.old_boundary != Some(b'\n'))
             || replay
                 .old_mac
                 .take()
@@ -697,6 +710,93 @@ mod tests {
             .err(),
             Some("source_history_changed")
         );
+    }
+
+    fn atif_doc(output: u64) -> Vec<u8> {
+        // Whole-document ATIF: a real transcript ends with `}`, never a newline.
+        (serde_json::json!({"schema_version":"ATIF-v1.7","session_id":"atif-a","agent":{"name":"devin"},
+            "steps":[{"step_id":1,"source":"agent","timestamp":"2026-09-15T10:00:05Z",
+                "message":{"content":PRIVATE},
+                "metrics":{"prompt_tokens":100,"completion_tokens":output,"cached_tokens":10}}]})
+        .to_string())
+        .into_bytes()
+    }
+
+    fn collect_devin(
+        bytes: &[u8],
+        previous: Option<CompletePrefix>,
+    ) -> Result<(Collection, CompletePrefix), &'static str> {
+        collect_reader(
+            &mut Cursor::new(bytes),
+            &SOURCE,
+            &CHECKPOINT,
+            &OCCURRENCE,
+            bytes.len() as u64,
+            previous,
+            Provider::Devin,
+        )
+    }
+
+    #[test]
+    fn devin_whole_document_witnesses_every_byte_without_a_newline_tail() {
+        let bytes = atif_doc(20);
+        assert_ne!(bytes.last(), Some(&b'\n'));
+        let (collection, witness) = collect_devin(&bytes, None).unwrap();
+        assert_eq!(witness, expected(&bytes, &CHECKPOINT, &SOURCE));
+        assert_eq!(collection.batches[0].usage.len(), 1);
+        assert_eq!(collection.batches[0].usage[0].tokens.output, 20);
+        assert_eq!(collect_devin(&bytes, Some(witness)).unwrap().1, witness);
+        assert!(!format!("{collection:?}").contains(PRIVATE));
+    }
+
+    #[test]
+    fn devin_partial_or_empty_document_is_malformed_never_a_deferred_tail() {
+        let bytes = atif_doc(20);
+        for truncated in [
+            bytes[..bytes.len() - 1].to_vec(),
+            bytes[..10].to_vec(),
+            vec![],
+        ] {
+            assert_eq!(
+                collect_devin(&truncated, None).err(),
+                Some("source_parse_failed"),
+                "{truncated:?}"
+            );
+        }
+    }
+
+    #[test]
+    fn devin_document_replacement_is_new_history_not_an_append() {
+        let bytes = atif_doc(20);
+        let previous = expected(&bytes, &CHECKPOINT, &SOURCE);
+        // Any content change — same length or not — fails the old-prefix MAC.
+        for changed in [atif_doc(30), atif_doc(2000)] {
+            assert_eq!(
+                collect_devin(&changed, Some(previous)).err(),
+                Some("source_history_changed")
+            );
+        }
+        // A shorter file cannot pass itself off as the witnessed document.
+        assert_eq!(
+            collect_devin(&bytes[..bytes.len() - 1], Some(previous)).err(),
+            Some("source_history_changed")
+        );
+    }
+
+    #[test]
+    fn devin_witness_is_source_and_checkpoint_scoped() {
+        let bytes = atif_doc(20);
+        let previous = expected(&bytes, &CHECKPOINT, &SOURCE);
+        for bad in [
+            expected(&bytes, &OCCURRENCE, &SOURCE),
+            expected(&bytes, &CHECKPOINT, &[4; 32]),
+        ] {
+            assert_eq!(
+                collect_devin(&bytes, Some(bad)).err(),
+                Some("source_history_changed")
+            );
+        }
+        assert!(collect_devin(&bytes, Some(previous)).is_ok());
     }
 
     #[test]

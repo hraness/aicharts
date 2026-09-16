@@ -15,7 +15,7 @@ import "@/styles/usage-leaderboard.css";
 export const metadata = createPublicSiteMetadata({
   ...searchSite,
   title: "AI usage analytics | AI Charts",
-  description: "A privacy-first home for numeric Codex and Claude Code usage measurements.",
+  description: "A privacy-first home for numeric Codex, Claude Code and Devin usage measurements.",
 }, { canonicalPath: "/usage" });
 
 const metrics = [
@@ -42,7 +42,7 @@ export default async function UsagePage() {
         <div className="usage-hero__copy">
           <p className="usage-hero__eyebrow">AI Charts Usage</p>
           <h1 id="usage-title">Your AI work, measured without your words.</h1>
-          <p className="usage-hero__lede">A local-first dashboard for Codex and Claude Code. It keeps transcripts out of the product and makes every unknown visible.</p>
+          <p className="usage-hero__lede">A local-first dashboard for Codex, Claude Code and Devin. It keeps transcripts out of the product and makes every unknown visible.</p>
           <div className="usage-hero__actions">
             <Link className="usage-button usage-button--primary" href="/usage/sessions">Inspect session usage <span aria-hidden="true">↗</span></Link>
             <Link className="usage-button usage-button--quiet" href="/leaderboard">See the public boundary <span aria-hidden="true">↗</span></Link>
@@ -74,7 +74,7 @@ export default async function UsagePage() {
 
       <section className="usage-trust" aria-labelledby="usage-trust-title">
         <div><h2 id="usage-trust-title">The boundary is the feature.</h2><p>Nothing here is a bill, a productivity score, or proof of a human prompt. Numeric measurements remain partial until their source coverage is qualified.</p></div>
-        <ul><li>Codex and Claude Code first</li><li>No transcript storage</li><li>Explicit public consent</li><li>Reversible enrollment</li></ul>
+        <ul><li>Codex, Claude Code and Devin first</li><li>No transcript storage</li><li>Explicit public consent</li><li>Reversible enrollment</li></ul>
       </section>
       <ChartPageFooter />
     </main>
