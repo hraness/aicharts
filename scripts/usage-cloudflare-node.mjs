@@ -44,6 +44,12 @@ const edges = new Map([
   [sourceUrl("services/usage-worker/src/namespace-anchor.ts"), new Map([
     ["./enrollment-contract", sourceUrl("services/usage-worker/src/enrollment-contract.ts")],
   ])],
+  [sourceUrl("scripts/usage-restore-fence-control.ts"), new Map([
+    ["../services/usage-worker/src/restore-fence-control-contract", sourceUrl("services/usage-worker/src/restore-fence-control-contract.ts")],
+  ])],
+  [sourceUrl("services/usage-worker/src/restore-fence-control-contract.ts"), new Map([
+    ["./enrollment-contract", sourceUrl("services/usage-worker/src/enrollment-contract.ts")],
+  ])],
 ]);
 
 nodeModule.registerHooks({

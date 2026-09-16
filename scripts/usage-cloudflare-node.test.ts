@@ -41,6 +41,30 @@ test("native Node imports the full qualification graph and transforms its parame
   expect(result.stdout).toBe("qualification-node-graph-ok\n");
 });
 
+test("native Node imports the restore-fence control driver graph and its wire contract", () => {
+  const program = `
+    import assert from "node:assert/strict";
+    const { FENCE_STEP_SEQUENCE, fenceStepRequest, parseFenceControlIntent } = await import(${JSON.stringify(sourceUrl("scripts/usage-restore-fence-control.ts"))});
+    const { FENCE_CONTROL_URL, parseFenceControlRequest, encodeFenceControlJson } = await import(${JSON.stringify(sourceUrl("services/usage-worker/src/restore-fence-control-contract.ts"))});
+    const intent = parseFenceControlIntent({ schemaVersion: 1, accountId: "acct_" + "a".repeat(32), generation: "1".repeat(64),
+      cloudflareAccountId: "2".repeat(32), fencedWorker: "aicharts-usage-fenced-test",
+      fromEpoch: 7, toEpoch: 8, fromWorkerVersion: "3".repeat(64), toWorkerVersion: "4".repeat(64) });
+    assert.ok(intent);
+    assert.deepEqual(FENCE_STEP_SEQUENCE, ["read-initial", "close", "drain", "publish", "read-final"]);
+    const request = fenceStepRequest(intent, "close");
+    assert.equal(request.operation, "close");
+    assert.equal(request.epoch, 7);
+    assert.ok(parseFenceControlRequest(JSON.parse(new TextDecoder().decode(encodeFenceControlJson(request)))));
+    assert.ok(FENCE_CONTROL_URL.endsWith(".invalid/v1/operation"));
+    await assert.rejects(import(${JSON.stringify(sourceUrl("services/usage-worker/src/restore-fence-control"))}), { code: "ERR_MODULE_NOT_FOUND" });
+    process.stdout.write("fence-control-node-graph-ok\\n");
+  `;
+  const result = spawnSync("node", ["--experimental-transform-types", "--import", loader, "--input-type=module", "--eval", program], options);
+  expect(result.error).toBeUndefined();
+  expect(result.status, result.stderr).toBe(0);
+  expect(result.stdout).toBe("fence-control-node-graph-ok\n");
+});
+
 test("native Node executes the driver command entrypoint", () => {
   const driver = fileURLToPath(new URL("./usage-cloudflare-qualification.ts", import.meta.url));
   const result = spawnSync("node", ["--experimental-transform-types", "--import", loader,
