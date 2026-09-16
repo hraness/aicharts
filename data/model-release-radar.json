@@ -3,7 +3,7 @@
   "source": {
     "method": "models-api",
     "name": "OpenRouter",
-    "retrievedAt": "2026-09-05T05:49:48.932Z",
+    "retrievedAt": "2026-09-16T23:01:03.554Z",
     "timestampMeaning": "source-added-at",
     "url": "https://openrouter.ai/api/v1/models?sort=newest"
   },
@@ -28,6 +28,12 @@
     "windowDays": 90
   },
   "observedListings": [
+    {
+      "id": "deepseek/deepseek-v4.1-flash",
+      "model": "DeepSeek V4.1 Flash",
+      "providerId": "deepseek",
+      "sourceAddedAt": "2026-09-10T06:21:25.000Z"
+    },
     {
       "id": "openai/gpt-6-astra",
       "model": "GPT-6 Astra",
@@ -276,6 +282,26 @@
     }
   ],
   "releases": [
+    {
+      "capabilities": {
+        "inputModalities": [
+          "image",
+          "text"
+        ],
+        "outputModalities": [
+          "text"
+        ],
+        "supportsTools": true
+      },
+      "canonicalSlug": "deepseek/deepseek-v4.1-flash-20260910",
+      "id": "deepseek/deepseek-v4.1-flash",
+      "model": "DeepSeek V4.1 Flash",
+      "modelUrl": "https://openrouter.ai/deepseek/deepseek-v4.1-flash",
+      "providerId": "deepseek",
+      "providerName": "DeepSeek",
+      "sourceAddedAt": "2026-09-10T06:21:25.000Z",
+      "status": "awaiting-benchmark"
+    },
     {
       "capabilities": {
         "inputModalities": [
@@ -997,87 +1023,6 @@
       "providerName": "Anthropic",
       "sourceAddedAt": "2026-06-30T18:11:23.000Z",
       "status": "awaiting-benchmark"
-    },
-    {
-      "capabilities": {
-        "inputModalities": [
-          "image",
-          "text"
-        ],
-        "outputModalities": [
-          "image",
-          "text"
-        ],
-        "supportsTools": true
-      },
-      "canonicalSlug": "google/gemini-3-pro-image-20260528",
-      "id": "google/gemini-3-pro-image",
-      "model": "Nano Banana Pro (Gemini 3 Pro Image)",
-      "modelUrl": "https://openrouter.ai/google/gemini-3-pro-image",
-      "providerId": "google",
-      "providerName": "Google",
-      "sourceAddedAt": "2026-06-18T03:40:54.000Z",
-      "status": "awaiting-benchmark"
-    },
-    {
-      "capabilities": {
-        "inputModalities": [
-          "text"
-        ],
-        "outputModalities": [
-          "text"
-        ],
-        "supportsTools": true
-      },
-      "canonicalSlug": "z-ai/glm-5.2-20260616",
-      "id": "z-ai/glm-5.2",
-      "model": "GLM 5.2",
-      "modelUrl": "https://openrouter.ai/z-ai/glm-5.2",
-      "providerId": "z_ai",
-      "providerName": "Z.ai",
-      "sourceAddedAt": "2026-06-16T17:45:30.000Z",
-      "status": "benchmarked"
-    },
-    {
-      "capabilities": {
-        "inputModalities": [
-          "image",
-          "text"
-        ],
-        "outputModalities": [
-          "text"
-        ],
-        "supportsTools": true
-      },
-      "canonicalSlug": "moonshotai/kimi-k2.7-code-20260612",
-      "id": "moonshotai/kimi-k2.7-code",
-      "model": "Kimi K2.7 Code",
-      "modelUrl": "https://openrouter.ai/moonshotai/kimi-k2.7-code",
-      "providerId": "moonshot_ai",
-      "providerName": "Moonshot AI",
-      "sourceAddedAt": "2026-06-12T12:12:41.000Z",
-      "status": "awaiting-benchmark"
-    },
-    {
-      "capabilities": {
-        "inputModalities": [
-          "file",
-          "image",
-          "text"
-        ],
-        "outputModalities": [
-          "text"
-        ],
-        "supportsTools": true
-      },
-      "canonicalSlug": "anthropic/claude-5-fable-20260609",
-      "id": "anthropic/claude-fable-5",
-      "model": "Claude Fable 5",
-      "modelUrl": "https://openrouter.ai/anthropic/claude-fable-5",
-      "providerId": "anthropic",
-      "providerName": "Anthropic",
-      "sourceAddedAt": "2026-06-09T12:18:35.000Z",
-      "status": "benchmarked"
     }
   ]
 }
