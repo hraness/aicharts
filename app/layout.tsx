@@ -80,6 +80,12 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
           />
           {children}
           <HranessSiteFooter
+            support={{
+              id: "aicharts",
+              name: "AI Charts",
+              updates: true,
+              valueProposition: "Support sourced benchmark research and clear, interactive model comparisons.",
+            }}
             mailingList={aiChartsMailingListConfig()}
             social={{
               x: { href: "https://x.com/aichartsio", label: "AI Charts on X" },
