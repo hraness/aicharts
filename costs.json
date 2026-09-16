@@ -1,0 +1,77 @@
+{
+  "version": 1,
+  "surfaces": {
+    "posthog:site-events": {
+      "kind": "telemetry",
+      "retention": "ttl:P365D",
+      "owner": "lib/analytics.ts",
+      "maxBytesPerEvent": 1024,
+      "note": "checked allowlist via payload.name in lib/analytics.ts; cookieless canonical-only"
+    },
+    "ledger:local-usage": {
+      "kind": "authoritative",
+      "retention": "account",
+      "owner": "crates/aicharts-ledger/src/lib.rs",
+      "deletion": "crates/aicharts-ledger/src/lib.rs",
+      "budget": {
+        "rowsPerAccount": 100000,
+        "bytesPerAccountMonth": 52428800
+      },
+      "note": "on-device canonical usage ledger; uploads are derived frames"
+    },
+    "sync:usage-upload": {
+      "kind": "authoritative",
+      "retention": "account",
+      "owner": "crates/aicharts-cli/src/enrollment.rs",
+      "deletion": "crates/aicharts-cli/src/enrollment.rs",
+      "budget": {
+        "rowsPerAccount": 100000,
+        "bytesPerAccountMonth": 52428800
+      },
+      "note": "enrolled upload of canonical frames to usage.aicharts.io"
+    },
+    "service:usage-days-read": {
+      "kind": "served",
+      "retention": "ephemeral",
+      "owner": "lib/usage/private-days-route.ts",
+      "note": "hosted usage-days proxy; server enforces account scoping"
+    },
+    "route:/api/usage/pairing/start": {
+      "kind": "served",
+      "retention": "ephemeral",
+      "owner": "app/api/usage/pairing/start/route.ts",
+      "note": "dynamic route; per-request compute, no storage"
+    },
+    "route:/api/usage/pairing": {
+      "kind": "served",
+      "retention": "ephemeral",
+      "owner": "app/api/usage/pairing/route.ts",
+      "note": "dynamic route; per-request compute, no storage"
+    },
+    "route:/api/usage/consent": {
+      "kind": "served",
+      "retention": "ephemeral",
+      "owner": "app/api/usage/consent/route.ts",
+      "note": "dynamic route; per-request compute, no storage"
+    },
+    "route:/api/usage/days": {
+      "kind": "served",
+      "retention": "ephemeral",
+      "owner": "app/api/usage/days/route.ts",
+      "note": "dynamic route; per-request compute, no storage"
+    },
+    "route:/api/leaderboard": {
+      "kind": "served",
+      "retention": "ephemeral",
+      "owner": "app/api/leaderboard/route.ts",
+      "note": "dynamic route; per-request compute, no storage"
+    },
+    "route:/api/suite-auth/[...path]": {
+      "kind": "served",
+      "retention": "ephemeral",
+      "owner": "app/api/suite-auth/[...path]/route.ts",
+      "note": "dynamic route; per-request compute, no storage"
+    }
+  },
+  "exempt": []
+}
