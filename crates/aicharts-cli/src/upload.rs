@@ -1,17 +1,21 @@
-//! Dormant one-flight orchestration. There is no enabled CLI upload command or
-//! enrolled transport constructor. The ledger alone owns sequence, retry and receipt
-//! state; this module never migrates, rebases or clears an uncertain flight.
+//! One-flight orchestration and the enrolled `aicharts upload` command. The
+//! command joins durable enrollment facts, custody-held secrets and the
+//! split-key ledger, then sends at most one bounded frozen batch. The ledger
+//! alone owns sequence, retry and receipt state; this module never rebases or
+//! clears an uncertain flight and never replays a retained one speculatively.
 #![cfg_attr(not(all(test, unix)), allow(dead_code))]
 
 use aicharts_ledger::{BatchSettlement, FrozenBatch, Ledger, SenderBinding};
 use aicharts_protocol::{admission as wire, Id, Policy, Registry};
 use std::fmt;
+use std::path::{Path, PathBuf};
 
 mod https;
 
-/// Only a future reviewed adapter inside this module may implement the port.
-/// An injected ordinary callback or a file containing valid bytes is not receipt
-/// authority. The HTTPS implementation has no enrolled production constructor.
+/// Only a reviewed adapter inside this module may implement the port. An
+/// injected ordinary callback or a file containing valid bytes is not receipt
+/// authority. The HTTPS implementation's sole production constructor is the
+/// enrolled custody join in this module's command path.
 mod trusted {
     pub trait Sealed {}
 }
@@ -217,6 +221,176 @@ pub(super) fn send_once(
     ledger
         .settle_upload_batch(&body.bytes)
         .map_err(Error::Ledger)
+}
+
+/// `aicharts upload --state-dir DIR --key-file PATH` options. `--key-file` is
+/// the retained local checkpoint key the split-key ledger was bound to; the
+/// account occurrence key and upload credential come from custody, never from
+/// files or flags.
+struct CommandOptions {
+    directory: PathBuf,
+    key: PathBuf,
+}
+
+fn parse_options(args: &[String]) -> Result<CommandOptions, &'static str> {
+    let (mut directory, mut key) = (None, None);
+    let mut i = 1;
+    while i < args.len() {
+        let slot = match args[i].as_str() {
+            "--state-dir" if directory.is_none() => &mut directory,
+            "--key-file" if key.is_none() => &mut key,
+            _ => return Err("invalid_option"),
+        };
+        i += 1;
+        let value = args
+            .get(i)
+            .filter(|value| !value.is_empty())
+            .ok_or("missing_option_value")?;
+        *slot = Some(PathBuf::from(value));
+        i += 1;
+    }
+    Ok(CommandOptions {
+        directory: directory.ok_or("state_directory_required")?,
+        key: key.ok_or("key_required")?,
+    })
+}
+
+/// A retained flight means an earlier exchange had an uncertain outcome. It is
+/// never replayed speculatively; an explicit recovery step owns what happens
+/// next, so this invocation refuses with a fixed code.
+fn refuse_inflight(ledger: &Ledger) -> Result<(), &'static str> {
+    if ledger
+        .inflight_batch()
+        .map_err(|error| error.code())?
+        .is_some()
+    {
+        return Err("upload_recovery_required");
+    }
+    Ok(())
+}
+
+/// Send one bounded batch for this enrolled installation: reopen the completed
+/// enrollment facts and custody records, bind the split-key ledger, freeze a
+/// pending selection at the wire ceiling, exchange once and settle only on a
+/// validated terminal journal.
+#[cfg(target_os = "macos")]
+fn send(directory: &Path, key: &Path) -> Result<String, &'static str> {
+    let enrolled = crate::enrollment::enrolled(directory).map_err(|code| match code {
+        "attempt_missing" => "upload_not_enrolled",
+        other => other,
+    })?;
+    let binding = SenderBinding {
+        account_id: enrolled.account_id,
+        device_id: enrolled.device_id,
+        generation: enrolled.recovery_generation,
+        namespace_version: 1,
+    };
+    let checkpoint = crate::read_key(key)?;
+    let upload_secret = enrolled
+        .pairing
+        .with_pairing_secrets(|_poll, upload| *upload)
+        .map_err(|_| "attempt_custody")?;
+    let occurrence = enrolled
+        .namespace
+        .with_namespace_key(|key| *key)
+        .map_err(|_| "attempt_custody")?;
+    let mut transport =
+        https::HttpsTransport::enrolled(binding, &upload_secret).map_err(TransportError::code)?;
+    let identity = aicharts_ledger::LedgerIdentity::SplitKeys {
+        checkpoint: &checkpoint,
+        occurrence: &occurrence,
+        namespace_version: 1,
+    };
+    let revision = Ledger::open_with_identity(directory, &identity)
+        .and_then(|ledger| ledger.snapshot().map(|snapshot| snapshot.revision))
+        .map_err(|error| error.code())?;
+    // The explicit additive migration binds the ledger to this exact enrolled
+    // sender on first use; an already-bound different sender refuses.
+    let mut ledger = Ledger::migrate_sender_v2(directory, &identity, revision, &binding)
+        .map_err(|error| error.code())?;
+    refuse_inflight(&ledger)?;
+    let page = ledger
+        .pending(None, aicharts_ledger::MAX_PAGE, None)
+        .map_err(|error| error.code())?;
+    if page.entries.is_empty() {
+        return Ok("No pending usage records; nothing was uploaded.\n".to_owned());
+    }
+    let ids: Vec<Id> = page.entries.iter().map(|entry| entry.id).collect();
+    let settlement = send_once(
+        &mut ledger,
+        &mut transport,
+        Selection::Freeze {
+            expected_revision: page.ledger_revision,
+            occurrence_ids: &ids,
+        },
+    )
+    .map_err(|error| error.code())?;
+    let status = ledger.sender_status().map_err(|error| error.code())?;
+    let pending = ledger
+        .status()
+        .map_err(|error| error.code())?
+        .pending_records;
+    let batch = ledger
+        .last_settled_batch()
+        .map_err(|error| error.code())?
+        .map(|settled| settled.batch_hash);
+    Ok(report(&settlement, &status, pending, batch))
+}
+
+/// Non-macOS platforms have no qualified credential custody, so no enrolled
+/// upload authority can exist there.
+#[cfg(not(target_os = "macos"))]
+fn send(_directory: &Path, _key: &Path) -> Result<String, &'static str> {
+    Err("upload_requires_qualified_macos_custody")
+}
+
+/// Nonsecret settlement facts only: a fixed outcome word, counts, the settled
+/// sequence, remaining pending records and the journal's own batch hash. No
+/// secret, path, receipt or response body is projected.
+#[cfg(target_os = "macos")]
+fn report(
+    settlement: &BatchSettlement,
+    status: &aicharts_ledger::SenderStatus,
+    pending: u64,
+    batch: Option<[u8; 32]>,
+) -> String {
+    let outcome = match *settlement {
+        BatchSettlement::Accepted {
+            cleared_records,
+            retained_newer,
+            ..
+        } => format!("accepted ({cleared_records} acknowledged, {retained_newer} retained newer)"),
+        BatchSettlement::Rejected {
+            conflicted_records,
+            aborted_records,
+            device_revoked,
+            ..
+        } => format!(
+            "rejected ({conflicted_records} conflicted, {aborted_records} aborted, device revoked: {})",
+            if device_revoked { "yes" } else { "no" }
+        ),
+        BatchSettlement::AlreadySettled { .. } => "already settled".to_owned(),
+    };
+    let mut hash = String::new();
+    if let Some(batch) = batch {
+        use std::fmt::Write;
+        for byte in batch {
+            let _ = write!(hash, "{byte:02x}");
+        }
+    }
+    format!(
+        "Usage upload completed.\nOutcome: {outcome}\nSettled sequence: {}\nPending records: {pending}\nBatch: {}\n",
+        status.settled_sequence,
+        if hash.is_empty() { "unavailable" } else { &hash }
+    )
+}
+
+/// `aicharts upload --state-dir DIR --key-file PATH` — one bounded enrolled
+/// send. `upload --dry-run` remains the separate fresh-source preview and
+/// never reaches this command.
+pub(super) fn run(args: &[String]) -> Result<String, &'static str> {
+    let options = parse_options(args)?;
+    send(&options.directory, &options.key)
 }
 
 #[cfg(all(test, unix))]

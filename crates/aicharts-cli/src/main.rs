@@ -28,12 +28,17 @@ const MAX_FILES: usize = 2_048;
 const MAX_DEPTH: usize = 16;
 const MAX_ENTRIES: usize = 20_000;
 const MAX_SOURCE_BYTES: u64 = 256 * 1_024 * 1_024;
+/// Serializes test fixtures whose repository-path create/remove would race
+/// another fixture's descriptor-pinned path readbacks.
+#[cfg(test)]
+pub(crate) static TEST_FIXTURE_PARENT: std::sync::Mutex<()> = std::sync::Mutex::new(());
 const HELP: &str = "AI Charts Usage — local-only foundation
 
   aicharts --version [--json]
   aicharts turns --codex FILE [--codex FILE ...] --occurrence-key-file KEY [--json]
   aicharts sessions --occurrence-key-file KEY [--codex FILE ...] [--claude FILE ...] [--json]
   aicharts usage --key-file PATH [--codex FILE_OR_DIR] [--claude FILE_OR_DIR] [--json]
+  aicharts upload --state-dir DIR --key-file PATH
   aicharts upload --dry-run --key-file PATH [--codex FILE_OR_DIR] [--claude FILE_OR_DIR]
   aicharts keygen --output PATH
   aicharts init --state-dir DIR --key-file PATH
@@ -55,7 +60,11 @@ Complete token totals and dispatched tool calls remain unknown. Nothing is uploa
 Version reports compiler metadata only, with no verified release provenance.
 Final source files must be regular files; this is not an OS source sandbox.
 usage prints numeric summaries. upload --dry-run prints canonical frames as hex JSON;
-it does not contact any service. Key files contain exactly 32 private random bytes.
+it does not contact any service. On an enrolled macOS installation, upload
+--state-dir sends at most one bounded pending batch to the fixed usage service
+and settles the local ledger only on a validated terminal journal; an uncertain
+reply retains the frozen flight for explicit recovery, never a speculative
+replay. Key files contain exactly 32 private random bytes.
 keygen creates a new mode-0600 file on Unix and never overwrites an existing file.
 Persistent commands are Unix-only and require explicit initialization. collect
 rescans changed sources from the beginning; unchanged metadata skips parsing.
@@ -80,9 +89,8 @@ It retries only bounded transient ledger busy/change results (three retries by d
 uploads or installs an OS service.
 enroll pairs this installation with an AI Charts account through local macOS
 credential custody and one explicit browser approval; it never uploads and only
-prepares the option to upload later. No account sign-in, upload, daemon installation,
-key recovery or OS sandbox
-is implemented yet.
+prepares the option to upload later. No account sign-in, daemon installation,
+key recovery or OS sandbox is implemented yet.
 Keep your key private and retain it: changing it changes occurrence identities.
 ";
 
@@ -431,6 +439,13 @@ fn run(args: &[String]) -> Result<String, &'static str> {
     ) {
         return state::run(args);
     }
+    // The enrolled send owns `upload` unless `--dry-run` selects the separate
+    // fresh-source preview below.
+    if args.first().map(String::as_str) == Some("upload")
+        && !args[1..].iter().any(|arg| arg == "--dry-run")
+    {
+        return upload::run(args);
+    }
     let options = options(args)?;
     if options.mode == Mode::Keygen {
         keygen(options.output.as_ref().ok_or("output_required")?)?;
@@ -487,10 +502,16 @@ mod tests {
     }
 
     #[test]
-    fn real_upload_is_rejected_before_reading_any_sources() {
+    fn upload_requires_state_dir_and_key_before_any_source_read() {
+        assert_eq!(run(&args(&["upload"])), Err("state_directory_required"));
         assert_eq!(
-            run(&args(&["upload"])),
-            Err("upload_not_enabled_use_dry_run")
+            run(&args(&["upload", "--state-dir", "d"])),
+            Err("key_required")
+        );
+        // `--dry-run` still routes to the fresh-source preview options.
+        assert_eq!(
+            run(&args(&["upload", "--dry-run"])),
+            Err("explicit_key_and_source_required")
         );
     }
 
