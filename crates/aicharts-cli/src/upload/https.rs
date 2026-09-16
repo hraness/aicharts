@@ -1,6 +1,7 @@
-//! Dormant HTTPS receipt custody. There is deliberately no production constructor:
-//! parsing a token or a binding cannot attest enrollment. A later reviewed custody
-//! join must own construction before any product command can use this adapter.
+//! HTTPS receipt custody for the enrolled upload command. The only production
+//! constructor is [`HttpsTransport::enrolled`], reached through the reviewed
+//! custody join: parsing a token or a binding cannot attest enrollment, and no
+//! arbitrary bearer or file import exists.
 //!
 //! ureq is pinned because its resolver API is unversioned. Timeouts are bounded
 //! I/O budgets plus a monotonic acceptance deadline, not thread/OS preemption:
@@ -56,7 +57,7 @@ impl Deadline {
 }
 
 // Neither Debug/Clone nor a public arbitrary-token constructor is provided.
-struct HttpsTransport {
+pub(super) struct HttpsTransport {
     binding: SenderBinding,
     bearer: HeaderValue,
     #[cfg(test)]
@@ -92,6 +93,34 @@ fn configuration(remaining: Duration, roots: RootCerts) -> Config {
 }
 
 impl HttpsTransport {
+    /// The enrolled constructor. Only the module's own command path may build
+    /// an adapter, supplying the exact sender binding from the completed
+    /// enrollment record and the retained pairing upload secret from verified
+    /// custody. There is no token file, arbitrary bearer or other entry point.
+    #[cfg(any(test, target_os = "macos"))]
+    pub(super) fn enrolled(
+        binding: SenderBinding,
+        upload_secret: &[u8; 32],
+    ) -> Result<Self, TransportError> {
+        if *upload_secret == [0; 32] {
+            return Err(TransportError::Unavailable);
+        }
+        let mut value = String::with_capacity(71);
+        value.push_str("Bearer ");
+        for byte in upload_secret {
+            use std::fmt::Write;
+            let _ = write!(value, "{byte:02x}");
+        }
+        let mut bearer = HeaderValue::from_str(&value).map_err(|_| TransportError::Unavailable)?;
+        bearer.set_sensitive(true);
+        Ok(Self {
+            binding,
+            bearer,
+            #[cfg(test)]
+            fixture: None,
+        })
+    }
+
     fn agent(&self, remaining: Duration) -> Agent {
         #[cfg(test)]
         if let Some(fixture) = &self.fixture {

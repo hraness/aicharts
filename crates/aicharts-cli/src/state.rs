@@ -232,7 +232,8 @@ pub(crate) mod unix {
     fn collect(
         ledger: &mut Ledger,
         options: &Options,
-        key: &[u8; 32],
+        checkpoint_key: &[u8; 32],
+        occurrence_key: &[u8; 32],
     ) -> Result<(aicharts_ledger::ImportReport, u64, u64, u64, u64), &'static str> {
         let prefix_mode = options.command == Command::CollectPrefix;
         let snapshot = ledger.prefix_snapshot().map_err(|error| error.code())?;
@@ -268,7 +269,7 @@ pub(crate) mod unix {
                 if total_files > crate::MAX_FILES as u64 {
                     return Err("source_file_limit");
                 }
-                let source_id = source_id(key, &canonical, *provider);
+                let source_id = source_id(checkpoint_key, &canonical, *provider);
                 let mut file = crate::open_regular(&path).map_err(|_| "source_read_failed")?;
                 let before = stamp(&file.metadata().map_err(|_| "source_metadata_failed")?)?;
                 verify_path(&path, &canonical, &before)?;
@@ -322,8 +323,8 @@ pub(crate) mod unix {
                     let (collection, prefix) = crate::prefix::collect_prefix(
                         &mut file,
                         &source_id,
-                        key,
-                        key,
+                        checkpoint_key,
+                        occurrence_key,
                         before.bytes,
                         previous,
                         *provider,
@@ -334,7 +335,7 @@ pub(crate) mod unix {
                         parse_reader(
                             BufReader::new((&mut file).take(before.bytes)),
                             *provider,
-                            key,
+                            occurrence_key,
                         )
                         .map_err(|_| "source_parse_failed")?,
                         None,
@@ -431,9 +432,43 @@ pub(crate) mod unix {
 
     pub(super) fn run(options: Options) -> Result<String, &'static str> {
         // Authenticate the namespace before opening state or visiting sources.
-        let key = crate::read_key(&options.key)?;
+        let checkpoint = crate::read_key(&options.key)?;
+        // A custody-verified enrollment at the state directory resolves the
+        // account occurrence key; anything else keeps the legacy identity.
+        let occurrence = crate::enrolled_ledger::resolve(&options.directory, None)?;
+        run_with_occurrence(options, &checkpoint, occurrence)
+    }
+
+    /// `occurrence` is the resolved account namespace key — custody-held for an
+    /// enrolled directory — or `None` for the legacy single-key identity.
+    /// Split-key state derives source checkpoints from `checkpoint` and
+    /// occurrence identities from `occurrence`; it never mixes them.
+    pub(super) fn run_with_occurrence(
+        options: Options,
+        checkpoint: &[u8; 32],
+        occurrence: Option<[u8; 32]>,
+    ) -> Result<String, &'static str> {
+        let identity = match &occurrence {
+            Some(occurrence) => LedgerIdentity::SplitKeys {
+                checkpoint,
+                occurrence,
+                namespace_version: 1,
+            },
+            None => LedgerIdentity::Legacy(checkpoint),
+        };
         if options.command == Command::Init {
-            Ledger::initialize(&options.directory, &key).map_err(|error| error.code())?;
+            match &occurrence {
+                // `enroll` already owns the verified anchor directory; the
+                // split-key database is provisioned inside it without
+                // adopting or overwriting anything.
+                Some(_) => {
+                    crate::enrolled_ledger::initialize_in_anchor(&options.directory, &identity)?;
+                }
+                None => {
+                    Ledger::initialize_with_identity(&options.directory, &identity)
+                        .map_err(|error| error.code())?;
+                }
+            }
             return Ok(
                 "Private local ledger initialized. No sources read; nothing uploaded.\n".to_owned(),
             );
@@ -441,18 +476,20 @@ pub(crate) mod unix {
         if options.command == Command::PrefixEnable {
             Ledger::migrate_complete_prefix(
                 &options.directory,
-                &LedgerIdentity::Legacy(&key),
+                &identity,
                 options.revision.ok_or("migration_revision_required")?,
             )
             .map_err(|error| error.code())?;
             return Ok("Completed-prefix collection enabled locally. No sources read; nothing uploaded. Use collect-prefix for this ledger.\n".to_owned());
         }
-        let mut ledger = Ledger::open(&options.directory, &key).map_err(|error| error.code())?;
+        let mut ledger = Ledger::open_with_identity(&options.directory, &identity)
+            .map_err(|error| error.code())?;
+        let occurrence_key = occurrence.as_ref().unwrap_or(checkpoint);
         match options.command {
             Command::Init | Command::PrefixEnable => unreachable!(),
             Command::Collect | Command::CollectPrefix => {
                 let (report, skipped, deferred, lines_read, bytes_scanned) =
-                    collect(&mut ledger, &options, &key)?;
+                    collect(&mut ledger, &options, checkpoint, occurrence_key)?;
                 let status = ledger.status().map_err(|error| error.code())?;
                 if options.json {
                     let mut output = status_json(&status);
@@ -544,5 +581,272 @@ mod tests {
             Err("invalid_page_limit")
         );
         assert_eq!(run(&args(&["status", "--send"])), Err("invalid_option"));
+    }
+
+    /// End-to-end command flow for both ledger identities. A custody-verified
+    /// enrollment resolves to `Some(occurrence)` inside `unix::run`; here the
+    /// resolved key arrives directly, the same shape `run` produces on macOS.
+    #[cfg(unix)]
+    mod identity {
+        use super::super::unix;
+        use super::{args, parse_options};
+        use std::fs;
+        use std::os::unix::fs::DirBuilderExt;
+        use std::path::{Path, PathBuf};
+
+        const CHECKPOINT: [u8; 32] = [7; 32];
+        const NAMESPACE: [u8; 32] = [0x5a; 32];
+
+        struct Fixture(PathBuf);
+        impl Fixture {
+            fn new() -> Self {
+                let mut random = [0; 16];
+                getrandom::fill(&mut random).unwrap();
+                let suffix: String = random.iter().map(|b| format!("{b:02x}")).collect();
+                let path = fs::canonicalize(std::env::temp_dir())
+                    .unwrap()
+                    .join(format!("aicharts-state-test-{suffix}"));
+                std::fs::DirBuilder::new()
+                    .mode(0o700)
+                    .create(&path)
+                    .unwrap();
+                Self(path)
+            }
+            /// `enroll` pre-creates the anchor for enrolled state; legacy
+            /// `init` still creates the directory itself.
+            fn state(&self) -> PathBuf {
+                self.0.join("state")
+            }
+            fn create_state(&self) -> PathBuf {
+                let dir = self.state();
+                std::fs::DirBuilder::new().mode(0o700).create(&dir).unwrap();
+                dir
+            }
+            /// One Claude source under a sibling directory.
+            fn write_source(&self) -> PathBuf {
+                let dir = self.0.join("src");
+                std::fs::DirBuilder::new().mode(0o700).create(&dir).unwrap();
+                let file = dir.join("session.jsonl");
+                fs::write(
+                    &file,
+                    concat!(
+                        r#"{"type":"assistant","timestamp":"2026-09-10T10:00:01Z","sessionId":"session-1","requestId":"r1","message":{"id":"message-1","usage":{"input_tokens":10,"output_tokens":2,"cache_read_input_tokens":3,"cache_creation_input_tokens":0}}}"#,
+                        "\n"
+                    ),
+                )
+                .unwrap();
+                dir
+            }
+        }
+        impl Drop for Fixture {
+            fn drop(&mut self) {
+                let _ = fs::remove_dir_all(&self.0);
+            }
+        }
+
+        fn options(dir: &Path, src: Option<&Path>, rest: &[&str]) -> super::Options {
+            let mut all: Vec<String> = rest.iter().map(|s| s.to_string()).collect();
+            all.extend([
+                "--state-dir".to_string(),
+                dir.to_string_lossy().into_owned(),
+                "--key-file".to_string(),
+                "unused".to_string(),
+            ]);
+            if let Some(src) = src {
+                all.push("--claude".to_string());
+                all.push(src.to_string_lossy().into_owned());
+            }
+            parse_options(&all).unwrap()
+        }
+
+        fn hex_id(dir: &Path, occurrence: Option<&[u8; 32]>) -> String {
+            // The committed occurrence id derives under the ledger's own
+            // namespace key, so recompute it the way the parser does.
+            let src = dir.join("src").join("session.jsonl");
+            let bytes = fs::read(&src).unwrap();
+            let key = occurrence.unwrap_or(&CHECKPOINT);
+            let collection = aicharts_core::parse_reader(
+                std::io::BufReader::new(&bytes[..]),
+                aicharts_protocol::Provider::ClaudeCode,
+                key,
+            )
+            .unwrap();
+            let id = collection.batches[0].usage[0].id;
+            id.iter().map(|b| format!("{b:02x}")).collect()
+        }
+
+        fn canary() -> String {
+            NAMESPACE.iter().map(|b| format!("{b:02x}")).collect()
+        }
+
+        #[test]
+        fn enrolled_dir_initializes_collects_and_reports_split_state() {
+            let fixture = Fixture::new();
+            let dir = fixture.create_state();
+            let out = unix::run_with_occurrence(
+                options(&dir, None, &["init"]),
+                &CHECKPOINT,
+                Some(NAMESPACE),
+            );
+            assert_eq!(
+                out.unwrap(),
+                "Private local ledger initialized. No sources read; nothing uploaded.\n"
+            );
+            fixture.write_source();
+            let out = unix::run_with_occurrence(
+                options(&dir, Some(&fixture.0.join("src")), &["collect"]),
+                &CHECKPOINT,
+                Some(NAMESPACE),
+            )
+            .unwrap();
+            assert!(out.contains("pending records: 1"), "{out}");
+            // Secret canary: the custody namespace key never reaches output.
+            assert!(!out.contains(&canary()));
+            let out = unix::run_with_occurrence(
+                options(&dir, None, &["status", "--json"]),
+                &CHECKPOINT,
+                Some(NAMESPACE),
+            )
+            .unwrap();
+            assert!(out.contains("\"usageOccurrences\": 1"), "{out}");
+            assert!(!out.contains(&canary()));
+            let out = unix::run_with_occurrence(
+                options(&dir, None, &["outbox", "--dry-run"]),
+                &CHECKPOINT,
+                Some(NAMESPACE),
+            )
+            .unwrap();
+            // The pending record's id is account-derived, not checkpoint-derived.
+            assert!(out.contains(&hex_id(&fixture.0, Some(&NAMESPACE))), "{out}");
+            assert!(!out.contains(&hex_id(&fixture.0, None)), "{out}");
+            assert!(!out.contains(&canary()));
+            // The same directory under the legacy identity refuses, as does
+            // the account namespace under a different checkpoint key.
+            assert_eq!(
+                unix::run_with_occurrence(options(&dir, None, &["status"]), &CHECKPOINT, None,)
+                    .err(),
+                Some("ledger_namespace_mismatch")
+            );
+            assert_eq!(
+                unix::run_with_occurrence(
+                    options(&dir, None, &["status"]),
+                    &[9; 32],
+                    Some(NAMESPACE),
+                )
+                .err(),
+                Some("ledger_namespace_mismatch")
+            );
+        }
+
+        #[test]
+        fn enrolled_dir_collect_prefix_and_migrate_run_under_split_identity() {
+            let fixture = Fixture::new();
+            let dir = fixture.create_state();
+            unix::run_with_occurrence(options(&dir, None, &["init"]), &CHECKPOINT, Some(NAMESPACE))
+                .unwrap();
+            let out = unix::run_with_occurrence(
+                options(&dir, None, &["prefix-enable", "--revision", "0"]),
+                &CHECKPOINT,
+                Some(NAMESPACE),
+            )
+            .unwrap();
+            assert!(out.contains("Completed-prefix collection enabled"), "{out}");
+            fixture.write_source();
+            let out = unix::run_with_occurrence(
+                options(&dir, Some(&fixture.0.join("src")), &["collect-prefix"]),
+                &CHECKPOINT,
+                Some(NAMESPACE),
+            )
+            .unwrap();
+            assert!(out.contains("pending records: 1"), "{out}");
+            // The migration refused under the legacy identity too.
+            assert_eq!(
+                unix::run_with_occurrence(
+                    options(&dir, None, &["prefix-enable", "--revision", "2"]),
+                    &CHECKPOINT,
+                    None,
+                )
+                .err(),
+                Some("ledger_namespace_mismatch")
+            );
+        }
+
+        #[test]
+        fn unenrolled_dir_keeps_legacy_flow_and_rejects_split_identity() {
+            let fixture = Fixture::new();
+            let dir = fixture.state();
+            let out = unix::run_with_occurrence(options(&dir, None, &["init"]), &CHECKPOINT, None);
+            assert_eq!(
+                out.unwrap(),
+                "Private local ledger initialized. No sources read; nothing uploaded.\n"
+            );
+            fixture.write_source();
+            let out = unix::run_with_occurrence(
+                options(&dir, Some(&fixture.0.join("src")), &["collect"]),
+                &CHECKPOINT,
+                None,
+            )
+            .unwrap();
+            assert!(out.contains("pending records: 1"), "{out}");
+            let out = unix::run_with_occurrence(
+                options(&dir, None, &["outbox", "--dry-run"]),
+                &CHECKPOINT,
+                None,
+            )
+            .unwrap();
+            // Legacy ids derive under the checkpoint key itself.
+            assert!(out.contains(&hex_id(&fixture.0, None)), "{out}");
+            // A split identity on the legacy ledger refuses closed.
+            assert_eq!(
+                unix::run_with_occurrence(
+                    options(&dir, None, &["status"]),
+                    &CHECKPOINT,
+                    Some(NAMESPACE),
+                )
+                .err(),
+                Some("ledger_namespace_mismatch")
+            );
+        }
+
+        #[test]
+        fn interrupted_enrollment_layout_refuses_through_the_full_run_path() {
+            let fixture = Fixture::new();
+            let dir = fixture.create_state();
+            std::fs::DirBuilder::new()
+                .mode(0o700)
+                .create(dir.join("enrollment-attempt-v1"))
+                .unwrap();
+            // `run` reads the real key file before resolution.
+            let key = fixture.0.join("key");
+            {
+                use std::io::Write;
+                use std::os::unix::fs::OpenOptionsExt;
+                fs::OpenOptions::new()
+                    .create_new(true)
+                    .write(true)
+                    .mode(0o600)
+                    .open(&key)
+                    .unwrap()
+                    .write_all(&CHECKPOINT)
+                    .unwrap();
+            }
+            let result = unix::run(
+                parse_options(&args(&[
+                    "status",
+                    "--state-dir",
+                    &dir.to_string_lossy(),
+                    "--key-file",
+                    &key.to_string_lossy(),
+                ]))
+                .unwrap(),
+            );
+            #[cfg(target_os = "macos")]
+            assert_eq!(result.err(), Some("attempt_recovery_required"));
+            #[cfg(not(target_os = "macos"))]
+            assert_eq!(
+                result.err(),
+                Some("persistent_state_requires_qualified_macos_custody")
+            );
+        }
     }
 }
