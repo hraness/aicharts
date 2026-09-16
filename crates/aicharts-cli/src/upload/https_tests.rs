@@ -764,3 +764,23 @@ fn a_dribbling_response_cannot_restart_the_global_acceptance_budget() {
         .exchange(&request(), &mut JournalBody::new())
         .is_err());
 }
+
+#[test]
+fn enrolled_constructor_binds_exact_facts_with_sensitive_bearer() {
+    let adapter = HttpsTransport::enrolled(BINDING, &TEST_SECRET).unwrap();
+    assert_eq!(adapter.binding(), BINDING);
+    assert!(adapter.bearer.is_sensitive());
+    let expected = format!(
+        "Bearer {}",
+        TEST_SECRET
+            .iter()
+            .map(|byte| format!("{byte:02x}"))
+            .collect::<String>()
+    );
+    assert_eq!(adapter.bearer.to_str().unwrap(), expected);
+    assert!(adapter.fixture.is_none());
+    assert_eq!(
+        HttpsTransport::enrolled(BINDING, &[0; 32]).err(),
+        Some(TransportError::Unavailable)
+    );
+}

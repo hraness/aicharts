@@ -1,7 +1,9 @@
 //! Terminal enrollment codec, once-only HTTPS exchange and the single
 //! activation seam. The `enroll` driver wires the sealed attempt, custody and
-//! transport pieces to the terminal; it still never uploads and a returned
-//! observation is not permission to upload.
+//! transport pieces to the terminal; it never uploads itself. The narrow
+//! `enrolled` read resolves the same completed, custody-verified join for the
+//! upload command without rerunning the handshake; a returned observation is
+//! not permission to upload.
 #![allow(dead_code)]
 
 mod attempt;
@@ -46,4 +48,26 @@ pub(crate) fn enroll(dir: &Path, io: &mut dyn EnrollIo) -> Result<EnrollOutcome,
 #[cfg(not(target_os = "macos"))]
 pub(crate) fn enroll(_dir: &Path, _io: &mut dyn EnrollIo) -> Result<EnrollOutcome, &'static str> {
     Err("enroll_requires_qualified_macos_custody")
+}
+
+/// Completed-enrollment sender binding facts plus the exact retained pairing
+/// and namespace custody records. Secret preimages stay borrow-only inside
+/// the records; this join is not an upload grant, transcript or proof of
+/// server-side state.
+#[cfg(target_os = "macos")]
+pub(crate) struct EnrolledInstallation {
+    pub(crate) account_id: [u8; 16],
+    pub(crate) device_id: [u8; 32],
+    pub(crate) recovery_generation: [u8; 32],
+    pub(crate) pairing: aicharts_custody::SecretRecord,
+    pub(crate) namespace: aicharts_custody::SecretRecord,
+}
+
+/// Read only a completed, custody-verified enrollment at `dir` and resolve the
+/// exact retained pairing and namespace records by their pinned identities and
+/// commitments. Missing, unfinished, revoked or inconsistent anchors refuse
+/// closed; nothing is reminted, repaired or substituted.
+#[cfg(target_os = "macos")]
+pub(crate) fn enrolled(dir: &Path) -> Result<EnrolledInstallation, &'static str> {
+    attempt::drive::enrolled(dir).map_err(|error| error.code())
 }
