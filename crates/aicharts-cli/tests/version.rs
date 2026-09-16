@@ -227,7 +227,7 @@ fn ordinary_help_remains_local_only_without_any_identity_side_effect() {
         assert_eq!(output.status.code(), Some(0));
         let text = String::from_utf8(output.stdout).unwrap();
         assert!(text.contains("local-only"));
-        assert!(text.contains("No account sign-in, upload, daemon"));
+        assert!(text.contains("No account sign-in, daemon installation"));
         assert!(output.stderr.is_empty());
     }
     assert!(snapshot(&fixture.0).is_empty());
