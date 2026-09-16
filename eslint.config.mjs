@@ -5,5 +5,5 @@ import nextTypescript from "eslint-config-next/typescript";
 export default defineConfig([
   ...nextVitals,
   ...nextTypescript,
-  globalIgnores([".next/**", "coverage/**", "next-env.d.ts", "desktop/target/**", "outputs/**", "**/.wrangler/**", "services/usage-worker/worker-configuration.d.ts"]),
+  globalIgnores([".next/**", "skills/aicharts/scripts/support-foundation.mjs", "coverage/**", "next-env.d.ts", "desktop/target/**", "outputs/**", "**/.wrangler/**", "services/usage-worker/worker-configuration.d.ts"]),
 ]);

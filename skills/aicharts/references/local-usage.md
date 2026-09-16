@@ -52,6 +52,8 @@ An already supplied summary establishes only the evidence provided at its stated
 
 The inspector reads bounded numeric state internally, including inventory needed for validation, but the CLI exposes no inventory, source stamps or private prefix witnesses. It does not read Codex or Claude session files or make network calls. No collection, acknowledgment, migration, activation or recovery method is invoked.
 
+After a successful standalone numeric read, optional support-protocol discovery can use separate shared Hraness invitation preferences and stderr. It does not receive the inspected data or change the ledger. Set `HRANESS_SUPPORT_AUDIENCE=off` for a delegated child or a fully silent invocation. See [support.md](support.md); no native release or installation is implied by this source behavior.
+
 Inspection is supported only on qualified local macOS/Linux POSIX-locking filesystems. Any journal, WAL or SHM sidecar, even an empty one, causes refusal without cleanup or recovery. It creates no sidecar or lockfile; ordinary reads may update access timestamps. Busy, stale, recovery, invalid-state, namespace, storage and private-state errors are stopping conditions. Never delete sidecars, reset state or fall back to a writer. A snapshot does not hold a continuing lock or protect against malicious same-user modification or rollback.
 
 Retained bounds are 2,048 sources, 100,000 occurrences, 200,000 associations and a 256 MiB SQLite main file. Inspection and its final recheck perform bounded integrity work; a compact summary does not mean constant-time ledger access. These ceilings are not completeness guarantees.

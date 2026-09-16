@@ -27,6 +27,11 @@ const SKILL = Object.freeze([
   ["references/local-usage.md", "skills/aicharts/references/local-usage.md"],
   ["scripts/atlas.mjs", "skills/aicharts/scripts/atlas.mjs"],
   ["scripts/atlas.check.mjs", "skills/aicharts/scripts/atlas.check.mjs"],
+  ["scripts/support.mjs", "skills/aicharts/scripts/support.mjs"],
+  ["scripts/support-foundation.mjs", "skills/aicharts/scripts/support-foundation.mjs"],
+  ["scripts/support.check.mjs", "skills/aicharts/scripts/support.check.mjs"],
+  ["references/support.md", "skills/aicharts/references/support.md"],
+  ["THIRD_PARTY_NOTICES.md", "skills/aicharts/THIRD_PARTY_NOTICES.md"],
 ].map(Object.freeze));
 const REQUIRED = Object.freeze([...new Set([
   "Cargo.lock", "bun.lock", "Cargo.toml", "crates/aicharts-cli/Cargo.toml",

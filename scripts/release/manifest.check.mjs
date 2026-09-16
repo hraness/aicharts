@@ -7,7 +7,7 @@ import { encodeManifest, parseManifest, encodeChecksums, parseChecksums } from "
 
 const sha = (bytes) => createHash("sha256").update(bytes).digest("hex");
 const CLI = ["bin/aicharts", "BUILD.json", "LICENSE", "NOTICE.md", "THIRD_PARTY_LICENSES.txt", "docs/usage-install.md", "docs/usage-local.md"];
-const SKILL = ["SKILL.md", "agents/openai.yaml", "references/benchmarks.md", "references/local-operations.md", "references/local-turns.md", "references/local-usage.md", "scripts/atlas.mjs", "scripts/atlas.check.mjs", "BUILD.json", "LICENSE", "NOTICE.md"];
+const SKILL = ["SKILL.md", "agents/openai.yaml", "references/benchmarks.md", "references/local-operations.md", "references/local-turns.md", "references/local-usage.md", "scripts/atlas.mjs", "scripts/atlas.check.mjs", "scripts/support.mjs", "scripts/support-foundation.mjs", "scripts/support.check.mjs", "references/support.md", "THIRD_PARTY_NOTICES.md", "BUILD.json", "LICENSE", "NOTICE.md"];
 const file = (path, mode = 0o644) => ({ path, mode, bytes: 12, sha256: sha(Buffer.from(`synthetic:${path}`)) });
 const fixture = () => ({
   version: "0.1.0",
@@ -374,11 +374,14 @@ test("mandatory CLI/skill allowlists and modes cannot be widened by supplied inv
   const f = fixture(); f.skill.files[0].mode = 0o755; reject(encodeManifest(f), "invalid_expectations");
 });
 
-test("the formerly accepted nine-file skill inventory is incomplete", () => {
-  const expected = fixture();
-  expected.skill.files = expected.skill.files.filter((entry) => !["references/local-turns.md", "references/local-operations.md"].includes(entry.path));
-  assert.equal(expected.skill.files.length, 9);
-  reject(encodeManifest(expected), "invalid_expectations");
+test("formerly accepted nine- and eleven-file skill inventories are incomplete", () => {
+  const support = ["scripts/support.mjs", "scripts/support-foundation.mjs", "scripts/support.check.mjs", "references/support.md", "THIRD_PARTY_NOTICES.md"];
+  for (const [removed, count] of [[support, 11], [[...support, "references/local-turns.md", "references/local-operations.md"], 9]]) {
+    const expected = fixture();
+    expected.skill.files = expected.skill.files.filter(entry => !removed.includes(entry.path));
+    assert.equal(expected.skill.files.length, count);
+    reject(encodeManifest(expected), "invalid_expectations");
+  }
 });
 
 test("source paths, modes, collisions and independently supplied complete inventory are strict", () => {

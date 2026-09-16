@@ -25,7 +25,7 @@ const REQUIRED = [
   "skills/aicharts/agents/openai.yaml", "skills/aicharts/references/benchmarks.md",
   "skills/aicharts/references/local-operations.md", "skills/aicharts/references/local-turns.md",
   "skills/aicharts/references/local-usage.md", "skills/aicharts/scripts/atlas.mjs",
-  "skills/aicharts/scripts/atlas.check.mjs",
+  "skills/aicharts/scripts/atlas.check.mjs", "skills/aicharts/scripts/support.mjs", "skills/aicharts/scripts/support-foundation.mjs", "skills/aicharts/scripts/support.check.mjs", "skills/aicharts/references/support.md", "skills/aicharts/THIRD_PARTY_NOTICES.md",
 ];
 function fixture() {
   return {
@@ -88,7 +88,7 @@ function expectedPayloads(input) {
     ],
     skill: [
       build("skill"), mapped("LICENSE", "LICENSE"), mapped("NOTICE.md", "distribution/NOTICE.md"),
-      ...["SKILL.md", "agents/openai.yaml", "references/benchmarks.md", "references/local-operations.md", "references/local-turns.md", "references/local-usage.md", "scripts/atlas.mjs", "scripts/atlas.check.mjs"]
+      ...["SKILL.md", "agents/openai.yaml", "references/benchmarks.md", "references/local-operations.md", "references/local-turns.md", "references/local-usage.md", "scripts/atlas.mjs", "scripts/atlas.check.mjs", "scripts/support.mjs", "scripts/support-foundation.mjs", "scripts/support.check.mjs", "references/support.md", "THIRD_PARTY_NOTICES.md"]
         .map((path) => mapped(path, `skills/aicharts/${path}`)),
     ],
     source: input.sourceFiles,
@@ -164,7 +164,7 @@ test("complete synthetic join binds every source member, both BUILDs and four ch
   const input = fixture();
   const joined = verifyJoin(input);
   assert.equal(joined.archived.cli.files.length, 7);
-  assert.equal(joined.archived.skill.files.length, 11);
+  assert.equal(joined.archived.skill.files.length, 16);
   assert.equal(joined.archived.source.files.length, input.sourceFiles.length);
   assert.equal(joined.archived.source.files.find((file) => file.path === "scripts/release/assemble.mjs").mode, 0o755);
   assert.notDeepEqual(joined.archived.source.files.find((file) => file.path === "NOTICE.md").bytes,

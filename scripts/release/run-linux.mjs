@@ -12,6 +12,7 @@ import { assembleLinuxRelease } from "./assemble.mjs";
 import { validateArchive } from "./archive.mjs";
 import { encodeLinuxQualificationReport, validateLinuxQualificationReport } from "./linux-qualification.mjs";
 import { LINUX_NOTICES_MAX_BYTES, linuxNativeDiagnostic, linuxSystemDiagnostic } from "./linux-notices.mjs";
+import { SUPPORT_SOURCE } from "./support-source.mjs";
 
 const MiB = 1024 * 1024;
 const TARGET = "x86_64-unknown-linux-gnu";
@@ -189,7 +190,7 @@ const HOST = Object.freeze({ platform: process.platform, arch: process.arch, nod
   progress: stage => process.stdout.write(JSON.stringify({ operation: "linux-qualification", stage }) + "\n") });
 
 function minimalEnvironment(directories, rustc = null) {
-  const env = { PATH: "/usr/bin:/bin", LANG: "C", LC_ALL: "C", TZ: "UTC", TMPDIR: directories.tmp,
+  const env = { HRANESS_SUPPORT_AUDIENCE: "off", PATH: "/usr/bin:/bin", LANG: "C", LC_ALL: "C", TZ: "UTC", TMPDIR: directories.tmp,
     CARGO_HOME: directories.cargo, CARGO_INCREMENTAL: "0", CARGO_TERM_COLOR: "never", CARGO_NET_RETRY: "0", CARGO_HTTP_TIMEOUT: "30",
     RUSTUP_HOME: "/home/runner/.rustup", CC: "/usr/bin/gcc-11", AR: "/usr/bin/ar", CARGO_BUILD_JOBS: "2" };
   if (rustc) {
@@ -208,7 +209,7 @@ function checkSource(source) {
   need(match && (manifest.match(/^version = /gmu) ?? []).length === 1, "unsupported_source");
   need(/^version\.workspace = true$/mu.test(byPath.get("crates/aicharts-cli/Cargo.toml")?.toString("utf8") ?? ""), "unsupported_source");
   const lock = byPath.get("Cargo.lock")?.toString("utf8") ?? "";
-  need(lock.length > 0 && [...lock.matchAll(/^source = "([^"]+)"$/gmu)].every(item => item[1] === "registry+https://github.com/rust-lang/crates.io-index"), "unsupported_source");
+  need(lock.length > 0 && [...lock.matchAll(/^source = "([^"]+)"$/gmu)].every(item => item[1] === "registry+https://github.com/rust-lang/crates.io-index" || item[1] === SUPPORT_SOURCE), "unsupported_source");
   return match[1];
 }
 function inventoryHash(files) { return sha(Buffer.from(JSON.stringify(files.map(file => ({ path: file.path, mode: file.mode, bytes: file.bytes.length, sha256: sha(file.bytes) }))))); }
@@ -420,7 +421,7 @@ async function runWith(value, host = HOST) {
     let measured;
     try { measured = inspectElf(binary, elf); }
     catch (error) { if (error instanceof ElfFailure) summary.diagnostic = error.diagnostic; throw error; }
-    const runtimeEnv = { PATH: "/usr/bin:/bin", LANG: "C", LC_ALL: "C", TZ: "UTC", TMPDIR: directories.tmp, LD_BIND_NOW: "1" };
+    const runtimeEnv = { HRANESS_SUPPORT_AUDIENCE: "off", PATH: "/usr/bin:/bin", LANG: "C", LC_ALL: "C", TZ: "UTC", TMPDIR: directories.tmp, LD_BIND_NOW: "1" };
     const resolved = await command("runtime-libraries", INTERPRETER, ["--list", executable], { env: runtimeEnv });
     const dynamicLibraries = resolveLibraries(resolved.stdout.toString("utf8"), measured.dependencies, host);
     for (const library of dynamicLibraries) {

@@ -10,12 +10,13 @@ import { assembleLinuxRelease } from "./assemble.mjs";
 import { validateArchive } from "./archive.mjs";
 import { validateLinuxQualificationReport } from "./linux-qualification.mjs";
 import { LINUX_NOTICES_MAX_BYTES } from "./linux-notices.mjs";
+import { SUPPORT_SOURCE } from "./support-source.mjs";
 
 // Private source-only seam. The shipped runner has no effects override. Fake
 // compiler/smoke facts exercise orchestration, never actual Linux qualification.
 const script = new URL("./run-linux.mjs", import.meta.url);
 const runtime = fs.readFileSync(script, "utf8").replace(/from "(\.\/[^"]+)"/gu, (_, relative) => "from " + JSON.stringify(new URL(relative, script).href));
-const internals = await import("data:text/javascript;base64," + Buffer.from(runtime + "\nexport { runWith, argumentsToInput, workflow, minimalEnvironment, inspectElf, resolveLibraries, compilerArtifact, execute, readRegular, prepareOutput, recheckSource, compareVersion, noticeOutputDiagnostic };\n").toString("base64"));
+const internals = await import("data:text/javascript;base64," + Buffer.from(runtime + "\nexport { runWith, argumentsToInput, workflow, minimalEnvironment, inspectElf, resolveLibraries, compilerArtifact, execute, readRegular, prepareOutput, recheckSource, compareVersion, noticeOutputDiagnostic, checkSource };\n").toString("base64"));
 const TARGET = "x86_64-unknown-linux-gnu";
 const RUST_COMMIT = "8bab26f4f68e0e26f0bb7960be334d5b520ea452";
 const SYSROOT = "/home/runner/.rustup/toolchains/1.97.1-" + TARGET;
@@ -47,7 +48,7 @@ function fixture(t) {
   const repositoryDirectory = join(root, "repository"); fs.mkdirSync(repositoryDirectory, { mode: 0o700 });
   const outputDirectory = join(root, "result");
   const input = { repositoryDirectory, commit: SHA, expectedTree: TREE, outputDirectory };
-  const paths = ["LICENSE", "NOTICE.md", "Cargo.lock", "bun.lock", "Cargo.toml", "crates/aicharts-cli/Cargo.toml", "rust-toolchain.toml", "distribution/NOTICE.md", "distribution/cli/docs/usage-install.md", "distribution/cli/docs/usage-local.md", "skills/aicharts/SKILL.md", "skills/aicharts/agents/openai.yaml", "skills/aicharts/references/benchmarks.md", "skills/aicharts/references/local-usage.md", "skills/aicharts/references/local-turns.md", "skills/aicharts/references/local-operations.md", "skills/aicharts/scripts/atlas.mjs", "skills/aicharts/scripts/atlas.check.mjs"];
+  const paths = ["LICENSE", "NOTICE.md", "Cargo.lock", "bun.lock", "Cargo.toml", "crates/aicharts-cli/Cargo.toml", "rust-toolchain.toml", "distribution/NOTICE.md", "distribution/cli/docs/usage-install.md", "distribution/cli/docs/usage-local.md", "skills/aicharts/SKILL.md", "skills/aicharts/agents/openai.yaml", "skills/aicharts/references/benchmarks.md", "skills/aicharts/references/local-usage.md", "skills/aicharts/references/local-turns.md", "skills/aicharts/references/local-operations.md", "skills/aicharts/scripts/atlas.mjs", "skills/aicharts/scripts/atlas.check.mjs", "skills/aicharts/scripts/support.mjs", "skills/aicharts/scripts/support-foundation.mjs", "skills/aicharts/scripts/support.check.mjs", "skills/aicharts/references/support.md", "skills/aicharts/THIRD_PARTY_NOTICES.md"];
   const sourceFiles = paths.sort().map(path => ({ path, mode: 0o644, bytes: bytes("synthetic public source: " + path + "\n") }));
   sourceFiles.find(file => file.path === "Cargo.toml").bytes = bytes("[workspace.package]\nversion = \"0.1.0\"\n");
   sourceFiles.find(file => file.path === "crates/aicharts-cli/Cargo.toml").bytes = bytes("[package]\nname = \"aicharts-cli\"\nversion.workspace = true\n");
@@ -246,10 +247,24 @@ test("output is create-new and requires a nonsymlink private owned parent", t =>
 test("minimal compiler environment fixes baseline and excludes inherited secrets and overrides", () => {
   const dirs = { source: "/owned/source", cargo: "/owned/cargo", tmp: "/owned/tmp" };
   const selected = internals.minimalEnvironment(dirs, SYSROOT + "/bin/rustc");
+  assert.equal(selected.HRANESS_SUPPORT_AUDIENCE, "off");
   for (const forbidden of ["GITHUB_TOKEN", "RUSTFLAGS", "LD_PRELOAD", "RUSTC_WRAPPER", "CARGO_REGISTRIES_CRATES_IO_TOKEN", "HOME", "LIBSQLITE3_SYS_USE_PKG_CONFIG"]) assert.equal(Object.hasOwn(selected, forbidden), false);
   const flags = selected.CARGO_ENCODED_RUSTFLAGS.split("\x1f");
   for (const expected of ["target-cpu=x86-64", "linker=/usr/bin/gcc-11", "linker-features=-lld", "link-self-contained=-linker", "link-arg=-fuse-ld=bfd"]) assert.ok(flags.includes(expected));
   assert.equal(flags.some(value => value.includes("native")), false); assert.ok(selected.CFLAGS.startsWith("-march=x86-64 -mtune=generic"));
+});
+
+test("source admission adds only the full reviewed support Git revision", t => {
+  const f = fixture(t), lock = f.source.sourceFiles.find(file => file.path === "Cargo.lock");
+  for (const source of ["registry+https://github.com/rust-lang/crates.io-index", SUPPORT_SOURCE]) {
+    lock.bytes = bytes(`version = 4\n[[package]]\nsource = "${source}"\n`);
+    assert.equal(internals.checkSource(f.source), "0.1.0");
+  }
+  for (const source of [SUPPORT_SOURCE.replace("ed89e584", "00000000"), SUPPORT_SOURCE.replace("hraness/", "other/"),
+    "git+https://github.com/hraness/support-foundation#main", "git+https://example.invalid/private"]) {
+    lock.bytes = bytes(`version = 4\n[[package]]\nsource = "${source}"\n`);
+    assert.throws(() => internals.checkSource(f.source), { code: "unsupported_source" });
+  }
 });
 
 test("ELF policy discriminates architecture, interpreter, dependency, stack, version and ISA failures", () => {

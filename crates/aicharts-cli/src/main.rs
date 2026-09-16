@@ -12,6 +12,7 @@ mod prefix;
 mod reindex;
 mod sessions;
 mod state;
+mod support;
 mod transport_dns;
 #[cfg(test)]
 mod transport_test_log;
@@ -37,6 +38,8 @@ pub(crate) static TEST_FIXTURE_PARENT: std::sync::Mutex<()> = std::sync::Mutex::
 const HELP: &str = "AI Charts Usage — local-only foundation
 
   aicharts --version [--json]
+  aicharts support protocol --json
+  aicharts support --help
   aicharts turns --codex FILE [--codex FILE ...] --occurrence-key-file KEY [--json]
   aicharts sessions --occurrence-key-file KEY [--codex FILE ...] [--claude FILE ...] [--json]
   aicharts usage --key-file PATH [--codex FILE_OR_DIR] [--claude FILE_OR_DIR] [--json]
@@ -468,6 +471,10 @@ fn main() {
         eprintln!("aicharts: invalid_argument_encoding");
         std::process::exit(2);
     };
+    let support_options = support::options();
+    if args.first().map(String::as_str) == Some("support") {
+        std::process::exit(support::execute(&args[1..], &support_options));
+    }
     match run(&args) {
         Ok(output) => {
             let stdout = io::stdout();
@@ -484,9 +491,14 @@ fn main() {
             if writer
                 .write_all(intro.as_bytes())
                 .and_then(|()| writer.write_all(output.as_bytes()))
+                .and_then(|()| writer.flush())
                 .is_err()
             {
                 std::process::exit(1);
+            }
+            drop(writer);
+            if support::useful_read(&args) {
+                support::completed(&support_options);
             }
         }
         Err(code) => {
