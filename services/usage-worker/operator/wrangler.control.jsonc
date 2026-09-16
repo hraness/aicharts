@@ -1,0 +1,25 @@
+{
+  "$schema": "../../../node_modules/wrangler/config-schema.json",
+  "name": "aicharts-usage-restore-fence-control-closed",
+  "main": "../src/restore-fence-control.ts",
+  "compatibility_date": "2026-09-10",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": false,
+  "preview_urls": false,
+  "send_metrics": false,
+  "observability": { "enabled": false },
+  // No account, fenced Worker or armed flag. The root driver prepares an exact
+  // reviewed private operator config under the run directory. The cross-script
+  // binding reaches the fenced Worker's existing RESTORE_FENCES namespace; this
+  // service owns no Durable Object storage itself.
+  "vars": { "AICHARTS_USAGE_FENCE_CONTROL_ENABLED": "" },
+  "durable_objects": {
+    "bindings": [
+      { "name": "RESTORE_FENCES", "class_name": "RestoreFence", "script_name": "aicharts-usage-fenced-unconfigured" }
+    ]
+  },
+  "exports": {
+    "RestoreFenceControl": { "type": "worker" }
+  },
+  "r2_buckets": []
+}
