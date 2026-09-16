@@ -4,7 +4,7 @@ use super::{
 };
 use crate::enrollment::contract::{
     DeviceState, DomainError, Enrollment, Operation, PairingState, PairingView, Receipt,
-    Reservation, MAX_TIME_MS, POLL_MS, TTL_MS,
+    Reservation, CLOCK_SKEW_MS, MAX_TIME_MS, POLL_MS, TTL_MS,
 };
 use aicharts_custody::{
     references::RecordIntent, CredentialRef, NamespaceBinding, Purpose, RecordIdentity, Secret32,
@@ -338,7 +338,7 @@ fn identity_phase_account_and_protocol_bindings_are_checked_before_encoding() {
 fn clock_ttl_poll_and_namespace_bounds_preserve_expired_observations() {
     let mutations: &[fn(&mut Record)] = &[
         |v| v.clock_floor_ms = MAX_TIME_MS + 1,
-        |v| v.clock_floor_ms = TIME - 1,
+        |v| v.clock_floor_ms = TIME - CLOCK_SKEW_MS - 1,
         |v| v.initialized_expires_at_ms = Some(TTL_MS - 1),
         |v| v.initialized_expires_at_ms = Some(MAX_TIME_MS + 1),
         |v| {
@@ -363,7 +363,7 @@ fn clock_ttl_poll_and_namespace_bounds_preserve_expired_observations() {
             }
         },
         |v| v.last_pairing.as_mut().unwrap().observed_at_ms = TIME - 1,
-        |v| v.last_pairing.as_mut().unwrap().observed_at_ms = v.clock_floor_ms + 1,
+        |v| v.last_pairing.as_mut().unwrap().observed_at_ms = v.clock_floor_ms + CLOCK_SKEW_MS + 1,
         |v| v.last_pairing.as_mut().unwrap().view.poll_after_ms = POLL_MS + 1,
         |v| v.reservation.as_mut().unwrap().reserved_at_ms = TIME - 1,
         |v| v.reservation.as_mut().unwrap().reserved_at_ms = TIME + 60_000,
@@ -386,6 +386,14 @@ fn clock_ttl_poll_and_namespace_bounds_preserve_expired_observations() {
         mutate(&mut value);
         assert!(record::encode(&value).is_err(), "time case {index}");
     }
+    // Server-issued timestamps may lead the local clock floor by the skew
+    // bound; exactly at the bound they still encode.
+    let mut edge = complete_record();
+    edge.last_pairing.as_mut().unwrap().observed_at_ms = edge.clock_floor_ms + CLOCK_SKEW_MS;
+    assert!(record::encode(&edge).is_ok());
+    let mut edge = flight_record();
+    edge.flight.as_mut().unwrap().prepared_at_ms = edge.clock_floor_ms + CLOCK_SKEW_MS;
+    assert!(record::encode(&edge).is_ok());
     let mut late = complete_record();
     late.clock_floor_ms = MAX_TIME_MS;
     late.enrollment.as_mut().unwrap().device_state = DeviceState::Revoked;
@@ -439,7 +447,7 @@ fn invalid_flight_fields_counter_limits_and_operation_requirements_refuse() {
         |v| v.flight.as_mut().unwrap().ordinal = 2,
         |v| v.flight.as_mut().unwrap().prepared_revision = 0,
         |v| v.flight.as_mut().unwrap().prepared_revision = v.revision + 1,
-        |v| v.flight.as_mut().unwrap().prepared_at_ms = v.clock_floor_ms + 1,
+        |v| v.flight.as_mut().unwrap().prepared_at_ms = v.clock_floor_ms + CLOCK_SKEW_MS + 1,
         |v| v.flight.as_mut().unwrap().last_attempt_at_ms = Some(TIME),
         |v| v.flight.as_mut().unwrap().dispatches = 1,
         |v| v.flight.as_mut().unwrap().operation = Operation::Poll,

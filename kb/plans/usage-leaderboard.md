@@ -776,3 +776,46 @@ private reads, the production Worker and `usage.aicharts.io` remain undeployed
 and dormant, and no public usage is activated. Live enrollment qualification
 (real Keychain custody + HTTPS pairing + bounded admission + private query) is
 the remaining source-independent step and stays gated on the DNS/route work.
+
+### 2026-09-14 — live enrollment qualified end-to-end; clock-skew bound
+
+The full pairing + enrollment flow was qualified live in production on the
+deployed route and Worker:
+
+- Pairing page rendered for a real intent; `POST /api/usage/pairing/start`
+  redirected through Hraness OAuth after `d03d887` accepted the browser's
+  `Origin: null` top-level navigation (merged on `main`). The pairing custody
+  cookie `__Host-aicharts-usage-pairing` is emitted on start and persisted
+  through the OAuth round-trip.
+- Email-OTP sign-in at `account.hraness.com` completed in a real browser; the
+  callback saved `browser-approved` for account
+  `db430f60bf2b446780edc330e9f0807e`; the user approved the collector.
+- The CLI completed `initialized → confirmed → reserved → enrolled →
+  namespace` with real Keychain custody and HTTPS transport for intent
+  `3643ecab3debff42d2fe182e12db0a28387c78765d051788f32f1790b5e1b4ac`, device
+  `c84e41f79a3c48dcf714e5d5938fa95ded9f6650c8db9539b858cddce2991fb8`. Nothing
+  was uploaded; telemetry stays local until upload is enabled.
+
+Live runs surfaced a cross-clock defect: the Worker's intent-creation
+timestamp leads the client wall clock (observed ~34 ms), and the client
+required server-issued `created`/`reserved_at`/`enrolled_at`/`accepted` times
+to be `<=` local `now` with zero tolerance — intermittently failing
+`Initialize`/`Poll` decode and record validation with
+`attempt_outcome_unknown`/`attempt_invalid_record`. The fix adds a bounded
+`CLOCK_SKEW_MS` (60 s, far below the 600 s attempt TTL) tolerance to the
+future-bound cross-clock comparisons in `contract.rs` (`valid_domain`
+initialize arm, `valid_reservation`, `valid_receipt`, resumed-context
+`valid_context`) and the shared `observed()` floor check in `record.rs`.
+Backdated and far-future timestamps remain refused; focused tests now cover
+exactly-at-bound admission and one-past-bound refusal for initialize,
+reserve, enroll, resumed context, and record observation paths.
+
+Result: live enrollment qualification is complete — the dormant seam drove a
+real production handshake end to end. Follow-ups that stay gated: bounded
+admission → private query qualification against the enrolled device; the
+operator restore-fence control tool (close → drain → restore → publish); and
+explicit recovery for an `Uncertain` poll flight — poll is throttle-idempotent
+server-side, so a retained read flight can be re-driven through the designed
+`reconstruct_retained` path without weakening the once-only guarantees that
+still apply to `Confirm`/`Reserve`/`Enroll`/`Namespace`. No public usage or
+leaderboard behavior is activated.

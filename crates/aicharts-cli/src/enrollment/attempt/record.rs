@@ -5,7 +5,7 @@
 use super::{Error, Result, MAX_DISPATCHES, MAX_FLIGHTS, MAX_RECORD_BYTES, MAX_REVISION};
 use crate::enrollment::contract::{
     self, AccountId, DeviceState, DomainError, Enrollment, Id, Operation, PairingState,
-    PairingView, Reservation, MAX_TIME_MS, POLL_MS, TTL_MS,
+    PairingView, Reservation, CLOCK_SKEW_MS, MAX_TIME_MS, POLL_MS, TTL_MS,
 };
 use aicharts_custody::{
     references::RecordIntent, CredentialRef, NamespaceBinding, Purpose, RecordIdentity,
@@ -220,7 +220,9 @@ fn nonzero(bytes: &[u8]) -> bool {
     bytes.iter().any(|byte| *byte != 0)
 }
 fn observed(time: u64, floor: u64) -> bool {
-    time <= floor && floor <= MAX_TIME_MS
+    // A responder's clock may lead the local floor; the skew bound tolerates a
+    // leading server timestamp while still refusing one far in the future.
+    time <= floor + CLOCK_SKEW_MS && floor <= MAX_TIME_MS
 }
 
 pub(super) fn validate(value: &Record) -> Result<()> {

@@ -397,7 +397,7 @@ fn reservation_lifetime_proof_and_generation_match_retained_evidence() {
                 4 => reservation.poll_commitment = [0x88; 32],
                 5 => reservation.upload_commitment = reservation.poll_commitment,
                 6 => reservation.reserved_at_ms = initialized - TTL_MS - 1,
-                7 => reservation.reserved_at_ms = context.now_ms + 1,
+                7 => reservation.reserved_at_ms = context.now_ms + CLOCK_SKEW_MS + 1,
                 8 => reservation.expires_at_ms = initialized + 1,
                 9 => reservation.expires_at_ms = reservation.reserved_at_ms,
                 _ => unreachable!(),
@@ -438,7 +438,7 @@ fn receipt_derivation_commit_time_and_replays_are_immutable() {
                     3 => receipt.device_id = [0x88; 32],
                     4 => receipt.enrolled_at_ms = reservation.reserved_at_ms - 1,
                     5 => receipt.enrolled_at_ms = reservation.expires_at_ms,
-                    6 => receipt.enrolled_at_ms = context.now_ms + 1,
+                    6 => receipt.enrolled_at_ms = context.now_ms + CLOCK_SKEW_MS + 1,
                     7 => receipt.enrolled_at_ms = MAX_TIME_MS + 1,
                     _ => unreachable!(),
                 }
@@ -468,7 +468,8 @@ fn context_requires_prior_facts_even_for_failure_bodies() {
             refused(&request, &invalid, &result);
             refused(&request, &invalid, &error);
             let mut invalid = context.clone();
-            invalid.now_ms = invalid.initialized_expires_at_ms.expect("expiry") - TTL_MS - 1;
+            invalid.now_ms =
+                invalid.initialized_expires_at_ms.expect("expiry") - TTL_MS - CLOCK_SKEW_MS - 1;
             refused(&request, &invalid, &error);
         }
         if matches!(
@@ -504,6 +505,35 @@ fn context_requires_prior_facts_even_for_failure_bodies() {
             expires_at_ms: TTL_MS - 1,
         });
     });
+}
+
+#[test]
+fn server_times_leading_local_clock_within_skew_bound_are_admitted() {
+    // A responder's clock may legitimately lead the local wall clock; each
+    // server-issued timestamp is admitted up to CLOCK_SKEW_MS past local now.
+    let (request, context, _) = parts("initialize-success");
+    let expires = context.now_ms + CLOCK_SKEW_MS + TTL_MS;
+    assert!(encode_response(
+        &request,
+        &context,
+        &Ok(Success::Initialized {
+            expires_at_ms: expires
+        })
+    )
+    .is_ok());
+    let (request, context, mut result) = parts("reserveEnrollment-success");
+    reservation_mut(&mut result).reserved_at_ms = context.now_ms + CLOCK_SKEW_MS;
+    assert!(encode_response(&request, &context, &result).is_ok());
+    let (request, context, mut result) = parts("enroll-success");
+    receipt_mut(&mut result).enrolled_at_ms = context.now_ms + CLOCK_SKEW_MS;
+    assert!(encode_response(&request, &context, &result).is_ok());
+    // The same bound admits a resumed context whose server-created timestamp
+    // leads local now.
+    let (request, mut context, result) = parts("poll-success");
+    context.now_ms = context.initialized_expires_at_ms.expect("expiry") - TTL_MS - CLOCK_SKEW_MS;
+    assert!(encode_response(&request, &context, &result).is_ok());
+    context.now_ms -= 1;
+    refused(&request, &context, &result);
 }
 
 #[test]
@@ -626,7 +656,7 @@ fn unsigned_time_extremes_and_success_variants_stay_bounded() {
         &request,
         &context,
         &Ok(Success::Initialized {
-            expires_at_ms: TTL_MS + 1,
+            expires_at_ms: TTL_MS + CLOCK_SKEW_MS + 1,
         }),
     );
     context.now_ms = MAX_TIME_MS;
