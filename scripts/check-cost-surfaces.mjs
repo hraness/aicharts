@@ -106,16 +106,27 @@ function* walk(dir) {
 }
 
 // --- Convex tables ---------------------------------------------------------
-const convexSchema = join(root, "convex", "schema.ts");
-if (existsSync(convexSchema)) {
-  const src = readFileSync(convexSchema, "utf8");
+function* convexSchemas() {
+  const direct = join(root, "convex", "schema.ts");
+  if (existsSync(direct)) yield direct;
+  for (const group of ["projects", "packages", "apps"]) {
+    const gdir = join(root, group);
+    if (!existsSync(gdir)) continue;
+    for (const child of readdirSync(gdir)) {
+      if (child.startsWith(".") || SKIP_DIRS.has(child)) continue;
+      const nested = join(gdir, child, "convex", "schema.ts");
+      if (existsSync(nested)) yield nested;
+    }
+  }
+}
+for (const schemaPath of convexSchemas()) {
+  const src = readFileSync(schemaPath, "utf8");
   const tableNames = new Set();
   for (const m of src.matchAll(/(\w+)\s*:\s*defineTable\s*\(/g)) tableNames.add(m[1]);
-  for (const m of src.matchAll(/defineTable\s*\([^)]*\)\s*(?:\.index|\.searchIndex|\.vectorIndex)*\s*,?/gs)) void m;
   for (const name of tableNames) {
     const id = `convex:${name}`;
     if (!surfaces[id] && !exempt.has(id)) {
-      fail(`unregistered Convex table "${name}" — add "${id}" to costs.json`);
+      fail(`unregistered Convex table "${name}" (${relative(root, schemaPath)}) — add "${id}" to costs.json`);
     }
   }
 }
@@ -146,11 +157,27 @@ for (const ev of seenEvents) {
 }
 
 // --- Dynamic / edge routes --------------------------------------------------
-const ROUTE_DIRS = ["app", "src/app", "pages", "website"];
+function* routeDirs() {
+  const singles = ["app", "src/app", "pages", "website", "site"];
+  for (const d of singles) {
+    const p = join(root, d);
+    if (existsSync(p)) yield p;
+  }
+  for (const group of ["projects", "apps"]) {
+    const gdir = join(root, group);
+    if (!existsSync(gdir)) continue;
+    for (const child of readdirSync(gdir)) {
+      if (child.startsWith(".") || SKIP_DIRS.has(child)) continue;
+      for (const d of ["app", "src/app"]) {
+        const p = join(gdir, child, d);
+        if (existsSync(p)) yield p;
+      }
+    }
+  }
+}
 const FORCE_RE = /export\s+const\s+(?:dynamic|runtime)\s*=\s*["'](force-dynamic|edge|force-cache)["']/;
-const routeDirs = ROUTE_DIRS.map((d) => join(root, d)).filter(existsSync);
 const seenRoutes = new Set();
-for (const base of routeDirs) {
+for (const base of routeDirs()) {
   for (const p of walk(base)) {
     const rel = relative(root, p);
     if (!/(route|page)\.(ts|tsx|js|mjs)$/.test(p)) continue;
