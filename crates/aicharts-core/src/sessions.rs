@@ -173,14 +173,17 @@ pub fn scan_metadata<R: BufRead>(
         let mut execution = None;
         let mut requested_model = None;
         let mut model_observed = false;
-        while let Some(record) =
-            crate::reader::next_record::<_, CodexEntry>(&mut reader).map_err(|e| e.code())?
-        {
+        loop {
+            let next =
+                crate::reader::next_record::<_, CodexEntry>(&mut reader).map_err(|e| e.code())?;
+            if matches!(next, crate::reader::Next::End) {
+                break;
+            }
             lines += 1;
             if lines > MAX_LINES {
                 return Err("record_limit");
             }
-            let Some(entry) = record else {
+            let crate::reader::Next::Parsed(entry) = next else {
                 continue;
             };
             let Some(payload) = entry.payload else {
@@ -228,14 +231,16 @@ pub fn scan_metadata<R: BufRead>(
         return Ok(out);
     }
     let mut lines = 0;
-    while let Some(record) =
-        crate::reader::next_record::<_, Entry>(&mut reader).map_err(|e| e.code())?
-    {
+    loop {
+        let next = crate::reader::next_record::<_, Entry>(&mut reader).map_err(|e| e.code())?;
+        if matches!(next, crate::reader::Next::End) {
+            break;
+        }
         lines += 1;
         if lines > MAX_LINES {
             return Err("record_limit");
         }
-        let Some(entry) = record else {
+        let crate::reader::Next::Parsed(entry) = next else {
             continue;
         };
         if entry.kind != crate::schema::Kind::Assistant {

@@ -576,12 +576,17 @@ mod tests {
 
     #[test]
     fn complete_malformed_or_oversized_lines_keep_parser_errors_fixed() {
-        for bytes in [
-            b"PRIVATE invalid JSON\n".to_vec(),
-            [vec![b' '; aicharts_core::MAX_LINE_BYTES], vec![b'\n']].concat(),
-        ] {
-            assert_eq!(collect(&bytes, None).err(), Some("source_parse_failed"));
-        }
+        assert_eq!(
+            collect(b"PRIVATE invalid JSON\n", None).err(),
+            Some("source_parse_failed")
+        );
+        // An over-cap completed line is a bounded skip under prefix replay too:
+        // it never becomes a line-sized copy or a source failure.
+        let oversized = [vec![b' '; aicharts_core::MAX_LINE_BYTES], vec![b'\n']].concat();
+        let (collection, _) = collect(&oversized, None).unwrap();
+        assert!(collection
+            .warnings
+            .contains(&aicharts_core::Warning::UnsupportedRecords));
     }
 
     #[test]

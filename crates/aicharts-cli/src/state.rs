@@ -402,6 +402,7 @@ pub(crate) mod unix {
                         source_id,
                         stamp: before,
                         collection,
+                        allows_rewrite: *provider == aicharts_protocol::Provider::Devin,
                     });
                 }
                 verification.push((path, canonical, before));

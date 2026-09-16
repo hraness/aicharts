@@ -145,6 +145,10 @@ pub struct SourceScan {
     pub source_id: SourceId,
     pub stamp: SourceStamp,
     pub collection: Collection,
+    /// Whole-document sources are rewritten wholesale between scans, so inode
+    /// replacement and smaller sizes are legitimate. Occurrence-level dominance
+    /// merging still applies to every retained id.
+    pub allows_rewrite: bool,
 }
 pub struct LedgerSnapshot {
     pub revision: u64,
@@ -330,13 +334,13 @@ impl Ledger {
                 let old = SourceStamp::decode(old)?;
                 let minimum_bytes = previous_prefix.map_or(old.bytes, |prefix| prefix.bytes);
                 if old.device != scan.stamp.device
-                    || old.inode != scan.stamp.inode
-                    || minimum_bytes > scan.stamp.bytes
+                    || (!scan.allows_rewrite
+                        && (old.inode != scan.stamp.inode || minimum_bytes > scan.stamp.bytes))
                 {
                     return Err(Error::SourceHistoryChanged);
                 }
             }
-            let records = collection_frames(scan.collection)?;
+            let mut records = collection_frames(scan.collection)?;
             let mut old_statement =
                 tx.prepare("SELECT id,frame FROM source_usage WHERE source_id=?1 LIMIT 100001")?;
             let mut old_rows = old_statement.query([scan.source_id.as_slice()])?;
@@ -350,9 +354,16 @@ impl Ledger {
                 let id: Id = id.try_into().map_err(|_| Error::InvalidState)?;
                 let old: Vec<u8> = row.get(1)?;
                 let new = records.get(&id).ok_or(Error::SourceHistoryChanged)?;
-                if (unchanged_prefix && old != *new) || merge_frames(&old, new)? != *new {
+                // Whole-document sources replace their snapshot wholesale; a
+                // revision only has to merge without conflict. The reconciled
+                // frame becomes this source's stored state so the status audit
+                // still derives the dominant measurement from source rows.
+                let reconciled = merge_frames(&old, new)?;
+                if (unchanged_prefix && old != *new) || (!scan.allows_rewrite && reconciled != *new)
+                {
                     return Err(Error::SourceHistoryChanged);
                 }
+                records.insert(id, reconciled);
             }
             if unchanged_prefix && previous_count != records.len() {
                 return Err(Error::SourceHistoryChanged);
