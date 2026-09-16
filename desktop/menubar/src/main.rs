@@ -15,6 +15,7 @@ use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Duration;
 
+use desktop_foundation::browser::{BrowserOpener, BrowserStatus};
 use desktop_foundation::outputs::OutputsSection;
 use desktop_foundation::{
     AccessibilityMetadata, DispatchOutcome, Host, MenuItem, MenuModel, MenuNode, Options,
@@ -22,6 +23,10 @@ use desktop_foundation::{
 };
 
 const STATUS_MARK: &str = "AI";
+const UPDATES_URL: &str =
+    "https://account.hraness.com/support?product=aicharts&source=desktop#updates";
+const SUPPORT_URL: &str =
+    "https://account.hraness.com/support?product=aicharts&source=desktop#support";
 
 /// The outputs directory agents write into: `AICHARTS_OUTPUTS`, an explicit
 /// `--outputs <dir>` argument, or `outputs/` under the working directory
@@ -59,12 +64,27 @@ fn acquire_instance_lock(outputs: &std::path::Path) -> Option<File> {
 
 struct AiChartsHost {
     outputs: OutputsSection,
+    browser: BrowserOpener,
 }
 
 impl Host for AiChartsHost {
     fn snapshot(&self) -> MenuModel {
         let mut nodes = vec![MenuNode::disabled("AI Charts Outputs"), MenuNode::Separator];
         nodes.extend(self.outputs.nodes());
+        nodes.push(MenuNode::Separator);
+        nodes.push(MenuNode::item(
+            "product.updates",
+            "Get AI Charts updates (free)…",
+        ));
+        nodes.push(MenuNode::item(
+            "product.support",
+            "Support AI Charts development (optional paid)…",
+        ));
+        if matches!(self.browser.status(), BrowserStatus::Failed(_)) {
+            nodes.push(MenuNode::disabled(
+                "Browser unavailable — use account.hraness.com",
+            ));
+        }
         nodes.push(MenuNode::Separator);
         nodes.push(MenuNode::interactive(
             MenuItem::action(desktop_foundation::QUIT_ACTION_ID, "Quit AI Charts")
@@ -84,6 +104,18 @@ impl Host for AiChartsHost {
     }
 
     fn dispatch_result(&self, id: &str) -> DispatchOutcome {
+        let address = match id {
+            "product.updates" => Some(UPDATES_URL),
+            "product.support" => Some(SUPPORT_URL),
+            _ => None,
+        };
+        if let Some(address) = address {
+            return if self.browser.open(address).is_ok() {
+                DispatchOutcome::Accepted
+            } else {
+                DispatchOutcome::Rejected
+            };
+        }
         if self.outputs.dispatch(id) {
             DispatchOutcome::Accepted
         } else {
@@ -107,7 +139,10 @@ fn main() {
     };
     let outputs = OutputsSection::new(dir);
     let _ = std::fs::create_dir_all(outputs.dir());
-    let host = Arc::new(AiChartsHost { outputs });
+    let host = Arc::new(AiChartsHost {
+        outputs,
+        browser: BrowserOpener::new(),
+    });
     let options = Options {
         refresh: Duration::from_secs(3),
         companion_window: false,
@@ -115,5 +150,29 @@ fn main() {
     if let Err(error) = desktop_foundation::run(tauri::generate_context!(), host, options, |b| b) {
         eprintln!("aicharts-menubar: {error}");
         std::process::exit(1);
+    }
+}
+
+#[cfg(test)]
+mod invitation_tests {
+    use super::*;
+
+    #[test]
+    fn unavailable_product_still_offers_explicit_browser_actions_without_launching() {
+        let host = AiChartsHost {
+            outputs: OutputsSection::new("/dev/null/absent-outputs"),
+            browser: BrowserOpener::new(),
+        };
+        let model = host.snapshot();
+        for expected in ["product.updates", "product.support"] {
+            assert!(model.nodes.iter().any(|node| matches!(node,
+                MenuNode::Item { id: Some(id), enabled: true, .. } if id == expected)));
+        }
+        assert_eq!(host.browser.status(), BrowserStatus::Idle);
+        assert!(matches!(
+            host.dispatch_result("unknown.action"),
+            DispatchOutcome::Rejected
+        ));
+        assert_eq!(host.browser.status(), BrowserStatus::Idle);
     }
 }

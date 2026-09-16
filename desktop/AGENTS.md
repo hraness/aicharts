@@ -7,5 +7,5 @@
 - The menu-bar companion is a disposable client. It reads `outputs/` in this checkout, renders filename stems as menu items, and opens or reveals files. It holds no product authority.
 - Consume `desktop-foundation` only through its immutable git tag. Product-neutral behavior belongs upstream; keep this crate a thin adapter.
 - Keep the binary unbundled and privilege-free: `bun run menubar:build` is the explicit build step, and `bun run menubar` launches the prebuilt executable in the foreground. No `.app` packaging, signing, or notarization is required.
-- Do not put credentials, query strings, or secret environment values in menu labels, tooltips, logs, or argv.
+- Do not put credentials, email, session data, arbitrary query strings, or secret environment values in menu labels, tooltips, logs, or argv. Explicit human browser actions may pass only the fixed public Accounts `product=aicharts&source=desktop` routing parameters through the shared foundation HTTPS helper; never derive them from agent output or environment values.
 - `target/` and `menubar/gen/` are ignored. Keep `Cargo.lock` committed for the binary workspace.
