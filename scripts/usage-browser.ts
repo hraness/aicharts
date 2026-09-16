@@ -165,7 +165,7 @@ export async function verifyUsageDashboard(browser: Browser, disabledBaseUrl: st
         await refreshButton.focus(); await page.mouse.move(1, 1); await settle(page); await assertButtonContrast(refreshButton);
         invariant(await page.locator(".usage-daily__coverage").textContent().then(text => text?.includes("Last recorded sync:")), "The timestamp must describe a recorded sync.");
         invariant(await page.locator(".usage-daily table tbody").count() === 30, "Each UTC date must be its own semantic row group.");
-        invariant(await page.locator(".usage-daily table tbody").first().locator("tr").count() === 2, "Each date must have both provider rows.");
+        invariant(await page.locator(".usage-daily table tbody").first().locator("tr").count() === 3, "Each date must have all three provider rows.");
         invariant(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), "Usage page must fit the viewport.");
         const scroll = page.getByRole("region", { name: "Daily usage, scroll horizontally for all columns" });
         await scroll.focus();
