@@ -150,8 +150,14 @@ export async function verifyUsageDashboard(browser: Browser, disabledBaseUrl: st
         await scroll.focus();
         invariant(await scroll.evaluate(element => element === document.activeElement && getComputedStyle(element).outlineStyle !== "none"), "The table must have a visible keyboard focus ring.");
         if (name === "mobile") {
+          // Native keyboard scrolling can continue after the first nonzero offset.
+          // Wait for its completion before resetting the screenshot position.
+          await scroll.evaluate(element => {
+            element.addEventListener("scrollend", () => element.setAttribute("data-keyboard-scroll-settled", ""), { once: true });
+          });
           await page.keyboard.press("ArrowRight");
-          await page.waitForFunction(() => (document.querySelector(".usage-daily__table-scroll")?.scrollLeft ?? 0) > 0);
+          await page.waitForFunction(() => document.querySelector(".usage-daily__table-scroll")?.hasAttribute("data-keyboard-scroll-settled"));
+          invariant(await scroll.evaluate(element => element.scrollLeft > 0), "ArrowRight must scroll the mobile table horizontally.");
           await scroll.evaluate(element => element.scrollTo({ left: 0, behavior: "instant" }));
           await page.waitForFunction(() => (document.querySelector(".usage-daily__table-scroll")?.scrollLeft ?? -1) === 0);
         }
