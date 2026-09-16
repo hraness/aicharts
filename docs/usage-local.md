@@ -132,6 +132,18 @@ If `nextAfter` is non-null, use it as `--after` together with the returned `ledg
 
 The [ledger contract](../crates/aicharts-ledger/README.md) describes atomicity, source-history checks and recovery boundaries. Do not delete a journal, reset a corrupt database or replace a lost namespace key as an automatic repair. Preserve the private state for diagnosis. Shadow preparation changes identity only in a new ledger; it cannot recover a corrupt database or missing native history.
 
+### Enrolled state directory
+
+On macOS, `enroll --state-dir DIR` changes how the local commands choose the ledger identity for that directory. `init` then provisions the account-bound split-key ledger inside the existing enrollment anchor instead of creating a new directory: the checkpoint half is the retained `--key-file` key and the occurrence half is the enrolled account namespace key, which lives in credential custody and is never a file, at namespace version 1. The anchor is never adopted or overwritten; the database installs atomically and any pre-existing ledger artifact refuses with `ledger_private_state_required`:
+
+```sh
+./target/debug/aicharts enroll --state-dir /absolute/private/directory/aicharts-state
+./target/debug/aicharts init --state-dir /absolute/private/directory/aicharts-state --key-file /absolute/private/directory/aicharts.key
+./target/debug/aicharts collect --state-dir /absolute/private/directory/aicharts-state --key-file /absolute/private/directory/aicharts.key --codex /absolute/path/to/sessions --claude /absolute/path/to/projects
+```
+
+`collect`, `collect-prefix`, `prefix-enable`, `status` and `outbox` reopen the same completed, custody-verified enrollment and operate on that account-bound ledger, so collection populates the pending queue `upload` later sends from. `inspect` resolves the same identity; `--occurrence-key-file` is refused on an enrolled directory (`occurrence_key_file_conflicts_with_enrollment`) because the account key is never a file. A directory holding only an unfinished, revoked or inconsistent enrollment record refuses closed with the enrollment seam's own fixed errors rather than silently using the legacy single-key identity; on non-macOS the same record refuses with `persistent_state_requires_qualified_macos_custody`. Unenrolled directories keep the legacy single-key behavior unchanged.
+
 ## Enrolled native sender
 
 The library's explicit split-key sender migration adds [bounded sender custody](usage-admission-v1.md): one immutable 1–256-operation batch, exact terminal receipts, conditional acknowledgment that preserves newer corrections, and persistent conflict/revocation gates. Ordinary opens and inspection never perform that migration; the `upload` command applies it explicitly on the first enrolled send, binding the existing ledger to the enrolled account, device, recovery generation and namespace version 1. A different already-bound sender refuses. Accepted receipt bytes must come from the owned authenticated transport, not a local file or an arbitrary caller.

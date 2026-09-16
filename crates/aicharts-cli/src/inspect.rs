@@ -50,11 +50,10 @@ pub(super) fn run(args: &[String]) -> Result<String, &'static str> {
     {
         use aicharts_ledger::{LedgerIdentity, ReadOnlyLedger};
         let checkpoint = crate::read_key(&options.key)?;
-        let occurrence = options
-            .occurrence_key
-            .as_ref()
-            .map(|path| crate::read_key(path))
-            .transpose()?;
+        // An enrolled directory resolves its account occurrence key from
+        // custody; an explicit file remains valid only for unenrolled state.
+        let occurrence =
+            crate::enrolled_ledger::resolve(&options.directory, options.occurrence_key.as_deref())?;
         let identity = match &occurrence {
             Some(occurrence) => LedgerIdentity::SplitKeys {
                 checkpoint: &checkpoint,
