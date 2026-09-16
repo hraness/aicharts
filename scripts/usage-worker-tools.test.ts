@@ -32,6 +32,8 @@ describe("local-only Worker tool boundary", () => {
     expect(workerToolCommands(["test-admission-http"])?.[0].at(-1)).toBe("test/admission-http.worker.ts");
     expect(workerToolCommands(["test-private-days"])?.[0].at(-1)).toBe("test/private-days.worker.ts");
     expect(workerToolCommands(["test-private-days-http"])?.[0].at(-1)).toBe("test/private-days-http.worker.ts");
+    expect(workerToolCommands(["test-restore-fence"])?.[0].at(-1)).toBe("test/restore-fence.worker.ts");
+    expect(workerToolCommands(["test-restore-fence-control"])?.[0].at(-1)).toBe("test/restore-fence-control.worker.ts");
     expect(workerToolCommands(["test-synthetic-qualification"])?.[0].at(-1)).toBe("test/synthetic-qualification.worker.ts");
     expect(workerToolCommands(["test-staging"])?.[0].at(-1)).toBe("test/staging.worker.ts");
     expect(workerToolCommands(["test-pairing", "--remote"])).toBeNull();
@@ -42,6 +44,8 @@ describe("local-only Worker tool boundary", () => {
     expect(workerToolCommands(["test-admission-http", "--remote"])).toBeNull();
     expect(workerToolCommands(["test-private-days", "--remote"])).toBeNull();
     expect(workerToolCommands(["test-private-days-http", "--remote"])).toBeNull();
+    expect(workerToolCommands(["test-restore-fence", "--remote"])).toBeNull();
+    expect(workerToolCommands(["test-restore-fence-control", "--remote"])).toBeNull();
     expect(workerToolCommands(["test-synthetic-qualification", "--remote"])).toBeNull();
     expect(JSON.stringify(workerToolCommands(["check"]))).not.toContain("deploy");
   });
