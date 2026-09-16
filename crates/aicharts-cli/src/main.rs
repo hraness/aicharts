@@ -43,7 +43,7 @@ const HELP: &str = "AI Charts Usage — local-only foundation
   aicharts turns --codex FILE [--codex FILE ...] --occurrence-key-file KEY [--json]
   aicharts sessions --occurrence-key-file KEY [--codex FILE ...] [--claude FILE ...] [--devin FILE ...] [--json]
   aicharts usage --key-file PATH [--codex FILE_OR_DIR] [--claude FILE_OR_DIR] [--devin FILE_OR_DIR] [--json]
-  aicharts upload --state-dir DIR --key-file PATH
+  aicharts upload --state-dir DIR --key-file PATH [--resume]
   aicharts upload --dry-run --key-file PATH [--codex FILE_OR_DIR] [--claude FILE_OR_DIR] [--devin FILE_OR_DIR]
   aicharts keygen --output PATH
   aicharts init --state-dir DIR --key-file PATH
@@ -70,7 +70,9 @@ it does not contact any service. On an enrolled macOS installation, upload
 --state-dir sends at most one bounded pending batch to the fixed usage service
 and settles the local ledger only on a validated terminal journal; an uncertain
 reply retains the frozen flight for explicit recovery, never a speculative
-replay. Key files contain exactly 32 private random bytes.
+replay. upload --resume re-exchanges that exact retained batch and settles only
+on its validated journal; it refuses when no flight is retained. Key files
+contain exactly 32 private random bytes.
 keygen creates a new mode-0600 file on Unix and never overwrites an existing file.
 Persistent commands are Unix-only and require explicit initialization. collect
 rescans changed sources from the beginning; unchanged metadata skips parsing.

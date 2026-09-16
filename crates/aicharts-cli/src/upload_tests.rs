@@ -846,6 +846,45 @@ fn upload_command_requires_state_dir_key_and_closed_options() {
         ])),
         Err("invalid_option")
     );
+    // `--resume` is a flag, not an option value, and may appear at most once.
+    let options = parse_options(&command_args(&[
+        "upload",
+        "--state-dir",
+        "d",
+        "--key-file",
+        "k",
+        "--resume",
+    ]))
+    .unwrap();
+    assert!(options.resume);
+    assert_eq!(
+        run(&command_args(&[
+            "upload",
+            "--state-dir",
+            "d",
+            "--key-file",
+            "k",
+            "--resume",
+            "--resume"
+        ])),
+        Err("invalid_option")
+    );
+    assert_eq!(
+        run(&command_args(&[
+            "upload",
+            "--state-dir",
+            "d",
+            "--key-file",
+            "k",
+            "--resume",
+            "extra"
+        ])),
+        Err("invalid_option")
+    );
+    assert_eq!(
+        run(&command_args(&["upload", "--resume"])),
+        Err("state_directory_required")
+    );
 }
 
 #[test]
