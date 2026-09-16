@@ -1,11 +1,15 @@
 import { createUsageOidcVerifier, type VerifierDependencies } from "../../../lib/usage/oidc/usage-oidc-verifier";
 import { PAIRING_HTTP_URL } from "../../../lib/usage/pairing-http-contract";
 import { PRIVATE_DAYS_HTTP_URL } from "../../../lib/usage/private-days-http-contract";
+import { USAGE_CONSENT_HTTP_URL } from "../../../lib/usage/consent-http-contract";
+import { LEADERBOARD_HTTP_URL } from "../../../lib/usage/leaderboard-http-contract";
 import { TERMINAL_ENROLLMENT_URL } from "../../../lib/usage/terminal-enrollment-contract";
 import { createPairingHttpHandler, type PairingHttpEnvironment, type PairingHttpRequestLifetime } from "./pairing-http";
 import { createTerminalEnrollmentHttpHandler, type TerminalEnrollmentHttpEnvironment } from "./terminal-enrollment-http";
 import { ADMISSION_HTTP_URL, createAdmissionHttpHandler, type AdmissionHttpEnvironment } from "./admission-http";
 import { createPrivateDaysHttpHandler, type PrivateDaysHttpEnvironment } from "./private-days-http";
+import { createConsentHttpHandler, type ConsentHttpEnvironment } from "./consent-http";
+import { createLeaderboardHttpHandler, type LeaderboardHttpEnvironment } from "./leaderboard-http";
 import type { PairingHttpVerifier } from "./pairing-http";
 
 export type ProductionEnvironment = Env & {
@@ -15,6 +19,7 @@ export type ProductionEnvironment = Env & {
   readonly AICHARTS_USAGE_AUTH_ENABLED?: unknown;
   readonly AICHARTS_USAGE_PAIRING_ENABLED?: unknown;
   readonly AICHARTS_USAGE_PRIVATE_READ_ENABLED?: unknown;
+  readonly AICHARTS_USAGE_PUBLIC_READ_ENABLED?: unknown;
 };
 type Lifetime = PairingHttpRequestLifetime;
 type Handler<E> = (request: Request, env: E, ctx: Lifetime) => Promise<Response>;
@@ -26,6 +31,8 @@ export interface ProductionRouterOptions {
     terminal: Handler<TerminalEnrollmentHttpEnvironment>;
     admission: Handler<AdmissionHttpEnvironment>;
     privateDays: Handler<PrivateDaysHttpEnvironment>;
+    consent: Handler<ConsentHttpEnvironment>;
+    leaderboard: Handler<LeaderboardHttpEnvironment>;
   }>;
 }
 
@@ -49,7 +56,7 @@ const bindingReady = (env: ProductionEnvironment, names: readonly string[]): boo
   try {
     const value = env[name as keyof ProductionEnvironment];
     if (value === undefined || value === null) return false;
-    if (name === "PAIRINGS" || name === "ACCOUNT_ENROLLMENTS") {
+    if (name === "PAIRINGS" || name === "ACCOUNT_ENROLLMENTS" || name === "PUBLIC_INDEX") {
       return typeof (value as { getByName?: unknown }).getByName === "function";
     }
     return ["list", "head", "get", "put", "delete"].every(method =>
@@ -74,17 +81,23 @@ export function createProductionRouter(options: ProductionRouterOptions = {}) {
     terminal: options.handlers?.terminal ?? createTerminalEnrollmentHttpHandler(effects),
     admission: options.handlers?.admission ?? createAdmissionHttpHandler(effects),
     privateDays: options.handlers?.privateDays ?? createPrivateDaysHttpHandler({ ...effects, verifier }),
+    consent: options.handlers?.consent ?? createConsentHttpHandler({ ...effects, verifier }),
+    leaderboard: options.handlers?.leaderboard ?? createLeaderboardHttpHandler(effects),
   };
   return async (request: Request, env: ProductionEnvironment, ctx: Lifetime): Promise<Response> => {
-    let path: "pairing" | "terminal" | "admission" | "privateDays" | null = null;
+    let path: "pairing" | "terminal" | "admission" | "privateDays" | "consent" | "leaderboard" | null = null;
     if (request.url === PAIRING_HTTP_URL) path = "pairing";
     else if (request.url === PRIVATE_DAYS_HTTP_URL) path = "privateDays";
     else if (request.url === TERMINAL_ENROLLMENT_URL) path = "terminal";
     else if (request.url === ADMISSION_HTTP_URL) path = "admission";
+    else if (request.url === USAGE_CONSENT_HTTP_URL) path = "consent";
+    else if (request.url === LEADERBOARD_HTTP_URL) path = "leaderboard";
     if (path === null || !flagReady(env, "AICHARTS_USAGE_WORKER_ENABLED") || !generationReady(env)) return unavailable();
     const required = path === "pairing" ? ["PAIRINGS"]
       : path === "terminal" ? ["PAIRINGS", "ACCOUNT_ENROLLMENTS"]
       : path === "admission" ? ["ACCOUNT_ENROLLMENTS", "STAGING", "CONTROL"]
+      : path === "consent" ? ["ACCOUNT_ENROLLMENTS", "PUBLIC_INDEX"]
+      : path === "leaderboard" ? ["PUBLIC_INDEX", "ACCOUNT_ENROLLMENTS"]
       : ["ACCOUNT_ENROLLMENTS", "CONTROL"];
     if (!bindingReady(env, required)) return unavailable();
     if (path === "pairing") {
@@ -94,6 +107,18 @@ export function createProductionRouter(options: ProductionRouterOptions = {}) {
     if (path === "privateDays") {
       if (!flagReady(env, "AICHARTS_USAGE_AUTH_ENABLED") || !flagReady(env, "AICHARTS_USAGE_PRIVATE_READ_ENABLED")) return unavailable();
       try { return await handlers.privateDays(request, env, ctx); } catch { return unavailable(); }
+    }
+    if (path === "consent") {
+      // The consent write stays fenced by the private-read qualification:
+      // authentication plus private reads must both be enabled.
+      if (!flagReady(env, "AICHARTS_USAGE_AUTH_ENABLED") || !flagReady(env, "AICHARTS_USAGE_PRIVATE_READ_ENABLED")) return unavailable();
+      try { return await handlers.consent(request, env, ctx); } catch { return unavailable(); }
+    }
+    if (path === "leaderboard") {
+      // The anonymous public read is gated by its own distinct flag; it never
+      // inherits activation from private collection or consent writes.
+      if (!flagReady(env, "AICHARTS_USAGE_PUBLIC_READ_ENABLED")) return unavailable();
+      try { return await handlers.leaderboard(request, env, ctx); } catch { return unavailable(); }
     }
     if (path === "terminal") {
       if (!flagReady(env, "AICHARTS_USAGE_ENROLLMENT_ENABLED")) return unavailable();

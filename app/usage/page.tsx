@@ -5,10 +5,12 @@ import { ChartPageFooter } from "@/components/chart-navigation";
 import { SiteHeader } from "@/components/site-header";
 import { searchSite } from "@/app/site";
 import { DailyUsageDashboard } from "@/components/usage/daily-dashboard";
+import { LeaderboardConsentControl } from "@/components/usage/leaderboard-consent";
 import { usagePageConfiguration } from "@/lib/usage/private-days-page";
 
 import "@/styles/usage.css";
 import "@/styles/usage-dashboard.css";
+import "@/styles/usage-leaderboard.css";
 
 export const metadata = createPublicSiteMetadata({
   ...searchSite,
@@ -28,6 +30,7 @@ export default async function UsagePage() {
     <SiteHeader current="/usage" />
     <main className="usage-home" id="main-content">
       <DailyUsageDashboard key={configuration.todayUtcDay} todayUtcDay={configuration.todayUtcDay} />
+      <LeaderboardConsentControl />
       <p><Link className="usage-inline-link" href="/usage/sessions">Inspect local sessions and model mix</Link></p>
       <ChartPageFooter />
     </main>

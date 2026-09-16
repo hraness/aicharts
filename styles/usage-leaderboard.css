@@ -1,0 +1,30 @@
+.usage-board { padding-block-end: 3rem; }
+.usage-board__table-scroll { border-block: 1px solid var(--grid); overflow-x: auto; scrollbar-color: var(--muted) var(--background); }
+.usage-board table { border-collapse: collapse; font-size: .85rem; font-variant-numeric: tabular-nums; inline-size: 100%; min-inline-size: 40rem; }
+.usage-board table caption { color: var(--muted); font-size: .8rem; padding-block: .25rem 1rem; text-align: start; }
+.usage-board :is(th, td) { padding: .7rem .75rem; text-align: end; white-space: nowrap; }
+.usage-board th { font-weight: 500; }
+.usage-board :is(th:first-child, th[scope="row"], .usage-board__handle) { text-align: start; }
+.usage-board thead { background: var(--surface-raised); }
+.usage-board tbody tr + tr { border-top: 1px solid var(--grid); }
+.usage-board__handle { font-weight: 600; overflow-wrap: anywhere; white-space: normal; }
+.usage-board__hint { color: var(--muted); font-size: .8rem; margin-block-start: .75rem; max-inline-size: 75ch; }
+
+.usage-consent { padding-block-end: 3rem; }
+.usage-consent .usage-daily__heading h2 { font-size: 1.6rem; letter-spacing: -.02em; }
+.usage-consent__published { border-block: 1px solid var(--grid); padding-block: 1.5rem; }
+.usage-consent__published p { color: var(--muted); margin-block-end: 1.5rem; max-inline-size: 70ch; }
+.usage-consent__handle { color: var(--foreground); font-weight: 600; }
+.usage-consent__form { border-block: 1px solid var(--grid); display: grid; gap: 1rem; justify-items: start; padding-block: 1.5rem; }
+.usage-consent__handle-field { display: grid; font-size: .8rem; font-weight: 600; gap: .4rem; }
+.usage-consent__handle-field input { background: var(--background); border: 1px solid var(--muted); border-radius: .35rem; caret-color: var(--foreground); color: var(--foreground); font: inherit; font-variant-numeric: tabular-nums; min-block-size: 2.75rem; min-inline-size: 16rem; padding: .55rem .65rem; }
+.usage-consent__handle-field input:hover { border-color: var(--foreground); }
+.usage-consent__form > span { color: var(--muted); font-size: .8rem; margin-block-start: -.75rem; }
+.usage-consent__check { align-items: start; display: flex; font-weight: 600; gap: .65rem; max-inline-size: 60ch; }
+.usage-consent__check input { accent-color: var(--foreground); block-size: 1.1rem; inline-size: 1.1rem; margin-block-start: .15rem; }
+.usage-consent__copy { color: var(--muted); font-size: .85rem; margin-block: 0; max-inline-size: 70ch; }
+.usage-consent button { cursor: pointer; font-family: inherit; }
+.usage-consent .usage-button--quiet { background: var(--background); }
+.usage-consent button:disabled { cursor: wait; opacity: .5; transform: none; }
+.usage-consent :is(button, input, a):focus-visible { outline: 2px solid var(--foreground); outline-offset: 4px; }
+.usage-consent ::selection { background: var(--foreground); color: var(--background); }

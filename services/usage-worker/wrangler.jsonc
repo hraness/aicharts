@@ -16,13 +16,15 @@
     "bindings": [
       { "name": "PAIRINGS", "class_name": "PairingIntent" },
       { "name": "ACCOUNT_ENROLLMENTS", "class_name": "AccountEnrollment" },
-      { "name": "RESTORE_FENCES", "class_name": "RestoreFence" }
+      { "name": "RESTORE_FENCES", "class_name": "RestoreFence" },
+      { "name": "PUBLIC_INDEX", "class_name": "LeaderboardIndex" }
     ]
   },
   "exports": {
     "PairingIntent": { "type": "durable-object", "storage": "sqlite" },
     "AccountEnrollment": { "type": "durable-object", "storage": "sqlite" },
-    "RestoreFence": { "type": "durable-object", "storage": "sqlite" }
+    "RestoreFence": { "type": "durable-object", "storage": "sqlite" },
+    "LeaderboardIndex": { "type": "durable-object", "storage": "sqlite" }
   },
   "r2_buckets": [
     { "binding": "STAGING", "bucket_name": "aicharts-usage-local-only" },

@@ -376,20 +376,23 @@ describe("explicit retained-genesis recovery", () => {
     }
     const before = await accountRow();
     const legacy = typeof before.payload === "string" ? JSON.parse(before.payload) as Record<string, unknown> : null;
-    if (legacy !== null) { delete legacy.genesisCompletion; delete legacy.fenceEpoch; }
+    if (legacy !== null) { delete legacy.genesisCompletion; delete legacy.fenceEpoch; delete legacy.leaderboard; }
     await runInDurableObject(accountStub(), (_instance, state) => {
       removeSyntheticAdmissionTables(state.storage.sql);
       state.storage.sql.exec("UPDATE account_enrollment SET schema_version = 1, payload = ?", legacy === null ? null : JSON.stringify(legacy));
     });
     await abortAllDurableObjects();
     const after = await accountRow();
-    expect(after).toMatchObject({ schema_version: 4, revision: before.revision });
+    expect(after).toMatchObject({ schema_version: 5, revision: before.revision });
     if (legacy === null) expect(after.payload).toBeNull();
     else {
       const payload = await accountPayload();
       expect(payload.genesisCompletion).toEqual(phase === "pending" ? null : { mode: "original", intentId: ID, reservationId: (legacy.anchor as { reservationId: string }).reservationId, completedAtMs: NOW });
+      // The consent migration never opts an existing account in.
+      expect(payload.leaderboard).toEqual({ consent: false, consentedAtMs: null, publicHandle: null, changedAtMs: 0 });
       delete payload.genesisCompletion;
       delete payload.fenceEpoch;
+      delete payload.leaderboard;
       expect(payload).toEqual(legacy);
     }
   });
@@ -798,7 +801,7 @@ describe("dormant account enrollment with real local pairing and R2", () => {
     expect(await accountStub().enroll(proof)).toEqual({ ok: false, error: "recovery_required" });
     expect((await accountStub().namespaceForEnrollment(proof)).ok).toBe(false);
     expect((await accountStub().revokeEnrollment(proof)).ok).toBe(false);
-    expect(await accountRow()).toMatchObject({ schema_version: 4, revision: 0, payload: null });
+    expect(await accountRow()).toMatchObject({ schema_version: 5, revision: 0, payload: null });
     expect(await anchor()).toEqual(original);
   });
 
@@ -847,7 +850,7 @@ describe("dormant account enrollment with real local pairing and R2", () => {
     await runInDurableObject(accountStub(), (_instance, state) => {
       switch (corruption) {
         case "malformed payload": state.storage.sql.exec("UPDATE account_enrollment SET payload = ?", '{"chat":"transcript-canary"}'); break;
-        case "future schema": state.storage.sql.exec("UPDATE account_enrollment SET schema_version = 5"); break;
+        case "future schema": state.storage.sql.exec("UPDATE account_enrollment SET schema_version = 6"); break;
         case "missing row": state.storage.sql.exec("DELETE FROM account_enrollment"); break;
         case "extra table": state.storage.sql.exec("CREATE TABLE unexpected_account_state (marker INTEGER)"); break;
         case "extra index": state.storage.sql.exec("CREATE INDEX unexpected_account_index ON account_enrollment (revision)"); break;
