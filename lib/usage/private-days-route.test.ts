@@ -7,7 +7,7 @@ const { createPrivateDaysPublicHandler } = await import("./private-days-route");
 const range = { firstUtcDay: 10, dayCount: 1 };
 const cell = { usageOccurrences: 0, observedAccountedTokens: "0", observedOutputTokens: "0" };
 const value: PrivateDaysV1 = { schemaVersion: 1, measurementProfile: "imported-tokens-v1", coverage: "partial",
-  journalRevision: 0, journalCommittedAtMs: null, firstUtcDay: 10, days: [{ utcDay: 10, codex: cell, claudeCode: cell }] };
+  journalRevision: 0, journalCommittedAtMs: null, firstUtcDay: 10, days: [{ utcDay: 10, codex: cell, claudeCode: cell, devin: cell }] };
 const ready = { kind: "query", result: { ok: true, value } };
 function incoming(options: { method?: string; url?: string; headers?: Record<string, string>; signal?: AbortSignal } = {}) {
   return new Request(options.url ?? `${PRIVATE_DAYS_PUBLIC_URL}?firstUtcDay=10&dayCount=1`, { method: options.method ?? "GET", signal: options.signal,

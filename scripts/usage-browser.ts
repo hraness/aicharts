@@ -27,6 +27,8 @@ function fixture(mode: Mode, range: PrivateDaysRange): PrivateDaysPublicReply {
         : { usageOccurrences: 20 + index, observedAccountedTokens: String(1_450_000 + (index * 679_133) % 5_000_000), observedOutputTokens: String(350_000 + index * 31_713) },
       claudeCode: mode === "zero" ? empty
         : { usageOccurrences: 9 + index, observedAccountedTokens: String(710_000 + (index * 331_721) % 3_000_000), observedOutputTokens: String(210_000 + index * 15_921) },
+      devin: mode === "zero" ? empty
+        : { usageOccurrences: 4 + index, observedAccountedTokens: String(380_000 + (index * 201_733) % 2_000_000), observedOutputTokens: String(90_000 + index * 9_517) },
     })),
   } };
 }

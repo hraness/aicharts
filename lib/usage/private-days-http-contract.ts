@@ -53,7 +53,7 @@ function resultOf(request: PrivateDaysRequestV1, value: unknown): PrivateDaysQue
 function responseProjection(result: PrivateDaysQueryResult): object {
   if (!result.ok) return owned({ schemaVersion: 1, result });
   const value = result.value;
-  const days = value.days.map(day => owned({ utcDay: day.utcDay, codex: owned(day.codex), claudeCode: owned(day.claudeCode) }));
+  const days = value.days.map(day => owned({ utcDay: day.utcDay, codex: owned(day.codex), claudeCode: owned(day.claudeCode), devin: owned(day.devin) }));
   Object.setPrototypeOf(days, null);
   const projection = owned({ schemaVersion: 1, measurementProfile: value.measurementProfile, coverage: value.coverage,
     journalRevision: value.journalRevision, journalCommittedAtMs: value.journalCommittedAtMs,

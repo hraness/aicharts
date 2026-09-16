@@ -60,8 +60,8 @@ fn parse_options(args: &[String]) -> Result<Options, &'static str> {
                 rescan = true
             }
             "--dry-run" if command == Command::Outbox && !dry_run => dry_run = true,
-            flag @ ("--state-dir" | "--key-file" | "--codex" | "--claude" | "--limit"
-            | "--after" | "--revision") => {
+            flag @ ("--state-dir" | "--key-file" | "--codex" | "--claude" | "--devin"
+            | "--limit" | "--after" | "--revision") => {
                 i += 1;
                 let value = args
                     .get(i)
@@ -78,6 +78,9 @@ fn parse_options(args: &[String]) -> Result<Options, &'static str> {
                             aicharts_protocol::Provider::ClaudeCode,
                             PathBuf::from(value),
                         ))
+                    }
+                    "--devin" if matches!(command, Command::Collect | Command::CollectPrefix) => {
+                        sources.push((aicharts_protocol::Provider::Devin, PathBuf::from(value)))
                     }
                     "--limit" if command == Command::Outbox && limit.is_none() => {
                         let parsed = value.parse::<usize>().map_err(|_| "invalid_page_limit")?;
@@ -189,6 +192,7 @@ pub(crate) mod unix {
         mac.update(&[match provider {
             Provider::Codex => 1,
             Provider::ClaudeCode => 2,
+            Provider::Devin => 3,
         }]);
         let bytes = path.as_os_str().as_bytes();
         mac.update(&(bytes.len() as u64).to_le_bytes());
@@ -258,7 +262,7 @@ pub(crate) mod unix {
         let mut verification = vec![];
         for (provider, path) in &options.sources {
             let mut files = vec![];
-            crate::source_files(path, 0, &mut files, &mut visited)?;
+            crate::source_files(path, *provider, 0, &mut files, &mut visited)?;
             files.sort();
             for path in files {
                 let canonical = fs::canonicalize(&path).map_err(|_| "source_metadata_failed")?;
@@ -296,9 +300,14 @@ pub(crate) mod unix {
                 if bytes_scanned > crate::MAX_SOURCE_BYTES {
                     return Err("source_byte_limit");
                 }
-                // A physical snapshot ends at a newline. Accepting an unfinished
-                // append can checkpoint an event before its final fields arrive.
-                if !prefix_mode && before.bytes != 0 {
+                // A physical JSONL snapshot ends at a newline. Accepting an
+                // unfinished append can checkpoint an event before its final
+                // fields arrive. A whole-document source has no tail marker;
+                // its own parse decides completeness.
+                if !prefix_mode
+                    && before.bytes != 0
+                    && *provider != aicharts_protocol::Provider::Devin
+                {
                     file.seek(SeekFrom::End(-1))
                         .map_err(|_| "source_read_failed")?;
                     let mut last = [0; 1];
@@ -637,6 +646,18 @@ mod tests {
                 .unwrap();
                 dir
             }
+            /// One Devin ATIF document under a sibling directory; no LF tail.
+            fn write_devin_source(&self) -> PathBuf {
+                let dir = self.0.join("devin-src");
+                std::fs::DirBuilder::new().mode(0o700).create(&dir).unwrap();
+                let file = dir.join("session.json");
+                fs::write(
+                    &file,
+                    r#"{"schema_version":"ATIF-v1.7","session_id":"atif-1","agent":{"name":"devin"},"steps":[{"step_id":1,"source":"agent","timestamp":"2026-09-15T10:00:05Z","metrics":{"prompt_tokens":10,"completion_tokens":2,"cached_tokens":3}}]}"#,
+                )
+                .unwrap();
+                dir
+            }
         }
         impl Drop for Fixture {
             fn drop(&mut self) {
@@ -645,6 +666,10 @@ mod tests {
         }
 
         fn options(dir: &Path, src: Option<&Path>, rest: &[&str]) -> super::Options {
+            options_as(dir, "--claude", src, rest)
+        }
+
+        fn options_as(dir: &Path, flag: &str, src: Option<&Path>, rest: &[&str]) -> super::Options {
             let mut all: Vec<String> = rest.iter().map(|s| s.to_string()).collect();
             all.extend([
                 "--state-dir".to_string(),
@@ -653,7 +678,7 @@ mod tests {
                 "unused".to_string(),
             ]);
             if let Some(src) = src {
-                all.push("--claude".to_string());
+                all.push(flag.to_string());
                 all.push(src.to_string_lossy().into_owned());
             }
             parse_options(&all).unwrap()
@@ -768,6 +793,57 @@ mod tests {
                 )
                 .err(),
                 Some("ledger_namespace_mismatch")
+            );
+        }
+
+        #[test]
+        fn devin_whole_documents_collect_in_both_modes_without_a_tail_marker() {
+            let fixture = Fixture::new();
+            let source = fixture.write_devin_source();
+            // Snapshot mode.
+            let dir = fixture.create_state();
+            unix::run_with_occurrence(options(&dir, None, &["init"]), &CHECKPOINT, Some(NAMESPACE))
+                .unwrap();
+            let out = unix::run_with_occurrence(
+                options_as(&dir, "--devin", Some(&source), &["collect"]),
+                &CHECKPOINT,
+                Some(NAMESPACE),
+            )
+            .unwrap();
+            assert!(out.contains("pending records: 1"), "{out}");
+            // Completed-prefix mode needs its own ledger generation.
+            let fixture = Fixture::new();
+            let source = fixture.write_devin_source();
+            let dir = fixture.create_state();
+            unix::run_with_occurrence(options(&dir, None, &["init"]), &CHECKPOINT, Some(NAMESPACE))
+                .unwrap();
+            let out = unix::run_with_occurrence(
+                options(&dir, None, &["prefix-enable", "--revision", "0"]),
+                &CHECKPOINT,
+                Some(NAMESPACE),
+            )
+            .unwrap();
+            assert!(out.contains("Completed-prefix collection enabled"), "{out}");
+            let out = unix::run_with_occurrence(
+                options_as(&dir, "--devin", Some(&source), &["collect-prefix"]),
+                &CHECKPOINT,
+                Some(NAMESPACE),
+            )
+            .unwrap();
+            assert!(out.contains("pending records: 1"), "{out}");
+            // A replaced document is new history, never an append: the
+            // unchanged witness replays; an edited one refuses.
+            let edited = source.join("session.json");
+            let original = fs::read_to_string(&edited).unwrap();
+            fs::write(&edited, original.replace("atif-1", "atif-2")).unwrap();
+            assert_eq!(
+                unix::run_with_occurrence(
+                    options_as(&dir, "--devin", Some(&source), &["collect-prefix"]),
+                    &CHECKPOINT,
+                    Some(NAMESPACE),
+                )
+                .err(),
+                Some("source_history_changed")
             );
         }
 

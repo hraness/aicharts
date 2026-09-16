@@ -10,7 +10,7 @@ const request: PrivateDaysRequestV1 = { schemaVersion: 1, accountId: `acct_${"1"
 const totals = (count = 0, total = "0", output = "0") => ({ usageOccurrences: count, observedAccountedTokens: total, observedOutputTokens: output });
 const value = (query = request) => ({ schemaVersion: 1, measurementProfile: "imported-tokens-v1", coverage: "partial",
   journalRevision: 1, journalCommittedAtMs: 1_000, firstUtcDay: query.firstUtcDay,
-  days: Array.from({ length: query.dayCount }, (_, index) => ({ utcDay: query.firstUtcDay + index, codex: totals(), claudeCode: totals() })) } satisfies PrivateDaysV1);
+  days: Array.from({ length: query.dayCount }, (_, index) => ({ utcDay: query.firstUtcDay + index, codex: totals(), claudeCode: totals(), devin: totals() })) } satisfies PrivateDaysV1);
 
 test("request validation copies exact data and never establishes current authentication", () => {
   const source = { ...request }, parsed = parsePrivateDaysRequest(source);
@@ -79,11 +79,13 @@ test("response sizing never invokes inherited object or array JSON hooks", () =>
 test("canonical totals preserve values above 2^53 and current provider token limits", () => {
   const query = { ...request, dayCount: 31 }, source = value(query);
   source.journalRevision = 4_096;
-  source.days[0].codex = totals(65_536, "196608000000000000", "65536000000000000");
-  source.days[1].claudeCode = totals(34_464, "172320000000000000", "34464000000000000");
+  source.days[0].codex = totals(50_000, "150000000000000000", "50000000000000000");
+  source.days[1].claudeCode = totals(30_000, "150000000000000000", "30000000000000000");
+  source.days[2].devin = totals(20_000, "60000000000000000", "20000000000000000");
   const parsed = parsePrivateDaysValue(query, source);
-  expect(parsed?.days[0].codex.observedAccountedTokens).toBe("196608000000000000");
-  expect(parsed?.days[1].claudeCode.observedAccountedTokens).toBe("172320000000000000");
+  expect(parsed?.days[0].codex.observedAccountedTokens).toBe("150000000000000000");
+  expect(parsed?.days[1].claudeCode.observedAccountedTokens).toBe("150000000000000000");
+  expect(parsed?.days[2].devin.observedAccountedTokens).toBe("60000000000000000");
   expect(JSON.stringify(parsed).length).toBeLessThan(PRIVATE_DAYS_MAX_RESPONSE_BYTES);
   source.days[2].codex = totals(1, "1");
   expect(parsePrivateDaysValue(query, source)).toBeNull();
@@ -105,6 +107,8 @@ test("invalid totals, zero semantics, provider and journal bounds fail closed", 
     { journalRevision: 0 }, { journalCommittedAtMs: -0 }, { firstUtcDay: -0 }, { coverage: "complete" }, { measurementProfile: "turns-v1" }]) {
     expect(parsePrivateDaysValue(request, { ...value(), ...fields })).toBeNull();
   }
+  const devin = value(); devin.days[0].devin = totals(1, "4000000000001");
+  expect(parsePrivateDaysValue(request, devin)).toBeNull();
   const exceeded = value(); exceeded.journalRevision = 4_096;
   exceeded.days[0].codex = totals(65_536, "65536"); exceeded.days[0].claudeCode = totals(1, "1");
   expect(parsePrivateDaysValue(request, exceeded)).toBeNull();

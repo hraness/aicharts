@@ -623,7 +623,7 @@ export class AccountEnrollment extends DurableObject<Env> {
         const days = admission.readImportedDays(state, windowRequest, control);
         let observedTokens = 0n, usageRecords = 0;
         for (const day of days.days) {
-          for (const provider of [day.codex, day.claudeCode] as const) {
+          for (const provider of [day.codex, day.claudeCode, day.devin] as const) {
             observedTokens += BigInt(provider.observedAccountedTokens);
             usageRecords += provider.usageOccurrences;
           }

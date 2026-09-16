@@ -6,7 +6,7 @@ import { decodePrivateDaysHttpRequest, decodePrivateDaysHttpResponse, encodePriv
 const query: PrivateDaysRequestV1 = { schemaVersion: 1, accountId: `acct_${"a".repeat(32)}`, sessionExpiresAtMs: 100_000, firstUtcDay: 0, dayCount: 1 };
 const empty = () => ({ usageOccurrences: 0, observedAccountedTokens: "0", observedOutputTokens: "0" });
 const value: PrivateDaysV1 = { schemaVersion: 1, measurementProfile: "imported-tokens-v1", coverage: "partial", journalRevision: 0,
-  journalCommittedAtMs: null, firstUtcDay: 0, days: [{ utcDay: 0, codex: empty(), claudeCode: empty() }] };
+  journalCommittedAtMs: null, firstUtcDay: 0, days: [{ utcDay: 0, codex: empty(), claudeCode: empty(), devin: empty() }] };
 const bytes = (text: string) => new TextEncoder().encode(text);
 const text = (value: Uint8Array | null) => new TextDecoder().decode(value!);
 

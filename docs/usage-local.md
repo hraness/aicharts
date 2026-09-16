@@ -26,10 +26,11 @@ Read one selected source or directory; repeat source flags to combine files. Nei
 ```sh
 ./target/debug/aicharts usage --key-file /absolute/private/directory/aicharts.key --codex /absolute/path/to/session.jsonl --json
 ./target/debug/aicharts usage --key-file /absolute/private/directory/aicharts.key --claude /absolute/path/to/projects --json
+./target/debug/aicharts usage --key-file /absolute/private/directory/aicharts.key --devin /absolute/path/to/atif-sessions --json
 ./target/debug/aicharts upload --dry-run --key-file /absolute/private/directory/aicharts.key --codex /absolute/path/to/session.jsonl
 ```
 
-`upload --dry-run` prints JSON containing hexadecimal canonical numeric frames. This JSON is a local inspection format, not an accepted HTTP request body. The actual [wire contract](usage-wire-v1.md) has no string fields. `upload` without `--dry-run` is the enrolled send described below; it reads no Codex/Claude sources. No command searches a home directory automatically or modifies Codex/Claude configuration.
+`upload --dry-run` prints JSON containing hexadecimal canonical numeric frames. This JSON is a local inspection format, not an accepted HTTP request body. The actual [wire contract](usage-wire-v1.md) has no string fields. `upload` without `--dry-run` is the enrolled send described below; it reads no provider sources. No command searches a home directory automatically or modifies provider configuration.
 
 ## Foreground daemon runner
 
@@ -40,7 +41,7 @@ are reconciled by their keyed native identities; partial tails remain deferred
 until a terminating newline, and copied or forked subagent histories are not
 reconstructed as new root usage.
 
-`daemon` repeats the existing local `collect` command in one foreground process. It requires the same explicit state directory, private key and Codex/Claude source paths; it does not discover paths, install a service, read provider credentials, or contact a server. The default interval is 15 minutes and is bounded to 60 seconds through 24 hours. Use `--once` for a single supervised pass or smoke test:
+`daemon` repeats the existing local `collect` command in one foreground process. It requires the same explicit state directory, private key and provider source paths; it does not discover paths, install a service, read provider credentials, or contact a server. The default interval is 15 minutes and is bounded to 60 seconds through 24 hours. Use `--once` for a single supervised pass or smoke test:
 
 ```sh
 ./target/debug/aicharts daemon --once --state-dir /absolute/private/aicharts-state \
@@ -54,14 +55,15 @@ For live logs and an already [prefix-enabled ledger](#collect-completed-lines-fr
 ```sh
 ./target/debug/aicharts daemon --once --complete-prefix \
   --state-dir /absolute/private/aicharts-state --key-file /absolute/private/aicharts.key \
-  --codex /absolute/path/to/codex-sessions --claude /absolute/path/to/claude-projects --json
+  --codex /absolute/path/to/codex-sessions --claude /absolute/path/to/claude-projects \
+  --devin /absolute/path/to/atif-sessions --json
 ```
 
-This selects `collect-prefix` on every pass and retry. Complete lines are imported; a stable unfinished suffix waits for its newline. JSON reports `scanMode: "full_changed_source_complete_prefix"` and `sourcesWithDeferredTail`. Prefix replay, history checks, atomic imports and metadata skips are unchanged. This is full-prefix replay, not byte-tail resumption. A file changing during the scan can still fail; prefix mode does not make every live-source race recoverable.
+This selects `collect-prefix` on every pass and retry. Complete JSONL lines are imported; a stable unfinished suffix waits for its newline. Devin ATIF documents are complete JSON documents: only a source that parses end to end is imported; a partial or truncated document fails closed. JSON reports `scanMode: "full_changed_source_complete_prefix"` and `sourcesWithDeferredTail`. Prefix replay, history checks, atomic imports and metadata skips are unchanged. This is full-prefix replay, not byte-tail resumption. A file changing during the scan can still fail; prefix mode does not make every live-source race recoverable.
 
 Choose the mode explicitly. Without `--complete-prefix`, the daemon retains legacy collection and refuses a prefix-enabled ledger with `ledger_complete_prefix_required`. With it, a legacy ledger refuses with `ledger_prefix_not_enabled`. Both mode checks occur before source traversal. The daemon never initializes, migrates, resets, or automatically switches a ledger; migration remains the separate revision-guarded `prefix-enable` command.
 
-Directory traversal selects `.jsonl` files, skips observed symlink entries, and rejects a symlink supplied as a source. Unix final-file opens use no-follow/nonblocking flags and check file identity. This is not descriptor-rooted traversal or an OS sandbox: parent-directory replacement and malicious local processes are outside this initial confinement claim. The source reader and uploader have not been isolated into separately sandboxed processes; no uploader exists yet.
+Directory traversal selects `.jsonl` files for Codex and Claude sources and `.json` files for Devin sources; an explicit file argument is accepted regardless of extension. Traversal skips observed symlink entries and rejects a symlink supplied as a source. Unix final-file opens use no-follow/nonblocking flags and check file identity. This is not descriptor-rooted traversal or an OS sandbox: parent-directory replacement and malicious local processes are outside this initial confinement claim. The source reader and uploader have not been isolated into separately sandboxed processes; no uploader exists yet.
 
 ## Interpreting the result
 
@@ -69,6 +71,7 @@ Token totals are **observed, partial historical usage**, not provider billing st
 
 - Codex uses cumulative deltas. A bounded first `last_token_usage` can count the last request while preceding unobserved cumulative history stays omitted. Missing baseline and counter regressions produce warnings. Declared fork history is unsupported, not newly earned usage. Copied complete records deduplicate; arbitrary partially overlapping/forked histories may conflict and require future lineage-aware reconciliation. Partial tails remain deferred until a complete newline; no incomplete suffix contributes numeric usage.
 - Claude uses native request/message identities and compatible monotonic streaming revisions. Positive cache creation without an explicit 5-minute/1-hour split is omitted with `claude_cache_ttl_unknown`, rather than assigned an invented price category.
+- Devin ATIF documents require `ATIF-v1.*` schema, a `devin` agent name, and a session identity. Only `agent` steps with prompt and completion metrics contribute; cached tokens count as cache-read and the uncached remainder is `prompt_tokens - cached_tokens`. A `final_metrics` block that disagrees with the summed agent steps produces `devin_totals_mismatch`. A document missing a session identity yields no measurements rather than unattributed usage.
 - Human prompt counts and activity/concurrency are not reconstructed from conversation text. The TypeScript rollup engine can calculate 15-minute activity and independent 16-minute concurrency from explicit interval/coverage inputs; historical token logs do not provide those inputs reliably.
 
 All omissions are reported with fixed warning codes. The parser's detailed code and limits are documented in [`crates/aicharts-core/README.md`](../crates/aicharts-core/README.md). Source formats change; current evidence is synthetic compatibility tests, not a universal installed-version qualification.
@@ -112,13 +115,13 @@ The foreground `daemon` runner uses the same collector and ledger. It retries on
 Collect explicit sources and inspect retained totals after a restart:
 
 ```sh
-./target/debug/aicharts collect --state-dir /absolute/private/directory/aicharts-state --key-file /absolute/private/directory/aicharts.key --codex /absolute/path/to/sessions --claude /absolute/path/to/projects --json
+./target/debug/aicharts collect --state-dir /absolute/private/directory/aicharts-state --key-file /absolute/private/directory/aicharts.key --codex /absolute/path/to/sessions --claude /absolute/path/to/projects --devin /absolute/path/to/atif-sessions --json
 ./target/debug/aicharts status --state-dir /absolute/private/directory/aicharts-state --key-file /absolute/private/directory/aicharts.key --json
 ```
 
 Unchanged file metadata skips source parsing. Changed sources are read again from the beginning; `--rescan` forces this for unchanged files too. `linesRead`, `bytesScanned` and `sourcesSkipped` describe that invocation. This is a source-snapshot checkpoint, not byte-tail resumption. Metadata skips are not tamper evidence. The ledger also validates its bounded numeric state on open, so a no-change scan still performs local integrity work.
 
-All selected changed sources must parse and remain stable before one transaction saves checkpoints, deduplicated measurements and pending candidates together. A partial final line, malformed source, conflicting occurrence, stale concurrent writer or exceeded limit leaves that import uncommitted. Persistent collection requires a final newline. Retry after the source writer completes. An omitted source remains retained; truncation, replacement at the same canonical path or disappearing previously observed occurrences fail with a fixed error instead of deleting history. Automatic rotation migration, explicit deletion and decreasing corrections are not implemented.
+All selected changed sources must parse and remain stable before one transaction saves checkpoints, deduplicated measurements and pending candidates together. A partial final line, malformed source, conflicting occurrence, stale concurrent writer or exceeded limit leaves that import uncommitted. Persistent JSONL collection requires a final newline; a Devin ATIF source must parse as one complete JSON document instead. Retry after the source writer completes. An omitted source remains retained; truncation, replacement at the same canonical path or disappearing previously observed occurrences fail with a fixed error instead of deleting history. Automatic rotation migration, explicit deletion and decreasing corrections are not implemented.
 
 Compatible Claude streaming updates replace the local pending value rather than add another occurrence. An older separate copy cannot lower the latest observed value. A successful result is still partial historical measurement, not a billing statement or proof against forged usage. If another collector commits before the summary is read, `committedRevision` identifies this import and `ledgerRevision` identifies the later summary snapshot.
 
@@ -139,7 +142,7 @@ On macOS, `enroll --state-dir DIR` changes how the local commands choose the led
 ```sh
 ./target/debug/aicharts enroll --state-dir /absolute/private/directory/aicharts-state
 ./target/debug/aicharts init --state-dir /absolute/private/directory/aicharts-state --key-file /absolute/private/directory/aicharts.key
-./target/debug/aicharts collect --state-dir /absolute/private/directory/aicharts-state --key-file /absolute/private/directory/aicharts.key --codex /absolute/path/to/sessions --claude /absolute/path/to/projects
+./target/debug/aicharts collect --state-dir /absolute/private/directory/aicharts-state --key-file /absolute/private/directory/aicharts.key --codex /absolute/path/to/sessions --claude /absolute/path/to/projects --devin /absolute/path/to/atif-sessions
 ```
 
 `collect`, `collect-prefix`, `prefix-enable`, `status` and `outbox` reopen the same completed, custody-verified enrollment and operate on that account-bound ledger, so collection populates the pending queue `upload` later sends from. `inspect` resolves the same identity; `--occurrence-key-file` is refused on an enrolled directory (`occurrence_key_file_conflicts_with_enrollment`) because the account key is never a file. A directory holding only an unfinished, revoked or inconsistent enrollment record refuses closed with the enrollment seam's own fixed errors rather than silently using the legacy single-key identity; on non-macOS the same record refuses with `persistent_state_requires_qualified_macos_custody`. Unenrolled directories keep the legacy single-key behavior unchanged.
@@ -187,19 +190,23 @@ checkpoints using that revision, without reading sources or changing identities:
 
 ```sh
 ./target/debug/aicharts prefix-enable --state-dir /absolute/private/directory/aicharts-state --key-file /absolute/private/directory/aicharts.key --revision 0
-./target/debug/aicharts collect-prefix --state-dir /absolute/private/directory/aicharts-state --key-file /absolute/private/directory/aicharts.key --codex /absolute/path/to/sessions --claude /absolute/path/to/projects --json
+./target/debug/aicharts collect-prefix --state-dir /absolute/private/directory/aicharts-state --key-file /absolute/private/directory/aicharts.key --codex /absolute/path/to/sessions --claude /absolute/path/to/projects --devin /absolute/path/to/atif-sessions --json
 ```
 
 Replace `0` with the observed revision. Migration preserves measurements, pending
 records and revisions; a stale first migration fails. It is additive, not an
 automatic repair. The old `collect` command refuses a prefix-enabled ledger
 before reading sources. `status`, `outbox` and read-only reindex inspection do
-not migrate it. Reindex still requires complete newline-terminated sources.
+not migrate it. Reindex still requires complete newline-terminated JSONL sources
+and complete Devin ATIF documents.
 
-`collect-prefix` replays the full LF-terminated prefix, not just appended bytes.
-An unfinished JSON or UTF-8 suffix waits for its terminating newline. The CLI
+`collect-prefix` replays the full LF-terminated prefix of each JSONL source, not
+just appended bytes. An unfinished JSON or UTF-8 suffix waits for its
+terminating newline. For a Devin source the observed file is itself the complete
+prefix: there is no partial tail, and a document that does not parse end to end
+fails rather than deferring. The CLI
 reports `sourcesWithDeferredTail`; no numeric measurement or checkpoint is
-created from that suffix. New and historically empty sources wait for their
+created from a deferred suffix. New and historically empty sources wait for their
 first complete line. A nonempty migrated source with no complete line fails
 instead of bypassing history conservation. Existing unwitnessed sources must
 replay even when their metadata matches a legacy checkpoint.

@@ -12,7 +12,7 @@ import "@/styles/usage-leaderboard.css";
 export const metadata = createPublicSiteMetadata({
   ...searchSite,
   title: "AI usage leaderboard | AI Charts",
-  description: "An opt-in leaderboard for comparable, numeric Codex and Claude Code usage measurements.",
+  description: "An opt-in leaderboard for comparable, numeric Codex, Claude Code and Devin usage measurements.",
 }, { canonicalPath: "/leaderboard" });
 
 export default async function LeaderboardPage() {

@@ -57,7 +57,7 @@ describe("usage wire v1", () => {
     expect(decodeUsageBatch(encoded(), { ...fixturePolicy, firstDay: 20_001 })).toEqual({ ok: false, error: "invalid_policy" });
     for (const [field, value, error] of [
       ["modelId", 2, "unknown_model"], ["contextTier", 1, "invalid_context_tier"],
-      ["provider", 3, "invalid_enum"], ["authMode", 3, "invalid_enum"], ["evidence", 3, "invalid_enum"],
+      ["provider", 4, "invalid_enum"], ["authMode", 3, "invalid_enum"], ["evidence", 3, "invalid_enum"],
       ["offsetMs", DAY_MS, "invalid_offset"],
     ] as const) {
       expect(encodeUsageBatch({ ...batch, usage: [{ ...batch.usage[0], [field]: value }] }, fixturePolicy)).toEqual({ ok: false, error });
@@ -74,6 +74,11 @@ describe("usage wire v1", () => {
       { ...usage.tokens, reasoningOutput: usage.tokens.output + 1n }, { ...usage.tokens, cacheWrite5m: 1n },
       { ...usage.tokens, inputUncached: 0n, cacheRead: 0n, output: 0n, reasoningOutput: 0n },
     ]) expect(encodeUsageBatch({ ...batch, usage: [{ ...usage, tokens }] }, fixturePolicy)).toEqual({ ok: false, error: "invalid_tokens" });
+    const devin = { ...usage, provider: 3 as const };
+    expect(encodeUsageBatch({ ...batch, usage: [devin] }, fixturePolicy).ok).toBe(true);
+    for (const tokens of [{ ...devin.tokens, cacheWrite5m: 1n }, { ...devin.tokens, cacheWrite1h: 1n }]) {
+      expect(encodeUsageBatch({ ...batch, usage: [{ ...devin, tokens }] }, fixturePolicy)).toEqual({ ok: false, error: "invalid_tokens" });
+    }
     expect(encodeUsageBatch({ ...batch, usage: [{ ...usage, id: new Uint8Array(16) }] }, fixturePolicy)).toEqual({ ok: false, error: "invalid_id" });
     expect(encodeUsageBatch({ ...batch, usage: [usage, usage] }, fixturePolicy)).toEqual({ ok: false, error: "invalid_order" });
     expect(encodeUsageBatch({ ...batch, prompts: [batch.prompts[0], batch.prompts[0]] }, fixturePolicy)).toEqual({ ok: false, error: "invalid_order" });

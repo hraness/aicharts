@@ -11,7 +11,7 @@ const numbers = new Intl.NumberFormat("en-US");
 const clock = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "UTC" });
 const percent = (value: number | null) => value === null ? "Unknown" : `${value.toFixed(1)}%`;
 const duration = (ms: number) => ms < 1_000 ? `${ms} ms` : ms < 60_000 ? `${(ms / 1_000).toFixed(1)} s` : ms < 3_600_000 ? `${(ms / 60_000).toFixed(1)} min` : `${(ms / 3_600_000).toFixed(1)} h`;
-const provider = (name: string) => name === "codex" ? "Codex" : "Claude Code";
+const provider = (name: string) => name === "codex" ? "Codex" : name === "devin" ? "Devin" : "Claude Code";
 const shortId = (id: string) => `${id.slice(0, 4)}…${id.slice(-6)}`;
 type ReadHandle = { getFile: () => Promise<File> };
 type PickerWindow = Window & { showOpenFilePicker?: (options: { multiple: false; types: { description: string; accept: Record<string, string[]> }[] }) => Promise<ReadHandle[]> };
@@ -137,7 +137,7 @@ export function SessionDashboard() {
     {error && <p className="usage-sessions__notice" role="alert">{error}</p>}
     <div aria-live="polite" className="usage-daily__announcement">{loading ? "Reading report." : example ? "Synthetic example loaded." : report ? `${report.sessions.length} sessions loaded.` : "No report opened."}</div>
     {report === null ? <div className="usage-sessions__intro">
-      <h2>Start with your local measurements</h2><p>Export numeric observations from an explicit Codex or Claude Code session file. Open the report here to inspect a session without sending its transcript.</p>
+      <h2>Start with your local measurements</h2><p>Export numeric observations from an explicit Codex, Claude Code or Devin session file. Open the report here to inspect a session without sending its transcript.</p>
       <pre><code>aicharts sessions --occurrence-key-file ./aicharts.key \
   --codex ./session.jsonl --json &gt; ./sessions.json</code></pre>
       <p>Historical files provide token totals. Live timing requires instrumented observations; unknown time stays visible.</p>
@@ -146,7 +146,7 @@ export function SessionDashboard() {
       <div className="usage-sessions__source"><strong>{example ? "Synthetic example · not your usage" : following ? "Following local report · every 3 seconds" : "Local report"}</strong>
         {updated !== null && <span>Read at {new Date(updated).toLocaleTimeString()}</span>}</div>
       <div className="usage-sessions__scope"><label htmlFor="session-scope">Show</label><select id="session-scope" value={scope} onChange={e => { setScope(e.target.value); setSelected(null); setLimit(100); }}>
-        <option value="all">All sessions</option><option value="codex">Codex</option><option value="claude_code">Claude Code</option>
+        <option value="all">All sessions</option><option value="codex">Codex</option><option value="claude_code">Claude Code</option><option value="devin">Devin</option>
         {conversations.map(c => <option key={c} value={`conversation:${c}`}>Conversation {shortId(c.split(":")[1])} · {provider(c.split(":")[0])}</option>)}
       </select><span>{sorted.length} sessions · {duration(summary?.netWindowMs ?? 0)} observed elapsed window</span></div>
       {summary && <dl className="usage-sessions__aggregate">

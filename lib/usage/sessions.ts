@@ -1,5 +1,6 @@
 import {
-  SESSION_MODELS, SESSION_PHASES, SESSION_REPORT_MAX_BYTES, SESSION_REPORT_MAX_RECORDS,
+  DEVIN_SESSION_MODELS, SESSION_MODELS, SESSION_PHASES, SESSION_REPORT_MAX_BYTES,
+  SESSION_REPORT_MAX_RECORDS,
   SESSION_REPORT_MAX_SESSIONS, SESSION_REPORT_PROFILE, type SessionObservation,
   type SessionPhase, type SessionReport, type SessionSpan, type SessionUsage, type SessionWindow,
 } from "./session-contract";
@@ -49,7 +50,7 @@ export function parseSessionReport(value: unknown): SessionReport | null {
     let count = 0;
     for (const record of records) {
       const s = fields(record, ["provider", "sessionId", "conversationId", "window", "source", "usage", "spans"]);
-      if (!s || (s.provider !== "codex" && s.provider !== "claude_code") || !id(s.sessionId)
+      if (!s || (s.provider !== "codex" && s.provider !== "claude_code" && s.provider !== "devin") || !id(s.sessionId)
         || (s.conversationId !== null && !id(s.conversationId)) || (s.source !== "history" && s.source !== "instrumented")) return null;
       const key = `${s.provider}:${s.sessionId}`;
       if (sessionIds.has(key)) return null;
@@ -68,7 +69,9 @@ export function parseSessionReport(value: unknown): SessionReport | null {
           || (u.model === null ? u.modelBasis !== "unknown" : u.modelBasis !== "response" && u.modelBasis !== "request")
           || TOKEN_FIELDS.some(k => !integer(u[k], MAX_TOKENS))
           || (u.reasoningTokens !== null && !integer(u.reasoningTokens, u.outputTokens as number))) return null;
-        if (u.model !== null && (s.provider === "codex" ? !(u.model as string).startsWith("gpt-") : !(u.model as string).startsWith("claude-"))) return null;
+        if (u.model !== null && (s.provider === "codex" ? !(u.model as string).startsWith("gpt-")
+          : s.provider === "devin" ? !DEVIN_SESSION_MODELS.some(model => model === u.model)
+          : !(u.model as string).startsWith("claude-"))) return null;
         const identity = `${s.provider}:usage:${u.id}`;
         if (occurrenceIds.has(identity)) return null;
         occurrenceIds.add(identity);

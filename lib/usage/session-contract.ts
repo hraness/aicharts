@@ -5,7 +5,7 @@ export const SESSION_REPORT_MAX_SESSIONS = 2_000;
 export const SESSION_REPORT_MAX_RECORDS = 50_000;
 export const SESSION_PHASES = ["inference", "reply_wait", "approval_wait", "tool_wait", "unknown"] as const;
 export type SessionPhase = typeof SESSION_PHASES[number];
-export type SessionProvider = "codex" | "claude_code";
+export type SessionProvider = "codex" | "claude_code" | "devin";
 export type SessionWindow = Readonly<{ startMs: number; endMs: number }>;
 export type SessionSpan = Readonly<{
   id: string; startMs: number; endMs: number;
@@ -41,4 +41,8 @@ export const SESSION_MODELS = [
   "claude-opus-4-1-20250805", "claude-opus-4-5-20251101", "claude-opus-4-6", "claude-opus-4-7",
   "claude-sonnet-4-20250514", "claude-sonnet-4-5-20250929", "claude-sonnet-4-6",
   "claude-haiku-4-5-20251001",
+  "gpt-6-astra-high", "gpt-6-astra-max", "swe-2-max",
 ] as const;
+
+/** Response-model slugs a Devin session's `extra.generation_model` may carry. */
+export const DEVIN_SESSION_MODELS = ["gpt-6-astra-high", "gpt-6-astra-max", "swe-2-max"] as const;

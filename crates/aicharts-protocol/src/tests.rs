@@ -271,7 +271,7 @@ fn registry_revision_and_provider_model_pair_must_match() {
         revision: 1,
         models: vec![],
     };
-    for provider in [Provider::Codex, Provider::ClaudeCode] {
+    for provider in [Provider::Codex, Provider::ClaudeCode, Provider::Devin] {
         batch = sample();
         batch.usage[0].provider = provider;
         batch.usage[0].model_id = 0;
@@ -285,11 +285,11 @@ fn registry_revision_and_provider_model_pair_must_match() {
 #[test]
 fn unsupported_enum_values_context_tiers_and_evidence_fail() {
     for (offset, valid) in [
-        (76, vec![1, 2]),
+        (76, vec![1, 2, 3]),
         (77, vec![0, 1, 2]),
-        (188, vec![1, 2]),
+        (188, vec![1, 2, 3]),
         (189, vec![0, 1, 2]),
-        (232, vec![1, 2]),
+        (232, vec![1, 2, 3]),
         (233, vec![1, 2]),
     ] {
         for value in 0..=u8::MAX {
@@ -322,7 +322,7 @@ fn unsupported_enum_values_context_tiers_and_evidence_fail() {
 
 #[test]
 fn all_defined_enums_roundtrip() {
-    for provider in [Provider::Codex, Provider::ClaudeCode] {
+    for provider in [Provider::Codex, Provider::ClaudeCode, Provider::Devin] {
         for auth_mode in [AuthMode::Unknown, AuthMode::Subscription, AuthMode::Api] {
             for origin in [Origin::Unknown, Origin::Human, Origin::Automation] {
                 for evidence in [Evidence::Imported, Evidence::Live] {
@@ -493,7 +493,7 @@ fn token_sum_excludes_reasoning_and_checks_every_bound() {
 }
 
 #[test]
-fn codex_cache_write_counters_are_rejected_independently() {
+fn codex_and_devin_cache_write_counters_are_rejected_independently() {
     for tokens in [
         Tokens {
             input_uncached: 1,
@@ -506,17 +506,19 @@ fn codex_cache_write_counters_are_rejected_independently() {
             ..Tokens::default()
         },
     ] {
-        let mut batch = sample();
-        batch.usage[0].tokens = tokens;
-        batch.usage[0].model_id = 0;
-        let mut bytes = encode(&batch, &policy(&registry())).unwrap();
-        batch.usage[0].provider = Provider::Codex;
-        assert_eq!(
-            encode(&batch, &policy(&registry())),
-            Err(Error::InvalidTokens)
-        );
-        bytes[76] = 1;
-        rejection(&bytes, Error::InvalidTokens);
+        for provider in [Provider::Codex, Provider::Devin] {
+            let mut batch = sample();
+            batch.usage[0].tokens = tokens;
+            batch.usage[0].model_id = 0;
+            let mut bytes = encode(&batch, &policy(&registry())).unwrap();
+            batch.usage[0].provider = provider;
+            assert_eq!(
+                encode(&batch, &policy(&registry())),
+                Err(Error::InvalidTokens)
+            );
+            bytes[76] = provider as u8;
+            rejection(&bytes, Error::InvalidTokens);
+        }
     }
 }
 
