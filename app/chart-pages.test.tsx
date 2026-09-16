@@ -1,12 +1,18 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, mock, test } from "bun:test";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import BenchmarksPage, { metadata as benchmarksMetadata } from "./benchmarks/page";
 import CalculatorPage, { metadata as calculatorMetadata } from "./calculator/page";
 import CodingPage, { metadata as codingMetadata } from "./coding/page";
-import LeaderboardPage, { metadata as leaderboardMetadata } from "./leaderboard/page";
 import { ATLAS_DATASETS, ATLAS_ENTRIES } from "@/lib/benchmark-atlas-catalog";
 import { CALCULATOR_INPUTS } from "@/lib/calculator-inputs-collection";
+import { LeaderboardView } from "@/components/usage/leaderboard-view";
+import type { LeaderboardEntryV1 } from "@/lib/usage/leaderboard-contract";
+
+// The request-time page imports the server-only read boundary; only its static
+// metadata is asserted here. View states are rendered directly below.
+mock.module("server-only", () => ({}));
+const { metadata: leaderboardMetadata } = await import("./leaderboard/page");
 
 describe("focused chart destinations", () => {
   test("the benchmark page owns the complete library and one initial chart", () => {
@@ -71,12 +77,36 @@ describe("focused chart destinations", () => {
   // Usage now needs a real Next request scope. Its copy, current navigation and
   // canonical metadata assertions live in scripts/usage-browser.ts instead of
   // depending on another Bun test's global server-only mock.
-  test("the leaderboard page keeps publishing paused until evidence is qualified", () => {
-    const html = renderToStaticMarkup(createElement(LeaderboardPage));
-    expect(html).toContain("A leaderboard that shows its receipts.");
-    expect(html).toContain("Publishing paused");
-    expect(html).toContain("No rankings before the evidence layer");
-    expect(html).toContain('aria-current="page" href="/leaderboard"');
+  test("the leaderboard page renders paused, empty, and ranked states honestly", () => {
+    const paused = renderToStaticMarkup(createElement(LeaderboardView, { available: false, snapshot: null }));
+    expect(paused).toContain("A leaderboard that shows its receipts.");
+    expect(paused).toContain("Publishing paused");
+    expect(paused).toContain("No rankings before the evidence layer");
+    const empty = renderToStaticMarkup(createElement(LeaderboardView, { available: true,
+      snapshot: { schemaVersion: 1, ranking: "observed-tokens-30d-v1", computedAtMs: 1_800_000_000_000, entries: [] } }));
+    expect(empty).toContain("Opt-in publishing");
+    expect(empty).toContain("0 entries");
+    expect(empty).toContain("No published entries yet");
+    expect(empty).not.toContain("Publishing paused");
+    const entries: LeaderboardEntryV1[] = [
+      { rank: 1, publicHandle: "alpha-coder", observedTokens: "9007199254740993", usageRecords: 42,
+        consentedAtMs: 1_799_000_000_000, refreshedAtMs: 1_800_000_000_000, windowFirstUtcDay: 20_900, windowUtcDays: 30 },
+      { rank: 2, publicHandle: "beta-agent", observedTokens: "1234567", usageRecords: 9,
+        consentedAtMs: 1_799_500_000_000, refreshedAtMs: 1_800_000_000_000, windowFirstUtcDay: 20_900, windowUtcDays: 30 },
+    ];
+    const board = renderToStaticMarkup(createElement(LeaderboardView, { available: true,
+      snapshot: { schemaVersion: 1, ranking: "observed-tokens-30d-v1", computedAtMs: 1_800_000_000_000, entries } }));
+    expect(board).toContain("Published rankings");
+    expect(board).toContain("alpha-coder");
+    expect(board).toContain("beta-agent");
+    expect(board).toContain("9,007,199,254,740,993");
+    expect(board).toContain("Verified");
+    // The ranked snapshot carries handles and numerics only; page copy may
+    // describe the excluded fields but the data never contains them.
+    const serialized = JSON.stringify(entries);
+    for (const marker of ["acct_", "deviceId", "email", "sessionSecret"]) {
+      expect(serialized.includes(marker)).toBe(false);
+    }
     expect(leaderboardMetadata.alternates?.canonical).toBe("https://aicharts.io/leaderboard");
   });
 });

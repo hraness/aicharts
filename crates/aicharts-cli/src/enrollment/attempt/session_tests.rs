@@ -1,15 +1,19 @@
-use super::super::contract::{self, Success};
-use super::super::https::AcceptedEnrollment;
+use super::super::contract::{
+    self, Context, EnrollmentProof, Operation, PairingState, PairingView, PollProof, Request,
+    Success,
+};
+use super::super::https::{AcceptedEnrollment, TransportError};
 use super::session::ExchangePort;
 use super::{
     record,
-    record_tests::initial_record,
+    record_tests::{enrolled_record, initial_record, TIME},
     sequencer::tests::Memory,
     session::HeldAttempt,
     storage::{self, Candidate, Storage},
     Error, Result,
 };
 use aicharts_custody::{references::RecordIntent, CredentialRef, Purpose, Secret32, SecretRecord};
+use std::collections::VecDeque;
 
 struct FakeCustody;
 impl super::session::CustodyPort for FakeCustody {
@@ -77,6 +81,26 @@ impl super::session::CustodyPort for FailingCustody {
         Err(Error::OutcomeUnknown)
     }
 }
+/// One scripted transport outcome per exchange call. The call count is the
+/// dispatch evidence: a refused operation must leave it at exactly one.
+struct StubExchange {
+    outcomes: VecDeque<std::result::Result<AcceptedEnrollment, TransportError>>,
+    calls: usize,
+}
+impl ExchangePort for StubExchange {
+    fn exchange(
+        &mut self,
+        _request: &contract::Request,
+        _context: &contract::Context,
+        _floor_ms: u64,
+    ) -> std::result::Result<AcceptedEnrollment, TransportError> {
+        self.calls += 1;
+        self.outcomes
+            .pop_front()
+            .expect("scripted exchange outcome")
+    }
+}
+
 struct FakeExchange {
     competitor: Option<Memory>,
     token: Option<record::Token>,
@@ -494,4 +518,332 @@ fn refresh_failure_refuses_custody_and_preserves_flight() {
         super::record::Progress::NamespacePlanned
     );
     assert!(state.record().flight.is_some());
+}
+
+/// One durable state, checked request and retained context per operation, all
+/// bound to the same synthetic pairing secret. Mirrors the reconstruction
+/// fixture: only the exact original secret satisfies the custody intent.
+fn operation_fixture(operation: Operation) -> (record::Record, Request, Context, SecretRecord) {
+    let mut current = if operation == Operation::Initialize {
+        let mut value = initial_record();
+        value.revision = 2;
+        value.progress = record::Progress::PairingCustodyVerified;
+        value
+    } else {
+        enrolled_record()
+    };
+    match operation {
+        Operation::Initialize | Operation::Namespace => (),
+        Operation::Poll | Operation::Confirm => {
+            current.progress = record::Progress::Initialized;
+            current.reservation = None;
+            current.enrollment = None;
+            current.last_pairing = None;
+            current.account_choice = if operation == Operation::Poll {
+                record::AccountChoice::Unchosen
+            } else {
+                record::AccountChoice::Chosen {
+                    account_id: [0x66; 16],
+                    chosen_at_ms: TIME + 1_000,
+                }
+            };
+        }
+        Operation::Reserve => {
+            current.progress = record::Progress::Confirmed;
+            current.reservation = None;
+            current.enrollment = None;
+        }
+        Operation::Enroll => {
+            current.progress = record::Progress::Reserved;
+            current.enrollment = None;
+        }
+    }
+    let secret = SecretRecord::pairing(
+        current.pairing.identity.reference().clone(),
+        current.intent_id,
+        Secret32::new([0x22; 32]).unwrap(),
+        Secret32::new([0x33; 32]).unwrap(),
+    )
+    .unwrap();
+    current.pairing = record::Pin::from_intent(&RecordIntent::from_record(&secret)).unwrap();
+    let proof = PollProof {
+        intent_id: current.intent_id,
+        poll_secret: contract::Secret32::from_bytes([0x22; 32]).unwrap(),
+    };
+    let request = match operation {
+        Operation::Initialize => Request::Initialize {
+            proof,
+            upload_commitment: *current.upload_commitment.as_bytes(),
+        },
+        Operation::Poll => Request::Poll(proof),
+        Operation::Confirm => Request::Confirm {
+            proof,
+            account_id: [0x66; 16],
+        },
+        operation => {
+            let proof = EnrollmentProof {
+                pairing: proof,
+                upload_secret: contract::Secret32::from_bytes([0x33; 32]).unwrap(),
+            };
+            match operation {
+                Operation::Reserve => Request::Reserve(proof),
+                Operation::Enroll => Request::Enroll(proof),
+                Operation::Namespace => Request::Namespace(proof),
+                _ => unreachable!(),
+            }
+        }
+    };
+    let context = Context {
+        now_ms: current.clock_floor_ms,
+        initialized_expires_at_ms: current.initialized_expires_at_ms,
+        confirmed_account_id: current.account_choice.confirmed(),
+        reservation: current.reservation.clone(),
+        enrollment: current.enrollment.clone(),
+    };
+    record::validate(&current).unwrap();
+    assert!(contract::valid_context(&request, &context));
+    (current, request, context, secret)
+}
+
+fn pending_pairing(observed_at_ms: u64) -> AcceptedEnrollment {
+    AcceptedEnrollment {
+        observed_at_ms,
+        result: Ok(Success::Pairing(PairingView {
+            state: PairingState::Pending,
+            expires_at_ms: TIME + contract::TTL_MS,
+            poll_after_ms: contract::POLL_MS,
+            approved_account_id: None,
+        })),
+    }
+}
+
+#[test]
+fn uncertain_poll_exchange_abandons_only_the_read_and_the_next_poll_settles() {
+    let (record, request, context, secret) = operation_fixture(Operation::Poll);
+    let token = record::token(&record).unwrap();
+    let memory = Memory::with(&record);
+    let retained = memory.clone();
+    let mut exchange = StubExchange {
+        outcomes: VecDeque::from([Err(TransportError::Uncertain)]),
+        calls: 0,
+    };
+    let mut custody = FakeCustody;
+    let failure = HeldAttempt::open(memory, token)
+        .unwrap()
+        .run_operation(
+            &request,
+            &context,
+            &secret,
+            &mut custody,
+            &mut exchange,
+            TIME + 8_000,
+            TIME + 8_001,
+        )
+        .err()
+        .expect("uncertain poll exchange fails the operation");
+    assert!(matches!(
+        failure,
+        super::session::OperationFailure {
+            error: Error::OutcomeUnknown,
+            transport: Some(TransportError::Uncertain),
+            ..
+        }
+    ));
+    assert_eq!(exchange.calls, 1);
+    // The dead read is durably recorded and abandoned; nothing stays retained
+    // and no secret material enters the failure evidence.
+    let mut observed = retained.clone();
+    let state = storage::inspect(&mut observed).unwrap();
+    assert!(state.record().flight.is_none());
+    assert_eq!(
+        state.record().last_failure,
+        Some(record::LastFailure::OutcomeUnknown)
+    );
+    let bytes = record::encode(state.record()).unwrap();
+    for canary in [[0x22; 32], [0x33; 32]] {
+        assert!(!bytes.as_bytes().windows(32).any(|part| part == canary));
+    }
+    // The next paced poll prepares a fresh flight and completes normally.
+    let later = Context {
+        now_ms: TIME + 12_000,
+        ..context.clone()
+    };
+    let mut exchange = StubExchange {
+        outcomes: VecDeque::from([Ok(pending_pairing(TIME + 12_001))]),
+        calls: 0,
+    };
+    let accepted = HeldAttempt::open(retained, state.token())
+        .unwrap()
+        .run_operation(
+            &request,
+            &later,
+            &secret,
+            &mut custody,
+            &mut exchange,
+            TIME + 12_000,
+            TIME + 12_001,
+        )
+        .ok()
+        .expect("poll after abandon settles");
+    assert!(matches!(accepted.result, Ok(Success::Pairing(_))));
+    assert_eq!(exchange.calls, 1);
+    let settled = storage::inspect(&mut observed).unwrap();
+    assert!(settled.record().flight.is_none());
+    assert_eq!(settled.record().last_failure, None);
+    assert_eq!(
+        settled
+            .record()
+            .last_pairing
+            .as_ref()
+            .unwrap()
+            .observed_at_ms,
+        TIME + 12_001
+    );
+}
+
+#[test]
+fn retained_dispatched_poll_flight_is_abandoned_before_the_next_operation() {
+    let (record, request, context, secret) = operation_fixture(Operation::Poll);
+    let token = record::token(&record).unwrap();
+    let mut storage = Memory::with(&record);
+    let prepared = super::sequencer::prepare_flight(
+        &mut storage,
+        token,
+        &record,
+        &request,
+        &context,
+        TIME + 8_000,
+    )
+    .unwrap();
+    let dispatched = super::sequencer::dispatch_flight(
+        &mut storage,
+        prepared.token(),
+        prepared.record(),
+        &request,
+        &context,
+        TIME + 8_001,
+    )
+    .unwrap();
+    let retained = storage.clone();
+    // A dispatched poll flight left by a crash or a lost reply is abandoned
+    // durably inside the next operation; the caller's own flight is prepared
+    // only after the loss is recorded.
+    let later = Context {
+        now_ms: TIME + 12_000,
+        ..context.clone()
+    };
+    let mut exchange = StubExchange {
+        outcomes: VecDeque::from([Ok(pending_pairing(TIME + 12_001))]),
+        calls: 0,
+    };
+    let mut custody = FakeCustody;
+    let accepted = HeldAttempt::open(storage, dispatched.token())
+        .unwrap()
+        .run_operation(
+            &request,
+            &later,
+            &secret,
+            &mut custody,
+            &mut exchange,
+            TIME + 12_000,
+            TIME + 12_001,
+        )
+        .ok()
+        .expect("operation after abandoned poll settles");
+    assert!(matches!(accepted.result, Ok(Success::Pairing(_))));
+    assert_eq!(exchange.calls, 1, "no implicit redispatch of the dead read");
+    let mut observed = retained;
+    let settled = storage::inspect(&mut observed).unwrap();
+    assert!(settled.record().flight.is_none());
+    // The abandoned flight stays counted; only the fresh poll is a new flight.
+    // Six revisions: dispatch, abandon, prepare, dispatch, settle — plus the
+    // original prepare.
+    assert_eq!(settled.record().flights_started, record.flights_started + 2);
+    assert_eq!(settled.record().revision, record.revision + 6);
+}
+
+#[test]
+fn uncertain_mutating_exchange_retains_the_flight_for_reconstruction() {
+    for operation in [
+        Operation::Initialize,
+        Operation::Confirm,
+        Operation::Reserve,
+        Operation::Enroll,
+        Operation::Namespace,
+    ] {
+        let (record, request, context, secret) = operation_fixture(operation);
+        let token = record::token(&record).unwrap();
+        let memory = Memory::with(&record);
+        let retained = memory.clone();
+        let mut exchange = StubExchange {
+            outcomes: VecDeque::from([Err(TransportError::Uncertain)]),
+            calls: 0,
+        };
+        let mut custody = FakeCustody;
+        let failure = HeldAttempt::open(memory, token)
+            .unwrap()
+            .run_operation(
+                &request,
+                &context,
+                &secret,
+                &mut custody,
+                &mut exchange,
+                TIME + 8_000,
+                TIME + 8_001,
+            )
+            .err()
+            .expect("uncertain exchange fails the operation");
+        assert!(matches!(
+            failure,
+            super::session::OperationFailure {
+                error: Error::OutcomeUnknown,
+                transport: Some(TransportError::Uncertain),
+                ..
+            }
+        ));
+        assert_eq!(exchange.calls, 1);
+        let mut observed = retained.clone();
+        let state = storage::inspect(&mut observed).unwrap();
+        let flight = state.record().flight.as_ref().unwrap();
+        assert_eq!(flight.operation, operation);
+        assert_eq!(flight.dispatches, 1);
+        // A dispatched mutating flight still refuses every later operation.
+        let mut retry = StubExchange {
+            outcomes: VecDeque::new(),
+            calls: 0,
+        };
+        let failure = HeldAttempt::open(retained, state.token())
+            .unwrap()
+            .run_operation(
+                &request,
+                &context,
+                &secret,
+                &mut custody,
+                &mut retry,
+                TIME + 8_002,
+                TIME + 8_003,
+            )
+            .err()
+            .expect("retained mutating flight refuses closed");
+        assert!(matches!(
+            failure,
+            super::session::OperationFailure {
+                error: Error::RecoveryRequired,
+                transport: None,
+                ..
+            }
+        ));
+        assert_eq!(retry.calls, 0, "no redispatch of a mutating operation");
+        assert_eq!(
+            storage::inspect(&mut observed)
+                .unwrap()
+                .record()
+                .flight
+                .as_ref()
+                .unwrap()
+                .dispatches,
+            1,
+            "operation {operation:?} keeps its retained flight"
+        );
+    }
 }

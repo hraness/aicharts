@@ -54,6 +54,25 @@ async function checkDormant(baseUrl: string): Promise<void> {
     if (method === "HEAD") invariant((await response.arrayBuffer()).byteLength === 0, "HEAD must have no body.");
     else invariant((await response.json() as { error: { code: string } }).error.code === (method === "GET" ? "unavailable" : "method_not_allowed"), "Dormant usage must retain fixed errors.");
   }
+  const leaderboard = await fetch(`${baseUrl}/leaderboard`), leaderboardHtml = await leaderboard.text();
+  invariant(leaderboard.status === 200, "The public leaderboard page must remain available while reads are paused.");
+  for (const text of ["A leaderboard that shows its receipts.", "Publishing paused", "No rankings before the evidence layer",
+    'aria-current="page" href="/leaderboard"', '<link rel="canonical" href="https://aicharts.io/leaderboard"']) {
+    invariant(leaderboardHtml.includes(text), "The paused leaderboard must render its honest disabled state.");
+  }
+  for (const [path, method, status, code, cache] of [
+    ["/api/leaderboard", "GET", 503, "unavailable", "public, max-age=60"],
+    ["/api/leaderboard", "POST", 405, "method_not_allowed", "public, max-age=60"],
+    ["/api/usage/consent", "GET", 503, "unavailable", "private, no-store"],
+    ["/api/usage/consent", "POST", 503, "unavailable", "private, no-store"],
+    ["/api/usage/consent", "PUT", 405, "method_not_allowed", "private, no-store"],
+  ] as const) {
+    const response = await fetch(`${baseUrl}${path}`, { method });
+    invariant(response.status === status, `Dormant ${method} ${path} must return ${status}.`);
+    invariant(response.headers.get("cache-control") === cache, `Dormant ${path} must keep its declared cache policy.`);
+    invariant(!response.headers.has("set-cookie") && !response.headers.has("location"), "Dormant routes must have no cookie or redirect effects.");
+    invariant((await response.json() as { error: { code: string } }).error.code === code, `Dormant ${path} must retain fixed errors.`);
+  }
 }
 
 async function assertButtonContrast(button: Locator): Promise<void> {

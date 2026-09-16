@@ -4,6 +4,8 @@ import { afterEach, expect, test } from "vitest";
 import { ADMISSION_HTTP_URL } from "../src/admission-http";
 import { PAIRING_HTTP_URL } from "../../../lib/usage/pairing-http-contract";
 import { PRIVATE_DAYS_HTTP_URL } from "../../../lib/usage/private-days-http-contract";
+import { USAGE_CONSENT_HTTP_URL } from "../../../lib/usage/consent-http-contract";
+import { LEADERBOARD_HTTP_URL } from "../../../lib/usage/leaderboard-http-contract";
 import { TERMINAL_ENROLLMENT_URL } from "../../../lib/usage/terminal-enrollment-contract";
 import { encodeTerminalEnrollmentRequest } from "../../../lib/usage/terminal-enrollment-contract";
 import { uploadSecretCommitment } from "../src/pairing";
@@ -17,19 +19,21 @@ afterEach(async () => { await reset(); });
 function environment(flags: Record<string, unknown> = {}): ProductionEnvironment {
   return {
     USAGE_ENROLLMENT_GENERATION: generation,
-    PAIRINGS: { getByName() {} }, ACCOUNT_ENROLLMENTS: { getByName() {} },
+    PAIRINGS: { getByName() {} }, ACCOUNT_ENROLLMENTS: { getByName() {} }, PUBLIC_INDEX: { getByName() {} },
     STAGING: { list() {}, head() {}, get() {}, put() {}, delete() {} },
     CONTROL: { list() {}, head() {}, get() {}, put() {}, delete() {} }, ...flags,
   } as unknown as ProductionEnvironment;
 }
 function handlers(calls: string[]) {
   const reply = (name: string) => async () => { calls.push(name); return new Response(name, { status: 201 }); };
-  return { pairing: reply("pairing"), terminal: reply("terminal"), admission: reply("admission"), privateDays: reply("privateDays") };
+  return { pairing: reply("pairing"), terminal: reply("terminal"), admission: reply("admission"),
+    privateDays: reply("privateDays"), consent: reply("consent"), leaderboard: reply("leaderboard") };
 }
 
 test("production router is closed by default and never dispatches dormant handlers", async () => {
   const calls: string[] = [], route = createProductionRouter({ handlers: handlers(calls) });
-  for (const url of [PAIRING_HTTP_URL, TERMINAL_ENROLLMENT_URL, ADMISSION_HTTP_URL, PRIVATE_DAYS_HTTP_URL, "https://usage.aicharts.io/unknown"]) {
+  for (const url of [PAIRING_HTTP_URL, TERMINAL_ENROLLMENT_URL, ADMISSION_HTTP_URL, PRIVATE_DAYS_HTTP_URL,
+    USAGE_CONSENT_HTTP_URL, LEADERBOARD_HTTP_URL, "https://usage.aicharts.io/unknown"]) {
     const response = await route(new Request(url, { method: "POST" }), environment(), context);
     expect(response.status).toBe(503);
     expect(await response.text()).toBe('{"error":"usage_service_unavailable"}');
@@ -49,12 +53,28 @@ test("each route requires its exact feature fence and usable generation/bindings
     [TERMINAL_ENROLLMENT_URL, { ...common, AICHARTS_USAGE_ENROLLMENT_ENABLED: "1" }, "terminal"],
     [ADMISSION_HTTP_URL, { ...common, AICHARTS_USAGE_ADMISSION_ENABLED: "1" }, "admission"],
     [PRIVATE_DAYS_HTTP_URL, { ...common, AICHARTS_USAGE_AUTH_ENABLED: "1", AICHARTS_USAGE_PRIVATE_READ_ENABLED: "1" }, "privateDays"],
+    [USAGE_CONSENT_HTTP_URL, { ...common, AICHARTS_USAGE_AUTH_ENABLED: "1", AICHARTS_USAGE_PRIVATE_READ_ENABLED: "1" }, "consent"],
+    [LEADERBOARD_HTTP_URL, { ...common, AICHARTS_USAGE_PUBLIC_READ_ENABLED: "1" }, "leaderboard"],
   ] as const;
   for (const [url, flags, expected] of cases) {
     const response = await route(new Request(url, { method: "POST" }), environment(flags), context);
     expect(response.status).toBe(201); expect(await response.text()).toBe(expected);
   }
-  expect(calls).toEqual(["pairing", "terminal", "admission", "privateDays"]);
+  expect(calls).toEqual(["pairing", "terminal", "admission", "privateDays", "consent", "leaderboard"]);
+  // The public read is independently gated: private collection flags do not
+  // open it, and the public flag never opens consent writes or private reads.
+  for (const [url, flags] of [
+    [LEADERBOARD_HTTP_URL, { ...common, AICHARTS_USAGE_AUTH_ENABLED: "1", AICHARTS_USAGE_PRIVATE_READ_ENABLED: "1" }],
+    [USAGE_CONSENT_HTTP_URL, { ...common, AICHARTS_USAGE_PUBLIC_READ_ENABLED: "1" }],
+    [PRIVATE_DAYS_HTTP_URL, { ...common, AICHARTS_USAGE_PUBLIC_READ_ENABLED: "1" }],
+    [USAGE_CONSENT_HTTP_URL, { ...common, AICHARTS_USAGE_AUTH_ENABLED: "1" }],
+    [USAGE_CONSENT_HTTP_URL, { ...common, AICHARTS_USAGE_PRIVATE_READ_ENABLED: "1" }],
+  ] as const) {
+    const closed = await route(new Request(url, { method: "POST" }), environment(flags), context);
+    expect(closed.status).toBe(503);
+    expect(await closed.text()).toBe('{"error":"usage_service_unavailable"}');
+  }
+  expect(calls).toEqual(["pairing", "terminal", "admission", "privateDays", "consent", "leaderboard"]);
   const closed = await route(new Request(TERMINAL_ENROLLMENT_URL), environment({ ...common, AICHARTS_USAGE_ENROLLMENT_ENABLED: "1", USAGE_ENROLLMENT_GENERATION: "0".repeat(64) }), context);
   expect(closed.status).toBe(503);
 });

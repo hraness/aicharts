@@ -613,9 +613,10 @@ describe("dormant account admission", () => {
     const before = await runInDurableObject(stub(), (_instance, state) => {
       const retained = state.storage.sql.exec("SELECT revision, payload FROM account_enrollment").one();
       for (const table of Object.keys(ADMISSION_SCHEMA)) state.storage.sql.exec(`DROP TABLE ${table}`);
-      // Schema 2 predates the restore-epoch field; a genuine legacy payload lacks it.
+      // Schema 2 predates the restore-epoch and consent fields; a genuine
+      // legacy payload lacks both.
       const legacy = JSON.parse(retained.payload as string) as Record<string, unknown>;
-      delete legacy.fenceEpoch;
+      delete legacy.fenceEpoch; delete legacy.leaderboard;
       const payload = JSON.stringify(legacy);
       state.storage.sql.exec("UPDATE account_enrollment SET schema_version = 2, payload = ?", payload);
       return { revision: retained.revision, payload };
@@ -624,9 +625,11 @@ describe("dormant account admission", () => {
     await runInDurableObject(stub(), (_instance, state) => {
       const after = state.storage.sql.exec("SELECT revision, schema_version, payload FROM account_enrollment").one();
       expect(after.revision).toBe(before.revision);
-      expect(after.schema_version).toBe(4);
-      // Migration preserves every prior field and records a null epoch pending first fenced contact.
-      expect(JSON.parse(after.payload as string)).toEqual({ ...JSON.parse(before.payload) as object, fenceEpoch: null });
+      expect(after.schema_version).toBe(5);
+      // Migration preserves every prior field, records a null epoch pending
+      // first fenced contact, and starts every account unpublished.
+      expect(JSON.parse(after.payload as string)).toEqual({ ...JSON.parse(before.payload) as object, fenceEpoch: null,
+        leaderboard: { consent: false, consentedAtMs: null, publicHandle: null, changedAtMs: 0 } });
       expect(state.storage.sql.exec("SELECT settled_sequence FROM usage_admission_devices").toArray()).toEqual([{ settled_sequence: 0 }, { settled_sequence: 0 }]);
     });
     success(await upload(second, batch(second)));
@@ -639,9 +642,10 @@ describe("dormant account admission", () => {
       if (typeof retained.payload !== "string") throw new Error("synthetic missing authority");
       const authority = JSON.parse(retained.payload) as Parameters<AdmissionState["initialize"]>[0];
       for (const table of Object.keys(ADMISSION_SCHEMA)) state.storage.sql.exec(`DROP TABLE ${table}`);
-      // Schema 2 predates the restore-epoch field; a genuine legacy payload lacks it.
+      // Schema 2 predates the restore-epoch and consent fields; a genuine
+      // legacy payload lacks both.
       const legacy = JSON.parse(retained.payload) as Record<string, unknown>;
-      delete legacy.fenceEpoch;
+      delete legacy.fenceEpoch; delete legacy.leaderboard;
       retained.payload = JSON.stringify(legacy);
       state.storage.sql.exec("UPDATE account_enrollment SET schema_version = 2, payload = ?", retained.payload);
       const manifest = state.storage.sql.exec("SELECT name, sql FROM sqlite_schema WHERE name NOT GLOB '_cf_*' AND name NOT GLOB 'sqlite_*' AND name != '__cf_kv' ORDER BY name").toArray();
