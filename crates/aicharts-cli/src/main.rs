@@ -2,6 +2,8 @@
 
 mod daemon;
 mod enroll;
+#[cfg(unix)]
+mod enrolled_ledger;
 mod enrollment;
 mod inspect;
 mod intro;
