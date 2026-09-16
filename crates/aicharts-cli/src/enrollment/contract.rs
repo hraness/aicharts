@@ -11,6 +11,11 @@ pub(super) const MAX_RESPONSE_BYTES: usize = 2_048;
 pub(super) const MAX_TIME_MS: u64 = 8_640_000_000_000_000;
 pub(super) const TTL_MS: u64 = 600_000;
 pub(super) const POLL_MS: u64 = 5_000;
+/// Positive clock-skew bound for a server-issued timestamp checked against the
+/// local wall clock. Cross-clock comparisons must tolerate the responder's
+/// clock leading the local clock (bounded here to far less than the attempt
+/// TTL), while still refusing a timestamp backdated or set far in the future.
+pub(super) const CLOCK_SKEW_MS: u64 = 60_000;
 pub(super) type Id = [u8; 32];
 pub(super) type AccountId = [u8; 16];
 
@@ -654,7 +659,7 @@ fn valid_reservation(request: &Request, context: &Context, reservation: &Reserva
         && reservation.reserved_at_ms < reservation.expires_at_ms
         && reservation.expires_at_ms - reservation.reserved_at_ms <= TTL_MS
         && reservation.reserved_at_ms >= created
-        && reservation.reserved_at_ms <= context.now_ms
+        && reservation.reserved_at_ms <= context.now_ms + CLOCK_SKEW_MS
         && reservation.expires_at_ms <= expires
 }
 pub(super) fn valid_receipt(reservation: &Reservation, now: u64, receipt: &Receipt) -> bool {
@@ -665,7 +670,7 @@ pub(super) fn valid_receipt(reservation: &Reservation, now: u64, receipt: &Recei
         && time(receipt.enrolled_at_ms)
         && receipt.enrolled_at_ms >= reservation.reserved_at_ms
         && receipt.enrolled_at_ms < reservation.expires_at_ms
-        && receipt.enrolled_at_ms <= now
+        && receipt.enrolled_at_ms <= now + CLOCK_SKEW_MS
 }
 pub(super) fn valid_context(request: &Request, context: &Context) -> bool {
     if !request.valid()
@@ -676,7 +681,9 @@ pub(super) fn valid_context(request: &Request, context: &Context) -> bool {
     }
     match context.initialized_expires_at_ms {
         Some(expires)
-            if !time(expires) || expires < TTL_MS || context.now_ms < expires - TTL_MS =>
+            if !time(expires)
+                || expires < TTL_MS
+                || context.now_ms + CLOCK_SKEW_MS < expires - TTL_MS =>
         {
             return false
         }
@@ -738,7 +745,7 @@ fn valid_domain(request: &Request, context: &Context, result: &DomainResult) -> 
         (Request::Initialize { .. }, Success::Initialized { expires_at_ms }) => {
             time(*expires_at_ms)
                 && *expires_at_ms >= TTL_MS
-                && *expires_at_ms - TTL_MS <= context.now_ms
+                && *expires_at_ms - TTL_MS <= context.now_ms + CLOCK_SKEW_MS
                 && context
                     .initialized_expires_at_ms
                     .is_none_or(|known| known == *expires_at_ms)
