@@ -19,10 +19,20 @@ use desktop_foundation::browser::{BrowserOpener, BrowserStatus};
 use desktop_foundation::outputs::OutputsSection;
 use desktop_foundation::{
     AccessibilityMetadata, DispatchOutcome, Host, MenuItem, MenuModel, MenuNode, Options,
-    RenderError,
+    RenderError, RgbaIcon,
 };
 
-const STATUS_MARK: &str = "AI";
+/// Bar-chart status mark. macOS renders `STATUS_MARK` as native colored emoji
+/// text; icon-only trays use this pre-rendered 32px Twemoji bitmap
+/// (U+1F4CA, CC-BY 4.0 — https://twemoji.twitter.com).
+const STATUS_MARK: &str = "\u{1f4ca}";
+fn mark_icon() -> RgbaIcon {
+    RgbaIcon {
+        rgba: include_bytes!("../icons/mark.rgba").to_vec(),
+        width: 32,
+        height: 32,
+    }
+}
 const UPDATES_URL: &str =
     "https://account.hraness.com/support?product=aicharts&source=desktop#updates";
 const SUPPORT_URL: &str =
@@ -95,12 +105,13 @@ impl Host for AiChartsHost {
                     hint: Some("Exit the AI Charts menu bar companion".to_owned()),
                 }),
         ));
-        MenuModel {
-            title: Some(STATUS_MARK.to_owned()),
+        let mut model = MenuModel {
             tooltip: Some("AI Charts — agent outputs".to_owned()),
-            icon: None,
             nodes,
-        }
+            ..MenuModel::default()
+        };
+        model.mark(STATUS_MARK, Some(mark_icon()));
+        model
     }
 
     fn dispatch_result(&self, id: &str) -> DispatchOutcome {
