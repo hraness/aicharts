@@ -82,6 +82,12 @@ The portable [AI Charts skill](skills/aicharts/SKILL.md) retrieves one public be
 
 The skill lives at `skills/aicharts`; load or install that directory through your agent's supported skill workflow. The source command is documented in the local usage guide; this repository does not yet distribute a signed native installer. The skill does not install a runtime, obtain keys or enable background collection.
 
+### Optional updates and support
+
+The standalone benchmark helper and native CLI source offer free AI Charts product updates and optional paid development support after useful completed reads. These use the shared Hraness invitation preferences; they never change benchmark or numeric JSON stdout, send usage data, or open checkout automatically. Imported benchmark calls, CI, background collection, authentication, uploads and control commands stay quiet. The native change is source support, not a claim that an installed binary has been released.
+
+Use `node skills/aicharts/scripts/atlas.mjs support protocol --json` for the local machine-readable handoff, or `aicharts support protocol --json` with a verified build exposing that command. The Node helper includes its reviewed shared runtime and needs no dependency installation. An agent presents a due invitation once at task closeout and records it only after persistent human-visible output. Git email is an optional unverified suggestion; signup requires explicit authorization and inbox confirmation, and payment requires human checkout approval. See the [skill handoff contract](skills/aicharts/references/support.md). Set `HRANESS_SUPPORT_AUDIENCE=off` for a delegated child, `HRANESS_SUPPORT=off` to suppress incidental invitations, or use `support dismiss` to save the suite preference.
+
 ## Data refresh
 
 The [`data-refresh.yml`](.github/workflows/data-refresh.yml) workflow checks first-party release sources and OpenRouter discovery hourly, off the top of the hour. It checks Terminal-Bench 4, Terminal-Bench-Science 0.1, direct DeepSWE evidence, the lightweight Artificial Analysis Intelligence model snapshot, and the reasoning and multimodal atlas imports every four hours, then adds the heavier Artificial Analysis coding-agent import to one daily full run at 10:43 UTC. Manual runs can select release-only, benchmark-only, or full refreshes; the legacy `discovery` mode remains a combined non-AAI alias. Poll-metadata-only checks remain visible in Actions without creating a data pull request. It treats each importer as a separate failure domain:

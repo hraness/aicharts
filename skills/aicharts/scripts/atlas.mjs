@@ -1,6 +1,8 @@
 import { createHash } from 'node:crypto';
+import { realpathSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { isDeepStrictEqual } from 'node:util';
+import { completedAtlasRead, runAtlasSupport } from './support.mjs';
 
 export const ORIGIN = 'https://aicharts.io';
 export const CATALOG = `${ORIGIN}/data/benchmark-atlas.json`;
@@ -218,10 +220,48 @@ export async function run(args, { fetchImpl = globalThis.fetch, now = () => new 
     dataset: { ...dataset.dataset, points: points.selected }, page: points.page };
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  try { process.stdout.write(`${JSON.stringify(await run(process.argv.slice(2)), null, 2)}\n`); }
-  catch (error) {
-    process.stderr.write(`${JSON.stringify({ error: error instanceof Failure ? error.message : 'unexpected_failure' })}\n`);
-    process.exitCode = 1;
+const HELP = `AI Charts public benchmark helper
+
+  node scripts/atlas.mjs catalog [--query WORDS] [--offset N] [--limit N]
+  node scripts/atlas.mjs dataset ID [--offset N] [--limit N]
+  node scripts/atlas.mjs support protocol --json
+  node scripts/atlas.mjs support --help
+
+Support and free product updates are optional. Benchmark output remains JSON.
+`;
+
+function write(output, text) {
+  return new Promise((resolve, reject) => output.write(text, error => error ? reject(error) : resolve()));
+}
+
+/** Explicit standalone owner; the exported benchmark run() remains side-effect free beyond its GETs. */
+export async function runStandalone(args, { stdout = process.stdout, stderr = process.stderr, support, ...benchmark } = {}) {
+  try {
+    if (args[0] === 'support') {
+      const result = await runAtlasSupport(args.slice(1), support);
+      if (result.stdout) await write(stdout, result.stdout);
+      if (result.stderr) await write(stderr, result.stderr);
+      return result.exitCode;
+    }
+    if (args.length === 1 && ['--help', '-h'].includes(args[0])) {
+      await write(stdout, HELP);
+      return 0;
+    }
+    await write(stdout, `${JSON.stringify(await run(args, benchmark), null, 2)}\n`);
+    await completedAtlasRead(support, stderr);
+    return 0;
   }
+  catch (error) {
+    try { await write(stderr, `${JSON.stringify({ error: error instanceof Failure ? error.message : 'unexpected_failure' })}\n`); }
+    catch { /* Preserve the failure exit status even when the output pipe closes. */ }
+    return 1;
+  }
+}
+
+function isStandalone() {
+  try { return Boolean(process.argv[1]) && import.meta.url === pathToFileURL(realpathSync(process.argv[1])).href; }
+  catch { return false; }
+}
+if (isStandalone()) {
+  process.exitCode = await runStandalone(process.argv.slice(2));
 }

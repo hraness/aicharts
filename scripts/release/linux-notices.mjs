@@ -7,6 +7,7 @@ import { lstat, open, realpath, readdir } from "node:fs/promises";
 import path from "node:path";
 import { execFile } from "node:child_process";
 import { promisify, types } from "node:util";
+import { SUPPORT_SOURCE, SUPPORT_FILES } from "./support-source.mjs";
 
 const exec = promisify(execFile);
 const MiB = 1024 * 1024;
@@ -186,6 +187,7 @@ export function planLinuxNotices(input) {
       } else if (message.reason === "compiler-artifact") {
         const pkg = packages.get(message.package_id);
         if (!pkg || message.manifest_path !== pkg.manifest_path || message.profile?.test !== false) fail("notices_build_incomplete");
+        if (pkg.source === SUPPORT_SOURCE && message.target?.kind?.includes("custom-build")) fail("notices_unmapped_crate");
         compiled.set(pkg.id, pkg);
         for (const filename of array(message.filenames, 32)) {
           absolute(filename);
@@ -205,6 +207,7 @@ export function planLinuxNotices(input) {
     for (const script of scripts) {
       const pkg = compiled.get(script.package_id);
       if (!pkg) fail("notices_build_incomplete");
+      if (pkg.source === SUPPORT_SOURCE) fail("notices_unmapped_crate");
       const links = array(script.linked_libs, 32), paths = array(script.linked_paths, 32);
       const provider = NATIVE_PROVIDERS.get(`${pkg.name}@${pkg.version}`);
       if (!links.length && !paths.length && !provider) continue;
@@ -335,6 +338,28 @@ export async function collectLinuxNotices(input) {
       if (pkg.source === null) {
         if (!inside(source, pkg.manifest_path) || !/^aicharts-(?:cli|core|custody|ledger|protocol)$/u.test(pkg.name) || pkg.license !== "MIT") fail("notices_unmapped_crate");
         continue; // Project LICENSE is a separate mandatory archive member.
+      }
+      if (pkg.source === SUPPORT_SOURCE) {
+        if (pkg.name !== "hraness-support-foundation" || pkg.version !== "0.4.0" || pkg.license !== "MIT" || pkg.license_file !== null) fail("notices_unmapped_crate");
+        const directory = path.dirname(pkg.manifest_path);
+        const checkout = path.dirname(directory);
+        if (path.basename(directory) !== "rust" || !inside(path.join(cargoHome, "git/checkouts"), checkout)
+          || await realpath(checkout) !== checkout || await realpath(directory) !== directory) fail("notices_crate_changed");
+        // Cargo can discover build.rs without a manifest declaration. The
+        // reviewed crate has no build script, including at notice readback.
+        try { await lstat(path.join(directory, "build.rs")); fail("notices_crate_changed"); }
+        catch (error) { if (error?.code !== "ENOENT") throw error; }
+        let license;
+        for (const [file, expected] of Object.entries(SUPPORT_FILES)) {
+          const filename = path.join(checkout, file);
+          await canonicalFile(filename, "notices_crate_changed");
+          const bytes = await read(filename, MiB, "notices_crate_changed");
+          await canonicalFile(filename, "notices_crate_changed");
+          if (digest(bytes) !== expected) fail("notices_crate_changed");
+          if (file === "LICENSE") license = bytes;
+        }
+        add(`Cargo ${pkg.name} ${pkg.version} (MIT) / LICENSE`, license);
+        continue;
       }
       const item = mapped.get(`${pkg.name}@${pkg.version}`);
       if (pkg.source !== REGISTRY || !item || item.license !== pkg.license || pkg.license_file !== null) fail("notices_unmapped_crate");

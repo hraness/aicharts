@@ -567,7 +567,7 @@ test("the complete synthetic source joins the real assembler without executing a
     "distribution/NOTICE.md", "distribution/cli/docs/usage-install.md", "distribution/cli/docs/usage-local.md",
     "skills/aicharts/SKILL.md", "skills/aicharts/agents/openai.yaml", "skills/aicharts/references/benchmarks.md",
     "skills/aicharts/references/local-operations.md", "skills/aicharts/references/local-turns.md",
-    "skills/aicharts/references/local-usage.md", "skills/aicharts/scripts/atlas.mjs", "skills/aicharts/scripts/atlas.check.mjs"];
+    "skills/aicharts/references/local-usage.md", "skills/aicharts/scripts/atlas.mjs", "skills/aicharts/scripts/atlas.check.mjs", "skills/aicharts/scripts/support.mjs", "skills/aicharts/scripts/support-foundation.mjs", "skills/aicharts/scripts/support.check.mjs", "skills/aicharts/references/support.md", "skills/aicharts/THIRD_PARTY_NOTICES.md"];
   const repo = fixture(t, [...required.map((path) => file(path, "Synthetic required source: " + path + "\n")), ...controls()]);
   const selected = assertGraph(repo, readGitSource(repo.input));
   const result = good(assembleLinuxRelease({ ...selected, version: "0.1.0", run: { runId: "42", runAttempt: 1 },

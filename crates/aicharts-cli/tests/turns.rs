@@ -121,6 +121,7 @@ impl Fixture {
         let output = Command::new(env!("CARGO_BIN_EXE_aicharts"))
             .current_dir(&self.0)
             .env_clear()
+            .env("HRANESS_SUPPORT_AUDIENCE", "off")
             .args(args)
             .stdin(Stdio::null())
             .output()

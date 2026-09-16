@@ -17,6 +17,7 @@ impl Fixture {
     }
     fn run(&self, args: &[&str]) -> Output {
         Command::new(env!("CARGO_BIN_EXE_aicharts"))
+            .env("HRANESS_SUPPORT_AUDIENCE", "off")
             .current_dir(&self.0)
             .args(args)
             .output()
@@ -184,6 +185,7 @@ fn malformed_sources_and_symlinks_fail_without_reflecting_paths_or_content() {
 fn non_utf8_arguments_fail_without_a_reflective_panic() {
     use std::os::unix::ffi::OsStringExt;
     let result = Command::new(env!("CARGO_BIN_EXE_aicharts"))
+        .env("HRANESS_SUPPORT_AUDIENCE", "off")
         .arg(std::ffi::OsString::from_vec(b"PRIVATE_\xff".to_vec()))
         .output()
         .unwrap();

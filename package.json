@@ -44,7 +44,7 @@
     "usage:worker:types": "bun run scripts/usage-worker-tools.ts types",
     "usage:worker:test": "bun run scripts/usage-worker-tools.ts test",
     "usage:worker:check": "bun run scripts/usage-worker-tools.ts check",
-    "skill:check": "node --check skills/aicharts/scripts/atlas.mjs && node --test skills/aicharts/scripts/atlas.check.mjs",
+    "skill:check": "bun run skill:support:check && node --check skills/aicharts/scripts/atlas.mjs && node --test skills/aicharts/scripts/atlas.check.mjs skills/aicharts/scripts/support.check.mjs",
     "release:archive:check": "node --check scripts/release/archive.mjs && node --test scripts/release/archive.check.mjs",
     "release:manifest:check": "node --check scripts/release/manifest.mjs && node --test scripts/release/manifest.check.mjs",
     "release:build:check": "node --check scripts/release/build.mjs && node --test scripts/release/build.check.mjs",
@@ -98,11 +98,13 @@
     "menubar:uninstall": "bun run scripts/menubar.ts uninstall",
     "menubar:status": "bun run scripts/menubar.ts status",
     "menubar:build": "bun run scripts/menubar-build.ts",
-    "outputs": "bun -e 'const {mkdirSync}=require(\"node:fs\");const p=require(\"node:path\").join(process.cwd(),\"outputs\");mkdirSync(p,{recursive:true});console.log(p)'"
+    "outputs": "bun -e 'const {mkdirSync}=require(\"node:fs\");const p=require(\"node:path\").join(process.cwd(),\"outputs\");mkdirSync(p,{recursive:true});console.log(p)'",
+    "skill:support:sync": "bun run scripts/skill-support-runtime.ts",
+    "skill:support:check": "bun run scripts/skill-support-runtime.ts --check"
   },
   "dependencies": {
     "@hraness/design-kit": "github:hraness/design-kit#v0.8.1",
-    "@hraness/site-footer": "github:hraness/site-footer#v0.12.0",
+    "@hraness/site-footer": "github:hraness/site-footer#v0.12.2",
     "@hraness/suite-accounts": "github:hraness/suite-accounts#v0.9.3",
     "@hraness/ui": "github:hraness/ui#v0.5.13",
     "@hraness/vercel-delivery": "github:hraness/vercel-delivery#v0.1.2",
@@ -135,6 +137,7 @@
     "typescript": "^6.0.3",
     "vitest": "4.1.11",
     "wrangler": "4.131.0",
-    "yaml": "2.9.0"
+    "yaml": "2.9.0",
+    "@hraness/support-foundation": "github:hraness/support-foundation#ed89e584c2c420e3e0547bbe8f32baf8e3a2ae4d"
   }
 }

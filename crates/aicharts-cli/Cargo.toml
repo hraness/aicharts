@@ -21,6 +21,7 @@ serde_json.workspace = true
 getrandom.workspace = true
 ureq.workspace = true
 log.workspace = true
+hraness-support-foundation = { git = "https://github.com/hraness/support-foundation", rev = "ed89e584c2c420e3e0547bbe8f32baf8e3a2ae4d" }
 
 [dev-dependencies]
 rustls = { version = "=0.23.44", default-features = false, features = ["ring", "std", "tls12"] }

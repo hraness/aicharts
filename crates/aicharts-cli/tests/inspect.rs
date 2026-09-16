@@ -110,6 +110,7 @@ impl Fixture {
     }
     fn run(&self, args: &[&str]) -> Output {
         let result = Command::new(env!("CARGO_BIN_EXE_aicharts"))
+            .env("HRANESS_SUPPORT_AUDIENCE", "off")
             .current_dir(&self.0)
             .args(args)
             .output()
