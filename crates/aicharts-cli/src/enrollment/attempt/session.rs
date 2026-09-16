@@ -11,7 +11,7 @@ use super::{
     Error, Result,
 };
 use crate::enrollment::{
-    contract::{Context, DomainResult, Request},
+    contract::{Context, DomainResult, Operation, Request},
     https::{AcceptedEnrollment, HttpsEnrollment, TransportError},
 };
 use aicharts_custody::{references::RecordIntent, SecretRecord};
@@ -457,10 +457,28 @@ impl<S: Storage> HeldAttempt<S> {
         self.publish(&next)
     }
 
+    /// Durably abandon a retained dispatched Poll flight under the held lock.
+    /// The exchange is a server-side read, so an uncertain outcome has nothing
+    /// to reconcile; the loss is a fixed durable fact. Mutating flights are
+    /// never abandoned here and still require explicit reconstruction.
+    pub(super) fn abandon_poll_flight(&mut self, observed_at_ms: u64) -> Result<()> {
+        self.usable()?;
+        let next = super::sequencer::abandon_poll_flight_record(
+            self.token,
+            &self.current,
+            observed_at_ms,
+        )?;
+        self.publish(&next)
+    }
+
     /// Run one complete synchronous operation. Custody verification happens
     /// before flight preparation, custody locks are released, then one bounded
     /// exchange and settlement run under this attempt lock. Namespace key
-    /// material is owned before any settlement/publication can fail.
+    /// material is owned before any settlement/publication can fail. A
+    /// retained dispatched Poll flight is the single explicit exception: it is
+    /// durably abandoned as a server-side read before this call prepares its
+    /// own flight, and an uncertain poll exchange abandons its flight the same
+    /// way. Every other retained dispatched flight refuses closed.
     #[allow(clippy::result_large_err, clippy::too_many_arguments)]
     pub(super) fn run_operation<C: CustodyPort, X: ExchangePort>(
         mut self,
@@ -483,15 +501,24 @@ impl<S: Storage> HeldAttempt<S> {
         if self.current.namespace.is_some() {
             return Err(fail(Error::RecoveryRequired));
         }
-        if self
+        let retained = self
             .current
             .flight
             .as_ref()
-            .is_some_and(|flight| flight.dispatches > 0)
-        {
+            .filter(|flight| flight.dispatches > 0)
+            .map(|flight| flight.operation);
+        if let Some(operation) = retained {
             // A retained dispatched flight requires explicit reconstruction and
             // caller-selected retry policy; this operation never auto-retries.
-            return Err(fail(Error::RecoveryRequired));
+            // A Poll flight is the sole abandonable case: the exchange is a
+            // server-side read, so an outcome lost between dispatch and
+            // settlement has nothing to reconcile. The loss is durably
+            // recorded before this call prepares its own flight, stamped at
+            // prepare time so the new flight's own floor is never regressed.
+            if operation != Operation::Poll {
+                return Err(fail(Error::RecoveryRequired));
+            }
+            self.abandon_poll_flight(prepared_at_ms).map_err(fail)?;
         }
         let intent = RecordIntent::from_record(pairing_secret);
         if intent.identity() != &self.current.pairing.identity
@@ -512,13 +539,31 @@ impl<S: Storage> HeldAttempt<S> {
         }
         self.dispatch_flight(request, context, attempted_at_ms)
             .map_err(fail)?;
-        let accepted = exchange
-            .exchange(request, context, self.current.clock_floor_ms)
-            .map_err(|transport| OperationFailure {
-                error: Error::OutcomeUnknown,
-                namespace_secret: None,
-                transport: Some(transport),
-            })?;
+        let accepted = match exchange.exchange(request, context, self.current.clock_floor_ms) {
+            Ok(accepted) => accepted,
+            Err(transport) => {
+                // An uncertain poll dispatch has nothing to reconcile: the
+                // exchange is a server-side read. Record the loss durably and
+                // abandon the flight so the next paced poll prepares a fresh
+                // one. Mutating operations and other transport failures keep
+                // the retained dispatched flight for explicit reconciliation.
+                if request.operation() == Operation::Poll && transport == TransportError::Uncertain
+                {
+                    if let Err(error) = self.abandon_poll_flight(attempted_at_ms) {
+                        return Err(OperationFailure {
+                            error,
+                            namespace_secret: None,
+                            transport: Some(transport),
+                        });
+                    }
+                }
+                return Err(OperationFailure {
+                    error: Error::OutcomeUnknown,
+                    namespace_secret: None,
+                    transport: Some(transport),
+                });
+            }
+        };
         let owned_namespace = match &accepted.result {
             Ok(crate::enrollment::contract::Success::Namespace { namespace, .. }) => Some(
                 super::sequencer::namespace_secret_record(&self.current, namespace)
