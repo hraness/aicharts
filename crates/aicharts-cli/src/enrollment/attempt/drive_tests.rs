@@ -14,6 +14,14 @@ use crate::enrollment::contract::{
 };
 use crate::enrollment::{EnrollIo, EnrollOutcome};
 use std::collections::VecDeque;
+use std::fs;
+use std::os::unix::fs::PermissionsExt;
+use std::path::{Path, PathBuf};
+use std::sync::{
+    atomic::{AtomicU64, Ordering},
+    MutexGuard,
+};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 const NOW: u64 = 1_700_000_000_000;
 
@@ -661,4 +669,82 @@ fn mint_produces_a_valid_genesis_bound_to_the_secret() {
     assert_eq!(*record.poll_commitment.as_bytes(), poll_commitment);
     assert_eq!(*record.upload_commitment.as_bytes(), upload_commitment);
     assert_eq!(record.intent_id, *secret.identity().intent_id().unwrap());
+}
+
+static NEXT_ANCHOR: AtomicU64 = AtomicU64::new(0);
+
+struct Anchor(PathBuf, MutexGuard<'static, ()>);
+
+impl Drop for Anchor {
+    fn drop(&mut self) {
+        let _ = fs::remove_dir_all(&self.0);
+    }
+}
+
+fn with_anchor(test: impl FnOnce(&Path)) {
+    // Anchor creation/removal changes the parent directory's metadata, which
+    // races another anchor's descriptor-pinned path readbacks. Serialize the
+    // whole fixture lifetime and use a repository path whose ancestors are not
+    // churned by shared tempdir activity, matching the custody fixtures.
+    let guard = crate::TEST_FIXTURE_PARENT
+        .lock()
+        .unwrap_or_else(|error| error.into_inner());
+    let stamp = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .expect("clock before epoch")
+        .as_nanos();
+    let path = Path::new(env!("CARGO_MANIFEST_DIR")).join(format!(
+        ".enrolled-anchor-{}-{stamp}-{}",
+        std::process::id(),
+        NEXT_ANCHOR.fetch_add(1, Ordering::Relaxed)
+    ));
+    fs::create_dir(&path).expect("create disposable anchor");
+    fs::set_permissions(&path, fs::Permissions::from_mode(0o700)).expect("set anchor mode");
+    let anchor = Anchor(path, guard);
+    test(&anchor.0);
+}
+
+#[test]
+fn enrolled_read_refuses_missing_and_unfinished_anchors() {
+    with_anchor(|path| {
+        // No attempt storage at all: the fixed not-enrolled refusal.
+        assert_eq!(drive::enrolled(path).err(), Some(Error::Missing));
+
+        // A real anchor whose durable record is still unfinished refuses
+        // before any vault read or secret copy.
+        let native =
+            super::coordinator::initialize_native(path, &super::record_tests::initial_record())
+                .expect("initialize native anchor");
+        drop(native);
+        assert_eq!(drive::enrolled(path).err(), Some(Error::RecoveryRequired));
+    });
+}
+
+#[test]
+fn binding_facts_require_terminal_progress_active_receipt_and_no_flight() {
+    let mut flow = super::record_tests::namespace_flow();
+    let complete = flow.pop().expect("verified record");
+    let (account, device, generation) = drive::binding_facts(&complete).expect("completed facts");
+    assert_eq!(account, [0x66; 16]);
+    assert_eq!(
+        device,
+        complete.enrollment.as_ref().unwrap().receipt.device_id
+    );
+    assert_eq!(generation, [0x44; 32]);
+
+    // Unfinished progress, a retained flight and a revoked receipt each refuse
+    // before any custody read or secret copy.
+    assert_eq!(
+        drive::binding_facts(&super::record_tests::initial_record()).err(),
+        Some(Error::RecoveryRequired)
+    );
+    let dispatched = flow.swap_remove(2);
+    assert!(dispatched.flight.is_some());
+    assert_eq!(
+        drive::binding_facts(&dispatched).err(),
+        Some(Error::RecoveryRequired)
+    );
+    let mut revoked = complete;
+    revoked.enrollment.as_mut().unwrap().device_state = DeviceState::Revoked;
+    assert_eq!(drive::binding_facts(&revoked).err(), Some(Error::Conflict));
 }

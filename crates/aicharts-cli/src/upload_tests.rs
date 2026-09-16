@@ -4,7 +4,13 @@ use super::*;
 use aicharts_core::Collection;
 use aicharts_ledger::{LedgerIdentity, SourceScan, SourceStamp};
 use aicharts_protocol::{AuthMode, Batch, Evidence, Provider, Tokens, Usage};
-use std::{cell::RefCell, fs, os::unix::fs::DirBuilderExt, path::PathBuf, rc::Rc};
+use std::{
+    cell::RefCell,
+    fs,
+    os::unix::fs::DirBuilderExt,
+    path::{Path, PathBuf},
+    rc::Rc,
+};
 
 const CHECKPOINT: [u8; 32] = [7; 32];
 const OCCURRENCE: [u8; 32] = [8; 32];
@@ -791,4 +797,127 @@ fn errors_have_only_fixed_non_reflective_codes() {
         assert_eq!(error.code(), code);
         assert_eq!(error.to_string(), code);
     }
+}
+
+fn command_args(values: &[&str]) -> Vec<String> {
+    values.iter().map(|value| (*value).to_owned()).collect()
+}
+
+#[test]
+fn upload_command_requires_state_dir_key_and_closed_options() {
+    assert_eq!(
+        run(&command_args(&["upload"])),
+        Err("state_directory_required")
+    );
+    assert_eq!(
+        run(&command_args(&["upload", "--state-dir"])),
+        Err("missing_option_value")
+    );
+    assert_eq!(
+        run(&command_args(&["upload", "--state-dir", "d"])),
+        Err("key_required")
+    );
+    assert_eq!(
+        run(&command_args(&["upload", "--state-dir", "d", "--bogus"])),
+        Err("invalid_option")
+    );
+    // `--dry-run` is the separate preview flag, not an option of the send.
+    assert_eq!(
+        run(&command_args(&[
+            "upload",
+            "--state-dir",
+            "d",
+            "--key-file",
+            "k",
+            "--dry-run"
+        ])),
+        Err("invalid_option")
+    );
+    assert_eq!(
+        run(&command_args(&[
+            "upload",
+            "--state-dir",
+            "d",
+            "--key-file",
+            "k",
+            "--state-dir",
+            "e"
+        ])),
+        Err("invalid_option")
+    );
+}
+
+#[test]
+fn upload_command_refuses_before_any_send_when_not_enrolled() {
+    // A repository path whose ancestors stay quiet during the enrolled read;
+    // the shared fixture lock keeps sibling anchor create/remove churn out of
+    // this descriptor-pinned walk.
+    let _guard = crate::TEST_FIXTURE_PARENT
+        .lock()
+        .unwrap_or_else(|error| error.into_inner());
+    let dir = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join(format!(".upload-no-anchor-{}", std::process::id()));
+    let args = command_args(&[
+        "upload",
+        "--state-dir",
+        &dir.display().to_string(),
+        "--key-file",
+        "unused",
+    ]);
+    #[cfg(target_os = "macos")]
+    assert_eq!(run(&args), Err("upload_not_enrolled"));
+    #[cfg(not(target_os = "macos"))]
+    assert_eq!(run(&args), Err("upload_requires_qualified_macos_custody"));
+}
+
+#[test]
+fn uncertain_exchange_retains_flight_and_invocation_refuses_replay() {
+    let fixture = Fixture::new();
+    let mut ledger = fixture.initialize(1, true);
+    assert_eq!(refuse_inflight(&ledger), Ok(()));
+    let mut client = transport(|_, _| Err(TransportError::Uncertain));
+    assert_eq!(
+        send_once(
+            &mut ledger,
+            &mut client,
+            Selection::Freeze {
+                expected_revision: 1,
+                occurrence_ids: &[id(1)],
+            },
+        ),
+        Err(Error::Transport(TransportError::Uncertain))
+    );
+    // The uncertain flight is retained; a later invocation refuses instead of
+    // speculatively replaying it.
+    assert!(ledger.inflight_batch().unwrap().is_some());
+    assert_eq!(refuse_inflight(&ledger), Err("upload_recovery_required"));
+}
+
+#[test]
+fn settled_batch_clears_flight_and_pending_work_is_not_reselected() {
+    let fixture = Fixture::new();
+    let mut ledger = fixture.initialize(2, true);
+    let mut client = transport(|request, body| body.append(&accepted(request)));
+    let settlement = send_once(
+        &mut ledger,
+        &mut client,
+        Selection::Freeze {
+            expected_revision: 1,
+            occurrence_ids: &[id(1), id(2)],
+        },
+    )
+    .unwrap();
+    assert!(matches!(
+        settlement,
+        BatchSettlement::Accepted {
+            cleared_records: 2,
+            ..
+        }
+    ));
+    // Settlement consumed the exact frozen range: nothing inflight and no
+    // settled occurrence is ever reselected for a new send.
+    assert!(ledger.inflight_batch().unwrap().is_none());
+    assert_eq!(refuse_inflight(&ledger), Ok(()));
+    assert_eq!(ledger.sender_status().unwrap().settled_sequence, 2);
+    assert!(ledger.pending(None, 256, None).unwrap().entries.is_empty());
 }

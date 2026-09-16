@@ -23,7 +23,7 @@ use super::storage;
 use super::{Error, Result};
 use crate::enrollment::contract::{self, DomainResult, Operation, PairingState, Success};
 use crate::enrollment::https::AcceptedEnrollment;
-use crate::enrollment::{EnrollIo, EnrollOutcome};
+use crate::enrollment::{EnrollIo, EnrollOutcome, EnrolledInstallation};
 use aicharts_custody::{
     references::RecordIntent, CredentialRef, Purpose, Secret32 as CustodySecret32, SecretRecord,
 };
@@ -422,4 +422,70 @@ pub(crate) fn enroll(dir: &Path, io: Io) -> Result<EnrollOutcome> {
         secret: &secret,
     };
     drive(&mut ops, io)
+}
+
+/// Nonsecret sender binding facts from one completed enrollment record. The
+/// durable decode only proves canonical shape, so semantic validation reruns
+/// here: terminal progress with no retained flight, an active device receipt
+/// and the full reservation/namespace chain are all required before any
+/// custody read; anything else refuses closed.
+pub(super) fn binding_facts(record: &Record) -> Result<([u8; 16], [u8; 32], [u8; 32])> {
+    super::record::validate(record)?;
+    if record.progress != Progress::NamespaceCustodyVerified || record.flight.is_some() {
+        return Err(Error::RecoveryRequired);
+    }
+    let enrollment = record.enrollment.as_ref().ok_or(Error::RecoveryRequired)?;
+    if enrollment.device_state != contract::DeviceState::Active {
+        return Err(Error::Conflict);
+    }
+    let reservation = record.reservation.as_ref().ok_or(Error::RecoveryRequired)?;
+    record.namespace.as_ref().ok_or(Error::RecoveryRequired)?;
+    Ok((
+        enrollment.receipt.account_id,
+        enrollment.receipt.device_id,
+        reservation.recovery_generation,
+    ))
+}
+
+/// The resolved custody record must reproduce the pinned identity and
+/// high-entropy commitment — the exact retained secret, never a substitute
+/// that merely shares a keychain label.
+fn exact_secret(secret: &SecretRecord, pin: &Pin) -> Result<()> {
+    let intent = RecordIntent::from_record(secret);
+    (intent.identity() == &pin.identity && intent.commitment() == pin.commitment.as_bytes())
+        .then_some(())
+        .ok_or(Error::Custody)
+}
+
+/// Reopen this installation's enrolled authority for one upload: durable
+/// binding facts plus the exact retained pairing and namespace records.
+/// Secret preimages stay borrow-only inside the returned records; nothing is
+/// persisted, reminted, repaired or substituted. A missing, unfinished,
+/// revoked or inconsistent anchor refuses before any secret is copied.
+pub(crate) fn enrolled(dir: &Path) -> Result<EnrolledInstallation> {
+    let mut native = reopen(dir)?;
+    let record = native.attempt.record();
+    let (account_id, device_id, recovery_generation) = binding_facts(record)?;
+    let pairing = native
+        .vault
+        .read_exact(&record.pairing.identity)
+        .map_err(|_| Error::RecoveryRequired)?;
+    exact_secret(&pairing, &record.pairing)?;
+    let namespace_pin = &record
+        .namespace
+        .as_ref()
+        .ok_or(Error::RecoveryRequired)?
+        .pin;
+    let namespace = native
+        .vault
+        .read_exact(&namespace_pin.identity)
+        .map_err(|_| Error::RecoveryRequired)?;
+    exact_secret(&namespace, namespace_pin)?;
+    Ok(EnrolledInstallation {
+        account_id,
+        device_id,
+        recovery_generation,
+        pairing,
+        namespace,
+    })
 }

@@ -275,8 +275,20 @@ mod unix {
 
     pub(super) fn run(options: Options) -> Result<String, &'static str> {
         let checkpoint = crate::read_key(&options.key)?;
-        let legacy = ReadOnlyLedger::open(&options.directory, &LedgerIdentity::Legacy(&checkpoint))
-            .map_err(|error| error.code())?;
+        // An enrolled old directory opens under its custody-held account
+        // namespace; the explicit `--occurrence-key-file` below still keys only
+        // the new shadow, never the existing ledger.
+        let source_occurrence = crate::enrolled_ledger::resolve(&options.directory, None)?;
+        let identity = match &source_occurrence {
+            Some(occurrence) => LedgerIdentity::SplitKeys {
+                checkpoint: &checkpoint,
+                occurrence,
+                namespace_version: 1,
+            },
+            None => LedgerIdentity::Legacy(&checkpoint),
+        };
+        let legacy =
+            ReadOnlyLedger::open(&options.directory, &identity).map_err(|error| error.code())?;
         let shadow = if options.prepare {
             Some(target(&options)?)
         } else {
@@ -287,7 +299,11 @@ mod unix {
             .as_ref()
             .map(|path| crate::read_key(path))
             .transpose()?;
-        let mut legacy_scan = scan(&options, &checkpoint, &checkpoint)?;
+        // The old ledger's measurements re-derive under its own occurrence
+        // key: checkpoint for a legacy ledger, the custody account key for an
+        // enrolled one.
+        let source_occurrence_key = source_occurrence.as_ref().unwrap_or(&checkpoint);
+        let mut legacy_scan = scan(&options, &checkpoint, source_occurrence_key)?;
         let observed = inventory(std::mem::take(&mut legacy_scan.sources))?;
         let (mut matched, mut missing, mut conflicting) = (0usize, 0usize, 0usize);
         for entry in legacy.inventory() {
