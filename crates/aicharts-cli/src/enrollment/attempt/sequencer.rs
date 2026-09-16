@@ -4,8 +4,10 @@
 //! context into a persisted flight. It records a canonical digest before any
 //! dispatch, records each explicit dispatch separately, and settles only a
 //! checked domain result. Transport and ambiguous publication failures retain
-//! the flight for explicit reconciliation. No constructor, network caller,
-//! vault, reference store or CLI path reaches these functions yet.
+//! the flight for explicit reconciliation; a dispatched Poll flight is the
+//! single abandonable exception because the exchange is a server-side read.
+//! No constructor, network caller, vault, reference store or CLI path reaches
+//! these functions yet.
 
 use super::{
     record::{
@@ -689,6 +691,44 @@ pub(super) fn record_unknown_outcome<S: Storage>(
         observed_at_ms,
         LastFailure::OutcomeUnknown,
     )
+}
+
+/// Abandon one dispatched Poll flight after an uncertain outcome. A poll is
+/// the only abandonable operation: the server exchange is a read whose sole
+/// side effect is advancing its own throttle interval, so a dispatched or
+/// undispatched outcome has nothing to reconcile and a later paced poll asks
+/// the same question again. Mutating operations still retain the dispatched
+/// flight for explicit reconstruction. The loss is a fixed durable fact
+/// recorded before any successor flight is prepared; the abandoned flight's
+/// dispatch accounting stays counted in `flights_started`.
+pub(super) fn abandon_poll_flight<S: Storage>(
+    storage: &mut S,
+    expected: Token,
+    current: &Record,
+    observed_at_ms: u64,
+) -> Result<DurableSnapshot> {
+    let next = abandon_poll_flight_record(expected, current, observed_at_ms)?;
+    storage::compare_and_publish(storage, expected, &next)
+}
+
+pub(super) fn abandon_poll_flight_record(
+    expected: Token,
+    current: &Record,
+    observed_at_ms: u64,
+) -> Result<Record> {
+    record::validate(current)?;
+    current_token(current, expected)?;
+    let flight = current.flight.as_ref().ok_or(Error::Missing)?;
+    if flight.operation != Operation::Poll || flight.dispatches == 0 {
+        return Err(Error::Conflict);
+    }
+    checked_time(observed_at_ms, current.clock_floor_ms)?;
+    let mut next = current.clone();
+    next.revision = next.revision.checked_add(1).ok_or(Error::Limit)?;
+    next.clock_floor_ms = observed_at_ms;
+    next.flight = None;
+    next.last_failure = Some(LastFailure::OutcomeUnknown);
+    Ok(next)
 }
 
 fn pairing_view(view: &PairingView) -> PairingView {

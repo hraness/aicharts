@@ -97,6 +97,8 @@ type Step = (Operation, DomainResult, Progress);
 
 struct ScriptedOps {
     script: VecDeque<Step>,
+    /// One injected exchange failure per call, consumed before the script.
+    exchange_failures: VecDeque<Error>,
     progress: Progress,
     chosen: Option<AccountId>,
     intent: Id,
@@ -108,6 +110,7 @@ impl ScriptedOps {
     fn new(progress: Progress, script: Vec<Step>) -> Self {
         Self {
             script: script.into(),
+            exchange_failures: VecDeque::new(),
             progress,
             chosen: None,
             intent: id(0x11),
@@ -134,6 +137,9 @@ impl AttemptOps for ScriptedOps {
         _io: &mut dyn EnrollIo,
     ) -> super::Result<DomainResult> {
         self.exchanges.push(operation);
+        if let Some(error) = self.exchange_failures.pop_front() {
+            return Err(error);
+        }
         let (expected, response, after) = self
             .script
             .pop_front()
@@ -470,9 +476,169 @@ fn drive_propagates_domain_refusals() {
 
 #[test]
 fn drive_refuses_poll_bound() {
-    // Drive handshake directly with an endless Pending stream is impossible to
-    // script by queue; bound is asserted via the fixed MAX_PAIRING_POLLS cap.
+    // The pairing loop is bounded by the fixed MAX_PAIRING_POLLS cap; an
+    // always-uncertain poll stream exhausts it without a single domain reply.
     assert_eq!(MAX_PAIRING_POLLS, 600);
+    let mut ops = ScriptedOps::new(Progress::Initialized, Vec::new());
+    ops.exchange_failures = vec![Error::OutcomeUnknown; MAX_PAIRING_POLLS as usize].into();
+    let mut io = FakeIo::new();
+    assert_eq!(drive::drive(&mut ops, &mut io).err(), Some(Error::Limit));
+    assert_eq!(ops.exchanges.len(), MAX_PAIRING_POLLS as usize);
+    assert_eq!(io.waits.len(), MAX_PAIRING_POLLS as usize);
+    assert!(io.waits.iter().all(|wait| *wait == contract::POLL_MS));
+}
+
+#[test]
+fn drive_recovers_from_uncertain_poll_transport_outcomes() {
+    let mut ops = ScriptedOps::new(
+        Progress::Initialized,
+        vec![
+            (
+                Operation::Poll,
+                pairing(PairingState::Pending, None),
+                Progress::Initialized,
+            ),
+            (
+                Operation::Poll,
+                pairing(PairingState::BrowserApproved, Some(account(0x22))),
+                Progress::Initialized,
+            ),
+            (
+                Operation::Confirm,
+                pairing(PairingState::TerminalConfirmed, Some(account(0x22))),
+                Progress::Confirmed,
+            ),
+            (
+                Operation::Reserve,
+                Ok(Success::Reserved(reservation())),
+                Progress::Reserved,
+            ),
+            (
+                Operation::Enroll,
+                Ok(Success::Enrolled {
+                    reservation: reservation(),
+                    enrollment: enrollment(),
+                }),
+                Progress::Enrolled,
+            ),
+            (
+                Operation::Namespace,
+                Ok(Success::Namespace {
+                    reservation: reservation(),
+                    namespace: Namespace {
+                        namespace_key: Secret32::from_bytes(id(0x99)).unwrap(),
+                        receipt: receipt(),
+                    },
+                }),
+                Progress::NamespaceCustodyVerified,
+            ),
+        ],
+    );
+    ops.exchange_failures = vec![Error::OutcomeUnknown, Error::OutcomeUnknown].into();
+    let mut io = FakeIo::new();
+    drive::drive(&mut ops, &mut io).expect("enrolled");
+    assert_eq!(
+        ops.exchanges,
+        vec![
+            Operation::Poll,
+            Operation::Poll,
+            Operation::Poll,
+            Operation::Poll,
+            Operation::Confirm,
+            Operation::Reserve,
+            Operation::Enroll,
+            Operation::Namespace,
+        ],
+        "two abandoned polls plus two settled polls"
+    );
+    assert_eq!(
+        io.waits,
+        vec![contract::POLL_MS, contract::POLL_MS, 2_000],
+        "each abandoned poll is paced on the server poll interval"
+    );
+}
+
+#[test]
+fn uncertain_mutating_exchanges_still_refuse_closed() {
+    for (progress, step) in [
+        (
+            Progress::PairingCustodyVerified,
+            (
+                Operation::Initialize,
+                Ok(Success::Initialized {
+                    expires_at_ms: NOW + 600_000,
+                }),
+                Progress::Initialized,
+            ),
+        ),
+        (
+            Progress::Confirmed,
+            (
+                Operation::Reserve,
+                Ok(Success::Reserved(reservation())),
+                Progress::Reserved,
+            ),
+        ),
+        (
+            Progress::Reserved,
+            (
+                Operation::Enroll,
+                Ok(Success::Enrolled {
+                    reservation: reservation(),
+                    enrollment: enrollment(),
+                }),
+                Progress::Enrolled,
+            ),
+        ),
+        (
+            Progress::Enrolled,
+            (
+                Operation::Namespace,
+                Ok(Success::Namespace {
+                    reservation: reservation(),
+                    namespace: Namespace {
+                        namespace_key: Secret32::from_bytes(id(0x99)).unwrap(),
+                        receipt: receipt(),
+                    },
+                }),
+                Progress::NamespaceCustodyVerified,
+            ),
+        ),
+    ] {
+        let operation = step.0;
+        let mut ops = ScriptedOps::new(progress, vec![step]);
+        ops.exchange_failures = vec![Error::OutcomeUnknown].into();
+        let mut io = FakeIo::new();
+        assert_eq!(
+            drive::drive(&mut ops, &mut io).err(),
+            Some(Error::OutcomeUnknown),
+            "operation {operation:?}"
+        );
+        assert_eq!(
+            ops.exchanges,
+            vec![operation],
+            "operation {operation:?} is never implicitly retried"
+        );
+        assert!(io.waits.is_empty());
+    }
+    // Confirm reaches the same refusal once an account is already chosen.
+    let mut ops = ScriptedOps::new(
+        Progress::Initialized,
+        vec![(
+            Operation::Confirm,
+            pairing(PairingState::TerminalConfirmed, Some(account(0x22))),
+            Progress::Confirmed,
+        )],
+    );
+    ops.chosen = Some(account(0x22));
+    ops.exchange_failures = vec![Error::OutcomeUnknown].into();
+    let mut io = FakeIo::new();
+    assert_eq!(
+        drive::drive(&mut ops, &mut io).err(),
+        Some(Error::OutcomeUnknown)
+    );
+    assert_eq!(ops.exchanges, vec![Operation::Confirm]);
+    assert!(io.waits.is_empty());
 }
 
 #[test]

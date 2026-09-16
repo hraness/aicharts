@@ -9,8 +9,11 @@
 //! pairing secret in caller-owned memory between operations; on a later
 //! invocation it reloads the exact retained secret from custody by its pinned
 //! identity. Crash and uncertain states refuse closed — a retained dispatched
-//! flight, an interrupted custody write or a lost secret is never retried or
-//! reminted implicitly.
+//! mutating flight, an interrupted custody write or a lost secret is never
+//! retried or reminted implicitly. A dispatched Poll flight is the single
+//! explicit exception: the exchange is a server-side read, so an uncertain
+//! outcome is durably abandoned and the paced poll loop prepares a fresh
+//! flight instead of reconstructing one.
 
 use super::coordinator::{self, NativeEnrollment};
 use super::macos::MacStorage;
@@ -230,7 +233,11 @@ pub(super) fn expect(result: DomainResult, operation: Operation) -> Result<()> {
 /// Present the pairing URL once, then poll until the browser approves, denies
 /// or the intent expires. Each poll is a separate exchange paced by the
 /// server's `poll_after_ms`; the approved account is then chosen once and the
-/// single confirmation exchange runs.
+/// single confirmation exchange runs. An uncertain poll transport outcome is
+/// the one recoverable refusal: the attempt already durably abandoned that
+/// read-only flight, so the loop waits the server's throttle interval and
+/// polls again within the same `MAX_PAIRING_POLLS` bound — an explicit
+/// recovery, never an implicit transport retry.
 pub(super) fn handshake(ops: &mut impl AttemptOps, io: Io) -> Result<()> {
     let url = coordinator::pairing_url(&ops.intent_id()?);
     io.pairing_url(&url);
@@ -243,7 +250,15 @@ pub(super) fn handshake(ops: &mut impl AttemptOps, io: Io) -> Result<()> {
         if polls > MAX_PAIRING_POLLS {
             return Err(Error::Limit);
         }
-        match domain(ops.exchange(Operation::Poll, None, io)?)? {
+        let result = match ops.exchange(Operation::Poll, None, io) {
+            Ok(result) => result,
+            Err(Error::OutcomeUnknown) => {
+                io.wait_ms(contract::POLL_MS);
+                continue;
+            }
+            Err(error) => return Err(error),
+        };
+        match domain(result)? {
             Success::Pairing(view) => match view.state {
                 PairingState::BrowserApproved | PairingState::TerminalConfirmed => {
                     break view.approved_account_id.ok_or(Error::OutcomeUnknown)?;

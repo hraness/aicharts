@@ -396,3 +396,178 @@ fn reconstructed_namespace_success_still_requires_fresh_acceptance() {
         .namespace
         .is_none());
 }
+
+#[test]
+fn abandoned_poll_flight_records_the_loss_and_admits_the_next_prepared_flight() {
+    let (current, request, context, _secret) = fixture(Operation::Poll);
+    let mut storage = Memory::with(&current);
+    let token = record::token(&current).unwrap();
+    let prepared = prepare_flight(
+        &mut storage,
+        token,
+        &current,
+        &request,
+        &context,
+        context.now_ms + 1,
+    )
+    .unwrap();
+    let dispatched = dispatch_flight(
+        &mut storage,
+        prepared.token(),
+        prepared.record(),
+        &request,
+        &context,
+        context.now_ms + 2,
+    )
+    .unwrap();
+    let abandoned = abandon_poll_flight(
+        &mut storage,
+        dispatched.token(),
+        dispatched.record(),
+        context.now_ms + 3,
+    )
+    .unwrap();
+    // The successor keeps every durable fact and drops only the dead read; the
+    // outcome stays explicitly recorded instead of silently retried.
+    assert!(abandoned.record().flight.is_none());
+    assert_eq!(
+        abandoned.record().last_failure,
+        Some(LastFailure::OutcomeUnknown)
+    );
+    assert_eq!(
+        abandoned.record().flights_started,
+        dispatched.record().flights_started
+    );
+    assert_eq!(
+        abandoned.record().revision,
+        dispatched.record().revision + 1
+    );
+    assert_eq!(abandoned.record().clock_floor_ms, context.now_ms + 3);
+    let bytes = record::encode(abandoned.record()).unwrap();
+    for canary in [[0x22; 32], [0x33; 32]] {
+        assert!(!bytes.as_bytes().windows(32).any(|part| part == canary));
+    }
+    // The next paced poll prepares a fresh flight on the same attempt.
+    let later = Context {
+        now_ms: context.now_ms + 5_000,
+        ..context.clone()
+    };
+    let reprepared = prepare_flight(
+        &mut storage,
+        abandoned.token(),
+        abandoned.record(),
+        &request,
+        &later,
+        context.now_ms + 5_000,
+    )
+    .unwrap();
+    let flight = reprepared.record().flight.as_ref().unwrap();
+    assert_eq!(flight.operation, Operation::Poll);
+    assert_eq!(flight.dispatches, 0);
+    assert_eq!(flight.ordinal, reprepared.record().flights_started);
+}
+
+#[test]
+fn only_a_dispatched_poll_flight_can_be_abandoned() {
+    for operation in [
+        Operation::Initialize,
+        Operation::Confirm,
+        Operation::Reserve,
+        Operation::Enroll,
+        Operation::Namespace,
+    ] {
+        let (current, request, context, _secret) = fixture(operation);
+        let mut storage = Memory::with(&current);
+        let token = record::token(&current).unwrap();
+        let prepared = prepare_flight(
+            &mut storage,
+            token,
+            &current,
+            &request,
+            &context,
+            context.now_ms + 1,
+        )
+        .unwrap();
+        let dispatched = dispatch_flight(
+            &mut storage,
+            prepared.token(),
+            prepared.record(),
+            &request,
+            &context,
+            context.now_ms + 2,
+        )
+        .unwrap();
+        assert_eq!(
+            abandon_poll_flight(
+                &mut storage,
+                dispatched.token(),
+                dispatched.record(),
+                context.now_ms + 3
+            )
+            .err(),
+            Some(Error::Conflict),
+            "operation {operation:?}"
+        );
+        assert!(dispatched.record().flight.is_some());
+    }
+    // An undispatched poll flight was never sent; it stays retained.
+    let (current, request, context, _secret) = fixture(Operation::Poll);
+    let mut storage = Memory::with(&current);
+    let token = record::token(&current).unwrap();
+    let prepared = prepare_flight(
+        &mut storage,
+        token,
+        &current,
+        &request,
+        &context,
+        context.now_ms + 1,
+    )
+    .unwrap();
+    assert_eq!(
+        abandon_poll_flight(
+            &mut storage,
+            prepared.token(),
+            prepared.record(),
+            context.now_ms + 2
+        )
+        .err(),
+        Some(Error::Conflict)
+    );
+    // No flight at all has nothing to abandon.
+    assert_eq!(
+        abandon_poll_flight(&mut storage, token, &current, context.now_ms + 2).err(),
+        Some(Error::Missing)
+    );
+    // A regressed observation is not a recovery boundary.
+    let (current, request, context, _secret) = fixture(Operation::Poll);
+    let mut storage = Memory::with(&current);
+    let token = record::token(&current).unwrap();
+    let prepared = prepare_flight(
+        &mut storage,
+        token,
+        &current,
+        &request,
+        &context,
+        context.now_ms + 1,
+    )
+    .unwrap();
+    let dispatched = dispatch_flight(
+        &mut storage,
+        prepared.token(),
+        prepared.record(),
+        &request,
+        &context,
+        context.now_ms + 2,
+    )
+    .unwrap();
+    assert_eq!(
+        abandon_poll_flight(
+            &mut storage,
+            dispatched.token(),
+            dispatched.record(),
+            dispatched.record().clock_floor_ms - 1
+        )
+        .err(),
+        Some(Error::ClockRegressed)
+    );
+}

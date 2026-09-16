@@ -219,9 +219,12 @@ impl NativeEnrollment {
 
 /// Execute one first-attempt exchange using the exact caller-owned pairing
 /// secret. Refreshing while the attempt lock is held closes the startup crash
-/// window before any custody or network effect. A retained dispatched flight
-/// is rejected by `HeldAttempt::run_operation`; explicit reconstruction/retry
-/// is a separate state-machine action and is never implicit here.
+/// window before any custody or network effect. A retained dispatched
+/// mutating flight is rejected by `HeldAttempt::run_operation`; explicit
+/// reconstruction/retry is a separate state-machine action and is never
+/// implicit here. A retained dispatched Poll flight is the one exception the
+/// session durably abandons, because the exchange is a server-side read with
+/// nothing to reconcile.
 #[allow(clippy::result_large_err, clippy::too_many_arguments)]
 pub(super) fn exchange_once<S, C, X>(
     mut held: HeldAttempt<S>,
