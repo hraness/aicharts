@@ -149,10 +149,6 @@ pub(crate) struct ClaudeEntry {
     pub request_id: Option<NativeId>,
     #[serde(rename = "sessionId")]
     pub session_id: Option<NativeId>,
-    #[serde(rename = "agentId")]
-    pub agent_id: Option<NativeId>,
-    #[serde(rename = "isSidechain", default)]
-    pub is_sidechain: bool,
     #[serde(default, deserialize_with = "metadata_object")]
     pub message: Option<ClaudeMessage>,
 }

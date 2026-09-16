@@ -299,6 +299,86 @@ fn copied_files_and_cross_file_claude_revisions_merge_once() {
 }
 
 #[test]
+fn claude_sidechain_copies_merge_into_the_parent_session() {
+    // A delegated call logged unmarked in the parent transcript and marked
+    // isSidechain/agentId in the subagent file shares one occurrence keyed
+    // by (request, message); attribution is the shared session.
+    let parent = parse(&claude_row("request-1", 10, 2, 1), Provider::ClaudeCode);
+    let child = parse(
+        &claude_row("request-1", 10, 8, 3).replace(
+            "\"requestId\"",
+            "\"isSidechain\":true,\"agentId\":\"agent-1\",\"requestId\"",
+        ),
+        Provider::ClaudeCode,
+    );
+    let merged = merge_collections(vec![parent, child]).unwrap();
+    let usage = &merged.batches[0].usage;
+    assert_eq!(usage.len(), 1);
+    assert_eq!(usage[0].tokens.output, 8);
+    assert_eq!(
+        usage[0].execution_id,
+        keyed_id(&KEY, b"claude-execution", &["session-1".as_bytes()])
+    );
+}
+
+#[test]
+fn claude_execution_attribution_drift_merges_but_context_still_conflicts() {
+    // Ledgers written before session-level attribution can hold the same
+    // occurrence under a per-agent execution; merging must not wedge them.
+    let usage = |execution_id: Id, provider: Provider, model_id: u32| Usage {
+        id: [1; 16],
+        execution_id,
+        account_id: [0; 16],
+        offset_ms: 1,
+        provider,
+        auth_mode: AuthMode::Unknown,
+        evidence: Evidence::Imported,
+        model_id,
+        context_tier: 0,
+        tokens: Tokens {
+            input_uncached: 10,
+            cache_read: 0,
+            cache_write_5m: 0,
+            cache_write_1h: 0,
+            output: 2,
+            reasoning_output: 0,
+        },
+    };
+    let wrap = |usage: Usage| Collection {
+        batches: vec![Batch {
+            utc_day: 0,
+            registry_revision: 1,
+            usage: vec![usage],
+            prompts: vec![],
+            intervals: vec![],
+        }],
+        warnings: vec![],
+        lines_read: 0,
+    };
+    let merged = merge_collections(vec![
+        wrap(usage([2; 16], Provider::ClaudeCode, 0)),
+        wrap(usage([3; 16], Provider::ClaudeCode, 0)),
+    ])
+    .unwrap();
+    assert_eq!(merged.batches[0].usage.len(), 1);
+    assert_eq!(merged.batches[0].usage[0].execution_id, [3; 16]);
+    for (provider, model_id) in [
+        (Provider::Devin, 0u32),
+        (Provider::Codex, 0u32),
+        (Provider::ClaudeCode, 7u32),
+    ] {
+        assert_eq!(
+            merge_collections(vec![
+                wrap(usage([2; 16], Provider::ClaudeCode, 0)),
+                wrap(usage([3; 16], provider, model_id)),
+            ])
+            .err(),
+            Some(Error::ConflictingOccurrence)
+        );
+    }
+}
+
+#[test]
 fn claude_cache_creation_preserves_ttl_and_refuses_unknown_split() {
     let source = r#"{"type":"assistant","timestamp":"2026-09-10T10:00:01Z","requestId":"request-1","message":{"id":"message-1","usage":{"input_tokens":10,"output_tokens":2,"cache_read_input_tokens":3,"cache_creation_input_tokens":12,"cache_creation":{"ephemeral_5m_input_tokens":7,"ephemeral_1h_input_tokens":5}}}}"#;
     let collection = parse(source, Provider::ClaudeCode);

@@ -124,7 +124,15 @@ impl Accumulator {
     fn add(&mut self, day: u32, usage: Usage) -> Result<(), Error> {
         if let Some((old_day, old)) = self.usage.get_mut(&usage.id) {
             if !same_source(old, &usage) {
-                return Err(Error::ConflictingOccurrence);
+                // One Claude API call can be logged in a parent transcript
+                // without sidechain markers and in its subagent file with
+                // them. The occurrence id already binds (request, message),
+                // so only execution attribution may legitimately differ;
+                // adopt the canonical session-level attribution.
+                if !(usage.provider == Provider::ClaudeCode && same_context(old, &usage)) {
+                    return Err(Error::ConflictingOccurrence);
+                }
+                old.execution_id = usage.execution_id;
             }
             if usage.provider == Provider::Codex {
                 if *old_day != day
@@ -201,8 +209,11 @@ impl Accumulator {
 }
 
 fn same_source(a: &Usage, b: &Usage) -> bool {
-    a.execution_id == b.execution_id
-        && a.account_id == b.account_id
+    a.execution_id == b.execution_id && same_context(a, b)
+}
+
+fn same_context(a: &Usage, b: &Usage) -> bool {
+    a.account_id == b.account_id
         && a.provider == b.provider
         && a.auth_mode == b.auth_mode
         && a.evidence == b.evidence
@@ -592,15 +603,11 @@ fn parse_claude<R: BufRead>(
             b"claude-usage",
             &[request.0.as_bytes(), message_id.0.as_bytes()],
         );
-        let execution_id = match (record.session_id, record.agent_id, record.is_sidechain) {
-            (Some(session), Some(agent), true) => keyed_id(
-                key,
-                b"claude-subagent",
-                &[session.0.as_bytes(), agent.0.as_bytes()],
-            ),
-            (Some(session), _, false) => {
-                keyed_id(key, b"claude-execution", &[session.0.as_bytes()])
-            }
+        // Sidechain markers are transcript-local: a parent transcript logs a
+        // delegated call without them while the subagent file marks it. Only
+        // `sessionId` is stable across copies, so executions are sessions.
+        let execution_id = match record.session_id {
+            Some(session) => keyed_id(key, b"claude-execution", &[session.0.as_bytes()]),
             _ => {
                 out.warn(Warning::UnknownExecution);
                 [0; 16]
