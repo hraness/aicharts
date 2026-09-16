@@ -5,7 +5,13 @@ import { AccountAdmission, type AdmissionObservation } from "./account-admission
 import { AdmissionFault, batchAccount, ownedAdmissionBatch } from "./admission-policy";
 import { ADMISSION_SCHEMA } from "./admission-schema";
 import { AdmissionState, type AdmissionControl } from "./admission-state";
-import { parsePrivateDaysRequest, type PrivateDaysRequestV1, type PrivateDaysV1 } from "../../../lib/usage/private-days-contract";
+import { parsePrivateDaysRequest, type PrivateDaysV1 } from "../../../lib/usage/private-days-contract";
+import {
+  LEADERBOARD_INDEX_NAME, LEADERBOARD_WINDOW_DAYS, leaderboardPublicHandle,
+  type LeaderboardConsentViewV1, type LeaderboardProjectionV1,
+} from "../../../lib/usage/leaderboard-contract";
+import { parseUsageConsentRequest } from "../../../lib/usage/consent-contract";
+import { DAY_MS } from "../../../lib/usage/wire";
 import {
   enrollmentAccount, enrollmentAccountName, enrollmentHex, enrollmentRandom,
   enrollmentSnapshot, enrollmentTime, parseEnrollmentProof, parseEnrollmentReservation,
@@ -37,6 +43,13 @@ export type EnrollmentStatus = Readonly<{
 }>;
 type Device = { reservation: EnrollmentReservation; deviceId: string; enrolledAtMs: number; revokedAtMs: number | null };
 type GenesisCompletion = { mode: "original" | "fresh-recovery"; intentId: string; reservationId: string; completedAtMs: number };
+/** Account-owned public-publishing consent. `changedAtMs` is the recorded
+ * commit time of the latest decision; it orders replays at the index and is
+ * never part of the public projection. `consentedAtMs` is the latest grant
+ * commit time, `null` whenever consent is off. */
+type LeaderboardState = {
+  consent: boolean; consentedAtMs: number | null; publicHandle: string | null; changedAtMs: number;
+};
 type State = {
   accountId: string; generation: string; observedAtMs: number; phase: "pending" | "active";
   // The restore epoch this state last committed under. `null` marks a
@@ -44,6 +57,7 @@ type State = {
   // fenced contact; a real epoch must match the fence's or the account is
   // stale (restored) and must refuse recovery_required.
   fenceEpoch: number | null; anchor: NamespaceAnchor; devices: Device[]; genesisCompletion: GenesisCompletion | null;
+  leaderboard: LeaderboardState;
 };
 // `fence`/`leaseToken`/`committed` are the request-scoped restore-fence
 // context: `fence` is the authoritative epoch/established the lease pinned,
@@ -73,14 +87,17 @@ function sameGrant(left: EnrollmentReservation, right: EnrollmentReservation): b
 // legacy=true is used only by the additive constructor migration. No legacy
 // shape is admitted to an operation before deriving and validating completion.
 // fence=false reads the schema-version-2/3 payload, which predates the
-// restore-epoch field; fence=true reads and admits only the current schema-4
-// shape. Both flags exist solely so additive migrations can load older rows.
-function validState(value: unknown, legacy = false, fence = true): value is State {
-  const state = enrollmentSnapshot(value, ["accountId", "generation", "observedAtMs", "phase", ...(fence ? ["fenceEpoch"] : []), "anchor", "devices", ...(legacy ? [] : ["genesisCompletion"])]);
+// restore-epoch field; fence=true reads and admits only the schema-4+ shape.
+// leaderboard=false reads the schema-≤4 payload, which predates consent;
+// leaderboard=true admits only the current schema-5 shape. These flags exist
+// solely so additive migrations can load older rows.
+function validState(value: unknown, legacy = false, fence = true, leaderboard = true): value is State {
+  const state = enrollmentSnapshot(value, ["accountId", "generation", "observedAtMs", "phase", ...(fence ? ["fenceEpoch"] : []), "anchor", "devices", ...(legacy ? [] : ["genesisCompletion"]), ...(leaderboard ? ["leaderboard"] : [])]);
   if (state === null || !enrollmentAccount(state.accountId) || !enrollmentHex(state.generation) || !enrollmentTime(state.observedAtMs)
     || (state.phase !== "pending" && state.phase !== "active") || !Array.isArray(state.devices)
     || state.devices.length > MAX_ENROLLED_DEVICES || (state.phase === "pending") !== (state.devices.length === 0)) return false;
   if (fence && !(state.fenceEpoch === null || (typeof state.fenceEpoch === "number" && Number.isSafeInteger(state.fenceEpoch) && state.fenceEpoch >= 0))) return false;
+  if (leaderboard && !validLeaderboard(state.leaderboard, state.observedAtMs)) return false;
   const anchor = enrollmentSnapshot(state.anchor, ["accountId", "namespaceKey", "intentId", "reservationId", "generation", "createdAtMs"]);
   if (anchor === null || anchor.accountId !== state.accountId || anchor.generation !== state.generation
     || !enrollmentHex(anchor.namespaceKey) || !enrollmentHex(anchor.intentId) || !enrollmentHex(anchor.reservationId)
@@ -113,6 +130,21 @@ function validState(value: unknown, legacy = false, fence = true): value is Stat
   return (state.devices as Device[]).some(device => device.reservation.intentId === completion.intentId
     && device.reservation.reservationId === completion.reservationId && device.enrolledAtMs === completion.completedAtMs
     && (completion.mode !== "fresh-recovery" || device.reservation.reservedAtMs >= anchorCreatedAtMs));
+}
+
+/** Consent invariants: a grant records its commit time and a bounded handle;
+ * a withdrawal erases both while keeping the decision time for index ordering. */
+function validLeaderboard(value: unknown, observedAtMs: number): value is LeaderboardState {
+  const leaderboard = enrollmentSnapshot(value, ["consent", "consentedAtMs", "publicHandle", "changedAtMs"]);
+  if (leaderboard === null || typeof leaderboard.consent !== "boolean"
+    || !enrollmentTime(leaderboard.changedAtMs) || leaderboard.changedAtMs > observedAtMs) return false;
+  if (leaderboard.consent === false) return leaderboard.consentedAtMs === null && leaderboard.publicHandle === null;
+  return enrollmentTime(leaderboard.consentedAtMs) && leaderboard.consentedAtMs <= leaderboard.changedAtMs
+    && leaderboardPublicHandle(leaderboard.publicHandle);
+}
+function consentViewOf(leaderboard: LeaderboardState): LeaderboardConsentViewV1 {
+  return Object.freeze({ schemaVersion: 1, consent: leaderboard.consent,
+    consentedAtMs: leaderboard.consentedAtMs, publicHandle: leaderboard.publicHandle });
 }
 
 function supersededGenesis(state: State, grant: EnrollmentReservation): boolean {
@@ -180,7 +212,8 @@ export class AccountEnrollment extends DurableObject<Env> {
         }
         this.#schema();
         this.#migrateFence();
-        new AdmissionState(ctx.storage.sql).audit(this.#stored(4).state);
+        this.#migrateLeaderboard();
+        new AdmissionState(ctx.storage.sql).audit(this.#stored(5).state);
       });
     } catch { this.#healthy = false; }
   }
@@ -208,12 +241,12 @@ export class AccountEnrollment extends DurableObject<Env> {
     if (row.payload !== null) {
       if (typeof row.payload !== "string" || row.payload.length > MAX_PAYLOAD || row.revision === 0) throw new Error("storage_invalid");
       const parsed: unknown = JSON.parse(row.payload);
-      if (!validState(parsed, true, false) || !this.ctx.id.equals(this.env.ACCOUNT_ENROLLMENTS.idFromName(enrollmentAccountName(parsed.accountId)))) throw new Error("storage_invalid");
+      if (!validState(parsed, true, false, false) || !this.ctx.id.equals(this.env.ACCOUNT_ENROLLMENTS.idFromName(enrollmentAccountName(parsed.accountId)))) throw new Error("storage_invalid");
       const origin = parsed.devices.find(device => device.reservation.intentId === parsed.anchor.intentId && device.reservation.reservationId === parsed.anchor.reservationId);
       const migrated: State = { ...parsed, genesisCompletion: origin === undefined ? null : {
         mode: "original", intentId: origin.reservation.intentId, reservationId: origin.reservation.reservationId, completedAtMs: origin.enrolledAtMs,
       } };
-      if (!validState(migrated, false, false)) throw new Error("storage_invalid");
+      if (!validState(migrated, false, false, false)) throw new Error("storage_invalid");
       payload = JSON.stringify(migrated);
       if (payload.length > MAX_PAYLOAD) throw new Error("storage_invalid");
     } else if (row.revision !== 0) throw new Error("storage_invalid");
@@ -229,21 +262,45 @@ export class AccountEnrollment extends DurableObject<Env> {
     const rows = this.ctx.storage.sql.exec("SELECT id, schema_version, revision, payload FROM account_enrollment LIMIT 2").toArray();
     const row = rows[0];
     if (rows.length !== 1 || row?.id !== 1) throw new Error("storage_invalid");
-    if (row.schema_version === 4) return;
+    // Schema 4+ already carries the restore-epoch field; a later version's
+    // stricter migration owns the fail-closed decision for future schemas.
+    if (typeof row.schema_version === "number" && row.schema_version >= 4) return;
     if (row.schema_version !== 3) throw new Error("storage_invalid");
     let payload = row.payload;
     if (payload !== null) {
       if (typeof payload !== "string" || payload.length > MAX_PAYLOAD) throw new Error("storage_invalid");
       const parsed: unknown = JSON.parse(payload);
-      if (!validState(parsed, false, false)) throw new Error("storage_invalid");
+      if (!validState(parsed, false, false, false)) throw new Error("storage_invalid");
       const migrated: State = { ...parsed, fenceEpoch: null };
-      if (!validState(migrated)) throw new Error("storage_invalid");
+      if (!validState(migrated, false, true, false)) throw new Error("storage_invalid");
       payload = JSON.stringify(migrated);
       if (payload.length > MAX_PAYLOAD) throw new Error("storage_invalid");
     }
     this.ctx.storage.sql.exec("UPDATE account_enrollment SET schema_version = 4, payload = ? WHERE id = 1", payload);
   }
-  #stored(version: 2 | 3 | 4): { revision: number; state: State | null } {
+  /** Additive schema-4→5 migration: begin recording leaderboard consent. Every
+   * existing account starts unpublished (`consent: false`, never changed);
+   * nothing is ever opted in by migration. An older binary fails closed on
+   * schema 5; rollback must not strip the field. */
+  #migrateLeaderboard(): void {
+    const rows = this.ctx.storage.sql.exec("SELECT id, schema_version, revision, payload FROM account_enrollment LIMIT 2").toArray();
+    const row = rows[0];
+    if (rows.length !== 1 || row?.id !== 1) throw new Error("storage_invalid");
+    if (row.schema_version === 5) return;
+    if (row.schema_version !== 4) throw new Error("storage_invalid");
+    let payload = row.payload;
+    if (payload !== null) {
+      if (typeof payload !== "string" || payload.length > MAX_PAYLOAD) throw new Error("storage_invalid");
+      const parsed: unknown = JSON.parse(payload);
+      if (!validState(parsed, false, true, false)) throw new Error("storage_invalid");
+      const migrated: State = { ...parsed, leaderboard: { consent: false, consentedAtMs: null, publicHandle: null, changedAtMs: 0 } };
+      if (!validState(migrated)) throw new Error("storage_invalid");
+      payload = JSON.stringify(migrated);
+      if (payload.length > MAX_PAYLOAD) throw new Error("storage_invalid");
+    }
+    this.ctx.storage.sql.exec("UPDATE account_enrollment SET schema_version = 5, payload = ? WHERE id = 1", payload);
+  }
+  #stored(version: 2 | 3 | 4 | 5): { revision: number; state: State | null } {
     const rows = this.ctx.storage.sql.exec("SELECT id, schema_version, revision, payload FROM account_enrollment LIMIT 2").toArray();
     const row = rows[0];
     if (rows.length !== 1 || row?.id !== 1 || row.schema_version !== version || typeof row.revision !== "number"
@@ -252,8 +309,9 @@ export class AccountEnrollment extends DurableObject<Env> {
     if (row.payload !== null) {
       if (typeof row.payload !== "string" || row.payload.length > MAX_PAYLOAD || row.revision === 0) throw new AdmissionFault();
       const parsed: unknown = JSON.parse(row.payload);
-      // version < 4 rows predate the restore-epoch field; version 4 requires it.
-      if (!validState(parsed, false, version === 4) || !this.ctx.id.equals(this.env.ACCOUNT_ENROLLMENTS.idFromName(enrollmentAccountName(parsed.accountId)))) throw new AdmissionFault();
+      // version < 4 rows predate the restore-epoch field; version < 5 rows
+      // predate the consent field. Only the current schema admits both.
+      if (!validState(parsed, false, version >= 4, version === 5) || !this.ctx.id.equals(this.env.ACCOUNT_ENROLLMENTS.idFromName(enrollmentAccountName(parsed.accountId)))) throw new AdmissionFault();
       state = parsed;
     } else if (row.revision !== 0) throw new AdmissionFault();
     return { revision: row.revision, state };
@@ -263,7 +321,7 @@ export class AccountEnrollment extends DurableObject<Env> {
       return this.ctx.storage.transactionSync(() => {
         this.#schema();
         if (this.#generation() !== operation.generation) return err("recovery_required");
-        const { revision, state } = this.#stored(4);
+        const { revision, state } = this.#stored(5);
         if (state !== null && state.generation !== operation.generation) return err("recovery_required");
         const fence = operation.fence;
         if (fence !== null) {
@@ -307,7 +365,7 @@ export class AccountEnrollment extends DurableObject<Env> {
    * match; the transaction re-checks the lease authoritatively, so this only
    * filters the fence's early refusal. */
   #fenceHint(): number {
-    try { return this.#stored(4).state?.fenceEpoch ?? RESTORE_FENCE_GENESIS_EPOCH; }
+    try { return this.#stored(5).state?.fenceEpoch ?? RESTORE_FENCE_GENESIS_EPOCH; }
     catch { return RESTORE_FENCE_GENESIS_EPOCH; }
   }
   /** Acquire a provider-operation lease from the external restore fence. The
@@ -384,21 +442,24 @@ export class AccountEnrollment extends DurableObject<Env> {
     } finally { await this.#fenceSettle(accountId, acquired.value.token, committed); }
   }
 
-  /** Unlike #transaction, this helper never advances clocks or enrollment state. */
-  #privateDaysSnapshot<T>(request: PrivateDaysRequestV1, observation: AdmissionObservation,
-    read: (state: State, admission: AdmissionState, control: AdmissionControl) => T): EnrollmentResult<T> {
+  /** Unlike #transaction, this helper never advances clocks or enrollment
+   * state. `checkQuarantine` stays true for admission-data reads; the consent
+   * control plane opts out so a quarantined journal cannot hide or block a
+   * withdrawal decision. */
+  #privateDaysSnapshot<T>(request: Readonly<{ accountId: string; sessionExpiresAtMs: number }>, observation: AdmissionObservation,
+    read: (state: State, admission: AdmissionState, control: AdmissionControl) => T, checkQuarantine = true): EnrollmentResult<T> {
     try {
       return this.ctx.storage.transactionSync(() => {
         this.#schema();
         if (!this.ctx.id.equals(this.env.ACCOUNT_ENROLLMENTS.idFromName(enrollmentAccountName(request.accountId)))) return err("unauthorized");
         if (this.#generation() !== observation.generation) return err("recovery_required");
-        const { state } = this.#stored(4);
+        const { state } = this.#stored(5);
         if (state === null) return err("not_enrolled");
         if (state.accountId !== request.accountId) return err("unauthorized");
         if (state.generation !== observation.generation) return err("recovery_required");
         if (state.phase !== "active") return err("not_enrolled");
         const admission = new AdmissionState(this.ctx.storage.sql), control = admission.control();
-        if (control.quarantined) return err("recovery_required");
+        if (checkQuarantine && control.quarantined) return err("recovery_required");
         const checkTime = (): EnrollmentError | null => {
           const now = Date.now();
           if (!enrollmentTime(now) || Object.is(now, -0) || now < observation.observed || now < control.observed || now < state.observedAtMs) return "clock_regressed";
@@ -435,6 +496,142 @@ export class AccountEnrollment extends DurableObject<Env> {
         if (unavailable) throw new AdmissionFault("storage_unavailable");
         if (external === null || !sameNamespaceAnchor(external, original.value) || !sameNamespaceAnchor(state.anchor, original.value)) throw new AdmissionFault("recovery_required");
         return admission.readImportedDays(state, request, control);
+      });
+    } catch { return err("storage_unavailable"); }
+  }
+
+  /** Session-scoped consent read. The two-phase namespace check matches the
+   * private-days snapshot so a stale restore cannot answer a wrong consent
+   * state; consent itself is control-plane data, so the quarantine gate does
+   * not apply and a withdrawal can never be hidden by admission integrity. */
+  async readLeaderboardConsent(input: unknown): Promise<EnrollmentResult<LeaderboardConsentViewV1>> {
+    try {
+      const request = parseUsageConsentRequest(input);
+      if (request === null || request.operation !== "status") return err("invalid_input");
+      const generation = this.#generation(), observed = Date.now();
+      if (generation === null) return err("recovery_required");
+      if (!enrollmentTime(observed) || Object.is(observed, -0)) return err("clock_regressed");
+      const observation: AdmissionObservation = { generation, observed, fence: null, committed: false };
+      const original = this.#privateDaysSnapshot(request, observation, state => Object.freeze({ ...state.anchor }), false);
+      if (!original.ok) return original;
+      let external: NamespaceAnchor | null = null, unavailable = false;
+      try { external = await readNamespaceAnchor(this.env.CONTROL, request.accountId); }
+      catch { unavailable = true; }
+      return this.#privateDaysSnapshot(request, observation, (state) => {
+        if (unavailable) throw new AdmissionFault("storage_unavailable");
+        if (external === null || !sameNamespaceAnchor(external, original.value) || !sameNamespaceAnchor(state.anchor, original.value)) throw new AdmissionFault("recovery_required");
+        return consentViewOf(state.leaderboard);
+      }, false);
+    } catch { return err("storage_unavailable"); }
+  }
+
+  /** Publish the committed consent decision to the materialized index. The
+   * exact apply outcome is authoritative for the consent call's reply: a
+   * failure means the publish is uncertain and must be retried or repaired by
+   * the index's refresh-at-source. */
+  async #publishLeaderboardConsent(accountId: string, view: LeaderboardConsentViewV1, eventAtMs: number): Promise<boolean> {
+    try {
+      const raw: unknown = await this.env.PUBLIC_INDEX.getByName(LEADERBOARD_INDEX_NAME).applyConsent(Object.freeze({
+        schemaVersion: 1, accountId, consent: view.consent, publicHandle: view.publicHandle,
+        consentedAtMs: view.consentedAtMs, eventAtMs }));
+      try {
+        const reply = rpcSnapshot(raw, ["ok", "value"]);
+        return reply?.ok === true;
+      } finally { disposeReply(raw); }
+    } catch { return false; }
+  }
+
+  /** Fenced, idempotent consent write. The restore-fence lease is acquired and
+   * settled exactly like other mutations; an unchanged decision performs no
+   * write but still re-publishes, which repairs a previously lost apply. A
+   * withdrawal commits `consent: false` and removes the member from the index. */
+  async setLeaderboardConsent(input: unknown): Promise<EnrollmentResult<LeaderboardConsentViewV1>> {
+    try {
+      const request = parseUsageConsentRequest(input);
+      if (request === null || request.operation !== "set") return err("invalid_input");
+      const generation = this.#generation();
+      if (generation === null) return err("recovery_required");
+      if (!this.ctx.id.equals(this.env.ACCOUNT_ENROLLMENTS.idFromName(enrollmentAccountName(request.accountId)))) return err("unauthorized");
+      const observed = Date.now();
+      if (!enrollmentTime(observed) || Object.is(observed, -0)) return err("clock_regressed");
+      const acquired = await this.#fenceAcquire(request.accountId, generation);
+      if (!acquired.ok) return acquired;
+      const observation: AdmissionObservation = { generation, observed, fence: acquired.value.fence, committed: false };
+      let committed: { view: LeaderboardConsentViewV1; eventAtMs: number };
+      try {
+        const result = this.#transaction<{ view: LeaderboardConsentViewV1; eventAtMs: number }>(observation, (state, now) => {
+          if (state === null || state.accountId !== request.accountId) return { state, result: err(state === null ? "not_enrolled" : "unauthorized") };
+          if (state.phase !== "active") return { state, result: err("not_enrolled") };
+          if (now >= request.sessionExpiresAtMs) return { state, result: err("expired") };
+          const current = state.leaderboard;
+          if (request.consent === false) {
+            if (current.consent === false) return { state: null, result: ok({ view: consentViewOf(current), eventAtMs: current.changedAtMs }) };
+            state.leaderboard = { consent: false, consentedAtMs: null, publicHandle: null, changedAtMs: now };
+            return { state, result: ok({ view: consentViewOf(state.leaderboard), eventAtMs: now }) };
+          }
+          if (current.consent === true && current.publicHandle === request.publicHandle) {
+            return { state: null, result: ok({ view: consentViewOf(current), eventAtMs: current.changedAtMs }) };
+          }
+          state.leaderboard = { consent: true, consentedAtMs: current.consent ? current.consentedAtMs : now,
+            publicHandle: request.publicHandle, changedAtMs: now };
+          return { state, result: ok({ view: consentViewOf(state.leaderboard), eventAtMs: now }) };
+        });
+        if (!result.ok) return result;
+        committed = result.value;
+      } finally { await this.#fenceSettle(request.accountId, acquired.value.token, observation.committed); }
+      const published = await this.#publishLeaderboardConsent(request.accountId, committed.view, committed.eventAtMs);
+      return published ? ok(committed.view) : err("storage_unavailable");
+    } catch { return err("storage_unavailable"); }
+  }
+
+  /** Trusted internal projection for the materialized index only. The reply's
+   * `accountId` exists solely so the index can match the member it queried; it
+   * never enters the public snapshot. A `consent: false` reply is the index's
+   * authoritative signal to remove a stale member. */
+  async readLeaderboardProjection(input: unknown): Promise<EnrollmentResult<LeaderboardProjectionV1>> {
+    try {
+      const request = enrollmentSnapshot(input, ["schemaVersion", "accountId"]);
+      if (request?.schemaVersion !== 1 || !enrollmentAccount(request.accountId)) return err("invalid_input");
+      const accountId = request.accountId;
+      const generation = this.#generation(), observed = Date.now();
+      if (generation === null) return err("recovery_required");
+      if (!enrollmentTime(observed) || Object.is(observed, -0)) return err("clock_regressed");
+      const observation: AdmissionObservation = { generation, observed, fence: null, committed: false };
+      // The projection is an internal coordinator read, not a user session;
+      // the never-expiring session bound keeps the snapshot's expiry check inert.
+      const scope = Object.freeze({ accountId, sessionExpiresAtMs: 8_640_000_000_000_000 });
+      const original = this.#privateDaysSnapshot(scope, observation, state => Object.freeze({ ...state.anchor }));
+      if (!original.ok) return original;
+      let external: NamespaceAnchor | null = null, unavailable = false;
+      try { external = await readNamespaceAnchor(this.env.CONTROL, accountId); }
+      catch { unavailable = true; }
+      return this.#privateDaysSnapshot(scope, observation, (state, admission, control) => {
+        if (unavailable) throw new AdmissionFault("storage_unavailable");
+        if (external === null || !sameNamespaceAnchor(external, original.value) || !sameNamespaceAnchor(state.anchor, original.value)) throw new AdmissionFault("recovery_required");
+        const leaderboard = state.leaderboard;
+        if (leaderboard.consent !== true) {
+          return Object.freeze({ schemaVersion: 1 as const, accountId: state.accountId, consent: false as const });
+        }
+        // Corrections, tombstones and supersession are exactly the private-days
+        // read path: the projection can decrease and never double-counts.
+        const todayUtcDay = Math.floor(observation.observed / DAY_MS);
+        const dayCount = Math.min(LEADERBOARD_WINDOW_DAYS, todayUtcDay + 1);
+        const firstUtcDay = todayUtcDay - dayCount + 1;
+        const windowRequest = parsePrivateDaysRequest({ schemaVersion: 1, accountId: state.accountId,
+          sessionExpiresAtMs: scope.sessionExpiresAtMs, firstUtcDay, dayCount });
+        if (windowRequest === null) throw new AdmissionFault("storage_invalid");
+        const days = admission.readImportedDays(state, windowRequest, control);
+        let observedTokens = 0n, usageRecords = 0;
+        for (const day of days.days) {
+          for (const provider of [day.codex, day.claudeCode] as const) {
+            observedTokens += BigInt(provider.observedAccountedTokens);
+            usageRecords += provider.usageOccurrences;
+          }
+        }
+        return Object.freeze({ schemaVersion: 1 as const, accountId: state.accountId, consent: true as const,
+          consentedAtMs: leaderboard.consentedAtMs as number, publicHandle: leaderboard.publicHandle as string,
+          observedTokens: observedTokens.toString(), usageRecords,
+          windowFirstUtcDay: firstUtcDay, windowUtcDays: dayCount });
       });
     } catch { return err("storage_unavailable"); }
   }
@@ -520,6 +717,7 @@ export class AccountEnrollment extends DurableObject<Env> {
       const prepared = this.#transaction(operation, (state, now) => {
         if (now >= grant.expiresAtMs) return { state, result: err("expired") };
         if (state === null) state = { accountId: grant.accountId, generation, observedAtMs: now, phase: "pending", fenceEpoch: null, devices: [], genesisCompletion: null,
+          leaderboard: { consent: false, consentedAtMs: null, publicHandle: null, changedAtMs: 0 },
           anchor: { accountId: grant.accountId, generation, namespaceKey: enrollmentRandom(), intentId: grant.intentId,
             reservationId: grant.reservationId, createdAtMs: now } };
         if (state.accountId !== grant.accountId) return { state, result: err("unauthorized") };
@@ -654,7 +852,7 @@ export class AccountEnrollment extends DurableObject<Env> {
       return this.ctx.storage.transactionSync(() => {
         this.#schema();
         if (this.#generation() !== operation.generation) return err("recovery_required");
-        const { revision: stateRevision, state } = this.#stored(4);
+        const { revision: stateRevision, state } = this.#stored(5);
         if (state === null || state.accountId !== operation.grant.accountId) return err("not_enrolled");
         const existing = this.#existing(state, operation.grant);
         if (!existing.ok) return existing;

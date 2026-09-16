@@ -49,6 +49,14 @@ The dashboard shows exact decimal Codex/Claude Code token totals, output-token s
 
 The sign-in action appears only in the enabled dashboard's authentication-required state. Source review and synthetic fixtures do not establish live Accounts sign-in, Worker deployment, accepted remote data, recovery or production dashboard availability. Private-read activation remains separate from enrollment, native upload and public publishing consent.
 
+## Public publishing consent and the public read
+
+The source includes `GET`/`POST /api/usage/consent` and a publishing control in the private dashboard. Consent is a separate recorded decision: private collection never implies public sharing, and a withdrawal durably removes the account from the published index. Both endpoints require the private-read qualification — `AICHARTS_USAGE_PRIVATE_READ_ENABLED=1` plus every authentication/production check above — and stay closed while those flags are unset. The POST body carries only `{consent, publicHandle}`; the server derives account identity and expiry from the live session, so no browser field can assert ownership or an account ID. `GET` answers the recorded status view. Replies are private, non-cacheable fixed states: `ready`, `not_enrolled`, `authentication_required` or a fixed error.
+
+`GET /api/leaderboard` and the `/leaderboard` page are anonymous by design. They are gated only by `AICHARTS_USAGE_PUBLIC_READ_ENABLED=1` plus the production identity checks above — never by the private collection or consent flags, and never by an Accounts session. The route serves only the materialized snapshot from the public index: ranked bounded handles, exact decimal observed-token totals, record counts, the coverage window and verification freshness. No account ID, email, device ID, credential or session field exists in the projection. Responses use a short shared `public, max-age=60` cache. While the flag is unset the route returns a fixed `503` and the page renders its honest paused state; an enabled-but-empty index renders the explicit zero-entry state, never fabricated rows.
+
+A public handle is bounded lowercase text (1–32 characters, digits and single interior hyphens) and is the only identity the public projection carries. Two members claiming the same handle are excluded rather than guessed. Source review and synthetic fixtures do not establish live index materialization, consent writes or production read availability; keep both flags unset until their separate qualifications pass.
+
 ## Registration and delivery order
 
 Accounts owns client registration. SDK source, authority adoption and public package release have distinct gates:
@@ -102,7 +110,7 @@ The internal enrollment primitive requires both original secret preimages and re
 
 The dormant [terminal enrollment adapter](usage-terminal-enrollment.md) now provides canonical bytes for initialization, polling, explicit account confirmation, reservation, enrollment and namespace readback. Its Worker factory routes account operations only through the authoritative reservation. The TypeScript and Rust client codecs retain correlation and expiry checks; neither supplies native credential custody or an active login command.
 
-Shared social/avatar profiles and accepted remote measurement storage remain separate implementation work. The existing private Accounts profile includes fields that must not be copied to a public leaderboard. A future public profile requires an explicit bounded projection and publishing consent.
+Shared social/avatar profiles and accepted remote measurement storage remain separate implementation work. The existing private Accounts profile includes fields that must not be copied to a public leaderboard. The public projection is now implemented as the explicit bounded consent flow and materialized index above; richer public profile fields still require their own reviewed projection and separate publishing consent.
 
 ## Validation contract
 

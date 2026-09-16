@@ -22,6 +22,7 @@ export type UsageAuthEnvironment = Readonly<{
   AICHARTS_USAGE_AUTH_ENABLED?: unknown;
   AICHARTS_USAGE_PAIRING_ENABLED?: unknown;
   AICHARTS_USAGE_PRIVATE_READ_ENABLED?: unknown;
+  AICHARTS_USAGE_PUBLIC_READ_ENABLED?: unknown;
   VERCEL?: unknown;
   VERCEL_ENV?: unknown;
   VERCEL_TARGET_ENV?: unknown;
@@ -64,6 +65,7 @@ function processEnvironment(): UsageAuthEnvironment {
     AICHARTS_USAGE_AUTH_ENABLED: environment.AICHARTS_USAGE_AUTH_ENABLED,
     AICHARTS_USAGE_PAIRING_ENABLED: environment.AICHARTS_USAGE_PAIRING_ENABLED,
     AICHARTS_USAGE_PRIVATE_READ_ENABLED: environment.AICHARTS_USAGE_PRIVATE_READ_ENABLED,
+    AICHARTS_USAGE_PUBLIC_READ_ENABLED: environment.AICHARTS_USAGE_PUBLIC_READ_ENABLED,
     VERCEL: environment.VERCEL,
     VERCEL_ENV: environment.VERCEL_ENV,
     VERCEL_TARGET_ENV: environment.VERCEL_TARGET_ENV,
@@ -110,6 +112,23 @@ function configuredPrivateReadSecret(options: UsageAuthOptions): string | null {
     const bytes = new TextEncoder().encode(secret).byteLength;
     return bytes >= 32 && bytes <= 1_024 ? secret : null;
   } catch { return null; }
+}
+
+/** The anonymous public-read fence. No session secret or auth flag is involved:
+ * the served payload is only the materialized public projection, so the gate is
+ * the distinct public flag plus the production deployment identity. */
+function configuredPublicRead(options: UsageAuthOptions): boolean {
+  try {
+    const environment = (options.environment ?? processEnvironment)();
+    return environment.AICHARTS_USAGE_PUBLIC_READ_ENABLED === "1"
+      && environment.VERCEL === "1"
+      && environment.VERCEL_ENV === "production"
+      && (environment.VERCEL_TARGET_ENV === undefined || environment.VERCEL_TARGET_ENV === "production")
+      && environment.NEXT_PUBLIC_SITE_URL === binding.origin
+      && environment.NEXT_PUBLIC_VERCEL_SURFACE_ORIGIN === undefined
+      && environment.NEXT_PUBLIC_HRANESS_VERCEL_SURFACE_ORIGIN === undefined
+      && environment.NEXT_PUBLIC_HRANESS_VERCEL_PREVIEW_ORIGIN === undefined;
+  } catch { return false; }
 }
 
 function configuredPairingSecret(options: UsageAuthOptions): string | null {
@@ -323,6 +342,8 @@ export function createUsageAuthServer(options: UsageAuthOptions = {}) {
       return beginAccountSession(request, options, true);
     },
 
+    publicReadAvailable(): boolean { return configuredPublicRead(options); },
+
     async startPairingAuthentication(request: Request, input: unknown): Promise<Response> {
       return privateResponse(await pairing.start(request, input), request);
     },
@@ -423,3 +444,4 @@ export const usageAccountSession = server.accountSession;
 export const beginUsageAccountSession = server.beginAccountSession;
 export const usagePrivateReadAvailable = server.privateReadAvailable;
 export const beginUsagePrivateReadSession = server.beginPrivateReadSession;
+export const usagePublicReadAvailable = server.publicReadAvailable;
