@@ -134,10 +134,10 @@ function checked<T>(value: { ok: true; value: T } | { ok: false; error: string }
 export function qualificationFixture(run: QualificationRun, deviceId: string): Readonly<{ insert: AdmissionBatch; correction: AdmissionBatch; tombstone: AdmissionBatch; revokedProbe: AdmissionBatch }> {
   if (!qualificationHex(deviceId)) throw new Error("invalid_qualification_fixture");
   const identity = qualificationIdentity(run), accountId = qualificationBytes(identity.accountId.slice(5)), device = qualificationBytes(deviceId), generation = qualificationBytes(run.generationOne);
-  const frame = (occurrenceId: Uint8Array, provider: 1 | 2, day: number, output: bigint) => checked(encodeUsageBatch({ utcDay: day, registryRevision: 1,
+  const frame = (occurrenceId: Uint8Array, provider: 1 | 2 | 3, day: number, output: bigint) => checked(encodeUsageBatch({ utcDay: day, registryRevision: 1,
     usage: [{ id: occurrenceId, executionId: new Uint8Array(16), accountId: new Uint8Array(16), offsetMs: 1, provider, authMode: 0, evidence: 1, modelId: 0, contextTier: 0,
-      tokens: { inputUncached: provider === 1 ? 10n : 20n, cacheRead: provider === 1 ? 0n : 3n, cacheWrite5m: provider === 1 ? 0n : 4n, cacheWrite1h: 0n, output, reasoningOutput: 0n } }], prompts: [], intervals: [] }, ADMISSION_POLICY_V1));
-  const operation = (occurrence: string, sequence: number, provider: 1 | 2, day: number, output: bigint, expectedHeadHash: Uint8Array = new Uint8Array(32), tombstone = false) => {
+      tokens: { inputUncached: provider === 2 ? 20n : 10n, cacheRead: provider === 2 ? 3n : 0n, cacheWrite5m: provider === 2 ? 4n : 0n, cacheWrite1h: 0n, output, reasoningOutput: 0n } }], prompts: [], intervals: [] }, ADMISSION_POLICY_V1));
+  const operation = (occurrence: string, sequence: number, provider: 1 | 2 | 3, day: number, output: bigint, expectedHeadHash: Uint8Array = new Uint8Array(32), tombstone = false) => {
     const occurrenceId = qualificationBytes(occurrence);
     return checked(encodeAdmissionOperation({ accountId, deviceId: device, generation, sequence, occurrenceId, expectedHeadHash,
       action: tombstone ? 2 : 1, frame: tombstone ? new Uint8Array() : frame(occurrenceId, provider, day, output) }, ADMISSION_POLICY_V1));
@@ -152,7 +152,7 @@ export function qualificationFixture(run: QualificationRun, deviceId: string): R
 
 export function qualificationExpectedDays(run: QualificationRun, revision: 1 | 2 | 3, committedAtMs: number): PrivateDaysV1 {
   const zero = () => ({ usageOccurrences: 0, observedAccountedTokens: "0", observedOutputTokens: "0" });
-  const days = Array.from({ length: 3 }, (_, index) => ({ utcDay: run.firstUtcDay + index, codex: zero(), claudeCode: zero() }));
+  const days = Array.from({ length: 3 }, (_, index) => ({ utcDay: run.firstUtcDay + index, codex: zero(), claudeCode: zero(), devin: zero() }));
   days[revision === 1 ? 1 : 0].codex = { usageOccurrences: 1, observedAccountedTokens: revision === 1 ? "15" : "11", observedOutputTokens: revision === 1 ? "5" : "1" };
   if (revision < 3) days[2].claudeCode = { usageOccurrences: 1, observedAccountedTokens: "34", observedOutputTokens: "7" };
   return { schemaVersion: 1, measurementProfile: "imported-tokens-v1", coverage: "partial", journalRevision: revision, journalCommittedAtMs: committedAtMs, firstUtcDay: run.firstUtcDay, days };

@@ -19,10 +19,11 @@
 .usage-daily__coverage strong { color: var(--foreground); font-weight: 600; }
 .usage-daily__coverage p { max-inline-size: 75ch; }
 .usage-daily__coverage p + p { margin-block-start: .5rem; }
-.usage-daily__totals { border-bottom: 1px solid var(--grid); display: grid; gap: 2rem; grid-template-columns: repeat(2, minmax(0, 1fr)); padding-block: 1.75rem; }
+.usage-daily__totals { border-bottom: 1px solid var(--grid); display: grid; gap: 2rem; grid-template-columns: repeat(3, minmax(0, 1fr)); padding-block: 1.75rem; }
 .usage-daily__totals h2 { align-items: center; display: flex; font-size: 1.05rem; gap: .6rem; margin-block-end: 1rem; }
 .usage-daily__key { background: var(--foreground); block-size: .65rem; display: inline-block; inline-size: .65rem; }
 .usage-daily__key--claudeCode { background: transparent; border: 1px solid var(--foreground); }
+.usage-daily__key--devin { background: repeating-linear-gradient(135deg, var(--foreground) 0 2px, transparent 2px 4px); }
 .usage-daily__totals dl { display: grid; gap: .75rem; }
 .usage-daily__totals dl > div { align-items: baseline; display: flex; gap: 1rem; justify-content: space-between; }
 .usage-daily__totals dt { color: var(--muted); font-size: .85rem; }
@@ -34,6 +35,7 @@
 .usage-daily__day { align-items: end; display: flex; flex: 1; gap: 2px; height: 100%; min-inline-size: 0; }
 .usage-daily__bar { background: var(--foreground); display: block; flex: 1; min-inline-size: 0; }
 .usage-daily__bar--claudeCode { background: var(--surface-raised); box-shadow: inset 0 0 0 1px var(--foreground); }
+.usage-daily__bar--devin { background: repeating-linear-gradient(135deg, var(--foreground) 0 2px, var(--surface-raised) 2px 5px); }
 .usage-daily__axis { color: var(--muted); display: flex; font-size: .75rem; justify-content: space-between; margin-block-start: .6rem; }
 .usage-daily__details { border-block: 1px solid var(--grid); margin-block: 2rem 1rem; }
 .usage-daily__details summary { cursor: pointer; font-weight: 600; padding-block: 1rem; }

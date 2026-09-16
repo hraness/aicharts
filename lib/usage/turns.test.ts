@@ -140,6 +140,8 @@ describe("daily terminal-turn averages", () => {
     invalid(input([turn(1, { toolCalls: MAX_TURN_TOOL_CALLS + 1 })]));
     invalid(input([turn(1, { tokens: { ...tokenValues(), output: MAX_TOKEN_COUNT + 1n } })]));
     invalid(input([turn(1, { tokens: { ...tokenValues(), cacheWrite5m: 1n } })]));
+    invalid(input([turn(1, { provider: 3, tokens: { ...tokenValues(), cacheWrite5m: 1n } })]));
+    expect(result([turn(1, { provider: 3 })]).observedCompletedTurns).toBe(1);
     invalid({ ...input([turn()]), observations: [{ ...turn(), tokens: { ...tokenValues(), reasoningOutput: 5n } }] });
   });
 
@@ -159,7 +161,7 @@ describe("daily terminal-turn averages", () => {
     }
     for (const changes of [
       { endedAtMs: (day + 1) * DAY_MS }, { startedAtMs: end + 1 }, { outcome: 0 }, { lineage: 3 },
-      { origin: 3 }, { provider: 3 }, { clockUncertaintyMs: 60_001 }, { startedAtMs: null },
+      { origin: 3 }, { provider: 4 }, { clockUncertaintyMs: 60_001 }, { startedAtMs: null },
       { tokens: { ...tokenValues(), output: -1n } }, { tokens: { ...tokenValues(), output: 1 } },
     ]) invalid({ ...input([]), observations: [{ ...turn(), ...changes }] });
     invalid({ ...input([]), terminalCoverageComplete: 1 });

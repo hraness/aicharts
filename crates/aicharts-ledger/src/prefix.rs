@@ -182,6 +182,7 @@ impl Ledger {
                 source_id: scan.source_id,
                 stamp: scan.stamp,
                 collection: scan.collection,
+                allows_rewrite: false,
             });
         }
         self.commit_mode_with(expected_revision, sources, Some(prefixes), before_commit)

@@ -109,6 +109,7 @@ fn scan(source: u8, bytes: u64, records: Vec<Usage>) -> SourceScan {
         source_id: [source; 32],
         stamp: stamp(bytes),
         collection: collection(records),
+        allows_rewrite: false,
     }
 }
 fn summary(ledger: &Ledger) -> (u64, u64, u64, u64, u64, u64) {
@@ -273,6 +274,65 @@ fn same_source_cannot_lose_occurrences_or_regress_usage() {
         assert_eq!(summary(&ledger), before);
         assert_eq!(ledger.snapshot().unwrap().checkpoints[&[1; 32]], stamp(100));
     }
+}
+
+#[test]
+fn rewritten_document_revisions_merge_by_dominance() {
+    let doc_scan = |stamp: SourceStamp, records: Vec<Usage>| SourceScan {
+        source_id: [7; 32],
+        stamp,
+        collection: collection(records),
+        allows_rewrite: true,
+    };
+    let f = Fixture::new();
+    let mut ledger = f.initialize();
+    let mut initial = usage(1, 20);
+    initial.provider = Provider::Devin;
+    ledger
+        .commit_scans(0, vec![doc_scan(stamp(100), vec![initial.clone()])])
+        .unwrap();
+    // A dominating rewrite may change inode and shrink the file at once.
+    let mut grown = initial.clone();
+    grown.tokens.output = 30;
+    ledger
+        .commit_scans(
+            1,
+            vec![doc_scan(
+                SourceStamp {
+                    inode: 9,
+                    ..stamp(50)
+                },
+                vec![grown],
+            )],
+        )
+        .unwrap();
+    assert_eq!(summary(&ledger), (2, 1, 1, 1, 150, 30));
+    // A strictly regressed revision is absorbed; the stored maximum stays.
+    let mut regressed = initial.clone();
+    regressed.tokens.output = 5;
+    regressed.offset_ms = 500;
+    ledger
+        .commit_scans(2, vec![doc_scan(stamp(40), vec![regressed])])
+        .unwrap();
+    assert_eq!(summary(&ledger), (3, 1, 1, 1, 150, 30));
+    // An irreconcilable revision is still a hard conflict.
+    let mut mixed = initial;
+    mixed.tokens.output = 999;
+    mixed.tokens.input_uncached = 1;
+    assert_eq!(
+        ledger
+            .commit_scans(3, vec![doc_scan(stamp(60), vec![mixed])])
+            .err(),
+        Some(Error::InvalidMeasurement)
+    );
+    assert_eq!(summary(&ledger), (3, 1, 1, 1, 150, 30));
+    // A rewrite that drops the occurrence entirely cannot erase history.
+    assert_eq!(
+        ledger
+            .commit_scans(3, vec![doc_scan(stamp(70), vec![])])
+            .err(),
+        Some(Error::SourceHistoryChanged)
+    );
 }
 
 #[test]
@@ -662,6 +722,7 @@ fn metadata_only_state_contains_no_source_content_path_or_namespace_key() {
             vec![SourceScan {
                 source_id: [1; 32],
                 stamp: stamp(source.len() as u64),
+                allows_rewrite: false,
                 collection,
             }],
         )

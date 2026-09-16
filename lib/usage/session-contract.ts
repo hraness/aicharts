@@ -5,7 +5,7 @@ export const SESSION_REPORT_MAX_SESSIONS = 2_000;
 export const SESSION_REPORT_MAX_RECORDS = 50_000;
 export const SESSION_PHASES = ["inference", "reply_wait", "approval_wait", "tool_wait", "unknown"] as const;
 export type SessionPhase = typeof SESSION_PHASES[number];
-export type SessionProvider = "codex" | "claude_code";
+export type SessionProvider = "codex" | "claude_code" | "devin";
 export type SessionWindow = Readonly<{ startMs: number; endMs: number }>;
 export type SessionSpan = Readonly<{
   id: string; startMs: number; endMs: number;

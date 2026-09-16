@@ -11,8 +11,8 @@ const empty = { usageOccurrences: 0, observedAccountedTokens: "0", observedOutpu
 const ready: PrivateDaysPublicReply = { schemaVersion: 1, state: "ready", value: {
   schemaVersion: 1, measurementProfile: "imported-tokens-v1", coverage: "partial",
   journalRevision: 1, journalCommittedAtMs: 1_000_000, firstUtcDay: 10, days: [
-    { utcDay: 10, codex: { usageOccurrences: 2, observedAccountedTokens: "10", observedOutputTokens: "4" }, claudeCode: empty },
-    { utcDay: 11, codex: empty, claudeCode: { usageOccurrences: 1, observedAccountedTokens: "5", observedOutputTokens: "1" } },
+    { utcDay: 10, codex: { usageOccurrences: 2, observedAccountedTokens: "10", observedOutputTokens: "4" }, claudeCode: empty, devin: empty },
+    { utcDay: 11, codex: empty, claudeCode: { usageOccurrences: 1, observedAccountedTokens: "5", observedOutputTokens: "1" }, devin: { usageOccurrences: 3, observedAccountedTokens: "8", observedOutputTokens: "2" } },
   ],
 } };
 const encoded = encodePrivateDaysPublicResponse(ready, range)!;

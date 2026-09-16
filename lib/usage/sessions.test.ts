@@ -47,6 +47,12 @@ describe("session report privacy boundary", () => {
       expect(parseSessionReport(report({ ...s, usage: [{ ...usage, ...patch }] }))).toBeNull();
     }
   });
+  test("devin sessions carry numeric usage without model evidence", () => {
+    const usage = { id: ident(60), atMs: 10, model: null, modelBasis: "unknown" as const, inputTokens: 10, cacheReadTokens: 5, cacheWriteTokens: 0, outputTokens: 4, reasoningTokens: null };
+    const s = { ...session([usage].map(() => span(2, 0, 10, "inference"))), provider: "devin" as const, usage: [usage] };
+    expect(parseSessionReport(report(s))).toEqual(report(s));
+    expect(parseSessionReport(report({ ...s, usage: [{ ...usage, model: "gpt-5.5", modelBasis: "response" as const }] }))).toBeNull();
+  });
 });
 
 describe("measured session time", () => {

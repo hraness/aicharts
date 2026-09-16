@@ -45,7 +45,7 @@ fn parse_options(args: &[String]) -> Result<Options, &'static str> {
             "--complete-prefix" if !complete_prefix => complete_prefix = true,
             "--once" if !once => once = true,
             "--json" if once && !json => json = true,
-            flag @ ("--state-dir" | "--key-file" | "--codex" | "--claude"
+            flag @ ("--state-dir" | "--key-file" | "--codex" | "--claude" | "--devin"
             | "--interval-seconds" | "--retry-attempts") => {
                 i += 1;
                 let value = args
@@ -62,6 +62,9 @@ fn parse_options(args: &[String]) -> Result<Options, &'static str> {
                         aicharts_protocol::Provider::ClaudeCode,
                         PathBuf::from(value),
                     )),
+                    "--devin" => {
+                        sources.push((aicharts_protocol::Provider::Devin, PathBuf::from(value)))
+                    }
                     "--interval-seconds" if !interval_set => {
                         interval_seconds = value.parse().map_err(|_| "invalid_interval")?;
                         if !(MIN_INTERVAL_SECONDS..=MAX_INTERVAL_SECONDS)
@@ -91,6 +94,13 @@ fn parse_options(args: &[String]) -> Result<Options, &'static str> {
     }
     if sources.len() > super::MAX_FILES {
         return Err("too_many_sources");
+    }
+    if complete_prefix
+        && sources
+            .iter()
+            .any(|(provider, _)| *provider == aicharts_protocol::Provider::Devin)
+    {
+        return Err("prefix_document_provider_unsupported");
     }
     Ok(Options {
         state_dir: state_dir.ok_or("state_directory_required")?,
@@ -140,6 +150,7 @@ fn collect_args(options: &Options) -> Vec<String> {
         args.push(match provider {
             aicharts_protocol::Provider::Codex => "--codex".to_owned(),
             aicharts_protocol::Provider::ClaudeCode => "--claude".to_owned(),
+            aicharts_protocol::Provider::Devin => "--devin".to_owned(),
         });
         args.push(path.to_string_lossy().into_owned());
     }
@@ -302,5 +313,24 @@ mod tests {
         assert_eq!(collect_args(&parse_options(&prefix_first).unwrap()), prefix);
         selected.push("--complete-prefix".to_owned());
         assert_eq!(parse_options(&selected).unwrap_err(), "invalid_option");
+        let mut document = args(&[
+            "daemon",
+            "--complete-prefix",
+            "--state-dir",
+            "state",
+            "--key-file",
+            "key",
+            "--devin",
+            "transcripts",
+        ]);
+        assert_eq!(
+            parse_options(&document).unwrap_err(),
+            "prefix_document_provider_unsupported"
+        );
+        document.retain(|arg| arg != "--complete-prefix");
+        assert_eq!(
+            collect_args(&parse_options(&document).unwrap())[0],
+            "collect"
+        );
     }
 }

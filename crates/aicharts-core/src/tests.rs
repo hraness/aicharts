@@ -396,12 +396,54 @@ fn deep_unknown_values_fail_before_recursion_or_reflection() {
 }
 
 #[test]
-fn oversized_unknown_string_fails_without_a_line_sized_copy() {
-    let source = format!("{{\"private\":\"{}\"}}", "x".repeat(MAX_LINE_BYTES));
-    assert_eq!(
-        parse_reader(Cursor::new(source), Provider::ClaudeCode, &KEY).unwrap_err(),
-        Error::LineTooLarge
+fn oversized_records_are_bounded_skips_not_source_failures() {
+    // An over-cap physical line is drained without a line-sized copy and the
+    // source stays alive; the skip surfaces as a bounded warning only.
+    let giant = format!(
+        "{{\"type\":\"compacted\",\"payload\":{{\"blob\":\"{}\"}}}}",
+        "x".repeat(MAX_LINE_BYTES)
     );
+    let source = codex_source(&[
+        codex_row(1, 10, 5, 4, 2, true),
+        giant,
+        codex_row(2, 30, 9, 12, 3, false),
+    ]);
+    let collection = parse(&source, Provider::Codex);
+    assert_eq!(collection.lines_read, 4);
+    assert!(collection.warnings.contains(&Warning::UnsupportedRecords));
+    assert_eq!(collection.batches[0].usage.len(), 2);
+    assert_eq!(
+        collection.batches[0]
+            .usage
+            .iter()
+            .map(|v| v.tokens.input_uncached)
+            .sum::<u64>(),
+        21
+    );
+    packets(&collection);
+}
+
+#[test]
+fn an_oversized_final_line_drains_to_eof() {
+    let giant = format!("{{\"private\":\"{}\"}}", "x".repeat(MAX_LINE_BYTES));
+    let source = format!("{}\n{}", claude_row("request-1", 10, 2, 1), giant);
+    let collection = parse(&source, Provider::ClaudeCode);
+    assert_eq!(collection.lines_read, 2);
+    assert!(collection.warnings.contains(&Warning::UnsupportedRecords));
+    assert_eq!(collection.batches[0].usage.len(), 1);
+    assert_eq!(collection.batches[0].usage[0].tokens.output, 2);
+}
+
+#[test]
+fn a_line_at_the_exact_cap_still_parses() {
+    // MAX_LINE_BYTES counts the full physical line including its newline.
+    let mut row = claude_row("request-1", 10, 2, 1);
+    let pad = MAX_LINE_BYTES - row.len() - 10;
+    row = format!("{{\"pad\":\"{}\",{}", "p".repeat(pad), &row[1..]);
+    assert_eq!(row.len() + 1, MAX_LINE_BYTES);
+    let collection = parse(&format!("{row}\n"), Provider::ClaudeCode);
+    assert_eq!(collection.batches[0].usage.len(), 1);
+    assert!(!collection.warnings.contains(&Warning::UnsupportedRecords));
 }
 
 #[test]
@@ -594,4 +636,149 @@ fn codex_reasoning_warning_merges_once_and_stays_a_fixed_code() {
         1
     );
     assert_eq!(Warning::UnmeasuredReasoning.code(), "unmeasured_reasoning");
+}
+
+fn devin_document(session: &str, prompt: u64, completion: u64, cached: u64) -> String {
+    format!(
+        concat!(
+            r#"{{"schema_version":"ATIF-v1.7","session_id":"{}","#,
+            r#""agent":{{"model_name":"private-model-name"}},"#,
+            r#""steps":[{{"timestamp":"2026-09-10T10:00:01Z","content":"private text","tool_calls":[{{"name":"private"}}]}},{{"timestamp":"2026-09-10T10:00:09.500+00:00"}}],"#,
+            r#""final_metrics":{{"total_prompt_tokens":{},"total_completion_tokens":{},"total_cached_tokens":{},"total_steps":2}}}}"#
+        ),
+        session, prompt, completion, cached
+    )
+}
+
+#[test]
+fn devin_document_maps_session_counters_to_one_occurrence() {
+    let collection = parse(&devin_document("session-9", 100, 40, 60), Provider::Devin);
+    assert_eq!(collection.lines_read, 1);
+    assert_eq!(collection.batches.len(), 1);
+    let usage = &collection.batches[0].usage;
+    assert_eq!(usage.len(), 1);
+    assert_eq!(usage[0].provider, Provider::Devin);
+    assert_eq!(usage[0].tokens.input_uncached, 40);
+    assert_eq!(usage[0].tokens.cache_read, 60);
+    assert_eq!(usage[0].tokens.cache_write_5m, 0);
+    assert_eq!(usage[0].tokens.output, 40);
+    assert_eq!(usage[0].tokens.reasoning_output, 0);
+    assert_eq!(usage[0].offset_ms, 36_009_500);
+    assert!(collection.warnings.contains(&Warning::UnmeasuredReasoning));
+    packets(&collection);
+}
+
+#[test]
+fn devin_rewrite_revises_one_occurrence_in_place() {
+    let older = parse(&devin_document("session-9", 100, 40, 60), Provider::Devin);
+    let newer = parse(&devin_document("session-9", 300, 90, 120), Provider::Devin);
+    let merged = merge_collections(vec![older, newer]).unwrap();
+    assert_eq!(merged.batches[0].usage.len(), 1);
+    let usage = &merged.batches[0].usage[0];
+    assert_eq!(usage.tokens.input_uncached, 180);
+    assert_eq!(usage.tokens.cache_read, 120);
+    assert_eq!(usage.tokens.output, 90);
+    packets(&merged);
+}
+
+#[test]
+fn devin_missing_and_unsupported_shapes_warn_without_usage() {
+    for (source, warning) in [
+        (
+            devin_document("session-9", 100, 40, 60).replace("ATIF-v1.7", "ATIF-v2.0"),
+            Warning::UnsupportedRecords,
+        ),
+        (
+            devin_document("session-9", 100, 40, 60)
+                .replace(r#""schema_version":"ATIF-v1.7","#, ""),
+            Warning::UnsupportedRecords,
+        ),
+        (
+            devin_document("session-9", 100, 40, 60).replace(r#""session_id":"session-9","#, ""),
+            Warning::MissingIdentity,
+        ),
+        (
+            devin_document("session-9", 100, 40, 60)
+                .replace(r#""final_metrics":{"#, r#""other_metrics":{"#),
+            Warning::MissingUsageCounters,
+        ),
+    ] {
+        let collection = parse(&source, Provider::Devin);
+        assert!(collection.batches.is_empty());
+        assert!(collection.warnings.contains(&warning));
+    }
+}
+
+#[test]
+fn devin_missing_counters_and_timestamps_warn_without_usage() {
+    let missing_counter =
+        devin_document("session-9", 100, 40, 60).replace(r#""total_completion_tokens":40,"#, "");
+    let collection = parse(&missing_counter, Provider::Devin);
+    assert!(collection.batches.is_empty());
+    assert!(collection.warnings.contains(&Warning::MissingUsageCounters));
+
+    let no_steps = devin_document("session-9", 100, 40, 60)
+        .replace(r#""steps":[{},{}"#, r#""steps":[] "#)
+        .replace(r#"{"timestamp":"2026-09-10T10:00:01Z","content":"private text","tool_calls":[{"name":"private"}]},{"timestamp":"2026-09-10T10:00:09.500+00:00"}"#, "");
+    let collection = parse(&no_steps, Provider::Devin);
+    assert!(collection.batches.is_empty());
+    assert!(collection.warnings.contains(&Warning::MissingTimestamp));
+
+    let bad_stamp = devin_document("session-9", 100, 40, 60)
+        .replace("2026-09-10T10:00:01Z", "not-a-time")
+        .replace("2026-09-10T10:00:09.500+00:00", "");
+    let collection = parse(&bad_stamp, Provider::Devin);
+    assert!(collection.batches.is_empty());
+    assert!(collection.warnings.contains(&Warning::MissingTimestamp));
+}
+
+#[test]
+fn devin_invalid_counters_fail_closed() {
+    for source in [
+        devin_document("session-9", 50, 40, 60), // cached exceeds prompt
+        devin_document("session-9", u64::MAX, 40, 0), // beyond the wire limit
+    ] {
+        assert_eq!(
+            parse_reader(Cursor::new(source), Provider::Devin, &KEY).unwrap_err(),
+            Error::InvalidCounters
+        );
+    }
+}
+
+#[test]
+fn devin_document_bounds_hold_at_the_cap() {
+    // An ignored private field is walked, never retained; the cap is physical.
+    let mut document = devin_document("session-9", 100, 40, 60);
+    let pad = MAX_DOCUMENT_BYTES as usize - document.len() - 9;
+    document.insert_str(
+        document.len() - 1,
+        &format!(",\"pad\":\"{}\"", "p".repeat(pad)),
+    );
+    assert_eq!(document.len(), MAX_DOCUMENT_BYTES as usize);
+    let collection = parse(&document, Provider::Devin);
+    assert_eq!(collection.batches[0].usage.len(), 1);
+
+    let mut over = document.clone();
+    over.insert_str(over.len() - 2, "pp");
+    assert_eq!(
+        parse_reader(Cursor::new(over), Provider::Devin, &KEY).unwrap_err(),
+        Error::LineTooLarge
+    );
+}
+
+#[test]
+fn devin_malformed_and_multi_documents_fail_closed() {
+    for source in [
+        "{".to_owned(),
+        format!("{} {{}}", devin_document("session-9", 100, 40, 60)),
+        devin_document("session-9", 100, 40, 60)
+            .chars()
+            .take(40)
+            .collect(),
+    ] {
+        assert_eq!(
+            parse_reader(Cursor::new(source), Provider::Devin, &KEY).unwrap_err(),
+            Error::MalformedRecord
+        );
+    }
 }

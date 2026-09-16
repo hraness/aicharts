@@ -33,7 +33,7 @@ export function operationDay(operation: AdmissionOperation): { day: number; time
   const usage = frame.value.usage[0];
   requireAdmission(frame.value.usage.length === 1 && frame.value.prompts.length === 0 && frame.value.intervals.length === 0
     && usage.modelId === 0 && usage.contextTier === 0 && usage.authMode === 0 && usage.evidence === 1
-    && isZeroHash(usage.accountId) && (usage.provider === 1 || usage.provider === 2));
+    && isZeroHash(usage.accountId) && (usage.provider === 1 || usage.provider === 2 || usage.provider === 3));
   const timestamp = frame.value.utcDay * DAY_MS + usage.offsetMs;
   requireAdmission(Number.isSafeInteger(timestamp) && timestamp >= 0 && timestamp <= MAX_ADMISSION_TIMESTAMP);
   return { day: frame.value.utcDay, timestamp };

@@ -16,7 +16,7 @@ export type ProviderImportedTotals = Readonly<{
   usageOccurrences: number; observedAccountedTokens: string; observedOutputTokens: string;
 }>;
 export type PrivateDayV1 = Readonly<{
-  utcDay: number; codex: ProviderImportedTotals; claudeCode: ProviderImportedTotals;
+  utcDay: number; codex: ProviderImportedTotals; claudeCode: ProviderImportedTotals; devin: ProviderImportedTotals;
 }>;
 export type PrivateDaysV1 = Readonly<{
   schemaVersion: 1; measurementProfile: "imported-tokens-v1"; coverage: "partial";
@@ -58,12 +58,12 @@ export function parsePrivateDaysRequest(value: unknown): PrivateDaysRequestV1 | 
 function decimal(value: unknown): bigint | null {
   return typeof value === "string" && value.length <= 18 && /^(0|[1-9][0-9]*)$/u.test(value) ? BigInt(value) : null;
 }
-function providerTotals(value: unknown, provider: 1 | 2): ProviderImportedTotals | null {
+function providerTotals(value: unknown, provider: 1 | 2 | 3): ProviderImportedTotals | null {
   const input = snapshot(value, ["usageOccurrences", "observedAccountedTokens", "observedOutputTokens"]);
   if (input === null || !integer(input.usageOccurrences, 0, PRIVATE_DAYS_MAX_DAY_HEADS)) return null;
   const total = decimal(input.observedAccountedTokens), output = decimal(input.observedOutputTokens);
   const count = BigInt(input.usageOccurrences);
-  if (total === null || output === null || total < count || total > count * MAX_TOKEN_COUNT * (provider === 1 ? 3n : 5n)
+  if (total === null || output === null || total < count || total > count * MAX_TOKEN_COUNT * (provider === 2 ? 5n : 3n)
     || output > count * MAX_TOKEN_COUNT || output > total) return null;
   return Object.freeze({ usageOccurrences: input.usageOccurrences,
     observedAccountedTokens: total.toString(), observedOutputTokens: output.toString() });
@@ -76,8 +76,8 @@ function responseBytes(value: PrivateDaysV1): number {
     + String(cell.usageOccurrences).length + cell.observedAccountedTokens.length + cell.observedOutputTokens.length;
   let size = '{"schemaVersion":1,"measurementProfile":"imported-tokens-v1","coverage":"partial","journalRevision":,"journalCommittedAtMs":,"firstUtcDay":,"days":[]}'.length
     + String(value.journalRevision).length + String(value.journalCommittedAtMs).length + String(value.firstUtcDay).length;
-  for (const day of value.days) size += '{"utcDay":,"codex":,"claudeCode":}'.length
-    + String(day.utcDay).length + providerBytes(day.codex) + providerBytes(day.claudeCode);
+  for (const day of value.days) size += '{"utcDay":,"codex":,"claudeCode":,"devin":}'.length
+    + String(day.utcDay).length + providerBytes(day.codex) + providerBytes(day.claudeCode) + providerBytes(day.devin);
   return size + value.days.length - 1;
 }
 
@@ -100,12 +100,13 @@ export function parsePrivateDaysValue(request: unknown, value: unknown): Private
     for (let index = 0; index < query.dayCount; index++) {
       const entry = entries[String(index)];
       if (entry === undefined || !("value" in entry) || entry.enumerable !== true) return null;
-      const day = snapshot(entry.value, ["utcDay", "codex", "claudeCode"]);
+      const day = snapshot(entry.value, ["utcDay", "codex", "claudeCode", "devin"]);
       if (day === null || day.utcDay !== query.firstUtcDay + index || Object.is(day.utcDay, -0)) return null;
-      const codex = providerTotals(day.codex, 1), claudeCode = providerTotals(day.claudeCode, 2);
-      if (codex === null || claudeCode === null || codex.usageOccurrences + claudeCode.usageOccurrences > PRIVATE_DAYS_MAX_DAY_HEADS) return null;
-      occurrences += codex.usageOccurrences + claudeCode.usageOccurrences;
-      days.push(Object.freeze({ utcDay: day.utcDay as number, codex, claudeCode }));
+      const codex = providerTotals(day.codex, 1), claudeCode = providerTotals(day.claudeCode, 2), devin = providerTotals(day.devin, 3);
+      if (codex === null || claudeCode === null || devin === null
+        || codex.usageOccurrences + claudeCode.usageOccurrences + devin.usageOccurrences > PRIVATE_DAYS_MAX_DAY_HEADS) return null;
+      occurrences += codex.usageOccurrences + claudeCode.usageOccurrences + devin.usageOccurrences;
+      days.push(Object.freeze({ utcDay: day.utcDay as number, codex, claudeCode, devin }));
     }
     if (occurrences > PRIVATE_DAYS_MAX_HEADS || occurrences > 256 * input.journalRevision) return null;
     const result: PrivateDaysV1 = Object.freeze({ schemaVersion: 1, measurementProfile: "imported-tokens-v1", coverage: "partial",

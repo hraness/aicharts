@@ -12,15 +12,16 @@ pub mod turns;
 use aicharts_protocol::{AuthMode, Batch, Evidence, Id, Provider, Tokens, Usage};
 use hmac::{Hmac, Mac};
 use schema::*;
+use serde::Deserialize;
 use sha2::Sha256;
 use std::{
     collections::{BTreeMap, BTreeSet},
     fmt,
-    io::BufRead,
+    io::{BufRead, Read},
 };
 use time::{format_description::well_known::Rfc3339, OffsetDateTime};
 
-pub use reader::{MAX_DEPTH, MAX_LINE_BYTES};
+pub use reader::{MAX_DEPTH, MAX_DOCUMENT_BYTES, MAX_LINE_BYTES};
 pub const MAX_LINES: u64 = 100_000;
 pub const MAX_MEASUREMENTS: usize = 100_000;
 const TOKEN_LIMIT: u64 = 1_000_000_000_000;
@@ -216,6 +217,7 @@ pub fn parse_reader<R: BufRead>(
     match provider {
         Provider::Codex => parse_codex(&mut reader, namespace_key, &mut out)?,
         Provider::ClaudeCode => parse_claude(&mut reader, namespace_key, &mut out)?,
+        Provider::Devin => parse_devin(&mut reader, namespace_key, &mut out)?,
     }
     Ok(out.finish())
 }
@@ -386,13 +388,22 @@ fn parse_codex<R: BufRead>(
     let mut previous: Option<CodexCounters> = None;
     let mut stopped = false;
     let mut forked = false;
-    while let Some(record) = reader::next_record::<_, CodexEntry>(reader)? {
+    loop {
+        let next = reader::next_record::<_, CodexEntry>(reader)?;
+        if matches!(next, reader::Next::End) {
+            break;
+        }
         out.lines_read += 1;
         if out.lines_read > MAX_LINES {
             return Err(Error::RecordLimit);
         }
-        let Some(record) = record else {
-            continue;
+        let record = match next {
+            reader::Next::Parsed(record) => record,
+            reader::Next::Oversized => {
+                out.warn(Warning::UnsupportedRecords);
+                continue;
+            }
+            _ => continue,
         };
         let Some(payload) = record.payload else {
             out.warn(Warning::UnsupportedRecords);
@@ -507,13 +518,22 @@ fn parse_claude<R: BufRead>(
     out: &mut Accumulator,
 ) -> Result<(), Error> {
     out.warn(Warning::UnmeasuredReasoning);
-    while let Some(record) = reader::next_record::<_, ClaudeEntry>(reader)? {
+    loop {
+        let next = reader::next_record::<_, ClaudeEntry>(reader)?;
+        if matches!(next, reader::Next::End) {
+            break;
+        }
         out.lines_read += 1;
         if out.lines_read > MAX_LINES {
             return Err(Error::RecordLimit);
         }
-        let Some(record) = record else {
-            continue;
+        let record = match next {
+            reader::Next::Parsed(record) => record,
+            reader::Next::Oversized => {
+                out.warn(Warning::UnsupportedRecords);
+                continue;
+            }
+            _ => continue,
         };
         if record.kind != Kind::Assistant {
             continue;
@@ -587,6 +607,83 @@ fn parse_claude<R: BufRead>(
             make_usage(id, execution_id, offset, Provider::ClaudeCode, tokens),
         )?;
     }
+    Ok(())
+}
+
+/// One bounded ATIF document per stream; never a JSONL line loop. The session's
+/// cumulative counters yield a single occurrence whose identity is keyed to the
+/// session alone — a rewritten transcript revises that one measurement in place
+/// through the usual dominance merge.
+fn parse_devin<R: BufRead>(
+    reader: &mut R,
+    key: &[u8; 32],
+    out: &mut Accumulator,
+) -> Result<(), Error> {
+    let mut taken = reader.take(MAX_DOCUMENT_BYTES + 1);
+    let parsed = {
+        let mut decoder = serde_json::Deserializer::from_reader(&mut taken);
+        DevinDocument::deserialize(&mut decoder)
+            .and_then(|document| decoder.end().map(|_| document))
+    };
+    if taken.limit() == 0 {
+        return Err(Error::LineTooLarge);
+    }
+    out.lines_read += 1;
+    let document = parsed.map_err(|_| Error::MalformedRecord)?;
+    let Some(version) = &document.schema_version else {
+        out.warn(Warning::UnsupportedRecords);
+        return Ok(());
+    };
+    if !version.0.starts_with("ATIF-v1.") {
+        out.warn(Warning::UnsupportedRecords);
+        return Ok(());
+    }
+    let Some(session) = &document.session_id else {
+        out.warn(Warning::MissingIdentity);
+        return Ok(());
+    };
+    out.warn(Warning::UnmeasuredReasoning);
+    let Some(metrics) = &document.final_metrics else {
+        out.warn(Warning::MissingUsageCounters);
+        return Ok(());
+    };
+    let (Some(prompt), Some(completion)) =
+        (metrics.total_prompt_tokens, metrics.total_completion_tokens)
+    else {
+        out.warn(Warning::MissingUsageCounters);
+        return Ok(());
+    };
+    let cached = metrics.total_cached_tokens.unwrap_or(0);
+    if cached > prompt {
+        return Err(Error::InvalidCounters);
+    }
+    let tokens = bounded(Tokens {
+        input_uncached: prompt - cached,
+        cache_read: cached,
+        cache_write_5m: 0,
+        cache_write_1h: 0,
+        output: completion,
+        reasoning_output: 0,
+    })?;
+    if !any_tokens(&tokens) {
+        return Ok(());
+    }
+    let mut latest = None;
+    for step in &document.steps {
+        if let Some(stamp) = timestamp(step.timestamp.as_ref()) {
+            latest = Some(latest.map_or(stamp, |old: (u32, u32)| old.max(stamp)));
+        }
+    }
+    let Some((day, offset)) = latest else {
+        out.warn(Warning::MissingTimestamp);
+        return Ok(());
+    };
+    let execution_id = keyed_id(key, b"devin-execution", &[session.0.as_bytes()]);
+    let id = keyed_id(key, b"devin-usage", &[session.0.as_bytes()]);
+    out.add(
+        day,
+        make_usage(id, execution_id, offset, Provider::Devin, tokens),
+    )?;
     Ok(())
 }
 

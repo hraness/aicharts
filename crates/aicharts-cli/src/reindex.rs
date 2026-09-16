@@ -32,7 +32,8 @@ fn parse_options(args: &[String]) -> Result<Options, &'static str> {
             | "--shadow-dir"
             | "--occurrence-key-file"
             | "--codex"
-            | "--claude") => {
+            | "--claude"
+            | "--devin") => {
                 i += 1;
                 let value = args
                     .get(i)
@@ -48,6 +49,7 @@ fn parse_options(args: &[String]) -> Result<Options, &'static str> {
                     }
                     "--codex" => sources.push((Provider::Codex, path)),
                     "--claude" => sources.push((Provider::ClaudeCode, path)),
+                    "--devin" => sources.push((Provider::Devin, path)),
                     _ => return Err("invalid_option"),
                 }
             }
@@ -97,7 +99,7 @@ mod unix {
     use crate::state::unix::{source_id, stamp, verify_path};
     use aicharts_core::{merge_collections, parse_reader};
     use aicharts_ledger::{Ledger, LedgerIdentity, ReadOnlyLedger, SourceScan, SourceStamp};
-    use aicharts_protocol::{encode, Batch, Id, Policy, Registry};
+    use aicharts_protocol::{encode, Batch, Id, Policy, Provider, Registry};
     use std::{
         collections::{BTreeMap, BTreeSet},
         fs,
@@ -137,7 +139,7 @@ mod unix {
         let mut seen = BTreeSet::new();
         for (provider, root) in &options.sources {
             let mut files = vec![];
-            crate::source_files(root, 0, &mut files, &mut visited)?;
+            crate::source_files(root, *provider, 0, &mut files, &mut visited)?;
             files.sort();
             for path in files {
                 let canonical = fs::canonicalize(&path).map_err(|_| "source_metadata_failed")?;
@@ -157,7 +159,8 @@ mod unix {
                 if result.bytes > crate::MAX_SOURCE_BYTES {
                     return Err("source_byte_limit");
                 }
-                if before.bytes != 0 {
+                // Whole-document providers enforce completeness in the parser.
+                if *provider != Provider::Devin && before.bytes != 0 {
                     file.seek(SeekFrom::End(-1))
                         .map_err(|_| "source_read_failed")?;
                     let mut last = [0; 1];
@@ -199,6 +202,7 @@ mod unix {
                     source_id: source_id(checkpoint, &canonical, *provider),
                     stamp: before,
                     collection,
+                    allows_rewrite: *provider == Provider::Devin,
                 });
                 result.verification.push((path, canonical, before));
             }

@@ -10,7 +10,7 @@ const request: PrivateDaysRequestV1 = { schemaVersion: 1, accountId: `acct_${"1"
 const totals = (count = 0, total = "0", output = "0") => ({ usageOccurrences: count, observedAccountedTokens: total, observedOutputTokens: output });
 const value = (query = request) => ({ schemaVersion: 1, measurementProfile: "imported-tokens-v1", coverage: "partial",
   journalRevision: 1, journalCommittedAtMs: 1_000, firstUtcDay: query.firstUtcDay,
-  days: Array.from({ length: query.dayCount }, (_, index) => ({ utcDay: query.firstUtcDay + index, codex: totals(), claudeCode: totals() })) } satisfies PrivateDaysV1);
+  days: Array.from({ length: query.dayCount }, (_, index) => ({ utcDay: query.firstUtcDay + index, codex: totals(), claudeCode: totals(), devin: totals() })) } satisfies PrivateDaysV1);
 
 test("request validation copies exact data and never establishes current authentication", () => {
   const source = { ...request }, parsed = parsePrivateDaysRequest(source);

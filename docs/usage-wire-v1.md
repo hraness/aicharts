@@ -34,7 +34,7 @@ Usage record (112 bytes):
 | 16 | 16-byte execution ID; all-zero means unknown |
 | 32 | 16-byte account ID; all-zero means unassigned |
 | 48 | u32 completion offset, less than 86,400,000 |
-| 52 | u8 provider: 1 Codex, 2 Claude Code |
+| 52 | u8 provider: 1 Codex, 2 Claude Code, 3 Devin |
 | 53 | u8 auth mode: 0 unknown, 1 subscription, 2 API |
 | 54 | u16 evidence flags: bit 0 imported, bit 1 live; exactly one set |
 | 56 | u32 model registry ID |
@@ -43,7 +43,7 @@ Usage record (112 bytes):
 | 64,72,80,88 | four u64: uncached input, cache read, cache write 5m, cache write 1h |
 | 96,104 | two u64: output and its reasoning subset |
 
-Every token counter is at most 10^12. Reasoning cannot exceed output and is never added again to total tokens. Codex cache-write counters must be zero. At least one disjoint token category must be nonzero. These are transport bounds, not a fraud score. Usage records are strictly sorted by occurrence ID, rejecting conflicting duplicates. Conflicting finalized occurrences across batches require a future explicit correction operation, never silent accumulation.
+Every token counter is at most 10^12. Reasoning cannot exceed output and is never added again to total tokens. Codex and Devin cache-write counters must be zero. At least one disjoint token category must be nonzero. These are transport bounds, not a fraud score. Usage records are strictly sorted by occurrence ID, rejecting conflicting duplicates. Conflicting finalized occurrences across batches require a future explicit correction operation, never silent accumulation.
 
 Prompt record (56 bytes): occurrence ID, execution ID and account ID at offsets 0/16/32; u32 timestamp at 48; provider u8 at 52; origin u8 at 53 (0 unknown, 1 human, 2 automation); evidence u16 at 54 with the same flags. Occurrence ID is nonzero; the other IDs may be zero. Strictly sort by occurrence ID. A provider `user` role does not establish human authorship; historical parsers must use unknown origin unless structured provenance establishes otherwise.
 
@@ -51,9 +51,9 @@ Interval record (48 bytes): nonzero execution ID at 0, account ID at 16; u32 sta
 
 ## Rust API shared with the collector
 
-The `aicharts-protocol` crate exports `Id = [u8;16]`, `Provider::{Codex,ClaudeCode}`, `AuthMode::{Unknown,Subscription,Api}`, `Origin::{Unknown,Human,Automation}`, `IntervalKind::{AgentWork,ApiRequest}`, `Evidence::{Imported,Live}`, `Tokens { input_uncached, cache_read, cache_write_5m, cache_write_1h, output, reasoning_output }`, `Usage { id, execution_id, account_id, offset_ms, provider, auth_mode, evidence, model_id, context_tier, tokens }`, `Prompt { id, execution_id, account_id, offset_ms, provider, origin, evidence }`, `Interval { execution_id, account_id, start_ms, end_ms, provider, kind, evidence, clock_uncertainty_ms }`, and `Batch { utc_day, registry_revision, usage, prompts, intervals }`.
+The `aicharts-protocol` crate exports `Id = [u8;16]`, `Provider::{Codex,ClaudeCode,Devin}`, `AuthMode::{Unknown,Subscription,Api}`, `Origin::{Unknown,Human,Automation}`, `IntervalKind::{AgentWork,ApiRequest}`, `Evidence::{Imported,Live}`, `Tokens { input_uncached, cache_read, cache_write_5m, cache_write_1h, output, reasoning_output }`, `Usage { id, execution_id, account_id, offset_ms, provider, auth_mode, evidence, model_id, context_tier, tokens }`, `Prompt { id, execution_id, account_id, offset_ms, provider, origin, evidence }`, `Interval { execution_id, account_id, start_ms, end_ms, provider, kind, evidence, clock_uncertainty_ms }`, and `Batch { utc_day, registry_revision, usage, prompts, intervals }`.
 
-Validation uses `Policy { first_day, last_day, registry: &Registry }` and `Registry { revision, models: Vec<(Provider,u32)> }`. Unknown model 0 is accepted for either provider without a registry entry. Export `encode(&Batch, &Policy) -> Result<Vec<u8>, Error>` and `decode(&[u8], &Policy) -> Result<Batch, Error>`, and checked `Tokens::total()`. Enum wire values follow the tables above. Public constructors do not bypass validation. Encoders require canonical order, rather than silently dropping duplicate data.
+Validation uses `Policy { first_day, last_day, registry: &Registry }` and `Registry { revision, models: Vec<(Provider,u32)> }`. Unknown model 0 is accepted for any provider without a registry entry. Export `encode(&Batch, &Policy) -> Result<Vec<u8>, Error>` and `decode(&[u8], &Policy) -> Result<Batch, Error>`, and checked `Tokens::total()`. Enum wire values follow the tables above. Public constructors do not bypass validation. Encoders require canonical order, rather than silently dropping duplicate data.
 
 The TypeScript decoder/encoder in `lib/usage` follows the same byte contract with `bigint` token counters. The offline CLI never sends a packet. Future HTTP handling must cap bytes before buffering and prevent raw-body logging before calling the decoder.
 

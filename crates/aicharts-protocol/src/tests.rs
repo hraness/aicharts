@@ -271,7 +271,7 @@ fn registry_revision_and_provider_model_pair_must_match() {
         revision: 1,
         models: vec![],
     };
-    for provider in [Provider::Codex, Provider::ClaudeCode] {
+    for provider in [Provider::Codex, Provider::ClaudeCode, Provider::Devin] {
         batch = sample();
         batch.usage[0].provider = provider;
         batch.usage[0].model_id = 0;
@@ -285,11 +285,11 @@ fn registry_revision_and_provider_model_pair_must_match() {
 #[test]
 fn unsupported_enum_values_context_tiers_and_evidence_fail() {
     for (offset, valid) in [
-        (76, vec![1, 2]),
+        (76, vec![1, 2, 3]),
         (77, vec![0, 1, 2]),
-        (188, vec![1, 2]),
+        (188, vec![1, 2, 3]),
         (189, vec![0, 1, 2]),
-        (232, vec![1, 2]),
+        (232, vec![1, 2, 3]),
         (233, vec![1, 2]),
     ] {
         for value in 0..=u8::MAX {
@@ -322,7 +322,7 @@ fn unsupported_enum_values_context_tiers_and_evidence_fail() {
 
 #[test]
 fn all_defined_enums_roundtrip() {
-    for provider in [Provider::Codex, Provider::ClaudeCode] {
+    for provider in [Provider::Codex, Provider::ClaudeCode, Provider::Devin] {
         for auth_mode in [AuthMode::Unknown, AuthMode::Subscription, AuthMode::Api] {
             for origin in [Origin::Unknown, Origin::Human, Origin::Automation] {
                 for evidence in [Evidence::Imported, Evidence::Live] {

@@ -57,7 +57,7 @@ describe("usage wire v1", () => {
     expect(decodeUsageBatch(encoded(), { ...fixturePolicy, firstDay: 20_001 })).toEqual({ ok: false, error: "invalid_policy" });
     for (const [field, value, error] of [
       ["modelId", 2, "unknown_model"], ["contextTier", 1, "invalid_context_tier"],
-      ["provider", 3, "invalid_enum"], ["authMode", 3, "invalid_enum"], ["evidence", 3, "invalid_enum"],
+      ["provider", 4, "invalid_enum"], ["authMode", 3, "invalid_enum"], ["evidence", 3, "invalid_enum"],
       ["offsetMs", DAY_MS, "invalid_offset"],
     ] as const) {
       expect(encodeUsageBatch({ ...batch, usage: [{ ...batch.usage[0], [field]: value }] }, fixturePolicy)).toEqual({ ok: false, error });
@@ -110,10 +110,10 @@ describe("usage wire v1", () => {
   test("counter round-trip holds across bounded bigint values", () => {
     assertProperty(fc.property(
       fc.bigInt({ min: 0n, max: MAX_TOKEN_COUNT }), fc.bigInt({ min: 0n, max: MAX_TOKEN_COUNT }),
-      fc.bigInt({ min: 1n, max: MAX_TOKEN_COUNT }), fc.boolean(),
-      (input, cached, output, claude) => {
-        const fixture = createFixtureBatch();
-        const batch: Batch = { ...fixture, usage: [{ ...fixture.usage[0], provider: claude ? 2 : 1, tokens: {
+      fc.bigInt({ min: 1n, max: MAX_TOKEN_COUNT }), fc.constantFrom(1, 2, 3),
+      (input, cached, output, provider) => {
+        const claude = provider === 2, fixture = createFixtureBatch();
+        const batch: Batch = { ...fixture, usage: [{ ...fixture.usage[0], provider, tokens: {
           inputUncached: input, cacheRead: cached, cacheWrite5m: claude ? cached : 0n,
           cacheWrite1h: claude ? input : 0n, output, reasoningOutput: output / 2n,
         } }] };

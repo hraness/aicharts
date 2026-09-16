@@ -77,6 +77,27 @@ impl<'de> Deserialize<'de> for NativeId {
     }
 }
 
+/// Bounded opaque metadata strings. Never emitted; only keyed or matched.
+pub(crate) struct BoundedString(pub String);
+impl<'de> Deserialize<'de> for BoundedString {
+    fn deserialize<D: Deserializer<'de>>(decoder: D) -> Result<Self, D::Error> {
+        struct TextVisitor;
+        impl Visitor<'_> for TextVisitor {
+            type Value = BoundedString;
+            fn expecting(&self, f: &mut fmt::Formatter) -> fmt::Result {
+                f.write_str("a bounded metadata string")
+            }
+            fn visit_str<E: de::Error>(self, value: &str) -> Result<Self::Value, E> {
+                if value.is_empty() || value.len() > 256 {
+                    return Err(E::custom("invalid_metadata"));
+                }
+                Ok(BoundedString(value.to_owned()))
+            }
+        }
+        decoder.deserialize_str(TextVisitor)
+    }
+}
+
 pub(crate) struct Timestamp(pub String);
 impl<'de> Deserialize<'de> for Timestamp {
     fn deserialize<D: Deserializer<'de>>(decoder: D) -> Result<Self, D::Error> {
@@ -173,4 +194,27 @@ pub(crate) struct ClaudeUsage {
 pub(crate) struct ClaudeCacheCreation {
     pub ephemeral_5m_input_tokens: Option<u64>,
     pub ephemeral_1h_input_tokens: Option<u64>,
+}
+
+/// ATIF transcript document. Only session identity, step timestamps and the
+/// cumulative final counters are modeled; step content and tool definitions
+/// are walked by the deserializer and never retained.
+#[derive(Deserialize)]
+pub(crate) struct DevinDocument {
+    pub schema_version: Option<BoundedString>,
+    pub session_id: Option<BoundedString>,
+    #[serde(default)]
+    pub steps: Vec<DevinStep>,
+    #[serde(default, deserialize_with = "metadata_object")]
+    pub final_metrics: Option<DevinMetrics>,
+}
+#[derive(Deserialize)]
+pub(crate) struct DevinStep {
+    pub timestamp: Option<Timestamp>,
+}
+#[derive(Deserialize)]
+pub(crate) struct DevinMetrics {
+    pub total_prompt_tokens: Option<u64>,
+    pub total_completion_tokens: Option<u64>,
+    pub total_cached_tokens: Option<u64>,
 }

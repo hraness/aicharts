@@ -60,8 +60,8 @@ fn parse_options(args: &[String]) -> Result<Options, &'static str> {
                 rescan = true
             }
             "--dry-run" if command == Command::Outbox && !dry_run => dry_run = true,
-            flag @ ("--state-dir" | "--key-file" | "--codex" | "--claude" | "--limit"
-            | "--after" | "--revision") => {
+            flag @ ("--state-dir" | "--key-file" | "--codex" | "--claude" | "--devin"
+            | "--limit" | "--after" | "--revision") => {
                 i += 1;
                 let value = args
                     .get(i)
@@ -78,6 +78,9 @@ fn parse_options(args: &[String]) -> Result<Options, &'static str> {
                             aicharts_protocol::Provider::ClaudeCode,
                             PathBuf::from(value),
                         ))
+                    }
+                    "--devin" if command == Command::Collect => {
+                        sources.push((aicharts_protocol::Provider::Devin, PathBuf::from(value)))
                     }
                     "--limit" if command == Command::Outbox && limit.is_none() => {
                         let parsed = value.parse::<usize>().map_err(|_| "invalid_page_limit")?;
@@ -189,6 +192,7 @@ pub(crate) mod unix {
         mac.update(&[match provider {
             Provider::Codex => 1,
             Provider::ClaudeCode => 2,
+            Provider::Devin => 3,
         }]);
         let bytes = path.as_os_str().as_bytes();
         mac.update(&(bytes.len() as u64).to_le_bytes());
@@ -257,8 +261,13 @@ pub(crate) mod unix {
         let mut prefix_scans = vec![];
         let mut verification = vec![];
         for (provider, path) in &options.sources {
+            // Whole-document sources are rewritten wholesale; an LF-terminated
+            // prefix replay has no meaning for them.
+            if prefix_mode && *provider == Provider::Devin {
+                return Err("prefix_document_provider_unsupported");
+            }
             let mut files = vec![];
-            crate::source_files(path, 0, &mut files, &mut visited)?;
+            crate::source_files(path, *provider, 0, &mut files, &mut visited)?;
             files.sort();
             for path in files {
                 let canonical = fs::canonicalize(&path).map_err(|_| "source_metadata_failed")?;
@@ -298,7 +307,8 @@ pub(crate) mod unix {
                 }
                 // A physical snapshot ends at a newline. Accepting an unfinished
                 // append can checkpoint an event before its final fields arrive.
-                if !prefix_mode && before.bytes != 0 {
+                // Whole-document providers enforce completeness in the parser.
+                if !prefix_mode && *provider != Provider::Devin && before.bytes != 0 {
                     file.seek(SeekFrom::End(-1))
                         .map_err(|_| "source_read_failed")?;
                     let mut last = [0; 1];
@@ -393,6 +403,7 @@ pub(crate) mod unix {
                         source_id,
                         stamp: before,
                         collection,
+                        allows_rewrite: *provider == Provider::Devin,
                     });
                 }
                 verification.push((path, canonical, before));

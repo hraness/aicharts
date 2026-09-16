@@ -69,6 +69,7 @@ impl Fixture {
                         changed_seconds: 100,
                         changed_nanos: 0,
                     },
+                    allows_rewrite: false,
                     collection: Collection {
                         batches: vec![Batch {
                             utc_day: 20000,

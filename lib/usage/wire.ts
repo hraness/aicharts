@@ -4,7 +4,7 @@ export const DAY_MS = 86_400_000;
 export const MAX_RECORDS = 4_096;
 export const MAX_PACKET_BYTES = 884_760;
 export const MAX_TOKEN_COUNT = 1_000_000_000_000n;
-export type Provider = 1 | 2;
+export type Provider = 1 | 2 | 3;
 export type AuthMode = 0 | 1 | 2;
 export type Evidence = 1 | 2;
 export type Origin = 0 | 1 | 2;
@@ -47,7 +47,7 @@ export type WireError =
 
 const tokenKeys = ["inputUncached", "cacheRead", "cacheWrite5m", "cacheWrite1h", "output", "reasoningOutput"] as const;
 const u32 = (value: unknown): value is number => typeof value === "number" && Number.isInteger(value) && value >= 0 && value <= 0xffff_ffff;
-const provider = (value: unknown): value is Provider => value === 1 || value === 2;
+const provider = (value: unknown): value is Provider => value === 1 || value === 2 || value === 3;
 const evidence = (value: unknown): value is Evidence => value === 1 || value === 2;
 const threeWay = (value: unknown): value is 0 | 1 | 2 => value === 0 || value === 1 || value === 2;
 const id = (value: unknown): value is Id => value instanceof Uint8Array && value.length === 16;
@@ -122,7 +122,7 @@ export function validateUsageBatch(value: unknown, policy: Policy): Result<Batch
     const total = totalTokens(usage.tokens);
     if (!total.ok || total.value === 0n) return err("invalid_tokens");
     const tokens = usage.tokens as Tokens;
-    if (usage.provider === 1 && (tokens.cacheWrite5m !== 0n || tokens.cacheWrite1h !== 0n)) return err("invalid_tokens");
+    if ((usage.provider === 1 || usage.provider === 3) && (tokens.cacheWrite5m !== 0n || tokens.cacheWrite1h !== 0n)) return err("invalid_tokens");
   }
   previous = null;
   for (const prompt of value.prompts) {

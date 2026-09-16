@@ -7,6 +7,8 @@ use crate::Error;
 
 pub const MAX_LINE_BYTES: usize = 1_048_576;
 pub const MAX_DEPTH: usize = 64;
+/// Single-document sources (whole-file JSON, not JSONL) get one bounded read.
+pub const MAX_DOCUMENT_BYTES: u64 = 16 * 1_048_576;
 
 struct Line<'a, R> {
     source: &'a mut R,
@@ -79,11 +81,39 @@ impl<R: BufRead> Read for Line<'_, R> {
     }
 }
 
+pub(crate) enum Next<T> {
+    End,
+    Blank,
+    Oversized,
+    Parsed(T),
+}
+
+/// Consume the remainder of an over-cap line without retaining it. Bounded by
+/// the underlying buffer window only.
+fn discard_line<R: BufRead>(reader: &mut R) -> Result<(), Error> {
+    loop {
+        let available = reader.fill_buf().map_err(|_| Error::ReadFailed)?;
+        if available.is_empty() {
+            return Ok(());
+        }
+        match available.iter().position(|&byte| byte == b'\n') {
+            Some(index) => {
+                reader.consume(index + 1);
+                return Ok(());
+            }
+            None => {
+                let length = available.len();
+                reader.consume(length);
+            }
+        }
+    }
+}
+
 pub(crate) fn next_record<R: BufRead, T: DeserializeOwned>(
     reader: &mut R,
-) -> Result<Option<Option<T>>, Error> {
+) -> Result<Next<T>, Error> {
     if reader.fill_buf().map_err(|_| Error::ReadFailed)?.is_empty() {
-        return Ok(None);
+        return Ok(Next::End);
     }
     let mut line = Line {
         source: reader,
@@ -98,12 +128,17 @@ pub(crate) fn next_record<R: BufRead, T: DeserializeOwned>(
     let mut decoder = serde_json::Deserializer::from_reader(&mut line);
     let parsed = T::deserialize(&mut decoder).and_then(|value| decoder.end().map(|_| value));
     if let Some(fault) = line.fault {
+        // Over-cap lines are records this crate declines to buffer, not evidence
+        // of corruption. Discard the remainder and report the bounded skip;
+        // other faults (depth, read failure) stay fatal.
+        if fault == Error::LineTooLarge {
+            discard_line(reader)?;
+            return Ok(Next::Oversized);
+        }
         return Err(fault);
     }
     if !line.non_whitespace {
-        return Ok(Some(None));
+        return Ok(Next::Blank);
     }
-    parsed
-        .map(|value| Some(Some(value)))
-        .map_err(|_| Error::MalformedRecord)
+    parsed.map(Next::Parsed).map_err(|_| Error::MalformedRecord)
 }

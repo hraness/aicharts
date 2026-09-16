@@ -17,6 +17,7 @@ umask 077
   --occurrence-key-file /absolute/private/aicharts.key \
   --codex /absolute/path/to/session.jsonl \
   --claude /absolute/path/to/another-session.jsonl \
+  --devin /absolute/path/to/devin-transcript.json \
   --json > /absolute/private/sessions.json
 ```
 
@@ -27,9 +28,11 @@ upload format. Keyed session and occurrence IDs let supported copies be
 deduplicated without revealing native identifiers. Keep the key stable.
 
 Historical token accounting follows the existing collector: cumulative Codex
-snapshots are not separate token purchases, and Claude cache reads are not
-subtracted from its already uncached input field. Reasoning is a subset of
-output and is never added twice. Missing reasoning detail remains unknown.
+snapshots are not separate token purchases, Claude cache reads are not
+subtracted from its already uncached input field, and Devin transcript
+documents contribute one occurrence per session from their cumulative final
+counters. Reasoning is a subset of output and is never added twice. Missing
+reasoning detail remains unknown.
 
 An actual response model may populate a reviewed display allowlist. Custom or
 unsupported model labels become unknown. Codex's requested turn model does

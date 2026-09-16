@@ -92,9 +92,9 @@ test("actual coordinator stays dormant and the default Worker remains unavailabl
   } finally { await waitOnExecutionContext(ctx); }
 });
 
-test("accepted Codex and Claude numeric heads cross real RPC disposal into a private daily response", async () => {
+test("accepted Codex, Claude and Devin numeric heads cross real RPC disposal into a private daily response", async () => {
   const device = await enroll();
-  const operations = ([1, 2] as const).map(provider => {
+  const operations = ([1, 2, 3] as const).map(provider => {
     const occurrenceId = admissionIdBytes(hex(provider, 16));
     const frame = success(encodeUsageBatch({ utcDay: DAY, registryRevision: 1,
       usage: [{ id: occurrenceId, executionId: new Uint8Array(16), accountId: new Uint8Array(16), offsetMs: 1,
@@ -110,9 +110,9 @@ test("accepted Codex and Claude numeric heads cross real RPC disposal into a pri
     batch: success(encodeAdmissionBatch(operations, ADMISSION_POLICY_V1)) }));
   const expected = { ok: true, value: { schemaVersion: 1, measurementProfile: "imported-tokens-v1", coverage: "partial",
     journalRevision: 1, journalCommittedAtMs: NOW, firstUtcDay: DAY - 1,
-    days: [{ utcDay: DAY - 1, codex: totals(), claudeCode: totals() },
-      { utcDay: DAY, codex: totals(1, "17", "5"), claudeCode: totals(1, "27", "5") },
-      { utcDay: DAY + 1, codex: totals(), claudeCode: totals() }] } };
+    days: [{ utcDay: DAY - 1, codex: totals(), claudeCode: totals(), devin: totals() },
+      { utcDay: DAY, codex: totals(1, "17", "5"), claudeCode: totals(1, "27", "5"), devin: totals(1, "17", "5") },
+      { utcDay: DAY + 1, codex: totals(), claudeCode: totals(), devin: totals() }] } };
   expect(await call()).toEqual(expected);
   success(await device.stub.revokeEnrollment(device.proof));
   expect(await call()).toEqual(expected); expect(finished).toBe(2);
@@ -123,7 +123,7 @@ test("actual absent and empty-account RPC results retain their exact bounded con
   await enroll();
   const result = success(await call(query(31)));
   expect(result.days).toHaveLength(31); expect(result.journalRevision).toBe(0); expect(result.journalCommittedAtMs).toBeNull();
-  expect(result.days.every(day => day.codex.usageOccurrences === 0 && day.claudeCode.usageOccurrences === 0)).toBe(true);
+  expect(result.days.every(day => day.codex.usageOccurrences === 0 && day.claudeCode.usageOccurrences === 0 && day.devin.usageOccurrences === 0)).toBe(true);
   expect(finished).toBe(2);
 });
 

@@ -44,7 +44,7 @@ macro_rules! wire_enum {
     };
 }
 
-wire_enum!(Provider { Codex = 1, ClaudeCode = 2 });
+wire_enum!(Provider { Codex = 1, ClaudeCode = 2, Devin = 3 });
 wire_enum!(AuthMode { Unknown = 0, Subscription = 1, Api = 2 });
 wire_enum!(Origin { Unknown = 0, Human = 1, Automation = 2 });
 wire_enum!(IntervalKind { AgentWork = 1, ApiRequest = 2 });
@@ -280,7 +280,7 @@ fn validate(batch: &Batch, policy: &Policy<'_>) -> Result<usize, Error> {
             return Err(Error::UnknownModel);
         }
         if record.tokens.total()? == 0
-            || (record.provider == Provider::Codex
+            || (matches!(record.provider, Provider::Codex | Provider::Devin)
                 && (record.tokens.cache_write_5m != 0 || record.tokens.cache_write_1h != 0))
         {
             return Err(Error::InvalidTokens);

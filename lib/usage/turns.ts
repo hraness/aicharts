@@ -74,7 +74,7 @@ function snapshotTurn(value: unknown, utcDay: number): TerminalTurn | null {
   const record = fields(value, ["id", "executionId", "accountId", "provider", "origin", "lineage", "outcome", "endedAtMs", "startedAtMs", "clockUncertaintyMs", "tokens", "toolCalls"]);
   if (!record) return null;
   const id = identity(record.id, false), executionId = identity(record.executionId, false), accountId = identity(record.accountId, true);
-  if (!id || !executionId || !accountId || (record.provider !== 1 && record.provider !== 2)) return null;
+  if (!id || !executionId || !accountId || (record.provider !== 1 && record.provider !== 2 && record.provider !== 3)) return null;
   if (!integer(record.origin, 2) || !integer(record.lineage, 2) || (record.outcome !== 1 && record.outcome !== 2)) return null;
   if (!integer(record.endedAtMs, MAX_EPOCH_MS) || Math.floor(record.endedAtMs / DAY_MS) !== utcDay) return null;
   if (record.startedAtMs !== null && (!integer(record.startedAtMs, record.endedAtMs) || record.endedAtMs - record.startedAtMs > MAX_TURN_RUNTIME_MS)) return null;
@@ -84,7 +84,7 @@ function snapshotTurn(value: unknown, utcDay: number): TerminalTurn | null {
   if (record.tokens !== null) {
     const candidate = fields(record.tokens, tokenKeys);
     if (!candidate || tokenKeys.some(key => typeof candidate[key] !== "bigint" || (candidate[key] as bigint) < 0n || (candidate[key] as bigint) > MAX_TOKEN_COUNT)) return null;
-    if (record.provider === 1 && (candidate.cacheWrite5m !== 0n || candidate.cacheWrite1h !== 0n)) return null;
+    if ((record.provider === 1 || record.provider === 3) && (candidate.cacheWrite5m !== 0n || candidate.cacheWrite1h !== 0n)) return null;
     tokens = candidate as TurnTokens;
   }
   return { ...record, id, executionId, accountId, tokens } as TerminalTurn;

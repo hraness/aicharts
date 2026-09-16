@@ -126,14 +126,17 @@ pub fn scan_metadata<R: BufRead>(
         let mut execution = None;
         let mut requested_model = None;
         let mut model_observed = false;
-        while let Some(record) =
-            crate::reader::next_record::<_, CodexEntry>(&mut reader).map_err(|e| e.code())?
-        {
+        loop {
+            let next =
+                crate::reader::next_record::<_, CodexEntry>(&mut reader).map_err(|e| e.code())?;
+            if matches!(next, crate::reader::Next::End) {
+                break;
+            }
             lines += 1;
             if lines > MAX_LINES {
                 return Err("record_limit");
             }
-            let Some(entry) = record else {
+            let crate::reader::Next::Parsed(entry) = next else {
                 continue;
             };
             let Some(payload) = entry.payload else {
@@ -181,14 +184,16 @@ pub fn scan_metadata<R: BufRead>(
         return Ok(out);
     }
     let mut lines = 0;
-    while let Some(record) =
-        crate::reader::next_record::<_, Entry>(&mut reader).map_err(|e| e.code())?
-    {
+    loop {
+        let next = crate::reader::next_record::<_, Entry>(&mut reader).map_err(|e| e.code())?;
+        if matches!(next, crate::reader::Next::End) {
+            break;
+        }
         lines += 1;
         if lines > MAX_LINES {
             return Err("record_limit");
         }
-        let Some(entry) = record else {
+        let crate::reader::Next::Parsed(entry) = next else {
             continue;
         };
         if entry.kind != crate::schema::Kind::Assistant {
@@ -365,10 +370,10 @@ pub fn join_sources(sources: Vec<(Collection, Metadata)>) -> Result<SessionRepor
             let session = sessions
                 .entry((usage.provider as u8, usage.execution_id))
                 .or_insert_with(|| SessionObservation {
-                    provider: if usage.provider == Provider::Codex {
-                        "codex"
-                    } else {
-                        "claude_code"
+                    provider: match usage.provider {
+                        Provider::Codex => "codex",
+                        Provider::ClaudeCode => "claude_code",
+                        Provider::Devin => "devin",
                     },
                     session_id: hex(usage.execution_id),
                     conversation_id: conversation.clone(),

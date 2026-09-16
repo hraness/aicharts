@@ -1,7 +1,7 @@
 //! Explicit, local session snapshots. No account, ledger, provider config or network.
 use aicharts_protocol::Provider;
 use std::path::PathBuf;
-const HELP: &str = "AI Charts sessions — local, read-only\n\n  aicharts sessions --occurrence-key-file KEY [--codex FILE ...] [--claude FILE ...] [--json]\n\nExplicit regular files only. Exports known session token observations and\nqualified response-model labels, without transcript content. Historical timing\nis unknown. An unfinished final JSONL record is deferred. Nothing is uploaded.\n";
+const HELP: &str = "AI Charts sessions — local, read-only\n\n  aicharts sessions --occurrence-key-file KEY [--codex FILE ...] [--claude FILE ...] [--devin FILE ...] [--json]\n\nExplicit regular files only. Exports known session token observations and\nqualified response-model labels, without transcript content. Historical timing\nis unknown. An unfinished final JSONL record is deferred; Devin transcript\ndocuments are read whole. Nothing is uploaded.\n";
 struct Options {
     sources: Vec<(Provider, PathBuf)>,
     key: PathBuf,
@@ -18,7 +18,7 @@ fn options(args: &[String]) -> Result<Options, &'static str> {
     while let Some(flag) = args.next() {
         match flag.as_str() {
             "--json" if !json => json = true,
-            "--codex" | "--claude" | "--occurrence-key-file" => {
+            "--codex" | "--claude" | "--devin" | "--occurrence-key-file" => {
                 let value = args
                     .next()
                     .filter(|s| !s.is_empty() && !s.starts_with("--"))
@@ -33,10 +33,10 @@ fn options(args: &[String]) -> Result<Options, &'static str> {
                         return Err("too_many_sources");
                     }
                     sources.push((
-                        if flag == "--codex" {
-                            Provider::Codex
-                        } else {
-                            Provider::ClaudeCode
+                        match flag.as_str() {
+                            "--codex" => Provider::Codex,
+                            "--claude" => Provider::ClaudeCode,
+                            _ => Provider::Devin,
                         },
                         PathBuf::from(value),
                     ));
@@ -200,7 +200,13 @@ mod native {
         let mut lines = 0;
         let mut records = 0;
         for (provider, source) in &mut sources {
-            let prefix = source.complete_prefix()?;
+            // Devin transcripts are whole documents; there is no unfinished
+            // tail record to defer, so the observed length is the read bound.
+            let prefix = if *provider == Provider::Devin {
+                source.stamp.bytes
+            } else {
+                source.complete_prefix()?
+            };
             source
                 .file
                 .seek(SeekFrom::Start(0))

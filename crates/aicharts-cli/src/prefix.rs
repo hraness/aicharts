@@ -112,6 +112,9 @@ fn collect_reader<R: Read + Seek>(
     previous: Option<CompletePrefix>,
     provider: Provider,
 ) -> Result<(Collection, CompletePrefix), &'static str> {
+    if provider == Provider::Devin {
+        return Err("prefix_document_provider_unsupported");
+    }
     if source_id == &[0; 32] || previous.is_some_and(|prefix| prefix.profile != 1) {
         return Err("source_prefix_invalid");
     }
@@ -563,12 +566,18 @@ mod tests {
 
     #[test]
     fn complete_malformed_or_oversized_lines_keep_parser_errors_fixed() {
-        for bytes in [
-            b"PRIVATE invalid JSON\n".to_vec(),
-            [vec![b' '; aicharts_core::MAX_LINE_BYTES], vec![b'\n']].concat(),
-        ] {
-            assert_eq!(collect(&bytes, None).err(), Some("source_parse_failed"));
-        }
+        assert_eq!(
+            collect(b"PRIVATE invalid JSON\n", None).err(),
+            Some("source_parse_failed")
+        );
+        // An over-cap completed line is a bounded skip, not a source failure:
+        // the replayed prefix still settles with the skip surfaced as a warning.
+        let oversized = [vec![b' '; aicharts_core::MAX_LINE_BYTES], vec![b'\n']].concat();
+        let (collection, _) = collect(&oversized, None).unwrap();
+        assert!(collection.batches.is_empty());
+        assert!(collection
+            .warnings
+            .contains(&aicharts_core::Warning::UnsupportedRecords));
     }
 
     #[test]

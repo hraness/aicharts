@@ -51,7 +51,7 @@ async function enroll(): Promise<Device> {
   const proof = await prepare();
   return { proof, id: admissionIdBytes(success(await stub().enroll(proof)).receipt.deviceId) };
 }
-type Member = { id: number; expected?: Uint8Array; provider?: 1 | 2; output?: bigint; input?: bigint; cache?: bigint;
+type Member = { id: number; expected?: Uint8Array; provider?: 1 | 2 | 3; output?: bigint; input?: bigint; cache?: bigint;
   write5m?: bigint; write1h?: bigint; reasoning?: bigint; tombstone?: boolean; day?: number };
 function batch(device: Device, sequence = 1, members: Member[] = [{ id: 1 }]): AdmissionBatch {
   const operations = members.map((member, index) => {
@@ -110,7 +110,7 @@ describe("dormant private imported days", () => {
     const result = await read();
     expect(result).toEqual({ schemaVersion: 1, measurementProfile: "imported-tokens-v1", coverage: "partial",
       journalRevision: 0, journalCommittedAtMs: null, firstUtcDay: DAY - 1,
-      days: [DAY - 1, DAY, DAY + 1].map(utcDay => ({ utcDay, codex: totals(), claudeCode: totals() })) });
+      days: [DAY - 1, DAY, DAY + 1].map(utcDay => ({ utcDay, codex: totals(), claudeCode: totals(), devin: totals() })) });
     expect(await snapshot()).toEqual(before);
   });
 
@@ -147,14 +147,15 @@ describe("dormant private imported days", () => {
     expect(await snapshot()).toEqual(before);
   });
 
-  test("both providers retain exact imported totals with reasoning counted only once", async () => {
+  test("all three providers retain exact imported totals with reasoning counted only once", async () => {
     const device = await enroll();
     success(await upload(device, batch(device, 1, [{ id: 1, input: 10n, cache: 7n, output: 5n, reasoning: 5n },
-      { id: 2, provider: 2, day: DAY - 1, input: 10n, cache: 7n, write5m: 3n, write1h: 4n, output: 5n, reasoning: 2n }])));
+      { id: 2, provider: 2, day: DAY - 1, input: 10n, cache: 7n, write5m: 3n, write1h: 4n, output: 5n, reasoning: 2n },
+      { id: 3, provider: 3, input: 6n, cache: 3n, output: 2n }])));
     const before = await snapshot(), result = await read();
-    expect(result.days[0]).toEqual({ utcDay: DAY - 1, codex: totals(), claudeCode: totals(1, "29", "5") });
-    expect(result.days[1]).toEqual({ utcDay: DAY, codex: totals(1, "22", "5"), claudeCode: totals() });
-    expect(result.days[2]).toEqual({ utcDay: DAY + 1, codex: totals(), claudeCode: totals() });
+    expect(result.days[0]).toEqual({ utcDay: DAY - 1, codex: totals(), claudeCode: totals(1, "29", "5"), devin: totals() });
+    expect(result.days[1]).toEqual({ utcDay: DAY, codex: totals(1, "22", "5"), claudeCode: totals(), devin: totals(1, "11", "2") });
+    expect(result.days[2]).toEqual({ utcDay: DAY + 1, codex: totals(), claudeCode: totals(), devin: totals() });
     expect(result.journalRevision).toBe(1); expect(result.journalCommittedAtMs).toBe(NOW);
     expect(await snapshot()).toEqual(before);
   });
@@ -169,7 +170,7 @@ describe("dormant private imported days", () => {
     const removed = batch(device, 3, [{ id: 1, expected: corrected.operations[0].operationHash, tombstone: true }]);
     success(await upload(device, removed));
     const tombstone = await read();
-    expect(tombstone.days.every(day => day.codex.usageOccurrences === 0 && day.claudeCode.usageOccurrences === 0)).toBe(true);
+    expect(tombstone.days.every(day => day.codex.usageOccurrences === 0 && day.claudeCode.usageOccurrences === 0 && day.devin.usageOccurrences === 0)).toBe(true);
     success(await upload(device, batch(device, 4, [{ id: 1, expected: removed.operations[0].operationHash }])));
     result = await read(); expect(result.days).toEqual(tombstone.days); expect(result.journalRevision).toBe(4);
   });

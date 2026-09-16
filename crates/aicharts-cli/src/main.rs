@@ -41,24 +41,26 @@ const HELP: &str = "AI Charts Usage — local-only foundation
   aicharts support protocol --json
   aicharts support --help
   aicharts turns --codex FILE [--codex FILE ...] --occurrence-key-file KEY [--json]
-  aicharts sessions --occurrence-key-file KEY [--codex FILE ...] [--claude FILE ...] [--json]
-  aicharts usage --key-file PATH [--codex FILE_OR_DIR] [--claude FILE_OR_DIR] [--json]
+  aicharts sessions --occurrence-key-file KEY [--codex FILE ...] [--claude FILE ...] [--devin FILE ...] [--json]
+  aicharts usage --key-file PATH [--codex FILE_OR_DIR] [--claude FILE_OR_DIR] [--devin FILE_OR_DIR] [--json]
   aicharts upload --state-dir DIR --key-file PATH
-  aicharts upload --dry-run --key-file PATH [--codex FILE_OR_DIR] [--claude FILE_OR_DIR]
+  aicharts upload --dry-run --key-file PATH [--codex FILE_OR_DIR] [--claude FILE_OR_DIR] [--devin FILE_OR_DIR]
   aicharts keygen --output PATH
   aicharts init --state-dir DIR --key-file PATH
-  aicharts collect --state-dir DIR --key-file PATH [--codex FILE_OR_DIR] [--claude FILE_OR_DIR] [--rescan] [--json]
+  aicharts collect --state-dir DIR --key-file PATH [--codex FILE_OR_DIR] [--claude FILE_OR_DIR] [--devin FILE_OR_DIR] [--rescan] [--json]
   aicharts prefix-enable --state-dir DIR --key-file PATH --revision N
   aicharts collect-prefix --state-dir DIR --key-file PATH [--codex FILE_OR_DIR] [--claude FILE_OR_DIR] [--rescan] [--json]
   aicharts status --state-dir DIR --key-file PATH [--json]
   aicharts inspect --state-dir DIR --key-file PATH [--occurrence-key-file PATH] [--json]
-  aicharts daemon [--once] [--complete-prefix] --state-dir DIR --key-file PATH [--codex FILE_OR_DIR] [--claude FILE_OR_DIR] [--interval-seconds N] [--retry-attempts N] [--json]
+  aicharts daemon [--once] [--complete-prefix] --state-dir DIR --key-file PATH [--codex FILE_OR_DIR] [--claude FILE_OR_DIR] [--devin FILE_OR_DIR] [--interval-seconds N] [--retry-attempts N] [--json]
   aicharts enroll --state-dir DIR
   aicharts outbox --dry-run --state-dir DIR --key-file PATH [--limit 1..256] [--after ID --revision N]
-  aicharts reindex-plan --dry-run --state-dir OLD --key-file PATH [--codex FILE_OR_DIR] [--claude FILE_OR_DIR] [--json]
-  aicharts reindex-prepare --state-dir OLD --key-file PATH --shadow-dir NEW --occurrence-key-file PATH [--codex FILE_OR_DIR] [--claude FILE_OR_DIR] [--json]
+  aicharts reindex-plan --dry-run --state-dir OLD --key-file PATH [--codex FILE_OR_DIR] [--claude FILE_OR_DIR] [--devin FILE_OR_DIR] [--json]
+  aicharts reindex-prepare --state-dir OLD --key-file PATH --shadow-dir NEW --occurrence-key-file PATH [--codex FILE_OR_DIR] [--claude FILE_OR_DIR] [--devin FILE_OR_DIR] [--json]
 
-Sources may be repeated. Directories scan .jsonl files and skip symlink entries.
+Sources may be repeated. Codex and Claude directories scan .jsonl files; Devin
+directories scan .json transcript documents. Symlink entries are skipped. Devin
+sources are whole rewritten documents and cannot join collect-prefix.
 turns requires explicit regular files instead; it never scans directories. It
 reports runtime and partial response-token/requested-call subtotals.
 Complete token totals and dispatched tool calls remain unknown. Nothing is uploaded.
@@ -135,7 +137,7 @@ fn options(args: &[String]) -> Result<Options, &'static str> {
         match args[i].as_str() {
             "--dry-run" if mode == Mode::DryRun && !dry_run => dry_run = true,
             "--json" if mode == Mode::Usage && !result.json => result.json = true,
-            flag @ ("--key-file" | "--codex" | "--claude" | "--output") => {
+            flag @ ("--key-file" | "--codex" | "--claude" | "--devin" | "--output") => {
                 i += 1;
                 let value = args
                     .get(i)
@@ -154,6 +156,9 @@ fn options(args: &[String]) -> Result<Options, &'static str> {
                     }
                     "--claude" if mode != Mode::Keygen => {
                         result.sources.push((Provider::ClaudeCode, path))
+                    }
+                    "--devin" if mode != Mode::Keygen => {
+                        result.sources.push((Provider::Devin, path))
                     }
                     _ => return Err("invalid_option"),
                 }
@@ -248,8 +253,16 @@ fn keygen(_path: &Path) -> Result<(), &'static str> {
     Err("keygen_requires_qualified_credential_storage")
 }
 
+fn source_extension(provider: Provider) -> &'static str {
+    match provider {
+        Provider::Devin => "json",
+        _ => "jsonl",
+    }
+}
+
 fn source_files(
     path: &Path,
+    provider: Provider,
     depth: usize,
     files: &mut Vec<PathBuf>,
     visited: &mut usize,
@@ -266,7 +279,11 @@ fn source_files(
         return Err("source_symlink_not_allowed");
     }
     if meta.is_file() {
-        if depth == 0 || path.extension().is_some_and(|s| s == "jsonl") {
+        if depth == 0
+            || path
+                .extension()
+                .is_some_and(|s| s == source_extension(provider))
+        {
             if files.len() >= MAX_FILES {
                 return Err("source_file_limit");
             }
@@ -287,7 +304,7 @@ fn source_files(
                 }
                 continue;
             }
-            source_files(&entry.path(), depth + 1, files, visited)?;
+            source_files(&entry.path(), provider, depth + 1, files, visited)?;
         }
     } else {
         return Err("source_not_regular");
@@ -305,7 +322,7 @@ fn collect(options: &Options) -> Result<Collection, &'static str> {
     let mut retained_measurements = 0usize;
     for (provider, source) in &options.sources {
         let mut files = vec![];
-        source_files(source, 0, &mut files, &mut visited)?;
+        source_files(source, *provider, 0, &mut files, &mut visited)?;
         files.sort();
         for file in files {
             let canonical = fs::canonicalize(&file).map_err(|_| "source_metadata_failed")?;

@@ -11,7 +11,7 @@ const ACCOUNT = `acct_${"a".repeat(32)}`, query: PrivateDaysRequestV1 = { schema
 const range = { firstUtcDay: 5, dayCount: 1 };
 const empty = { usageOccurrences: 0, observedAccountedTokens: "0", observedOutputTokens: "0" };
 const value: PrivateDaysV1 = { schemaVersion: 1, measurementProfile: "imported-tokens-v1", coverage: "partial", journalRevision: 0,
-  journalCommittedAtMs: null, firstUtcDay: 5, days: [{ utcDay: 5, codex: empty, claudeCode: empty }] };
+  journalCommittedAtMs: null, firstUtcDay: 5, days: [{ utcDay: 5, codex: empty, claudeCode: empty, devin: empty }] };
 const result = { ok: true as const, value };
 const tick = async () => { for (let index = 0; index < 40; index++) await Promise.resolve(); };
 function clock() {

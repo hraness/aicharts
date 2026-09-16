@@ -27,6 +27,8 @@ function fixture(mode: Mode, range: PrivateDaysRange): PrivateDaysPublicReply {
         : { usageOccurrences: 20 + index, observedAccountedTokens: String(1_450_000 + (index * 679_133) % 5_000_000), observedOutputTokens: String(350_000 + index * 31_713) },
       claudeCode: mode === "zero" ? empty
         : { usageOccurrences: 9 + index, observedAccountedTokens: String(710_000 + (index * 331_721) % 3_000_000), observedOutputTokens: String(210_000 + index * 15_921) },
+      devin: mode === "zero" ? empty
+        : { usageOccurrences: 5 + index, observedAccountedTokens: String(390_000 + (index * 211_387) % 2_000_000), observedOutputTokens: String(120_000 + index * 9_313) },
     })),
   } };
 }
@@ -163,7 +165,7 @@ export async function verifyUsageDashboard(browser: Browser, disabledBaseUrl: st
         await refreshButton.focus(); await page.mouse.move(1, 1); await settle(page); await assertButtonContrast(refreshButton);
         invariant(await page.locator(".usage-daily__coverage").textContent().then(text => text?.includes("Last recorded sync:")), "The timestamp must describe a recorded sync.");
         invariant(await page.locator(".usage-daily table tbody").count() === 30, "Each UTC date must be its own semantic row group.");
-        invariant(await page.locator(".usage-daily table tbody").first().locator("tr").count() === 2, "Each date must have both provider rows.");
+        invariant(await page.locator(".usage-daily table tbody").first().locator("tr").count() === 3, "Each date must have all three provider rows.");
         invariant(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), "Usage page must fit the viewport.");
         const scroll = page.getByRole("region", { name: "Daily usage, scroll horizontally for all columns" });
         await scroll.focus();

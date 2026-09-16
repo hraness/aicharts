@@ -1,6 +1,6 @@
-# Local Codex and Claude Code usage
+# Local Codex, Claude Code and Devin usage
 
-The available usage CLI commands operate locally. They read explicitly selected JSONL files, project metadata into numeric measurements, deduplicate supported copied records, and print a summary or exact wire dry-run. Explicit initialization also enables a private numeric ledger with restart-safe checkpoints and a local pending queue. On macOS, `enroll` pairs this installation with an AI Charts account through local credential custody and one explicit browser approval, and `upload --state-dir` can then send one bounded pending batch for that enrolled installation; service installation remains unavailable. These account paths are not qualified against a live service. No transcript cache is created. Public benchmark pages and the calculator do not require usage collection. The separate [browser identity boundary](usage-identity.md) and private daily reads are disabled by default and do not enroll devices or transmit local measurements.
+The available usage CLI commands operate locally. They read explicitly selected Codex/Claude JSONL files and Devin ATIF transcript documents, project metadata into numeric measurements, deduplicate supported copied records, and print a summary or exact wire dry-run. Explicit initialization also enables a private numeric ledger with restart-safe checkpoints and a local pending queue. On macOS, `enroll` pairs this installation with an AI Charts account through local credential custody and one explicit browser approval, and `upload --state-dir` can then send one bounded pending batch for that enrolled installation; service installation remains unavailable. These account paths are not qualified against a live service. No transcript cache is created. Public benchmark pages and the calculator do not require usage collection. The separate [browser identity boundary](usage-identity.md) and private daily reads are disabled by default and do not enroll devices or transmit local measurements.
 
 ## Build and run
 
@@ -26,6 +26,7 @@ Read one selected source or directory; repeat source flags to combine files. Nei
 ```sh
 ./target/debug/aicharts usage --key-file /absolute/private/directory/aicharts.key --codex /absolute/path/to/session.jsonl --json
 ./target/debug/aicharts usage --key-file /absolute/private/directory/aicharts.key --claude /absolute/path/to/projects --json
+./target/debug/aicharts usage --key-file /absolute/private/directory/aicharts.key --devin /absolute/path/to/transcripts --json
 ./target/debug/aicharts upload --dry-run --key-file /absolute/private/directory/aicharts.key --codex /absolute/path/to/session.jsonl
 ```
 
@@ -40,7 +41,7 @@ are reconciled by their keyed native identities; partial tails remain deferred
 until a terminating newline, and copied or forked subagent histories are not
 reconstructed as new root usage.
 
-`daemon` repeats the existing local `collect` command in one foreground process. It requires the same explicit state directory, private key and Codex/Claude source paths; it does not discover paths, install a service, read provider credentials, or contact a server. The default interval is 15 minutes and is bounded to 60 seconds through 24 hours. Use `--once` for a single supervised pass or smoke test:
+`daemon` repeats the existing local `collect` command in one foreground process. It requires the same explicit state directory, private key and Codex/Claude/Devin source paths; it does not discover paths, install a service, read provider credentials, or contact a server. The default interval is 15 minutes and is bounded to 60 seconds through 24 hours. Use `--once` for a single supervised pass or smoke test:
 
 ```sh
 ./target/debug/aicharts daemon --once --state-dir /absolute/private/aicharts-state \
@@ -61,7 +62,7 @@ This selects `collect-prefix` on every pass and retry. Complete lines are import
 
 Choose the mode explicitly. Without `--complete-prefix`, the daemon retains legacy collection and refuses a prefix-enabled ledger with `ledger_complete_prefix_required`. With it, a legacy ledger refuses with `ledger_prefix_not_enabled`. Both mode checks occur before source traversal. The daemon never initializes, migrates, resets, or automatically switches a ledger; migration remains the separate revision-guarded `prefix-enable` command.
 
-Directory traversal selects `.jsonl` files, skips observed symlink entries, and rejects a symlink supplied as a source. Unix final-file opens use no-follow/nonblocking flags and check file identity. This is not descriptor-rooted traversal or an OS sandbox: parent-directory replacement and malicious local processes are outside this initial confinement claim. The source reader and uploader have not been isolated into separately sandboxed processes; no uploader exists yet.
+Directory traversal selects `.jsonl` files for Codex/Claude and `.json` transcript documents for Devin, skips observed symlink entries, and rejects a symlink supplied as a source. Devin sources are whole rewritten documents: each file maps to one usage occurrence keyed by its session identity, and a rewrite revises that measurement in place. They cannot join `collect-prefix`, which replays LF-terminated JSONL prefixes only. Unix final-file opens use no-follow/nonblocking flags and check file identity. This is not descriptor-rooted traversal or an OS sandbox: parent-directory replacement and malicious local processes are outside this initial confinement claim. The source reader and uploader have not been isolated into separately sandboxed processes; no uploader exists yet.
 
 ## Interpreting the result
 
@@ -69,6 +70,7 @@ Token totals are **observed, partial historical usage**, not provider billing st
 
 - Codex uses cumulative deltas. A bounded first `last_token_usage` can count the last request while preceding unobserved cumulative history stays omitted. Missing baseline and counter regressions produce warnings. Declared fork history is unsupported, not newly earned usage. Copied complete records deduplicate; arbitrary partially overlapping/forked histories may conflict and require future lineage-aware reconciliation. Partial tails remain deferred until a complete newline; no incomplete suffix contributes numeric usage.
 - Claude uses native request/message identities and compatible monotonic streaming revisions. Positive cache creation without an explicit 5-minute/1-hour split is omitted with `claude_cache_ttl_unknown`, rather than assigned an invented price category.
+- Devin transcript documents contribute one occurrence per session from their cumulative final counters. Cached tokens are counted as cache reads; reasoning detail, activity and prompt coverage remain unmeasured. Step content, tool calls and agent metadata are walked and never retained.
 - Human prompt counts and activity/concurrency are not reconstructed from conversation text. The TypeScript rollup engine can calculate 15-minute activity and independent 16-minute concurrency from explicit interval/coverage inputs; historical token logs do not provide those inputs reliably.
 
 All omissions are reported with fixed warning codes. The parser's detailed code and limits are documented in [`crates/aicharts-core/README.md`](../crates/aicharts-core/README.md). Source formats change; current evidence is synthetic compatibility tests, not a universal installed-version qualification.
