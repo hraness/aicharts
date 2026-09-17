@@ -44,7 +44,7 @@ export default function Home() {
       <HomeIntelligenceEfficiency snapshot={parsed.value} />
       <section aria-labelledby="home-calculator-title" className="home-calculator" data-analytics-surface="home_calculator">
         <div className="home-calculator__copy">
-          <TopicIcon className="home-calculator__icon" size={40} slug="cost-compare" />
+          <TopicIcon className="home-calculator__icon" size={88} slug="cost-compare" />
           <h2 id="home-calculator-title">Subscription vs API vs GPUs</h2>
           <p>One maxed ChatGPT Pro seat implies a monthly token volume. The calculator prices it five ways: the subscription sticker, OpenAI and DeepSeek API rates, GPUs you buy, and GPUs you rent.</p>
         </div>
@@ -54,7 +54,7 @@ export default function Home() {
         <header><h2 id="task-discovery-title">What do you want to do?</h2><Link href="/benchmarks">All benchmarks <span aria-hidden="true">↗</span></Link></header>
         <div className="task-discovery__links">
           {homeTaskLinks.map(({ task, name, description }) => <Link href={`/benchmarks?task=${task}#explore`} key={task}>
-            <TopicIcon className="task-discovery__icon" size={40} slug={TASK_ICONS[task]} />
+            <TopicIcon className="task-discovery__icon" size={88} slug={TASK_ICONS[task]} />
             <span><strong>{name}</strong><span>{description}</span></span><span aria-hidden="true">↗</span>
           </Link>)}
         </div>

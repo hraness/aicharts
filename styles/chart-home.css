@@ -69,5 +69,5 @@
 }
 
 /* Decorative topic icons (agent-generated line art, public/icons/). */
-.home-calculator__icon { display: block; width: 40px; height: 40px; margin: 0 0 12px; }
-.task-discovery__icon { display: block; width: 40px; height: 40px; margin: 0 0 10px; flex: none; }
+.home-calculator__icon { display: block; width: 88px; height: 88px; margin: 0 0 18px; }
+.task-discovery__icon { display: block; width: 88px; height: 88px; margin: 0 0 16px; flex: none; }
