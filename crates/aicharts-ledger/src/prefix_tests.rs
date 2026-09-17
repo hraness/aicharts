@@ -617,7 +617,7 @@ fn profile_byte_bounds_and_duplicate_inputs_are_atomic() {
                 Error::Limit
             }
             4 => {
-                scan.stamp.bytes = 268_435_457;
+                scan.stamp.bytes = 1_073_741_825;
                 Error::Limit
             }
             _ => {

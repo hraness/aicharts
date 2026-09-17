@@ -5,6 +5,7 @@ mod inspection;
 mod prefix;
 mod sender;
 mod storage;
+pub use storage::MAX_DATABASE_BYTES;
 
 pub use inspection::ReadOnlyLedger;
 pub use prefix::{CompletePrefix, PrefixScan, PrefixSnapshot, SourceCheckpoint};
@@ -18,9 +19,9 @@ use aicharts_protocol::{decode, encode, AuthMode, Batch, Evidence, Id, Policy, R
 use rusqlite::{params, Connection, OptionalExtension, TransactionBehavior};
 
 pub type SourceId = [u8; 32];
-pub const MAX_SOURCES: usize = 2_048;
-pub const MAX_OCCURRENCES: usize = 100_000;
-pub const MAX_ASSOCIATIONS: usize = 200_000;
+pub const MAX_SOURCES: usize = 32_768;
+pub const MAX_OCCURRENCES: usize = 500_000;
+pub const MAX_ASSOCIATIONS: usize = 1_000_000;
 pub const MAX_PAGE: usize = 256;
 const FRAME_BYTES: usize = 136;
 
@@ -110,7 +111,7 @@ impl SourceStamp {
     fn encode(self) -> Result<Vec<u8>> {
         if self.modified_nanos >= 1_000_000_000
             || self.changed_nanos >= 1_000_000_000
-            || self.bytes > 256 * 1024 * 1024
+            || self.bytes > 1_024 * 1_024 * 1_024
         {
             return Err(Error::Limit);
         }
@@ -163,6 +164,7 @@ pub struct LedgerStatus {
     pub revision: u64,
     pub sources: u64,
     pub usage_occurrences: u64,
+    pub associations: u64,
     pub pending_records: u64,
     pub tokens: u64,
     pub output_tokens: u64,
@@ -341,8 +343,10 @@ impl Ledger {
                 }
             }
             let mut records = collection_frames(scan.collection)?;
-            let mut old_statement =
-                tx.prepare("SELECT id,frame FROM source_usage WHERE source_id=?1 LIMIT 100001")?;
+            let mut old_statement = tx.prepare(&format!(
+                "SELECT id,frame FROM source_usage WHERE source_id=?1 LIMIT {}",
+                MAX_OCCURRENCES + 1
+            ))?;
             let mut old_rows = old_statement.query([scan.source_id.as_slice()])?;
             let mut previous_count = 0;
             while let Some(row) = old_rows.next()? {
@@ -454,8 +458,10 @@ impl Ledger {
 fn snapshot(connection: &Connection) -> Result<LedgerSnapshot> {
     let revision = revision(connection)?;
     let mut checkpoints = BTreeMap::new();
-    let mut statement =
-        connection.prepare("SELECT id,stamp FROM sources ORDER BY id LIMIT 2049")?;
+    let mut statement = connection.prepare(&format!(
+        "SELECT id,stamp FROM sources ORDER BY id LIMIT {}",
+        MAX_SOURCES + 1
+    ))?;
     let mut rows = statement.query([])?;
     while let Some(row) = rows.next()? {
         let id: Vec<u8> = row.get(0)?;
@@ -478,8 +484,10 @@ fn status(tx: &Connection) -> Result<LedgerStatus> {
     let mut tokens = 0u64;
     let mut output_tokens = 0u64;
     let current_revision = revision(tx)?;
-    let mut statement =
-        tx.prepare("SELECT id,frame,revision FROM measurements ORDER BY id LIMIT 100001")?;
+    let mut statement = tx.prepare(&format!(
+        "SELECT id,frame,revision FROM measurements ORDER BY id LIMIT {}",
+        MAX_OCCURRENCES + 1
+    ))?;
     let mut rows = statement.query([])?;
     while let Some(row) = rows.next()? {
         let id: Vec<u8> = row.get(0)?;
@@ -497,7 +505,10 @@ fn status(tx: &Connection) -> Result<LedgerStatus> {
             .ok_or(Error::Limit)?;
     }
     let mut mask = 0;
-    let mut statement = tx.prepare("SELECT warnings FROM sources LIMIT 2049")?;
+    let mut statement = tx.prepare(&format!(
+        "SELECT warnings FROM sources LIMIT {}",
+        MAX_SOURCES + 1
+    ))?;
     for row in statement.query_map([], |row| row.get::<_, i64>(0))? {
         mask |= unsigned(row?)?;
     }
@@ -510,6 +521,7 @@ fn status(tx: &Connection) -> Result<LedgerStatus> {
         revision: revision(tx)?,
         sources: table_count(tx, "sources")?,
         usage_occurrences,
+        associations: table_count(tx, "source_usage")?,
         pending_records: table_count(tx, "outbox")?,
         tokens,
         output_tokens,
@@ -625,7 +637,10 @@ fn validate_relations_with(
     }
     enforce_counts(tx)?;
     let current = revision(tx)?;
-    let mut statement = tx.prepare("SELECT id,stamp,warnings FROM sources LIMIT 2049")?;
+    let mut statement = tx.prepare(&format!(
+        "SELECT id,stamp,warnings FROM sources LIMIT {}",
+        MAX_SOURCES + 1
+    ))?;
     let mut rows = statement.query([])?;
     while let Some(row) = rows.next()? {
         let id: Vec<u8> = row.get(0)?;
@@ -636,8 +651,10 @@ fn validate_relations_with(
         warnings(unsigned(row.get(2)?)?)?;
     }
     let mut merged = BTreeMap::<Id, Vec<u8>>::new();
-    let mut statement =
-        tx.prepare("SELECT id,frame FROM source_usage ORDER BY source_id,id LIMIT 200001")?;
+    let mut statement = tx.prepare(&format!(
+        "SELECT id,frame FROM source_usage ORDER BY source_id,id LIMIT {}",
+        MAX_ASSOCIATIONS + 1
+    ))?;
     let mut rows = statement.query([])?;
     while let Some(row) = rows.next()? {
         let id: Vec<u8> = row.get(0)?;
@@ -655,7 +672,10 @@ fn validate_relations_with(
             return Err(Error::Limit);
         }
     }
-    let mut statement = tx.prepare("SELECT m.id,m.frame,m.revision,o.frame,o.revision FROM measurements m LEFT JOIN outbox o ON m.id=o.id ORDER BY m.id LIMIT 100001")?;
+    let mut statement = tx.prepare(&format!(
+        "SELECT m.id,m.frame,m.revision,o.frame,o.revision FROM measurements m LEFT JOIN outbox o ON m.id=o.id ORDER BY m.id LIMIT {}",
+        MAX_OCCURRENCES + 1
+    ))?;
     let mut rows = statement.query([])?;
     let mut count = 0;
     let mut pending_count = 0;

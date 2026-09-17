@@ -51,6 +51,56 @@ export const HOME_EDITORIAL_SLUGS = [
 ] as const satisfies readonly BlogSlug[];
 
 export const BLOG_ARTICLE_ADMISSIONS = {
+  "harnesstax-coding-agent-harness": {
+    canonicalOwner: blogArticlePath("harnesstax-coding-agent-harness"),
+    decision: "keep",
+    evidenceOwner: EVIDENCE_OWNER,
+    evidenceType: "primary-source-synthesis",
+    harmIfWrong:
+      "A same-model cost gap could be quoted as a universal harness ranking, a statistically tested success effect, or a conversion into Artificial Analysis scores.",
+    hostFit:
+      "AI Charts already stores model, harness, and setting as one configuration and publishes cost-aware benchmark notes, so it can place a crossed-harness study beside the chart without merging the two scales.",
+    humanReviewedOn: null,
+    lifecycleState: "indexable",
+    nearestUrls: [
+      {
+        distinction:
+          "Real-SWE scores each model in its native harness on private tasks; this page explains a study that moves the same model across Claude Code, Codex CLI, and Pi on public suites.",
+        url: blogArticlePath("real-swe-private-enterprise-benchmark"),
+      },
+      {
+        distinction:
+          "The AA Index page derives a cost frontier from checked single-configuration rows; this page reconstructs a different evaluator’s same-model harness comparison.",
+        url: blogArticlePath("aa-index-cost-coding-agents"),
+      },
+      {
+        distinction:
+          "The holdout page asks whether a public-suite score generalizes to unseen cases; this page reports harness cost and success on two named public suites and keeps their contamination risk as a limit.",
+        url: blogArticlePath("coding-agent-score-holdouts"),
+      },
+    ],
+    originalContribution:
+      "A reconstruction of the published 21-pair success and cost tables, a pair-by-pair check of the nine-of-12 alternative-harness success tally that treats provider-harness ties as non-wins, and an explicit refusal to convert those rates into the checked Artificial Analysis snapshot.",
+    overlapDecision:
+      "Keep separately: no current route evaluates the same model across Claude Code, Codex CLI, and Pi, or reconstructs HarnessTax’s pair tables and 9 of 12 count.",
+    primaryEvidence:
+      "The HarnessTax page owns every rate, cost, geometric-mean ratio, and method bound; the checked Artificial Analysis snapshot owns only the same-name chart rows and their retrieval date.",
+    primarySourceIds: ["harnessTax", "artificialAnalysisCodingAgents"],
+    readerJob:
+      "Understand what HarnessTax’s same-model cost gap measures when a coding model changes harness, and read that study beside the AI Charts chart without merging the two scales.",
+    reassessOn: "2026-10-22",
+    reviewedBy: REVIEWED_BY,
+    reviewedOn: "2026-09-17",
+    scores: {
+      factualConfidence: 2,
+      hostFit: 2,
+      maintenanceValue: 1,
+      originalEvidence: 2,
+      readerUtility: 2,
+      voiceIntegrity: 2,
+    },
+    sourceCheckedOn: "2026-09-17",
+  },
   "real-swe-private-enterprise-benchmark": {
     canonicalOwner: blogArticlePath("real-swe-private-enterprise-benchmark"),
     decision: "keep",

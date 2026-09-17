@@ -11,7 +11,8 @@ export default function DataLayout({
       <header className="plain-header hraness-material-chrome" data-analytics-surface="global_header">
         <div className="plain-header__inner">
           <Link className="plain-wordmark" href="/">
-            <span aria-hidden="true">📈</span>{" "}aicharts.io
+            {/* eslint-disable-next-line @next/next/no-img-element -- the generated app icon serves the canonical mark unchanged. */}
+            <img alt="" height={20} src="/icon.png" width={20} />{" "}aicharts.io
           </Link>
           <div className="plain-header__actions">
             <nav aria-label="Dataset navigation" className="plain-nav">

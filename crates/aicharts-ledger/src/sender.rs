@@ -844,7 +844,7 @@ fn validate_inner(connection: &Connection, selected: Option<&BTreeSet<Id>>) -> R
     });
 
     let mut accepted = BTreeMap::new();
-    let mut statement = connection.prepare(&format!("SELECT id,local_revision,sequence,operation,receipt FROM sender_accepted{filter} ORDER BY id LIMIT 100001"))?;
+    let mut statement = connection.prepare(&format!("SELECT id,local_revision,sequence,operation,receipt FROM sender_accepted{filter} ORDER BY id LIMIT {}", MAX_OCCURRENCES + 1))?;
     let mut rows = statement.query(rusqlite::params_from_iter(parameters.iter().copied()))?;
     let mut accepted_sequences = BTreeSet::new();
     while let Some(row) = rows.next()? {
@@ -881,7 +881,7 @@ fn validate_inner(connection: &Connection, selected: Option<&BTreeSet<Id>>) -> R
     }
     let mut gated = BTreeSet::new();
     let mut gate_receipts = BTreeMap::new();
-    let mut statement = connection.prepare(&format!("SELECT id,local_revision,operation,receipt FROM sender_reconciliation{filter} ORDER BY id LIMIT 100001"))?;
+    let mut statement = connection.prepare(&format!("SELECT id,local_revision,operation,receipt FROM sender_reconciliation{filter} ORDER BY id LIMIT {}", MAX_OCCURRENCES + 1))?;
     let mut rows = statement.query(rusqlite::params_from_iter(parameters.iter().copied()))?;
     while let Some(row) = rows.next()? {
         let id: Id = row

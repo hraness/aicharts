@@ -14,7 +14,7 @@ use hmac::{Hmac, Mac};
 use schema::*;
 use sha2::Sha256;
 use std::{
-    collections::{BTreeMap, BTreeSet},
+    collections::{BTreeMap, BTreeSet, HashMap},
     fmt,
     io::{BufRead, Read},
 };
@@ -401,6 +401,7 @@ fn parse_codex<R: BufRead>(
 ) -> Result<(), Error> {
     let mut execution = None;
     let mut previous: Option<CodexCounters> = None;
+    let mut same_instant: HashMap<(u32, u32), HashMap<[u64; 6], u64>> = HashMap::new();
     let mut stopped = false;
     let mut forked = false;
     loop {
@@ -514,11 +515,33 @@ fn parse_codex<R: BufRead>(
         };
         let day_bytes = day.to_le_bytes();
         let offset_bytes = offset.to_le_bytes();
-        let id = keyed_id(
-            key,
-            b"codex-usage",
-            &[&execution_id, &day_bytes, &offset_bytes],
-        );
+        // Compaction can stamp several distinct token_count deltas with one
+        // timestamp. An exact copy still dedups on the base identity; each
+        // distinct value takes a deterministic disambiguated identity so one
+        // compacted file measures every request instead of conflicting.
+        let slot = {
+            let slots = same_instant.entry((day, offset)).or_default();
+            let next = slots.len() as u64;
+            *slots.entry(values(&tokens)).or_insert(next)
+        };
+        let id = if slot == 0 {
+            keyed_id(
+                key,
+                b"codex-usage",
+                &[&execution_id, &day_bytes, &offset_bytes],
+            )
+        } else {
+            keyed_id(
+                key,
+                b"codex-usage",
+                &[
+                    &execution_id,
+                    &day_bytes,
+                    &offset_bytes,
+                    &slot.to_le_bytes(),
+                ],
+            )
+        };
         out.add(
             day,
             make_usage(id, execution_id, offset, Provider::Codex, tokens),

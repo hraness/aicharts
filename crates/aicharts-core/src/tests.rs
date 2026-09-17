@@ -95,6 +95,51 @@ fn codex_uses_first_last_usage_then_disjoint_cumulative_deltas() {
 }
 
 #[test]
+fn codex_same_instant_distinct_deltas_disambiguate_but_copies_dedup() {
+    // Compaction can freeze every record at one timestamp. Distinct deltas at
+    // that instant are separate measured requests, not a conflict; an exact
+    // copy still dedups on its assigned identity.
+    let collection = parse(
+        &codex_source(&[
+            codex_row(1, 100, 50, 10, 2, true),
+            codex_row(1, 200, 60, 20, 4, false),
+            codex_row(1, 200, 60, 20, 4, false),
+            codex_row(1, 300, 70, 30, 5, false),
+        ]),
+        Provider::Codex,
+    );
+    let usage = &collection.batches[0].usage;
+    assert_eq!(usage.len(), 3);
+    assert_eq!(
+        usage.iter().map(|v| v.tokens.input_uncached).sum::<u64>(),
+        50 + 90 + 90
+    );
+    assert_eq!(
+        usage.iter().map(|v| v.tokens.output).sum::<u64>(),
+        10 + 10 + 10
+    );
+    // Deterministic replay: reparsing the same bytes assigns the same
+    // identities, so a later collection of the grown file dedups.
+    let replay = parse(
+        &codex_source(&[
+            codex_row(1, 100, 50, 10, 2, true),
+            codex_row(1, 200, 60, 20, 4, false),
+            codex_row(1, 200, 60, 20, 4, false),
+            codex_row(1, 300, 70, 30, 5, false),
+        ]),
+        Provider::Codex,
+    );
+    assert_eq!(
+        usage.iter().map(|u| u.id).collect::<Vec<_>>(),
+        replay.batches[0]
+            .usage
+            .iter()
+            .map(|u| u.id)
+            .collect::<Vec<_>>()
+    );
+}
+
+#[test]
 fn first_cumulative_without_last_is_a_baseline_not_a_request() {
     let source = codex_source(&[
         codex_row(1, 50, 5, 10, 0, false),
@@ -268,12 +313,20 @@ fn codex_optional_turn_metadata_does_not_change_occurrence_identity() {
 
 #[test]
 fn ambiguous_same_timestamp_codex_deltas_fail_instead_of_double_counting() {
-    let source = codex_source(&[
-        codex_row(1, 10, 0, 5, 0, true),
-        codex_row(1, 30, 0, 15, 0, false),
-    ]);
+    // Within one file, distinct same-instant deltas take deterministic
+    // disambiguated identities (compaction freezes timestamps). Across merged
+    // sources the same identity carrying different values is still an
+    // unresolvable conflict, never a silent double count.
+    let first = parse(
+        &codex_source(&[codex_row(1, 10, 0, 5, 0, true)]),
+        Provider::Codex,
+    );
+    let second = parse(
+        &codex_source(&[codex_row(1, 30, 0, 15, 0, true)]),
+        Provider::Codex,
+    );
     assert_eq!(
-        parse_reader(Cursor::new(source), Provider::Codex, &KEY).unwrap_err(),
+        merge_collections(vec![first, second]).unwrap_err(),
         Error::ConflictingOccurrence
     );
 }

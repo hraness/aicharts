@@ -1,12 +1,16 @@
+import { getDesignPaletteTheme } from "@hraness/design-kit";
 import {
-  DesignThemeProvider,
+  DesignPaletteProvider,
   ThemeColorSync,
 } from "@hraness/design-kit/react";
+import { MarketingSiteFooter } from "@hraness/design-kit/react/server";
 import { HranessSiteFooter } from "@hraness/site-footer/react";
 import type { Metadata, Viewport } from "next";
 import type { CSSProperties, ReactNode } from "react";
 
 import { AnalyticsBoundary } from "@/components/analytics-boundary";
+import { FoilController } from "@/components/foil-controller";
+import { SITE_HEADER_LINKS } from "@/components/site-header";
 
 import "./globals.css";
 import { aiChartsMailingListConfig } from "./mailing-config";
@@ -18,6 +22,13 @@ type BrandThemeStyle = CSSProperties & Readonly<{
   "--brand-shadow": string;
   "--brand-support": string;
 }>;
+
+/**
+ * SSR renders the Paper light palette tokens so the first paint is stable.
+ * The blocking bootstrap replaces them with the stored preference before
+ * paint; without JavaScript the `:root` fallbacks keep the Paper light look.
+ */
+const initialPalette = getDesignPaletteTheme("paper", "light");
 
 const brandTheme: BrandThemeStyle = {
   "--brand-highlight": site.palette.tonal.highlight,
@@ -70,15 +81,40 @@ const structuredData = [
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (
-    <html data-hraness-material="lantern" data-theme="light" lang="en" style={brandTheme} suppressHydrationWarning>
+    <html
+      className={initialPalette.className}
+      data-hraness-material="lantern"
+      data-palette="paper"
+      lang="en"
+      style={brandTheme}
+      suppressHydrationWarning
+    >
+      <head>
+        {/* eslint-disable-next-line @next/next/no-sync-scripts */}
+        <script src="/theme-bootstrap.js" />
+      </head>
       <body>
-        <DesignThemeProvider storageKey="aicharts-theme">
+        <DesignPaletteProvider
+          defaultPreference={{ palette: "paper", mode: "system" }}
+          legacyStorageKey="aicharts-theme"
+        >
           <ThemeColorSync darkColor="#12100f" lightColor="#f8f7f4" />
           <script
             dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replaceAll("<", "\\u003c") }}
             type="application/ld+json"
           />
           {children}
+          <MarketingSiteFooter
+            ariaLabel="AI Charts"
+            brand={(
+              // eslint-disable-next-line @next/next/no-img-element -- the generated app icon serves the canonical mark unchanged.
+              <img alt="" height={20} src="/icon.png" width={20} />
+            )}
+            brandHref="/"
+            brandLabel="AI Charts home"
+            links={SITE_HEADER_LINKS}
+            name={site.name}
+          />
           <HranessSiteFooter
             support={{
               id: "aicharts",
@@ -93,7 +129,8 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
             }}
           />
           <AnalyticsBoundary />
-        </DesignThemeProvider>
+          <FoilController />
+        </DesignPaletteProvider>
       </body>
     </html>
   );

@@ -1,15 +1,23 @@
 "use client";
 
+import { getDesignPaletteTheme } from "@hraness/design-kit";
 import {
-  DesignThemeProvider,
+  DesignPaletteProvider,
   ThemeColorSync,
 } from "@hraness/design-kit/react";
 import { RouteErrorState, type RouteErrorProps } from "@/components/route-state";
 import "./globals.css";
 
+const initialPalette = getDesignPaletteTheme("paper", "light");
+
 export default function GlobalError(props: RouteErrorProps) {
   return (
-    <html data-theme="light" lang="en" suppressHydrationWarning>
+    <html
+      className={initialPalette.className}
+      data-palette="paper"
+      lang="en"
+      suppressHydrationWarning
+    >
       <head>
         <meta content="light dark" name="color-scheme" />
         <meta
@@ -22,12 +30,17 @@ export default function GlobalError(props: RouteErrorProps) {
           media="(prefers-color-scheme: dark)"
           name="theme-color"
         />
+        {/* eslint-disable-next-line @next/next/no-sync-scripts */}
+        <script src="/theme-bootstrap.js" />
       </head>
       <body>
-        <DesignThemeProvider storageKey="aicharts-theme">
+        <DesignPaletteProvider
+          defaultPreference={{ palette: "paper", mode: "system" }}
+          legacyStorageKey="aicharts-theme"
+        >
           <ThemeColorSync darkColor="#12100f" lightColor="#f8f7f4" />
           <RouteErrorState {...props} />
-        </DesignThemeProvider>
+        </DesignPaletteProvider>
       </body>
     </html>
   );

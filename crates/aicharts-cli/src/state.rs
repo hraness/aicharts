@@ -181,7 +181,7 @@ pub(crate) mod unix {
     use std::{
         collections::BTreeSet,
         fs,
-        io::{BufReader, Read, Seek, SeekFrom},
+        io::{BufReader, IsTerminal, Read, Seek, SeekFrom},
         os::unix::{ffi::OsStrExt, fs::MetadataExt},
         path::{Path, PathBuf},
     };
@@ -233,6 +233,59 @@ pub(crate) mod unix {
         Ok(())
     }
 
+    /// The changed-source count staged for the current wave across the two
+    /// mode-exclusive scan vectors.
+    fn wave_len(scans: &[SourceScan], prefix_scans: &[PrefixScan]) -> u64 {
+        (scans.len() + prefix_scans.len()) as u64
+    }
+
+    /// Rate-limited, single-line stderr progress for long collections. Emits
+    /// only on an interactive terminal; piped stderr keeps its exact contract.
+    /// Dropping clears the line so errors and results start on a fresh row.
+    struct Progress {
+        enabled: bool,
+        last: std::time::Instant,
+    }
+    impl Progress {
+        fn new() -> Self {
+            Self {
+                enabled: std::io::stderr().is_terminal(),
+                // First note writes immediately so a long run shows life at once.
+                last: std::time::Instant::now() - std::time::Duration::from_secs(1),
+            }
+        }
+        fn note(&mut self, line: &str) {
+            if self.enabled && self.last.elapsed() >= std::time::Duration::from_millis(200) {
+                eprint!("\raicharts: {line}\x1b[K");
+                self.last = std::time::Instant::now();
+            }
+        }
+    }
+    impl Drop for Progress {
+        fn drop(&mut self) {
+            if self.enabled {
+                eprint!("\r\x1b[K");
+            }
+        }
+    }
+
+    /// Fold one committed wave's outcome into the invocation's aggregate report.
+    fn absorb(
+        report: &mut aicharts_ledger::ImportReport,
+        committed: aicharts_ledger::ImportReport,
+    ) -> Result<(), &'static str> {
+        report.sources_updated = report
+            .sources_updated
+            .checked_add(committed.sources_updated)
+            .ok_or("source_file_limit")?;
+        report.occurrences_changed = report
+            .occurrences_changed
+            .checked_add(committed.occurrences_changed)
+            .ok_or("retained_measurement_limit")?;
+        report.revision = committed.revision;
+        Ok(())
+    }
+
     /// Verify every source in the wave, commit it atomically at the current
     /// revision, then refresh the snapshot for the next wave.
     fn commit_wave(
@@ -270,18 +323,25 @@ pub(crate) mod unix {
             checkpoint_key,
             occurrence_key,
             crate::MAX_SOURCE_BYTES,
+            crate::MAX_WAVE_FILES,
+            aicharts_core::MAX_MEASUREMENTS,
         )
     }
 
-    /// `wave_limit` bounds the bytes committed in one atomic wave; callers use
-    /// `crate::MAX_SOURCE_BYTES` and tests use small values to exercise
-    /// partitioning deterministically.
+    /// `wave_limit` bounds the bytes committed in one atomic wave,
+    /// `wave_file_limit` bounds its changed-source count and
+    /// `wave_measurement_limit` bounds its merged measurement count; callers
+    /// use `crate::MAX_SOURCE_BYTES`/`crate::MAX_WAVE_FILES`/
+    /// `aicharts_core::MAX_MEASUREMENTS` and tests use small values to
+    /// exercise partitioning deterministically.
     pub(super) fn collect_with_limit(
         ledger: &mut Ledger,
         options: &Options,
         checkpoint_key: &[u8; 32],
         occurrence_key: &[u8; 32],
         wave_limit: u64,
+        wave_file_limit: u64,
+        wave_measurement_limit: usize,
     ) -> Result<(aicharts_ledger::ImportReport, u64, u64, u64, u64), &'static str> {
         let prefix_mode = options.command == Command::CollectPrefix;
         let mut snapshot = ledger.prefix_snapshot().map_err(|error| error.code())?;
@@ -300,9 +360,9 @@ pub(crate) mod unix {
         let mut deferred = 0u64;
         let mut bytes_scanned = 0u64;
         let mut lines_read = 0u64;
-        // Each commit wave stays inside the per-commit byte and measurement
-        // budgets; a source tree larger than either bound completes across
-        // consecutive atomic waves instead of failing the entire collect.
+        // Each commit wave stays inside the per-commit byte, file-count and
+        // measurement budgets; a source tree larger than any bound completes
+        // across consecutive atomic waves instead of failing the entire collect.
         let mut wave_bytes = 0u64;
         let mut retained = 0usize;
         let mut scans = vec![];
@@ -313,19 +373,35 @@ pub(crate) mod unix {
             sources_updated: 0,
             occurrences_changed: 0,
         };
-        for (provider, path) in &options.sources {
+        let mut progress = Progress::new();
+        let trees = options.sources.len();
+        for (tree, (provider, path)) in options.sources.iter().enumerate() {
             let mut files = vec![];
-            crate::source_files(path, *provider, 0, &mut files, &mut visited)?;
+            progress.note("discovering source files");
+            crate::source_files(
+                path,
+                *provider,
+                0,
+                &mut files,
+                &mut visited,
+                crate::MAX_DISCOVERY_FILES,
+            )?;
             files.sort();
-            for path in files {
+            let tree_files = files.len();
+            for (index, path) in files.into_iter().enumerate() {
                 let canonical = fs::canonicalize(&path).map_err(|_| "source_metadata_failed")?;
                 if !seen.insert((*provider, canonical.clone())) {
                     continue;
                 }
                 total_files += 1;
-                if total_files > crate::MAX_FILES as u64 {
+                if total_files > crate::MAX_DISCOVERY_FILES as u64 {
                     return Err("source_file_limit");
                 }
+                progress.note(&format!(
+                    "collecting — source set {}/{trees}, file {}/{tree_files}, {total_files} visited",
+                    tree + 1,
+                    index + 1
+                ));
                 let source_id = source_id(checkpoint_key, &canonical, *provider);
                 let mut file = crate::open_regular(&path).map_err(|_| "source_read_failed")?;
                 let before = stamp(&file.metadata().map_err(|_| "source_metadata_failed")?)?;
@@ -352,29 +428,25 @@ pub(crate) mod unix {
                     // read bound still applies inside one wave.
                     return Err("source_byte_limit");
                 }
-                if wave_bytes > 0
-                    && wave_bytes
-                        .checked_add(before.bytes)
-                        .ok_or("source_byte_limit")?
-                        > wave_limit
+                if wave_len(&scans, &prefix_scans) > 0
+                    && (wave_len(&scans, &prefix_scans) >= wave_file_limit
+                        || wave_bytes
+                            .checked_add(before.bytes)
+                            .ok_or("source_byte_limit")?
+                            > wave_limit)
                 {
-                    let committed = commit_wave(
-                        ledger,
-                        &mut snapshot,
-                        prefix_mode,
-                        &mut scans,
-                        &mut prefix_scans,
-                        &verification,
+                    progress.note("committing a bounded wave");
+                    absorb(
+                        &mut report,
+                        commit_wave(
+                            ledger,
+                            &mut snapshot,
+                            prefix_mode,
+                            &mut scans,
+                            &mut prefix_scans,
+                            &verification,
+                        )?,
                     )?;
-                    report.sources_updated = report
-                        .sources_updated
-                        .checked_add(committed.sources_updated)
-                        .ok_or("source_file_limit")?;
-                    report.occurrences_changed = report
-                        .occurrences_changed
-                        .checked_add(committed.occurrences_changed)
-                        .ok_or("retained_measurement_limit")?;
-                    report.revision = committed.revision;
                     wave_bytes = 0;
                     retained = 0;
                     verification.clear();
@@ -447,10 +519,35 @@ pub(crate) mod unix {
                     .iter()
                     .map(|batch| batch.usage.len())
                     .sum();
+                // The measurement budget bounds a commit the same way the byte
+                // and file budgets do: a denser wave commits first and this
+                // source opens the next one.
+                if wave_len(&scans, &prefix_scans) > 0
+                    && retained
+                        .checked_add(count)
+                        .ok_or("retained_measurement_limit")?
+                        > wave_measurement_limit
+                {
+                    progress.note("committing a bounded wave");
+                    absorb(
+                        &mut report,
+                        commit_wave(
+                            ledger,
+                            &mut snapshot,
+                            prefix_mode,
+                            &mut scans,
+                            &mut prefix_scans,
+                            &verification,
+                        )?,
+                    )?;
+                    wave_bytes = before.bytes;
+                    retained = 0;
+                    verification.clear();
+                }
                 retained = retained
                     .checked_add(count)
                     .ok_or("retained_measurement_limit")?;
-                if retained > aicharts_core::MAX_MEASUREMENTS {
+                if retained > wave_measurement_limit {
                     return Err("retained_measurement_limit");
                 }
                 if let Some(complete) = complete {
@@ -496,31 +593,29 @@ pub(crate) mod unix {
         if total_files == 0 {
             return Err("no_source_files");
         }
-        let committed = commit_wave(
-            ledger,
-            &mut snapshot,
-            prefix_mode,
-            &mut scans,
-            &mut prefix_scans,
-            &verification,
+        progress.note("committing a bounded wave");
+        absorb(
+            &mut report,
+            commit_wave(
+                ledger,
+                &mut snapshot,
+                prefix_mode,
+                &mut scans,
+                &mut prefix_scans,
+                &verification,
+            )?,
         )?;
-        report.sources_updated = report
-            .sources_updated
-            .checked_add(committed.sources_updated)
-            .ok_or("source_file_limit")?;
-        report.occurrences_changed = report
-            .occurrences_changed
-            .checked_add(committed.occurrences_changed)
-            .ok_or("retained_measurement_limit")?;
-        report.revision = committed.revision;
         Ok((report, skipped, deferred, lines_read, bytes_scanned))
     }
 
     fn status_json(status: &LedgerStatus) -> serde_json::Value {
         serde_json::json!({
             "schemaVersion":1,"localOnly":true,"uploaded":false,"ledgerRevision":status.revision,
-            "sources":status.sources,"usageOccurrences":status.usage_occurrences,"pendingRecords":status.pending_records,
+            "sources":status.sources,"usageOccurrences":status.usage_occurrences,"associations":status.associations,
+            "pendingRecords":status.pending_records,
             "tokens":status.tokens.to_string(),"outputTokens":status.output_tokens.to_string(),
+            "capacity":{"sources":aicharts_ledger::MAX_SOURCES,"usageOccurrences":aicharts_ledger::MAX_OCCURRENCES,
+                "associations":aicharts_ledger::MAX_ASSOCIATIONS,"databaseBytes":aicharts_ledger::MAX_DATABASE_BYTES.to_string()},
             "promptOccurrences":null,"measurementCoverage":"partial","activityCoverage":"unavailable",
             "humanOriginVerified":false,"modelPricingAvailable":false,
             "warnings":status.warnings.iter().map(|warning| warning.code()).collect::<Vec<_>>()
@@ -636,7 +731,7 @@ pub(crate) mod unix {
                         .map(|warning| warning.code())
                         .collect::<Vec<_>>()
                         .join(", ");
-                    Ok(format!("AI Charts local ledger — revision {}\nSources: {}; usage occurrences: {}; pending records: {}\nObserved tokens: {}; output tokens: {}\nCoverage: partial; prompt counts, activity and model pricing unavailable.\nWarnings: {warnings}\nNothing uploaded.\n",status.revision,status.sources,status.usage_occurrences,status.pending_records,status.tokens,status.output_tokens))
+                    Ok(format!("AI Charts local ledger — revision {}\nSources: {}; usage occurrences: {}; pending records: {}\nObserved tokens: {}; output tokens: {}\nCapacity: {} of {} sources, {} of {} occurrences, {} of {} source associations\nCoverage: partial; prompt counts, activity and model pricing unavailable.\nWarnings: {warnings}\nNothing uploaded.\n",status.revision,status.sources,status.usage_occurrences,status.pending_records,status.tokens,status.output_tokens,status.sources,aicharts_ledger::MAX_SOURCES,status.usage_occurrences,aicharts_ledger::MAX_OCCURRENCES,status.associations,aicharts_ledger::MAX_ASSOCIATIONS))
                 }
             }
             Command::Outbox => {
@@ -929,6 +1024,8 @@ mod tests {
                 &CHECKPOINT,
                 &NAMESPACE,
                 size * 2 - 1,
+                u64::MAX,
+                usize::MAX,
             )
             .unwrap();
             assert_eq!(report.sources_updated, 3);
@@ -942,11 +1039,194 @@ mod tests {
                 &CHECKPOINT,
                 &NAMESPACE,
                 size * 2 - 1,
+                u64::MAX,
+                usize::MAX,
             )
             .unwrap();
             assert_eq!((report.sources_updated, skipped), (0, 3));
             assert_eq!(bytes, 0);
             assert_eq!(ledger.status().unwrap().revision - before, 3);
+        }
+
+        #[test]
+        fn collect_partitions_sources_across_bounded_wave_file_counts() {
+            let fixture = Fixture::new();
+            let dir = fixture.create_state();
+            unix::run_with_occurrence(options(&dir, None, &["init"]), &CHECKPOINT, Some(NAMESPACE))
+                .unwrap();
+            let src = fixture.0.join("src");
+            std::fs::DirBuilder::new().mode(0o700).create(&src).unwrap();
+            for index in 0..5u8 {
+                fs::write(
+                    src.join(format!("session-{index}.jsonl")),
+                    format!(
+                        concat!(
+                            r#"{{"type":"assistant","timestamp":"2026-09-10T10:00:0{i}Z","sessionId":"session-{i}","requestId":"r{i}","message":{{"id":"message-{i}","usage":{{"input_tokens":10,"output_tokens":2,"cache_read_input_tokens":3,"cache_creation_input_tokens":0}}}}}}"#,
+                            "\n"
+                        ),
+                        i = index
+                    ),
+                )
+                .unwrap();
+            }
+            // An unbounded byte budget with two files per wave commits five
+            // sources as three atomic waves (2 + 2 + 1), not one commit.
+            let options = options(&dir, Some(&src), &["collect"]);
+            let mut ledger = aicharts_ledger::Ledger::open_with_identity(
+                &dir,
+                &aicharts_ledger::LedgerIdentity::SplitKeys {
+                    checkpoint: &CHECKPOINT,
+                    occurrence: &NAMESPACE,
+                    namespace_version: 1,
+                },
+            )
+            .unwrap();
+            let before = ledger.status().unwrap().revision;
+            let (report, skipped, _deferred, _lines, _bytes) = unix::collect_with_limit(
+                &mut ledger,
+                &options,
+                &CHECKPOINT,
+                &NAMESPACE,
+                u64::MAX,
+                2,
+                usize::MAX,
+            )
+            .unwrap();
+            assert_eq!(report.sources_updated, 5);
+            assert_eq!(skipped, 0);
+            assert_eq!(ledger.status().unwrap().revision - before, 3);
+        }
+
+        #[test]
+        fn collect_partitions_sources_across_bounded_wave_measurements() {
+            let fixture = Fixture::new();
+            let dir = fixture.create_state();
+            unix::run_with_occurrence(options(&dir, None, &["init"]), &CHECKPOINT, Some(NAMESPACE))
+                .unwrap();
+            let src = fixture.0.join("src");
+            std::fs::DirBuilder::new().mode(0o700).create(&src).unwrap();
+            // Two assistant measurements per file; a four-measurement wave
+            // budget commits five files as three atomic waves (2 + 2 + 1).
+            for index in 0..5u8 {
+                fs::write(
+                    src.join(format!("session-{index}.jsonl")),
+                    (0..2)
+                        .map(|line| {
+                            format!(
+                                r#"{{"type":"assistant","timestamp":"2026-09-10T10:00:0{index}Z","sessionId":"session-{index}","requestId":"r{index}-{line}","message":{{"id":"message-{index}-{line}","usage":{{"input_tokens":10,"output_tokens":2,"cache_read_input_tokens":3,"cache_creation_input_tokens":0}}}}}}"#,
+                            )
+                        })
+                        .collect::<Vec<_>>()
+                        .join("\n")
+                        + "\n",
+                )
+                .unwrap();
+            }
+            let collect_options = options(&dir, Some(&src), &["collect"]);
+            let mut ledger = aicharts_ledger::Ledger::open_with_identity(
+                &dir,
+                &aicharts_ledger::LedgerIdentity::SplitKeys {
+                    checkpoint: &CHECKPOINT,
+                    occurrence: &NAMESPACE,
+                    namespace_version: 1,
+                },
+            )
+            .unwrap();
+            let before = ledger.status().unwrap().revision;
+            let (report, skipped, _deferred, _lines, _bytes) = unix::collect_with_limit(
+                &mut ledger,
+                &collect_options,
+                &CHECKPOINT,
+                &NAMESPACE,
+                u64::MAX,
+                u64::MAX,
+                4,
+            )
+            .unwrap();
+            assert_eq!(report.sources_updated, 5);
+            assert_eq!(skipped, 0);
+            assert_eq!(ledger.status().unwrap().revision - before, 3);
+            // A single source denser than the whole budget still refuses
+            // explicitly instead of partitioning mid-source.
+            let dense = fixture.0.join("dense");
+            std::fs::DirBuilder::new()
+                .mode(0o700)
+                .create(&dense)
+                .unwrap();
+            fs::write(
+                dense.join("dense.jsonl"),
+                (0..5)
+                    .map(|line| {
+                        format!(
+                            r#"{{"type":"assistant","timestamp":"2026-09-10T11:00:0{line}Z","sessionId":"dense","requestId":"d{line}","message":{{"id":"dm{line}","usage":{{"input_tokens":1,"output_tokens":1,"cache_read_input_tokens":0,"cache_creation_input_tokens":0}}}}}}"#,
+                        )
+                    })
+                    .collect::<Vec<_>>()
+                    .join("\n")
+                    + "\n",
+            )
+            .unwrap();
+            let dense_options = options(&dir, Some(&dense), &["collect"]);
+            assert_eq!(
+                unix::collect_with_limit(
+                    &mut ledger,
+                    &dense_options,
+                    &CHECKPOINT,
+                    &NAMESPACE,
+                    u64::MAX,
+                    u64::MAX,
+                    4,
+                )
+                .err(),
+                Some("retained_measurement_limit")
+            );
+        }
+
+        #[test]
+        fn collect_discovers_sources_beyond_the_ephemeral_scan_bound() {
+            let fixture = Fixture::new();
+            let dir = fixture.create_state();
+            unix::run_with_occurrence(options(&dir, None, &["init"]), &CHECKPOINT, Some(NAMESPACE))
+                .unwrap();
+            let src = fixture.0.join("src");
+            std::fs::DirBuilder::new().mode(0o700).create(&src).unwrap();
+            // Persistent collection must admit trees larger than the
+            // ephemeral `usage` scan bound of 2,048 files; the wave file
+            // bound then commits them across two atomic revisions.
+            let count = crate::MAX_WAVE_FILES as usize + 2;
+            for index in 0..count {
+                fs::write(
+                    src.join(format!("session-{index}.jsonl")),
+                    format!(
+                        r#"{{"type":"assistant","timestamp":"2026-09-10T10:00:00Z","sessionId":"session-{index}","requestId":"r{index}","message":{{"id":"message-{index}","usage":{{"input_tokens":10,"output_tokens":2,"cache_read_input_tokens":3,"cache_creation_input_tokens":0}}}}}}"#
+                    ) + "\n",
+                )
+                .unwrap();
+            }
+            let collect_options = options(&dir, Some(&src), &["collect"]);
+            let mut ledger = aicharts_ledger::Ledger::open_with_identity(
+                &dir,
+                &aicharts_ledger::LedgerIdentity::SplitKeys {
+                    checkpoint: &CHECKPOINT,
+                    occurrence: &NAMESPACE,
+                    namespace_version: 1,
+                },
+            )
+            .unwrap();
+            let before = ledger.status().unwrap().revision;
+            let (report, skipped, _deferred, _lines, _bytes) = unix::collect_with_limit(
+                &mut ledger,
+                &collect_options,
+                &CHECKPOINT,
+                &NAMESPACE,
+                u64::MAX,
+                crate::MAX_WAVE_FILES,
+                usize::MAX,
+            )
+            .unwrap();
+            assert_eq!(report.sources_updated, count as u64);
+            assert_eq!(skipped, 0);
+            assert_eq!(ledger.status().unwrap().revision - before, 2);
         }
 
         #[test]

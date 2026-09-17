@@ -80,7 +80,7 @@ Maximum length is 67,744 bytes. Every receipt must match its exact ordinal opera
 
 ## Native ledger behavior
 
-Schema 2 is an explicit, atomic migration of a split-key ledger with an exact expected revision and nonzero sender binding. Ordinary open, inspection and legacy commands do not migrate or acquire sender authority. Existing measurements, checkpoints, source associations, revisions and pending frames are preserved. Six bounded sender tables retain binding/high-water marks, one immutable batch, its local member revisions, accepted coverage, the latest settled request/journal pair and reconciliation gates. SQLite's connection-local row-length cap is 262,144 bytes; the database cap remains 256 MiB.
+Schema 2 is an explicit, atomic migration of a split-key ledger with an exact expected revision and nonzero sender binding. Ordinary open, inspection and legacy commands do not migrate or acquire sender authority. Existing measurements, checkpoints, source associations, revisions and pending frames are preserved. Six bounded sender tables retain binding/high-water marks, one immutable batch, its local member revisions, accepted coverage, the latest settled request/journal pair and reconciliation gates. SQLite's connection-local row-length cap is 262,144 bytes; the database cap remains 512 MiB.
 
 Freezing selects 1–256 unique pending occurrences and durably allocates a contiguous sequence range before any transport. Expected predecessor hashes come only from retained accepted receipts, or zero for no locally accepted predecessor. Neither a newly observed remote head nor a collection update automatically rebases a conflict. An existing flight cannot be rewritten.
 
