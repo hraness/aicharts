@@ -14,6 +14,5 @@ export function ChartPageFooter() {
     <Link href="/models">Model cards</Link>
     <Link href="/blog">Benchmark notes</Link>
     <a href="https://github.com/hraness/aicharts">Open source <span aria-hidden="true">↗</span></a>
-    <span>By <a href="https://x.com/hraness">Ben Guo</a></span>
   </nav>;
 }

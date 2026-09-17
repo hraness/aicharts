@@ -1,4 +1,5 @@
 import { describe, expect, test } from "bun:test";
+import { hranessAttribution } from "@hraness/site-footer";
 import { HranessSiteFooter } from "@hraness/site-footer/react";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
@@ -61,5 +62,34 @@ describe("AI Charts mailing configuration", () => {
     expect(html).not.toContain('href="https://github.com/hraness"');
     expect(html).not.toContain("bsky.app");
     expect(html).not.toContain("Bluesky");
+  });
+
+  test("keeps the package-owned Hraness attribution alongside the AI Charts audience and profiles", () => {
+    expect(hranessAttribution).toEqual({
+      subtitle: "Hraness is an advanced software research organization dedicated to advancing the frontier of machine intelligence.",
+      title: "Built by Hraness",
+    });
+
+    const html = renderToStaticMarkup(createElement(HranessSiteFooter, {
+      mailingList: aiChartsMailingListConfig(),
+      social: {
+        x: { href: "https://x.com/aichartsio", label: "AI Charts on X" },
+        github: { href: "https://github.com/hraness/aicharts", label: "AI Charts on GitHub" },
+      },
+      support: {
+        id: "aicharts",
+        name: "AI Charts",
+        updates: true,
+        valueProposition: "Support sourced benchmark research and clear, interactive model comparisons.",
+      },
+    }));
+
+    expect(html.match(/data-slot="hraness-attribution"/gu)).toHaveLength(1);
+    expect(html).toContain(`>${hranessAttribution.title}</p>`);
+    expect(html).toContain(`>${hranessAttribution.subtitle}</p>`);
+    expect(html).toContain('name="audience" type="hidden" value="aicharts"');
+    expect(html).toContain('href="https://x.com/aichartsio"');
+    expect(html).not.toContain("Ben Guo");
+    expect(html).not.toContain("Built by AI Charts");
   });
 });
