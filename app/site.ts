@@ -35,6 +35,19 @@ export const homeTaskLinks = [
 export const modelCardsHeading = "Every model, on a card";
 export const modelCardsLede =
   "Shareable benchmark cards built from the same records as the charts, with the model, harness, and reasoning profile attached.";
+export const modelCardsEyebrow = "Benchmark cards";
+export const modelCardsTitle = "AI Model Benchmark Cards | AI Charts";
+export const modelCardsDescription =
+  "Shareable model trading cards for the current Artificial Analysis coding-agent benchmark snapshot.";
+
+/** Social and search copy for one model card page; keep title and description paired. */
+export function modelCardTitle(displayTitle: string): string {
+  return `${displayTitle} Benchmark Card | AI Charts`;
+}
+
+export function modelCardDescription(displayTitle: string): string {
+  return `${displayTitle} with available observed coding-agent benchmark, cost, time, and total-token ranges from Artificial Analysis.`;
+}
 
 export const notFoundSearchSite = {
   ...searchSite,

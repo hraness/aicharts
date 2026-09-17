@@ -1,50 +1,19 @@
-import { nebulaSansSocialFonts } from "@hraness/design-kit/fonts/nebula-sans/social";
-import { ImageResponse } from "next/og";
+import {
+  socialImageContentType,
+  socialImageSize,
+} from "@hraness/web-discovery/social-image";
 
 import { homeHeading, searchSite, site } from "./site";
+import { aichartsSocialImage } from "./social-card";
 
 export const alt = searchSite.socialImage.alt;
-export const contentType = "image/png";
-export const size = { width: 1200, height: 630 };
+export const contentType = socialImageContentType;
+export const size = socialImageSize;
 
 export default function Image() {
-  return new ImageResponse(
-    <div
-      style={{
-        alignItems: "stretch",
-        background: "#f8f7f4",
-        color: "#1c1917",
-        display: "flex",
-        flexDirection: "column",
-        fontFamily: "Nebula Sans",
-        height: "100%",
-        justifyContent: "space-between",
-        padding: "72px 82px",
-        width: "100%",
-      }}
-    >
-      <div style={{ alignItems: "center", display: "flex", fontSize: 28, gap: 14 }}>
-        <div
-          style={{
-            alignItems: "center",
-            border: `5px solid ${site.palette.chromatic.key}`,
-            borderRadius: "50%",
-            display: "flex",
-            height: 36,
-            justifyContent: "center",
-            width: 36,
-          }}
-        >
-          <div style={{ background: site.palette.chromatic.key, borderRadius: "50%", height: 12, width: 12 }} />
-        </div>
-        <span>{site.domain}</span>
-      </div>
-      <div style={{ display: "flex", flexDirection: "column", gap: 22 }}>
-        <div style={{ fontSize: 76, fontWeight: 700, letterSpacing: "-4px" }}>{homeHeading}</div>
-        <div style={{ color: "#625d57", fontSize: 34 }}>Capability, cost, and token use. Explore the Pareto frontier, then go deeper with benchmarks for the task.</div>
-      </div>
-      <div style={{ background: site.palette.chromatic.key, height: 10, width: "100%" }} />
-    </div>,
-    { ...size, fonts: [...nebulaSansSocialFonts()] },
-  );
+  return aichartsSocialImage({
+    description: site.description,
+    eyebrow: site.name,
+    title: homeHeading,
+  });
 }

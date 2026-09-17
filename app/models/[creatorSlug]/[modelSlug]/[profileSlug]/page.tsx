@@ -23,7 +23,12 @@ import { modelCardRouteStatus } from "@/lib/model-card-route-status";
 import { vercelGatewayModelCatalog } from "@/lib/model-card-sources";
 import { formatRetrievedAt } from "@/lib/coding-agent-updates";
 
-import { searchSite, site } from "../../../../site";
+import {
+  modelCardDescription,
+  modelCardTitle,
+  searchSite,
+  site,
+} from "../../../../site";
 
 export const dynamicParams = false;
 
@@ -42,8 +47,8 @@ export async function generateMetadata({
 }: Readonly<{ params: Promise<ModelCardRouteParams> }>): Promise<Metadata> {
   const card = findModelCardPresentation(await params);
   if (card === undefined) notFound();
-  const title = `${card.displayTitle} Benchmark Card | AI Charts`;
-  const description = `${card.displayTitle} with available observed coding-agent benchmark, cost, time, and total-token ranges from Artificial Analysis.`;
+  const title = modelCardTitle(card.displayTitle);
+  const description = modelCardDescription(card.displayTitle);
   const base = createPublicSiteMetadata({
     ...searchSite,
     description,

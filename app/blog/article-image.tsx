@@ -1,10 +1,7 @@
-import {
-  createSocialImageResponse,
-  socialImageSize,
-} from "@hraness/web-discovery/social-image";
+import { socialImageSize } from "@hraness/web-discovery/social-image";
 import type { ImageResponse } from "next/og";
 
-import { site } from "../site";
+import { aichartsSocialImage } from "../social-card";
 
 export const BLOG_IMAGE_SIZE = socialImageSize;
 
@@ -15,11 +12,9 @@ function renderBlogImage({
   description: string;
   title: string;
 }>): ImageResponse {
-  return createSocialImageResponse({
+  return aichartsSocialImage({
     description,
-    domain: `${site.domain}/blog`,
     eyebrow: "AI Charts benchmark analysis",
-    theme: { accent: site.palette.chromatic.key },
     title,
   });
 }

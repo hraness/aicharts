@@ -14,14 +14,14 @@ test("uses the released Nebula Sans contract across web, exports, and social ima
   expect(packageJson.dependencies).toMatchObject({
     "@hraness/design-kit": "github:hraness/design-kit#v0.10.0",
     "@hraness/ui": "github:hraness/ui#v0.5.13",
-    "@hraness/web-discovery": "github:hraness/web-discovery#v0.3.1",
+    "@hraness/web-discovery": "github:hraness/web-discovery#v0.6.0",
   });
   expect(globals).toContain("--font-sans: var(--font-text)");
   expect(globals).not.toContain("--font-sans: Inter");
   expect(plainSite).toContain("font-family: var(--font-text)");
   expect(plainPublication).toContain("font-family: var(--font-text)");
-  expect(rootSocialImage).toContain('fontFamily: "Nebula Sans"');
-  expect(rootSocialImage).toContain("fonts: [...nebulaSansSocialFonts()]");
+  expect(rootSocialImage).toContain('from "@hraness/web-discovery/social-image"');
+  expect(rootSocialImage).toContain("aichartsSocialImage(");
   expect(modelImages.match(/fontFamily: "Nebula Sans"/gu)?.length).toBe(3);
   expect(chartExport).toContain('"Nebula Sans, sans-serif"');
   expect(chartExport).toContain("appendEmbeddedNebulaSans(exportedSvg)");

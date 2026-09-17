@@ -38,7 +38,14 @@ import {
   modelReleaseRadarHighlightsExcluding,
 } from "@/lib/model-release-collection";
 
-import { modelCardsHeading, modelCardsLede, searchSite } from "../site";
+import {
+  modelCardsDescription,
+  modelCardsEyebrow,
+  modelCardsHeading,
+  modelCardsLede,
+  modelCardsTitle,
+  searchSite,
+} from "../site";
 
 const MODEL_RELEASE_RADAR_PAGE_HIGHLIGHTS = modelReleaseRadarHighlightsExcluding(
   FIRST_PARTY_RELEASE_HIGHLIGHTS.flatMap(release => release.namedModels),
@@ -46,13 +53,13 @@ const MODEL_RELEASE_RADAR_PAGE_HIGHLIGHTS = modelReleaseRadarHighlightsExcluding
 
 const modelCardsSearchSite = {
   ...searchSite,
-  description: "Shareable model trading cards for the current Artificial Analysis coding-agent benchmark snapshot.",
+  description: modelCardsDescription,
   socialImage: {
     alt: "Illuminated AI model benchmark atlas with distinct provider sigils",
     path: MODEL_CARD_COLLECTION_SOCIAL_IMAGE_PATH,
   },
-  socialTitle: "AI Model Benchmark Cards | AI Charts",
-  title: "AI Model Benchmark Cards | AI Charts",
+  socialTitle: modelCardsTitle,
+  title: modelCardsTitle,
 } as const;
 
 const modelCardsMetadata = createPublicSiteMetadata(modelCardsSearchSite, {
@@ -110,7 +117,7 @@ export default function ModelCardsPage() {
         data-tone="paper"
       >
         <div className="hraness-marketing-hero__copy">
-          <p className="hraness-marketing-hero__eyebrow">Benchmark cards</p>
+          <p className="hraness-marketing-hero__eyebrow">{modelCardsEyebrow}</p>
           <h1 className="hraness-marketing-hero__heading" id="model-cards-title">{modelCardsHeading}</h1>
           <p className="hraness-marketing-hero__summary model-card-gallery__lede">{modelCardsLede}</p>
           <p className="hraness-marketing-hero__boundary model-card-gallery__meta">
