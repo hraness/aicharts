@@ -1,9 +1,7 @@
 /* The shared footer carries its layout wherever the component is rendered. */
 .chart-page-footer { display: flex; flex-wrap: wrap; gap: 12px 26px; color: var(--muted); font-size: 12px; padding-block: 28px 8px; }
 .chart-page-footer a { text-underline-offset: 4px; }
-.chart-page-footer > span { margin-inline-start: auto; }
 
 @media (max-width: 720px) {
   .chart-page-footer { gap: 14px 22px; }
-  .chart-page-footer > span { flex-basis: 100%; margin-inline-start: 0; }
 }
