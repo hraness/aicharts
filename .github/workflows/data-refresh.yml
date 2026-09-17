@@ -298,14 +298,27 @@ jobs:
         if: steps.snapshot.outputs.changed == 'true' && steps.usage_toolchain.outcome == 'success'
         continue-on-error: true
         run: bun run check
+      - name: Mint the data-refresh writer token
+        id: writer
+        if: steps.validation.outcome == 'success' && steps.snapshot.outputs.changed == 'true'
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2.2.2
+        with:
+          app-id: ${{ vars.AICHARTS_DATA_REFRESH_APP_ID }}
+          private-key: ${{ secrets.AICHARTS_DATA_REFRESH_APP_PRIVATE_KEY }}
+          owner: hraness
+          repositories: aicharts
+          permission-contents: write
+          permission-pull-requests: write
+          permission-statuses: write
+          permission-actions: write
       - name: Publish the validated update through required CI
         id: publish
-        if: steps.validation.outcome == 'success' && steps.snapshot.outputs.changed == 'true'
+        if: steps.validation.outcome == 'success' && steps.snapshot.outputs.changed == 'true' && steps.writer.outcome == 'success'
         continue-on-error: true
         env:
           GH_REPO: ${{ github.repository }}
-          GH_TOKEN: ${{ github.token }}
-          GITHUB_TOKEN: ${{ github.token }}
+          GH_TOKEN: ${{ steps.writer.outputs.token }}
+          GITHUB_TOKEN: ${{ steps.writer.outputs.token }}
         shell: bash
         run: |
           git config user.name "0thernet"

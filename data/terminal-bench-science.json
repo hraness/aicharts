@@ -34,6 +34,87 @@
         },
         "version": null
       },
+      "id": "1264a994-632f-4742-a143-a848a6ad4114",
+      "metrics": {
+        "domains": {
+          "earth": {
+            "nTrials": 24,
+            "passes": 9,
+            "resolutionRatePercent": 37.5,
+            "standardErrorPercent": 9.882117688026186,
+            "totalCostUsd": 746.4760759999999,
+            "totalTokens": 431225074
+          },
+          "engineering": {
+            "nTrials": 27,
+            "passes": 13,
+            "resolutionRatePercent": 48.148148148148145,
+            "standardErrorPercent": 9.615902424319279,
+            "totalCostUsd": 976.645512,
+            "totalTokens": 633357580
+          },
+          "life": {
+            "nTrials": 57,
+            "passes": 22,
+            "resolutionRatePercent": 38.59649122807017,
+            "standardErrorPercent": 6.448119524174796,
+            "totalCostUsd": 1109.489021,
+            "totalTokens": 751380608
+          },
+          "mathematical": {
+            "nTrials": 51,
+            "passes": 21,
+            "resolutionRatePercent": 41.17647058823529,
+            "standardErrorPercent": 6.891519836811836,
+            "totalCostUsd": 1596.16417625,
+            "totalTokens": 891442338
+          },
+          "physical": {
+            "nTrials": 51,
+            "passes": 19,
+            "resolutionRatePercent": 37.254901960784316,
+            "standardErrorPercent": 6.770122476910462,
+            "totalCostUsd": 1818.3650532499998,
+            "totalTokens": 1045886930
+          }
+        },
+        "nTrials": 210,
+        "passes": 84,
+        "resolutionRatePercent": 40,
+        "standardErrorPercent": 3.380617018914066,
+        "totalCostUsd": 6247.1398385,
+        "totalTokens": 3753292530
+      },
+      "model": {
+        "display": {
+          "label": "Fable 5.1",
+          "url": "https://www.anthropic.com/claude-fable-and-mythos-5-1"
+        },
+        "organization": {
+          "label": "Anthropic",
+          "url": "https://www.anthropic.com"
+        },
+        "version": null
+      },
+      "rank": 1,
+      "reasoningEffort": "max",
+      "releaseDate": "2026-09-01",
+      "safeguardMode": null,
+      "sourceUpdatedAt": "2026-09-16T13:45:27.369938+00:00",
+      "sourceUrl": "https://hub.harborframework.com/datasets/terminal-bench-science/terminal-bench-science/0.1.0/leaderboards/v0-1-eval/rows/1264a994-632f-4742-a143-a848a6ad4114"
+    },
+    {
+      "harness": {
+        "display": {
+          "label": "Claude Code",
+          "url": "https://claude.com/product/claude-code"
+        },
+        "organization": {
+          "label": "Anthropic",
+          "url": "https://www.anthropic.com"
+        },
+        "version": null
+      },
       "id": "bcf50bd8-8555-48a6-8cae-9f697af54051",
       "metrics": {
         "domains": {
@@ -96,11 +177,11 @@
         },
         "version": null
       },
-      "rank": 1,
+      "rank": 2,
       "reasoningEffort": "max",
       "releaseDate": "2026-07-24",
       "safeguardMode": null,
-      "sourceUpdatedAt": "2026-08-30T03:13:14.468783+00:00",
+      "sourceUpdatedAt": "2026-09-16T13:45:27.369938+00:00",
       "sourceUrl": "https://hub.harborframework.com/datasets/terminal-bench-science/terminal-bench-science/0.1.0/leaderboards/v0-1-eval/rows/bcf50bd8-8555-48a6-8cae-9f697af54051"
     },
     {
@@ -177,11 +258,11 @@
         },
         "version": null
       },
-      "rank": 2,
+      "rank": 3,
       "reasoningEffort": "max",
       "releaseDate": "2026-07-09",
       "safeguardMode": null,
-      "sourceUpdatedAt": "2026-08-30T00:08:39.126225+00:00",
+      "sourceUpdatedAt": "2026-09-16T13:45:27.369938+00:00",
       "sourceUrl": "https://hub.harborframework.com/datasets/terminal-bench-science/terminal-bench-science/0.1.0/leaderboards/v0-1-eval/rows/378f8b49-dbd8-4acf-a065-8c07e1712de2"
     },
     {
@@ -258,12 +339,93 @@
         },
         "version": null
       },
-      "rank": 3,
+      "rank": 4,
       "reasoningEffort": "max",
       "releaseDate": "2026-06-09",
       "safeguardMode": null,
-      "sourceUpdatedAt": "2026-08-30T02:23:50.049283+00:00",
+      "sourceUpdatedAt": "2026-09-16T13:45:27.369938+00:00",
       "sourceUrl": "https://hub.harborframework.com/datasets/terminal-bench-science/terminal-bench-science/0.1.0/leaderboards/v0-1-eval/rows/e3f2861a-97db-4730-a0ff-99f08d8c7299"
+    },
+    {
+      "harness": {
+        "display": {
+          "label": "Codex",
+          "url": "https://openai.com/codex/"
+        },
+        "organization": {
+          "label": "OpenAI",
+          "url": "https://openai.com"
+        },
+        "version": null
+      },
+      "id": "58d4c48d-791b-4873-ba3e-af1cf997a79c",
+      "metrics": {
+        "domains": {
+          "earth": {
+            "nTrials": 24,
+            "passes": 2,
+            "resolutionRatePercent": 8.333333333333332,
+            "standardErrorPercent": 5.64169333655275,
+            "totalCostUsd": 39.16776078,
+            "totalTokens": 1777639333
+          },
+          "engineering": {
+            "nTrials": 27,
+            "passes": 5,
+            "resolutionRatePercent": 18.51851851851852,
+            "standardErrorPercent": 7.4756798866604734,
+            "totalCostUsd": 69.74610236399998,
+            "totalTokens": 3041093185
+          },
+          "life": {
+            "nTrials": 57,
+            "passes": 6,
+            "resolutionRatePercent": 10.526315789473683,
+            "standardErrorPercent": 4.064886556427542,
+            "totalCostUsd": 64.22627608800002,
+            "totalTokens": 2470912103
+          },
+          "mathematical": {
+            "nTrials": 51,
+            "passes": 6,
+            "resolutionRatePercent": 11.76470588235294,
+            "standardErrorPercent": 4.511558757925709,
+            "totalCostUsd": 93.96861560400001,
+            "totalTokens": 2921282541
+          },
+          "physical": {
+            "nTrials": 51,
+            "passes": 14,
+            "resolutionRatePercent": 27.450980392156865,
+            "standardErrorPercent": 6.2489869213841,
+            "totalCostUsd": 118.824719418,
+            "totalTokens": 4648478757
+          }
+        },
+        "nTrials": 210,
+        "passes": 33,
+        "resolutionRatePercent": 15.714285714285714,
+        "standardErrorPercent": 2.511392893650442,
+        "totalCostUsd": 385.933474254,
+        "totalTokens": 14859405919
+      },
+      "model": {
+        "display": {
+          "label": "DeepSeek V4.1 Flash",
+          "url": "https://api-docs.deepseek.com/updates/"
+        },
+        "organization": {
+          "label": "DeepSeek",
+          "url": "https://www.deepseek.com/"
+        },
+        "version": null
+      },
+      "rank": 5,
+      "reasoningEffort": "max",
+      "releaseDate": "2026-09-10",
+      "safeguardMode": null,
+      "sourceUpdatedAt": "2026-09-16T13:45:27.369938+00:00",
+      "sourceUrl": "https://hub.harborframework.com/datasets/terminal-bench-science/terminal-bench-science/0.1.0/leaderboards/v0-1-eval/rows/58d4c48d-791b-4873-ba3e-af1cf997a79c"
     },
     {
       "harness": {
@@ -339,11 +501,11 @@
         },
         "version": null
       },
-      "rank": 4,
+      "rank": 6,
       "reasoningEffort": "high",
       "releaseDate": "2026-09-02",
       "safeguardMode": null,
-      "sourceUpdatedAt": "2026-09-03T09:13:25.326394+00:00",
+      "sourceUpdatedAt": "2026-09-16T13:45:27.369938+00:00",
       "sourceUrl": "https://hub.harborframework.com/datasets/terminal-bench-science/terminal-bench-science/0.1.0/leaderboards/v0-1-eval/rows/409f68a6-d6a4-43c9-adb8-63679dc17a45"
     },
     {
@@ -420,11 +582,11 @@
         },
         "version": null
       },
-      "rank": 5,
+      "rank": 7,
       "reasoningEffort": "max",
       "releaseDate": "2026-05-28",
       "safeguardMode": null,
-      "sourceUpdatedAt": "2026-08-30T00:48:53.817356+00:00",
+      "sourceUpdatedAt": "2026-09-16T13:45:27.369938+00:00",
       "sourceUrl": "https://hub.harborframework.com/datasets/terminal-bench-science/terminal-bench-science/0.1.0/leaderboards/v0-1-eval/rows/e8bf7739-3c94-46a3-95a5-fa4d4444034e"
     },
     {
@@ -501,11 +663,11 @@
         },
         "version": null
       },
-      "rank": 6,
+      "rank": 8,
       "reasoningEffort": "max",
       "releaseDate": "2026-07-09",
       "safeguardMode": null,
-      "sourceUpdatedAt": "2026-08-30T01:34:23.771829+00:00",
+      "sourceUpdatedAt": "2026-09-16T13:45:27.369938+00:00",
       "sourceUrl": "https://hub.harborframework.com/datasets/terminal-bench-science/terminal-bench-science/0.1.0/leaderboards/v0-1-eval/rows/c79d5ef6-b3c6-40da-84b5-946c11099426"
     },
     {
@@ -582,11 +744,11 @@
         },
         "version": null
       },
-      "rank": 7,
+      "rank": 9,
       "reasoningEffort": "max",
       "releaseDate": "2026-08-14",
       "safeguardMode": null,
-      "sourceUpdatedAt": "2026-08-30T04:43:51.891874+00:00",
+      "sourceUpdatedAt": "2026-09-16T13:45:27.369938+00:00",
       "sourceUrl": "https://hub.harborframework.com/datasets/terminal-bench-science/terminal-bench-science/0.1.0/leaderboards/v0-1-eval/rows/78f18248-3ee9-4eb4-b7af-19019f1fc64f"
     },
     {
@@ -663,11 +825,11 @@
         },
         "version": null
       },
-      "rank": 8,
+      "rank": 10,
       "reasoningEffort": "max",
       "releaseDate": "2026-07-16",
       "safeguardMode": null,
-      "sourceUpdatedAt": "2026-08-29T19:21:10.538643+00:00",
+      "sourceUpdatedAt": "2026-09-16T13:45:27.369938+00:00",
       "sourceUrl": "https://hub.harborframework.com/datasets/terminal-bench-science/terminal-bench-science/0.1.0/leaderboards/v0-1-eval/rows/66e64f64-abbd-40a6-a470-2151df25472e"
     },
     {
@@ -744,11 +906,11 @@
         },
         "version": null
       },
-      "rank": 9,
+      "rank": 11,
       "reasoningEffort": "xhigh",
       "releaseDate": "2026-08-12",
       "safeguardMode": null,
-      "sourceUpdatedAt": "2026-08-30T05:21:48.859178+00:00",
+      "sourceUpdatedAt": "2026-09-16T13:45:27.369938+00:00",
       "sourceUrl": "https://hub.harborframework.com/datasets/terminal-bench-science/terminal-bench-science/0.1.0/leaderboards/v0-1-eval/rows/231bc6c3-8f2b-455e-8c87-5a08ec200b05"
     },
     {
@@ -825,12 +987,93 @@
         },
         "version": null
       },
-      "rank": 10,
+      "rank": 12,
       "reasoningEffort": "high",
       "releaseDate": "2026-08-13",
       "safeguardMode": null,
-      "sourceUpdatedAt": "2026-09-03T09:13:10.360986+00:00",
+      "sourceUpdatedAt": "2026-09-16T13:45:27.369938+00:00",
       "sourceUrl": "https://hub.harborframework.com/datasets/terminal-bench-science/terminal-bench-science/0.1.0/leaderboards/v0-1-eval/rows/5a71d088-1bfd-4bbe-a65a-973a4fffd50f"
+    },
+    {
+      "harness": {
+        "display": {
+          "label": "Codex",
+          "url": "https://openai.com/codex/"
+        },
+        "organization": {
+          "label": "OpenAI",
+          "url": "https://openai.com"
+        },
+        "version": null
+      },
+      "id": "00b5eabf-caca-435c-b8a8-458633192aa8",
+      "metrics": {
+        "domains": {
+          "earth": {
+            "nTrials": 24,
+            "passes": 0,
+            "resolutionRatePercent": 0,
+            "standardErrorPercent": 0,
+            "totalCostUsd": 71.822495184,
+            "totalTokens": 1481972810
+          },
+          "engineering": {
+            "nTrials": 27,
+            "passes": 3,
+            "resolutionRatePercent": 11.11111111111111,
+            "standardErrorPercent": 6.04812282168686,
+            "totalCostUsd": 108.39618107999999,
+            "totalTokens": 2200281229
+          },
+          "life": {
+            "nTrials": 57,
+            "passes": 0,
+            "resolutionRatePercent": 0,
+            "standardErrorPercent": 0,
+            "totalCostUsd": 107.43456482000002,
+            "totalTokens": 2083306722
+          },
+          "mathematical": {
+            "nTrials": 51,
+            "passes": 3,
+            "resolutionRatePercent": 5.88235294117647,
+            "standardErrorPercent": 3.294776668301199,
+            "totalCostUsd": 146.126849924,
+            "totalTokens": 2672070982
+          },
+          "physical": {
+            "nTrials": 51,
+            "passes": 2,
+            "resolutionRatePercent": 3.9215686274509802,
+            "standardErrorPercent": 2.718052078759498,
+            "totalCostUsd": 140.452167108,
+            "totalTokens": 2763809854
+          }
+        },
+        "nTrials": 210,
+        "passes": 8,
+        "resolutionRatePercent": 3.8095238095238093,
+        "standardErrorPercent": 1.3209662936780717,
+        "totalCostUsd": 1120.15076932,
+        "totalTokens": 11201441597
+      },
+      "model": {
+        "display": {
+          "label": "DeepSeek V4 Pro",
+          "url": "https://api-docs.deepseek.com/news/news260813/"
+        },
+        "organization": {
+          "label": "DeepSeek",
+          "url": "https://www.deepseek.com/"
+        },
+        "version": null
+      },
+      "rank": 13,
+      "reasoningEffort": "max",
+      "releaseDate": "2026-08-13",
+      "safeguardMode": null,
+      "sourceUpdatedAt": "2026-09-16T13:45:27.369938+00:00",
+      "sourceUrl": "https://hub.harborframework.com/datasets/terminal-bench-science/terminal-bench-science/0.1.0/leaderboards/v0-1-eval/rows/00b5eabf-caca-435c-b8a8-458633192aa8"
     },
     {
       "harness": {
@@ -906,11 +1149,11 @@
         },
         "version": null
       },
-      "rank": 11,
+      "rank": 14,
       "reasoningEffort": "max",
       "releaseDate": "2026-07-09",
       "safeguardMode": null,
-      "sourceUpdatedAt": "2026-08-30T04:12:04.906326+00:00",
+      "sourceUpdatedAt": "2026-09-16T13:45:27.369938+00:00",
       "sourceUrl": "https://hub.harborframework.com/datasets/terminal-bench-science/terminal-bench-science/0.1.0/leaderboards/v0-1-eval/rows/7cf10b06-3e5b-4723-b98f-c679e773959b"
     }
   ],
@@ -922,7 +1165,7 @@
     "leaderboardId": "9a545a14-78d0-44b4-9003-afe062522a47",
     "leaderboardName": "v0-1-eval",
     "leaderboardPackage": "terminal-bench-science/terminal-bench-science",
-    "leaderboardUpdatedAt": "2026-09-04T18:07:28.264353+00:00",
+    "leaderboardUpdatedAt": "2026-09-16T13:45:27.369938+00:00",
     "leaderboardUrl": "https://hub.harborframework.com/datasets/terminal-bench-science/terminal-bench-science/0.1.0?leaderboard=v0-1-eval&tab=leaderboard",
     "method": "version-pinned-release-owner-leaderboard-api",
     "name": "Terminal-Bench-Science and Harbor Framework",
@@ -935,7 +1178,7 @@
     "releaseTag": "v0.1.0",
     "releaseUrl": "https://github.com/harbor-framework/terminal-bench-science/releases/tag/v0.1.0",
     "repositoryUrl": "https://github.com/harbor-framework/terminal-bench-science",
-    "retrievedAt": "2026-09-04T18:59:01.281Z",
+    "retrievedAt": "2026-09-17T15:05:51.383Z",
     "sourceClass": "benchmark-owner"
   }
 }
