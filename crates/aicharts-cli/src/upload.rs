@@ -230,12 +230,18 @@ pub(super) fn send_once(
 struct CommandOptions {
     directory: PathBuf,
     key: PathBuf,
+    resume: bool,
 }
 
 fn parse_options(args: &[String]) -> Result<CommandOptions, &'static str> {
-    let (mut directory, mut key) = (None, None);
+    let (mut directory, mut key, mut resume) = (None, None, false);
     let mut i = 1;
     while i < args.len() {
+        if args[i] == "--resume" && !resume {
+            resume = true;
+            i += 1;
+            continue;
+        }
         let slot = match args[i].as_str() {
             "--state-dir" if directory.is_none() => &mut directory,
             "--key-file" if key.is_none() => &mut key,
@@ -252,6 +258,7 @@ fn parse_options(args: &[String]) -> Result<CommandOptions, &'static str> {
     Ok(CommandOptions {
         directory: directory.ok_or("state_directory_required")?,
         key: key.ok_or("key_required")?,
+        resume,
     })
 }
 
@@ -272,9 +279,10 @@ fn refuse_inflight(ledger: &Ledger) -> Result<(), &'static str> {
 /// Send one bounded batch for this enrolled installation: reopen the completed
 /// enrollment facts and custody records, bind the split-key ledger, freeze a
 /// pending selection at the wire ceiling, exchange once and settle only on a
-/// validated terminal journal.
+/// validated terminal journal. With `resume`, the sole exchange replays the
+/// retained flight instead of freezing new work.
 #[cfg(target_os = "macos")]
-fn send(directory: &Path, key: &Path) -> Result<String, &'static str> {
+fn send(directory: &Path, key: &Path, resume: bool) -> Result<String, &'static str> {
     let enrolled = crate::enrollment::enrolled(directory).map_err(|code| match code {
         "attempt_missing" => "upload_not_enrolled",
         other => other,
@@ -308,22 +316,29 @@ fn send(directory: &Path, key: &Path) -> Result<String, &'static str> {
     // sender on first use; an already-bound different sender refuses.
     let mut ledger = Ledger::migrate_sender_v2(directory, &identity, revision, &binding)
         .map_err(|error| error.code())?;
-    refuse_inflight(&ledger)?;
-    let page = ledger
-        .pending(None, aicharts_ledger::MAX_PAGE, None)
-        .map_err(|error| error.code())?;
-    if page.entries.is_empty() {
-        return Ok("No pending usage records; nothing was uploaded.\n".to_owned());
+    let settlement = if resume {
+        // Explicit recovery: re-exchange the exact retained flight. The service
+        // admits only its identical bytes, so replay can settle or reconcile but
+        // never double-apply.
+        send_once(&mut ledger, &mut transport, Selection::Resume)
+    } else {
+        refuse_inflight(&ledger)?;
+        let page = ledger
+            .pending(None, aicharts_ledger::MAX_PAGE, None)
+            .map_err(|error| error.code())?;
+        if page.entries.is_empty() {
+            return Ok("No pending usage records; nothing was uploaded.\n".to_owned());
+        }
+        let ids: Vec<Id> = page.entries.iter().map(|entry| entry.id).collect();
+        send_once(
+            &mut ledger,
+            &mut transport,
+            Selection::Freeze {
+                expected_revision: page.ledger_revision,
+                occurrence_ids: &ids,
+            },
+        )
     }
-    let ids: Vec<Id> = page.entries.iter().map(|entry| entry.id).collect();
-    let settlement = send_once(
-        &mut ledger,
-        &mut transport,
-        Selection::Freeze {
-            expected_revision: page.ledger_revision,
-            occurrence_ids: &ids,
-        },
-    )
     .map_err(|error| error.code())?;
     let status = ledger.sender_status().map_err(|error| error.code())?;
     let pending = ledger
@@ -340,7 +355,7 @@ fn send(directory: &Path, key: &Path) -> Result<String, &'static str> {
 /// Non-macOS platforms have no qualified credential custody, so no enrolled
 /// upload authority can exist there.
 #[cfg(not(target_os = "macos"))]
-fn send(_directory: &Path, _key: &Path) -> Result<String, &'static str> {
+fn send(_directory: &Path, _key: &Path, _resume: bool) -> Result<String, &'static str> {
     Err("upload_requires_qualified_macos_custody")
 }
 
@@ -385,12 +400,13 @@ fn report(
     )
 }
 
-/// `aicharts upload --state-dir DIR --key-file PATH` — one bounded enrolled
-/// send. `upload --dry-run` remains the separate fresh-source preview and
-/// never reaches this command.
+/// `aicharts upload --state-dir DIR --key-file PATH [--resume]` — one bounded
+/// enrolled send; `--resume` performs the explicit retained-flight recovery.
+/// `upload --dry-run` remains the separate fresh-source preview and never
+/// reaches this command.
 pub(super) fn run(args: &[String]) -> Result<String, &'static str> {
     let options = parse_options(args)?;
-    send(&options.directory, &options.key)
+    send(&options.directory, &options.key, options.resume)
 }
 
 #[cfg(all(test, unix))]

@@ -24,10 +24,6 @@ struct Entry {
     request_id: Option<crate::schema::NativeId>,
     #[serde(rename = "sessionId")]
     session_id: Option<crate::schema::NativeId>,
-    #[serde(rename = "agentId")]
-    agent_id: Option<crate::schema::NativeId>,
-    #[serde(rename = "isSidechain", default)]
-    is_sidechain: bool,
     #[serde(default, deserialize_with = "crate::schema::metadata_object")]
     message: Option<Message>,
 }
@@ -173,14 +169,17 @@ pub fn scan_metadata<R: BufRead>(
         let mut execution = None;
         let mut requested_model = None;
         let mut model_observed = false;
-        while let Some(record) =
-            crate::reader::next_record::<_, CodexEntry>(&mut reader).map_err(|e| e.code())?
-        {
+        loop {
+            let next =
+                crate::reader::next_record::<_, CodexEntry>(&mut reader).map_err(|e| e.code())?;
+            if matches!(next, crate::reader::Next::End) {
+                break;
+            }
             lines += 1;
             if lines > MAX_LINES {
                 return Err("record_limit");
             }
-            let Some(entry) = record else {
+            let crate::reader::Next::Parsed(entry) = next else {
                 continue;
             };
             let Some(payload) = entry.payload else {
@@ -228,14 +227,16 @@ pub fn scan_metadata<R: BufRead>(
         return Ok(out);
     }
     let mut lines = 0;
-    while let Some(record) =
-        crate::reader::next_record::<_, Entry>(&mut reader).map_err(|e| e.code())?
-    {
+    loop {
+        let next = crate::reader::next_record::<_, Entry>(&mut reader).map_err(|e| e.code())?;
+        if matches!(next, crate::reader::Next::End) {
+            break;
+        }
         lines += 1;
         if lines > MAX_LINES {
             return Err("record_limit");
         }
-        let Some(entry) = record else {
+        let crate::reader::Next::Parsed(entry) = next else {
             continue;
         };
         if entry.kind != crate::schema::Kind::Assistant {
@@ -257,18 +258,9 @@ pub fn scan_metadata<R: BufRead>(
         let Some(session) = entry.session_id else {
             continue;
         };
-        let execution = if entry.is_sidechain {
-            let Some(agent) = entry.agent_id else {
-                continue;
-            };
-            crate::keyed_id(
-                key,
-                b"claude-subagent",
-                &[session.0.as_bytes(), agent.0.as_bytes()],
-            )
-        } else {
-            crate::keyed_id(key, b"claude-execution", &[session.0.as_bytes()])
-        };
+        // Sidechain markers are transcript-local (see the usage parser); the
+        // session is the stable execution attribution for one occurrence.
+        let execution = crate::keyed_id(key, b"claude-execution", &[session.0.as_bytes()]);
         let value = OccurrenceMetadata {
             execution,
             conversation: Some(crate::keyed_id(
@@ -279,10 +271,26 @@ pub fn scan_metadata<R: BufRead>(
             model: message.model.and_then(|m| m.0),
             basis: "response",
         };
-        if out.occurrences.get(&id).is_some_and(|old| old != &value) {
-            return Err("conflicting_occurrence");
+        match out.occurrences.get(&id) {
+            Some(old)
+                if old.execution != value.execution || old.conversation != value.conversation =>
+            {
+                return Err("conflicting_occurrence");
+            }
+            Some(old)
+                if old.model.is_some() && value.model.is_some() && old.model != value.model =>
+            {
+                return Err("conflicting_occurrence");
+            }
+            Some(old) => {
+                if old.model.is_none() && value.model.is_some() {
+                    out.occurrences.insert(id, value);
+                }
+            }
+            None => {
+                out.occurrences.insert(id, value);
+            }
         }
-        out.occurrences.insert(id, value);
         if out.occurrences.len() > MAX_RECORDS {
             return Err("record_limit");
         }
@@ -332,7 +340,8 @@ fn hex(id: Id) -> String {
 }
 
 /// Keep daily token normalization authoritative, including cumulative baselines,
-/// older copied Claude revisions, subagent identity and unknown cache TTLs.
+/// older copied Claude revisions, session-level execution attribution and
+/// unknown cache TTLs.
 pub fn join_sources(sources: Vec<(Collection, Metadata)>) -> Result<SessionReport, &'static str> {
     let mut metadata = BTreeMap::new();
     let mut reasoning_known = BTreeMap::new();
@@ -592,7 +601,10 @@ mod tests {
             .contains("PRIVATE_MODEL"));
     }
     #[test]
-    fn subagent_is_a_separate_session_in_the_same_conversation() {
+    fn subagent_usage_joins_the_parent_session() {
+        // A delegated call logged unmarked in the parent transcript and
+        // marked isSidechain/agentId in the subagent file is one occurrence;
+        // the session is the only attribution stable across both copies.
         let root = claude(2, "claude-sonnet-4-6", "1");
         let child = claude(4, "claude-opus-4-6", "2")
             .replace("\"req\"", "\"child-req\"")
@@ -605,12 +617,24 @@ mod tests {
             source(&child, Provider::ClaudeCode),
         ])
         .unwrap();
-        assert_eq!(report.sessions.len(), 2);
-        assert_ne!(report.sessions[0].session_id, report.sessions[1].session_id);
-        assert_eq!(
-            report.sessions[0].conversation_id,
-            report.sessions[1].conversation_id
+        assert_eq!(report.sessions.len(), 1);
+        assert_eq!(report.sessions[0].usage.len(), 2);
+    }
+    #[test]
+    fn subagent_marked_copy_of_one_call_does_not_conflict() {
+        let parent = claude(2, "claude-sonnet-4-6", "1");
+        let child = parent.replace(
+            "\"sessionId\":\"session\"",
+            "\"sessionId\":\"session\",\"agentId\":\"agent\",\"isSidechain\":true",
         );
+        let report = join_sources(vec![
+            source(&parent, Provider::ClaudeCode),
+            source(&child, Provider::ClaudeCode),
+        ])
+        .unwrap();
+        assert_eq!(report.sessions.len(), 1);
+        assert_eq!(report.sessions[0].usage.len(), 1);
+        assert_eq!(report.sessions[0].usage[0].output_tokens, 2);
     }
     #[test]
     fn metadata_clock_and_unrelated_payload_cannot_expand_token_window() {
