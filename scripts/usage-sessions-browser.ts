@@ -67,12 +67,12 @@ export async function verifyUsageSessions(browser: Browser, baseUrl: string): Pr
       if (capture !== undefined) await page.screenshot({ path: resolve(capture, `${name}.png`), fullPage: true });
 
       const history = { ...SESSION_EXAMPLE, sessions: SESSION_EXAMPLE.sessions.map(s => ({ ...s, source: "history", spans: [] })) };
-      await page.locator('input[type="file"]').setInputFiles({ name: "local-report.json", mimeType: "application/json", buffer: Buffer.from(JSON.stringify(history)) });
+      await page.locator('input[type="file"][accept="application/json,.json"]').setInputFiles({ name: "local-report.json", mimeType: "application/json", buffer: Buffer.from(JSON.stringify(history)) });
       await page.getByText("Local report", { exact: true }).waitFor();
       await page.getByText("History provides token observations.", { exact: false }).waitFor();
       invariant(await page.locator(".usage-sessions__aggregate dd").first().textContent() === "Unknown", "Unmeasured historical inference must not become zero utilization.");
       invariant(await page.getByText("Synthetic example · not your usage", { exact: true }).count() === 0, "Imported report must replace example marker.");
-      await page.locator('input[type="file"]').setInputFiles({ name: "rejected.json", mimeType: "application/json", buffer: Buffer.from('{"prompt":"DO_NOT_ECHO_PRIVATE_SOURCE"}') });
+      await page.locator('input[type="file"][accept="application/json,.json"]').setInputFiles({ name: "rejected.json", mimeType: "application/json", buffer: Buffer.from('{"prompt":"DO_NOT_ECHO_PRIVATE_SOURCE"}') });
       await page.locator('.usage-sessions__notice[role="alert"]').waitFor();
       invariant(!(await page.locator("body").textContent())?.includes("DO_NOT_ECHO_PRIVATE_SOURCE"), "Rejected report must never echo source content.");
       await page.getByRole("button", { name: "Follow a report", exact: true }).click();

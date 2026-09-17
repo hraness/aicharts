@@ -62,8 +62,11 @@ test('standalone completed read preserves JSON and discovers once without claimi
   const first = sink(), second = sink(), stdout = sink();
   assert.equal(await runStandalone(['catalog'], { stdout, stderr: first, support: f.options, ...benchmark() }), 0);
   assert.equal(stdout.read(), expected);
-  assert.deepEqual(JSON.parse(first.read()).protocol, [...f.options.command, 'support', 'protocol', '--json']);
-  assert.doesNotMatch(first.read(), /emailSuggestion|@|https:\/\/account/u);
+  const discovery = JSON.parse(first.read());
+  assert.deepEqual(discovery.protocol, [...f.options.command, 'support', 'protocol', '--json']);
+  const discoveryFields = { ...discovery };
+  delete discoveryFields.protocol;
+  assert.doesNotMatch(JSON.stringify(discoveryFields), /emailSuggestion|@|https:\/\/account/u);
   assert.equal(await runStandalone(['catalog'], { stdout: sink(), stderr: second, support: f.options, ...benchmark() }), 0);
   assert.equal(second.read(), '');
   const call = async args => {
