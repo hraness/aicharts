@@ -83,6 +83,21 @@
   color-scheme: dark;
 }
 
+/* Once the palette bridge applies, shared roles repaint the vendored plain
+ * surfaces; the data-theme rules remain the pre-bootstrap fallback. */
+:root[data-palette][data-theme]:has(> body.plain-site) {
+  background: var(--background);
+}
+:root[data-palette][data-theme] .plain-site,
+.plain-site[data-palette][data-theme] {
+  --plain-background: var(--background);
+  --plain-foreground: var(--foreground);
+  --plain-link: var(--primary);
+  --plain-line: var(--line);
+  --plain-muted: var(--muted);
+  --plain-surface: var(--surface);
+}
+
 html { background: var(--background); min-width: 320px; }
 body {
   background: var(--background);

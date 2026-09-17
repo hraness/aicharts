@@ -13,5 +13,6 @@ artifacts/slopcamera/
 /outputs/
 /desktop/target/
 /target/
+public/theme-bootstrap.js
 services/usage-worker/.wrangler/
 services/usage-worker/worker-configuration.d.ts
