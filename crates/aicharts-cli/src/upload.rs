@@ -3,6 +3,8 @@
 //! split-key ledger, then sends at most one bounded frozen batch. The ledger
 //! alone owns sequence, retry and receipt state; this module never rebases or
 //! clears an uncertain flight and never replays a retained one speculatively.
+//! A definitely-refused exchange (an explicit 503 reply) may replay the
+//! identical retained bytes in place, bounded by `MAX_UNAVAILABLE_REPLAYS`.
 #![cfg_attr(not(all(test, unix)), allow(dead_code))]
 
 use aicharts_ledger::{BatchSettlement, FrozenBatch, Ledger, SenderBinding};
@@ -223,6 +225,46 @@ pub(super) fn send_once(
         .map_err(Error::Ledger)
 }
 
+/// At most this many in-place replays follow the first exchange, so one
+/// command never exceeds `1 + MAX_UNAVAILABLE_REPLAYS` exchanges.
+const MAX_UNAVAILABLE_REPLAYS: u8 = 2;
+/// Escalating pause multiplier between replays, in seconds.
+#[cfg(target_os = "macos")]
+const REPLAY_PAUSE: std::time::Duration = std::time::Duration::from_secs(1);
+
+/// One command-level send. The first exchange uses the caller's selection —
+/// a fresh `Freeze` or the explicit `Resume` recovery. A `Unavailable` failure
+/// means the remote definitely refused or never received the exchange (an
+/// explicit 503 reply, or an impossible local budget), so the retained flight
+/// may be replayed in place — a `Resume` replay carries byte-identical bytes
+/// and can never present a second distinct batch. Every other outcome,
+/// including `Uncertain`, returns at once and still demands the explicit
+/// recovery step. `pause` receives the 1-based replay ordinal before each
+/// replay so tests inject no delay.
+fn send_with_replay(
+    ledger: &mut Ledger,
+    transport: &mut impl AuthenticatedTransport,
+    first: Selection<'_>,
+    mut pause: impl FnMut(u32),
+) -> Result<BatchSettlement, Error> {
+    let mut first = Some(first);
+    let mut replays = 0u8;
+    loop {
+        // A transport failure after the freeze leaves the flight retained;
+        // every replay selects those exact bytes rather than a fresh selection.
+        let selection = first.take().unwrap_or(Selection::Resume);
+        match send_once(ledger, transport, selection) {
+            Err(Error::Transport(TransportError::Unavailable))
+                if replays < MAX_UNAVAILABLE_REPLAYS =>
+            {
+                replays += 1;
+                pause(u32::from(replays));
+            }
+            result => return result,
+        }
+    }
+}
+
 /// `aicharts upload --state-dir DIR --key-file PATH` options. `--key-file` is
 /// the retained local checkpoint key the split-key ledger was bound to; the
 /// account occurrence key and upload credential come from custody, never from
@@ -316,11 +358,12 @@ fn send(directory: &Path, key: &Path, resume: bool) -> Result<String, &'static s
     // sender on first use; an already-bound different sender refuses.
     let mut ledger = Ledger::migrate_sender_v2(directory, &identity, revision, &binding)
         .map_err(|error| error.code())?;
+    let pause = |replay| std::thread::sleep(REPLAY_PAUSE * replay);
     let settlement = if resume {
         // Explicit recovery: re-exchange the exact retained flight. The service
         // admits only its identical bytes, so replay can settle or reconcile but
         // never double-apply.
-        send_once(&mut ledger, &mut transport, Selection::Resume)
+        send_with_replay(&mut ledger, &mut transport, Selection::Resume, pause)
     } else {
         refuse_inflight(&ledger)?;
         let page = ledger
@@ -330,13 +373,14 @@ fn send(directory: &Path, key: &Path, resume: bool) -> Result<String, &'static s
             return Ok("No pending usage records; nothing was uploaded.\n".to_owned());
         }
         let ids: Vec<Id> = page.entries.iter().map(|entry| entry.id).collect();
-        send_once(
+        send_with_replay(
             &mut ledger,
             &mut transport,
             Selection::Freeze {
                 expected_revision: page.ledger_revision,
                 occurrence_ids: &ids,
             },
+            pause,
         )
     }
     .map_err(|error| error.code())?;

@@ -155,6 +155,8 @@ On macOS, `upload --state-dir DIR --key-file PATH` sends at most one bounded pen
 
 The CLI `upload::send_once` composes that sender state with one sealed authenticated transport port. The command first refuses a retained in-flight batch with `upload_recovery_required`; an uncertain earlier exchange is never replayed speculatively and requires an explicit recovery step. It then freezes the explicitly selected pending set at its expected ledger revision and releases transaction ownership before the exchange. It checks the transport binding and exact batch/journal correlation before the existing ledger settlement. Lost responses and transport failures retain the same flight; HTTP status alone cannot acknowledge records or persist device revocation. A terminal rejection still consumes its sequence range, and successful settlement preserves newer local corrections and a concurrently created successor flight. The report prints only nonsecret settlement facts: outcome, counts, the settled sequence, remaining pending records and the settled batch hash.
 
+One narrow in-command exception exists: a definitely-refused exchange — an explicit `503` reply, never an ambiguous outcome — replays the identical retained bytes at most twice more before reporting `upload_transport_unavailable`. The replay selects the existing retained flight rather than a fresh batch, so the remote can never observe a second distinct selection.
+
 The port's [native HTTPS implementation](usage-admission-v1.md#native-https-transport) has a fixed service origin, verified TLS and one synchronous exchange; its sole constructor is the enrolled custody join, which derives the bearer from the retained pairing upload secret. Its request contains owned numeric bytes, never a source path, ledger handle, polling secret or namespace key. A sticky journal byte limit rejects overflow even if an adapter ignores an append error. The implementation accepts only bounded Content-Length responses and refuses late success against a monotonic deadline; blocking OS/TLS work is not preemptible. Its exact dependency policy disables the `log` facade's macros in every build profile because a sensitive header marker alone does not suppress raw protocol traces.
 
 The sender orchestration cases establish local retry/settlement behavior with synthetic authority and ledger reopen. The HTTPS cases use local synthetic TLS and cover certificate/hostname rejection, framing, deadlines, lost replies, cleanup and a live test logger that receives no exchange records. A shared DNS module retains the single process-wide permit until the operating-system lookup finishes, including after the caller times out. It keeps the fixed service host and port, three-second budget and 16-address limit. Run these cases with `cargo test --locked -p aicharts-cli --bin aicharts -- upload:: transport_dns::`. These results do not qualify live enrollment, actual edge framing or process-death recovery.
@@ -166,6 +168,25 @@ Its private attempt schema records original credential identities and commitment
 Typed pairing and namespace handoff functions verify the original secret against its persisted `RecordIntent` before recording nonsecret custody progress. Completion calls the sealed reference-store API after reestablishing attempt durability. Its macOS instance methods now reach the private persistence backend with one lazy vault session per custody operation. Explicit macOS library constructors now use the existing absolute-anchor, descriptor, ACL and APFS checks. Opening and inspection only observe committed bytes; they do not synchronize, recover state or select a vault. The [disposable Keychain qualification](../crates/aicharts-custody/README.md#validation-and-qualification) passed through those facade methods with pairing and namespace records, including lost-reply reconciliation and locked-access refusal; the owned parent was empty after cleanup. Default User-domain keychain selection, the combined enrollment owner and live enrollment remain unqualified. On macOS the `enroll` command uses this custody to retain the pairing and namespace records; non-macOS enrollment stays refused.
 
 Use `inspect` when you need a source-free summary without recovery. `status` and `outbox --dry-run` use the ordinary ledger opener, which can recover a SQLite rollback journal; neither is the dedicated no-recovery inspector.
+
+## Stable macOS signing for credential custody
+
+The file-based macOS Keychain binds each custody item's access list to the creating program's code signature. An ad hoc signed build designates its own code hash, so every recompile loses access to items an earlier build created. Sign each build with one persistent local identity so the binding is certificate-bound and survives rebuilds:
+
+```sh
+bun run custody:signing status
+bun run custody:signing sign --binary ./target/debug/aicharts
+```
+
+`custody:signing` creates the self-signed `AI Charts Custody (Local)` certificate in the login keychain once, proves it can sign a scratch binary, signs the target with the fixed identifier `io.aicharts.cli`, then verifies the signature and its certificate-bound designated requirement. `sign` must run before `enroll` so the new custody items record the stable identity; sign again after every rebuild. The identity is a local custody anchor only — it is not release signing, notarization, or a distribution claim.
+
+Items created before the first stable-signed build still refuse the new signature. Grant access once per item by permitting the OS consent dialog for a single command:
+
+```sh
+AICHARTS_CUSTODY_INTERACTION=allow ./target/debug/aicharts status --state-dir /absolute/private/directory/aicharts-state --key-file /absolute/private/directory/aicharts.key
+```
+
+Choose "Always Allow" in the dialog. The exact value `allow` is required; any other value keeps prompts suppressed, and the grant persists under the stable designated requirement so later rebuilds need no consent.
 
 ## Inspect retained totals without writes
 

@@ -16,6 +16,21 @@ use zeroize::Zeroizing;
 
 static VAULT_OPERATION: Mutex<()> = Mutex::new(());
 
+/// Environment variable an operator sets to `allow` for exactly one process so
+/// the OS may present its native consent dialog. Items created by an earlier
+/// differently signed build refuse this build's signature; the only fix is one
+/// interactive "always allow" grant, which requires UI suppression to be off.
+/// Every other value, including an empty one, keeps prompts suppressed.
+const CONSENT_VARIABLE: &str = "AICHARTS_CUSTODY_INTERACTION";
+
+fn consent_permitted(value: Option<&std::ffi::OsStr>) -> bool {
+    value == Some(std::ffi::OsStr::new("allow"))
+}
+
+fn explicit_user_consent() -> bool {
+    consent_permitted(std::env::var_os(CONSENT_VARIABLE).as_deref())
+}
+
 pub(crate) fn with_store<T>(f: impl FnOnce(&mut dyn RawStore) -> Result<T>) -> Result<T> {
     // User-interaction policy is process-wide. The mutex owns its complete
     // lifetime, including guard drop, and also pins one keychain per operation.
@@ -24,11 +39,16 @@ pub(crate) fn with_store<T>(f: impl FnOnce(&mut dyn RawStore) -> Result<T>) -> R
         Err(TryLockError::WouldBlock) => return Err(Error::Busy),
         Err(TryLockError::Poisoned(_)) => return Err(Error::Unavailable),
     };
-    suppress_for(&NativeUi, || {
+    let run = || {
         let keychain = SecKeychain::default_for_domain(SecPreferencesDomain::User)
             .map_err(|error| read_error(error.code()).fixed())?;
         f(&mut MacStore { keychain })
-    })
+    };
+    if explicit_user_consent() {
+        run()
+    } else {
+        suppress_for(&NativeUi, run)
+    }
 }
 
 trait UiControl {
@@ -87,7 +107,7 @@ impl NativeSession {
             Err(TryLockError::Poisoned(_)) => return Err(RawError::Unavailable),
         };
         let allowed = SecKeychain::user_interaction_allowed().map_err(|_| RawError::Unavailable)?;
-        let no_ui = if allowed {
+        let no_ui = if allowed && !explicit_user_consent() {
             Some(SecKeychain::disable_user_interaction().map_err(|_| RawError::Unavailable)?)
         } else {
             None
@@ -418,6 +438,19 @@ mod tests {
         assert!(result.is_err());
         assert!(state.borrow().allowed);
         assert_eq!(state.borrow().calls, ["sample", "disable", "enable"]);
+    }
+
+    #[test]
+    fn consent_escape_requires_the_exact_allow_value() {
+        use std::ffi::OsStr;
+        assert!(!consent_permitted(None));
+        for value in [
+            "", "1", "true", "yes", "Allow", "ALLOW", "allow ", " allow", "allow\0",
+        ] {
+            assert!(!consent_permitted(Some(OsStr::new(value))));
+        }
+        assert!(consent_permitted(Some(OsStr::new("allow"))));
+        assert_eq!(CONSENT_VARIABLE, "AICHARTS_CUSTODY_INTERACTION");
     }
 
     #[test]

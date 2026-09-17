@@ -934,6 +934,81 @@ fn uncertain_exchange_retains_flight_and_invocation_refuses_replay() {
 }
 
 #[test]
+fn refused_exchange_replays_identical_retained_bytes_in_place() {
+    let fixture = Fixture::new();
+    let mut ledger = fixture.initialize(2, true);
+    let mut refused = 0u8;
+    let mut pauses = vec![];
+    let mut client = transport(move |request, body| {
+        refused += 1;
+        if refused <= 2 {
+            Err(TransportError::Unavailable)
+        } else {
+            body.append(&accepted(request))
+        }
+    });
+    let settlement = send_with_replay(
+        &mut ledger,
+        &mut client,
+        select(&[id(1), id(2)]),
+        |replay| pauses.push(replay),
+    )
+    .unwrap();
+    assert!(matches!(
+        settlement,
+        BatchSettlement::Accepted {
+            cleared_records: 2,
+            ..
+        }
+    ));
+    // Every exchange carried the identical frozen bytes — a replay, never a
+    // fresh selection.
+    assert_eq!(client.calls.len(), 3);
+    assert!(client.calls.windows(2).all(|pair| pair[0] == pair[1]));
+    assert_eq!(pauses, vec![1, 2]);
+    assert!(ledger.inflight_batch().unwrap().is_none());
+    assert_eq!(ledger.status().unwrap().pending_records, 0);
+}
+
+#[test]
+fn persistent_refusal_stays_bounded_and_keeps_the_retained_flight() {
+    let fixture = Fixture::new();
+    let mut ledger = fixture.initialize(1, true);
+    let mut client = transport(|_, _| Err(TransportError::Unavailable));
+    assert_eq!(
+        send_with_replay(&mut ledger, &mut client, select(&[id(1)]), |_| {}),
+        Err(Error::Transport(TransportError::Unavailable))
+    );
+    assert_eq!(client.calls.len(), 1 + usize::from(MAX_UNAVAILABLE_REPLAYS));
+    // The flight is still retained: the next invocation takes the explicit
+    // recovery path rather than a fresh selection.
+    assert!(ledger.inflight_batch().unwrap().is_some());
+    assert_eq!(refuse_inflight(&ledger), Err("upload_recovery_required"));
+}
+
+#[test]
+fn non_refusal_failures_never_replay_within_one_command() {
+    for failure in [
+        TransportError::Uncertain,
+        TransportError::InvalidResponse,
+        TransportError::Blocked,
+        TransportError::Unauthorized,
+    ] {
+        let fixture = Fixture::new();
+        let mut ledger = fixture.initialize(1, true);
+        let mut client = transport(move |_, _| Err(failure));
+        assert_eq!(
+            send_with_replay(&mut ledger, &mut client, select(&[id(1)]), |_| {
+                panic!("no pause before a replay that must not happen")
+            }),
+            Err(Error::Transport(failure))
+        );
+        assert_eq!(client.calls.len(), 1);
+        assert!(ledger.inflight_batch().unwrap().is_some());
+    }
+}
+
+#[test]
 fn settled_batch_clears_flight_and_pending_work_is_not_reselected() {
     let fixture = Fixture::new();
     let mut ledger = fixture.initialize(2, true);

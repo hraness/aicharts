@@ -234,6 +234,25 @@ settings change is requested. Locked or consent-required access pauses with a
 fixed error. This coordination assumes no unrelated code changes process-wide
 Keychain UI policy outside this crate.
 
+The file-based keychain binds each new item's access list to the *creating
+program's code signature*. An ad hoc signed build designates its own code hash,
+so every recompile produces a different caller identity and loses access to
+items an earlier build created. Stable access requires signing each build with
+one persistent identity — `scripts/custody-signing.ts` creates and reuses the
+self-signed `AI Charts Custody (Local)` certificate and signs builds under the
+fixed identifier `io.aicharts.cli`, so the designated requirement is
+certificate-bound rather than hash-bound.
+
+Items already created by a differently signed build still refuse a new
+signature. The only remedy is one interactive OS consent per item, which
+requires prompts this library normally suppresses. Setting
+`AICHARTS_CUSTODY_INTERACTION=allow` for one process leaves native consent
+enabled so an operator can grant the newly signed binary access; the exact
+value `allow` is required, and every other value keeps prompts suppressed.
+That grant is recorded by the item's access list under the stable designated
+requirement, so subsequent rebuilds signed with the same identity need no
+further consent.
+
 The private reference integration uses a lazy vault session. Construction makes
 no native call. Only after the manifest's filesystem durability barrier does its
 first vault operation acquire the process mutex, suppress UI and select one

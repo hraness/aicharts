@@ -183,7 +183,7 @@ pub(crate) mod unix {
         fs,
         io::{BufReader, Read, Seek, SeekFrom},
         os::unix::{ffi::OsStrExt, fs::MetadataExt},
-        path::Path,
+        path::{Path, PathBuf},
     };
 
     pub(crate) fn source_id(key: &[u8; 32], path: &Path, provider: Provider) -> [u8; 32] {
@@ -233,14 +233,58 @@ pub(crate) mod unix {
         Ok(())
     }
 
+    /// Verify every source in the wave, commit it atomically at the current
+    /// revision, then refresh the snapshot for the next wave.
+    fn commit_wave(
+        ledger: &mut Ledger,
+        snapshot: &mut aicharts_ledger::PrefixSnapshot,
+        prefix_mode: bool,
+        scans: &mut Vec<SourceScan>,
+        prefix_scans: &mut Vec<PrefixScan>,
+        verification: &[(PathBuf, PathBuf, SourceStamp)],
+    ) -> Result<aicharts_ledger::ImportReport, &'static str> {
+        // Nothing durable changes until the complete wave is valid and the
+        // ledger's revision CAS succeeds.
+        for (path, canonical, expected) in verification {
+            verify_path(path, canonical, expected)?;
+        }
+        let report = if prefix_mode {
+            ledger.commit_prefix_scans(snapshot.revision, std::mem::take(prefix_scans))
+        } else {
+            ledger.commit_scans(snapshot.revision, std::mem::take(scans))
+        }
+        .map_err(|error| error.code())?;
+        *snapshot = ledger.prefix_snapshot().map_err(|error| error.code())?;
+        Ok(report)
+    }
+
     fn collect(
         ledger: &mut Ledger,
         options: &Options,
         checkpoint_key: &[u8; 32],
         occurrence_key: &[u8; 32],
     ) -> Result<(aicharts_ledger::ImportReport, u64, u64, u64, u64), &'static str> {
+        collect_with_limit(
+            ledger,
+            options,
+            checkpoint_key,
+            occurrence_key,
+            crate::MAX_SOURCE_BYTES,
+        )
+    }
+
+    /// `wave_limit` bounds the bytes committed in one atomic wave; callers use
+    /// `crate::MAX_SOURCE_BYTES` and tests use small values to exercise
+    /// partitioning deterministically.
+    pub(super) fn collect_with_limit(
+        ledger: &mut Ledger,
+        options: &Options,
+        checkpoint_key: &[u8; 32],
+        occurrence_key: &[u8; 32],
+        wave_limit: u64,
+    ) -> Result<(aicharts_ledger::ImportReport, u64, u64, u64, u64), &'static str> {
         let prefix_mode = options.command == Command::CollectPrefix;
-        let snapshot = ledger.prefix_snapshot().map_err(|error| error.code())?;
+        let mut snapshot = ledger.prefix_snapshot().map_err(|error| error.code())?;
         // Validate the explicit mode before visiting any source. Empty commits
         // validate layout/revision without advancing state or migrating it.
         if prefix_mode {
@@ -256,10 +300,19 @@ pub(crate) mod unix {
         let mut deferred = 0u64;
         let mut bytes_scanned = 0u64;
         let mut lines_read = 0u64;
+        // Each commit wave stays inside the per-commit byte and measurement
+        // budgets; a source tree larger than either bound completes across
+        // consecutive atomic waves instead of failing the entire collect.
+        let mut wave_bytes = 0u64;
         let mut retained = 0usize;
         let mut scans = vec![];
         let mut prefix_scans = vec![];
         let mut verification = vec![];
+        let mut report = aicharts_ledger::ImportReport {
+            revision: snapshot.revision,
+            sources_updated: 0,
+            occurrences_changed: 0,
+        };
         for (provider, path) in &options.sources {
             let mut files = vec![];
             crate::source_files(path, *provider, 0, &mut files, &mut visited)?;
@@ -277,7 +330,7 @@ pub(crate) mod unix {
                 let mut file = crate::open_regular(&path).map_err(|_| "source_read_failed")?;
                 let before = stamp(&file.metadata().map_err(|_| "source_metadata_failed")?)?;
                 verify_path(&path, &canonical, &before)?;
-                let checkpoint = snapshot.checkpoints.get(&source_id);
+                let checkpoint = snapshot.checkpoints.get(&source_id).copied();
                 if !options.rescan
                     && checkpoint.is_some_and(|old| {
                         old.stamp == before && (!prefix_mode || old.prefix.is_some())
@@ -294,12 +347,44 @@ pub(crate) mod unix {
                     verification.push((path, canonical, before));
                     continue;
                 }
+                if before.bytes > wave_limit {
+                    // A single source cannot be partitioned; the per-source
+                    // read bound still applies inside one wave.
+                    return Err("source_byte_limit");
+                }
+                if wave_bytes > 0
+                    && wave_bytes
+                        .checked_add(before.bytes)
+                        .ok_or("source_byte_limit")?
+                        > wave_limit
+                {
+                    let committed = commit_wave(
+                        ledger,
+                        &mut snapshot,
+                        prefix_mode,
+                        &mut scans,
+                        &mut prefix_scans,
+                        &verification,
+                    )?;
+                    report.sources_updated = report
+                        .sources_updated
+                        .checked_add(committed.sources_updated)
+                        .ok_or("source_file_limit")?;
+                    report.occurrences_changed = report
+                        .occurrences_changed
+                        .checked_add(committed.occurrences_changed)
+                        .ok_or("retained_measurement_limit")?;
+                    report.revision = committed.revision;
+                    wave_bytes = 0;
+                    retained = 0;
+                    verification.clear();
+                }
                 bytes_scanned = bytes_scanned
                     .checked_add(before.bytes)
                     .ok_or("source_byte_limit")?;
-                if bytes_scanned > crate::MAX_SOURCE_BYTES {
-                    return Err("source_byte_limit");
-                }
+                wave_bytes = wave_bytes
+                    .checked_add(before.bytes)
+                    .ok_or("source_byte_limit")?;
                 // A physical JSONL snapshot ends at a newline. Accepting an
                 // unfinished append can checkpoint an event before its final
                 // fields arrive. A whole-document source has no tail marker;
@@ -411,17 +496,23 @@ pub(crate) mod unix {
         if total_files == 0 {
             return Err("no_source_files");
         }
-        // Recheck every source after all parsing. Nothing durable changes until
-        // the complete set is valid and the ledger's revision CAS succeeds.
-        for (path, canonical, expected) in &verification {
-            verify_path(path, canonical, expected)?;
-        }
-        let report = if prefix_mode {
-            ledger.commit_prefix_scans(snapshot.revision, prefix_scans)
-        } else {
-            ledger.commit_scans(snapshot.revision, scans)
-        }
-        .map_err(|error| error.code())?;
+        let committed = commit_wave(
+            ledger,
+            &mut snapshot,
+            prefix_mode,
+            &mut scans,
+            &mut prefix_scans,
+            &verification,
+        )?;
+        report.sources_updated = report
+            .sources_updated
+            .checked_add(committed.sources_updated)
+            .ok_or("source_file_limit")?;
+        report.occurrences_changed = report
+            .occurrences_changed
+            .checked_add(committed.occurrences_changed)
+            .ok_or("retained_measurement_limit")?;
+        report.revision = committed.revision;
         Ok((report, skipped, deferred, lines_read, bytes_scanned))
     }
 
@@ -795,6 +886,67 @@ mod tests {
                 .err(),
                 Some("ledger_namespace_mismatch")
             );
+        }
+
+        #[test]
+        fn collect_partitions_sources_across_bounded_commit_waves() {
+            let fixture = Fixture::new();
+            let dir = fixture.create_state();
+            unix::run_with_occurrence(options(&dir, None, &["init"]), &CHECKPOINT, Some(NAMESPACE))
+                .unwrap();
+            let src = fixture.0.join("src");
+            std::fs::DirBuilder::new().mode(0o700).create(&src).unwrap();
+            for index in 0..3u8 {
+                fs::write(
+                    src.join(format!("session-{index}.jsonl")),
+                    format!(
+                        concat!(
+                            r#"{{"type":"assistant","timestamp":"2026-09-10T10:00:0{i}Z","sessionId":"session-{i}","requestId":"r{i}","message":{{"id":"message-{i}","usage":{{"input_tokens":10,"output_tokens":2,"cache_read_input_tokens":3,"cache_creation_input_tokens":0}}}}}}"#,
+                            "\n"
+                        ),
+                        i = index
+                    ),
+                )
+                .unwrap();
+            }
+            // One file fits a wave, but two never do: three files must
+            // complete across three atomic commits instead of failing.
+            let size = fs::metadata(src.join("session-0.jsonl")).unwrap().len();
+            let options = options(&dir, Some(&src), &["collect"]);
+            let mut ledger = aicharts_ledger::Ledger::open_with_identity(
+                &dir,
+                &aicharts_ledger::LedgerIdentity::SplitKeys {
+                    checkpoint: &CHECKPOINT,
+                    occurrence: &NAMESPACE,
+                    namespace_version: 1,
+                },
+            )
+            .unwrap();
+            let before = ledger.status().unwrap().revision;
+            let (report, skipped, _deferred, _lines, bytes) = unix::collect_with_limit(
+                &mut ledger,
+                &options,
+                &CHECKPOINT,
+                &NAMESPACE,
+                size * 2 - 1,
+            )
+            .unwrap();
+            assert_eq!(report.sources_updated, 3);
+            assert_eq!(skipped, 0);
+            assert_eq!(bytes, size * 3);
+            assert_eq!(ledger.status().unwrap().revision - before, 3);
+            // An idempotent re-collect skips every source and commits nothing.
+            let (report, skipped, _deferred, _lines, bytes) = unix::collect_with_limit(
+                &mut ledger,
+                &options,
+                &CHECKPOINT,
+                &NAMESPACE,
+                size * 2 - 1,
+            )
+            .unwrap();
+            assert_eq!((report.sources_updated, skipped), (0, 3));
+            assert_eq!(bytes, 0);
+            assert_eq!(ledger.status().unwrap().revision - before, 3);
         }
 
         #[test]

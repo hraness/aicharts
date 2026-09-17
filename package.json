@@ -99,6 +99,7 @@
     "menubar:uninstall": "bun run scripts/menubar.ts uninstall",
     "menubar:status": "bun run scripts/menubar.ts status",
     "menubar:build": "bun run scripts/menubar-build.ts",
+    "custody:signing": "bun run scripts/custody-signing.ts",
     "outputs": "bun -e 'const {mkdirSync}=require(\"node:fs\");const p=require(\"node:path\").join(process.cwd(),\"outputs\");mkdirSync(p,{recursive:true});console.log(p)'",
     "skill:support:sync": "bun run scripts/skill-support-runtime.ts",
     "skill:support:check": "bun run scripts/skill-support-runtime.ts --check"
