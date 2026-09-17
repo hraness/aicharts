@@ -9,6 +9,7 @@ import type { Metadata, Viewport } from "next";
 import type { CSSProperties, ReactNode } from "react";
 
 import { AnalyticsBoundary } from "@/components/analytics-boundary";
+import { FoilController } from "@/components/foil-controller";
 import { SITE_HEADER_LINKS } from "@/components/site-header";
 
 import "./globals.css";
@@ -112,7 +113,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
             brandHref="/"
             brandLabel="AI Charts home"
             links={SITE_HEADER_LINKS}
-            name={site.domain}
+            name={site.name}
           />
           <HranessSiteFooter
             support={{
@@ -128,6 +129,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
             }}
           />
           <AnalyticsBoundary />
+          <FoilController />
         </DesignPaletteProvider>
       </body>
     </html>
