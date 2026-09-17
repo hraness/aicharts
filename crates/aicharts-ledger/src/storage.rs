@@ -8,7 +8,8 @@ use sha2::Sha256;
 use crate::{Error, LedgerIdentity, Result};
 
 const APPLICATION_ID: i32 = 0x4149434c;
-const MAX_DATABASE_BYTES: u64 = 256 * 1024 * 1024;
+const MAX_DATABASE_BYTES: u64 = 512 * 1024 * 1024;
+const MAX_PAGES: i64 = (MAX_DATABASE_BYTES / 4096) as i64;
 pub(super) const MAX_SQLITE_VALUE_BYTES: i32 = 262_144;
 const TABLES: [(&str, &str); 5] = [
     ("meta", "CREATE TABLE meta(singleton INTEGER PRIMARY KEY CHECK(singleton=1), namespace BLOB NOT NULL CHECK(length(namespace)=32), revision INTEGER NOT NULL CHECK(revision>=0)) STRICT"),
@@ -131,9 +132,8 @@ pub(super) fn initialize(dir: &Path, identity: &LedgerIdentity<'_>) -> Result<Co
     file.sync_all().map_err(|_| Error::Storage)?;
     validate_paths(dir)?;
     let mut connection = connect(&dir.join("usage.sqlite3"))?;
-    connection.execute_batch(
-        "PRAGMA page_size=4096; PRAGMA max_page_count=65536; PRAGMA journal_mode=DELETE;",
-    )?;
+    connection.execute_batch("PRAGMA page_size=4096; PRAGMA journal_mode=DELETE;")?;
+    connection.pragma_update(None, "max_page_count", MAX_PAGES)?;
     let tx = connection.transaction_with_behavior(rusqlite::TransactionBehavior::Immediate)?;
     tx.pragma_update(None, "application_id", APPLICATION_ID)?;
     tx.pragma_update(None, "user_version", 1)?;
@@ -170,8 +170,11 @@ pub(super) fn open(dir: &Path, identity: &LedgerIdentity<'_>) -> Result<Connecti
     validate_schema(&connection, &expected, false)?;
     // The cap is a connection-local setting. Reapply only after validating this
     // owned schema and namespace; it does not migrate or delete existing data.
-    let cap: i64 = connection.query_row("PRAGMA max_page_count=65536", [], |row| row.get(0))?;
-    if cap != 65536 {
+    let cap: i64 =
+        connection.query_row(&format!("PRAGMA max_page_count={MAX_PAGES}"), [], |row| {
+            row.get(0)
+        })?;
+    if cap != MAX_PAGES {
         return Err(Error::Limit);
     }
     validate_paths(dir)?;

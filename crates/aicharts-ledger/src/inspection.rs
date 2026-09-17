@@ -108,8 +108,10 @@ impl ReadOnlyLedger {
 fn inventory(connection: &rusqlite::Connection, revision: u64) -> Result<Vec<InventoryRecord>> {
     // Explicit measurements inventory: do not substitute the current outbox
     // equality invariant for this API's history-coverage contract.
-    let mut statement = connection
-        .prepare("SELECT id,revision,frame FROM measurements ORDER BY id LIMIT 100001")?;
+    let mut statement = connection.prepare(&format!(
+        "SELECT id,revision,frame FROM measurements ORDER BY id LIMIT {}",
+        crate::MAX_OCCURRENCES + 1
+    ))?;
     let mut rows = statement.query([])?;
     let mut result = Vec::new();
     while let Some(row) = rows.next()? {

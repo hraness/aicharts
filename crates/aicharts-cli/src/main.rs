@@ -28,13 +28,38 @@ use aicharts_core::{merge_collections, parse_reader, Collection, Warning};
 use aicharts_protocol::{encode, Policy, Provider, Registry};
 
 const MAX_FILES: usize = 2_048;
+/// Files discovered under one explicit source tree, and the deduplicated
+/// total a persistent collection admits across all trees. Deliberately larger
+/// than the retained ledger source bound: bounded waves then commit every
+/// discovered source until the retained cap refuses further growth.
+const MAX_DISCOVERY_FILES: usize = 65_536;
+/// Changed sources committed in one atomic wave: the 256 MiB byte bound and
+/// this file bound both bound a single commit's work.
+const MAX_WAVE_FILES: u64 = 2_048;
 const MAX_DEPTH: usize = 16;
-const MAX_ENTRIES: usize = 20_000;
+const MAX_ENTRIES: usize = 262_144;
 const MAX_SOURCE_BYTES: u64 = 256 * 1_024 * 1_024;
 /// Serializes test fixtures whose repository-path create/remove would race
 /// another fixture's descriptor-pinned path readbacks.
 #[cfg(test)]
 pub(crate) static TEST_FIXTURE_PARENT: std::sync::Mutex<()> = std::sync::Mutex::new(());
+/// Argument-shape errors point an interactive caller at the command contract;
+/// state and data errors keep their single line so the cause stays unambiguous.
+const USAGE_HINT_CODES: &[&str] = &[
+    "invalid_command",
+    "invalid_option",
+    "missing_option_value",
+    "explicit_key_and_source_required",
+    "explicit_source_required",
+    "state_directory_required",
+    "key_required",
+    "output_required",
+    "occurrence_key_required",
+    "invalid_interval",
+    "invalid_retry_attempts",
+    "upload_not_enabled_use_dry_run",
+    "too_many_sources",
+];
 const HELP: &str = "AI Charts Usage — local-only foundation
 
   aicharts --version [--json]
@@ -58,6 +83,7 @@ const HELP: &str = "AI Charts Usage — local-only foundation
   aicharts reindex-plan --dry-run --state-dir OLD --key-file PATH [--codex FILE_OR_DIR] [--claude FILE_OR_DIR] [--devin FILE_OR_DIR] [--json]
   aicharts reindex-prepare --state-dir OLD --key-file PATH --shadow-dir NEW --occurrence-key-file PATH [--codex FILE_OR_DIR] [--claude FILE_OR_DIR] [--devin FILE_OR_DIR] [--json]
 
+Every command also answers `aicharts COMMAND --help` with its contract.
 Sources may be repeated. Directories scan .jsonl files (.json ATIF transcripts
 for --devin) and skip symlink entries.
 turns requires explicit regular files instead; it never scans directories. It
@@ -262,6 +288,7 @@ fn source_files(
     depth: usize,
     files: &mut Vec<PathBuf>,
     visited: &mut usize,
+    file_limit: usize,
 ) -> Result<(), &'static str> {
     *visited += 1;
     if *visited > MAX_ENTRIES {
@@ -282,7 +309,7 @@ fn source_files(
             "jsonl"
         };
         if depth == 0 || path.extension().is_some_and(|s| s == extension) {
-            if files.len() >= MAX_FILES {
+            if files.len() >= file_limit {
                 return Err("source_file_limit");
             }
             files.push(path.to_path_buf());
@@ -302,7 +329,14 @@ fn source_files(
                 }
                 continue;
             }
-            source_files(&entry.path(), provider, depth + 1, files, visited)?;
+            source_files(
+                &entry.path(),
+                provider,
+                depth + 1,
+                files,
+                visited,
+                file_limit,
+            )?;
         }
     } else {
         return Err("source_not_regular");
@@ -320,7 +354,7 @@ fn collect(options: &Options) -> Result<Collection, &'static str> {
     let mut retained_measurements = 0usize;
     for (provider, source) in &options.sources {
         let mut files = vec![];
-        source_files(source, *provider, 0, &mut files, &mut visited)?;
+        source_files(source, *provider, 0, &mut files, &mut visited, MAX_FILES)?;
         files.sort();
         for file in files {
             let canonical = fs::canonicalize(&file).map_err(|_| "source_metadata_failed")?;
@@ -432,6 +466,29 @@ fn run(args: &[String]) -> Result<String, &'static str> {
     if args.is_empty() || args == ["--help"] || args == ["-h"] {
         return Ok(HELP.to_owned());
     }
+    // turns, sessions, daemon and support answer their own help inside their
+    // runners; every other known command gets the top-level contract.
+    if args.len() == 2
+        && matches!(args[1].as_str(), "--help" | "-h")
+        && matches!(
+            args[0].as_str(),
+            "usage"
+                | "keygen"
+                | "init"
+                | "collect"
+                | "prefix-enable"
+                | "collect-prefix"
+                | "status"
+                | "outbox"
+                | "inspect"
+                | "enroll"
+                | "reindex-plan"
+                | "reindex-prepare"
+                | "upload"
+        )
+    {
+        return Ok(HELP.to_owned());
+    }
     if args.first().map(String::as_str) == Some("turns") {
         return turns::run(args);
     }
@@ -518,6 +575,11 @@ fn main() {
         }
         Err(code) => {
             eprintln!("aicharts: {code}");
+            // Piped output keeps the exact one-line contract; an interactive
+            // caller gets a pointer to the command contract for usage errors.
+            if io::stderr().is_terminal() && USAGE_HINT_CODES.contains(&code) {
+                eprintln!("aicharts: run 'aicharts --help' for the command contract");
+            }
             std::process::exit(2);
         }
     }
@@ -579,10 +641,26 @@ mod tests {
         std::fs::write(dir.join("b.jsonl"), b"").unwrap();
         let mut files = vec![];
         let mut visited = 0;
-        source_files(&dir, Provider::Devin, 0, &mut files, &mut visited).unwrap();
+        source_files(
+            &dir,
+            Provider::Devin,
+            0,
+            &mut files,
+            &mut visited,
+            MAX_FILES,
+        )
+        .unwrap();
         assert_eq!(files, vec![dir.join("a.json")]);
         files.clear();
-        source_files(&dir, Provider::ClaudeCode, 0, &mut files, &mut visited).unwrap();
+        source_files(
+            &dir,
+            Provider::ClaudeCode,
+            0,
+            &mut files,
+            &mut visited,
+            MAX_FILES,
+        )
+        .unwrap();
         assert_eq!(files, vec![dir.join("b.jsonl")]);
         // A source named explicitly is the caller's choice, whatever its name.
         files.clear();
@@ -592,6 +670,7 @@ mod tests {
             0,
             &mut files,
             &mut visited,
+            MAX_FILES,
         )
         .unwrap();
         assert_eq!(files, vec![dir.join("b.jsonl")]);
