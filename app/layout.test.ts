@@ -1,19 +1,26 @@
 import { expect, test } from "bun:test";
-import { hranessAttribution } from "@hraness/site-footer";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
 import RootLayout from "./layout";
 
-test("the root layout renders the shared Hraness footer after every route", async () => {
+test("the root layout renders the in-flow content footer and the shared Hraness footer after every route", async () => {
   const source = await Bun.file(new URL("./layout.tsx", import.meta.url)).text();
   const children = source.indexOf("{children}");
+  const contentFooter = source.indexOf("<MarketingSiteFooter");
   const footer = source.indexOf("<HranessSiteFooter");
   const analytics = source.indexOf("<AnalyticsBoundary />");
 
+  expect(source).toContain('from "@hraness/design-kit/react/server"');
   expect(source).toContain('from "@hraness/site-footer/react"');
   expect(source).toContain('from "@/components/analytics-boundary"');
+  expect(source).toContain('from "@/components/site-header"');
   expect(source).toContain('from "./mailing-config"');
+  expect(source).toContain('ariaLabel="AI Charts"');
+  expect(source).toContain('src="/icon.png"');
+  expect(source).toContain('brandLabel="AI Charts home"');
+  expect(source).toContain("links={SITE_HEADER_LINKS}");
+  expect(source).toContain("name={site.domain}");
   expect(source).toContain("mailingList={aiChartsMailingListConfig()}");
   expect(source).toContain('x: { href: "https://x.com/aichartsio", label: "AI Charts on X" }');
   expect(source).toContain(
@@ -22,11 +29,12 @@ test("the root layout renders the shared Hraness footer after every route", asyn
   expect(source).not.toContain("bsky.app");
   expect(source).not.toContain("bluesky");
   expect(children).toBeGreaterThan(-1);
-  expect(footer).toBeGreaterThan(children);
+  expect(contentFooter).toBeGreaterThan(children);
+  expect(footer).toBeGreaterThan(contentFooter);
   expect(analytics).toBeGreaterThan(footer);
 });
 
-test("every route inherits one shared footer carrying the package-owned Hraness attribution", () => {
+test("every route inherits one in-flow content footer and one shared footer carrying the package-owned Hraness attribution", () => {
   const marker = "route-content-marker";
   const html = renderToStaticMarkup(createElement(
     RootLayout,
@@ -34,11 +42,17 @@ test("every route inherits one shared footer carrying the package-owned Hraness 
     createElement("main", { id: marker }, "Route content"),
   ));
 
+  expect(html.match(/data-hraness-marketing="footer"/gu)).toHaveLength(1);
   expect(html.match(/id="hraness-site-footer"/gu)).toHaveLength(1);
-  expect(html.match(/data-slot="hraness-attribution"/gu)).toHaveLength(1);
-  expect(html).toContain(`>${hranessAttribution.title}</p>`);
-  expect(html).toContain(`>${hranessAttribution.subtitle}</p>`);
-  expect(html.indexOf(`id="${marker}"`)).toBeLessThan(html.indexOf('id="hraness-site-footer"'));
+  expect(html.match(/data-slot="hraness-site-footer"/gu)).toHaveLength(1);
+  expect(html).toContain('aria-label="AI Charts"');
+  expect(html).toContain('aria-label="AI Charts home"');
+  expect(html).toContain('src="/icon.png"');
+  expect(html).toContain(">aicharts.io</span>");
+  expect(html).toContain('aria-label="Hraness home"');
+  expect(html).toContain(">by Hraness</span>");
+  expect(html.indexOf(`id="${marker}"`)).toBeLessThan(html.indexOf('data-hraness-marketing="footer"'));
+  expect(html.indexOf('data-hraness-marketing="footer"')).toBeLessThan(html.indexOf('id="hraness-site-footer"'));
   expect(html).toContain('name="audience" type="hidden" value="aicharts"');
   expect(html).toContain('href="https://x.com/aichartsio"');
   expect(html).not.toContain("Ben Guo");

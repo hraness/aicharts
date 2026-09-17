@@ -320,7 +320,7 @@ async function verifyBenchmarkAtlas(browser: Browser, baseUrl: string): Promise<
     await intelligence.locator('[data-intelligence-metric="outputTokensPerTask"]').click();
     invariant(await intelligence.locator(".intelligence-efficiency__inspector h3").textContent() === selectedConfiguration, "Switching Pareto axes must preserve the selected configuration.");
     invariant(await pareto.isVisible(), "The Pareto curve disappeared after changing axes.");
-    await page.getByRole("link", { name: "Benchmarks", exact: true }).click();
+    await page.getByLabel("Site").getByRole("link", { name: "Benchmarks", exact: true }).click();
     await page.waitForURL(`${baseUrl}/benchmarks`);
     const atlas = page.locator("#explore");
     invariant(await atlas.locator(".atlas-row").count() === 8, "Default ranking must show eight results, not a wall of labels.");
