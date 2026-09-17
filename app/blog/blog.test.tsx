@@ -796,7 +796,10 @@ describe("AI Charts benchmark notes", () => {
     });
     const withFusion = createDevinFusionCostSavingArticle({
       ...parsed.value,
-      records: [...parsed.value.records, fusionRecord],
+      records: [
+        ...parsed.value.records.filter(record => !record.agent.includes("Fusion")),
+        fusionRecord,
+      ],
     });
     const without = articleToMarkdown(withoutFusion);
     const withRows = articleToMarkdown(withFusion);

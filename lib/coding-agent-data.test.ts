@@ -37,8 +37,8 @@ const validSnapshot: CodingAgentSnapshot = {
   schemaVersion: 3,
   source: {
     benchmarkDatasets: {
-      deepSwe: "deep-swe",
-      terminalBench: "terminal-bench-v2.1",
+      deepSwe: "deep-swe-v1.1",
+      terminalBench: "terminal-bench-v4",
       sweAtlas: "swe-atlas-qna",
     },
     name: "Artificial Analysis",

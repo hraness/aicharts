@@ -29,7 +29,7 @@ function pngDimensions(bytes: ArrayBuffer): Readonly<{ height: number; width: nu
 describe("model card ImageResponse rendering", () => {
   test("keeps the collectible identity focused while naming official release provenance", () => {
     const card = MODEL_CARD_PRESENTATIONS.find(candidate => (
-      candidate.canonicalModelId === "anthropic/claude-fable-5"
+      candidate.canonicalModelId === "anthropic/claude-fable-5.1"
       && candidate.profileSlug === "max"
     ));
     expect(card).toBeDefined();
@@ -40,7 +40,7 @@ describe("model card ImageResponse rendering", () => {
     const portrait = renderToStaticMarkup(<ModelCardRasterFace card={card} />);
     const social = renderToStaticMarkup(<ModelCardSocialImage card={card} />);
     for (const markup of [portrait, social]) {
-      expect(markup).toContain(">Fable 5 Max</span>");
+      expect(markup).toContain(">Fable 5.1 Max</span>");
       expect(markup).toContain(`>${card.harnessLabel}</span>`);
       expect(markup).toContain("aicharts.io");
       expect(markup).not.toContain("with fallback");
@@ -96,11 +96,10 @@ describe("model card ImageResponse rendering", () => {
 
   test("renders the shared illuminated geometry at every density", async () => {
     for (const density of [1, 2, 3, 4, 5] as const) {
-      const card = MODEL_CARD_PRESENTATIONS.find(candidate => (
-        candidate.illuminationDensity === density
-      ));
-      expect(card).toBeDefined();
-      if (card === undefined) continue;
+      const base = MODEL_CARD_PRESENTATIONS[0];
+      expect(base).toBeDefined();
+      if (base === undefined) continue;
+      const card = { ...base, illuminationDensity: density };
       const markup = renderToStaticMarkup(<ModelCardRasterFace card={card} />);
       expect(markup).toContain(`data-illumination-density="${density}"`);
       expect(markup).toContain(`data-illumination-accent="${card.accentFamily}"`);

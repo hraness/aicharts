@@ -207,7 +207,7 @@ export function createOpenModelsCodingAgentsArticle(
       ),
       heading("What the coding-agent snapshot records"),
       paragraph(
-        `AI Charts retrieved the checked snapshot on ${retrievedAt}. The dataset contains ${summary.recordCount} model-agent configurations across ${summary.modelCount} models, ${summary.agentCount} agent harnesses, and ${summary.providerCount} providers. AA Index is the snapshot's overall 0–100 score across code changes, terminal work, and repository understanding. DeepSWE, Terminal-Bench v2.1, and SWE-Atlas-QnA stay separate. The `,
+        `AI Charts retrieved the checked snapshot on ${retrievedAt}. The dataset contains ${summary.recordCount} model-agent configurations across ${summary.modelCount} models, ${summary.agentCount} agent harnesses, and ${summary.providerCount} providers. AA Index is the snapshot's overall 0–100 score across code changes, terminal work, and repository understanding. DeepSWE v1.1, Terminal-Bench 4, and SWE-Atlas-QnA stay separate. The `,
         { href: "/data", text: "dataset page" },
         " lists every configuration and the highest stored score for each metric.",
       ),

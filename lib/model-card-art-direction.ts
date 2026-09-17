@@ -26,7 +26,6 @@ export const modelCardProviderColors = {
   alibaba_cloud: "#f28e2b",
   anthropic: "#ff665c",
   cognition: "#d7ef39",
-  cursor: "#f062a6",
   deepseek: "#499894",
   google: "#67c95c",
   meta: "#b07aa1",

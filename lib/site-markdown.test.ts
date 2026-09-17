@@ -166,7 +166,7 @@ describe("markdown representations", () => {
     expect(data.body).toContain(intelligence.source.termsUrl);
     expect(data.body).toContain(snapshot.source.url);
     expect(data.body).toContain("## All configurations");
-    expect(data.body).toContain("| Model | Agent | Provider | Setting | AA Index | DeepSWE | Terminal-Bench v2.1 | SWE-Atlas-QnA | Cost |");
+    expect(data.body).toContain("| Model | Agent | Provider | Setting | AA Index | DeepSWE v1.1 | Terminal-Bench 4 | SWE-Atlas-QnA | Cost |");
     const cards = markdownForPath("/models");
     expect(cards.body).toContain(`# ${modelCardsHeading}`);
     expect(cards.body).toContain(modelCardsLede);
@@ -213,10 +213,10 @@ describe("markdown representations", () => {
       expect(document.body).not.toContain("undefined");
     }
     expect(coding.body).toStartWith("# Coding agent comparisons\n");
-    expect(coding.body).toContain("DeepSWE accuracy against API cost");
+    expect(coding.body).toContain("DeepSWE v1.1 accuracy against API cost");
     expect(coding.body).toContain(snapshot.source.url);
     expect(coding.body).toContain(formatRetrievedAt(snapshot.source.retrievedAt));
-    expect(coding.body).toContain("Terminal-Bench v2.1");
+    expect(coding.body).toContain("Coding Agent Index v1.5");
     expect(coding.body).toContain("/benchmarks?atlas=terminal-bench-4#explore");
     expect(coding.body).toContain("/data/coding-agents.json");
     expect(coding.body).not.toContain(atlasDefaultChartMarkdown());

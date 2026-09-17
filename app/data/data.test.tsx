@@ -168,7 +168,7 @@ describe("benchmark dataset surface", () => {
     expect(markup).toContain('href="/data/terminal-bench-4.json"');
     expect(markup).toContain(terminalBench.source.repositoryCommitUrl);
     expect(markup).toContain(terminalBench.source.repositoryCommittedAt);
-    expect(markup).toContain("breaking exam generation");
+    expect(markup).toContain("standalone Terminal-Bench 4 owner cohort");
     expect(markup).toContain('id="terminal-bench-science"');
     expect(markup).toContain("Terminal-Bench-Science 0.1");
     expect(markup).toContain('href="/data/terminal-bench-science-0-1.json"');
@@ -305,8 +305,8 @@ describe("benchmark dataset surface", () => {
     });
     expect(data.variableMeasured.map(variable => variable.name)).toEqual([
       "AA Index",
-      "DeepSWE",
-      "Terminal-Bench v2.1",
+      "DeepSWE v1.1",
+      "Terminal-Bench 4",
       "SWE-Atlas-QnA",
       "API cost per task",
       "Active time per task",

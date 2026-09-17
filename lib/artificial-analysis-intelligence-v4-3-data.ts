@@ -11,7 +11,7 @@ export const ARTIFICIAL_ANALYSIS_INTELLIGENCE_V43_EVALUATIONS = [
   "AA-Briefcase",
   "GDPval-AA v2",
   "AutomationBench-AA",
-  "Terminal-Bench v4.0",
+  "Terminal-Bench 4.0",
   "SciCode",
   "Humanity's Last Exam",
   "GDP.pdf",

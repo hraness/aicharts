@@ -312,11 +312,11 @@ export default function CodingAgentDatasetPage() {
               </time>.
             </p>
             <p>
-              Terminal-Bench 4 is a breaking exam generation. Its scores remain
-              separate from the Terminal-Bench v2.1 field in the Artificial
-              Analysis dataset below. Every TB4 row retains its model, agent,
-              agent version, effort, accuracy, 95% confidence interval, trials,
-              cost, tokens, duration, and pinned source files.
+              This standalone Terminal-Bench 4 owner cohort remains separate
+              from the Terminal-Bench 4 component reported inside the Artificial
+              Analysis Coding Agent Index. Every standalone TB4 row retains its
+              model, agent, agent version, effort, accuracy, 95% confidence
+              interval, trials, cost, tokens, duration, and pinned source files.
             </p>
             <a
               className="plain-publication__primary-link"
@@ -466,10 +466,10 @@ export default function CodingAgentDatasetPage() {
 
             <h2 id="source">Artificial Analysis coding-agent source and refresh</h2>
             <p>
-              The source is the public{" "}
+              The source is the public Coding Agent Index v1.5{" "}
               <a href={snapshot.source.url}>
                 {snapshot.source.name} coding-agents comparison
-              </a>.
+              </a>, composed of DeepSWE v1.1, Terminal-Bench 4, and SWE-Atlas-QnA.
               AI Charts retrieved this snapshot on{" "}
               <time dateTime={snapshot.source.retrievedAt}>
                 {formatRetrievedAt(snapshot.source.retrievedAt)}

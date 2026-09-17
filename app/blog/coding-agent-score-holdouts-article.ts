@@ -217,10 +217,10 @@ export function createCodingAgentScoreHoldoutsArticle(
         ]),
       ),
       paragraph(
-        "AA Index is the snapshot’s overall 0–100 score across code changes, terminal work, and repository understanding. DeepSWE scores long-horizon software-engineering tasks with automated code verification. Terminal-Bench v2.1 scores agentic terminal-use tasks with automated test-suite verification. SWE-Atlas-QnA scores repository-understanding questions with a strict resolve verifier. Those definitions are the ones on the dataset page. They are different tasks.",
+        "AA Index is the snapshot’s overall 0–100 score across code changes, terminal work, and repository understanding. DeepSWE v1.1 scores long-horizon software-engineering tasks with automated code verification. Terminal-Bench 4 scores agentic terminal-use tasks with automated test-suite verification. SWE-Atlas-QnA scores repository-understanding questions with a strict resolve verifier. Those definitions are the ones on the dataset page. They are different tasks.",
       ),
       paragraph(
-        `The highest stored AA Index is ${formatBenchmarkScore(aaLeader.value)} for ${aaLeader.record.model} on ${aaLeader.record.agent} at the ${aaLeader.record.setting} setting. The highest stored DeepSWE is ${formatBenchmarkScore(deepSweLeader.value)} for ${deepSweLeader.record.model} on ${deepSweLeader.record.agent} at the ${deepSweLeader.record.setting} setting. The highest stored Terminal-Bench v2.1 is ${formatBenchmarkScore(terminalLeader.value)} for ${terminalLeader.record.model} on ${terminalLeader.record.agent}. The highest stored SWE-Atlas-QnA is ${formatBenchmarkScore(sweAtlasLeader.value)} for ${sweAtlasLeader.record.model} on ${sweAtlasLeader.record.agent}. One named configuration does not own every column.`,
+        `The highest stored AA Index is ${formatBenchmarkScore(aaLeader.value)} for ${aaLeader.record.model} on ${aaLeader.record.agent} at the ${aaLeader.record.setting} setting. The highest stored DeepSWE v1.1 is ${formatBenchmarkScore(deepSweLeader.value)} for ${deepSweLeader.record.model} on ${deepSweLeader.record.agent} at the ${deepSweLeader.record.setting} setting. The highest stored Terminal-Bench 4 is ${formatBenchmarkScore(terminalLeader.value)} for ${terminalLeader.record.model} on ${terminalLeader.record.agent}. The highest stored SWE-Atlas-QnA is ${formatBenchmarkScore(sweAtlasLeader.value)} for ${sweAtlasLeader.record.model} on ${sweAtlasLeader.record.agent}. One named configuration does not own every column.`,
       ),
       table(
         `Stored component scores for the highest AA Index configuration in the ${snapshot.source.name} snapshot retrieved ${retrievedAt}, beside the highest stored value for each metric`,
@@ -232,12 +232,12 @@ export function createCodingAgentScoreHoldoutsArticle(
             textCell(`${formatBenchmarkScore(aaLeader.value)}, ${aaLeader.record.model}`),
           ],
           [
-            textCell("DeepSWE"),
+            textCell("DeepSWE v1.1"),
             textCell(storedScore(aaLeader, "deepSwe")),
             textCell(`${formatBenchmarkScore(deepSweLeader.value)}, ${deepSweLeader.record.model}`),
           ],
           [
-            textCell("Terminal-Bench v2.1"),
+            textCell("Terminal-Bench 4"),
             textCell(storedScore(aaLeader, "terminalBench")),
             textCell(`${formatBenchmarkScore(terminalLeader.value)}, ${terminalLeader.record.model}`),
           ],
@@ -249,7 +249,7 @@ export function createCodingAgentScoreHoldoutsArticle(
         ],
       ),
       paragraph(
-        "That split is already a weak holdout inside the snapshot. A configuration can store the highest AA Index and still store less than another configuration on DeepSWE or Terminal-Bench v2.1. The inverse is also in the table. Citing one high cell as “the coding-agent result” hides the other three cells. It also hides the larger gap Luu is after: tasks that never entered the published suite.",
+        "That split is already a weak holdout inside the snapshot. A configuration can store the highest AA Index and still store less than another configuration on DeepSWE v1.1 or Terminal-Bench 4. The inverse is also in the table. Citing one high cell as “the coding-agent result” hides the other three cells. It also hides the larger gap Luu is after: tasks that never entered the published suite.",
       ),
       paragraph(
         { href: BLOG_SOURCES.artificialAnalysisCodingAgents.url, text: "Artificial Analysis publishes the coding-agent comparison" },
@@ -265,7 +265,7 @@ export function createCodingAgentScoreHoldoutsArticle(
       ),
       callout(
         "A high score is a named-suite score",
-        "Use a stored AA Index, DeepSWE, Terminal-Bench v2.1, or SWE-Atlas-QnA value as evidence about that named configuration on that named suite. Use a holdout, a second suite, or production work when the question is whether the same system generalizes.",
+        "Use a stored AA Index, DeepSWE v1.1, Terminal-Bench 4, or SWE-Atlas-QnA value as evidence about that named configuration on that named suite. Use a holdout, a second suite, or production work when the question is whether the same system generalizes.",
       ),
       paragraph(
         "The useful sentence is narrower than a leaderboard headline. A high coding-agent score means the named model, harness, and setting did well on the visible suite at the retrieval date. It does not mean the same system would keep that margin on tasks the suite never published. Luu’s holdout is the cheapest way to keep that distinction attached to the number.",

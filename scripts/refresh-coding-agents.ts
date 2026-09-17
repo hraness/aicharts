@@ -43,7 +43,7 @@ const sourceRowSchema = z.object({
     creator: z.object({
       agent: z.string().min(1),
       model: z.string().min(1),
-    }),
+    }).optional(),
   }),
   displayLabel: z.string().min(1),
   indexComponentCount: z.number().int().nonnegative(),
@@ -58,6 +58,14 @@ const sourceRowSchema = z.object({
     agentWallTimeSec: sourceMetricSchema,
     totalTokens: sourceMetricSchema,
   }),
+}).superRefine((row, context) => {
+  if (row.display.creator === undefined && row.provider !== "cognition") {
+    context.addIssue({
+      code: "custom",
+      message: "Only Cognition-owned composite systems may omit a model creator.",
+      path: ["display", "creator"],
+    });
+  }
 });
 
 type SourceRow = z.infer<typeof sourceRowSchema>;
@@ -231,13 +239,14 @@ function extractSetting(modelLabel: string): { model: string; setting: string; s
 export function normalizeSourceRows(rows: readonly SourceRow[], retrievedAt: string): CodingAgentSnapshot {
   const records: CodingAgentRecord[] = rows.map((row) => {
     const setting = extractSetting(row.display.model);
+    const providerName = row.display.creator?.model ?? "Cognition";
     return {
       id: row.id,
       agent: row.display.agent,
       model: setting.model,
       modelLabel: row.display.model,
-      providerId: providerId(row.display.creator.model),
-      providerName: row.display.creator.model,
+      providerId: providerId(providerName),
+      providerName,
       seriesId: `${row.agentName}:${row.hostModelSlug}`,
       seriesLabel: `${row.display.agent} · ${setting.model}`,
       setting: setting.setting,

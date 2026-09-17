@@ -42,12 +42,14 @@ export type ModelCardProviderLineHand = typeof providerLineHands[keyof typeof pr
 const lineHandNames = Object.values(providerLineHands);
 
 const familyArchetypes = {
+  "claude-fable-xhigh-swe-medium": "interlaced-stave",
   composer: "interlaced-stave",
   "deepseek-v": "abyssal-eye",
   fable: "illuminated-initial",
   gemini: "twin-vesica",
   glm: "seal-tablet",
   gpt: "labyrinth-knot",
+  "gpt-astra-xhigh-swe-medium": "lightning-codex",
   grok: "astrolabe-cross",
   "kimi-k": "lunar-ladder",
   "muse-spark": "lantern-spark",

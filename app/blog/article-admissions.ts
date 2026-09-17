@@ -235,7 +235,7 @@ export const BLOG_ARTICLE_ADMISSIONS = {
       },
     ],
     originalContribution:
-      "A checked reconstruction of the 70-task acceptance funnel and the cost and token frontiers beside the reported resolution rate, plus an explicit separation from Terminal-Bench v2.1.",
+      "A checked reconstruction of the 70-task acceptance funnel and the cost and token frontiers beside the reported resolution rate, plus an explicit separation from the standalone Terminal-Bench 4 owner cohort.",
     overlapDecision:
       "Keep separately: its scientific task funnel, configuration, and incomparable metric are not answered by the site's coding-agent snapshot analyses.",
     primaryEvidence:

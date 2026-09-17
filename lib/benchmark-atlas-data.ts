@@ -42,9 +42,9 @@ export function intelligenceAtlasDataset(snapshot: ArtificialAnalysisIntelligenc
 }
 
 const CODING_DATASET_DEFINITIONS = [
-  { id: "deep-swe", metric: "deepSwe", version: "deep-swe", label: "DeepSWE", unit: "%" },
-  { id: "aa-coding-index", metric: "aaIndex", version: "AA coding suite", label: "Coding Agent Index", unit: "index points" },
-  { id: "terminal-bench-2-1", metric: "terminalBench", version: "2.1", label: "Terminal-Bench v2.1", unit: "%" },
+  { id: "deep-swe", metric: "deepSwe", version: "1.1", label: "DeepSWE v1.1", unit: "%" },
+  { id: "aa-coding-index", metric: "aaIndex", version: "1.5", label: "Coding Agent Index", unit: "index points" },
+  { id: "aa-terminal-bench-4", metric: "terminalBench", version: "4.0", label: "Terminal-Bench 4", unit: "%" },
   { id: "swe-atlas", metric: "sweAtlas", version: "swe-atlas-qna", label: "SWE-Atlas-QnA", unit: "%" },
 ] as const satisfies readonly Readonly<{ id: string; metric: BenchmarkMetric; version: string; label: string; unit: string }>[];
 
@@ -56,7 +56,7 @@ export function codingAtlasDatasets(snapshot: CodingAgentSnapshot): readonly Ben
     source: { name: snapshot.source.name, url: snapshot.source.url, retrievedAt: snapshot.source.retrievedAt },
     evidenceLabel: "Independent evaluation",
     configurationLabel: "Model, coding agent, and effort",
-    comparabilityNote: "Each point is an Artificial Analysis coding-agent configuration. Cost covers the source’s coding suite, not an isolated run of the selected benchmark. These results stay separate from other evaluators and Terminal-Bench 4.",
+    comparabilityNote: "Each point is an Artificial Analysis coding-agent configuration. Cost covers the source’s coding suite, not an isolated run of the selected benchmark. Component results stay separate from standalone cohorts published by other evaluators.",
     costLabel: "USD per task across the AA coding suite",
     points: snapshot.records.flatMap((record): BenchmarkAtlasPoint[] => {
       const score = record.benchmarks[definition.metric];

@@ -81,6 +81,16 @@ function cardFor(canonicalModelId: string, profileSlug?: string): ModelCardPrese
   return card;
 }
 
+function fixtureCard(overrides: Partial<ModelCardPresentation> = {}): ModelCardPresentation {
+  const card = MODEL_CARD_PRESENTATIONS[0];
+  if (card === undefined) throw new Error("Expected a model-card fixture.");
+  return { ...card, ...overrides };
+}
+
+function densityCard(illuminationDensity: 1 | 2 | 3 | 4 | 5): ModelCardPresentation {
+  return fixtureCard({ illuminationDensity });
+}
+
 describe("model card illumination", () => {
   test("assigns every current family a distinct curated archetype and foil field", () => {
     const familyIds = [...new Set(
@@ -178,11 +188,8 @@ describe("model card illumination", () => {
   });
 
   test("adds stamped foil coverage instead of increasing motion by profile", () => {
-    const channelCounts = [1, 2, 3, 4, 5].map(density => {
-      const card = MODEL_CARD_PRESENTATIONS.find(candidate => (
-        candidate.illuminationDensity === density
-      ));
-      if (card === undefined) throw new Error(`Expected a density ${density} foil fixture.`);
+    const channelCounts = ([1, 2, 3, 4, 5] as const).map(density => {
+      const card = densityCard(density);
       const markup = render(card, "gallery", "holographic");
       const value = markup.match(/data-holographic-channel-count="(\d+)"/u)?.[1];
       if (value === undefined) throw new Error("Expected holographic channel coverage.");
@@ -190,17 +197,7 @@ describe("model card illumination", () => {
     });
     expect(channelCounts).toEqual([4, 6, 8, 11, 14]);
 
-    const cardsWithDifferentDensities = [...Map.groupBy(
-      MODEL_CARD_PRESENTATIONS,
-      card => card.canonicalModelId,
-    ).values()].find(cards => new Set(cards.map(card => card.illuminationDensity)).size > 1);
-    if (cardsWithDifferentDensities === undefined) {
-      throw new Error("Expected one model with multiple foil coverage tiers.");
-    }
-    const [first, last] = cardsWithDifferentDensities.toSorted((left, right) => (
-      left.illuminationDensity - right.illuminationDensity
-    ));
-    if (first === undefined || last === undefined) throw new Error("Expected foil profile fixtures.");
+    const [first, last] = [densityCard(1), densityCard(5)];
     expect(first.illuminationDensity).not.toBe(last.illuminationDensity);
     expect(first.seed).toBe(first.canonicalModelId);
     expect(last.seed).toBe(first.seed);
@@ -210,11 +207,8 @@ describe("model card illumination", () => {
   });
 
   test("grows a deterministic organic speck field without rearranging model identity", () => {
-    const speckCounts = [1, 2, 3, 4, 5].map(density => {
-      const card = MODEL_CARD_PRESENTATIONS.find(candidate => (
-        candidate.illuminationDensity === density
-      ));
-      if (card === undefined) throw new Error(`Expected a density ${density} speck fixture.`);
+    const speckCounts = ([1, 2, 3, 4, 5] as const).map(density => {
+      const card = densityCard(density);
       const markup = render(card, "gallery", "holographic");
       const count = markup.match(/data-speck-count="(\d+)"/u)?.[1];
       const foilCount = markup.match(/data-holographic-speck-count="(\d+)"/u)?.[1];
@@ -227,19 +221,8 @@ describe("model card illumination", () => {
     });
     expect(speckCounts).toEqual([10, 14, 19, 25, 32]);
 
-    const cardsWithDifferentDensities = [...Map.groupBy(
-      MODEL_CARD_PRESENTATIONS,
-      card => card.canonicalModelId,
-    ).values()].find(cards => new Set(cards.map(card => card.illuminationDensity)).size > 1);
-    if (cardsWithDifferentDensities === undefined) {
-      throw new Error("Expected one model with multiple speck densities.");
-    }
-    const sortedProfiles = cardsWithDifferentDensities.toSorted((left, right) => (
-      left.illuminationDensity - right.illuminationDensity
-    ));
-    const lower = sortedProfiles[0];
-    const higher = sortedProfiles.at(-1);
-    if (lower === undefined || higher === undefined) throw new Error("Expected speck profiles.");
+    const lower = densityCard(1);
+    const higher = densityCard(5);
     const lowerPath = attributedPath(
       render(lower, "gallery"),
       "data-ornament-mark",
@@ -332,45 +315,41 @@ describe("model card illumination", () => {
   });
 
   test("preserves family resemblance while generation and edition marks mutate", () => {
-    const opus48 = render(cardFor("anthropic/claude-opus-4.8", "low"));
-    const opus5 = render(cardFor("anthropic/claude-opus-5", "low"));
-    expect(signaturePath(opus48, "family")).toBe(signaturePath(opus5, "family"));
-    expect(signaturePath(opus48, "generation")).not.toBe(signaturePath(opus5, "generation"));
-    expect(holographicBandSignature(
-      render(cardFor("anthropic/claude-opus-4.8", "low"), "full", "holographic"),
-    )).not.toBe(holographicBandSignature(
-      render(cardFor("anthropic/claude-opus-5", "low"), "full", "holographic"),
-    ));
-
-    const gptLuna = cardFor("openai/gpt-5.6-luna", "low");
-    const gptLunaWithSolEdition: ModelCardPresentation = {
-      ...gptLuna,
-      emblemIdentity: { ...gptLuna.emblemIdentity, editionId: "sol" },
+    const opus5 = cardFor("anthropic/claude-opus-5", "max");
+    const opus48: ModelCardPresentation = {
+      ...opus5,
+      canonicalModelId: "anthropic/claude-opus-4.8",
+      emblemIdentity: { ...opus5.emblemIdentity, generation: ["4", "8"] },
+      seed: "anthropic/claude-opus-4.8",
     };
-    expect(holographicBandSignature(render(gptLuna, "full", "holographic"))).not.toBe(
-      holographicBandSignature(render(gptLunaWithSolEdition, "full", "holographic")),
+    const opus48Markup = render(opus48);
+    const opus5Markup = render(opus5);
+    expect(signaturePath(opus48Markup, "family")).toBe(signaturePath(opus5Markup, "family"));
+    expect(signaturePath(opus48Markup, "generation")).not.toBe(signaturePath(opus5Markup, "generation"));
+    expect(holographicBandSignature(render(opus48, "full", "holographic"))).not.toBe(
+      holographicBandSignature(render(opus5, "full", "holographic")),
     );
 
-    const gptEditions = ["luna", "sol", "terra"].map(edition => (
-      render(cardFor(`openai/gpt-5.6-${edition}`, "low"))
-    ));
+    const gptSol = cardFor("openai/gpt-5.6-sol", "max");
+    const gptEditions = ["luna", "sol", "terra"].map((edition): ModelCardPresentation => ({
+      ...gptSol,
+      canonicalModelId: `openai/gpt-5.6-${edition}`,
+      emblemIdentity: { ...gptSol.emblemIdentity, editionId: edition },
+      seed: `openai/gpt-5.6-${edition}`,
+    })).map(card => render(card));
     expect(new Set(gptEditions.map(markup => signaturePath(markup, "family"))).size).toBe(1);
     expect(new Set(gptEditions.map(markup => signaturePath(markup, "generation"))).size).toBe(1);
     expect(new Set(gptEditions.map(markup => signaturePath(markup, "edition"))).size).toBe(3);
 
     const qwenMax = render(cardFor("alibaba/qwen3.8-max"));
-    const fableMax = render(cardFor("anthropic/claude-fable-5"));
+    const fableMax = render(cardFor("anthropic/claude-fable-5.1"));
     expect(signaturePath(qwenMax, "provider")).not.toBe(signaturePath(fableMax, "provider"));
     expect(signaturePath(qwenMax, "family")).not.toBe(signaturePath(fableMax, "family"));
   });
 
   test("uses four teachable secondary-ink coronas", () => {
     const families = ["base", "fast", "thinking", "elevated"] as const;
-    const markups = families.map(accentFamily => {
-      const card = MODEL_CARD_PRESENTATIONS.find(candidate => candidate.accentFamily === accentFamily);
-      if (card === undefined) throw new Error(`Expected a ${accentFamily} fixture.`);
-      return render(card);
-    });
+    const markups = families.map(accentFamily => render(fixtureCard({ accentFamily })));
     expect(new Set(markups.map(markup => signaturePath(markup, "class"))).size).toBe(4);
     for (const [index, accentFamily] of families.entries()) {
       expect(markups[index]).toContain(`data-illumination-accent="${accentFamily}"`);
@@ -379,15 +358,13 @@ describe("model card illumination", () => {
 
   test("uses role as visible topology and exact profile tallies", () => {
     const roles = ["general", "speed", "reasoning", "flagship"] as const;
-    const rolePaths = roles.map(role => {
-      const card = MODEL_CARD_PRESENTATIONS.find(candidate => candidate.emblemIdentity.role === role);
-      if (card === undefined) throw new Error(`Expected a ${role} fixture.`);
-      return signaturePath(render(card), "role");
-    });
+    const rolePaths = roles.map(role => signaturePath(render(fixtureCard({
+      emblemIdentity: { ...fixtureCard().emblemIdentity, role },
+    })), "role"));
     expect(new Set(rolePaths).size).toBe(roles.length);
 
-    const none = render(cardFor("openai/gpt-5.6-luna", "none"));
-    const low = render(cardFor("openai/gpt-5.6-luna", "low"));
+    const none = render(fixtureCard({ profileLabel: "None", profileSlug: "none" }));
+    const low = render(fixtureCard({ profileLabel: "Low", profileSlug: "low" }));
     expect(signaturePath(none, "profile")).not.toBe(signaturePath(low, "profile"));
   });
 
@@ -406,13 +383,9 @@ describe("model card illumination", () => {
 
   test("adds visibly more geometry at every profile density", () => {
     for (const mode of ["full", "gallery"] as const) {
-      const geometryCounts = [1, 2, 3, 4, 5].map((density) => {
-        const card = MODEL_CARD_PRESENTATIONS.find(candidate => (
-          candidate.illuminationDensity === density
-        ));
-        if (card === undefined) throw new Error(`Expected a density ${density} fixture.`);
-        return geometryCount(render(card, mode));
-      });
+      const geometryCounts = ([1, 2, 3, 4, 5] as const).map(density => (
+        geometryCount(render(densityCard(density), mode))
+      ));
       expect(geometryCounts).toEqual([...geometryCounts].sort((left, right) => left - right));
       expect(new Set(geometryCounts).size).toBe(geometryCounts.length);
     }

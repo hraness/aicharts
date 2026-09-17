@@ -104,9 +104,9 @@ function benchmarkSnapshot(records: readonly CodingAgentRecord[] = []): CodingAg
     schemaVersion: 3,
     source: {
       benchmarkDatasets: {
-        deepSwe: "deep-swe",
+        deepSwe: "deep-swe-v1.1",
         sweAtlas: "swe-atlas-qna",
-        terminalBench: "terminal-bench-v2.1",
+        terminalBench: "terminal-bench-v4",
       },
       method: "next-flight",
       name: "Artificial Analysis",

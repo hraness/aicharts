@@ -117,7 +117,7 @@ describe("Artificial Analysis Intelligence v4.3 refresh", () => {
     expect(extractArtificialAnalysisIntelligencePage(html).ok).toBeFalse();
     expect(extractArtificialAnalysisIntelligencePage(sourcePage(sourcePayload(), "4.4"), ARTIFICIAL_ANALYSIS_INTELLIGENCE_V43_PAGE_CONTRACT).ok).toBeFalse();
     expect(extractArtificialAnalysisIntelligencePage(html.replace("AA-LCR v1.1 ·", "AA-LCR v1.1, Surprise Eval ·"), ARTIFICIAL_ANALYSIS_INTELLIGENCE_V43_PAGE_CONTRACT).ok).toBeFalse();
-    expect(extractArtificialAnalysisIntelligencePage(html.replace("Terminal-Bench v4.0", "Terminal-Bench v2.1"), ARTIFICIAL_ANALYSIS_INTELLIGENCE_V43_PAGE_CONTRACT).ok).toBeFalse();
+    expect(extractArtificialAnalysisIntelligencePage(html.replace("Terminal-Bench 4.0", "Terminal-Bench v2.1"), ARTIFICIAL_ANALYSIS_INTELLIGENCE_V43_PAGE_CONTRACT).ok).toBeFalse();
   });
 
   test("binds public leaderboard scores to the exact native-resource model manifest", () => {

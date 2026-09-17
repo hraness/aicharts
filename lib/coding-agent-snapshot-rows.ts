@@ -142,12 +142,12 @@ export const SNAPSHOT_COLUMN_LABELS = {
   aaIndex: "AA Index",
   agent: "Agent",
   costUsd: "Cost",
-  deepSwe: "DeepSWE",
+  deepSwe: "DeepSWE v1.1",
   model: "Model",
   provider: "Provider",
   setting: "Setting",
   sweAtlas: "SWE-Atlas-QnA",
-  terminalBench: "Terminal-Bench v2.1",
+  terminalBench: "Terminal-Bench 4",
 } as const satisfies Record<SnapshotTableColumn, string>;
 
 export function snapshotRowCell(

@@ -37,7 +37,7 @@ The site is a static-data Next.js and TypeScript application. Its benchmark snap
 - Keep a checked, version-pinned Terminal-Bench-Science 0.1 owner snapshot—with per-domain results, uncertainty, cost, and token use—separate from GDPval-AA v2, OSWorld 2.0, and Humanity's Last Exam rather than collapsing the families into one composite score.
 - Treat CursorBench 3.2 as supplemental closed evidence for the model-plus-Cursor system, not an independently reproducible coding standard.
 - Compare Artificial Analysis Intelligence Index v4.3 with native output-only tokens and cost per Index task in the leading model-level Pareto chart. The historical v4.1.1 dataset remains separately accessible; scores are never relabeled across versions.
-- Compare Artificial Analysis's AA Index, DeepSWE, Terminal-Bench v2.1, and SWE-Atlas-QnA results.
+- Compare Artificial Analysis Coding Agent Index v1.5, DeepSWE v1.1, Terminal-Bench 4, and SWE-Atlas-QnA results.
 - Plot each result against cost, duration, or total token use.
 - Pin a model to see its nearby performance cohort, or pin a provider to inspect its range.
 - Explore the cost/performance Pareto frontier and per-provider score ranges.
