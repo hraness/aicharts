@@ -4,7 +4,7 @@
     "version": "Verified · Qwen3.5-35B-A3B",
     "source": {
       "url": "https://raw.githubusercontent.com/PKU-YuanGroup/WISE/main/leadboard.md",
-      "retrievedAt": "2026-09-09T00:05:33.978Z",
+      "retrievedAt": "2026-09-17T15:07:07.972Z",
       "sha256": "1b06a1e2697244ff1f29417662bc34b5708587c6bf335e0de65c80d984972263"
     },
     "rows": [
@@ -391,7 +391,7 @@
     "version": "2",
     "source": {
       "url": "https://zhangqijiang07.github.io/gedit2_web/",
-      "retrievedAt": "2026-09-09T00:05:33.978Z",
+      "retrievedAt": "2026-09-17T15:07:07.972Z",
       "sha256": "87a97fa869d8d879e2f834520a109632e41c7f8e43724aabae6bb13882f838cc"
     },
     "rows": [
@@ -593,7 +593,7 @@
     "version": "2 · human evaluation",
     "source": {
       "url": "https://videophy2.github.io/",
-      "retrievedAt": "2026-09-09T00:05:33.978Z",
+      "retrievedAt": "2026-09-17T15:07:07.972Z",
       "sha256": "bad716a62a9247323932ca8ea305feb4a2f373ebe01233beece8e3dbea4fbd34"
     },
     "rows": [
@@ -666,10 +666,36 @@
     "version": "1.6_full",
     "source": {
       "url": "https://raw.githubusercontent.com/opendatalab/OmniDocBench/main/README.md",
-      "retrievedAt": "2026-09-09T00:05:33.978Z",
-      "sha256": "1c3f6f7e0dc6027e96161fd368f68b41b1e797b2329a4decbefdd4f2d2ec31eb"
+      "retrievedAt": "2026-09-17T15:07:07.972Z",
+      "sha256": "a799f3dabee0d8e2be9f990fc325c3fefadb8d7f8d0cf56148406547d495a3ad"
     },
     "rows": [
+      {
+        "id": "teleocr",
+        "label": "TeleOCR",
+        "provider": "TeleOCR project",
+        "kind": "Specialized VLMs",
+        "size": "1.2B",
+        "score": 96.91,
+        "textEdit": 0.0267,
+        "formula": 96.5895,
+        "table": 96.8183,
+        "tableStructure": 98.1806,
+        "readingOrderEdit": 0.1184
+      },
+      {
+        "id": "ovisocr2",
+        "label": "OvisOCR2",
+        "provider": "OvisOCR2 project",
+        "kind": "Specialized VLMs",
+        "size": "0.8B",
+        "score": 96.47,
+        "textEdit": 0.0265,
+        "formula": 97.4854,
+        "table": 94.5842,
+        "tableStructure": 96.9768,
+        "readingOrderEdit": 0.112
+      },
       {
         "id": "paddleocr-vl-1-6",
         "label": "PaddleOCR-VL-1.6",
@@ -734,6 +760,19 @@
         "table": 90.65,
         "tableStructure": 93.74,
         "readingOrderEdit": 0.135
+      },
+      {
+        "id": "unlimited-ocr",
+        "label": "Unlimited-OCR",
+        "provider": "Unlimited-OCR project",
+        "kind": "Specialized VLMs",
+        "size": "3B",
+        "score": 94,
+        "textEdit": 0.0394,
+        "formula": 95.7234,
+        "table": 90.21,
+        "tableStructure": 93.3565,
+        "readingOrderEdit": 0.1281
       },
       {
         "id": "youtu-parsing",
@@ -1092,8 +1131,8 @@
     "version": "Static · 2025 author cohort",
     "source": {
       "url": "https://huggingface.co/spaces/Howieeeee/WorldScore_Leaderboard/raw/main/leaderboard.csv",
-      "retrievedAt": "2026-09-09T00:05:33.978Z",
-      "sha256": "6e97e0bc57b0c2472d3685bcd6f5ab96b64d17f0a6188fb8eb29acdedcba14ff"
+      "retrievedAt": "2026-09-17T15:07:07.972Z",
+      "sha256": "a1c51fa9e6f1d4970f58293f4f648dda890a68d987f48b21ab8e61e0542adff3"
     },
     "rows": [
       {

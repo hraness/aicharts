@@ -84,7 +84,7 @@ describe("checked multimodal publication", () => {
   test("all charts have explicit versions, native units, and matched catalog evidence", () => {
     expect(validateAtlasCatalog(MULTIMODAL_ATLAS_ENTRIES, MULTIMODAL_ATLAS_DATASETS).ok).toBeTrue();
     expect(MULTIMODAL_ATLAS_DATASETS).toHaveLength(5);
-    expect(MULTIMODAL_ATLAS_DATASETS.reduce((sum, dataset) => sum + dataset.points.length, 0)).toBe(103);
+    expect(MULTIMODAL_ATLAS_DATASETS.reduce((sum, dataset) => sum + dataset.points.length, 0)).toBe(106);
     for (const dataset of MULTIMODAL_ATLAS_DATASETS) {
       expect(dataset.evidenceLabel).toBeTruthy();
       expect(dataset.source.revision).toMatch(/^sha256:[a-f0-9]{64}$/u);
