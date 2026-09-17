@@ -8,7 +8,7 @@ use sha2::Sha256;
 use crate::{Error, LedgerIdentity, Result};
 
 const APPLICATION_ID: i32 = 0x4149434c;
-const MAX_DATABASE_BYTES: u64 = 512 * 1024 * 1024;
+pub const MAX_DATABASE_BYTES: u64 = 512 * 1024 * 1024;
 const MAX_PAGES: i64 = (MAX_DATABASE_BYTES / 4096) as i64;
 pub(super) const MAX_SQLITE_VALUE_BYTES: i32 = 262_144;
 const TABLES: [(&str, &str); 5] = [

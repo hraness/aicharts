@@ -181,7 +181,7 @@ pub(crate) mod unix {
     use std::{
         collections::BTreeSet,
         fs,
-        io::{BufReader, Read, Seek, SeekFrom},
+        io::{BufReader, IsTerminal, Read, Seek, SeekFrom},
         os::unix::{ffi::OsStrExt, fs::MetadataExt},
         path::{Path, PathBuf},
     };
@@ -237,6 +237,36 @@ pub(crate) mod unix {
     /// mode-exclusive scan vectors.
     fn wave_len(scans: &[SourceScan], prefix_scans: &[PrefixScan]) -> u64 {
         (scans.len() + prefix_scans.len()) as u64
+    }
+
+    /// Rate-limited, single-line stderr progress for long collections. Emits
+    /// only on an interactive terminal; piped stderr keeps its exact contract.
+    /// Dropping clears the line so errors and results start on a fresh row.
+    struct Progress {
+        enabled: bool,
+        last: std::time::Instant,
+    }
+    impl Progress {
+        fn new() -> Self {
+            Self {
+                enabled: std::io::stderr().is_terminal(),
+                // First note writes immediately so a long run shows life at once.
+                last: std::time::Instant::now() - std::time::Duration::from_secs(1),
+            }
+        }
+        fn note(&mut self, line: &str) {
+            if self.enabled && self.last.elapsed() >= std::time::Duration::from_millis(200) {
+                eprint!("\raicharts: {line}\x1b[K");
+                self.last = std::time::Instant::now();
+            }
+        }
+    }
+    impl Drop for Progress {
+        fn drop(&mut self) {
+            if self.enabled {
+                eprint!("\r\x1b[K");
+            }
+        }
     }
 
     /// Fold one committed wave's outcome into the invocation's aggregate report.
@@ -343,8 +373,11 @@ pub(crate) mod unix {
             sources_updated: 0,
             occurrences_changed: 0,
         };
-        for (provider, path) in &options.sources {
+        let mut progress = Progress::new();
+        let trees = options.sources.len();
+        for (tree, (provider, path)) in options.sources.iter().enumerate() {
             let mut files = vec![];
+            progress.note("discovering source files");
             crate::source_files(
                 path,
                 *provider,
@@ -354,7 +387,8 @@ pub(crate) mod unix {
                 crate::MAX_DISCOVERY_FILES,
             )?;
             files.sort();
-            for path in files {
+            let tree_files = files.len();
+            for (index, path) in files.into_iter().enumerate() {
                 let canonical = fs::canonicalize(&path).map_err(|_| "source_metadata_failed")?;
                 if !seen.insert((*provider, canonical.clone())) {
                     continue;
@@ -363,6 +397,11 @@ pub(crate) mod unix {
                 if total_files > crate::MAX_DISCOVERY_FILES as u64 {
                     return Err("source_file_limit");
                 }
+                progress.note(&format!(
+                    "collecting — source set {}/{trees}, file {}/{tree_files}, {total_files} visited",
+                    tree + 1,
+                    index + 1
+                ));
                 let source_id = source_id(checkpoint_key, &canonical, *provider);
                 let mut file = crate::open_regular(&path).map_err(|_| "source_read_failed")?;
                 let before = stamp(&file.metadata().map_err(|_| "source_metadata_failed")?)?;
@@ -396,6 +435,7 @@ pub(crate) mod unix {
                             .ok_or("source_byte_limit")?
                             > wave_limit)
                 {
+                    progress.note("committing a bounded wave");
                     absorb(
                         &mut report,
                         commit_wave(
@@ -488,6 +528,7 @@ pub(crate) mod unix {
                         .ok_or("retained_measurement_limit")?
                         > wave_measurement_limit
                 {
+                    progress.note("committing a bounded wave");
                     absorb(
                         &mut report,
                         commit_wave(
@@ -552,6 +593,7 @@ pub(crate) mod unix {
         if total_files == 0 {
             return Err("no_source_files");
         }
+        progress.note("committing a bounded wave");
         absorb(
             &mut report,
             commit_wave(
@@ -569,8 +611,11 @@ pub(crate) mod unix {
     fn status_json(status: &LedgerStatus) -> serde_json::Value {
         serde_json::json!({
             "schemaVersion":1,"localOnly":true,"uploaded":false,"ledgerRevision":status.revision,
-            "sources":status.sources,"usageOccurrences":status.usage_occurrences,"pendingRecords":status.pending_records,
+            "sources":status.sources,"usageOccurrences":status.usage_occurrences,"associations":status.associations,
+            "pendingRecords":status.pending_records,
             "tokens":status.tokens.to_string(),"outputTokens":status.output_tokens.to_string(),
+            "capacity":{"sources":aicharts_ledger::MAX_SOURCES,"usageOccurrences":aicharts_ledger::MAX_OCCURRENCES,
+                "associations":aicharts_ledger::MAX_ASSOCIATIONS,"databaseBytes":aicharts_ledger::MAX_DATABASE_BYTES.to_string()},
             "promptOccurrences":null,"measurementCoverage":"partial","activityCoverage":"unavailable",
             "humanOriginVerified":false,"modelPricingAvailable":false,
             "warnings":status.warnings.iter().map(|warning| warning.code()).collect::<Vec<_>>()
@@ -686,7 +731,7 @@ pub(crate) mod unix {
                         .map(|warning| warning.code())
                         .collect::<Vec<_>>()
                         .join(", ");
-                    Ok(format!("AI Charts local ledger — revision {}\nSources: {}; usage occurrences: {}; pending records: {}\nObserved tokens: {}; output tokens: {}\nCoverage: partial; prompt counts, activity and model pricing unavailable.\nWarnings: {warnings}\nNothing uploaded.\n",status.revision,status.sources,status.usage_occurrences,status.pending_records,status.tokens,status.output_tokens))
+                    Ok(format!("AI Charts local ledger — revision {}\nSources: {}; usage occurrences: {}; pending records: {}\nObserved tokens: {}; output tokens: {}\nCapacity: {} of {} sources, {} of {} occurrences, {} of {} source associations\nCoverage: partial; prompt counts, activity and model pricing unavailable.\nWarnings: {warnings}\nNothing uploaded.\n",status.revision,status.sources,status.usage_occurrences,status.pending_records,status.tokens,status.output_tokens,status.sources,aicharts_ledger::MAX_SOURCES,status.usage_occurrences,aicharts_ledger::MAX_OCCURRENCES,status.associations,aicharts_ledger::MAX_ASSOCIATIONS))
                 }
             }
             Command::Outbox => {

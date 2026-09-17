@@ -5,6 +5,7 @@ mod inspection;
 mod prefix;
 mod sender;
 mod storage;
+pub use storage::MAX_DATABASE_BYTES;
 
 pub use inspection::ReadOnlyLedger;
 pub use prefix::{CompletePrefix, PrefixScan, PrefixSnapshot, SourceCheckpoint};
@@ -163,6 +164,7 @@ pub struct LedgerStatus {
     pub revision: u64,
     pub sources: u64,
     pub usage_occurrences: u64,
+    pub associations: u64,
     pub pending_records: u64,
     pub tokens: u64,
     pub output_tokens: u64,
@@ -519,6 +521,7 @@ fn status(tx: &Connection) -> Result<LedgerStatus> {
         revision: revision(tx)?,
         sources: table_count(tx, "sources")?,
         usage_occurrences,
+        associations: table_count(tx, "source_usage")?,
         pending_records: table_count(tx, "outbox")?,
         tokens,
         output_tokens,
