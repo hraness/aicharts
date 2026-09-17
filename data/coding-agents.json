@@ -3,7 +3,7 @@
   "source": {
     "name": "Artificial Analysis",
     "url": "https://artificialanalysis.ai/agents/coding-agents/",
-    "retrievedAt": "2026-09-17T16:52:37.631Z",
+    "retrievedAt": "2026-09-17T18:43:53.953Z",
     "method": "next-flight",
     "benchmarkDatasets": {
       "deepSwe": "deep-swe-v1.1",
@@ -458,7 +458,7 @@
         "sweAtlas": 51.3440860215054
       },
       "economics": {
-        "costUsd": 0.0827862290103409,
+        "costUsd": 0.08278622901034095,
         "durationSeconds": 1097.0404400440034
       },
       "usage": {
