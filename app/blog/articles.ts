@@ -3,6 +3,7 @@ import { PUBLIC_BLOG_SLUGS } from "@/lib/public-analytics-routes";
 import { createAaIndexCostArticle } from "./aa-index-cost-article";
 import { createCodingAgentScoreHoldoutsArticle } from "./coding-agent-score-holdouts-article";
 import { createDevinFusionCostSavingArticle } from "./devin-fusion-cost-saving-article";
+import { createHarnessTaxArticle } from "./harnesstax-coding-agent-harness-article";
 import { createOpenModelsCodingAgentsArticle } from "./open-models-coding-agents-article";
 import { createRealSweArticle } from "./real-swe-private-enterprise-benchmark-article";
 import { createSmallModelsHaveArrivedArticle } from "./small-models-have-arrived-article";
@@ -173,6 +174,14 @@ export const BLOG_SOURCES = {
     url: "https://news.ycombinator.com/item?id=49676820",
     year: 2026,
   },
+  harnessTax: {
+    note:
+      "The page captured September 16, 2026 UTC owns the 21-pair evaluation, the three findings, the printed SWE-bench Lite and Terminal-Bench 2.0 tables, and the named method bounds.",
+    publication: "UC Berkeley and Arena",
+    title: "HarnessTax: How Much Does the Harness Matter for Coding Agents?",
+    url: "https://harnesstax.github.io/",
+    year: 2026,
+  },
 } as const satisfies Record<string, BlogSource>;
 
 export type BlogSourceId = keyof typeof BLOG_SOURCES;
@@ -338,6 +347,7 @@ const mirrorCodeArticle = {
 } as const satisfies BlogArticle;
 
 export const blogArticles = [
+  createHarnessTaxArticle(),
   createRealSweArticle(),
   createDevinFusionCostSavingArticle(),
   createTerminalBenchScienceArticle(),

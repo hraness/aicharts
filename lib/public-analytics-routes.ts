@@ -5,6 +5,7 @@
  * every other route-shaped value collapses to the shared `other` bucket.
  */
 export const PUBLIC_BLOG_SLUGS = [
+  "harnesstax-coding-agent-harness",
   "real-swe-private-enterprise-benchmark",
   "devin-fusion-cost-saving",
   "terminal-bench-science",
