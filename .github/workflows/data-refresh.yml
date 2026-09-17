@@ -331,45 +331,78 @@ jobs:
           printf -v pr_body 'Automated model-data refresh from %s.\n\nAll checked snapshots were validated with `bun run check` before this PR was created. Imports retain their admitted task, version, and scoring boundaries. Arena publishes complete overall media cohorts; Open ASR reproduces a reviewed pinned cohort. Historical Intelligence Index v4.1.1 remains unchanged. Required CI is dispatched explicitly because pull-request checks created by `GITHUB_TOKEN` otherwise wait for manual approval.' "$run_url"
           pr_url="$(gh pr create --base main --head "$REFRESH_BRANCH" --title "chore: refresh model data" --body "$pr_body")"
           echo "pr_url=${pr_url}" >> "$GITHUB_OUTPUT"
+          pr_number="${pr_url##*/}"
 
-          head_sha="$(git rev-parse HEAD)"
-          gh workflow run ci.yml --ref "$REFRESH_BRANCH"
-
-          ci_run_id=""
-          for lookup_attempt in {1..30}; do
-            ci_run_id="$(gh run list --workflow ci.yml --branch "$REFRESH_BRANCH" --commit "$head_sha" --event workflow_dispatch --limit 1 --json databaseId --jq '.[0].databaseId')"
-            if [[ -n "$ci_run_id" ]]; then break; fi
-            sleep 2
-          done
-          if [[ -z "$ci_run_id" ]]; then
-            echo "Required CI run was not registered for ${head_sha}."
-            exit 1
-          fi
-
-          ci_run_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${ci_run_id}"
-          echo "ci_run_url=${ci_run_url}" >> "$GITHUB_OUTPUT"
-          gh run watch "$ci_run_id" --exit-status
-
-          # workflow_dispatch check runs are attached to the commit but omitted
-          # from a pull request's merge rollup. Attest to the exact successful run
-          # with the same GitHub Actions integration and required context.
-          gh api --method POST "repos/${GITHUB_REPOSITORY}/statuses/${head_sha}" \
-            -f state=success \
-            -f context="$REQUIRED_CHECK_CONTEXT" \
-            -f description="Exact-head CI passed for this generated data refresh" \
-            -f target_url="$ci_run_url"
-          gh pr merge "$pr_url" --auto --squash --delete-branch
-
+          # The strict required-status rule refuses a merge while the
+          # generated branch is behind main. Reconcile main movement observed
+          # during the refresh or CI window, re-running exact-head CI and the
+          # required-context attestation on the reconciled head each round.
           pr_state="OPEN"
-          for merge_attempt in {1..60}; do
-            pr_state="$(gh pr view "$pr_url" --json state --jq '.state')"
-            if [[ "$pr_state" == "MERGED" ]]; then break; fi
-            if [[ "$pr_state" == "CLOSED" ]]; then break; fi
-            if [[ "$merge_attempt" -lt 60 ]]; then sleep 5; fi
+          for publish_round in 1 2; do
+            merge_state="$(gh pr view "$pr_url" --json mergeStateStatus --jq '.mergeStateStatus')"
+            for settle_attempt in {1..24}; do
+              if [[ "$merge_state" != "UNKNOWN" ]]; then break; fi
+              sleep 5
+              merge_state="$(gh pr view "$pr_url" --json mergeStateStatus --jq '.mergeStateStatus')"
+            done
+            if [[ "$merge_state" == "BEHIND" ]]; then
+              before_sha="$(gh pr view "$pr_url" --json headRefOid --jq '.headRefOid')"
+              gh api --method PUT "repos/${GITHUB_REPOSITORY}/pulls/${pr_number}/update-branch"
+              for head_attempt in {1..30}; do
+                sleep 2
+                head_sha="$(gh pr view "$pr_url" --json headRefOid --jq '.headRefOid')"
+                if [[ "$head_sha" != "$before_sha" ]]; then break; fi
+              done
+              if [[ "$head_sha" == "$before_sha" ]]; then
+                echo "The generated branch could not be reconciled with main."
+                exit 1
+              fi
+            fi
+            head_sha="$(gh pr view "$pr_url" --json headRefOid --jq '.headRefOid')"
+
+            gh workflow run ci.yml --ref "$REFRESH_BRANCH"
+
+            ci_run_id=""
+            for lookup_attempt in {1..30}; do
+              ci_run_id="$(gh run list --workflow ci.yml --branch "$REFRESH_BRANCH" --commit "$head_sha" --event workflow_dispatch --limit 1 --json databaseId --jq '.[0].databaseId')"
+              if [[ -n "$ci_run_id" ]]; then break; fi
+              sleep 2
+            done
+            if [[ -z "$ci_run_id" ]]; then
+              echo "Required CI run was not registered for ${head_sha}."
+              exit 1
+            fi
+
+            ci_run_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${ci_run_id}"
+            echo "ci_run_url=${ci_run_url}" >> "$GITHUB_OUTPUT"
+            gh run watch "$ci_run_id" --exit-status
+
+            # workflow_dispatch check runs are attached to the commit but omitted
+            # from a pull request's merge rollup. Attest to the exact successful run
+            # with the same GitHub Actions integration and required context.
+            gh api --method POST "repos/${GITHUB_REPOSITORY}/statuses/${head_sha}" \
+              -f state=success \
+              -f context="$REQUIRED_CHECK_CONTEXT" \
+              -f description="Exact-head CI passed for this generated data refresh" \
+              -f target_url="$ci_run_url"
+            gh pr merge "$pr_url" --auto --squash --delete-branch
+
+            merge_state=""
+            for merge_attempt in {1..60}; do
+              pr_state="$(gh pr view "$pr_url" --json state --jq '.state')"
+              if [[ "$pr_state" == "MERGED" ]]; then break; fi
+              if [[ "$pr_state" == "CLOSED" ]]; then break; fi
+              merge_state="$(gh pr view "$pr_url" --json mergeStateStatus --jq '.mergeStateStatus')"
+              if [[ "$merge_state" == "BEHIND" ]]; then break; fi
+              if [[ "$merge_attempt" -lt 60 ]]; then sleep 5; fi
+            done
+            if [[ "$pr_state" != "OPEN" ]]; then break; fi
+            if [[ "$merge_state" != "BEHIND" ]]; then break; fi
           done
           pr_state="$(gh pr view "$pr_url" --json state --jq '.state')"
           if [[ "$pr_state" != "MERGED" ]]; then
             gh pr merge "$pr_url" --disable-auto || true
+            gh pr close "$pr_url" --delete-branch || true
             pr_state="$(gh pr view "$pr_url" --json state --jq '.state')"
           fi
           if [[ "$pr_state" != "MERGED" ]]; then

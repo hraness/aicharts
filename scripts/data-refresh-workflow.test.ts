@@ -450,6 +450,21 @@ describe("scheduled model-data refresh", () => {
     );
     expect(publish).toContain('"HEAD:refs/heads/${REFRESH_BRANCH}"');
     expect(publish).toContain('gh pr create --base main');
+    expect(publish).toContain('pr_number="${pr_url##*/}"');
+    // Strict required checks refuse a behind-main merge; the bounded round
+    // reconciles through update-branch and re-attests the reconciled head.
+    expect(publish).toContain("for publish_round in 1 2");
+    expect(publish).toContain('--json mergeStateStatus --jq');
+    expect(publish).toContain('"repos/${GITHUB_REPOSITORY}/pulls/${pr_number}/update-branch"');
+    expect(publish).toContain('--json headRefOid --jq');
+    expect(publish).toContain('if [[ "$merge_state" != "BEHIND" ]]; then break; fi');
+    expect(publish).toContain('gh pr close "$pr_url" --delete-branch || true');
+    expect(publish.indexOf('for publish_round in 1 2')).toBeLessThan(
+      publish.indexOf('"repos/${GITHUB_REPOSITORY}/pulls/${pr_number}/update-branch"'),
+    );
+    expect(publish.indexOf('"repos/${GITHUB_REPOSITORY}/pulls/${pr_number}/update-branch"')).toBeLessThan(
+      publish.indexOf('gh workflow run ci.yml --ref "$REFRESH_BRANCH"'),
+    );
     expect(publish).toContain('--commit "$head_sha" --event workflow_dispatch');
     expect(publish).toContain('gh workflow run ci.yml --ref "$REFRESH_BRANCH"');
     expect(publish).toContain('gh run watch "$ci_run_id" --exit-status');
