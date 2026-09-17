@@ -193,12 +193,20 @@ const modelCardSourceDateFormatter = new Intl.DateTimeFormat("en-US", {
   year: "numeric",
 });
 
-const modelCardReleaseDateFormatter = new Intl.DateTimeFormat("en-GB", {
-  day: "numeric",
-  month: "short",
-  timeZone: "UTC",
-  year: "numeric",
-});
+const modelCardReleaseDateMonthNames = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+] as const;
 
 const modelCardReleaseAccessibleDateFormatter = new Intl.DateTimeFormat("en-US", {
   day: "numeric",
@@ -217,9 +225,11 @@ function modelCardReleaseDate(releasedOn: string): Date {
 
 /** Formats a checked first-party release date for the compact card face. */
 export function formatModelCardReleaseDate(releasedOn: string): string {
-  return modelCardReleaseDateFormatter
-    .format(modelCardReleaseDate(releasedOn))
-    .toLocaleUpperCase("en-US");
+  const date = modelCardReleaseDate(releasedOn);
+  const day = date.getUTCDate();
+  const month = modelCardReleaseDateMonthNames[date.getUTCMonth()];
+  const year = date.getUTCFullYear();
+  return `${day} ${month} ${year}`.toLocaleUpperCase("en-US");
 }
 
 export function formatModelCardReleaseDateLong(releasedOn: string): string {
