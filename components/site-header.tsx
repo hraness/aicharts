@@ -42,9 +42,9 @@ export function SiteHeader({
         data-hraness-marketing="header"
       >
         <div className="hraness-marketing-header__inner">
-          <Link className="hraness-marketing-header__brand" href="/">
+          <Link className="hraness-marketing-header__brand" data-foil="" href="/">
             {/* eslint-disable-next-line @next/next/no-img-element -- the generated app icon serves the canonical mark unchanged. */}
-            <img alt="" height={20} src="/icon.png" width={20} /> {site.domain}
+            <img alt="" height={20} src="/icon.png" width={20} /> {site.name}
           </Link>
           <nav aria-label="Site" className="hraness-marketing-header__nav">
             {SITE_HEADER_LINKS.map(link => (
