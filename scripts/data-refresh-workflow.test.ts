@@ -418,9 +418,32 @@ describe("scheduled model-data refresh", () => {
       run: "rustup show active-toolchain",
     });
     expect(steps.indexOf(step("usage_toolchain"))).toBeLessThan(steps.indexOf(step("validation")));
+    // The enterprise forbids createPullRequest for github-actions[bot], so the
+    // publish step authenticates as the scoped data-refresh GitHub App instead.
+    expect(step("writer")).toMatchObject({
+      if: "steps.validation.outcome == 'success' && steps.snapshot.outputs.changed == 'true'",
+      uses: "actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349",
+      with: {
+        "app-id": "${{ vars.AICHARTS_DATA_REFRESH_APP_ID }}",
+        "private-key": "${{ secrets.AICHARTS_DATA_REFRESH_APP_PRIVATE_KEY }}",
+        owner: "hraness",
+        repositories: "aicharts",
+        "permission-contents": "write",
+        "permission-pull-requests": "write",
+        "permission-statuses": "write",
+        "permission-actions": "write",
+      },
+    });
+    expect(steps.indexOf(step("validation"))).toBeLessThan(steps.indexOf(step("writer")));
+    expect(steps.indexOf(step("writer"))).toBeLessThan(steps.indexOf(step("publish")));
     expect(step("publish")).toMatchObject({
       "continue-on-error": true,
-      if: "steps.validation.outcome == 'success' && steps.snapshot.outputs.changed == 'true'",
+      if: "steps.validation.outcome == 'success' && steps.snapshot.outputs.changed == 'true' && steps.writer.outcome == 'success'",
+      env: {
+        GH_REPO: "${{ github.repository }}",
+        GH_TOKEN: "${{ steps.writer.outputs.token }}",
+        GITHUB_TOKEN: "${{ steps.writer.outputs.token }}",
+      },
     });
     expect(publish).toContain(
       'git add -- "$BENCHMARK_PATH" "$CALCULATOR_PATH" "$DEEP_SWE_PATH" "$FIRST_PARTY_RELEASE_PATH" "$INTELLIGENCE_PATH" "$RELEASE_RADAR_PATH" "$TERMINAL_BENCH_PATH" "$TERMINAL_BENCH_SCIENCE_PATH" "$ATLAS_REASONING_PATH" "$ATLAS_MULTIMODAL_PATH" "$ARENA_MEDIA_PATH" "$ATLAS_AUDIO_PATH"',
