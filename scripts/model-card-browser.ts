@@ -219,7 +219,7 @@ async function verifyChartExport(browser: Browser, baseUrl: string): Promise<voi
     await settle(page);
     const benchmarkPicker = page.locator(".chart-benchmark-select:visible");
     invariant(await benchmarkPicker.count() === 1, "The coding chart needs exactly one visible benchmark picker.");
-    await assertCompactPickerAlignment(benchmarkPicker, "DeepSWE");
+    await assertCompactPickerAlignment(benchmarkPicker, "DeepSWE v1.1");
     for (const metric of ["Cost", "Time", "Tokens"] as const) {
       invariant(
         await page.getByRole("radio", { name: metric, exact: true }).locator("svg").count() === 1,

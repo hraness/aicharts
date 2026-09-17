@@ -458,10 +458,10 @@ export function createDevinFusionCostSavingArticle(
       paragraph(
         "The AI Charts coding-agent chart is a checked snapshot of the public ",
         { href: BLOG_SOURCES.artificialAnalysisCodingAgents.url, text: "Artificial Analysis coding-agents page" },
-        `, retrieved ${retrievedAt}. The snapshot stores AA Index with DeepSWE, Terminal-Bench v2.1, and SWE-Atlas-QnA as component benchmarks. Cognition’s headline chart and table use Coding Agent Index v1.5, DeepSWE 1.1, and Terminal-Bench 4. Values from the two index versions are different measurements and must not be compared with each other.`,
+        `, retrieved ${retrievedAt}. The snapshot stores Coding Agent Index v1.5 with DeepSWE v1.1, Terminal-Bench 4, and SWE-Atlas-QnA as component benchmarks. Compare its Fusion rows only with configurations measured in this same source cohort.`,
       ),
       paragraph(
-        "The snapshot does include the two lead models in their single-model harnesses and Cognition’s earlier Devin CLI configuration, so a reader can see what the site currently stores for those names.",
+        "The snapshot includes both Fusion configurations and the two lead models in their single-model harnesses, so readers can compare the source-published rows within one index version.",
       ),
       ...baselineBlocks(snapshot, retrievedAt),
       ...fusionStatusBlocks(snapshot, retrievedAt),

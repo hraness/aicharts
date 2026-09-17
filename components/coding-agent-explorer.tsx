@@ -1500,8 +1500,9 @@ export function CodingAgentExplorer({
             Only configurations reporting both selected metrics appear in the chart.
           </p>
           <p>
-            This source reports Terminal-Bench v2.1. Its scores stay separate from{" "}
-            <Link href="/benchmarks?atlas=terminal-bench-4">Terminal-Bench 4, the current coding standard</Link>.
+            This Coding Agent Index v1.5 source combines DeepSWE v1.1, Terminal-Bench 4, and SWE-Atlas-QnA.
+            Its Terminal-Bench scores stay separate from the standalone{" "}
+            <Link href="/benchmarks?atlas=terminal-bench-4">Terminal-Bench 4 owner cohort</Link>.
             A snapshot date records retrieval, not when each model was evaluated.
           </p>
           <p>
@@ -1546,8 +1547,8 @@ export function CodingAgentExplorer({
             <small>{hoveredPoint.record.agent} / {hoveredPoint.record.setting}</small>
             <dl>
               <div><dt>AA Index</dt><dd>{formatNullableMetricValue("aaIndex", hoveredPoint.record.benchmarks.aaIndex)}</dd></div>
-              <div><dt>DeepSWE</dt><dd>{formatNullableMetricValue("deepSwe", hoveredPoint.record.benchmarks.deepSwe)}</dd></div>
-              <div><dt>Terminal v2</dt><dd>{formatNullableMetricValue("terminalBench", hoveredPoint.record.benchmarks.terminalBench)}</dd></div>
+              <div><dt>DeepSWE 1.1</dt><dd>{formatNullableMetricValue("deepSwe", hoveredPoint.record.benchmarks.deepSwe)}</dd></div>
+              <div><dt>Terminal 4</dt><dd>{formatNullableMetricValue("terminalBench", hoveredPoint.record.benchmarks.terminalBench)}</dd></div>
               <div><dt>SWE Atlas</dt><dd>{formatNullableMetricValue("sweAtlas", hoveredPoint.record.benchmarks.sweAtlas)}</dd></div>
               <div><dt>Cost</dt><dd>{formatNullableMetricValue("costUsd", hoveredPoint.record.economics.costUsd)}</dd></div>
               <div><dt>Time</dt><dd>{formatNullableMetricValue("durationMinutes", hoveredPoint.record.economics.durationSeconds === null ? null : hoveredPoint.record.economics.durationSeconds / 60)}</dd></div>

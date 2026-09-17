@@ -531,7 +531,7 @@
       "providerId": "z_ai",
       "providerName": "Z.ai",
       "sourceAddedAt": "2026-08-18T20:57:35.000Z",
-      "status": "awaiting-benchmark"
+      "status": "benchmarked"
     },
     {
       "capabilities": {
@@ -575,7 +575,7 @@
       "providerId": "google",
       "providerName": "Google",
       "sourceAddedAt": "2026-08-13T17:03:01.000Z",
-      "status": "benchmarked"
+      "status": "awaiting-benchmark"
     },
     {
       "capabilities": {
@@ -634,7 +634,7 @@
       "providerId": "xai",
       "providerName": "xAI",
       "sourceAddedAt": "2026-08-12T15:35:57.000Z",
-      "status": "awaiting-benchmark"
+      "status": "benchmarked"
     },
     {
       "capabilities": {
@@ -677,7 +677,7 @@
       "providerId": "meta",
       "providerName": "Meta",
       "sourceAddedAt": "2026-08-05T19:48:07.000Z",
-      "status": "benchmarked"
+      "status": "awaiting-benchmark"
     },
     {
       "capabilities": {
@@ -761,7 +761,7 @@
       "providerId": "google",
       "providerName": "Google",
       "sourceAddedAt": "2026-07-21T15:12:13.000Z",
-      "status": "benchmarked"
+      "status": "awaiting-benchmark"
     },
     {
       "capabilities": {
@@ -828,7 +828,7 @@
       "providerId": "meta",
       "providerName": "Meta",
       "sourceAddedAt": "2026-07-16T15:29:01.000Z",
-      "status": "benchmarked"
+      "status": "awaiting-benchmark"
     },
     {
       "capabilities": {
@@ -870,7 +870,7 @@
       "providerId": "openai",
       "providerName": "OpenAI",
       "sourceAddedAt": "2026-07-09T09:54:24.000Z",
-      "status": "benchmarked"
+      "status": "awaiting-benchmark"
     },
     {
       "capabilities": {
@@ -912,7 +912,7 @@
       "providerId": "openai",
       "providerName": "OpenAI",
       "sourceAddedAt": "2026-07-09T09:54:17.000Z",
-      "status": "benchmarked"
+      "status": "awaiting-benchmark"
     },
     {
       "capabilities": {
@@ -975,7 +975,7 @@
       "providerId": "xai",
       "providerName": "xAI",
       "sourceAddedAt": "2026-07-08T15:05:54.000Z",
-      "status": "benchmarked"
+      "status": "awaiting-benchmark"
     },
     {
       "capabilities": {
@@ -1036,7 +1036,7 @@
       "providerId": "z_ai",
       "providerName": "Z.ai",
       "sourceAddedAt": "2026-06-16T17:45:30.000Z",
-      "status": "benchmarked"
+      "status": "awaiting-benchmark"
     },
     {
       "capabilities": {
@@ -1077,7 +1077,7 @@
       "providerId": "anthropic",
       "providerName": "Anthropic",
       "sourceAddedAt": "2026-06-09T12:18:35.000Z",
-      "status": "benchmarked"
+      "status": "awaiting-benchmark"
     }
   ]
 }

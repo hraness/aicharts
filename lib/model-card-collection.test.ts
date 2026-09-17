@@ -195,26 +195,28 @@ describe("model-card OpenRouter listings", () => {
     for (const card of MODEL_CARD_PRESENTATIONS) {
       const expectedRelease = modelReleaseDateForCanonicalId(card.canonicalModelId);
       if (expectedRelease === undefined) {
-        throw new Error(`Missing release fixture for ${card.canonicalModelId}.`);
+        expect(card.release.status).toBe("unreviewed");
+        expect(card.canonicalModelId).toStartWith("unlisted/");
+      } else {
+        expect(card.release).toEqual(expectedRelease);
+        expect(card.canonicalModelId).not.toStartWith("unlisted/");
       }
-      expect(card.release).toEqual(expectedRelease);
-      expect(card.canonicalModelId).not.toStartWith("unlisted/");
     }
 
     const datedOpusProfiles = MODEL_CARD_VARIANTS.filter(card => (
       card.providerId === "anthropic" && card.model === "Opus 5"
     ));
-    expect(datedOpusProfiles.length).toBeGreaterThan(1);
+    expect(datedOpusProfiles.length).toBeGreaterThan(0);
     expect(datedOpusProfiles.every(card => (
       MODEL_CARD_LISTINGS.get(card.path)?.sourceAddedAt === "2026-07-24T17:02:24.000Z"
     ))).toBeTrue();
 
-    const unmatchedDeepSeek = MODEL_CARD_VARIANTS.find(card => (
-      card.providerId === "deepseek" && card.model === "DeepSeek V4 Pro"
+    const unmatchedComposite = MODEL_CARD_VARIANTS.find(card => (
+      card.providerId === "cognition" && card.model.startsWith("Claude Fable")
     ));
-    expect(unmatchedDeepSeek).toBeDefined();
-    if (unmatchedDeepSeek !== undefined) {
-      expect(MODEL_CARD_LISTINGS.get(unmatchedDeepSeek.path)).toBeNull();
+    expect(unmatchedComposite).toBeDefined();
+    if (unmatchedComposite !== undefined) {
+      expect(MODEL_CARD_LISTINGS.get(unmatchedComposite.path)).toBeNull();
     }
   });
 

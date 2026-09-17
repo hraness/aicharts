@@ -237,12 +237,12 @@ export function createTerminalBenchScienceArticle(
       paragraph(
         "The ",
         { href: "/", text: "AI Charts homepage" },
-        " now includes Terminal-Bench-Science 0.1 as the scientific-workflow member of its five-role benchmark portfolio. Its scores remain separate from the interactive Artificial Analysis coding-agent chart, which plots AA Index, DeepSWE, Terminal-Bench v2.1, and SWE-Atlas-QnA against API cost, active time, or total token use. Those coding observations come from a checked ",
+        " now includes Terminal-Bench-Science 0.1 as the scientific-workflow member of its five-role benchmark portfolio. Its scores remain separate from the interactive Artificial Analysis coding-agent chart, which plots Coding Agent Index v1.5, DeepSWE v1.1, Terminal-Bench 4, and SWE-Atlas-QnA against API cost, active time, or total token use. Those coding observations come from a checked ",
         { href: BLOG_SOURCES.artificialAnalysisCodingAgents.url, text: "Artificial Analysis coding-agents snapshot" },
         ` retrieved ${retrievedAt}.`,
       ),
       paragraph(
-        "For orientation, the snapshot’s highest stored Terminal-Bench v2.1 score is ",
+        "For orientation, the snapshot’s highest stored Terminal-Bench 4 score is ",
         formatBenchmarkScore(terminalLeader.value),
         " for ",
         terminalLeader.record.model,
@@ -258,7 +258,7 @@ export function createTerminalBenchScienceArticle(
           "Resolution rates, costs, and token totals belong to the named 0.1 release, models, harnesses, and three-trial protocol on the announcement. They can change in a later release.",
         ],
         [
-          "Terminal-Bench-Science 0.1 is a homepage benchmark family, not a field in the checked Artificial Analysis coding-agent snapshot. A stored Terminal-Bench v2.1 score is a different suite.",
+          "Terminal-Bench-Science 0.1 is a homepage benchmark family, not a field in the checked Artificial Analysis coding-agent snapshot. A stored Coding Agent Index Terminal-Bench 4 component is a separate evaluator cohort.",
         ],
         [
           "Reported evaluation costs are totals across all 70 tasks. They are not a production invoice, a subscription price, or a per-query quote.",

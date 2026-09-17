@@ -63,32 +63,30 @@ describe("model card presentation", () => {
 
   test("derives a stable UTC source date and sorted unique harness context", () => {
     expect(formatModelCardSourceDate("2026-08-18T23:59:59.000Z")).toBe("Aug 18, 2026");
-    const multiHarness = MODEL_CARD_PRESENTATIONS.find(card => card.agentNames.length > 1);
-    if (multiHarness === undefined) throw new Error("Expected a multi-harness card fixture.");
-    expect(multiHarness.agentNames).toEqual([...multiHarness.agentNames].sort());
-    expect(new Set(multiHarness.agentNames).size).toBe(multiHarness.agentNames.length);
-    expect(compactModelCardHarnessLabel(multiHarness.agentNames)).toBe(
-      `${multiHarness.agentNames[0]} +${multiHarness.agentNames.length - 1}`,
-    );
+    for (const card of MODEL_CARD_PRESENTATIONS) {
+      expect(card.agentNames).toEqual([...card.agentNames].sort());
+      expect(new Set(card.agentNames).size).toBe(card.agentNames.length);
+    }
+    expect(compactModelCardHarnessLabel(["Claude Code", "Codex"])).toBe("Claude Code +1");
   });
 
   test("presents checked first-party release dates with official provenance", () => {
     const released = MODEL_CARD_PRESENTATIONS.find(card => (
-      card.canonicalModelId === "google/gemini-3.7-flash"
+      card.canonicalModelId === "google/gemini-3.8-flash"
     ));
     expect(released?.release).toMatchObject({
-      releasedOn: "2026-08-13",
+      releasedOn: "2026-09-02",
       stage: "public-release",
       status: "verified",
     });
     if (released?.release.status !== "verified") {
       throw new Error("Expected a current card with verified official release metadata.");
     }
-    expect(formatModelCardReleaseDate(released.release.releasedOn)).toBe("13 AUG 2026");
-    expect(formatModelCardReleaseDateLong(released.release.releasedOn)).toBe("Aug 13, 2026");
+    expect(formatModelCardReleaseDate(released.release.releasedOn)).toBe("2 SEP 2026");
+    expect(formatModelCardReleaseDateLong(released.release.releasedOn)).toBe("Sep 2, 2026");
     expect(formatModelCardReleaseStage(released.release.stage)).toBe("Public release");
     expect(modelCardReleaseAccessibleLabel(released.release)).toBe(
-      "Official release date: Aug 13, 2026. Verified from Introducing Gemini 3.7 Flash.",
+      "Official release date: Sep 2, 2026. Verified from Gemini model release dates.",
     );
   });
 
@@ -116,15 +114,15 @@ describe("model card presentation", () => {
   });
 
   test("discloses when a verified date applies to the base model", () => {
-    const cognition = MODEL_CARD_PRESENTATIONS.find(card => (
-      card.canonicalModelId === "cognition/swe-1.7"
+    const deepSeek = MODEL_CARD_PRESENTATIONS.find(card => (
+      card.canonicalModelId === "deepseek/deepseek-v4-pro-0813"
     ));
-    if (cognition?.release.status !== "verified") {
-      throw new Error("Expected checked Cognition base-model release metadata.");
+    if (deepSeek?.release.status !== "verified") {
+      throw new Error("Expected checked DeepSeek base-model release metadata.");
     }
-    expect(modelCardReleaseLabel(cognition.release)).toBe("Base released");
-    expect(modelCardReleaseAccessibleLabel(cognition.release)).toBe(
-      "Official base-model release date for SWE-1.7: Jul 8, 2026. Verified from SWE-1.7: Frontier Intelligence at a Fraction of the Cost.",
+    expect(modelCardReleaseLabel(deepSeek.release)).toBe("Base released");
+    expect(modelCardReleaseAccessibleLabel(deepSeek.release)).toBe(
+      "Official base-model release date for DeepSeek-V4-Pro: Aug 13, 2026. Verified from DeepSeek-V4-Pro GA Release.",
     );
   });
 
@@ -153,15 +151,15 @@ describe("model card presentation", () => {
 
   test("turns operational source labels into a clean collectible title", () => {
     const fable = MODEL_CARD_PRESENTATIONS.find(card => (
-      card.canonicalModelId === "anthropic/claude-fable-5"
+      card.canonicalModelId === "anthropic/claude-fable-5.1"
       && card.profileSlug === "max"
     ));
     expect(fable).toMatchObject({
-      canonicalModelId: "anthropic/claude-fable-5",
+      canonicalModelId: "anthropic/claude-fable-5.1",
       classLabel: "Max",
-      displayTitle: "Fable 5 Max",
+      displayTitle: "Fable 5.1 Max",
       harnessLabel: "Claude Code",
-      model: "Fable 5 (with fallback)",
+      model: "Fable 5.1 (with fallback)",
       profileLabel: "Max",
       visualClass: "max",
     });
@@ -175,9 +173,9 @@ describe("model card presentation", () => {
     expect(formatModelCardDisplayTitle("Model Prime xhigh", "X-high")).toBe(
       "Model Prime X-high",
     );
-    expect(MODEL_CARD_PRESENTATIONS.find(card => card.visualClass === "thinking")).toMatchObject({
-      displayTitle: "Qwen3.7 Plus Thinking",
-      model: "Qwen3.7 Plus (thinking)",
+    expect(MODEL_CARD_PRESENTATIONS.find(card => card.visualClass === "fast")).toMatchObject({
+      displayTitle: "DeepSeek V4 Flash 0731 Max",
+      model: "DeepSeek V4 Flash 0731",
     });
   });
 

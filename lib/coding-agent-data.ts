@@ -77,8 +77,8 @@ const comparableCodingAgentBenchmarkDatasetsSchema = z.object({
 }).strict();
 
 export const CODING_AGENT_BENCHMARK_DATASETS = {
-  deepSwe: "deep-swe",
-  terminalBench: "terminal-bench-v2.1",
+  deepSwe: "deep-swe-v1.1",
+  terminalBench: "terminal-bench-v4",
   sweAtlas: "swe-atlas-qna",
 } as const;
 

@@ -36,7 +36,7 @@ describe("focused chart destinations", () => {
     expect(html).toContain('id="chart"');
     expect(html).toContain('aria-label="Share and export chart"');
     expect(html).toContain('class="option-picker option-picker--list chart-benchmark-select"');
-    expect(html).toContain("<strong>DeepSWE</strong>");
+    expect(html).toContain("<strong>DeepSWE v1.1</strong>");
     expect(/<a\b(?=[^>]*href="\/coding")(?=[^>]*aria-current="page")[^>]*>Coding agents<\/a>/u.test(html)).toBeTrue();
     expect(html).toContain('/benchmarks?atlas=terminal-bench-4');
     expect(html).toContain('/benchmarks?atlas=terminal-bench-science');

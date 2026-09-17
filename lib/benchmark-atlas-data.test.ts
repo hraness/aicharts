@@ -13,7 +13,7 @@ describe("checked benchmark atlas projections", () => {
     const valid = validateAtlasCatalog(CORE_ATLAS_ENTRIES, BENCHMARK_ATLAS_DATASETS);
     expect(valid.ok ? true : valid.error.message).toBeTrue();
     expect(getBenchmarkAtlasDataset("terminal-bench-4")?.version).toBe("4.0.0");
-    expect(getBenchmarkAtlasDataset("terminal-bench-2-1")?.version).toBe("2.1");
+    expect(getBenchmarkAtlasDataset("aa-terminal-bench-4")?.version).toBe("4.0");
     expect(getBenchmarkAtlasDataset("unknown")).toBeUndefined();
   });
 
@@ -26,7 +26,7 @@ describe("checked benchmark atlas projections", () => {
     first.benchmarks.terminalBench = 0;
     const datasets = codingAtlasDatasets(source);
     expect(datasets.find(dataset => dataset.benchmarkId === "deep-swe")?.points.some(point => point.id === first.id)).toBeFalse();
-    expect(datasets.find(dataset => dataset.benchmarkId === "terminal-bench-2-1")?.points.find(point => point.id === first.id)?.score).toBe(0);
+    expect(datasets.find(dataset => dataset.benchmarkId === "aa-terminal-bench-4")?.points.find(point => point.id === first.id)?.score).toBe(0);
   });
 
   test("Intelligence includes measured configurations without inventing missing costs", () => {

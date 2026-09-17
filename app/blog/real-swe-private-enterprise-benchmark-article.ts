@@ -309,7 +309,7 @@ function overlapBlocks(snapshot: CodingAgentSnapshot, retrievedAt: string): Blog
       overlaps.map(overlapRow),
     ),
     paragraph(
-      "The two columns of scores measure different things. Real-SWE resolution is the share of 80 private-task rollouts that passed a company-derived verifier. AA Index is a composite of DeepSWE, Terminal-Bench v2.1, and SWE-Atlas-QnA on public task sets. A pair can therefore sit higher in one column than the other without either source being wrong, and the two values must not be subtracted, averaged, or plotted on one axis.",
+      "The two columns of scores measure different things. Real-SWE resolution is the share of 80 private-task rollouts that passed a company-derived verifier. AA Index is a composite of DeepSWE v1.1, Terminal-Bench 4, and SWE-Atlas-QnA on public task sets. A pair can therefore sit higher in one column than the other without either source being wrong, and the two values must not be subtracted, averaged, or plotted on one axis.",
     ),
   ];
 }

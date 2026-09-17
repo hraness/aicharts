@@ -28,8 +28,8 @@ function sourceRow(index: number, model = `Model ${index}`) {
     evalCount: 3,
     indexScore: 0.75,
     evals: [
-      { datasetIndexName: "deep-swe", mean: { reward: 0.62 } },
-      { datasetIndexName: "terminal-bench-v2.1", mean: { reward: 0.81 } },
+      { datasetIndexName: "deep-swe-v1.1", mean: { reward: 0.62 } },
+      { datasetIndexName: "terminal-bench-v4", mean: { reward: 0.81 } },
       { datasetIndexName: "swe-atlas-qna", mean: { reward: 0.7 } },
     ],
     mean: {
@@ -87,6 +87,19 @@ describe("Artificial Analysis Flight extraction", () => {
     if (!result.ok) expect(result.error.message).toContain("benchmarkRows");
   });
 
+  test("accepts creator-less Cognition composites without accepting unowned missing attribution", () => {
+    const rows = Array.from({ length: 10 }, (_, index) => sourceRow(index));
+    const display = { agent: rows[0]!.display.agent, model: rows[0]!.display.model };
+    rows[0] = { ...rows[0]!, agentName: "Devin Fusion CLI", provider: "cognition", display } as typeof rows[number];
+    const extracted = extractSourceRows(flightScript(`0:{"benchmarkRows":${JSON.stringify(rows)}}`));
+    expect(extracted.ok).toBeTrue();
+    if (!extracted.ok) return;
+    expect(normalizeSourceRows(extracted.value, "2026-09-17T00:00:00.000Z").records[0]?.providerName).toBe("Cognition");
+
+    rows[0] = { ...rows[0]!, provider: "unknown" };
+    expect(extractSourceRows(flightScript(`0:{"benchmarkRows":${JSON.stringify(rows)}}`)).ok).toBeFalse();
+  });
+
   test("normalizes benchmark percentages, total tokens, effort settings, completeness, and source metadata", () => {
     const rows = Array.from({ length: 10 }, (_, index) => (
       sourceRow(index, index === 0 ? "Model Prime (Extra High)" : `Model ${index}`)
@@ -100,8 +113,8 @@ describe("Artificial Analysis Flight extraction", () => {
 
     expect(snapshot.source).toEqual({
       benchmarkDatasets: {
-        deepSwe: "deep-swe",
-        terminalBench: "terminal-bench-v2.1",
+        deepSwe: "deep-swe-v1.1",
+        terminalBench: "terminal-bench-v4",
         sweAtlas: "swe-atlas-qna",
       },
       name: "Artificial Analysis",

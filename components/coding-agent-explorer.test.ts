@@ -129,8 +129,8 @@ test("keeps the working chart ahead of optional comparison and evidence", async 
   expect(source).toContain("codingAgentDatasetSummary(snapshot)");
   expect(source).not.toContain("standard above");
   expect(source).not.toContain("chart-family-intro__eyebrow");
-  expect(source).toContain("This source reports Terminal-Bench v2.1");
-  expect(source.indexOf("This source reports Terminal-Bench v2.1")).toBeGreaterThan(overviewIndex);
+  expect(source).toContain("This Coding Agent Index v1.5 source combines DeepSWE v1.1, Terminal-Bench 4, and SWE-Atlas-QnA");
+  expect(source.indexOf("This Coding Agent Index v1.5 source combines")).toBeGreaterThan(overviewIndex);
   expect(source).toContain('href="/benchmarks?atlas=terminal-bench-4"');
   expect(source).toContain('href={snapshot.source.url}');
   expect(source).toContain("<span>{snapshot.source.name} · {snapshotSummary.recordCount} configurations");
@@ -308,11 +308,11 @@ test("renders a compact source note, real chart anchor, and closed secondary con
   expect(html.indexOf(formatRetrievedAt(parsed.value.source.retrievedAt))).toBeLessThan(chartIndex);
   expect(overviewIndex).toBeGreaterThan(chartIndex);
   expect(methodIndex).toBeGreaterThan(overviewIndex);
-  expect(html.indexOf("This source reports Terminal-Bench v2.1")).toBeGreaterThan(methodIndex);
+  expect(html.indexOf("This Coding Agent Index v1.5 source combines")).toBeGreaterThan(methodIndex);
   expect(html.indexOf('href="/data/coding-agents.json"')).toBeGreaterThan(methodIndex);
   expect(html).toContain('href="/benchmarks?atlas=terminal-bench-4"');
   expect(html).toContain('class="option-picker option-picker--list chart-benchmark-select"');
-  expect(html).toContain("<strong>Terminal-Bench v2.1</strong>");
+  expect(html).toContain("<strong>Terminal-Bench 4</strong>");
   expect(html).toContain('class="ui-segmented-control__leading"');
   expect(html).toContain(">Cost</button>");
   expect(html).toContain(">Time</button>");
@@ -377,23 +377,18 @@ test("routes overlapping mobile chart centers by distance instead of SVG order",
   const initialPhoneViewportRight = 1440 * 390 / 700;
   expect(restingLabels).toHaveLength(3);
   expect(restingLabels.filter(point => point.x <= initialPhoneViewportRight).length).toBeGreaterThanOrEqual(2);
-  const composer = visible.find(record => record.agent === "Cursor CLI" && record.modelLabel === "Composer 2.5");
-  const deepSeek = visible.find(record => record.agent === "Codex" && record.modelLabel === "DeepSeek V4 Pro 0813 (max)");
-  expect(composer).toBeDefined();
-  expect(deepSeek).toBeDefined();
-  if (composer === undefined || deepSeek === undefined) return;
-  const composerPoint = points.find(point => point.id === composer.id);
-  const deepSeekPoint = points.find(point => point.id === deepSeek.id);
-  expect(composerPoint).toBeDefined();
-  expect(deepSeekPoint).toBeDefined();
-  if (composerPoint === undefined || deepSeekPoint === undefined) return;
+  const first = points[0];
+  const second = points[1];
+  expect(first).toBeDefined();
+  expect(second).toBeDefined();
+  if (first === undefined || second === undefined) return;
+  const overlapping = [
+    { ...first, x: 100, y: 100 },
+    { ...second, x: 120, y: 100 },
+  ];
 
-  // The 700px phone canvas used 42-unit hit circles; the later DeepSeek node
-  // covered Composer's center even though Composer was the visible tap target.
-  expect(Math.hypot(composerPoint.x - deepSeekPoint.x, composerPoint.y - deepSeekPoint.y)).toBeLessThan(42);
-  expect(points.indexOf(deepSeekPoint)).toBeGreaterThan(points.indexOf(composerPoint));
-  expect(nearestCodingAgentPointId(points, composerPoint.x, composerPoint.y, 50)).toBe(composer.id);
-  expect(nearestCodingAgentPointId(points, deepSeekPoint.x, deepSeekPoint.y, 50)).toBe(deepSeek.id);
+  expect(nearestCodingAgentPointId(overlapping, 100, 100, 50)).toBe(first.id);
+  expect(nearestCodingAgentPointId(overlapping, 120, 100, 50)).toBe(second.id);
   expect(nearestCodingAgentPointId(points, 1440, 940, 4)).toBeNull();
 });
 
