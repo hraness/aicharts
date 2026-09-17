@@ -139,14 +139,21 @@ mod unix {
         let mut seen = BTreeSet::new();
         for (provider, root) in &options.sources {
             let mut files = vec![];
-            crate::source_files(root, *provider, 0, &mut files, &mut visited)?;
+            crate::source_files(
+                root,
+                *provider,
+                0,
+                &mut files,
+                &mut visited,
+                crate::MAX_DISCOVERY_FILES,
+            )?;
             files.sort();
             for path in files {
                 let canonical = fs::canonicalize(&path).map_err(|_| "source_metadata_failed")?;
                 if !seen.insert((*provider, canonical.clone())) {
                     continue;
                 }
-                if seen.len() > crate::MAX_FILES {
+                if seen.len() > crate::MAX_DISCOVERY_FILES {
                     return Err("source_file_limit");
                 }
                 let mut file = crate::open_regular(&path).map_err(|_| "source_read_failed")?;
