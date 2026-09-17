@@ -33,8 +33,9 @@
     "node": "24.x"
   },
   "scripts": {
-    "dev": "next dev --webpack",
-    "build": "next build --webpack",
+    "build:theme": "bun scripts/build-theme-bootstrap.ts",
+    "dev": "bun run build:theme && next dev --webpack",
+    "build": "bun run build:theme && next build --webpack",
     "start": "next start",
     "lint": "eslint .",
     "test": "bun test .",
