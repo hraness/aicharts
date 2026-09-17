@@ -1,5 +1,4 @@
 import { describe, expect, test } from "bun:test";
-import { hranessAttribution } from "@hraness/site-footer";
 import { HranessSiteFooter } from "@hraness/site-footer/react";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
@@ -65,11 +64,6 @@ describe("AI Charts mailing configuration", () => {
   });
 
   test("keeps the package-owned Hraness attribution alongside the AI Charts audience and profiles", () => {
-    expect(hranessAttribution).toEqual({
-      subtitle: "Hraness is an advanced software research organization dedicated to advancing the frontier of machine intelligence.",
-      title: "Built by Hraness",
-    });
-
     const html = renderToStaticMarkup(createElement(HranessSiteFooter, {
       mailingList: aiChartsMailingListConfig(),
       social: {
@@ -84,9 +78,9 @@ describe("AI Charts mailing configuration", () => {
       },
     }));
 
-    expect(html.match(/data-slot="hraness-attribution"/gu)).toHaveLength(1);
-    expect(html).toContain(`>${hranessAttribution.title}</p>`);
-    expect(html).toContain(`>${hranessAttribution.subtitle}</p>`);
+    expect(html.match(/data-slot="hraness-site-footer"/gu)).toHaveLength(1);
+    expect(html).toContain('aria-label="Hraness home"');
+    expect(html).toContain(">by Hraness</span>");
     expect(html).toContain('name="audience" type="hidden" value="aicharts"');
     expect(html).toContain('href="https://x.com/aichartsio"');
     expect(html).not.toContain("Ben Guo");

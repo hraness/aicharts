@@ -3,11 +3,13 @@ import {
   DesignPaletteProvider,
   ThemeColorSync,
 } from "@hraness/design-kit/react";
+import { MarketingSiteFooter } from "@hraness/design-kit/react/server";
 import { HranessSiteFooter } from "@hraness/site-footer/react";
 import type { Metadata, Viewport } from "next";
 import type { CSSProperties, ReactNode } from "react";
 
 import { AnalyticsBoundary } from "@/components/analytics-boundary";
+import { SITE_HEADER_LINKS } from "@/components/site-header";
 
 import "./globals.css";
 import { aiChartsMailingListConfig } from "./mailing-config";
@@ -101,6 +103,17 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
             type="application/ld+json"
           />
           {children}
+          <MarketingSiteFooter
+            ariaLabel="AI Charts"
+            brand={(
+              // eslint-disable-next-line @next/next/no-img-element -- the generated app icon serves the canonical mark unchanged.
+              <img alt="" height={20} src="/icon.png" width={20} />
+            )}
+            brandHref="/"
+            brandLabel="AI Charts home"
+            links={SITE_HEADER_LINKS}
+            name={site.domain}
+          />
           <HranessSiteFooter
             support={{
               id: "aicharts",
