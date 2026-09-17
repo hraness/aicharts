@@ -52,7 +52,6 @@ jobs:
       REFRESH_MODE: ${{ github.event_name == 'workflow_dispatch' && inputs.mode || github.event.schedule == '23 * * * *' && 'releases' || github.event.schedule == '17 */4 * * *' && 'benchmarks' || github.event.schedule == '43 10 * * *' && 'full' || 'full' }}
       REFRESH_BRANCH: automation/model-data-refresh-${{ github.run_id }}-${{ github.run_attempt }}
       RELEASE_RADAR_PATH: data/model-release-radar.json
-      REQUIRED_CHECK_CONTEXT: Required
       REFRESH_ISSUE_TITLE: "[automation] Data refresh is unhealthy"
       RELEASE_REVIEW_ISSUE_TITLE: "[automation] First-party releases need review"
       RUN_BENCHMARK_REFRESH: ${{ (github.event_name == 'schedule' && (github.event.schedule == '17 */4 * * *' || github.event.schedule == '43 10 * * *')) || (github.event_name == 'workflow_dispatch' && (inputs.mode == 'full' || inputs.mode == 'benchmarks' || inputs.mode == 'discovery')) }}
