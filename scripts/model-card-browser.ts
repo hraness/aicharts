@@ -217,7 +217,8 @@ async function verifyChartExport(browser: Browser, baseUrl: string): Promise<voi
   try {
     await page.goto(`${baseUrl}/coding`, { waitUntil: "domcontentloaded" });
     await settle(page);
-    const benchmarkPicker = page.locator(".chart-benchmark-select");
+    const benchmarkPicker = page.locator(".chart-benchmark-select:visible");
+    invariant(await benchmarkPicker.count() === 1, "The coding chart needs exactly one visible benchmark picker.");
     await assertCompactPickerAlignment(benchmarkPicker, "DeepSWE");
     for (const metric of ["Cost", "Time", "Tokens"] as const) {
       invariant(
