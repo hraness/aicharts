@@ -418,15 +418,53 @@ describe("scheduled model-data refresh", () => {
       run: "rustup show active-toolchain",
     });
     expect(steps.indexOf(step("usage_toolchain"))).toBeLessThan(steps.indexOf(step("validation")));
+    // The enterprise forbids createPullRequest for github-actions[bot], so the
+    // publish step authenticates as the scoped data-refresh GitHub App instead.
+    expect(step("writer")).toMatchObject({
+      if: "steps.validation.outcome == 'success' && steps.snapshot.outputs.changed == 'true'",
+      uses: "actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349",
+      with: {
+        "app-id": "${{ vars.AICHARTS_DATA_REFRESH_APP_ID }}",
+        "private-key": "${{ secrets.AICHARTS_DATA_REFRESH_APP_PRIVATE_KEY }}",
+        owner: "hraness",
+        repositories: "aicharts",
+        "permission-contents": "write",
+        "permission-pull-requests": "write",
+        "permission-statuses": "write",
+        "permission-actions": "write",
+      },
+    });
+    expect(steps.indexOf(step("validation"))).toBeLessThan(steps.indexOf(step("writer")));
+    expect(steps.indexOf(step("writer"))).toBeLessThan(steps.indexOf(step("publish")));
     expect(step("publish")).toMatchObject({
       "continue-on-error": true,
-      if: "steps.validation.outcome == 'success' && steps.snapshot.outputs.changed == 'true'",
+      if: "steps.validation.outcome == 'success' && steps.snapshot.outputs.changed == 'true' && steps.writer.outcome == 'success'",
+      env: {
+        GH_REPO: "${{ github.repository }}",
+        GH_TOKEN: "${{ steps.writer.outputs.token }}",
+        GITHUB_TOKEN: "${{ steps.writer.outputs.token }}",
+      },
     });
     expect(publish).toContain(
       'git add -- "$BENCHMARK_PATH" "$CALCULATOR_PATH" "$DEEP_SWE_PATH" "$FIRST_PARTY_RELEASE_PATH" "$INTELLIGENCE_PATH" "$RELEASE_RADAR_PATH" "$TERMINAL_BENCH_PATH" "$TERMINAL_BENCH_SCIENCE_PATH" "$ATLAS_REASONING_PATH" "$ATLAS_MULTIMODAL_PATH" "$ARENA_MEDIA_PATH" "$ATLAS_AUDIO_PATH"',
     );
     expect(publish).toContain('"HEAD:refs/heads/${REFRESH_BRANCH}"');
     expect(publish).toContain('gh pr create --base main');
+    expect(publish).toContain('pr_number="${pr_url##*/}"');
+    // Strict required checks refuse a behind-main merge; the bounded round
+    // reconciles through update-branch and re-attests the reconciled head.
+    expect(publish).toContain("for publish_round in 1 2");
+    expect(publish).toContain('--json mergeStateStatus --jq');
+    expect(publish).toContain('"repos/${GITHUB_REPOSITORY}/pulls/${pr_number}/update-branch"');
+    expect(publish).toContain('--json headRefOid --jq');
+    expect(publish).toContain('if [[ "$merge_state" != "BEHIND" ]]; then break; fi');
+    expect(publish).toContain('gh pr close "$pr_url" --delete-branch || true');
+    expect(publish.indexOf('for publish_round in 1 2')).toBeLessThan(
+      publish.indexOf('"repos/${GITHUB_REPOSITORY}/pulls/${pr_number}/update-branch"'),
+    );
+    expect(publish.indexOf('"repos/${GITHUB_REPOSITORY}/pulls/${pr_number}/update-branch"')).toBeLessThan(
+      publish.indexOf('gh workflow run ci.yml --ref "$REFRESH_BRANCH"'),
+    );
     expect(publish).toContain('--commit "$head_sha" --event workflow_dispatch');
     expect(publish).toContain('gh workflow run ci.yml --ref "$REFRESH_BRANCH"');
     expect(publish).toContain('gh run watch "$ci_run_id" --exit-status');
