@@ -28,9 +28,11 @@ test("the root layout renders the shared Hraness footer after every route", asyn
 
 test("every route inherits one shared footer carrying the package-owned Hraness attribution", () => {
   const marker = "route-content-marker";
-  const html = renderToStaticMarkup(createElement(RootLayout, {
-    children: createElement("main", { id: marker }, "Route content"),
-  }));
+  const html = renderToStaticMarkup(createElement(
+    RootLayout,
+    null,
+    createElement("main", { id: marker }, "Route content"),
+  ));
 
   expect(html.match(/id="hraness-site-footer"/gu)).toHaveLength(1);
   expect(html.match(/data-slot="hraness-attribution"/gu)).toHaveLength(1);
