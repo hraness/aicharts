@@ -1,4 +1,7 @@
-import { absoluteWebUrl } from "@hraness/web-discovery";
+import {
+  absoluteWebUrl,
+  createAtomImageEnclosure,
+} from "@hraness/web-discovery";
 
 import { searchSite } from "../site";
 import {
@@ -9,6 +12,7 @@ import {
 } from "./articles";
 import {
   blogEditorialImage,
+  representativeEditorialImage,
   type BlogEditorialImage,
 } from "./editorial-images";
 
@@ -41,6 +45,12 @@ export function atomFeed(
     const imageUrl = image === undefined
       ? undefined
       : absoluteWebUrl(searchSite.origin, image.src);
+    const enclosure = image === undefined
+      ? undefined
+      : createAtomImageEnclosure(
+        searchSite.origin,
+        representativeEditorialImage(image),
+      );
     const categories = article.keywords
       .map(keyword => `<category term="${escapeXml(keyword)}" />`)
       .join("");
@@ -49,8 +59,8 @@ export function atomFeed(
       `<id>${escapeXml(url)}</id>`,
       `<title>${escapeXml(article.title)}</title>`,
       `<link href="${escapeXml(url)}" rel="alternate" />`,
-      ...(imageUrl === undefined ? [] : [
-        `<link href="${escapeXml(imageUrl)}" rel="enclosure" type="image/webp" />`,
+      ...(enclosure === undefined ? [] : [
+        `<link href="${escapeXml(enclosure.href)}" rel="${enclosure.rel}" type="${enclosure.type}" />`,
       ]),
       `<published>${isoDateTime(article.publishedAt)}</published>`,
       `<updated>${isoDateTime(article.updatedAt)}</updated>`,

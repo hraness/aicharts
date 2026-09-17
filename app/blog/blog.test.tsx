@@ -1162,7 +1162,17 @@ describe("AI Charts blog discovery", () => {
       if (image === undefined) {
         expect(structured).not.toHaveProperty("image");
       } else {
-        expect(structured.image).toBe(`https://aicharts.io${image.src}`);
+        expect(structured.image).toMatchObject({
+          "@type": "ImageObject",
+          caption: image.caption,
+          contentUrl: `https://aicharts.io${image.src}`,
+          creditText: image.credit,
+          description: image.alt,
+          height: EDITORIAL_IMAGE_HEIGHT,
+          representativeOfPage: true,
+          url: `https://aicharts.io${image.src}`,
+          width: EDITORIAL_IMAGE_WIDTH,
+        });
       }
       expect(structured.citation).toEqual(
         article.sourceIds.map(sourceId => BLOG_SOURCES[sourceId].url),
