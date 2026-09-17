@@ -52,6 +52,17 @@ import {
   leadModelBaselines,
 } from "./devin-fusion-cost-saving-article";
 import {
+  HARNESS_TAX,
+  HARNESS_TAX_ARTICLE_PUBLISHED_AT,
+  HARNESS_TAX_HARNESSES,
+  HARNESS_TAX_MODELS,
+  HARNESS_TAX_OWN_HARNESS,
+  HARNESS_TAX_SWE_PAIRS,
+  HARNESS_TAX_TB_PAIRS,
+  harnessTaxAlternativeWins,
+  largestSameModelCostRatio,
+} from "./harnesstax-coding-agent-harness-article";
+import {
   REAL_SWE,
   REAL_SWE_CONFIGURATIONS,
   createRealSweArticle,
@@ -156,7 +167,11 @@ describe("AI Charts benchmark notes", () => {
       expect(articleToMarkdown(article)).not.toContain("/images/blog/");
       expect(article.authorshipDisclosure).toBe(BLOG_AUTHORSHIP_DISCLOSURE);
       expect(articleToMarkdown(article)).toContain(BLOG_AUTHORSHIP_DISCLOSURE);
-      if (article.slug === "real-swe-private-enterprise-benchmark") {
+      if (article.slug === "harnesstax-coding-agent-harness") {
+        expect(article.publishedAt).toBe(HARNESS_TAX_ARTICLE_PUBLISHED_AT);
+        expect(article.updatedAt >= article.publishedAt).toBeTrue();
+        expect(articleToMarkdown(article)).toContain("captured September 16, 2026 UTC");
+      } else if (article.slug === "real-swe-private-enterprise-benchmark") {
         expect(article.publishedAt).toBe("2026-09-14");
         expect(article.updatedAt >= article.publishedAt).toBeTrue();
         expect(articleToMarkdown(article)).toContain("captured September 14, 2026 UTC");
@@ -598,6 +613,89 @@ describe("AI Charts benchmark notes", () => {
     expect(() => spellCount(1.5)).toThrow(RangeError);
   });
 
+  test("reconstructs HarnessTax pair tables and the 9 of 12 alternative-harness tally", () => {
+    const parsed = parseCodingAgentSnapshot(codingAgentData);
+    if (!parsed.ok) throw parsed.error;
+    const article = getBlogArticle("harnesstax-coding-agent-harness");
+    expect(article).toBeDefined();
+    if (article === undefined) return;
+
+    const markup = renderToStaticMarkup(
+      createElement(ArticleBody, { blocks: article.body }),
+    );
+    const markdown = articleToMarkdown(article);
+
+    expect(article.title).toBe("What HarnessTax’s same-model cost gap measures");
+    expect(article.sourceIds).toEqual(["harnessTax", "artificialAnalysisCodingAgents"]);
+    expect(blogEditorialImage(article.slug)).toBeUndefined();
+    expect(markup).toContain(BLOG_SOURCES.harnessTax.url);
+    expect(markup).toContain(BLOG_SOURCES.artificialAnalysisCodingAgents.url);
+    expect(markup).toContain(formatRetrievedAt(parsed.value.source.retrievedAt));
+    expect(article.nextStep?.links.map(link => link.href)).toEqual([
+      "/coding",
+      "/calculator",
+    ]);
+    expect(markdown).toContain(HARNESS_TAX.quotes.upToFiveTimes);
+    expect(markdown).toContain(HARNESS_TAX.quotes.claudeMayNotNeedClaudeCode);
+    expect(markdown).toContain(HARNESS_TAX.reported.fableSweClaudeCodeSuccess);
+    expect(markdown).toContain(HARNESS_TAX.reported.fableSwePiCost);
+    expect(markdown).toContain(HARNESS_TAX.reported.solTbPiSuccess);
+    expect(markdown).toContain(HARNESS_TAX.reported.alternativeWins);
+    expect(markdown).not.toContain("—");
+    expect(markdown).not.toContain("refresh");
+    expect(markdown).not.toContain("schema");
+
+    expect(HARNESS_TAX_SWE_PAIRS).toHaveLength(
+      HARNESS_TAX.modelCount * HARNESS_TAX.harnessCount,
+    );
+    expect(HARNESS_TAX_TB_PAIRS).toHaveLength(HARNESS_TAX_SWE_PAIRS.length);
+    expect(HARNESS_TAX_MODELS).toHaveLength(HARNESS_TAX.modelCount);
+    expect(HARNESS_TAX_HARNESSES).toHaveLength(HARNESS_TAX.harnessCount);
+    for (const model of HARNESS_TAX_MODELS) {
+      for (const harness of HARNESS_TAX_HARNESSES) {
+        expect(HARNESS_TAX_SWE_PAIRS.some(pair =>
+          pair.model === model && pair.harness === harness)).toBeTrue();
+        expect(HARNESS_TAX_TB_PAIRS.some(pair =>
+          pair.model === model && pair.harness === harness)).toBeTrue();
+      }
+    }
+    for (const pair of [...HARNESS_TAX_SWE_PAIRS, ...HARNESS_TAX_TB_PAIRS]) {
+      expect(markup).toContain(pair.model);
+      expect(markup).toContain(pair.success);
+      expect(markup).toContain(pair.costUsd);
+    }
+
+    const wins = harnessTaxAlternativeWins();
+    expect(wins).toHaveLength(9);
+    expect(Object.keys(HARNESS_TAX_OWN_HARNESS)).toHaveLength(
+      HARNESS_TAX.reported.anthropicOpenaiModels,
+    );
+    expect(wins.filter(win => win.benchmark === "SWE-bench Lite")).toHaveLength(4);
+    expect(wins.filter(win => win.benchmark === "Terminal-Bench 2.0")).toHaveLength(5);
+    for (const win of wins) {
+      expect(win.highest.some(pair => pair.harness === win.own.harness)).toBeFalse();
+      expect(markdown).toContain(`${win.model} on ${win.benchmark}`);
+    }
+
+    const lunaSwe = largestSameModelCostRatio(HARNESS_TAX_SWE_PAIRS);
+    expect(lunaSwe.model).toBe("GPT-5.6 Luna");
+    expect(lunaSwe.low).toEqual({
+      model: "GPT-5.6 Luna",
+      harness: "Pi",
+      success: "53.3%",
+      costUsd: "$0.030",
+    });
+    expect(lunaSwe.high).toEqual({
+      model: "GPT-5.6 Luna",
+      harness: "Claude Code",
+      success: "55.6%",
+      costUsd: "$0.152",
+    });
+    expect(lunaSwe.ratio).toBeCloseTo(0.152 / 0.030, 5);
+    expect(markdown).toContain("$0.030");
+    expect(markdown).toContain("$0.152");
+  });
+
   test("reconstructs the Devin Fusion claim from Cognition's posts and the checked snapshot", () => {
     const parsed = parseCodingAgentSnapshot(codingAgentData);
     if (!parsed.ok) throw parsed.error;
@@ -801,6 +899,7 @@ describe("AI Charts benchmark notes", () => {
     expect(markup).toContain(`href="${BLOG_SOURCES.specificLabsRealSwe.url}"`);
     expect(markup).toContain(`href="${BLOG_SOURCES.googleAntigravityCliTransition.url}"`);
     expect(markup).toContain(`href="${BLOG_SOURCES.hackerNewsRealSwe.url}"`);
+    expect(markup).toContain(`href="${BLOG_SOURCES.harnessTax.url}"`);
   });
 
   test("renders the index, static routes, breadcrumbs, dates, and sources", async () => {
@@ -951,6 +1050,7 @@ describe("AI Charts blog discovery", () => {
     }
     const imageFreeSlugs = BLOG_SLUGS.filter(slug => blogEditorialImage(slug) === undefined);
     expect(imageFreeSlugs).toEqual([
+      "harnesstax-coding-agent-harness",
       "real-swe-private-enterprise-benchmark",
       "devin-fusion-cost-saving",
     ]);
