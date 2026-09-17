@@ -133,7 +133,10 @@ describe("homepage canonical content", () => {
     for (const task of ["coding", "reasoning", "research", "image", "video", "audio"]) {
       expect(markup).toContain(`href="/benchmarks?task=${task}#explore"`);
     }
-    expect(markup).toContain('href="https://x.com/hraness"');
+    // Attribution belongs to the shared Hraness footer, never to a personal byline in page content.
+    expect(markup).not.toContain('href="https://x.com/hraness"');
+    expect(markup).not.toContain("Ben Guo");
+    expect(markup).not.toMatch(/<span>By /u);
     expect(markup).toContain('href="https://github.com/hraness/aicharts"');
     expect(markup).toContain('href="/data"');
     expect(markup).toContain('href="/models"');

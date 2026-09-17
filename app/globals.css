@@ -2116,7 +2116,6 @@ body {
 }
 .hraness-marketing-stats__source a,
 .hraness-marketing-question__answer a,
-.hraness-marketing-maker__links a,
 .chart-family-intro__evidence a:not(.latest-update-badge) {
   color: var(--hraness-site-accent);
 }
