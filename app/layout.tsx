@@ -1,5 +1,6 @@
+import { getDesignPaletteTheme } from "@hraness/design-kit";
 import {
-  DesignThemeProvider,
+  DesignPaletteProvider,
   ThemeColorSync,
 } from "@hraness/design-kit/react";
 import { HranessSiteFooter } from "@hraness/site-footer/react";
@@ -18,6 +19,13 @@ type BrandThemeStyle = CSSProperties & Readonly<{
   "--brand-shadow": string;
   "--brand-support": string;
 }>;
+
+/**
+ * SSR renders the Paper light palette tokens so the first paint is stable.
+ * The blocking bootstrap replaces them with the stored preference before
+ * paint; without JavaScript the `:root` fallbacks keep the Paper light look.
+ */
+const initialPalette = getDesignPaletteTheme("paper", "light");
 
 const brandTheme: BrandThemeStyle = {
   "--brand-highlight": site.palette.tonal.highlight,
@@ -70,9 +78,23 @@ const structuredData = [
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (
-    <html data-hraness-material="lantern" data-theme="light" lang="en" style={brandTheme} suppressHydrationWarning>
+    <html
+      className={initialPalette.className}
+      data-hraness-material="lantern"
+      data-palette="paper"
+      lang="en"
+      style={brandTheme}
+      suppressHydrationWarning
+    >
+      <head>
+        {/* eslint-disable-next-line @next/next/no-sync-scripts */}
+        <script src="/theme-bootstrap.js" />
+      </head>
       <body>
-        <DesignThemeProvider storageKey="aicharts-theme">
+        <DesignPaletteProvider
+          defaultPreference={{ palette: "paper", mode: "system" }}
+          legacyStorageKey="aicharts-theme"
+        >
           <ThemeColorSync darkColor="#12100f" lightColor="#f8f7f4" />
           <script
             dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replaceAll("<", "\\u003c") }}
@@ -93,7 +115,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
             }}
           />
           <AnalyticsBoundary />
-        </DesignThemeProvider>
+        </DesignPaletteProvider>
       </body>
     </html>
   );

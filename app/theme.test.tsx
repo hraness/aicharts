@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import {
-  DesignThemeProvider,
+  DesignPaletteProvider,
   ThemeMenuButton,
 } from "@hraness/design-kit/react";
 import { renderToStaticMarkup } from "react-dom/server";
@@ -8,17 +8,18 @@ import { renderToStaticMarkup } from "react-dom/server";
 import GlobalError from "./global-error";
 import NotFound from "./not-found";
 
-test("appearance starts with System and uses the shared persisted runtime", () => {
+test("appearance starts Paper, System and uses the shared persisted runtime", () => {
   const html = renderToStaticMarkup(
-    <DesignThemeProvider storageKey="aicharts-theme">
+    <DesignPaletteProvider
+      defaultPreference={{ palette: "paper", mode: "system" }}
+      legacyStorageKey="aicharts-theme"
+    >
       <ThemeMenuButton aria-label="Chart appearance" />
-    </DesignThemeProvider>,
+    </DesignPaletteProvider>,
   );
 
-  expect(html).toContain("aicharts-theme");
-  expect(html).toContain('data-hraness-design-theme-guard=""');
-  expect(html).toContain('data-theme-value="system"');
-  expect(html).toContain('aria-label="Chart appearance: System"');
+  expect(html).toContain('data-presentation="menu"');
+  expect(html).toContain('aria-label="Chart appearance: Paper, System"');
 });
 
 test("AI Charts does not keep a second theme runtime", async () => {
@@ -27,7 +28,10 @@ test("AI Charts does not keep a second theme runtime", async () => {
     Bun.file(new URL("../components/ui.tsx", import.meta.url)).text(),
   ]);
 
-  expect(layout).toContain('<DesignThemeProvider storageKey="aicharts-theme">');
+  expect(layout).toContain("DesignPaletteProvider");
+  expect(layout).toContain('legacyStorageKey="aicharts-theme"');
+  expect(layout).toContain('data-palette="paper"');
+  expect(layout).toContain('src="/theme-bootstrap.js"');
   expect(controls).toContain('from "@hraness/design-kit/react"');
   expect(controls).not.toContain("localStorage");
   expect(controls).not.toContain("matchMedia");
