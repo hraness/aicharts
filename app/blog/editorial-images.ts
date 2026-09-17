@@ -1,3 +1,5 @@
+import type { RepresentativeImage } from "@hraness/web-discovery";
+
 import type { BlogSlug } from "./articles";
 
 export const EDITORIAL_IMAGE_WIDTH = 1536;
@@ -143,6 +145,30 @@ export function blogEditorialImage<Slug extends BlogSlug>(
   return (BLOG_EDITORIAL_IMAGES as EditorialImageRecord)[slug] as
     | BlogEditorialImage<Slug>
     | undefined;
+}
+
+/**
+ * Projects one checked editorial-image record into the shared representative-
+ * image contract so metadata, structured data, feeds, and sitemaps derive from
+ * the same alt text, caption, credit, dimensions, and paths.
+ */
+export function representativeEditorialImage(
+  image: BlogEditorialImage,
+): RepresentativeImage {
+  return {
+    alt: image.alt,
+    caption: image.caption,
+    contentType: "image/webp",
+    credit: image.credit,
+    height: image.height,
+    path: image.src,
+    social: {
+      height: image.height,
+      path: image.socialSrc,
+      width: image.width,
+    },
+    width: image.width,
+  };
 }
 
 export const blogEditorialImages = Object.values(BLOG_EDITORIAL_IMAGES);

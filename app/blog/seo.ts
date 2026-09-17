@@ -1,7 +1,10 @@
 import {
   absoluteWebUrl,
+  articleJsonLd,
+  createArticleMetadata,
   createPublicSiteMetadata,
   INDEXABLE_ROBOTS,
+  type ArticleDiscovery,
 } from "@hraness/web-discovery";
 import type { Metadata } from "next";
 
@@ -17,6 +20,7 @@ import {
 } from "./articles";
 import {
   blogEditorialImage,
+  representativeEditorialImage,
   type BlogEditorialImage,
 } from "./editorial-images";
 
@@ -52,6 +56,46 @@ function isoDateTime(date: string): string {
   return `${date}T00:00:00.000Z`;
 }
 
+function httpsCitation(url: string): `https://${string}` {
+  if (!url.startsWith("https://")) {
+    throw new TypeError(`Blog source URLs must be HTTPS citations: ${url}`);
+  }
+  return url as `https://${string}`;
+}
+
+/**
+ * Projects one article and its checked editorial-image record into the shared
+ * article-discovery contract. Only articles with a registered image use this
+ * path; the image-free path below keeps every surface free of imagery.
+ */
+function articleDiscovery(
+  article: BlogArticle,
+  image: BlogEditorialImage,
+): ArticleDiscovery {
+  const section = blogArticleSection(article);
+  return {
+    authors: [{ kind: "Organization", name: "AI Charts", path: "/blog" }],
+    canonicalPath: blogArticlePath(article.slug),
+    category: section,
+    ...(article.sourceIds.length === 0 ? {} : {
+      citations: article.sourceIds.map(
+        sourceId => httpsCitation(BLOG_SOURCES[sourceId].url),
+      ),
+    }),
+    description: article.seoDescription,
+    image: representativeEditorialImage(image),
+    isAccessibleForFree: true,
+    isPartOfPath: "/",
+    keywords: article.keywords,
+    modifiedTime: isoDateTime(article.updatedAt),
+    publishedTime: isoDateTime(article.publishedAt),
+    publisher: { kind: "Organization", name: site.name, path: "/" },
+    section,
+    title: article.title,
+    type: "BlogPosting",
+  };
+}
+
 export function blogArticleImagePath(
   slug: BlogSlug,
 ): `/images/blog/${BlogSlug}.webp` | undefined {
@@ -63,11 +107,15 @@ export function blogArticleMetadata(
   editorialImage: BlogEditorialImage | null =
     blogEditorialImage(article.slug) ?? null,
 ): Metadata {
+  if (editorialImage !== null) {
+    const metadata = createArticleMetadata(
+      searchSite,
+      articleDiscovery(article, editorialImage),
+    );
+    return { ...metadata, creator: "AI Charts" };
+  }
   const path = blogArticlePath(article.slug);
   const canonical = absoluteWebUrl(searchSite.origin, path);
-  const image = editorialImage === null
-    ? undefined
-    : absoluteWebUrl(searchSite.origin, editorialImage.socialSrc);
   const section = blogArticleSection(article);
 
   return {
@@ -93,23 +141,12 @@ export function blogArticleMetadata(
       authors: [absoluteWebUrl(searchSite.origin, "/blog")],
       section,
       tags: [...article.keywords],
-      ...(editorialImage === null || image === undefined ? {} : {
-        images: [{
-          alt: editorialImage.alt,
-          height: editorialImage.height,
-          url: image,
-          width: editorialImage.width,
-        }],
-      }),
     },
     robots: INDEXABLE_ROBOTS,
     twitter: {
-      card: editorialImage === null ? "summary" : "summary_large_image",
+      card: "summary",
       title: article.title,
       description: article.seoDescription,
-      ...(editorialImage === null || image === undefined ? {} : {
-        images: [{ alt: editorialImage.alt, url: image }],
-      }),
     },
   };
 }
@@ -160,7 +197,13 @@ export function blogArticleJsonLd(
   article: BlogArticle,
   editorialImage: BlogEditorialImage | null =
     blogEditorialImage(article.slug) ?? null,
-) {
+): Readonly<Record<string, unknown>> {
+  if (editorialImage !== null) {
+    return {
+      ...articleJsonLd(searchSite, articleDiscovery(article, editorialImage)),
+      creditText: article.authorshipDisclosure,
+    };
+  }
   const path = blogArticlePath(article.slug);
   const url = absoluteWebUrl(searchSite.origin, path);
   const blogUrl = absoluteWebUrl(searchSite.origin, "/blog");
@@ -175,9 +218,6 @@ export function blogArticleJsonLd(
     headline: article.title,
     description: article.seoDescription,
     creditText: article.authorshipDisclosure,
-    ...(editorialImage === null ? {} : {
-      image: absoluteWebUrl(searchSite.origin, editorialImage.src),
-    }),
     datePublished: isoDateTime(article.publishedAt),
     dateModified: isoDateTime(article.updatedAt),
     author: {
