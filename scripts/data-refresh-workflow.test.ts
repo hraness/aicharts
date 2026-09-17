@@ -391,7 +391,6 @@ describe("scheduled model-data refresh", () => {
       INTELLIGENCE_PATH: "data/artificial-analysis-intelligence-v4-3.json",
       REFRESH_BRANCH: "automation/model-data-refresh-${{ github.run_id }}-${{ github.run_attempt }}",
       RELEASE_RADAR_PATH: "data/model-release-radar.json",
-      REQUIRED_CHECK_CONTEXT: "Required",
       TERMINAL_BENCH_PATH: "data/terminal-bench.json",
       TERMINAL_BENCH_SCIENCE_PATH: "data/terminal-bench-science.json",
     });
@@ -452,54 +451,30 @@ describe("scheduled model-data refresh", () => {
     expect(publish).toContain('gh pr create --base main');
     expect(publish).toContain('pr_number="${pr_url##*/}"');
     // Strict required checks refuse a behind-main merge; the bounded round
-    // reconciles through update-branch and re-attests the reconciled head.
+    // reconciles through update-branch and then lets natural CI checks satisfy
+    // the required status before enabling squash auto-merge.
     expect(publish).toContain("for publish_round in 1 2");
     expect(publish).toContain('--json mergeStateStatus --jq');
     expect(publish).toContain('"repos/${GITHUB_REPOSITORY}/pulls/${pr_number}/update-branch"');
     expect(publish).toContain('--json headRefOid --jq');
-    expect(publish).toContain('if [[ "$merge_state" != "BEHIND" ]]; then break; fi');
+    expect(publish).toContain('gh pr merge "$pr_url" --auto --squash --delete-branch');
+    expect(publish).toContain('for merge_attempt in {1..90}');
+    expect(publish).toContain('if [[ "$merge_attempt" -lt 90 ]]; then sleep 10; fi');
+    expect(publish).toContain('gh pr merge "$pr_url" --disable-auto || true');
     expect(publish).toContain('gh pr close "$pr_url" --delete-branch || true');
-    expect(publish.indexOf('for publish_round in 1 2')).toBeLessThan(
+    expect(publish).toContain('if [[ "$pr_state" != "MERGED" ]]');
+    expect(publish).not.toContain("HEAD:main");
+    expect(publish).not.toContain('gh workflow run ci.yml --ref "$REFRESH_BRANCH"');
+    expect(publish).not.toContain('"repos/${GITHUB_REPOSITORY}/statuses/${head_sha}"');
+    expect(publish.indexOf('echo "pr_url=${pr_url}"')).toBeLessThan(
       publish.indexOf('"repos/${GITHUB_REPOSITORY}/pulls/${pr_number}/update-branch"'),
     );
     expect(publish.indexOf('"repos/${GITHUB_REPOSITORY}/pulls/${pr_number}/update-branch"')).toBeLessThan(
-      publish.indexOf('gh workflow run ci.yml --ref "$REFRESH_BRANCH"'),
-    );
-    expect(publish).toContain('--commit "$head_sha" --event workflow_dispatch');
-    expect(publish).toContain('gh workflow run ci.yml --ref "$REFRESH_BRANCH"');
-    expect(publish).toContain('gh run watch "$ci_run_id" --exit-status');
-    expect(publish).toContain('"repos/${GITHUB_REPOSITORY}/statuses/${head_sha}"');
-    expect(publish).toContain('-f context="$REQUIRED_CHECK_CONTEXT"');
-    expect(publish).toContain('gh pr merge "$pr_url" --auto --squash --delete-branch');
-    expect(publish).toContain('for merge_attempt in {1..60}');
-    expect(publish).toContain('if [[ "$merge_attempt" -lt 60 ]]; then sleep 5; fi');
-    expect(publish).toContain('gh pr merge "$pr_url" --disable-auto || true');
-    expect(publish).toContain('if [[ "$pr_state" != "MERGED" ]]');
-    expect(publish.indexOf('echo "pr_url=${pr_url}"')).toBeLessThan(
-      publish.indexOf('gh workflow run ci.yml --ref "$REFRESH_BRANCH"'),
-    );
-    expect(publish.indexOf('gh run watch "$ci_run_id" --exit-status')).toBeLessThan(
-      publish.indexOf('"repos/${GITHUB_REPOSITORY}/statuses/${head_sha}"'),
-    );
-    expect(publish.indexOf('"repos/${GITHUB_REPOSITORY}/statuses/${head_sha}"')).toBeLessThan(
       publish.indexOf('gh pr merge "$pr_url" --auto'),
     );
-    expect(publish).not.toContain("HEAD:main");
     expect(ciWorkflow.on).toHaveProperty("workflow_dispatch");
-    expect(ciWorkflow.on?.pull_request?.["paths-ignore"]).toEqual([
-      "data/arena-media.json",
-      "data/artificial-analysis-intelligence-v4-3.json",
-      "data/benchmark-atlas-audio.json",
-      "data/benchmark-atlas-multimodal.json",
-      "data/benchmark-atlas-reasoning.json",
-      "data/calculator-inputs.json",
-      "data/coding-agents.json",
-      "data/deep-swe-evidence.json",
-      "data/first-party-release-radar.json",
-      "data/model-release-radar.json",
-      "data/terminal-bench.json",
-      "data/terminal-bench-science.json",
-    ]);
+    expect(ciWorkflow.on).toHaveProperty("pull_request");
+    expect(ciWorkflow.on?.pull_request).toBeNull();
   });
 
   test("restores poll-metadata-only snapshots before deciding whether to publish", () => {
