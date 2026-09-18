@@ -174,6 +174,8 @@ const pinnedCheckout = `actions/checkout@${commit}`;
 describe("workflow action supply chain", () => {
   test("pins every repository action and discards checkout credentials", async () => {
     expect(auditWorkflowSet(await repositoryWorkflowSources())).toEqual([
+      "Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6",
+      "Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6",
       "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
       "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
       "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
