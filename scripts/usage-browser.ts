@@ -1,10 +1,13 @@
 import { mkdir } from "node:fs/promises";
 import { resolve } from "node:path";
 import type { Browser, Locator, Page, Route } from "playwright-core";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { LeaderboardView } from "../components/usage/leaderboard-view";
 import { encodePrivateDaysPublicResponse, parsePrivateDaysPublicSearch, privateDaysPublicStatus,
   PRIVATE_DAYS_PUBLIC_MEDIA, type PrivateDaysPublicReply, type PrivateDaysRange } from "../lib/usage/private-days-public";
 import { encodeUsageConsentPublicReply, USAGE_CONSENT_PUBLIC_MEDIA } from "../lib/usage/consent-public";
-import type { LeaderboardConsentViewV1 } from "../lib/usage/leaderboard-contract";
+import { parseLeaderboardSnapshot, type LeaderboardConsentViewV1 } from "../lib/usage/leaderboard-contract";
 import { verifyUsagePairing } from "./usage-pairing-browser";
 
 function invariant(value: unknown, message: string): asserts value {
@@ -65,8 +68,8 @@ async function checkDormant(baseUrl: string): Promise<void> {
     invariant(leaderboardHtml.includes(text), "The paused leaderboard must render its honest disabled state.");
   }
   for (const [path, method, status, code, cache] of [
-    ["/api/leaderboard", "GET", 503, "unavailable", "public, max-age=60"],
-    ["/api/leaderboard", "POST", 405, "method_not_allowed", "public, max-age=60"],
+    ["/api/leaderboard", "GET", 503, "unavailable", "private, no-store"],
+    ["/api/leaderboard", "POST", 405, "method_not_allowed", "private, no-store"],
     ["/api/usage/consent", "GET", 503, "unavailable", "private, no-store"],
     ["/api/usage/consent", "POST", 503, "unavailable", "private, no-store"],
     ["/api/usage/consent", "PUT", 405, "method_not_allowed", "private, no-store"],
@@ -76,6 +79,53 @@ async function checkDormant(baseUrl: string): Promise<void> {
     invariant(response.headers.get("cache-control") === cache, `Dormant ${path} must keep its declared cache policy.`);
     invariant(!response.headers.has("set-cookie") && !response.headers.has("location"), "Dormant routes must have no cookie or redirect effects.");
     invariant((await response.json() as { error: { code: string } }).error.code === code, `Dormant ${path} must retain fixed errors.`);
+  }
+}
+
+/** Synthetic component integration with the real route's loaded CSS and theme.
+ * This verifies ranked layout, not live SSR data or provider availability. */
+async function verifyRankedLeaderboard(page: Page, baseUrl: string, name: string, captureDirectory?: string): Promise<void> {
+  const computedAtMs = Date.UTC(2026, 8, 19, 0, 5), utcDay = Math.floor(computedAtMs / 86_400_000);
+  const snapshot = parseLeaderboardSnapshot({ schemaVersion: 1, ranking: "observed-tokens-30d-v1", computedAtMs, entries: [
+    { rank: 1, publicHandle: "synthetic-long-handle-1234567890", observedTokens: "9007199254740993", usageRecords: 4096,
+      consentedAtMs: computedAtMs - 86_400_000, refreshedAtMs: computedAtMs, windowFirstUtcDay: utcDay - 29, windowUtcDays: 30 },
+    { rank: 2, publicHandle: "synthetic-second-account", observedTokens: "1234567", usageRecords: 87,
+      consentedAtMs: computedAtMs - 2 * 86_400_000, refreshedAtMs: computedAtMs - 10 * 60_000, windowFirstUtcDay: utcDay - 30, windowUtcDays: 30 },
+  ] });
+  invariant(snapshot !== null, "Synthetic rankings must pass the production snapshot contract.");
+  const markup = renderToStaticMarkup(createElement(LeaderboardView, { available: true, snapshot }));
+  await page.goto(`${baseUrl}/leaderboard`, { waitUntil: "networkidle" });
+  await page.getByRole("heading", { name: "Public usage leaderboard", exact: true }).waitFor();
+  await settle(page);
+  await page.locator("main.leaderboard-home").evaluate((main, html) => {
+    for (const section of main.querySelectorAll(":scope > section")) section.remove();
+    main.setAttribute("data-qa-fixture", "synthetic-ranked-leaderboard");
+    main.insertAdjacentHTML("afterbegin", `<p class="usage-board__hint">Synthetic fixture · layout verification only</p>${html}`);
+  }, markup);
+  const rankings = page.getByRole("region", { name: "Public usage rankings", exact: true });
+  await rankings.waitFor(); await settle(page);
+  invariant(await rankings.locator("tbody tr").count() === 2, "The ranked fixture must render both accounts.");
+  invariant(await rankings.getByText("9,007,199,254,740,993", { exact: true }).count() === 1, "Ranked token totals must retain integer precision.");
+  invariant(await rankings.getByRole("columnheader", { name: "Last refreshed", exact: true }).count() === 1, "Rankings must label refreshes without claiming independent verification.");
+  const coverage = await rankings.locator(".usage-board__coverage").allTextContents();
+  invariant(coverage.length === 2 && coverage[0] !== coverage[1], "Ranked entries must retain distinct reporting windows.");
+  invariant(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), "Ranked leaderboard must fit the page viewport.");
+  await page.keyboard.press("Tab"); await rankings.focus();
+  invariant(await rankings.evaluate(element => element === document.activeElement && getComputedStyle(element).outlineStyle !== "none"), "Rankings must have visible keyboard focus.");
+  if (name === "mobile") {
+    invariant(await rankings.evaluate(element => element.scrollWidth > element.clientWidth && getComputedStyle(element).overflowX === "auto"), "Mobile ranking columns must scroll inside their own region.");
+    await rankings.evaluate(element => {
+      element.addEventListener("scrollend", () => element.setAttribute("data-keyboard-scroll-settled", ""), { once: true });
+    });
+    await page.keyboard.press("ArrowRight");
+    await page.waitForFunction(() => document.querySelector(".usage-board__table-scroll")?.hasAttribute("data-keyboard-scroll-settled"));
+    invariant(await rankings.evaluate(element => element.scrollLeft > 0), "ArrowRight must scroll the mobile rankings.");
+    await rankings.evaluate(element => element.scrollTo({ left: 0, behavior: "instant" }));
+  }
+  await page.locator("h1").click(); await page.evaluate(() => scrollTo(0, 0)); await settle(page);
+  if (captureDirectory !== undefined) {
+    await page.screenshot({ path: resolve(captureDirectory, `${name}-leaderboard.png`), fullPage: true });
+    await page.screenshot({ path: resolve(captureDirectory, `${name}-leaderboard-viewport.png`) });
   }
 }
 
@@ -100,7 +150,7 @@ export async function verifyUsageDashboard(browser: Browser, disabledBaseUrl: st
   const environment: NodeJS.ProcessEnv = { ...process.env, NODE_ENV: "production", VERCEL: "1", VERCEL_ENV: "production", VERCEL_TARGET_ENV: "production",
     VERCEL_DEPLOYMENT_ID: "dpl_SYNTHETICUsageBrowser", VERCEL_PROJECT_ID: "prj_SYNTHETICUsageBrowser", VERCEL_GIT_COMMIT_SHA: "0".repeat(40),
     NEXT_PUBLIC_SITE_URL: "https://aicharts.io", AICHARTS_USAGE_AUTH_ENABLED: "1", AICHARTS_USAGE_PRIVATE_READ_ENABLED: "1",
-    AICHARTS_USAGE_PAIRING_ENABLED: "1",
+    AICHARTS_USAGE_PAIRING_ENABLED: "1", AICHARTS_USAGE_PUBLIC_READ_ENABLED: "0",
     SUITE_OIDC_COOKIE_SECRET: "synthetic-browser-fixture-not-a-production-secret" };
   for (const key of ["NEXT_PUBLIC_VERCEL_SURFACE_ORIGIN", "NEXT_PUBLIC_HRANESS_VERCEL_SURFACE_ORIGIN", "NEXT_PUBLIC_HRANESS_VERCEL_PREVIEW_ORIGIN", "POSTHOG_API_KEY", "VERCEL_OIDC_TOKEN"]) delete environment[key];
   const server = Bun.spawn([process.execPath, "run", "start", "--", "--hostname", hostname, "--port", String(port)], {
@@ -185,7 +235,10 @@ export async function verifyUsageDashboard(browser: Browser, disabledBaseUrl: st
           await page.waitForFunction(() => (document.querySelector(".usage-daily__table-scroll")?.scrollLeft ?? -1) === 0);
         }
         await page.locator("h1").click(); await page.evaluate(() => scrollTo(0, 0));
-        if (captureDirectory !== undefined) await page.screenshot({ path: resolve(captureDirectory, `${name}.png`), fullPage: true });
+        if (captureDirectory !== undefined) {
+          await page.screenshot({ path: resolve(captureDirectory, `${name}.png`), fullPage: true });
+          await page.screenshot({ path: resolve(captureDirectory, `${name}-viewport.png`) });
+        }
 
         const todayInput = await page.getByLabel("Through", { exact: true }).inputValue();
         const todayUtcDay = Date.parse(`${todayInput}T00:00:00.000Z`) / 86_400_000;
@@ -287,6 +340,7 @@ export async function verifyUsageDashboard(browser: Browser, disabledBaseUrl: st
         await consentPanel.getByLabel("Public handle", { exact: true }).waitFor();
         invariant(Number(consentWrites) === 5, "Checking capacity-refused consent must stay read-only.");
         invariant(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), "Consent controls must fit the viewport.");
+        await verifyRankedLeaderboard(page, baseUrl, name, captureDirectory);
         invariant(failures.length === 0, failures.join("; "));
         invariant(!blockedOrigins.has("https://account.hraness.com") && !blockedOrigins.has("https://usage.aicharts.io"), "Synthetic UI checks must not attempt account or usage-provider access.");
       } finally { await context.close(); }
