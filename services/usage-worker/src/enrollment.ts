@@ -26,7 +26,7 @@ import {
 } from "./restore-fence";
 
 export type EnrollmentError = "invalid_input" | "unavailable" | "unauthorized" | "not_reserved" | "not_enrolled"
-  | "expired" | "conflict" | "recovery_required" | "revoked" | "storage_invalid" | "storage_unavailable" | "clock_regressed" | "limit";
+  | "expired" | "conflict" | "recovery_required" | "revoked" | "storage_invalid" | "storage_unavailable" | "clock_regressed" | "limit" | "handle_unavailable" | "publishing_full";
 export type EnrollmentResult<T> = { ok: true; value: T } | { ok: false; error: EnrollmentError };
 export type EnrollmentReceipt = Readonly<{
   schemaVersion: 1; accountId: string; intentId: string; reservationId: string;
@@ -529,16 +529,89 @@ export class AccountEnrollment extends DurableObject<Env> {
    * exact apply outcome is authoritative for the consent call's reply: a
    * failure means the publish is uncertain and must be retried or repaired by
    * the index's refresh-at-source. */
-  async #publishLeaderboardConsent(accountId: string, view: LeaderboardConsentViewV1, eventAtMs: number): Promise<boolean> {
+  async #publishLeaderboardConsent(accountId: string, view: LeaderboardConsentViewV1, eventAtMs: number): Promise<"published" | "handle_unavailable" | "publishing_full" | "unavailable"> {
     try {
       const raw: unknown = await this.env.PUBLIC_INDEX.getByName(LEADERBOARD_INDEX_NAME).applyConsent(Object.freeze({
         schemaVersion: 1, accountId, consent: view.consent, publicHandle: view.publicHandle,
         consentedAtMs: view.consentedAtMs, eventAtMs }));
       try {
         const reply = rpcSnapshot(raw, ["ok", "value"]);
-        return reply?.ok === true;
+        if (reply?.ok === true) return "published";
+        const failure = rpcSnapshot(raw, ["ok", "error"]);
+        if (failure?.ok === false && failure.error === "handle_unavailable") return "handle_unavailable";
+        return failure?.ok === false && failure.error === "limit" ? "publishing_full" : "unavailable";
       } finally { disposeReply(raw); }
-    } catch { return false; }
+    } catch { return "unavailable"; }
+  }
+
+  /** Compensate only an explicit handle/capacity refusal, never an uncertain publish.
+   * A newer user decision wins over this delayed restoration. */
+  async #restoreLeaderboardConsent(accountId: string, generation: string,
+    rejected: { view: LeaderboardConsentViewV1; eventAtMs: number }, previous: LeaderboardState): Promise<boolean> {
+    const acquired = await this.#fenceAcquire(accountId, generation);
+    if (!acquired.ok) return false;
+    const observation: AdmissionObservation = { generation, observed: Date.now(), fence: acquired.value.fence, committed: false };
+    let restored: { view: LeaderboardConsentViewV1; eventAtMs: number } | null = null;
+    try {
+      const result = this.#transaction(observation, (state, now) => {
+        if (state === null || state.accountId !== accountId) return { state: null, result: err("not_enrolled") };
+        const current = state.leaderboard;
+        if (current.changedAtMs !== rejected.eventAtMs || current.consent !== rejected.view.consent
+          || current.publicHandle !== rejected.view.publicHandle) return { state: null, result: ok(null) };
+        // Retrying an earlier uncertain refusal may no longer have its prior
+        // decision in memory. An unavailable handle remains unpublished.
+        state.leaderboard = previous.consent && previous.publicHandle === rejected.view.publicHandle
+          ? { consent: false, consentedAtMs: null, publicHandle: null, changedAtMs: now }
+          : { ...previous, changedAtMs: now };
+        return { state, result: ok({ view: consentViewOf(state.leaderboard), eventAtMs: now }) };
+      });
+      if (!result.ok) return false;
+      restored = result.value;
+    } finally { await this.#fenceSettle(accountId, acquired.value.token, observation.committed); }
+    return restored === null || await this.#publishLeaderboardConsent(accountId, restored.view, restored.eventAtMs) === "published";
+  }
+
+  /** Durable delivery retry. A consent mutation arms this before committing,
+   * so an index outage or lost response cannot strand a saved decision. The
+   * latest stored decision is replayed; reads never perform this repair. */
+  async alarm(): Promise<void> {
+    try {
+      const candidate = this.ctx.storage.transactionSync(() => {
+        this.#schema();
+        const { state } = this.#stored(5);
+        return state === null || state.phase !== "active" ? null : {
+          accountId: state.accountId, generation: state.generation,
+          view: consentViewOf(state.leaderboard), eventAtMs: state.leaderboard.changedAtMs,
+        };
+      });
+      if (candidate === null) return;
+      const current = await this.readLeaderboardConsent({ schemaVersion: 1, operation: "status",
+        accountId: candidate.accountId, sessionExpiresAtMs: 8_640_000_000_000_000 });
+      if (!current.ok) {
+        if (current.error === "storage_unavailable" || current.error === "clock_regressed") throw new Error("consent_delivery_unavailable");
+        // Closed restore fences or invalid storage need operator recovery;
+        // polling them cannot repair authority and must not create busy work.
+        return;
+      }
+      const unchanged = this.ctx.storage.transactionSync(() => {
+        const { state } = this.#stored(5);
+        return state !== null && state.leaderboard.changedAtMs === candidate.eventAtMs
+          && state.generation === candidate.generation && state.leaderboard.consent === candidate.view.consent
+          && state.leaderboard.publicHandle === candidate.view.publicHandle
+          && state.leaderboard.consentedAtMs === candidate.view.consentedAtMs;
+      });
+      if (!unchanged) { await this.ctx.storage.setAlarm(Date.now() + 60_000); return; }
+      const published = await this.#publishLeaderboardConsent(candidate.accountId, candidate.view, candidate.eventAtMs);
+      if (published === "published") return;
+      if ((published === "handle_unavailable" || published === "publishing_full") && await this.#restoreLeaderboardConsent(candidate.accountId,
+        candidate.generation, candidate, { consent: false, consentedAtMs: null, publicHandle: null, changedAtMs: 0 })) return;
+      throw new Error("consent_delivery_unavailable");
+    } catch (error) {
+      if (error instanceof SyntaxError || (error instanceof Error && error.message === "storage_invalid")) return;
+      // Explicitly retain the retry after provider alarm retries are exhausted.
+      await this.ctx.storage.setAlarm(Date.now() + 60_000);
+      throw new Error("consent_delivery_unavailable");
+    }
   }
 
   /** Fenced, idempotent consent write. The restore-fence lease is acquired and
@@ -558,12 +631,23 @@ export class AccountEnrollment extends DurableObject<Env> {
       if (!acquired.ok) return acquired;
       const observation: AdmissionObservation = { generation, observed, fence: acquired.value.fence, committed: false };
       let committed: { view: LeaderboardConsentViewV1; eventAtMs: number };
+      let previous: LeaderboardState | null = null;
       try {
+        // Settle cannot cancel this alarm: an older request completing after a
+        // newer one must not erase the newer decision's delivery retry.
+        await this.ctx.storage.setAlarm(observed + 60_000);
         const result = this.#transaction<{ view: LeaderboardConsentViewV1; eventAtMs: number }>(observation, (state, now) => {
           if (state === null || state.accountId !== request.accountId) return { state, result: err(state === null ? "not_enrolled" : "unauthorized") };
           if (state.phase !== "active") return { state, result: err("not_enrolled") };
           if (now >= request.sessionExpiresAtMs) return { state, result: err("expired") };
           const current = state.leaderboard;
+          previous = { ...current };
+          const unchanged = current.consent === request.consent
+            && current.publicHandle === request.publicHandle;
+          // The index orders consent events by this timestamp. Never commit
+          // a distinct decision under an already-used event key: the index
+          // would acknowledge it as a replay without applying a withdrawal.
+          if (!unchanged && now <= current.changedAtMs) return { state: null, result: err("clock_regressed") };
           if (request.consent === false) {
             if (current.consent === false) return { state: null, result: ok({ view: consentViewOf(current), eventAtMs: current.changedAtMs }) };
             state.leaderboard = { consent: false, consentedAtMs: null, publicHandle: null, changedAtMs: now };
@@ -580,7 +664,10 @@ export class AccountEnrollment extends DurableObject<Env> {
         committed = result.value;
       } finally { await this.#fenceSettle(request.accountId, acquired.value.token, observation.committed); }
       const published = await this.#publishLeaderboardConsent(request.accountId, committed.view, committed.eventAtMs);
-      return published ? ok(committed.view) : err("storage_unavailable");
+      if (published === "published") return ok(committed.view);
+      if ((published === "handle_unavailable" || published === "publishing_full") && previous !== null
+        && await this.#restoreLeaderboardConsent(request.accountId, generation, committed, previous)) return err(published);
+      return err("storage_unavailable");
     } catch { return err("storage_unavailable"); }
   }
 
@@ -600,7 +687,7 @@ export class AccountEnrollment extends DurableObject<Env> {
       // The projection is an internal coordinator read, not a user session;
       // the never-expiring session bound keeps the snapshot's expiry check inert.
       const scope = Object.freeze({ accountId, sessionExpiresAtMs: 8_640_000_000_000_000 });
-      const original = this.#privateDaysSnapshot(scope, observation, state => Object.freeze({ ...state.anchor }));
+      const original = this.#privateDaysSnapshot(scope, observation, state => Object.freeze({ ...state.anchor }), false);
       if (!original.ok) return original;
       let external: NamespaceAnchor | null = null, unavailable = false;
       try { external = await readNamespaceAnchor(this.env.CONTROL, accountId); }
@@ -612,6 +699,7 @@ export class AccountEnrollment extends DurableObject<Env> {
         if (leaderboard.consent !== true) {
           return Object.freeze({ schemaVersion: 1 as const, accountId: state.accountId, consent: false as const });
         }
+        if (control.quarantined) throw new AdmissionFault("recovery_required");
         // Corrections, tombstones and supersession are exactly the private-days
         // read path: the projection can decrease and never double-counts.
         const todayUtcDay = Math.floor(observation.observed / DAY_MS);
@@ -632,7 +720,7 @@ export class AccountEnrollment extends DurableObject<Env> {
           consentedAtMs: leaderboard.consentedAtMs as number, publicHandle: leaderboard.publicHandle as string,
           observedTokens: observedTokens.toString(), usageRecords,
           windowFirstUtcDay: firstUtcDay, windowUtcDays: dayCount });
-      });
+      }, false);
     } catch { return err("storage_unavailable"); }
   }
 

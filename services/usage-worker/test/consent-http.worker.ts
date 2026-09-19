@@ -11,7 +11,7 @@ import type { PairingHttpVerifier } from "../src/pairing-http";
 import { PAIRING_TTL_MS, uploadSecretCommitment } from "../src/pairing";
 import worker from "../src/index";
 
-const NOW = Date.UTC(2026, 8, 11, 12);
+const NOW = Math.ceil(Date.now() / 86_400_000) * 86_400_000 + 43_200_000;
 let serial = 0, account = "", finished = 0;
 const hex = (value: number, width = 32) => value.toString(16).padStart(width * 2, "0");
 const success = <T>(result: { ok: true; value: T } | { ok: false; error: string }): T => {
@@ -92,6 +92,7 @@ test("status and set cross real RPC disposal into bounded consent replies", asyn
     .toEqual({ ok: true, value: { schemaVersion: 1, consent: true, consentedAtMs: NOW, publicHandle: "alpha-coder" } });
   expect(await call({ ...session(), operation: "status" })).toEqual({ ok: true,
     value: { schemaVersion: 1, consent: true, consentedAtMs: NOW, publicHandle: "alpha-coder" } });
+  vi.setSystemTime(NOW + 1);
   expect(await call({ ...session(), operation: "set", consent: false, publicHandle: null }))
     .toEqual({ ok: true, value: { schemaVersion: 1, consent: false, consentedAtMs: null, publicHandle: null } });
   expect(finished).toBe(4);

@@ -77,11 +77,17 @@ describe("focused chart destinations", () => {
   // Usage now needs a real Next request scope. Its copy, current navigation and
   // canonical metadata assertions live in scripts/usage-browser.ts instead of
   // depending on another Bun test's global server-only mock.
-  test("the leaderboard page renders paused, empty, and ranked states honestly", () => {
+  test("the leaderboard page renders paused, unavailable, empty, and ranked states honestly", () => {
     const paused = renderToStaticMarkup(createElement(LeaderboardView, { available: false, snapshot: null }));
-    expect(paused).toContain("A leaderboard that shows its receipts.");
+    expect(paused).toContain("Public usage leaderboard");
     expect(paused).toContain("Publishing paused");
-    expect(paused).toContain("No rankings before the evidence layer");
+    expect(paused).toContain("Public publishing is not available yet");
+    expect(paused).not.toContain("Reload rankings");
+    const unavailable = renderToStaticMarkup(createElement(LeaderboardView, { available: true, snapshot: null }));
+    expect(unavailable).toContain("Rankings could not be loaded");
+    expect(unavailable).toContain("Reload rankings");
+    expect(unavailable).not.toContain("Publishing paused");
+    expect(unavailable).not.toContain("No published entries yet");
     const empty = renderToStaticMarkup(createElement(LeaderboardView, { available: true,
       snapshot: { schemaVersion: 1, ranking: "observed-tokens-30d-v1", computedAtMs: 1_800_000_000_000, entries: [] } }));
     expect(empty).toContain("Opt-in publishing");
@@ -100,7 +106,9 @@ describe("focused chart destinations", () => {
     expect(board).toContain("alpha-coder");
     expect(board).toContain("beta-agent");
     expect(board).toContain("9,007,199,254,740,993");
-    expect(board).toContain("Verified");
+    expect(board).toContain("Last refreshed");
+    expect(board).toContain("Coverage (UTC)");
+    expect(board).toContain("not independently verified or a provider billing record");
     // The ranked snapshot carries handles and numerics only; page copy may
     // describe the excluded fields but the data never contains them.
     const serialized = JSON.stringify(entries);

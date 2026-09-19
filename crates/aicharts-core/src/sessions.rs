@@ -51,7 +51,13 @@ struct CodexPayload {
     /// proof of the effective response model.
     /// Outer `None` means the field was omitted (retain the prior setting);
     /// `Some(None)` is an explicit null and clears attribution.
+    #[serde(default, deserialize_with = "request_model_update")]
     model: Option<Option<RequestModel>>,
+}
+fn request_model_update<'de, D: Deserializer<'de>>(
+    decoder: D,
+) -> Result<Option<Option<RequestModel>>, D::Error> {
+    Option::<RequestModel>::deserialize(decoder).map(Some)
 }
 struct RequestModel(Option<&'static str>);
 impl<'de> Deserialize<'de> for RequestModel {
@@ -675,6 +681,29 @@ mod tests {
         let report = join_sources(vec![source(text, Provider::Codex)]).unwrap();
         assert_eq!(report.sessions[0].usage[0].model, None);
         assert_eq!(report.sessions[0].usage[0].model_basis, "unknown");
+    }
+    #[test]
+    fn codex_explicit_null_clears_request_model_but_omission_preserves_it() {
+        for (update, expected) in [
+            ("", Some("gpt-5.5")),
+            (",\"model\":null", None),
+            (",\"model\":\"PRIVATE_MODEL\"", None),
+        ] {
+            let text = format!(
+                concat!(
+                    "{{\"type\":\"session_meta\",\"payload\":{{\"id\":\"native\",\"model\":\"gpt-5.5\"}}}}\n",
+                    "{{\"type\":\"session_meta\",\"payload\":{{\"id\":\"native\"{update}}}}}\n",
+                    "{{\"type\":\"event_msg\",\"timestamp\":\"2026-01-01T00:00:01Z\",\"payload\":{{\"type\":\"token_count\",\"info\":{{\"total_token_usage\":{{\"input_tokens\":100,\"output_tokens\":0}},\"last_token_usage\":{{\"input_tokens\":100,\"output_tokens\":0}}}}}}}}\n",
+                ),
+                update = update,
+            );
+            let report = join_sources(vec![source(&text, Provider::Codex)]).unwrap();
+            assert_eq!(report.sessions[0].usage[0].model, expected);
+            assert_eq!(report.sessions[0].usage[0].model_basis, "request");
+            assert!(!serde_json::to_string(&report)
+                .unwrap()
+                .contains("PRIVATE_MODEL"));
+        }
     }
     fn atif(session: &str, generation_model: &str) -> String {
         format!(

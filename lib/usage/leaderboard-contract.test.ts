@@ -67,8 +67,20 @@ test("ranked entries keep exact decimals, bounded ranks and no account fields", 
     { rank: 0, ...base }, { rank: 129, ...base }, { rank: 1, ...base, publicHandle: "Bad" },
     { rank: 1, ...base, observedTokens: "1.5" }, { rank: 1, ...base, accountId: account },
     { rank: 1, ...base, usageRecords: -1 }, { rank: 1, ...base, windowUtcDays: 31 },
+    { rank: 1, ...base, windowFirstUtcDay: 100_000_000, windowUtcDays: 2 },
     { rank: 1, ...base, refreshedAtMs: -1 }, null,
   ]) expect(parseLeaderboardEntry(bad)).toBeNull();
+});
+
+test("all leaderboard windows end within the supported date range", () => {
+  const edge = { ...base, windowFirstUtcDay: 100_000_000, windowUtcDays: 1 };
+  expect(parseLeaderboardEntry({ rank: 1, ...edge })).not.toBeNull();
+  expect(rankLeaderboardEntries([{ ...edge, windowUtcDays: 2 }])).toEqual([]);
+  const projection = { publicHandle: edge.publicHandle, observedTokens: edge.observedTokens,
+    usageRecords: edge.usageRecords, consentedAtMs: edge.consentedAtMs,
+    windowFirstUtcDay: edge.windowFirstUtcDay, windowUtcDays: edge.windowUtcDays };
+  expect(parseLeaderboardProjection({ schemaVersion: 1, accountId: account, consent: true, ...projection })).not.toBeNull();
+  expect(parseLeaderboardProjection({ schemaVersion: 1, accountId: account, consent: true, ...projection, windowUtcDays: 2 })).toBeNull();
 });
 
 test("snapshots require the pinned ranking and unique ranks", () => {

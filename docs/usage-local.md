@@ -1,6 +1,6 @@
 # Local Codex and Claude Code usage
 
-The available usage CLI commands operate locally. They read explicitly selected JSONL files, project metadata into numeric measurements, deduplicate supported copied records, and print a summary or exact wire dry-run. Explicit initialization also enables a private numeric ledger with restart-safe checkpoints and a local pending queue. On macOS, `enroll` pairs this installation with an AI Charts account through local credential custody and one explicit browser approval, and `upload --state-dir` can then send one bounded pending batch for that enrolled installation; service installation remains unavailable. These account paths are not qualified against a live service. No transcript cache is created. Public benchmark pages and the calculator do not require usage collection. The separate [browser identity boundary](usage-identity.md) and private daily reads are disabled by default and do not enroll devices or transmit local measurements.
+The usage CLI reads explicitly selected Codex and Claude JSONL files or Devin ATIF exports, projects metadata into numeric measurements, deduplicates supported copied records, and prints a summary or exact wire dry-run. Explicit initialization also enables a private numeric ledger with restart-safe checkpoints and a local pending queue. On macOS, `enroll` pairs an installation with an AI Charts account through local credential custody and explicit browser approval, and `upload --state-dir` sends one bounded pending batch for that enrolled installation. For an already prepared installation, `sync` combines one local collection pass with bounded publishing. Service installation remains unavailable. The [activation runbook](usage-activation.md) separates current deployment evidence from qualification of a particular binary and installation. No transcript cache is created. Public benchmark pages and the calculator do not require usage collection. The separate browser identity and private-read boundaries do not enroll devices or transmit local measurements.
 
 ## Build and run
 
@@ -48,7 +48,7 @@ reconstructed as new root usage.
   --key-file /absolute/private/aicharts.key --codex /absolute/path/to/codex-sessions --json
 ```
 
-Without `--once`, the process prints each local collection result and sleeps between passes. A failed pass exits with a fixed error so an eventual qualified OS service can apply its own restart/backoff policy. This runner is local persistence only: its ledger remains `uploaded: false`, and the separate upload/authentication boundary remains disabled.
+Without `--once`, the process prints each local collection result and sleeps between passes. A failed pass exits with a fixed error so an eventual qualified OS service can apply its own restart/backoff policy. This runner is local persistence only: `uploaded: false` describes its own invocation. It does not send pending records. Use the enrolled `upload` command or the [bounded sync pass](#collect-and-publish-in-one-bounded-pass) to transmit accepted numeric measurements.
 
 For live logs and an already [prefix-enabled ledger](#collect-completed-lines-from-a-live-source), add `--complete-prefix`:
 
@@ -63,7 +63,7 @@ This selects `collect-prefix` on every pass and retry. Complete JSONL lines are 
 
 Choose the mode explicitly. Without `--complete-prefix`, the daemon retains legacy collection and refuses a prefix-enabled ledger with `ledger_complete_prefix_required`. With it, a legacy ledger refuses with `ledger_prefix_not_enabled`. Both mode checks occur before source traversal. The daemon never initializes, migrates, resets, or automatically switches a ledger; migration remains the separate revision-guarded `prefix-enable` command.
 
-Directory traversal selects `.jsonl` files for Codex and Claude sources and `.json` files for Devin sources; an explicit file argument is accepted regardless of extension. Traversal skips observed symlink entries and rejects a symlink supplied as a source. Unix final-file opens use no-follow/nonblocking flags and check file identity. This is not descriptor-rooted traversal or an OS sandbox: parent-directory replacement and malicious local processes are outside this initial confinement claim. The source reader and uploader have not been isolated into separately sandboxed processes; no uploader exists yet.
+Directory traversal selects `.jsonl` files for Codex and Claude sources and `.json` files for Devin sources; an explicit file argument is accepted regardless of extension. Traversal skips observed symlink entries and rejects a symlink supplied as a source. Unix final-file opens use no-follow/nonblocking flags and check file identity. This is not descriptor-rooted traversal or an OS sandbox: parent-directory replacement and malicious local processes are outside this confinement claim. Collection and upload use separate stages; `sync` combines them in one bounded invocation. They are not isolated into separately sandboxed executables. Devin support requires exported ATIF documents; it does not continuously read the Devin CLI session database.
 
 ## Interpreting the result
 
@@ -133,7 +133,7 @@ Preview the local pending queue without acknowledging or transmitting anything:
 ./target/debug/aicharts outbox --dry-run --state-dir /absolute/private/directory/aicharts-state --key-file /absolute/private/directory/aicharts.key --limit 64
 ```
 
-If `nextAfter` is non-null, use it as `--after` together with the returned `ledgerRevision` as `--revision` on the next invocation. The page limit is 1 through 256. A changed ledger invalidates pagination; restart from the first page. Entries contain canonical numeric frames and local revisions only. This queue is not the remote upload protocol or a provider attestation. There is no sending or acknowledgment command.
+If `nextAfter` is non-null, use it as `--after` together with the returned `ledgerRevision` as `--revision` on the next invocation. The page limit is 1 through 256. A changed ledger invalidates pagination; restart from the first page. Entries contain canonical numeric frames and local revisions only. This queue is not the remote upload protocol or a provider attestation. Enrolled `upload` and `sync` acknowledge records only after checked remote settlement.
 
 The [ledger contract](../crates/aicharts-ledger/README.md) describes atomicity, source-history checks and recovery boundaries. Do not delete a journal, reset a corrupt database or replace a lost namespace key as an automatic repair. Preserve the private state for diagnosis. Shadow preparation changes identity only in a new ledger; it cannot recover a corrupt database or missing native history.
 
@@ -170,6 +170,39 @@ Its private attempt schema records original credential identities and commitment
 Typed pairing and namespace handoff functions verify the original secret against its persisted `RecordIntent` before recording nonsecret custody progress. Completion calls the sealed reference-store API after reestablishing attempt durability. Its macOS instance methods now reach the private persistence backend with one lazy vault session per custody operation. Explicit macOS library constructors now use the existing absolute-anchor, descriptor, ACL and APFS checks. Opening and inspection only observe committed bytes; they do not synchronize, recover state or select a vault. The [disposable Keychain qualification](../crates/aicharts-custody/README.md#validation-and-qualification) passed through those facade methods with pairing and namespace records, including lost-reply reconciliation and locked-access refusal; the owned parent was empty after cleanup. Default User-domain keychain selection, the combined enrollment owner and live enrollment remain unqualified. On macOS the `enroll` command uses this custody to retain the pairing and namespace records; non-macOS enrollment stays refused.
 
 Use `inspect` when you need a source-free summary without recovery. `status` and `outbox --dry-run` use the ordinary ledger opener, which can recover a SQLite rollback journal; neither is the dedicated no-recovery inspector.
+
+## Collect and publish in one bounded pass
+
+On macOS, `sync` collects explicit sources once, then sends a bounded number of pending batches. Before using it, prepare and verify all of the following for the same state directory:
+
+- Completed, custody-verified account enrollment and the original local checkpoint key.
+- An existing account-bound ledger with [completed-prefix collection enabled](#collect-completed-lines-from-a-live-source).
+- Sender custody already bound to that exact account, device, and namespace. The first enrolled `upload` prepares this binding; `sync` only reopens it.
+
+Run one pass with the retained state and key:
+
+```sh
+./target/debug/aicharts sync --complete-prefix \
+  --state-dir /absolute/private/directory/aicharts-state \
+  --key-file /absolute/private/directory/aicharts.key \
+  --codex /absolute/path/to/codex-sessions \
+  --claude /absolute/path/to/claude-projects \
+  --max-batches 8 --json
+```
+
+At least one explicit source is required. Repeat provider flags as needed; `--devin FILE_OR_DIR` accepts ATIF exports. `--complete-prefix` is mandatory. The command checks enrollment, sender health, binding, and prefix mode before traversing sources. It never initializes, migrates, enrolls, rekeys, resets state, or installs an OS service. Non-macOS builds refuse with `sync_requires_qualified_macos_custody`.
+
+The default is eight batches, each containing at most 256 records. `--max-batches 1..64` bounds the entire pass, including any retained-batch recovery. A batch may replay an explicit `503` refusal at most twice using identical retained bytes. Native I/O timeouts do not impose a hard wall-clock deadline. Collection retains completed-prefix history checks and defers stable unfinished tails. A collection failure sends no new batch; local waves already committed remain durable.
+
+A retained uncertain batch stops the default pass with `upload_recovery_required` before collection. After inspecting that retained state, adding `--reconcile-retained` explicitly permits one recovery of its exact bytes before collection. Any new uncertainty stops the invocation and retains the flight for a later explicit recovery, even when this flag was supplied. The command never automatically recovers an account or credentials.
+
+| Exit | Meaning | Next step |
+| --- | --- | --- |
+| `0` | The pending queue is drained and the sender is healthy at the final observation. | Schedule the next collection when needed. |
+| `3` | The bounded pass completed with pending records. | Schedule another bounded pass. |
+| `2` | A refusal, rejection, or failure stopped the pass. | Inspect the fixed error code and retained state before recovery. |
+
+An output-write failure exits `1`. `--json` emits one structured result, including command failures, without source paths or secrets. It reports the phase, collection counters, attempted and settled batches, acknowledged and pending records, and available sender state. `status: "complete"` describes the pending queue at that observation; measurement coverage remains partial.
 
 ## Stable macOS signing for credential custody
 
@@ -256,6 +289,12 @@ The existing 256 MiB snapshot limit bounds reverse newline discovery as well as
 the replay; `bytesScanned` reports the selected observed snapshot sizes, not
 physical I/O amplification. Prefix mode can read part of a snapshot twice while
 finding its last newline and replaying it. No daemon is activated by migration.
+
+### Upgrading a collector with retained history
+
+Preserve the original state directory, key, and pending records when upgrading. Parser corrections can change normalized frames or exclude observations previously admitted. An unchanged completed prefix must reproduce its retained numeric history exactly, so even an explicit `collect-prefix --rescan` can refuse with `ledger_source_history_changed`. Do not bypass this check by changing checkpoints, deleting history, or replacing the key.
+
+Such changes may need a separately reviewed shadow or reindex migration. Start with the read-only plan below. Reindex preparation requires every retained occurrence to match an exact normalized frame; equal token totals are insufficient. Changes between known and unknown Claude execution attribution can fail this exact-subset requirement with conflicting frames. The existing commands may therefore refuse preparation rather than repair the old ledger. Preserve that refusal and the original state for a migration that accounts for the discrepancy; no shadow is automatically promoted.
 
 ## Prepare an account-bound shadow
 

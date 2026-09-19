@@ -5,18 +5,36 @@ current step's evidence and rollback check are complete.
 
 ## What is currently true
 
-The repository Worker router joins pairing, terminal enrollment, admission and
-private daily reads through `services/usage-worker/src/production.ts`. Its
-current production deployment remains unqualified. The Wrangler template has no public
-Worker URL or route (`services/usage-worker/wrangler.jsonc` sets
-`workers_dev:false` and `preview_urls:false`). Public Accounts discovery and JWKS
-endpoints are healthy at the exact URLs below. The last inspected Vercel production environment inventory contained only the
-existing newsletter and PostHog entries; Usage bindings, authentication values,
-and the AI Charts site URL were absent from that inventory. It did not read
-secret values and does not prove credentials do not exist elsewhere. No live
-Accounts or Usage activation qualification has passed. The repository therefore
-has no verified live collector, upload endpoint, or authenticated dashboard, even
-though the handlers and local Cloudflare qualification exist in source.
+The 2026-09-19 production inspection supersedes the earlier unconfigured
+environment inventory. Vercel project `aicharts` has production authentication,
+pairing and private-read flags, the cookie secret and the canonical site URL.
+The public-read flag is absent. A correctly framed anonymous request to
+`/api/usage/days` returns `authentication_required`; `/api/leaderboard` returns
+`unavailable`. These observations prove configuration and refusal behavior,
+not authenticated dashboard readback or readiness to replace another collector.
+
+Cloudflare currently serves Usage from the existing Worker named
+`aicharts-usage-local-only`, despite that historical name. On 2026-09-19 its
+active version was `36447868-30b8-4cb4-8bcd-cb9fd6913946`, deployed September 16.
+Its worker, authentication, enrollment, pairing, admission and private-read
+flags were enabled; public reads were disabled. It binds four Durable Object
+classes (`PairingIntent`, `AccountEnrollment`, `RestoreFence`, and
+`LeaderboardIndex`) and the existing private `aicharts-usage-local-only` and
+`aicharts-usage-control-local-only` R2 buckets. Preserve those resource
+identities, generation and restore-fence authority during upgrades. Do not
+substitute newly named resources or deploy the source fixture configuration
+over production. The checked Wrangler file remains a local test fixture.
+
+A retained September 16 qualification record reports a real browser-approved
+enrollment and one accepted native upload of 62 occurrences / 5,293,376 observed
+tokens, followed by an empty second upload. This is historical evidence, not a
+renewed qualification of the current tree. On September 19, the retained CLI
+could no longer open that enrollment and returned `attempt_recovery_required`.
+Preserve the ledger and custody items; do not reset them to make a new build run.
+
+The collector, private dashboard, public consent and scheduled publisher must
+each pass their own current acceptance checks before cutover. A passing source
+gate or a configured flag alone does not establish those outcomes.
 
 The exact browser registration is owned by the pinned Suite Accounts SDK and
 the binding in `lib/usage/auth-server.ts`:
@@ -35,7 +53,7 @@ deployment identity checks remain authoritative.
 
 ## Minimal live Accounts qualification
 
-This can be qualified before enabling the Worker or accepting usage data. It
+For a new environment, this can be qualified before enabling the Worker or accepting usage data. It
 requires owner access to the Vercel production project, a test Accounts user,
 and a private 32–1,024-byte `SUITE_OIDC_COOKIE_SECRET` in the secret store.
 Do not put the secret in a shell command, fixture, browser variable, log, or
@@ -66,20 +84,18 @@ repository file.
    qualification intent. Authentication can remain usable after a passed test,
    while private reads and collection stay separately fenced.
 
-No provider configuration mutation occurred: the requested Vercel configuration
-change was rejected by automatic review. The remaining prerequisite is explicit
-owner approval to add `SUITE_OIDC_COOKIE_SECRET` and `NEXT_PUBLIC_SITE_URL` to
-the production environment, followed by the bounded qualification above. The
-Vercel project must also provide owner-authorized metadata access and a test
-Accounts user. Until that evidence exists, activation remains unqualified. The local
-`bun run test:browser` fixture is synthetic evidence only.
+The production configuration already exists. Do not rotate secrets, repeat
+provisioning, or disable a working private service as a side effect of checking
+this list. Qualify the current authenticated path with an owner-authorized
+account and retain a bounded receipt. The local `bun run test:browser` fixture
+is synthetic evidence only.
 
 ## Worker and collector order
 
 After Accounts qualification, proceed in this order, with one owner for each
 provider operation:
 
-1. Provision or verify the private Worker, both Durable Object namespaces and
+1. Verify the existing Worker, all four Durable Object namespaces and
    the existing R2 buckets. The workload identity is the platform-issued
    `x-vercel-oidc-token` request-context header captured by `@vercel/oidc`;
    there is no CLI token-minting step and `VERCEL_OIDC_TOKEN` is not a production
@@ -92,8 +108,8 @@ provider operation:
    template configs are intentionally unconfigured; do not deploy them
    directly. Preserve the completed v3 synthetic manifest and its seven
    objects.
-3. Connect the native enrollment sequencer to the explicit macOS custody
-   adapter and production constructor. Qualify default User-domain keychain
+3. Qualify the connected native enrollment sequencer, macOS custody
+   adapter and production constructor. Verify default User-domain keychain
    selection, signed CLI/LaunchAgent behavior, process-death recovery and
    fresh Accounts pairing. The disposable keychain receipt does not cover
    these cases.
@@ -107,6 +123,47 @@ provider operation:
    disable them and verify the fixed private response. Retain the result before
    any leaderboard or public publishing decision.
 
+## Stable macOS collector identity
+
+An ad hoc signed executable has a code-hash-specific Keychain requirement.
+Rebuilding it can make existing enrollment credentials inaccessible. Use the
+checked `bun run custody:signing` workflow to inspect and establish a stable
+local signing identity before a new enrollment. Local self-signing does not
+establish a notarized or publicly distributed release.
+
+Never weaken a Keychain ACL, export custody secrets, replace a checkpoint key,
+or reset a ledger to repair a build mismatch. Use the original authorized
+binary when it remains available, or complete an explicit fresh enrollment
+under the stable identity while retaining prior state for reconciliation.
+Verify the same signed binary from launchd before replacing an existing job.
+
+## Cutover acceptance
+
+1. Record the old publisher's schedule and provider coverage. Keep its job and
+   data intact while the replacement is being qualified.
+2. Compare the same source range locally. Account for UTC versus local-day
+   bucketing, unknown cache categories, source exclusions and deduplication;
+   differing totals alone do not identify which collector is correct.
+3. Inspect a numeric-only outbox, then upload a bounded batch with the enrolled
+   collector. Reconcile uncertain results through the retained batch, and verify
+   a repeated run does not add usage twice.
+4. Read the same dates in the authenticated dashboard and compare exact totals.
+   Verify error, empty, expired-session and refresh behavior.
+5. Exercise public consent, unique handles, refresh and withdrawal before
+   opening rankings. Cached public responses may remain visible for 60 seconds.
+6. Qualify scheduled collection and upload with the stable installed binary,
+   bounded batches, overlap prevention, observable failures and recovery after
+   a missed or interrupted run. Disable the old job only after the replacement
+   has completed a successful scheduled cycle and its data is visible.
+
+Current source limits are explicit: the public index holds at most 128
+publishers; each account admits at most 100,000 occurrence heads and 4,096
+journal revisions. These are bounded rollout limits, not an unlimited
+retention promise. Cursor collection, pricing parity, public profile pages,
+embeddable statistics and a supported recurring upload installer are not
+provided by the current usage CLI. A migration that depends on them must remain
+pending or explicitly narrow its accepted scope.
+
 ## External restore fence
 
 The current generation variable and namespace anchor are useful refusal checks,
@@ -117,7 +174,12 @@ prove that the restored state is stale. Durable Object restart audit and the
 immutable admission journal detect missing or reordered local history, not an
 administrative rollback of both stores.
 
-Implement the fence as a separately owned, append-only control resource whose
+The implementation in `services/usage-worker/src/restore-fence.ts` provides a
+separate control authority. The [operator procedure](usage-restore-fence-control.md)
+owns close, drain and publication. Qualify its deployment and recovery before
+relying on it to survive an administrative restore; source tests alone cannot
+prove independent operational custody. The required recovery behavior is:
+use a separately owned, append-only control resource whose
 authority survives either store: one account/generation record containing a
 monotonic `restoreEpoch`, the active Worker version, and a closed/open state.
 The restore operator must close the epoch before restoring either Durable
@@ -129,7 +191,7 @@ mismatch also returns `recovery_required`. A restored object cannot reopen
 itself. Recovery must also invalidate old device credentials and reconcile
 journal prefixes and namespace anchors before reopening the epoch.
 
-The join can be implemented independently behind a narrow `RestoreFence` port:
+The recovery authority must retain the responsibilities of the narrow `RestoreFence` port:
 `read()`, `close(epoch)`, `publish(epoch, deployment)`, and `assertOpen(epoch)`.
 The port must also own a lease/drain barrier: closing an epoch first prevents
 new operations, waits for already admitted operations to settle, and only then

@@ -40,7 +40,7 @@ function response(body: Uint8Array, status: number): Response {
   return new Response(new Uint8Array(body), { status, headers: {
     "content-type": PAIRING_HTTP_MEDIA,
     // The snapshot is anonymous public data; a short shared cache is correct.
-    "cache-control": "public, max-age=60",
+    "cache-control": status === 200 ? "public, max-age=60" : "private, no-store",
     "referrer-policy": "no-referrer",
     "x-content-type-options": "nosniff",
     "x-robots-tag": "noindex, nofollow",
@@ -50,8 +50,8 @@ const failure = (status: 400 | 503) => response(leaderboardHttpFailure(status ==
 
 /** Dormant public boundary. Unauthenticated by design: the only body it can
  * emit is the materialized snapshot, so no identity is verified or accepted.
- * The read itself never touches account objects — only the index's bounded
- * stale-subset refresh does. */
+ * Reads only serve the stored index; consent mutations and scheduled alarms
+ * own all account verification and index writes. */
 export function createLeaderboardHttpHandler(dependencies: PairingHttpEffects) {
   const { now, setTimeout, clearTimeout } = dependencies;
   let outstanding = 0;

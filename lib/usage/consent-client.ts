@@ -6,7 +6,7 @@ import {
 import type { UsageConsentDecision } from "./consent-contract";
 
 const unavailable = () => new Error("usage_unavailable");
-const statuses = [200, 400, 401, 403, 405, 503] as const;
+const statuses = [200, 400, 401, 403, 405, 409, 503] as const;
 
 async function bounded(response: Response, signal: AbortSignal): Promise<Uint8Array> {
   const encoding = response.headers.get("content-encoding");
@@ -35,7 +35,7 @@ async function bounded(response: Response, signal: AbortSignal): Promise<Uint8Ar
 }
 function statusOf(reply: UsageConsentPublicReply): number {
   return "error" in reply
-    ? { invalid_request: 400, authentication_required: 401, request_rejected: 403, method_not_allowed: 405, unavailable: 503 }[reply.error.code]
+    ? { invalid_request: 400, authentication_required: 401, request_rejected: 403, method_not_allowed: 405, handle_unavailable: 409, publishing_full: 409, unavailable: 503 }[reply.error.code]
     : 200;
 }
 
