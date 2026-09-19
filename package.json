@@ -1,7 +1,7 @@
 {
   "name": "aicharts",
   "version": "1.0.0",
-  "description": "Open-source AI benchmark charts for comparing models and agents across performance, cost, speed, and token use.",
+  "description": "A portal for AI model benchmarks and individual token usage: compare capability, cost, and speed, and inspect coding-agent usage locally.",
   "private": true,
   "type": "module",
   "license": "MIT",

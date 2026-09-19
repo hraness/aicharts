@@ -1,25 +1,10 @@
 # AI Charts
 
-## Menu-bar companion
-
-AI Charts includes an unbundled macOS menu-bar companion for the repository's
-`outputs/` directory. Build it explicitly, then run the foreground singleton:
-
-```sh
-bun run menubar:build
-bun run menubar:install
-bun run menubar
-```
-
-`menubar:install` copies the release-built companion to
-`~/Library/Application Support/AI Charts/bin/aicharts-menubar` atomically. The
-launcher never compiles on startup: it uses that installed copy when present,
-or a prebuilt checkout binary otherwise. A second invocation exits through the
-binary's per-output-directory lock. Use `bun run menubar:uninstall` to remove
-the installed copy. No app bundle, signing, or notarization is part of this
-companion.
-
-[AI Charts](https://aicharts.io) is an open-source home for sourced, interactive AI benchmark charts. It compares models and agents across performance, cost, speed, and token use without collapsing those trade-offs into one rank.
+[AI Charts](https://aicharts.io) is a portal for AI model benchmarks and
+individual token usage. Compare models and agents across capability, cost,
+speed, and token use, then inspect the source and configuration behind a result.
+The local usage tools help you understand your own coding-agent sessions;
+usage reports stay local and uploads are not enabled.
 
 The homepage leads with an interactive Pareto frontier: compare model capability against output tokens or cost, then inspect the configuration behind each point. The original coding-agent charts have a focused home at [`/coding`](https://aicharts.io/coding). The separate [`/benchmarks`](https://aicharts.io/benchmarks) library covers coding, reasoning, research, memory, images, video, audio, and world models. Charted results, source guides, and emerging evaluations are labeled separately; older research cohorts do not masquerade as current-product rankings.
 
@@ -75,6 +60,25 @@ The Rust workspace contains a local-only Codex/Claude Code usage reader, a close
 The [session usage view](https://aicharts.io/usage/sessions) opens local numeric reports for session totals, model mix and evidence-backed time breakdowns. Reports stay in the browser tab. See [session collection and timing](docs/usage-sessions.md) for the command, concurrent-work denominators and source coverage.
 
 The website also includes a server-only Hraness Accounts adapter behind an explicit, default-off production control. It has no login UI or device enrollment. The [identity design and activation contract](docs/usage-identity.md) separates verified package installation from live sign-in qualification; publishing this source does not enable usage uploads.
+
+## Menu-bar companion
+
+AI Charts includes an unbundled macOS menu-bar companion for the repository's
+`outputs/` directory. Build it explicitly, then run the foreground singleton:
+
+```sh
+bun run menubar:build
+bun run menubar:install
+bun run menubar
+```
+
+`menubar:install` copies the release-built companion to
+`~/Library/Application Support/AI Charts/bin/aicharts-menubar` atomically. The
+launcher never compiles on startup: it uses that installed copy when present,
+or a prebuilt checkout binary otherwise. A second invocation exits through the
+binary's per-output-directory lock. Use `bun run menubar:uninstall` to remove
+the installed copy. No app bundle, signing, or notarization is part of this
+companion.
 
 ## AI Charts agent skill
 

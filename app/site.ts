@@ -1,5 +1,5 @@
 export const site = {
-  description: "Explore AI benchmark charts for coding, reasoning, research, memory, images, video, and world models. Compare published results, costs, and configurations.",
+  description: "Explore AI model benchmarks and local token usage tools. Compare published results, costs, and configurations, and inspect your own coding-agent sessions.",
   domain: "aicharts.io",
   emoji: "◉",
   name: "AI Charts",
