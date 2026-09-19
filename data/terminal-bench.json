@@ -23,18 +23,18 @@
     }
   },
   "source": {
-    "leaderboardDefinitionUrl": "https://github.com/harbor-framework/terminal-bench/blob/83c7a6172d629c6575b785ab12c8db787bb2e323/leaderboard/leaderboard.yaml",
+    "leaderboardDefinitionUrl": "https://github.com/harbor-framework/terminal-bench/blob/c7878bd7cbd05d1dd21586b83eb3a1929a412312/leaderboard/leaderboard.yaml",
     "leaderboardUrl": "https://hub.harborframework.com/datasets/terminal-bench/terminal-bench/latest?leaderboard=4-0-0&tab=leaderboard",
     "method": "version-pinned-github-submissions",
     "name": "Harbor Framework",
     "releaseUrl": "https://github.com/harbor-framework/terminal-bench/releases/tag/v4.0.0",
-    "repositoryCommit": "83c7a6172d629c6575b785ab12c8db787bb2e323",
-    "repositoryCommittedAt": "2026-09-03T02:43:32Z",
-    "repositoryCommitUrl": "https://github.com/harbor-framework/terminal-bench/commit/83c7a6172d629c6575b785ab12c8db787bb2e323",
+    "repositoryCommit": "c7878bd7cbd05d1dd21586b83eb3a1929a412312",
+    "repositoryCommittedAt": "2026-09-19T20:50:55Z",
+    "repositoryCommitUrl": "https://github.com/harbor-framework/terminal-bench/commit/c7878bd7cbd05d1dd21586b83eb3a1929a412312",
     "repositoryUrl": "https://github.com/harbor-framework/terminal-bench",
-    "retrievedAt": "2026-09-03T21:57:53.225Z",
+    "retrievedAt": "2026-09-19T22:19:44.733Z",
     "sourceClass": "benchmark-owner",
-    "submissionsDirectoryUrl": "https://github.com/harbor-framework/terminal-bench/tree/83c7a6172d629c6575b785ab12c8db787bb2e323/leaderboard/submissions"
+    "submissionsDirectoryUrl": "https://github.com/harbor-framework/terminal-bench/tree/c7878bd7cbd05d1dd21586b83eb3a1929a412312/leaderboard/submissions"
   },
   "records": [
     {
@@ -85,7 +85,7 @@
         "https://hub.harborframework.com/jobs/d3a44a19-9643-5d66-9633-0375f701d4db"
       ],
       "sourcePath": "leaderboard/submissions/2026-09-02-anthropic-claude-fable-5-1-max-claude-code.json",
-      "sourceUrl": "https://raw.githubusercontent.com/harbor-framework/terminal-bench/83c7a6172d629c6575b785ab12c8db787bb2e323/leaderboard/submissions/2026-09-02-anthropic-claude-fable-5-1-max-claude-code.json"
+      "sourceUrl": "https://raw.githubusercontent.com/harbor-framework/terminal-bench/c7878bd7cbd05d1dd21586b83eb3a1929a412312/leaderboard/submissions/2026-09-02-anthropic-claude-fable-5-1-max-claude-code.json"
     },
     {
       "id": "2026-08-26-anthropic-claude-opus-5-max-claude-code",
@@ -135,7 +135,7 @@
         "https://hub.harborframework.com/jobs/a1ac63a1-8a9b-4bc7-9906-2b63657ee1c2"
       ],
       "sourcePath": "leaderboard/submissions/2026-08-26-anthropic-claude-opus-5-max-claude-code.json",
-      "sourceUrl": "https://raw.githubusercontent.com/harbor-framework/terminal-bench/83c7a6172d629c6575b785ab12c8db787bb2e323/leaderboard/submissions/2026-08-26-anthropic-claude-opus-5-max-claude-code.json"
+      "sourceUrl": "https://raw.githubusercontent.com/harbor-framework/terminal-bench/c7878bd7cbd05d1dd21586b83eb3a1929a412312/leaderboard/submissions/2026-08-26-anthropic-claude-opus-5-max-claude-code.json"
     },
     {
       "id": "2026-08-26-anthropic-claude-fable-5-max-claude-code",
@@ -185,7 +185,7 @@
         "https://hub.harborframework.com/jobs/991af5e0-8c5f-4511-9619-a2a46939ebd4"
       ],
       "sourcePath": "leaderboard/submissions/2026-08-26-anthropic-claude-fable-5-max-claude-code.json",
-      "sourceUrl": "https://raw.githubusercontent.com/harbor-framework/terminal-bench/83c7a6172d629c6575b785ab12c8db787bb2e323/leaderboard/submissions/2026-08-26-anthropic-claude-fable-5-max-claude-code.json"
+      "sourceUrl": "https://raw.githubusercontent.com/harbor-framework/terminal-bench/c7878bd7cbd05d1dd21586b83eb3a1929a412312/leaderboard/submissions/2026-08-26-anthropic-claude-fable-5-max-claude-code.json"
     },
     {
       "id": "2026-08-26-anthropic-glm-5-3-max-claude-code",
@@ -235,7 +235,7 @@
         "https://hub.harborframework.com/jobs/18e4ee29-d8b4-516b-b79d-b8bad5bcd5be"
       ],
       "sourcePath": "leaderboard/submissions/2026-08-26-anthropic-glm-5-3-max-claude-code.json",
-      "sourceUrl": "https://raw.githubusercontent.com/harbor-framework/terminal-bench/83c7a6172d629c6575b785ab12c8db787bb2e323/leaderboard/submissions/2026-08-26-anthropic-glm-5-3-max-claude-code.json"
+      "sourceUrl": "https://raw.githubusercontent.com/harbor-framework/terminal-bench/c7878bd7cbd05d1dd21586b83eb3a1929a412312/leaderboard/submissions/2026-08-26-anthropic-glm-5-3-max-claude-code.json"
     },
     {
       "id": "2026-08-26-openai-gpt-5-6-sol-max-codex",
@@ -285,7 +285,7 @@
         "https://hub.harborframework.com/jobs/5aebbab5-1f8f-4cdb-8073-c6ce785a930d"
       ],
       "sourcePath": "leaderboard/submissions/2026-08-26-openai-gpt-5-6-sol-max-codex.json",
-      "sourceUrl": "https://raw.githubusercontent.com/harbor-framework/terminal-bench/83c7a6172d629c6575b785ab12c8db787bb2e323/leaderboard/submissions/2026-08-26-openai-gpt-5-6-sol-max-codex.json"
+      "sourceUrl": "https://raw.githubusercontent.com/harbor-framework/terminal-bench/c7878bd7cbd05d1dd21586b83eb3a1929a412312/leaderboard/submissions/2026-08-26-openai-gpt-5-6-sol-max-codex.json"
     },
     {
       "id": "2026-08-26-anthropic-claude-opus-4-8-max-claude-code",
@@ -335,7 +335,7 @@
         "https://hub.harborframework.com/jobs/10722b22-0bbd-4c93-8d27-611fb8dd02a6"
       ],
       "sourcePath": "leaderboard/submissions/2026-08-26-anthropic-claude-opus-4-8-max-claude-code.json",
-      "sourceUrl": "https://raw.githubusercontent.com/harbor-framework/terminal-bench/83c7a6172d629c6575b785ab12c8db787bb2e323/leaderboard/submissions/2026-08-26-anthropic-claude-opus-4-8-max-claude-code.json"
+      "sourceUrl": "https://raw.githubusercontent.com/harbor-framework/terminal-bench/c7878bd7cbd05d1dd21586b83eb3a1929a412312/leaderboard/submissions/2026-08-26-anthropic-claude-opus-4-8-max-claude-code.json"
     },
     {
       "id": "2026-08-26-openai-gpt-5-6-terra-max-codex",
@@ -385,7 +385,7 @@
         "https://hub.harborframework.com/jobs/3de0aee9-6de7-4d94-83c4-ac5e789fe757"
       ],
       "sourcePath": "leaderboard/submissions/2026-08-26-openai-gpt-5-6-terra-max-codex.json",
-      "sourceUrl": "https://raw.githubusercontent.com/harbor-framework/terminal-bench/83c7a6172d629c6575b785ab12c8db787bb2e323/leaderboard/submissions/2026-08-26-openai-gpt-5-6-terra-max-codex.json"
+      "sourceUrl": "https://raw.githubusercontent.com/harbor-framework/terminal-bench/c7878bd7cbd05d1dd21586b83eb3a1929a412312/leaderboard/submissions/2026-08-26-openai-gpt-5-6-terra-max-codex.json"
     },
     {
       "id": "2026-08-26-xai-grok-4-6-none-grok-build",
@@ -435,7 +435,7 @@
         "https://hub.harborframework.com/jobs/2c89a14f-d14a-4ea8-ad8a-d08d90c67a5d"
       ],
       "sourcePath": "leaderboard/submissions/2026-08-26-xai-grok-4-6-none-grok-build.json",
-      "sourceUrl": "https://raw.githubusercontent.com/harbor-framework/terminal-bench/83c7a6172d629c6575b785ab12c8db787bb2e323/leaderboard/submissions/2026-08-26-xai-grok-4-6-none-grok-build.json"
+      "sourceUrl": "https://raw.githubusercontent.com/harbor-framework/terminal-bench/c7878bd7cbd05d1dd21586b83eb3a1929a412312/leaderboard/submissions/2026-08-26-xai-grok-4-6-none-grok-build.json"
     },
     {
       "id": "2026-09-01-gemini-gemini-3-8-flash-high-mini-swe-agent",
@@ -485,7 +485,7 @@
         "https://hub.harborframework.com/jobs/542367e9-c4ae-5255-ab76-4c9045749e8e"
       ],
       "sourcePath": "leaderboard/submissions/2026-09-01-gemini-gemini-3-8-flash-high-mini-swe-agent.json",
-      "sourceUrl": "https://raw.githubusercontent.com/harbor-framework/terminal-bench/83c7a6172d629c6575b785ab12c8db787bb2e323/leaderboard/submissions/2026-09-01-gemini-gemini-3-8-flash-high-mini-swe-agent.json"
+      "sourceUrl": "https://raw.githubusercontent.com/harbor-framework/terminal-bench/c7878bd7cbd05d1dd21586b83eb3a1929a412312/leaderboard/submissions/2026-09-01-gemini-gemini-3-8-flash-high-mini-swe-agent.json"
     },
     {
       "id": "2026-08-26-openai-gpt-5-6-luna-max-codex",
@@ -535,7 +535,7 @@
         "https://hub.harborframework.com/jobs/b7444ba2-78b7-46a0-a3c1-2196d40a337d"
       ],
       "sourcePath": "leaderboard/submissions/2026-08-26-openai-gpt-5-6-luna-max-codex.json",
-      "sourceUrl": "https://raw.githubusercontent.com/harbor-framework/terminal-bench/83c7a6172d629c6575b785ab12c8db787bb2e323/leaderboard/submissions/2026-08-26-openai-gpt-5-6-luna-max-codex.json"
+      "sourceUrl": "https://raw.githubusercontent.com/harbor-framework/terminal-bench/c7878bd7cbd05d1dd21586b83eb3a1929a412312/leaderboard/submissions/2026-08-26-openai-gpt-5-6-luna-max-codex.json"
     },
     {
       "id": "2026-08-26-anthropic-claude-sonnet-5-max-claude-code",
@@ -585,7 +585,7 @@
         "https://hub.harborframework.com/jobs/a5758f1a-9ef2-4100-9893-34a99c99bd9c"
       ],
       "sourcePath": "leaderboard/submissions/2026-08-26-anthropic-claude-sonnet-5-max-claude-code.json",
-      "sourceUrl": "https://raw.githubusercontent.com/harbor-framework/terminal-bench/83c7a6172d629c6575b785ab12c8db787bb2e323/leaderboard/submissions/2026-08-26-anthropic-claude-sonnet-5-max-claude-code.json"
+      "sourceUrl": "https://raw.githubusercontent.com/harbor-framework/terminal-bench/c7878bd7cbd05d1dd21586b83eb3a1929a412312/leaderboard/submissions/2026-08-26-anthropic-claude-sonnet-5-max-claude-code.json"
     },
     {
       "id": "2026-08-26-xai-grok-4-5-none-grok-build",
@@ -635,7 +635,7 @@
         "https://hub.harborframework.com/jobs/51a17348-a8b8-4c5e-b8d2-73a9a724c3b6"
       ],
       "sourcePath": "leaderboard/submissions/2026-08-26-xai-grok-4-5-none-grok-build.json",
-      "sourceUrl": "https://raw.githubusercontent.com/harbor-framework/terminal-bench/83c7a6172d629c6575b785ab12c8db787bb2e323/leaderboard/submissions/2026-08-26-xai-grok-4-5-none-grok-build.json"
+      "sourceUrl": "https://raw.githubusercontent.com/harbor-framework/terminal-bench/c7878bd7cbd05d1dd21586b83eb3a1929a412312/leaderboard/submissions/2026-08-26-xai-grok-4-5-none-grok-build.json"
     },
     {
       "id": "2026-09-02-gemini-gemini-3-7-flash-high-mini-swe-agent",
@@ -685,7 +685,7 @@
         "https://hub.harborframework.com/jobs/98bfa993-cbb6-5d79-a209-efdf3ed037a5"
       ],
       "sourcePath": "leaderboard/submissions/2026-09-02-gemini-gemini-3-7-flash-high-mini-swe-agent.json",
-      "sourceUrl": "https://raw.githubusercontent.com/harbor-framework/terminal-bench/83c7a6172d629c6575b785ab12c8db787bb2e323/leaderboard/submissions/2026-09-02-gemini-gemini-3-7-flash-high-mini-swe-agent.json"
+      "sourceUrl": "https://raw.githubusercontent.com/harbor-framework/terminal-bench/c7878bd7cbd05d1dd21586b83eb3a1929a412312/leaderboard/submissions/2026-09-02-gemini-gemini-3-7-flash-high-mini-swe-agent.json"
     }
   ]
 }
