@@ -191,7 +191,7 @@ export async function verifyUsageDashboard(browser: Browser, disabledBaseUrl: st
         const todayUtcDay = Date.parse(`${todayInput}T00:00:00.000Z`) / 86_400_000;
         const quickRanges = page.getByRole("group", { name: "Quick date ranges in UTC", exact: true });
         for (const [label, days] of [["Today", 1], ["Last 7 days", 7], ["Last 30 days", 30]] as const) {
-          const beforePreset = requests;
+          const beforePreset: number = requests;
           const button = quickRanges.getByRole("button", { name: label, exact: true });
           await button.focus(); await page.keyboard.press("Enter"); await loaded();
           invariant(requests === beforePreset + 1, "Each date preset must issue exactly one bounded read.");
