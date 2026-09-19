@@ -10,7 +10,7 @@ import { createLeaderboardHttpHandler, type LeaderboardHttpEnvironment } from ".
 import { PAIRING_TTL_MS, uploadSecretCommitment } from "../src/pairing";
 import worker from "../src/index";
 
-const NOW = Date.UTC(2026, 8, 11, 12);
+const NOW = Math.ceil(Date.now() / 86_400_000) * 86_400_000 + 43_200_000;
 let serial = 0, account = "";
 const hex = (value: number, width = 32) => value.toString(16).padStart(width * 2, "0");
 const success = <T>(result: { ok: true; value: T } | { ok: false; error: string }): T => {
@@ -75,7 +75,7 @@ test("the anonymous read serves only the materialized snapshot", async () => {
   expect(first.response.headers.get("cache-control")).toBe("public, max-age=60");
   expect(decodeLeaderboardHttpResponse(first.bytes)).toEqual({ ok: true, value: {
     schemaVersion: 1, ranking: "observed-tokens-30d-v1", computedAtMs: NOW, entries: [] } });
-  // Enroll and consent at the account; the next read materializes the member.
+  // Enroll and consent materializes the member before the read-only request.
   const stub = await enroll();
   success(await stub.setLeaderboardConsent({ schemaVersion: 1, accountId: account,
     sessionExpiresAtMs: NOW + PAIRING_TTL_MS, operation: "set", consent: true, publicHandle: "alpha-coder" }));
@@ -101,6 +101,7 @@ test("the public boundary refuses identity, bodies, cookies and wrong shapes", a
     try {
       const response = await handler()(new Request(LEADERBOARD_HTTP_URL, init as RequestInit), actual, ctx);
       expect(response.status).toBe(400);
+      expect(response.headers.get("cache-control")).toBe("private, no-store");
       const text = await response.text();
       expect(text).toBe('{"schemaVersion":1,"error":{"code":"invalid_request"}}');
     } finally { await waitOnExecutionContext(ctx); }
@@ -121,6 +122,7 @@ test("an unreachable index produces the fixed unavailable body", async () => {
   try {
     const response = await handler()(request(), actual, ctx);
     expect(response.status).toBe(503);
+    expect(response.headers.get("cache-control")).toBe("private, no-store");
     expect(await response.text()).toBe('{"schemaVersion":1,"error":{"code":"leaderboard_unavailable"}}');
   } finally { await waitOnExecutionContext(ctx); }
 });

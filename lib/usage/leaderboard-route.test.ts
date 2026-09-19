@@ -24,7 +24,7 @@ function fixture(options: { available?: () => boolean; read?: () => Promise<unkn
 }
 function privacy(response: Response) {
   expect(response.headers.get("content-type")).toBe(LEADERBOARD_PUBLIC_MEDIA);
-  expect(response.headers.get("cache-control")).toBe("public, max-age=60");
+  expect(response.headers.get("cache-control")).toBe(response.status === 200 ? "public, max-age=60" : "private, no-store");
   expect(response.headers.get("referrer-policy")).toBe("no-referrer");
   expect(response.headers.get("x-content-type-options")).toBe("nosniff");
   expect(response.headers.get("x-content-type-options")).toBe("nosniff");

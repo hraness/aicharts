@@ -4,6 +4,8 @@
 .usage-daily__heading p { color: var(--muted); margin-block-start: .6rem; max-inline-size: 65ch; }
 .usage-daily__privacy { color: var(--muted); font-size: .8rem; }
 .usage-daily__controls { align-items: end; border-block: 1px solid var(--grid); display: flex; flex-wrap: wrap; gap: 1rem; padding-block: 1.25rem; }
+.usage-daily__presets { display: flex; flex-basis: 100%; flex-wrap: wrap; gap: .5rem; }
+.usage-daily__presets .usage-button[aria-pressed="true"] { background: var(--foreground); border-color: var(--foreground); color: var(--background); }
 .usage-daily__controls label { display: grid; font-size: .8rem; font-weight: 600; gap: .4rem; }
 .usage-daily__controls input { background: var(--background); border: 1px solid var(--muted); border-radius: .35rem; caret-color: var(--foreground); color: var(--foreground); font: inherit; font-variant-numeric: tabular-nums; min-block-size: 2.75rem; min-inline-size: 10.5rem; padding: .55rem .65rem; }
 .usage-daily__controls input:hover { border-color: var(--foreground); }

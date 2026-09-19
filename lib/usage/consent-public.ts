@@ -10,7 +10,7 @@ export const USAGE_CONSENT_PUBLIC_MEDIA = "application/json; charset=utf-8";
 export const USAGE_CONSENT_PUBLIC_REQUEST_BYTES = 128;
 export const USAGE_CONSENT_PUBLIC_MAX_BYTES = 1_024;
 export type UsageConsentPublicError = "invalid_request" | "authentication_required" | "request_rejected"
-  | "method_not_allowed" | "unavailable";
+  | "method_not_allowed" | "unavailable" | "handle_unavailable" | "publishing_full";
 export type UsageConsentPublicReply =
   | Readonly<{ schemaVersion: 1; state: "ready"; value: LeaderboardConsentViewV1 }>
   | Readonly<{ schemaVersion: 1; state: "not_enrolled" }>
@@ -25,7 +25,7 @@ export function parseUsageConsentPublicReply(value: unknown): UsageConsentPublic
     const nested = privateDaysSnapshot(error.error, ["code"]);
     if (nested?.code === "invalid_request" || nested?.code === "authentication_required"
       || nested?.code === "request_rejected" || nested?.code === "method_not_allowed"
-      || nested?.code === "unavailable") {
+      || nested?.code === "unavailable" || nested?.code === "handle_unavailable" || nested?.code === "publishing_full") {
       return owned({ schemaVersion: 1, error: owned({ code: nested.code as UsageConsentPublicError }) });
     }
   }

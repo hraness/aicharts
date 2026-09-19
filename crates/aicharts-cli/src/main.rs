@@ -13,6 +13,7 @@ mod reindex;
 mod sessions;
 mod state;
 mod support;
+mod sync;
 mod transport_dns;
 #[cfg(test)]
 mod transport_test_log;
@@ -69,6 +70,7 @@ const HELP: &str = "AI Charts Usage — local-only foundation
   aicharts sessions --occurrence-key-file KEY [--codex FILE ...] [--claude FILE ...] [--devin FILE ...] [--json]
   aicharts usage --key-file PATH [--codex FILE_OR_DIR] [--claude FILE_OR_DIR] [--devin FILE_OR_DIR] [--json]
   aicharts upload --state-dir DIR --key-file PATH [--resume]
+  aicharts sync --complete-prefix --state-dir DIR --key-file PATH [--codex FILE_OR_DIR] [--claude FILE_OR_DIR] [--devin FILE_OR_DIR] [--max-batches N] [--reconcile-retained] [--json]
   aicharts upload --dry-run --key-file PATH [--codex FILE_OR_DIR] [--claude FILE_OR_DIR] [--devin FILE_OR_DIR]
   aicharts keygen --output PATH
   aicharts init --state-dir DIR --key-file PATH
@@ -123,6 +125,9 @@ Omitting it retains collect. A ledger mode mismatch fails before reading sources
 It retries only bounded transient ledger busy/change results (three retries by default;
 --retry-attempts accepts 0..8) before returning a fixed error. It never
 uploads or installs an OS service.
+sync performs one supervised collection and bounded upload pass on an already
+enrolled macOS installation. It requires an existing prefix-enabled sender ledger;
+it never initializes, migrates, enrolls or installs a service. See sync --help.
 enroll pairs this installation with an AI Charts account through local macOS
 credential custody and one explicit browser approval; it never uploads and only
 prepares the option to upload later. No account sign-in, daemon installation,
@@ -546,6 +551,11 @@ fn main() {
     let support_options = support::options();
     if args.first().map(String::as_str) == Some("support") {
         std::process::exit(support::execute(&args[1..], &support_options));
+    }
+    if args.first().map(String::as_str) == Some("sync")
+        && !args.iter().any(|arg| arg == "--version")
+    {
+        std::process::exit(sync::execute(&args));
     }
     match run(&args) {
         Ok(output) => {
