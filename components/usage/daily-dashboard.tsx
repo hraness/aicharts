@@ -13,6 +13,12 @@ const time = new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: 
 const providers = [{ key: "codex", name: "Codex" }, { key: "claudeCode", name: "Claude Code" }, { key: "devin", name: "Devin" }] as const;
 const formattedDay = (day: number) => date.format(new Date(day * 86_400_000));
 const tokens = (value: string) => number.format(BigInt(value));
+const presets = [{ days: 1, label: "Today" }, { days: 7, label: "Last 7 days" }, { days: 30, label: "Last 30 days" }] as const;
+
+/** Calendar days anchored to the server UTC day, including today. */
+export function dailyUsagePresetRange(todayUtcDay: number, days: 1 | 7 | 30): PrivateDaysRange {
+  return { firstUtcDay: Math.max(0, todayUtcDay - days + 1), dayCount: Math.min(days, todayUtcDay + 1) };
+}
 
 function summed(value: PrivateDaysV1, key: "codex" | "claudeCode" | "devin"): ProviderImportedTotals {
   let total = 0n, output = 0n, count = 0;
@@ -81,9 +87,10 @@ function Measurements({ value }: Readonly<{ value: PrivateDaysV1 }>) {
 }
 
 export function DailyUsageDashboard({ todayUtcDay }: Readonly<{ todayUtcDay: number }>) {
-  const [first, setFirst] = useState(utcDayInput(Math.max(0, todayUtcDay - 29)));
+  const initialRange = dailyUsagePresetRange(todayUtcDay, 30);
+  const [first, setFirst] = useState(utcDayInput(initialRange.firstUtcDay));
   const [last, setLast] = useState(utcDayInput(todayUtcDay));
-  const [range, setRange] = useState<PrivateDaysRange>({ firstUtcDay: Math.max(0, todayUtcDay - 29), dayCount: Math.min(30, todayUtcDay + 1) });
+  const [range, setRange] = useState<PrivateDaysRange>(initialRange);
   const [view, setView] = useState<View>({ kind: "loading" });
   const [inputError, setInputError] = useState<string | null>(null);
   const requests = useRef({ id: 0, pending: null as AbortController | null });
@@ -119,9 +126,15 @@ export function DailyUsageDashboard({ todayUtcDay }: Readonly<{ todayUtcDay: num
     const controller = new AbortController(); owner.pending = controller;
     // The initial state already describes this request; only its asynchronous
     // settlement updates the view, avoiding a redundant loading render.
-    void read({ firstUtcDay: Math.max(0, todayUtcDay - 29), dayCount: Math.min(30, todayUtcDay + 1) }, controller, id);
+    void read(dailyUsagePresetRange(todayUtcDay, 30), controller, id);
     return () => { owner.id++; owner.pending?.abort(); };
   }, [read, todayUtcDay]);
+
+  const applyPreset = (days: 1 | 7 | 30) => {
+    const selected = dailyUsagePresetRange(todayUtcDay, days);
+    setFirst(utcDayInput(selected.firstUtcDay)); setLast(utcDayInput(todayUtcDay));
+    load(selected);
+  };
 
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -143,6 +156,15 @@ export function DailyUsageDashboard({ todayUtcDay }: Readonly<{ todayUtcDay: num
       <span className="usage-daily__privacy">Private to your account</span>
     </header>
     <form className="usage-daily__controls" onSubmit={submit} aria-label="Usage date range">
+      <div className="usage-daily__presets" role="group" aria-label="Quick date ranges in UTC">
+        {presets.map(preset => {
+          const selected = dailyUsagePresetRange(todayUtcDay, preset.days);
+          const active = view.kind !== "invalid_dates" && range.firstUtcDay === selected.firstUtcDay && range.dayCount === selected.dayCount
+            && first === utcDayInput(selected.firstUtcDay) && last === utcDayInput(todayUtcDay);
+          return <button className="usage-button usage-button--quiet" key={preset.days} type="button"
+            aria-pressed={active} aria-describedby="usage-range-hint" onClick={() => applyPreset(preset.days)}>{preset.label}</button>;
+        })}
+      </div>
       <label>From <input type="date" value={first} min="1970-01-01" max="9999-12-31" required aria-describedby={inputError ? "usage-date-error" : "usage-range-hint"} aria-invalid={inputError !== null} onChange={event => setFirst(event.target.value)} /></label>
       <label>Through <input type="date" value={last} min="1970-01-01" max="9999-12-31" required aria-describedby={inputError ? "usage-date-error" : "usage-range-hint"} aria-invalid={inputError !== null} onChange={event => setLast(event.target.value)} /></label>
       <button className="usage-button usage-button--primary" type="submit">Apply dates</button>

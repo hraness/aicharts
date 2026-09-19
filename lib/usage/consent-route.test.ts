@@ -72,6 +72,13 @@ test("a checked authentication-required outcome becomes a fixed 401", async () =
   expect(await result(response)).toEqual({ schemaVersion: 1, error: { code: "authentication_required" } });
 });
 
+test.each(["handle_unavailable", "publishing_full"])("a publishing refusal is an explicit private conflict response (%s)", async error => {
+  const f = fixture({ query: async () => ({ kind: "query", result: { ok: false, error } }) });
+  const response = await f.handle(incoming({ method: "POST", body: encodeUsageConsentDecision({ consent: true, publicHandle: "taken" })! }));
+  expect(response.status).toBe(409);
+  expect(await result(response)).toEqual({ schemaVersion: 1, error: { code: error } });
+});
+
 test("unsupported methods perform no availability or auth work", async () => {
   const f = fixture({ available() { throw new Error("CONSENT_CANARY"); }, query: async () => { throw new Error("CONSENT_CANARY"); } });
   for (const method of ["HEAD", "OPTIONS", "PUT", "PATCH", "DELETE"]) {

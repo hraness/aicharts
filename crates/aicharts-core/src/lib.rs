@@ -132,7 +132,12 @@ impl Accumulator {
                 if !(usage.provider == Provider::ClaudeCode && same_context(old, &usage)) {
                     return Err(Error::ConflictingOccurrence);
                 }
-                old.execution_id = usage.execution_id;
+                // A copy with no session identity cannot erase an observed
+                // execution. Keep unknown-to-known enrichment independent of
+                // import order so a ledger rebuild reaches the same frame.
+                if usage.execution_id != [0; 16] {
+                    old.execution_id = usage.execution_id;
+                }
             }
             if usage.provider == Provider::Codex {
                 if *old_day != day
@@ -399,9 +404,11 @@ fn parse_codex<R: BufRead>(
     key: &[u8; 32],
     out: &mut Accumulator,
 ) -> Result<(), Error> {
+    // Each distinct delta owns a stable slot and its next repeat ordinal.
+    type DeltaSlots = HashMap<[u64; 6], (u64, u64)>;
     let mut execution = None;
     let mut previous: Option<CodexCounters> = None;
-    let mut same_instant: HashMap<(u32, u32), HashMap<[u64; 6], u64>> = HashMap::new();
+    let mut same_instant: HashMap<(u32, u32), DeltaSlots> = HashMap::new();
     let mut stopped = false;
     let mut forked = false;
     loop {
@@ -516,15 +523,31 @@ fn parse_codex<R: BufRead>(
         let day_bytes = day.to_le_bytes();
         let offset_bytes = offset.to_le_bytes();
         // Compaction can stamp several distinct token_count deltas with one
-        // timestamp. An exact copy still dedups on the base identity; each
-        // distinct value takes a deterministic disambiguated identity so one
-        // compacted file measures every request instead of conflicting.
-        let slot = {
+        // timestamp. Unchanged cumulative copies were already skipped above;
+        // even an equal delta now represents newly measured usage. Retain the
+        // original identity for the first occurrence of each distinct delta,
+        // and give repeats a separate ordinal without shifting later slots.
+        let (slot, repeat) = {
             let slots = same_instant.entry((day, offset)).or_default();
             let next = slots.len() as u64;
-            *slots.entry(values(&tokens)).or_insert(next)
+            let entry = slots.entry(values(&tokens)).or_insert((next, 0));
+            let result = *entry;
+            entry.1 += 1;
+            result
         };
-        let id = if slot == 0 {
+        let id = if repeat != 0 {
+            keyed_id(
+                key,
+                b"codex-usage-repeat",
+                &[
+                    &execution_id,
+                    &day_bytes,
+                    &offset_bytes,
+                    &slot.to_le_bytes(),
+                    &repeat.to_le_bytes(),
+                ],
+            )
+        } else if slot == 0 {
             keyed_id(
                 key,
                 b"codex-usage",

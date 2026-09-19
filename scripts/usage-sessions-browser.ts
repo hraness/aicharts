@@ -66,6 +66,28 @@ export async function verifyUsageSessions(browser: Browser, baseUrl: string): Pr
       await page.locator("h1").click(); await page.evaluate(() => scrollTo(0, 0));
       if (capture !== undefined) await page.screenshot({ path: resolve(capture, `${name}.png`), fullPage: true });
 
+      const event = (session: typeof SESSION_EXAMPLE.sessions[number], reclaimed: number) => JSON.stringify({
+        schema: "gobstopper/compaction-events-v1", ts: Math.floor(session.window.endMs / 1_000),
+        provider: session.provider, session_id: session.sessionId, strategy: "context", action: "provider_compact",
+        outcome: "applied", trigger_tokens: 200, context_tokens_before: 200, context_tokens_after: 200 - reclaimed,
+        est_reclaimed_tokens: reclaimed, items_covered: 1, duration_ms: 10, error_code: null,
+      });
+      const events = page.locator('input[type="file"][accept=".jsonl,application/x-ndjson"]');
+      await events.setInputFiles({ name: "events.jsonl", mimeType: "application/x-ndjson", buffer: Buffer.from(`${event(SESSION_EXAMPLE.sessions[0]!, 100)}\n${event(SESSION_EXAMPLE.sessions[1]!, 50)}\ntorn-line`) });
+      const applied = page.locator(".usage-sessions__aggregate > div").filter({ has: page.getByText("Compactions applied", { exact: true }) }).locator("dd");
+      await page.getByText("1 unrecognized or incomplete event lines were skipped.", { exact: false }).waitFor();
+      invariant(await applied.textContent() === "2", "All-session compaction totals must include both matched events.");
+      await page.getByLabel("Show", { exact: true }).selectOption("claude_code");
+      invariant(await applied.textContent() === "1", "Filtered compaction totals must exclude events outside the selection.");
+      const reclaimed = page.locator(".usage-sessions__aggregate > div").filter({ has: page.getByText("Tokens reclaimed", { exact: true }) }).locator("dd");
+      invariant(await reclaimed.textContent() === "50", "Reclaimed tokens must follow the selected sessions.");
+      await events.setInputFiles({ name: "wrong.jsonl", mimeType: "application/x-ndjson", buffer: Buffer.from('{"prompt":"DO_NOT_ECHO_COMPACTION_SOURCE"}') });
+      await page.getByRole("alert").filter({ hasText: "valid gobstopper events log" }).waitFor();
+      invariant(await applied.textContent() === "1", "Rejected events must preserve the last valid log.");
+      invariant(!(await page.locator("body").textContent())?.includes("DO_NOT_ECHO_COMPACTION_SOURCE"), "Rejected compaction content must never be echoed.");
+      await page.getByRole("button", { name: "Explore an example", exact: true }).click();
+      invariant(await page.getByText("Compactions applied", { exact: true }).count() === 0, "Replacing a report must clear its attached event log.");
+
       const history = { ...SESSION_EXAMPLE, sessions: SESSION_EXAMPLE.sessions.map(s => ({ ...s, source: "history", spans: [] })) };
       await page.locator('input[type="file"][accept="application/json,.json"]').setInputFiles({ name: "local-report.json", mimeType: "application/json", buffer: Buffer.from(JSON.stringify(history)) });
       await page.getByText("Local report", { exact: true }).waitFor();

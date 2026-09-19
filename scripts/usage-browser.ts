@@ -3,6 +3,8 @@ import { resolve } from "node:path";
 import type { Browser, Locator, Page, Route } from "playwright-core";
 import { encodePrivateDaysPublicResponse, parsePrivateDaysPublicSearch, privateDaysPublicStatus,
   PRIVATE_DAYS_PUBLIC_MEDIA, type PrivateDaysPublicReply, type PrivateDaysRange } from "../lib/usage/private-days-public";
+import { encodeUsageConsentPublicReply, USAGE_CONSENT_PUBLIC_MEDIA } from "../lib/usage/consent-public";
+import type { LeaderboardConsentViewV1 } from "../lib/usage/leaderboard-contract";
 import { verifyUsagePairing } from "./usage-pairing-browser";
 
 function invariant(value: unknown, message: string): asserts value {
@@ -43,7 +45,7 @@ async function settle(page: Page): Promise<void> {
 async function checkDormant(baseUrl: string): Promise<void> {
   const page = await fetch(`${baseUrl}/usage`), html = await page.text();
   invariant(page.status === 200, "Disabled usage page must remain available.");
-  for (const text of ["Your AI work, measured without your words.", "Remote sync is not enabled yet.",
+  for (const text of ["Your AI usage", "Remote sync is not enabled yet.",
     "aicharts usage --key-file ./aicharts.key --codex ./sessions", "No transcript storage", 'aria-current="page" href="/usage"',
     '<link rel="canonical" href="https://aicharts.io/usage"']) {
     invariant(html.includes(text), "The real request-time page must preserve local-only measurement, coverage and current navigation.");
@@ -58,7 +60,7 @@ async function checkDormant(baseUrl: string): Promise<void> {
   }
   const leaderboard = await fetch(`${baseUrl}/leaderboard`), leaderboardHtml = await leaderboard.text();
   invariant(leaderboard.status === 200, "The public leaderboard page must remain available while reads are paused.");
-  for (const text of ["A leaderboard that shows its receipts.", "Publishing paused", "No rankings before the evidence layer",
+  for (const text of ["Public usage leaderboard", "Publishing paused", "Public publishing is not available yet",
     'aria-current="page" href="/leaderboard"', '<link rel="canonical" href="https://aicharts.io/leaderboard"']) {
     invariant(leaderboardHtml.includes(text), "The paused leaderboard must render its honest disabled state.");
   }
@@ -185,6 +187,21 @@ export async function verifyUsageDashboard(browser: Browser, disabledBaseUrl: st
         await page.locator("h1").click(); await page.evaluate(() => scrollTo(0, 0));
         if (captureDirectory !== undefined) await page.screenshot({ path: resolve(captureDirectory, `${name}.png`), fullPage: true });
 
+        const todayInput = await page.getByLabel("Through", { exact: true }).inputValue();
+        const todayUtcDay = Date.parse(`${todayInput}T00:00:00.000Z`) / 86_400_000;
+        const quickRanges = page.getByRole("group", { name: "Quick date ranges in UTC", exact: true });
+        for (const [label, days] of [["Today", 1], ["Last 7 days", 7], ["Last 30 days", 30]] as const) {
+          const beforePreset = requests;
+          const button = quickRanges.getByRole("button", { name: label, exact: true });
+          await button.focus(); await page.keyboard.press("Enter"); await loaded();
+          invariant(requests === beforePreset + 1, "Each date preset must issue exactly one bounded read.");
+          invariant(await page.locator(".usage-daily table tbody").count() === days, "Preset calendar days must control daily rows.");
+          invariant(await button.getAttribute("aria-pressed") === "true", "The applied preset must expose its selected state.");
+          invariant(await page.getByLabel("From", { exact: true }).inputValue() === new Date((todayUtcDay - days + 1) * 86_400_000).toISOString().slice(0, 10), "Presets must use UTC calendar days.");
+          invariant(await page.getByLabel("Through", { exact: true }).inputValue() === todayInput, "Presets must include the server's current UTC day.");
+        }
+        invariant(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), "Preset controls must fit the viewport.");
+
         await refresh("zero"); await page.getByRole("heading", { name: "No observations in these dates" }).waitFor();
         invariant(await page.locator(".usage-daily__plot").count() === 0, "Connected zero observations must not invent chart data.");
         await refresh("not_enrolled"); await page.getByRole("heading", { name: "No collector connected" }).waitFor();
@@ -219,6 +236,57 @@ export async function verifyUsageDashboard(browser: Browser, disabledBaseUrl: st
         for (const route of held.splice(0)) await route.fulfill({ status: 503, contentType: PRIVATE_DAYS_PUBLIC_MEDIA, body: '{"schemaVersion":1,"error":{"code":"unavailable"}}' }).catch(() => undefined);
         await settle(page);
         invariant(await page.locator(".usage-daily table tbody").count() === 2, "Superseded responses must not replace the selected range.");
+        let consent: LeaderboardConsentViewV1 = { schemaVersion: 1, consent: false, consentedAtMs: null, publicHandle: null };
+        let consentWrites = 0, interruptConsent = true, refuseConsent = false;
+        await page.route("**/api/usage/consent", async route => {
+          if (route.request().method() === "POST") {
+            consentWrites++;
+            if (refuseConsent) {
+              const bytes = encodeUsageConsentPublicReply({ schemaVersion: 1, error: { code: "publishing_full" } });
+              invariant(bytes !== null, "Capacity refusal must pass the public codec.");
+              await route.fulfill({ status: 409, headers: { "content-type": USAGE_CONSENT_PUBLIC_MEDIA, "cache-control": "private, no-store" }, body: Buffer.from(bytes) });
+              return;
+            }
+            const decision = route.request().postDataJSON() as { consent: boolean; publicHandle: string | null };
+            consent = decision.consent
+              ? { schemaVersion: 1, consent: true, consentedAtMs: 1_800_000_000_000, publicHandle: decision.publicHandle }
+              : { schemaVersion: 1, consent: false, consentedAtMs: null, publicHandle: null };
+            // The server commits the change, but the response is lost.
+            if (interruptConsent) { await route.abort(); return; }
+          }
+          const bytes = encodeUsageConsentPublicReply({ schemaVersion: 1, state: "ready", value: consent });
+          invariant(bytes !== null, "Consent fixture must pass its public codec.");
+          await route.fulfill({ status: 200, headers: { "content-type": USAGE_CONSENT_PUBLIC_MEDIA, "cache-control": "private, no-store" }, body: Buffer.from(bytes) });
+        });
+        await page.reload(); await loaded();
+        const consentPanel = page.locator(".usage-consent");
+        await consentPanel.getByLabel("Public handle", { exact: true }).fill("browser-check");
+        await consentPanel.getByLabel("Publish my handle and numeric usage totals on the public leaderboard.", { exact: true }).check();
+        await consentPanel.getByRole("button", { name: "Publish to leaderboard", exact: true }).click();
+        await consentPanel.getByRole("button", { name: "Check publishing status", exact: true }).waitFor();
+        invariant(consentWrites === 1 && await consentPanel.locator("form").count() === 0, "An uncertain write must require a read before another mutation.");
+        await consentPanel.getByRole("button", { name: "Check publishing status", exact: true }).click();
+        await consentPanel.getByRole("button", { name: "Withdraw from leaderboard", exact: true }).waitFor();
+        invariant(consentWrites === 1, "Consent reconciliation must be read-only.");
+        await consentPanel.getByRole("button", { name: "Withdraw from leaderboard", exact: true }).click();
+        await consentPanel.getByRole("button", { name: "Check publishing status", exact: true }).click();
+        await consentPanel.getByLabel("Public handle", { exact: true }).fill("browser-check");
+        await consentPanel.getByLabel("Publish my handle and numeric usage totals on the public leaderboard.", { exact: true }).check();
+        interruptConsent = false;
+        await consentPanel.getByRole("button", { name: "Publish to leaderboard", exact: true }).click();
+        await consentPanel.getByRole("button", { name: "Withdraw from leaderboard", exact: true }).waitFor();
+        invariant(Number(consentWrites) === 3, "Publishing must work after reconciling a failed withdrawal.");
+        await consentPanel.getByRole("button", { name: "Withdraw from leaderboard", exact: true }).click();
+        await consentPanel.getByLabel("Public handle", { exact: true }).fill("browser-check");
+        await consentPanel.getByLabel("Publish my handle and numeric usage totals on the public leaderboard.", { exact: true }).check();
+        refuseConsent = true;
+        await consentPanel.getByRole("button", { name: "Publish to leaderboard", exact: true }).click();
+        await consentPanel.getByRole("heading", { name: "The leaderboard is full", exact: true }).waitFor();
+        invariant(await consentPanel.locator("form").count() === 0 && Number(consentWrites) === 5, "Capacity refusal must not invite a duplicate publishing attempt.");
+        await consentPanel.getByRole("button", { name: "Check publishing status", exact: true }).click();
+        await consentPanel.getByLabel("Public handle", { exact: true }).waitFor();
+        invariant(Number(consentWrites) === 5, "Checking capacity-refused consent must stay read-only.");
+        invariant(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), "Consent controls must fit the viewport.");
         invariant(failures.length === 0, failures.join("; "));
         invariant(!blockedOrigins.has("https://account.hraness.com") && !blockedOrigins.has("https://usage.aicharts.io"), "Synthetic UI checks must not attempt account or usage-provider access.");
       } finally { await context.close(); }

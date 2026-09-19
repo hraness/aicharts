@@ -257,6 +257,31 @@ fn streaming_revisions_replace_pending_values_without_double_counting() {
 }
 
 #[test]
+fn claude_known_and_unknown_execution_copies_reopen_in_either_scan_order() {
+    for reverse in [false, true] {
+        let f = Fixture::new();
+        let mut ledger = f.initialize();
+        let known = usage(1, 10);
+        let mut unknown = known.clone();
+        unknown.execution_id = [0; 16];
+        let mut scans = vec![
+            scan(1, 100, vec![known.clone()]),
+            scan(2, 100, vec![unknown]),
+        ];
+        if reverse {
+            scans.reverse();
+        }
+        ledger.commit_scans(0, scans).unwrap();
+        drop(ledger);
+        let reopened = f.open();
+        assert_eq!(
+            reopened.pending(None, 10, None).unwrap().entries[0].frame,
+            frame(known)
+        );
+    }
+}
+
+#[test]
 fn same_source_cannot_lose_occurrences_or_regress_usage() {
     for replacement in [vec![usage(2, 20)], vec![usage(1, 9), usage(2, 20)]] {
         let f = Fixture::new();

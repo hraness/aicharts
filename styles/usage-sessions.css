@@ -18,10 +18,10 @@
 .usage-sessions__scope span { color: var(--muted); margin-inline-start: auto; }
 .usage-sessions__aggregate { border-block: 1px solid var(--grid); display: grid; gap: 1.25rem; grid-template-columns: repeat(4, minmax(0, 1fr)); padding-block: 1.5rem; }
 .usage-sessions__aggregate dt { font-size: .85rem; font-weight: 600; }
-.usage-sessions__aggregate dd { font-size: 1.2rem; font-variant-numeric: tabular-nums; margin-block: .7rem .5rem; }
+.usage-sessions__aggregate dd { overflow-wrap: anywhere; font-size: 1.2rem; font-variant-numeric: tabular-nums; margin-block: .7rem .5rem; }
 .usage-sessions__aggregate p { color: var(--muted); font-size: .75rem; line-height: 1.6; max-inline-size: 25ch; }
 .usage-sessions__table { margin-block-start: 2rem; }
-.usage-sessions__table tr[aria-selected="true"] { background: var(--surface-raised); }
+.usage-sessions__table tr[data-selected="true"] { background: var(--surface-raised); }
 .usage-sessions__table tbody tr { border-block-end: 1px solid var(--grid); }
 .usage-sessions__select { background: transparent; border: 0; color: var(--foreground); font: inherit; font-weight: 600; min-block-size: 2.75rem; padding: .2rem 0; text-align: start; text-decoration: underline; text-underline-offset: .25em; }
 .usage-sessions__select:hover { text-decoration-thickness: 2px; }
@@ -60,4 +60,5 @@
   .usage-sessions__controls { align-items: stretch; flex-direction: column; }
   .usage-sessions__phases { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .usage-sessions__aggregate { gap: 1.5rem 1rem; }
+  .usage-sessions__controls .usage-button { justify-content: center; }
 }

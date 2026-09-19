@@ -16,7 +16,7 @@ function send(request: Request, bytes: Uint8Array<ArrayBuffer>, code?: Leaderboa
     "content-type": LEADERBOARD_PUBLIC_MEDIA,
     // Public anonymous data: a short shared cache is correct here, unlike the
     // private usage routes which must stay no-store.
-    "cache-control": "public, max-age=60",
+    "cache-control": code === undefined ? "public, max-age=60" : "private, no-store",
     "referrer-policy": "no-referrer", "x-content-type-options": "nosniff", "x-robots-tag": "noindex, nofollow",
     ...(code === "method_not_allowed" ? { allow: "GET" } : {}),
   } });

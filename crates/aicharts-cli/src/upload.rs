@@ -118,6 +118,7 @@ pub(super) enum Error {
     Ledger(aicharts_ledger::Error),
     BindingMismatch,
     NoRetainedBatch,
+    RetainedBatchChanged,
     Transport(TransportError),
     InvalidResponse,
 }
@@ -128,6 +129,7 @@ impl Error {
             Self::Ledger(error) => error.code(),
             Self::BindingMismatch => "upload_binding_mismatch",
             Self::NoRetainedBatch => "upload_no_retained_batch",
+            Self::RetainedBatchChanged => "upload_retained_batch_changed",
             Self::Transport(error) => error.code(),
             Self::InvalidResponse => "upload_response_rejected",
         }
@@ -157,6 +159,11 @@ pub(super) enum Selection<'a> {
         expected_revision: u64,
         occurrence_ids: &'a [Id],
     },
+    /// Never adopt a flight frozen by a concurrent caller.
+    FreezeNew {
+        expected_revision: u64,
+        occurrence_ids: &'a [Id],
+    },
 }
 
 pub(super) fn send_once(
@@ -164,6 +171,15 @@ pub(super) fn send_once(
     transport: &mut impl AuthenticatedTransport,
     selection: Selection<'_>,
 ) -> Result<BatchSettlement, Error> {
+    let request = prepare_request(ledger, transport, selection)?;
+    exchange_request(ledger, transport, &request)
+}
+
+fn prepare_request(
+    ledger: &mut Ledger,
+    transport: &impl AuthenticatedTransport,
+    selection: Selection<'_>,
+) -> Result<UploadRequest, Error> {
     let status = ledger.sender_status()?;
     if status.binding != transport.binding() {
         return Err(Error::BindingMismatch);
@@ -177,11 +193,22 @@ pub(super) fn send_once(
             expected_revision,
             occurrence_ids,
         } => ledger.freeze_upload_batch(expected_revision, occurrence_ids)?,
+        Selection::FreezeNew {
+            expected_revision,
+            occurrence_ids,
+        } => ledger.freeze_new_upload_batch(expected_revision, occurrence_ids)?,
     };
-    let request = UploadRequest {
+    Ok(UploadRequest {
         binding: status.binding,
         frozen,
-    };
+    })
+}
+
+fn exchange_request(
+    ledger: &mut Ledger,
+    transport: &mut impl AuthenticatedTransport,
+    request: &UploadRequest,
+) -> Result<BatchSettlement, Error> {
     // This is the existing local numeric v1 ledger policy, not a caller-supplied
     // registry or an enrollment assertion. The ledger already audited these bytes.
     let registry = Registry {
@@ -210,7 +237,7 @@ pub(super) fn send_once(
     }
     let mut body = JournalBody::new();
     transport
-        .exchange(&request, &mut body)
+        .exchange(request, &mut body)
         .map_err(Error::Transport)?;
     if body.refused {
         return Err(Error::InvalidResponse);
@@ -236,7 +263,7 @@ const REPLAY_PAUSE: std::time::Duration = std::time::Duration::from_secs(1);
 /// a fresh `Freeze` or the explicit `Resume` recovery. A `Unavailable` failure
 /// means the remote definitely refused or never received the exchange (an
 /// explicit 503 reply, or an impossible local budget), so the retained flight
-/// may be replayed in place — a `Resume` replay carries byte-identical bytes
+/// may be replayed in place — the retained request carries byte-identical bytes
 /// and can never present a second distinct batch. Every other outcome,
 /// including `Uncertain`, returns at once and still demands the explicit
 /// recovery step. `pause` receives the 1-based replay ordinal before each
@@ -247,13 +274,16 @@ fn send_with_replay(
     first: Selection<'_>,
     mut pause: impl FnMut(u32),
 ) -> Result<BatchSettlement, Error> {
-    let mut first = Some(first);
+    let request = prepare_request(ledger, transport, first)?;
     let mut replays = 0u8;
     loop {
-        // A transport failure after the freeze leaves the flight retained;
-        // every replay selects those exact bytes rather than a fresh selection.
-        let selection = first.take().unwrap_or(Selection::Resume);
-        match send_once(ledger, transport, selection) {
+        // Pin every replay to this command's original flight. Another sender
+        // may settle it and freeze a successor during the pause; that successor
+        // is never adopted, even when it contains the same occurrence IDs.
+        if replays != 0 && ledger.inflight_batch()?.as_ref() != Some(&request.frozen) {
+            return Err(Error::RetainedBatchChanged);
+        }
+        match exchange_request(ledger, transport, &request) {
             Err(Error::Transport(TransportError::Unavailable))
                 if replays < MAX_UNAVAILABLE_REPLAYS =>
             {
@@ -324,7 +354,26 @@ fn refuse_inflight(ledger: &Ledger) -> Result<(), &'static str> {
 /// validated terminal journal. With `resume`, the sole exchange replays the
 /// retained flight instead of freezing new work.
 #[cfg(target_os = "macos")]
-fn send(directory: &Path, key: &Path, resume: bool) -> Result<String, &'static str> {
+struct EnrolledKeys {
+    binding: SenderBinding,
+    checkpoint: [u8; 32],
+    occurrence: [u8; 32],
+    transport: https::HttpsTransport,
+}
+
+#[cfg(target_os = "macos")]
+impl EnrolledKeys {
+    fn identity(&self) -> aicharts_ledger::LedgerIdentity<'_> {
+        aicharts_ledger::LedgerIdentity::SplitKeys {
+            checkpoint: &self.checkpoint,
+            occurrence: &self.occurrence,
+            namespace_version: 1,
+        }
+    }
+}
+
+#[cfg(target_os = "macos")]
+fn enrolled_keys(directory: &Path, key: &Path) -> Result<EnrolledKeys, &'static str> {
     let enrolled = crate::enrollment::enrolled(directory).map_err(|code| match code {
         "attempt_missing" => "upload_not_enrolled",
         other => other,
@@ -344,26 +393,39 @@ fn send(directory: &Path, key: &Path, resume: bool) -> Result<String, &'static s
         .namespace
         .with_namespace_key(|key| *key)
         .map_err(|_| "attempt_custody")?;
-    let mut transport =
+    let transport =
         https::HttpsTransport::enrolled(binding, &upload_secret).map_err(TransportError::code)?;
-    let identity = aicharts_ledger::LedgerIdentity::SplitKeys {
-        checkpoint: &checkpoint,
-        occurrence: &occurrence,
-        namespace_version: 1,
-    };
-    let revision = Ledger::open_with_identity(directory, &identity)
+    Ok(EnrolledKeys {
+        binding,
+        checkpoint,
+        occurrence,
+        transport,
+    })
+}
+
+#[cfg(target_os = "macos")]
+fn send(directory: &Path, key: &Path, resume: bool) -> Result<String, &'static str> {
+    let mut enrolled = enrolled_keys(directory, key)?;
+    let revision = Ledger::open_with_identity(directory, &enrolled.identity())
         .and_then(|ledger| ledger.snapshot().map(|snapshot| snapshot.revision))
         .map_err(|error| error.code())?;
     // The explicit additive migration binds the ledger to this exact enrolled
     // sender on first use; an already-bound different sender refuses.
-    let mut ledger = Ledger::migrate_sender_v2(directory, &identity, revision, &binding)
-        .map_err(|error| error.code())?;
+    let mut ledger =
+        Ledger::migrate_sender_v2(directory, &enrolled.identity(), revision, &enrolled.binding)
+            .map_err(|error| error.code())?;
+    require_healthy(&ledger.sender_status().map_err(|error| error.code())?)?;
     let pause = |replay| std::thread::sleep(REPLAY_PAUSE * replay);
     let settlement = if resume {
         // Explicit recovery: re-exchange the exact retained flight. The service
         // admits only its identical bytes, so replay can settle or reconcile but
         // never double-apply.
-        send_with_replay(&mut ledger, &mut transport, Selection::Resume, pause)
+        send_with_replay(
+            &mut ledger,
+            &mut enrolled.transport,
+            Selection::Resume,
+            pause,
+        )
     } else {
         refuse_inflight(&ledger)?;
         let page = ledger
@@ -375,8 +437,8 @@ fn send(directory: &Path, key: &Path, resume: bool) -> Result<String, &'static s
         let ids: Vec<Id> = page.entries.iter().map(|entry| entry.id).collect();
         send_with_replay(
             &mut ledger,
-            &mut transport,
-            Selection::Freeze {
+            &mut enrolled.transport,
+            Selection::FreezeNew {
                 expected_revision: page.ledger_revision,
                 occurrence_ids: &ids,
             },
@@ -384,7 +446,11 @@ fn send(directory: &Path, key: &Path, resume: bool) -> Result<String, &'static s
         )
     }
     .map_err(|error| error.code())?;
+    require_accepted(&settlement)?;
     let status = ledger.sender_status().map_err(|error| error.code())?;
+    // A concurrent caller can settle the same rejected journal first, making
+    // this settlement AlreadySettled. Persistent rejection still means failure.
+    require_healthy(&status)?;
     let pending = ledger
         .status()
         .map_err(|error| error.code())?
@@ -394,6 +460,184 @@ fn send(directory: &Path, key: &Path, resume: bool) -> Result<String, &'static s
         .map_err(|error| error.code())?
         .map(|settled| settled.batch_hash);
     Ok(report(&settlement, &status, pending, batch))
+}
+
+fn require_accepted(settlement: &BatchSettlement) -> Result<(), &'static str> {
+    match settlement {
+        BatchSettlement::Rejected {
+            device_revoked: true,
+            ..
+        } => Err("upload_device_revoked"),
+        BatchSettlement::Rejected { .. } => Err("upload_reconciliation_required"),
+        _ => Ok(()),
+    }
+}
+
+fn require_healthy(sender: &aicharts_ledger::SenderStatus) -> Result<(), &'static str> {
+    if sender.device_revoked {
+        return Err("upload_device_revoked");
+    }
+    if sender.reconciliation_required != 0 {
+        return Err("upload_reconciliation_required");
+    }
+    Ok(())
+}
+
+/// Open only the already prepared enrollment and ledger. Unlike `upload`, this
+/// unattended command has no schema migration or account-preparation branch.
+#[cfg(target_os = "macos")]
+pub(crate) fn sync_existing(
+    options: &crate::sync::Options,
+    report: &mut crate::sync::Report,
+) -> Result<(), &'static str> {
+    let mut enrolled = enrolled_keys(&options.directory, &options.key)?;
+    let mut ledger = Ledger::open_with_identity(&options.directory, &enrolled.identity())
+        .map_err(|error| error.code())?;
+    sync_with(
+        &mut ledger,
+        &mut enrolled.transport,
+        options.max_batches,
+        options.reconcile_retained,
+        report,
+        |ledger| {
+            crate::state::collect_existing_prefix(
+                ledger,
+                &options.directory,
+                &options.key,
+                &options.sources,
+                &enrolled.checkpoint,
+                &enrolled.occurrence,
+            )
+        },
+        |replay| std::thread::sleep(REPLAY_PAUSE * replay),
+    )
+}
+
+#[cfg(unix)]
+fn sync_observe(ledger: &Ledger, report: &mut crate::sync::Report) -> Result<(), &'static str> {
+    let sender = ledger.sender_status().map_err(|error| error.code())?;
+    let status = ledger.status().map_err(|error| error.code())?;
+    report.pending_records = Some(status.pending_records);
+    report.inflight_operations = Some(sender.inflight_operations);
+    report.reconciliation_required = Some(sender.reconciliation_required);
+    report.device_revoked = Some(sender.device_revoked);
+    require_healthy(&sender)
+}
+
+#[cfg(unix)]
+fn sync_settlement(
+    settlement: BatchSettlement,
+    report: &mut crate::sync::Report,
+) -> Result<(), &'static str> {
+    report.batches_settled += 1;
+    match settlement {
+        BatchSettlement::Accepted {
+            cleared_records,
+            retained_newer,
+            ..
+        } => {
+            report.acknowledged_records += u64::from(cleared_records);
+            report.retained_newer += u64::from(retained_newer);
+        }
+        BatchSettlement::Rejected {
+            conflicted_records,
+            aborted_records,
+            ..
+        } => {
+            report.conflicted_records += u64::from(conflicted_records);
+            report.aborted_records += u64::from(aborted_records);
+        }
+        BatchSettlement::AlreadySettled { .. } => {}
+    }
+    require_accepted(&settlement)
+}
+
+/// The bounded driver is shared with synthetic transport tests. Its production
+/// caller alone supplies custody-resolved keys and an authenticated transport.
+#[cfg(unix)]
+fn sync_with(
+    ledger: &mut Ledger,
+    transport: &mut impl AuthenticatedTransport,
+    max_batches: u8,
+    reconcile_retained: bool,
+    report: &mut crate::sync::Report,
+    collect: impl FnOnce(&mut Ledger) -> Result<crate::state::CollectionReport, &'static str>,
+    mut pause: impl FnMut(u32),
+) -> Result<(), &'static str> {
+    let result = (|| {
+        if !(1..=64).contains(&max_batches) {
+            return Err("invalid_batch_limit");
+        }
+        let sender = ledger.sender_status().map_err(|error| error.code())?;
+        if sender.binding != transport.binding() {
+            return Err("upload_binding_mismatch");
+        }
+        sync_observe(ledger, report)?;
+        // Validate prefix layout without source traversal or migration.
+        let revision = ledger.snapshot().map_err(|error| error.code())?.revision;
+        ledger
+            .commit_prefix_scans(revision, vec![])
+            .map_err(|error| error.code())?;
+        if report.inflight_operations != Some(0) {
+            if !reconcile_retained {
+                return Err("upload_recovery_required");
+            }
+            report.phase = "recovery";
+            report.batches_attempted += 1;
+            let settlement = send_with_replay(ledger, transport, Selection::Resume, &mut pause)
+                .map_err(|error| error.code())?;
+            sync_settlement(settlement, report)?;
+            sync_observe(ledger, report)?;
+        }
+        report.phase = "collection";
+        report.collection = Some(collect(ledger)?);
+        report.phase = "upload";
+        loop {
+            sync_observe(ledger, report)?;
+            if report.inflight_operations != Some(0) {
+                return Err("upload_recovery_required");
+            }
+            if report.pending_records == Some(0) {
+                report.status = "complete";
+                report.phase = "complete";
+                return Ok(());
+            }
+            if report.batches_attempted >= max_batches {
+                report.status = "pending";
+                return Ok(());
+            }
+            let page = ledger
+                .pending(None, aicharts_ledger::MAX_PAGE, None)
+                .map_err(|error| error.code())?;
+            if page.entries.is_empty() {
+                // Another sender may have completed between observations.
+                // Observe again without consuming budget or sending an empty batch.
+                // Bound this race by returning backlog for a later pass.
+                report.status = "pending";
+                return Ok(());
+            }
+            let ids: Vec<Id> = page.entries.iter().map(|entry| entry.id).collect();
+            report.batches_attempted += 1;
+            let settlement = send_with_replay(
+                ledger,
+                transport,
+                Selection::FreezeNew {
+                    expected_revision: page.ledger_revision,
+                    occurrence_ids: &ids,
+                },
+                &mut pause,
+            )
+            .map_err(|error| error.code())?;
+            sync_settlement(settlement, report)?;
+        }
+    })();
+    if let Err(code) = result {
+        // Recover the last observable counts, while preserving the originating
+        // failure if collection committed an earlier wave or transport froze a flight.
+        let _ = sync_observe(ledger, report);
+        report.fail(code);
+    }
+    result
 }
 
 /// Non-macOS platforms have no qualified credential custody, so no enrolled

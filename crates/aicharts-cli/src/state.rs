@@ -2,6 +2,52 @@
 
 use std::path::PathBuf;
 
+#[derive(Debug, Default)]
+pub(crate) struct CollectionReport {
+    pub revision: u64,
+    pub sources_updated: u64,
+    pub occurrences_changed: u64,
+    pub sources_skipped: u64,
+    pub deferred_tails: u64,
+    pub lines_read: u64,
+    pub bytes_scanned: u64,
+}
+
+/// Collect into an already opened ledger without initializing or migrating it.
+/// This shares the complete-prefix collector and its per-wave durability rules.
+#[cfg(all(unix, any(target_os = "macos", test)))]
+pub(crate) fn collect_existing_prefix(
+    ledger: &mut aicharts_ledger::Ledger,
+    directory: &std::path::Path,
+    key_file: &std::path::Path,
+    sources: &[(aicharts_protocol::Provider, PathBuf)],
+    checkpoint: &[u8; 32],
+    occurrence: &[u8; 32],
+) -> Result<CollectionReport, &'static str> {
+    let options = Options {
+        command: Command::CollectPrefix,
+        directory: directory.to_owned(),
+        key: key_file.to_owned(),
+        sources: sources.to_vec(),
+        json: false,
+        rescan: false,
+        limit: 0,
+        after: None,
+        revision: None,
+    };
+    let (report, sources_skipped, deferred_tails, lines_read, bytes_scanned) =
+        unix::collect(ledger, &options, checkpoint, occurrence)?;
+    Ok(CollectionReport {
+        revision: report.revision,
+        sources_updated: report.sources_updated,
+        occurrences_changed: report.occurrences_changed,
+        sources_skipped,
+        deferred_tails,
+        lines_read,
+        bytes_scanned,
+    })
+}
+
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum Command {
     Init,
@@ -311,7 +357,7 @@ pub(crate) mod unix {
         Ok(report)
     }
 
-    fn collect(
+    pub(super) fn collect(
         ledger: &mut Ledger,
         options: &Options,
         checkpoint_key: &[u8; 32],

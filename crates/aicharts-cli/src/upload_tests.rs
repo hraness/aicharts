@@ -12,6 +12,9 @@ use std::{
     rc::Rc,
 };
 
+#[path = "upload_sync_tests.rs"]
+mod sync;
+
 const CHECKPOINT: [u8; 32] = [7; 32];
 const OCCURRENCE: [u8; 32] = [8; 32];
 const BINDING: SenderBinding = SenderBinding {

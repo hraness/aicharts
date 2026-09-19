@@ -67,7 +67,7 @@ export function parseUsageConsentRequest(value: unknown): UsageConsentRequestV1 
 /** Consent-domain errors reuse the private-days fixed code set. */
 export type UsageConsentError =
   | "invalid_input" | "unauthorized" | "not_enrolled" | "expired"
-  | "recovery_required" | "clock_regressed" | "storage_invalid" | "storage_unavailable" | "limit";
+  | "recovery_required" | "clock_regressed" | "storage_invalid" | "storage_unavailable" | "limit" | "handle_unavailable" | "publishing_full";
 export type UsageConsentResult =
   | Readonly<{ ok: true; value: LeaderboardConsentViewV1 }>
   | Readonly<{ ok: false; error: UsageConsentError }>;
@@ -82,7 +82,7 @@ export function parseUsageConsentResult(value: unknown): UsageConsentResult | nu
   const error = failure.error;
   if (error !== "invalid_input" && error !== "unauthorized" && error !== "not_enrolled" && error !== "expired"
     && error !== "recovery_required" && error !== "clock_regressed" && error !== "storage_invalid"
-    && error !== "storage_unavailable" && error !== "limit") return null;
+    && error !== "storage_unavailable" && error !== "limit" && error !== "handle_unavailable" && error !== "publishing_full") return null;
   return Object.freeze({ ok: false, error });
 }
 

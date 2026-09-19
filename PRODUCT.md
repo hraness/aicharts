@@ -24,12 +24,12 @@ The primary workflow begins on a developer machine with Codex and Claude Code se
 
 ## Capabilities and Constraints
 
-- Initial providers are Codex and Claude Code only.
+- Local measurement supports Codex and Claude Code JSONL and Devin ATIF exports. It does not read Cursor usage or the live Devin session database.
 - Metrics include tokens, prompts, activity at 15-minute granularity, throughput, hourly message counts, concurrent agents, and daily average turn runtime, tokens, and tool calls.
 - No transcript, prompt, tool input, model response, path, credential, or raw session object may enter remote storage.
 - Hraness Accounts are the intended sign-in authority; profile projection may include X, GitHub, LinkedIn, website, and an R2-backed avatar.
 - Subscription/account observations remain explicit, dated, and coverage-aware; retail-equivalent API pricing is not a bill.
-- Public usage, authentication, enrollment, upload, daemon installation, and leaderboard routes remain disabled until their live qualification gates pass.
+- Authentication, enrollment, upload, private reads, scheduled collection, and public publishing have separate qualification gates. See `docs/usage-activation.md` for current production evidence; source defaults do not describe deployed activation.
 
 ## Brand Commitments
 
@@ -37,7 +37,7 @@ The product is AI Charts, on aicharts.io, and should extend the existing AI Char
 
 ## Evidence on Hand
 
-The repository contains reviewed local numeric collectors, turn rollups, bounded wire/admission contracts, dormant Hraness/Worker coordination, release-source custody, and public benchmark data. Live authenticated ingestion and public usage pages are not yet qualified.
+The repository contains local numeric collectors, turn rollups, bounded wire/admission contracts, Hraness/Worker coordination, release-source custody, and public benchmark data. A historical bounded native upload succeeded. Current deployment configuration and authenticated refusal behavior are verified separately from collector custody, scheduled operation, private data readback, and public activation.
 
 ## Product Principles
 
@@ -54,4 +54,4 @@ Usage analytics must work with keyboard and screen-reader navigation, preserve r
 ## Open Decisions
 
 - Inferred default: personal analytics is the first signed-in screen; the user has not explicitly confirmed this choice.
-- The live Cloudflare resources, authenticated Hraness production binding, and public publishing rollout remain unprovisioned.
+- Existing Cloudflare and Hraness production bindings must be preserved during upgrades. Public publishing and replacement of an existing collector require the acceptance evidence in the activation runbook.

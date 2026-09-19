@@ -84,7 +84,8 @@ export function parseLeaderboardProjection(value: unknown): LeaderboardProjectio
     || !enrollmentTime(owned.consentedAtMs) || !leaderboardPublicHandle(owned.publicHandle)
     || !leaderboardDecimal(owned.observedTokens) || !recordCount(owned.usageRecords)
     || !utcDay(owned.windowFirstUtcDay) || !utcDay(owned.windowUtcDays)
-    || (owned.windowUtcDays as number) < 1 || (owned.windowUtcDays as number) > LEADERBOARD_WINDOW_DAYS) return null;
+    || (owned.windowUtcDays as number) < 1 || (owned.windowUtcDays as number) > LEADERBOARD_WINDOW_DAYS
+    || (owned.windowFirstUtcDay as number) + (owned.windowUtcDays as number) - 1 > 100_000_000) return null;
   return Object.freeze({ schemaVersion: 1, accountId: owned.accountId, consent: true,
     consentedAtMs: owned.consentedAtMs as number, publicHandle: owned.publicHandle,
     observedTokens: owned.observedTokens, usageRecords: owned.usageRecords as number,
@@ -110,7 +111,8 @@ export function parseLeaderboardEntry(value: unknown): LeaderboardEntryV1 | null
     || !leaderboardDecimal(owned.observedTokens) || !recordCount(owned.usageRecords)
     || !enrollmentTime(owned.consentedAtMs) || !enrollmentTime(owned.refreshedAtMs)
     || !utcDay(owned.windowFirstUtcDay) || !utcDay(owned.windowUtcDays)
-    || (owned.windowUtcDays as number) < 1 || (owned.windowUtcDays as number) > LEADERBOARD_WINDOW_DAYS) return null;
+    || (owned.windowUtcDays as number) < 1 || (owned.windowUtcDays as number) > LEADERBOARD_WINDOW_DAYS
+    || (owned.windowFirstUtcDay as number) + (owned.windowUtcDays as number) - 1 > 100_000_000) return null;
   return Object.freeze({ rank: owned.rank as number, publicHandle: owned.publicHandle,
     observedTokens: owned.observedTokens, usageRecords: owned.usageRecords as number,
     consentedAtMs: owned.consentedAtMs as number, refreshedAtMs: owned.refreshedAtMs as number,
@@ -162,7 +164,8 @@ export function rankLeaderboardEntries(input: readonly LeaderboardRankable[]): r
     if (!leaderboardPublicHandle(entry.publicHandle) || !leaderboardDecimal(entry.observedTokens)
       || !recordCount(entry.usageRecords) || !enrollmentTime(entry.consentedAtMs)
       || !enrollmentTime(entry.refreshedAtMs) || !utcDay(entry.windowFirstUtcDay)
-      || !utcDay(entry.windowUtcDays) || entry.windowUtcDays < 1 || entry.windowUtcDays > LEADERBOARD_WINDOW_DAYS) continue;
+      || !utcDay(entry.windowUtcDays) || entry.windowUtcDays < 1 || entry.windowUtcDays > LEADERBOARD_WINDOW_DAYS
+      || entry.windowFirstUtcDay + entry.windowUtcDays - 1 > 100_000_000) continue;
     candidates.push(entry);
   }
   const claimed = new Map<string, number>();

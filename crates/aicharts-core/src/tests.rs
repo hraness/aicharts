@@ -140,6 +140,88 @@ fn codex_same_instant_distinct_deltas_disambiguate_but_copies_dedup() {
 }
 
 #[test]
+fn codex_same_instant_equal_deltas_remain_separate_when_totals_advance() {
+    let rows = [
+        codex_row(1, 100, 50, 10, 2, true),
+        codex_row(1, 200, 100, 20, 4, false),
+        // An unchanged cumulative snapshot is a copy, not another delta.
+        codex_row(1, 200, 100, 20, 4, false),
+        codex_row(1, 300, 150, 30, 6, false),
+        codex_row(1, 450, 170, 50, 8, false),
+    ];
+    let source = codex_source(&rows);
+    let collection = parse(&source, Provider::Codex);
+    let expected = packets(&collection);
+    let usage = &collection.batches[0].usage;
+    assert_eq!(usage.len(), 4);
+    assert_eq!(
+        usage.iter().map(|v| v.tokens.input_uncached).sum::<u64>(),
+        280
+    );
+    assert_eq!(usage.iter().map(|v| v.tokens.cache_read).sum::<u64>(), 170);
+    assert_eq!(usage.iter().map(|v| v.tokens.output).sum::<u64>(), 50);
+    assert_eq!(
+        usage.iter().map(|v| v.tokens.reasoning_output).sum::<u64>(),
+        8
+    );
+    let without_repeats = parse(
+        &codex_source(&[
+            codex_row(1, 100, 50, 10, 2, true),
+            codex_row(1, 250, 70, 30, 4, false),
+        ]),
+        Provider::Codex,
+    );
+    // The first instance of every distinct delta keeps the identity assigned
+    // before repeat support, including slots after the repeated delta.
+    for old in &without_repeats.batches[0].usage {
+        assert!(usage
+            .iter()
+            .any(|new| new.id == old.id && new.tokens == old.tokens));
+    }
+    // Copies and previously collected prefixes must stay idempotent.
+    let merged = merge_collections(vec![
+        collection,
+        parse(&source, Provider::Codex),
+        parse(&codex_source(&rows[..2]), Provider::Codex),
+    ])
+    .unwrap();
+    assert_eq!(packets(&merged), expected);
+}
+
+#[test]
+fn codex_frozen_timestamp_sequences_conserve_every_cumulative_increment() {
+    // Exhaust every length-four sequence over zero/equal/distinct increments,
+    // including exact duplicate snapshots between advancing totals.
+    for sequence in 0..81 {
+        let mut digits = sequence;
+        let mut total = 0;
+        let mut occurrences = 0;
+        let mut rows = vec![codex_row(1, 0, 0, 0, 0, true)];
+        for _ in 0..4 {
+            let delta = digits % 3;
+            digits /= 3;
+            total += delta;
+            occurrences += usize::from(delta != 0);
+            let row = codex_row(1, total, 0, total, 0, false);
+            rows.push(row.clone());
+            rows.push(row);
+        }
+        let collection = parse(&codex_source(&rows), Provider::Codex);
+        let usage: Vec<_> = collection
+            .batches
+            .iter()
+            .flat_map(|batch| &batch.usage)
+            .collect();
+        assert_eq!(usage.len(), occurrences, "sequence {sequence}");
+        assert_eq!(
+            usage.iter().map(|v| v.tokens.input_uncached).sum::<u64>(),
+            total
+        );
+        assert_eq!(usage.iter().map(|v| v.tokens.output).sum::<u64>(), total);
+    }
+}
+
+#[test]
 fn first_cumulative_without_last_is_a_baseline_not_a_request() {
     let source = codex_source(&[
         codex_row(1, 50, 5, 10, 0, false),

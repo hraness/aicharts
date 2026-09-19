@@ -17,7 +17,7 @@ export interface UsageConsentRouteDependencies extends PairingHttpEffects {
   registerLifetime(terminal: Promise<void>): void;
 }
 const status = Object.freeze({ invalid_request: 400, authentication_required: 401, request_rejected: 403,
-  method_not_allowed: 405, unavailable: 503 } as const);
+  method_not_allowed: 405, handle_unavailable: 409, publishing_full: 409, unavailable: 503 } as const);
 function send(request: Request, bytes: Uint8Array<ArrayBuffer>, code?: UsageConsentPublicError): Response {
   return new Response(request.method === "HEAD" ? null : bytes, { status: code === undefined ? 200 : status[code], headers: {
     "content-type": USAGE_CONSENT_PUBLIC_MEDIA, "cache-control": "private, no-store", pragma: "no-cache", vary: "Cookie",
@@ -84,6 +84,7 @@ export function createUsageConsentHandler(dependencies: UsageConsentRouteDepende
         reply = { schemaVersion: 1, state: "ready", value: success.value as never };
       } else {
         const absent = privateDaysSnapshot(outcome.result, ["ok", "error"]);
+        if (absent?.ok === false && (absent.error === "handle_unavailable" || absent.error === "publishing_full")) return failure(request, absent.error);
         if (absent?.ok === false && absent.error === "not_enrolled") {
           reply = { schemaVersion: 1, state: "not_enrolled" };
         } else return failure(request, "unavailable");

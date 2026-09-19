@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
-import { SESSION_PHASES, SESSION_REPORT_MAX_BYTES, type SessionPhase, type SessionReport } from "@/lib/usage/session-contract";
-import { decodeSessionReport, summarizeSessions, type SessionSummary } from "@/lib/usage/sessions";
-import { decodeCompactionEvents, joinCompactionEvents, type CompactionEvent, type SessionCompactions } from "@/lib/usage/compaction";
+import { SESSION_PHASES, type SessionPhase, type SessionReport } from "@/lib/usage/session-contract";
+import { summarizeSessions, type SessionSummary } from "@/lib/usage/sessions";
+import { joinCompactionEvents, type CompactionEvent, type SessionCompactions } from "@/lib/usage/compaction";
+import { readCompactionFile, readSessionFile } from "./local-report-file";
 import { SESSION_EXAMPLE } from "@/lib/usage/session-example";
 
 const labels: Record<SessionPhase, string> = { inference: "Inference", reply_wait: "Reply wait", approval_wait: "Approval wait", tool_wait: "Tool wait", unknown: "Unknown" };
@@ -44,7 +45,7 @@ function Breakdown({ value }: Readonly<{ value: SessionSummary }>) {
 }
 
 function SessionDetail({ value }: Readonly<{ value: SessionSummary }>) {
-  return <section className="usage-sessions__detail" aria-labelledby="session-detail-title">
+  return <section id="session-detail" className="usage-sessions__detail" aria-labelledby="session-detail-title">
     <header><div><h2 id="session-detail-title">{provider(value.session.provider)} · Session {shortId(value.session.sessionId)}</h2>
       <p>{value.session.conversationId === null ? "Conversation link unavailable" : `Conversation ${shortId(value.session.conversationId)}`} · {value.session.source === "history" ? "Imported history" : "Instrumented observations"}</p></div>
       <span>{duration(value.windowMs)} window</span></header>
@@ -75,25 +76,46 @@ export function SessionDashboard() {
   const [updated, setUpdated] = useState<number | null>(null);
   const [limit, setLimit] = useState(100);
   const [compactionEvents, setCompactionEvents] = useState<readonly CompactionEvent[] | null>(null);
-  const sequence = useRef(0);
-  useEffect(() => () => { sequence.current++; }, []);
+  const [compactionError, setCompactionError] = useState<string | null>(null);
+  const [compactionLoading, setCompactionLoading] = useState(false);
+  const [skippedCompactions, setSkippedCompactions] = useState(0);
+  const sequence = useRef(0), compactionSequence = useRef(0);
+  useEffect(() => () => { sequence.current++; compactionSequence.current++; }, []);
 
-  const read = async (file: File, expected: number) => {
-    if (file.size > SESSION_REPORT_MAX_BYTES) throw new Error("invalid_report");
-    const text = await file.text();
-    const result = decodeSessionReport(text);
-    if (!result) throw new Error("invalid_report");
-    if (sequence.current === expected) { setReport(result); setError(null); setExample(false); setUpdated(Date.now()); }
+  const read = async (file: File, expected: number, replace = false) => {
+    const result = await readSessionFile(file);
+    if (sequence.current !== expected) return false;
+    setReport(result); setError(null); setExample(false); setUpdated(Date.now());
+    if (replace) {
+      setSelected(null); setScope("all"); setLimit(100);
+      compactionSequence.current++; setCompactionEvents(null); setCompactionError(null); setCompactionLoading(false); setSkippedCompactions(0);
+    }
+    return true;
+  };
+
+  const openCompactions = async (file: File) => {
+    const generation = ++compactionSequence.current;
+    setCompactionLoading(true); setCompactionError(null);
+    try {
+      const result = await readCompactionFile(file);
+      if (generation === compactionSequence.current) {
+        setCompactionEvents(result.events); setSkippedCompactions(result.skippedLines);
+      }
+    } catch {
+      if (generation === compactionSequence.current) setCompactionError("Open a valid gobstopper events log (events.jsonl), up to 8 MiB. The previous events, if any, are still shown.");
+    } finally {
+      if (generation === compactionSequence.current) setCompactionLoading(false);
+    }
   };
 
   useEffect(() => {
     if (!following) return;
     const generation = sequence.current;
-    let stopped = false;
+    let stopped = false, initial = true;
     let timer: ReturnType<typeof setTimeout>;
     const poll = async () => {
       if (stopped || generation !== sequence.current) return;
-      try { await read(await following.getFile(), generation); }
+      try { if (await read(await following.getFile(), generation, initial)) initial = false; }
       catch { if (!stopped && generation === sequence.current) setError("The report could not be refreshed. Showing the last valid reading; check the collector or reopen the report."); }
       if (!stopped) timer = setTimeout(() => { void poll(); }, 3_000);
     };
@@ -104,7 +126,7 @@ export function SessionDashboard() {
   const open = async (file: File) => {
     const generation = ++sequence.current;
     setFollowing(null); setLoading(true); setError(null);
-    try { await read(file, generation); if (sequence.current === generation) { setSelected(null); setScope("all"); } }
+    try { await read(file, generation, true); }
     catch { if (sequence.current === generation) setError("Open a valid AI Charts session report, up to 8 MiB. Raw session logs are not accepted."); }
     finally { if (sequence.current === generation) setLoading(false); }
   };
@@ -113,15 +135,19 @@ export function SessionDashboard() {
     if (!picker) return;
     try {
       const [handle] = await picker.call(window, { multiple: false, types: [{ description: "AI Charts session report", accept: { "application/json": [".json"] } }] });
-      if (handle) { ++sequence.current; setFollowing(handle); setError(null); }
+      if (handle) { ++sequence.current; setFollowing(handle); setLoading(false); setError(null); }
     } catch (cause) { if (!(cause instanceof DOMException && cause.name === "AbortError")) setError("The browser could not follow this file. Use Open session report to read a snapshot."); }
   };
   const filtered = useMemo(() => report === null ? null : { ...report, sessions: report.sessions.filter(s => scope === "all" || (scope.startsWith("conversation:") ? `${s.provider}:${s.conversationId}` === scope.slice(13) : s.provider === scope)) }, [report, scope]);
   const summary = useMemo(() => filtered === null ? null : summarizeSessions(filtered), [filtered]);
   const compactions = useMemo(() => filtered === null || compactionEvents === null ? null : joinCompactionEvents(filtered, compactionEvents), [filtered, compactionEvents]);
+  const selectedCompactions = useMemo(() => ({
+    applied: compactions?.sessions.reduce((sum, session) => sum + session.applied, 0) ?? 0,
+    reclaimed: compactions?.sessions.reduce((sum, session) => sum + session.estReclaimedTokens, 0n) ?? 0n,
+  }), [compactions]);
   const compactionBySession = useMemo(() => {
     const map = new Map<string, SessionCompactions>();
-    for (const s of compactions?.sessions ?? []) map.set(`${s.session.provider}${s.session.sessionId}`, s);
+    for (const s of compactions?.sessions ?? []) map.set(`${s.session.provider}:${s.session.sessionId}`, s);
     return map;
   }, [compactions]);
   const sorted = useMemo(() => [...(summary?.sessions ?? [])].sort((a, b) => b.session.window.endMs - a.session.window.endMs || a.session.sessionId.localeCompare(b.session.sessionId)), [summary]);
@@ -139,20 +165,22 @@ export function SessionDashboard() {
       </label>
       {canFollow && <button className="usage-button usage-button--quiet" type="button" onClick={() => void follow()}>Follow a report</button>}
       {following && <button className="usage-button usage-button--quiet" type="button" onClick={() => { ++sequence.current; setFollowing(null); }}>Stop following</button>}
-      <button className="usage-button usage-button--quiet" type="button" onClick={() => { ++sequence.current; setFollowing(null); setReport(SESSION_EXAMPLE); setExample(true); setError(null); setLoading(false); setScope("all"); setSelected(null); setUpdated(null); }}>Explore an example</button>
-      <label className="usage-button usage-button--quiet usage-sessions__file">Add compaction events
-        <input type="file" accept=".jsonl,application/x-ndjson" onChange={e => {
-          const f = e.currentTarget.files?.[0]; e.currentTarget.value = ""; if (!f) return;
-          void f.text().then(text => {
-            const result = decodeCompactionEvents(text);
-            setCompactionEvents(result === null ? null : result.events);
-            if (result === null) setError("Open a valid gobstopper events log (events.jsonl), up to 8 MiB.");
-          });
+      <button className="usage-button usage-button--quiet" type="button" onClick={() => { ++sequence.current; setFollowing(null); setReport(SESSION_EXAMPLE); setExample(true); setError(null); setLoading(false); setScope("all"); setSelected(null); setUpdated(null); setLimit(100); compactionSequence.current++; setCompactionEvents(null); setCompactionError(null); setCompactionLoading(false); setSkippedCompactions(0); }}>Explore an example</button>
+      {report !== null && <label className="usage-button usage-button--quiet usage-sessions__file" aria-disabled={compactionLoading}>
+        {compactionLoading ? "Reading events…" : "Add compaction events"}
+        <input type="file" accept=".jsonl,application/x-ndjson" disabled={compactionLoading} onChange={e => {
+          const file = e.currentTarget.files?.[0]; e.currentTarget.value = "";
+          if (file) void openCompactions(file);
         }} />
-      </label>
+      </label>}
+      {compactionEvents !== null && <button className="usage-button usage-button--quiet" type="button" onClick={() => {
+        compactionSequence.current++; setCompactionEvents(null); setCompactionError(null); setCompactionLoading(false); setSkippedCompactions(0);
+      }}>Remove compaction events</button>}
     </div>
     <p className="usage-sessions__privacy">The report stays in this browser tab. Opening it does not upload it or save it to your account.</p>
     {error && <p className="usage-sessions__notice" role="alert">{error}</p>}
+    {compactionError && <p className="usage-sessions__notice" role="alert">{compactionError}</p>}
+    {skippedCompactions > 0 && <p className="usage-sessions__notice">{numbers.format(skippedCompactions)} unrecognized or incomplete event lines were skipped. Compaction coverage is partial.</p>}
     <div aria-live="polite" className="usage-daily__announcement">{loading ? "Reading report." : example ? "Synthetic example loaded." : report ? `${report.sessions.length} sessions loaded.` : "No report opened."}</div>
     {report === null ? <div className="usage-sessions__intro">
       <h2>Start with your local measurements</h2><p>Export numeric observations from an explicit Codex, Claude Code or Devin session file. Open the report here to inspect a session without sending its transcript.</p>
@@ -174,9 +202,9 @@ export function SessionDashboard() {
         <div><dt>Unclassified session time</dt><dd>{duration(summary.phaseMs.unknown)}</dd><p>Unknown time remains in the denominator.</p></div>
       </dl>}
       {summary && compactions !== null && <dl className="usage-sessions__aggregate">
-        <div><dt>Compactions applied</dt><dd>{numbers.format(compactions.applied)}</dd><p>Provider or transcript compactions observed in the events log.</p></div>
-        <div><dt>Tokens reclaimed</dt><dd>{numbers.format(compactions.estReclaimedTokens)}</dd><p>Estimated context tokens reclaimed by applied compactions.</p></div>
-        {compactions.unmatchedEvents.length > 0 && <div><dt>Unmatched events</dt><dd>{numbers.format(compactions.unmatchedEvents.length)}</dd><p>Compaction events naming no session in this report.</p></div>}
+        <div><dt>Compactions applied</dt><dd>{numbers.format(selectedCompactions.applied)}</dd><p>Applied events matched to the selected sessions.</p></div>
+        <div><dt>Tokens reclaimed</dt><dd>{numbers.format(selectedCompactions.reclaimed)}</dd><p>Estimated context tokens reclaimed in the selected sessions.</p></div>
+        {compactions.unmatchedEvents.length > 0 && <div><dt>Events outside selection</dt><dd>{numbers.format(compactions.unmatchedEvents.length)}</dd><p>Log events not matched to the selected sessions; excluded from these totals.</p></div>}
       </dl>}
       <p className="usage-daily__hint">A ≥ value is the observed minimum; missing timing prevents an exact share. Streaming is observed application activity, not a measurement of GPU utilization. Elapsed windows exclude gaps when no selected session is observed.</p>
       {summary && summary.models.length > 0 && <details className="usage-daily__details">
@@ -192,9 +220,9 @@ export function SessionDashboard() {
         <div className="usage-daily__table-scroll" role="region" aria-label="Session list" tabIndex={0}><table className="usage-sessions__table">
           <caption>Select a session to inspect its model mix and time breakdown. Token coverage is partial.</caption><thead><tr><th scope="col">Session</th><th scope="col">Last observation (UTC)</th><th scope="col">Observed tokens</th><th scope="col">Output</th><th scope="col">Inference</th>{compactions !== null && <th scope="col">Compactions</th>}<th scope="col">Window</th></tr></thead>
           <tbody>{sorted.slice(0, limit).map(value => {
-            const c = compactionBySession.get(`${value.session.provider}${value.session.sessionId}`);
-            return <tr key={`${value.session.provider}:${value.session.sessionId}`} aria-selected={value === detail}>
-            <th scope="row"><button className="usage-sessions__select" type="button" aria-pressed={value === detail} onClick={() => setSelected(`${value.session.provider}:${value.session.sessionId}`)}>{provider(value.session.provider)} <span>{shortId(value.session.sessionId)}</span></button></th>
+            const c = compactionBySession.get(`${value.session.provider}:${value.session.sessionId}`);
+            return <tr key={`${value.session.provider}:${value.session.sessionId}`} data-selected={value === detail}>
+            <th scope="row"><button className="usage-sessions__select" type="button" aria-pressed={value === detail} aria-controls="session-detail" onClick={() => setSelected(`${value.session.provider}:${value.session.sessionId}`)}>{provider(value.session.provider)} <span>{shortId(value.session.sessionId)}</span></button></th>
             <td>{clock.format(value.session.window.endMs)}</td><td>{numbers.format(value.accountedTokens)}</td><td>{numbers.format(value.outputTokens)}</td><td>{reading(value.inferencePct, value.observedInferencePct)}</td>
             {compactions !== null && <td>{c === undefined || c.events.length === 0 ? "—" : `${numbers.format(c.applied)} applied · ${numbers.format(c.estReclaimedTokens)} reclaimed`}</td>}
             <td>{duration(value.windowMs)}</td>

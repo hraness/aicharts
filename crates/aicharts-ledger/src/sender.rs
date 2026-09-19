@@ -286,10 +286,30 @@ impl Ledger {
         self.freeze_with(expected_revision, occurrence_ids, || Ok(()))
     }
 
+    /// Freeze new work only. A concurrent or previously retained flight always
+    /// refuses, even when its selection matches; explicit recovery owns replay.
+    pub fn freeze_new_upload_batch(
+        &mut self,
+        expected_revision: u64,
+        occurrence_ids: &[Id],
+    ) -> Result<FrozenBatch> {
+        self.freeze_mode_with(expected_revision, occurrence_ids, false, || Ok(()))
+    }
+
     pub(super) fn freeze_with<F: FnOnce() -> Result<()>>(
         &mut self,
         expected_revision: u64,
         occurrence_ids: &[Id],
+        before_commit: F,
+    ) -> Result<FrozenBatch> {
+        self.freeze_mode_with(expected_revision, occurrence_ids, true, before_commit)
+    }
+
+    fn freeze_mode_with<F: FnOnce() -> Result<()>>(
+        &mut self,
+        expected_revision: u64,
+        occurrence_ids: &[Id],
+        allow_existing: bool,
         before_commit: F,
     ) -> Result<FrozenBatch> {
         let previous = self.sender_audit.take();
@@ -308,7 +328,8 @@ impl Ledger {
             return Err(Error::DeviceRevoked);
         }
         if let Some(existing) = state.inflight {
-            if existing.frozen.selected_revision == expected_revision
+            if allow_existing
+                && existing.frozen.selected_revision == expected_revision
                 && existing
                     .members
                     .iter()
