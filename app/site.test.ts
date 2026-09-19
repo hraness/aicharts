@@ -16,7 +16,7 @@ describe("AI Charts public positioning", () => {
       "AI Model & Agent Comparison Charts | AI Charts",
     );
     expect(homeHeading).toBe("Compare AI models");
-    for (const dimension of ["coding", "reasoning", "research", "memory", "images", "video", "world models"]) {
+    for (const dimension of ["AI model benchmarks", "local token usage", "coding-agent sessions"]) {
       expect(site.description).toContain(dimension);
     }
     expect(site.description).toContain("published results");
@@ -52,7 +52,7 @@ describe("AI Charts public positioning", () => {
     ).text();
 
     expect(packageJson.description).toBe(
-      "Open-source AI benchmark charts for comparing models and agents across performance, cost, speed, and token use.",
+      "A portal for AI model benchmarks and individual token usage: compare capability, cost, and speed, and inspect coding-agent usage locally.",
     );
     expect(strategy).toContain(`> ${packageJson.description}`);
     expect(strategy).toContain(
