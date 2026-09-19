@@ -114,7 +114,7 @@
     "@hraness/web-discovery": "github:hraness/web-discovery#v0.6.0",
     "@hugeicons/core-free-icons": "^4.3.0",
     "@hugeicons/react": "^1.1.10",
-    "@lobehub/icons-static-svg": "1.94.0",
+    "@lobehub/icons-static-svg": "1.95.0",
     "@posthog/nextjs-config": "1.10.0",
     "@vercel/oidc": "3.8.7",
     "jose": "6.2.4",
