@@ -897,6 +897,40 @@
     },
     {
       "costUsdPerTask": {
+        "answer": 0.055551813856968536,
+        "cacheRead": 0.3066852521003935,
+        "cacheWrite": 0.2198278844824743,
+        "input": 0.5405148332407624,
+        "nonCacheInput": 0.014001696657894582,
+        "output": 0.1721277461494678,
+        "reasoning": 0.11657593229249925,
+        "total": 0.7126425793902301
+      },
+      "creator": {
+        "id": "ce2e2e8b-7a22-4020-98ec-8ef71000dd42",
+        "name": "StepFun",
+        "slug": "stepfun"
+      },
+      "detailsUrl": "https://artificialanalysis.ai/models/step-5",
+      "effort": null,
+      "id": "094ea3e3-ce41-419e-8bd1-723389663158",
+      "intelligenceIndex": 43.6394799141614,
+      "name": "Step 5 Preview",
+      "outputTokensPerTask": {
+        "answer": 20574.745872951306,
+        "reasoning": 43176.27121944416,
+        "total": 63751.01709239547
+      },
+      "release": {
+        "name": "Step 5 Preview",
+        "slug": "step-5-preview"
+      },
+      "releaseDate": "2026-09-18",
+      "shortName": "Step 5 Preview",
+      "slug": "step-5"
+    },
+    {
+      "costUsdPerTask": {
         "answer": 0.08825019745616867,
         "cacheRead": 0.5371558246060252,
         "cacheWrite": 0.7554091494759443,
@@ -3758,17 +3792,17 @@
   ],
   "schemaVersion": 1,
   "selection": {
-    "measuredCompleteRecordCount": 104,
-    "positiveCostRecordCount": 98,
+    "measuredCompleteRecordCount": 105,
+    "positiveCostRecordCount": 99,
     "rule": "current, non-estimated model configurations with a finite 0–100 Intelligence Index, finite positive per-task output-token total, and a complete finite nonnegative per-task cost breakdown; source cost totals at or below zero normalize to null",
-    "sourceRecordCount": 652
+    "sourceRecordCount": 653
   },
   "source": {
     "citation": "Artificial Analysis (2025). LLM benchmarks dataset. https://artificialanalysis.ai",
     "method": "public-next-flight",
     "methodologyUrl": "https://artificialanalysis.ai/methodology/intelligence-benchmarking",
     "name": "Artificial Analysis",
-    "retrievedAt": "2026-09-17T16:34:30.979Z",
+    "retrievedAt": "2026-09-19T04:36:06.828Z",
     "sourceClass": "benchmark-publisher",
     "termsUrl": "https://artificialanalysis.ai/docs/legal/Terms-of-Use.pdf",
     "url": "https://artificialanalysis.ai/models"
