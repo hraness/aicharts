@@ -3,7 +3,7 @@
   "source": {
     "method": "models-api",
     "name": "OpenRouter",
-    "retrievedAt": "2026-09-17T18:18:52.072Z",
+    "retrievedAt": "2026-09-19T05:58:40.694Z",
     "timestampMeaning": "source-added-at",
     "url": "https://openrouter.ai/api/v1/models?sort=newest"
   },
@@ -28,6 +28,12 @@
     "windowDays": 90
   },
   "observedListings": [
+    {
+      "id": "z-ai/glm-5.3-flashx",
+      "model": "GLM 5.3 FlashX",
+      "providerId": "z_ai",
+      "sourceAddedAt": "2026-09-18T15:07:00.000Z"
+    },
     {
       "id": "deepseek/deepseek-v4.1-flash",
       "model": "DeepSeek V4.1 Flash",
@@ -282,6 +288,27 @@
     }
   ],
   "releases": [
+    {
+      "capabilities": {
+        "inputModalities": [
+          "image",
+          "text",
+          "video"
+        ],
+        "outputModalities": [
+          "text"
+        ],
+        "supportsTools": true
+      },
+      "canonicalSlug": "z-ai/glm-5.3-flashx-20260918",
+      "id": "z-ai/glm-5.3-flashx",
+      "model": "GLM 5.3 FlashX",
+      "modelUrl": "https://openrouter.ai/z-ai/glm-5.3-flashx",
+      "providerId": "z_ai",
+      "providerName": "Z.ai",
+      "sourceAddedAt": "2026-09-18T15:07:00.000Z",
+      "status": "awaiting-benchmark"
+    },
     {
       "capabilities": {
         "inputModalities": [
