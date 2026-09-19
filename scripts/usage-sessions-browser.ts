@@ -21,10 +21,13 @@ export async function verifyUsageSessions(browser: Browser, baseUrl: string): Pr
     }, SESSION_EXAMPLE);
     const page = await context.newPage();
     let interaction = false, effects = 0, errors = 0;
-    page.on("pageerror", () => errors++);
+    const effectDetails: string[] = [], errorDetails: string[] = [];
+    page.on("pageerror", error => {
+      errors++;
+      if (errorDetails.length < 8) errorDetails.push(`${error.name}: ${error.message.slice(0, 500)}`);
+    });
     await context.route("**/*", async route => {
       const request = route.request(), url = new URL(request.url());
-      if (interaction && request.method() !== "GET") effects++;
       if (url.origin === "https://account.hraness.com") {
         // The shared footer's consent and mailing-enrollment calls are
         // production-only and hostname-allowlisted; answer the two boundary
@@ -38,8 +41,18 @@ export async function verifyUsageSessions(browser: Browser, baseUrl: string): Pr
           return;
         }
       }
+      // Count report effects after the two exact footer stubs above. Footer
+      // assignment timing is independent of local report import and never
+      // reaches Accounts here; every other external request remains blocked.
+      if (interaction && request.method() !== "GET") {
+        effects++;
+        if (effectDetails.length < 8) effectDetails.push(`${request.method()} ${url.origin}${url.pathname}`);
+      }
       if (url.origin !== baseUrl) { await route.abort(); return; }
-      if (interaction && url.pathname.startsWith("/api/")) effects++;
+      if (interaction && url.pathname.startsWith("/api/")) {
+        effects++;
+        if (effectDetails.length < 8) effectDetails.push(`API ${request.method()} ${url.pathname}`);
+      }
       await route.continue();
     });
     try {
@@ -104,7 +117,7 @@ export async function verifyUsageSessions(browser: Browser, baseUrl: string): Pr
       invariant(await page.locator(".usage-sessions__table tbody tr").count() === 2, "A failed watched read must preserve the last valid report with visible stale status.");
       await page.getByRole("button", { name: "Stop following", exact: true }).click();
       invariant(await page.getByRole("button", { name: "Stop following", exact: true }).count() === 0, "Stop must release the watched file.");
-      invariant(effects === 0 && errors === 0, "Report import and interaction must have no API effects or browser errors.");
+      invariant(effects === 0 && errors === 0, `Session ${name}: report import and interaction must have no API effects or browser errors. Effects=${effects} ${JSON.stringify(effectDetails)}; browserErrors=${errors} ${JSON.stringify(errorDetails)}.`);
     } finally { await context.close(); }
   }
 }
