@@ -140,12 +140,20 @@ absolute binary path, `autosubmit`, `--config-file`, and the absolute private
 configuration path. Use label `io.aicharts.autosubmit`, `RunAtLoad`,
 `ProcessType=Background`, and a deliberate `StartInterval`. Do not enable a
 new schedule until a manual live cycle and account totals have been checked.
+The interval is a scheduling request, not guaranteed daily delivery: firings
+while the Mac sleeps or the job is already running are missed. Verify the
+actual completion timestamp and result in `last-cycle.json`.
 
-Record the old job's label, file, arguments and enabled state. After the first
-AI Charts scheduled cycle succeeds, unload the old Tokscale job while retaining
-its plist, executable, credentials and local history. Read back AI Charts again
-after the old job is disabled. Rollback re-enables the retained old job and
-disables the new schedule; it never resets either service's data or credentials.
+Record the old job's label, file, arguments, user GUI domain and enabled state.
+After the first AI Charts scheduled cycle succeeds, persistently disable the
+old Tokscale service in that same domain with `launchctl disable`, then unload
+it with `launchctl bootout`. Verify `launchctl print-disabled` and the unloaded
+service state; unloading alone permits the retained LaunchAgent to return at
+the next login. Keep its plist, executable, credentials and local history.
+Read back AI Charts again after the old job is disabled. Rollback disables and
+unloads the new service, then uses `launchctl enable` and `launchctl bootstrap`
+for the retained old job in its original domain. It never resets either
+service's data or credentials.
 
 Use the fixed error code in `last-cycle.json` to investigate a completed cycle.
 Configuration, lock, or runtime-storage failures can occur before this file is

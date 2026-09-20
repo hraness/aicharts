@@ -18,6 +18,8 @@ const DPKG_QUERY_TIMEOUT_MS = 30_000;
 // Shared assembled-output ceiling; individual reads and section totals remain
 // independently bounded below.
 export const LINUX_NOTICES_MAX_BYTES = 64 * MiB;
+// One complete GNU bfd map must fit both the runner read and this parser.
+export const LINUX_LINK_MAP_MAX_BYTES = 32 * MiB;
 const TARGET = "x86_64-unknown-linux-gnu";
 const REGISTRY = "registry+https://github.com/rust-lang/crates.io-index";
 const ERRORS = new Set(["notices_invalid_input", "notices_limit", "notices_build_incomplete", "notices_unmapped_crate", "notices_crate_changed", "notices_unknown_native", "notices_rust_missing", "notices_system_missing", "notices_source_changed"]);
@@ -231,7 +233,7 @@ export function planLinuxNotices(input) {
     }
     if (![...nativePackages].some(id => compiled.get(id).name === "libsqlite3-sys")
       || [...compiled.values()].some(pkg => NATIVE_PROVIDERS.has(`${pkg.name}@${pkg.version}`) && !nativePackages.has(pkg.id))) fail("notices_build_incomplete");
-    const map = utf8(owned(input.linkMapBytes, 32 * MiB));
+    const map = utf8(owned(input.linkMapBytes, LINUX_LINK_MAP_MAX_BYTES));
     const outputs = [...map.matchAll(/^OUTPUT\((\S+) elf64-x86-64\)$/gmu)];
     if (!map.includes("Linker script and memory map\n") || outputs.length !== 1) fail("notices_build_incomplete");
     const linkOutput = absolute(outputs[0][1]);

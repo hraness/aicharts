@@ -1,6 +1,8 @@
-# Local Codex and Claude Code usage
+# Local usage and the v1 ledger
 
-The usage CLI reads explicitly selected Codex and Claude JSONL files or Devin ATIF exports, projects metadata into numeric measurements, deduplicates supported copied records, and prints a summary or exact wire dry-run. Explicit initialization also enables a private numeric ledger with restart-safe checkpoints and a local pending queue. On macOS, `enroll` pairs an installation with an AI Charts account through local credential custody and explicit browser approval, and `upload --state-dir` sends one bounded pending batch for that enrolled installation. For an already prepared installation, `sync` combines one local collection pass with bounded publishing. Service installation remains unavailable. The [activation runbook](usage-activation.md) separates current deployment evidence from qualification of a particular binary and installation. No transcript cache is created. Public benchmark pages and the calculator do not require usage collection. The separate browser identity and private-read boundaries do not enroll devices or transmit local measurements.
+This guide covers the legacy v1 `usage`, collection, ledger, and publishing commands for Codex, Claude Code, and Devin ATIF exports. For the broader client roster, source profiles, model attribution, and costs, use [detailed `stats` reports](usage-details.md). Native refresh, capture, and scheduled publication are covered in the [scheduled publisher guide](usage-autosubmit.md). The measurement and source-handling limits below apply to the v1 commands.
+
+`usage` reads explicitly selected Codex and Claude JSONL files or Devin ATIF exports, projects metadata into numeric measurements, deduplicates supported copied records, and prints a summary or exact wire dry-run. Explicit initialization also enables a private numeric ledger with restart-safe checkpoints and a local pending queue. On macOS, `enroll` pairs an installation with an AI Charts account through local credential custody and explicit browser approval, and `upload --state-dir` sends one bounded pending batch for that enrolled installation. For an already prepared installation, `sync` combines one local collection pass with bounded publishing. The CLI does not install an OS service. The [activation runbook](usage-activation.md) separates current deployment evidence from qualification of a particular binary and installation. These v1 commands retain numeric measurements and checkpoints without creating a transcript cache. Public benchmark pages and the calculator do not require usage collection. The separate browser identity and private-read boundaries do not enroll devices or transmit local measurements.
 
 ## Build and run
 
@@ -19,7 +21,7 @@ On macOS/Linux, create a private namespace key at a new path outside the reposit
 ./target/debug/aicharts keygen --output /absolute/private/directory/aicharts.key
 ```
 
-Retain this key securely. It determines the opaque IDs used for deduplication; replacing it changes those IDs. It is not a provider token and is never included in a frame. The current CLI checks Unix permission bits and creates keys with mode 0600. The separate [credential custody library](../crates/aicharts-custody/README.md) has passed disposable macOS Keychain qualification, but it is not connected to these commands: live vault integration, shared-device recovery and namespace rotation remain unqualified. Windows key generation remains disabled until its credential-storage path is qualified; this is not a claim of a completed cross-platform installer.
+Retain this key securely. It determines the opaque IDs used for deduplication; replacing it changes those IDs. It is not a provider token and is never included in a frame. The current CLI checks Unix permission bits and creates keys with mode 0600. Explicit file keys remain separate from native custody. Enrolled macOS commands use retained Keychain credentials through the [credential custody library](../crates/aicharts-custody/README.md). Its disposable qualification does not establish live credential access for a particular installation; shared-device recovery and namespace rotation also remain unqualified. Windows key generation remains disabled until its credential-storage path is qualified; this is not a claim of a completed cross-platform installer.
 
 Read one selected source or directory; repeat source flags to combine files. Neither key bytes nor source paths are printed:
 
@@ -30,7 +32,7 @@ Read one selected source or directory; repeat source flags to combine files. Nei
 ./target/debug/aicharts upload --dry-run --key-file /absolute/private/directory/aicharts.key --codex /absolute/path/to/session.jsonl
 ```
 
-`upload --dry-run` prints JSON containing hexadecimal canonical numeric frames. This JSON is a local inspection format, not an accepted HTTP request body. The actual [wire contract](usage-wire-v1.md) has no string fields. `upload` without `--dry-run` is the enrolled send described below; it reads no provider sources. No command searches a home directory automatically or modifies provider configuration.
+`upload --dry-run` prints JSON containing hexadecimal canonical numeric frames. This JSON is a local inspection format, not an accepted HTTP request body. The actual [wire contract](usage-wire-v1.md) has no string fields. `upload` without `--dry-run` is the enrolled send described below; it reads no provider sources. The v1 commands documented here do not discover sources under a home directory or modify provider configuration.
 
 ## Foreground daemon runner
 
@@ -67,7 +69,7 @@ Directory traversal selects `.jsonl` files for Codex and Claude sources and `.js
 
 ## Interpreting the result
 
-Token totals are **observed, partial historical usage**, not provider billing statements. JSON token counters are decimal strings so clients do not lose integer precision. Model IDs, API-versus-subscription attribution and account ownership remain unknown; no estimated prices are invented. `promptOccurrences: null` and unavailable activity coverage are intentional, not a zero-prompt/idle-day claim.
+Token totals are **observed, partial historical usage**, not provider billing statements. JSON token counters are decimal strings so clients do not lose integer precision. In these v1 measurements, model IDs, API-versus-subscription attribution, and account ownership remain unknown; no estimated prices are supplied. `promptOccurrences: null` and unavailable activity coverage are intentional, not a zero-prompt/idle-day claim.
 
 - Codex uses cumulative deltas. A bounded first `last_token_usage` can count the last request while preceding unobserved cumulative history stays omitted. Missing baseline and counter regressions produce warnings. Declared fork history is unsupported, not newly earned usage. Copied complete records deduplicate; arbitrary partially overlapping/forked histories may conflict and require future lineage-aware reconciliation. Partial tails remain deferred until a complete newline; no incomplete suffix contributes numeric usage.
 - Claude uses native request/message identities and compatible monotonic streaming revisions. Positive cache creation without an explicit 5-minute/1-hour split is omitted with `claude_cache_ttl_unknown`, rather than assigned an invented price category.
