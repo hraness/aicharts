@@ -368,7 +368,7 @@ export async function verifyUsageDashboard(browser: Browser, disabledBaseUrl: st
             channel.postMessage({ kind: "signed_out", version: "suite-oidc-session-event-v1" }); channel.close();
           });
           await consentPanel.getByRole("heading", { name: "Sign in to manage publishing", exact: true }).waitFor();
-          await page.locator(".usage-daily").getByRole("heading", { name: "Sign in to view your usage", exact: true }).waitFor();
+          await page.locator("main").getByRole("heading", { name: "Sign in to view your usage", exact: true }).waitFor();
           invariant(await consentPanel.getByLabel("Public handle", { exact: true }).count() === 0 && await page.locator(".usage-daily table").count() === 0,
             "A cross-tab SDK sign-out must clear publishing form identity and private daily values.");
           invariant(Number(consentWrites) === 5, "Signing out must not replay a consent write.");
