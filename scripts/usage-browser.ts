@@ -70,6 +70,8 @@ async function checkDormant(baseUrl: string): Promise<void> {
     invariant(leaderboardHtml.includes(text), "The paused leaderboard must render its honest disabled state.");
   }
   for (const [path, method, status, code, cache] of [
+    ["/api/usage/account", "GET", 503, "unavailable", "private, no-store"],
+    ["/api/usage/account", "POST", 405, "method_not_allowed", "private, no-store"],
     ["/api/leaderboard", "GET", 503, "unavailable", "private, no-store"],
     ["/api/leaderboard", "POST", 405, "method_not_allowed", "private, no-store"],
     ["/api/usage/consent", "GET", 503, "unavailable", "private, no-store"],
@@ -199,6 +201,10 @@ export async function verifyUsageDashboard(browser: Browser, disabledBaseUrl: st
         }
         if (url.pathname === "/api/suite-auth/refresh") {
           throw new Error("A signed-out browser fixture must never attempt session renewal.");
+        }
+        if (url.pathname === "/api/usage/account") {
+          invariant(route.request().method() === "GET" && url.search === "", "Account identity must use its fixed read-only route.");
+          await route.fulfill({ status: 200, contentType: PRIVATE_DAYS_PUBLIC_MEDIA, body: JSON.stringify({ schemaVersion: 1, state: "ready", account: { accountId: `acct_${"a".repeat(32)}` } }) }); return;
         }
         if (url.pathname === "/api/usage/stats") {
           invariant(route.request().method() === "GET" && parseStatsPublicSearch(url.search), "The stats fallback must use the numeric GET contract.");
@@ -354,6 +360,19 @@ export async function verifyUsageDashboard(browser: Browser, disabledBaseUrl: st
         await consentPanel.getByLabel("Public handle", { exact: true }).waitFor();
         invariant(Number(consentWrites) === 5, "Checking capacity-refused consent must stay read-only.");
         invariant(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), "Consent controls must fit the viewport.");
+        const sibling = await context.newPage();
+        try {
+          await sibling.goto(`${baseUrl}/usage/sessions`, { waitUntil: "networkidle" });
+          await sibling.evaluate(() => {
+            const channel = new BroadcastChannel("jungle-suite-accounts:oidc-session:v1");
+            channel.postMessage({ kind: "signed_out", version: "suite-oidc-session-event-v1" }); channel.close();
+          });
+          await consentPanel.getByRole("heading", { name: "Sign in to manage publishing", exact: true }).waitFor();
+          await page.locator("main").getByRole("heading", { name: "Sign in to view your usage", exact: true }).waitFor();
+          invariant(await consentPanel.getByLabel("Public handle", { exact: true }).count() === 0 && await page.locator(".usage-daily table").count() === 0,
+            "A cross-tab SDK sign-out must clear publishing form identity and private daily values.");
+          invariant(Number(consentWrites) === 5, "Signing out must not replay a consent write.");
+        } finally { await sibling.close(); }
         await verifyRankedLeaderboard(page, baseUrl, name, captureDirectory);
         invariant(failures.length === 0, failures.join("; "));
         invariant(!blockedOrigins.has("https://account.hraness.com") && !blockedOrigins.has("https://usage.aicharts.io"), "Synthetic UI checks must not attempt account or usage-provider access.");

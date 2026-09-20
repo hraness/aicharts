@@ -1,4 +1,6 @@
-import { loadSuiteOidcBrowserSession, type SuiteOidcExclusiveLock } from "@hraness/suite-accounts/browser-session";
+import { broadcastSuiteOidcBrowserSignOut, loadSuiteOidcBrowserSession, signOutSuiteOidcBrowserSession, type SuiteOidcExclusiveLock } from "@hraness/suite-accounts/browser-session";
+import { readUsageAccount } from "./account-client";
+import { clearUsageAccountViews } from "./account-session-events";
 import { readPrivateDays } from "./private-days-client";
 import { readPrivateStats } from "./stats-client";
 import { readUsageConsent } from "./consent-client";
@@ -65,6 +67,15 @@ function signedIn(value: unknown): boolean {
     && typeof Reflect.get(value, "session") === "object" && !Array.isArray(Reflect.get(value, "session"));
 }
 
+function sessionLock(signal: AbortSignal, options: Options) {
+  return options.withExclusiveLock ?? (options.withExclusiveLock !== null
+    && typeof navigator !== "undefined" && navigator.locks !== undefined
+    ? (name: string, task: () => Promise<unknown>) => navigator.locks.request(name, { mode: "exclusive", signal }, async () => {
+      if (signal.aborted) throw unavailable();
+      return task();
+    }) : options.withExclusiveLock);
+}
+
 async function recoverRead<T>(read: () => Promise<T>, needsAuthentication: (reply: T) => boolean,
   signal: AbortSignal, options: Options): Promise<T> {
   if (signal.aborted) throw unavailable();
@@ -76,14 +87,8 @@ async function recoverRead<T>(read: () => Promise<T>, needsAuthentication: (repl
   const fetcher = options.fetch ?? globalThis.fetch;
   let calls = 0;
   try {
-    const withExclusiveLock = options.withExclusiveLock ?? (options.withExclusiveLock !== null
-      && typeof navigator !== "undefined" && navigator.locks !== undefined
-      ? (name: string, task: () => Promise<unknown>) => navigator.locks.request(name, { mode: "exclusive", signal }, async () => {
-        if (signal.aborted) throw unavailable();
-        return task();
-      }) : options.withExclusiveLock);
     const session = await untilAbort(loadSuiteOidcBrowserSession({
-      withExclusiveLock,
+      withExclusiveLock: sessionLock(signal, options),
       fetch: async (input, init) => {
         if (signal.aborted) throw unavailable();
         // SDK protocol: initial status, locked status recheck, then at most one
@@ -121,4 +126,35 @@ export function readAccountStats(firstUtcDay: number, dayCount: number, signal: 
 export function readAccountConsent(signal: AbortSignal, options: Options = {}) {
   return recoverRead(() => readUsageConsent(signal, options.fetch),
     reply => "error" in reply && reply.error.code === "authentication_required", signal, options);
+}
+export function readAccountSummary(signal: AbortSignal, options: Options = {}) {
+  return recoverRead(() => readUsageAccount(signal, options.fetch),
+    reply => "error" in reply && reply.error.code === "authentication_required", signal, options);
+}
+
+/** Explicit user mutation, never replayed. SDK owns cookie custody and the same
+ * refresh lock. The local fallback can join another operation: require this
+ * call's actual sign-out POST before accepting its notification as success. */
+export async function signOutUsageAccount(signal: AbortSignal, options: Options = {}): Promise<void> {
+  if (signal.aborted) throw unavailable();
+  const fetcher = options.fetch ?? globalThis.fetch;
+  let calls = 0, confirmed = false;
+  try {
+    await untilAbort(signOutSuiteOidcBrowserSession({
+      withExclusiveLock: sessionLock(signal, options),
+      fetch: async (input, init) => {
+        if (signal.aborted || calls !== 0 || input !== "/api/suite-auth/sign-out" || init?.method !== "POST") throw unavailable();
+        calls++;
+        return sessionResponse(await fetcher(input, { ...init, signal }), signal);
+      },
+      notifySignedOut: () => {
+        if (signal.aborted || calls !== 1) throw unavailable();
+        confirmed = true;
+      },
+    }), signal);
+    if (!confirmed || signal.aborted) throw unavailable();
+  } catch { throw unavailable(); }
+  // The initiating tab does not receive its own BroadcastChannel event.
+  clearUsageAccountViews();
+  try { broadcastSuiteOidcBrowserSignOut(); } catch { /* Local custody has ended. */ }
 }

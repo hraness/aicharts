@@ -166,6 +166,19 @@ deadline and does not repeat a publishing change. Previously loaded account
 details are cleared when authentication is required; local reports and examples
 remain available.
 
+The **Hraness account** disclosure on the overview and detailed reports verifies
+your current account and shows its full ID for comparison with
+`aicharts account --state-dir /absolute/private/state --json` on the collector.
+The account check uses a live Hraness read; it does not establish that the
+collector has published or that the usage service is available. If the check
+fails, retry before comparing accounts.
+
+Use **Sign out** to end the AI Charts browser session, or **Switch account** to
+sign out and start a fresh sign-in. A confirmed sign-out clears pending account
+reads and remote account displays in the current tab and other tabs that receive
+the sign-out notification. Local reports and examples remain available. If
+sign-out cannot be confirmed, the interface asks you to retry before switching.
+
 Manage public consent and the public handle from the account overview. The
 leaderboard ranks consenting accounts by reported tokens over 30 UTC days and
 shows each entry's exact total, record count, coverage dates, and last refresh.

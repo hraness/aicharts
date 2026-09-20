@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { readAccountStats } from "@/lib/usage/account-read-client";
+import { subscribeUsageAccountSignOut } from "@/lib/usage/account-session-events";
 import type { UsageStatsReport } from "@/lib/usage/stats-contract";
 import { createUsageStatsExample } from "@/lib/usage/stats-example";
 import { readStatsReportFile } from "./stats-report-file";
@@ -20,6 +21,14 @@ export function StatsDashboard({ todayUtcDay, remoteEnabled = false, startWithAc
   const [range, setRange] = useState<StatsRange>({ firstUtcDay: Math.max(0, todayUtcDay - 29), dayCount: Math.min(30, todayUtcDay + 1) });
   const pending = useRef({ id: 0, controller: null as AbortController | null });
   const picker = useRef<HTMLInputElement>(null);
+
+  useEffect(() => subscribeUsageAccountSignOut(() => {
+    const owner = pending.current;
+    // A local file parse has no controller and must be allowed to finish.
+    if (owner.controller !== null) { owner.id++; owner.controller.abort(); owner.controller = null; }
+    setLoaded(previous => previous?.scope === "account" ? null : previous);
+    setStatus("authentication_required");
+  }), []);
 
   const read = useCallback(async (selected: StatsRange, id: number, controller: AbortController, selection?: StatsSelection) => {
     const owner = pending.current;

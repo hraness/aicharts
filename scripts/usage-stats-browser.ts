@@ -1,6 +1,6 @@
 import { access, mkdir } from "node:fs/promises";
 import { resolve } from "node:path";
-import { chromium, type Browser, type Page } from "playwright-core";
+import { chromium, type Browser, type Page, type Route } from "playwright-core";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { LeaderboardView } from "../components/usage/leaderboard-view";
@@ -34,6 +34,12 @@ export async function verifyUsageStats(browser: Browser, baseUrl: string, captur
     const page = await context.newPage();
     const errors: string[] = [], effects: string[] = [];
     let localInteraction = false, statsMode: "ready" | "not_started" | "range_too_large" | "authentication_required" = "ready";
+    const accountId = `acct_${"a".repeat(32)}`;
+    let signOutCalls = 0, signOutFails = true, accountSignedOut = false, holdStats = false;
+    const heldStats: Route[] = []; let statsArrived: (() => void) | undefined;
+    await context.addInitScript(() => {
+      Object.defineProperty(navigator, "clipboard", { value: { writeText: async (text: string) => { document.documentElement.dataset.copiedAccount = text; } } });
+    });
     page.on("pageerror", error => errors.push(error.message.slice(0, 500)));
     await context.route("**/*", async route => {
       const request = route.request(), url = new URL(request.url());
@@ -53,14 +59,28 @@ export async function verifyUsageStats(browser: Browser, baseUrl: string, captur
       if (url.pathname === "/api/suite-auth/refresh") {
         throw new Error("The signed-out synthetic account must not renew.");
       }
+      if (url.pathname === "/api/usage/account") {
+        invariant(request.method() === "GET" && url.search === "" && request.postData() === null, "Account identity must use the fixed read-only contract.");
+        await route.fulfill({ status: accountSignedOut ? 401 : 200, contentType: PRIVATE_DAYS_PUBLIC_MEDIA,
+          body: JSON.stringify(accountSignedOut ? { schemaVersion: 1, error: { code: "authentication_required" } } : { schemaVersion: 1, state: "ready", account: { accountId } }) }); return;
+      }
+      if (url.pathname === "/api/suite-auth/sign-out") {
+        invariant(request.method() === "POST" && request.postData() === null, "SDK sign-out must remain one explicit body-free mutation.");
+        signOutCalls++; if (!signOutFails) accountSignedOut = true;
+        await route.fulfill({ status: signOutFails ? 503 : 200, contentType: "application/json", body: signOutFails ? '{"error":"unavailable"}' : '{"kind":"signed_out"}' }); return;
+      }
       if (url.pathname === "/api/usage/stats") {
         const range = parseStatsPublicSearch(url.search); invariant(range, "Stats request must use the exact numeric GET contract.");
         invariant(request.method() === "GET" && request.postData() === null, "Stats reads must have no mutation body.");
+        if (holdStats) { heldStats.push(route); statsArrived?.(); return; }
         const reply: StatsPublicReply = statsMode === "ready" ? { schemaVersion: 2, ok: true, value: hostedReport(range.firstUtcDay, range.dayCount) }
           : { schemaVersion: 2, ok: false, error: statsMode };
         await route.fulfill({ status: statsPublicStatus(reply), headers: { "content-type": STATS_PUBLIC_MEDIA, "cache-control": "private, no-store" }, body: JSON.stringify(reply) }); return;
       }
       if (url.pathname === "/api/usage/days") {
+        if (accountSignedOut) {
+          await route.fulfill({ status: 401, contentType: PRIVATE_DAYS_PUBLIC_MEDIA, body: '{"schemaVersion":1,"error":{"code":"authentication_required"}}' }); return;
+        }
         const range = parsePrivateDaysPublicSearch(url.search); invariant(range, "Fallback range must validate.");
         const total = { usageOccurrences: 5, observedAccountedTokens: "1250000", observedOutputTokens: "75000" };
         const bytes = encodePrivateDaysPublicResponse({ schemaVersion: 1, state: "ready", value: { schemaVersion: 1, measurementProfile: "imported-tokens-v1", coverage: "partial", journalRevision: 100,
@@ -95,9 +115,35 @@ export async function verifyUsageStats(browser: Browser, baseUrl: string, captur
       if (name === "mobile") await page.getByLabel("Period", { exact: true }).selectOption(String(days));
       else await page.getByRole("button", { name: `${days} days`, exact: true }).click();
     };
+    const siblingSignOut = async () => {
+      const sibling = await context.newPage();
+      try {
+        await sibling.goto(`${baseUrl}/usage/sessions`, { waitUntil: "networkidle" });
+        await sibling.evaluate(() => {
+          const channel = new BroadcastChannel("jungle-suite-accounts:oidc-session:v1");
+          channel.postMessage({ kind: "signed_out", version: "suite-oidc-session-event-v1" }); channel.close();
+        });
+        await page.locator(".usage-account__status").filter({ hasText: "Sign-in required" }).waitFor();
+      } finally { await sibling.close(); }
+    };
     try {
       await page.goto(`${baseUrl}/usage/details`, { waitUntil: "networkidle" });
       await page.getByRole("heading", { name: "Your usage", exact: true }).waitFor();
+      const account = page.locator(".usage-account");
+      if (await account.count()) {
+        await account.getByText("Verified with Hraness", { exact: true }).waitFor();
+        await account.locator("summary").focus(); await page.keyboard.press("Enter");
+        invariant(await account.getByLabel("Account ID", { exact: true }).inputValue() === accountId, "The full verified account ID must be selectable for collector comparison.");
+        await account.getByRole("button", { name: "Copy account ID", exact: true }).click();
+        await account.getByRole("status").filter({ hasText: "Copied" }).waitFor();
+        invariant(await page.locator("html").getAttribute("data-copied-account") === accountId, "Copy must preserve the full canonical account ID.");
+        await capture("account-verified");
+        await account.getByRole("button", { name: "Sign out", exact: true }).click();
+        await account.getByRole("alert").waitFor();
+        invariant(signOutCalls === 1 && page.url() === `${baseUrl}/usage/details`, "A failed sign-out must not claim success or navigate.");
+        await capture("account-sign-out-failed");
+        await page.reload({ waitUntil: "networkidle" });
+      }
       await capture("stats-initial");
       localInteraction = true;
       await page.getByRole("button", { name: "Explore example", exact: true }).click();
@@ -106,7 +152,7 @@ export async function verifyUsageStats(browser: Browser, baseUrl: string, captur
       const plot = page.getByRole("group", { name: /^Reported tokens by day/ });
       if (name === "mobile") {
         const bounds = await plot.boundingBox();
-        invariant(bounds && bounds.y < 640 && bounds.y + bounds.height < 830, "The full mobile trend must be visible above the fixed footer in the initial 390×900 viewport.");
+        invariant(bounds && bounds.y < 700 && bounds.y + bounds.height < 830, "The full mobile trend, with the compact account control above it, must be visible above the fixed footer in the initial 390×900 viewport.");
       }
       const firstBar = plot.getByRole("button").first();
       await firstBar.focus(); await page.keyboard.press("ArrowRight");
@@ -158,6 +204,18 @@ export async function verifyUsageStats(browser: Browser, baseUrl: string, captur
       await page.getByRole("alert").filter({ hasText: "could not be read as a numeric usage report" }).waitFor(); await capture("stats-import-error");
       invariant(effects.length === 0, `Local report actions must have no API or write effects: ${JSON.stringify(effects)}`);
       localInteraction = false;
+      if (await account.count()) {
+        await account.locator("summary").click(); signOutFails = false;
+        await account.getByRole("button", { name: "Sign out", exact: true }).click();
+        await account.getByText("Sign-in required", { exact: true }).waitFor();
+        invariant(page.url() === `${baseUrl}/usage/details` && await page.locator(".usage-stats").count() === 1
+          && await page.getByText("Local reports stay in this browser", { exact: true }).count() === 1 && Number(signOutCalls) === 2,
+          "Ordinary sign-out must clear account identity without navigating away from the initiating tab's local report.");
+        await account.locator("summary").click();
+        await siblingSignOut();
+        invariant(await page.locator(".usage-stats").count() === 1 && await page.getByText("Local reports stay in this browser", { exact: true }).count() === 1,
+          "A cross-tab sign-out must preserve a locally imported report.");
+      }
       await page.locator(".usage-stats-source__menu > summary").click();
       if (await page.getByRole("button", { name: "Load account", exact: true }).count()) {
         statsMode = "authentication_required";
@@ -185,13 +243,47 @@ export async function verifyUsageStats(browser: Browser, baseUrl: string, captur
         await page.getByRole("heading", { name: "Sign in to view your usage", exact: true }).waitFor();
         invariant(await page.locator(".usage-stats").count() === 1 && await page.getByText("Example data · synthetic", { exact: true }).count() === 1,
           "Authentication failure must preserve a synthetic example.");
+        if (await account.count()) {
+          await account.locator("summary").click();
+          await account.getByRole("button", { name: "Sign out", exact: true }).click();
+          await account.getByText("Sign-in required", { exact: true }).waitFor();
+          invariant(page.url() === `${baseUrl}/usage/details` && await page.locator(".usage-stats").count() === 1
+            && await page.getByText("Example data · synthetic", { exact: true }).count() === 1 && Number(signOutCalls) === 3,
+            "Ordinary sign-out must preserve the initiating tab's synthetic example.");
+          await account.locator("summary").click();
+          await siblingSignOut();
+          invariant(await page.locator(".usage-stats").count() === 1 && await page.getByText("Example data · synthetic", { exact: true }).count() === 1,
+            "A cross-tab sign-out must preserve example data.");
+        }
         statsMode = "ready"; await page.getByRole("button", { name: "Load account", exact: true }).click();
         await page.getByRole("heading", { name: "Daily usage", exact: true }).waitFor();
         statsMode = "not_started"; await expandFilters(); await page.getByRole("button", { name: "Refresh", exact: true }).click();
         await page.getByRole("heading", { name: "No detailed snapshot yet", exact: true }).waitFor();
+        if (await account.count()) {
+          statsMode = "ready";
+          const arrived = new Promise<void>(done => { statsArrived = done; }); holdStats = true;
+          await page.getByRole("button", { name: "Load account", exact: true }).click(); await arrived;
+          await siblingSignOut();
+          await page.getByRole("heading", { name: "Sign in to view your usage", exact: true }).waitFor();
+          holdStats = false;
+          for (const route of heldStats.splice(0)) {
+            const range = parseStatsPublicSearch(new URL(route.request().url()).search); invariant(range, "Held read keeps its original range.");
+            await route.fulfill({ status: 200, contentType: STATS_PUBLIC_MEDIA, body: JSON.stringify({ schemaVersion: 2, ok: true, value: hostedReport(range.firstUtcDay, range.dayCount) }) }).catch(() => undefined);
+          }
+          await settle(page);
+          invariant(await page.locator(".usage-stats").count() === 0, "A late successful account response must not restore private data after cross-tab sign-out.");
+        }
       }
       statsMode = "not_started";
+      accountSignedOut = false; // A distinct synthetic signed-in visit for daily cleanup.
       await page.goto(`${baseUrl}/usage`, { waitUntil: "networkidle" }); await page.getByRole("heading", { name: "Codex", exact: true }).waitFor(); await capture("usage-fallback");
+      if (await account.count()) {
+        await account.locator("summary").click(); signOutFails = false;
+        await account.getByRole("button", { name: "Sign out", exact: true }).click();
+        await account.getByText("Sign-in required", { exact: true }).waitFor();
+        invariant(page.url() === `${baseUrl}/usage` && await page.locator(".usage-daily table").count() === 0, "Confirmed sign-out must clear private daily data in the initiating tab.");
+        invariant(Number(signOutCalls) === 4, "Every explicit sign-out must make exactly one SDK POST without replay.");
+      }
       await page.goto(`${baseUrl}/leaderboard`, { waitUntil: "networkidle" }); await page.getByRole("heading", { name: "Public usage leaderboard", exact: true }).waitFor(); await capture("leaderboard-paused");
       const computedAtMs = today * 86_400_000 + 5 * 60_000;
       const rankings = parseLeaderboardSnapshot({ schemaVersion: 1, ranking: "observed-tokens-30d-v1", computedAtMs, entries: [

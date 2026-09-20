@@ -46,6 +46,8 @@ export type UsageAccountSessionScope = Readonly<{
   readOutcome(): Promise<UsageAccountSessionRead>;
   current(): boolean;
   finish(): void;
+  /** Fixed diagnostic bit only; absent on older injected test ports. */
+  providerAttempted?(): boolean;
 }>;
 
 type UsageAuthOptions = Readonly<{
@@ -233,7 +235,7 @@ function beginAccountSession(request: Request, options: UsageAuthOptions, privat
       } catch { finish(); return unavailable(); }
     };
     return Object.freeze({
-      current, finish, readOutcome,
+      current, finish, readOutcome, providerAttempted: () => providerAttempted,
       async read(): Promise<UsageAccountSession | null> {
         // Preserve the original accessor's repeated-read and null-and-close
         // behavior. Both entry points share one attempt, including during awaits.

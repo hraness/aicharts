@@ -1,5 +1,6 @@
 #![forbid(unsafe_code)]
 
+mod account;
 mod autosubmit;
 mod capture;
 mod daemon;
@@ -89,6 +90,7 @@ const HELP: &str = "AI Charts Usage — local reports and enrolled publication
   aicharts collect-prefix --state-dir DIR --key-file PATH [--codex FILE_OR_DIR] [--claude FILE_OR_DIR] [--devin FILE_OR_DIR] [--rescan] [--json]
   aicharts status --state-dir DIR --key-file PATH [--json]
   aicharts inspect --state-dir DIR --key-file PATH [--occurrence-key-file PATH] [--json]
+  aicharts account --state-dir ABSOLUTE_DIR [--json]
   aicharts daemon [--once] [--complete-prefix] --state-dir DIR --key-file PATH [--codex FILE_OR_DIR] [--claude FILE_OR_DIR] [--devin FILE_OR_DIR] [--interval-seconds N] [--retry-attempts N] [--json]
   aicharts enroll --state-dir DIR
   aicharts outbox --dry-run --state-dir DIR --key-file PATH [--limit 1..256] [--after ID --revision N]
@@ -122,6 +124,8 @@ Metadata skipping is a reliability optimization, not tamper attestation; --resca
 rehashes every retained prefix. Neither command uploads content or enables sending.
 outbox never acknowledges or sends; ordinary state opening can recover SQLite.
 inspect reads only an existing ledger without source scanning, recovery or writes.
+account verifies both retained credentials and prints the enrolled account and
+device IDs without advancing enrollment, opening the ledger or contacting a server.
 An explicit occurrence key selects the existing split-key namespace version 1;
 omitting it selects legacy identity. Neither option migrates or rekeys state.
 reindex-plan inspects existing state without recovery or writes and rereads explicit
@@ -499,6 +503,7 @@ fn run(args: &[String]) -> Result<String, &'static str> {
                 | "status"
                 | "outbox"
                 | "inspect"
+                | "account"
                 | "enroll"
                 | "reindex-plan"
                 | "reindex-prepare"
@@ -524,6 +529,9 @@ fn run(args: &[String]) -> Result<String, &'static str> {
     }
     if args.first().map(String::as_str) == Some("inspect") {
         return inspect::run(args);
+    }
+    if args.first().map(String::as_str) == Some("account") {
+        return account::run(args);
     }
     if args.first().map(String::as_str) == Some("daemon") {
         return daemon::run(args);
