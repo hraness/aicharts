@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
-import { privateDaysInputRange, readPrivateDays, utcDayInput } from "@/lib/usage/private-days-client";
+import { privateDaysInputRange, utcDayInput } from "@/lib/usage/private-days-client";
+import { readAccountDays } from "@/lib/usage/account-read-client";
 import type { PrivateDaysV1, ProviderImportedTotals } from "@/lib/usage/private-days-contract";
 import type { PrivateDaysPublicReply, PrivateDaysRange } from "@/lib/usage/private-days-public";
 
@@ -110,7 +111,7 @@ export function DailyUsageDashboard({ todayUtcDay }: Readonly<{ todayUtcDay: num
       if (id === owner.id) setView({ kind: "unavailable" });
     }, 20_000);
     try {
-      const reply = await readPrivateDays(selected, controller.signal);
+      const reply = await readAccountDays(selected, controller.signal);
       if (id === owner.id && !controller.signal.aborted) setView({ kind: "reply", reply });
     } catch {
       if (id === owner.id) setView({ kind: "unavailable" });

@@ -159,6 +159,13 @@ snapshot. An account that has not published a detailed snapshot keeps its
 existing daily overview. Local files and synthetic examples stay separate from
 account publication; opening either does not change saved account measurements.
 
+When an account read requires authentication, the dashboard tries to renew the
+existing Hraness session once, then repeats the read once. A missing or invalid
+session still requires sign-in. Renewal stays within the current request's
+deadline and does not repeat a publishing change. Previously loaded account
+details are cleared when authentication is required; local reports and examples
+remain available.
+
 Manage public consent and the public handle from the account overview. The
 leaderboard ranks consenting accounts by reported tokens over 30 UTC days and
 shows each entry's exact total, record count, coverage dates, and last refresh.

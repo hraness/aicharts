@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { readPrivateStats } from "@/lib/usage/stats-client";
+import { readAccountStats } from "@/lib/usage/account-read-client";
 import type { UsageStatsReport } from "@/lib/usage/stats-contract";
 import { createUsageStatsExample } from "@/lib/usage/stats-example";
 import { readStatsReportFile } from "./stats-report-file";
@@ -25,7 +25,12 @@ export function StatsDashboard({ todayUtcDay, remoteEnabled = false, startWithAc
     const owner = pending.current;
     const deadline = setTimeout(() => { controller.abort(); if (owner.id === id) setStatus("unavailable"); }, 20_000);
     try {
-      const reply = await readPrivateStats(selected.firstUtcDay, selected.dayCount, controller.signal);
+      const reply = await readAccountStats(selected.firstUtcDay, selected.dayCount, controller.signal, {
+        onAuthenticationRequired: () => {
+          if (owner.id === id && !controller.signal.aborted) setLoaded(previous =>
+            owner.id === id && !controller.signal.aborted && previous?.scope === "account" ? null : previous);
+        },
+      });
       if (owner.id !== id || controller.signal.aborted) return;
       if (reply.ok) { setLoaded({ report: reply.value, scope: "account", version: id, selection }); setRange(selected); setStatus("ready"); }
       else {
