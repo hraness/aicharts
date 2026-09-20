@@ -33,6 +33,8 @@
     "node": "24.x"
   },
   "scripts": {
+    "kb:search": "bunx --bun --package https://github.com/hraness/wordcell/releases/download/v0.22.0/hraness-wordcell-0.22.0.tgz wordcell search --root kb --mode exact --rerank typesafe --rerank-limit 25",
+    "kb:search:local": "bunx --bun --package https://github.com/hraness/wordcell/releases/download/v0.22.0/hraness-wordcell-0.22.0.tgz wordcell search --root kb --mode exact",
     "build:theme": "bun scripts/build-theme-bootstrap.ts",
     "dev": "bun run build:theme && next dev --webpack",
     "build": "bun run build:theme && next build --webpack",
