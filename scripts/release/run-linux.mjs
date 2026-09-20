@@ -536,7 +536,12 @@ async function runWith(value, host = HOST) {
     const turns = parseJson((await smoke(["turns", "--codex", "turns.jsonl", "--occurrence-key-file", "key", "--json"])).stdout);
     need(turns.days?.length === 1 && turns.days[0].utcDay === 2 && turns.days[0].completed.runtimeMsSum === "1537" && turns.days[0].completed.runtimeEligibleTurns === 1 && turns.uploaded === false, "smoke_failed");
     const dry = parseJson((await smoke(["upload", "--dry-run", ...sources])).stdout); need(dry.uploaded === false && Array.isArray(dry.frames) && dry.frames.length > 0, "smoke_failed");
-    const refused = await smoke(["upload", ...sources], 2); need(refused.stdout.length === 0 && refused.stderr.toString("utf8") === "aicharts: upload_not_enabled_use_dry_run\n", "smoke_failed");
+    const beforeUpload = JSON.stringify(treeImage(path.join(directories.smoke, "state")));
+    const refused = await smoke(["upload", "--state-dir", "state", "--key-file", "key"], 2);
+    need(refused.stdout.length === 0 && refused.stderr.toString("utf8") === "aicharts: upload_requires_qualified_macos_custody\n", "smoke_failed");
+    need(JSON.stringify(treeImage(path.join(directories.smoke, "state"))) === beforeUpload
+      && host.readFile(path.join(directories.smoke, "key"), 32).equals(key)
+      && (fs.lstatSync(path.join(directories.smoke, "key")).mode & 0o777) === 0o600, "smoke_failed");
     await smoke(["usage", "--key-file", "key", "--claude", "bad.jsonl", "--json"], 2);
     for (const file of synthetic) need(host.readFile(path.join(directories.smoke, file.path), file.bytes.length).equals(file.bytes), "smoke_failed");
     for (const entry of fs.readdirSync(path.join(directories.smoke, "state"))) { const bytes = host.readFile(path.join(directories.smoke, "state", entry), 32 * MiB); need(!bytes.includes(CANARY) && !bytes.includes(key), "smoke_failed"); }
