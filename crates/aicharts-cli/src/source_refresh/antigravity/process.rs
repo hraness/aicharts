@@ -6,6 +6,7 @@ use std::{
     path::{Path, PathBuf},
     time::{Duration, Instant},
 };
+#[cfg(any(target_os = "macos", test))]
 const INVALID: &str = "antigravity_refresh_process_unqualified";
 #[derive(Clone, PartialEq, Eq)]
 pub(super) struct Identity {
