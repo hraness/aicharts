@@ -200,7 +200,7 @@ export function createUsageOidcVerifier(dependencies: VerifierDependencies) {
               timer = { handle: later(stop, FETCH_MS) };
               const result = await fetcher(JWKS_URL, {
                 method: "GET", redirect: "manual", credentials: "omit",
-                headers: { Accept: "application/json, application/jwk-set+json" }, signal: controller.signal,
+                headers: { Accept: "application/json, application/jwk-set+json", "Accept-Encoding": "identity" }, signal: controller.signal,
               });
               reader = result.body?.getReader();
               checkFlight();
