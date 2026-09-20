@@ -4,19 +4,33 @@ The nonpublishing `Qualify Linux CLI` workflow joins exact Git source reading, a
 
 This is qualification infrastructure, not an authenticated public release. A workflow definition or a passing local test does not establish that its Linux run passed. Keep public download instructions disabled until the actual run and separate provenance/acquisition gates pass.
 
-## Latest hosted result
+## Hosted qualification evidence
+
+The [20 September 2026 run 35498763628](https://github.com/hraness/aicharts/actions/runs/35498763628), attempt 1, passed for source `c6b2b3e665cc82b72ab7d64a6a147624c6d1a783`, tree `7318b86736bf5c4192da303bb7731e330d00d7bd`. It qualified `x86_64-unknown-linux-gnu` on Ubuntu 22.04 image `20260907.292.1`, with GCC 11.4.0 and Rust 1.97.1. Source/build checks, ELF/runtime checks, all 18 smoke invocations, complete notice collection, assembly and the new-directory installation checks passed. The installed executable's two `stats` smokes are included in those 18 invocations.
+
+Independent verification of the downloaded artifacts bound all five assets to the qualification receipt, release manifest, checksums and build records. The source archive contained the exact 1,011 source files. The five assets are the CLI, skill and source archives, `release-manifest.json` and `SHA256SUMS`. Verified byte identities are:
+
+| Artifact | Bytes | SHA-256 |
+| --- | ---: | --- |
+| Linux executable | 19,291,016 | `82da56a8d55291d4bb7a341a05728b7f81bc651e8ee26a4eaf9940b6f5ddcbc6` |
+| Complete notices | 17,689,035 | `fa6211a57d69a885242aa73055204fdf5051ee71377f6cc2f7144e656f8771b9` |
+| Source archive | 4,145,654 | `adc9f6bf4c8999de82c1b7c42fd976242054944d519507e37607cc771b714718` |
+
+The qualification receipt SHA-256 is `82752518f82ce91ab96bdea755401dd41144f456f76417a8c3ddc54420f6c6fb`. This evidence applies to the exact source and artifacts above; later documentation edits are not claimed as their build source. The workflow artifacts are temporary qualification results, with no public release or provenance attestation. The scratch installation checks do not establish a user installation, macOS qualification, live provider acquisition or execution on every historical x86-64 processor.
+
+### Earlier hosted evidence
 
 The [20 September run 35497007643](https://github.com/hraness/aicharts/actions/runs/35497007643), attempt 1, used PR 335 merge `aef0856ad82faa6b9ebf3fef2779cc518cc3c304`, tree `49fc881d9cd10159964b57af39b4cc014ae0e1ce`, on Ubuntu image `20260907.292.1`. The shared linker-map bound passed, followed by ELF and runtime checks (maximum required glibc 2.34, x86-64 baseline ISA) and smokes 1–12. Smoke 13 then failed. Its source still used the old fresh-source upload flags and expected `upload_not_enabled_use_dry_run`; the current enrolled-upload parser rejects those flags with `invalid_option`. The summary identifies the failed smoke, but does not publish its raw stderr. Notice collection, installation and the detailed-report smokes were not reached.
 
-Smoke 13 now invokes the valid `upload --state-dir state --key-file key` form and requires exit 2, empty stdout and the exact Linux refusal `upload_requires_qualified_macos_custody`. It also verifies unchanged synthetic ledger bytes, key bytes and private key permissions. This checks the current platform boundary without accessing real credentials or sending usage, and keeps the total at 18 smoke invocations. A fresh hosted qualification remains required.
+Smoke 13 now invokes the valid `upload --state-dir state --key-file key` form and requires exit 2, empty stdout and the exact Linux refusal `upload_requires_qualified_macos_custody`. It also verifies unchanged synthetic ledger bytes, key bytes and private key permissions. This checks the current platform boundary without accessing real credentials or sending usage, and keeps the total at 18 smoke invocations. Run 35498763628 above passed this corrected check.
 
 The [20 September diagnostic run 35495936110](https://github.com/hraness/aicharts/actions/runs/35495936110), attempt 1, used PR 334 merge `0bc181f99339ee52874d36a73801025eee2a96e6`, tree `e994eec34429637503a00cff18e61b3b75f880c4`, on Ubuntu image `20260907.292.1`. Compilation and the executable read passed. The named `read-link-map` stage then refused `link_map` with `byte_limit`: its exact **32,742,487-byte** size exceeded the runner's **8,388,608-byte** limit. Only the diagnostic summary was retained; ELF checks, notice attribution, installation and the 18 smoke checks were not reached.
 
-That measurement fits within the collector's existing **33,554,432-byte (32 MiB)** map bound. The runner and collector now share `LINUX_LINK_MAP_MAX_BYTES` at that bound. This admits the complete map for attribution instead of truncating it, while preserving the 64 MiB executable limit, deadlines and every source, native-library, notice and archive check. Synthetic boundary tests cover complete maps above 8 MiB and exactly at 32 MiB; one byte beyond is refused before parsing or qualification. A fresh hosted run is still required to establish that subsequent checks pass.
+That measurement fits within the collector's existing **33,554,432-byte (32 MiB)** map bound. The runner and collector now share `LINUX_LINK_MAP_MAX_BYTES` at that bound. This admits the complete map for attribution instead of truncating it, while preserving the 64 MiB executable limit, deadlines and every source, native-library, notice and archive check. Synthetic boundary tests cover complete maps above 8 MiB and exactly at 32 MiB; one byte beyond is refused before parsing or qualification.
 
 The [20 September run 35494506870](https://github.com/hraness/aicharts/actions/runs/35494506870), attempt 1, used PR 332 merge `f9febdfb7e7be1b04f04d7f29f67a41c79033f1b`, tree `b58773ee8cd08043dcc4a2c4460a99f9ab25936f`, on Ubuntu image `20260907.292.1`. Source and fixed-toolchain checks completed, and compilation succeeded. The runner then refused an artifact read with `artifact_invalid`, before ELF inspection, notice collection or the 18 smoke checks. Only its diagnostic summary was retained. That revision did not distinguish the executable read from the linker-map read or report the failed artifact's size, so it establishes neither a size-limit cause nor successful qualification of the new installed `stats` command.
 
-The [13 September run 34786660910](https://github.com/hraness/aicharts/actions/runs/34786660910) used PR 219 merge `7a1df9f4db73e070369ef51f26d4aa3a1083b31e`, tree `c70f7dd920310ea3b4f3badbf8beb114b1589084`, on Ubuntu image `20260907.292.1`. Exact source/build checks, ELF/runtime validation, all 14 CLI smokes, notice collection, assembly and persistence passed. The retained summary reports 16 smoke invocations, a 3,828,896-byte executable and 16,797,664 bytes of notices. This is the most recent successful historical receipt; it does not qualify later provider or detailed-report changes.
+The [13 September run 34786660910](https://github.com/hraness/aicharts/actions/runs/34786660910) used PR 219 merge `7a1df9f4db73e070369ef51f26d4aa3a1083b31e`, tree `c70f7dd920310ea3b4f3badbf8beb114b1589084`, on Ubuntu image `20260907.292.1`. Exact source/build checks, ELF/runtime validation, all 14 CLI smokes, notice collection, assembly and persistence passed. The retained summary reports 16 smoke invocations, a 3,828,896-byte executable and 16,797,664 bytes of notices. This earlier successful receipt does not qualify later provider or detailed-report changes.
 
 The repair raised each bounded `dpkg-query` ownership/version subprocess timeout from five to 30 seconds for cold package databases. The fixed query environment, output cap, overall qualification deadline, diagnostics and all attribution predicates remain unchanged. The preceding [run 34785498690](https://github.com/hraness/aicharts/actions/runs/34785498690) and exact retry [34785695232](https://github.com/hraness/aicharts/actions/runs/34785695232) are retained as the two reproduced `package_query_terminated` refusals that motivated this repair.
 
@@ -46,8 +60,8 @@ partial breakdown coverage and correct source timestamps. The adjacent empty
 day must contain no rows and retain empty sources with unavailable token coverage.
 Both checks reject transcript canary output and recheck the unchanged synthetic
 stores and installed files. The invocation cap is 18; the shared 60-second smoke
-budget is unchanged. This source extension needs a fresh hosted run and does not
-extend the earlier 16-invocation receipt or qualify live provider acquisition.
+budget is unchanged. Run 35498763628 passed these installed-report checks; their
+synthetic inputs do not qualify live provider acquisition.
 
 Success retains the assembler's five exact files under `assets/`, `qualification.json` and a bounded `summary.json`. A failed job retains no successful qualification artifact; its bounded summary identifies the failing stage. The workflow uploads only those explicit outputs for seven days, never caches, private build evidence or the entire scratch directory. These public-repository artifacts are temporary test results, not immutable GitHub Releases or installation authority.
 
