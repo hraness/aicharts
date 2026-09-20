@@ -39,3 +39,14 @@ test("qualification refuses unsupported dependencies and oversized reports", () 
   assert.deepEqual(encodeLinuxQualificationReport({ ...input, target: { ...input.target, dynamicDependencies: [] } }), { ok: false, error: "invalid_report" });
   assert.deepEqual(validateLinuxQualificationReport(new Uint8Array(65 * 1024)), { ok: false, error: "limit_exceeded" });
 });
+
+test("smoke count admits the two installed stats checks without losing historical receipts or the bound", () => {
+  for (const invocations of [16, 17, 18]) {
+    const encoded = encodeLinuxQualificationReport({ ...input, smoke: { passed: true, invocations } });
+    assert.equal(encoded.ok, true);
+    assert.equal(validateLinuxQualificationReport(encoded.value.bytes).value.value.smoke.invocations, invocations);
+  }
+  for (const invocations of [0, 19, 1.5]) {
+    assert.equal(encodeLinuxQualificationReport({ ...input, smoke: { passed: true, invocations } }).ok, false);
+  }
+});

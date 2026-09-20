@@ -5,6 +5,7 @@ import { createHash } from "node:crypto";
 import { types } from "node:util";
 
 const MAX_REPORT = 64 * 1024;
+export const LINUX_SMOKE_MAX_INVOCATIONS = 18;
 const SHA256 = /^[0-9a-f]{64}$/u;
 const SHA1 = /^[0-9a-f]{40}$/u;
 const VERSION = /^(0|[1-9][0-9]{0,8})\.(0|[1-9][0-9]{0,8})\.(0|[1-9][0-9]{0,8})$/u;
@@ -109,7 +110,7 @@ function qualify(value) {
   integer(executable.bytes, 128 * 1024 * 1024, 1);
   const smoke = record(input.smoke, ["passed", "invocations"]);
   if (smoke.passed !== true) fail("invalid_report");
-  integer(smoke.invocations, 16, 1);
+  integer(smoke.invocations, LINUX_SMOKE_MAX_INVOCATIONS, 1);
   const notices = record(input.notices, ["complete", "bytes", "sha256"]);
   if (notices.complete !== true) fail("invalid_report");
   integer(notices.bytes, 128 * 1024 * 1024, 1);
