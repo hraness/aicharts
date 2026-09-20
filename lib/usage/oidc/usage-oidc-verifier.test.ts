@@ -51,7 +51,7 @@ function fixture() {
     fetch: async (input, init) => {
       requests++; expect(input).toBe(URL); expect(init?.method).toBe("GET");
       expect(init?.redirect).toBe("manual"); expect(init?.credentials).toBe("omit");
-      expect(init?.headers).toEqual({ Accept: "application/json, application/jwk-set+json" });
+      expect(init?.headers).toEqual({ Accept: "application/json, application/jwk-set+json", "Accept-Encoding": "identity" });
       expect(init?.signal instanceof AbortSignal).toBe(true);
       return reply(input, init);
     }, now: () => time,
@@ -126,6 +126,19 @@ test("malformed input never fetches and consumes the one attempt", async () => {
   expect(await s.verify("bad")).toEqual({ ok: false, error: "unauthorized" });
   expect(await s.verify(token)).toEqual({ ok: false, error: "unavailable" });
   expect(f.requests()).toBe(0); expect(c.pending).toHaveLength(0);
+});
+test("requests uncompressed keys from an endpoint that otherwise negotiates Brotli", async () => {
+  const f = fixture();
+  f.reply((_input, init) => {
+    const body = JSON.stringify({ keys: [jwk] });
+    return new Headers(init?.headers).get("accept-encoding") === "identity"
+      ? wireResponse(body, { headers: { "content-length": String(new TextEncoder().encode(body).byteLength) } })
+      : wireResponse(body, { headers: { "content-encoding": "br" } });
+  });
+  const result = await invoke(f);
+  value(result.result);
+  expect(f.requests()).toBe(1);
+  result.scope.finish();
 });
 test("completed keys serve a different scope without a second fetch", async () => {
   const f = fixture(); const a = context(); const b = context();
@@ -224,6 +237,7 @@ test("JWKS header and body policy refuses HTTP substitutions with fixed private 
     () => wireResponse("{}", { headers: { "content-type": "application/json; charset=latin1" } }),
     () => wireResponse("{}", { headers: { "content-type": "application/json; extra=1" } }),
     () => wireResponse("{}", { headers: { "content-encoding": "gzip" } }),
+    () => wireResponse("{}", { headers: { "content-encoding": "br" } }),
     () => wireResponse("{}", { headers: { "content-encoding": "" } }),
     ...["0", "01", "+2", "2.0", "16385", "9999999999999999999999", "3"].map((length) => () => wireResponse("{}", { headers: { "content-length": length } })),
     () => wireResponse(null), () => wireResponse(""), () => wireResponse("SYNTHETIC_RESPONSE_CANARY"),
