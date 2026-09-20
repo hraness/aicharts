@@ -1,12 +1,15 @@
 import { expect, test } from "bun:test";
 import { readAccountConsent, readAccountDays, readAccountStats } from "./account-read-client";
 import { setUsageConsent } from "./consent-client";
+import type { PrivateDaysPublicReply } from "./private-days-public";
+import type { StatsPublicReply } from "./stats-public";
+import type { UsageConsentPublicReply } from "./consent-public";
 
 const signedIn = { kind: "signed_in", session: { suiteAccountId: "PRIVATE_SESSION_CANARY" } };
-const missing = { schemaVersion: 1, error: { code: "authentication_required" } };
-const absent = { schemaVersion: 1, state: "not_enrolled" };
-const statsMissing = { schemaVersion: 2, ok: false, error: "authentication_required" };
-const statsAbsent = { schemaVersion: 2, ok: false, error: "not_enrolled" };
+const missing = { schemaVersion: 1, error: { code: "authentication_required" } } satisfies PrivateDaysPublicReply & UsageConsentPublicReply;
+const absent = { schemaVersion: 1, state: "not_enrolled" } satisfies PrivateDaysPublicReply & UsageConsentPublicReply;
+const statsMissing = { schemaVersion: 2, ok: false, error: "authentication_required" } satisfies StatsPublicReply;
+const statsAbsent = { schemaVersion: 2, ok: false, error: "not_enrolled" } satisfies StatsPublicReply;
 type Options = NonNullable<Parameters<typeof readAccountConsent>[1]>;
 const clients = [
   { name: "daily", path: "/api/usage/days?firstUtcDay=10&dayCount=1", missing, absent,
