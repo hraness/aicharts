@@ -134,11 +134,22 @@ fn account_diagnostic_is_fixed_and_does_not_guess_identity() {
     assert_eq!(value["operation"], "account_diagnostic");
     assert_eq!(value["access"], "read_only");
     assert_eq!(value["outcome"], "refused");
-    assert_eq!(value["stage"], "attempt_snapshot");
-    assert!(matches!(
-        value["reason"].as_str(),
-        Some("attempt_missing" | "attempt_recovery_required")
-    ));
+    #[cfg(target_os = "macos")]
+    {
+        assert_eq!(value["stage"], "attempt_snapshot");
+        assert!(matches!(
+            value["reason"].as_str(),
+            Some("attempt_missing" | "attempt_recovery_required")
+        ));
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        assert_eq!(value["stage"], "platform");
+        assert_eq!(
+            value["reason"],
+            "persistent_state_requires_qualified_macos_custody"
+        );
+    }
     assert!(!text.contains("acct_"));
     assert!(!text.contains("http"));
     assert!(!missing.exists());
