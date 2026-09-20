@@ -91,6 +91,7 @@ const HELP: &str = "AI Charts Usage — local reports and enrolled publication
   aicharts status --state-dir DIR --key-file PATH [--json]
   aicharts inspect --state-dir DIR --key-file PATH [--occurrence-key-file PATH] [--json]
   aicharts account --state-dir ABSOLUTE_DIR [--json]
+  aicharts account --state-dir ABSOLUTE_DIR --diagnose [--json]
   aicharts daemon [--once] [--complete-prefix] --state-dir DIR --key-file PATH [--codex FILE_OR_DIR] [--claude FILE_OR_DIR] [--devin FILE_OR_DIR] [--interval-seconds N] [--retry-attempts N] [--json]
   aicharts enroll --state-dir DIR
   aicharts outbox --dry-run --state-dir DIR --key-file PATH [--limit 1..256] [--after ID --revision N]
@@ -126,6 +127,9 @@ outbox never acknowledges or sends; ordinary state opening can recover SQLite.
 inspect reads only an existing ledger without source scanning, recovery or writes.
 account verifies both retained credentials and prints the enrolled account and
 device IDs without advancing enrollment, opening the ledger or contacting a server.
+account --diagnose performs the same one-time read-only enrolled join but emits
+only a fixed stage and reason, without IDs or native messages. A refusal exits 2;
+it never repairs, reenrolls, contacts a server or opens the ledger.
 An explicit occurrence key selects the existing split-key namespace version 1;
 omitting it selects legacy identity. Neither option migrates or rekeys state.
 reindex-plan inspects existing state without recovery or writes and rereads explicit
@@ -531,6 +535,26 @@ fn run(args: &[String]) -> Result<String, &'static str> {
         return inspect::run(args);
     }
     if args.first().map(String::as_str) == Some("account") {
+        if args.iter().any(|arg| arg == "--diagnose") {
+            match account::run_diagnostic(&args) {
+                Ok((output, exit_code)) => {
+                    let stdout = io::stdout();
+                    let mut writer = stdout.lock();
+                    if writer
+                        .write_all(output.as_bytes())
+                        .and_then(|()| writer.flush())
+                        .is_err()
+                    {
+                        std::process::exit(1);
+                    }
+                    std::process::exit(exit_code);
+                }
+                Err(code) => {
+                    eprintln!("aicharts: {code}");
+                    std::process::exit(2);
+                }
+            }
+        }
         return account::run(args);
     }
     if args.first().map(String::as_str) == Some("daemon") {

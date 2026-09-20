@@ -13,6 +13,8 @@ use super::session::{CustodyPort, ExchangePort, HeldAttempt, OperationFailure};
 use super::storage::Storage;
 use super::Error;
 use crate::enrollment::contract::{Context, Operation, Request};
+#[cfg(target_os = "macos")]
+use crate::enrollment::diagnostic::{Failure, Stage};
 use crate::enrollment::https::{AcceptedEnrollment, TransportError};
 use aicharts_custody::SecretRecord;
 
@@ -149,10 +151,23 @@ pub(super) fn reopen_native(
     path: &Path,
     expected: super::record::Token,
 ) -> Result<NativeEnrollment, Error> {
-    let storage = MacStorage::open_existing(path)?;
-    let references = ReferenceStore::open_existing(path).map_err(native_custody_error)?;
-    let vault = Vault::new().map_err(|_| Error::Custody)?;
-    let attempt = HeldAttempt::open(storage, expected)?;
+    reopen_native_observed(path, expected).map_err(|failure| failure.error)
+}
+
+#[cfg(target_os = "macos")]
+pub(super) fn reopen_native_observed(
+    path: &Path,
+    expected: super::record::Token,
+) -> Result<NativeEnrollment, Failure> {
+    let storage = MacStorage::open_existing(path)
+        .map_err(|error| Failure::attempt(Stage::AttemptReopen, error))?;
+    let references = ReferenceStore::open_existing(path).map_err(|error| {
+        Failure::references(Stage::ReferencesOpen, error, native_custody_error(error))
+    })?;
+    let vault = Vault::new()
+        .map_err(|error| Failure::custody(Stage::CustodyConstruct, error, Error::Custody))?;
+    let attempt = HeldAttempt::open(storage, expected)
+        .map_err(|error| Failure::attempt(Stage::AttemptDurability, error))?;
     Ok(NativeEnrollment {
         attempt,
         references,

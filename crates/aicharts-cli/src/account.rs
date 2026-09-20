@@ -5,6 +5,7 @@ use std::path::{Path, PathBuf};
 struct Options {
     directory: PathBuf,
     json: bool,
+    diagnose: bool,
 }
 
 struct Identity {
@@ -18,10 +19,12 @@ fn options(args: &[String]) -> Result<Options, &'static str> {
     }
     let mut directory = None;
     let mut json = false;
+    let mut diagnose = false;
     let mut args = args[1..].iter();
     while let Some(flag) = args.next() {
         match flag.as_str() {
             "--json" if !json => json = true,
+            "--diagnose" if !diagnose => diagnose = true,
             "--state-dir" if directory.is_none() => {
                 let value = args
                     .next()
@@ -39,6 +42,7 @@ fn options(args: &[String]) -> Result<Options, &'static str> {
     Ok(Options {
         directory: directory.ok_or("state_directory_required")?,
         json,
+        diagnose,
     })
 }
 
@@ -78,9 +82,49 @@ fn render(identity: &Identity, json: bool) -> Result<String, &'static str> {
     }
 }
 
+fn render_diagnostic(diagnostic: crate::enrollment::AccountDiagnostic, json: bool) -> String {
+    if json {
+        // Keep this projection fixed and deliberately free of account IDs,
+        // paths, native messages and credential material.
+        format!(
+            "{{\"schemaVersion\":1,\"operation\":\"account_diagnostic\",\"access\":\"read_only\",\"outcome\":\"{}\",\"stage\":\"{}\",\"reason\":\"{}\"}}\n",
+            if diagnostic.is_qualified() { "qualified" } else { "refused" },
+            diagnostic.stage(),
+            diagnostic.reason(),
+        )
+    } else {
+        format!(
+            "AI Charts account diagnostic\nOutcome: {}\nStage: {}\nReason: {}\n{}\n",
+            if diagnostic.is_qualified() {
+                "qualified"
+            } else {
+                "refused"
+            },
+            diagnostic.stage(),
+            diagnostic.reason(),
+            diagnostic.guidance(),
+        )
+    }
+}
+
 pub(super) fn run(args: &[String]) -> Result<String, &'static str> {
     let options = options(args)?;
+    if options.diagnose {
+        return Err("account_diagnostic_requires_dispatch");
+    }
     render(&identity(&options.directory)?, options.json)
+}
+
+pub(super) fn run_diagnostic(args: &[String]) -> Result<(String, i32), &'static str> {
+    let options = options(args)?;
+    if !options.diagnose {
+        return Err("account_diagnostic_required");
+    }
+    let diagnostic = crate::enrollment::diagnose_account(&options.directory);
+    Ok((
+        render_diagnostic(diagnostic, options.json),
+        if diagnostic.is_qualified() { 0 } else { 2 },
+    ))
 }
 
 #[cfg(test)]
@@ -100,6 +144,13 @@ mod tests {
             vec!["account", "--state-dir"],
             vec!["account", "--state-dir", "--json"],
             vec!["account", "--state-dir", "relative"],
+            vec![
+                "account",
+                "--state-dir",
+                "/private/example",
+                "--diagnose",
+                "--diagnose",
+            ],
             vec![
                 "account",
                 "--state-dir",
@@ -141,6 +192,7 @@ mod tests {
         .expect("explicit account options");
         assert_eq!(parsed.directory, Path::new("/private/example"));
         assert!(parsed.json);
+        assert!(parsed.diagnose == false);
     }
 
     #[test]

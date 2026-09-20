@@ -116,4 +116,30 @@ fn account_help_explains_local_verification_without_opening_state() {
     assert!(
         text.contains("without advancing enrollment, opening the ledger or contacting a server")
     );
+    assert!(text.contains("aicharts account --state-dir ABSOLUTE_DIR --diagnose [--json]"));
+}
+
+#[test]
+fn account_diagnostic_is_fixed_and_does_not_guess_identity() {
+    let fixture = Fixture::new();
+    let missing = fixture.0.join("diagnostic-missing");
+    let output = fixture.run(&missing, &["--diagnose", "--json"]);
+    assert_eq!(output.status.code(), Some(2));
+    assert!(output.stderr.is_empty());
+    let text = String::from_utf8(output.stdout).unwrap();
+    assert!(text.len() < 512);
+    assert!(text.ends_with('\n'));
+    let value: serde_json::Value = serde_json::from_str(&text).unwrap();
+    assert_eq!(value["schemaVersion"], 1);
+    assert_eq!(value["operation"], "account_diagnostic");
+    assert_eq!(value["access"], "read_only");
+    assert_eq!(value["outcome"], "refused");
+    assert_eq!(value["stage"], "attempt_snapshot");
+    assert!(matches!(
+        value["reason"].as_str(),
+        Some("attempt_missing" | "attempt_recovery_required")
+    ));
+    assert!(!text.contains("acct_"));
+    assert!(!text.contains("http"));
+    assert!(!missing.exists());
 }
