@@ -140,7 +140,14 @@ function fixture(t) {
       if (args[0] === "prefix-enable") return result("Prefix enabled\n");
       if (args[0] === "daemon") return response({ tokens: "185", scanMode: "full_changed_source_complete_prefix", sourcesWithDeferredTail: 0 });
       if (args[0] === "turns") return response({ days: [{ utcDay: 2, completed: { runtimeMsSum: "1537", runtimeEligibleTurns: 1 } }], uploaded: false });
-      if (args[0] === "upload") return args.includes("--dry-run") ? response({ uploaded: false, frames: [{ hex: "00" }] }) : result("", 2, "aicharts: upload_not_enabled_use_dry_run\n");
+      if (args[0] === "upload") {
+        if (args.includes("--dry-run")) {
+          assert.deepEqual(args, ["upload", "--dry-run", "--key-file", "key", "--codex", "codex.jsonl", "--claude", "claude.jsonl"]);
+          return response({ uploaded: false, frames: [{ hex: "00" }] });
+        }
+        assert.deepEqual(args, ["upload", "--state-dir", "state", "--key-file", "key"]);
+        return result("", 2, "aicharts: upload_requires_qualified_macos_custody\n");
+      }
       assert.fail("unexpected synthetic executable argv");
     },
   };
@@ -426,6 +433,36 @@ test("installed stats totals, reported basis, coverage and date scope are requir
     assert.deepEqual(await internals.runWith(f.input, f.host), { ok: false, error: "smoke_failed" });
     assert.equal(fs.existsSync(join(f.input.outputDirectory, "qualification.json")), false);
     assert.equal(f.stages.includes("persist-assets"), false);
+  }
+});
+
+test("upload smoke fixture refuses the obsolete fresh-source syntax", async t => {
+  const f = fixture(t);
+  await assert.rejects(f.host.execute("/synthetic/aicharts", ["upload", "--key-file", "key", "--codex", "codex.jsonl", "--claude", "claude.jsonl"], {
+    cwd: join(f.input.outputDirectory, "smoke"), env: { PATH: "/usr/bin:/bin" }, timeoutMs: 1000, maxBytes: 1024,
+  }), { code: "ERR_ASSERTION" });
+});
+
+test("Linux upload must refuse through custody without changing the synthetic key or ledger", async t => {
+  for (const fault of ["old_refusal", "invalid_option", "unexpected_output", "success", "state", "key", "key_mode"]) {
+    const f = fixture(t), execute = f.host.execute;
+    f.host.execute = async (executable, args, options) => {
+      const response = await execute(executable, args, options);
+      if (args[0] === "upload" && !args.includes("--dry-run")) {
+        assert.deepEqual(args, ["upload", "--state-dir", "state", "--key-file", "key"]);
+        if (fault === "old_refusal") response.stderr = bytes("aicharts: upload_not_enabled_use_dry_run\n");
+        if (fault === "invalid_option") response.stderr = bytes("aicharts: invalid_option\n");
+        if (fault === "unexpected_output") response.stdout = bytes("unexpected output\n");
+        if (fault === "success") { response.status = 0; response.stderr = bytes(""); }
+        if (fault === "state") fs.appendFileSync(join(options.cwd, "state/usage.sqlite3"), "unexpected mutation");
+        if (fault === "key") fs.writeFileSync(join(options.cwd, "key"), Buffer.alloc(32, 9));
+        if (fault === "key_mode") fs.chmodSync(join(options.cwd, "key"), 0o644);
+      }
+      return response;
+    };
+    assert.deepEqual(await internals.runWith(f.input, f.host), { ok: false, error: "smoke_failed" });
+    assert.equal(f.stages.at(-1), "smoke-13"); assert.equal(f.notices.length, 0);
+    assert.equal(fs.existsSync(join(f.input.outputDirectory, "qualification.json")), false);
   }
 });
 
