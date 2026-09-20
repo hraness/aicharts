@@ -9,7 +9,7 @@ import { hydrateReleaseSource } from "./hydrate-source.mjs";
 import { assembleLinuxRelease } from "./assemble.mjs";
 import { validateArchive } from "./archive.mjs";
 import { validateLinuxQualificationReport } from "./linux-qualification.mjs";
-import { LINUX_NOTICES_MAX_BYTES } from "./linux-notices.mjs";
+import { LINUX_LINK_MAP_MAX_BYTES, LINUX_NOTICES_MAX_BYTES } from "./linux-notices.mjs";
 import { SUPPORT_SOURCE } from "./support-source.mjs";
 
 // Private source-only seam. The shipped runner has no effects override. Fake
@@ -669,30 +669,31 @@ test("real bounded child capture preserves status and refuses excess output and 
 });
 
 
-test("compiler artifact diagnostics identify the bounded read without exposing paths or bytes", async t => {
-  for (const [kind, stage, maximumBytes] of [["executable", "measure-executable", 64 * 1024 * 1024], ["link_map", "read-link-map", 8 * 1024 * 1024]]) {
+test("compiler artifact diagnostics identify one-byte excess without exposing paths or bytes", async t => {
+  for (const [kind, stage, maximumBytes] of [["executable", "measure-executable", 64 * 1024 * 1024], ["link_map", "read-link-map", LINUX_LINK_MAP_MAX_BYTES]]) {
     const f = fixture(t), execute = f.host.execute;
     f.host.execute = async (executable, args, options) => {
       const outcome = await execute(executable, args, options);
       if (args[0] === "rustc") {
         const file = kind === "executable" ? join(f.input.outputDirectory, "target", TARGET, "release/aicharts") : args.at(-1).slice("link-arg=-Wl,-Map=".length);
-        fs.truncateSync(file, maximumBytes + 137);
+        fs.truncateSync(file, maximumBytes + 1);
       }
       return outcome;
     };
     assert.deepEqual(await internals.runWith(f.input, f.host), { ok: false, error: "artifact_invalid" });
     const summaryText = fs.readFileSync(join(f.input.outputDirectory, "summary.json"), "utf8"), summary = JSON.parse(summaryText);
     assert.deepEqual(summary.diagnostic, { module: "artifact", code: "artifact_read_invalid", kind, reason: "byte_limit", maximumBytes,
-      observedBytes: maximumBytes + 137, sizeSaturated: false, telemetryMaximumBytes: 1024 * 1024 * 1024 });
+      observedBytes: maximumBytes + 1, sizeSaturated: false, telemetryMaximumBytes: 1024 * 1024 * 1024 });
     assert.equal(summary.stages.at(-1), stage); assert.equal(summary.checksPassed, false);
     assert.equal(f.calls.some(call => call.executable === "/usr/bin/readelf"), false);
+    assert.equal(f.notices.length, 0);
     assert.equal(fs.existsSync(join(f.input.outputDirectory, "qualification.json")), false);
     assert.equal(summaryText.includes(f.root) || summaryText.includes("SYNTHETIC_NEVER_FORWARD"), false);
   }
 });
 
 test("artifact diagnostics retain regular-file guards and cap only their size telemetry", t => {
-  const f = fixture(t), file = join(f.root, "PRIVATE_PATH_CANARY"), maximumBytes = 8 * 1024 * 1024;
+  const f = fixture(t), file = join(f.root, "PRIVATE_PATH_CANARY"), maximumBytes = LINUX_LINK_MAP_MAX_BYTES;
   fs.writeFileSync(file, "PRIVATE_CONTENT_CANARY");
   const diagnostic = (selected, cap = maximumBytes, executable = false) => {
     let failure; try { internals.readRegular(selected, cap, executable); } catch (error) { failure = error; }
@@ -707,4 +708,29 @@ test("artifact diagnostics retain regular-file guards and cap only their size te
   assert.equal(JSON.stringify([missing, large]).includes("PRIVATE_"), false);
   const arbitrary = internals.artifactReadDiagnostic(Object.assign(new Error("PRIVATE_ERROR_CANARY"), { reason: "PRIVATE_REASON_CANARY", observedBytes: 1 }), "link_map", maximumBytes);
   assert.equal(arbitrary.reason, "io_failed"); assert.equal(arbitrary.observedBytes, null); assert.equal(JSON.stringify(arbitrary).includes("PRIVATE_"), false);
+});
+
+test("runner delivers complete linker maps above 8 MiB and at the collector boundary", async t => {
+  assert.equal(LINUX_LINK_MAP_MAX_BYTES, 32 * 1024 * 1024);
+  for (const size of [8 * 1024 * 1024 + 1, LINUX_LINK_MAP_MAX_BYTES]) {
+    const f = fixture(t), execute = f.host.execute, collectNotices = f.host.collectNotices;
+    const measuredMap = Buffer.alloc(size, 0x20);
+    Buffer.from("Linker script and memory map\nLOAD SYNTHETIC_MAP_CANARY\n").copy(measuredMap);
+    measuredMap[size - 1] = 0x0a;
+    f.host.execute = async (executable, args, options) => {
+      const result = await execute(executable, args, options);
+      if (args[0] === "rustc") fs.writeFileSync(args.at(-1).slice("link-arg=-Wl,-Map=".length), measuredMap);
+      return result;
+    };
+    f.host.collectNotices = async input => {
+      assert.equal(input.linkMapBytes.length, size); assert.equal(input.linkMapBytes.equals(measuredMap), true);
+      return await collectNotices(input);
+    };
+    assert.equal((await internals.runWith(f.input, f.host)).ok, true);
+    assert.equal(f.notices.length, 1);
+    const summaryText = fs.readFileSync(join(f.input.outputDirectory, "summary.json"), "utf8"), summary = JSON.parse(summaryText);
+    assert.equal(summary.smokeInvocations, 18); assert.equal(summary.checksPassed, true);
+    assert.equal(summaryText.includes("SYNTHETIC_MAP_CANARY"), false);
+    assert.equal(fs.existsSync(join(f.input.outputDirectory, "qualification.json")), true);
+  }
 });

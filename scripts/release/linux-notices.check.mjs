@@ -7,7 +7,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
-import { collectLinuxNotices, planLinuxNotices, linuxNativeDiagnostic, linuxSystemDiagnostic } from "./linux-notices.mjs";
+import { collectLinuxNotices, planLinuxNotices, linuxNativeDiagnostic, linuxSystemDiagnostic, LINUX_LINK_MAP_MAX_BYTES } from "./linux-notices.mjs";
 import { SUPPORT_SOURCE, SUPPORT_FILES } from "./support-source.mjs";
 
 const digest = bytes => createHash("sha256").update(bytes).digest("hex");
@@ -240,6 +240,22 @@ test("lld maps, empty maps and maps bound to another output refuse", () => {
     const f = fixture(); f.input.linkMapBytes = Buffer.from(map);
     assert.equal(planLinuxNotices(f.input).error, "notices_build_incomplete");
   }
+});
+
+test("complete bfd maps above 8 MiB and at the shared 32 MiB bound retain exact attribution", () => {
+  assert.equal(LINUX_LINK_MAP_MAX_BYTES, 32 * 1024 * 1024);
+  const f = fixture(), expected = planLinuxNotices(f.input);
+  assert.equal(expected.ok, true);
+  const measuredMap = f.input.linkMapBytes;
+  for (const size of [8 * 1024 * 1024 + 1, LINUX_LINK_MAP_MAX_BYTES]) {
+    // Ignored map whitespace changes size without changing any LOAD or OUTPUT.
+    const padded = Buffer.alloc(size, 0x20); measuredMap.copy(padded); padded[size - 1] = 0x0a;
+    f.input.linkMapBytes = padded;
+    assert.deepEqual(planLinuxNotices(f.input), expected);
+  }
+  // Invalid UTF-8 beyond the byte bound must be refused before decoding.
+  f.input.linkMapBytes = Buffer.alloc(LINUX_LINK_MAP_MAX_BYTES + 1, 0xff);
+  assert.deepEqual(planLinuxNotices(f.input), { ok: false, error: "notices_limit" });
 });
 
 test("map paths never accept relative paths or shell-like whitespace", () => {

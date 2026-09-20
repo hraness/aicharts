@@ -1,4 +1,6 @@
-# Local usage
+# Legacy v1 usage and turn observations
+
+This guide covers legacy v1 file-key usage collection and the numeric ledger, plus the separate Codex `turns` report. For the broader client roster, model attribution, and costs without a namespace key, see [Create a detailed local report](usage-install.md#create-a-detailed-local-report). The limits below apply to the commands documented here.
 
 Use the executable admitted through [Run the Linux CLI](usage-install.md). Commands below run from its archive root. Uppercase `KEY`, `SOURCE`, `FILE`, and `STATE` are syntax placeholders, not shell variables or ready-made paths. Replace them with your own explicitly selected paths, quoting each path as one argument.
 
@@ -19,11 +21,11 @@ This creates a 32-byte random key with mode 0600 and refuses to overwrite an exi
 ./bin/aicharts usage --key-file KEY --claude SOURCE --json
 ```
 
-Repeat the provider flags to combine selected files or directories. Directory scanning selects `.jsonl` files and skips observed symlink entries; explicitly supplied symlinks are refused. No home-directory discovery or provider configuration change occurs. The CLI scans source bytes to extract selected metadata. It does not copy session logs or retain conversation bodies.
+Repeat the provider flags to combine selected files or directories. Directory scanning selects `.jsonl` files and skips observed symlink entries; explicitly supplied symlinks are refused. These `usage` commands require explicit source paths and do not change provider configuration. They scan source bytes to extract selected metadata without copying session logs or retaining conversation bodies.
 
 Results describe partial observed history, not a bill or all activity in an account. Preserve JSON token counters as decimal strings. `outputTokens` is part of the total, not another amount to add. Warnings matter: missing baselines, unsupported history, or unmeasured token subdivisions are not zero usage. Supported copied records deduplicate; arbitrary overlaps and forks are not guaranteed to reconcile.
 
-Model attribution, subscription type and cost, API-versus-subscription use, account ownership, human prompt counts, activity, concurrency, and cost per hour remain unavailable. Do not infer time worked or productivity from tokens. This guide does not claim compatibility with every provider version.
+In these `usage` results, model attribution, subscription type and cost, API-versus-subscription use, account ownership, human prompt counts, activity, concurrency, and cost per hour remain unavailable. Do not infer time worked or productivity from tokens. This guide does not claim compatibility with every provider version.
 
 ## Inspect daily turn observations
 

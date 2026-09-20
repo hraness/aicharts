@@ -11,7 +11,7 @@ import { hydrateReleaseSource } from "./hydrate-source.mjs";
 import { assembleLinuxRelease } from "./assemble.mjs";
 import { validateArchive } from "./archive.mjs";
 import { encodeLinuxQualificationReport, validateLinuxQualificationReport, LINUX_SMOKE_MAX_INVOCATIONS } from "./linux-qualification.mjs";
-import { LINUX_NOTICES_MAX_BYTES, linuxNativeDiagnostic, linuxSystemDiagnostic } from "./linux-notices.mjs";
+import { LINUX_LINK_MAP_MAX_BYTES, LINUX_NOTICES_MAX_BYTES, linuxNativeDiagnostic, linuxSystemDiagnostic } from "./linux-notices.mjs";
 import { SUPPORT_SOURCE } from "./support-source.mjs";
 
 const MiB = 1024 * 1024;
@@ -21,7 +21,7 @@ const RUST_COMMIT = "8bab26f4f68e0e26f0bb7960be334d5b520ea452";
 const INTERPRETER = "/lib64/ld-linux-x86-64.so.2";
 const INTERPRETER_SONAME = path.basename(INTERPRETER);
 const SYSTEM_LIBRARIES = new Set([INTERPRETER_SONAME, "libc.so.6", "libm.so.6", "libgcc_s.so.1", "libpthread.so.0", "librt.so.1", "libdl.so.2", "libutil.so.1", "libresolv.so.2"]);
-const CAPS = Object.freeze({ deadline: 20 * 60_000, build: 12 * 60_000, logs: 32 * MiB, diagnostic: MiB, map: 8 * MiB, notices: LINUX_NOTICES_MAX_BYTES, binary: 64 * MiB, metadata: 8 * MiB });
+const CAPS = Object.freeze({ deadline: 20 * 60_000, build: 12 * 60_000, logs: 32 * MiB, diagnostic: MiB, map: LINUX_LINK_MAP_MAX_BYTES, notices: LINUX_NOTICES_MAX_BYTES, binary: 64 * MiB, metadata: 8 * MiB });
 const ERRORS = new Set(["invalid_input", "unsupported_host", "invalid_workflow", "unsupported_destination", "destination_exists", "source_failed", "source_changed", "unsupported_source", "toolchain_failed", "toolchain_mismatch", "process_failed", "process_timeout", "process_output_limit", "process_custody_failed", "deadline_exceeded", "build_failed", "artifact_invalid", "elf_invalid", "runtime_invalid", "smoke_failed", "notices_incomplete", "assembly_failed", "install_failed", "write_failed"]);
 const MODULE_ERRORS = Object.freeze({
   source: new Set(["invalid_input", "unsupported_repository", "repository_changed", "missing_object", "invalid_object", "invalid_source", "limit_exceeded", "git_failed", "deadline_exceeded"]),
