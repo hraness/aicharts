@@ -1,5 +1,7 @@
 #![forbid(unsafe_code)]
 
+mod autosubmit;
+mod capture;
 mod daemon;
 mod enroll;
 #[cfg(unix)]
@@ -11,7 +13,10 @@ mod intro;
 mod prefix;
 mod reindex;
 mod sessions;
+mod source_refresh;
 mod state;
+mod stats;
+mod stats_sync;
 mod support;
 mod sync;
 mod transport_dns;
@@ -61,9 +66,14 @@ const USAGE_HINT_CODES: &[&str] = &[
     "upload_not_enabled_use_dry_run",
     "too_many_sources",
 ];
-const HELP: &str = "AI Charts Usage — local-only foundation
+const HELP: &str = "AI Charts Usage — local reports and enrolled publication
 
   aicharts --version [--json]
+  aicharts stats --home DIR (--all | --client ID ...) [--since YYYY-MM-DD --until YYYY-MM-DD] [--json]
+  aicharts stats-sync --state-dir DIR --key-file PATH --home DIR --client ID [--since YYYY-MM-DD --until YYYY-MM-DD]
+  aicharts refresh --help
+  aicharts autosubmit --config-file PATH [--check | --dry-run]
+  aicharts capture mcode --cache-dir DIR --executable PATH -- exec ...
   aicharts support protocol --json
   aicharts support --help
   aicharts turns --codex FILE [--codex FILE ...] --occurrence-key-file KEY [--json]
@@ -130,8 +140,8 @@ enrolled macOS installation. It requires an existing prefix-enabled sender ledge
 it never initializes, migrates, enrolls or installs a service. See sync --help.
 enroll pairs this installation with an AI Charts account through local macOS
 credential custody and one explicit browser approval; it never uploads and only
-prepares the option to upload later. No account sign-in, daemon installation,
-key recovery or OS sandbox is implemented yet.
+prepares the option to upload later. Enrollment does not install a scheduled
+publisher or recover an unavailable key. See autosubmit --help for scheduling.
 Keep your key private and retain it: changing it changes occurrence identities.
 ";
 
@@ -459,7 +469,10 @@ fn render(collection: &Collection, mode: Mode, json: bool) -> Result<String, &'s
         }
         serde_json::to_string_pretty(&result).map_err(|_| "summary_encode_failed")
     } else {
-        Ok(format!("AI Charts Usage — local only; nothing uploaded\nObserved tokens: {token_total}\nObserved output tokens: {output_total}\nUsage occurrences: {usage_total}\nPrompt counts and activity: unavailable\nCoverage: partial historical import\nPricing: unavailable; models remain unknown\nWarnings: {}\n", warnings.join(", ")))
+        Ok(format!(
+            "AI Charts Usage — local only; nothing uploaded\nObserved tokens: {token_total}\nObserved output tokens: {output_total}\nUsage occurrences: {usage_total}\nPrompt counts and activity: unavailable\nCoverage: partial historical import\nPricing: unavailable; models remain unknown\nWarnings: {}\n",
+            warnings.join(", ")
+        ))
     }
 }
 
@@ -499,6 +512,15 @@ fn run(args: &[String]) -> Result<String, &'static str> {
     }
     if args.first().map(String::as_str) == Some("sessions") {
         return sessions::run(args);
+    }
+    if args.first().map(String::as_str) == Some("stats") {
+        return stats::run(args);
+    }
+    if args.first().map(String::as_str) == Some("stats-sync") {
+        return stats_sync::run(args);
+    }
+    if args.first().map(String::as_str) == Some("refresh") {
+        return source_refresh::run(&args[1..]);
     }
     if args.first().map(String::as_str) == Some("inspect") {
         return inspect::run(args);
@@ -549,6 +571,35 @@ fn main() {
         std::process::exit(2);
     };
     let support_options = support::options();
+    if matches!(
+        args.first().map(String::as_str),
+        Some("autosubmit" | "capture")
+    ) && !args.iter().any(|arg| arg == "--version")
+    {
+        let outcome = if args[0] == "capture" {
+            capture::run(&args[1..]).map(|outcome| (outcome.summary, outcome.exit_code))
+        } else {
+            autosubmit::run(&args).map(|outcome| (outcome.summary, outcome.exit_code))
+        };
+        match outcome {
+            Ok((summary, exit_code)) => {
+                let stdout = io::stdout();
+                let mut writer = stdout.lock();
+                if writer
+                    .write_all(summary.as_bytes())
+                    .and_then(|()| writer.flush())
+                    .is_err()
+                {
+                    std::process::exit(1);
+                }
+                std::process::exit(exit_code);
+            }
+            Err(code) => {
+                eprintln!("aicharts: {code}");
+                std::process::exit(2);
+            }
+        }
+    }
     if args.first().map(String::as_str) == Some("support") {
         std::process::exit(support::execute(&args[1..], &support_options));
     }
@@ -690,7 +741,7 @@ mod tests {
     #[test]
     fn help_does_not_read_source_data() {
         let help = run(&args(&["--help"])).unwrap();
-        assert!(help.contains("local-only"));
+        assert!(help.contains("local reports and enrolled publication"));
         assert!(help.contains("partial response-token/requested-call subtotals"));
         assert!(help.contains("Complete token totals and dispatched tool calls remain unknown"));
         assert!(!help.contains("partial observed runtime with unknown tokens/tools"));

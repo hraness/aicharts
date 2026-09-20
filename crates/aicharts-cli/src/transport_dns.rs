@@ -5,6 +5,7 @@ use std::io;
 use std::net::{SocketAddr, ToSocketAddrs};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::mpsc;
+use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
 use ureq::config::Config;
@@ -52,6 +53,64 @@ fn start_lookup(
 #[derive(Debug)]
 pub(super) struct UsageResolver;
 
+/// A source refresh pins the exact explicitly selected authority before reading
+/// credentials. HTTPS may target a configured service; cleartext is restricted
+/// to literal loopback addresses for a local service.
+#[derive(Clone, Debug)]
+pub(super) struct SourceResolver {
+    scheme: &'static str,
+    host: Arc<str>,
+    port: u16,
+}
+
+impl SourceResolver {
+    pub(super) fn https(host: &str, port: u16) -> io::Result<Self> {
+        let plain = host
+            .strip_prefix('[')
+            .and_then(|s| s.strip_suffix(']'))
+            .unwrap_or(host);
+        let literal = plain.parse::<std::net::IpAddr>().is_ok();
+        let dns = !host.is_empty()
+            && host.len() <= 253
+            && host.split('.').all(|label| {
+                !label.is_empty()
+                    && label.len() <= 63
+                    && label
+                        .as_bytes()
+                        .first()
+                        .is_some_and(u8::is_ascii_alphanumeric)
+                    && label
+                        .as_bytes()
+                        .last()
+                        .is_some_and(u8::is_ascii_alphanumeric)
+                    && label
+                        .bytes()
+                        .all(|b| b.is_ascii_alphanumeric() || b == b'-')
+            });
+        if port == 0 || (!literal && !dns) {
+            return Err(io::Error::from(io::ErrorKind::InvalidInput));
+        }
+        Ok(Self {
+            scheme: "https",
+            host: Arc::from(plain),
+            port,
+        })
+    }
+
+    pub(super) fn loopback_http(host: &str, port: u16) -> io::Result<Self> {
+        let mut resolver = Self::https(host, port)?;
+        if !resolver
+            .host
+            .parse::<std::net::IpAddr>()
+            .is_ok_and(|address| address.is_loopback())
+        {
+            return Err(io::Error::from(io::ErrorKind::InvalidInput));
+        }
+        resolver.scheme = "http";
+        Ok(resolver)
+    }
+}
+
 fn bounded_addresses(
     addresses: impl Iterator<Item = SocketAddr>,
 ) -> io::Result<ResolvedSocketAddrs> {
@@ -72,40 +131,69 @@ impl Resolver for UsageResolver {
         _: &Config,
         timeout: NextTimeout,
     ) -> Result<ResolvedSocketAddrs, ureq::Error> {
-        if uri.scheme_str() != Some("https")
-            || uri.host() != Some(HOST)
-            || uri.port_u16().unwrap_or(443) != 443
-        {
-            return Err(io::Error::from(io::ErrorKind::InvalidInput).into());
+        resolve_authority(uri, timeout, "https", Arc::from(HOST), 443)
+    }
+}
+
+impl Resolver for SourceResolver {
+    fn resolve(
+        &self,
+        uri: &Uri,
+        _: &Config,
+        timeout: NextTimeout,
+    ) -> Result<ResolvedSocketAddrs, ureq::Error> {
+        resolve_authority(uri, timeout, self.scheme, self.host.clone(), self.port)
+    }
+}
+
+fn resolve_authority(
+    uri: &Uri,
+    timeout: NextTimeout,
+    scheme: &'static str,
+    host: Arc<str>,
+    port: u16,
+) -> Result<ResolvedSocketAddrs, ureq::Error> {
+    let uri_host = uri.host().map(|v| {
+        v.strip_prefix('[')
+            .and_then(|s| s.strip_suffix(']'))
+            .unwrap_or(v)
+    });
+    if uri.scheme_str() != Some(scheme)
+        || uri_host != Some(host.as_ref())
+        || uri
+            .port_u16()
+            .unwrap_or(if scheme == "https" { 443 } else { 80 })
+            != port
+    {
+        return Err(io::Error::from(io::ErrorKind::InvalidInput).into());
+    }
+    let budget = (*timeout.after).min(RESOLVE);
+    if budget.is_zero() {
+        return Err(ureq::Error::Timeout(timeout.reason));
+    }
+    let pending = start_lookup(&DNS_BUSY, move || {
+        // The OS resolver receives only the pinned hostname and port. It has
+        // no token, binding, request bytes or HTTP callback to run after timeout.
+        bounded_addresses((host.as_ref(), port).to_socket_addrs()?)
+    })?;
+    match pending.result.recv_timeout(budget) {
+        Ok(result) => {
+            // The result is available only after lookup returns. Join this
+            // completed work before permitting an ordinary successful return.
+            pending
+                .worker
+                .join()
+                .map_err(|_| io::Error::other("upload_dns_failed"))?;
+            result.map_err(Into::into)
         }
-        let budget = (*timeout.after).min(RESOLVE);
-        if budget.is_zero() {
-            return Err(ureq::Error::Timeout(timeout.reason));
+        Err(mpsc::RecvTimeoutError::Timeout) => {
+            // Dropping the handle does not cancel DNS. The worker still owns
+            // the global permit until actual completion; no retry is queued.
+            Err(ureq::Error::Timeout(timeout.reason))
         }
-        let pending = start_lookup(&DNS_BUSY, || {
-            // The OS resolver receives only this literal public hostname. It has
-            // no token, binding, request bytes or HTTP callback to run after timeout.
-            bounded_addresses((HOST, 443).to_socket_addrs()?)
-        })?;
-        match pending.result.recv_timeout(budget) {
-            Ok(result) => {
-                // The result is available only after lookup returns. Join this
-                // completed work before permitting an ordinary successful return.
-                pending
-                    .worker
-                    .join()
-                    .map_err(|_| io::Error::other("upload_dns_failed"))?;
-                result.map_err(Into::into)
-            }
-            Err(mpsc::RecvTimeoutError::Timeout) => {
-                // Dropping the handle does not cancel DNS. The worker still owns
-                // the global permit until actual completion; no retry is queued.
-                Err(ureq::Error::Timeout(timeout.reason))
-            }
-            Err(mpsc::RecvTimeoutError::Disconnected) => {
-                let _ = pending.worker.join();
-                Err(io::Error::other("upload_dns_failed").into())
-            }
+        Err(mpsc::RecvTimeoutError::Disconnected) => {
+            let _ = pending.worker.join();
+            Err(io::Error::other("upload_dns_failed").into())
         }
     }
 }
@@ -114,6 +202,34 @@ impl Resolver for UsageResolver {
 mod tests {
     use super::*;
     use std::sync::Arc;
+
+    #[test]
+    fn source_resolver_pins_authority_and_cleartext_is_literal_loopback_only() {
+        let resolver = SourceResolver::https("cursor.com", 443).unwrap();
+        let config = ureq::Agent::config_builder().build();
+        let timeout = NextTimeout {
+            after: Duration::ZERO.into(),
+            reason: ureq::Timeout::Resolve,
+        };
+        for uri in [
+            "http://cursor.com/api",
+            "https://other.test/api",
+            "https://cursor.com:444/api",
+        ] {
+            assert!(resolver
+                .resolve(&uri.parse().unwrap(), &config, timeout)
+                .is_err());
+        }
+        for host in ["", "cursor.com@evil.test", "bad/name", "-bad.test", "a..b"] {
+            assert!(SourceResolver::https(host, 443).is_err());
+        }
+        assert!(SourceResolver::https("service.example", 0).is_err());
+        for host in ["service.example", "localhost", "192.168.1.1", "8.8.8.8"] {
+            assert!(SourceResolver::loopback_http(host, 8888).is_err());
+        }
+        assert!(SourceResolver::loopback_http("127.0.0.1", 8888).is_ok());
+        assert!(SourceResolver::loopback_http("[::1]", 8888).is_ok());
+    }
 
     #[test]
     fn fixed_service_authority_is_rejected_before_dns_work() {

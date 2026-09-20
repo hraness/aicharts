@@ -220,14 +220,14 @@ fn extra_reordered_and_command_mixed_version_flags_refuse_before_data_io() {
 }
 
 #[test]
-fn ordinary_help_remains_local_only_without_any_identity_side_effect() {
+fn ordinary_help_has_no_identity_side_effect() {
     let fixture = Fixture::new();
     for args in [&[][..], &["--help"][..], &["-h"][..]] {
         let output = fixture.run(args);
         assert_eq!(output.status.code(), Some(0));
         let text = String::from_utf8(output.stdout).unwrap();
-        assert!(text.contains("local-only"));
-        assert!(text.contains("No account sign-in, daemon installation"));
+        assert!(text.contains("local reports and enrolled publication"));
+        assert!(text.contains("enroll pairs this installation with an AI Charts account"));
         assert!(output.stderr.is_empty());
     }
     assert!(snapshot(&fixture.0).is_empty());

@@ -39,21 +39,14 @@ function Measurements({ value }: Readonly<{ value: PrivateDaysV1 }>) {
     if (count > maximum) maximum = count;
   }
   const height = (value: string) => `${maximum === 0n ? 0 : Number(BigInt(value) * 10_000n / maximum) / 100}%`;
+  const combined = totals.reduce((sum, provider) => sum + BigInt(provider.totals.observedAccountedTokens), 0n);
+  const combinedOutput = totals.reduce((sum, provider) => sum + BigInt(provider.totals.observedOutputTokens), 0n);
   return <>
-    <div className="usage-daily__coverage">
-      <p><strong>Partial coverage</strong> · Imported token records only. Missing records are unknown; a zero does not prove there was no activity.</p>
-      <p>{value.journalCommittedAtMs === null ? "No recorded sync yet." : <>Last recorded sync: <time dateTime={new Date(value.journalCommittedAtMs).toISOString()}>{time.format(value.journalCommittedAtMs)} UTC</time>.</>}</p>
+    <div className="usage-daily__overview" aria-label="Combined observed usage for the selected dates">
+      <div><h2>Observed tokens</h2><strong>{number.format(combined)}</strong></div>
+      <dl><div><dt>Output tokens</dt><dd>{number.format(combinedOutput)}</dd></div><div><dt>Usage records</dt><dd>{number.format(records)}</dd></div></dl>
     </div>
-    <div className="usage-daily__totals" aria-label="Provider totals for the selected dates">
-      {totals.map(provider => <section key={provider.key} aria-labelledby={`usage-total-${provider.key}`}>
-        <h2 id={`usage-total-${provider.key}`}><span className={`usage-daily__key usage-daily__key--${provider.key}`} aria-hidden="true" />{provider.name}</h2>
-        <dl>
-          <div><dt>Observed tokens</dt><dd>{tokens(provider.totals.observedAccountedTokens)}</dd></div>
-          <div><dt>Output tokens</dt><dd>{tokens(provider.totals.observedOutputTokens)}</dd></div>
-          <div><dt>Usage records</dt><dd>{number.format(provider.totals.usageOccurrences)}</dd></div>
-        </dl>
-      </section>)}
-    </div>
+    <p className="usage-daily__hint">Partial local coverage · Output is included in observed tokens. <Link href="/usage/details">Open detailed reports for model and token breakdowns.</Link></p>
     {records === 0 ? <div className="usage-daily__notice">
       <h2>No observations in these dates</h2>
       <p>Your account is connected, but this range has no accepted token records. Try other dates or check your local collector.</p>
@@ -69,6 +62,21 @@ function Measurements({ value }: Readonly<{ value: PrivateDaysV1 }>) {
       <div className="usage-daily__axis" aria-hidden="true"><span>{formattedDay(value.firstUtcDay)}</span><span>{formattedDay(value.firstUtcDay + value.days.length - 1)}</span></div>
       <p className="usage-daily__hint">Exact daily values are in the table below. Output tokens are included in observed tokens.</p>
     </figure>}
+    <div className="usage-daily__totals" aria-label="Client totals for the selected dates">
+      {totals.map(provider => <section key={provider.key} aria-labelledby={`usage-total-${provider.key}`}>
+        <h2 id={`usage-total-${provider.key}`}><span className={`usage-daily__key usage-daily__key--${provider.key}`} aria-hidden="true" />{provider.name}</h2>
+        <dl>
+          <div><dt>Observed tokens</dt><dd>{tokens(provider.totals.observedAccountedTokens)}</dd></div>
+          <div><dt>Output tokens</dt><dd>{tokens(provider.totals.observedOutputTokens)}</dd></div>
+          <div><dt>Usage records</dt><dd>{number.format(provider.totals.usageOccurrences)}</dd></div>
+        </dl>
+      </section>)}
+    </div>
+    <div className="usage-daily__coverage">
+      <p><strong>Partial coverage</strong> · Imported token records only. Missing records are unknown; a zero does not prove there was no activity.</p>
+      <p>{value.journalCommittedAtMs === null ? "No recorded sync yet." : <>Last recorded sync: <time dateTime={new Date(value.journalCommittedAtMs).toISOString()}>{time.format(value.journalCommittedAtMs)} UTC</time>.</>}</p>
+      <p>This account projection does not contain model attribution, input/cache breakdowns, or costs. Inspect a detailed local report for the fields your sources supply.</p>
+    </div>
     <details className="usage-daily__details" open>
       <summary>Daily records <span>{number.format(records)} records · {value.days.length} UTC days</span></summary>
       <div className="usage-daily__table-scroll" role="region" aria-label="Daily usage, scroll horizontally for all columns" tabIndex={0}>

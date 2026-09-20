@@ -1,4 +1,9 @@
 import { DurableObject } from "cloudflare:workers";
+import { parseStatsQuery, parseStatsStatusRequest, parseStatsUpload, type StatsError, type StatsReceipt, type StatsResult, type StatsStatus } from "../../../lib/usage/stats-http-contract";
+import { parseStatsAbandonRequest, type StatsAbandonment } from "../../../lib/usage/stats-http-contract";
+import type { UsageStatsReport } from "../../../lib/usage/stats-contract";
+import { StatsState, StatsFault, STATS_SCHEMA } from "./stats-state";
+import { AccountStats } from "./stats-admission";
 import { createHash } from "node:crypto";
 import { type AdmissionBatch } from "../../../lib/usage/admission";
 import { AccountAdmission, type AdmissionObservation } from "./account-admission";
@@ -22,11 +27,11 @@ import {
 } from "./namespace-anchor";
 import {
   RESTORE_FENCE_GENESIS_EPOCH, RESTORE_FENCE_LEASE_TTL_MS, restoreFenceName,
-  type FenceObservation, type RestoreFenceLease,
+  type FenceObservation,
 } from "./restore-fence";
 
 export type EnrollmentError = "invalid_input" | "unavailable" | "unauthorized" | "not_reserved" | "not_enrolled"
-  | "expired" | "conflict" | "recovery_required" | "revoked" | "storage_invalid" | "storage_unavailable" | "clock_regressed" | "limit" | "handle_unavailable" | "publishing_full";
+  | StatsError | "expired" | "conflict" | "recovery_required" | "revoked" | "storage_invalid" | "storage_unavailable" | "clock_regressed" | "limit" | "handle_unavailable" | "publishing_full";
 export type EnrollmentResult<T> = { ok: true; value: T } | { ok: false; error: EnrollmentError };
 export type EnrollmentReceipt = Readonly<{
   schemaVersion: 1; accountId: string; intentId: string; reservationId: string;
@@ -214,16 +219,27 @@ export class AccountEnrollment extends DurableObject<Env> {
         this.#migrateFence();
         this.#migrateLeaderboard();
         new AdmissionState(ctx.storage.sql).audit(this.#stored(5).state);
+        if (!this.#statsPresent() && this.#statsEnabled()) {
+          new StatsState(ctx.storage.sql).initialize();
+          ctx.storage.sql.exec("UPDATE account_enrollment SET schema_version = 6 WHERE id = 1");
+        }
+        if (this.#statsPresent()) new StatsState(ctx.storage.sql).audit(this.#stored(5).state);
+        this.#schema();
       });
     } catch { this.#healthy = false; }
   }
 
   #objects(): Record<string, SqlStorageValue>[] {
-    return this.ctx.storage.sql.exec("SELECT type, name, sql FROM sqlite_schema WHERE name NOT GLOB '_cf_*' AND name NOT GLOB 'sqlite_*' AND name != '__cf_kv' LIMIT 8").toArray();
+    return this.ctx.storage.sql.exec("SELECT type, name, sql FROM sqlite_schema WHERE name NOT GLOB '_cf_*' AND name NOT GLOB 'sqlite_*' AND name != '__cf_kv' LIMIT 16").toArray();
   }
   #schema(legacy = false): void {
     const objects = this.#objects();
-    const expected: Record<string, string> = { account_enrollment: SCHEMA_SQL, ...(legacy ? {} : ADMISSION_SCHEMA) };
+    const withStats = !legacy && objects.some(object => object.name === "usage_stats_control");
+    const expected: Record<string, string> = { account_enrollment: SCHEMA_SQL, ...(legacy ? {} : ADMISSION_SCHEMA), ...(withStats ? STATS_SCHEMA : {}) };
+    if (!legacy) {
+      const version = this.ctx.storage.sql.exec("SELECT schema_version FROM account_enrollment WHERE id = 1").toArray()[0]?.schema_version;
+      if ((version === 6) !== withStats) throw new Error("storage_invalid");
+    }
     if (!this.#healthy || objects.length !== Object.keys(expected).length || objects.some(object => object.type !== "table"
       || typeof object.name !== "string" || !Object.hasOwn(expected, object.name) || object.sql !== expected[object.name])) throw new Error("storage_invalid");
   }
@@ -286,7 +302,7 @@ export class AccountEnrollment extends DurableObject<Env> {
     const rows = this.ctx.storage.sql.exec("SELECT id, schema_version, revision, payload FROM account_enrollment LIMIT 2").toArray();
     const row = rows[0];
     if (rows.length !== 1 || row?.id !== 1) throw new Error("storage_invalid");
-    if (row.schema_version === 5) return;
+    if (row.schema_version === 5 || row.schema_version === 6) return;
     if (row.schema_version !== 4) throw new Error("storage_invalid");
     let payload = row.payload;
     if (payload !== null) {
@@ -303,7 +319,7 @@ export class AccountEnrollment extends DurableObject<Env> {
   #stored(version: 2 | 3 | 4 | 5): { revision: number; state: State | null } {
     const rows = this.ctx.storage.sql.exec("SELECT id, schema_version, revision, payload FROM account_enrollment LIMIT 2").toArray();
     const row = rows[0];
-    if (rows.length !== 1 || row?.id !== 1 || row.schema_version !== version || typeof row.revision !== "number"
+    if (rows.length !== 1 || row?.id !== 1 || (row.schema_version !== version && !(version === 5 && row.schema_version === 6)) || typeof row.revision !== "number"
       || !Number.isSafeInteger(row.revision) || row.revision < 0 || row.revision >= Number.MAX_SAFE_INTEGER) throw new AdmissionFault();
     let state: State | null = null;
     if (row.payload !== null) {
@@ -353,7 +369,7 @@ export class AccountEnrollment extends DurableObject<Env> {
         }
         return outcome.result;
       });
-    } catch (error) { return err(error instanceof AdmissionFault ? error.code : "storage_invalid"); }
+    } catch (error) { return err(error instanceof AdmissionFault || error instanceof StatsFault ? error.code : "storage_invalid"); }
   }
 
   /** The Worker deployment version this account object is running under. */
@@ -435,11 +451,84 @@ export class AccountEnrollment extends DurableObject<Env> {
     try {
       const admission = new AdmissionState(this.ctx.storage.sql);
       return await new AccountAdmission(this.env, admission, (observation, run) => {
-        const result = this.#transaction(observation, (state, now) => ({ state, result: ok(run(state, now)) }));
+        const result = this.#transaction(observation, (state, now) => {
+          if (state && this.#statsPresent()) new StatsState(this.ctx.storage.sql).guardV1(batch, state);
+          return { state, result: ok(run(state, now)) };
+        });
         committed ||= observation.committed;
         return result;
       }).admit({ uploadSecret, batch }, acquired.value.fence);
     } finally { await this.#fenceSettle(accountId, acquired.value.token, committed); }
+  }
+
+  #statsEnabled(): boolean {
+    return (this.env as Env & { AICHARTS_USAGE_STATS_ENABLED?: string }).AICHARTS_USAGE_STATS_ENABLED === "1";
+  }
+  #statsPresent(): boolean {
+    return this.ctx.storage.sql.exec("SELECT name FROM sqlite_schema WHERE name = 'usage_stats_control' LIMIT 1").toArray().length === 1;
+  }
+  async admitStatsSnapshot(input: unknown): Promise<StatsResult<StatsReceipt>> {
+    if (!this.#statsEnabled() || !this.#statsPresent()) return { ok: false, error: "storage_unavailable" };
+    const dto = enrollmentSnapshot(input, ["uploadSecret", "request"]);
+    if (!dto || !enrollmentHex(dto.uploadSecret)) return { ok: false, error: "invalid_input" };
+    const request = parseStatsUpload(dto.request);
+    if (!request) return { ok: false, error: "invalid_input" };
+    const generation = this.#generation();
+    if (generation === null || request.generation !== generation) return { ok: false, error: "recovery_required" };
+    const acquired = await this.#fenceAcquire(request.accountId, generation);
+    if (!acquired.ok) return { ok: false, error: acquired.error as StatsError };
+    const observation: AdmissionObservation = { generation, observed: Date.now(), fence: acquired.value.fence, committed: false };
+    try {
+      return await new AccountStats(this.env, new StatsState(this.ctx.storage.sql), (seen, run) =>
+        this.#transaction(seen, (state, now) => ({ state, result: ok(run(state, now)) }))).admit(request, dto.uploadSecret, observation);
+    } finally { await this.#fenceSettle(request.accountId, acquired.value.token, observation.committed); }
+  }
+  async readStatsStatus(input: unknown): Promise<StatsResult<StatsStatus>> {
+    if (!this.#statsEnabled() || !this.#statsPresent()) return { ok: false, error: "storage_unavailable" };
+    const dto = enrollmentSnapshot(input, ["uploadSecret", "request"]);
+    if (!dto || !enrollmentHex(dto.uploadSecret)) return { ok: false, error: "invalid_input" };
+    const request = parseStatsStatusRequest(dto.request);
+    if (!request) return { ok: false, error: "invalid_input" };
+    const generation = this.#generation();
+    if (generation === null || request.generation !== generation) return { ok: false, error: "recovery_required" };
+    const observation: AdmissionObservation = { generation, observed: Date.now(), fence: null, committed: false };
+    const scope = { accountId: request.accountId, sessionExpiresAtMs: 8_640_000_000_000_000 };
+    return new AccountStats(this.env, new StatsState(this.ctx.storage.sql), (seen, run) =>
+      this.#privateDaysSnapshot(scope, seen, state => run(state, seen.observed))).status(request, dto.uploadSecret, observation);
+  }
+  async abandonStatsSnapshot(input: unknown): Promise<StatsResult<StatsAbandonment>> {
+    if (!this.#statsEnabled() || !this.#statsPresent()) return { ok: false, error: "storage_unavailable" };
+    const dto = enrollmentSnapshot(input, ["uploadSecret", "request"]);
+    if (!dto || !enrollmentHex(dto.uploadSecret)) return { ok: false, error: "invalid_input" };
+    const request = parseStatsAbandonRequest(dto.request);
+    if (!request) return { ok: false, error: "invalid_input" };
+    const generation = this.#generation();
+    if (generation === null || request.generation !== generation) return { ok: false, error: "recovery_required" };
+    const acquired = await this.#fenceAcquire(request.accountId, generation);
+    if (!acquired.ok) return { ok: false, error: acquired.error as StatsError };
+    const observation: AdmissionObservation = { generation, observed: Date.now(), fence: acquired.value.fence, committed: false };
+    try {
+      return await new AccountStats(this.env, new StatsState(this.ctx.storage.sql), (seen, run) =>
+        this.#transaction(seen, (state, now) => ({ state, result: ok(run(state, now)) }))).abandon(request, dto.uploadSecret, observation);
+    } finally { await this.#fenceSettle(request.accountId, acquired.value.token, observation.committed); }
+  }
+  async readUsageStats(input: unknown): Promise<StatsResult<UsageStatsReport>> {
+    const request = parseStatsQuery(input);
+    if (request === null) return { ok: false, error: "invalid_input" };
+    if (!this.#statsEnabled() || !this.#statsPresent()) return { ok: false, error: "not_started" };
+    try {
+      const generation = this.#generation(), observed = Date.now();
+      if (generation === null) return { ok: false, error: "recovery_required" };
+      const observation: AdmissionObservation = { generation, observed, fence: null, committed: false };
+      const original = this.#privateDaysSnapshot(request, observation, state => Object.freeze({ ...state.anchor }));
+      if (!original.ok) return { ok: false, error: original.error as StatsError };
+      const external = await readNamespaceAnchor(this.env.CONTROL, request.accountId);
+      const result = this.#privateDaysSnapshot(request, observation, state => {
+        if (!external || !sameNamespaceAnchor(external, original.value) || !sameNamespaceAnchor(state.anchor, original.value)) throw new StatsFault("recovery_required");
+        return new StatsState(this.ctx.storage.sql).read(state, request, observation.observed);
+      });
+      return result.ok ? result : { ok: false, error: result.error as StatsError };
+    } catch { return { ok: false, error: "storage_unavailable" }; }
   }
 
   /** Unlike #transaction, this helper never advances clocks or enrollment
@@ -474,7 +563,7 @@ export class AccountEnrollment extends DurableObject<Env> {
         if (this.#generation() !== observation.generation) return err("recovery_required");
         return ok(value);
       });
-    } catch (error) { return err(error instanceof AdmissionFault ? error.code : "storage_invalid"); }
+    } catch (error) { return err(error instanceof AdmissionFault || error instanceof StatsFault ? error.code : "storage_invalid"); }
   }
 
   /** Dormant trusted-coordinator RPC. The DTO establishes syntax, not user auth.
@@ -708,6 +797,12 @@ export class AccountEnrollment extends DurableObject<Env> {
         const windowRequest = parsePrivateDaysRequest({ schemaVersion: 1, accountId: state.accountId,
           sessionExpiresAtMs: scope.sessionExpiresAtMs, firstUtcDay, dayCount });
         if (windowRequest === null) throw new AdmissionFault("storage_invalid");
+        if (this.#statsPresent() && new StatsState(this.ctx.storage.sql).hasCommittedSnapshot()) {
+          const totals = new StatsState(this.ctx.storage.sql).leaderboard(state, { firstUtcDay, dayCount }, observation.observed);
+          return Object.freeze({ schemaVersion: 1 as const, accountId: state.accountId, consent: true as const,
+            consentedAtMs: leaderboard.consentedAtMs as number, publicHandle: leaderboard.publicHandle as string,
+            ...totals, windowFirstUtcDay: firstUtcDay, windowUtcDays: dayCount });
+        }
         const days = admission.readImportedDays(state, windowRequest, control);
         let observedTokens = 0n, usageRecords = 0;
         for (const day of days.days) {
@@ -956,7 +1051,7 @@ export class AccountEnrollment extends DurableObject<Env> {
           quarantined: control.quarantined,
           devices: Object.freeze(state.devices.map(device => view(device))) }));
       });
-    } catch (error) { return err(error instanceof AdmissionFault ? error.code : "storage_invalid"); }
+    } catch (error) { return err(error instanceof AdmissionFault || error instanceof StatsFault ? error.code : "storage_invalid"); }
   }
 
   /** Exact original proof can revoke only its own existing device, never enroll one. */
@@ -972,6 +1067,7 @@ export class AccountEnrollment extends DurableObject<Env> {
           if (!existing.ok) return { state, result: existing };
           if (existing.value === null) return { state, result: err("not_enrolled") };
           existing.value.revokedAtMs ??= now;
+          if (this.#statsPresent()) new StatsState(this.ctx.storage.sql).revokeDevice(existing.value.deviceId);
           return { state, result: ok(view(existing.value)) };
         });
       } finally { await this.#fenceSettle(operation.grant.accountId, operation.leaseToken, operation.committed); }

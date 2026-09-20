@@ -1,3 +1,14 @@
+.leaderboard-home { padding-block-start: 2rem; padding-block-end: 6rem; }
+.leaderboard-home .usage-hero { gap: 1.5rem 2rem; padding-block-end: 2rem; }
+.leaderboard-home .usage-hero h1 { font-size: 2rem; letter-spacing: -.03em; line-height: 1.15; max-inline-size: none; }
+.leaderboard-home .usage-hero__lede { font-size: .95rem; margin-block-start: .75rem; max-inline-size: 65ch; }
+.leaderboard-home .usage-hero__actions { margin-block-start: 1rem; }
+.leaderboard-home .usage-status__dot { background: var(--muted); }
+.leaderboard-home .usage-board { padding-block-start: 1.5rem; }
+.leaderboard-home .usage-empty { padding-block: 2rem; }
+.leaderboard-home .usage-empty h2, .leaderboard-home .usage-trust h2 { font-size: 1.5rem; line-height: 1.2; }
+.leaderboard-home .usage-trust { border-block-start: 1px solid var(--grid); padding-block: 2rem; }
+@media (max-width: 700px) { .leaderboard-home { padding-block-start: 1.5rem; } .leaderboard-home .usage-hero h1 { font-size: 1.8rem; } }
 .usage-board { padding-block-end: 3rem; }
 .usage-board__table-scroll { border-block: 1px solid var(--grid); overflow-x: auto; scrollbar-color: var(--muted) var(--background); }
 .usage-board table { border-collapse: collapse; font-size: .85rem; font-variant-numeric: tabular-nums; inline-size: 100%; min-inline-size: 40rem; }

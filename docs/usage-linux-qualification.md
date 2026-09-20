@@ -28,6 +28,17 @@ The runner and its imported release modules are trusted bootstrap code from the 
 
 Cargo fetches the locked public dependencies into a fresh private cache. Compilation then uses the offline locked source and one release build. No provider logs, personal keys, user ledger or production service are inputs. The source and target directories, compiler cache and synthetic smoke state remain in scratch, outside the archive.
 
+The current runner retains its 16 existing smoke invocations and adds two for
+`stats` from the assembled, installed executable. It reuses the synthetic Codex
+and Claude inputs inside a fresh explicit home, selects September 10, 2026 with
+both date flags, and requires 185 exact reported tokens across two records with
+partial breakdown coverage and correct source timestamps. The adjacent empty
+day must contain no rows and retain empty sources with unavailable token coverage.
+Both checks reject transcript canary output and recheck the unchanged synthetic
+stores and installed files. The invocation cap is 18; the shared 60-second smoke
+budget is unchanged. This source extension needs a fresh hosted run and does not
+extend the earlier 16-invocation receipt or qualify live provider acquisition.
+
 Success retains the assembler's five exact files under `assets/`, `qualification.json` and a bounded `summary.json`. A failed job retains no successful qualification artifact; its bounded summary identifies the failing stage. The workflow uploads only those explicit outputs for seven days, never caches, private build evidence or the entire scratch directory. These public-repository artifacts are temporary test results, not immutable GitHub Releases or installation authority.
 
 An ELF refusal also records a fixed predicate code and bounded observations: recognized system-library names, numeric version requirements, and counts or redaction markers for unsupported values. This summary does not include arbitrary tool output, unknown names, paths or compiler diagnostics. These observations explain a refusal; they do not relax the compatibility policy or establish a successful run.

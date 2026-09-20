@@ -10,7 +10,7 @@ import { readGitSource } from "./git-source.mjs";
 import { hydrateReleaseSource } from "./hydrate-source.mjs";
 import { assembleLinuxRelease } from "./assemble.mjs";
 import { validateArchive } from "./archive.mjs";
-import { encodeLinuxQualificationReport, validateLinuxQualificationReport } from "./linux-qualification.mjs";
+import { encodeLinuxQualificationReport, validateLinuxQualificationReport, LINUX_SMOKE_MAX_INVOCATIONS } from "./linux-qualification.mjs";
 import { LINUX_NOTICES_MAX_BYTES, linuxNativeDiagnostic, linuxSystemDiagnostic } from "./linux-notices.mjs";
 import { SUPPORT_SOURCE } from "./support-source.mjs";
 
@@ -336,13 +336,61 @@ const CANARY = "QUALIFICATION_PRIVATE_CANARY_c7d84";
 function syntheticSources(directory) {
   const lines = values => Buffer.from(values.map(value => JSON.stringify(value) + "\n").join(""));
   const files = [
-    { path: "claude.jsonl", mode: 0o644, bytes: lines([{ type: "assistant", requestId: "request_a", sessionId: "session_a", timestamp: "2026-09-10T10:00:00Z", cwd: CANARY, message: { id: "message_a", content: [{ type: "text", text: CANARY }], usage: { input_tokens: 100, output_tokens: 20, cache_read_input_tokens: 50, cache_creation_input_tokens: 0 } } }]) },
+    { path: "claude.jsonl", mode: 0o644, bytes: lines([{ type: "assistant", requestId: "request_a", sessionId: "session_a", timestamp: "2026-09-10T10:00:00Z", cwd: CANARY, message: { id: "message_a", model: CANARY, content: [{ type: "text", text: CANARY }], usage: { input_tokens: 100, output_tokens: 20, cache_read_input_tokens: 50, cache_creation_input_tokens: 0 } } }]) },
     { path: "codex.jsonl", mode: 0o644, bytes: lines([{ type: "session_meta", payload: { id: "session_b" } }, { type: "event_msg", timestamp: "2026-09-10T10:00:00Z", payload: { type: "token_count", info: { total_token_usage: { input_tokens: 10, output_tokens: 5 }, last_token_usage: { input_tokens: 10, output_tokens: 5 } } } }]) },
     { path: "turns.jsonl", mode: 0o644, bytes: lines([{ type: "session_meta", payload: { id: "turn_session", source: "cli", cwd: CANARY } }, { type: "event_msg", timestamp: "1970-01-02T23:59:59.001Z", payload: { type: "task_started", turn_id: "turn_a", root_turn_id: "turn_a", started_at: 172799 } }, { type: "event_msg", payload: { type: "task_complete", turn_id: "turn_a", started_at: 172799, completed_at: 172800, duration_ms: 1537, error: { message: CANARY } } }]) },
     { path: "bad.jsonl", mode: 0o644, bytes: Buffer.from("{\"" + CANARY + "\":\n") },
   ];
   for (const file of files) createFile(path.join(directory, file.path), file.bytes, file.mode);
   return files;
+}
+// Reuse the legacy synthetic inputs inside an isolated home. The stats importer
+// uses native client store layouts; malformed and turn-only fixtures stay out.
+function statsSources(files) {
+  return [["claude.jsonl", ".claude/projects/qualification/claude.jsonl"], ["codex.jsonl", ".codex/sessions/codex.jsonl"]]
+    .map(([name, destination]) => {
+      const source = files.find(file => file.path === name);
+      need(source !== undefined, "smoke_failed");
+      return { path: destination, mode: 0o644, bytes: source.bytes };
+    });
+}
+function statsOutput(bytes, observed) {
+  const report = parseJson(bytes);
+  const keys = (value, expected) => need(value !== null && typeof value === "object" && !Array.isArray(value)
+    && Object.keys(value).sort().join(",") === [...expected].sort().join(","), "smoke_failed");
+  keys(report, ["schemaVersion", "profile", "registryRevision", "firstUtcDay", "dayCount", "generatedAtMs", "revision", "updatedAtMs", "sources", "rows"]);
+  const timestamp = Date.parse("2026-09-10T10:00:00Z"), day = Math.floor(timestamp / 86_400_000);
+  need(report.schemaVersion === 2 && report.profile === "client-stats-v2" && report.registryRevision === 1
+    && report.firstUtcDay === day + (observed ? 0 : 1) && report.dayCount === 1
+    && Number.isSafeInteger(report.generatedAtMs) && report.generatedAtMs >= timestamp
+    && report.revision === 0 && report.updatedAtMs === null
+    && Array.isArray(report.sources) && report.sources.length === 2
+    && Array.isArray(report.rows) && report.rows.length === (observed ? 2 : 0), "smoke_failed");
+  const clients = ["claude", "codex"];
+  for (const [index, source] of report.sources.entries()) {
+    keys(source, ["client", "status", "tokenBasis", "records", "warnings", "latestAtMs"]);
+    need(source.client === clients[index] && source.status === (observed ? "observed" : "empty")
+      && source.tokenBasis === (observed ? "reported" : "unavailable") && source.records === (observed ? 1 : 0)
+      && source.warnings === 0 && source.latestAtMs === (observed ? timestamp : null), "smoke_failed");
+  }
+  let tokens = 0n;
+  for (const [index, row] of report.rows.entries()) {
+    keys(row, ["utcDay", "client", "provider", "model", "tokens", "records", "reportedCostMicrousd", "reportedCostRecords",
+      "estimatedCostMicrousd", "estimatedCostRecords", "durationMs", "timedRecords", "timedTokens", "tokenBasis", "breakdownCoverage"]);
+    need(row.utcDay === day && row.client === clients[index] && row.model === null
+      && (row.provider === null || row.provider === (index === 0 ? "anthropic" : "openai"))
+      && row.records === 1 && row.tokenBasis === "reported" && row.breakdownCoverage === "partial"
+      && row.reportedCostMicrousd === null && row.reportedCostRecords === 0
+      && row.estimatedCostMicrousd === null && row.estimatedCostRecords === 0
+      && row.durationMs === null && row.timedRecords === 0 && row.timedTokens === "0", "smoke_failed");
+    keys(row.tokens, ["input", "cacheRead", "cacheWrite", "output", "reasoning"]);
+    const expected = index === 0 ? ["100", "50", "0", "20", "0"] : ["10", "0", "0", "5", "0"];
+    for (const [bucket, name] of ["input", "cacheRead", "cacheWrite", "output", "reasoning"].entries()) {
+      need(row.tokens[name] === expected[bucket], "smoke_failed");
+      tokens += BigInt(row.tokens[name]);
+    }
+  }
+  need(tokens === (observed ? 185n : 0n), "smoke_failed");
 }
 function treeImage(directory) {
   const entries = fs.readdirSync(directory, { withFileTypes: true });
@@ -435,7 +483,7 @@ async function runWith(value, host = HOST) {
     const smokeBinary = path.join(directories.smoke, "aicharts"); createFile(smokeBinary, binary, 0o755);
     const synthetic = syntheticSources(directories.smoke);
     const smoke = async (args, status = 0, binaryPath = smokeBinary) => {
-      need(context.smokeCalls < 16 && context.smokeMillis < 60_000, "smoke_failed");
+      need(context.smokeCalls < LINUX_SMOKE_MAX_INVOCATIONS && context.smokeMillis < 60_000, "smoke_failed");
       const before = host.now(); context.smokeCalls += 1;
       const result = await command("smoke-" + String(context.smokeCalls).padStart(2, "0"), binaryPath, args, { cwd: directories.smoke, env: runtimeEnv, status, timeoutMs: Math.min(5000, 60_000 - context.smokeMillis), failure: "smoke_failed" });
       context.smokeMillis += host.now() - before;
@@ -493,8 +541,17 @@ async function runWith(value, host = HOST) {
     const installedBinary = path.join(installedRoot, "bin/aicharts"); need(sha(host.readFile(installedBinary, CAPS.binary, true)) === binaryHash, "install_failed");
     versionOutput((await smoke(["--version", "--json"], 0, installedBinary)).stdout, version);
     need((await smoke(["--help"], 0, installedBinary)).stdout.includes("--complete-prefix"), "smoke_failed");
+    const statsHome = path.join(directories.smoke, "stats-home"), statsFiles = statsSources(synthetic);
+    checked(host.hydrate({ destinationDirectory: statsHome, sourceFiles: statsFiles }), "smoke_failed");
+    for (const [date, observed] of [["2026-09-10", true], ["2026-09-11", false]]) {
+      statsOutput((await smoke(["stats", "--home", statsHome, "--client", "claude", "--client", "codex",
+        "--since", date, "--until", date, "--json"], 0, installedBinary)).stdout, observed);
+    }
+    // Stats is read-only: preserve the exact synthetic stores and installed
+    // source bytes after both the observed and empty-window invocations.
+    try { recheckSource(statsHome, statsFiles, host); } catch { fail("smoke_failed"); }
     // Bind the executed install back to the validated archive, including BUILD
-    // and every installed byte, after both invocations have settled.
+    // and every installed byte, after all installed invocations have settled.
     try { recheckSource(installedRoot, installedFiles.files, host); } catch { fail("install_failed"); }
     const qualification = checked(encodeLinuxQualificationReport({ schemaVersion: 1, qualified: true, profile: "linux-cli-v1", version, source: source.source, runner, toolchain: { rustChannel: RUST, rustCommit: RUST_COMMIT, nodeMajor: 24, cCompiler: summary.toolchain.cCompiler }, target: { triple: TARGET, os: "linux", arch: "x86_64", osFloor: "ubuntu-22.04", libcFloor: "glibc-2.35", cpuBaseline: "x86-64", dynamicDependencies: measured.dependencies }, executable: { bytes: binary.length, sha256: binaryHash }, smoke: { passed: true, invocations: context.smokeCalls }, notices: { complete: true, bytes: notices.bytes.length, sha256: notices.sha256 } }), "assembly_failed");
     checked(validateLinuxQualificationReport(qualification.bytes), "assembly_failed");

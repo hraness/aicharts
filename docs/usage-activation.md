@@ -1,23 +1,26 @@
 # Usage activation runbook
 
-This runbook records the qualifications required to activate Usage. Keep the product flags closed unless the
-current step's evidence and rollback check are complete.
+This runbook records the qualifications required to activate Usage. Preserve
+working services and enable new behavior only after its current evidence and
+rollback checks are complete.
 
-## What is currently true
+## Recorded production evidence
 
-The 2026-09-19 production inspection supersedes the earlier unconfigured
-environment inventory. Vercel project `aicharts` has production authentication,
-pairing and private-read flags, the cookie secret and the canonical site URL.
-The public-read flag is absent. A correctly framed anonymous request to
-`/api/usage/days` returns `authentication_required`; `/api/leaderboard` returns
+The 2026-09-19 production inspection superseded the earlier unconfigured
+environment inventory. It found that Vercel project `aicharts` had production
+authentication, pairing and private-read flags, the cookie secret and the
+canonical site URL.
+The public-read flag was absent. A correctly framed anonymous request to
+`/api/usage/days` returned `authentication_required`; `/api/leaderboard` returned
 `unavailable`. These observations prove configuration and refusal behavior,
 not authenticated dashboard readback or readiness to replace another collector.
+They describe that inspection, not deployment of the current source tree.
 
-Cloudflare currently serves Usage from the existing Worker named
-`aicharts-usage-local-only`, despite that historical name. On 2026-09-19 its
-active version was `36447868-30b8-4cb4-8bcd-cb9fd6913946`, deployed September 16.
+That inspection found Usage served by the existing Worker named
+`aicharts-usage-local-only`, despite that historical name. Its then-active
+version was `36447868-30b8-4cb4-8bcd-cb9fd6913946`, deployed September 16.
 Its worker, authentication, enrollment, pairing, admission and private-read
-flags were enabled; public reads were disabled. It binds four Durable Object
+flags were enabled; public reads were disabled. It bound four Durable Object
 classes (`PairingIntent`, `AccountEnrollment`, `RestoreFence`, and
 `LeaderboardIndex`) and the existing private `aicharts-usage-local-only` and
 `aicharts-usage-control-local-only` R2 buckets. Preserve those resource
@@ -84,8 +87,9 @@ repository file.
    qualification intent. Authentication can remain usable after a passed test,
    while private reads and collection stay separately fenced.
 
-The production configuration already exists. Do not rotate secrets, repeat
-provisioning, or disable a working private service as a side effect of checking
+The recorded production configuration already existed. Reinspect deployment
+identity and configuration names before qualification. Do not rotate secrets,
+repeat provisioning, or disable a working private service as a side effect of checking
 this list. Qualify the current authenticated path with an owner-authorized
 account and retain a bounded receipt. The local `bun run test:browser` fixture
 is synthetic evidence only.
@@ -156,13 +160,75 @@ Verify the same signed binary from launchd before replacing an existing job.
    a missed or interrupted run. Disable the old job only after the replacement
    has completed a successful scheduled cycle and its data is visible.
 
-Current source limits are explicit: the public index holds at most 128
+Current v1 source limits are explicit: the public index holds at most 128
 publishers; each account admits at most 100,000 occurrence heads and 4,096
 journal revisions. These are bounded rollout limits, not an unlimited
-retention promise. Cursor collection, pricing parity, public profile pages,
-embeddable statistics and a supported recurring upload installer are not
-provided by the current usage CLI. A migration that depends on them must remain
-pending or explicitly narrow its accepted scope.
+retention promise. The [detailed report](usage-details.md) expands known source
+formats and dated retail estimates. The current source implements explicit
+Cursor, Trae, Warp, Hindsight, and Antigravity refreshes, MiniMax Code capture,
+and one configured `autosubmit` publication cycle. The
+[scheduled publisher guide](usage-autosubmit.md) describes configuration and
+manual launchd setup; the CLI does not install or switch a LaunchAgent.
+These implementations still require relevant live provider, custody, account
+readback, and scheduled-cycle qualification before cutover. Public profile
+pages and embeddable statistics are not implemented.
+
+## Detailed snapshot profile
+
+The `client-stats-v2` source adds bounded day/client/provider/model snapshots
+behind `AICHARTS_USAGE_STATS_ENABLED=1` on both the Worker and Next.js service.
+The existing authentication, enrollment, admission, private-read, namespace,
+restore-generation, and revocation requirements still apply. Deploying the new
+source does not authorize enabling those controls or replacing an existing job
+without the cutover evidence above.
+
+V2 uses the existing `AccountEnrollment` Durable Object and private R2 resources.
+Its account schema adds control, writer, device-receipt, pending-intent, and
+daily-projection tables while preserving v1 records. A client has one device
+writer. Exact retries retain their original operation and receipt. Ordinary snapshots preserve historical days and refuse unexplained reductions
+in existing numeric observations. Explicit reviewed replacement windows have
+a separate mode. Warp replaces only its own latest billing snapshot; its
+refresh date never becomes a daily activity total. Queries select the owned
+profile for each client/day and never add overlapping v1 and v2 totals. Estimated or unavailable
+token observations do not enter reported-token rankings.
+
+For an existing v1 window, the native sender pins the prior revision, head digest
+and client owner. The service admits takeover only when every retained day has
+at least its prior reported record count and every one of its five token buckets.
+A head digest alone is not coverage proof. Empty, missing or incomplete imports,
+estimated replacements, stale heads, another writer and unknown-provenance
+tombstones refuse. V1 tables and immutable history remain retained. This numeric
+preservation guard does not replace live source comparison during cutover.
+
+A terminally refused retained flight requires explicit `stats-sync --abandon`
+with the existing state and key. The authenticated operation pins the exact
+flight. It either returns its already committed receipt or advances the account
+revision to fence a late retry, without consuming the device upload sequence.
+It clears only a matching pending intent and keeps immutable objects and byte
+reservations. The native checkpoint clears a flight only after correlated
+proof; uncertain replies remain frozen. The scheduled publisher never abandons
+a flight automatically. A maintenance revision can exist before any published
+report; read and recovery paths must not infer publication from revision alone.
+
+Each upload is limited to 4 MiB and 8,192 aggregate rows. Account projections are
+limited to 65,536 client-days, 262,144 rows, and 128 MiB. Hosted reads are capped
+at 4 MiB and 8,192 rows and return an explicit range-limit result rather than a
+truncated total. The complete local report remains bounded at 32 MiB and 65,536
+rows. These ceilings are admission limits; production qualification must also
+measure the intended user's scan duration and real Worker resource use.
+
+Each account also has an 8 GiB cumulative immutable-object budget and at most
+1,000,000 accepted revisions. Admission reserves the snapshot's encoded bytes
+plus 1,024 bytes for its receipt before the first R2 write. Exact retries do not
+reserve again; an abandoned uncertain intent keeps its reservation. Exhaustion
+refuses new data without deleting existing history.
+
+Once account schema 6 has been initialized, a schema-5-only Worker is not a
+compatible rollback: its strict schema check refuses the extra tables. Keep a
+schema-6-aware rollback artifact and turn off the detailed-profile controls when
+needed. Do not delete the new tables to make old code run. Immutable R2 receipt
+objects can belong to an abandoned intent; recovery follows the committed SQL
+references and must not replay every receipt object found in the bucket.
 
 ## External restore fence
 

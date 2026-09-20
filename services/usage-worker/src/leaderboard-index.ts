@@ -1,7 +1,7 @@
 import { DurableObject } from "cloudflare:workers";
 import { parseLeaderboardConsentApply } from "../../../lib/usage/consent-contract";
 import {
-  LEADERBOARD_INDEX_NAME, LEADERBOARD_MAX_MEMBERS,
+  LEADERBOARD_INDEX_NAME, LEADERBOARD_MAX_MEMBERS, LEADERBOARD_MAX_RECORDS,
   LEADERBOARD_RANKING, leaderboardDecimal, leaderboardPublicHandle,
   parseLeaderboardProjection, rankLeaderboardEntries,
   type LeaderboardSnapshotV1,
@@ -47,7 +47,7 @@ function validProjection(value: unknown): value is IndexProjection {
   const projection = enrollmentSnapshot(value, ["observedTokens", "usageRecords", "windowFirstUtcDay", "windowUtcDays"]);
   return projection !== null && leaderboardDecimal(projection.observedTokens)
     && typeof projection.usageRecords === "number" && Number.isSafeInteger(projection.usageRecords)
-    && projection.usageRecords >= 0 && projection.usageRecords <= 100_000
+    && projection.usageRecords >= 0 && projection.usageRecords <= LEADERBOARD_MAX_RECORDS
     && typeof projection.windowFirstUtcDay === "number" && Number.isSafeInteger(projection.windowFirstUtcDay)
     && projection.windowFirstUtcDay >= 0 && projection.windowFirstUtcDay <= 100_000_000
     && typeof projection.windowUtcDays === "number" && Number.isSafeInteger(projection.windowUtcDays)

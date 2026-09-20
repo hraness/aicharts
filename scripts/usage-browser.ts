@@ -9,6 +9,8 @@ import { encodePrivateDaysPublicResponse, parsePrivateDaysPublicSearch, privateD
 import { encodeUsageConsentPublicReply, USAGE_CONSENT_PUBLIC_MEDIA } from "../lib/usage/consent-public";
 import { parseLeaderboardSnapshot, type LeaderboardConsentViewV1 } from "../lib/usage/leaderboard-contract";
 import { verifyUsagePairing } from "./usage-pairing-browser";
+import { verifyUsageStats } from "./usage-stats-browser";
+import { parseStatsPublicSearch, STATS_PUBLIC_MEDIA } from "../lib/usage/stats-public";
 
 function invariant(value: unknown, message: string): asserts value {
   if (!value) throw new Error(message);
@@ -48,10 +50,10 @@ async function settle(page: Page): Promise<void> {
 async function checkDormant(baseUrl: string): Promise<void> {
   const page = await fetch(`${baseUrl}/usage`), html = await page.text();
   invariant(page.status === 200, "Disabled usage page must remain available.");
-  for (const text of ["Your AI usage", "Remote sync is not enabled yet.",
-    "aicharts usage --key-file ./aicharts.key --codex ./sessions", "No transcript storage", 'aria-current="page" href="/usage"',
+  for (const text of ["Your AI usage", "Your private dashboard is unavailable.",
+    "aicharts stats --home", "No transcript uploads", 'href="/usage/details"', 'aria-current="page" href="/usage"',
     '<link rel="canonical" href="https://aicharts.io/usage"']) {
-    invariant(html.includes(text), "The real request-time page must preserve local-only measurement, coverage and current navigation.");
+    invariant(html.includes(text), `The usage fallback must preserve local reporting, coverage and navigation: missing ${text}.`);
   }
   for (const [method, status] of [["GET", 503], ["HEAD", 405], ["POST", 405], ["OPTIONS", 405]] as const) {
     const response = await fetch(`${baseUrl}/api/usage/days?firstUtcDay=20000&dayCount=1`, { method });
@@ -150,7 +152,7 @@ export async function verifyUsageDashboard(browser: Browser, disabledBaseUrl: st
   const environment: NodeJS.ProcessEnv = { ...process.env, NODE_ENV: "production", VERCEL: "1", VERCEL_ENV: "production", VERCEL_TARGET_ENV: "production",
     VERCEL_DEPLOYMENT_ID: "dpl_SYNTHETICUsageBrowser", VERCEL_PROJECT_ID: "prj_SYNTHETICUsageBrowser", VERCEL_GIT_COMMIT_SHA: "0".repeat(40),
     NEXT_PUBLIC_SITE_URL: "https://aicharts.io", AICHARTS_USAGE_AUTH_ENABLED: "1", AICHARTS_USAGE_PRIVATE_READ_ENABLED: "1",
-    AICHARTS_USAGE_PAIRING_ENABLED: "1", AICHARTS_USAGE_PUBLIC_READ_ENABLED: "0",
+    AICHARTS_USAGE_PAIRING_ENABLED: "1", AICHARTS_USAGE_PUBLIC_READ_ENABLED: "0", AICHARTS_USAGE_STATS_ENABLED: "1",
     SUITE_OIDC_COOKIE_SECRET: "synthetic-browser-fixture-not-a-production-secret" };
   for (const key of ["NEXT_PUBLIC_VERCEL_SURFACE_ORIGIN", "NEXT_PUBLIC_HRANESS_VERCEL_SURFACE_ORIGIN", "NEXT_PUBLIC_HRANESS_VERCEL_PREVIEW_ORIGIN", "POSTHOG_API_KEY", "VERCEL_OIDC_TOKEN"]) delete environment[key];
   const server = Bun.spawn([process.execPath, "run", "start", "--", "--hostname", hostname, "--port", String(port)], {
@@ -191,6 +193,11 @@ export async function verifyUsageDashboard(browser: Browser, disabledBaseUrl: st
           }
         }
         if (url.origin !== baseUrl) { blockedOrigins.add(url.origin); await route.abort(); return; }
+        if (url.pathname === "/api/usage/stats") {
+          invariant(route.request().method() === "GET" && parseStatsPublicSearch(url.search), "The stats fallback must use the numeric GET contract.");
+          await route.fulfill({ status: 200, headers: { "content-type": STATS_PUBLIC_MEDIA, "cache-control": "private, no-store" }, body: '{"schemaVersion":2,"ok":false,"error":"not_started"}' });
+          return;
+        }
         if (url.pathname !== "/api/usage/days") { await route.continue(); return; }
         requests++;
         const request = route.request();
@@ -346,6 +353,7 @@ export async function verifyUsageDashboard(browser: Browser, disabledBaseUrl: st
       } finally { await context.close(); }
     }
     await verifyUsagePairing(browser, disabledBaseUrl, baseUrl, captureDirectory);
+    await verifyUsageStats(browser, baseUrl, captureDirectory);
   } finally {
     server.kill("SIGTERM");
     await Promise.race([server.exited, Bun.sleep(5_000)]);

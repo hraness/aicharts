@@ -15,6 +15,11 @@ aicharts-core.workspace = true
 aicharts-custody.workspace = true
 aicharts-protocol.workspace = true
 aicharts-ledger.workspace = true
+aicharts-import.workspace = true
+serde.workspace = true
+time.workspace = true
+base64.workspace = true
+rusqlite.workspace = true
 hmac.workspace = true
 sha2.workspace = true
 serde_json.workspace = true
@@ -27,8 +32,9 @@ hraness-support-foundation = { git = "https://github.com/hraness/support-foundat
 rustls = { version = "=0.23.44", default-features = false, features = ["ring", "std", "tls12"] }
 
 [target.'cfg(unix)'.dependencies]
+aicharts-platform-process.workspace = true
 libc.workspace = true
+rustix = { version = "=1.1.4", features = ["fs", "process"] }
 
 [target.'cfg(target_os = "macos")'.dependencies]
 aicharts-platform-acl.workspace = true
-rustix = { version = "=1.1.4", features = ["fs", "process"] }

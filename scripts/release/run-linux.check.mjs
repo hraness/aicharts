@@ -41,6 +41,18 @@ function elfOutput() {
     notes: "Properties: x86 ISA needed: x86-64-baseline\n",
   };
 }
+function statsReport(observed) {
+  const clients = ["claude", "codex"], timestamp = Date.parse("2026-09-10T10:00:00Z");
+  const day = Math.floor(timestamp / 86_400_000);
+  return { schemaVersion: 2, profile: "client-stats-v2", registryRevision: 1, firstUtcDay: day + (observed ? 0 : 1), dayCount: 1,
+    generatedAtMs: Date.parse("2026-09-20T12:00:00Z"), revision: 0, updatedAtMs: null,
+    sources: clients.map(client => ({ client, status: observed ? "observed" : "empty", tokenBasis: observed ? "reported" : "unavailable",
+      records: observed ? 1 : 0, warnings: 0, latestAtMs: observed ? timestamp : null })),
+    rows: observed ? clients.map((client, index) => ({ utcDay: day, client, provider: null, model: null,
+      tokens: { input: index === 0 ? "100" : "10", cacheRead: index === 0 ? "50" : "0", cacheWrite: "0", output: index === 0 ? "20" : "5", reasoning: "0" },
+      records: 1, reportedCostMicrousd: null, reportedCostRecords: 0, estimatedCostMicrousd: null, estimatedCostRecords: 0,
+      durationMs: null, timedRecords: 0, timedTokens: "0", tokenBasis: "reported", breakdownCoverage: "partial" })) : [] };
+}
 function fixture(t) {
   const root = fs.mkdtempSync(join(fs.realpathSync(tmpdir()), "aicharts-linux-runner-test-"));
   fs.chmodSync(root, 0o700);
@@ -110,6 +122,16 @@ function fixture(t) {
       const response = value => result(JSON.stringify(value));
       if (args[0] === "--version") return response({ schemaVersion: 1, operation: "version", version: "0.1.0", provenance: "unverified", build: { os: "linux", arch: "x86_64", sourceCommit: null } });
       if (args[0] === "--help") return result("synthetic help --complete-prefix\n");
+      if (args[0] === "stats") {
+        assert.equal(executable, join(outputDirectory, "install/aicharts-0.1.0-" + TARGET + "/bin/aicharts"));
+        const home = join(options.cwd, "stats-home"), date = args[8];
+        assert.deepEqual(args, ["stats", "--home", home, "--client", "claude", "--client", "codex", "--since", date, "--until", date, "--json"]);
+        assert.equal(options.env.HOME, undefined);
+        assert.equal(fs.readFileSync(join(home, ".claude/projects/qualification/claude.jsonl")).equals(fs.readFileSync(join(options.cwd, "claude.jsonl"))), true);
+        assert.equal(fs.readFileSync(join(home, ".codex/sessions/codex.jsonl")).equals(fs.readFileSync(join(options.cwd, "codex.jsonl"))), true);
+        assert.ok(["2026-09-10", "2026-09-11"].includes(date));
+        return response(statsReport(date === "2026-09-10"));
+      }
       if (args[0] === "keygen") { const file = join(options.cwd, "key"); if (fs.existsSync(file)) return result("", 2, "aicharts: key_create_failed\n"); fs.writeFileSync(file, Buffer.alloc(32, 7), { mode: 0o600 }); return result("Key created\n"); }
       if (args[0] === "usage") return args.includes("bad.jsonl") ? result("", 2, "aicharts: source_parse_failed\n") : response({ tokens: "185" });
       if (args[0] === "init") { fs.mkdirSync(join(options.cwd, "state"), { mode: 0o700 }); fs.writeFileSync(join(options.cwd, "state/usage.sqlite3"), "synthetic empty numeric state", { mode: 0o600 }); return result("Initialized\n"); }
@@ -367,7 +389,7 @@ test("synthetic orchestration crosses real source hydration, archive validation 
   const actual = fs.readdirSync(join(f.input.outputDirectory, "assets")).sort();
   assert.deepEqual(actual, ["SHA256SUMS", "aicharts-0.1.0-" + TARGET + ".tar.gz", "aicharts-skill-0.1.0.tar.gz", "aicharts-source-0.1.0.tar.gz", "release-manifest.json"].sort());
   const report = validateLinuxQualificationReport(fs.readFileSync(join(f.input.outputDirectory, "qualification.json")));
-  assert.equal(report.ok, true); assert.equal(report.value.value.smoke.invocations, 16);
+  assert.equal(report.ok, true); assert.equal(report.value.value.smoke.invocations, 18);
   const summary = JSON.parse(fs.readFileSync(join(f.input.outputDirectory, "summary.json")));
   assert.equal(summary.checksPassed, true); assert.equal(Object.hasOwn(summary, "qualified"), false);
   assert.equal(JSON.stringify(summary).includes(f.root), false); assert.equal(summary.compatibility.universalBaselineExecutionProven, false);
@@ -377,6 +399,65 @@ test("synthetic orchestration crosses real source hydration, archive validation 
   assert.equal(f.calls.filter(call => call.args[0] === "fetch").length, 1);
   assert.equal(f.notices.length, 1); assert.ok(f.notices[0].dynamicLibraries.some(library => library.soname === "ld-linux-x86-64.so.2"));
   assert.equal(sha(fs.readFileSync(join(f.input.outputDirectory, "install/aicharts-0.1.0-" + TARGET + "/bin/aicharts"))), sha(elfBytes()));
+  const statsCalls = f.calls.filter(call => call.args[0] === "stats");
+  assert.equal(statsCalls.length, 2);
+  assert.deepEqual(statsCalls.map(call => call.args[8]), ["2026-09-10", "2026-09-11"]);
+});
+
+test("installed stats totals, reported basis, coverage and date scope are required before qualification", async t => {
+  const mutations = [
+    report => { report.rows[0].tokens.cacheRead = "0"; },
+    report => { report.rows[1].tokenBasis = "estimated"; },
+    report => { report.sources[0].status = "incomplete"; },
+    report => { report.sources[0].records = 0; },
+    report => { report.sources[1].latestAtMs += 86_400_000; },
+    report => { report.dayCount = 30; },
+    report => { report.rows[0].privateField = "must not pass"; },
+  ];
+  for (const mutate of mutations) {
+    const f = fixture(t), original = f.host.execute;
+    f.host.execute = async (executable, args, options) => {
+      const response = await original(executable, args, options);
+      if (args[0] === "stats" && args[8] === "2026-09-10") {
+        const report = JSON.parse(response.stdout); mutate(report); response.stdout = bytes(JSON.stringify(report));
+      }
+      return response;
+    };
+    assert.deepEqual(await internals.runWith(f.input, f.host), { ok: false, error: "smoke_failed" });
+    assert.equal(fs.existsSync(join(f.input.outputDirectory, "qualification.json")), false);
+    assert.equal(f.stages.includes("persist-assets"), false);
+  }
+});
+
+test("empty stats windows cannot invent observed coverage or retain out-of-range rows", async t => {
+  for (const mutate of [report => { report.sources[0].status = "observed"; }, report => { report.rows = statsReport(true).rows; }]) {
+    const f = fixture(t), original = f.host.execute;
+    f.host.execute = async (executable, args, options) => {
+      const response = await original(executable, args, options);
+      if (args[0] === "stats" && args[8] === "2026-09-11") {
+        const report = JSON.parse(response.stdout); mutate(report); response.stdout = bytes(JSON.stringify(report));
+      }
+      return response;
+    };
+    assert.deepEqual(await internals.runWith(f.input, f.host), { ok: false, error: "smoke_failed" });
+    assert.equal(fs.existsSync(join(f.input.outputDirectory, "qualification.json")), false);
+  }
+});
+
+test("installed stats must preserve source bytes and withhold the transcript canary", async t => {
+  for (const leak of [false, true]) {
+    const f = fixture(t), original = f.host.execute;
+    f.host.execute = async (executable, args, options) => {
+      const response = await original(executable, args, options);
+      if (args[0] === "stats" && args[8] === "2026-09-11") {
+        if (leak) response.stdout = Buffer.concat([response.stdout, bytes("QUALIFICATION_PRIVATE_CANARY_c7d84")]);
+        else fs.appendFileSync(join(args[2], ".codex/sessions/codex.jsonl"), "\n");
+      }
+      return response;
+    };
+    assert.deepEqual(await internals.runWith(f.input, f.host), { ok: false, error: "smoke_failed" });
+    assert.equal(fs.existsSync(join(f.input.outputDirectory, "qualification.json")), false);
+  }
 });
 
 test("complete synthetic notices above 16 MiB cross runner assembly and installed-byte verification", async t => {
@@ -391,7 +472,7 @@ test("complete synthetic notices above 16 MiB cross runner assembly and installe
   const report = validateLinuxQualificationReport(fs.readFileSync(join(f.input.outputDirectory, "qualification.json")));
   assert.equal(report.ok, true);
   assert.deepEqual(report.value.value.notices, { complete: true, ...expected });
-  assert.equal(report.value.value.smoke.invocations, 16);
+  assert.equal(report.value.value.smoke.invocations, 18);
   const manifest = JSON.parse(fs.readFileSync(join(f.input.outputDirectory, "assets/release-manifest.json")));
   const cli = manifest.assets.find(asset => asset.kind === "cli");
   const installed = fs.readFileSync(join(f.input.outputDirectory, "install", cli.root, "THIRD_PARTY_LICENSES.txt"));

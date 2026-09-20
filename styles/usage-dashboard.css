@@ -1,9 +1,9 @@
 .usage-daily { padding-block-end: 3rem; }
-.usage-daily__heading { align-items: baseline; display: flex; flex-wrap: wrap; gap: 1rem 2rem; justify-content: space-between; margin-block-end: 2rem; }
-.usage-daily__heading h1 { font-size: 2.5rem; letter-spacing: -.035em; line-height: 1.1; }
+.usage-daily__heading { align-items: baseline; display: flex; flex-wrap: wrap; gap: 1rem 2rem; justify-content: space-between; margin-block-end: 1.25rem; }
+.usage-daily__heading h1 { font-size: 2rem; letter-spacing: -.03em; line-height: 1.15; }
 .usage-daily__heading p { color: var(--muted); margin-block-start: .6rem; max-inline-size: 65ch; }
 .usage-daily__privacy { color: var(--muted); font-size: .8rem; }
-.usage-daily__controls { align-items: end; border-block: 1px solid var(--grid); display: flex; flex-wrap: wrap; gap: 1rem; padding-block: 1.25rem; }
+.usage-daily__controls { align-items: end; border-block: 1px solid var(--grid); display: flex; flex-wrap: wrap; gap: .75rem; padding-block: .85rem; }
 .usage-daily__presets { display: flex; flex-basis: 100%; flex-wrap: wrap; gap: .5rem; }
 .usage-daily__presets .usage-button[aria-pressed="true"] { background: var(--foreground); border-color: var(--foreground); color: var(--background); }
 .usage-daily__controls label { display: grid; font-size: .8rem; font-weight: 600; gap: .4rem; }
@@ -16,8 +16,15 @@
 .usage-daily button:disabled { cursor: wait; opacity: .5; transform: none; }
 .usage-daily :is(button, input, a, summary, [tabindex]):focus-visible { outline: 2px solid var(--foreground); outline-offset: 4px; }
 .usage-daily ::selection { background: var(--foreground); color: var(--background); }
-.usage-daily__range { font-size: .875rem; font-weight: 600; margin-block: 1.5rem 1rem; }
-.usage-daily__coverage { border-bottom: 1px solid var(--grid); color: var(--muted); font-size: .85rem; padding-block-end: 1.5rem; }
+.usage-daily__range { font-size: .8rem; font-weight: 500; margin-block: 1rem; }
+.usage-daily__coverage { border-bottom: 1px solid var(--grid); color: var(--muted); font-size: .8rem; padding-block: 1.25rem; }
+.usage-daily__overview { align-items: center; display: grid; gap: 1.5rem; grid-template-columns: 1.2fr 1fr; }
+.usage-daily__overview h2 { color: var(--muted); font-size: .8rem; font-weight: 500; }
+.usage-daily__overview strong { display: block; font-size: 2.25rem; font-variant-numeric: tabular-nums; font-weight: 600; letter-spacing: -.03em; margin-block-start: .25rem; overflow-wrap: anywhere; }
+.usage-daily__overview dl { display: grid; gap: .65rem; }
+.usage-daily__overview dl > div { display: flex; font-size: .85rem; gap: 1rem; justify-content: space-between; }
+.usage-daily__overview dt { color: var(--muted); }
+.usage-daily__overview dd { font-variant-numeric: tabular-nums; overflow-wrap: anywhere; text-align: end; }
 .usage-daily__coverage strong { color: var(--foreground); font-weight: 600; }
 .usage-daily__coverage p { max-inline-size: 75ch; }
 .usage-daily__coverage p + p { margin-block-start: .5rem; }
@@ -30,7 +37,7 @@
 .usage-daily__totals dl > div { align-items: baseline; display: flex; gap: 1rem; justify-content: space-between; }
 .usage-daily__totals dt { color: var(--muted); font-size: .85rem; }
 .usage-daily__totals dd { font-size: 1.1rem; font-variant-numeric: tabular-nums; font-weight: 600; overflow-wrap: anywhere; text-align: end; }
-.usage-daily__figure { margin-block: 2rem; }
+.usage-daily__figure { margin-block: 1.75rem; }
 .usage-daily__figure figcaption { align-items: baseline; display: flex; flex-wrap: wrap; font-size: .95rem; gap: .5rem 1rem; justify-content: space-between; }
 .usage-daily__figure figcaption span { color: var(--muted); font-size: .8rem; }
 .usage-daily__plot { align-items: end; border-bottom: 1px solid var(--muted); display: flex; gap: .4rem; height: 10rem; margin-block-start: 1.5rem; }
@@ -63,6 +70,8 @@
 .usage-daily__announcement { block-size: 1px; clip-path: inset(50%); inline-size: 1px; overflow: hidden; position: absolute; white-space: nowrap; }
 @media (max-width: 700px) {
   .usage-daily__heading h1 { font-size: 2rem; }
+  .usage-daily__overview { gap: .8rem; grid-template-columns: 1fr; }
+  .usage-daily__overview strong { font-size: 1.9rem; }
   .usage-daily__totals { gap: 1.75rem; grid-template-columns: 1fr; }
   .usage-daily__totals section + section { border-top: 1px solid var(--grid); padding-block-start: 1.5rem; }
   .usage-daily__controls { gap: .75rem; }

@@ -64,7 +64,7 @@ function domainFailure(error: unknown): Response {
   switch (error) {
     case "invalid_input": return failure(400);
     case "unauthorized": case "not_enrolled": return failure(401);
-    case "revoked": case "conflict": case "limit": return failure(409);
+    case "revoked": case "conflict": case "limit": case "profile_superseded": return failure(409);
     default: return failure(503);
   }
 }
