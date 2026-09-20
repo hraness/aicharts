@@ -16,7 +16,7 @@ import { SUPPORT_SOURCE } from "./support-source.mjs";
 // compiler/smoke facts exercise orchestration, never actual Linux qualification.
 const script = new URL("./run-linux.mjs", import.meta.url);
 const runtime = fs.readFileSync(script, "utf8").replace(/from "(\.\/[^"]+)"/gu, (_, relative) => "from " + JSON.stringify(new URL(relative, script).href));
-const internals = await import("data:text/javascript;base64," + Buffer.from(runtime + "\nexport { runWith, argumentsToInput, workflow, minimalEnvironment, inspectElf, resolveLibraries, compilerArtifact, execute, readRegular, prepareOutput, recheckSource, compareVersion, noticeOutputDiagnostic, checkSource };\n").toString("base64"));
+const internals = await import("data:text/javascript;base64," + Buffer.from(runtime + "\nexport { runWith, argumentsToInput, workflow, minimalEnvironment, inspectElf, resolveLibraries, compilerArtifact, execute, readRegular, prepareOutput, recheckSource, compareVersion, noticeOutputDiagnostic, artifactReadDiagnostic, checkSource };\n").toString("base64"));
 const TARGET = "x86_64-unknown-linux-gnu";
 const RUST_COMMIT = "8bab26f4f68e0e26f0bb7960be334d5b520ea452";
 const SYSROOT = "/home/runner/.rustup/toolchains/1.97.1-" + TARGET;
@@ -666,4 +666,45 @@ test("real bounded child capture preserves status and refuses excess output and 
   assert.equal(success.status, 7); assert.equal(success.stdout.toString(), "ok"); assert.equal(success.stderr.toString(), "diagnostic");
   await assert.rejects(internals.execute(process.execPath, ["-e", "process.stdout.write('x'.repeat(1024)); setInterval(() => {}, 1000)"], options), { code: "process_output_limit" });
   await assert.rejects(internals.execute(process.execPath, ["-e", "setInterval(() => {}, 1000)"], { ...options, timeoutMs: 100 }), { code: "process_timeout" });
+});
+
+
+test("compiler artifact diagnostics identify the bounded read without exposing paths or bytes", async t => {
+  for (const [kind, stage, maximumBytes] of [["executable", "measure-executable", 64 * 1024 * 1024], ["link_map", "read-link-map", 8 * 1024 * 1024]]) {
+    const f = fixture(t), execute = f.host.execute;
+    f.host.execute = async (executable, args, options) => {
+      const outcome = await execute(executable, args, options);
+      if (args[0] === "rustc") {
+        const file = kind === "executable" ? join(f.input.outputDirectory, "target", TARGET, "release/aicharts") : args.at(-1).slice("link-arg=-Wl,-Map=".length);
+        fs.truncateSync(file, maximumBytes + 137);
+      }
+      return outcome;
+    };
+    assert.deepEqual(await internals.runWith(f.input, f.host), { ok: false, error: "artifact_invalid" });
+    const summaryText = fs.readFileSync(join(f.input.outputDirectory, "summary.json"), "utf8"), summary = JSON.parse(summaryText);
+    assert.deepEqual(summary.diagnostic, { module: "artifact", code: "artifact_read_invalid", kind, reason: "byte_limit", maximumBytes,
+      observedBytes: maximumBytes + 137, sizeSaturated: false, telemetryMaximumBytes: 1024 * 1024 * 1024 });
+    assert.equal(summary.stages.at(-1), stage); assert.equal(summary.checksPassed, false);
+    assert.equal(f.calls.some(call => call.executable === "/usr/bin/readelf"), false);
+    assert.equal(fs.existsSync(join(f.input.outputDirectory, "qualification.json")), false);
+    assert.equal(summaryText.includes(f.root) || summaryText.includes("SYNTHETIC_NEVER_FORWARD"), false);
+  }
+});
+
+test("artifact diagnostics retain regular-file guards and cap only their size telemetry", t => {
+  const f = fixture(t), file = join(f.root, "PRIVATE_PATH_CANARY"), maximumBytes = 8 * 1024 * 1024;
+  fs.writeFileSync(file, "PRIVATE_CONTENT_CANARY");
+  const diagnostic = (selected, cap = maximumBytes, executable = false) => {
+    let failure; try { internals.readRegular(selected, cap, executable); } catch (error) { failure = error; }
+    assert.ok(failure); return internals.artifactReadDiagnostic(failure, "link_map", cap);
+  };
+  fs.symlinkSync(file, join(f.root, "link")); assert.equal(diagnostic(join(f.root, "link")).reason, "not_regular");
+  assert.equal(diagnostic(file, maximumBytes, true).reason, "not_executable");
+  const missing = diagnostic(join(f.root, "missing")); assert.equal(missing.reason, "io_failed"); assert.equal(missing.observedBytes, null);
+  fs.truncateSync(file, 1024 * 1024 * 1024 + 137);
+  const large = diagnostic(file); assert.equal(large.observedBytes, 1024 * 1024 * 1024); assert.equal(large.sizeSaturated, true);
+  assert.equal(large.maximumBytes, maximumBytes); assert.equal(large.reason, "byte_limit");
+  assert.equal(JSON.stringify([missing, large]).includes("PRIVATE_"), false);
+  const arbitrary = internals.artifactReadDiagnostic(Object.assign(new Error("PRIVATE_ERROR_CANARY"), { reason: "PRIVATE_REASON_CANARY", observedBytes: 1 }), "link_map", maximumBytes);
+  assert.equal(arbitrary.reason, "io_failed"); assert.equal(arbitrary.observedBytes, null); assert.equal(JSON.stringify(arbitrary).includes("PRIVATE_"), false);
 });

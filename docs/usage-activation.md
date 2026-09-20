@@ -6,6 +6,36 @@ rollback checks are complete.
 
 ## Recorded production evidence
 
+On September 20, commit `f9febdfb7e7be1b04f04d7f29f67a41c79033f1b`
+([PR 332](https://github.com/hraness/aicharts/pull/332)) deployed to both
+production services after the complete source gate and protected-main checks.
+Vercel deployment `dpl_F8s93JB5rF1p855yiep6BGNKvZc5` served the canonical
+`aicharts.io` alias with the expected project, team, and source identity.
+All four usage/leaderboard pages and three anonymous API checks passed with
+the exact deployment proof. The legacy private API required authentication;
+detailed and public APIs remained unavailable.
+
+Worker deployment `8a6ddf61-4229-405a-8c1d-64c6f48c1d9f` served version
+`3d7728a4-78b2-47e3-91e5-260ad3f6b97a` at 100% traffic. Current settings and
+immutable-version bindings preserved all four SQLite namespaces, both R2
+buckets, enrollment generation, restore authority, existing private flags,
+and the fail-closed route. The workers.dev and Preview URLs remained disabled,
+with no cron schedules. The deployed bundle matched the reviewed 561,689-byte dry run
+(`sha256:14ebd6d4935577b9f37f703a42e2871c1542d349e6e26e4de84fc137f5783081`).
+All four anonymous Worker probes passed, including native status response
+framing. HTTP refusals are health evidence; the separate provider readback
+establishes the active version.
+
+Both `AICHARTS_USAGE_STATS_ENABLED` and `AICHARTS_USAGE_PUBLIC_READ_ENABLED`
+remain disabled on both services. Retain Worker version
+`3d7728a4-78b2-47e3-91e5-260ad3f6b97a` as the schema-6-aware flags-off
+recovery artifact before any detailed-profile activation. Restoring it
+contains new operations while retaining stored data and committed ownership;
+it does not undo a completed v2 transition. Reinspect its identity before use.
+Authenticated account readback, existing native custody, live acquisition,
+public consent/refresh/withdrawal, and scheduled cutover remain unqualified
+by this deployment. The old scheduled publisher was preserved.
+
 The 2026-09-19 production inspection superseded the earlier unconfigured
 environment inventory. It found that Vercel project `aicharts` had production
 authentication, pairing and private-read flags, the cookie secret and the
@@ -135,11 +165,22 @@ checked `bun run custody:signing` workflow to inspect and establish a stable
 local signing identity before a new enrollment. Local self-signing does not
 establish a notarized or publicly distributed release.
 
-Never weaken a Keychain ACL, export custody secrets, replace a checkpoint key,
-or reset a ledger to repair a build mismatch. Use the original authorized
-binary when it remains available, or complete an explicit fresh enrollment
-under the stable identity while retaining prior state for reconciliation.
-Verify the same signed binary from launchd before replacing an existing job.
+Never remove Keychain access checks, export custody secrets, replace a
+checkpoint key, or reset a ledger to repair a build mismatch. For retained
+items created under an earlier signature, the documented
+[existing-item consent flow](usage-local.md#stable-macos-signing-for-credential-custody)
+allows macOS to request access for one process with
+`AICHARTS_CUSTODY_INTERACTION=allow`. The operator grants the stable signed
+binary access through the native prompt; the CLI does not silently change
+the access list. A status read from the verified enrolled state resolves both
+pairing and namespace custody. Confirm that enrollment binding, then repeat
+with the interaction override unset to verify unattended access. A generic
+status response from legacy state is not enrolled-custody proof.
+
+Keep the original authorized binary and retained state available for
+reconciliation. A fresh enrollment is a separate operation, not a repair
+shortcut. Verify the same signed binary from launchd before replacing an
+existing job.
 
 ## Cutover acceptance
 
