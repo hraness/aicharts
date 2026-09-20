@@ -5,7 +5,7 @@ export const USAGE_FAILURE_STAGES = [
   "request_verify", "request_body", "request_decode", "request_guard", "request_timeout",
   "verifier_clock", "verifier_capacity", "verifier_cooldown", "verifier_fetch", "verifier_framing",
   "verifier_body", "verifier_keys", "verifier_import", "verifier_signature", "verifier_guard",
-  "rpc_dispatch", "rpc_shape", "rpc_encode", "deadline", "unknown",
+  "rpc_dispatch", "rpc_call", "rpc_rejected", "rpc_shape", "rpc_encode", "deadline", "unknown",
 ] as const;
 export type UsageFailureStage = typeof USAGE_FAILURE_STAGES[number];
 export const USAGE_FAILURE_HEADER = "x-aicharts-usage-failure";
