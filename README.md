@@ -3,8 +3,9 @@
 [AI Charts](https://aicharts.io) is a portal for AI model benchmarks and
 individual token usage. Compare models and agents across capability, cost,
 speed, and token use, then inspect the source and configuration behind a result.
-The local usage tools help you understand your own coding-agent sessions;
-usage reports stay local and uploads are not enabled.
+The local usage tools help you understand your own coding-agent sessions.
+Local reports stay in the browser tab; account synchronization requires a
+separately enrolled collector and enabled service controls.
 
 The homepage leads with an interactive Pareto frontier: compare model capability against output tokens or cost, then inspect the configuration behind each point. The original coding-agent charts have a focused home at [`/coding`](https://aicharts.io/coding). The separate [`/benchmarks`](https://aicharts.io/benchmarks) library covers coding, reasoning, research, memory, images, video, audio, and world models. Charted results, source guides, and emerging evaluations are labeled separately; older research cohorts do not masquerade as current-product rankings.
 
@@ -55,11 +56,23 @@ The complete gate also requires Rust 1.97.1 with rustfmt and Clippy, pinned in `
 
 ## Local usage foundation
 
+The [detailed usage dashboard](https://aicharts.io/usage/details) adds UTC trends,
+client/provider/model drilldowns, token composition, separate cost bases, source
+coverage, and exact numeric exports. The `aicharts stats` command imports the
+known local formats of all 53 primary clients in the pinned Tokscale parser
+registry. See [detailed usage reports](docs/usage-details.md) for commands,
+acquisition requirements, and the difference between parsing coverage and live
+qualification. The [scheduled publisher guide](docs/usage-autosubmit.md) covers
+native refresh profiles, dry runs, failure recovery and a reversible macOS cutover.
+
 The Rust workspace contains a local-only Codex/Claude Code usage reader, a closed numeric wire format, a private numeric SQLite ledger and matching TypeScript validation/rollups. Explicit collection can retain measurements across restarts with atomic source checkpoints and a pending-queue preview. The separate `inspect` command reads retained numeric totals without source scanning, writes or SQLite recovery. It does not enable sign-in, uploads, a public leaderboard or background collection. See [the local usage guide](docs/usage-local.md) for explicit source selection, private namespace keys and current measurement/recovery limitations.
 
 The [session usage view](https://aicharts.io/usage/sessions) opens local numeric reports for session totals, model mix and evidence-backed time breakdowns. Reports stay in the browser tab. See [session collection and timing](docs/usage-sessions.md) for the command, concurrent-work denominators and source coverage.
 
-The website also includes a server-only Hraness Accounts adapter behind an explicit, default-off production control. It has no login UI or device enrollment. The [identity design and activation contract](docs/usage-identity.md) separates verified package installation from live sign-in qualification; publishing this source does not enable usage uploads.
+The website includes Hraness Accounts sign-in and device enrollment behind
+explicit production controls. The [identity design](docs/usage-identity.md) and
+[activation runbook](docs/usage-activation.md) separate source validation from
+live qualification and record the active production boundaries.
 
 ## Menu-bar companion
 

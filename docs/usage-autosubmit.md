@@ -1,0 +1,181 @@
+# Scheduled usage publication
+
+`aicharts autosubmit` implements one configured refresh-and-publish cycle. It
+does not install a schedule; on macOS, launchd supplies the schedule. Live
+publication requires the existing macOS custody path. The command uses a
+custody-verified enrollment and keeps provider credentials separate from AI Charts credentials.
+Complete the [activation checks](usage-activation.md) before replacing another
+publisher. Keep the previous job and its configuration until the first AI Charts
+scheduled cycle and account readback have succeeded.
+
+The refresh adapters, capture wrapper, and cycle orchestration have synthetic
+test coverage. This guide records their implemented contracts, not a completed
+live provider qualification, deployment, or launchd cutover.
+
+## Configuration
+
+Store configuration in a private regular file with mode `0600`. Paths are
+absolute; shell variables in JSON are not expanded. `days` accepts 1–366; select
+up to 54 disjoint clients, with at most 128 source roots per client. This example
+uses placeholder paths and must be changed to the existing enrollment and source locations:
+
+```json
+{
+  "schemaVersion": 1,
+  "stateDir": "/Users/example/.aicharts/state",
+  "keyFile": "/Users/example/.aicharts/checkpoint.key",
+  "runtimeDir": "/Users/example/.aicharts/autosubmit-runtime",
+  "home": "/Users/example",
+  "days": 30,
+  "clients": [
+    { "client": "codex" },
+    { "client": "claude" },
+    { "client": "devin-cli" },
+    {
+      "client": "cursor",
+      "sourceRoots": ["/Users/example/.aicharts/cursor"],
+      "refresh": {
+        "kind": "cursor",
+        "cacheDir": "/Users/example/.aicharts/cursor",
+        "cursorStateDb": "/Users/example/Library/Application Support/Cursor/User/globalStorage/state.vscdb"
+      }
+    }
+  ]
+}
+```
+
+The runtime directory is separate from the enrollment and provider caches. It
+holds a stable cycle lock and the latest bounded `last-cycle.json` result. An
+overlapping invocation refuses without starting another cycle. The status file
+contains public client IDs, actions and fixed error codes; it excludes account
+identifiers, paths, credentials and source content.
+
+Use `sourceRoots` for a configured client profile. A refresh cache must be one
+of that client's explicit roots. Clients without roots use discovery beneath
+the selected home. Roots never enable a provider login or refresh implicitly.
+One client entry owns all its configured roots; duplicate clients and overlapping
+9Router publication are refused. A profile with several accounts must preserve
+their separate acquisition bindings before combining numeric observations.
+
+## Check and run
+
+```sh
+aicharts autosubmit --config-file /absolute/path/autosubmit.json --check
+aicharts autosubmit --config-file /absolute/path/autosubmit.json --dry-run
+aicharts autosubmit --config-file /absolute/path/autosubmit.json
+```
+
+`--check` validates configuration without creating runtime state. `--dry-run`
+reads local usage without opening enrollment, refreshing providers or sending
+data. Neither proves live authentication or publication. The ordinary invocation
+first reconciles any retained upload using its exact frozen bytes, then refreshes
+and publishes each configured client. Failed refreshes skip that client's
+publication; another client may continue. An uncertain upload stops later writes
+and remains retained for the next cycle. Partial failures return a nonzero exit
+status. A successfully parsed source with no observations in the selected
+period is a successful `no_observations` skip; it does not upload an empty
+replacement. Missing or incomplete sources still fail. The cycle has a
+30-minute budget checked between individually bounded operations.
+
+Historical daily observations use history-preserving publication: absent days
+remain, and unexplained reductions in existing counters or coverage are refused.
+Warp uses a separate latest-counter snapshot because its billing-period counters
+are not daily events. See [detailed report semantics](usage-details.md).
+
+## Provider refreshes
+
+Every refresh is explicit, bounded, and publishes its local numeric cache only
+after its complete required fetch succeeds. A failed fetch preserves the last
+complete cache. Credential files are private owned regular files; credentials
+are never stored in configuration or emitted in status output.
+Use `aicharts refresh --help` for standalone refresh commands. A refresh writes
+the local cache; `stats-sync` or an ordinary `autosubmit` cycle publishes the
+numeric snapshot to the enrolled AI Charts account.
+
+| Kind | Required refresh fields | Optional fields |
+| --- | --- | --- |
+| `cursor` | `cacheDir`, exactly one of `cursorStateDb` or `sessionTokenFile` | — |
+| `trae` | `cacheDir`, `tokenFile` | `includeAux` (default false); the configured `days` selects the fetch window |
+| `warp` | `cacheDir`, exactly one of `tokenFile` or `cookieFile` | — |
+| `hindsight` | `cacheDir`, `endpoint`, `tenant` | `tokenFile`, `allowLoopbackHttp` (default false) |
+| `antigravity` | `cacheDir`, `app` | `pid`, `port`, `allowLocalSelfSignedTls` (default false) |
+
+Trae IDE and Solo share account-level international usage, so configure one
+profile. The upstream China backend has no supported session-usage endpoint.
+Warp retains its latest billing/refresh counters, with tokens unavailable.
+Hindsight's source may retain traces briefly; choose a cadence that captures
+the configured service's retention window. Antigravity requires the selected
+local macOS application and verifies process ownership and the loopback listener.
+Its optional local TLS mode is restricted to that verified local process.
+MiniMax capture is an explicit command around a user-requested invocation; a
+scheduled publisher reads completed captures and never starts new model work.
+
+## MiniMax Code capture
+
+Capture an invocation you intend to run with your existing MiniMax installation:
+
+```sh
+aicharts capture mcode --cache-dir /absolute/private/mcode-cache --executable /absolute/path/mcode -- exec "your task"
+```
+
+The wrapper supplies `--output-format stream-json`. It consumes stdout and stderr
+privately, discards content, and retains only complete numeric usage matched to
+an authoritative final result. Success prints a numeric summary. A failed child
+returns its nonzero exit status and preserves prior captured history. Run your
+own `mcode` installation directly when you need its provider diagnostics.
+
+The default timeout is one hour; `--timeout-seconds` accepts 1–7,200. Output is
+bounded at 64 MiB stdout, 4 MiB stderr, and 1 MiB per line. Cancellation and timeout
+clean up the owned process group. The numeric cache is bounded at 64 MiB, bound
+to the selected executable identity, and merges completed turns without repeating
+identical captures. A conflicting replay refuses rather than rewriting history.
+Configure client `mcode` with this cache as an explicit source root. Scheduling
+reads these completed captures; it never runs a new model task.
+
+## macOS scheduling and cutover
+
+Use a stable signed collector path qualified against the retained enrollment.
+The LaunchAgent's `ProgramArguments` are separate arguments, for example the
+absolute binary path, `autosubmit`, `--config-file`, and the absolute private
+configuration path. Use label `io.aicharts.autosubmit`, `RunAtLoad`,
+`ProcessType=Background`, and a deliberate `StartInterval`. Do not enable a
+new schedule until a manual live cycle and account totals have been checked.
+
+Record the old job's label, file, arguments and enabled state. After the first
+AI Charts scheduled cycle succeeds, unload the old Tokscale job while retaining
+its plist, executable, credentials and local history. Read back AI Charts again
+after the old job is disabled. Rollback re-enables the retained old job and
+disables the new schedule; it never resets either service's data or credentials.
+
+Use the fixed error code in `last-cycle.json` to investigate a completed cycle.
+Configuration, lock, or runtime-storage failures can occur before this file is
+updated; also inspect the command's exit status and fixed error output. Never
+remove enrollment, key, checkpoint or pending-upload files to make a retry run.
+Account/generation mismatches, revoked devices and unexplained source reductions
+require explicit reconciliation. For a terminally refused frozen request, the
+authenticated `stats-sync --abandon` protocol fences a late retry before clearing
+that flight; never delete the checkpoint manually. A credential rotation that changes a profile's
+bound scope requires a separate profile or a reviewed migration.
+
+## Local retention
+
+Provider caches can retain numeric history that is no longer available from the
+provider, so treat them as historical records. Each profile is bounded at
+64 MiB (Warp's current snapshot is bounded at 4 MiB); reaching a limit refuses
+growth instead of deleting older records. Completed source capture caches have
+their own documented bounds. The sync checkpoint retains the exact pending
+numeric request and validated receipt in private authenticated files.
+
+On an explicit uninstall or profile-retirement request, stop the owned schedule,
+verify the exact profile identity, preserve a private backup/export if history
+is still needed, and remove only that profile's owned cache/runtime files.
+Removing a local profile does not withdraw public consent or delete server data.
+Those account actions have separate authenticated controls. Source transcripts
+and another tool's credentials or caches are never part of profile cleanup.
+
+Importer snapshot files are private temporary copies and are removed after a
+normal scan or handled error. Supported macOS filesystems use temporary clones
+that share unchanged data blocks; fallback copies require a 2 GiB free-space
+reserve. An abrupt process kill can leave a private
+`aicharts-import-*` directory; inspect ownership and active-process status before
+removing an abandoned exact directory. Do not sweep unrelated temporary data.

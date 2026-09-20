@@ -37,7 +37,7 @@ export class AccountAdmission {
     });
     if (!result.ok) {
       switch (result.error) {
-        case "invalid_input": case "unauthorized": case "not_enrolled": case "revoked": case "conflict":
+        case "invalid_input": case "unauthorized": case "not_enrolled": case "revoked": case "conflict": case "profile_superseded":
         case "recovery_required": case "clock_regressed": case "storage_invalid": case "storage_unavailable": case "limit":
           throw new AdmissionFault(result.error);
         default: throw new AdmissionFault();

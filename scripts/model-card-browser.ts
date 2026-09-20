@@ -400,15 +400,24 @@ async function verifyBenchmarkAtlas(browser: Browser, baseUrl: string): Promise<
     invariant(new URL(page.url()).pathname === "/coding", "Legacy coding selections must resolve to the dedicated coding chart.");
     await page.locator(".chart-canvas .benchmark-chart").waitFor();
     invariant(await page.getByRole("button", { name: "Share and export chart" }).isVisible(), "Legacy shared chart links no longer reveal the exportable chart.");
-    await page.goto(`${baseUrl}/?benchmark=aaIndex#model-updates`, { waitUntil: "domcontentloaded" });
-    await page.waitForURL(`${baseUrl}/coding?benchmark=aaIndex#model-updates`);
-    await page.locator("#model-updates").waitFor().catch(() => invariant(false, "Combined query and section bookmarks must retain their original fragment."));
-    await page.goto(`${baseUrl}/#chart`, { waitUntil: "domcontentloaded" });
-    await page.waitForURL(`${baseUrl}/coding#chart`);
-    await page.locator("#chart").waitFor().catch(() => invariant(false, "Hash-only chart bookmarks must retain their destination."));
-    await page.goto(`${baseUrl}/#explore`, { waitUntil: "domcontentloaded" });
-    await page.waitForURL(`${baseUrl}/benchmarks#explore`);
-    await page.locator("#explore").waitFor().catch(() => invariant(false, "Hash-only benchmark bookmarks must retain their destination."));
+    for (const bookmark of [
+      { source: "/?benchmark=aaIndex#model-updates", destination: "/coding?benchmark=aaIndex#model-updates", target: "#model-updates", message: "Combined query and section bookmarks must retain their original fragment." },
+      { source: "/#chart", destination: "/coding#chart", target: "#chart", message: "Hash-only chart bookmarks must retain their destination." },
+      { source: "/#explore", destination: "/benchmarks#explore", target: "#explore", message: "Hash-only benchmark bookmarks must retain their destination." },
+    ]) {
+      try {
+        // Listen before hydration can replace the legacy document. A matching URL
+        // observed afterward can precede the destination document's readiness.
+        await Promise.all([
+          page.waitForURL(`${baseUrl}${bookmark.destination}`, { waitUntil: "domcontentloaded" }),
+          page.goto(`${baseUrl}${bookmark.source}`, { waitUntil: "domcontentloaded" }),
+        ]);
+        await page.locator(bookmark.target).waitFor({ state: "visible" });
+        invariant(page.url() === `${baseUrl}${bookmark.destination}`, bookmark.message);
+      } catch (cause: unknown) {
+        throw new Error(bookmark.message, { cause });
+      }
+    }
     invariant(failures.length === 0, failures.join("; "));
   } finally {
     await context.close();

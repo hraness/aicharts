@@ -41,7 +41,7 @@ export function LeaderboardView({ available, snapshot }: LeaderboardViewProps) {
     <section className="usage-hero" aria-labelledby="leaderboard-title">
       <div className="usage-hero__copy">
         <h1 id="leaderboard-title">Public usage leaderboard</h1>
-        <p className="usage-hero__lede">Opt-in accounts ranked by locally reported tokens over {LEADERBOARD_WINDOW_DAYS} UTC days, across Codex, Claude Code, and Devin. Each entry shows its reporting window and last refresh.</p>
+        <p className="usage-hero__lede">Opt-in accounts ranked by locally reported tokens over {LEADERBOARD_WINDOW_DAYS} UTC days. Each entry shows its reporting window and last refresh.</p>
         <div className="usage-hero__actions"><Link className="usage-button usage-button--primary" href="/usage">View your usage</Link></div>
       </div>
       {live

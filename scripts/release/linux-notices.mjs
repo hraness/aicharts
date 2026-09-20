@@ -39,8 +39,12 @@ const NATIVE_PROVIDERS = new Map([
   ["libsqlite3-sys@0.38.2", { links: "sqlite3", libraries: ["sqlite3"] }],
   // ring builds its test archive even for ordinary release library builds.
   ["ring@0.17.14", { links: "ring_core_0_17_14_", libraries: ["ring_core_0_17_14_", "ring_core_0_17_14__test"] }],
+  // Reviewed bundled C build, with the upstream BSD notice retained below.
+  ["zstd-sys@2.1.0+zstd.1.5.7", { links: "zstd", libraries: ["zstd"] }],
 ]);
 const RING_NESTED_LICENSES = new Set(["src/polyfill/once_cell/LICENSE-APACHE", "src/polyfill/once_cell/LICENSE-MIT"]);
+const ZSTD_NESTED_LICENSES = new Set(["zstd/LICENSE"]);
+const TOKSCALE_LICENSE_SHA256 = "24a794f325f7625b5f124945dedb6dcec8188f88e76bf4b99557b52d6cc77be9";
 class NativeFailure { constructor(category) { this.category = category; } }
 class SystemFailure { constructor(category) { this.category = category; } }
 const unknownNative = category => { throw new NativeFailure(category); };
@@ -314,7 +318,7 @@ export async function collectLinuxNotices(input) {
     const policy = json(policyBytes, MiB);
     if (policy.schemaVersion !== 1 || policy.registry !== REGISTRY) fail("notices_unmapped_crate");
     const mapped = new Map();
-    for (const item of array(policy.packages, 128)) {
+    for (const item of array(policy.packages, 256)) {
       if (!CRATE.test(item.name) || !VERSION.test(item.version) || !HASH.test(item.checksum)) fail("notices_unmapped_crate");
       const key = `${item.name}@${item.version}`;
       if (mapped.has(key)) fail("notices_unmapped_crate");
@@ -336,7 +340,18 @@ export async function collectLinuxNotices(input) {
     }
     for (const pkg of plan.value.compiled.sort((a, b) => compare(a.name + a.version, b.name + b.version))) {
       if (pkg.source === null) {
-        if (!inside(source, pkg.manifest_path) || !/^aicharts-(?:cli|core|custody|ledger|protocol)$/u.test(pkg.name) || pkg.license !== "MIT") fail("notices_unmapped_crate");
+        if (pkg.name === "tokscale-core") {
+          if (pkg.manifest_path !== path.join(source, "vendor/tokscale-core/Cargo.toml")
+            || pkg.version !== "4.17.0-aicharts.1" || pkg.license !== "MIT" || pkg.license_file !== null) fail("notices_unmapped_crate");
+          const filename = path.join(source, "vendor/tokscale-core/LICENSE");
+          await canonicalFile(filename, "notices_crate_changed");
+          const bytes = await read(filename, MiB, "notices_crate_changed");
+          await canonicalFile(filename, "notices_crate_changed");
+          if (digest(bytes) !== TOKSCALE_LICENSE_SHA256) fail("notices_crate_changed");
+          add(`Cargo ${pkg.name} ${pkg.version} (MIT) / LICENSE`, bytes);
+          continue;
+        }
+        if (!inside(source, pkg.manifest_path) || !/^aicharts-(?:cli|core|custody|ledger|protocol|import|platform-process)$/u.test(pkg.name) || pkg.license !== "MIT") fail("notices_unmapped_crate");
         continue; // Project LICENSE is a separate mandatory archive member.
       }
       if (pkg.source === SUPPORT_SOURCE) {
@@ -380,9 +395,12 @@ export async function collectLinuxNotices(input) {
       if (!array(item.files, 16).length) fail("notices_unmapped_crate");
       if (pkg.name === "ring" && pkg.version === "0.17.14"
         && [...RING_NESTED_LICENSES].some(name => !item.files.some(file => file.path === name))) fail("notices_unmapped_crate");
+      if (pkg.name === "zstd-sys" && pkg.version === "2.1.0+zstd.1.5.7"
+        && [...ZSTD_NESTED_LICENSES].some(name => !item.files.some(file => file.path === name))) fail("notices_unmapped_crate");
       for (const file of item.files) {
         const relativeFile = relative(file.path);
-        if (!(LICENSE_FILE.test(relativeFile) || (pkg.name === "ring" && pkg.version === "0.17.14" && RING_NESTED_LICENSES.has(relativeFile)))
+        if (!(LICENSE_FILE.test(relativeFile) || (pkg.name === "ring" && pkg.version === "0.17.14" && RING_NESTED_LICENSES.has(relativeFile))
+          || (pkg.name === "zstd-sys" && pkg.version === "2.1.0+zstd.1.5.7" && ZSTD_NESTED_LICENSES.has(relativeFile)))
           || !HASH.test(file.sha256)) fail("notices_unmapped_crate");
         const filename = path.join(directory, relativeFile);
         await canonicalFile(filename, "notices_crate_changed");
