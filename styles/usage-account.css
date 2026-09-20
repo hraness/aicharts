@@ -11,7 +11,7 @@
 .usage-account__id input { background: var(--background); border: 1px solid var(--grid); border-radius: .35rem; color: var(--foreground); font-family: var(--font-mono); font-size: .8rem; inline-size: 100%; min-inline-size: 0; padding: .7rem; }
 .usage-account__copy, .usage-account__actions { align-items: center; display: flex; flex-wrap: wrap; gap: .4rem 1.25rem; }
 .usage-account__copy > span { color: var(--muted); }
-.usage-account__action { color: var(--foreground); min-block-size: 2.75rem; text-decoration: underline; text-underline-offset: .25em; }
+.usage-account__action { background: transparent; border: 0; color: var(--foreground); cursor: pointer; font: inherit; min-block-size: 2.75rem; padding: .35rem 0; text-decoration: underline; text-underline-offset: .25em; }
 .usage-account__action:hover { color: var(--hraness-site-accent); }
 .usage-account__action:disabled { color: var(--muted); cursor: not-allowed; text-decoration: none; }
 .usage-account__actions { border-block-start: 1px solid var(--grid); margin-block-start: .75rem; padding-block-start: .35rem; }
