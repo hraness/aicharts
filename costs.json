@@ -70,7 +70,7 @@
       "kind": "served",
       "retention": "ephemeral",
       "owner": "app/api/suite-auth/[...path]/route.ts",
-      "note": "dynamic route; per-request compute, no storage"
+      "note": "Dynamic route; per-request compute, no product storage. Usage read recovery uses the pinned Accounts SDK with at most two same-origin session GETs and one refresh POST per failed read, within the existing browser request deadline; publishing mutations are never replayed."
     },
     "route:/api/usage/stats": {
       "kind": "served",

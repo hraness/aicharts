@@ -193,6 +193,13 @@ export async function verifyUsageDashboard(browser: Browser, disabledBaseUrl: st
           }
         }
         if (url.origin !== baseUrl) { blockedOrigins.add(url.origin); await route.abort(); return; }
+        if (url.pathname === "/api/suite-auth/session") {
+          invariant(route.request().method() === "GET", "Session recovery must read status before mutation.");
+          await route.fulfill({ status: 200, contentType: "application/json", body: '{"kind":"signed_out"}' }); return;
+        }
+        if (url.pathname === "/api/suite-auth/refresh") {
+          throw new Error("A signed-out browser fixture must never attempt session renewal.");
+        }
         if (url.pathname === "/api/usage/stats") {
           invariant(route.request().method() === "GET" && parseStatsPublicSearch(url.search), "The stats fallback must use the numeric GET contract.");
           await route.fulfill({ status: 200, headers: { "content-type": STATS_PUBLIC_MEDIA, "cache-control": "private, no-store" }, body: '{"schemaVersion":2,"ok":false,"error":"not_started"}' });

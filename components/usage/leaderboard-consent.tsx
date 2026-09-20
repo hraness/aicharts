@@ -4,7 +4,8 @@ import { useCallback, useEffect, useRef, useState, type FormEvent } from "react"
 import Link from "next/link";
 
 import { leaderboardPublicHandle, type LeaderboardConsentViewV1 } from "@/lib/usage/leaderboard-contract";
-import { readUsageConsent, setUsageConsent } from "@/lib/usage/consent-client";
+import { setUsageConsent } from "@/lib/usage/consent-client";
+import { readAccountConsent } from "@/lib/usage/account-read-client";
 import type { UsageConsentPublicReply } from "@/lib/usage/consent-public";
 
 const date = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
@@ -75,7 +76,7 @@ export function LeaderboardConsentControl() {
   useEffect(() => {
     let active = true;
     const owner = requests.current;
-    void Promise.resolve().then(() => { if (active) return issue(signal => readUsageConsent(signal), false); });
+    void Promise.resolve().then(() => { if (active) return issue(signal => readAccountConsent(signal), false); });
     return () => { active = false; owner.id++; owner.pending?.abort(); };
   }, [issue]);
 
@@ -91,7 +92,7 @@ export function LeaderboardConsentControl() {
     setState({ kind: "busy", view });
     void issue(signal => setUsageConsent({ consent: false, publicHandle: null }, signal), true);
   };
-  const retry = () => { setState({ kind: "loading" }); void issue(signal => readUsageConsent(signal), false); };
+  const retry = () => { setState({ kind: "loading" }); void issue(signal => readAccountConsent(signal), false); };
 
   return <LeaderboardConsentPanel state={state} handle={handle} confirmed={confirmed} setHandle={setHandle}
     setConfirmed={setConfirmed} publish={publish} withdraw={withdraw} retry={retry} />;

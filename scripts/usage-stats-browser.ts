@@ -46,6 +46,13 @@ export async function verifyUsageStats(browser: Browser, baseUrl: string, captur
       }
       if (localInteraction && (request.method() !== "GET" || url.pathname.startsWith("/api/"))) effects.push(`${request.method()} ${url.origin}${url.pathname}`);
       if (url.origin !== baseUrl) { await route.abort(); return; }
+      if (url.pathname === "/api/suite-auth/session") {
+        invariant(request.method() === "GET", "Session recovery must start with a status read.");
+        await route.fulfill({ status: 200, contentType: "application/json", body: '{"kind":"signed_out"}' }); return;
+      }
+      if (url.pathname === "/api/suite-auth/refresh") {
+        throw new Error("The signed-out synthetic account must not renew.");
+      }
       if (url.pathname === "/api/usage/stats") {
         const range = parseStatsPublicSearch(url.search); invariant(range, "Stats request must use the exact numeric GET contract.");
         invariant(request.method() === "GET" && request.postData() === null, "Stats reads must have no mutation body.");
@@ -153,6 +160,12 @@ export async function verifyUsageStats(browser: Browser, baseUrl: string, captur
       localInteraction = false;
       await page.locator(".usage-stats-source__menu > summary").click();
       if (await page.getByRole("button", { name: "Load account", exact: true }).count()) {
+        statsMode = "authentication_required";
+        await page.getByRole("button", { name: "Load account", exact: true }).click();
+        await page.getByRole("heading", { name: "Sign in to view your usage", exact: true }).waitFor();
+        invariant(await page.locator(".usage-stats").count() === 1 && await page.getByText("Local reports stay in this browser", { exact: true }).count() === 1,
+          "Authentication failure must preserve a locally imported report.");
+        statsMode = "ready";
         await page.getByRole("button", { name: "Load account", exact: true }).click(); await page.getByText("Private to your account", { exact: true }).waitFor();
         await expandFilters();
         await page.getByLabel("Client", { exact: true }).selectOption("codex");
@@ -162,6 +175,17 @@ export async function verifyUsageStats(browser: Browser, baseUrl: string, captur
         statsMode = "range_too_large"; await page.getByRole("button", { name: "Refresh", exact: true }).click();
         await page.getByRole("alert").filter({ hasText: "too much detail" }).waitFor(); await capture("stats-range-error");
         statsMode = "ready"; await page.getByRole("button", { name: "Load last 7 days", exact: true }).click();
+        await page.getByRole("heading", { name: "Daily usage", exact: true }).waitFor();
+        statsMode = "authentication_required"; await expandFilters(); await page.getByRole("button", { name: "Refresh", exact: true }).click();
+        await page.getByRole("heading", { name: "Sign in to view your usage", exact: true }).waitFor();
+        invariant(await page.locator(".usage-stats").count() === 0, "Confirmed authentication failure must remove the old account report.");
+        await page.getByRole("button", { name: "Explore example", exact: true }).click();
+        await page.locator(".usage-stats-source__menu > summary").click();
+        await page.getByRole("button", { name: "Load account", exact: true }).click();
+        await page.getByRole("heading", { name: "Sign in to view your usage", exact: true }).waitFor();
+        invariant(await page.locator(".usage-stats").count() === 1 && await page.getByText("Example data · synthetic", { exact: true }).count() === 1,
+          "Authentication failure must preserve a synthetic example.");
+        statsMode = "ready"; await page.getByRole("button", { name: "Load account", exact: true }).click();
         await page.getByRole("heading", { name: "Daily usage", exact: true }).waitFor();
         statsMode = "not_started"; await expandFilters(); await page.getByRole("button", { name: "Refresh", exact: true }).click();
         await page.getByRole("heading", { name: "No detailed snapshot yet", exact: true }).waitFor();
