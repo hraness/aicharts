@@ -3,7 +3,7 @@
   "source": {
     "name": "Artificial Analysis",
     "url": "https://artificialanalysis.ai/agents/coding-agents/",
-    "retrievedAt": "2026-09-17T18:43:53.953Z",
+    "retrievedAt": "2026-09-20T14:21:48.090Z",
     "method": "next-flight",
     "benchmarkDatasets": {
       "deepSwe": "deep-swe-v1.1",
@@ -458,7 +458,7 @@
         "sweAtlas": 51.3440860215054
       },
       "economics": {
-        "costUsd": 0.08278622901034095,
+        "costUsd": 0.08506419165060494,
         "durationSeconds": 1097.0404400440034
       },
       "usage": {
@@ -510,7 +510,7 @@
         "sweAtlas": 54.0322580645161
       },
       "economics": {
-        "costUsd": 6.579795483718375,
+        "costUsd": 6.353318230693071,
         "durationSeconds": 1237.696445544555
       },
       "usage": {
@@ -666,7 +666,7 @@
         "sweAtlas": 54.5698924731183
       },
       "economics": {
-        "costUsd": 3.4530380026952665,
+        "costUsd": 3.467754041474145,
         "durationSeconds": 1098.202911991198
       },
       "usage": {
