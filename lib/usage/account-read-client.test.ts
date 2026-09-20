@@ -1,5 +1,7 @@
 import { expect, test } from "bun:test";
-import { readAccountConsent, readAccountDays, readAccountStats } from "./account-read-client";
+import { readAccountConsent, readAccountDays, readAccountStats, readAccountSummary, signOutUsageAccount } from "./account-read-client";
+import { subscribeUsageAccountSignOut } from "./account-session-events";
+import type { UsageAccountReply } from "./account-public";
 import { setUsageConsent } from "./consent-client";
 import type { PrivateDaysPublicReply } from "./private-days-public";
 import type { StatsPublicReply } from "./stats-public";
@@ -10,6 +12,7 @@ const missing = { schemaVersion: 1, error: { code: "authentication_required" } }
 const absent = { schemaVersion: 1, state: "not_enrolled" } satisfies PrivateDaysPublicReply & UsageConsentPublicReply;
 const statsMissing = { schemaVersion: 2, ok: false, error: "authentication_required" } satisfies StatsPublicReply;
 const statsAbsent = { schemaVersion: 2, ok: false, error: "not_enrolled" } satisfies StatsPublicReply;
+const accountReady = { schemaVersion: 1, state: "ready", account: { accountId: `acct_${"1".repeat(32)}` } } satisfies UsageAccountReply;
 type Options = NonNullable<Parameters<typeof readAccountConsent>[1]>;
 const clients = [
   { name: "daily", path: "/api/usage/days?firstUtcDay=10&dayCount=1", missing, absent,
@@ -18,6 +21,8 @@ const clients = [
     read: (signal: AbortSignal, options: Options) => readAccountStats(10, 1, signal, options) },
   { name: "consent", path: "/api/usage/consent", missing, absent,
     read: (signal: AbortSignal, options: Options) => readAccountConsent(signal, options) },
+  { name: "account", path: "/api/usage/account", missing, absent: accountReady,
+    read: (signal: AbortSignal, options: Options) => readAccountSummary(signal, options) },
 ] as const;
 const json = (value: unknown, status = 200) => new Response(JSON.stringify(value), { status, headers: { "content-type": "application/json; charset=utf-8" } });
 const port = (run: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response> | Response) => run as typeof fetch;
@@ -248,4 +253,64 @@ test("failed consent POST is never renewed or replayed", async () => {
     calls.push(`${init?.method} ${input}`); expect(init?.body).toBeInstanceOf(Uint8Array); return json(missing, 401);
   }));
   expect(result).toEqual(missing); expect(calls).toEqual(["POST /api/usage/consent"]);
+});
+
+test("explicit sign-out uses one SDK-serialized POST and clears this tab only after confirmed completion", async () => {
+  let clears = 0; const unsubscribe = subscribeUsageAccountSignOut(() => { clears++; });
+  const controller = new AbortController(); const calls: string[] = [];
+  try {
+    await signOutUsageAccount(controller.signal, { withExclusiveLock: serialLock(), fetch: port((input, init) => {
+      expect(clears).toBe(0); calls.push(`${init?.method} ${input}`);
+      expect(init?.signal).toBe(controller.signal); expect(init?.body).toBeUndefined();
+      expect(init?.credentials).toBe("same-origin"); expect(init?.redirect).toBe("error"); expect(init?.cache).toBe("no-store");
+      return json({ kind: "signed_out" });
+    }) });
+    expect(calls).toEqual(["POST /api/suite-auth/sign-out"]); expect(clears).toBe(1);
+  } finally { unsubscribe(); }
+});
+
+test("failed, malformed and aborted sign-out never announces success or retries", async () => {
+  let clears = 0; const unsubscribe = subscribeUsageAccountSignOut(() => { clears++; });
+  try {
+    for (const mode of ["failure", "invalid", "extra", "abort", "oversize"] as const) {
+      const controller = new AbortController(); let calls = 0;
+      await expect(signOutUsageAccount(controller.signal, { withExclusiveLock: serialLock(), fetch: port(() => {
+        calls++;
+        if (mode === "failure") throw new Error("PRIVATE_CANARY");
+        if (mode === "abort") controller.abort();
+        return mode === "oversize" ? new Response("x".repeat(32_769), { headers: { "content-type": "application/json" } })
+          : json(mode === "invalid" ? { kind: "signed_in", session: {} } : mode === "extra" ? { kind: "signed_out", private: "PRIVATE_CANARY" } : { kind: "signed_out" });
+      }) })).rejects.toEqual(new Error("usage_unavailable"));
+      expect(calls).toBe(1); expect(clears).toBe(0);
+    }
+  } finally { unsubscribe(); }
+});
+
+test("late sign-out lock cannot dispatch after cancellation", async () => {
+  const controller = new AbortController(); let task!: () => Promise<unknown>, calls = 0;
+  const entered = deferred<void>(), lock = deferred<unknown>();
+  const operation = signOutUsageAccount(controller.signal, { withExclusiveLock: async (_name, next) => { task = next; entered.resolve(); return lock.promise; },
+    fetch: port(() => { calls++; return json({ kind: "signed_out" }); }) });
+  const result = operation.then(() => null, (error: unknown) => error);
+  await entered.promise; controller.abort(); expect(await result).toEqual(new Error("usage_unavailable"));
+  await expect(task()).rejects.toEqual(new Error("usage_unavailable")); lock.resolve(undefined); expect(calls).toBe(0);
+});
+
+test("SDK local singleflight cannot mistake a concurrent renewal for a successful sign-out", async () => {
+  let clears = 0, signOutCalls = 0, reads = 0;
+  const unsubscribe = subscribeUsageAccountSignOut(() => { clears++; });
+  const entered = deferred<void>(), refresh = deferred<Response>();
+  try {
+    const renewal = readAccountConsent(new AbortController().signal, { withExclusiveLock: null, fetch: port(input => {
+      if (input === "/api/usage/consent") return json(++reads === 1 ? missing : absent, reads === 1 ? 401 : 200);
+      if (input === "/api/suite-auth/session") return json({ kind: "refresh_required" });
+      entered.resolve(); return refresh.promise;
+    }) });
+    await entered.promise;
+    const signOut = signOutUsageAccount(new AbortController().signal, { withExclusiveLock: null, fetch: port(() => { signOutCalls++; return json({ kind: "signed_out" }); }) });
+    const result = signOut.then(() => null, (error: unknown) => error);
+    refresh.resolve(json(signedIn));
+    expect(await renewal).toEqual(absent); expect(await result).toEqual(new Error("usage_unavailable"));
+    expect(signOutCalls).toBe(0); expect(clears).toBe(0);
+  } finally { unsubscribe(); }
 });

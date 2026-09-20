@@ -7,6 +7,7 @@ import { searchSite } from "@/app/site";
 import { DailyUsageDashboard } from "@/components/usage/daily-dashboard";
 import { StatsDashboard } from "@/components/usage/stats-dashboard";
 import { LeaderboardConsentControl } from "@/components/usage/leaderboard-consent";
+import { UsageAccountControl } from "@/components/usage/account-control";
 import { usagePublicReadAvailable } from "@/lib/usage/auth-server";
 import { usagePageConfiguration } from "@/lib/usage/private-days-page";
 import { privateStatsEnabled } from "@/lib/usage/stats-page";
@@ -15,6 +16,7 @@ import "@/styles/usage.css";
 import "@/styles/usage-dashboard.css";
 import "@/styles/usage-leaderboard.css";
 import "@/styles/usage-stats.css";
+import "@/styles/usage-account.css";
 
 export const metadata = createPublicSiteMetadata({
   ...searchSite,
@@ -34,6 +36,7 @@ export default async function UsagePage() {
     <SiteHeader current="/usage" />
     <main className="usage-home usage-home--stats" id="main-content">
       <nav className="usage-stats-nav" aria-label="Usage views"><Link href="/usage" aria-current="page">Account overview</Link><Link href="/usage/details">Detailed reports</Link><Link href="/usage/sessions">Sessions</Link><Link href="/leaderboard">Leaderboard</Link></nav>
+      <UsageAccountControl />
       {privateStatsEnabled() ? <StatsDashboard todayUtcDay={configuration.todayUtcDay} remoteEnabled startWithAccount fallback={<DailyUsageDashboard todayUtcDay={configuration.todayUtcDay} />} />
         : <DailyUsageDashboard key={configuration.todayUtcDay} todayUtcDay={configuration.todayUtcDay} />}
       {!usagePublicReadAvailable() && <p className="usage-publishing-notice">Public rankings are paused. You can still review or withdraw your publishing consent below.</p>}

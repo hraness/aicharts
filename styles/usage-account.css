@@ -1,0 +1,18 @@
+.usage-account { border-block-end: 1px solid var(--grid); font-size: .8rem; margin-block: -.4rem .5rem; padding-block-end: .25rem; }
+.usage-account summary { align-items: center; cursor: pointer; display: flex; flex-wrap: wrap; gap: .25rem .75rem; min-block-size: 2.25rem; width: fit-content; }
+.usage-account summary::after { border-block-end: 1px solid currentColor; border-inline-end: 1px solid currentColor; content: ""; block-size: .4rem; inline-size: .4rem; margin-inline: .25rem; transform: translateY(-.1rem) rotate(45deg); }
+.usage-account[open] summary::after { transform: translateY(.1rem) rotate(225deg); }
+.usage-account summary > span:first-child { font-weight: 600; }
+.usage-account code { font-family: var(--font-mono); font-size: .8rem; }
+.usage-account__status { color: var(--muted); }
+.usage-account__body { max-inline-size: 40rem; padding-block: .65rem .4rem; }
+.usage-account__body p { color: var(--muted); line-height: 1.6; margin-block: .65rem; max-inline-size: 65ch; }
+.usage-account__id { display: grid; font-weight: 600; gap: .4rem; }
+.usage-account__id input { background: var(--background); border: 1px solid var(--grid); border-radius: .35rem; color: var(--foreground); font-family: var(--font-mono); font-size: .8rem; inline-size: 100%; min-inline-size: 0; padding: .7rem; }
+.usage-account__copy, .usage-account__actions { align-items: center; display: flex; flex-wrap: wrap; gap: .4rem 1.25rem; }
+.usage-account__copy > span { color: var(--muted); }
+.usage-account__action { color: var(--foreground); min-block-size: 2.75rem; text-decoration: underline; text-underline-offset: .25em; }
+.usage-account__action:hover { color: var(--hraness-site-accent); }
+.usage-account__action:disabled { color: var(--muted); cursor: not-allowed; text-decoration: none; }
+.usage-account__actions { border-block-start: 1px solid var(--grid); margin-block-start: .75rem; padding-block-start: .35rem; }
+@media (max-width: 440px) { .usage-account summary { column-gap: .55rem; } .usage-account__status { flex-basis: calc(100% - 2rem); } .usage-account summary::after { margin-inline-start: auto; } }

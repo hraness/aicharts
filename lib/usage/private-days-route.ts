@@ -2,13 +2,15 @@ import "server-only";
 import { usagePrivateReadAvailable } from "./auth-server";
 import { privateDaysSnapshot, type PrivateDaysRange } from "./private-days-http-contract";
 import { createVercelPrivateDaysTransport } from "./private-days-vercel";
+import { createPrivateDaysDiagnostic, emitPrivateDaysDiagnostic, type PrivateDaysDiagnostic, type PrivateDaysDiagnosticSink } from "./private-days-diagnostic";
 import { encodePrivateDaysPublicResponse, parsePrivateDaysPublicReply, parsePrivateDaysPublicSearch, privateDaysPublicStatus,
   PRIVATE_DAYS_PUBLIC_MEDIA, PRIVATE_DAYS_PUBLIC_URL, type PrivateDaysPublicReply, type PrivateDaysPublicError } from "./private-days-public";
 
 export { usagePrivateReadAvailable } from "./auth-server";
 export interface PrivateDaysPublicDependencies {
   available(): boolean;
-  query(request: Request, range: PrivateDaysRange): Promise<unknown>;
+  query(request: Request, range: PrivateDaysRange, diagnostic?: PrivateDaysDiagnostic): Promise<unknown>;
+  diagnostic?: PrivateDaysDiagnosticSink;
 }
 function send(request: Request, bytes: Uint8Array<ArrayBuffer>, status: number): Response {
   return new Response(request.method === "HEAD" ? null : bytes, { status, headers: {
@@ -32,34 +34,56 @@ function failure(request: Request, code: PrivateDaysPublicError): Response {
  * request-owned Accounts scope. Explicit method handling performs no auth work. */
 export function createPrivateDaysPublicHandler(dependencies: PrivateDaysPublicDependencies) {
   return async (request: Request): Promise<Response> => {
+    const diagnostic = createPrivateDaysDiagnostic(dependencies.diagnostic);
+    const finish = (reply: Response, outcome: Parameters<PrivateDaysDiagnostic["finish"]>[0]) => {
+      diagnostic.finish(outcome); return reply;
+    };
+    const deny = (code: PrivateDaysPublicError) => finish(failure(request, code), code);
     try {
-      if (request.method !== "GET") return failure(request, "method_not_allowed");
-      if (request.signal.aborted || dependencies.available() !== true) return failure(request, "unavailable");
-      if (request.url.length > 256) return failure(request, "invalid_request");
+      if (request.method !== "GET") return deny("method_not_allowed");
+      diagnostic.route("aborted");
+      if (request.signal.aborted) return deny("unavailable");
+      diagnostic.route("configuration");
+      if (dependencies.available() !== true) return deny("unavailable");
+      diagnostic.route("url");
+      if (request.url.length > 256) return deny("invalid_request");
       const url = new URL(request.url), origin = request.headers.get("origin");
+      diagnostic.route("origin");
       if (url.origin !== "https://aicharts.io" || request.headers.get("sec-fetch-site") !== "same-origin"
-        || (origin !== null && origin !== "https://aicharts.io")) return failure(request, "request_rejected");
+        || (origin !== null && origin !== "https://aicharts.io")) return deny("request_rejected");
+      diagnostic.route("framing");
       if (request.url !== `${PRIVATE_DAYS_PUBLIC_URL}${url.search}` || request.headers.get("accept") !== "application/json"
         || request.body !== null || request.headers.has("content-type") || request.headers.has("content-encoding")
         || request.headers.has("transfer-encoding") || request.headers.has("authorization")
-        || (request.headers.has("content-length") && request.headers.get("content-length") !== "0")) return failure(request, "invalid_request");
+        || (request.headers.has("content-length") && request.headers.get("content-length") !== "0")) return deny("invalid_request");
+      diagnostic.route("range");
       const range = parsePrivateDaysPublicSearch(url.search);
-      if (range === null) return failure(request, "invalid_request");
-      if (request.signal.aborted || dependencies.available() !== true) return failure(request, "unavailable");
-      const raw = await dependencies.query(request, range);
-      if (request.signal.aborted || dependencies.available() !== true) return failure(request, "unavailable");
+      if (range === null) return deny("invalid_request");
+      diagnostic.route("aborted");
+      if (request.signal.aborted) return deny("unavailable");
+      diagnostic.route("configuration");
+      if (dependencies.available() !== true) return deny("unavailable");
+      diagnostic.route("query");
+      const raw = await dependencies.query(request, range, diagnostic);
+      diagnostic.closeTransport(); diagnostic.route("post_query");
+      if (request.signal.aborted || dependencies.available() !== true) return deny("unavailable");
       const negative = privateDaysSnapshot(raw, ["kind"]);
-      if (negative?.kind === "authentication_required") return failure(request, "authentication_required");
+      if (negative?.kind === "authentication_required") return deny("authentication_required");
       const query = privateDaysSnapshot(raw, ["kind", "result"]);
-      if (query?.kind !== "query") return failure(request, "unavailable");
+      if (query?.kind !== "query") return deny("unavailable");
+      diagnostic.route("projection");
       const success = privateDaysSnapshot(query.result, ["ok", "value"]);
-      if (success?.ok === true) return response(request, { schemaVersion: 1, state: "ready", value: success.value }, range);
+      if (success?.ok === true) {
+        const reply = response(request, { schemaVersion: 1, state: "ready", value: success.value }, range);
+        return finish(reply, reply.status === 200 ? "ready" : "unavailable");
+      }
       const absent = privateDaysSnapshot(query.result, ["ok", "error"]);
       return absent?.ok === false && absent.error === "not_enrolled"
-        ? response(request, { schemaVersion: 1, state: "not_enrolled" }) : failure(request, "unavailable");
-    } catch { return failure(request, "unavailable"); }
+        ? finish(response(request, { schemaVersion: 1, state: "not_enrolled" }), "not_enrolled") : deny("unavailable");
+    } catch { diagnostic.route("exception"); return deny("unavailable"); }
   };
 }
 
 // Construction is effect-free; flags are read anew for each actual request.
-export const handleUsagePrivateDays = createPrivateDaysPublicHandler({ available: usagePrivateReadAvailable, query: createVercelPrivateDaysTransport() });
+export const handleUsagePrivateDays = createPrivateDaysPublicHandler({ available: usagePrivateReadAvailable,
+  query: createVercelPrivateDaysTransport(), diagnostic: emitPrivateDaysDiagnostic });

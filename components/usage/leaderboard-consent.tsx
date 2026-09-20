@@ -6,6 +6,7 @@ import Link from "next/link";
 import { leaderboardPublicHandle, type LeaderboardConsentViewV1 } from "@/lib/usage/leaderboard-contract";
 import { setUsageConsent } from "@/lib/usage/consent-client";
 import { readAccountConsent } from "@/lib/usage/account-read-client";
+import { subscribeUsageAccountSignOut } from "@/lib/usage/account-session-events";
 import type { UsageConsentPublicReply } from "@/lib/usage/consent-public";
 
 const date = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
@@ -37,6 +38,11 @@ export function LeaderboardConsentControl() {
   const [handle, setHandle] = useState("");
   const [confirmed, setConfirmed] = useState(false);
   const requests = useRef({ id: 0, pending: null as AbortController | null });
+
+  useEffect(() => subscribeUsageAccountSignOut(() => {
+    const owner = requests.current; owner.id++; owner.pending?.abort(); owner.pending = null;
+    setState({ kind: "authentication_required" }); setHandle(""); setConfirmed(false);
+  }), []);
 
   const settle = useCallback((reply: UsageConsentPublicReply) => {
     const next = stateOf(reply);

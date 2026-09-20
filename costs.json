@@ -36,6 +36,16 @@
       "owner": "lib/usage/private-days-route.ts",
       "note": "hosted usage-days proxy; server enforces account scoping"
     },
+    "vercel:usage-days-diagnostic": {
+      "kind": "telemetry",
+      "retention": "persistent",
+      "owner": "lib/usage/private-days-diagnostic.ts",
+      "maxBytesPerEvent": 768,
+      "budget": {
+        "eventsPerRequest": 1
+      },
+      "note": "One fixed-shape terminal diagnostic per private-days request in provider-managed Vercel runtime logs. The application has no telemetry queue or store and makes no TTL/deletion guarantee. Fixed outcome enums, request-stage booleans and bounded HTTP status only; no identifiers, credentials, headers, URLs, query dates, raw errors, response bodies or usage counts. Sink failure cannot affect the public result."
+    },
     "route:/api/usage/pairing/start": {
       "kind": "served",
       "retention": "ephemeral",
@@ -59,6 +69,17 @@
       "retention": "ephemeral",
       "owner": "app/api/usage/days/route.ts",
       "note": "dynamic route; per-request compute, no storage"
+    },
+    "route:/api/usage/account": {
+      "kind": "served",
+      "retention": "ephemeral",
+      "owner": "app/api/usage/account/route.ts",
+      "budget": {
+        "bytesPerResponse": 512,
+        "liveAccountReadsPerRequest": 1,
+        "concurrentReadsPerProcess": 8
+      },
+      "note": "Private no-store account ID projection from one request-owned live Accounts read; no Worker request, credentials, profile details or product storage. Bounded browser renewal uses the existing suite-auth route."
     },
     "route:/api/leaderboard": {
       "kind": "served",

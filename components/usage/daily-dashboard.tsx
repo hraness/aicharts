@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { privateDaysInputRange, utcDayInput } from "@/lib/usage/private-days-client";
 import { readAccountDays } from "@/lib/usage/account-read-client";
+import { subscribeUsageAccountSignOut } from "@/lib/usage/account-session-events";
 import type { PrivateDaysV1, ProviderImportedTotals } from "@/lib/usage/private-days-contract";
 import type { PrivateDaysPublicReply, PrivateDaysRange } from "@/lib/usage/private-days-public";
 
@@ -103,6 +104,11 @@ export function DailyUsageDashboard({ todayUtcDay }: Readonly<{ todayUtcDay: num
   const [view, setView] = useState<View>({ kind: "loading" });
   const [inputError, setInputError] = useState<string | null>(null);
   const requests = useRef({ id: 0, pending: null as AbortController | null });
+
+  useEffect(() => subscribeUsageAccountSignOut(() => {
+    const owner = requests.current; owner.id++; owner.pending?.abort(); owner.pending = null;
+    setView({ kind: "reply", reply: { schemaVersion: 1, error: { code: "authentication_required" } } });
+  }), []);
 
   const read = useCallback(async (selected: PrivateDaysRange, controller: AbortController, id: number) => {
     const owner = requests.current;

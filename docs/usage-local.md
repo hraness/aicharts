@@ -151,6 +151,16 @@ On macOS, `enroll --state-dir DIR` changes how the local commands choose the led
 
 `collect`, `collect-prefix`, `prefix-enable`, `status` and `outbox` reopen the same completed, custody-verified enrollment and operate on that account-bound ledger, so collection populates the pending queue `upload` later sends from. `inspect` resolves the same identity; `--occurrence-key-file` is refused on an enrolled directory (`occurrence_key_file_conflicts_with_enrollment`) because the account key is never a file. A directory holding only an unfinished, revoked or inconsistent enrollment record refuses closed with the enrollment seam's own fixed errors rather than silently using the legacy single-key identity; on non-macOS the same record refuses with `persistent_state_requires_qualified_macos_custody`. Unenrolled directories keep the legacy single-key behavior unchanged.
 
+To check which account an existing installation belongs to without advancing enrollment, use the qualified signed collector:
+
+```sh
+/absolute/path/to/aicharts account --state-dir /absolute/private/directory/aicharts-state --json
+```
+
+`account` verifies both retained pairing and namespace credentials against the completed enrollment, then returns only the non-secret `accountId` and `deviceId`, with `access: "read_only"` and `verification: "local_custody"`. It preserves the existing lock and durable-read checks, which can flush existing state; it does not initialize or repair enrollment, change retained records, open the ledger or sources, or contact a server. It requires no checkpoint-key file. Missing, unfinished, inconsistent or inaccessible custody refuses instead of guessing an identity. Other platforms refuse until their persistent custody is qualified.
+
+Compare the complete `accountId` with the account disclosure on the signed-in usage dashboard before publishing. A match establishes that the two views identify the same account; it does not prove server enrollment, upload permission, accepted measurements or unattended Keychain access. Keep those separate acceptance checks. Do not run `enroll` as an identity-inspection shortcut: enrollment can advance unfinished state.
+
 ## Enrolled native sender
 
 The library's explicit split-key sender migration adds [bounded sender custody](usage-admission-v1.md): one immutable 1–256-operation batch, exact terminal receipts, conditional acknowledgment that preserves newer corrections, and persistent conflict/revocation gates. Ordinary opens and inspection never perform that migration; the `upload` command applies it explicitly on the first enrolled send, binding the existing ledger to the enrolled account, device, recovery generation and namespace version 1. A different already-bound sender refuses. Accepted receipt bytes must come from the owned authenticated transport, not a local file or an arbitrary caller.

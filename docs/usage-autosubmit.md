@@ -135,6 +135,13 @@ reads these completed captures; it never runs a new model task.
 ## macOS scheduling and cutover
 
 Use a stable signed collector path qualified against the retained enrollment.
+Before the first publish, compare the full account ID from
+`aicharts account --state-dir /absolute/private/state --json` with the account
+disclosure on the signed-in usage dashboard. The command verifies both retained
+local credentials without advancing enrollment or uploading data. This identity
+match does not replace live publication, numeric readback or unattended custody
+qualification; see [enrolled state](usage-local.md#enrolled-state-directory).
+
 The LaunchAgent's `ProgramArguments` are separate arguments, for example the
 absolute binary path, `autosubmit`, `--config-file`, and the absolute private
 configuration path. Use label `io.aicharts.autosubmit`, `RunAtLoad`,
