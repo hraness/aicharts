@@ -102,19 +102,40 @@ function workflow(input, host) {
 }
 function identity(stat) { return [stat.dev, stat.ino, stat.mode, stat.uid, stat.gid].join(":"); }
 function stamp(stat) { return [identity(stat), stat.size, stat.nlink, stat.mtimeNs, stat.ctimeNs].join(":"); }
+const ARTIFACT_SIZE_TELEMETRY_CAP = 1024 * MiB;
+class ArtifactReadFailure extends Failure {
+  constructor(reason, observedSize) {
+    super("artifact_invalid");
+    this.reason = reason;
+    this.observedBytes = typeof observedSize === "bigint" && observedSize >= 0n
+      ? Number(observedSize > BigInt(ARTIFACT_SIZE_TELEMETRY_CAP) ? BigInt(ARTIFACT_SIZE_TELEMETRY_CAP) : observedSize) : null;
+    this.sizeSaturated = typeof observedSize === "bigint" && observedSize > BigInt(ARTIFACT_SIZE_TELEMETRY_CAP);
+  }
+}
+function artifactReadDiagnostic(error, kind, maximumBytes) {
+  // Only the two source-owned compiler outputs receive this diagnostic. The
+  // larger telemetry bound measures metadata; it never authorizes a larger read.
+  const measured = error instanceof ArtifactReadFailure;
+  return { module: "artifact", code: "artifact_read_invalid", kind, reason: measured ? error.reason : "io_failed",
+    maximumBytes, observedBytes: measured ? error.observedBytes : null,
+    sizeSaturated: measured ? error.sizeSaturated : false, telemetryMaximumBytes: ARTIFACT_SIZE_TELEMETRY_CAP };
+}
 function readRegular(file, cap, executable = false) {
   const before = fs.lstatSync(file, { bigint: true });
-  need(before.isFile() && !before.isSymbolicLink() && before.size >= 0 && before.size <= BigInt(cap), "artifact_invalid");
-  if (executable) need((before.mode & 0o111n) !== 0n, "artifact_invalid");
+  const check = (condition, reason) => { if (!condition) throw new ArtifactReadFailure(reason, before.size); };
+  check(before.isFile() && !before.isSymbolicLink(), "not_regular");
+  check(before.size >= 0 && before.size <= BigInt(cap), "byte_limit");
+  if (executable) check((before.mode & 0o111n) !== 0n, "not_executable");
   const fd = fs.openSync(file, fs.constants.O_RDONLY | fs.constants.O_NOFOLLOW | fs.constants.O_NONBLOCK);
   try {
-    need(stamp(fs.fstatSync(fd, { bigint: true })) === stamp(before), "artifact_invalid");
+    check(stamp(fs.fstatSync(fd, { bigint: true })) === stamp(before), "identity_changed");
     const bytes = Buffer.alloc(Number(before.size));
     let offset = 0;
-    while (offset < bytes.length) { const count = fs.readSync(fd, bytes, offset, Math.min(64 * 1024, bytes.length - offset), offset); need(count > 0, "artifact_invalid"); offset += count; }
+    while (offset < bytes.length) { const count = fs.readSync(fd, bytes, offset, Math.min(64 * 1024, bytes.length - offset), offset); check(count > 0, "short_read"); offset += count; }
     const extra = Buffer.alloc(1);
-    need(fs.readSync(fd, extra, 0, 1, bytes.length) === 0 && stamp(fs.fstatSync(fd, { bigint: true })) === stamp(before)
-      && stamp(fs.lstatSync(file, { bigint: true })) === stamp(before), "artifact_invalid");
+    check(fs.readSync(fd, extra, 0, 1, bytes.length) === 0, "file_grew");
+    check(stamp(fs.fstatSync(fd, { bigint: true })) === stamp(before)
+      && stamp(fs.lstatSync(file, { bigint: true })) === stamp(before), "identity_changed");
     return bytes;
   } finally { fs.closeSync(fd); }
 }
@@ -462,8 +483,13 @@ async function runWith(value, host = HOST) {
     const mapPath = path.join(directories.evidence, "link.map");
     const build = await command("cargo-build", cargo, ["rustc", "--frozen", "--release", "--target", TARGET, "-p", "aicharts-cli", "--bin", "aicharts", "--target-dir", directories.target, "--message-format=json", "--", "-C", "link-arg=-Wl,-Map=" + mapPath], { timeoutMs: CAPS.build, maxBytes: 16 * MiB, failure: "build_failed" });
     const executable = compilerArtifact(metadata.stdout, build.stdout, directories, version);
-    const binary = host.readFile(executable, CAPS.binary, true); const binaryHash = sha(binary);
-    const linkMapBytes = host.readFile(mapPath, CAPS.map);
+    const readArtifact = (kind, name, file, maximumBytes, isExecutable = false) => {
+      stage(name);
+      try { return host.readFile(file, maximumBytes, isExecutable); }
+      catch (error) { summary.diagnostic = artifactReadDiagnostic(error, kind, maximumBytes); fail("artifact_invalid"); }
+    };
+    const binary = readArtifact("executable", "measure-executable", executable, CAPS.binary, true); const binaryHash = sha(binary);
+    const linkMapBytes = readArtifact("link_map", "read-link-map", mapPath, CAPS.map);
     const elf = {};
     for (const [name, flag] of [["header", "--file-header"], ["program", "--program-headers"], ["dynamic", "--dynamic"], ["versions", "--version-info"], ["notes", "--notes"]]) elf[name] = (await command("elf-" + name, "/usr/bin/readelf", ["--wide", flag, executable])).stdout.toString("utf8");
     let measured;
