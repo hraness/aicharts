@@ -536,7 +536,7 @@ fn run(args: &[String]) -> Result<String, &'static str> {
     }
     if args.first().map(String::as_str) == Some("account") {
         if args.iter().any(|arg| arg == "--diagnose") {
-            match account::run_diagnostic(&args) {
+            match account::run_diagnostic(args) {
                 Ok((output, exit_code)) => {
                     let stdout = io::stdout();
                     let mut writer = stdout.lock();

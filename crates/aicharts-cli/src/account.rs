@@ -192,7 +192,7 @@ mod tests {
         .expect("explicit account options");
         assert_eq!(parsed.directory, Path::new("/private/example"));
         assert!(parsed.json);
-        assert!(parsed.diagnose == false);
+        assert!(!parsed.diagnose);
     }
 
     #[test]
