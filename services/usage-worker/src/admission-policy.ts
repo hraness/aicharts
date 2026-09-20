@@ -13,7 +13,7 @@ export const MAX_ADMISSION_HEADS = 100_000;
 export const MAX_ADMISSION_DAY_HEADS = 65_536;
 export const MAX_ADMISSION_REVISIONS = 4_096;
 export type AdmissionFailure = "invalid_input" | "unauthorized" | "not_enrolled" | "revoked" | "conflict"
-  | "recovery_required" | "clock_regressed" | "storage_invalid" | "storage_unavailable" | "limit";
+  | "profile_superseded" | "recovery_required" | "clock_regressed" | "storage_invalid" | "storage_unavailable" | "limit";
 export class AdmissionFault extends Error {
   constructor(readonly code: AdmissionFailure = "storage_invalid") { super(code); }
 }

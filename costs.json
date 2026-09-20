@@ -71,6 +71,141 @@
       "retention": "ephemeral",
       "owner": "app/api/suite-auth/[...path]/route.ts",
       "note": "dynamic route; per-request compute, no storage"
+    },
+    "route:/api/usage/stats": {
+      "kind": "served",
+      "retention": "ephemeral",
+      "owner": "app/api/usage/stats/route.ts",
+      "note": "Authenticated detailed stats; account identity from server session; 366-day range; 8192 rows and 4 MiB response, refusal without truncation."
+    },
+    "service:usage-stats-v2": {
+      "kind": "served",
+      "retention": "ephemeral",
+      "owner": "services/usage-worker/src/stats-http.ts",
+      "note": "Bounded native snapshot/status and private query endpoints using existing enrollment and restore authority; max 4 MiB upload."
+    },
+    "durable-object:usage_stats_control": {
+      "kind": "authoritative",
+      "retention": "account",
+      "owner": "services/usage-worker/src/stats-state.ts",
+      "deletion": "services/usage-worker/src/enrollment.ts",
+      "budget": {
+        "rowsPerAccount": 1
+      },
+      "note": "Numeric account projection control, canonical client writer ownership, settled idempotency receipts, or one pending immutable-object intent. Preserved under existing account lifecycle and restore fencing."
+    },
+    "durable-object:usage_stats_writers": {
+      "kind": "authoritative",
+      "retention": "account",
+      "owner": "services/usage-worker/src/stats-state.ts",
+      "deletion": "services/usage-worker/src/enrollment.ts",
+      "budget": {
+        "rowsPerAccount": 64
+      },
+      "note": "Numeric account projection control, canonical client writer ownership, settled idempotency receipts, or one pending immutable-object intent. Preserved under existing account lifecycle and restore fencing."
+    },
+    "durable-object:usage_stats_devices": {
+      "kind": "authoritative",
+      "retention": "account",
+      "owner": "services/usage-worker/src/stats-state.ts",
+      "deletion": "services/usage-worker/src/enrollment.ts",
+      "budget": {
+        "rowsPerAccount": 128
+      },
+      "note": "Numeric account projection control, canonical client writer ownership, settled idempotency receipts, or one pending immutable-object intent. Preserved under existing account lifecycle and restore fencing."
+    },
+    "durable-object:usage_stats_pending": {
+      "kind": "authoritative",
+      "retention": "account",
+      "owner": "services/usage-worker/src/stats-state.ts",
+      "deletion": "services/usage-worker/src/enrollment.ts",
+      "budget": {
+        "rowsPerAccount": 1
+      },
+      "note": "Numeric account projection control, canonical client writer ownership, settled idempotency receipts, or one pending immutable-object intent. Preserved under existing account lifecycle and restore fencing."
+    },
+    "durable-object:usage_stats_days": {
+      "kind": "derived",
+      "retention": "account",
+      "owner": "services/usage-worker/src/stats-state.ts",
+      "source": "r2:usage-stats-v2-snapshots",
+      "budget": {
+        "clientDaysPerAccount": 65536,
+        "aggregateRowsPerAccount": 262144,
+        "bytesPerAccount": 134217728
+      },
+      "note": "Rebuildable numeric daily projections; explicit replacement windows exclude overlapping v1 totals."
+    },
+    "r2:usage-stats-v2-snapshots": {
+      "kind": "authoritative",
+      "retention": "account",
+      "owner": "services/usage-worker/src/stats-objects.ts",
+      "deletion": "services/usage-worker/src/enrollment.ts",
+      "budget": {
+        "bytesPerSnapshot": 4194304,
+        "bytesPerReceipt": 1024,
+        "cumulativeBytesPerAccount": 8589934592,
+        "revisionsPerAccount": 1000000
+      },
+      "note": "Existing private R2 bucket; content-addressed numeric snapshots and immutable receipts. SQL references distinguish committed receipts from abandoned intents; no source transcripts or credentials."
+    },
+    "local:usage-source-cache": {
+      "kind": "authoritative",
+      "retention": "persistent",
+      "owner": "crates/aicharts-cli/src/source_refresh/disk.rs",
+      "deletion": "docs/usage-autosubmit.md",
+      "budget": {
+        "bytesPerProfile": 67108864,
+        "warpBytesPerProfile": 4194304
+      },
+      "note": "Private numeric provider history, explicit credential scope; complete atomic snapshots retain last good data. Explicit retirement only, not automatic eviction."
+    },
+    "local:usage-stats-checkpoint": {
+      "kind": "authoritative",
+      "retention": "account",
+      "owner": "crates/aicharts-cli/src/stats_sync/disk.rs",
+      "deletion": "docs/usage-autosubmit.md",
+      "budget": {
+        "bytesPerCheckpoint": 4210688,
+        "filesPerInstallation": 3
+      },
+      "note": "Existing private APFS enrollment: authenticated current/staged numeric flight and stable lock. Uncertain writes retain exact request; never delete to recover."
+    },
+    "local:usage-import-snapshots": {
+      "kind": "derived",
+      "retention": "ephemeral",
+      "owner": "vendor/tokscale-core/src/offline_io.rs",
+      "source": "explicit user-owned local source files",
+      "budget": {
+        "bytesPerImport": 137438953472,
+        "filesPerImport": 65536
+      },
+      "note": "Private0700/0600 bounded scan snapshots; logical source bytes are capped. macOS clones share unchanged data blocks; fallback copies require a 2 GiB free-space reserve. Removed on normal success/error/unwind. Abrupt kill can leave an owned temporary directory requiring guarded cleanup."
+    },
+    "local:usage-autosubmit-runtime": {
+      "kind": "derived",
+      "retention": "persistent",
+      "owner": "crates/aicharts-cli/src/autosubmit.rs",
+      "source": "qualified native publication and provider refresh results",
+      "budget": {
+        "statusBytes": 32768,
+        "statusFiles": 1
+      },
+      "note": "Private stable cycle lock and latest numeric/fixed-code result only; no source content or credentials; config16KiB,54clients,30minute between-operation deadline."
+    },
+    "local:usage-mcode-capture": {
+      "kind": "authoritative",
+      "retention": "persistent",
+      "owner": "crates/aicharts-cli/src/capture/process.rs",
+      "deletion": "docs/usage-autosubmit.md",
+      "budget": {
+        "numericCacheBytes": 67108864,
+        "stdoutBytesPerInvocation": 67108864,
+        "stderrBytesPerInvocation": 4194304,
+        "lineBytes": 1048576,
+        "timeoutSeconds": 7200
+      },
+      "note": "Explicit user-requested process capture; only complete numeric observations retained, private cache bound to executable identity. Raw streams remain in bounded memory and are never persisted or echoed."
     }
   },
   "exempt": []

@@ -43,6 +43,7 @@ function fixture(directory = root) {
 }
 
 const ringLicenses = ["LICENSE", "LICENSE-BoringSSL", "LICENSE-other-bits", "src/polyfill/once_cell/LICENSE-APACHE", "src/polyfill/once_cell/LICENSE-MIT"];
+const zstdLicenses = ["LICENSE", "LICENSE.BSD-3-Clause", "zstd/LICENSE"];
 function addRing(f) {
   const pkg = { id: `${registry}#ring@0.17.14`, name: "ring", version: "0.17.14", source: registry, license: "Apache-2.0 AND ISC", license_file: null,
     links: "ring_core_0_17_14_", manifest_path: `${f.input.cargoHomeDirectory}/registry/src/index-fixture/ring-0.17.14/Cargo.toml` };
@@ -68,6 +69,58 @@ function addCustody(f, changes = {}) {
   f.update();
   return pkg;
 }
+
+function addZstd(f) {
+  const pkg = addRing(f);
+  const oldId = pkg.id;
+  Object.assign(pkg, { id: `${registry}#zstd-sys@2.1.0+zstd.1.5.7`, name: "zstd-sys", version: "2.1.0+zstd.1.5.7", license: "BSD-3-Clause", links: "zstd",
+    manifest_path: `${f.input.cargoHomeDirectory}/registry/src/index-fixture/zstd-sys-2.1.0+zstd.1.5.7/Cargo.toml` });
+  for (const message of f.messages.filter(value => value.package_id === oldId)) {
+    message.package_id = pkg.id;
+    if (message.reason === "compiler-artifact") {
+      message.manifest_path = pkg.manifest_path;
+      message.target.name = "zstd_sys";
+      message.filenames = [`${f.input.targetDirectory}/x86_64-unknown-linux-gnu/release/deps/libzstd_sys-abc123.rlib`];
+    } else {
+      message.out_dir = message.out_dir.replace("ring-", "zstd-sys-");
+      message.linked_libs = ["static=zstd"];
+      message.linked_paths = [`native=${message.out_dir}`];
+    }
+  }
+  f.update();
+  return pkg;
+}
+
+test("bundled Zstandard requires its exact reviewed native provider and output", () => {
+  const f = fixture(); addZstd(f);
+  const result = planLinuxNotices(f.input);
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.value.nativeArchives.map(value => path.basename(value.file)), ["libsqlite3.a", "libzstd.a"]);
+  f.messages.at(-2).linked_libs = ["dylib=zstd"];
+  assert.equal(planLinuxNotices(f.update()).error, "notices_unknown_native");
+  f.messages.at(-2).linked_libs = ["static=zstd"];
+  f.packages.at(-1).version = "2.1.1+zstd.1.5.7";
+  assert.equal(planLinuxNotices(f.update()).error, "notices_unknown_native");
+});
+
+test("vendored Tokscale retains its pinned MIT notice and rejects identity or notice substitution", async () => {
+  await diskFixture(async f => {
+    const pkg = addCustody(f, { id: "path+file:///source/vendor/tokscale-core#4.17.0-aicharts.1", name: "tokscale-core", version: "4.17.0-aicharts.1",
+      manifest_path: `${f.input.sourceDirectory}/vendor/tokscale-core/Cargo.toml` });
+    const file = path.join(path.dirname(pkg.manifest_path), "LICENSE");
+    await mkdir(path.dirname(file), { recursive: true });
+    const license = await readFile(new URL("../../vendor/tokscale-core/LICENSE", import.meta.url));
+    await writeFile(file, license);
+    assert.equal((await collectLinuxNotices(f.update())).error, "notices_rust_missing");
+    for (const [field, value] of [["version", "4.17.1"], ["license", "Apache-2.0"], ["license_file", "LICENSE"]]) {
+      const before = pkg[field]; pkg[field] = value;
+      assert.equal((await collectLinuxNotices(f.update())).error, "notices_unmapped_crate");
+      pkg[field] = before;
+    }
+    await writeFile(file, "Changed notice\n");
+    assert.equal((await collectLinuxNotices(f.update())).error, "notices_crate_changed");
+  });
+});
 
 async function addSupport(f) {
   const checkout = `${f.input.cargoHomeDirectory}/git/checkouts/support-foundation-fixture/ed89e58`;
@@ -539,13 +592,16 @@ test("source mapping is unique, pinned and covers SQLite and Unicode notices", a
     for (const file of pkg.files) {
       assert.match(file.sha256, /^[0-9a-f]{64}$/u);
       if (file.path.includes("/")) {
-        assert.equal(id, "ring@0.17.14"); assert.ok(ringLicenses.slice(3).includes(file.path));
+        if (id === "ring@0.17.14") assert.ok(ringLicenses.slice(3).includes(file.path));
+        else { assert.equal(id, "zstd-sys@2.1.0+zstd.1.5.7"); assert.ok(zstdLicenses.includes(file.path)); }
       }
     }
   }
   assert.ok(seen.has("libsqlite3-sys@0.38.2"));
   assert.ok(policy.packages.find(pkg => pkg.name === "unicode-ident").files.some(file => file.path === "LICENSE-UNICODE"));
   assert.deepEqual(policy.packages.find(pkg => pkg.name === "ring" && pkg.version === "0.17.14").files.map(file => file.path).sort(), [...ringLicenses].sort());
+  assert.deepEqual(policy.packages.find(pkg => pkg.name === "zstd-sys" && pkg.version === "2.1.0+zstd.1.5.7").files.map(file => file.path).sort(), [...zstdLicenses].sort());
+  assert.ok(policy.packages.length <= 256);
 });
 
 test("complete synthetic Ubuntu filesystem and dpkg join emits deterministic notices", async () => {

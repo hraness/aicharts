@@ -1,5 +1,17 @@
 # Third-party notice
 
+The detailed local usage importer includes modified MIT-licensed parser source
+from [Tokscale](https://github.com/junhoyeo/tokscale), copyright 2025 Junho Yeo,
+pinned at commit `d8fd670a46857e5290e71b10245dc522a344fc17`. Its
+[license](vendor/tokscale-core/LICENSE), [source provenance and changes](vendor/tokscale-core/UPSTREAM.md),
+and original source hashes accompany the private vendored crate. AI Charts does
+not use Tokscale's hosted submission service through this importer.
+
+Public usage-model identities and dated retail rate facts derive from the
+[models.dev catalog](https://models.dev/api.json). The checked registries retain
+the retrieval date and full source SHA-256. Rates are estimates of API retail
+usage and do not establish a user's invoice or subscription charges.
+
 AI Charts includes normalized snapshots of publicly displayed benchmark facts sourced from [Harbor Framework's Terminal-Bench repository](https://github.com/harbor-framework/terminal-bench), the [Terminal-Bench-Science 0.1 release and owner leaderboard](https://www.terminal-bench-science.ai/announcement), the [Artificial Analysis model leaderboard](https://artificialanalysis.ai/models), the [Artificial Analysis coding agents page](https://artificialanalysis.ai/agents/coding-agents/), and the [DataCurve DeepSWE leaderboard](https://deepswe.datacurve.ai/). It also includes discovery metadata from the [OpenRouter Models API](https://openrouter.ai/docs/api/api-reference/models/get-models) and provider-owned release sitemaps. Harbor Framework, Terminal-Bench-Science, Artificial Analysis, DataCurve, OpenRouter, and the represented providers are not affiliated with or responsible for AI Charts.
 
 Official model release dates are manually checked against the provider-owned announcements, changelogs, documentation, and model indexes linked in `data/model-release-dates.json`. Marketplace listing timestamps and sitemap last-modified values are discovery metadata, not release dates.

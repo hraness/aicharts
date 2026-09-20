@@ -1,10 +1,13 @@
 # AI Charts credential custody
 
-This library supplies immutable, typed secret records, a noninteractive macOS
-Keychain adapter, and explicit macOS reference-manifest persistence. It is not
-connected to an enabled CLI enrollment, upload, or daemon command. Ordinary tests
-use in-memory fakes and owned disposable filesystem fixtures, never a user's
-keychain.
+This library supplies immutable, typed secret records, a macOS Keychain adapter
+that suppresses interaction by default, and explicit macOS reference-manifest
+persistence. The CLI's
+macOS enrollment driver uses these APIs, and the enrolled upload and stats-sync
+paths resolve the retained pairing and namespace records. These connections do
+not establish live qualification or install a background publisher. Ordinary
+tests use in-memory fakes and owned disposable filesystem fixtures, never a
+user's keychain.
 
 ## Boundary
 
@@ -25,8 +28,8 @@ The private record format permits three purposes:
 References and bindings are checked, nonsecret types. Their constructors and the
 private decoder establish syntax only. They do not authenticate a server, prove an
 enrollment receipt, grant permission to use a namespace, or establish credential
-liveness. Device binding, enrollment receipts, live reference persistence, legacy
-key import, ledger promotion, and transport are outside this slice.
+liveness. Device binding, enrollment receipts, legacy key import, ledger
+promotion, and transport require their separate caller-owned checks.
 
 Secret types have no `Debug`, `Display`, `Clone`, `Copy`, or serialization
 implementation. Typed `with_*` methods make byte access explicit. Callers still
@@ -44,7 +47,7 @@ present.
 
 Immutability describes this library's operations, not an OS write-once guarantee.
 `read_exact` validates identity and syntax; it cannot recognize an externally
-replaced valid secret without a separately retained commitment. Future callers
+replaced valid secret without a separately retained commitment. Callers
 must also verify the existing ledger key fingerprint and server commitments.
 
 Any nonduplicate error after insertion dispatch returns
@@ -57,14 +60,14 @@ Reconcile that same identity explicitly. A missing lookup does not authorize
 reminting a key or pairing proof. A fresh exact insertion after a confirmed missing
 read remains a caller decision with the original record, not a library retry.
 
-This is not a crash-safe enrollment workflow yet. Before any future integration,
-the caller must durably record nonsecret operation intent before keychain writes,
+The library alone is not a complete enrollment workflow. Its caller must
+durably record nonsecret operation intent before keychain writes,
 verify readback before publishing references, and preserve the original pairing
 proof before any remote effect. A missing reference or key must close that workflow.
 The ledger remains sole owner of frozen upload batches, sequence allocation, and
 terminal acknowledgment; custody must not duplicate that authority.
 
-## Dormant reference manifest
+## Reference manifest
 
 On macOS, `references::ReferenceStore` accepts a caller-supplied existing absolute
 trust anchor through the descriptor, ownership, ACL and APFS checks below.
@@ -86,8 +89,9 @@ The facade uses `QualifiedStore` and the supplied `Vault`. Each custody operatio
 owns one lazy session, selected only after filesystem guards, committed durability
 and exact-token checks. It stays pinned across insertion and readback and is
 released before return. A refusal before vault work selects no session. Public
-backend injection, raw-byte import and verification setters remain absent. These
-explicit library APIs do not install or enable a CLI enrollment command.
+backend injection, raw-byte import and verification setters remain absent. The
+CLI enrollment coordinator calls these explicit APIs; the library itself does
+not own the browser handshake, network dispatch or background scheduling.
 
 The manifest binds one nonzero installation to at most 256 retained references.
 Each entry contains the exact `RecordIdentity`, a commitment to the complete
@@ -304,7 +308,7 @@ guard the absence of secret debug/clone traits. macOS-only pure tests check nati
 error classification, result projection, synthetic UI guard behavior, and mutex
 refusal before any native call.
 
-The current ordinary custody run passed 127 tests, with two explicit native
+The previously recorded ordinary custody run passed 127 tests, with two explicit native
 qualification tests ignored; four doctests and scoped Clippy also passed. The
 facade cases use disposable APFS directories and an in-memory vault to check pairing and
 namespace records, one session per custody operation, refusal before selection,
@@ -333,7 +337,9 @@ This receipt qualifies the explicit disposable fixture on this host. Default
 User-domain keychain selection, hostile-process isolation, Secure Enclave/Data
 Protection guarantees, signed-application and LaunchAgent behavior, installation,
 upgrade, user consent, full credential recovery and live enrollment remain
-unqualified. Explicit library construction does not enable a CLI command or
-establish those default-use and unattended guarantees.
+outside this receipt's qualification. The CLI integration exists, but library
+construction and synthetic tests do not establish those default-use and
+unattended guarantees. Record the separate live acceptance evidence in the
+[activation runbook](../../docs/usage-activation.md).
 Signed CLI and LaunchAgent artifact qualification must precede claims of
 unattended support.

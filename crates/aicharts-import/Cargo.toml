@@ -1,0 +1,13 @@
+[package]
+name = "aicharts-import"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+publish = false
+
+[dependencies]
+tokscale-core = { path = "../../vendor/tokscale-core" }
+
+[dev-dependencies]
+tempfile = "3"

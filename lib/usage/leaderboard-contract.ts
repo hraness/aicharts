@@ -10,7 +10,9 @@ export const LEADERBOARD_INDEX_NAME = "leaderboard-index-v1:public";
 export const LEADERBOARD_HANDLE_MAX_LENGTH = 32;
 export const LEADERBOARD_RANKING = "observed-tokens-30d-v1";
 const MAX_TIME = 8_640_000_000_000_000;
-const MAX_RECORDS = 100_000;
+/** At most 64 source clients, each with 10 million records per private query.
+ * V2 estimates are excluded; both profiles use the same disjoint token sum. */
+export const LEADERBOARD_MAX_RECORDS = 640_000_000;
 
 function snapshot(value: unknown, keys: readonly string[]): Record<string, unknown> | null {
   try {
@@ -33,7 +35,7 @@ function enrollmentTime(value: unknown): value is number {
 }
 /** Decimal string non-negative integers are the canonical token wire shape. */
 export function leaderboardDecimal(value: unknown): value is string {
-  return typeof value === "string" && /^(0|[1-9][0-9]*)$/u.test(value) && value.length <= 18;
+  return typeof value === "string" && /^(0|[1-9][0-9]*)$/u.test(value) && value.length <= 30;
 }
 /** Bounded public handles: lowercase, 1-32 chars, single interior hyphens. */
 export function leaderboardPublicHandle(value: unknown): value is string {
@@ -44,7 +46,7 @@ function utcDay(value: unknown): value is number {
   return typeof value === "number" && Number.isSafeInteger(value) && value >= 0 && value <= 100_000_000;
 }
 function recordCount(value: unknown): value is number {
-  return typeof value === "number" && Number.isSafeInteger(value) && value >= 0 && value <= MAX_RECORDS;
+  return typeof value === "number" && Number.isSafeInteger(value) && value >= 0 && value <= LEADERBOARD_MAX_RECORDS;
 }
 
 /** The consent fields persisted on the enrolled account object. */

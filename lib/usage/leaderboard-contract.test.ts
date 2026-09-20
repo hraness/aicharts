@@ -117,3 +117,12 @@ test("ranking orders by exact tokens, records, then handle; collisions exclude",
   expect(big[0]?.publicHandle).toBe("a");
   expect(rankLeaderboardEntries([{ ...base, publicHandle: "Bad Handle" }, { ...base, observedTokens: "NaN" }])).toEqual([]);
 });
+
+
+test("v2 public numeric bounds admit observed aggregates and reject overflow", () => {
+  const maximum = { ...base, usageRecords: 640_000_000, observedTokens: "9".repeat(30) };
+  expect(parseLeaderboardEntry({ rank: 1, ...maximum })).not.toBeNull();
+  expect(rankLeaderboardEntries([maximum])).toHaveLength(1);
+  expect(parseLeaderboardEntry({ rank: 1, ...maximum, usageRecords: 640_000_001 })).toBeNull();
+  expect(parseLeaderboardEntry({ rank: 1, ...maximum, observedTokens: "1".repeat(31) })).toBeNull();
+});

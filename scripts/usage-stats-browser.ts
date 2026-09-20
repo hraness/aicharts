@@ -1,0 +1,228 @@
+import { access, mkdir } from "node:fs/promises";
+import { resolve } from "node:path";
+import { chromium, type Browser, type Page } from "playwright-core";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import { LeaderboardView } from "../components/usage/leaderboard-view";
+import { parseLeaderboardSnapshot } from "../lib/usage/leaderboard-contract";
+import { createUsageStatsExample } from "../lib/usage/stats-example";
+import { parseUsageStatsReport, type UsageStatsReport } from "../lib/usage/stats-contract";
+import { parseStatsPublicSearch, statsPublicStatus, STATS_PUBLIC_MEDIA, type StatsPublicReply } from "../lib/usage/stats-public";
+import { encodePrivateDaysPublicResponse, parsePrivateDaysPublicSearch, PRIVATE_DAYS_PUBLIC_MEDIA } from "../lib/usage/private-days-public";
+import { encodeUsageConsentPublicReply, USAGE_CONSENT_PUBLIC_MEDIA } from "../lib/usage/consent-public";
+
+function invariant(value: unknown, message: string): asserts value { if (!value) throw new Error(message); }
+async function settle(page: Page) { await page.evaluate(async () => { await document.fonts.ready; await new Promise<void>(done => requestAnimationFrame(() => done())); }); }
+
+function hostedReport(firstUtcDay: number, dayCount: number): UsageStatsReport {
+  const example = createUsageStatsExample(firstUtcDay + dayCount - 1);
+  const rows = example.rows.filter(row => row.utcDay >= firstUtcDay);
+  const report = parseUsageStatsReport({ ...example, firstUtcDay, dayCount, revision: 1, updatedAtMs: example.generatedAtMs,
+    rows, sources: example.sources.map(source => {
+      const records = rows.filter(row => row.client === source.client).reduce((sum, row) => sum + row.records, 0);
+      return { ...source, records, status: records > 0 ? "observed" : source.status === "not_found" ? "not_found" : "empty", latestAtMs: records > 0 ? source.latestAtMs : null };
+    }) });
+  invariant(report, "Synthetic hosted report must pass the production numeric boundary."); return report;
+}
+
+/** Synthetic component integration only: no provider or authenticated account is contacted. */
+export async function verifyUsageStats(browser: Browser, baseUrl: string, captureDirectory?: string): Promise<void> {
+  if (captureDirectory) await mkdir(captureDirectory, { recursive: true });
+  const failures: string[] = [];
+  for (const [name, width, colorScheme] of [["desktop", 1440, "light"], ["mobile", 390, "dark"]] as const) {
+    const context = await browser.newContext({ viewport: { width, height: 900 }, colorScheme, reducedMotion: "reduce", serviceWorkers: "block" });
+    const page = await context.newPage();
+    const errors: string[] = [], effects: string[] = [];
+    let localInteraction = false, statsMode: "ready" | "not_started" | "range_too_large" | "authentication_required" = "ready";
+    page.on("pageerror", error => errors.push(error.message.slice(0, 500)));
+    await context.route("**/*", async route => {
+      const request = route.request(), url = new URL(request.url());
+      // Existing shared-footer fixture boundary; these calls never reach Accounts.
+      if (url.origin === "https://account.hraness.com" && request.method() === "GET" && url.pathname === "/api/consent/region") {
+        await route.fulfill({ status: 200, contentType: "application/json", body: '{"region":null,"required":false}' }); return;
+      }
+      if (url.origin === "https://account.hraness.com" && request.method() === "POST" && url.pathname === "/api/mailing/experiment") {
+        await route.fulfill({ status: 204 }); return;
+      }
+      if (localInteraction && (request.method() !== "GET" || url.pathname.startsWith("/api/"))) effects.push(`${request.method()} ${url.origin}${url.pathname}`);
+      if (url.origin !== baseUrl) { await route.abort(); return; }
+      if (url.pathname === "/api/usage/stats") {
+        const range = parseStatsPublicSearch(url.search); invariant(range, "Stats request must use the exact numeric GET contract.");
+        invariant(request.method() === "GET" && request.postData() === null, "Stats reads must have no mutation body.");
+        const reply: StatsPublicReply = statsMode === "ready" ? { schemaVersion: 2, ok: true, value: hostedReport(range.firstUtcDay, range.dayCount) }
+          : { schemaVersion: 2, ok: false, error: statsMode };
+        await route.fulfill({ status: statsPublicStatus(reply), headers: { "content-type": STATS_PUBLIC_MEDIA, "cache-control": "private, no-store" }, body: JSON.stringify(reply) }); return;
+      }
+      if (url.pathname === "/api/usage/days") {
+        const range = parsePrivateDaysPublicSearch(url.search); invariant(range, "Fallback range must validate.");
+        const total = { usageOccurrences: 5, observedAccountedTokens: "1250000", observedOutputTokens: "75000" };
+        const bytes = encodePrivateDaysPublicResponse({ schemaVersion: 1, state: "ready", value: { schemaVersion: 1, measurementProfile: "imported-tokens-v1", coverage: "partial", journalRevision: 100,
+          journalCommittedAtMs: (range.firstUtcDay + range.dayCount - 1) * 86_400_000, firstUtcDay: range.firstUtcDay,
+          days: Array.from({ length: range.dayCount }, (_, index) => ({ utcDay: range.firstUtcDay + index, codex: total, claudeCode: total, devin: total })) } }, range);
+        invariant(bytes, "Fallback fixture must pass its contract.");
+        await route.fulfill({ status: 200, headers: { "content-type": PRIVATE_DAYS_PUBLIC_MEDIA }, body: Buffer.from(bytes) }); return;
+      }
+      if (url.pathname === "/api/usage/consent") {
+        const bytes = encodeUsageConsentPublicReply({ schemaVersion: 1, error: { code: "authentication_required" } });
+        invariant(bytes, "Consent fixture must validate.");
+        await route.fulfill({ status: 401, headers: { "content-type": USAGE_CONSENT_PUBLIC_MEDIA }, body: Buffer.from(bytes) }); return;
+      }
+      await route.continue();
+    });
+    const capture = async (state: string) => {
+      await settle(page);
+      invariant(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `${name}/${state}: page must not overflow horizontally.`);
+      await page.evaluate(() => scrollTo(0, 0));
+      if (captureDirectory) {
+        await page.screenshot({ path: resolve(captureDirectory, `${name}-${state}.png`), fullPage: true });
+        await page.screenshot({ path: resolve(captureDirectory, `${name}-${state}-viewport.png`) });
+      }
+    };
+    const expandFilters = async () => {
+      if (name === "mobile") {
+        const toggle = page.getByRole("button", { name: /^Filters/ });
+        if (await toggle.getAttribute("aria-expanded") !== "true") { await toggle.focus(); await page.keyboard.press("Enter"); }
+      }
+    };
+    const choosePeriod = async (days: number) => {
+      if (name === "mobile") await page.getByLabel("Period", { exact: true }).selectOption(String(days));
+      else await page.getByRole("button", { name: `${days} days`, exact: true }).click();
+    };
+    try {
+      await page.goto(`${baseUrl}/usage/details`, { waitUntil: "networkidle" });
+      await page.getByRole("heading", { name: "Your usage", exact: true }).waitFor();
+      await capture("stats-initial");
+      localInteraction = true;
+      await page.getByRole("button", { name: "Explore example", exact: true }).click();
+      await page.getByRole("heading", { name: "Daily usage", exact: true }).waitFor();
+      await capture("stats-example");
+      const plot = page.getByRole("group", { name: /^Reported tokens by day/ });
+      if (name === "mobile") {
+        const bounds = await plot.boundingBox();
+        invariant(bounds && bounds.y < 640 && bounds.y + bounds.height < 830, "The full mobile trend must be visible above the fixed footer in the initial 390×900 viewport.");
+      }
+      const firstBar = plot.getByRole("button").first();
+      await firstBar.focus(); await page.keyboard.press("ArrowRight");
+      invariant(await plot.getByRole("button").nth(1).evaluate(el => el === document.activeElement), "ArrowRight must move chart focus.");
+      await page.keyboard.press("Enter"); await page.getByRole("region", { name: "Selected period detail", exact: true }).waitFor();
+      await page.keyboard.press("Escape");
+      invariant(await page.getByRole("region", { name: "Selected period detail", exact: true }).count() === 0, "Escape must clear chart selection.");
+      await expandFilters();
+      await page.getByLabel("Client", { exact: true }).selectOption("warp");
+      if (name === "mobile") invariant(await page.getByRole("button", { name: "Filters · 1 active", exact: true }).count() === 1, "Collapsed filter control must expose the active scope count.");
+      await page.getByText("No token observations", { exact: true }).waitFor();
+      invariant(await page.locator(".usage-stats__cost > strong").textContent() === "Unavailable", "A cumulative Warp billing snapshot must not become daily period cost.");
+      await page.getByRole("region", { name: "Warp billing snapshot", exact: true }).getByText("$12.35", { exact: true }).waitFor();
+      const snapshotDownloadEvent = page.waitForEvent("download"); await page.getByRole("button", { name: "Download numeric CSV" }).click();
+      const snapshotDownload = await snapshotDownloadEvent, snapshotFile = await snapshotDownload.path(); invariant(snapshotFile, "Snapshot CSV must download.");
+      const snapshotCsv = await Bun.file(snapshotFile).text(); invariant(snapshotCsv.includes('"refresh_snapshot","warp"') && !snapshotCsv.includes('"codex"'), "CSV must retain the explicitly labeled latest Warp snapshot in the selected client scope.");
+      await page.getByRole("button", { name: /^Clear filters/ }).click();
+      await page.getByLabel("Token basis", { exact: true }).selectOption("estimated");
+      invariant(await page.locator(".usage-stats__exact").textContent() === "60,000 exact", "Estimated tokens must remain separate.");
+      await page.getByLabel("Token basis", { exact: true }).selectOption("reported");
+      await page.getByRole("button", { name: "Models", exact: true }).click();
+      const sorted = page.getByRole("columnheader", { name: "Reported tokens", exact: true });
+      await sorted.getByRole("button").focus(); await page.keyboard.press("Enter"); invariant(await sorted.getAttribute("aria-sort") === "ascending", "Sort must update accessible direction.");
+      await page.getByRole("button", { name: "gpt-5", exact: true }).click();
+      invariant(await page.getByLabel("Model", { exact: true }).inputValue() === "gpt-5", "Model drilldown must filter the common scope.");
+      const downloadEvent = page.waitForEvent("download"); await page.getByRole("button", { name: "Download numeric CSV" }).focus(); await page.keyboard.press("Enter");
+      const download = await downloadEvent, file = await download.path(); invariant(file, "CSV must download.");
+      const csv = await Bun.file(file).text(); invariant(csv.includes("output_excluding_reasoning") && csv.includes('"gpt-5"') && !csv.includes('"warp"'), "CSV must match the selected numeric scope.");
+      await page.getByRole("button", { name: /^Clear filters/ }).click();
+      await choosePeriod(90); await page.getByRole("heading", { name: "Weekly usage" }).waitFor();
+      const scroll = page.getByRole("region", { name: "Usage breakdown, scroll horizontally for all columns", exact: true });
+      await page.keyboard.press("Tab"); await scroll.focus(); invariant(await scroll.evaluate(el => el === document.activeElement && getComputedStyle(el).outlineStyle !== "none"), "Breakdown requires visible keyboard focus.");
+      if (name === "mobile") {
+        invariant(await scroll.evaluate(el => el.scrollWidth > el.clientWidth), "Wide table must scroll inside its own region.");
+        await page.keyboard.press("ArrowRight"); await page.waitForFunction(() => (document.querySelector(".usage-stats__breakdown .usage-stats__table-scroll")?.scrollLeft ?? 0) > 0);
+      }
+      await capture("stats-year-range");
+      const today = Math.floor(Date.now() / 86_400_000), original = createUsageStatsExample(today);
+      const large = { ...original, rows: original.rows.map((row, index) => index === original.rows.length - 3 ? { ...row, tokens: { ...row.tokens, input: "9007199254740993" } } : row) };
+      invariant(parseUsageStatsReport(large), "Large local numeric fixture must validate.");
+      const upload = page.getByLabel("Open numeric usage report", { exact: true });
+      await upload.setInputFiles({ name: "numeric-report.json", mimeType: "application/json", buffer: Buffer.from(JSON.stringify(large)) });
+      await page.locator(".usage-stats-heading > span").filter({ hasText: "Local reports stay in this browser" }).waitFor();
+      await capture("stats-local-large");
+      const empty = { ...original, sources: [], rows: [] };
+      await upload.setInputFiles({ name: "empty.json", mimeType: "application/json", buffer: Buffer.from(JSON.stringify(empty)) });
+      await page.getByRole("heading", { name: "No matching reported records" }).waitFor(); await capture("stats-empty");
+      await upload.setInputFiles({ name: "invalid.json", mimeType: "application/json", buffer: Buffer.from('{"prompt":"must not leave browser"}') });
+      await page.getByRole("alert").filter({ hasText: "could not be read as a numeric usage report" }).waitFor(); await capture("stats-import-error");
+      invariant(effects.length === 0, `Local report actions must have no API or write effects: ${JSON.stringify(effects)}`);
+      localInteraction = false;
+      await page.locator(".usage-stats-source__menu > summary").click();
+      if (await page.getByRole("button", { name: "Load account", exact: true }).count()) {
+        await page.getByRole("button", { name: "Load account", exact: true }).click(); await page.getByText("Private to your account", { exact: true }).waitFor();
+        await expandFilters();
+        await page.getByLabel("Client", { exact: true }).selectOption("codex");
+        await choosePeriod(90); await page.getByRole("heading", { name: "Weekly usage" }).waitFor();
+        invariant(await page.getByLabel("Client", { exact: true }).inputValue() === "codex", "Account range refresh must preserve client selection.");
+        await expandFilters();
+        statsMode = "range_too_large"; await page.getByRole("button", { name: "Refresh", exact: true }).click();
+        await page.getByRole("alert").filter({ hasText: "too much detail" }).waitFor(); await capture("stats-range-error");
+        statsMode = "ready"; await page.getByRole("button", { name: "Load last 7 days", exact: true }).click();
+        await page.getByRole("heading", { name: "Daily usage", exact: true }).waitFor();
+        statsMode = "not_started"; await expandFilters(); await page.getByRole("button", { name: "Refresh", exact: true }).click();
+        await page.getByRole("heading", { name: "No detailed snapshot yet", exact: true }).waitFor();
+      }
+      statsMode = "not_started";
+      await page.goto(`${baseUrl}/usage`, { waitUntil: "networkidle" }); await page.getByRole("heading", { name: "Codex", exact: true }).waitFor(); await capture("usage-fallback");
+      await page.goto(`${baseUrl}/leaderboard`, { waitUntil: "networkidle" }); await page.getByRole("heading", { name: "Public usage leaderboard", exact: true }).waitFor(); await capture("leaderboard-paused");
+      const computedAtMs = today * 86_400_000 + 5 * 60_000;
+      const rankings = parseLeaderboardSnapshot({ schemaVersion: 1, ranking: "observed-tokens-30d-v1", computedAtMs, entries: [
+        { rank: 1, publicHandle: "synthetic-max-counts", observedTokens: "999999999999999999999999999999", usageRecords: 640_000_000,
+          consentedAtMs: computedAtMs - 86_400_000, refreshedAtMs: computedAtMs, windowFirstUtcDay: today - 29, windowUtcDays: 30 },
+        { rank: 2, publicHandle: "synthetic-distinct-coverage", observedTokens: "9007199254740993", usageRecords: 12,
+          consentedAtMs: computedAtMs - 86_400_000, refreshedAtMs: computedAtMs - 10 * 60_000, windowFirstUtcDay: today - 30, windowUtcDays: 30 },
+      ] });
+      invariant(rankings, "Maximum ranked fixture must pass the public contract.");
+      const markup = renderToStaticMarkup(createElement(LeaderboardView, { available: true, snapshot: rankings }));
+      await page.locator("main.leaderboard-home").evaluate((main, html) => {
+        for (const section of main.querySelectorAll(":scope > section")) section.remove();
+        main.insertAdjacentHTML("afterbegin", `<p class="usage-board__hint">Synthetic ranked fixture · layout verification only</p>${html}`);
+      }, markup);
+      const rankingRegion = page.getByRole("region", { name: "Public usage rankings", exact: true });
+      invariant(await rankingRegion.getByText("999,999,999,999,999,999,999,999,999,999", { exact: true }).count() === 1, "Thirty-digit public totals must retain exact formatting.");
+      invariant(await rankingRegion.getByText("640,000,000", { exact: true }).count() === 1, "Maximum record counts must remain readable.");
+      await page.keyboard.press("Tab"); await rankingRegion.focus(); invariant(await rankingRegion.evaluate(el => el === document.activeElement && getComputedStyle(el).outlineStyle !== "none"), "Rankings require visible keyboard focus.");
+      if (name === "mobile") {
+        await page.keyboard.press("ArrowRight"); await page.waitForFunction(() => (document.querySelector(".usage-board__table-scroll")?.scrollLeft ?? 0) > 0);
+      }
+      await capture("leaderboard-ranked-max");
+      invariant(errors.length === 0, `Browser runtime errors: ${JSON.stringify(errors)}`);
+      console.log(`${name}: stats local privacy, filters, sort, keyboard, CSV, bounds, account fallback and layout passed.`);
+    } catch (error) {
+      failures.push(`${name}: ${error instanceof Error ? error.message : String(error)}`);
+      try { await capture("failure"); } catch { /* The original failure remains authoritative. */ }
+    } finally { await context.close(); }
+  }
+  invariant(failures.length === 0, failures.join("\n"));
+}
+
+if (import.meta.main) {
+  const repository = resolve(import.meta.dir, ".."), port = 47_000 + process.pid % 1_000, baseUrl = `http://127.0.0.1:${port}`;
+  const dev = process.argv.includes("--dev"), captureIndex = process.argv.indexOf("--capture");
+  const environment: NodeJS.ProcessEnv = { ...process.env, NODE_ENV: dev ? "development" : "production", VERCEL: "1", VERCEL_ENV: "production", VERCEL_TARGET_ENV: "production", NEXT_PUBLIC_SITE_URL: "https://aicharts.io",
+    VERCEL_DEPLOYMENT_ID: "dpl_SYNTHETICStatsBrowser", VERCEL_PROJECT_ID: "prj_SYNTHETICStatsBrowser", VERCEL_GIT_COMMIT_SHA: "0".repeat(40),
+    AICHARTS_USAGE_AUTH_ENABLED: "1", AICHARTS_USAGE_PRIVATE_READ_ENABLED: "1", AICHARTS_USAGE_STATS_ENABLED: "1", AICHARTS_USAGE_PUBLIC_READ_ENABLED: "0", SUITE_OIDC_COOKIE_SECRET: "synthetic-stats-browser-no-production-authority" };
+  for (const key of ["NEXT_PUBLIC_VERCEL_SURFACE_ORIGIN", "NEXT_PUBLIC_HRANESS_VERCEL_SURFACE_ORIGIN", "NEXT_PUBLIC_HRANESS_VERCEL_PREVIEW_ORIGIN", "POSTHOG_API_KEY", "VERCEL_OIDC_TOKEN"]) delete environment[key];
+  const server = Bun.spawn([process.execPath, "run", dev ? "dev" : "start", "--", "--hostname", "127.0.0.1", "--port", String(port)], { cwd: repository, env: environment, stdout: "inherit", stderr: "inherit" });
+  let browser: Browser | undefined;
+  try {
+    let ready = false;
+    for (let attempt = 0; attempt < 180; attempt++) {
+      invariant(server.exitCode === null, "Stats server exited before readiness.");
+      try { if ((await fetch(`${baseUrl}/usage/details`)).status === 200) { ready = true; break; } } catch { /* Bounded readiness. */ }
+      await Bun.sleep(500);
+    }
+    invariant(ready, "Stats server did not become ready.");
+    for (const executablePath of [process.env.CHROMIUM_EXECUTABLE_PATH, chromium.executablePath(), "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome", "/usr/bin/chromium"].filter((path): path is string => path !== undefined)) {
+      try { await access(executablePath); browser = await chromium.launch({ executablePath, headless: true, args: ["--no-sandbox"] }); break; } catch { /* Try available supported executable. */ }
+    }
+    invariant(browser, "No supported Chromium executable was available.");
+    await verifyUsageStats(browser, baseUrl, captureIndex >= 0 ? process.argv[captureIndex + 1] : process.env.AICHARTS_STATS_BROWSER_CAPTURE_DIR);
+  } finally {
+    await browser?.close(); server.kill("SIGTERM"); await Promise.race([server.exited, Bun.sleep(5_000)]); if (server.exitCode === null) server.kill("SIGKILL");
+  }
+}
