@@ -13,6 +13,7 @@ import { createPrivateDaysHttpHandler, type PrivateDaysHttpEnvironment } from ".
 import { createConsentHttpHandler, type ConsentHttpEnvironment } from "./consent-http";
 import { createLeaderboardHttpHandler, type LeaderboardHttpEnvironment } from "./leaderboard-http";
 import type { PairingHttpVerifier } from "./pairing-http";
+import { usageFailure } from "./usage-failure";
 
 export type ProductionEnvironment = Env & {
   readonly AICHARTS_USAGE_WORKER_ENABLED?: unknown;
@@ -122,13 +123,13 @@ export function createProductionRouter(options: ProductionRouterOptions = {}) {
     }
     if (path === "privateDays") {
       if (!flagReady(env, "AICHARTS_USAGE_AUTH_ENABLED") || !flagReady(env, "AICHARTS_USAGE_PRIVATE_READ_ENABLED")) return unavailable();
-      try { return await handlers.privateDays(request, env, ctx); } catch { return unavailable(); }
+      try { return await handlers.privateDays(request, env, ctx); } catch { return usageFailure("router_exception"); }
     }
     if (path === "consent") {
       // The consent write stays fenced by the private-read qualification:
       // authentication plus private reads must both be enabled.
       if (!flagReady(env, "AICHARTS_USAGE_AUTH_ENABLED") || !flagReady(env, "AICHARTS_USAGE_PRIVATE_READ_ENABLED")) return unavailable();
-      try { return await handlers.consent(request, env, ctx); } catch { return unavailable(); }
+      try { return await handlers.consent(request, env, ctx); } catch { return usageFailure("router_exception"); }
     }
     if (path === "leaderboard") {
       // The anonymous public read is gated by its own distinct flag; it never

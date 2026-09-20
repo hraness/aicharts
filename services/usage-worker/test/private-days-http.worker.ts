@@ -4,6 +4,7 @@ import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { encodeAdmissionBatch, encodeAdmissionOperation } from "../../../lib/usage/admission";
 import { decodePrivateDaysHttpResponse, encodePrivateDaysHttpRequest, PRIVATE_DAYS_HTTP_URL } from "../../../lib/usage/private-days-http-contract";
 import { PAIRING_HTTP_MEDIA } from "../../../lib/usage/pairing-http-contract";
+import { USAGE_FAILURE_HEADER, USAGE_FAILURE_STAGES } from "../../../lib/usage/usage-failure-contract";
 import { DAY_MS, encodeUsageBatch } from "../../../lib/usage/wire";
 import { ADMISSION_POLICY_V1 } from "../src/admission-policy";
 import { admissionIdBytes } from "../src/admission-state";
@@ -134,7 +135,12 @@ test("workload and session failures refuse before real namespace selection", asy
   } } };
   for (const [input, token, status] of [[query(), "wrong.token.value", 401], [{ ...query(), sessionExpiresAtMs: NOW }, "a.b.c", 503]] as const) {
     const ctx = createExecutionContext();
-    try { expect((await handler()(request(input, token), actual, ctx)).status).toBe(status); }
+    try {
+      const response = await handler()(request(input, token), actual, ctx);
+      expect(response.status).toBe(status);
+      if (status === 503) expect(USAGE_FAILURE_STAGES).toContain(response.headers.get(USAGE_FAILURE_HEADER));
+      else expect(response.headers.has(USAGE_FAILURE_HEADER)).toBe(false);
+    }
     finally { await waitOnExecutionContext(ctx); }
   }
   expect(selected).toBe(0); expect(finished).toBe(2);
