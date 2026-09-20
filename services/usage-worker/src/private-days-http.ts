@@ -5,6 +5,7 @@ import { PAIRING_HTTP_CAPACITY, PAIRING_HTTP_STAGE_MS, PAIRING_HTTP_WORKER_MS,
 import { pairingHttpWork, type PairingHttpEffects } from "../../../lib/usage/pairing-http-work";
 import type { PairingHttpRequestLifetime, PairingHttpVerifier } from "./pairing-http";
 import { enrollmentAccountName } from "./enrollment-contract";
+import { usageFailure, type UsageFailureStage } from "./usage-failure";
 
 export interface PrivateDaysHttpEnvironment {
   readonly ACCOUNT_ENROLLMENTS: Readonly<{
@@ -44,7 +45,8 @@ export function createPrivateDaysHttpHandler(dependencies: PrivateDaysHttpDepend
   let outstanding = 0;
   return async (request: Request, env: PrivateDaysHttpEnvironment, ctx: PairingHttpRequestLifetime): Promise<Response> => {
     let startedAt: number, expected: number | null, token: string | null;
-    try { startedAt = now(); } catch { return pairingHttpFailure(503); }
+    let failureStage: UsageFailureStage = "unknown";
+    try { startedAt = now(); } catch { return usageFailure("request_clock"); }
     try {
       if (request.url !== PRIVATE_DAYS_HTTP_URL || request.method !== "POST" || request.headers.get("content-type") !== "application/json"
         || request.headers.get("accept") !== "application/json" || request.headers.has("content-encoding") || request.headers.has("cookie")) return pairingHttpFailure(400);
@@ -52,7 +54,7 @@ export function createPrivateDaysHttpHandler(dependencies: PrivateDaysHttpDepend
       token = pairingHttpBearer(request.headers.get("authorization"));
     } catch { return pairingHttpFailure(400); }
     if (token === null) return pairingHttpFailure(401);
-    if (request.signal.aborted || outstanding >= PAIRING_HTTP_CAPACITY) return pairingHttpFailure(503);
+    if (request.signal.aborted || outstanding >= PAIRING_HTTP_CAPACITY) return usageFailure("request_capacity");
     outstanding++;
     let observed = startedAt;
     const sample = () => {
@@ -61,10 +63,11 @@ export function createPrivateDaysHttpHandler(dependencies: PrivateDaysHttpDepend
       observed = current; return current;
     };
     return pairingHttpWork({ now: sample, setTimeout, clearTimeout }, PAIRING_HTTP_WORKER_MS, terminal => { ctx.waitUntil(terminal); },
-      () => pairingHttpFailure(503), () => { outstanding--; }, async work => {
+      () => usageFailure(failureStage), () => { outstanding--; }, async work => {
+        failureStage = "request_verify";
         const scope = verifier.beginRequest(ctx); work.onStop(() => { scope.finish(); });
         const verified = await scope.verify(token); work.guard();
-        if (!verified.ok) return pairingHttpFailure(verified.error === "unauthorized" ? 401 : 503);
+        if (!verified.ok) return verified.error === "unauthorized" ? pairingHttpFailure(401) : usageFailure("verifier_fetch");
         let expiry: number | null = null;
         const guard = () => {
           work.guard();
@@ -73,12 +76,15 @@ export function createPrivateDaysHttpHandler(dependencies: PrivateDaysHttpDepend
         };
         guard();
         let bytes: Uint8Array;
+        failureStage = "request_body";
         try { bytes = await pairingHttpBody(request.body, PRIVATE_DAYS_HTTP_REQUEST_BYTES, expected, work); }
         catch { guard(); return pairingHttpFailure(400); }
         guard();
+        failureStage = "request_decode";
         const query = decodePrivateDaysHttpRequest(bytes);
         if (query === null) return pairingHttpFailure(400);
         expiry = query.sessionExpiresAtMs;
+        failureStage = "rpc_dispatch";
         const encoded = await work.stage(PAIRING_HTTP_STAGE_MS, async () => {
           guard();
           // The account assertion came from the authenticated coordinator. The
@@ -88,10 +94,12 @@ export function createPrivateDaysHttpHandler(dependencies: PrivateDaysHttpDepend
             firstUtcDay: query.firstUtcDay, dayCount: query.dayCount,
           }));
           const boxed = await new Promise<{ raw: unknown }>((resolve, reject) => { void rpc.then(raw => { resolve({ raw }); }, reject); });
+          failureStage = "rpc_shape";
           const snapshot = rpcSnapshot(boxed.raw);
           try {
             guard();
             if (snapshot.envelope === null || snapshot.dispose === null) throw new Error("private_days_rpc");
+            failureStage = "rpc_encode";
             const response = encodePrivateDaysHttpResponse(query, snapshot.envelope);
             if (response === null) throw new Error("private_days_rpc");
             guard(); return response;

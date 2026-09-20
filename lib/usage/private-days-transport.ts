@@ -10,6 +10,7 @@ import {
 } from "./pairing-http-contract";
 import { pairingHttpWork, type PairingHttpEffects } from "./pairing-http-work";
 import type { PrivateDaysDiagnostic } from "./private-days-diagnostic";
+import { USAGE_FAILURE_HEADER, USAGE_FAILURE_STAGES, type UsageFailureStage } from "./usage-failure-contract";
 
 /** Trusted request-owned port: readOutcome() verifies the live Accounts session.
  * current() fences the exact configuration/authority across awaits; finish()
@@ -121,6 +122,8 @@ export function createPrivateDaysTransport(dependencies: PrivateDaysTransportDep
           body: encoded, redirect: "manual", credentials: "omit", cache: "no-store", signal: controller.signal,
         }); } catch { return reject("worker_fetch"); }
         diagnostic?.status(response.status);
+        const failureHeader = response.headers.get(USAGE_FAILURE_HEADER);
+        diagnostic?.workerFailure(failureHeader !== null && USAGE_FAILURE_STAGES.includes(failureHeader as UsageFailureStage) ? failureHeader : null);
         let reading = false;
         try {
           guard();

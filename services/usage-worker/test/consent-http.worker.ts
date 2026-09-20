@@ -5,6 +5,7 @@ import {
   decodeUsageConsentHttpResponse, encodeUsageConsentHttpRequest, USAGE_CONSENT_HTTP_URL,
 } from "../../../lib/usage/consent-http-contract";
 import { PAIRING_HTTP_MEDIA } from "../../../lib/usage/pairing-http-contract";
+import { USAGE_FAILURE_HEADER } from "../../../lib/usage/usage-failure-contract";
 import { enrollmentAccountName } from "../src/enrollment-contract";
 import { createConsentHttpHandler, type ConsentHttpEnvironment } from "../src/consent-http";
 import type { PairingHttpVerifier } from "../src/pairing-http";
@@ -120,6 +121,7 @@ test("workload failures and malformed frames refuse before namespace selection",
       const response = await handler()(new Request(USAGE_CONSENT_HTTP_URL, { method: "POST", body,
         headers: { "content-type": "application/json", accept: "application/json", authorization: `Bearer ${token}` } }), actual, ctx);
       expect(response.status).toBe(status);
+      expect(response.headers.has(USAGE_FAILURE_HEADER)).toBe(false);
     } finally { await waitOnExecutionContext(ctx); }
   }
   expect(selected).toBe(0); expect(finished).toBe(2);

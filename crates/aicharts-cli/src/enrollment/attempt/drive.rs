@@ -22,6 +22,7 @@ use super::session::SealedCustody;
 use super::storage;
 use super::{Error, Result};
 use crate::enrollment::contract::{self, DomainResult, Operation, PairingState, Success};
+use crate::enrollment::diagnostic::{Failure, Stage};
 use crate::enrollment::https::AcceptedEnrollment;
 use crate::enrollment::{EnrollIo, EnrollOutcome, EnrolledInstallation};
 use aicharts_custody::{
@@ -68,11 +69,18 @@ pub(super) trait AttemptOps {
 /// fresh attempt lock is held for the span of each effect; it is dropped before
 /// any browser or account wait so a crash cannot leave a live lock.
 fn reopen(dir: &Path) -> Result<NativeEnrollment> {
+    reopen_observed(dir).map_err(|failure| failure.error)
+}
+
+fn reopen_observed(dir: &Path) -> std::result::Result<NativeEnrollment, Failure> {
     let token = {
-        let mut storage = MacStorage::open_existing(dir)?;
-        storage::inspect(&mut storage)?.token()
+        let mut storage = MacStorage::open_existing(dir)
+            .map_err(|error| Failure::attempt(Stage::AttemptSnapshot, error))?;
+        storage::inspect(&mut storage)
+            .map_err(|error| Failure::attempt(Stage::AttemptSnapshot, error))?
+            .token()
     };
-    coordinator::reopen_native(dir, token)
+    coordinator::reopen_native_observed(dir, token)
 }
 
 /// Mint the one-time pairing secret and its pinned genesis record. Random
@@ -450,11 +458,22 @@ pub(super) fn binding_facts(record: &Record) -> Result<([u8; 16], [u8; 32], [u8;
 /// The resolved custody record must reproduce the pinned identity and
 /// high-entropy commitment — the exact retained secret, never a substitute
 /// that merely shares a keychain label.
-fn exact_secret(secret: &SecretRecord, pin: &Pin) -> Result<()> {
+fn exact_secret(
+    secret: &SecretRecord,
+    pin: &Pin,
+    stage: Stage,
+) -> std::result::Result<(), Failure> {
     let intent = RecordIntent::from_record(secret);
-    (intent.identity() == &pin.identity && intent.commitment() == pin.commitment.as_bytes())
+    if intent.identity() != &pin.identity {
+        return Err(Failure::custody(
+            stage,
+            aicharts_custody::Error::Conflict,
+            Error::Custody,
+        ));
+    }
+    (intent.commitment() == pin.commitment.as_bytes())
         .then_some(())
-        .ok_or(Error::Custody)
+        .ok_or_else(|| Failure::commitment(stage))
 }
 
 /// Reopen this installation's enrolled authority for one upload: durable
@@ -463,24 +482,37 @@ fn exact_secret(secret: &SecretRecord, pin: &Pin) -> Result<()> {
 /// persisted, reminted, repaired or substituted. A missing, unfinished,
 /// revoked or inconsistent anchor refuses before any secret is copied.
 pub(crate) fn enrolled(dir: &Path) -> Result<EnrolledInstallation> {
-    let mut native = reopen(dir)?;
-    let record = native.attempt.record();
-    let (account_id, device_id, recovery_generation) = binding_facts(record)?;
-    let pairing = native
-        .vault
-        .read_exact(&record.pairing.identity)
-        .map_err(|_| Error::RecoveryRequired)?;
-    exact_secret(&pairing, &record.pairing)?;
+    enrolled_observed(dir).map_err(|failure| failure.error)
+}
+
+pub(in crate::enrollment) fn enrolled_observed(
+    dir: &Path,
+) -> std::result::Result<EnrolledInstallation, Failure> {
+    let mut native = reopen_observed(dir)?;
+    enrolled_credentials(native.attempt.record(), |identity| {
+        native.vault.read_exact(identity)
+    })
+}
+
+/// The production read uses this exact sequence. Tests script only the two
+/// existing vault reads; the seam cannot add, recover, enroll or dispatch.
+pub(super) fn enrolled_credentials(
+    record: &Record,
+    mut read: impl FnMut(&aicharts_custody::RecordIdentity) -> aicharts_custody::Result<SecretRecord>,
+) -> std::result::Result<EnrolledInstallation, Failure> {
+    let (account_id, device_id, recovery_generation) =
+        binding_facts(record).map_err(|error| Failure::attempt(Stage::Binding, error))?;
+    let pairing = read(&record.pairing.identity)
+        .map_err(|error| Failure::custody(Stage::PairingRead, error, Error::RecoveryRequired))?;
+    exact_secret(&pairing, &record.pairing, Stage::PairingCommitment)?;
     let namespace_pin = &record
         .namespace
         .as_ref()
-        .ok_or(Error::RecoveryRequired)?
+        .ok_or_else(|| Failure::attempt(Stage::Binding, Error::RecoveryRequired))?
         .pin;
-    let namespace = native
-        .vault
-        .read_exact(&namespace_pin.identity)
-        .map_err(|_| Error::RecoveryRequired)?;
-    exact_secret(&namespace, namespace_pin)?;
+    let namespace = read(&namespace_pin.identity)
+        .map_err(|error| Failure::custody(Stage::NamespaceRead, error, Error::RecoveryRequired))?;
+    exact_secret(&namespace, namespace_pin, Stage::NamespaceCommitment)?;
     Ok(EnrolledInstallation {
         account_id,
         device_id,

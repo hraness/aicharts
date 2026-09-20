@@ -8,7 +8,7 @@ import type { PrivateDaysSessionScope, PrivateDaysTransportDependencies } from "
 
 const CANARY = "PRIVATE_ACCOUNT_COOKIE_TOKEN_URL_BODY_ERROR_CANARY";
 const query = { schemaVersion: 1, accountId: `acct_${"0".repeat(32)}`, sessionExpiresAtMs: 100_000, firstUtcDay: 10, dayCount: 1 };
-const keys = ["event", "routeStage", "transportStage", "transportFailure", "sessionOutcome", "accountsAttempted", "workerDispatched", "workerStatus", "workerDomain", "publicOutcome"].sort();
+const keys = ["event", "routeStage", "transportStage", "transportFailure", "sessionOutcome", "accountsAttempted", "workerDispatched", "workerStatus", "workerFailure", "workerDomain", "publicOutcome"].sort();
 function request(signal?: AbortSignal) {
   return new Request("https://aicharts.io/api/usage/days?firstUtcDay=10&dayCount=1", { signal,
     headers: { accept: "application/json", "sec-fetch-site": "same-origin", cookie: CANARY } });
@@ -55,7 +55,7 @@ test("diagnostic shape rejects arbitrary values, bounds bytes, and seals before 
   const d = createPrivateDaysDiagnostic(line => { lines.push(line); d.finish("ready"); throw new Error(CANARY); });
   d.route(CANARY as never); d.step(CANARY as never); d.fail(CANARY as never); d.session(CANARY, CANARY);
   d.status(CANARY); d.status(Number.MAX_SAFE_INTEGER); d.domain(CANARY); d.finish("unavailable");
-  const captured = event(lines); expect(captured.accountsAttempted).toBeNull(); expect(captured.workerStatus).toBeNull();
+  const captured = event(lines); expect(captured.accountsAttempted).toBeNull(); expect(captured.workerStatus).toBeNull(); expect(captured.workerFailure).toBeNull();
   expect(captured.sessionOutcome).toBe("malformed"); expect(captured.workerDomain).toBe("malformed");
   d.dispatched(); d.status(200); d.domain("success"); d.finish("ready"); expect(event(lines)).toEqual(captured);
 });

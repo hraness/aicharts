@@ -1,4 +1,5 @@
 import "server-only";
+import { USAGE_FAILURE_STAGES, type UsageFailureStage } from "./usage-failure-contract";
 
 export const PRIVATE_DAYS_DIAGNOSTIC_BYTES = 768;
 const routes = ["method", "aborted", "configuration", "url", "origin", "framing", "range", "query", "post_query", "projection", "exception"] as const;
@@ -17,6 +18,7 @@ export interface PrivateDaysDiagnostic {
   attempted(value: unknown): void;
   dispatched(): void;
   status(value: unknown): void;
+  workerFailure(value: unknown): void;
   domain(value: unknown): void;
   closeTransport(reason?: Member<typeof reasons>): void;
   finish(outcome: Member<typeof outcomes>): void;
@@ -33,6 +35,7 @@ export function createPrivateDaysDiagnostic(sink?: PrivateDaysDiagnosticSink): P
     transportStage: "not_started" as Member<typeof stages>, transportFailure: "none" as Member<typeof reasons>,
     sessionOutcome: "not_started" as Member<typeof sessions>, accountsAttempted: null as boolean | null,
     workerDispatched: false, workerStatus: null as number | null,
+    workerFailure: null as UsageFailureStage | null,
     workerDomain: "not_checked" as Member<typeof domains>, publicOutcome: "unavailable" as Member<typeof outcomes> };
   const open = () => !sealed && !transportClosed;
   const fail = (reason: unknown) => {
@@ -50,6 +53,7 @@ export function createPrivateDaysDiagnostic(sink?: PrivateDaysDiagnosticSink): P
     attempted(value) { if (open() && typeof value === "boolean") event.accountsAttempted = value; },
     dispatched() { if (open()) event.workerDispatched = true; },
     status(value) { if (open() && typeof value === "number" && Number.isInteger(value) && value >= 100 && value <= 599) event.workerStatus = value; },
+    workerFailure(value) { if (open() && (value === null || (typeof value === "string" && USAGE_FAILURE_STAGES.includes(value as UsageFailureStage)))) event.workerFailure = value as UsageFailureStage | null; },
     domain(value) { if (open()) event.workerDomain = allowed(domains, value) ? value : "malformed"; },
     closeTransport(reason) { if (reason !== undefined) fail(reason); transportClosed = true; },
     finish(outcome) {

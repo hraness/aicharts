@@ -8,7 +8,10 @@
 
 mod attempt;
 pub(super) mod contract;
+mod diagnostic;
 mod https;
+
+pub(crate) use diagnostic::AccountDiagnostic;
 
 use std::path::Path;
 
@@ -70,4 +73,21 @@ pub(crate) struct EnrolledInstallation {
 #[cfg(target_os = "macos")]
 pub(crate) fn enrolled(dir: &Path) -> Result<EnrolledInstallation, &'static str> {
     attempt::drive::enrolled(dir).map_err(|error| error.code())
+}
+
+/// Same enrolled join, one time. Discard all successful authority-bearing
+/// values; diagnostic output is never a substitute for an enrolled authority.
+pub(crate) fn diagnose_account(dir: &Path) -> AccountDiagnostic {
+    #[cfg(target_os = "macos")]
+    {
+        match attempt::drive::enrolled_observed(dir) {
+            Ok(_) => AccountDiagnostic::qualified(),
+            Err(failure) => failure.diagnostic,
+        }
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        let _ = dir;
+        AccountDiagnostic::unsupported()
+    }
 }
