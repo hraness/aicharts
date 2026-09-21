@@ -3,6 +3,7 @@ import { PUBLIC_BLOG_SLUGS } from "@/lib/public-analytics-routes";
 import { createAaIndexCostArticle } from "./aa-index-cost-article";
 import { createCodingAgentScoreHoldoutsArticle } from "./coding-agent-score-holdouts-article";
 import { createDevinFusionCostSavingArticle } from "./devin-fusion-cost-saving-article";
+import { createHarnessDesignArticle } from "./harness-design-coding-agents-article";
 import { createHarnessTaxArticle } from "./harnesstax-coding-agent-harness-article";
 import { createOpenModelsCodingAgentsArticle } from "./open-models-coding-agents-article";
 import { createRealSweArticle } from "./real-swe-private-enterprise-benchmark-article";
@@ -182,6 +183,14 @@ export const BLOG_SOURCES = {
     url: "https://harnesstax.github.io/",
     year: 2026,
   },
+  fanHarnessDesign: {
+    note:
+      "The September 17, 2026 arXiv paper owns the fixed-loop harness, the five context-management tiers, the 176-setting design, the printed SWE-Bench Verified and Terminal-Bench 2.1 tables, the trajectory analysis, and the stated limitations.",
+    publication: "arXiv",
+    title: "An Empirical Study of Harness Design for Coding Agents",
+    url: "https://arxiv.org/abs/2609.20804",
+    year: 2026,
+  },
 } as const satisfies Record<string, BlogSource>;
 
 export type BlogSourceId = keyof typeof BLOG_SOURCES;
@@ -347,6 +356,7 @@ const mirrorCodeArticle = {
 } as const satisfies BlogArticle;
 
 export const blogArticles = [
+  createHarnessDesignArticle(),
   createHarnessTaxArticle(),
   createRealSweArticle(),
   createDevinFusionCostSavingArticle(),

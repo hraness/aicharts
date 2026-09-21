@@ -52,6 +52,24 @@ import {
   leadModelBaselines,
 } from "./devin-fusion-cost-saving-article";
 import {
+  HARNESS_DESIGN,
+  HARNESS_DESIGN_ABLATIONS,
+  HARNESS_DESIGN_ARTICLE_PUBLISHED_AT,
+  HARNESS_DESIGN_BENCHMARKS,
+  HARNESS_DESIGN_BUDGETS,
+  HARNESS_DESIGN_MODELS,
+  HARNESS_DESIGN_TIERS,
+  ablationMeasure,
+  componentEffect,
+  createHarnessDesignArticle,
+  formatPoints,
+  harnessDesignSettings,
+  lowestMeanCostTiers,
+  managedMinusT0Gap,
+  snapshotModelsSharedWithPaper,
+  tierMeasure,
+} from "./harness-design-coding-agents-article";
+import {
   HARNESS_TAX,
   HARNESS_TAX_ARTICLE_PUBLISHED_AT,
   HARNESS_TAX_HARNESSES,
@@ -167,7 +185,11 @@ describe("AI Charts benchmark notes", () => {
       expect(articleToMarkdown(article)).not.toContain("/images/blog/");
       expect(article.authorshipDisclosure).toBe(BLOG_AUTHORSHIP_DISCLOSURE);
       expect(articleToMarkdown(article)).toContain(BLOG_AUTHORSHIP_DISCLOSURE);
-      if (article.slug === "harnesstax-coding-agent-harness") {
+      if (article.slug === "harness-design-coding-agents") {
+        expect(article.publishedAt).toBe(HARNESS_DESIGN_ARTICLE_PUBLISHED_AT);
+        expect(article.updatedAt >= article.publishedAt).toBeTrue();
+        expect(articleToMarkdown(article)).toContain("posted to arXiv on September 17, 2026");
+      } else if (article.slug === "harnesstax-coding-agent-harness") {
         expect(article.publishedAt).toBe(HARNESS_TAX_ARTICLE_PUBLISHED_AT);
         expect(article.updatedAt >= article.publishedAt).toBeTrue();
         expect(articleToMarkdown(article)).toContain("captured September 16, 2026 UTC");
@@ -613,6 +635,149 @@ describe("AI Charts benchmark notes", () => {
     expect(() => spellCount(1.5)).toThrow(RangeError);
   });
 
+  test("reconstructs the harness-design tables, the managed-minus-T0 gap, and the component effects", () => {
+    const parsed = parseCodingAgentSnapshot(codingAgentData);
+    if (!parsed.ok) throw parsed.error;
+    const article = getBlogArticle("harness-design-coding-agents");
+    expect(article).toBeDefined();
+    if (article === undefined) return;
+
+    const markup = renderToStaticMarkup(
+      createElement(ArticleBody, { blocks: article.body }),
+    );
+    const markdown = articleToMarkdown(article);
+
+    expect(article.title).toBe("What Fan et al.’s harness-component ablations measure");
+    expect(article.sourceIds).toEqual(["fanHarnessDesign", "artificialAnalysisCodingAgents"]);
+    expect(blogEditorialImage(article.slug)).toBeUndefined();
+    expect(markup).toContain(`href="${BLOG_SOURCES.fanHarnessDesign.url}"`);
+    expect(markup).toContain(BLOG_SOURCES.artificialAnalysisCodingAgents.url);
+    expect(markup).toContain(formatRetrievedAt(parsed.value.source.retrievedAt));
+    expect(markup).toContain('href="/blog/harnesstax-coding-agent-harness"');
+    expect(markup).not.toContain("hraness.com/reading");
+    expect(article.nextStep?.links.map(link => link.href)).toEqual(["/coding", "/data"]);
+    expect(markdown).toContain(HARNESS_DESIGN.quotes.conditionalSystemsProblem);
+    expect(markdown).toContain(HARNESS_DESIGN.quotes.contextManagementTakeaway);
+    expect(markdown).toContain(HARNESS_DESIGN.quotes.recallTakeaway);
+    expect(markdown).toContain(HARNESS_DESIGN.quotes.planningTakeaway);
+    expect(markdown).toContain("Terminal-Bench 2.1 with 89 tasks");
+    expect(markdown).toContain("Terminal-Bench 4");
+    expect(markdown).toContain("version 4.0.0");
+    expect(markdown).toContain(HARNESS_DESIGN.reported.t0OverflowSwe);
+    expect(markdown).toContain(HARNESS_DESIGN.reported.t0OverflowTb);
+    expect(markdown).not.toContain("—");
+    expect(markdown).not.toContain("refresh");
+    expect(markdown).not.toContain("schema");
+    expect(markdown).not.toContain("`");
+
+    const settings = harnessDesignSettings();
+    expect(settings).toHaveLength(HARNESS_DESIGN.settingCount);
+    expect(settings).toHaveLength(
+      HARNESS_DESIGN_BENCHMARKS.length
+      * HARNESS_DESIGN_MODELS.length
+      * (HARNESS_DESIGN_BUDGETS.length * HARNESS_DESIGN_TIERS.length + HARNESS_DESIGN_ABLATIONS.length),
+    );
+    for (const setting of settings) {
+      expect(setting.measure.successPercent).toBeGreaterThanOrEqual(0);
+      expect(setting.measure.successPercent).toBeLessThanOrEqual(100);
+      expect(setting.measure.costUsd).toBeGreaterThan(0);
+    }
+    for (const benchmark of HARNESS_DESIGN_BENCHMARKS) {
+      for (const budget of HARNESS_DESIGN_BUDGETS) {
+        for (const model of HARNESS_DESIGN_MODELS) {
+          expect(tierMeasure(benchmark, budget, "T0", model).significant).toBeFalse();
+        }
+      }
+    }
+
+    const sweGaps = HARNESS_DESIGN_BUDGETS.map(budget =>
+      formatPoints(managedMinusT0Gap("SWE-Bench Verified", budget)));
+    const tbGaps = HARNESS_DESIGN_BUDGETS.map(budget =>
+      formatPoints(managedMinusT0Gap("Terminal-Bench 2.1", budget)));
+    expect(sweGaps).toEqual([...HARNESS_DESIGN.reported.managedGapSwe]);
+    expect(tbGaps).toEqual([...HARNESS_DESIGN.reported.managedGapTb]);
+    for (const gap of [...sweGaps, ...tbGaps]) {
+      expect(markdown).toContain(`| ${gap} |`);
+    }
+    for (let index = 1; index < HARNESS_DESIGN_BUDGETS.length; index += 1) {
+      const wider = HARNESS_DESIGN_BUDGETS[index];
+      const tighter = HARNESS_DESIGN_BUDGETS[index - 1];
+      if (wider === undefined || tighter === undefined) throw new Error("Budget list is short.");
+      for (const benchmark of HARNESS_DESIGN_BENCHMARKS) {
+        expect(managedMinusT0Gap(benchmark, wider))
+          .toBeLessThan(managedMinusT0Gap(benchmark, tighter));
+      }
+    }
+
+    const lowestCost = HARNESS_DESIGN_BENCHMARKS.flatMap(benchmark =>
+      HARNESS_DESIGN_MODELS.map(model => lowestMeanCostTiers(benchmark, model)));
+    expect(lowestCost).toHaveLength(8);
+    expect(lowestCost.every(tiers => tiers.includes("T4"))).toBeTrue();
+    expect(lowestCost.filter(tiers => tiers.length === 1)).toHaveLength(7);
+    expect(lowestMeanCostTiers("SWE-Bench Verified", "Nemotron-3 30B"))
+      .toEqual(["T1", "T2", "T4"]);
+    expect(markdown).toContain("strictly lowest in seven panels and ties for lowest in the remaining one");
+    expect(markdown).toContain("Nemotron-3 30B on SWE-Bench Verified");
+
+    const planning30bSwe = componentEffect("SWE-Bench Verified", "Nemotron-3 30B", "without planning");
+    expect(formatPoints(planning30bSwe.successPoints)).toBe(HARNESS_DESIGN.reported.planning30bSwe);
+    expect(planning30bSwe.baseline.costUsd).toBeGreaterThan(planning30bSwe.ablated.costUsd);
+    const planning30bTb = componentEffect("Terminal-Bench 2.1", "Nemotron-3 30B", "without planning");
+    expect(formatPoints(planning30bTb.successPoints)).toBe(HARNESS_DESIGN.reported.planning30bTb);
+    expect(planning30bTb.costChangePercent).toBeCloseTo(75, 0);
+    const planning550bSwe = componentEffect("SWE-Bench Verified", "Nemotron-3 550B", "without planning");
+    expect(formatPoints(-planning550bSwe.successPoints)).toBe(HARNESS_DESIGN.reported.planning550bSweSuccessDrop);
+    expect(Math.round(-planning550bSwe.costChangePercent)).toBe(30);
+    const planningMistralSwe = componentEffect("SWE-Bench Verified", "Mistral-Medium-3.5-128B", "without planning");
+    expect(formatPoints(-planningMistralSwe.successPoints)).toBe(HARNESS_DESIGN.reported.planningMistralSweSuccessDrop);
+    expect(Math.round(-planningMistralSwe.costChangePercent)).toBe(32);
+    const planning120bTb = componentEffect("Terminal-Bench 2.1", "Nemotron-3 120B", "without planning");
+    expect(planning120bTb.successPoints).toBe(0);
+    expect(Math.round(-planning120bTb.costChangePercent)).toBe(26);
+
+    const tools30bSwe = componentEffect("SWE-Bench Verified", "Nemotron-3 30B", "bash only");
+    expect(formatPoints(tools30bSwe.successPoints)).toBe(HARNESS_DESIGN.reported.tools30bSwe);
+    const tools30bTb = componentEffect("Terminal-Bench 2.1", "Nemotron-3 30B", "bash only");
+    expect(formatPoints(tools30bTb.successPoints)).toBe(HARNESS_DESIGN.reported.tools30bTb);
+    const bash550bSwe = componentEffect("SWE-Bench Verified", "Nemotron-3 550B", "bash only");
+    expect(formatPoints(-bash550bSwe.successPoints)).toBe(HARNESS_DESIGN.reported.bashOnly550bSwe);
+    expect(1 - bash550bSwe.ablated.costUsd / bash550bSwe.baseline.costUsd).toBeCloseTo(0.52, 1);
+    const bash550bTb = componentEffect("Terminal-Bench 2.1", "Nemotron-3 550B", "bash only");
+    expect(formatPoints(-bash550bTb.successPoints)).toBe(HARNESS_DESIGN.reported.bashOnly550bTb);
+    expect(Math.round((1 - bash550bTb.ablated.costUsd / bash550bTb.baseline.costUsd) * 100)).toBe(30);
+    const toolsMistralSwe = componentEffect("SWE-Bench Verified", "Mistral-Medium-3.5-128B", "bash only");
+    expect(formatPoints(toolsMistralSwe.successPoints)).toBe(HARNESS_DESIGN.reported.toolsMistralSwe);
+    const bashMistralTb = componentEffect("Terminal-Bench 2.1", "Mistral-Medium-3.5-128B", "bash only");
+    expect(formatPoints(-bashMistralTb.successPoints)).toBe(HARNESS_DESIGN.reported.bashOnlyMistralTb);
+    expect(bashMistralTb.ablated.costUsd).toBeGreaterThan(bashMistralTb.baseline.costUsd);
+    expect(markdown).toContain("$2.75 versus $2.22");
+    expect(markdown).toContain("$1.11 versus $2.33");
+
+    for (const benchmark of HARNESS_DESIGN_BENCHMARKS) {
+      for (const model of HARNESS_DESIGN_MODELS) {
+        const baseline = tierMeasure(benchmark, 128, "T4", model);
+        expect(markup).toContain(`${baseline.successPercent.toFixed(1)}% at $${baseline.costUsd.toFixed(2)}`);
+        for (const ablation of HARNESS_DESIGN_ABLATIONS) {
+          const ablated = ablationMeasure(benchmark, ablation, model);
+          expect(markup).toContain(`${ablated.successPercent.toFixed(1)}% at $${ablated.costUsd.toFixed(2)}`);
+        }
+      }
+    }
+
+    expect(snapshotModelsSharedWithPaper(parsed.value)).toEqual([]);
+    expect(markdown).toContain("stores none of the paper’s four models");
+    const sharedSnapshot = {
+      ...parsed.value,
+      records: parsed.value.records.map((record, index) =>
+        index === 0 ? { ...record, model: "Nemotron-3 550B" } : record),
+    };
+    const sharedArticle = createHarnessDesignArticle(sharedSnapshot);
+    const sharedMarkdown = articleToMarkdown(sharedArticle);
+    expect(snapshotModelsSharedWithPaper(sharedSnapshot)).toEqual(["Nemotron-3 550B"]);
+    expect(sharedMarkdown).toContain("stores Nemotron-3 550B by name");
+    expect(sharedMarkdown).not.toContain("stores none of the paper’s four models");
+  });
+
   test("reconstructs HarnessTax pair tables and the 9 of 12 alternative-harness tally", () => {
     const parsed = parseCodingAgentSnapshot(codingAgentData);
     if (!parsed.ok) throw parsed.error;
@@ -903,6 +1068,7 @@ describe("AI Charts benchmark notes", () => {
     expect(markup).toContain(`href="${BLOG_SOURCES.googleAntigravityCliTransition.url}"`);
     expect(markup).toContain(`href="${BLOG_SOURCES.hackerNewsRealSwe.url}"`);
     expect(markup).toContain(`href="${BLOG_SOURCES.harnessTax.url}"`);
+    expect(markup).toContain(`href="${BLOG_SOURCES.fanHarnessDesign.url}"`);
   });
 
   test("renders the index, static routes, breadcrumbs, dates, and sources", async () => {
@@ -1053,6 +1219,7 @@ describe("AI Charts blog discovery", () => {
     }
     const imageFreeSlugs = BLOG_SLUGS.filter(slug => blogEditorialImage(slug) === undefined);
     expect(imageFreeSlugs).toEqual([
+      "harness-design-coding-agents",
       "harnesstax-coding-agent-harness",
       "real-swe-private-enterprise-benchmark",
       "devin-fusion-cost-saving",
