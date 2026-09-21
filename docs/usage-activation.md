@@ -302,10 +302,25 @@ fails a read closed.
 
 Because that audit must pass before a mutation commits, the device upload
 boundary carries its own budgets (`STATS_UPLOAD_HTTP_WORKER_MS`,
-`STATS_UPLOAD_HTTP_STAGE_MS`) rather than the shorter pairing ones. They stay
-inside the CLI's 20s global timeout, so an upload that waits out the audit
-returns its settled receipt instead of a `rpc_pending` the client must resume.
-The pairing boundary and its capacity are unchanged.
+`STATS_UPLOAD_HTTP_STAGE_MS`) rather than the shorter pairing ones, so an
+upload that waits out the audit returns its settled receipt instead of the
+`storage_unavailable` the CLI records as an uncertain exchange to resume. The
+binding client constraint is `timeout_recv_response` (15s), not the 20s global,
+which is shared with resolve, connect and body send; raise one only with the
+other. These budgets are sized against the audit's current cost, so a long
+enough retained history outgrows them — making the audit incremental is the
+durable fix, not widening the budget again.
+
+Two consequences to keep in view. The pairing boundary and its capacity are
+unchanged, but this boundary still admits `PAIRING_HTTP_CAPACITY` concurrent
+uploads while holding each slot up to the longer budget, so its effective
+throughput is lower than the shared constant implies. And because the
+constructor now runs only the control audit, an account whose retained history
+is corrupt no longer rolls the constructor transaction back: the schema
+migrations and the stats initialization commit before anything detects the
+corruption. Restore tooling should expect a migrated payload and schema version
+on such an account, and rely on the journal and heads — which are untouched —
+as the authority.
 
 The remaining tradeoff is scoped to the non-committing private reads: daily
 totals, stats status, stats reports and consent can be served between a

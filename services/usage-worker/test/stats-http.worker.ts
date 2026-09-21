@@ -81,12 +81,13 @@ test("same enrolled credential uploads through real RPC, retries and returns pri
     expect(parsed).toMatchObject({ ok: true, value: { revision: 1, rows: [{ client: "cursor", tokens: { input: "7", cacheWrite: "5" } }] } });
   } finally { await waitOnExecutionContext(ctx); }
 });
-test("an upload slower than the old shared stage budget settles instead of reporting rpc_pending", async () => {
+test("an upload slower than the old shared stage budget settles instead of refusing as unavailable", async () => {
   const device = await activated();
   // Stand in for the account object's history audit, which is linear in
   // retained history and must pass before a mutation may commit. At 7s it
-  // exceeds the 5s pairing stage this boundary used to share, and the CLI's
-  // own global budget is 20s, so the settled receipt must still reach it.
+  // exceeds the 5s pairing stage this boundary used to share, so the settled
+  // receipt would otherwise be refused as `storage_unavailable` and reach the
+  // CLI as an uncertain exchange it has to resume.
   const slow = { ...env, ACCOUNT_ENROLLMENTS: new Proxy(env.ACCOUNT_ENROLLMENTS, {
     get(target, property) {
       if (property !== "getByName") {

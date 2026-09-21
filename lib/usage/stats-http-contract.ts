@@ -14,10 +14,20 @@ export const STATS_UPLOAD_BYTES = 4 * 1024 * 1024;
 export const STATS_UPLOAD_ROWS = 8_192;
 /** The device boundary waits out the account object's history audit, which is
  * linear in retained history and must pass before a mutation may commit. The
- * pairing boundary keeps its own shorter budgets; these stay inside the CLI's
- * 20s global timeout so a settled upload is never reported as uncertain. */
-export const STATS_UPLOAD_HTTP_WORKER_MS = 15_000;
-export const STATS_UPLOAD_HTTP_STAGE_MS = 12_000;
+ * pairing boundary keeps its own shorter budgets.
+ *
+ * The binding constraint is the CLI's `timeout_recv_response` of 15s, not its
+ * 20s global: that global is shared with resolve, connect and body send, and
+ * the client's response clock starts before the Worker's does. These leave
+ * headroom under 15s so an exhausted budget still delivers this boundary's own
+ * refusal rather than being abandoned client-side as uncertain. Raising either
+ * one requires raising `timeout_recv_response` in lockstep.
+ *
+ * They are sized against the audit's current cost, not against its ceiling. A
+ * long enough retained history outgrows any fixed budget; the durable fix is
+ * to make the audit incremental rather than to keep widening this. */
+export const STATS_UPLOAD_HTTP_WORKER_MS = 12_000;
+export const STATS_UPLOAD_HTTP_STAGE_MS = 10_000;
 export const STATS_MEDIA = "application/json; charset=utf-8";
 export const STATS_MAX_TIME = 8_640_000_000_000_000;
 export type StatsRange = Readonly<{ firstUtcDay: number; dayCount: number }>;
