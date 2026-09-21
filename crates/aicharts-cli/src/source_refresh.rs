@@ -29,7 +29,17 @@ const SUMMARY_ENDPOINT: &str = "https://cursor.com/api/usage-summary";
 const MAX_BYTES: usize = 64 * 1024 * 1024;
 const MAX_PAGES: usize = 500;
 const PAGE_SIZE: usize = 500;
-const BUDGET: Duration = Duration::from_secs(120);
+const BUDGET: Duration = Duration::from_secs(600);
+// Incremental refreshes re-read the newest cached events so usage that Cursor
+// posts late still lands in the cache; the merge replaces only days present in
+// the fresh window and retains every absent day.
+const OVERLAP_MS: u64 = 2 * 86_400_000;
+// A first refresh without cache history is bounded to a rolling month; deeper
+// history belongs to exported CSV/JSON source files, not the paging endpoint.
+const FIRST_RUN_MS: u64 = 30 * 86_400_000;
+// Events reposted with old timestamps shift page boundaries inside a pinned
+// fetch window; only mass duplication beyond this bound is treated as damage.
+const MAX_DRIFT_DUPLICATES: usize = 1024;
 const INVALID: &str = "cursor_refresh_response_invalid";
 const LIMIT: &str = "cursor_refresh_limit";
 const CREDENTIAL: &str = "cursor_refresh_credential_invalid";
@@ -75,10 +85,19 @@ fn credential(raw: &str, desktop_access_token: bool) -> Result<Credential> {
         .get("sub")
         .and_then(Value::as_str)
         .ok_or(CREDENTIAL)?;
-    let user = subject
-        .strip_prefix("auth0|")
-        .or_else(|| subject.strip_prefix("workos|"))
-        .unwrap_or(subject);
+    // Subjects that embed the account id behind an identity-provider
+    // connection (`auth0|user_…`, `workos|user_…`, `google-oauth2|user_…`)
+    // prove the binding: the cookie prefix must equal that final segment.
+    // IdP-backed subjects (`google-oauth2|<numeric>`, …) never carry the
+    // account id; the cookie prefix is the only `user_` source and Cursor
+    // still authenticates the JWT itself. Desktop access tokens have no
+    // prefix, so they must provide a `user_` subject.
+    let derived = subject.rsplit('|').next().unwrap_or(subject);
+    let user = if derived.starts_with("user_") {
+        derived
+    } else {
+        prefix.ok_or(CREDENTIAL)?
+    };
     if !user.starts_with("user_")
         || !(6..=128).contains(&user.len())
         || user
@@ -106,6 +125,7 @@ trait Transport {
         &mut self,
         credential: &Credential,
         page: usize,
+        range_ms: (u64, u64),
         remaining: Duration,
         max_bytes: usize,
     ) -> Result<Vec<u8>>;
@@ -119,17 +139,18 @@ impl Transport for Https {
         &mut self,
         credential: &Credential,
         page: usize,
+        range_ms: (u64, u64),
         remaining: Duration,
         max_bytes: usize,
     ) -> Result<Vec<u8>> {
-        self.request(credential, Some(page), remaining, max_bytes)
+        self.request(credential, Some((page, range_ms)), remaining, max_bytes)
     }
 }
 impl Https {
     fn request(
         &mut self,
         credential: &Credential,
-        page: Option<usize>,
+        page: Option<(usize, (u64, u64))>,
         remaining: Duration,
         max_bytes: usize,
     ) -> Result<Vec<u8>> {
@@ -153,9 +174,15 @@ impl Https {
             crate::transport_dns::SourceResolver::https("cursor.com", 443)
                 .map_err(|_| "cursor_refresh_transport_unavailable")?,
         );
-        let mut response = if let Some(page) = page {
-            let body = serde_json::to_vec(&json!({"teamId":0,"page":page,"pageSize":PAGE_SIZE}))
-                .map_err(|_| INVALID)?;
+        let mut response = if let Some((page, range)) = page {
+            let body = serde_json::to_vec(&json!({
+                "teamId": 0,
+                "page": page,
+                "pageSize": PAGE_SIZE,
+                "startDate": range.0,
+                "endDate": range.1,
+            }))
+            .map_err(|_| INVALID)?;
             agent
                 .post(ENDPOINT)
                 .header("Cookie", credential.cookie.clone())
@@ -316,7 +343,7 @@ fn project(event: &Value) -> Result<Value> {
     day(&result)?;
     Ok(result)
 }
-fn validate_summary(bytes: &[u8]) -> Result<()> {
+fn validate_summary(bytes: &[u8]) -> Result<u64> {
     if bytes.len() > 128 * 1024 {
         return Err(LIMIT);
     }
@@ -335,24 +362,56 @@ fn validate_summary(bytes: &[u8]) -> Result<()> {
     {
         return Err(INVALID);
     }
-    Ok(())
+    u64::try_from(start.unix_timestamp_nanos() / 1_000_000).map_err(|_| INVALID)
+}
+
+/// Newest cached event timestamp, used to bound the next fetch window. A
+/// malformed cache degrades to the bounded first-run window; merge() still
+/// rejects it outright afterwards.
+fn latest_event_ms(previous: &[u8]) -> Option<u64> {
+    serde_json::from_slice::<Value>(previous)
+        .ok()?
+        .get("usageEventsDisplay")?
+        .as_array()?
+        .iter()
+        .filter_map(|event| event.get("timestamp")?.as_u64())
+        .max()
 }
 
 fn fetch(
     transport: &mut impl Transport,
     credential: &Credential,
     started: Instant,
+    cache_latest_ms: Option<u64>,
 ) -> Result<Vec<Value>> {
     let summary = transport.summary(credential, remaining(started)?)?;
     remaining(started)?;
-    validate_summary(&summary)?;
+    let billing_start_ms = validate_summary(&summary)?;
+    let until_ms = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|elapsed| elapsed.as_millis() as u64)
+        .map_err(|_| INVALID)?;
+    // Pinning both bounds freezes the page range: events arriving while paging
+    // cannot shift rows between pages or extend an already-sized total.
+    let since_ms = match cache_latest_ms {
+        Some(latest) => latest.saturating_sub(OVERLAP_MS).min(until_ms),
+        None => billing_start_ms.min(until_ms.saturating_sub(FIRST_RUN_MS)),
+    };
+    let range = (since_ms, until_ms);
     let mut rows = Vec::new();
     let mut bytes = summary.len();
     let mut total = None;
+    let mut duplicates = 0usize;
     let mut page_hashes = BTreeSet::new();
     let mut event_hashes = BTreeSet::new();
     for page in 1..=MAX_PAGES {
-        let body = transport.page(credential, page, remaining(started)?, MAX_BYTES - bytes)?;
+        let body = transport.page(
+            credential,
+            page,
+            range,
+            remaining(started)?,
+            MAX_BYTES - bytes,
+        )?;
         remaining(started)?;
         bytes = bytes
             .checked_add(body.len())
@@ -364,7 +423,10 @@ fn fetch(
             .and_then(Value::as_u64)
             .filter(|n| *n <= (MAX_PAGES * PAGE_SIZE) as u64)
             .ok_or(INVALID)? as usize;
-        if total.is_some_and(|previous| previous != advertised) {
+        // Usage events arrive append-only but can be posted with past
+        // timestamps, so a growing advertised total is expected mid-pagination;
+        // a shrinking one means the basis moved and the refresh cannot settle.
+        if total.is_some_and(|previous| advertised < previous) {
             return Err("cursor_refresh_history_changed");
         }
         total = Some(advertised);
@@ -382,10 +444,15 @@ fn fetch(
             let projected = project(event)?;
             let fingerprint =
                 Sha256::digest(serde_json::to_vec(&projected).map_err(|_| INVALID)?).to_vec();
-            // No authoritative event id is promised by this endpoint. Ambiguous
-            // overlapping pages fail rather than silently count one event twice.
+            // Inserts inside the pinned window shift page boundaries, so the
+            // same event can be observed twice on adjacent pages; identical
+            // projections are one event, not two. Mass duplication still fails.
             if !event_hashes.insert(fingerprint) {
-                return Err("cursor_refresh_duplicate_event");
+                duplicates += 1;
+                if duplicates > MAX_DRIFT_DUPLICATES {
+                    return Err("cursor_refresh_duplicate_event");
+                }
+                continue;
             }
             rows.push(projected);
         }
@@ -450,7 +517,7 @@ pub(super) fn run(args: &[String]) -> Result<String> {
         return Ok("AI Charts provider refresh — explicit numeric cache acquisition\n\n  aicharts refresh cursor --help\n  aicharts refresh trae --help\n  aicharts refresh warp --help\n  aicharts refresh hindsight --help\n  aicharts refresh antigravity --help\n\nA refresh reads one explicitly selected provider account into a private numeric\ncache. It does not publish to AI Charts. Failed refreshes preserve the last\ncomplete cache. Use stats --source-root to inspect it and autosubmit --help\nfor scheduled refresh and publication. See docs/usage-autosubmit.md.\n".into());
     }
     if args == ["cursor", "--help"] || args == ["cursor", "-h"] {
-        return Ok("AI Charts Cursor refresh\n\n  aicharts refresh cursor --cache-dir ABS (--session-token-file ABS | --cursor-state-db ABS)\n\nSelect exactly one credential source. The private token file contains an existing\nWorkos session token; --cursor-state-db explicitly reads the signed-in desktop\ncredential. No login or credential discovery occurs implicitly. The fixed Cursor\nservice authenticates the account. Complete numeric pages merge into a private,\naccount-bound cache; prompts and response text are discarded. The refresh is\nbounded to 500 pages, 64 MiB and 120 seconds. Failure preserves prior history.\nNothing is published to AI Charts by this command.\n".into());
+        return Ok("AI Charts Cursor refresh\n\n  aicharts refresh cursor --cache-dir ABS (--session-token-file ABS | --cursor-state-db ABS)\n\nSelect exactly one credential source. The private token file contains an existing\nWorkos session token; --cursor-state-db explicitly reads the signed-in desktop\ncredential. No login or credential discovery occurs implicitly. The fixed Cursor\nservice authenticates the account. Complete numeric pages merge into a private,\naccount-bound cache; prompts and response text are discarded. The refresh is\nbounded to 500 pages, 64 MiB and 600 seconds. Fetches are windowed to the\naccount's newest cached events plus overlap, or a bounded first-run lookback.\nFailure preserves prior history. Nothing is published to AI Charts by this command.\n".into());
     }
     #[cfg(unix)]
     match args.first().map(String::as_str) {
@@ -535,9 +602,21 @@ fn refresh(
     if manifest.is_none() && previous.is_some() {
         return Err("cursor_refresh_cache_unbound");
     }
-    let fresh = fetch(transport, credential, started)?;
+    let fresh = fetch(
+        transport,
+        credential,
+        started,
+        previous.as_deref().and_then(latest_event_ms),
+    )?;
     let received = fresh.len();
-    let bytes = merge(previous.as_deref(), fresh)?;
+    // A completely empty window is a successful no-change refresh: the retained
+    // cache still holds the account's history. Only a cache-less first refresh
+    // that finds nothing keeps the existing refusal.
+    let bytes = if fresh.is_empty() {
+        previous.clone().ok_or("cursor_refresh_empty_preserved")?
+    } else {
+        merge(previous.as_deref(), fresh)?
+    };
     remaining(started)?;
     if manifest.is_none() {
         cache.create_binding(&serde_json::to_vec(&expected).map_err(|_| INVALID)?)?;
