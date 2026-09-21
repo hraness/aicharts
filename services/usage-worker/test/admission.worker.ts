@@ -709,7 +709,7 @@ describe("dormant account admission", () => {
       try { expect((await instance.admitBatch({ uploadSecret: device.proof.uploadSecret, batch: value.bytes })).ok).toBe(false); } finally { restore(); }
       const payload = state.storage.sql.exec("SELECT payload FROM account_enrollment").one().payload;
       if (typeof payload !== "string") throw new Error("synthetic missing authority");
-      const authority = JSON.parse(payload) as Parameters<AdmissionState["audit"]>[0];
+      const authority = JSON.parse(payload) as Parameters<AdmissionState["auditHistory"]>[0];
       if (!authority) throw new Error("synthetic missing authority");
       const before = allRows(state.storage.sql);
       const sql = new Proxy(state.storage.sql, { get(target, property) {
@@ -736,7 +736,7 @@ describe("dormant account admission", () => {
     await runInDurableObject(stub(), (_instance, state) => {
       const payload = state.storage.sql.exec("SELECT payload FROM account_enrollment").one().payload;
       if (typeof payload !== "string") throw new Error("synthetic missing authority");
-      const authority = JSON.parse(payload) as Parameters<AdmissionState["audit"]>[0];
+      const authority = JSON.parse(payload) as Parameters<AdmissionState["auditHistory"]>[0];
       if (!authority) throw new Error("synthetic missing authority");
       // Source-only fixture history. This seeds canonical SQL via the actual
       // synchronous transitions, never fabricates R2 or claims live readback.
@@ -747,7 +747,7 @@ describe("dormant account admission", () => {
           const value = batch(device, start, members);
           admission.publish(admission.freeze(admission.reserve(value, authority, NOW), authority, NOW), authority);
         }
-        admission.audit(authority);
+        admission.auditHistory(authority);
       });
     });
     const lastSlot = batch(device, seeded + 1, [{ id: seeded + 1 }]);
@@ -777,7 +777,7 @@ describe("dormant account admission", () => {
     await runInDurableObject(stub(), (_instance, state) => {
       const payload = state.storage.sql.exec("SELECT payload FROM account_enrollment").one().payload;
       if (typeof payload !== "string") throw new Error("synthetic missing authority");
-      const authority = JSON.parse(payload) as Parameters<AdmissionState["audit"]>[0];
+      const authority = JSON.parse(payload) as Parameters<AdmissionState["auditHistory"]>[0];
       if (!authority) throw new Error("synthetic missing authority");
       state.storage.transactionSync(() => {
         const admission = new AdmissionState(state.storage.sql);
@@ -785,7 +785,7 @@ describe("dormant account admission", () => {
           const value = batch(device, sequence);
           admission.publish(admission.freeze(admission.reserve(value, authority, NOW), authority, NOW), authority);
         }
-        admission.audit(authority);
+        admission.auditHistory(authority);
       });
     });
     const final = batch(device, 4096), bytes = success(await upload(device, final));

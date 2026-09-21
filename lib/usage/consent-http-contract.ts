@@ -8,6 +8,14 @@ import { privateDaysSnapshot } from "./private-days-http-contract";
 export const USAGE_CONSENT_HTTP_URL = "https://usage.aicharts.io/internal/usage/consent";
 export const USAGE_CONSENT_HTTP_REQUEST_BYTES = USAGE_CONSENT_REQUEST_BYTES;
 export const USAGE_CONSENT_HTTP_RESPONSE_BYTES = USAGE_CONSENT_RESPONSE_BYTES;
+/** Setting consent commits, so it clears the account object's history audit
+ * first, and a status read beforehand no longer does — leaving the decision as
+ * the first committing call on a cold object. It then publishes to the index
+ * in the same stage. Refusing there would report a decision that did commit
+ * and publish, so this boundary carries the upload boundary's budgets rather
+ * than the pairing ones. */
+export const USAGE_CONSENT_HTTP_WORKER_MS = 12_000;
+export const USAGE_CONSENT_HTTP_STAGE_MS = 10_000;
 export type UsageConsentQueryResult = UsageConsentResult;
 
 function owned<T extends object>(value: T): Readonly<T> {

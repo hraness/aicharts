@@ -4,7 +4,7 @@ import { createConsentHttpHandler } from "../../services/usage-worker/src/consen
 import type { PairingHttpVerifier } from "../../services/usage-worker/src/pairing-http";
 import { verifierFailureStage } from "../../services/usage-worker/src/usage-failure";
 import { encodePrivateDaysHttpRequest, PRIVATE_DAYS_HTTP_URL } from "./private-days-http-contract";
-import { encodeUsageConsentHttpRequest, USAGE_CONSENT_HTTP_URL } from "./consent-http-contract";
+import { encodeUsageConsentHttpRequest, USAGE_CONSENT_HTTP_STAGE_MS, USAGE_CONSENT_HTTP_URL } from "./consent-http-contract";
 import { PAIRING_HTTP_STAGE_MS } from "./pairing-http-contract";
 import { USAGE_FAILURE_HEADER, USAGE_FAILURE_STAGES } from "./usage-failure-contract";
 
@@ -24,8 +24,10 @@ test("RPC stages distinguish target lookup, synchronous invocation, rejection an
   const daysBody = encodePrivateDaysHttpRequest({ ...session, firstUtcDay: 20_000, dayCount: 1 });
   const consentBody = encodeUsageConsentHttpRequest({ ...session, operation: "status" });
   expect(daysBody).not.toBeNull(); expect(consentBody).not.toBeNull();
-  for (const [url, makeHandler, body] of [[PRIVATE_DAYS_HTTP_URL, createPrivateDaysHttpHandler, daysBody],
-    [USAGE_CONSENT_HTTP_URL, createConsentHttpHandler, consentBody]] as const) {
+  // Consent commits and publishes in its stage, so it carries a longer budget
+  // than the read-only private-days boundary; each is asserted against its own.
+  for (const [url, makeHandler, body, stageMs] of [[PRIVATE_DAYS_HTTP_URL, createPrivateDaysHttpHandler, daysBody, PAIRING_HTTP_STAGE_MS],
+    [USAGE_CONSENT_HTTP_URL, createConsentHttpHandler, consentBody, USAGE_CONSENT_HTTP_STAGE_MS]] as const) {
     for (const mode of ["dispatch", "sync", "rejected", "pending"] as const) {
       let entered!: () => void, rejectLate!: (error: Error) => void;
       const called = new Promise<void>(resolve => { entered = resolve; });
@@ -54,7 +56,7 @@ test("RPC stages distinguish target lookup, synchronous invocation, rejection an
       { waitUntil(terminal) { pending.push(terminal); } });
       await called;
       if (mode === "pending") {
-        const timer = [...timers.values()].filter(timer => timer.delay === PAIRING_HTTP_STAGE_MS);
+        const timer = [...timers.values()].filter(timer => timer.delay === stageMs);
         expect(timer).toHaveLength(1); timer[0]!.callback();
       }
       const response = await outward;

@@ -230,11 +230,6 @@ export class AdmissionState {
     return Uint8Array.from(journal.bytes);
   }
 
-  /** Full audit: the history scan, which begins with the control checks. */
-  audit(authority: AdmissionAuthority | null): void {
-    this.auditHistory(authority);
-  }
-
   /** Constant-cost half of the audit. Validates the control row and its
    * observed-time floor without touching the journal, head or day tables, so
    * rehydrating an object to serve a read does not scan the whole account. */

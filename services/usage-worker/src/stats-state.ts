@@ -397,11 +397,6 @@ export class StatsState {
     }
     return { observedTokens: tokens.toString(), usageRecords: records };
   }
-  /** Full audit: the stored-day scan, which begins with the control checks. */
-  audit(authority: AdmissionAuthority | null): void {
-    this.auditHistory(authority);
-  }
-
   /** Constant-cost half of the audit. Writers, devices and the pending intent
    * are each capped well under a page; the stored-day table is not, so it is
    * left to `auditHistory`. Returns the writer clients it already read so the

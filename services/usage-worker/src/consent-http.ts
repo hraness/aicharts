@@ -1,6 +1,7 @@
 import { decodeUsageConsentHttpRequest, encodeUsageConsentHttpResponse,
-  USAGE_CONSENT_HTTP_REQUEST_BYTES, USAGE_CONSENT_HTTP_URL } from "../../../lib/usage/consent-http-contract";
-import { PAIRING_HTTP_CAPACITY, PAIRING_HTTP_STAGE_MS, PAIRING_HTTP_WORKER_MS,
+  USAGE_CONSENT_HTTP_REQUEST_BYTES, USAGE_CONSENT_HTTP_URL,
+  USAGE_CONSENT_HTTP_STAGE_MS, USAGE_CONSENT_HTTP_WORKER_MS } from "../../../lib/usage/consent-http-contract";
+import { PAIRING_HTTP_CAPACITY,
   pairingHttpBearer, pairingHttpBody, pairingHttpFailure, pairingHttpResponse } from "../../../lib/usage/pairing-http-contract";
 import { privateDaysHttpLength } from "../../../lib/usage/private-days-http-contract";
 import { pairingHttpWork, type PairingHttpEffects } from "../../../lib/usage/pairing-http-work";
@@ -67,7 +68,7 @@ export function createConsentHttpHandler(dependencies: ConsentHttpDependencies) 
       if (!Number.isSafeInteger(current) || Object.is(current, -0) || current < 0 || current < observed || current > 8_640_000_000_000_000) throw new Error("consent_clock");
       observed = current; return current;
     };
-    return pairingHttpWork({ now: sample, setTimeout, clearTimeout }, PAIRING_HTTP_WORKER_MS, terminal => { ctx.waitUntil(terminal); },
+    return pairingHttpWork({ now: sample, setTimeout, clearTimeout }, USAGE_CONSENT_HTTP_WORKER_MS, terminal => { ctx.waitUntil(terminal); },
       () => usageFailure(failureStage), () => { outstanding--; }, async work => {
         failureStage = "request_verify";
         const scope = verifier.beginRequest(ctx); work.onStop(() => { scope.finish(); });
@@ -90,7 +91,7 @@ export function createConsentHttpHandler(dependencies: ConsentHttpDependencies) 
         if (query === null) return pairingHttpFailure(400);
         expiry = query.sessionExpiresAtMs;
         failureStage = "rpc_dispatch";
-        const encoded = await work.stage(PAIRING_HTTP_STAGE_MS, async () => {
+        const encoded = await work.stage(USAGE_CONSENT_HTTP_STAGE_MS, async () => {
           guard();
           // The account assertion came from the authenticated coordinator. The
           // owned ordinary projection is accepted by actual workerd RPC.

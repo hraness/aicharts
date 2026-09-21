@@ -307,9 +307,20 @@ upload that waits out the audit returns its settled receipt instead of the
 `storage_unavailable` the CLI records as an uncertain exchange to resume. The
 binding client constraint is `timeout_recv_response` (15s), not the 20s global,
 which is shared with resolve, connect and body send; raise one only with the
-other. These budgets are sized against the audit's current cost, so a long
-enough retained history outgrows them — making the audit incremental is the
-durable fix, not widening the budget again.
+other. Setting leaderboard consent carries the same budgets for the same
+reason: a status read no longer audits, so the decision is the first
+committing call on a cold object and publishes to the index in the same stage,
+and refusing there would report a decision that did commit and publish.
+
+Bounding what the audit decodes was tried and rejected. Structural
+reconciliation over the indexed columns — revision prefix, head counts, and
+each day against the live heads claiming it — does detect single-row loss,
+duplication and re-dating, but a coordinated edit that keeps those aggregates
+consistent, such as re-dating a head and adjusting both day rows to match,
+passes every one of them. Only decoding the operation binds `utc_day` to the
+bytes it came from, and that misattribution reaches the public leaderboard
+window. So the audit stays linear in retained history; the cost is contained by
+running it once per object lifetime and off the read path, not by decoding less.
 
 Two consequences to keep in view. The pairing boundary and its capacity are
 unchanged, but this boundary still admits `PAIRING_HTTP_CAPACITY` concurrent
