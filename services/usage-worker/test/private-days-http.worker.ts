@@ -1,9 +1,9 @@
 import { env } from "cloudflare:workers";
-import { createExecutionContext, waitOnExecutionContext, reset } from "cloudflare:test";
+import { createExecutionContext, waitOnExecutionContext, reset, runInDurableObject } from "cloudflare:test";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { encodeAdmissionBatch, encodeAdmissionOperation } from "../../../lib/usage/admission";
 import { decodePrivateDaysHttpResponse, encodePrivateDaysHttpRequest, PRIVATE_DAYS_HTTP_URL } from "../../../lib/usage/private-days-http-contract";
-import { PAIRING_HTTP_MEDIA } from "../../../lib/usage/pairing-http-contract";
+import { PAIRING_HTTP_CAPACITY, PAIRING_HTTP_MEDIA, PAIRING_HTTP_STAGE_MS } from "../../../lib/usage/pairing-http-contract";
 import { USAGE_FAILURE_HEADER, USAGE_FAILURE_STAGES } from "../../../lib/usage/usage-failure-contract";
 import { DAY_MS, encodeUsageBatch } from "../../../lib/usage/wire";
 import { ADMISSION_POLICY_V1 } from "../src/admission-policy";
@@ -144,4 +144,88 @@ test("workload and session failures refuse before real namespace selection", asy
     finally { await waitOnExecutionContext(ctx); }
   }
   expect(selected).toBe(0); expect(finished).toBe(2);
+});
+
+test.each(["success", "storage_failure"] as const)("delayed anchor returns rpc_pending before real RPC completes with %s", async outcome => {
+  const device = await enroll();
+  // Keep injected streams, timer-created Responses and their cleanup in one
+  // actor I/O scope. Nothing carrying I/O ownership leaves this callback.
+  await runInDurableObject(device.stub, async instance => {
+    let releaseBody!: () => void, enterBody!: () => void;
+    const bodyGate = new Promise<void>(resolve => { releaseBody = resolve; });
+    const bodyEntered = new Promise<void>(resolve => { enterBody = resolve; });
+    let restore = () => {}, reads = 0, stageTimeouts = 0;
+    // Date remains fixed for the synthetic enrollment. Timers are real. Delay
+    // the get for 3s, then hold its body until the outer 5s stage has expired.
+    // Each storage phase remains within its own 5s budget when we release it.
+    const object = instance as unknown as { env: Env }, original = object.env;
+    const control = new Proxy(original.CONTROL, { get(target, property) {
+      if (property === "get") return async (key: string) => {
+        reads++;
+        const anchor = await target.get(key);
+        if (anchor === null) throw new Error("synthetic_anchor_missing");
+        const bytes = new Uint8Array(await anchor.arrayBuffer());
+        await new Promise<void>(resolve => setTimeout(resolve, 3_000));
+        const body = new ReadableStream<Uint8Array>({ async pull(controller) {
+          enterBody(); await bodyGate;
+          if (outcome === "storage_failure") controller.error(new Error("SYNTHETIC_ANCHOR_BODY_FAILURE"));
+          else { controller.enqueue(bytes); controller.close(); }
+        } });
+        return new Proxy(anchor, { get(target, property) {
+          if (property === "body") return body;
+          const value: unknown = Reflect.get(target, property, target);
+          return typeof value === "function" ? value.bind(target) : value;
+        } });
+      };
+      const value: unknown = Reflect.get(target, property, target);
+      return typeof value === "function" ? value.bind(target) : value;
+    } });
+    object.env = { ...original, CONTROL: control };
+    restore = () => { object.env = original; };
+    let observe!: (result: { ok: boolean; error: string | null }) => void, remoteSettled = false;
+    const observed = new Promise<{ ok: boolean; error: string | null }>(resolve => { observe = resolve; });
+    const actual: PrivateDaysHttpEnvironment = { ACCOUNT_ENROLLMENTS: { getByName(name) {
+      const stub = env.ACCOUNT_ENROLLMENTS.getByName(name);
+      return { readImportedDays(input) {
+        const rpc = stub.readImportedDays(input);
+        // Observe the real transport without replacing its thenable or keeping
+        // the returned object: the HTTP handler remains its disposal owner.
+        void rpc.then(raw => { remoteSettled = true; observe({ ok: raw.ok, error: raw.ok ? null : raw.error }); },
+          () => { remoteSettled = true; observe({ ok: false, error: "rpc_rejected" }); });
+        return rpc;
+      } };
+    } } };
+    const retained = createPrivateDaysHttpHandler({ verifier, now: Date.now,
+      setTimeout: (callback, ms) => setTimeout(() => { if (ms === PAIRING_HTTP_STAGE_MS) stageTimeouts++; callback(); }, ms),
+      clearTimeout: timer => clearTimeout(timer as ReturnType<typeof setTimeout>) });
+    const ctx = createExecutionContext();
+    let joined = false;
+    const outward = retained(request(), actual, ctx);
+    const terminal = waitOnExecutionContext(ctx).then(() => { joined = true; });
+    try {
+      await bodyEntered;
+      const response = await outward;
+      expect(response.status).toBe(503); expect(response.headers.get(USAGE_FAILURE_HEADER)).toBe("rpc_pending");
+      expect(await response.text()).toBe('{"schemaVersion":1,"error":{"code":"coordinator_unavailable"}}');
+      expect(stageTimeouts).toBe(1); expect(reads).toBe(1);
+      expect(remoteSettled).toBe(false); expect(joined).toBe(false); expect(finished).toBe(1);
+      releaseBody();
+      expect(await observed).toEqual(outcome === "success" ? { ok: true, error: null } : { ok: false, error: "storage_unavailable" });
+      await terminal;
+      expect(joined).toBe(true); expect(response.headers.get(USAGE_FAILURE_HEADER)).toBe("rpc_pending");
+      restore();
+      // Eight simultaneous healthy reads require every capacity slot, including
+      // the timed-out call's slot. Reuse the same factory to expose a leaked slot.
+      const followups = Array.from({ length: PAIRING_HTTP_CAPACITY }, async () => {
+        const next = createExecutionContext();
+        try {
+          const response = await retained(request(), env, next);
+          expect(response.status).toBe(200);
+          expect(decodePrivateDaysHttpResponse(new Uint8Array(await response.arrayBuffer()), query())?.ok).toBe(true);
+        } finally { await waitOnExecutionContext(next); }
+      });
+      await Promise.all(followups);
+      expect(finished).toBe(PAIRING_HTTP_CAPACITY + 1);
+    } finally { releaseBody(); await outward; await terminal; restore(); }
+  });
 });

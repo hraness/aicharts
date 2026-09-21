@@ -25,7 +25,7 @@ aicharts stats --home "$HOME" --all --since 2026-09-01 --until 2026-09-19 --json
 aicharts stats --list-clients
 ```
 
-Open the report with **Open local report**. Use the client and model
+Open the report with **Open local report**. Use the client, provider, and model
 filters to narrow the totals and chart. The breakdown can group rows by client,
 provider, or model; select a row name to filter to that group. Select a chart bar
 to inspect that day or week. **Download numeric CSV** exports the selected
@@ -34,7 +34,10 @@ records with exact integer counts.
 The first view prioritizes the selected period, exact total, and trend. Open
 **Recorded request duration** or **Daily data** for detailed values, and use
 **Source coverage & freshness** to inspect collection status and source timestamps.
-On mobile, **Filters** expands the client, model, and token-basis controls.
+On mobile, **Filters** expands the client, provider, model, and token-basis controls.
+**Supported clients** lists the complete parser roster and identifies entries
+that are not included in the report. Collection status does not change when
+you filter the chart; an absent source is not evidence of zero usage.
 
 CSV includes a `time_basis` column. Ordinary dated observations use `observed`.
 The latest Warp billing counter uses `refresh_snapshot`; its date records when
