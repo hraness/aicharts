@@ -68,7 +68,12 @@ fn credential_derives_account_from_identity_provider_prefixed_subjects() {
     // Cursor's migrated session tokens carry Auth0 connection names such as
     // `google-oauth2|`; the account id is the final `user_` segment and the
     // cookie prefix must still bind to it exactly.
-    for sub in ["google-oauth2|user_test", "workos|user_test", "auth0|user_test", "user_test"] {
+    for sub in [
+        "google-oauth2|user_test",
+        "workos|user_test",
+        "auth0|user_test",
+        "user_test",
+    ] {
         let access = jwt_sub(sub);
         let bound = credential(&format!("user_test%3A%3A{access}"), false).unwrap();
         assert_eq!(bound.account, auth().account);

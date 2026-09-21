@@ -405,7 +405,13 @@ fn fetch(
     let mut page_hashes = BTreeSet::new();
     let mut event_hashes = BTreeSet::new();
     for page in 1..=MAX_PAGES {
-        let body = transport.page(credential, page, range, remaining(started)?, MAX_BYTES - bytes)?;
+        let body = transport.page(
+            credential,
+            page,
+            range,
+            remaining(started)?,
+            MAX_BYTES - bytes,
+        )?;
         remaining(started)?;
         bytes = bytes
             .checked_add(body.len())
