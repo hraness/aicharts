@@ -81,6 +81,38 @@ test("same enrolled credential uploads through real RPC, retries and returns pri
     expect(parsed).toMatchObject({ ok: true, value: { revision: 1, rows: [{ client: "cursor", tokens: { input: "7", cacheWrite: "5" } }] } });
   } finally { await waitOnExecutionContext(ctx); }
 });
+test("an upload slower than the old shared stage budget settles instead of reporting rpc_pending", async () => {
+  const device = await activated();
+  // Stand in for the account object's history audit, which is linear in
+  // retained history and must pass before a mutation may commit. At 7s it
+  // exceeds the 5s pairing stage this boundary used to share, and the CLI's
+  // own global budget is 20s, so the settled receipt must still reach it.
+  const slow = { ...env, ACCOUNT_ENROLLMENTS: new Proxy(env.ACCOUNT_ENROLLMENTS, {
+    get(target, property) {
+      if (property !== "getByName") {
+        const value: unknown = Reflect.get(target, property, target);
+        return typeof value === "function" ? value.bind(target) : value;
+      }
+      return (name: string) => new Proxy(target.getByName(name), {
+        get(stub, key) {
+          const original: unknown = Reflect.get(stub, key, stub);
+          if (key !== "admitStatsSnapshot" || typeof original !== "function") return typeof original === "function" ? original.bind(stub) : original;
+          return async (payload: unknown) => {
+            await new Promise<void>(resolve => setTimeout(resolve, 7_000));
+            return await (Reflect.apply(original, stub, [payload]) as Promise<unknown>);
+          };
+        },
+      });
+    },
+  }) } as unknown as StatsUploadHttpEnvironment;
+  const ctx = createExecutionContext();
+  try {
+    const response = await createStatsUploadHttpHandler(effects)(request(STATS_UPLOAD_URL, device.input, device.proof.uploadSecret), slow, ctx);
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({ schemaVersion: 2, result: { ok: true, value: { revision: 1 } } });
+  } finally { await waitOnExecutionContext(ctx); }
+}, 60_000);
+
 test("status is authenticated and uploads reject polling secret and wrong generation", async () => {
   const device = await activated();
   const refused = await uploadCall(device.input, device.proof.pollSecret);

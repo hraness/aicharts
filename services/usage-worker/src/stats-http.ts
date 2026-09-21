@@ -1,6 +1,7 @@
 import { STATS_UPLOAD_URL, STATS_STATUS_URL, STATS_UPLOAD_BYTES, STATS_MEDIA, statsHex, statsJsonBytes, statsJsonValue,
   parseStatsUpload, parseStatsStatusRequest, parseStatsResult, parseStatsReceipt, parseStatsStatus, type StatsError } from "../../../lib/usage/stats-http-contract";
-import { STATS_ABANDON_URL, STATS_ABANDON_BYTES, parseStatsAbandonRequest, parseStatsAbandonment } from "../../../lib/usage/stats-http-contract";
+import { STATS_ABANDON_URL, STATS_ABANDON_BYTES, parseStatsAbandonRequest, parseStatsAbandonment,
+  STATS_UPLOAD_HTTP_STAGE_MS, STATS_UPLOAD_HTTP_WORKER_MS } from "../../../lib/usage/stats-http-contract";
 import { decodeStatsHttpRequest, encodeStatsHttpResponse, statsHttpLength,
   STATS_HTTP_REQUEST_BYTES, STATS_HTTP_URL } from "../../../lib/usage/stats-http-contract";
 import { PAIRING_HTTP_CAPACITY, PAIRING_HTTP_STAGE_MS, PAIRING_HTTP_WORKER_MS,
@@ -143,7 +144,7 @@ export function createStatsUploadHttpHandler(dependencies: PairingHttpEffects) {
     } catch { return deviceFailure("invalid_input"); }
     if (request.signal.aborted || outstanding >= PAIRING_HTTP_CAPACITY) return deviceFailure("storage_unavailable");
     outstanding++;
-    return pairingHttpWork(dependencies, PAIRING_HTTP_WORKER_MS, terminal => ctx.waitUntil(terminal),
+    return pairingHttpWork(dependencies, STATS_UPLOAD_HTTP_WORKER_MS, terminal => ctx.waitUntil(terminal),
       () => deviceFailure("storage_unavailable"), () => { outstanding--; }, async work => {
         const guard = () => { work.guard(); if (request.signal.aborted) throw new Error("stats_closed"); };
         let bytes: Uint8Array;
@@ -153,7 +154,7 @@ export function createStatsUploadHttpHandler(dependencies: PairingHttpEffects) {
         const raw = statsJsonValue(bytes, cap);
         const input = statusQuery ? parseStatsStatusRequest(raw) : abandon ? parseStatsAbandonRequest(raw) : parseStatsUpload(raw);
         if (!input) return deviceFailure("invalid_input");
-        return await work.stage(PAIRING_HTTP_STAGE_MS, async () => {
+        return await work.stage(STATS_UPLOAD_HTTP_STAGE_MS, async () => {
           guard();
           const stub = env.ACCOUNT_ENROLLMENTS.getByName(enrollmentAccountName(input.accountId));
           const rpc = statusQuery ? stub.readStatsStatus({ uploadSecret: secret, request: input })

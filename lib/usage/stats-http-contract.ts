@@ -12,6 +12,12 @@ export const STATS_HTTP_RESPONSE_BYTES = 4 * 1024 * 1024;
 export const STATS_HTTP_RESPONSE_ROWS = 8_192;
 export const STATS_UPLOAD_BYTES = 4 * 1024 * 1024;
 export const STATS_UPLOAD_ROWS = 8_192;
+/** The device boundary waits out the account object's history audit, which is
+ * linear in retained history and must pass before a mutation may commit. The
+ * pairing boundary keeps its own shorter budgets; these stay inside the CLI's
+ * 20s global timeout so a settled upload is never reported as uncertain. */
+export const STATS_UPLOAD_HTTP_WORKER_MS = 15_000;
+export const STATS_UPLOAD_HTTP_STAGE_MS = 12_000;
 export const STATS_MEDIA = "application/json; charset=utf-8";
 export const STATS_MAX_TIME = 8_640_000_000_000_000;
 export type StatsRange = Readonly<{ firstUtcDay: number; dayCount: number }>;

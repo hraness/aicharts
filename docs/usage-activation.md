@@ -300,6 +300,13 @@ known bad. The constructor still runs the constant-cost control checks on every
 rehydration, so a lost or malformed control row, or a schema mismatch, still
 fails a read closed.
 
+Because that audit must pass before a mutation commits, the device upload
+boundary carries its own budgets (`STATS_UPLOAD_HTTP_WORKER_MS`,
+`STATS_UPLOAD_HTTP_STAGE_MS`) rather than the shorter pairing ones. They stay
+inside the CLI's 20s global timeout, so an upload that waits out the audit
+returns its settled receipt instead of a `rpc_pending` the client must resume.
+The pairing boundary and its capacity are unchanged.
+
 The remaining tradeoff is scoped to the non-committing private reads: daily
 totals, stats status, stats reports and consent can be served between a
 corruption and the next audited operation, and would then report unverified
