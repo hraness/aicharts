@@ -196,6 +196,14 @@ jobs:
         if: steps.dependencies.outcome == 'success' && env.RUN_BENCHMARK_REFRESH == 'true'
         continue-on-error: true
         run: bun run atlas:multimodal:refresh
+      # Private professional-domain boards only. A Vals re-run of a public
+      # benchmark is a different system from that benchmark owner's leaderboard
+      # and fails the schema rather than entering a chart.
+      - name: Refresh admitted Vals AI private professional boards
+        id: atlas_vals
+        if: steps.dependencies.outcome == 'success' && env.RUN_BENCHMARK_REFRESH == 'true'
+        continue-on-error: true
+        run: bun run atlas:vals:refresh
       - name: Refresh licensed Arena media preference cohorts
         id: arena_media
         if: steps.dependencies.outcome == 'success' && env.RUN_BENCHMARK_REFRESH == 'true'
@@ -392,6 +400,7 @@ jobs:
         env:
           ARENA_MEDIA_OUTCOME: ${{ steps.arena_media.outcome }}
           ATLAS_AUDIO_OUTCOME: ${{ steps.atlas_audio.outcome }}
+          ATLAS_VALS_OUTCOME: ${{ steps.atlas_vals.outcome }}
           ATLAS_MULTIMODAL_OUTCOME: ${{ steps.atlas_multimodal.outcome }}
           ATLAS_REASONING_OUTCOME: ${{ steps.atlas_reasoning.outcome }}
           BENCHMARK_OUTCOME: ${{ steps.benchmark.outcome }}
@@ -443,6 +452,7 @@ jobs:
             if [[ "$RUN_BENCHMARK_REFRESH" == "true" ]]; then
               if [[ "$ARENA_MEDIA_OUTCOME" != "success" ]]; then unhealthy=true; fi
               if [[ "$ATLAS_AUDIO_OUTCOME" != "success" ]]; then unhealthy=true; fi
+              if [[ "$ATLAS_VALS_OUTCOME" != "success" ]]; then unhealthy=true; fi
               if [[ "$ATLAS_REASONING_OUTCOME" != "success" ]]; then unhealthy=true; fi
               if [[ "$ATLAS_MULTIMODAL_OUTCOME" != "success" ]]; then unhealthy=true; fi
               if [[ "$CALCULATOR_OUTCOME" != "success" ]]; then unhealthy=true; fi
@@ -454,6 +464,7 @@ jobs:
               if [[ "$INTELLIGENCE_OUTCOME" != "skipped" ]]; then unhealthy=true; fi
               if [[ "$ARENA_MEDIA_OUTCOME" != "skipped" ]]; then unhealthy=true; fi
               if [[ "$ATLAS_AUDIO_OUTCOME" != "skipped" ]]; then unhealthy=true; fi
+              if [[ "$ATLAS_VALS_OUTCOME" != "skipped" ]]; then unhealthy=true; fi
               if [[ "$ATLAS_REASONING_OUTCOME" != "skipped" ]]; then unhealthy=true; fi
               if [[ "$ATLAS_MULTIMODAL_OUTCOME" != "skipped" ]]; then unhealthy=true; fi
               if [[ "$CALCULATOR_OUTCOME" != "skipped" ]]; then unhealthy=true; fi
@@ -491,6 +502,7 @@ jobs:
             echo "| Multimodal atlas | ${ATLAS_MULTIMODAL_OUTCOME} |"
             echo "| Arena media | ${ARENA_MEDIA_OUTCOME} |"
             echo "| Pinned audio atlas | ${ATLAS_AUDIO_OUTCOME} |"
+            echo "| Vals AI private boards | ${ATLAS_VALS_OUTCOME} |"
             echo "| Calculator inputs | ${CALCULATOR_OUTCOME} |"
             echo "| Change boundary | ${DETECT_OUTCOME} |"
             echo "| Application validation | ${VALIDATION_OUTCOME} |"
@@ -583,14 +595,14 @@ jobs:
           fi
 
           if [[ "$unhealthy" == "true" ]]; then
-            printf -v issue_body 'The scheduled model-data refresh is unhealthy. Valid updates publish only after the normal pull-request gate has passed; failed sources remain on their last-known-good snapshots.\n\n- Run: %s\n- Mode: `%s`\n- OpenRouter: `%s`\n- First-party releases: `%s`\n- Artificial Analysis coding agents: `%s`\n- AA Intelligence efficiency: `%s`\n- Direct DeepSWE: `%s`\n- Terminal-Bench 4: `%s`\n- Terminal-Bench-Science 0.1: `%s`\n- Reasoning atlas: `%s`\n- Multimodal atlas: `%s`\n- Arena media: `%s`\n- Pinned audio atlas: `%s`\n- Calculator inputs: `%s`\n- Radar reconciliation: `%s`\n- Validation: `%s`\n- Publication: `%s`\n- Update PR: %s\n- Required CI: %s\n\nThis issue is updated on repeated failures and closes automatically after a healthy full refresh.' \
-              "$run_url" "$REFRESH_MODE" "$RELEASE_OUTCOME" "$FIRST_PARTY_RELEASE_OUTCOME" "$BENCHMARK_OUTCOME" "$INTELLIGENCE_OUTCOME" "$DEEP_SWE_OUTCOME" "$TERMINAL_BENCH_OUTCOME" "$TERMINAL_BENCH_SCIENCE_OUTCOME" "$ATLAS_REASONING_OUTCOME" "$ATLAS_MULTIMODAL_OUTCOME" "$ARENA_MEDIA_OUTCOME" "$ATLAS_AUDIO_OUTCOME" "$CALCULATOR_OUTCOME" "$RELEASE_RECONCILE_OUTCOME" "$VALIDATION_OUTCOME" "$PUBLISH_OUTCOME" "${PUBLISH_PR_URL:-not created}" "${PUBLISH_CI_RUN_URL:-not dispatched}"
+            printf -v issue_body 'The scheduled model-data refresh is unhealthy. Valid updates publish only after the normal pull-request gate has passed; failed sources remain on their last-known-good snapshots.\n\n- Run: %s\n- Mode: `%s`\n- OpenRouter: `%s`\n- First-party releases: `%s`\n- Artificial Analysis coding agents: `%s`\n- AA Intelligence efficiency: `%s`\n- Direct DeepSWE: `%s`\n- Terminal-Bench 4: `%s`\n- Terminal-Bench-Science 0.1: `%s`\n- Reasoning atlas: `%s`\n- Multimodal atlas: `%s`\n- Arena media: `%s`\n- Pinned audio atlas: `%s`\n- Vals AI private boards: `%s`\n- Calculator inputs: `%s`\n- Radar reconciliation: `%s`\n- Validation: `%s`\n- Publication: `%s`\n- Update PR: %s\n- Required CI: %s\n\nThis issue is updated on repeated failures and closes automatically after a healthy full refresh.' \
+              "$run_url" "$REFRESH_MODE" "$RELEASE_OUTCOME" "$FIRST_PARTY_RELEASE_OUTCOME" "$BENCHMARK_OUTCOME" "$INTELLIGENCE_OUTCOME" "$DEEP_SWE_OUTCOME" "$TERMINAL_BENCH_OUTCOME" "$TERMINAL_BENCH_SCIENCE_OUTCOME" "$ATLAS_REASONING_OUTCOME" "$ATLAS_MULTIMODAL_OUTCOME" "$ARENA_MEDIA_OUTCOME" "$ATLAS_AUDIO_OUTCOME" "$ATLAS_VALS_OUTCOME" "$CALCULATOR_OUTCOME" "$RELEASE_RECONCILE_OUTCOME" "$VALIDATION_OUTCOME" "$PUBLISH_OUTCOME" "${PUBLISH_PR_URL:-not created}" "${PUBLISH_CI_RUN_URL:-not dispatched}"
             if [[ -z "$issue_number" ]]; then
               gh issue create --title "$REFRESH_ISSUE_TITLE" --body "$issue_body"
             else
               gh issue edit "$issue_number" --body "$issue_body"
             fi
-            echo "::error title=Model data refresh unhealthy::OpenRouter=${RELEASE_OUTCOME}; first-party releases=${FIRST_PARTY_RELEASE_OUTCOME}; Artificial Analysis coding agents=${BENCHMARK_OUTCOME}; AA Intelligence efficiency=${INTELLIGENCE_OUTCOME}; Direct DeepSWE=${DEEP_SWE_OUTCOME}; Terminal-Bench 4=${TERMINAL_BENCH_OUTCOME}; Terminal-Bench-Science 0.1=${TERMINAL_BENCH_SCIENCE_OUTCOME}; Reasoning atlas=${ATLAS_REASONING_OUTCOME}; Multimodal atlas=${ATLAS_MULTIMODAL_OUTCOME}; Arena media=${ARENA_MEDIA_OUTCOME}; Pinned audio atlas=${ATLAS_AUDIO_OUTCOME}; Calculator inputs=${CALCULATOR_OUTCOME}; reconciliation=${RELEASE_RECONCILE_OUTCOME}; validation=${VALIDATION_OUTCOME}; publication=${PUBLISH_OUTCOME}."
+            echo "::error title=Model data refresh unhealthy::OpenRouter=${RELEASE_OUTCOME}; first-party releases=${FIRST_PARTY_RELEASE_OUTCOME}; Artificial Analysis coding agents=${BENCHMARK_OUTCOME}; AA Intelligence efficiency=${INTELLIGENCE_OUTCOME}; Direct DeepSWE=${DEEP_SWE_OUTCOME}; Terminal-Bench 4=${TERMINAL_BENCH_OUTCOME}; Terminal-Bench-Science 0.1=${TERMINAL_BENCH_SCIENCE_OUTCOME}; Reasoning atlas=${ATLAS_REASONING_OUTCOME}; Multimodal atlas=${ATLAS_MULTIMODAL_OUTCOME}; Arena media=${ARENA_MEDIA_OUTCOME}; Pinned audio atlas=${ATLAS_AUDIO_OUTCOME}; Vals AI private boards=${ATLAS_VALS_OUTCOME}; Calculator inputs=${CALCULATOR_OUTCOME}; reconciliation=${RELEASE_RECONCILE_OUTCOME}; validation=${VALIDATION_OUTCOME}; publication=${PUBLISH_OUTCOME}."
             exit 1
           fi
 

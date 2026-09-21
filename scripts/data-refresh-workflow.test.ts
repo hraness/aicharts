@@ -169,6 +169,7 @@ async function executeWorkflowShell(
         ...process.env,
         ARENA_MEDIA_OUTCOME: "success",
         ATLAS_AUDIO_OUTCOME: "success",
+        ATLAS_VALS_OUTCOME: "success",
         ATLAS_MULTIMODAL_OUTCOME: "success",
         ATLAS_REASONING_OUTCOME: "success",
         BENCHMARK_OUTCOME: "skipped",
@@ -547,10 +548,12 @@ describe("scheduled model-data refresh", () => {
     expect(String(health?.run)).toContain("$ATLAS_MULTIMODAL_OUTCOME");
     expect(String(health?.run)).toContain("$ARENA_MEDIA_OUTCOME");
     expect(String(health?.run)).toContain("$ATLAS_AUDIO_OUTCOME");
+    expect(String(health?.run)).toContain("$ATLAS_VALS_OUTCOME");
     expect(String(health?.run)).toContain("$CALCULATOR_OUTCOME");
     expect(health?.env).toMatchObject({
       ARENA_MEDIA_OUTCOME: "${{ steps.arena_media.outcome }}",
       ATLAS_AUDIO_OUTCOME: "${{ steps.atlas_audio.outcome }}",
+      ATLAS_VALS_OUTCOME: "${{ steps.atlas_vals.outcome }}",
       CALCULATOR_OUTCOME: "${{ steps.calculator.outcome }}",
     });
     expect(String(health?.run)).toContain(
@@ -633,7 +636,7 @@ describe("scheduled model-data refresh", () => {
 
   test("persists atlas failures independently while retaining last-known-good data", async () => {
     const health = steps.find(candidate => candidate.name === "Report health and manage the durable alert");
-    for (const [outcome, label] of [["ATLAS_REASONING_OUTCOME", "Reasoning atlas"], ["ATLAS_MULTIMODAL_OUTCOME", "Multimodal atlas"], ["ARENA_MEDIA_OUTCOME", "Arena media"], ["ATLAS_AUDIO_OUTCOME", "Pinned audio atlas"], ["CALCULATOR_OUTCOME", "Calculator inputs"]]) {
+    for (const [outcome, label] of [["ATLAS_REASONING_OUTCOME", "Reasoning atlas"], ["ATLAS_MULTIMODAL_OUTCOME", "Multimodal atlas"], ["ARENA_MEDIA_OUTCOME", "Arena media"], ["ATLAS_AUDIO_OUTCOME", "Pinned audio atlas"], ["ATLAS_VALS_OUTCOME", "Vals AI private boards"], ["CALCULATOR_OUTCOME", "Calculator inputs"]]) {
       const result = await executeWorkflowShell(String(health?.run), {
         candidates: [], issueBody: "", extraEnvironment: { [outcome]: "failure", REFRESH_MODE: "benchmarks", FAKE_HEALTH_ISSUE_NUMBER: "109" },
       });
@@ -689,6 +692,7 @@ describe("scheduled model-data refresh", () => {
           ATLAS_MULTIMODAL_OUTCOME: "skipped",
           ARENA_MEDIA_OUTCOME: "skipped",
           ATLAS_AUDIO_OUTCOME: "skipped",
+          ATLAS_VALS_OUTCOME: "skipped",
           CALCULATOR_OUTCOME: "skipped",
           FAKE_HEALTH_ISSUE_NUMBER: "109",
           REFRESH_MODE: "releases",
