@@ -400,7 +400,12 @@ export class AccountEnrollment extends DurableObject<Env> {
       const state = this.#stored(5).state;
       new AdmissionState(this.ctx.storage.sql).auditHistory(state);
       if (this.#statsPresent()) new StatsState(this.ctx.storage.sql).auditHistory(state);
-    } catch { this.#historyAudited = "failed"; return "storage_invalid"; }
+    } catch {
+      // Poison the object exactly as a failed constructor audit did, so no
+      // later transaction on any path can commit onto history known bad.
+      this.#historyAudited = "failed"; this.#healthy = false;
+      return "storage_invalid";
+    }
     this.#historyAudited = "passed";
     return null;
   }
@@ -795,6 +800,12 @@ export class AccountEnrollment extends DurableObject<Env> {
       const generation = this.#generation(), observed = Date.now();
       if (generation === null) return err("recovery_required");
       if (!enrollmentTime(observed) || Object.is(observed, -0)) return err("clock_regressed");
+      // These totals leave the account for the public index, so they are held
+      // to the same verified history a mutation is. A dormant member is
+      // re-verified on the index's schedule and never mutates, so nothing else
+      // would audit it; this read is internal and rare enough to pay the scan.
+      const audited = this.#auditHistory();
+      if (audited !== null) return err(audited);
       const observation: AdmissionObservation = { generation, observed, fence: null, committed: false };
       // The projection is an internal coordinator read, not a user session;
       // the never-expiring session bound keeps the snapshot's expiry check inert.
@@ -845,6 +856,11 @@ export class AccountEnrollment extends DurableObject<Env> {
   async #operation(input: unknown, fenced: boolean): Promise<EnrollmentResult<Operation>> {
     const proof = parseEnrollmentProof(input);
     if (proof === null) return err("invalid_input");
+    // Every operation here settles through #closed, which commits an observed
+    // time and an enrollment revision, so the unfenced status path durably
+    // writes too and must clear the same history audit the fence does.
+    const audited = this.#auditHistory();
+    if (audited !== null) return err(audited);
     const generation = this.#generation();
     if (generation === null) return err("recovery_required");
     const before = Date.now();

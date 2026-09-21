@@ -405,17 +405,31 @@ describe("dormant account admission", () => {
     expect(await snapshot()).toEqual(before);
   });
 
-  test("retained-history corruption refuses the next mutation but no longer blocks a cold read", async () => {
+  test("retained-history corruption refuses the next mutation but no longer blocks a non-committing read", async () => {
     const device = await enroll(), value = batch(device); success(await upload(device, value));
     // Counts that disagree with the retained heads are visible only to the
     // linear history scan; the constant-cost control check cannot see them.
     await runInDurableObject(stub(), (_instance, state) => state.storage.sql.exec("UPDATE usage_admission_control SET head_count = 2, live_count = 2").toArray());
     const before = await snapshot(); await abortAllDurableObjects();
-    // The read is served from the rehydrated object without scanning history,
-    // so it reports the corrupted counters rather than refusing.
-    expect(await stub().readEnrollmentStatus(device.proof)).toMatchObject({ ok: true, value: { headCount: 2, liveCount: 2 } });
+    // A private daily read commits nothing, so it is served from the
+    // rehydrated object without scanning history.
+    expect(await stub().readImportedDays({ schemaVersion: 1, accountId: account,
+      sessionExpiresAtMs: NOW + PAIRING_TTL_MS, firstUtcDay: DAY - 1, dayCount: 3 })).toMatchObject({ ok: true });
     expect(await upload(device, value)).toEqual({ ok: false, error: "storage_invalid" });
     expect(await snapshot()).toEqual(before);
+  });
+
+  test("a failed history audit closes the enrollment status write path too", async () => {
+    const device = await enroll(); success(await upload(device, batch(device)));
+    await runInDurableObject(stub(), (_instance, state) => state.storage.sql.exec("UPDATE usage_admission_control SET head_count = 2, live_count = 2").toArray());
+    await abortAllDurableObjects();
+    const revision = async () => runInDurableObject(stub(), (_instance, state) =>
+      state.storage.sql.exec("SELECT revision FROM account_enrollment WHERE id = 1").one().revision);
+    const before = await revision();
+    // readEnrollmentStatus settles a durable observed time and revision, so it
+    // is a write path: it must refuse rather than commit onto bad history.
+    expect(await stub().readEnrollmentStatus(device.proof)).toMatchObject({ ok: false });
+    expect(await revision()).toBe(before);
   });
 
   test("a lost control row still fails a cold read closed", async () => {

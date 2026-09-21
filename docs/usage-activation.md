@@ -291,13 +291,20 @@ the immutable admission journal detect missing or reordered local history, not
 an administrative rollback of both stores.
 
 That history audit is linear in retained history, so it runs once per object
-lifetime before the first mutation rather than in the constructor. Nothing
-commits onto history it has not verified, and a refusal poisons the object
-instead of rescanning per retry. The constructor still runs the constant-cost
-control checks on every rehydration, so a lost or malformed control row, or a
-schema mismatch, still fails a read closed. A read served between a corruption
-and the next mutation can therefore return unverified counters; treat the
-private dashboard as a numeric view, not as evidence of history integrity.
+lifetime before the first write rather than in the constructor. Every path that
+commits — the fenced mutations, and the enrollment status read, which settles a
+durable observed time and revision — clears it first, as does the leaderboard
+projection, whose totals leave the account for the public index. A refusal
+poisons the object, so no later transaction on any path can commit onto history
+known bad. The constructor still runs the constant-cost control checks on every
+rehydration, so a lost or malformed control row, or a schema mismatch, still
+fails a read closed.
+
+The remaining tradeoff is scoped to the non-committing private reads: daily
+totals, stats status, stats reports and consent can be served between a
+corruption and the next audited operation, and would then report unverified
+counters. Treat the private dashboard as a numeric view, not as evidence of
+history integrity. Nothing published to the public index relies on it.
 
 The implementation in `services/usage-worker/src/restore-fence.ts` provides a
 separate control authority. The [operator procedure](usage-restore-fence-control.md)
