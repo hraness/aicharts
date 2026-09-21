@@ -2,6 +2,7 @@
 
 import { useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import type { UsageStatsReport } from "@/lib/usage/stats-contract";
+import { STATS_CLIENTS } from "@/lib/usage/stats-registry";
 import {
   ALL_STATS, UNKNOWN_STATS, bucketStatsRows, filterStatsRows, filterStatsSnapshots, formatStatsCompact, formatStatsDay, formatStatsInteger,
   formatStatsMoney, groupStatsRows, previousStatsPeriod, statsDateInput, statsInputRange, statsLabel, statsRatio,
@@ -64,9 +65,10 @@ export function StatsReportView({ report, scope, todayUtcDay, onRangeRequest, on
     return new Map([...grouped].map(([day, members]) => [day, sumStatsRows(members)]));
   }, [rows]);
   const prior = useMemo(() => previousStatsPeriod(report, filters), [report, filters]);
-  const clients = [...new Set(report.rows.map(row => row.client))].sort();
-  const modelRows = report.rows.filter(row => (filters.client === ALL_STATS || row.client === filters.client)
-    && (filters.provider === ALL_STATS || (row.provider ?? UNKNOWN_STATS) === filters.provider));
+  const clients = report.sources.map(source => source.client);
+  const clientRows = report.rows.filter(row => filters.client === ALL_STATS || row.client === filters.client);
+  const providers = [...new Set(clientRows.map(row => row.provider ?? UNKNOWN_STATS))].sort();
+  const modelRows = clientRows.filter(row => filters.provider === ALL_STATS || (row.provider ?? UNKNOWN_STATS) === filters.provider);
   const models = [...new Set(modelRows.map(row => row.model ?? UNKNOWN_STATS))].sort();
   const hasEstimated = report.rows.some(row => row.tokenBasis === "estimated");
   const label = filters.basis === "reported" ? "Reported" : "Estimated";
@@ -75,6 +77,7 @@ export function StatsReportView({ report, scope, todayUtcDay, onRangeRequest, on
   const detailRows = selectedDay ? rows.filter(row => row.utcDay >= selectedDay.firstUtcDay && row.utcDay < selectedDay.firstUtcDay + selectedDay.dayCount) : [];
   const detailTotals = selectedDay ? sumStatsRows(detailRows) : null;
   const sourceList = report.sources.filter(source => filters.client === ALL_STATS || source.client === filters.client);
+  const sourceByClient = new Map(report.sources.map(source => [source.client, source]));
   const periodEnd = filters.firstUtcDay + filters.dayCount - 1;
   const rangeText = `${formatStatsDay(filters.firstUtcDay)}–${formatStatsDay(periodEnd)}`;
   const anchor = scope === "account" ? todayUtcDay : end;
@@ -153,6 +156,10 @@ export function StatsReportView({ report, scope, todayUtcDay, onRangeRequest, on
           <option value={ALL_STATS}>All clients</option>{clients.map(client => <option key={client} value={client}>{statsLabel(client, "client")}</option>)}
           {filters.client !== ALL_STATS && !clients.includes(filters.client) && <option value={filters.client}>{statsLabel(filters.client, "client")} · no records</option>}
         </select></label>
+        <label>Provider<select aria-label="Provider" value={filters.provider} onChange={event => changeFilter({ provider: event.target.value, model: ALL_STATS })}>
+          <option value={ALL_STATS}>All providers</option>{providers.map(provider => <option key={provider} value={provider}>{statsLabel(provider)}</option>)}
+          {filters.provider !== ALL_STATS && !providers.includes(filters.provider) && <option value={filters.provider}>{statsLabel(filters.provider)} · no records</option>}
+        </select></label>
         <label>Model<select aria-label="Model" value={filters.model} onChange={event => changeFilter({ model: event.target.value })}>
           <option value={ALL_STATS}>All models</option>{models.map(model => <option key={model} value={model}>{statsLabel(model)}</option>)}
           {filters.model !== ALL_STATS && !models.includes(filters.model) && <option value={filters.model}>{statsLabel(filters.model)} · no records</option>}
@@ -229,7 +236,7 @@ export function StatsReportView({ report, scope, todayUtcDay, onRangeRequest, on
       <div className="usage-stats__presets" role="group" aria-label="Group usage by">
         {(["client", "provider", "model"] as const).map(by => <button type="button" key={by} aria-pressed={grouping === by} onClick={() => { setGrouping(by); setShowAllGroups(false); }}>{by === "client" ? "Clients" : by === "provider" ? "Providers" : "Models"}</button>)}
       </div>
-      {groups.length === 0 ? <div className="usage-stats__notice"><h3>{snapshotOnly ? "No dated usage records" : `No matching ${filters.basis} records`}</h3><p>{snapshotOnly ? "Warp supplies a billing snapshot instead of dated usage records." : "Try a different period, client, model, or token basis. Missing observations stay unknown."}</p></div> : <>
+      {groups.length === 0 ? <div className="usage-stats__notice"><h3>{snapshotOnly ? "No dated usage records" : `No matching ${filters.basis} records`}</h3><p>{snapshotOnly ? "Warp supplies a billing snapshot instead of dated usage records." : "Try a different period, client, provider, model, or token basis. Missing observations stay unknown."}</p></div> : <>
         <div className="usage-stats__table-scroll" role="region" aria-label="Usage breakdown, scroll horizontally for all columns" tabIndex={0}>
           <table><caption>{label} usage by {grouping}, {rangeText}. Select a name to filter.</caption>
             <thead><tr>{([ ["name", grouping === "client" ? "Client" : grouping === "provider" ? "Provider" : "Model"], ["tokens", `${label} tokens`], ["output", "Output + reasoning"], ["records", "Records"]] as const).map(([key, name]) => <th scope="col" key={key} aria-sort={sort.key === key ? (sort.ascending ? "ascending" : "descending") : "none"}>
@@ -273,6 +280,19 @@ export function StatsReportView({ report, scope, todayUtcDay, onRangeRequest, on
         <table><caption>Collection status for the report’s declared window, {formatStatsDay(report.firstUtcDay)}–{formatStatsDay(end)}. Filters do not change collection status.</caption><thead><tr><th scope="col">Client</th><th scope="col">Collection</th><th scope="col">Token basis</th><th scope="col">Records</th><th scope="col">Warnings</th><th scope="col">Latest source timestamp (UTC)</th></tr></thead>
           <tbody>{sourceList.map(source => <tr key={source.client}><th scope="row">{statsLabel(source.client, "client")}</th><td>{sourceStates[source.status]}</td><td>{source.tokenBasis}</td><td>{formatStatsInteger(source.records)}</td><td>{formatStatsInteger(source.warnings)}</td><td>{source.latestAtMs === null ? "Unknown" : stamp.format(source.latestAtMs)}</td></tr>)}</tbody></table>
       </div>
+      <details className="usage-stats__details usage-stats__client-coverage">
+        <summary>Supported clients <span>{report.sources.length} of {STATS_CLIENTS.length} included in this report</span></summary>
+        <p>A supported client needs a readable local source or a configured refresh. “Not included” means this report supplies no collection status for that client; it does not mean zero usage.</p>
+        <div className="usage-stats__table-scroll" role="region" aria-label="Supported client coverage, scroll horizontally for all columns" tabIndex={0}>
+          <table><caption>All supported clients, regardless of chart filters.</caption><thead><tr><th scope="col">Client</th><th scope="col">In this report</th></tr></thead>
+            <tbody>{STATS_CLIENTS.map(client => {
+              const source = sourceByClient.get(client.id);
+              return <tr key={client.id}><th scope="row">{client.name}</th><td>{source ? sourceStates[source.status] : "Not included"}</td></tr>;
+            })}</tbody>
+          </table>
+        </div>
+        <p>Detailed reports support this full client list. The older daily overview and session imports cover Codex, Claude Code, and Devin. Account synchronization requires an enrolled collector; public leaderboard visibility requires separate consent.</p>
+      </details>
       {sourceList.some(source => source.client === "warp" && source.records > 0) && <p>Warp dates identify when usage was synchronized, not when each request occurred. Warp token counts are unavailable; billing snapshots are shown separately from dated usage.</p>}
       <p>Coverage depends on recognized local source formats. No observations does not prove that a source had no activity. Reported cost is supplied by source records and may cover only part of the usage. Retail estimates are separate and are not subscription charges or a provider bill.</p>
       <p>The current local collector uses a <a href="https://github.com/hraness/aicharts/blob/main/data/usage-prices.json">models.dev pricing snapshot dated 2026-09-19</a>. Imported or source-provided estimates may use other prices or dates. Neither token volume nor request duration measures productivity.</p>
