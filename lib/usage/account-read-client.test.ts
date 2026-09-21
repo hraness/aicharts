@@ -10,18 +10,24 @@ import type { UsageConsentPublicReply } from "./consent-public";
 const signedIn = { kind: "signed_in", session: { suiteAccountId: "PRIVATE_SESSION_CANARY" } };
 const missing = { schemaVersion: 1, error: { code: "authentication_required" } } satisfies PrivateDaysPublicReply & UsageConsentPublicReply;
 const absent = { schemaVersion: 1, state: "not_enrolled" } satisfies PrivateDaysPublicReply & UsageConsentPublicReply;
+const down = { schemaVersion: 1, error: { code: "unavailable" } } satisfies PrivateDaysPublicReply & UsageConsentPublicReply;
+const refused = { schemaVersion: 1, error: { code: "request_rejected" } } satisfies PrivateDaysPublicReply & UsageConsentPublicReply;
 const statsMissing = { schemaVersion: 2, ok: false, error: "authentication_required" } satisfies StatsPublicReply;
 const statsAbsent = { schemaVersion: 2, ok: false, error: "not_enrolled" } satisfies StatsPublicReply;
+const statsDown = { schemaVersion: 2, ok: false, error: "unavailable" } satisfies StatsPublicReply;
+const statsRefused = { schemaVersion: 2, ok: false, error: "request_rejected" } satisfies StatsPublicReply;
 const accountReady = { schemaVersion: 1, state: "ready", account: { accountId: `acct_${"1".repeat(32)}` } } satisfies UsageAccountReply;
+const accountDown = { schemaVersion: 1, error: { code: "unavailable" } } satisfies UsageAccountReply;
+const accountRefused = { schemaVersion: 1, error: { code: "request_rejected" } } satisfies UsageAccountReply;
 type Options = NonNullable<Parameters<typeof readAccountConsent>[1]>;
 const clients = [
-  { name: "daily", path: "/api/usage/days?firstUtcDay=10&dayCount=1", missing, absent,
+  { name: "daily", path: "/api/usage/days?firstUtcDay=10&dayCount=1", missing, absent, down, refused,
     read: (signal: AbortSignal, options: Options) => readAccountDays({ firstUtcDay: 10, dayCount: 1 }, signal, options) },
-  { name: "stats", path: "/api/usage/stats?firstUtcDay=10&dayCount=1", missing: statsMissing, absent: statsAbsent,
+  { name: "stats", path: "/api/usage/stats?firstUtcDay=10&dayCount=1", missing: statsMissing, absent: statsAbsent, down: statsDown, refused: statsRefused,
     read: (signal: AbortSignal, options: Options) => readAccountStats(10, 1, signal, options) },
-  { name: "consent", path: "/api/usage/consent", missing, absent,
+  { name: "consent", path: "/api/usage/consent", missing, absent, down, refused,
     read: (signal: AbortSignal, options: Options) => readAccountConsent(signal, options) },
-  { name: "account", path: "/api/usage/account", missing, absent: accountReady,
+  { name: "account", path: "/api/usage/account", missing, absent: accountReady, down: accountDown, refused: accountRefused,
     read: (signal: AbortSignal, options: Options) => readAccountSummary(signal, options) },
 ] as const;
 const json = (value: unknown, status = 200) => new Response(JSON.stringify(value), { status, headers: { "content-type": "application/json; charset=utf-8" } });
@@ -85,6 +91,51 @@ for (const client of clients) {
     }) });
     expect(reply).toEqual(client.missing); expect(reads).toBe(2); expect(sessions).toBe(1);
   });
+
+  test(`${client.name}: a transient refusal settles once into a strict re-read`, async () => {
+    let calls = 0, cleared = 0;
+    const reply = await client.read(new AbortController().signal, { transientRetryDelayMs: 0, fetch: port(input => {
+      expect(input).toBe(client.path); return ++calls === 1 ? json(client.down, 503) : json(client.absent);
+    }), onAuthenticationRequired: () => { cleared++; } });
+    expect(reply).toEqual(client.absent); expect(calls).toBe(2); expect(cleared).toBe(0);
+  });
+
+  test(`${client.name}: a thrown transport failure retries once on the same read`, async () => {
+    let calls = 0;
+    const pending = client.read(new AbortController().signal, { transientRetryDelayMs: 0, fetch: port(input => {
+      expect(input).toBe(client.path); calls++; throw new Error("PRIVATE_TRANSPORT_CANARY");
+    }) });
+    if (client.name === "stats") expect(await pending).toEqual(client.down);
+    else await expect(pending).rejects.toEqual(new Error("usage_unavailable"));
+    expect(calls).toBe(2);
+  });
+
+  test(`${client.name}: persistent unavailability retries exactly once and surfaces the checked reply`, async () => {
+    let calls = 0;
+    const reply = await client.read(new AbortController().signal, { transientRetryDelayMs: 0, fetch: port(input => {
+      expect(input).toBe(client.path); calls++; return json(client.down, 503);
+    }) });
+    expect(reply).toEqual(client.down); expect(calls).toBe(2);
+  });
+
+  test(`${client.name}: deliberate refusals return without a retry`, async () => {
+    let calls = 0;
+    const reply = await client.read(new AbortController().signal, { transientRetryDelayMs: 0, fetch: port(input => {
+      expect(input).toBe(client.path); calls++; return json(client.refused, 403);
+    }) });
+    expect(reply).toEqual(client.refused); expect(calls).toBe(1);
+  });
+
+  test(`${client.name}: aborting during the retry settle never dispatches the second read`, async () => {
+    const controller = new AbortController(), firstRead = deferred<void>();
+    let calls = 0;
+    const pending = client.read(controller.signal, { transientRetryDelayMs: 60_000, fetch: port(input => {
+      expect(input).toBe(client.path); calls++; firstRead.resolve(); return json(client.down, 503);
+    }) });
+    const refused = pending.then(() => null, (error: unknown) => error);
+    await firstRead.promise; controller.abort();
+    expect(await refused).toEqual(new Error("usage_unavailable")); expect(calls).toBe(1);
+  });
 }
 
 test("ordinary replies and unvalidated authentication bodies never enter session recovery", async () => {
@@ -94,7 +145,7 @@ test("ordinary replies and unvalidated authentication bodies never enter session
       expect(input).toBe(client.path); calls++; return json(client.absent);
     }), onAuthenticationRequired: () => { cleared++; } })).toEqual(client.absent);
     expect(calls).toBe(1); expect(cleared).toBe(0);
-    const malformed = () => client.read(new AbortController().signal, { fetch: port(input => {
+    const malformed = () => client.read(new AbortController().signal, { transientRetryDelayMs: 0, fetch: port(input => {
       expect(input).toBe(client.path); return json({ ...client.missing, extra: "PRIVATE_CANARY" }, 401);
     }), onAuthenticationRequired: () => { cleared++; } });
     if (client.name === "stats") expect(await malformed()).toEqual({ schemaVersion: 2, ok: false, error: "unavailable" });
