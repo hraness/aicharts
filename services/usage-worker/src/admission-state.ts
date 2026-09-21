@@ -230,10 +230,25 @@ export class AdmissionState {
     return Uint8Array.from(journal.bytes);
   }
 
-  /** Finite restart audit: stream heads, retain bounded metadata, no cross-product. */
+  /** Full audit: the history scan, which begins with the control checks. */
   audit(authority: AdmissionAuthority | null): void {
+    this.auditHistory(authority);
+  }
+
+  /** Constant-cost half of the audit. Validates the control row and its
+   * observed-time floor without touching the journal, head or day tables, so
+   * rehydrating an object to serve a read does not scan the whole account. */
+  auditControl(authority: AdmissionAuthority | null): AdmissionControl {
     const control = this.control();
     requireAdmission(control.observed >= (authority?.observedAtMs ?? 0));
+    return control;
+  }
+
+  /** Finite restart audit: stream heads, retain bounded metadata, no cross-product.
+   * Linear in the account's retained history, so the owner runs it once per
+   * object lifetime before the first mutation rather than on every rehydration. */
+  auditHistory(authority: AdmissionAuthority | null): void {
+    const control = this.auditControl(authority);
     // Every committed revision must have exactly one immutable batch/receipt
     // pair. Missing, duplicated, reordered, or rewritten rows fail closed;
     // restore tooling can then consume this contiguous prefix under its own

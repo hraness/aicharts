@@ -397,22 +397,40 @@ export class StatsState {
     }
     return { observedTokens: tokens.toString(), usageRecords: records };
   }
+  /** Full audit: the stored-day scan, which begins with the control checks. */
   audit(authority: AdmissionAuthority | null): void {
-    const control = this.control(); let days = 0, rows = 0, bytes = 0;
+    this.auditHistory(authority);
+  }
+
+  /** Constant-cost half of the audit. Writers, devices and the pending intent
+   * are each capped well under a page; the stored-day table is not, so it is
+   * left to `auditHistory`. Returns the writer clients it already read so the
+   * history scan does not repeat the query. */
+  auditControl(authority: AdmissionAuthority | null): { control: Control; clients: Set<SqlStorageValue> } {
+    const control = this.control();
     const writers = this.sql.exec("SELECT * FROM usage_stats_writers LIMIT 65").toArray();
     requireStats(writers.length <= 64);
     for (const writer of writers) requireStats(isStatsClient(writer.client) && authority?.devices.some(device => device.deviceId === writer.device_id));
-    const clients = new Set(writers.map(writer => writer.client));
-    for (const raw of this.sql.exec("SELECT * FROM usage_stats_days LIMIT 65537")) {
-      requireStats(++days <= MAX_STATS_STORED_DAYS && authority);
-      const day = this.#day(raw, control); rows += day.report.rows.length; bytes += new TextEncoder().encode(day.text).length;
-      requireStats(rows <= MAX_STATS_STORED_ROWS && bytes <= MAX_STATS_STORED_BYTES && clients.has(day.client));
-    }
-    requireStats(control.revision !== 0 || (days === 0 && writers.length === 0));
+    requireStats(control.revision !== 0 || writers.length === 0);
     const devices = this.sql.exec("SELECT device_id FROM usage_stats_devices LIMIT 129").toArray();
     requireStats(devices.length <= 128);
     for (const device of devices) { requireStats(typeof device.device_id === "string" && authority?.devices.some(item => item.deviceId === device.device_id)); this.progress(device.device_id); }
     const pending = this.pending();
     if (pending) requireStats(authority?.devices.some(device => device.deviceId === pending.deviceId) && pending.expectedRevision === control.revision && pending.sequence === this.progress(pending.deviceId).sequence + 1);
+    return { control, clients: new Set(writers.map(writer => writer.client)) };
+  }
+
+  /** Linear in retained days, and each stored projection is parsed to confirm
+   * it still matches its recorded metadata. The owner runs it once per object
+   * lifetime before the first mutation, never to serve a read. */
+  auditHistory(authority: AdmissionAuthority | null): void {
+    const { control, clients } = this.auditControl(authority);
+    let days = 0, rows = 0, bytes = 0;
+    for (const raw of this.sql.exec("SELECT * FROM usage_stats_days LIMIT 65537")) {
+      requireStats(++days <= MAX_STATS_STORED_DAYS && authority);
+      const day = this.#day(raw, control); rows += day.report.rows.length; bytes += new TextEncoder().encode(day.text).length;
+      requireStats(rows <= MAX_STATS_STORED_ROWS && bytes <= MAX_STATS_STORED_BYTES && clients.has(day.client));
+    }
+    requireStats(control.revision !== 0 || days === 0);
   }
 }
