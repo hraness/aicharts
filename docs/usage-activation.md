@@ -6,29 +6,34 @@ rollback checks are complete.
 
 ## Recorded production evidence
 
-On September 21 (UTC), commit `79f6452a7fa64e2234f33ce41a83fc92c58cac4a`
-([PR 347](https://github.com/hraness/aicharts/pull/347)) deployed to both
+On September 21 (UTC), commit `3a1ddb93456da39fd6a06037f1902dc81acf2663`
+([PR 349](https://github.com/hraness/aicharts/pull/349)) deployed to both
 production services after the complete source gate and protected-main checks.
-Vercel deployment `dpl_7kmgyeBkXBTGaT1s9cpk9KowY77C` served the canonical
+Vercel deployment `dpl_HRUt74pjFKM4bQe6DNkbr7E86TqX` served the canonical
 `aicharts.io` alias with the expected project, team, production target, and
 source identity. This is a dated inspection; reinspect the alias before using
 it as evidence for a later source change.
 
-Worker deployment `e7347f01-472e-40c5-aef6-d6877f64f570` served version
-`efda5344-fe6b-4ee5-9c35-cc63caaadd77` at 100% traffic. Provider readback
+Worker deployment `4c2b0b07-5838-468d-8161-2b27a84cab46` served version
+`8c5d52c9-ad8f-4e2f-ae7d-63571743e23c` at 100% traffic. Provider readback
 confirmed all four existing SQLite namespaces, both R2 buckets, enrollment
 generation, restore authority, six enabled private flags, and the fail-closed
 route. The workers.dev and Preview URLs remained disabled, with no cron
 schedules. The private production configuration preserved those identities;
 the repository's Wrangler fixture was not used as production configuration.
 
-The signed-in browser verified its account identity, but daily usage and
-leaderboard consent remained unavailable. The daily read reached the Worker
-and returned HTTP 503 with the fixed diagnostic stage `rpc_call`. In that
-deployed version, the stage includes namespace lookup, method invocation,
-and waiting for the account response; it does not identify which failed.
-These observations establish authenticated request routing and refusal
-behavior, not successful private numeric readback or production readiness.
+The first signed-in reads returned HTTP 503 at the fixed diagnostic stage
+`rpc_pending`: namespace lookup and method dispatch returned, but the response
+did not settle inside the five-second request stage. A later bounded retry on
+the same deployment and account succeeded. The dashboard returned 28,028
+records with 7,947,800,864 observed tokens and 18,056,507 output tokens across
+Codex, Claude Code, and Devin, and the consent read resolved to **Not
+publishing**. This establishes current authenticated numeric readback and
+consent status for that deployment. It does not establish uninterrupted
+latency, current native custody, a new accepted upload, public publication, or
+scheduled cutover. A local real-runtime regression keeps the earlier delayed
+storage case covered: the request returns `rpc_pending`, the late RPC result
+remains owned through settlement, and all eight capacity slots are reusable.
 
 Both `AICHARTS_USAGE_STATS_ENABLED` and `AICHARTS_USAGE_PUBLIC_READ_ENABLED`
 remain disabled on both services. Retain Worker version
@@ -36,9 +41,9 @@ remain disabled on both services. Retain Worker version
 recovery artifact before any detailed-profile activation. Restoring it
 contains new operations while retaining stored data and committed ownership;
 it does not undo a completed v2 transition. Reinspect its identity before use.
-Authenticated account readback, existing native custody, live acquisition,
-public consent/refresh/withdrawal, and scheduled cutover remain unqualified
-by this deployment. The old scheduled publisher was preserved.
+Existing native custody, renewed live acquisition, public
+publish/refresh/withdrawal, and scheduled cutover remain unqualified by this
+deployment. The old scheduled publisher was preserved.
 
 The 2026-09-19 production inspection superseded the earlier unconfigured
 environment inventory. It found that Vercel project `aicharts` had production
