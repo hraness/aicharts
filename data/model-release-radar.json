@@ -3,7 +3,7 @@
   "source": {
     "method": "models-api",
     "name": "OpenRouter",
-    "retrievedAt": "2026-09-19T05:58:40.694Z",
+    "retrievedAt": "2026-09-21T17:06:29.863Z",
     "timestampMeaning": "source-added-at",
     "url": "https://openrouter.ai/api/v1/models?sort=newest"
   },
@@ -28,6 +28,12 @@
     "windowDays": 90
   },
   "observedListings": [
+    {
+      "id": "x-ai/grok-4.7",
+      "model": "Grok 4.7",
+      "providerId": "xai",
+      "sourceAddedAt": "2026-09-21T16:19:01.000Z"
+    },
     {
       "id": "z-ai/glm-5.3-flashx",
       "model": "GLM 5.3 FlashX",
@@ -288,6 +294,27 @@
     }
   ],
   "releases": [
+    {
+      "capabilities": {
+        "inputModalities": [
+          "file",
+          "image",
+          "text"
+        ],
+        "outputModalities": [
+          "text"
+        ],
+        "supportsTools": true
+      },
+      "canonicalSlug": "x-ai/grok-4.7-20260916",
+      "id": "x-ai/grok-4.7",
+      "model": "Grok 4.7",
+      "modelUrl": "https://openrouter.ai/x-ai/grok-4.7",
+      "providerId": "xai",
+      "providerName": "xAI",
+      "sourceAddedAt": "2026-09-21T16:19:01.000Z",
+      "status": "awaiting-benchmark"
+    },
     {
       "capabilities": {
         "inputModalities": [
