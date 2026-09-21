@@ -398,7 +398,9 @@ async function verifyBenchmarkAtlas(browser: Browser, baseUrl: string): Promise<
     await page.getByText("Costs are measured across the AA coding suite, not separately for each test.", { exact: false }).waitFor();
     await page.goto(`${baseUrl}/?benchmark=aaIndex&compare=costUsd#chart`, { waitUntil: "domcontentloaded" });
     invariant(new URL(page.url()).pathname === "/coding", "Legacy coding selections must resolve to the dedicated coding chart.");
-    await page.locator(".chart-canvas .benchmark-chart").waitFor();
+    // A route transition can retain the previous chart in a hidden tree.
+    // Wait for the requested chart by its accessible name, not either SVG.
+    await page.getByRole("group", { name: "AA Index versus API cost per task", exact: true }).waitFor();
     invariant(await page.getByRole("button", { name: "Share and export chart" }).isVisible(), "Legacy shared chart links no longer reveal the exportable chart.");
     for (const bookmark of [
       { source: "/?benchmark=aaIndex#model-updates", destination: "/coding?benchmark=aaIndex#model-updates", target: "#model-updates", message: "Combined query and section bookmarks must retain their original fragment." },
