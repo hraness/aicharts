@@ -1,5 +1,6 @@
 import { createLocalJWKSet, errors, jwtVerify, type JWK, type JWTVerifyResult } from "jose";
 import { boundedJson, byteView, decodeBase64Url, exactKeys, record } from "./bounded-json";
+import type { UsageFailureStage } from "../usage-failure-contract";
 
 export interface RequestLifetime {
   waitUntil(promise: Promise<void>): void;
@@ -45,6 +46,7 @@ type KeyEntry = Readonly<{ key: CryptoKey; signatureBytes: number }>;
 type Cache = Readonly<{ keys: ReadonlyMap<string, KeyEntry>; expires: number }>;
 type Token = Readonly<{ compact: string; kid: string; signatureBytes: number; expires: number; issued: number; begins: number }>;
 type Timer = { handle: unknown };
+type VerifierFailureStage = Extract<UsageFailureStage, `verifier_${string}`>;
 
 function kid(value: unknown): value is string {
   return typeof value === "string" && value.length > 0 && value.length <= 128 && !/[^A-Za-z0-9_-]/u.test(value);
@@ -135,20 +137,34 @@ export function createUsageOidcVerifier(dependencies: VerifierDependencies) {
     beginRequest(ctx: RequestLifetime) {
       let open = true;
       let used = false;
+      let phase: VerifierFailureStage = "verifier_guard";
+      let failure: VerifierFailureStage | null = null;
+      let failureSealed = false;
+      // Diagnostics are request-local, fixed literals only, and cannot be
+      // relabeled by cleanup after an unavailable result has escaped.
+      const noteFailure = (stage = phase) => { if (!failureSealed) failure ??= stage; };
+      const refused = (stage: VerifierFailureStage) => {
+        noteFailure(stage); failureSealed = true; return Promise.resolve(unavailable);
+      };
+      const sampleRequest = () => {
+        try { return sample(); }
+        catch (error) { noteFailure("verifier_clock"); throw error; }
+      };
       let authority: { handle: VerifiedCoordinator; cache: Cache; expires: number } | undefined;
       let stopOwner: (() => void) | undefined;
       return Object.freeze({
+        get failureStage(): VerifierFailureStage | null { return failure; },
         verify(input: unknown): Promise<VerificationResult> {
-          if (!open || used) return Promise.resolve(unavailable);
+          if (!open || used) return refused("verifier_guard");
           used = true;
           let token: Token;
           try { token = tokenInput(input); } catch { return Promise.resolve(unauthorized); }
           let started: number;
-          try { started = sample(); } catch { return Promise.resolve(unavailable); }
+          try { started = sampleRequest(); } catch { return refused("verifier_clock"); }
           try { active(token, started); } catch { return Promise.resolve(unauthorized); }
-          if (verificationTickets.size >= 8) return Promise.resolve(unavailable);
+          if (verificationTickets.size >= 8) return refused("verifier_capacity");
           let ownTicket: number;
-          try { ownTicket = ticket(); } catch { return Promise.resolve(unavailable); }
+          try { ownTicket = ticket(); } catch { return refused("verifier_capacity"); }
           verificationTickets.add(ownTicket);
           const generation = clockGeneration;
           let registered = false;
@@ -163,7 +179,11 @@ export function createUsageOidcVerifier(dependencies: VerifierDependencies) {
           let resolveResponse!: (result: VerificationResult) => void;
           const response = new Promise<VerificationResult>((resolve) => { resolveResponse = resolve; });
           const settle = (result: VerificationResult) => {
-            if (!responseSettled) { responseSettled = true; resolveResponse(result); }
+            if (!responseSettled) {
+              if (!result.ok && result.error === "unavailable") { noteFailure(); failureSealed = true; }
+              else failure = null;
+              responseSettled = true; resolveResponse(result);
+            }
           };
           function cancel() {
             if (controller && !aborted) { aborted = true; controller.abort(); }
@@ -172,11 +192,13 @@ export function createUsageOidcVerifier(dependencies: VerifierDependencies) {
               catch { canceledRead = Promise.resolve(); }
             }
           }
-          const stop = () => { stopped = true; authority = undefined; cancel(); settle(unavailable); };
+          const stop = () => { noteFailure(); stopped = true; authority = undefined; cancel(); settle(unavailable); };
           stopOwner = stop;
           function guard(): number {
-            const current = sample();
-            if (!open || !registered || stopped || generation !== clockGeneration || current >= started + VERIFY_MS) throw unavailable;
+            const current = sampleRequest();
+            if (!open || !registered || stopped || generation !== clockGeneration || current >= started + VERIFY_MS) {
+              noteFailure("verifier_guard"); throw unavailable;
+            }
             active(token, current);
             return current;
           }
@@ -185,6 +207,7 @@ export function createUsageOidcVerifier(dependencies: VerifierDependencies) {
           };
 
           async function refresh(flightStart: number): Promise<Cache> {
+            phase = "verifier_capacity";
             const ownFetch = ticket();
             fetchTicket = ownFetch;
             nextFetch = flightStart + COOLDOWN_MS;
@@ -193,15 +216,18 @@ export function createUsageOidcVerifier(dependencies: VerifierDependencies) {
             let complete = false;
             const checkFlight = () => {
               const current = guard();
-              if (current >= flightStart + FETCH_MS || fetchTicket !== ownFetch) throw unavailable;
+              if (current >= flightStart + FETCH_MS || fetchTicket !== ownFetch) { noteFailure("verifier_guard"); throw unavailable; }
               return current;
             };
             try {
+              phase = "verifier_guard";
               timer = { handle: later(stop, FETCH_MS) };
+              phase = "verifier_fetch";
               const result = await fetcher(JWKS_URL, {
                 method: "GET", redirect: "manual", credentials: "omit",
                 headers: { Accept: "application/json, application/jwk-set+json", "Accept-Encoding": "identity" }, signal: controller.signal,
               });
+              phase = "verifier_framing";
               reader = result.body?.getReader();
               checkFlight();
               if (result.status !== 200 || result.redirected || result.url !== JWKS_URL || result.headers.has("content-encoding") || !reader) throw unavailable;
@@ -214,6 +240,7 @@ export function createUsageOidcVerifier(dependencies: VerifierDependencies) {
                 length = Number(lengthHeader);
                 if (length > MAX_BODY) throw unavailable;
               }
+              phase = "verifier_body";
               const bytes = new Uint8Array(MAX_BODY);
               let size = 0;
               let reads = 0;
@@ -226,7 +253,10 @@ export function createUsageOidcVerifier(dependencies: VerifierDependencies) {
                 bytes.set(chunk, size); size += chunk.length;
               }
               if (size === 0 || (length !== undefined && size !== length)) throw unavailable;
-              const owned = admittedJwks(boundedJson(bytes.subarray(0, size)));
+              const json = boundedJson(bytes.subarray(0, size));
+              phase = "verifier_keys";
+              const owned = admittedJwks(json);
+              phase = "verifier_import";
               const resolver = createLocalJWKSet({ keys: owned.keys });
               const keys = new Map<string, KeyEntry>();
               for (let index = 0; index < owned.keys.length; index++) {
@@ -244,6 +274,7 @@ export function createUsageOidcVerifier(dependencies: VerifierDependencies) {
               complete = true;
               return admitted;
             } catch (error) {
+              if (error !== unauthorized) noteFailure();
               throw error === unauthorized ? unauthorized : unavailable;
             } finally {
               clearTimer(timer);
@@ -252,7 +283,7 @@ export function createUsageOidcVerifier(dependencies: VerifierDependencies) {
               try { reader?.releaseLock(); } catch { /* No I/O follows release. */ }
               reader = undefined; controller = undefined;
               if (fetchTicket === ownFetch) {
-                try { nextFetch = Math.max(nextFetch, sample() + COOLDOWN_MS); } catch { /* Retain the old clock floor and reservation. */ }
+                try { nextFetch = Math.max(nextFetch, sampleRequest() + COOLDOWN_MS); } catch { /* Retain the old clock floor and reservation. */ }
                 fetchTicket = undefined;
               }
             }
@@ -265,17 +296,21 @@ export function createUsageOidcVerifier(dependencies: VerifierDependencies) {
               const current = guard();
               let selected = cache && current < cache.expires ? cache : undefined;
               if (!selected?.keys.has(token.kid)) {
-                if (fetchTicket !== undefined) return unavailable;
-                if (current < nextFetch) return selected ? unauthorized : unavailable;
+                if (fetchTicket !== undefined) { noteFailure("verifier_capacity"); return unavailable; }
+                if (current < nextFetch) {
+                  if (!selected) noteFailure("verifier_cooldown");
+                  return selected ? unauthorized : unavailable;
+                }
                 selected = await refresh(current);
               }
               const entry = selected.keys.get(token.kid);
               if (!entry) return unauthorized;
               const beforeVerify = guard();
-              if (cache !== selected || beforeVerify >= selected.expires) return unavailable;
+              if (cache !== selected || beforeVerify >= selected.expires) { noteFailure("verifier_guard"); return unavailable; }
               if (token.signatureBytes !== entry.signatureBytes) return unauthorized;
               let verified: JWTVerifyResult;
               try {
+                phase = "verifier_signature";
                 verified = await jwtVerify(token.compact, entry.key, {
                   algorithms: ["RS256"], issuer: identity.iss, audience: identity.aud, subject: identity.sub,
                   typ: "jwt", requiredClaims: [...requiredClaims], maxTokenAge: 7200, clockTolerance: 0,
@@ -285,17 +320,18 @@ export function createUsageOidcVerifier(dependencies: VerifierDependencies) {
                 // jose can mask verify exceptions as bad signatures. Recheck our
                 // own fences even on that indistinguishable rejection path.
                 const rejectedAt = guard();
-                if (cache !== selected || rejectedAt >= selected.expires) return unavailable;
+                if (cache !== selected || rejectedAt >= selected.expires) { noteFailure("verifier_guard"); return unavailable; }
                 return signatureFailure(error) ? unauthorized : unavailable;
               }
               const finalTime = guard();
-              if (cache !== selected || finalTime >= selected.expires) return unavailable;
+              if (cache !== selected || finalTime >= selected.expires) { noteFailure("verifier_guard"); return unavailable; }
               if (checkedHeader(verified.protectedHeader) !== token.kid) return unauthorized;
               const times = checkedClaims(verified.payload); active(times, finalTime);
               const handle = Object.freeze(Object.create(null)) as VerifiedCoordinator;
               authority = { handle, cache: selected, expires: times.expires };
               return Object.freeze({ ok: true, value: handle } as const);
             } catch (error) {
+              if (error !== unauthorized) noteFailure();
               return error === unauthorized ? unauthorized : unavailable;
             } finally {
               clearTimer(responseTimer);
@@ -312,11 +348,11 @@ export function createUsageOidcVerifier(dependencies: VerifierDependencies) {
         isCurrent(handle: unknown) {
           if (!open || !authority || authority.handle !== handle) return false;
           try {
-            const current = sample();
+            const current = sampleRequest();
             return cache === authority.cache && current < authority.expires && current < authority.cache.expires;
           } catch { return false; }
         },
-        finish() { open = false; authority = undefined; stopOwner?.(); },
+        finish() { if (stopOwner) noteFailure("verifier_guard"); open = false; authority = undefined; stopOwner?.(); },
       });
     },
   });

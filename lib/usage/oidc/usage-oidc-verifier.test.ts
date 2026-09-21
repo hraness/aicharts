@@ -109,9 +109,77 @@ function value(result: VerificationResult) {
 test("construction and request scopes do no work", () => {
   const f = fixture(); const c = context(); const s = f.verifier.beginRequest(c.ctx);
   expect(f.requests()).toBe(0); expect(c.pending).toHaveLength(0);
-  expect(Object.isFrozen(f.verifier)).toBe(true); expect(Object.isFrozen(s)).toBe(true);
+  expect(Object.isFrozen(f.verifier)).toBe(true); expect(Object.isFrozen(s)).toBe(true); expect(s.failureStage).toBeNull();
   expect(s.isCurrent({})).toBe(false); s.finish(); s.finish();
 });
+test("fixed failure stages distinguish fetch, framing, body, key admission and import without changing results", async () => {
+  const cases = [
+    ["verifier_fetch", () => { throw new Error("PRIVATE_FETCH_CANARY"); }],
+    ["verifier_framing", () => wireResponse("{}", { headers: { "content-encoding": "br" } })],
+    ["verifier_framing", () => wireResponse(null)],
+    ["verifier_body", () => wireResponse("PRIVATE_BODY_CANARY")],
+    ["verifier_body", () => wireResponse("{}", { headers: { "content-length": "3" } })],
+    ["verifier_keys", () => response({ keys: [{ ...jwk, e: "Aw" }] })],
+  ] as const;
+  for (const [stage, reply] of cases) {
+    const f = fixture(); f.reply(reply);
+    const first = await invoke(f);
+    expect(first.result).toEqual(down); expect(first.scope.failureStage).toBe(stage);
+    const second = await invoke(f);
+    expect(second.result).toEqual(down); expect(second.scope.failureStage).toBe("verifier_cooldown");
+    expect(first.scope.failureStage).toBe(stage); expect(f.requests()).toBe(1);
+    expect(JSON.stringify(first.result)).toBe('{"ok":false,"error":"unavailable"}');
+  }
+  const f = fixture(); const restore = interceptCrypto("importKey", async () => { throw new Error("PRIVATE_IMPORT_CANARY"); });
+  try {
+    const result = await invoke(f); expect(result.result).toEqual(down);
+    expect(result.scope.failureStage).toBe("verifier_import");
+  } finally { restore(); }
+});
+
+test("unavailable signature work is diagnosed while unauthorized signatures keep their exact result", async () => {
+  const f = fixture(); const good = await invoke(f); value(good.result); expect(good.scope.failureStage).toBeNull();
+  const badToken = await new SignJWT(claims()).setProtectedHeader({ alg: "RS256", typ: "jwt", kid: "synthetic_1" }).sign(secondPrivate);
+  const bad = await invoke(f, badToken); expect(bad.result).toEqual(denied); expect(bad.scope.failureStage).toBeNull();
+  const entered = deferred<void>(), gate = deferred<void>(), c = context();
+  const restore = interceptCrypto("verify", async call => { entered.resolve(); await gate.promise; return call(); });
+  const scope = f.verifier.beginRequest(c.ctx);
+  try {
+    const pending = scope.verify(token); await entered.promise; f.tick(5000, false);
+    expect(await pending).toEqual(down); expect(scope.failureStage).toBe("verifier_signature");
+    // Late cleanup still trips the clock guard, but cannot relabel a settled refusal.
+    f.time = NOW - 1; gate.resolve(); await c.drain();
+    expect(scope.failureStage).toBe("verifier_signature");
+  } finally { gate.resolve(); await c.drain(); restore(); }
+});
+
+test("in-flight fetch capacity and request closure have isolated fixed failure stages", async () => {
+  const f = fixture(), entered = deferred<void>(), gate = deferred<Response>(), c = context();
+  f.reply(() => { entered.resolve(); return gate.promise; });
+  const first = f.verifier.beginRequest(c.ctx), pending = first.verify(token);
+  try {
+    await entered.promise;
+    const second = await invoke(f); expect(second.result).toEqual(down);
+    expect(second.scope.failureStage).toBe("verifier_capacity"); expect(first.failureStage).toBeNull();
+    first.finish(); expect(await pending).toEqual(down); expect(first.failureStage).toBe("verifier_guard");
+    gate.resolve(response()); await c.drain();
+    expect(first.failureStage).toBe("verifier_guard"); expect(second.scope.failureStage).toBe("verifier_capacity");
+  } finally { gate.resolve(response()); await c.drain(); }
+});
+
+test("A=T, B=T+1, A=T still trips the shared clock floor without contaminating B's diagnostic", async () => {
+  // Two individually monotone logical request clocks: this models the sequence,
+  // not evidence that deployed Cloudflare produces it.
+  const f = fixture(), a = await invoke(f), handleA = value(a.result);
+  f.time = NOW + 1; const b = await invoke(f), handleB = value(b.result);
+  f.time = NOW; expect(a.scope.isCurrent(handleA)).toBe(false);
+  expect(a.scope.failureStage).toBe("verifier_clock"); expect(b.scope.failureStage).toBeNull();
+  const rejected = await invoke(f); expect(rejected.result).toEqual(down);
+  expect(rejected.scope.failureStage).toBe("verifier_clock");
+  f.time = NOW + 1; expect(b.scope.isCurrent(handleB)).toBe(false);
+  expect(f.requests()).toBe(1);
+});
+
 test("signed exact identity mints only request-local authority and finish revokes it", async () => {
   const f = fixture(); const c = context(); const s = f.verifier.beginRequest(c.ctx);
   const handle = value(await s.verify(token)); await c.drain();
