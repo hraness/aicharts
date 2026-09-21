@@ -115,8 +115,10 @@ describe("benchmark library progressive disclosure", () => {
     expect(primary.indexOf('class="atlas-ranking"')).toBeLessThan(primary.indexOf(dataset.comparabilityNote));
     expect(primary.indexOf(dataset.comparabilityNote)).toBeLessThan(primary.indexOf('class="atlas-provenance"'));
     expect(primary.replace(/<details[\s\S]*?<\/details>/gu, "")).toContain(dataset.comparabilityNote);
-    expect(primary).toContain("Source date: Sep 7, 2026");
-    expect(primary).toContain("<strong>10</strong> configurations in source cohort");
+    expect(primary).toContain("<dt>Source date</dt>");
+    expect(primary).toContain("Sep 7, 2026</time>");
+    expect(primary).toContain("<dt>Configurations</dt><dd>10</dd>");
+    expect(primary).toContain("<dt>Evidence</dt>");
     expect(primary).toContain("Showing 5 systems. Best-scoring configuration per model and harness.");
     expect(primary).not.toContain("Best result per system");
     expect(primary).toContain('data-analytics-surface="benchmark_atlas"');
@@ -193,5 +195,44 @@ describe("benchmark library progressive disclosure", () => {
     expect(css).toMatch(/@media \(max-width: 720px\)[\s\S]*?\.atlas-benchmark-select \{ grid-column: 1 \/ -1; grid-row: 2;/u);
     expect(css).not.toContain(".atlas-mobile-select");
     expect(css).not.toContain(".atlas-tasks");
+  });
+});
+
+describe("benchmark page grammar", () => {
+  const html = renderToStaticMarkup(<BenchmarkAtlasExplorer entries={entries} datasets={[dataset]} />);
+
+  test("leads with what the benchmark measures before showing who wins", () => {
+    expect(html).toContain('class="atlas-lead"');
+    expect(html.indexOf('class="atlas-lead"')).toBeLessThan(html.indexOf('class="atlas-ranking"'));
+    const lead = html.slice(html.indexOf('class="atlas-lead"'), html.indexOf('class="atlas-toolbar"'));
+    expect(lead).toContain(entries[0].summary);
+    expect(lead).toContain(entries[0].measure);
+  });
+
+  test("states provenance as labelled facts, not a run-on caption", () => {
+    for (const label of ["Evidence", "Version", "Source date", "Configurations"]) {
+      expect(html).toContain(`<dt>${label}</dt>`);
+    }
+    expect(html).toContain("<dd>Publisher-run evaluation</dd>");
+    expect(html).not.toContain('class="atlas-context"');
+  });
+
+  test("summarises the result in prose after the chart and before the caveats", () => {
+    const takeaways = html.indexOf('class="atlas-takeaways"');
+    expect(takeaways).toBeGreaterThan(html.indexOf('class="atlas-ranking"'));
+    expect(takeaways).toBeLessThan(html.indexOf(dataset.comparabilityNote));
+    expect(html).toContain("What this chart shows");
+    // Named from the data rather than authored copy: leader, overlap, and cost spread.
+    expect(html).toContain("Model 0 leads at 90%, ahead of Model 1 at 88%.");
+    expect(html).toContain("Their reported uncertainty ranges overlap, so this source does not separate the top two.");
+    // The fixture's leader is also its cheapest result, so no cost trade-off is claimed.
+    expect(html).not.toContain("the cheapest result is");
+    expect(html).toContain("Read from the full charted cohort, not the filters above.");
+  });
+
+  test("carries the task family on the surface so each family can be themed", () => {
+    expect(html).toContain('data-atlas-category="coding"');
+    const audioOnly = renderToStaticMarkup(<BenchmarkAtlasExplorer entries={entries.filter(entry => entry.category === "audio")} datasets={[]} />);
+    expect(audioOnly).toContain('data-atlas-category="audio"');
   });
 });

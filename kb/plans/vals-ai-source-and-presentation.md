@@ -213,6 +213,43 @@ tests, the generated-snapshot checks, the full build, and the browser contract
 suite. `bun run atlas:vals:check` reports 299 observations across five private
 boards. All five `/data/benchmark-atlas/vals-*` downloads prerender.
 
+### 2026-09-21 · page grammar adopted
+
+Step 7 on `claude/benchmark-page-grammar`, shipped as a separate change from the
+import. The explorer now reads motivation, results, takeaways, caveats, source,
+which is the order Vals uses, instead of controls followed by bars.
+
+- **Generated takeaways.** `lib/benchmark-atlas-takeaways.ts` derives two to
+  four sentences from the checked snapshot: the leader and runner-up, whether
+  their uncertainty ranges separate them, the cheapest result within five points
+  of the leader, and the cohort span. A refresh moves the prose with the data.
+  The separation sentence is a claim Vals does not make and the repository's own
+  uncertainty handling already supports.
+- **Rules, not judgments.** Each sentence states the rule it applied. The cost
+  sentence is suppressed on relative units, where "within five points" would be
+  an invented claim, and when the leader is already cheapest. The interval type
+  is named in the caption and inspector rather than inlined, because source
+  labels do not read as sentence fragments.
+- **Provenance as labelled facts.** The run-on `.atlas-context` caption became a
+  definition list of evidence class, version, source date, and configuration
+  count, with `<time>` on the date.
+- **Motivation above the fold.** `entry.summary` and `entry.measure` moved out
+  of the bottom disclosure to a lead paragraph above the toolbar.
+- **Per-family accents.** `data-atlas-category` on the explorer selects one of
+  five muted accent ramps through the existing `--atlas-accent`, `--atlas-tint`,
+  and `--atlas-bar` tokens. Every value clears AA in both themes; the lowest is
+  6.46:1.
+- **Tabular numerals** on ranks, scores, provenance values, scatter axes, and
+  the takeaway prose.
+
+Deviation: the per-benchmark methodology changelog is still not built. It needs
+authored dated entries for 29 datasets and no existing field carries them, so it
+stays open rather than being filled with invented history.
+
+Evidence: `bun run check` exits 0. 21 new tests cover the takeaway sentences,
+seven properties over generated cohorts, and the page order. Screenshots in both
+themes confirmed the layout and the accent families.
+
 ## Verification
 
 - Importer fixtures cover a full page, a missing cost field, an archived

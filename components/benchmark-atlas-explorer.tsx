@@ -2,6 +2,7 @@
 
 import { useId, useMemo, useRef, useState, useSyncExternalStore, type CSSProperties } from "react";
 import { captureAnalyticsEvent } from "@/lib/analytics";
+import { atlasTakeaways } from "@/lib/benchmark-atlas-takeaways";
 import { atlasDatasetSummary, selectAtlasEntries, selectAtlasModelProfiles, sortAtlasPoints, type BenchmarkAtlasDataset, type BenchmarkAtlasEntry, type BenchmarkAtlasPoint } from "@/lib/benchmark-atlas";
 import { ATLAS_CATEGORY_LABELS, atlasViewSearch, formatAtlasCost, formatAtlasScore, parseAtlasView, type AtlasViewState } from "@/lib/benchmark-atlas-view";
 import { providerBrand } from "@/lib/provider-brand";
@@ -147,6 +148,7 @@ function Comparison({ dataset, points, onRemove }: Readonly<{ dataset: Benchmark
 
 export function BenchmarkAtlasExplorer({ entries, datasets }: Readonly<{ entries: readonly BenchmarkAtlasEntry[]; datasets: readonly BenchmarkAtlasDataset[] }>) {
   const search = useSyncExternalStore(subscribe, snapshot, serverSnapshot);
+  const baseId = useId();
   const state = useMemo(() => parseAtlasView(search, entries, datasets), [search, entries, datasets]);
   const [query, setQuery] = useState("");
   const [chartOnly, setChartOnly] = useState(false);
@@ -175,6 +177,8 @@ export function BenchmarkAtlasExplorer({ entries, datasets }: Readonly<{ entries
   const selected = selectable.find(point => point.id === state.pointId) ?? selectable[0];
   const providers = [...new Set(ranked.map(point => point.provider))].sort();
   const summary = dataset ? atlasDatasetSummary(dataset) : null;
+  const takeawaysId = `${baseId}-takeaways`;
+  const takeaways = useMemo(() => dataset ? atlasTakeaways(dataset) : [], [dataset]);
   const comparison = state.compareIds.flatMap(id => { const point = ranked.find(item => item.id === id); return point ? [point] : []; });
   function update(next: AtlasViewState, replace = false) {
     const url = atlasViewSearch(next);
@@ -207,7 +211,7 @@ export function BenchmarkAtlasExplorer({ entries, datasets }: Readonly<{ entries
     catch { setShareStatus("Copy this page’s address to share the comparison."); }
   }
   if (!entry) return null;
-  return <section className="benchmark-atlas" id="explore" aria-label="Explore AI benchmarks" data-analytics-surface="benchmark_atlas">
+  return <section className="benchmark-atlas" id="explore" aria-label="Explore AI benchmarks" data-analytics-surface="benchmark_atlas" data-atlas-category={entry?.category ?? "general"}>
     <div className="atlas-navigation" role="group" aria-label="Choose a benchmark">
       <OptionGridPicker
         className="atlas-task-select"
@@ -279,7 +283,13 @@ export function BenchmarkAtlasExplorer({ entries, datasets }: Readonly<{ entries
         <header className="atlas-heading"><div><p className="atlas-eyebrow">{ATLAS_CATEGORY_LABELS[entry.category]} <span> / </span> {entry.version}</p><h2>{entry.name}</h2><p>{entry.question}</p></div><button className="atlas-button atlas-button--quiet" onClick={share} type="button">Copy view link ↗</button></header>
         <p className="atlas-share-status" role="status">{shareStatus}</p>
         {dataset && summary ? <>
-          <div className="atlas-context"><span><strong>{summary.configurationCount}</strong> configurations in source cohort</span><span>{dataset.evidenceLabel ?? dataset.source.name}</span><span>{dataset.observedAt ? `Source date: ${sourceDate(dataset.observedAt)}` : `Retrieved ${sourceDate(dataset.source.retrievedAt)}`}</span></div>
+          <dl className="atlas-facts">
+            <div><dt>Evidence</dt><dd>{dataset.evidenceLabel ?? dataset.source.name}</dd></div>
+            <div><dt>Version</dt><dd>{entry.version}</dd></div>
+            <div><dt>{dataset.observedAt ? "Source date" : "Retrieved"}</dt><dd><time dateTime={dataset.observedAt ?? dataset.source.retrievedAt}>{sourceDate(dataset.observedAt ?? dataset.source.retrievedAt)}</time></dd></div>
+            <div><dt>Configurations</dt><dd>{summary.configurationCount}</dd></div>
+          </dl>
+          <p className="atlas-lead">{entry.summary} {entry.measure}</p>
           <div className="atlas-toolbar">
             <div className="atlas-view-toggle" role="group" aria-label="Chart view">
               {(["ranking", "cost", "table"] as const).filter(view => view !== "cost" || ranked.some(point => point.costUsd !== null && point.costUsd > 0)).map(view => <button key={view} aria-pressed={state.view === view} onClick={() => changeView(view)} type="button">{atlasViewGlyph(view)}{view === "ranking" ? "Ranking" : view === "cost" ? "Cost vs. score" : "Table"}</button>)}
@@ -327,6 +337,11 @@ export function BenchmarkAtlasExplorer({ entries, datasets }: Readonly<{ entries
             {selected && <PointInspector dataset={dataset} point={selected} compareIds={state.compareIds} onCompare={compare} />}
           </div>
           <Comparison dataset={dataset} points={comparison} onRemove={compare} />
+          <section className="atlas-takeaways" aria-labelledby={takeawaysId}>
+            <h3 id={takeawaysId}>What this chart shows</h3>
+            <p>{takeaways.join(" ")}</p>
+            <p className="atlas-takeaways__basis">Read from the full charted cohort, not the filters above. Effort-only variants of one system count once.</p>
+          </section>
           <p className="atlas-description"><strong>About these results.</strong> {dataset.comparabilityNote}</p>
           <div className="atlas-provenance"><a data-analytics-destination-id={`source:${entry.id}`} data-analytics-destination-kind="source" href={dataset.source.url} target="_blank" rel="noreferrer">{dataset.source.name} ↗</a><span>Retrieved <time dateTime={dataset.source.retrievedAt}>{sourceDate(dataset.source.retrievedAt)}</time></span></div>
         </> : <div className="atlas-source-guide"><p className="atlas-eyebrow">{entry.coverage === "watchlist" ? "Emerging evaluation" : "Benchmark guide"}</p><h3>{entry.measure}</h3><p>{entry.summary}</p><p className="atlas-source-guide__status">Comparable scores are not yet charted here. The source below provides the published evaluation.</p><a className="atlas-button" href={entry.source.url} data-analytics-destination-id={`source:${entry.id}`} data-analytics-destination-kind="source" target="_blank" rel="noreferrer">Explore {entry.source.name} ↗</a></div>}

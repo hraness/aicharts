@@ -28,6 +28,7 @@ import {
   DEFAULT_CALCULATOR_KNOBS,
 } from "./calculator-math";
 import { ATLAS_DATASETS, ATLAS_ENTRIES } from "./benchmark-atlas-catalog";
+import { atlasTakeaways } from "./benchmark-atlas-takeaways";
 import { selectAtlasModelProfiles, sortAtlasPoints } from "./benchmark-atlas";
 import { ATLAS_CATEGORY_LABELS, formatAtlasCost, formatAtlasScore, parseAtlasView } from "./benchmark-atlas-view";
 import { ATLAS_CATALOG_DOWNLOAD_PATH, atlasDatasetDownloadPath } from "./benchmark-atlas-distribution";
@@ -259,6 +260,8 @@ export function atlasDefaultChartMarkdown(): string {
     `### Benchmark library: ${entry.name} · ${entry.version}`,
     "",
     entry.question,
+    "",
+    atlasTakeaways(dataset).join(" "),
     "",
     dataset.comparabilityNote,
     "",
