@@ -1,6 +1,7 @@
 import { expect, test } from "bun:test";
 import { renderToStaticMarkup } from "react-dom/server";
 import { createUsageStatsExample } from "@/lib/usage/stats-example";
+import { STATS_CLIENTS } from "@/lib/usage/stats-registry";
 import { StatsReportView } from "./stats-report-view";
 import { StatsDashboard } from "./stats-dashboard";
 
@@ -57,4 +58,26 @@ test("hosted reports retain their requested long range and selected client", () 
   expect(html).toContain('aria-pressed="true">90 days');
   expect(html).toContain('value="codex" selected=""');
   expect(html).toContain("Filters · 1 active");
+});
+
+test("coverage distinguishes an absent client from a checked source with no observations", () => {
+  const report = createUsageStatsExample(20_700);
+  const html = renderToStaticMarkup(<StatsReportView report={report} scope="local" todayUtcDay={20_700} />);
+  expect(html).toContain(`${report.sources.length} of ${STATS_CLIENTS.length} included in this report`);
+  expect(html).toContain('<th scope="row">Amp</th><td>Not included</td>');
+  expect(html).toContain('<th scope="row">OpenCode</th><td>Not found</td>');
+  expect(html).toContain('<option value="opencode">OpenCode</option>');
+  expect(html).toContain("it does not mean zero usage");
+  expect(html).toContain("public leaderboard visibility requires separate consent");
+});
+
+test("provider filters retain unknown attribution and a selected value without records", () => {
+  const report = createUsageStatsExample(20_700);
+  const html = renderToStaticMarkup(<StatsReportView report={report} scope="account" todayUtcDay={20_700}
+    initialSelection={{ client: "cursor", provider: "openai", model: "*", basis: "reported" }} />);
+  expect(html).toContain('aria-label="Provider"');
+  expect(html).toContain('<option value="~">Unknown</option>');
+  expect(html).toContain('<option value="openai" selected="">OpenAI · no records</option>');
+  expect(html).not.toContain('<option value="anthropic">');
+  expect(html).toContain("No matching reported records");
 });
