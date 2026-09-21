@@ -442,6 +442,37 @@ describe("dormant account admission", () => {
     expect(await stub().readEnrollmentStatus(device.proof)).toMatchObject({ ok: false });
   });
 
+  test("a revision lost far outside the decoded window still fails the restart audit", async () => {
+    const device = await enroll();
+    for (let sequence = 1; sequence <= 12; sequence += 1) success(await upload(device, batch(device, sequence, [{ id: sequence }])));
+    // Revision 2 is well behind the newest revisions the audit still decodes,
+    // so only the structural reconciliation can see that it is gone.
+    await runInDurableObject(stub(), (_instance, state) => state.storage.sql.exec("DELETE FROM usage_admission_journal WHERE revision = 2").toArray());
+    const before = await snapshot(); await abortAllDurableObjects();
+    expect(await upload(device, batch(device, 13, [{ id: 13 }]))).toEqual({ ok: false, error: "storage_invalid" });
+    expect(await snapshot()).toEqual(before);
+  });
+
+  test("an old head re-dated outside the decoded window still fails the day reconciliation", async () => {
+    const device = await enroll();
+    for (let sequence = 1; sequence <= 12; sequence += 1) success(await upload(device, batch(device, sequence, [{ id: sequence }])));
+    await runInDurableObject(stub(), (_instance, state) =>
+      state.storage.sql.exec("UPDATE usage_admission_heads SET utc_day = utc_day - 7 WHERE journal_revision = 2").toArray());
+    const before = await snapshot(); await abortAllDurableObjects();
+    expect(await upload(device, batch(device, 13, [{ id: 13 }]))).toEqual({ ok: false, error: "storage_invalid" });
+    expect(await snapshot()).toEqual(before);
+  });
+
+  test("an old head dropped outside the decoded window still fails the retained-count reconciliation", async () => {
+    const device = await enroll();
+    for (let sequence = 1; sequence <= 12; sequence += 1) success(await upload(device, batch(device, sequence, [{ id: sequence }])));
+    await runInDurableObject(stub(), (_instance, state) =>
+      state.storage.sql.exec("DELETE FROM usage_admission_heads WHERE journal_revision = 3").toArray());
+    const before = await snapshot(); await abortAllDurableObjects();
+    expect(await upload(device, batch(device, 13, [{ id: 13 }]))).toEqual({ ok: false, error: "storage_invalid" });
+    expect(await snapshot()).toEqual(before);
+  });
+
   test("canonical frozen rejection cannot replace an eligible pending insert", async () => {
     const device = await enroll(), value = batch(device);
     await runInDurableObject(stub(), async instance => {

@@ -18,6 +18,10 @@ export type AdmissionControl = { revision: number; committed: number; observed: 
 export type AdmissionProgress = { device: string; sequence: number; batch: AdmissionBatch | null; journal: AdmissionJournal | null };
 export type AdmissionPending = { phase: 1 | 2; predecessor: number; batch: AdmissionBatch; journal: AdmissionJournal | null };
 type Row = Record<string, SqlStorageValue>;
+/** Revisions whose retained rows the restart audit decodes. Bounding this is
+ * what keeps the audit off the account's whole history; the structural checks
+ * that cover every row need no decoding and are not bounded by it. */
+const AUDIT_DEEP_REVISIONS = 8;
 const integer = (value: unknown, min: number, max: number): value is number => typeof value === "number" && Number.isSafeInteger(value) && value >= min && value <= max;
 const bytes = (value: unknown): Uint8Array => {
   requireAdmission(value instanceof ArrayBuffer);
@@ -245,25 +249,39 @@ export class AdmissionState {
   }
 
   /** Finite restart audit: stream heads, retain bounded metadata, no cross-product.
-   * Linear in the account's retained history, so the owner runs it once per
-   * object lifetime before the first mutation rather than on every rehydration. */
+   *
+   * Cost is proportional to recent history rather than retained history. The
+   * structural checks below cover every retained row without decoding any of
+   * them, which is what detects missing, duplicated or reordered history; the
+   * decoding checks, which detect corrupted content, cover the newest
+   * revisions and every revision a device still holds as its latest. Older
+   * rows were decoded and validated by the publication that wrote them and
+   * cannot change afterwards without taking a newer revision. */
   auditHistory(authority: AdmissionAuthority | null): void {
     const control = this.auditControl(authority);
     // Every committed revision must have exactly one immutable batch/receipt
     // pair. Missing, duplicated, reordered, or rewritten rows fail closed;
     // restore tooling can then consume this contiguous prefix under its own
     // external fence without trusting the mutable head projection.
-    let journalRows = 0, previousJournalTime = 0;
-    for (const row of this.sql.exec("SELECT revision, batch, journal, committed_at_ms FROM usage_admission_journal ORDER BY revision LIMIT 4097")) {
-      requireAdmission(++journalRows <= MAX_ADMISSION_REVISIONS && row.revision === journalRows
-        && integer(row.committed_at_ms, 0, MAX_ADMISSION_TIMESTAMP) && row.committed_at_ms >= previousJournalTime);
+    //
+    // `revision` is a unique primary key bounded to 1..4096, so a row count
+    // equal to the published revision with endpoints 1 and N admits only the
+    // exact prefix 1..N: a gap, a duplicate or an extra row cannot satisfy all
+    // three at once. Adjacency then pins commit-time ordering.
+    const shape = this.sql.exec("SELECT COUNT(*) AS retained, MIN(revision) AS low, MAX(revision) AS high, MAX(committed_at_ms) AS latest FROM usage_admission_journal").one();
+    requireAdmission(shape.retained === control.revision);
+    if (control.revision === 0) requireAdmission(shape.low === null && shape.high === null);
+    else requireAdmission(shape.low === 1 && shape.high === control.revision && shape.latest === control.committed);
+    const ordering = this.sql.exec("SELECT COUNT(*) AS breaks FROM usage_admission_journal AS earlier JOIN usage_admission_journal AS later ON later.revision = earlier.revision + 1 WHERE later.committed_at_ms < earlier.committed_at_ms").one();
+    requireAdmission(ordering.breaks === 0);
+    const deepFrom = Math.max(0, control.revision - AUDIT_DEEP_REVISIONS);
+    for (const row of this.sql.exec("SELECT revision, batch, journal, committed_at_ms FROM usage_admission_journal WHERE revision > ? ORDER BY revision LIMIT ?", deepFrom, AUDIT_DEEP_REVISIONS + 1)) {
+      requireAdmission(integer(row.revision, 1, MAX_ADMISSION_REVISIONS) && integer(row.committed_at_ms, 0, MAX_ADMISSION_TIMESTAMP));
       const batch = ownedAdmissionBatch(bytes(row.batch)), journal = ownedAdmissionJournal(bytes(row.journal), batch);
       requireAdmission(authority !== null && journal.accountJournalRevision === row.revision
         && journal.committedAtMs === row.committed_at_ms && journal.committedAtMs <= control.committed
         && sameAccount(batch, authority));
-      previousJournalTime = row.committed_at_ms;
     }
-    requireAdmission(journalRows === control.revision);
     const devices = new Map<string, { sequence: number; first: number; revision: number }>();
     const latestRevisions = new Set<number>();
     const latestTimes: { revision: number; time: number }[] = [];
@@ -291,10 +309,28 @@ export class AdmissionState {
       && sequences >= control.revision && sequences <= 256 * control.revision);
     latestTimes.sort((left, right) => left.revision - right.revision);
     for (let index = 1; index < latestTimes.length; index += 1) requireAdmission(latestTimes[index].time >= latestTimes[index - 1].time);
-    const dayCounts = new Map<number, number>(), seenSequences = new Set<string>(), revisionOwners = new Map<number, string>();
-    let headCount = 0, liveCount = 0;
-    for (const row of this.sql.exec("SELECT * FROM usage_admission_heads LIMIT 100001")) {
-      requireAdmission(authority && ++headCount <= MAX_ADMISSION_HEADS);
+    // The retained heads and their day projection are reconciled by count, so
+    // a lost, duplicated or re-dated row fails without decoding any operation.
+    // `COUNT(utc_day)` counts only the live rows, the ones a day claims.
+    const tally = this.sql.exec("SELECT COUNT(*) AS retained, COUNT(utc_day) AS live FROM usage_admission_heads").one();
+    requireAdmission(tally.retained === control.heads && tally.live === control.live);
+    requireAdmission(authority !== null || control.heads === 0);
+    // Both directions: a retained day whose live heads disagree with it, and a
+    // day claimed by a live head with no row of its own, each fail closed.
+    const dayBreaks = this.sql.exec("SELECT COUNT(*) AS breaks FROM usage_admission_days AS retained LEFT JOIN (SELECT utc_day, COUNT(*) AS live FROM usage_admission_heads WHERE utc_day IS NOT NULL GROUP BY utc_day) AS claimed ON claimed.utc_day = retained.utc_day WHERE claimed.live IS NULL OR claimed.live != retained.live_count").one();
+    const dayOrphans = this.sql.exec("SELECT COUNT(*) AS breaks FROM (SELECT utc_day FROM usage_admission_heads WHERE utc_day IS NOT NULL GROUP BY utc_day) AS claimed LEFT JOIN usage_admission_days AS retained ON retained.utc_day = claimed.utc_day WHERE retained.utc_day IS NULL").one();
+    requireAdmission(dayBreaks.breaks === 0 && dayOrphans.breaks === 0);
+    // Decode the newest revisions and every revision still held as a device's
+    // latest, which is what the receipt cross-checks below are stated over.
+    const held = [...latestRevisions];
+    const slots = held.map(() => "?").join(",");
+    const recent = held.length === 0
+      ? this.sql.exec("SELECT * FROM usage_admission_heads WHERE journal_revision > ? LIMIT 100001", deepFrom)
+      : this.sql.exec(`SELECT * FROM usage_admission_heads WHERE journal_revision > ? OR journal_revision IN (${slots}) LIMIT 100001`, deepFrom, ...held);
+    const seenSequences = new Set<string>(), revisionOwners = new Map<number, string>();
+    let scanned = 0;
+    for (const row of recent) {
+      requireAdmission(authority && ++scanned <= MAX_ADMISSION_HEADS);
       const head = this.#head(row, authority, control), deviceId = admissionHex(head.operation.deviceId), progress = devices.get(deviceId);
       requireAdmission(progress && head.operation.sequence <= progress.sequence && head.operation.sequence <= 256 * head.revision
         && head.revision <= progress.revision && (head.revision === progress.revision || head.operation.sequence < progress.first));
@@ -306,17 +342,7 @@ export class AdmissionState {
         const creator = latestCreators.get(`${head.revision}:${admissionHex(head.operation.occurrenceId)}`);
         requireAdmission(creator && equalAdmissionBytes(creator, head.operation.bytes));
       }
-      if (head.day !== null) {
-        liveCount += 1; dayCounts.set(head.day, (dayCounts.get(head.day) ?? 0) + 1);
-      }
     }
-    requireAdmission(headCount === control.heads && liveCount === control.live);
-    let days = 0;
-    for (const row of this.sql.exec("SELECT utc_day, live_count FROM usage_admission_days LIMIT 100001")) {
-      requireAdmission(++days <= liveCount && integer(row.utc_day, 0, 100_000_000) && integer(row.live_count, 1, MAX_ADMISSION_DAY_HEADS)
-        && dayCounts.get(row.utc_day) === row.live_count);
-    }
-    requireAdmission(days === dayCounts.size);
     const pending = this.pending(authority, control);
     if (pending) {
       requireAdmission(authority);

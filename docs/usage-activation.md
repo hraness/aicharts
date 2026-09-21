@@ -307,9 +307,25 @@ upload that waits out the audit returns its settled receipt instead of the
 `storage_unavailable` the CLI records as an uncertain exchange to resume. The
 binding client constraint is `timeout_recv_response` (15s), not the 20s global,
 which is shared with resolve, connect and body send; raise one only with the
-other. These budgets are sized against the audit's current cost, so a long
-enough retained history outgrows them — making the audit incremental is the
-durable fix, not widening the budget again.
+other. The audit these wait on is bounded by recent history rather than
+retained history, so they do not need to grow as an account does.
+
+That bound is what the audit decodes, not what it checks. Every retained row is
+still reconciled on each audit without being decoded: the journal's row count
+with its endpoints admits only the exact revision prefix, since `revision` is a
+unique bounded primary key; adjacent revisions pin commit-time ordering; the
+retained and live head counts must equal the control row; and each retained day
+must equal the live heads claiming it, in both directions. That is what detects
+missing, duplicated, re-dated or reordered history. Decoding, which is what
+detects corrupted operation bytes, covers the newest `AUDIT_DEEP_REVISIONS`
+revisions and every revision a device still holds as its latest — the rows a
+receipt cross-check is stated over, and the ones an interrupted write can
+still be touching. Older rows were decoded and validated by the publication
+that wrote them, and cannot change afterwards without taking a newer revision.
+The residual gap is an older row whose operation bytes are corrupted in place
+while its indexed columns stay consistent; no restart audit detects that today
+once it has passed, and the external restore fence, not this audit, is the
+control for an administrative rollback.
 
 Two consequences to keep in view. The pairing boundary and its capacity are
 unchanged, but this boundary still admits `PAIRING_HTTP_CAPACITY` concurrent

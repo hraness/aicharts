@@ -23,9 +23,10 @@ export const STATS_UPLOAD_ROWS = 8_192;
  * refusal rather than being abandoned client-side as uncertain. Raising either
  * one requires raising `timeout_recv_response` in lockstep.
  *
- * They are sized against the audit's current cost, not against its ceiling. A
- * long enough retained history outgrows any fixed budget; the durable fix is
- * to make the audit incremental rather than to keep widening this. */
+ * The audit they wait on is bounded by recent history rather than retained
+ * history, so these do not need to grow as an account does. Widening them
+ * again would be the wrong answer to a slow audit; bounding what the audit
+ * decodes is. */
 export const STATS_UPLOAD_HTTP_WORKER_MS = 12_000;
 export const STATS_UPLOAD_HTTP_STAGE_MS = 10_000;
 export const STATS_MEDIA = "application/json; charset=utf-8";
