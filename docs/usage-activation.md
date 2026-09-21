@@ -286,9 +286,18 @@ The current generation variable and namespace anchor are useful refusal checks,
 but they are not an external restore fence. The Worker reads generation from
 its environment and the anchor from the control bucket; if both the account
 object and control data are restored or deleted together, neither source can
-prove that the restored state is stale. Durable Object restart audit and the
-immutable admission journal detect missing or reordered local history, not an
-administrative rollback of both stores.
+prove that the restored state is stale. The Durable Object history audit and
+the immutable admission journal detect missing or reordered local history, not
+an administrative rollback of both stores.
+
+That history audit is linear in retained history, so it runs once per object
+lifetime before the first mutation rather than in the constructor. Nothing
+commits onto history it has not verified, and a refusal poisons the object
+instead of rescanning per retry. The constructor still runs the constant-cost
+control checks on every rehydration, so a lost or malformed control row, or a
+schema mismatch, still fails a read closed. A read served between a corruption
+and the next mutation can therefore return unverified counters; treat the
+private dashboard as a numeric view, not as evidence of history integrity.
 
 The implementation in `services/usage-worker/src/restore-fence.ts` provides a
 separate control authority. The [operator procedure](usage-restore-fence-control.md)

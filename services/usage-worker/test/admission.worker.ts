@@ -405,6 +405,29 @@ describe("dormant account admission", () => {
     expect(await snapshot()).toEqual(before);
   });
 
+  test("retained-history corruption refuses the next mutation but no longer blocks a cold read", async () => {
+    const device = await enroll(), value = batch(device); success(await upload(device, value));
+    // Counts that disagree with the retained heads are visible only to the
+    // linear history scan; the constant-cost control check cannot see them.
+    await runInDurableObject(stub(), (_instance, state) => state.storage.sql.exec("UPDATE usage_admission_control SET head_count = 2, live_count = 2").toArray());
+    const before = await snapshot(); await abortAllDurableObjects();
+    // The read is served from the rehydrated object without scanning history,
+    // so it reports the corrupted counters rather than refusing.
+    expect(await stub().readEnrollmentStatus(device.proof)).toMatchObject({ ok: true, value: { headCount: 2, liveCount: 2 } });
+    expect(await upload(device, value)).toEqual({ ok: false, error: "storage_invalid" });
+    expect(await snapshot()).toEqual(before);
+  });
+
+  test("a lost control row still fails a cold read closed", async () => {
+    const device = await enroll(); success(await upload(device, batch(device)));
+    // Schema CHECKs already defend every scalar control invariant, so the
+    // reachable control corruption is a missing row — what a truncated or
+    // partially restored store looks like. The constructor still catches it.
+    await runInDurableObject(stub(), (_instance, state) => state.storage.sql.exec("DELETE FROM usage_admission_control").toArray());
+    await abortAllDurableObjects();
+    expect(await stub().readEnrollmentStatus(device.proof)).toMatchObject({ ok: false });
+  });
+
   test("canonical frozen rejection cannot replace an eligible pending insert", async () => {
     const device = await enroll(), value = batch(device);
     await runInDurableObject(stub(), async instance => {
@@ -720,7 +743,9 @@ describe("dormant account admission", () => {
     const lastSubject = batch(device, seeded + 2, [{ id: seeded + 2, day: DAY - 1 }]);
     const latest = success(await upload(device, lastSubject)); // Exactly 100,000 identities.
     expect(await upload(device, batch(device, seeded + 3, [{ id: seeded + 3, day: DAY - 1 }]))).toEqual({ ok: false, error: "limit" });
-    await abortAllDurableObjects(); // Executes the actual constructor's full audit.
+    await abortAllDurableObjects();
+    // The rehydrated object pays the real 100,000-head history audit before
+    // this mutation may commit; only reads are served without it.
     expect(success(await upload(device, lastSubject))).toEqual(latest);
     const removal = batch(device, seeded + 3, [{ id: seeded + 1, expected: lastSlot.operations[0].operationHash, tombstone: true }]);
     success(await upload(device, removal));

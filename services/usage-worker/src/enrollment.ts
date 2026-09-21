@@ -200,6 +200,7 @@ function disposeReply(value: unknown): void {
  */
 export class AccountEnrollment extends DurableObject<Env> {
   #healthy = true;
+  #historyAudited: "pending" | "passed" | "failed" = "pending";
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
     try {
@@ -218,12 +219,12 @@ export class AccountEnrollment extends DurableObject<Env> {
         this.#schema();
         this.#migrateFence();
         this.#migrateLeaderboard();
-        new AdmissionState(ctx.storage.sql).audit(this.#stored(5).state);
+        new AdmissionState(ctx.storage.sql).auditControl(this.#stored(5).state);
         if (!this.#statsPresent() && this.#statsEnabled()) {
           new StatsState(ctx.storage.sql).initialize();
           ctx.storage.sql.exec("UPDATE account_enrollment SET schema_version = 6 WHERE id = 1");
         }
-        if (this.#statsPresent()) new StatsState(ctx.storage.sql).audit(this.#stored(5).state);
+        if (this.#statsPresent()) new StatsState(ctx.storage.sql).auditControl(this.#stored(5).state);
         this.#schema();
       });
     } catch { this.#healthy = false; }
@@ -384,12 +385,34 @@ export class AccountEnrollment extends DurableObject<Env> {
     try { return this.#stored(5).state?.fenceEpoch ?? RESTORE_FENCE_GENESIS_EPOCH; }
     catch { return RESTORE_FENCE_GENESIS_EPOCH; }
   }
+  /** The linear history audit, run once per object lifetime before the first
+   * mutation rather than on every rehydration. Durable Objects are evicted
+   * after seconds of idleness, so auditing in the constructor made every
+   * cold read rescan the account's whole retained history. Nothing may commit
+   * onto history this has not verified; reads are gated by the constant-cost
+   * `auditControl` the constructor still runs. */
+  #auditHistory(): EnrollmentError | null {
+    if (this.#historyAudited === "passed") return null;
+    // A refusal poisons the object rather than rescanning per retry, keeping
+    // the scan bounded at one per lifetime exactly as the constructor was.
+    if (this.#historyAudited === "failed") return "storage_invalid";
+    try {
+      const state = this.#stored(5).state;
+      new AdmissionState(this.ctx.storage.sql).auditHistory(state);
+      if (this.#statsPresent()) new StatsState(this.ctx.storage.sql).auditHistory(state);
+    } catch { this.#historyAudited = "failed"; return "storage_invalid"; }
+    this.#historyAudited = "passed";
+    return null;
+  }
   /** Acquire a provider-operation lease from the external restore fence. The
    * fence is a separate store; the returned epoch/established are authoritative
    * and cross-checked against durable state inside the transaction. */
   async #fenceAcquire(accountId: string, generation: string): Promise<EnrollmentResult<{ fence: FenceObservation; token: string }>> {
     const workerVersion = this.#workerVersion();
     if (workerVersion === null) return err("recovery_required");
+    // Audited before the lease exists, so a refusal leaves nothing to release.
+    const audited = this.#auditHistory();
+    if (audited !== null) return err(audited);
     const stub = this.env.RESTORE_FENCES.getByName(restoreFenceName(accountId));
     const input = { accountId, generation, epoch: this.#fenceHint(), workerVersion, leaseMs: RESTORE_FENCE_LEASE_TTL_MS };
     let raw: unknown;
