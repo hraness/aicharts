@@ -5,7 +5,7 @@ import { PAIRING_HTTP_CAPACITY, PAIRING_HTTP_STAGE_MS, PAIRING_HTTP_WORKER_MS,
 import { pairingHttpWork, type PairingHttpEffects } from "../../../lib/usage/pairing-http-work";
 import type { PairingHttpRequestLifetime, PairingHttpVerifier } from "./pairing-http";
 import { enrollmentAccountName } from "./enrollment-contract";
-import { usageFailure, type UsageFailureStage } from "./usage-failure";
+import { usageFailure, verifierFailureStage, type UsageFailureStage } from "./usage-failure";
 
 export interface PrivateDaysHttpEnvironment {
   readonly ACCOUNT_ENROLLMENTS: Readonly<{
@@ -67,7 +67,7 @@ export function createPrivateDaysHttpHandler(dependencies: PrivateDaysHttpDepend
         failureStage = "request_verify";
         const scope = verifier.beginRequest(ctx); work.onStop(() => { scope.finish(); });
         const verified = await scope.verify(token); work.guard();
-        if (!verified.ok) return verified.error === "unauthorized" ? pairingHttpFailure(401) : usageFailure("verifier_fetch");
+        if (!verified.ok) return verified.error === "unauthorized" ? pairingHttpFailure(401) : usageFailure(verifierFailureStage(scope));
         let expiry: number | null = null;
         const guard = () => {
           work.guard();
@@ -87,13 +87,15 @@ export function createPrivateDaysHttpHandler(dependencies: PrivateDaysHttpDepend
         failureStage = "rpc_dispatch";
         const encoded = await work.stage(PAIRING_HTTP_STAGE_MS, async () => {
           guard();
-          failureStage = "rpc_call";
           // The account assertion came from the authenticated coordinator. The
           // owned ordinary projection is accepted by actual workerd RPC.
-          const rpc = env.ACCOUNT_ENROLLMENTS.getByName(enrollmentAccountName(query.accountId)).readImportedDays(Object.freeze({
+          const stub = env.ACCOUNT_ENROLLMENTS.getByName(enrollmentAccountName(query.accountId));
+          failureStage = "rpc_call";
+          const rpc = stub.readImportedDays(Object.freeze({
             schemaVersion: 1, accountId: query.accountId, sessionExpiresAtMs: query.sessionExpiresAtMs,
             firstUtcDay: query.firstUtcDay, dayCount: query.dayCount,
           }));
+          failureStage = "rpc_pending";
           const boxed = await new Promise<{ raw: unknown }>((resolve, reject) => {
             void rpc.then(raw => { resolve({ raw }); }, error => { failureStage = "rpc_rejected"; reject(error); });
           });

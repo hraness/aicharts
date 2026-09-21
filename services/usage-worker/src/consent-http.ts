@@ -6,7 +6,7 @@ import { privateDaysHttpLength } from "../../../lib/usage/private-days-http-cont
 import { pairingHttpWork, type PairingHttpEffects } from "../../../lib/usage/pairing-http-work";
 import type { PairingHttpRequestLifetime, PairingHttpVerifier } from "./pairing-http";
 import { enrollmentAccountName } from "./enrollment-contract";
-import { usageFailure, type UsageFailureStage } from "./usage-failure";
+import { usageFailure, verifierFailureStage, type UsageFailureStage } from "./usage-failure";
 
 export interface ConsentHttpEnvironment {
   readonly ACCOUNT_ENROLLMENTS: Readonly<{
@@ -72,7 +72,7 @@ export function createConsentHttpHandler(dependencies: ConsentHttpDependencies) 
         failureStage = "request_verify";
         const scope = verifier.beginRequest(ctx); work.onStop(() => { scope.finish(); });
         const verified = await scope.verify(token); work.guard();
-        if (!verified.ok) return verified.error === "unauthorized" ? pairingHttpFailure(401) : usageFailure("verifier_fetch");
+        if (!verified.ok) return verified.error === "unauthorized" ? pairingHttpFailure(401) : usageFailure(verifierFailureStage(scope));
         let expiry: number | null = null;
         const guard = () => {
           work.guard();
@@ -92,16 +92,17 @@ export function createConsentHttpHandler(dependencies: ConsentHttpDependencies) 
         failureStage = "rpc_dispatch";
         const encoded = await work.stage(PAIRING_HTTP_STAGE_MS, async () => {
           guard();
-          failureStage = "rpc_call";
           // The account assertion came from the authenticated coordinator. The
           // owned ordinary projection is accepted by actual workerd RPC.
           const stub = env.ACCOUNT_ENROLLMENTS.getByName(enrollmentAccountName(query.accountId));
+          failureStage = "rpc_call";
           const rpc = query.operation === "status"
             ? stub.readLeaderboardConsent(Object.freeze({ schemaVersion: 1, accountId: query.accountId,
                 sessionExpiresAtMs: query.sessionExpiresAtMs, operation: "status" }))
             : stub.setLeaderboardConsent(Object.freeze({ schemaVersion: 1, accountId: query.accountId,
                 sessionExpiresAtMs: query.sessionExpiresAtMs, operation: "set",
                 consent: query.consent, publicHandle: query.publicHandle }));
+          failureStage = "rpc_pending";
           const boxed = await new Promise<{ raw: unknown }>((resolve, reject) => {
             void rpc.then(raw => { resolve({ raw }); }, error => { failureStage = "rpc_rejected"; reject(error); });
           });

@@ -17,6 +17,7 @@ export interface PairingHttpVerifier {
     verify(input: unknown): Promise<Readonly<{ ok: true; value: unknown }> | Readonly<{ ok: false; error: "unauthorized" | "unavailable" }>>;
     isCurrent(handle: unknown): boolean;
     finish(): void;
+    readonly failureStage?: unknown;
   }>;
 }
 export interface PairingHttpDependencies extends PairingHttpEffects {

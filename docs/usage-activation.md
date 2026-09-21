@@ -6,29 +6,33 @@ rollback checks are complete.
 
 ## Recorded production evidence
 
-On September 20, commit `f9febdfb7e7be1b04f04d7f29f67a41c79033f1b`
-([PR 332](https://github.com/hraness/aicharts/pull/332)) deployed to both
+On September 21 (UTC), commit `79f6452a7fa64e2234f33ce41a83fc92c58cac4a`
+([PR 347](https://github.com/hraness/aicharts/pull/347)) deployed to both
 production services after the complete source gate and protected-main checks.
-Vercel deployment `dpl_F8s93JB5rF1p855yiep6BGNKvZc5` served the canonical
-`aicharts.io` alias with the expected project, team, and source identity.
-All four usage/leaderboard pages and three anonymous API checks passed with
-the exact deployment proof. The legacy private API required authentication;
-detailed and public APIs remained unavailable.
+Vercel deployment `dpl_7kmgyeBkXBTGaT1s9cpk9KowY77C` served the canonical
+`aicharts.io` alias with the expected project, team, production target, and
+source identity. This is a dated inspection; reinspect the alias before using
+it as evidence for a later source change.
 
-Worker deployment `8a6ddf61-4229-405a-8c1d-64c6f48c1d9f` served version
-`3d7728a4-78b2-47e3-91e5-260ad3f6b97a` at 100% traffic. Current settings and
-immutable-version bindings preserved all four SQLite namespaces, both R2
-buckets, enrollment generation, restore authority, existing private flags,
-and the fail-closed route. The workers.dev and Preview URLs remained disabled,
-with no cron schedules. The deployed bundle matched the reviewed 561,689-byte dry run
-(`sha256:14ebd6d4935577b9f37f703a42e2871c1542d349e6e26e4de84fc137f5783081`).
-All four anonymous Worker probes passed, including native status response
-framing. HTTP refusals are health evidence; the separate provider readback
-establishes the active version.
+Worker deployment `e7347f01-472e-40c5-aef6-d6877f64f570` served version
+`efda5344-fe6b-4ee5-9c35-cc63caaadd77` at 100% traffic. Provider readback
+confirmed all four existing SQLite namespaces, both R2 buckets, enrollment
+generation, restore authority, six enabled private flags, and the fail-closed
+route. The workers.dev and Preview URLs remained disabled, with no cron
+schedules. The private production configuration preserved those identities;
+the repository's Wrangler fixture was not used as production configuration.
+
+The signed-in browser verified its account identity, but daily usage and
+leaderboard consent remained unavailable. The daily read reached the Worker
+and returned HTTP 503 with the fixed diagnostic stage `rpc_call`. In that
+deployed version, the stage includes namespace lookup, method invocation,
+and waiting for the account response; it does not identify which failed.
+These observations establish authenticated request routing and refusal
+behavior, not successful private numeric readback or production readiness.
 
 Both `AICHARTS_USAGE_STATS_ENABLED` and `AICHARTS_USAGE_PUBLIC_READ_ENABLED`
 remain disabled on both services. Retain Worker version
-`3d7728a4-78b2-47e3-91e5-260ad3f6b97a` as the schema-6-aware flags-off
+`c40fc2b2-fce2-4189-8cdb-458bed6e9cda` as the preceding schema-6-aware flags-off
 recovery artifact before any detailed-profile activation. Restoring it
 contains new operations while retaining stored data and committed ownership;
 it does not undo a completed v2 transition. Reinspect its identity before use.
