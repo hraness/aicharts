@@ -7,8 +7,11 @@ use std::{
 };
 
 fn jwt(user: &str) -> String {
+    jwt_sub(&format!("auth0|{user}"))
+}
+fn jwt_sub(sub: &str) -> String {
     let claims = base64::engine::general_purpose::URL_SAFE_NO_PAD
-        .encode(serde_json::to_vec(&json!({"sub":format!("auth0|{user}")})).unwrap());
+        .encode(serde_json::to_vec(&json!({"sub":sub})).unwrap());
     format!("header.{claims}.signature")
 }
 fn auth() -> Credential {
@@ -36,7 +39,14 @@ impl Transport for Fixture {
     fn summary(&mut self, _: &Credential, _: Duration) -> Result<Vec<u8>> {
         Ok(br#"{"billingCycleStart":"2026-09-01T00:00:00Z","billingCycleEnd":"2026-10-01T00:00:00Z"}"#.to_vec())
     }
-    fn page(&mut self, _: &Credential, page: usize, _: Duration, _: usize) -> Result<Vec<u8>> {
+    fn page(
+        &mut self,
+        _: &Credential,
+        page: usize,
+        _: (u64, u64),
+        _: Duration,
+        _: usize,
+    ) -> Result<Vec<u8>> {
         self.calls += 1;
         assert_eq!(page, self.calls);
         self.pages.pop_front().expect("bounded fixture request")
@@ -54,27 +64,81 @@ fn credential_requires_exact_subject_cookie_binding_and_never_debugs_cookie() {
     assert!(credential(&format!("{access};secret=bad"), true).is_err());
 }
 #[test]
+fn credential_derives_account_from_identity_provider_prefixed_subjects() {
+    // Cursor's migrated session tokens carry Auth0 connection names such as
+    // `google-oauth2|`; the account id is the final `user_` segment and the
+    // cookie prefix must still bind to it exactly.
+    for sub in ["google-oauth2|user_test", "workos|user_test", "auth0|user_test", "user_test"] {
+        let access = jwt_sub(sub);
+        let bound = credential(&format!("user_test%3A%3A{access}"), false).unwrap();
+        assert_eq!(bound.account, auth().account);
+    }
+    // IdP-backed subjects carry the upstream identity, not the account id; the
+    // cookie prefix supplies it instead. Desktop tokens have no prefix and
+    // cannot derive an account from these subjects.
+    let idp = jwt_sub("google-oauth2|112374926342319287763");
+    let bound = credential(&format!("user_test%3A%3A{idp}"), false).unwrap();
+    assert_eq!(bound.account, auth().account);
+    assert!(credential(&idp, true).is_err());
+    // With an IdP subject no embedded `user_` exists to prove the binding, so
+    // the cookie prefix is authoritative: a different prefix binds a different
+    // account rather than aliasing user_test's.
+    let other = credential(&format!("user_other%3A%3A{idp}"), false).unwrap();
+    assert_ne!(other.account, auth().account);
+    assert!(credential(&jwt_sub("google-oauth2|service_account"), true).is_err());
+    assert_ne!(
+        credential(&jwt_sub("google-oauth2|user_other"), true)
+            .unwrap()
+            .account,
+        auth().account
+    );
+    let foreign = jwt_sub("google-oauth2|user_test");
+    assert!(credential(&format!("user_other%3A%3A{foreign}"), false).is_err());
+}
+#[test]
 fn pagination_is_complete_and_projects_only_recognized_usage_fields() {
     let mut fixture = Fixture::new(vec![
         page(2, vec![event(1789779600000, 10)]),
         page(2, vec![event(1789779700000, 20)]),
     ]);
-    let rows = fetch(&mut fixture, &auth(), Instant::now()).unwrap();
+    let rows = fetch(&mut fixture, &auth(), Instant::now(), None).unwrap();
     assert_eq!(rows.len(), 2);
     assert_eq!(fixture.calls, 2);
     assert!(rows.iter().all(|r| r.get("privateTranscript").is_none()));
 }
 #[test]
-fn repeated_pages_changed_totals_and_empty_truncation_are_rejected() {
+fn repeated_pages_shrinking_totals_and_empty_truncation_are_rejected() {
     let first = page(2, vec![event(1789779600000, 10)]);
     for last in [
         first.clone(),
-        page(3, vec![event(1789779700000, 20)]),
+        page(1, vec![event(1789779700000, 20)]),
         page(2, vec![]),
     ] {
         let mut fixture = Fixture::new(vec![first.clone(), last]);
-        assert!(fetch(&mut fixture, &auth(), Instant::now()).is_err());
+        assert!(fetch(&mut fixture, &auth(), Instant::now(), None).is_err());
     }
+}
+#[test]
+fn append_only_drift_is_tolerated_and_boundary_duplicates_collapse() {
+    // The advertised total may grow while paging: Cursor clients repost usage
+    // with past timestamps inside the pinned window. The refresh completes on
+    // the newest advertised count.
+    let grown = event(1789779800000, 30);
+    let mut fixture = Fixture::new(vec![
+        page(2, vec![event(1789779600000, 10)]),
+        page(3, vec![event(1789779700000, 20), grown.clone()]),
+    ]);
+    let rows = fetch(&mut fixture, &auth(), Instant::now(), None).unwrap();
+    assert_eq!(rows.len(), 3);
+    // A boundary-shifted page can re-show an identical event; it collapses
+    // instead of double counting, while a mass duplicate still refuses.
+    let duped = event(1789779600000, 10);
+    let mut fixture = Fixture::new(vec![
+        page(2, vec![duped.clone()]),
+        page(2, vec![duped, event(1789779700000, 20)]),
+    ]);
+    let rows = fetch(&mut fixture, &auth(), Instant::now(), None).unwrap();
+    assert_eq!(rows.len(), 2);
 }
 #[test]
 fn malformed_usage_is_not_silently_dropped() {
@@ -84,19 +148,19 @@ fn malformed_usage_is_not_silently_dropped() {
         json!({"timestamp":1789779600000u64,"model":"auto","chargedCents":"NaN"}),
     ] {
         let mut fixture = Fixture::new(vec![page(1, vec![row])]);
-        assert!(fetch(&mut fixture, &auth(), Instant::now()).is_err());
+        assert!(fetch(&mut fixture, &auth(), Instant::now(), None).is_err());
     }
     let mut fixture = Fixture::new(vec![serde_json::to_vec(
         &json!({"totalUsageEventsCount":0,"challenge":"blocked"}),
     )
     .unwrap()]);
-    assert!(fetch(&mut fixture, &auth(), Instant::now()).is_err());
+    assert!(fetch(&mut fixture, &auth(), Instant::now(), None).is_err());
 }
 #[test]
 fn total_deadline_refuses_late_success_without_publishing() {
     let mut fixture = Fixture::new(vec![]);
     assert_eq!(
-        fetch(&mut fixture, &auth(), Instant::now() - BUDGET).unwrap_err(),
+        fetch(&mut fixture, &auth(), Instant::now() - BUDGET, None).unwrap_err(),
         "cursor_refresh_timeout"
     );
     assert_eq!(fixture.calls, 0);
