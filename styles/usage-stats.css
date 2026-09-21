@@ -114,6 +114,9 @@
 .usage-stats__coverage p { color: var(--muted); font-size: .8rem; max-inline-size: 75ch; }
 .usage-stats__coverage p:last-child { margin-block-start: 1rem; }
 .usage-stats__coverage th[scope="row"] { white-space: nowrap; }
+.usage-stats__client-coverage { margin-block: 1.25rem; }
+.usage-stats__client-coverage > p:last-child { padding-block-end: 1.1rem; }
+.usage-stats__client-coverage table { min-inline-size: 24rem; }
 .usage-stats__notice { background: var(--surface-raised); font-size: .9rem; margin-block: 1rem; padding: 1.25rem; }
 .usage-stats__notice h2, .usage-stats__notice h3 { font-size: 1.1rem; }
 .usage-stats__notice p { color: var(--muted); margin-block: .5rem; max-inline-size: 65ch; }
