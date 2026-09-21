@@ -51,6 +51,56 @@ export const HOME_EDITORIAL_SLUGS = [
 ] as const satisfies readonly BlogSlug[];
 
 export const BLOG_ARTICLE_ADMISSIONS = {
+  "harness-design-coding-agents": {
+    canonicalOwner: blogArticlePath("harness-design-coding-agents"),
+    decision: "keep",
+    evidenceOwner: EVIDENCE_OWNER,
+    evidenceType: "primary-source-synthesis",
+    harmIfWrong:
+      "A conditional component effect measured on four open-weight models in one research harness could be quoted as a universal rule for commercial harnesses, or a Terminal-Bench 2.1 rate could be compared numerically with the site’s Terminal-Bench 4 rows.",
+    hostFit:
+      "AI Charts already stores model, harness, and setting as one configuration and explains what a harness study measures, so it can place a component-level ablation beside the chart and name the benchmark-version gap without merging the scales.",
+    humanReviewedOn: null,
+    lifecycleState: "indexable",
+    nearestUrls: [
+      {
+        distinction:
+          "HarnessTax moves the same frontier model across three complete products and reports same-model cost gaps; this page explains a study that holds one loop fixed and toggles planning, action space, and context management inside it.",
+        url: blogArticlePath("harnesstax-coding-agent-harness"),
+      },
+      {
+        distinction:
+          "The holdout page asks whether a public-suite score generalizes to unseen cases; this page reports component effects on two public suites and keeps their exposure risk as a limit.",
+        url: blogArticlePath("coding-agent-score-holdouts"),
+      },
+      {
+        distinction:
+          "The AA Index page derives a cost frontier from checked single-configuration rows; this page reconstructs another evaluator’s within-harness cost and success tables for models the snapshot does not store.",
+        url: blogArticlePath("aa-index-cost-coding-agents"),
+      },
+    ],
+    originalContribution:
+      "A typed reconstruction of the paper’s 176 printed settings, a recomputation of the model-averaged managed-minus-T0 gap at each window budget that matches the reported 35.7, 15.9, 5.5, and 2.7 points, a tie-aware check of the seven-of-eight lowest-cost claim for staged elision, and an explicit statement that the paper’s Terminal-Bench 2.1 rates and the site’s Terminal-Bench 4 accuracy are different task sets.",
+    overlapDecision:
+      "Keep separately: no current route explains component-level harness ablations under a fixed execution loop, the five context-management tiers, or the planning and action-space crossover by model capability.",
+    primaryEvidence:
+      "The arXiv paper owns every success rate, cost, gap, trajectory statistic, quote, and limitation; the checked Artificial Analysis snapshot owns only the retrieval date and the absence or presence of same-name rows; the checked Terminal-Bench 4 constants own the charted version, task count, and trial count.",
+    primarySourceIds: ["fanHarnessDesign", "artificialAnalysisCodingAgents"],
+    readerJob:
+      "Understand which harness components (planning, action space, and context management) move coding-agent success and cost under a fixed loop, under what model and budget conditions, and how to read those results beside the AI Charts chart without merging benchmark versions.",
+    reassessOn: "2026-10-26",
+    reviewedBy: REVIEWED_BY,
+    reviewedOn: "2026-09-21",
+    scores: {
+      factualConfidence: 2,
+      hostFit: 2,
+      maintenanceValue: 1,
+      originalEvidence: 2,
+      readerUtility: 2,
+      voiceIntegrity: 2,
+    },
+    sourceCheckedOn: "2026-09-21",
+  },
   "harnesstax-coding-agent-harness": {
     canonicalOwner: blogArticlePath("harnesstax-coding-agent-harness"),
     decision: "keep",
