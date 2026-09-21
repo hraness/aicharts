@@ -485,6 +485,19 @@ fn merge(previous: Option<&[u8]>, fresh: Vec<Value>) -> Result<Vec<u8>> {
     }
     let fresh = fresh.iter().map(project).collect::<Result<Vec<_>>>()?;
     let days: BTreeSet<_> = fresh.iter().map(day).collect::<Result<_>>()?;
+    // Cursor both posts past-dated events late and ages old events out of the
+    // endpoint, so a refetched day can report fewer events than were observed
+    // before. Publication preserves history and never accepts a decline, so a
+    // covered day unions: cached events absent from the fresh page stay, and
+    // identical projections still count once.
+    let fresh_fingerprints: BTreeSet<Vec<u8>> = fresh
+        .iter()
+        .map(|event| {
+            serde_json::to_vec(event)
+                .map(|bytes| Sha256::digest(&bytes).to_vec())
+                .map_err(|_| INVALID)
+        })
+        .collect::<Result<_>>()?;
     let mut rows = Vec::new();
     if let Some(previous) = previous {
         let previous: Value =
@@ -495,7 +508,11 @@ fn merge(previous: Option<&[u8]>, fresh: Vec<Value>) -> Result<Vec<u8>> {
             .ok_or("cursor_refresh_cache_invalid")?;
         for event in events {
             let event = project(event).map_err(|_| "cursor_refresh_cache_invalid")?;
-            if !days.contains(&day(&event)?) {
+            let covered = days.contains(&day(&event)?);
+            let identical = serde_json::to_vec(&event)
+                .map(|bytes| fresh_fingerprints.contains(&Sha256::digest(&bytes).to_vec()))
+                .map_err(|_| INVALID)?;
+            if !covered || !identical {
                 rows.push(event);
             }
         }
@@ -622,5 +639,5 @@ fn refresh(
         cache.create_binding(&serde_json::to_vec(&expected).map_err(|_| INVALID)?)?;
     }
     cache.replace(&name, &bytes)?;
-    serde_json::to_string(&json!({"client":"cursor","refreshedEvents":received,"cacheBytes":bytes.len(),"historyPolicy":"replace_present_utc_days_retain_absent_days"})).map_err(|_| INVALID)
+    serde_json::to_string(&json!({"client":"cursor","refreshedEvents":received,"cacheBytes":bytes.len(),"historyPolicy":"union_present_utc_days_retain_absent_days"})).map_err(|_| INVALID)
 }

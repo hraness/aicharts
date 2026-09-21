@@ -171,18 +171,29 @@ fn total_deadline_refuses_late_success_without_publishing() {
     assert_eq!(fixture.calls, 0);
 }
 #[test]
-fn merge_replaces_present_utc_days_and_retains_older_absent_days() {
+fn merge_unions_present_utc_days_and_retains_older_absent_days() {
     let older = event(1789606800000, 5);
     let old_current = event(1789779600000, 10);
     let new_current = event(1789779700000, 20);
-    let previous = merge(None, vec![older.clone(), old_current]).unwrap();
+    let previous = merge(None, vec![older.clone(), old_current.clone()]).unwrap();
+    // Upstream may age out or correct past-dated events; an event observed in an
+    // earlier fetch stays even when the fresh page for its day omits it, so a
+    // later refresh can never make a published day decline.
     let result = merge(Some(&previous), vec![new_current.clone()]).unwrap();
     let result: Value = serde_json::from_slice(&result).unwrap();
     let rows = result["usageEventsDisplay"].as_array().unwrap();
     assert_eq!(
         rows,
-        &vec![project(&older).unwrap(), project(&new_current).unwrap()]
+        &vec![
+            project(&older).unwrap(),
+            project(&old_current).unwrap(),
+            project(&new_current).unwrap()
+        ]
     );
+    // An event that the fresh page still carries is not counted twice.
+    let result = merge(Some(&previous), vec![old_current, new_current]).unwrap();
+    let result: Value = serde_json::from_slice(&result).unwrap();
+    assert_eq!(result["usageEventsDisplay"].as_array().unwrap().len(), 3);
     assert_eq!(
         merge(Some(&previous), vec![]).unwrap_err(),
         "cursor_refresh_empty_preserved"
