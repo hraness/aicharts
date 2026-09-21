@@ -270,7 +270,8 @@ as separate observations.
 
 ### Atlas imports: maintained selections, not universal live leaderboards
 
-`bun run atlas:reasoning:refresh` and `bun run atlas:multimodal:refresh` run in
+`bun run atlas:reasoning:refresh`, `bun run atlas:multimodal:refresh`, and
+`bun run atlas:vals:refresh` run in
 the four-hour benchmark lane and the daily full run. Their offline `:check`
 commands are part of `check:generated`. Both outputs join the existing owned-file
 boundary, complete application gate, exact-head CI, and protected-branch PR
@@ -327,6 +328,55 @@ release/source review queue, then receive an explicit catalog and data-admission
 decision. Do not loosen a failed version or cohort assertion merely to make the
 scheduled run green. Inspect the source change, preserve the old facet, revise
 the comparison policy and fixtures, and run the full gate before publishing.
+
+### Independent-evaluator results
+
+A benchmark owner's leaderboard and a vendor's launch claim are not the only
+kinds of evidence. A third party can also build an evaluation, keep its test set
+private, and run every model itself. That is a distinct evidence class, and
+`evidenceLabel` names it: `Independent evaluator · private test set`.
+
+[Vals AI](https://www.vals.ai) is the first source admitted under it. Vals
+publishes two kinds of board, and only one of them belongs here:
+
+- A board whose `dataset_type` is `private` is an evaluation Vals owns, scores,
+  and alone can reproduce. Those are admitted.
+- A board whose `dataset_type` is `public` is Vals re-running a benchmark
+  someone else owns, such as SWE-bench Verified, GPQA Diamond, Terminal-Bench,
+  or Terminal-Bench-Science. A re-run is a different system from the owner's
+  leaderboard: different harness, different settings, different run count. It
+  must never share a series with the owner snapshot the site already carries.
+
+`lib/benchmark-atlas-vals-data.ts` enforces that boundary with a literal rather
+than a review step, so a public board fails the schema instead of reaching a
+chart. The importer fails the same way, with the reason stated in the error.
+
+The admitted set is finance, legal, tax, medical, and the publisher's own
+GDP-weighted composite. Those are professional-domain evaluations the rest of
+the portfolio does not measure. `VALS_ADMITTED_BENCHMARKS` pins each board's
+slug, catalog ID, family, and published version; a version bump fails the
+schema and requires a separate admission, as with Intelligence Index v4.1.1 and
+v4.3.
+
+Three source-fidelity rules apply to every Vals import:
+
+1. Identifiers stay exactly as Vals publishes them. `meta/muse_spark_1_3_max`
+   and `anthropic/claude-haiku-4-5-20251001-thinking` are not prettified into
+   guessed product names, and the provider field is shown beside the ID.
+2. Cost follows the publisher's own `use_cost_per_test` flag. When Vals does not
+   present its cost column as comparable, as on MedCode, the board carries no
+   cost axis and the rows carry no cost, even though the source page contains
+   numbers.
+3. Agentic and one-shot boards are never mixed. MedCode is scored one-shot and
+   says so on every observation.
+
+Vals publishes no data license and describes its test sets as proprietary. Its
+`robots.txt` permits crawling and the page payload is public, which is not the
+same as a redistribution grant. Every observation therefore links to its exact
+source page, and the catalog entry names Vals as the evaluator. A written
+permission or a published API from Vals would replace this position; until then
+the import stays attributed, bounded to five boards, and removable by deleting
+one data file and its entries.
 
 The public `/data/benchmark-atlas.json` catalog links bounded per-cohort JSON at
 `/data/benchmark-atlas/{benchmarkId}`. Only charted IDs have downloads; source
