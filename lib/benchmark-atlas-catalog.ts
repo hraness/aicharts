@@ -6,6 +6,7 @@ import { REASONING_ATLAS_DATASETS, REASONING_ATLAS_ENTRIES } from "./benchmark-a
 import { INTELLIGENCE_V43_ATLAS_DATASET, INTELLIGENCE_V43_ATLAS_ENTRY } from "./benchmark-atlas-intelligence-v4-3";
 import { AUDIO_ATLAS_DATASETS, AUDIO_ATLAS_ENTRIES } from "./benchmark-atlas-audio";
 import { ARENA_MEDIA_ATLAS_DATASETS, ARENA_MEDIA_ATLAS_ENTRIES } from "./benchmark-atlas-arena-media";
+import { VALS_ATLAS_DATASETS, VALS_ATLAS_ENTRIES } from "./benchmark-atlas-vals";
 
 // Lead with the primary terminal benchmark, not the retained historical general index.
 export const ATLAS_ENTRIES: readonly BenchmarkAtlasEntry[] = [
@@ -13,11 +14,12 @@ export const ATLAS_ENTRIES: readonly BenchmarkAtlasEntry[] = [
   INTELLIGENCE_V43_ATLAS_ENTRY,
   ...ARENA_MEDIA_ATLAS_ENTRIES,
   ...CORE_ATLAS_ENTRIES.filter(entry => entry.id !== "terminal-bench-4"),
+  ...VALS_ATLAS_ENTRIES,
   ...REASONING_ATLAS_ENTRIES,
   ...MULTIMODAL_ATLAS_ENTRIES,
   ...AUDIO_ATLAS_ENTRIES,
 ];
-export const ATLAS_DATASETS: readonly BenchmarkAtlasDataset[] = [INTELLIGENCE_V43_ATLAS_DATASET, ...BENCHMARK_ATLAS_DATASETS, ...REASONING_ATLAS_DATASETS, ...MULTIMODAL_ATLAS_DATASETS, ...AUDIO_ATLAS_DATASETS, ...ARENA_MEDIA_ATLAS_DATASETS];
+export const ATLAS_DATASETS: readonly BenchmarkAtlasDataset[] = [INTELLIGENCE_V43_ATLAS_DATASET, ...BENCHMARK_ATLAS_DATASETS, ...REASONING_ATLAS_DATASETS, ...MULTIMODAL_ATLAS_DATASETS, ...AUDIO_ATLAS_DATASETS, ...ARENA_MEDIA_ATLAS_DATASETS, ...VALS_ATLAS_DATASETS];
 
 const checked = validateAtlasCatalog(ATLAS_ENTRIES, ATLAS_DATASETS);
 if (!checked.ok) throw new Error("Invalid checked benchmark atlas", { cause: checked.error });
