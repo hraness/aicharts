@@ -103,7 +103,6 @@ import { BlogIndex } from "./page";
 import { atomFeed } from "./atom-feed";
 import { GET as getAtomFeed } from "./feed.xml/route";
 import {
-  BLOG_EDITORIAL_IMAGES,
   EDITORIAL_IMAGE_HEIGHT,
   EDITORIAL_IMAGE_WIDTH,
   SLOPCAMERA_PACKAGE,
