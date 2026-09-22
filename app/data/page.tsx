@@ -389,8 +389,8 @@ export default function CodingAgentDatasetPage() {
               Retrieved <time dateTime={currentIntelligence.source.retrievedAt}>{formatRetrievedAt(currentIntelligence.source.retrievedAt)}</time>.
             </p>
             <p>
-              <a href="/data/artificial-analysis-intelligence-v4-3.json" download="aicharts-artificial-analysis-intelligence-v4-3.json">Download current Intelligence v4.3 JSON</a>{" "}
-              · <a href="#atlas-aa-intelligence-4-3">Full v4.3 comparison rules and limitations</a>.
+              <a href="/data/artificial-analysis-intelligence-v4-3.json" download="aicharts-artificial-analysis-intelligence-v4-3.json">Download current Intelligence v{currentIntelligence.benchmark.version} JSON</a>{" "}
+              · <a href="#atlas-aa-intelligence-4-3">Full v{currentIntelligence.benchmark.version} comparison rules and limitations</a>.
               Keep these results separate from the frozen v4.1.1 snapshot below; its evaluation roster and weights differ.
             </p>
 
@@ -595,7 +595,7 @@ export default function CodingAgentDatasetPage() {
                 source evaluation. They are not price or latency guarantees.
               </li>
               <li>
-                The current v4.3 Intelligence snapshot is checked every four hours and the
+                The current v{currentIntelligence.benchmark.version} Intelligence snapshot is checked every four hours and the
                 coding-agent snapshot daily; neither is a real-time mirror. The historical
                 v4.1.1 snapshot is frozen. Use the relevant version and retrieval timestamp when citing a value.
               </li>
@@ -622,7 +622,7 @@ export default function CodingAgentDatasetPage() {
             <ol>
               <li>
                 <a href="/data/artificial-analysis-intelligence-v4-3.json">
-                  Download the current Intelligence v4.3 JSON snapshot
+                  Download the current Intelligence v{currentIntelligence.benchmark.version} JSON snapshot
                 </a>
                 <span>
                   Model-level Intelligence score, output-only tokens, comparable

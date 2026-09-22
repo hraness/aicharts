@@ -41,7 +41,7 @@ function sourcePayload() {
   return result.value;
 }
 
-function sourcePage(payload = sourcePayload(), version = "4.3", evaluations: readonly string[] = ARTIFICIAL_ANALYSIS_INTELLIGENCE_V43_EVALUATIONS): string {
+function sourcePage(payload = sourcePayload(), version = "4.3.2", evaluations: readonly string[] = ARTIFICIAL_ANALYSIS_INTELLIGENCE_V43_EVALUATIONS): string {
   const dataset = {
     "@context": "https://schema.org",
     "@type": "Dataset",
@@ -131,7 +131,7 @@ describe("Artificial Analysis Intelligence v4.3 refresh", () => {
 
   test("selects native resources and null costs identically while pinning the new benchmark", () => {
     const snapshot = derivedSnapshot();
-    expect(snapshot.benchmark.version).toBe("4.3");
+    expect(snapshot.benchmark.version).toBe("4.3.2");
     expect(snapshot.benchmark.evaluationCount).toBe(10);
     expect(snapshot.records).toEqual(current.records);
     expect(snapshot.selection.positiveCostRecordCount).toBe(current.selection.positiveCostRecordCount);
@@ -156,7 +156,7 @@ describe("Artificial Analysis Intelligence v4.3 refresh", () => {
     for (const failure of ["version", "scores", "time", "fetch"] as const) {
       let writes = 0;
       const payload = sourcePayload();
-      const html = sourcePage(payload, failure === "version" ? "4.4" : "4.3");
+      const html = sourcePage(payload, failure === "version" ? "4.4" : "4.3.2");
       if (failure === "scores") payload.models[0]!.intelligenceIndex = 1;
       const result = await refreshArtificialAnalysisIntelligenceV43({
         fetchPage: async () => failure === "fetch" ? err(new Error("Unavailable")) : ok(html),

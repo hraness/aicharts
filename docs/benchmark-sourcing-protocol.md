@@ -43,7 +43,7 @@ share a comparison series. AutomationBench remains on the watchlist because
 its cross-application workflow signal overlaps the selected professional-work
 and computer-use axes.
 
-Artificial Analysis Intelligence Index v4.3 leads the homepage as a separate
+Artificial Analysis Intelligence Index v4.3.2 leads the homepage as a separate
 model-level Pareto view, not a sixth portfolio role or a composite created by
 AI Charts. The ten-evaluation owner index weights agents 30%, coding 20%,
 scientific reasoning 20%, and general capability 30%. The efficiency chart pairs that owner score
@@ -56,12 +56,15 @@ checked JSON with cost normalized to unavailable; rows with incomplete cost are
 excluded. Both selectable axes omit the complete zero-total rows so output-token
 and cost frontiers use the same positive-cost cohort.
 
-The v4.3 importer pins the exact ten-evaluation roster and cross-checks every
-published Dataset JSON-LD leaderboard score against its native payload record.
-It keeps native per-task output tokens and costs; it never divides evaluation
-totals by an inferred denominator. Historical v4.1.1 data and downloads stay
-frozen, with their original nine-evaluation weights. Future index changes
-require a separate versioned admission, not a relabeled historical series.
+The current importer pins the exact ten-evaluation v4.3.2 roster
+(AA-Briefcase v1.1, GDPval-AA v2.1, AutomationBench-AA, Terminal-Bench 4.0,
+SciCode, Humanity's Last Exam, GDP.pdf, CritPt, AA-Omniscience, AA-LCR v1.1)
+and cross-checks every published Dataset JSON-LD leaderboard score against its
+native payload record. It keeps native per-task output tokens and costs; it
+never divides evaluation totals by an inferred denominator. Historical v4.1.1
+data and downloads stay frozen, with their original nine-evaluation weights.
+Future index changes require a separate versioned admission, not a relabeled
+historical series.
 
 ## Cross-release comparison rule
 

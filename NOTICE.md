@@ -16,7 +16,7 @@ AI Charts includes normalized snapshots of publicly displayed benchmark facts so
 
 Official model release dates are manually checked against the provider-owned announcements, changelogs, documentation, and model indexes linked in `data/model-release-dates.json`. Marketplace listing timestamps and sitemap last-modified values are discovery metadata, not release dates.
 
-The current Artificial Analysis Intelligence v4.3 model snapshot refreshes every four hours; historical v4.1.1 is frozen. The heavier Artificial Analysis coding-agent snapshot refreshes daily. The refresh automation owns eleven checked data snapshots, while historical Intelligence data and manually reviewed release dates remain outside that write set.
+The current Artificial Analysis Intelligence v4.3.2 model snapshot refreshes every four hours; historical v4.1.1 is frozen. The heavier Artificial Analysis coding-agent snapshot refreshes daily. The refresh automation owns eleven checked data snapshots, while historical Intelligence data and manually reviewed release dates remain outside that write set.
 
 Arena media ratings derive from the owner-released [Arena leaderboard dataset](https://huggingface.co/datasets/lmarena-ai/leaderboard-dataset), licensed under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). AI Charts selects four overall task cohorts and normalizes field names without changing the published ratings, interval bounds, or vote counts. Attribution, the pinned source, and the change statement are preserved in each public dataset projection; see [the complete Arena data notice](data/arena-media-LICENSE.md). Dataset licensing is separate from the licenses of the evaluated models.
 

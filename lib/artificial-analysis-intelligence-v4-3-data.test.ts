@@ -55,7 +55,7 @@ describe("Artificial Analysis Intelligence v4.3 snapshot", () => {
 
   test("projects native values without mixing historical scores or fabricating uncertainty", () => {
     expect(validateAtlasCatalog([INTELLIGENCE_V43_ATLAS_ENTRY], [INTELLIGENCE_V43_ATLAS_DATASET]).ok).toBeTrue();
-    expect(INTELLIGENCE_V43_ATLAS_DATASET.version).toBe("4.3");
+    expect(INTELLIGENCE_V43_ATLAS_DATASET.version).toBe("4.3.2");
     expect(INTELLIGENCE_V43_ATLAS_DATASET.points.length).toBe(current.records.length);
     for (const point of INTELLIGENCE_V43_ATLAS_DATASET.points) {
       const record = current.records.find(candidate => candidate.id === point.id)!;
@@ -64,5 +64,18 @@ describe("Artificial Analysis Intelligence v4.3 snapshot", () => {
       expect(point.uncertainty).toBeNull();
       expect(point.sourceUrl).toBe(record.detailsUrl);
     }
+  });
+
+  test("admits Xiaomi MiMo-V2.6-Pro from the current publisher leaderboard", () => {
+    const parsed = parseArtificialAnalysisIntelligenceV43Snapshot(current);
+    if (!parsed.ok) throw parsed.error;
+    const mimo = parsed.value.records.find(record => record.slug === "mimo-v2-6-pro");
+    expect(mimo?.name).toBe("MiMo-V2.6-Pro");
+    expect(mimo?.creator.slug).toBe("xiaomi");
+    expect(mimo?.detailsUrl).toBe("https://artificialanalysis.ai/models/mimo-v2-6-pro");
+    expect(mimo?.intelligenceIndex).toBeGreaterThan(0);
+    expect(mimo?.intelligenceIndex).toBeLessThanOrEqual(100);
+    expect(mimo?.costUsdPerTask?.total).toBeGreaterThan(0);
+    expect(INTELLIGENCE_V43_ATLAS_DATASET.points.some(point => point.id === mimo?.id)).toBeTrue();
   });
 });

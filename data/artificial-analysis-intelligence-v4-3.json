@@ -8,8 +8,8 @@
     },
     "evaluationCount": 10,
     "evaluations": [
-      "AA-Briefcase",
-      "GDPval-AA v2",
+      "AA-Briefcase v1.1",
+      "GDPval-AA v2.1",
       "AutomationBench-AA",
       "Terminal-Bench 4.0",
       "SciCode",
@@ -22,7 +22,7 @@
     "name": "Artificial Analysis Intelligence Index",
     "score": "intelligence-index",
     "scoreUnit": "index-points",
-    "version": "4.3"
+    "version": "4.3.2"
   },
   "records": [
     {
@@ -48,7 +48,7 @@
         "slug": "max"
       },
       "id": "3e87c73e-a257-495e-9730-367a66229811",
-      "intelligenceIndex": 53.3737509623252,
+      "intelligenceIndex": 53.3549259623252,
       "name": "Claude Fable 5.1 (Adaptive Reasoning, Max Effort, Default Fallback)",
       "outputTokensPerTask": {
         "answer": 30870.99075157802,
@@ -86,7 +86,7 @@
         "slug": "xhigh"
       },
       "id": "9b166bf3-42db-4f63-8338-1c4a1244ffe8",
-      "intelligenceIndex": 53.1840337538944,
+      "intelligenceIndex": 53.2032587538944,
       "name": "Claude Fable 5.1 (Adaptive Reasoning, Xhigh Effort, Default Fallback)",
       "outputTokensPerTask": {
         "answer": 26470.208625081556,
@@ -124,7 +124,7 @@
         "slug": "max"
       },
       "id": "2f339a97-9a0d-499a-9cb5-e0db665bfa25",
-      "intelligenceIndex": 52.814069395513,
+      "intelligenceIndex": 52.673669395513,
       "name": "GPT-6 Astra (max)",
       "outputTokensPerTask": {
         "answer": 10514.266871765667,
@@ -162,7 +162,7 @@
         "slug": "xhigh"
       },
       "id": "1f541ef3-913f-4eb2-9d07-0e93c7a9a5e3",
-      "intelligenceIndex": 52.5059027108782,
+      "intelligenceIndex": 52.3863277108782,
       "name": "GPT-6 Astra (xhigh)",
       "outputTokensPerTask": {
         "answer": 8318.693934893881,
@@ -200,7 +200,7 @@
         "slug": "high"
       },
       "id": "9d7d72cd-d95d-45a0-b109-4ad292c9aabd",
-      "intelligenceIndex": 51.2094958852237,
+      "intelligenceIndex": 51.1515708852237,
       "name": "Claude Fable 5.1 (Adaptive Reasoning, High Effort, Default Fallback)",
       "outputTokensPerTask": {
         "answer": 19431.730066504435,
@@ -217,14 +217,14 @@
     },
     {
       "costUsdPerTask": {
-        "answer": 0.3543601577046459,
-        "cacheRead": 0.5018655420565792,
-        "cacheWrite": 0.4128844641598186,
-        "input": 1.1316902764026926,
+        "answer": 0.3550259304319186,
+        "cacheRead": 0.5037339938746381,
+        "cacheWrite": 0.4139383221158992,
+        "input": 1.1346125861768321,
         "nonCacheInput": 0.21694027018629464,
-        "output": 0.5897429772007414,
-        "reasoning": 0.2353828194960955,
-        "total": 1.7214332536034334
+        "output": 0.5906404999280142,
+        "reasoning": 0.23561456949609552,
+        "total": 1.7252530861048456
       },
       "creator": {
         "id": "e67e56e3-15cd-43db-b679-da4660a69f41",
@@ -238,12 +238,12 @@
         "slug": "high"
       },
       "id": "e05a4828-0536-4876-870d-a235023f992b",
-      "intelligenceIndex": 51.0480721636152,
+      "intelligenceIndex": 50.9191471636152,
       "name": "GPT-6 Astra (high)",
       "outputTokensPerTask": {
-        "answer": 7087.203154092917,
-        "reasoning": 4707.65638992191,
-        "total": 11794.859544014827
+        "answer": 7100.518608638372,
+        "reasoning": 4712.29138992191,
+        "total": 11812.809998560282
       },
       "release": {
         "name": "GPT-6 Astra",
@@ -276,7 +276,7 @@
         "slug": "max"
       },
       "id": "b8fc61f7-5e9a-49e6-8547-6ac56db24627",
-      "intelligenceIndex": 50.7001865797629,
+      "intelligenceIndex": 50.7771115797629,
       "name": "Claude Opus 5 (Adaptive Reasoning, Max Effort)",
       "outputTokensPerTask": {
         "answer": 29718.724913377504,
@@ -290,44 +290,6 @@
       "releaseDate": "2026-07-24",
       "shortName": "Claude Opus 5 (max)",
       "slug": "claude-opus-5"
-    },
-    {
-      "costUsdPerTask": {
-        "answer": 0.3083949940992259,
-        "cacheRead": 0.4804451305927465,
-        "cacheWrite": 0.3638549041156922,
-        "input": 1.0611692893193365,
-        "nonCacheInput": 0.2168692546108978,
-        "output": 0.4794800326827803,
-        "reasoning": 0.17108503858355434,
-        "total": 1.5406493220021167
-      },
-      "creator": {
-        "id": "e67e56e3-15cd-43db-b679-da4660a69f41",
-        "name": "OpenAI",
-        "slug": "openai"
-      },
-      "detailsUrl": "https://artificialanalysis.ai/models/gpt-6-astra-medium",
-      "effort": {
-        "label": "medium",
-        "level": 30,
-        "slug": "medium"
-      },
-      "id": "e97a4ef5-e817-480e-9595-12f81dc4974f",
-      "intelligenceIndex": 49.6685363034369,
-      "name": "GPT-6 Astra (medium)",
-      "outputTokensPerTask": {
-        "answer": 6167.899881984518,
-        "reasoning": 3421.700771671087,
-        "total": 9589.600653655605
-      },
-      "release": {
-        "name": "GPT-6 Astra",
-        "slug": "gpt-6-astra"
-      },
-      "releaseDate": "2026-09-03",
-      "shortName": "GPT-6 Astra (medium)",
-      "slug": "gpt-6-astra-medium"
     },
     {
       "costUsdPerTask": {
@@ -352,7 +314,7 @@
         "slug": "xhigh"
       },
       "id": "1305c921-7aaa-4d6d-99b5-99b3acf15e19",
-      "intelligenceIndex": 49.6514552926939,
+      "intelligenceIndex": 49.6773552926939,
       "name": "Claude Opus 5 (Adaptive Reasoning, Xhigh Effort)",
       "outputTokensPerTask": {
         "answer": 25659.979658440694,
@@ -366,6 +328,44 @@
       "releaseDate": "2026-07-24",
       "shortName": "Claude Opus 5 (xhigh)",
       "slug": "claude-opus-5-xhigh"
+    },
+    {
+      "costUsdPerTask": {
+        "answer": 0.3083949940992259,
+        "cacheRead": 0.4804451305927465,
+        "cacheWrite": 0.3638549041156922,
+        "input": 1.0611692893193365,
+        "nonCacheInput": 0.2168692546108978,
+        "output": 0.4794800326827803,
+        "reasoning": 0.17108503858355434,
+        "total": 1.5406493220021167
+      },
+      "creator": {
+        "id": "e67e56e3-15cd-43db-b679-da4660a69f41",
+        "name": "OpenAI",
+        "slug": "openai"
+      },
+      "detailsUrl": "https://artificialanalysis.ai/models/gpt-6-astra-medium",
+      "effort": {
+        "label": "medium",
+        "level": 30,
+        "slug": "medium"
+      },
+      "id": "e97a4ef5-e817-480e-9595-12f81dc4974f",
+      "intelligenceIndex": 49.5704363034369,
+      "name": "GPT-6 Astra (medium)",
+      "outputTokensPerTask": {
+        "answer": 6167.899881984518,
+        "reasoning": 3421.700771671087,
+        "total": 9589.600653655605
+      },
+      "release": {
+        "name": "GPT-6 Astra",
+        "slug": "gpt-6-astra"
+      },
+      "releaseDate": "2026-09-03",
+      "shortName": "GPT-6 Astra (medium)",
+      "slug": "gpt-6-astra-medium"
     },
     {
       "costUsdPerTask": {
@@ -390,7 +390,7 @@
         "slug": "medium"
       },
       "id": "3b7de71c-e034-4591-8ca6-6b6be2fa471f",
-      "intelligenceIndex": 49.0591662609523,
+      "intelligenceIndex": 48.9206162609523,
       "name": "Claude Fable 5.1 (Adaptive Reasoning, Medium Effort, Default Fallback)",
       "outputTokensPerTask": {
         "answer": 15806.115480715269,
@@ -428,7 +428,7 @@
         "slug": "high"
       },
       "id": "712be54a-77ae-41b2-9a58-21181479d6ee",
-      "intelligenceIndex": 48.2371932595908,
+      "intelligenceIndex": 48.1219182595908,
       "name": "Claude Opus 5 (Adaptive Reasoning, High Effort)",
       "outputTokensPerTask": {
         "answer": 20831.41095969314,
@@ -466,7 +466,7 @@
         "slug": "max"
       },
       "id": "9999672c-b687-4026-9c15-5cef02ff53bb",
-      "intelligenceIndex": 48.1690107719685,
+      "intelligenceIndex": 48.0923107719685,
       "name": "Muse Spark 1.3 (max)",
       "outputTokensPerTask": {
         "answer": 26074.228596099943,
@@ -504,7 +504,7 @@
         "slug": "max"
       },
       "id": "d93edfe8-bf35-49ad-b56e-b18116142a1c",
-      "intelligenceIndex": 47.0613568915036,
+      "intelligenceIndex": 46.9727068915036,
       "name": "GPT-5.6 Sol (max)",
       "outputTokensPerTask": {
         "answer": 12028.929221184391,
@@ -542,7 +542,7 @@
         "slug": "low"
       },
       "id": "05776db7-f5c0-40f7-b824-079160f8cfa8",
-      "intelligenceIndex": 47.0391672014862,
+      "intelligenceIndex": 46.8163422014862,
       "name": "Claude Fable 5.1 (Adaptive Reasoning, Low Effort, Default Fallback)",
       "outputTokensPerTask": {
         "answer": 13272.568454756867,
@@ -556,6 +556,116 @@
       "releaseDate": "2026-09-01",
       "shortName": "Claude Fable 5.1 (low with fallback)",
       "slug": "claude-fable-5-1-low"
+    },
+    {
+      "costUsdPerTask": {
+        "answer": 0.13210638952354134,
+        "cacheRead": 1.5328336728452165,
+        "cacheWrite": 1.6893325283251048,
+        "input": 3.254957763735755,
+        "nonCacheInput": 0.03279156256543316,
+        "output": 0.4833681883711849,
+        "reasoning": 0.3512617988476435,
+        "total": 3.738325952106939
+      },
+      "creator": {
+        "id": "a1e3ddcf-d3e4-44a5-9e8f-029a69850875",
+        "name": "SpaceXAI",
+        "slug": "xai"
+      },
+      "detailsUrl": "https://artificialanalysis.ai/models/grok-4-7",
+      "effort": {
+        "label": "xhigh",
+        "level": 50,
+        "slug": "xhigh"
+      },
+      "id": "59627802-1546-422c-9a65-65b61c022d36",
+      "intelligenceIndex": 46.4465506302286,
+      "name": "Grok 4.7 (xhigh)",
+      "outputTokensPerTask": {
+        "answer": 22017.731587256894,
+        "reasoning": 58543.633141273924,
+        "total": 80561.36472853081
+      },
+      "release": {
+        "name": "Grok 4.7",
+        "slug": "grok-4-7"
+      },
+      "releaseDate": "2026-09-21",
+      "shortName": "Grok 4.7 (xhigh)",
+      "slug": "grok-4-7"
+    },
+    {
+      "costUsdPerTask": {
+        "answer": 0.1156089748390749,
+        "cacheRead": 1.0800845370203476,
+        "cacheWrite": 1.2176866117749017,
+        "input": 2.3306978852971905,
+        "nonCacheInput": 0.0329267365019411,
+        "output": 0.3954088064888365,
+        "reasoning": 0.27979983164976163,
+        "total": 2.726106691786027
+      },
+      "creator": {
+        "id": "a1e3ddcf-d3e4-44a5-9e8f-029a69850875",
+        "name": "SpaceXAI",
+        "slug": "xai"
+      },
+      "detailsUrl": "https://artificialanalysis.ai/models/grok-4-7-high",
+      "effort": {
+        "label": "high",
+        "level": 40,
+        "slug": "high"
+      },
+      "id": "272f5f03-aea9-4675-a244-2b753b618cdf",
+      "intelligenceIndex": 46.3321770885625,
+      "name": "Grok 4.7 (high)",
+      "outputTokensPerTask": {
+        "answer": 19268.162473179156,
+        "reasoning": 46633.30527496027,
+        "total": 65901.46774813943
+      },
+      "release": {
+        "name": "Grok 4.7",
+        "slug": "grok-4-7"
+      },
+      "releaseDate": "2026-09-21",
+      "shortName": "Grok 4.7 (high)",
+      "slug": "grok-4-7-high"
+    },
+    {
+      "costUsdPerTask": {
+        "answer": 0.023277736261924822,
+        "cacheRead": 0.01946950897564899,
+        "cacheWrite": 0.05358918507522471,
+        "input": 0.07730332992698383,
+        "nonCacheInput": 0.004244635876110132,
+        "output": 0.055919859445151064,
+        "reasoning": 0.03264212318322624,
+        "total": 0.13322318937213493
+      },
+      "creator": {
+        "id": "5147c8b4-61d5-4070-9324-8adf8aa144c2",
+        "name": "Xiaomi",
+        "slug": "xiaomi"
+      },
+      "detailsUrl": "https://artificialanalysis.ai/models/mimo-v2-6-pro",
+      "effort": null,
+      "id": "24d8fdfe-6241-424e-b7b7-1b6efb06e4fb",
+      "intelligenceIndex": 46.3242065310383,
+      "name": "MiMo-V2.6-Pro",
+      "outputTokensPerTask": {
+        "answer": 26756.018691867608,
+        "reasoning": 37519.68181980028,
+        "total": 64275.70051166789
+      },
+      "release": {
+        "name": "MiMo-V2.6-Pro",
+        "slug": "mimo-v2-6-pro"
+      },
+      "releaseDate": "2026-09-21",
+      "shortName": "MiMo-V2.6-Pro",
+      "slug": "mimo-v2-6-pro"
     },
     {
       "costUsdPerTask": {
@@ -580,7 +690,7 @@
         "slug": "low"
       },
       "id": "a3f8100d-e38f-408b-b0fa-0085dae18dc1",
-      "intelligenceIndex": 45.9944993120341,
+      "intelligenceIndex": 45.7819243120341,
       "name": "GPT-6 Astra (low)",
       "outputTokensPerTask": {
         "answer": 3495.0627791575184,
@@ -614,7 +724,7 @@
       "detailsUrl": "https://artificialanalysis.ai/models/qwen3-8-max",
       "effort": null,
       "id": "b112af07-3bd5-4647-b09f-b23204361bb2",
-      "intelligenceIndex": 45.4354834980521,
+      "intelligenceIndex": 45.4152084980521,
       "name": "Qwen3.8 Max (0902)",
       "outputTokensPerTask": {
         "answer": 36900.3468741272,
@@ -652,7 +762,7 @@
         "slug": "xhigh"
       },
       "id": "d5170215-69be-4129-849b-26d8d8825bfc",
-      "intelligenceIndex": 45.1612216922226,
+      "intelligenceIndex": 45.0732966922226,
       "name": "Muse Spark 1.3 (xhigh)",
       "outputTokensPerTask": {
         "answer": 21979.40538713003,
@@ -690,7 +800,7 @@
         "slug": "medium"
       },
       "id": "ff51be8f-e362-4a7e-9043-687ba15de207",
-      "intelligenceIndex": 45.0575765420613,
+      "intelligenceIndex": 44.8253265420613,
       "name": "Claude Opus 5 (Adaptive Reasoning, Medium Effort)",
       "outputTokensPerTask": {
         "answer": 14108.459544317355,
@@ -728,7 +838,7 @@
         "slug": "max"
       },
       "id": "cd684ea4-b475-4269-b001-d469d06d8a7a",
-      "intelligenceIndex": 44.855717385614,
+      "intelligenceIndex": 44.777392385614,
       "name": "GLM-5.3 (max)",
       "outputTokensPerTask": {
         "answer": 22398.092941404666,
@@ -766,7 +876,7 @@
         "slug": "high"
       },
       "id": "c8adc5cf-fd5a-407b-af51-dc3bede3e49c",
-      "intelligenceIndex": 44.4050073012592,
+      "intelligenceIndex": 44.3113073012592,
       "name": "Grok 4.6 (high)",
       "outputTokensPerTask": {
         "answer": 17052.94754748812,
@@ -804,7 +914,7 @@
         "slug": "xhigh"
       },
       "id": "d6f43d0a-e8c4-447c-9ff7-5cf0a9d59aa3",
-      "intelligenceIndex": 44.270160436996,
+      "intelligenceIndex": 44.199810436996,
       "name": "Grok 4.6 (xhigh)",
       "outputTokensPerTask": {
         "answer": 17806.47553842945,
@@ -842,7 +952,7 @@
         "slug": "xhigh"
       },
       "id": "d998db47-9b67-4727-a2bb-2e1261020ac0",
-      "intelligenceIndex": 44.138026369169,
+      "intelligenceIndex": 44.008876369169,
       "name": "GPT-5.6 Sol (xhigh)",
       "outputTokensPerTask": {
         "answer": 9450.396010246131,
@@ -856,6 +966,40 @@
       "releaseDate": "2026-07-09",
       "shortName": "GPT-5.6 Sol (xhigh)",
       "slug": "gpt-5-6-sol-xhigh"
+    },
+    {
+      "costUsdPerTask": {
+        "answer": 0.05577491240242307,
+        "cacheRead": 0.3080034840417753,
+        "cacheWrite": 0.22078761020029253,
+        "input": 0.5427927908999624,
+        "nonCacheInput": 0.014001696657894582,
+        "output": 0.17273056655855867,
+        "reasoning": 0.11695565415613561,
+        "total": 0.715523357458521
+      },
+      "creator": {
+        "id": "ce2e2e8b-7a22-4020-98ec-8ef71000dd42",
+        "name": "StepFun",
+        "slug": "stepfun"
+      },
+      "detailsUrl": "https://artificialanalysis.ai/models/step-5",
+      "effort": null,
+      "id": "094ea3e3-ce41-419e-8bd1-723389663158",
+      "intelligenceIndex": 43.7343049141614,
+      "name": "Step 5 Preview",
+      "outputTokensPerTask": {
+        "answer": 20657.3749638604,
+        "reasoning": 43316.90894671689,
+        "total": 63974.28391057729
+      },
+      "release": {
+        "name": "Step 5 Preview",
+        "slug": "step-5-preview"
+      },
+      "releaseDate": "2026-09-18",
+      "shortName": "Step 5 Preview",
+      "slug": "step-5"
     },
     {
       "costUsdPerTask": {
@@ -880,7 +1024,7 @@
         "slug": "max"
       },
       "id": "f7d2fc3e-1f7b-405f-818c-07952a4af78f",
-      "intelligenceIndex": 43.7841729518782,
+      "intelligenceIndex": 43.5938229518782,
       "name": "Kimi K3 (max)",
       "outputTokensPerTask": {
         "answer": 16002.10458876525,
@@ -894,40 +1038,6 @@
       "releaseDate": "2026-07-16",
       "shortName": "Kimi K3 (max)",
       "slug": "kimi-k3"
-    },
-    {
-      "costUsdPerTask": {
-        "answer": 0.055551813856968536,
-        "cacheRead": 0.3066852521003935,
-        "cacheWrite": 0.2198278844824743,
-        "input": 0.5405148332407624,
-        "nonCacheInput": 0.014001696657894582,
-        "output": 0.1721277461494678,
-        "reasoning": 0.11657593229249925,
-        "total": 0.7126425793902301
-      },
-      "creator": {
-        "id": "ce2e2e8b-7a22-4020-98ec-8ef71000dd42",
-        "name": "StepFun",
-        "slug": "stepfun"
-      },
-      "detailsUrl": "https://artificialanalysis.ai/models/step-5",
-      "effort": null,
-      "id": "094ea3e3-ce41-419e-8bd1-723389663158",
-      "intelligenceIndex": 43.6394799141614,
-      "name": "Step 5 Preview",
-      "outputTokensPerTask": {
-        "answer": 20574.745872951306,
-        "reasoning": 43176.27121944416,
-        "total": 63751.01709239547
-      },
-      "release": {
-        "name": "Step 5 Preview",
-        "slug": "step-5-preview"
-      },
-      "releaseDate": "2026-09-18",
-      "shortName": "Step 5 Preview",
-      "slug": "step-5"
     },
     {
       "costUsdPerTask": {
@@ -952,7 +1062,7 @@
         "slug": "medium"
       },
       "id": "26614164-6840-4e17-a65a-2deb2fe7e87b",
-      "intelligenceIndex": 43.011172654063,
+      "intelligenceIndex": 42.836322654063,
       "name": "Grok 4.6 (medium)",
       "outputTokensPerTask": {
         "answer": 14708.366242694778,
@@ -990,7 +1100,7 @@
         "slug": "high"
       },
       "id": "8afc250d-b538-45a2-812a-4605f4ffd87e",
-      "intelligenceIndex": 42.4991760420519,
+      "intelligenceIndex": 42.3461010420519,
       "name": "GPT-5.6 Sol (high)",
       "outputTokensPerTask": {
         "answer": 7374.652563547264,
@@ -1028,7 +1138,7 @@
         "slug": "max"
       },
       "id": "bcf8db0a-3bb6-4d82-9516-0f57370c85a6",
-      "intelligenceIndex": 42.2514998239494,
+      "intelligenceIndex": 42.0829248239494,
       "name": "GPT-5.6 Terra (max)",
       "outputTokensPerTask": {
         "answer": 12853.54225872057,
@@ -1066,7 +1176,7 @@
         "slug": "max"
       },
       "id": "19496b81-9f41-4214-a77a-1df803b3c5ae",
-      "intelligenceIndex": 41.907366113455,
+      "intelligenceIndex": 41.807466113455,
       "name": "GLM 5.3 Flash",
       "outputTokensPerTask": {
         "answer": 22023.666872022226,
@@ -1104,7 +1214,7 @@
         "slug": "high"
       },
       "id": "8a999846-4c1d-4ce7-a8b7-1310a7166fd7",
-      "intelligenceIndex": 41.1863571765904,
+      "intelligenceIndex": 40.9262321765904,
       "name": "Gemini 3.8 Flash (high)",
       "outputTokensPerTask": {
         "answer": 28275.424690494336,
@@ -1121,14 +1231,14 @@
     },
     {
       "costUsdPerTask": {
-        "answer": 0.13126806979529473,
+        "answer": 0.13130591179529474,
         "cacheRead": 1.2243770642088534,
         "cacheWrite": 0.5001053384259188,
-        "input": 1.7440718525339405,
-        "nonCacheInput": 0.0195894498991681,
-        "output": 0.41109009170952704,
-        "reasoning": 0.27982202191423233,
-        "total": 2.1551619442434675
+        "input": 1.7443035365339405,
+        "nonCacheInput": 0.0198211338991681,
+        "output": 0.41161351370952703,
+        "reasoning": 0.2803076019142323,
+        "total": 2.1559170502434677
       },
       "creator": {
         "id": "d874d370-74d3-4fa0-ba00-5272f92f946b",
@@ -1138,12 +1248,12 @@
       "detailsUrl": "https://artificialanalysis.ai/models/qwen3-8-2-4t-a95b",
       "effort": null,
       "id": "8df710d3-9dae-4498-9b4e-9818238e6f31",
-      "intelligenceIndex": 40.0445723105325,
+      "intelligenceIndex": 39.8861723105325,
       "name": "Qwen3.8 2.4T A95B",
       "outputTokensPerTask": {
-        "answer": 21878.01163254913,
-        "reasoning": 46637.003652372056,
-        "total": 68515.01528492119
+        "answer": 21884.31863254913,
+        "reasoning": 46717.933652372056,
+        "total": 68602.25228492118
       },
       "release": {
         "name": "Qwen3.8 2.4T A95B",
@@ -1152,6 +1262,40 @@
       "releaseDate": "2026-08-12",
       "shortName": "Qwen3.8 2.4T A95B",
       "slug": "qwen3-8-2-4t-a95b"
+    },
+    {
+      "costUsdPerTask": {
+        "answer": 0.01695638332498605,
+        "cacheRead": 0.2717961254229642,
+        "cacheWrite": 0.04700064496525313,
+        "input": 0.32147019145696387,
+        "nonCacheInput": 0.0026734210687464144,
+        "output": 0.05070581107333271,
+        "reasoning": 0.03374942774834666,
+        "total": 0.3721760025302965
+      },
+      "creator": {
+        "id": "d874d370-74d3-4fa0-ba00-5272f92f946b",
+        "name": "Alibaba",
+        "slug": "alibaba"
+      },
+      "detailsUrl": "https://artificialanalysis.ai/models/qwen3-8-flash-next",
+      "effort": null,
+      "id": "9ac3908c-9eb2-44db-8c01-3ec7da6fc2ae",
+      "intelligenceIndex": 39.8223021864741,
+      "name": "Qwen3.8-Flash-Next",
+      "outputTokensPerTask": {
+        "answer": 36077.41132975757,
+        "reasoning": 71807.29308158865,
+        "total": 107884.70441134622
+      },
+      "release": {
+        "name": "Qwen3.8-Flash-Next",
+        "slug": "qwen3-8-flash-next"
+      },
+      "releaseDate": "2026-08-26",
+      "shortName": "Qwen3.8-Flash-Next",
+      "slug": "qwen3-8-flash-next"
     },
     {
       "costUsdPerTask": {
@@ -1176,7 +1320,7 @@
         "slug": "medium"
       },
       "id": "744fa3c1-42a7-4995-b138-fb6be11f463c",
-      "intelligenceIndex": 39.9993187061926,
+      "intelligenceIndex": 39.7740187061926,
       "name": "Gemini 3.8 Flash (medium)",
       "outputTokensPerTask": {
         "answer": 25642.973601599828,
@@ -1190,78 +1334,6 @@
       "releaseDate": "2026-09-02",
       "shortName": "Gemini 3.8 Flash (medium)",
       "slug": "gemini-3-8-flash-medium"
-    },
-    {
-      "costUsdPerTask": {
-        "answer": 0.01695638332498605,
-        "cacheRead": 0.2717961254229642,
-        "cacheWrite": 0.04700064496525313,
-        "input": 0.32147019145696387,
-        "nonCacheInput": 0.0026734210687464144,
-        "output": 0.05070581107333271,
-        "reasoning": 0.03374942774834666,
-        "total": 0.3721760025302965
-      },
-      "creator": {
-        "id": "d874d370-74d3-4fa0-ba00-5272f92f946b",
-        "name": "Alibaba",
-        "slug": "alibaba"
-      },
-      "detailsUrl": "https://artificialanalysis.ai/models/qwen3-8-flash-next",
-      "effort": null,
-      "id": "9ac3908c-9eb2-44db-8c01-3ec7da6fc2ae",
-      "intelligenceIndex": 39.9140521864741,
-      "name": "Qwen3.8-Flash-Next",
-      "outputTokensPerTask": {
-        "answer": 36077.41132975757,
-        "reasoning": 71807.29308158865,
-        "total": 107884.70441134622
-      },
-      "release": {
-        "name": "Qwen3.8-Flash-Next",
-        "slug": "qwen3-8-flash-next"
-      },
-      "releaseDate": "2026-08-26",
-      "shortName": "Qwen3.8-Flash-Next",
-      "slug": "qwen3-8-flash-next"
-    },
-    {
-      "costUsdPerTask": {
-        "answer": 0.20310387857275466,
-        "cacheRead": 0.42549678019648396,
-        "cacheWrite": 0.17761585656159834,
-        "input": 0.7316021918097116,
-        "nonCacheInput": 0.1284895550516296,
-        "output": 0.36670013270472546,
-        "reasoning": 0.16359625413197068,
-        "total": 1.098302324514437
-      },
-      "creator": {
-        "id": "f0aa413f-e8ae-4fcd-9c48-0e049f4f3128",
-        "name": "Anthropic",
-        "slug": "anthropic"
-      },
-      "detailsUrl": "https://artificialanalysis.ai/models/claude-opus-5-low",
-      "effort": {
-        "label": "low",
-        "level": 20,
-        "slug": "low"
-      },
-      "id": "20928ba9-3a3f-415f-9519-b84ff64ecf34",
-      "intelligenceIndex": 39.7883357992936,
-      "name": "Claude Opus 5 (Adaptive Reasoning, Low Effort)",
-      "outputTokensPerTask": {
-        "answer": 8124.155142910187,
-        "reasoning": 6543.850165278829,
-        "total": 14668.005308189016
-      },
-      "release": {
-        "name": "Claude Opus 5",
-        "slug": "claude-opus-5"
-      },
-      "releaseDate": "2026-07-24",
-      "shortName": "Claude Opus 5 (low)",
-      "slug": "claude-opus-5-low"
     },
     {
       "costUsdPerTask": {
@@ -1286,7 +1358,7 @@
         "slug": "max"
       },
       "id": "dbe7c625-3100-4463-b479-a228c41f75dd",
-      "intelligenceIndex": 39.545442472527,
+      "intelligenceIndex": 39.456167472527,
       "name": "DeepSeek V4.1 Flash (Reasoning, Max Effort)",
       "outputTokensPerTask": {
         "answer": 25904.436307344844,
@@ -1300,6 +1372,44 @@
       "releaseDate": "2026-09-10",
       "shortName": "DeepSeek V4.1 Flash (max)",
       "slug": "deepseek-v4-1-flash"
+    },
+    {
+      "costUsdPerTask": {
+        "answer": 0.20310387857275466,
+        "cacheRead": 0.42549678019648396,
+        "cacheWrite": 0.17761585656159834,
+        "input": 0.7316021918097116,
+        "nonCacheInput": 0.1284895550516296,
+        "output": 0.36670013270472546,
+        "reasoning": 0.16359625413197068,
+        "total": 1.098302324514437
+      },
+      "creator": {
+        "id": "f0aa413f-e8ae-4fcd-9c48-0e049f4f3128",
+        "name": "Anthropic",
+        "slug": "anthropic"
+      },
+      "detailsUrl": "https://artificialanalysis.ai/models/claude-opus-5-low",
+      "effort": {
+        "label": "low",
+        "level": 20,
+        "slug": "low"
+      },
+      "id": "20928ba9-3a3f-415f-9519-b84ff64ecf34",
+      "intelligenceIndex": 39.3543357992936,
+      "name": "Claude Opus 5 (Adaptive Reasoning, Low Effort)",
+      "outputTokensPerTask": {
+        "answer": 8124.155142910187,
+        "reasoning": 6543.850165278829,
+        "total": 14668.005308189016
+      },
+      "release": {
+        "name": "Claude Opus 5",
+        "slug": "claude-opus-5"
+      },
+      "releaseDate": "2026-07-24",
+      "shortName": "Claude Opus 5 (low)",
+      "slug": "claude-opus-5-low"
     },
     {
       "costUsdPerTask": {
@@ -1324,7 +1434,7 @@
         "slug": "medium"
       },
       "id": "6f174934-5b7d-4333-86cb-f5ebf4a862e3",
-      "intelligenceIndex": 39.4845585889147,
+      "intelligenceIndex": 39.2363585889147,
       "name": "GPT-5.6 Sol (medium)",
       "outputTokensPerTask": {
         "answer": 5211.832978830537,
@@ -1362,7 +1472,7 @@
         "slug": "max"
       },
       "id": "23c86e4a-c769-43c0-a056-79e3cd15834f",
-      "intelligenceIndex": 38.3576962882576,
+      "intelligenceIndex": 38.1638712882576,
       "name": "Claude Sonnet 5 (Adaptive Reasoning, Max Effort)",
       "outputTokensPerTask": {
         "answer": 29395.02883974881,
@@ -1400,7 +1510,7 @@
         "slug": "xhigh"
       },
       "id": "9e30696f-16fa-4b4f-ba53-161895a85fed",
-      "intelligenceIndex": 38.1856370742927,
+      "intelligenceIndex": 37.9513370742927,
       "name": "GPT-5.6 Terra (xhigh)",
       "outputTokensPerTask": {
         "answer": 8855.697541233654,
@@ -1438,7 +1548,7 @@
         "slug": "max"
       },
       "id": "426d24c8-49ae-482a-b4a8-20f1c53f21c1",
-      "intelligenceIndex": 37.5048489690841,
+      "intelligenceIndex": 37.3244239690841,
       "name": "GPT-5.6 Luna (max)",
       "outputTokensPerTask": {
         "answer": 13136.33788999603,
@@ -1476,7 +1586,7 @@
         "slug": "max"
       },
       "id": "83173329-c09a-41f1-a028-a282a5f908d7",
-      "intelligenceIndex": 36.2828791278402,
+      "intelligenceIndex": 35.9967791278402,
       "name": "DeepSeek V4 Pro 0813 (Reasoning, Max Effort)",
       "outputTokensPerTask": {
         "answer": 16990.708662221845,
@@ -1514,7 +1624,7 @@
         "slug": "low"
       },
       "id": "c07e65e6-32fc-451e-938d-7477a1c3ffcc",
-      "intelligenceIndex": 35.4148453482174,
+      "intelligenceIndex": 35.1246953482174,
       "name": "Grok 4.6 (low)",
       "outputTokensPerTask": {
         "answer": 7803.206181322389,
@@ -1552,7 +1662,7 @@
         "slug": "max"
       },
       "id": "7707a46f-895f-4247-b7a8-ddab87c9a11d",
-      "intelligenceIndex": 35.0122378035969,
+      "intelligenceIndex": 34.8390628035969,
       "name": "DeepSeek V4 Flash Vision (Reasoning, Max Effort)",
       "outputTokensPerTask": {
         "answer": 23270.191905002044,
@@ -1590,7 +1700,7 @@
         "slug": "xhigh"
       },
       "id": "87110ff0-1f79-41b4-9976-eda250597317",
-      "intelligenceIndex": 34.772048822309,
+      "intelligenceIndex": 34.555348822309,
       "name": "GPT-5.6 Luna (xhigh)",
       "outputTokensPerTask": {
         "answer": 8901.299682240313,
@@ -1628,7 +1738,7 @@
         "slug": "xhigh"
       },
       "id": "99f376bf-cbcb-4124-bf3e-6b0a4e6e9bea",
-      "intelligenceIndex": 34.707236557212,
+      "intelligenceIndex": 34.384211557212,
       "name": "Claude Sonnet 5 (Adaptive Reasoning, Xhigh Effort)",
       "outputTokensPerTask": {
         "answer": 21398.113523242846,
@@ -1666,7 +1776,7 @@
         "slug": "high"
       },
       "id": "81972fba-1219-477e-bbfb-18c656a63ff7",
-      "intelligenceIndex": 34.4910058067555,
+      "intelligenceIndex": 34.2376558067555,
       "name": "GPT-5.6 Terra (high)",
       "outputTokensPerTask": {
         "answer": 5852.216975309924,
@@ -1683,14 +1793,14 @@
     },
     {
       "costUsdPerTask": {
-        "answer": 0.057274850355187125,
+        "answer": 0.057259691355187124,
         "cacheRead": 0.18729555800601444,
         "cacheWrite": 0.4231391110871978,
-        "input": 0.6198444445967706,
-        "nonCacheInput": 0.009409775503558189,
-        "output": 0.20034969155380952,
-        "reasoning": 0.14307484119862238,
-        "total": 0.8201941361505801
+        "input": 0.6196269810967705,
+        "nonCacheInput": 0.009192312003558188,
+        "output": 0.20039241455380952,
+        "reasoning": 0.14313272319862239,
+        "total": 0.8200193956505801
       },
       "creator": {
         "id": "d874d370-74d3-4fa0-ba00-5272f92f946b",
@@ -1704,12 +1814,12 @@
         "slug": "xhigh"
       },
       "id": "b01dee41-c62b-48ed-8d16-984adc405e5c",
-      "intelligenceIndex": 33.9015108057476,
+      "intelligenceIndex": 33.6962858057476,
       "name": "Qwen3.8 27B (xhigh)",
       "outputTokensPerTask": {
-        "answer": 19091.61678506237,
-        "reasoning": 47691.613732874124,
-        "total": 66783.23051793649
+        "answer": 19086.56378506237,
+        "reasoning": 47710.90773287412,
+        "total": 66797.47151793649
       },
       "release": {
         "name": "Qwen3.8 27B",
@@ -1742,7 +1852,7 @@
         "slug": "low"
       },
       "id": "0904b596-8932-43bd-9b21-324f128e1723",
-      "intelligenceIndex": 33.7979387646002,
+      "intelligenceIndex": 33.4731387646002,
       "name": "GPT-5.6 Sol (low)",
       "outputTokensPerTask": {
         "answer": 3137.161686445854,
@@ -1780,7 +1890,7 @@
         "slug": "high"
       },
       "id": "aa55297e-8fbf-4372-b4ab-9b068dc6396c",
-      "intelligenceIndex": 32.4147953501091,
+      "intelligenceIndex": 32.1196453501091,
       "name": "GPT-5.6 Luna (high)",
       "outputTokensPerTask": {
         "answer": 6630.658051274337,
@@ -1818,7 +1928,7 @@
         "slug": "high"
       },
       "id": "ba0224cf-0351-4f56-8508-b3f1a740ae4a",
-      "intelligenceIndex": 32.0283996664651,
+      "intelligenceIndex": 31.6623246664651,
       "name": "Claude Sonnet 5 (Adaptive Reasoning, High Effort)",
       "outputTokensPerTask": {
         "answer": 16326.210929566934,
@@ -1832,44 +1942,6 @@
       "releaseDate": "2026-06-30",
       "shortName": "Claude Sonnet 5 (high)",
       "slug": "claude-sonnet-5-high"
-    },
-    {
-      "costUsdPerTask": {
-        "answer": 0.0949526096060325,
-        "cacheRead": 0.5139825966207331,
-        "cacheWrite": 0.3865428771521632,
-        "input": 0.96298041064786,
-        "nonCacheInput": 0.0624549368749636,
-        "output": 0.18332520587489112,
-        "reasoning": 0.08837259626885861,
-        "total": 1.1463056165227514
-      },
-      "creator": {
-        "id": "0a177021-87dd-4250-9a37-f01df196bfe0",
-        "name": "Kimi",
-        "slug": "kimi"
-      },
-      "detailsUrl": "https://artificialanalysis.ai/models/kimi-k3-low",
-      "effort": {
-        "label": "low",
-        "level": 20,
-        "slug": "low"
-      },
-      "id": "512d17ef-13d2-4f65-bf9b-154b0dec7e8d",
-      "intelligenceIndex": 30.4810237529068,
-      "name": "Kimi K3 (low)",
-      "outputTokensPerTask": {
-        "answer": 6330.173973735501,
-        "reasoning": 5891.506417923906,
-        "total": 12221.680391659407
-      },
-      "release": {
-        "name": "Kimi K3",
-        "slug": "kimi-k3"
-      },
-      "releaseDate": "2026-07-16",
-      "shortName": "Kimi K3 (low)",
-      "slug": "kimi-k3-low"
     },
     {
       "costUsdPerTask": {
@@ -1894,7 +1966,7 @@
         "slug": "medium"
       },
       "id": "26e0f83a-ca98-4f34-94ac-7c5e251ee410",
-      "intelligenceIndex": 30.4205773419377,
+      "intelligenceIndex": 30.0938023419377,
       "name": "GPT-5.6 Terra (medium)",
       "outputTokensPerTask": {
         "answer": 3600.6617093438053,
@@ -1928,7 +2000,7 @@
       "detailsUrl": "https://artificialanalysis.ai/models/gemini-3-1-pro-preview",
       "effort": null,
       "id": "bbd93ebe-80da-4594-bb19-61e69d0331df",
-      "intelligenceIndex": 30.3596656132261,
+      "intelligenceIndex": 29.7185656132261,
       "name": "Gemini 3.1 Pro Preview",
       "outputTokensPerTask": {
         "answer": 5622.60726322975,
@@ -1962,7 +2034,7 @@
       "detailsUrl": "https://artificialanalysis.ai/models/minimax-m3",
       "effort": null,
       "id": "277f939a-985b-4b37-859d-b3eabc7c0b26",
-      "intelligenceIndex": 29.6125932236316,
+      "intelligenceIndex": 29.2202932236316,
       "name": "MiniMax-M3",
       "outputTokensPerTask": {
         "answer": 26373.78883392722,
@@ -2000,7 +2072,7 @@
         "slug": "medium"
       },
       "id": "effcd151-7c31-4437-af3d-e88daeae9385",
-      "intelligenceIndex": 28.4376468379456,
+      "intelligenceIndex": 28.0531468379456,
       "name": "Claude Sonnet 5 (Adaptive Reasoning, Medium Effort)",
       "outputTokensPerTask": {
         "answer": 11895.8126007476,
@@ -2014,44 +2086,6 @@
       "releaseDate": "2026-06-30",
       "shortName": "Claude Sonnet 5 (medium)",
       "slug": "claude-sonnet-5-medium"
-    },
-    {
-      "costUsdPerTask": {
-        "answer": 0.0341723922096898,
-        "cacheRead": 0.022938415626610687,
-        "cacheWrite": 0.03203556792735608,
-        "input": 0.09800621112672665,
-        "nonCacheInput": 0.0430322275727599,
-        "output": 0.0464555503023554,
-        "reasoning": 0.012283158092665612,
-        "total": 0.1444617614290821
-      },
-      "creator": {
-        "id": "e67e56e3-15cd-43db-b679-da4660a69f41",
-        "name": "OpenAI",
-        "slug": "openai"
-      },
-      "detailsUrl": "https://artificialanalysis.ai/models/gpt-5-6-terra-low",
-      "effort": {
-        "label": "low",
-        "level": 20,
-        "slug": "low"
-      },
-      "id": "cc4a20cd-09fe-4962-a430-119c815e85fa",
-      "intelligenceIndex": 27.916528401716,
-      "name": "GPT-5.6 Terra (low)",
-      "outputTokensPerTask": {
-        "answer": 2847.6993508074834,
-        "reasoning": 1023.5965077221342,
-        "total": 3871.2958585296174
-      },
-      "release": {
-        "name": "GPT-5.6 Terra",
-        "slug": "gpt-5-6-terra"
-      },
-      "releaseDate": "2026-07-09",
-      "shortName": "GPT-5.6 Terra (low)",
-      "slug": "gpt-5-6-terra-low"
     },
     {
       "costUsdPerTask": {
@@ -2076,7 +2110,7 @@
         "slug": "medium"
       },
       "id": "6657d7de-a2a9-40bc-a32f-86e80ad63698",
-      "intelligenceIndex": 27.8121478231586,
+      "intelligenceIndex": 27.5508228231586,
       "name": "Qwen3.8 27B (medium)",
       "outputTokensPerTask": {
         "answer": 19731.905093093967,
@@ -2090,6 +2124,44 @@
       "releaseDate": "2026-08-14",
       "shortName": "Qwen3.8 27B (medium)",
       "slug": "qwen3-8-27b-medium"
+    },
+    {
+      "costUsdPerTask": {
+        "answer": 0.0341723922096898,
+        "cacheRead": 0.022938415626610687,
+        "cacheWrite": 0.03203556792735608,
+        "input": 0.09800621112672665,
+        "nonCacheInput": 0.0430322275727599,
+        "output": 0.0464555503023554,
+        "reasoning": 0.012283158092665612,
+        "total": 0.1444617614290821
+      },
+      "creator": {
+        "id": "e67e56e3-15cd-43db-b679-da4660a69f41",
+        "name": "OpenAI",
+        "slug": "openai"
+      },
+      "detailsUrl": "https://artificialanalysis.ai/models/gpt-5-6-terra-low",
+      "effort": {
+        "label": "low",
+        "level": 20,
+        "slug": "low"
+      },
+      "id": "cc4a20cd-09fe-4962-a430-119c815e85fa",
+      "intelligenceIndex": 27.496203401716,
+      "name": "GPT-5.6 Terra (low)",
+      "outputTokensPerTask": {
+        "answer": 2847.6993508074834,
+        "reasoning": 1023.5965077221342,
+        "total": 3871.2958585296174
+      },
+      "release": {
+        "name": "GPT-5.6 Terra",
+        "slug": "gpt-5-6-terra"
+      },
+      "releaseDate": "2026-07-09",
+      "shortName": "GPT-5.6 Terra (low)",
+      "slug": "gpt-5-6-terra-low"
     },
     {
       "costUsdPerTask": {
@@ -2114,7 +2186,7 @@
         "slug": "max"
       },
       "id": "f9739750-6d42-450f-ba1e-2f76c869b4fe",
-      "intelligenceIndex": 27.1275286607816,
+      "intelligenceIndex": 26.7372536607816,
       "name": "Quasar 438B (max, based on GLM-5.2)",
       "outputTokensPerTask": {
         "answer": 19143.32045347732,
@@ -2128,40 +2200,6 @@
       "releaseDate": "2026-08-10",
       "shortName": "Quasar 438B (max)",
       "slug": "quasar-438b"
-    },
-    {
-      "costUsdPerTask": {
-        "answer": 0.1149651037864279,
-        "cacheRead": 0.16050451883738082,
-        "cacheWrite": 0.3026137322303595,
-        "input": 0.5402707715752649,
-        "nonCacheInput": 0.07715252050752461,
-        "output": 0.15121459626868378,
-        "reasoning": 0.03624949248225594,
-        "total": 0.6914853678439488
-      },
-      "creator": {
-        "id": "e67e56e3-15cd-43db-b679-da4660a69f41",
-        "name": "OpenAI",
-        "slug": "openai"
-      },
-      "detailsUrl": "https://artificialanalysis.ai/models/gpt-5-5-instant-06-26",
-      "effort": null,
-      "id": "c4169d75-9d24-4794-a9c3-69e1fe364de5",
-      "intelligenceIndex": 26.8042923401368,
-      "name": "GPT-5.5 Instant (June 2026)",
-      "outputTokensPerTask": {
-        "answer": 3832.170126214263,
-        "reasoning": 1208.3164160751978,
-        "total": 5040.486542289461
-      },
-      "release": {
-        "name": "GPT-5.5 Instant (June 2026)",
-        "slug": "gpt-5-5-instant-06-26"
-      },
-      "releaseDate": "2026-06-25",
-      "shortName": "GPT-5.5 Instant (June 2026)",
-      "slug": "gpt-5-5-instant-06-26"
     },
     {
       "costUsdPerTask": {
@@ -2186,7 +2224,7 @@
         "slug": "low"
       },
       "id": "7e30585f-fad7-40df-a8cb-03c1d96df38a",
-      "intelligenceIndex": 26.4944478189896,
+      "intelligenceIndex": 26.2047978189896,
       "name": "Qwen3.8 27B (low)",
       "outputTokensPerTask": {
         "answer": 19567.340810427126,
@@ -2200,6 +2238,40 @@
       "releaseDate": "2026-08-14",
       "shortName": "Qwen3.8 27B (low)",
       "slug": "qwen3-8-27b-low"
+    },
+    {
+      "costUsdPerTask": {
+        "answer": 0.1149651037864279,
+        "cacheRead": 0.16050451883738082,
+        "cacheWrite": 0.3026137322303595,
+        "input": 0.5402707715752649,
+        "nonCacheInput": 0.07715252050752461,
+        "output": 0.15121459626868378,
+        "reasoning": 0.03624949248225594,
+        "total": 0.6914853678439488
+      },
+      "creator": {
+        "id": "e67e56e3-15cd-43db-b679-da4660a69f41",
+        "name": "OpenAI",
+        "slug": "openai"
+      },
+      "detailsUrl": "https://artificialanalysis.ai/models/gpt-5-5-instant-06-26",
+      "effort": null,
+      "id": "c4169d75-9d24-4794-a9c3-69e1fe364de5",
+      "intelligenceIndex": 26.0135173401368,
+      "name": "GPT-5.5 Instant (June 2026)",
+      "outputTokensPerTask": {
+        "answer": 3832.170126214263,
+        "reasoning": 1208.3164160751978,
+        "total": 5040.486542289461
+      },
+      "release": {
+        "name": "GPT-5.5 Instant (June 2026)",
+        "slug": "gpt-5-5-instant-06-26"
+      },
+      "releaseDate": "2026-06-25",
+      "shortName": "GPT-5.5 Instant (June 2026)",
+      "slug": "gpt-5-5-instant-06-26"
     },
     {
       "costUsdPerTask": {
@@ -2220,7 +2292,7 @@
       "detailsUrl": "https://artificialanalysis.ai/models/mimo-v2-5-pro",
       "effort": null,
       "id": "00f1248e-78e3-4230-8dc8-5e13ba8645e2",
-      "intelligenceIndex": 26.4078138896511,
+      "intelligenceIndex": 25.9868888896511,
       "name": "MiMo-V2.5-Pro",
       "outputTokensPerTask": {
         "answer": 11977.483503480798,
@@ -2254,7 +2326,7 @@
       "detailsUrl": "https://artificialanalysis.ai/models/kimi-k2-7-code",
       "effort": null,
       "id": "8d0cb231-7303-452c-9923-a9620b948475",
-      "intelligenceIndex": 26.2686562401836,
+      "intelligenceIndex": 25.8121062401836,
       "name": "Kimi K2.7 Code",
       "outputTokensPerTask": {
         "answer": 10705.071954383264,
@@ -2268,74 +2340,6 @@
       "releaseDate": "2026-06-12",
       "shortName": "Kimi K2.7 Code",
       "slug": "kimi-k2-7-code"
-    },
-    {
-      "costUsdPerTask": {
-        "answer": 0.008728598247253591,
-        "cacheRead": 0.038486787821886706,
-        "cacheWrite": 0.010728607678842116,
-        "input": 0.053273380077746235,
-        "nonCacheInput": 0.00405798457701741,
-        "output": 0.03619161725068855,
-        "reasoning": 0.027463019003434955,
-        "total": 0.0894649973284348
-      },
-      "creator": {
-        "id": "8f3f9fdd-e42f-4814-a35e-5da1925b539b",
-        "name": "Thinking Machines",
-        "slug": "thinking-machines"
-      },
-      "detailsUrl": "https://artificialanalysis.ai/models/inkling-small",
-      "effort": null,
-      "id": "7261504e-503c-4a66-a9d3-a3272cdf9ad6",
-      "intelligenceIndex": 26.0860584411942,
-      "name": "Inkling Small",
-      "outputTokensPerTask": {
-        "answer": 7273.831872711327,
-        "reasoning": 22885.84916952913,
-        "total": 30159.68104224046
-      },
-      "release": {
-        "name": "Inkling Small",
-        "slug": "inkling-small"
-      },
-      "releaseDate": "2026-07-30",
-      "shortName": "Inkling Small",
-      "slug": "inkling-small"
-    },
-    {
-      "costUsdPerTask": {
-        "answer": 0.017877009070380465,
-        "cacheRead": 0.018156045901524007,
-        "cacheWrite": 0.24129055802078492,
-        "input": 0.2671200908688062,
-        "nonCacheInput": 0.007673486946497344,
-        "output": 0.05815334111238546,
-        "reasoning": 0.040276332042005,
-        "total": 0.32527343198119174
-      },
-      "creator": {
-        "id": "d874d370-74d3-4fa0-ba00-5272f92f946b",
-        "name": "Alibaba",
-        "slug": "alibaba"
-      },
-      "detailsUrl": "https://artificialanalysis.ai/models/qwen3-7-plus",
-      "effort": null,
-      "id": "a87fce42-eea3-4e45-a96d-fe057814f371",
-      "intelligenceIndex": 25.8186965821984,
-      "name": "Qwen3.7 Plus",
-      "outputTokensPerTask": {
-        "answer": 11173.130668987791,
-        "reasoning": 25172.707526253125,
-        "total": 36345.83819524092
-      },
-      "release": {
-        "name": "Qwen3.7 Plus",
-        "slug": "qwen3-7-plus"
-      },
-      "releaseDate": "2026-06-01",
-      "shortName": "Qwen3.7 Plus",
-      "slug": "qwen3-7-plus"
     },
     {
       "costUsdPerTask": {
@@ -2356,7 +2360,7 @@
       "detailsUrl": "https://artificialanalysis.ai/models/hy3",
       "effort": null,
       "id": "b23e6c69-96e5-44c9-8f58-4b42e0c399d5",
-      "intelligenceIndex": 25.7716025731571,
+      "intelligenceIndex": 25.2972775731571,
       "name": "Hy3",
       "outputTokensPerTask": {
         "answer": 10354.707136031948,
@@ -2373,41 +2377,37 @@
     },
     {
       "costUsdPerTask": {
-        "answer": 0.04559012774457057,
-        "cacheRead": 0.371122547835551,
-        "cacheWrite": 0.08095664630271783,
-        "input": 0.4666877952660252,
-        "nonCacheInput": 0.014608601127756447,
-        "output": 0.14035670581605783,
-        "reasoning": 0.09476657807148725,
-        "total": 0.6070445010820831
+        "answer": 0.017877009070380465,
+        "cacheRead": 0.018156045901524007,
+        "cacheWrite": 0.24129055802078492,
+        "input": 0.2671200908688062,
+        "nonCacheInput": 0.007673486946497344,
+        "output": 0.05815334111238546,
+        "reasoning": 0.040276332042005,
+        "total": 0.32527343198119174
       },
       "creator": {
-        "id": "8f3f9fdd-e42f-4814-a35e-5da1925b539b",
-        "name": "Thinking Machines",
-        "slug": "thinking-machines"
+        "id": "d874d370-74d3-4fa0-ba00-5272f92f946b",
+        "name": "Alibaba",
+        "slug": "alibaba"
       },
-      "detailsUrl": "https://artificialanalysis.ai/models/inkling",
-      "effort": {
-        "label": "xhigh",
-        "level": 50,
-        "slug": "xhigh"
-      },
-      "id": "0de09623-2b1a-4c8d-86ef-7f5245d4e24b",
-      "intelligenceIndex": 25.5423060999384,
-      "name": "Inkling (xhigh)",
+      "detailsUrl": "https://artificialanalysis.ai/models/qwen3-7-plus",
+      "effort": null,
+      "id": "a87fce42-eea3-4e45-a96d-fe057814f371",
+      "intelligenceIndex": 25.1622215821984,
+      "name": "Qwen3.7 Plus",
       "outputTokensPerTask": {
-        "answer": 11256.82166532607,
-        "reasoning": 23399.155079379572,
-        "total": 34655.976744705644
+        "answer": 11173.130668987791,
+        "reasoning": 25172.707526253125,
+        "total": 36345.83819524092
       },
       "release": {
-        "name": "Inkling",
-        "slug": "inkling"
+        "name": "Qwen3.7 Plus",
+        "slug": "qwen3-7-plus"
       },
-      "releaseDate": "2026-07-15",
-      "shortName": "Inkling",
-      "slug": "inkling"
+      "releaseDate": "2026-06-01",
+      "shortName": "Qwen3.7 Plus",
+      "slug": "qwen3-7-plus"
     },
     {
       "costUsdPerTask": {
@@ -2432,7 +2432,7 @@
         "slug": "medium"
       },
       "id": "58b812bf-8498-46db-b834-f43ccc614b61",
-      "intelligenceIndex": 25.4773991440784,
+      "intelligenceIndex": 25.0358741440784,
       "name": "GPT-5.6 Luna (medium)",
       "outputTokensPerTask": {
         "answer": 2937.209736835318,
@@ -2446,6 +2446,44 @@
       "releaseDate": "2026-07-09",
       "shortName": "GPT-5.6 Luna (medium)",
       "slug": "gpt-5-6-luna-medium"
+    },
+    {
+      "costUsdPerTask": {
+        "answer": 0.04559012774457057,
+        "cacheRead": 0.371122547835551,
+        "cacheWrite": 0.08095664630271783,
+        "input": 0.4666877952660252,
+        "nonCacheInput": 0.014608601127756447,
+        "output": 0.14035670581605783,
+        "reasoning": 0.09476657807148725,
+        "total": 0.6070445010820831
+      },
+      "creator": {
+        "id": "8f3f9fdd-e42f-4814-a35e-5da1925b539b",
+        "name": "Thinking Machines",
+        "slug": "thinking-machines"
+      },
+      "detailsUrl": "https://artificialanalysis.ai/models/inkling",
+      "effort": {
+        "label": "xhigh",
+        "level": 50,
+        "slug": "xhigh"
+      },
+      "id": "0de09623-2b1a-4c8d-86ef-7f5245d4e24b",
+      "intelligenceIndex": 24.9847810999384,
+      "name": "Inkling (xhigh)",
+      "outputTokensPerTask": {
+        "answer": 11256.82166532607,
+        "reasoning": 23399.155079379572,
+        "total": 34655.976744705644
+      },
+      "release": {
+        "name": "Inkling",
+        "slug": "inkling"
+      },
+      "releaseDate": "2026-07-15",
+      "shortName": "Inkling",
+      "slug": "inkling"
     },
     {
       "costUsdPerTask": {
@@ -2470,7 +2508,7 @@
         "slug": "low"
       },
       "id": "142b93bf-09c4-42dc-9c3a-50b1a222cbd4",
-      "intelligenceIndex": 24.7426143579597,
+      "intelligenceIndex": 24.2638393579597,
       "name": "Claude Sonnet 5 (Adaptive Reasoning, Low Effort)",
       "outputTokensPerTask": {
         "answer": 8068.200939915205,
@@ -2504,7 +2542,7 @@
       "detailsUrl": "https://artificialanalysis.ai/models/nvidia-nemotron-3-ultra-550b-a55b",
       "effort": null,
       "id": "5b52def2-ac9b-4465-ad80-91ea8079e253",
-      "intelligenceIndex": 23.4145123422858,
+      "intelligenceIndex": 22.9279123422858,
       "name": "Nemotron 3 Ultra 550B A55B (Reasoning)",
       "outputTokensPerTask": {
         "answer": 13315.828431664018,
@@ -2542,7 +2580,7 @@
         "slug": "high"
       },
       "id": "093b9df2-ebee-4309-943f-5a7e88360adf",
-      "intelligenceIndex": 22.6606674839812,
+      "intelligenceIndex": 22.1685424839812,
       "name": "Gemini 3.5 Flash-Lite",
       "outputTokensPerTask": {
         "answer": 7101.546561550058,
@@ -2556,40 +2594,6 @@
       "releaseDate": "2026-07-21",
       "shortName": "Gemini 3.5 Flash-Lite",
       "slug": "gemini-3-5-flash-lite"
-    },
-    {
-      "costUsdPerTask": {
-        "answer": 0.0030583436341475906,
-        "cacheRead": 0.0033684338231462128,
-        "cacheWrite": 0.005584111560079288,
-        "input": 0.010410232216692858,
-        "nonCacheInput": 0.001457686833467357,
-        "output": 0.008659541327663205,
-        "reasoning": 0.005601197693515617,
-        "total": 0.019069773544356065
-      },
-      "creator": {
-        "id": "5147c8b4-61d5-4070-9324-8adf8aa144c2",
-        "name": "Xiaomi",
-        "slug": "xiaomi"
-      },
-      "detailsUrl": "https://artificialanalysis.ai/models/mimo-v2-5-0424",
-      "effort": null,
-      "id": "22d09131-343b-4adf-8760-533e20a2155f",
-      "intelligenceIndex": 22.3038928794953,
-      "name": "MiMo-V2.5",
-      "outputTokensPerTask": {
-        "answer": 10922.655836241394,
-        "reasoning": 20004.277476841482,
-        "total": 30926.933313082875
-      },
-      "release": {
-        "name": "MiMo-V2.5",
-        "slug": "mimo-v2-5-0424"
-      },
-      "releaseDate": "2026-04-22",
-      "shortName": "MiMo-V2.5",
-      "slug": "mimo-v2-5-0424"
     },
     {
       "costUsdPerTask": {
@@ -2614,7 +2618,7 @@
         "slug": "low"
       },
       "id": "050c61cd-cddc-463a-a30a-a82aaa37be59",
-      "intelligenceIndex": 21.5456033424265,
+      "intelligenceIndex": 21.0124783424265,
       "name": "GPT-5.6 Luna (low)",
       "outputTokensPerTask": {
         "answer": 1955.358913324883,
@@ -2648,7 +2652,7 @@
       "detailsUrl": "https://artificialanalysis.ai/models/gpt-5-6-terra-non-reasoning",
       "effort": null,
       "id": "9b97a35e-6ac7-44d9-91c6-422fa678963e",
-      "intelligenceIndex": 21.2083013584503,
+      "intelligenceIndex": 20.7797013584503,
       "name": "GPT-5.6 Terra (Non-reasoning)",
       "outputTokensPerTask": {
         "answer": 3129.3947847469058,
@@ -2665,37 +2669,37 @@
     },
     {
       "costUsdPerTask": {
-        "answer": 0.0034077811544387807,
-        "cacheRead": 0.009273311947255305,
-        "cacheWrite": 0.012917963340164727,
-        "input": 0.02294333770881802,
-        "nonCacheInput": 0.000752062421397982,
-        "output": 0.010713335881722649,
-        "reasoning": 0.007305554727283867,
-        "total": 0.03365667359054066
+        "answer": 0.08992600116655003,
+        "cacheRead": 0.5806323376289286,
+        "cacheWrite": 1.2266054198050151,
+        "input": 1.8171990530935989,
+        "nonCacheInput": 0.009961295659655287,
+        "output": 0.08992600116655003,
+        "reasoning": 0,
+        "total": 1.9071250542601492
       },
       "creator": {
-        "id": "4df238a9-d4fd-4cf2-ab1e-d12956c41f9b",
-        "name": "InclusionAI",
-        "slug": "inclusionai"
+        "id": "d874d370-74d3-4fa0-ba00-5272f92f946b",
+        "name": "Alibaba",
+        "slug": "alibaba"
       },
-      "detailsUrl": "https://artificialanalysis.ai/models/ling-3-0-flash",
+      "detailsUrl": "https://artificialanalysis.ai/models/qwen3-8-27b-non-reasoning",
       "effort": null,
-      "id": "e33dc369-ae81-40e0-8c4e-28b002d02197",
-      "intelligenceIndex": 20.6349521865481,
-      "name": "Ling 3.0 Flash",
+      "id": "353c92f3-2148-4c2d-9231-aa7e1322a1fd",
+      "intelligenceIndex": 20.1502427055595,
+      "name": "Qwen3.8 27B (Non-reasoning)",
       "outputTokensPerTask": {
-        "answer": 15489.914338358092,
-        "reasoning": 33207.0669421994,
-        "total": 48696.98128055749
+        "answer": 29975.33372218334,
+        "reasoning": 0,
+        "total": 29975.33372218334
       },
       "release": {
-        "name": "Ling 3.0 Flash",
-        "slug": "ling-3-0-flash"
+        "name": "Qwen3.8 27B",
+        "slug": "qwen3-8-27b"
       },
-      "releaseDate": "2026-08-04",
-      "shortName": "Ling 3.0 Flash",
-      "slug": "ling-3-0-flash"
+      "releaseDate": "2026-08-14",
+      "shortName": "Qwen3.8 27B",
+      "slug": "qwen3-8-27b-non-reasoning"
     },
     {
       "costUsdPerTask": {
@@ -2716,7 +2720,7 @@
       "detailsUrl": "https://artificialanalysis.ai/models/longcat-2-0",
       "effort": null,
       "id": "5c3bdc0d-abab-4526-8079-34de4089bb4a",
-      "intelligenceIndex": 19.6877756610623,
+      "intelligenceIndex": 19.1123256610623,
       "name": "LongCat 2.0",
       "outputTokensPerTask": {
         "answer": 10127.64712437838,
@@ -2750,7 +2754,7 @@
       "detailsUrl": "https://artificialanalysis.ai/models/qwen3-5-397b-a17b",
       "effort": null,
       "id": "0e66bae9-41f1-42fc-9276-ce8cb6f72919",
-      "intelligenceIndex": 19.1073499294815,
+      "intelligenceIndex": 18.4204249294815,
       "name": "Qwen3.5 397B A17B (Reasoning)",
       "outputTokensPerTask": {
         "answer": 9924.316472722072,
@@ -2784,7 +2788,7 @@
       "detailsUrl": "https://artificialanalysis.ai/models/qwen3-6-35b-a3b",
       "effort": null,
       "id": "8665ca00-c687-44c7-875c-22618cb31c4f",
-      "intelligenceIndex": 18.8138400189843,
+      "intelligenceIndex": 18.2289900189843,
       "name": "Qwen3.6 35B A3B (Reasoning)",
       "outputTokensPerTask": {
         "answer": 22088.67015641846,
@@ -2822,7 +2826,7 @@
         "slug": "high"
       },
       "id": "583f98fb-c4b8-4df3-8d40-60ac0ed69882",
-      "intelligenceIndex": 18.0678176089465,
+      "intelligenceIndex": 17.4754176089465,
       "name": "Muse Glimmer (high)",
       "outputTokensPerTask": {
         "answer": 4377.332690535162,
@@ -2856,7 +2860,7 @@
       "detailsUrl": "https://artificialanalysis.ai/models/claude-4-5-haiku-reasoning",
       "effort": null,
       "id": "a6340098-d7ae-462d-b372-0a0a67fc44b4",
-      "intelligenceIndex": 17.5868602291856,
+      "intelligenceIndex": 16.8822352291856,
       "name": "Claude 4.5 Haiku (Reasoning)",
       "outputTokensPerTask": {
         "answer": 10819.566842159622,
@@ -2894,7 +2898,7 @@
         "slug": "xhigh"
       },
       "id": "eb4ba465-3fcd-4065-9fe2-e8225e7b2c6c",
-      "intelligenceIndex": 17.2770613768618,
+      "intelligenceIndex": 16.6172363768618,
       "name": "Ring-2.6-1T",
       "outputTokensPerTask": {
         "answer": 17669.475709649934,
@@ -2928,7 +2932,7 @@
       "detailsUrl": "https://artificialanalysis.ai/models/qwen3-5-122b-a10b",
       "effort": null,
       "id": "2236df45-0699-40d1-b5cc-69ee345d2257",
-      "intelligenceIndex": 16.1869509312969,
+      "intelligenceIndex": 15.5694009312969,
       "name": "Qwen3.5 122B A10B (Reasoning)",
       "outputTokensPerTask": {
         "answer": 9843.907107429015,
@@ -2962,7 +2966,7 @@
       "detailsUrl": "https://artificialanalysis.ai/models/gpt-5-6-luna-non-reasoning",
       "effort": null,
       "id": "dc64f856-3ded-497d-9527-d41d31267ed5",
-      "intelligenceIndex": 16.0500252110259,
+      "intelligenceIndex": 15.5270002110259,
       "name": "GPT-5.6 Luna (Non-reasoning)",
       "outputTokensPerTask": {
         "answer": 2027.4761833867608,
@@ -2976,31 +2980,6 @@
       "releaseDate": "2026-07-09",
       "shortName": "GPT-5.6 Luna (Non-reasoning)",
       "slug": "gpt-5-6-luna-non-reasoning"
-    },
-    {
-      "costUsdPerTask": null,
-      "creator": {
-        "id": "faddc6d9-2c14-445f-9b28-56726f59c793",
-        "name": "Google",
-        "slug": "google"
-      },
-      "detailsUrl": "https://artificialanalysis.ai/models/gemma-4-31b",
-      "effort": null,
-      "id": "cd26a386-4873-46ff-b853-d239050025a2",
-      "intelligenceIndex": 15.4156500745828,
-      "name": "Gemma 4 31B (Reasoning)",
-      "outputTokensPerTask": {
-        "answer": 4679.969333946847,
-        "reasoning": 7833.237082636707,
-        "total": 12513.206416583555
-      },
-      "release": {
-        "name": "Gemma 4 31B",
-        "slug": "gemma-4-31b"
-      },
-      "releaseDate": "2026-04-02",
-      "shortName": "Gemma 4 31B",
-      "slug": "gemma-4-31b"
     },
     {
       "costUsdPerTask": {
@@ -3025,7 +3004,7 @@
         "slug": "high"
       },
       "id": "dd059b25-d82a-4ead-82a4-4adceaaec48b",
-      "intelligenceIndex": 14.8946727802691,
+      "intelligenceIndex": 14.1889227802691,
       "name": "Mistral Medium 3.5",
       "outputTokensPerTask": {
         "answer": 12065.772317071056,
@@ -3050,7 +3029,7 @@
       "detailsUrl": "https://artificialanalysis.ai/models/command-a-plus",
       "effort": null,
       "id": "2e9ff877-fd2c-4ce7-b631-7ca1bdb6d13e",
-      "intelligenceIndex": 13.9235002685349,
+      "intelligenceIndex": 13.1335002685349,
       "name": "Command A+",
       "outputTokensPerTask": {
         "answer": 8481.701336345193,
@@ -3084,7 +3063,7 @@
       "detailsUrl": "https://artificialanalysis.ai/models/nemotron-3-5-lightning",
       "effort": null,
       "id": "29976311-665a-4b2f-ac72-557c33e0758e",
-      "intelligenceIndex": 13.6352556217144,
+      "intelligenceIndex": 12.8572306217144,
       "name": "Nemotron 3.5 Lightning",
       "outputTokensPerTask": {
         "answer": 19818.7768327742,
@@ -3101,14 +3080,14 @@
     },
     {
       "costUsdPerTask": {
-        "answer": 0.030396076669741624,
+        "answer": 0.04208687538887301,
         "cacheRead": 0,
-        "cacheWrite": 0.9846832146981574,
-        "input": 0.9860017454872753,
-        "nonCacheInput": 0.0013185307891178497,
-        "output": 0.07398463973212283,
-        "reasoning": 0.04358856306238122,
-        "total": 1.0599863852193983
+        "cacheWrite": 1.5345712436854402,
+        "input": 1.536626096863286,
+        "nonCacheInput": 0.0020548531778459994,
+        "output": 0.10244027039832393,
+        "reasoning": 0.060353395009450896,
+        "total": 1.6390663672616101
       },
       "creator": {
         "id": "0c303112-430d-4367-a484-51defaa2e166",
@@ -3118,7 +3097,7 @@
       "detailsUrl": "https://artificialanalysis.ai/models/nvidia-nemotron-3-super-120b-a12b",
       "effort": null,
       "id": "63872e9c-3377-4a6b-b477-7bba244c38e9",
-      "intelligenceIndex": 13.5508075290979,
+      "intelligenceIndex": 12.8287575290979,
       "name": "Nemotron 3 Super 120B A12B (Reasoning)",
       "outputTokensPerTask": {
         "answer": 46763.194876525566,
@@ -3156,7 +3135,7 @@
         "slug": "high"
       },
       "id": "f0083258-8646-45b8-8082-7aaf6c2ea82a",
-      "intelligenceIndex": 12.3483931512592,
+      "intelligenceIndex": 11.6028431512592,
       "name": "gpt-oss-120b (high)",
       "outputTokensPerTask": {
         "answer": 11869.499232430167,
@@ -3170,103 +3149,6 @@
       "releaseDate": "2025-08-05",
       "shortName": "gpt-oss-120b (high)",
       "slug": "gpt-oss-120b"
-    },
-    {
-      "costUsdPerTask": null,
-      "creator": {
-        "id": "4df238a9-d4fd-4cf2-ab1e-d12956c41f9b",
-        "name": "InclusionAI",
-        "slug": "inclusionai"
-      },
-      "detailsUrl": "https://artificialanalysis.ai/models/ling-3-0-tiny",
-      "effort": null,
-      "id": "7eaf926c-5f39-4e58-ae50-c38b5fc630fc",
-      "intelligenceIndex": 11.8679233769305,
-      "name": "Ling 3.0 Tiny",
-      "outputTokensPerTask": {
-        "answer": 30352.390728791637,
-        "reasoning": 39935.0719889828,
-        "total": 70287.46271777444
-      },
-      "release": {
-        "name": "Ling 3.0 Tiny",
-        "slug": "ling-3-0-tiny"
-      },
-      "releaseDate": "2026-08-06",
-      "shortName": "Ling 3.0 Tiny",
-      "slug": "ling-3-0-tiny"
-    },
-    {
-      "costUsdPerTask": {
-        "answer": 0.00289467980723181,
-        "cacheRead": 0.01185625788148534,
-        "cacheWrite": 0.002926751511860106,
-        "input": 0.015246413095103268,
-        "nonCacheInput": 0.00046340370175782246,
-        "output": 0.008349678396825922,
-        "reasoning": 0.005454998589594112,
-        "total": 0.023596091491929188
-      },
-      "creator": {
-        "id": "512ef1e4-e02e-4532-a5f2-d11a40962498",
-        "name": "IBM",
-        "slug": "ibm"
-      },
-      "detailsUrl": "https://artificialanalysis.ai/models/granite-4-2-8b",
-      "effort": null,
-      "id": "adfae555-f489-4f3e-9064-c6b7fcdd0783",
-      "intelligenceIndex": 11.8124212267815,
-      "name": "Granite 4.2 8B",
-      "outputTokensPerTask": {
-        "answer": 11578.71922892724,
-        "reasoning": 21819.994358376447,
-        "total": 33398.71358730369
-      },
-      "release": {
-        "name": "Granite 4.2 8B",
-        "slug": "granite-4-2-8b"
-      },
-      "releaseDate": "2026-08-25",
-      "shortName": "Granite 4.2 8B",
-      "slug": "granite-4-2-8b"
-    },
-    {
-      "costUsdPerTask": {
-        "answer": 0.003373471698796278,
-        "cacheRead": 0.007573339879368866,
-        "cacheWrite": 0.04415449189290785,
-        "input": 0.05375344778742799,
-        "nonCacheInput": 0.0020256160151512644,
-        "output": 0.019594488869300982,
-        "reasoning": 0.016221017170504705,
-        "total": 0.07334793665672895
-      },
-      "creator": {
-        "id": "e8fe48d4-d420-48a5-87db-fcd5f5b14d5c",
-        "name": "Inception",
-        "slug": "inception"
-      },
-      "detailsUrl": "https://artificialanalysis.ai/models/mercury-2",
-      "effort": {
-        "label": "high",
-        "level": 40,
-        "slug": "high"
-      },
-      "id": "016d330a-2141-4afa-b2fc-62b314423dc1",
-      "intelligenceIndex": 11.5087340974661,
-      "name": "Mercury 2",
-      "outputTokensPerTask": {
-        "answer": 4497.962265061703,
-        "reasoning": 21628.02289400627,
-        "total": 26125.985159067972
-      },
-      "release": {
-        "name": "Mercury 2",
-        "slug": "mercury-2"
-      },
-      "releaseDate": "2026-02-20",
-      "shortName": "Mercury 2",
-      "slug": "mercury-2"
     },
     {
       "costUsdPerTask": {
@@ -3287,7 +3169,7 @@
       "detailsUrl": "https://artificialanalysis.ai/models/mistral-small-4",
       "effort": null,
       "id": "3fd96175-4ef1-434c-8795-f873aec2abc1",
-      "intelligenceIndex": 11.4511294141469,
+      "intelligenceIndex": 11.2675794141469,
       "name": "Mistral Small 4 (Reasoning)",
       "outputTokensPerTask": {
         "answer": 4969.996763633023,
@@ -3301,6 +3183,40 @@
       "releaseDate": "2026-03-16",
       "shortName": "Mistral Small 4",
       "slug": "mistral-small-4"
+    },
+    {
+      "costUsdPerTask": {
+        "answer": 0.00289467980723181,
+        "cacheRead": 0.01185625788148534,
+        "cacheWrite": 0.002926751511860106,
+        "input": 0.015246413095103268,
+        "nonCacheInput": 0.00046340370175782246,
+        "output": 0.008349678396825922,
+        "reasoning": 0.005454998589594112,
+        "total": 0.023596091491929188
+      },
+      "creator": {
+        "id": "512ef1e4-e02e-4532-a5f2-d11a40962498",
+        "name": "IBM",
+        "slug": "ibm"
+      },
+      "detailsUrl": "https://artificialanalysis.ai/models/granite-4-2-8b",
+      "effort": null,
+      "id": "adfae555-f489-4f3e-9064-c6b7fcdd0783",
+      "intelligenceIndex": 11.0812712267815,
+      "name": "Granite 4.2 8B",
+      "outputTokensPerTask": {
+        "answer": 11578.71922892724,
+        "reasoning": 21819.994358376447,
+        "total": 33398.71358730369
+      },
+      "release": {
+        "name": "Granite 4.2 8B",
+        "slug": "granite-4-2-8b"
+      },
+      "releaseDate": "2026-08-25",
+      "shortName": "Granite 4.2 8B",
+      "slug": "granite-4-2-8b"
     },
     {
       "costUsdPerTask": {
@@ -3321,7 +3237,7 @@
       "detailsUrl": "https://artificialanalysis.ai/models/trinity-large-thinking",
       "effort": null,
       "id": "b6d2e43d-3082-43f5-9318-0f4dbcb54163",
-      "intelligenceIndex": 10.8821425924218,
+      "intelligenceIndex": 10.8242425924218,
       "name": "Trinity Large Thinking",
       "outputTokensPerTask": {
         "answer": 5777.461993446014,
@@ -3335,40 +3251,6 @@
       "releaseDate": "2026-04-01",
       "shortName": "Trinity Large Thinking",
       "slug": "trinity-large-thinking"
-    },
-    {
-      "costUsdPerTask": {
-        "answer": 0.0181677328736971,
-        "cacheRead": 0,
-        "cacheWrite": 0.5299722117576076,
-        "input": 0.5335468961430659,
-        "nonCacheInput": 0.0035746843854585005,
-        "output": 0.0181677328736971,
-        "reasoning": 0,
-        "total": 0.5517146290167634
-      },
-      "creator": {
-        "id": "d874d370-74d3-4fa0-ba00-5272f92f946b",
-        "name": "Alibaba",
-        "slug": "alibaba"
-      },
-      "detailsUrl": "https://artificialanalysis.ai/models/qwen3-coder-next",
-      "effort": null,
-      "id": "fc92f822-04b7-420d-9c07-a21af5e9aac7",
-      "intelligenceIndex": 10.0530720321917,
-      "name": "Qwen3 Coder Next",
-      "outputTokensPerTask": {
-        "answer": 15139.777394747589,
-        "reasoning": 0,
-        "total": 15139.777394747589
-      },
-      "release": {
-        "name": "Qwen3 Coder Next",
-        "slug": "qwen3-coder-next"
-      },
-      "releaseDate": "2026-02-03",
-      "shortName": "Qwen3 Coder Next",
-      "slug": "qwen3-coder-next"
     },
     {
       "costUsdPerTask": null,
@@ -3414,7 +3296,7 @@
       "detailsUrl": "https://artificialanalysis.ai/models/mistral-large-3",
       "effort": null,
       "id": "4928e950-7f37-4475-b0dc-c5bad781a321",
-      "intelligenceIndex": 9.70803812860467,
+      "intelligenceIndex": 9.26608812860467,
       "name": "Mistral Large 3",
       "outputTokensPerTask": {
         "answer": 5566.44243010125,
@@ -3430,74 +3312,49 @@
       "slug": "mistral-large-3"
     },
     {
-      "costUsdPerTask": null,
-      "creator": {
-        "id": "b5c0639a-cc9c-443b-a07e-bae6b7088933",
-        "name": "Mistral",
-        "slug": "mistral"
-      },
-      "detailsUrl": "https://artificialanalysis.ai/models/devstral-2",
-      "effort": null,
-      "id": "09f43999-b67b-4c1b-b050-44df41ed7e62",
-      "intelligenceIndex": 9.40586079574885,
-      "name": "Devstral 2",
-      "outputTokensPerTask": {
-        "answer": 12544.288298302885,
-        "reasoning": 0,
-        "total": 12544.288298302885
-      },
-      "release": {
-        "name": "Devstral 2",
-        "slug": "devstral-2"
-      },
-      "releaseDate": "2025-12-09",
-      "shortName": "Devstral 2",
-      "slug": "devstral-2"
-    },
-    {
       "costUsdPerTask": {
-        "answer": 0.001863006214263387,
+        "answer": 0.018173793419151645,
         "cacheRead": 0,
-        "cacheWrite": 0.03644639979439206,
-        "input": 0.03787297165288413,
-        "nonCacheInput": 0.0014265718584920634,
-        "output": 0.001863006214263387,
+        "cacheWrite": 0.5300556496894258,
+        "input": 0.5336303340748841,
+        "nonCacheInput": 0.0035746843854585005,
+        "output": 0.018173793419151645,
         "reasoning": 0,
-        "total": 0.03973597786714752
+        "total": 0.5518041274940361
       },
       "creator": {
-        "id": "e1694725-0192-4e54-b1b8-c97e816c6cbe",
-        "name": "Meta",
-        "slug": "meta"
+        "id": "d874d370-74d3-4fa0-ba00-5272f92f946b",
+        "name": "Alibaba",
+        "slug": "alibaba"
       },
-      "detailsUrl": "https://artificialanalysis.ai/models/llama-4-maverick",
+      "detailsUrl": "https://artificialanalysis.ai/models/qwen3-coder-next",
       "effort": null,
-      "id": "922c69c7-9037-43c6-8bcf-a1c555e7f3eb",
-      "intelligenceIndex": 9.29902687437199,
-      "name": "Llama 4 Maverick",
+      "id": "fc92f822-04b7-420d-9c07-a21af5e9aac7",
+      "intelligenceIndex": 9.23682203219174,
+      "name": "Qwen3 Coder Next",
       "outputTokensPerTask": {
-        "answer": 2047.2595761136122,
+        "answer": 15144.827849293042,
         "reasoning": 0,
-        "total": 2047.2595761136122
+        "total": 15144.827849293042
       },
       "release": {
-        "name": "Llama 4 Maverick",
-        "slug": "llama-4-maverick"
+        "name": "Qwen3 Coder Next",
+        "slug": "qwen3-coder-next"
       },
-      "releaseDate": "2025-04-05",
-      "shortName": "Llama 4 Maverick",
-      "slug": "llama-4-maverick"
+      "releaseDate": "2026-02-03",
+      "shortName": "Qwen3 Coder Next",
+      "slug": "qwen3-coder-next"
     },
     {
       "costUsdPerTask": {
-        "answer": 0.0008867238451642424,
-        "cacheRead": 0.0028862322976982518,
-        "cacheWrite": 0.0006239772999721645,
-        "input": 0.00373299080970506,
+        "answer": 0.0008905261542551513,
+        "cacheRead": 0.002896550562958479,
+        "cacheWrite": 0.0006258668480221645,
+        "input": 0.0037451986230152877,
         "nonCacheInput": 0.00022278121203464407,
-        "output": 0.002229297448009534,
-        "reasoning": 0.0013425736028452916,
-        "total": 0.005962288257714593
+        "output": 0.0022350490480095337,
+        "reasoning": 0.0013445228937543825,
+        "total": 0.005980247671024821
       },
       "creator": {
         "id": "512ef1e4-e02e-4532-a5f2-d11a40962498",
@@ -3510,9 +3367,9 @@
       "intelligenceIndex": 9.05588232376756,
       "name": "Granite 4.2 3B",
       "outputTokensPerTask": {
-        "answer": 7389.365376368686,
-        "reasoning": 11188.113357044096,
-        "total": 18577.478733412783
+        "answer": 7421.051285459595,
+        "reasoning": 11204.357447953187,
+        "total": 18625.408733412783
       },
       "release": {
         "name": "Granite 4.2 3B",
@@ -3545,7 +3402,7 @@
         "slug": "high"
       },
       "id": "36f73aaf-d38a-4b56-a2b3-d04d17186910",
-      "intelligenceIndex": 9.0371671856126,
+      "intelligenceIndex": 8.9675171856126,
       "name": "gpt-oss-20b (high)",
       "outputTokensPerTask": {
         "answer": 2000.674950298791,
@@ -3601,10 +3458,35 @@
         "name": "Mistral",
         "slug": "mistral"
       },
+      "detailsUrl": "https://artificialanalysis.ai/models/devstral-2",
+      "effort": null,
+      "id": "09f43999-b67b-4c1b-b050-44df41ed7e62",
+      "intelligenceIndex": 8.61676079574885,
+      "name": "Devstral 2",
+      "outputTokensPerTask": {
+        "answer": 12544.288298302885,
+        "reasoning": 0,
+        "total": 12544.288298302885
+      },
+      "release": {
+        "name": "Devstral 2",
+        "slug": "devstral-2"
+      },
+      "releaseDate": "2025-12-09",
+      "shortName": "Devstral 2",
+      "slug": "devstral-2"
+    },
+    {
+      "costUsdPerTask": null,
+      "creator": {
+        "id": "b5c0639a-cc9c-443b-a07e-bae6b7088933",
+        "name": "Mistral",
+        "slug": "mistral"
+      },
       "detailsUrl": "https://artificialanalysis.ai/models/devstral-small-2",
       "effort": null,
       "id": "ce819310-af7c-49d3-9a02-6845111e1788",
-      "intelligenceIndex": 8.3575858990318,
+      "intelligenceIndex": 7.5369358990318,
       "name": "Devstral Small 2",
       "outputTokensPerTask": {
         "answer": 13060.27418852321,
@@ -3618,40 +3500,6 @@
       "releaseDate": "2025-12-09",
       "shortName": "Devstral Small 2",
       "slug": "devstral-small-2"
-    },
-    {
-      "costUsdPerTask": {
-        "answer": 0.0013043134818713667,
-        "cacheRead": 0,
-        "cacheWrite": 0.11665280328657858,
-        "input": 0.1170718316942674,
-        "nonCacheInput": 0.00041902840768882123,
-        "output": 0.0013043134818713667,
-        "reasoning": 0,
-        "total": 0.11837614517613876
-      },
-      "creator": {
-        "id": "e1694725-0192-4e54-b1b8-c97e816c6cbe",
-        "name": "Meta",
-        "slug": "meta"
-      },
-      "detailsUrl": "https://artificialanalysis.ai/models/llama-4-scout",
-      "effort": null,
-      "id": "adf9a85e-abc3-4f28-937b-db6655cc5238",
-      "intelligenceIndex": 6.45126865234633,
-      "name": "Llama 4 Scout",
-      "outputTokensPerTask": {
-        "answer": 1918.1080615755395,
-        "reasoning": 0,
-        "total": 1918.1080615755395
-      },
-      "release": {
-        "name": "Llama 4 Scout",
-        "slug": "llama-4-scout"
-      },
-      "releaseDate": "2025-04-05",
-      "shortName": "Llama 4 Scout",
-      "slug": "llama-4-scout"
     },
     {
       "costUsdPerTask": {
@@ -3792,17 +3640,17 @@
   ],
   "schemaVersion": 1,
   "selection": {
-    "measuredCompleteRecordCount": 105,
-    "positiveCostRecordCount": 99,
+    "measuredCompleteRecordCount": 100,
+    "positiveCostRecordCount": 96,
     "rule": "current, non-estimated model configurations with a finite 0–100 Intelligence Index, finite positive per-task output-token total, and a complete finite nonnegative per-task cost breakdown; source cost totals at or below zero normalize to null",
-    "sourceRecordCount": 653
+    "sourceRecordCount": 656
   },
   "source": {
     "citation": "Artificial Analysis (2025). LLM benchmarks dataset. https://artificialanalysis.ai",
     "method": "public-next-flight",
     "methodologyUrl": "https://artificialanalysis.ai/methodology/intelligence-benchmarking",
     "name": "Artificial Analysis",
-    "retrievedAt": "2026-09-19T04:36:06.828Z",
+    "retrievedAt": "2026-09-22T14:26:36.105Z",
     "sourceClass": "benchmark-publisher",
     "termsUrl": "https://artificialanalysis.ai/docs/legal/Terms-of-Use.pdf",
     "url": "https://artificialanalysis.ai/models"

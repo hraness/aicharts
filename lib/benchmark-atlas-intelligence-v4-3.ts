@@ -23,8 +23,8 @@ export const INTELLIGENCE_V43_ATLAS_ENTRY = {
     url: ARTIFICIAL_ANALYSIS_INTELLIGENCE_SOURCE_URL,
     methodologyUrl: ARTIFICIAL_ANALYSIS_INTELLIGENCE_METHODOLOGY_URL,
   },
-  measure: "The publisher’s v4.3 index across ten evaluations: agents 30%, coding 20%, scientific reasoning 20%, and general capability 30%.",
-  comparisonRule: "Compare configurations only within v4.3. Its evaluation roster and weights differ from v4.1.1; the historical scores are not on a continuous scale with these scores.",
+  measure: "The publisher’s v4.3.2 index across ten evaluations: agents 30%, coding 20%, scientific reasoning 20%, and general capability 30%.",
+  comparisonRule: "Compare configurations only within v4.3.2. Its evaluation roster and weights differ from v4.1.1; the historical scores are not on a continuous scale with these scores.",
   limitations: [
     "An index reflects the publisher’s task mix and weights, not every use case. Reasoning effort changes the evaluated configuration.",
     "Both resources are publisher-reported per-task measures. Output tokens include answer and reasoning; cost also includes input and cache traffic.",
@@ -45,7 +45,7 @@ export function intelligenceV43AtlasDataset(
     source: { name: snapshot.source.name, url: snapshot.source.url, retrievedAt: snapshot.source.retrievedAt },
     evidenceLabel: "Independent evaluation",
     configurationLabel: "Model and reasoning effort",
-    comparabilityNote: "Ten-evaluation v4.3 cohort. Compare the same reasoning configuration and native per-task measurements. Historical v4.1.1 scores remain separate; a later index revision requires a new versioned cohort.",
+    comparabilityNote: "Ten-evaluation v4.3.2 cohort. Compare the same reasoning configuration and native per-task measurements. Historical v4.1.1 scores remain separate; a later index revision requires a new versioned cohort.",
     costLabel: "USD per Intelligence Index task",
     points: snapshot.records.map(record => ({
       id: record.id,

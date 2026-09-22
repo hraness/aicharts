@@ -213,6 +213,6 @@ if (import.meta.main) {
     console.error(result.error.message);
     process.exitCode = 1;
   } else {
-    console.log(`${checkOnly ? "Validated" : "Refreshed"} ${result.value.records.length} Artificial Analysis Intelligence Index v4.3 configurations in data/artificial-analysis-intelligence-v4-3.json.`);
+    console.log(`${checkOnly ? "Validated" : "Refreshed"} ${result.value.records.length} Artificial Analysis Intelligence Index v${result.value.benchmark.version} configurations in data/artificial-analysis-intelligence-v4-3.json.`);
   }
 }

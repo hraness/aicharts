@@ -6,10 +6,10 @@ import {
 import type { Result } from "./result";
 import { parseResult, z } from "./schema";
 
-export const ARTIFICIAL_ANALYSIS_INTELLIGENCE_V43_VERSION = "4.3" as const;
+export const ARTIFICIAL_ANALYSIS_INTELLIGENCE_V43_VERSION = "4.3.2" as const;
 export const ARTIFICIAL_ANALYSIS_INTELLIGENCE_V43_EVALUATIONS = [
-  "AA-Briefcase",
-  "GDPval-AA v2",
+  "AA-Briefcase v1.1",
+  "GDPval-AA v2.1",
   "AutomationBench-AA",
   "Terminal-Bench 4.0",
   "SciCode",

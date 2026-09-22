@@ -72,7 +72,7 @@ describe("benchmark dataset surface", () => {
   test("current Pareto download and frozen historical dataset have separate labels and refresh claims", () => {
     const markup = renderToStaticMarkup(createElement(CodingAgentDatasetPage));
     expect(markup).toContain('id="current-intelligence-efficiency"');
-    expect(markup).toContain("Current Intelligence efficiency · v4.3");
+    expect(markup).toContain("Current Intelligence efficiency · v4.3.2");
     expect(markup).toContain('href="/data/artificial-analysis-intelligence-v4-3.json"');
     expect(markup).toContain("Historical Intelligence v4.1.1 · frozen snapshot");
     expect(markup).toContain("is frozen and is no longer refreshed by automation");
