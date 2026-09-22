@@ -99,7 +99,7 @@ import {
   TERMINAL_BENCH_SCIENCE,
 } from "./terminal-bench-science-article";
 import BlogLayout from "./layout";
-import BlogIndex from "./page";
+import { BlogIndex } from "./page";
 import { atomFeed } from "./atom-feed";
 import { GET as getAtomFeed } from "./feed.xml/route";
 import {
@@ -1140,7 +1140,7 @@ describe("AI Charts benchmark notes", () => {
     expect(getBlogArticle("not-an-article")).toBeUndefined();
 
     const imageLessIndex = renderToStaticMarkup(
-      createElement(BlogIndex, { imageForSlug: imageLessLookup }),
+      BlogIndex({ imageForSlug: imageLessLookup }),
     );
     expect(imageLessIndex).toContain("AI model and agent benchmark analysis");
     expect(imageLessIndex.match(/rel="preload"/gu) ?? []).toHaveLength(0);

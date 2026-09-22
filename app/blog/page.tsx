@@ -34,7 +34,7 @@ function formatDate(date: string): string {
   return dateFormatter.format(new Date(`${date}T00:00:00.000Z`));
 }
 
-export default function BlogIndex({
+export function BlogIndex({
   imageForSlug = blogEditorialImage,
 }: {
   readonly imageForSlug?: (slug: BlogSlug) => BlogEditorialImage | undefined;
@@ -148,4 +148,8 @@ export default function BlogIndex({
       </div>
     </main>
   );
+}
+
+export default function BlogIndexPage() {
+  return <BlogIndex />;
 }
