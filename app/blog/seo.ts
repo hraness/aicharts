@@ -65,8 +65,9 @@ function httpsCitation(url: string): `https://${string}` {
 
 /**
  * Projects one article and its checked editorial-image record into the shared
- * article-discovery contract. Only articles with a registered image use this
- * path; the image-free path below keeps every surface free of imagery.
+ * article-discovery contract. Live articles register a figure. The image-free
+ * path below keeps every surface free of imagery when the lookup is omitted
+ * or injected as null.
  */
 function articleDiscovery(
   article: BlogArticle,
