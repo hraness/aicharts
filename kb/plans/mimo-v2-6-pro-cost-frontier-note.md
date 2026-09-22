@@ -3,7 +3,7 @@ title: Publish the MiMo-V2.6-Pro cost-frontier note
 description: Ship /blog/mimo-v2-6-pro-cost-frontier, a note that tests Xiaomi’s and Deedy Das’s MiMo-V2.6-Pro claims against the checked Intelligence Index snapshot, and complete its Slopcamera figure through the documented generation path.
 type: plan
 area: blog
-status: blocked
+status: ready
 repository_scopes:
   - app/blog
   - lib/mimo-v2-6-pro-frontier.ts

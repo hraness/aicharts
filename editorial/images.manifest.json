@@ -220,6 +220,26 @@
       },
       "validation": "decode-passed",
       "review": "accepted"
+    },
+    {
+      "slug": "mimo-v2-6-pro-cost-frontier",
+      "promptSha256": "22d5fe3788ce281525136d9b4137f6405a1c5c302e8fe14773e7bde8b74294bc",
+      "master": {
+        "path": "/images/blog/mimo-v2-6-pro-cost-frontier.webp",
+        "width": 1536,
+        "height": 864,
+        "bytes": 67330,
+        "sha256": "252b9d6343404db49cce1e48f6e1b5374dd495f82dbdd1ff0a6ce8e4d2e2dbe7"
+      },
+      "receiptPath": "artifacts/slopcamera/generated/gateway/20260922T164854745Z-image-919d058d-dc9/receipt.json",
+      "jobPath": "artifacts/slopcamera/generated/gateway-jobs/gateway_5573d1d786af4a94a2569ae0bbc905a2.json",
+      "generator": {
+        "package": "@hraness/slopcamera",
+        "version": "3.2.5",
+        "sourceCommit": "66b4322030f4de24f4d5b6d0c2515c109259f901"
+      },
+      "validation": "decode-passed",
+      "review": "accepted"
     }
   ]
 }
