@@ -10,7 +10,7 @@ import {
 } from "../site";
 import { aichartsSocialImage } from "../social-card";
 
-export const alt = "Illuminated AI model benchmark atlas with distinct provider sigils";
+export const alt = "AI Charts model pages with provider logos and Intelligence Index scores";
 export const contentType = socialImageContentType;
 export const size = socialImageSize;
 

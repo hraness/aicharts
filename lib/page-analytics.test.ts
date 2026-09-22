@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
 
 import { MODEL_CARD_PRESENTATIONS } from "./model-card-collection";
+import { INDEX_MODEL_PAGES } from "./index-model-pages";
 import { PUBLIC_MODEL_CARD_PATHS } from "./public-analytics-routes";
 import {
   normalizedPageAnalyticsProperties,
@@ -136,7 +137,10 @@ describe("page analytics context", () => {
 
   test("keeps the client-safe model route allowlist aligned with published cards", () => {
     expect(PUBLIC_MODEL_CARD_PATHS.join("\n")).toBe(
-      MODEL_CARD_PRESENTATIONS.map(card => card.path).join("\n"),
+      [
+        ...MODEL_CARD_PRESENTATIONS.map(card => card.path),
+        ...INDEX_MODEL_PAGES.map(page => page.path),
+      ].join("\n"),
     );
   });
 });

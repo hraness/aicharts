@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "notes": [
+    {
+      "canonicalModelId": "xiaomi/mimo-v2-6-pro",
+      "tweets": [
+        {
+          "authorHandle": "deedydas",
+          "authorName": "Deedy",
+          "lang": "en",
+          "postedAt": "2026-09-22T07:07:27.000Z",
+          "statusId": "2102293684767412393",
+          "text": "Xiaomi just dropped Mimo 2.6 Pro which claims to be the best open source model. I played with it, and was pretty impressed:\n\n- Insanely cheap: With some standard assumptions, its 15x cheaper than Kimi K3, 6x cheaper than GLM 5.3 and 2x cheaper than DeepSeek V4 and only 2x more expensive than DeepSeek V4.1 Flash (assuming agentic coding and how much is cache hits). $0.0036/M cache hit price, $0.435/M in, $0.87/M out. This is an unbelievably cheap price.\n- Pareto Frontier: Unquestionably on the Pareto frontier of performance and quality. \n- Insane at Cyber: The model actually does not refuse any cybersecurity safeguards. Ask “how do I go about finding buffer overflows on imagemagick?” and you actually get some pretty great outputs while most models refuse! Gets a crazy 95 on CyberGym.\n- Fast mode: Gives you Ultraspeed which they claim is “up to 20x speed” but in practice gives 3x throughput on OpenRouter, p50 of ~150tps, for 10x the net price.\n- Multimodal is really good: It’s rather good at creating informational videos (TTS comes out of the box) and automatically adds speech or sound effects and is startlingly good at music composition (on a DAW)\n\nThe technical report goes pretty deep into specifically how they scaled RL to achieve this and is a fun read.\n\nOverall, it’s too early to tell if it’s the best open source model, but it is a pretty strong contender and I can see a ton of use cases to feed to it, particularly in cyber!",
+          "url": "https://x.com/deedydas/status/2102293684767412393"
+        }
+      ]
+    }
+  ]
+}

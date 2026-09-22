@@ -78,6 +78,7 @@ const officialSourcePolicies: Readonly<Record<string, OfficialSourcePolicy>> = {
   moonshot_ai: { canonicalCreator: "moonshotai", domains: ["kimi.com"] },
   openai: { canonicalCreator: "openai", domains: ["openai.com"] },
   xai: { canonicalCreator: "spacexai", domains: ["x.ai"] },
+  xiaomi: { canonicalCreator: "xiaomi", domains: ["mimo.mi.com", "mi.com"] },
   z_ai: { canonicalCreator: "zai", domains: ["z.ai"] },
 };
 

@@ -68,7 +68,7 @@ Atlas actions are `benchmark`, `view`, `provider`, `expand`, `inspect`, `profile
 
 The raw href, query, hash, and link text are never placed in an event. Link kinds are `anchor`, `download`, `internal`, and `outbound`. Destination kinds distinguish articles, model cards, site pages and resources, datasets, assets, sections, sources, repositories, social services, Ask-AI services, and Hraness. Unknown outbound hosts collapse to `destination_kind=source` and `destination_id=external:other`.
 
-Use the narrowest existing surface. Current surfaces are `site`, `global_header`, `global_footer`, `home_orientation`, `home_portfolio`, `benchmark_chart`, `benchmark_atlas`, `home_editorial`, `blog_header`, `blog_index`, `blog_article`, `blog_related`, `data_document`, `models_header`, `models_gallery`, `model_release_radar`, `model_card`, and `error_recovery`.
+Use the narrowest existing surface. Current surfaces are `site`, `global_header`, `global_footer`, `home_calculator`, `home_activity`, `home_orientation`, `home_portfolio`, `benchmark_chart`, `benchmark_atlas`, `home_editorial`, `blog_header`, `blog_index`, `blog_article`, `blog_related`, `data_document`, `models_header`, `models_gallery`, `model_release_radar`, `model_card`, and `error_recovery`.
 
 Atlas source links use `source:{benchmarkId}` only for checked catalog IDs. The compact catalog and per-cohort JSON links are dataset destinations, not pageviews for invented editorial routes. Add their public IDs to the existing classifier when a dataset is admitted; ordinary anchors then inherit tracking from the shared boundary.
 

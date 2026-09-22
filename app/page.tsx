@@ -2,6 +2,7 @@ import { createPublicSiteMetadata } from "@hraness/web-discovery";
 import Link from "next/link";
 import artificialAnalysisIntelligenceData from "@/data/artificial-analysis-intelligence-v4-3.json";
 import { ChartNavigation, HomeExploreFooter } from "@/components/chart-navigation";
+import { HomeActivityFeed } from "@/components/home-activity-feed";
 import { HomeIntelligenceEfficiency } from "@/components/home-intelligence-efficiency";
 import { LegacyChartNavigation } from "@/components/legacy-chart-navigation";
 import { ProjectAskAiAboutThis } from "@/components/project-ask-ai-about-this";
@@ -33,6 +34,7 @@ export default function Home() {
       </header>
       <ChartNavigation current="/" />
       <HomeIntelligenceEfficiency snapshot={parsed.value} />
+      <HomeActivityFeed />
       <section aria-labelledby="home-calculator-title" className="home-calculator" data-analytics-surface="home_calculator">
         <div className="home-calculator__copy">
           <TopicIcon className="home-calculator__icon" size={88} slug="cost-compare" />

@@ -460,6 +460,12 @@
     ]
   },
   {
+    "canonicalModelId": "xiaomi/mimo-v2-6-pro",
+    "status": "pending",
+    "reason": "MiMo-V2.6-Pro appears on the checked Intelligence Index; a Xiaomi-owned publication date has not been verified.",
+    "researchedOn": "2026-09-22"
+  },
+  {
     "canonicalModelId": "zai/glm-5.1",
     "status": "verified",
     "releasedOn": "2026-04-07",

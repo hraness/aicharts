@@ -1,6 +1,5 @@
 "use client";
 
-import { FoilCardDeck } from "@hraness/design-kit/react";
 import { OptionGridPicker, type OptionGridPickerItem } from "@/components/option-grid-picker";
 import { providerBrand } from "@/lib/provider-brand";
 import { useSearchParams } from "next/navigation";
@@ -376,5 +375,5 @@ export function ModelCardGalleryItems({
     if (node === undefined) throw new Error("Model-card gallery order escaped its card children.");
     return node;
   });
-  return <FoilCardDeck className={className} id={id}>{visibleNodes}</FoilCardDeck>;
+  return <div className={className} id={id}>{visibleNodes}</div>;
 }

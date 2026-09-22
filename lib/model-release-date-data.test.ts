@@ -23,7 +23,13 @@ describe("official model release dates", () => {
     expect(new Set(MODEL_RELEASE_DATES.map(entry => entry.canonicalModelId))).toEqual(
       new Set(MODEL_CARD_CATALOG.map(entry => entry.canonicalModelId)),
     );
-    expect(MODEL_RELEASE_DATES.every(entry => entry.status === "verified")).toBe(true);
+    expect(MODEL_RELEASE_DATES.every(entry => (
+      entry.status === "verified" || entry.status === "pending"
+    ))).toBe(true);
+    expect(modelReleaseDateForCanonicalId("xiaomi/mimo-v2-6-pro")).toMatchObject({
+      status: "pending",
+      researchedOn: "2026-09-22",
+    });
   });
 
   test("resolves a model-level fact shared by all of its card profiles", () => {

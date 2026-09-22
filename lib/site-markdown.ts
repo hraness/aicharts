@@ -65,12 +65,21 @@ import {
   DEEP_SWE_LEADERBOARD_URL,
   formatDeepSweEvidenceScore,
 } from "./deep-swe-evidence";
+import { HOME_ACTIVITY_FEED, HOME_ACTIVITY_SOURCE_LABEL } from "./home-activity-feed";
+import {
+  INDEX_MODEL_PAGES,
+  findIndexModelPage,
+  formatIntelligenceCost,
+  formatIntelligenceIndex,
+  type IndexModelPage,
+} from "./index-model-pages";
 import {
   MODEL_CARD_PRESENTATIONS,
   MODEL_CARD_SNAPSHOT,
   findModelCardPresentation,
   versionedModelCardImagePath,
 } from "./model-card-collection";
+import { modelCommentaryForCanonicalId } from "./model-commentary";
 import {
   formatModelCardReleaseDateLong,
   formatModelCardReleaseStage,
@@ -314,6 +323,14 @@ function homeMarkdown(snapshot: CodingAgentSnapshot): string {
     `Source: [${intelligence.source.name}](${intelligence.source.url}), retrieved ${formatRetrievedAt(intelligence.source.retrievedAt)}. The ${intelligence.benchmark.evaluationCount}-evaluation Index keeps the publisher’s scores. Output tokens include answer and reasoning, not input and cache traffic. AI Charts derives the frontier within this checked cohort. Historical v4.1.1 remains separate and is never relabeled as v${intelligence.benchmark.version}.`,
     "",
     `[Source and method](${absolute("/data#current-intelligence-efficiency")}) · [Current v${intelligence.benchmark.version} JSON](${absolute("/data/artificial-analysis-intelligence-v4-3.json")}) · [Historical v4.1.1 JSON](${absolute("/data/artificial-analysis-intelligence.json")})`,
+    "",
+    "## Recent models and notes",
+    "",
+    `Compact Index listings and published analysis. Model scores come from ${HOME_ACTIVITY_SOURCE_LABEL}.`,
+    "",
+    ...HOME_ACTIVITY_FEED.map(item => (
+      `- [${item.title}](${absolute(item.href)}). ${item.kind === "model" ? "Model" : "Note"}; ${item.detail}; ${formatUpdateDate(item.occurredOn)}.`
+    )),
     "",
     "## Explore by task",
     "",
@@ -566,7 +583,7 @@ function modelCardsMarkdown(): string {
     "",
     modelCardsLede,
     "",
-    `${MODEL_CARD_PRESENTATIONS.length} model-and-profile benchmark cards from the current Artificial Analysis coding-agents snapshot. Cataloged cards use canonical model-and-profile routes. Newly observed identities or profile settings receive deterministic provisional routes so a data refresh can publish without manual intervention. Cards show observed ranges when multiple agent harnesses evaluated the same configuration.`,
+    `${MODEL_CARD_PRESENTATIONS.length} coding-agent profiles from the current Artificial Analysis coding-agents snapshot, plus ${INDEX_MODEL_PAGES.length} recent Intelligence Index pages that do not yet have coding-agent observations. Cataloged cards use canonical model-and-profile routes. Newly observed identities or profile settings receive deterministic provisional routes so a data refresh can publish without manual intervention. Cards show observed ranges when multiple agent harnesses evaluated the same configuration.`,
     "",
     `[Source snapshot](${MODEL_CARD_SNAPSHOT.source.url}), retrieved ${formatRetrievedAt(MODEL_CARD_SNAPSHOT.source.retrievedAt)}.`,
     "",
@@ -600,7 +617,31 @@ function modelCardsMarkdown(): string {
           : `official release date pending first-party review; first observed in the benchmark snapshot ${formatModelCardReleaseDateLong(card.release.observedOn)}`;
       return `- [${card.displayTitle}](${absolute(card.path)}). ${card.providerName}; ${card.classLabel}; ${release}; ${card.observationCount} ${card.observationCount === 1 ? "configuration" : "configurations"}.`;
     }),
+    "",
+    "## Recent Intelligence Index pages",
+    "",
+    ...INDEX_MODEL_PAGES.map(page => (
+      `- [${page.displayTitle}](${absolute(page.path)}). ${page.providerName}; Index ${formatIntelligenceIndex(page.intelligenceIndex)}; listed ${formatModelCardReleaseDateLong(page.releaseDate)}.`
+    )),
   ]);
+}
+
+function commentaryMarkdown(canonicalModelId: string): readonly string[] {
+  const note = modelCommentaryForCanonicalId(canonicalModelId);
+  if (note === undefined) return [];
+  return [
+    "",
+    "## Notes from X",
+    "",
+    "Curated public posts about this model. These are quotations, not AI Charts measurements.",
+    "",
+    ...note.tweets.flatMap(tweet => [
+      `> ${tweet.text.replaceAll("\n", "\n> ")}`,
+      ">",
+      `> — [${tweet.authorName} (@${tweet.authorHandle})](${tweet.url}), ${formatUpdateDate(tweet.postedAt)}`,
+      "",
+    ]),
+  ];
 }
 
 export function modelCardMarkdown(card: ModelCardPresentation): string {
@@ -638,6 +679,26 @@ export function modelCardMarkdown(card: ModelCardPresentation): string {
     `- [Download the branded PNG](${absolute(versionedModelCardImagePath(card.path, "card.png"))})`,
     `- [All model cards](${absolute("/models")})`,
     `- [Dataset and method](${absolute(CODING_AGENT_DATASET_PATH)})`,
+    ...commentaryMarkdown(card.canonicalModelId),
+  ]);
+}
+
+export function indexModelMarkdown(page: IndexModelPage): string {
+  return joinMarkdown([
+    `# ${page.displayTitle}`,
+    "",
+    `${page.providerName} page from the checked ${page.sourceName} snapshot. AI Charts does not invent missing coding-agent scores.`,
+    "",
+    "## Intelligence Index",
+    "",
+    `- Index: ${formatIntelligenceIndex(page.intelligenceIndex)}`,
+    `- Cost per task: ${page.costUsdPerTask === null ? "Not reported" : formatIntelligenceCost(page.costUsdPerTask)}`,
+    `- Canonical model ID: \`${page.canonicalModelId}\``,
+    `- Listed on Index: ${formatModelCardReleaseDateLong(page.releaseDate)} (snapshot date, not a verified first-party release date)`,
+    `- [${page.displayTitle} on Artificial Analysis](${page.detailsUrl})`,
+    `- [${page.sourceName}](${page.sourceUrl}), retrieved ${formatRetrievedAt(page.sourceRetrievedAt)}`,
+    `- [All model cards](${absolute("/models")})`,
+    ...commentaryMarkdown(page.canonicalModelId),
   ]);
 }
 
@@ -668,7 +729,7 @@ export function agentGuideMarkdown(
     `- [AI benchmark explorer](${absolute("/benchmarks")}). Choose a task, inspect a measured cohort, or read a source guide. Terminal-Bench 4 is the current terminal-engineering standard.`,
     `- [Subscription vs API vs GPUs](${absolute("/calculator")}). Price one fully used ChatGPT Pro seat's token volume at OpenAI and DeepSeek API rates, on purchased GPUs, and on rented GPUs, with sourced assumptions.`,
     `- [Atlas catalog JSON](${absolute(ATLAS_CATALOG_DOWNLOAD_PATH)}). All benchmark IDs, coverage, versions, source dates, and per-cohort JSON distribution links.`,
-    `- [Model benchmark cards](${absolute("/models")}). Shareable cards for each model and benchmark profile, with canonical routes for cataloged identities.`,
+    `- [Model pages](${absolute("/models")}). Identity pages for each model, with Intelligence Index, cost, and coding-agent observations when those exist.`,
     `- [Dataset and methodology](${absolute(CODING_AGENT_DATASET_PATH)}). Every atlas benchmark’s provenance, version boundaries, definitions, measured distributions, and limits.`,
     `- [Terminal-Bench 4 JSON](${absolute("/data/terminal-bench-4.json")}). Machine-readable owner snapshot for the current coding standard.`,
     `- [Terminal-Bench-Science 0.1 JSON](${absolute("/data/terminal-bench-science-0-1.json")}). Machine-readable owner snapshot for scientific workflows.`,
@@ -741,6 +802,10 @@ export function markdownForPath(pathname: string): MarkdownDocument {
       const card = findModelCardPresentation({ creatorSlug, modelSlug, profileSlug });
       if (card !== undefined) {
         return { body: modelCardMarkdown(card), contentType: MARKDOWN_CONTENT_TYPE, found: true };
+      }
+      const indexPage = findIndexModelPage({ creatorSlug, modelSlug, profileSlug });
+      if (indexPage !== undefined) {
+        return { body: indexModelMarkdown(indexPage), contentType: MARKDOWN_CONTENT_TYPE, found: true };
       }
     }
   }

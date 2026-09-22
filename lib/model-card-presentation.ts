@@ -1,5 +1,3 @@
-import type { FoilCardPreset } from "@hraness/design-kit/react";
-
 import {
   modelCardArtDirection,
   type ModelCardAccentFamily,
@@ -60,7 +58,6 @@ export type ModelCardPresentation = Readonly<{
   displayTitle: string;
   emblemIdentity: ModelCardVariant["emblemIdentity"];
   economics: readonly ModelCardStat[];
-  foilPreset: FoilCardPreset;
   gatewayModelId: string | null;
   harnessLabel: string;
   iconDataUrl: string;
@@ -117,10 +114,6 @@ function classAwareDisplayTitle(
     return displayTitle;
   }
   return `${displayTitle} Thinking`;
-}
-
-function foilPreset(): FoilCardPreset {
-  return "etched";
 }
 
 const modelCardOperationalSuffixes = [
@@ -384,7 +377,6 @@ export function createModelCardPresentation(
       label,
       variant.metricRanges[id],
     )),
-    foilPreset: foilPreset(),
     gatewayModelId: variant.gatewayModelId,
     harnessLabel: compactModelCardHarnessLabel(agentNames),
     iconDataUrl: modelIconDataUrl(variant.lobeIconKey, variant.providerName),
