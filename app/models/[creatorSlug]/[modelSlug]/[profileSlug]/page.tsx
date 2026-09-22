@@ -113,7 +113,6 @@ function CodingModelPage({
       <div className="model-card-detail__layout">
         <section className="model-card-detail__stage" aria-label={`${card.displayTitle} model card`}>
           <ModelLogoCard card={logoCardFromPresentation(card)} />
-          {commentary !== undefined && <ModelCommentary note={commentary} />}
         </section>
         <div className="model-card-detail__copy">
           <header>
@@ -222,6 +221,7 @@ function CodingModelPage({
           )}
         </div>
       </div>
+      {commentary !== undefined && <ModelCommentary note={commentary} />}
     </main>
   );
 }
@@ -242,7 +242,6 @@ function IndexModelDetailPage({
       <div className="model-card-detail__layout">
         <section className="model-card-detail__stage" aria-label={`${page.displayTitle} model card`}>
           <ModelLogoCard card={logoCardFromIndexPage(page)} />
-          {commentary !== undefined && <ModelCommentary note={commentary} />}
         </section>
         <div className="model-card-detail__copy">
           <header>
@@ -290,6 +289,7 @@ function IndexModelDetailPage({
           </section>
         </div>
       </div>
+      {commentary !== undefined && <ModelCommentary note={commentary} />}
     </main>
   );
 }
