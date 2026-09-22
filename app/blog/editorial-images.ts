@@ -173,6 +173,15 @@ export const BLOG_EDITORIAL_IMAGES = {
     "20260922T011430131Z-image-d26de292-0f6/receipt.json",
     "gateway_060552ce62b24ce6b9b5c19ce16c4884.json",
   ),
+  "mimo-v2-6-pro-cost-frontier": image(
+    "mimo-v2-6-pro-cost-frontier",
+    "A small ivory sphere rests on a low charcoal step beside three tall dark pillars, on a staircase traced by one thin brass line.",
+    "A frontier position is a measured score at a measured cost per task. It is not a ranking of every open model or a verdict on every task.",
+    "252b9d6343404db49cce1e48f6e1b5374dd495f82dbdd1ff0a6ce8e4d2e2dbe7",
+    "22d5fe3788ce281525136d9b4137f6405a1c5c302e8fe14773e7bde8b74294bc",
+    "20260922T164854745Z-image-919d058d-dc9/receipt.json",
+    "gateway_5573d1d786af4a94a2569ae0bbc905a2.json",
+  ),
 } as const satisfies EditorialImageRecord;
 
 export function blogEditorialImage<Slug extends BlogSlug>(

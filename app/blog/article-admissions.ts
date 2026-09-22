@@ -51,6 +51,64 @@ export const HOME_EDITORIAL_SLUGS = [
 ] as const satisfies readonly BlogSlug[];
 
 export const BLOG_ARTICLE_ADMISSIONS = {
+  "mimo-v2-6-pro-cost-frontier": {
+    canonicalOwner: blogArticlePath("mimo-v2-6-pro-cost-frontier"),
+    decision: "keep",
+    evidenceOwner: EVIDENCE_OWNER,
+    evidenceType: "checked-dataset-analysis",
+    harmIfWrong:
+      "A vendor-run CyberGym score under a corrected protocol could be quoted as an independent cybersecurity ranking, an investor’s per-token price multiples could be quoted as measured cost, or a launch-day composite score could be read as a general open-versus-closed verdict.",
+    hostFit:
+      "AI Charts already charts the Intelligence Index cohort with its cost frontier from a checked snapshot that stores MiMo-V2.6-Pro and every model Xiaomi and Das name, so it can test the frontier and price claims on measured cost per task without adding a new data surface.",
+    humanReviewedOn: null,
+    lifecycleState: "indexable",
+    nearestUrls: [
+      {
+        distinction:
+          "The open-models page compares an open-versus-closed era claim with coding-agent configurations; this page tests one model’s launch claims against the model-level Intelligence Index frontier and its vendor cybersecurity table.",
+        url: blogArticlePath("open-models-coding-agent-benchmarks"),
+      },
+      {
+        distinction:
+          "The AA Index page derives a cost frontier from coding-agent harness rows; this page places one model on the separate Intelligence Index cost frontier and compares measured per-task multiples with stated per-token multiples.",
+        url: blogArticlePath("aa-index-cost-coding-agents"),
+      },
+      {
+        distinction:
+          "The small-models page gives a decision rule for adopting a cheaper model on a product acceptance set; this page reports where a specific new model sits on a published frontier and what its scores measure.",
+        url: blogArticlePath("small-models-have-arrived"),
+      },
+    ],
+    originalContribution:
+      "A snapshot-derived statement of MiMo-V2.6-Pro’s cost-frontier membership with its frontier neighbors and the counts of higher-scoring and cheaper configurations, a table of every configuration within one index point with cost multiples, a side-by-side of Das’s stated price multiples with measured cost-per-task multiples for the same models, a reading of Xiaomi’s cybersecurity table that separates the corrected-protocol CyberGym score from the exploitation benchmarks where frontier models lead, and a verified 10x UltraSpeed price ratio from the first-party OpenRouter endpoint.",
+    overlapDecision:
+      "Keep separately: no current route covers the model-level Intelligence Index frontier, a specific model launch, or a cybersecurity capability profile, and fewer than a third of its headings or claims overlap any existing article.",
+    primaryEvidence:
+      "Das’s post owns his multiples, assumptions, throughput, refusal, and multimodal observations; Xiaomi’s release note, model card, and technical report own the parameter counts, license, index claim, training figures, evaluation table, corrected CyberGym oracle, and open-source inventory; the Artificial Analysis model page owns the score, class rank, prices, speed, and cost per task; the OpenRouter listing owns the UltraSpeed prices; the checked Artificial Analysis snapshot owns every frontier position, neighbor, and measured multiple.",
+    primarySourceIds: [
+      "deedyDasMimoV26",
+      "xiaomiMimoV26Release",
+      "xiaomiMimoV26ModelCard",
+      "xiaomiMimoV26TechnicalReport",
+      "artificialAnalysisMimoV26Pro",
+      "openRouterMimoV26ProUltraSpeed",
+      "artificialAnalysisIntelligenceIndex",
+    ],
+    readerJob:
+      "Understand what MiMo-V2.6-Pro’s 46 on the Intelligence Index and $0.13 per task measure, where the model sits on the measured cost frontier, how far Das’s price and cybersecurity claims are supported by primary sources, and what remains a vendor or single-user observation.",
+    reassessOn: "2026-10-27",
+    reviewedBy: REVIEWED_BY,
+    reviewedOn: "2026-09-22",
+    scores: {
+      factualConfidence: 2,
+      hostFit: 2,
+      maintenanceValue: 1,
+      originalEvidence: 2,
+      readerUtility: 2,
+      voiceIntegrity: 2,
+    },
+    sourceCheckedOn: "2026-09-22",
+  },
   "harness-design-coding-agents": {
     canonicalOwner: blogArticlePath("harness-design-coding-agents"),
     decision: "keep",
