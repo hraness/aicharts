@@ -13,6 +13,30 @@ import type { StatsRange, StatsSelection } from "./stats-view";
 type Loaded = { report: UsageStatsReport; scope: "account" | "local" | "example"; version: number; selection?: StatsSelection };
 type Status = "idle" | "loading" | "ready" | "authentication_required" | "stats_not_started" | "not_enrolled" | "range_too_large" | "unavailable" | "invalid_file";
 
+// Decorative bar heights; the skeleton is aria-hidden and carries no data.
+const skeletonBars = [42, 63, 38, 71, 48, 56, 30, 66, 44, 78, 52, 35, 60, 47, 73, 40, 58, 68, 33, 62, 50, 76, 37, 55, 45, 70, 31, 64, 53, 43];
+
+function StatsSkeleton() {
+  return <div className="usage-stats__skeleton" aria-hidden="true">
+    <div className="usage-stats__skeleton-presets"><span /><span /><span /><span /><span /></div>
+    <div className="usage-stats__skeleton-filters"><span /><span /><span /></div>
+    <div className="usage-stats__skeleton-summary">
+      <div><span className="usage-stats__skeleton-label" /><span className="usage-stats__skeleton-total" /><span className="usage-stats__skeleton-sub" /></div>
+      <div className="usage-stats__skeleton-facts"><span /><span /><span /></div>
+      <div className="usage-stats__skeleton-cost"><span className="usage-stats__skeleton-label" /><span className="usage-stats__skeleton-amount" /><span className="usage-stats__skeleton-sub" /></div>
+    </div>
+    <div className="usage-stats__skeleton-section">
+      <div className="usage-stats__skeleton-heading"><span /><span /></div>
+      <div className="usage-stats__skeleton-plot">{skeletonBars.map((height, index) => <span key={index} style={{ height: `${height}%` }} />)}</div>
+      <div className="usage-stats__skeleton-axis"><span /><span /></div>
+    </div>
+    <div className="usage-stats__skeleton-section">
+      <div className="usage-stats__skeleton-heading"><span /><span /></div>
+      <div className="usage-stats__skeleton-table"><span /><span /><span /><span /><span /><span /></div>
+    </div>
+  </div>;
+}
+
 export function StatsDashboard({ todayUtcDay, remoteEnabled = false, startWithAccount = false, fallback }: Readonly<{
   todayUtcDay: number; remoteEnabled?: boolean; startWithAccount?: boolean; fallback?: ReactNode;
 }>) {
@@ -113,7 +137,7 @@ export function StatsDashboard({ todayUtcDay, remoteEnabled = false, startWithAc
     {showFallback ? fallback : status === "stats_not_started" ? <div className="usage-stats__notice"><h2>No detailed snapshot yet</h2><p>Your existing daily measurements remain available. Any report below is the last one loaded. Open a detailed local report to inspect model and token breakdowns.</p><Link className="usage-inline-link" href="/usage">View account overview</Link></div> : null}
     {loaded && <StatsReportView key={loaded.version} report={loaded.report} scope={loaded.scope} todayUtcDay={todayUtcDay}
       initialSelection={loaded.selection} busy={status === "loading"} onRangeRequest={loaded.scope === "account" ? loadAccount : undefined} onRefresh={loaded.scope === "account" ? filters => loadAccount({ firstUtcDay: filters.firstUtcDay, dayCount: filters.dayCount }, { client: filters.client, provider: filters.provider, model: filters.model, basis: filters.basis }) : undefined} />}
-    {status === "loading" && !loaded && <div className="usage-stats__skeleton" aria-hidden="true"><span /><span /><span /></div>}
+    {status === "loading" && !loaded && <StatsSkeleton />}
     {status === "idle" && <section className="usage-stats__empty"><h2>See the whole usage picture</h2><p>Open a numeric report to compare clients and models, inspect daily trends, and export exact totals. The file stays in this browser; opening it does not publish or upload anything.</p>
       <button className="usage-button usage-button--primary" type="button" onClick={example}>Explore a working example</button>
       <p><Link href="https://github.com/hraness/aicharts/blob/main/docs/usage-details.md">Create a numeric report with the local collector</Link></p></section>}
