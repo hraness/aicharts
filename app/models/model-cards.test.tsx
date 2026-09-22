@@ -301,6 +301,7 @@ describe("public model cards", () => {
 
     expect(stylesheet).toContain(".model-logo-card");
     expect(stylesheet).toMatch(/\.model-logo-card\s*\{[^}]*aspect-ratio:\s*1;/su);
+    expect(stylesheet).toMatch(/\.model-logo-card__art\s*\{[^}]*brand-shadow/su);
     expect(stylesheet).not.toContain("--foil-light-x");
     expect(stylesheet).not.toContain("--foil-spectrum-angle");
     expect(stylesheet).not.toContain("holographic");

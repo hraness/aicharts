@@ -34,7 +34,7 @@ export function ModelCommentary({
         {note.tweets.map(tweet => (
           <li key={tweet.statusId}>
             <blockquote cite={tweet.url} lang={tweet.lang}>
-              {tweet.text.split("\n").map((line, index) => (
+              {tweet.text.split("\n").filter(line => line.trim() !== "").map((line, index) => (
                 <p key={`${tweet.statusId}-${String(index)}`}>{line}</p>
               ))}
               <footer>

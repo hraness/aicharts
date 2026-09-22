@@ -59,8 +59,8 @@
 
 .model-logo-card__art {
   align-items: center;
-  background: color-mix(in oklch, var(--background) 70%, transparent);
-  border: 1px solid var(--grid);
+  background: color-mix(in oklch, var(--brand-shadow) 62%, #111318);
+  border: 1px solid color-mix(in oklch, var(--brand-shadow) 70%, var(--grid));
   border-radius: .65rem;
   display: flex;
   justify-content: center;
@@ -68,8 +68,8 @@
 }
 
 .model-logo-card__art img {
-  block-size: 48%;
-  inline-size: 48%;
+  block-size: 56%;
+  inline-size: 56%;
   object-fit: contain;
 }
 
@@ -137,6 +137,9 @@
   .model-logo-card__art {
     background: Canvas;
     border: 1px solid CanvasText;
+  }
+  .model-logo-card__art img {
+    filter: invert(1);
   }
 }
 
