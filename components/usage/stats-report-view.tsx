@@ -88,6 +88,12 @@ export function StatsReportView({ report, scope, todayUtcDay, onRangeRequest, on
   });
   const activeFilters = Number(filters.client !== ALL_STATS) + Number(filters.provider !== ALL_STATS)
     + Number(filters.model !== ALL_STATS) + Number(filters.basis !== "reported");
+  const inputSide = totals.input + totals.cacheRead;
+  const cacheShare = totals.tokenRecords > 0 && inputSide > 0n ? statsRatio(totals.cacheRead, inputSide) : null;
+  const outputSpeed = totals.timedRecords > 0 && totals.durationMs !== null && totals.durationMs > 0n
+    ? totals.timedTokens * 1000n / totals.durationMs : null;
+  const costDelta = totals.reportedCost !== null && totals.estimatedCost !== null
+    ? totals.estimatedCost - totals.reportedCost : null;
 
   const changeFilter = (patch: Partial<StatsFilters>) => {
     setFilters(previous => ({ ...previous, ...patch })); setSelectedDay(null); setShowAllGroups(false);
@@ -184,12 +190,16 @@ export function StatsReportView({ report, scope, todayUtcDay, onRangeRequest, on
       <div className="usage-stats__lead"><h2>{label} tokens</h2>{totals.tokenRecords > 0 ? <><ExactValue className="usage-stats__total" value={totals.tokens} /><span className="usage-stats__exact">{formatStatsInteger(totals.tokens)} exact</span></> : <><span className="usage-stats__total">—</span><span className="usage-stats__exact">No token observations</span></>}<a className="usage-stats__mobile-coverage" href="#stats-coverage">Partial source coverage</a></div>
       <dl>
         <div><dt>Output + reasoning</dt><dd>{totals.tokenRecords === 0 ? "Unknown" : formatStatsInteger(totals.output + totals.reasoning)}</dd></div>
+        <div><dt>Input</dt><dd>{totals.tokenRecords === 0 ? "Unknown" : formatStatsInteger(totals.input)}</dd></div>
+        <div><dt>Cache reads</dt><dd>{cacheShare === null ? "Unknown" : <>{cacheShare}% <span>{formatStatsInteger(totals.cacheRead)} tokens</span></>}</dd></div>
         <div><dt>Usage records</dt><dd>{snapshotOnly ? "Unavailable" : formatStatsInteger(totals.records)}</dd></div>
         <div><dt>Days with records</dt><dd>{snapshotOnly ? "Unavailable" : <>{totals.activeDays} <span>of {filters.dayCount}</span></>}</dd></div>
+        <div><dt>Tokens per second</dt><dd>{outputSpeed === null ? "Untimed" : <>{formatStatsInteger(outputSpeed)} <span>across {formatStatsInteger(totals.timedRecords)} timed records</span></>}</dd></div>
       </dl>
-      <div className="usage-stats__cost"><h2>Reported cost</h2><strong>{formatStatsMoney(totals.reportedCost)}</strong>
-        <span>{totals.reportedCost === null ? "No cost supplied by these records" : `${formatStatsInteger(totals.reportedCostRecords)} of ${formatStatsInteger(totals.records)} records · USD`}</span>
-        {totals.estimatedCost !== null && <p>Retail estimate: <strong>{formatStatsMoney(totals.estimatedCost)}</strong><br />{formatStatsInteger(totals.estimatedCostRecords)} of {formatStatsInteger(totals.records)} records · not a bill</p>}
+      <div className="usage-stats__cost"><h2>Cost</h2><strong>{formatStatsMoney(totals.reportedCost)}</strong>
+        <span>{totals.reportedCost === null ? "No cost supplied by these records" : `reported by sources · ${formatStatsInteger(totals.reportedCostRecords)} of ${formatStatsInteger(totals.records)} records · USD`}</span>
+        {totals.estimatedCost !== null && <p>Public-API estimate: <strong>{formatStatsMoney(totals.estimatedCost)}</strong><br />{formatStatsInteger(totals.estimatedCostRecords)} of {formatStatsInteger(totals.records)} records · dated retail rates, not a bill</p>}
+        {costDelta !== null && costDelta !== 0n && <p>Estimate {costDelta > 0n ? "exceeds" : "is under"} reported by <strong>{formatStatsMoney(costDelta < 0n ? -costDelta : costDelta)}</strong> — flat subscriptions, cache discounts and unpriced records explain most gaps.</p>}
       </div>
     </div>
     <p className="usage-stats__qualification">{scope === "example" ? "Synthetic example. " : ""}Partial coverage. {hasEstimated && filters.basis === "reported" ? "Estimated tokens are separate. " : ""}<a href="#stats-coverage">See source coverage</a>
@@ -241,9 +251,10 @@ export function StatsReportView({ report, scope, todayUtcDay, onRangeRequest, on
           <table><caption>{label} usage by {grouping}, {rangeText}. Select a name to filter.</caption>
             <thead><tr>{([ ["name", grouping === "client" ? "Client" : grouping === "provider" ? "Provider" : "Model"], ["tokens", `${label} tokens`], ["output", "Output + reasoning"], ["records", "Records"]] as const).map(([key, name]) => <th scope="col" key={key} aria-sort={sort.key === key ? (sort.ascending ? "ascending" : "descending") : "none"}>
               <button type="button" onClick={() => sortBy(key)}>{name}{sort.key === key && <span className={`usage-stats__sort ${sort.ascending ? "usage-stats__sort--ascending" : ""}`} aria-hidden="true" />}</button>
-            </th>)}<th scope="col">Share</th><th scope="col">Reported cost</th></tr></thead>
+            </th>)}<th scope="col">Share</th><th scope="col">Tok/s</th><th scope="col">Reported cost</th></tr></thead>
             <tbody>{visibleGroups.map(group => <tr key={group.key}><th scope="row"><button className="usage-stats__row-link" type="button" onClick={() => drillInto(group.key)}>{group.name}</button><span className="usage-stats__share-bar" aria-hidden="true"><span style={{ width: `${statsRatio(group.totals.tokens, totals.tokens)}%` }} /></span></th>
               <td>{group.totals.tokenRecords > 0 ? formatStatsInteger(group.totals.tokens) : "Unavailable"}</td><td>{group.totals.tokenRecords > 0 ? formatStatsInteger(group.totals.output + group.totals.reasoning) : "Unknown"}</td><td>{formatStatsInteger(group.totals.records)}</td><td>{group.totals.tokenRecords > 0 ? `${statsRatio(group.totals.tokens, totals.tokens).toFixed(1)}%` : "—"}</td>
+              <td>{group.totals.timedRecords > 0 && group.totals.durationMs !== null && group.totals.durationMs > 0n ? formatStatsInteger(group.totals.timedTokens * 1000n / group.totals.durationMs) : "—"}</td>
               <td>{formatStatsMoney(group.totals.reportedCost)}{group.totals.reportedCost !== null && <small>{group.totals.reportedCostRecords}/{group.totals.records} records</small>}</td></tr>)}</tbody>
           </table>
         </div>
@@ -265,10 +276,10 @@ export function StatsReportView({ report, scope, todayUtcDay, onRangeRequest, on
     </details>
     <details className="usage-stats__details"><summary>Daily data <span>{filters.dayCount} UTC days · exact values</span></summary>
       <div className="usage-stats__table-scroll" role="region" aria-label="Daily numeric usage, scroll horizontally for all columns" tabIndex={0}>
-        <table><caption>{label} tokens, {rangeText}. No records does not prove inactivity.</caption><thead><tr><th scope="col">UTC day</th><th scope="col">Tokens</th><th scope="col">Output + reasoning</th><th scope="col">Records</th></tr></thead>
+        <table><caption>{label} tokens, {rangeText}. No records does not prove inactivity.</caption><thead><tr><th scope="col">UTC day</th><th scope="col">Tokens</th><th scope="col">Output + reasoning</th><th scope="col">Tok/s</th><th scope="col">Records</th></tr></thead>
           <tbody>{Array.from({ length: filters.dayCount }, (_, index) => {
             const day = filters.firstUtcDay + index, total = dailyTotals.get(day);
-            return <tr key={day}><th scope="row">{formatStatsDay(day)}</th><td>{!total ? "No records" : total.tokenRecords === 0 ? "Unavailable" : formatStatsInteger(total.tokens)}</td><td>{!total || total.tokenRecords === 0 ? "Unknown" : formatStatsInteger(total.output + total.reasoning)}</td><td>{formatStatsInteger(total?.records ?? 0)}</td></tr>;
+            return <tr key={day}><th scope="row">{formatStatsDay(day)}</th><td>{!total ? "No records" : total.tokenRecords === 0 ? "Unavailable" : formatStatsInteger(total.tokens)}</td><td>{!total || total.tokenRecords === 0 ? "Unknown" : formatStatsInteger(total.output + total.reasoning)}</td><td>{total && total.timedRecords > 0 && total.durationMs !== null && total.durationMs > 0n ? formatStatsInteger(total.timedTokens * 1000n / total.durationMs) : "—"}</td><td>{formatStatsInteger(total?.records ?? 0)}</td></tr>;
           })}</tbody></table>
       </div>
     </details>
