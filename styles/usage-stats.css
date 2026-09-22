@@ -54,6 +54,43 @@
 .usage-stats__summary h2 { font-size: .8rem; letter-spacing: normal; }
 .usage-stats__section-heading > span { color: var(--muted); font-size: .75rem; }
 .usage-stats__trend { position: relative; }
+.usage-stats__calendar { margin-block-start: 2rem; position: relative; }
+.usage-stats__calendar-scroll { max-inline-size: 100%; overflow-x: auto; scrollbar-color: var(--muted) var(--background); }
+.usage-stats__calendar-svg { display: block; }
+.usage-stats__calendar-month, .usage-stats__calendar-weekday { fill: var(--muted); font-size: 9px; }
+.usage-stats__calendar-svg rect[data-day] { fill: var(--secondary); }
+.usage-stats__calendar-svg rect[data-tier="1"], .usage-stats__calendar-scale i[data-tier="1"] { background: color-mix(in srgb, var(--hraness-site-accent) 26%, var(--secondary)); fill: color-mix(in srgb, var(--hraness-site-accent) 26%, var(--secondary)); }
+.usage-stats__calendar-svg rect[data-tier="2"], .usage-stats__calendar-scale i[data-tier="2"] { background: color-mix(in srgb, var(--hraness-site-accent) 46%, var(--secondary)); fill: color-mix(in srgb, var(--hraness-site-accent) 46%, var(--secondary)); }
+.usage-stats__calendar-svg rect[data-tier="3"], .usage-stats__calendar-scale i[data-tier="3"] { background: color-mix(in srgb, var(--hraness-site-accent) 70%, var(--secondary)); fill: color-mix(in srgb, var(--hraness-site-accent) 70%, var(--secondary)); }
+.usage-stats__calendar-svg rect[data-tier="4"], .usage-stats__calendar-scale i[data-tier="4"] { background: var(--hraness-site-accent); fill: var(--hraness-site-accent); }
+.usage-stats__calendar-svg rect.is-unknown { fill: var(--background); stroke: var(--line); stroke-dasharray: 2 1.5; }
+.usage-stats__calendar-svg rect[data-day]:is(:hover, :focus-visible) { stroke: var(--hraness-site-accent); stroke-width: 1.5; }
+.usage-stats__calendar-svg rect[data-day]:focus { outline: none; }
+.usage-stats__calendar-svg rect[data-day]:focus-visible { outline: 2px solid var(--foreground); outline-offset: 1px; }
+.usage-stats__calendar-svg rect[aria-pressed="true"] { stroke: var(--foreground); stroke-width: 1.5; }
+.usage-stats__calendar-footer { align-items: start; display: flex; flex-wrap: wrap; gap: .25rem 1.5rem; justify-content: space-between; }
+.usage-stats__calendar-scale { align-items: center; color: var(--muted); display: flex; font-size: .72rem; gap: 3px; margin-block-start: .75rem; }
+.usage-stats__calendar-scale i { background: var(--secondary); block-size: .7rem; border-radius: 2px; display: block; inline-size: .7rem; }
+.usage-stats__chart-controls { align-items: center; display: flex; flex-wrap: wrap; gap: .4rem 1.25rem; }
+.usage-stats__plot button > .usage-stats__bar-stack { display: flex; flex-direction: column-reverse; inline-size: 100%; }
+.usage-stats__plot .usage-stats__bar-stack i { display: block; inline-size: 100%; }
+.usage-stats__plot .usage-stats__bar-stack i[data-segment="0"], .usage-stats__legend i[data-segment="0"] { background: var(--hraness-site-accent); }
+.usage-stats__plot .usage-stats__bar-stack i[data-segment="1"], .usage-stats__legend i[data-segment="1"] { background: color-mix(in srgb, var(--hraness-site-accent) 58%, transparent); }
+.usage-stats__plot .usage-stats__bar-stack i[data-segment="2"], .usage-stats__legend i[data-segment="2"] { background: color-mix(in srgb, var(--hraness-site-accent) 30%, transparent); }
+.usage-stats__plot .usage-stats__bar-stack i[data-segment="3"], .usage-stats__legend i[data-segment="3"] { background: color-mix(in srgb, var(--foreground) 55%, transparent); }
+.usage-stats__plot .usage-stats__bar-stack i[data-segment="4"], .usage-stats__legend i[data-segment="4"] { background: color-mix(in srgb, var(--foreground) 30%, transparent); }
+.usage-stats__plot .usage-stats__bar-stack i[data-segment="5"], .usage-stats__legend i[data-segment="5"] { background: var(--line); }
+.usage-stats__plot button:is(:hover, :focus-visible, [aria-pressed="true"]) > .usage-stats__bar-stack { background: transparent; outline: 2px solid var(--hraness-site-accent); outline-offset: 1px; }
+.usage-stats__legend { display: flex; flex-wrap: wrap; gap: .45rem 1.25rem; list-style: none; margin-block-start: .85rem; margin-inline-start: 3.25rem; }
+.usage-stats__legend li { align-items: center; color: var(--muted); display: flex; font-size: .78rem; gap: .45rem; }
+.usage-stats__legend i { block-size: .7rem; border-radius: 2px; display: block; inline-size: .7rem; }
+.usage-stats__legend li > span { color: var(--faint); font-variant-numeric: tabular-nums; }
+.usage-stats__chips { display: flex; flex-basis: 100%; flex-wrap: wrap; gap: .5rem 2rem; }
+.usage-stats__chips > div { display: flex; font-size: .8rem; gap: .6rem; }
+.usage-stats__chips dt { color: var(--muted); }
+.usage-stats__chips dd { font-variant-numeric: tabular-nums; font-weight: 500; }
+.usage-stats__day-groups { flex: 1 1 15rem; }
+.usage-stats__actions { display: flex; flex-wrap: wrap; gap: .25rem 1.25rem; }
 .usage-stats__scale { color: var(--muted); display: flex; flex-direction: column; font-size: .68rem; inset-block-start: 2.8rem; inset-inline-start: 0; justify-content: space-between; block-size: 12rem; position: absolute; }
 .usage-stats__plot { align-items: end; border-block-end: 1px solid var(--grid); display: flex; gap: 3px; height: 12rem; margin-inline-start: 3.25rem; }
 .usage-stats__plot button { align-items: end; background: transparent; border: 0; border-radius: 0; display: flex; flex: 1; height: 100%; justify-content: center; min-inline-size: 0; padding: 0; position: relative; }
@@ -196,6 +233,7 @@
   .usage-stats__lead .usage-stats__exact { display: inline-block; }
   .usage-stats__mobile-coverage { color: var(--muted); display: inline-block; font-size: .72rem; margin-block: .2rem 1rem; margin-inline-start: .65rem; }
   .usage-stats__trend { order: 2; }
+  .usage-stats__calendar { order: 6; }
   .usage-stats__summary dl { border-block-start: 1px solid var(--grid); margin-block-start: 1.25rem; order: 3; padding-block: 1rem; }
   .usage-stats__cost { order: 4; }
   .usage-stats__qualification { order: 5; }
@@ -213,6 +251,11 @@
   .usage-stats__details summary > span { display: block; margin-block-start: .25rem; margin-inline-start: 1rem; }
   .usage-stats__section-heading { gap: .35rem; }
   .usage-stats__section-heading > span { flex-basis: 100%; }
+  .usage-stats__trend { display: flex; flex-direction: column; }
+  .usage-stats__trend > .usage-stats__section-heading { display: contents; }
+  .usage-stats__trend > .usage-stats__section-heading > h2 { margin-block-end: .9rem; }
+  .usage-stats__trend > .usage-stats__section-heading > .usage-stats__chart-controls { margin-block-start: .75rem; order: 3; }
+  .usage-stats__trend > .usage-stats__day-detail { order: 4; }
   .usage-stats__skeleton-plot { height: 9rem; margin-inline-start: 2.75rem; }
   .usage-stats__skeleton-axis { margin-inline-start: 2.75rem; }
   .usage-stats__skeleton-total { block-size: 2.9rem; inline-size: 9rem; }

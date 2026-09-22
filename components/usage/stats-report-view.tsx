@@ -3,15 +3,21 @@
 import { useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import type { UsageStatsReport } from "@/lib/usage/stats-contract";
 import { STATS_CLIENTS } from "@/lib/usage/stats-registry";
+import { createBrandedChartPng, downloadChartPng } from "@/components/chart-export";
 import {
   ALL_STATS, UNKNOWN_STATS, bucketStatsRows, filterStatsRows, filterStatsSnapshots, formatStatsCompact, formatStatsDay, formatStatsInteger,
-  formatStatsMoney, groupStatsRows, previousStatsPeriod, statsDateInput, statsInputRange, statsLabel, statsRatio,
-  statsRowsCsv, sumStatsRows, type StatsFilters, type StatsGrouping, type StatsRange, type StatsSelection, type StatsSort,
+  formatStatsMoney, groupStatsRows, previousStatsPeriod, statsBucketValue, statsDateInput, statsDayGrid, statsInputRange, statsLabel, statsRatio,
+  statsRowsCsv, statsSplitBuckets, statsSummaryText, sumStatsRows, type StatsFilters, type StatsGrouping, type StatsMetric, type StatsRange,
+  type StatsSelection, type StatsSort,
 } from "./stats-view";
 
 const stamp = new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short", timeZone: "UTC" });
 const sourceStates = { observed: "Observed", empty: "No observations", not_found: "Not found", incomplete: "Incomplete", unavailable: "Unavailable" };
 const componentNames = { input: "Input", cacheRead: "Cache read", cacheWrite: "Cache write", output: "Output", reasoning: "Reasoning" };
+const metricNames: Record<StatsMetric, string> = { tokens: "Tokens", records: "Records", speed: "Tok/s" };
+const splitNames: Record<StatsGrouping | "none", string> = { none: "Total", client: "Clients", provider: "Providers", model: "Models" };
+const CALENDAR_CELL = 11, CALENDAR_GAP = 3, CALENDAR_PITCH = CALENDAR_CELL + CALENDAR_GAP, CALENDAR_GUTTER = 28, CALENDAR_HEADER = 17;
+const weekdayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 type Scope = "local" | "example" | "account";
 
 function ExactValue({ value, className }: Readonly<{ value: bigint; className?: string }>) {
@@ -46,9 +52,16 @@ export function StatsReportView({ report, scope, todayUtcDay, onRangeRequest, on
   const [sort, setSort] = useState<{ key: StatsSort; ascending: boolean }>({ key: "tokens", ascending: false });
   const [selectedDay, setSelectedDay] = useState<StatsRange | null>(null);
   const [chartFocus, setChartFocus] = useState(0);
+  const [mapFocus, setMapFocus] = useState<number | null>(null);
+  const [metric, setMetric] = useState<StatsMetric>("tokens");
+  const [split, setSplit] = useState<StatsGrouping | null>(null);
   const [showAllGroups, setShowAllGroups] = useState(false);
   const [exportError, setExportError] = useState(false);
+  const [shareStatus, setShareStatus] = useState("");
+  const [copyStatus, setCopyStatus] = useState("");
+  const [sharing, setSharing] = useState(false);
   const plot = useRef<HTMLDivElement>(null);
+  const calendarSvg = useRef<SVGSVGElement>(null);
   const rows = useMemo(() => filterStatsRows(report, filters), [report, filters]);
   const totals = useMemo(() => sumStatsRows(rows), [rows]);
   const snapshotRows = useMemo(() => filterStatsSnapshots(report, filters), [report, filters]);
@@ -59,6 +72,8 @@ export function StatsReportView({ report, scope, todayUtcDay, onRangeRequest, on
 
   const groups = useMemo(() => groupStatsRows(rows, grouping, sort.key, sort.ascending), [rows, grouping, sort]);
   const buckets = useMemo(() => bucketStatsRows(rows, filters), [rows, filters]);
+  const calendar = useMemo(() => statsDayGrid(rows, filters), [rows, filters]);
+  const splitView = useMemo(() => split !== null && metric !== "speed" ? statsSplitBuckets(rows, filters, split) : null, [rows, filters, split, metric]);
   const dailyTotals = useMemo(() => {
     const grouped = new Map<number, typeof rows>();
     for (const row of rows) { const dayRows = grouped.get(row.utcDay) ?? []; dayRows.push(row); grouped.set(row.utcDay, dayRows); }
@@ -73,9 +88,22 @@ export function StatsReportView({ report, scope, todayUtcDay, onRangeRequest, on
   const hasEstimated = report.rows.some(row => row.tokenBasis === "estimated");
   const label = filters.basis === "reported" ? "Reported" : "Estimated";
   const visibleGroups = showAllGroups ? groups : groups.slice(0, 12);
-  const max = buckets.reduce((value, bucket) => bucket.totals.tokens > value ? bucket.totals.tokens : value, 0n);
-  const detailRows = selectedDay ? rows.filter(row => row.utcDay >= selectedDay.firstUtcDay && row.utcDay < selectedDay.firstUtcDay + selectedDay.dayCount) : [];
-  const detailTotals = selectedDay ? sumStatsRows(detailRows) : null;
+  const metricMax = buckets.reduce((value, bucket) => {
+    const bucketValue = statsBucketValue(bucket.totals, metric);
+    return bucketValue !== null && bucketValue > value ? bucketValue : value;
+  }, 0n);
+  const metricTitle = metric === "tokens" ? `${label} tokens` : metric === "records" ? "Usage records" : "Measured tokens per second";
+  const metricUnit = metric === "speed" ? " tok/s" : "";
+  const formatMetric = (value: bigint) => metric === "records" ? formatStatsInteger(value) : formatStatsCompact(value);
+  const bucketLabel = (bucket: (typeof buckets)[number]) => {
+    const range = `${formatStatsDay(bucket.firstUtcDay)}${bucket.dayCount > 1 ? ` through ${formatStatsDay(bucket.firstUtcDay + bucket.dayCount - 1)}` : ""}`;
+    const value = statsBucketValue(bucket.totals, metric);
+    const valueText = value === null ? (metric === "speed" ? "request duration unrecorded" : "token usage unknown")
+      : metric === "records" ? `${formatStatsInteger(value)} records`
+      : metric === "speed" ? `${formatStatsInteger(value)} measured tok/s across ${formatStatsInteger(bucket.totals.timedRecords)} timed records`
+      : `${formatStatsInteger(value)} ${filters.basis} tokens`;
+    return `${range}: ${valueText}`;
+  };
   const sourceList = report.sources.filter(source => filters.client === ALL_STATS || source.client === filters.client);
   const sourceByClient = new Map(report.sources.map(source => [source.client, source]));
   const periodEnd = filters.firstUtcDay + filters.dayCount - 1;
@@ -94,6 +122,14 @@ export function StatsReportView({ report, scope, todayUtcDay, onRangeRequest, on
     ? totals.timedTokens * 1000n / totals.durationMs : null;
   const costDelta = totals.reportedCost !== null && totals.estimatedCost !== null
     ? totals.estimatedCost - totals.reportedCost : null;
+  const calendarWidth = CALENDAR_GUTTER + calendar.weeks * CALENDAR_PITCH;
+  const calendarHeight = CALENDAR_HEADER + 7 * CALENDAR_PITCH;
+  const focusDay = mapFocus !== null && mapFocus >= filters.firstUtcDay && mapFocus < filters.firstUtcDay + filters.dayCount ? mapFocus : periodEnd;
+  const detailRows = selectedDay ? rows.filter(row => row.utcDay >= selectedDay.firstUtcDay && row.utcDay < selectedDay.firstUtcDay + selectedDay.dayCount) : [];
+  const detailTotals = selectedDay ? sumStatsRows(detailRows) : null;
+  const detailClients = selectedDay ? groupStatsRows(detailRows, "client", "tokens") : [];
+  const detailSpeed = detailTotals ? statsBucketValue(detailTotals, "speed") : null;
+  const detailInput = detailTotals === null ? 0n : detailTotals.input + detailTotals.cacheRead;
 
   const changeFilter = (patch: Partial<StatsFilters>) => {
     setFilters(previous => ({ ...previous, ...patch })); setSelectedDay(null); setShowAllGroups(false);
@@ -130,6 +166,55 @@ export function StatsReportView({ report, scope, todayUtcDay, onRangeRequest, on
   };
   const exportRows = () => {
     try { saveCsv(statsRowsCsv([...rows, ...snapshotRows])); setExportError(false); } catch { setExportError(true); }
+  };
+  const moveMapFocus = (day: number) => {
+    const next = Math.max(filters.firstUtcDay, Math.min(periodEnd, day));
+    setMapFocus(next);
+    calendarSvg.current?.querySelector<SVGRectElement>(`[data-day="${next}"]`)?.focus();
+  };
+  const mapKey = (event: KeyboardEvent<SVGRectElement>, utcDay: number) => {
+    const next = event.key === "ArrowRight" ? utcDay + 1 : event.key === "ArrowLeft" ? utcDay - 1
+      : event.key === "ArrowDown" ? utcDay + 7 : event.key === "ArrowUp" ? utcDay - 7
+      : event.key === "Home" ? filters.firstUtcDay : event.key === "End" ? periodEnd : null;
+    if (event.key === "Escape") { setSelectedDay(null); return; }
+    if ((event.key === "Enter" || event.key === " ")) {
+      event.preventDefault();
+      setSelectedDay(selectedDay?.firstUtcDay === utcDay && selectedDay.dayCount === 1 ? null : { firstUtcDay: utcDay, dayCount: 1 });
+      return;
+    }
+    if (next !== null) { event.preventDefault(); moveMapFocus(next); }
+  };
+  const pickMapDay = (utcDay: number) => {
+    setMapFocus(utcDay);
+    setSelectedDay(selectedDay?.firstUtcDay === utcDay && selectedDay.dayCount === 1 ? null : { firstUtcDay: utcDay, dayCount: 1 });
+  };
+  const copySummary = async () => {
+    try {
+      await navigator.clipboard.writeText(statsSummaryText(scope, filters, totals, rangeText, groups));
+      setCopyStatus("Summary copied to the clipboard.");
+    } catch { setCopyStatus("The summary could not be copied. Try again in this browser."); }
+  };
+  const exportImage = async () => {
+    const source = calendarSvg.current;
+    if (source === null || sharing) return;
+    setSharing(true); setShareStatus("Preparing image…");
+    try {
+      const filterNote = [filters.client !== ALL_STATS ? statsLabel(filters.client, "client") : null,
+        filters.provider !== ALL_STATS ? statsLabel(filters.provider) : null, filters.model !== ALL_STATS ? statsLabel(filters.model) : null]
+        .filter(Boolean).join(" · ");
+      const image = await createBrandedChartPng(source, calendarWidth, calendarHeight, {
+        context: `${label} tokens · ${rangeText} UTC${filterNote === "" ? "" : ` · ${filterNote}`}`,
+        domain: "aicharts.io",
+        freshness: `Generated ${stamp.format(report.generatedAtMs)} UTC${scope === "example" ? " · synthetic example" : ""}`,
+        providers: [],
+        selection: totals.tokenRecords > 0
+          ? `${formatStatsCompact(totals.tokens)} tokens · ${formatStatsInteger(totals.records)} records · ${totals.activeDays}/${filters.dayCount} active days`
+          : `${formatStatsInteger(totals.records)} records · tokens unobserved`,
+      });
+      downloadChartPng(image, `aicharts-usage-${statsDateInput(filters.firstUtcDay)}-${statsDateInput(periodEnd)}.png`);
+      setShareStatus("Image downloaded. Coverage may be partial — see the report for source status.");
+    } catch { setShareStatus("The image could not be prepared in this browser."); }
+    finally { setSharing(false); }
   };
   return <div className="usage-stats" aria-busy={busy}>
     <div className="usage-stats__toolbar">
@@ -194,6 +279,8 @@ export function StatsReportView({ report, scope, todayUtcDay, onRangeRequest, on
         <div><dt>Cache reads</dt><dd>{cacheShare === null ? "Unknown" : <>{cacheShare}% <span>{formatStatsInteger(totals.cacheRead)} tokens</span></>}</dd></div>
         <div><dt>Usage records</dt><dd>{snapshotOnly ? "Unavailable" : formatStatsInteger(totals.records)}</dd></div>
         <div><dt>Days with records</dt><dd>{snapshotOnly ? "Unavailable" : <>{totals.activeDays} <span>of {filters.dayCount}</span></>}</dd></div>
+        <div><dt>Records per active day</dt><dd>{totals.activeDays === 0 ? "Unknown" : formatStatsInteger(Math.round(totals.records / totals.activeDays))}</dd></div>
+        <div><dt>Tokens per record</dt><dd>{totals.tokenRecords === 0 ? "Unknown" : <>{formatStatsCompact(totals.tokens / BigInt(totals.tokenRecords))} <span>average</span></>}</dd></div>
         <div><dt>Tokens per second</dt><dd>{outputSpeed === null ? "Untimed" : <>{formatStatsInteger(outputSpeed)} <span>across {formatStatsInteger(totals.timedRecords)} timed records</span></>}</dd></div>
       </dl>
       <div className="usage-stats__cost"><h2>Cost</h2><strong>{formatStatsMoney(totals.reportedCost)}</strong>
@@ -206,26 +293,85 @@ export function StatsReportView({ report, scope, todayUtcDay, onRangeRequest, on
       {totals.tokenRecords < totals.records && <span> · Tokens unavailable for {formatStatsInteger(totals.records - totals.tokenRecords)} records.</span>}</p>
     <p className="usage-stats__sr" role="status">Showing {formatStatsInteger(totals.records)} records for {rangeText}, {filters.basis} token basis.</p>
 
-    <section className="usage-stats__trend" aria-labelledby="stats-trend-title">
-      <div className="usage-stats__section-heading"><h2 id="stats-trend-title">{filters.dayCount > 62 ? "Weekly" : "Daily"} usage</h2><span>{label} tokens · select a {filters.dayCount > 62 ? "week" : "day"} to inspect</span></div>
-      <div className="usage-stats__scale" aria-hidden="true"><span>{formatStatsCompact(max)}</span><span>0</span></div>
-      <div className="usage-stats__plot" ref={plot} role="group" aria-label={`${label} tokens by ${filters.dayCount > 62 ? "week" : "day"}. Use left and right arrow keys to move; press Enter to inspect.`}>
-        {buckets.map((bucket, index) => <button type="button" key={bucket.firstUtcDay} data-bucket={index} tabIndex={chartFocus === index ? 0 : -1}
-          className={bucket.totals.tokenRecords === 0 ? "is-unobserved" : undefined} aria-pressed={selectedDay?.firstUtcDay === bucket.firstUtcDay}
-          aria-label={`${formatStatsDay(bucket.firstUtcDay)}${bucket.dayCount > 1 ? ` through ${formatStatsDay(bucket.firstUtcDay + bucket.dayCount - 1)}` : ""}: ${bucket.totals.tokenRecords > 0 ? `${formatStatsInteger(bucket.totals.tokens)} ${filters.basis} tokens` : "token usage unknown"}, ${bucket.totals.records} records`}
-          onFocus={() => setChartFocus(index)} onKeyDown={event => chartKey(event, index)}
-          onClick={() => setSelectedDay(selectedDay?.firstUtcDay === bucket.firstUtcDay ? null : { firstUtcDay: bucket.firstUtcDay, dayCount: bucket.dayCount })}>
-          <span style={{ height: `${statsRatio(bucket.totals.tokens, max)}%` }} aria-hidden="true" />
-        </button>)}
+    <section className="usage-stats__calendar" aria-labelledby="stats-calendar-title">
+      <div className="usage-stats__section-heading"><h2 id="stats-calendar-title">Daily activity</h2>
+        <button type="button" className="usage-stats__text-button" disabled={sharing} onClick={() => void exportImage()}>{sharing ? "Preparing image…" : "Download image"}</button>
       </div>
+      <div className="usage-stats__calendar-scroll" role="region" aria-label={`${label} token density calendar, ${rangeText} — scroll horizontally for the full range`} tabIndex={0}>
+        <svg ref={calendarSvg} className="usage-stats__calendar-svg" width={calendarWidth} height={calendarHeight} viewBox={`0 0 ${calendarWidth} ${calendarHeight}`}
+          role="group" aria-label={`${label} token density by UTC day, ${rangeText}. Arrow keys move between days; Enter selects a day.`}>
+          {calendar.monthMarks.map(mark => <text key={`${mark.column}-${mark.label}`} className="usage-stats__calendar-month" x={CALENDAR_GUTTER + mark.column * CALENDAR_PITCH} y={10} aria-hidden="true">{mark.label}</text>)}
+          {[1, 3, 5].map(row => <text key={row} className="usage-stats__calendar-weekday" x={0} y={CALENDAR_HEADER + row * CALENDAR_PITCH + CALENDAR_CELL - 2} aria-hidden="true">{weekdayNames[row]}</text>)}
+          {calendar.cells.map((cell, index) => cell === null ? null : <rect
+            key={cell.utcDay} data-day={cell.utcDay}
+            x={CALENDAR_GUTTER + Math.floor(index / 7) * CALENDAR_PITCH}
+            y={CALENDAR_HEADER + (index % 7) * CALENDAR_PITCH}
+            width={CALENDAR_CELL} height={CALENDAR_CELL} rx={2}
+            data-tier={cell.tier} className={cell.records > 0 && cell.tokenRecords === 0 ? "is-unknown" : undefined}
+            role="button" tabIndex={cell.utcDay === focusDay ? 0 : -1}
+            aria-pressed={selectedDay?.firstUtcDay === cell.utcDay && selectedDay.dayCount === 1}
+            aria-label={`${formatStatsDay(cell.utcDay)}: ${cell.records === 0 ? "no usage records" : `${cell.tokenRecords > 0 ? `${formatStatsInteger(cell.tokens)} ${filters.basis} tokens` : "token usage unknown"}, ${formatStatsInteger(cell.records)} records`}`}
+            onFocus={() => setMapFocus(cell.utcDay)} onKeyDown={event => mapKey(event, cell.utcDay)} onClick={() => pickMapDay(cell.utcDay)} />)}
+        </svg>
+      </div>
+      <div className="usage-stats__calendar-footer">
+        <p className="usage-stats__hint">{calendar.activeDays} of {filters.dayCount} days carried records.{calendar.peak !== null && <> Highest activity: {formatStatsDay(calendar.peak.utcDay)} at {formatStatsCompact(calendar.peak.tokens)} {filters.basis} tokens.</>} Hatched days carried records without a token basis; blank days recorded nothing.</p>
+        <div className="usage-stats__calendar-scale" aria-hidden="true"><span>Less</span>{[0, 1, 2, 3, 4].map(tier => <i key={tier} data-tier={tier} />)}<span>More</span></div>
+      </div>
+      {shareStatus !== "" && <p role="status" className="usage-stats__hint">{shareStatus}</p>}
+    </section>
+
+    <section className="usage-stats__trend" aria-labelledby="stats-trend-title">
+      <div className="usage-stats__section-heading"><h2 id="stats-trend-title">{filters.dayCount > 62 ? "Weekly" : "Daily"} usage</h2>
+        <div className="usage-stats__chart-controls">
+          <div className="usage-stats__presets" role="group" aria-label="Chart metric">
+            {(Object.keys(metricNames) as StatsMetric[]).map(item => <button type="button" key={item} aria-pressed={metric === item} onClick={() => setMetric(item)}>{metricNames[item]}</button>)}
+          </div>
+          {metric !== "speed" && <div className="usage-stats__presets" role="group" aria-label="Stack bars by">
+            {(["none", "client", "provider", "model"] as const).map(item => <button type="button" key={item} aria-pressed={(split ?? "none") === item} onClick={() => setSplit(item === "none" ? null : item)}>{splitNames[item]}</button>)}
+          </div>}
+        </div>
+      </div>
+      <div className="usage-stats__scale" aria-hidden="true"><span>{formatMetric(metricMax)}{metricUnit}</span><span>0</span></div>
+      <div className="usage-stats__plot" ref={plot} role="group" aria-label={`${metricTitle} by ${filters.dayCount > 62 ? "week" : "day"}. Use left and right arrow keys to move; press Enter to inspect.`}>
+        {buckets.map((bucket, index) => {
+          const value = statsBucketValue(bucket.totals, metric);
+          const segments = splitView?.buckets[index]?.segments ?? [];
+          const segmentValue = (segment: { tokens: bigint; records: number }) => metric === "records" ? BigInt(segment.records) : segment.tokens;
+          return <button type="button" key={bucket.firstUtcDay} data-bucket={index} tabIndex={chartFocus === index ? 0 : -1}
+            className={value === null ? "is-unobserved" : undefined} aria-pressed={selectedDay?.firstUtcDay === bucket.firstUtcDay}
+            aria-label={bucketLabel(bucket)}
+            onFocus={() => setChartFocus(index)} onKeyDown={event => chartKey(event, index)}
+            onClick={() => setSelectedDay(selectedDay?.firstUtcDay === bucket.firstUtcDay ? null : { firstUtcDay: bucket.firstUtcDay, dayCount: bucket.dayCount })}>
+            {splitView === null || value === null || value === 0n
+              ? <span style={{ height: `${value === null ? 0 : statsRatio(value, metricMax)}%` }} aria-hidden="true" />
+              : <span className="usage-stats__bar-stack" style={{ height: `${statsRatio(value, metricMax)}%` }} aria-hidden="true">
+                  {segments.map(segment => <i key={segment.key} data-segment={segment.slot} style={{ height: `${statsRatio(segmentValue(segment), value)}%` }} />)}
+                </span>}
+          </button>;
+        })}
+      </div>
+      {splitView !== null && splitView.series.length > 0 && <ul className="usage-stats__legend" aria-label={`Stacked by ${splitNames[split ?? "client"].toLowerCase()} — share of ${metric === "records" ? "records" : "tokens"}`}>
+        {splitView.series.map(segment => {
+          const total = metric === "records" ? BigInt(totals.records) : totals.tokens;
+          const weight = metric === "records" ? BigInt(segment.records) : segment.tokens;
+          return <li key={segment.key}><i data-segment={segment.slot} aria-hidden="true" />{segment.name}<span>{total > 0n ? `${statsRatio(weight, total).toFixed(1)}%` : "—"}</span></li>;
+        })}
+      </ul>}
       <div className="usage-stats__axis" aria-hidden="true"><span>{formatStatsDay(filters.firstUtcDay)}</span><span>{formatStatsDay(periodEnd)}</span></div>
-      <p className="usage-stats__hint">Dots indicate no token observations; they do not establish no activity. Exact values are available by selecting a bar or opening daily data.</p>
-      {prior && prior.tokenRecords > 0 && <p className="usage-stats__hint">Previous {filters.dayCount} days: {formatStatsInteger(prior.tokens)} {filters.basis} tokens; coverage may differ.</p>}
+      <p className="usage-stats__hint">{metric === "speed" ? "Dots mark buckets with no recorded request durations; measured tok/s is source-reported duration, not inference speed or time spent working." : "Dots indicate no observations for this metric; they do not establish no activity. Exact values are available by selecting a bar or opening daily data."}</p>
+      {prior && prior.tokenRecords > 0 && metric === "tokens" && <p className="usage-stats__hint">Previous {filters.dayCount} days: {formatStatsInteger(prior.tokens)} {filters.basis} tokens; coverage may differ.</p>}
       {selectedDay && detailTotals && <div className="usage-stats__day-detail" role="region" aria-label="Selected period detail">
         <div><h3>{formatStatsDay(selectedDay.firstUtcDay)}{selectedDay.dayCount > 1 ? `–${formatStatsDay(selectedDay.firstUtcDay + selectedDay.dayCount - 1)}` : ""}</h3>
           <p>{detailTotals.tokenRecords > 0 ? `${formatStatsInteger(detailTotals.tokens)} ${filters.basis} tokens` : "Token usage unknown"} · {formatStatsInteger(detailTotals.records)} records</p></div>
         <button type="button" className="usage-stats__text-button" onClick={() => setSelectedDay(null)}>Close detail</button>
-        <ul>{groupStatsRows(detailRows, "model", "tokens").map(group => <li key={group.key}><span>{group.name}</span><strong>{group.totals.tokenRecords > 0 ? formatStatsInteger(group.totals.tokens) : "Unknown"}</strong></li>)}</ul>
+        <dl className="usage-stats__chips">
+          <div><dt>Reported cost</dt><dd>{formatStatsMoney(detailTotals.reportedCost)}</dd></div>
+          <div><dt>Measured tok/s</dt><dd>{detailSpeed === null ? "Unrecorded" : formatStatsInteger(detailSpeed)}</dd></div>
+          <div><dt>Cache-read share</dt><dd>{detailTotals.tokenRecords > 0 && detailInput > 0n ? `${statsRatio(detailTotals.cacheRead, detailInput)}%` : "Unknown"}</dd></div>
+        </dl>
+        {detailClients.length > 0 && <ul className="usage-stats__day-groups" aria-label="Clients in this period">{detailClients.slice(0, 4).map(group => <li key={group.key}><span>{group.name}</span><strong>{group.totals.tokenRecords > 0 ? formatStatsInteger(group.totals.tokens) : "Unknown"}</strong></li>)}</ul>}
+        <ul className="usage-stats__day-groups" aria-label="Models in this period">{groupStatsRows(detailRows, "model", "tokens").map(group => <li key={group.key}><span>{group.name}</span><strong>{group.totals.tokenRecords > 0 ? formatStatsInteger(group.totals.tokens) : "Unknown"}</strong></li>)}</ul>
       </div>}
     </section>
     </div>
@@ -241,7 +387,13 @@ export function StatsReportView({ report, scope, todayUtcDay, onRangeRequest, on
       <p>Synchronization dates are not request timestamps. CSV exports retain this snapshot with the time basis <code>refresh_snapshot</code>.</p>
     </section>}
     <section className="usage-stats__breakdown" aria-labelledby="stats-breakdown-title">
-      <div className="usage-stats__section-heading"><h2 id="stats-breakdown-title">Where the tokens went</h2><button type="button" className="usage-stats__text-button" onClick={exportRows} disabled={rows.length === 0 && snapshotRows.length === 0}>Download numeric CSV</button></div>
+      <div className="usage-stats__section-heading"><h2 id="stats-breakdown-title">Where the tokens went</h2>
+        <div className="usage-stats__actions">
+          <button type="button" className="usage-stats__text-button" onClick={() => void copySummary()}>Copy summary</button>
+          <button type="button" className="usage-stats__text-button" onClick={exportRows} disabled={rows.length === 0 && snapshotRows.length === 0}>Download numeric CSV</button>
+        </div>
+      </div>
+      {copyStatus !== "" && <p role="status" className="usage-stats__hint">{copyStatus}</p>}
       {exportError && <p role="alert">The download could not be prepared. Try again in this browser.</p>}
       <div className="usage-stats__presets" role="group" aria-label="Group usage by">
         {(["client", "provider", "model"] as const).map(by => <button type="button" key={by} aria-pressed={grouping === by} onClick={() => { setGrouping(by); setShowAllGroups(false); }}>{by === "client" ? "Clients" : by === "provider" ? "Providers" : "Models"}</button>)}
