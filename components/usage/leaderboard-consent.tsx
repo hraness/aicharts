@@ -33,7 +33,7 @@ function stateOf(reply: UsageConsentPublicReply): ConsentState {
  * public sharing: consent is a separate recorded decision with a chosen
  * bounded handle, and withdrawal removes the account from the published
  * index. No local persistence; the server session is the only authority. */
-export function LeaderboardConsentControl() {
+export function LeaderboardConsentControl({ returnTo = "/dashboard" }: Readonly<{ returnTo?: string }>) {
   const [state, setState] = useState<ConsentState>({ kind: "loading" });
   const [handle, setHandle] = useState("");
   const [confirmed, setConfirmed] = useState(false);
@@ -102,13 +102,13 @@ export function LeaderboardConsentControl() {
   const retry = () => { setState({ kind: "loading" }); void issue(signal => readAccountConsent(signal), false); };
 
   return <LeaderboardConsentPanel state={state} handle={handle} confirmed={confirmed} setHandle={setHandle}
-    setConfirmed={setConfirmed} publish={publish} withdraw={withdraw} retry={retry} />;
+    setConfirmed={setConfirmed} publish={publish} withdraw={withdraw} retry={retry} returnTo={returnTo} />;
 }
 
-export function LeaderboardConsentPanel({ state, handle, confirmed, setHandle, setConfirmed, publish, withdraw, retry }: Readonly<{
+export function LeaderboardConsentPanel({ state, handle, confirmed, setHandle, setConfirmed, publish, withdraw, retry, returnTo = "/dashboard" }: Readonly<{
   state: ConsentState; handle: string; confirmed: boolean; setHandle: (value: string) => void;
   setConfirmed: (value: boolean) => void; publish: (event: FormEvent<HTMLFormElement>) => void;
-  withdraw: () => void; retry: () => void;
+  withdraw: () => void; retry: () => void; returnTo?: string;
 }>) {
 
   const view = state.kind === "ready" || state.kind === "busy" || state.kind === "handle_unavailable" ? state.view : null;
@@ -146,7 +146,7 @@ export function LeaderboardConsentPanel({ state, handle, confirmed, setHandle, s
       : state.kind === "authentication_required" ? <div className="usage-daily__notice">
           <h3>Sign in to manage publishing</h3>
           <p>Publishing consent is recorded on your account. Sign in to choose a public handle or withdraw.</p>
-          <form method="get" action="/api/suite-auth/start"><input type="hidden" name="return_to" value="/usage" />
+          <form method="get" action="/api/suite-auth/start"><input type="hidden" name="return_to" value={returnTo} />
             <button className="usage-button usage-button--primary" type="submit">Sign in with Hraness</button></form>
         </div>
       : state.kind === "not_enrolled" ? <div className="usage-daily__notice">
