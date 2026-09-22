@@ -38,8 +38,8 @@ function StatsSkeleton() {
   </div>;
 }
 
-export function StatsDashboard({ todayUtcDay, remoteEnabled = false, startWithAccount = false, fallback }: Readonly<{
-  todayUtcDay: number; remoteEnabled?: boolean; startWithAccount?: boolean; fallback?: ReactNode;
+export function StatsDashboard({ todayUtcDay, remoteEnabled = false, startWithAccount = false, fallback, returnTo = "/dashboard" }: Readonly<{
+  todayUtcDay: number; remoteEnabled?: boolean; startWithAccount?: boolean; fallback?: ReactNode; returnTo?: string;
 }>) {
   const [loaded, setLoaded] = useState<Loaded | null>(null);
   const [status, setStatus] = useState<Status>(startWithAccount ? "loading" : "idle");
@@ -150,9 +150,9 @@ export function StatsDashboard({ todayUtcDay, remoteEnabled = false, startWithAc
     </div>}
     {status === "range_too_large" && <div className="usage-stats__notice" role="alert"><strong>This period has too much detail to load at once</strong><p>Choose a shorter period. No records have been truncated; any report below is the last one loaded.</p><button className="usage-stats__text-button" type="button" onClick={() => loadAccount({ firstUtcDay: Math.max(0, todayUtcDay - 6), dayCount: Math.min(7, todayUtcDay + 1) })}>Load last 7 days</button></div>}
     {status === "authentication_required" && <div className="usage-stats__notice"><h2>Sign in to view your usage</h2><p>Use your Hraness account for private measurements. Local reports work without signing in.</p>
-      <form action="/api/suite-auth/start" method="get"><input type="hidden" name="return_to" value="/usage" /><button className="usage-button usage-button--primary" type="submit">Sign in with Hraness</button></form></div>}
+      <form action="/api/suite-auth/start" method="get"><input type="hidden" name="return_to" value={returnTo} /><button className="usage-button usage-button--primary" type="submit">Sign in with Hraness</button></form></div>}
     {status === "not_enrolled" && <div className="usage-stats__notice"><h2>No collector connected</h2><p>Enroll a device to sync accepted measurements to your account. You can inspect a local numeric report now.</p><Link className="usage-inline-link" href="https://github.com/hraness/aicharts/blob/main/docs/usage-local.md">Local collector guide</Link></div>}
-    {showFallback ? fallback : status === "stats_not_started" ? <div className="usage-stats__notice"><h2>No detailed snapshot yet</h2><p>Your existing daily measurements remain available. Any report below is the last one loaded. Open a detailed local report to inspect model and token breakdowns.</p><Link className="usage-inline-link" href="/usage">View account overview</Link></div> : null}
+    {showFallback ? fallback : status === "stats_not_started" ? <div className="usage-stats__notice"><h2>No detailed snapshot yet</h2><p>Your existing daily measurements remain available. Any report below is the last one loaded. Open a detailed local report to inspect model and token breakdowns.</p><Link className="usage-inline-link" href="/dashboard">View account overview</Link></div> : null}
     {loaded && <StatsReportView key={loaded.version} report={loaded.report} scope={loaded.scope} todayUtcDay={todayUtcDay}
       initialSelection={loaded.selection} busy={status === "loading"} onRangeRequest={loaded.scope === "account" ? loadAccount : undefined} onRefresh={loaded.scope === "account" ? filters => loadAccount({ firstUtcDay: filters.firstUtcDay, dayCount: filters.dayCount }, { client: filters.client, provider: filters.provider, model: filters.model, basis: filters.basis }) : undefined} />}
     {status === "loading" && !loaded && <StatsSkeleton />}

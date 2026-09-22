@@ -112,7 +112,7 @@ repository file.
 3. In a production deployment, set only `AICHARTS_USAGE_AUTH_ENABLED=1` and
    the private cookie secret. Verify the disabled `/api/usage/days` response is
    still `503`; authentication alone must not enable usage reads.
-4. In a clean browser at `https://aicharts.io/usage`, exercise one fresh email
+4. In a clean browser at `https://aicharts.io/dashboard`, exercise one fresh email
    code login. Verify the exact callback, state and nonce handling, an opaque
    session account ID, expiry, refresh rotation and sign-out. Verify no access
    or refresh bearer appears in HTML, browser JSON, cookies, URLs, analytics or

@@ -156,7 +156,7 @@ export function SessionDashboard() {
   const reading = (complete: number | null, observed: number | null) => complete !== null ? percent(complete) : observed !== null && observed > 0 ? `≥ ${percent(observed)}` : "Unknown";
 
   return <section className="usage-daily usage-sessions" aria-labelledby="sessions-title">
-    <Link className="usage-inline-link" href="/usage">Usage overview</Link>
+    <Link className="usage-inline-link" href="/dashboard">Usage overview</Link>
     <header className="usage-daily__heading"><div><h1 id="sessions-title">Your sessions, in detail</h1>
       <p>See the model mix and where time goes, within a conversation and across concurrent sessions.</p></div></header>
     <div className="usage-sessions__controls">
