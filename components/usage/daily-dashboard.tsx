@@ -96,7 +96,7 @@ function Measurements({ value }: Readonly<{ value: PrivateDaysV1 }>) {
   </>;
 }
 
-export function DailyUsageDashboard({ todayUtcDay }: Readonly<{ todayUtcDay: number }>) {
+export function DailyUsageDashboard({ todayUtcDay, returnTo = "/dashboard" }: Readonly<{ todayUtcDay: number; returnTo?: string }>) {
   const initialRange = dailyUsagePresetRange(todayUtcDay, 30);
   const [first, setFirst] = useState(utcDayInput(initialRange.firstUtcDay));
   const [last, setLast] = useState(utcDayInput(todayUtcDay));
@@ -200,7 +200,7 @@ export function DailyUsageDashboard({ todayUtcDay }: Readonly<{ todayUtcDay: num
             : notEnrolled ? "Accepted measurements will appear here after you enroll a device. Your local collector can still be used independently."
               : "Your measurements have not been changed. Try again when the connection is available."}</p>
           {authenticationRequired ? <form method="get" action="/api/suite-auth/start">
-            <input type="hidden" name="return_to" value="/usage" />
+            <input type="hidden" name="return_to" value={returnTo} />
             <button className="usage-button usage-button--primary" type="submit">Sign in with Hraness</button>
           </form>
             : notEnrolled ? <Link className="usage-inline-link" href="https://github.com/hraness/aicharts/blob/main/docs/usage-local.md">Local collector guide</Link>

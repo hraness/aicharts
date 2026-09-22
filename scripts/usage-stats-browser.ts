@@ -292,12 +292,12 @@ export async function verifyUsageStats(browser: Browser, baseUrl: string, captur
       }
       statsMode = "not_started";
       accountSignedOut = false; // A distinct synthetic signed-in visit for daily cleanup.
-      await page.goto(`${baseUrl}/usage`, { waitUntil: "networkidle" }); await page.getByRole("heading", { name: "Codex", exact: true }).waitFor(); await capture("usage-fallback");
+      await page.goto(`${baseUrl}/dashboard`, { waitUntil: "networkidle" }); await page.getByRole("heading", { name: "Codex", exact: true }).waitFor(); await capture("usage-fallback");
       if (await account.count()) {
         await account.locator("summary").click(); signOutFails = false;
         await account.getByRole("button", { name: "Sign out", exact: true }).click();
         await account.getByText("Sign-in required", { exact: true }).waitFor();
-        invariant(page.url() === `${baseUrl}/usage` && await page.locator(".usage-daily table").count() === 0, "Confirmed sign-out must clear private daily data in the initiating tab.");
+        invariant(page.url() === `${baseUrl}/dashboard` && await page.locator(".usage-daily table").count() === 0, "Confirmed sign-out must clear private daily data in the initiating tab.");
         invariant(Number(signOutCalls) === 4, "Every explicit sign-out must make exactly one SDK POST without replay.");
       }
       await page.goto(`${baseUrl}/leaderboard`, { waitUntil: "networkidle" }); await page.getByRole("heading", { name: "Public usage leaderboard", exact: true }).waitFor(); await capture("leaderboard-paused");

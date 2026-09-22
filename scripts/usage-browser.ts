@@ -50,10 +50,16 @@ async function settle(page: Page): Promise<void> {
 async function checkDormant(baseUrl: string): Promise<void> {
   const page = await fetch(`${baseUrl}/usage`), html = await page.text();
   invariant(page.status === 200, "Disabled usage page must remain available.");
-  for (const text of ["Your AI usage", "Your private dashboard is unavailable.",
+  for (const text of ["See what your AI agents actually use", "Set up tracking in three steps", "Private reads are paused; local reports still work.",
     "aicharts stats --home", "No transcript uploads", 'href="/usage/details"', 'aria-current="page" href="/usage"',
     '<link rel="canonical" href="https://aicharts.io/usage"']) {
     invariant(html.includes(text), `The usage fallback must preserve local reporting, coverage and navigation: missing ${text}.`);
+  }
+  const dashboard = await fetch(`${baseUrl}/dashboard`), dashboardHtml = await dashboard.text();
+  invariant(dashboard.status === 200, "The dormant dashboard must remain available.");
+  for (const text of ["Your dashboard is unavailable right now", 'href="/usage"', 'href="/usage/details"',
+    'aria-current="page" href="/dashboard"', 'name="robots" content="noindex']) {
+    invariant(dashboardHtml.includes(text), `The dormant dashboard must render its honest disabled state: missing ${text}.`);
   }
   for (const [method, status] of [["GET", 503], ["HEAD", 405], ["POST", 405], ["OPTIONS", 405]] as const) {
     const response = await fetch(`${baseUrl}/api/usage/days?firstUtcDay=20000&dayCount=1`, { method });
@@ -228,7 +234,7 @@ export async function verifyUsageDashboard(browser: Browser, disabledBaseUrl: st
       };
       const refresh = async (next: Mode) => { mode = next; await page.getByRole("button", { name: "Refresh", exact: true }).click(); };
       try {
-        await page.goto(`${baseUrl}/usage`, { waitUntil: "domcontentloaded" });
+        await page.goto(`${baseUrl}/dashboard`, { waitUntil: "domcontentloaded" });
         await loaded();
         invariant(requests === 1, "The initial dashboard must issue one request.");
         const refreshButton = page.getByRole("button", { name: "Refresh", exact: true });
@@ -280,7 +286,7 @@ export async function verifyUsageDashboard(browser: Browser, disabledBaseUrl: st
         await refresh("not_enrolled"); await page.getByRole("heading", { name: "No collector connected" }).waitFor();
         invariant(await page.locator(".usage-daily table").count() === 0, "Unenrolled state must clear previous measurements.");
         await refresh("authentication_required"); await page.getByRole("button", { name: "Sign in with Hraness" }).waitFor();
-        invariant(await page.locator('form[action="/api/suite-auth/start"][method="get"] input[name="return_to"]').inputValue() === "/usage", "Document sign-in must return to this private page.");
+        invariant(await page.locator('form[action="/api/suite-auth/start"][method="get"] input[name="return_to"]').inputValue() === "/dashboard", "Document sign-in must return to this private page.");
         await refresh("ready"); await loaded();
         await refresh("unavailable"); await page.getByRole("heading", { name: "Usage is unavailable right now" }).waitFor();
         invariant(await page.locator(".usage-daily table").count() === 0, "Failed refresh must clear old values.");

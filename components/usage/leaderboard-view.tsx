@@ -42,7 +42,7 @@ export function LeaderboardView({ available, snapshot }: LeaderboardViewProps) {
       <div className="usage-hero__copy">
         <h1 id="leaderboard-title">Public usage leaderboard</h1>
         <p className="usage-hero__lede">Opt-in accounts ranked by locally reported tokens over {LEADERBOARD_WINDOW_DAYS} UTC days. Each entry shows its reporting window and last refresh.</p>
-        <div className="usage-hero__actions"><Link className="usage-button usage-button--primary" href="/usage">View your usage</Link></div>
+        <div className="usage-hero__actions"><Link className="usage-button usage-button--primary" href="/dashboard">View your usage</Link></div>
       </div>
       {live
         ? <aside className="usage-status" aria-label="Leaderboard status">
@@ -73,7 +73,7 @@ export function LeaderboardView({ available, snapshot }: LeaderboardViewProps) {
         </section>
       : live
         ? <section className="usage-empty" aria-labelledby="leaderboard-empty-title">
-            <div><h2 id="leaderboard-empty-title">No published entries yet</h2><p>Accounts appear after their owners choose a public handle and enable publishing from their private usage dashboard.</p><Link className="usage-inline-link" href="/usage">Manage publishing</Link></div>
+            <div><h2 id="leaderboard-empty-title">No published entries yet</h2><p>Accounts appear after their owners choose a public handle and enable publishing from their private usage dashboard.</p><Link className="usage-inline-link" href="/dashboard">Manage publishing</Link></div>
           </section>
         : <section className="usage-empty" aria-labelledby="leaderboard-empty-title">
             <div><h2 id="leaderboard-empty-title">{available ? "Rankings could not be loaded" : "Public publishing is not available yet"}</h2>

@@ -8,7 +8,7 @@ export type AccountControlState = "loading" | "ready" | "authentication_required
 type CopyState = "idle" | "copied" | "failed";
 
 /** Identity is fetched live after mount; no private values enter cached HTML. */
-export function UsageAccountControl() {
+export function UsageAccountControl({ returnTo }: Readonly<{ returnTo: string }>) {
   const [state, setState] = useState<AccountControlState>("loading");
   const [accountId, setAccountId] = useState<string | null>(null);
   const [copyState, setCopyState] = useState<CopyState>("idle");
@@ -57,7 +57,7 @@ export function UsageAccountControl() {
       // Keep local/example reports open after ordinary sign-out. The confirmed
       // SDK result already invalidated private views in this and sibling tabs.
       // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- The OIDC API route requires a document request for its external authorization redirect.
-      if (switchAccount && current.mounted) window.location.assign("/api/suite-auth/start?return_to=%2Fusage");
+      if (switchAccount && current.mounted) window.location.assign(`/api/suite-auth/start?return_to=${encodeURIComponent(returnTo)}`);
     } catch { if (current.id === id) setState("sign_out_failed"); }
     finally { clearTimeout(deadline); if (current.id === id) current.controller = null; }
   };
@@ -69,12 +69,12 @@ export function UsageAccountControl() {
       if (current.id === id && current.mounted) setCopyState("copied");
     } catch { if (current.id === id && current.mounted) setCopyState("failed"); }
   };
-  return <UsageAccountPanel state={state} accountId={accountId} copyState={copyState} copy={() => void copy()}
+  return <UsageAccountPanel state={state} accountId={accountId} copyState={copyState} copy={() => void copy()} returnTo={returnTo}
     retry={() => { setState("loading"); setCopyState("idle"); void read(); }} signOut={switchAccount => void signOut(switchAccount)} />;
 }
 
-export function UsageAccountPanel({ state, accountId, copyState, copy, retry, signOut }: Readonly<{
-  state: AccountControlState; accountId: string | null; copyState: CopyState; copy(): void; retry(): void; signOut(switchAccount: boolean): void;
+export function UsageAccountPanel({ state, accountId, copyState, copy, retry, signOut, returnTo }: Readonly<{
+  state: AccountControlState; accountId: string | null; copyState: CopyState; copy(): void; retry(): void; signOut(switchAccount: boolean): void; returnTo: string;
 }>) {
   const busy = state === "signing_out";
   const status = state === "loading" ? "Checking account" : busy ? "Signing out…" : state === "sign_out_failed" ? "Sign-out unconfirmed"
@@ -93,7 +93,7 @@ export function UsageAccountPanel({ state, accountId, copyState, copy, retry, si
       {state === "loading" && <p role="status">Verifying your browser account with Hraness.</p>}
       {state === "unavailable" && <><p role="status">Your account could not be verified. Try again before comparing it with your collector.</p><button className="usage-account__action" type="button" onClick={retry}>Retry account check</button></>}
       {state === "authentication_required" && <><p>Sign in to see which account receives your private usage. Local reports work without signing in.</p>
-        <form action="/api/suite-auth/start" method="get"><input type="hidden" name="return_to" value="/usage" /><button className="usage-button usage-button--quiet" type="submit">Sign in with Hraness</button></form></>}
+        <form action="/api/suite-auth/start" method="get"><input type="hidden" name="return_to" value={returnTo} /><button className="usage-button usage-button--quiet" type="submit">Sign in with Hraness</button></form></>}
       {state === "sign_out_failed" && <p role="alert">Sign-out could not be confirmed. Retry sign-out before switching accounts.</p>}
       {state !== "loading" && <div className="usage-account__actions">
         <button className="usage-account__action" type="button" disabled={busy} onClick={() => signOut(false)}>{busy ? "Signing out…" : state === "sign_out_failed" ? "Retry sign-out" : "Sign out"}</button>

@@ -157,7 +157,7 @@ publication.
 
 ## Account reports and rankings
 
-With detailed account reads enabled, `/usage` loads the accepted account
+With detailed account reads enabled, `/dashboard` loads the accepted account
 snapshot. An account that has not published a detailed snapshot keeps its
 existing daily overview. Local files and synthetic examples stay separate from
 account publication; opening either does not change saved account measurements.
