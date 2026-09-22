@@ -90,7 +90,7 @@ export function createAaIndexCostArticle(
   return {
     authorshipDisclosure: BLOG_AUTHORSHIP_DISCLOSURE,
     slug: AA_INDEX_COST_ARTICLE_SLUG,
-    title: "Highest AA Index and lowest cost pick different agents",
+    title: "Highest AA Index and lowest cost pick different coding agents",
     dek:
       "The checked snapshot keeps a configuration on the frontier only when nothing cheaper scores at least as well on AA Index.",
     focusPhrase: "coding agent AA Index vs cost",
