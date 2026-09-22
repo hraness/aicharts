@@ -30,13 +30,13 @@ export default function Home() {
   return <>
     <SiteHeader current="/" />
     <main className="chart-home hraness-marketing-main" id="main-content">
-      <HomeIndexStrip />
       <header className="chart-page-intro">
         <h1 id="home-title">{homeHeading}</h1>
         <p>{homeLede}</p>
       </header>
       <ChartNavigation current="/" />
       <HomeIntelligenceEfficiency snapshot={parsed.value} />
+      <HomeIndexStrip />
       <ModelReleaseRadars />
       <HomeActivityFeed />
       <section aria-labelledby="home-calculator-title" className="home-calculator" data-analytics-surface="home_calculator">

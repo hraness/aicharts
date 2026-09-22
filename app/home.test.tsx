@@ -102,9 +102,9 @@ describe("homepage canonical content", () => {
     const mainEndAt = markup.indexOf("</main>", mainAt);
 
     expect(mainAt).toBeGreaterThan(markup.indexOf("site-header"));
-    expect(stripAt).toBeGreaterThan(mainAt);
-    expect(intelligenceAt).toBeGreaterThan(stripAt);
-    expect(radarAt).toBeGreaterThan(intelligenceAt);
+    expect(intelligenceAt).toBeGreaterThan(mainAt);
+    expect(stripAt).toBeGreaterThan(intelligenceAt);
+    expect(radarAt).toBeGreaterThan(stripAt);
     expect(activityAt).toBeGreaterThan(radarAt);
     expect(calculatorAt).toBeGreaterThan(activityAt);
     expect(markup).toContain('data-analytics-surface="home_index_strip"');
