@@ -374,6 +374,10 @@ export class PairingIntent extends DurableObject<Env> {
         && recorded.sessionExpiresAtMs === sessionExpiresAtMs ? ok({ recorded: true }) : err("conflict");
       if (state.status !== "pending") return err("invalid_transition");
       attempt.authentication = { accountId, authTimeMs, sessionExpiresAtMs, recordedAtMs: now };
+      // A fresh authentication recorded against this exact sealed attempt is
+      // the browser approval. The terminal still confirms the same account.
+      state.status = "browser-approved";
+      state.approvedAccountId = accountId;
       return ok({ recorded: true });
     });
   }

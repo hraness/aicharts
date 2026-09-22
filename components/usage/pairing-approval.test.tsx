@@ -24,9 +24,14 @@ test("only a checked pending account displays approve/deny, with opaque identity
   expect(html).toContain('<time dateTime="'); expect(html).toContain(" UTC"); expect(html).not.toContain(token);
   for (const state of ["browser-approved", "terminal-confirmed", "denied"] as const) {
     const shown = markup({ kind: "reply", reply: { ...reply, state } });
-    expect(shown).not.toContain("Approve collector"); expect(shown).not.toContain(">Deny</button>"); expect(shown).not.toContain(token);
+    expect(shown).not.toContain("Approve collector"); expect(shown).not.toContain(token);
   }
-  expect(markup({ kind: "reply", reply: { ...reply, state: "browser-approved" } })).toContain("Approval saved. Return to your terminal to confirm this account.");
+  const approved = markup({ kind: "reply", reply: { ...reply, state: "browser-approved" } });
+  expect(approved).toContain("Approved. Return to your terminal to confirm this account.");
+  expect(approved).toContain(">Deny</button>");
+  for (const state of ["terminal-confirmed", "denied"] as const) {
+    expect(markup({ kind: "reply", reply: { ...reply, state } })).not.toContain(">Deny</button>");
+  }
 });
 test("uncertainty has an explicit read action and no POST retry or ordinary sign-in", () => {
   for (const kind of ["uncertain", "unavailable", "rejected"] as const) {

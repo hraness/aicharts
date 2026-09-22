@@ -77,7 +77,7 @@ test("real namespace is assignable and four pairing operations cross the owned R
     authTimeMs: Math.floor(begin.value.startedAtMs / 1000) * 1000, sessionExpiresAtMs: expiry,
   })).toEqual({ ok: true, value: { recorded: true } });
   expect(await call("browserStatus", proof)).toEqual({ ok: true, value: {
-    state: "pending", expiresAtMs: expiry, accountId: ACCOUNT, authenticationExpiresAtMs: expiry,
+    state: "browser-approved", expiresAtMs: expiry, accountId: ACCOUNT, authenticationExpiresAtMs: expiry,
   } });
   expect(await call("decideBrowser", { ...proof, accountId: ACCOUNT, liveSessionExpiresAtMs: expiry, decision: "approve" }))
     .toEqual({ ok: true, value: { state: "browser-approved", expiresAtMs: expiry, accountId: ACCOUNT, authenticationExpiresAtMs: expiry } });

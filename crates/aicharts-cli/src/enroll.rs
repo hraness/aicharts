@@ -1,7 +1,7 @@
 //! `aicharts enroll` — enroll this installation for AI Charts Usage. Local
-//! credential custody is prepared, then one explicit browser approval pairs the
-//! account. Nothing is uploaded and no transcript, source or secret leaves the
-//! device; enrollment only prepares the option to upload later.
+//! credential custody is prepared, then one intent-bound browser sign-in pairs
+//! the account. Nothing is uploaded and no transcript, source or secret leaves
+//! the device; enrollment only prepares the option to upload later.
 
 use std::path::PathBuf;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
@@ -23,7 +23,7 @@ impl crate::enrollment::EnrollIo for CliIo {
             .unwrap_or(0)
     }
     fn pairing_url(&mut self, url: &str) {
-        eprintln!("aicharts: open this URL in your browser to approve enrollment:");
+        eprintln!("aicharts: open this URL in your browser to connect this collector:");
         eprintln!("aicharts: {url}");
     }
     fn wait_ms(&mut self, ms: u64) {
