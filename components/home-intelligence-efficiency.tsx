@@ -53,7 +53,7 @@ function methodologySummary(snapshot: IntelligenceSnapshot): string {
 export function HomeIntelligenceEfficiency({
   snapshot,
 }: Readonly<{ snapshot: IntelligenceSnapshot }>) {
-  const currentVersion = snapshot.benchmark.version === "4.3";
+  const currentVersion = snapshot.benchmark.version.startsWith("4.3");
   const datasetId = currentVersion ? "artificial-analysis-intelligence-v4-3" : "artificial-analysis-intelligence";
   const cohort = comparableIntelligenceRecords(snapshot.records);
   const comparison = focusModelComparison(cohort);
