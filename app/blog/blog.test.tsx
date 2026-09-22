@@ -28,10 +28,11 @@ import {
 
 import nextConfig from "../../next.config";
 import sitemap, { blogSitemapEntries } from "../sitemap";
-import BlogArticlePage, {
+import {
   generateMetadata,
   generateStaticParams,
 } from "./[slug]/page";
+import { BlogArticlePage } from "./blog-article-page";
 import { ArticleBody } from "./article-body";
 import {
   BLOG_SLUGS,
@@ -99,7 +100,7 @@ import {
   TERMINAL_BENCH_SCIENCE,
 } from "./terminal-bench-science-article";
 import BlogLayout from "./layout";
-import { BlogIndex } from "./page";
+import { BlogIndex } from "./blog-index";
 import { atomFeed } from "./atom-feed";
 import { GET as getAtomFeed } from "./feed.xml/route";
 import {
