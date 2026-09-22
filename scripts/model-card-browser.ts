@@ -403,6 +403,83 @@ async function verifyBenchmarkAtlas(browser: Browser, baseUrl: string): Promise<
   }
 }
 
+async function assertLogoCardArtIsolation(page: Page): Promise<void> {
+  const isolation = await page.evaluate(() => {
+    const cards = [...document.querySelectorAll(".model-card-grid .model-logo-card")];
+    const measured: Array<{
+      art: DOMRect;
+      card: DOMRect;
+      providerTop: number;
+    }> = [];
+    const violations: string[] = [];
+
+    for (const [index, card] of cards.entries()) {
+      const art = card.querySelector(".model-logo-card__art");
+      const provider = card.querySelector(".model-logo-card__provider");
+      if (!(art instanceof HTMLElement) || !(provider instanceof HTMLElement)) {
+        violations.push(`card ${String(index)} is missing a contained art pill or provider label`);
+        continue;
+      }
+      const cardBox = card.getBoundingClientRect();
+      const artBox = art.getBoundingClientRect();
+      const providerBox = provider.getBoundingClientRect();
+      if (
+        artBox.left < cardBox.left - 0.5
+        || artBox.right > cardBox.right + 0.5
+        || artBox.top < cardBox.top - 0.5
+        || artBox.bottom > cardBox.bottom + 0.5
+      ) {
+        violations.push(`card ${String(index)} art paints outside its card`);
+      }
+      if (artBox.left < cardBox.left + 8 || artBox.right > cardBox.right - 8) {
+        violations.push(`card ${String(index)} art is not inset from the card edges`);
+      }
+      if (providerBox.top < cardBox.top + 10) {
+        violations.push(`card ${String(index)} provider label sits too close to the top edge`);
+      }
+      measured.push({ art: artBox, card: cardBox, providerTop: providerBox.top });
+    }
+
+    const rows: Array<typeof measured> = [];
+    for (const item of measured) {
+      const row = rows.find(candidate => {
+        const first = candidate[0];
+        return first !== undefined && Math.abs(first.card.top - item.card.top) < 4;
+      });
+      if (row === undefined) rows.push([item]);
+      else row.push(item);
+    }
+
+    for (const row of rows) {
+      row.sort((left, right) => left.art.left - right.art.left);
+      for (let index = 1; index < row.length; index += 1) {
+        const previous = row[index - 1];
+        const current = row[index];
+        if (previous === undefined || current === undefined) continue;
+        const gap = current.art.left - previous.art.right;
+        if (gap < 8) {
+          violations.push(`art pills in a row overlap or bleed (gap ${gap.toFixed(1)}px)`);
+        }
+      }
+    }
+
+    return {
+      cardCount: cards.length,
+      rowCount: rows.length,
+      lastRowCount: rows.at(-1)?.length ?? 0,
+      violations,
+    };
+  });
+
+  invariant(isolation.cardCount > 1, "The gallery needs more than one logo card to test row isolation.");
+  invariant(isolation.rowCount > 1, "The gallery did not wrap into more than one card row at 1280px.");
+  invariant(isolation.lastRowCount > 1, "The last gallery row needs multiple cards to catch cross-card art bleed.");
+  invariant(
+    isolation.violations.length === 0,
+    isolation.violations.join("; "),
+  );
+}
+
 async function verifyModelLogoCards(browser: Browser, baseUrl: string): Promise<void> {
   const context = await browser.newContext({
     colorScheme: "dark",
@@ -424,6 +501,7 @@ async function verifyModelLogoCards(browser: Browser, baseUrl: string): Promise<
       await page.locator(".model-card-frame, .model-card-holographic-foil, .model-card-illumination").count() === 0,
       "Foil or illumination chrome remains on the gallery.",
     );
+    await assertLogoCardArtIsolation(page);
     const mimo = page.getByRole("link", { name: /MiMo-V2\.6-Pro/u });
     await mimo.click();
     await page.waitForURL("**/models/xiaomi/mimo-v2-6-pro/index");

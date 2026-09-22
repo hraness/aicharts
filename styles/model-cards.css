@@ -8,6 +8,7 @@
   border: 1px solid var(--grid);
   border-radius: .85rem;
   color: var(--model-card-ink);
+  contain: paint;
   container-type: inline-size;
   display: grid;
   font-family: var(--font-sans);
@@ -15,7 +16,9 @@
   grid-template-rows: auto minmax(0, 1fr) auto auto;
   inline-size: 100%;
   isolation: isolate;
-  padding: .85rem;
+  /* Clip paint to this card so an incomplete last row cannot share one art bar. */
+  overflow: clip;
+  padding: 1.15rem .9rem .85rem;
 }
 
 .model-logo-card__header {
@@ -62,9 +65,16 @@
   background: color-mix(in oklch, var(--brand-shadow) 62%, #111318);
   border: 1px solid color-mix(in oklch, var(--brand-shadow) 70%, var(--grid));
   border-radius: .65rem;
+  contain: paint;
   display: flex;
+  inline-size: 100%;
+  isolation: isolate;
   justify-content: center;
+  justify-self: stretch;
+  max-inline-size: 100%;
   min-block-size: 0;
+  min-inline-size: 0;
+  overflow: clip;
 }
 
 .model-logo-card__art img {
@@ -445,9 +455,11 @@
 }
 
 .model-card-grid {
+  align-items: start;
   display: grid;
   gap: clamp(1rem, 2vw, 1.75rem);
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 12.5rem), 1fr));
+  justify-items: stretch;
 }
 
 .model-card-grid__link {
@@ -455,7 +467,9 @@
   border-radius: .85rem;
   color: inherit;
   display: block;
+  isolation: isolate;
   min-inline-size: 0;
+  overflow: clip;
   text-decoration: none;
 }
 

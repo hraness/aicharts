@@ -315,6 +315,36 @@ describe("public model cards", () => {
     expect(stylesheet).not.toContain("animation:");
   });
 
+  test("isolates each logo-card art pill so a gallery row cannot paint one continuous bar", async () => {
+    const stylesheet = await Bun.file(
+      new URL("../../styles/model-cards.css", import.meta.url),
+    ).text();
+
+    function firstRule(selector: string): string {
+      const escaped = selector.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
+      return stylesheet.match(new RegExp(`${escaped}\\s*\\{(?<body>[^}]*)\\}`, "u"))?.groups?.body ?? "";
+    }
+
+    const card = firstRule(".model-logo-card");
+    const art = firstRule(".model-logo-card__art");
+    const grid = firstRule(".model-card-grid");
+    const link = firstRule(".model-card-grid__link");
+
+    expect(card).toContain("contain: paint");
+    expect(card).toContain("isolation: isolate");
+    expect(card).toContain("overflow: clip");
+    expect(card).toContain("padding: 1.15rem .9rem .85rem");
+    expect(art).toContain("contain: paint");
+    expect(art).toContain("isolation: isolate");
+    expect(art).toContain("min-inline-size: 0");
+    expect(art).toContain("max-inline-size: 100%");
+    expect(art).toContain("overflow: clip");
+    expect(grid).toContain("align-items: start");
+    expect(link).toContain("isolation: isolate");
+    expect(link).toContain("overflow: clip");
+    expect(stylesheet).not.toContain("model-card-grid__bleed");
+  });
+
   test("names every contributing agent harness on detail and Markdown surfaces", async () => {
     const card = MODEL_CARD_PRESENTATIONS[0];
     if (card === undefined) throw new Error("Expected a model-card fixture.");
