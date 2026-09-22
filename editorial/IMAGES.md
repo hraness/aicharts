@@ -13,10 +13,9 @@ raised charcoal (`#1d1a18`), the warm key (`#d0a77c`), and the cool highlight
 (`#8fb0ff`). Give each image one accent at most. Prefer fewer, larger forms
 and a calm composition that stays readable after a center-safe Open Graph crop.
 
-When an article genuinely benefits from an image, give it a distinct silhouette
-that remains legible at 320 px wide. The picture should make the article’s
-evidence boundary easier to recognize. It is not a data plot and must not
-depict invented scores.
+Give each live published note a distinct silhouette that remains legible at
+320 px wide. The picture should make the article’s evidence boundary easier to
+recognize. It is not a data plot and must not depict invented scores.
 
 Do not use text, numbers, axes, fake charts, UI screenshots, model or provider
 logos, watermarks, robots, brains, or brand marks. Do not reuse the retired
@@ -26,11 +25,13 @@ repository-native chart code.
 
 ## Source of truth
 
-`app/blog/editorial-images.ts` is a partial registry of the images that passed
-editorial review. A registered image drives the visible article figure, blog
-cards, the curated homepage module, Open Graph, Twitter, `BlogPosting.image`,
-Atom enclosures, canonical Markdown, and the image sitemap. An article without
-a registered image must remain image-free across all of those representations.
+`app/blog/editorial-images.ts` is the typed registry of images that passed
+editorial review. After admission and overlap review, every live published
+note must include one registered Slopcamera figure. A registered image drives
+the visible article figure, blog cards, the curated homepage module, Open
+Graph, Twitter, `BlogPosting.image`, Atom enclosures, canonical Markdown, and
+the image sitemap. An unregistered lookup stays image-free across all of
+those representations so the generic renderer can still omit imagery.
 
 Keep the reviewed 1536×864 WebP at `public/images/blog/<slug>.webp`. Alt text
 describes the visible composition. The caption explains the editorial
@@ -38,12 +39,11 @@ distinction without overstating evidence. Record dimensions, bytes, hashes,
 prompt digest, and immutable generator receipt/job paths in
 `editorial/images.manifest.json`.
 
-The focused discovery tests must validate manifest metadata against the typed
-registry and the exact binary. A registered image is optional per article.
-When the live corpus still has an admitted image-free article, exercise that
-route. When every live article is registered, prove the image-free path with
-injected `undefined` records so rendering, Open Graph, Atom, sitemap, and
-Markdown stay optional.
+The focused discovery tests must validate every `PUBLIC_BLOG_SLUG` against a
+registry row, a matching manifest entry, and the exact public binary. A later
+article without its generated figure must fail that gate. Prove the generic
+image-free renderer only through injected `undefined` records, not through a
+live published hole.
 
 ## Generation boundary
 

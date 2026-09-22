@@ -4,12 +4,16 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { EditorialFigure } from "./editorial-figure";
-import { blogEditorialImage } from "./editorial-images";
+import {
+  blogEditorialImage,
+  type BlogEditorialImage,
+} from "./editorial-images";
 import {
   articleReadingMinutes,
   blogArticlePath,
   blogArticles,
   blogDescription,
+  type BlogSlug,
 } from "./articles";
 import {
   blogCollectionJsonLd,
@@ -30,7 +34,11 @@ function formatDate(date: string): string {
   return dateFormatter.format(new Date(`${date}T00:00:00.000Z`));
 }
 
-export default function BlogIndex() {
+export default function BlogIndex({
+  imageForSlug = blogEditorialImage,
+}: {
+  readonly imageForSlug?: (slug: BlogSlug) => BlogEditorialImage | undefined;
+} = {}) {
   return (
     <main
       className="plain-publication__index"
@@ -39,7 +47,7 @@ export default function BlogIndex() {
     >
       <JsonLdScript
         data={[
-          blogCollectionJsonLd(),
+          blogCollectionJsonLd(imageForSlug),
           breadcrumbJsonLd([
             { name: "Home", path: "/" },
             { name: "Blog", path: "/blog" },
@@ -72,7 +80,7 @@ export default function BlogIndex() {
           </div>
           <div className="plain-publication__article-list">
             {blogArticles.map((article, index) => {
-              const editorialImage = blogEditorialImage(article.slug);
+              const editorialImage = imageForSlug(article.slug);
               return (
                 <article className="plain-publication__entry" key={article.slug}>
                   {editorialImage === undefined ? null : (

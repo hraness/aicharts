@@ -140,6 +140,86 @@
       },
       "validation": "decode-passed",
       "review": "accepted"
+    },
+    {
+      "slug": "devin-fusion-cost-saving",
+      "promptSha256": "e902695ca85d37e131c384d87ffd2fce36fff4ef48c2c97b518beaf5ab9ae9b3",
+      "master": {
+        "path": "/images/blog/devin-fusion-cost-saving.webp",
+        "width": 1536,
+        "height": 864,
+        "bytes": 119418,
+        "sha256": "40afa01d30b5ba78c6e344eccd314fa3130880f4a3aab63cc85ab2f0455133d1"
+      },
+      "receiptPath": "artifacts/slopcamera/generated/gateway/20260922T011246307Z-image-03c61456-554/receipt.json",
+      "jobPath": "artifacts/slopcamera/generated/gateway-jobs/gateway_089f98316e314755a51d5e5184ce0040.json",
+      "generator": {
+        "package": "@hraness/slopcamera",
+        "version": "3.2.5",
+        "sourceCommit": "66b4322030f4de24f4d5b6d0c2515c109259f901"
+      },
+      "validation": "decode-passed",
+      "review": "accepted"
+    },
+    {
+      "slug": "real-swe-private-enterprise-benchmark",
+      "promptSha256": "6fff75d9e6eac755b5bcee02b85eddcdda93d166e11597d99227299ba23b59e7",
+      "master": {
+        "path": "/images/blog/real-swe-private-enterprise-benchmark.webp",
+        "width": 1536,
+        "height": 864,
+        "bytes": 91198,
+        "sha256": "1d0837d5c90a477ddecf0a3ffc1e4aa6bf6153a791fc652a41f3c00d5c860331"
+      },
+      "receiptPath": "artifacts/slopcamera/generated/gateway/20260922T011318249Z-image-fa29105e-a30/receipt.json",
+      "jobPath": "artifacts/slopcamera/generated/gateway-jobs/gateway_fe2ca7c1cfee475e9a289746ad50e763.json",
+      "generator": {
+        "package": "@hraness/slopcamera",
+        "version": "3.2.5",
+        "sourceCommit": "66b4322030f4de24f4d5b6d0c2515c109259f901"
+      },
+      "validation": "decode-passed",
+      "review": "accepted"
+    },
+    {
+      "slug": "harnesstax-coding-agent-harness",
+      "promptSha256": "6182bf82dbcf86ea00e56241f9b2c3650136b8cdbc98b3be1314d41c7dec5952",
+      "master": {
+        "path": "/images/blog/harnesstax-coding-agent-harness.webp",
+        "width": 1536,
+        "height": 864,
+        "bytes": 128916,
+        "sha256": "ed17017da5bc44cb99f83fe2fc35f073d68d8f17cf1d3b0d353d2da762dc3927"
+      },
+      "receiptPath": "artifacts/slopcamera/generated/gateway/20260922T011357242Z-image-f8ded62b-d9f/receipt.json",
+      "jobPath": "artifacts/slopcamera/generated/gateway-jobs/gateway_41c77d234b00449ca128245eea7de842.json",
+      "generator": {
+        "package": "@hraness/slopcamera",
+        "version": "3.2.5",
+        "sourceCommit": "66b4322030f4de24f4d5b6d0c2515c109259f901"
+      },
+      "validation": "decode-passed",
+      "review": "accepted"
+    },
+    {
+      "slug": "harness-design-coding-agents",
+      "promptSha256": "4b11525047f54f222de119a3399e58ab62fc376cc1d1788f33e62fcf8b135615",
+      "master": {
+        "path": "/images/blog/harness-design-coding-agents.webp",
+        "width": 1536,
+        "height": 864,
+        "bytes": 81374,
+        "sha256": "63c4aa98609f10d4d49886e922a8f97864fe584b20c6b1ab05a7a11b4dccff7d"
+      },
+      "receiptPath": "artifacts/slopcamera/generated/gateway/20260922T011430131Z-image-d26de292-0f6/receipt.json",
+      "jobPath": "artifacts/slopcamera/generated/gateway-jobs/gateway_060552ce62b24ce6b9b5c19ce16c4884.json",
+      "generator": {
+        "package": "@hraness/slopcamera",
+        "version": "3.2.5",
+        "sourceCommit": "66b4322030f4de24f4d5b6d0c2515c109259f901"
+      },
+      "validation": "decode-passed",
+      "review": "accepted"
     }
   ]
 }

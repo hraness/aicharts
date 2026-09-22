@@ -48,7 +48,7 @@ export type BlogEditorialImage<Slug extends BlogSlug = BlogSlug> = Readonly<{
 }>;
 
 type EditorialImageRecord = Readonly<{
-  [Slug in BlogSlug]?: BlogEditorialImage<Slug>;
+  [Slug in BlogSlug]: BlogEditorialImage<Slug>;
 }>;
 
 function image<Slug extends BlogSlug>(
@@ -136,6 +136,42 @@ export const BLOG_EDITORIAL_IMAGES = {
     "fe677680fbcdc340cfd5e0083d2e91c8163464a5fef249d634f5a75c37ede2a8",
     "20260911T000116830Z-image-e23527ec-438/receipt.json",
     "gateway_3d2ac2f152574a2dafa6d5f5341f3b60.json",
+  ),
+  "devin-fusion-cost-saving": image(
+    "devin-fusion-cost-saving",
+    "A thick charcoal band carries a pale inner path that curves and meets a thinner side path, then continues as one quieter channel.",
+    "The 39% saving belongs to one Astra-led Fusion pairing against Codex, not to Fusion as a general discount.",
+    "40afa01d30b5ba78c6e344eccd314fa3130880f4a3aab63cc85ab2f0455133d1",
+    "e902695ca85d37e131c384d87ffd2fce36fff4ef48c2c97b518beaf5ab9ae9b3",
+    "20260922T011246307Z-image-03c61456-554/receipt.json",
+    "gateway_089f98316e314755a51d5e5184ce0040.json",
+  ),
+  "real-swe-private-enterprise-benchmark": image(
+    "real-swe-private-enterprise-benchmark",
+    "A locked dark glass cabinet packed with black cubes sits beside a small pale-blue cube in a spotlight.",
+    "The 38.8% rate is an aggregate over licensed private tasks; it is not interchangeable with a public-suite result.",
+    "1d0837d5c90a477ddecf0a3ffc1e4aa6bf6153a791fc652a41f3c00d5c860331",
+    "6fff75d9e6eac755b5bcee02b85eddcdda93d166e11597d99227299ba23b59e7",
+    "20260922T011318249Z-image-fa29105e-a30/receipt.json",
+    "gateway_fe2ca7c1cfee475e9a289746ad50e763.json",
+  ),
+  "harnesstax-coding-agent-harness": image(
+    "harnesstax-coding-agent-harness",
+    "A pale fiber core passes through a square, a circle, and a triangle frame, then flares into a wide fan.",
+    "Same-model cost gaps belong to the harness pairing. Success stayed close; cost did not.",
+    "ed17017da5bc44cb99f83fe2fc35f073d68d8f17cf1d3b0d353d2da762dc3927",
+    "6182bf82dbcf86ea00e56241f9b2c3650136b8cdbc98b3be1314d41c7dec5952",
+    "20260922T011357242Z-image-f8ded62b-d9f/receipt.json",
+    "gateway_41c77d234b00449ca128245eea7de842.json",
+  ),
+  "harness-design-coding-agents": image(
+    "harness-design-coding-agents",
+    "A dark ring with four pale dots sits at the center, with modular pedestals and one blue cube under a glass dome around it.",
+    "Component effects belong to one fixed agent loop and the named ablation settings, not to harnesses in general.",
+    "63c4aa98609f10d4d49886e922a8f97864fe584b20c6b1ab05a7a11b4dccff7d",
+    "4b11525047f54f222de119a3399e58ab62fc376cc1d1788f33e62fcf8b135615",
+    "20260922T011430131Z-image-d26de292-0f6/receipt.json",
+    "gateway_060552ce62b24ce6b9b5c19ce16c4884.json",
   ),
 } as const satisfies EditorialImageRecord;
 

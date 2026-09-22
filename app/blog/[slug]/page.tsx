@@ -7,7 +7,10 @@ import { notFound } from "next/navigation";
 
 import { ArticleBody } from "../article-body";
 import { EditorialFigure } from "../editorial-figure";
-import { blogEditorialImage } from "../editorial-images";
+import {
+  blogEditorialImage,
+  type BlogEditorialImage,
+} from "../editorial-images";
 import {
   BLOG_SOURCES,
   blogArticleSection,
@@ -16,6 +19,7 @@ import {
   blogArticles,
   getBlogArticle,
   headingId,
+  type BlogSlug,
 } from "../articles";
 import {
   blogArticleJsonLd,
@@ -24,6 +28,7 @@ import {
 } from "../seo";
 
 interface BlogArticlePageProps {
+  readonly imageForSlug?: (slug: BlogSlug) => BlogEditorialImage | undefined;
   readonly params: Promise<{ slug: string }>;
 }
 
@@ -53,6 +58,7 @@ export async function generateMetadata({
 }
 
 export default async function BlogArticlePage({
+  imageForSlug = blogEditorialImage,
   params,
 }: BlogArticlePageProps) {
   const { slug } = await params;
@@ -67,7 +73,7 @@ export default async function BlogArticlePage({
       ? [{ text: block.text }]
       : []);
   const path = blogArticlePath(article.slug);
-  const editorialImage = blogEditorialImage(article.slug);
+  const editorialImage = imageForSlug(article.slug);
 
   return (
     <main
@@ -77,7 +83,7 @@ export default async function BlogArticlePage({
     >
       <JsonLdScript
         data={[
-          blogArticleJsonLd(article),
+          blogArticleJsonLd(article, editorialImage ?? null),
           breadcrumbJsonLd([
             { name: "Home", path: "/" },
             { name: "Blog", path: "/blog" },
