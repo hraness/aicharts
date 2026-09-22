@@ -20,7 +20,8 @@ up to 54 disjoint clients, with at most 128 source roots per client. A client
 entry may carry its own `days` (same 1–366 bound) to narrow or widen only that
 client's collection and refresh window — for example a source whose underlying
 store can drop committed rows benefits from a short window so a legitimately
-reduced stored day leaves the published range sooner. This example
+reduced stored day leaves the published range sooner. Up to 8 sinks, one per
+kind, may delegate delivery to other installed publishers. This example
 uses placeholder paths and must be changed to the existing enrollment and source locations:
 
 ```json
@@ -44,6 +45,9 @@ uses placeholder paths and must be changed to the existing enrollment and source
         "cursorStateDb": "/Users/example/Library/Application Support/Cursor/User/globalStorage/state.vscdb"
       }
     }
+  ],
+  "sinks": [
+    { "kind": "tokscale", "binary": "/Users/example/.config/tokscale/autosubmit/tokscale" }
   ]
 }
 ```
@@ -113,6 +117,39 @@ local macOS application and verifies process ownership and the loopback listener
 Its optional local TLS mode is restricted to that verified local process.
 MiniMax capture is an explicit command around a user-requested invocation; a
 scheduled publisher reads completed captures and never starts new model work.
+
+## Sinks
+
+A sink delegates one delivery to another installed publisher at the end of the
+cycle. It runs after every client attempt — including when publication itself
+needs reconciliation — because it is an independent delivery channel, not a
+second write on the AI Charts pipeline. Each delegate keeps its own collection,
+credentials, identity and submission semantics; the cycle never sees the
+delegate's account, token or payload, and discards delegate output because it
+can carry account identifiers and source paths.
+
+```json
+"sinks": [
+  { "kind": "tokscale", "binary": "/Users/example/.config/tokscale/autosubmit/tokscale" }
+]
+```
+
+`kind` selects the delegate; `binary` is an absolute path invoked without a
+shell, extra arguments or configured environment. `tokscale` runs
+`tokscale submit`, the same full-history submission its own scheduled job
+performs; the delegate's service remains responsible for deduplication and
+history handling on its side. Each attempt is bounded to the lesser of 10
+minutes and the remaining cycle budget, and the delegate's process group is
+killed on deadline. A nonzero exit reports `sink_failed`; spawn and deadline
+failures report `sink_spawn_failed` and `sink_deadline`. A sink failure never
+reorders, repeats or suppresses client publication, and a publication failure
+never suppresses a sink. `--dry-run` records each sink as `skipped` without
+delegating.
+
+Keep the delegate's own schedule disabled or interval-compatible once the
+delegated path is verified: two active schedules invoking the same publisher
+duplicate work. Until a completed cycle proves the delegated delivery, leave the
+previous publisher's own job enabled exactly as the cutover section requires.
 
 ## MiniMax Code capture
 
