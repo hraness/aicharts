@@ -79,7 +79,7 @@ describe("homepage document", () => {
       `${currentIntelligenceData.selection.positiveCostRecordCount}-configuration positive-cost cohort`,
     );
     expect(text).toContain("no universal score is calculated");
-    expect(text).toContain("Recent Index listings and a source-backed release radar");
+    expect(text).toContain("A short row of recent Index listings sits above the chart");
     expect(text).toContain("not invented scores");
     expect(text).toContain("Benchmark data and method");
     expect(text).toContain("Machine-readable site guide");

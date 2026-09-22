@@ -103,9 +103,9 @@ describe("homepage canonical content", () => {
 
     expect(mainAt).toBeGreaterThan(markup.indexOf("site-header"));
     expect(stripAt).toBeGreaterThan(mainAt);
-    expect(radarAt).toBeGreaterThan(stripAt);
-    expect(intelligenceAt).toBeGreaterThan(radarAt);
-    expect(activityAt).toBeGreaterThan(intelligenceAt);
+    expect(intelligenceAt).toBeGreaterThan(stripAt);
+    expect(radarAt).toBeGreaterThan(intelligenceAt);
+    expect(activityAt).toBeGreaterThan(radarAt);
     expect(calculatorAt).toBeGreaterThan(activityAt);
     expect(markup).toContain('data-analytics-surface="home_index_strip"');
     expect(markup).toContain("hraness-marketing-card-row");
