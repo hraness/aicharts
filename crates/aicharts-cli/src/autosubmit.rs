@@ -7,10 +7,19 @@ use std::{
     path::{Component, Path, PathBuf},
     time::{Duration, Instant},
 };
+#[cfg(unix)]
+use {
+    rustix::process::{kill_process_group, Pid, Signal},
+    std::{
+        os::unix::process::CommandExt,
+        process::{Command, Stdio},
+    },
+};
 
 const INVALID: &str = "autosubmit_config_invalid";
 const BUDGET: Duration = Duration::from_secs(1800);
-const HELP: &str = "AI Charts automatic publication — one configured cycle\n\n  aicharts autosubmit --config-file ABS [--check | --dry-run]\n\nA private mode0600 JSON configuration selects clients, explicit source roots,\nprovider refreshes, and an existing enrolled state/key. Each invocation performs\none cycle; launchd controls its schedule. --check validates configuration only.\n--dry-run scans local sources without refreshing providers, opening enrollment,\nor publishing. Neither option changes the existing scheduled publisher.\n\nA retained uncertain upload is resumed from its exact frozen bytes before new\nwork. Failed acquisition skips publication for that client. Other clients may\ncontinue; partial failure exits nonzero and reports only fixed error codes.\nNo paths, account identifiers, credentials, prompts or source content are logged.\nHistory-preserving publication refuses unexplained reductions; it never resets\nstate to resolve a failure. The whole cycle is bounded to 30 minutes between\nindividually bounded operations. See docs/usage-autosubmit.md for configuration.\n";
+const SINK_BUDGET: Duration = Duration::from_secs(600);
+const HELP: &str = "AI Charts automatic publication — one configured cycle\n\n  aicharts autosubmit --config-file ABS [--check | --dry-run]\n\nA private mode0600 JSON configuration selects clients, explicit source roots,\nprovider refreshes, and an existing enrolled state/key. Each invocation performs\none cycle; launchd controls its schedule. --check validates configuration only.\n--dry-run scans local sources without refreshing providers, opening enrollment,\nor publishing. Neither option changes the existing scheduled publisher.\n\nA retained uncertain upload is resumed from its exact frozen bytes before new\nwork. Failed acquisition skips publication for that client. Other clients may\ncontinue; partial failure exits nonzero and reports only fixed error codes.\nNo paths, account identifiers, credentials, prompts or source content are logged.\nHistory-preserving publication refuses unexplained reductions; it never resets\nstate to resolve a failure. Configured sinks then attempt one delegated delivery\neach; they still run when publication needs reconciliation, their output is\ndiscarded, and a sink failure reports a fixed code without reordering\npublication. The whole cycle is bounded to 30 minutes between individually\nbounded operations. See docs/usage-autosubmit.md for configuration.\n";
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -22,6 +31,8 @@ struct Config {
     home: PathBuf,
     days: u64,
     clients: Vec<Client>,
+    #[serde(default)]
+    sinks: Vec<Sink>,
 }
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -86,6 +97,37 @@ enum Refresh {
         #[serde(default)]
         allow_local_self_signed_tls: bool,
     },
+}
+/// A downstream delivery target attempted once per cycle after every client
+/// step, even when publication itself needs reconciliation. The delegate keeps
+/// its own collection, credentials and submission semantics; this cycle never
+/// sees its account, token or payload.
+#[derive(Deserialize)]
+#[serde(
+    tag = "kind",
+    rename_all = "lowercase",
+    rename_all_fields = "camelCase",
+    deny_unknown_fields
+)]
+enum Sink {
+    Tokscale { binary: PathBuf },
+}
+impl Sink {
+    fn action(&self) -> &'static str {
+        match self {
+            Self::Tokscale { .. } => "sink_tokscale",
+        }
+    }
+    #[cfg(unix)]
+    fn command(&self) -> Result<Command, &'static str> {
+        match self {
+            Self::Tokscale { binary } => {
+                let mut command = Command::new(argument(binary)?);
+                command.arg("submit");
+                Ok(command)
+            }
+        }
+    }
 }
 fn path_valid(path: &Path) -> bool {
     path.to_str().is_some_and(|value| {
@@ -222,8 +264,16 @@ fn parse(bytes: &[u8], now: u64) -> Result<Config, &'static str> {
         || !(1..=366).contains(&config.days)
         || config.clients.is_empty()
         || config.clients.len() > 54
+        || config.sinks.len() > 8
     {
         return Err(INVALID);
+    }
+    let mut sinks = BTreeSet::new();
+    for sink in &config.sinks {
+        let Sink::Tokscale { binary } = sink;
+        if !path_valid(binary) || !sinks.insert(sink.action()) {
+            return Err(INVALID);
+        }
     }
     let mut clients = BTreeSet::new();
     let mut caches = BTreeSet::new();
@@ -313,6 +363,46 @@ fn outcome(steps: Vec<Step>, status: &'static str, dry_run: bool) -> Result<Outc
     }
     Ok(Outcome { summary, exit_code })
 }
+/// One delegated publish under a hard deadline, killed as a process group if it
+/// overruns. Output is discarded rather than relayed: delegate text can carry
+/// account identifiers and source paths, which this cycle never logs.
+#[cfg(unix)]
+fn run_delegate(command: &mut Command, budget: Duration) -> Result<(), &'static str> {
+    let mut child = command
+        .process_group(0)
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .spawn()
+        .map_err(|_| "sink_spawn_failed")?;
+    let deadline = Instant::now() + budget;
+    loop {
+        match child.try_wait() {
+            Ok(Some(status)) => {
+                return if status.success() {
+                    Ok(())
+                } else {
+                    Err("sink_failed")
+                };
+            }
+            Ok(None) | Err(_) if Instant::now() < deadline => {
+                std::thread::sleep(Duration::from_millis(50))
+            }
+            _ => {
+                if let Some(pid) = i32::try_from(child.id())
+                    .ok()
+                    .filter(|pid| *pid > 1)
+                    .and_then(Pid::from_raw)
+                {
+                    let _ = kill_process_group(pid, Signal::KILL);
+                }
+                let _ = child.kill();
+                let _ = child.wait();
+                return Err("sink_deadline");
+            }
+        }
+    }
+}
 trait Runner {
     fn resume(&mut self, config: &Config) -> Result<(), &'static str>;
     fn refresh(&mut self, source: &Refresh, days: u64) -> Result<(), &'static str>;
@@ -323,6 +413,7 @@ trait Runner {
         now: u64,
         dry_run: bool,
     ) -> Result<(), &'static str>;
+    fn sink(&mut self, sink: &Sink, budget: Duration) -> Result<(), &'static str>;
 }
 struct Native;
 impl Runner for Native {
@@ -363,6 +454,17 @@ impl Runner for Native {
         args.extend(collection);
         crate::stats_sync::run(&args).map(|_| ())
     }
+    fn sink(&mut self, sink: &Sink, budget: Duration) -> Result<(), &'static str> {
+        #[cfg(unix)]
+        {
+            run_delegate(&mut sink.command()?, budget)
+        }
+        #[cfg(not(unix))]
+        {
+            let _ = (sink, budget);
+            Err("autosubmit_requires_unix")
+        }
+    }
 }
 fn execute(
     config: &Config,
@@ -373,6 +475,7 @@ fn execute(
 ) -> Result<Outcome, &'static str> {
     let mut steps = Vec::new();
     let mut failed = false;
+    let mut status = "complete";
     if !dry_run {
         match runner.resume(config) {
             Ok(()) => steps.push(Step {
@@ -383,104 +486,149 @@ fn execute(
             }),
             Err("stats_sync_no_retained_flight") => (),
             Err(code) => {
-                return outcome(
-                    vec![Step {
-                        client: None,
-                        action: "resume",
-                        status: "failed",
-                        error: Some(code),
-                    }],
-                    "resume_required",
-                    false,
-                );
+                steps.push(Step {
+                    client: None,
+                    action: "resume",
+                    status: "failed",
+                    error: Some(code),
+                });
+                status = "resume_required";
             }
         }
     }
-    for client in &config.clients {
-        if elapsed() >= BUDGET {
-            steps.push(Step {
-                client: Some(client.client.clone()),
-                action: "cycle",
-                status: "not_started",
-                error: Some("autosubmit_deadline"),
-            });
-            return outcome(steps, "partial_failure", dry_run);
-        }
-        if let Some(refresh) = client.refresh.as_ref().filter(|_| !dry_run) {
-            match runner.refresh(refresh, client.days(config)) {
+    if status == "complete" {
+        for client in &config.clients {
+            if elapsed() >= BUDGET {
+                failed = true;
+                steps.push(Step {
+                    client: Some(client.client.clone()),
+                    action: "cycle",
+                    status: "not_started",
+                    error: Some("autosubmit_deadline"),
+                });
+                break;
+            }
+            if let Some(refresh) = client.refresh.as_ref().filter(|_| !dry_run) {
+                match runner.refresh(refresh, client.days(config)) {
+                    Ok(()) => steps.push(Step {
+                        client: Some(client.client.clone()),
+                        action: "refresh",
+                        status: "complete",
+                        error: None,
+                    }),
+                    Err(code) => {
+                        failed = true;
+                        steps.push(Step {
+                            client: Some(client.client.clone()),
+                            action: "refresh",
+                            status: "failed",
+                            error: Some(code),
+                        });
+                        continue;
+                    }
+                }
+            }
+            let action = if dry_run { "local_scan" } else { "publish" };
+            if elapsed() >= BUDGET {
+                failed = true;
+                steps.push(Step {
+                    client: Some(client.client.clone()),
+                    action,
+                    status: "not_started",
+                    error: Some("autosubmit_deadline"),
+                });
+                break;
+            }
+            match runner.publish(config, client, clock()?, dry_run) {
                 Ok(()) => steps.push(Step {
                     client: Some(client.client.clone()),
-                    action: "refresh",
-                    status: "complete",
+                    action,
+                    status: if dry_run { "complete" } else { "published" },
+                    error: None,
+                }),
+                Err("stats_sync_no_observations") => steps.push(Step {
+                    client: Some(client.client.clone()),
+                    action: "no_observations",
+                    status: "skipped",
                     error: None,
                 }),
                 Err(code) => {
                     failed = true;
                     steps.push(Step {
                         client: Some(client.client.clone()),
-                        action: "refresh",
+                        action,
                         status: "failed",
                         error: Some(code),
                     });
-                    continue;
+                    // Once a send may have started, a retained flight can fence
+                    // all later clients. It is reconciled once at the next
+                    // cycle start.
+                    if !dry_run
+                        && (code.starts_with("stats_sync_")
+                            && !matches!(
+                                code,
+                                "stats_sync_incomplete_source"
+                                    | "stats_sync_one_client_required"
+                                    | "stats_sync_legacy_takeover_required"
+                                    | "stats_sync_writer_conflict"
+                                    | "stats_sync_remote_progress_changed"
+                            ))
+                    {
+                        status = "resume_required";
+                        break;
+                    }
                 }
             }
         }
-        let action = if dry_run { "local_scan" } else { "publish" };
-        if elapsed() >= BUDGET {
+    }
+    // Delegated sinks are an independent delivery channel: they still run when
+    // a retained flight or a failed step stopped publication above, bounded by
+    // the same cycle deadline.
+    for sink in &config.sinks {
+        if dry_run {
             steps.push(Step {
-                client: Some(client.client.clone()),
-                action,
+                client: None,
+                action: sink.action(),
+                status: "skipped",
+                error: None,
+            });
+            continue;
+        }
+        let remaining = BUDGET.saturating_sub(elapsed());
+        if remaining.is_zero() {
+            failed = true;
+            steps.push(Step {
+                client: None,
+                action: sink.action(),
                 status: "not_started",
                 error: Some("autosubmit_deadline"),
             });
-            return outcome(steps, "partial_failure", dry_run);
+            break;
         }
-        match runner.publish(config, client, clock()?, dry_run) {
+        match runner.sink(sink, remaining.min(SINK_BUDGET)) {
             Ok(()) => steps.push(Step {
-                client: Some(client.client.clone()),
-                action,
-                status: if dry_run { "complete" } else { "published" },
-                error: None,
-            }),
-            Err("stats_sync_no_observations") => steps.push(Step {
-                client: Some(client.client.clone()),
-                action: "no_observations",
-                status: "skipped",
+                client: None,
+                action: sink.action(),
+                status: "submitted",
                 error: None,
             }),
             Err(code) => {
                 failed = true;
                 steps.push(Step {
-                    client: Some(client.client.clone()),
-                    action,
+                    client: None,
+                    action: sink.action(),
                     status: "failed",
                     error: Some(code),
                 });
-                // Once a send may have started, a retained flight can fence all
-                // later clients. It is reconciled once at the next cycle start.
-                if !dry_run
-                    && (code.starts_with("stats_sync_")
-                        && !matches!(
-                            code,
-                            "stats_sync_incomplete_source"
-                                | "stats_sync_one_client_required"
-                                | "stats_sync_legacy_takeover_required"
-                                | "stats_sync_writer_conflict"
-                                | "stats_sync_remote_progress_changed"
-                        ))
-                {
-                    return outcome(steps, "resume_required", false);
-                }
             }
         }
     }
     outcome(
         steps,
-        if failed {
+        if status == "complete" && failed {
             "partial_failure"
         } else {
-            "complete"
+            status
         },
         dry_run,
     )
@@ -560,6 +708,7 @@ mod tests {
         fail_refresh: bool,
         fail_resume: bool,
         fail_publish: bool,
+        fail_sink: bool,
         empty_client: Option<&'static str>,
     }
     impl Runner for Fake {
@@ -596,6 +745,14 @@ mod tests {
                 Err("stats_sync_no_observations")
             } else if self.fail_publish {
                 Err("stats_sync_exchange_uncertain")
+            } else {
+                Ok(())
+            }
+        }
+        fn sink(&mut self, sink: &Sink, _: Duration) -> Result<(), &'static str> {
+            self.calls.push(format!("sink:{}", sink.action()));
+            if self.fail_sink {
+                Err("sink_failed")
             } else {
                 Ok(())
             }
@@ -775,5 +932,152 @@ mod tests {
         let out = execute(&configuration(), &mut fake, || Ok(NOW), true, || BUDGET).unwrap();
         assert!(fake.calls.is_empty());
         assert_eq!(out.exit_code, 1);
+    }
+    fn sink_configuration() -> Config {
+        let mut value = config_value();
+        value["sinks"] = serde_json::json!([{"kind":"tokscale","binary":"/usr/bin/tokscale"}]);
+        parse(&serde_json::to_vec(&value).unwrap(), NOW).unwrap()
+    }
+    #[test]
+    fn sinks_run_once_after_every_client_attempt() {
+        let mut fake = Fake::default();
+        let out = execute(
+            &sink_configuration(),
+            &mut fake,
+            || Ok(NOW),
+            false,
+            || Duration::ZERO,
+        )
+        .unwrap();
+        assert_eq!(
+            fake.calls,
+            [
+                "resume",
+                "refresh:cursor",
+                "publish:cursor",
+                "publish:claude",
+                "sink:sink_tokscale"
+            ]
+        );
+        assert_eq!(out.exit_code, 0);
+        let value: serde_json::Value = serde_json::from_str(&out.summary).unwrap();
+        assert!(value["steps"].as_array().unwrap().iter().any(|step| {
+            step == &serde_json::json!({"client":null,"action":"sink_tokscale","status":"submitted"})
+        }));
+    }
+    #[test]
+    fn a_failed_sink_reports_a_fixed_code_after_publication() {
+        let mut fake = Fake {
+            fail_sink: true,
+            ..Default::default()
+        };
+        let out = execute(
+            &sink_configuration(),
+            &mut fake,
+            || Ok(NOW),
+            false,
+            || Duration::ZERO,
+        )
+        .unwrap();
+        assert_eq!(out.exit_code, 1);
+        let value: serde_json::Value = serde_json::from_str(&out.summary).unwrap();
+        assert_eq!(value["status"], "partial_failure");
+        assert!(value["steps"].as_array().unwrap().iter().any(|step| {
+            step == &serde_json::json!({"client":null,"action":"sink_tokscale","status":"failed","error":"sink_failed"})
+        }));
+        assert!(!out.summary.contains("/usr/bin"));
+    }
+    #[test]
+    fn sinks_still_run_when_publication_needs_reconciliation() {
+        for (mut fake, calls) in [
+            (
+                Fake {
+                    fail_resume: true,
+                    ..Default::default()
+                },
+                vec!["resume", "sink:sink_tokscale"],
+            ),
+            (
+                Fake {
+                    fail_publish: true,
+                    ..Default::default()
+                },
+                vec![
+                    "resume",
+                    "refresh:cursor",
+                    "publish:cursor",
+                    "sink:sink_tokscale",
+                ],
+            ),
+        ] {
+            let out = execute(
+                &sink_configuration(),
+                &mut fake,
+                || Ok(NOW),
+                false,
+                || Duration::ZERO,
+            )
+            .unwrap();
+            assert_eq!(fake.calls, calls);
+            let value: serde_json::Value = serde_json::from_str(&out.summary).unwrap();
+            assert_eq!(value["status"], "resume_required");
+            assert!(value["steps"].as_array().unwrap().iter().any(|step| {
+                step
+                    == &serde_json::json!({"client":null,"action":"sink_tokscale","status":"submitted"})
+            }));
+        }
+    }
+    #[test]
+    fn dry_run_never_delegates() {
+        let mut fake = Fake::default();
+        let out = execute(
+            &sink_configuration(),
+            &mut fake,
+            || Ok(NOW),
+            true,
+            || Duration::ZERO,
+        )
+        .unwrap();
+        assert_eq!(fake.calls, ["scan:cursor", "scan:claude"]);
+        assert_eq!(out.exit_code, 0);
+        let value: serde_json::Value = serde_json::from_str(&out.summary).unwrap();
+        assert!(value["steps"].as_array().unwrap().iter().any(|step| {
+            step == &serde_json::json!({"client":null,"action":"sink_tokscale","status":"skipped"})
+        }));
+    }
+    #[test]
+    fn an_exhausted_cycle_never_delegates() {
+        let mut fake = Fake::default();
+        let out = execute(
+            &sink_configuration(),
+            &mut fake,
+            || Ok(NOW),
+            false,
+            || BUDGET,
+        )
+        .unwrap();
+        assert_eq!(fake.calls, ["resume"]);
+        assert_eq!(out.exit_code, 1);
+        let value: serde_json::Value = serde_json::from_str(&out.summary).unwrap();
+        assert!(value["steps"].as_array().unwrap().iter().any(|step| {
+            step == &serde_json::json!({"client":null,"action":"sink_tokscale","status":"not_started","error":"autosubmit_deadline"})
+        }));
+    }
+    #[test]
+    fn sink_shape_is_validated_before_effects() {
+        for sinks in [
+            serde_json::json!([{"kind":"tokscale","binary":"relative/tokscale"}]),
+            serde_json::json!([{"kind":"tokscale"}]),
+            serde_json::json!([{"kind":"tokscale","binary":"/usr/bin/tokscale","token":"NEVER"}]),
+            serde_json::json!([{"kind":"unknown","binary":"/usr/bin/x"}]),
+            serde_json::json!([
+                {"kind":"tokscale","binary":"/usr/bin/tokscale"},
+                {"kind":"tokscale","binary":"/usr/bin/other"}
+            ]),
+        ] {
+            let mut value = config_value();
+            value["sinks"] = sinks;
+            assert!(parse(&serde_json::to_vec(&value).unwrap(), NOW).is_err());
+        }
     }
 }
