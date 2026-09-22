@@ -152,7 +152,7 @@ describe("public model cards", () => {
       for (const model of release.namedModels) expect(markup).toContain(model);
     }
     expect(markup).toContain('class="hraness-marketing-card-row"');
-    expect(markup).toContain("hraness-marketing-card-row__meta");
+    expect(markup).toContain("hraness-marketing-card__meta");
     expect(modelsPageSource).toContain("ModelReleaseRadars");
     expect(modelCardsStyles).toContain(".model-release-radar .hraness-marketing-card-row");
     expect(modelCardsStyles).not.toContain(".model-release-radar ul {");
@@ -274,6 +274,7 @@ describe("public model cards", () => {
       expect(markup).not.toContain("undefined");
     }
     expect(live).toContain('class="model-logo-card"');
+    expect(live).toContain('class="model-logo-card__art hraness-marketing-card__art"');
     expect(live).not.toContain("<article");
     expect(live).not.toContain("<dl");
     expect(live).not.toContain("data-illumination-finish");

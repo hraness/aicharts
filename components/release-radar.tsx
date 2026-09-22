@@ -72,7 +72,7 @@ function ReleaseRadarSection({
               <span>
                 <strong>{item.title}</strong>
                 <small>{item.detail}</small>
-                <small className="hraness-marketing-card-row__meta model-release-radar__early-score">
+                <small className="hraness-marketing-card__meta model-release-radar__early-score">
                   {item.meta ?? "\u00a0"}
                 </small>
               </span>

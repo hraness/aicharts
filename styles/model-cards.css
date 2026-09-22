@@ -20,6 +20,7 @@
   min-inline-size: 0;
   /* Long nowrap Index source lines must not widen the column or the art pill. */
   overflow: clip;
+  position: relative;
   padding: 1.15rem .9rem .85rem;
 }
 
@@ -77,6 +78,9 @@
   min-block-size: 0;
   min-inline-size: 0;
   overflow: clip;
+  background-attachment: scroll;
+  background-clip: border-box;
+  background-origin: padding-box;
 }
 
 .model-logo-card__art img {
@@ -247,10 +251,6 @@
   scroll-margin-block-start: calc(var(--model-cards-sticky-offset) + .75rem);
 }
 
-.model-card-gallery.hraness-marketing-main {
-  padding-block-start: max(var(--hraness-marketing-main-offset), clamp(1rem, 3.5vw, 3.5rem));
-}
-
 .model-card-gallery__hero {
   padding-block: clamp(2.5rem, 6vw, 4.5rem) clamp(1.5rem, 4vw, 2.5rem);
 }
@@ -330,6 +330,14 @@
 
 .model-release-radar .hraness-marketing-card-row {
   gap: .45rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  list-style: none;
+  padding: 0;
+}
+
+.model-release-radar .hraness-marketing-card-row > * {
+  display: flex;
+  min-inline-size: 0;
 }
 
 .model-release-radar li a {
@@ -361,7 +369,7 @@
 
 .model-release-radar li span { min-inline-size: 0; }
 .model-release-radar li strong,
-.model-release-radar li small:not(.hraness-marketing-card-row__meta) {
+.model-release-radar li small:not(.hraness-marketing-card__meta) {
   display: block;
   overflow: hidden;
   text-overflow: ellipsis;
