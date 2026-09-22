@@ -3,9 +3,19 @@ import { INDEXABLE_ROBOTS } from "@hraness/web-discovery";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
+import intelligenceData from "@/data/artificial-analysis-intelligence-v4-3.json";
 import codingAgentData from "@/data/coding-agents.json";
 import editorialImageManifest from "@/editorial/images.manifest.json";
+import { parseArtificialAnalysisIntelligenceV43Snapshot } from "@/lib/artificial-analysis-intelligence-v4-3-data";
 import { parseCodingAgentSnapshot } from "@/lib/coding-agent-data";
+import {
+  formatCostMultiple,
+  formatPointGap,
+  mimoClosedReferences,
+  mimoComparisonRows,
+  mimoFrontierPosition,
+  mimoScoreNeighbors,
+} from "@/lib/mimo-v2-6-pro-frontier";
 import { PUBLIC_BLOG_SLUGS } from "@/lib/public-analytics-routes";
 import {
   currentCodingAgentBenchmarkLeaders,
@@ -82,6 +92,11 @@ import {
   harnessTaxAlternativeWins,
   largestSameModelCostRatio,
 } from "./harnesstax-coding-agent-harness-article";
+import {
+  MIMO_V26,
+  MIMO_V26_ARTICLE_PUBLISHED_AT,
+  createMimoV26Article,
+} from "./mimo-v2-6-pro-cost-frontier-article";
 import {
   REAL_SWE,
   REAL_SWE_CONFIGURATIONS,
@@ -186,7 +201,11 @@ describe("AI Charts benchmark notes", () => {
       expect(articleToMarkdown(article)).not.toContain("/images/blog/");
       expect(article.authorshipDisclosure).toBe(BLOG_AUTHORSHIP_DISCLOSURE);
       expect(articleToMarkdown(article)).toContain(BLOG_AUTHORSHIP_DISCLOSURE);
-      if (article.slug === "harness-design-coding-agents") {
+      if (article.slug === "mimo-v2-6-pro-cost-frontier") {
+        expect(article.publishedAt).toBe(MIMO_V26_ARTICLE_PUBLISHED_AT);
+        expect(article.updatedAt >= article.publishedAt).toBeTrue();
+        expect(articleToMarkdown(article)).toContain("captured September 22, 2026 UTC");
+      } else if (article.slug === "harness-design-coding-agents") {
         expect(article.publishedAt).toBe(HARNESS_DESIGN_ARTICLE_PUBLISHED_AT);
         expect(article.updatedAt >= article.publishedAt).toBeTrue();
         expect(articleToMarkdown(article)).toContain("posted to arXiv on September 17, 2026");
@@ -636,6 +655,155 @@ describe("AI Charts benchmark notes", () => {
     expect(() => spellCount(1.5)).toThrow(RangeError);
   });
 
+  test("places MiMo-V2.6-Pro on the checked Intelligence Index frontier beside Das’s and Xiaomi’s claims", () => {
+    const parsed = parseArtificialAnalysisIntelligenceV43Snapshot(intelligenceData);
+    if (!parsed.ok) throw parsed.error;
+    const article = getBlogArticle("mimo-v2-6-pro-cost-frontier");
+    expect(article).toBeDefined();
+    if (article === undefined) return;
+
+    const markup = renderToStaticMarkup(
+      createElement(ArticleBody, { blocks: article.body }),
+    );
+    const markdown = articleToMarkdown(article);
+
+    expect(article.title).toBe("What MiMo-V2.6-Pro’s 46 at $0.13 per task measures");
+    expect(article.section).toBe("AI model benchmarks");
+    expect(article.sourceIds).toEqual([
+      "deedyDasMimoV26",
+      "xiaomiMimoV26Release",
+      "xiaomiMimoV26ModelCard",
+      "xiaomiMimoV26TechnicalReport",
+      "artificialAnalysisMimoV26Pro",
+      "openRouterMimoV26ProUltraSpeed",
+      "artificialAnalysisIntelligenceIndex",
+    ]);
+    expect(blogEditorialImage(article.slug)?.slug).toBe(article.slug);
+    for (const sourceId of article.sourceIds) {
+      expect(markup).toContain(`href="${BLOG_SOURCES[sourceId].url}"`);
+    }
+    expect(article.nextStep?.links.map(link => link.href)).toEqual(["/#intelligence-index", "/data"]);
+    expect(markup).toContain(formatRetrievedAt(parsed.value.source.retrievedAt));
+    expect(markdown).toContain(parsed.value.benchmark.version);
+    expect(markdown).toContain(MIMO_V26.xiaomi.openClaim);
+    expect(markdown).toContain(MIMO_V26.das.verdict);
+    expect(markdown).toContain(MIMO_V26.das.cheaperThanKimi);
+    expect(markdown).toContain(MIMO_V26.das.assumptions);
+    expect(markdown).toContain(MIMO_V26.xiaomi.ultraSpeedClaim);
+    expect(markdown).toContain(MIMO_V26.das.ultraSpeedPrice);
+    expect(markdown).toContain("corrected what it calls flawed CyberGym evaluation environments");
+    expect(markdown).toContain("does not discuss refusal behavior");
+    expect(markdown).not.toContain("how do I go about finding buffer overflows");
+    expect(markdown).not.toContain("—");
+    expect(markdown).not.toContain("refresh");
+    expect(markdown).not.toContain("schema");
+    expect(markdown).not.toContain("`");
+    for (const value of Object.values(MIMO_V26.reported)) {
+      expect(markup).toContain(value);
+    }
+    for (const value of Object.values(MIMO_V26.openRouter)) {
+      expect(markup).toContain(value);
+    }
+
+    // Every derived sentence and table cell comes from the same cohort the chart plots.
+    const position = mimoFrontierPosition(parsed.value.records);
+    expect(position).toBeDefined();
+    if (position === undefined) return;
+    const cost = position.record.costUsdPerTask?.total ?? 0;
+    expect(markup).toContain(formatSnapshotScore(position.record.intelligenceIndex));
+    expect(markup).toContain(formatSnapshotCostUsd(cost));
+    if (position.onCostFrontier) {
+      expect(markdown).toContain("It is on the cost frontier");
+      expect(markdown).not.toContain("It is not on the cost frontier");
+    } else {
+      expect(markdown).toContain("It is not on the cost frontier");
+    }
+    if (position.cheapestHigher !== undefined) {
+      expect(markup).toContain(position.cheapestHigher.record.name);
+      expect(markup).toContain(formatCostMultiple(position.cheapestHigher.multiple));
+    }
+    if (position.bestCheaper !== undefined) {
+      expect(markup).toContain(position.bestCheaper.record.name);
+      expect(markup).toContain(position.bestCheaper.gapPoints.toFixed(1));
+    }
+    for (const neighbor of mimoScoreNeighbors(parsed.value.records)) {
+      expect(markup).toContain(neighbor.name);
+      expect(markup).toContain(formatSnapshotScore(neighbor.intelligenceIndex));
+      expect(markup).toContain(formatCostMultiple((neighbor.costUsdPerTask?.total ?? 0) / cost));
+    }
+    const comparisons = mimoComparisonRows(parsed.value.records);
+    expect(comparisons.length).toBeGreaterThanOrEqual(2);
+    for (const row of comparisons) {
+      expect(markup).toContain(row.record.name);
+      expect(markup).toContain(`${formatCostMultiple(row.costMultiple)} (${formatPointGap(row.scoreGapPoints)} points)`);
+      expect(markup).toContain(row.comparison.dasMultiple ?? "not stated");
+    }
+    for (const reference of mimoClosedReferences(parsed.value.records)) {
+      expect(markup).toContain(reference.name);
+      expect(markup).toContain(formatSnapshotScore(reference.intelligenceIndex));
+    }
+  });
+
+  test("states the MiMo snapshot position from the records it is given", () => {
+    const parsed = parseArtificialAnalysisIntelligenceV43Snapshot(intelligenceData);
+    if (!parsed.ok) throw parsed.error;
+    const mimo = parsed.value.records.find(record => record.slug === "mimo-v2-6-pro");
+    expect(mimo).toBeDefined();
+    if (mimo === undefined || mimo.costUsdPerTask === null) return;
+
+    const withoutMimo = articleToMarkdown(createMimoV26Article({
+      ...parsed.value,
+      records: parsed.value.records.filter(record => record.slug !== "mimo-v2-6-pro"),
+    }));
+    expect(withoutMimo).toContain("does not store a MiMo-V2.6-Pro row");
+    expect(withoutMimo).toContain("stores zero of the five models Das and Xiaomi name");
+    expect(withoutMimo).toContain("The snapshot stores neither comparator by name.");
+    expect(withoutMimo).not.toContain("It is on the cost frontier");
+
+    const dominator = {
+      ...mimo,
+      costUsdPerTask: {
+        ...mimo.costUsdPerTask,
+        answer: mimo.costUsdPerTask.answer / 2,
+        output: mimo.costUsdPerTask.output - mimo.costUsdPerTask.answer / 2,
+        total: mimo.costUsdPerTask.total - mimo.costUsdPerTask.answer / 2,
+      },
+      id: "00000000-0000-4000-8000-000000000001",
+      intelligenceIndex: mimo.intelligenceIndex + 0.2,
+      name: "Cheaper Twin",
+      release: { name: "Cheaper Twin", slug: "cheaper-twin" },
+      shortName: "Cheaper Twin",
+      slug: "cheaper-twin",
+    };
+    const dominated = articleToMarkdown(createMimoV26Article({
+      ...parsed.value,
+      records: [...parsed.value.records, dominator],
+    }));
+    expect(dominated).toContain("It is not on the cost frontier");
+    expect(dominated).toContain("The cheapest configuration that scores higher, Cheaper Twin,");
+    expect(dominated).toContain("The best-scoring configuration that costs less, Cheaper Twin,");
+    expect(dominated).not.toContain("Its frontier neighbors are");
+    expect(dominated).toContain("Cheaper Twin");
+
+    const mimoOnly = articleToMarkdown(createMimoV26Article({
+      ...parsed.value,
+      records: [mimo],
+    }));
+    expect(mimoOnly).toContain("No configuration in the cohort scores higher.");
+    expect(mimoOnly).toContain("No configuration in the cohort costs less per task.");
+    expect(mimoOnly).toContain("stores zero other configurations within one index point");
+    expect(mimoOnly).toContain("stores neither of the closed models Xiaomi names");
+    expect(mimoOnly).toContain("cannot place his price multiples beside measured cost per task");
+    expect(mimoOnly).not.toContain("| Kimi K3");
+
+    const laterRetrieval = createMimoV26Article({
+      ...parsed.value,
+      source: { ...parsed.value.source, retrievedAt: "2026-12-01T08:00:00.000Z" },
+    });
+    expect(laterRetrieval.updatedAt).toBe("2026-12-01");
+    expect(articleToMarkdown(laterRetrieval)).toContain("Dec 1, 2026, 8:00 AM UTC");
+  });
+
   test("reconstructs the harness-design tables, the managed-minus-T0 gap, and the component effects", () => {
     const parsed = parseCodingAgentSnapshot(codingAgentData);
     if (!parsed.ok) throw parsed.error;
@@ -1070,6 +1238,11 @@ describe("AI Charts benchmark notes", () => {
     expect(markup).toContain(`href="${BLOG_SOURCES.hackerNewsRealSwe.url}"`);
     expect(markup).toContain(`href="${BLOG_SOURCES.harnessTax.url}"`);
     expect(markup).toContain(`href="${BLOG_SOURCES.fanHarnessDesign.url}"`);
+    expect(markup).toContain(`href="${BLOG_SOURCES.deedyDasMimoV26.url}"`);
+    expect(markup).toContain(`href="${BLOG_SOURCES.xiaomiMimoV26Release.url}"`);
+    expect(markup).toContain(`href="${BLOG_SOURCES.xiaomiMimoV26TechnicalReport.url}"`);
+    expect(markup).toContain(`href="${BLOG_SOURCES.artificialAnalysisMimoV26Pro.url}"`);
+    expect(markup).toContain(`href="${BLOG_SOURCES.openRouterMimoV26ProUltraSpeed.url}"`);
   });
 
   test("renders the index, static routes, breadcrumbs, dates, and sources", async () => {

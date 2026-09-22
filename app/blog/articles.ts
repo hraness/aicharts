@@ -5,6 +5,7 @@ import { createCodingAgentScoreHoldoutsArticle } from "./coding-agent-score-hold
 import { createDevinFusionCostSavingArticle } from "./devin-fusion-cost-saving-article";
 import { createHarnessDesignArticle } from "./harness-design-coding-agents-article";
 import { createHarnessTaxArticle } from "./harnesstax-coding-agent-harness-article";
+import { createMimoV26Article } from "./mimo-v2-6-pro-cost-frontier-article";
 import { createOpenModelsCodingAgentsArticle } from "./open-models-coding-agents-article";
 import { createRealSweArticle } from "./real-swe-private-enterprise-benchmark-article";
 import { createSmallModelsHaveArrivedArticle } from "./small-models-have-arrived-article";
@@ -191,6 +192,62 @@ export const BLOG_SOURCES = {
     url: "https://arxiv.org/abs/2609.20804",
     year: 2026,
   },
+  deedyDasMimoV26: {
+    note:
+      "The September 22, 2026 post by Deedy Das reports his price multiples and their stated workload assumptions, his frontier judgment, one cybersecurity prompt the model answered, his UltraSpeed throughput on OpenRouter, and his video, music, and technical-report impressions.",
+    publication: "X",
+    title: "Xiaomi just dropped Mimo 2.6 Pro which claims to be the best open source model",
+    url: "https://x.com/deedydas/status/2102293684767412393",
+    year: 2026,
+  },
+  xiaomiMimoV26Release: {
+    note:
+      "The release note updated September 22, 2026 owns the Intelligence Index claim and its named comparators, the unchanged API pricing statement, the UltraSpeed speed claim, the training step, trajectory, and cost figures, the DeepSWE gains, and the open-source inventory.",
+    publication: "Xiaomi MiMo",
+    title: "MiMo-V2.6: Scaling Up Reinforcement Learning for Self-Improvement",
+    url: "https://mimo.mi.com/docs/en-US/news/latest/v2-6",
+    year: 2026,
+  },
+  xiaomiMimoV26ModelCard: {
+    note:
+      "The model card owns the MIT license, the 1.02T total and 42B active parameter counts, the 1M-token context length, the modality list, and the evaluation table comparing MiMo-V2.6 Pro and Flash with MiMo-V2.5 Pro, Claude Opus 5, GPT-5.6 Sol, and Claude Fable 5.",
+    publication: "Hugging Face",
+    title: "XiaomiMiMo/MiMo-V2.6-Pro-RL",
+    url: "https://huggingface.co/XiaomiMiMo/MiMo-V2.6-Pro-RL",
+    year: 2026,
+  },
+  xiaomiMimoV26TechnicalReport: {
+    note:
+      "The technical report owns the RL scaling method, the per-step sample and token counts, the vulnerability-reproduction training task and its corrected CyberGym oracle, the multi-harness training result on held-out harnesses, and the evaluation setup behind the printed table.",
+    publication: "LLM-Core Xiaomi",
+    title: "MiMo-V2.6: Scaling Reinforcement Learning Towards Self-Improvement",
+    url: "https://huggingface.co/XiaomiMiMo/MiMo-V2.6-Pro-RL/blob/main/MiMo_V2_6_technical_report.pdf",
+    year: 2026,
+  },
+  artificialAnalysisMimoV26Pro: {
+    note:
+      "The model page captured September 22, 2026 UTC owns the 46 index score, the open-weights label and class rank, the $0.435 and $0.87 per million token prices with a 99% cache discount, the 110.8 tokens per second output speed, the $0.13 cost per index task, and the index run cost.",
+    publication: "Artificial Analysis",
+    title: "MiMo-V2.6-Pro: Intelligence, Performance & Price Analysis",
+    url: "https://artificialanalysis.ai/models/mimo-v2-6-pro",
+    year: 2026,
+  },
+  openRouterMimoV26ProUltraSpeed: {
+    note:
+      "The listing captured September 22, 2026 UTC owns the UltraSpeed prices of $4.35 per million input tokens, $8.70 per million output tokens, and $0.036 per million cached input tokens on Xiaomi’s endpoint, and describes the edition as built from the same checkpoint as MiMo-V2.6-Pro.",
+    publication: "OpenRouter",
+    title: "Xiaomi: MiMo-V2.6-Pro-UltraSpeed",
+    url: "https://openrouter.ai/xiaomi/mimo-v2.6-pro-ultraspeed",
+    year: 2026,
+  },
+  artificialAnalysisIntelligenceIndex: {
+    note:
+      "The public models leaderboard is the upstream source of the checked AI Charts Intelligence Index snapshot. Scores, per-task costs, and output tokens are Artificial Analysis measurements under Intelligence Index v4.3.2.",
+    publication: "Artificial Analysis",
+    title: "LLM Leaderboard",
+    url: "https://artificialanalysis.ai/models",
+    year: 2026,
+  },
 } as const satisfies Record<string, BlogSource>;
 
 export type BlogSourceId = keyof typeof BLOG_SOURCES;
@@ -356,6 +413,7 @@ const mirrorCodeArticle = {
 } as const satisfies BlogArticle;
 
 export const blogArticles = [
+  createMimoV26Article(),
   createHarnessDesignArticle(),
   createHarnessTaxArticle(),
   createRealSweArticle(),
