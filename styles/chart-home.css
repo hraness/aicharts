@@ -1,4 +1,25 @@
 .chart-home { max-width: 1320px; margin-inline: auto; padding: 0 clamp(20px, 4vw, 52px) 48px; }
+.chart-home.hraness-marketing-main { padding-block-start: var(--hraness-marketing-main-offset); }
+.home-index-strip { scroll-margin-block-start: var(--hraness-marketing-sticky-clearance); padding-block: 20px 8px; }
+.home-index-strip__heading h2 { font-size: 18px; font-weight: 550; letter-spacing: -.02em; line-height: 1.3; }
+.home-index-strip__heading p { color: var(--muted); font-size: 13px; line-height: 1.55; margin-top: 6px; max-width: 72ch; }
+.home-index-strip__row { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: clamp(10px, 1.6vw, 18px); margin: 16px 0 0; }
+.home-index-strip__row a { color: inherit; display: flex; min-block-size: 100%; text-decoration: none; }
+.home-index-strip__row .model-logo-card {
+  aspect-ratio: auto;
+  flex: 1 1 auto;
+  gap: .35rem;
+  grid-template-rows: auto auto auto auto;
+  min-block-size: 100%;
+  padding: .55rem .65rem;
+}
+.home-index-strip__row .model-logo-card__art {
+  aspect-ratio: 1;
+  inline-size: 2.25rem;
+  justify-self: start;
+  min-block-size: 2.25rem;
+}
+.home-index-strip__row .model-logo-card__model { font-size: clamp(.95rem, 4.6cqi, 1.2rem); }
 .chart-page-intro { padding-block: 36px 26px; }
 .chart-page-intro h1 { font-size: clamp(28px, 3vw, 38px); line-height: 1.15; font-weight: 550; letter-spacing: -.035em; }
 .chart-page-intro > p { color: var(--muted); margin-top: 10px; font-size: 16px; line-height: 1.6; max-width: 65ch; }
@@ -62,8 +83,12 @@
   .coding-home .chart-metric-controls .metric-control--x { margin-left: 0; }
   .home-activity__list a { grid-template-columns: auto minmax(0, 1fr); }
   .home-activity__list time { grid-column: 2; }
+  .home-index-strip__row { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .home-calculator { padding: 14px 16px; }
   .home-calculator__cta { width: 100%; justify-content: center; }
+}
+@media (max-width: 480px) {
+  .home-index-strip__row { grid-template-columns: minmax(0, 1fr); }
 }
 
 /* Decorative topic icons (agent-generated line art, public/icons/). */
