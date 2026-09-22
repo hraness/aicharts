@@ -116,7 +116,8 @@ describe("homepage canonical content", () => {
     expect(markup).not.toContain('class="atlas-reading"');
     expect(markup.indexOf('aria-label="Ask AI about this"')).toBeGreaterThan(mainEndAt);
     expect(markup).not.toContain('id="advanced-charts"');
-    expect(markup).toContain("Artificial Analysis Intelligence Index v4.3");
+    expect(markup).toContain("Artificial Analysis Intelligence Index v4.3.2");
+    expect(markup).toContain("MiMo-V2.6-Pro");
     expect(markup).toContain('href="/data/artificial-analysis-intelligence-v4-3.json"');
     expect(markup).toContain('href="/data#atlas-aa-intelligence-4-3"');
     expect(markup).not.toContain("both round to 61");

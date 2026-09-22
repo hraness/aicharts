@@ -318,7 +318,7 @@ describe("agent instruction file", () => {
   test("data Markdown and agent guide separate the current Pareto source from frozen v4.1.1", () => {
     const data = markdownForPath("/data").body;
     const guide = agentGuideMarkdown(snapshot);
-    expect(data).toContain("## Current Intelligence efficiency · v4.3");
+    expect(data).toContain("## Current Intelligence efficiency · v4.3.2");
     expect(data).toContain("efficiency · historical frozen snapshot");
     expect(data).toContain("This v4.1.1 snapshot is frozen and is no longer refreshed by automation");
     const historical = data.split("efficiency · historical frozen snapshot")[1]?.split("## Artificial Analysis coding-agent")[0] ?? "";
