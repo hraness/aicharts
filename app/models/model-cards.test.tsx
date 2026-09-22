@@ -152,7 +152,7 @@ describe("public model cards", () => {
       for (const model of release.namedModels) expect(markup).toContain(model);
     }
     expect(markup).toContain('class="hraness-marketing-card-row"');
-    expect(markup).toContain("hraness-marketing-card-row__meta");
+    expect(markup).toContain("hraness-marketing-card__meta");
     expect(modelsPageSource).toContain("ModelReleaseRadars");
     expect(modelCardsStyles).toContain(".model-release-radar .hraness-marketing-card-row");
     expect(modelCardsStyles).not.toContain(".model-release-radar ul {");
@@ -274,6 +274,7 @@ describe("public model cards", () => {
       expect(markup).not.toContain("undefined");
     }
     expect(live).toContain('class="model-logo-card"');
+    expect(live).toContain('class="model-logo-card__art hraness-marketing-card__art"');
     expect(live).not.toContain("<article");
     expect(live).not.toContain("<dl");
     expect(live).not.toContain("data-illumination-finish");
@@ -313,6 +314,41 @@ describe("public model cards", () => {
     expect(stylesheet).not.toContain("holographic");
     expect(stylesheet).not.toContain("model-card-illumination");
     expect(stylesheet).not.toContain("animation:");
+  });
+
+  test("isolates each logo-card art pill so a gallery row cannot paint one continuous bar", async () => {
+    const stylesheet = await Bun.file(
+      new URL("../../styles/model-cards.css", import.meta.url),
+    ).text();
+
+    function firstRule(selector: string): string {
+      const escaped = selector.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
+      return stylesheet.match(new RegExp(`${escaped}\\s*\\{(?<body>[^}]*)\\}`, "u"))?.groups?.body ?? "";
+    }
+
+    const card = firstRule(".model-logo-card");
+    const art = firstRule(".model-logo-card__art");
+    const grid = firstRule(".model-card-grid");
+    const link = firstRule(".model-card-grid__link");
+
+    expect(card).toContain("contain: paint");
+    expect(card).toContain("grid-template-columns: minmax(0, 1fr)");
+    expect(card).toContain("isolation: isolate");
+    expect(card).toContain("min-inline-size: 0");
+    expect(card).toContain("overflow: clip");
+    expect(card).toContain("padding: 1.15rem .9rem .85rem");
+    expect(stylesheet).toMatch(
+      /\.model-logo-card__title,\s*\.model-logo-card__stat\s*\{[^}]*min-inline-size:\s*0;/su,
+    );
+    expect(art).toContain("contain: paint");
+    expect(art).toContain("isolation: isolate");
+    expect(art).toContain("min-inline-size: 0");
+    expect(art).toContain("max-inline-size: 100%");
+    expect(art).toContain("overflow: clip");
+    expect(grid).toContain("align-items: start");
+    expect(link).toContain("isolation: isolate");
+    expect(link).toContain("overflow: clip");
+    expect(stylesheet).not.toContain("model-card-grid__bleed");
   });
 
   test("names every contributing agent harness on detail and Markdown surfaces", async () => {

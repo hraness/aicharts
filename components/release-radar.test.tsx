@@ -9,7 +9,7 @@ test("radar rows use the shared equal-height card-row contract and reserve meta 
   const markup = renderToStaticMarkup(createElement(ModelReleaseRadars));
 
   expect(markup).toContain('class="hraness-marketing-card-row"');
-  expect(markup).toContain("hraness-marketing-card-row__meta");
+  expect(markup).toContain("hraness-marketing-card__meta");
   expect(markup).toContain("model-release-radar__early-score");
   if (FIRST_PARTY_RELEASE_HIGHLIGHTS.length > 0) {
     expect(markup).toContain("First-party release radar");
@@ -17,5 +17,5 @@ test("radar rows use the shared equal-height card-row contract and reserve meta 
   }
   const cards = markup.match(/<li\b/gu)?.length ?? 0;
   expect(cards).toBeGreaterThan(0);
-  expect(markup.match(/hraness-marketing-card-row__meta/gu)).toHaveLength(cards);
+  expect(markup.match(/hraness-marketing-card__meta/gu)).toHaveLength(cards);
 });
