@@ -450,6 +450,7 @@ async function assertLogoCardArtIsolation(page: Page): Promise<void> {
       else row.push(item);
     }
 
+    const firstRowWidth = rows[0]?.[0]?.art.width;
     for (const row of rows) {
       row.sort((left, right) => left.art.left - right.art.left);
       for (let index = 1; index < row.length; index += 1) {
@@ -459,6 +460,15 @@ async function assertLogoCardArtIsolation(page: Page): Promise<void> {
         const gap = current.art.left - previous.art.right;
         if (gap < 8) {
           violations.push(`art pills in a row overlap or bleed (gap ${gap.toFixed(1)}px)`);
+        }
+      }
+      if (firstRowWidth !== undefined) {
+        for (const item of row) {
+          if (Math.abs(item.art.width - firstRowWidth) > 1) {
+            violations.push(
+              `art pill width ${item.art.width.toFixed(1)}px drifted from the first row ${firstRowWidth.toFixed(1)}px`,
+            );
+          }
         }
       }
     }

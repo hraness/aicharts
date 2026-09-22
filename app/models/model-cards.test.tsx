@@ -331,9 +331,14 @@ describe("public model cards", () => {
     const link = firstRule(".model-card-grid__link");
 
     expect(card).toContain("contain: paint");
+    expect(card).toContain("grid-template-columns: minmax(0, 1fr)");
     expect(card).toContain("isolation: isolate");
+    expect(card).toContain("min-inline-size: 0");
     expect(card).toContain("overflow: clip");
     expect(card).toContain("padding: 1.15rem .9rem .85rem");
+    expect(stylesheet).toMatch(
+      /\.model-logo-card__title,\s*\.model-logo-card__stat\s*\{[^}]*min-inline-size:\s*0;/su,
+    );
     expect(art).toContain("contain: paint");
     expect(art).toContain("isolation: isolate");
     expect(art).toContain("min-inline-size: 0");

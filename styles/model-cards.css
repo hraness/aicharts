@@ -13,10 +13,12 @@
   display: grid;
   font-family: var(--font-sans);
   gap: .7rem;
+  grid-template-columns: minmax(0, 1fr);
   grid-template-rows: auto minmax(0, 1fr) auto auto;
   inline-size: 100%;
   isolation: isolate;
-  /* Clip paint to this card so an incomplete last row cannot share one art bar. */
+  min-inline-size: 0;
+  /* Long nowrap Index source lines must not widen the column or the art pill. */
   overflow: clip;
   padding: 1.15rem .9rem .85rem;
 }
@@ -81,6 +83,11 @@
   block-size: 56%;
   inline-size: 56%;
   object-fit: contain;
+}
+
+.model-logo-card__title,
+.model-logo-card__stat {
+  min-inline-size: 0;
 }
 
 .model-logo-card__model {
