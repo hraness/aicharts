@@ -94,6 +94,7 @@ describe("homepage canonical content", () => {
     const mainAt = markup.indexOf('<main class="chart-home" id="main-content">');
     const calculatorAt = markup.indexOf('class="home-calculator"');
     const intelligenceAt = markup.indexOf('class="intelligence-efficiency"');
+    const activityAt = markup.indexOf('class="home-activity"');
     const exploreFooterAt = markup.indexOf('aria-label="What do you want to do?"');
     const resourceFooterAt = markup.indexOf('aria-label="Chart resources"');
     const mainEndAt = markup.indexOf("</main>", mainAt);
@@ -102,7 +103,11 @@ describe("homepage canonical content", () => {
     // The Pareto chart leads (the browser contract holds its fold position);
     // the calculator callout follows it, ahead of the shared footer nav.
     expect(intelligenceAt).toBeGreaterThan(mainAt);
-    expect(calculatorAt).toBeGreaterThan(intelligenceAt);
+    expect(activityAt).toBeGreaterThan(intelligenceAt);
+    expect(calculatorAt).toBeGreaterThan(activityAt);
+    expect(markup).toContain('data-analytics-surface="home_activity"');
+    expect(markup).toContain("Recent models and notes");
+    expect(markup).toContain('href="/models/xiaomi/mimo-v2-6-pro/index"');
     expect(exploreFooterAt).toBeGreaterThan(calculatorAt);
     expect(resourceFooterAt).toBeGreaterThan(exploreFooterAt);
     expect(mainEndAt).toBeGreaterThan(resourceFooterAt);

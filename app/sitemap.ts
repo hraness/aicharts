@@ -20,6 +20,10 @@ import {
   codingAgentDatasetModifiedAt,
 } from "@/lib/coding-agent-dataset";
 import {
+  INDEX_MODEL_PAGES,
+  INDEX_MODEL_SNAPSHOT,
+} from "@/lib/index-model-pages";
+import {
   MODEL_CARD_COLLECTION_SOCIAL_IMAGE_URL,
   MODEL_CARD_PRESENTATIONS,
   versionedModelCardImagePath,
@@ -190,6 +194,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
       lastModified: datasetModifiedAt,
       priority: 0.75,
       url: absolute(card.path),
+    })),
+    ...INDEX_MODEL_PAGES.map(page => ({
+      changeFrequency: "daily" as const,
+      images: [absolute(versionedModelCardImagePath(page.path, "opengraph-image"))],
+      lastModified: INDEX_MODEL_SNAPSHOT.source.retrievedAt,
+      priority: 0.75,
+      url: absolute(page.path),
     })),
     ...blogSitemapEntries(),
   ];

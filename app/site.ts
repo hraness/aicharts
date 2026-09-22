@@ -32,21 +32,21 @@ export const homeTaskLinks = [
   { task: "video", name: "Video", description: "Create video from text or images." },
   { task: "audio", name: "Audio", description: "Transcribe and understand speech." },
 ] as const;
-export const modelCardsHeading = "Every model, on a card";
+export const modelCardsHeading = "Models";
 export const modelCardsLede =
-  "Shareable benchmark cards built from the same records as the charts, with the model, harness, and reasoning profile attached.";
-export const modelCardsEyebrow = "Benchmark cards";
-export const modelCardsTitle = "AI Model Benchmark Cards | AI Charts";
+  "Identity pages for models in the current snapshots, with Intelligence Index, cost, and coding-agent ranges when those observations exist.";
+export const modelCardsEyebrow = "Model pages";
+export const modelCardsTitle = "AI Models | AI Charts";
 export const modelCardsDescription =
-  "Shareable model trading cards for the current Artificial Analysis coding-agent benchmark snapshot.";
+  "Model identity pages with Intelligence Index, cost, and coding-agent observations from the checked snapshots.";
 
-/** Social and search copy for one model card page; keep title and description paired. */
+/** Social and search copy for one model page; keep title and description paired. */
 export function modelCardTitle(displayTitle: string): string {
-  return `${displayTitle} Benchmark Card | AI Charts`;
+  return `${displayTitle} | AI Charts`;
 }
 
 export function modelCardDescription(displayTitle: string): string {
-  return `${displayTitle} with available observed coding-agent benchmark, cost, time, and total-token ranges from Artificial Analysis.`;
+  return `${displayTitle} with available Intelligence Index, cost, and coding-agent observations from Artificial Analysis.`;
 }
 
 export const notFoundSearchSite = {

@@ -143,12 +143,6 @@ describe("model card presentation", () => {
     )).toThrow("must match");
   });
 
-  test("uses one neutral foil field so the provider and model inks own color", () => {
-    expect(new Set(MODEL_CARD_PRESENTATIONS.map(card => card.foilPreset))).toEqual(
-      new Set(["etched"]),
-    );
-  });
-
   test("turns operational source labels into a clean collectible title", () => {
     const fable = MODEL_CARD_PRESENTATIONS.find(card => (
       card.canonicalModelId === "anthropic/claude-fable-5.1"

@@ -38,7 +38,7 @@ if (!parsedSnapshot.ok) {
 }
 
 export const MODEL_CARD_SNAPSHOT = parsedSnapshot.value;
-export const MODEL_CARD_RENDERER_VERSION = "model-card-v7";
+export const MODEL_CARD_RENDERER_VERSION = "model-card-v8";
 export const MODEL_CARD_COLLECTION_SOCIAL_IMAGE_PATH = "/models/opengraph-image-v7";
 export const MODEL_CARD_SNAPSHOT_VERSION = createHash("sha256")
   .update(JSON.stringify(codingAgentData))
@@ -112,6 +112,17 @@ export const MODEL_CARD_TOP_PATHS = modelCardCostAaFrontierPaths(MODEL_CARD_VARI
 
 export const MODEL_CARD_COLLECTION_CREST_LIMIT = 11;
 
+const visualClassRanks = {
+  fast: 2,
+  max: 4,
+  standard: 1,
+  thinking: 3,
+} as const;
+
+function visualClassRank(visualClass: ModelCardPresentation["visualClass"]): number {
+  return visualClassRanks[visualClass];
+}
+
 /**
  * Maps the checked cost/AA Index Pareto frontier back to card profiles.
  * A profile is Top when at least one retained configuration has no alternative
@@ -183,11 +194,13 @@ export function modelCardProviderRepresentatives(
   const byProvider = new Map<string, ModelCardPresentation>();
   for (const card of cards) {
     const selected = byProvider.get(card.providerId);
+    const selectedRank = selected === undefined ? -1 : visualClassRank(selected.visualClass);
+    const nextRank = visualClassRank(card.visualClass);
     if (
       selected === undefined
-      || card.illuminationDensity > selected.illuminationDensity
+      || nextRank > selectedRank
       || (
-        card.illuminationDensity === selected.illuminationDensity
+        nextRank === selectedRank
         && card.cardNumber < selected.cardNumber
       )
     ) {

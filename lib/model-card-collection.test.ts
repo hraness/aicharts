@@ -91,7 +91,7 @@ function radar(
 }
 
 describe("model-card OpenRouter listings", () => {
-  test("includes curated identity and official-release bytes in the v7 image cache key", () => {
+  test("includes curated identity and official-release bytes in the v8 image cache key", () => {
     const expected = createHash("sha256")
       .update(JSON.stringify(codingAgentData))
       .update("\0")
@@ -109,7 +109,7 @@ describe("model-card OpenRouter listings", () => {
       .digest("hex")
       .slice(0, 16);
 
-    expect(MODEL_CARD_RENDERER_VERSION).toBe("model-card-v7");
+    expect(MODEL_CARD_RENDERER_VERSION).toBe("model-card-v8");
     expect(MODEL_CARD_SNAPSHOT_VERSION).toBe(expected);
     expect(MODEL_CARD_SNAPSHOT_VERSION).not.toBe(benchmarkOnly);
   });

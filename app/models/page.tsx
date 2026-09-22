@@ -2,13 +2,16 @@ import { createPublicSiteMetadata } from "@hraness/web-discovery";
 import Link from "next/link";
 import type { CSSProperties } from "react";
 
-import { ModelCardFace } from "@/components/model-card-face";
-import { ModelCardFoilFrame } from "@/components/model-card-foil-frame";
 import {
   ModelCardGalleryFilters,
   ModelCardGalleryItems,
   type ModelCardProviderFilter,
 } from "@/components/model-card-gallery-filters";
+import {
+  ModelLogoCard,
+  logoCardFromIndexPage,
+  logoCardFromPresentation,
+} from "@/components/model-logo-card";
 import {
   MODEL_CARD_COLLECTION_SOCIAL_IMAGE_PATH,
   MODEL_CARD_COLLECTION_SOCIAL_IMAGE_URL,
@@ -29,8 +32,9 @@ import {
   FIRST_PARTY_RELEASE_HIGHLIGHTS,
   FIRST_PARTY_RELEASE_SOURCE_SUMMARY,
 } from "@/lib/first-party-release-collection";
+import { INDEX_MODEL_PAGES } from "@/lib/index-model-pages";
 import { modelCardArtDirection } from "@/lib/model-card-art-direction";
-import { modelCardReleaseAccessibleLabel } from "@/lib/model-card-presentation";
+import { formatModelCardReleaseDateLong, modelCardReleaseAccessibleLabel } from "@/lib/model-card-presentation";
 import {
   MODEL_RELEASE_RADAR,
   MODEL_RELEASES_AWAITING_BENCHMARK,
@@ -55,7 +59,7 @@ const modelCardsSearchSite = {
   ...searchSite,
   description: modelCardsDescription,
   socialImage: {
-    alt: "Illuminated AI model benchmark atlas with distinct provider sigils",
+    alt: "AI Charts model pages with provider logos and Intelligence Index scores",
     path: MODEL_CARD_COLLECTION_SOCIAL_IMAGE_PATH,
   },
   socialTitle: modelCardsTitle,
@@ -87,15 +91,37 @@ export const metadata = {
 
 export default function ModelCardsPage() {
   const topPaths = new Set(MODEL_CARD_TOP_PATHS);
+  const galleryItems = [
+    ...MODEL_CARD_PRESENTATIONS.map(card => ({
+      href: card.path,
+      isTop: topPaths.has(card.path),
+      label: `Open ${card.displayTitle} model page; ${card.classLabel} class. ${modelCardReleaseAccessibleLabel(card.release)}`,
+      providerColor: card.providerColor,
+      providerId: card.providerId,
+      providerName: card.providerName,
+      releasedOn: card.release.status === "verified" ? card.release.releasedOn : null,
+      view: logoCardFromPresentation(card),
+    })),
+    ...INDEX_MODEL_PAGES.map(page => ({
+      href: page.path,
+      isTop: false,
+      label: `Open ${page.displayTitle} model page. First listed on the Intelligence Index on ${formatModelCardReleaseDateLong(page.releaseDate)}.`,
+      providerColor: page.providerColor,
+      providerId: page.providerId,
+      providerName: page.providerName,
+      releasedOn: page.releaseDate,
+      view: logoCardFromIndexPage(page),
+    })),
+  ];
   const providerMap = new Map<string, ModelCardProviderFilter>();
-  for (const card of MODEL_CARD_PRESENTATIONS) {
-    const provider = providerMap.get(card.providerId);
-    providerMap.set(card.providerId, {
-      color: card.providerColor,
+  for (const item of galleryItems) {
+    const provider = providerMap.get(item.providerId);
+    providerMap.set(item.providerId, {
+      color: item.providerColor,
       count: (provider?.count ?? 0) + 1,
-      id: card.providerId,
-      name: card.providerName,
-      topCount: (provider?.topCount ?? 0) + (topPaths.has(card.path) ? 1 : 0),
+      id: item.providerId,
+      name: item.providerName,
+      topCount: (provider?.topCount ?? 0) + (item.isTop ? 1 : 0),
     });
   }
   const providers = [...providerMap.values()].sort((left, right) => (
@@ -121,7 +147,7 @@ export default function ModelCardsPage() {
           <h1 className="hraness-marketing-hero__heading" id="model-cards-title">{modelCardsHeading}</h1>
           <p className="hraness-marketing-hero__summary model-card-gallery__lede">{modelCardsLede}</p>
           <p className="hraness-marketing-hero__boundary model-card-gallery__meta">
-            <span>{MODEL_CARD_PRESENTATIONS.length} benchmark profiles across {providers.length} providers</span>
+            <span>{galleryItems.length} model pages across {providers.length} providers</span>
             <span>
               <a href={MODEL_CARD_SNAPSHOT.source.url}>{MODEL_CARD_SNAPSHOT.source.name}</a>
               {" · retrieved "}
@@ -134,34 +160,25 @@ export default function ModelCardsPage() {
         gridId={gridId}
         providers={providers}
         topCount={topPaths.size}
-        totalCount={MODEL_CARD_PRESENTATIONS.length}
+        totalCount={galleryItems.length}
       >
         <ModelCardGalleryItems
           className="model-card-grid"
           id={gridId}
-          items={MODEL_CARD_PRESENTATIONS.map(card => ({
-            isTop: topPaths.has(card.path),
-            providerId: card.providerId,
-            releasedOn: card.release.status === "verified"
-              ? card.release.releasedOn
-              : null,
+          items={galleryItems.map(item => ({
+            isTop: item.isTop,
+            providerId: item.providerId,
+            releasedOn: item.releasedOn,
           }))}
         >
-          {MODEL_CARD_PRESENTATIONS.map(card => (
+          {galleryItems.map(item => (
             <Link
-              aria-label={`Open ${card.displayTitle} model card; ${card.classLabel} class. ${modelCardReleaseAccessibleLabel(card.release)}`}
+              aria-label={item.label}
               className="model-card-grid__link"
-              href={card.path}
-              key={card.path}
+              href={item.href}
+              key={item.href}
             >
-              <div className="model-card-grid__bleed">
-                <ModelCardFoilFrame
-                  foilPreset={card.foilPreset}
-                  seed={card.seed}
-                >
-                  <ModelCardFace card={card} illuminationMode="gallery" />
-                </ModelCardFoilFrame>
-              </div>
+              <ModelLogoCard card={item.view} />
             </Link>
           ))}
         </ModelCardGalleryItems>

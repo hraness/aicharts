@@ -41,6 +41,10 @@ export const PUBLIC_MODEL_CARD_PATHS = [
   "/models/unlisted/glm-5-3.fffd32adf07098d3cd835ee1/default",
   "/models/unlisted/gpt-6-astra-xhigh-swe-2-medium.54c5f1484f55a9b95f428406/default",
   "/models/unlisted/grok-4-6.8d0cb9ac05267687236dffd8/xhigh",
+  "/models/xai/grok-4-7/index",
+  "/models/xiaomi/mimo-v2-6-pro/index",
+  "/models/stepfun/step-5-preview/index",
+  "/models/deepseek/deepseek-v4-1-flash/index",
 ] as const;
 
 const publicModelCardPathSet = new Set<string>(PUBLIC_MODEL_CARD_PATHS);

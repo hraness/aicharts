@@ -60,9 +60,7 @@ describe("model card ImageResponse rendering", () => {
       expect(social).toContain(`>${stat.value}</span>`);
     }
     expect(social).toContain(`>${card.profileLabel} profile</span>`);
-    expect(social).toContain(">illuminated benchmark specimen</span>");
     expect(social.match(/data:image\/svg\+xml;base64,/gu)).toHaveLength(1);
-    expect(social).toContain(`data-emblem-family="${card.emblemIdentity.familyId}"`);
   });
 
   test("renders an explicit pending release state without inventing a date", () => {
@@ -94,31 +92,13 @@ describe("model card ImageResponse rendering", () => {
     }
   });
 
-  test("renders the shared illuminated geometry at every density", async () => {
-    for (const density of [1, 2, 3, 4, 5] as const) {
-      const base = MODEL_CARD_PRESENTATIONS[0];
-      expect(base).toBeDefined();
-      if (base === undefined) continue;
-      const card = { ...base, illuminationDensity: density };
-      const markup = renderToStaticMarkup(<ModelCardRasterFace card={card} />);
-      expect(markup).toContain(`data-illumination-density="${density}"`);
-      expect(markup).toContain(`data-illumination-accent="${card.accentFamily}"`);
-      expect(markup).not.toContain("data-card-filigree");
-      expect(markup).not.toContain("model-card-face__class");
-      const raster = await new ImageResponse(<ModelCardRasterFace card={card} compact />, {
-        height: 350,
-        width: 250,
-      }).arrayBuffer();
-      expect(pngDimensions(raster)).toEqual({ height: 350, width: 250 });
-    }
-  }, 20_000);
-
-  test("keeps every provider emblem compatible with the PNG renderer", async () => {
+  test("renders a compact and full portrait for every provider color key", async () => {
     const cardByProvider = new Map(MODEL_CARD_PRESENTATIONS.map(card => [card.providerId, card]));
     expect([...cardByProvider.keys()].sort()).toEqual(Object.keys(modelCardProviderColors).sort());
     for (const card of cardByProvider.values()) {
       const markup = renderToStaticMarkup(<ModelCardRasterFace card={card} compact />);
-      expect(markup).toMatch(/data-illumination-motif="[^"]+"/u);
+      expect(markup).toContain("data:image/svg+xml;base64,");
+      expect(markup).not.toContain("data-illumination-motif");
       const raster = await new ImageResponse(<ModelCardRasterFace card={card} compact />, {
         height: 350,
         width: 250,
@@ -212,15 +192,6 @@ describe("model card ImageResponse rendering", () => {
     const providerCount = modelCardProviderCount();
     expect(cards).toHaveLength(providerCount);
     expect(new Set(cards.map(card => card.providerId)).size).toBe(cards.length);
-    for (const card of cards) {
-      const providerCards = MODEL_CARD_PRESENTATIONS.filter(candidate => (
-        candidate.providerId === card.providerId
-      ));
-      expect(Number(card.illuminationDensity)).toBe(Math.max(
-        ...providerCards.map(candidate => candidate.illuminationDensity),
-      ));
-    }
-
     const markup = renderToStaticMarkup(
       <ModelCardCollectionSocialImage
         cards={cards}
@@ -228,10 +199,10 @@ describe("model card ImageResponse rendering", () => {
         providerCount={providerCount}
       />,
     );
-    expect(markup.match(/data-emblem-family=/gu)).toHaveLength(providerCount);
-    expect(markup.match(/data-illumination-density="1"/gu)).toHaveLength(providerCount);
-    expect(markup).toContain(">THE BENCHMARK ATLAS</span>");
-    expect(markup).toContain(">The model codex</span>");
+    expect(markup.match(/data:image\/svg\+xml;base64,/gu)).toHaveLength(providerCount);
+    expect(markup).toContain(">MODELS</span>");
+    expect(markup).toContain(">Models</span>");
+    expect(markup).toContain(">Index · cost · coding agents</span>");
     expect(markup).toContain(`${MODEL_CARD_PRESENTATIONS.length}</span>`);
     expect(markup).toContain(`${providerCount}</span>`);
     for (const card of cards) expect(markup).toContain(`>${card.providerName}</div>`);
@@ -269,7 +240,7 @@ describe("model card ImageResponse rendering", () => {
       />
     );
     const markup = renderToStaticMarkup(image);
-    expect(markup.match(/data-emblem-family=/gu)).toHaveLength(MODEL_CARD_COLLECTION_CREST_LIMIT);
+    expect(markup.match(/data:image\/svg\+xml;base64,/gu)).toHaveLength(MODEL_CARD_COLLECTION_CREST_LIMIT);
     expect(markup).toContain('data-provider-overflow="6"');
     expect(markup).toContain(">+6</span>");
 

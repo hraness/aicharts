@@ -16,31 +16,8 @@ const expectedBunVersion = "1.3.14";
 const repository = process.cwd();
 const hostname = "127.0.0.1";
 
-type FoilEvidence = Readonly<{
-  active: boolean;
-  angle: string;
-  bandColors: readonly string[];
-  glintCx: string;
-  glintCy: string;
-  illuminationDisplay: string;
-  lightX: string;
-  lightY: string;
-  opacities: readonly string[];
-  transitionDurations: readonly string[];
-}>;
-
 function invariant(value: unknown, message: string): asserts value {
   if (!value) throw new Error(message);
-}
-
-function cssDurationMilliseconds(value: string): number | null {
-  const match = /^((?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?)(ms|s)$/iu.exec(value.trim());
-  const numeric = match?.[1];
-  const unit = match?.[2];
-  if (numeric === undefined || unit === undefined) return null;
-  const duration = Number(numeric);
-  if (!Number.isFinite(duration) || duration < 0) return null;
-  return unit.toLowerCase() === "s" ? duration * 1_000 : duration;
 }
 
 function errorMessage(error: unknown): string {
@@ -200,10 +177,10 @@ async function assertCompactPickerAlignment(
 
 async function openModels(page: Page, baseUrl: string): Promise<Locator> {
   await page.goto(`${baseUrl}/models`, { waitUntil: "domcontentloaded" });
-  const frame = page.locator(".model-card-frame").first();
-  await frame.waitFor();
+  const card = page.locator(".model-logo-card").first();
+  await card.waitFor();
   await settle(page);
-  return frame;
+  return card;
 }
 
 async function verifyChartExport(browser: Browser, baseUrl: string): Promise<void> {
@@ -426,207 +403,33 @@ async function verifyBenchmarkAtlas(browser: Browser, baseUrl: string): Promise<
   }
 }
 
-async function foilEvidence(frame: Locator): Promise<FoilEvidence> {
-  return frame.evaluate((root) => {
-    if (!(root instanceof HTMLElement)) throw new Error("The foil frame is not an HTML element.");
-    const glint = root.querySelector(".model-card-holographic-foil__glint-gradient");
-    const illumination = root.querySelector(".model-card-illumination");
-    const layers = [
-      root.querySelector(".model-card-holographic-foil__metal"),
-      root.querySelector(".model-card-holographic-foil__spectrum"),
-      root.querySelector(".model-card-holographic-foil__glint"),
-    ];
-    if (!(glint instanceof SVGElement) || !(illumination instanceof SVGElement)) {
-      throw new Error("The holographic SVG is incomplete.");
-    }
-    if (layers.some(layer => !(layer instanceof SVGElement))) {
-      throw new Error("The holographic paint layers are incomplete.");
-    }
-    const frameStyle = getComputedStyle(root);
-    const glintStyle = getComputedStyle(glint);
-    return {
-      active: root.hasAttribute("data-foil-active"),
-      angle: frameStyle.getPropertyValue("--foil-spectrum-angle").trim(),
-      bandColors: Array.from(root.querySelectorAll<SVGStopElement>(
-        "stop[data-holographic-band]",
-      )).map(stop => getComputedStyle(stop).stopColor),
-      glintCx: glintStyle.getPropertyValue("cx"),
-      glintCy: glintStyle.getPropertyValue("cy"),
-      illuminationDisplay: getComputedStyle(illumination).display,
-      lightX: frameStyle.getPropertyValue("--foil-light-x").trim(),
-      lightY: frameStyle.getPropertyValue("--foil-light-y").trim(),
-      opacities: layers.map(layer => getComputedStyle(layer as SVGElement).opacity),
-      transitionDurations: layers.map(
-        layer => getComputedStyle(layer as SVGElement).transitionDuration,
-      ),
-    };
-  });
-}
-
-async function moveInside(page: Page, frame: Locator): Promise<void> {
-  await frame.scrollIntoViewIfNeeded();
-  const box = await frame.boundingBox();
-  invariant(box !== null && box.width > 0 && box.height > 0, "The foil frame has no layout box.");
-  await page.mouse.move(box.x + box.width * 0.78, box.y + box.height * 0.24);
-  await settle(page);
-}
-
-async function verifyInteractivePointer(browser: Browser, baseUrl: string): Promise<void> {
+async function verifyModelLogoCards(browser: Browser, baseUrl: string): Promise<void> {
   const context = await browser.newContext({
     colorScheme: "dark",
     viewport: { height: 900, width: 1_280 },
   });
   await stubAccountBoundary(context);
   const page = await context.newPage();
-  const failures = attachDiagnostics(page, "interactive");
+  const failures = attachDiagnostics(page, "model logo cards");
   try {
-    const frame = await openModels(page, baseUrl);
-    const initial = await foilEvidence(frame);
-    invariant(!initial.active, "The foil frame is active before pointer movement.");
-    invariant(initial.bandColors.length === 5, "The holographic spectrum does not expose five bands.");
-
-    await moveInside(page, frame);
-    const active = await foilEvidence(frame);
-    invariant(active.active, "Fine-pointer movement did not activate the foil frame.");
+    const card = await openModels(page, baseUrl);
+    const box = await card.boundingBox();
+    invariant(box !== null && box.width > 0 && box.height > 0, "The logo card has no layout box.");
+    invariant(Math.abs(box.width - box.height) < 2, "Gallery logo cards must stay square.");
     invariant(
-      active.lightX !== initial.lightX && active.lightY !== initial.lightY,
-      `Pointer movement did not move the foil light: ${JSON.stringify({ active, initial })}`,
+      await page.locator(".model-logo-card").count() > 0,
+      "The gallery did not render square logo cards.",
     );
     invariant(
-      active.angle !== initial.angle,
-      `Pointer movement did not rotate the spectrum: ${JSON.stringify({ active, initial })}`,
+      await page.locator(".model-card-frame, .model-card-holographic-foil, .model-card-illumination").count() === 0,
+      "Foil or illumination chrome remains on the gallery.",
     );
+    const mimo = page.getByRole("link", { name: /MiMo-V2\.6-Pro/u });
+    await mimo.click();
+    await page.waitForURL("**/models/xiaomi/mimo-v2-6-pro/index");
     invariant(
-      active.glintCx !== initial.glintCx && active.glintCy !== initial.glintCy,
-      `The radial SVG glint did not follow the custom properties: ${JSON.stringify({ active, initial })}`,
-    );
-    invariant(
-      active.bandColors.some((color, index) => color !== initial.bandColors[index]),
-      `The SVG spectrum colors did not follow the phase angle: ${JSON.stringify({ active, initial })}`,
-    );
-
-    await page.mouse.move(1, 1);
-    await settle(page);
-    const reset = await foilEvidence(frame);
-    invariant(!reset.active, "Pointer exit did not deactivate the foil frame.");
-    invariant(
-      reset.lightX === initial.lightX
-      && reset.lightY === initial.lightY
-      && reset.angle === initial.angle,
-      `Pointer exit did not restore the deterministic seed pose: ${JSON.stringify({ initial, reset })}`,
-    );
-    invariant(failures.length === 0, failures.join("; "));
-  } finally {
-    await context.close();
-  }
-}
-
-async function verifyReducedMotion(browser: Browser, baseUrl: string): Promise<void> {
-  const context = await browser.newContext({
-    colorScheme: "dark",
-    reducedMotion: "reduce",
-    viewport: { height: 900, width: 1_280 },
-  });
-  await stubAccountBoundary(context);
-  const page = await context.newPage();
-  const failures = attachDiagnostics(page, "reduced motion");
-  try {
-    const frame = await openModels(page, baseUrl);
-    invariant(
-      await page.evaluate(() => matchMedia("(prefers-reduced-motion: reduce)").matches),
-      "Chromium did not activate reduced motion.",
-    );
-    const initial = await foilEvidence(frame);
-    await moveInside(page, frame);
-    const moved = await foilEvidence(frame);
-    invariant(!moved.active, "Reduced motion allowed pointer-driven foil activation.");
-    invariant(
-      moved.lightX === initial.lightX
-      && moved.lightY === initial.lightY
-      && moved.angle === initial.angle,
-      `Reduced motion changed the deterministic seed pose: ${JSON.stringify({ initial, moved })}`,
-    );
-    invariant(
-      moved.transitionDurations.every((duration) => {
-        const milliseconds = cssDurationMilliseconds(duration);
-        // Chromium normalizes a disabled transition to 1e-05s in reduced-motion
-        // emulation, which is its effectively-zero computed duration.
-        return milliseconds !== null && milliseconds <= 0.01;
-      }),
-      `Reduced motion retained foil transitions: ${JSON.stringify(moved.transitionDurations)}`,
-    );
-    invariant(failures.length === 0, failures.join("; "));
-  } finally {
-    await context.close();
-  }
-}
-
-async function verifyReducedTransparency(browser: Browser, baseUrl: string): Promise<void> {
-  const context = await browser.newContext({
-    colorScheme: "dark",
-    viewport: { height: 900, width: 1_280 },
-  });
-  await stubAccountBoundary(context);
-  const page = await context.newPage();
-  const failures = attachDiagnostics(page, "reduced transparency");
-  const session = await context.newCDPSession(page);
-  try {
-    await session.send("Emulation.setEmulatedMedia", {
-      features: [{ name: "prefers-reduced-transparency", value: "reduce" }],
-    });
-    const frame = await openModels(page, baseUrl);
-    invariant(
-      await page.evaluate(() => matchMedia("(prefers-reduced-transparency: reduce)").matches),
-      "Chromium did not activate reduced transparency.",
-    );
-    const initial = await foilEvidence(frame);
-    invariant(
-      JSON.stringify(initial.opacities) === JSON.stringify(["0.44", "0.08", "0.035"]),
-      `Reduced transparency produced ${JSON.stringify(initial.opacities)} foil opacities.`,
-    );
-    await moveInside(page, frame);
-    const moved = await foilEvidence(frame);
-    invariant(moved.active, "Reduced transparency disabled fine-pointer foil feedback.");
-    invariant(
-      moved.angle !== initial.angle,
-      `Reduced transparency prevented pointer-driven spectrum movement: ${JSON.stringify({ initial, moved })}`,
-    );
-    invariant(
-      JSON.stringify(moved.opacities) === JSON.stringify(initial.opacities),
-      `Pointer movement escaped reduced-transparency opacity caps: ${JSON.stringify({ initial, moved })}`,
-    );
-    invariant(failures.length === 0, failures.join("; "));
-  } finally {
-    await session.detach();
-    await context.close();
-  }
-}
-
-async function verifyForcedColors(browser: Browser, baseUrl: string): Promise<void> {
-  const context = await browser.newContext({
-    colorScheme: "dark",
-    forcedColors: "active",
-    viewport: { height: 900, width: 1_280 },
-  });
-  await stubAccountBoundary(context);
-  const page = await context.newPage();
-  const failures = attachDiagnostics(page, "forced colors");
-  try {
-    const frame = await openModels(page, baseUrl);
-    invariant(
-      await page.evaluate(() => matchMedia("(forced-colors: active)").matches),
-      "Chromium did not activate forced colors.",
-    );
-    const initial = await foilEvidence(frame);
-    invariant(initial.illuminationDisplay === "none", "Forced colors did not hide decorative illumination.");
-    await moveInside(page, frame);
-    const moved = await foilEvidence(frame);
-    invariant(!moved.active, "Forced colors allowed pointer-driven foil activation.");
-    invariant(
-      moved.lightX === initial.lightX
-      && moved.lightY === initial.lightY
-      && moved.angle === initial.angle,
-      `Forced colors changed the deterministic seed pose: ${JSON.stringify({ initial, moved })}`,
+      await page.getByRole("heading", { name: "Notes from X" }).isVisible(),
+      "The MiMo page did not surface curated commentary.",
     );
     invariant(failures.length === 0, failures.join("; "));
   } finally {
@@ -671,10 +474,7 @@ try {
   try {
     await verifyBenchmarkAtlas(browser, baseUrl);
     await verifyChartExport(browser, baseUrl);
-    await verifyInteractivePointer(browser, baseUrl);
-    await verifyReducedMotion(browser, baseUrl);
-    await verifyReducedTransparency(browser, baseUrl);
-    await verifyForcedColors(browser, baseUrl);
+    await verifyModelLogoCards(browser, baseUrl);
     await verifyUsageDashboard(browser, baseUrl, repository, hostname, await reservePort());
     await verifyUsageSessions(browser, baseUrl);
   } finally {
@@ -686,4 +486,4 @@ try {
   if (server.exitCode === null) server.kill("SIGKILL");
 }
 
-console.log("Benchmark atlas, chart export, and model-card foil browser contracts passed.");
+console.log("Benchmark atlas, chart export, and model logo-card browser contracts passed.");

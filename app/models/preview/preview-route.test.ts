@@ -41,13 +41,13 @@ describe("Hraness model-card preview", () => {
     );
     expect(body).toContain('<meta name="robots" content="noindex, nofollow, noarchive">');
     expect(body).toContain('<link rel="canonical" href="https://aicharts.io/models">');
-    expect(body).toContain("<title>AI model trading cards | AI Charts</title>");
+    expect(body).toContain("<title>AI model pages | AI Charts</title>");
   });
 
   test("is a bounded, inert document built from the existing collection image", async () => {
     const body = await GET().text();
 
-    expect(body).toContain(`<h1>AI model trading cards</h1>`);
+    expect(body).toContain(`<h1>AI model pages</h1>`);
     expect(body).toContain(`src="${MODEL_CARD_COLLECTION_SOCIAL_IMAGE_URL}"`);
     expect(body).not.toMatch(/<(?:a|button|form|iframe|input|script)\b/iu);
     expect(body).not.toMatch(/\son[a-z]+\s*=/iu);

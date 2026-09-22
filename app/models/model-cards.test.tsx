@@ -5,8 +5,8 @@ import ModelCardPage from "@/app/models/[creatorSlug]/[modelSlug]/[profileSlug]/
 import ModelCardsPage from "@/app/models/page";
 import { modelCardsHeading, modelCardsLede } from "@/app/site";
 import { ModelCardFace } from "@/components/model-card-face";
-import { ModelCardFoilFrame } from "@/components/model-card-foil-frame";
 import { ModelCardRasterFace, ModelCardSocialImage } from "@/components/model-card-image";
+import { INDEX_MODEL_PAGES } from "@/lib/index-model-pages";
 import {
   MODEL_CARD_COLLECTION_SOCIAL_IMAGE_PATH,
   MODEL_CARD_COLLECTION_SOCIAL_IMAGE_URL,
@@ -58,23 +58,6 @@ const modelCardsStyles = await Bun.file(
 ).text();
 
 describe("public model cards", () => {
-  function cardSpeckTransform(card: (typeof MODEL_CARD_PRESENTATIONS)[number]): string {
-    const markup = renderToStaticMarkup(<ModelCardFace card={card} />);
-    const properties = [
-      "rotation",
-      "scale",
-      "shift-x",
-      "shift-y",
-    ].map(property => markup.match(new RegExp(
-      `--model-card-speck-${property}:([^;\"]+)`,
-      "u",
-    ))?.[1]);
-    if (properties.some(value => value === undefined)) {
-      throw new Error("Expected a complete card-background speck transform.");
-    }
-    return properties.join("/");
-  }
-
   test("keeps model-specific resources without a second site footer", () => {
     expect(modelsLayoutSource).not.toContain("<TopBar");
     expect(modelsLayoutSource).toContain("<SiteHeader");
@@ -122,63 +105,38 @@ describe("public model cards", () => {
     }
   });
 
-  test("uses one delegated foil deck for the full gallery", () => {
+  test("renders square logo cards for coding profiles and recent Index pages", () => {
     const markup = renderToStaticMarkup(<ModelCardsPage />);
+    const galleryCount = MODEL_CARD_PRESENTATIONS.length + INDEX_MODEL_PAGES.length;
     expect(markup).toContain(
-      '<h1 class="hraness-marketing-hero__heading" id="model-cards-title">Every model, on a card</h1>',
+      `<h1 class="hraness-marketing-hero__heading" id="model-cards-title">${modelCardsHeading}</h1>`,
     );
     expect(markup).toContain('class="hraness-marketing-hero__summary model-card-gallery__lede"');
-    expect(markup).toContain(
-      "Shareable benchmark cards built from the same records as the charts",
-    );
+    expect(markup).toContain(modelCardsLede);
     expect(markup.indexOf('class="model-release-radar"')).toBeGreaterThan(
       markup.indexOf('class="model-card-grid"'),
     );
-    expect(markup).toContain("data-foil-card-deck");
-    expect(markup.match(/data-foil-controller="deck"/gu)).toHaveLength(
-      MODEL_CARD_PRESENTATIONS.length,
-    );
-    expect(markup.match(/data-foil-render-mode="interactive"/gu)).toHaveLength(
-      MODEL_CARD_PRESENTATIONS.length,
-    );
-    expect(markup.match(/data-illumination-mode="gallery"/gu)).toHaveLength(
-      MODEL_CARD_PRESENTATIONS.length,
-    );
-    expect(markup.match(/data-illumination-finish="holographic"/gu)).toHaveLength(
-      MODEL_CARD_PRESENTATIONS.length,
-    );
-    expect(markup.match(/data-holographic-finish="diffractive-spot-foil"/gu)).toHaveLength(
-      MODEL_CARD_PRESENTATIONS.length,
-    );
-    expect(markup.match(/data-ornament-mark="organic-speck-field"/gu)).toHaveLength(
-      MODEL_CARD_PRESENTATIONS.length,
-    );
-    expect(markup.match(/model-card-grid__bleed/gu)).toHaveLength(
-      MODEL_CARD_PRESENTATIONS.length,
-    );
-    expect(markup.match(/<(?:path|ellipse|circle)\b/gu)?.length ?? 0).toBeLessThan(
-      MODEL_CARD_PRESENTATIONS.length * 23,
-    );
-    expect(markup.match(/<[A-Za-z][^>]*>/gu)?.length ?? 0).toBeLessThan(
-      MODEL_CARD_PRESENTATIONS.length * 120 + 160,
-    );
-    expect(Buffer.byteLength(markup)).toBeLessThan(
-      MODEL_CARD_PRESENTATIONS.length * 23_000 + 10_400,
-    );
+    expect(markup.match(/class="model-logo-card"/gu)).toHaveLength(galleryCount);
+    expect(markup).toContain('href="/models/xiaomi/mimo-v2-6-pro/index"');
+    expect(markup).toContain("MiMo-V2.6-Pro");
+    expect(markup).not.toContain("data-foil-card-deck");
+    expect(markup).not.toContain("data-illumination-finish");
+    expect(markup).not.toContain("data-holographic-finish");
+    expect(markup).not.toContain("model-card-grid__bleed");
     expect(markup).not.toContain("<canvas");
     expect(markup).toContain('aria-label="Filter model cards"');
     expect(markup).toContain('aria-label="Show only cost and AA Index Pareto-frontier cards"');
     expect(markup).toContain('aria-label="Sort model cards by official release date"');
     expect(markup).toContain("All providers");
-    expect(markup).toContain(`${MODEL_CARD_PRESENTATIONS.length} cards`);
+    expect(markup).toContain(`${galleryCount} cards`);
     expect(markup).toContain(`${MODEL_CARD_TOP_PATHS.length} cards · Cost ↓ · AAI ↑`);
     expect(markup).toContain("Newest releases first");
     expect(markup).not.toContain(`${MODEL_CARD_PRESENTATIONS.length} of ${MODEL_CARD_PRESENTATIONS.length} cards`);
     expect(markup).not.toContain("<span>Provider</span>");
     expect(markup).not.toContain('aria-label="How to read model card emblems"');
     expect(markup).not.toContain("Read the sigil");
-    expect(markup).not.toContain("Maker — color &amp; outer court");
     expect(modelsPageSource).not.toContain("model-card-gallery__legend");
+    expect(modelsPageSource).not.toContain("ModelCardFoilFrame");
   });
 
   test("surfaces a restrained release radar without inventing benchmark cards", () => {
@@ -244,7 +202,7 @@ describe("public model cards", () => {
       expect(markup).not.toContain("Release radar");
     }
     expect(markup.match(/model-card-grid__link/gu)).toHaveLength(
-      MODEL_CARD_PRESENTATIONS.length,
+      MODEL_CARD_PRESENTATIONS.length + INDEX_MODEL_PAGES.length,
     );
   });
 
@@ -260,10 +218,11 @@ describe("public model cards", () => {
     expect(modelsPageSource).toContain("topCount");
     expect(modelsPageSource).toContain("ModelCardGalleryItems");
     expect(modelsPageSource).toContain("topPaths.has(card.path)");
+    expect(modelsPageSource).toContain("INDEX_MODEL_PAGES");
   });
 
   test("uses the shared option picker instead of a baseline chevron glyph", () => {
-    expect(modelsPageSource).toContain('card.release.status === "verified"');
+    expect(modelsPageSource).toContain('card.release.status === "verified" ? card.release.releasedOn : null');
     expect(modelCardsStyles).toContain(".model-card-gallery__provider-filter");
     expect(modelCardsStyles).toContain("--option-picker-accent");
     expect(modelCardsStyles).not.toContain(".model-card-gallery__provider-filter .hraness-field__select");
@@ -277,23 +236,9 @@ describe("public model cards", () => {
     if (fastCard === undefined) throw new Error("Expected a Fast card fixture.");
     const markup = renderToStaticMarkup(<ModelCardsPage />);
     expect(markup).toContain(
-      `aria-label="Open ${fastCard.displayTitle} model card; Fast class.`,
+      `aria-label="Open ${fastCard.displayTitle} model page; Fast class.`,
     );
     expect(markup).not.toContain("model-card-face__class");
-  });
-
-  test("keeps card-background specks model-stable and collection-distinct", () => {
-    const signaturesByModel = new Map<string, Set<string>>();
-    for (const card of MODEL_CARD_PRESENTATIONS) {
-      const signatures = signaturesByModel.get(card.canonicalModelId) ?? new Set<string>();
-      signatures.add(cardSpeckTransform(card));
-      signaturesByModel.set(card.canonicalModelId, signatures);
-    }
-    expect([...signaturesByModel.values()].every(signatures => signatures.size === 1)).toBe(true);
-    const modelSignatures = [...signaturesByModel.values()].map(signatures => (
-      [...signatures][0]
-    ));
-    expect(new Set(modelSignatures).size).toBe(modelSignatures.length);
   });
 
   test("keeps semantic content in the live face and both raster layouts", () => {
@@ -308,7 +253,6 @@ describe("public model cards", () => {
     for (const markup of [live, portrait, social]) {
       expect(markup).toContain(card.displayTitle);
       expect(markup).toContain(card.harnessLabel);
-      expect(markup).toContain("aicharts.io");
       expect(markup).toContain("data:image/svg+xml;base64,");
       expect(markup).not.toContain("with fallback");
       expect(markup).not.toContain("Artificial Analysis");
@@ -323,12 +267,12 @@ describe("public model cards", () => {
       expect(markup).not.toContain("NaN");
       expect(markup).not.toContain("undefined");
     }
-    expect(live).toContain("<div");
+    expect(live).toContain('class="model-logo-card"');
     expect(live).not.toContain("<article");
-    expect(live).toContain("<dl");
-    expect(live).toContain('data-illumination-finish="holographic"');
-    expect(portrait).toContain('data-illumination-finish="print"');
-    expect(social).toContain('data-illumination-finish="print"');
+    expect(live).not.toContain("<dl");
+    expect(live).not.toContain("data-illumination-finish");
+    expect(portrait).toContain("aicharts.io");
+    expect(social).toContain("aicharts.io");
     expect(portrait).not.toContain("data-holographic-finish");
     expect(social).not.toContain("data-holographic-finish");
 
@@ -350,22 +294,17 @@ describe("public model cards", () => {
     expect(pendingLive).not.toContain(">OpenRouter</span>");
   });
 
-  test("drives holographic ink from the delegated pose with accessible fallbacks", async () => {
+  test("keeps logo-card chrome quiet and free of foil leftovers", async () => {
     const stylesheet = await Bun.file(
       new URL("../../styles/model-cards.css", import.meta.url),
     ).text();
 
-    expect(stylesheet).toContain("--foil-light-x");
-    expect(stylesheet).toContain("--foil-light-y");
-    expect(stylesheet).toContain("--foil-spectrum-angle");
-    expect(stylesheet).toContain("--model-card-rail-spectrum-opacity");
-    expect(stylesheet).toMatch(/\.model-card-face\s*\{[^}]*conic-gradient\(/su);
-    expect(stylesheet).toMatch(/\.model-card-face__art\s*\{[^}]*conic-gradient\(/su);
-    expect(stylesheet).toMatch(/\.model-card-face\[data-card-density="5"\]\s*\{[^}]*--model-card-rail-spectrum-opacity:\s*\.37;/su);
-    expect(stylesheet).toMatch(/\.model-card-holographic-foil__spectrum use\s*\{[^}]*stroke-dasharray:/su);
-    expect(stylesheet).toMatch(/\.model-card-frame\[data-foil-active\][\s\S]*?\.model-card-holographic-foil__spectrum/u);
-    expect(stylesheet).toMatch(/@media \(prefers-reduced-motion:\s*reduce\)[\s\S]*?\.model-card-holographic-foil__spectrum/u);
-    expect(stylesheet).toMatch(/@media \(prefers-reduced-transparency:\s*reduce\), \(prefers-contrast:\s*more\)[\s\S]*?\.model-card-holographic-foil__glint/u);
+    expect(stylesheet).toContain(".model-logo-card");
+    expect(stylesheet).toMatch(/\.model-logo-card\s*\{[^}]*aspect-ratio:\s*1;/su);
+    expect(stylesheet).not.toContain("--foil-light-x");
+    expect(stylesheet).not.toContain("--foil-spectrum-angle");
+    expect(stylesheet).not.toContain("holographic");
+    expect(stylesheet).not.toContain("model-card-illumination");
     expect(stylesheet).not.toContain("animation:");
   });
 
@@ -389,12 +328,32 @@ describe("public model cards", () => {
     const harnessLabel = card.agentNames.length === 1 ? "Agent harness" : "Agent harnesses";
     expect(detailMarkup).toContain(harnessLabel);
     expect(detailMarkup).toContain("Snapshot");
-    expect(detailMarkup).toContain(">Sigil</dt>");
-    expect(detailMarkup).toContain(`${card.emblemIdentity.generation.join(".")} version marks`);
-    expect(detailMarkup).toContain(`foil/detail ${card.illuminationDensity}/5`);
     expect(detailMarkup).toContain("model-card-detail__code-token");
+    expect(detailMarkup).not.toContain(">Sigil</dt>");
+    expect(detailMarkup).not.toContain("foil/detail");
     expect(detailMarkup).not.toContain(">Observations<");
     expect(markdown).toContain(`${harnessLabel}:`);
+  });
+
+  test("seeds Deedy commentary under the MiMo Index page", async () => {
+    const mimo = INDEX_MODEL_PAGES.find(page => page.canonicalModelId === "xiaomi/mimo-v2-6-pro");
+    if (mimo === undefined) throw new Error("Expected the MiMo Index page.");
+    const detailPage = await ModelCardPage({
+      params: Promise.resolve({
+        creatorSlug: mimo.creatorSlug,
+        modelSlug: mimo.modelSlug,
+        profileSlug: mimo.profileSlug,
+      }),
+    });
+    const detailMarkup = renderToStaticMarkup(detailPage);
+    const markdown = markdownForPath(mimo.path).body;
+    expect(detailMarkup).toContain("Notes from X");
+    expect(detailMarkup).toContain("deedydas");
+    expect(detailMarkup).toContain("https://x.com/deedydas/status/2102293684767412393");
+    expect(detailMarkup).toContain("Xiaomi just dropped Mimo 2.6 Pro");
+    expect(detailMarkup).not.toContain("widgets.js");
+    expect(markdown).toContain("Notes from X");
+    expect(markdown).toContain("https://x.com/deedydas/status/2102293684767412393");
   });
 
   test("shows missing metrics as a dash with an explicit accessible value", () => {
@@ -414,8 +373,7 @@ describe("public model cards", () => {
 
     const live = renderToStaticMarkup(<ModelCardFace card={card} />);
     const detail = modelCardMarkdown(card);
-    expect(live).toContain('<span aria-hidden="true">–</span>');
-    expect(live).toContain(">Not available</span>");
+    expect(live).toContain("–");
     expect(detail).toContain(`- ${missing.label}: Not available`);
     expect(detail).not.toContain(`- ${missing.label}: –`);
   });
@@ -429,16 +387,18 @@ describe("public model cards", () => {
     expect(collection.body).toContain(`# ${modelCardsHeading}`);
     expect(collection.body).toContain(modelCardsLede);
     expect(collection.body).toContain(card.path);
+    expect(collection.body).toContain("/models/xiaomi/mimo-v2-6-pro/index");
     expect(detail.found).toBe(true);
     expect(detail.body).toContain(card.displayTitle);
     expect(detail.body).toContain("Download the branded PNG");
+    expect(markdownForPath("/models/xiaomi/mimo-v2-6-pro/index").found).toBe(true);
     expect(markdownForPath("/models/openai/not-a-model/max").found).toBe(false);
   });
 
   test("includes the renderer contract in versioned card artwork URLs", () => {
     const card = MODEL_CARD_PRESENTATIONS[0];
     if (card === undefined) throw new Error("Expected at least one model card.");
-    expect(MODEL_CARD_RENDERER_VERSION).toBe("model-card-v7");
+    expect(MODEL_CARD_RENDERER_VERSION).toBe("model-card-v8");
     expect(MODEL_CARD_COLLECTION_SOCIAL_IMAGE_PATH).toBe("/models/opengraph-image-v7");
     expect(MODEL_CARD_COLLECTION_SOCIAL_IMAGE_URL).toBe(
       `${MODEL_CARD_COLLECTION_SOCIAL_IMAGE_PATH}?v=${MODEL_CARD_SNAPSHOT_VERSION}`,
@@ -460,46 +420,17 @@ describe("public model cards", () => {
     );
   });
 
-  test("moves class expression from the outer frame into the illuminated logo field", () => {
-    for (const density of [1, 2, 3, 4, 5] as const) {
-      const base = MODEL_CARD_PRESENTATIONS[0];
-      if (base === undefined) throw new Error("Expected a model-card fixture.");
-      const card = { ...base, illuminationDensity: density };
-      const markup = renderToStaticMarkup(
-        <ModelCardFoilFrame
-          foilPreset={card.foilPreset}
-          renderMode="static"
-          seed={card.seed}
-        >
-          <ModelCardFace card={card} />
-        </ModelCardFoilFrame>,
-      );
-      expect(markup).toContain('data-foil-ornament="none"');
-      expect(markup).toContain(`data-illumination-density="${density}"`);
-      expect(markup).toContain(`data-card-density="${density}"`);
-      expect(markup).toContain("data-illumination-motif=");
-      expect(markup).not.toContain("model-card-face__class");
-    }
-  });
-
-  test("keeps gallery cards legible with a paint-safe transform bleed", async () => {
+  test("keeps square gallery cards readable without foil bleed chrome", async () => {
     const stylesheet = await Bun.file(
       new URL("../../styles/model-cards.css", import.meta.url),
     ).text();
 
-    expect(stylesheet).toMatch(/\.model-card-grid__link\s*\{[^}]*aspect-ratio:\s*5 \/ 7;[^}]*contain:\s*layout style;[^}]*position:\s*relative;/su);
-    expect(stylesheet).not.toMatch(/\.model-card-grid__link\s*\{[^}]*content-visibility:\s*auto;/su);
-    expect(stylesheet).toMatch(/\.model-card-grid__bleed\s*\{[^}]*contain:\s*layout paint style;[^}]*content-visibility:\s*auto;[^}]*inset:\s*-\.375rem;[^}]*padding:\s*\.375rem;/su);
-    expect(stylesheet).toMatch(/\.model-card-frame\s*\{[^}]*outline:\s*none;/su);
-    expect(stylesheet).toMatch(/\.model-card-frame\s*\{[^}]*clip-path:\s*inset\(0 round var\(--foil-card-radius\)\);[^}]*overflow:\s*clip;/su);
-    expect(stylesheet).toMatch(/\.model-card-grid__link:focus-visible\s*\{[^}]*outline-offset:\s*5px;/su);
-    expect(stylesheet).toMatch(/\.model-card-grid__bleed\s*\{[^}]*contain-intrinsic-block-size:\s*auto 20\.35rem;[^}]*contain-intrinsic-inline-size:\s*auto 14\.75rem;/su);
-    expect(stylesheet).toMatch(/@media \(max-width:\s*560px\)[\s\S]*?\.model-card-grid\s*\{[^}]*grid-template-columns:\s*minmax\(0, 25rem\);/u);
-    expect(stylesheet).toMatch(/@media \(max-width:\s*430px\)[\s\S]*?\.model-card-frame\s*\{[^}]*--foil-card-radius:\s*\.85rem;/u);
-    expect(stylesheet).toMatch(/\.model-card-face__harness\s*\{[^}]*overflow:\s*hidden;[^}]*padding-block-end:\s*\.18em;[^}]*text-overflow:\s*ellipsis;/su);
-    expect(stylesheet).toMatch(/\.model-card-face dt\s*\{[^}]*font-size:\s*max\(\.625rem, 2\.4cqi\);/su);
-    expect(stylesheet).toMatch(/@media \(forced-colors:\s*active\)[\s\S]*?\.model-card-illumination\s*\{[^}]*display:\s*none;/u);
-    expect(stylesheet).toMatch(/@media \(prefers-reduced-transparency:\s*reduce\), \(prefers-contrast:\s*more\)[\s\S]*?--model-card-rail-spectrum-opacity:\s*\.06;/u);
+    expect(stylesheet).toMatch(/\.model-card-grid__link\s*\{[^}]*aspect-ratio:\s*1;/su);
+    expect(stylesheet).not.toContain("model-card-grid__bleed");
+    expect(stylesheet).not.toContain("--foil-card-radius");
+    expect(stylesheet).toMatch(/\.model-card-grid__link:focus-visible\s*\{[^}]*outline-offset:\s*4px;/su);
+    expect(stylesheet).toMatch(/@media \(max-width:\s*560px\)[\s\S]*?\.model-card-grid\s*\{[^}]*grid-template-columns:\s*minmax\(0, 22rem\);/u);
+    expect(stylesheet).toMatch(/@media \(forced-colors:\s*active\)[\s\S]*?\.model-logo-card\s*\{[^}]*background:\s*Canvas;/u);
     expect(modelsPageSource).toContain("url: MODEL_CARD_COLLECTION_SOCIAL_IMAGE_URL");
   });
 });

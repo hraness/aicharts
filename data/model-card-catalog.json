@@ -528,6 +528,22 @@
     "aliases": ["xai_grok-4-5"]
   },
   {
+    "providerId": "xiaomi",
+    "model": "MiMo-V2.6-Pro",
+    "canonicalModelId": "xiaomi/mimo-v2-6-pro",
+    "emblemIdentity": {
+      "familyId": "mimo",
+      "generation": ["2", "6"],
+      "revision": null,
+      "editionId": "pro",
+      "role": "flagship"
+    },
+    "gatewayModelId": null,
+    "lobeIconKey": null,
+    "intrinsicClass": "standard",
+    "aliases": []
+  },
+  {
     "providerId": "z_ai",
     "model": "GLM-5.1",
     "canonicalModelId": "zai/glm-5.1",

@@ -18,6 +18,10 @@ import {
   codingAgentDatasetModifiedAt,
 } from "@/lib/coding-agent-dataset";
 import {
+  INDEX_MODEL_PAGES,
+  INDEX_MODEL_SNAPSHOT,
+} from "@/lib/index-model-pages";
+import {
   MODEL_CARD_COLLECTION_SOCIAL_IMAGE_URL,
   MODEL_CARD_PRESENTATIONS,
 } from "@/lib/model-card-collection";
@@ -95,8 +99,14 @@ describe("public search discovery", () => {
     expect(modelsEntry?.images).toEqual([
       new URL(MODEL_CARD_COLLECTION_SOCIAL_IMAGE_URL, "https://aicharts.io").toString(),
     ]);
-    expect(cardEntries).toHaveLength(indexableModelCards().length);
-    expect(cardEntries.every(entry => entry.lastModified === datasetModifiedAt)).toBe(true);
+    expect(cardEntries).toHaveLength(
+      indexableModelCards().length + INDEX_MODEL_PAGES.length,
+    );
+    expect(cardEntries.filter(entry => entry.lastModified === datasetModifiedAt))
+      .toHaveLength(indexableModelCards().length);
+    expect(cardEntries.filter(entry => (
+      entry.lastModified === INDEX_MODEL_SNAPSHOT.source.retrievedAt
+    ))).toHaveLength(INDEX_MODEL_PAGES.length);
     expect(cardEntries.every(entry => entry.images?.length === 1)).toBe(true);
     expect(new Date(datasetModifiedAt).getTime())
       .toBeLessThanOrEqual(new Date(parsed.value.source.retrievedAt).getTime());

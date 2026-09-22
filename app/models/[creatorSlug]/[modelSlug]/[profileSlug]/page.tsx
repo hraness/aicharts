@@ -4,7 +4,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { ModelCardShare } from "@/components/model-card-share";
-import { ModelTradingCard } from "@/components/model-trading-card";
+import { ModelCommentary } from "@/components/model-commentary";
+import { ModelLogoCard, logoCardFromIndexPage, logoCardFromPresentation } from "@/components/model-logo-card";
 import {
   MODEL_CARD_PRESENTATIONS,
   MODEL_CARD_SNAPSHOT,
@@ -22,6 +23,14 @@ import {
 import { modelCardRouteStatus } from "@/lib/model-card-route-status";
 import { vercelGatewayModelCatalog } from "@/lib/model-card-sources";
 import { formatRetrievedAt } from "@/lib/coding-agent-updates";
+import {
+  findIndexModelPage,
+  formatIntelligenceCost,
+  formatIntelligenceIndex,
+  indexModelRouteStaticParams,
+  intelligenceObservationForCard,
+} from "@/lib/index-model-pages";
+import { modelCommentaryForCanonicalId } from "@/lib/model-commentary";
 
 import {
   modelCardDescription,
@@ -33,31 +42,32 @@ import {
 export const dynamicParams = false;
 
 export function generateStaticParams() {
-  return [...modelCardRouteStaticParams()];
-}
-
-function emblemTerm(value: string): string {
-  return value.split("-").filter(Boolean).map(term => (
-    term.charAt(0).toLocaleUpperCase("en-US") + term.slice(1)
-  )).join(" ");
+  return [...modelCardRouteStaticParams(), ...indexModelRouteStaticParams()];
 }
 
 export async function generateMetadata({
   params,
 }: Readonly<{ params: Promise<ModelCardRouteParams> }>): Promise<Metadata> {
-  const card = findModelCardPresentation(await params);
-  if (card === undefined) notFound();
-  const title = modelCardTitle(card.displayTitle);
-  const description = modelCardDescription(card.displayTitle);
+  const resolved = await params;
+  const card = findModelCardPresentation(resolved);
+  const indexPage = card === undefined ? findIndexModelPage(resolved) : undefined;
+  const displayTitle = card?.displayTitle ?? indexPage?.displayTitle;
+  const path = card?.path ?? indexPage?.path;
+  if (displayTitle === undefined || path === undefined) notFound();
+  const title = modelCardTitle(displayTitle);
+  const description = modelCardDescription(displayTitle);
   const base = createPublicSiteMetadata({
     ...searchSite,
     description,
     socialTitle: title,
     title,
-  }, { canonicalPath: card.path });
-  const imagePath = versionedModelCardImagePath(card.path, "opengraph-image");
-  const imageAlt = `${card.displayTitle} benchmark card`;
-  const indexingPolicy = modelCardIndexingPolicy(card);
+  }, { canonicalPath: path });
+  const imagePath = versionedModelCardImagePath(
+    path as `/models/${string}/${string}/${string}`,
+    "opengraph-image",
+  );
+  const imageAlt = `${displayTitle} model page`;
+  const indexingPolicy = card === undefined ? undefined : modelCardIndexingPolicy(card);
   return {
     ...base,
     ...(indexingPolicy === undefined ? {} : { robots: indexingPolicy }),
@@ -79,11 +89,11 @@ export async function generateMetadata({
   };
 }
 
-export default async function ModelCardPage({
-  params,
-}: Readonly<{ params: Promise<ModelCardRouteParams> }>) {
-  const card = findModelCardPresentation(await params);
-  if (card === undefined) notFound();
+function CodingModelPage({
+  card,
+}: Readonly<{
+  card: NonNullable<ReturnType<typeof findModelCardPresentation>>;
+}>) {
   const canonicalUrl = new URL(card.path, site.origin).toString();
   const imageUrl = versionedModelCardImagePath(card.path, "card.png");
   const routeStatus = modelCardRouteStatus(card);
@@ -91,17 +101,19 @@ export default async function ModelCardPage({
     candidate.canonicalModelId === card.canonicalModelId
     && candidate.path !== card.path
   ));
+  const commentary = modelCommentaryForCanonicalId(card.canonicalModelId);
+  const intelligence = intelligenceObservationForCard(card);
   return (
     <main
       className="model-card-detail"
       data-analytics-surface="model_card"
       id="model-cards-content"
     >
-      <Link className="model-card-detail__back" href="/models">← All model cards</Link>
+      <Link className="model-card-detail__back" href="/models">← All models</Link>
       <div className="model-card-detail__layout">
-        <section className="model-card-detail__stage" aria-label="Interactive foil model card">
-          <ModelTradingCard card={card} intensity="vivid" />
-          <p className="model-card-detail__interaction-hint">Move the pointer across the card to inspect the foil.</p>
+        <section className="model-card-detail__stage" aria-label={`${card.displayTitle} model card`}>
+          <ModelLogoCard card={logoCardFromPresentation(card)} />
+          {commentary !== undefined && <ModelCommentary note={commentary} />}
         </section>
         <div className="model-card-detail__copy">
           <header>
@@ -114,8 +126,30 @@ export default async function ModelCardPage({
             card={card}
             imageUrl={imageUrl}
           />
+          {intelligence !== undefined && (
+            <section aria-labelledby="model-index-stats-title" className="model-card-detail__facts">
+              <h2 id="model-index-stats-title">Intelligence Index</h2>
+              <dl>
+                <div><dt>Index</dt><dd>{formatIntelligenceIndex(intelligence.intelligenceIndex)}</dd></div>
+                <div>
+                  <dt>Cost per task</dt>
+                  <dd>
+                    {intelligence.costUsdPerTask === null
+                      ? "Not reported"
+                      : formatIntelligenceCost(intelligence.costUsdPerTask.total)}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Source</dt>
+                  <dd>
+                    <a href={intelligence.detailsUrl}>Artificial Analysis model page</a>
+                  </dd>
+                </div>
+              </dl>
+            </section>
+          )}
           <section aria-labelledby="model-card-details-title" className="model-card-detail__facts">
-            <h2 id="model-card-details-title">Card details</h2>
+            <h2 id="model-card-details-title">Coding-agent observations</h2>
             <dl>
               <div><dt>{routeStatus.provisionalIdentity ? "Provisional ID" : "Canonical ID"}</dt><dd><code className="model-card-detail__code-token">{card.canonicalModelId}</code></dd></div>
               <div>
@@ -156,16 +190,6 @@ export default async function ModelCardPage({
               </div>
               <div><dt>Profile</dt><dd><code className="model-card-detail__code-token">{card.profileSlug}</code></dd></div>
               <div>
-                <dt>Sigil</dt>
-                <dd>
-                  {card.providerName} court
-                  {" · "}{emblemTerm(card.emblemIdentity.familyId)} family seal
-                  {" · "}{card.emblemIdentity.generation.join(".")} version marks
-                  {" · "}{emblemTerm(card.emblemIdentity.editionId)} edition
-                  {" · "}foil/detail {card.illuminationDensity}/5
-                </dd>
-              </div>
-              <div>
                 <dt>{card.agentNames.length === 1 ? "Agent harness" : "Agent harnesses"}</dt>
                 <dd>
                   <ul className="model-card-detail__harnesses">
@@ -200,4 +224,83 @@ export default async function ModelCardPage({
       </div>
     </main>
   );
+}
+
+function IndexModelDetailPage({
+  page,
+}: Readonly<{
+  page: NonNullable<ReturnType<typeof findIndexModelPage>>;
+}>) {
+  const commentary = modelCommentaryForCanonicalId(page.canonicalModelId);
+  return (
+    <main
+      className="model-card-detail"
+      data-analytics-surface="model_card"
+      id="model-cards-content"
+    >
+      <Link className="model-card-detail__back" href="/models">← All models</Link>
+      <div className="model-card-detail__layout">
+        <section className="model-card-detail__stage" aria-label={`${page.displayTitle} model card`}>
+          <ModelLogoCard card={logoCardFromIndexPage(page)} />
+          {commentary !== undefined && <ModelCommentary note={commentary} />}
+        </section>
+        <div className="model-card-detail__copy">
+          <header>
+            <p>{page.providerName}</p>
+            <h1>{page.displayTitle}</h1>
+            <p>{page.sourceName}</p>
+          </header>
+          <section aria-labelledby="model-index-stats-title" className="model-card-detail__facts">
+            <h2 id="model-index-stats-title">Intelligence Index</h2>
+            <dl>
+              <div><dt>Index</dt><dd>{formatIntelligenceIndex(page.intelligenceIndex)}</dd></div>
+              <div>
+                <dt>Cost per task</dt>
+                <dd>
+                  {page.costUsdPerTask === null
+                    ? "Not reported"
+                    : formatIntelligenceCost(page.costUsdPerTask)}
+                </dd>
+              </div>
+              <div>
+                <dt>Canonical ID</dt>
+                <dd><code className="model-card-detail__code-token">{page.canonicalModelId}</code></dd>
+              </div>
+              <div>
+                <dt>Listed on Index</dt>
+                <dd>
+                  <time dateTime={page.releaseDate}>{formatModelCardReleaseDateLong(page.releaseDate)}</time>
+                  {" · snapshot date, not a verified first-party release date"}
+                </dd>
+              </div>
+              <div>
+                <dt>Source</dt>
+                <dd>
+                  <a href={page.detailsUrl}>{page.displayTitle} on Artificial Analysis</a>
+                  {" · "}
+                  <a href={page.sourceUrl}>{page.sourceName}</a>
+                  {" · retrieved "}
+                  <time dateTime={page.sourceRetrievedAt}>{formatRetrievedAt(page.sourceRetrievedAt)}</time>
+                </dd>
+              </div>
+            </dl>
+            <p>
+              These values come from the checked Intelligence Index snapshot. AI Charts does not invent missing coding-agent scores.
+            </p>
+          </section>
+        </div>
+      </div>
+    </main>
+  );
+}
+
+export default async function ModelCardPage({
+  params,
+}: Readonly<{ params: Promise<ModelCardRouteParams> }>) {
+  const resolved = await params;
+  const card = findModelCardPresentation(resolved);
+  if (card !== undefined) return <CodingModelPage card={card} />;
+  const indexPage = findIndexModelPage(resolved);
+  if (indexPage !== undefined) return <IndexModelDetailPage page={indexPage} />;
+  notFound();
 }
