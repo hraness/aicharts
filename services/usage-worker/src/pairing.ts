@@ -1,5 +1,6 @@
 import { DurableObject } from "cloudflare:workers";
 import { enrollmentHex, enrollmentRandom, parseEnrollmentProof, parseEnrollmentReservation, type EnrollmentReservation } from "./enrollment-contract";
+import { PAIRING_AUTHENTICATION_REUSE_WINDOW_MS } from "../../../lib/usage/pairing-transport-contract";
 
 /** Dormant internal RPC primitives, not an authenticated HTTP API. */
 export type PairingError =
@@ -140,7 +141,7 @@ function validLegacyState(value: unknown): value is LegacyState {
       const auth = attempt.authentication;
       if (!exact(auth, ["accountId", "authTimeMs", "sessionExpiresAtMs", "recordedAtMs"])
         || !account(auth.accountId) || !isTime(auth.authTimeMs) || auth.authTimeMs % 1_000 !== 0
-        || auth.authTimeMs < Math.floor(attempt.startedAtMs / 1_000) * 1_000
+        || auth.authTimeMs < Math.floor((attempt.startedAtMs - PAIRING_AUTHENTICATION_REUSE_WINDOW_MS) / 1_000) * 1_000
         || !isTime(auth.recordedAtMs) || auth.recordedAtMs < attempt.startedAtMs
         || auth.authTimeMs > auth.recordedAtMs || auth.recordedAtMs >= value.expiresAtMs
         || auth.recordedAtMs > value.observedAtMs || !isTime(auth.sessionExpiresAtMs)
@@ -367,8 +368,10 @@ export class PairingIntent extends DurableObject<Env> {
       if (!matchesBrowser(state, input, proof)) return failedProof(state);
       if (state.status === "denied" || state.status === "expired") return err("invalid_transition");
       const attempt = state.attempt!;
-      // Signed OIDC auth_time has seconds precision. No positive clock skew is admitted.
-      if (authTimeMs < Math.floor(attempt.startedAtMs / 1_000) * 1_000 || authTimeMs > now || sessionExpiresAtMs <= now) return err("authentication_not_fresh");
+      // Signed OIDC auth_time has seconds precision. A completed sign-in inside
+      // the shared reuse window satisfies freshness without another prompt.
+      if (authTimeMs < Math.floor((attempt.startedAtMs - PAIRING_AUTHENTICATION_REUSE_WINDOW_MS) / 1_000) * 1_000
+        || authTimeMs > now || sessionExpiresAtMs <= now) return err("authentication_not_fresh");
       const recorded = attempt.authentication;
       if (recorded !== null) return recorded.accountId === accountId && recorded.authTimeMs === authTimeMs
         && recorded.sessionExpiresAtMs === sessionExpiresAtMs ? ok({ recorded: true }) : err("conflict");

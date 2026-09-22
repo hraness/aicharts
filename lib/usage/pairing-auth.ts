@@ -6,6 +6,7 @@ import {
   randomPairingToken, sealPairingCustody, type PairingCustody, type PairingProof as Proof,
 } from "./pairing-custody";
 import { encodePairingPublicReply, parsePairingDecision, PAIRING_PAGE_PATH, PAIRING_PUBLIC_MEDIA } from "./pairing-public";
+import { PAIRING_AUTHENTICATION_REUSE_WINDOW_MS } from "./pairing-transport-contract";
 
 /** Trusted server transport only; the public composition requires both flags. */
 export type UsagePairingIntent = Readonly<{
@@ -189,8 +190,13 @@ export function createPairingAuthentication(options: Options) {
         const freshRequest = new Request(`${origin}/api/suite-auth/start?return_to=${encodeURIComponent(PAIRING_PAGE_PATH)}`, {
           method: "GET", headers: request.headers, signal: request.signal,
         });
+        // A sign-in completed inside the reuse window before this attempt
+        // satisfies the freshness floor; the +1s margin keeps the recorded
+        // auth_time inside the worker floor after the provider's own
+        // second-precision max_age rounding.
         const response = await authority.startFreshAuthentication(freshRequest, {
           context: encode(proof), expiresAtMs: attempt.expiresAtMs,
+          authenticationNotBeforeMs: Math.max(0, attempt.startedAtMs - PAIRING_AUTHENTICATION_REUSE_WINDOW_MS + 1_000),
         });
         if (liveTime(afterBegin, attempt.expiresAtMs, current) === null) return failure("FAILED", 503);
         if (response.status !== 302) return response;

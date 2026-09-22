@@ -166,13 +166,27 @@ describe("internal pairing lifecycle, with no credential activation", () => {
     await initialize();
     const proof = await browser();
     const auth = { ...proof, accountId: ACCOUNT, authTimeMs: Math.floor(NOW / 1_000) * 1_000, sessionExpiresAtMs: NOW + 60_000 };
-    for (const change of [{ authTimeMs: auth.authTimeMs - 1_000 }, { authTimeMs: auth.authTimeMs + 1_000 }, { sessionExpiresAtMs: NOW }]) {
+    for (const change of [
+      { authTimeMs: Math.floor((NOW - 600_000) / 1_000) * 1_000 - 1_000 },
+      { authTimeMs: auth.authTimeMs + 1_000 }, { sessionExpiresAtMs: NOW },
+    ]) {
       expect(await stub().recordVerifiedAuthentication({ ...auth, ...change })).toEqual({ ok: false, error: "authentication_not_fresh" });
     }
     for (const authTimeMs of [NOW, NaN, Infinity, -1]) {
       expect(await stub().recordVerifiedAuthentication({ ...auth, authTimeMs })).toEqual({ ok: false, error: "invalid_input" });
     }
     expect(await stub().recordVerifiedAuthentication(auth)).toEqual({ ok: true, value: { recorded: true } });
+  });
+
+  test("a recent sign-in inside the reuse window satisfies pairing freshness", async () => {
+    await initialize();
+    const proof = await browser();
+    const floor = Math.floor((NOW - 600_000) / 1_000) * 1_000;
+    const auth = { ...proof, accountId: ACCOUNT, authTimeMs: floor, sessionExpiresAtMs: NOW + 60_000 };
+    expect(await stub().recordVerifiedAuthentication(auth)).toEqual({ ok: true, value: { recorded: true } });
+    expect(await stub().recordVerifiedAuthentication(auth)).toEqual({ ok: true, value: { recorded: true } });
+    expect(await stub().recordVerifiedAuthentication({ ...auth, authTimeMs: floor + 1_000 }))
+      .toEqual({ ok: false, error: "conflict" });
   });
 
   test("concurrent authentication records bind one account and replay only exact facts", async () => {
