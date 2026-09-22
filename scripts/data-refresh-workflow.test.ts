@@ -198,11 +198,13 @@ async function executeWorkflowShell(
         RUN_AAI_REFRESH: "false",
         RUN_BENCHMARK_REFRESH: "true",
         RUN_RELEASE_REFRESH: "true",
+        RUN_USAGE_PRICES_REFRESH: "false",
         SETUP_BUN_OUTCOME: "success",
         SETUP_NODE_OUTCOME: "success",
         SNAPSHOT_CHANGED: "false",
         TERMINAL_BENCH_OUTCOME: "success",
         TERMINAL_BENCH_SCIENCE_OUTCOME: "success",
+        USAGE_PRICES_OUTCOME: "skipped",
         VALIDATION_OUTCOME: "skipped",
         ...options.extraEnvironment,
       },
@@ -294,6 +296,15 @@ describe("scheduled model-data refresh", () => {
     expect(aaiRefresh).not.toContain("inputs.mode == 'releases'");
     expect(aaiRefresh).not.toContain("inputs.mode == 'benchmarks'");
     expect(aaiRefresh).not.toContain("inputs.mode == 'discovery'");
+    const usagePricesRefresh = String(refresh.env?.RUN_USAGE_PRICES_REFRESH);
+    expect(usagePricesRefresh).toContain("github.event.schedule == '43 10 * * *'");
+    expect(usagePricesRefresh).toContain("inputs.mode == 'full'");
+    expect(usagePricesRefresh).not.toContain("inputs.mode == 'releases'");
+    expect(usagePricesRefresh).not.toContain("inputs.mode == 'benchmarks'");
+    expect(usagePricesRefresh).not.toContain("inputs.mode == 'discovery'");
+    expect(usagePricesRefresh).not.toContain("23 * * * *");
+    expect(usagePricesRefresh).not.toContain("17 */4 * * *");
+    expect(String(step("usage_prices").if)).toContain("env.RUN_USAGE_PRICES_REFRESH == 'true'");
     expect(String(step("benchmark").if)).toContain("env.RUN_AAI_REFRESH == 'true'");
     expect(String(step("release_radar").if)).toContain("env.RUN_RELEASE_REFRESH == 'true'");
     expect(String(step("first_party_releases").if)).toContain("env.RUN_RELEASE_REFRESH == 'true'");
@@ -362,6 +373,13 @@ describe("scheduled model-data refresh", () => {
     expect(step("arena_media")).toMatchObject({ "continue-on-error": true, run: "bun run atlas:arena-media:refresh" });
     expect(step("atlas_audio")).toMatchObject({ "continue-on-error": true, run: "bun run atlas:audio:refresh" });
     expect(step("calculator")).toMatchObject({ "continue-on-error": true, run: "bun run calculator:refresh" });
+    expect(step("usage_prices")).toMatchObject({ "continue-on-error": true, shell: "bash" });
+    expect(String(step("usage_prices").run)).toContain("https://models.dev/api.json");
+    expect(String(step("usage_prices").run)).toContain("--max-filesize 16777216");
+    expect(String(step("usage_prices").run)).toContain("bun run scripts/usage-catalog.ts --source");
+    expect(String(step("usage_prices").run)).toContain("--retrieved-at");
+    expect(steps.indexOf(step("calculator"))).toBeLessThan(steps.indexOf(step("usage_prices")));
+    expect(steps.indexOf(step("usage_prices"))).toBeLessThan(steps.indexOf(step("snapshot")));
     expect(String(step("release_reconcile").if)).toContain("steps.dependencies.outcome == 'success'");
     expect(steps.indexOf(step("first_party_releases"))).toBeLessThan(
       steps.indexOf(step("first_party_review")),
@@ -377,7 +395,7 @@ describe("scheduled model-data refresh", () => {
     expect(steps.indexOf(step("release_reconcile"))).toBeLessThan(steps.indexOf(step("deep_swe")));
   });
 
-  test("publishes only the twelve current owned snapshots through the protected-branch contract", () => {
+  test("publishes only the fourteen current owned snapshots through the protected-branch contract", () => {
     const publish = String(step("publish").run);
     expect(refresh["timeout-minutes"]).toBe(45);
     expect(refresh.env).toMatchObject({
@@ -394,6 +412,8 @@ describe("scheduled model-data refresh", () => {
       RELEASE_RADAR_PATH: "data/model-release-radar.json",
       TERMINAL_BENCH_PATH: "data/terminal-bench.json",
       TERMINAL_BENCH_SCIENCE_PATH: "data/terminal-bench-science.json",
+      USAGE_PRICES_PATH: "data/usage-prices.json",
+      USAGE_REGISTRY_PATH: "data/usage-registry.json",
     });
     expect(String(step("snapshot").run)).toContain('"$BENCHMARK_PATH"');
     expect(String(step("snapshot").run)).toContain('"$CALCULATOR_PATH"');
@@ -407,6 +427,8 @@ describe("scheduled model-data refresh", () => {
     expect(String(step("snapshot").run)).toContain('"$ATLAS_MULTIMODAL_PATH"');
     expect(String(step("snapshot").run)).toContain('"$ARENA_MEDIA_PATH"');
     expect(String(step("snapshot").run)).toContain('"$ATLAS_AUDIO_PATH"');
+    expect(String(step("snapshot").run)).toContain('"$USAGE_PRICES_PATH"');
+    expect(String(step("snapshot").run)).toContain('"$USAGE_REGISTRY_PATH"');
     expect(step("validation")).toMatchObject({
       "continue-on-error": true,
       if: "steps.snapshot.outputs.changed == 'true' && steps.usage_toolchain.outcome == 'success'",
@@ -446,7 +468,7 @@ describe("scheduled model-data refresh", () => {
       },
     });
     expect(publish).toContain(
-      'git add -- "$BENCHMARK_PATH" "$CALCULATOR_PATH" "$DEEP_SWE_PATH" "$FIRST_PARTY_RELEASE_PATH" "$INTELLIGENCE_PATH" "$RELEASE_RADAR_PATH" "$TERMINAL_BENCH_PATH" "$TERMINAL_BENCH_SCIENCE_PATH" "$ATLAS_REASONING_PATH" "$ATLAS_MULTIMODAL_PATH" "$ARENA_MEDIA_PATH" "$ATLAS_AUDIO_PATH"',
+      'git add -- "$BENCHMARK_PATH" "$CALCULATOR_PATH" "$DEEP_SWE_PATH" "$FIRST_PARTY_RELEASE_PATH" "$INTELLIGENCE_PATH" "$RELEASE_RADAR_PATH" "$TERMINAL_BENCH_PATH" "$TERMINAL_BENCH_SCIENCE_PATH" "$ATLAS_REASONING_PATH" "$ATLAS_MULTIMODAL_PATH" "$ARENA_MEDIA_PATH" "$ATLAS_AUDIO_PATH" "$USAGE_PRICES_PATH" "$USAGE_REGISTRY_PATH"',
     );
     expect(publish).toContain('"HEAD:refs/heads/${REFRESH_BRANCH}"');
     expect(publish).toContain('gh pr create --base main');
@@ -550,11 +572,22 @@ describe("scheduled model-data refresh", () => {
     expect(String(health?.run)).toContain("$ATLAS_AUDIO_OUTCOME");
     expect(String(health?.run)).toContain("$ATLAS_VALS_OUTCOME");
     expect(String(health?.run)).toContain("$CALCULATOR_OUTCOME");
+    expect(String(health?.run)).toContain("$USAGE_PRICES_OUTCOME");
+    expect(String(health?.run)).toContain(
+      '[[ "$RUN_USAGE_PRICES_REFRESH" == "true" ]]',
+    );
+    expect(String(health?.run)).toContain(
+      '[[ "$USAGE_PRICES_OUTCOME" != "success" ]]',
+    );
+    expect(String(health?.run)).toContain(
+      '[[ "$USAGE_PRICES_OUTCOME" != "skipped" ]]',
+    );
     expect(health?.env).toMatchObject({
       ARENA_MEDIA_OUTCOME: "${{ steps.arena_media.outcome }}",
       ATLAS_AUDIO_OUTCOME: "${{ steps.atlas_audio.outcome }}",
       ATLAS_VALS_OUTCOME: "${{ steps.atlas_vals.outcome }}",
       CALCULATOR_OUTCOME: "${{ steps.calculator.outcome }}",
+      USAGE_PRICES_OUTCOME: "${{ steps.usage_prices.outcome }}",
     });
     expect(String(health?.run)).toContain(
       '[[ "$RUN_AAI_REFRESH" == "true" && "$BENCHMARK_OUTCOME" != "success" ]]',
@@ -594,6 +627,8 @@ describe("scheduled model-data refresh", () => {
         PUBLISH_OUTCOME: "skipped",
         REFRESH_MODE: "full",
         RUN_AAI_REFRESH: "true",
+        RUN_USAGE_PRICES_REFRESH: "true",
+        USAGE_PRICES_OUTCOME: "success",
         SNAPSHOT_CHANGED: "true",
         VALIDATION_OUTCOME: "failure",
       },
@@ -636,9 +671,9 @@ describe("scheduled model-data refresh", () => {
 
   test("persists atlas failures independently while retaining last-known-good data", async () => {
     const health = steps.find(candidate => candidate.name === "Report health and manage the durable alert");
-    for (const [outcome, label] of [["ATLAS_REASONING_OUTCOME", "Reasoning atlas"], ["ATLAS_MULTIMODAL_OUTCOME", "Multimodal atlas"], ["ARENA_MEDIA_OUTCOME", "Arena media"], ["ATLAS_AUDIO_OUTCOME", "Pinned audio atlas"], ["ATLAS_VALS_OUTCOME", "Vals AI private boards"], ["CALCULATOR_OUTCOME", "Calculator inputs"]]) {
+    for (const [outcome, label, extra] of [["ATLAS_REASONING_OUTCOME", "Reasoning atlas", {}], ["ATLAS_MULTIMODAL_OUTCOME", "Multimodal atlas", {}], ["ARENA_MEDIA_OUTCOME", "Arena media", {}], ["ATLAS_AUDIO_OUTCOME", "Pinned audio atlas", {}], ["ATLAS_VALS_OUTCOME", "Vals AI private boards", {}], ["CALCULATOR_OUTCOME", "Calculator inputs", {}], ["USAGE_PRICES_OUTCOME", "Usage price catalog", { RUN_USAGE_PRICES_REFRESH: "true" }]] as const) {
       const result = await executeWorkflowShell(String(health?.run), {
-        candidates: [], issueBody: "", extraEnvironment: { [outcome]: "failure", REFRESH_MODE: "benchmarks", FAKE_HEALTH_ISSUE_NUMBER: "109" },
+        candidates: [], issueBody: "", extraEnvironment: { [outcome]: "failure", REFRESH_MODE: "benchmarks", FAKE_HEALTH_ISSUE_NUMBER: "109", ...extra },
       });
       expect(result.status).toBe(1);
       expect(result.stderr).toBe("");
@@ -662,6 +697,8 @@ describe("scheduled model-data refresh", () => {
         FAKE_HEALTH_ISSUE_NUMBER: "109",
         REFRESH_MODE: "full",
         RUN_AAI_REFRESH: "true",
+        RUN_USAGE_PRICES_REFRESH: "true",
+        USAGE_PRICES_OUTCOME: "success",
       },
       issueBody: "",
     });
