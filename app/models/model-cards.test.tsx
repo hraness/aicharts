@@ -108,6 +108,7 @@ describe("public model cards", () => {
   test("renders square logo cards for coding profiles and recent Index pages", () => {
     const markup = renderToStaticMarkup(<ModelCardsPage />);
     const galleryCount = MODEL_CARD_PRESENTATIONS.length + INDEX_MODEL_PAGES.length;
+    expect(markup).toContain('class="model-card-gallery hraness-marketing-main"');
     expect(markup).toContain(
       `<h1 class="hraness-marketing-hero__heading" id="model-cards-title">${modelCardsHeading}</h1>`,
     );
@@ -150,6 +151,11 @@ describe("public model cards", () => {
       expect(markup).toContain(release.canonicalUrl);
       for (const model of release.namedModels) expect(markup).toContain(model);
     }
+    expect(markup).toContain('class="hraness-marketing-card-row"');
+    expect(markup).toContain("hraness-marketing-card-row__meta");
+    expect(modelsPageSource).toContain("ModelReleaseRadars");
+    expect(modelCardsStyles).toContain(".model-release-radar .hraness-marketing-card-row");
+    expect(modelCardsStyles).not.toContain(".model-release-radar ul {");
     if (FIRST_PARTY_RELEASE_HIGHLIGHTS.length > 0) {
       expect(markup).toContain("First-party release radar");
       expect(markup).toContain("New releases found at first-party sources");

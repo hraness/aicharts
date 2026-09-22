@@ -19,6 +19,7 @@ export const ANALYTICS_SURFACES = [
   "global_footer",
   "home_calculator",
   "home_activity",
+  "home_index_strip",
   "home_orientation",
   "home_portfolio",
   "benchmark_chart",

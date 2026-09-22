@@ -18,6 +18,10 @@ export type SiteHeaderPath = "/calculator" | "/coding" | "/models" | "/data" | (
  * translucent paper, one hairline, the wordmark, the site links, and the
  * appearance control last. Rendered on the documented classes so links stay
  * on `next/link` and the header keeps its analytics surface.
+ *
+ * First content after this header must consume `--hraness-marketing-main-offset`
+ * / `.hraness-marketing-main` so it clears the sticky chrome. See
+ * `styles/marketing-layout.css` until design-kit publishes the same names.
  */
 export function SiteHeader({
   className,
