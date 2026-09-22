@@ -1,22 +1,13 @@
 import { createPublicSiteMetadata } from "@hraness/web-discovery";
 import Link from "next/link";
 import artificialAnalysisIntelligenceData from "@/data/artificial-analysis-intelligence-v4-3.json";
-import { ChartNavigation, ChartPageFooter } from "@/components/chart-navigation";
+import { ChartNavigation, HomeExploreFooter } from "@/components/chart-navigation";
 import { HomeIntelligenceEfficiency } from "@/components/home-intelligence-efficiency";
 import { LegacyChartNavigation } from "@/components/legacy-chart-navigation";
 import { ProjectAskAiAboutThis } from "@/components/project-ask-ai-about-this";
 import { SiteHeader } from "@/components/site-header";
 import { parseArtificialAnalysisIntelligenceV43Snapshot } from "@/lib/artificial-analysis-intelligence-v4-3-data";
-import { homeHeading, homeLede, homeTaskLinks, searchSite, site } from "./site";
-
-const TASK_ICONS: Record<string, string> = {
-  coding: "task-coding",
-  reasoning: "task-reasoning",
-  research: "task-research",
-  image: "task-images",
-  video: "task-video",
-  audio: "task-audio",
-};
+import { homeHeading, homeLede, searchSite, site } from "./site";
 
 function TopicIcon({ className, size, slug }: Readonly<{ className: string; size: number; slug: string }>) {
   // Decorative local SVG; next/image cannot optimize vector sources.
@@ -50,16 +41,7 @@ export default function Home() {
         </div>
         <Link className="home-calculator__cta" href="/calculator">Open the calculator <span aria-hidden="true">↗</span></Link>
       </section>
-      <section className="task-discovery" aria-labelledby="task-discovery-title">
-        <header><h2 id="task-discovery-title">What do you want to do?</h2><Link href="/benchmarks">All benchmarks <span aria-hidden="true">↗</span></Link></header>
-        <div className="task-discovery__links">
-          {homeTaskLinks.map(({ task, name, description }) => <Link href={`/benchmarks?task=${task}#explore`} key={task}>
-            <TopicIcon className="task-discovery__icon" size={88} slug={TASK_ICONS[task]} />
-            <span><strong>{name}</strong><span>{description}</span></span><span aria-hidden="true">↗</span>
-          </Link>)}
-        </div>
-      </section>
-      <ChartPageFooter />
+      <HomeExploreFooter />
       <LegacyChartNavigation />
     </main>
     <ProjectAskAiAboutThis url={site.origin} />

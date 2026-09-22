@@ -94,16 +94,18 @@ describe("homepage canonical content", () => {
     const mainAt = markup.indexOf('<main class="chart-home" id="main-content">');
     const calculatorAt = markup.indexOf('class="home-calculator"');
     const intelligenceAt = markup.indexOf('class="intelligence-efficiency"');
-    const discoveryAt = markup.indexOf('class="task-discovery"');
+    const exploreFooterAt = markup.indexOf('aria-label="What do you want to do?"');
+    const resourceFooterAt = markup.indexOf('aria-label="Chart resources"');
     const mainEndAt = markup.indexOf("</main>", mainAt);
 
     expect(mainAt).toBeGreaterThan(markup.indexOf("site-header"));
     // The Pareto chart leads (the browser contract holds its fold position);
-    // the calculator callout follows it, ahead of the task links.
+    // the calculator callout follows it, ahead of the shared footer nav.
     expect(intelligenceAt).toBeGreaterThan(mainAt);
     expect(calculatorAt).toBeGreaterThan(intelligenceAt);
-    expect(discoveryAt).toBeGreaterThan(calculatorAt);
-    expect(mainEndAt).toBeGreaterThan(discoveryAt);
+    expect(exploreFooterAt).toBeGreaterThan(calculatorAt);
+    expect(resourceFooterAt).toBeGreaterThan(exploreFooterAt);
+    expect(mainEndAt).toBeGreaterThan(resourceFooterAt);
     expect(markup).toContain('data-analytics-surface="home_calculator"');
     expect(markup).toContain("Subscription vs API vs GPUs");
     expect(markup).toContain('href="/calculator"');
@@ -130,8 +132,16 @@ describe("homepage canonical content", () => {
     expect(markup).toContain('aria-label="Chart collection"');
     expect(markup).toContain('href="/coding"');
     expect(markup).toContain('href="/benchmarks"');
+    expect(markup).toContain('class="chart-page-footer-stack"');
+    expect(markup.match(/class="chart-page-footer"/gu)).toHaveLength(2);
+    expect(markup).not.toContain('class="task-discovery"');
+    expect(markup).not.toContain("task-discovery__icon");
+    expect(markup).not.toContain("/icons/task-");
     for (const task of ["coding", "reasoning", "research", "image", "video", "audio"]) {
       expect(markup).toContain(`href="/benchmarks?task=${task}#explore"`);
+    }
+    for (const name of ["Coding", "Reasoning", "Research", "Images", "Video", "Audio", "All benchmarks"]) {
+      expect(markup).toContain(name);
     }
     // Attribution belongs to the shared Hraness footer, never to a personal byline in page content.
     expect(markup).not.toContain('href="https://x.com/hraness"');
