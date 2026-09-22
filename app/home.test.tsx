@@ -91,7 +91,9 @@ describe("homepage canonical content", () => {
   test("keeps the Pareto chart prominent and gives each other chart workspace its own destination", async () => {
     const source = await Bun.file(new URL("./page.tsx", import.meta.url)).text();
     const markup = renderToStaticMarkup(createElement(Home));
-    const mainAt = markup.indexOf('<main class="chart-home" id="main-content">');
+    const mainAt = markup.indexOf('<main class="chart-home hraness-marketing-main" id="main-content">');
+    const stripAt = markup.indexOf('class="home-index-strip"');
+    const radarAt = markup.indexOf('class="model-release-radar"');
     const calculatorAt = markup.indexOf('class="home-calculator"');
     const intelligenceAt = markup.indexOf('class="intelligence-efficiency"');
     const activityAt = markup.indexOf('class="home-activity"');
@@ -100,11 +102,17 @@ describe("homepage canonical content", () => {
     const mainEndAt = markup.indexOf("</main>", mainAt);
 
     expect(mainAt).toBeGreaterThan(markup.indexOf("site-header"));
-    // The Pareto chart leads (the browser contract holds its fold position);
-    // the calculator callout follows it, ahead of the shared footer nav.
-    expect(intelligenceAt).toBeGreaterThan(mainAt);
+    expect(stripAt).toBeGreaterThan(mainAt);
+    expect(radarAt).toBeGreaterThan(stripAt);
+    expect(intelligenceAt).toBeGreaterThan(radarAt);
     expect(activityAt).toBeGreaterThan(intelligenceAt);
     expect(calculatorAt).toBeGreaterThan(activityAt);
+    expect(markup).toContain('data-analytics-surface="home_index_strip"');
+    expect(markup).toContain("hraness-marketing-card-row");
+    expect(markup).toContain('class="model-logo-card"');
+    expect(markup).not.toContain("data-foil-card-deck");
+    expect(markup).toContain("First-party release radar");
+    expect(markup).toContain("Release radar");
     expect(markup).toContain('data-analytics-surface="home_activity"');
     expect(markup).toContain("Recent models and notes");
     expect(markup).toContain('href="/models/xiaomi/mimo-v2-6-pro/index"');

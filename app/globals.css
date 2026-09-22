@@ -2,6 +2,7 @@
 @import "@hraness/site-footer/styles.css";
 @import "../styles/plain-site.css";
 @import "../styles/plain-publication.css";
+@import "../styles/marketing-layout.css";
 @import "../styles/model-cards.css";
 @import "../styles/benchmark-atlas.css";
 @import "../styles/usage.css";

@@ -6,6 +6,7 @@ const atlasStylesheet = await Bun.file(new URL("../styles/benchmark-atlas.css", 
 test("the complete released StyleX entry precedes application styles", () => {
   expect(stylesheet.trimStart()).toStartWith('@import "@hraness/design-kit/styles.css";');
   expect(stylesheet.match(/@import "@hraness\/design-kit\/styles\.css"/gu)).toHaveLength(1);
+  expect(stylesheet).toContain('@import "../styles/marketing-layout.css"');
   expect(stylesheet).not.toMatch(/@import\s+["'](?:tailwindcss|@hraness\/design-kit\/(?:product-marketing|tokens|components)\.css)["']/u);
   expect(stylesheet).not.toMatch(/@(?:tailwind|apply)\b/u);
 });
@@ -139,6 +140,13 @@ test("homepage has no clipped discovery document", () => {
   expect(stylesheet).not.toContain(".home-document");
   expect(stylesheet).not.toContain(".chart-top-bar");
   expect(stylesheet).not.toContain(".chart-heading");
+});
+
+test("ordinary pages consume the documented marketing main offset", async () => {
+  const marketingLayout = await Bun.file(new URL("../styles/marketing-layout.css", import.meta.url)).text();
+  expect(marketingLayout).toContain("--hraness-marketing-main-offset: var(--hraness-marketing-sticky-clearance)");
+  expect(marketingLayout).toContain(".hraness-marketing-main");
+  expect(marketingLayout).toContain("scroll-padding-block-start: var(--hraness-marketing-sticky-clearance)");
 });
 
 test("homepage orientation is a hairline fact list on the shared section grammar", () => {

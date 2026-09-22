@@ -197,7 +197,7 @@ export function homeDocumentModel(
     heading: homeHeading,
     paragraphs: [
       site.description,
-      `The homepage compares capability with cost or output tokens on the ${intelligence.benchmark.name} v${intelligence.benchmark.version} Pareto frontier. Both resource views use the identical ${intelligence.selection.positiveCostRecordCount}-configuration positive-cost cohort. Inspect a point to see the model, effort setting, and exact values.`,
+      `The homepage compares capability with cost or output tokens on the ${intelligence.benchmark.name} v${intelligence.benchmark.version} Pareto frontier. Both resource views use the identical ${intelligence.selection.positiveCostRecordCount}-configuration positive-cost cohort. Inspect a point to see the model, effort setting, and exact values. Recent Index listings and a source-backed release radar sit above the chart; those rows use the checked snapshot and reviewed discovery evidence, not invented scores.`,
       "Choose a task-specific comparison in the benchmark explorer, or use the separate coding-agent charts to compare cost, time, and total tokens. Each evaluation keeps its own source, version, and configuration; no universal score is calculated.",
     ],
     links: [
