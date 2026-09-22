@@ -113,7 +113,10 @@ export function createPairingController(available: boolean, browser: PairingBrow
     },
     read() { if (["reply", "unavailable", "uncertain", "rejected"].includes(view.kind)) void perform(); },
     decide(decision: PairingDecision) {
-      if (view.kind !== "reply" || view.reply.state !== "pending") return;
+      // Sign-in approves the collector; a recorded attempt can still be denied
+      // until the terminal confirms. Pending approvals remain for older workers.
+      if (view.kind !== "reply" || !(view.reply.state === "pending"
+        || (decision === "deny" && view.reply.state === "browser-approved"))) return;
       if (!live(view.reply)) { emit({ kind: "expired" }); return; }
       void perform({ decision, csrfToken: view.reply.csrfToken });
     },

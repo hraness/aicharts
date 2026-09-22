@@ -231,11 +231,11 @@ describe("internal pairing lifecycle, with no credential activation", () => {
     const pending = { state: "pending", expiresAtMs: NOW + PAIRING_TTL_MS, accountId: null, authenticationExpiresAtMs: null };
     expect(await stub().browserStatus(proof)).toEqual({ ok: true, value: pending });
     await stub().recordVerifiedAuthentication({ ...proof, accountId: ACCOUNT, authTimeMs: Math.floor(NOW / 1_000) * 1_000, sessionExpiresAtMs: NOW + 60_000 });
-    const recorded = { ...pending, accountId: ACCOUNT, authenticationExpiresAtMs: NOW + 60_000 };
+    const recorded = { ...pending, state: "browser-approved", accountId: ACCOUNT, authenticationExpiresAtMs: NOW + 60_000 };
     expect(await stub().browserStatus(proof)).toEqual({ ok: true, value: recorded });
     await abortAllDurableObjects();
     expect(await stub().browserStatus(proof)).toEqual({ ok: true, value: recorded });
-    expect(await retainedPayload()).toMatchObject({ status: "pending", failedAttempts: 0, approvedAccountId: null });
+    expect(await retainedPayload()).toMatchObject({ status: "browser-approved", failedAttempts: 0, approvedAccountId: ACCOUNT });
     expect(JSON.stringify(recorded)).not.toMatch(/nonce|proof|commitment|secret|token|credential|namespace/i);
     expect((await env.STAGING.list()).objects).toEqual([]);
   });
@@ -244,7 +244,7 @@ describe("internal pairing lifecycle, with no credential activation", () => {
     const missing = { intentId: ID, attemptId: OTHER, browserNonce: NONCE, contextToken: OTHER };
     expect(await stub().browserStatus(missing)).toEqual({ ok: false, error: "not_initialized" });
     await initialize();
-    const { proof: stale } = await authenticated();
+    const stale = await browser();
     const { proof: current } = await authenticated();
     for (let index = 0; index <= MAX_FAILED_ATTEMPTS; index++) {
       expect(await stub().browserStatus(stale)).toEqual({ ok: false, error: "unauthorized" });
@@ -253,7 +253,7 @@ describe("internal pairing lifecycle, with no credential activation", () => {
     for (const change of [{ intentId: OTHER }, { attemptId: OTHER }, { browserNonce: OTHER }, { contextToken: OTHER }]) {
       expect(await stub().browserStatus({ ...current, ...change })).toEqual({ ok: false, error: "unauthorized" });
     }
-    expect(await retainedPayload()).toMatchObject({ status: "pending", failedAttempts: 0, approvedAccountId: null });
+    expect(await retainedPayload()).toMatchObject({ status: "browser-approved", failedAttempts: 0, approvedAccountId: ACCOUNT });
     expect((await stub().decideBrowser(decisionInput(current))).ok).toBe(true);
   });
 
@@ -265,7 +265,7 @@ describe("internal pairing lifecycle, with no credential activation", () => {
     for (let index = 0; index <= MAX_FAILED_ATTEMPTS; index++) {
       expect(await stub().decideBrowser({ ...decisionInput(current, decision), accountId: OTHER_ACCOUNT })).toEqual({ ok: false, error: "unauthorized" });
     }
-    expect(await retainedPayload()).toMatchObject({ status: "pending", failedAttempts: 0, approvedAccountId: null });
+    expect(await retainedPayload()).toMatchObject({ status: "browser-approved", failedAttempts: 0, approvedAccountId: ACCOUNT });
     expect((await stub().decideBrowser(decisionInput(current, decision))).ok).toBe(true);
   });
 
@@ -289,7 +289,7 @@ describe("internal pairing lifecycle, with no credential activation", () => {
         return await operation;
       });
       expect(result).toEqual({ ok: false, error: "authentication_not_fresh" });
-      expect(await retainedPayload()).toMatchObject({ status: "pending", failedAttempts: 0, approvedAccountId: null });
+      expect(await retainedPayload()).toMatchObject({ status: "browser-approved", failedAttempts: 0, approvedAccountId: ACCOUNT });
     }
   });
 
@@ -362,11 +362,12 @@ describe("internal pairing lifecycle, with no credential activation", () => {
       vi.setSystemTime(NOW);
       await initialize();
       const { proof } = await authenticated();
-      let expected: "pending" | "browser-approved" | "terminal-confirmed" | "denied" = "pending";
+      let expected: "pending" | "browser-approved" | "terminal-confirmed" | "denied" = "browser-approved";
       for (const action of sequence) {
         const previous = expected;
         if (action === "deny" && expected !== "terminal-confirmed") expected = "denied";
-        if (action === "approve" && expected === "pending") expected = "browser-approved";
+        // Verified authentication already approved the attempt; an approve
+        // replay only re-reads the same state.
         if (action === "confirm" && expected === "browser-approved") expected = "terminal-confirmed";
         const permitted = action === "deny" ? previous !== "terminal-confirmed"
           : action === "approve" ? previous !== "denied"

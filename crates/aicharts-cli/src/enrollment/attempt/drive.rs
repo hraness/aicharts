@@ -238,14 +238,15 @@ pub(super) fn expect(result: DomainResult, operation: Operation) -> Result<()> {
     matches.then_some(()).ok_or(Error::OutcomeUnknown)
 }
 
-/// Present the pairing URL once, then poll until the browser approves, denies
-/// or the intent expires. Each poll is a separate exchange paced by the
-/// server's `poll_after_ms`; the approved account is then chosen once and the
-/// single confirmation exchange runs. An uncertain poll transport outcome is
-/// the one recoverable refusal: the attempt already durably abandoned that
-/// read-only flight, so the loop waits the server's throttle interval and
-/// polls again within the same `MAX_PAIRING_POLLS` bound — an explicit
-/// recovery, never an implicit transport retry.
+/// Present the pairing URL once, then poll until the browser's recorded
+/// sign-in approves, its denial lands or the intent expires. Each poll is a
+/// separate exchange paced by the server's `poll_after_ms`; the approved
+/// account is then chosen once and the single confirmation exchange runs. An
+/// uncertain poll transport outcome is the one recoverable refusal: the
+/// attempt already durably abandoned that read-only flight, so the loop waits
+/// the server's throttle interval and polls again within the same
+/// `MAX_PAIRING_POLLS` bound — an explicit recovery, never an implicit
+/// transport retry.
 pub(super) fn handshake(ops: &mut impl AttemptOps, io: Io) -> Result<()> {
     let url = coordinator::pairing_url(&ops.intent_id()?);
     io.pairing_url(&url);

@@ -90,6 +90,19 @@ test("the fragment-free callback page reads once and only explicit approval disp
   client.decide("approve"); client.decide("approve"); await tick();
   expect(b.calls.map(call => call.decision)).toEqual([undefined, { decision: "approve", csrfToken: token }]);
   expect(client.snapshot()).toEqual({ kind: "reply", reply: { ...reply, state: "browser-approved" } });
+  client.decide("approve"); expect(b.calls).toHaveLength(2);
+  client.decide("deny"); await tick();
+  expect(b.calls.map(call => call.decision)).toEqual([undefined, { decision: "approve", csrfToken: token }, { decision: "deny", csrfToken: token }]);
+  unmount();
+});
+
+test("denial reaches a browser-approved attempt but not a terminal one", async () => {
+  const b = browser("", async (_signal, decision) => decision ? { ...reply, state: "terminal-confirmed" } : { ...reply, state: "browser-approved" });
+  const client = createPairingController(true, b.effects), unmount = client.mount(); await tick();
+  expect(client.snapshot()).toEqual({ kind: "reply", reply: { ...reply, state: "browser-approved" } });
+  client.decide("deny"); await tick();
+  expect(b.calls.map(call => call.decision)).toEqual([undefined, { decision: "deny", csrfToken: token }]);
+  expect(client.snapshot()).toEqual({ kind: "reply", reply: { ...reply, state: "terminal-confirmed" } });
   client.decide("deny"); expect(b.calls).toHaveLength(2); unmount();
 });
 

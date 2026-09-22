@@ -20,7 +20,7 @@ export function PairingApprovalPanel({ view, read, decide, navigating }: Readonl
           : view.kind === "invalid" ? <><h2>This pairing link is invalid</h2><p>Return to your terminal and open its original pairing link. No authentication was started.</p></>
             : view.kind === "start" || view.kind === "starting" ? <>
               <h2>Sign in for this pairing attempt</h2>
-              <p>Continue only if you started this connection in your own terminal. Signing in identifies the account; approval is a separate step.</p>
+              <p>Continue only if you started this connection in your own terminal. Signing in approves this collector for the account you choose.</p>
               <form method="post" action="/api/usage/pairing/start" encType="application/x-www-form-urlencoded" onSubmit={navigating}>
                 <input type="hidden" name="intentId" value={view.intentId} />
                 <button className="usage-button usage-button--primary" type="submit" disabled={view.kind === "starting"}>{view.kind === "starting" ? "Opening Hraness…" : "Continue with Hraness"}</button>
@@ -35,10 +35,11 @@ export function PairingApprovalPanel({ view, read, decide, navigating }: Readonl
                         <h2>Approve this collector?</h2><p>Compare this account with your terminal. Approve only the collector you started.</p>
                         <div className="usage-pairing__actions"><button className="usage-button usage-button--primary" onClick={() => decide("approve")}>Approve collector</button><button className="usage-button usage-button--quiet" onClick={() => decide("deny")}>Deny</button></div>
                       </> : <>
-                        <h2>{reply.state === "browser-approved" ? "Approval saved. Return to your terminal to confirm this account." : reply.state === "terminal-confirmed" ? "Account confirmed in your terminal." : "Collector denied."}</h2>
-                        <p>{reply.state === "browser-approved" ? "Browser approval alone does not finish enrollment. Continue with the original attempt in your terminal."
+                        <h2>{reply.state === "browser-approved" ? "Approved. Return to your terminal to confirm this account." : reply.state === "terminal-confirmed" ? "Account confirmed in your terminal." : "Collector denied."}</h2>
+                        <p>{reply.state === "browser-approved" ? "Your sign-in approved this collector. The terminal finishes enrollment after it confirms the same account."
                           : reply.state === "terminal-confirmed" ? "Continue there to finish connecting this collector. This page does not confirm that enrollment or upload is complete."
                             : "This attempt cannot be approved again. Start a new attempt in your terminal if you want to connect."}</p>
+                        {reply.state === "browser-approved" && <button className="usage-button usage-button--quiet" onClick={() => decide("deny")}>Deny</button>}
                         {reply.state !== "denied" && <button className="usage-button usage-button--quiet" onClick={read}>Check approval status</button>}
                       </>}
                       <p className="usage-pairing__expiry">This attempt expires at <time dateTime={new Date(reply.expiresAtMs).toISOString()}>{new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", timeZone: "UTC" }).format(reply.expiresAtMs)} UTC</time>.</p>
