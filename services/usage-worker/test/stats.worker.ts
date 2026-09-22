@@ -496,10 +496,70 @@ describe("v2 account snapshots", () => {
     // the corrupted projection proves no recomputation happened.
     await runInDurableObject(stub(), (_instance, state) => state.storage.sql.exec("UPDATE usage_stats_days SET projection = ?", "x"));
     expect(success(await stub().readUsageStats(statsQuery()))).toEqual(second);
-    // A new committed stats revision recomputes and now meets the corruption.
+    // A new committed stats revision recomputes; the exploded read model never
+    // reopens the projection blob, so the answer stays correct, and it is the
+    // derived row store whose digest pins what a recomputed read may serve.
     success(await statsUpload(device, statsRequest(device, { operationId: hex(40020), sequence: 2, expectedRevision: 1,
       report: { ...base.report, sources: [{ ...base.report.sources[0], client: "claude" }], rows: [{ ...base.report.rows[0], client: "claude" }] } })));
-    expect(await stub().readUsageStats(statsQuery())).toEqual({ ok: false, error: "storage_invalid" });
+    expect(success(await stub().readUsageStats(statsQuery())).rows).toHaveLength(3);
+    await runInDurableObject(stub(), (_instance, state) => state.storage.sql.exec("UPDATE usage_stats_day_rows SET output_tokens = ?", "999"));
+    // A wider range misses the memo key and recomputes into the corruption.
+    expect(await stub().readUsageStats({ ...statsQuery(), dayCount: 3 })).toEqual({ ok: false, error: "storage_invalid" });
+  });
+
+  test("a cold read after eviction serves the persisted row model without reopening projections", async () => {
+    const device = await enroll(); await activate();
+    success(await statsUpload(device, statsRequest(device)));
+    expect(success(await stub().readUsageStats(statsQuery())).rows).toHaveLength(1);
+    // The memo and the Durable Object instance die here; the projection blob is
+    // corrupted to prove the next read neither parses it nor needs it.
+    await runInDurableObject(stub(), (_instance, state) => state.storage.sql.exec("UPDATE usage_stats_days SET projection = ?", "x"));
+    await abortAllDurableObjects(); await activate();
+    const report = success(await stub().readUsageStats(statsQuery()));
+    expect(report.rows).toHaveLength(1);
+    expect(report.rows[0].tokens.input).toBe("10");
+  });
+
+  test("derived row model corruption fails closed across meta, rows and digest", async () => {
+    const device = await enroll(); await activate();
+    success(await statsUpload(device, statsRequest(device)));
+    const read = () => stub().readUsageStats(statsQuery());
+    // A tampered row field fails the pinned digest before any row may serve.
+    await runInDurableObject(stub(), (_instance, state) => state.storage.sql.exec("UPDATE usage_stats_day_rows SET output_tokens = ?", "999"));
+    expect(await read()).toEqual({ ok: false, error: "storage_invalid" });
+    // A dropped row mismatches the meta row_count just as surely.
+    await runInDurableObject(stub(), (_instance, state) => {
+      state.storage.sql.exec("UPDATE usage_stats_day_rows SET output_tokens = ?", "4");
+      state.storage.sql.exec("DELETE FROM usage_stats_day_rows WHERE ordinal = 0");
+    });
+    expect(await read()).toEqual({ ok: false, error: "storage_invalid" });
+    // Meta missing entirely is not corruption: the day backfills from its
+    // verified projection and the next read stays on the exploded path.
+    await runInDurableObject(stub(), (_instance, state) => state.storage.sql.exec("DELETE FROM usage_stats_day_meta"));
+    expect(success(await read()).rows).toHaveLength(1);
+    expect(await runInDurableObject(stub(), (_instance, state) =>
+      state.storage.sql.exec("SELECT COUNT(*) AS count FROM usage_stats_day_meta").toArray()[0].count)).toBe(1);
+    expect(success(await read()).rows).toHaveLength(1);
+  });
+
+  test("schema six accounts migrate the read model and backfill it on first read", async () => {
+    const device = await enroll(); await activate();
+    success(await statsUpload(device, statsRequest(device)));
+    // Reconstruct the pre-migration state: version six with no derived tables.
+    await runInDurableObject(stub(), (_instance, state) => {
+      state.storage.sql.exec("DROP TABLE usage_stats_day_meta");
+      state.storage.sql.exec("DROP TABLE usage_stats_day_rows");
+      state.storage.sql.exec("UPDATE account_enrollment SET schema_version = 6");
+    });
+    await abortAllDurableObjects(); await activate();
+    expect(await runInDurableObject(stub(), (_instance, state) =>
+      state.storage.sql.exec("SELECT schema_version FROM account_enrollment WHERE id = 1").toArray()[0].schema_version)).toBe(7);
+    const report = success(await stub().readUsageStats(statsQuery()));
+    expect(report.rows).toHaveLength(1);
+    expect(report.rows[0].tokens.input).toBe("10");
+    // The backfilled model now serves without the projection parse.
+    expect(await runInDurableObject(stub(), (_instance, state) =>
+      state.storage.sql.exec("SELECT COUNT(*) AS count FROM usage_stats_day_rows").toArray()[0].count)).toBe(1);
   });
 
 });

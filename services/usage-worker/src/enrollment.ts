@@ -220,13 +220,14 @@ export class AccountEnrollment extends DurableObject<Env> {
           new AdmissionState(ctx.storage.sql).initialize(state);
           ctx.storage.sql.exec("UPDATE account_enrollment SET schema_version = 3 WHERE id = 1");
         }
+        this.#migrateStatsRows();
         this.#schema();
         this.#migrateFence();
         this.#migrateLeaderboard();
         new AdmissionState(ctx.storage.sql).auditControl(this.#stored(5).state);
         if (!this.#statsPresent() && this.#statsEnabled()) {
           new StatsState(ctx.storage.sql).initialize();
-          ctx.storage.sql.exec("UPDATE account_enrollment SET schema_version = 6 WHERE id = 1");
+          ctx.storage.sql.exec("UPDATE account_enrollment SET schema_version = 7 WHERE id = 1");
         }
         if (this.#statsPresent()) new StatsState(ctx.storage.sql).auditControl(this.#stored(5).state);
         this.#schema();
@@ -243,7 +244,7 @@ export class AccountEnrollment extends DurableObject<Env> {
     const expected: Record<string, string> = { account_enrollment: SCHEMA_SQL, ...(legacy ? {} : ADMISSION_SCHEMA), ...(withStats ? STATS_SCHEMA : {}) };
     if (!legacy) {
       const version = this.ctx.storage.sql.exec("SELECT schema_version FROM account_enrollment WHERE id = 1").toArray()[0]?.schema_version;
-      if ((version === 6) !== withStats) throw new Error("storage_invalid");
+      if ((version === 6 || version === 7) !== withStats) throw new Error("storage_invalid");
     }
     if (!this.#healthy || objects.length !== Object.keys(expected).length || objects.some(object => object.type !== "table"
       || typeof object.name !== "string" || !Object.hasOwn(expected, object.name) || object.sql !== expected[object.name])) throw new Error("storage_invalid");
@@ -307,7 +308,7 @@ export class AccountEnrollment extends DurableObject<Env> {
     const rows = this.ctx.storage.sql.exec("SELECT id, schema_version, revision, payload FROM account_enrollment LIMIT 2").toArray();
     const row = rows[0];
     if (rows.length !== 1 || row?.id !== 1) throw new Error("storage_invalid");
-    if (row.schema_version === 5 || row.schema_version === 6) return;
+    if (row.schema_version === 5 || row.schema_version === 6 || row.schema_version === 7) return;
     if (row.schema_version !== 4) throw new Error("storage_invalid");
     let payload = row.payload;
     if (payload !== null) {
@@ -321,10 +322,23 @@ export class AccountEnrollment extends DurableObject<Env> {
     }
     this.ctx.storage.sql.exec("UPDATE account_enrollment SET schema_version = 5, payload = ? WHERE id = 1", payload);
   }
+  /** Additive schema-6→7 migration: install the derived stats read model. The
+   * exploded tables carry no authority — they are populated from committed
+   * projections at publish or lazily on first read, and a missing piece heals
+   * by recreation. Runs before #schema because the exact-table check already
+   * expects them once the stats schema is installed. */
+  #migrateStatsRows(): void {
+    const names = new Set(this.#objects().map(object => object.name));
+    if (!names.has("usage_stats_control")) return;
+    for (const name of ["usage_stats_day_meta", "usage_stats_day_rows"] as const)
+      if (!names.has(name)) this.ctx.storage.sql.exec(STATS_SCHEMA[name]);
+    const version = this.ctx.storage.sql.exec("SELECT schema_version FROM account_enrollment WHERE id = 1").toArray()[0]?.schema_version;
+    if (version === 6) this.ctx.storage.sql.exec("UPDATE account_enrollment SET schema_version = 7 WHERE id = 1");
+  }
   #stored(version: 2 | 3 | 4 | 5): { revision: number; state: State | null } {
     const rows = this.ctx.storage.sql.exec("SELECT id, schema_version, revision, payload FROM account_enrollment LIMIT 2").toArray();
     const row = rows[0];
-    if (rows.length !== 1 || row?.id !== 1 || (row.schema_version !== version && !(version === 5 && row.schema_version === 6)) || typeof row.revision !== "number"
+    if (rows.length !== 1 || row?.id !== 1 || (row.schema_version !== version && !(version === 5 && typeof row.schema_version === "number" && row.schema_version >= 6)) || typeof row.revision !== "number"
       || !Number.isSafeInteger(row.revision) || row.revision < 0 || row.revision >= Number.MAX_SAFE_INTEGER) throw new AdmissionFault();
     let state: State | null = null;
     if (row.payload !== null) {

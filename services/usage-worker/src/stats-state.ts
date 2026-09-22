@@ -1,8 +1,8 @@
 import { LEADERBOARD_MAX_RECORDS } from "../../../lib/usage/leaderboard-contract";
 import { createHash } from "node:crypto";
 import { admissionHex, equalAdmissionBytes, type AdmissionBatch } from "../../../lib/usage/admission";
-import { parseUsageStatsReport, statsRowKey, statsTokenTotal, type SourceCoverage, type UsageStatsReport, type UsageStatsRow } from "../../../lib/usage/stats-contract";
-import { isStatsClient } from "../../../lib/usage/stats-registry";
+import { parseUsageStatsReport, statsDecimal, statsRowKey, statsTokenTotal, STATS_MAX_DAY, STATS_MAX_RECORDS, type SourceCoverage, type UsageStatsReport, type UsageStatsRow } from "../../../lib/usage/stats-contract";
+import { isStatsClient, isStatsModel, isStatsProvider } from "../../../lib/usage/stats-registry";
 import { STATS_HTTP_RESPONSE_BYTES, STATS_HTTP_RESPONSE_ROWS, parseStatsReceipt, statsHex, statsInteger, type StatsError, type StatsRange, type StatsReceipt, type StatsStatus, type StatsUpload } from "../../../lib/usage/stats-http-contract";
 import type { StatsAbandonRequest, StatsAbandonment } from "../../../lib/usage/stats-http-contract";
 import { decodeUsageBatch } from "../../../lib/usage/wire";
@@ -20,6 +20,8 @@ export const STATS_SCHEMA = Object.freeze({
   usage_stats_devices: `CREATE TABLE usage_stats_devices (device_id TEXT PRIMARY KEY NOT NULL CHECK (length(device_id) = 64), sequence INTEGER NOT NULL CHECK (sequence BETWEEN 1 AND 9007199254740991), receipt TEXT NOT NULL CHECK (length(receipt) <= 1024)) WITHOUT ROWID`,
   usage_stats_pending: `CREATE TABLE usage_stats_pending (id INTEGER PRIMARY KEY CHECK (id = 1), body_hash TEXT NOT NULL CHECK (length(body_hash) = 64), device_id TEXT NOT NULL CHECK (length(device_id) = 64), sequence INTEGER NOT NULL CHECK (sequence BETWEEN 1 AND 9007199254740991), expected_revision INTEGER NOT NULL CHECK (expected_revision BETWEEN 0 AND 999999), receipt TEXT CHECK (receipt IS NULL OR length(receipt) <= 1024))`,
   usage_stats_days: `CREATE TABLE usage_stats_days (client TEXT NOT NULL, utc_day INTEGER NOT NULL CHECK (utc_day BETWEEN 0 AND 99999999), revision INTEGER NOT NULL CHECK (revision BETWEEN 1 AND 1000000), body_hash TEXT NOT NULL CHECK (length(body_hash) = 64), projection_hash TEXT NOT NULL CHECK (length(projection_hash) = 64), row_count INTEGER NOT NULL CHECK (row_count BETWEEN 0 AND 8192), byte_count INTEGER NOT NULL CHECK (byte_count BETWEEN 1 AND 4194304), projection TEXT NOT NULL CHECK (length(projection) <= 4194304), PRIMARY KEY (client, utc_day)) WITHOUT ROWID`,
+  usage_stats_day_meta: `CREATE TABLE usage_stats_day_meta (client TEXT NOT NULL, utc_day INTEGER NOT NULL CHECK (utc_day BETWEEN 0 AND 99999999), revision INTEGER NOT NULL CHECK (revision BETWEEN 1 AND 1000000), row_count INTEGER NOT NULL CHECK (row_count BETWEEN 0 AND 8192), latest_at_ms INTEGER CHECK (latest_at_ms IS NULL OR latest_at_ms BETWEEN 0 AND 8640000000000000), rows_hash TEXT NOT NULL CHECK (length(rows_hash) = 64), PRIMARY KEY (client, utc_day)) WITHOUT ROWID`,
+  usage_stats_day_rows: `CREATE TABLE usage_stats_day_rows (client TEXT NOT NULL, utc_day INTEGER NOT NULL CHECK (utc_day BETWEEN 0 AND 99999999), ordinal INTEGER NOT NULL CHECK (ordinal BETWEEN 0 AND 8191), provider TEXT, model TEXT, input_tokens TEXT NOT NULL, cache_read_tokens TEXT NOT NULL, cache_write_tokens TEXT NOT NULL, output_tokens TEXT NOT NULL, reasoning_tokens TEXT NOT NULL, records INTEGER NOT NULL CHECK (records BETWEEN 1 AND 10000000), reported_cost_microusd TEXT, reported_cost_records INTEGER NOT NULL CHECK (reported_cost_records BETWEEN 0 AND 10000000), estimated_cost_microusd TEXT, estimated_cost_records INTEGER NOT NULL CHECK (estimated_cost_records BETWEEN 0 AND 10000000), duration_ms TEXT, timed_records INTEGER NOT NULL CHECK (timed_records BETWEEN 0 AND 10000000), timed_tokens TEXT NOT NULL, token_basis TEXT NOT NULL CHECK (token_basis IN ('reported', 'estimated', 'unavailable')), breakdown_coverage TEXT NOT NULL CHECK (breakdown_coverage IN ('partial', 'complete')), PRIMARY KEY (client, utc_day, ordinal)) WITHOUT ROWID`,
 });
 export class StatsFault extends Error { constructor(readonly code: StatsError = "storage_invalid") { super(code); } }
 function requireStats(value: unknown): asserts value { if (!value) throw new StatsFault(); }
@@ -97,6 +99,91 @@ export class StatsState {
       && report.firstUtcDay === raw.utc_day && report.rows.length === raw.row_count && report.revision === raw.revision);
     return { client: raw.client, utcDay: raw.utc_day, revision: raw.revision, bodyHash: raw.body_hash, text: raw.projection, report };
   }
+  /** Canonical digest input for one exploded row: the ordered field tuple. */
+  #rowDigestInput(row: UsageStatsRow): string {
+    return JSON.stringify([row.utcDay, row.client, row.provider, row.model, row.tokens.input, row.tokens.cacheRead, row.tokens.cacheWrite,
+      row.tokens.output, row.tokens.reasoning, row.records, row.reportedCostMicrousd, row.reportedCostRecords, row.estimatedCostMicrousd,
+      row.estimatedCostRecords, row.durationMs, row.timedRecords, row.timedTokens, row.tokenBasis, row.breakdownCoverage]);
+  }
+  #rowsDigest(latestAtMs: number | null, rows: readonly UsageStatsRow[]): string {
+    const hash = createHash("sha256").update("aicharts:stats-v2:day-rows\0").update(`${latestAtMs ?? ""}\0`);
+    for (const row of rows) hash.update(this.#rowDigestInput(row));
+    return hash.digest("hex");
+  }
+  /** Structural validation for one exploded row. Value-level invariants are
+   * additionally pinned by the day's rows_hash before the row may serve. */
+  #storedRow(raw: Record<string, SqlStorageValue>): UsageStatsRow {
+    const client = raw.client, utcDay = raw.utc_day, provider = raw.provider, model = raw.model, records = raw.records,
+      reportedCostMicrousd = raw.reported_cost_microusd, reportedCostRecords = raw.reported_cost_records,
+      estimatedCostMicrousd = raw.estimated_cost_microusd, estimatedCostRecords = raw.estimated_cost_records,
+      durationMs = raw.duration_ms, timedRecords = raw.timed_records, timedTokens = raw.timed_tokens,
+      tokenBasis = raw.token_basis, breakdownCoverage = raw.breakdown_coverage;
+    const tokens = { input: raw.input_tokens, cacheRead: raw.cache_read_tokens, cacheWrite: raw.cache_write_tokens,
+      output: raw.output_tokens, reasoning: raw.reasoning_tokens };
+    requireStats(isStatsClient(client) && statsInteger(utcDay, 0, STATS_MAX_DAY) && statsInteger(raw.ordinal, 0, 8191)
+      && (provider === null || isStatsProvider(provider)) && (model === null || isStatsModel(model))
+      && statsDecimal(tokens.input) && statsDecimal(tokens.cacheRead) && statsDecimal(tokens.cacheWrite)
+      && statsDecimal(tokens.output) && statsDecimal(tokens.reasoning) && statsDecimal(timedTokens)
+      && statsInteger(records, 1, STATS_MAX_RECORDS) && statsInteger(reportedCostRecords, 0, records)
+      && statsInteger(estimatedCostRecords, 0, records) && statsInteger(timedRecords, 0, records)
+      && reportedCostRecords + estimatedCostRecords <= records
+      && (reportedCostMicrousd === null || (statsDecimal(reportedCostMicrousd) && reportedCostRecords > 0))
+      && (reportedCostMicrousd !== null || reportedCostRecords === 0)
+      && (estimatedCostMicrousd === null || (statsDecimal(estimatedCostMicrousd) && estimatedCostRecords > 0))
+      && (estimatedCostMicrousd !== null || estimatedCostRecords === 0)
+      && (durationMs === null || (statsDecimal(durationMs) && timedRecords > 0))
+      && (durationMs !== null || timedRecords === 0)
+      && (tokenBasis === "reported" || tokenBasis === "estimated" || tokenBasis === "unavailable")
+      && (breakdownCoverage === "partial" || breakdownCoverage === "complete"));
+    const fixed = Object.freeze({ input: tokens.input, cacheRead: tokens.cacheRead, cacheWrite: tokens.cacheWrite,
+      output: tokens.output, reasoning: tokens.reasoning });
+    requireStats(!(tokenBasis === "unavailable" && (statsTokenTotal(fixed) !== 0n || timedTokens !== "0" || breakdownCoverage !== "partial"))
+      && BigInt(timedTokens) <= statsTokenTotal(fixed) && !(timedRecords === 0 && timedTokens !== "0"));
+    return Object.freeze({ utcDay, client, provider, model, tokens: fixed, records, reportedCostMicrousd, reportedCostRecords,
+      estimatedCostMicrousd, estimatedCostRecords, durationMs, timedRecords, timedTokens, tokenBasis, breakdownCoverage });
+  }
+  /** Derived read model: explode a committed day's validated report into typed
+   * rows. Written atomically with the projection it summarizes; meta is last so
+   * a present-but-partial explosion can never certify a pinned day. */
+  #explodeDay(client: string, utcDay: number, revision: number, report: UsageStatsReport): void {
+    this.sql.exec("DELETE FROM usage_stats_day_rows WHERE client = ? AND utc_day = ?", client, utcDay);
+    let ordinal = 0;
+    for (const row of report.rows) this.sql.exec("INSERT INTO usage_stats_day_rows (client, utc_day, ordinal, provider, model, input_tokens, cache_read_tokens, cache_write_tokens, output_tokens, reasoning_tokens, records, reported_cost_microusd, reported_cost_records, estimated_cost_microusd, estimated_cost_records, duration_ms, timed_records, timed_tokens, token_basis, breakdown_coverage) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      client, utcDay, ordinal++, row.provider, row.model, row.tokens.input, row.tokens.cacheRead, row.tokens.cacheWrite, row.tokens.output,
+      row.tokens.reasoning, row.records, row.reportedCostMicrousd, row.reportedCostRecords, row.estimatedCostMicrousd, row.estimatedCostRecords,
+      row.durationMs, row.timedRecords, row.timedTokens, row.tokenBasis, row.breakdownCoverage);
+    const latest = report.sources[0].latestAtMs;
+    this.sql.exec("INSERT INTO usage_stats_day_meta (client, utc_day, revision, row_count, latest_at_ms, rows_hash) VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(client, utc_day) DO UPDATE SET revision = excluded.revision, row_count = excluded.row_count, latest_at_ms = excluded.latest_at_ms, rows_hash = excluded.rows_hash",
+      client, utcDay, revision, report.rows.length, latest, this.#rowsDigest(latest, report.rows));
+  }
+  /** Exploded rows for a stored day, served only when the meta row pins the
+   * day's current revision and the row scan reproduces its digest. Absent meta
+   * means the derived model was never populated; every other inconsistency is
+   * corruption, not a cache miss. */
+  #storedDayRows(client: string, utcDay: number, revision: number): { latestAtMs: number | null; rows: UsageStatsRow[] } | null {
+    const meta = this.sql.exec("SELECT revision, row_count, latest_at_ms, rows_hash FROM usage_stats_day_meta WHERE client = ? AND utc_day = ? LIMIT 2", client, utcDay).toArray();
+    requireStats(meta.length <= 1);
+    if (meta.length === 0) return null;
+    const row = meta[0];
+    requireStats(statsInteger(row.revision, 1, MAX_STATS_REVISIONS) && statsInteger(row.row_count, 0, 8192)
+      && (row.latest_at_ms === null || statsInteger(row.latest_at_ms, 0, 8_640_000_000_000_000)) && statsHex(row.rows_hash));
+    requireStats(row.revision === revision);
+    const rows: UsageStatsRow[] = [], hash = createHash("sha256").update("aicharts:stats-v2:day-rows\0").update(`${row.latest_at_ms ?? ""}\0`);
+    for (const raw of this.sql.exec("SELECT * FROM usage_stats_day_rows WHERE client = ? AND utc_day = ? ORDER BY ordinal LIMIT 8193", client, utcDay)) {
+      const stored = this.#storedRow(raw);
+      requireStats(stored.utcDay === utcDay && stored.client === client && rows.length < row.row_count);
+      rows.push(stored); hash.update(this.#rowDigestInput(stored));
+    }
+    requireStats(rows.length === row.row_count && hash.digest("hex") === row.rows_hash);
+    return { latestAtMs: row.latest_at_ms, rows };
+  }
+  /** Full parse fallback for a day whose derived model is not yet populated;
+   * the parsed report backfills it so a subsequent read stays on the scan. */
+  #dayRows(raw: Record<string, SqlStorageValue>, control: Control): { latestAtMs: number | null; rows: readonly UsageStatsRow[] } {
+    const day = this.#day(raw, control);
+    this.#explodeDay(day.client, day.utcDay, day.revision, day.report);
+    return { latestAtMs: day.report.sources[0].latestAtMs, rows: day.report.rows };
+  }
   #legacy(authority: AdmissionAuthority, range: StatsRange, coveredDay: (day: number) => boolean = () => false) {
     const admission = new AdmissionState(this.sql), control = admission.control(), sql = this.sql;
     function* heads() {
@@ -163,16 +250,22 @@ export class StatsState {
       }
     }
   }
-  #projections(request: StatsUpload, receipt: StatsReceipt): readonly { day: number; text: string; rows: number }[] {
+  #projections(request: StatsUpload, receipt: StatsReceipt): readonly { day: number; text: string; rows: number; report: UsageStatsReport }[] {
     const report = request.report, source = report.sources[0];
     return Array.from({ length: report.dayCount }, (_, index) => {
       const day = report.firstUtcDay + index, rows = report.rows.filter(row => row.utcDay === day), records = rows.reduce((sum, row) => sum + row.records, 0);
       if (request.mode === "preserve-history") {
         if (rows.length === 0) return null;
-        const prior = this.sql.exec("SELECT * FROM usage_stats_days WHERE client = ? AND utc_day = ? LIMIT 1", source.client, day).toArray()[0];
+        const prior = this.sql.exec("SELECT revision FROM usage_stats_days WHERE client = ? AND utc_day = ? LIMIT 1", source.client, day).toArray()[0];
         if (prior) {
+          requireStats(statsInteger(prior.revision, 1, MAX_STATS_REVISIONS));
+          // Prefer the exploded read model; only an unpopulated day pays the
+          // blob parse, and the digest pins the exploded copy to the stored day.
+          const stored = this.#storedDayRows(source.client, day, prior.revision);
+          const oldRows = stored !== null ? stored.rows : this.#day(
+            this.sql.exec("SELECT * FROM usage_stats_days WHERE client = ? AND utc_day = ? LIMIT 1", source.client, day).toArray()[0]).report.rows;
           const next = new Map(rows.map(row => [statsRowKey(row), row]));
-          for (const old of this.#day(prior).report.rows) {
+          for (const old of oldRows) {
             const row = next.get(statsRowKey(old));
             if (!row || row.records < old.records || (old.breakdownCoverage === "complete" && row.breakdownCoverage !== "complete")
               || row.reportedCostRecords < old.reportedCostRecords || row.estimatedCostRecords < old.estimatedCostRecords
@@ -187,8 +280,8 @@ export class StatsState {
         sources: [{ ...source, status: rows.length ? "observed" : "empty", records, tokenBasis: bases.size > 1 ? "mixed" : [...bases][0] ?? source.tokenBasis,
           latestAtMs: rows.length ? source.latestAtMs : null }], rows });
       requireStats(daily);
-      return { day, text: JSON.stringify(daily), rows: rows.length };
-    }).filter((value): value is { day: number; text: string; rows: number } => value !== null);
+      return { day, text: JSON.stringify(daily), rows: rows.length, report: daily };
+    }).filter((value): value is { day: number; text: string; rows: number; report: UsageStatsReport } => value !== null);
   }
   #capacity(request: StatsUpload, projections: readonly { day: number; text: string; rows: number }[]): void {
     const client = request.report.sources[0].client, first = request.report.firstUtcDay, last = first + request.report.dayCount;
@@ -247,9 +340,23 @@ export class StatsState {
     if (status.writerDeviceId !== null && status.writerDeviceId !== request.deviceId) throw new StatsFault("writer_conflict");
     if (request.expectedRevision !== status.revision || request.sequence !== status.nextSequence) throw new StatsFault("conflict");
     if (request.mode === "replace-snapshot") {
-      const previous = this.sql.exec("SELECT * FROM usage_stats_days WHERE client = ? ORDER BY utc_day DESC LIMIT 2", client).toArray();
+      const previous = this.sql.exec("SELECT d.utc_day, d.revision, m.revision AS pinned, m.latest_at_ms FROM usage_stats_days d LEFT JOIN usage_stats_day_meta m ON m.client = d.client AND m.utc_day = d.utc_day WHERE d.client = ? ORDER BY d.utc_day DESC LIMIT 2", client).toArray();
       requireStats(previous.length <= 1);
-      if (previous.length && (request.report.sources[0].latestAtMs ?? 0) < (this.#day(previous[0]).report.sources[0].latestAtMs ?? 0)) throw new StatsFault("clock_regressed");
+      if (previous.length) {
+        const prior = previous[0];
+        requireStats(statsInteger(prior.utc_day, 0, STATS_MAX_DAY) && statsInteger(prior.revision, 1, control.revision));
+        let latest: number | null;
+        if (prior.pinned === null) {
+          const stored = this.sql.exec("SELECT * FROM usage_stats_days WHERE client = ? AND utc_day = ? LIMIT 2", client, prior.utc_day).toArray();
+          requireStats(stored.length === 1);
+          latest = this.#day(stored[0], control).report.sources[0].latestAtMs;
+        } else {
+          requireStats(prior.pinned === prior.revision
+            && (prior.latest_at_ms === null || statsInteger(prior.latest_at_ms, 0, 8_640_000_000_000_000)));
+          latest = prior.latest_at_ms;
+        }
+        if ((request.report.sources[0].latestAtMs ?? 0) < (latest ?? 0)) throw new StatsFault("clock_regressed");
+      }
     }
     if (new AdmissionState(this.sql).pending(authority)) throw new StatsFault("conflict");
     if (!status.takeoverEligible || (status.legacyRecords > 0 && request.takeover === null)) throw new StatsFault("takeover_required");
@@ -291,9 +398,16 @@ export class StatsState {
     this.#capacity(request, projections);
     // Warp publishes a current billing-interval counter, not daily usage. Only
     // derived projections are replaced; immutable snapshots/receipts remain.
-    if (request.mode === "replace-snapshot") this.sql.exec("DELETE FROM usage_stats_days WHERE client = ?", receipt.client);
-    for (const day of projections) this.sql.exec("INSERT INTO usage_stats_days (client, utc_day, revision, body_hash, projection_hash, row_count, byte_count, projection) VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(client, utc_day) DO UPDATE SET revision = excluded.revision, body_hash = excluded.body_hash, projection_hash = excluded.projection_hash, row_count = excluded.row_count, byte_count = excluded.byte_count, projection = excluded.projection",
-      receipt.client, day.day, receipt.revision, receipt.bodyHash, statsHash(day.text), day.rows, new TextEncoder().encode(day.text).length, day.text);
+    if (request.mode === "replace-snapshot") {
+      this.sql.exec("DELETE FROM usage_stats_days WHERE client = ?", receipt.client);
+      this.sql.exec("DELETE FROM usage_stats_day_rows WHERE client = ?", receipt.client);
+      this.sql.exec("DELETE FROM usage_stats_day_meta WHERE client = ?", receipt.client);
+    }
+    for (const day of projections) {
+      this.sql.exec("INSERT INTO usage_stats_days (client, utc_day, revision, body_hash, projection_hash, row_count, byte_count, projection) VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(client, utc_day) DO UPDATE SET revision = excluded.revision, body_hash = excluded.body_hash, projection_hash = excluded.projection_hash, row_count = excluded.row_count, byte_count = excluded.byte_count, projection = excluded.projection",
+        receipt.client, day.day, receipt.revision, receipt.bodyHash, statsHash(day.text), day.rows, new TextEncoder().encode(day.text).length, day.text);
+      this.#explodeDay(receipt.client, day.day, receipt.revision, day.report);
+    }
     this.sql.exec("INSERT INTO usage_stats_writers (client, device_id) VALUES (?, ?) ON CONFLICT(client) DO NOTHING", receipt.client, request.deviceId);
     this.sql.exec("INSERT INTO usage_stats_devices (device_id, sequence, receipt) VALUES (?, ?, ?) ON CONFLICT(device_id) DO UPDATE SET sequence = excluded.sequence, receipt = excluded.receipt", request.deviceId, request.sequence, JSON.stringify(receipt));
     this.sql.exec("UPDATE usage_stats_control SET revision = ?, updated_at_ms = ? WHERE id = 1", receipt.revision, receipt.committedAtMs);
@@ -337,18 +451,35 @@ export class StatsState {
       : `${range.firstUtcDay}:${range.dayCount}:${control.revision}:${new AdmissionState(this.sql).control().revision}`;
     const hit = memo === undefined || memoKey === undefined ? undefined : memo.get(memoKey);
     if (hit !== undefined) return hit;
-    let projectedBytes = 32_768; // Envelope/source headroom, charged before parsing projection text.
+    let projectedBytes = 32_768; // Envelope/source headroom, charged before row content.
     const rows: UsageStatsRow[] = [], coverage = new Map<string, { latest: number | null; empty: boolean }>(), owned = new Set<string>();
-    for (const raw of this.sql.exec("SELECT * FROM usage_stats_days WHERE utc_day >= ? AND utc_day < ? ORDER BY utc_day, client LIMIT 23425", range.firstUtcDay, range.firstUtcDay + range.dayCount)) {
+    for (const raw of this.sql.exec("SELECT client, utc_day, revision, row_count, byte_count FROM usage_stats_days WHERE utc_day >= ? AND utc_day < ? ORDER BY utc_day, client LIMIT 23425", range.firstUtcDay, range.firstUtcDay + range.dayCount)) {
       if (owned.size >= 64 * 366) throw new StatsFault("limit");
-      requireStats(statsInteger(raw.byte_count, 1, 4 * 1024 * 1024));
-      projectedBytes += raw.byte_count;
-      if (projectedBytes > STATS_HTTP_RESPONSE_BYTES) throw new StatsFault("limit");
-      const day = this.#day(raw, control); owned.add(`${day.client}:${day.utcDay}`);
-      rows.push(...day.report.rows);
-      if (rows.length > STATS_HTTP_RESPONSE_ROWS) throw new StatsFault("limit");
-      const previous = coverage.get(day.client), latest = day.report.sources[0].latestAtMs;
-      coverage.set(day.client, { latest: latest === null ? previous?.latest ?? null : Math.max(latest, previous?.latest ?? 0), empty: (previous?.empty ?? true) && day.report.rows.length === 0 });
+      requireStats(isStatsClient(raw.client) && statsInteger(raw.utc_day, 0, STATS_MAX_DAY) && statsInteger(raw.revision, 1, control.revision)
+        && statsInteger(raw.row_count, 0, 8192) && statsInteger(raw.byte_count, 1, 4 * 1024 * 1024));
+      owned.add(`${raw.client}:${raw.utc_day}`);
+      // The exploded read model serves pinned days straight from typed storage;
+      // only a never-populated day pays the projection parse, and backfills.
+      const stored = this.#storedDayRows(raw.client, raw.utc_day, raw.revision);
+      let latest: number | null, count: number;
+      if (stored !== null) {
+        for (const row of stored.rows) {
+          rows.push(row); projectedBytes += JSON.stringify(row).length;
+          if (projectedBytes > STATS_HTTP_RESPONSE_BYTES || rows.length > STATS_HTTP_RESPONSE_ROWS) throw new StatsFault("limit");
+        }
+        latest = stored.latestAtMs; count = stored.rows.length;
+      } else {
+        const full = this.sql.exec("SELECT * FROM usage_stats_days WHERE client = ? AND utc_day = ? LIMIT 2", raw.client, raw.utc_day).toArray();
+        requireStats(full.length === 1);
+        projectedBytes += raw.byte_count;
+        if (projectedBytes > STATS_HTTP_RESPONSE_BYTES) throw new StatsFault("limit");
+        const day = this.#dayRows(full[0], control);
+        rows.push(...day.rows);
+        if (rows.length > STATS_HTTP_RESPONSE_ROWS) throw new StatsFault("limit");
+        latest = day.latestAtMs; count = day.rows.length;
+      }
+      const previous = coverage.get(raw.client);
+      coverage.set(raw.client, { latest: latest === null ? previous?.latest ?? null : Math.max(latest, previous?.latest ?? 0), empty: (previous?.empty ?? true) && count === 0 });
     }
     const legacy = new Map<string, UsageStatsRow>();
     // A day already owned by every legacy provider's projection yields nothing.
@@ -402,12 +533,18 @@ export class StatsState {
     // Public arithmetic does not materialize the private response. A dense
     // publisher remains rankable even when its requested browser range needs
     // to be shortened. Each daily projection is independently bounded.
-    for (const raw of this.sql.exec("SELECT * FROM usage_stats_days WHERE utc_day >= ? AND utc_day < ? ORDER BY utc_day, client LIMIT 23425", range.firstUtcDay, range.firstUtcDay + range.dayCount)) {
+    for (const raw of this.sql.exec("SELECT client, utc_day, revision, row_count, byte_count FROM usage_stats_days WHERE utc_day >= ? AND utc_day < ? ORDER BY utc_day, client LIMIT 23425", range.firstUtcDay, range.firstUtcDay + range.dayCount)) {
       if (owned.size >= 64 * 366) throw new StatsFault("limit");
-      const day = this.#day(raw, control); owned.add(`${day.client}:${day.utcDay}`);
-      rowCount += day.report.rows.length; bytes += day.text.length;
+      requireStats(isStatsClient(raw.client) && statsInteger(raw.utc_day, 0, STATS_MAX_DAY) && statsInteger(raw.revision, 1, control.revision)
+        && statsInteger(raw.row_count, 0, 8192) && statsInteger(raw.byte_count, 1, 4 * 1024 * 1024));
+      owned.add(`${raw.client}:${raw.utc_day}`);
+      const stored = this.#storedDayRows(raw.client, raw.utc_day, raw.revision);
+      const source = stored !== null ? stored.rows : this.#dayRows(
+        this.sql.exec("SELECT * FROM usage_stats_days WHERE client = ? AND utc_day = ? LIMIT 2", raw.client, raw.utc_day).toArray()[0], control).rows;
+      rowCount += source.length;
+      for (const row of source) bytes += JSON.stringify(row).length;
       if (rowCount > MAX_STATS_STORED_ROWS || bytes > MAX_STATS_STORED_BYTES) throw new StatsFault("limit");
-      for (const row of day.report.rows) if (row.tokenBasis === "reported") add(statsTokenTotal(row.tokens), row.records);
+      for (const row of source) if (row.tokenBasis === "reported") add(statsTokenTotal(row.tokens), row.records);
     }
     for (const { head, usage, client } of this.#legacy(authority, range, day => LEGACY_CLIENTS.every(source => owned.has(`${source}:${day}`))).heads) {
       if (owned.has(`${client}:${head.day}`)) continue;
@@ -440,7 +577,8 @@ export class StatsState {
   }
 
   /** Linear in retained days, and each stored projection is parsed to confirm
-   * it still matches its recorded metadata. The owner runs it once per object
+   * it still matches its recorded metadata — and any populated derived model
+   * reproduces the same rows exactly. The owner runs it once per object
    * lifetime before the first mutation, never to serve a read. */
   auditHistory(authority: AdmissionAuthority | null): void {
     const { control, clients } = this.auditControl(authority);
@@ -449,7 +587,14 @@ export class StatsState {
       requireStats(++days <= MAX_STATS_STORED_DAYS && authority);
       const day = this.#day(raw, control); rows += day.report.rows.length; bytes += new TextEncoder().encode(day.text).length;
       requireStats(rows <= MAX_STATS_STORED_ROWS && bytes <= MAX_STATS_STORED_BYTES && clients.has(day.client));
+      const stored = this.#storedDayRows(day.client, day.utcDay, day.revision);
+      if (stored !== null) requireStats(stored.latestAtMs === day.report.sources[0].latestAtMs
+        && stored.rows.length === day.report.rows.length
+        && stored.rows.every((row, index) => this.#rowDigestInput(row) === this.#rowDigestInput(day.report.rows[index])));
     }
+    // The derived model may only cover days that still exist.
+    const orphans = this.sql.exec("SELECT (SELECT COUNT(*) FROM usage_stats_day_meta m WHERE NOT EXISTS (SELECT 1 FROM usage_stats_days d WHERE d.client = m.client AND d.utc_day = m.utc_day)) + (SELECT COUNT(*) FROM usage_stats_day_rows r WHERE NOT EXISTS (SELECT 1 FROM usage_stats_days d WHERE d.client = r.client AND d.utc_day = r.utc_day)) AS orphans").toArray()[0];
+    requireStats(orphans.orphans === 0);
     requireStats(control.revision !== 0 || days === 0);
   }
 }
