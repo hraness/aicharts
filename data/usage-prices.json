@@ -3,8 +3,8 @@
   "registryRevision": 1,
   "source": {
     "url": "https://models.dev/api.json",
-    "retrievedAt": "2026-09-19",
-    "sha256": "5f67f81c68d10a28905a6d299418854f6c8cb444f27538e1134975510c1e81fe"
+    "retrievedAt": "2026-09-22",
+    "sha256": "97dd59b590124debb98907bdcff8f919bc2c694547d8340a1dcebb2d6ea87fee"
   },
   "unit": "picousd-per-token",
   "basis": "dated-retail-estimate",
@@ -1659,6 +1659,12 @@
       "cacheWrite": null,
       "output": "284000"
     },
+    "aihubmix\u0000deepseek-v4-flash-0731-fast": {
+      "input": "280000",
+      "cacheRead": "70000",
+      "cacheWrite": null,
+      "output": "1400000"
+    },
     "aihubmix\u0000deepseek-v4-flash-vision-exp": {
       "input": "155000",
       "cacheRead": "3100",
@@ -1677,10 +1683,22 @@
       "cacheWrite": null,
       "output": "620000"
     },
+    "aihubmix\u0000gemini-3.1-flash-image": {
+      "input": "500000",
+      "cacheRead": null,
+      "cacheWrite": null,
+      "output": "3000000"
+    },
     "aihubmix\u0000gemini-3.1-flash-lite": {
       "input": "250000",
       "cacheRead": "25000",
       "cacheWrite": "1000000",
+      "output": "1500000"
+    },
+    "aihubmix\u0000gemini-3.1-flash-lite-image": {
+      "input": "250000",
+      "cacheRead": "25000",
+      "cacheWrite": null,
       "output": "1500000"
     },
     "aihubmix\u0000gemini-3.5-flash": {
@@ -1689,7 +1707,25 @@
       "cacheWrite": null,
       "output": "9000000"
     },
+    "aihubmix\u0000gemini-3.5-flash-lite": {
+      "input": "300000",
+      "cacheRead": "30000",
+      "cacheWrite": null,
+      "output": "2499999"
+    },
+    "aihubmix\u0000gemini-3.6-flash": {
+      "input": "1500000",
+      "cacheRead": "150000",
+      "cacheWrite": null,
+      "output": "7500000"
+    },
     "aihubmix\u0000gemini-3.7-flash": {
+      "input": "750000",
+      "cacheRead": "75000",
+      "cacheWrite": null,
+      "output": "3750000"
+    },
+    "aihubmix\u0000gemini-3.8-flash": {
       "input": "750000",
       "cacheRead": "75000",
       "cacheWrite": null,
@@ -1797,11 +1833,23 @@
       "cacheWrite": null,
       "output": "2000000"
     },
+    "aihubmix\u0000hy3": {
+      "input": "156200",
+      "cacheRead": "39050",
+      "cacheWrite": null,
+      "output": "624800"
+    },
     "aihubmix\u0000hy3-preview": {
       "input": "170000",
       "cacheRead": "51000",
       "cacheWrite": null,
       "output": "566661"
+    },
+    "aihubmix\u0000hy4-preview": {
+      "input": "845000",
+      "cacheRead": "42250",
+      "cacheWrite": null,
+      "output": "2535000"
     },
     "aihubmix\u0000kimi-k2.5": {
       "input": "600000",
@@ -1833,11 +1881,41 @@
       "cacheWrite": null,
       "output": "15000000"
     },
+    "aihubmix\u0000longcat-2.0": {
+      "input": "774600",
+      "cacheRead": "15492",
+      "cacheWrite": null,
+      "output": "3098400"
+    },
     "aihubmix\u0000minimax-m2.7": {
       "input": "300000",
       "cacheRead": "60000",
       "cacheWrite": "375000",
       "output": "1200000"
+    },
+    "aihubmix\u0000minimax-m3": {
+      "input": "288000",
+      "cacheRead": null,
+      "cacheWrite": null,
+      "output": "1152000"
+    },
+    "aihubmix\u0000muse-spark-1.1": {
+      "input": "1375000",
+      "cacheRead": null,
+      "cacheWrite": null,
+      "output": "4675000"
+    },
+    "aihubmix\u0000muse-spark-1.2": {
+      "input": "1375000",
+      "cacheRead": null,
+      "cacheWrite": null,
+      "output": "4675000"
+    },
+    "aihubmix\u0000muse-spark-1.3": {
+      "input": "1375000",
+      "cacheRead": "165000",
+      "cacheWrite": null,
+      "output": "4675000"
     },
     "aihubmix\u0000qwen3.7-flash": {
       "input": "28200",
@@ -1874,6 +1952,18 @@
       "cacheRead": "169000",
       "cacheWrite": "2112500",
       "output": "5070000"
+    },
+    "aihubmix\u0000qwen3.8-omni-flash": {
+      "input": "112600",
+      "cacheRead": "14075",
+      "cacheWrite": "175937",
+      "output": "380025"
+    },
+    "aihubmix\u0000step-3.7-flash": {
+      "input": "220000",
+      "cacheRead": "44000",
+      "cacheWrite": null,
+      "output": "1320000"
     },
     "aihubmix\u0000zai-glm-5.1": {
       "input": "845000",
@@ -2625,6 +2715,12 @@
       "cacheWrite": "6250000",
       "output": "25000000"
     },
+    "amazon-bedrock\u0000anthropic.claude-opus-5-5": {
+      "input": "4000000",
+      "cacheRead": "200000",
+      "cacheWrite": "5000000",
+      "output": "20000000"
+    },
     "amazon-bedrock\u0000anthropic.claude-sonnet-4-5-20250929-v1:0": {
       "input": "3000000",
       "cacheRead": "300000",
@@ -2696,6 +2792,12 @@
       "cacheRead": "550000",
       "cacheWrite": "6875000",
       "output": "27500000"
+    },
+    "amazon-bedrock\u0000au.anthropic.claude-opus-5-5": {
+      "input": "4400000",
+      "cacheRead": "220000",
+      "cacheWrite": "5500000",
+      "output": "22000000"
     },
     "amazon-bedrock\u0000au.anthropic.claude-sonnet-4-5-20250929-v1:0": {
       "input": "3300000",
@@ -2805,6 +2907,12 @@
       "cacheWrite": "6875000",
       "output": "27500000"
     },
+    "amazon-bedrock\u0000eu.anthropic.claude-opus-5-5": {
+      "input": "4400000",
+      "cacheRead": "220000",
+      "cacheWrite": "5500000",
+      "output": "22000000"
+    },
     "amazon-bedrock\u0000eu.anthropic.claude-sonnet-4-20250514-v1:0": {
       "input": "3000000",
       "cacheRead": "300000",
@@ -2888,6 +2996,12 @@
       "cacheRead": "500000",
       "cacheWrite": "6250000",
       "output": "25000000"
+    },
+    "amazon-bedrock\u0000global.anthropic.claude-opus-5-5": {
+      "input": "4000000",
+      "cacheRead": "200000",
+      "cacheWrite": "5000000",
+      "output": "20000000"
     },
     "amazon-bedrock\u0000global.anthropic.claude-sonnet-4-20250514-v1:0": {
       "input": "3000000",
@@ -2984,6 +3098,12 @@
       "cacheRead": "550000",
       "cacheWrite": "6875000",
       "output": "27500000"
+    },
+    "amazon-bedrock\u0000jp.anthropic.claude-opus-5-5": {
+      "input": "4400000",
+      "cacheRead": "220000",
+      "cacheWrite": "5500000",
+      "output": "22000000"
     },
     "amazon-bedrock\u0000jp.anthropic.claude-sonnet-4-5-20250929-v1:0": {
       "input": "3300000",
@@ -3327,6 +3447,12 @@
       "cacheWrite": "6875000",
       "output": "27500000"
     },
+    "amazon-bedrock\u0000us.anthropic.claude-opus-5-5": {
+      "input": "4400000",
+      "cacheRead": "220000",
+      "cacheWrite": "5500000",
+      "output": "22000000"
+    },
     "amazon-bedrock\u0000us.anthropic.claude-sonnet-4-20250514-v1:0": {
       "input": "3000000",
       "cacheRead": "300000",
@@ -3603,6 +3729,12 @@
       "cacheWrite": "6250000",
       "output": "25000000"
     },
+    "anthropic\u0000claude-opus-5-5": {
+      "input": "4000000",
+      "cacheRead": "200000",
+      "cacheWrite": "5000000",
+      "output": "20000000"
+    },
     "anthropic\u0000claude-sonnet-4-5": {
       "input": "3000000",
       "cacheRead": "300000",
@@ -3782,6 +3914,12 @@
       "cacheRead": "500000",
       "cacheWrite": "6250000",
       "output": "25000000"
+    },
+    "azure\u0000claude-opus-5-5": {
+      "input": "4000000",
+      "cacheRead": "200000",
+      "cacheWrite": "5000000",
+      "output": "20000000"
     },
     "azure\u0000claude-sonnet-4-5": {
       "input": "3000000",
@@ -4250,6 +4388,12 @@
       "cacheRead": "500000",
       "cacheWrite": "6250000",
       "output": "25000000"
+    },
+    "azure-cognitive-services\u0000claude-opus-5-5": {
+      "input": "4000000",
+      "cacheRead": "200000",
+      "cacheWrite": "5000000",
+      "output": "20000000"
     },
     "azure-cognitive-services\u0000claude-sonnet-4-5": {
       "input": "3000000",
@@ -5391,12 +5535,6 @@
       "cacheWrite": null,
       "output": "4400000"
     },
-    "cloudflare-ai-gateway\u0000typesafe/jev": {
-      "input": "42000",
-      "cacheRead": "0",
-      "cacheWrite": null,
-      "output": "0"
-    },
     "cloudflare-ai-gateway\u0000unbiased/pareto": {
       "input": "2500000",
       "cacheRead": "250000",
@@ -5475,29 +5613,29 @@
       "cacheWrite": null,
       "output": "150000"
     },
+    "coralbricks\u0000deepseek-v4.1-flash-fast-fp4": {
+      "input": "300000",
+      "cacheRead": "0",
+      "cacheWrite": "90000",
+      "output": "1200000"
+    },
     "coralbricks\u0000glm-5.3-flash-fp4": {
       "input": "150000",
       "cacheRead": "0",
-      "cacheWrite": null,
+      "cacheWrite": "230000",
       "output": "500000"
     },
     "coralbricks\u0000glm-5.3-fp4": {
       "input": "1120000",
       "cacheRead": "0",
-      "cacheWrite": null,
+      "cacheWrite": "1680000",
       "output": "4400000"
     },
     "coralbricks\u0000gpt-oss-120b": {
       "input": "120000",
       "cacheRead": "0",
-      "cacheWrite": null,
+      "cacheWrite": "180000",
       "output": "600000"
-    },
-    "coralbricks\u0000kimi-k3": {
-      "input": "3000000",
-      "cacheRead": "0",
-      "cacheWrite": null,
-      "output": "15000000"
     },
     "cortecs\u0000apertus-70b": {
       "input": "1393000",
@@ -6046,10 +6184,10 @@
       "output": "299000"
     },
     "cortecs\u0000qwen3-32b": {
-      "input": "89000",
+      "input": "179000",
       "cacheRead": null,
       "cacheWrite": null,
-      "output": "312000"
+      "output": "697000"
     },
     "cortecs\u0000qwen3-coder-30b-a3b-instruct": {
       "input": "67000",
@@ -6441,6 +6579,12 @@
       "cacheWrite": "2350000",
       "output": "5630000"
     },
+    "crossmodel\u0000qwen/qwen3.8-omni-flash": {
+      "input": "130000",
+      "cacheRead": "16000",
+      "cacheWrite": "130000",
+      "output": "430000"
+    },
     "crossmodel\u0000tencent/hy3": {
       "input": "160000",
       "cacheRead": "40000",
@@ -6460,6 +6604,18 @@
       "output": "320000"
     },
     "crossmodel\u0000xiaomi/mimo-v2.5-pro": {
+      "input": "470000",
+      "cacheRead": "5000",
+      "cacheWrite": "470000",
+      "output": "940000"
+    },
+    "crossmodel\u0000xiaomi/mimo-v2.6-flash": {
+      "input": "160000",
+      "cacheRead": "4000",
+      "cacheWrite": "160000",
+      "output": "320000"
+    },
+    "crossmodel\u0000xiaomi/mimo-v2.6-pro": {
       "input": "470000",
       "cacheRead": "5000",
       "cacheWrite": "470000",
@@ -7018,10 +7174,10 @@
       "output": "1150000"
     },
     "deepinfra\u0000tencent/hy3": {
-      "input": "140000",
-      "cacheRead": "35000",
+      "input": "130000",
+      "cacheRead": "33000",
       "cacheWrite": null,
-      "output": "580000"
+      "output": "530000"
     },
     "deepinfra\u0000thinkingmachines/inkling": {
       "input": "950000",
@@ -7276,16 +7432,16 @@
       "output": "0"
     },
     "digitalocean\u0000deepseek-3.2": {
-      "input": "250000",
-      "cacheRead": "75000",
+      "input": "500000",
+      "cacheRead": "150000",
       "cacheWrite": null,
-      "output": "800000"
+      "output": "1600000"
     },
     "digitalocean\u0000deepseek-4-flash": {
-      "input": "67900",
-      "cacheRead": "16800",
+      "input": "140000",
+      "cacheRead": "28000",
       "cacheWrite": null,
-      "output": "168000"
+      "output": "280000"
     },
     "digitalocean\u0000deepseek-r1-distill-llama-70b": {
       "input": "990000",
@@ -7294,16 +7450,16 @@
       "output": "990000"
     },
     "digitalocean\u0000deepseek-v4-flash-0731": {
-      "input": "80000",
-      "cacheRead": "25200",
+      "input": "140000",
+      "cacheRead": "28000",
       "cacheWrite": null,
-      "output": "252000"
+      "output": "280000"
     },
     "digitalocean\u0000deepseek-v4-pro": {
-      "input": "870000",
-      "cacheRead": "174000",
+      "input": "1740000",
+      "cacheRead": "348000",
       "cacheWrite": null,
-      "output": "1740000"
+      "output": "3480000"
     },
     "digitalocean\u0000deepseek-v4-pro-0813": {
       "input": "1320000",
@@ -7342,16 +7498,16 @@
       "output": "4300000"
     },
     "digitalocean\u0000glm-5.2": {
-      "input": "700000",
-      "cacheRead": "105000",
+      "input": "1400000",
+      "cacheRead": "210000",
       "cacheWrite": null,
-      "output": "2200000"
+      "output": "4400000"
     },
     "digitalocean\u0000glm-5.3": {
-      "input": "950000",
-      "cacheRead": "200000",
+      "input": "1400000",
+      "cacheRead": "260000",
       "cacheWrite": null,
-      "output": "3400000"
+      "output": "4400000"
     },
     "digitalocean\u0000glm-5.3-flash": {
       "input": "150000",
@@ -7378,10 +7534,10 @@
       "output": "4000000"
     },
     "digitalocean\u0000kimi-k3": {
-      "input": "2550000",
-      "cacheRead": "285000",
+      "input": "3000000",
+      "cacheRead": "300000",
       "cacheWrite": null,
-      "output": "12950000"
+      "output": "15000000"
     },
     "digitalocean\u0000llama-4-maverick": {
       "input": "250000",
@@ -7402,10 +7558,10 @@
       "output": "650000"
     },
     "digitalocean\u0000mimo-v2.5-pro": {
-      "input": "400000",
-      "cacheRead": "80000",
+      "input": "800000",
+      "cacheRead": "160000",
       "cacheWrite": null,
-      "output": "1500000"
+      "output": "3000000"
     },
     "digitalocean\u0000minimax-m2.5": {
       "input": "300000",
@@ -7546,10 +7702,10 @@
       "output": "30000000"
     },
     "digitalocean\u0000openai-gpt-oss-120b": {
-      "input": "55000",
+      "input": "100000",
       "cacheRead": "20000",
       "cacheWrite": null,
-      "output": "385000"
+      "output": "700000"
     },
     "digitalocean\u0000openai-gpt-oss-20b": {
       "input": "50000",
@@ -8200,10 +8356,10 @@
       "output": "1150000"
     },
     "edenai\u0000deepinfra/tencent/hy3": {
-      "input": "140000",
-      "cacheRead": "35000",
+      "input": "130000",
+      "cacheRead": "33000",
       "cacheWrite": null,
-      "output": "580000"
+      "output": "530000"
     },
     "edenai\u0000deepinfra/thinkingmachines/inkling": {
       "input": "950000",
@@ -8344,22 +8500,22 @@
       "output": "300000"
     },
     "edenai\u0000infomaniak/mistralai/ministral-3-14b-instruct-2512": {
-      "input": "343800",
+      "input": "343890",
       "cacheRead": null,
       "cacheWrite": null,
-      "output": "458400"
+      "output": "458520"
     },
     "edenai\u0000ionos/meta-llama/llama-3.3-70b-instruct": {
-      "input": "744900",
+      "input": "745095",
       "cacheRead": null,
       "cacheWrite": null,
-      "output": "744900"
+      "output": "745095"
     },
     "edenai\u0000ionos/openai/gpt-oss-120b": {
-      "input": "171900",
+      "input": "171945",
       "cacheRead": null,
       "cacheWrite": null,
-      "output": "744900"
+      "output": "745095"
     },
     "edenai\u0000minimax/minimax-m2": {
       "input": "300000",
@@ -8872,10 +9028,10 @@
       "output": "2400000"
     },
     "edenai\u0000scaleway/deepseek-v4-flash-0731": {
-      "input": "458400",
+      "input": "458520",
       "cacheRead": null,
       "cacheWrite": null,
-      "output": "916800"
+      "output": "917040"
     },
     "edenai\u0000scaleway/gemma-3-27b-it": {
       "input": "287125",
@@ -8884,16 +9040,16 @@
       "output": "574250"
     },
     "edenai\u0000scaleway/gpt-oss-120b": {
-      "input": "171900",
+      "input": "171945",
       "cacheRead": null,
       "cacheWrite": null,
-      "output": "687600"
+      "output": "687780"
     },
     "edenai\u0000scaleway/llama-3.3-70b-instruct": {
-      "input": "1031400",
+      "input": "1031670",
       "cacheRead": null,
       "cacheWrite": null,
-      "output": "1031400"
+      "output": "1031670"
     },
     "edenai\u0000tensorx/deepseek/deepseek-v4-flash-0731": {
       "input": "250000",
@@ -9123,6 +9279,24 @@
       "cacheWrite": null,
       "output": "4350000"
     },
+    "empiriolabs\u0000mimo-v2-6-flash": {
+      "input": "700000",
+      "cacheRead": "700000",
+      "cacheWrite": null,
+      "output": "1400000"
+    },
+    "empiriolabs\u0000mimo-v2-6-pro": {
+      "input": "2175000",
+      "cacheRead": "2175000",
+      "cacheWrite": null,
+      "output": "4350000"
+    },
+    "empiriolabs\u0000mimo-v2-6-pro-ultraspeed": {
+      "input": "21750000",
+      "cacheRead": "21750000",
+      "cacheWrite": null,
+      "output": "43500000"
+    },
     "empiriolabs\u0000minimax-m2-7": {
       "input": "150000",
       "cacheRead": "30000",
@@ -9254,6 +9428,12 @@
       "cacheRead": "40000",
       "cacheWrite": null,
       "output": "1150000"
+    },
+    "empiriolabs\u0000step-5-preview": {
+      "input": "1000000",
+      "cacheRead": "50000",
+      "cacheWrite": null,
+      "output": "2700000"
     },
     "evroc\u0000evroc/roc": {
       "input": "2875000",
@@ -10395,6 +10575,12 @@
       "cacheWrite": "18750000",
       "output": "75000000"
     },
+    "google-vertex\u0000claude-opus-5-5@default": {
+      "input": "4000000",
+      "cacheRead": "200000",
+      "cacheWrite": "5000000",
+      "output": "20000000"
+    },
     "google-vertex\u0000claude-opus-5@default": {
       "input": "5000000",
       "cacheRead": "500000",
@@ -10574,6 +10760,12 @@
       "cacheRead": "1500000",
       "cacheWrite": "18750000",
       "output": "75000000"
+    },
+    "google-vertex-anthropic\u0000claude-opus-5-5@default": {
+      "input": "4000000",
+      "cacheRead": "200000",
+      "cacheWrite": "5000000",
+      "output": "20000000"
     },
     "google-vertex-anthropic\u0000claude-opus-5@default": {
       "input": "5000000",
@@ -11900,6 +12092,12 @@
       "cacheRead": null,
       "cacheWrite": null,
       "output": "580000"
+    },
+    "huggingface\u0000tencent/hy4-preview": {
+      "input": "834000",
+      "cacheRead": null,
+      "cacheWrite": null,
+      "output": "2501000"
     },
     "huggingface\u0000thinkingmachines/inkling": {
       "input": "1000000",
@@ -13479,12 +13677,6 @@
       "cacheWrite": "1250000",
       "output": "5000000"
     },
-    "kilo\u0000anthropic/claude-opus-4": {
-      "input": "15000000",
-      "cacheRead": "1500000",
-      "cacheWrite": "18750000",
-      "output": "75000000"
-    },
     "kilo\u0000anthropic/claude-opus-4-1": {
       "input": "15000000",
       "cacheRead": "1500000",
@@ -13550,6 +13742,18 @@
       "cacheRead": "500000",
       "cacheWrite": "6250000",
       "output": "25000000"
+    },
+    "kilo\u0000anthropic/claude-opus-5-5": {
+      "input": "4000000",
+      "cacheRead": "200000",
+      "cacheWrite": "5000000",
+      "output": "20000000"
+    },
+    "kilo\u0000anthropic/claude-opus-5.5": {
+      "input": "4000000",
+      "cacheRead": "200000",
+      "cacheWrite": "5000000",
+      "output": "20000000"
     },
     "kilo\u0000anthropic/claude-sonnet-4": {
       "input": "3000000",
@@ -13881,12 +14085,6 @@
       "cacheWrite": null,
       "output": "150000"
     },
-    "kilo\u0000kwaipilot/kat-coder-pro-v2": {
-      "input": "300000",
-      "cacheRead": "60000",
-      "cacheWrite": null,
-      "output": "1200000"
-    },
     "kilo\u0000kwaipilot/kat-coder-pro-v2.5": {
       "input": "740000",
       "cacheRead": "150000",
@@ -14194,10 +14392,10 @@
       "output": "4000000"
     },
     "kilo\u0000moonshotai/kimi-k3": {
-      "input": "1700000",
-      "cacheRead": "170000",
+      "input": "3000000",
+      "cacheRead": "300000",
       "cacheWrite": null,
-      "output": "8500000"
+      "output": "15000000"
     },
     "kilo\u0000morph/morph-v3-fast": {
       "input": "800000",
@@ -14210,6 +14408,18 @@
       "cacheRead": null,
       "cacheWrite": null,
       "output": "1900000"
+    },
+    "kilo\u0000nex-agi/nex-n2.5-mini": {
+      "input": "25000",
+      "cacheRead": "2500",
+      "cacheWrite": null,
+      "output": "100000"
+    },
+    "kilo\u0000nex-agi/nex-n2.5-pro": {
+      "input": "75000",
+      "cacheRead": "15000",
+      "cacheWrite": null,
+      "output": "250000"
     },
     "kilo\u0000nousresearch/hermes-3-llama-3.1-405b": {
       "input": "1000000",
@@ -14254,7 +14464,7 @@
       "output": "200000"
     },
     "kilo\u0000nvidia/nemotron-3.5-lightning": {
-      "input": "40000",
+      "input": "65000",
       "cacheRead": null,
       "cacheWrite": null,
       "output": "180000"
@@ -14908,10 +15118,10 @@
       "output": "2700000"
     },
     "kilo\u0000qwen/qwen3.6-35b-a3b": {
-      "input": "100000",
+      "input": "150000",
       "cacheRead": "50000",
       "cacheWrite": null,
-      "output": "900000"
+      "output": "1000000"
     },
     "kilo\u0000qwen/qwen3.6-flash": {
       "input": "187500",
@@ -15076,10 +15286,10 @@
       "output": "295000"
     },
     "kilo\u0000tencent/hy3": {
-      "input": "132000",
-      "cacheRead": "33000",
+      "input": "82500",
+      "cacheRead": "20625",
       "cacheWrite": null,
-      "output": "528000"
+      "output": "330000"
     },
     "kilo\u0000tencent/hy3-preview": {
       "input": "180000",
@@ -15183,11 +15393,35 @@
       "cacheWrite": null,
       "output": "6000000"
     },
+    "kilo\u0000x-ai/grok-4.7": {
+      "input": "1600000",
+      "cacheRead": "400000",
+      "cacheWrite": null,
+      "output": "4800000"
+    },
     "kilo\u0000x-ai/grok-build-0.1": {
       "input": "1000000",
       "cacheRead": "200000",
       "cacheWrite": null,
       "output": "2000000"
+    },
+    "kilo\u0000xiaomi/mimo-v2.6-flash": {
+      "input": "140000",
+      "cacheRead": "2800",
+      "cacheWrite": null,
+      "output": "280000"
+    },
+    "kilo\u0000xiaomi/mimo-v2.6-pro": {
+      "input": "435000",
+      "cacheRead": "3600",
+      "cacheWrite": null,
+      "output": "870000"
+    },
+    "kilo\u0000xiaomi/mimo-v2.6-pro-ultraspeed": {
+      "input": "4350000",
+      "cacheRead": "36000",
+      "cacheWrite": null,
+      "output": "8700000"
     },
     "kilo\u0000z-ai/glm-4.5": {
       "input": "600000",
@@ -15664,10 +15898,10 @@
       "output": "4000000"
     },
     "llmgateway\u0000glm-5.3-flash": {
-      "input": "88000",
-      "cacheRead": "25000",
+      "input": "70000",
+      "cacheRead": "15000",
       "cacheWrite": null,
-      "output": "250000"
+      "output": "190000"
     },
     "llmgateway\u0000glm-5v-turbo": {
       "input": "1200000",
@@ -15891,6 +16125,12 @@
       "cacheWrite": null,
       "output": "6000000"
     },
+    "llmgateway\u0000grok-4-7": {
+      "input": "2000000",
+      "cacheRead": "500000",
+      "cacheWrite": null,
+      "output": "6000000"
+    },
     "llmgateway\u0000hy-mt2-plus": {
       "input": "74000",
       "cacheRead": null,
@@ -15908,6 +16148,18 @@
       "cacheRead": "42000",
       "cacheWrite": null,
       "output": "2501000"
+    },
+    "llmgateway\u0000inkling": {
+      "input": "950000",
+      "cacheRead": "160000",
+      "cacheWrite": null,
+      "output": "4050000"
+    },
+    "llmgateway\u0000inkling-small": {
+      "input": "450000",
+      "cacheRead": "100000",
+      "cacheWrite": null,
+      "output": "1200000"
     },
     "llmgateway\u0000kimi-k2": {
       "input": "570000",
@@ -16005,6 +16257,18 @@
       "cacheWrite": null,
       "output": "590000"
     },
+    "llmgateway\u0000mimo-v2.6-flash": {
+      "input": "140000",
+      "cacheRead": "2800",
+      "cacheWrite": null,
+      "output": "280000"
+    },
+    "llmgateway\u0000mimo-v2.6-pro": {
+      "input": "435000",
+      "cacheRead": "3600",
+      "cacheWrite": null,
+      "output": "870000"
+    },
     "llmgateway\u0000minimax-m2": {
       "input": "200000",
       "cacheRead": "30000",
@@ -16095,6 +16359,12 @@
       "cacheWrite": null,
       "output": "300000"
     },
+    "llmgateway\u0000muse-glimmer-30b": {
+      "input": "300000",
+      "cacheRead": "40000",
+      "cacheWrite": null,
+      "output": "1200000"
+    },
     "llmgateway\u0000muse-spark-1.1": {
       "input": "1250000",
       "cacheRead": "150000",
@@ -16130,6 +16400,12 @@
       "cacheRead": "100000",
       "cacheWrite": null,
       "output": "2200000"
+    },
+    "llmgateway\u0000nemotron-3.5-lightning": {
+      "input": "80000",
+      "cacheRead": null,
+      "cacheWrite": null,
+      "output": "200000"
     },
     "llmgateway\u0000o1": {
       "input": "15000000",
@@ -16317,6 +16593,12 @@
       "cacheWrite": "500000",
       "output": "1600000"
     },
+    "llmgateway\u0000qwen3.8-2.4t-a95b": {
+      "input": "2000000",
+      "cacheRead": "250000",
+      "cacheWrite": null,
+      "output": "6000000"
+    },
     "llmgateway\u0000qwen3.8-27b": {
       "input": "80000",
       "cacheRead": "50000",
@@ -16382,6 +16664,12 @@
       "cacheRead": null,
       "cacheWrite": null,
       "output": "8000000"
+    },
+    "llmgateway\u0000step-3.7-flash": {
+      "input": "200000",
+      "cacheRead": "40000",
+      "cacheWrite": null,
+      "output": "1150000"
     },
     "llmgateway-providers\u0000alibaba/deepseek-v4-flash": {
       "input": "200000",
@@ -17009,15 +17297,21 @@
     },
     "llmgateway-providers\u0000baidu/deepseek-v4-flash": {
       "input": "440000",
-      "cacheRead": "44000",
+      "cacheRead": "14000",
       "cacheWrite": null,
       "output": "1320000"
     },
     "llmgateway-providers\u0000baidu/deepseek-v4-pro": {
       "input": "1320000",
-      "cacheRead": "132000",
+      "cacheRead": "42000",
       "cacheWrite": null,
       "output": "3960000"
+    },
+    "llmgateway-providers\u0000baidu/deepseek-v4.1-flash": {
+      "input": "300000",
+      "cacheRead": "6000",
+      "cacheWrite": null,
+      "output": "1200000"
     },
     "llmgateway-providers\u0000baidu/glm-5": {
       "input": "1000000",
@@ -17247,11 +17541,29 @@
       "cacheWrite": null,
       "output": "3500000"
     },
+    "llmgateway-providers\u0000deepinfra/glm-5.3": {
+      "input": "1200000",
+      "cacheRead": "200000",
+      "cacheWrite": null,
+      "output": "4000000"
+    },
     "llmgateway-providers\u0000deepinfra/hy3": {
       "input": "140000",
       "cacheRead": "35000",
       "cacheWrite": null,
       "output": "580000"
+    },
+    "llmgateway-providers\u0000deepinfra/inkling": {
+      "input": "950000",
+      "cacheRead": "160000",
+      "cacheWrite": null,
+      "output": "4050000"
+    },
+    "llmgateway-providers\u0000deepinfra/inkling-small": {
+      "input": "450000",
+      "cacheRead": "100000",
+      "cacheWrite": null,
+      "output": "1200000"
     },
     "llmgateway-providers\u0000deepinfra/ling-3.0-flash": {
       "input": "60000",
@@ -17259,11 +17571,23 @@
       "cacheWrite": null,
       "output": "180000"
     },
+    "llmgateway-providers\u0000deepinfra/muse-glimmer-30b": {
+      "input": "300000",
+      "cacheRead": "40000",
+      "cacheWrite": null,
+      "output": "1200000"
+    },
     "llmgateway-providers\u0000deepinfra/nemotron-3-ultra-550b": {
       "input": "500000",
       "cacheRead": "100000",
       "cacheWrite": null,
       "output": "2200000"
+    },
+    "llmgateway-providers\u0000deepinfra/nemotron-3.5-lightning": {
+      "input": "80000",
+      "cacheRead": null,
+      "cacheWrite": null,
+      "output": "200000"
     },
     "llmgateway-providers\u0000deepinfra/qwen3-vl-235b-a22b-instruct": {
       "input": "200000",
@@ -17282,6 +17606,24 @@
       "cacheRead": null,
       "cacheWrite": null,
       "output": "150000"
+    },
+    "llmgateway-providers\u0000deepinfra/qwen3.8-2.4t-a95b": {
+      "input": "2000000",
+      "cacheRead": "200000",
+      "cacheWrite": null,
+      "output": "6000000"
+    },
+    "llmgateway-providers\u0000deepinfra/qwen3.8-27b": {
+      "input": "200000",
+      "cacheRead": "50000",
+      "cacheWrite": null,
+      "output": "2500000"
+    },
+    "llmgateway-providers\u0000deepinfra/step-3.7-flash": {
+      "input": "200000",
+      "cacheRead": "40000",
+      "cacheWrite": null,
+      "output": "1150000"
     },
     "llmgateway-providers\u0000deepseek/deepseek-v4-pro": {
       "input": "435000",
@@ -17384,6 +17726,12 @@
       "cacheRead": "9700",
       "cacheWrite": null,
       "output": "104000"
+    },
+    "llmgateway-providers\u0000gonka24/glm-5.3-flash": {
+      "input": "70000",
+      "cacheRead": "15000",
+      "cacheWrite": null,
+      "output": "190000"
     },
     "llmgateway-providers\u0000gonka24/minimax-m2.7": {
       "input": "80000",
@@ -17931,6 +18279,12 @@
       "cacheWrite": null,
       "output": "3750000"
     },
+    "llmgateway-providers\u0000novita/qwen3.8-2.4t-a95b": {
+      "input": "2000000",
+      "cacheRead": "250000",
+      "cacheWrite": null,
+      "output": "6000000"
+    },
     "llmgateway-providers\u0000novita/qwen3.8-27b": {
       "input": "420000",
       "cacheRead": "85000",
@@ -17954,6 +18308,12 @@
       "cacheRead": null,
       "cacheWrite": null,
       "output": "3600000"
+    },
+    "llmgateway-providers\u0000novita/step-3.7-flash": {
+      "input": "200000",
+      "cacheRead": "40000",
+      "cacheWrite": null,
+      "output": "1150000"
     },
     "llmgateway-providers\u0000openai/gpt-3.5-turbo": {
       "input": "500000",
@@ -18243,6 +18603,12 @@
       "cacheWrite": null,
       "output": "30000000"
     },
+    "llmgateway-providers\u0000scx-ai-gp/deepseek-v4.1-flash": {
+      "input": "150000",
+      "cacheRead": "10000",
+      "cacheWrite": null,
+      "output": "600000"
+    },
     "llmgateway-providers\u0000scx-ai-gp/glm-5.2": {
       "input": "880000",
       "cacheRead": "160000",
@@ -18435,11 +18801,29 @@
       "cacheWrite": null,
       "output": "2000000"
     },
+    "llmgateway-providers\u0000together-ai/glm-5.3": {
+      "input": "1400000",
+      "cacheRead": "260000",
+      "cacheWrite": null,
+      "output": "4400000"
+    },
+    "llmgateway-providers\u0000together-ai/glm-5.3-flash": {
+      "input": "150000",
+      "cacheRead": "30000",
+      "cacheWrite": null,
+      "output": "500000"
+    },
     "llmgateway-providers\u0000together-ai/gpt-oss-120b": {
       "input": "150000",
       "cacheRead": null,
       "cacheWrite": null,
       "output": "600000"
+    },
+    "llmgateway-providers\u0000together-ai/inkling": {
+      "input": "1000000",
+      "cacheRead": "170000",
+      "cacheWrite": null,
+      "output": "4050000"
     },
     "llmgateway-providers\u0000together-ai/kimi-k3": {
       "input": "3000000",
@@ -18452,6 +18836,18 @@
       "cacheRead": "60000",
       "cacheWrite": null,
       "output": "1200000"
+    },
+    "llmgateway-providers\u0000together-ai/muse-glimmer-30b": {
+      "input": "350000",
+      "cacheRead": "40000",
+      "cacheWrite": null,
+      "output": "1500000"
+    },
+    "llmgateway-providers\u0000together-ai/qwen3.8-2.4t-a95b": {
+      "input": "2000000",
+      "cacheRead": "250000",
+      "cacheWrite": null,
+      "output": "6000000"
     },
     "llmgateway-providers\u0000vertex-anthropic/claude-haiku-4-5": {
       "input": "1000000",
@@ -18573,6 +18969,24 @@
       "cacheWrite": null,
       "output": "6000000"
     },
+    "llmgateway-providers\u0000xai/grok-4-7": {
+      "input": "2000000",
+      "cacheRead": "500000",
+      "cacheWrite": null,
+      "output": "6000000"
+    },
+    "llmgateway-providers\u0000xiaomi/mimo-v2.6-flash": {
+      "input": "140000",
+      "cacheRead": "2800",
+      "cacheWrite": null,
+      "output": "280000"
+    },
+    "llmgateway-providers\u0000xiaomi/mimo-v2.6-pro": {
+      "input": "435000",
+      "cacheRead": "3600",
+      "cacheWrite": null,
+      "output": "870000"
+    },
     "llmgateway-providers\u0000zai/glm-4-32b-0414-128k": {
       "input": "100000",
       "cacheRead": null,
@@ -18669,7 +19083,7 @@
       "cacheWrite": null,
       "output": "500000"
     },
-    "llmtech\u0000unsloth/qwen3.8-27b-nvfp4": {
+    "llmtech\u0000nvidia/qwen3.8-27b-nvfp4": {
       "input": "250000",
       "cacheRead": "40000",
       "cacheWrite": null,
@@ -19172,6 +19586,12 @@
       "cacheRead": "500000",
       "cacheWrite": "6250000",
       "output": "25000000"
+    },
+    "merge-gateway\u0000anthropic/claude-opus-5-5": {
+      "input": "4000000",
+      "cacheRead": "200000",
+      "cacheWrite": "5000000",
+      "output": "20000000"
     },
     "merge-gateway\u0000anthropic/claude-sonnet-4": {
       "input": "3000000",
@@ -20055,6 +20475,12 @@
       "cacheWrite": null,
       "output": "6000000"
     },
+    "merge-gateway\u0000xai/grok-4.7": {
+      "input": "2000000",
+      "cacheRead": "500000",
+      "cacheWrite": null,
+      "output": "6000000"
+    },
     "merge-gateway\u0000xai/grok-build-0.1": {
       "input": "1000000",
       "cacheRead": "200000",
@@ -20620,20 +21046,20 @@
       "output": "493000"
     },
     "nano-gpt\u0000abliteration-ai/abliterated-model": {
-      "input": "3000000",
-      "cacheRead": "300000",
+      "input": "1000000",
+      "cacheRead": "100000",
       "cacheWrite": null,
       "output": "3000000"
     },
     "nano-gpt\u0000abliteration-ai/abliterated-model-large": {
-      "input": "5000000",
-      "cacheRead": "500000",
+      "input": "3000000",
+      "cacheRead": "300000",
       "cacheWrite": null,
       "output": "5000000"
     },
     "nano-gpt\u0000abliteration-ai/abliterated-model-large-v2": {
-      "input": "5000000",
-      "cacheRead": "500000",
+      "input": "3000000",
+      "cacheRead": "300000",
       "cacheWrite": null,
       "output": "5000000"
     },
@@ -21364,16 +21790,16 @@
       "output": "2200000"
     },
     "nano-gpt\u0000deepseek/deepseek-v4.1-flash": {
-      "input": "100000",
-      "cacheRead": "3000",
+      "input": "130000",
+      "cacheRead": "6000",
       "cacheWrite": null,
-      "output": "400000"
+      "output": "520000"
     },
     "nano-gpt\u0000deepseek/deepseek-v4.1-flash:thinking": {
-      "input": "100000",
-      "cacheRead": "3000",
+      "input": "130000",
+      "cacheRead": "6000",
       "cacheWrite": null,
-      "output": "400000"
+      "output": "520000"
     },
     "nano-gpt\u0000doctor-shotgun/ms3.2-24b-magnum-diamond": {
       "input": "493000",
@@ -23161,7 +23587,7 @@
       "input": "300000",
       "cacheRead": "150000",
       "cacheWrite": null,
-      "output": "1200000"
+      "output": "1900000"
     },
     "nano-gpt\u0000qwen/qwen3-vl-235b-a22b-thinking": {
       "input": "500000",
@@ -23343,6 +23769,12 @@
       "cacheWrite": null,
       "output": "1500000"
     },
+    "nano-gpt\u0000qwen/qwen3.8-27b-hemmingway": {
+      "input": "250000",
+      "cacheRead": "125000",
+      "cacheWrite": null,
+      "output": "1500000"
+    },
     "nano-gpt\u0000qwen/qwen3.8-27b-obliterated": {
       "input": "250000",
       "cacheRead": "200000",
@@ -23362,16 +23794,16 @@
       "output": "1500000"
     },
     "nano-gpt\u0000qwen/qwen3.8-27b-uncensored": {
-      "input": "200000",
-      "cacheRead": "180000",
+      "input": "150000",
+      "cacheRead": "125000",
       "cacheWrite": null,
-      "output": "1700000"
+      "output": "1200000"
     },
     "nano-gpt\u0000qwen/qwen3.8-27b-uncensored:thinking": {
-      "input": "200000",
-      "cacheRead": "180000",
+      "input": "150000",
+      "cacheRead": "125000",
       "cacheWrite": null,
-      "output": "1700000"
+      "output": "1200000"
     },
     "nano-gpt\u0000qwen/qwen3.8-27b:thinking": {
       "input": "150000",
@@ -23410,10 +23842,10 @@
       "output": "470000"
     },
     "nano-gpt\u0000qwen3-vl-235b-a22b-instruct-original": {
-      "input": "500000",
-      "cacheRead": "250000",
+      "input": "300000",
+      "cacheRead": "150000",
       "cacheWrite": null,
-      "output": "1200000"
+      "output": "1900000"
     },
     "nano-gpt\u0000qwen3.5-27b-bluestar-v3-derestricted": {
       "input": "306000",
@@ -23559,17 +23991,17 @@
       "cacheWrite": null,
       "output": "1150000"
     },
+    "nano-gpt\u0000stepfun/step-5-preview": {
+      "input": "1000000",
+      "cacheRead": "50000",
+      "cacheWrite": null,
+      "output": "2700000"
+    },
     "nano-gpt\u0000tee/deepseek-v3.2": {
       "input": "500000",
       "cacheRead": "250000",
       "cacheWrite": null,
       "output": "1000000"
-    },
-    "nano-gpt\u0000tee/deepseek-v4-flash": {
-      "input": "200000",
-      "cacheRead": "40000",
-      "cacheWrite": null,
-      "output": "400000"
     },
     "nano-gpt\u0000tee/deepseek-v4.1-flash": {
       "input": "650000",
@@ -23931,6 +24363,12 @@
       "cacheWrite": null,
       "output": "6000000"
     },
+    "nano-gpt\u0000x-ai/grok-4.7": {
+      "input": "1600000",
+      "cacheRead": "400000",
+      "cacheWrite": null,
+      "output": "4800000"
+    },
     "nano-gpt\u0000x-ai/grok-build-0.1": {
       "input": "1000000",
       "cacheRead": "200000",
@@ -23966,6 +24404,24 @@
       "cacheRead": "2800",
       "cacheWrite": "0",
       "output": "280000"
+    },
+    "nano-gpt\u0000xiaomi/mimo-v2.6-flash": {
+      "input": "140000",
+      "cacheRead": "2800",
+      "cacheWrite": "0",
+      "output": "280000"
+    },
+    "nano-gpt\u0000xiaomi/mimo-v2.6-pro": {
+      "input": "435000",
+      "cacheRead": "3600",
+      "cacheWrite": "0",
+      "output": "870000"
+    },
+    "nano-gpt\u0000xiaomi/mimo-v2.6-pro-ultraspeed": {
+      "input": "4350000",
+      "cacheRead": "36000",
+      "cacheWrite": "0",
+      "output": "8700000"
     },
     "nano-gpt\u0000z-ai/glm-4.5": {
       "input": "300000",
@@ -24052,18 +24508,6 @@
       "output": "800000"
     },
     "nano-gpt\u0000z-ai/glm-4.7-flash": {
-      "input": "70000",
-      "cacheRead": "35000",
-      "cacheWrite": null,
-      "output": "400000"
-    },
-    "nano-gpt\u0000z-ai/glm-4.7-flash-original": {
-      "input": "70000",
-      "cacheRead": "35000",
-      "cacheWrite": null,
-      "output": "400000"
-    },
-    "nano-gpt\u0000z-ai/glm-4.7-flash-original:thinking": {
       "input": "70000",
       "cacheRead": "35000",
       "cacheWrite": null,
@@ -24693,11 +25137,29 @@
       "cacheWrite": null,
       "output": "182000"
     },
+    "neuralwatt\u0000deepseek-v4-flash-speed": {
+      "input": "140000",
+      "cacheRead": "28000",
+      "cacheWrite": null,
+      "output": "280000"
+    },
     "neuralwatt\u0000deepseek-v4-pro": {
       "input": "1000000",
       "cacheRead": "100000",
       "cacheWrite": null,
       "output": "3000000"
+    },
+    "neuralwatt\u0000deepseek-v4.1-flash": {
+      "input": "150000",
+      "cacheRead": "15000",
+      "cacheWrite": null,
+      "output": "600000"
+    },
+    "neuralwatt\u0000deepseek-v4.1-flash-flex": {
+      "input": "97500",
+      "cacheRead": "9750",
+      "cacheWrite": null,
+      "output": "390000"
     },
     "neuralwatt\u0000gemma-4-31b": {
       "input": "144000",
@@ -24753,6 +25215,24 @@
       "cacheWrite": null,
       "output": "4500000"
     },
+    "neuralwatt\u0000glm-5.3-flash": {
+      "input": "150000",
+      "cacheRead": "30000",
+      "cacheWrite": null,
+      "output": "500000"
+    },
+    "neuralwatt\u0000glm-5.3-flash-flex": {
+      "input": "97500",
+      "cacheRead": "19500",
+      "cacheWrite": null,
+      "output": "325000"
+    },
+    "neuralwatt\u0000glm-5.3-flex": {
+      "input": "942500",
+      "cacheRead": "94250",
+      "cacheWrite": null,
+      "output": "2925000"
+    },
     "neuralwatt\u0000kimi-k2.7-code": {
       "input": "950000",
       "cacheRead": "95000",
@@ -24795,6 +25275,12 @@
       "cacheWrite": null,
       "output": "3200000"
     },
+    "neuralwatt\u0000qwen-3.8-27b-flex": {
+      "input": "292500",
+      "cacheRead": "162500",
+      "cacheWrite": null,
+      "output": "2080000"
+    },
     "neuralwatt\u0000qwen3.6-35b": {
       "input": "290000",
       "cacheRead": "29000",
@@ -24806,6 +25292,12 @@
       "cacheRead": "29000",
       "cacheWrite": null,
       "output": "1150000"
+    },
+    "neuralwatt\u0000qwen3.6-35b-flex": {
+      "input": "188500",
+      "cacheRead": "18850",
+      "cacheWrite": null,
+      "output": "747500"
     },
     "novita-ai\u0000baichuan/baichuan-m2-32b": {
       "input": "70000",
@@ -26931,18 +27423,6 @@
       "cacheWrite": null,
       "output": "2000000"
     },
-    "opencode\u0000jev-1.13": {
-      "input": "42000",
-      "cacheRead": null,
-      "cacheWrite": null,
-      "output": "0"
-    },
-    "opencode\u0000jev-latest": {
-      "input": "42000",
-      "cacheRead": null,
-      "cacheWrite": null,
-      "output": "0"
-    },
     "opencode\u0000kimi-k2": {
       "input": "400000",
       "cacheRead": "400000",
@@ -27153,16 +27633,28 @@
       "cacheWrite": null,
       "output": "870000"
     },
+    "opencode-go\u0000mimo-v2.6-flash": {
+      "input": "140000",
+      "cacheRead": "2800",
+      "cacheWrite": null,
+      "output": "280000"
+    },
+    "opencode-go\u0000mimo-v2.6-pro": {
+      "input": "435000",
+      "cacheRead": "3625",
+      "cacheWrite": null,
+      "output": "870000"
+    },
     "opencode-go\u0000minimax-m2.5": {
       "input": "300000",
-      "cacheRead": "30000",
-      "cacheWrite": null,
+      "cacheRead": "60000",
+      "cacheWrite": "375000",
       "output": "1200000"
     },
     "opencode-go\u0000minimax-m2.7": {
       "input": "300000",
       "cacheRead": "60000",
-      "cacheWrite": null,
+      "cacheWrite": "375000",
       "output": "1200000"
     },
     "opencode-go\u0000muse-spark-1.2-contributor": {
@@ -27321,12 +27813,6 @@
       "cacheWrite": "1250000",
       "output": "5000000"
     },
-    "openrouter\u0000anthropic/claude-opus-4": {
-      "input": "15000000",
-      "cacheRead": "1500000",
-      "cacheWrite": "18750000",
-      "output": "75000000"
-    },
     "openrouter\u0000anthropic/claude-opus-4-1": {
       "input": "15000000",
       "cacheRead": "1500000",
@@ -27368,6 +27854,18 @@
       "cacheRead": "500000",
       "cacheWrite": "6250000",
       "output": "25000000"
+    },
+    "openrouter\u0000anthropic/claude-opus-5-5": {
+      "input": "4000000",
+      "cacheRead": "200000",
+      "cacheWrite": "5000000",
+      "output": "20000000"
+    },
+    "openrouter\u0000anthropic/claude-opus-5.5": {
+      "input": "4000000",
+      "cacheRead": "200000",
+      "cacheWrite": "5000000",
+      "output": "20000000"
     },
     "openrouter\u0000anthropic/claude-sonnet-5": {
       "input": "2000000",
@@ -27484,34 +27982,34 @@
       "output": "410000"
     },
     "openrouter\u0000deepseek/deepseek-v4-flash": {
-      "input": "37240",
-      "cacheRead": "7448",
+      "input": "49000",
+      "cacheRead": "9800",
       "cacheWrite": null,
-      "output": "74480"
+      "output": "98000"
     },
     "openrouter\u0000deepseek/deepseek-v4-flash-0731": {
       "input": "40000",
       "cacheRead": "16000",
       "cacheWrite": null,
-      "output": "80000"
+      "output": "640000"
     },
     "openrouter\u0000deepseek/deepseek-v4-flash-vision-exp": {
-      "input": "215600",
-      "cacheRead": "6860",
+      "input": "220000",
+      "cacheRead": "7000",
       "cacheWrite": null,
-      "output": "646800"
+      "output": "660000"
     },
     "openrouter\u0000deepseek/deepseek-v4-pro": {
-      "input": "422298",
-      "cacheRead": "35192",
+      "input": "915936",
+      "cacheRead": "76328",
       "cacheWrite": null,
-      "output": "844596"
+      "output": "1831872"
     },
     "openrouter\u0000deepseek/deepseek-v4-pro-0813": {
-      "input": "578160",
-      "cacheRead": "18396",
+      "input": "660000",
+      "cacheRead": "22000",
       "cacheWrite": null,
-      "output": "1734480"
+      "output": "1980000"
     },
     "openrouter\u0000deepseek/deepseek-v4.1-flash": {
       "input": "150000",
@@ -27639,12 +28137,6 @@
       "cacheWrite": null,
       "output": "150000"
     },
-    "openrouter\u0000kwaipilot/kat-coder-pro-v2": {
-      "input": "300000",
-      "cacheRead": "60000",
-      "cacheWrite": null,
-      "output": "1200000"
-    },
     "openrouter\u0000kwaipilot/kat-coder-pro-v2.5": {
       "input": "740000",
       "cacheRead": "150000",
@@ -27712,10 +28204,10 @@
       "output": "180000"
     },
     "openrouter\u0000meta/muse-glimmer-30b": {
-      "input": "350000",
+      "input": "300000",
       "cacheRead": "40000",
       "cacheWrite": null,
-      "output": "1500000"
+      "output": "1200000"
     },
     "openrouter\u0000meta/muse-spark-1.1": {
       "input": "1250000",
@@ -27949,13 +28441,13 @@
       "input": "706200",
       "cacheRead": "180000",
       "cacheWrite": null,
-      "output": "3210000"
+      "output": "3300000"
     },
     "openrouter\u0000moonshotai/kimi-k3": {
-      "input": "1700000",
-      "cacheRead": "170000",
+      "input": "3000000",
+      "cacheRead": "300000",
       "cacheWrite": null,
-      "output": "8500000"
+      "output": "15000000"
     },
     "openrouter\u0000morph/morph-v3-fast": {
       "input": "800000",
@@ -27968,6 +28460,18 @@
       "cacheRead": null,
       "cacheWrite": null,
       "output": "1900000"
+    },
+    "openrouter\u0000nex-agi/nex-n2.5-mini": {
+      "input": "25000",
+      "cacheRead": "2500",
+      "cacheWrite": null,
+      "output": "100000"
+    },
+    "openrouter\u0000nex-agi/nex-n2.5-pro": {
+      "input": "75000",
+      "cacheRead": "15000",
+      "cacheWrite": null,
+      "output": "250000"
     },
     "openrouter\u0000nousresearch/hermes-3-llama-3.1-405b": {
       "input": "1000000",
@@ -27988,10 +28492,10 @@
       "output": "3000000"
     },
     "openrouter\u0000nvidia/nemotron-3-nano-30b-a3b": {
-      "input": "60000",
-      "cacheRead": null,
+      "input": "50000",
+      "cacheRead": "30000",
       "cacheWrite": null,
-      "output": "240000"
+      "output": "200000"
     },
     "openrouter\u0000nvidia/nemotron-3-super-120b-a12b": {
       "input": "80000",
@@ -28240,10 +28744,10 @@
       "output": "600000"
     },
     "openrouter\u0000openai/gpt-oss-20b": {
-      "input": "30000",
-      "cacheRead": "30000",
+      "input": "18000",
+      "cacheRead": null,
       "cacheWrite": null,
-      "output": "130000"
+      "output": "90000"
     },
     "openrouter\u0000openai/gpt-oss-safeguard-20b": {
       "input": "75000",
@@ -28534,16 +29038,16 @@
       "output": "260000"
     },
     "openrouter\u0000qwen/qwen3.6-27b": {
-      "input": "300000",
-      "cacheRead": "30000",
+      "input": "320000",
+      "cacheRead": "150000",
       "cacheWrite": null,
-      "output": "2000000"
+      "output": "2700000"
     },
     "openrouter\u0000qwen/qwen3.6-35b-a3b": {
-      "input": "100000",
+      "input": "150000",
       "cacheRead": "50000",
       "cacheWrite": null,
-      "output": "900000"
+      "output": "1000000"
     },
     "openrouter\u0000qwen/qwen3.7-max": {
       "input": "1475000",
@@ -28666,10 +29170,10 @@
       "output": "295000"
     },
     "openrouter\u0000tencent/hy3": {
-      "input": "132000",
-      "cacheRead": "33000",
+      "input": "82500",
+      "cacheRead": "20625",
       "cacheWrite": null,
-      "output": "528000"
+      "output": "330000"
     },
     "openrouter\u0000tencent/hy3-preview": {
       "input": "180000",
@@ -28755,6 +29259,24 @@
       "cacheWrite": null,
       "output": "870000"
     },
+    "openrouter\u0000xiaomi/mimo-v2.6-flash": {
+      "input": "140000",
+      "cacheRead": "2800",
+      "cacheWrite": null,
+      "output": "280000"
+    },
+    "openrouter\u0000xiaomi/mimo-v2.6-pro": {
+      "input": "435000",
+      "cacheRead": "3600",
+      "cacheWrite": null,
+      "output": "870000"
+    },
+    "openrouter\u0000xiaomi/mimo-v2.6-pro-ultraspeed": {
+      "input": "4350000",
+      "cacheRead": "36000",
+      "cacheWrite": null,
+      "output": "8700000"
+    },
     "openrouter\u0000z-ai/glm-4.5": {
       "input": "600000",
       "cacheRead": "110000",
@@ -28816,22 +29338,22 @@
       "output": "3036000"
     },
     "openrouter\u0000z-ai/glm-5.2": {
-      "input": "554400",
-      "cacheRead": "102960",
+      "input": "649600",
+      "cacheRead": "120640",
       "cacheWrite": null,
-      "output": "1742400"
+      "output": "2041600"
     },
     "openrouter\u0000z-ai/glm-5.3": {
-      "input": "896000",
-      "cacheRead": "166400",
+      "input": "653800",
+      "cacheRead": "121420",
       "cacheWrite": null,
-      "output": "2816000"
+      "output": "2054800"
     },
     "openrouter\u0000z-ai/glm-5.3-flash": {
-      "input": "90000",
-      "cacheRead": "18000",
+      "input": "150000",
+      "cacheRead": "50000",
       "cacheWrite": null,
-      "output": "300000"
+      "output": "500000"
     },
     "openrouter\u0000z-ai/glm-5.3-flashx": {
       "input": "370000",
@@ -28845,167 +29367,281 @@
       "cacheWrite": null,
       "output": "4000000"
     },
-    "opper\u0000anthropic/claude-fable-5": {
+    "opper\u0000claude-fable-5": {
       "input": "10000000",
       "cacheRead": "1000000",
       "cacheWrite": "12500000",
       "output": "50000000"
     },
-    "opper\u0000anthropic/claude-haiku-4-5": {
-      "input": "1000000",
-      "cacheRead": "100000",
-      "cacheWrite": "1250000",
-      "output": "5000000"
+    "opper\u0000claude-fable-5-1": {
+      "input": "10000000",
+      "cacheRead": "250000",
+      "cacheWrite": "12500000",
+      "output": "50000000"
     },
-    "opper\u0000anthropic/claude-opus-4-5": {
+    "opper\u0000claude-haiku-4-5": {
+      "input": "1100000",
+      "cacheRead": "110000",
+      "cacheWrite": "1375000",
+      "output": "5500000"
+    },
+    "opper\u0000claude-opus-4-5": {
       "input": "5000000",
       "cacheRead": "500000",
       "cacheWrite": "6250000",
       "output": "25000000"
     },
-    "opper\u0000anthropic/claude-opus-4-6": {
+    "opper\u0000claude-opus-4-6": {
       "input": "5000000",
       "cacheRead": "500000",
       "cacheWrite": "6250000",
       "output": "25000000"
     },
-    "opper\u0000anthropic/claude-opus-4-7": {
+    "opper\u0000claude-opus-4-7": {
+      "input": "5500000",
+      "cacheRead": "550000",
+      "cacheWrite": "6875000",
+      "output": "27500000"
+    },
+    "opper\u0000claude-opus-4-8": {
       "input": "5000000",
       "cacheRead": "500000",
       "cacheWrite": "6250000",
       "output": "25000000"
     },
-    "opper\u0000anthropic/claude-opus-4-8": {
-      "input": "5000000",
-      "cacheRead": "500000",
-      "cacheWrite": "6250000",
-      "output": "25000000"
+    "opper\u0000claude-opus-5": {
+      "input": "5500000",
+      "cacheRead": "550000",
+      "cacheWrite": "6875000",
+      "output": "27500000"
     },
-    "opper\u0000anthropic/claude-opus-5": {
-      "input": "5000000",
-      "cacheRead": "500000",
-      "cacheWrite": "6250000",
-      "output": "25000000"
+    "opper\u0000claude-sonnet-4-6": {
+      "input": "3300000",
+      "cacheRead": "330000",
+      "cacheWrite": "4125000",
+      "output": "16500000"
     },
-    "opper\u0000anthropic/claude-sonnet-4-5": {
-      "input": "3000000",
-      "cacheRead": "300000",
-      "cacheWrite": "3750000",
-      "output": "15000000"
+    "opper\u0000claude-sonnet-5": {
+      "input": "2200000",
+      "cacheRead": "220000",
+      "cacheWrite": "2750000",
+      "output": "11000000"
     },
-    "opper\u0000anthropic/claude-sonnet-4-6": {
-      "input": "3000000",
-      "cacheRead": "300000",
-      "cacheWrite": "3750000",
-      "output": "15000000"
-    },
-    "opper\u0000anthropic/claude-sonnet-5": {
-      "input": "2000000",
-      "cacheRead": "200000",
-      "cacheWrite": "2500000",
-      "output": "10000000"
-    },
-    "opper\u0000gemini/gemini-3-flash-preview": {
-      "input": "500000",
-      "cacheRead": "50000",
+    "opper\u0000deepseek-v4-flash": {
+      "input": "250000",
+      "cacheRead": null,
       "cacheWrite": null,
-      "output": "3000000"
+      "output": "660000"
     },
-    "opper\u0000gemini/gemini-3.5-flash": {
-      "input": "1500000",
-      "cacheRead": "150000",
+    "opper\u0000deepseek-v4-pro": {
+      "input": "1788120",
+      "cacheRead": null,
       "cacheWrite": null,
-      "output": "9000000"
+      "output": "3576240"
     },
-    "opper\u0000gemini/gemini-3.5-flash-lite": {
-      "input": "300000",
-      "cacheRead": "30000",
-      "cacheWrite": null,
-      "output": "2500000"
-    },
-    "opper\u0000meta/muse-spark-1.2": {
-      "input": "1250000",
-      "cacheRead": "150000",
-      "cacheWrite": null,
-      "output": "4250000"
-    },
-    "opper\u0000mistral/devstral-2512": {
+    "opper\u0000devstral-2512": {
       "input": "400000",
       "cacheRead": null,
       "cacheWrite": null,
       "output": "2000000"
     },
-    "opper\u0000mistral/mistral-large-2512": {
+    "opper\u0000gemini-3-flash-preview": {
       "input": "500000",
+      "cacheRead": "50000",
+      "cacheWrite": null,
+      "output": "3000000"
+    },
+    "opper\u0000gemini-3.5-flash": {
+      "input": "1500000",
+      "cacheRead": "150000",
+      "cacheWrite": null,
+      "output": "9000000"
+    },
+    "opper\u0000gemini-3.5-flash-lite": {
+      "input": "300000",
+      "cacheRead": "30000",
+      "cacheWrite": null,
+      "output": "2500000"
+    },
+    "opper\u0000gemini-3.7-flash": {
+      "input": "750000",
+      "cacheRead": "75000",
+      "cacheWrite": null,
+      "output": "3750000"
+    },
+    "opper\u0000gemini-3.8-flash": {
+      "input": "825000",
+      "cacheRead": "82500",
+      "cacheWrite": null,
+      "output": "4125000"
+    },
+    "opper\u0000gemma-4-31b-it": {
+      "input": "464880",
       "cacheRead": null,
       "cacheWrite": null,
-      "output": "1500000"
+      "output": "2440620"
     },
-    "opper\u0000mistral/mistral-small-2603": {
-      "input": "150000",
+    "opper\u0000glm-5.2": {
+      "input": "1627080",
       "cacheRead": null,
       "cacheWrite": null,
-      "output": "600000"
+      "output": "5811000"
     },
-    "opper\u0000moonshot/kimi-k3": {
-      "input": "3000000",
-      "cacheRead": "300000",
+    "opper\u0000glm-5.3": {
+      "input": "1750000",
+      "cacheRead": "440000",
       "cacheWrite": null,
-      "output": "15000000"
+      "output": "4648800"
     },
-    "opper\u0000openai/gpt-5.3-chat-latest": {
+    "opper\u0000glm-5.3-flash": {
+      "input": "200000",
+      "cacheRead": "70000",
+      "cacheWrite": null,
+      "output": "500000"
+    },
+    "opper\u0000gpt-5.3-chat-latest": {
       "input": "1750000",
       "cacheRead": "175000",
       "cacheWrite": null,
       "output": "14000000"
     },
-    "opper\u0000openai/gpt-5.3-codex": {
+    "opper\u0000gpt-5.3-codex": {
       "input": "1750000",
       "cacheRead": "175000",
       "cacheWrite": null,
       "output": "14000000"
     },
-    "opper\u0000openai/gpt-5.4-mini": {
+    "opper\u0000gpt-5.4-mini": {
       "input": "750000",
       "cacheRead": "75000",
       "cacheWrite": null,
       "output": "4500000"
     },
-    "opper\u0000openai/gpt-5.4-nano": {
+    "opper\u0000gpt-5.4-nano": {
       "input": "200000",
       "cacheRead": "20000",
       "cacheWrite": null,
       "output": "1250000"
     },
-    "opper\u0000perplexity/sonar": {
-      "input": "1000000",
+    "opper\u0000gpt-5.5-pro": {
+      "input": "30000000",
       "cacheRead": null,
       "cacheWrite": null,
-      "output": "1000000"
+      "output": "180000000"
     },
-    "opper\u0000perplexity/sonar-pro": {
+    "opper\u0000gpt-oss-120b": {
+      "input": "1162200",
+      "cacheRead": null,
+      "cacheWrite": null,
+      "output": "4881240"
+    },
+    "opper\u0000gpt-oss-20b": {
+      "input": "116220",
+      "cacheRead": null,
+      "cacheWrite": null,
+      "output": "488124"
+    },
+    "opper\u0000grok-4.3": {
+      "input": "1250000",
+      "cacheRead": "200000",
+      "cacheWrite": null,
+      "output": "2500000"
+    },
+    "opper\u0000grok-4.5": {
+      "input": "2000000",
+      "cacheRead": "500000",
+      "cacheWrite": null,
+      "output": "6000000"
+    },
+    "opper\u0000grok-build-0.1": {
+      "input": "1000000",
+      "cacheRead": "200000",
+      "cacheWrite": null,
+      "output": "2000000"
+    },
+    "opper\u0000kimi-k3": {
       "input": "3000000",
       "cacheRead": null,
       "cacheWrite": null,
       "output": "15000000"
     },
-    "opper\u0000perplexity/sonar-reasoning-pro": {
+    "opper\u0000minimax-m2.7": {
+      "input": "697320",
+      "cacheRead": null,
+      "cacheWrite": null,
+      "output": "2789280"
+    },
+    "opper\u0000mistral-large-2512": {
+      "input": "500000",
+      "cacheRead": null,
+      "cacheWrite": null,
+      "output": "1500000"
+    },
+    "opper\u0000mistral-small-2603": {
+      "input": "581100",
+      "cacheRead": null,
+      "cacheWrite": null,
+      "output": "2440620"
+    },
+    "opper\u0000muse-spark-1.2": {
+      "input": "1250000",
+      "cacheRead": "150000",
+      "cacheWrite": null,
+      "output": "4250000"
+    },
+    "opper\u0000muse-spark-1.3": {
+      "input": "1250000",
+      "cacheRead": "150000",
+      "cacheWrite": null,
+      "output": "4250000"
+    },
+    "opper\u0000qwen3-coder-next": {
+      "input": "581100",
+      "cacheRead": null,
+      "cacheWrite": null,
+      "output": "2324400"
+    },
+    "opper\u0000qwen3.6-35b-a3b": {
+      "input": "248000",
+      "cacheRead": null,
+      "cacheWrite": null,
+      "output": "1485000"
+    },
+    "opper\u0000qwen3.8-2.4t-a95b": {
+      "input": "2500000",
+      "cacheRead": "630000",
+      "cacheWrite": null,
+      "output": "6000000"
+    },
+    "opper\u0000qwen3.8-27b": {
+      "input": "581100",
+      "cacheRead": null,
+      "cacheWrite": null,
+      "output": "3000000"
+    },
+    "opper\u0000qwen3.8-max": {
+      "input": "2000000",
+      "cacheRead": "250000",
+      "cacheWrite": null,
+      "output": "6000000"
+    },
+    "opper\u0000sonar": {
+      "input": "1000000",
+      "cacheRead": null,
+      "cacheWrite": null,
+      "output": "1000000"
+    },
+    "opper\u0000sonar-pro": {
+      "input": "3000000",
+      "cacheRead": null,
+      "cacheWrite": null,
+      "output": "15000000"
+    },
+    "opper\u0000sonar-reasoning-pro": {
       "input": "2000000",
       "cacheRead": null,
       "cacheWrite": null,
       "output": "8000000"
-    },
-    "opper\u0000vertexai/gemini-3.7-flash": {
-      "input": "750000",
-      "cacheRead": "75000",
-      "cacheWrite": null,
-      "output": "3750000"
-    },
-    "opper\u0000vertexai/gemini-3.7-flash-eu": {
-      "input": "750000",
-      "cacheRead": "75000",
-      "cacheWrite": null,
-      "output": "3750000"
     },
     "orcarouter\u0000anthropic/claude-fable-5": {
       "input": "10000000",
@@ -32589,12 +33225,6 @@
       "cacheWrite": "2500000",
       "output": "5446100"
     },
-    "siliconflow\u0000baidu/ernie-4.5-300b-a47b": {
-      "input": "280000",
-      "cacheRead": null,
-      "cacheWrite": null,
-      "output": "1100000"
-    },
     "siliconflow\u0000bytedance-seed/seed-oss-36b-instruct": {
       "input": "210000",
       "cacheRead": null,
@@ -32627,7 +33257,7 @@
     },
     "siliconflow\u0000deepseek-ai/deepseek-v3.2": {
       "input": "270000",
-      "cacheRead": null,
+      "cacheRead": "135000",
       "cacheWrite": null,
       "output": "420000"
     },
@@ -32638,16 +33268,40 @@
       "output": "410000"
     },
     "siliconflow\u0000deepseek-ai/deepseek-v4-flash": {
-      "input": "140000",
+      "input": "130000",
       "cacheRead": "28000",
       "cacheWrite": null,
       "output": "280000"
     },
-    "siliconflow\u0000deepseek-ai/deepseek-v4-pro": {
-      "input": "1740000",
-      "cacheRead": "145000",
+    "siliconflow\u0000deepseek-ai/deepseek-v4-flash-0731": {
+      "input": "220000",
+      "cacheRead": "14000",
       "cacheWrite": null,
-      "output": "3480000"
+      "output": "660000"
+    },
+    "siliconflow\u0000deepseek-ai/deepseek-v4-flash-vision-exp": {
+      "input": "440000",
+      "cacheRead": "28000",
+      "cacheWrite": null,
+      "output": "1320000"
+    },
+    "siliconflow\u0000deepseek-ai/deepseek-v4-pro": {
+      "input": "1501620",
+      "cacheRead": "135000",
+      "cacheWrite": null,
+      "output": "3135000"
+    },
+    "siliconflow\u0000deepseek-ai/deepseek-v4-pro-0813": {
+      "input": "1320000",
+      "cacheRead": "44000",
+      "cacheWrite": null,
+      "output": "3960000"
+    },
+    "siliconflow\u0000google/gemma-4-12b-it": {
+      "input": "100000",
+      "cacheRead": null,
+      "cacheWrite": null,
+      "output": "300000"
     },
     "siliconflow\u0000google/gemma-4-26b-a4b-it": {
       "input": "120000",
@@ -32667,9 +33321,21 @@
       "cacheWrite": null,
       "output": "570000"
     },
+    "siliconflow\u0000meituan-longcat/longcat-2.0": {
+      "input": "750000",
+      "cacheRead": "15000",
+      "cacheWrite": null,
+      "output": "2950000"
+    },
     "siliconflow\u0000minimaxai/minimax-m2.5": {
       "input": "300000",
       "cacheRead": "30000",
+      "cacheWrite": null,
+      "output": "1200000"
+    },
+    "siliconflow\u0000minimaxai/minimax-m3": {
+      "input": "300000",
+      "cacheRead": "60000",
       "cacheWrite": null,
       "output": "1200000"
     },
@@ -32681,9 +33347,27 @@
     },
     "siliconflow\u0000moonshotai/kimi-k2.6": {
       "input": "770000",
-      "cacheRead": "200000",
+      "cacheRead": "140000",
       "cacheWrite": null,
-      "output": "4000000"
+      "output": "3400000"
+    },
+    "siliconflow\u0000moonshotai/kimi-k2.7-code": {
+      "input": "859160",
+      "cacheRead": "179930",
+      "cacheWrite": null,
+      "output": "3800000"
+    },
+    "siliconflow\u0000moonshotai/kimi-k3": {
+      "input": "2700000",
+      "cacheRead": "270000",
+      "cacheWrite": null,
+      "output": "13500000"
+    },
+    "siliconflow\u0000nex-agi/nex-n2-pro": {
+      "input": "500000",
+      "cacheRead": "250000",
+      "cacheWrite": null,
+      "output": "2500000"
     },
     "siliconflow\u0000openai/gpt-oss-120b": {
       "input": "50000",
@@ -32715,12 +33399,6 @@
       "cacheWrite": null,
       "output": "280000"
     },
-    "siliconflow\u0000qwen/qwen3-235b-a22b-thinking-2507": {
-      "input": "130000",
-      "cacheRead": null,
-      "cacheWrite": null,
-      "output": "600000"
-    },
     "siliconflow\u0000qwen/qwen3-30b-a3b-instruct-2507": {
       "input": "90000",
       "cacheRead": null,
@@ -32750,18 +33428,6 @@
       "cacheRead": null,
       "cacheWrite": null,
       "output": "1000000"
-    },
-    "siliconflow\u0000qwen/qwen3-vl-235b-a22b-instruct": {
-      "input": "300000",
-      "cacheRead": null,
-      "cacheWrite": null,
-      "output": "1500000"
-    },
-    "siliconflow\u0000qwen/qwen3-vl-235b-a22b-thinking": {
-      "input": "450000",
-      "cacheRead": null,
-      "cacheWrite": null,
-      "output": "3500000"
     },
     "siliconflow\u0000qwen/qwen3-vl-30b-a3b-instruct": {
       "input": "290000",
@@ -32835,6 +33501,12 @@
       "cacheWrite": null,
       "output": "1600000"
     },
+    "siliconflow\u0000qwen/qwen3.8-2.4t-a95b": {
+      "input": "2000000",
+      "cacheRead": "250000",
+      "cacheWrite": null,
+      "output": "6000000"
+    },
     "siliconflow\u0000stepfun-ai/step-3.5-flash": {
       "input": "100000",
       "cacheRead": null,
@@ -32847,11 +33519,11 @@
       "cacheWrite": null,
       "output": "570000"
     },
-    "siliconflow\u0000tencent/hy3-preview": {
-      "input": "66000",
-      "cacheRead": "29000",
+    "siliconflow\u0000tencent/hy3": {
+      "input": "132000",
+      "cacheRead": "33000",
       "cacheWrite": null,
-      "output": "260000"
+      "output": "528000"
     },
     "siliconflow\u0000zai-org/glm-4.5-air": {
       "input": "140000",
@@ -32866,28 +33538,34 @@
       "output": "2550000"
     },
     "siliconflow\u0000zai-org/glm-5.1": {
+      "input": "1190000",
+      "cacheRead": "600000",
+      "cacheWrite": "0",
+      "output": "3740000"
+    },
+    "siliconflow\u0000zai-org/glm-5.2": {
+      "input": "1302000",
+      "cacheRead": "260000",
+      "cacheWrite": "0",
+      "output": "4092000"
+    },
+    "siliconflow\u0000zai-org/glm-5.3": {
       "input": "1400000",
       "cacheRead": "260000",
       "cacheWrite": "0",
       "output": "4400000"
     },
-    "siliconflow\u0000zai-org/glm-5.2": {
-      "input": "1400000",
-      "cacheRead": "260000",
+    "siliconflow\u0000zai-org/glm-5.3-flash": {
+      "input": "150000",
+      "cacheRead": "30000",
       "cacheWrite": "0",
-      "output": "4400000"
+      "output": "500000"
     },
     "siliconflow\u0000zai-org/glm-5v-turbo": {
       "input": "1200000",
       "cacheRead": "240000",
       "cacheWrite": "0",
       "output": "4000000"
-    },
-    "siliconflow-cn\u0000baidu/ernie-4.5-300b-a47b": {
-      "input": "280000",
-      "cacheRead": null,
-      "cacheWrite": null,
-      "output": "1100000"
     },
     "siliconflow-cn\u0000bytedance-seed/seed-oss-36b-instruct": {
       "input": "210000",
@@ -33044,18 +33722,6 @@
       "cacheRead": null,
       "cacheWrite": null,
       "output": "1000000"
-    },
-    "siliconflow-cn\u0000qwen/qwen3-vl-235b-a22b-instruct": {
-      "input": "300000",
-      "cacheRead": null,
-      "cacheWrite": null,
-      "output": "1500000"
-    },
-    "siliconflow-cn\u0000qwen/qwen3-vl-235b-a22b-thinking": {
-      "input": "450000",
-      "cacheRead": null,
-      "cacheWrite": null,
-      "output": "3500000"
     },
     "siliconflow-cn\u0000qwen/qwen3-vl-30b-a3b-instruct": {
       "input": "290000",
@@ -33255,6 +33921,12 @@
       "cacheWrite": null,
       "output": "1110000"
     },
+    "stepfun-ai\u0000step-5-preview": {
+      "input": "1000000",
+      "cacheRead": "50000",
+      "cacheWrite": null,
+      "output": "2700000"
+    },
     "subconscious\u0000subconscious/glm-5.2": {
       "input": "1400000",
       "cacheRead": "260000",
@@ -33380,6 +34052,114 @@
       "cacheRead": "40000",
       "cacheWrite": null,
       "output": "500000"
+    },
+    "tempr\u0000anthropic/claude-fable-5": {
+      "input": "10000000",
+      "cacheRead": "1000000",
+      "cacheWrite": "12500000",
+      "output": "50000000"
+    },
+    "tempr\u0000anthropic/claude-fable-5-1": {
+      "input": "10000000",
+      "cacheRead": "250000",
+      "cacheWrite": "12500000",
+      "output": "50000000"
+    },
+    "tempr\u0000anthropic/claude-haiku-4-5": {
+      "input": "1000000",
+      "cacheRead": "100000",
+      "cacheWrite": "1250000",
+      "output": "5000000"
+    },
+    "tempr\u0000anthropic/claude-haiku-4-5-20251001": {
+      "input": "1000000",
+      "cacheRead": "100000",
+      "cacheWrite": "1250000",
+      "output": "5000000"
+    },
+    "tempr\u0000anthropic/claude-opus-4-5": {
+      "input": "5000000",
+      "cacheRead": "500000",
+      "cacheWrite": "6250000",
+      "output": "25000000"
+    },
+    "tempr\u0000anthropic/claude-opus-4-5-20251101": {
+      "input": "5000000",
+      "cacheRead": "500000",
+      "cacheWrite": "6250000",
+      "output": "25000000"
+    },
+    "tempr\u0000anthropic/claude-opus-4-6": {
+      "input": "5000000",
+      "cacheRead": "500000",
+      "cacheWrite": "6250000",
+      "output": "25000000"
+    },
+    "tempr\u0000anthropic/claude-opus-4-7": {
+      "input": "5000000",
+      "cacheRead": "500000",
+      "cacheWrite": "6250000",
+      "output": "25000000"
+    },
+    "tempr\u0000anthropic/claude-opus-4-8": {
+      "input": "5000000",
+      "cacheRead": "500000",
+      "cacheWrite": "6250000",
+      "output": "25000000"
+    },
+    "tempr\u0000anthropic/claude-opus-5": {
+      "input": "5000000",
+      "cacheRead": "500000",
+      "cacheWrite": "6250000",
+      "output": "25000000"
+    },
+    "tempr\u0000anthropic/claude-sonnet-4-5": {
+      "input": "3000000",
+      "cacheRead": "300000",
+      "cacheWrite": "3750000",
+      "output": "15000000"
+    },
+    "tempr\u0000anthropic/claude-sonnet-4-5-20250929": {
+      "input": "3000000",
+      "cacheRead": "300000",
+      "cacheWrite": "3750000",
+      "output": "15000000"
+    },
+    "tempr\u0000anthropic/claude-sonnet-4-6": {
+      "input": "3000000",
+      "cacheRead": "300000",
+      "cacheWrite": "3750000",
+      "output": "15000000"
+    },
+    "tempr\u0000anthropic/claude-sonnet-5": {
+      "input": "2000000",
+      "cacheRead": "200000",
+      "cacheWrite": "2500000",
+      "output": "10000000"
+    },
+    "tempr\u0000google/gemini-3.5-flash-lite": {
+      "input": "300000",
+      "cacheRead": "30000",
+      "cacheWrite": null,
+      "output": "2500000"
+    },
+    "tempr\u0000google/gemini-embedding-001": {
+      "input": "150000",
+      "cacheRead": null,
+      "cacheWrite": null,
+      "output": "0"
+    },
+    "tempr\u0000google/gemini-embedding-2": {
+      "input": "200000",
+      "cacheRead": null,
+      "cacheWrite": null,
+      "output": "0"
+    },
+    "tempr\u0000google/gemini-flash-lite-latest": {
+      "input": "300000",
+      "cacheRead": "30000",
+      "cacheWrite": null,
+      "output": "2500000"
     },
     "tencent-token-plan\u0000hy4-preview": {
       "input": "834000",
@@ -34185,6 +34965,12 @@
       "cacheWrite": "7500000",
       "output": "30000000"
     },
+    "venice\u0000claude-opus-5-5": {
+      "input": "4800000",
+      "cacheRead": "240000",
+      "cacheWrite": "6000000",
+      "output": "24000000"
+    },
     "venice\u0000claude-opus-5-fast": {
       "input": "12000000",
       "cacheRead": "1200000",
@@ -34665,23 +35451,11 @@
       "cacheWrite": null,
       "output": "640000"
     },
-    "vercel\u0000alibaba/qwen-3.6-max-preview": {
-      "input": "1300000",
-      "cacheRead": "130000",
-      "cacheWrite": "1625000",
-      "output": "7800000"
-    },
     "vercel\u0000alibaba/qwen3-235b-a22b-thinking": {
       "input": "400000",
       "cacheRead": null,
       "cacheWrite": null,
       "output": "4000000"
-    },
-    "vercel\u0000alibaba/qwen3-coder": {
-      "input": "1500000",
-      "cacheRead": "300000",
-      "cacheWrite": null,
-      "output": "7500000"
     },
     "vercel\u0000alibaba/qwen3-coder-30b-a3b": {
       "input": "150000",
@@ -34694,30 +35468,6 @@
       "cacheRead": null,
       "cacheWrite": null,
       "output": "1200000"
-    },
-    "vercel\u0000alibaba/qwen3-coder-plus": {
-      "input": "1000000",
-      "cacheRead": "200000",
-      "cacheWrite": null,
-      "output": "5000000"
-    },
-    "vercel\u0000alibaba/qwen3-max": {
-      "input": "1200000",
-      "cacheRead": "240000",
-      "cacheWrite": null,
-      "output": "6000000"
-    },
-    "vercel\u0000alibaba/qwen3-max-preview": {
-      "input": "1200000",
-      "cacheRead": "240000",
-      "cacheWrite": null,
-      "output": "6000000"
-    },
-    "vercel\u0000alibaba/qwen3-max-thinking": {
-      "input": "1200000",
-      "cacheRead": "240000",
-      "cacheWrite": null,
-      "output": "6000000"
     },
     "vercel\u0000alibaba/qwen3-next-80b-a3b-instruct": {
       "input": "150000",
@@ -34755,41 +35505,17 @@
       "cacheWrite": "125000",
       "output": "400000"
     },
-    "vercel\u0000alibaba/qwen3.5-plus": {
-      "input": "400000",
-      "cacheRead": "40000",
-      "cacheWrite": "500000",
-      "output": "2500000"
-    },
     "vercel\u0000alibaba/qwen3.6-27b": {
       "input": "600000",
       "cacheRead": null,
       "cacheWrite": null,
       "output": "3600000"
     },
-    "vercel\u0000alibaba/qwen3.6-plus": {
-      "input": "500000",
-      "cacheRead": "50000",
-      "cacheWrite": "625000",
-      "output": "3000000"
-    },
-    "vercel\u0000alibaba/qwen3.7-flash": {
-      "input": "30000",
-      "cacheRead": "6000",
-      "cacheWrite": "38000",
-      "output": "130000"
-    },
     "vercel\u0000alibaba/qwen3.7-max": {
       "input": "2500000",
       "cacheRead": "500000",
       "cacheWrite": "3125000",
       "output": "7500000"
-    },
-    "vercel\u0000alibaba/qwen3.7-plus": {
-      "input": "400000",
-      "cacheRead": "80000",
-      "cacheWrite": "500000",
-      "output": "1600000"
     },
     "vercel\u0000alibaba/qwen3.8-2.4t-a95b": {
       "input": "2000000",
@@ -34965,12 +35691,6 @@
       "cacheWrite": "12500000",
       "output": "50000000"
     },
-    "vercel\u0000anthropic/claude-sonnet-4": {
-      "input": "3000000",
-      "cacheRead": "300000",
-      "cacheWrite": "3750000",
-      "output": "15000000"
-    },
     "vercel\u0000anthropic/claude-sonnet-4-5": {
       "input": "3000000",
       "cacheRead": "300000",
@@ -34994,18 +35714,6 @@
       "cacheRead": null,
       "cacheWrite": null,
       "output": "900000"
-    },
-    "vercel\u0000bytedance/seed-1.6": {
-      "input": "250000",
-      "cacheRead": "50000",
-      "cacheWrite": null,
-      "output": "2000000"
-    },
-    "vercel\u0000bytedance/seed-1.8": {
-      "input": "250000",
-      "cacheRead": "50000",
-      "cacheWrite": null,
-      "output": "2000000"
     },
     "vercel\u0000bytedance/seed-2.1-turbo": {
       "input": "500000",
@@ -35081,7 +35789,7 @@
     },
     "vercel\u0000deepseek/deepseek-v4.1-flash": {
       "input": "300000",
-      "cacheRead": "30000",
+      "cacheRead": "7000",
       "cacheWrite": null,
       "output": "1200000"
     },
@@ -35132,12 +35840,6 @@
       "cacheRead": "30000",
       "cacheWrite": null,
       "output": "1500000"
-    },
-    "vercel\u0000google/gemini-3.1-pro-preview": {
-      "input": "2000000",
-      "cacheRead": "200000",
-      "cacheWrite": null,
-      "output": "12000000"
     },
     "vercel\u0000google/gemini-3.5-flash": {
       "input": "1500000",
@@ -35685,12 +36387,6 @@
       "cacheWrite": null,
       "output": "28000000"
     },
-    "vercel\u0000openai/gpt-5.4": {
-      "input": "2500000",
-      "cacheRead": "250000",
-      "cacheWrite": null,
-      "output": "15000000"
-    },
     "vercel\u0000openai/gpt-5.4-fast": {
       "input": "5000000",
       "cacheRead": "500000",
@@ -35715,65 +36411,11 @@
       "cacheWrite": null,
       "output": "1250000"
     },
-    "vercel\u0000openai/gpt-5.4-pro": {
-      "input": "30000000",
-      "cacheRead": null,
-      "cacheWrite": null,
-      "output": "180000000"
-    },
-    "vercel\u0000openai/gpt-5.5": {
-      "input": "5000000",
-      "cacheRead": "500000",
-      "cacheWrite": null,
-      "output": "30000000"
-    },
     "vercel\u0000openai/gpt-5.5-fast": {
       "input": "12500000",
       "cacheRead": "1250000",
       "cacheWrite": null,
       "output": "75000000"
-    },
-    "vercel\u0000openai/gpt-5.5-pro": {
-      "input": "30000000",
-      "cacheRead": null,
-      "cacheWrite": null,
-      "output": "180000000"
-    },
-    "vercel\u0000openai/gpt-5.6-luna": {
-      "input": "200000",
-      "cacheRead": "20000",
-      "cacheWrite": "250000",
-      "output": "1200000"
-    },
-    "vercel\u0000openai/gpt-5.6-luna-fast": {
-      "input": "400000",
-      "cacheRead": "40000",
-      "cacheWrite": "500000",
-      "output": "2400000"
-    },
-    "vercel\u0000openai/gpt-5.6-sol": {
-      "input": "4000000",
-      "cacheRead": "400000",
-      "cacheWrite": "5000000",
-      "output": "20000000"
-    },
-    "vercel\u0000openai/gpt-5.6-sol-fast": {
-      "input": "8000000",
-      "cacheRead": "800000",
-      "cacheWrite": "10000000",
-      "output": "40000000"
-    },
-    "vercel\u0000openai/gpt-5.6-terra": {
-      "input": "2000000",
-      "cacheRead": "200000",
-      "cacheWrite": "2500000",
-      "output": "12000000"
-    },
-    "vercel\u0000openai/gpt-5.6-terra-fast": {
-      "input": "4000000",
-      "cacheRead": "400000",
-      "cacheWrite": "5000000",
-      "output": "24000000"
     },
     "vercel\u0000openai/gpt-image-1": {
       "input": "5000000",
@@ -35925,18 +36567,6 @@
       "cacheWrite": null,
       "output": "6000000"
     },
-    "vercel\u0000sakana/fugu-ultra": {
-      "input": "5000000",
-      "cacheRead": "500000",
-      "cacheWrite": null,
-      "output": "30000000"
-    },
-    "vercel\u0000sakana/fugu-ultra-v2": {
-      "input": "5000000",
-      "cacheRead": "500000",
-      "cacheWrite": null,
-      "output": "30000000"
-    },
     "vercel\u0000sakana/namazu": {
       "input": "950000",
       "cacheRead": "150000",
@@ -35955,66 +36585,6 @@
       "cacheWrite": null,
       "output": "500000"
     },
-    "vercel\u0000spacexai/grok-4.20-multi-agent": {
-      "input": "1250000",
-      "cacheRead": "200000",
-      "cacheWrite": null,
-      "output": "2500000"
-    },
-    "vercel\u0000spacexai/grok-4.20-multi-agent-beta": {
-      "input": "1250000",
-      "cacheRead": "200000",
-      "cacheWrite": null,
-      "output": "2500000"
-    },
-    "vercel\u0000spacexai/grok-4.20-non-reasoning": {
-      "input": "1250000",
-      "cacheRead": "200000",
-      "cacheWrite": null,
-      "output": "2500000"
-    },
-    "vercel\u0000spacexai/grok-4.20-non-reasoning-beta": {
-      "input": "1250000",
-      "cacheRead": "400000",
-      "cacheWrite": null,
-      "output": "2500000"
-    },
-    "vercel\u0000spacexai/grok-4.20-reasoning": {
-      "input": "1250000",
-      "cacheRead": "200000",
-      "cacheWrite": null,
-      "output": "2500000"
-    },
-    "vercel\u0000spacexai/grok-4.20-reasoning-beta": {
-      "input": "1250000",
-      "cacheRead": "200000",
-      "cacheWrite": null,
-      "output": "2500000"
-    },
-    "vercel\u0000spacexai/grok-4.3": {
-      "input": "1250000",
-      "cacheRead": "200000",
-      "cacheWrite": null,
-      "output": "2500000"
-    },
-    "vercel\u0000spacexai/grok-4.5": {
-      "input": "2000000",
-      "cacheRead": "300000",
-      "cacheWrite": null,
-      "output": "6000000"
-    },
-    "vercel\u0000spacexai/grok-4.6": {
-      "input": "2000000",
-      "cacheRead": "500000",
-      "cacheWrite": null,
-      "output": "6000000"
-    },
-    "vercel\u0000spacexai/grok-build-0.1": {
-      "input": "1000000",
-      "cacheRead": "200000",
-      "cacheWrite": null,
-      "output": "2000000"
-    },
     "vercel\u0000stepfun/step-3.5-flash": {
       "input": "90000",
       "cacheRead": "20000",
@@ -36026,6 +36596,12 @@
       "cacheRead": "40000",
       "cacheWrite": null,
       "output": "1150000"
+    },
+    "vercel\u0000stepfun/step-5-preview": {
+      "input": "1000000",
+      "cacheRead": "50000",
+      "cacheWrite": null,
+      "output": "2700000"
     },
     "vercel\u0000tencent/hy-mt2-lite": {
       "input": "44000",
@@ -36069,12 +36645,6 @@
       "cacheWrite": null,
       "output": "1200000"
     },
-    "vercel\u0000typesafe-ai/jev": {
-      "input": "42000",
-      "cacheRead": null,
-      "cacheWrite": null,
-      "output": "0"
-    },
     "vercel\u0000xiaomi/mimo-v2.5": {
       "input": "140000",
       "cacheRead": "2800",
@@ -36086,6 +36656,24 @@
       "cacheRead": "3600",
       "cacheWrite": null,
       "output": "870000"
+    },
+    "vercel\u0000xiaomi/mimo-v2.6-flash": {
+      "input": "140000",
+      "cacheRead": "2800",
+      "cacheWrite": null,
+      "output": "280000"
+    },
+    "vercel\u0000xiaomi/mimo-v2.6-pro": {
+      "input": "435000",
+      "cacheRead": "3600",
+      "cacheWrite": null,
+      "output": "870000"
+    },
+    "vercel\u0000xiaomi/mimo-v2.6-pro-ultraspeed": {
+      "input": "4350000",
+      "cacheRead": "36000",
+      "cacheWrite": null,
+      "output": "8700000"
     },
     "vercel\u0000zai/glm-4.5": {
       "input": "600000",
@@ -36243,6 +36831,12 @@
       "cacheWrite": null,
       "output": "870000"
     },
+    "vivgrid\u0000deepseek-v4.1-flash": {
+      "input": "310000",
+      "cacheRead": "10000",
+      "cacheWrite": null,
+      "output": "1230000"
+    },
     "vivgrid\u0000gemini-3.1-flash-lite-preview": {
       "input": "250000",
       "cacheRead": "25000",
@@ -36345,17 +36939,17 @@
       "cacheWrite": "3125000",
       "output": "15000000"
     },
-    "vivgrid\u0000jev": {
-      "input": "42000",
-      "cacheRead": null,
-      "cacheWrite": null,
-      "output": "0"
-    },
     "vivgrid\u0000kimi-k3": {
       "input": "3000000",
       "cacheRead": "300000",
       "cacheWrite": null,
       "output": "15000000"
+    },
+    "vivgrid\u0000viv-fast": {
+      "input": "130000",
+      "cacheRead": "50000",
+      "cacheWrite": null,
+      "output": "400000"
     },
     "volcengine\u0000deepseek-v4-flash-ga-260731": {
       "input": "445300",
@@ -36518,6 +37112,12 @@
       "cacheRead": "44000",
       "cacheWrite": null,
       "output": "3960000"
+    },
+    "wandb\u0000deepseek-ai/deepseek-v4.1-flash": {
+      "input": "200000",
+      "cacheRead": "30000",
+      "cacheWrite": null,
+      "output": "650000"
     },
     "wandb\u0000google/gemma-4-31b-it": {
       "input": "100000",
@@ -36716,6 +37316,24 @@
       "cacheRead": "10800",
       "cacheWrite": null,
       "output": "2610000"
+    },
+    "xiaomi\u0000mimo-v2.6-flash": {
+      "input": "140000",
+      "cacheRead": "2800",
+      "cacheWrite": null,
+      "output": "280000"
+    },
+    "xiaomi\u0000mimo-v2.6-pro": {
+      "input": "435000",
+      "cacheRead": "3600",
+      "cacheWrite": null,
+      "output": "870000"
+    },
+    "xiaomi\u0000mimo-v2.6-pro-ultraspeed": {
+      "input": "4350000",
+      "cacheRead": "36000",
+      "cacheWrite": null,
+      "output": "8700000"
     },
     "zai\u0000glm-4.5": {
       "input": "600000",
