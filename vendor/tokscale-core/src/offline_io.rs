@@ -17,6 +17,14 @@ pub(crate) const MAX_LINE_BYTES: usize = 64 * 1024 * 1024;
 pub const MAX_SQLITE_BYTES: u64 = 64 * 1024 * 1024 * 1024;
 pub const MAX_ROWS: usize = 2_000_000;
 const MAX_ENTRIES: usize = 262_144;
+const AUDIT_BASE_SECS: u64 = 120;
+const AUDIT_MAX_SECS: u64 = 1800;
+const SQLITE_SCAN_MIN_SECS: u64 = 60;
+const SQLITE_SCAN_MAX_SECS: u64 = 600;
+// A leaf-page scan over an unindexed column costs in proportion to the store's
+// admitted size; 32 MiB/s is a conservative sequential-read floor so ordinary
+// disk contention still fits inside the bounded deadline.
+const SQLITE_SCAN_BYTES_PER_SEC: u64 = 32 * 1024 * 1024;
 static SERIAL: Mutex<()> = Mutex::new(());
 static ACTIVE: Mutex<Option<Audit>> = Mutex::new(None);
 static CAPTURE: Mutex<()> = Mutex::new(());
@@ -93,7 +101,21 @@ struct Audit {
     entries: usize,
     sqlite_opened: BTreeSet<PathBuf>,
     sqlite_completed: BTreeSet<PathBuf>,
+    sqlite_budget_secs: u64,
     started: std::time::Instant,
+}
+
+fn sqlite_scan_budget(bytes: u64) -> Duration {
+    Duration::from_secs(
+        (bytes / SQLITE_SCAN_BYTES_PER_SEC).clamp(SQLITE_SCAN_MIN_SECS, SQLITE_SCAN_MAX_SECS),
+    )
+}
+/// The overall deadline is the fixed base plus headroom for every admitted
+/// SQLite source's scaled scan budget, never exceeding AUDIT_MAX_SECS.
+fn audit_time_limit(a: &Audit) -> Duration {
+    Duration::from_secs(AUDIT_BASE_SECS)
+        .max(Duration::from_secs(a.sqlite_budget_secs.saturating_add(60)))
+        .min(Duration::from_secs(AUDIT_MAX_SECS))
 }
 
 /// Counts and static reason codes only: source paths and contents stay local.
@@ -141,6 +163,7 @@ pub fn begin(roots: &[PathBuf]) -> Result<Guard, &'static str> {
         entries: 0,
         sqlite_opened: BTreeSet::new(),
         sqlite_completed: BTreeSet::new(),
+        sqlite_budget_secs: 0,
         started: std::time::Instant::now(),
     });
     Ok(Guard { _serial: serial })
@@ -149,14 +172,15 @@ impl Guard {
     pub fn finish(self) -> Result<ReadReceipt, Vec<&'static str>> {
         let mut active = ACTIVE.lock().unwrap_or_else(|p| p.into_inner());
         let mut audit = active.take().expect("owned import guard");
-        if audit.started.elapsed() > Duration::from_secs(120) {
+        let limit = audit_time_limit(&audit);
+        if audit.started.elapsed() > limit {
             audit.errors.insert("import_time_limit");
         }
         // Captures are per-file snapshots, not a global filesystem transaction.
         // Verify every consumed log prefix in full; later appends are harmless.
         for (path, before) in &audit.files {
             if let Some(snapshot) = audit.snapshots.get(path) {
-                if let Err(code) = verify_snapshot(path, snapshot, audit.started) {
+                if let Err(code) = verify_snapshot(path, snapshot, audit.started, limit) {
                     audit.errors.insert(code);
                 }
                 continue;
@@ -185,7 +209,7 @@ impl Guard {
                 audit.errors.insert("import_source_changed");
             }
         }
-        if audit.started.elapsed() > Duration::from_secs(120) {
+        if audit.started.elapsed() > limit {
             audit.errors.insert("import_time_limit");
         }
         if !audit.sqlite_opened.is_subset(&audit.sqlite_completed) {
@@ -264,7 +288,7 @@ pub(crate) fn admit(path: &Path) -> io::Result<()> {
         a.errors.insert(code);
         io::Error::other(code)
     };
-    if a.started.elapsed() > Duration::from_secs(120) {
+    if a.started.elapsed() > audit_time_limit(a) {
         return Err(fail(a, "import_time_limit"));
     }
     if !a.roots.iter().any(|root| path.starts_with(root)) {
@@ -352,7 +376,7 @@ pub(crate) fn observe_row() {
         let mut state = ACTIVE.lock().unwrap_or_else(|p| p.into_inner());
         state.as_mut().is_some_and(|a| {
             a.rows += 1;
-            if a.started.elapsed() > Duration::from_secs(120) {
+            if a.started.elapsed() > audit_time_limit(a) {
                 a.errors.insert("import_time_limit");
                 true
             } else if a.rows > MAX_ROWS {
@@ -431,6 +455,7 @@ fn verify_snapshot(
     path: &Path,
     snapshot: &Snapshot,
     started: std::time::Instant,
+    limit: Duration,
 ) -> Result<(), &'static str> {
     let mut source = open_regular(path).map_err(|_| "import_source_changed")?;
     let before = Stamp::of(&source.metadata().map_err(|_| "import_source_changed")?);
@@ -447,7 +472,7 @@ fn verify_snapshot(
     let mut remaining = snapshot.source_bytes;
     let mut buffer = [0u8; 65536];
     while remaining > 0 {
-        if started.elapsed() > Duration::from_secs(120) {
+        if started.elapsed() > limit {
             return Err("import_time_limit");
         }
         let amount = buffer.len().min(remaining as usize);
@@ -464,7 +489,7 @@ fn verify_snapshot(
         let mut expected = Sha256::new();
         let mut remaining = snapshot.parsed_bytes;
         while remaining > 0 {
-            if started.elapsed() > Duration::from_secs(120) {
+            if started.elapsed() > limit {
                 return Err("import_time_limit");
             }
             let amount = buffer.len().min(remaining as usize);
@@ -499,12 +524,12 @@ fn snapshot(path: &Path) -> io::Result<Arc<Snapshot>> {
         return Ok(snapshot);
     }
     admit(path)?;
-    let started = ACTIVE
+    let (started, limit) = ACTIVE
         .lock()
         .unwrap_or_else(|p| p.into_inner())
         .as_ref()
-        .expect("active snapshot")
-        .started;
+        .map(|a| (a.started, audit_time_limit(a)))
+        .expect("active snapshot");
     let mut source = open_regular(path).map_err(|_| error("import_source_unreadable"))?;
     let source_metadata = source.metadata()?;
     let stamp = Stamp::of(&source_metadata);
@@ -568,7 +593,7 @@ fn snapshot(path: &Path) -> io::Result<Arc<Snapshot>> {
         let mut remaining = stamp.bytes;
         let mut buffer = [0u8; 65536];
         while remaining > 0 {
-            if started.elapsed() > Duration::from_secs(120) {
+            if started.elapsed() > limit {
                 return Err(error("import_time_limit"));
             }
             let amount = buffer.len().min(remaining as usize);
@@ -775,15 +800,28 @@ pub(crate) fn sqlite(path: &Path) -> rusqlite::Result<rusqlite::Connection> {
         }
     }
     admit(path).map_err(|_| rusqlite::Error::InvalidPath(PathBuf::new()))?;
+    let mut source_bytes = fs::symlink_metadata(path).map(|m| m.len()).unwrap_or(0);
     for suffix in ["-wal", "-shm", "-journal"] {
         let mut sidecar = path.as_os_str().to_os_string();
         sidecar.push(suffix);
         let sidecar = PathBuf::from(sidecar);
         match admit(&sidecar) {
-            Ok(()) => {}
+            Ok(()) => {
+                source_bytes = source_bytes
+                    .saturating_add(fs::symlink_metadata(&sidecar).map(|m| m.len()).unwrap_or(0));
+            }
             Err(e) if e.kind() == io::ErrorKind::NotFound => {}
             Err(_) => return Err(rusqlite::Error::InvalidPath(PathBuf::new())),
         }
+    }
+    // An unindexed column filter must leaf-scan the whole store, so the
+    // cooperative deadline scales with admitted size instead of a fixed 60 s.
+    let scan_budget = sqlite_scan_budget(source_bytes);
+    if let Some(a) = ACTIVE.lock().unwrap_or_else(|p| p.into_inner()).as_mut() {
+        a.sqlite_budget_secs = a
+            .sqlite_budget_secs
+            .saturating_add(scan_budget.as_secs())
+            .min(AUDIT_MAX_SECS.saturating_sub(60));
     }
     let conn = rusqlite::Connection::open_with_flags(
         path,
@@ -803,7 +841,7 @@ pub(crate) fn sqlite(path: &Path) -> rusqlite::Result<rusqlite::Connection> {
     conn.progress_handler(
         10_000,
         Some(move || {
-            let stop = started.elapsed() > Duration::from_secs(60);
+            let stop = started.elapsed() > scan_budget;
             if stop {
                 fault("import_sqlite_time_limit");
             }
@@ -1084,6 +1122,72 @@ mod tests {
         sqlite_completed(&path);
         drop(reader);
         next.finish().unwrap();
+    }
+    #[test]
+    fn sqlite_scan_budget_scales_with_admitted_size() {
+        assert_eq!(sqlite_scan_budget(0), Duration::from_secs(60));
+        assert_eq!(sqlite_scan_budget(1024), Duration::from_secs(60));
+        assert_eq!(sqlite_scan_budget(3 * 1024 * 1024 * 1024), Duration::from_secs(96));
+        assert_eq!(
+            sqlite_scan_budget(13_556_932_608),
+            Duration::from_secs(404)
+        );
+        assert_eq!(sqlite_scan_budget(u64::MAX), Duration::from_secs(600));
+    }
+    #[test]
+    fn large_sqlite_source_extends_the_bounded_audit_deadline() {
+        let (_temp, root) = root();
+        let path = root.join("usage.db");
+        let writer = rusqlite::Connection::open(&path).unwrap();
+        writer
+            .execute_batch("CREATE TABLE usage(tokens INTEGER); INSERT INTO usage VALUES(1);")
+            .unwrap();
+        drop(writer);
+        let guard = begin(std::slice::from_ref(&root)).unwrap();
+        let reader = sqlite(&path).unwrap();
+        sqlite_completed(&path);
+        drop(reader);
+        // A source whose scaled scan budget is 500 s must survive past the
+        // 120 s base limit without relaxing any other audit check.
+        ACTIVE.lock().unwrap().as_mut().unwrap().sqlite_budget_secs = 500;
+        ACTIVE.lock().unwrap().as_mut().unwrap().started =
+            std::time::Instant::now() - Duration::from_secs(200);
+        guard.finish().unwrap();
+    }
+    #[test]
+    fn scaled_audit_deadline_stays_bounded() {
+        let (_temp, root) = root();
+        let path = root.join("usage.db");
+        let writer = rusqlite::Connection::open(&path).unwrap();
+        writer
+            .execute_batch("CREATE TABLE usage(tokens INTEGER); INSERT INTO usage VALUES(1);")
+            .unwrap();
+        drop(writer);
+        let guard = begin(std::slice::from_ref(&root)).unwrap();
+        let reader = sqlite(&path).unwrap();
+        sqlite_completed(&path);
+        drop(reader);
+        ACTIVE.lock().unwrap().as_mut().unwrap().sqlite_budget_secs = u64::MAX;
+        ACTIVE.lock().unwrap().as_mut().unwrap().started =
+            std::time::Instant::now() - Duration::from_secs(AUDIT_MAX_SECS + 1);
+        assert_eq!(guard.finish().unwrap_err(), vec!["import_time_limit"]);
+    }
+    #[test]
+    fn small_sqlite_source_keeps_the_base_audit_deadline() {
+        let (_temp, root) = root();
+        let path = root.join("usage.db");
+        let writer = rusqlite::Connection::open(&path).unwrap();
+        writer
+            .execute_batch("CREATE TABLE usage(tokens INTEGER); INSERT INTO usage VALUES(1);")
+            .unwrap();
+        drop(writer);
+        let guard = begin(std::slice::from_ref(&root)).unwrap();
+        let reader = sqlite(&path).unwrap();
+        sqlite_completed(&path);
+        drop(reader);
+        ACTIVE.lock().unwrap().as_mut().unwrap().started =
+            std::time::Instant::now() - Duration::from_secs(121);
+        assert_eq!(guard.finish().unwrap_err(), vec!["import_time_limit"]);
     }
     #[test]
     fn captures_are_private_closed_files_and_removed_on_finish() {
