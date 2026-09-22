@@ -10,7 +10,7 @@ use super::{
     sequencer::tests::Memory,
     session::HeldAttempt,
     storage::{self, Candidate, Storage},
-    Error, Result,
+    Error, Result, MAX_DISPATCHES,
 };
 use aicharts_custody::{references::RecordIntent, CredentialRef, Purpose, Secret32, SecretRecord};
 use std::collections::VecDeque;
@@ -273,6 +273,7 @@ fn one_operation_keeps_attempt_lock_through_http_and_settlement() {
             &mut exchange,
             super::record_tests::TIME + 1,
             super::record_tests::TIME + 2,
+            std::time::Duration::ZERO,
         )
         .ok()
         .expect("synthetic operation should settle");
@@ -313,6 +314,7 @@ fn persisted_namespace_pin_is_recovery_only_and_cannot_redispatch() {
         &mut exchange,
         super::record_tests::TIME + 1,
         super::record_tests::TIME + 2,
+        std::time::Duration::ZERO,
     );
     assert!(matches!(
         result,
@@ -350,6 +352,7 @@ fn retained_dispatched_flight_requires_explicit_reconstruction() {
         &mut exchange,
         super::record_tests::TIME + 1,
         super::record_tests::TIME + 2,
+        std::time::Duration::ZERO,
     );
     assert!(matches!(
         result,
@@ -638,6 +641,7 @@ fn uncertain_poll_exchange_abandons_only_the_read_and_the_next_poll_settles() {
             &mut exchange,
             TIME + 8_000,
             TIME + 8_001,
+            std::time::Duration::ZERO,
         )
         .err()
         .expect("uncertain poll exchange fails the operation");
@@ -682,6 +686,7 @@ fn uncertain_poll_exchange_abandons_only_the_read_and_the_next_poll_settles() {
             &mut exchange,
             TIME + 12_000,
             TIME + 12_001,
+            std::time::Duration::ZERO,
         )
         .ok()
         .expect("poll after abandon settles");
@@ -747,6 +752,7 @@ fn retained_dispatched_poll_flight_is_abandoned_before_the_next_operation() {
             &mut exchange,
             TIME + 12_000,
             TIME + 12_001,
+            std::time::Duration::ZERO,
         )
         .ok()
         .expect("operation after abandoned poll settles");
@@ -775,8 +781,14 @@ fn uncertain_mutating_exchange_retains_the_flight_for_reconstruction() {
         let token = record::token(&record).unwrap();
         let memory = Memory::with(&record);
         let retained = memory.clone();
+        // Idempotent account mutations redispatch the same retained flight
+        // inside the bounded dispatch count; every other mutating operation
+        // keeps it parked for explicit reconstruction.
+        let paced = matches!(operation, Operation::Enroll | Operation::Namespace);
         let mut exchange = StubExchange {
-            outcomes: VecDeque::from([Err(TransportError::Uncertain)]),
+            outcomes: (0..if paced { MAX_DISPATCHES as usize } else { 1 })
+                .map(|_| Err(TransportError::Uncertain))
+                .collect(),
             calls: 0,
         };
         let mut custody = FakeCustody;
@@ -790,6 +802,7 @@ fn uncertain_mutating_exchange_retains_the_flight_for_reconstruction() {
                 &mut exchange,
                 TIME + 8_000,
                 TIME + 8_001,
+                std::time::Duration::ZERO,
             )
             .err()
             .expect("uncertain exchange fails the operation");
@@ -801,12 +814,15 @@ fn uncertain_mutating_exchange_retains_the_flight_for_reconstruction() {
                 ..
             }
         ));
-        assert_eq!(exchange.calls, 1);
+        assert_eq!(
+            exchange.calls,
+            if paced { MAX_DISPATCHES as usize } else { 1 }
+        );
         let mut observed = retained.clone();
         let state = storage::inspect(&mut observed).unwrap();
         let flight = state.record().flight.as_ref().unwrap();
         assert_eq!(flight.operation, operation);
-        assert_eq!(flight.dispatches, 1);
+        assert_eq!(flight.dispatches, if paced { MAX_DISPATCHES } else { 1 });
         // A dispatched mutating flight still refuses every later operation.
         let mut retry = StubExchange {
             outcomes: VecDeque::new(),
@@ -822,6 +838,7 @@ fn uncertain_mutating_exchange_retains_the_flight_for_reconstruction() {
                 &mut retry,
                 TIME + 8_002,
                 TIME + 8_003,
+                std::time::Duration::ZERO,
             )
             .err()
             .expect("retained mutating flight refuses closed");
@@ -842,8 +859,49 @@ fn uncertain_mutating_exchange_retains_the_flight_for_reconstruction() {
                 .as_ref()
                 .unwrap()
                 .dispatches,
-            1,
+            if paced { MAX_DISPATCHES } else { 1 },
             "operation {operation:?} keeps its retained flight"
         );
+    }
+}
+
+#[test]
+fn an_unavailable_account_mutation_redispatches_the_same_flight_until_a_reply_lands() {
+    for operation in [Operation::Enroll, Operation::Namespace] {
+        let (record, request, context, secret) = operation_fixture(operation);
+        let token = record::token(&record).unwrap();
+        let memory = Memory::with(&record);
+        let mut exchange = StubExchange {
+            outcomes: VecDeque::from([
+                Err(TransportError::Unavailable),
+                Ok(AcceptedEnrollment {
+                    observed_at_ms: TIME + 8_001,
+                    result: Err(contract::DomainError::Unavailable),
+                }),
+            ]),
+            calls: 0,
+        };
+        let mut custody = FakeCustody;
+        let accepted = HeldAttempt::open(memory, token)
+            .unwrap()
+            .run_operation(
+                &request,
+                &context,
+                &secret,
+                &mut custody,
+                &mut exchange,
+                TIME + 8_000,
+                TIME + 8_001,
+                std::time::Duration::ZERO,
+            )
+            .ok()
+            .expect("a landed domain reply settles the operation");
+        assert!(matches!(
+            accepted.result,
+            Err(contract::DomainError::Unavailable)
+        ));
+        // The retained flight was dispatched twice with the identical
+        // request/context digest, then settled by the landed reply.
+        assert_eq!(exchange.calls, 2);
     }
 }

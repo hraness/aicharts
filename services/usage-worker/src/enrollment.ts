@@ -497,10 +497,7 @@ export class AccountEnrollment extends DurableObject<Env> {
     try {
       const admission = new AdmissionState(this.ctx.storage.sql);
       return await new AccountAdmission(this.env, admission, (observation, run) => {
-        const result = this.#transaction(observation, (state, now) => {
-          if (state && this.#statsPresent()) new StatsState(this.ctx.storage.sql).guardV1(batch, state);
-          return { state, result: ok(run(state, now)) };
-        });
+        const result = this.#transaction(observation, (state, now) => ({ state, result: ok(run(state, now)) }));
         committed ||= observation.committed;
         return result;
       }).admit({ uploadSecret, batch }, acquired.value.fence);

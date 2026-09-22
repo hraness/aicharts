@@ -312,14 +312,14 @@ test("final delivery guard retains successful expiry across the handler's last a
   }
 });
 
-test("body plus two RPC stages share one original ten-second deadline", async () => {
+test("body plus two RPC stages share one original thirty-second deadline", async () => {
   let controller!: ReadableStreamDefaultController<Uint8Array>; const pending: ((value: unknown) => void)[] = [];
   const w = worker({ rpc: () => new Promise(resolve => { pending.push(resolve); }) });
   const body = new ReadableStream<Uint8Array>({ start(value) { controller = value; } }, { highWaterMark: 0 });
   const operation = w.handle(request("reserveEnrollment", { body })); await tick();
   w.time.move(NOW + 4000, false); controller.enqueue(new TextEncoder().encode(vector("reserveEnrollment").requestAscii)); controller.close(); await tick();
   expect(pending).toHaveLength(1); w.time.move(NOW + 8000, false); pending[0](reply({ ok: false, error: "not_reserved" })); await tick();
-  expect(pending).toHaveLength(2); w.time.move(NOW + 10000, false); pending[1](reply(vector("reserveEnrollment").result));
+  expect(pending).toHaveLength(2); w.time.move(NOW + 30000, false); pending[1](reply(vector("reserveEnrollment").result));
   await checkedFailure(await operation, 503); await w.ctx.drain(); expect(w.calls).toHaveLength(2); expect(w.time.count()).toBe(0);
 });
 

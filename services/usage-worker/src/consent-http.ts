@@ -1,6 +1,6 @@
 import { decodeUsageConsentHttpRequest, encodeUsageConsentHttpResponse,
   USAGE_CONSENT_HTTP_REQUEST_BYTES, USAGE_CONSENT_HTTP_URL } from "../../../lib/usage/consent-http-contract";
-import { PAIRING_HTTP_CAPACITY, PAIRING_HTTP_STAGE_MS, PAIRING_HTTP_WORKER_MS,
+import { PAIRING_HTTP_CAPACITY, PAIRING_HTTP_STAGE_MS, PAIRING_HTTP_STAGE_MUTATION_MS, PAIRING_HTTP_WORKER_MS,
   pairingHttpBearer, pairingHttpBody, pairingHttpFailure, pairingHttpResponse } from "../../../lib/usage/pairing-http-contract";
 import { privateDaysHttpLength } from "../../../lib/usage/private-days-http-contract";
 import { pairingHttpWork, type PairingHttpEffects } from "../../../lib/usage/pairing-http-work";
@@ -90,7 +90,7 @@ export function createConsentHttpHandler(dependencies: ConsentHttpDependencies) 
         if (query === null) return pairingHttpFailure(400);
         expiry = query.sessionExpiresAtMs;
         failureStage = "rpc_dispatch";
-        const encoded = await work.stage(PAIRING_HTTP_STAGE_MS, async () => {
+        const encoded = await work.stage(query.operation === "status" ? PAIRING_HTTP_STAGE_MS : PAIRING_HTTP_STAGE_MUTATION_MS, async () => {
           guard();
           // The account assertion came from the authenticated coordinator. The
           // owned ordinary projection is accepted by actual workerd RPC.

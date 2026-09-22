@@ -26,9 +26,9 @@ Requests use only POST to the exact target, with `Content-Type: application/json
 | --- | --- |
 | Request / response body | 1,024 / 512 bytes |
 | Bearer | 8,192 ASCII characters; three nonempty base64url segments |
-| Client deadline | 15 seconds from method entry, including synchronous context acquisition |
-| Worker deadline | 10 seconds from handler entry |
-| Body read or RPC stage | Five seconds, capped by the remaining overall deadline |
+| Client deadline | 35 seconds from method entry, including synchronous context acquisition |
+| Worker deadline | 30 seconds from handler entry |
+| Body read or RPC stage | Five seconds, capped by the remaining overall deadline; fenced account mutations get 15 seconds for the cold once-per-lifetime history audit |
 | Outstanding operations | Eight per client factory and eight per Worker adapter instance; no queue |
 | Body reads | At most byte cap plus one reader result, including EOF; zero-length chunks refused |
 

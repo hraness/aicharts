@@ -38,7 +38,7 @@ mod storage_tests;
 const MAX_RECORD_BYTES: usize = 4_096;
 const MAX_REVISION: u64 = 1_024;
 const MAX_FLIGHTS: u16 = 128;
-const MAX_DISPATCHES: u8 = 3;
+const MAX_DISPATCHES: u8 = 10;
 
 type Result<T> = std::result::Result<T, Error>;
 

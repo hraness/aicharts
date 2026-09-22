@@ -40,6 +40,10 @@ fn native_custody_error(error: aicharts_custody::references::Error) -> Error {
     }
 }
 
+/// Paced gap between same-flight redispatches of an idempotent account
+/// mutation whose exchange outcome was unavailable or uncertain.
+const REDISPATCH_DELAY: std::time::Duration = std::time::Duration::from_secs(4);
+
 /// Stable browser handoff URL. The fragment contains only the public intent
 /// identifier; pairing preimages and local paths never enter this string.
 pub(super) fn pairing_url(intent_id: &[u8; 32]) -> String {
@@ -271,6 +275,10 @@ where
         exchange,
         prepared_at_ms,
         attempted_at_ms,
+        // Idempotent account mutations settle remotely while an unavailable
+        // reply is in flight; the paced gap lets that commit land before the
+        // same-flight redispatch reconciles it.
+        REDISPATCH_DELAY,
     )
 }
 

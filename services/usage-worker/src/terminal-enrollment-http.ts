@@ -3,7 +3,7 @@ import {
   type TerminalEnrollmentRequest,
 } from "../../../lib/usage/terminal-enrollment-contract";
 import { ownTerminalEnrollmentServerResponse, ownTerminalReservationRead } from "../../../lib/usage/terminal-enrollment-server-contract";
-import { pairingHttpBody, PAIRING_HTTP_CAPACITY, PAIRING_HTTP_STAGE_MS, PAIRING_HTTP_WORKER_MS } from "../../../lib/usage/pairing-http-contract";
+import { pairingHttpBody, PAIRING_HTTP_CAPACITY, PAIRING_HTTP_STAGE_MS, PAIRING_HTTP_STAGE_MUTATION_MS, PAIRING_HTTP_WORKER_MS } from "../../../lib/usage/pairing-http-contract";
 import { pairingHttpWork, type PairingHttpEffects } from "../../../lib/usage/pairing-http-work";
 import { enrollmentAccountName, enrollmentHex } from "./enrollment-contract";
 
@@ -88,8 +88,8 @@ export function createTerminalEnrollmentHttpHandler(dependencies: PairingHttpEff
     return pairingHttpWork({ now: sample, setTimeout, clearTimeout }, PAIRING_HTTP_WORKER_MS,
       terminal => { ctx.waitUntil(terminal); }, () => failure(503), () => { outstanding--; }, async work => {
         const observation = () => { work.guard(); return Object.freeze({ nowMs: observedAt, recoveryGeneration: capturedGeneration }); };
-        async function rpc<T>(dispatch: () => Promise<unknown>, own: (raw: Record<string, unknown>) => T | null): Promise<T> {
-          return await work.stage(PAIRING_HTTP_STAGE_MS, async () => {
+        async function rpc<T>(dispatch: () => Promise<unknown>, own: (raw: Record<string, unknown>) => T | null, stageMs = PAIRING_HTTP_STAGE_MS): Promise<T> {
+          return await work.stage(stageMs, async () => {
             work.guard();
             const pending = dispatch();
             // A box prevents Promise resolution from touching a raw reply's then.
@@ -153,7 +153,10 @@ export function createTerminalEnrollmentHttpHandler(dependencies: PairingHttpEff
                 const stub = env.ACCOUNT_ENROLLMENTS.getByName(enrollmentAccountName(reservation.accountId));
                 return owned.operation === "enroll" ? stub.enroll(proof) : stub.namespaceForEnrollment(proof);
               }, result => encode(result.ok === true ? { ok: true, value: owned.operation === "enroll"
-                ? { reservation, enrollment: result.value } : { reservation, namespace: result.value } } : result));
+                ? { reservation, enrollment: result.value } : { reservation, namespace: result.value } } : result),
+                // The first fenced account operation pays the once-per-lifetime
+                // history audit; mutation stages carry that cold bound.
+                PAIRING_HTTP_STAGE_MUTATION_MS);
             }
           }
         }

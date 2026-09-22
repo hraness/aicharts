@@ -3,9 +3,10 @@ import type { PairingHttpWork } from "./pairing-http-work";
 export const PAIRING_HTTP_URL = "https://usage.aicharts.io/internal/pairing";
 export const PAIRING_HTTP_MEDIA = "application/json; charset=utf-8";
 export const PAIRING_HTTP_CAPACITY = 8;
-export const PAIRING_HTTP_CLIENT_MS = 15_000;
-export const PAIRING_HTTP_WORKER_MS = 10_000;
+export const PAIRING_HTTP_CLIENT_MS = 35_000;
+export const PAIRING_HTTP_WORKER_MS = 30_000;
 export const PAIRING_HTTP_STAGE_MS = 5_000;
+export const PAIRING_HTTP_STAGE_MUTATION_MS = 15_000;
 export type PairingHttpFailure = 400 | 401 | 503;
 
 const codes = Object.freeze({ 400: "invalid_request", 401: "unauthorized_service", 503: "coordinator_unavailable" });
