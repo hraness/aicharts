@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { privateDaysInputRange, utcDayInput } from "@/lib/usage/private-days-client";
-import { readAccountDays } from "@/lib/usage/account-read-client";
+import { readAccountDays, warmUsageAccountSession } from "@/lib/usage/account-read-client";
 import { subscribeUsageAccountSignOut } from "@/lib/usage/account-session-events";
 import type { PrivateDaysV1, ProviderImportedTotals } from "@/lib/usage/private-days-contract";
 import type { PrivateDaysPublicReply, PrivateDaysRange } from "@/lib/usage/private-days-public";
@@ -141,6 +141,7 @@ export function DailyUsageDashboard({ todayUtcDay }: Readonly<{ todayUtcDay: num
     const controller = new AbortController(); owner.pending = controller;
     // The initial state already describes this request; only its asynchronous
     // settlement updates the view, avoiding a redundant loading render.
+    warmUsageAccountSession();
     void read(dailyUsagePresetRange(todayUtcDay, 30), controller, id);
     return () => { owner.id++; owner.pending?.abort(); };
   }, [read, todayUtcDay]);

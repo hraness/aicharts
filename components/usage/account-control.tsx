@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { readAccountSummary, signOutUsageAccount } from "@/lib/usage/account-read-client";
+import { readAccountSummary, signOutUsageAccount, warmUsageAccountSession } from "@/lib/usage/account-read-client";
 import { subscribeUsageAccountSignOut } from "@/lib/usage/account-session-events";
 
 export type AccountControlState = "loading" | "ready" | "authentication_required" | "unavailable" | "signing_out" | "sign_out_failed";
@@ -39,6 +39,7 @@ export function UsageAccountControl() {
       current.id++; current.controller?.abort(); current.controller = null;
       setAccountId(null); setCopyState("idle"); setState("authentication_required");
     });
+    warmUsageAccountSession();
     void read();
     return () => { current.mounted = false; current.id++; current.controller?.abort(); unsubscribe(); };
   }, [read]);

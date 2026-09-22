@@ -26,6 +26,7 @@ function requireStats(value: unknown): asserts value { if (!value) throw new Sta
 export const statsHash = (value: string | Uint8Array): string => createHash("sha256").update(value).digest("hex");
 export const statsUploadText = (request: StatsUpload): string => JSON.stringify(request);
 const legacyClient = (provider: number): string => provider === 1 ? "codex" : provider === 2 ? "claude" : "devin-cli";
+const LEGACY_CLIENTS = ["codex", "claude", "devin-cli"];
 type Control = { revision: number; updatedAtMs: number; quarantined: boolean; immutableBytes: number };
 export type StatsPending = { bodyHash: string; deviceId: string; sequence: number; expectedRevision: number; receipt: StatsReceipt | null };
 type StoredDay = { client: string; utcDay: number; revision: number; bodyHash: string; text: string; report: UsageStatsReport };
@@ -96,12 +97,16 @@ export class StatsState {
       && report.firstUtcDay === raw.utc_day && report.rows.length === raw.row_count && report.revision === raw.revision);
     return { client: raw.client, utcDay: raw.utc_day, revision: raw.revision, bodyHash: raw.body_hash, text: raw.projection, report };
   }
-  #legacy(authority: AdmissionAuthority, range: StatsRange) {
+  #legacy(authority: AdmissionAuthority, range: StatsRange, coveredDay: (day: number) => boolean = () => false) {
     const admission = new AdmissionState(this.sql), control = admission.control(), sql = this.sql;
     function* heads() {
       let count = 0;
-      for (const row of sql.exec("SELECT occurrence_id FROM usage_admission_heads WHERE utc_day >= ? AND utc_day < ? ORDER BY occurrence_id LIMIT 100001", range.firstUtcDay, range.firstUtcDay + range.dayCount)) {
+      for (const row of sql.exec("SELECT occurrence_id, utc_day FROM usage_admission_heads WHERE utc_day >= ? AND utc_day < ? ORDER BY occurrence_id LIMIT 100001", range.firstUtcDay, range.firstUtcDay + range.dayCount)) {
         requireStats(row.occurrence_id instanceof ArrayBuffer && ++count <= 100_000);
+        // Days already owned by the relevant projections contribute nothing
+        // downstream; skip the stored-operation fetch and frame decode. The
+        // indexed day agrees with the decoded day or the history audit fails.
+        if (statsInteger(row.utc_day, 0, 99_999_999) && coveredDay(row.utc_day)) continue;
         const head = admission.head(new Uint8Array(row.occurrence_id), authority, control);
         requireStats(head && head.day !== null);
         const batch = decodeUsageBatch(head.operation.frame, ADMISSION_POLICY_V1);
@@ -112,10 +117,13 @@ export class StatsState {
     return { control, heads: heads() };
   }
   status(authority: AdmissionAuthority, deviceId: string, client: string, range: StatsRange): StatsStatus {
-    const { control, heads } = this.#legacy(authority, range), hash = createHash("sha256").update("aicharts:stats-v2:legacy-heads\0").update(client).update("\0").update(`${range.firstUtcDay}:${range.dayCount}\0`);
     let legacyRecords = 0, eligible = true;
     const ownedDays = new Set(this.sql.exec("SELECT utc_day FROM usage_stats_days WHERE client = ? AND utc_day >= ? AND utc_day < ? LIMIT 367", client, range.firstUtcDay, range.firstUtcDay + range.dayCount).toArray().map(row => row.utc_day));
     requireStats(ownedDays.size <= 366);
+    // A head on a day this client already owns contributes nothing regardless
+    // of its own source client.
+    const { control, heads } = this.#legacy(authority, range, day => ownedDays.has(day));
+    const hash = createHash("sha256").update("aicharts:stats-v2:legacy-heads\0").update(client).update("\0").update(`${range.firstUtcDay}:${range.dayCount}\0`);
     for (const { head, client: source } of heads) {
       if (source !== client || ownedDays.has(head.day!)) continue;
       hash.update(head.operation.occurrenceId).update(head.operation.operationHash);
@@ -125,7 +133,7 @@ export class StatsState {
     // V1 tombstones deliberately discard their day/provider frame. Until an
     // explicit canonical reconciliation can establish that provenance, a
     // legacy-client snapshot must not resurrect an erased occurrence.
-    if (["codex", "claude", "devin-cli"].includes(client) && ownedDays.size < range.dayCount) {
+    if (LEGACY_CLIENTS.includes(client) && ownedDays.size < range.dayCount) {
       const admission = new AdmissionState(this.sql);
       let tombstones = 0;
       for (const row of this.sql.exec("SELECT occurrence_id FROM usage_admission_heads WHERE utc_day IS NULL ORDER BY occurrence_id LIMIT 100001")) {
@@ -219,7 +227,7 @@ export class StatsState {
     // separately prove that taking ownership cannot lose its numeric coverage.
     // Subtract each retained occurrence from the incoming per-day populations;
     // model regrouping is allowed, estimated rows cannot cover reported usage.
-    for (const { head, usage, client: original } of this.#legacy(authority, request.report).heads) {
+    for (const { head, usage, client: original } of this.#legacy(authority, request.report, day => owned.has(day)).heads) {
       if (original !== client || owned.has(head.day!)) continue;
       const value = incoming.get(head.day!), old = usage.tokens;
       if (!value || --value.records < 0) throw new StatsFault("replacement_required");
@@ -318,11 +326,17 @@ export class StatsState {
     return { schemaVersion: 2, outcome: "abandoned", operationId: request.operationId, bodyHash: request.bodyHash,
       sequence: request.sequence, expectedRevision: request.expectedRevision, fencedAtRevision };
   }
-  read(authority: AdmissionAuthority, range: StatsRange, now: number): UsageStatsReport {
+  read(authority: AdmissionAuthority, range: StatsRange, now: number, memo?: Map<string, UsageStatsReport>): UsageStatsReport {
     const control = this.control();
     if (control.quarantined) throw new StatsFault("recovery_required");
     if (now < control.updatedAtMs) throw new StatsFault("clock_regressed");
     if (!this.hasCommittedSnapshot()) throw new StatsFault("not_started");
+    // A completed read is a pure function of its range plus the stats and
+    // admission revisions; every guard above still runs before a hit serves.
+    const memoKey = memo === undefined ? undefined
+      : `${range.firstUtcDay}:${range.dayCount}:${control.revision}:${new AdmissionState(this.sql).control().revision}`;
+    const hit = memo === undefined || memoKey === undefined ? undefined : memo.get(memoKey);
+    if (hit !== undefined) return hit;
     let projectedBytes = 32_768; // Envelope/source headroom, charged before parsing projection text.
     const rows: UsageStatsRow[] = [], coverage = new Map<string, { latest: number | null; empty: boolean }>(), owned = new Set<string>();
     for (const raw of this.sql.exec("SELECT * FROM usage_stats_days WHERE utc_day >= ? AND utc_day < ? ORDER BY utc_day, client LIMIT 23425", range.firstUtcDay, range.firstUtcDay + range.dayCount)) {
@@ -337,7 +351,8 @@ export class StatsState {
       coverage.set(day.client, { latest: latest === null ? previous?.latest ?? null : Math.max(latest, previous?.latest ?? 0), empty: (previous?.empty ?? true) && day.report.rows.length === 0 });
     }
     const legacy = new Map<string, UsageStatsRow>();
-    for (const { head, usage, client } of this.#legacy(authority, range).heads) {
+    // A day already owned by every legacy provider's projection yields nothing.
+    for (const { head, usage, client } of this.#legacy(authority, range, day => LEGACY_CLIENTS.every(source => owned.has(`${source}:${day}`))).heads) {
       if (owned.has(`${client}:${head.day}`)) continue;
       const key = `${client}:${head.day}`, previous = legacy.get(key);
       const token = usage.tokens;
@@ -367,6 +382,10 @@ export class StatsState {
       firstUtcDay: range.firstUtcDay, dayCount: range.dayCount, generatedAtMs: now,
       revision: control.revision, updatedAtMs: control.updatedAtMs, sources, rows });
     if (!report) throw new StatsFault("limit");
+    if (memo !== undefined && memoKey !== undefined) {
+      if (memo.size >= 4) memo.delete(memo.keys().next().value!);
+      memo.set(memoKey, report);
+    }
     return report;
   }
   leaderboard(authority: AdmissionAuthority, range: StatsRange, now: number): { observedTokens: string; usageRecords: number } {
@@ -390,7 +409,7 @@ export class StatsState {
       if (rowCount > MAX_STATS_STORED_ROWS || bytes > MAX_STATS_STORED_BYTES) throw new StatsFault("limit");
       for (const row of day.report.rows) if (row.tokenBasis === "reported") add(statsTokenTotal(row.tokens), row.records);
     }
-    for (const { head, usage, client } of this.#legacy(authority, range).heads) {
+    for (const { head, usage, client } of this.#legacy(authority, range, day => LEGACY_CLIENTS.every(source => owned.has(`${source}:${day}`))).heads) {
       if (owned.has(`${client}:${head.day}`)) continue;
       const token = usage.tokens;
       add(token.inputUncached + token.cacheRead + token.cacheWrite5m + token.cacheWrite1h + token.output, 1);

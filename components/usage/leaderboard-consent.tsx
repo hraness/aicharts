@@ -5,7 +5,7 @@ import Link from "next/link";
 
 import { leaderboardPublicHandle, type LeaderboardConsentViewV1 } from "@/lib/usage/leaderboard-contract";
 import { setUsageConsent } from "@/lib/usage/consent-client";
-import { readAccountConsent } from "@/lib/usage/account-read-client";
+import { readAccountConsent, warmUsageAccountSession } from "@/lib/usage/account-read-client";
 import { subscribeUsageAccountSignOut } from "@/lib/usage/account-session-events";
 import type { UsageConsentPublicReply } from "@/lib/usage/consent-public";
 
@@ -82,6 +82,7 @@ export function LeaderboardConsentControl() {
   useEffect(() => {
     let active = true;
     const owner = requests.current;
+    warmUsageAccountSession();
     void Promise.resolve().then(() => { if (active) return issue(signal => readAccountConsent(signal), false); });
     return () => { active = false; owner.id++; owner.pending?.abort(); };
   }, [issue]);

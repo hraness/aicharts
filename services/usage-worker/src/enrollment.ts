@@ -201,6 +201,10 @@ function disposeReply(value: unknown): void {
 export class AccountEnrollment extends DurableObject<Env> {
   #healthy = true;
   #historyAudited: "pending" | "passed" | "failed" = "pending";
+  /** Completed stats reads are pure in (range, stats revision, admission
+   * revision); the memo only ever serves after every fencing guard passes.
+   * Bounded to a few ranges, dies with the object, and holds no authority. */
+  #statsReadMemo = new Map<string, UsageStatsReport>();
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
     try {
@@ -553,7 +557,7 @@ export class AccountEnrollment extends DurableObject<Env> {
       const external = await readNamespaceAnchor(this.env.CONTROL, request.accountId);
       const result = this.#privateDaysSnapshot(request, observation, state => {
         if (!external || !sameNamespaceAnchor(external, original.value) || !sameNamespaceAnchor(state.anchor, original.value)) throw new StatsFault("recovery_required");
-        return new StatsState(this.ctx.storage.sql).read(state, request, observation.observed);
+        return new StatsState(this.ctx.storage.sql).read(state, request, observation.observed, this.#statsReadMemo);
       });
       return result.ok ? result : { ok: false, error: result.error as StatsError };
     } catch { return { ok: false, error: "storage_unavailable" }; }
