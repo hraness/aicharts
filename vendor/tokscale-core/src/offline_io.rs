@@ -1127,11 +1127,11 @@ mod tests {
     fn sqlite_scan_budget_scales_with_admitted_size() {
         assert_eq!(sqlite_scan_budget(0), Duration::from_secs(60));
         assert_eq!(sqlite_scan_budget(1024), Duration::from_secs(60));
-        assert_eq!(sqlite_scan_budget(3 * 1024 * 1024 * 1024), Duration::from_secs(96));
         assert_eq!(
-            sqlite_scan_budget(13_556_932_608),
-            Duration::from_secs(404)
+            sqlite_scan_budget(3 * 1024 * 1024 * 1024),
+            Duration::from_secs(96)
         );
+        assert_eq!(sqlite_scan_budget(13_556_932_608), Duration::from_secs(404));
         assert_eq!(sqlite_scan_budget(u64::MAX), Duration::from_secs(600));
     }
     #[test]
