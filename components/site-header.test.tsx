@@ -14,3 +14,13 @@ test("the shared header renders the canonical product wordmark on the shared foi
   expect(markup).not.toContain("◉");
   expect(markup).not.toContain(">aicharts.io<");
 });
+
+test("publishes the design-kit sticky offset from the in-flow marketing header", async () => {
+  const source = await Bun.file(new URL("./site-header.tsx", import.meta.url)).text();
+
+  expect(source).toContain('from "@hraness/design-kit/react"');
+  expect(source).toContain("StickyOffsetSync");
+  expect(source).toContain("hraness-marketing-header");
+  expect(source).not.toContain("data-position=\"fixed\"");
+  expect(source).not.toContain("--hraness-marketing-main-offset");
+});

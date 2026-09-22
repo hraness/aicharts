@@ -3,7 +3,7 @@
   "source": {
     "method": "models-api",
     "name": "OpenRouter",
-    "retrievedAt": "2026-09-21T17:06:29.863Z",
+    "retrievedAt": "2026-09-22T19:03:16.085Z",
     "timestampMeaning": "source-added-at",
     "url": "https://openrouter.ai/api/v1/models?sort=newest"
   },
@@ -28,6 +28,36 @@
     "windowDays": 90
   },
   "observedListings": [
+    {
+      "id": "openai/gpt-6-luna-pro",
+      "model": "GPT-6 Luna Pro",
+      "providerId": "openai",
+      "sourceAddedAt": "2026-09-22T18:13:11.000Z"
+    },
+    {
+      "id": "openai/gpt-6-luna",
+      "model": "GPT-6 Luna",
+      "providerId": "openai",
+      "sourceAddedAt": "2026-09-22T18:13:06.000Z"
+    },
+    {
+      "id": "openai/gpt-6-sol-pro",
+      "model": "GPT-6 Sol Pro",
+      "providerId": "openai",
+      "sourceAddedAt": "2026-09-22T18:13:01.000Z"
+    },
+    {
+      "id": "openai/gpt-6-sol",
+      "model": "GPT-6 Sol",
+      "providerId": "openai",
+      "sourceAddedAt": "2026-09-22T18:12:55.000Z"
+    },
+    {
+      "id": "anthropic/claude-opus-5.5",
+      "model": "Claude Opus 5.5",
+      "providerId": "anthropic",
+      "sourceAddedAt": "2026-09-22T16:32:12.000Z"
+    },
     {
       "id": "x-ai/grok-4.7",
       "model": "Grok 4.7",
@@ -294,6 +324,111 @@
     }
   ],
   "releases": [
+    {
+      "capabilities": {
+        "inputModalities": [
+          "file",
+          "image",
+          "text"
+        ],
+        "outputModalities": [
+          "text"
+        ],
+        "supportsTools": true
+      },
+      "canonicalSlug": "openai/gpt-6-luna-pro-20260922",
+      "id": "openai/gpt-6-luna-pro",
+      "model": "GPT-6 Luna Pro",
+      "modelUrl": "https://openrouter.ai/openai/gpt-6-luna-pro",
+      "providerId": "openai",
+      "providerName": "OpenAI",
+      "sourceAddedAt": "2026-09-22T18:13:11.000Z",
+      "status": "awaiting-benchmark"
+    },
+    {
+      "capabilities": {
+        "inputModalities": [
+          "file",
+          "image",
+          "text"
+        ],
+        "outputModalities": [
+          "text"
+        ],
+        "supportsTools": true
+      },
+      "canonicalSlug": "openai/gpt-6-luna-20260922",
+      "id": "openai/gpt-6-luna",
+      "model": "GPT-6 Luna",
+      "modelUrl": "https://openrouter.ai/openai/gpt-6-luna",
+      "providerId": "openai",
+      "providerName": "OpenAI",
+      "sourceAddedAt": "2026-09-22T18:13:06.000Z",
+      "status": "awaiting-benchmark"
+    },
+    {
+      "capabilities": {
+        "inputModalities": [
+          "file",
+          "image",
+          "text"
+        ],
+        "outputModalities": [
+          "text"
+        ],
+        "supportsTools": true
+      },
+      "canonicalSlug": "openai/gpt-6-sol-pro-20260922",
+      "id": "openai/gpt-6-sol-pro",
+      "model": "GPT-6 Sol Pro",
+      "modelUrl": "https://openrouter.ai/openai/gpt-6-sol-pro",
+      "providerId": "openai",
+      "providerName": "OpenAI",
+      "sourceAddedAt": "2026-09-22T18:13:01.000Z",
+      "status": "awaiting-benchmark"
+    },
+    {
+      "capabilities": {
+        "inputModalities": [
+          "file",
+          "image",
+          "text"
+        ],
+        "outputModalities": [
+          "text"
+        ],
+        "supportsTools": true
+      },
+      "canonicalSlug": "openai/gpt-6-sol-20260922",
+      "id": "openai/gpt-6-sol",
+      "model": "GPT-6 Sol",
+      "modelUrl": "https://openrouter.ai/openai/gpt-6-sol",
+      "providerId": "openai",
+      "providerName": "OpenAI",
+      "sourceAddedAt": "2026-09-22T18:12:55.000Z",
+      "status": "awaiting-benchmark"
+    },
+    {
+      "capabilities": {
+        "inputModalities": [
+          "file",
+          "image",
+          "text"
+        ],
+        "outputModalities": [
+          "text"
+        ],
+        "supportsTools": true
+      },
+      "canonicalSlug": "anthropic/claude-opus-5.5-20260921",
+      "id": "anthropic/claude-opus-5.5",
+      "model": "Claude Opus 5.5",
+      "modelUrl": "https://openrouter.ai/anthropic/claude-opus-5.5",
+      "providerId": "anthropic",
+      "providerName": "Anthropic",
+      "sourceAddedAt": "2026-09-22T16:32:12.000Z",
+      "status": "awaiting-benchmark"
+    },
     {
       "capabilities": {
         "inputModalities": [

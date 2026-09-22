@@ -1,3 +1,4 @@
+import { StickyOffsetSync } from "@hraness/design-kit/react";
 import Link from "next/link";
 
 import { site } from "@/app/site";
@@ -18,6 +19,11 @@ export type SiteHeaderPath = "/calculator" | "/coding" | "/models" | "/data" | (
  * translucent paper, one hairline, the wordmark, the site links, and the
  * appearance control last. Rendered on the documented classes so links stay
  * on `next/link` and the header keeps its analytics surface.
+ *
+ * The header publishes `--hraness-sticky-offset`. `StickyOffsetSync` replaces
+ * the token fallback with the measured header box when the chrome wraps.
+ * Mains keep `hraness-marketing-main` for kit scroll-margin. Do not add a
+ * second padding gap while this header stays in flow.
  */
 export function SiteHeader({
   className,
@@ -36,6 +42,7 @@ export function SiteHeader({
   return (
     <>
       <SkipLink href={skipTarget}>{skipLabel}</SkipLink>
+      <StickyOffsetSync />
       <header
         className={headerClassName}
         data-analytics-surface="global_header"

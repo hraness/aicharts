@@ -113,7 +113,7 @@ export function ModelLogoCard({
         <span className="model-logo-card__provider">{card.providerName}</span>
         <ModelLogoRelease release={card.release} />
       </header>
-      <div className="model-logo-card__art" aria-hidden="true">
+      <div className="model-logo-card__art hraness-marketing-card__art" aria-hidden="true">
         {/* eslint-disable-next-line @next/next/no-img-element -- The pinned SVG bytes must remain identical in DOM and exported images. */}
         <img alt="" height="128" src={card.iconDataUrl} width="128" />
       </div>
