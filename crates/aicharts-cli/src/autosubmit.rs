@@ -31,6 +31,13 @@ struct Client {
     source_roots: Vec<PathBuf>,
     #[serde(default)]
     refresh: Option<Refresh>,
+    #[serde(default)]
+    days: Option<u64>,
+}
+impl Client {
+    fn days<'a>(&'a self, config: &'a Config) -> u64 {
+        self.days.unwrap_or(config.days)
+    }
 }
 #[derive(Deserialize)]
 #[serde(
@@ -226,6 +233,7 @@ fn parse(bytes: &[u8], now: u64) -> Result<Config, &'static str> {
             || !aicharts_import::all_clients().contains(&client.client.as_str())
             || client.source_roots.len() > 128
             || client.source_roots.iter().any(|path| !path_valid(path))
+            || client.days.is_some_and(|days| !(1..=366).contains(&days))
         {
             return Err(INVALID);
         }
@@ -240,7 +248,7 @@ fn parse(bytes: &[u8], now: u64) -> Result<Config, &'static str> {
             {
                 return Err(INVALID);
             }
-            refresh.args(config.days)?;
+            refresh.args(client.days(&config))?;
         }
     }
     Ok(config)
@@ -253,7 +261,7 @@ fn collection_args(
     let day = now / crate::stats::DAY_MS;
     let first = day
         .checked_add(1)
-        .and_then(|value| value.checked_sub(config.days))
+        .and_then(|value| value.checked_sub(client.days(config)))
         .ok_or(INVALID)?;
     let date = |day: u64| -> Result<String, &'static str> {
         let seconds = day
@@ -399,7 +407,7 @@ fn execute(
             return outcome(steps, "partial_failure", dry_run);
         }
         if let Some(refresh) = client.refresh.as_ref().filter(|_| !dry_run) {
-            match runner.refresh(refresh, config.days) {
+            match runner.refresh(refresh, client.days(config)) {
                 Ok(()) => steps.push(Step {
                     client: Some(client.client.clone()),
                     action: "refresh",
@@ -734,6 +742,32 @@ mod tests {
         let after =
             collection_args(&config, &config.clients[0], NOW + crate::stats::DAY_MS).unwrap();
         assert_ne!(before, after);
+    }
+    #[test]
+    fn a_client_days_override_narrows_only_its_own_window() {
+        let mut value = config_value();
+        value["clients"][1]["days"] = 2.into();
+        let config = parse(&serde_json::to_vec(&value).unwrap(), NOW).unwrap();
+        let global = collection_args(&config, &config.clients[0], NOW).unwrap();
+        let narrow = collection_args(&config, &config.clients[1], NOW).unwrap();
+        let since =
+            |args: &[String]| args[args.iter().position(|a| a == "--since").unwrap() + 1].clone();
+        let until =
+            |args: &[String]| args[args.iter().position(|a| a == "--until").unwrap() + 1].clone();
+        assert_eq!(until(&global), until(&narrow));
+        assert_ne!(since(&global), since(&narrow));
+        let day = NOW / crate::stats::DAY_MS;
+        let expected = time::OffsetDateTime::from_unix_timestamp(((day - 1) * 86_400) as i64)
+            .unwrap()
+            .date()
+            .to_string();
+        assert_eq!(since(&narrow), expected);
+        let mut bad = config_value();
+        bad["clients"][0]["days"] = 0.into();
+        assert!(parse(&serde_json::to_vec(&bad).unwrap(), NOW).is_err());
+        let mut bad = config_value();
+        bad["clients"][0]["days"] = 367.into();
+        assert!(parse(&serde_json::to_vec(&bad).unwrap(), NOW).is_err());
     }
     #[test]
     fn cycle_budget_does_not_start_another_scan() {
