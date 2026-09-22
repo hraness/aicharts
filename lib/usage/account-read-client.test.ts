@@ -1,5 +1,5 @@
 import { expect, test } from "bun:test";
-import { readAccountConsent, readAccountDays, readAccountStats, readAccountSummary, signOutUsageAccount } from "./account-read-client";
+import { readAccountConsent, readAccountDays, readAccountStats, readAccountSummary, signOutUsageAccount, warmUsageAccountSession } from "./account-read-client";
 import { subscribeUsageAccountSignOut } from "./account-session-events";
 import type { UsageAccountReply } from "./account-public";
 import { setUsageConsent } from "./consent-client";
@@ -198,12 +198,12 @@ test("native SDK lock acquisition receives cancellation so timed-out waiters do 
 
 test("aborting a follower does not cancel the SDK local singleflight owner's refresh", async () => {
   const owner = new AbortController(), follower = new AbortController();
-  const entered = deferred<void>(), followerWaiting = deferred<void>(), refreshed = deferred<Response>();
+  const entered = deferred<void>(), refreshed = deferred<Response>();
   let posts = 0, renewed = false, followerSessions = 0;
   const fetch = port((input, init) => {
     if (input === "/api/usage/consent") return json(renewed ? absent : missing, renewed ? 200 : 401);
     if (input === "/api/suite-auth/session") {
-      if (init?.signal === follower.signal && ++followerSessions === 1) followerWaiting.resolve();
+      if (init?.signal === follower.signal) followerSessions++;
       return json({ kind: "refresh_required" });
     }
     posts++; expect(init?.signal).toBe(owner.signal); entered.resolve(); return refreshed.promise;
@@ -212,9 +212,13 @@ test("aborting a follower does not cancel the SDK local singleflight owner's ref
   await entered.promise;
   const second = readAccountConsent(follower.signal, { fetch, withExclusiveLock: null });
   const refused = second.then(() => null, (error: unknown) => error);
-  await followerWaiting.promise; follower.abort(); expect(await refused).toEqual(new Error("usage_unavailable"));
+  // The follower joins the owner's flight: it dispatches no session calls of
+  // its own, so its abort cancels only its own wait — the owner keeps going.
+  await new Promise(resolve => setTimeout(resolve, 0));
+  follower.abort(); expect(await refused).toEqual(new Error("usage_unavailable"));
   renewed = true; refreshed.resolve(json(signedIn));
-  expect(await first).toEqual(absent); expect(owner.signal.aborted).toBe(false); expect(posts).toBe(1);
+  expect(await first).toEqual(absent); expect(owner.signal.aborted).toBe(false);
+  expect(posts).toBe(1); expect(followerSessions).toBe(0);
 });
 
 test("concurrent dashboard readers use the SDK lock and rotate only once", async () => {
@@ -226,6 +230,68 @@ test("concurrent dashboard readers use the SDK lock and rotate only once", async
   });
   const replies = await Promise.all([0, 1].map(() => readAccountConsent(new AbortController().signal, { fetch, withExclusiveLock })));
   expect(replies).toEqual([absent, absent]); expect(posts).toBe(1); expect(reads).toBe(4);
+});
+
+test("concurrent refused readers share one renewal flight", async () => {
+  const withExclusiveLock = serialLock(); let renewed = false, posts = 0, sessions = 0, reads = 0;
+  const fetch = port(input => {
+    if (input === "/api/usage/consent") { reads++; return json(renewed ? absent : missing, renewed ? 200 : 401); }
+    if (input === "/api/suite-auth/session") { sessions++; return json(renewed ? signedIn : { kind: "refresh_required" }); }
+    expect(input).toBe("/api/suite-auth/refresh"); posts++; renewed = true; return json(signedIn);
+  });
+  const replies = await Promise.all([0, 1, 2].map(() => readAccountConsent(new AbortController().signal, { fetch, withExclusiveLock })));
+  expect(replies).toEqual([absent, absent, absent]);
+  expect(reads).toBe(6); expect(posts).toBe(1); expect(sessions).toBe(2);
+});
+
+test("a joiner whose shared flight died with its owner drives one fresh recovery", async () => {
+  const owner = new AbortController(), follower = new AbortController(), refreshing = deferred<void>();
+  let renewed = false, posts = 0, sessions = 0, reads = 0;
+  const fetch = port(input => {
+    if (input === "/api/usage/consent") { reads++; return json(renewed ? absent : missing, renewed ? 200 : 401); }
+    if (input === "/api/suite-auth/session") { sessions++; return json(renewed ? signedIn : { kind: "refresh_required" }); }
+    posts++;
+    if (posts === 1) {
+      refreshing.resolve();
+      return new Promise<Response>((_, reject) => {
+        owner.signal.addEventListener("abort", () => reject(new DOMException("aborted", "AbortError")), { once: true });
+      });
+    }
+    renewed = true; return json(signedIn);
+  });
+  const first = readAccountConsent(owner.signal, { fetch, withExclusiveLock: null });
+  const refused = first.then(() => null, (error: unknown) => error);
+  await refreshing.promise;
+  const second = readAccountConsent(follower.signal, { fetch, withExclusiveLock: null });
+  owner.abort();
+  expect(await refused).toEqual(new Error("usage_unavailable"));
+  // The follower observed the null settlement and ran one fresh protocol —
+  // its refresh succeeded, so its strict retry reads the private reply.
+  expect(await second).toEqual(absent);
+  expect(reads).toBe(3); expect(posts).toBe(2); expect(sessions).toBe(4);
+});
+
+test("the session warm shares its flight with recovery and respects the freshness window", async () => {
+  const refreshed = deferred<Response>();
+  let renewed = false, posts = 0, sessions = 0, reads = 0;
+  const fetch = port((input, init) => {
+    if (input === "/api/usage/consent") { reads++; return json(renewed ? absent : missing, renewed ? 200 : 401); }
+    if (input === "/api/suite-auth/session") { sessions++; return json(renewed ? signedIn : { kind: "refresh_required" }); }
+    expect(init?.method).toBe("POST"); posts++; return refreshed.promise;
+  });
+  warmUsageAccountSession({ fetch, withExclusiveLock: serialLock(), sessionWarmMs: 0 });
+  await new Promise(resolve => setTimeout(resolve, 0));
+  const pending = readAccountConsent(new AbortController().signal, { fetch, withExclusiveLock: null });
+  await new Promise(resolve => setTimeout(resolve, 0));
+  // The refused reader joins the warm's in-flight protocol instead of running
+  // its own status sequence.
+  expect(sessions).toBe(2); expect(posts).toBe(1); expect(reads).toBe(1);
+  renewed = true; refreshed.resolve(json(signedIn));
+  expect(await pending).toEqual(absent); expect(reads).toBe(2);
+  // A fresh check suppresses a new warm entirely.
+  warmUsageAccountSession({ fetch, withExclusiveLock: serialLock() });
+  await new Promise(resolve => setTimeout(resolve, 0));
+  expect(sessions).toBe(2); expect(posts).toBe(1);
 });
 
 test("late renewed reads are suppressed when the caller replaces or cancels them", async () => {

@@ -454,5 +454,52 @@ describe("v2 account snapshots", () => {
     expect((await env.STAGING.list({ prefix: "usage-stats/v2/" })).objects).toHaveLength(1);
     expect(success(await stub().readUsageStats(statsQuery())).revision).toBe(1);
   });
+  test("stored projections fully owning a day skip its legacy head decode", async () => {
+    const device = await enroll(); success(await upload(device, batch(device))); await activate();
+    const base = statsRequest(device);
+    // The codex head on DAY needs a takeover that dominates its retained usage.
+    const status = await statsStatus(device);
+    const covering = (client: string, sequence: number) => statsRequest(device, { operationId: hex(40000 + sequence), sequence,
+      expectedRevision: sequence - 1, takeover: client === "codex" ? { expectedV1Revision: status.v1Revision, headDigest: status.headDigest } : null,
+      report: { ...base.report, sources: [{ ...base.report.sources[0], client }],
+        rows: [{ ...base.report.rows[0], client, tokens: { input: "10", cacheRead: "2", cacheWrite: "3", output: "5", reasoning: "1" } }] } });
+    for (const [index, client] of ["codex", "claude", "devin-cli"].entries()) success(await statsUpload(device, covering(client, index + 1)));
+    // A decoded operation would fail outright; owning the day skips the fetch.
+    await runInDurableObject(stub(), (_instance, state) => state.storage.sql.exec("UPDATE usage_admission_heads SET operation = ?", new Uint8Array(184).buffer));
+    const report = success(await stub().readUsageStats(statsQuery()));
+    expect(report.rows).toHaveLength(3); expect(report.rows.every(row => row.utcDay === DAY)).toBe(true);
+  });
+  test("a legacy head still decodes while any legacy client lacks its day projection", async () => {
+    const device = await enroll(); success(await upload(device, batch(device))); await activate();
+    const base = statsRequest(device);
+    const status = await statsStatus(device);
+    const covering = (client: string, sequence: number) => statsRequest(device, { operationId: hex(40010 + sequence), sequence,
+      expectedRevision: sequence - 1, takeover: client === "codex" ? { expectedV1Revision: status.v1Revision, headDigest: status.headDigest } : null,
+      report: { ...base.report, sources: [{ ...base.report.sources[0], client }],
+        rows: [{ ...base.report.rows[0], client, tokens: { input: "10", cacheRead: "2", cacheWrite: "3", output: "5", reasoning: "1" } }] } });
+    for (const [index, client] of ["codex", "claude"].entries()) success(await statsUpload(device, covering(client, index + 1)));
+    await runInDurableObject(stub(), (_instance, state) => state.storage.sql.exec("UPDATE usage_admission_heads SET operation = ?", new Uint8Array(184).buffer));
+    expect(await stub().readUsageStats(statsQuery())).toEqual({ ok: false, error: "storage_invalid" });
+  });
+  test("repeat reads reuse the pinned result while stats or admission revisions recompute", async () => {
+    const device = await enroll(); await activate(); const base = statsRequest(device);
+    success(await statsUpload(device, base));
+    const first = success(await stub().readUsageStats(statsQuery()));
+    expect(first.rows).toHaveLength(1);
+    // A legacy admission bumps the admission revision: the next read must
+    // recompute and surface the new head as a projected row.
+    success(await upload(device, batch(device, 1, [{ id: 9, day: DAY - 1, provider: 3 }])));
+    const second = success(await stub().readUsageStats(statsQuery()));
+    expect(second.rows).toHaveLength(2);
+    expect(second.rows.some(row => row.utcDay === DAY - 1 && row.client === "devin-cli")).toBe(true);
+    // With both revisions unchanged a repeat read serves the memoized report;
+    // the corrupted projection proves no recomputation happened.
+    await runInDurableObject(stub(), (_instance, state) => state.storage.sql.exec("UPDATE usage_stats_days SET projection = ?", "x"));
+    expect(success(await stub().readUsageStats(statsQuery()))).toEqual(second);
+    // A new committed stats revision recomputes and now meets the corruption.
+    success(await statsUpload(device, statsRequest(device, { operationId: hex(40020), sequence: 2, expectedRevision: 1,
+      report: { ...base.report, sources: [{ ...base.report.sources[0], client: "claude" }], rows: [{ ...base.report.rows[0], client: "claude" }] } })));
+    expect(await stub().readUsageStats(statsQuery())).toEqual({ ok: false, error: "storage_invalid" });
+  });
 
 });

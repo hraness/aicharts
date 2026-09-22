@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { readAccountStats } from "@/lib/usage/account-read-client";
+import { readAccountStats, warmUsageAccountSession } from "@/lib/usage/account-read-client";
 import { subscribeUsageAccountSignOut } from "@/lib/usage/account-session-events";
 import type { UsageStatsReport } from "@/lib/usage/stats-contract";
 import { createUsageStatsExample } from "@/lib/usage/stats-example";
+import { cachedStatsReport, clearStatsReports, rememberStatsReport } from "./stats-report-cache";
 import { readStatsReportFile } from "./stats-report-file";
 import { StatsReportView } from "./stats-report-view";
 import type { StatsRange, StatsSelection } from "./stats-view";
@@ -60,12 +61,23 @@ export function StatsDashboard({ todayUtcDay, remoteEnabled = false, startWithAc
     try {
       const reply = await readAccountStats(selected.firstUtcDay, selected.dayCount, controller.signal, {
         onAuthenticationRequired: () => {
+          clearStatsReports();
           if (owner.id === id && !controller.signal.aborted) setLoaded(previous =>
             owner.id === id && !controller.signal.aborted && previous?.scope === "account" ? null : previous);
         },
       });
       if (owner.id !== id || controller.signal.aborted) return;
-      if (reply.ok) { setLoaded({ report: reply.value, scope: "account", version: id, selection }); setRange(selected); setStatus("ready"); }
+      // A revalidated identical window keeps the view's version so its
+      // selection survives; any other scope or window remounts as before.
+      if (reply.ok) {
+        rememberStatsReport(selected, reply.value);
+        setLoaded(previous => ({
+          report: reply.value, scope: "account", selection,
+          version: previous?.scope === "account" && previous.report.firstUtcDay === selected.firstUtcDay
+            && previous.report.dayCount === selected.dayCount ? previous.version : id,
+        }));
+        setRange(selected); setStatus("ready");
+      }
       else {
         const code = reply.error;
         setStatus(code === "authentication_required" ? "authentication_required"
@@ -79,13 +91,19 @@ export function StatsDashboard({ todayUtcDay, remoteEnabled = false, startWithAc
     if (!remoteEnabled) return;
     const owner = pending.current, id = ++owner.id;
     owner.controller?.abort(); const controller = new AbortController(); owner.controller = controller;
+    const cached = cachedStatsReport(selected);
+    if (cached !== undefined) setLoaded({ report: cached, scope: "account", version: id, selection });
     setStatus("loading"); void read(selected, id, controller, selection);
   };
   useEffect(() => {
     const owner = pending.current;
+    if (remoteEnabled) warmUsageAccountSession();
     if (startWithAccount && remoteEnabled) {
       const id = ++owner.id, controller = new AbortController(); owner.controller = controller;
-      void read({ firstUtcDay: Math.max(0, todayUtcDay - 29), dayCount: Math.min(30, todayUtcDay + 1) }, id, controller);
+      const initial = { firstUtcDay: Math.max(0, todayUtcDay - 29), dayCount: Math.min(30, todayUtcDay + 1) };
+      const cached = cachedStatsReport(initial);
+      if (cached !== undefined) setLoaded({ report: cached, scope: "account", version: id });
+      void read(initial, id, controller);
     }
     return () => { owner.id++; owner.controller?.abort(); };
   }, [read, remoteEnabled, startWithAccount, todayUtcDay]);

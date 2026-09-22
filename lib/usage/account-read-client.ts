@@ -12,11 +12,15 @@ type Options = Readonly<{
   withExclusiveLock?: SuiteOidcExclusiveLock | null;
   /** Trusted test port; production uses the fixed settle delay. */
   transientRetryDelayMs?: number;
+  /** Trusted test port; production uses the fixed freshness window. */
+  sessionWarmMs?: number;
   onAuthenticationRequired?: () => void;
 }>;
 const unavailable = () => new Error("usage_unavailable");
 const SESSION_BYTES = 32_768;
 const TRANSIENT_RETRY_DELAY_MS = 1_500;
+const SESSION_WARM_MS = 60_000;
+const SESSION_WARM_BOUND_MS = 15_000;
 
 /** The caller's existing deadline also covers waiting for the SDK's refresh
  * lock. A late lock owner still meets the fetch fence before any provider work. */
@@ -79,6 +83,43 @@ function sessionLock(signal: AbortSignal, options: Options) {
     }) : options.withExclusiveLock);
 }
 
+/** At most one SDK session protocol runs at a time; every private read that
+ * needs authentication joins the same flight instead of serializing its own
+ * status/refresh sequence behind the SDK lock. Joiners only observe the
+ * settled projection — the owning caller's fetch, lock and signal drive it. */
+let sessionFlight: Promise<unknown> | null = null;
+let sessionCheckedAt = Number.NEGATIVE_INFINITY;
+function beginSessionFlight(signal: AbortSignal, options: Options): { flight: Promise<unknown>; owner: boolean } {
+  if (sessionFlight !== null) return { flight: sessionFlight, owner: false };
+  const fetcher = options.fetch ?? globalThis.fetch;
+  let calls = 0;
+  const flight = untilAbort(loadSuiteOidcBrowserSession({
+    withExclusiveLock: sessionLock(signal, options),
+    fetch: async (input, init) => {
+      if (signal.aborted) throw unavailable();
+      // SDK protocol: initial status, locked status recheck, then at most one
+      // refresh POST. No arbitrary target, headers, credentials or retry loop.
+      const expected = calls < 2 ? "/api/suite-auth/session" : "/api/suite-auth/refresh";
+      if (calls >= 3 || input !== expected || init?.method !== (calls < 2 ? "GET" : "POST")) throw unavailable();
+      calls++;
+      const response = await fetcher(input, { ...init, signal });
+      return sessionResponse(response, signal);
+    },
+  }), signal).then(value => { sessionCheckedAt = Date.now(); return value; },
+    () => { sessionCheckedAt = Date.now(); return null; });
+  sessionFlight = flight;
+  void flight.then(() => { if (sessionFlight === flight) sessionFlight = null; });
+  return { flight, owner: true };
+}
+
+/** Best-effort session freshness check so a needed renewal overlaps the
+ * optimistic private read instead of serializing behind its refusal. Bounded,
+ * never throws, and shares any recovery flight already running. */
+export function warmUsageAccountSession(options: Options = {}): void {
+  if (sessionFlight !== null || Date.now() - sessionCheckedAt < (options.sessionWarmMs ?? SESSION_WARM_MS)) return;
+  try { beginSessionFlight(AbortSignal.timeout(SESSION_WARM_BOUND_MS), options); } catch { /* Best-effort warm only. */ }
+}
+
 /** One settle before a transient retry. The first attempt's server-side work
  * leaves the account object warm, so the retry is the fast path; a caller
  * abort still settles promptly instead of dispatching a stale read. */
@@ -114,22 +155,16 @@ async function recoverRead<T>(read: () => Promise<T>, needsAuthentication: (repl
     const first = outcome.reply;
     options.onAuthenticationRequired?.();
     if (signal.aborted) throw unavailable();
-    const fetcher = options.fetch ?? globalThis.fetch;
-    let calls = 0;
     try {
-      const session = await untilAbort(loadSuiteOidcBrowserSession({
-        withExclusiveLock: sessionLock(signal, options),
-        fetch: async (input, init) => {
-          if (signal.aborted) throw unavailable();
-          // SDK protocol: initial status, locked status recheck, then at most one
-          // refresh POST. No arbitrary target, headers, credentials or retry loop.
-          const expected = calls < 2 ? "/api/suite-auth/session" : "/api/suite-auth/refresh";
-          if (calls >= 3 || input !== expected || init?.method !== (calls < 2 ? "GET" : "POST")) throw unavailable();
-          calls++;
-          const response = await fetcher(input, { ...init, signal });
-          return sessionResponse(response, signal);
-        },
-      }), signal);
+      let joined = beginSessionFlight(signal, options);
+      let session = await untilAbort(joined.flight, signal);
+      // A null settlement means the joined flight died with its owner; a mere
+      // joiner may still drive one fresh protocol before giving up. A failed
+      // owned flight and a signed_out answer are both definitive as-is.
+      if (session === null && !joined.owner && !signal.aborted) {
+        joined = beginSessionFlight(signal, options);
+        session = await untilAbort(joined.flight, signal);
+      }
       if (!signedIn(session)) return first;
     } catch {
       if (signal.aborted) throw unavailable();
