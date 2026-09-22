@@ -2,6 +2,10 @@
 export const PAIRING_TRANSPORT_MAX_REQUEST_BYTES = 1_024;
 export const PAIRING_TRANSPORT_MAX_RESPONSE_BYTES = 512;
 export const PAIRING_TRANSPORT_MAX_TIME_MS = 8_640_000_000_000_000;
+/** A completed sign-in satisfies pairing freshness when it began inside this
+ * window before the browser attempt. The recorded auth_time floor and the
+ * OIDC max_age request share it. */
+export const PAIRING_AUTHENTICATION_REUSE_WINDOW_MS = 600_000;
 
 export type Result<T, E extends string> = Readonly<{ ok: true; value: T }> | Readonly<{ ok: false; error: E }>;
 export type PairingTransportOperation = "beginBrowserAttempt" | "recordVerifiedAuthentication" | "browserStatus" | "decideBrowser";

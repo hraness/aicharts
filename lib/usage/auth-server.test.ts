@@ -435,7 +435,9 @@ describe("dormant AI Charts browser authentication", () => {
     expect(authorization.searchParams.get("redirect_uri")).toBe(`${origin}/api/suite-auth/callback`);
     expect(authorization.searchParams.get("response_type")).toBe("code");
     expect(authorization.searchParams.get("code_challenge_method")).toBe("S256");
-    expect(authorization.searchParams.get("prompt")).toBe("login");
+    // Ordinary start reuses a live Accounts session; the provider still enforces
+    // the email-OTP method requirement for this consumer.
+    expect(authorization.searchParams.has("prompt")).toBe(false);
     expect(authorization.searchParams.get("scope")).toBe("openid profile email offline_access");
     const cookie = response.headers.getSetCookie()[0];
     for (const flag of ["HttpOnly", "Secure", "SameSite=Lax", "Path=/"]) expect(cookie).toContain(flag);
@@ -1186,7 +1188,8 @@ describe("dormant intent-bound pairing authentication", () => {
     expect(f.calls).toEqual([]);
     expect(f.recorded).toEqual([]);
     expect(started.authorization.searchParams.get("prompt")).toBe("login");
-    expect(started.authorization.searchParams.get("max_age")).toBe("0");
+    // The reuse window minus its sub-second margin becomes the OIDC bound.
+    expect(started.authorization.searchParams.get("max_age")).toBe("599");
     for (const value of [intentId, f.browserNonce(), attemptId, contextToken]) {
       expect(started.authorization.href).not.toContain(value);
       expect(started.response.headers.get("set-cookie")).not.toContain(value);
