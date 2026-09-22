@@ -44,6 +44,7 @@ jobs:
       ATLAS_AUDIO_PATH: data/benchmark-atlas-audio.json
       ATLAS_MULTIMODAL_PATH: data/benchmark-atlas-multimodal.json
       ATLAS_REASONING_PATH: data/benchmark-atlas-reasoning.json
+      ATLAS_VALS_PATH: data/benchmark-atlas-vals.json
       BENCHMARK_PATH: data/coding-agents.json
       CALCULATOR_PATH: data/calculator-inputs.json
       DEEP_SWE_PATH: data/deep-swe-evidence.json
@@ -236,7 +237,7 @@ jobs:
         continue-on-error: true
         shell: bash
         run: |
-          source_file="$(mktemp -t models-dev-api)"
+          source_file="$(mktemp -t models-dev-api.XXXXXX)"
           trap 'rm -f "$source_file"' EXIT
           curl -fsSL --max-time 120 --max-filesize 16777216 -o "$source_file" "https://models.dev/api.json"
           bun run scripts/usage-catalog.ts --source "$source_file" --retrieved-at "$(date -u +%F)"
@@ -255,7 +256,7 @@ jobs:
           fi
 
           while IFS= read -r changed_file; do
-            if [[ "$changed_file" != "$BENCHMARK_PATH" && "$changed_file" != "$CALCULATOR_PATH" && "$changed_file" != "$DEEP_SWE_PATH" && "$changed_file" != "$FIRST_PARTY_RELEASE_PATH" && "$changed_file" != "$INTELLIGENCE_PATH" && "$changed_file" != "$RELEASE_RADAR_PATH" && "$changed_file" != "$TERMINAL_BENCH_PATH" && "$changed_file" != "$TERMINAL_BENCH_SCIENCE_PATH" && "$changed_file" != "$ATLAS_REASONING_PATH" && "$changed_file" != "$ATLAS_MULTIMODAL_PATH" && "$changed_file" != "$ARENA_MEDIA_PATH" && "$changed_file" != "$ATLAS_AUDIO_PATH" && "$changed_file" != "$USAGE_PRICES_PATH" && "$changed_file" != "$USAGE_REGISTRY_PATH" ]]; then
+            if [[ "$changed_file" != "$BENCHMARK_PATH" && "$changed_file" != "$CALCULATOR_PATH" && "$changed_file" != "$DEEP_SWE_PATH" && "$changed_file" != "$FIRST_PARTY_RELEASE_PATH" && "$changed_file" != "$INTELLIGENCE_PATH" && "$changed_file" != "$RELEASE_RADAR_PATH" && "$changed_file" != "$TERMINAL_BENCH_PATH" && "$changed_file" != "$TERMINAL_BENCH_SCIENCE_PATH" && "$changed_file" != "$ATLAS_REASONING_PATH" && "$changed_file" != "$ATLAS_MULTIMODAL_PATH" && "$changed_file" != "$ARENA_MEDIA_PATH" && "$changed_file" != "$ATLAS_AUDIO_PATH" && "$changed_file" != "$ATLAS_VALS_PATH" && "$changed_file" != "$USAGE_PRICES_PATH" && "$changed_file" != "$USAGE_REGISTRY_PATH" ]]; then
               echo "Refresh changed unexpected file: ${changed_file}"
               exit 1
             fi
@@ -295,6 +296,9 @@ jobs:
                 ;;
               "$USAGE_REGISTRY_PATH")
                 semantic_filter='del(.source.models.retrievedAt)'
+                ;;
+              "$ATLAS_VALS_PATH")
+                semantic_filter='del(.benchmarks[].source.retrievedAt)'
                 ;;
             esac
             previous_semantic="$(git show "HEAD:${changed_file}" | jq -cS "$semantic_filter")"
@@ -353,7 +357,7 @@ jobs:
         run: |
           git config user.name "0thernet"
           git config user.email "894119+0thernet@users.noreply.github.com"
-          git add -- "$BENCHMARK_PATH" "$CALCULATOR_PATH" "$DEEP_SWE_PATH" "$FIRST_PARTY_RELEASE_PATH" "$INTELLIGENCE_PATH" "$RELEASE_RADAR_PATH" "$TERMINAL_BENCH_PATH" "$TERMINAL_BENCH_SCIENCE_PATH" "$ATLAS_REASONING_PATH" "$ATLAS_MULTIMODAL_PATH" "$ARENA_MEDIA_PATH" "$ATLAS_AUDIO_PATH" "$USAGE_PRICES_PATH" "$USAGE_REGISTRY_PATH"
+          git add -- "$BENCHMARK_PATH" "$CALCULATOR_PATH" "$DEEP_SWE_PATH" "$FIRST_PARTY_RELEASE_PATH" "$INTELLIGENCE_PATH" "$RELEASE_RADAR_PATH" "$TERMINAL_BENCH_PATH" "$TERMINAL_BENCH_SCIENCE_PATH" "$ATLAS_REASONING_PATH" "$ATLAS_MULTIMODAL_PATH" "$ARENA_MEDIA_PATH" "$ATLAS_AUDIO_PATH" "$ATLAS_VALS_PATH" "$USAGE_PRICES_PATH" "$USAGE_REGISTRY_PATH"
           git commit -m "chore: refresh model data"
           git push "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "HEAD:refs/heads/${REFRESH_BRANCH}"
 
@@ -582,6 +586,9 @@ jobs:
             fi
             if [[ -f "$USAGE_PRICES_PATH" && -f "$USAGE_REGISTRY_PATH" ]]; then
               jq -r --slurpfile registry "$USAGE_REGISTRY_PATH" '"- Usage price catalog: \(.rates | length) tariffs across \($registry[0].providers | length) providers and \($registry[0].models | length) models; retrieved \(.source.retrievedAt)."' "$USAGE_PRICES_PATH"
+            fi
+            if [[ -f "$ATLAS_VALS_PATH" ]]; then
+              jq -r '"- Vals AI private boards: \(.benchmarks | length) boards; \([.benchmarks[].rows | length] | add) observations."' "$ATLAS_VALS_PATH"
             fi
           } >> "$GITHUB_STEP_SUMMARY"
 
