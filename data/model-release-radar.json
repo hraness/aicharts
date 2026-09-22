@@ -3,7 +3,7 @@
   "source": {
     "method": "models-api",
     "name": "OpenRouter",
-    "retrievedAt": "2026-09-22T19:03:16.085Z",
+    "retrievedAt": "2026-09-22T22:16:23.240Z",
     "timestampMeaning": "source-added-at",
     "url": "https://openrouter.ai/api/v1/models?sort=newest"
   },
@@ -63,6 +63,12 @@
       "model": "Grok 4.7",
       "providerId": "xai",
       "sourceAddedAt": "2026-09-21T16:19:01.000Z"
+    },
+    {
+      "id": "qwen/qwen3.8-omni-flash",
+      "model": "Qwen3.8 Omni Flash",
+      "providerId": "alibaba_cloud",
+      "sourceAddedAt": "2026-09-21T03:05:54.000Z"
     },
     {
       "id": "z-ai/glm-5.3-flashx",
@@ -448,6 +454,28 @@
       "providerId": "xai",
       "providerName": "xAI",
       "sourceAddedAt": "2026-09-21T16:19:01.000Z",
+      "status": "awaiting-benchmark"
+    },
+    {
+      "capabilities": {
+        "inputModalities": [
+          "audio",
+          "image",
+          "text",
+          "video"
+        ],
+        "outputModalities": [
+          "text"
+        ],
+        "supportsTools": true
+      },
+      "canonicalSlug": "qwen/qwen3.8-omni-flash-20260918",
+      "id": "qwen/qwen3.8-omni-flash",
+      "model": "Qwen3.8 Omni Flash",
+      "modelUrl": "https://openrouter.ai/qwen/qwen3.8-omni-flash",
+      "providerId": "alibaba_cloud",
+      "providerName": "Alibaba Cloud",
+      "sourceAddedAt": "2026-09-21T03:05:54.000Z",
       "status": "awaiting-benchmark"
     },
     {
