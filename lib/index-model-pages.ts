@@ -10,10 +10,8 @@ import { isoCalendarDateToUtcDate } from "./iso-calendar-date";
 import { MODEL_CARD_CATALOG } from "./model-card-data";
 import { modelCardArtDirection } from "./model-card-art-direction";
 import { modelIconDataUrl } from "./model-card-icons";
-import {
-  MODEL_CARD_PRESENTATIONS,
-  type ModelCardPresentation,
-} from "./model-card-collection";
+import { MODEL_CARD_PRESENTATIONS } from "./model-card-collection";
+import type { ModelCardPresentation } from "./model-card-presentation";
 import type { ModelCardPath, ModelCardRouteParams } from "./model-card-data";
 
 export const INDEX_MODEL_PROFILE_SLUG = "index" as const;
