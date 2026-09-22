@@ -6,6 +6,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import codingAgentData from "@/data/coding-agents.json";
 import editorialImageManifest from "@/editorial/images.manifest.json";
 import { parseCodingAgentSnapshot } from "@/lib/coding-agent-data";
+import { PUBLIC_BLOG_SLUGS } from "@/lib/public-analytics-routes";
 import {
   currentCodingAgentBenchmarkLeaders,
   formatBenchmarkScore,
@@ -27,10 +28,11 @@ import {
 
 import nextConfig from "../../next.config";
 import sitemap, { blogSitemapEntries } from "../sitemap";
-import BlogArticlePage, {
+import {
   generateMetadata,
   generateStaticParams,
 } from "./[slug]/page";
+import { BlogArticlePage } from "./blog-article-page";
 import { ArticleBody } from "./article-body";
 import {
   BLOG_SLUGS,
@@ -98,11 +100,10 @@ import {
   TERMINAL_BENCH_SCIENCE,
 } from "./terminal-bench-science-article";
 import BlogLayout from "./layout";
-import BlogIndex from "./page";
+import { BlogIndex } from "./blog-index";
 import { atomFeed } from "./atom-feed";
 import { GET as getAtomFeed } from "./feed.xml/route";
 import {
-  BLOG_EDITORIAL_IMAGES,
   EDITORIAL_IMAGE_HEIGHT,
   EDITORIAL_IMAGE_WIDTH,
   SLOPCAMERA_PACKAGE,
@@ -492,7 +493,7 @@ describe("AI Charts benchmark notes", () => {
       "hackerNewsRealSwe",
       "artificialAnalysisCodingAgents",
     ]);
-    expect(blogEditorialImage(article.slug)).toBeUndefined();
+    expect(blogEditorialImage(article.slug)?.slug).toBe(article.slug);
     for (const sourceId of article.sourceIds) {
       expect(markup).toContain(BLOG_SOURCES[sourceId].url);
     }
@@ -649,7 +650,7 @@ describe("AI Charts benchmark notes", () => {
 
     expect(article.title).toBe("What Fan et al.’s harness-component ablations measure");
     expect(article.sourceIds).toEqual(["fanHarnessDesign", "artificialAnalysisCodingAgents"]);
-    expect(blogEditorialImage(article.slug)).toBeUndefined();
+    expect(blogEditorialImage(article.slug)?.slug).toBe(article.slug);
     expect(markup).toContain(`href="${BLOG_SOURCES.fanHarnessDesign.url}"`);
     expect(markup).toContain(BLOG_SOURCES.artificialAnalysisCodingAgents.url);
     expect(markup).toContain(formatRetrievedAt(parsed.value.source.retrievedAt));
@@ -792,7 +793,7 @@ describe("AI Charts benchmark notes", () => {
 
     expect(article.title).toBe("What HarnessTax’s same-model cost gap measures");
     expect(article.sourceIds).toEqual(["harnessTax", "artificialAnalysisCodingAgents"]);
-    expect(blogEditorialImage(article.slug)).toBeUndefined();
+    expect(blogEditorialImage(article.slug)?.slug).toBe(article.slug);
     expect(markup).toContain(BLOG_SOURCES.harnessTax.url);
     expect(markup).toContain(BLOG_SOURCES.artificialAnalysisCodingAgents.url);
     expect(markup).toContain(formatRetrievedAt(parsed.value.source.retrievedAt));
@@ -880,7 +881,7 @@ describe("AI Charts benchmark notes", () => {
       "devinFable51",
       "artificialAnalysisCodingAgents",
     ]);
-    expect(blogEditorialImage(article.slug)).toBeUndefined();
+    expect(blogEditorialImage(article.slug)?.slug).toBe(article.slug);
     for (const sourceId of article.sourceIds) {
       expect(markup).toContain(BLOG_SOURCES[sourceId].url);
     }
@@ -1078,8 +1079,8 @@ describe("AI Charts benchmark notes", () => {
     expect(indexMarkup).toContain("The first collection focuses on coding agents.");
     expect(indexMarkup).toContain("Explore the coding-agent chart");
     expect(indexMarkup).toContain("Method");
-    // Only the first card may preload its image; an image-free lead card
-    // preloads nothing rather than promoting a below-fold image.
+    // Only the first card may preload its image. An injected image-free
+    // index preloads nothing rather than promoting a below-fold image.
     const leadImage = blogEditorialImage(blogArticles[0].slug);
     expect(indexMarkup.match(/rel="preload"/gu) ?? [])
       .toHaveLength(leadImage === undefined ? 0 : 1);
@@ -1137,6 +1138,22 @@ describe("AI Charts benchmark notes", () => {
       blogArticles.map(article => ({ slug: article.slug })),
     );
     expect(getBlogArticle("not-an-article")).toBeUndefined();
+
+    const imageLessIndex = renderToStaticMarkup(
+      BlogIndex({ imageForSlug: imageLessLookup }),
+    );
+    expect(imageLessIndex).toContain("AI model and agent benchmark analysis");
+    expect(imageLessIndex.match(/rel="preload"/gu) ?? []).toHaveLength(0);
+    expect(imageLessIndex).not.toContain("/images/blog/");
+    expect(imageLessIndex).not.toContain("<figure");
+    const imageLessArticle = await BlogArticlePage({
+      imageForSlug: imageLessLookup,
+      params: Promise.resolve({ slug: blogArticles[0].slug }),
+    });
+    const imageLessMarkup = renderToStaticMarkup(imageLessArticle);
+    expect(imageLessMarkup).toContain(blogArticles[0].title);
+    expect(imageLessMarkup).not.toContain("<figure");
+    expect(imageLessMarkup).not.toContain("/images/blog/");
   });
 
   test("layers shared controls below repository-owned publication CSS", async () => {
@@ -1210,20 +1227,21 @@ describe("AI Charts blog discovery", () => {
   });
 
   test("validates each registered editorial image against the manifest and binary", async () => {
-    // The registry is intentionally partial: every registered slug must be a
-    // live article, but a live article may remain image-free.
+    // Every live published note must have a registry row, matching manifest
+    // entry, and exact public binary. Image-free rendering is proven only
+    // through injected undefined lookups, not through a live hole.
     const registeredSlugs = blogEditorialImages.map(image => image.slug).sort();
     expect(new Set(registeredSlugs).size).toBe(registeredSlugs.length);
-    for (const slug of Object.keys(BLOG_EDITORIAL_IMAGES)) {
-      expect(BLOG_SLUGS as readonly string[]).toContain(slug);
+    expect(registeredSlugs).toEqual([...BLOG_SLUGS].sort());
+    expect(registeredSlugs).toEqual([...PUBLIC_BLOG_SLUGS].sort());
+    for (const slug of PUBLIC_BLOG_SLUGS) {
+      const image = blogEditorialImage(slug);
+      expect(image).toBeDefined();
+      if (image === undefined) continue;
+      expect(image.slug).toBe(slug);
     }
-    const imageFreeSlugs = BLOG_SLUGS.filter(slug => blogEditorialImage(slug) === undefined);
-    expect(imageFreeSlugs).toEqual([
-      "harness-design-coding-agents",
-      "harnesstax-coding-agent-harness",
-      "real-swe-private-enterprise-benchmark",
-      "devin-fusion-cost-saving",
-    ]);
+    expect(BLOG_SLUGS.filter(slug => blogEditorialImage(slug) === undefined))
+      .toEqual([]);
     expect(new Set(blogEditorialImages.map(image => image.sha256)).size)
       .toBe(blogEditorialImages.length);
 
