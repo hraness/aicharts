@@ -243,22 +243,35 @@ profile for each client/day and never add overlapping v1 and v2 totals. Estimate
 token observations do not enter reported-token rankings.
 
 For an existing v1 window, the native sender pins the prior revision, head digest
-and client owner. The service admits takeover only when every retained day has
-at least its prior reported record count and every one of its five token buckets.
-A head digest alone is not coverage proof. Empty, missing or incomplete imports,
-estimated replacements, stale heads, another writer and unknown-provenance
-tombstones refuse. V1 tables and immutable history remain retained. This numeric
-preservation guard does not replace live source comparison during cutover.
+and client owner. Takeover scope is the writer's own retained v1 heads: heads
+and tombstones recorded by other devices stay their own immutable evidence and
+cannot strand the migration. The service admits takeover only when every
+retained day has at least its prior reported record count and every one of its
+five token buckets. A head digest alone is not coverage proof. Empty, missing or
+incomplete imports, estimated replacements, stale heads, another writer and
+unknown-provenance tombstones refuse. V1 tables and immutable history remain
+retained. This numeric preservation guard does not replace live source
+comparison during cutover.
 
-A terminally refused retained flight requires explicit `stats-sync --abandon`
-with the existing state and key. The authenticated operation pins the exact
-flight. It either returns its already committed receipt or advances the account
-revision to fence a late retry, without consuming the device upload sequence.
-It clears only a matching pending intent and keeps immutable objects and byte
-reservations. The native checkpoint clears a flight only after correlated
-proof; uncertain replies remain frozen. The scheduled publisher never abandons
-a flight automatically. A maintenance revision can exist before any published
-report; read and recovery paths must not infer publication from revision alone.
+This profile does not fence v1 admission in either direction. Batches touching
+days the stats profile already owns still admit as retained v1 evidence, and a
+parked v1 pending flight does not block stats writes. The takeover basis
+revisions make any interleaved commit stale, so a conflicting request retries
+instead of deadlocking either profile.
+
+A fresh upload from the same writer supersedes its own stranded pending intent:
+the parked bytes can never settle once the writer has dispatched a replacement,
+and their reserved byte charge stays counted as recovery evidence. A pending
+intent recorded by another device still refuses. Explicit `stats-sync --abandon`
+with the existing state and key remains the deterministic discard. The
+authenticated operation pins the exact flight. It either returns its already
+committed receipt or advances the account revision to fence a late retry,
+without consuming the device upload sequence. It clears only a matching pending
+intent and keeps immutable objects and byte reservations. The native checkpoint
+clears a flight only after correlated proof; uncertain replies remain frozen.
+The scheduled publisher never abandons a flight automatically. A maintenance
+revision can exist before any published report; read and recovery paths must
+not infer publication from revision alone.
 
 Each upload is limited to 4 MiB and 8,192 aggregate rows. Account projections are
 limited to 65,536 client-days, 262,144 rows, and 128 MiB. Hosted reads are capped

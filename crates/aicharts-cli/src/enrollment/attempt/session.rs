@@ -8,7 +8,7 @@
 use super::{
     record::{Record, Token},
     storage::{self, Storage},
-    Error, Result,
+    Error, Result, MAX_DISPATCHES,
 };
 use crate::enrollment::{
     contract::{Context, DomainResult, Operation, Request},
@@ -489,6 +489,7 @@ impl<S: Storage> HeldAttempt<S> {
         exchange: &mut X,
         prepared_at_ms: u64,
         attempted_at_ms: u64,
+        redispatch_delay: std::time::Duration,
     ) -> std::result::Result<AcceptedEnrollment, OperationFailure> {
         let fail = |error| OperationFailure {
             error,
@@ -539,29 +540,62 @@ impl<S: Storage> HeldAttempt<S> {
         }
         self.dispatch_flight(request, context, attempted_at_ms)
             .map_err(fail)?;
-        let accepted = match exchange.exchange(request, context, self.current.clock_floor_ms) {
-            Ok(accepted) => accepted,
-            Err(transport) => {
-                // An uncertain poll dispatch has nothing to reconcile: the
-                // exchange is a server-side read. Record the loss durably and
-                // abandon the flight so the next paced poll prepares a fresh
-                // one. Mutating operations and other transport failures keep
-                // the retained dispatched flight for explicit reconciliation.
-                if request.operation() == Operation::Poll && transport == TransportError::Uncertain
-                {
-                    if let Err(error) = self.abandon_poll_flight(attempted_at_ms) {
-                        return Err(OperationFailure {
-                            error,
-                            namespace_secret: None,
-                            transport: Some(transport),
-                        });
+        let accepted = loop {
+            match exchange.exchange(request, context, self.current.clock_floor_ms) {
+                Ok(accepted) => break accepted,
+                Err(transport) => {
+                    // An uncertain poll dispatch has nothing to reconcile: the
+                    // exchange is a server-side read. Record the loss durably and
+                    // abandon the flight so the next paced poll prepares a fresh
+                    // one. Mutating operations and other transport failures keep
+                    // the retained dispatched flight for explicit reconciliation.
+                    if request.operation() == Operation::Poll
+                        && transport == TransportError::Uncertain
+                    {
+                        if let Err(error) = self.abandon_poll_flight(attempted_at_ms) {
+                            return Err(OperationFailure {
+                                error,
+                                namespace_secret: None,
+                                transport: Some(transport),
+                            });
+                        }
                     }
+                    // The account mutations commit idempotently by pairing
+                    // intent, so an unavailable or uncertain exchange can still
+                    // be settling remotely while this retained flight's
+                    // request/context digest stays fixed. An explicit
+                    // same-flight redispatch inside the bounded dispatch count
+                    // is the designed reconciliation — never a retry of new
+                    // work.
+                    if matches!(
+                        request.operation(),
+                        Operation::Enroll | Operation::Namespace
+                    ) && matches!(
+                        transport,
+                        TransportError::Uncertain | TransportError::Unavailable
+                    ) && self
+                        .current
+                        .flight
+                        .as_ref()
+                        .is_some_and(|flight| flight.dispatches < MAX_DISPATCHES)
+                    {
+                        std::thread::sleep(redispatch_delay);
+                        if let Err(error) = self.dispatch_flight(request, context, attempted_at_ms)
+                        {
+                            return Err(OperationFailure {
+                                error,
+                                namespace_secret: None,
+                                transport: Some(transport),
+                            });
+                        }
+                        continue;
+                    }
+                    return Err(OperationFailure {
+                        error: Error::OutcomeUnknown,
+                        namespace_secret: None,
+                        transport: Some(transport),
+                    });
                 }
-                return Err(OperationFailure {
-                    error: Error::OutcomeUnknown,
-                    namespace_secret: None,
-                    transport: Some(transport),
-                });
             }
         };
         let owned_namespace = match &accepted.result {

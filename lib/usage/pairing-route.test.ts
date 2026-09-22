@@ -173,7 +173,7 @@ test("eight timed-out calls retain capacity through late settlement and dispose 
   const f = fixture({ read: async () => late.promise });
   const pending = Array.from({ length: 8 }, () => f.approval(incoming())); await tick();
   expect(f.counts().reads).toBe(8); expect((await f.approval(incoming())).status).toBe(503);
-  f.fire(15_000); expect((await Promise.all(pending)).map(r => r.status)).toEqual(Array(8).fill(503));
+  f.fire(35_000); expect((await Promise.all(pending)).map(r => r.status)).toEqual(Array(8).fill(503));
   expect((await f.approval(incoming())).status).toBe(503); expect(f.counts().reads).toBe(8);
   late.resolve(new Response(new ReadableStream({ cancel() { cancelled++; } }), { headers: { "content-type": PAIRING_PUBLIC_MEDIA } }));
   await f.join(); expect(cancelled).toBe(1);

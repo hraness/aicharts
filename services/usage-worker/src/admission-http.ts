@@ -8,8 +8,8 @@ export const ADMISSION_HTTP_URL = "https://usage.aicharts.io/v1/batches";
 export const ADMISSION_HTTP_BATCH_MEDIA = "application/vnd.aicharts.usage-batch-v1";
 export const ADMISSION_HTTP_JOURNAL_MEDIA = "application/vnd.aicharts.usage-journal-v1";
 export const ADMISSION_HTTP_CAPACITY = 8;
-export const ADMISSION_HTTP_WORKER_MS = 15_000;
-export const ADMISSION_HTTP_RPC_MS = 10_000;
+export const ADMISSION_HTTP_WORKER_MS = 30_000;
+export const ADMISSION_HTTP_RPC_MS = 20_000;
 export interface AdmissionHttpLifetime { waitUntil(terminal: Promise<void>): void; }
 export interface AdmissionHttpEnvironment {
   readonly ACCOUNT_ENROLLMENTS: Readonly<{

@@ -470,9 +470,13 @@ pub(crate) mod unix {
                     continue;
                 }
                 if before.bytes > wave_limit {
-                    // A single source cannot be partitioned; the per-source
-                    // read bound still applies inside one wave.
-                    return Err("source_byte_limit");
+                    // A single source cannot be partitioned; skip it rather
+                    // than failing the whole collect.
+                    progress.note(&format!(
+                        "skipping oversized source ({} bytes)",
+                        before.bytes
+                    ));
+                    continue;
                 }
                 if wave_len(&scans, &prefix_scans) > 0
                     && (wave_len(&scans, &prefix_scans) >= wave_file_limit

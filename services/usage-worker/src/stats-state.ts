@@ -1,12 +1,12 @@
 import { LEADERBOARD_MAX_RECORDS } from "../../../lib/usage/leaderboard-contract";
 import { createHash } from "node:crypto";
-import { admissionHex, equalAdmissionBytes, type AdmissionBatch } from "../../../lib/usage/admission";
+import { admissionHex } from "../../../lib/usage/admission";
 import { parseUsageStatsReport, statsDecimal, statsRowKey, statsTokenTotal, STATS_MAX_DAY, STATS_MAX_RECORDS, type SourceCoverage, type UsageStatsReport, type UsageStatsRow } from "../../../lib/usage/stats-contract";
 import { isStatsClient, isStatsModel, isStatsProvider } from "../../../lib/usage/stats-registry";
 import { STATS_HTTP_RESPONSE_BYTES, STATS_HTTP_RESPONSE_ROWS, parseStatsReceipt, statsHex, statsInteger, type StatsError, type StatsRange, type StatsReceipt, type StatsStatus, type StatsUpload } from "../../../lib/usage/stats-http-contract";
 import type { StatsAbandonRequest, StatsAbandonment } from "../../../lib/usage/stats-http-contract";
 import { decodeUsageBatch } from "../../../lib/usage/wire";
-import { ADMISSION_POLICY_V1, AdmissionFault, operationDay } from "./admission-policy";
+import { ADMISSION_POLICY_V1 } from "./admission-policy";
 import { AdmissionState, type AdmissionAuthority } from "./admission-state";
 
 export const MAX_STATS_STORED_DAYS = 65_536;
@@ -86,9 +86,6 @@ export class StatsState {
       && statsInteger(row.expected_revision, 0, MAX_STATS_REVISIONS - 1) && (row.receipt === null || receipt)
       && (receipt === null || (receipt.bodyHash === row.body_hash && receipt.sequence === row.sequence && receipt.revision === row.expected_revision + 1)));
     return { bodyHash: row.body_hash, deviceId: row.device_id, sequence: row.sequence, expectedRevision: row.expected_revision, receipt };
-  }
-  owns(client: string, day: number): boolean {
-    return this.sql.exec("SELECT 1 FROM usage_stats_days WHERE client = ? AND utc_day = ? LIMIT 1", client, day).toArray().length === 1;
   }
   #day(raw: Record<string, SqlStorageValue>, control = this.control()): StoredDay {
     requireStats(isStatsClient(raw.client) && statsInteger(raw.utc_day, 0, 99_999_999) && statsInteger(raw.revision, 1, control.revision)
@@ -212,14 +209,17 @@ export class StatsState {
     const { control, heads } = this.#legacy(authority, range, day => ownedDays.has(day));
     const hash = createHash("sha256").update("aicharts:stats-v2:legacy-heads\0").update(client).update("\0").update(`${range.firstUtcDay}:${range.dayCount}\0`);
     for (const { head, client: source } of heads) {
-      if (source !== client || ownedDays.has(head.day!)) continue;
+      // Retained heads from other devices are their own evidence. Another
+      // machine's ledger is outside this writer's takeover scope and cannot
+      // strand this client's migration onto the stats profile.
+      if (source !== client || ownedDays.has(head.day!) || admissionHex(head.operation.deviceId) !== deviceId) continue;
       hash.update(head.operation.occurrenceId).update(head.operation.operationHash);
       legacyRecords++;
-      if (admissionHex(head.operation.deviceId) !== deviceId) eligible = false;
     }
     // V1 tombstones deliberately discard their day/provider frame. Until an
     // explicit canonical reconciliation can establish that provenance, a
-    // legacy-client snapshot must not resurrect an erased occurrence.
+    // legacy-client snapshot must not resurrect an erased occurrence. Only
+    // this writer's own erasures could be resurrected by its own snapshots.
     if (LEGACY_CLIENTS.includes(client) && ownedDays.size < range.dayCount) {
       const admission = new AdmissionState(this.sql);
       let tombstones = 0;
@@ -227,28 +227,18 @@ export class StatsState {
         requireStats(++tombstones <= 100_000 && row.occurrence_id instanceof ArrayBuffer);
         const head = admission.head(new Uint8Array(row.occurrence_id), authority, control);
         requireStats(head && head.operation.action === 2);
+        if (admissionHex(head.operation.deviceId) !== deviceId) continue;
         hash.update(head.operation.occurrenceId).update(head.operation.operationHash); eligible = false;
       }
     }
     return { schemaVersion: 2, revision: this.control().revision, nextSequence: this.progress(deviceId).sequence + 1,
       writerDeviceId: this.writer(client), v1Revision: control.revision, headDigest: hash.digest("hex"), legacyRecords, takeoverEligible: eligible };
   }
-  guardV1(batch: AdmissionBatch, authority: AdmissionAuthority): void {
-    const admission = new AdmissionState(this.sql), progress = admission.progress(batch.deviceId, authority);
-    if (progress.batch && equalAdmissionBytes(progress.batch.bytes, batch.bytes)) return;
-    // An authenticated v2 intent fences the complete legacy basis until it
-    // settles. Otherwise a concurrent v1 commit could strand an immutable
-    // takeover request after its expected predecessor had changed.
-    if (this.pending() !== null) throw new AdmissionFault("conflict");
-    for (const operation of batch.operations) {
-      const before = admission.head(operation.occurrenceId, authority);
-      for (const candidate of [before?.operation, operation]) {
-        if (!candidate || candidate.action === 2) continue;
-        const day = operationDay(candidate), frame = decodeUsageBatch(candidate.frame, ADMISSION_POLICY_V1);
-        requireStats(day && frame.ok);
-        if (this.owns(legacyClient(frame.value.usage[0].provider), day.day)) throw new AdmissionFault("profile_superseded");
-      }
-    }
+  /** A writer's new upload supersedes its own uncommitted flight. The parked
+   * bytes can never settle once the writer has dispatched a replacement, and
+   * their reserved immutable charge stays counted as recovery evidence. */
+  supersedePending(deviceId: string): void {
+    this.sql.exec("DELETE FROM usage_stats_pending WHERE id = 1 AND device_id = ?", deviceId);
   }
   #projections(request: StatsUpload, receipt: StatsReceipt): readonly { day: number; text: string; rows: number; report: UsageStatsReport }[] {
     const report = request.report, source = report.sources[0];
@@ -321,7 +311,7 @@ export class StatsState {
     // Subtract each retained occurrence from the incoming per-day populations;
     // model regrouping is allowed, estimated rows cannot cover reported usage.
     for (const { head, usage, client: original } of this.#legacy(authority, request.report, day => owned.has(day)).heads) {
-      if (original !== client || owned.has(head.day!)) continue;
+      if (original !== client || owned.has(head.day!) || admissionHex(head.operation.deviceId) !== request.deviceId) continue;
       const value = incoming.get(head.day!), old = usage.tokens;
       if (!value || --value.records < 0) throw new StatsFault("replacement_required");
       const retained = { input: old.inputUncached, cacheRead: old.cacheRead, cacheWrite: old.cacheWrite5m + old.cacheWrite1h,
@@ -358,7 +348,6 @@ export class StatsState {
         if ((request.report.sources[0].latestAtMs ?? 0) < (latest ?? 0)) throw new StatsFault("clock_regressed");
       }
     }
-    if (new AdmissionState(this.sql).pending(authority)) throw new StatsFault("conflict");
     if (!status.takeoverEligible || (status.legacyRecords > 0 && request.takeover === null)) throw new StatsFault("takeover_required");
     if (request.takeover && (request.takeover.expectedV1Revision !== status.v1Revision || request.takeover.headDigest !== status.headDigest || !status.takeoverEligible)) throw new StatsFault("conflict");
     if (request.takeover && status.legacyRecords > 0) this.#checkLegacyCoverage(request, authority);

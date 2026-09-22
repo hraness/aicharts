@@ -21,7 +21,7 @@ const ABANDON: &str = "https://usage.aicharts.io/v2/snapshots/abandon";
 const CAP: usize = 2048;
 const UNAVAILABLE: &str = "stats_sync_exchange_uncertain";
 const INVALID: &str = "stats_sync_invalid_response";
-const TOTAL: Duration = Duration::from_secs(20);
+const TOTAL: Duration = Duration::from_secs(45);
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 struct Envelope<T> {
@@ -93,7 +93,7 @@ fn config(roots: RootCerts) -> Config {
         .timeout_connect(Some(Duration::from_secs(5)))
         .timeout_send_request(Some(Duration::from_secs(3)))
         .timeout_send_body(Some(Duration::from_secs(5)))
-        .timeout_recv_response(Some(Duration::from_secs(15)))
+        .timeout_recv_response(Some(Duration::from_secs(40)))
         .timeout_recv_body(Some(Duration::from_secs(5)))
         .tls_config(
             TlsConfig::builder()

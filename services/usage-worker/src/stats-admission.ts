@@ -79,9 +79,11 @@ export class AccountStats {
         if (progress.receipt?.bodyHash === bodyHash && progress.receipt.sequence === request.sequence && progress.receipt.operationId === request.operationId) return progress.receipt;
         const pending = this.state.pending();
         if (pending) {
-          if (pending.bodyHash !== bodyHash || pending.deviceId !== request.deviceId) throw new StatsFault("conflict");
-          this.state.check(request, owner);
-        } else this.state.reserve(request, owner, now);
+          if (pending.deviceId !== request.deviceId) throw new StatsFault("conflict");
+          if (pending.bodyHash === bodyHash) { this.state.check(request, owner); return null; }
+          this.state.supersedePending(request.deviceId);
+        }
+        this.state.reserve(request, owner, now);
         return null;
       });
       if (settled) return { ok: true, value: settled };

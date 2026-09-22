@@ -235,7 +235,7 @@ describe("v2 account snapshots", () => {
       expect(await counters()).toEqual(before);
     }
     expect(await statsUpload(device, { ...request, takeover: { ...takeover, headDigest: hex(9999999) } })).toEqual({ ok: false, error: "conflict" });
-    expect(await statsUpload(other, statsRequest(other, { report, mode: "preserve-history", takeover }))).toEqual({ ok: false, error: "takeover_required" });
+    expect(await statsUpload(other, statsRequest(other, { report, mode: "preserve-history", takeover }))).toEqual({ ok: false, error: "conflict" });
     expect(await counters()).toEqual(before);
     // A real legacy commit after status invalidates the frozen predecessor,
     // even when it happens outside this report's selected day window.
@@ -350,12 +350,13 @@ describe("v2 account snapshots", () => {
     expect(rows).toHaveLength(1); expect(rows[0].utcDay).toBe(DAY - 1);
     expect((await read()).days[1].codex.usageOccurrences).toBe(1); // Retained original profile remains readable.
   });
-  test("ownership excludes overlapping v1 writes and refuses another installation", async () => {
+  test("stats ownership does not fence overlapping v1 writes; another installation still conflicts", async () => {
     const device = await enroll(), other = await enroll(); await activate(); const first = statsRequest(device);
     success(await statsUpload(device, first));
-    expect(await upload(device, batch(device))).toMatchObject({ ok: false, error: "profile_superseded" });
+    // V1 heads stay retained evidence even on days the stats profile owns.
+    success(await upload(device, batch(device)));
     expect(await statsUpload(other, statsRequest(other, { expectedRevision: 1 }))).toMatchObject({ ok: false, error: "writer_conflict" });
-    success(await upload(device, batch(device, 1, [{ id: 2, day: DAY - 1 }])));
+    success(await upload(device, batch(device, 2, [{ id: 2, day: DAY - 1 }])));
     expect(success(await stub().readUsageStats(statsQuery())).rows).toHaveLength(2);
   });
   test("wrong secret/account/generation, expired session and incomplete scans refuse", async () => {
@@ -378,8 +379,42 @@ describe("v2 account snapshots", () => {
       finally { restore(); }
     });
     expect(await stub().readUsageStats(statsQuery())).toMatchObject({ ok: false, error: "not_started" });
-    expect(await upload(device, batch(device))).toMatchObject({ ok: false, error: "conflict" });
+    // A parked stats flight no longer fences v1 admission; heads still land.
+    success(await upload(device, batch(device, 1, [{ id: 1, provider: 2 }])));
     success(await statsUpload(device, request)); expect((await statsStatus(device)).revision).toBe(1);
+  });
+  test("a writer's new upload supersedes its own stranded pending flight", async () => {
+    const device = await enroll(); await activate(); const first = statsRequest(device);
+    await runInDurableObject(stub(), async instance => {
+      const restore = replaceEnvironment(instance, original => ({ ...original, STAGING: bucketProxy(original.STAGING, async (method, _args, invoke) => {
+        if (method === "put") throw new Error("synthetic_unavailable"); return invoke();
+      }) }));
+      try { expect(await instance.admitStatsSnapshot({ uploadSecret: device.proof.uploadSecret, request: first })).toMatchObject({ ok: false, error: "storage_unavailable" }); }
+      finally { restore(); }
+    });
+    expect(await runInDurableObject(stub(), (_instance, state) => new StatsState(state.storage.sql).pending())).not.toBeNull();
+    // A foreign device still cannot take the slot; only the writer supersedes.
+    const other = await enroll();
+    expect(await statsUpload(other, statsRequest(other))).toMatchObject({ ok: false, error: "conflict" });
+    const receipt = success(await statsUpload(device, statsRequest(device, { operationId: hex(90300) })));
+    expect(receipt.revision).toBe(1);
+    expect((await statsStatus(device)).nextSequence).toBe(2);
+    expect(success(await stub().readUsageStats(statsQuery())).rows[0].tokens.input).toBe("10");
+  });
+  test("another device's retained heads stay outside a writer's takeover scope", async () => {
+    const device = await enroll(), other = await enroll();
+    success(await upload(other, batch(other, 1, [{ id: 1, provider: 2, day: DAY }])));
+    await activate();
+    const base = statsRequest(device, { mode: "preserve-history" });
+    const request = statsRequest(device, { mode: "preserve-history", report: { ...base.report,
+      sources: [{ ...base.report.sources[0], client: "claude", records: 1 }],
+      rows: [{ ...base.report.rows[0], client: "claude" }] } });
+    const status = await statsStatus(device, request);
+    expect(status).toMatchObject({ legacyRecords: 0, takeoverEligible: true });
+    success(await statsUpload(device, request));
+    expect(success(await stub().readUsageStats(statsQuery())).rows).toHaveLength(1);
+    // The foreign head remains readable through the retained v1 profile.
+    expect((await read()).days[1].claudeCode.usageOccurrences).toBe(1);
   });
   test("reported-only leaderboard uses disjoint totals and never adds replaced legacy", async () => {
     const device = await enroll(); success(await upload(device, batch(device, 1, [{ id: 1, reasoning: 1n }]))); await activate();

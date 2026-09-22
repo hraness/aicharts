@@ -26,10 +26,10 @@ use ureq::Agent;
 // Preserve Cargo's process-wide compile-time logging suppression in all profiles.
 const _: () = assert!(matches!(log::STATIC_MAX_LEVEL, log::LevelFilter::Off));
 const REQUEST_MEDIA: &str = "application/json";
-const TOTAL: Duration = Duration::from_secs(20);
+const TOTAL: Duration = Duration::from_secs(45);
 const RESOLVE: Duration = Duration::from_secs(3);
 const CONNECT: Duration = Duration::from_secs(5);
-const HEADERS: Duration = Duration::from_secs(15);
+const HEADERS: Duration = Duration::from_secs(40);
 const BODY: Duration = Duration::from_secs(5);
 const HEADER_BYTES: usize = 16 * 1024;
 const HEADER_COUNT: usize = 64;

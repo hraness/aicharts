@@ -284,7 +284,7 @@ test("late client fetch holds permits and cancels late response before releasing
   const answers = Array.from({ length: 8 }, () => c.port.browserStatus(proof).catch(error => error.message));
   await tick(); expect(pending).toHaveLength(8);
   await expect(c.port.browserStatus(proof)).rejects.toThrow("pairing_transport_unavailable");
-  c.time.move(25_000); expect(await Promise.all(answers)).toEqual(Array(8).fill("pairing_transport_unavailable"));
+  c.time.move(45_000); expect(await Promise.all(answers)).toEqual(Array(8).fill("pairing_transport_unavailable"));
   expect(c.calls.every(call => call.signal?.aborted)).toBe(true);
   await expect(c.port.browserStatus(proof)).rejects.toThrow("pairing_transport_unavailable");
   for (const resolve of pending) resolve(response("browserStatus", results.browserStatus, { body: new ReadableStream({ cancel() { canceled++; } }) }));
@@ -322,7 +322,7 @@ test("clock regression and invalid samples fail closed without dispatch", async 
 });
 
 test("client deadline includes synchronous context acquisition, not only fetch time", async () => {
-  const c = client({ context: () => { c.time.move(25_000); return { headers: { "x-vercel-oidc-token": "a.b.c" } }; } });
+  const c = client({ context: () => { c.time.move(45_000); return { headers: { "x-vercel-oidc-token": "a.b.c" } }; } });
   await expect(c.port.browserStatus(proof)).rejects.toThrow("pairing_transport_unavailable");
   await c.ctx.drain(); expect(c.calls).toHaveLength(0);
 });

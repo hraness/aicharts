@@ -144,7 +144,7 @@ test("session timeout seals before a late session result without dispatch or dup
 test("late Worker response after request timeout cannot update terminal status or emit again", async () => {
   let resolve!: (value: Response) => void;
   const f = fixture({ fetch: () => new Promise(done => { resolve = done; }) });
-  const pending = f.handle(request()); await turns(); expect(f.fetches()).toBe(1); f.fire(15_000);
+  const pending = f.handle(request()); await turns(); expect(f.fetches()).toBe(1); f.fire(35_000);
   expect((await pending).status).toBe(503); const before = event(f.lines); expect(before.workerStatus).toBeNull();
   resolve(worker()); await f.drain(); expect(event(f.lines)).toEqual(before);
 });

@@ -3,7 +3,7 @@ import { STATS_UPLOAD_URL, STATS_STATUS_URL, STATS_UPLOAD_BYTES, STATS_MEDIA, st
 import { STATS_ABANDON_URL, STATS_ABANDON_BYTES, parseStatsAbandonRequest, parseStatsAbandonment } from "../../../lib/usage/stats-http-contract";
 import { decodeStatsHttpRequest, encodeStatsHttpResponse, statsHttpLength,
   STATS_HTTP_REQUEST_BYTES, STATS_HTTP_URL } from "../../../lib/usage/stats-http-contract";
-import { PAIRING_HTTP_CAPACITY, PAIRING_HTTP_STAGE_MS, PAIRING_HTTP_WORKER_MS,
+import { PAIRING_HTTP_CAPACITY, PAIRING_HTTP_STAGE_MS, PAIRING_HTTP_STAGE_MUTATION_MS, PAIRING_HTTP_WORKER_MS,
   pairingHttpBearer, pairingHttpBody, pairingHttpFailure, pairingHttpResponse } from "../../../lib/usage/pairing-http-contract";
 import { pairingHttpWork, type PairingHttpEffects } from "../../../lib/usage/pairing-http-work";
 import type { PairingHttpRequestLifetime, PairingHttpVerifier } from "./pairing-http";
@@ -153,7 +153,9 @@ export function createStatsUploadHttpHandler(dependencies: PairingHttpEffects) {
         const raw = statsJsonValue(bytes, cap);
         const input = statusQuery ? parseStatsStatusRequest(raw) : abandon ? parseStatsAbandonRequest(raw) : parseStatsUpload(raw);
         if (!input) return deviceFailure("invalid_input");
-        return await work.stage(PAIRING_HTTP_STAGE_MS, async () => {
+        // Status reads keep the tight stage; fenced mutations carry the
+        // once-per-lifetime account history audit's cold bound.
+        return await work.stage(statusQuery ? PAIRING_HTTP_STAGE_MS : PAIRING_HTTP_STAGE_MUTATION_MS, async () => {
           guard();
           const stub = env.ACCOUNT_ENROLLMENTS.getByName(enrollmentAccountName(input.accountId));
           const rpc = statusQuery ? stub.readStatsStatus({ uploadSecret: secret, request: input })
