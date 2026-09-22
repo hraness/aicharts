@@ -366,7 +366,8 @@ describe("internal pairing lifecycle, with no credential activation", () => {
       for (const action of sequence) {
         const previous = expected;
         if (action === "deny" && expected !== "terminal-confirmed") expected = "denied";
-        if (action === "approve" && expected === "pending") expected = "browser-approved";
+        // Verified authentication already approved the attempt; an approve
+        // replay only re-reads the same state.
         if (action === "confirm" && expected === "browser-approved") expected = "terminal-confirmed";
         const permitted = action === "deny" ? previous !== "terminal-confirmed"
           : action === "approve" ? previous !== "denied"

@@ -119,37 +119,40 @@ export async function verifyUsagePairing(browser: Browser, disabledBaseUrl: stri
       await page.waitForFunction(() => location.hash === "");
       invariant(Number(reads) === 0 && Number(starts) === 0 && Number(decisions) === 0, "Loading an intent must not create an authentication attempt or read approval.");
       await noRetainedSecrets(page);
+      state = "browser-approved";
       await start.focus(); await page.keyboard.press("Enter");
-      const approve = page.getByRole("button", { name: "Approve collector", exact: true });
-      await approve.waitFor();
+      const deny = page.getByRole("button", { name: "Deny", exact: true });
+      await page.getByText("Approved. Return to your terminal to confirm this account.", { exact: true }).waitFor();
+      await deny.waitFor();
       invariant(Number(starts) === 1 && Number(reads) === 1, "A completed native start navigation must perform one approval read.");
       invariant(await page.getByText(account, { exact: true }).count() === 1, "Approval must show the exact checked account.");
+      invariant(await page.getByRole("button", { name: "Approve collector", exact: true }).count() === 0, "A sign-in-approved attempt must not offer another approval.");
       invariant(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), "Pairing must fit the viewport.");
-      for (const button of [approve, page.getByRole("button", { name: "Deny", exact: true })]) {
-        await page.mouse.move(1, 1); await buttonContrast(button);
-        await button.hover(); await buttonContrast(button);
-      }
+      await page.mouse.move(1, 1); await buttonContrast(deny);
+      await deny.hover(); await buttonContrast(deny);
       await page.mouse.move(1, 1);
-      await approve.focus();
-      invariant(await approve.evaluate(element => element === document.activeElement && getComputedStyle(element).outlineStyle !== "none"), "Pairing decisions need visible keyboard focus.");
+      await deny.focus();
+      invariant(await deny.evaluate(element => element === document.activeElement && getComputedStyle(element).outlineStyle !== "none"), "Pairing decisions need visible keyboard focus.");
       await noRetainedSecrets(page);
       if (captureDirectory !== undefined) await page.screenshot({ path: resolve(captureDirectory, `${name}-pairing.png`), fullPage: true });
 
-      uncertain = true;
-      await page.keyboard.press("Enter");
-      const readback = page.getByRole("button", { name: "Check approval status", exact: true });
-      await readback.waitFor();
-      invariant(Number(decisions) === 1 && Number(reads) === 1, "An uncertain decision must not retry or claim completion automatically.");
-      await readback.click();
-      await page.getByText("Approval saved. Return to your terminal to confirm this account.", { exact: true }).waitFor();
-      invariant(Number(decisions) === 1 && Number(reads) === 2, "Explicit readback must reconcile through one GET.");
-      invariant(await approve.count() === 0, "A saved browser approval must not offer another approval or claim enrollment.");
+      await deny.click();
+      await page.getByText("Collector denied.", { exact: true }).waitFor();
+      invariant(Number(decisions) === 1, "Deny must send one explicit decision.");
 
       state = "pending";
-      await page.reload(); await approve.waitFor();
-      await page.getByRole("button", { name: "Deny", exact: true }).click();
-      await page.getByText("Collector denied.", { exact: true }).waitFor();
-      invariant(Number(decisions) === 2, "Deny must send one explicit decision.");
+      await page.reload();
+      const approve = page.getByRole("button", { name: "Approve collector", exact: true });
+      await approve.waitFor();
+      uncertain = true;
+      await approve.click();
+      const readback = page.getByRole("button", { name: "Check approval status", exact: true });
+      await readback.waitFor();
+      invariant(Number(decisions) === 2 && Number(reads) === 2, "An uncertain decision must not retry or claim completion automatically.");
+      await readback.click();
+      await page.getByText("Approved. Return to your terminal to confirm this account.", { exact: true }).waitFor();
+      invariant(Number(decisions) === 2 && Number(reads) === 3, "Explicit readback must reconcile through one GET.");
+      invariant(await approve.count() === 0, "A saved browser approval must not offer another approval or claim enrollment.");
 
       state = "pending"; expired = true;
       await page.reload();
