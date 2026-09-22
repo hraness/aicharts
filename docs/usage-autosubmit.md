@@ -16,7 +16,11 @@ live provider qualification, deployment, or launchd cutover.
 
 Store configuration in a private regular file with mode `0600`. Paths are
 absolute; shell variables in JSON are not expanded. `days` accepts 1–366; select
-up to 54 disjoint clients, with at most 128 source roots per client. This example
+up to 54 disjoint clients, with at most 128 source roots per client. A client
+entry may carry its own `days` (same 1–366 bound) to narrow or widen only that
+client's collection and refresh window — for example a source whose underlying
+store can drop committed rows benefits from a short window so a legitimately
+reduced stored day leaves the published range sooner. This example
 uses placeholder paths and must be changed to the existing enrollment and source locations:
 
 ```json
