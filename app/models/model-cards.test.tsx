@@ -120,6 +120,8 @@ describe("public model cards", () => {
     expect(markup.match(/class="model-logo-card"/gu)).toHaveLength(galleryCount);
     expect(markup).toContain('href="/models/xiaomi/mimo-v2-6-pro/index"');
     expect(markup).toContain("MiMo-V2.6-Pro");
+    expect(markup).toContain('href="/models/anthropic/claude-opus-5-5/index"');
+    expect(markup).toContain("Claude Opus 5.5");
     expect(markup).not.toContain("data-foil-card-deck");
     expect(markup).not.toContain("data-illumination-finish");
     expect(markup).not.toContain("data-holographic-finish");
@@ -376,6 +378,33 @@ describe("public model cards", () => {
     expect(detailMarkup).not.toContain("foil/detail");
     expect(detailMarkup).not.toContain(">Observations<");
     expect(markdown).toContain(`${harnessLabel}:`);
+  });
+
+  test("publishes Claude Opus 5.5 as its own Index page with publisher scores", async () => {
+    const opus55 = INDEX_MODEL_PAGES.find(page => (
+      page.canonicalModelId === "anthropic/claude-opus-5-5"
+    ));
+    if (opus55 === undefined) throw new Error("Expected the Claude Opus 5.5 Index page.");
+    const detailPage = await ModelCardPage({
+      params: Promise.resolve({
+        creatorSlug: opus55.creatorSlug,
+        modelSlug: opus55.modelSlug,
+        profileSlug: opus55.profileSlug,
+      }),
+    });
+    const detailMarkup = renderToStaticMarkup(detailPage);
+    const markdown = markdownForPath(opus55.path).body;
+    expect(detailMarkup).toContain("<h1>Claude Opus 5.5</h1>");
+    expect(detailMarkup).toContain("Anthropic");
+    expect(detailMarkup).toContain("2026-09-22");
+    expect(detailMarkup).toContain("https://artificialanalysis.ai/models/claude-opus-5-5");
+    expect(detailMarkup).not.toContain("Claude Opus 5 Max");
+    expect(detailMarkup).not.toContain("/models/anthropic/claude-opus-5/max");
+    expect(markdown).toContain("# Claude Opus 5.5");
+    expect(markdown).toContain("`anthropic/claude-opus-5-5`");
+    expect(markdown).toContain("https://artificialanalysis.ai/models/claude-opus-5-5");
+    expect(markdownForPath("/models/anthropic/claude-opus-5-5/index").found).toBe(true);
+    expect(markdownForPath("/models/anthropic/claude-opus-5-5").found).toBe(false);
   });
 
   test("seeds Deedy commentary under the MiMo Index page", async () => {
