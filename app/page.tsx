@@ -59,7 +59,7 @@ export default function Home() {
                 name: "xcb",
                 href: "https://xcb.sh",
                 role: "A metaharness for agent subscriptions",
-                relationship: "xcb runs the agent subscriptions Aicharts inspects, meters each account locally, and can publish usage here when you opt in.",
+                relationship: "xcb runs the agent subscriptions Aicharts inspects and meters each account locally; its aicharts-format session exports stay on your machine.",
               },
               {
                 name: "Gobstopper",
