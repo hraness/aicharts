@@ -102,6 +102,12 @@ struct Audit {
     sqlite_opened: BTreeSet<PathBuf>,
     sqlite_completed: BTreeSet<PathBuf>,
     sqlite_budget_secs: u64,
+    /// Report lower bound applied to file enumeration: a source file whose
+    /// last write predates it cannot hold a record inside the window, so the
+    /// walk skips admitting it at all. Only set for single-client contexts
+    /// whose file set is consumed directly; multi-source ownership contexts
+    /// still need complete identity scans.
+    file_floor_ms: Option<u64>,
     started: std::time::Instant,
 }
 
@@ -164,6 +170,7 @@ pub fn begin(roots: &[PathBuf]) -> Result<Guard, &'static str> {
         sqlite_opened: BTreeSet::new(),
         sqlite_completed: BTreeSet::new(),
         sqlite_budget_secs: 0,
+        file_floor_ms: None,
         started: std::time::Instant::now(),
     });
     Ok(Guard { _serial: serial })
@@ -243,6 +250,11 @@ pub(crate) fn first_observed_ms() -> Option<u64> {
         .unwrap_or_else(|p| p.into_inner())
         .as_ref()
         .and_then(|a| a.first_observed_ms)
+}
+pub(crate) fn set_file_floor_ms(value: Option<u64>) {
+    if let Some(a) = ACTIVE.lock().unwrap_or_else(|p| p.into_inner()).as_mut() {
+        a.file_floor_ms = value;
+    }
 }
 pub(crate) fn active() -> bool {
     ACTIVE.lock().unwrap_or_else(|p| p.into_inner()).is_some()
@@ -367,6 +379,26 @@ pub(crate) fn entry(path: &Path) -> bool {
                 a.errors.insert("import_entry_limit");
                 return false;
             }
+        }
+    }
+    let floor_ms = ACTIVE
+        .lock()
+        .unwrap_or_else(|p| p.into_inner())
+        .as_ref()
+        .and_then(|a| a.file_floor_ms);
+    if let Some(floor_ms) = floor_ms {
+        // Only regular files carry a meaningful content bound. Directories
+        // keep descending: an old directory can still hold a file modified
+        // inside the window, since file writes do not bump the parent mtime.
+        let skip = fs::symlink_metadata(path)
+            .ok()
+            .filter(|meta| meta.is_file())
+            .and_then(|meta| meta.modified().ok())
+            .is_some_and(|mtime| {
+                mtime < std::time::UNIX_EPOCH + std::time::Duration::from_millis(floor_ms)
+            });
+        if skip {
+            return false;
         }
     }
     admit(path).is_ok()

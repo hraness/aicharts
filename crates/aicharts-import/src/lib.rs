@@ -88,6 +88,59 @@ mod tests {
     }
 
     #[test]
+    fn collect_since_skips_sources_untouched_since_before_the_window() {
+        let (_temp, root) = home();
+        let sessions = root.join(".codex/sessions/2026/09/20");
+        fs::create_dir_all(&sessions).unwrap();
+        let fresh =
+            sessions.join("rollout-2026-09-20T10-00-00-0192f3a4-5b6c-7d8e-9f01-23456789abcd.jsonl");
+        fs::write(
+            &fresh,
+            concat!(
+                r#"{"timestamp":"2026-09-20T10:00:00Z","type":"turn_context","payload":{"model":"gpt-5.4"}}"#,
+                "\n",
+                r#"{"timestamp":"2026-09-20T10:00:01Z","type":"event_msg","payload":{"type":"token_count","info":{"total_token_usage":{"input_tokens":10,"cached_input_tokens":2,"output_tokens":3,"reasoning_output_tokens":1},"last_token_usage":{"input_tokens":10,"cached_input_tokens":2,"output_tokens":3,"reasoning_output_tokens":1}}}}"#,
+                "\n"
+            ),
+        )
+        .unwrap();
+        // A historical file whose records all predate the report window: in
+        // an append-only log its last write bounds every record it holds,
+        // so an mtime before the window proves it cannot contribute.
+        let archived = root.join(".codex/archived_sessions/2026/08/30");
+        fs::create_dir_all(&archived).unwrap();
+        let stale =
+            archived.join("rollout-2026-08-30T10-00-00-0192f3a4-5b6c-7d8e-9f01-23456789abcd.jsonl");
+        fs::write(
+            &stale,
+            concat!(
+                r#"{"timestamp":"2026-08-30T10:00:00Z","type":"turn_context","payload":{"model":"gpt-5.4"}}"#,
+                "\n",
+                r#"{"timestamp":"2026-08-30T10:00:01Z","type":"event_msg","payload":{"type":"token_count","info":{"total_token_usage":{"input_tokens":20,"cached_input_tokens":4,"output_tokens":6,"reasoning_output_tokens":2},"last_token_usage":{"input_tokens":20,"cached_input_tokens":4,"output_tokens":6,"reasoning_output_tokens":2}}}}"#,
+                "\n"
+            ),
+        )
+        .unwrap();
+        // UTC day 20716 = 2026-09-20; the stale file's mtime stays in August.
+        let first_ms = 20716u64 * 86_400_000;
+        fs::File::options()
+            .write(true)
+            .open(&stale)
+            .unwrap()
+            .set_modified(
+                std::time::UNIX_EPOCH + std::time::Duration::from_millis(20695 * 86_400_000),
+            )
+            .unwrap();
+
+        let bounded =
+            collect_since(&root, "codex", std::slice::from_ref(&root), None, first_ms).unwrap();
+        assert!(!bounded.messages.is_empty());
+        assert_eq!(bounded.receipt.files, 1);
+        let full = collect(&root, "codex", std::slice::from_ref(&root)).unwrap();
+        assert_eq!(full.receipt.files, 2);
+    }
+
+    #[test]
     fn unfinished_tail_is_deferred_without_losing_complete_records() {
         let (_temp, root) = home();
         let source = root.join(".reasonix/stats");
