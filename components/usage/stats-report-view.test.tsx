@@ -7,7 +7,8 @@ import { StatsDashboard } from "./stats-dashboard";
 
 test("the detailed report prioritizes total and trend before explanation and offers exact accessible detail", () => {
   const html = renderToStaticMarkup(<StatsReportView report={createUsageStatsExample(20_700)} scope="example" todayUtcDay={20_700} />);
-  expect(html.indexOf("Reported tokens")).toBeLessThan(html.indexOf("Daily usage"));
+  expect(html.indexOf("Reported tokens")).toBeLessThan(html.indexOf("Daily activity"));
+  expect(html.indexOf("Daily activity")).toBeLessThan(html.indexOf("Daily usage"));
   expect(html.indexOf("Daily usage")).toBeLessThan(html.indexOf("Where the tokens went"));
   expect(html.indexOf("Where the tokens went")).toBeLessThan(html.indexOf("Source coverage &amp; freshness"));
   for (const label of ["Clients", "Providers", "Models", "Download numeric CSV", "Token composition", "Reasoning", "Daily data", "Unknown"]) expect(html).toContain(label);
@@ -21,6 +22,24 @@ test("the detailed report prioritizes total and trend before explanation and off
   expect(html).toContain("Recorded request duration");
   expect(html).toContain("not time spent working, GPU time");
   expect(html).toContain("models.dev pricing snapshot dated 2026-09-19");
+});
+
+test("the dashboard renders the activity calendar, metric and composition controls, and share actions", () => {
+  const html = renderToStaticMarkup(<StatsReportView report={createUsageStatsExample(20_700)} scope="local" todayUtcDay={20_700} />);
+  expect(html).toContain('aria-labelledby="stats-calendar-title"');
+  expect(html).toContain('role="group" aria-label="Reported token density by UTC day');
+  expect(html).toContain('data-tier="4"');
+  expect(html).toContain('role="button" tabindex="0"');
+  expect(html).toContain("Highest activity:");
+  expect(html).toContain("Download image");
+  expect(html).toContain("Copy summary");
+  expect(html).toContain('aria-label="Chart metric"');
+  expect(html).toContain('aria-pressed="true">Tokens<');
+  expect(html).toContain('aria-label="Stack bars by"');
+  expect(html).toContain('aria-pressed="true">Total<');
+  expect(html).toContain("Records per active day");
+  expect(html).toContain("Tokens per record");
+  expect(html).not.toContain("not inference speed or time spent working");
 });
 
 test("local entry point labels its privacy boundary without claiming any account is connected", () => {

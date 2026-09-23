@@ -2,7 +2,7 @@ import { expect, test } from "bun:test";
 import fc from "fast-check";
 import { createUsageStatsExample } from "@/lib/usage/stats-example";
 import { parseUsageStatsReport, type UsageStatsReport, type UsageStatsRow } from "@/lib/usage/stats-contract";
-import { ALL_STATS, UNKNOWN_STATS, bucketStatsRows, filterStatsRows, filterStatsSnapshots, formatStatsMoney, groupStatsRows, previousStatsPeriod, statsInputRange, statsRowsCsv, sumStatsRows, type StatsFilters } from "./stats-view";
+import { ALL_STATS, UNKNOWN_STATS, bucketStatsRows, filterStatsRows, filterStatsSnapshots, formatStatsMoney, groupStatsRows, previousStatsPeriod, statsBucketValue, statsDayGrid, statsInputRange, statsRowsCsv, statsSplitBuckets, statsSummaryText, sumStatsRows, type StatsFilters } from "./stats-view";
 
 const example = createUsageStatsExample(20_700);
 const row = (patch: Partial<UsageStatsRow> = {}): UsageStatsRow => ({ utcDay: 20_700, client: "codex", provider: "openai", model: "gpt-5",
@@ -116,6 +116,87 @@ test("CSV keeps exact disjoint numeric fields and blank unknown costs", () => {
   expect(csv).toContain('"unknown"');
   expect(csv).toContain('"complete","","0","","0"');
   expect(csv).not.toContain("[object");
+});
+
+test("metric bucket values keep unobserved gaps honest instead of fabricating zero", () => {
+  const totals = sumStatsRows([row()]);
+  expect(statsBucketValue(totals, "tokens")).toBe(9_007_199_254_741_015n);
+  expect(statsBucketValue(totals, "records")).toBe(2n);
+  expect(statsBucketValue(totals, "speed")).toBeNull();
+  const timed = sumStatsRows([row({ durationMs: "2000", timedRecords: 2, timedTokens: "300" })]);
+  expect(statsBucketValue(timed, "speed")).toBe(150n);
+  const unobserved = sumStatsRows([row({ tokenBasis: "unavailable", breakdownCoverage: "partial",
+    tokens: { input: "0", cacheRead: "0", cacheWrite: "0", output: "0", reasoning: "0" }, timedTokens: "0" })]);
+  expect(statsBucketValue(unobserved, "tokens")).toBeNull();
+  expect(statsBucketValue(unobserved, "records")).toBe(2n);
+});
+
+test("calendar cells sit column-major with quartile tiers, a peak, and month marks", () => {
+  const weekday = new Date(20_700 * 86_400_000).getUTCDay();
+  const rows = [row({ utcDay: 20_700 }), row({ utcDay: 20_701, tokens: { input: "10", cacheRead: "0", cacheWrite: "0", output: "0", reasoning: "0" } }),
+    row({ utcDay: 20_705, tokens: { input: "9999", cacheRead: "0", cacheWrite: "0", output: "0", reasoning: "0" } }),
+    row({ utcDay: 20_702, client: "warp", tokenBasis: "unavailable", breakdownCoverage: "partial",
+      tokens: { input: "0", cacheRead: "0", cacheWrite: "0", output: "0", reasoning: "0" }, timedTokens: "0" })];
+  const grid = statsDayGrid(rows, { firstUtcDay: 20_700, dayCount: 10 });
+  expect(grid.weeks).toBe(Math.ceil((weekday + 10) / 7));
+  expect(grid.cells[weekday]?.utcDay).toBe(20_700);
+  expect(grid.cells[weekday + 1]?.utcDay).toBe(20_701);
+  expect(grid.cells[7]?.utcDay).toBe(20_700 + (7 - weekday));
+  expect(grid.cells[weekday]?.tier).toBe(4);
+  expect(grid.cells[weekday + 1]?.tier).toBe(1);
+  expect(grid.cells[(Math.floor((weekday + 5) / 7)) * 7 + new Date(20_705 * 86_400_000).getUTCDay()]?.tier).toBe(2);
+  const unknownCell = grid.cells.find(cell => cell?.utcDay === 20_702);
+  expect(unknownCell?.records).toBe(2);
+  expect(unknownCell?.tokenRecords).toBe(0);
+  expect(unknownCell?.tier).toBe(0);
+  expect(grid.activeDays).toBe(4);
+  expect(grid.peak?.utcDay).toBe(20_700);
+  const september = statsInputRange("2026-08-15", "2026-09-15");
+  expect(september).not.toBeNull();
+  const marked = statsDayGrid(rows, september ?? { firstUtcDay: 0, dayCount: 0 }).monthMarks.map(mark => mark.label);
+  expect(marked).toContain("Sep");
+  expect(marked).not.toContain("Aug");
+});
+
+test("stacked buckets reconcile with plain totals and fold beyond five series into Other", () => {
+  const range = { firstUtcDay: example.firstUtcDay, dayCount: example.dayCount };
+  const filtered = filterStatsRows(example, { ...filters, ...range });
+  const split = statsSplitBuckets(filtered, range, "client");
+  const plain = bucketStatsRows(filtered, range);
+  split.buckets.forEach((bucket, index) => {
+    expect(bucket.segments.reduce((sum, segment) => sum + segment.tokens, 0n)).toBe(plain[index]?.totals.tokens);
+    expect(bucket.segments.reduce((sum, segment) => sum + segment.records, 0)).toBe(plain[index]?.totals.records);
+  });
+  expect(split.series.map(item => item.key).sort()).toEqual(["claude", "codex", "cursor", "devin-cli"]);
+  const wide = [0, 1, 2, 3, 4, 5, 6].map(index => row({ utcDay: 20_700 + index, model: `m-${index}`,
+    tokens: { input: String(100 - index), cacheRead: "0", cacheWrite: "0", output: "0", reasoning: "0" } }));
+  const stacked = statsSplitBuckets(wide, { firstUtcDay: 20_700, dayCount: 7 }, "model");
+  expect(stacked.series.map(item => item.name)).toEqual(["m-0", "m-1", "m-2", "m-3", "m-4", "Other"]);
+  expect(stacked.series.at(-1)?.slot).toBe(5);
+  expect(stacked.buckets[0]?.segments.every(segment => segment.slot >= 0)).toBe(true);
+  const onlyRecords = statsSplitBuckets([row({ tokenBasis: "unavailable", breakdownCoverage: "partial",
+    tokens: { input: "0", cacheRead: "0", cacheWrite: "0", output: "0", reasoning: "0" }, timedTokens: "0" })], { firstUtcDay: 20_700, dayCount: 1 }, "client");
+  expect(onlyRecords.buckets[0]?.segments[0]?.tokens).toBe(0n);
+  expect(onlyRecords.buckets[0]?.segments[0]?.records).toBe(2);
+});
+
+test("the shareable summary states basis, scope, velocity, and partial coverage honestly", () => {
+  const range = { firstUtcDay: example.firstUtcDay + 30, dayCount: 30 };
+  const filtered = filterStatsRows(example, { ...filters, ...range });
+  const totals = sumStatsRows(filtered);
+  const text = statsSummaryText("local", { ...filters, ...range }, totals, "Jul 20–Aug 18, 2026", groupStatsRows(filtered, "model", "tokens"));
+  expect(text).toContain("reported token basis");
+  expect(text).toContain("usage records");
+  expect(text).toContain("active days");
+  expect(text).toContain("Reported cost");
+  expect(text).toContain("tok/s");
+  expect(text).toContain("Top by tokens");
+  expect(text).toContain("local report");
+  expect(text).toContain("coverage may be partial");
+  const empty = statsSummaryText("example", filters, sumStatsRows([]), "Sep 22, 2026", []);
+  expect(empty).toContain("tokens unobserved");
+  expect(empty).toContain("synthetic example");
+  expect(empty).not.toContain("Reported cost");
 });
 
 test("group and bucket totals reconcile for arbitrary exact numeric records, including partial final weeks", () => {
