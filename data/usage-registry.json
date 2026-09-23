@@ -10,7 +10,7 @@
     "models": {
       "url": "https://models.dev/api.json",
       "retrievedAt": "2026-09-23",
-      "sha256": "db899d725fec14f05bc2f2ebd51220d832b0fc3ba47df0f5ef3ca5be75f3fd05"
+      "sha256": "1f2d8df619e75a7e09c0e8d0184198ec923ec986541316687ff464cbcb80bdca"
     }
   },
   "clients": [
@@ -519,6 +519,8 @@
     "aion-labs/aion-2.0",
     "aion-labs/aion-3.0",
     "aion-labs/aion-3.0-mini",
+    "aion-labs/aion-3.5",
+    "aion-labs/aion-3.5-mini",
     "aion-labs/aion-rp-llama-3.1-8b",
     "alibaba-qwen3-32b",
     "alibaba/deepseek-v4-flash",
@@ -3617,6 +3619,7 @@
     "soob3123/amoral-gemma3-27b-v2",
     "soob3123/grayline-qwen3-8b",
     "soob3123/veiled-calla-12b",
+    "space-bunny-free",
     "spacexai/grok-4.1-fast-non-reasoning",
     "spacexai/grok-4.1-fast-reasoning",
     "spacexai/grok-4.20-multi-agent",
@@ -3816,6 +3819,8 @@
     "unsloth/gemma-3-4b-it",
     "unsloth/mistral-nemo-instruct-2407-tee",
     "upstage/solar-10.7b-instruct",
+    "upstage/solar-mini4",
+    "upstage/solar-mini4:thinking",
     "upstage/solar-pro-3",
     "upstage/solar-pro2",
     "upstage/solar-pro3",

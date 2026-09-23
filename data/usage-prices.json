@@ -4,7 +4,7 @@
   "source": {
     "url": "https://models.dev/api.json",
     "retrievedAt": "2026-09-23",
-    "sha256": "db899d725fec14f05bc2f2ebd51220d832b0fc3ba47df0f5ef3ca5be75f3fd05"
+    "sha256": "1f2d8df619e75a7e09c0e8d0184198ec923ec986541316687ff464cbcb80bdca"
   },
   "unit": "picousd-per-token",
   "basis": "dated-retail-estimate",
@@ -8079,6 +8079,12 @@
       "cacheWrite": "6250000",
       "output": "25000000"
     },
+    "edenai\u0000anthropic/claude-opus-5-5": {
+      "input": "4000000",
+      "cacheRead": "200000",
+      "cacheWrite": "5000000",
+      "output": "20000000"
+    },
     "edenai\u0000anthropic/claude-opus-latest": {
       "input": "5000000",
       "cacheRead": "500000",
@@ -8207,15 +8213,15 @@
     },
     "edenai\u0000databricks/databricks-deepseek-v4-flash-0731": {
       "input": "140000",
-      "cacheRead": "28000",
+      "cacheRead": "14000",
       "cacheWrite": "140000",
       "output": "280000"
     },
     "edenai\u0000databricks/databricks-deepseek-v4-pro-0813": {
-      "input": "1319990",
-      "cacheRead": "132020",
+      "input": "1320000",
+      "cacheRead": "132000",
       "cacheWrite": "1319990",
-      "output": "3959970"
+      "output": "3959999"
     },
     "edenai\u0000databricks/databricks-gpt-oss-120b": {
       "input": "150010",
@@ -8242,10 +8248,10 @@
       "output": "300020"
     },
     "edenai\u0000databricks/databricks-inkling": {
-      "input": "1000020",
-      "cacheRead": "170030",
+      "input": "1000000",
+      "cacheRead": "100000",
       "cacheWrite": "1000020",
-      "output": "4049990"
+      "output": "4050000"
     },
     "edenai\u0000deepinfra/bytedance/seed-2.0-code": {
       "input": "500000",
@@ -8465,31 +8471,31 @@
     },
     "edenai\u0000flexai/deepseek-v4-flash-0731": {
       "input": "65000",
-      "cacheRead": null,
+      "cacheRead": "9700",
       "cacheWrite": null,
       "output": "180000"
     },
     "edenai\u0000flexai/gpt-oss-120b": {
       "input": "37000",
-      "cacheRead": null,
+      "cacheRead": "5500",
       "cacheWrite": null,
       "output": "170000"
     },
     "edenai\u0000flexai/gpt-oss-20b": {
-      "input": "30000",
-      "cacheRead": null,
+      "input": "18000",
+      "cacheRead": "2700",
       "cacheWrite": null,
-      "output": "130000"
+      "output": "90000"
     },
     "edenai\u0000flexai/muse-glimmer-30b": {
       "input": "300000",
-      "cacheRead": null,
+      "cacheRead": "45000",
       "cacheWrite": null,
       "output": "1100000"
     },
     "edenai\u0000flexai/step-3.7-flash": {
       "input": "200000",
-      "cacheRead": null,
+      "cacheRead": "30000",
       "cacheWrite": null,
       "output": "1150000"
     },
@@ -9059,7 +9065,7 @@
     },
     "edenai\u0000scaleway/deepseek-v4-flash-0731": {
       "input": "458520",
-      "cacheRead": null,
+      "cacheRead": "91704",
       "cacheWrite": null,
       "output": "917040"
     },
@@ -13641,6 +13647,18 @@
       "cacheWrite": null,
       "output": "1400000"
     },
+    "kilo\u0000aion-labs/aion-3.5": {
+      "input": "3000000",
+      "cacheRead": "750000",
+      "cacheWrite": null,
+      "output": "6000000"
+    },
+    "kilo\u0000aion-labs/aion-3.5-mini": {
+      "input": "700000",
+      "cacheRead": "180000",
+      "cacheWrite": null,
+      "output": "1400000"
+    },
     "kilo\u0000aion-labs/aion-rp-llama-3.1-8b": {
       "input": "800000",
       "cacheRead": null,
@@ -14423,21 +14441,21 @@
     },
     "kilo\u0000moonshotai/kimi-k2.5": {
       "input": "600000",
-      "cacheRead": "100000",
+      "cacheRead": null,
       "cacheWrite": null,
       "output": "3000000"
     },
     "kilo\u0000moonshotai/kimi-k2.6": {
-      "input": "800000",
+      "input": "950000",
       "cacheRead": "160000",
       "cacheWrite": null,
-      "output": "3400000"
+      "output": "4000000"
     },
     "kilo\u0000moonshotai/kimi-k2.7-code": {
-      "input": "950000",
-      "cacheRead": "190000",
+      "input": "706200",
+      "cacheRead": "180000",
       "cacheWrite": null,
-      "output": "4000000"
+      "output": "3300000"
     },
     "kilo\u0000moonshotai/kimi-k3": {
       "input": "3000000",
@@ -15422,6 +15440,12 @@
       "cacheRead": null,
       "cacheWrite": null,
       "output": "650000"
+    },
+    "kilo\u0000upstage/solar-mini4": {
+      "input": "100000",
+      "cacheRead": "10000",
+      "cacheWrite": null,
+      "output": "400000"
     },
     "kilo\u0000upstage/solar-pro-3": {
       "input": "150000",
@@ -21213,6 +21237,18 @@
       "cacheWrite": null,
       "output": "1400000"
     },
+    "nano-gpt\u0000aion-labs/aion-3.5": {
+      "input": "3000000",
+      "cacheRead": "750000",
+      "cacheWrite": null,
+      "output": "6000000"
+    },
+    "nano-gpt\u0000aion-labs/aion-3.5-mini": {
+      "input": "700000",
+      "cacheRead": "180000",
+      "cacheWrite": null,
+      "output": "1400000"
+    },
     "nano-gpt\u0000aion-labs/aion-rp-llama-3.1-8b": {
       "input": "800000",
       "cacheRead": "400000",
@@ -24470,6 +24506,18 @@
       "cacheRead": "100300",
       "cacheWrite": null,
       "output": "200600"
+    },
+    "nano-gpt\u0000upstage/solar-mini4": {
+      "input": "50000",
+      "cacheRead": "5000",
+      "cacheWrite": null,
+      "output": "200000"
+    },
+    "nano-gpt\u0000upstage/solar-mini4:thinking": {
+      "input": "50000",
+      "cacheRead": "5000",
+      "cacheWrite": null,
+      "output": "200000"
     },
     "nano-gpt\u0000upstage/solar-pro-3": {
       "input": "150000",
@@ -27939,6 +27987,18 @@
       "cacheWrite": null,
       "output": "1400000"
     },
+    "openrouter\u0000aion-labs/aion-3.5": {
+      "input": "3000000",
+      "cacheRead": "750000",
+      "cacheWrite": null,
+      "output": "6000000"
+    },
+    "openrouter\u0000aion-labs/aion-3.5-mini": {
+      "input": "700000",
+      "cacheRead": "180000",
+      "cacheWrite": null,
+      "output": "1400000"
+    },
     "openrouter\u0000aion-labs/aion-rp-llama-3.1-8b": {
       "input": "800000",
       "cacheRead": null,
@@ -28192,10 +28252,10 @@
       "output": "410000"
     },
     "openrouter\u0000deepseek/deepseek-v4-flash": {
-      "input": "88606",
-      "cacheRead": "17721",
+      "input": "85540",
+      "cacheRead": "17108",
       "cacheWrite": null,
-      "output": "177212"
+      "output": "171080"
     },
     "openrouter\u0000deepseek/deepseek-v4-flash-0731": {
       "input": "40000",
@@ -28216,16 +28276,16 @@
       "output": "1910520"
     },
     "openrouter\u0000deepseek/deepseek-v4-pro-0813": {
-      "input": "660000",
-      "cacheRead": "22000",
+      "input": "462000",
+      "cacheRead": "15400",
       "cacheWrite": null,
-      "output": "1980000"
+      "output": "1386000"
     },
     "openrouter\u0000deepseek/deepseek-v4.1-flash": {
-      "input": "94000",
-      "cacheRead": "50000",
+      "input": "100000",
+      "cacheRead": "10000",
       "cacheWrite": null,
-      "output": "600000"
+      "output": "500000"
     },
     "openrouter\u0000google/gemini-2.5-flash-image": {
       "input": "300000",
@@ -28726,7 +28786,7 @@
       "output": "200000"
     },
     "openrouter\u0000nvidia/nemotron-3.5-lightning": {
-      "input": "70000",
+      "input": "80000",
       "cacheRead": "40000",
       "cacheWrite": null,
       "output": "200000"
@@ -29445,6 +29505,12 @@
       "cacheWrite": null,
       "output": "650000"
     },
+    "openrouter\u0000upstage/solar-mini4": {
+      "input": "50000",
+      "cacheRead": "5000",
+      "cacheWrite": null,
+      "output": "200000"
+    },
     "openrouter\u0000upstage/solar-pro-3": {
       "input": "150000",
       "cacheRead": "15000",
@@ -29560,10 +29626,10 @@
       "output": "2041600"
     },
     "openrouter\u0000z-ai/glm-5.3": {
-      "input": "840000",
-      "cacheRead": "156000",
+      "input": "561400",
+      "cacheRead": "104260",
       "cacheWrite": null,
-      "output": "2640000"
+      "output": "1764400"
     },
     "openrouter\u0000z-ai/glm-5.3-flash": {
       "input": "150000",
@@ -36725,7 +36791,7 @@
     },
     "vercel\u0000openai/gpt-oss-120b": {
       "input": "100000",
-      "cacheRead": null,
+      "cacheRead": "100000",
       "cacheWrite": null,
       "output": "500000"
     },
