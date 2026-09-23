@@ -12,6 +12,8 @@ mod disk;
 #[cfg(target_os = "macos")]
 mod https;
 const MAX_BYTES: usize = 4 * 1024 * 1024;
+/// Shared admitted legacy population, not a response-body allocation bound.
+pub(crate) const MAX_LEGACY_RECORDS: u64 = 1_000_000;
 const SAFE: u64 = 9_007_199_254_740_991;
 const HELP: &str = "AI Charts stats sync — explicit enrolled numeric publication\n\n  aicharts stats-sync --state-dir DIR --key-file KEY --home DIR --client ID [--since YYYY-MM-DD --until YYYY-MM-DD] [--source-root DIR ...]\n  aicharts stats-sync --state-dir DIR --key-file KEY --resume\n  aicharts stats-sync --state-dir DIR --key-file KEY --abandon\n  aicharts stats-sync --dry-run --home DIR --client ID [--since YYYY-MM-DD --until YYYY-MM-DD] [--source-root DIR ...]\n\nSends one client's nonempty numeric snapshot to the fixed AI Charts service.\nRequires an existing custody-verified macOS enrollment and its local state key.\nEach client belongs to one installation. Incomplete, warning-bearing, empty,\nor missing-source scans refuse; no automatic clearing is available. A legacy\nownership transfer pins its exact predecessor and must pass the service's\nper-day reported-token and record-preservation guard. Provider exports must already exist locally. No provider credentials\nare read or refreshed by this command. Ordinary sync retains absent days and\nrefuses declining counters or lost known coverage. Explicit reconciliation is\nrequired; no replacement override is available. Warp publishes one latest\nbilling-counter snapshot and replaces its prior derived snapshot, so repeated\nrefreshes cannot add the same monthly spend. Immutable history is retained.\nCosts and unknown coverage remain separate from reported tokens.\n\nA frozen request is durably retained before sending. An uncertain result requires\n--resume, which retries those exact bytes without reading source files.\nFor a refused request that needs a fresh scan, --abandon obtains an authenticated\nserver fence before clearing only that pending flight. If already committed, it\nsettles the matching receipt instead. Uncertain abandonment keeps the flight.\nPublished data and immutable recovery evidence remain retained. Never remove\ncheckpoint files to recover: reconcile identity, generation or a revoked\nwriter through the service. --dry-run reads local sources and prints the report;\nit does not enroll, create state or send.\n";
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
@@ -317,7 +319,7 @@ impl Status {
                 .is_some_and(|id| !identity(id))
             || self.v1_revision > 4096
             || !is_hex(&self.head_digest, 64)
-            || self.legacy_records > 100_000
+            || self.legacy_records > MAX_LEGACY_RECORDS
         {
             return Err("stats_sync_invalid_response");
         }

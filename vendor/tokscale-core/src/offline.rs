@@ -148,18 +148,8 @@ fn collect_inner(
         "openclaw" => vec!["codex".to_owned(), "openclaw".to_owned()],
         _ => vec![client.to_owned()],
     };
-    // Transcript-log clients (Codex, Claude Code) keep one self-contained
-    // record stream per file, so a file last written before the report
-    // window cannot hold an in-window record. Bounding their enumeration by
-    // mtime keeps huge historical trees inside the audit deadline without
-    // changing what the windowed report admits. Counter-style and
-    // cross-source clients are deliberately out: their baselines or
-    // identity lanes can live in older files.
-    if let (Some(floor), [single]) = (first_ms, context_clients.as_slice()) {
-        if matches!(single.as_str(), "codex" | "claude") {
-            crate::offline_io::set_file_floor_ms(Some(floor));
-        }
-    }
+    // Filesystem times do not bound provider event times after copying,
+    // restore or clock skew. Filter parsed events, never prune by file mtime.
     let options = LocalParseOptions {
         home_dir: Some(home.to_owned()),
         use_env_roots: false,

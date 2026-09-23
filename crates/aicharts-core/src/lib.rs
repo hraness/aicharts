@@ -124,17 +124,14 @@ impl Accumulator {
     fn add(&mut self, day: u32, usage: Usage) -> Result<(), Error> {
         if let Some((old_day, old)) = self.usage.get_mut(&usage.id) {
             if !same_source(old, &usage) {
-                // One Claude API call can be logged in a parent transcript
-                // without sidechain markers and in its subagent file with
-                // them. The occurrence id already binds (request, message),
-                // so only execution attribution may legitimately differ;
-                // adopt the canonical session-level attribution.
-                if !(usage.provider == Provider::ClaudeCode && same_context(old, &usage)) {
+                // Missing attribution may be enriched; two known owners are
+                // conflicting evidence. Arrival order is never owner authority.
+                if !(usage.provider == Provider::ClaudeCode
+                    && same_context(old, &usage)
+                    && (old.execution_id == [0; 16] || usage.execution_id == [0; 16]))
+                {
                     return Err(Error::ConflictingOccurrence);
                 }
-                // A copy with no session identity cannot erase an observed
-                // execution. Keep unknown-to-known enrichment independent of
-                // import order so a ledger rebuild reaches the same frame.
                 if usage.execution_id != [0; 16] {
                     old.execution_id = usage.execution_id;
                 }

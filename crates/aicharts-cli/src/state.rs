@@ -34,6 +34,8 @@ pub(crate) fn collect_existing_prefix(
         limit: 0,
         after: None,
         revision: None,
+        backup: None,
+        occurrence_key: None,
     };
     let (report, sources_skipped, deferred_tails, lines_read, bytes_scanned) =
         unix::collect(ledger, &options, checkpoint, occurrence)?;
@@ -54,6 +56,7 @@ enum Command {
     Collect,
     CollectPrefix,
     PrefixEnable,
+    Upgrade,
     Status,
     Outbox,
 }
@@ -68,6 +71,8 @@ struct Options {
     limit: usize,
     after: Option<aicharts_protocol::Id>,
     revision: Option<u64>,
+    backup: Option<PathBuf>,
+    occurrence_key: Option<PathBuf>,
 }
 
 fn parse_options(args: &[String]) -> Result<Options, &'static str> {
@@ -76,6 +81,7 @@ fn parse_options(args: &[String]) -> Result<Options, &'static str> {
         Some("collect") => Command::Collect,
         Some("collect-prefix") => Command::CollectPrefix,
         Some("prefix-enable") => Command::PrefixEnable,
+        Some("upgrade") => Command::Upgrade,
         Some("status") => Command::Status,
         Some("outbox") => Command::Outbox,
         _ => return Err("invalid_command"),
@@ -89,6 +95,8 @@ fn parse_options(args: &[String]) -> Result<Options, &'static str> {
     let mut limit = None;
     let mut after = None;
     let mut revision = None;
+    let mut backup = None;
+    let mut occurrence_key = None;
     let mut i = 1;
     while i < args.len() {
         match args[i].as_str() {
@@ -106,8 +114,16 @@ fn parse_options(args: &[String]) -> Result<Options, &'static str> {
                 rescan = true
             }
             "--dry-run" if command == Command::Outbox && !dry_run => dry_run = true,
-            flag @ ("--state-dir" | "--key-file" | "--codex" | "--claude" | "--devin"
-            | "--limit" | "--after" | "--revision") => {
+            flag @ ("--state-dir"
+            | "--key-file"
+            | "--codex"
+            | "--claude"
+            | "--devin"
+            | "--limit"
+            | "--after"
+            | "--revision"
+            | "--backup-dir"
+            | "--occurrence-key-file") => {
                 i += 1;
                 let value = args
                     .get(i)
@@ -115,6 +131,14 @@ fn parse_options(args: &[String]) -> Result<Options, &'static str> {
                     .ok_or("missing_option_value")?;
                 match flag {
                     "--state-dir" if directory.is_none() => directory = Some(PathBuf::from(value)),
+                    "--occurrence-key-file"
+                        if command == Command::Upgrade && occurrence_key.is_none() =>
+                    {
+                        occurrence_key = Some(PathBuf::from(value))
+                    }
+                    "--backup-dir" if command == Command::Upgrade && backup.is_none() => {
+                        backup = Some(PathBuf::from(value))
+                    }
                     "--key-file" if key.is_none() => key = Some(PathBuf::from(value)),
                     "--codex" if matches!(command, Command::Collect | Command::CollectPrefix) => {
                         sources.push((aicharts_protocol::Provider::Codex, PathBuf::from(value)))
@@ -139,8 +163,10 @@ fn parse_options(args: &[String]) -> Result<Options, &'static str> {
                         after = Some(parse_id(value)?)
                     }
                     "--revision"
-                        if matches!(command, Command::Outbox | Command::PrefixEnable)
-                            && revision.is_none() =>
+                        if matches!(
+                            command,
+                            Command::Outbox | Command::PrefixEnable | Command::Upgrade
+                        ) && revision.is_none() =>
                     {
                         revision = Some(value.parse::<u64>().map_err(|_| "invalid_revision")?)
                     }
@@ -157,8 +183,11 @@ fn parse_options(args: &[String]) -> Result<Options, &'static str> {
     if after.is_some() && revision.is_none() {
         return Err("pagination_revision_required");
     }
-    if command == Command::PrefixEnable && revision.is_none() {
+    if matches!(command, Command::PrefixEnable | Command::Upgrade) && revision.is_none() {
         return Err("migration_revision_required");
+    }
+    if command == Command::Upgrade && backup.is_none() {
+        return Err("migration_backup_required");
     }
     if matches!(command, Command::Collect | Command::CollectPrefix) && sources.is_empty() {
         return Err("explicit_source_required");
@@ -176,6 +205,8 @@ fn parse_options(args: &[String]) -> Result<Options, &'static str> {
         limit: limit.unwrap_or(64),
         after,
         revision,
+        backup,
+        occurrence_key,
     })
 }
 
@@ -470,13 +501,9 @@ pub(crate) mod unix {
                     continue;
                 }
                 if before.bytes > wave_limit {
-                    // A single source cannot be partitioned; skip it rather
-                    // than failing the whole collect.
-                    progress.note(&format!(
-                        "skipping oversized source ({} bytes)",
-                        before.bytes
-                    ));
-                    continue;
+                    // A selected source cannot be silently omitted. Earlier
+                    // completed waves remain durable; this invocation fails.
+                    return Err("source_byte_limit");
                 }
                 if wave_len(&scans, &prefix_scans) > 0
                     && (wave_len(&scans, &prefix_scans) >= wave_file_limit
@@ -681,7 +708,8 @@ pub(crate) mod unix {
         let checkpoint = crate::read_key(&options.key)?;
         // A custody-verified enrollment at the state directory resolves the
         // account occurrence key; anything else keeps the legacy identity.
-        let occurrence = crate::enrolled_ledger::resolve(&options.directory, None)?;
+        let occurrence =
+            crate::enrolled_ledger::resolve(&options.directory, options.occurrence_key.as_deref())?;
         run_with_occurrence(options, &checkpoint, occurrence)
     }
 
@@ -719,6 +747,22 @@ pub(crate) mod unix {
                 "Private local ledger initialized. No sources read; nothing uploaded.\n".to_owned(),
             );
         }
+        if options.command == Command::Upgrade {
+            let outcome = Ledger::upgrade(
+                &options.directory,
+                &identity,
+                options.revision.ok_or("migration_revision_required")?,
+                options
+                    .backup
+                    .as_deref()
+                    .ok_or("migration_backup_required")?,
+            )
+            .map_err(|error| error.code())?;
+            if !outcome.changed {
+                return Ok("Ledger schema is already current. No schema change or backup creation performed. Use inspect --export-dir NEW_PRIVATE_DIRECTORY to create an exact numeric recovery copy. Nothing uploaded.\n".into());
+            }
+            return Ok("Ledger schema upgraded after validating an exact private numeric backup. Sources, frames, warnings, revision and sender records preserved. Retain the original keys and enrollment anchors; the backup grants no upload authority. No sources read; nothing uploaded.\n".into());
+        }
         if options.command == Command::PrefixEnable {
             Ledger::migrate_complete_prefix(
                 &options.directory,
@@ -732,7 +776,7 @@ pub(crate) mod unix {
             .map_err(|error| error.code())?;
         let occurrence_key = occurrence.as_ref().unwrap_or(checkpoint);
         match options.command {
-            Command::Init | Command::PrefixEnable => unreachable!(),
+            Command::Init | Command::PrefixEnable | Command::Upgrade => unreachable!(),
             Command::Collect | Command::CollectPrefix => {
                 let (report, skipped, deferred, lines_read, bytes_scanned) =
                     collect(&mut ledger, &options, checkpoint, occurrence_key)?;
@@ -1096,6 +1140,39 @@ mod tests {
             assert_eq!((report.sources_updated, skipped), (0, 3));
             assert_eq!(bytes, 0);
             assert_eq!(ledger.status().unwrap().revision - before, 3);
+        }
+
+        #[test]
+        fn selected_oversized_source_is_explicit_failure_with_reopenable_state() {
+            let fixture = Fixture::new();
+            let dir = fixture.create_state();
+            unix::run_with_occurrence(options(&dir, None, &["init"]), &CHECKPOINT, Some(NAMESPACE))
+                .unwrap();
+            fixture.write_source();
+            let identity = aicharts_ledger::LedgerIdentity::SplitKeys {
+                checkpoint: &CHECKPOINT,
+                occurrence: &NAMESPACE,
+                namespace_version: 1,
+            };
+            let mut ledger = aicharts_ledger::Ledger::open_with_identity(&dir, &identity).unwrap();
+            let selected = options(&dir, Some(&fixture.0.join("src")), &["collect"]);
+            assert_eq!(
+                unix::collect_with_limit(
+                    &mut ledger,
+                    &selected,
+                    &CHECKPOINT,
+                    &NAMESPACE,
+                    1,
+                    u64::MAX,
+                    usize::MAX
+                )
+                .err(),
+                Some("source_byte_limit")
+            );
+            assert_eq!(ledger.status().unwrap().sources, 0);
+            drop(ledger);
+            let reopened = aicharts_ledger::Ledger::open_with_identity(&dir, &identity).unwrap();
+            assert_eq!(reopened.status().unwrap().revision, 0);
         }
 
         #[test]

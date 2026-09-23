@@ -2,7 +2,7 @@
 //! The caller must validate the executable's ownership/path before using any
 //! argument as authority. Errors never contain process arguments or paths.
 #![deny(unsafe_op_in_unsafe_fn)]
-#[cfg(target_os = "macos")]
+#[cfg(unix)]
 pub mod groups;
 #[cfg(unix)]
 pub mod signals;

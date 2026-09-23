@@ -479,3 +479,28 @@ fn explicit_source_roots_pass_to_offline_collection_and_resume_rejects_them() {
     )
     .is_err());
 }
+
+#[test]
+fn legacy_status_parser_accepts_admitted_million_record_population_and_refuses_excess() {
+    let device = upload().device_id;
+    for records in [100_001, MAX_LEGACY_RECORDS, MAX_LEGACY_RECORDS + 1] {
+        let bytes = serde_json::to_vec(
+            &serde_json::json!({"schemaVersion":2,"revision":0,"nextSequence":1,
+            "writerDeviceId":null,"v1Revision":12,"headDigest":"00".repeat(32),
+            "legacyRecords":records,"takeoverEligible":true}),
+        )
+        .unwrap();
+        let status: Status = serde_json::from_slice(&bytes).unwrap();
+        assert_eq!(
+            status.validate(&device),
+            if records <= MAX_LEGACY_RECORDS {
+                Ok(())
+            } else {
+                Err("stats_sync_invalid_response")
+            }
+        );
+        if records <= MAX_LEGACY_RECORDS {
+            assert!(status.takeover(&device).unwrap().is_some());
+        }
+    }
+}

@@ -11,6 +11,8 @@ mod enrollment;
 mod inspect;
 mod intro;
 #[cfg(unix)]
+mod owned_process;
+#[cfg(unix)]
 mod prefix;
 mod reindex;
 mod sessions;
@@ -87,9 +89,10 @@ const HELP: &str = "AI Charts Usage — local reports and enrolled publication
   aicharts init --state-dir DIR --key-file PATH
   aicharts collect --state-dir DIR --key-file PATH [--codex FILE_OR_DIR] [--claude FILE_OR_DIR] [--devin FILE_OR_DIR] [--rescan] [--json]
   aicharts prefix-enable --state-dir DIR --key-file PATH --revision N
+  aicharts upgrade --state-dir DIR --key-file PATH --revision N --backup-dir NEW_DIR [--occurrence-key-file PATH]
   aicharts collect-prefix --state-dir DIR --key-file PATH [--codex FILE_OR_DIR] [--claude FILE_OR_DIR] [--devin FILE_OR_DIR] [--rescan] [--json]
   aicharts status --state-dir DIR --key-file PATH [--json]
-  aicharts inspect --state-dir DIR --key-file PATH [--occurrence-key-file PATH] [--json]
+  aicharts inspect --state-dir DIR --key-file PATH [--occurrence-key-file PATH] [--json] [--export-dir NEW_DIR]
   aicharts account --state-dir ABSOLUTE_DIR [--json]
   aicharts account --state-dir ABSOLUTE_DIR --diagnose [--json]
   aicharts daemon [--once] [--complete-prefix] --state-dir DIR --key-file PATH [--codex FILE_OR_DIR] [--claude FILE_OR_DIR] [--devin FILE_OR_DIR] [--interval-seconds N] [--retry-attempts N] [--json]
@@ -117,6 +120,13 @@ contain exactly 32 private random bytes.
 keygen creates a new mode-0600 file on Unix and never overwrites an existing file.
 Persistent commands are Unix-only and require explicit initialization. collect
 rescans changed sources from the beginning; unchanged metadata skips parsing.
+inspect diagnoses legacy attribution conflicts without changing the ledger.
+inspect --export-dir creates an exact private numeric recovery copy, preserving
+source, outbox and sender facts; retain original keys and enrollment anchors.
+upgrade requires the inspected revision and a new backup directory. Only
+unambiguous legacy histories upgrade; conflicting known owners remain quarantined
+and cannot collect, reindex or upload. Never reset a quarantined ledger.
+
 prefix-enable explicitly adds local completed-prefix integrity metadata. Then use
 collect-prefix: it fully replays completed lines and defers an unfinished tail.
 A --devin source is one whole ATIF document, so its completed prefix is the
@@ -503,6 +513,7 @@ fn run(args: &[String]) -> Result<String, &'static str> {
                 | "init"
                 | "collect"
                 | "prefix-enable"
+                | "upgrade"
                 | "collect-prefix"
                 | "status"
                 | "outbox"
@@ -571,7 +582,15 @@ fn run(args: &[String]) -> Result<String, &'static str> {
     }
     if matches!(
         args.first().map(String::as_str),
-        Some("init" | "collect" | "prefix-enable" | "collect-prefix" | "status" | "outbox")
+        Some(
+            "init"
+                | "collect"
+                | "prefix-enable"
+                | "upgrade"
+                | "collect-prefix"
+                | "status"
+                | "outbox"
+        )
     ) {
         return state::run(args);
     }

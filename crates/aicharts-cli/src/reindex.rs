@@ -299,6 +299,10 @@ mod unix {
         };
         let legacy =
             ReadOnlyLedger::open(&options.directory, &identity).map_err(|error| error.code())?;
+        legacy
+            .history_audit()
+            .require_unambiguous()
+            .map_err(|error| error.code())?;
         let shadow = if options.prepare {
             Some(target(&options)?)
         } else {

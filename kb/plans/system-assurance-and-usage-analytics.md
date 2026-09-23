@@ -142,7 +142,7 @@ F15/F16 are in [stats report view](../../components/usage/stats-report-view.tsx)
 
 F17–F19 span [stats projection](../../crates/aicharts-cli/src/stats.rs), 419–537; [Codex adapter](../../vendor/tokscale-core/src/sessions/codex.rs), 723–805; [upload contract](../../lib/usage/stats-http-contract.ts), 110; [hosted coverage](../../services/usage-worker/src/stats-state.ts), 496–500; [workspace manifest](../../Cargo.toml), and [vendor manifest](../../vendor/tokscale-core/Cargo.toml).
 F20–F22 span [schema](../../services/usage-worker/src/admission-schema.ts), [stats state](../../services/usage-worker/src/stats-state.ts), [cost registry](../../costs.json), [cost checker](../../scripts/check-cost-surfaces.mjs) and [worker capacity documentation](../../docs/usage-worker.md).
-F23–F25 span [report cache](../../components/usage/stats-report-cache.ts), [session contract](../../lib/usage/session-contract.ts) and [public index](../../services/usage-worker/src/leaderboard-index.ts).
+F23–F25 span [account generation boundary](../../lib/usage/account-generation.ts), [session contract](../../lib/usage/session-contract.ts) and [public index](../../services/usage-worker/src/leaderboard-index.ts).
 
 ## What to preserve and reuse
 
@@ -454,13 +454,13 @@ The integration owner controls manifests/lockfiles, shared schemas/capacity/metr
 
 ### Phase 1A — Native correctness repairs
 
-- **Status:** In progress
+- **Status:** Complete
 - **Depends on:** 0
 - **Objective:** Successful collection always produces a reopenable ledger and truthful scan/coverage evidence.
 - **Scope:** F01, F05–F08, initial F14 custody regression; core merge, ledger warning/migration, CLI collection/refresh.
 - **Out of scope:** New hosted metric schema or automatic repair of private user files.
 - **Approach:** Decide explicit attribution conflict/migration rules; replace unsafe mtime proof with validated metadata or a conservative fallback; align range replacement; persist all diagnostics; reuse owned-process custody.
-- **Acceptance:** All native counterexamples become deterministic regressions; permutations/waves/reopen agree; every omitted selected source has a fixed machine-readable reason; Cursor preserves outside-range data; warning encoding is exhaustive and old databases upgrade without lost facts; subprocess completion includes bounded descendant settlement.
+- **Acceptance:** All native counterexamples become deterministic regressions; successful commits reopen to the same canonical projection; undefined partial-dominance histories refuse, with retained legacy conflicts inspectable/exportable; every omitted selected source has a fixed machine-readable reason; Cursor preserves outside-range data; warning encoding is exhaustive and old databases upgrade without lost facts; subprocess completion includes bounded descendant settlement.
 - **Validation:** cargo test --locked -p aicharts-core -p aicharts-ledger -p aicharts-cli -p aicharts-import; cargo clippy --workspace --all-targets --locked -- -D warnings; cargo fmt --all -- --check. Add focused named tests for each trace and platform-qualified process fixtures.
 - **Recovery:** Back up exact affected ledger/schema and verify recovery on copies before any live migration. No reset/truncate or forced checkpoint acceptance.
 
@@ -472,7 +472,7 @@ The integration owner controls manifests/lockfiles, shared schemas/capacity/metr
 - **Scope:** F02–F04, F09–F13; admission/enrollment/stats/fence effect boundaries and capacity parser compatibility.
 - **Out of scope:** Raising provider spend or exposing new public rankings.
 - **Approach:** Use Phase 2A's failing baseline traces to define safe commits and late-effect handling. Remove implicit whole-account replacement and automatic ABA; add a reviewed writer recovery transition. Route persistent maintenance through an explicit fenced owner.
-- **Acceptance:** 120+15 remains 135 for disjoint devices; proven copies count once; delayed old A cannot replace B or charge again; a revoked v2 writer cannot publish a new operation but a verified successor can. Preserve v1's declared linearization: pre-freeze revocation rejects; an already-frozen terminal decision remains reconcilable. Status/read/constructor effects are classified and covered; lease expiry cannot stand in for drain; 100,001 admitted records do not corrupt response handling; ordinary reads issue no persistent DML.
+- **Acceptance:** Ambiguous v1/v2 overlap is refused while retained legacy measurements remain readable; Phase 5 must qualify exact population proofs so disjoint 120+15 remains 135 and proven copies count once; delayed old A cannot replace B or charge again; a revoked v2 writer cannot publish a new operation but a verified successor can. Preserve v1's declared linearization: pre-freeze revocation rejects; an already-frozen terminal decision remains reconcilable. Status/read/constructor effects are classified and covered; lease expiry cannot stand in for drain; 100,001 admitted records do not corrupt response handling; ordinary reads issue no persistent DML.
 - **Validation:** bun run usage:worker:check; bun test lib/usage/admission.test.ts lib/usage/private-days-contract.test.ts lib/usage/stats-http-contract.test.ts. Add real-workerd concurrent-delay/restore tests and replay model traces through actual adapters.
 - **Recovery:** Additive schema/epoch migration, immutable intent/receipt, bounded dry run, compatible recovery artifact and explicit reconciliation. No ad hoc fence bypass.
 
@@ -485,7 +485,7 @@ The integration owner controls manifests/lockfiles, shared schemas/capacity/metr
 - **Out of scope:** Pretending daily aggregates contain request distributions.
 - **Approach:** Correct cache denominator/coverage; suppress unmatched cost deltas and causal explanations; label record/duration basis; bind ephemeral reports to an authenticated generation and clear late reads consistently.
 - **Acceptance:** Synthetic 100/900 cache example displays 10% only with complete input evidence; missing buckets withhold complete share; disjoint $1/$3 observations have no savings claim; account-switch/bfcache/late-response cases preserve isolation; local files survive account cleanup; image/text/CSV include applicable basis and coverage.
-- **Validation:** bun test components/usage/stats-view.test.ts components/usage/stats-report-view.test.tsx components/usage/stats-report-cache.test.ts components/usage/stats-dashboard.test.tsx lib/usage/account-session-events.test.ts; bun run test:browser through the repository's browser procedure.
+- **Validation:** bun test components/usage/stats-view.test.ts components/usage/stats-report-view.test.tsx lib/usage/account-generation-read.test.ts components/usage/stats-dashboard.test.tsx lib/usage/account-session-events.test.ts; bun run test:browser through the repository's browser procedure.
 - **Recovery:** Reversible UI change with schema-compatible display; preserve available reports and explicit unavailable states.
 
 ### Phase 2B — Repaired protocols and implementation conformance
@@ -705,3 +705,13 @@ Phase 0 committed as db10d74. Native owner began Phase 1A; formal owner began Ph
 Completed 15 pinned TLC expectations: six intended safety counterexamples, four complete sanity checks (2,751 / 8 / 8 / 23 distinct states), and five reachability controls. The runner stages exact input bytes, rejects incomplete or unexpected outcomes, and binds receipts to source/configuration/tool hashes. Eight focused tests (87 assertions), ESLint and strict targeted TypeScript passed. Independent cloud-owner review verified final receipt `target/assurance/tla/run-nUXdGt/receipt.json`, all source provenance, traces and frozen repair obligations without edits. Root reviewed the obligations and wired `usage:formal:tla`; Phase 1B opened. These baseline results establish failure mechanisms, not production refinement or unbounded correctness; M1 still needs actual Durable Object fault replay in Phase 2B.
 
 Phase 1C applies the same response-bound generation rule to the daily and consent views as well as stats/account controls. A consent mutation additionally conditions the intended account against the live trusted session before dispatch; it never derives authority from the browser or retries a mutation. This adjacent scope closes the same F23 identity-lifetime boundary across all private views.
+
+Phase 1C removes the range cache entirely: a fresh authenticated response is already required before rendering, so retaining eight old report bodies offered no usable cache hit and consumed memory. Only the displayed account report is held in component state, with an account/generation scope checked again by React before commit. Local/example data remains independent.
+
+Phase 1B preserves source populations by refusing ambiguous legacy takeover: the current v2 aggregate contract cannot prove occurrence overlap or disjointness. Exact population evidence (stable source/occurrence identity, predecessor operation hash and attributed numeric payload) remains a required Phase 5 acceptance dependency for combined 135-token and deduplication cases. F02 stays open; refusal is a containment repair, not deduplication qualification.
+
+### Phase 1A — Accepted native repairs
+
+Independent source review accepted the attribution and numeric replay quarantine, exact read-only export, guarded schema upgrade, conservative source scanning, exact Cursor range replacement, complete warning persistence and owned-process settlement. A successful write now checks the affected occurrence's canonical replay; undefined partial-dominance histories refuse before commit. Historical conflicts remain inspectable and exportable with their original bytes. No associativity or order-independence claim is made for arbitrary occurrence merges.
+
+Current focused evidence: ledger 92 tests passed (one intentional fixture ignored), inspect integration 8 passed, CLI 377 unit and 87 integration tests passed (one intentional fixture ignored), workspace Clippy with all targets and `-D warnings` passed, and formatting passed. Unchanged-source core 135, import 16 and platform-process 5 test results were inspected rather than repeated. CLI fixtures required approved local socket access. Seven old/new-binary history scenarios passed with exact original-byte export and refusal before backup or mutation for quarantined upgrades. Retained receipts are `target/assurance-repaired/historical.json` (SHA-256 `9cae270272772be2ffebd84d919aedc16546b61bc97213cb3cd997907921b7f4`) and `target/assurance-repaired/native-cli.json` (SHA-256 `73ce13a20c318fb389540d5ec3791209fbb4488a9e2a6a0ba49fdbf0806915ae`); repaired binary SHA-256 is `f4ca6c09deb02d7d66def7a88b53cd8fa86897d79063c27fa16c8bad45add95e`. This qualifies the local macOS evidence; Linux process behavior still needs its platform CI gate. No private user ledger was migrated.

@@ -91,6 +91,7 @@ dependencies = [
  "getrandom 0.3.4",
  "hmac",
  "rusqlite",
+ "rustix",
  "sha2",
 ]
 

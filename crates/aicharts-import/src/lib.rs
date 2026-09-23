@@ -88,7 +88,7 @@ mod tests {
     }
 
     #[test]
-    fn collect_since_skips_sources_untouched_since_before_the_window() {
+    fn collect_since_preserves_in_window_events_with_old_filesystem_times() {
         let (_temp, root) = home();
         let sessions = root.join(".codex/sessions/2026/09/20");
         fs::create_dir_all(&sessions).unwrap();
@@ -104,9 +104,7 @@ mod tests {
             ),
         )
         .unwrap();
-        // A historical file whose records all predate the report window: in
-        // an append-only log its last write bounds every record it holds,
-        // so an mtime before the window proves it cannot contribute.
+        // A second file predates the report window by event timestamp.
         let archived = root.join(".codex/archived_sessions/2026/08/30");
         fs::create_dir_all(&archived).unwrap();
         let stale =
@@ -135,7 +133,19 @@ mod tests {
         let bounded =
             collect_since(&root, "codex", std::slice::from_ref(&root), None, first_ms).unwrap();
         assert!(!bounded.messages.is_empty());
-        assert_eq!(bounded.receipt.files, 1);
+        assert_eq!(bounded.receipt.files, 2);
+        fs::File::options()
+            .write(true)
+            .open(&fresh)
+            .unwrap()
+            .set_modified(
+                std::time::UNIX_EPOCH + std::time::Duration::from_millis(20695 * 86_400_000),
+            )
+            .unwrap();
+        let copied =
+            collect_since(&root, "codex", std::slice::from_ref(&root), None, first_ms).unwrap();
+        assert_eq!(copied.receipt.files, 2);
+        assert_eq!(bounded.messages, copied.messages);
         let full = collect(&root, "codex", std::slice::from_ref(&root)).unwrap();
         assert_eq!(full.receipt.files, 2);
     }
