@@ -22,9 +22,9 @@ describe("AI Charts public positioning", () => {
     }
     expect(site.description).toContain("published results");
     expect(site.description).toContain("configurations");
-    // The lede names what the homepage chart plots: the Index score against cost or tokens.
+    // The lede names what the homepage chart plots: the Index score against cost or output tokens.
     for (const fact of ["Intelligence Index", "cost", "tokens"]) expect(homeLede).toContain(fact);
-    expect(homeLede.length).toBeLessThan(80);
+    expect(homeLede.length).toBeLessThan(110);
     expect(homeLede).not.toMatch(/universal|definitive|best model overall/iu);
     expect(searchSite.description).toBe(site.description);
     expect(searchSite.origin).toBe("https://aicharts.io");

@@ -15,7 +15,7 @@ export const metadata = createPublicSiteMetadata({
 }, { canonicalPath: "/usage" });
 
 const steps = [
-  ["01", "Build the collector", "Build the aicharts CLI from this repository with Rust. It reads token counts from your clients' local files. A few clients, such as Cursor and Warp, need a refresh step first."],
+  ["01", "Build the collector", "Build the aicharts CLI from the AI Charts GitHub repository with Rust. It reads token counts from your clients' local files. A few clients, such as Cursor and Warp, need a refresh step first."],
   ["02", "Connect your account", "On a Mac, run aicharts enroll and approve the pairing in your browser. Each enrolled Mac reports to one account."],
   ["03", "Publish on a schedule", "Set up a launchd job that runs aicharts autosubmit. Each run refreshes your clients and uploads their latest totals, so your dashboard stays current without manual exports."],
 ] as const;

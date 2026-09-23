@@ -26,10 +26,6 @@ function count(value: number): string {
   return COUNT_WORDS[value] ?? countNumber.format(value);
 }
 
-function capitalize(text: string): string {
-  return text.charAt(0).toUpperCase() + text.slice(1);
-}
-
 type PricedPoint = BenchmarkAtlasPoint & { costUsd: number };
 
 function priced(point: BenchmarkAtlasPoint): point is PricedPoint {
@@ -166,7 +162,7 @@ function costSentences(dataset: BenchmarkAtlasDataset, ranked: readonly Benchmar
   const [worse, better] = dataset.score.direction === "higher" ? ["lower", "higher"] : ["higher", "lower"];
   const opening = `Within ${COMPARABLE_MARGIN} percentage points of the top score, the cheapest result is ${name(cheapest)} at ${formatAtlasCost(cheapest.costUsd)}`;
   sentences.push(ratio >= NOTABLE_COST_RATIO
-    ? `${opening}. ${capitalize(referenceLabel)} costs ${ratio >= 10 ? Math.round(ratio) : ratio.toFixed(1)}× as much, ${formatAtlasCost(reference.costUsd)}, and scores ${gap} ${better}.`
+    ? `${opening}. At ${formatAtlasCost(reference.costUsd)}, ${referenceLabel} costs ${ratio >= 10 ? Math.round(ratio) : ratio.toFixed(1)}× as much and scores ${gap} ${better}.`
     : `${opening}, against ${formatAtlasCost(reference.costUsd)} for ${referenceLabel}, and it scores ${gap} ${worse}.`);
   return sentences;
 }
@@ -208,7 +204,7 @@ export function atlasTakeaways(dataset: BenchmarkAtlasDataset): readonly string[
 
 /** The note under the takeaways: what the sentences cover, true for this chart. */
 export function atlasTakeawaysBasis(dataset: BenchmarkAtlasDataset): string {
-  const scope = "These sentences describe every charted result and ignore the filters above.";
+  const scope = "These sentences cover the whole chart and ignore the filters above.";
   if (dataset.points.length === 0) return scope;
   return oneSystem(selectAtlasModelProfiles(sortAtlasPoints(dataset)))
     ? `${scope} Each setting of the charted system counts separately.`

@@ -23,7 +23,7 @@ export const searchSite = {
 
 export const homeHeading = "Compare AI models";
 export const homeLede =
-  "The chart plots each model by Intelligence Index score against cost or tokens.";
+  "The chart plots model configurations by Intelligence Index score against cost or output tokens per task.";
 export const homeTaskLinks = [
   { task: "coding", name: "Coding", description: "Build, debug, and work in a terminal." },
   { task: "reasoning", name: "Reasoning", description: "Solve unfamiliar problems." },

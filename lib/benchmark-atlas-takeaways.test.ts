@@ -57,7 +57,7 @@ describe("atlas takeaways", () => {
       point({ id: "a", model: "Alpha", score: 80, costUsd: 40 }),
       point({ id: "b", model: "Beta", score: 77, costUsd: 2 }),
     ], { costLabel: "Cost per task" }));
-    expect(sentences).toContain("Within 5 percentage points of the top score, the cheapest result is Beta at $2.00. The leader costs 20× as much, $40.00, and scores 3 points higher.");
+    expect(sentences).toContain("Within 5 percentage points of the top score, the cheapest result is Beta at $2.00. At $40.00, the leader costs 20× as much and scores 3 points higher.");
   });
 
   test("reports a small cost gap as a comparison, not a multiple, and the score gap in points", () => {
@@ -77,8 +77,19 @@ describe("atlas takeaways", () => {
     ], { costLabel: "Cost per task" }));
     expect(sentences[0]).toBe("Alpha and Beta share the top score at 80%.");
     expect(sentences).toContain("Among the tied leaders, costs run from $3.00 for Beta to $30.00 for Alpha.");
-    expect(sentences).toContain("Within 5 percentage points of the top score, the cheapest result is Gamma at $1.00. Beta costs 3.0× as much, $3.00, and scores 2 points higher.");
+    expect(sentences).toContain("Within 5 percentage points of the top score, the cheapest result is Gamma at $1.00. At $3.00, Beta costs 3.0× as much and scores 2 points higher.");
     expect(sentences.join(" ")).not.toContain("the leader");
+  });
+
+  test("keeps a lowercase co-leader's model ID exactly as the source spells it", () => {
+    const sentences = atlasTakeaways(dataset([
+      point({ id: "a", model: "anthropic/claude-opus-5", score: 80, costUsd: 30 }),
+      point({ id: "b", model: "meta/muse_spark_1_3_max", score: 80, costUsd: 6 }),
+      point({ id: "c", model: "openai/gpt-lite", score: 77.71, costUsd: 0.5 }),
+    ], { costLabel: "Cost per task" }));
+    const comparison = sentences.find(sentence => sentence.startsWith("Within 5 percentage points"));
+    expect(comparison).toContain(", meta/muse_spark_1_3_max costs 12× as much");
+    expect(sentences.join(" ")).not.toContain("Meta/muse_spark_1_3_max");
   });
 
   test("names the worse direction correctly when a lower score is better", () => {
@@ -140,13 +151,13 @@ describe("atlas takeaways", () => {
       point({ id: "c", model: "Alpha", score: 60, effort: "low" }),
     ]);
     expect(atlasTakeaways(single)).toContain("Scores across the three charted configurations run from 60% to 80%.");
-    expect(atlasTakeawaysBasis(single)).toBe("These sentences describe every charted result and ignore the filters above. Each setting of the charted system counts separately.");
+    expect(atlasTakeawaysBasis(single)).toBe("These sentences cover the whole chart and ignore the filters above. Each setting of the charted system counts separately.");
     const several = dataset([
       point({ id: "a", model: "Alpha", score: 80, effort: "high" }),
       point({ id: "b", model: "Alpha", score: 70, effort: "low" }),
       point({ id: "c", model: "Beta", score: 60 }),
     ]);
-    expect(atlasTakeawaysBasis(several)).toBe("These sentences describe every charted result and ignore the filters above. Each system counts once, at its best-scoring setting.");
+    expect(atlasTakeawaysBasis(several)).toBe("These sentences cover the whole chart and ignore the filters above. Each system counts once, at its best-scoring setting.");
   });
 
   test("states plainly when only one configuration is charted", () => {

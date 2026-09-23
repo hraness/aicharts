@@ -227,7 +227,7 @@ describe("benchmark page grammar", () => {
     expect(html).toContain("Their reported uncertainty ranges overlap, so this source does not separate the top two.");
     // The fixture's leader is also its cheapest result, so no cost trade-off is claimed.
     expect(html).not.toContain("the cheapest result is");
-    expect(html).toContain("These sentences describe every charted result and ignore the filters above.");
+    expect(html).toContain("These sentences cover the whole chart and ignore the filters above.");
   });
 
   test("carries the task family on the surface so each family can be themed", () => {
