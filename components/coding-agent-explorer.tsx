@@ -773,7 +773,7 @@ export function CodingAgentExplorer({
   const siteUrl = `https://${brand.domain}/coding`;
   const shareUrl = buildChartShareUrl(siteUrl, shareView);
   const shareFilename = chartImageFilename(shareView, shareSelectionLabel);
-  const shareText = `${yMetricLabels[yMetric]} vs ${xMetricLabels[xMetric]}${shareSelectionLabel === null ? "" : ` — ${shareSelectionLabel}`} on ${brand.domain}`;
+  const shareText = `${yMetricLabels[yMetric]} vs ${xMetricLabels[xMetric]}${shareSelectionLabel === null ? "" : ` for ${shareSelectionLabel}`} on ${brand.domain}`;
   const shareIntent = xPostIntentUrl(shareText, shareUrl);
   const shareImageProviders = useMemo(() => providers.map((provider) => {
     const colors = providerColorRange(provider.id);
@@ -1081,7 +1081,7 @@ export function CodingAgentExplorer({
       </div>
       <header className="chart-header">
         <p aria-live="polite" className="benchmark-description">
-          <strong>{yMetricLabels[yMetric]}</strong> — {yMetricDescriptions[yMetric]}
+          <strong>{yMetricLabels[yMetric]}:</strong> {yMetricDescriptions[yMetric]}
         </p>
       </header>
 

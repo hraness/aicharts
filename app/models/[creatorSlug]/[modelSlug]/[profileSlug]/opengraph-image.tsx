@@ -8,10 +8,15 @@ import {
   findModelCardPresentation,
   modelCardRouteStaticParams,
 } from "@/lib/model-card-collection";
-import { findIndexModelPage, indexModelRouteStaticParams } from "@/lib/index-model-pages";
+import {
+  findIndexModelPage,
+  formatIntelligenceCost,
+  formatIntelligenceIndex,
+  indexModelRouteStaticParams,
+} from "@/lib/index-model-pages";
 import type { ModelCardRouteParams } from "@/lib/model-card-data";
 
-import { modelCardDescription, modelCardTitle } from "../../../../site";
+import { indexModelPageDescription, modelCardDescription, modelCardTitle } from "../../../../site";
 import { aichartsSocialImage } from "../../../../social-card";
 
 export const alt = "AI Charts model page with provider, name, and Intelligence Index";
@@ -37,7 +42,12 @@ export default async function OpenGraphImage({
   const indexPage = findIndexModelPage(resolved);
   if (indexPage === undefined) notFound();
   return aichartsSocialImage({
-    description: modelCardDescription(indexPage.displayTitle),
+    description: indexModelPageDescription({
+      cost: indexPage.costUsdPerTask === null ? null : formatIntelligenceCost(indexPage.costUsdPerTask),
+      displayTitle: indexPage.displayTitle,
+      score: formatIntelligenceIndex(indexPage.intelligenceIndex),
+      sourceName: indexPage.sourceName,
+    }),
     eyebrow: indexPage.providerName,
     title: modelCardTitle(indexPage.displayTitle),
   });

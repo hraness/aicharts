@@ -34,10 +34,11 @@ the image sitemap. An unregistered lookup stays image-free across all of
 those representations so the generic renderer can still omit imagery.
 
 Keep the reviewed 1536×864 WebP at `public/images/blog/<slug>.webp`. Alt text
-describes the visible composition. The caption explains the editorial
-distinction without overstating evidence. Record dimensions, bytes, hashes,
-prompt digest, and immutable generator receipt/job paths in
-`editorial/images.manifest.json`.
+describes the visible composition. Write the caption as one plain sentence that
+states the point of the article the image illustrates. Do not describe what the
+image is not, such as “this illustration is not a data plot”. Record
+dimensions, bytes, hashes, prompt digest, and immutable generator receipt/job
+paths in `editorial/images.manifest.json`.
 
 The focused discovery tests must validate every `PUBLIC_BLOG_SLUG` against a
 registry row, a matching manifest entry, and the exact public binary. A later

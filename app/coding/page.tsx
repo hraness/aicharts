@@ -25,7 +25,7 @@ export default function CodingPage() {
   return <>
     <SiteHeader current="/coding" />
     <main className="chart-home coding-home" id="main-content">
-      <header className="chart-page-intro"><h1>Coding agent comparisons</h1><p>Performance, cost, and time for the full model-and-agent setup.</p></header>
+      <header className="chart-page-intro"><h1>Coding agent comparisons</h1><p>Each point is one model running in one agent harness at one effort setting, plotted by benchmark score against cost, time, or tokens per task.</p></header>
       <ChartNavigation current="/coding" />
       <Suspense fallback={<RouteLoadingState />}>
         <CodingAgentExplorer brand={{ domain: site.domain }} modelCardPaths={modelCardPaths} snapshot={parsed.value} />

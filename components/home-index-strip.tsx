@@ -30,7 +30,7 @@ export function HomeIndexStrip() {
     >
       <div className="home-index-strip__heading">
         <h2 id="home-index-strip-title">Recent Intelligence Index listings</h2>
-        <p>{INDEX_MODEL_VERSION_LABEL}. Scores come from the checked snapshot, not a first-party release date.</p>
+        <p>{INDEX_MODEL_VERSION_LABEL}. Card dates come from the Artificial Analysis listing and are not verified first-party release dates.</p>
       </div>
       <ul className="hraness-marketing-card-row home-index-strip__row">
         {pages.map(page => (

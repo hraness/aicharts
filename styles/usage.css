@@ -39,4 +39,5 @@
 .usage-trust li { border-bottom: 1px solid var(--grid); padding-block: .7rem; }
 .usage-inline-link { display: inline-flex; color: var(--foreground); font-size: .9rem; gap: .45rem; margin-block-start: 1.5rem; text-underline-offset: .2em; }
 .usage-inline-link:hover { color: var(--hraness-site-accent); }
+.usage-inline-links { column-gap: 1.5rem; display: flex; flex-wrap: wrap; }
 @media (max-width: 700px) { .usage-hero, .usage-trust { grid-template-columns: 1fr; } .usage-hero h1 { max-inline-size: 12ch; } .usage-metric-row { gap: .35rem; grid-template-columns: 1fr; } .usage-metric-row__window { margin-block-start: .4rem; } }

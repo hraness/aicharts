@@ -10,12 +10,12 @@ const snapshot: LeaderboardSnapshotV1 = { schemaVersion: 1, ranking: LEADERBOARD
 
 test("an unavailable public read is distinct from disabled publication", () => {
   const paused = renderToStaticMarkup(<LeaderboardView available={false} snapshot={null} />);
-  expect(paused).toContain("Publishing paused");
+  expect(paused).toContain("Not live yet");
   expect(paused).toContain("Inspect local sessions");
   const unavailable = renderToStaticMarkup(<LeaderboardView available snapshot={null} />);
   expect(unavailable).toContain("Rankings could not be loaded");
   expect(unavailable).toContain('href="/leaderboard"');
-  expect(unavailable).not.toContain("Publishing paused");
+  expect(unavailable).not.toContain("Not live yet");
 });
 
 test("each ranking retains its own coverage window and exact token total", () => {

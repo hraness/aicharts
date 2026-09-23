@@ -18,12 +18,12 @@ export const searchSite = {
     alt: "AI Charts comparison of AI models and agents",
     path: "/opengraph-image",
   },
-  title: "AI Model & Agent Comparison Charts | AI Charts",
+  title: "AI model and agent comparison charts | AI Charts",
 } as const;
 
 export const homeHeading = "Compare AI models";
 export const homeLede =
-  "Understand the tradeoff between capability and cost.";
+  "The chart plots each model by Intelligence Index score against cost or tokens.";
 export const homeTaskLinks = [
   { task: "coding", name: "Coding", description: "Build, debug, and work in a terminal." },
   { task: "reasoning", name: "Reasoning", description: "Solve unfamiliar problems." },
@@ -34,19 +34,30 @@ export const homeTaskLinks = [
 ] as const;
 export const modelCardsHeading = "Models";
 export const modelCardsLede =
-  "Identity pages for models in the current snapshots, with Intelligence Index, cost, and coding-agent ranges when those observations exist.";
+  "Model pages from the current Artificial Analysis snapshots, with Intelligence Index scores, cost per task, and coding-agent results where they exist.";
 export const modelCardsEyebrow = "Model pages";
-export const modelCardsTitle = "AI Models | AI Charts";
+export const modelCardsTitle = "AI models | AI Charts";
 export const modelCardsDescription =
-  "Model identity pages with Intelligence Index, cost, and coding-agent observations from the checked snapshots.";
+  "Pages for AI models and their coding-agent profiles, with Artificial Analysis Intelligence Index scores, costs, and coding-agent results where they exist.";
 
 /** Social and search copy for one model page; keep title and description paired. */
 export function modelCardTitle(displayTitle: string): string {
   return `${displayTitle} | AI Charts`;
 }
 
+/** Coding-agent profile pages: every one has coding-agent observations. */
 export function modelCardDescription(displayTitle: string): string {
-  return `${displayTitle} with available Intelligence Index, cost, and coding-agent observations from Artificial Analysis.`;
+  return `${displayTitle} on the Artificial Analysis coding-agent chart, with scores, cost, time, and tokens per task for each agent harness.`;
+}
+
+/** Index-only pages exist only for models without coding-agent observations, so the description names only the Index result. */
+export function indexModelPageDescription(page: Readonly<{
+  displayTitle: string;
+  score: string;
+  sourceName: string;
+  cost: string | null;
+}>): string {
+  return `${page.displayTitle} scores ${page.score} on the ${page.sourceName}${page.cost === null ? "" : `, at ${page.cost} per task`}.`;
 }
 
 export const notFoundSearchSite = {
@@ -56,10 +67,10 @@ export const notFoundSearchSite = {
 } as const;
 
 export const notFoundRecoveryLinks = [
-  { href: "/", label: "Comparison chart" },
-  { href: "/models", label: "Model cards" },
-  { href: "/data", label: "Dataset" },
-  { href: "/blog", label: "Benchmark analysis" },
+  { href: "/", label: "Charts" },
+  { href: "/models", label: "Models" },
+  { href: "/data", label: "Data" },
+  { href: "/blog", label: "Notes" },
   { href: "/llms.txt", label: "Site guide" },
   { href: "/sitemap.xml", label: "Sitemap" },
 ] as const;

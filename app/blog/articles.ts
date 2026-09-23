@@ -277,11 +277,12 @@ export const BLOG_SOURCES = {
 
 export type BlogSourceId = keyof typeof BLOG_SOURCES;
 
-export const BLOG_AUTHORSHIP_DISCLOSURE =
-  "Prepared with AI assistance from the cited primary sources and checked site data. AI Charts did not independently rerun the reported benchmarks.";
+/** Where each note's figures come from. AI-drafting disclosure appears only on hraness.com, never here. */
+export const BLOG_SOURCE_NOTE =
+  "Figures come from the cited primary sources and the AI Charts datasets. AI Charts did not rerun the reported benchmarks.";
 
 export interface BlogArticle {
-  readonly authorshipDisclosure: typeof BLOG_AUTHORSHIP_DISCLOSURE;
+  readonly sourceNote: typeof BLOG_SOURCE_NOTE;
   readonly body: readonly BlogBlock[];
   readonly dek: string;
   readonly focusPhrase: string;
@@ -327,7 +328,7 @@ export function table(
 }
 
 const mirrorCodeArticle = {
-  authorshipDisclosure: BLOG_AUTHORSHIP_DISCLOSURE,
+  sourceNote: BLOG_SOURCE_NOTE,
   slug: "mirrorcode-coding-agent-benchmark",
   title: "MirrorCode scores complete-program reimplementation",
   dek:
@@ -558,7 +559,7 @@ export function articleToMarkdown(
     "",
     `Published ${published}.`,
     "",
-    article.authorshipDisclosure,
+    article.sourceNote,
     "",
     ...(editorialImage === undefined ? [] : [
       `![${editorialImage.alt}](${new URL(editorialImage.src, site.origin)})`,

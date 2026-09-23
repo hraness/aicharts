@@ -53,7 +53,7 @@ import { ArticleBody } from "./article-body";
 import {
   BLOG_SLUGS,
   BLOG_SOURCES,
-  BLOG_AUTHORSHIP_DISCLOSURE,
+  BLOG_SOURCE_NOTE,
   articleToMarkdown,
   blogArticleSection,
   blogArticlePath,
@@ -213,8 +213,10 @@ describe("AI Charts benchmark notes", () => {
       expect(articleToMarkdown(article)).toContain(`# ${article.title}`);
       expect(articleToMarkdown(article)).toContain(article.dek);
       expect(articleToMarkdown(article)).not.toContain("/images/blog/");
-      expect(article.authorshipDisclosure).toBe(BLOG_AUTHORSHIP_DISCLOSURE);
-      expect(articleToMarkdown(article)).toContain(BLOG_AUTHORSHIP_DISCLOSURE);
+      expect(article.sourceNote).toBe(BLOG_SOURCE_NOTE);
+      expect(articleToMarkdown(article)).toContain(BLOG_SOURCE_NOTE);
+      // AI-drafting disclosure appears only on hraness.com (hraness/.github STYLE.md).
+      expect(articleToMarkdown(article)).not.toMatch(/AI-assisted|Prepared with AI assistance/u);
       if (article.slug === "grok-4-7-coding-agent-index") {
         expect(article.publishedAt).toBe(GROK_47_ARTICLE_PUBLISHED_AT);
         expect(article.updatedAt >= article.publishedAt).toBeTrue();
@@ -1499,8 +1501,9 @@ describe("AI Charts benchmark notes", () => {
         `<span aria-current="page">${article.title}</span>`,
       );
       expect(markup).toContain(`dateTime="${article.publishedAt}"`);
-      expect(markup).toContain("By AI Charts · AI-assisted");
-      expect(markup).toContain(article.authorshipDisclosure);
+      expect(markup).toContain("By AI Charts");
+      expect(markup).not.toMatch(/AI-assisted|Prepared with AI assistance/u);
+      expect(markup).toContain(article.sourceNote);
       if (editorialImage === undefined) {
         expect(markup).not.toContain("<figure");
         expect(markup).not.toContain(`/images/blog/${article.slug}.webp`);
@@ -1735,8 +1738,8 @@ describe("AI Charts blog discovery", () => {
         datePublished: `${article.publishedAt}T00:00:00.000Z`,
         dateModified: `${article.updatedAt}T00:00:00.000Z`,
         isAccessibleForFree: true,
-        creditText: article.authorshipDisclosure,
       });
+      expect(structured).not.toHaveProperty("creditText");
       const image = blogEditorialImage(article.slug);
       if (image === undefined) {
         expect(structured).not.toHaveProperty("image");
@@ -1842,7 +1845,7 @@ describe("AI Charts blog discovery", () => {
     ]);
 
     expect(layoutSource).toContain('"@type": "WebSite"');
-    expect(chartNavigationSource).toContain('<Link href="/blog">Benchmark notes</Link>');
+    expect(chartNavigationSource).toContain('<Link href="/blog">Notes</Link>');
     expect(headerSource).toContain('{ href: "/blog", label: "Notes" }');
   });
 });

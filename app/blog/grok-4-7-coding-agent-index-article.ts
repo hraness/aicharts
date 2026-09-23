@@ -29,7 +29,7 @@ import { comparableTaskCost, formatCostMultiple, formatPointGap } from "@/lib/mi
 import { spellCount } from "./real-swe-private-enterprise-benchmark-article";
 
 import {
-  BLOG_AUTHORSHIP_DISCLOSURE,
+  BLOG_SOURCE_NOTE,
   BLOG_SOURCES,
   callout,
   heading,
@@ -620,7 +620,7 @@ export function createGrok47Article(
     : `Grok 4.7 scores ${codingScore} on the AI Charts coding-agent AA Index with Grok Build and ${intelligenceScore} on the Intelligence Index. See what each measures and where each sits on cost.`;
 
   return {
-    authorshipDisclosure: BLOG_AUTHORSHIP_DISCLOSURE,
+    sourceNote: BLOG_SOURCE_NOTE,
     slug: GROK_47_ARTICLE_SLUG,
     title,
     dek,

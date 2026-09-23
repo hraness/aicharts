@@ -197,7 +197,7 @@ export function homeDocumentModel(
     heading: homeHeading,
     paragraphs: [
       site.description,
-      `The homepage compares capability with cost or output tokens on the ${intelligence.benchmark.name} v${intelligence.benchmark.version} Pareto frontier. Both resource views use the identical ${intelligence.selection.positiveCostRecordCount}-configuration positive-cost cohort. Inspect a point to see the model, effort setting, and exact values. Recent Index listings and a source-backed release radar follow the chart. Those rows use the checked snapshot and reviewed discovery evidence, not invented scores.`,
+      `The homepage plots each model configuration's ${intelligence.benchmark.name} v${intelligence.benchmark.version} score against its cost or output tokens per task and marks the Pareto frontier. Both views use the same ${intelligence.selection.positiveCostRecordCount} configurations, the ones that report a task cost above zero. Inspect a point to see the model, effort setting, and exact values. Recent Index listings and release radars for newly found models follow the chart. The radars show where and when AI Charts found each model.`,
       "Choose a task-specific comparison in the benchmark explorer, or use the separate coding-agent charts to compare cost, time, and total tokens. Each evaluation keeps its own source, version, and configuration; no universal score is calculated.",
     ],
     links: [
@@ -223,7 +223,7 @@ export function homeDocumentModel(
       },
       {
         href: "/blog",
-        label: "Benchmark analysis",
+        label: "Notes",
         note: blogDescription,
       },
       {
@@ -348,7 +348,7 @@ function codingMarkdown(snapshot: CodingAgentSnapshot): string {
   return joinMarkdown([
     "# Coding agent comparisons",
     "",
-    "Compare coding-agent benchmark scores with API cost, active time, or total token use. Each point is a model, agent harness, and effort setting—not a model in isolation.",
+    "Compare coding-agent benchmark scores with API cost, active time, or total token use. Each point is one model running in one agent harness at one effort setting.",
     "",
     `The default chart shows DeepSWE v1.1 accuracy against API cost. Choose another benchmark or resource axis, inspect a point, or compare a provider’s configurations. The checked Coding Agent Index v1.5 [${snapshot.source.name} coding-agents snapshot](${snapshot.source.url}) contains ${summary.recordCount} configurations across ${summary.modelCount} models and ${summary.agentCount} agent harnesses. Retrieved ${formatRetrievedAt(snapshot.source.retrievedAt)}.`,
     "",
@@ -358,7 +358,7 @@ function codingMarkdown(snapshot: CodingAgentSnapshot): string {
     "",
     "This Coding Agent Index v1.5 source combines DeepSWE v1.1, Terminal-Bench 4, and SWE-Atlas-QnA. Its Terminal-Bench scores remain separate from the standalone owner-published Terminal-Bench 4 cohort in the benchmark explorer.",
     "",
-    `[Terminal-Bench 4](${absolute("/benchmarks?atlas=terminal-bench-4#explore")}) · [All benchmarks](${absolute("/benchmarks")}) · [Source and method](${absolute("/data#source")}) · [Coding-agent JSON](${absolute(CODING_AGENT_DATASET_DOWNLOAD_PATH)}) · [Model cards](${absolute("/models")})`,
+    `[Terminal-Bench 4](${absolute("/benchmarks?atlas=terminal-bench-4#explore")}) · [All benchmarks](${absolute("/benchmarks")}) · [Source and method](${absolute("/data#source")}) · [Coding-agent JSON](${absolute(CODING_AGENT_DATASET_DOWNLOAD_PATH)}) · [Models](${absolute("/models")})`,
   ]);
 }
 
@@ -589,7 +589,7 @@ function modelCardsMarkdown(): string {
     "",
     "## First-party release radar",
     "",
-    `${FIRST_PARTY_RELEASE_SOURCE_SUMMARY.labCount} labs across ${FIRST_PARTY_RELEASE_SOURCE_SUMMARY.sourceCount} first-party sources supply durable announcement candidates. Previously unseen canonical URLs create candidates; mutable source timestamps are secondary change evidence, not official release dates or benchmark scores.`,
+    `${FIRST_PARTY_RELEASE_SOURCE_SUMMARY.labCount} labs across ${FIRST_PARTY_RELEASE_SOURCE_SUMMARY.sourceCount} first-party sources. These links come from each lab's own release pages, so a model can appear here before aggregators such as OpenRouter list it. Each date shows when AI Charts first found the page, which can differ from the official release date. Official dates and benchmark scores come from their own sources.`,
     "",
     ...FIRST_PARTY_RELEASE_HIGHLIGHTS.map(release => (
       `- [${release.namedModels.join(" and ")}](${release.canonicalUrl}). ${release.providerName}; first observed ${formatUpdateDate(release.firstSeenAt)}.`
@@ -597,7 +597,7 @@ function modelCardsMarkdown(): string {
     "",
     "## Benchmark coverage radar",
     "",
-    `${MODEL_RELEASES_AWAITING_BENCHMARK.length} recent releases from established providers are awaiting a complete four-benchmark Artificial Analysis index; ${MODEL_RELEASES_WITH_EARLY_DEEP_SWE.length} already have direct DeepSWE evidence. Discovery is not a score. OpenRouter is the first-line model-identity catalog, with Artificial Analysis used only when a model is unresolved. A labeled early [DeepSWE v${DIRECT_DEEP_SWE_EVIDENCE.source.benchmarkVersion}](${DEEP_SWE_LEADERBOARD_URL}) pass@1 result, when present, comes directly from DataCurve's mini-swe-agent leaderboard and remains outside the Artificial Analysis chart and cards. Partial Artificial Analysis observations can appear there with missing metrics shown explicitly.`,
+    `${MODEL_RELEASES_AWAITING_BENCHMARK.length} recent releases from established providers are awaiting a complete four-benchmark Artificial Analysis index; ${MODEL_RELEASES_WITH_EARLY_DEEP_SWE.length} already have an early DeepSWE result. Where shown, an early [DeepSWE v${DIRECT_DEEP_SWE_EVIDENCE.source.benchmarkVersion}](${DEEP_SWE_LEADERBOARD_URL}) pass@1 comes straight from DataCurve's mini-swe-agent leaderboard, matched to the model through OpenRouter's catalog, or through Artificial Analysis when OpenRouter has no match. That result depends on DataCurve's harness, so it stays off the Artificial Analysis chart and model cards. Models with partial Artificial Analysis results can appear there, with missing metrics marked.`,
     "",
     ...distinctReleaseHighlights.map(release => {
       const earlyEvidence = directDeepSweEvidenceForRelease(release);
@@ -716,7 +716,7 @@ export function agentGuideMarkdown(
     "",
     "Use AI Charts when you need a sourced comparison that keeps benchmark versions and system configurations explicit. Explore coding, reasoning, deep research, memory, scientific work, image and video generation, audio, and world-model evaluation. A chart has measured results; a source guide describes an evaluation whose results are not charted here. Some sources contain historical research cohorts rather than current products.",
     "",
-    `The current Intelligence v${intelligence.benchmark.version} JSON powers the homepage’s leading Pareto chart. It retains ${intelligence.records.length} measured model configurations across ${intelligence.benchmark.evaluationCount} weighted evaluations. Both resource views use the identical ${intelligence.selection.positiveCostRecordCount}-configuration positive-cost cohort. Its output tokens are answer plus reasoning tokens, not the coding-agent dataset's total tokens. Historical v4.1.1 is frozen and must not be pooled with this version.`,
+    `The current Intelligence v${intelligence.benchmark.version} JSON powers the homepage’s leading Pareto chart. It has ${intelligence.records.length} measured model configurations across ${intelligence.benchmark.evaluationCount} weighted evaluations. Both views, cost and output tokens, use the same ${intelligence.selection.positiveCostRecordCount} configurations, the ones that report a task cost above zero. Its output tokens are answer plus reasoning tokens, not the coding-agent dataset's total tokens. Historical v4.1.1 is frozen and must not be pooled with this version.`,
     "",
     "Use `/data` for every benchmark’s definition, comparison rules, source dates, and limitations. Start machine-readable exploration at `/data/benchmark-atlas.json`, a compact catalog with individual measured-dataset URLs. Versioned source JSON downloads retain the full Terminal-Bench 4, Terminal-Bench-Science, current and historical Artificial Analysis Intelligence, and coding-agent snapshots. Use `/models` for model-and-profile cards and `/blog` for analysis of a named benchmark.",
     "",
@@ -724,19 +724,20 @@ export function agentGuideMarkdown(
     "",
     "## Main pages",
     "",
-    `- [AI model charts](${absolute("/")}). Start with capability versus cost or output tokens on the Pareto frontier. Inspect exact model configurations in one matched resource cohort.`,
+    `- [Charts](${absolute("/")}). Start with Intelligence Index score against cost or output tokens on the Pareto frontier, then inspect each model configuration.`,
     `- [Coding agent comparisons](${absolute("/coding")}). Compare benchmark scores with API cost, active time, or total tokens from the separate Artificial Analysis coding-agents source.`,
     `- [AI benchmark explorer](${absolute("/benchmarks")}). Choose a task, inspect a measured cohort, or read a source guide. Terminal-Bench 4 is the current terminal-engineering standard.`,
     `- [Subscription vs API vs GPUs](${absolute("/calculator")}). Price one fully used ChatGPT Pro seat's token volume at OpenAI and DeepSeek API rates, on purchased GPUs, and on rented GPUs, with sourced assumptions.`,
+    `- [AI usage tracking](${absolute("/usage")}). Measure your own coding agents' token use, cost, and speed with the AI Charts collector. It has no packaged release yet; build it from source. Account sync runs on macOS only.`,
     `- [Atlas catalog JSON](${absolute(ATLAS_CATALOG_DOWNLOAD_PATH)}). All benchmark IDs, coverage, versions, source dates, and per-cohort JSON distribution links.`,
-    `- [Model pages](${absolute("/models")}). Identity pages for each model, with Intelligence Index, cost, and coding-agent observations when those exist.`,
-    `- [Dataset and methodology](${absolute(CODING_AGENT_DATASET_PATH)}). Every atlas benchmark’s provenance, version boundaries, definitions, measured distributions, and limits.`,
+    `- [Models](${absolute("/models")}). ${modelCardsLede}`,
+    `- [Data](${absolute(CODING_AGENT_DATASET_PATH)}). Every benchmark’s source, version, definitions, dataset downloads, and limits.`,
     `- [Terminal-Bench 4 JSON](${absolute("/data/terminal-bench-4.json")}). Machine-readable owner snapshot for the current coding standard.`,
     `- [Terminal-Bench-Science 0.1 JSON](${absolute("/data/terminal-bench-science-0-1.json")}). Machine-readable owner snapshot for scientific workflows.`,
     `- [Current Artificial Analysis Intelligence JSON](${absolute("/data/artificial-analysis-intelligence-v4-3.json")}). Machine-readable v${intelligence.benchmark.version} model-configuration score, output-token, cost, and source records used by the homepage’s Pareto chart.`,
     `- [Historical Intelligence v4.1.1 JSON](${absolute("/data/artificial-analysis-intelligence.json")}). Frozen earlier cohort; not refreshed or comparable with the current index scale.`,
     `- [Artificial Analysis coding-agent JSON](${absolute(CODING_AGENT_DATASET_DOWNLOAD_PATH)}). Machine-readable copy of the separate coding-agent chart records.`,
-    `- [Benchmark analysis](${absolute("/blog")}). Sourced notes on named evaluations.`,
+    `- [Notes](${absolute("/blog")}). Sourced notes on named evaluations.`,
     ...blogArticles.map(article => (
       `- [${article.title}](${absolute(blogArticlePath(article.slug))})`
     )),

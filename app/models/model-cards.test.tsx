@@ -65,7 +65,7 @@ describe("public model cards", () => {
     expect(modelsLayoutSource).toContain('current="/models"');
     expect(modelsLayoutSource).toContain('aria-label="Model card resources"');
     expect(modelsLayoutSource).toContain('className="model-cards-footer__links"');
-    expect(modelsLayoutSource).toContain("Data and method");
+    expect(modelsLayoutSource).toContain('<Link href="/data">Data</Link>');
     expect(modelsLayoutSource).not.toContain("Icons by LobeHub");
     expect(modelsLayoutSource).not.toContain("lobehub.com/icons");
     expect(modelsLayoutSource).not.toContain("<footer");
@@ -167,7 +167,8 @@ describe("public model cards", () => {
       );
       expect(markup).toContain("first observed");
       expect(markup).not.toContain("source changed");
-      expect(markup).toContain("A newly observed canonical URL is discovery evidence");
+      // The radar date is when AI Charts found the page, never an official release date.
+      expect(markup).toContain("which can differ from the official");
     }
     expect(MODEL_RELEASE_RADAR_HIGHLIGHTS[0]).toBe(
       MODEL_RELEASES_AWAITING_BENCHMARK[0],
@@ -191,8 +192,10 @@ describe("public model cards", () => {
     if (MODEL_RELEASE_RADAR_PAGE_HIGHLIGHTS.length > 0) {
       expect(markup).toContain("Release radar");
       expect(markup).toContain("New, awaiting complete benchmark coverage");
-      expect(markup).toContain("Discovery is not a score");
-      expect(markup).toContain("missing metrics shown explicitly");
+      // A radar listing is not a score: listed models lack a complete coding-agent result.
+      expect(markup).toContain("do not yet have a complete result on the Artificial");
+      expect(markup).toContain("missing metrics marked");
+      expect(markup).toContain("stays off the Artificial Analysis chart and model cards");
       expect(markup).toContain(`${MODEL_RELEASES_WITH_EARLY_DEEP_SWE.length} with early DeepSWE`);
       expect(markup).toContain(`DeepSWE v${DIRECT_DEEP_SWE_EVIDENCE.source.benchmarkVersion}`);
       expect(markup).toContain("mini-swe-agent leaderboard");

@@ -24,7 +24,7 @@ import {
 import { spellCount } from "./real-swe-private-enterprise-benchmark-article";
 
 import {
-  BLOG_AUTHORSHIP_DISCLOSURE,
+  BLOG_SOURCE_NOTE,
   BLOG_SOURCES,
   callout,
   heading,
@@ -322,7 +322,7 @@ export function createMimoV26Article(
     : `In the snapshot, ${closed.map(record => `${record.name} scores ${formatSnapshotScore(record.intelligenceIndex)} at ${formatSnapshotCostUsd(taskCost(record))}`).join(" and ")}.`;
 
   return {
-    authorshipDisclosure: BLOG_AUTHORSHIP_DISCLOSURE,
+    sourceNote: BLOG_SOURCE_NOTE,
     slug: MIMO_V26_ARTICLE_SLUG,
     title: "What MiMo-V2.6-Pro’s 46 at $0.13 per task measures",
     dek:

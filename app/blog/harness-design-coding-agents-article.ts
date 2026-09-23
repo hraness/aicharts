@@ -10,7 +10,7 @@ import {
 } from "@/lib/terminal-bench-data";
 
 import {
-  BLOG_AUTHORSHIP_DISCLOSURE,
+  BLOG_SOURCE_NOTE,
   BLOG_SOURCES,
   callout,
   heading,
@@ -483,7 +483,7 @@ export function createHarnessDesignArticle(
     "† marks a cell the paper reports as significantly different from the T4 baseline under a two-sided exact McNemar test with Benjamini–Hochberg q < 0.05.";
 
   return {
-    authorshipDisclosure: BLOG_AUTHORSHIP_DISCLOSURE,
+    sourceNote: BLOG_SOURCE_NOTE,
     slug: HARNESS_DESIGN_ARTICLE_SLUG,
     title: "What Fan et al.’s harness-component ablations measure",
     dek:

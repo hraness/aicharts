@@ -2,7 +2,7 @@
 
 import { useId, useMemo, useRef, useState, useSyncExternalStore, type CSSProperties } from "react";
 import { captureAnalyticsEvent } from "@/lib/analytics";
-import { atlasTakeaways } from "@/lib/benchmark-atlas-takeaways";
+import { atlasTakeaways, atlasTakeawaysBasis } from "@/lib/benchmark-atlas-takeaways";
 import { atlasDatasetSummary, selectAtlasEntries, selectAtlasModelProfiles, sortAtlasPoints, type BenchmarkAtlasDataset, type BenchmarkAtlasEntry, type BenchmarkAtlasPoint } from "@/lib/benchmark-atlas";
 import { ATLAS_CATEGORY_LABELS, atlasViewSearch, formatAtlasCost, formatAtlasScore, parseAtlasView, type AtlasViewState } from "@/lib/benchmark-atlas-view";
 import { providerBrand } from "@/lib/provider-brand";
@@ -280,7 +280,7 @@ export function BenchmarkAtlasExplorer({ entries, datasets }: Readonly<{ entries
     </div>
     <div className="atlas-workspace">
       <div className="atlas-content">
-        <header className="atlas-heading"><div><p className="atlas-eyebrow">{ATLAS_CATEGORY_LABELS[entry.category]} <span> / </span> {entry.version}</p><h2>{entry.name}</h2><p>{entry.question}</p></div><button className="atlas-button atlas-button--quiet" onClick={share} type="button">Copy view link ↗</button></header>
+        <header className="atlas-heading"><div><p className="atlas-eyebrow">{ATLAS_CATEGORY_LABELS[entry.category]} <span> / </span> {entry.version}</p><h2>{entry.name}</h2><p>{entry.question}</p></div><button className="atlas-button atlas-button--quiet" onClick={share} type="button">Copy link to this view</button></header>
         <p className="atlas-share-status" role="status">{shareStatus}</p>
         {dataset && summary ? <>
           <dl className="atlas-facts">
@@ -340,7 +340,7 @@ export function BenchmarkAtlasExplorer({ entries, datasets }: Readonly<{ entries
           <section className="atlas-takeaways" aria-labelledby={takeawaysId}>
             <h3 id={takeawaysId}>What this chart shows</h3>
             <p>{takeaways.join(" ")}</p>
-            <p className="atlas-takeaways__basis">Read from the full charted cohort, not the filters above. Effort-only variants of one system count once.</p>
+            <p className="atlas-takeaways__basis">{atlasTakeawaysBasis(dataset)}</p>
           </section>
           <p className="atlas-description"><strong>About these results.</strong> {dataset.comparabilityNote}</p>
           <div className="atlas-provenance"><a data-analytics-destination-id={`source:${entry.id}`} data-analytics-destination-kind="source" href={dataset.source.url} target="_blank" rel="noreferrer">{dataset.source.name} ↗</a><span>Retrieved <time dateTime={dataset.source.retrievedAt}>{sourceDate(dataset.source.retrievedAt)}</time></span></div>
