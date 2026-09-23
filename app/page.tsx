@@ -1,4 +1,5 @@
 import { createPublicSiteMetadata } from "@hraness/web-discovery";
+import { MarketingRelated } from "@hraness/design-kit/react/server";
 import Link from "next/link";
 import artificialAnalysisIntelligenceData from "@/data/artificial-analysis-intelligence-v4-3.json";
 import { ChartNavigation, HomeExploreFooter } from "@/components/chart-navigation";
@@ -47,6 +48,69 @@ export default function Home() {
         </div>
         <Link className="home-calculator__cta" href="/calculator">Open the calculator <span aria-hidden="true">↗</span></Link>
       </section>
+      <MarketingRelated
+        groups={[
+          {
+            heading: "The agent platform",
+            headingId: "related-tools",
+            summary: "The layer your agent runs through: sessions, accounts, web reads, and the models behind them.",
+            items: [
+              {
+                name: "xcb",
+                href: "https://xcb.sh",
+                role: "A metaharness for agent subscriptions",
+                relationship: "xcb runs the agent subscriptions Aicharts inspects, meters each account locally, and can publish usage here when you opt in.",
+              },
+              {
+                name: "Gobstopper",
+                href: "https://gobstopper.sh",
+                role: "Automatic context compaction for agent sessions",
+                relationship: "Gobstopper cuts the context bill; Aicharts makes the bill visible per model and per session.",
+              },
+              {
+                name: "Ghostget",
+                href: "https://ghostget.com",
+                role: "A bounded bridge to provider data",
+                relationship: "Ghostget bounds what each web read costs in tokens; Aicharts bounds what the models behind those reads cost.",
+              },
+            ],
+          },
+          {
+            heading: "The personal apps",
+            headingId: "related-apps",
+            items: [
+              {
+                name: "PeopleBlade",
+                href: "https://peopleblade.com",
+                role: "A private contact book for you and your agent",
+                relationship: "PeopleBlade's agent researches your contacts; Aicharts shows which model does that work cheapest and what a run spent.",
+              },
+              {
+                name: "Soulscrape",
+                href: "https://soulscrape.com",
+                role: "A dated, cited dossier on a person",
+                relationship: "A Soulscrape dossier run is exactly the kind of token spend Aicharts measures and compares.",
+              },
+              {
+                name: "Textbutler",
+                href: "https://textbutler.app",
+                role: "A personal message butler for Mac",
+                relationship: "Textbutler drafts through your chosen agent; Aicharts benchmarks the models that can drive it.",
+              },
+              {
+                name: "Wordcell",
+                href: "https://wordcell.io",
+                role: "A Markdown knowledge base for agents",
+                relationship: "Wordcell's agent queries your vault; Aicharts shows the capability and cost tradeoffs for that loop.",
+              },
+            ],
+          },
+        ]}
+        heading="From the same workshop."
+        headingId="related-title"
+        label="Related"
+        summary="Each Hraness product owns one private domain and gives your agent the same kind of access: local, bounded, and inspectable."
+      />
       <HomeExploreFooter />
       <LegacyChartNavigation />
     </main>

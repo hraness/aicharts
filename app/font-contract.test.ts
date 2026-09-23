@@ -12,8 +12,8 @@ const atlas = await Bun.file(new URL("../styles/benchmark-atlas.css", import.met
 
 test("uses the released Nebula Sans contract across web, exports, and social images", () => {
   expect(packageJson.dependencies).toMatchObject({
-    "@hraness/design-kit": "github:hraness/design-kit#v0.13.0",
-    "@hraness/ui": "github:hraness/ui#v0.5.13",
+    "@hraness/design-kit": "github:hraness/design-kit#v0.15.0",
+    "@hraness/ui": "github:hraness/ui#v0.5.16",
     "@hraness/web-discovery": "github:hraness/web-discovery#v0.6.0",
   });
   expect(globals).toContain("--font-sans: var(--font-text)");
