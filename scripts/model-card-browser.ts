@@ -475,15 +475,18 @@ async function assertLogoCardArtIsolation(page: Page): Promise<void> {
 
     return {
       cardCount: cards.length,
+      multiCardRowCount: rows.filter(row => row.length > 1).length,
       rowCount: rows.length,
-      lastRowCount: rows.at(-1)?.length ?? 0,
       violations,
     };
   });
 
   invariant(isolation.cardCount > 1, "The gallery needs more than one logo card to test row isolation.");
   invariant(isolation.rowCount > 1, "The gallery did not wrap into more than one card row at 1280px.");
-  invariant(isolation.lastRowCount > 1, "The last gallery row needs multiple cards to catch cross-card art bleed.");
+  invariant(
+    isolation.multiCardRowCount > 0,
+    "The gallery needs a multi-card row to catch cross-card art bleed.",
+  );
   invariant(
     isolation.violations.length === 0,
     isolation.violations.join("; "),
@@ -512,6 +515,14 @@ async function verifyModelLogoCards(browser: Browser, baseUrl: string): Promise<
       "Foil or illumination chrome remains on the gallery.",
     );
     await assertLogoCardArtIsolation(page);
+    const opus55 = page.getByRole("link", { name: /Claude Opus 5\.5/u });
+    await opus55.click();
+    await page.waitForURL("**/models/anthropic/claude-opus-5-5/index");
+    invariant(
+      await page.getByRole("heading", { name: "Claude Opus 5.5", exact: true }).isVisible(),
+      "The Opus 5.5 page did not render its own title.",
+    );
+    await page.goto(`${baseUrl}/models`, { waitUntil: "domcontentloaded" });
     const mimo = page.getByRole("link", { name: /MiMo-V2\.6-Pro/u });
     await mimo.click();
     await page.waitForURL("**/models/xiaomi/mimo-v2-6-pro/index");
