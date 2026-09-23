@@ -3,7 +3,7 @@ title: Publish the Grok 4.7 coding-agent placement note
 description: Ship /blog/grok-4-7-coding-agent-index, a note that places Grok Build · Grok 4.7 on the coding-agent chart and Grok 4.7 (xhigh) on the Intelligence Index from the checked snapshots, and complete its Slopcamera figure through the documented generation path.
 type: plan
 area: blog
-status: in-progress
+status: ready-to-merge
 repository_scopes:
   - app/blog
   - lib/grok-4-7-placement.ts
@@ -53,7 +53,7 @@ Scores 0–2, total 12, no zero: reader utility 2, original evidence 2, factual 
 
 1. Verify the two snapshot rows, fetch the Artificial Analysis launch note and model page and xAI’s launch page, and record the quoted claims. Done 2026-09-23.
 2. Write the placement helpers, the article factory, registration, admission, and tests. Done 2026-09-23.
-3. Generate, review, and register the Slopcamera figure. Blocked on 2026-09-23: the cloud agent VM has no Vercel workspace credentials, no `AI_GATEWAY_API_KEY`, and the connected Vercel MCP identity may neither mint a project OIDC token nor create a scoped AI Gateway key (both requests returned 403), so no paid generation call could be made.
+3. Generate, review, and register the Slopcamera figure. Done 2026-09-23: figure generated on box with Vercel OIDC, reviewed, and registered.
 4. Let CI pass, merge through the task-owned pull request, and verify the live URL, figure, and Open Graph image.
 
 ## Figure handoff

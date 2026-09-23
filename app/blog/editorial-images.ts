@@ -182,6 +182,15 @@ export const BLOG_EDITORIAL_IMAGES = {
     "20260922T164854745Z-image-919d058d-dc9/receipt.json",
     "gateway_5573d1d786af4a94a2569ae0bbc905a2.json",
   ),
+  "grok-4-7-coding-agent-index": image(
+    "grok-4-7-coding-agent-index",
+    "A large matte ivory stone rests across two separate charcoal plinths of different heights, each edged by its own short brass line.",
+    "One model, two measurements: a coding-agent row inside one harness and an Intelligence Index row under another. The two scales do not meet, and this illustration is not a data plot.",
+    "d6bbdb612bccd75470de5930aea3a73be525521b5245c6b6d69e2b4a01761f53",
+    "ffba129024de00345b0c1f48b93cc1e89ecdd0cb48e3af88f5db5a2b095e89d8",
+    "20260923T150512173Z-image-4365db6c-c83/receipt.json",
+    "gateway_bc71b5ff0a604e44a40268303d9d329f.json",
+  ),
 } as const satisfies EditorialImageRecord;
 
 export function blogEditorialImage<Slug extends BlogSlug>(
