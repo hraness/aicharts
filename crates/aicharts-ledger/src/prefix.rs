@@ -187,7 +187,7 @@ impl Ledger {
                 allows_rewrite: false,
             });
         }
-        self.commit_mode_with(expected_revision, sources, Some(prefixes), before_commit)
+        self.commit_mode_with(expected_revision, &sources, Some(prefixes), before_commit)
     }
 }
 
