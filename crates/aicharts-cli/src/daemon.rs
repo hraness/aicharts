@@ -111,18 +111,45 @@ fn retryable(error: &'static str) -> bool {
     matches!(error, "ledger_busy_retry" | "ledger_changed_retry")
 }
 
-fn collect(options: &Options, args: &[String]) -> Result<String, &'static str> {
+fn collect(
+    retry_attempts: u8,
+    run: &mut impl FnMut() -> Result<String, &'static str>,
+    sleep: &mut impl FnMut(Duration),
+) -> Result<String, &'static str> {
     let mut attempt = 0u8;
     loop {
-        match super::state::run(args) {
+        match run() {
             Ok(output) => return Ok(output),
-            Err(error) if retryable(error) && attempt < options.retry_attempts => {
+            Err(error) if retryable(error) && attempt < retry_attempts => {
                 let seconds = 1u64 << attempt.min(3);
-                std::thread::sleep(Duration::from_secs(seconds));
+                sleep(Duration::from_secs(seconds));
                 attempt += 1;
             }
             Err(error) => return Err(error),
         }
+    }
+}
+
+fn run_loop(
+    options: &Options,
+    mut run: impl FnMut() -> Result<String, &'static str>,
+    mut sleep: impl FnMut(Duration),
+    mut report: impl FnMut(Result<String, &'static str>),
+) -> Result<String, &'static str> {
+    loop {
+        let result = collect(options.retry_attempts, &mut run, &mut sleep);
+        if options.once {
+            return result;
+        }
+        if let Err(error) = &result {
+            if !retryable(error) && *error != "source_changed_during_scan" {
+                return Err(*error);
+            }
+        }
+        // Contention and live-source churn defer this cycle. Source changes
+        // never consume the immediate ledger retry budget.
+        report(result);
+        sleep(Duration::from_secs(options.interval_seconds));
     }
 }
 
@@ -166,23 +193,69 @@ pub(super) fn run(args: &[String]) -> Result<String, &'static str> {
     #[cfg(unix)]
     {
         let collect_args = collect_args(&options);
-        if options.once {
-            return collect(&options, &collect_args);
-        }
-        loop {
-            let output = collect(&options, &collect_args)?;
-            println!("{output}");
-            std::thread::sleep(Duration::from_secs(options.interval_seconds));
-        }
+        run_loop(
+            &options,
+            || super::state::run(&collect_args),
+            std::thread::sleep,
+            |result| match result {
+                Ok(output) => println!("{output}"),
+                Err(error) => eprintln!("aicharts: {error}"),
+            },
+        )
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::cell::RefCell;
 
     fn args(values: &[&str]) -> Vec<String> {
         values.iter().map(|value| (*value).to_owned()).collect()
+    }
+
+    #[derive(Debug, PartialEq, Eq)]
+    enum Event {
+        Collect,
+        Sleep(u64),
+        Report(Result<String, &'static str>),
+    }
+
+    fn run_script(
+        retry_attempts: u8,
+        once: bool,
+        results: Vec<Result<&str, &'static str>>,
+    ) -> (Result<String, &'static str>, Vec<Event>) {
+        let mut options = parse_options(&args(&[
+            "daemon",
+            "--state-dir",
+            "state",
+            "--key-file",
+            "key",
+            "--codex",
+            "source",
+            "--interval-seconds",
+            "600",
+        ]))
+        .unwrap();
+        options.retry_attempts = retry_attempts;
+        options.once = once;
+        let events = RefCell::new(Vec::new());
+        let mut results = results.into_iter();
+        let result = run_loop(
+            &options,
+            || {
+                events.borrow_mut().push(Event::Collect);
+                results
+                    .next()
+                    .expect("unexpected collection")
+                    .map(str::to_owned)
+            },
+            |duration| events.borrow_mut().push(Event::Sleep(duration.as_secs())),
+            |result| events.borrow_mut().push(Event::Report(result)),
+        );
+        assert!(results.next().is_none(), "unconsumed collection result");
+        (result, events.into_inner())
     }
 
     #[test]
@@ -275,8 +348,138 @@ mod tests {
     fn retries_only_bounded_transient_ledger_results() {
         assert!(retryable("ledger_busy_retry"));
         assert!(retryable("ledger_changed_retry"));
+        assert!(!retryable("source_changed_during_scan"));
         assert!(!retryable("source_partial_tail"));
         assert!(!retryable("ledger_invalid_state_do_not_reset"));
+    }
+
+    #[test]
+    fn exhausted_ledger_retries_wait_for_the_normal_interval() {
+        for error in ["ledger_busy_retry", "ledger_changed_retry"] {
+            for retry_attempts in 0..=MAX_RETRY_ATTEMPTS {
+                let mut results = vec![Err(error); usize::from(retry_attempts) + 1];
+                results.push(Err("stop_test"));
+                let (result, events) = run_script(retry_attempts, false, results);
+                assert_eq!(result, Err("stop_test"));
+                let mut expected = vec![Event::Collect];
+                for retry in 0..retry_attempts {
+                    expected.push(Event::Sleep(1u64 << retry.min(3)));
+                    expected.push(Event::Collect);
+                }
+                expected.extend([Event::Report(Err(error)), Event::Sleep(600), Event::Collect]);
+                assert_eq!(events, expected);
+            }
+        }
+    }
+
+    #[test]
+    fn source_churn_waits_for_the_normal_interval_without_immediate_retries() {
+        let (result, events) = run_script(
+            MAX_RETRY_ATTEMPTS,
+            false,
+            vec![
+                Err("source_changed_during_scan"),
+                Err("source_changed_during_scan"),
+                Ok("collected"),
+                Err("stop_test"),
+            ],
+        );
+        assert_eq!(result, Err("stop_test"));
+        assert_eq!(
+            events,
+            vec![
+                Event::Collect,
+                Event::Report(Err("source_changed_during_scan")),
+                Event::Sleep(600),
+                Event::Collect,
+                Event::Report(Err("source_changed_during_scan")),
+                Event::Sleep(600),
+                Event::Collect,
+                Event::Report(Ok("collected".to_owned())),
+                Event::Sleep(600),
+                Event::Collect,
+            ]
+        );
+    }
+
+    #[test]
+    fn success_waits_for_the_normal_interval_and_resets_the_retry_budget() {
+        let (result, events) = run_script(
+            1,
+            false,
+            vec![
+                Err("ledger_busy_retry"),
+                Ok("first"),
+                Err("ledger_changed_retry"),
+                Ok("second"),
+                Err("stop_test"),
+            ],
+        );
+        assert_eq!(result, Err("stop_test"));
+        assert_eq!(
+            events,
+            vec![
+                Event::Collect,
+                Event::Sleep(1),
+                Event::Collect,
+                Event::Report(Ok("first".to_owned())),
+                Event::Sleep(600),
+                Event::Collect,
+                Event::Sleep(1),
+                Event::Collect,
+                Event::Report(Ok("second".to_owned())),
+                Event::Sleep(600),
+                Event::Collect,
+            ]
+        );
+    }
+
+    #[test]
+    fn fixed_and_fatal_errors_stop_without_sleeping() {
+        for error in [
+            "source_partial_tail",
+            "ledger_invalid_state_do_not_reset",
+            "ledger_write_failed",
+            "unknown_failure",
+        ] {
+            let (result, events) = run_script(MAX_RETRY_ATTEMPTS, false, vec![Err(error)]);
+            assert_eq!(result, Err(error));
+            assert_eq!(events, vec![Event::Collect]);
+        }
+    }
+
+    #[test]
+    fn once_returns_the_underlying_result_without_reporting_or_interval_sleep() {
+        for expected in [
+            Ok("collected"),
+            Err("source_changed_during_scan"),
+            Err("source_partial_tail"),
+            Err("ledger_invalid_state_do_not_reset"),
+        ] {
+            let (result, events) = run_script(MAX_RETRY_ATTEMPTS, true, vec![expected]);
+            assert_eq!(result, expected.map(str::to_owned));
+            assert_eq!(events, vec![Event::Collect]);
+        }
+        for error in ["ledger_busy_retry", "ledger_changed_retry"] {
+            let (result, events) = run_script(2, true, vec![Err(error); 3]);
+            assert_eq!(result, Err(error));
+            assert_eq!(
+                events,
+                vec![
+                    Event::Collect,
+                    Event::Sleep(1),
+                    Event::Collect,
+                    Event::Sleep(2),
+                    Event::Collect,
+                ]
+            );
+            let (result, events) = run_script(2, true, vec![Err(error), Ok("collected")]);
+            assert_eq!(result, Ok("collected".to_owned()));
+            assert_eq!(
+                events,
+                vec![Event::Collect, Event::Sleep(1), Event::Collect]
+            );
+        }
     }
 
     #[test]

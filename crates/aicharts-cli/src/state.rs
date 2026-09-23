@@ -36,7 +36,7 @@ pub(crate) fn collect_existing_prefix(
         after: None,
         revision: None,
     };
-    let (report, sources_skipped, deferred_tails, lines_read, bytes_scanned, sources_conflicted) =
+    let (report, sources_skipped, deferred_tails, lines_read, bytes_scanned, sources_conflicted, _) =
         unix::collect(ledger, &options, checkpoint, occurrence)?;
     Ok(CollectionReport {
         revision: report.revision,
@@ -281,6 +281,117 @@ pub(crate) mod unix {
         Ok(())
     }
 
+    fn verify_snapshot(
+        file: &fs::File,
+        path: &Path,
+        canonical: &Path,
+        expected: &SourceStamp,
+    ) -> Result<(), &'static str> {
+        if stamp(&file.metadata().map_err(|_| "source_metadata_failed")?)? != *expected {
+            return Err("source_changed_during_scan");
+        }
+        verify_path(path, canonical, expected)
+    }
+
+    struct SourceVerification {
+        source_id: [u8; 32],
+        path: PathBuf,
+        canonical: PathBuf,
+        stamp: SourceStamp,
+        skipped: bool,
+    }
+
+    #[cfg(test)]
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    pub(super) enum ScanStage {
+        AfterOpen,
+        BeforeRead,
+        BeforeParse,
+        AfterRead,
+        BeforeCommit,
+    }
+
+    #[cfg(test)]
+    type ScanHook = Box<dyn FnMut(ScanStage, &Path)>;
+    #[cfg(test)]
+    thread_local! {
+        static SCAN_HOOK: std::cell::RefCell<Option<ScanHook>> = const { std::cell::RefCell::new(None) };
+    }
+
+    /// Per-thread synthetic fault injection, absent from production builds.
+    #[cfg(test)]
+    pub(super) fn with_scan_hook<T>(
+        hook: impl FnMut(ScanStage, &Path) + 'static,
+        run: impl FnOnce() -> T,
+    ) -> T {
+        struct Reset;
+        impl Drop for Reset {
+            fn drop(&mut self) {
+                SCAN_HOOK.with(|hook| *hook.borrow_mut() = None);
+            }
+        }
+        SCAN_HOOK.with(|slot| {
+            let mut slot = slot.borrow_mut();
+            assert!(slot.is_none());
+            *slot = Some(Box::new(hook));
+        });
+        let _reset = Reset;
+        run()
+    }
+
+    #[cfg(test)]
+    fn scan_hook(stage: ScanStage, path: &Path) {
+        SCAN_HOOK.with(|hook| {
+            if let Some(hook) = hook.borrow_mut().as_mut() {
+                hook(stage, path);
+            }
+        });
+    }
+
+    /// Legacy collection admits only a stable, complete file. Revalidate even
+    /// after read/parse failure: a concurrent truncate can look malformed, but
+    /// a stable malformed file must keep its original fatal error.
+    fn collect_snapshot(
+        file: &mut fs::File,
+        verification: &SourceVerification,
+        provider: Provider,
+        occurrence_key: &[u8; 32],
+    ) -> Result<aicharts_core::Collection, &'static str> {
+        #[cfg(test)]
+        scan_hook(ScanStage::BeforeRead, &verification.path);
+        let result = (|| {
+            if verification.stamp.bytes != 0 && provider != Provider::Devin {
+                file.seek(SeekFrom::End(-1))
+                    .map_err(|_| "source_read_failed")?;
+                let mut last = [0; 1];
+                file.read_exact(&mut last)
+                    .map_err(|_| "source_read_failed")?;
+                if last[0] != b'\n' {
+                    return Err("source_partial_tail");
+                }
+                file.seek(SeekFrom::Start(0))
+                    .map_err(|_| "source_read_failed")?;
+            }
+            #[cfg(test)]
+            scan_hook(ScanStage::BeforeParse, &verification.path);
+            parse_reader(
+                BufReader::new((&mut *file).take(verification.stamp.bytes)),
+                provider,
+                occurrence_key,
+            )
+            .map_err(|_| "source_parse_failed")
+        })();
+        #[cfg(test)]
+        scan_hook(ScanStage::AfterRead, &verification.path);
+        verify_snapshot(
+            file,
+            &verification.path,
+            &verification.canonical,
+            &verification.stamp,
+        )?;
+        result
+    }
+
     /// The changed-source count staged for the current wave across the two
     /// mode-exclusive scan vectors.
     fn wave_len(scans: &[SourceScan], prefix_scans: &[PrefixScan]) -> u64 {
@@ -338,21 +449,35 @@ pub(crate) mod unix {
     /// revision, then refresh the snapshot for the next wave. A wave rejected
     /// for a single source's irreconcilable rewrite retries per source so one
     /// conflicting file cannot stall every source ordered after it; the second
-    /// return counts sources skipped for irreconcilable retained history.
+    /// return counts conflicts, whole-source deferrals and deferred metadata
+    /// skips. A changing legacy source leaves its retained state untouched.
     fn commit_wave(
         ledger: &mut Ledger,
         snapshot: &mut aicharts_ledger::PrefixSnapshot,
         prefix_mode: bool,
         scans: &mut Vec<SourceScan>,
         prefix_scans: &mut Vec<PrefixScan>,
-        verification: &[(PathBuf, PathBuf, SourceStamp)],
+        verification: &[SourceVerification],
         progress: &mut Progress,
-    ) -> Result<(aicharts_ledger::ImportReport, u64), &'static str> {
+    ) -> Result<(aicharts_ledger::ImportReport, u64, u64, u64), &'static str> {
         // Nothing durable changes until the complete wave is valid and the
         // ledger's revision CAS succeeds.
-        for (path, canonical, expected) in verification {
-            verify_path(path, canonical, expected)?;
+        let mut deferred = 0;
+        let mut deferred_skips = 0;
+        let mut unstable = BTreeSet::new();
+        for source in verification {
+            #[cfg(test)]
+            scan_hook(ScanStage::BeforeCommit, &source.path);
+            match verify_path(&source.path, &source.canonical, &source.stamp) {
+                Err("source_changed_during_scan") if !prefix_mode => {
+                    unstable.insert(source.source_id);
+                    deferred += 1;
+                    deferred_skips += u64::from(source.skipped);
+                }
+                result => result?,
+            }
         }
+        scans.retain(|scan| !unstable.contains(&scan.source_id));
         let mut conflicted = 0;
         let report = if prefix_mode {
             ledger
@@ -391,7 +516,7 @@ pub(crate) mod unix {
             }
         };
         *snapshot = ledger.prefix_snapshot().map_err(|error| error.code())?;
-        Ok((report, conflicted))
+        Ok((report, conflicted, deferred, deferred_skips))
     }
 
     pub(super) fn collect(
@@ -399,7 +524,7 @@ pub(crate) mod unix {
         options: &Options,
         checkpoint_key: &[u8; 32],
         occurrence_key: &[u8; 32],
-    ) -> Result<(aicharts_ledger::ImportReport, u64, u64, u64, u64, u64), &'static str> {
+    ) -> Result<(aicharts_ledger::ImportReport, u64, u64, u64, u64, u64, u64), &'static str> {
         collect_with_limit(
             ledger,
             options,
@@ -425,7 +550,7 @@ pub(crate) mod unix {
         wave_limit: u64,
         wave_file_limit: u64,
         wave_measurement_limit: usize,
-    ) -> Result<(aicharts_ledger::ImportReport, u64, u64, u64, u64, u64), &'static str> {
+    ) -> Result<(aicharts_ledger::ImportReport, u64, u64, u64, u64, u64, u64), &'static str> {
         let prefix_mode = options.command == Command::CollectPrefix;
         let mut snapshot = ledger.prefix_snapshot().map_err(|error| error.code())?;
         // Validate the explicit mode before visiting any source. Empty commits
@@ -441,6 +566,7 @@ pub(crate) mod unix {
         let mut total_files = 0u64;
         let mut skipped = 0u64;
         let mut deferred = 0u64;
+        let mut sources_deferred = 0u64;
         let mut conflicted = 0u64;
         let mut bytes_scanned = 0u64;
         let mut lines_read = 0u64;
@@ -489,7 +615,22 @@ pub(crate) mod unix {
                 let source_id = source_id(checkpoint_key, &canonical, *provider);
                 let mut file = crate::open_regular(&path).map_err(|_| "source_read_failed")?;
                 let before = stamp(&file.metadata().map_err(|_| "source_metadata_failed")?)?;
-                verify_path(&path, &canonical, &before)?;
+                #[cfg(test)]
+                scan_hook(ScanStage::AfterOpen, &path);
+                match verify_path(&path, &canonical, &before) {
+                    Err("source_changed_during_scan") if !prefix_mode => {
+                        sources_deferred += 1;
+                        continue;
+                    }
+                    result => result?,
+                }
+                let mut source_verification = SourceVerification {
+                    source_id,
+                    path,
+                    canonical,
+                    stamp: before,
+                    skipped: false,
+                };
                 let checkpoint = snapshot.checkpoints.get(&source_id).copied();
                 if !options.rescan
                     && checkpoint.is_some_and(|old| {
@@ -504,7 +645,8 @@ pub(crate) mod unix {
                     {
                         deferred += 1;
                     }
-                    verification.push((path, canonical, before));
+                    source_verification.skipped = true;
+                    verification.push(source_verification);
                     continue;
                 }
                 if before.bytes > wave_limit {
@@ -516,7 +658,7 @@ pub(crate) mod unix {
                     ));
                     continue;
                 }
-                if wave_len(&scans, &prefix_scans) > 0
+                if (wave_bytes > 0 || wave_len(&scans, &prefix_scans) > 0)
                     && (wave_len(&scans, &prefix_scans) >= wave_file_limit
                         || wave_bytes
                             .checked_add(before.bytes)
@@ -524,7 +666,7 @@ pub(crate) mod unix {
                             > wave_limit)
                 {
                     progress.note("committing a bounded wave");
-                    let (committed, delta) = commit_wave(
+                    let (committed, delta, deferred_sources, deferred_skips) = commit_wave(
                         ledger,
                         &mut snapshot,
                         prefix_mode,
@@ -534,6 +676,8 @@ pub(crate) mod unix {
                         &mut progress,
                     )?;
                     conflicted += delta;
+                    sources_deferred += deferred_sources;
+                    skipped -= deferred_skips;
                     absorb(&mut report, committed)?;
                     wave_bytes = 0;
                     retained = 0;
@@ -545,25 +689,6 @@ pub(crate) mod unix {
                 wave_bytes = wave_bytes
                     .checked_add(before.bytes)
                     .ok_or("source_byte_limit")?;
-                // A physical JSONL snapshot ends at a newline. Accepting an
-                // unfinished append can checkpoint an event before its final
-                // fields arrive. A whole-document source has no tail marker;
-                // its own parse decides completeness.
-                if !prefix_mode
-                    && before.bytes != 0
-                    && *provider != aicharts_protocol::Provider::Devin
-                {
-                    file.seek(SeekFrom::End(-1))
-                        .map_err(|_| "source_read_failed")?;
-                    let mut last = [0; 1];
-                    file.read_exact(&mut last)
-                        .map_err(|_| "source_read_failed")?;
-                    if last[0] != b'\n' {
-                        return Err("source_partial_tail");
-                    }
-                    file.seek(SeekFrom::Start(0))
-                        .map_err(|_| "source_read_failed")?;
-                }
                 let previous = checkpoint.and_then(|old| old.prefix);
                 let (collection, complete) = if prefix_mode {
                     if checkpoint.is_some_and(|old| {
@@ -583,22 +708,28 @@ pub(crate) mod unix {
                         previous,
                         *provider,
                     )?;
+                    verify_snapshot(
+                        &file,
+                        &source_verification.path,
+                        &source_verification.canonical,
+                        &before,
+                    )?;
                     (collection, Some(prefix))
                 } else {
-                    (
-                        parse_reader(
-                            BufReader::new((&mut file).take(before.bytes)),
-                            *provider,
-                            occurrence_key,
-                        )
-                        .map_err(|_| "source_parse_failed")?,
-                        None,
-                    )
+                    match collect_snapshot(
+                        &mut file,
+                        &source_verification,
+                        *provider,
+                        occurrence_key,
+                    ) {
+                        Ok(collection) => (collection, None),
+                        Err("source_changed_during_scan" | "source_partial_tail") => {
+                            sources_deferred += 1;
+                            continue;
+                        }
+                        Err(error) => return Err(error),
+                    }
                 };
-                if stamp(&file.metadata().map_err(|_| "source_metadata_failed")?)? != before {
-                    return Err("source_changed_during_scan");
-                }
-                verify_path(&path, &canonical, &before)?;
                 lines_read = lines_read
                     .checked_add(collection.lines_read)
                     .ok_or("source_line_limit")?;
@@ -617,7 +748,7 @@ pub(crate) mod unix {
                         > wave_measurement_limit
                 {
                     progress.note("committing a bounded wave");
-                    let (committed, delta) = commit_wave(
+                    let (committed, delta, deferred_sources, deferred_skips) = commit_wave(
                         ledger,
                         &mut snapshot,
                         prefix_mode,
@@ -627,6 +758,8 @@ pub(crate) mod unix {
                         &mut progress,
                     )?;
                     conflicted += delta;
+                    sources_deferred += deferred_sources;
+                    skipped -= deferred_skips;
                     absorb(&mut report, committed)?;
                     wave_bytes = before.bytes;
                     retained = 0;
@@ -678,14 +811,14 @@ pub(crate) mod unix {
                         allows_rewrite: true,
                     });
                 }
-                verification.push((path, canonical, before));
+                verification.push(source_verification);
             }
         }
         if total_files == 0 {
             return Err("no_source_files");
         }
         progress.note("committing a bounded wave");
-        let (committed, delta) = commit_wave(
+        let (committed, delta, deferred_sources, deferred_skips) = commit_wave(
             ledger,
             &mut snapshot,
             prefix_mode,
@@ -695,6 +828,8 @@ pub(crate) mod unix {
             &mut progress,
         )?;
         conflicted += delta;
+        sources_deferred += deferred_sources;
+        skipped -= deferred_skips;
         absorb(&mut report, committed)?;
         Ok((
             report,
@@ -703,6 +838,7 @@ pub(crate) mod unix {
             lines_read,
             bytes_scanned,
             conflicted,
+            sources_deferred,
         ))
     }
 
@@ -782,8 +918,15 @@ pub(crate) mod unix {
         match options.command {
             Command::Init | Command::PrefixEnable => unreachable!(),
             Command::Collect | Command::CollectPrefix => {
-                let (report, skipped, deferred, lines_read, bytes_scanned, conflicted) =
-                    collect(&mut ledger, &options, checkpoint, occurrence_key)?;
+                let (
+                    report,
+                    skipped,
+                    deferred,
+                    lines_read,
+                    bytes_scanned,
+                    conflicted,
+                    sources_deferred,
+                ) = collect(&mut ledger, &options, checkpoint, occurrence_key)?;
                 let status = ledger.status().map_err(|error| error.code())?;
                 if options.json {
                     let mut output = status_json(&status);
@@ -792,6 +935,7 @@ pub(crate) mod unix {
                     output["occurrencesChanged"] = report.occurrences_changed.into();
                     output["sourcesSkipped"] = skipped.into();
                     output["sourcesConflicted"] = conflicted.into();
+                    output["sourcesDeferred"] = sources_deferred.into();
                     if options.command == Command::CollectPrefix {
                         output["sourcesWithDeferredTail"] = deferred.into();
                     }
@@ -814,9 +958,9 @@ pub(crate) mod unix {
                     let deferred_note = if options.command == Command::CollectPrefix {
                         format!("Sources with unfinished tails deferred: {deferred}\n")
                     } else {
-                        String::new()
+                        format!("Unstable or unfinished sources deferred: {sources_deferred}\n")
                     };
-                    Ok(format!("Import committed at revision {}; current ledger revision {}. Nothing uploaded.\nSources updated: {}; unchanged skipped: {skipped}; conflicting history skipped: {conflicted}\n{deferred_note}Physical lines read: {lines_read}; bytes scanned: {bytes_scanned}\nObserved tokens: {}; pending records: {}\nCoverage: partial; prompt counts, activity and model pricing unavailable.\nWarnings: {warnings}\n", report.revision,status.revision,report.sources_updated,status.tokens,status.pending_records))
+                    Ok(format!("Collection completed at revision {}; current ledger revision {}. Nothing uploaded.\nSources updated: {}; unchanged skipped: {skipped}; conflicting history skipped: {conflicted}\n{deferred_note}Physical lines read: {lines_read}; bytes scanned: {bytes_scanned}\nObserved tokens: {}; pending records: {}\nCoverage: partial; prompt counts, activity and model pricing unavailable.\nWarnings: {warnings}\n", report.revision,status.revision,report.sources_updated,status.tokens,status.pending_records))
                 }
             }
             Command::Status => {
@@ -846,6 +990,34 @@ pub(crate) mod unix {
                     "measurementCoverage":"partial","modelPricingAvailable":false}),
                 )
             }
+        }
+    }
+    #[cfg(test)]
+    mod snapshot_tests {
+        use super::*;
+
+        #[test]
+        fn persistent_read_failure_remains_fatal_when_snapshot_is_stable() {
+            let mut random = [0; 16];
+            getrandom::fill(&mut random).unwrap();
+            let path = std::env::temp_dir().join(format!("aicharts-read-failure-{}", hex(&random)));
+            let mut file = fs::OpenOptions::new()
+                .write(true)
+                .create_new(true)
+                .open(&path)
+                .unwrap();
+            std::io::Write::write_all(&mut file, b"{}\n").unwrap();
+            let verification = SourceVerification {
+                source_id: [1; 32],
+                canonical: fs::canonicalize(&path).unwrap(),
+                path: path.clone(),
+                stamp: stamp(&file.metadata().unwrap()).unwrap(),
+                skipped: false,
+            };
+            let result = collect_snapshot(&mut file, &verification, Provider::ClaudeCode, &[7; 32]);
+            drop(file);
+            fs::remove_file(path).unwrap();
+            assert_eq!(result.err(), Some("source_read_failed"));
         }
     }
 }
@@ -990,6 +1162,343 @@ mod tests {
             NAMESPACE.iter().map(|b| format!("{b:02x}")).collect()
         }
 
+        fn live_line(request: u8, output: u64) -> String {
+            serde_json::json!({"type":"assistant","timestamp":"2026-09-10T10:00:00Z",
+                "sessionId":"session","requestId":format!("r{request}"),
+                "message":{"id":format!("m{request}"),"usage":{"input_tokens":10,"output_tokens":output}}})
+                .to_string() + "\n"
+        }
+
+        fn pending(ledger: &aicharts_ledger::Ledger) -> Vec<(aicharts_protocol::Id, u64, Vec<u8>)> {
+            ledger
+                .pending(None, 256, None)
+                .unwrap()
+                .entries
+                .into_iter()
+                .map(|entry| (entry.id, entry.revision, entry.frame))
+                .collect()
+        }
+
+        #[test]
+        fn empty_sources_still_obey_wave_file_limit() {
+            let fixture = Fixture::new();
+            let dir = fixture.state();
+            let mut ledger = aicharts_ledger::Ledger::initialize(&dir, &CHECKPOINT).unwrap();
+            let src = fixture.0.join("src");
+            fs::create_dir(&src).unwrap();
+            for i in 0..3 {
+                fs::write(src.join(format!("{i}.jsonl")), "").unwrap();
+            }
+            let result = unix::collect_with_limit(
+                &mut ledger,
+                &options(&dir, Some(&src), &["collect"]),
+                &CHECKPOINT,
+                &CHECKPOINT,
+                crate::MAX_SOURCE_BYTES,
+                1,
+                usize::MAX,
+            )
+            .unwrap();
+            assert_eq!(
+                (
+                    result.0.sources_updated,
+                    result.0.revision,
+                    result.4,
+                    result.6
+                ),
+                (3, 3, 0, 0)
+            );
+        }
+
+        #[test]
+        fn fatal_input_preserves_earlier_waves_and_nonregular_replacement_is_not_deferred() {
+            for nonregular in [false, true] {
+                let fixture = Fixture::new();
+                let dir = fixture.state();
+                let mut ledger = aicharts_ledger::Ledger::initialize(&dir, &CHECKPOINT).unwrap();
+                let src = fixture.0.join("src");
+                fs::create_dir(&src).unwrap();
+                fs::write(src.join("a.jsonl"), live_line(1, 2)).unwrap();
+                let second = src.join("b.jsonl");
+                fs::write(
+                    &second,
+                    if nonregular {
+                        live_line(2, 2)
+                    } else {
+                        "{invalid\n".to_owned()
+                    },
+                )
+                .unwrap();
+                let selected = options(&dir, Some(&src), &["collect"]);
+                let result = unix::with_scan_hook(
+                    move |stage, path| {
+                        if nonregular && stage == unix::ScanStage::BeforeCommit && path == second {
+                            fs::remove_file(path).unwrap();
+                            fs::create_dir(path).unwrap();
+                        }
+                    },
+                    || {
+                        unix::collect_with_limit(
+                            &mut ledger,
+                            &selected,
+                            &CHECKPOINT,
+                            &CHECKPOINT,
+                            crate::MAX_SOURCE_BYTES,
+                            1,
+                            usize::MAX,
+                        )
+                    },
+                );
+                assert_eq!(
+                    result.err(),
+                    Some(if nonregular {
+                        "source_not_regular"
+                    } else {
+                        "source_parse_failed"
+                    })
+                );
+                let status = ledger.status().unwrap();
+                assert_eq!((status.revision, status.sources, status.tokens), (1, 1, 12));
+            }
+        }
+
+        #[test]
+        fn observed_churn_defers_only_that_source_and_retains_its_checkpoint_and_frames() {
+            use unix::ScanStage::*;
+            for stage in [AfterOpen, BeforeRead, BeforeParse, AfterRead, BeforeCommit] {
+                for replacement in [String::new(), "{invalid\n".to_owned(), live_line(2, 99)] {
+                    let fixture = Fixture::new();
+                    let dir = fixture.state();
+                    let mut ledger =
+                        aicharts_ledger::Ledger::initialize(&dir, &CHECKPOINT).unwrap();
+                    let src = fixture.0.join("src");
+                    fs::create_dir(&src).unwrap();
+                    let unstable = src.join("b.jsonl");
+                    fs::write(&unstable, live_line(2, 2)).unwrap();
+                    let selected = options(&dir, Some(&src), &["collect"]);
+                    unix::collect(&mut ledger, &selected, &CHECKPOINT, &CHECKPOINT).unwrap();
+                    let old = ledger.snapshot().unwrap();
+                    let old_pending = pending(&ledger);
+                    fs::write(&unstable, live_line(2, 3)).unwrap();
+                    fs::write(src.join("a.jsonl"), live_line(1, 2)).unwrap();
+                    fs::write(src.join("c.jsonl"), live_line(3, 2)).unwrap();
+                    let attempted: u64 = fs::read_dir(&src)
+                        .unwrap()
+                        .map(|file| file.unwrap().metadata().unwrap().len())
+                        .sum();
+                    let target = unstable.clone();
+                    let result = unix::with_scan_hook(
+                        move |point, path| {
+                            if point == stage && path == target {
+                                fs::write(path, &replacement).unwrap();
+                            }
+                        },
+                        || unix::collect(&mut ledger, &selected, &CHECKPOINT, &CHECKPOINT),
+                    )
+                    .unwrap();
+                    let (report, skipped, tails, _, bytes, conflicts, deferred) = result;
+                    assert_eq!(
+                        (report.sources_updated, skipped, tails, conflicts, deferred),
+                        (2, 0, 0, 0, 1),
+                        "{stage:?}"
+                    );
+                    // Work attempted before detecting a changed source is still charged.
+                    assert_eq!(
+                        bytes,
+                        attempted
+                            - if stage == AfterOpen {
+                                live_line(2, 3).len() as u64
+                            } else {
+                                0
+                            }
+                    );
+                    let current = ledger.snapshot().unwrap();
+                    for (id, stamp) in old.checkpoints {
+                        assert_eq!(current.checkpoints.get(&id), Some(&stamp), "{stage:?}");
+                    }
+                    let current_pending = pending(&ledger);
+                    assert!(
+                        old_pending
+                            .iter()
+                            .all(|entry| current_pending.contains(entry)),
+                        "{stage:?}"
+                    );
+                    let status = ledger.status().unwrap();
+                    assert_eq!(
+                        (
+                            status.sources,
+                            status.usage_occurrences,
+                            status.associations,
+                            status.tokens
+                        ),
+                        (3, 3, 3, 36)
+                    );
+                    // No inner rescan: the changed source is admitted only on a later pass.
+                    fs::write(&unstable, live_line(2, 3)).unwrap();
+                    let next =
+                        unix::collect(&mut ledger, &selected, &CHECKPOINT, &CHECKPOINT).unwrap();
+                    assert_eq!((next.0.sources_updated, next.1, next.6), (1, 2, 0));
+                    assert_eq!(ledger.status().unwrap().tokens, 37);
+                }
+            }
+        }
+
+        #[test]
+        fn late_change_to_metadata_skip_does_not_block_stable_sibling() {
+            let fixture = Fixture::new();
+            let dir = fixture.state();
+            let mut ledger = aicharts_ledger::Ledger::initialize(&dir, &CHECKPOINT).unwrap();
+            let src = fixture.write_source();
+            let selected = options(&dir, Some(&src), &["collect"]);
+            unix::collect(&mut ledger, &selected, &CHECKPOINT, &CHECKPOINT).unwrap();
+            let old = ledger.snapshot().unwrap();
+            let old_pending = pending(&ledger);
+            fs::write(src.join("new.jsonl"), live_line(2, 2)).unwrap();
+            let target = src.join("session.jsonl");
+            let result = unix::with_scan_hook(
+                move |stage, path| {
+                    if stage == unix::ScanStage::BeforeCommit && path == target {
+                        fs::write(path, "{invalid\n").unwrap();
+                    }
+                },
+                || unix::collect(&mut ledger, &selected, &CHECKPOINT, &CHECKPOINT),
+            )
+            .unwrap();
+            assert_eq!(
+                (result.0.sources_updated, result.1, result.5, result.6),
+                (1, 0, 0, 1)
+            );
+            let current = ledger.snapshot().unwrap();
+            for (id, stamp) in old.checkpoints {
+                assert_eq!(current.checkpoints.get(&id), Some(&stamp));
+            }
+            assert!(old_pending
+                .iter()
+                .all(|entry| pending(&ledger).contains(entry)));
+            assert_eq!(ledger.status().unwrap().tokens, 27);
+        }
+
+        #[test]
+        fn all_deferred_sources_leave_revision_checkpoints_and_pending_frames_unchanged() {
+            for retained in [false, true] {
+                let fixture = Fixture::new();
+                let dir = fixture.state();
+                let mut ledger = aicharts_ledger::Ledger::initialize(&dir, &CHECKPOINT).unwrap();
+                let src = fixture.write_source();
+                let selected = options(&dir, Some(&src), &["collect"]);
+                if retained {
+                    unix::collect(&mut ledger, &selected, &CHECKPOINT, &CHECKPOINT).unwrap();
+                }
+                let old = ledger.snapshot().unwrap();
+                let old_pending = pending(&ledger);
+                let result = unix::with_scan_hook(
+                    |stage, path| {
+                        if stage == unix::ScanStage::BeforeCommit {
+                            fs::write(path, "{invalid\n").unwrap();
+                        }
+                    },
+                    || unix::collect(&mut ledger, &selected, &CHECKPOINT, &CHECKPOINT),
+                )
+                .unwrap();
+                assert_eq!(
+                    (result.0.sources_updated, result.1, result.5, result.6),
+                    (0, 0, 0, 1)
+                );
+                assert_eq!(result.0.revision, old.revision);
+                assert_eq!(ledger.snapshot().unwrap().checkpoints, old.checkpoints);
+                assert_eq!(pending(&ledger), old_pending);
+            }
+        }
+
+        #[test]
+        fn stable_unfinished_sources_wait_without_advancing_new_or_retained_state() {
+            for retained in [false, true] {
+                let fixture = Fixture::new();
+                let dir = fixture.state();
+                let mut ledger = aicharts_ledger::Ledger::initialize(&dir, &CHECKPOINT).unwrap();
+                let src = fixture.write_source();
+                let selected = options(&dir, Some(&src), &["collect"]);
+                if retained {
+                    unix::collect(&mut ledger, &selected, &CHECKPOINT, &CHECKPOINT).unwrap();
+                }
+                let old = ledger.snapshot().unwrap();
+                let old_pending = pending(&ledger);
+                let source = src.join("session.jsonl");
+                let complete = fs::read_to_string(&source).unwrap() + &live_line(2, 5);
+                fs::write(&source, complete.trim_end_matches('\n')).unwrap();
+                for _ in 0..2 {
+                    let result =
+                        unix::collect(&mut ledger, &selected, &CHECKPOINT, &CHECKPOINT).unwrap();
+                    assert_eq!(
+                        (result.0.sources_updated, result.1, result.5, result.6),
+                        (0, 0, 0, 1)
+                    );
+                    assert_eq!(result.0.revision, old.revision);
+                    assert_eq!(ledger.snapshot().unwrap().checkpoints, old.checkpoints);
+                    assert_eq!(pending(&ledger), old_pending);
+                }
+                fs::write(&source, complete).unwrap();
+                let result =
+                    unix::collect(&mut ledger, &selected, &CHECKPOINT, &CHECKPOINT).unwrap();
+                assert_eq!((result.0.sources_updated, result.6), (1, 0));
+                assert_eq!(ledger.status().unwrap().tokens, 30);
+            }
+        }
+
+        #[test]
+        fn prefix_churn_still_fails_and_legacy_does_not_follow_replaced_paths() {
+            for prefix in [false, true] {
+                for symlink in [false, true] {
+                    if !prefix && !symlink {
+                        continue;
+                    }
+                    let fixture = Fixture::new();
+                    let dir = fixture.state();
+                    let mut ledger =
+                        aicharts_ledger::Ledger::initialize(&dir, &CHECKPOINT).unwrap();
+                    if prefix {
+                        drop(ledger);
+                        ledger = aicharts_ledger::Ledger::migrate_complete_prefix(
+                            &dir,
+                            &aicharts_ledger::LedgerIdentity::Legacy(&CHECKPOINT),
+                            0,
+                        )
+                        .unwrap();
+                    }
+                    let src = fixture.write_source();
+                    let selected = options(
+                        &dir,
+                        Some(&src),
+                        &[if prefix { "collect-prefix" } else { "collect" }],
+                    );
+                    let old = ledger.snapshot().unwrap();
+                    let result = unix::with_scan_hook(
+                        move |stage, path| {
+                            if stage == unix::ScanStage::BeforeCommit {
+                                if symlink {
+                                    let retained = path.with_extension("saved");
+                                    fs::rename(path, &retained).unwrap();
+                                    std::os::unix::fs::symlink(&retained, path).unwrap();
+                                } else {
+                                    fs::write(path, "{invalid\n").unwrap();
+                                }
+                            }
+                        },
+                        || unix::collect(&mut ledger, &selected, &CHECKPOINT, &CHECKPOINT),
+                    );
+                    // Replaced paths never contribute the parsed snapshot.
+                    if prefix {
+                        assert_eq!(result.err(), Some("source_changed_during_scan"));
+                    } else {
+                        assert_eq!(result.unwrap().6, 1);
+                    }
+                    assert_eq!(ledger.snapshot().unwrap().revision, old.revision);
+                    assert!(ledger.snapshot().unwrap().checkpoints.is_empty());
+                    assert!(pending(&ledger).is_empty());
+                }
+            }
+        }
+
         #[test]
         fn enrolled_dir_initializes_collects_and_reports_split_state() {
             let fixture = Fixture::new();
@@ -1117,7 +1626,7 @@ mod tests {
             )
             .unwrap();
             let before = ledger.status().unwrap().revision;
-            let (report, skipped, _deferred, _lines, bytes, _conflicted) =
+            let (report, skipped, _deferred, _lines, bytes, _conflicted, _sources_deferred) =
                 unix::collect_with_limit(
                     &mut ledger,
                     &options,
@@ -1133,7 +1642,7 @@ mod tests {
             assert_eq!(bytes, size * 3);
             assert_eq!(ledger.status().unwrap().revision - before, 3);
             // An idempotent re-collect skips every source and commits nothing.
-            let (report, skipped, _deferred, _lines, bytes, _conflicted) =
+            let (report, skipped, _deferred, _lines, bytes, _conflicted, _sources_deferred) =
                 unix::collect_with_limit(
                     &mut ledger,
                     &options,
@@ -1183,7 +1692,7 @@ mod tests {
             )
             .unwrap();
             let before = ledger.status().unwrap().revision;
-            let (report, skipped, _deferred, _lines, _bytes, _conflicted) =
+            let (report, skipped, _deferred, _lines, _bytes, _conflicted, _sources_deferred) =
                 unix::collect_with_limit(
                     &mut ledger,
                     &options,
@@ -1235,7 +1744,7 @@ mod tests {
             )
             .unwrap();
             let before = ledger.status().unwrap().revision;
-            let (report, skipped, _deferred, _lines, _bytes, _conflicted) =
+            let (report, skipped, _deferred, _lines, _bytes, _conflicted, _sources_deferred) =
                 unix::collect_with_limit(
                     &mut ledger,
                     &collect_options,
@@ -1317,7 +1826,7 @@ mod tests {
             )
             .unwrap();
             let before = ledger.status().unwrap().revision;
-            let (report, skipped, _deferred, _lines, _bytes, _conflicted) =
+            let (report, skipped, _deferred, _lines, _bytes, _conflicted, _sources_deferred) =
                 unix::collect_with_limit(
                     &mut ledger,
                     &collect_options,
