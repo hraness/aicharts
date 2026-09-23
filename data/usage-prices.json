@@ -3,8 +3,8 @@
   "registryRevision": 1,
   "source": {
     "url": "https://models.dev/api.json",
-    "retrievedAt": "2026-09-22",
-    "sha256": "97dd59b590124debb98907bdcff8f919bc2c694547d8340a1dcebb2d6ea87fee"
+    "retrievedAt": "2026-09-23",
+    "sha256": "db899d725fec14f05bc2f2ebd51220d832b0fc3ba47df0f5ef3ca5be75f3fd05"
   },
   "unit": "picousd-per-token",
   "basis": "dated-retail-estimate",
@@ -3027,6 +3027,12 @@
       "cacheWrite": "2500000",
       "output": "10000000"
     },
+    "amazon-bedrock\u0000global.moonshotai.kimi-k3": {
+      "input": "3000000",
+      "cacheRead": "300000",
+      "cacheWrite": "3750000",
+      "output": "15000000"
+    },
     "amazon-bedrock\u0000global.xai.grok-4.6": {
       "input": "2000000",
       "cacheRead": "500000",
@@ -3518,6 +3524,12 @@
       "cacheRead": null,
       "cacheWrite": null,
       "output": "6000000"
+    },
+    "amazon-bedrock\u0000us.moonshotai.kimi-k3": {
+      "input": "3300000",
+      "cacheRead": "330000",
+      "cacheWrite": "4125000",
+      "output": "16500000"
     },
     "amazon-bedrock\u0000us.writer.palmyra-x4-v1:0": {
       "input": "2500000",
@@ -5205,6 +5217,18 @@
       "cacheWrite": null,
       "output": "3480000"
     },
+    "cline-pass\u0000cline-pass/mimo-v2.6-flash": {
+      "input": "140000",
+      "cacheRead": "2800",
+      "cacheWrite": null,
+      "output": "280000"
+    },
+    "cline-pass\u0000cline-pass/mimo-v2.6-pro": {
+      "input": "435000",
+      "cacheRead": "3600",
+      "cacheWrite": null,
+      "output": "870000"
+    },
     "cline-pass\u0000cline-pass/minimax-m3": {
       "input": "300000",
       "cacheRead": "60000",
@@ -6434,6 +6458,12 @@
       "cacheRead": "500000",
       "cacheWrite": "6250000",
       "output": "25000000"
+    },
+    "crossmodel\u0000anthropic/claude-opus-5-5": {
+      "input": "4000000",
+      "cacheRead": "200000",
+      "cacheWrite": "5000000",
+      "output": "20000000"
     },
     "crossmodel\u0000anthropic/claude-sonnet-4-6": {
       "input": "3000000",
@@ -10269,6 +10299,18 @@
       "cacheWrite": "6250000",
       "output": "25000000"
     },
+    "github-copilot\u0000claude-opus-5-5": {
+      "input": "4000000",
+      "cacheRead": "200000",
+      "cacheWrite": "5000000",
+      "output": "20000000"
+    },
+    "github-copilot\u0000claude-opus-5.5": {
+      "input": "4000000",
+      "cacheRead": "200000",
+      "cacheWrite": "5000000",
+      "output": "20000000"
+    },
     "github-copilot\u0000claude-sonnet-4-6": {
       "input": "3000000",
       "cacheRead": "300000",
@@ -13857,6 +13899,12 @@
       "cacheWrite": null,
       "output": "10000000"
     },
+    "kilo\u0000cohere/command-a-plus": {
+      "input": "300000",
+      "cacheRead": "150000",
+      "cacheWrite": null,
+      "output": "1500000"
+    },
     "kilo\u0000cohere/command-r-08-2024": {
       "input": "150000",
       "cacheRead": null,
@@ -14739,6 +14787,30 @@
       "cacheWrite": "12500000",
       "output": "50000000"
     },
+    "kilo\u0000openai/gpt-6-luna": {
+      "input": "100000",
+      "cacheRead": "10000",
+      "cacheWrite": "125000",
+      "output": "500000"
+    },
+    "kilo\u0000openai/gpt-6-luna-pro": {
+      "input": "100000",
+      "cacheRead": "10000",
+      "cacheWrite": "125000",
+      "output": "500000"
+    },
+    "kilo\u0000openai/gpt-6-sol": {
+      "input": "2000000",
+      "cacheRead": "200000",
+      "cacheWrite": "2500000",
+      "output": "10000000"
+    },
+    "kilo\u0000openai/gpt-6-sol-pro": {
+      "input": "2000000",
+      "cacheRead": "200000",
+      "cacheWrite": "2500000",
+      "output": "10000000"
+    },
     "kilo\u0000openai/gpt-audio": {
       "input": "2500000",
       "cacheRead": null,
@@ -15183,6 +15255,12 @@
       "cacheWrite": "2500000",
       "output": "6000000"
     },
+    "kilo\u0000qwen/qwen3.8-omni-flash": {
+      "input": "150000",
+      "cacheRead": "16000",
+      "cacheWrite": null,
+      "output": "470000"
+    },
     "kilo\u0000rekaai/reka-edge": {
       "input": "100000",
       "cacheRead": null,
@@ -15286,10 +15364,10 @@
       "output": "295000"
     },
     "kilo\u0000tencent/hy3": {
-      "input": "82500",
-      "cacheRead": "20625",
+      "input": "130000",
+      "cacheRead": "33000",
       "cacheWrite": null,
-      "output": "330000"
+      "output": "530000"
     },
     "kilo\u0000tencent/hy3-preview": {
       "input": "180000",
@@ -15632,6 +15710,12 @@
       "cacheRead": "500000",
       "cacheWrite": "6250000",
       "output": "25000000"
+    },
+    "llmgateway\u0000claude-opus-5-5": {
+      "input": "4000000",
+      "cacheRead": "200000",
+      "cacheWrite": "5000000",
+      "output": "20000000"
     },
     "llmgateway\u0000claude-sonnet-4-5": {
       "input": "3000000",
@@ -16082,6 +16166,18 @@
       "cacheRead": "1000000",
       "cacheWrite": "12500000",
       "output": "50000000"
+    },
+    "llmgateway\u0000gpt-6-luna": {
+      "input": "100000",
+      "cacheRead": "10000",
+      "cacheWrite": "125000",
+      "output": "500000"
+    },
+    "llmgateway\u0000gpt-6-sol": {
+      "input": "2000000",
+      "cacheRead": "200000",
+      "cacheWrite": "2500000",
+      "output": "10000000"
     },
     "llmgateway\u0000gpt-oss-120b": {
       "input": "32000",
@@ -16898,6 +16994,12 @@
       "cacheRead": "500000",
       "cacheWrite": "6250000",
       "output": "25000000"
+    },
+    "llmgateway-providers\u0000anthropic/claude-opus-5-5": {
+      "input": "4000000",
+      "cacheRead": "200000",
+      "cacheWrite": "5000000",
+      "output": "20000000"
     },
     "llmgateway-providers\u0000anthropic/claude-sonnet-4-5": {
       "input": "3000000",
@@ -18470,6 +18572,18 @@
       "cacheRead": "1000000",
       "cacheWrite": "12500000",
       "output": "50000000"
+    },
+    "llmgateway-providers\u0000openai/gpt-6-luna": {
+      "input": "100000",
+      "cacheRead": "10000",
+      "cacheWrite": "125000",
+      "output": "500000"
+    },
+    "llmgateway-providers\u0000openai/gpt-6-sol": {
+      "input": "2000000",
+      "cacheRead": "200000",
+      "cacheWrite": "2500000",
+      "output": "10000000"
     },
     "llmgateway-providers\u0000openai/o1": {
       "input": "15000000",
@@ -20184,8 +20298,20 @@
     "merge-gateway\u0000openai/gpt-6-astra": {
       "input": "10000000",
       "cacheRead": "1000000",
-      "cacheWrite": null,
+      "cacheWrite": "12500000",
       "output": "50000000"
+    },
+    "merge-gateway\u0000openai/gpt-6-luna": {
+      "input": "100000",
+      "cacheRead": "10000",
+      "cacheWrite": "125000",
+      "output": "500000"
+    },
+    "merge-gateway\u0000openai/gpt-6-sol": {
+      "input": "2000000",
+      "cacheRead": "200000",
+      "cacheWrite": "2500000",
+      "output": "10000000"
     },
     "merge-gateway\u0000openai/gpt-oss-120b": {
       "input": "90000",
@@ -21404,6 +21530,18 @@
       "cacheRead": "500000",
       "cacheWrite": "6250000",
       "output": "25000000"
+    },
+    "nano-gpt\u0000anthropic/claude-opus-5-5": {
+      "input": "4000000",
+      "cacheRead": "200000",
+      "cacheWrite": "5000000",
+      "output": "20000000"
+    },
+    "nano-gpt\u0000anthropic/claude-opus-5.5": {
+      "input": "4000000",
+      "cacheRead": "200000",
+      "cacheWrite": "5000000",
+      "output": "20000000"
     },
     "nano-gpt\u0000anthropic/claude-opus-latest": {
       "input": "5000000",
@@ -22959,6 +23097,12 @@
       "cacheWrite": null,
       "output": "10000000"
     },
+    "nano-gpt\u0000nano/lumen-stealth": {
+      "input": "50000",
+      "cacheRead": null,
+      "cacheWrite": null,
+      "output": "0"
+    },
     "nano-gpt\u0000nanogpt/coding-router": {
       "input": "1100000",
       "cacheRead": "110000",
@@ -23276,6 +23420,30 @@
       "cacheRead": "1000000",
       "cacheWrite": "12500000",
       "output": "50000000"
+    },
+    "nano-gpt\u0000openai/gpt-6-luna": {
+      "input": "50000",
+      "cacheRead": "5000",
+      "cacheWrite": "62500",
+      "output": "250000"
+    },
+    "nano-gpt\u0000openai/gpt-6-luna-pro": {
+      "input": "50000",
+      "cacheRead": "5000",
+      "cacheWrite": "62500",
+      "output": "250000"
+    },
+    "nano-gpt\u0000openai/gpt-6-sol": {
+      "input": "2000000",
+      "cacheRead": "200000",
+      "cacheWrite": "2500000",
+      "output": "10000000"
+    },
+    "nano-gpt\u0000openai/gpt-6-sol-pro": {
+      "input": "2000000",
+      "cacheRead": "200000",
+      "cacheWrite": "2500000",
+      "output": "10000000"
     },
     "nano-gpt\u0000openai/gpt-astra-latest": {
       "input": "10000000",
@@ -26055,6 +26223,18 @@
       "cacheWrite": "6250000",
       "output": "25000000"
     },
+    "ofox\u0000anthropic/claude-opus-5-5": {
+      "input": "4000000",
+      "cacheRead": "200000",
+      "cacheWrite": "5000000",
+      "output": "20000000"
+    },
+    "ofox\u0000anthropic/claude-opus-5.5": {
+      "input": "4000000",
+      "cacheRead": "200000",
+      "cacheWrite": "5000000",
+      "output": "20000000"
+    },
     "ofox\u0000anthropic/claude-sonnet-4-5": {
       "input": "3000000",
       "cacheRead": "300000",
@@ -26529,6 +26709,18 @@
       "cacheWrite": "10000000",
       "output": "40000000"
     },
+    "ofox\u0000openai/gpt-6-luna": {
+      "input": "80000",
+      "cacheRead": "8000",
+      "cacheWrite": "100000",
+      "output": "400000"
+    },
+    "ofox\u0000openai/gpt-6-sol": {
+      "input": "1600000",
+      "cacheRead": "160000",
+      "cacheWrite": "2000000",
+      "output": "8000000"
+    },
     "ofox\u0000qwen/qwen-flash": {
       "input": "22000",
       "cacheRead": "4300",
@@ -26776,6 +26968,12 @@
       "output": "6000000"
     },
     "ofox\u0000x-ai/grok-4.6": {
+      "input": "2000000",
+      "cacheRead": "500000",
+      "cacheWrite": null,
+      "output": "6000000"
+    },
+    "ofox\u0000x-ai/grok-4.7": {
       "input": "2000000",
       "cacheRead": "500000",
       "cacheWrite": null,
@@ -27236,6 +27434,12 @@
       "cacheRead": "500000",
       "cacheWrite": "6250000",
       "output": "25000000"
+    },
+    "opencode\u0000claude-opus-5-5": {
+      "input": "4000000",
+      "cacheRead": "200000",
+      "cacheWrite": "5000000",
+      "output": "20000000"
     },
     "opencode\u0000claude-sonnet-4-6": {
       "input": "3000000",
@@ -27909,6 +28113,12 @@
       "cacheWrite": null,
       "output": "10000000"
     },
+    "openrouter\u0000cohere/command-a-plus": {
+      "input": "300000",
+      "cacheRead": "150000",
+      "cacheWrite": null,
+      "output": "1500000"
+    },
     "openrouter\u0000cohere/command-r-08-2024": {
       "input": "150000",
       "cacheRead": null,
@@ -27982,10 +28192,10 @@
       "output": "410000"
     },
     "openrouter\u0000deepseek/deepseek-v4-flash": {
-      "input": "49000",
-      "cacheRead": "9800",
+      "input": "88606",
+      "cacheRead": "17721",
       "cacheWrite": null,
-      "output": "98000"
+      "output": "177212"
     },
     "openrouter\u0000deepseek/deepseek-v4-flash-0731": {
       "input": "40000",
@@ -28000,10 +28210,10 @@
       "output": "660000"
     },
     "openrouter\u0000deepseek/deepseek-v4-pro": {
-      "input": "915936",
-      "cacheRead": "76328",
+      "input": "955260",
+      "cacheRead": "79605",
       "cacheWrite": null,
-      "output": "1831872"
+      "output": "1910520"
     },
     "openrouter\u0000deepseek/deepseek-v4-pro-0813": {
       "input": "660000",
@@ -28012,8 +28222,8 @@
       "output": "1980000"
     },
     "openrouter\u0000deepseek/deepseek-v4.1-flash": {
-      "input": "150000",
-      "cacheRead": "3000",
+      "input": "94000",
+      "cacheRead": "50000",
       "cacheWrite": null,
       "output": "600000"
     },
@@ -29079,6 +29289,12 @@
       "cacheWrite": "2500000",
       "output": "6000000"
     },
+    "openrouter\u0000qwen/qwen3.8-omni-flash": {
+      "input": "150000",
+      "cacheRead": "16000",
+      "cacheWrite": null,
+      "output": "470000"
+    },
     "openrouter\u0000rekaai/reka-edge": {
       "input": "100000",
       "cacheRead": null,
@@ -29170,10 +29386,10 @@
       "output": "295000"
     },
     "openrouter\u0000tencent/hy3": {
-      "input": "82500",
-      "cacheRead": "20625",
+      "input": "132000",
+      "cacheRead": "33000",
       "cacheWrite": null,
-      "output": "330000"
+      "output": "528000"
     },
     "openrouter\u0000tencent/hy3-preview": {
       "input": "180000",
@@ -29344,10 +29560,10 @@
       "output": "2041600"
     },
     "openrouter\u0000z-ai/glm-5.3": {
-      "input": "653800",
-      "cacheRead": "121420",
+      "input": "840000",
+      "cacheRead": "156000",
       "cacheWrite": null,
-      "output": "2054800"
+      "output": "2640000"
     },
     "openrouter\u0000z-ai/glm-5.3-flash": {
       "input": "150000",
@@ -30555,6 +30771,12 @@
       "cacheWrite": "150000",
       "output": "150000"
     },
+    "pioneer\u0000fastino/gliguard-pii-multi": {
+      "input": "150000",
+      "cacheRead": "150000",
+      "cacheWrite": "150000",
+      "output": "150000"
+    },
     "pioneer\u0000fastino/gliner2-base-v1": {
       "input": "150000",
       "cacheRead": "150000",
@@ -30580,6 +30802,12 @@
       "output": "150000"
     },
     "pioneer\u0000fastino/gliner2-privacy-filter-pii-multi": {
+      "input": "150000",
+      "cacheRead": "150000",
+      "cacheWrite": "150000",
+      "output": "150000"
+    },
+    "pioneer\u0000fastino/gliner2.5-multi-v1": {
       "input": "150000",
       "cacheRead": "150000",
       "cacheWrite": "150000",
@@ -32048,6 +32276,18 @@
       "cacheRead": "500000",
       "cacheWrite": "6250000",
       "output": "25000000"
+    },
+    "requesty\u0000claude-opus-5-5": {
+      "input": "5000000",
+      "cacheRead": "500000",
+      "cacheWrite": "6250000",
+      "output": "25000000"
+    },
+    "requesty\u0000claude-opus-5-5@eu": {
+      "input": "5500000",
+      "cacheRead": "550000",
+      "cacheWrite": "6875000",
+      "output": "27500000"
     },
     "requesty\u0000claude-opus-5@eu": {
       "input": "5500000",
@@ -33891,6 +34131,12 @@
       "cacheWrite": null,
       "output": "1110000"
     },
+    "stepfun\u0000step-5-preview": {
+      "input": "959000",
+      "cacheRead": "48000",
+      "cacheWrite": null,
+      "output": "2741000"
+    },
     "stepfun-ai\u0000step-1-32k": {
       "input": "2050000",
       "cacheRead": "410000",
@@ -35685,11 +35931,35 @@
       "cacheWrite": "6250000",
       "output": "25000000"
     },
+    "vercel\u0000anthropic/claude-opus-5-5": {
+      "input": "4000000",
+      "cacheRead": "200000",
+      "cacheWrite": "5000000",
+      "output": "20000000"
+    },
+    "vercel\u0000anthropic/claude-opus-5-5-fast": {
+      "input": "8000000",
+      "cacheRead": "400000",
+      "cacheWrite": "10000000",
+      "output": "40000000"
+    },
     "vercel\u0000anthropic/claude-opus-5-fast": {
       "input": "10000000",
       "cacheRead": "1000000",
       "cacheWrite": "12500000",
       "output": "50000000"
+    },
+    "vercel\u0000anthropic/claude-opus-5.5": {
+      "input": "4000000",
+      "cacheRead": "200000",
+      "cacheWrite": "5000000",
+      "output": "20000000"
+    },
+    "vercel\u0000anthropic/claude-opus-5.5-fast": {
+      "input": "8000000",
+      "cacheRead": "400000",
+      "cacheWrite": "10000000",
+      "output": "40000000"
     },
     "vercel\u0000anthropic/claude-sonnet-4-5": {
       "input": "3000000",
@@ -37118,6 +37388,12 @@
       "cacheRead": "30000",
       "cacheWrite": null,
       "output": "650000"
+    },
+    "wandb\u0000google/gemma-4-26b-a4b-it": {
+      "input": "100000",
+      "cacheRead": "50000",
+      "cacheWrite": null,
+      "output": "300000"
     },
     "wandb\u0000google/gemma-4-31b-it": {
       "input": "100000",
