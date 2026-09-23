@@ -3,6 +3,7 @@ import { PUBLIC_BLOG_SLUGS } from "@/lib/public-analytics-routes";
 import { createAaIndexCostArticle } from "./aa-index-cost-article";
 import { createCodingAgentScoreHoldoutsArticle } from "./coding-agent-score-holdouts-article";
 import { createDevinFusionCostSavingArticle } from "./devin-fusion-cost-saving-article";
+import { createGrok47Article } from "./grok-4-7-coding-agent-index-article";
 import { createHarnessDesignArticle } from "./harness-design-coding-agents-article";
 import { createHarnessTaxArticle } from "./harnesstax-coding-agent-harness-article";
 import { createMimoV26Article } from "./mimo-v2-6-pro-cost-frontier-article";
@@ -248,6 +249,30 @@ export const BLOG_SOURCES = {
     url: "https://artificialanalysis.ai/models",
     year: 2026,
   },
+  artificialAnalysisGrok47: {
+    note:
+      "The September 21, 2026 launch note owns the 47 to 56 Coding Agent Index step for Grok Build, the native-harness rank claim, the three component gains, the 81k output tokens per Intelligence Index task, the +2 point Intelligence Index gain, and the statement that Grok Build results are separate from the standardized Intelligence Index harness.",
+    publication: "Artificial Analysis",
+    title: "Benchmarking Grok 4.7",
+    url: "https://artificialanalysis.ai/articles/benchmarking-grok-4-7",
+    year: 2026,
+  },
+  artificialAnalysisGrok47Model: {
+    note:
+      "The model page captured September 23, 2026 UTC owns the 46 index score, the proprietary label, the September 21, 2026 release date, the $2.00 and $6.00 per million token prices with a 75% cache discount, the $3.74 cost per index task, the 39.3 tokens per second output speed, the 240M output tokens across the index, and the 500k token context window.",
+    publication: "Artificial Analysis",
+    title: "Grok 4.7 (xhigh): Intelligence, Performance & Price Analysis",
+    url: "https://artificialanalysis.ai/models/grok-4-7",
+    year: 2026,
+  },
+  xaiGrok47Announcement: {
+    note:
+      "The September 21, 2026 launch page owns xAI’s description of the model, the $2 and $6 per million token prices, the same-price-as-Grok-4.6 statement, the Cursor and Grok Build availability, and a vendor-run benchmark table that this site does not chart.",
+    publication: "SpaceXAI",
+    title: "Introducing Grok 4.7",
+    url: "https://x.ai/news/grok-4-7",
+    year: 2026,
+  },
 } as const satisfies Record<string, BlogSource>;
 
 export type BlogSourceId = keyof typeof BLOG_SOURCES;
@@ -413,6 +438,7 @@ const mirrorCodeArticle = {
 } as const satisfies BlogArticle;
 
 export const blogArticles = [
+  createGrok47Article(),
   createMimoV26Article(),
   createHarnessDesignArticle(),
   createHarnessTaxArticle(),

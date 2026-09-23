@@ -240,6 +240,26 @@
       },
       "validation": "decode-passed",
       "review": "accepted"
+    },
+    {
+      "slug": "grok-4-7-coding-agent-index",
+      "promptSha256": "ffba129024de00345b0c1f48b93cc1e89ecdd0cb48e3af88f5db5a2b095e89d8",
+      "master": {
+        "path": "/images/blog/grok-4-7-coding-agent-index.webp",
+        "width": 1536,
+        "height": 864,
+        "bytes": 73398,
+        "sha256": "d6bbdb612bccd75470de5930aea3a73be525521b5245c6b6d69e2b4a01761f53"
+      },
+      "receiptPath": "artifacts/slopcamera/generated/gateway/20260923T150512173Z-image-4365db6c-c83/receipt.json",
+      "jobPath": "artifacts/slopcamera/generated/gateway-jobs/gateway_bc71b5ff0a604e44a40268303d9d329f.json",
+      "generator": {
+        "package": "@hraness/slopcamera",
+        "version": "3.2.5",
+        "sourceCommit": "66b4322030f4de24f4d5b6d0c2515c109259f901"
+      },
+      "validation": "decode-passed",
+      "review": "accepted"
     }
   ]
 }

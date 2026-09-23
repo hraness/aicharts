@@ -9,6 +9,12 @@ import editorialImageManifest from "@/editorial/images.manifest.json";
 import { parseArtificialAnalysisIntelligenceV43Snapshot } from "@/lib/artificial-analysis-intelligence-v4-3-data";
 import { parseCodingAgentSnapshot } from "@/lib/coding-agent-data";
 import {
+  formatFineCostMultiple,
+  grokCodingAgentPlacement,
+  grokIntelligencePlacement,
+  spellOrdinal,
+} from "@/lib/grok-4-7-placement";
+import {
   formatCostMultiple,
   formatPointGap,
   mimoClosedReferences,
@@ -92,6 +98,14 @@ import {
   harnessTaxAlternativeWins,
   largestSameModelCostRatio,
 } from "./harnesstax-coding-agent-harness-article";
+import {
+  GROK_47,
+  GROK_47_ARTICLE_PUBLISHED_AT,
+  createGrok47Article,
+  formatMillionTokens,
+  formatMinutes,
+  formatWholeTokens,
+} from "./grok-4-7-coding-agent-index-article";
 import {
   MIMO_V26,
   MIMO_V26_ARTICLE_PUBLISHED_AT,
@@ -201,7 +215,11 @@ describe("AI Charts benchmark notes", () => {
       expect(articleToMarkdown(article)).not.toContain("/images/blog/");
       expect(article.authorshipDisclosure).toBe(BLOG_AUTHORSHIP_DISCLOSURE);
       expect(articleToMarkdown(article)).toContain(BLOG_AUTHORSHIP_DISCLOSURE);
-      if (article.slug === "mimo-v2-6-pro-cost-frontier") {
+      if (article.slug === "grok-4-7-coding-agent-index") {
+        expect(article.publishedAt).toBe(GROK_47_ARTICLE_PUBLISHED_AT);
+        expect(article.updatedAt >= article.publishedAt).toBeTrue();
+        expect(articleToMarkdown(article)).toContain("captured September 23, 2026 UTC");
+      } else if (article.slug === "mimo-v2-6-pro-cost-frontier") {
         expect(article.publishedAt).toBe(MIMO_V26_ARTICLE_PUBLISHED_AT);
         expect(article.updatedAt >= article.publishedAt).toBeTrue();
         expect(articleToMarkdown(article)).toContain("captured September 22, 2026 UTC");
@@ -804,6 +822,203 @@ describe("AI Charts benchmark notes", () => {
     expect(articleToMarkdown(laterRetrieval)).toContain("Dec 1, 2026, 8:00 AM UTC");
   });
 
+  test("places Grok 4.7 on both checked charts from the same rows the charts plot", () => {
+    const codingParsed = parseCodingAgentSnapshot(codingAgentData);
+    if (!codingParsed.ok) throw codingParsed.error;
+    const intelligenceParsed = parseArtificialAnalysisIntelligenceV43Snapshot(intelligenceData);
+    if (!intelligenceParsed.ok) throw intelligenceParsed.error;
+    const article = getBlogArticle("grok-4-7-coding-agent-index");
+    expect(article).toBeDefined();
+    if (article === undefined) return;
+
+    const markup = renderToStaticMarkup(
+      createElement(ArticleBody, { blocks: article.body }),
+    );
+    const markdown = articleToMarkdown(article);
+
+    expect(article.section).toBe("AI model benchmarks");
+    expect(article.sourceIds).toEqual([
+      "artificialAnalysisCodingAgents",
+      "artificialAnalysisIntelligenceIndex",
+      "artificialAnalysisGrok47",
+      "artificialAnalysisGrok47Model",
+      "xaiGrok47Announcement",
+    ]);
+    expect(blogEditorialImage(article.slug)?.slug).toBe(article.slug);
+    for (const sourceId of article.sourceIds) {
+      expect(markup).toContain(`href="${BLOG_SOURCES[sourceId].url}"`);
+    }
+    expect(markup.match(new RegExp(`href="${BLOG_SOURCES.xaiGrok47Announcement.url}"`, "gu")))
+      .toHaveLength(1);
+    expect(article.nextStep?.links.map(link => link.href))
+      .toEqual(["/coding", "/#intelligence-index", "/models/xai/grok-4-7/index"]);
+    expect(markup).toContain(formatRetrievedAt(codingParsed.value.source.retrievedAt));
+    expect(markup).toContain(formatRetrievedAt(intelligenceParsed.value.source.retrievedAt));
+    expect(markdown).toContain(intelligenceParsed.value.benchmark.version);
+    expect(markdown).toContain(GROK_47.xai.capabilityClaim);
+    expect(markdown).toContain(GROK_47.xai.samePriceClaim);
+    expect(markdown).toContain(GROK_47.artificialAnalysis.nativeHarnessRank);
+    expect(markdown).toContain(GROK_47.artificialAnalysis.separateHarnesses);
+    expect(markdown).toContain(GROK_47.artificialAnalysis.componentGains);
+    expect(markdown).toContain("vendor-run table");
+    expect(markdown).not.toContain("CursorBench 4.0 against");
+    expect(markdown).not.toContain("46.3%");
+    expect(markdown).not.toContain("—");
+    expect(markdown).not.toContain("refresh");
+    expect(markdown).not.toContain("schema");
+    expect(markdown).not.toContain("`");
+
+    // Every coding-agent sentence and cell comes from the rows the coding chart plots.
+    const coding = grokCodingAgentPlacement(codingParsed.value.records);
+    expect(coding).toBeDefined();
+    if (coding === undefined) return;
+    const codingScore = formatSnapshotScore(coding.record.benchmarks.aaIndex);
+    expect(article.title).toBe(`What Grok 4.7’s ${Math.round(coding.record.benchmarks.aaIndex)} on the coding-agent chart measures`);
+    expect(markup).toContain(codingScore);
+    expect(markup).toContain(formatSnapshotCostUsd(coding.record.economics.costUsd));
+    expect(markdown).toContain(`${spellOrdinal(coding.rank)} of the ${coding.indexedCount} configurations`);
+    for (const candidate of coding.higher) {
+      expect(markup).toContain(candidate.seriesLabel);
+      expect(markup).toContain(formatSnapshotScore(candidate.benchmarks.aaIndex));
+    }
+    if (coding.onCostFrontier) {
+      expect(markdown).toContain("It is on the chart’s cost frontier");
+    } else {
+      expect(markdown).toContain("It is not on the chart’s cost frontier");
+      for (const dominator of coding.dominators) {
+        expect(markup).toContain(dominator.seriesLabel);
+        expect(markup).toContain(formatSnapshotCostUsd(dominator.economics.costUsd));
+      }
+    }
+    for (const component of coding.components) {
+      expect(markup).toContain(`${component.rank} of ${component.count}`);
+      expect(markup).toContain(formatSnapshotScore(component.value));
+    }
+    for (const candidate of coding.lowerIndexHigherTerminal) {
+      expect(markup).toContain(candidate.seriesLabel);
+      expect(markup).toContain(formatSnapshotScore(candidate.benchmarks.terminalBench));
+    }
+    if (coding.predecessor !== undefined) {
+      expect(markup).toContain(formatSnapshotScore(coding.predecessor.benchmarks.aaIndex));
+      expect(markup).toContain(formatSnapshotCostUsd(coding.predecessor.economics.costUsd));
+      expect(markup).toContain(formatMillionTokens(coding.predecessor.usage.totalTokens));
+      expect(markup).toContain(formatMinutes(coding.predecessor.economics.durationSeconds));
+    }
+
+    // Every Intelligence Index sentence and cell comes from the comparable cohort.
+    const intelligence = grokIntelligencePlacement(intelligenceParsed.value.records);
+    expect(intelligence).toBeDefined();
+    if (intelligence === undefined) return;
+    const cost = intelligence.record.costUsdPerTask?.total ?? 0;
+    expect(markup).toContain(formatSnapshotScore(intelligence.record.intelligenceIndex));
+    expect(markup).toContain(formatSnapshotCostUsd(cost));
+    expect(markup).toContain(formatWholeTokens(intelligence.record.outputTokensPerTask.total));
+    expect(markdown).toContain(`${spellOrdinal(intelligence.rank)} of the ${intelligence.cohortSize} comparable configurations`);
+    expect(markup).toContain(intelligence.leader.name);
+    if (intelligence.onCostFrontier) {
+      expect(markdown).toContain("It is on the cost frontier");
+    } else {
+      expect(markdown).toContain("It is not on the cost frontier");
+    }
+    if (intelligence.cheapestHigher !== undefined) {
+      expect(markup).toContain(intelligence.cheapestHigher.record.name);
+      expect(markup).toContain(formatFineCostMultiple(intelligence.cheapestHigher.multiple));
+    }
+    for (const neighbor of intelligence.neighbors) {
+      expect(markup).toContain(neighbor.name);
+      expect(markup).toContain(formatSnapshotScore(neighbor.intelligenceIndex));
+      expect(markup).toContain(formatFineCostMultiple((neighbor.costUsdPerTask?.total ?? 0) / cost));
+    }
+    if (intelligence.high !== undefined) {
+      expect(markup).toContain(formatSnapshotCostUsd(intelligence.high.costUsdPerTask?.total ?? 0));
+    }
+  });
+
+  test("states the Grok 4.7 placement from the records it is given", () => {
+    const codingParsed = parseCodingAgentSnapshot(codingAgentData);
+    if (!codingParsed.ok) throw codingParsed.error;
+    const intelligenceParsed = parseArtificialAnalysisIntelligenceV43Snapshot(intelligenceData);
+    if (!intelligenceParsed.ok) throw intelligenceParsed.error;
+    const codingSnapshot = codingParsed.value;
+    const intelligenceSnapshot = intelligenceParsed.value;
+    const isGrok = (record: { agent: string; model: string }): boolean => (
+      record.agent === "Grok Build" && record.model === "Grok 4.7"
+    );
+
+    const withoutCoding = createGrok47Article({
+      ...codingSnapshot,
+      records: codingSnapshot.records.filter(record => !isGrok(record)),
+    }, intelligenceSnapshot);
+    const withoutCodingMarkdown = articleToMarkdown(withoutCoding);
+    expect(withoutCoding.title).toBe("Where Grok 4.7 lands on the AI Charts snapshots");
+    expect(withoutCodingMarkdown).toContain("does not store a Grok Build · Grok 4.7 row");
+    expect(withoutCodingMarkdown).toContain("cannot split the index into its components");
+    expect(withoutCodingMarkdown).toContain("cannot compare the two generations in one harness");
+    expect(withoutCodingMarkdown).toContain("with one of the two rows absent");
+    expect(withoutCodingMarkdown).not.toContain("| Coding agents (AA Index) |");
+
+    const withoutIntelligence = createGrok47Article(codingSnapshot, {
+      ...intelligenceSnapshot,
+      records: intelligenceSnapshot.records.filter(record => record.release.slug !== "grok-4-7"),
+    });
+    const withoutIntelligenceMarkdown = articleToMarkdown(withoutIntelligence);
+    expect(withoutIntelligence.title).toContain("on the coding-agent chart measures");
+    expect(withoutIntelligenceMarkdown).toContain("does not store a Grok 4.7 (xhigh) row that meets the comparable-cohort rule");
+    expect(withoutIntelligenceMarkdown).toContain("does not store a comparable Grok 4.7 (xhigh) row");
+    expect(withoutIntelligenceMarkdown).not.toContain("| Intelligence Index |");
+
+    const grokOnly = createGrok47Article({
+      ...codingSnapshot,
+      records: codingSnapshot.records.filter(isGrok),
+      updates: [],
+    }, {
+      ...intelligenceSnapshot,
+      records: intelligenceSnapshot.records.filter(record => record.slug === "grok-4-7"),
+    });
+    const grokOnlyMarkdown = articleToMarkdown(grokOnly);
+    expect(grokOnlyMarkdown).toContain("No configuration scores higher.");
+    expect(grokOnlyMarkdown).toContain("It is on the chart’s cost frontier");
+    expect(grokOnlyMarkdown).toContain("records no higher-scoring configuration added after that note");
+    expect(grokOnlyMarkdown).toContain("Grok 4.7 leads");
+    expect(grokOnlyMarkdown).toContain("order Grok 4.7 the same way");
+    expect(grokOnlyMarkdown).toContain("does not store both Grok Build · Grok 4.6 and Grok Build · Grok 4.7");
+    expect(grokOnlyMarkdown).toContain("It is on the cost frontier");
+    expect(grokOnlyMarkdown).toContain("No configuration scores higher.");
+    expect(grokOnlyMarkdown).toContain("zero other configurations within one index point");
+    expect(grokOnlyMarkdown).toContain("does not store a comparable Grok 4.7 (high) row");
+    expect(grokOnly.dek).toContain("on the cost frontier of both charts");
+
+    const grokRecord = codingSnapshot.records.find(isGrok);
+    if (grokRecord === undefined || grokRecord.economics.costUsd === null || grokRecord.benchmarks.aaIndex === null) {
+      throw new Error("Checked snapshot must store the Grok Build · Grok 4.7 row.");
+    }
+    const singleDominator = {
+      ...grokRecord,
+      agent: "Twin Harness",
+      benchmarks: { ...grokRecord.benchmarks, aaIndex: grokRecord.benchmarks.aaIndex + 0.5 },
+      economics: { ...grokRecord.economics, costUsd: grokRecord.economics.costUsd / 2 },
+      id: "twin",
+      seriesId: "Twin Harness:twin",
+      seriesLabel: "Twin Harness · Twin",
+    };
+    const dominated = articleToMarkdown(createGrok47Article({
+      ...codingSnapshot,
+      records: [...codingSnapshot.records.filter(isGrok), singleDominator],
+      updates: [],
+    }, intelligenceSnapshot));
+    expect(dominated).toContain("One configuration scores higher: Twin Harness · Twin (xhigh)");
+    expect(dominated).toContain("It is not on the chart’s cost frontier: Twin Harness · Twin (xhigh) scores");
+    expect(dominated).not.toContain("| Twin Harness · Twin |");
+
+    const laterRetrieval = createGrok47Article({
+      ...codingSnapshot,
+      source: { ...codingSnapshot.source, retrievedAt: "2026-12-01T08:00:00.000Z" },
+    }, intelligenceSnapshot);
+    expect(laterRetrieval.updatedAt).toBe("2026-12-01");
+    expect(laterRetrieval.dek).toContain("On the December 1, 2026 snapshots");
+    expect(articleToMarkdown(laterRetrieval)).toContain("Dec 1, 2026, 8:00 AM UTC");
+  });
+
   test("reconstructs the harness-design tables, the managed-minus-T0 gap, and the component effects", () => {
     const parsed = parseCodingAgentSnapshot(codingAgentData);
     if (!parsed.ok) throw parsed.error;
@@ -1243,6 +1458,9 @@ describe("AI Charts benchmark notes", () => {
     expect(markup).toContain(`href="${BLOG_SOURCES.xiaomiMimoV26TechnicalReport.url}"`);
     expect(markup).toContain(`href="${BLOG_SOURCES.artificialAnalysisMimoV26Pro.url}"`);
     expect(markup).toContain(`href="${BLOG_SOURCES.openRouterMimoV26ProUltraSpeed.url}"`);
+    expect(markup).toContain(`href="${BLOG_SOURCES.artificialAnalysisGrok47.url}"`);
+    expect(markup).toContain(`href="${BLOG_SOURCES.artificialAnalysisGrok47Model.url}"`);
+    expect(markup).toContain(`href="${BLOG_SOURCES.xaiGrok47Announcement.url}"`);
   });
 
   test("renders the index, static routes, breadcrumbs, dates, and sources", async () => {
