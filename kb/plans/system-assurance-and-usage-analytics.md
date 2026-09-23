@@ -466,7 +466,7 @@ The integration owner controls manifests/lockfiles, shared schemas/capacity/metr
 
 ### Phase 1B — Cloud safety and ownership repairs
 
-- **Status:** In progress
+- **Status:** Complete
 - **Depends on:** 0, 2A
 - **Objective:** Restore, retry, migration and revocation preserve authority and every distinct contribution.
 - **Scope:** F02–F04, F09–F13; admission/enrollment/stats/fence effect boundaries and capacity parser compatibility.
@@ -490,7 +490,7 @@ The integration owner controls manifests/lockfiles, shared schemas/capacity/metr
 
 ### Phase 2B — Repaired protocols and implementation conformance
 
-- **Status:** Not started
+- **Status:** In progress
 - **Depends on:** 2A, 1A, 1B, 1C
 - **Objective:** M1–M7 have checked safety properties, explicit conditional liveness and replayable counterexamples.
 - **Scope:** verify/tla, model/action maps, trace format and CI evidence.
@@ -514,7 +514,7 @@ The integration owner controls manifests/lockfiles, shared schemas/capacity/metr
 
 ### Phase 4 — Source qualification, incremental ingestion and health
 
-- **Status:** Not started
+- **Status:** In progress
 - **Depends on:** 0, 1A
 - **Objective:** Advertised source support has evidence, collection scales with changes, and failed refreshes remain visible.
 - **Scope:** F18/F19; vendor compatibility target, source/version manifest, numeric health channel, checkpoints and refresh acquisition.
@@ -721,3 +721,10 @@ Current focused evidence: ledger 92 tests passed (one intentional fixture ignore
 Independent source review accepted complete-input cache shares, matched source-duration rates, separate cost cohorts, and response-bound private identity generations. Authenticated absence and conflict replies retain the same captured identity as successful replies, so account B's empty result also invalidates account A's views. Consent intent is conditional on the live trusted account; uncertain mutations are not replayed. Clearing account state preserves local and example reports. Pending image export checks current report authority before download and releases its job independently so a retained local report can retry after a failed import.
 
 The production build, TypeScript and focused ESLint passed. Focused client/formula/export tests passed 134 cases with 4,203 assertions; coordinator/lifecycle/transport/rendering tests passed 28 cases with 10,741 assertions. The expanded real-browser synthetic suite passed desktop and mobile with distinct A/B measurements, held old replies, bfcache/visibility/focus boundaries, local reports, CSV/PNG, and a paused real canvas callback completed after report closure or failed replacement. The canceled image did not download and a subsequent local export succeeded. Final screenshots in `outputs/assurance-audit-2026-09-23/ui-final` were inspected; the mobile chart scale no longer overlaps its heading. These are synthetic local qualification results, not live account/provider evidence. The converged repository gate remains Phase 11's responsibility.
+
+
+### 2026-09-23 — Phase 1B accepted; repaired protocol and source lanes opened
+
+Independent review accepted retained restore registrations, same-attempt lost-reply recovery, pure account/pairing/index reads, explicit fenced maintenance/scrub, explicit pending-snapshot abandonment, and retained per-day writer provenance. Invalid upload secrets refuse before consuming fence capacity; authorization is rechecked after asynchronous work. A canonical namespace write that outlives its outward deadline keeps its registration until the actual provider promise settles. Conditional immutable object tails are permitted only after terminal caller return with retained intent/charge and no remaining canonical continuation. Current schema cannot reconstruct lost authority from a successor writer; only the exact pre-transfer legacy schema/layout can initialize provenance.
+
+The integration owner ran `bun run usage:worker:check` through the installed compact-output wrapper on the converged source: 20 files, 488 tests passed in 131.13 seconds. Independent index review also covered fresh post-await clocks and exact source decision matching. No live-provider qualification was performed. These results do not establish exact legacy overlap reconciliation, arbitrary distributed schedules, eventual settlement after permanent process/provider loss, deletion, or global instantaneous withdrawal. Phases 2B, 5 and 10 retain those obligations. Phase 2B now owns maintained finite repaired models plus generated real-runtime correspondence; Phase 4 has begun its source/checkpoint/health inventory.

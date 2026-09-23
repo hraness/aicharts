@@ -242,36 +242,29 @@ refresh date never becomes a daily activity total. Queries select the owned
 profile for each client/day and never add overlapping v1 and v2 totals. Estimated or unavailable
 token observations do not enter reported-token rankings.
 
-For an existing v1 window, the native sender pins the prior revision, head digest
-and client owner. Takeover scope is the writer's own retained v1 heads: heads
-and tombstones recorded by other devices stay their own immutable evidence and
-cannot strand the migration. The service admits takeover only when every
-retained day has at least its prior reported record count and every one of its
-five token buckets. A head digest alone is not coverage proof. Empty, missing or
-incomplete imports, estimated replacements, stale heads, another writer and
-unknown-provenance tombstones refuse. V1 tables and immutable history remain
-retained. This numeric preservation guard does not replace live source
-comparison during cutover.
+A legacy head digest and bucket totals cannot prove overlap or disjointness.
+Current source refuses any ambiguous v1/v2 takeover and leaves legacy history
+readable. It also refuses a mixed client/day projection instead of choosing
+one profile and hiding records. Exact mirrored-history deduplication and
+lossless multi-device reconciliation remain unqualified; do not activate a
+legacy cutover until their canonical population proof is implemented and tested.
 
-This profile does not fence v1 admission in either direction. Batches touching
-days the stats profile already owns still admit as retained v1 evidence, and a
-parked v1 pending flight does not block stats writes. The takeover basis
-revisions make any interleaved commit stale, so a conflicting request retries
-instead of deadlocking either profile.
+A new upload cannot supersede a different pending snapshot automatically.
+Explicit `stats-sync --abandon` with the existing state and key pins the exact
+flight. It either returns its already committed receipt or advances the account
+revision to fence every late retry, without consuming the device upload
+sequence. It clears only the matching pending intent and keeps immutable
+objects and byte reservations. The native checkpoint clears a flight only
+after correlated proof; uncertain replies remain frozen. The scheduled
+publisher never abandons a flight automatically. A maintenance revision can
+exist before a published report; reads must not infer publication from revision.
 
-A fresh upload from the same writer supersedes its own stranded pending intent:
-the parked bytes can never settle once the writer has dispatched a replacement,
-and their reserved byte charge stays counted as recovery evidence. A pending
-intent recorded by another device still refuses. Explicit `stats-sync --abandon`
-with the existing state and key remains the deterministic discard. The
-authenticated operation pins the exact flight. It either returns its already
-committed receipt or advances the account revision to fence a late retry,
-without consuming the device upload sequence. It clears only a matching pending
-intent and keeps immutable objects and byte reservations. The native checkpoint
-clears a flight only after correlated proof; uncertain replies remain frozen.
-The scheduled publisher never abandons a flight automatically. A maintenance
-revision can exist before any published report; read and recovery paths must
-not infer publication from revision alone.
+Trusted internal `recoverStatsWriter` requires the current account session,
+exact ownership revision, a revoked predecessor and an active successor. It
+changes future writer authority while retaining the original owner of each
+historical day. A successor cannot replace a predecessor's day without exact
+population evidence. This internal RPC has no newly qualified public recovery
+journey in this phase.
 
 Each upload is limited to 4 MiB and 8,192 aggregate rows. Account projections are
 limited to 65,536 client-days, 262,144 rows, and 128 MiB. Hosted reads are capped
@@ -303,27 +296,23 @@ prove that the restored state is stale. The Durable Object history audit and
 the immutable admission journal detect missing or reordered local history, not
 an administrative rollback of both stores.
 
-That history audit re-verifies only the journal extension and the head rows
-touched since a durable checkpoint row, so its cost stays proportional to work
-committed since the last verified restart rather than the whole retained
-account. The checkpoint advances inside the same transaction as a successful
-audit; deleting the checkpoint row forces the next mutation to re-verify
-everything from revision zero, which is the operator recovery path for
-suspected deep corruption. It still runs once per object lifetime before the
-first write rather than in the constructor. Every path that commits — the
-fenced mutations, and the enrollment status read, which settles a durable
-observed time and revision — clears it first, as does the leaderboard
-projection, whose totals leave the account for the public index. A refusal
-poisons the object, so no later transaction on any path can commit onto history
-known bad. The constructor still runs the constant-cost control checks on every
-rehydration, so a lost or malformed control row, or a schema mismatch, still
-fails a read closed.
+The routine history audit re-verifies the journal extension and affected heads
+since a retained checkpoint. Registered mutations own checkpoint advancement,
+schema preparation and backfill. Constructors, enrollment status, private reads,
+pairing status and public-index reads perform no DDL or DML. Index source
+verification may audit in memory, without writing the checkpoint. Legacy state
+that needs migration refuses reads until an authorized mutation or trusted
+internal maintenance operation prepares it.
 
-The remaining tradeoff is scoped to the non-committing private reads: daily
-totals, stats status, stats reports and consent can be served between a
-corruption and the next audited operation, and would then report unverified
-counters. Treat the private dashboard as a numeric view, not as evidence of
-history integrity. Nothing published to the public index relies on it.
+For suspected deep corruption, use trusted internal
+`maintainAccount({schemaVersion:1, accountId, generation, operation:"scrub"})`.
+It acquires external registration and forces a from-zero audit even if the
+current object already passed its routine audit. `operation:"prepare"` retains
+the checkpoint-extension path. Neither operation authenticates a caller-supplied
+account string; only an authorized coordinator may invoke it. There is no new
+public scrub endpoint or permission to delete checkpoint rows directly. A
+failed audit keeps the object closed. Current control validation is not proof
+of provider truth, backup completeness or detection of a coordinated rollback.
 
 The implementation in `services/usage-worker/src/restore-fence.ts` provides a
 separate control authority. The [operator procedure](usage-restore-fence-control.md)
@@ -343,10 +332,17 @@ itself. Recovery must also invalidate old device credentials and reconcile
 journal prefixes and namespace anchors before reopening the epoch.
 
 The recovery authority must retain the responsibilities of the narrow `RestoreFence` port:
-`read()`, `close(epoch)`, `publish(epoch, deployment)`, and `assertOpen(epoch)`.
-The port must also own a lease/drain barrier: closing an epoch first prevents
-new operations, waits for already admitted operations to settle, and only then
-allows restore. Pre/post checks alone cannot prove that an in-flight commit did
+read, close, publish, stable-attempt acquisition/cancellation and exact release.
+Each execution registers a random attempt ID before its grant can be lost;
+readback and cancellation use that same ID. Terminal attempts remain retained,
+with a one-million-attempt admission cap and reconciliation at capacity.
+Closing an epoch refuses new registrations and waits for admitted canonical
+continuations to settle before restore. The 30-second deadline is diagnostic,
+never automatic release or proof of drain. A namespace-anchor put retains its
+holder after an outward timeout until the actual put settles. A conditional
+immutable snapshot or journal tail may remain only after its caller has
+returned terminally, with retained intent/charge and no SQL or visibility
+continuation. Pre/post checks alone cannot prove that an in-flight commit did
 not race the close. The Worker adapter owns the provider-operation lease and
 pre-dispatch/post-await checks; a separate operator tool owns the two-store
 snapshot, bounded reconciliation and epoch publication. Add tests for

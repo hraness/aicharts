@@ -1,11 +1,13 @@
 import { DurableObject } from "cloudflare:workers";
-import { parseStatsQuery, parseStatsStatusRequest, parseStatsUpload, type StatsError, type StatsReceipt, type StatsResult, type StatsStatus } from "../../../lib/usage/stats-http-contract";
+import { parseStatsQuery, parseStatsStatusRequest, parseStatsUpload, statsInteger, type StatsError, type StatsReceipt, type StatsResult, type StatsStatus } from "../../../lib/usage/stats-http-contract";
+import { isStatsClient } from "../../../lib/usage/stats-registry";
 import { parseStatsAbandonRequest, type StatsAbandonment } from "../../../lib/usage/stats-http-contract";
 import type { UsageStatsReport } from "../../../lib/usage/stats-contract";
 import { StatsState, StatsFault, STATS_SCHEMA } from "./stats-state";
 import { AccountStats } from "./stats-admission";
 import { createHash } from "node:crypto";
-import { type AdmissionBatch } from "../../../lib/usage/admission";
+import { admissionHex, type AdmissionBatch } from "../../../lib/usage/admission";
+import { uploadSecretCommitment } from "./pairing";
 import { AccountAdmission, type AdmissionObservation } from "./account-admission";
 import { AdmissionFault, batchAccount, ownedAdmissionBatch } from "./admission-policy";
 import { ADMISSION_SCHEMA } from "./admission-schema";
@@ -201,43 +203,57 @@ function disposeReply(value: unknown): void {
 export class AccountEnrollment extends DurableObject<Env> {
   #healthy = true;
   #historyAudited: "pending" | "passed" | "failed" = "pending";
+  #leaseEstablishment = new Set<string>();
+  #canonicalWrites = new Map<string, Set<Promise<void>>>();
   /** Completed stats reads are pure in (range, stats revision, admission
    * revision); the memo only ever serves after every fencing guard passes.
    * Bounded to a few ranges, dies with the object, and holds no authority. */
   #statsReadMemo = new Map<string, UsageStatsReport>();
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
+    // Construction is read-only. Explicit maintenance or a registered mutation
+    // owns initialization, upgrades and checkpoint writes.
+  }
+
+  #prepareFenced(accountId: string, generation: string, fence: FenceObservation): EnrollmentError | null {
     try {
-      ctx.storage.transactionSync(() => {
+      this.ctx.storage.transactionSync(() => {
+        const before = this.#fencePreflight(accountId, generation);
+        if (!before.ok) throw new AdmissionFault(before.error === "unauthorized" ? "unauthorized" : "recovery_required");
+        if (before.value.epoch !== fence.epoch || (!before.value.established && fence.established)) throw new AdmissionFault("recovery_required");
         if (this.#objects().length === 0) {
-          ctx.storage.sql.exec(SCHEMA_SQL);
-          ctx.storage.sql.exec("INSERT INTO account_enrollment (id, schema_version, revision, payload) VALUES (1, 2, 0, NULL)");
+          this.ctx.storage.sql.exec(SCHEMA_SQL);
+          this.ctx.storage.sql.exec("INSERT INTO account_enrollment (id, schema_version, revision, payload) VALUES (1, 2, 0, NULL)");
         }
         if (this.#objects().length === 1) {
           this.#schema(true);
           this.#migrate();
           const { state } = this.#stored(2);
-          new AdmissionState(ctx.storage.sql).initialize(state);
-          ctx.storage.sql.exec("UPDATE account_enrollment SET schema_version = 3 WHERE id = 1");
+          new AdmissionState(this.ctx.storage.sql).initialize(state);
+          this.ctx.storage.sql.exec("UPDATE account_enrollment SET schema_version = 3 WHERE id = 1");
         }
         this.#migrateStatsRows();
-        new AdmissionState(ctx.storage.sql).migrateCapacity();
+        this.#migrateStatsOwnership();
+        new AdmissionState(this.ctx.storage.sql).migrateCapacity();
         this.#schema();
         this.#migrateFence();
         this.#migrateLeaderboard();
-        new AdmissionState(ctx.storage.sql).auditControl(this.#stored(5).state);
+        new AdmissionState(this.ctx.storage.sql).auditControl(this.#stored(5).state);
         if (!this.#statsPresent() && this.#statsEnabled()) {
-          new StatsState(ctx.storage.sql).initialize();
-          ctx.storage.sql.exec("UPDATE account_enrollment SET schema_version = 7 WHERE id = 1");
+          new StatsState(this.ctx.storage.sql).initialize();
+          this.ctx.storage.sql.exec("UPDATE account_enrollment SET schema_version = 8 WHERE id = 1");
         }
-        if (this.#statsPresent()) new StatsState(ctx.storage.sql).auditControl(this.#stored(5).state);
+        if (this.#statsPresent()) new StatsState(this.ctx.storage.sql).auditControl(this.#stored(5).state);
         this.#schema();
+        const audited = this.#auditHistory();
+        if (audited !== null) throw new AdmissionFault(audited === "storage_invalid" ? "storage_invalid" : "recovery_required");
       });
-    } catch { this.#healthy = false; }
+      return null;
+    } catch (error) { return error instanceof AdmissionFault ? error.code : "storage_invalid"; }
   }
 
   #objects(): Record<string, SqlStorageValue>[] {
-    return this.ctx.storage.sql.exec("SELECT type, name, sql FROM sqlite_schema WHERE name NOT GLOB '_cf_*' AND name NOT GLOB 'sqlite_*' AND name != '__cf_kv' LIMIT 24").toArray();
+    return this.ctx.storage.sql.exec("SELECT type, name, sql FROM sqlite_schema WHERE name NOT GLOB '_cf_*' AND name NOT GLOB 'sqlite_*' AND name != '__cf_kv' LIMIT 28").toArray();
   }
   #schema(legacy = false): void {
     const objects = this.#objects();
@@ -245,7 +261,7 @@ export class AccountEnrollment extends DurableObject<Env> {
     const expected: Record<string, string> = { account_enrollment: SCHEMA_SQL, ...(legacy ? {} : ADMISSION_SCHEMA), ...(withStats ? STATS_SCHEMA : {}) };
     if (!legacy) {
       const version = this.ctx.storage.sql.exec("SELECT schema_version FROM account_enrollment WHERE id = 1").toArray()[0]?.schema_version;
-      if ((version === 6 || version === 7) !== withStats) throw new Error("storage_invalid");
+      if ((version === 6 || version === 7 || version === 8) !== withStats) throw new Error("storage_invalid");
     }
     if (!this.#healthy || objects.length !== Object.keys(expected).length || objects.some(object => object.type !== "table"
       || typeof object.name !== "string" || !Object.hasOwn(expected, object.name) || object.sql !== expected[object.name])) throw new Error("storage_invalid");
@@ -309,7 +325,7 @@ export class AccountEnrollment extends DurableObject<Env> {
     const rows = this.ctx.storage.sql.exec("SELECT id, schema_version, revision, payload FROM account_enrollment LIMIT 2").toArray();
     const row = rows[0];
     if (rows.length !== 1 || row?.id !== 1) throw new Error("storage_invalid");
-    if (row.schema_version === 5 || row.schema_version === 6 || row.schema_version === 7) return;
+    if (row.schema_version === 5 || row.schema_version === 6 || row.schema_version === 7 || row.schema_version === 8) return;
     if (row.schema_version !== 4) throw new Error("storage_invalid");
     let payload = row.payload;
     if (payload !== null) {
@@ -325,8 +341,7 @@ export class AccountEnrollment extends DurableObject<Env> {
   }
   /** Additive schema-6→7 migration: install the derived stats read model. The
    * exploded tables carry no authority — they are populated from committed
-   * projections at publish or lazily on first read, and a missing piece heals
-   * by recreation. Runs before #schema because the exact-table check already
+   * projections at publish or explicit fenced maintenance. Runs before #schema because the exact-table check already
    * expects them once the stats schema is installed. */
   #migrateStatsRows(): void {
     const names = new Set(this.#objects().map(object => object.name));
@@ -335,6 +350,12 @@ export class AccountEnrollment extends DurableObject<Env> {
       if (!names.has(name)) this.ctx.storage.sql.exec(STATS_SCHEMA[name]);
     const version = this.ctx.storage.sql.exec("SELECT schema_version FROM account_enrollment WHERE id = 1").toArray()[0]?.schema_version;
     if (version === 6) this.ctx.storage.sql.exec("UPDATE account_enrollment SET schema_version = 7 WHERE id = 1");
+  }
+  #migrateStatsOwnership(): void {
+    if (!this.#statsPresent()) return;
+    const version = this.ctx.storage.sql.exec("SELECT schema_version FROM account_enrollment WHERE id = 1").one().schema_version;
+    new StatsState(this.ctx.storage.sql).migrateOwnership(version);
+    if (version === 7) this.ctx.storage.sql.exec("UPDATE account_enrollment SET schema_version = 8 WHERE id = 1");
   }
   #stored(version: 2 | 3 | 4 | 5): { revision: number; state: State | null } {
     const rows = this.ctx.storage.sql.exec("SELECT id, schema_version, revision, payload FROM account_enrollment LIMIT 2").toArray();
@@ -360,6 +381,7 @@ export class AccountEnrollment extends DurableObject<Env> {
         const { revision, state } = this.#stored(5);
         if (state !== null && state.generation !== operation.generation) return err("recovery_required");
         const fence = operation.fence;
+        if (fence === null) return err("recovery_required");
         if (fence !== null) {
           // A wiped-but-established account cannot silently re-run genesis, and a
           // recorded epoch that disagrees with the fence is a stale restore —
@@ -397,27 +419,85 @@ export class AccountEnrollment extends DurableObject<Env> {
     const value: unknown = this.env.USAGE_WORKER_VERSION;
     return enrollmentHex(value) ? value : null;
   }
-  /** Best-effort read of the recorded restore epoch for the assertOpen epoch
-   * match; the transaction re-checks the lease authoritatively, so this only
-   * filters the fence's early refusal. */
-  #fenceHint(): number {
-    try { return this.#stored(5).state?.fenceEpoch ?? RESTORE_FENCE_GENESIS_EPOCH; }
-    catch { return RESTORE_FENCE_GENESIS_EPOCH; }
+  /** Pure preflight admits existing legacy shapes only for a fenced upgrade.
+   * It never converts absent or malformed authority into a genesis guess. */
+  #fencePreflight(accountId: string, generation: string): EnrollmentResult<{ epoch: number; established: boolean }> {
+    try {
+      if (!this.#healthy || this.#generation() !== generation) return err("recovery_required");
+      if (!this.ctx.id.equals(this.env.ACCOUNT_ENROLLMENTS.idFromName(enrollmentAccountName(accountId)))) return err("unauthorized");
+      const objects = this.#objects();
+      if (objects.length === 0) return ok({ epoch: RESTORE_FENCE_GENESIS_EPOCH, established: false });
+      if (!objects.some(object => object.type === "table" && object.name === "account_enrollment" && object.sql === SCHEMA_SQL)) return err("storage_invalid");
+      const rows = this.ctx.storage.sql.exec("SELECT id, schema_version, revision, payload FROM account_enrollment LIMIT 2").toArray();
+      const row = rows[0];
+      if (rows.length !== 1 || row.id !== 1 || typeof row.schema_version !== "number" || !Number.isInteger(row.schema_version)
+        || row.schema_version < 1 || row.schema_version > 8 || typeof row.revision !== "number" || !Number.isSafeInteger(row.revision)
+        || row.revision < 0 || row.revision >= Number.MAX_SAFE_INTEGER) return err("storage_invalid");
+      if (row.payload === null) return row.revision === 0 ? ok({ epoch: RESTORE_FENCE_GENESIS_EPOCH, established: false }) : err("storage_invalid");
+      if (typeof row.payload !== "string" || row.payload.length > MAX_PAYLOAD || row.revision === 0) return err("storage_invalid");
+      const state: unknown = JSON.parse(row.payload);
+      if (!validState(state, row.schema_version === 1, row.schema_version >= 4, row.schema_version >= 5)) return err("storage_invalid");
+      if (state.accountId !== accountId) return err("unauthorized");
+      if (state.generation !== generation) return err("recovery_required");
+      return ok({ epoch: state.fenceEpoch ?? RESTORE_FENCE_GENESIS_EPOCH, established: true });
+    } catch { return err("storage_invalid"); }
+  }
+  /** Reject unauthenticated traffic before it can consume lifetime fence
+   * attempts or trigger schema/checkpoint work. This reads validated retained
+   * legacy payloads without upgrading them. Mutation-specific authentication,
+   * revocation and namespace checks still run after acquisition and awaits. */
+  async #preauthenticateUpload(accountId: string, deviceId: string, generation: string, secret: string): Promise<EnrollmentError | null> {
+    const read = (): EnrollmentResult<{ intentId: string; commitment: string }> => {
+      const checked = this.#fencePreflight(accountId, generation);
+      if (!checked.ok) return checked;
+      if (!checked.value.established) return err("not_enrolled");
+      try {
+        return this.ctx.storage.transactionSync(() => {
+          const row = this.ctx.storage.sql.exec("SELECT schema_version, payload FROM account_enrollment WHERE id = 1").one();
+          if (typeof row.payload !== "string" || typeof row.schema_version !== "number") return err("storage_invalid");
+          const state: unknown = JSON.parse(row.payload);
+          if (!validState(state, row.schema_version === 1, row.schema_version >= 4, row.schema_version >= 5)) return err("storage_invalid");
+          if (state.phase !== "active") return err("not_enrolled");
+          const device = state.devices.find(device => device.deviceId === deviceId);
+          return device === undefined ? err("unauthorized") : ok({ intentId: device.reservation.intentId,
+            commitment: device.reservation.uploadCommitment });
+        });
+      } catch { return err("storage_invalid"); }
+    };
+    const original = read();
+    if (!original.ok) {
+      if (original.error !== "not_enrolled") return original.error;
+      const authority = await this.#readAuthority(accountId, generation);
+      return authority ?? original.error;
+    }
+    const commitment = await uploadSecretCommitment(original.value.intentId, secret);
+    if (!commitment.ok) return "unauthorized";
+    const same = (left: string, right: string): boolean => {
+      if (!enrollmentHex(left) || !enrollmentHex(right)) return false;
+      let difference = 0;
+      for (let index = 0; index < 64; index++) difference |= left.charCodeAt(index) ^ right.charCodeAt(index);
+      return difference === 0;
+    };
+    if (!same(commitment.value, original.value.commitment)) return "unauthorized";
+    const current = read();
+    if (!current.ok) return current.error;
+    return current.value.intentId === original.value.intentId && same(current.value.commitment, commitment.value) ? null : "unauthorized";
   }
   /** The linear history audit, run once per object lifetime before the first
    * mutation rather than on every rehydration. Durable Objects are evicted
    * after seconds of idleness, so auditing in the constructor made every
    * cold read rescan the account's whole retained history. Nothing may commit
-   * onto history this has not verified; reads are gated by the constant-cost
-   * `auditControl` the constructor still runs. */
-  #auditHistory(): EnrollmentError | null {
+   * onto history this has not verified. Reads validate the current control and
+   * external fence without advancing a checkpoint or running a migration. */
+  #auditHistory(writeCheckpoint = true): EnrollmentError | null {
     if (this.#historyAudited === "passed") return null;
     // A refusal poisons the object rather than rescanning per retry, keeping
     // the scan bounded at one per lifetime exactly as the constructor was.
     if (this.#historyAudited === "failed") return "storage_invalid";
     try {
       const state = this.#stored(5).state;
-      new AdmissionState(this.ctx.storage.sql).auditHistory(state);
+      const admission = new AdmissionState(this.ctx.storage.sql);
+      if (writeCheckpoint) admission.auditHistory(state); else admission.verifyHistory(state);
       if (this.#statsPresent()) new StatsState(this.ctx.storage.sql).auditHistory(state);
     } catch {
       // Poison the object exactly as a failed constructor audit did, so no
@@ -434,45 +514,117 @@ export class AccountEnrollment extends DurableObject<Env> {
   async #fenceAcquire(accountId: string, generation: string): Promise<EnrollmentResult<{ fence: FenceObservation; token: string }>> {
     const workerVersion = this.#workerVersion();
     if (workerVersion === null) return err("recovery_required");
-    // Audited before the lease exists, so a refusal leaves nothing to release.
-    const audited = this.#auditHistory();
-    if (audited !== null) return err(audited);
+    const preflight = this.#fencePreflight(accountId, generation);
+    if (!preflight.ok) return preflight;
     const stub = this.env.RESTORE_FENCES.getByName(restoreFenceName(accountId));
-    const input = { accountId, generation, epoch: this.#fenceHint(), workerVersion, leaseMs: RESTORE_FENCE_LEASE_TTL_MS };
-    let raw: unknown;
-    try { raw = await stub.assertOpen(input); } catch { return err("storage_unavailable"); }
-    try {
-      const reply = rpcSnapshot(raw, ["ok", "value"]);
-      // The nested lease carries no transport disposal marker; only the outer
-      // reply does, so it is parsed with the plain exact-key snapshot.
-      const lease = reply?.ok === true ? enrollmentSnapshot(reply.value, ["token", "epoch", "established", "deadlineMs"]) : null;
-      if (lease !== null) {
-        if (!enrollmentHex(lease.token) || typeof lease.epoch !== "number" || !Number.isSafeInteger(lease.epoch)
-          || lease.epoch < RESTORE_FENCE_GENESIS_EPOCH || (lease.established !== true && lease.established !== false)
-          || typeof lease.deadlineMs !== "number") return err("storage_unavailable");
-        return ok({ fence: Object.freeze({ epoch: lease.epoch, established: lease.established }), token: lease.token });
-      }
-      const failure = rpcSnapshot(raw, ["ok", "error"]);
-      if (failure?.ok === false) {
-        const code = failure.error;
-        return err(code === "recovery_required" || code === "clock_regressed" || code === "unauthorized" || code === "limit" ? code : "storage_invalid");
-      }
-      return err("storage_unavailable");
-    } finally { disposeReply(raw); }
+    // This ID belongs to one execution, not the retriable upload operation.
+    // Concurrent exact uploads each retain their own outstanding holder.
+    const input = { accountId, generation, epoch: preflight.value.epoch, workerVersion, leaseMs: RESTORE_FENCE_LEASE_TTL_MS, attemptId: enrollmentRandom() };
+    let failure: EnrollmentError = "storage_unavailable";
+    let uncertain = false;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      let raw: unknown;
+      try {
+        raw = await stub.assertOpen(input);
+        const reply = rpcSnapshot(raw, ["ok", "value"]);
+        const lease = reply?.ok === true ? enrollmentSnapshot(reply.value, ["token", "epoch", "established", "deadlineMs"]) : null;
+        if (lease !== null && lease.token === input.attemptId && lease.epoch === input.epoch
+          && (lease.established === true || lease.established === false) && enrollmentTime(lease.deadlineMs)) {
+          const fence = Object.freeze({ epoch: input.epoch, established: lease.established });
+          if (preflight.value.established) this.#leaseEstablishment.add(input.attemptId);
+          const prepared = this.#prepareFenced(accountId, generation, fence);
+          if (prepared !== null) {
+            await this.#fenceSettle(accountId, input.attemptId, false);
+            return err(prepared);
+          }
+          return ok({ fence, token: input.attemptId });
+        }
+        const rejected = rpcSnapshot(raw, ["ok", "error"]);
+        if (rejected?.ok === false) {
+          const code = rejected.error;
+          failure = code === "recovery_required" || code === "clock_regressed" || code === "unauthorized" || code === "limit" ? code : "storage_invalid";
+          if (!uncertain) return err(failure);
+          break;
+        }
+        uncertain = true;
+      } catch { uncertain = true; /* Read back the same durable attempt; never mint a replacement. */ }
+      finally { disposeReply(raw); }
+    }
+    // No canonical continuation has been dispatched before this handoff.
+    // Persist its terminal disposition so a delayed grant cannot appear behind
+    // close/drain. If reconciliation is unavailable, report recovery_required;
+    // any uncertain holder remains registered rather than being force-drained.
+    for (let attempt = 0; attempt < 3; attempt++) {
+      let raw: unknown;
+      try {
+        raw = await stub.cancelAcquire({ accountId, generation, epoch: input.epoch, workerVersion, attemptId: input.attemptId });
+        const reply = rpcSnapshot(raw, ["ok", "value"]);
+        if (reply?.ok === true && reply.value === null) return err(failure);
+      } catch { /* Uncertain cancellation remains registered/fail-closed. */ }
+      finally { disposeReply(raw); }
+    }
+    return err("recovery_required");
   }
-  /** Release the lease with the exact commit outcome. A lost or failed release
-   * leaves the lease to expire by TTL — it never masks the operation result,
-   * and the recorded epoch remains authoritative. */
+  /** Each execution can dispatch only one fixed-key anchor write. The external
+   * fence bounds simultaneous executions; completion deletes local custody.
+   * If this object dies first, the durable holder stays unresolved. */
+  #retainCanonicalWrite(token: string | null, pending: Promise<unknown>): void {
+    if (token === null) throw new Error("unregistered_write");
+    const writes = this.#canonicalWrites.get(token) ?? new Set<Promise<void>>();
+    this.#canonicalWrites.set(token, writes);
+    const tracked = new Promise<void>(resolve => { void pending.then(() => resolve(), () => resolve()); });
+    writes.add(tracked);
+    void tracked.then(() => {
+      writes.delete(tracked);
+      if (writes.size === 0) this.#canonicalWrites.delete(token);
+    });
+  }
+  /** Called only after this execution's canonical continuations have ended.
+   * Lost replies reconcile the same terminal decision. If storage remains
+   * unavailable the holder remains registered; no timer may force drain. */
   async #fenceSettle(accountId: string, token: string | null, committed: boolean): Promise<void> {
     if (token === null) return;
-    try {
-      const raw: unknown = await this.env.RESTORE_FENCES.getByName(restoreFenceName(accountId))
-        .release({ accountId, token, committed });
-      disposeReply(raw);
-    } catch { /* A failed release leaves the lease to expire; the epoch record is authoritative. */ }
+    const writes = this.#canonicalWrites.get(token);
+    if (writes !== undefined && writes.size > 0) {
+      // Preserve the outward deadline while retaining custody of the actual
+      // canonical provider operation. waitUntil is liveness support, not proof
+      // of termination: process loss leaves the separate durable fence held.
+      this.ctx.waitUntil(Promise.allSettled([...writes]).then(() => this.#fenceSettle(accountId, token, committed)));
+      return;
+    }
+    const established = committed || this.#leaseEstablishment.has(token);
+    for (let attempt = 0; attempt < 3; attempt++) {
+      let raw: unknown;
+      try {
+        raw = await this.env.RESTORE_FENCES.getByName(restoreFenceName(accountId)).release({ accountId, token, committed: established });
+        const reply = rpcSnapshot(raw, ["ok", "value"]);
+        if (reply?.ok === true && reply.value === null) { this.#leaseEstablishment.delete(token); return; }
+      } catch { /* A retained holder requires reconciliation, never TTL deletion. */ }
+      finally { disposeReply(raw); }
+    }
+    // Durable registration owns uncertain settlement, not unreachable local
+    // bookkeeping. Lost replies must not grow this per-execution set forever.
+    this.#leaseEstablishment.delete(token);
   }
 
   #closed(operation: Operation, live: boolean): EnrollmentError | null {
+    if (operation.fence === null) {
+      try {
+        return this.ctx.storage.transactionSync(() => {
+          if (this.#objects().length === 0) return "not_enrolled";
+          this.#schema();
+          if (this.#generation() !== operation.generation) return "recovery_required";
+          const state = this.#stored(5).state;
+          if (state === null) return "not_enrolled";
+          if (state.accountId !== operation.grant.accountId || state.generation !== operation.generation) return "recovery_required";
+          const control = new AdmissionState(this.ctx.storage.sql).auditControl(state);
+          const now = Date.now();
+          if (!enrollmentTime(now) || now < operation.observed || now < control.observed || now < state.observedAtMs) return "clock_regressed";
+          operation.observed = now;
+          return live && now >= operation.grant.expiresAtMs ? "expired" : null;
+        });
+      } catch { return "storage_invalid"; }
+    }
     const observed = this.#transaction(operation, (state, now) => ({ state, result: ok(now) }));
     if (!observed.ok) return observed.error;
     return live && observed.value >= operation.grant.expiresAtMs ? "expired" : null;
@@ -492,6 +644,8 @@ export class AccountEnrollment extends DurableObject<Env> {
     const accountId = batchAccount(batch);
     const generation = this.#generation();
     if (generation === null) return err("recovery_required");
+    const authenticated = await this.#preauthenticateUpload(accountId, admissionHex(batch.deviceId), generation, uploadSecret);
+    if (authenticated !== null) return err(authenticated);
     const acquired = await this.#fenceAcquire(accountId, generation);
     if (!acquired.ok) return acquired;
     let committed = false;
@@ -511,14 +665,103 @@ export class AccountEnrollment extends DurableObject<Env> {
   #statsPresent(): boolean {
     return this.ctx.storage.sql.exec("SELECT name FROM sqlite_schema WHERE name = 'usage_stats_control' LIMIT 1").toArray().length === 1;
   }
+  /** Trusted coordinator maintenance, never dispatched by a read. The account,
+   * generation and current schema/history define its idempotent target. A
+   * from-zero scrub checks retained journal content rather than trusting the
+   * colocated checkpoint; it is not proof of external backup completeness. */
+  async maintainAccount(input: unknown): Promise<EnrollmentResult<{ schemaVersion: 1; admissionRevision: number; statsRevision: number | null; auditBasis: "from-zero" | "checkpoint-extension" }>> {
+    const request = enrollmentSnapshot(input, ["schemaVersion", "accountId", "generation", "operation"]);
+    if (request?.schemaVersion !== 1 || !enrollmentAccount(request.accountId) || !enrollmentHex(request.generation)
+      || (request.operation !== "prepare" && request.operation !== "scrub")) return err("invalid_input");
+    const accountId = request.accountId, generation = request.generation;
+    const acquired = await this.#fenceAcquire(accountId, generation);
+    if (!acquired.ok) return acquired;
+    const observation: AdmissionObservation = { generation, observed: Date.now(), fence: acquired.value.fence, committed: false };
+    try {
+      const result = this.#transaction(observation, state => {
+        const admission = new AdmissionState(this.ctx.storage.sql);
+        admission.auditHistory(state, request.operation === "scrub");
+        const stats = this.#statsPresent() ? new StatsState(this.ctx.storage.sql) : null;
+        stats?.auditHistory(state);
+        stats?.backfillRows(state);
+        this.#statsReadMemo.clear();
+        return { state, result: ok({ schemaVersion: 1 as const, admissionRevision: admission.control().revision,
+          statsRevision: stats?.control().revision ?? null,
+          auditBasis: request.operation === "scrub" ? "from-zero" as const : "checkpoint-extension" as const }) };
+      });
+      if (!result.ok && result.error === "storage_invalid") { this.#historyAudited = "failed"; this.#healthy = false; }
+      return result;
+    } finally { await this.#fenceSettle(accountId, acquired.value.token, observation.committed); }
+  }
+  /** Trusted live-account recovery. It neither grants a new device credential
+   * nor claims that a successor ledger contains its predecessor's records. */
+  async recoverStatsWriter(input: unknown): Promise<EnrollmentResult<{ writerDeviceId: string; ownershipRevision: number }>> {
+    const request = enrollmentSnapshot(input, ["schemaVersion", "accountId", "sessionExpiresAtMs", "client", "previousDeviceId", "deviceId", "expectedRevision"]);
+    if (request?.schemaVersion !== 1 || !enrollmentAccount(request.accountId) || !enrollmentTime(request.sessionExpiresAtMs)
+      || !isStatsClient(request.client) || !enrollmentHex(request.previousDeviceId) || !enrollmentHex(request.deviceId)
+      || !statsInteger(request.expectedRevision, 0, 999_999)) return err("invalid_input");
+    if (!this.#statsEnabled()) return err("unavailable");
+    const generation = this.#generation();
+    if (generation === null) return err("recovery_required");
+    const accountId = request.accountId;
+    const acquired = await this.#fenceAcquire(accountId, generation);
+    if (!acquired.ok) return acquired;
+    const observation: AdmissionObservation = { generation, observed: Date.now(), fence: acquired.value.fence, committed: false };
+    try {
+      const external = await readNamespaceAnchor(this.env.CONTROL, accountId);
+      return this.#transaction(observation, (state, now) => {
+        if (state === null || state.phase !== "active") return { state, result: err("not_enrolled") };
+        if (state.accountId !== accountId) return { state, result: err("unauthorized") };
+        if (now >= (request.sessionExpiresAtMs as number)) return { state, result: err("expired") };
+        if (external === null || !sameNamespaceAnchor(external, state.anchor)) return { state, result: err("recovery_required") };
+        const value = new StatsState(this.ctx.storage.sql).transferWriter(state, request.client as string, request.previousDeviceId as string,
+          request.deviceId as string, request.expectedRevision as number, now);
+        this.#statsReadMemo.clear();
+        return { state, result: ok(value) };
+      });
+    } finally { await this.#fenceSettle(accountId, acquired.value.token, observation.committed); }
+  }
+  /** Pure external authority check. A read linearizes no later than its final
+   * successful check; a close or epoch change during its awaits refuses it. */
+  async #readAuthority(accountId: string, generation: string): Promise<EnrollmentError | null> {
+    const local = this.#fencePreflight(accountId, generation);
+    if (!local.ok) return local.error;
+    let raw: unknown;
+    try {
+      raw = await this.env.RESTORE_FENCES.getByName(restoreFenceName(accountId)).read({ accountId, generation });
+      const reply = rpcSnapshot(raw, ["ok", "value"]);
+      const failed = rpcSnapshot(raw, ["ok", "error"]);
+      if (failed?.ok === false && (failed.error === "clock_regressed" || failed.error === "storage_invalid" || failed.error === "storage_unavailable")) return failed.error;
+      const view = reply?.ok === true ? enrollmentSnapshot(reply.value, ["record", "inFlight", "observedAtMs"]) : null;
+      if (view === null || !statsInteger(view.inFlight, 0, 64) || !enrollmentTime(view.observedAtMs)) return "recovery_required";
+      if (view.record === null) return local.value.established ? "recovery_required" : null;
+      const record = enrollmentSnapshot(view.record, ["schemaVersion", "accountId", "generation", "epoch", "workerVersion", "phase", "established", "updatedAtMs"]);
+      return record?.schemaVersion === 1 && record.accountId === accountId && record.generation === generation
+        && record.epoch === local.value.epoch && record.workerVersion === this.#workerVersion() && record.phase === "open"
+        && enrollmentTime(record.updatedAtMs) && record.updatedAtMs <= view.observedAtMs
+        && (record.established === false || (record.established === true && local.value.established)) ? null : "recovery_required";
+    } catch { return "storage_unavailable"; }
+    finally { disposeReply(raw); }
+  }
+  async #readFenced<T>(accountId: string, read: () => Promise<EnrollmentResult<T>>): Promise<EnrollmentResult<T>> {
+    const generation = this.#generation();
+    if (generation === null) return err("recovery_required");
+    const before = await this.#readAuthority(accountId, generation);
+    if (before !== null) return err(before);
+    const result = await read();
+    const after = await this.#readAuthority(accountId, generation);
+    return after === null ? result : err(after);
+  }
   async admitStatsSnapshot(input: unknown): Promise<StatsResult<StatsReceipt>> {
-    if (!this.#statsEnabled() || !this.#statsPresent()) return { ok: false, error: "storage_unavailable" };
+    if (!this.#statsEnabled()) return { ok: false, error: "storage_unavailable" };
     const dto = enrollmentSnapshot(input, ["uploadSecret", "request"]);
     if (!dto || !enrollmentHex(dto.uploadSecret)) return { ok: false, error: "invalid_input" };
     const request = parseStatsUpload(dto.request);
     if (!request) return { ok: false, error: "invalid_input" };
     const generation = this.#generation();
     if (generation === null || request.generation !== generation) return { ok: false, error: "recovery_required" };
+    const authenticated = await this.#preauthenticateUpload(request.accountId, request.deviceId, generation, dto.uploadSecret);
+    if (authenticated !== null) return { ok: false, error: authenticated as StatsError };
     const acquired = await this.#fenceAcquire(request.accountId, generation);
     if (!acquired.ok) return { ok: false, error: acquired.error as StatsError };
     const observation: AdmissionObservation = { generation, observed: Date.now(), fence: acquired.value.fence, committed: false };
@@ -528,6 +771,11 @@ export class AccountEnrollment extends DurableObject<Env> {
     } finally { await this.#fenceSettle(request.accountId, acquired.value.token, observation.committed); }
   }
   async readStatsStatus(input: unknown): Promise<StatsResult<StatsStatus>> {
+    const dto = enrollmentSnapshot(input, ["uploadSecret", "request"]), request = dto && parseStatsStatusRequest(dto.request);
+    if (!request) return { ok: false, error: "invalid_input" };
+    return this.#readFenced(request.accountId, () => this.#readStatsStatus(input)) as Promise<StatsResult<StatsStatus>>;
+  }
+  async #readStatsStatus(input: unknown): Promise<StatsResult<StatsStatus>> {
     if (!this.#statsEnabled() || !this.#statsPresent()) return { ok: false, error: "storage_unavailable" };
     const dto = enrollmentSnapshot(input, ["uploadSecret", "request"]);
     if (!dto || !enrollmentHex(dto.uploadSecret)) return { ok: false, error: "invalid_input" };
@@ -541,13 +789,15 @@ export class AccountEnrollment extends DurableObject<Env> {
       this.#privateDaysSnapshot(scope, seen, state => run(state, seen.observed))).status(request, dto.uploadSecret, observation);
   }
   async abandonStatsSnapshot(input: unknown): Promise<StatsResult<StatsAbandonment>> {
-    if (!this.#statsEnabled() || !this.#statsPresent()) return { ok: false, error: "storage_unavailable" };
+    if (!this.#statsEnabled()) return { ok: false, error: "storage_unavailable" };
     const dto = enrollmentSnapshot(input, ["uploadSecret", "request"]);
     if (!dto || !enrollmentHex(dto.uploadSecret)) return { ok: false, error: "invalid_input" };
     const request = parseStatsAbandonRequest(dto.request);
     if (!request) return { ok: false, error: "invalid_input" };
     const generation = this.#generation();
     if (generation === null || request.generation !== generation) return { ok: false, error: "recovery_required" };
+    const authenticated = await this.#preauthenticateUpload(request.accountId, request.deviceId, generation, dto.uploadSecret);
+    if (authenticated !== null) return { ok: false, error: authenticated as StatsError };
     const acquired = await this.#fenceAcquire(request.accountId, generation);
     if (!acquired.ok) return { ok: false, error: acquired.error as StatsError };
     const observation: AdmissionObservation = { generation, observed: Date.now(), fence: acquired.value.fence, committed: false };
@@ -557,6 +807,11 @@ export class AccountEnrollment extends DurableObject<Env> {
     } finally { await this.#fenceSettle(request.accountId, acquired.value.token, observation.committed); }
   }
   async readUsageStats(input: unknown): Promise<StatsResult<UsageStatsReport>> {
+    const request = parseStatsQuery(input);
+    if (!request) return { ok: false, error: "invalid_input" };
+    return this.#readFenced(request.accountId, () => this.#readUsageStats(input)) as Promise<StatsResult<UsageStatsReport>>;
+  }
+  async #readUsageStats(input: unknown): Promise<StatsResult<UsageStatsReport>> {
     const request = parseStatsQuery(input);
     if (request === null) return { ok: false, error: "invalid_input" };
     if (!this.#statsEnabled() || !this.#statsPresent()) return { ok: false, error: "not_started" };
@@ -583,6 +838,7 @@ export class AccountEnrollment extends DurableObject<Env> {
     read: (state: State, admission: AdmissionState, control: AdmissionControl) => T, checkQuarantine = true): EnrollmentResult<T> {
     try {
       return this.ctx.storage.transactionSync(() => {
+        if (this.#objects().length === 0) return err("not_enrolled");
         this.#schema();
         if (!this.ctx.id.equals(this.env.ACCOUNT_ENROLLMENTS.idFromName(enrollmentAccountName(request.accountId)))) return err("unauthorized");
         if (this.#generation() !== observation.generation) return err("recovery_required");
@@ -613,6 +869,11 @@ export class AccountEnrollment extends DurableObject<Env> {
   /** Dormant trusted-coordinator RPC. The DTO establishes syntax, not user auth.
    * Future HTTP dispatch must verify workload identity and assert a live account. */
   async readImportedDays(input: unknown): Promise<EnrollmentResult<PrivateDaysV1>> {
+    const request = parsePrivateDaysRequest(input);
+    if (!request) return err("invalid_input");
+    return this.#readFenced(request.accountId, () => this.#readImportedDays(input));
+  }
+  async #readImportedDays(input: unknown): Promise<EnrollmentResult<PrivateDaysV1>> {
     try {
       const request = parsePrivateDaysRequest(input);
       if (request === null) return err("invalid_input");
@@ -638,6 +899,11 @@ export class AccountEnrollment extends DurableObject<Env> {
    * state; consent itself is control-plane data, so the quarantine gate does
    * not apply and a withdrawal can never be hidden by admission integrity. */
   async readLeaderboardConsent(input: unknown): Promise<EnrollmentResult<LeaderboardConsentViewV1>> {
+    const request = parseUsageConsentRequest(input);
+    if (!request || request.operation !== "status") return err("invalid_input");
+    return this.#readFenced(request.accountId, () => this.#readLeaderboardConsent(input));
+  }
+  async #readLeaderboardConsent(input: unknown): Promise<EnrollmentResult<LeaderboardConsentViewV1>> {
     try {
       const request = parseUsageConsentRequest(input);
       if (request === null || request.operation !== "status") return err("invalid_input");
@@ -700,16 +966,17 @@ export class AccountEnrollment extends DurableObject<Env> {
       });
       if (!result.ok) return false;
       restored = result.value;
+      return restored === null || await this.#publishLeaderboardConsent(accountId, restored.view, restored.eventAtMs) === "published";
     } finally { await this.#fenceSettle(accountId, acquired.value.token, observation.committed); }
-    return restored === null || await this.#publishLeaderboardConsent(accountId, restored.view, restored.eventAtMs) === "published";
   }
 
   /** Durable delivery retry. A consent mutation arms this before committing,
    * so an index outage or lost response cannot strand a saved decision. The
    * latest stored decision is replayed; reads never perform this repair. */
   async alarm(): Promise<void> {
+    let candidate: { accountId: string; generation: string; view: LeaderboardConsentViewV1; eventAtMs: number } | null;
     try {
-      const candidate = this.ctx.storage.transactionSync(() => {
+      candidate = this.ctx.storage.transactionSync(() => {
         this.#schema();
         const { state } = this.#stored(5);
         return state === null || state.phase !== "active" ? null : {
@@ -717,7 +984,11 @@ export class AccountEnrollment extends DurableObject<Env> {
           view: consentViewOf(state.leaderboard), eventAtMs: state.leaderboard.changedAtMs,
         };
       });
-      if (candidate === null) return;
+    } catch { return; }
+    if (candidate === null) return;
+    const acquired = await this.#fenceAcquire(candidate.accountId, candidate.generation);
+    if (!acquired.ok) return;
+    try {
       const current = await this.readLeaderboardConsent({ schemaVersion: 1, operation: "status",
         accountId: candidate.accountId, sessionExpiresAtMs: 8_640_000_000_000_000 });
       if (!current.ok) {
@@ -744,7 +1015,7 @@ export class AccountEnrollment extends DurableObject<Env> {
       // Explicitly retain the retry after provider alarm retries are exhausted.
       await this.ctx.storage.setAlarm(Date.now() + 60_000);
       throw new Error("consent_delivery_unavailable");
-    }
+    } finally { await this.#fenceSettle(candidate.accountId, acquired.value.token, true); }
   }
 
   /** Fenced, idempotent consent write. The restore-fence lease is acquired and
@@ -795,12 +1066,12 @@ export class AccountEnrollment extends DurableObject<Env> {
         });
         if (!result.ok) return result;
         committed = result.value;
+        const published = await this.#publishLeaderboardConsent(request.accountId, committed.view, committed.eventAtMs);
+        if (published === "published") return ok(committed.view);
+        if ((published === "handle_unavailable" || published === "publishing_full") && previous !== null
+          && await this.#restoreLeaderboardConsent(request.accountId, generation, committed, previous)) return err(published);
+        return err("storage_unavailable");
       } finally { await this.#fenceSettle(request.accountId, acquired.value.token, observation.committed); }
-      const published = await this.#publishLeaderboardConsent(request.accountId, committed.view, committed.eventAtMs);
-      if (published === "published") return ok(committed.view);
-      if ((published === "handle_unavailable" || published === "publishing_full") && previous !== null
-        && await this.#restoreLeaderboardConsent(request.accountId, generation, committed, previous)) return err(published);
-      return err("storage_unavailable");
     } catch { return err("storage_unavailable"); }
   }
 
@@ -809,6 +1080,17 @@ export class AccountEnrollment extends DurableObject<Env> {
    * never enters the public snapshot. A `consent: false` reply is the index's
    * authoritative signal to remove a stale member. */
   async readLeaderboardProjection(input: unknown): Promise<EnrollmentResult<LeaderboardProjectionV1>> {
+    const request = enrollmentSnapshot(input, ["schemaVersion", "accountId"]);
+    if (request?.schemaVersion !== 1 || !enrollmentAccount(request.accountId)) return err("invalid_input");
+    const result = await this.readLeaderboardDelivery(input);
+    return result.ok ? ok(result.value.projection) : result;
+  }
+  async readLeaderboardDelivery(input: unknown): Promise<EnrollmentResult<{ schemaVersion: 1; accountId: string; eventAtMs: number; projection: LeaderboardProjectionV1 }>> {
+    const request = enrollmentSnapshot(input, ["schemaVersion", "accountId"]);
+    if (request?.schemaVersion !== 1 || !enrollmentAccount(request.accountId)) return err("invalid_input");
+    return this.#readFenced(request.accountId, () => this.#readLeaderboardDelivery(input));
+  }
+  async #readLeaderboardDelivery(input: unknown): Promise<EnrollmentResult<{ schemaVersion: 1; accountId: string; eventAtMs: number; projection: LeaderboardProjectionV1 }>> {
     try {
       const request = enrollmentSnapshot(input, ["schemaVersion", "accountId"]);
       if (request?.schemaVersion !== 1 || !enrollmentAccount(request.accountId)) return err("invalid_input");
@@ -816,12 +1098,6 @@ export class AccountEnrollment extends DurableObject<Env> {
       const generation = this.#generation(), observed = Date.now();
       if (generation === null) return err("recovery_required");
       if (!enrollmentTime(observed) || Object.is(observed, -0)) return err("clock_regressed");
-      // These totals leave the account for the public index, so they are held
-      // to the same verified history a mutation is. A dormant member is
-      // re-verified on the index's schedule and never mutates, so nothing else
-      // would audit it; this read is internal and rare enough to pay the scan.
-      const audited = this.#auditHistory();
-      if (audited !== null) return err(audited);
       const observation: AdmissionObservation = { generation, observed, fence: null, committed: false };
       // The projection is an internal coordinator read, not a user session;
       // the never-expiring session bound keeps the snapshot's expiry check inert.
@@ -834,11 +1110,17 @@ export class AccountEnrollment extends DurableObject<Env> {
       return this.#privateDaysSnapshot(scope, observation, (state, admission, control) => {
         if (unavailable) throw new AdmissionFault("storage_unavailable");
         if (external === null || !sameNamespaceAnchor(external, original.value) || !sameNamespaceAnchor(state.anchor, original.value)) throw new AdmissionFault("recovery_required");
+        const projection = (): LeaderboardProjectionV1 => {
         const leaderboard = state.leaderboard;
         if (leaderboard.consent !== true) {
           return Object.freeze({ schemaVersion: 1 as const, accountId: state.accountId, consent: false as const });
         }
         if (control.quarantined) throw new AdmissionFault("recovery_required");
+        // Only an enrolled, current-schema numeric projection needs history
+        // verification. Absent/legacy reads cannot poison later maintenance,
+        // and withdrawn consent remains available despite numeric corruption.
+        const audited = this.#auditHistory(false);
+        if (audited !== null) throw new AdmissionFault(audited === "storage_invalid" ? "storage_invalid" : "recovery_required");
         // Corrections, tombstones and supersession are exactly the private-days
         // read path: the projection can decrease and never double-counts.
         const todayUtcDay = Math.floor(observation.observed / DAY_MS);
@@ -865,6 +1147,8 @@ export class AccountEnrollment extends DurableObject<Env> {
           consentedAtMs: leaderboard.consentedAtMs as number, publicHandle: leaderboard.publicHandle as string,
           observedTokens: observedTokens.toString(), usageRecords,
           windowFirstUtcDay: firstUtcDay, windowUtcDays: dayCount });
+        };
+        return { schemaVersion: 1 as const, accountId: state.accountId, eventAtMs: state.leaderboard.changedAtMs, projection: projection() };
       }, false);
     } catch { return err("storage_unavailable"); }
   }
@@ -872,11 +1156,6 @@ export class AccountEnrollment extends DurableObject<Env> {
   async #operation(input: unknown, fenced: boolean): Promise<EnrollmentResult<Operation>> {
     const proof = parseEnrollmentProof(input);
     if (proof === null) return err("invalid_input");
-    // Every operation here settles through #closed, which commits an observed
-    // time and an enrollment revision, so the unfenced status path durably
-    // writes too and must clear the same history audit the fence does.
-    const audited = this.#auditHistory();
-    if (audited !== null) return err(audited);
     const generation = this.#generation();
     if (generation === null) return err("recovery_required");
     const before = Date.now();
@@ -966,7 +1245,8 @@ export class AccountEnrollment extends DurableObject<Env> {
       if (!prepared.ok) return prepared;
       if (prepared.value.phase === "pending") {
         try {
-          await ensureNamespaceAnchor(this.env.CONTROL, prepared.value.anchor, () => this.#closed(operation, true) === null);
+          await ensureNamespaceAnchor(this.env.CONTROL, prepared.value.anchor, () => this.#closed(operation, true) === null,
+            pending => this.#retainCanonicalWrite(operation.leaseToken, pending));
         } catch { return err(this.#closed(operation, true) ?? "storage_unavailable"); }
       } else {
         const external = await readNamespaceAnchor(this.env.CONTROL, grant.accountId);
@@ -1023,7 +1303,8 @@ export class AccountEnrollment extends DurableObject<Env> {
       if (!prepared.ok) return prepared;
       if ("completed" in prepared.value) return ok(prepared.value.completed);
       const original = prepared.value.anchor;
-      try { await ensureNamespaceAnchor(this.env.CONTROL, original, () => this.#closed(operation, true) === null); }
+      try { await ensureNamespaceAnchor(this.env.CONTROL, original, () => this.#closed(operation, true) === null,
+        pending => this.#retainCanonicalWrite(operation.leaseToken, pending)); }
       catch { return err(this.#closed(operation, true) ?? "storage_unavailable"); }
       const closed = this.#closed(operation, true);
       if (closed !== null) return err(closed);
@@ -1087,7 +1368,7 @@ export class AccountEnrollment extends DurableObject<Env> {
       const resolved = await this.#operation(input, false);
       if (!resolved.ok) return resolved;
       const operation = resolved.value;
-      return this.ctx.storage.transactionSync(() => {
+      return this.#readFenced(operation.grant.accountId, async () => this.ctx.storage.transactionSync(() => {
         this.#schema();
         if (this.#generation() !== operation.generation) return err("recovery_required");
         const { revision: stateRevision, state } = this.#stored(5);
@@ -1105,7 +1386,7 @@ export class AccountEnrollment extends DurableObject<Env> {
           admissionObservedAtMs: control.observed, headCount: control.heads, liveCount: control.live,
           quarantined: control.quarantined,
           devices: Object.freeze(state.devices.map(device => view(device))) }));
-      });
+      }));
     } catch (error) { return err(error instanceof AdmissionFault || error instanceof StatsFault ? error.code : "storage_invalid"); }
   }
 

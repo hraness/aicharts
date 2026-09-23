@@ -42,7 +42,7 @@ The nonrejecting terminal task retains cleanup through the actual request lifeti
 
 Worker transport failures have fixed bodies and codes: HTTP 400 `invalid_request`, 401 `unauthorized_service`, or 503 `coordinator_unavailable`. Checked domain results, including domain failures, use HTTP 200 and the existing codec. The server client returns those checked domain results; every transport failure throws only `pairing_transport_unavailable`, without a cause or reflected body, token, account, URL or upstream exception. Never log transport bodies: they contain pairing capabilities.
 
-A timeout or lost response after dispatch may follow a committed durable operation. There is no automatic retry, rollback claim or permission to replay an OAuth code. Reconcile the same retained attempt through the existing identity flow before replacing it. Even `browserStatus` can advance durable expiry state, so it is not a storage-read-only API.
+A timeout or lost response after dispatch may follow a committed durable operation. There is no automatic retry, rollback claim or permission to replay an OAuth code. Reconcile the same retained attempt through the existing identity flow before replacing it. `browserStatus` projects expiry without changing storage. A later authorized mutation persists the terminal transition; readback never renews or creates authority.
 
 ## Validation and remaining qualification
 

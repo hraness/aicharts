@@ -40,7 +40,7 @@ const pairingStub = (intentId = ID) => env.PAIRINGS.getByName(intentId);
 const hex = /^[0-9a-f]{64}$/u;
 
 let fixtureNumber = 0;
-beforeEach(() => {
+beforeEach(async () => {
   fixtureNumber++;
   ID = (fixtureNumber * 2).toString(16).padStart(64, "0");
   SECOND_ID = (fixtureNumber * 2 + 1).toString(16).padStart(64, "0");
@@ -48,6 +48,10 @@ beforeEach(() => {
   proof = { intentId: ID, pollSecret: POLL, uploadSecret: UPLOAD };
   vi.useFakeTimers({ toFake: ["Date"] });
   vi.setSystemTime(NOW);
+  // This suite starts from an explicitly prepared empty fixture; constructors
+  // and ordinary reads no longer manufacture persistent account storage.
+  success(await accountStub().maintainAccount({ schemaVersion: 1, accountId: ACCOUNT,
+    generation: env.USAGE_ENROLLMENT_GENERATION, operation: "prepare" }));
 });
 afterEach(async () => {
   vi.restoreAllMocks();
@@ -190,6 +194,30 @@ async function pendingGenesis(committed = true) {
 }
 
 describe("explicit retained-genesis recovery", () => {
+  test("a delivery read before first enrollment cannot poison later authenticated initialization", async () => {
+    await eraseSyntheticAccount();
+    const request = { schemaVersion: 1, accountId: ACCOUNT };
+    expect(await accountStub().readLeaderboardDelivery(request)).toEqual({ ok: false, error: "not_enrolled" });
+    await reserved(); success(await accountStub().enroll(proof));
+    expect(await accountStub().readLeaderboardDelivery(request)).toMatchObject({ ok: true,
+      value: { eventAtMs: 0, projection: { consent: false } } });
+  });
+  test("fresh reads and closed-fence maintenance never initialize account storage", async () => {
+    const accountId = `acct_${"fe".repeat(16)}`, account = accountStub(accountId);
+    const tables = () => runInDurableObject(account, (_instance, state) => state.storage.sql.exec(
+      "SELECT name FROM sqlite_schema WHERE name NOT GLOB '_cf_*' AND name NOT GLOB 'sqlite_*' AND name != '__cf_kv'").toArray());
+    expect(await tables()).toEqual([]);
+    expect(await account.readImportedDays({ schemaVersion: 1, accountId, sessionExpiresAtMs: NOW + PAIRING_TTL_MS,
+      firstUtcDay: Math.floor(NOW / 86_400_000), dayCount: 1 })).toEqual({ ok: false, error: "not_enrolled" });
+    expect(await tables()).toEqual([]);
+    const fence = env.RESTORE_FENCES.getByName(restoreFenceName(accountId));
+    const request = { accountId, generation: env.USAGE_ENROLLMENT_GENERATION, epoch: 0, workerVersion: env.USAGE_WORKER_VERSION };
+    const lease = success(await fence.assertOpen({ ...request, attemptId: "ab".repeat(32), leaseMs: 1 }));
+    success(await fence.release({ accountId, token: lease.token, committed: false })); success(await fence.close(request));
+    expect(await account.maintainAccount({ schemaVersion: 1, accountId, generation: request.generation, operation: "prepare" }))
+      .toEqual({ ok: false, error: "recovery_required" });
+    expect(await tables()).toEqual([]);
+  });
   test.each([true, false])("fresh recovery keeps the namespace when anchor committed=%s", async committed => {
     const origin = await pendingGenesis(committed);
     const pending = await accountPayload();
@@ -227,7 +255,7 @@ describe("explicit retained-genesis recovery", () => {
     await eraseSyntheticAccount();
     await abortAllDurableObjects();
     expect(await accountStub().recoverPendingEnrollment(proof)).toEqual({ ok: false, error: "recovery_required" });
-    expect(await accountRow()).toMatchObject({ revision: 0, payload: null });
+    expect(await runInDurableObject(accountStub(), (_instance, state) => state.storage.sql.exec("SELECT name FROM sqlite_schema WHERE name = 'account_enrollment'").toArray())).toEqual([]);
     expect(await anchor()).toEqual(original);
   });
 
@@ -383,8 +411,10 @@ describe("explicit retained-genesis recovery", () => {
       state.storage.sql.exec("UPDATE account_enrollment SET schema_version = 1, payload = ?", legacy === null ? null : JSON.stringify(legacy));
     });
     await abortAllDurableObjects();
+    success(await accountStub().maintainAccount({ schemaVersion: 1, accountId: ACCOUNT,
+      generation: env.USAGE_ENROLLMENT_GENERATION, operation: "prepare" }));
     const after = await accountRow();
-    expect(after).toMatchObject({ schema_version: 5, revision: before.revision });
+    expect(after).toMatchObject({ schema_version: 5, revision: Number(before.revision) + (legacy === null ? 0 : 1) });
     if (legacy === null) expect(after.payload).toBeNull();
     else {
       const payload = await accountPayload();
@@ -802,7 +832,7 @@ describe("dormant account enrollment with real local pairing and R2", () => {
     expect(await accountStub().enroll(proof)).toEqual({ ok: false, error: "recovery_required" });
     expect((await accountStub().namespaceForEnrollment(proof)).ok).toBe(false);
     expect((await accountStub().revokeEnrollment(proof)).ok).toBe(false);
-    expect(await accountRow()).toMatchObject({ schema_version: 5, revision: 0, payload: null });
+    expect(await runInDurableObject(accountStub(), (_instance, state) => state.storage.sql.exec("SELECT name FROM sqlite_schema WHERE name = 'account_enrollment'").toArray())).toEqual([]);
     expect(await anchor()).toEqual(original);
   });
 
@@ -840,7 +870,7 @@ describe("dormant account enrollment with real local pairing and R2", () => {
         }
       } finally { restore(); }
     });
-    expect(await accountRow()).toMatchObject({ revision: 0, payload: null });
+    expect(await runInDurableObject(accountStub(), (_instance, state) => state.storage.sql.exec("SELECT name FROM sqlite_schema WHERE name = 'account_enrollment'").toArray())).toEqual([]);
     expect((await env.CONTROL.list()).objects).toEqual([]);
   });
 
@@ -1236,9 +1266,113 @@ describe("external restore fence integration", () => {
     return value.value;
   };
 
+  type FenceMethod = "assertOpen" | "cancelAcquire" | "release";
+  function lostFenceReplies(lose: (method: FenceMethod, input: unknown) => boolean): Env["RESTORE_FENCES"] {
+    return new Proxy(env.RESTORE_FENCES, { get(target, property) {
+      if (property === "getByName") return (name: string) => new Proxy(target.getByName(name), { get(stub, method) {
+        const original: unknown = Reflect.get(stub, method, stub);
+        if ((method === "assertOpen" || method === "cancelAcquire" || method === "release") && typeof original === "function") return async (input: unknown) => {
+          const reply: unknown = await Reflect.apply(original, stub, [input]);
+          if (lose(method, input)) {
+            const disposal = reply !== null && typeof reply === "object" ? Object.getOwnPropertyDescriptor(reply, Symbol.dispose) : undefined;
+            if (disposal === undefined || typeof disposal.value !== "function") throw new Error("synthetic RPC disposer missing");
+            Reflect.apply(disposal.value, reply, []);
+            throw new Error("synthetic lost committed reply");
+          }
+          return reply;
+        };
+        return typeof original === "function" ? original.bind(stub) : original;
+      } });
+      const value: unknown = Reflect.get(target, property, target);
+      return typeof value === "function" ? value.bind(target) : value;
+    } });
+  }
+
+  test.each(["first", "all"] as const)("enrollment reconciles the same attempt when %s grant replies are lost", async mode => {
+    await reserved();
+    const grants: unknown[] = [], cancels: unknown[] = [];
+    const result = await runInDurableObject(accountStub(), async instance => {
+      const fences = lostFenceReplies((method, input) => {
+        if (method === "cancelAcquire") cancels.push(input);
+        if (method !== "assertOpen") return false;
+        grants.push(input); return mode === "all" || grants.length === 1;
+      });
+      const restore = replaceEnvironment(instance, original => ({ ...original, RESTORE_FENCES: fences }));
+      try { return await instance.enroll(proof); } finally { restore(); }
+    });
+    expect(grants).toHaveLength(mode === "first" ? 2 : 3);
+    expect(grants.every(grant => JSON.stringify(grant) === JSON.stringify(grants[0]))).toBe(true);
+    expect((await fenceView()).inFlight).toBe(0);
+    if (mode === "first") {
+      success(result); expect(cancels).toEqual([]);
+      expect((await fenceView()).record?.established).toBe(true);
+    } else {
+      expect(result).toEqual({ ok: false, error: "storage_unavailable" });
+      expect(cancels).toHaveLength(1);
+      expect(cancels[0]).toMatchObject({ attemptId: (grants[0] as { attemptId: string }).attemptId });
+      expect(await accountRow()).toMatchObject({ revision: 0, payload: null });
+      expect((await env.CONTROL.list()).objects).toEqual([]);
+      expect(await env.RESTORE_FENCES.getByName(restoreFenceName(ACCOUNT)).assertOpen(grants[0]))
+        .toEqual({ ok: false, error: "conflict" });
+      success(await accountStub().enroll(proof));
+    }
+  });
+
+  test.each(["first", "all"] as const)("enrollment reconciles one terminal disposition when %s release replies are lost", async mode => {
+    await reserved(); const releases: unknown[] = [];
+    const result = await runInDurableObject(accountStub(), async instance => {
+      const restore = replaceEnvironment(instance, original => ({ ...original, RESTORE_FENCES: lostFenceReplies((method, input) => {
+        if (method !== "release") return false;
+        releases.push(input); return mode === "all" || releases.length === 1;
+      }) }));
+      try { return await instance.enroll(proof); } finally { restore(); }
+    });
+    success(result);
+    expect(releases).toHaveLength(mode === "first" ? 2 : 3);
+    expect(releases.every(release => JSON.stringify(release) === JSON.stringify(releases[0]))).toBe(true);
+    expect(releases[0]).toMatchObject({ accountId: ACCOUNT, committed: true });
+    expect(await fenceView()).toMatchObject({ inFlight: 0, record: { established: true } });
+    success(await accountStub().enroll(proof));
+  });
+
+  test("a real timed-out namespace put retains registration until actual provider settlement", async () => {
+    await reserved();
+    await runInDurableObject(accountStub(), async (instance, state) => {
+      const fence = env.RESTORE_FENCES.getByName(restoreFenceName(ACCOUNT));
+      const authority = { accountId: ACCOUNT, generation: GENERATION, epoch: 0, workerVersion: VERSION };
+      const arrived = Promise.withResolvers<void>(), release = Promise.withResolvers<void>(), finished = Promise.withResolvers<void>();
+      const restore = replaceEnvironment(instance, original => ({ ...original, CONTROL: bucketReplies({ put: async (bucket, args) => {
+        arrived.resolve(); await release.promise;
+        try { return await bucket.put(...args); } finally { finished.resolve(); }
+      } }) }));
+      const operation = instance.enroll(proof);
+      try {
+        await arrived.promise;
+        // Only Date is mocked; this waits for the actual five-second helper
+        // timeout while the provider promise still has a future canonical put.
+        expect(await operation).toEqual({ ok: false, error: "storage_unavailable" });
+        expect((await env.CONTROL.list()).objects).toEqual([]);
+        expect(success(await fence.close(authority)).inFlight).toBe(1);
+        expect(await fence.publish({ ...authority, epoch: 1 })).toEqual({ ok: false, error: "recovery_required" });
+        const terminal = state.storage.sql.exec("SELECT * FROM account_enrollment").toArray();
+        release.resolve(); await finished.promise;
+        let drained = false;
+        for (let attempt = 0; attempt < 30; attempt++) {
+          if (success(await fence.read({ accountId: ACCOUNT, generation: GENERATION })).inFlight === 0) { drained = true; break; }
+          await new Promise(resolve => setTimeout(resolve, 10));
+        }
+        expect(drained).toBe(true);
+        success(await fence.publish({ ...authority, epoch: 1 }));
+        expect((await env.CONTROL.list()).objects).toHaveLength(1);
+        expect(state.storage.sql.exec("SELECT * FROM account_enrollment").toArray()).toEqual(terminal);
+        expect(JSON.parse(String(terminal[0].payload))).toMatchObject({ phase: "pending", devices: [] });
+      } finally { release.resolve(); await operation; await finished.promise; restore(); }
+    });
+  }, 20_000);
+
   test("the first durable commit establishes the account on the fence", async () => {
     await reserved();
-    expect((await fenceView()).record).toBeNull();
+    expect((await fenceView()).record?.established).toBe(false);
     success(await accountStub().enroll(proof));
     expect((await fenceView()).record?.established).toBe(true);
   });
@@ -1253,7 +1387,7 @@ describe("external restore fence integration", () => {
     await abortAllDurableObjects();
     // The account store is empty again, but the external fence still reports the
     // account was established — a wiped object cannot silently re-run genesis.
-    expect(await accountRow()).toMatchObject({ revision: 0, payload: null });
+    expect(await runInDurableObject(accountStub(), (_instance, state) => state.storage.sql.exec("SELECT name FROM sqlite_schema WHERE name = 'account_enrollment'").toArray())).toEqual([]);
     expect((await fenceView()).record?.established).toBe(true);
     expect(await accountStub().enroll(proof)).toEqual({ ok: false, error: "recovery_required" });
   });

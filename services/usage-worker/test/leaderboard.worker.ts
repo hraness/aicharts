@@ -10,6 +10,7 @@ import { admissionIdBytes } from "../src/admission-state";
 import { enrollmentAccountName, type EnrollmentProof } from "../src/enrollment-contract";
 import { PAIRING_TTL_MS, uploadSecretCommitment } from "../src/pairing";
 import { LEADERBOARD_REFRESH_MS, LEADERBOARD_RECHECK_MS, LEADERBOARD_RETRY_MS } from "../src/leaderboard-index";
+import { restoreFenceName } from "../src/restore-fence";
 
 // Storage alarms use the runtime clock even when JavaScript Date is mocked.
 // Keep fixture timestamps in its future so setAlarm does not clamp them to now.
@@ -17,6 +18,7 @@ const NOW = Math.ceil(Date.now() / DAY_MS) * DAY_MS + DAY_MS / 2, DAY = Math.flo
 let serial = 0, account = "";
 const hex = (value: number, width = 32) => value.toString(16).padStart(width * 2, "0");
 const index = () => env.PUBLIC_INDEX.getByName(LEADERBOARD_INDEX_NAME);
+const fence = (id = account) => env.RESTORE_FENCES.getByName(restoreFenceName(id));
 const stub = (id = account) => env.ACCOUNT_ENROLLMENTS.getByName(enrollmentAccountName(id));
 const success = <T>(result: { ok: true; value: T } | { ok: false; error: string }): T => {
   expect(result).toMatchObject({ ok: true });
@@ -58,6 +60,8 @@ const grant = (handle: string, id = account, sessionExpiresAtMs?: number) =>
 const withdraw = (id = account, sessionExpiresAtMs?: number) =>
   ({ ...session(id, sessionExpiresAtMs), operation: "set" as const, consent: false, publicHandle: null });
 const status = (id = account, sessionExpiresAtMs?: number) => ({ ...session(id, sessionExpiresAtMs), operation: "status" as const });
+const initializeIndex = () => index().applyConsent({ schemaVersion: 1, accountId: account, consent: false,
+  publicHandle: null, consentedAtMs: null, eventAtMs: 0 });
 const alarm = () => runInDurableObject(index(), async (instance, state) => {
   await state.storage.deleteAlarm();
   await instance.alarm();
@@ -82,6 +86,18 @@ async function admit(device: Device, tokens = 10n) {
   const uploaded = await stub().admitBatch({ uploadSecret: device.proof.uploadSecret, batch: batch.bytes });
   expect(uploaded).toMatchObject({ ok: true });
 }
+
+test("constructing and reading an unseen public index creates no schema or alarm", async () => {
+  const objects = () => runInDurableObject(index(), async (_instance, state) => ({
+    schema: state.storage.sql.exec("SELECT type, name, sql FROM sqlite_schema WHERE name NOT GLOB '_cf_*' AND name NOT GLOB 'sqlite_*' AND name != '__cf_kv'").toArray(),
+    alarm: await state.storage.getAlarm(),
+  }));
+  expect(await objects()).toEqual({ schema: [], alarm: null });
+  expect(success(await index().read({ schemaVersion: 1 })).entries).toEqual([]);
+  expect(await objects()).toEqual({ schema: [], alarm: null });
+  await runInDurableObject(index(), instance => instance.alarm());
+  expect(await objects()).toEqual({ schema: [], alarm: null });
+});
 
 test("consent starts unpublished, grants durably, ranks imported totals, and withdrawal removes", async () => {
   const device = await enroll();
@@ -119,25 +135,172 @@ test("consent starts unpublished, grants durably, ranks imported totals, and wit
     .toEqual({ ok: true, value: { schemaVersion: 1, accountId: account, consent: false } });
 });
 
-test("index applies order replays; a tombstone blocks republish until a newer decision", async () => {
+test("index applies require the current exact source decision, including replays and withdrawals", async () => {
   await enroll();
   success(await stub().setLeaderboardConsent(grant("alpha-coder")));
-  // A stale replay of the same decision is a no-op at the index.
-  success(await index().applyConsent({ schemaVersion: 1, accountId: account, consent: true,
-    publicHandle: "imposter-handle", consentedAtMs: NOW, eventAtMs: NOW }));
-  // A delayed duplicate withdrawal tombstones the member at a newer event time.
-  success(await index().applyConsent({ schemaVersion: 1, accountId: account, consent: false,
-    publicHandle: null, consentedAtMs: null, eventAtMs: NOW + 1 }));
+  const before = await indexState();
+  // Neither a syntactically valid handle nor a newer caller timestamp is authority.
+  expect(await index().applyConsent({ schemaVersion: 1, accountId: account, consent: true,
+    publicHandle: "imposter-handle", consentedAtMs: NOW, eventAtMs: NOW })).toEqual({ ok: false, error: "recovery_required" });
+  expect(await index().applyConsent({ schemaVersion: 1, accountId: account, consent: false,
+    publicHandle: null, consentedAtMs: null, eventAtMs: NOW + 1 })).toEqual({ ok: false, error: "recovery_required" });
+  expect(await indexState()).toEqual(before);
+  vi.setSystemTime(NOW + 1);
+  success(await stub().setLeaderboardConsent(withdraw()));
   const gone = success(await index().read({ schemaVersion: 1 }));
   expect(gone.entries).toEqual([]);
   // Republishing the older committed grant cannot resurrect the member.
-  success(await index().applyConsent({ schemaVersion: 1, accountId: account, consent: true,
-    publicHandle: "alpha-coder", consentedAtMs: NOW, eventAtMs: NOW }));
+  expect(await index().applyConsent({ schemaVersion: 1, accountId: account, consent: true,
+    publicHandle: "alpha-coder", consentedAtMs: NOW, eventAtMs: NOW })).toEqual({ ok: false, error: "recovery_required" });
   // A newer decision heals: the account's next committed consent republishes.
   vi.setSystemTime(NOW + 2);
   success(await stub().setLeaderboardConsent(grant("beta-agent")));
   const healed = success(await index().read({ schemaVersion: 1 }));
   expect(healed.entries.map(entry => entry.publicHandle)).toEqual(["beta-agent"]);
+});
+
+test("the index retains its own registration through a delayed source reply and never drains by timeout", async () => {
+  await enroll();
+  success(await stub().setLeaderboardConsent(grant("alpha-coder")));
+  await runInDurableObject(index(), async instance => {
+    const object = instance as unknown as { env: Env }, original = object.env;
+    let resume!: () => void, reached!: () => void;
+    const paused = new Promise<void>(resolve => { resume = resolve; });
+    const blocked = new Promise<void>(resolve => { reached = resolve; });
+    object.env = { ...original, ACCOUNT_ENROLLMENTS: { getByName(name: string) { return {
+      async readLeaderboardDelivery(input: unknown) {
+        const reply = await original.ACCOUNT_ENROLLMENTS.getByName(name).readLeaderboardDelivery(input);
+        reached(); await paused; return reply;
+      },
+    }; } } as unknown as Env["ACCOUNT_ENROLLMENTS"] };
+    try {
+      const pending = instance.applyConsent({ schemaVersion: 1, accountId: account, consent: true,
+        publicHandle: "alpha-coder", consentedAtMs: NOW, eventAtMs: NOW });
+      await blocked;
+      const authority = { accountId: account, generation: env.USAGE_ENROLLMENT_GENERATION, epoch: 0, workerVersion: env.USAGE_WORKER_VERSION };
+      expect(success(await fence().close(authority)).inFlight).toBe(1);
+      vi.setSystemTime(NOW + 60_000);
+      expect(success(await fence().read({ accountId: account, generation: env.USAGE_ENROLLMENT_GENERATION })).inFlight).toBe(1);
+      expect(await fence().publish({ ...authority, epoch: 1 })).toEqual({ ok: false, error: "recovery_required" });
+      resume(); success(await pending);
+      expect(success(await fence().publish({ ...authority, epoch: 1 })).inFlight).toBe(0);
+    } finally { resume(); object.env = original; }
+  });
+});
+
+test("a delayed old source reply cannot overwrite a completed withdrawal", async () => {
+  await enroll();
+  success(await stub().setLeaderboardConsent(grant("alpha-coder")));
+  await runInDurableObject(index(), async instance => {
+    const object = instance as unknown as { env: Env }, original = object.env;
+    let resume!: () => void, reached!: () => void, calls = 0;
+    const paused = new Promise<void>(resolve => { resume = resolve; });
+    const blocked = new Promise<void>(resolve => { reached = resolve; });
+    object.env = { ...original, ACCOUNT_ENROLLMENTS: { getByName(name: string) { return {
+      async readLeaderboardDelivery(input: unknown) {
+        const reply = await original.ACCOUNT_ENROLLMENTS.getByName(name).readLeaderboardDelivery(input);
+        if (++calls === 1) { reached(); await paused; }
+        return reply;
+      },
+    }; } } as unknown as Env["ACCOUNT_ENROLLMENTS"] };
+    try {
+      const pending = instance.applyConsent({ schemaVersion: 1, accountId: account, consent: true,
+        publicHandle: "alpha-coder", consentedAtMs: NOW, eventAtMs: NOW });
+      await blocked; vi.setSystemTime(NOW + 1);
+      success(await stub().setLeaderboardConsent(withdraw()));
+      resume(); expect(await pending).toEqual({ ok: false, error: "storage_unavailable" });
+      expect(success(await instance.read({ schemaVersion: 1 })).entries).toEqual([]);
+    } finally { resume(); object.env = original; }
+  });
+});
+
+test.each([false, true])("delayed alarm delivery uses the completion clock and refuses regression (%s)", async regress => {
+  await enroll();
+  success(await stub().setLeaderboardConsent(grant("alpha-coder")));
+  const startedAt = NOW + LEADERBOARD_REFRESH_MS + 1;
+  vi.setSystemTime(startedAt);
+  await runInDurableObject(index(), async (instance, state) => {
+    const object = instance as unknown as { env: Env }, original = object.env;
+    const before = { rows: state.storage.sql.exec("SELECT * FROM leaderboard_index").toArray(),
+      alarm: await state.storage.getAlarm() };
+    let resume!: () => void, reached!: () => void;
+    const paused = new Promise<void>(resolve => { resume = resolve; });
+    const blocked = new Promise<void>(resolve => { reached = resolve; });
+    object.env = { ...original, ACCOUNT_ENROLLMENTS: { getByName(name: string) { return {
+      async readLeaderboardDelivery(input: unknown) {
+        const reply = await original.ACCOUNT_ENROLLMENTS.getByName(name).readLeaderboardDelivery(input);
+        reached(); await paused; return reply;
+      },
+    }; } } as unknown as Env["ACCOUNT_ENROLLMENTS"] };
+    try {
+      const pending = instance.alarm();
+      await blocked;
+      const completedAt = startedAt + (regress ? -1 : 10);
+      vi.setSystemTime(completedAt); resume();
+      if (regress) {
+        await expect(pending).rejects.toThrow("leaderboard_refresh_unavailable");
+        expect({ rows: state.storage.sql.exec("SELECT * FROM leaderboard_index").toArray(),
+          alarm: await state.storage.getAlarm() }).toEqual(before);
+      } else {
+        await pending;
+        expect(success(await instance.read({ schemaVersion: 1 })).entries[0]?.refreshedAtMs).toBe(completedAt);
+        expect(await state.storage.getAlarm()).toBe(completedAt + LEADERBOARD_RECHECK_MS);
+      }
+    } finally { resume(); object.env = original; }
+  });
+});
+
+test("an old consent hint cannot adopt the newer restore epoch as new intent", async () => {
+  await enroll();
+  success(await stub().setLeaderboardConsent(grant("alpha-coder")));
+  vi.setSystemTime(NOW + 1);
+  success(await stub().setLeaderboardConsent(withdraw()));
+  const before = await indexState();
+  const authority = { accountId: account, generation: env.USAGE_ENROLLMENT_GENERATION, epoch: 0, workerVersion: env.USAGE_WORKER_VERSION };
+  success(await fence().close(authority));
+  success(await fence().publish({ ...authority, epoch: 1 }));
+  // Synthetic operator reconciliation adopts the published epoch while
+  // preserving the current withdrawn source decision and every numeric fact.
+  await runInDurableObject(stub(), (_instance, state) => {
+    const row = state.storage.sql.exec("SELECT payload FROM account_enrollment WHERE id = 1").one();
+    const stored = JSON.parse(String(row.payload)) as Record<string, unknown>;
+    state.storage.sql.exec("UPDATE account_enrollment SET payload = ? WHERE id = 1", JSON.stringify({ ...stored, fenceEpoch: 1 }));
+  });
+  expect(await index().applyConsent({ schemaVersion: 1, accountId: account, consent: true,
+    publicHandle: "alpha-coder", consentedAtMs: NOW, eventAtMs: NOW })).toEqual({ ok: false, error: "recovery_required" });
+  expect(await indexState()).toEqual(before);
+  expect(success(await fence().read({ accountId: account, generation: env.USAGE_ENROLLMENT_GENERATION })).inFlight).toBe(0);
+});
+
+test.each([false, true])("lost index grant replies reconcile or terminally cancel one exact attempt (%s)", async loseEveryReply => {
+  await enroll();
+  success(await stub().setLeaderboardConsent(grant("alpha-coder")));
+  const before = await indexState();
+  await runInDurableObject(index(), async instance => {
+    const object = instance as unknown as { env: Env }, original = object.env;
+    const attempts: string[] = [];
+    object.env = { ...original, RESTORE_FENCES: { getByName(name: string) {
+      const target = original.RESTORE_FENCES.getByName(name);
+      return { read: (input: unknown) => target.read(input), cancelAcquire: (input: unknown) => target.cancelAcquire(input),
+        release: (input: unknown) => target.release(input),
+        async assertOpen(input: { attemptId: string }) {
+          attempts.push(input.attemptId);
+          const reply = await target.assertOpen(input);
+          if (loseEveryReply || attempts.length === 1) throw new Error("synthetic_lost_grant_reply");
+          return reply;
+        } };
+    } } as unknown as Env["RESTORE_FENCES"] };
+    try {
+      const reply = await instance.applyConsent({ schemaVersion: 1, accountId: account, consent: true,
+        publicHandle: "alpha-coder", consentedAtMs: NOW, eventAtMs: NOW });
+      expect(attempts).toHaveLength(loseEveryReply ? 3 : 2); expect(new Set(attempts).size).toBe(1);
+      if (loseEveryReply) expect(reply).toEqual({ ok: false, error: "recovery_required" }); else success(reply);
+      expect(success(await fence().read({ accountId: account, generation: env.USAGE_ENROLLMENT_GENERATION })).inFlight).toBe(0);
+      expect(await fence().assertOpen({ accountId: account, generation: env.USAGE_ENROLLMENT_GENERATION,
+        epoch: 0, workerVersion: env.USAGE_WORKER_VERSION, leaseMs: 5000, attemptId: attempts[0] })).toEqual({ ok: false, error: "conflict" });
+    } finally { object.env = original; }
+  });
+  if (loseEveryReply) expect(await indexState()).toEqual(before);
 });
 
 test("malformed applies and reads are refused without state change", async () => {
@@ -155,6 +318,7 @@ test("malformed applies and reads are refused without state change", async () =>
 
 test("the members bound refuses the 129th publisher", async () => {
   await enroll();
+  success(await initializeIndex());
   await runInDurableObject(index(), (_instance, state) => {
     const members = Array.from({ length: LEADERBOARD_MAX_MEMBERS }, (_, member) => ({
       accountId: `acct_${hex(2000 + member, 16)}`, publicHandle: `member-${member.toString(16)}`,
@@ -165,7 +329,7 @@ test("the members bound refuses the 129th publisher", async () => {
   });
   expect(await index().applyConsent({ schemaVersion: 1, accountId: `acct_${hex(9999, 16)}`,
     consent: true, publicHandle: "overflow-member", consentedAtMs: NOW, eventAtMs: NOW }))
-    .toEqual({ ok: false, error: "limit" });
+    .toEqual({ ok: false, error: "recovery_required" });
   expect(await stub().setLeaderboardConsent(grant("overflow-member"))).toEqual({ ok: false, error: "publishing_full" });
   expect(success(await stub().readLeaderboardConsent(status())).consent).toBe(false);
   await runInDurableObject(stub(), async (instance, state) => {
@@ -220,6 +384,14 @@ test("quarantined usage cannot hide a withdrawal after a failed index apply", as
 });
 
 test("bounded alarm batches drain promptly and unavailable sources cannot starve later members", async () => {
+  await enroll();
+  success(await initializeIndex());
+  for (let member = 0; member < 16; member++) {
+    const accountId = `acct_${hex(2000 + member, 16)}`;
+    const lease = success(await fence(accountId).assertOpen({ accountId, generation: env.USAGE_ENROLLMENT_GENERATION,
+      epoch: 0, workerVersion: env.USAGE_WORKER_VERSION, leaseMs: 5000, attemptId: hex(10000 + member) }));
+    success(await fence(accountId).release({ accountId, token: lease.token, committed: true }));
+  }
   await runInDurableObject(index(), async (instance, state) => {
     const members = Array.from({ length: 16 }, (_, member) => ({
       accountId: `acct_${hex(2000 + member, 16)}`, publicHandle: `member-${member.toString(16)}`,
@@ -230,7 +402,7 @@ test("bounded alarm batches drain promptly and unavailable sources cannot starve
     const object = instance as unknown as { env: Env }, original = object.env;
     const visited: string[] = [];
     object.env = { ...original, ACCOUNT_ENROLLMENTS: { getByName() { return {
-      async readLeaderboardProjection(input: { accountId: string }) {
+      async readLeaderboardDelivery(input: { accountId: string }) {
         visited.push(input.accountId);
         throw new Error("synthetic_unavailable");
       },
@@ -253,6 +425,21 @@ test("bounded alarm batches drain promptly and unavailable sources cannot starve
       ]);
     } finally { object.env = original; }
   });
+});
+
+test("closed account fences cannot starve an open member beyond the source refresh batch", async () => {
+  for (let member = 0; member < 9; member++) {
+    account = `acct_${hex(++serial, 16)}`;
+    await enroll();
+    success(await stub().setLeaderboardConsent(grant(`member-${member}`)));
+    if (member < 8) success(await fence().close({ accountId: account, generation: env.USAGE_ENROLLMENT_GENERATION,
+      epoch: 0, workerVersion: env.USAGE_WORKER_VERSION }));
+  }
+  vi.setSystemTime(NOW + LEADERBOARD_REFRESH_MS + 1);
+  await alarm();
+  const entries = success(await index().read({ schemaVersion: 1 })).entries;
+  expect(entries.map(entry => entry.publicHandle)).toEqual(["member-8"]);
+  expect(entries[0]?.refreshedAtMs).toBe(NOW + LEADERBOARD_REFRESH_MS + 1);
 });
 
 test("the public snapshot never contains account or device identifiers", async () => {

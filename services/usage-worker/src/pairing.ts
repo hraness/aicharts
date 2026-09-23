@@ -222,19 +222,26 @@ export class PairingIntent extends DurableObject<Env> {
 
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
-    try {
-      ctx.storage.transactionSync(() => {
-        const objects = this.#schemaObjects();
-        if (objects.length === 0) {
-          ctx.storage.sql.exec(SCHEMA_SQL);
-          // workerd restricts PRAGMAs, including user_version. Version the owned
-          // row explicitly, in the same transaction as schema initialization.
-          ctx.storage.sql.exec("INSERT INTO pairing_state (id, schema_version, revision, payload) VALUES (1, 2, 0, NULL)");
-        }
-        this.#assertSchema();
-        this.#migrateLegacyState();
-      });
-    } catch { this.#healthy = false; }
+    // Ordinary readback may instantiate this object. Only a mutation or the
+    // explicit maintenance entry point owns persistent schema changes.
+  }
+  #prepareSchema(): void {
+    const objects = this.#schemaObjects();
+    if (objects.length === 0) {
+      this.ctx.storage.sql.exec(SCHEMA_SQL);
+      // workerd restricts PRAGMAs, including user_version. Version the owned
+      // row explicitly, in the same transaction as schema initialization.
+      this.ctx.storage.sql.exec("INSERT INTO pairing_state (id, schema_version, revision, payload) VALUES (1, 2, 0, NULL)");
+    }
+    this.#assertSchema();
+    this.#migrateLegacyState();
+  }
+  /** Intent-local additive maintenance; never creates or renews a grant. */
+  async preparePairing(input: unknown): Promise<PairingResult<null>> {
+    if (!exact(input, ["intentId"]) || !hex(input.intentId)
+      || !this.ctx.id.equals(this.env.PAIRINGS.idFromName(input.intentId))) return err("invalid_input");
+    try { return this.ctx.storage.transactionSync(() => { this.#prepareSchema(); return ok(null); }); }
+    catch { return err("storage_invalid"); }
   }
 
   #schemaObjects(): Record<string, SqlStorageValue>[] {
@@ -272,9 +279,11 @@ export class PairingIntent extends DurableObject<Env> {
     this.ctx.storage.sql.exec("UPDATE pairing_state SET schema_version = 2, payload = ? WHERE id = 1", payload);
   }
 
-  #transaction<T>(run: (state: State | null, now: number) => { state: State | null; result: PairingResult<T> }, minimumObservedAtMs = 0): PairingResult<T> {
+  #transaction<T>(run: (state: State | null, now: number) => { state: State | null; result: PairingResult<T> }, minimumObservedAtMs = 0, mutating = true): PairingResult<T> {
     try {
       return this.ctx.storage.transactionSync(() => {
+        if (mutating) this.#prepareSchema();
+        else if (this.#schemaObjects().length === 0) return err("not_initialized");
         this.#assertSchema();
         const rows = this.ctx.storage.sql.exec("SELECT id, schema_version, revision, payload FROM pairing_state LIMIT 2").toArray();
         const row = rows[0];
@@ -290,9 +299,9 @@ export class PairingIntent extends DurableObject<Env> {
         const now = Date.now();
         if (!isTime(now) || now > MAX_TIME - PAIRING_TTL_MS || now < minimumObservedAtMs
           || (state !== null && now < state.observedAtMs)) return err("clock_regressed");
-        if (state !== null) state.observedAtMs = now;
+        if (state !== null && mutating) state.observedAtMs = now;
         const outcome = run(state, now);
-        if (outcome.state !== null) {
+        if (mutating && outcome.state !== null) {
           if (!validState(outcome.state)) throw new Error("storage_invalid");
           const payload = JSON.stringify(outcome.state);
           if (payload.length > MAX_PAYLOAD) throw new Error("storage_invalid");
@@ -303,12 +312,12 @@ export class PairingIntent extends DurableObject<Env> {
     } catch { return err("storage_invalid"); }
   }
 
-  #existing<T>(intentId: string, run: (state: State, now: number) => PairingResult<T>, minimumObservedAtMs = 0): PairingResult<T> {
+  #existing<T>(intentId: string, run: (state: State, now: number) => PairingResult<T>, minimumObservedAtMs = 0, mutating = true): PairingResult<T> {
     return this.#transaction((state, now) => {
       if (state === null) return { state, result: err("not_initialized") };
       if (state.intentId !== intentId) return { state, result: err("unauthorized") };
       return { state, result: run(state, now) };
-    }, minimumObservedAtMs);
+    }, minimumObservedAtMs, mutating);
   }
 
   async initialize(input: unknown): Promise<PairingResult<{ expiresAtMs: number }>> {
@@ -385,7 +394,9 @@ export class PairingIntent extends DurableObject<Env> {
     });
   }
 
-  /** Trusted readback, not consent or an authorization grant, even after expiry. */
+  /** Pure trusted readback. Expiry is projected from the checked current time;
+   * only an explicit mutation records a durable terminal expiry decision. This
+   * display cannot grant, revive or renew any authority. */
   async browserStatus(input: unknown): Promise<PairingResult<BrowserPairingView>> {
     const owned = browserSnapshot(input);
     if (owned === null) return err("invalid_input");
@@ -394,7 +405,7 @@ export class PairingIntent extends DurableObject<Env> {
       if (!matchesBrowser(state, owned, proof)) return err("unauthorized");
       expired(state, now);
       return ok(browserView(state));
-    });
+    }, 0, false);
   }
 
   /** Live account/session facts come only from the trusted server coordinator. */
@@ -483,7 +494,7 @@ export class PairingIntent extends DurableObject<Env> {
           recoveryGeneration: generation, reservedAtMs: now, expiresAtMs,
         });
         return ok(state.enrollment);
-      }, afterUploadAtMs);
+      }, afterUploadAtMs, reserve);
     } catch { return err("storage_invalid"); }
   }
 

@@ -10,7 +10,7 @@ const id = z.string().regex(/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/u);
 const path = text.refine(value => !isAbsolute(value) && !value.split(/[\\/]/u).includes(".."), "repository-relative path required");
 const phase = z.enum(["0", "1A", "1B", "1C", "2A", "2B", "3", "4", "5", "6", "7", "7B", "8", "9", "10", "11", "12"]);
 const metricFamilies = ["token-volume", "mix", "trends", "typical-sizes", "costs", "cache-economics", "billing-and-limits", "latency-and-generation", "activity-and-concurrency", "sessions-turns-and-agents", "context-and-compaction", "reliability", "coverage-and-freshness", "comparisons", "budgets-and-forecasts", "operations", "benchmark-context"] as const;
-const mandatoryControls = new Set(["worker:leaderboard_index", "worker:restore_fence", "worker:fence_lease", "worker:account_enrollment", "worker:usage_admission_control", "worker:usage_admission_devices", "worker:usage_stats_control", "worker:usage_stats_devices", "worker:usage_stats_writers", "ledger:sender_binding", "ledger:sender_accepted", "ledger:sender_settled", "r2:enrollment-namespace-anchors"]);
+const mandatoryControls = new Set(["worker:leaderboard_index", "worker:restore_fence", "worker:fence_lease", "worker:fence_attempt", "worker:account_enrollment", "worker:usage_admission_control", "worker:usage_admission_devices", "worker:usage_stats_control", "worker:usage_stats_devices", "worker:usage_stats_writers", "worker:usage_stats_day_sources", "ledger:sender_binding", "ledger:sender_accepted", "ledger:sender_settled", "r2:enrollment-namespace-anchors"]);
 const metric = z.object({
   id, version: z.literal(1), family: z.enum(metricFamilies), question: text, unit: text, grain: text,
   sourceCapabilities: z.array(text).min(1), numerator: text, denominator: text.nullable(),

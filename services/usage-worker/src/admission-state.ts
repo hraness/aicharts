@@ -47,10 +47,9 @@ export class AdmissionState {
   /** One-time widening of the retained-head ceiling plus installation of the
    * audit checkpoint on stores created under the first admission schema. The
    * control row is rebuilt through a temporary rename so the surviving CREATE
-   * statement matches the manifest byte-for-byte. The seeded checkpoint trusts
-   * only history the previous schema's restart audit already verified, so the
-   * next cold audit scans just the delta. Idempotent; runs inside the owning
-   * object's schema transaction before the exact-schema check. */
+   * statement matches the manifest byte-for-byte. New checkpoint installation
+   * starts at zero: a prior binary's scan is not independently retained proof.
+   * Idempotent; runs inside the fenced owner's schema transaction. */
   migrateCapacity(): void {
     const definitions = new Map(this.sql.exec("SELECT name, sql FROM sqlite_schema WHERE name IN ('usage_admission_control', 'usage_admission_audit') LIMIT 4")
       .toArray().map(row => [String(row.name), row.sql]));
@@ -73,8 +72,7 @@ export class AdmissionState {
       return;
     }
     this.sql.exec(ADMISSION_SCHEMA.usage_admission_audit);
-    const control = this.control();
-    this.sql.exec("INSERT INTO usage_admission_audit (id, revision, committed_at_ms) VALUES (1, ?, ?)", control.revision, control.committed);
+    this.sql.exec("INSERT INTO usage_admission_audit (id, revision, committed_at_ms) VALUES (1, 0, 0)");
   }
   addDevice(device: string): void {
     this.sql.exec("INSERT INTO usage_admission_devices (device_id, settled_sequence, last_batch, last_journal) VALUES (?, 0, NULL, NULL)", admissionIdBytes(device));
@@ -291,14 +289,20 @@ export class AdmissionState {
   }
   /** Finite restart audit: re-verify the journal extension and the heads last
    * touched since the stored checkpoint, retaining bounded metadata and no
-   * cross-product. History at or below the checkpoint was verified (or
+   * cross-product. A checkpoint is a same-storage optimization, not an
+   * independent integrity root. History at or below an existing checkpoint was verified (or
    * migration-trusted) once; every later mutation carries a newer
    * journal_revision, so delta coverage still reaches every subsequent write.
    * An absent checkpoint row re-verifies from revision zero, which is also the
    * operator recovery path for suspected deep corruption. Cost stays
    * proportional to work committed since the last verified restart. */
-  auditHistory(authority: AdmissionAuthority | null): void {
-    this.#auditDelta(authority, this.#auditCheckpoint());
+  verifyHistory(authority: AdmissionAuthority | null, fromZero = false): void {
+    this.#auditDelta(authority, fromZero ? { revision: 0, committedAtMs: 0 } : this.#auditCheckpoint());
+  }
+  /** Fenced maintenance may checkpoint a verified extension, or explicitly
+   * scrub from zero without trusting the existing checkpoint's prefix. */
+  auditHistory(authority: AdmissionAuthority | null, fromZero = false): void {
+    this.verifyHistory(authority, fromZero);
     const control = this.auditControl(authority);
     this.sql.exec("INSERT INTO usage_admission_audit (id, revision, committed_at_ms) VALUES (1, ?, ?) ON CONFLICT(id) DO UPDATE SET revision = excluded.revision, committed_at_ms = excluded.committed_at_ms",
       control.revision, control.committed);

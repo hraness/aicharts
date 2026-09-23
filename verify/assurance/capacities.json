@@ -125,7 +125,7 @@
       "id": "private-days-max-heads",
       "scope": "private-days-v1-response",
       "unit": "count",
-      "value": 100000,
+      "value": 1000000,
       "source": {
         "path": "lib/usage/private-days-contract.ts",
         "symbol": "PRIVATE_DAYS_MAX_HEADS"
@@ -350,6 +350,36 @@
         "path": "crates/aicharts-protocol/src/lib.rs",
         "symbol": "MAX_TOKEN_COUNTER"
       }
+    },
+    {
+      "id": "restore-max-attempts",
+      "scope": "account-restore-fence-retained-authority",
+      "unit": "count",
+      "value": 1000000,
+      "source": {
+        "path": "services/usage-worker/src/restore-fence.ts",
+        "symbol": "RESTORE_FENCE_MAX_ATTEMPTS"
+      }
+    },
+    {
+      "id": "native-stats-legacy-records",
+      "scope": "account-v1-retained",
+      "unit": "count",
+      "value": 1000000,
+      "source": {
+        "path": "crates/aicharts-cli/src/stats_sync.rs",
+        "symbol": "MAX_LEGACY_RECORDS"
+      }
+    },
+    {
+      "id": "stats-day-sources",
+      "scope": "account-v2-retained-authority",
+      "unit": "count",
+      "value": 65536,
+      "source": {
+        "path": "services/usage-worker/src/stats-state.ts",
+        "symbol": "MAX_STATS_DAY_SOURCES"
+      }
     }
   ],
   "relations": [
@@ -357,8 +387,8 @@
       "left": "max-admission-heads",
       "right": "private-days-max-heads",
       "relation": "equal",
-      "status": "known-defect",
-      "finding": "F10"
+      "status": "enforced",
+      "finding": null
     },
     {
       "left": "max-admission-day-heads",
@@ -384,6 +414,13 @@
     {
       "left": "wire-rust-records",
       "right": "wire-typescript-records",
+      "relation": "equal",
+      "status": "enforced",
+      "finding": null
+    },
+    {
+      "left": "max-admission-heads",
+      "right": "native-stats-legacy-records",
       "relation": "equal",
       "status": "enforced",
       "finding": null

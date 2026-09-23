@@ -227,6 +227,26 @@
         "timeoutSeconds": 7200
       },
       "note": "Explicit user-requested process capture; only complete numeric observations retained, private cache bound to executable identity. Raw streams remain in bounded memory and are never persisted or echoed."
+    },
+    "durable-object:fence_attempt": {
+      "kind": "authoritative",
+      "retention": "account",
+      "owner": "services/usage-worker/src/restore-fence.ts",
+      "deletion": "services/usage-worker/src/restore-fence.ts",
+      "budget": {
+        "rowsPerAccount": 1000000
+      },
+      "note": "Per-execution restore grant/cancellation/settlement authority. Terminal attempts remain retained across delayed RPCs, credential replay and account restoration. No time-only expiry or reclamation. One million is the admission row cap, not an attested physical SQL/index/WAL byte bound; existing attempt reconciliation must remain available at capacity."
+    },
+    "durable-object:usage_stats_day_sources": {
+      "kind": "authoritative",
+      "retention": "account",
+      "owner": "services/usage-worker/src/stats-state.ts",
+      "deletion": "services/usage-worker/src/enrollment.ts",
+      "budget": {
+        "rowsPerAccount": 65536
+      },
+      "note": "Canonical client/day writer provenance and ownership revision survive writer transfer. No foreign-owner replacement without exact population proof. Retained while its canonical day exists; no independent reclamation in this phase. Row bound is enforced, not an attested physical SQL/index/WAL byte budget."
     }
   },
   "exempt": []

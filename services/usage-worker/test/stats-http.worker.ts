@@ -43,9 +43,11 @@ beforeEach(() => { account = `acct_${hex(++serial, 16)}`; vi.useFakeTimers({ toF
 afterEach(async () => { vi.restoreAllMocks(); vi.useRealTimers(); await reset(); });
 async function activated() {
   const device = await enroll();
-  await runInDurableObject(device.stub, (instance, state) => {
+  await runInDurableObject(device.stub, async (instance, state) => {
     const owner = instance as unknown as { env: Env }, next = { ...owner.env, AICHARTS_USAGE_STATS_ENABLED: "1" };
     new AccountEnrollment(state, next); owner.env = next;
+    success(await instance.maintainAccount({ schemaVersion: 1, accountId: account,
+      generation: env.USAGE_ENROLLMENT_GENERATION, operation: "prepare" }));
   });
   const report = parseUsageStatsReport({ schemaVersion: 2, profile: "client-stats-v2", registryRevision: 1,
     firstUtcDay: DAY, dayCount: 1, generatedAtMs: NOW, revision: 0, updatedAtMs: null,

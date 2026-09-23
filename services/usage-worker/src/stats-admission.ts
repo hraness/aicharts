@@ -81,7 +81,10 @@ export class AccountStats {
         if (pending) {
           if (pending.deviceId !== request.deviceId) throw new StatsFault("conflict");
           if (pending.bodyHash === bodyHash) { this.state.check(request, owner); return null; }
-          this.state.supersedePending(request.deviceId);
+          // A different body has no authority to erase the retained intent.
+          // Explicit abandon first advances the durable predecessor revision;
+          // a delayed A can then neither displace B nor reserve/charge again.
+          throw new StatsFault("conflict");
         }
         this.state.reserve(request, owner, now);
         return null;

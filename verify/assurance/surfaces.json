@@ -351,6 +351,26 @@
       "rebuildFrom": null,
       "lifecycleStatus": "qualification-required",
       "controlEvidence": false
+    },
+    {
+      "id": "worker:fence_attempt",
+      "table": "fence_attempt",
+      "owner": "services/usage-worker/src/restore-fence.ts",
+      "kind": "authoritative",
+      "retentionPolicy": "authority-and-deletion-controls",
+      "rebuildFrom": null,
+      "lifecycleStatus": "qualification-required",
+      "controlEvidence": true
+    },
+    {
+      "id": "worker:usage_stats_day_sources",
+      "table": "usage_stats_day_sources",
+      "owner": "services/usage-worker/src/stats-state.ts",
+      "kind": "authoritative",
+      "retentionPolicy": "authority-and-deletion-controls",
+      "rebuildFrom": null,
+      "lifecycleStatus": "qualification-required",
+      "controlEvidence": true
     }
   ]
 }

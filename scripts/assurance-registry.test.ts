@@ -81,9 +81,10 @@ describe("executable assurance inventory", () => {
       ...reader,
       read: path => {
         const source = reader.read(path);
-        if (path === "lib/usage/private-days-contract.ts") return source.replace("PRIVATE_DAYS_MAX_HEADS = 100_000", "PRIVATE_DAYS_MAX_HEADS = 1_000_000");
         if (path !== "verify/assurance/capacities.json") return source;
-        const data = JSON.parse(source); data.capacities.find((row: { id: string }) => row.id === "private-days-max-heads").value = 1_000_000;
+        const data = JSON.parse(source);
+        const relation = data.relations.find((row: { right: string }) => row.right === "private-days-max-heads");
+        relation.status = "known-defect"; relation.finding = "F10";
         return JSON.stringify(data);
       },
     };
