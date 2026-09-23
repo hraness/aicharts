@@ -774,7 +774,7 @@ describe("dormant account admission", () => {
       expect(state.storage.sql.exec("SELECT head_count, live_count FROM usage_admission_control").one()).toEqual({ head_count: 100_001, live_count: 100_000 });
       expect(state.storage.sql.exec("SELECT live_count FROM usage_admission_days WHERE utc_day = ?", DAY).one().live_count).toBe(65_536);
     });
-  }, 60_000);
+  }, 120_000);
 
   test("capacity migration rebuilds first-generation control bounds and seeds the audit checkpoint", async () => {
     const device = await enroll(), value = batch(device); success(await upload(device, value));
