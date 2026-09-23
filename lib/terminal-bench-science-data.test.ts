@@ -89,15 +89,21 @@ describe("checked Terminal-Bench-Science data", () => {
       expect(record.sourceUrl).not.toContain("/latest/");
     }
     expect(parsed.value.records[0]).toMatchObject({
-      harness: { display: { label: "Claude Code" } },
-      metrics: { resolutionRatePercent: 40 },
-      model: { display: { label: "Fable 5.1" } },
+      harness: { display: { label: "Codex" } },
+      metrics: { resolutionRatePercent: 68.0952380952381 },
+      model: { display: { label: "GPT-6 Astra" } },
       rank: 1,
     });
     expect(parsed.value.records[1]).toMatchObject({
+      harness: { display: { label: "Claude Code" } },
+      metrics: { resolutionRatePercent: 40 },
+      model: { display: { label: "Fable 5.1" } },
+      rank: 2,
+    });
+    expect(parsed.value.records[2]).toMatchObject({
       metrics: { resolutionRatePercent: 30 },
       model: { display: { label: "Opus 5" } },
-      rank: 2,
+      rank: 3,
     });
   });
 

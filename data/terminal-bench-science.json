@@ -25,6 +25,87 @@
     {
       "harness": {
         "display": {
+          "label": "Codex",
+          "url": "https://openai.com/codex/"
+        },
+        "organization": {
+          "label": "OpenAI",
+          "url": "https://openai.com"
+        },
+        "version": null
+      },
+      "id": "76867ebc-8f35-43c5-a8b0-0cee9db46c96",
+      "metrics": {
+        "domains": {
+          "earth": {
+            "nTrials": 24,
+            "passes": 19,
+            "resolutionRatePercent": 79.16666666666666,
+            "standardErrorPercent": 8.28981693493981,
+            "totalCostUsd": 595.7791399999999,
+            "totalTokens": 293274673
+          },
+          "engineering": {
+            "nTrials": 27,
+            "passes": 19,
+            "resolutionRatePercent": 70.37037037037037,
+            "standardErrorPercent": 8.787718725951697,
+            "totalCostUsd": 698.2211565000001,
+            "totalTokens": 275452102
+          },
+          "life": {
+            "nTrials": 57,
+            "passes": 34,
+            "resolutionRatePercent": 59.64912280701754,
+            "standardErrorPercent": 6.498170362001764,
+            "totalCostUsd": 1029.8967839999998,
+            "totalTokens": 499877944
+          },
+          "mathematical": {
+            "nTrials": 51,
+            "passes": 41,
+            "resolutionRatePercent": 80.3921568627451,
+            "standardErrorPercent": 5.559511900620688,
+            "totalCostUsd": 1453.6847160000002,
+            "totalTokens": 661648841
+          },
+          "physical": {
+            "nTrials": 51,
+            "passes": 30,
+            "resolutionRatePercent": 58.82352941176471,
+            "standardErrorPercent": 6.891519836811836,
+            "totalCostUsd": 1219.8793844999996,
+            "totalTokens": 558073236
+          }
+        },
+        "nTrials": 210,
+        "passes": 143,
+        "resolutionRatePercent": 68.0952380952381,
+        "standardErrorPercent": 3.2164475807033743,
+        "totalCostUsd": 4997.461181,
+        "totalTokens": 2288326796
+      },
+      "model": {
+        "display": {
+          "label": "GPT-6 Astra",
+          "url": "https://developers.openai.com/api/docs/models/gpt-6-astra"
+        },
+        "organization": {
+          "label": "OpenAI",
+          "url": "https://openai.com"
+        },
+        "version": null
+      },
+      "rank": 1,
+      "reasoningEffort": "max",
+      "releaseDate": "2026-09-03",
+      "safeguardMode": null,
+      "sourceUpdatedAt": "2026-09-22T11:46:04.426644+00:00",
+      "sourceUrl": "https://hub.harborframework.com/datasets/terminal-bench-science/terminal-bench-science/0.1.0/leaderboards/v0-1-eval/rows/76867ebc-8f35-43c5-a8b0-0cee9db46c96"
+    },
+    {
+      "harness": {
+        "display": {
           "label": "Claude Code",
           "url": "https://claude.com/product/claude-code"
         },
@@ -96,7 +177,7 @@
         },
         "version": null
       },
-      "rank": 1,
+      "rank": 2,
       "reasoningEffort": "max",
       "releaseDate": "2026-09-01",
       "safeguardMode": null,
@@ -177,7 +258,7 @@
         },
         "version": null
       },
-      "rank": 2,
+      "rank": 3,
       "reasoningEffort": "max",
       "releaseDate": "2026-07-24",
       "safeguardMode": null,
@@ -258,7 +339,7 @@
         },
         "version": null
       },
-      "rank": 3,
+      "rank": 4,
       "reasoningEffort": "max",
       "releaseDate": "2026-07-09",
       "safeguardMode": null,
@@ -339,7 +420,7 @@
         },
         "version": null
       },
-      "rank": 4,
+      "rank": 5,
       "reasoningEffort": "max",
       "releaseDate": "2026-06-09",
       "safeguardMode": null,
@@ -420,12 +501,93 @@
         },
         "version": null
       },
-      "rank": 5,
+      "rank": 6,
       "reasoningEffort": "max",
       "releaseDate": "2026-09-10",
       "safeguardMode": null,
       "sourceUpdatedAt": "2026-09-16T13:45:27.369938+00:00",
       "sourceUrl": "https://hub.harborframework.com/datasets/terminal-bench-science/terminal-bench-science/0.1.0/leaderboards/v0-1-eval/rows/58d4c48d-791b-4873-ba3e-af1cf997a79c"
+    },
+    {
+      "harness": {
+        "display": {
+          "label": "Grok Build",
+          "url": "https://x.ai/"
+        },
+        "organization": {
+          "label": "xAI",
+          "url": "https://x.ai"
+        },
+        "version": null
+      },
+      "id": "360317df-baea-4ead-8a11-09db70a27d15",
+      "metrics": {
+        "domains": {
+          "earth": {
+            "nTrials": 24,
+            "passes": 6,
+            "resolutionRatePercent": 25,
+            "standardErrorPercent": 8.838834764831844,
+            "totalCostUsd": 314.11143000000004,
+            "totalTokens": 437274242
+          },
+          "engineering": {
+            "nTrials": 27,
+            "passes": 7,
+            "resolutionRatePercent": 25.925925925925924,
+            "standardErrorPercent": 8.433704334123124,
+            "totalCostUsd": 343.575272,
+            "totalTokens": 464565188
+          },
+          "life": {
+            "nTrials": 57,
+            "passes": 7,
+            "resolutionRatePercent": 12.280701754385964,
+            "standardErrorPercent": 4.347321296345194,
+            "totalCostUsd": 377.22269599999987,
+            "totalTokens": 516732172
+          },
+          "mathematical": {
+            "nTrials": 51,
+            "passes": 2,
+            "resolutionRatePercent": 3.9215686274509802,
+            "standardErrorPercent": 2.718052078759498,
+            "totalCostUsd": 1355.7633679999997,
+            "totalTokens": 1874600150
+          },
+          "physical": {
+            "nTrials": 51,
+            "passes": 8,
+            "resolutionRatePercent": 15.686274509803921,
+            "standardErrorPercent": 5.09241697494762,
+            "totalCostUsd": 680.1440580000001,
+            "totalTokens": 913055022
+          }
+        },
+        "nTrials": 210,
+        "passes": 30,
+        "resolutionRatePercent": 14.285714285714286,
+        "standardErrorPercent": 2.414726442081476,
+        "totalCostUsd": 3070.816824,
+        "totalTokens": 4206226774
+      },
+      "model": {
+        "display": {
+          "label": "Grok 4.7",
+          "url": "https://x.ai/news/grok-4-7"
+        },
+        "organization": {
+          "label": "xAI",
+          "url": "https://x.ai"
+        },
+        "version": null
+      },
+      "rank": 7,
+      "reasoningEffort": "xhigh",
+      "releaseDate": "2026-09-21",
+      "safeguardMode": null,
+      "sourceUpdatedAt": "2026-09-21T20:47:10.285461+00:00",
+      "sourceUrl": "https://hub.harborframework.com/datasets/terminal-bench-science/terminal-bench-science/0.1.0/leaderboards/v0-1-eval/rows/360317df-baea-4ead-8a11-09db70a27d15"
     },
     {
       "harness": {
@@ -501,7 +663,7 @@
         },
         "version": null
       },
-      "rank": 6,
+      "rank": 8,
       "reasoningEffort": "high",
       "releaseDate": "2026-09-02",
       "safeguardMode": null,
@@ -582,7 +744,7 @@
         },
         "version": null
       },
-      "rank": 7,
+      "rank": 9,
       "reasoningEffort": "max",
       "releaseDate": "2026-05-28",
       "safeguardMode": null,
@@ -663,7 +825,7 @@
         },
         "version": null
       },
-      "rank": 8,
+      "rank": 10,
       "reasoningEffort": "max",
       "releaseDate": "2026-07-09",
       "safeguardMode": null,
@@ -744,7 +906,7 @@
         },
         "version": null
       },
-      "rank": 9,
+      "rank": 11,
       "reasoningEffort": "max",
       "releaseDate": "2026-08-14",
       "safeguardMode": null,
@@ -825,7 +987,7 @@
         },
         "version": null
       },
-      "rank": 10,
+      "rank": 12,
       "reasoningEffort": "max",
       "releaseDate": "2026-07-16",
       "safeguardMode": null,
@@ -906,7 +1068,7 @@
         },
         "version": null
       },
-      "rank": 11,
+      "rank": 13,
       "reasoningEffort": "xhigh",
       "releaseDate": "2026-08-12",
       "safeguardMode": null,
@@ -987,7 +1149,7 @@
         },
         "version": null
       },
-      "rank": 12,
+      "rank": 14,
       "reasoningEffort": "high",
       "releaseDate": "2026-08-13",
       "safeguardMode": null,
@@ -1068,7 +1230,7 @@
         },
         "version": null
       },
-      "rank": 13,
+      "rank": 15,
       "reasoningEffort": "max",
       "releaseDate": "2026-08-13",
       "safeguardMode": null,
@@ -1149,7 +1311,7 @@
         },
         "version": null
       },
-      "rank": 14,
+      "rank": 16,
       "reasoningEffort": "max",
       "releaseDate": "2026-07-09",
       "safeguardMode": null,
@@ -1165,7 +1327,7 @@
     "leaderboardId": "9a545a14-78d0-44b4-9003-afe062522a47",
     "leaderboardName": "v0-1-eval",
     "leaderboardPackage": "terminal-bench-science/terminal-bench-science",
-    "leaderboardUpdatedAt": "2026-09-16T13:45:27.369938+00:00",
+    "leaderboardUpdatedAt": "2026-09-22T11:46:04.426644+00:00",
     "leaderboardUrl": "https://hub.harborframework.com/datasets/terminal-bench-science/terminal-bench-science/0.1.0?leaderboard=v0-1-eval&tab=leaderboard",
     "method": "version-pinned-release-owner-leaderboard-api",
     "name": "Terminal-Bench-Science and Harbor Framework",
@@ -1178,7 +1340,7 @@
     "releaseTag": "v0.1.0",
     "releaseUrl": "https://github.com/harbor-framework/terminal-bench-science/releases/tag/v0.1.0",
     "repositoryUrl": "https://github.com/harbor-framework/terminal-bench-science",
-    "retrievedAt": "2026-09-17T15:05:51.383Z",
+    "retrievedAt": "2026-09-23T03:44:41.725Z",
     "sourceClass": "benchmark-owner"
   }
 }

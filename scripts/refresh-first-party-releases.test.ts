@@ -1576,11 +1576,17 @@ describe("provider sitemap shape guards", () => {
     );
     expect(parseProviderSitemap(anthropic, foreign).ok).toBeFalse();
 
-    const missingDate = anthropicXml().replace(
+    const missingDate = openAiXml().replace(
+      "<lastmod>2026-03-01T00:00:00.000Z</lastmod>",
+      "",
+    );
+    expect(parseProviderSitemap(openai, missingDate).ok).toBeFalse();
+
+    const undatedOptionalEntry = anthropicXml().replace(
       "<lastmod>2026-08-01T00:00:00.000Z</lastmod>",
       "",
     );
-    expect(parseProviderSitemap(anthropic, missingDate).ok).toBeFalse();
+    expect(parseProviderSitemap(anthropic, undatedOptionalEntry).ok).toBeTrue();
 
     const impossibleDate = anthropicXml().replace(
       "2026-08-01T00:00:00.000Z",

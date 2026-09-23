@@ -3,7 +3,7 @@
   "source": {
     "name": "Artificial Analysis",
     "url": "https://artificialanalysis.ai/agents/coding-agents/",
-    "retrievedAt": "2026-09-20T14:21:48.090Z",
+    "retrievedAt": "2026-09-23T03:44:34.316Z",
     "method": "next-flight",
     "benchmarkDatasets": {
       "deepSwe": "deep-swe-v1.1",
@@ -12,6 +12,74 @@
     }
   },
   "updates": [
+    {
+      "id": "[\"model-added\",\"2026-09-23T03:44:34.316Z\",\"[\\\"Codex\\\",\\\"openai\\\",\\\"GPT-6 Sol\\\"]\"]",
+      "detectedAt": "2026-09-23T03:44:34.316Z",
+      "agent": "Codex",
+      "model": "GPT-6 Sol",
+      "providerId": "openai",
+      "providerName": "OpenAI",
+      "setting": "max",
+      "benchmarks": {
+        "aaIndex": 56.662591275779974,
+        "deepSwe": 69.0265486725664,
+        "terminalBench": 43.4343434343434,
+        "sweAtlas": 57.5268817204301
+      },
+      "kind": "model-added",
+      "variantCount": 1
+    },
+    {
+      "id": "[\"model-added\",\"2026-09-23T03:44:34.316Z\",\"[\\\"Grok Build\\\",\\\"xai\\\",\\\"Grok 4.7\\\"]\"]",
+      "detectedAt": "2026-09-23T03:44:34.316Z",
+      "agent": "Grok Build",
+      "model": "Grok 4.7",
+      "providerId": "xai",
+      "providerName": "xAI",
+      "setting": "xhigh",
+      "benchmarks": {
+        "aaIndex": 56.26764360706693,
+        "deepSwe": 72.5663716814159,
+        "terminalBench": 33.3333333333333,
+        "sweAtlas": 62.9032258064516
+      },
+      "kind": "model-added",
+      "variantCount": 1
+    },
+    {
+      "id": "[\"model-added\",\"2026-09-23T03:44:34.316Z\",\"[\\\"Codex\\\",\\\"openai\\\",\\\"GPT-5.6 Luna\\\"]\"]",
+      "detectedAt": "2026-09-23T03:44:34.316Z",
+      "agent": "Codex",
+      "model": "GPT-5.6 Luna",
+      "providerId": "openai",
+      "providerName": "OpenAI",
+      "setting": "max",
+      "benchmarks": {
+        "aaIndex": 43.22468668029613,
+        "deepSwe": 66.3716814159292,
+        "terminalBench": 14.6464646464646,
+        "sweAtlas": 48.6559139784946
+      },
+      "kind": "model-added",
+      "variantCount": 1
+    },
+    {
+      "id": "[\"model-added\",\"2026-09-23T03:44:34.316Z\",\"[\\\"Codex\\\",\\\"openai\\\",\\\"GPT-6 Luna\\\"]\"]",
+      "detectedAt": "2026-09-23T03:44:34.316Z",
+      "agent": "Codex",
+      "model": "GPT-6 Luna",
+      "providerId": "openai",
+      "providerName": "OpenAI",
+      "setting": "max",
+      "benchmarks": {
+        "aaIndex": 41.07438934016153,
+        "deepSwe": 63.716814159292,
+        "terminalBench": 15.151515151515198,
+        "sweAtlas": 44.3548387096774
+      },
+      "kind": "model-added",
+      "variantCount": 1
+    },
     {
       "id": "[\"benchmark-changed\",\"2026-09-17T16:34:51.985Z\",\"[\\\"Claude Code:anthropic_claude-fable-5-1\\\",\\\"max\\\"]\"]",
       "detectedAt": "2026-09-17T16:34:51.985Z",
@@ -492,6 +560,32 @@
       }
     },
     {
+      "id": "b3c56ec69185d544992fd578edb75e8c",
+      "agent": "Codex",
+      "model": "GPT-5.6 Luna",
+      "modelLabel": "GPT-5.6 Luna (max)",
+      "providerId": "openai",
+      "providerName": "OpenAI",
+      "seriesId": "Codex:openai_gpt-5-6-luna",
+      "seriesLabel": "Codex · GPT-5.6 Luna",
+      "setting": "max",
+      "settingRank": 6,
+      "completeIndex": true,
+      "benchmarks": {
+        "aaIndex": 43.22468668029613,
+        "deepSwe": 66.3716814159292,
+        "terminalBench": 14.6464646464646,
+        "sweAtlas": 48.6559139784946
+      },
+      "economics": {
+        "costUsd": 0.43802256393839384,
+        "durationSeconds": 1412.260883388339
+      },
+      "usage": {
+        "totalTokens": 14854524.539053895
+      }
+    },
+    {
       "id": "709f801275dedae5675b1f56e97c9df3",
       "agent": "Codex",
       "model": "GPT-5.6 Sol",
@@ -541,6 +635,58 @@
       },
       "usage": {
         "totalTokens": 3346611.012209417
+      }
+    },
+    {
+      "id": "ac8276cd5d15ac2daacb9956ad44c132",
+      "agent": "Codex",
+      "model": "GPT-6 Luna",
+      "modelLabel": "GPT-6 Luna (max)",
+      "providerId": "openai",
+      "providerName": "OpenAI",
+      "seriesId": "Codex:openai_gpt-6-luna",
+      "seriesLabel": "Codex · GPT-6 Luna",
+      "setting": "max",
+      "settingRank": 6,
+      "completeIndex": true,
+      "benchmarks": {
+        "aaIndex": 41.07438934016153,
+        "deepSwe": 63.716814159292,
+        "terminalBench": 15.151515151515198,
+        "sweAtlas": 44.3548387096774
+      },
+      "economics": {
+        "costUsd": 0.17591172304455457,
+        "durationSeconds": 1285.9268514851478
+      },
+      "usage": {
+        "totalTokens": 10218069.248074815
+      }
+    },
+    {
+      "id": "7a0dfd2a7a9d93056f860d4675586d66",
+      "agent": "Codex",
+      "model": "GPT-6 Sol",
+      "modelLabel": "GPT-6 Sol (max)",
+      "providerId": "openai",
+      "providerName": "OpenAI",
+      "seriesId": "Codex:openai_gpt-6-sol",
+      "seriesLabel": "Codex · GPT-6 Sol",
+      "setting": "max",
+      "settingRank": 6,
+      "completeIndex": true,
+      "benchmarks": {
+        "aaIndex": 56.662591275779974,
+        "deepSwe": 69.0265486725664,
+        "terminalBench": 43.4343434343434,
+        "sweAtlas": 57.5268817204301
+      },
+      "economics": {
+        "costUsd": 2.989729004180416,
+        "durationSeconds": 1338.0527051705185
+      },
+      "usage": {
+        "totalTokens": 9840777.763476355
       }
     },
     {
@@ -619,6 +765,32 @@
       },
       "usage": {
         "totalTokens": 5543624.597359739
+      }
+    },
+    {
+      "id": "f927d9c41b5c3021996eb14c3dd1341e",
+      "agent": "Grok Build",
+      "model": "Grok 4.7",
+      "modelLabel": "Grok 4.7 (xhigh)",
+      "providerId": "xai",
+      "providerName": "xAI",
+      "seriesId": "Grok Build:xai_grok-bop-o86-xhigh",
+      "seriesLabel": "Grok Build · Grok 4.7",
+      "setting": "xhigh",
+      "settingRank": 5,
+      "completeIndex": true,
+      "benchmarks": {
+        "aaIndex": 56.26764360706693,
+        "deepSwe": 72.5663716814159,
+        "terminalBench": 33.3333333333333,
+        "sweAtlas": 62.9032258064516
+      },
+      "economics": {
+        "costUsd": 8.817468730473037,
+        "durationSeconds": 2354.367686468646
+      },
+      "usage": {
+        "totalTokens": 14324724.283828393
       }
     },
     {
