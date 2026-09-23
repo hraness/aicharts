@@ -240,23 +240,18 @@ fn codex_append_recomputes_deltas_without_recounting_the_initial_request() {
 }
 
 #[test]
-fn partial_tail_and_malformed_multisource_import_leave_all_state_unchanged() {
+fn partial_tail_is_deferred_and_stable_malformed_input_remains_fatal() {
     let f = Fixture::new();
     f.init();
     fs::write(f.0.join("source.jsonl"), source("request_a", 20)).unwrap();
     f.collect();
     let before = f.status();
     f.append("{\"type\":\"assistant\"");
-    let partial = f.failed(&[
-        "collect",
-        "--state-dir",
-        "state",
-        "--key-file",
-        "private.key",
-        "--claude",
-        "source.jsonl",
-    ]);
-    assert_eq!(partial, "aicharts: source_partial_tail\n");
+    let partial = f.collect();
+    assert_eq!(partial["sourcesDeferred"], 1);
+    assert_eq!(partial["sourcesUpdated"], 0);
+    assert_eq!(partial["sourcesSkipped"], 0);
+    assert_eq!(partial["sourcesConflicted"], 0);
     assert_eq!(f.status(), before);
     fs::write(f.0.join("new.jsonl"), source("request_b", 30)).unwrap();
     fs::write(f.0.join("bad.jsonl"), format!("{{\"{PRIVATE}\":\n")).unwrap();
