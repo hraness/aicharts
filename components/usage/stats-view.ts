@@ -16,6 +16,8 @@ export type StatsTotals = {
   reportedCost: bigint | null; reportedCostRecords: number;
   estimatedCost: bigint | null; estimatedCostRecords: number;
   durationMs: bigint | null; timedRecords: number; timedTokens: bigint;
+  /** Timed records with observed reported/estimated tokens, including measured zero. */
+  timedTokenRecords: number;
 };
 export type StatsGroup = { key: string; name: string; totals: StatsTotals };
 export type StatsBucket = StatsRange & { totals: StatsTotals };
@@ -58,6 +60,22 @@ export function statsRatio(value: bigint, total: bigint): number {
   return total === 0n ? 0 : Number(value * 10_000n / total) / 100;
 }
 
+/** Whole-input share requires every selected record's disjoint categories. */
+export function statsCacheReadShare(totals: StatsTotals): number | null {
+  const input = totals.input + totals.cacheRead + totals.cacheWrite;
+  return totals.records > 0 && totals.tokenRecords === totals.records && totals.partialRecords === 0 && input > 0n
+    ? statsRatio(totals.cacheRead, input) : null;
+}
+
+/** The duration denominator may not include records with unknown token counts.
+ * Keep all recorded durations for inspection, but withhold this aggregate rate
+ * until every timed record has a token basis. It is not a decode-speed metric. */
+export function statsSourceTokenRate(totals: StatsTotals): bigint | null {
+  return totals.timedRecords > 0 && totals.timedTokenRecords === totals.timedRecords
+    && totals.durationMs !== null && totals.durationMs > 0n
+    ? totals.timedTokens * 1000n / totals.durationMs : null;
+}
+
 export function statsLabel(value: string | null, dimension?: StatsGrouping): string {
   if (value === null || value === UNKNOWN_STATS) return "Unknown";
   const names: Record<string, string> = { openai: "OpenAI", anthropic: "Anthropic", google: "Google" };
@@ -67,7 +85,7 @@ export function statsLabel(value: string | null, dimension?: StatsGrouping): str
 export function sumStatsRows(rows: readonly UsageStatsRow[]): StatsTotals {
   const totals: StatsTotals = { tokens: 0n, input: 0n, cacheRead: 0n, cacheWrite: 0n, output: 0n, reasoning: 0n,
     records: 0, tokenRecords: 0, partialRecords: 0, activeDays: 0, reportedCost: null, reportedCostRecords: 0, estimatedCost: null, estimatedCostRecords: 0,
-    durationMs: null, timedRecords: 0, timedTokens: 0n };
+    durationMs: null, timedRecords: 0, timedTokens: 0n, timedTokenRecords: 0 };
   const active = new Set<number>();
   for (const row of rows) {
     for (const key of ["input", "cacheRead", "cacheWrite", "output", "reasoning"] as const) {
@@ -86,6 +104,7 @@ export function sumStatsRows(rows: readonly UsageStatsRow[]): StatsTotals {
     if (row.durationMs !== null) totals.durationMs = (totals.durationMs ?? 0n) + BigInt(row.durationMs);
     totals.timedRecords += row.timedRecords;
     totals.timedTokens += BigInt(row.timedTokens);
+    if (row.tokenBasis !== "unavailable") totals.timedTokenRecords += row.timedRecords;
   }
   totals.activeDays = active.size;
   return totals;
@@ -146,10 +165,7 @@ export function bucketStatsRows(rows: readonly UsageStatsRow[], range: StatsRang
 /** The value a bucket plots for a metric; null marks an honest unobserved gap, never zero. */
 export function statsBucketValue(totals: StatsTotals, metric: StatsMetric): bigint | null {
   if (metric === "records") return BigInt(totals.records);
-  if (metric === "speed") {
-    return totals.timedRecords > 0 && totals.durationMs !== null && totals.durationMs > 0n
-      ? totals.timedTokens * 1000n / totals.durationMs : null;
-  }
+  if (metric === "speed") return statsSourceTokenRate(totals);
   return totals.tokenRecords > 0 ? totals.tokens : null;
 }
 
@@ -215,12 +231,13 @@ export function statsDayGrid(rows: readonly UsageStatsRow[], range: StatsRange):
 
 const csvCell = (value: string) => `"${(/^[=+\-@]/.test(value) ? `'${value}` : value).replaceAll('"', '""')}"`;
 export function statsRowsCsv(rows: readonly UsageStatsRow[]): string {
-  const header = ["utc_day", "time_basis", "client", "provider", "model", "token_basis", "input", "cache_read", "cache_write", "output_excluding_reasoning", "reasoning", "total_tokens", "records", "breakdown_coverage", "reported_cost_microusd", "reported_cost_records", "retail_estimate_microusd", "estimated_cost_records", "source_duration_ms", "timed_records", "timed_tokens"];
+  const header = ["utc_day", "time_basis", "client", "provider", "model", "token_basis", "input", "cache_read", "cache_write", "output_excluding_reasoning", "reasoning", "total_tokens", "records", "breakdown_coverage", "reported_cost_microusd", "reported_cost_records", "retail_estimate_microusd", "estimated_cost_records", "source_duration_ms", "timed_records", "timed_tokens", "record_grain", "duration_basis"];
   const lines = rows.map(row => [statsDateInput(row.utcDay), row.client === "warp" ? "refresh_snapshot" : "observed", row.client, row.provider ?? "unknown", row.model ?? "unknown", row.tokenBasis,
     ...[row.tokens.input, row.tokens.cacheRead, row.tokens.cacheWrite, row.tokens.output, row.tokens.reasoning,
       sumStatsRows([row]).tokens.toString()].map(value => row.tokenBasis === "unavailable" ? "" : value), row.records.toString(), row.breakdownCoverage,
     row.reportedCostMicrousd ?? "", row.reportedCostRecords.toString(), row.estimatedCostMicrousd ?? "", row.estimatedCostRecords.toString(),
-    row.durationMs ?? "", row.timedRecords.toString(), row.timedRecords === 0 ? "" : row.timedTokens].map(csvCell).join(","));
+    row.durationMs ?? "", row.timedRecords.toString(), row.timedRecords === 0 || row.tokenBasis === "unavailable" ? "" : row.timedTokens,
+    "source-defined", row.durationMs === null ? "unknown" : "source-defined"].map(csvCell).join(","));
   return [header.join(","), ...lines].join("\r\n") + "\r\n";
 }
 
@@ -291,19 +308,22 @@ export function statsSummaryText(scope: "local" | "example" | "account", filters
     ? `${formatStatsInteger(totals.tokens)} tokens · ${formatStatsInteger(totals.records)} usage records · ${totals.activeDays}/${filters.dayCount} active days`
     : `${formatStatsInteger(totals.records)} usage records · ${totals.activeDays}/${filters.dayCount} active days · tokens unobserved`);
   if (totals.reportedCost !== null || totals.estimatedCost !== null) {
-    lines.push([totals.reportedCost !== null ? `Reported cost ${formatStatsMoney(totals.reportedCost)}` : null,
-      totals.estimatedCost !== null ? `retail estimate ${formatStatsMoney(totals.estimatedCost)} (dated public rates)` : null].filter(Boolean).join(" · "));
+    lines.push([totals.reportedCost !== null ? `Reported cost ${formatStatsMoney(totals.reportedCost)} (${formatStatsInteger(totals.reportedCostRecords)} records)` : null,
+      totals.estimatedCost !== null ? `retail estimate ${formatStatsMoney(totals.estimatedCost)} (${formatStatsInteger(totals.estimatedCostRecords)} records; dated public rates)` : null].filter(Boolean).join(" · "));
+    lines.push("Cost populations may differ; their difference is not established.");
   }
-  const inputSide = totals.input + totals.cacheRead;
+  const cacheShare = statsCacheReadShare(totals);
   const speed = statsBucketValue(totals, "speed");
   const qualifiers = [
-    totals.tokenRecords > 0 && inputSide > 0n ? `cache reads ${statsRatio(totals.cacheRead, inputSide)}% of input side` : null,
-    speed !== null ? `measured ${formatStatsInteger(speed)} tok/s across ${formatStatsInteger(totals.timedRecords)} timed records` : null,
+    cacheShare !== null ? `cache reads ${cacheShare}% of whole input (uncached + read + write)` : "cache-read share unavailable: incomplete categories or no input",
+    speed !== null ? `${formatStatsInteger(speed)} tokens per source-duration second across ${formatStatsInteger(totals.timedRecords)} timed records; not decode speed`
+      : totals.timedTokenRecords < totals.timedRecords ? "source-token rate unavailable: tokens missing from timed records" : null,
   ].filter((item): item is string => item !== null);
   if (qualifiers.length > 0) lines.push(qualifiers.join(" · "));
   const top = groups.filter(group => group.totals.tokenRecords > 0).slice(0, 3)
     .map(group => `${group.name} ${formatStatsCompact(group.totals.tokens)}`);
   if (top.length > 0) lines.push(`Top by tokens: ${top.join(" · ")}`);
+  lines.push("Record grain and duration meaning are source-defined; records are not comparable request, turn or session counts.");
   lines.push(`Measured by AI Charts — ${scope === "account" ? "account report" : scope === "example" ? "synthetic example" : "local report"} · coverage may be partial.`);
   return lines.join("\n");
 }

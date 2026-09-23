@@ -28,7 +28,7 @@ export interface StatsTransportDependencies extends PairingHttpEffects {
   registerLifetime(terminal: Promise<void>): void;
   beginSession(request: Request): StatsSessionScope | null;
 }
-export type StatsTransportOutcome = Readonly<{ kind: "query"; result: StatsResult<UsageStatsReport> }>
+export type StatsTransportOutcome = Readonly<{ kind: "query"; accountId: string; result: StatsResult<UsageStatsReport> }>
   | Readonly<{ kind: "authentication_required" }> | Readonly<{ kind: "unavailable" }>;
 const unavailable = () => new Error("stats_transport_unavailable");
 const failed = (): StatsTransportOutcome => Object.freeze({ kind: "unavailable" });
@@ -100,7 +100,7 @@ export function createStatsTransport(dependencies: StatsTransportDependencies) {
           guard();
           const domain = decodeStatsHttpResponse(bytes, captured);
           if (domain === null) throw unavailable();
-          guard(); return Object.freeze({ kind: "query", result: domain });
+          guard(); return Object.freeze({ kind: "query", accountId: captured.accountId, result: domain });
         } finally { if (!reading) await pairingHttpDiscard(response); }
       }, startedAt);
       return result;

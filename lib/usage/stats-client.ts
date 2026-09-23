@@ -1,9 +1,13 @@
-import { parseStatsPublicReply, statsPublicPath, statsPublicStatus, STATS_PUBLIC_MAX_BYTES, STATS_PUBLIC_MEDIA, type StatsPublicReply } from "./stats-public";
+import { parseStatsPublicReply, statsPublicPath, statsPublicStatus, STATS_ACCOUNT_HEADER, STATS_PUBLIC_MAX_BYTES, STATS_PUBLIC_MEDIA, type StatsPublicReply } from "./stats-public";
+import { usageAccountId } from "./account-public";
+
+export type StatsReadReply = (Extract<StatsPublicReply, { ok: false }> & Readonly<{ accountId?: string }>)
+  | (Extract<StatsPublicReply, { ok: true }> & Readonly<{ accountId: string }>);
 
 /** One request per user-selected range. No persistence, automatic upload or retry. */
-export async function readPrivateStats(firstUtcDay: number, dayCount: number, signal: AbortSignal, fetcher: typeof fetch = globalThis.fetch): Promise<StatsPublicReply> {
+export async function readPrivateStats(firstUtcDay: number, dayCount: number, signal: AbortSignal, fetcher: typeof fetch = globalThis.fetch): Promise<StatsReadReply> {
   const range = { firstUtcDay, dayCount }, path = statsPublicPath(range);
-  const failed: StatsPublicReply = { schemaVersion: 2, ok: false, error: "unavailable" };
+  const failed = { schemaVersion: 2, ok: false, error: "unavailable" } as const;
   if (path === null || signal.aborted) return failed;
   let response: Response | undefined, reader: ReadableStreamDefaultReader<Uint8Array> | undefined, complete = false;
   try {
@@ -28,7 +32,10 @@ export async function readPrivateStats(firstUtcDay: number, dayCount: number, si
     const bytes = new Uint8Array(length); let offset = 0;
     for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.byteLength; }
     const reply = parseStatsPublicReply(JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes)) as unknown, range);
-    return reply !== null && statsPublicStatus(reply) === response.status && !signal.aborted ? reply : failed;
+    if (reply === null || statsPublicStatus(reply) !== response.status || signal.aborted) return failed;
+    if (!reply.ok && reply.error !== "not_enrolled" && reply.error !== "not_started" && reply.error !== "range_too_large") return reply;
+    const accountId = response.headers.get(STATS_ACCOUNT_HEADER);
+    return usageAccountId(accountId) ? Object.freeze({ ...reply, accountId }) : failed;
   } catch { return failed; }
   finally {
     if (reader !== undefined) {

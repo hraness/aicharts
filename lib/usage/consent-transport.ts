@@ -11,10 +11,11 @@ import {
 import { privateDaysHttpLength, privateDaysSnapshot } from "./private-days-http-contract";
 import { pairingHttpWork, type PairingHttpEffects } from "./pairing-http-work";
 import type { PrivateDaysSessionScope } from "./private-days-transport";
+import { usageAccountId } from "./account-public";
 
 /** Same trusted request-owned port as private days: readOutcome() verifies the
  * live Accounts session and derives the opaque account id and expiry. The
- * browser only supplies the consent decision, never identity. */
+ * browser supplies a decision and expected account, never authority. */
 export interface UsageConsentTransportDependencies extends PairingHttpEffects {
   available(): boolean;
   fetch(input: RequestInfo | URL, init?: RequestInit): Promise<Response>;
@@ -24,8 +25,8 @@ export interface UsageConsentTransportDependencies extends PairingHttpEffects {
 }
 export type UsageConsentOperationInput =
   | Readonly<{ operation: "status" }>
-  | Readonly<{ operation: "set"; consent: boolean; publicHandle: string | null }>;
-export type UsageConsentTransportOutcome = Readonly<{ kind: "query"; result: UsageConsentQueryResult }>
+  | Readonly<{ operation: "set"; consent: boolean; publicHandle: string | null; expectedAccountId: string }>;
+export type UsageConsentTransportOutcome = Readonly<{ kind: "query"; accountId: string; result: UsageConsentQueryResult }>
   | Readonly<{ kind: "authentication_required" }> | Readonly<{ kind: "unavailable" }>;
 const unavailable = () => new Error("usage_consent_transport_unavailable");
 const failed = (): UsageConsentTransportOutcome => Object.freeze({ kind: "unavailable" });
@@ -37,10 +38,10 @@ function ownValue(value: unknown, key: string): unknown {
 function parseOperation(value: unknown): UsageConsentOperationInput | null {
   const status = privateDaysSnapshot(value, ["operation"]);
   if (status?.operation === "status") return Object.freeze({ operation: "status" });
-  const set = privateDaysSnapshot(value, ["operation", "consent", "publicHandle"]);
-  if (set?.operation !== "set") return null;
+  const set = privateDaysSnapshot(value, ["operation", "consent", "publicHandle", "expectedAccountId"]);
+  if (set?.operation !== "set" || !usageAccountId(set.expectedAccountId)) return null;
   const decision = parseUsageConsentDecision({ consent: set.consent, publicHandle: set.publicHandle });
-  return decision === null ? null : Object.freeze({ operation: "set", ...decision });
+  return decision === null ? null : Object.freeze({ operation: "set", ...decision, expectedAccountId: set.expectedAccountId });
 }
 
 export function createUsageConsentTransport(dependencies: UsageConsentTransportDependencies) {
@@ -81,6 +82,7 @@ export function createUsageConsentTransport(dependencies: UsageConsentTransportD
         if (authenticated?.kind !== "authenticated") throw unavailable();
         const account = privateDaysSnapshot(authenticated.value, ["suiteAccountId", "expiresAtMs"]);
         if (account === null) throw unavailable();
+        if (operation.operation === "set" && operation.expectedAccountId !== account.suiteAccountId) throw unavailable();
         query = parseUsageConsentRequest(operation.operation === "status"
           ? { schemaVersion: 1, accountId: account.suiteAccountId,
               sessionExpiresAtMs: account.expiresAtMs, operation: "status" }
@@ -108,7 +110,7 @@ export function createUsageConsentTransport(dependencies: UsageConsentTransportD
           guard();
           const domain = decodeUsageConsentHttpResponse(bytes);
           if (domain === null) throw unavailable();
-          guard(); return Object.freeze({ kind: "query", result: domain });
+          guard(); return Object.freeze({ kind: "query", accountId: captured.accountId, result: domain });
         } finally { if (!reading) await pairingHttpDiscard(response); }
       }, startedAt);
       return result;

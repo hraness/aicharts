@@ -3,15 +3,18 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { readAccountStats, warmUsageAccountSession } from "@/lib/usage/account-read-client";
-import { subscribeUsageAccountSignOut } from "@/lib/usage/account-session-events";
+import { retainUsageAccountLifecycle } from "@/lib/usage/account-session-events";
+import { currentUsageAccountScope, subscribeUsageAccountInvalidation, type UsageAccountScope } from "@/lib/usage/account-generation";
+import { readInUsageAccountGeneration } from "@/lib/usage/account-generation-read";
 import type { UsageStatsReport } from "@/lib/usage/stats-contract";
 import { createUsageStatsExample } from "@/lib/usage/stats-example";
-import { cachedStatsReport, clearStatsReports, rememberStatsReport } from "./stats-report-cache";
+import { useAccountGeneration } from "./use-account-generation";
 import { readStatsReportFile } from "./stats-report-file";
 import { StatsReportView } from "./stats-report-view";
 import type { StatsRange, StatsSelection } from "./stats-view";
 
-type Loaded = { report: UsageStatsReport; scope: "account" | "local" | "example"; version: number; selection?: StatsSelection };
+type Loaded = { report: UsageStatsReport; version: number; selection?: StatsSelection } &
+  ({ scope: "account"; authority: UsageAccountScope } | { scope: "local" | "example" });
 type Status = "idle" | "loading" | "ready" | "authentication_required" | "stats_not_started" | "not_enrolled" | "range_too_large" | "unavailable" | "invalid_file";
 
 // Decorative bar heights; the skeleton is aria-hidden and carries no data.
@@ -41,41 +44,55 @@ function StatsSkeleton() {
 export function StatsDashboard({ todayUtcDay, remoteEnabled = false, startWithAccount = false, fallback, returnTo = "/dashboard" }: Readonly<{
   todayUtcDay: number; remoteEnabled?: boolean; startWithAccount?: boolean; fallback?: ReactNode; returnTo?: string;
 }>) {
-  const [loaded, setLoaded] = useState<Loaded | null>(null);
+  const [stored, setLoaded] = useState<Loaded | null>(null);
+  const generation = useAccountGeneration();
+  const loaded = stored?.scope === "account" && (stored.authority.generation !== generation || !currentUsageAccountScope(stored.authority)) ? null : stored;
   const [status, setStatus] = useState<Status>(startWithAccount ? "loading" : "idle");
   const [range, setRange] = useState<StatsRange>({ firstUtcDay: Math.max(0, todayUtcDay - 29), dayCount: Math.min(30, todayUtcDay + 1) });
-  const pending = useRef({ id: 0, controller: null as AbortController | null });
+  const pending = useRef({ id: 0, controller: null as AbortController | null, hasAccount: false });
   const picker = useRef<HTMLInputElement>(null);
 
-  useEffect(() => subscribeUsageAccountSignOut(() => {
-    const owner = pending.current;
-    // A local file parse has no controller and must be allowed to finish.
-    if (owner.controller !== null) { owner.id++; owner.controller.abort(); owner.controller = null; }
-    setLoaded(previous => previous?.scope === "account" ? null : previous);
-    setStatus("authentication_required");
-  }), []);
+  useEffect(() => {
+    const release = retainUsageAccountLifecycle();
+    const unsubscribe = subscribeUsageAccountInvalidation(reason => {
+      const owner = pending.current;
+      const hadAccountWork = owner.hasAccount || owner.controller !== null;
+      owner.hasAccount = false;
+      // Identity adoption discards payloads through generation tickets; its caller owns one fresh read.
+      // Local parses have no controller and remain independent of every account boundary.
+      if (reason !== "identity-changed" && owner.controller !== null) { owner.id++; owner.controller.abort(); owner.controller = null; }
+      setLoaded(previous => previous?.scope === "account" ? null : previous);
+      if (reason === "confirmed-signout" || reason === "authentication-required") setStatus("authentication_required");
+      else if (hadAccountWork) setStatus(owner.controller === null ? "unavailable" : "loading");
+    });
+    return () => { unsubscribe(); release(); };
+  }, []);
 
   const read = useCallback(async (selected: StatsRange, id: number, controller: AbortController, selection?: StatsSelection) => {
     const owner = pending.current;
     const deadline = setTimeout(() => { controller.abort(); if (owner.id === id) setStatus("unavailable"); }, 20_000);
     try {
-      const reply = await readAccountStats(selected.firstUtcDay, selected.dayCount, controller.signal, {
+      const bound = await readInUsageAccountGeneration(() => readAccountStats(selected.firstUtcDay, selected.dayCount, controller.signal, {
         onAuthenticationRequired: () => {
-          clearStatsReports();
           if (owner.id === id && !controller.signal.aborted) setLoaded(previous =>
             owner.id === id && !controller.signal.aborted && previous?.scope === "account" ? null : previous);
         },
-      });
+      }), reply => reply.accountId ?? null, () => owner.id === id && !controller.signal.aborted,
+      reply => !reply.ok && reply.error === "authentication_required");
       if (owner.id !== id || controller.signal.aborted) return;
+      if (bound === null) { setStatus("unavailable"); return; }
+      const { reply, scope: authority } = bound;
       // A revalidated identical window keeps the view's version so its
       // selection survives; any other scope or window remounts as before.
       if (reply.ok) {
-        rememberStatsReport(selected, reply.value);
-        setLoaded(previous => ({
-          report: reply.value, scope: "account", selection,
-          version: previous?.scope === "account" && previous.report.firstUtcDay === selected.firstUtcDay
+        if (authority === null || !currentUsageAccountScope(authority)) { setStatus("unavailable"); return; }
+        owner.hasAccount = true;
+        setLoaded(previous => currentUsageAccountScope(authority) && owner.id === id && !controller.signal.aborted ? ({
+          report: reply.value, scope: "account", authority, selection,
+          version: previous?.scope === "account" && previous.authority.accountId === authority.accountId
+            && previous.authority.generation === authority.generation && previous.report.firstUtcDay === selected.firstUtcDay
             && previous.report.dayCount === selected.dayCount ? previous.version : id,
-        }));
+        }) : previous?.scope === "account" ? null : previous);
         setRange(selected); setStatus("ready");
       }
       else {
@@ -91,8 +108,7 @@ export function StatsDashboard({ todayUtcDay, remoteEnabled = false, startWithAc
     if (!remoteEnabled) return;
     const owner = pending.current, id = ++owner.id;
     owner.controller?.abort(); const controller = new AbortController(); owner.controller = controller;
-    const cached = cachedStatsReport(selected);
-    if (cached !== undefined) setLoaded({ report: cached, scope: "account", version: id, selection });
+    setLoaded(previous => previous?.scope === "account" ? null : previous);
     setStatus("loading"); void read(selected, id, controller, selection);
   };
   useEffect(() => {
@@ -101,8 +117,6 @@ export function StatsDashboard({ todayUtcDay, remoteEnabled = false, startWithAc
     if (startWithAccount && remoteEnabled) {
       const id = ++owner.id, controller = new AbortController(); owner.controller = controller;
       const initial = { firstUtcDay: Math.max(0, todayUtcDay - 29), dayCount: Math.min(30, todayUtcDay + 1) };
-      const cached = cachedStatsReport(initial);
-      if (cached !== undefined) setLoaded({ report: cached, scope: "account", version: id });
       void read(initial, id, controller);
     }
     return () => { owner.id++; owner.controller?.abort(); };
@@ -113,15 +127,17 @@ export function StatsDashboard({ todayUtcDay, remoteEnabled = false, startWithAc
     setStatus("loading");
     try {
       const report = await readStatsReportFile(file);
-      if (owner.id === id) { setLoaded({ report, scope: "local", version: id }); setStatus("ready"); }
+      if (owner.id === id) { owner.hasAccount = false; setLoaded({ report, scope: "local", version: id }); setStatus("ready"); }
     } catch { if (owner.id === id) setStatus("invalid_file"); }
   };
   const example = () => {
     const owner = pending.current, id = ++owner.id; owner.controller?.abort(); owner.controller = null;
+    owner.hasAccount = false;
     setLoaded({ report: createUsageStatsExample(todayUtcDay), scope: "example", version: id }); setStatus("ready");
   };
   const clear = () => {
     const owner = pending.current; owner.id++; owner.controller?.abort(); owner.controller = null;
+    owner.hasAccount = false;
     setLoaded(null); setStatus("idle");
   };
   const showFallback = status === "stats_not_started" && loaded === null && fallback !== undefined;
@@ -154,6 +170,10 @@ export function StatsDashboard({ todayUtcDay, remoteEnabled = false, startWithAc
     {status === "not_enrolled" && <div className="usage-stats__notice"><h2>No collector connected</h2><p>Enroll a device to sync accepted measurements to your account. You can inspect a local numeric report now.</p><Link className="usage-inline-link" href="https://github.com/hraness/aicharts/blob/main/docs/usage-local.md">Local collector guide</Link></div>}
     {showFallback ? fallback : status === "stats_not_started" ? <div className="usage-stats__notice"><h2>No detailed snapshot yet</h2><p>Your existing daily measurements remain available. Any report below is the last one loaded. Open a detailed local report to inspect model and token breakdowns.</p><Link className="usage-inline-link" href="/dashboard">View account overview</Link></div> : null}
     {loaded && <StatsReportView key={loaded.version} report={loaded.report} scope={loaded.scope} todayUtcDay={todayUtcDay}
+      captureExport={() => {
+        const id = pending.current.id;
+        return () => pending.current.id === id && (loaded.scope !== "account" || currentUsageAccountScope(loaded.authority));
+      }}
       initialSelection={loaded.selection} busy={status === "loading"} onRangeRequest={loaded.scope === "account" ? loadAccount : undefined} onRefresh={loaded.scope === "account" ? filters => loadAccount({ firstUtcDay: filters.firstUtcDay, dayCount: filters.dayCount }, { client: filters.client, provider: filters.provider, model: filters.model, basis: filters.basis }) : undefined} />}
     {status === "loading" && !loaded && <StatsSkeleton />}
     {status === "idle" && <section className="usage-stats__empty"><h2>See the whole usage picture</h2><p>Open a numeric report to compare clients and models, inspect daily trends, and export exact totals. The file stays in this browser; opening it does not publish or upload anything.</p>

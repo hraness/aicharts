@@ -1,6 +1,7 @@
 import { expect, test } from "bun:test";
 import { renderToStaticMarkup } from "react-dom/server";
 import { createUsageStatsExample } from "@/lib/usage/stats-example";
+import { parseUsageStatsReport, type UsageStatsRow } from "@/lib/usage/stats-contract";
 import { STATS_CLIENTS } from "@/lib/usage/stats-registry";
 import { StatsReportView } from "./stats-report-view";
 import { StatsDashboard } from "./stats-dashboard";
@@ -19,7 +20,7 @@ test("the detailed report prioritizes total and trend before explanation and off
   expect(html).toContain('aria-label="Usage breakdown, scroll horizontally for all columns" tabindex="0"');
   expect(html).toContain('aria-sort="descending"');
   expect(html).toContain("not subscription charges or a provider bill");
-  expect(html).toContain("Recorded request duration");
+  expect(html).toContain("Recorded source duration");
   expect(html).toContain("not time spent working, GPU time");
   expect(html).toContain("models.dev pricing snapshot dated 2026-09-19");
 });
@@ -63,7 +64,7 @@ test("Warp renders billing spend separately from unavailable daily usage", () =>
   expect(html).toContain("No dated usage records");
   expect(html).toContain("refresh_snapshot");
   expect(html.split("$12.35")).toHaveLength(2);
-  expect(html).toContain("<dt>Usage records</dt><dd>Unavailable</dd>");
+  expect(html).toContain("<dt>Source records</dt><dd>Unavailable</dd>");
   expect(html).toContain("token usage unknown");
   expect(html).not.toContain("0 exact");
   expect(html).toContain("Warp dates identify when usage was synchronized");
@@ -99,4 +100,57 @@ test("provider filters retain unknown attribution and a selected value without r
   expect(html).toContain('<option value="openai" selected="">OpenAI · no records</option>');
   expect(html).not.toContain('<option value="anthropic">');
   expect(html).toContain("No matching reported records");
+});
+
+
+test("cache write tokens belong to whole input and incomplete buckets withhold a percentage", () => {
+  const example = createUsageStatsExample(20_700);
+  for (const breakdownCoverage of ["complete", "partial"] as const) {
+    const row: UsageStatsRow = { ...example.rows[0]!, utcDay: 20_700, client: "codex", provider: null, model: null,
+      records: 1, tokens: { input: "0", cacheRead: "100", cacheWrite: "900", output: "0", reasoning: "0" },
+      reportedCostMicrousd: null, reportedCostRecords: 0, estimatedCostMicrousd: null, estimatedCostRecords: 0,
+      durationMs: null, timedRecords: 0, timedTokens: "0", tokenBasis: "reported", breakdownCoverage };
+    const report = parseUsageStatsReport({ ...example, firstUtcDay: 20_700, dayCount: 1, rows: [row],
+      sources: [{ client: "codex", status: "observed", tokenBasis: "reported", records: 1, warnings: 0, latestAtMs: example.generatedAtMs }] });
+    expect(report).not.toBeNull();
+    const html = renderToStaticMarkup(<StatsReportView report={report!} scope="local" todayUtcDay={20_700} />);
+    expect(html).toContain(breakdownCoverage === "complete" ? "<dt>Cache reads / whole input</dt><dd>10%" : "<dt>Cache reads / whole input</dt><dd>Unknown");
+    expect(html).not.toContain("<dt>Cache reads / whole input</dt><dd>100%");
+  }
+});
+
+test("disjoint one-dollar reported and three-dollar estimated records do not invent savings", () => {
+  const example = createUsageStatsExample(20_700);
+  const base: UsageStatsRow = { ...example.rows[0]!, utcDay: 20_700, client: "codex", provider: null, model: null,
+    records: 1, tokens: { input: "1", cacheRead: "0", cacheWrite: "0", output: "0", reasoning: "0" },
+    reportedCostMicrousd: "1000000", reportedCostRecords: 1, estimatedCostMicrousd: null, estimatedCostRecords: 0,
+    durationMs: null, timedRecords: 0, timedTokens: "0", tokenBasis: "reported", breakdownCoverage: "complete" };
+  const report = parseUsageStatsReport({ ...example, firstUtcDay: 20_700, dayCount: 1,
+    rows: [base, { ...base, client: "cursor", reportedCostMicrousd: null, reportedCostRecords: 0, estimatedCostMicrousd: "3000000", estimatedCostRecords: 1 }],
+    sources: ["codex", "cursor"].map(client => ({ client, status: "observed", tokenBasis: "reported", records: 1, warnings: 0, latestAtMs: example.generatedAtMs })) });
+  expect(report).not.toBeNull();
+  const html = renderToStaticMarkup(<StatsReportView report={report!} scope="local" todayUtcDay={20_700} />);
+  expect(html).toContain("$1.00"); expect(html).toContain("$3.00");
+  expect(html).toContain("These amounts can cover different records.");
+  expect(html).toContain("1 of 2 records");
+  expect(html).not.toContain("$2.00"); expect(html).not.toContain("savings");
+});
+
+
+test("a timed unknown-token record withholds the combined rate without treating missing tokens as zero", () => {
+  const example = createUsageStatsExample(20_700);
+  const known: UsageStatsRow = { ...example.rows[0]!, utcDay: 20_700, client: "codex", provider: null, model: null,
+    records: 1, tokens: { input: "100", cacheRead: "0", cacheWrite: "0", output: "0", reasoning: "0" },
+    reportedCostMicrousd: null, reportedCostRecords: 0, estimatedCostMicrousd: null, estimatedCostRecords: 0,
+    durationMs: "1000", timedRecords: 1, timedTokens: "100", tokenBasis: "reported", breakdownCoverage: "complete" };
+  const report = parseUsageStatsReport({ ...example, firstUtcDay: 20_700, dayCount: 1,
+    rows: [known, { ...known, client: "cursor", tokens: { input: "0", cacheRead: "0", cacheWrite: "0", output: "0", reasoning: "0" },
+      timedTokens: "0", tokenBasis: "unavailable", breakdownCoverage: "partial" }],
+    sources: ["codex", "cursor"].map(client => ({ client, status: "observed", tokenBasis: client === "codex" ? "reported" : "unavailable", records: 1, warnings: 0, latestAtMs: example.generatedAtMs })) });
+  expect(report).not.toBeNull();
+  const html = renderToStaticMarkup(<StatsReportView report={report!} scope="local" todayUtcDay={20_700} />);
+  expect(html).toContain("<dt>Tokens / source second</dt><dd>Unknown</dd>");
+  expect(html).toContain("<dt>Tokens in timed records</dt><dd>Unknown</dd>");
+  expect(html).toContain("<dt>Sum of source durations</dt><dd>2,000 ms</dd>");
+  expect(html).not.toContain("<td>50</td>");
 });

@@ -6,6 +6,7 @@ import {
   type PrivateDaysPublicReply, type PrivateDaysRange,
 } from "./private-days-public";
 
+const accountId = `acct_${"a".repeat(32)}`;
 const range: PrivateDaysRange = { firstUtcDay: 10, dayCount: 2 };
 const empty = { usageOccurrences: 0, observedAccountedTokens: "0", observedOutputTokens: "0" };
 const ready: PrivateDaysPublicReply = { schemaVersion: 1, state: "ready", value: {
@@ -33,7 +34,7 @@ function streamed(chunks: readonly Uint8Array[] = [encoded], options: {
     cancel() { cancels++; if (options.cancelThrows) throw new Error("SYNTHETIC_PRIVATE_CANARY"); },
   }, { highWaterMark: 0 });
   const response = new Response(body, { status: options.status ?? 200,
-    headers: { "content-type": PRIVATE_DAYS_PUBLIC_MEDIA, ...options.headers } });
+    headers: { "x-aicharts-account-id": accountId, "content-type": PRIVATE_DAYS_PUBLIC_MEDIA, ...options.headers } });
   return { body, response, fetch: fetchPort(async () => response), counts: () => ({ pulls, cancels }) };
 }
 
@@ -44,6 +45,14 @@ async function refused(operation: () => Promise<unknown>) {
   expect(failure.message).toBe("usage_unavailable");
   expect(Object.hasOwn(failure, "cause")).toBe(false);
 }
+
+test("private daily data cannot be accepted without one canonical response account", async () => {
+  for (const identity of [null, "", "foreign", `${accountId}, ${accountId}`]) {
+    const f = streamed();
+    if (identity === null) f.response.headers.delete("x-aicharts-account-id"); else f.response.headers.set("x-aicharts-account-id", identity);
+    await refused(() => readPrivateDays(range, signal(), f.fetch));
+  }
+});
 
 test("date controls use real UTC calendar days, including leap years and the epoch", () => {
   expect(utcDayInput(0)).toBe("1970-01-01");
@@ -89,7 +98,7 @@ test("canonical browser GET accepts ready, not-enrolled and the five exact error
       return f.response;
     });
     const actual = await readPrivateDays(range, controller.signal, fetcher);
-    expect(actual).toEqual(reply); expect(Object.isFrozen(actual)).toBe(true); expect(calls).toBe(1);
+    expect(actual).toEqual("state" in reply ? { ...reply, accountId } : reply); expect(Object.isFrozen(actual)).toBe(true); expect(calls).toBe(1);
     expect(f.counts().cancels).toBe(0); expect(f.body.locked).toBe(false);
   }
 });
@@ -99,7 +108,7 @@ test("browser-decoded gzip and br replies use decoded bytes, not encoded Content
     expect(compressed.byteLength).not.toBe(encoded.byteLength);
     // Fetch exposes this decoded body while retaining the wire encoding headers.
     const f = streamed([encoded], { headers: { "content-encoding": encoding, "content-length": String(compressed.byteLength) } });
-    expect(await readPrivateDays(range, signal(), f.fetch)).toEqual(ready);
+    expect(await readPrivateDays(range, signal(), f.fetch)).toEqual({ ...ready, accountId });
     expect(f.counts().cancels).toBe(0); expect(f.body.locked).toBe(false);
   }
 });
@@ -108,7 +117,7 @@ test("unencoded and identity lengths must match the full decoded body", async ()
   for (const encoding of [undefined, "identity", " Identity "]) {
     const headers: Record<string, string> = encoding === undefined ? {} : { "content-encoding": encoding };
     const accepted = streamed([encoded], { headers: { ...headers, "content-length": String(encoded.byteLength) } });
-    expect(await readPrivateDays(range, signal(), accepted.fetch)).toEqual(ready);
+    expect(await readPrivateDays(range, signal(), accepted.fetch)).toEqual({ ...ready, accountId });
     for (const declared of [encoded.byteLength - 1, encoded.byteLength + 1]) {
       const f = streamed([encoded], { headers: { ...headers, "content-length": String(declared) } });
       await refused(() => readPrivateDays(range, signal(), f.fetch));
@@ -159,7 +168,7 @@ test("empty-chunk streams stop within the read budget and valid byte-sized chunk
   expect(f.counts().pulls).toBeLessThanOrEqual(PRIVATE_DAYS_PUBLIC_MAX_BYTES + 1);
   expect(f.counts().cancels).toBe(1); expect(f.body.locked).toBe(false);
   const bytes = streamed(Array.from(encoded, byte => Uint8Array.of(byte)));
-  expect(await readPrivateDays(range, signal(), bytes.fetch)).toEqual(ready);
+  expect(await readPrivateDays(range, signal(), bytes.fetch)).toEqual({ ...ready, accountId });
   expect(bytes.counts().cancels).toBe(0); expect(bytes.body.locked).toBe(false);
 });
 

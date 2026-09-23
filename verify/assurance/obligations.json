@@ -407,7 +407,7 @@
         "S14"
       ],
       "regression": "account-generation-cache",
-      "owner": "components/usage/stats-report-cache.ts",
+      "owner": "lib/usage/account-generation.ts",
       "obligation": "Identity change, bfcache and late replies cannot expose another authority generation; local files survive.",
       "status": "open",
       "evidenceClass": "source-or-assurance-gap"

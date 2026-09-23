@@ -1,23 +1,25 @@
 import "server-only";
 import { privateDaysSnapshot } from "./private-days-http-contract";
+import { usageAccountId } from "./account-public";
 import type { StatsRange } from "./stats-http-contract";
 import { privateStatsEnabled } from "./stats-page";
 import { createVercelStatsTransport } from "./stats-vercel";
-import { parseStatsPublicReply, parseStatsPublicSearch, statsPublicStatus, STATS_PUBLIC_MEDIA, STATS_PUBLIC_URL, type StatsPublicError, type StatsPublicReply } from "./stats-public";
+import { parseStatsPublicReply, parseStatsPublicSearch, statsPublicStatus, STATS_ACCOUNT_HEADER, STATS_PUBLIC_MEDIA, STATS_PUBLIC_URL, type StatsPublicError, type StatsPublicReply } from "./stats-public";
 
 export interface StatsPublicDependencies {
   available(): boolean;
   query(request: Request, range: StatsRange): Promise<unknown>;
 }
-function send(request: Request, reply: StatsPublicReply): Response {
+function send(request: Request, reply: StatsPublicReply, accountId?: string): Response {
   const status = statsPublicStatus(reply);
   return new Response(request.method === "HEAD" ? null : JSON.stringify(reply), { status, headers: {
     "content-type": STATS_PUBLIC_MEDIA, "cache-control": "private, no-store", pragma: "no-cache", vary: "Cookie",
     "referrer-policy": "no-referrer", "x-content-type-options": "nosniff", "x-robots-tag": "noindex, nofollow",
     ...(status === 405 ? { allow: "GET" } : {}),
+    ...(accountId !== undefined ? { [STATS_ACCOUNT_HEADER]: accountId } : {}),
   } });
 }
-const failure = (request: Request, error: StatsPublicError) => send(request, { schemaVersion: 2, ok: false, error });
+const failure = (request: Request, error: StatsPublicError, accountId?: string) => send(request, { schemaVersion: 2, ok: false, error }, accountId);
 
 export function createStatsPublicHandler(dependencies: StatsPublicDependencies) {
   return async (request: Request): Promise<Response> => {
@@ -38,17 +40,17 @@ export function createStatsPublicHandler(dependencies: StatsPublicDependencies) 
       if (request.signal.aborted || dependencies.available() !== true) return failure(request, "unavailable");
       const negative = privateDaysSnapshot(raw, ["kind"]);
       if (negative?.kind === "authentication_required") return failure(request, "authentication_required");
-      const query = privateDaysSnapshot(raw, ["kind", "result"]);
-      if (query?.kind !== "query") return failure(request, "unavailable");
+      const query = privateDaysSnapshot(raw, ["kind", "accountId", "result"]);
+      if (query?.kind !== "query" || !usageAccountId(query.accountId)) return failure(request, "unavailable");
       const success = privateDaysSnapshot(query.result, ["ok", "value"]);
       if (success?.ok === true) {
         const reply = parseStatsPublicReply({ schemaVersion: 2, ok: true, value: success.value }, range);
-        return reply === null ? failure(request, "unavailable") : send(request, reply);
+        return reply === null ? failure(request, "unavailable") : send(request, reply, query.accountId);
       }
       const absent = privateDaysSnapshot(query.result, ["ok", "error"]);
-      if (absent?.ok === false && absent.error === "limit") return failure(request, "range_too_large");
+      if (absent?.ok === false && absent.error === "limit") return failure(request, "range_too_large", query.accountId);
       return absent?.ok === false && (absent.error === "not_enrolled" || absent.error === "not_started")
-        ? failure(request, absent.error) : failure(request, "unavailable");
+        ? failure(request, absent.error, query.accountId) : failure(request, "unavailable");
     } catch { return failure(request, "unavailable"); }
   };
 }

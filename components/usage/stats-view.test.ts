@@ -1,8 +1,8 @@
 import { expect, test } from "bun:test";
 import fc from "fast-check";
 import { createUsageStatsExample } from "@/lib/usage/stats-example";
-import { parseUsageStatsReport, type UsageStatsReport, type UsageStatsRow } from "@/lib/usage/stats-contract";
-import { ALL_STATS, UNKNOWN_STATS, bucketStatsRows, filterStatsRows, filterStatsSnapshots, formatStatsMoney, groupStatsRows, previousStatsPeriod, statsBucketValue, statsDayGrid, statsInputRange, statsRowsCsv, statsSplitBuckets, statsSummaryText, sumStatsRows, type StatsFilters } from "./stats-view";
+import { parseUsageStatsReport, parseUsageStatsRow, type UsageStatsReport, type UsageStatsRow } from "@/lib/usage/stats-contract";
+import { ALL_STATS, UNKNOWN_STATS, bucketStatsRows, filterStatsRows, filterStatsSnapshots, formatStatsMoney, groupStatsRows, previousStatsPeriod, statsBucketValue, statsCacheReadShare, statsDayGrid, statsInputRange, statsRowsCsv, statsSourceTokenRate, statsSplitBuckets, statsSummaryText, sumStatsRows, type StatsFilters } from "./stats-view";
 
 const example = createUsageStatsExample(20_700);
 const row = (patch: Partial<UsageStatsRow> = {}): UsageStatsRow => ({ utcDay: 20_700, client: "codex", provider: "openai", model: "gpt-5",
@@ -85,8 +85,72 @@ test("recorded duration stays exact and carries its own record and token coverag
   expect(total.durationMs).toBe(9_007_199_254_740_993n);
   expect(total.timedRecords).toBe(1);
   expect(total.timedTokens).toBe(100n);
+  expect(total.timedTokenRecords).toBe(1);
   expect(statsRowsCsv([timed])).toContain('"9007199254740993","1","100"');
-  expect(statsRowsCsv([row()])).toContain('"","0",""\r\n');
+  expect(statsRowsCsv([row()])).toContain('"","0","","source-defined","unknown"\r\n');
+});
+
+test("unknown timed tokens withhold source rates without erasing recorded durations or inventing CSV zeros", () => {
+  const known = row({ records: 1, durationMs: "1000", timedRecords: 1, timedTokens: "100",
+    tokens: { input: "100", cacheRead: "0", cacheWrite: "0", output: "0", reasoning: "0" } });
+  const unknown = row({ client: "cursor", records: 1, durationMs: "1000", timedRecords: 1, timedTokens: "0",
+    tokenBasis: "unavailable", breakdownCoverage: "partial",
+    tokens: { input: "0", cacheRead: "0", cacheWrite: "0", output: "0", reasoning: "0" } });
+  expect(parseUsageStatsRow(known)).toEqual(known);
+  expect(parseUsageStatsRow(unknown)).toEqual(unknown);
+  expect(statsSourceTokenRate(sumStatsRows([known]))).toBe(100n);
+  for (const rows of [[unknown], [known, unknown], [unknown, known]]) {
+    const totals = sumStatsRows(rows);
+    expect(totals.durationMs).toBe(BigInt(rows.length) * 1000n);
+    expect(totals.timedRecords).toBe(rows.length);
+    expect(totals.timedTokenRecords).toBe(rows.length - 1);
+    expect(statsSourceTokenRate(totals)).toBeNull();
+    expect(statsBucketValue(totals, "speed")).toBeNull();
+    expect(statsBucketValue(bucketStatsRows(rows, filters)[0]!.totals, "speed")).toBeNull();
+    const summary = statsSummaryText("local", filters, totals, "one day", []);
+    expect(summary).toContain("source-token rate unavailable: tokens missing from timed records");
+    expect(summary).not.toContain("tokens per source-duration second");
+  }
+  const groups = groupStatsRows([known, unknown], "client", "tokens");
+  expect(statsSourceTokenRate(groups.find(group => group.key === "codex")!.totals)).toBe(100n);
+  expect(statsSourceTokenRate(groups.find(group => group.key === "cursor")!.totals)).toBeNull();
+  expect(statsRowsCsv([unknown])).toContain('"1000","1","","source-defined","source-defined"\r\n');
+  expect(statsRowsCsv([known])).toContain('"1000","1","100","source-defined","source-defined"\r\n');
+});
+
+test("source rates preserve observed zero and weight exact matched durations, while untimed unknown rows do not dilute them", () => {
+  const zero = row({ records: 1, durationMs: "1000", timedRecords: 1, timedTokens: "0",
+    tokens: { input: "0", cacheRead: "0", cacheWrite: "0", output: "0", reasoning: "0" } });
+  expect(parseUsageStatsRow(zero)).toEqual(zero);
+  expect(statsSourceTokenRate(sumStatsRows([zero]))).toBe(0n);
+  expect(statsSourceTokenRate(sumStatsRows([{ ...zero, tokenBasis: "estimated" }]))).toBe(0n);
+  expect(statsSourceTokenRate(sumStatsRows([{ ...zero, durationMs: "0" }]))).toBeNull();
+  expect(statsSourceTokenRate(sumStatsRows([]))).toBeNull();
+  const untimed = { ...zero, tokenBasis: "unavailable" as const, breakdownCoverage: "partial" as const,
+    durationMs: null, timedRecords: 0 };
+  expect(parseUsageStatsRow(untimed)).toEqual(untimed);
+  const known = [row({ records: 1, durationMs: "1000", timedRecords: 1, timedTokens: "100" }),
+    row({ records: 1, durationMs: "3000", timedRecords: 1, timedTokens: "900" })];
+  expect(statsSourceTokenRate(sumStatsRows(known))).toBe(250n);
+  expect(statsSourceTokenRate(sumStatsRows([...known, untimed]))).toBe(250n);
+  expect(statsRowsCsv([zero])).toContain('"1000","1","0","source-defined","source-defined"\r\n');
+});
+
+test("source-rate eligibility is order independent across generated known and unknown timed populations", () => {
+  fc.assert(fc.property(fc.array(fc.record({
+    tokens: fc.bigInt({ min: 0n, max: 10n ** 24n - 1n }), duration: fc.bigInt({ min: 1n, max: 10n ** 20n }),
+    unknown: fc.boolean(), records: fc.integer({ min: 1, max: 1000 }),
+  }), { minLength: 1, maxLength: 30 }), samples => {
+    const rows = samples.map(sample => row({ records: sample.records, timedRecords: sample.records,
+      timedTokens: sample.unknown ? "0" : String(sample.tokens), durationMs: String(sample.duration),
+      tokenBasis: sample.unknown ? "unavailable" : "reported", breakdownCoverage: sample.unknown ? "partial" : "complete",
+      tokens: { input: sample.unknown ? "0" : String(sample.tokens), cacheRead: "0", cacheWrite: "0", output: "0", reasoning: "0" } }));
+    for (const value of rows) expect(parseUsageStatsRow(value)).toEqual(value);
+    const expected = samples.some(sample => sample.unknown) ? null
+      : samples.reduce((sum, sample) => sum + sample.tokens, 0n) * 1000n / samples.reduce((sum, sample) => sum + sample.duration, 0n);
+    expect(statsSourceTokenRate(sumStatsRows(rows))).toBe(expected);
+    expect(statsSourceTokenRate(sumStatsRows([...rows].reverse()))).toBe(expected);
+  }), { numRuns: 100, seed: 23092026 });
 });
 
 test("model grouping preserves unknown rows, stable exact sorting, and complete shares", () => {
@@ -189,7 +253,8 @@ test("the shareable summary states basis, scope, velocity, and partial coverage 
   expect(text).toContain("usage records");
   expect(text).toContain("active days");
   expect(text).toContain("Reported cost");
-  expect(text).toContain("tok/s");
+  expect(text).toContain("tokens per source-duration second");
+  expect(text).toContain("not decode speed");
   expect(text).toContain("Top by tokens");
   expect(text).toContain("local report");
   expect(text).toContain("coverage may be partial");
@@ -209,4 +274,24 @@ test("group and bucket totals reconcile for arbitrary exact numeric records, inc
     expect(buckets.reduce((sum, bucket) => sum + bucket.totals.tokens, 0n)).toBe(total);
     expect(buckets.at(-1)?.dayCount).toBe(6);
   }), { numRuns: 100, seed: 741 });
+});
+
+
+test("cache-read share includes write tokens and refuses incomplete categories", () => {
+  const complete = row({ tokens: { input: "0", cacheRead: "100", cacheWrite: "900", output: "0", reasoning: "0" } });
+  expect(statsCacheReadShare(sumStatsRows([complete]))).toBe(10);
+  expect(statsCacheReadShare(sumStatsRows([{ ...complete, breakdownCoverage: "partial" }]))).toBeNull();
+  expect(statsCacheReadShare(sumStatsRows([]))).toBeNull();
+  expect(statsCacheReadShare(sumStatsRows([row({ tokens: { input: "0", cacheRead: "0", cacheWrite: "0", output: "10", reasoning: "0" } })]))).toBeNull();
+  const text = statsSummaryText("local", filters, sumStatsRows([complete]), "one day", []);
+  expect(text).toContain("cache reads 10% of whole input (uncached + read + write)");
+});
+
+test("complete cache shares obey exact token-weighted arithmetic at integer boundaries", () => {
+  fc.assert(fc.property(fc.bigInt({ min: 0n, max: 10n ** 25n }), fc.bigInt({ min: 0n, max: 10n ** 25n }), fc.bigInt({ min: 0n, max: 10n ** 25n }), (input, read, write) => {
+    const total = sumStatsRows([row({ tokens: { input: String(input), cacheRead: String(read), cacheWrite: String(write), output: "0", reasoning: "0" } })]);
+    const share = statsCacheReadShare(total), denominator = input + read + write;
+    expect(share).toBe(denominator === 0n ? null : Number(10000n * read / denominator) / 100);
+    if (share !== null) { expect(share).toBeGreaterThanOrEqual(0); expect(share).toBeLessThanOrEqual(100); }
+  }));
 });

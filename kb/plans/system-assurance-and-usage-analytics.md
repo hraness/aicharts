@@ -478,7 +478,7 @@ The integration owner controls manifests/lockfiles, shared schemas/capacity/metr
 
 ### Phase 1C — Metric truth and private browser lifetime
 
-- **Status:** In progress
+- **Status:** Complete
 - **Depends on:** 0
 - **Objective:** Existing UI summaries express valid populations and never optimistically reuse another identity's report.
 - **Scope:** F15–F17/F23 and shared-image qualifiers.
@@ -502,7 +502,7 @@ The integration owner controls manifests/lockfiles, shared schemas/capacity/metr
 
 ### Phase 3 — Exact metric kernel and theorem pilot
 
-- **Status:** Not started
+- **Status:** In progress
 - **Depends on:** 0, 1A
 - **Objective:** Production arithmetic/normalization and core aggregation laws have appropriate proof evidence.
 - **Scope:** A new I/O-free owned metric kernel (proposed crates/aicharts-metrics), Kani harnesses, profile mappings and one theorem-route pilot. The integrator owns changes to existing callers shared with ingestion lanes.
@@ -715,3 +715,9 @@ Phase 1B preserves source populations by refusing ambiguous legacy takeover: the
 Independent source review accepted the attribution and numeric replay quarantine, exact read-only export, guarded schema upgrade, conservative source scanning, exact Cursor range replacement, complete warning persistence and owned-process settlement. A successful write now checks the affected occurrence's canonical replay; undefined partial-dominance histories refuse before commit. Historical conflicts remain inspectable and exportable with their original bytes. No associativity or order-independence claim is made for arbitrary occurrence merges.
 
 Current focused evidence: ledger 92 tests passed (one intentional fixture ignored), inspect integration 8 passed, CLI 377 unit and 87 integration tests passed (one intentional fixture ignored), workspace Clippy with all targets and `-D warnings` passed, and formatting passed. Unchanged-source core 135, import 16 and platform-process 5 test results were inspected rather than repeated. CLI fixtures required approved local socket access. Seven old/new-binary history scenarios passed with exact original-byte export and refusal before backup or mutation for quarantined upgrades. Retained receipts are `target/assurance-repaired/historical.json` (SHA-256 `9cae270272772be2ffebd84d919aedc16546b61bc97213cb3cd997907921b7f4`) and `target/assurance-repaired/native-cli.json` (SHA-256 `73ce13a20c318fb389540d5ec3791209fbb4488a9e2a6a0ba49fdbf0806915ae`); repaired binary SHA-256 is `f4ca6c09deb02d7d66def7a88b53cd8fa86897d79063c27fa16c8bad45add95e`. This qualifies the local macOS evidence; Linux process behavior still needs its platform CI gate. No private user ledger was migrated.
+
+### Phase 1C — Accepted metric and browser repairs
+
+Independent source review accepted complete-input cache shares, matched source-duration rates, separate cost cohorts, and response-bound private identity generations. Authenticated absence and conflict replies retain the same captured identity as successful replies, so account B's empty result also invalidates account A's views. Consent intent is conditional on the live trusted account; uncertain mutations are not replayed. Clearing account state preserves local and example reports. Pending image export checks current report authority before download and releases its job independently so a retained local report can retry after a failed import.
+
+The production build, TypeScript and focused ESLint passed. Focused client/formula/export tests passed 134 cases with 4,203 assertions; coordinator/lifecycle/transport/rendering tests passed 28 cases with 10,741 assertions. The expanded real-browser synthetic suite passed desktop and mobile with distinct A/B measurements, held old replies, bfcache/visibility/focus boundaries, local reports, CSV/PNG, and a paused real canvas callback completed after report closure or failed replacement. The canceled image did not download and a subsequent local export succeeded. Final screenshots in `outputs/assurance-audit-2026-09-23/ui-final` were inspected; the mobile chart scale no longer overlaps its heading. These are synthetic local qualification results, not live account/provider evidence. The converged repository gate remains Phase 11's responsibility.

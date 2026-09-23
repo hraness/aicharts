@@ -88,7 +88,7 @@ test("client derives fresh account/expiry and crosses the exact Worker boundary"
     expect(url).toBe(PRIVATE_DAYS_HTTP_URL); expect(JSON.parse(new TextDecoder().decode(init!.body as Uint8Array))).toEqual(query);
     const reply = await w.handle(new Request(url, init)); Object.defineProperty(reply, "url", { value: url }); return reply;
   } });
-  expect(await c.run()).toEqual({ kind: "query", result }); await Promise.all([c.ctx.drain(), w.ctx.drain()]);
+  expect(await c.run()).toEqual({ kind: "query", accountId: ACCOUNT, result }); await Promise.all([c.ctx.drain(), w.ctx.drain()]);
   expect(c.calls[0]).toMatchObject({ method: "POST", credentials: "omit", cache: "no-store", redirect: "manual",
     headers: { authorization: "Bearer a.b.c", "content-type": "application/json", accept: "application/json" } });
   expect(c.counts()).toEqual({ contexts: 1, sessions: 1, reads: 1, finished: 1 });

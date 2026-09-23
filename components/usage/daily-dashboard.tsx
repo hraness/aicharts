@@ -4,11 +4,14 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { privateDaysInputRange, utcDayInput } from "@/lib/usage/private-days-client";
 import { readAccountDays, warmUsageAccountSession } from "@/lib/usage/account-read-client";
-import { subscribeUsageAccountSignOut } from "@/lib/usage/account-session-events";
+import { retainUsageAccountLifecycle } from "@/lib/usage/account-session-events";
+import { currentUsageAccountScope, subscribeUsageAccountInvalidation, type UsageAccountScope } from "@/lib/usage/account-generation";
+import { readInUsageAccountGeneration } from "@/lib/usage/account-generation-read";
+import { useAccountGeneration } from "./use-account-generation";
 import type { PrivateDaysV1, ProviderImportedTotals } from "@/lib/usage/private-days-contract";
 import type { PrivateDaysPublicReply, PrivateDaysRange } from "@/lib/usage/private-days-public";
 
-type View = { kind: "loading" } | { kind: "unavailable" } | { kind: "invalid_dates" } | { kind: "reply"; reply: PrivateDaysPublicReply };
+type View = { kind: "loading" } | { kind: "unavailable" } | { kind: "invalid_dates" } | { kind: "reply"; reply: PrivateDaysPublicReply; scope: UsageAccountScope | null };
 const number = new Intl.NumberFormat("en-US");
 const date = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
 const time = new Intl.DateTimeFormat("en-US", { dateStyle: "medium", timeStyle: "short", timeZone: "UTC" });
@@ -101,14 +104,24 @@ export function DailyUsageDashboard({ todayUtcDay, returnTo = "/dashboard" }: Re
   const [first, setFirst] = useState(utcDayInput(initialRange.firstUtcDay));
   const [last, setLast] = useState(utcDayInput(todayUtcDay));
   const [range, setRange] = useState<PrivateDaysRange>(initialRange);
-  const [view, setView] = useState<View>({ kind: "loading" });
+  const [storedView, setView] = useState<View>({ kind: "loading" });
+  const generation = useAccountGeneration();
+  const view: View = storedView.kind === "reply" && storedView.scope !== null
+    && (storedView.scope.generation !== generation || !currentUsageAccountScope(storedView.scope)) ? { kind: "unavailable" } : storedView;
   const [inputError, setInputError] = useState<string | null>(null);
   const requests = useRef({ id: 0, pending: null as AbortController | null });
 
-  useEffect(() => subscribeUsageAccountSignOut(() => {
-    const owner = requests.current; owner.id++; owner.pending?.abort(); owner.pending = null;
-    setView({ kind: "reply", reply: { schemaVersion: 1, error: { code: "authentication_required" } } });
-  }), []);
+  useEffect(() => {
+    const release = retainUsageAccountLifecycle();
+    const unsubscribe = subscribeUsageAccountInvalidation(reason => {
+      const owner = requests.current;
+      if (reason === "identity-changed") { setView({ kind: owner.pending === null ? "unavailable" : "loading" }); return; }
+      owner.id++; owner.pending?.abort(); owner.pending = null;
+      setView(reason === "confirmed-signout" || reason === "authentication-required"
+        ? { kind: "reply", reply: { schemaVersion: 1, error: { code: "authentication_required" } }, scope: null } : { kind: "unavailable" });
+    });
+    return () => { unsubscribe(); release(); };
+  }, []);
 
   const read = useCallback(async (selected: PrivateDaysRange, controller: AbortController, id: number) => {
     const owner = requests.current;
@@ -117,8 +130,10 @@ export function DailyUsageDashboard({ todayUtcDay, returnTo = "/dashboard" }: Re
       if (id === owner.id) setView({ kind: "unavailable" });
     }, 20_000);
     try {
-      const reply = await readAccountDays(selected, controller.signal);
-      if (id === owner.id && !controller.signal.aborted) setView({ kind: "reply", reply });
+      const bound = await readInUsageAccountGeneration(() => readAccountDays(selected, controller.signal),
+        reply => "accountId" in reply ? reply.accountId : null, () => id === owner.id && !controller.signal.aborted,
+        reply => "error" in reply && reply.error.code === "authentication_required");
+      if (id === owner.id && !controller.signal.aborted) setView(bound === null ? { kind: "unavailable" } : { kind: "reply", reply: bound.reply, scope: bound.scope });
     } catch {
       if (id === owner.id) setView({ kind: "unavailable" });
     } finally {

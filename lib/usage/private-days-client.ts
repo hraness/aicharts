@@ -3,6 +3,10 @@ import {
   PRIVATE_DAYS_PUBLIC_MAX_BYTES, PRIVATE_DAYS_PUBLIC_MEDIA,
   type PrivateDaysPublicReply, type PrivateDaysRange,
 } from "./private-days-public";
+import { usageAccountId, USAGE_ACCOUNT_HEADER } from "./account-public";
+
+export type PrivateDaysReadReply = Extract<PrivateDaysPublicReply, { error: unknown }> |
+  (Exclude<PrivateDaysPublicReply, { error: unknown }> & Readonly<{ accountId: string }>);
 
 const DAY_MS = 86_400_000;
 const unavailable = () => new Error("usage_unavailable");
@@ -30,7 +34,7 @@ export async function readPrivateDays(
   range: PrivateDaysRange,
   signal: AbortSignal,
   fetcher: typeof fetch = globalThis.fetch,
-): Promise<PrivateDaysPublicReply> {
+): Promise<PrivateDaysReadReply> {
   const path = privateDaysPublicPath(range);
   if (path === null || signal.aborted) throw unavailable();
   let response: Response | undefined;
@@ -62,7 +66,10 @@ export async function readPrivateDays(
     if (!complete || (declared !== null && Number(declared) !== length)) throw unavailable();
     const reply = decodePrivateDaysPublicResponse(bytes.subarray(0, length), range);
     if (reply === null || privateDaysPublicStatus(reply) !== response.status || signal.aborted) throw unavailable();
-    return reply;
+    if (!("state" in reply)) return reply;
+    const accountId = response.headers.get(USAGE_ACCOUNT_HEADER);
+    if (!usageAccountId(accountId)) throw unavailable();
+    return Object.freeze({ ...reply, accountId });
   } catch { throw unavailable(); }
   finally {
     if (reader !== undefined) {

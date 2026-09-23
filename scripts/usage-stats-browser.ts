@@ -9,14 +9,39 @@ import { createUsageStatsExample } from "../lib/usage/stats-example";
 import { parseUsageStatsReport, type UsageStatsReport } from "../lib/usage/stats-contract";
 import { parseStatsPublicSearch, statsPublicStatus, STATS_PUBLIC_MEDIA, type StatsPublicReply } from "../lib/usage/stats-public";
 import { encodePrivateDaysPublicResponse, parsePrivateDaysPublicSearch, PRIVATE_DAYS_PUBLIC_MEDIA } from "../lib/usage/private-days-public";
+import { USAGE_ACCOUNT_HEADER } from "../lib/usage/account-public";
 import { encodeUsageConsentPublicReply, USAGE_CONSENT_PUBLIC_MEDIA } from "../lib/usage/consent-public";
 
 function invariant(value: unknown, message: string): asserts value { if (!value) throw new Error(message); }
 async function settle(page: Page) { await page.evaluate(async () => { await document.fonts.ready; await new Promise<void>(done => requestAnimationFrame(() => done())); }); }
 
-function hostedReport(firstUtcDay: number, dayCount: number): UsageStatsReport {
+/** Hold the real encoder callback so report changes happen during an actual export. */
+async function holdNextImage(page: Page): Promise<() => Promise<void>> {
+  await page.evaluate(() => {
+    const state = window as Window & { releaseUsageImage?: () => Promise<void> };
+    const original = HTMLCanvasElement.prototype.toBlob;
+    delete document.documentElement.dataset.usageImageHeld;
+    HTMLCanvasElement.prototype.toBlob = function (callback, type, quality) {
+      HTMLCanvasElement.prototype.toBlob = original;
+      state.releaseUsageImage = () => new Promise<void>(done => {
+        original.call(this, blob => { callback(blob); setTimeout(done, 0); }, type, quality);
+      });
+      document.documentElement.dataset.usageImageHeld = "true";
+    };
+  });
+  return async () => {
+    await page.evaluate(async () => {
+      const state = window as Window & { releaseUsageImage?: () => Promise<void> };
+      if (!state.releaseUsageImage) throw new Error("The image encoder did not reach the held callback.");
+      await state.releaseUsageImage(); delete state.releaseUsageImage;
+    });
+  };
+}
+
+function hostedReport(firstUtcDay: number, dayCount: number, accountId: string): UsageStatsReport {
   const example = createUsageStatsExample(firstUtcDay + dayCount - 1);
-  const rows = example.rows.filter(row => row.utcDay >= firstUtcDay);
+  const rows = example.rows.filter(row => row.utcDay >= firstUtcDay).map((row, index) => index === 0
+    ? { ...row, tokens: { ...row.tokens, input: accountId === `acct_${"a".repeat(32)}` ? "11111" : "22222" } } : row);
   const report = parseUsageStatsReport({ ...example, firstUtcDay, dayCount, revision: 1, updatedAtMs: example.generatedAtMs,
     rows, sources: example.sources.map(source => {
       const records = rows.filter(row => row.client === source.client).reduce((sum, row) => sum + row.records, 0);
@@ -34,13 +59,14 @@ export async function verifyUsageStats(browser: Browser, baseUrl: string, captur
     const page = await context.newPage();
     const errors: string[] = [], effects: string[] = [];
     let localInteraction = false, statsMode: "ready" | "not_started" | "range_too_large" | "authentication_required" = "ready";
-    const accountId = `acct_${"a".repeat(32)}`;
-    let signOutCalls = 0, signOutFails = true, accountSignedOut = false, holdStats = false;
-    const heldStats: Route[] = []; let statsArrived: (() => void) | undefined;
+    let accountId = `acct_${"a".repeat(32)}`;
+    let signOutCalls = 0, signOutFails = true, accountSignedOut = false, holdStats = false, downloads = 0;
+    const heldStats: { route: Route; accountId: string }[] = []; let statsArrived: (() => void) | undefined;
     await context.addInitScript(() => {
       Object.defineProperty(navigator, "clipboard", { value: { writeText: async (text: string) => { document.documentElement.dataset.copiedAccount = text; } } });
     });
     page.on("pageerror", error => errors.push(error.message.slice(0, 500)));
+    page.on("download", () => { downloads++; });
     await context.route("**/*", async route => {
       const request = route.request(), url = new URL(request.url());
       // Existing shared-footer fixture boundary; these calls never reach Accounts.
@@ -72,10 +98,10 @@ export async function verifyUsageStats(browser: Browser, baseUrl: string, captur
       if (url.pathname === "/api/usage/stats") {
         const range = parseStatsPublicSearch(url.search); invariant(range, "Stats request must use the exact numeric GET contract.");
         invariant(request.method() === "GET" && request.postData() === null, "Stats reads must have no mutation body.");
-        if (holdStats) { heldStats.push(route); statsArrived?.(); return; }
-        const reply: StatsPublicReply = statsMode === "ready" ? { schemaVersion: 2, ok: true, value: hostedReport(range.firstUtcDay, range.dayCount) }
+        if (holdStats) { heldStats.push({ route, accountId }); statsArrived?.(); return; }
+        const reply: StatsPublicReply = statsMode === "ready" ? { schemaVersion: 2, ok: true, value: hostedReport(range.firstUtcDay, range.dayCount, accountId) }
           : { schemaVersion: 2, ok: false, error: statsMode };
-        await route.fulfill({ status: statsPublicStatus(reply), headers: { "content-type": STATS_PUBLIC_MEDIA, "cache-control": "private, no-store" }, body: JSON.stringify(reply) }); return;
+        await route.fulfill({ status: statsPublicStatus(reply), headers: { "content-type": STATS_PUBLIC_MEDIA, "cache-control": "private, no-store", [USAGE_ACCOUNT_HEADER]: accountId }, body: JSON.stringify(reply) }); return;
       }
       if (url.pathname === "/api/usage/days") {
         if (accountSignedOut) {
@@ -87,12 +113,12 @@ export async function verifyUsageStats(browser: Browser, baseUrl: string, captur
           journalCommittedAtMs: (range.firstUtcDay + range.dayCount - 1) * 86_400_000, firstUtcDay: range.firstUtcDay,
           days: Array.from({ length: range.dayCount }, (_, index) => ({ utcDay: range.firstUtcDay + index, codex: total, claudeCode: total, devin: total })) } }, range);
         invariant(bytes, "Fallback fixture must pass its contract.");
-        await route.fulfill({ status: 200, headers: { "content-type": PRIVATE_DAYS_PUBLIC_MEDIA }, body: Buffer.from(bytes) }); return;
+        await route.fulfill({ status: 200, headers: { "content-type": PRIVATE_DAYS_PUBLIC_MEDIA, [USAGE_ACCOUNT_HEADER]: accountId }, body: Buffer.from(bytes) }); return;
       }
       if (url.pathname === "/api/usage/consent") {
-        const bytes = encodeUsageConsentPublicReply({ schemaVersion: 1, error: { code: "authentication_required" } });
+        const bytes = encodeUsageConsentPublicReply(accountSignedOut ? { schemaVersion: 1, error: { code: "authentication_required" } } : { schemaVersion: 1, state: "not_enrolled" });
         invariant(bytes, "Consent fixture must validate.");
-        await route.fulfill({ status: 401, headers: { "content-type": USAGE_CONSENT_PUBLIC_MEDIA }, body: Buffer.from(bytes) }); return;
+        await route.fulfill({ status: accountSignedOut ? 401 : 200, headers: { "content-type": USAGE_CONSENT_PUBLIC_MEDIA, [USAGE_ACCOUNT_HEADER]: accountId }, body: Buffer.from(bytes) }); return;
       }
       await route.continue();
     });
@@ -145,6 +171,51 @@ export async function verifyUsageStats(browser: Browser, baseUrl: string, captur
         await page.reload({ waitUntil: "networkidle" });
       }
       await capture("stats-initial");
+      if (await account.count()) {
+        await page.getByRole("button", { name: "Load account", exact: true }).click();
+        await page.getByText("Private to your account", { exact: true }).waitFor();
+        const aTotal = await page.locator(".usage-stats__exact").textContent();
+        await expandFilters();
+        const arrived = new Promise<void>(done => { statsArrived = done; }); holdStats = true;
+        await page.getByRole("button", { name: "Refresh", exact: true }).click(); await arrived;
+        await page.evaluate(() => window.dispatchEvent(new Event("pagehide")));
+        invariant(await page.locator(".usage-stats").count() === 0, "Page suspension must clear private charts before a response can settle.");
+        accountId = `acct_${"b".repeat(32)}`; holdStats = false;
+        await page.getByRole("button", { name: "Load account", exact: true }).click();
+        await page.getByText("Private to your account", { exact: true }).waitFor();
+        await account.getByText("Verified with Hraness", { exact: true }).waitFor();
+        await account.locator("summary").click();
+        invariant(await account.getByLabel("Account ID", { exact: true }).inputValue() === accountId, "A fresh read must establish the switched account.");
+        await account.locator("summary").click();
+        const bTotal = await page.locator(".usage-stats__exact").textContent();
+        invariant(aTotal !== bTotal, "A and B fixtures must carry observably different measurements.");
+        for (const { route, accountId: staleAccount } of heldStats.splice(0)) {
+          const range = parseStatsPublicSearch(new URL(route.request().url()).search); invariant(range, "Held A range remains exact.");
+          await route.fulfill({ status: 200, headers: { "content-type": STATS_PUBLIC_MEDIA, [USAGE_ACCOUNT_HEADER]: staleAccount },
+            body: JSON.stringify({ schemaVersion: 2, ok: true, value: hostedReport(range.firstUtcDay, range.dayCount, staleAccount) }) }).catch(() => undefined);
+        }
+        await settle(page);
+        invariant(await page.getByText("Private to your account", { exact: true }).count() === 1, "Late A cannot displace current B.");
+        invariant(await page.locator(".usage-stats__exact").textContent() === bTotal, "Late A data must not overwrite the distinct B measurement.");
+        for (const boundary of ["bfcache", "visibility", "focus"] as const) {
+          await page.evaluate(kind => {
+            if (kind === "bfcache") window.dispatchEvent(new PageTransitionEvent("pageshow", { persisted: true }));
+            else if (kind === "visibility") document.dispatchEvent(new Event("visibilitychange"));
+            else window.dispatchEvent(new Event("focus"));
+          }, boundary);
+          invariant(await page.locator(".usage-stats").count() === 0, `${boundary} must require a fresh private read.`);
+          await page.getByRole("button", { name: "Load account", exact: true }).click();
+          await page.getByText("Private to your account", { exact: true }).waitFor();
+        }
+        await capture("stats-account-b-revalidated");
+        const beforeCloseDownloads = downloads, releaseClosedImage = await holdNextImage(page);
+        await page.getByRole("button", { name: "Download image", exact: true }).click();
+        await page.waitForFunction(() => document.documentElement.dataset.usageImageHeld === "true");
+        await page.locator(".usage-stats-source__menu > summary").click();
+        await page.getByRole("button", { name: "Close report", exact: true }).click();
+        await releaseClosedImage(); await settle(page);
+        invariant(downloads === beforeCloseDownloads, "An image completed after the private report closes must never download.");
+      }
       localInteraction = true;
       await page.getByRole("button", { name: "Explore example", exact: true }).click();
       await page.getByRole("heading", { name: "Daily usage", exact: true }).waitFor();
@@ -171,8 +242,8 @@ export async function verifyUsageStats(browser: Browser, baseUrl: string, captur
       invariant(await page.getByText(/Highest activity:/).count() === 1, "The calendar must name the peak observed day.");
       await page.getByRole("group", { name: "Chart metric" }).getByRole("button", { name: "Records", exact: true }).click();
       await page.getByRole("group", { name: /^Usage records by day/ }).waitFor();
-      await page.getByRole("group", { name: "Chart metric" }).getByRole("button", { name: "Tok/s", exact: true }).click();
-      await page.getByRole("group", { name: /^Measured tokens per second by day/ }).waitFor();
+      await page.getByRole("group", { name: "Chart metric" }).getByRole("button", { name: "Source tok/s", exact: true }).click();
+      await page.getByRole("group", { name: /^Tokens per source-duration second by day/ }).waitFor();
       invariant(await page.getByRole("group", { name: "Stack bars by" }).count() === 0, "A rate must not offer stacked composition.");
       await page.getByRole("group", { name: "Chart metric" }).getByRole("button", { name: "Tokens", exact: true }).click();
       await page.getByRole("group", { name: "Stack bars by" }).getByRole("button", { name: "Clients", exact: true }).click();
@@ -242,6 +313,17 @@ export async function verifyUsageStats(browser: Browser, baseUrl: string, captur
       await upload.setInputFiles({ name: "numeric-report.json", mimeType: "application/json", buffer: Buffer.from(JSON.stringify(large)) });
       await page.locator(".usage-stats-heading > span").filter({ hasText: "Local reports stay in this browser" }).waitFor();
       await capture("stats-local-large");
+      const beforeRejectedImportDownloads = downloads, releaseCanceledImage = await holdNextImage(page);
+      await page.getByRole("button", { name: "Download image", exact: true }).click();
+      await page.waitForFunction(() => document.documentElement.dataset.usageImageHeld === "true");
+      await upload.setInputFiles({ name: "rejected-during-export.json", mimeType: "application/json", buffer: Buffer.from('{"unexpected":"synthetic"}') });
+      await page.getByRole("alert").filter({ hasText: "could not be read as a numeric usage report" }).waitFor();
+      await releaseCanceledImage();
+      await page.getByRole("status").filter({ hasText: "Image canceled after the report changed" }).waitFor();
+      invariant(downloads === beforeRejectedImportDownloads, "A pending replacement must cancel the old image even when its import fails.");
+      const retryImage = page.waitForEvent("download");
+      await page.getByRole("button", { name: "Download image", exact: true }).click();
+      invariant((await retryImage).suggestedFilename().endsWith(".png"), "A canceled image must release its job so the retained local report can be exported again.");
       const empty = { ...original, sources: [], rows: [] };
       await upload.setInputFiles({ name: "empty.json", mimeType: "application/json", buffer: Buffer.from(JSON.stringify(empty)) });
       await page.getByRole("heading", { name: "No matching reported records" }).waitFor(); await capture("stats-empty");
@@ -268,7 +350,7 @@ export async function verifyUsageStats(browser: Browser, baseUrl: string, captur
         await page.getByRole("heading", { name: "Sign in to view your usage", exact: true }).waitFor();
         invariant(await page.locator(".usage-stats").count() === 1 && await page.getByText("Local reports stay in this browser", { exact: true }).count() === 1,
           "Authentication failure must preserve a locally imported report.");
-        statsMode = "ready";
+        statsMode = "ready"; accountSignedOut = false;
         await page.getByRole("button", { name: "Load account", exact: true }).click(); await page.getByText("Private to your account", { exact: true }).waitFor();
         await expandFilters();
         await page.getByLabel("Client", { exact: true }).selectOption("codex");
@@ -277,7 +359,7 @@ export async function verifyUsageStats(browser: Browser, baseUrl: string, captur
         await expandFilters();
         statsMode = "range_too_large"; await page.getByRole("button", { name: "Refresh", exact: true }).click();
         await page.getByRole("alert").filter({ hasText: "too much detail" }).waitFor(); await capture("stats-range-error");
-        statsMode = "ready"; await page.getByRole("button", { name: "Load last 7 days", exact: true }).click();
+        statsMode = "ready"; accountSignedOut = false; await page.getByRole("button", { name: "Load last 7 days", exact: true }).click();
         await page.getByRole("heading", { name: "Daily usage", exact: true }).waitFor();
         statsMode = "authentication_required"; await expandFilters(); await page.getByRole("button", { name: "Refresh", exact: true }).click();
         await page.getByRole("heading", { name: "Sign in to view your usage", exact: true }).waitFor();
@@ -300,20 +382,20 @@ export async function verifyUsageStats(browser: Browser, baseUrl: string, captur
           invariant(await page.locator(".usage-stats").count() === 1 && await page.getByText("Example data · synthetic", { exact: true }).count() === 1,
             "A cross-tab sign-out must preserve example data.");
         }
-        statsMode = "ready"; await page.getByRole("button", { name: "Load account", exact: true }).click();
+        statsMode = "ready"; accountSignedOut = false; await page.getByRole("button", { name: "Load account", exact: true }).click();
         await page.getByRole("heading", { name: "Daily usage", exact: true }).waitFor();
         statsMode = "not_started"; await expandFilters(); await page.getByRole("button", { name: "Refresh", exact: true }).click();
         await page.getByRole("heading", { name: "No detailed snapshot yet", exact: true }).waitFor();
         if (await account.count()) {
-          statsMode = "ready";
+          statsMode = "ready"; accountSignedOut = false;
           const arrived = new Promise<void>(done => { statsArrived = done; }); holdStats = true;
           await page.getByRole("button", { name: "Load account", exact: true }).click(); await arrived;
           await siblingSignOut();
           await page.getByRole("heading", { name: "Sign in to view your usage", exact: true }).waitFor();
           holdStats = false;
-          for (const route of heldStats.splice(0)) {
+          for (const { route, accountId } of heldStats.splice(0)) {
             const range = parseStatsPublicSearch(new URL(route.request().url()).search); invariant(range, "Held read keeps its original range.");
-            await route.fulfill({ status: 200, contentType: STATS_PUBLIC_MEDIA, body: JSON.stringify({ schemaVersion: 2, ok: true, value: hostedReport(range.firstUtcDay, range.dayCount) }) }).catch(() => undefined);
+            await route.fulfill({ status: 200, headers: { "content-type": STATS_PUBLIC_MEDIA, [USAGE_ACCOUNT_HEADER]: accountId }, body: JSON.stringify({ schemaVersion: 2, ok: true, value: hostedReport(range.firstUtcDay, range.dayCount, accountId) }) }).catch(() => undefined);
           }
           await settle(page);
           invariant(await page.locator(".usage-stats").count() === 0, "A late successful account response must not restore private data after cross-tab sign-out.");
