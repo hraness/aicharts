@@ -6,7 +6,7 @@ import { isStatsClient, isStatsModel, isStatsProvider } from "../../../lib/usage
 import { STATS_HTTP_RESPONSE_BYTES, STATS_HTTP_RESPONSE_ROWS, parseStatsReceipt, statsHex, statsInteger, type StatsError, type StatsRange, type StatsReceipt, type StatsStatus, type StatsUpload } from "../../../lib/usage/stats-http-contract";
 import type { StatsAbandonRequest, StatsAbandonment } from "../../../lib/usage/stats-http-contract";
 import { decodeUsageBatch } from "../../../lib/usage/wire";
-import { ADMISSION_POLICY_V1 } from "./admission-policy";
+import { ADMISSION_POLICY_V1, MAX_ADMISSION_HEADS } from "./admission-policy";
 import { AdmissionState, type AdmissionAuthority } from "./admission-state";
 
 export const MAX_STATS_STORED_DAYS = 65_536;
@@ -185,8 +185,8 @@ export class StatsState {
     const admission = new AdmissionState(this.sql), control = admission.control(), sql = this.sql;
     function* heads() {
       let count = 0;
-      for (const row of sql.exec("SELECT occurrence_id, utc_day FROM usage_admission_heads WHERE utc_day >= ? AND utc_day < ? ORDER BY occurrence_id LIMIT 100001", range.firstUtcDay, range.firstUtcDay + range.dayCount)) {
-        requireStats(row.occurrence_id instanceof ArrayBuffer && ++count <= 100_000);
+      for (const row of sql.exec(`SELECT occurrence_id, utc_day FROM usage_admission_heads WHERE utc_day >= ? AND utc_day < ? ORDER BY occurrence_id LIMIT ${MAX_ADMISSION_HEADS + 1}`, range.firstUtcDay, range.firstUtcDay + range.dayCount)) {
+        requireStats(row.occurrence_id instanceof ArrayBuffer && ++count <= MAX_ADMISSION_HEADS);
         // Days already owned by the relevant projections contribute nothing
         // downstream; skip the stored-operation fetch and frame decode. The
         // indexed day agrees with the decoded day or the history audit fails.
@@ -223,8 +223,8 @@ export class StatsState {
     if (LEGACY_CLIENTS.includes(client) && ownedDays.size < range.dayCount) {
       const admission = new AdmissionState(this.sql);
       let tombstones = 0;
-      for (const row of this.sql.exec("SELECT occurrence_id FROM usage_admission_heads WHERE utc_day IS NULL ORDER BY occurrence_id LIMIT 100001")) {
-        requireStats(++tombstones <= 100_000 && row.occurrence_id instanceof ArrayBuffer);
+      for (const row of this.sql.exec(`SELECT occurrence_id FROM usage_admission_heads WHERE utc_day IS NULL ORDER BY occurrence_id LIMIT ${MAX_ADMISSION_HEADS + 1}`)) {
+        requireStats(++tombstones <= MAX_ADMISSION_HEADS && row.occurrence_id instanceof ArrayBuffer);
         const head = admission.head(new Uint8Array(row.occurrence_id), authority, control);
         requireStats(head && head.operation.action === 2);
         if (admissionHex(head.operation.deviceId) !== deviceId) continue;

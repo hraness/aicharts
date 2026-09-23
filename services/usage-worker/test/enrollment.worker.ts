@@ -16,6 +16,7 @@ function removeSyntheticAdmissionTables(sql: SqlStorage): void {
   sql.exec("DROP TABLE usage_admission_heads");
   sql.exec("DROP TABLE usage_admission_days");
   sql.exec("DROP TABLE usage_admission_journal");
+  sql.exec("DROP TABLE usage_admission_audit");
 }
 async function eraseSyntheticAccount() {
   await runInDurableObject(accountStub(), (_instance, state) => {

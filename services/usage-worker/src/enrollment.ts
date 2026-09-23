@@ -221,6 +221,7 @@ export class AccountEnrollment extends DurableObject<Env> {
           ctx.storage.sql.exec("UPDATE account_enrollment SET schema_version = 3 WHERE id = 1");
         }
         this.#migrateStatsRows();
+        new AdmissionState(ctx.storage.sql).migrateCapacity();
         this.#schema();
         this.#migrateFence();
         this.#migrateLeaderboard();
@@ -236,7 +237,7 @@ export class AccountEnrollment extends DurableObject<Env> {
   }
 
   #objects(): Record<string, SqlStorageValue>[] {
-    return this.ctx.storage.sql.exec("SELECT type, name, sql FROM sqlite_schema WHERE name NOT GLOB '_cf_*' AND name NOT GLOB 'sqlite_*' AND name != '__cf_kv' LIMIT 16").toArray();
+    return this.ctx.storage.sql.exec("SELECT type, name, sql FROM sqlite_schema WHERE name NOT GLOB '_cf_*' AND name NOT GLOB 'sqlite_*' AND name != '__cf_kv' LIMIT 24").toArray();
   }
   #schema(legacy = false): void {
     const objects = this.#objects();

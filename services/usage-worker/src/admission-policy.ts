@@ -9,7 +9,7 @@ import { DAY_MS, decodeUsageBatch, type Policy } from "../../../lib/usage/wire";
 // A different measurement profile or registry needs a reviewed schema change.
 export const ADMISSION_POLICY_V1: Policy = Object.freeze({ firstDay: 0, lastDay: 100_000_000,
   registry: Object.freeze({ revision: 1, models: Object.freeze([]) }) });
-export const MAX_ADMISSION_HEADS = 100_000;
+export const MAX_ADMISSION_HEADS = 1_000_000;
 export const MAX_ADMISSION_DAY_HEADS = 65_536;
 export const MAX_ADMISSION_REVISIONS = 4_096;
 export type AdmissionFailure = "invalid_input" | "unauthorized" | "not_enrolled" | "revoked" | "conflict"

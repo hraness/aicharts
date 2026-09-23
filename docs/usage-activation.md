@@ -303,10 +303,16 @@ prove that the restored state is stale. The Durable Object history audit and
 the immutable admission journal detect missing or reordered local history, not
 an administrative rollback of both stores.
 
-That history audit is linear in retained history, so it runs once per object
-lifetime before the first write rather than in the constructor. Every path that
-commits — the fenced mutations, and the enrollment status read, which settles a
-durable observed time and revision — clears it first, as does the leaderboard
+That history audit re-verifies only the journal extension and the head rows
+touched since a durable checkpoint row, so its cost stays proportional to work
+committed since the last verified restart rather than the whole retained
+account. The checkpoint advances inside the same transaction as a successful
+audit; deleting the checkpoint row forces the next mutation to re-verify
+everything from revision zero, which is the operator recovery path for
+suspected deep corruption. It still runs once per object lifetime before the
+first write rather than in the constructor. Every path that commits — the
+fenced mutations, and the enrollment status read, which settles a durable
+observed time and revision — clears it first, as does the leaderboard
 projection, whose totals leave the account for the public index. A refusal
 poisons the object, so no later transaction on any path can commit onto history
 known bad. The constructor still runs the constant-cost control checks on every
