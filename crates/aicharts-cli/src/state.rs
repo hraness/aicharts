@@ -36,17 +36,16 @@ pub(crate) fn collect_existing_prefix(
         after: None,
         revision: None,
     };
-    let (report, sources_skipped, deferred_tails, lines_read, bytes_scanned, sources_conflicted, _) =
-        unix::collect(ledger, &options, checkpoint, occurrence)?;
+    let outcome = unix::collect(ledger, &options, checkpoint, occurrence)?;
     Ok(CollectionReport {
-        revision: report.revision,
-        sources_updated: report.sources_updated,
-        occurrences_changed: report.occurrences_changed,
-        sources_skipped,
-        deferred_tails,
-        sources_conflicted,
-        lines_read,
-        bytes_scanned,
+        revision: outcome.report.revision,
+        sources_updated: outcome.report.sources_updated,
+        occurrences_changed: outcome.report.occurrences_changed,
+        sources_skipped: outcome.sources_skipped,
+        deferred_tails: outcome.deferred_tails,
+        sources_conflicted: outcome.sources_conflicted,
+        lines_read: outcome.lines_read,
+        bytes_scanned: outcome.bytes_scanned,
     })
 }
 
@@ -519,12 +518,22 @@ pub(crate) mod unix {
         Ok((report, conflicted, deferred, deferred_skips))
     }
 
+    pub(super) struct CollectionOutcome {
+        pub(super) report: aicharts_ledger::ImportReport,
+        pub(super) sources_skipped: u64,
+        pub(super) deferred_tails: u64,
+        pub(super) lines_read: u64,
+        pub(super) bytes_scanned: u64,
+        pub(super) sources_conflicted: u64,
+        pub(super) sources_deferred: u64,
+    }
+
     pub(super) fn collect(
         ledger: &mut Ledger,
         options: &Options,
         checkpoint_key: &[u8; 32],
         occurrence_key: &[u8; 32],
-    ) -> Result<(aicharts_ledger::ImportReport, u64, u64, u64, u64, u64, u64), &'static str> {
+    ) -> Result<CollectionOutcome, &'static str> {
         collect_with_limit(
             ledger,
             options,
@@ -550,7 +559,7 @@ pub(crate) mod unix {
         wave_limit: u64,
         wave_file_limit: u64,
         wave_measurement_limit: usize,
-    ) -> Result<(aicharts_ledger::ImportReport, u64, u64, u64, u64, u64, u64), &'static str> {
+    ) -> Result<CollectionOutcome, &'static str> {
         let prefix_mode = options.command == Command::CollectPrefix;
         let mut snapshot = ledger.prefix_snapshot().map_err(|error| error.code())?;
         // Validate the explicit mode before visiting any source. Empty commits
@@ -831,15 +840,15 @@ pub(crate) mod unix {
         sources_deferred += deferred_sources;
         skipped -= deferred_skips;
         absorb(&mut report, committed)?;
-        Ok((
+        Ok(CollectionOutcome {
             report,
-            skipped,
-            deferred,
+            sources_skipped: skipped,
+            deferred_tails: deferred,
             lines_read,
             bytes_scanned,
-            conflicted,
+            sources_conflicted: conflicted,
             sources_deferred,
-        ))
+        })
     }
 
     fn status_json(status: &LedgerStatus) -> serde_json::Value {
@@ -918,15 +927,15 @@ pub(crate) mod unix {
         match options.command {
             Command::Init | Command::PrefixEnable => unreachable!(),
             Command::Collect | Command::CollectPrefix => {
-                let (
+                let CollectionOutcome {
                     report,
-                    skipped,
-                    deferred,
+                    sources_skipped: skipped,
+                    deferred_tails: deferred,
                     lines_read,
                     bytes_scanned,
-                    conflicted,
+                    sources_conflicted: conflicted,
                     sources_deferred,
-                ) = collect(&mut ledger, &options, checkpoint, occurrence_key)?;
+                } = collect(&mut ledger, &options, checkpoint, occurrence_key)?;
                 let status = ledger.status().map_err(|error| error.code())?;
                 if options.json {
                     let mut output = status_json(&status);
@@ -1201,10 +1210,10 @@ mod tests {
             .unwrap();
             assert_eq!(
                 (
-                    result.0.sources_updated,
-                    result.0.revision,
-                    result.4,
-                    result.6
+                    result.report.sources_updated,
+                    result.report.revision,
+                    result.bytes_scanned,
+                    result.sources_deferred
                 ),
                 (3, 3, 0, 0)
             );
@@ -1296,7 +1305,15 @@ mod tests {
                         || unix::collect(&mut ledger, &selected, &CHECKPOINT, &CHECKPOINT),
                     )
                     .unwrap();
-                    let (report, skipped, tails, _, bytes, conflicts, deferred) = result;
+                    let unix::CollectionOutcome {
+                        report,
+                        sources_skipped: skipped,
+                        deferred_tails: tails,
+                        bytes_scanned: bytes,
+                        sources_conflicted: conflicts,
+                        sources_deferred: deferred,
+                        ..
+                    } = result;
                     assert_eq!(
                         (report.sources_updated, skipped, tails, conflicts, deferred),
                         (2, 0, 0, 0, 1),
@@ -1337,7 +1354,14 @@ mod tests {
                     fs::write(&unstable, live_line(2, 3)).unwrap();
                     let next =
                         unix::collect(&mut ledger, &selected, &CHECKPOINT, &CHECKPOINT).unwrap();
-                    assert_eq!((next.0.sources_updated, next.1, next.6), (1, 2, 0));
+                    assert_eq!(
+                        (
+                            next.report.sources_updated,
+                            next.sources_skipped,
+                            next.sources_deferred
+                        ),
+                        (1, 2, 0)
+                    );
                     assert_eq!(ledger.status().unwrap().tokens, 37);
                 }
             }
@@ -1365,7 +1389,12 @@ mod tests {
             )
             .unwrap();
             assert_eq!(
-                (result.0.sources_updated, result.1, result.5, result.6),
+                (
+                    result.report.sources_updated,
+                    result.sources_skipped,
+                    result.sources_conflicted,
+                    result.sources_deferred
+                ),
                 (1, 0, 0, 1)
             );
             let current = ledger.snapshot().unwrap();
@@ -1401,10 +1430,15 @@ mod tests {
                 )
                 .unwrap();
                 assert_eq!(
-                    (result.0.sources_updated, result.1, result.5, result.6),
+                    (
+                        result.report.sources_updated,
+                        result.sources_skipped,
+                        result.sources_conflicted,
+                        result.sources_deferred
+                    ),
                     (0, 0, 0, 1)
                 );
-                assert_eq!(result.0.revision, old.revision);
+                assert_eq!(result.report.revision, old.revision);
                 assert_eq!(ledger.snapshot().unwrap().checkpoints, old.checkpoints);
                 assert_eq!(pending(&ledger), old_pending);
             }
@@ -1430,17 +1464,25 @@ mod tests {
                     let result =
                         unix::collect(&mut ledger, &selected, &CHECKPOINT, &CHECKPOINT).unwrap();
                     assert_eq!(
-                        (result.0.sources_updated, result.1, result.5, result.6),
+                        (
+                            result.report.sources_updated,
+                            result.sources_skipped,
+                            result.sources_conflicted,
+                            result.sources_deferred
+                        ),
                         (0, 0, 0, 1)
                     );
-                    assert_eq!(result.0.revision, old.revision);
+                    assert_eq!(result.report.revision, old.revision);
                     assert_eq!(ledger.snapshot().unwrap().checkpoints, old.checkpoints);
                     assert_eq!(pending(&ledger), old_pending);
                 }
                 fs::write(&source, complete).unwrap();
                 let result =
                     unix::collect(&mut ledger, &selected, &CHECKPOINT, &CHECKPOINT).unwrap();
-                assert_eq!((result.0.sources_updated, result.6), (1, 0));
+                assert_eq!(
+                    (result.report.sources_updated, result.sources_deferred),
+                    (1, 0)
+                );
                 assert_eq!(ledger.status().unwrap().tokens, 30);
             }
         }
@@ -1490,7 +1532,7 @@ mod tests {
                     if prefix {
                         assert_eq!(result.err(), Some("source_changed_during_scan"));
                     } else {
-                        assert_eq!(result.unwrap().6, 1);
+                        assert_eq!(result.unwrap().sources_deferred, 1);
                     }
                     assert_eq!(ledger.snapshot().unwrap().revision, old.revision);
                     assert!(ledger.snapshot().unwrap().checkpoints.is_empty());
@@ -1626,33 +1668,41 @@ mod tests {
             )
             .unwrap();
             let before = ledger.status().unwrap().revision;
-            let (report, skipped, _deferred, _lines, bytes, _conflicted, _sources_deferred) =
-                unix::collect_with_limit(
-                    &mut ledger,
-                    &options,
-                    &CHECKPOINT,
-                    &NAMESPACE,
-                    size * 2 - 1,
-                    u64::MAX,
-                    usize::MAX,
-                )
-                .unwrap();
+            let unix::CollectionOutcome {
+                report,
+                sources_skipped: skipped,
+                bytes_scanned: bytes,
+                ..
+            } = unix::collect_with_limit(
+                &mut ledger,
+                &options,
+                &CHECKPOINT,
+                &NAMESPACE,
+                size * 2 - 1,
+                u64::MAX,
+                usize::MAX,
+            )
+            .unwrap();
             assert_eq!(report.sources_updated, 3);
             assert_eq!(skipped, 0);
             assert_eq!(bytes, size * 3);
             assert_eq!(ledger.status().unwrap().revision - before, 3);
             // An idempotent re-collect skips every source and commits nothing.
-            let (report, skipped, _deferred, _lines, bytes, _conflicted, _sources_deferred) =
-                unix::collect_with_limit(
-                    &mut ledger,
-                    &options,
-                    &CHECKPOINT,
-                    &NAMESPACE,
-                    size * 2 - 1,
-                    u64::MAX,
-                    usize::MAX,
-                )
-                .unwrap();
+            let unix::CollectionOutcome {
+                report,
+                sources_skipped: skipped,
+                bytes_scanned: bytes,
+                ..
+            } = unix::collect_with_limit(
+                &mut ledger,
+                &options,
+                &CHECKPOINT,
+                &NAMESPACE,
+                size * 2 - 1,
+                u64::MAX,
+                usize::MAX,
+            )
+            .unwrap();
             assert_eq!((report.sources_updated, skipped), (0, 3));
             assert_eq!(bytes, 0);
             assert_eq!(ledger.status().unwrap().revision - before, 3);
@@ -1692,17 +1742,20 @@ mod tests {
             )
             .unwrap();
             let before = ledger.status().unwrap().revision;
-            let (report, skipped, _deferred, _lines, _bytes, _conflicted, _sources_deferred) =
-                unix::collect_with_limit(
-                    &mut ledger,
-                    &options,
-                    &CHECKPOINT,
-                    &NAMESPACE,
-                    u64::MAX,
-                    2,
-                    usize::MAX,
-                )
-                .unwrap();
+            let unix::CollectionOutcome {
+                report,
+                sources_skipped: skipped,
+                ..
+            } = unix::collect_with_limit(
+                &mut ledger,
+                &options,
+                &CHECKPOINT,
+                &NAMESPACE,
+                u64::MAX,
+                2,
+                usize::MAX,
+            )
+            .unwrap();
             assert_eq!(report.sources_updated, 5);
             assert_eq!(skipped, 0);
             assert_eq!(ledger.status().unwrap().revision - before, 3);
@@ -1744,17 +1797,20 @@ mod tests {
             )
             .unwrap();
             let before = ledger.status().unwrap().revision;
-            let (report, skipped, _deferred, _lines, _bytes, _conflicted, _sources_deferred) =
-                unix::collect_with_limit(
-                    &mut ledger,
-                    &collect_options,
-                    &CHECKPOINT,
-                    &NAMESPACE,
-                    u64::MAX,
-                    u64::MAX,
-                    4,
-                )
-                .unwrap();
+            let unix::CollectionOutcome {
+                report,
+                sources_skipped: skipped,
+                ..
+            } = unix::collect_with_limit(
+                &mut ledger,
+                &collect_options,
+                &CHECKPOINT,
+                &NAMESPACE,
+                u64::MAX,
+                u64::MAX,
+                4,
+            )
+            .unwrap();
             assert_eq!(report.sources_updated, 5);
             assert_eq!(skipped, 0);
             assert_eq!(ledger.status().unwrap().revision - before, 3);
@@ -1826,17 +1882,20 @@ mod tests {
             )
             .unwrap();
             let before = ledger.status().unwrap().revision;
-            let (report, skipped, _deferred, _lines, _bytes, _conflicted, _sources_deferred) =
-                unix::collect_with_limit(
-                    &mut ledger,
-                    &collect_options,
-                    &CHECKPOINT,
-                    &NAMESPACE,
-                    u64::MAX,
-                    crate::MAX_WAVE_FILES,
-                    usize::MAX,
-                )
-                .unwrap();
+            let unix::CollectionOutcome {
+                report,
+                sources_skipped: skipped,
+                ..
+            } = unix::collect_with_limit(
+                &mut ledger,
+                &collect_options,
+                &CHECKPOINT,
+                &NAMESPACE,
+                u64::MAX,
+                crate::MAX_WAVE_FILES,
+                usize::MAX,
+            )
+            .unwrap();
             assert_eq!(report.sources_updated, count as u64);
             assert_eq!(skipped, 0);
             assert_eq!(ledger.status().unwrap().revision - before, 2);
