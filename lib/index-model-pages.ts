@@ -43,27 +43,45 @@ function creatorRouteAliases(creatorSlug: string): readonly string[] {
   return [creatorSlug];
 }
 
+/**
+ * A later name covers an earlier one when they are equal after
+ * normalization, or when the later name continues with a non-digit
+ * qualifier such as `max`. A digit continuation such as Opus 5.5
+ * against Opus 5 is a different model.
+ */
+export function identityTokenCovers(candidate: string, target: string): boolean {
+  const normalizedTarget = normalizeIdentity(target);
+  if (normalizedTarget.length === 0) return false;
+  const normalizedCandidate = normalizeIdentity(candidate);
+  if (!normalizedCandidate.startsWith(normalizedTarget)) return false;
+  const next = normalizedCandidate.charAt(normalizedTarget.length);
+  return next === "" || !/[0-9]/u.test(next);
+}
+
+function identitiesOverlap(left: string, right: string): boolean {
+  return identityTokenCovers(left, right) || identityTokenCovers(right, left);
+}
+
 export function intelligenceRecordCoversCard(
-  record: ArtificialAnalysisIntelligenceRecord,
+  record: Pick<
+    ArtificialAnalysisIntelligenceRecord,
+    "creator" | "name" | "release" | "shortName" | "slug"
+  >,
   card: Pick<ModelCardPresentation, "canonicalModelId" | "model" | "displayTitle">,
 ): boolean {
   const [creator, model] = card.canonicalModelId.split("/");
   if (creator === undefined || model === undefined) return false;
   if (!creatorRouteAliases(record.creator.slug).includes(creator)) return false;
-  const cardTokens = [model, card.model, card.displayTitle].map(normalizeIdentity);
+  const cardTokens = [model, card.model, card.displayTitle];
   const recordTokens = [
     record.slug,
     record.release.slug,
     record.name,
     record.release.name,
     record.shortName,
-  ].map(normalizeIdentity);
+  ];
   return cardTokens.some(cardToken => (
-    recordTokens.some(recordToken => (
-      recordToken === cardToken
-      || recordToken.startsWith(cardToken)
-      || cardToken.startsWith(recordToken)
-    ))
+    recordTokens.some(recordToken => identitiesOverlap(recordToken, cardToken))
   ));
 }
 
