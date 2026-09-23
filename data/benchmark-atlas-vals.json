@@ -16,8 +16,8 @@
       "totalModels": 65,
       "source": {
         "url": "https://www.vals.ai/benchmarks/vals_index",
-        "retrievedAt": "2026-09-23T04:37:55.641Z",
-        "sha256": "b025a839153886f1ecc65d15725c134ae96345ba97272657c8293729c8122180",
+        "retrievedAt": "2026-09-23T13:38:11.750Z",
+        "sha256": "b0c283142fa3096a03609ea708da09652e59f1503f5f9a2ef2d06626da1b626f",
         "observedAt": "2026-09-22T00:00:00.000Z",
         "revision": "vals_index v2"
       },
@@ -2620,7 +2620,7 @@
           "provider": "OpenAI",
           "effort": "max",
           "harness": null,
-          "score": 65.887,
+          "score": 62.569,
           "standardError": 0.954,
           "costUsdPerTest": 7.564103,
           "latencySeconds": 1593.734,
@@ -2658,7 +2658,7 @@
             {
               "id": "legal_agent_benchmark",
               "label": "HLAB",
-              "score": 83.514
+              "score": 1.667
             }
           ]
         },
@@ -3159,8 +3159,8 @@
       "totalModels": 68,
       "source": {
         "url": "https://www.vals.ai/benchmarks/fabv2",
-        "retrievedAt": "2026-09-23T04:37:55.641Z",
-        "sha256": "d6a45f4183d74621a35d35c08fcce5b2f457335aa23f53f632ab055f5eef62cb",
+        "retrievedAt": "2026-09-23T13:38:11.750Z",
+        "sha256": "8253d7a092188677e18f64165f4f338e5b99be804498c7d5476f877cd246914b",
         "observedAt": "2026-09-22T00:00:00.000Z",
         "revision": "finance_agent v2"
       },
@@ -7466,8 +7466,8 @@
       "totalModels": 68,
       "source": {
         "url": "https://www.vals.ai/benchmarks/legal_research",
-        "retrievedAt": "2026-09-23T04:37:55.641Z",
-        "sha256": "8dda31c7b9e6fd8dfade1bfa37e3a26117c2db4f8863ea48bb95cbddc67f91ce",
+        "retrievedAt": "2026-09-23T13:38:11.750Z",
+        "sha256": "c163b99e1a0e2be1a20e1f44d2914a932e31049d0b5c6767a7803cb35e0b3a74",
         "observedAt": "2026-09-22T00:00:00.000Z",
         "revision": "legal_research v1"
       },
@@ -11433,8 +11433,8 @@
       "totalModels": 26,
       "source": {
         "url": "https://www.vals.ai/benchmarks/tax_agent_bench",
-        "retrievedAt": "2026-09-23T04:37:55.641Z",
-        "sha256": "5371fb8bab4b2a9d0a5522305fd01956b1a696a37bf1f6211f8214625f465bde",
+        "retrievedAt": "2026-09-23T13:38:11.750Z",
+        "sha256": "38c3cccec98fbbecd9bf665e2258eb151f0001a74affc0be2eed9912b5485161",
         "observedAt": "2026-09-22T00:00:00.000Z",
         "revision": "tax_agent_bench v1"
       },
@@ -12704,8 +12704,8 @@
       "totalModels": 98,
       "source": {
         "url": "https://www.vals.ai/benchmarks/medcode",
-        "retrievedAt": "2026-09-23T04:37:55.641Z",
-        "sha256": "d38cb706931055d225da065e7c70e40218f1b59f47c88d0e44c7e559b2d1a672",
+        "retrievedAt": "2026-09-23T13:38:11.750Z",
+        "sha256": "f51ab09f75f1f2a43e4795332d87d10d469da5713ee9e294dfd8a018c22ed0b0",
         "observedAt": "2026-09-22T00:00:00.000Z",
         "revision": "medcode v1"
       },

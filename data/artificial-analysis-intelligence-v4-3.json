@@ -1832,13 +1832,13 @@
     {
       "costUsdPerTask": {
         "answer": 0.057259691355187124,
-        "cacheRead": 0.18729555800601444,
+        "cacheRead": 0.3745911160120289,
         "cacheWrite": 0.4231391110871978,
-        "input": 0.6196269810967705,
+        "input": 0.8069225391027849,
         "nonCacheInput": 0.009192312003558188,
         "output": 0.20039241455380952,
         "reasoning": 0.14313272319862239,
-        "total": 0.8200193956505801
+        "total": 1.0073149536565944
       },
       "creator": {
         "id": "d874d370-74d3-4fa0-ba00-5272f92f946b",
@@ -2162,13 +2162,13 @@
     {
       "costUsdPerTask": {
         "answer": 0.0591957152792819,
-        "cacheRead": 0.22964745662767694,
+        "cacheRead": 0.4592949132553539,
         "cacheWrite": 0.508704714942818,
-        "input": 0.7475864192704818,
+        "input": 0.9772338758981587,
         "nonCacheInput": 0.00923424769998676,
         "output": 0.1558298981323625,
         "reasoning": 0.09663418285308062,
-        "total": 0.9034163174028444
+        "total": 1.133063774030521
       },
       "creator": {
         "id": "d874d370-74d3-4fa0-ba00-5272f92f946b",
@@ -2276,13 +2276,13 @@
     {
       "costUsdPerTask": {
         "answer": 0.05870202243128136,
-        "cacheRead": 0.21421287786340634,
+        "cacheRead": 0.4284257557268127,
         "cacheWrite": 0.4740960884269201,
-        "input": 0.6977302581520196,
+        "input": 0.911943136015426,
         "nonCacheInput": 0.00942129186169311,
         "output": 0.13627940050061324,
         "reasoning": 0.07757737806933192,
-        "total": 0.8340096586526328
+        "total": 1.0482225365160391
       },
       "creator": {
         "id": "d874d370-74d3-4fa0-ba00-5272f92f946b",
@@ -2450,13 +2450,13 @@
     {
       "costUsdPerTask": {
         "answer": 0.017877009070380465,
-        "cacheRead": 0.018156045901524007,
-        "cacheWrite": 0.24129055802078492,
-        "input": 0.2671200908688062,
+        "cacheRead": 0.036312091803048015,
+        "cacheWrite": 0.19303244641662795,
+        "input": 0.23701802516617335,
         "nonCacheInput": 0.007673486946497344,
         "output": 0.05815334111238546,
         "reasoning": 0.040276332042005,
-        "total": 0.32527343198119174
+        "total": 0.2951713662785588
       },
       "creator": {
         "id": "d874d370-74d3-4fa0-ba00-5272f92f946b",
@@ -2704,13 +2704,13 @@
     {
       "costUsdPerTask": {
         "answer": 0.08992600116655003,
-        "cacheRead": 0.5806323376289286,
+        "cacheRead": 1.1612646752578573,
         "cacheWrite": 1.2266054198050151,
-        "input": 1.8171990530935989,
+        "input": 2.3978313907225277,
         "nonCacheInput": 0.009961295659655287,
         "output": 0.08992600116655003,
         "reasoning": 0,
-        "total": 1.9071250542601492
+        "total": 2.487757391889078
       },
       "creator": {
         "id": "d874d370-74d3-4fa0-ba00-5272f92f946b",
@@ -3684,7 +3684,7 @@
     "method": "public-next-flight",
     "methodologyUrl": "https://artificialanalysis.ai/methodology/intelligence-benchmarking",
     "name": "Artificial Analysis",
-    "retrievedAt": "2026-09-23T03:44:35.255Z",
+    "retrievedAt": "2026-09-23T13:38:04.121Z",
     "sourceClass": "benchmark-publisher",
     "termsUrl": "https://artificialanalysis.ai/docs/legal/Terms-of-Use.pdf",
     "url": "https://artificialanalysis.ai/models"
