@@ -9,6 +9,7 @@ pub(crate) struct CollectionReport {
     pub occurrences_changed: u64,
     pub sources_skipped: u64,
     pub deferred_tails: u64,
+    pub sources_conflicted: u64,
     pub lines_read: u64,
     pub bytes_scanned: u64,
 }
@@ -35,7 +36,7 @@ pub(crate) fn collect_existing_prefix(
         after: None,
         revision: None,
     };
-    let (report, sources_skipped, deferred_tails, lines_read, bytes_scanned) =
+    let (report, sources_skipped, deferred_tails, lines_read, bytes_scanned, sources_conflicted) =
         unix::collect(ledger, &options, checkpoint, occurrence)?;
     Ok(CollectionReport {
         revision: report.revision,
@@ -43,6 +44,7 @@ pub(crate) fn collect_existing_prefix(
         occurrences_changed: report.occurrences_changed,
         sources_skipped,
         deferred_tails,
+        sources_conflicted,
         lines_read,
         bytes_scanned,
     })
@@ -333,7 +335,10 @@ pub(crate) mod unix {
     }
 
     /// Verify every source in the wave, commit it atomically at the current
-    /// revision, then refresh the snapshot for the next wave.
+    /// revision, then refresh the snapshot for the next wave. A wave rejected
+    /// for a single source's irreconcilable rewrite retries per source so one
+    /// conflicting file cannot stall every source ordered after it; the second
+    /// return counts sources skipped for irreconcilable retained history.
     fn commit_wave(
         ledger: &mut Ledger,
         snapshot: &mut aicharts_ledger::PrefixSnapshot,
@@ -341,20 +346,52 @@ pub(crate) mod unix {
         scans: &mut Vec<SourceScan>,
         prefix_scans: &mut Vec<PrefixScan>,
         verification: &[(PathBuf, PathBuf, SourceStamp)],
-    ) -> Result<aicharts_ledger::ImportReport, &'static str> {
+        progress: &mut Progress,
+    ) -> Result<(aicharts_ledger::ImportReport, u64), &'static str> {
         // Nothing durable changes until the complete wave is valid and the
         // ledger's revision CAS succeeds.
         for (path, canonical, expected) in verification {
             verify_path(path, canonical, expected)?;
         }
+        let mut conflicted = 0;
         let report = if prefix_mode {
-            ledger.commit_prefix_scans(snapshot.revision, std::mem::take(prefix_scans))
+            ledger
+                .commit_prefix_scans(snapshot.revision, std::mem::take(prefix_scans))
+                .map_err(|error| error.code())?
         } else {
-            ledger.commit_scans(snapshot.revision, std::mem::take(scans))
-        }
-        .map_err(|error| error.code())?;
+            let wave = std::mem::take(scans);
+            match ledger.commit_scans_ref(snapshot.revision, &wave) {
+                Ok(report) => report,
+                Err(
+                    aicharts_ledger::Error::SourceHistoryChanged
+                    | aicharts_ledger::Error::InvalidMeasurement,
+                ) => {
+                    let mut report = aicharts_ledger::ImportReport {
+                        revision: snapshot.revision,
+                        sources_updated: 0,
+                        occurrences_changed: 0,
+                    };
+                    for scan in &wave {
+                        match ledger.commit_scans_ref(report.revision, std::slice::from_ref(scan)) {
+                            Ok(committed) => absorb(&mut report, committed)?,
+                            Err(
+                                aicharts_ledger::Error::SourceHistoryChanged
+                                | aicharts_ledger::Error::InvalidMeasurement,
+                            ) => {
+                                conflicted += 1;
+                                progress
+                                    .note("skipping a source with irreconcilable retained history");
+                            }
+                            Err(error) => return Err(error.code()),
+                        }
+                    }
+                    report
+                }
+                Err(error) => return Err(error.code()),
+            }
+        };
         *snapshot = ledger.prefix_snapshot().map_err(|error| error.code())?;
-        Ok(report)
+        Ok((report, conflicted))
     }
 
     pub(super) fn collect(
@@ -362,7 +399,7 @@ pub(crate) mod unix {
         options: &Options,
         checkpoint_key: &[u8; 32],
         occurrence_key: &[u8; 32],
-    ) -> Result<(aicharts_ledger::ImportReport, u64, u64, u64, u64), &'static str> {
+    ) -> Result<(aicharts_ledger::ImportReport, u64, u64, u64, u64, u64), &'static str> {
         collect_with_limit(
             ledger,
             options,
@@ -388,7 +425,7 @@ pub(crate) mod unix {
         wave_limit: u64,
         wave_file_limit: u64,
         wave_measurement_limit: usize,
-    ) -> Result<(aicharts_ledger::ImportReport, u64, u64, u64, u64), &'static str> {
+    ) -> Result<(aicharts_ledger::ImportReport, u64, u64, u64, u64, u64), &'static str> {
         let prefix_mode = options.command == Command::CollectPrefix;
         let mut snapshot = ledger.prefix_snapshot().map_err(|error| error.code())?;
         // Validate the explicit mode before visiting any source. Empty commits
@@ -404,6 +441,7 @@ pub(crate) mod unix {
         let mut total_files = 0u64;
         let mut skipped = 0u64;
         let mut deferred = 0u64;
+        let mut conflicted = 0u64;
         let mut bytes_scanned = 0u64;
         let mut lines_read = 0u64;
         // Each commit wave stays inside the per-commit byte, file-count and
@@ -486,17 +524,17 @@ pub(crate) mod unix {
                             > wave_limit)
                 {
                     progress.note("committing a bounded wave");
-                    absorb(
-                        &mut report,
-                        commit_wave(
-                            ledger,
-                            &mut snapshot,
-                            prefix_mode,
-                            &mut scans,
-                            &mut prefix_scans,
-                            &verification,
-                        )?,
+                    let (committed, delta) = commit_wave(
+                        ledger,
+                        &mut snapshot,
+                        prefix_mode,
+                        &mut scans,
+                        &mut prefix_scans,
+                        &verification,
+                        &mut progress,
                     )?;
+                    conflicted += delta;
+                    absorb(&mut report, committed)?;
                     wave_bytes = 0;
                     retained = 0;
                     verification.clear();
@@ -579,17 +617,17 @@ pub(crate) mod unix {
                         > wave_measurement_limit
                 {
                     progress.note("committing a bounded wave");
-                    absorb(
-                        &mut report,
-                        commit_wave(
-                            ledger,
-                            &mut snapshot,
-                            prefix_mode,
-                            &mut scans,
-                            &mut prefix_scans,
-                            &verification,
-                        )?,
+                    let (committed, delta) = commit_wave(
+                        ledger,
+                        &mut snapshot,
+                        prefix_mode,
+                        &mut scans,
+                        &mut prefix_scans,
+                        &verification,
+                        &mut progress,
                     )?;
+                    conflicted += delta;
+                    absorb(&mut report, committed)?;
                     wave_bytes = before.bytes;
                     retained = 0;
                     verification.clear();
@@ -634,7 +672,10 @@ pub(crate) mod unix {
                         source_id,
                         stamp: before,
                         collection,
-                        allows_rewrite: *provider == aicharts_protocol::Provider::Devin,
+                        // Tools replace session files wholesale on upgrades and
+                        // forks; every provider merges retained history by
+                        // dominance instead of failing the wave.
+                        allows_rewrite: true,
                     });
                 }
                 verification.push((path, canonical, before));
@@ -644,18 +685,25 @@ pub(crate) mod unix {
             return Err("no_source_files");
         }
         progress.note("committing a bounded wave");
-        absorb(
-            &mut report,
-            commit_wave(
-                ledger,
-                &mut snapshot,
-                prefix_mode,
-                &mut scans,
-                &mut prefix_scans,
-                &verification,
-            )?,
+        let (committed, delta) = commit_wave(
+            ledger,
+            &mut snapshot,
+            prefix_mode,
+            &mut scans,
+            &mut prefix_scans,
+            &verification,
+            &mut progress,
         )?;
-        Ok((report, skipped, deferred, lines_read, bytes_scanned))
+        conflicted += delta;
+        absorb(&mut report, committed)?;
+        Ok((
+            report,
+            skipped,
+            deferred,
+            lines_read,
+            bytes_scanned,
+            conflicted,
+        ))
     }
 
     fn status_json(status: &LedgerStatus) -> serde_json::Value {
@@ -734,7 +782,7 @@ pub(crate) mod unix {
         match options.command {
             Command::Init | Command::PrefixEnable => unreachable!(),
             Command::Collect | Command::CollectPrefix => {
-                let (report, skipped, deferred, lines_read, bytes_scanned) =
+                let (report, skipped, deferred, lines_read, bytes_scanned, conflicted) =
                     collect(&mut ledger, &options, checkpoint, occurrence_key)?;
                 let status = ledger.status().map_err(|error| error.code())?;
                 if options.json {
@@ -743,6 +791,7 @@ pub(crate) mod unix {
                     output["sourcesUpdated"] = report.sources_updated.into();
                     output["occurrencesChanged"] = report.occurrences_changed.into();
                     output["sourcesSkipped"] = skipped.into();
+                    output["sourcesConflicted"] = conflicted.into();
                     if options.command == Command::CollectPrefix {
                         output["sourcesWithDeferredTail"] = deferred.into();
                     }
@@ -767,7 +816,7 @@ pub(crate) mod unix {
                     } else {
                         String::new()
                     };
-                    Ok(format!("Import committed at revision {}; current ledger revision {}. Nothing uploaded.\nSources updated: {}; unchanged skipped: {skipped}\n{deferred_note}Physical lines read: {lines_read}; bytes scanned: {bytes_scanned}\nObserved tokens: {}; pending records: {}\nCoverage: partial; prompt counts, activity and model pricing unavailable.\nWarnings: {warnings}\n", report.revision,status.revision,report.sources_updated,status.tokens,status.pending_records))
+                    Ok(format!("Import committed at revision {}; current ledger revision {}. Nothing uploaded.\nSources updated: {}; unchanged skipped: {skipped}; conflicting history skipped: {conflicted}\n{deferred_note}Physical lines read: {lines_read}; bytes scanned: {bytes_scanned}\nObserved tokens: {}; pending records: {}\nCoverage: partial; prompt counts, activity and model pricing unavailable.\nWarnings: {warnings}\n", report.revision,status.revision,report.sources_updated,status.tokens,status.pending_records))
                 }
             }
             Command::Status => {
@@ -1068,31 +1117,33 @@ mod tests {
             )
             .unwrap();
             let before = ledger.status().unwrap().revision;
-            let (report, skipped, _deferred, _lines, bytes) = unix::collect_with_limit(
-                &mut ledger,
-                &options,
-                &CHECKPOINT,
-                &NAMESPACE,
-                size * 2 - 1,
-                u64::MAX,
-                usize::MAX,
-            )
-            .unwrap();
+            let (report, skipped, _deferred, _lines, bytes, _conflicted) =
+                unix::collect_with_limit(
+                    &mut ledger,
+                    &options,
+                    &CHECKPOINT,
+                    &NAMESPACE,
+                    size * 2 - 1,
+                    u64::MAX,
+                    usize::MAX,
+                )
+                .unwrap();
             assert_eq!(report.sources_updated, 3);
             assert_eq!(skipped, 0);
             assert_eq!(bytes, size * 3);
             assert_eq!(ledger.status().unwrap().revision - before, 3);
             // An idempotent re-collect skips every source and commits nothing.
-            let (report, skipped, _deferred, _lines, bytes) = unix::collect_with_limit(
-                &mut ledger,
-                &options,
-                &CHECKPOINT,
-                &NAMESPACE,
-                size * 2 - 1,
-                u64::MAX,
-                usize::MAX,
-            )
-            .unwrap();
+            let (report, skipped, _deferred, _lines, bytes, _conflicted) =
+                unix::collect_with_limit(
+                    &mut ledger,
+                    &options,
+                    &CHECKPOINT,
+                    &NAMESPACE,
+                    size * 2 - 1,
+                    u64::MAX,
+                    usize::MAX,
+                )
+                .unwrap();
             assert_eq!((report.sources_updated, skipped), (0, 3));
             assert_eq!(bytes, 0);
             assert_eq!(ledger.status().unwrap().revision - before, 3);
@@ -1132,16 +1183,17 @@ mod tests {
             )
             .unwrap();
             let before = ledger.status().unwrap().revision;
-            let (report, skipped, _deferred, _lines, _bytes) = unix::collect_with_limit(
-                &mut ledger,
-                &options,
-                &CHECKPOINT,
-                &NAMESPACE,
-                u64::MAX,
-                2,
-                usize::MAX,
-            )
-            .unwrap();
+            let (report, skipped, _deferred, _lines, _bytes, _conflicted) =
+                unix::collect_with_limit(
+                    &mut ledger,
+                    &options,
+                    &CHECKPOINT,
+                    &NAMESPACE,
+                    u64::MAX,
+                    2,
+                    usize::MAX,
+                )
+                .unwrap();
             assert_eq!(report.sources_updated, 5);
             assert_eq!(skipped, 0);
             assert_eq!(ledger.status().unwrap().revision - before, 3);
@@ -1183,16 +1235,17 @@ mod tests {
             )
             .unwrap();
             let before = ledger.status().unwrap().revision;
-            let (report, skipped, _deferred, _lines, _bytes) = unix::collect_with_limit(
-                &mut ledger,
-                &collect_options,
-                &CHECKPOINT,
-                &NAMESPACE,
-                u64::MAX,
-                u64::MAX,
-                4,
-            )
-            .unwrap();
+            let (report, skipped, _deferred, _lines, _bytes, _conflicted) =
+                unix::collect_with_limit(
+                    &mut ledger,
+                    &collect_options,
+                    &CHECKPOINT,
+                    &NAMESPACE,
+                    u64::MAX,
+                    u64::MAX,
+                    4,
+                )
+                .unwrap();
             assert_eq!(report.sources_updated, 5);
             assert_eq!(skipped, 0);
             assert_eq!(ledger.status().unwrap().revision - before, 3);
@@ -1264,16 +1317,17 @@ mod tests {
             )
             .unwrap();
             let before = ledger.status().unwrap().revision;
-            let (report, skipped, _deferred, _lines, _bytes) = unix::collect_with_limit(
-                &mut ledger,
-                &collect_options,
-                &CHECKPOINT,
-                &NAMESPACE,
-                u64::MAX,
-                crate::MAX_WAVE_FILES,
-                usize::MAX,
-            )
-            .unwrap();
+            let (report, skipped, _deferred, _lines, _bytes, _conflicted) =
+                unix::collect_with_limit(
+                    &mut ledger,
+                    &collect_options,
+                    &CHECKPOINT,
+                    &NAMESPACE,
+                    u64::MAX,
+                    crate::MAX_WAVE_FILES,
+                    usize::MAX,
+                )
+                .unwrap();
             assert_eq!(report.sources_updated, count as u64);
             assert_eq!(skipped, 0);
             assert_eq!(ledger.status().unwrap().revision - before, 2);
