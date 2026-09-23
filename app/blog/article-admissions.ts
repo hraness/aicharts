@@ -51,6 +51,67 @@ export const HOME_EDITORIAL_SLUGS = [
 ] as const satisfies readonly BlogSlug[];
 
 export const BLOG_ARTICLE_ADMISSIONS = {
+  "grok-4-7-coding-agent-index": {
+    canonicalOwner: blogArticlePath("grok-4-7-coding-agent-index"),
+    decision: "keep",
+    evidenceOwner: EVIDENCE_OWNER,
+    evidenceType: "checked-dataset-analysis",
+    harmIfWrong:
+      "A coding-agent AA Index and an Intelligence Index score for the same model could be quoted as one ranking, a mean harness cost per task could be compared with a per-task Intelligence Index cost or a list price, a launch-day native-harness rank could be repeated after cheaper higher-scoring rows entered the chart, or xAI’s vendor-run table could be cited as independent evidence.",
+    hostFit:
+      "AI Charts stores Grok 4.7 in both checked snapshots, the coding-agent chart with its Grok Build row and the Intelligence Index chart with its xhigh and high rows, so it can derive rank, frontier position, component split, generation step, and neighbor tables from the same data the charts plot without adding a data surface.",
+    humanReviewedOn: null,
+    lifecycleState: "indexable",
+    nearestUrls: [
+      {
+        distinction:
+          "The MiMo page places one open-weights model on the Intelligence Index cost frontier and tests an investor’s price and cybersecurity claims; this page places one proprietary model on both AI Charts charts and explains why its two scores and two costs are not one measurement.",
+        url: blogArticlePath("mimo-v2-6-pro-cost-frontier"),
+      },
+      {
+        distinction:
+          "The AA Index page derives the whole coding-agent cost frontier and the AA Index per dollar view; this page reads one new row against that frontier, splits its index into components, and compares it with its predecessor in the same harness.",
+        url: blogArticlePath("aa-index-cost-coding-agents"),
+      },
+      {
+        distinction:
+          "The open-models page compares an open-versus-closed era claim with coding-agent rows; this page concerns one model launch and never classifies weight access.",
+        url: blogArticlePath("open-models-coding-agent-benchmarks"),
+      },
+      {
+        distinction:
+          "The small-models page gives a decision rule for adopting a cheaper model on a product acceptance set; this page reports where a specific new model sits and what its scores measure.",
+        url: blogArticlePath("small-models-have-arrived"),
+      },
+    ],
+    originalContribution:
+      "A snapshot-derived statement of Grok Build · Grok 4.7’s AA Index rank, the configurations that cost no more and score at least as high, and the rows that entered the chart after Artificial Analysis’s launch note; a component table showing DeepSWE v1.1 near the top while Terminal-Bench 4 sits mid-table, with the lower-index rows that beat it on terminal work; a same-harness Grok 4.6 to Grok 4.7 table showing the point gain bought with tokens at unchanged list prices; the Intelligence Index rank, frontier position, one-point neighbors, and xhigh-versus-high trade; and an explicit separation of the two per-task costs.",
+    overlapDecision:
+      "Keep separately: no current route places a model on both charts at once, splits a coding-agent AA Index into its components, or compares two generations of one model in one harness, and fewer than a third of its headings or claims overlap the MiMo or AA Index pages.",
+    primaryEvidence:
+      "The checked coding-agent snapshot owns every AA Index, component score, cost, token, and duration value and the update log; the checked Intelligence Index snapshot owns every Intelligence Index score, cost per task, and output token value; Artificial Analysis’s launch note and model page own the quoted launch-day claims, prices, speed, and context window; xAI’s launch page owns the vendor description, prices, availability, and vendor-run table.",
+    primarySourceIds: [
+      "artificialAnalysisCodingAgents",
+      "artificialAnalysisIntelligenceIndex",
+      "artificialAnalysisGrok47",
+      "artificialAnalysisGrok47Model",
+      "xaiGrok47Announcement",
+    ],
+    readerJob:
+      "Understand where Grok 4.7 lands on the AI Charts coding-agent chart and Intelligence Index chart, what its AA Index, component scores, Intelligence Index, and two costs per task measure, how it compares with Grok 4.6 in the same harness, and where independent evidence stops and vendor claims begin.",
+    reassessOn: "2026-10-28",
+    reviewedBy: REVIEWED_BY,
+    reviewedOn: "2026-09-23",
+    scores: {
+      factualConfidence: 2,
+      hostFit: 2,
+      maintenanceValue: 2,
+      originalEvidence: 2,
+      readerUtility: 2,
+      voiceIntegrity: 2,
+    },
+    sourceCheckedOn: "2026-09-23",
+  },
   "mimo-v2-6-pro-cost-frontier": {
     canonicalOwner: blogArticlePath("mimo-v2-6-pro-cost-frontier"),
     decision: "keep",
