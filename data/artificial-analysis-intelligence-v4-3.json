@@ -27,6 +27,120 @@
   "records": [
     {
       "costUsdPerTask": {
+        "answer": 0.7047386768928764,
+        "cacheRead": 2.4242292976790343,
+        "cacheWrite": 1.0712258098804728,
+        "input": 3.5986917043747417,
+        "nonCacheInput": 0.10323659681523459,
+        "output": 2.383320315146325,
+        "reasoning": 1.6785816382534489,
+        "total": 5.982012019521066
+      },
+      "creator": {
+        "id": "f0aa413f-e8ae-4fcd-9c48-0e049f4f3128",
+        "name": "Anthropic",
+        "slug": "anthropic"
+      },
+      "detailsUrl": "https://artificialanalysis.ai/models/claude-opus-5-5",
+      "effort": {
+        "label": "max",
+        "level": 60,
+        "slug": "max"
+      },
+      "id": "2f3c4dc9-a450-4303-8697-0237257cf08f",
+      "intelligenceIndex": 57.6223698102963,
+      "name": "Claude Opus 5.5 (Adaptive Reasoning, Max Effort, Default Fallback)",
+      "outputTokensPerTask": {
+        "answer": 35236.93384464381,
+        "reasoning": 83929.08191267242,
+        "total": 119166.01575731623
+      },
+      "release": {
+        "name": "Claude Opus 5.5",
+        "slug": "claude-opus-5-5"
+      },
+      "releaseDate": "2026-09-22",
+      "shortName": "Claude Opus 5.5 (max with fallback)",
+      "slug": "claude-opus-5-5"
+    },
+    {
+      "costUsdPerTask": {
+        "answer": 0.5070532882283616,
+        "cacheRead": 1.369353232934504,
+        "cacheWrite": 0.6732878661712699,
+        "input": 2.145762274502332,
+        "nonCacheInput": 0.10312117539655766,
+        "output": 1.3133479013199578,
+        "reasoning": 0.8062946130915963,
+        "total": 3.459110175822289
+      },
+      "creator": {
+        "id": "f0aa413f-e8ae-4fcd-9c48-0e049f4f3128",
+        "name": "Anthropic",
+        "slug": "anthropic"
+      },
+      "detailsUrl": "https://artificialanalysis.ai/models/claude-opus-5-5-xhigh",
+      "effort": {
+        "label": "xhigh",
+        "level": 50,
+        "slug": "xhigh"
+      },
+      "id": "df5bf99d-d228-4715-b41b-19ca86118777",
+      "intelligenceIndex": 55.9873505840139,
+      "name": "Claude Opus 5.5 (Adaptive Reasoning, Xhigh Effort, Default Fallback)",
+      "outputTokensPerTask": {
+        "answer": 25352.66441141809,
+        "reasoning": 40314.73065457981,
+        "total": 65667.3950659979
+      },
+      "release": {
+        "name": "Claude Opus 5.5",
+        "slug": "claude-opus-5-5"
+      },
+      "releaseDate": "2026-09-17",
+      "shortName": "Claude Opus 5.5 (xhigh with fallback)",
+      "slug": "claude-opus-5-5-xhigh"
+    },
+    {
+      "costUsdPerTask": {
+        "answer": 0.346949435438196,
+        "cacheRead": 0.6041606983763739,
+        "cacheWrite": 0.40371220113345924,
+        "input": 1.110823541212022,
+        "nonCacheInput": 0.10295064170218898,
+        "output": 0.711681177559682,
+        "reasoning": 0.364731742121486,
+        "total": 1.822504718771704
+      },
+      "creator": {
+        "id": "f0aa413f-e8ae-4fcd-9c48-0e049f4f3128",
+        "name": "Anthropic",
+        "slug": "anthropic"
+      },
+      "detailsUrl": "https://artificialanalysis.ai/models/claude-opus-5-5-high",
+      "effort": {
+        "label": "high",
+        "level": 40,
+        "slug": "high"
+      },
+      "id": "f314eade-2232-44bf-a3ab-9b326bc67de6",
+      "intelligenceIndex": 53.5831959822067,
+      "name": "Claude Opus 5.5 (Adaptive Reasoning, High Effort, Default Fallback)",
+      "outputTokensPerTask": {
+        "answer": 17347.4717719098,
+        "reasoning": 18236.5871060743,
+        "total": 35584.058877984105
+      },
+      "release": {
+        "name": "Claude Opus 5.5",
+        "slug": "claude-opus-5-5"
+      },
+      "releaseDate": "2026-09-17",
+      "shortName": "Claude Opus 5.5 (high with fallback)",
+      "slug": "claude-opus-5-5-high"
+    },
+    {
+      "costUsdPerTask": {
         "answer": 1.543409456346096,
         "cacheRead": 1.603090760194992,
         "cacheWrite": 1.8646632226419768,
@@ -179,6 +293,44 @@
     },
     {
       "costUsdPerTask": {
+        "answer": 0.2809914980011208,
+        "cacheRead": 0.4095411957490367,
+        "cacheWrite": 0.30871413165482986,
+        "input": 0.8211036059888349,
+        "nonCacheInput": 0.10284827858496842,
+        "output": 0.5149057379088234,
+        "reasoning": 0.23391423990770263,
+        "total": 1.3360093438976588
+      },
+      "creator": {
+        "id": "f0aa413f-e8ae-4fcd-9c48-0e049f4f3128",
+        "name": "Anthropic",
+        "slug": "anthropic"
+      },
+      "detailsUrl": "https://artificialanalysis.ai/models/claude-opus-5-5-medium",
+      "effort": {
+        "label": "medium",
+        "level": 30,
+        "slug": "medium"
+      },
+      "id": "ea9e0da6-169f-43c6-92f5-730a10d6ff8d",
+      "intelligenceIndex": 51.2434931792768,
+      "name": "Claude Opus 5.5 (Adaptive Reasoning, Medium Effort, Default Fallback)",
+      "outputTokensPerTask": {
+        "answer": 14049.574900056037,
+        "reasoning": 11695.71199538513,
+        "total": 25745.286895441168
+      },
+      "release": {
+        "name": "Claude Opus 5.5",
+        "slug": "claude-opus-5-5"
+      },
+      "releaseDate": "2026-09-17",
+      "shortName": "Claude Opus 5.5 (medium with fallback)",
+      "slug": "claude-opus-5-5-medium"
+    },
+    {
+      "costUsdPerTask": {
         "answer": 0.971487616392725,
         "cacheRead": 0.7007398694325817,
         "cacheWrite": 1.0537792551877592,
@@ -252,82 +404,6 @@
       "releaseDate": "2026-09-03",
       "shortName": "GPT-6 Astra (high)",
       "slug": "gpt-6-astra-high"
-    },
-    {
-      "costUsdPerTask": {
-        "answer": 0.7429681228344376,
-        "cacheRead": 3.1554299546716544,
-        "cacheWrite": 0.7610058913787667,
-        "input": 4.045610010784609,
-        "nonCacheInput": 0.12917416473418766,
-        "output": 1.8127862262514098,
-        "reasoning": 1.069818103416972,
-        "total": 5.858396237036018
-      },
-      "creator": {
-        "id": "f0aa413f-e8ae-4fcd-9c48-0e049f4f3128",
-        "name": "Anthropic",
-        "slug": "anthropic"
-      },
-      "detailsUrl": "https://artificialanalysis.ai/models/claude-opus-5",
-      "effort": {
-        "label": "max",
-        "level": 60,
-        "slug": "max"
-      },
-      "id": "b8fc61f7-5e9a-49e6-8547-6ac56db24627",
-      "intelligenceIndex": 50.7771115797629,
-      "name": "Claude Opus 5 (Adaptive Reasoning, Max Effort)",
-      "outputTokensPerTask": {
-        "answer": 29718.724913377504,
-        "reasoning": 42792.72413667888,
-        "total": 72511.44905005638
-      },
-      "release": {
-        "name": "Claude Opus 5",
-        "slug": "claude-opus-5"
-      },
-      "releaseDate": "2026-07-24",
-      "shortName": "Claude Opus 5 (max)",
-      "slug": "claude-opus-5"
-    },
-    {
-      "costUsdPerTask": {
-        "answer": 0.6414994914610175,
-        "cacheRead": 2.575722571246833,
-        "cacheWrite": 0.6566555976216382,
-        "input": 3.361467828679532,
-        "nonCacheInput": 0.1290896598110611,
-        "output": 1.516375943967254,
-        "reasoning": 0.8748764525062369,
-        "total": 4.877843772646787
-      },
-      "creator": {
-        "id": "f0aa413f-e8ae-4fcd-9c48-0e049f4f3128",
-        "name": "Anthropic",
-        "slug": "anthropic"
-      },
-      "detailsUrl": "https://artificialanalysis.ai/models/claude-opus-5-xhigh",
-      "effort": {
-        "label": "xhigh",
-        "level": 50,
-        "slug": "xhigh"
-      },
-      "id": "1305c921-7aaa-4d6d-99b5-99b3acf15e19",
-      "intelligenceIndex": 49.6773552926939,
-      "name": "Claude Opus 5 (Adaptive Reasoning, Xhigh Effort)",
-      "outputTokensPerTask": {
-        "answer": 25659.979658440694,
-        "reasoning": 34995.05810024947,
-        "total": 60655.03775869017
-      },
-      "release": {
-        "name": "Claude Opus 5",
-        "slug": "claude-opus-5"
-      },
-      "releaseDate": "2026-07-24",
-      "shortName": "Claude Opus 5 (xhigh)",
-      "slug": "claude-opus-5-xhigh"
     },
     {
       "costUsdPerTask": {
@@ -407,44 +483,6 @@
     },
     {
       "costUsdPerTask": {
-        "answer": 0.5207852739923285,
-        "cacheRead": 1.8172430157813064,
-        "cacheWrite": 0.5111738636457864,
-        "input": 2.457285921808886,
-        "nonCacheInput": 0.12886904238179273,
-        "output": 1.155981085991586,
-        "reasoning": 0.6351958119992573,
-        "total": 3.6132670078004714
-      },
-      "creator": {
-        "id": "f0aa413f-e8ae-4fcd-9c48-0e049f4f3128",
-        "name": "Anthropic",
-        "slug": "anthropic"
-      },
-      "detailsUrl": "https://artificialanalysis.ai/models/claude-opus-5-high",
-      "effort": {
-        "label": "high",
-        "level": 40,
-        "slug": "high"
-      },
-      "id": "712be54a-77ae-41b2-9a58-21181479d6ee",
-      "intelligenceIndex": 48.1219182595908,
-      "name": "Claude Opus 5 (Adaptive Reasoning, High Effort)",
-      "outputTokensPerTask": {
-        "answer": 20831.41095969314,
-        "reasoning": 25407.832479970297,
-        "total": 46239.243439663434
-      },
-      "release": {
-        "name": "Claude Opus 5",
-        "slug": "claude-opus-5"
-      },
-      "releaseDate": "2026-07-24",
-      "shortName": "Claude Opus 5 (high)",
-      "slug": "claude-opus-5-high"
-    },
-    {
-      "costUsdPerTask": {
         "answer": 0.11081547153342473,
         "cacheRead": 0.8431508870964701,
         "cacheWrite": 0.4834073208577061,
@@ -483,41 +521,41 @@
     },
     {
       "costUsdPerTask": {
-        "answer": 0.24057858442368782,
-        "cacheRead": 0.9898341191978236,
-        "cacheWrite": 0.3263658655823049,
-        "input": 1.402267896152844,
-        "nonCacheInput": 0.08606791137271577,
-        "output": 0.5861874847009061,
-        "reasoning": 0.34560890027721825,
-        "total": 1.98845538085375
+        "answer": 0.10214117618168614,
+        "cacheRead": 0.5152461786380224,
+        "cacheWrite": 0.18601645626303118,
+        "input": 0.7440472041058913,
+        "nonCacheInput": 0.04278456920483766,
+        "output": 0.3123768853017475,
+        "reasoning": 0.21023570912006137,
+        "total": 1.0564240894076389
       },
       "creator": {
         "id": "e67e56e3-15cd-43db-b679-da4660a69f41",
         "name": "OpenAI",
         "slug": "openai"
       },
-      "detailsUrl": "https://artificialanalysis.ai/models/gpt-5-6-sol",
+      "detailsUrl": "https://artificialanalysis.ai/models/gpt-6-sol",
       "effort": {
         "label": "max",
         "level": 60,
         "slug": "max"
       },
-      "id": "d93edfe8-bf35-49ad-b56e-b18116142a1c",
-      "intelligenceIndex": 46.9727068915036,
-      "name": "GPT-5.6 Sol (max)",
+      "id": "c50ea08c-88c0-4eb7-85b8-27f2bbf6d527",
+      "intelligenceIndex": 47.5276426437724,
+      "name": "GPT-6 Sol (max)",
       "outputTokensPerTask": {
-        "answer": 12028.929221184391,
-        "reasoning": 17280.445013860917,
-        "total": 29309.37423504531
+        "answer": 10214.117618168617,
+        "reasoning": 21023.570912006136,
+        "total": 31237.688530174753
       },
       "release": {
-        "name": "GPT-5.6 Sol",
-        "slug": "gpt-5-6-sol"
+        "name": "GPT-6 Sol",
+        "slug": "gpt-6-sol"
       },
-      "releaseDate": "2026-07-09",
-      "shortName": "GPT-5.6 Sol (max)",
-      "slug": "gpt-5-6-sol"
+      "releaseDate": "2026-09-22",
+      "shortName": "GPT-6 Sol (max)",
+      "slug": "gpt-6-sol"
     },
     {
       "costUsdPerTask": {
@@ -779,44 +817,6 @@
     },
     {
       "costUsdPerTask": {
-        "answer": 0.3527114886079339,
-        "cacheRead": 1.0087253194992214,
-        "cacheWrite": 0.32741517232887046,
-        "input": 1.4650453890215214,
-        "nonCacheInput": 0.12890489719342937,
-        "output": 0.7244339196323479,
-        "reasoning": 0.371722431024414,
-        "total": 2.1894793086538695
-      },
-      "creator": {
-        "id": "f0aa413f-e8ae-4fcd-9c48-0e049f4f3128",
-        "name": "Anthropic",
-        "slug": "anthropic"
-      },
-      "detailsUrl": "https://artificialanalysis.ai/models/claude-opus-5-medium",
-      "effort": {
-        "label": "medium",
-        "level": 30,
-        "slug": "medium"
-      },
-      "id": "ff51be8f-e362-4a7e-9043-687ba15de207",
-      "intelligenceIndex": 44.8253265420613,
-      "name": "Claude Opus 5 (Adaptive Reasoning, Medium Effort)",
-      "outputTokensPerTask": {
-        "answer": 14108.459544317355,
-        "reasoning": 14868.897240976565,
-        "total": 28977.35678529392
-      },
-      "release": {
-        "name": "Claude Opus 5",
-        "slug": "claude-opus-5"
-      },
-      "releaseDate": "2026-07-24",
-      "shortName": "Claude Opus 5 (medium)",
-      "slug": "claude-opus-5-medium"
-    },
-    {
-      "costUsdPerTask": {
         "answer": 0.09855160894218057,
         "cacheRead": 1.5218481062416964,
         "cacheWrite": 0.1573738205431785,
@@ -931,41 +931,41 @@
     },
     {
       "costUsdPerTask": {
-        "answer": 0.1890079202049226,
-        "cacheRead": 0.4548901148928282,
-        "cacheWrite": 0.25520261203072625,
-        "input": 0.7928364848325662,
-        "nonCacheInput": 0.08274375790901188,
-        "output": 0.3915264533581611,
-        "reasoning": 0.20251853315323862,
-        "total": 1.1843629381907275
+        "answer": 0.06712957962181508,
+        "cacheRead": 0.2207183195991877,
+        "cacheWrite": 0.10828549411653818,
+        "input": 0.3717684311021912,
+        "nonCacheInput": 0.042764617386465274,
+        "output": 0.16012783813682321,
+        "reasoning": 0.0929982585150081,
+        "total": 0.5318962692390143
       },
       "creator": {
         "id": "e67e56e3-15cd-43db-b679-da4660a69f41",
         "name": "OpenAI",
         "slug": "openai"
       },
-      "detailsUrl": "https://artificialanalysis.ai/models/gpt-5-6-sol-xhigh",
+      "detailsUrl": "https://artificialanalysis.ai/models/gpt-6-sol-xhigh",
       "effort": {
         "label": "xhigh",
         "level": 50,
         "slug": "xhigh"
       },
-      "id": "d998db47-9b67-4727-a2bb-2e1261020ac0",
-      "intelligenceIndex": 44.008876369169,
-      "name": "GPT-5.6 Sol (xhigh)",
+      "id": "da2642fe-9f73-4788-b5af-24edcd55b37e",
+      "intelligenceIndex": 44.1009705516407,
+      "name": "GPT-6 Sol (xhigh)",
       "outputTokensPerTask": {
-        "answer": 9450.396010246131,
-        "reasoning": 10125.92665766193,
-        "total": 19576.32266790806
+        "answer": 6712.95796218151,
+        "reasoning": 9299.825851500813,
+        "total": 16012.783813682323
       },
       "release": {
-        "name": "GPT-5.6 Sol",
-        "slug": "gpt-5-6-sol"
+        "name": "GPT-6 Sol",
+        "slug": "gpt-6-sol"
       },
-      "releaseDate": "2026-07-09",
-      "shortName": "GPT-5.6 Sol (xhigh)",
-      "slug": "gpt-5-6-sol-xhigh"
+      "releaseDate": "2026-09-22",
+      "shortName": "GPT-6 Sol (xhigh)",
+      "slug": "gpt-6-sol-xhigh"
     },
     {
       "costUsdPerTask": {
@@ -1079,41 +1079,79 @@
     },
     {
       "costUsdPerTask": {
-        "answer": 0.1474930512709453,
-        "cacheRead": 0.27762926202719224,
-        "cacheWrite": 0.18375755857473625,
-        "input": 0.5429831976574473,
-        "nonCacheInput": 0.08159637705551878,
-        "output": 0.2649994924770508,
-        "reasoning": 0.11750644120610544,
-        "total": 0.807982690134498
+        "answer": 0.05243879033068356,
+        "cacheRead": 0.15190366068981917,
+        "cacheWrite": 0.07766363175645888,
+        "input": 0.27230827649941,
+        "nonCacheInput": 0.04274098405313194,
+        "output": 0.10232441421541026,
+        "reasoning": 0.049885623884726685,
+        "total": 0.3746326907148203
       },
       "creator": {
         "id": "e67e56e3-15cd-43db-b679-da4660a69f41",
         "name": "OpenAI",
         "slug": "openai"
       },
-      "detailsUrl": "https://artificialanalysis.ai/models/gpt-5-6-sol-high",
+      "detailsUrl": "https://artificialanalysis.ai/models/gpt-6-sol-high",
       "effort": {
         "label": "high",
         "level": 40,
         "slug": "high"
       },
-      "id": "8afc250d-b538-45a2-812a-4605f4ffd87e",
-      "intelligenceIndex": 42.3461010420519,
-      "name": "GPT-5.6 Sol (high)",
+      "id": "52eebe3e-6ede-4e46-92db-c5dea49fc410",
+      "intelligenceIndex": 42.8215513642985,
+      "name": "GPT-6 Sol (high)",
       "outputTokensPerTask": {
-        "answer": 7374.652563547264,
-        "reasoning": 5875.322060305272,
-        "total": 13249.974623852537
+        "answer": 5243.879033068356,
+        "reasoning": 4988.562388472668,
+        "total": 10232.441421541025
       },
       "release": {
-        "name": "GPT-5.6 Sol",
-        "slug": "gpt-5-6-sol"
+        "name": "GPT-6 Sol",
+        "slug": "gpt-6-sol"
       },
-      "releaseDate": "2026-07-09",
-      "shortName": "GPT-5.6 Sol (high)",
-      "slug": "gpt-5-6-sol-high"
+      "releaseDate": "2026-09-22",
+      "shortName": "GPT-6 Sol (high)",
+      "slug": "gpt-6-sol-high"
+    },
+    {
+      "costUsdPerTask": {
+        "answer": 0.1355049803781217,
+        "cacheRead": 0.1199490288638381,
+        "cacheWrite": 0.12557237215649053,
+        "input": 0.34815494839667943,
+        "nonCacheInput": 0.10263354737635083,
+        "output": 0.2030255255124665,
+        "reasoning": 0.06752054513434476,
+        "total": 0.551180473909146
+      },
+      "creator": {
+        "id": "f0aa413f-e8ae-4fcd-9c48-0e049f4f3128",
+        "name": "Anthropic",
+        "slug": "anthropic"
+      },
+      "detailsUrl": "https://artificialanalysis.ai/models/claude-opus-5-5-low",
+      "effort": {
+        "label": "low",
+        "level": 20,
+        "slug": "low"
+      },
+      "id": "4416ca93-fde6-4b7b-abbc-3a6be109cc3d",
+      "intelligenceIndex": 42.3077781466168,
+      "name": "Claude Opus 5.5 (Adaptive Reasoning, Low Effort, Default Fallback)",
+      "outputTokensPerTask": {
+        "answer": 6775.2490189060845,
+        "reasoning": 3376.0272567172387,
+        "total": 10151.276275623324
+      },
+      "release": {
+        "name": "Claude Opus 5.5",
+        "slug": "claude-opus-5-5"
+      },
+      "releaseDate": "2026-09-17",
+      "shortName": "Claude Opus 5.5 (low with fallback)",
+      "slug": "claude-opus-5-5-low"
     },
     {
       "costUsdPerTask": {
@@ -1299,6 +1337,44 @@
     },
     {
       "costUsdPerTask": {
+        "answer": 0.04123399325450569,
+        "cacheRead": 0.0885029907491722,
+        "cacheWrite": 0.05219185379800295,
+        "input": 0.18341830092173564,
+        "nonCacheInput": 0.04272345637456051,
+        "output": 0.06478379486490403,
+        "reasoning": 0.023549801610398356,
+        "total": 0.24820209578663968
+      },
+      "creator": {
+        "id": "e67e56e3-15cd-43db-b679-da4660a69f41",
+        "name": "OpenAI",
+        "slug": "openai"
+      },
+      "detailsUrl": "https://artificialanalysis.ai/models/gpt-6-sol-medium",
+      "effort": {
+        "label": "medium",
+        "level": 30,
+        "slug": "medium"
+      },
+      "id": "780a4a85-17ff-4175-a8dd-ebca4823e61b",
+      "intelligenceIndex": 39.7820971749522,
+      "name": "GPT-6 Sol (medium)",
+      "outputTokensPerTask": {
+        "answer": 4123.399325450569,
+        "reasoning": 2354.9801610398354,
+        "total": 6478.379486490405
+      },
+      "release": {
+        "name": "GPT-6 Sol",
+        "slug": "gpt-6-sol"
+      },
+      "releaseDate": "2026-09-22",
+      "shortName": "GPT-6 Sol (medium)",
+      "slug": "gpt-6-sol-medium"
+    },
+    {
+      "costUsdPerTask": {
         "answer": 0.09616115100599934,
         "cacheRead": 0.3012328521578915,
         "cacheWrite": 0.42142126451743733,
@@ -1372,82 +1448,6 @@
       "releaseDate": "2026-09-10",
       "shortName": "DeepSeek V4.1 Flash (max)",
       "slug": "deepseek-v4-1-flash"
-    },
-    {
-      "costUsdPerTask": {
-        "answer": 0.20310387857275466,
-        "cacheRead": 0.42549678019648396,
-        "cacheWrite": 0.17761585656159834,
-        "input": 0.7316021918097116,
-        "nonCacheInput": 0.1284895550516296,
-        "output": 0.36670013270472546,
-        "reasoning": 0.16359625413197068,
-        "total": 1.098302324514437
-      },
-      "creator": {
-        "id": "f0aa413f-e8ae-4fcd-9c48-0e049f4f3128",
-        "name": "Anthropic",
-        "slug": "anthropic"
-      },
-      "detailsUrl": "https://artificialanalysis.ai/models/claude-opus-5-low",
-      "effort": {
-        "label": "low",
-        "level": 20,
-        "slug": "low"
-      },
-      "id": "20928ba9-3a3f-415f-9519-b84ff64ecf34",
-      "intelligenceIndex": 39.3543357992936,
-      "name": "Claude Opus 5 (Adaptive Reasoning, Low Effort)",
-      "outputTokensPerTask": {
-        "answer": 8124.155142910187,
-        "reasoning": 6543.850165278829,
-        "total": 14668.005308189016
-      },
-      "release": {
-        "name": "Claude Opus 5",
-        "slug": "claude-opus-5"
-      },
-      "releaseDate": "2026-07-24",
-      "shortName": "Claude Opus 5 (low)",
-      "slug": "claude-opus-5-low"
-    },
-    {
-      "costUsdPerTask": {
-        "answer": 0.10423665957661074,
-        "cacheRead": 0.14820552113434882,
-        "cacheWrite": 0.11775034690806853,
-        "input": 0.34751197892645896,
-        "nonCacheInput": 0.08155611088404166,
-        "output": 0.15748065151183707,
-        "reasoning": 0.053243991935226324,
-        "total": 0.5049926304382959
-      },
-      "creator": {
-        "id": "e67e56e3-15cd-43db-b679-da4660a69f41",
-        "name": "OpenAI",
-        "slug": "openai"
-      },
-      "detailsUrl": "https://artificialanalysis.ai/models/gpt-5-6-sol-medium",
-      "effort": {
-        "label": "medium",
-        "level": 30,
-        "slug": "medium"
-      },
-      "id": "6f174934-5b7d-4333-86cb-f5ebf4a862e3",
-      "intelligenceIndex": 39.2363585889147,
-      "name": "GPT-5.6 Sol (medium)",
-      "outputTokensPerTask": {
-        "answer": 5211.832978830537,
-        "reasoning": 2662.1995967613157,
-        "total": 7874.032575591853
-      },
-      "release": {
-        "name": "GPT-5.6 Sol",
-        "slug": "gpt-5-6-sol"
-      },
-      "releaseDate": "2026-07-09",
-      "shortName": "GPT-5.6 Sol (medium)",
-      "slug": "gpt-5-6-sol-medium"
     },
     {
       "costUsdPerTask": {
@@ -1527,41 +1527,41 @@
     },
     {
       "costUsdPerTask": {
-        "answer": 0.01576360546799524,
-        "cacheRead": 0.09774468082447282,
-        "cacheWrite": 0.026430496259981964,
-        "input": 0.12881575370170473,
-        "nonCacheInput": 0.004640576617249952,
-        "output": 0.04948150782118623,
-        "reasoning": 0.03371790235319099,
-        "total": 0.17829726152289094
+        "answer": 0.005618384995119874,
+        "cacheRead": 0.028846687225027846,
+        "cacheWrite": 0.01183466829559067,
+        "input": 0.04282646798632586,
+        "nonCacheInput": 0.0021451124657073345,
+        "output": 0.02526851830068472,
+        "reasoning": 0.01965013330556484,
+        "total": 0.06809498628701058
       },
       "creator": {
         "id": "e67e56e3-15cd-43db-b679-da4660a69f41",
         "name": "OpenAI",
         "slug": "openai"
       },
-      "detailsUrl": "https://artificialanalysis.ai/models/gpt-5-6-luna",
+      "detailsUrl": "https://artificialanalysis.ai/models/gpt-6-luna",
       "effort": {
         "label": "max",
         "level": 60,
         "slug": "max"
       },
-      "id": "426d24c8-49ae-482a-b4a8-20f1c53f21c1",
-      "intelligenceIndex": 37.3244239690841,
-      "name": "GPT-5.6 Luna (max)",
+      "id": "6fb13851-40ce-4bda-ad3f-6b38e0c5daa7",
+      "intelligenceIndex": 37.2559686869738,
+      "name": "GPT-6 Luna (max)",
       "outputTokensPerTask": {
-        "answer": 13136.33788999603,
-        "reasoning": 28098.251960992493,
-        "total": 41234.58985098852
+        "answer": 11236.769990239749,
+        "reasoning": 39300.266611129686,
+        "total": 50537.03660136944
       },
       "release": {
-        "name": "GPT-5.6 Luna",
-        "slug": "gpt-5-6-luna"
+        "name": "GPT-6 Luna",
+        "slug": "gpt-6-luna"
       },
-      "releaseDate": "2026-07-09",
-      "shortName": "GPT-5.6 Luna (max)",
-      "slug": "gpt-5-6-luna"
+      "releaseDate": "2026-09-22",
+      "shortName": "GPT-6 Luna (max)",
+      "slug": "gpt-6-luna"
     },
     {
       "costUsdPerTask": {
@@ -1679,44 +1679,6 @@
     },
     {
       "costUsdPerTask": {
-        "answer": 0.010681559618688375,
-        "cacheRead": 0.037834157348881084,
-        "cacheWrite": 0.014966852888088147,
-        "input": 0.05699336768895161,
-        "nonCacheInput": 0.004192357451982362,
-        "output": 0.02834943844677641,
-        "reasoning": 0.01766787882808803,
-        "total": 0.085342806135728
-      },
-      "creator": {
-        "id": "e67e56e3-15cd-43db-b679-da4660a69f41",
-        "name": "OpenAI",
-        "slug": "openai"
-      },
-      "detailsUrl": "https://artificialanalysis.ai/models/gpt-5-6-luna-xhigh",
-      "effort": {
-        "label": "xhigh",
-        "level": 50,
-        "slug": "xhigh"
-      },
-      "id": "87110ff0-1f79-41b4-9976-eda250597317",
-      "intelligenceIndex": 34.555348822309,
-      "name": "GPT-5.6 Luna (xhigh)",
-      "outputTokensPerTask": {
-        "answer": 8901.299682240313,
-        "reasoning": 14723.232356740027,
-        "total": 23624.53203898034
-      },
-      "release": {
-        "name": "GPT-5.6 Luna",
-        "slug": "gpt-5-6-luna"
-      },
-      "releaseDate": "2026-07-09",
-      "shortName": "GPT-5.6 Luna (xhigh)",
-      "slug": "gpt-5-6-luna-xhigh"
-    },
-    {
-      "costUsdPerTask": {
         "answer": 0.21398113523242845,
         "cacheRead": 1.725491207000738,
         "cacheWrite": 0.4414985622800483,
@@ -1793,6 +1755,82 @@
     },
     {
       "costUsdPerTask": {
+        "answer": 0.026611294513005836,
+        "cacheRead": 0.029759481023433204,
+        "cacheWrite": 0.026190574963886746,
+        "input": 0.09866099321505509,
+        "nonCacheInput": 0.04271093722773511,
+        "output": 0.03357985767292598,
+        "reasoning": 0.006968563159920149,
+        "total": 0.13224085088798104
+      },
+      "creator": {
+        "id": "e67e56e3-15cd-43db-b679-da4660a69f41",
+        "name": "OpenAI",
+        "slug": "openai"
+      },
+      "detailsUrl": "https://artificialanalysis.ai/models/gpt-6-sol-low",
+      "effort": {
+        "label": "low",
+        "level": 20,
+        "slug": "low"
+      },
+      "id": "01459872-433a-4ab2-8e99-7083162172eb",
+      "intelligenceIndex": 33.9008505585733,
+      "name": "GPT-6 Sol (low)",
+      "outputTokensPerTask": {
+        "answer": 2661.129451300584,
+        "reasoning": 696.8563159920149,
+        "total": 3357.985767292599
+      },
+      "release": {
+        "name": "GPT-6 Sol",
+        "slug": "gpt-6-sol"
+      },
+      "releaseDate": "2026-09-22",
+      "shortName": "GPT-6 Sol (low)",
+      "slug": "gpt-6-sol-low"
+    },
+    {
+      "costUsdPerTask": {
+        "answer": 0.004267445303984145,
+        "cacheRead": 0.01859113867964833,
+        "cacheWrite": 0.00738029305758965,
+        "input": 0.02811443951000101,
+        "nonCacheInput": 0.00214300777276303,
+        "output": 0.013594332084450555,
+        "reasoning": 0.00932688678046641,
+        "total": 0.041708771594451556
+      },
+      "creator": {
+        "id": "e67e56e3-15cd-43db-b679-da4660a69f41",
+        "name": "OpenAI",
+        "slug": "openai"
+      },
+      "detailsUrl": "https://artificialanalysis.ai/models/gpt-6-luna-xhigh",
+      "effort": {
+        "label": "xhigh",
+        "level": 50,
+        "slug": "xhigh"
+      },
+      "id": "19813eb2-460a-475c-af65-810bb8660fec",
+      "intelligenceIndex": 33.8845820217785,
+      "name": "GPT-6 Luna (xhigh)",
+      "outputTokensPerTask": {
+        "answer": 8534.890607968291,
+        "reasoning": 18653.77356093282,
+        "total": 27188.66416890111
+      },
+      "release": {
+        "name": "GPT-6 Luna",
+        "slug": "gpt-6-luna"
+      },
+      "releaseDate": "2026-09-22",
+      "shortName": "GPT-6 Luna (xhigh)",
+      "slug": "gpt-6-luna-xhigh"
+    },
+    {
+      "costUsdPerTask": {
         "answer": 0.057259691355187124,
         "cacheRead": 0.18729555800601444,
         "cacheWrite": 0.4231391110871978,
@@ -1831,79 +1869,41 @@
     },
     {
       "costUsdPerTask": {
-        "answer": 0.06274323372891706,
-        "cacheRead": 0.03976239054446097,
-        "cacheWrite": 0.059905779123111194,
-        "input": 0.1811539787500265,
-        "nonCacheInput": 0.08148580908245436,
-        "output": 0.07948796545900477,
-        "reasoning": 0.016744731730087704,
-        "total": 0.2606419442090313
+        "answer": 0.003485419089522839,
+        "cacheRead": 0.010984775603930663,
+        "cacheWrite": 0.005607566217143253,
+        "input": 0.018734112924524163,
+        "nonCacheInput": 0.0021417711034502477,
+        "output": 0.009885535844834287,
+        "reasoning": 0.006400116755311448,
+        "total": 0.02861964876935845
       },
       "creator": {
         "id": "e67e56e3-15cd-43db-b679-da4660a69f41",
         "name": "OpenAI",
         "slug": "openai"
       },
-      "detailsUrl": "https://artificialanalysis.ai/models/gpt-5-6-sol-low",
-      "effort": {
-        "label": "low",
-        "level": 20,
-        "slug": "low"
-      },
-      "id": "0904b596-8932-43bd-9b21-324f128e1723",
-      "intelligenceIndex": 33.4731387646002,
-      "name": "GPT-5.6 Sol (low)",
-      "outputTokensPerTask": {
-        "answer": 3137.161686445854,
-        "reasoning": 837.2365865043852,
-        "total": 3974.398272950239
-      },
-      "release": {
-        "name": "GPT-5.6 Sol",
-        "slug": "gpt-5-6-sol"
-      },
-      "releaseDate": "2026-07-09",
-      "shortName": "GPT-5.6 Sol (low)",
-      "slug": "gpt-5-6-sol-low"
-    },
-    {
-      "costUsdPerTask": {
-        "answer": 0.007956789661529205,
-        "cacheRead": 0.014294814351833315,
-        "cacheWrite": 0.008741995640131497,
-        "input": 0.02734702904029932,
-        "nonCacheInput": 0.0043102190483345106,
-        "output": 0.01663452321162077,
-        "reasoning": 0.008677733550091568,
-        "total": 0.043981552251920096
-      },
-      "creator": {
-        "id": "e67e56e3-15cd-43db-b679-da4660a69f41",
-        "name": "OpenAI",
-        "slug": "openai"
-      },
-      "detailsUrl": "https://artificialanalysis.ai/models/gpt-5-6-luna-high",
+      "detailsUrl": "https://artificialanalysis.ai/models/gpt-6-luna-high",
       "effort": {
         "label": "high",
         "level": 40,
         "slug": "high"
       },
-      "id": "aa55297e-8fbf-4372-b4ab-9b068dc6396c",
-      "intelligenceIndex": 32.1196453501091,
-      "name": "GPT-5.6 Luna (high)",
+      "id": "7d1229bc-deea-4717-ba5b-f59a35d991e3",
+      "intelligenceIndex": 32.1482304150837,
+      "name": "GPT-6 Luna (high)",
       "outputTokensPerTask": {
-        "answer": 6630.658051274337,
-        "reasoning": 7231.444625076305,
-        "total": 13862.102676350642
+        "answer": 6970.838179045675,
+        "reasoning": 12800.233510622893,
+        "total": 19771.07168966857
       },
       "release": {
-        "name": "GPT-5.6 Luna",
-        "slug": "gpt-5-6-luna"
+        "name": "GPT-6 Luna",
+        "slug": "gpt-6-luna"
       },
-      "releaseDate": "2026-07-09",
-      "shortName": "GPT-5.6 Luna (high)",
-      "slug": "gpt-5-6-luna-high"
+      "releaseDate": "2026-09-22",
+      "shortName": "GPT-6 Luna (high)",
+      "slug": "gpt-6-luna-high"
     },
     {
       "costUsdPerTask": {
@@ -2017,6 +2017,44 @@
     },
     {
       "costUsdPerTask": {
+        "answer": 0.0025024875892811914,
+        "cacheRead": 0.005984276350126219,
+        "cacheWrite": 0.0035155641335052204,
+        "input": 0.011639959537478511,
+        "nonCacheInput": 0.0021401190538470733,
+        "output": 0.005613634656787373,
+        "reasoning": 0.003111147067506181,
+        "total": 0.01725359419426588
+      },
+      "creator": {
+        "id": "e67e56e3-15cd-43db-b679-da4660a69f41",
+        "name": "OpenAI",
+        "slug": "openai"
+      },
+      "detailsUrl": "https://artificialanalysis.ai/models/gpt-6-luna-medium",
+      "effort": {
+        "label": "medium",
+        "level": 30,
+        "slug": "medium"
+      },
+      "id": "36667da0-9222-4967-adbb-f7efa15ad213",
+      "intelligenceIndex": 29.4619523515762,
+      "name": "GPT-6 Luna (medium)",
+      "outputTokensPerTask": {
+        "answer": 5004.975178562384,
+        "reasoning": 6222.294135012362,
+        "total": 11227.269313574747
+      },
+      "release": {
+        "name": "GPT-6 Luna",
+        "slug": "gpt-6-luna"
+      },
+      "releaseDate": "2026-09-22",
+      "shortName": "GPT-6 Luna (medium)",
+      "slug": "gpt-6-luna-medium"
+    },
+    {
+      "costUsdPerTask": {
         "answer": 0.03164854660071267,
         "cacheRead": 0.3556943830256406,
         "cacheWrite": 0.08745531081964547,
@@ -2048,6 +2086,40 @@
       "releaseDate": "2026-06-01",
       "shortName": "MiniMax-M3",
       "slug": "minimax-m3"
+    },
+    {
+      "costUsdPerTask": {
+        "answer": 0.04912460193383308,
+        "cacheRead": 0.17822769561738294,
+        "cacheWrite": 0.06135617666304006,
+        "input": 0.2823204725637136,
+        "nonCacheInput": 0.04273660028329067,
+        "output": 0.04912460193383308,
+        "reasoning": 0,
+        "total": 0.33144507449754673
+      },
+      "creator": {
+        "id": "e67e56e3-15cd-43db-b679-da4660a69f41",
+        "name": "OpenAI",
+        "slug": "openai"
+      },
+      "detailsUrl": "https://artificialanalysis.ai/models/gpt-6-sol-non-reasoning",
+      "effort": null,
+      "id": "d3e20e76-9e1a-45b6-b809-ad6aa37430cf",
+      "intelligenceIndex": 28.0921663410513,
+      "name": "GPT-6 Sol (Non-reasoning)",
+      "outputTokensPerTask": {
+        "answer": 4912.460193383309,
+        "reasoning": 0,
+        "total": 4912.460193383309
+      },
+      "release": {
+        "name": "GPT-6 Sol",
+        "slug": "gpt-6-sol"
+      },
+      "releaseDate": "2026-09-22",
+      "shortName": "GPT-6 Sol (Non-reasoning)",
+      "slug": "gpt-6-sol-non-reasoning"
     },
     {
       "costUsdPerTask": {
@@ -2411,44 +2483,6 @@
     },
     {
       "costUsdPerTask": {
-        "answer": 0.0035246516842023803,
-        "cacheRead": 0.0026256678843229173,
-        "cacheWrite": 0.003250269915819403,
-        "input": 0.010214462049439143,
-        "nonCacheInput": 0.004338524249296821,
-        "output": 0.0053835875603808715,
-        "reasoning": 0.0018589358761784895,
-        "total": 0.015598049609820011
-      },
-      "creator": {
-        "id": "e67e56e3-15cd-43db-b679-da4660a69f41",
-        "name": "OpenAI",
-        "slug": "openai"
-      },
-      "detailsUrl": "https://artificialanalysis.ai/models/gpt-5-6-luna-medium",
-      "effort": {
-        "label": "medium",
-        "level": 30,
-        "slug": "medium"
-      },
-      "id": "58b812bf-8498-46db-b834-f43ccc614b61",
-      "intelligenceIndex": 25.0358741440784,
-      "name": "GPT-5.6 Luna (medium)",
-      "outputTokensPerTask": {
-        "answer": 2937.209736835318,
-        "reasoning": 1549.1132301487414,
-        "total": 4486.322966984059
-      },
-      "release": {
-        "name": "GPT-5.6 Luna",
-        "slug": "gpt-5-6-luna"
-      },
-      "releaseDate": "2026-07-09",
-      "shortName": "GPT-5.6 Luna (medium)",
-      "slug": "gpt-5-6-luna-medium"
-    },
-    {
-      "costUsdPerTask": {
         "answer": 0.04559012774457057,
         "cacheRead": 0.371122547835551,
         "cacheWrite": 0.08095664630271783,
@@ -2525,14 +2559,14 @@
     },
     {
       "costUsdPerTask": {
-        "answer": 0.03195798823599364,
-        "cacheRead": 0.06764191580025615,
-        "cacheWrite": 0.43754600816565603,
-        "input": 0.5110581364742596,
+        "answer": 0.033289571079160044,
+        "cacheRead": 0.061020794139011625,
+        "cacheWrite": 0.4116437775451308,
+        "input": 0.4785347841924899,
         "nonCacheInput": 0.005870212508347456,
-        "output": 0.06807863210391353,
-        "reasoning": 0.03612064386791989,
-        "total": 0.5791367685781732
+        "output": 0.07091524177490993,
+        "reasoning": 0.03762567069574988,
+        "total": 0.5494500259673998
       },
       "creator": {
         "id": "0c303112-430d-4367-a484-51defaa2e166",
@@ -2597,41 +2631,41 @@
     },
     {
       "costUsdPerTask": {
-        "answer": 0.00234643069598986,
-        "cacheRead": 0.0008072532149511116,
-        "cacheWrite": 0.001699488418750139,
-        "input": 0.006810324749469599,
-        "nonCacheInput": 0.004303583115768349,
-        "output": 0.0030169250051863983,
-        "reasoning": 0.0006704943091965392,
-        "total": 0.009827249754655997
+        "answer": 0.0007694656246636993,
+        "cacheRead": 0.0004571391655762074,
+        "cacheWrite": 0.0008619915557026344,
+        "input": 0.003456871569768772,
+        "nonCacheInput": 0.0021377408484899306,
+        "output": 0.0010269376897702404,
+        "reasoning": 0.000257472065106541,
+        "total": 0.004483809259539013
       },
       "creator": {
         "id": "e67e56e3-15cd-43db-b679-da4660a69f41",
         "name": "OpenAI",
         "slug": "openai"
       },
-      "detailsUrl": "https://artificialanalysis.ai/models/gpt-5-6-luna-low",
+      "detailsUrl": "https://artificialanalysis.ai/models/gpt-6-luna-low",
       "effort": {
         "label": "low",
         "level": 20,
         "slug": "low"
       },
-      "id": "050c61cd-cddc-463a-a30a-a82aaa37be59",
-      "intelligenceIndex": 21.0124783424265,
-      "name": "GPT-5.6 Luna (low)",
+      "id": "bf9708d8-933d-44f6-affa-b696a7a650c9",
+      "intelligenceIndex": 20.9225480080866,
+      "name": "GPT-6 Luna (low)",
       "outputTokensPerTask": {
-        "answer": 1955.358913324883,
-        "reasoning": 558.7452576637828,
-        "total": 2514.104170988666
+        "answer": 1538.9312493273987,
+        "reasoning": 514.9441302130821,
+        "total": 2053.875379540481
       },
       "release": {
-        "name": "GPT-5.6 Luna",
-        "slug": "gpt-5-6-luna"
+        "name": "GPT-6 Luna",
+        "slug": "gpt-6-luna"
       },
-      "releaseDate": "2026-07-09",
-      "shortName": "GPT-5.6 Luna (low)",
-      "slug": "gpt-5-6-luna-low"
+      "releaseDate": "2026-09-22",
+      "shortName": "GPT-6 Luna (low)",
+      "slug": "gpt-6-luna-low"
     },
     {
       "costUsdPerTask": {
@@ -2768,6 +2802,40 @@
       "releaseDate": "2026-02-16",
       "shortName": "Qwen3.5 397B A17B",
       "slug": "qwen3-5-397b-a17b"
+    },
+    {
+      "costUsdPerTask": {
+        "answer": 0.001832567173613062,
+        "cacheRead": 0.004981969461348566,
+        "cacheWrite": 0.0021697846745384773,
+        "input": 0.009291929593088376,
+        "nonCacheInput": 0.0021401754572013326,
+        "output": 0.001832567173613062,
+        "reasoning": 0,
+        "total": 0.01112449676670144
+      },
+      "creator": {
+        "id": "e67e56e3-15cd-43db-b679-da4660a69f41",
+        "name": "OpenAI",
+        "slug": "openai"
+      },
+      "detailsUrl": "https://artificialanalysis.ai/models/gpt-6-luna-non-reasoning",
+      "effort": null,
+      "id": "63cb48ea-0b0c-4e07-8ded-6d28dec4fa28",
+      "intelligenceIndex": 18.2617465935701,
+      "name": "GPT-6 Luna (Non-reasoning)",
+      "outputTokensPerTask": {
+        "answer": 3665.1343472261233,
+        "reasoning": 0,
+        "total": 3665.1343472261233
+      },
+      "release": {
+        "name": "GPT-6 Luna",
+        "slug": "gpt-6-luna"
+      },
+      "releaseDate": "2026-09-22",
+      "shortName": "GPT-6 Luna (Non-reasoning)",
+      "slug": "gpt-6-luna-non-reasoning"
     },
     {
       "costUsdPerTask": {
@@ -2949,40 +3017,6 @@
     },
     {
       "costUsdPerTask": {
-        "answer": 0.002432971420064113,
-        "cacheRead": 0.0013225316336537422,
-        "cacheWrite": 0.0020332654698000056,
-        "input": 0.007658850390116149,
-        "nonCacheInput": 0.004303053286662401,
-        "output": 0.002432971420064113,
-        "reasoning": 0,
-        "total": 0.010091821810180262
-      },
-      "creator": {
-        "id": "e67e56e3-15cd-43db-b679-da4660a69f41",
-        "name": "OpenAI",
-        "slug": "openai"
-      },
-      "detailsUrl": "https://artificialanalysis.ai/models/gpt-5-6-luna-non-reasoning",
-      "effort": null,
-      "id": "dc64f856-3ded-497d-9527-d41d31267ed5",
-      "intelligenceIndex": 15.5270002110259,
-      "name": "GPT-5.6 Luna (Non-reasoning)",
-      "outputTokensPerTask": {
-        "answer": 2027.4761833867608,
-        "reasoning": 0,
-        "total": 2027.4761833867608
-      },
-      "release": {
-        "name": "GPT-5.6 Luna",
-        "slug": "gpt-5-6-luna"
-      },
-      "releaseDate": "2026-07-09",
-      "shortName": "GPT-5.6 Luna (Non-reasoning)",
-      "slug": "gpt-5-6-luna-non-reasoning"
-    },
-    {
-      "costUsdPerTask": {
         "answer": 0.09049329237803294,
         "cacheRead": 0.12533339167458266,
         "cacheWrite": 0.0997893922244269,
@@ -3046,14 +3080,14 @@
     },
     {
       "costUsdPerTask": {
-        "answer": 0.003963755366554841,
-        "cacheRead": 0,
-        "cacheWrite": 0.08513059681461324,
-        "input": 0.08573949660515129,
-        "nonCacheInput": 0.0006088997905380644,
-        "output": 0.007359687570818874,
-        "reasoning": 0.003395932204264034,
-        "total": 0.09309918417597017
+        "answer": 0.0043601309032103245,
+        "cacheRead": 0.02452345028658335,
+        "cacheWrite": 0.0649861992158321,
+        "input": 0.09022003259137652,
+        "nonCacheInput": 0.0007103830889610751,
+        "output": 0.008095656327900762,
+        "reasoning": 0.0037355254246904377,
+        "total": 0.09831568891927728
       },
       "creator": {
         "id": "0c303112-430d-4367-a484-51defaa2e166",
@@ -3381,14 +3415,14 @@
     },
     {
       "costUsdPerTask": {
-        "answer": 0.0003801282405567702,
+        "answer": 0.0003601214910537822,
         "cacheRead": 0,
-        "cacheWrite": 0.007377755858001817,
-        "input": 0.007886619392112458,
-        "nonCacheInput": 0.0005088635341106404,
-        "output": 0.0034406723005321617,
-        "reasoning": 0.003060544059975391,
-        "total": 0.011327291692644618
+        "cacheWrite": 0.008607381834335454,
+        "input": 0.009201055957464534,
+        "nonCacheInput": 0.0005936741231290805,
+        "output": 0.0032595842847146787,
+        "reasoning": 0.0028994627936608968,
+        "total": 0.012460640242179213
       },
       "creator": {
         "id": "e67e56e3-15cd-43db-b679-da4660a69f41",
@@ -3640,17 +3674,17 @@
   ],
   "schemaVersion": 1,
   "selection": {
-    "measuredCompleteRecordCount": 100,
-    "positiveCostRecordCount": 96,
+    "measuredCompleteRecordCount": 101,
+    "positiveCostRecordCount": 97,
     "rule": "current, non-estimated model configurations with a finite 0–100 Intelligence Index, finite positive per-task output-token total, and a complete finite nonnegative per-task cost breakdown; source cost totals at or below zero normalize to null",
-    "sourceRecordCount": 656
+    "sourceRecordCount": 673
   },
   "source": {
     "citation": "Artificial Analysis (2025). LLM benchmarks dataset. https://artificialanalysis.ai",
     "method": "public-next-flight",
     "methodologyUrl": "https://artificialanalysis.ai/methodology/intelligence-benchmarking",
     "name": "Artificial Analysis",
-    "retrievedAt": "2026-09-22T14:26:36.105Z",
+    "retrievedAt": "2026-09-23T03:44:35.255Z",
     "sourceClass": "benchmark-publisher",
     "termsUrl": "https://artificialanalysis.ai/docs/legal/Terms-of-Use.pdf",
     "url": "https://artificialanalysis.ai/models"

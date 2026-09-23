@@ -13,7 +13,7 @@ export type FirstPartyReleaseProviderId = (typeof PROVIDER_IDS)[number];
 type SourceContract = Readonly<{
   allowRelativeUrls: boolean;
   canonicalHost: string;
-  datePolicy: "all" | "candidates" | "ignore";
+  datePolicy: "all" | "candidates" | "ignore" | "optional";
   format:
     | "html-cognition-blog-index"
     | "html-deepseek-updates"
@@ -41,7 +41,7 @@ type SourceContract = Readonly<{
  */
 export const FIRST_PARTY_RELEASE_SOURCE_DEFINITIONS = [
   {
-    allowRelativeUrls: false, canonicalHost: "www.anthropic.com", datePolicy: "all",
+    allowRelativeUrls: false, canonicalHost: "www.anthropic.com", datePolicy: "optional",
     format: "sitemap-urlset", id: "anthropic-sitemap", minimumCandidateCount: 2,
     minimumEntryCount: 100, providerId: "anthropic", providerName: "Anthropic",
     url: "https://www.anthropic.com/sitemap.xml",
