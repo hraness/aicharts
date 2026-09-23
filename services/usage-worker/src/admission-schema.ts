@@ -1,5 +1,17 @@
 // Exact SQL is the migration manifest, not an auto-repair recipe. Preserve the
-// prior enrollment table verbatim and create these six tables atomically.
+// prior enrollment table verbatim and create these seven tables atomically.
+// The legacy control definition is retained verbatim only so existing stores
+// can be detected and rebuilt by AdmissionState.migrateCapacity.
+export const LEGACY_ADMISSION_CONTROL_SQL = `CREATE TABLE usage_admission_control (
+  id INTEGER PRIMARY KEY CHECK (id = 1),
+  policy_version INTEGER NOT NULL CHECK (policy_version = 1),
+  published_revision INTEGER NOT NULL CHECK (published_revision BETWEEN 0 AND 4096),
+  committed_at_ms INTEGER NOT NULL CHECK (committed_at_ms BETWEEN 0 AND 8640000000000000),
+  observed_at_ms INTEGER NOT NULL CHECK (observed_at_ms BETWEEN committed_at_ms AND 8640000000000000),
+  head_count INTEGER NOT NULL CHECK (head_count BETWEEN 0 AND 100000),
+  live_count INTEGER NOT NULL CHECK (live_count BETWEEN 0 AND head_count),
+  quarantined INTEGER NOT NULL CHECK (quarantined IN (0, 1))
+)`;
 export const ADMISSION_SCHEMA = Object.freeze({
   usage_admission_control: `CREATE TABLE usage_admission_control (
   id INTEGER PRIMARY KEY CHECK (id = 1),
@@ -7,7 +19,7 @@ export const ADMISSION_SCHEMA = Object.freeze({
   published_revision INTEGER NOT NULL CHECK (published_revision BETWEEN 0 AND 4096),
   committed_at_ms INTEGER NOT NULL CHECK (committed_at_ms BETWEEN 0 AND 8640000000000000),
   observed_at_ms INTEGER NOT NULL CHECK (observed_at_ms BETWEEN committed_at_ms AND 8640000000000000),
-  head_count INTEGER NOT NULL CHECK (head_count BETWEEN 0 AND 100000),
+  head_count INTEGER NOT NULL CHECK (head_count BETWEEN 0 AND 1000000),
   live_count INTEGER NOT NULL CHECK (live_count BETWEEN 0 AND head_count),
   quarantined INTEGER NOT NULL CHECK (quarantined IN (0, 1))
 )`,
@@ -45,4 +57,13 @@ export const ADMISSION_SCHEMA = Object.freeze({
   journal BLOB NOT NULL CHECK (typeof(journal) = 'blob' AND length(journal) BETWEEN 424 AND 67744),
   committed_at_ms INTEGER NOT NULL CHECK (committed_at_ms BETWEEN 0 AND 8640000000000000)
 ) WITHOUT ROWID`,
+  // Verified-history high-water mark. The restart audit re-verifies only rows
+  // newer than the checkpoint, so audit cost stays proportional to new work
+  // rather than the whole retained account history. Deleting the row forces
+  // the next mutation to re-verify everything from revision zero.
+  usage_admission_audit: `CREATE TABLE usage_admission_audit (
+  id INTEGER PRIMARY KEY CHECK (id = 1),
+  revision INTEGER NOT NULL CHECK (revision BETWEEN 0 AND 4096),
+  committed_at_ms INTEGER NOT NULL CHECK (committed_at_ms BETWEEN 0 AND 8640000000000000)
+)`,
 });

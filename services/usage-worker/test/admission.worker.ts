@@ -5,7 +5,7 @@ import { decodeAdmissionBatch, decodeAdmissionJournal, encodeAdmissionBatch, enc
 import { DAY_MS, encodeUsageBatch } from "../../../lib/usage/wire";
 import { ADMISSION_POLICY_V1, decideAdmission, freezeAdmission, type AdmissionHead } from "../src/admission-policy";
 import { AdmissionState, admissionIdBytes } from "../src/admission-state";
-import { ADMISSION_SCHEMA } from "../src/admission-schema";
+import { ADMISSION_SCHEMA, LEGACY_ADMISSION_CONTROL_SQL } from "../src/admission-schema";
 import { enrollmentAccountName, type EnrollmentProof } from "../src/enrollment-contract";
 import { namespaceAnchorKey } from "../src/namespace-anchor";
 import { PAIRING_TTL_MS, uploadSecretCommitment } from "../src/pairing";
@@ -164,7 +164,10 @@ describe("dormant account admission", () => {
   test("a missing immutable revision fails the restart audit without repair", async () => {
     const device = await enroll(), value = batch(device);
     success(await upload(device, value));
-    await runInDurableObject(stub(), (_instance, state) => state.storage.sql.exec("DELETE FROM usage_admission_journal WHERE revision = 1").toArray());
+    await runInDurableObject(stub(), (_instance, state) => {
+      state.storage.sql.exec("DELETE FROM usage_admission_journal WHERE revision = 1").toArray();
+      state.storage.sql.exec("DELETE FROM usage_admission_audit").toArray();
+    });
     await abortAllDurableObjects();
     expect(await upload(device, value)).toEqual({ ok: false, error: "storage_invalid" });
   });
@@ -499,6 +502,7 @@ describe("dormant account admission", () => {
         state.storage.sql.exec("UPDATE usage_admission_control SET live_count = live_count - 1");
         state.storage.sql.exec("UPDATE usage_admission_days SET live_count = live_count - 1 WHERE utc_day = ?", DAY);
       }
+      state.storage.sql.exec("DELETE FROM usage_admission_audit").toArray();
     });
     const before = await snapshot(); await abortAllDurableObjects();
     expect(await upload(first, next)).toEqual({ ok: false, error: "storage_invalid" }); expect(await snapshot()).toEqual(before);
@@ -755,22 +759,55 @@ describe("dormant account admission", () => {
     const excessDay = batch(device, seeded + 2, [{ id: seeded + 2 }]);
     expect(await upload(device, excessDay)).toEqual({ ok: false, error: "limit" });
     const lastSubject = batch(device, seeded + 2, [{ id: seeded + 2, day: DAY - 1 }]);
-    const latest = success(await upload(device, lastSubject)); // Exactly 100,000 identities.
-    expect(await upload(device, batch(device, seeded + 3, [{ id: seeded + 3, day: DAY - 1 }]))).toEqual({ ok: false, error: "limit" });
+    success(await upload(device, lastSubject)); // 100,000 identities: the retired ceiling.
+    const widened = batch(device, seeded + 3, [{ id: seeded + 3, day: DAY - 1 }]);
+    const latest = success(await upload(device, widened)); // The widened ceiling admits it.
     await abortAllDurableObjects();
-    // The rehydrated object pays the real 100,000-head history audit before
-    // this mutation may commit; only reads are served without it.
-    expect(success(await upload(device, lastSubject))).toEqual(latest);
-    const removal = batch(device, seeded + 3, [{ id: seeded + 1, expected: lastSlot.operations[0].operationHash, tombstone: true }]);
+    // The rehydrated object pays the checkpointed delta audit before this
+    // mutation may commit; only reads are served without it.
+    expect(success(await upload(device, widened))).toEqual(latest);
+    const removal = batch(device, seeded + 4, [{ id: seeded + 1, expected: lastSlot.operations[0].operationHash, tombstone: true }]);
     success(await upload(device, removal));
-    expect(await upload(device, batch(device, seeded + 4, [{ id: seeded + 3 }]))).toEqual({ ok: false, error: "limit" }); // Tombstone never releases identity.
-    const move = batch(device, seeded + 4, [{ id: seeded + 2, expected: lastSubject.operations[0].operationHash }]);
-    success(await upload(device, move)); // Net day move fits after tombstone.
+    const move = batch(device, seeded + 5, [{ id: seeded + 2, expected: lastSubject.operations[0].operationHash }]);
+    success(await upload(device, move)); // Net day move still fits after tombstone.
     await runInDurableObject(stub(), (_instance, state) => {
-      expect(state.storage.sql.exec("SELECT head_count, live_count FROM usage_admission_control").one()).toEqual({ head_count: 100_000, live_count: 99_999 });
+      expect(state.storage.sql.exec("SELECT head_count, live_count FROM usage_admission_control").one()).toEqual({ head_count: 100_001, live_count: 100_000 });
       expect(state.storage.sql.exec("SELECT live_count FROM usage_admission_days WHERE utc_day = ?", DAY).one().live_count).toBe(65_536);
     });
   }, 60_000);
+
+  test("capacity migration rebuilds first-generation control bounds and seeds the audit checkpoint", async () => {
+    const device = await enroll(), value = batch(device); success(await upload(device, value));
+    await runInDurableObject(stub(), (_instance, state) => {
+      state.storage.sql.exec("ALTER TABLE usage_admission_control RENAME TO usage_admission_control_current").toArray();
+      state.storage.sql.exec(LEGACY_ADMISSION_CONTROL_SQL).toArray();
+      state.storage.sql.exec("INSERT INTO usage_admission_control SELECT * FROM usage_admission_control_current").toArray();
+      state.storage.sql.exec("DROP TABLE usage_admission_control_current").toArray();
+      state.storage.sql.exec("DROP TABLE usage_admission_audit").toArray();
+    });
+    await abortAllDurableObjects();
+    const migrated = await runInDurableObject(stub(), (_instance, state) => ({
+      controlSql: state.storage.sql.exec("SELECT sql FROM sqlite_schema WHERE name = 'usage_admission_control'").one().sql,
+      checkpoint: state.storage.sql.exec("SELECT * FROM usage_admission_audit").one(),
+    }));
+    expect(migrated.controlSql).toEqual(ADMISSION_SCHEMA.usage_admission_control);
+    expect(migrated.checkpoint).toMatchObject({ revision: 1 });
+    success(await upload(device, value));
+  });
+
+  test("the verified-history checkpoint advances only across audited cold starts", async () => {
+    const device = await enroll();
+    const checkpoint = async () => (await runInDurableObject(stub(), (_instance, state) =>
+      state.storage.sql.exec("SELECT revision FROM usage_admission_audit").one())).revision;
+    success(await upload(device, batch(device, 1, [{ id: 1 }])));
+    expect(await checkpoint()).toBe(0);
+    await abortAllDurableObjects();
+    success(await upload(device, batch(device, 2, [{ id: 2 }])));
+    expect(await checkpoint()).toBe(1);
+    await abortAllDurableObjects();
+    success(await upload(device, batch(device, 3, [{ id: 3 }])));
+    expect(await checkpoint()).toBe(2);
+  });
 
   test("4096 terminal revisions exhaust new custody but retain replay and self-revocation", async () => {
     const device = await enroll();

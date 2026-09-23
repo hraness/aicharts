@@ -5,7 +5,7 @@ import {
   ownedAdmissionBatch, ownedAdmissionJournal, ownedAdmissionOperation, requireAdmission, timestampsAtMost,
   type AdmissionHead, type AdmissionDecision,
 } from "./admission-policy";
-import { ADMISSION_SCHEMA } from "./admission-schema";
+import { ADMISSION_SCHEMA, LEGACY_ADMISSION_CONTROL_SQL } from "./admission-schema";
 import { parsePrivateDaysRequest, parsePrivateDaysValue, type PrivateDaysRequestV1, type PrivateDaysV1 } from "../../../lib/usage/private-days-contract";
 import { decodeUsageBatch, totalTokens } from "../../../lib/usage/wire";
 
@@ -41,7 +41,40 @@ export class AdmissionState {
   initialize(authority: AdmissionAuthority | null): void {
     for (const definition of Object.values(ADMISSION_SCHEMA)) this.sql.exec(definition);
     this.sql.exec("INSERT INTO usage_admission_control (id, policy_version, published_revision, committed_at_ms, observed_at_ms, head_count, live_count, quarantined) VALUES (1, 1, 0, 0, ?, 0, 0, 0)", authority?.observedAtMs ?? 0);
+    this.sql.exec("INSERT INTO usage_admission_audit (id, revision, committed_at_ms) VALUES (1, 0, 0)");
     for (const device of authority?.devices ?? []) this.addDevice(device.deviceId);
+  }
+  /** One-time widening of the retained-head ceiling plus installation of the
+   * audit checkpoint on stores created under the first admission schema. The
+   * control row is rebuilt through a temporary rename so the surviving CREATE
+   * statement matches the manifest byte-for-byte. The seeded checkpoint trusts
+   * only history the previous schema's restart audit already verified, so the
+   * next cold audit scans just the delta. Idempotent; runs inside the owning
+   * object's schema transaction before the exact-schema check. */
+  migrateCapacity(): void {
+    const definitions = new Map(this.sql.exec("SELECT name, sql FROM sqlite_schema WHERE name IN ('usage_admission_control', 'usage_admission_audit') LIMIT 4")
+      .toArray().map(row => [String(row.name), row.sql]));
+    const controlSql = definitions.get("usage_admission_control");
+    if (controlSql === undefined) return;
+    requireAdmission(typeof controlSql === "string");
+    if (controlSql === LEGACY_ADMISSION_CONTROL_SQL) {
+      this.sql.exec("ALTER TABLE usage_admission_control RENAME TO usage_admission_control_retired");
+      try {
+        this.sql.exec(ADMISSION_SCHEMA.usage_admission_control);
+        this.sql.exec("INSERT INTO usage_admission_control SELECT * FROM usage_admission_control_retired");
+        this.sql.exec("DROP TABLE usage_admission_control_retired");
+      } catch (error) {
+        this.sql.exec("ALTER TABLE usage_admission_control_retired RENAME TO usage_admission_control");
+        throw error;
+      }
+    } else requireAdmission(controlSql === ADMISSION_SCHEMA.usage_admission_control);
+    if (definitions.has("usage_admission_audit")) {
+      requireAdmission(definitions.get("usage_admission_audit") === ADMISSION_SCHEMA.usage_admission_audit);
+      return;
+    }
+    this.sql.exec(ADMISSION_SCHEMA.usage_admission_audit);
+    const control = this.control();
+    this.sql.exec("INSERT INTO usage_admission_audit (id, revision, committed_at_ms) VALUES (1, ?, ?)", control.revision, control.committed);
   }
   addDevice(device: string): void {
     this.sql.exec("INSERT INTO usage_admission_devices (device_id, settled_sequence, last_batch, last_journal) VALUES (?, 0, NULL, NULL)", admissionIdBytes(device));
@@ -142,7 +175,7 @@ export class AdmissionState {
     const empty = () => ({ usageOccurrences: 0, accounted: 0n, output: 0n });
     const days = Array.from({ length: query.dayCount }, (_, index) => ({ utcDay: query.firstUtcDay + index, codex: empty(), claudeCode: empty(), devin: empty() }));
     let count = 0;
-    for (const row of this.sql.exec("SELECT occurrence_id, operation, journal_revision, utc_day FROM usage_admission_heads WHERE utc_day >= ? AND utc_day < ? ORDER BY occurrence_id LIMIT 100001",
+    for (const row of this.sql.exec(`SELECT occurrence_id, operation, journal_revision, utc_day FROM usage_admission_heads WHERE utc_day >= ? AND utc_day < ? ORDER BY occurrence_id LIMIT ${MAX_ADMISSION_HEADS + 1}`,
       query.firstUtcDay, query.firstUtcDay + query.dayCount)) {
       requireAdmission(++count <= MAX_ADMISSION_HEADS && count <= control.live);
       const head = this.#head(row, authority, control);
@@ -230,9 +263,10 @@ export class AdmissionState {
     return Uint8Array.from(journal.bytes);
   }
 
-  /** Full audit: the history scan, which begins with the control checks. */
+  /** Whole-history audit for direct callers and the from-zero recovery path;
+   * the checkpointed object-lifetime audit goes through auditHistory. */
   audit(authority: AdmissionAuthority | null): void {
-    this.auditHistory(authority);
+    this.#auditDelta(authority, { revision: 0, committedAtMs: 0 });
   }
 
   /** Constant-cost half of the audit. Validates the control row and its
@@ -244,17 +278,41 @@ export class AdmissionState {
     return control;
   }
 
-  /** Finite restart audit: stream heads, retain bounded metadata, no cross-product.
-   * Linear in the account's retained history, so the owner runs it once per
-   * object lifetime before the first mutation rather than on every rehydration. */
+  #auditCheckpoint(): { revision: number; committedAtMs: number } {
+    const present = this.sql.exec("SELECT name FROM sqlite_schema WHERE type = 'table' AND name = 'usage_admission_audit' LIMIT 2").toArray();
+    requireAdmission(present.length <= 1);
+    if (present.length === 0) return { revision: 0, committedAtMs: 0 };
+    const rows = this.sql.exec("SELECT revision, committed_at_ms FROM usage_admission_audit LIMIT 2").toArray();
+    requireAdmission(rows.length <= 1);
+    if (rows.length === 0) return { revision: 0, committedAtMs: 0 };
+    const row = rows[0];
+    requireAdmission(integer(row.revision, 0, MAX_ADMISSION_REVISIONS) && integer(row.committed_at_ms, 0, MAX_ADMISSION_TIMESTAMP));
+    return { revision: row.revision, committedAtMs: row.committed_at_ms };
+  }
+  /** Finite restart audit: re-verify the journal extension and the heads last
+   * touched since the stored checkpoint, retaining bounded metadata and no
+   * cross-product. History at or below the checkpoint was verified (or
+   * migration-trusted) once; every later mutation carries a newer
+   * journal_revision, so delta coverage still reaches every subsequent write.
+   * An absent checkpoint row re-verifies from revision zero, which is also the
+   * operator recovery path for suspected deep corruption. Cost stays
+   * proportional to work committed since the last verified restart. */
   auditHistory(authority: AdmissionAuthority | null): void {
+    this.#auditDelta(authority, this.#auditCheckpoint());
     const control = this.auditControl(authority);
-    // Every committed revision must have exactly one immutable batch/receipt
-    // pair. Missing, duplicated, reordered, or rewritten rows fail closed;
-    // restore tooling can then consume this contiguous prefix under its own
-    // external fence without trusting the mutable head projection.
-    let journalRows = 0, previousJournalTime = 0;
-    for (const row of this.sql.exec("SELECT revision, batch, journal, committed_at_ms FROM usage_admission_journal ORDER BY revision LIMIT 4097")) {
+    this.sql.exec("INSERT INTO usage_admission_audit (id, revision, committed_at_ms) VALUES (1, ?, ?) ON CONFLICT(id) DO UPDATE SET revision = excluded.revision, committed_at_ms = excluded.committed_at_ms",
+      control.revision, control.committed);
+  }
+  #auditDelta(authority: AdmissionAuthority | null, checkpoint: { revision: number; committedAtMs: number }): void {
+    const control = this.auditControl(authority);
+    requireAdmission(checkpoint.revision <= control.revision && checkpoint.committedAtMs <= control.committed);
+    // Every committed revision must extend the verified prefix contiguously
+    // with exactly one immutable batch/receipt pair. Missing, duplicated,
+    // reordered, or rewritten rows fail closed; restore tooling can then
+    // consume this contiguous prefix under its own external fence without
+    // trusting the mutable head projection.
+    let journalRows = checkpoint.revision, previousJournalTime = checkpoint.committedAtMs;
+    for (const row of this.sql.exec(`SELECT revision, batch, journal, committed_at_ms FROM usage_admission_journal WHERE revision > ? ORDER BY revision LIMIT ${MAX_ADMISSION_REVISIONS + 1}`, checkpoint.revision)) {
       requireAdmission(++journalRows <= MAX_ADMISSION_REVISIONS && row.revision === journalRows
         && integer(row.committed_at_ms, 0, MAX_ADMISSION_TIMESTAMP) && row.committed_at_ms >= previousJournalTime);
       const batch = ownedAdmissionBatch(bytes(row.batch)), journal = ownedAdmissionJournal(bytes(row.journal), batch);
@@ -291,32 +349,50 @@ export class AdmissionState {
       && sequences >= control.revision && sequences <= 256 * control.revision);
     latestTimes.sort((left, right) => left.revision - right.revision);
     for (let index = 1; index < latestTimes.length; index += 1) requireAdmission(latestTimes[index].time >= latestTimes[index - 1].time);
-    const dayCounts = new Map<number, number>(), seenSequences = new Set<string>(), revisionOwners = new Map<number, string>();
-    let headCount = 0, liveCount = 0;
-    for (const row of this.sql.exec("SELECT * FROM usage_admission_heads LIMIT 100001")) {
-      requireAdmission(authority && ++headCount <= MAX_ADMISSION_HEADS);
+    const seenSequences = new Set<string>(), touchedDays = new Set<number>();
+    // Ordered delta scan plus a one-entry journal cache: memory stays bounded
+    // no matter how much history sits behind the checkpoint.
+    let createdRevision = 0, created: { batch: AdmissionBatch; journal: AdmissionJournal } | null = null;
+    for (const row of this.sql.exec(`SELECT * FROM usage_admission_heads WHERE journal_revision > ? ORDER BY journal_revision LIMIT ${MAX_ADMISSION_HEADS + 1}`, checkpoint.revision)) {
+      requireAdmission(authority);
       const head = this.#head(row, authority, control), deviceId = admissionHex(head.operation.deviceId), progress = devices.get(deviceId);
       requireAdmission(progress && head.operation.sequence <= progress.sequence && head.operation.sequence <= 256 * head.revision
         && head.revision <= progress.revision && (head.revision === progress.revision || head.operation.sequence < progress.first));
       const sequenceKey = `${deviceId}:${head.operation.sequence}`;
       requireAdmission(!seenSequences.has(sequenceKey)); seenSequences.add(sequenceKey);
-      const owner = revisionOwners.get(head.revision);
-      requireAdmission(owner === undefined || owner === deviceId); revisionOwners.set(head.revision, deviceId);
+      // Every head written after the checkpoint must carry an operation that
+      // is literally a member of that revision's committed batch under the
+      // same device; revision ownership is therefore exact, not first-seen.
+      if (createdRevision !== head.revision) {
+        const rows = this.sql.exec("SELECT batch, journal FROM usage_admission_journal WHERE revision = ? LIMIT 2", head.revision).toArray();
+        requireAdmission(rows.length === 1);
+        const batch = ownedAdmissionBatch(bytes(rows[0].batch));
+        created = { batch, journal: ownedAdmissionJournal(bytes(rows[0].journal), batch) };
+        createdRevision = head.revision;
+      }
+      requireAdmission(created !== null && admissionHex(created.batch.deviceId) === deviceId);
+      const index = created.batch.operations.findIndex(operation => equalAdmissionBytes(operation.occurrenceId, head.operation.occurrenceId));
+      requireAdmission(index >= 0 && equalAdmissionBytes(created.batch.operations[index].bytes, head.operation.bytes));
+      auditReceiptHead(head.operation, created.journal.receipts[index], head.revision, head);
       if (latestRevisions.has(head.revision)) {
         const creator = latestCreators.get(`${head.revision}:${admissionHex(head.operation.occurrenceId)}`);
         requireAdmission(creator && equalAdmissionBytes(creator, head.operation.bytes));
       }
-      if (head.day !== null) {
-        liveCount += 1; dayCounts.set(head.day, (dayCounts.get(head.day) ?? 0) + 1);
-      }
+      if (head.day !== null) touchedDays.add(head.day);
     }
-    requireAdmission(headCount === control.heads && liveCount === control.live);
-    let days = 0;
-    for (const row of this.sql.exec("SELECT utc_day, live_count FROM usage_admission_days LIMIT 100001")) {
-      requireAdmission(++days <= liveCount && integer(row.utc_day, 0, 100_000_000) && integer(row.live_count, 1, MAX_ADMISSION_DAY_HEADS)
-        && dayCounts.get(row.utc_day) === row.live_count);
+    const headRows = this.sql.exec("SELECT COUNT(*) AS heads FROM usage_admission_heads").toArray()[0]?.heads;
+    const liveRows = this.sql.exec("SELECT COUNT(*) AS live FROM usage_admission_heads WHERE utc_day IS NOT NULL").toArray()[0]?.live;
+    requireAdmission(integer(headRows, 0, MAX_ADMISSION_HEADS) && headRows === control.heads
+      && integer(liveRows, 0, headRows) && liveRows === control.live);
+    const dayTotals = this.sql.exec("SELECT COUNT(*) AS days, COALESCE(SUM(live_count), 0) AS live FROM usage_admission_days").toArray()[0];
+    const dayRows = dayTotals?.days, dayLive = dayTotals?.live;
+    requireAdmission(integer(dayRows, 0, liveRows) && integer(dayLive, 0, MAX_ADMISSION_HEADS) && dayLive === control.live);
+    // Days untouched since the checkpoint keep their verified counts; any day
+    // a newer head landed on or moved away from is recounted against rows.
+    for (const day of touchedDays) {
+      const count = this.sql.exec("SELECT COUNT(*) AS live FROM usage_admission_heads WHERE utc_day = ?", day).toArray()[0]?.live;
+      requireAdmission(integer(count, 0, MAX_ADMISSION_DAY_HEADS) && this.dayCount(day) === count);
     }
-    requireAdmission(days === dayCounts.size);
     const pending = this.pending(authority, control);
     if (pending) {
       requireAdmission(authority);
