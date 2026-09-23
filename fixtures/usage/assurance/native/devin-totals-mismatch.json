@@ -1,0 +1,19 @@
+{
+  "schema_version": "ATIF-v1.0",
+  "session_id": "session_assurance_devin",
+  "agent": { "name": "devin" },
+  "steps": [
+    {
+      "step_id": "one",
+      "source": "agent",
+      "timestamp": "2026-09-20T10:00:01Z",
+      "metrics": { "prompt_tokens": 10, "completion_tokens": 3, "cached_tokens": 2 }
+    }
+  ],
+  "final_metrics": {
+    "total_prompt_tokens": 999,
+    "total_completion_tokens": 3,
+    "total_cached_tokens": 2,
+    "total_steps": 1
+  }
+}

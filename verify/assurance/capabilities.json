@@ -1,0 +1,576 @@
+{
+  "schemaVersion": 1,
+  "registryRevision": 1,
+  "clients": [
+    {
+      "id": "9router",
+      "qualification": "unreviewed",
+      "phase": "4",
+      "evidence": [
+        "data/usage-registry.json",
+        "crates/aicharts-import/src/lib.rs"
+      ],
+      "limit": "Selector presence is not fixture or live qualification. Each adapter/version must earn capabilities through executed evidence."
+    },
+    {
+      "id": "amp",
+      "qualification": "unreviewed",
+      "phase": "4",
+      "evidence": [
+        "data/usage-registry.json",
+        "crates/aicharts-import/src/lib.rs"
+      ],
+      "limit": "Selector presence is not fixture or live qualification. Each adapter/version must earn capabilities through executed evidence."
+    },
+    {
+      "id": "antigravity",
+      "qualification": "unreviewed",
+      "phase": "4",
+      "evidence": [
+        "data/usage-registry.json",
+        "crates/aicharts-import/src/lib.rs"
+      ],
+      "limit": "Selector presence is not fixture or live qualification. Each adapter/version must earn capabilities through executed evidence."
+    },
+    {
+      "id": "antigravity-cli",
+      "qualification": "unreviewed",
+      "phase": "4",
+      "evidence": [
+        "data/usage-registry.json",
+        "crates/aicharts-import/src/lib.rs"
+      ],
+      "limit": "Selector presence is not fixture or live qualification. Each adapter/version must earn capabilities through executed evidence."
+    },
+    {
+      "id": "augment",
+      "qualification": "unreviewed",
+      "phase": "4",
+      "evidence": [
+        "data/usage-registry.json",
+        "crates/aicharts-import/src/lib.rs"
+      ],
+      "limit": "Selector presence is not fixture or live qualification. Each adapter/version must earn capabilities through executed evidence."
+    },
+    {
+      "id": "cherrystudio",
+      "qualification": "unreviewed",
+      "phase": "4",
+      "evidence": [
+        "data/usage-registry.json",
+        "crates/aicharts-import/src/lib.rs"
+      ],
+      "limit": "Selector presence is not fixture or live qualification. Each adapter/version must earn capabilities through executed evidence."
+    },
+    {
+      "id": "claude",
+      "qualification": "unreviewed",
+      "phase": "4",
+      "evidence": [
+        "data/usage-registry.json",
+        "crates/aicharts-import/src/lib.rs"
+      ],
+      "limit": "Selector presence is not fixture or live qualification. Each adapter/version must earn capabilities through executed evidence."
+    },
+    {
+      "id": "cline",
+      "qualification": "unreviewed",
+      "phase": "4",
+      "evidence": [
+        "data/usage-registry.json",
+        "crates/aicharts-import/src/lib.rs"
+      ],
+      "limit": "Selector presence is not fixture or live qualification. Each adapter/version must earn capabilities through executed evidence."
+    },
+    {
+      "id": "codebuddy",
+      "qualification": "unreviewed",
+      "phase": "4",
+      "evidence": [
+        "data/usage-registry.json",
+        "crates/aicharts-import/src/lib.rs"
+      ],
+      "limit": "Selector presence is not fixture or live qualification. Each adapter/version must earn capabilities through executed evidence."
+    },
+    {
+      "id": "codebuff",
+      "qualification": "unreviewed",
+      "phase": "4",
+      "evidence": [
+        "data/usage-registry.json",
+        "crates/aicharts-import/src/lib.rs"
+      ],
+      "limit": "Selector presence is not fixture or live qualification. Each adapter/version must earn capabilities through executed evidence."
+    },
+    {
+      "id": "codex",
+      "qualification": "unreviewed",
+      "phase": "4",
+      "evidence": [
+        "data/usage-registry.json",
+        "crates/aicharts-import/src/lib.rs"
+      ],
+      "limit": "Selector presence is not fixture or live qualification. Each adapter/version must earn capabilities through executed evidence."
+    },
+    {
+      "id": "commandcode",
+      "qualification": "unreviewed",
+      "phase": "4",
+      "evidence": [
+        "data/usage-registry.json",
+        "crates/aicharts-import/src/lib.rs"
+      ],
+      "limit": "Selector presence is not fixture or live qualification. Each adapter/version must earn capabilities through executed evidence."
+    },
+    {
+      "id": "copilot",
+      "qualification": "unreviewed",
+      "phase": "4",
+      "evidence": [
+        "data/usage-registry.json",
+        "crates/aicharts-import/src/lib.rs"
+      ],
+      "limit": "Selector presence is not fixture or live qualification. Each adapter/version must earn capabilities through executed evidence."
+    },
+    {
+      "id": "crush",
+      "qualification": "unreviewed",
+      "phase": "4",
+      "evidence": [
+        "data/usage-registry.json",
+        "crates/aicharts-import/src/lib.rs"
+      ],
+      "limit": "Selector presence is not fixture or live qualification. Each adapter/version must earn capabilities through executed evidence."
+    },
+    {
+      "id": "cursor",
+      "qualification": "unreviewed",
+      "phase": "4",
+      "evidence": [
+        "data/usage-registry.json",
+        "crates/aicharts-import/src/lib.rs"
+      ],
+      "limit": "Selector presence is not fixture or live qualification. Each adapter/version must earn capabilities through executed evidence."
+    },
+    {
+      "id": "devin-cli",
+      "qualification": "unreviewed",
+      "phase": "4",
+      "evidence": [
+        "data/usage-registry.json",
+        "crates/aicharts-import/src/lib.rs"
+      ],
+      "limit": "Selector presence is not fixture or live qualification. Each adapter/version must earn capabilities through executed evidence."
+    },
+    {
+      "id": "devin-desktop",
+      "qualification": "unreviewed",
+      "phase": "4",
+      "evidence": [
+        "data/usage-registry.json",
+        "crates/aicharts-import/src/lib.rs"
+      ],
+      "limit": "Selector presence is not fixture or live qualification. Each adapter/version must earn capabilities through executed evidence."
+    },
+    {
+      "id": "droid",
+      "qualification": "unreviewed",
+      "phase": "4",
+      "evidence": [
+        "data/usage-registry.json",
+        "crates/aicharts-import/src/lib.rs"
+      ],
+      "limit": "Selector presence is not fixture or live qualification. Each adapter/version must earn capabilities through executed evidence."
+    },
+    {
+      "id": "dsh",
+      "qualification": "unreviewed",
+      "phase": "4",
+      "evidence": [
+        "data/usage-registry.json",
+        "crates/aicharts-import/src/lib.rs"
+      ],
+      "limit": "Selector presence is not fixture or live qualification. Each adapter/version must earn capabilities through executed evidence."
+    },
+    {
+      "id": "freebuff",
+      "qualification": "unreviewed",
+      "phase": "4",
+      "evidence": [
+        "data/usage-registry.json",
+        "crates/aicharts-import/src/lib.rs"
+      ],
+      "limit": "Selector presence is not fixture or live qualification. Each adapter/version must earn capabilities through executed evidence."
+    },
+    {
+      "id": "fx",
+      "qualification": "unreviewed",
+      "phase": "4",
+      "evidence": [
+        "data/usage-registry.json",
+        "crates/aicharts-import/src/lib.rs"
+      ],
+      "limit": "Selector presence is not fixture or live qualification. Each adapter/version must earn capabilities through executed evidence."
+    },
+    {
+      "id": "gemini",
+      "qualification": "unreviewed",
+      "phase": "4",
+      "evidence": [
+        "data/usage-registry.json",
+        "crates/aicharts-import/src/lib.rs"
+      ],
+      "limit": "Selector presence is not fixture or live qualification. Each adapter/version must earn capabilities through executed evidence."
+    },
+    {
+      "id": "gjc",
+      "qualification": "unreviewed",
+      "phase": "4",
+      "evidence": [
+        "data/usage-registry.json",
+        "crates/aicharts-import/src/lib.rs"
+      ],
+      "limit": "Selector presence is not fixture or live qualification. Each adapter/version must earn capabilities through executed evidence."
+    },
+    {
+      "id": "goose",
+      "qualification": "unreviewed",
+      "phase": "4",
+      "evidence": [
+        "data/usage-registry.json",
+        "crates/aicharts-import/src/lib.rs"
+      ],
+      "limit": "Selector presence is not fixture or live qualification. Each adapter/version must earn capabilities through executed evidence."
+    },
+    {
+      "id": "grok",
+      "qualification": "unreviewed",
+      "phase": "4",
+      "evidence": [
+        "data/usage-registry.json",
+        "crates/aicharts-import/src/lib.rs"
+      ],
+      "limit": "Selector presence is not fixture or live qualification. Each adapter/version must earn capabilities through executed evidence."
+    },
+    {
+      "id": "hermes",
+      "qualification": "unreviewed",
+      "phase": "4",
+      "evidence": [
+        "data/usage-registry.json",
+        "crates/aicharts-import/src/lib.rs"
+      ],
+      "limit": "Selector presence is not fixture or live qualification. Each adapter/version must earn capabilities through executed evidence."
+    },
+    {
+      "id": "hindsight",
+      "qualification": "unreviewed",
+      "phase": "4",
+      "evidence": [
+        "data/usage-registry.json",
+        "crates/aicharts-import/src/lib.rs"
+      ],
+      "limit": "Selector presence is not fixture or live qualification. Each adapter/version must earn capabilities through executed evidence."
+    },
+    {
+      "id": "jcode",
+      "qualification": "unreviewed",
+      "phase": "4",
+      "evidence": [
+        "data/usage-registry.json",
+        "crates/aicharts-import/src/lib.rs"
+      ],
+      "limit": "Selector presence is not fixture or live qualification. Each adapter/version must earn capabilities through executed evidence."
+    },
+    {
+      "id": "junie",
+      "qualification": "unreviewed",
+      "phase": "4",
+      "evidence": [
+        "data/usage-registry.json",
+        "crates/aicharts-import/src/lib.rs"
+      ],
+      "limit": "Selector presence is not fixture or live qualification. Each adapter/version must earn capabilities through executed evidence."
+    },
+    {
+      "id": "kilo",
+      "qualification": "unreviewed",
+      "phase": "4",
+      "evidence": [
+        "data/usage-registry.json",
+        "crates/aicharts-import/src/lib.rs"
+      ],
+      "limit": "Selector presence is not fixture or live qualification. Each adapter/version must earn capabilities through executed evidence."
+    },
+    {
+      "id": "kilocode",
+      "qualification": "unreviewed",
+      "phase": "4",
+      "evidence": [
+        "data/usage-registry.json",
+        "crates/aicharts-import/src/lib.rs"
+      ],
+      "limit": "Selector presence is not fixture or live qualification. Each adapter/version must earn capabilities through executed evidence."
+    },
+    {
+      "id": "kimchi",
+      "qualification": "unreviewed",
+      "phase": "4",
+      "evidence": [
+        "data/usage-registry.json",
+        "crates/aicharts-import/src/lib.rs"
+      ],
+      "limit": "Selector presence is not fixture or live qualification. Each adapter/version must earn capabilities through executed evidence."
+    },
+    {
+      "id": "kimi",
+      "qualification": "unreviewed",
+      "phase": "4",
+      "evidence": [
+        "data/usage-registry.json",
+        "crates/aicharts-import/src/lib.rs"
+      ],
+      "limit": "Selector presence is not fixture or live qualification. Each adapter/version must earn capabilities through executed evidence."
+    },
+    {
+      "id": "kiro",
+      "qualification": "unreviewed",
+      "phase": "4",
+      "evidence": [
+        "data/usage-registry.json",
+        "crates/aicharts-import/src/lib.rs"
+      ],
+      "limit": "Selector presence is not fixture or live qualification. Each adapter/version must earn capabilities through executed evidence."
+    },
+    {
+      "id": "lmstudio",
+      "qualification": "unreviewed",
+      "phase": "4",
+      "evidence": [
+        "data/usage-registry.json",
+        "crates/aicharts-import/src/lib.rs"
+      ],
+      "limit": "Selector presence is not fixture or live qualification. Each adapter/version must earn capabilities through executed evidence."
+    },
+    {
+      "id": "mcode",
+      "qualification": "unreviewed",
+      "phase": "4",
+      "evidence": [
+        "data/usage-registry.json",
+        "crates/aicharts-import/src/lib.rs"
+      ],
+      "limit": "Selector presence is not fixture or live qualification. Each adapter/version must earn capabilities through executed evidence."
+    },
+    {
+      "id": "micode",
+      "qualification": "unreviewed",
+      "phase": "4",
+      "evidence": [
+        "data/usage-registry.json",
+        "crates/aicharts-import/src/lib.rs"
+      ],
+      "limit": "Selector presence is not fixture or live qualification. Each adapter/version must earn capabilities through executed evidence."
+    },
+    {
+      "id": "mux",
+      "qualification": "unreviewed",
+      "phase": "4",
+      "evidence": [
+        "data/usage-registry.json",
+        "crates/aicharts-import/src/lib.rs"
+      ],
+      "limit": "Selector presence is not fixture or live qualification. Each adapter/version must earn capabilities through executed evidence."
+    },
+    {
+      "id": "omp",
+      "qualification": "unreviewed",
+      "phase": "4",
+      "evidence": [
+        "data/usage-registry.json",
+        "crates/aicharts-import/src/lib.rs"
+      ],
+      "limit": "Selector presence is not fixture or live qualification. Each adapter/version must earn capabilities through executed evidence."
+    },
+    {
+      "id": "openclaw",
+      "qualification": "unreviewed",
+      "phase": "4",
+      "evidence": [
+        "data/usage-registry.json",
+        "crates/aicharts-import/src/lib.rs"
+      ],
+      "limit": "Selector presence is not fixture or live qualification. Each adapter/version must earn capabilities through executed evidence."
+    },
+    {
+      "id": "opencode",
+      "qualification": "unreviewed",
+      "phase": "4",
+      "evidence": [
+        "data/usage-registry.json",
+        "crates/aicharts-import/src/lib.rs"
+      ],
+      "limit": "Selector presence is not fixture or live qualification. Each adapter/version must earn capabilities through executed evidence."
+    },
+    {
+      "id": "opencodereview",
+      "qualification": "unreviewed",
+      "phase": "4",
+      "evidence": [
+        "data/usage-registry.json",
+        "crates/aicharts-import/src/lib.rs"
+      ],
+      "limit": "Selector presence is not fixture or live qualification. Each adapter/version must earn capabilities through executed evidence."
+    },
+    {
+      "id": "pi",
+      "qualification": "unreviewed",
+      "phase": "4",
+      "evidence": [
+        "data/usage-registry.json",
+        "crates/aicharts-import/src/lib.rs"
+      ],
+      "limit": "Selector presence is not fixture or live qualification. Each adapter/version must earn capabilities through executed evidence."
+    },
+    {
+      "id": "prime-agent",
+      "qualification": "unreviewed",
+      "phase": "4",
+      "evidence": [
+        "data/usage-registry.json",
+        "crates/aicharts-import/src/lib.rs"
+      ],
+      "limit": "Selector presence is not fixture or live qualification. Each adapter/version must earn capabilities through executed evidence."
+    },
+    {
+      "id": "qwen",
+      "qualification": "unreviewed",
+      "phase": "4",
+      "evidence": [
+        "data/usage-registry.json",
+        "crates/aicharts-import/src/lib.rs"
+      ],
+      "limit": "Selector presence is not fixture or live qualification. Each adapter/version must earn capabilities through executed evidence."
+    },
+    {
+      "id": "reasonix",
+      "qualification": "unreviewed",
+      "phase": "4",
+      "evidence": [
+        "data/usage-registry.json",
+        "crates/aicharts-import/src/lib.rs"
+      ],
+      "limit": "Selector presence is not fixture or live qualification. Each adapter/version must earn capabilities through executed evidence."
+    },
+    {
+      "id": "roocode",
+      "qualification": "unreviewed",
+      "phase": "4",
+      "evidence": [
+        "data/usage-registry.json",
+        "crates/aicharts-import/src/lib.rs"
+      ],
+      "limit": "Selector presence is not fixture or live qualification. Each adapter/version must earn capabilities through executed evidence."
+    },
+    {
+      "id": "senpi",
+      "qualification": "unreviewed",
+      "phase": "4",
+      "evidence": [
+        "data/usage-registry.json",
+        "crates/aicharts-import/src/lib.rs"
+      ],
+      "limit": "Selector presence is not fixture or live qualification. Each adapter/version must earn capabilities through executed evidence."
+    },
+    {
+      "id": "synthetic",
+      "qualification": "unreviewed",
+      "phase": "4",
+      "evidence": [
+        "data/usage-registry.json",
+        "crates/aicharts-import/src/lib.rs"
+      ],
+      "limit": "Selector presence is not fixture or live qualification. Each adapter/version must earn capabilities through executed evidence."
+    },
+    {
+      "id": "trae",
+      "qualification": "unreviewed",
+      "phase": "4",
+      "evidence": [
+        "data/usage-registry.json",
+        "crates/aicharts-import/src/lib.rs"
+      ],
+      "limit": "Selector presence is not fixture or live qualification. Each adapter/version must earn capabilities through executed evidence."
+    },
+    {
+      "id": "unsloth",
+      "qualification": "unreviewed",
+      "phase": "4",
+      "evidence": [
+        "data/usage-registry.json",
+        "crates/aicharts-import/src/lib.rs"
+      ],
+      "limit": "Selector presence is not fixture or live qualification. Each adapter/version must earn capabilities through executed evidence."
+    },
+    {
+      "id": "warp",
+      "qualification": "unreviewed",
+      "phase": "4",
+      "evidence": [
+        "data/usage-registry.json",
+        "crates/aicharts-import/src/lib.rs"
+      ],
+      "limit": "Selector presence is not fixture or live qualification. Each adapter/version must earn capabilities through executed evidence."
+    },
+    {
+      "id": "workbuddy",
+      "qualification": "unreviewed",
+      "phase": "4",
+      "evidence": [
+        "data/usage-registry.json",
+        "crates/aicharts-import/src/lib.rs"
+      ],
+      "limit": "Selector presence is not fixture or live qualification. Each adapter/version must earn capabilities through executed evidence."
+    },
+    {
+      "id": "zcode",
+      "qualification": "unreviewed",
+      "phase": "4",
+      "evidence": [
+        "data/usage-registry.json",
+        "crates/aicharts-import/src/lib.rs"
+      ],
+      "limit": "Selector presence is not fixture or live qualification. Each adapter/version must earn capabilities through executed evidence."
+    },
+    {
+      "id": "zed",
+      "qualification": "unreviewed",
+      "phase": "4",
+      "evidence": [
+        "data/usage-registry.json",
+        "crates/aicharts-import/src/lib.rs"
+      ],
+      "limit": "Selector presence is not fixture or live qualification. Each adapter/version must earn capabilities through executed evidence."
+    }
+  ],
+  "platforms": [
+    {
+      "id": "portable-source",
+      "evidence": "CONTRIBUTING.md",
+      "qualification": "synthetic-tests",
+      "limit": "Exact governed audit check passed; this is not live provider or native package qualification."
+    },
+    {
+      "id": "macos-companion",
+      "evidence": "desktop/AGENTS.md",
+      "qualification": "separate-gate",
+      "limit": "Release build and admitted native custody acceptance required."
+    },
+    {
+      "id": "linux-package",
+      "evidence": "docs/usage-release-build.md",
+      "qualification": "separate-gate",
+      "limit": "Source checks do not establish installed runtime behavior."
+    }
+  ]
+}

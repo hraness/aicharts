@@ -1,0 +1,105 @@
+{
+  "schemaVersion": 1,
+  "claim": "synthetic-helper-baseline-only",
+  "platform": "darwin",
+  "architecture": "arm64",
+  "cpu": "Apple M5 Max",
+  "bun": "1.3.14",
+  "samplesAfterWarmup": 5,
+  "warmups": 2,
+  "limits": "High-cardinality admitted local reports. No browser render, real provider, hosted query or concurrent workload; process RSS is not isolated peak allocation.",
+  "results": [
+    {
+      "rows": 8192,
+      "bytes": 3403921,
+      "distinctModels": 1024,
+      "distinctClients": 8,
+      "admitted": true,
+      "expectedTokens": "41996288",
+      "parsing": {
+        "samplesMs": [
+          55.50995899999998,
+          63.13958400000001,
+          64.33362500000004,
+          64.32358299999999,
+          63.563125000000014
+        ],
+        "medianMs": 63.563125000000014,
+        "maximumMs": 64.33362500000004
+      },
+      "selectors": {
+        "samplesMs": [
+          15.548208000000045,
+          18.22354200000001,
+          17.753375000000005,
+          16.686166999999955,
+          15.068750000000023
+        ],
+        "medianMs": 16.686166999999955,
+        "maximumMs": 18.22354200000001
+      },
+      "csv": {
+        "samplesMs": [
+          28.408500000000004,
+          24.730999999999995,
+          22.95237499999996,
+          23.17604199999994,
+          23.222499999999968
+        ],
+        "medianMs": 23.222499999999968,
+        "maximumMs": 28.408500000000004
+      },
+      "processRssBytes": 210599936
+    },
+    {
+      "rows": 65536,
+      "bytes": 27256456,
+      "distinctModels": 1024,
+      "distinctClients": 54,
+      "admitted": true,
+      "expectedTokens": "2215018496",
+      "parsing": {
+        "samplesMs": [
+          544.4878749999998,
+          500.14333299999953,
+          544.1575000000003,
+          544.8796249999996,
+          589.523792
+        ],
+        "medianMs": 544.4878749999998,
+        "maximumMs": 589.523792
+      },
+      "selectors": {
+        "samplesMs": [
+          153.663458,
+          143.78799999999956,
+          140.99445900000046,
+          149.4481250000008,
+          166.00404200000048
+        ],
+        "medianMs": 149.4481250000008,
+        "maximumMs": 166.00404200000048
+      },
+      "csv": {
+        "samplesMs": [
+          201.48050000000012,
+          184.9045839999999,
+          196.8226249999998,
+          194.46520899999996,
+          202.72179199999937
+        ],
+        "medianMs": 196.8226249999998,
+        "maximumMs": 202.72179199999937
+      },
+      "processRssBytes": 1166934016
+    }
+  ],
+  "sourceCommit": "696400da880d78e9a8b5ffd2b4265ea93c4948ce",
+  "sourceSha256": {
+    "scripts/assurance-metric-baseline.ts": "04b80c99c85954e2c403f39a05dc2fe31ebbeea4643dffa4565a64b1b8e70972",
+    "lib/usage/stats-contract.ts": "8bff90f049aa37bdb532c7a8e665f122a0cf5c864f621416442de1d547e9a90f",
+    "components/usage/stats-view.ts": "239b15a2a596f7b32a9ecd8b0ca68f12c16bc7b00b25bf43962bd8cefe83c594",
+    "data/usage-registry.json": "0f6f35c3557f39214a39236bcf4e08ea514ff0494bcca809907220f67b1ae02b"
+  },
+  "scope": "Current source dependencies at the named commit plus the additive pinned benchmark script; receipt is historical and cannot substitute for changed-source performance evidence."
+}

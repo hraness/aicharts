@@ -1,0 +1,402 @@
+{
+  "schemaVersion": 1,
+  "capacities": [
+    {
+      "id": "stats-max-days",
+      "scope": "local-detailed-report",
+      "unit": "count",
+      "value": 366,
+      "source": {
+        "path": "lib/usage/stats-contract.ts",
+        "symbol": "STATS_MAX_DAYS"
+      }
+    },
+    {
+      "id": "stats-max-rows",
+      "scope": "local-detailed-report",
+      "unit": "count",
+      "value": 65536,
+      "source": {
+        "path": "lib/usage/stats-contract.ts",
+        "symbol": "STATS_MAX_ROWS"
+      }
+    },
+    {
+      "id": "stats-max-bytes",
+      "scope": "local-detailed-report",
+      "unit": "bytes",
+      "value": 33554432,
+      "source": {
+        "path": "lib/usage/stats-contract.ts",
+        "symbol": "STATS_MAX_BYTES"
+      }
+    },
+    {
+      "id": "stats-max-sources",
+      "scope": "local-detailed-report",
+      "unit": "count",
+      "value": 64,
+      "source": {
+        "path": "lib/usage/stats-contract.ts",
+        "symbol": "STATS_MAX_SOURCES"
+      }
+    },
+    {
+      "id": "stats-max-records",
+      "scope": "local-detailed-report",
+      "unit": "count",
+      "value": 10000000,
+      "source": {
+        "path": "lib/usage/stats-contract.ts",
+        "symbol": "STATS_MAX_RECORDS"
+      }
+    },
+    {
+      "id": "stats-http-response-bytes",
+      "scope": "hosted-detailed-report",
+      "unit": "bytes",
+      "value": 4194304,
+      "source": {
+        "path": "lib/usage/stats-http-contract.ts",
+        "symbol": "STATS_HTTP_RESPONSE_BYTES"
+      }
+    },
+    {
+      "id": "stats-http-response-rows",
+      "scope": "hosted-detailed-report",
+      "unit": "count",
+      "value": 8192,
+      "source": {
+        "path": "lib/usage/stats-http-contract.ts",
+        "symbol": "STATS_HTTP_RESPONSE_ROWS"
+      }
+    },
+    {
+      "id": "stats-upload-bytes",
+      "scope": "hosted-detailed-report",
+      "unit": "bytes",
+      "value": 4194304,
+      "source": {
+        "path": "lib/usage/stats-http-contract.ts",
+        "symbol": "STATS_UPLOAD_BYTES"
+      }
+    },
+    {
+      "id": "stats-upload-rows",
+      "scope": "hosted-detailed-report",
+      "unit": "count",
+      "value": 8192,
+      "source": {
+        "path": "lib/usage/stats-http-contract.ts",
+        "symbol": "STATS_UPLOAD_ROWS"
+      }
+    },
+    {
+      "id": "max-admission-heads",
+      "scope": "account-v1-retained",
+      "unit": "count",
+      "value": 1000000,
+      "source": {
+        "path": "services/usage-worker/src/admission-policy.ts",
+        "symbol": "MAX_ADMISSION_HEADS"
+      }
+    },
+    {
+      "id": "max-admission-day-heads",
+      "scope": "account-v1-retained",
+      "unit": "count",
+      "value": 65536,
+      "source": {
+        "path": "services/usage-worker/src/admission-policy.ts",
+        "symbol": "MAX_ADMISSION_DAY_HEADS"
+      }
+    },
+    {
+      "id": "max-admission-revisions",
+      "scope": "account-v1-retained",
+      "unit": "count",
+      "value": 4096,
+      "source": {
+        "path": "services/usage-worker/src/admission-policy.ts",
+        "symbol": "MAX_ADMISSION_REVISIONS"
+      }
+    },
+    {
+      "id": "private-days-max-heads",
+      "scope": "private-days-v1-response",
+      "unit": "count",
+      "value": 100000,
+      "source": {
+        "path": "lib/usage/private-days-contract.ts",
+        "symbol": "PRIVATE_DAYS_MAX_HEADS"
+      }
+    },
+    {
+      "id": "private-days-max-day-heads",
+      "scope": "private-days-v1-response",
+      "unit": "count",
+      "value": 65536,
+      "source": {
+        "path": "lib/usage/private-days-contract.ts",
+        "symbol": "PRIVATE_DAYS_MAX_DAY_HEADS"
+      }
+    },
+    {
+      "id": "private-days-max-days",
+      "scope": "private-days-v1-response",
+      "unit": "count",
+      "value": 31,
+      "source": {
+        "path": "lib/usage/private-days-contract.ts",
+        "symbol": "PRIVATE_DAYS_MAX_DAYS"
+      }
+    },
+    {
+      "id": "private-days-max-revisions",
+      "scope": "private-days-v1-response",
+      "unit": "count",
+      "value": 4096,
+      "source": {
+        "path": "lib/usage/private-days-contract.ts",
+        "symbol": "PRIVATE_DAYS_MAX_REVISIONS"
+      }
+    },
+    {
+      "id": "private-days-max-response-bytes",
+      "scope": "private-days-v1-response",
+      "unit": "bytes",
+      "value": 16384,
+      "source": {
+        "path": "lib/usage/private-days-contract.ts",
+        "symbol": "PRIVATE_DAYS_MAX_RESPONSE_BYTES"
+      }
+    },
+    {
+      "id": "max-stats-stored-days",
+      "scope": "account-v2-retained",
+      "unit": "count",
+      "value": 65536,
+      "source": {
+        "path": "services/usage-worker/src/stats-state.ts",
+        "symbol": "MAX_STATS_STORED_DAYS"
+      }
+    },
+    {
+      "id": "max-stats-stored-rows",
+      "scope": "account-v2-retained",
+      "unit": "count",
+      "value": 262144,
+      "source": {
+        "path": "services/usage-worker/src/stats-state.ts",
+        "symbol": "MAX_STATS_STORED_ROWS"
+      }
+    },
+    {
+      "id": "max-stats-stored-bytes",
+      "scope": "account-v2-retained",
+      "unit": "bytes",
+      "value": 134217728,
+      "source": {
+        "path": "services/usage-worker/src/stats-state.ts",
+        "symbol": "MAX_STATS_STORED_BYTES"
+      }
+    },
+    {
+      "id": "max-stats-immutable-bytes",
+      "scope": "account-v2-retained",
+      "unit": "bytes",
+      "value": 8589934592,
+      "source": {
+        "path": "services/usage-worker/src/stats-state.ts",
+        "symbol": "MAX_STATS_IMMUTABLE_BYTES"
+      }
+    },
+    {
+      "id": "max-stats-revisions",
+      "scope": "account-v2-retained",
+      "unit": "count",
+      "value": 1000000,
+      "source": {
+        "path": "services/usage-worker/src/stats-state.ts",
+        "symbol": "MAX_STATS_REVISIONS"
+      }
+    },
+    {
+      "id": "ledger-max-sources",
+      "scope": "local-ledger",
+      "unit": "count",
+      "value": 32768,
+      "source": {
+        "path": "crates/aicharts-ledger/src/lib.rs",
+        "symbol": "MAX_SOURCES"
+      }
+    },
+    {
+      "id": "ledger-max-occurrences",
+      "scope": "local-ledger",
+      "unit": "count",
+      "value": 500000,
+      "source": {
+        "path": "crates/aicharts-ledger/src/lib.rs",
+        "symbol": "MAX_OCCURRENCES"
+      }
+    },
+    {
+      "id": "ledger-max-associations",
+      "scope": "local-ledger",
+      "unit": "count",
+      "value": 1000000,
+      "source": {
+        "path": "crates/aicharts-ledger/src/lib.rs",
+        "symbol": "MAX_ASSOCIATIONS"
+      }
+    },
+    {
+      "id": "ledger-max-database-bytes",
+      "scope": "local-ledger",
+      "unit": "bytes",
+      "value": 536870912,
+      "source": {
+        "path": "crates/aicharts-ledger/src/storage.rs",
+        "symbol": "MAX_DATABASE_BYTES"
+      }
+    },
+    {
+      "id": "collection-max-source-bytes",
+      "scope": "collection-wave",
+      "unit": "bytes",
+      "value": 268435456,
+      "source": {
+        "path": "crates/aicharts-cli/src/main.rs",
+        "symbol": "MAX_SOURCE_BYTES"
+      }
+    },
+    {
+      "id": "account-max-devices",
+      "scope": "account-lifetime",
+      "unit": "count",
+      "value": 128,
+      "source": {
+        "path": "services/usage-worker/src/enrollment.ts",
+        "symbol": "MAX_ENROLLED_DEVICES"
+      }
+    },
+    {
+      "id": "leaderboard-max-members",
+      "scope": "public-index",
+      "unit": "count",
+      "value": 128,
+      "source": {
+        "path": "lib/usage/leaderboard-contract.ts",
+        "symbol": "LEADERBOARD_MAX_MEMBERS"
+      }
+    },
+    {
+      "id": "leaderboard-max-tombstones",
+      "scope": "public-index",
+      "unit": "count",
+      "value": 256,
+      "source": {
+        "path": "services/usage-worker/src/leaderboard-index.ts",
+        "symbol": "LEADERBOARD_MAX_TOMBSTONES"
+      }
+    },
+    {
+      "id": "restore-max-leases",
+      "scope": "account-restore-fence",
+      "unit": "count",
+      "value": 64,
+      "source": {
+        "path": "services/usage-worker/src/restore-fence.ts",
+        "symbol": "RESTORE_FENCE_MAX_LEASES"
+      }
+    },
+    {
+      "id": "restore-lease-ms",
+      "scope": "lease-deadline-not-termination",
+      "unit": "milliseconds",
+      "value": 30000,
+      "source": {
+        "path": "services/usage-worker/src/restore-fence.ts",
+        "symbol": "RESTORE_FENCE_LEASE_TTL_MS"
+      }
+    },
+    {
+      "id": "wire-rust-records",
+      "scope": "wire-frame",
+      "unit": "count",
+      "value": 4096,
+      "source": {
+        "path": "crates/aicharts-protocol/src/lib.rs",
+        "symbol": "MAX_RECORDS"
+      }
+    },
+    {
+      "id": "wire-typescript-records",
+      "scope": "wire-frame",
+      "unit": "count",
+      "value": 4096,
+      "source": {
+        "path": "lib/usage/wire.ts",
+        "symbol": "MAX_RECORDS"
+      }
+    },
+    {
+      "id": "wire-rust-token-counter",
+      "scope": "wire-frame",
+      "unit": "count",
+      "value": 1000000000000,
+      "source": {
+        "path": "crates/aicharts-protocol/src/lib.rs",
+        "symbol": "MAX_TOKEN_COUNTER"
+      }
+    }
+  ],
+  "relations": [
+    {
+      "left": "max-admission-heads",
+      "right": "private-days-max-heads",
+      "relation": "equal",
+      "status": "known-defect",
+      "finding": "F10"
+    },
+    {
+      "left": "max-admission-day-heads",
+      "right": "private-days-max-day-heads",
+      "relation": "equal",
+      "status": "enforced",
+      "finding": null
+    },
+    {
+      "left": "max-admission-revisions",
+      "right": "private-days-max-revisions",
+      "relation": "equal",
+      "status": "enforced",
+      "finding": null
+    },
+    {
+      "left": "stats-upload-rows",
+      "right": "stats-http-response-rows",
+      "relation": "equal",
+      "status": "enforced",
+      "finding": null
+    },
+    {
+      "left": "wire-rust-records",
+      "right": "wire-typescript-records",
+      "relation": "equal",
+      "status": "enforced",
+      "finding": null
+    }
+  ],
+  "budgetExamples": [
+    {
+      "id": "v1-head-operation-lower-bound",
+      "capacity": "max-admission-heads",
+      "bytesPerItem": 320,
+      "minimumPayloadBytes": 320000000,
+      "claim": "Only operation payload in heads. Not a total SQL/physical storage bound; journal, derived rows, keys, indexes, pages and WAL are additional.",
+      "finding": "F21"
+    }
+  ]
+}

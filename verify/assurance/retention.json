@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "status": "frozen-implementation-contract",
+  "activation": "No retention action or live deletion is authorized by this metadata. Deletion remains disabled until implemented recovery, export, tombstone and restore qualification pass.",
+  "policies": [
+    {
+      "id": "canonical-account-history",
+      "duration": "account-lifetime",
+      "physicalReclamation": "Only explicit account erasure or verified canonical compaction retaining equivalent authoritative commitments. Never delete to recover a quota slot.",
+      "recovery": "Keep lossless export and data-preserving schema rollback before migration."
+    },
+    {
+      "id": "fine-numeric-events",
+      "duration": "P90D",
+      "physicalReclamation": "Future opt-in private event store only; after event age reaches 90 days AND at least 30 days have passed since export-expiry notice, corrected summary publication and active-reader closure. Existing retained data is grandfathered.",
+      "recovery": "Disclose that expired detail cannot be reconstructed from aggregates; retain independent correction/deletion controls."
+    },
+    {
+      "id": "derived-projections",
+      "duration": "rebuildable",
+      "physicalReclamation": "After manifest-pinned successor is verified, active readers settle and pending/recovery references no longer depend on this version.",
+      "recovery": "Rebuild exactly from committed canonical evidence; never infer commitment from R2 existence."
+    },
+    {
+      "id": "authority-and-deletion-controls",
+      "duration": "account-lifetime-plus-replay-horizon",
+      "physicalReclamation": "Retain minimal non-content generation/tombstone evidence while any accepted credential, delayed operation or restorable backup could replay. No time-only GC until finite replay and backup cutoffs are enforceable.",
+      "recovery": "Restore reconciles current controls before making restored facts readable."
+    },
+    {
+      "id": "unreferenced-immutable-orphans",
+      "duration": "P30D-after-terminal-reconciliation",
+      "physicalReclamation": "Only after an authoritative terminal disposition, no pending/reader/recovery reference, and at least 30 days. Unknown disposition is retained and charged.",
+      "recovery": "Recompute reachability from committed publication history; timeout is not abandonment."
+    },
+    {
+      "id": "recovery-artifacts",
+      "duration": "P30D-after-qualified-successor",
+      "physicalReclamation": "Future managed backup/rollback artifacts expire only after successor restore test, deletion-control reconciliation and explicit horizon enforcement. No existing backup is shortened.",
+      "recovery": "Old backup restore beyond accepted cutoff must refuse or reapply retained controls before reads."
+    }
+  ],
+  "objectives": {
+    "rpo": "Zero acknowledged canonical publications lost within the qualified local/replicated storage fault model; simultaneous loss outside that model is explicitly unsupported until independently durable backups qualify.",
+    "rto": "Target one hour for tested supported recovery; currently unqualified. No activation claim until measured rehearsal.",
+    "publicWithdrawal": "At most the current public cache bound after authority revalidation; never equate cached visibility with current consent."
+  },
+  "reclamationGate": [
+    "qualified committed-manifest recovery",
+    "current control/tombstone reconciliation",
+    "active-reader and pending-flight safety",
+    "export and disclosure complete",
+    "measured recovery objective",
+    "independent migration/reclamation review"
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "profiles": [
+    {
+      "id": "imported-tokens-v1",
+      "source": "crates/aicharts-protocol/src/lib.rs",
+      "grain": "deduplicated provider occurrence",
+      "totalPartition": [
+        "input",
+        "cache-read",
+        "cache-write-5m",
+        "cache-write-1h",
+        "output-inclusive"
+      ],
+      "subsets": {
+        "reasoning": "output-inclusive"
+      },
+      "unknown": "No known model, provider account, costs, timing, context, request-enumeration or complete scan claim.",
+      "coverage": "partial"
+    },
+    {
+      "id": "client-stats-v2",
+      "source": "lib/usage/stats-contract.ts",
+      "grain": "client/provider/model/basis/UTC-day aggregate over heterogeneous source records",
+      "totalPartition": [
+        "input",
+        "cacheRead",
+        "cacheWrite",
+        "output-exclusive-reasoning",
+        "reasoning"
+      ],
+      "subsets": {},
+      "unknown": "Provider/model/cost/duration remain nullable; missing metric coverage must not become measured zero. Generic record count is not a request count.",
+      "coverage": "source status plus per-row breakdownCoverage and tokenBasis"
+    }
+  ],
+  "conversionRules": [
+    "Only convert when subset and disjoint-partition evidence is known. Never add reasoning twice.",
+    "Do not invent cache-write TTL where only aggregate write volume exists.",
+    "Retain distinct cost evidence cohorts and per-metric eligible denominators.",
+    "Daily UTC aggregates cannot establish arbitrary timezone rebuckets, exact request quantiles or lineage.",
+    "Canonical integer counts use exact arithmetic and decimal-string transport; conversion beyond representability refuses."
+  ]
+}
