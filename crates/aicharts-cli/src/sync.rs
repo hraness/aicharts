@@ -178,7 +178,7 @@ impl Report {
                 serde_json::json!({
                     "revision":c.revision.to_string(), "sourcesUpdated":c.sources_updated,
                     "occurrencesChanged":c.occurrences_changed,"sourcesSkipped":c.sources_skipped,
-                    "sourcesWithDeferredTail":c.deferred_tails,"linesRead":c.lines_read,
+                    "sourcesWithDeferredTail":c.deferred_tails,"sourcesConflicted":c.sources_conflicted,"linesRead":c.lines_read,
                     "bytesScanned":c.bytes_scanned,
                 })
             });

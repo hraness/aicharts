@@ -124,7 +124,7 @@ fn summary(ledger: &Ledger) -> (u64, u64, u64, u64, u64, u64) {
     )
 }
 fn frame(record: Usage) -> Vec<u8> {
-    collection_frames(collection(vec![record]))
+    collection_frames(&collection(vec![record]))
         .unwrap()
         .into_values()
         .next()
@@ -415,13 +415,12 @@ fn rewritten_document_revisions_merge_by_dominance() {
         Some(Error::InvalidMeasurement)
     );
     assert_eq!(summary(&ledger), (3, 1, 1, 1, 150, 30));
-    // A rewrite that drops the occurrence entirely cannot erase history.
-    assert_eq!(
-        ledger
-            .commit_scans(3, vec![doc_scan(stamp(70), vec![])])
-            .err(),
-        Some(Error::SourceHistoryChanged)
-    );
+    // A rewrite that drops the occurrence is absorbed: the retained frame
+    // keeps the dominant measurement so history cannot shrink or erase.
+    ledger
+        .commit_scans(3, vec![doc_scan(stamp(70), vec![])])
+        .unwrap();
+    assert_eq!(summary(&ledger), (4, 1, 1, 1, 150, 30));
 }
 
 #[test]
@@ -435,7 +434,7 @@ fn explicit_transaction_failure_rolls_back_checkpoint_measurements_and_pending()
         ledger
             .commit_with(
                 1,
-                vec![scan(1, 200, vec![usage(1, 20), usage(2, 30)])],
+                &[scan(1, 200, vec![usage(1, 20), usage(2, 30)])],
                 || Err(Error::Storage)
             )
             .err(),
@@ -783,13 +782,9 @@ fn process_death_child() {
         .execute_batch("PRAGMA cache_size=1; PRAGMA cache_spill=ON;")
         .unwrap();
     ledger
-        .commit_with(
-            1,
-            vec![scan(1, 200, vec![usage(1, 20), usage(2, 30)])],
-            || {
-                std::process::exit(73);
-            },
-        )
+        .commit_with(1, &[scan(1, 200, vec![usage(1, 20), usage(2, 30)])], || {
+            std::process::exit(73);
+        })
         .unwrap();
     panic!("crash injection unexpectedly returned");
 }
