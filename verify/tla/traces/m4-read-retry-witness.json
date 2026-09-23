@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "case": "m4-read-retry-witness",
+  "invariant": "NoReadRetryWitness",
+  "provenance": "TLC 1.7.4 structured output; TLA values retained verbatim, not production adapter replay",
+  "states": [
+    {
+      "index": 1,
+      "action": "Init",
+      "location": "Initial predicate",
+      "state": "/\\ detailedStage = \"idle\"\n/\\ retrySeen = FALSE\n/\\ legacyStored = FALSE\n/\\ snapshotTokens = 0\n/\\ readDone = FALSE\n/\\ visible = {}"
+    },
+    {
+      "index": 2,
+      "action": "SeedForeignLegacy",
+      "location": "SeedForeignLegacy line 17, col 5 to line 18, col 80 of module M4Contributions",
+      "state": "/\\ detailedStage = \"idle\"\n/\\ retrySeen = FALSE\n/\\ legacyStored = TRUE\n/\\ snapshotTokens = 0\n/\\ readDone = FALSE\n/\\ visible = {}"
+    },
+    {
+      "index": 3,
+      "action": "ReserveDetailed",
+      "location": "ReserveDetailed line 20, col 5 to line 21, col 79 of module M4Contributions",
+      "state": "/\\ detailedStage = \"reserved\"\n/\\ retrySeen = FALSE\n/\\ legacyStored = TRUE\n/\\ snapshotTokens = 0\n/\\ readDone = FALSE\n/\\ visible = {}"
+    },
+    {
+      "index": 4,
+      "action": "FreezeDetailed",
+      "location": "FreezeDetailed line 23, col 5 to line 24, col 79 of module M4Contributions",
+      "state": "/\\ detailedStage = \"frozen\"\n/\\ retrySeen = FALSE\n/\\ legacyStored = TRUE\n/\\ snapshotTokens = 0\n/\\ readDone = FALSE\n/\\ visible = {}"
+    },
+    {
+      "index": 5,
+      "action": "PublishDetailed",
+      "location": "PublishDetailed line 26, col 5 to line 28, col 63 of module M4Contributions",
+      "state": "/\\ detailedStage = \"published\"\n/\\ retrySeen = FALSE\n/\\ legacyStored = TRUE\n/\\ snapshotTokens = 120\n/\\ readDone = FALSE\n/\\ visible = {}"
+    },
+    {
+      "index": 6,
+      "action": "ReadProjection",
+      "location": "ReadProjection line 30, col 5 to line 34, col 75 of module M4Contributions",
+      "state": "/\\ detailedStage = \"published\"\n/\\ retrySeen = FALSE\n/\\ legacyStored = TRUE\n/\\ snapshotTokens = 120\n/\\ readDone = TRUE\n/\\ visible = {\"foreign\"}"
+    },
+    {
+      "index": 7,
+      "action": "RetrySame",
+      "location": "RetrySame line 36, col 5 to line 37, col 83 of module M4Contributions",
+      "state": "/\\ detailedStage = \"published\"\n/\\ retrySeen = TRUE\n/\\ legacyStored = TRUE\n/\\ snapshotTokens = 120\n/\\ readDone = TRUE\n/\\ visible = {\"foreign\"}"
+    }
+  ],
+  "kind": "witness",
+  "moduleSha256": "10e237929d58ac1b381360fff947fceb5fdfa9613f61513e9a40531f572da77b",
+  "configSha256": "39d666caf684df5a2471a1e7648c7ea9b8cb6b5a64f70fa2b4feed9783e6b5cd",
+  "counts": {
+    "generated": 8,
+    "distinct": 8,
+    "queued": 1
+  },
+  "tlcArtifactSha256": "936a262061c914694dfd669a543be24573c45d5aa0ff20a8b96b23d01e050e88"
+}

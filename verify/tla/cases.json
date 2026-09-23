@@ -1,0 +1,245 @@
+{
+  "schemaVersion": 1,
+  "claim": "finite-baseline-model-evidence-only",
+  "bounds": {
+    "workers": 1,
+    "heapMiB": 256,
+    "timeoutMs": 30000,
+    "maxOutputBytes": 1048576,
+    "maxDistinctStates": 100000
+  },
+  "cases": [
+    {
+      "id": "m1-expired-live-lease",
+      "module": "M1Restore",
+      "kind": "counterexample",
+      "invariant": "DrainIsQuiescent",
+      "requiredActions": [
+        "Acquire",
+        "AdvanceClock",
+        "Expire",
+        "ObserveDrain"
+      ],
+      "minTraceStates": 6,
+      "config": "configs/m1-expired-live-lease.cfg",
+      "minDistinctStates": 3,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m1-late-sql-after-publish",
+      "module": "M1Restore",
+      "kind": "counterexample",
+      "invariant": "NoPostRestoreSQLCommit",
+      "requiredActions": [
+        "Acquire",
+        "Expire",
+        "Restore",
+        "PublishEpoch",
+        "SQLCommit"
+      ],
+      "minTraceStates": 10,
+      "config": "configs/m1-late-sql-after-publish.cfg",
+      "minDistinctStates": 3,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m1-unfenced-persistent-effect",
+      "module": "M1Restore",
+      "kind": "counterexample",
+      "invariant": "NoUnfencedPersistentEffect",
+      "requiredActions": [
+        "Close",
+        "StartUnfencedMaintenance",
+        "UnfencedPersistentWrite"
+      ],
+      "minTraceStates": 4,
+      "config": "configs/m1-unfenced-persistent-effect.cfg",
+      "minDistinctStates": 3,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m1-structural-sanity",
+      "module": "M1Restore",
+      "kind": "sanity",
+      "invariant": null,
+      "requiredActions": [],
+      "minTraceStates": 0,
+      "config": "configs/m1-structural-sanity.cfg",
+      "minDistinctStates": 5,
+      "expectedDistinctStates": 2751
+    },
+    {
+      "id": "m1-healthy-settlement-witness",
+      "module": "M1Restore",
+      "kind": "witness",
+      "invariant": "NoHealthySettlementWitness",
+      "requiredActions": [
+        "Acquire",
+        "Dispatch",
+        "ProviderReturns",
+        "SQLCommit",
+        "Release"
+      ],
+      "minTraceStates": 6,
+      "config": "configs/m1-healthy-settlement-witness.cfg",
+      "minDistinctStates": 3,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m1-permitted-orphan-witness",
+      "module": "M1Restore",
+      "kind": "witness",
+      "invariant": "NoPermittedOrphanWitness",
+      "requiredActions": [
+        "Acquire",
+        "Dispatch",
+        "SettleWithoutContinuation",
+        "ObserveDrain",
+        "Restore",
+        "PublishEpoch",
+        "LateImmutableOrphan"
+      ],
+      "minTraceStates": 9,
+      "config": "configs/m1-permitted-orphan-witness.cfg",
+      "minDistinctStates": 3,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m4-foreign-population-loss",
+      "module": "M4Contributions",
+      "kind": "counterexample",
+      "invariant": "ForeignPopulationPreserved",
+      "requiredActions": [
+        "SeedForeignLegacy",
+        "ReserveDetailed",
+        "FreezeDetailed",
+        "PublishDetailed",
+        "ReadProjection"
+      ],
+      "minTraceStates": 6,
+      "config": "configs/m4-foreign-population-loss.cfg",
+      "minDistinctStates": 3,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m4-contributions-structural-sanity",
+      "module": "M4Contributions",
+      "kind": "sanity",
+      "invariant": null,
+      "requiredActions": [],
+      "minTraceStates": 0,
+      "config": "configs/m4-contributions-structural-sanity.cfg",
+      "minDistinctStates": 5,
+      "expectedDistinctStates": 8
+    },
+    {
+      "id": "m4-proven-overlap-sanity",
+      "module": "M4Contributions",
+      "kind": "sanity",
+      "invariant": null,
+      "requiredActions": [],
+      "minTraceStates": 0,
+      "config": "configs/m4-proven-overlap-sanity.cfg",
+      "minDistinctStates": 5,
+      "expectedDistinctStates": 8
+    },
+    {
+      "id": "m4-read-retry-witness",
+      "module": "M4Contributions",
+      "kind": "witness",
+      "invariant": "NoReadRetryWitness",
+      "requiredActions": [
+        "SeedForeignLegacy",
+        "ReserveDetailed",
+        "FreezeDetailed",
+        "PublishDetailed",
+        "ReadProjection",
+        "RetrySame"
+      ],
+      "minTraceStates": 7,
+      "config": "configs/m4-read-retry-witness.cfg",
+      "minDistinctStates": 3,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m4-aba-resurrection",
+      "module": "M4Supersession",
+      "kind": "counterexample",
+      "invariant": "SupersededCannotReturn",
+      "requiredActions": [
+        "ReserveFirstA",
+        "Supersede",
+        "ReserveB",
+        "Supersede",
+        "ReplayA"
+      ],
+      "minTraceStates": 6,
+      "config": "configs/m4-aba-resurrection.cfg",
+      "minDistinctStates": 3,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m4-aba-double-charge",
+      "module": "M4Supersession",
+      "kind": "counterexample",
+      "invariant": "ChargeEachIntentOnce",
+      "requiredActions": [
+        "ReserveFirstA",
+        "Supersede",
+        "ReserveB",
+        "Supersede",
+        "ReplayA"
+      ],
+      "minTraceStates": 6,
+      "config": "configs/m4-aba-double-charge.cfg",
+      "minDistinctStates": 3,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m4-supersession-structural-sanity",
+      "module": "M4Supersession",
+      "kind": "sanity",
+      "invariant": null,
+      "requiredActions": [],
+      "minTraceStates": 0,
+      "config": "configs/m4-supersession-structural-sanity.cfg",
+      "minDistinctStates": 5,
+      "expectedDistinctStates": 23
+    },
+    {
+      "id": "m4-successful-retry-witness",
+      "module": "M4Supersession",
+      "kind": "witness",
+      "invariant": "NoSuccessfulRetryWitness",
+      "requiredActions": [
+        "ReserveFirstA",
+        "RetrySame",
+        "Freeze",
+        "Publish"
+      ],
+      "minTraceStates": 5,
+      "config": "configs/m4-successful-retry-witness.cfg",
+      "minDistinctStates": 3,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m4-capacity-refusal-witness",
+      "module": "M4Supersession",
+      "kind": "witness",
+      "invariant": "NoCapacityRefusalWitness",
+      "requiredActions": [
+        "ReserveFirstA",
+        "Supersede",
+        "ReserveB",
+        "Supersede",
+        "ReplayA",
+        "Supersede",
+        "RefuseAtCapacity"
+      ],
+      "minTraceStates": 8,
+      "config": "configs/m4-capacity-refusal-witness.cfg",
+      "minDistinctStates": 3,
+      "expectedDistinctStates": null
+    }
+  ]
+}

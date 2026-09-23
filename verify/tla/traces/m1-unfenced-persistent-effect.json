@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "case": "m1-unfenced-persistent-effect",
+  "invariant": "NoUnfencedPersistentEffect",
+  "provenance": "TLC 1.7.4 structured output; TLA values retained verbatim, not production adapter replay",
+  "states": [
+    {
+      "index": 1,
+      "action": "Init",
+      "location": "Initial predicate",
+      "state": "/\\ publications = {}\n/\\ epoch = 0\n/\\ leases = {}\n/\\ settledGood = {}\n/\\ unfencedWrite = FALSE\n/\\ restored = FALSE\n/\\ maintenance = \"idle\"\n/\\ orphanWitness = FALSE\n/\\ objects = {}\n/\\ drainClaim = FALSE\n/\\ lateSQL = FALSE\n/\\ phase = \"open\"\n/\\ capturedEpoch = (opA :> 0 @@ opB :> 0)\n/\\ orphans = {}\n/\\ stage = (opA :> \"idle\" @@ opB :> \"idle\")\n/\\ clock = 0"
+    },
+    {
+      "index": 2,
+      "action": "Close",
+      "location": "Close line 93, col 5 to line 96, col 75 of module M1Restore",
+      "state": "/\\ publications = {}\n/\\ epoch = 0\n/\\ leases = {}\n/\\ settledGood = {}\n/\\ unfencedWrite = FALSE\n/\\ restored = FALSE\n/\\ maintenance = \"idle\"\n/\\ orphanWitness = FALSE\n/\\ objects = {}\n/\\ drainClaim = FALSE\n/\\ lateSQL = FALSE\n/\\ phase = \"closed\"\n/\\ capturedEpoch = (opA :> 0 @@ opB :> 0)\n/\\ orphans = {}\n/\\ stage = (opA :> \"idle\" @@ opB :> \"idle\")\n/\\ clock = 0"
+    },
+    {
+      "index": 3,
+      "action": "StartUnfencedMaintenance",
+      "location": "StartUnfencedMaintenance line 118, col 5 to line 122, col 62 of module M1Restore",
+      "state": "/\\ publications = {}\n/\\ epoch = 0\n/\\ leases = {}\n/\\ settledGood = {}\n/\\ unfencedWrite = FALSE\n/\\ restored = FALSE\n/\\ maintenance = \"started\"\n/\\ orphanWitness = FALSE\n/\\ objects = {}\n/\\ drainClaim = FALSE\n/\\ lateSQL = FALSE\n/\\ phase = \"closed\"\n/\\ capturedEpoch = (opA :> 0 @@ opB :> 0)\n/\\ orphans = {}\n/\\ stage = (opA :> \"idle\" @@ opB :> \"idle\")\n/\\ clock = 0"
+    },
+    {
+      "index": 4,
+      "action": "UnfencedPersistentWrite",
+      "location": "UnfencedPersistentWrite line 125, col 5 to line 128, col 47 of module M1Restore",
+      "state": "/\\ publications = {}\n/\\ epoch = 0\n/\\ leases = {}\n/\\ settledGood = {}\n/\\ unfencedWrite = TRUE\n/\\ restored = FALSE\n/\\ maintenance = \"done\"\n/\\ orphanWitness = FALSE\n/\\ objects = {}\n/\\ drainClaim = FALSE\n/\\ lateSQL = FALSE\n/\\ phase = \"closed\"\n/\\ capturedEpoch = (opA :> 0 @@ opB :> 0)\n/\\ orphans = {}\n/\\ stage = (opA :> \"idle\" @@ opB :> \"idle\")\n/\\ clock = 0"
+    }
+  ],
+  "kind": "counterexample",
+  "moduleSha256": "79ccdd627f585fe49a64a8c541de381c392f8d769862ebc34eb8fab4ca6eb82c",
+  "configSha256": "13ab8c348e0d4133a389e0c5bc42aed70e65e403a2c5f063f9162215276aa4e4",
+  "counts": {
+    "generated": 54,
+    "distinct": 40,
+    "queued": 23
+  },
+  "tlcArtifactSha256": "936a262061c914694dfd669a543be24573c45d5aa0ff20a8b96b23d01e050e88"
+}

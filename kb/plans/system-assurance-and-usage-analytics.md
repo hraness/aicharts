@@ -442,7 +442,7 @@ The integration owner controls manifests/lockfiles, shared schemas/capacity/metr
 
 ### Phase 2A — Baseline protocol counterexamples
 
-- **Status:** Not started
+- **Status:** Complete
 - **Depends on:** 0
 - **Objective:** Restore and contribution/supersession defects have executable counterexamples and frozen safety properties before their protocol repairs are accepted.
 - **Scope:** Initial M1/M4 specifications, finite TLC configurations and baseline trace fixtures in verify/tla.
@@ -454,7 +454,7 @@ The integration owner controls manifests/lockfiles, shared schemas/capacity/metr
 
 ### Phase 1A — Native correctness repairs
 
-- **Status:** Not started
+- **Status:** In progress
 - **Depends on:** 0
 - **Objective:** Successful collection always produces a reopenable ledger and truthful scan/coverage evidence.
 - **Scope:** F01, F05–F08, initial F14 custody regression; core merge, ledger warning/migration, CLI collection/refresh.
@@ -466,7 +466,7 @@ The integration owner controls manifests/lockfiles, shared schemas/capacity/metr
 
 ### Phase 1B — Cloud safety and ownership repairs
 
-- **Status:** Not started
+- **Status:** In progress
 - **Depends on:** 0, 2A
 - **Objective:** Restore, retry, migration and revocation preserve authority and every distinct contribution.
 - **Scope:** F02–F04, F09–F13; admission/enrollment/stats/fence effect boundaries and capacity parser compatibility.
@@ -478,7 +478,7 @@ The integration owner controls manifests/lockfiles, shared schemas/capacity/metr
 
 ### Phase 1C — Metric truth and private browser lifetime
 
-- **Status:** Not started
+- **Status:** In progress
 - **Depends on:** 0
 - **Objective:** Existing UI summaries express valid populations and never optimistically reuse another identity's report.
 - **Scope:** F15–F17/F23 and shared-image qualifiers.
@@ -695,3 +695,13 @@ The synthetic benchmark admits 8,192 and 65,536 distinct rows through the produc
 ### Phase 0 — Accepted contracts and corpus
 
 Independent native/cloud/formal-owner reviews converged after repairs to source-observability classifications, cash rounding, manual plan allowances, gauge correction, retention controls, recursive schema discovery and bounded corpus execution. The checked inventory contains 241 planned metric rows across 17 families, 723 named acceptance obligations, 26 findings, 16 invariants, 35 named capacities, 35 SQL/object surfaces and all 55 source selectors. Qualification requires attributed current-source execution receipts; no metric is marked implemented or qualified. The native corpus reproduced five historical failures; the cloud/formula corpus reproduced seven. Historical replay and repaired-code checks are separate. Focused validation passed: registry plus 11 negative-control tests (51 assertions), native seven tests, cloud ordinary and explicit historical tests, cost-surface check, typecheck, ESLint and diff check. The root will run the unchanged aggregate/final gate after implementation converges; historical audit receipts are not reused for that gate.
+
+### Parallel repair wave
+
+Phase 0 committed as db10d74. Native owner began Phase 1A; formal owner began Phase 2A. The integration owner began Phase 1C formulas, private transport binding and UI lifetime, with a disjoint cloud-owner lane for the pure account-generation coordinator. Phase 1B awaits the reviewed Phase 2A safety contract. No live data or activation changes are involved.
+
+### Phase 2A — Accepted historical protocol evidence
+
+Completed 15 pinned TLC expectations: six intended safety counterexamples, four complete sanity checks (2,751 / 8 / 8 / 23 distinct states), and five reachability controls. The runner stages exact input bytes, rejects incomplete or unexpected outcomes, and binds receipts to source/configuration/tool hashes. Eight focused tests (87 assertions), ESLint and strict targeted TypeScript passed. Independent cloud-owner review verified final receipt `target/assurance/tla/run-nUXdGt/receipt.json`, all source provenance, traces and frozen repair obligations without edits. Root reviewed the obligations and wired `usage:formal:tla`; Phase 1B opened. These baseline results establish failure mechanisms, not production refinement or unbounded correctness; M1 still needs actual Durable Object fault replay in Phase 2B.
+
+Phase 1C applies the same response-bound generation rule to the daily and consent views as well as stats/account controls. A consent mutation additionally conditions the intended account against the live trusted session before dispatch; it never derives authority from the browser or retries a mutation. This adjacent scope closes the same F23 identity-lifetime boundary across all private views.

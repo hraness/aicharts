@@ -108,6 +108,7 @@
     "outputs": "bun -e 'const {mkdirSync}=require(\"node:fs\");const p=require(\"node:path\").join(process.cwd(),\"outputs\");mkdirSync(p,{recursive:true});console.log(p)'",
     "skill:support:sync": "bun run scripts/skill-support-runtime.ts",
     "skill:support:check": "bun run scripts/skill-support-runtime.ts --check",
+    "usage:formal:tla": "bun scripts/assurance-tla.ts",
     "usage:assurance:check": "bun run scripts/assurance-registry.ts && python3 scripts/assurance-native-baseline.py"
   },
   "dependencies": {

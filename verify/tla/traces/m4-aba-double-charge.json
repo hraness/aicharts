@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "case": "m4-aba-double-charge",
+  "invariant": "ChargeEachIntentOnce",
+  "provenance": "TLC 1.7.4 structured output; TLA values retained verbatim, not production adapter replay",
+  "states": [
+    {
+      "index": 1,
+      "action": "Init",
+      "location": "Initial predicate",
+      "state": "/\\ pending = \"none\"\n/\\ lastSuperseded = \"none\"\n/\\ retrySeen = FALSE\n/\\ seen = {}\n/\\ capacityRefused = FALSE\n/\\ superseded = {}\n/\\ frozen = FALSE\n/\\ committed = \"none\"\n/\\ charges = [A |-> 0, B |-> 0]"
+    },
+    {
+      "index": 2,
+      "action": "ReserveFirstA",
+      "location": "ReserveFirstA line 22, col 18 to line 22, col 45 of module M4Supersession",
+      "state": "/\\ pending = \"A\"\n/\\ lastSuperseded = \"none\"\n/\\ retrySeen = FALSE\n/\\ seen = {\"A\"}\n/\\ capacityRefused = FALSE\n/\\ superseded = {}\n/\\ frozen = FALSE\n/\\ committed = \"none\"\n/\\ charges = [A |-> 1, B |-> 0]"
+    },
+    {
+      "index": 3,
+      "action": "Supersede",
+      "location": "Supersede line 26, col 5 to line 30, col 70 of module M4Supersession",
+      "state": "/\\ pending = \"none\"\n/\\ lastSuperseded = \"A\"\n/\\ retrySeen = FALSE\n/\\ seen = {\"A\"}\n/\\ capacityRefused = FALSE\n/\\ superseded = {\"A\"}\n/\\ frozen = FALSE\n/\\ committed = \"none\"\n/\\ charges = [A |-> 1, B |-> 0]"
+    },
+    {
+      "index": 4,
+      "action": "ReserveB",
+      "location": "ReserveB line 23, col 13 to line 23, col 67 of module M4Supersession",
+      "state": "/\\ pending = \"B\"\n/\\ lastSuperseded = \"A\"\n/\\ retrySeen = FALSE\n/\\ seen = {\"A\", \"B\"}\n/\\ capacityRefused = FALSE\n/\\ superseded = {\"A\"}\n/\\ frozen = FALSE\n/\\ committed = \"none\"\n/\\ charges = [A |-> 1, B |-> 1]"
+    },
+    {
+      "index": 5,
+      "action": "Supersede",
+      "location": "Supersede line 26, col 5 to line 30, col 70 of module M4Supersession",
+      "state": "/\\ pending = \"none\"\n/\\ lastSuperseded = \"B\"\n/\\ retrySeen = FALSE\n/\\ seen = {\"A\", \"B\"}\n/\\ capacityRefused = FALSE\n/\\ superseded = {\"A\", \"B\"}\n/\\ frozen = FALSE\n/\\ committed = \"none\"\n/\\ charges = [A |-> 1, B |-> 1]"
+    },
+    {
+      "index": 6,
+      "action": "ReplayA",
+      "location": "ReplayA line 24, col 12 to line 24, col 68 of module M4Supersession",
+      "state": "/\\ pending = \"A\"\n/\\ lastSuperseded = \"B\"\n/\\ retrySeen = FALSE\n/\\ seen = {\"A\", \"B\"}\n/\\ capacityRefused = FALSE\n/\\ superseded = {\"A\", \"B\"}\n/\\ frozen = FALSE\n/\\ committed = \"none\"\n/\\ charges = [A |-> 2, B |-> 1]"
+    }
+  ],
+  "kind": "counterexample",
+  "moduleSha256": "f5b9e66f50790ec06b0e1289e3ce16850e1a6c9f8a0a12a977feb37db6193805",
+  "configSha256": "ab96ae8692ba50ccd44184b9454b2a7163b8b792d00c4d24dfbe841a7c49120c",
+  "counts": {
+    "generated": 16,
+    "distinct": 13,
+    "queued": 3
+  },
+  "tlcArtifactSha256": "936a262061c914694dfd669a543be24573c45d5aa0ff20a8b96b23d01e050e88"
+}

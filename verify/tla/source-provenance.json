@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "baselineCommit": "a5bec6415ce640a61495db57bc9c2ce83fb83021",
+  "phaseZeroCommit": "db10d74117b82eaf8075788742fd99afc47a290e",
+  "sourceSha256": {
+    "services/usage-worker/src/restore-fence.ts": "fc469f08f96ae4da47bfbf63e5a51229d6dbf8fa731fcfdc3a632415bc70b28e",
+    "services/usage-worker/src/enrollment.ts": "a4dedd36e5f62d3b110f9684f1c544416de34e07f1fb1bb3cff922dd32ef3473",
+    "services/usage-worker/src/admission-state.ts": "d0b34719140a081217ac0eccb7910e281f8b4b6302d007c261a4e2b62ad5f5d3",
+    "services/usage-worker/src/stats-state.ts": "329b4f16e433fa0f93ec074a016dbeb3e134e0ccfeffbca553361ee17e234899",
+    "services/usage-worker/src/stats-admission.ts": "4a7374acd90a96ff2d1bbd7ddf3b4ce25078b8c721b6943a51c27ca9e62e367b"
+  },
+  "sourceMapping": "README.md",
+  "m1Evidence": "Source-mechanism mapping only; no fence Durable Object failure schedule was executed.",
+  "m4Evidence": {
+    "corpus": "fixtures/usage/assurance/cloud/baseline.json",
+    "runner": "scripts/assurance-cloud-baseline.ts",
+    "findings": [
+      "F02",
+      "F11"
+    ],
+    "scope": "Executed production-state methods with synthetic SQLite; network order remains source-traced, not workerd replay."
+  }
+}
