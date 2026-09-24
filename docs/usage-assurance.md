@@ -94,6 +94,37 @@ remain trusted boundaries. See the [theorem route](../verify/lean/README.md) and
 These commands require their pinned local tools; installing tools is a separate
 step from executing or accepting a proof.
 
+The production callers route their kernel arithmetic through the same
+functions the proofs cover. The detailed CLI report converts a source's
+floating-point cost through `scaled_decimal`, which scales the shortest
+round-trip decimal literal and rounds half-up in integer arithmetic; the
+retired `f64` product kept 124 micro-USD for the literal `0.0001245` and
+fabricated a micro-USD near 2^53. Row totals, per-source summaries, the Claude
+cache TTL partition, Devin transcript totals, the ledger status counters and the
+CLI collection counters use `checked_sum`, `checked_add_bounded` and
+`CacheWrites::with_ttl`; every u64 or 24-digit overflow is a refusal, never a
+wrapped or silently absent number. A malformed checked-in tariff rate refuses
+that client's projection, so the source reports `incomplete` with a warning and
+its measured health records the refusal; the retired parser read such a rate
+as an absent tariff and left the estimate silently unknown. Each report row's
+reported-cost, estimated-cost and timed cohorts are paired through
+`match_quantities` with the selection the shared explorer applies (a known
+token basis, complete breakdown coverage and wholly covered records), and the
+TypeScript explorer applies the same pairing before any ratio. These routings
+are exercised by unit tests and by the differential vectors below; they are
+not separately live-qualified against real client stores.
+
+`bun run kernel-vectors:check` regenerates five seeded vector files under
+`fixtures/usage/assurance/kernel-vectors/` (wire token totals, bounded checked
+addition, cache TTL splits, exact-ratio rounding and micro-USD pricing, at least
+2,000 cases each including the 10^12 wire limit, the 24-digit profile limit and
+u64/u128 edges) from plain BigInt references and refuses any drift. The Rust
+kernel evaluates every vector in `crates/aicharts-metrics/src/vectors_tests.rs`
+and the shared TypeScript evaluates the same files in
+`lib/usage/kernel-vectors.test.ts`; each law must witness every declared
+outcome. The vectors are synthetic and check agreement of three
+implementations, not tariff provenance or provider quantities.
+
 Provision the pinned tools with `bun scripts/assurance-tools.ts`; use
 `--verify --offline` to inspect an existing installation. The
 [installation contract](../verify/tools/README.md) records platform, archive,
