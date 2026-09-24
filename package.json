@@ -113,7 +113,9 @@
     "usage:formal:kani": "bun scripts/assurance-kani.ts",
     "usage:formal:theorems": "bun scripts/assurance-theorems.ts",
     "usage:adapters:check": "bun scripts/assurance-adapters.ts",
-    "usage:conformance:check": "bun scripts/assurance-conformance.ts"
+    "usage:conformance:check": "bun scripts/assurance-conformance.ts",
+    "usage:deployment:verify": "bun scripts/usage-deployment-verify.ts",
+    "usage:claims:check": "bun scripts/assurance-claims.ts"
   },
   "dependencies": {
     "@hraness/design-kit": "github:hraness/design-kit#v0.15.0",
