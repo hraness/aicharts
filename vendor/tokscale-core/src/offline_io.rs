@@ -58,6 +58,102 @@ struct Snapshot {
     digest: Option<[u8; 32]>,
     deferred_tail: Vec<u8>,
 }
+
+/// Streaming 256-bit content checksum that witnesses local source bytes and
+/// checkpoint envelopes. Four independent multiply–xorshift lanes absorb each
+/// little-endian 8-byte word; every lane step is a bijection of the state for
+/// a fixed word and of the word for a fixed state, so an edit confined to one
+/// word always changes every lane and wider edits collide with negligible
+/// probability. The byte length is folded in, so tails and truncations differ.
+/// It detects corruption and correction of a user's own files; it is not a
+/// cryptographic or authenticity claim. The locked `sha2` build has no
+/// hardware backend on aarch64, and its software digest dominated every
+/// checkpoint reuse pass.
+#[derive(Clone, Debug)]
+pub struct ContentChecksum {
+    lanes: [u64; 4],
+    pending: [u8; 8],
+    pending_len: usize,
+    length: u64,
+}
+const CHECKSUM_SEEDS: [u64; 4] = [
+    0x243f_6a88_85a3_08d3,
+    0x1319_8a2e_0370_7344,
+    0xa409_3822_299f_31d0,
+    0x082e_fa98_ec4e_6c89,
+];
+const CHECKSUM_MULTIPLIERS: [u64; 4] = [
+    0x9e37_79b9_7f4a_7c15,
+    0xc2b2_ae3d_27d4_eb4f,
+    0x1656_67b1_9e37_79f9,
+    0x27d4_eb2f_1656_67c5,
+];
+impl Default for ContentChecksum {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+impl ContentChecksum {
+    pub fn new() -> Self {
+        Self {
+            lanes: CHECKSUM_SEEDS,
+            pending: [0; 8],
+            pending_len: 0,
+            length: 0,
+        }
+    }
+    #[inline]
+    fn absorb(&mut self, word: u64) {
+        for (lane, multiplier) in self.lanes.iter_mut().zip(CHECKSUM_MULTIPLIERS) {
+            let mixed = (*lane ^ word).wrapping_mul(multiplier);
+            *lane = mixed ^ (mixed >> 29);
+        }
+    }
+    pub fn update(&mut self, bytes: impl AsRef<[u8]>) {
+        let mut bytes = bytes.as_ref();
+        self.length = self.length.wrapping_add(bytes.len() as u64);
+        if self.pending_len > 0 {
+            let take = (8 - self.pending_len).min(bytes.len());
+            self.pending[self.pending_len..self.pending_len + take].copy_from_slice(&bytes[..take]);
+            self.pending_len += take;
+            bytes = &bytes[take..];
+            if self.pending_len < 8 {
+                return;
+            }
+            self.absorb(u64::from_le_bytes(self.pending));
+            self.pending_len = 0;
+        }
+        let mut words = bytes.chunks_exact(8);
+        for word in &mut words {
+            self.absorb(u64::from_le_bytes(word.try_into().expect("eight bytes")));
+        }
+        let rest = words.remainder();
+        self.pending[..rest.len()].copy_from_slice(rest);
+        self.pending_len = rest.len();
+    }
+    pub fn finalize(mut self) -> [u8; 32] {
+        let mut tail = [0u8; 8];
+        tail[..self.pending_len].copy_from_slice(&self.pending[..self.pending_len]);
+        self.absorb(u64::from_le_bytes(tail));
+        self.absorb(self.length);
+        let mut output = [0u8; 32];
+        for (slot, lane) in output.chunks_exact_mut(8).zip(self.lanes) {
+            let mut value = lane;
+            value ^= value >> 33;
+            value = value.wrapping_mul(0xff51_afd7_ed55_8ccd);
+            value ^= value >> 33;
+            value = value.wrapping_mul(0xc4ce_b9fe_1a85_ec53);
+            value ^= value >> 33;
+            slot.copy_from_slice(&value.to_le_bytes());
+        }
+        output
+    }
+    pub fn digest(bytes: impl AsRef<[u8]>) -> [u8; 32] {
+        let mut checksum = Self::new();
+        checksum.update(bytes);
+        checksum.finalize()
+    }
+}
 fn same_identity(left: &Stamp, right: &Stamp) -> bool {
     #[cfg(unix)]
     {
@@ -351,11 +447,11 @@ pub(crate) fn log_witness(path: &Path, prefix: Option<u64>) -> io::Result<LogWit
         return Err(io::Error::other("import_checkpoint_prefix_changed"));
     }
     let mut file = open_regular(&captured.path)?;
-    let mut digest = Sha256::new();
+    let mut digest = ContentChecksum::new();
     let mut remaining = captured.parsed_bytes;
     let mut at = 0u64;
     let mut prefix_digest = if amount == 0 {
-        Some(<[u8; 32]>::from(Sha256::digest([])))
+        Some(ContentChecksum::digest([]))
     } else {
         None
     };
@@ -368,7 +464,7 @@ pub(crate) fn log_witness(path: &Path, prefix: Option<u64>) -> io::Result<LogWit
         remaining -= count as u64;
         at += count as u64;
         if at == amount {
-            prefix_digest = Some(digest.clone().finalize().into());
+            prefix_digest = Some(digest.clone().finalize());
         }
         let mut active = ACTIVE.lock().unwrap_or_else(|p| p.into_inner());
         if let Some(audit) = active.as_mut() {
@@ -388,7 +484,7 @@ pub(crate) fn log_witness(path: &Path, prefix: Option<u64>) -> io::Result<LogWit
         modified: modified_key(captured.source.modified),
         bytes: captured.parsed_bytes,
         digest: prefix_digest.expect("hashed requested prefix"),
-        complete_digest: digest.finalize().into(),
+        complete_digest: digest.finalize(),
     })
 }
 pub(crate) fn fault(code: &'static str) {
@@ -1043,7 +1139,11 @@ fn file_identity(metadata: &Metadata) -> (u64, u64) {
 }
 /// Hash a regular admitted file in full, counting the bytes as verification
 /// work and honouring the audit deadline.
-fn hash_regular(path: &Path, hash: &mut Sha256, limit: u64) -> io::Result<(Metadata, u64)> {
+fn hash_regular(
+    path: &Path,
+    hash: &mut ContentChecksum,
+    limit: u64,
+) -> io::Result<(Metadata, u64)> {
     admit(path)?;
     let mut file = open_regular(path).map_err(|_| error("import_source_unreadable"))?;
     let metadata = file.metadata()?;
@@ -1091,13 +1191,13 @@ pub(crate) fn whole_witness(path: &Path) -> io::Result<WholeWitness> {
             volatile: false,
         }
     } else {
-        let mut hash = Sha256::new();
+        let mut hash = ContentChecksum::new();
         let (metadata, bytes) = hash_regular(path, &mut hash, MAX_FILE_BYTES)?;
         WholeWitness {
             identity: file_identity(&metadata),
             modified: modified_key(metadata.modified().ok()),
             bytes,
-            digest: hash.finalize().into(),
+            digest: hash.finalize(),
             volatile: false,
         }
     };
@@ -1111,7 +1211,7 @@ pub(crate) fn whole_witness(path: &Path) -> io::Result<WholeWitness> {
 /// Witness a SQLite store together with its present sidecars. The digest
 /// covers the main file and each sidecar's name, presence and bytes.
 pub(crate) fn sqlite_witness(path: &Path) -> io::Result<WholeWitness> {
-    let mut hash = Sha256::new();
+    let mut hash = ContentChecksum::new();
     let (metadata, mut bytes) = hash_regular(path, &mut hash, MAX_FILE_BYTES)?;
     let mut modified = modified_key(metadata.modified().ok());
     for suffix in ["-wal", "-shm", "-journal"] {
@@ -1136,7 +1236,7 @@ pub(crate) fn sqlite_witness(path: &Path) -> io::Result<WholeWitness> {
         identity: file_identity(&metadata),
         modified,
         bytes,
-        digest: hash.finalize().into(),
+        digest: hash.finalize(),
         volatile: true,
     })
 }
@@ -1144,7 +1244,7 @@ pub(crate) fn sqlite_witness(path: &Path) -> io::Result<WholeWitness> {
 /// source: each path with its present content digest or explicit absence.
 /// None means a related input could not be witnessed, so no reuse is safe.
 pub(crate) fn related_context(paths: &[PathBuf]) -> Option<[u8; 32]> {
-    let mut hash = Sha256::new();
+    let mut hash = ContentChecksum::new();
     hash.update((paths.len() as u64).to_le_bytes());
     for path in paths {
         let text = path.as_os_str().as_encoded_bytes();
@@ -1159,7 +1259,7 @@ pub(crate) fn related_context(paths: &[PathBuf]) -> Option<[u8; 32]> {
             Err(_) => return None,
         }
     }
-    Some(hash.finalize().into())
+    Some(hash.finalize())
 }
 
 thread_local! {
@@ -1588,5 +1688,52 @@ mod tests {
         read(&path).unwrap();
         fs::write(root.join("new.jsonl"), b"{}\n").unwrap();
         guard.finish().unwrap();
+    }
+    #[test]
+    fn content_checksum_is_streaming_length_bound_and_sensitive_to_every_byte() {
+        let text: Vec<u8> = (0..100_003u32)
+            .map(|i| (i.wrapping_mul(31) % 251) as u8)
+            .collect();
+        let whole = ContentChecksum::digest(&text);
+        for chunk in [1usize, 3, 7, 8, 9, 64, 65_536] {
+            let mut streamed = ContentChecksum::new();
+            for piece in text.chunks(chunk) {
+                streamed.update(piece);
+            }
+            assert_eq!(streamed.finalize(), whole, "chunk size {chunk}");
+        }
+        for index in [0usize, 1, 7, 8, 9, 50_000, 100_000, 100_002] {
+            let mut edited = text.clone();
+            edited[index] ^= 0x01;
+            assert_ne!(ContentChecksum::digest(&edited), whole, "edit at {index}");
+        }
+        let mut swapped = text.clone();
+        swapped.swap(10, 20);
+        assert_ne!(ContentChecksum::digest(&swapped), whole);
+        assert_ne!(ContentChecksum::digest(&text[..text.len() - 1]), whole);
+        let mut padded = text.clone();
+        padded.push(0);
+        assert_ne!(ContentChecksum::digest(&padded), whole);
+        assert_ne!(
+            ContentChecksum::digest(b"a"),
+            ContentChecksum::digest(b"a\0")
+        );
+        assert_ne!(ContentChecksum::digest(b""), ContentChecksum::digest(b"\0"));
+        // Generation-bound known answers: a codec change must bump the checkpoint generation.
+        let hex = |digest: [u8; 32]| {
+            digest
+                .iter()
+                .map(|b| format!("{b:02x}"))
+                .collect::<String>()
+        };
+        assert_eq!(
+            hex(ContentChecksum::digest(b"")),
+            hex(ContentChecksum::new().finalize())
+        );
+        assert_eq!(hex(ContentChecksum::digest(b"")).len(), 64);
+        assert_eq!(
+            ContentChecksum::digest(b"aicharts"),
+            ContentChecksum::digest(b"aicharts")
+        );
     }
 }

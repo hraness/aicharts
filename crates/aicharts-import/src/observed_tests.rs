@@ -292,14 +292,14 @@ fn observed_checkpoint_fork_baseline_and_mirrored_file_dedup_survive_restart() {
 
 #[test]
 fn checkpoint_framing_refuses_truncation_lengths_duplicates_and_old_generation() {
-    use sha2::{Digest, Sha256};
+    use tokscale_core::offline::ContentChecksum;
     let (_temp, home, root, file) = fixture();
     fs::write(&file, format!("{}{}", context(), event(1, 10))).unwrap();
     let mut checkpoint = ImportCheckpoint::default();
     observed(&home, &root, &mut checkpoint).result.unwrap();
     let bytes = checkpoint.encode().unwrap();
     let resign = |mut bytes: Vec<u8>| {
-        let digest = Sha256::digest(&bytes[40..]);
+        let digest = ContentChecksum::digest(&bytes[40..]);
         bytes[8..40].copy_from_slice(&digest);
         bytes
     };

@@ -1,15 +1,16 @@
-//! Local-only derived state. The envelope detects torn/corrupt files; its hash
-//! is not an authentication claim. The CLI owns private descriptor-bound I/O.
+//! Local-only derived state. The envelope's content checksum detects torn or
+//! corrupt files; it is not an authentication claim. The CLI owns private
+//! descriptor-bound I/O.
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::io::{self, Write};
 use std::path::{Path, PathBuf};
-use tokscale_core::offline::{OfflineCheckpoint, CHECKPOINT_GENERATION};
+use tokscale_core::offline::{ContentChecksum, OfflineCheckpoint, CHECKPOINT_GENERATION};
 pub use tokscale_core::offline::{
     MAX_CHECKPOINT_BYTES, MAX_CHECKPOINT_FILES, MAX_CHECKPOINT_OBSERVATIONS,
 };
 
-const MAGIC: &[u8; 8] = b"AICHCP02";
+const MAGIC: &[u8; 8] = b"AICHCP03";
 #[derive(Clone, Debug, Default)]
 pub struct ImportCheckpoint {
     pub(crate) state: Option<State>,
@@ -64,7 +65,7 @@ impl ImportCheckpoint {
         state.source.encode_into(&mut body)?;
         let mut bytes = Vec::with_capacity(body.0.len() + 40);
         bytes.extend_from_slice(MAGIC);
-        bytes.extend_from_slice(&Sha256::digest(&body.0));
+        bytes.extend_from_slice(&ContentChecksum::digest(&body.0));
         bytes.extend_from_slice(&body.0);
         let _ = self.encoded.set(bytes);
         Ok(self.encoded.get().expect("installed bounded encoding"))
@@ -73,7 +74,7 @@ impl ImportCheckpoint {
         if bytes.len() > MAX_CHECKPOINT_BYTES
             || bytes.len() <= 44
             || &bytes[..8] != MAGIC
-            || Sha256::digest(&bytes[40..]).as_slice() != &bytes[8..40]
+            || ContentChecksum::digest(&bytes[40..]) != bytes[8..40]
         {
             return Err("import_checkpoint_invalid");
         }

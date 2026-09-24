@@ -4,8 +4,8 @@ pub use crate::offline_checkpoint::{
     MAX_CHECKPOINT_FILES, MAX_CHECKPOINT_OBSERVATIONS,
 };
 pub use crate::offline_io::{
-    ImportWork, ReadReceipt, MAX_BYTES, MAX_FILES, MAX_FILE_BYTES, MAX_LOG_BYTES, MAX_ROWS,
-    MAX_SQLITE_BYTES,
+    ContentChecksum, ImportWork, ReadReceipt, MAX_BYTES, MAX_FILES, MAX_FILE_BYTES, MAX_LOG_BYTES,
+    MAX_ROWS, MAX_SQLITE_BYTES,
 };
 use crate::{LocalParseOptions, ScannerSettings, UnifiedMessage};
 use std::path::{Path, PathBuf};
