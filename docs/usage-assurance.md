@@ -361,3 +361,28 @@ footprint reached 1,079.7 MB while holding two full reports in the diagnostic
 episode, so physical memory budgeting and maximum-report optimization remain
 open. These measurements are bounded synthetic workload evidence, not a hosted
 SLO or modest-hardware p95 claim.
+
+## Verification matrix
+
+Each evidence class has one command, one receipt location and one stated
+limit. Everything below is implemented and passes locally on the recorded tree;
+none of it is live-qualified, and no receipt from one class substitutes for
+another.
+
+| Command | Evidence | Receipt | What a pass means |
+| --- | --- | --- | --- |
+| `bun run test:property` | fast-check laws in `lib/*.property.test.ts` and `lib/*/*.property.test.ts` (108 tests, 16 files) | test output only | Sampled laws hold for the generated inputs. Bun does not expand globs, so the script lists both depths; `scripts/assurance-fuzz.test.ts` fails when a property file sits outside them. |
+| `bun run usage:fuzz` | seeded stateful runs in `crates/aicharts-fuzz`: ledger command sequences against real SQLite, usage and admission wire round trips with byte corruption and single-violation injection, metrics arithmetic, token-partition and dominance laws | `target/assurance/fuzz/run-*/receipt.json` | Four named seeds (`baseline`, `rewrite-heavy`, `conflict-heavy`, `settlement-race`) ran the configured iterations (default 1,000; ledger commands capped at 5,000) with one receipt line per suite and seed and no counterexample. `--iterations`, `--seed <name\|decimal>`, `--ledger-commands` and `--timeout-minutes` replay a failure exactly. Sampled evidence, not a proof. |
+| `bun run usage:fault-matrix` | eleven existing injected-failure suites listed in `verify/assurance/fault-matrix.json` | `target/assurance/fault-matrix/run-*/receipt.json` | Every listed test still exists under its exact name, every suite ran through the worker tool command or exact cargo filters, and every summary is complete and passing. Failure classes covered by passing suites: crash before effect, crash after effect, lost reply, restore race and capacity exhaustion. `disk-full` is a declared gap: no existing test injects a full disk, and capacity exhaustion is recorded as the nearest analog, not as disk-full evidence. macOS-only suites are `skipped-platform` elsewhere, never passed. |
+| `bun run security:check` | `cargo audit` on both Cargo locks, `bun audit`, dependency pins (release tags or full commits for `github:` packages, exact hashed lockfile entries, checksummed registry crates, pinned git crates, full-commit action pins, pinned `bunx` targets), a shape-based secret scan, and a privacy canary over the PostHog import boundary and the analytics and discovery surfaces | `target/assurance/security/run-*/receipt.json` | No published advisory, no unpinned dependency, no credential-shaped literal outside a value that names itself synthetic or a fixture directory whose README documents synthetic data, and no raw location, referrer, storage or private identifier on the canary surfaces. Findings carry a path and rule, never the matched bytes. A missing tool fails the run unless `--allow-missing-tools` is stated; the workflows never state it. |
+| `bun run usage:formal:tla`, `usage:formal:kani`, `usage:formal:theorems`, `usage:conformance:check` | see the sections above | `target/assurance/{tla,kani,theorems,conformance}/` | Unchanged; the nightly workflow runs the TLA suite with `--profile nightly`. |
+
+`.github/workflows/nightly-assurance.yml` runs daily at 09:00 UTC and on
+dispatch with a three-hour budget: it provisions the formal tools and
+`cargo-audit` 0.22.2, then runs the nightly TLA profile, `usage:fuzz` at 200,000
+iterations, `usage:fault-matrix`, `security:check` and, when
+`scripts/usage-perf.ts` exists, `usage:perf`, and retains every receipt for
+thirty days. `.github/workflows/security.yml` runs only `security:check` on pull
+requests and pushes to `main`; it is informational and not a required check.
+A green nightly run is evidence for that day's tree and advisory database; it
+does not qualify a deployment.

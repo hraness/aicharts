@@ -77,6 +77,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "aicharts-fuzz"
+version = "0.1.0"
+dependencies = [
+ "aicharts-core",
+ "aicharts-ledger",
+ "aicharts-metrics",
+ "aicharts-protocol",
+]
+
+[[package]]
 name = "aicharts-import"
 version = "0.1.0"
 dependencies = [

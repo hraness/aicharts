@@ -42,7 +42,7 @@
     "lint": "eslint .",
     "test": "bun test .",
     "test:browser": "bun run ./scripts/model-card-browser.ts",
-    "test:property": "bun test ./lib/*.property.test.ts",
+    "test:property": "bun test ./lib/*.property.test.ts ./lib/*/*.property.test.ts",
     "usage:check": "cargo fmt --all -- --check && cargo clippy --workspace --all-targets --locked -- -D warnings && cargo test --workspace --locked",
     "usage:worker:types": "bun run scripts/usage-worker-tools.ts types",
     "usage:worker:test": "bun run scripts/usage-worker-tools.ts test",
@@ -118,7 +118,10 @@
     "usage:adapters:check": "bun scripts/assurance-adapters.ts",
     "usage:conformance:check": "bun scripts/assurance-conformance.ts",
     "usage:deployment:verify": "bun scripts/usage-deployment-verify.ts",
-    "usage:claims:check": "bun scripts/assurance-claims.ts"
+    "usage:claims:check": "bun scripts/assurance-claims.ts",
+    "usage:fuzz": "bun scripts/assurance-fuzz.ts",
+    "security:check": "bun scripts/assurance-security.ts",
+    "usage:fault-matrix": "bun scripts/assurance-fault-matrix.ts"
   },
   "dependencies": {
     "@hraness/design-kit": "github:hraness/design-kit#v0.15.0",
