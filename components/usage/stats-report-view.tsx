@@ -490,7 +490,7 @@ export function StatsReportView({ report, session, scope, todayUtcDay, onRangeRe
       } else if (dimension !== null) setSecondGrouping(dimension);
     }}
       rich={rich ?? { document: null, absence: scope === "account" ? "hosted" : "not-loaded" }}
-      secondary={secondGrouping} onSecondary={setSecondGrouping} onCostKind={setCostKind} pending={computation.pending} prepareExport={() => computation.prepare("json")}
+      secondary={secondGrouping} onSecondary={setSecondGrouping} onCostKind={setCostKind} pending={computation.pending} prepareExport={format => computation.prepare(format === "json" ? "json" : { metricCsv: explorerMetric })}
       onMetricSort={() => setRankByMetric(true)} captureExport={() => {
         const epoch = exportLifetime.current, authority = captureExport?.() ?? (() => true);
         return () => epoch !== null && exportLifetime.current === epoch && exportSelection.current === explored && authority();

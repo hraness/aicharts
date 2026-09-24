@@ -10,6 +10,7 @@ import { LeaderboardView } from "../components/usage/leaderboard-view";
 import { parseLeaderboardSnapshot } from "../lib/usage/leaderboard-contract";
 import { createUsageStatsExample } from "../lib/usage/stats-example";
 import { SESSION_EXAMPLE } from "../lib/usage/session-example";
+import { METRIC_CSV_COLUMNS, parseCsv } from "../lib/usage/metric-export";
 import { parseUsageStatsReport, type UsageStatsReport } from "../lib/usage/stats-contract";
 import { parseStatsPublicSearch, statsPublicStatus, STATS_PUBLIC_MEDIA, type StatsPublicReply } from "../lib/usage/stats-public";
 import { encodePrivateDaysPublicResponse, parsePrivateDaysPublicSearch, PRIVATE_DAYS_PUBLIC_MEDIA } from "../lib/usage/private-days-public";
@@ -371,6 +372,23 @@ export async function verifyUsageStats(browser: Browser, baseUrl: string, captur
       const metricExport = JSON.parse(await Bun.file(metricFile).text()) as { profile: string; snapshot: { sha256: string }; query: { groupBy: string[] }; measures: { id: string; value: { numerator: string; denominator: string } | null }[] };
       invariant(metricExport.profile === "metric-explorer-v1" && /^[0-9a-f]{64}$/u.test(metricExport.snapshot.sha256), "Export must bind the complete captured report.");
       invariant(metricExport.query.groupBy.join("/") === "client/model" && metricExport.measures.some(value => value.id === "cached-input-share" && typeof value.value?.denominator === "string"), "Export must preserve exact metric fractions and selected dimensions.");
+      // The per-metric CSV (D4/D12) binds the same selection: identity columns on
+      // every row, the same fingerprint as the JSON export, one total row plus
+      // the listed groups, and exact decimal values rather than rounded display.
+      const metricCsvEvent = page.waitForEvent("download");
+      await explorer.getByRole("button", { name: "Export metric CSV", exact: true }).click();
+      const metricCsvDownload = await metricCsvEvent, metricCsvFile = await metricCsvDownload.path(); invariant(metricCsvFile, "Metric CSV must download.");
+      invariant(metricCsvDownload.suggestedFilename() === "aicharts-metric-cached-input-share.csv", `Metric CSV must be named after its metric: ${metricCsvDownload.suggestedFilename()}.`);
+      const metricCsvRows = parseCsv(await Bun.file(metricCsvFile).text());
+      invariant(metricCsvRows[0].join(",") === METRIC_CSV_COLUMNS.join(","), "Metric CSV must carry the documented identity columns.");
+      const csvTotal = metricCsvRows[1], csvColumn = (name: typeof METRIC_CSV_COLUMNS[number]) => csvTotal[METRIC_CSV_COLUMNS.indexOf(name)];
+      const jsonShare = metricExport.measures.find(value => value.id === "cached-input-share")!.value!;
+      invariant(csvColumn("metric_id") === "cached-input-share" && csvColumn("metric_version") === "1" && csvColumn("scope") === "total" && csvColumn("group_by") === "client+model"
+        && csvColumn("snapshot_sha256") === metricExport.snapshot.sha256 && csvColumn("value") === jsonShare.numerator && csvColumn("denominator") === jsonShare.denominator,
+        `Metric CSV total must carry the metric identity, fingerprint and the JSON export's exact fraction: ${JSON.stringify(csvTotal)}.`);
+      invariant(metricCsvRows.length - 2 === await explorer.locator("tbody tr").count() && metricCsvRows.slice(2).every(row => row[METRIC_CSV_COLUMNS.indexOf("scope")] === "group" || row[METRIC_CSV_COLUMNS.indexOf("scope")] === "other"),
+        "Metric CSV must list exactly the groups shown on screen.");
+      await explorer.getByRole("status").filter({ hasText: "Downloaded cached-input-share as CSV" }).waitFor();
       // Session facts join the same explorer: rich metrics evaluate locally once a
       // session-observations-v1 file is opened, and refuse with a stated reason before.
       await explorer.getByLabel("Find a metric").fill("token-size-p95");

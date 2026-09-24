@@ -62,3 +62,4 @@
 .usage-rich__drilldown summary span { color: var(--muted); font-size: .75rem; margin-inline-start: .5rem; }
 .usage-rich__drilldown .usage-stats__text-button { min-block-size: 2.75rem; }
 @media (max-width: 720px) { .usage-rich__histogram li { grid-template-columns: minmax(0, 1fr) 3rem; } .usage-rich__histogram .usage-rich__bar { grid-column: 1 / -1; } .usage-rich__controls { grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr)); } }
+.usage-metrics__exports { display: flex; flex-wrap: wrap; gap: .5rem; }

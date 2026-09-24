@@ -69,9 +69,9 @@ function revealMetricDetail(element: HTMLElement | null) {
     element.scrollIntoView({ block: "start", behavior: "instant" });
   }
 }
-function downloadJson(value: string | Blob) {
-  const url = URL.createObjectURL(value instanceof Blob ? value : new Blob([value], { type: "application/json;charset=utf-8" })), anchor = document.createElement("a");
-  anchor.href = url; anchor.download = "aicharts-metric-snapshot.json"; anchor.click();
+function downloadExport(value: string | Blob, name: string, type: string) {
+  const url = URL.createObjectURL(value instanceof Blob ? value : new Blob([value], { type })), anchor = document.createElement("a");
+  anchor.href = url; anchor.download = name; anchor.click();
   setTimeout(() => URL.revokeObjectURL(url), 1_000);
 }
 
@@ -81,7 +81,7 @@ export function StatsMetricExplorer({ result, metricId, onMetric, secondary, onS
   secondary: MetricDimension | null; onSecondary: (dimension: MetricDimension | null) => void;
   onCostKind: (kind: "reported" | "estimated") => void; onMetricSort: () => void;
   captureExport?: () => (() => boolean);
-  prepareExport: () => Promise<string | Blob>; pending?: boolean;
+  prepareExport: (format: "json" | "metric-csv") => Promise<string | Blob>; pending?: boolean;
 }>) {
   const id = useId(), [search, setSearch] = useState(""), [page, setPage] = useState(0);
   const [view, setView] = useState(() => { const family = metricDefinition(metricId)?.family; const index = views.findIndex(item => family !== undefined && item.families.includes(family)); return index === -1 ? 1 : index; });
@@ -109,21 +109,27 @@ export function StatsMetricExplorer({ result, metricId, onMetric, secondary, onS
       : event.key === "Home" ? 0 : event.key === "End" ? views.length - 1 : null;
     if (next !== null) { event.preventDefault(); setView(next); setPage(0); event.currentTarget.parentElement?.querySelector<HTMLButtonElement>(`[data-view="${next}"]`)?.focus(); }
   };
-  const exportMetrics = async () => {
+  const exportMetrics = async (format: "json" | "metric-csv") => {
     if (job.current !== null || lifetime.current === null) return;
     const token = {}, epoch = lifetime.current, authorized = captureExport?.() ?? (() => true); job.current = token;
-    setExporting(true); setExportStatus("Preparing the selected metric snapshot…");
+    setExporting(true); setExportStatus(format === "json" ? "Preparing the selected metric snapshot…" : `Preparing the ${metricId} CSV…`);
     const current = () => lifetime.current === epoch && selection.current === result && authorized();
+    const save = (value: string | Blob) => format === "json" ? downloadExport(value, "aicharts-metric-snapshot.json", "application/json;charset=utf-8")
+      : downloadExport(value, `aicharts-metric-${metricId}.csv`, "text/csv;charset=utf-8");
     try {
-      const done = await exportCurrentStatsImage(current, prepareExport, downloadJson);
-      if (lifetime.current === epoch) setExportStatus(done ? "Downloaded exact values, units, coverage and the captured report fingerprint." : "Download canceled after the report changed.");
+      const done = await exportCurrentStatsImage(current, () => prepareExport(format), save);
+      if (lifetime.current === epoch) setExportStatus(done ? format === "json" ? "Downloaded exact values, units, coverage and the captured report fingerprint."
+        : `Downloaded ${metricId} as CSV: total and every listed group with the filters, unit, version and report fingerprint on each row.` : "Download canceled after the report changed.");
     } catch { if (lifetime.current === epoch) setExportStatus(current()
       ? "The snapshot could not be prepared. Your report is unchanged; try again." : "Download canceled after the report changed."); }
     finally { if (job.current === token) { job.current = null; if (lifetime.current === epoch) setExporting(false); } }
   };
   return <section id="stats-metric-explorer" className="usage-metrics" aria-labelledby={`${id}-title`}>
     <div className="usage-stats__section-heading"><div><h2 id={`${id}-title`}>Metric explorer</h2><p>Choose a question. Every value uses the dates, filters and token basis above.</p></div>
-      <button type="button" className="usage-stats__text-button" disabled={exporting || pending} onClick={() => void exportMetrics()}>{exporting ? "Preparing snapshot…" : "Export metric snapshot"}</button>
+      <div className="usage-metrics__exports">
+        <button type="button" className="usage-stats__text-button" disabled={exporting || pending} onClick={() => void exportMetrics("json")}>{exporting ? "Preparing export…" : "Export metric snapshot"}</button>
+        {!richSelected && <button type="button" className="usage-stats__text-button" disabled={exporting || pending} onClick={() => void exportMetrics("metric-csv")}>Export metric CSV</button>}
+      </div>
     </div>
     <div className="usage-metrics__tabs" role="tablist" aria-label="Metric topics">{views.map((item, index) => <button key={item.name} type="button" role="tab"
       id={`${id}-tab-${index}`} aria-selected={view === index} aria-controls={`${id}-catalog`} tabIndex={view === index ? 0 : -1} data-view={index}
