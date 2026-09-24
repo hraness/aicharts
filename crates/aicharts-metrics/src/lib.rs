@@ -8,11 +8,13 @@
 #![forbid(unsafe_code)]
 
 mod arithmetic;
+mod decimal;
 mod evidence;
 mod revision;
 mod tokens;
 
 pub use arithmetic::*;
+pub use decimal::*;
 pub use evidence::*;
 pub use revision::*;
 pub use tokens::*;
@@ -37,6 +39,10 @@ pub enum Error {
     MissingEvidence,
 }
 
+#[cfg(test)]
+mod decimal_tests;
+#[cfg(test)]
+mod vectors_tests;
 #[cfg(test)]
 mod tests;
 

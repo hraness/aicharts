@@ -1,3 +1,4 @@
+import { err, ok, type Result } from "../result";
 import { METRIC_CATALOG, type MetricCatalogEntry } from "./metric-explorer-catalog";
 import { metricWindow, type MetricFold, type MetricTokenPart } from "./metric-explorer-fold";
 
@@ -109,6 +110,37 @@ export function metricCollectionPath(definition: MetricCatalogEntry): Readonly<{
   return { label: "Planned snapshot and cohort evidence from account contributions", href: null };
 }
 
+const U128_MAX = (1n << 128n) - 1n;
+export type MetricRounding = "floor" | "ceiling" | "half-up";
+/** One rounding of an exact ratio, as the native kernel's `ExactRatio::rounded`.
+ * Half-up rounds a remainder of at least half the denominator upward. */
+export function metricRatioRounded(numerator: bigint, denominator: bigint, rule: MetricRounding): Result<bigint, "zero_denominator" | "overflow"> {
+  if (numerator < 0n || denominator < 0n || numerator > U128_MAX || denominator > U128_MAX) return err("overflow");
+  if (denominator === 0n) return err("zero_denominator");
+  const quotient = numerator / denominator, remainder = numerator % denominator;
+  const increment = rule === "floor" ? false : rule === "ceiling" ? remainder !== 0n : remainder >= denominator / 2n + denominator % 2n;
+  const rounded = quotient + (increment ? 1n : 0n);
+  return rounded > U128_MAX ? err("overflow") : ok(rounded);
+}
+
+export type MetricBasis = "reported" | "derived" | "estimated";
+/** Unknown and unsupported are distinct from a known zero. */
+export type MetricQuantityEvidence = Readonly<{ kind: "known"; value: bigint; basis: MetricBasis }> | Readonly<{ kind: "unknown" }> | Readonly<{ kind: "unsupported" }>;
+/** Caller-established population identity and compatible units; equality is a
+ * consistency predicate, never proof of source identity. */
+export type MetricPopulation = Readonly<{ identity: string; unit: string; grain: string }>;
+export type MetricScopedQuantity = Readonly<{ population: MetricPopulation; evidence: MetricQuantityEvidence }>;
+export type MetricMatchedPair = Readonly<{ left: bigint; right: bigint; leftBasis: MetricBasis; rightBasis: MetricBasis }>;
+/** As the native kernel's `match_quantities`: a ratio pairs two known
+ * quantities over the same population, or it does not exist. */
+export function matchMetricQuantities(left: MetricScopedQuantity, right: MetricScopedQuantity): Result<MetricMatchedPair, "population_mismatch" | "missing_evidence"> {
+  if (left.population.identity !== right.population.identity || left.population.unit !== right.population.unit
+    || left.population.grain !== right.population.grain) return err("population_mismatch");
+  if (left.evidence.kind !== "known" || right.evidence.kind !== "known") return err("missing_evidence");
+  return ok(Object.freeze({ left: left.evidence.value, right: right.evidence.value, leftBasis: left.evidence.basis, rightBasis: right.evidence.basis }));
+}
+const knownQuantity = (value: bigint, basis: MetricBasis, records: bigint): MetricQuantityEvidence => records === 0n ? { kind: "unknown" } : { kind: "known", value, basis };
+
 /** Values keep exact numerators and denominators. Any display rounding happens
  * after this fold, and unavailable quantities never carry a numeric zero. */
 export function metricMeasure(id: string, fold: MetricFold, context: MetricValueContext): MetricMeasure {
@@ -127,6 +159,13 @@ export function metricMeasure(id: string, fold: MetricFold, context: MetricValue
     ? result(null, 0n, "no-observations", unit, "eligible-cohort")
     : denominator === 0n ? result(null, eligible, "zero-denominator", unit, "eligible-cohort")
       : result({ kind: "ratio", numerator, denominator }, eligible, null, unit, "eligible-cohort");
+  // A cohort ratio exists only for two known quantities over one selected
+  // population; an empty cohort has unknown quantities, never zeros.
+  const cohortRatio = (identity: string, left: MetricQuantityEvidence, right: MetricQuantityEvidence, eligible: bigint, unit = definition.unit) => {
+    const population = { identity, unit: "records", grain: "aggregate-row" };
+    const matched = matchMetricQuantities({ population, evidence: left }, { population, evidence: right });
+    return matched.ok ? ratio(matched.value.left, matched.value.right, eligible, unit) : result(null, 0n, "no-observations", unit, "eligible-cohort");
+  };
   if (!SUPPORTED_METRIC_IDS.has(id)) return result(null, 0n, unavailableMetricReason(definition), definition.unit, "planned");
   const dimension = metricRecommendedDimension(id);
   if (dimension !== null && !context.groupBy.includes(dimension)) return result(null, 0n, "grouping-required");
@@ -163,9 +202,13 @@ export function metricMeasure(id: string, fold: MetricFold, context: MetricValue
   if (id.startsWith("effective-usd-per-million-")) {
     const cohort = context.costKind === "reported" ? fold.reportedCohort : fold.estimatedCohort;
     // micro-USD / token equals USD / million tokens exactly.
-    return ratio(cohort.microusd, cohort.total, cohort.records, "USD-per-million-tokens");
+    return cohortRatio(`${context.costKind}-cost-cohort`, knownQuantity(cohort.microusd, context.costKind, cohort.records),
+      knownQuantity(cohort.total, "reported", cohort.records), cohort.records, "USD-per-million-tokens");
   }
-  if (id === "tokens-per-source-duration-second") return ratio(fold.rateCohort.tokens * 1000n, fold.rateCohort.durationMs, fold.rateCohort.records);
+  if (id === "tokens-per-source-duration-second") {
+    const cohort = fold.rateCohort;
+    return cohortRatio("timed-cohort", knownQuantity(cohort.tokens * 1000n, "reported", cohort.records), knownQuantity(cohort.durationMs, "reported", cohort.records), cohort.records);
+  }
   if (id.startsWith("rolling-")) {
     const width = id === "rolling-7-day-tokens" ? 7 : id === "rolling-30-day-tokens" ? 30 : 90;
     if (context.asOfUtcDay - context.firstUtcDay < width) return result(null, 0n, "insufficient-window");

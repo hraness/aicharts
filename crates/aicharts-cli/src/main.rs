@@ -455,12 +455,20 @@ fn render(collection: &Collection, mode: Mode, json: bool) -> Result<String, &'s
     let mut frames = vec![];
     for batch in &collection.batches {
         for usage in &batch.usage {
-            token_total = token_total
-                .checked_add(usage.tokens.total().map_err(|_| "counter_overflow")?)
+            let total = usage.tokens.total().map_err(|_| "counter_overflow")?;
+            for (target, value) in [
+                (&mut token_total, total),
+                (&mut output_total, usage.tokens.output),
+            ] {
+                *target = aicharts_metrics::checked_add_bounded(
+                    u128::from(*target),
+                    u128::from(value),
+                    u128::from(u64::MAX),
+                )
+                .ok()
+                .and_then(|sum| u64::try_from(sum).ok())
                 .ok_or("counter_overflow")?;
-            output_total = output_total
-                .checked_add(usage.tokens.output)
-                .ok_or("counter_overflow")?;
+            }
         }
         prompt_total += batch.prompts.len();
         usage_total += batch.usage.len();
