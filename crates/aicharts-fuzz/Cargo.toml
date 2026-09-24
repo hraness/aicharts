@@ -1,0 +1,16 @@
+[package]
+name = "aicharts-fuzz"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[lib]
+path = "src/lib.rs"
+
+[dev-dependencies]
+aicharts-metrics.workspace = true
+aicharts-protocol.workspace = true
+aicharts-core.workspace = true
+aicharts-ledger.workspace = true
