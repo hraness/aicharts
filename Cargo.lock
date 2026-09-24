@@ -92,6 +92,7 @@ name = "aicharts-ledger"
 version = "0.1.0"
 dependencies = [
  "aicharts-core",
+ "aicharts-metrics",
  "aicharts-protocol",
  "getrandom 0.3.4",
  "hmac",
