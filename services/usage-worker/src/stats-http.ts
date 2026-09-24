@@ -10,10 +10,11 @@ import type { PairingHttpRequestLifetime, PairingHttpVerifier } from "./pairing-
 import { enrollmentAccountName } from "./enrollment-contract";
 import { rpcResultSnapshot as rpcSnapshot } from "./rpc-result";
 import { statsHash, statsUploadText } from "./stats-state";
+import { STATS_TOTALS_REQUEST_BYTES, STATS_TOTALS_URL, decodeStatsTotalsRequest, encodeStatsTotalsResponse, statsTotalsHttpLength } from "../../../lib/usage/stats-totals-contract";
 
 export interface StatsHttpEnvironment {
   readonly ACCOUNT_ENROLLMENTS: Readonly<{
-    getByName(name: string): Readonly<{ readUsageStats(input: unknown): Promise<unknown> }>;
+    getByName(name: string): Readonly<{ readUsageStats(input: unknown): Promise<unknown>; readUsageTotals(input: unknown): Promise<unknown> }>;
   }>;
 }
 export interface StatsHttpDependencies extends PairingHttpEffects { verifier: PairingHttpVerifier; }
@@ -75,6 +76,69 @@ export function createStatsHttpHandler(dependencies: StatsHttpDependencies) {
             if (snapshot.envelope === null || snapshot.dispose === null) throw new Error("private_days_rpc");
             const response = encodeStatsHttpResponse(query, snapshot.envelope);
             if (response === null) throw new Error("private_days_rpc");
+            guard(); return response;
+          } finally { snapshot.dispose?.(); }
+        });
+        guard(); return pairingHttpResponse(encoded);
+      }, startedAt);
+  };
+}
+
+/** Lifetime totals for the signed-in dashboard, through the same verified
+ * workload boundary as the windowed report. The reply is small and bounded;
+ * it carries no date range because it has none. */
+export function createStatsTotalsHttpHandler(dependencies: StatsHttpDependencies) {
+  const { verifier, now, setTimeout, clearTimeout } = dependencies;
+  let outstanding = 0;
+  return async (request: Request, env: StatsHttpEnvironment, ctx: PairingHttpRequestLifetime): Promise<Response> => {
+    let startedAt: number, expected: number | null, token: string | null;
+    try { startedAt = now(); } catch { return pairingHttpFailure(503); }
+    try {
+      if (request.url !== STATS_TOTALS_URL || request.method !== "POST" || request.headers.get("content-type") !== "application/json"
+        || request.headers.get("accept") !== "application/json" || request.headers.has("content-encoding") || request.headers.has("cookie")) return pairingHttpFailure(400);
+      expected = statsTotalsHttpLength(request.headers, STATS_TOTALS_REQUEST_BYTES);
+      token = pairingHttpBearer(request.headers.get("authorization"));
+    } catch { return pairingHttpFailure(400); }
+    if (token === null) return pairingHttpFailure(401);
+    if (request.signal.aborted || outstanding >= PAIRING_HTTP_CAPACITY) return pairingHttpFailure(503);
+    outstanding++;
+    let observed = startedAt;
+    const sample = () => {
+      const current = now();
+      if (!Number.isSafeInteger(current) || Object.is(current, -0) || current < 0 || current < observed || current > 8_640_000_000_000_000) throw new Error("stats_totals_clock");
+      observed = current; return current;
+    };
+    return pairingHttpWork({ now: sample, setTimeout, clearTimeout }, PAIRING_HTTP_WORKER_MS, terminal => { ctx.waitUntil(terminal); },
+      () => pairingHttpFailure(503), () => { outstanding--; }, async work => {
+        const scope = verifier.beginRequest(ctx); work.onStop(() => { scope.finish(); });
+        const verified = await scope.verify(token); work.guard();
+        if (!verified.ok) return pairingHttpFailure(verified.error === "unauthorized" ? 401 : 503);
+        let expiry: number | null = null;
+        const guard = () => {
+          work.guard();
+          if (request.signal.aborted || !scope.isCurrent(verified.value) || (expiry !== null && sample() >= expiry)) throw new Error("stats_totals_closed");
+          work.guard();
+        };
+        guard();
+        let bytes: Uint8Array;
+        try { bytes = await pairingHttpBody(request.body, STATS_TOTALS_REQUEST_BYTES, expected, work); }
+        catch { guard(); return pairingHttpFailure(400); }
+        guard();
+        const query = decodeStatsTotalsRequest(bytes);
+        if (query === null) return pairingHttpFailure(400);
+        expiry = query.sessionExpiresAtMs;
+        const encoded = await work.stage(PAIRING_HTTP_STAGE_MS, async () => {
+          guard();
+          const rpc = env.ACCOUNT_ENROLLMENTS.getByName(enrollmentAccountName(query.accountId)).readUsageTotals(Object.freeze({
+            schemaVersion: 2, accountId: query.accountId, sessionExpiresAtMs: query.sessionExpiresAtMs,
+          }));
+          const boxed = await new Promise<{ raw: unknown }>((resolve, reject) => { void rpc.then(raw => { resolve({ raw }); }, reject); });
+          const snapshot = rpcSnapshot(boxed.raw);
+          try {
+            guard();
+            if (snapshot.envelope === null || snapshot.dispose === null) throw new Error("stats_totals_rpc");
+            const response = encodeStatsTotalsResponse(snapshot.envelope);
+            if (response === null) throw new Error("stats_totals_rpc");
             guard(); return response;
           } finally { snapshot.dispose?.(); }
         });
