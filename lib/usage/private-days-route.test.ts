@@ -1,4 +1,5 @@
 import { expect, mock, test } from "bun:test";
+import { USAGE_ACCOUNT_HEADER } from "./account-public";
 import type { PrivateDaysV1 } from "./private-days-contract";
 import { decodePrivateDaysPublicResponse, PRIVATE_DAYS_PUBLIC_MEDIA, PRIVATE_DAYS_PUBLIC_URL } from "./private-days-public";
 mock.module("server-only", () => ({}));
@@ -8,7 +9,8 @@ const range = { firstUtcDay: 10, dayCount: 1 };
 const cell = { usageOccurrences: 0, observedAccountedTokens: "0", observedOutputTokens: "0" };
 const value: PrivateDaysV1 = { schemaVersion: 1, measurementProfile: "imported-tokens-v1", coverage: "partial",
   journalRevision: 0, journalCommittedAtMs: null, firstUtcDay: 10, days: [{ utcDay: 10, codex: cell, claudeCode: cell, devin: cell }] };
-const ready = { kind: "query", result: { ok: true, value } };
+const accountId = `acct_${"a".repeat(32)}`;
+const ready = { kind: "query", accountId, result: { ok: true, value } };
 function incoming(options: { method?: string; url?: string; headers?: Record<string, string>; signal?: AbortSignal } = {}) {
   return new Request(options.url ?? `${PRIVATE_DAYS_PUBLIC_URL}?firstUtcDay=10&dayCount=1`, { method: options.method ?? "GET", signal: options.signal,
     headers: { accept: "application/json", "sec-fetch-site": "same-origin", ...options.headers } });
@@ -37,8 +39,9 @@ async function result(response: Response) {
 test("ready snapshots and not-enrolled responses preserve distinct 200 states", async () => {
   const f = fixture(), response = await f.handle(incoming({ headers: { cookie: "browser-private-cookie", "if-none-match": "ignored" } }));
   expect(response.status).toBe(200); expect(await result(response)).toEqual({ schemaVersion: 1, state: "ready", value });
+  expect(response.headers.get(USAGE_ACCOUNT_HEADER)).toBe(accountId);
   expect(f.counts().calls).toBe(1);
-  const absent = fixture({ query: async () => ({ kind: "query", result: { ok: false, error: "not_enrolled" } }) });
+  const absent = fixture({ query: async () => ({ kind: "query", accountId, result: { ok: false, error: "not_enrolled" } }) });
   const reply = await absent.handle(incoming()); expect(reply.status).toBe(200);
   expect(await result(reply)).toEqual({ schemaVersion: 1, state: "not_enrolled" });
 });
@@ -95,9 +98,9 @@ test("only a checked authentication-required outcome becomes 401", async () => {
   const response = await f.handle(incoming()); expect(response.status).toBe(401);
   expect(await result(response)).toEqual({ schemaVersion: 1, error: { code: "authentication_required" } });
   for (const raw of [null, { kind: "unavailable" }, { kind: "authentication_required", email: "PRIVATE_CANARY" },
-    { kind: "query", result: { ok: true, value, extra: "PRIVATE_CANARY" } }, { kind: "query", result: { ok: true, value: { ...value, coverage: "complete" } } },
+    { kind: "query", accountId, result: { ok: true, value, extra: "PRIVATE_CANARY" } }, { kind: "query", accountId, result: { ok: true, value: { ...value, coverage: "complete" } } },
     ...["invalid_input", "unauthorized", "expired", "recovery_required", "clock_regressed", "storage_invalid", "storage_unavailable"]
-      .map(error => ({ kind: "query", result: { ok: false, error } }))]) {
+      .map(error => ({ kind: "query", accountId, result: { ok: false, error } }))]) {
     const g = fixture({ query: async () => raw }); const reply = await g.handle(incoming()); expect(reply.status).toBe(503);
     expect(await result(reply)).toEqual({ schemaVersion: 1, error: { code: "unavailable" } });
   }

@@ -117,8 +117,12 @@ export async function readNamespaceAnchor(bucket: R2Bucket, accountId: string): 
   return value;
 }
 
-/** Caller must durably retain this exact pending anchor before its first write. */
-export async function ensureNamespaceAnchor(bucket: R2Bucket, expected: NamespaceAnchor, admitted: () => boolean): Promise<void> {
+/** Caller must durably retain this exact pending anchor before its first write.
+ * The fixed account key is canonical authority. A response deadline is not
+ * cancellation: retainWrite keeps its restore registration until the actual
+ * provider promise settles, even after this helper returns a timeout. */
+export async function ensureNamespaceAnchor(bucket: R2Bucket, expected: NamespaceAnchor, admitted: () => boolean,
+  retainWrite: (pending: Promise<unknown>) => void): Promise<void> {
   const bytes = encodeNamespaceAnchor(expected);
   const owned = decode(bytes);
   if (!admitted()) throw new Error("enrollment_closed");
@@ -126,10 +130,12 @@ export async function ensureNamespaceAnchor(bucket: R2Bucket, expected: Namespac
   if (existing === null) {
     const sha256 = await crypto.subtle.digest("SHA-256", bytes);
     if (!admitted()) throw new Error("enrollment_closed");
-    await enrollmentStorageCall(bucket.put(namespaceAnchorKey(owned.accountId), bytes, {
+    const pending = bucket.put(namespaceAnchorKey(owned.accountId), bytes, {
       onlyIf: new Headers({ "if-none-match": "*" }), sha256,
       httpMetadata: { contentType: mediaType }, customMetadata: { schemaVersion: "1" },
-    }));
+    });
+    retainWrite(pending);
+    await enrollmentStorageCall(pending);
     if (!admitted()) throw new Error("enrollment_closed");
     existing = await readNamespaceAnchor(bucket, owned.accountId);
   }

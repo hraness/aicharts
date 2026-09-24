@@ -1,5 +1,6 @@
 import "server-only";
 import { usagePrivateReadAvailable } from "./auth-server";
+import { usageAccountId, USAGE_ACCOUNT_HEADER } from "./account-public";
 import { privateDaysSnapshot, type PrivateDaysRange } from "./private-days-http-contract";
 import { createVercelPrivateDaysTransport } from "./private-days-vercel";
 import { createPrivateDaysDiagnostic, emitPrivateDaysDiagnostic, type PrivateDaysDiagnostic, type PrivateDaysDiagnosticSink } from "./private-days-diagnostic";
@@ -12,18 +13,19 @@ export interface PrivateDaysPublicDependencies {
   query(request: Request, range: PrivateDaysRange, diagnostic?: PrivateDaysDiagnostic): Promise<unknown>;
   diagnostic?: PrivateDaysDiagnosticSink;
 }
-function send(request: Request, bytes: Uint8Array<ArrayBuffer>, status: number): Response {
+function send(request: Request, bytes: Uint8Array<ArrayBuffer>, status: number, accountId?: string): Response {
   return new Response(request.method === "HEAD" ? null : bytes, { status, headers: {
     "content-type": PRIVATE_DAYS_PUBLIC_MEDIA, "cache-control": "private, no-store", pragma: "no-cache", vary: "Cookie",
     "referrer-policy": "no-referrer", "x-content-type-options": "nosniff", "x-robots-tag": "noindex, nofollow",
     ...(status === 405 ? { allow: "GET" } : {}),
+    ...(accountId !== undefined ? { [USAGE_ACCOUNT_HEADER]: accountId } : {}),
   } });
 }
-function response(request: Request, body: unknown, range?: PrivateDaysRange): Response {
+function response(request: Request, body: unknown, range?: PrivateDaysRange, accountId?: string): Response {
   const checked = parsePrivateDaysPublicReply(body, range);
   if (checked === null) return failure(request, "unavailable");
   const bytes = encodePrivateDaysPublicResponse(checked, range);
-  return bytes === null ? failure(request, "unavailable") : send(request, bytes, privateDaysPublicStatus(checked));
+  return bytes === null ? failure(request, "unavailable") : send(request, bytes, privateDaysPublicStatus(checked), accountId);
 }
 function failure(request: Request, code: PrivateDaysPublicError): Response {
   const body: PrivateDaysPublicReply = { schemaVersion: 1, error: { code } };
@@ -69,17 +71,17 @@ export function createPrivateDaysPublicHandler(dependencies: PrivateDaysPublicDe
       if (request.signal.aborted || dependencies.available() !== true) return deny("unavailable");
       const negative = privateDaysSnapshot(raw, ["kind"]);
       if (negative?.kind === "authentication_required") return deny("authentication_required");
-      const query = privateDaysSnapshot(raw, ["kind", "result"]);
-      if (query?.kind !== "query") return deny("unavailable");
+      const query = privateDaysSnapshot(raw, ["kind", "accountId", "result"]);
+      if (query?.kind !== "query" || !usageAccountId(query.accountId)) return deny("unavailable");
       diagnostic.route("projection");
       const success = privateDaysSnapshot(query.result, ["ok", "value"]);
       if (success?.ok === true) {
-        const reply = response(request, { schemaVersion: 1, state: "ready", value: success.value }, range);
+        const reply = response(request, { schemaVersion: 1, state: "ready", value: success.value }, range, query.accountId);
         return finish(reply, reply.status === 200 ? "ready" : "unavailable");
       }
       const absent = privateDaysSnapshot(query.result, ["ok", "error"]);
       return absent?.ok === false && absent.error === "not_enrolled"
-        ? finish(response(request, { schemaVersion: 1, state: "not_enrolled" }), "not_enrolled") : deny("unavailable");
+        ? finish(response(request, { schemaVersion: 1, state: "not_enrolled" }, undefined, query.accountId), "not_enrolled") : deny("unavailable");
     } catch { diagnostic.route("exception"); return deny("unavailable"); }
   };
 }

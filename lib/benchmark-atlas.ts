@@ -1,5 +1,6 @@
 import { isCredentialFreeHttpsUrl } from "./credential-free-https-url";
 import { err, ok, type Result } from "./result";
+import { compareStableText } from "./stable-text-order";
 
 export const BENCHMARK_ATLAS_CATEGORIES = [
   "general", "coding", "science", "work", "computer-use", "reasoning",
@@ -82,7 +83,7 @@ export function sortAtlasPoints(dataset: BenchmarkAtlasDataset): BenchmarkAtlasP
   return [...dataset.points].sort((left, right) => (
     direction * (left.score - right.score)
     || left.label.localeCompare(right.label, "en")
-    || left.id.localeCompare(right.id, "en")
+    || compareStableText(left.id, right.id)
   ));
 }
 

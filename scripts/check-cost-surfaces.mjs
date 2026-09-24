@@ -15,6 +15,7 @@
 
 import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
+import { inspectUsageCostSurfaces } from "./usage-cost-surfaces.mjs";
 
 const root = process.cwd();
 const failures = [];
@@ -85,6 +86,8 @@ const SKIP_DIRS = new Set([
 	".cache",
 	"public",
 	".bun",
+	"target",
+	"vendor",
 ]);
 const SCAN_EXT = new Set([".ts", ".tsx", ".js", ".mjs", ".rs"]);
 
@@ -246,6 +249,12 @@ for (const r of seenRoutes) {
 	if (!surfaces[id] && !exempt.has(id)) {
 		fail(`dynamic/edge route ${path || "/"} (${rel}) is unregistered — add "${id}" to costs.json`);
 	}
+}
+
+try {
+	for (const error of inspectUsageCostSurfaces(root, surfaces)) fail(error);
+} catch {
+	fail("owned usage SQL/object surface discovery failed");
 }
 
 if (failures.length > 0) {

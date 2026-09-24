@@ -1,0 +1,46 @@
+# Local rich numeric facts
+
+`lib/usage/rich-fact-contract.ts` defines the additive `rich-facts-v1` JSON profile. The TypeScript parser, revision resolver, local adapters and opt-in native session export are a foundation for drilldown. The Sessions view renders exact local token-size distributions for the selected session's usage observations. Continuous runtime collection, hosted storage and account-wide joins still require their own admission and activation evidence.
+
+Every fact carries an explicit producer profile/version, keyed source epoch, fact identity, correction revision and immutable owner context. A null payload is a retained retraction. Equal revisions must have equal bytes after owned normalization; the greatest revision supplies the current value. Changing the owner, kind, observation identity, grain or token scope under an existing fact identity refuses the report. A new source epoch is a separate namespace, not an automatic deduplication claim.
+
+Admission bounds the JSON body at 8 MiB, the revision array at 50,000, executions at 2,000, and known lineage/retry paths at 64 edges. Facts fall within an explicit half-open retention interval of at most 31 days. This is an admission boundary, not an automatic deletion or compaction job. Source timestamps use integer milliseconds; their uncertainty is recorded separately. Token counters are canonical decimal strings with at most 24 digits, and the disjoint total must fit the same limit. Reasoning is a nullable subset of inclusive output. Unknown cache-write TTL has its own bucket.
+
+The native CLI can export existing session-history usage under this profile without changing the default `sessions` report:
+
+```sh
+aicharts sessions --codex /absolute/path/to/session.jsonl \
+  --occurrence-key-file /absolute/private/aicharts.key \
+  --profile rich-facts-v1 --source-epoch history-generation-1 \
+  --window-start-ms 1767225600000 --window-end-ms 1767312000000 --json
+```
+
+The example selects 2026-01-01 UTC. `--claude FILE` and `--devin FILE` use the same explicit-file collection boundary. Rich export requires JSON, a stable nonsecret source generation of 1–128 ASCII letters, digits, underscores or hyphens, and canonical integer millisecond bounds. The source generation and all native identities are keyed before output. Source files and the key retain their existing descriptor/path checks through final output admission; no ledger, source configuration or network connection is opened. An oversized report fails in full, even if its record count is within the limit.
+
+The Rust exporter and TypeScript session adapter share a synthetic cross-runtime fixture, including exact HMAC identities. Both preserve historical `usage_observation` grain, unknown token scope/lineage/cache TTL, partial coverage and nullable reasoning. An unsupported or cleared model label has `model: null` and `modelBasis: "unknown"`; a known Codex request tag remains request attribution. Each native export is a revision-zero snapshot. Replaying equal facts is idempotent; conflicting values under that same fact/revision refuse when merged. This command does not assign corrective revisions, retract missing records or make a new source generation equivalent to an old one.
+
+| Adapter | Preserved evidence | Remaining unknowns |
+| --- | --- | --- |
+| `richFactsFromSessions` | Validated session-v1 usage observations, public model attribution basis, recorded lifecycle endpoints | Request/response grain, root/child lineage, direct/inclusive token scope, exact clock uncertainty and cache-write TTL |
+| `richFactsFromTerminalTurns` | Qualified terminal-turn contract, root/child/unknown lineage, explicit origin/outcome, direct tokens, recorded runtime and tool-call coverage | A child's absent parent identity, unmeasured fields, complete population coverage. Native CLI partial response-token/requested-call subtotals do not satisfy this contract. |
+| `richFactsFromCompactions` | Strict producer event schema, outcome, before/after context, duration and stable record position | A source generation and stable position must come from the caller; equal-valued events are not interchangeable identities. Private strategies, error labels and native session IDs are omitted. |
+
+Adapters re-key identities with the supplied 32-byte key and a profile/epoch/domain prefix. Options and source data are copied before asynchronous hashing. Every adapter marks supported facts as partial, so an empty capture never proves an idle population. Existing session OTLP request spans remain request-lifecycle spans; they do not establish dispatch, successful completion, streaming or an exact clock.
+
+The fold selects one source, retention subwindow, grain, token scope and lineage, plus an explicit `executionId` selector (`null` selects all). Direct and inclusive usage are separate views. Unknown lineage is neither root nor child. Known request/turn observations without matching token facts remain unmeasured. Usage facts can also exist without a matching lifecycle observation; those retain their own grain and observation timestamp. Request/tool stages are disjoint current states, while explicit outcomes have separate counts. Completed-turn runtime and tool-call means exclude aborted turns; token distributions cover selected observations regardless of outcome. These are observed cohorts, not inferred complete populations.
+
+Token aggregation has a separate eligibility result. Direct quantities are additive across executions. An inclusive view with multiple measured executions requires complete retained paths to explicit roots and no selected ancestor/descendant pair; disjoint sibling branches and distinct roots qualify. Unknown lineage, an unnamed parent or an omitted parent cannot establish disjointness. Retained owner evidence can establish a path even when its fact lies outside the selected subwindow. Unknown token scope across multiple measured executions also refuses aggregation. Refusal sets `tokens` to `null` and supplies `tokenAggregation.reason` (`overlapping_executions`, `incomplete_lineage` or `unknown_token_scope`), while independently valid timing, outcome, context and compaction metrics remain available. Selecting one execution permits inspection of its own observations. Consumers must not relabel a per-execution or unknown-scope observation sum as account consumption or silently omit children to manufacture an additive total.
+
+Each numeric distribution keeps its own measured/unmeasured count, exact BigInt sum and rational observed mean. Quantiles use the nearest-rank rule, including the lower middle observation for an even-sized median. Zero measured samples have no mean or quantile; a measured numeric zero remains a sample. Timing distributions require explicit zero uncertainty. Failed, planned and skipped compactions cannot contribute reclaimed tokens. Cost, tariff, savings and repricing claims are absent until corresponding attributable evidence is admitted.
+
+The local session panel exposes minimum, median, p90, p95, p99 and maximum token size for a selected token quantity. Its grain is the recorded usage observation. The evaluator's lifecycle, request, timing and compaction recipes require their corresponding fact profiles; the session panel does not advertise those as measured capabilities. The panel converts the session's inclusive final timestamp into a half-open window without dropping endpoint observations. Windows outside the rich profile's 31-day or timestamp limit receive an explicit refusal. Each exact session snapshot is adapted once with an ephemeral browser HMAC key; quantity changes reuse those admitted facts, and results from an older snapshot cannot render beneath the current selection. Keyed identifiers, transcripts and account identity are not serialized into the rendered view.
+
+Before a canonical or hosted join, preserve these requirements:
+
+- Map the local source epoch and keyed owner/observation IDs through an explicit, versioned binding. Independently keyed histories and instrumented reports cannot simply be concatenated; `mergeRichFactReports` accepts only the same provenance, retention window and coverage declaration.
+- Apply correction/retraction heads atomically to their exact prior contribution, retain withdrawal fences, and separate an observation's attribution time from a later usage receipt. The local fold selects each fact by its own observation timestamp; it does not establish a cross-period final-usage cohort.
+- Carry source health, per-metric measurement coverage and unknown fields through projection and export. A producer's source-coverage declaration is retained separately from `observedOnly: true`; no population mean is manufactured from that declaration.
+- Establish coarse aggregates and explicit recovery/erasure behavior before fine-grained retention removes facts. Retention of a report alone must not forget a correction or withdrawal fence.
+- Qualify any new source timing, retry, context-limit or tariff field against its actual producer. Unsupported historical measurements remain unavailable.
+
+Focused checks: `bun test lib/usage/rich-facts.test.ts lib/usage/rich-facts.property.test.ts lib/usage/rich-fact-adapters.test.ts lib/usage/sessions.test.ts lib/usage/turns.test.ts lib/usage/session-telemetry.test.ts lib/usage/compaction.test.ts`.

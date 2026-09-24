@@ -1,0 +1,546 @@
+{
+  "schemaVersion": 1,
+  "scope": "Owned usage SQL schemas and immutable usage/control object families; costs.json carries the same owned surface IDs, retention policies and checked capacity references.",
+  "surfaces": [
+    {
+      "id": "worker:usage_admission_audit",
+      "table": "usage_admission_audit",
+      "owner": "services/usage-worker/src/admission-schema.ts",
+      "kind": "authoritative",
+      "retentionPolicy": "canonical-account-history",
+      "rebuildFrom": null,
+      "lifecycleStatus": "qualification-required",
+      "controlEvidence": false
+    },
+    {
+      "id": "worker:usage_admission_control",
+      "table": "usage_admission_control",
+      "owner": "services/usage-worker/src/admission-schema.ts",
+      "kind": "authoritative",
+      "retentionPolicy": "authority-and-deletion-controls",
+      "rebuildFrom": null,
+      "lifecycleStatus": "qualification-required",
+      "controlEvidence": true
+    },
+    {
+      "id": "worker:usage_admission_days",
+      "table": "usage_admission_days",
+      "owner": "services/usage-worker/src/admission-schema.ts",
+      "kind": "derived",
+      "retentionPolicy": "derived-projections",
+      "rebuildFrom": "committed canonical history and current authority controls",
+      "lifecycleStatus": "qualification-required",
+      "controlEvidence": false
+    },
+    {
+      "id": "worker:usage_admission_devices",
+      "table": "usage_admission_devices",
+      "owner": "services/usage-worker/src/admission-schema.ts",
+      "kind": "authoritative",
+      "retentionPolicy": "authority-and-deletion-controls",
+      "rebuildFrom": null,
+      "lifecycleStatus": "qualification-required",
+      "controlEvidence": true
+    },
+    {
+      "id": "worker:usage_admission_heads",
+      "table": "usage_admission_heads",
+      "owner": "services/usage-worker/src/admission-schema.ts",
+      "kind": "authoritative",
+      "retentionPolicy": "canonical-account-history",
+      "rebuildFrom": null,
+      "lifecycleStatus": "qualification-required",
+      "controlEvidence": false
+    },
+    {
+      "id": "worker:usage_admission_journal",
+      "table": "usage_admission_journal",
+      "owner": "services/usage-worker/src/admission-schema.ts",
+      "kind": "authoritative",
+      "retentionPolicy": "authority-and-deletion-controls",
+      "rebuildFrom": null,
+      "lifecycleStatus": "qualification-required",
+      "controlEvidence": true
+    },
+    {
+      "id": "worker:usage_admission_pending",
+      "table": "usage_admission_pending",
+      "owner": "services/usage-worker/src/admission-schema.ts",
+      "kind": "authoritative",
+      "retentionPolicy": "authority-and-deletion-controls",
+      "rebuildFrom": null,
+      "lifecycleStatus": "qualification-required",
+      "controlEvidence": true
+    },
+    {
+      "id": "worker:account_enrollment",
+      "table": "account_enrollment",
+      "owner": "services/usage-worker/src/enrollment.ts",
+      "kind": "authoritative",
+      "retentionPolicy": "authority-and-deletion-controls",
+      "rebuildFrom": null,
+      "lifecycleStatus": "qualification-required",
+      "controlEvidence": true
+    },
+    {
+      "id": "worker:leaderboard_index",
+      "table": "leaderboard_index",
+      "owner": "services/usage-worker/src/leaderboard-index.ts",
+      "kind": "authoritative",
+      "retentionPolicy": "authority-and-deletion-controls",
+      "rebuildFrom": null,
+      "lifecycleStatus": "qualification-required",
+      "controlEvidence": true
+    },
+    {
+      "id": "worker:pairing_state",
+      "table": "pairing_state",
+      "owner": "services/usage-worker/src/pairing.ts",
+      "kind": "authoritative",
+      "retentionPolicy": "authority-and-deletion-controls",
+      "rebuildFrom": null,
+      "lifecycleStatus": "qualification-required",
+      "controlEvidence": true
+    },
+    {
+      "id": "worker:fence_lease",
+      "table": "fence_lease",
+      "owner": "services/usage-worker/src/restore-fence.ts",
+      "kind": "authoritative",
+      "retentionPolicy": "authority-and-deletion-controls",
+      "rebuildFrom": null,
+      "lifecycleStatus": "qualification-required",
+      "controlEvidence": true
+    },
+    {
+      "id": "worker:restore_fence",
+      "table": "restore_fence",
+      "owner": "services/usage-worker/src/restore-fence.ts",
+      "kind": "authoritative",
+      "retentionPolicy": "authority-and-deletion-controls",
+      "rebuildFrom": null,
+      "lifecycleStatus": "qualification-required",
+      "controlEvidence": true
+    },
+    {
+      "id": "worker:usage_stats_control",
+      "table": "usage_stats_control",
+      "owner": "services/usage-worker/src/stats-state.ts",
+      "kind": "authoritative",
+      "retentionPolicy": "authority-and-deletion-controls",
+      "rebuildFrom": null,
+      "lifecycleStatus": "qualification-required",
+      "controlEvidence": true
+    },
+    {
+      "id": "worker:usage_stats_day_meta",
+      "table": "usage_stats_day_meta",
+      "owner": "services/usage-worker/src/stats-state.ts",
+      "kind": "derived",
+      "retentionPolicy": "derived-projections",
+      "rebuildFrom": "committed canonical history and current authority controls",
+      "lifecycleStatus": "qualification-required",
+      "controlEvidence": false
+    },
+    {
+      "id": "worker:usage_stats_day_rows",
+      "table": "usage_stats_day_rows",
+      "owner": "services/usage-worker/src/stats-state.ts",
+      "kind": "derived",
+      "retentionPolicy": "derived-projections",
+      "rebuildFrom": "committed canonical history and current authority controls",
+      "lifecycleStatus": "qualification-required",
+      "controlEvidence": false
+    },
+    {
+      "id": "worker:usage_stats_days",
+      "table": "usage_stats_days",
+      "owner": "services/usage-worker/src/stats-state.ts",
+      "kind": "authoritative",
+      "retentionPolicy": "canonical-account-history",
+      "rebuildFrom": null,
+      "lifecycleStatus": "qualification-required",
+      "controlEvidence": false
+    },
+    {
+      "id": "worker:usage_stats_devices",
+      "table": "usage_stats_devices",
+      "owner": "services/usage-worker/src/stats-state.ts",
+      "kind": "authoritative",
+      "retentionPolicy": "authority-and-deletion-controls",
+      "rebuildFrom": null,
+      "lifecycleStatus": "qualification-required",
+      "controlEvidence": true
+    },
+    {
+      "id": "worker:usage_stats_pending",
+      "table": "usage_stats_pending",
+      "owner": "services/usage-worker/src/stats-state.ts",
+      "kind": "authoritative",
+      "retentionPolicy": "authority-and-deletion-controls",
+      "rebuildFrom": null,
+      "lifecycleStatus": "qualification-required",
+      "controlEvidence": true
+    },
+    {
+      "id": "worker:usage_stats_writers",
+      "table": "usage_stats_writers",
+      "owner": "services/usage-worker/src/stats-state.ts",
+      "kind": "authoritative",
+      "retentionPolicy": "authority-and-deletion-controls",
+      "rebuildFrom": null,
+      "lifecycleStatus": "qualification-required",
+      "controlEvidence": true
+    },
+    {
+      "id": "ledger:measurements",
+      "table": "measurements",
+      "owner": "crates/aicharts-ledger/src/storage.rs",
+      "kind": "authoritative",
+      "retentionPolicy": "canonical-account-history",
+      "rebuildFrom": null,
+      "lifecycleStatus": "qualification-required",
+      "controlEvidence": false
+    },
+    {
+      "id": "ledger:meta",
+      "table": "meta",
+      "owner": "crates/aicharts-ledger/src/storage.rs",
+      "kind": "authoritative",
+      "retentionPolicy": "authority-and-deletion-controls",
+      "rebuildFrom": null,
+      "lifecycleStatus": "qualification-required",
+      "controlEvidence": true
+    },
+    {
+      "id": "ledger:outbox",
+      "table": "outbox",
+      "owner": "crates/aicharts-ledger/src/storage.rs",
+      "kind": "authoritative",
+      "retentionPolicy": "authority-and-deletion-controls",
+      "rebuildFrom": null,
+      "lifecycleStatus": "qualification-required",
+      "controlEvidence": true
+    },
+    {
+      "id": "ledger:source_usage",
+      "table": "source_usage",
+      "owner": "crates/aicharts-ledger/src/storage.rs",
+      "kind": "authoritative",
+      "retentionPolicy": "canonical-account-history",
+      "rebuildFrom": null,
+      "lifecycleStatus": "qualification-required",
+      "controlEvidence": false
+    },
+    {
+      "id": "ledger:sources",
+      "table": "sources",
+      "owner": "crates/aicharts-ledger/src/storage.rs",
+      "kind": "authoritative",
+      "retentionPolicy": "canonical-account-history",
+      "rebuildFrom": null,
+      "lifecycleStatus": "qualification-required",
+      "controlEvidence": false
+    },
+    {
+      "id": "ledger:sender_accepted",
+      "table": "sender_accepted",
+      "owner": "crates/aicharts-ledger/src/sender.rs",
+      "kind": "authoritative",
+      "retentionPolicy": "authority-and-deletion-controls",
+      "rebuildFrom": null,
+      "lifecycleStatus": "qualification-required",
+      "controlEvidence": true
+    },
+    {
+      "id": "ledger:sender_batch",
+      "table": "sender_batch",
+      "owner": "crates/aicharts-ledger/src/sender.rs",
+      "kind": "authoritative",
+      "retentionPolicy": "authority-and-deletion-controls",
+      "rebuildFrom": null,
+      "lifecycleStatus": "qualification-required",
+      "controlEvidence": true
+    },
+    {
+      "id": "ledger:sender_batch_members",
+      "table": "sender_batch_members",
+      "owner": "crates/aicharts-ledger/src/sender.rs",
+      "kind": "authoritative",
+      "retentionPolicy": "authority-and-deletion-controls",
+      "rebuildFrom": null,
+      "lifecycleStatus": "qualification-required",
+      "controlEvidence": true
+    },
+    {
+      "id": "ledger:sender_binding",
+      "table": "sender_binding",
+      "owner": "crates/aicharts-ledger/src/sender.rs",
+      "kind": "authoritative",
+      "retentionPolicy": "authority-and-deletion-controls",
+      "rebuildFrom": null,
+      "lifecycleStatus": "qualification-required",
+      "controlEvidence": true
+    },
+    {
+      "id": "ledger:sender_reconciliation",
+      "table": "sender_reconciliation",
+      "owner": "crates/aicharts-ledger/src/sender.rs",
+      "kind": "authoritative",
+      "retentionPolicy": "authority-and-deletion-controls",
+      "rebuildFrom": null,
+      "lifecycleStatus": "qualification-required",
+      "controlEvidence": true
+    },
+    {
+      "id": "ledger:sender_settled",
+      "table": "sender_settled",
+      "owner": "crates/aicharts-ledger/src/sender.rs",
+      "kind": "authoritative",
+      "retentionPolicy": "authority-and-deletion-controls",
+      "rebuildFrom": null,
+      "lifecycleStatus": "qualification-required",
+      "controlEvidence": true
+    },
+    {
+      "id": "ledger:source_prefixes",
+      "table": "source_prefixes",
+      "owner": "crates/aicharts-ledger/src/prefix.rs",
+      "kind": "authoritative",
+      "retentionPolicy": "canonical-account-history",
+      "rebuildFrom": null,
+      "lifecycleStatus": "qualification-required",
+      "controlEvidence": false
+    },
+    {
+      "id": "r2:admission-batches-and-journals",
+      "table": null,
+      "owner": "services/usage-worker/src/admission-objects.ts",
+      "kind": "authoritative",
+      "retentionPolicy": "authority-and-deletion-controls",
+      "rebuildFrom": null,
+      "lifecycleStatus": "qualification-required",
+      "controlEvidence": true
+    },
+    {
+      "id": "r2:stats-snapshots-and-receipts",
+      "table": null,
+      "owner": "services/usage-worker/src/stats-objects.ts",
+      "kind": "authoritative",
+      "retentionPolicy": "authority-and-deletion-controls",
+      "rebuildFrom": null,
+      "lifecycleStatus": "qualification-required",
+      "controlEvidence": true
+    },
+    {
+      "id": "r2:enrollment-namespace-anchors",
+      "table": null,
+      "owner": "services/usage-worker/src/namespace-anchor.ts",
+      "kind": "authoritative",
+      "retentionPolicy": "authority-and-deletion-controls",
+      "rebuildFrom": null,
+      "lifecycleStatus": "qualification-required",
+      "controlEvidence": true
+    },
+    {
+      "id": "r2:staged-measurements",
+      "table": null,
+      "owner": "services/usage-worker/src/staging.ts",
+      "kind": "authoritative",
+      "retentionPolicy": "canonical-account-history",
+      "rebuildFrom": null,
+      "lifecycleStatus": "qualification-required",
+      "controlEvidence": false
+    },
+    {
+      "id": "worker:fence_attempt",
+      "table": "fence_attempt",
+      "owner": "services/usage-worker/src/restore-fence.ts",
+      "kind": "authoritative",
+      "retentionPolicy": "authority-and-deletion-controls",
+      "rebuildFrom": null,
+      "lifecycleStatus": "qualification-required",
+      "controlEvidence": true
+    },
+    {
+      "id": "worker:usage_stats_day_sources",
+      "table": "usage_stats_day_sources",
+      "owner": "services/usage-worker/src/stats-state.ts",
+      "kind": "authoritative",
+      "retentionPolicy": "authority-and-deletion-controls",
+      "rebuildFrom": null,
+      "lifecycleStatus": "qualification-required",
+      "controlEvidence": true
+    },
+    {
+      "id": "local:usage-import-checkpoint",
+      "table": null,
+      "owner": "crates/aicharts-cli/src/source_checkpoint.rs",
+      "kind": "derived",
+      "retentionPolicy": "derived-projections",
+      "rebuildFrom": "explicit qualified local Codex profile sources",
+      "lifecycleStatus": "qualification-required",
+      "controlEvidence": false
+    },
+    {
+      "id": "local:usage-source-health",
+      "table": null,
+      "owner": "crates/aicharts-cli/src/source_health.rs",
+      "kind": "authoritative",
+      "retentionPolicy": "canonical-account-history",
+      "rebuildFrom": null,
+      "lifecycleStatus": "qualification-required",
+      "controlEvidence": false
+    },
+    {
+      "id": "worker:usage_contribution_control",
+      "table": "usage_contribution_control",
+      "owner": "services/usage-worker/src/contributions-state.ts",
+      "kind": "authoritative",
+      "retentionPolicy": "authority-and-deletion-controls",
+      "rebuildFrom": null,
+      "lifecycleStatus": "qualification-required",
+      "controlEvidence": true
+    },
+    {
+      "id": "worker:usage_contribution_populations",
+      "table": "usage_contribution_populations",
+      "owner": "services/usage-worker/src/contributions-state.ts",
+      "kind": "authoritative",
+      "retentionPolicy": "authority-and-deletion-controls",
+      "rebuildFrom": null,
+      "lifecycleStatus": "qualification-required",
+      "controlEvidence": true
+    },
+    {
+      "id": "worker:usage_contribution_heads",
+      "table": "usage_contribution_heads",
+      "owner": "services/usage-worker/src/contributions-state.ts",
+      "kind": "authoritative",
+      "retentionPolicy": "canonical-account-history",
+      "rebuildFrom": null,
+      "lifecycleStatus": "qualification-required",
+      "controlEvidence": false
+    },
+    {
+      "id": "worker:usage_contribution_memberships",
+      "table": "usage_contribution_memberships",
+      "owner": "services/usage-worker/src/contributions-state.ts",
+      "kind": "authoritative",
+      "retentionPolicy": "authority-and-deletion-controls",
+      "rebuildFrom": null,
+      "lifecycleStatus": "qualification-required",
+      "controlEvidence": true
+    },
+    {
+      "id": "worker:usage_contribution_operations",
+      "table": "usage_contribution_operations",
+      "owner": "services/usage-worker/src/contributions-state.ts",
+      "kind": "authoritative",
+      "retentionPolicy": "authority-and-deletion-controls",
+      "rebuildFrom": null,
+      "lifecycleStatus": "qualification-required",
+      "controlEvidence": true
+    },
+    {
+      "id": "worker:usage_contribution_devices",
+      "table": "usage_contribution_devices",
+      "owner": "services/usage-worker/src/contributions-state.ts",
+      "kind": "authoritative",
+      "retentionPolicy": "authority-and-deletion-controls",
+      "rebuildFrom": null,
+      "lifecycleStatus": "qualification-required",
+      "controlEvidence": true
+    },
+    {
+      "id": "r2:canonical-contribution-bodies",
+      "table": null,
+      "owner": "services/usage-worker/src/contributions-objects.ts",
+      "kind": "authoritative",
+      "retentionPolicy": "canonical-account-history",
+      "rebuildFrom": null,
+      "lifecycleStatus": "qualification-required",
+      "controlEvidence": false
+    },
+    {
+      "id": "r2:canonical-contribution-artifacts",
+      "table": null,
+      "owner": "services/usage-worker/src/contributions-journal.ts",
+      "kind": "authoritative",
+      "retentionPolicy": "authority-and-deletion-controls",
+      "rebuildFrom": null,
+      "lifecycleStatus": "qualification-required",
+      "controlEvidence": true
+    },
+    {
+      "id": "r2:canonical-contribution-index",
+      "table": null,
+      "owner": "services/usage-worker/src/contribution-index-objects.ts",
+      "kind": "derived",
+      "retentionPolicy": "derived-projections",
+      "rebuildFrom": "committed canonical contribution journal including verified sealed legacy references",
+      "lifecycleStatus": "qualification-required",
+      "controlEvidence": false
+    },
+    {
+      "id": "worker:usage_contribution_projection_control",
+      "table": "usage_contribution_projection_control",
+      "owner": "services/usage-worker/src/contribution-projection-state.ts",
+      "kind": "authoritative",
+      "retentionPolicy": "authority-and-deletion-controls",
+      "rebuildFrom": null,
+      "lifecycleStatus": "qualification-required",
+      "controlEvidence": true
+    },
+    {
+      "id": "worker:usage_contribution_projection_pending",
+      "table": "usage_contribution_projection_pending",
+      "owner": "services/usage-worker/src/contribution-projection-state.ts",
+      "kind": "authoritative",
+      "retentionPolicy": "authority-and-deletion-controls",
+      "rebuildFrom": null,
+      "lifecycleStatus": "qualification-required",
+      "controlEvidence": true
+    },
+    {
+      "id": "worker:usage_contribution_projection_publications",
+      "table": "usage_contribution_projection_publications",
+      "owner": "services/usage-worker/src/contribution-projection-state.ts",
+      "kind": "authoritative",
+      "retentionPolicy": "authority-and-deletion-controls",
+      "rebuildFrom": null,
+      "lifecycleStatus": "qualification-required",
+      "controlEvidence": true
+    },
+    {
+      "id": "worker:account_work",
+      "table": "account_work",
+      "owner": "services/usage-worker/src/account-work-state.ts",
+      "kind": "authoritative",
+      "retentionPolicy": "authority-and-deletion-controls",
+      "rebuildFrom": null,
+      "lifecycleStatus": "qualification-required",
+      "controlEvidence": true
+    },
+    {
+      "id": "local:canonical-contribution-checkpoint",
+      "table": null,
+      "owner": "crates/aicharts-cli/src/contribution_sync/disk.rs",
+      "kind": "authoritative",
+      "retentionPolicy": "authority-and-deletion-controls",
+      "controlEvidence": true,
+      "rebuildFrom": null,
+      "lifecycleStatus": "qualification-required"
+    },
+    {
+      "id": "worker:usage_contribution_rebuild_jobs",
+      "table": "usage_contribution_rebuild_jobs",
+      "owner": "services/usage-worker/src/contribution-rebuild-state.ts",
+      "kind": "authoritative",
+      "retentionPolicy": "authority-and-deletion-controls",
+      "rebuildFrom": null,
+      "lifecycleStatus": "qualification-required",
+      "controlEvidence": true
+    }
+  ]
+}

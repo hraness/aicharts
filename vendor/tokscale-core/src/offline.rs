@@ -1,6 +1,11 @@
 //! AI Charts' only admitted entry point into the pinned local parsers.
+pub use crate::offline_checkpoint::{
+    OfflineCheckpoint, CHECKPOINT_GENERATION, MAX_CHECKPOINT_BYTES, MAX_CHECKPOINT_FILES,
+    MAX_CHECKPOINT_OBSERVATIONS,
+};
 pub use crate::offline_io::{
-    ReadReceipt, MAX_BYTES, MAX_FILES, MAX_FILE_BYTES, MAX_LOG_BYTES, MAX_ROWS, MAX_SQLITE_BYTES,
+    ImportWork, ReadReceipt, MAX_BYTES, MAX_FILES, MAX_FILE_BYTES, MAX_LOG_BYTES, MAX_ROWS,
+    MAX_SQLITE_BYTES,
 };
 use crate::{LocalParseOptions, ScannerSettings, UnifiedMessage};
 use std::path::{Path, PathBuf};
@@ -122,118 +127,173 @@ fn collect_inner(
     source_roots: Option<&[PathBuf]>,
     first_ms: Option<u64>,
 ) -> Result<LocalImport, Vec<&'static str>> {
-    if !home.is_absolute() || !clients().contains(&client) {
-        return Err(vec!["import_request_invalid"]);
-    }
-    let home = home
-        .to_str()
-        .ok_or_else(|| vec!["import_home_encoding_invalid"])?;
-    let guard = crate::offline_io::begin(approved_roots).map_err(|e| vec![e])?;
-    // Desktop overlap resolution still needs all CLI session identities.
-    if client == "devin-cli" {
-        crate::offline_io::set_first_observed_ms(first_ms);
-    }
-    if let Some(roots) = source_roots {
-        for root in roots {
-            crate::offline_io::admit(root).map_err(|_| vec!["import_profile_root_unavailable"])?;
-            if !root.is_dir() {
-                return Err(vec!["import_profile_root_not_directory"]);
-            }
-        }
-        crate::offline_io::set_profile(client, roots);
-    }
-    // These ownership decisions require both stores in the same parse call.
-    let context_clients = match client {
-        "devin-desktop" => vec!["devin-cli".to_owned(), "devin-desktop".to_owned()],
-        "openclaw" => vec!["codex".to_owned(), "openclaw".to_owned()],
-        _ => vec![client.to_owned()],
-    };
-    // Transcript-log clients (Codex, Claude Code) keep one self-contained
-    // record stream per file, so a file last written before the report
-    // window cannot hold an in-window record. Bounding their enumeration by
-    // mtime keeps huge historical trees inside the audit deadline without
-    // changing what the windowed report admits. Counter-style and
-    // cross-source clients are deliberately out: their baselines or
-    // identity lanes can live in older files.
-    if let (Some(floor), [single]) = (first_ms, context_clients.as_slice()) {
-        if matches!(single.as_str(), "codex" | "claude") {
-            crate::offline_io::set_file_floor_ms(Some(floor));
-        }
-    }
-    let options = LocalParseOptions {
-        home_dir: Some(home.to_owned()),
-        use_env_roots: false,
-        clients: Some(context_clients.clone()),
-        scanner_settings: ScannerSettings {
-            bucket_timezone: Some("UTC".to_owned()),
-            ..Default::default()
-        },
-        ..Default::default()
-    };
-    let pool = rayon::ThreadPoolBuilder::new()
-        .num_threads(2)
-        .build()
-        .map_err(|_| vec!["import_worker_unavailable"])?;
-    let parsed = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-        pool.install(|| {
-            if client == "synthetic" {
-                // Synthetic gateway observations already belong to their
-                // originating primary client. Its only disjoint source is
-                // Octofriend; scanning every other client again is unnecessary.
-                let paths = match source_roots {
-                    Some(roots) => crate::scanner::profile_synthetic_dbs(roots),
-                    None => vec![Path::new(home).join(".local/share/octofriend/sqlite.db")],
-                };
-                let mut messages = Vec::new();
-                let mut seen = std::collections::HashSet::new();
-                for path in paths {
-                    match crate::offline_io::admit(&path) {
-                        Ok(()) => {
-                            messages.extend(
-                                crate::sessions::synthetic::parse_octofriend_sqlite(&path)
-                                    .into_iter()
-                                    .filter(|row| {
-                                        row.dedup_key
-                                            .as_ref()
-                                            .is_none_or(|key| seen.insert(key.clone()))
-                                    }),
-                            );
-                        }
-                        Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
-                        Err(_) => return Err("import_source_unreadable".to_owned()),
-                    }
-                }
-                let zone = crate::BucketTimezone::from_scanner_settings(&options.scanner_settings);
-                for message in &mut messages {
-                    message.rebucket_date(&zone);
-                }
-                return Ok(messages);
-            }
-            crate::parse_local_unified_messages_resolved(
-                options,
-                home,
-                &context_clients,
-                None,
-                crate::SourceCachePolicy::InMemory,
-            )
-        })
-    }));
-    let receipt = guard.finish()?;
-    let mut messages = parsed
-        .map_err(|_| vec!["import_parser_aborted"])?
-        .map_err(|_| vec!["import_parser_failed"])?;
-    if messages.len() > MAX_ROWS {
-        return Err(vec!["import_row_limit"]);
-    }
-    match client {
-        "devin-desktop" | "openclaw" | "synthetic" => messages.retain(|row| row.client == client),
-        _ => {}
-    }
-    for message in &mut messages {
-        crate::sessions::synthetic::normalize_synthetic_gateway_fields(
-            &mut message.model_id,
-            &mut message.provider_id,
+    collect_observed_inner(home, client, approved_roots, source_roots, first_ms, None).0
+}
+
+/// Internal observability port. Checkpoints are optional and never persisted by
+/// the parser. The caller replaces a prior checkpoint only on complete success.
+pub fn collect_observed_since(
+    home: &Path,
+    client: &str,
+    approved_roots: &[PathBuf],
+    source_roots: Option<&[PathBuf]>,
+    first_ms: u64,
+    checkpoint: Option<OfflineCheckpoint>,
+) -> (
+    Result<LocalImport, Vec<&'static str>>,
+    ImportWork,
+    Option<OfflineCheckpoint>,
+) {
+    if first_ms > i64::MAX as u64 || source_roots.is_some_and(|r| r.is_empty() || r.len() > 128) {
+        return (
+            Err(vec!["import_request_invalid"]),
+            ImportWork::default(),
+            None,
         );
     }
-    Ok(LocalImport { messages, receipt })
+    collect_observed_inner(
+        home,
+        client,
+        approved_roots,
+        source_roots,
+        Some(first_ms),
+        checkpoint,
+    )
+}
+
+fn collect_observed_inner(
+    home: &Path,
+    client: &str,
+    approved_roots: &[PathBuf],
+    source_roots: Option<&[PathBuf]>,
+    first_ms: Option<u64>,
+    checkpoint: Option<OfflineCheckpoint>,
+) -> (
+    Result<LocalImport, Vec<&'static str>>,
+    ImportWork,
+    Option<OfflineCheckpoint>,
+) {
+    let mut work = ImportWork::default();
+    let mut next = None;
+    let result = (|| {
+        if !home.is_absolute() || !clients().contains(&client) {
+            return Err(vec!["import_request_invalid"]);
+        }
+        let home = home
+            .to_str()
+            .ok_or_else(|| vec!["import_home_encoding_invalid"])?;
+        let guard = crate::offline_io::begin(approved_roots).map_err(|e| vec![e])?;
+        if client == "codex" {
+            if let Some(checkpoint) = checkpoint {
+                crate::offline_io::set_checkpoint(checkpoint);
+            }
+        }
+        // Desktop overlap resolution still needs all CLI session identities.
+        if client == "devin-cli" {
+            crate::offline_io::set_first_observed_ms(first_ms);
+        }
+        if let Some(roots) = source_roots {
+            for root in roots {
+                crate::offline_io::admit(root)
+                    .map_err(|_| vec!["import_profile_root_unavailable"])?;
+                if !root.is_dir() {
+                    return Err(vec!["import_profile_root_not_directory"]);
+                }
+            }
+            crate::offline_io::set_profile(client, roots);
+        }
+        // These ownership decisions require both stores in the same parse call.
+        let context_clients = match client {
+            "devin-desktop" => vec!["devin-cli".to_owned(), "devin-desktop".to_owned()],
+            "openclaw" => vec!["codex".to_owned(), "openclaw".to_owned()],
+            _ => vec![client.to_owned()],
+        };
+        // Filesystem times do not bound provider event times after copying,
+        // restore or clock skew. Filter parsed events, never prune by file mtime.
+        let options = LocalParseOptions {
+            home_dir: Some(home.to_owned()),
+            use_env_roots: false,
+            clients: Some(context_clients.clone()),
+            scanner_settings: ScannerSettings {
+                bucket_timezone: Some("UTC".to_owned()),
+                ..Default::default()
+            },
+            ..Default::default()
+        };
+        let pool = rayon::ThreadPoolBuilder::new()
+            .num_threads(2)
+            .build()
+            .map_err(|_| vec!["import_worker_unavailable"])?;
+        let parsed = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+            pool.install(|| {
+                if client == "synthetic" {
+                    // Synthetic gateway observations already belong to their
+                    // originating primary client. Its only disjoint source is
+                    // Octofriend; scanning every other client again is unnecessary.
+                    let paths = match source_roots {
+                        Some(roots) => crate::scanner::profile_synthetic_dbs(roots),
+                        None => vec![Path::new(home).join(".local/share/octofriend/sqlite.db")],
+                    };
+                    let mut messages = Vec::new();
+                    let mut seen = std::collections::HashSet::new();
+                    for path in paths {
+                        match crate::offline_io::admit(&path) {
+                            Ok(()) => {
+                                messages.extend(
+                                    crate::sessions::synthetic::parse_octofriend_sqlite(&path)
+                                        .into_iter()
+                                        .filter(|row| {
+                                            row.dedup_key
+                                                .as_ref()
+                                                .is_none_or(|key| seen.insert(key.clone()))
+                                        }),
+                                );
+                            }
+                            Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+                            Err(_) => return Err("import_source_unreadable".to_owned()),
+                        }
+                    }
+                    let zone =
+                        crate::BucketTimezone::from_scanner_settings(&options.scanner_settings);
+                    for message in &mut messages {
+                        message.rebucket_date(&zone);
+                    }
+                    return Ok(messages);
+                }
+                crate::parse_local_unified_messages_resolved(
+                    options,
+                    home,
+                    &context_clients,
+                    None,
+                    crate::SourceCachePolicy::InMemory,
+                )
+            })
+        }));
+        let (receipt, observed, candidate) = guard.finish_observed();
+        work = observed;
+        let receipt = receipt?;
+        let mut messages = parsed
+            .map_err(|_| vec!["import_parser_aborted"])?
+            .map_err(|_| vec!["import_parser_failed"])?;
+        if messages.len() > MAX_ROWS {
+            return Err(vec!["import_row_limit"]);
+        }
+        match client {
+            "devin-desktop" | "openclaw" | "synthetic" => {
+                messages.retain(|row| row.client == client)
+            }
+            _ => {}
+        }
+        for message in &mut messages {
+            crate::sessions::synthetic::normalize_synthetic_gateway_fields(
+                &mut message.model_id,
+                &mut message.provider_id,
+            );
+        }
+        if receipt.deferred_tail_files == 0 && candidate.valid() && !work.checkpoint_capacity {
+            next = Some(candidate);
+        }
+        Ok(LocalImport { messages, receipt })
+    })();
+    (result, work, next)
 }

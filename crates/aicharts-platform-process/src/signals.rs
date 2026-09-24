@@ -10,6 +10,20 @@ extern "C" fn cancel(signal: libc::c_int) {
         std::sync::atomic::Ordering::Relaxed,
     );
 }
+/// Ownership requires a waitable child. Never change inherited dispositions to
+/// obtain it: an auto-reaping SIGCHLD policy must fail before spawning.
+pub fn require_child_wait_custody() -> std::result::Result<(), &'static str> {
+    let mut action = std::mem::MaybeUninit::<libc::sigaction>::uninit();
+    // SAFETY: a read-only disposition query initializes the complete live buffer.
+    if unsafe { libc::sigaction(libc::SIGCHLD, std::ptr::null(), action.as_mut_ptr()) } != 0 {
+        return Err("capture_child_wait_custody_unavailable");
+    }
+    let action = unsafe { action.assume_init() };
+    if action.sa_sigaction != libc::SIG_DFL || action.sa_flags & libc::SA_NOCLDWAIT != 0 {
+        return Err("capture_child_wait_custody_unavailable");
+    }
+    Ok(())
+}
 pub struct CancellationScope {
     _guard: std::sync::MutexGuard<'static, ()>,
     previous: Vec<(libc::c_int, libc::sigaction)>,

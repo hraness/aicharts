@@ -1,0 +1,460 @@
+{
+  "schemaVersion": 1,
+  "auditCommit": "a5bec6415ce640a61495db57bc9c2ce83fb83021",
+  "phases": [
+    "0",
+    "2A",
+    "1A",
+    "1B",
+    "1C",
+    "2B",
+    "3",
+    "4",
+    "5",
+    "6",
+    "7",
+    "8",
+    "9",
+    "10",
+    "7B",
+    "11",
+    "12"
+  ],
+  "invariants": [
+    {
+      "id": "S01",
+      "name": "source admission",
+      "contract": "A successfully complete scan accounts for every selected supported observation or explicitly reports exclusion/incompleteness. Limits and unknown schemas cannot silently prove absence."
+    },
+    {
+      "id": "S02",
+      "name": "identity and ownership",
+      "contract": "One logical observation has one declared canonical owner. Copies deduplicate only with evidence; independent devices/accounts never lose disjoint usage."
+    },
+    {
+      "id": "S03",
+      "name": "merge and correction",
+      "contract": "Accepted state is deterministic under the declared order. Rebuild equals committed state. A correction removes precisely its prior contribution, including changed day/model/coverage/denominator."
+    },
+    {
+      "id": "S04",
+      "name": "exact quantities",
+      "contract": "No overflow, rounding ambiguity, subset double-counting or integer precision loss. Unknown, estimated and measured zero remain distinct across all representations."
+    },
+    {
+      "id": "S05",
+      "name": "coverage",
+      "contract": "Coverage is scoped to source, interval, metric and population; merging evidence cannot invent completeness. A parser's success or a record's presence is not enumeration proof."
+    },
+    {
+      "id": "S06",
+      "name": "durability",
+      "contract": "Cursor, facts, associations, revision and outbox commit consistently. Success survives qualified restart; uncertain outcome retains enough evidence for reconciliation."
+    },
+    {
+      "id": "S07",
+      "name": "network effects",
+      "contract": "Retried delivery has at-most-once accounting effect. Acknowledgment refers to exact identity/sequence/hash/revision. A stale response cannot clear newer work."
+    },
+    {
+      "id": "S08",
+      "name": "authority",
+      "contract": "Every sensitive effect uses current account/device/generation authority. Revocation, transfer and restore fence stale actors at declared linearization points."
+    },
+    {
+      "id": "S09",
+      "name": "read semantics",
+      "contract": "Reads do not mutate persistent state; pagination and projection reads represent a declared snapshot and detect stale cursors."
+    },
+    {
+      "id": "S10",
+      "name": "projection equivalence",
+      "contract": "Optimized rollups and queries equal an independent fold of canonical contributions, including correction, migration, deletion and reindex."
+    },
+    {
+      "id": "S11",
+      "name": "privacy",
+      "contract": "Only explicitly allowed numeric facts/public identities cross each boundary. No prompts, paths, tool arguments, credentials or private labels leak through errors, exports, caches or telemetry."
+    },
+    {
+      "id": "S12",
+      "name": "deletion and consent",
+      "contract": "Withdrawal/erasure cannot be undone by delayed work or restored backups beyond the explicitly retained control evidence and documented public cache bound."
+    },
+    {
+      "id": "S13",
+      "name": "resources and liveness",
+      "contract": "Every allocation/I/O/query/retry/retention path is bounded. Under stated recovery/fairness assumptions valid work can progress; refusal has a usable recovery path."
+    },
+    {
+      "id": "S14",
+      "name": "product fidelity",
+      "contract": "Dashboard, CLI, CSV, charts and accessible tables express the same selected facts, units, cohort and coverage."
+    },
+    {
+      "id": "S15",
+      "name": "supply chain and deployment",
+      "contract": "Qualified artifact identity, source, toolchains and deployed service identity agree. Feature flags reflect current qualification, not historical source-test success."
+    },
+    {
+      "id": "S16",
+      "name": "benchmark integrity",
+      "contract": "Comparisons preserve benchmark/config/version distinctions and dated evidence; missing measurements are not zeros, and personal usage is not benchmark capability."
+    }
+  ],
+  "findings": [
+    {
+      "id": "F01",
+      "phase": "1A",
+      "invariants": [
+        "S02",
+        "S03",
+        "S06"
+      ],
+      "regression": "permutation-reopen",
+      "owner": "crates/aicharts-core/src/lib.rs",
+      "obligation": "Reject conflicting known owners atomically; preserve unknown-to-known enrichment and exact replay; migration must be explicit.",
+      "status": "fixed",
+      "evidenceClass": "reproduced"
+    },
+    {
+      "id": "F02",
+      "phase": "1B",
+      "invariants": [
+        "S02",
+        "S03",
+        "S10"
+      ],
+      "regression": "cross-device-takeover",
+      "owner": "services/usage-worker/src/stats-state.ts",
+      "obligation": "Disjoint 120 and 15 remain 135; only proven-owned overlap may be replaced.",
+      "status": "open",
+      "evidenceClass": "reproduced"
+    },
+    {
+      "id": "F03",
+      "phase": "1B",
+      "invariants": [
+        "S08",
+        "S13"
+      ],
+      "regression": "expired-live-lease",
+      "owner": "services/usage-worker/src/restore-fence.ts",
+      "obligation": "An expired lease with a live continuation cannot prove drain or permit new-epoch visibility.",
+      "status": "fixed",
+      "evidenceClass": "source-or-assurance-gap"
+    },
+    {
+      "id": "F04",
+      "phase": "1B",
+      "invariants": [
+        "S08",
+        "S09"
+      ],
+      "regression": "maintenance-fence",
+      "owner": "services/usage-worker/src/enrollment.ts",
+      "obligation": "All persistent maintenance participates in drain; reads have explicit restored-state visibility.",
+      "status": "fixed",
+      "evidenceClass": "source-or-assurance-gap"
+    },
+    {
+      "id": "F05",
+      "phase": "1A",
+      "invariants": [
+        "S01",
+        "S05"
+      ],
+      "regression": "mtime-counterexample",
+      "owner": "vendor/tokscale-core/src/offline_io.rs",
+      "obligation": "Event bytes unchanged by mtime manipulation preserve in-range observations.",
+      "status": "fixed",
+      "evidenceClass": "reproduced"
+    },
+    {
+      "id": "F06",
+      "phase": "1A",
+      "invariants": [
+        "S01",
+        "S05",
+        "S13"
+      ],
+      "regression": "source-byte-limit",
+      "owner": "crates/aicharts-cli/src/state.rs",
+      "obligation": "Every omitted selected source is a bounded refusal or explicit incomplete diagnostic.",
+      "status": "fixed",
+      "evidenceClass": "reproduced"
+    },
+    {
+      "id": "F07",
+      "phase": "1A",
+      "invariants": [
+        "S01",
+        "S03"
+      ],
+      "regression": "cursor-partial-day",
+      "owner": "crates/aicharts-cli/src/source_refresh.rs",
+      "obligation": "Replacement covers precisely a fetched complete interval; outside-range records survive.",
+      "status": "fixed",
+      "evidenceClass": "reproduced"
+    },
+    {
+      "id": "F08",
+      "phase": "1A",
+      "invariants": [
+        "S04",
+        "S05",
+        "S06"
+      ],
+      "regression": "warning-roundtrip",
+      "owner": "crates/aicharts-ledger/src/lib.rs",
+      "obligation": "Every warning survives persistence and historical schema migration.",
+      "status": "fixed",
+      "evidenceClass": "reproduced"
+    },
+    {
+      "id": "F09",
+      "phase": "1B",
+      "invariants": [
+        "S08",
+        "S13"
+      ],
+      "regression": "revoked-writer-transfer",
+      "owner": "services/usage-worker/src/stats-state.ts",
+      "obligation": "Authorized successor progresses; late old-generation effects cannot publish.",
+      "status": "fixed",
+      "evidenceClass": "reproduced"
+    },
+    {
+      "id": "F10",
+      "phase": "1B",
+      "invariants": [
+        "S04",
+        "S13"
+      ],
+      "regression": "capacity-boundary",
+      "owner": "lib/usage/private-days-contract.ts",
+      "obligation": "An admitted 100001-record population remains representable by the corresponding response.",
+      "status": "fixed",
+      "evidenceClass": "reproduced"
+    },
+    {
+      "id": "F11",
+      "phase": "1B",
+      "invariants": [
+        "S07",
+        "S08"
+      ],
+      "regression": "supersession-aba",
+      "owner": "services/usage-worker/src/stats-admission.ts",
+      "obligation": "Superseded operations cannot revive or double-charge retained capacity.",
+      "status": "fixed",
+      "evidenceClass": "reproduced"
+    },
+    {
+      "id": "F12",
+      "phase": "1B",
+      "invariants": [
+        "S09",
+        "S10"
+      ],
+      "regression": "read-dml-instrumentation",
+      "owner": "services/usage-worker/src/stats-state.ts",
+      "obligation": "Ordinary read issues no persistent insert/update/delete; maintenance has explicit owner.",
+      "status": "fixed",
+      "evidenceClass": "reproduced"
+    },
+    {
+      "id": "F13",
+      "phase": "1B",
+      "invariants": [
+        "S06",
+        "S10"
+      ],
+      "regression": "from-zero-audit",
+      "owner": "services/usage-worker/src/admission-state.ts",
+      "obligation": "Retained checkpoints distinguish migration trust from verified full replay; reference fold agrees.",
+      "status": "fixed",
+      "evidenceClass": "source-or-assurance-gap"
+    },
+    {
+      "id": "F14",
+      "phase": "1A",
+      "invariants": [
+        "S08",
+        "S13"
+      ],
+      "regression": "descendant-settlement",
+      "owner": "crates/aicharts-cli/src/autosubmit.rs",
+      "obligation": "Owned descendants settle within deadline without signaling an unrelated or reused process group.",
+      "status": "open",
+      "evidenceClass": "source-or-assurance-gap"
+    },
+    {
+      "id": "F15",
+      "phase": "1C",
+      "invariants": [
+        "S04",
+        "S05",
+        "S14"
+      ],
+      "regression": "cache-share-denominator",
+      "owner": "components/usage/stats-report-view.tsx",
+      "obligation": "100 cache-read and 900 cache-write input yields 10% only for complete category coverage.",
+      "status": "fixed",
+      "evidenceClass": "reproduced"
+    },
+    {
+      "id": "F16",
+      "phase": "1C",
+      "invariants": [
+        "S04",
+        "S05",
+        "S14"
+      ],
+      "regression": "matched-cost-population",
+      "owner": "components/usage/stats-report-view.tsx",
+      "obligation": "Disjoint reported and estimated observations yield no savings/difference claim.",
+      "status": "fixed",
+      "evidenceClass": "reproduced"
+    },
+    {
+      "id": "F17",
+      "phase": "1C",
+      "invariants": [
+        "S04",
+        "S05",
+        "S14"
+      ],
+      "regression": "record-timing-basis",
+      "owner": "components/usage/stats-view.ts",
+      "obligation": "Display source record grain and duration basis; total/source-duration rate never implies decode speed.",
+      "status": "fixed",
+      "evidenceClass": "source-or-assurance-gap"
+    },
+    {
+      "id": "F18",
+      "phase": "4",
+      "invariants": [
+        "S01",
+        "S05",
+        "S14"
+      ],
+      "regression": "latest-attempt-health",
+      "owner": "lib/usage/stats-http-contract.ts",
+      "obligation": "Failed collection remains observable without replacing retained good measurements.",
+      "status": "open",
+      "evidenceClass": "source-or-assurance-gap"
+    },
+    {
+      "id": "F19",
+      "phase": "4",
+      "invariants": [
+        "S01",
+        "S05",
+        "S15"
+      ],
+      "regression": "adapter-qualification",
+      "owner": "vendor/tokscale-core/Cargo.toml",
+      "obligation": "Every advertised adapter has versioned executed fixture qualification; excluded tests never count as run.",
+      "status": "open",
+      "evidenceClass": "source-or-assurance-gap"
+    },
+    {
+      "id": "F20",
+      "phase": "6",
+      "invariants": [
+        "S10",
+        "S13"
+      ],
+      "regression": "query-plan-and-fold",
+      "owner": "services/usage-worker/src/stats-state.ts",
+      "obligation": "Indexed bounded queries and counters equal independent full recomputation under correction.",
+      "status": "open",
+      "evidenceClass": "source-or-assurance-gap"
+    },
+    {
+      "id": "F21",
+      "phase": "6",
+      "invariants": [
+        "S13"
+      ],
+      "regression": "complete-cost-inventory",
+      "owner": "costs.json",
+      "obligation": "Owned SQL/R2 surfaces are discovered; executable logical budgets never masquerade as physical bounds. Native read-only recovery must support the same database byte bound as writer admission; this Phase 1A dependency is part of the broader capacity obligation.",
+      "status": "open",
+      "evidenceClass": "source-or-assurance-gap"
+    },
+    {
+      "id": "F22",
+      "phase": "10",
+      "invariants": [
+        "S08",
+        "S12",
+        "S13"
+      ],
+      "regression": "account-lifecycle",
+      "owner": "services/usage-worker/src/enrollment.ts",
+      "obligation": "Export/erase/transfer/recovery are functional and preserve authority across delayed and restored work.",
+      "status": "open",
+      "evidenceClass": "source-or-assurance-gap"
+    },
+    {
+      "id": "F23",
+      "phase": "1C",
+      "invariants": [
+        "S08",
+        "S11",
+        "S14"
+      ],
+      "regression": "account-generation-cache",
+      "owner": "lib/usage/account-generation.ts",
+      "obligation": "Identity change, bfcache and late replies cannot expose another authority generation; local files survive.",
+      "status": "fixed",
+      "evidenceClass": "source-or-assurance-gap"
+    },
+    {
+      "id": "F24",
+      "phase": "8",
+      "invariants": [
+        "S04",
+        "S05",
+        "S11",
+        "S14"
+      ],
+      "regression": "numeric-drilldown",
+      "owner": "lib/usage/session-contract.ts",
+      "obligation": "Typed attributable numeric facts support distribution/lineage metrics with no content upload.",
+      "status": "open",
+      "evidenceClass": "source-or-assurance-gap"
+    },
+    {
+      "id": "F25",
+      "phase": "10",
+      "invariants": [
+        "S08",
+        "S11",
+        "S12",
+        "S13"
+      ],
+      "regression": "consent-replay-and-capacity",
+      "owner": "services/usage-worker/src/leaderboard-index.ts",
+      "obligation": "Current consent and freshness bound every public projection; withdrawn/erased state cannot resurrect.",
+      "status": "open",
+      "evidenceClass": "source-or-assurance-gap"
+    },
+    {
+      "id": "F26",
+      "phase": "11",
+      "invariants": [
+        "S15",
+        "S16"
+      ],
+      "regression": "qualification-inventory",
+      "owner": "docs/usage-activation.md",
+      "obligation": "Claim inventory cites exact source/artifact/live evidence and does not promote dated activation to current proof.",
+      "status": "open",
+      "evidenceClass": "source-or-assurance-gap"
+    }
+  ],
+  "proofClaim": "No proof established by this inventory; each evidence artifact must declare scope and assumptions."
+}

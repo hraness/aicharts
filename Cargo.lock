@@ -31,6 +31,7 @@ dependencies = [
  "aicharts-custody",
  "aicharts-import",
  "aicharts-ledger",
+ "aicharts-metrics",
  "aicharts-platform-acl",
  "aicharts-platform-process",
  "aicharts-protocol",
@@ -54,6 +55,7 @@ dependencies = [
 name = "aicharts-core"
 version = "0.1.0"
 dependencies = [
+ "aicharts-metrics",
  "aicharts-protocol",
  "hmac",
  "serde",
@@ -78,6 +80,9 @@ dependencies = [
 name = "aicharts-import"
 version = "0.1.0"
 dependencies = [
+ "serde",
+ "serde_json",
+ "sha2",
  "tempfile",
  "tokscale-core",
 ]
@@ -91,8 +96,13 @@ dependencies = [
  "getrandom 0.3.4",
  "hmac",
  "rusqlite",
+ "rustix",
  "sha2",
 ]
+
+[[package]]
+name = "aicharts-metrics"
+version = "0.1.0"
 
 [[package]]
 name = "aicharts-platform-acl"
@@ -112,6 +122,7 @@ dependencies = [
 name = "aicharts-protocol"
 version = "0.1.0"
 dependencies = [
+ "aicharts-metrics",
  "sha2",
 ]
 

@@ -11,6 +11,7 @@ pub mod mcp;
 mod message_cache;
 pub mod model_alias;
 pub mod offline;
+mod offline_checkpoint;
 mod offline_clone;
 mod offline_io;
 pub mod opencode_model_name;
@@ -1037,11 +1038,17 @@ fn parse_all_messages_streaming<S: MessageSink>(
         is_headless: bool,
     ) -> CodexSourceOutcome {
         let fallback_timestamp = sessions::utils::file_modified_timestamp_ms(path);
-        let parsed = sessions::codex::parse_codex_file_incremental(
-            path,
-            0,
-            sessions::codex::CodexParseState::default(),
-        );
+        let parsed = if crate::offline_io::checkpoint_enabled() {
+            crate::offline_checkpoint::parse_codex(path)
+        } else {
+            let parsed = sessions::codex::parse_codex_file_incremental(
+                path,
+                0,
+                sessions::codex::CodexParseState::default(),
+            );
+            crate::offline_io::codex_diagnostics(&parsed.state);
+            parsed
+        };
         let turn_coverage = parsed.state.turn_coverage.clone();
         if crate::offline_io::active() {
             // The offline boundary owns an immutable capture and never saves a

@@ -1,5 +1,5 @@
 [workspace]
-members = ["crates/aicharts-protocol", "crates/aicharts-core", "crates/aicharts-ledger", "crates/aicharts-cli", "crates/aicharts-custody", "crates/aicharts-platform-acl", "crates/aicharts-platform-process", "crates/aicharts-import"]
+members = ["crates/aicharts-protocol", "crates/aicharts-core", "crates/aicharts-ledger", "crates/aicharts-cli", "crates/aicharts-custody", "crates/aicharts-platform-acl", "crates/aicharts-platform-process", "crates/aicharts-import", "crates/aicharts-metrics"]
 exclude = ["vendor/tokscale-core"]
 resolver = "2"
 
@@ -11,6 +11,7 @@ rust-version = "1.97"
 publish = false
 
 [workspace.dependencies]
+aicharts-metrics = { path = "crates/aicharts-metrics" }
 aicharts-protocol = { path = "crates/aicharts-protocol" }
 aicharts-core = { path = "crates/aicharts-core" }
 aicharts-ledger = { path = "crates/aicharts-ledger" }

@@ -176,7 +176,7 @@ test("account-owned status exposes durable control metadata without namespace ma
     admissionRevision: status.admissionRevision, admissionCommittedAtMs: status.admissionCommittedAtMs,
     admissionObservedAtMs: status.admissionObservedAtMs, headCount: status.headCount, liveCount: status.liveCount,
     quarantined: false });
-  expect(reopened.stateRevision).toBeGreaterThan(status.stateRevision);
+  expect(reopened.stateRevision).toBe(status.stateRevision);
   success(await env.ACCOUNT_ENROLLMENTS.getByName(enrollmentAccountName(t.accountId)).revokeEnrollment(t.proof));
   const revoked = success(await env.ACCOUNT_ENROLLMENTS.getByName(enrollmentAccountName(t.accountId)).readEnrollmentStatus(t.proof));
   expect(revoked.devices[0].deviceState).toBe("revoked");

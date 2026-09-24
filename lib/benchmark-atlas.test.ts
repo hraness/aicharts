@@ -97,6 +97,15 @@ describe("benchmark atlas exploration", () => {
     expect(points.map(item => item.id)).toEqual(["one", "two"]);
   });
 
+  test("collation-equivalent IDs cannot make a tied leader depend on input order", () => {
+    const points = ["é", "e\u0301"].map(id => ({ ...point, id }));
+    const forward = { ...dataset, points };
+    const reversed = { ...dataset, points: points.toReversed() };
+    expect(validateAtlasCatalog([entry], [forward]).ok).toBeTrue();
+    expect(sortAtlasPoints(forward)).toEqual(sortAtlasPoints(reversed));
+    expect(atlasDatasetSummary(forward).leader).toEqual(atlasDatasetSummary(reversed).leader);
+  });
+
   test("counts configurations separately from models and keeps providers in model identity", () => {
     const summary = atlasDatasetSummary({ ...dataset, points: [
       point,

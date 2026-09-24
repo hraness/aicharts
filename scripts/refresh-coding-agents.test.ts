@@ -187,6 +187,15 @@ describe("Artificial Analysis Flight extraction", () => {
     if (!replacedResult.ok) expect(replacedResult.error.message).toContain("stable series/setting keys");
   });
 
+  test("rejects an otherwise identical source snapshot with a regressed retrieval clock", () => {
+    const previous = normalizedSnapshot(10);
+    const candidate = normalizedSnapshot(10);
+    candidate.source = { ...candidate.source, retrievedAt: "2026-07-16T16:29:07.106Z" };
+    const result = validateSnapshotUpdate(previous, candidate);
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error.message).toContain("retrieval time regressed");
+  });
+
   test("reconciles upstream series slug churn without fabricating model-added events", () => {
     const previous = normalizedSnapshot(10);
     const candidate = normalizedSnapshot(10);

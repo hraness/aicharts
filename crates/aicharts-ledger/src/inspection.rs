@@ -11,6 +11,7 @@ pub struct ReadOnlyLedger {
     prefix_snapshot: crate::PrefixSnapshot,
     status: LedgerStatus,
     inventory: Vec<InventoryRecord>,
+    audit: crate::HistoryAudit,
 }
 
 impl ReadOnlyLedger {
@@ -32,7 +33,7 @@ impl ReadOnlyLedger {
         let mut connection = guard.connect()?;
         let tx = connection.transaction()?;
         crate::storage::validate_schema(&tx, &guard.namespace, true)?;
-        crate::validate_relations_in(&tx)?;
+        let audit = crate::audit_relations_in(&tx)?;
         let snapshot = crate::snapshot(&tx)?;
         let prefix_snapshot = crate::prefix::snapshot(&tx)?;
         let status = crate::status(&tx)?;
@@ -50,6 +51,7 @@ impl ReadOnlyLedger {
             prefix_snapshot,
             status,
             inventory,
+            audit,
         })
     }
 
@@ -60,6 +62,10 @@ impl ReadOnlyLedger {
         _after_guard: F,
     ) -> Result<Self> {
         Err(Error::UnsupportedPlatform)
+    }
+
+    pub fn history_audit(&self) -> crate::HistoryAudit {
+        self.audit
     }
 
     pub fn snapshot(&self) -> &LedgerSnapshot {
@@ -76,6 +82,114 @@ impl ReadOnlyLedger {
         &self.inventory
     }
 
+    /// Explicit local recovery export, including quarantined facts and all
+    /// sender tables. Never overwrites a directory. Does not export keys or
+    /// enrollment anchors and grants no authority to upload the copy.
+    #[cfg(any(target_os = "macos", target_os = "linux"))]
+    pub fn export_to(&self, target: &Path, identity: &LedgerIdentity<'_>) -> Result<()> {
+        use sha2::{Digest, Sha256};
+        use std::io::{Read, Write};
+        use std::os::unix::fs::{DirBuilderExt, OpenOptionsExt};
+        if crate::storage::namespace(identity)? != self.guard.namespace {
+            return Err(Error::WrongNamespace);
+        }
+        self.ensure_unchanged()?;
+        let mut connection = self.guard.connect()?;
+        let tx = connection.transaction()?;
+        crate::storage::validate_schema(&tx, &self.guard.namespace, true)?;
+        if crate::revision(&tx)? != self.snapshot.revision {
+            return Err(Error::StaleRevision);
+        }
+        self.guard.ensure_paths()?;
+        let target = crate::storage::private_state_path(target)?;
+        std::fs::DirBuilder::new()
+            .mode(0o700)
+            .create(&target)
+            .map_err(|_| Error::PrivateStateRequired)?;
+        let mut output = std::fs::OpenOptions::new()
+            .write(true)
+            .create_new(true)
+            .mode(0o600)
+            .open(target.join("usage.sqlite3"))
+            .map_err(|_| Error::Storage)?;
+        let open = |path: &Path| -> Result<std::fs::File> {
+            use rustix::fs::{open, Mode, OFlags};
+            Ok(open(
+                path,
+                OFlags::RDONLY | OFlags::NOFOLLOW | OFlags::NONBLOCK | OFlags::CLOEXEC,
+                Mode::empty(),
+            )
+            .map_err(|_| Error::PrivateStateRequired)?
+            .into())
+        };
+        let mut input = open(&self.guard.resolved.join("usage.sqlite3"))?;
+        let descriptor =
+            || FileIdentity::from_metadata(&input.metadata().map_err(|_| Error::Storage)?, false);
+        if descriptor()? != self.guard.database {
+            return Err(Error::StaleRevision);
+        }
+        let mut digest = Sha256::new();
+        let mut buffer = [0u8; 65536];
+        let mut total = 0u64;
+        loop {
+            let n = input.read(&mut buffer).map_err(|_| Error::Storage)?;
+            if n == 0 {
+                break;
+            }
+            total = total
+                .checked_add(n as u64)
+                .filter(|n| *n <= crate::MAX_DATABASE_BYTES)
+                .ok_or(Error::Limit)?;
+            output.write_all(&buffer[..n]).map_err(|_| Error::Storage)?;
+            digest.update(&buffer[..n]);
+        }
+        output.sync_all().map_err(|_| Error::Storage)?;
+        if FileIdentity::from_metadata(&input.metadata().map_err(|_| Error::Storage)?, false)?
+            != self.guard.database
+        {
+            return Err(Error::StaleRevision);
+        }
+        self.guard.ensure_paths()?;
+        if total != self.guard.database.bytes {
+            return Err(Error::StaleRevision);
+        }
+        let copy = Self::open(&target, identity)?;
+        if copy.audit != self.audit || copy.snapshot.revision != self.snapshot.revision {
+            return Err(Error::InvalidState);
+        }
+        let mut copy_file = open(&target.join("usage.sqlite3"))?;
+        if FileIdentity::from_metadata(&copy_file.metadata().map_err(|_| Error::Storage)?, false)?
+            != copy.guard.database
+        {
+            return Err(Error::StaleRevision);
+        }
+        let mut copied_digest = Sha256::new();
+        let mut copied_bytes = 0u64;
+        loop {
+            let n = copy_file.read(&mut buffer).map_err(|_| Error::Storage)?;
+            if n == 0 {
+                break;
+            }
+            copied_bytes = copied_bytes
+                .checked_add(n as u64)
+                .filter(|n| *n <= total)
+                .ok_or(Error::Limit)?;
+            copied_digest.update(&buffer[..n]);
+        }
+        if copied_bytes != total || digest.finalize() != copied_digest.finalize() {
+            return Err(Error::InvalidState);
+        }
+        copy.ensure_unchanged()?;
+        for directory in [&target, target.parent().ok_or(Error::PrivateStateRequired)?] {
+            std::fs::File::open(directory)
+                .and_then(|f| f.sync_all())
+                .map_err(|_| Error::Storage)?;
+        }
+        self.guard.ensure_paths()?;
+        tx.rollback()?;
+        Ok(())
+    }
+
     /// Recheck identity, schema, namespace, integrity and revision. This does not
     /// reserve a future write or eliminate the need for writer coordination at
     /// activation. An intervening changed file is rejected even if its numeric
@@ -86,7 +200,9 @@ impl ReadOnlyLedger {
         let mut connection = self.guard.connect()?;
         let tx = connection.transaction()?;
         crate::storage::validate_schema(&tx, &self.guard.namespace, true)?;
-        crate::validate_relations_in(&tx)?;
+        if crate::audit_relations_in(&tx)? != self.audit {
+            return Err(Error::StaleRevision);
+        }
         if crate::revision(&tx)? != self.snapshot.revision {
             return Err(Error::StaleRevision);
         }
@@ -159,9 +275,12 @@ struct FileIdentity {
 #[cfg(any(target_os = "macos", target_os = "linux"))]
 impl FileIdentity {
     fn read(path: &Path, directory: bool) -> Result<Self> {
-        use std::os::unix::fs::MetadataExt;
         crate::storage::private_file(path, directory)?;
         let metadata = std::fs::symlink_metadata(path).map_err(|_| Error::PrivateStateRequired)?;
+        Self::from_metadata(&metadata, directory)
+    }
+    fn from_metadata(metadata: &std::fs::Metadata, directory: bool) -> Result<Self> {
+        use std::os::unix::fs::MetadataExt;
         // Check this metadata too, not only the preceding validation's sample.
         if metadata.file_type().is_symlink()
             || metadata.mode() & 0o077 != 0
@@ -169,7 +288,7 @@ impl FileIdentity {
             || (!directory
                 && (!metadata.is_file()
                     || metadata.nlink() != 1
-                    || metadata.len() > 256 * 1024 * 1024))
+                    || metadata.len() > crate::storage::MAX_DATABASE_BYTES))
         {
             return Err(Error::PrivateStateRequired);
         }
@@ -278,4 +397,30 @@ pub(super) fn readonly_connection_for_test(
     identity: &LedgerIdentity<'_>,
 ) -> Result<rusqlite::Connection> {
     Guard::capture(dir, crate::storage::namespace(identity)?)?.connect()
+}
+
+#[cfg(all(test, any(target_os = "macos", target_os = "linux")))]
+mod capacity_tests {
+    use super::*;
+    use std::os::unix::fs::OpenOptionsExt;
+    #[test]
+    fn reader_metadata_uses_the_same_sparse_file_capacity_as_writer() {
+        let fixture = crate::tests::Fixture::new();
+        let path = fixture.0.join("sparse-capacity");
+        let file = std::fs::OpenOptions::new()
+            .create_new(true)
+            .write(true)
+            .mode(0o600)
+            .open(&path)
+            .unwrap();
+        for bytes in [256 * 1024 * 1024 + 1, crate::MAX_DATABASE_BYTES] {
+            file.set_len(bytes).unwrap();
+            assert_eq!(FileIdentity::read(&path, false).unwrap().bytes, bytes);
+        }
+        file.set_len(crate::MAX_DATABASE_BYTES + 1).unwrap();
+        assert!(matches!(
+            FileIdentity::read(&path, false),
+            Err(Error::PrivateStateRequired)
+        ));
+    }
 }

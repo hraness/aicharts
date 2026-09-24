@@ -103,11 +103,13 @@ node --experimental-transform-types --import ./scripts/usage-cloudflare-node.mjs
 2. `close` is idempotent: an already closed record at the pinned epoch
    reconciles instead of conflicting. New mutating leases then return
    `recovery_required` from the fence itself.
-3. `drain` polls `read` every 2 seconds for at most 90 seconds — the lease TTL
-   is 30 seconds — and completes only on `inFlight:0` while the record stays
-   closed at the pinned epoch. A fence that never drains, or reports any other
-   state, refuses the run; investigate the outstanding lease rather than
-   forcing it.
+3. `drain` polls `read` every 2 seconds for at most 90 seconds and completes
+   only on `inFlight:0` while the record stays closed at the pinned epoch.
+   The 30-second holder deadline is diagnostic; elapsed time never releases
+   authority. A lost execution or an unsettled canonical provider write can
+   keep the fence closed indefinitely. If polling expires, inspect the retained
+   attempt and actual provider settlement; never delete a holder or infer drain
+   from its deadline. This operator route has no forced-release operation.
 4. The restore checkpoint is external. The tool performs no restore. After the
    two-store restore, credential invalidation and journal/anchor
    reconciliation, record a `FenceRestoreReceipt` attesting

@@ -1,13 +1,20 @@
 import { expect, test } from "bun:test";
 import { STATS_MAX_DAY } from "./stats-contract";
 import { decodeStatsHttpResponse, encodeStatsHttpResponse, parseStatsQuery, parseStatsRange, parseStatsUpload } from "./stats-http-contract";
-import { parseStatsAbandonRequest, parseStatsAbandonment } from "./stats-http-contract";
+import { parseStatsAbandonRequest, parseStatsAbandonment, parseStatsStatus } from "./stats-http-contract";
 
 const report = { schemaVersion: 2, profile: "client-stats-v2", registryRevision: 1, firstUtcDay: 20_000, dayCount: 1,
   generatedAtMs: 1_800_000_000_000, revision: 0, updatedAtMs: null,
   sources: [{ client: "cursor", status: "empty", tokenBasis: "unavailable", records: 0, warnings: 0, latestAtMs: null }], rows: [] };
 const upload = { schemaVersion: 2, operationId: "11".repeat(32), accountId: `acct_${"22".repeat(16)}`, deviceId: "33".repeat(32),
   generation: "44".repeat(32), sequence: 1, expectedRevision: 0, mode: "replace-window", takeover: null, report };
+
+test("takeover status accepts every retained admission count and refuses one beyond the shared bound", () => {
+  const status = { schemaVersion: 2, revision: 0, nextSequence: 1, writerDeviceId: null,
+    v1Revision: 4_096, headDigest: "00".repeat(32), legacyRecords: 100_001, takeoverEligible: false };
+  for (const legacyRecords of [100_001, 1_000_000]) expect(parseStatsStatus({ ...status, legacyRecords })?.legacyRecords).toBe(legacyRecords);
+  expect(parseStatsStatus({ ...status, legacyRecords: 1_000_001 })).toBeNull();
+});
 test("abandonment proofs require the complete exact predecessor and a strictly later bounded fence", () => {
   const input = { schemaVersion: 2, operationId: upload.operationId, accountId: upload.accountId, deviceId: upload.deviceId,
     generation: upload.generation, sequence: 1, expectedRevision: 0, bodyHash: "55".repeat(32) };

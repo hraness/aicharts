@@ -225,6 +225,38 @@ growth instead of deleting older records. Completed source capture caches have
 their own documented bounds. The sync checkpoint retains the exact pending
 numeric request and validated receipt in private authenticated files.
 
+Fresh enrolled detailed collection also retains private source health, bounded
+to 128 KiB and 55 client entries. The last attempt, last complete good observation
+and publication state are independent. Each collection receives a private random
+attempt identity, so even two scans completed in the same millisecond remain
+distinct. Each publication binds that observation and the entire frozen
+request identity; a delayed reply cannot settle another flight. Legacy flights
+with no health binding stay unknown. `stats-health` inspects existing evidence
+without a write lock or new files; see [source health](usage-details.md#select-a-source-profile).
+
+The explicit `stats-sync --incremental` option applies only to an exclusive
+Codex source profile. Its derived local checkpoint has a 256 MiB payload ceiling,
+65,536-file ceiling and two-million-observation ceiling. It binds source identity,
+consumed content, parser generation and cumulative/fork state together. Copy,
+rotation, truncation, changed prefix or incompatible generation requires full
+replay; failed, partial or rejected projection attempts preserve the prior
+checkpoint. Ordinary `stats` and dry runs never persist a checkpoint. Automatic
+use remains disabled until the complete cold/warm/append/correction workload
+passes performance qualification. Avoid interpreting zero parsed bytes as zero
+I/O: reused source prefixes still require content verification.
+
+The measured 50,000-observation fixture confirmed exact results but did not
+qualify persisted reuse: median full collection was 185 ms, warm reload 237 ms,
+and append with reload 295 ms versus 182 ms for an append full scan. These are
+diagnostic timings on one host, not service guarantees. Smaller parser work does
+not yet offset checkpoint verification, decoding and reconstruction costs.
+
+Both new stores retain at most one staged replacement beside their current
+payload and stable lock. An interrupted replacement that leaves a stage refuses
+another write with `source_snapshot_recovery_required`; existing valid health
+remains readable. Preserve the retained files for recovery rather than removing
+them to force a retry.
+
 On an explicit uninstall or profile-retirement request, stop the owned schedule,
 verify the exact profile identity, preserve a private backup/export if history
 is still needed, and remove only that profile's owned cache/runtime files.

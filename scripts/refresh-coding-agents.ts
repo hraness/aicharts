@@ -483,6 +483,9 @@ export function validateSnapshotUpdate(
   previous: CodingAgentSnapshot,
   candidate: CodingAgentSnapshot,
 ): Result<void, Error> {
+  if (Date.parse(candidate.source.retrievedAt) < Date.parse(previous.source.retrievedAt)) {
+    return err(new Error("Source retrieval time regressed; retain the last validated snapshot."));
+  }
   const seenIds = new Set<string>();
   const seenStableKeys = new Set<string>();
   const seenSemanticKeys = new Set<string>();

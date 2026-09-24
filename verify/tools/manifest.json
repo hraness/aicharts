@@ -1,0 +1,212 @@
+{
+  "schemaVersion": 1,
+  "claim": "tool-provisioning-only; proof qualification requires separate maintained runner receipts",
+  "common": [
+    {
+      "id": "tlc",
+      "url": "https://github.com/tlaplus/tlaplus/releases/download/v1.7.4/tla2tools.jar",
+      "sha256": "936a262061c914694dfd669a543be24573c45d5aa0ff20a8b96b23d01e050e88",
+      "cache": "target/assurance-tools/tla2tools-1.7.4.jar",
+      "installPath": "target/assurance-tools/tla2tools-1.7.4.jar",
+      "format": "file",
+      "archiveRoot": ".",
+      "maxArchiveBytes": 16777216,
+      "maxExpandedBytes": 12884901888
+    },
+    {
+      "id": "rust-2026-08-21",
+      "url": "https://static.rust-lang.org/dist/2026-08-21/channel-rust-nightly.toml",
+      "sha256": "3c30cc655a7549d0b30015cd032f949e8723da5ad039f672d04520bbaea4e76d",
+      "cache": "target/assurance-tools/rust-nightly-2026-08-21.toml",
+      "installPath": "target/assurance-tools/rust-nightly-2026-08-21.toml",
+      "format": "file",
+      "archiveRoot": ".",
+      "maxArchiveBytes": 4194304,
+      "maxExpandedBytes": 12884901888
+    },
+    {
+      "id": "rust-2026-09-17",
+      "url": "https://static.rust-lang.org/dist/2026-09-17/channel-rust-nightly.toml",
+      "sha256": "9cec46bc6224bd0ff346b0a01a951ba07f9ccb806f89842b897a5a182d0aaccd",
+      "cache": "target/assurance-tools/rust-nightly-2026-09-17.toml",
+      "installPath": "target/assurance-tools/rust-nightly-2026-09-17.toml",
+      "format": "file",
+      "archiveRoot": ".",
+      "maxArchiveBytes": 4194304,
+      "maxExpandedBytes": 12884901888
+    }
+  ],
+  "platforms": {
+    "darwin-arm64": {
+      "target": "aarch64-apple-darwin",
+      "artifacts": [
+        {
+          "id": "aeneas",
+          "url": "https://github.com/AeneasVerif/aeneas/releases/download/nightly-2026.09.23-12a018b/aeneas-macos-aarch64.tar.gz",
+          "sha256": "de4d3e79e166f706f9dace225594b9015a7eedb262056cc3357d4b71f7d87a86",
+          "cache": "target/assurance-tools/aeneas-nightly-2026.09.23-12a018b-macos-aarch64.tar.gz",
+          "installPath": "target/assurance-tools/aeneas-12a018b",
+          "format": "tar.gz",
+          "archiveRoot": ".",
+          "maxArchiveBytes": 1073741824,
+          "maxExpandedBytes": 12884901888
+        },
+        {
+          "id": "lean",
+          "url": "https://github.com/leanprover/lean4/releases/download/v4.31.0/lean-4.31.0-darwin_aarch64.tar.zst",
+          "sha256": "264105500c8abdf37b68ffe03390a783ed259807807222698da8dd92d6ce0a27",
+          "cache": "target/assurance-tools/lean-4.31.0-darwin_aarch64.tar.zst",
+          "installPath": "target/assurance-tools/lean-4.31.0-darwin_aarch64",
+          "format": "tar.zst",
+          "archiveRoot": "lean-4.31.0-darwin_aarch64",
+          "maxArchiveBytes": 1073741824,
+          "maxExpandedBytes": 12884901888
+        },
+        {
+          "id": "kani",
+          "url": "https://github.com/model-checking/kani/releases/download/kani-0.68.0/kani-0.68.0-aarch64-apple-darwin.tar.gz",
+          "sha256": "a5d39a5d5e748253a553aa62f295c6c397287927a28e5e32691d7ff2eda0c398",
+          "cache": "target/assurance-tools/kani-0.68.0-aarch64-apple-darwin.tar.gz",
+          "installPath": "target/assurance-tools/kani-macos/kani-0.68.0",
+          "format": "tar.gz",
+          "archiveRoot": "kani-0.68.0",
+          "maxArchiveBytes": 1073741824,
+          "maxExpandedBytes": 12884901888
+        },
+        {
+          "id": "java",
+          "url": "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.12.1%2B1/OpenJDK21U-jre_aarch64_mac_hotspot_21.0.12.1_1.tar.gz",
+          "sha256": "dec50fc6f9fcd4fe3ae8cabf5a5fa68f6afc48841f7698e468e9aa5d54beed84",
+          "cache": "target/assurance-tools/temurin21-jre.tar.gz",
+          "installPath": "target/assurance-tools/jdk-21.0.12.1+1-jre",
+          "format": "tar.gz",
+          "archiveRoot": "jdk-21.0.12.1+1-jre",
+          "maxArchiveBytes": 104857600,
+          "maxExpandedBytes": 536870912
+        }
+      ]
+    },
+    "linux-x64": {
+      "target": "x86_64-unknown-linux-gnu",
+      "artifacts": [
+        {
+          "id": "aeneas",
+          "url": "https://github.com/AeneasVerif/aeneas/releases/download/nightly-2026.09.23-12a018b/aeneas-linux-x86_64.tar.gz",
+          "sha256": "4fc954f56f2f8d53304ee12d46df5023940a083f9b42717b29ee0b233f555acb",
+          "cache": "target/assurance-tools/aeneas-linux-x86_64.tar.gz",
+          "installPath": "target/assurance-tools/aeneas-linux-12a018b",
+          "format": "tar.gz",
+          "archiveRoot": ".",
+          "maxArchiveBytes": 1073741824,
+          "maxExpandedBytes": 12884901888
+        },
+        {
+          "id": "lean",
+          "url": "https://github.com/leanprover/lean4/releases/download/v4.31.0/lean-4.31.0-linux.tar.zst",
+          "sha256": "07a633cc8d9151cbc08825ea4cdda50d4b02a2c9cb852c0131b13046f49cad7f",
+          "cache": "target/assurance-tools/lean-4.31.0-linux.tar.zst",
+          "installPath": "target/assurance-tools/lean-linux/lean-4.31.0-linux",
+          "format": "tar.zst",
+          "archiveRoot": "lean-4.31.0-linux",
+          "maxArchiveBytes": 1073741824,
+          "maxExpandedBytes": 12884901888
+        },
+        {
+          "id": "kani",
+          "url": "https://github.com/model-checking/kani/releases/download/kani-0.68.0/kani-0.68.0-x86_64-unknown-linux-gnu.tar.gz",
+          "sha256": "32e2b484d73ede0bbf64a2cf0879c4259422497d8aec4ee67d448de9ae7843d3",
+          "cache": "target/assurance-tools/kani-0.68.0-x86_64-unknown-linux-gnu.tar.gz",
+          "installPath": "target/assurance-tools/kani-linux/kani-0.68.0",
+          "format": "tar.gz",
+          "archiveRoot": "kani-0.68.0",
+          "maxArchiveBytes": 1073741824,
+          "maxExpandedBytes": 12884901888
+        },
+        {
+          "id": "java",
+          "url": "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.12.1%2B1/OpenJDK21U-jre_x64_linux_hotspot_21.0.12.1_1.tar.gz",
+          "sha256": "2413149700df0f7d440500a84a8f764c535f21e5a5e87d38328b64eec2c5b500",
+          "cache": "target/assurance-tools/temurin21-jre-linux.tar.gz",
+          "installPath": "target/assurance-tools/jre-linux/jdk-21.0.12.1+1-jre",
+          "format": "tar.gz",
+          "archiveRoot": "jdk-21.0.12.1+1-jre",
+          "maxArchiveBytes": 104857600,
+          "maxExpandedBytes": 536870912
+        }
+      ]
+    }
+  },
+  "rust": [
+    {
+      "toolchain": "nightly-2026-08-21",
+      "manifest": "target/assurance-tools/rust-nightly-2026-08-21.toml",
+      "components": [
+        "cargo",
+        "rust-std",
+        "rustc",
+        "rustc-dev",
+        "rust-src",
+        "llvm-tools-preview"
+      ]
+    },
+    {
+      "toolchain": "nightly-2026-09-17",
+      "manifest": "target/assurance-tools/rust-nightly-2026-09-17.toml",
+      "components": [
+        "cargo",
+        "rust-std",
+        "rustc",
+        "rustc-dev",
+        "rust-src",
+        "llvm-tools-preview"
+      ]
+    }
+  ],
+  "leanPackages": [
+    {
+      "name": "mathlib",
+      "url": "https://github.com/leanprover-community/mathlib4.git",
+      "rev": "fabf563a7c95a166b8d7b6efca11c8b4dc9d911f"
+    },
+    {
+      "name": "plausible",
+      "url": "https://github.com/leanprover-community/plausible",
+      "rev": "63045536fe95024e6c18fc7b48e03f506701c5bc"
+    },
+    {
+      "name": "LeanSearchClient",
+      "url": "https://github.com/leanprover-community/LeanSearchClient",
+      "rev": "c5d5b8fe6e5158def25cd28eb94e4141ad97c843"
+    },
+    {
+      "name": "importGraph",
+      "url": "https://github.com/leanprover-community/import-graph",
+      "rev": "5c7542ed018c78194f1e2b903eaf6a792b74c03d"
+    },
+    {
+      "name": "proofwidgets",
+      "url": "https://github.com/leanprover-community/ProofWidgets4",
+      "rev": "24b0d9dc081c5423f8eec7e866c441e5184f29d9"
+    },
+    {
+      "name": "aesop",
+      "url": "https://github.com/leanprover-community/aesop",
+      "rev": "e3cb2f741431ce31bf73549fb52316a57368b06f"
+    },
+    {
+      "name": "Qq",
+      "url": "https://github.com/leanprover-community/quote4",
+      "rev": "f46324995fca5f0483b742e4eb4daec7f4ee50d2"
+    },
+    {
+      "name": "batteries",
+      "url": "https://github.com/leanprover-community/batteries",
+      "rev": "fa08db58b30eb033edcdab331bba000827f9f785"
+    },
+    {
+      "name": "Cli",
+      "url": "https://github.com/leanprover/lean4-cli",
+      "rev": "92564e5770e4d09f2d86dfbf8ada1e9c715b384c"
+    }
+  ]
+}

@@ -1,8 +1,11 @@
 import { parseUsageStatsReport, statsOwnRecord, type UsageStatsReport } from "./stats-contract";
 import { parseStatsRange, STATS_HTTP_RESPONSE_BYTES, type StatsRange } from "./stats-http-contract";
+import { USAGE_ACCOUNT_HEADER } from "./account-public";
 
 export const STATS_PUBLIC_URL = "https://aicharts.io/api/usage/stats";
 export const STATS_PUBLIC_MEDIA = "application/json; charset=utf-8";
+/** Private same-origin acquisition identity, bound by the server to this exact report. */
+export const STATS_ACCOUNT_HEADER = USAGE_ACCOUNT_HEADER;
 export const STATS_PUBLIC_MAX_BYTES = STATS_HTTP_RESPONSE_BYTES + 128;
 export type StatsPublicError = "invalid_request" | "request_rejected" | "authentication_required" | "method_not_allowed" | "unavailable" | "not_enrolled" | "not_started" | "range_too_large";
 export type StatsPublicReply = Readonly<{ schemaVersion: 2; ok: true; value: UsageStatsReport }>

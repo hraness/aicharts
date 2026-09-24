@@ -4,9 +4,12 @@ import { useCallback, useEffect, useRef, useState, type FormEvent } from "react"
 import Link from "next/link";
 
 import { leaderboardPublicHandle, type LeaderboardConsentViewV1 } from "@/lib/usage/leaderboard-contract";
-import { setUsageConsent } from "@/lib/usage/consent-client";
+import { setUsageConsent, type UsageConsentReadReply } from "@/lib/usage/consent-client";
 import { readAccountConsent, warmUsageAccountSession } from "@/lib/usage/account-read-client";
-import { subscribeUsageAccountSignOut } from "@/lib/usage/account-session-events";
+import { retainUsageAccountLifecycle } from "@/lib/usage/account-session-events";
+import { currentUsageAccountScope, invalidateUsageAccountGeneration, subscribeUsageAccountInvalidation, type UsageAccountScope } from "@/lib/usage/account-generation";
+import { readInUsageAccountGeneration } from "@/lib/usage/account-generation-read";
+import { useAccountGeneration } from "./use-account-generation";
 import type { UsageConsentPublicReply } from "@/lib/usage/consent-public";
 
 const date = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
@@ -34,15 +37,30 @@ function stateOf(reply: UsageConsentPublicReply): ConsentState {
  * bounded handle, and withdrawal removes the account from the published
  * index. No local persistence; the server session is the only authority. */
 export function LeaderboardConsentControl({ returnTo = "/dashboard" }: Readonly<{ returnTo?: string }>) {
-  const [state, setState] = useState<ConsentState>({ kind: "loading" });
+  const [storedState, setState] = useState<ConsentState>({ kind: "loading" });
+  const [scope, setScope] = useState<UsageAccountScope | null>(null);
+  const generation = useAccountGeneration();
+  const state: ConsentState = "view" in storedState && (scope === null || scope.generation !== generation || !currentUsageAccountScope(scope))
+    ? { kind: "unavailable" } : storedState;
   const [handle, setHandle] = useState("");
   const [confirmed, setConfirmed] = useState(false);
-  const requests = useRef({ id: 0, pending: null as AbortController | null });
+  const requests = useRef({ id: 0, pending: null as AbortController | null, mutating: false });
 
-  useEffect(() => subscribeUsageAccountSignOut(() => {
-    const owner = requests.current; owner.id++; owner.pending?.abort(); owner.pending = null;
-    setState({ kind: "authentication_required" }); setHandle(""); setConfirmed(false);
-  }), []);
+  useEffect(() => {
+    const release = retainUsageAccountLifecycle();
+    const unsubscribe = subscribeUsageAccountInvalidation(reason => {
+      const owner = requests.current;
+      setScope(null); setHandle(""); setConfirmed(false);
+      if (reason === "identity-changed" && !owner.mutating) {
+        setState({ kind: owner.pending === null ? "unavailable" : "loading" }); return;
+      }
+      const mutating = owner.mutating;
+      owner.id++; owner.pending?.abort(); owner.pending = null; owner.mutating = false;
+      setState({ kind: reason === "confirmed-signout" || reason === "authentication-required" ? "authentication_required"
+        : mutating ? "uncertain" : "unavailable" });
+    });
+    return () => { unsubscribe(); release(); };
+  }, []);
 
   const settle = useCallback((reply: UsageConsentPublicReply) => {
     const next = stateOf(reply);
@@ -53,29 +71,45 @@ export function LeaderboardConsentControl({ returnTo = "/dashboard" }: Readonly<
     }
   }, []);
 
-  const issue = useCallback(async (run: (signal: AbortSignal) => Promise<UsageConsentPublicReply>, mutation: boolean) => {
+  const issue = useCallback(async (run: (signal: AbortSignal) => Promise<UsageConsentReadReply>, mutationScope: UsageAccountScope | null) => {
+    const mutation = mutationScope !== null;
+    if (mutationScope !== null && !currentUsageAccountScope(mutationScope)) return;
     const owner = requests.current, id = ++owner.id;
     owner.pending?.abort();
-    const controller = new AbortController(); owner.pending = controller;
+    const controller = new AbortController(); owner.pending = controller; owner.mutating = mutation;
+    const current = () => id === owner.id && !controller.signal.aborted;
     const deadline = setTimeout(() => {
       controller.abort();
       if (id === owner.id) setState({ kind: mutation ? "uncertain" : "unavailable" });
     }, 20_000);
     try {
-      const reply = await Promise.resolve().then(() => run(controller.signal));
-      if (id === owner.id && !controller.signal.aborted) {
+      // Only reads may run twice to establish identity. A mutation is one
+      // conditional request; interrupted outcomes require a fresh status read.
+      const bound = mutationScope === null
+        ? await readInUsageAccountGeneration(() => run(controller.signal), reply => reply.accountId ?? null,
+          current, reply => "error" in reply && reply.error.code === "authentication_required")
+        : { reply: await run(controller.signal), scope: mutationScope };
+      if (!current()) return;
+      if (bound === null || (mutationScope !== null && !currentUsageAccountScope(mutationScope))) {
+        setScope(null); setState({ kind: mutation ? "uncertain" : "unavailable" }); return;
+      }
+      const { reply } = bound;
+      if (mutation && "error" in reply && reply.error.code === "authentication_required") {
+        invalidateUsageAccountGeneration("authentication-required"); return;
+      }
+      if (current()) {
         if (mutation && "error" in reply) {
           setState(previous => reply.error.code === "publishing_full" ? { kind: "publishing_full" }
             : reply.error.code === "handle_unavailable" && previous.kind === "busy"
               ? { kind: "handle_unavailable", view: previous.view } : { kind: "uncertain" });
         }
-        else settle(reply);
+        else { setScope(bound.scope); settle(reply); }
       }
     } catch {
       if (id === owner.id) setState({ kind: mutation ? "uncertain" : "unavailable" });
     } finally {
       clearTimeout(deadline);
-      if (id === owner.id) owner.pending = null;
+      if (id === owner.id) { owner.pending = null; owner.mutating = false; }
     }
   }, [settle]);
 
@@ -83,23 +117,24 @@ export function LeaderboardConsentControl({ returnTo = "/dashboard" }: Readonly<
     let active = true;
     const owner = requests.current;
     warmUsageAccountSession();
-    void Promise.resolve().then(() => { if (active) return issue(signal => readAccountConsent(signal), false); });
+    void Promise.resolve().then(() => { if (active) return issue(signal => readAccountConsent(signal), null); });
     return () => { active = false; owner.id++; owner.pending?.abort(); };
   }, [issue]);
 
   const publish = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if ((state.kind !== "ready" && state.kind !== "handle_unavailable") || !confirmed || !leaderboardPublicHandle(handle)) return;
+    if ((state.kind !== "ready" && state.kind !== "handle_unavailable") || !confirmed || !leaderboardPublicHandle(handle)
+      || scope === null || !currentUsageAccountScope(scope)) return;
     setState({ kind: "busy", view: state.view });
-    void issue(signal => setUsageConsent({ consent: true, publicHandle: handle }, signal), true);
+    void issue(signal => setUsageConsent({ consent: true, publicHandle: handle }, scope.accountId, signal), scope);
   };
   const withdraw = () => {
-    if (state.kind !== "ready") return;
+    if (state.kind !== "ready" || scope === null || !currentUsageAccountScope(scope)) return;
     const view = state.view;
     setState({ kind: "busy", view });
-    void issue(signal => setUsageConsent({ consent: false, publicHandle: null }, signal), true);
+    void issue(signal => setUsageConsent({ consent: false, publicHandle: null }, scope.accountId, signal), scope);
   };
-  const retry = () => { setState({ kind: "loading" }); void issue(signal => readAccountConsent(signal), false); };
+  const retry = () => { setScope(null); setState({ kind: "loading" }); void issue(signal => readAccountConsent(signal), null); };
 
   return <LeaderboardConsentPanel state={state} handle={handle} confirmed={confirmed} setHandle={setHandle}
     setConfirmed={setConfirmed} publish={publish} withdraw={withdraw} retry={retry} returnTo={returnTo} />;

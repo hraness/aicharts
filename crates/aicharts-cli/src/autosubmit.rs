@@ -2,18 +2,12 @@
 //! explicit paths and credential references, never secret values. A failed
 //! acquisition cannot publish its old cache as if a fresh acquisition succeeded.
 use serde::{Deserialize, Serialize};
+#[cfg(unix)]
+use std::process::{Command, Stdio};
 use std::{
     collections::BTreeSet,
     path::{Component, Path, PathBuf},
     time::{Duration, Instant},
-};
-#[cfg(unix)]
-use {
-    rustix::process::{kill_process_group, Pid, Signal},
-    std::{
-        os::unix::process::CommandExt,
-        process::{Command, Stdio},
-    },
 };
 
 const INVALID: &str = "autosubmit_config_invalid";
@@ -368,41 +362,41 @@ fn outcome(steps: Vec<Step>, status: &'static str, dry_run: bool) -> Result<Outc
 /// account identifiers and source paths, which this cycle never logs.
 #[cfg(unix)]
 fn run_delegate(command: &mut Command, budget: Duration) -> Result<(), &'static str> {
-    let mut child = command
-        .process_group(0)
-        .stdin(Stdio::null())
-        .stdout(Stdio::null())
-        .stderr(Stdio::null())
-        .spawn()
-        .map_err(|_| "sink_spawn_failed")?;
+    let mut group = crate::owned_process::OwnedGroup::spawn(
+        command
+            .stdin(Stdio::null())
+            .stdout(Stdio::null())
+            .stderr(Stdio::null()),
+    )
+    .map_err(delegate_error)?;
     let deadline = Instant::now() + budget;
     loop {
-        match child.try_wait() {
-            Ok(Some(status)) => {
-                return if status.success() {
-                    Ok(())
-                } else {
-                    Err("sink_failed")
-                };
-            }
-            Ok(None) | Err(_) if Instant::now() < deadline => {
-                std::thread::sleep(Duration::from_millis(50))
-            }
-            _ => {
-                if let Some(pid) = i32::try_from(child.id())
-                    .ok()
-                    .filter(|pid| *pid > 1)
-                    .and_then(Pid::from_raw)
-                {
-                    let _ = kill_process_group(pid, Signal::KILL);
-                }
-                let _ = child.kill();
-                let _ = child.wait();
-                return Err("sink_deadline");
-            }
+        if group.exited().map_err(delegate_error)? {
+            let status = group.finish().map_err(delegate_error)?;
+            return if status.success() {
+                Ok(())
+            } else {
+                Err("sink_failed")
+            };
         }
+        if Instant::now() >= deadline {
+            group.finish().map_err(delegate_error)?;
+            return Err("sink_deadline");
+        }
+        std::thread::sleep(Duration::from_millis(10));
     }
 }
+#[cfg(unix)]
+fn delegate_error(error: &'static str) -> &'static str {
+    match error {
+        "capture_spawn_failed" => "sink_spawn_failed",
+        "capture_process_custody_lost" => "sink_process_custody_lost",
+        "capture_process_identity_invalid" => "sink_process_identity_invalid",
+        "capture_child_wait_custody_unavailable" => "sink_child_wait_custody_unavailable",
+        _ => "sink_process_cleanup_failed",
+    }
+}
+
 trait Runner {
     fn resume(&mut self, config: &Config) -> Result<(), &'static str>;
     fn refresh(&mut self, source: &Refresh, days: u64) -> Result<(), &'static str>;
@@ -1079,5 +1073,22 @@ mod tests {
             value["sinks"] = sinks;
             assert!(parse(&serde_json::to_vec(&value).unwrap(), NOW).is_err());
         }
+    }
+}
+
+#[cfg(all(test, unix))]
+mod delegate_custody_tests {
+    use super::*;
+    #[test]
+    fn delegate_deadline_settles_group_before_reporting_deadline() {
+        let start = Instant::now();
+        assert_eq!(
+            run_delegate(
+                Command::new("/bin/sh").args(["-c", "sleep 30 & wait"]),
+                Duration::from_millis(25)
+            ),
+            Err("sink_deadline")
+        );
+        assert!(start.elapsed() < Duration::from_secs(6));
     }
 }

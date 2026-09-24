@@ -1,5 +1,5 @@
 import { AccountEnrollment } from "../src/enrollment";
-import { MAX_STATS_IMMUTABLE_BYTES, StatsState, statsHash, statsUploadText } from "../src/stats-state";
+import { LEGACY_STATS_WRITERS_SQL, MAX_STATS_IMMUTABLE_BYTES, STATS_SCHEMA, StatsState, statsHash, statsUploadText } from "../src/stats-state";
 import { parseStatsUpload, type StatsUpload } from "../../../lib/usage/stats-http-contract";
 import registry from "../../../data/usage-registry.json";
 import { statsRowKey, parseUsageStatsReport } from "../../../lib/usage/stats-contract";
@@ -13,14 +13,15 @@ import { ADMISSION_POLICY_V1 } from "../src/admission-policy";
 import { admissionIdBytes } from "../src/admission-state";
 import { enrollmentAccountName, type EnrollmentProof } from "../src/enrollment-contract";
 import { PAIRING_TTL_MS, uploadSecretCommitment } from "../src/pairing";
+import { RESTORE_FENCE_LEASE_TTL_MS, restoreFenceName } from "../src/restore-fence";
 
 const NOW = Math.ceil(Date.now() / DAY_MS) * DAY_MS + DAY_MS / 2, DAY = Math.floor(NOW / DAY_MS);
 let serial = 0, account = "", intent = 0;
 const hex = (value: number, width = 32) => value.toString(16).padStart(width * 2, "0");
 const stub = () => env.ACCOUNT_ENROLLMENTS.getByName(enrollmentAccountName(account));
 const success = <T>(result: { ok: true; value: T } | { ok: false; error: string }): T => {
-  expect(result).toMatchObject({ ok: true });
   if (!result.ok) throw new Error(`synthetic fixture: ${result.error}`);
+  expect(result).toMatchObject({ ok: true });
   return result.value;
 };
 const query = (fields: Partial<PrivateDaysRequestV1> = {}): PrivateDaysRequestV1 => ({ schemaVersion: 1, accountId: account,
@@ -89,11 +90,12 @@ function bucketProxy(bucket: R2Bucket, intercept: (method: "get" | "put", args: 
   } });
 }
 
-async function activate() {
-  await runInDurableObject(stub(), (instance, state) => {
+async function activate(prepare = true) {
+  await runInDurableObject(stub(), async (instance, state) => {
     const owner = instance as unknown as { env: Env }, updated = { ...owner.env, AICHARTS_USAGE_STATS_ENABLED: "1" };
     new AccountEnrollment(state, updated);
     owner.env = updated;
+    if (prepare) success(await instance.maintainAccount({ schemaVersion: 1, accountId: account, generation: env.USAGE_ENROLLMENT_GENERATION, operation: "prepare" }));
   });
 }
 function statsRequest(device: Device, fields: Partial<StatsUpload> = {}): StatsUpload {
@@ -123,6 +125,120 @@ async function statsStatus(device: Device, request = statsRequest(device)) {
 }
 
 describe("v2 account snapshots", () => {
+  test("a real timed-out immutable put can only finish as a charged orphan after restore publication", async () => {
+    const device = await enroll(); await activate(); const request = statsRequest(device);
+    const authority = { accountId: account, generation: env.USAGE_ENROLLMENT_GENERATION, epoch: 0, workerVersion: env.USAGE_WORKER_VERSION };
+    await runInDurableObject(stub(), async (instance, state) => {
+      const fence = env.RESTORE_FENCES.getByName(restoreFenceName(account));
+      const started = Promise.withResolvers<void>(), release = Promise.withResolvers<void>(), finished = Promise.withResolvers<void>();
+      const restore = replaceEnvironment(instance, original => ({ ...original, STAGING: bucketProxy(original.STAGING, async (method, _args, invoke) => {
+        if (method !== "put") return invoke();
+        started.resolve(); await release.promise;
+        try { return await invoke(); } finally { finished.resolve(); }
+      }) }));
+      const tables = ["account_enrollment", "usage_admission_control", ...Object.keys(STATS_SCHEMA)];
+      const snapshot = () => Object.fromEntries(tables.map(name => [name, state.storage.sql.exec(`SELECT * FROM ${name}`).toArray()]));
+      const pending = instance.admitStatsSnapshot({ uploadSecret: device.proof.uploadSecret, request });
+      try {
+        await started.promise;
+        // Date is fixed, but the real five-second outward deadline elapses
+        // while the actual put promise remains unresolved.
+        expect(await pending).toEqual({ ok: false, error: "storage_unavailable" });
+        expect((await env.STAGING.list()).objects).toEqual([]);
+        expect(state.storage.sql.exec("SELECT revision, immutable_bytes FROM usage_stats_control").one())
+          .toMatchObject({ revision: 0, immutable_bytes: expect.any(Number) });
+        expect(state.storage.sql.exec("SELECT immutable_bytes FROM usage_stats_control").one().immutable_bytes).toBeGreaterThan(0);
+        expect(state.storage.sql.exec("SELECT body_hash FROM usage_stats_pending").one().body_hash).toBe(statsHash(statsUploadText(request)));
+        const terminal = snapshot();
+        expect(success(await fence.close(authority)).inFlight).toBe(0);
+        success(await fence.publish({ ...authority, epoch: 1 }));
+        release.resolve(); await finished.promise;
+        const objects = (await env.STAGING.list()).objects;
+        expect(objects.map(object => object.key)).toEqual([
+          `usage-stats/v2/${account}/${authority.generation}/snapshots/${statsHash(statsUploadText(request))}.json`,
+        ]);
+        expect(await (await env.STAGING.get(objects[0].key))?.text()).toBe(statsUploadText(request));
+        expect(snapshot()).toEqual(terminal);
+        expect(state.storage.sql.exec("SELECT * FROM usage_stats_days").toArray()).toEqual([]);
+      } finally { release.resolve(); await pending; await finished.promise; restore(); }
+    });
+  }, 20_000);
+  test("restore cannot drain a real delayed stats continuation after its diagnostic deadline", async () => {
+    const device = await enroll(); await activate(); const request = statsRequest(device);
+    const authority = { accountId: account, generation: env.USAGE_ENROLLMENT_GENERATION, epoch: 0, workerVersion: env.USAGE_WORKER_VERSION };
+    await runInDurableObject(stub(), async instance => {
+      const fence = env.RESTORE_FENCES.getByName(restoreFenceName(account));
+      const started = Promise.withResolvers<void>(), release = Promise.withResolvers<void>();
+      const restore = replaceEnvironment(instance, original => ({ ...original, STAGING: bucketProxy(original.STAGING, async (method, _args, invoke) => {
+        if (method === "put") { started.resolve(); await release.promise; }
+        return invoke();
+      }) }));
+      const pending = instance.admitStatsSnapshot({ uploadSecret: device.proof.uploadSecret, request });
+      try {
+        await started.promise;
+        vi.setSystemTime(NOW + RESTORE_FENCE_LEASE_TTL_MS + 1);
+        expect(success(await fence.close(authority)).inFlight).toBe(1);
+        expect(await fence.publish({ ...authority, epoch: 1 })).toEqual({ ok: false, error: "recovery_required" });
+        expect(await instance.readUsageStats(statsQuery())).toEqual({ ok: false, error: "recovery_required" });
+        release.resolve();
+        success(await pending);
+        expect(success(await fence.read({ accountId: account, generation: authority.generation })).inFlight).toBe(0);
+        success(await fence.publish({ ...authority, epoch: 1 }));
+        expect(await instance.readUsageStats(statsQuery())).toEqual({ ok: false, error: "recovery_required" });
+        expect(await instance.maintainAccount({ schemaVersion: 1, accountId: account, generation: authority.generation, operation: "scrub" }))
+          .toEqual({ ok: false, error: "recovery_required" });
+      } finally { release.resolve(); await pending; restore(); }
+    });
+  });
+  test("revoked writer recovery advances authority while preserving predecessor days", async () => {
+    const predecessor = await enroll(), successor = await enroll(); await activate();
+    const original = statsRequest(predecessor); success(await statsUpload(predecessor, original));
+    const replacement = statsRequest(successor, { expectedRevision: 1 });
+    const recovery = { schemaVersion: 1, accountId: account, sessionExpiresAtMs: NOW + PAIRING_TTL_MS,
+      client: "codex", previousDeviceId: original.deviceId, deviceId: replacement.deviceId, expectedRevision: 1 };
+    expect(await stub().recoverStatsWriter(recovery)).toEqual({ ok: false, error: "writer_conflict" });
+    success(await stub().revokeEnrollment(predecessor.proof));
+    expect(await statsUpload(successor, replacement)).toEqual({ ok: false, error: "writer_conflict" });
+    const transferred = success(await stub().recoverStatsWriter(recovery));
+    expect(transferred).toEqual({ writerDeviceId: replacement.deviceId, ownershipRevision: 2 });
+    expect(success(await stub().recoverStatsWriter(recovery))).toEqual(transferred);
+    expect(await statsUpload(predecessor, { ...original, sequence: 2, expectedRevision: 2 })).toEqual({ ok: false, error: "revoked" });
+    expect(await statsUpload(successor, { ...replacement, expectedRevision: 2 })).toEqual({ ok: false, error: "replacement_required" });
+    const previousDay = { ...replacement.report, firstUtcDay: DAY - 1, sources: [{ ...replacement.report.sources[0], latestAtMs: (DAY - 1) * DAY_MS + 1 }],
+      rows: [{ ...replacement.report.rows[0], utcDay: DAY - 1 }] };
+    success(await statsUpload(successor, { ...replacement, expectedRevision: 2, report: previousDay }));
+    const report = success(await stub().readUsageStats(statsQuery()));
+    expect(report.rows).toHaveLength(2);
+    expect(report.rows.map(row => row.tokens.input)).toEqual(["10", "10"]);
+    expect(await runInDurableObject(stub(), (_instance, state) => state.storage.sql.exec(
+      "SELECT device_id, ownership_revision FROM usage_stats_day_sources WHERE client = 'codex' ORDER BY utc_day").toArray()))
+      .toEqual([{ device_id: replacement.deviceId, ownership_revision: 2 }, { device_id: original.deviceId, ownership_revision: 1 }]);
+  });
+  test.each(["missing sources", "restored legacy writer"] as const)("writer recovery cannot reconstruct authority from %s", async corruption => {
+    const predecessor = await enroll(), successor = await enroll(); await activate();
+    const original = statsRequest(predecessor); success(await statsUpload(predecessor, original));
+    const replacement = statsRequest(successor, { expectedRevision: 2 });
+    success(await stub().revokeEnrollment(predecessor.proof));
+    success(await stub().recoverStatsWriter({ schemaVersion: 1, accountId: account, sessionExpiresAtMs: NOW + PAIRING_TTL_MS,
+      client: "codex", previousDeviceId: original.deviceId, deviceId: replacement.deviceId, expectedRevision: 1 }));
+    const retained = await runInDurableObject(stub(), (_instance, state) => {
+      const days = state.storage.sql.exec("SELECT * FROM usage_stats_days").toArray();
+      state.storage.sql.exec("DROP TABLE usage_stats_day_sources");
+      if (corruption === "restored legacy writer") {
+        state.storage.sql.exec("DROP TABLE usage_stats_writers");
+        state.storage.sql.exec(LEGACY_STATS_WRITERS_SQL);
+        state.storage.sql.exec("INSERT INTO usage_stats_writers VALUES ('codex', ?)", replacement.deviceId);
+      }
+      return days;
+    });
+    expect(await stub().maintainAccount({ schemaVersion: 1, accountId: account,
+      generation: env.USAGE_ENROLLMENT_GENERATION, operation: "prepare" })).toEqual({ ok: false, error: "storage_invalid" });
+    expect(await statsUpload(successor, replacement)).toEqual({ ok: false, error: "storage_invalid" });
+    expect(await runInDurableObject(stub(), (_instance, state) => ({
+      days: state.storage.sql.exec("SELECT * FROM usage_stats_days").toArray(),
+      sourceTables: state.storage.sql.exec("SELECT name FROM sqlite_schema WHERE name = 'usage_stats_day_sources'").toArray(),
+    }))).toEqual({ days: retained, sourceTables: [] });
+  });
   test("explicit abandonment fences an unreserved request idempotently and reports an already committed result", async () => {
     const device = await enroll(); await activate(); const first = statsRequest(device);
     success(await stub().setLeaderboardConsent({ schemaVersion: 1, operation: "set", accountId: account, sessionExpiresAtMs: NOW + PAIRING_TTL_MS, consent: true, publicHandle: "abandon-test" }));
@@ -205,51 +321,20 @@ describe("v2 account snapshots", () => {
     expect(success(await abandon(device, first))).toEqual({ schemaVersion: 2, outcome: "committed", receipt });
     expect(await abandon(device, { ...first, operationId: hex(91234) })).toEqual({ ok: false, error: "conflict" });
   });
-  test("legacy takeover proves every retained day, reported bucket and record before reserving objects", async () => {
-    const device = await enroll(), other = await enroll();
-    const values = { provider: 2 as const, input: 10n, cache: 2n, write5m: 3n, output: 5n, reasoning: 1n };
-    success(await upload(device, batch(device, 1, [{ id: 1, day: DAY - 1, ...values }, { id: 2, ...values }, { id: 3, ...values }, { id: 4, day: DAY - 2, ...values }])));
-    await activate();
-    const base = statsRequest(device, { mode: "preserve-history" });
-    const single = { ...base.report.rows[0], client: "claude", model: "gpt-5", tokens: { input: "10", cacheRead: "2", cacheWrite: "3", output: "4", reasoning: "1" } };
-    const doubled = { ...single, records: 2, tokens: { input: "20", cacheRead: "4", cacheWrite: "6", output: "8", reasoning: "2" } };
-    const report = { ...base.report, firstUtcDay: DAY - 1, dayCount: 2, sources: [{ ...base.report.sources[0], client: "claude", records: 3 }], rows: [{ ...single, utcDay: DAY - 1 }, doubled] };
-    const request = statsRequest(device, { mode: "preserve-history", report });
-    const status = await statsStatus(device, request);
-    expect(status).toMatchObject({ legacyRecords: 3, takeoverEligible: true });
-    const takeover = { expectedV1Revision: status.v1Revision, headDigest: status.headDigest };
-    const counters = () => runInDurableObject(stub(), (_instance, state) => ({
-      control: state.storage.sql.exec("SELECT * FROM usage_stats_control").toArray(),
-      pending: state.storage.sql.exec("SELECT * FROM usage_stats_pending").toArray(),
-    }));
-    const before = await counters();
-    const reductions = [
-      { ...report, sources: [{ ...report.sources[0], records: 2 }], rows: [doubled] },
-      { ...report, sources: [{ ...report.sources[0], tokenBasis: "mixed" as const }], rows: [report.rows[0], { ...doubled, tokenBasis: "estimated" as const }] },
-      { ...report, sources: [{ ...report.sources[0], records: 2 }], rows: [report.rows[0], { ...doubled, records: 1 }] },
-      ...Object.keys(doubled.tokens).map(key => ({ ...report, rows: [report.rows[0], { ...doubled, tokens: { ...doubled.tokens, [key]: (BigInt(doubled.tokens[key as keyof typeof doubled.tokens]) - 1n).toString() } }] })),
-    ];
-    for (const report of reductions) {
-      const input = parseStatsUpload({ ...request, takeover, report }); expect(input).not.toBeNull();
-      expect(await statsUpload(device, input!)).toEqual({ ok: false, error: "replacement_required" });
-      expect(await counters()).toEqual(before);
+  test("aggregate equality and dominance never prove legacy population overlap", async () => {
+    const device = await enroll();
+    success(await upload(device, batch(device, 1, [{ id: 1, input: 120n, output: 0n }]))); await activate();
+    const request = statsRequest(device), status = await statsStatus(device);
+    expect(status).toMatchObject({ legacyRecords: 1, takeoverEligible: false });
+    const before = await read();
+    for (const amount of ["15", "120", "240"]) {
+      const report = { ...request.report, rows: [{ ...request.report.rows[0], tokens: { input: amount, cacheRead: "0", cacheWrite: "0", output: "0", reasoning: "0" } }] };
+      expect(await statsUpload(device, { ...request, report, takeover: { expectedV1Revision: status.v1Revision, headDigest: status.headDigest } }))
+        .toEqual({ ok: false, error: "takeover_required" });
     }
-    expect(await statsUpload(device, { ...request, takeover: { ...takeover, headDigest: hex(9999999) } })).toEqual({ ok: false, error: "conflict" });
-    expect(await statsUpload(other, statsRequest(other, { report, mode: "preserve-history", takeover }))).toEqual({ ok: false, error: "conflict" });
-    expect(await counters()).toEqual(before);
-    // A real legacy commit after status invalidates the frozen predecessor,
-    // even when it happens outside this report's selected day window.
-    success(await upload(device, batch(device, 5, [{ id: 5, day: DAY - 3, ...values }])));
-    expect(await statsUpload(device, { ...request, takeover })).toEqual({ ok: false, error: "conflict" });
-    expect(await counters()).toEqual(before);
-    const currentStatus = await statsStatus(device, request);
-    const originalV1 = await read(query({ firstUtcDay: DAY - 2, dayCount: 3 }));
-    success(await statsUpload(device, { ...request, takeover: { expectedV1Revision: currentStatus.v1Revision, headDigest: currentStatus.headDigest } }));
-    const current = success(await stub().readUsageStats({ ...statsQuery(), firstUtcDay: DAY - 2, dayCount: 3 }));
-    expect(current.rows).toHaveLength(3);
-    expect(current.rows.reduce((sum, row) => sum + row.records, 0)).toBe(4);
-    expect(current.rows.reduce((sum, row) => sum + Object.values(row.tokens).reduce((amount, count) => amount + BigInt(count), 0n), 0n)).toBe(80n);
-    expect(await read(query({ firstUtcDay: DAY - 2, dayCount: 3 }))).toEqual(originalV1);
+    expect(await read()).toEqual(before);
+    expect((await env.STAGING.list({ prefix: "usage-stats/v2/" })).objects).toHaveLength(0);
+    expect(await runInDurableObject(stub(), (_instance, state) => new StatsState(state.storage.sql).control().immutableBytes)).toBe(0);
   });
   test("Warp refresh replaces its prior counter snapshot while preserving immutable evidence", async () => {
     const device = await enroll(); await activate();
@@ -319,7 +404,7 @@ describe("v2 account snapshots", () => {
       v1: state.storage.sql.exec("SELECT * FROM usage_admission_control").toArray(),
     }));
     const stored = await snapshot();
-    const status = await statsStatus(device); expect(status).toMatchObject({ revision: 0, nextSequence: 1, legacyRecords: 1, takeoverEligible: true });
+    const status = await statsStatus(device); expect(status).toMatchObject({ revision: 0, nextSequence: 1, legacyRecords: 1, takeoverEligible: false });
     expect(await stub().readUsageStats(statsQuery())).toMatchObject({ ok: false, error: "not_started" });
     expect(await snapshot()).toEqual(stored);
   });
@@ -337,31 +422,46 @@ describe("v2 account snapshots", () => {
     await abortAllDurableObjects(); await activate();
     expect(success(await stub().readUsageStats(statsQuery())).revision).toBe(2);
   });
-  test("explicit empty window removes owned rows without reviving v1; other days remain", async () => {
-    const device = await enroll(); success(await upload(device, batch(device, 1, [{ id: 1, reasoning: 1n }, { id: 2, day: DAY - 1 }]))); await activate();
-    const first = statsRequest(device), status = await statsStatus(device);
-    expect(await statsUpload(device, first)).toMatchObject({ ok: false, error: "takeover_required" });
-    success(await statsUpload(device, { ...first, takeover: { expectedV1Revision: status.v1Revision, headDigest: status.headDigest } }));
+  test("explicit empty window removes owned rows while disjoint legacy days remain", async () => {
+    const device = await enroll(); success(await upload(device, batch(device, 1, [{ id: 2, day: DAY - 1 }]))); await activate();
+    const first = statsRequest(device);
+    success(await statsUpload(device, first));
     expect(success(await stub().readUsageStats(statsQuery())).rows).toHaveLength(2);
     const empty = statsRequest(device, { operationId: hex(20001), expectedRevision: 1, sequence: 2, report: { ...first.report,
       sources: [{ ...first.report.sources[0], status: "empty", records: 0, latestAtMs: null }], rows: [] } });
     success(await statsUpload(device, empty));
     const rows = success(await stub().readUsageStats(statsQuery())).rows;
     expect(rows).toHaveLength(1); expect(rows[0].utcDay).toBe(DAY - 1);
-    expect((await read()).days[1].codex.usageOccurrences).toBe(1); // Retained original profile remains readable.
+    expect((await read()).days[0].codex.usageOccurrences).toBe(1); // Retained original profile remains readable.
   });
-  test("stats ownership does not fence overlapping v1 writes; another installation still conflicts", async () => {
+  test("later ambiguous v1 overlap is retained but withheld from combined reports", async () => {
     const device = await enroll(), other = await enroll(); await activate(); const first = statsRequest(device);
     success(await statsUpload(device, first));
     // V1 heads stay retained evidence even on days the stats profile owns.
     success(await upload(device, batch(device)));
     expect(await statsUpload(other, statsRequest(other, { expectedRevision: 1 }))).toMatchObject({ ok: false, error: "writer_conflict" });
     success(await upload(device, batch(device, 2, [{ id: 2, day: DAY - 1 }])));
-    expect(success(await stub().readUsageStats(statsQuery())).rows).toHaveLength(2);
+    expect(await stub().readUsageStats(statsQuery())).toEqual({ ok: false, error: "takeover_required" });
+    expect((await read()).days.reduce((sum, day) => sum + day.codex.usageOccurrences, 0)).toBe(2);
   });
   test("wrong secret/account/generation, expired session and incomplete scans refuse", async () => {
     const device = await enroll(); await activate(); const first = statsRequest(device);
+    const authority = async () => ({
+      fence: await runInDurableObject(env.RESTORE_FENCES.getByName(restoreFenceName(account)), (_instance, state) => ({
+        control: state.storage.sql.exec("SELECT * FROM restore_fence").toArray(),
+        attempts: state.storage.sql.exec("SELECT * FROM fence_attempt ORDER BY attempt_id").toArray(),
+      })),
+      account: await runInDurableObject(stub(), (_instance, state) => ({
+        owner: state.storage.sql.exec("SELECT * FROM account_enrollment").toArray(),
+        audit: state.storage.sql.exec("SELECT * FROM usage_admission_audit").toArray(),
+        stats: state.storage.sql.exec("SELECT * FROM usage_stats_control").toArray(),
+      })),
+    });
+    const before = await authority();
     expect(await stub().admitStatsSnapshot({ uploadSecret: device.proof.pollSecret, request: first })).toMatchObject({ ok: false, error: "unauthorized" });
+    expect(await stub().abandonStatsSnapshot({ uploadSecret: device.proof.pollSecret, request: abandonRequest(first) })).toMatchObject({ ok: false, error: "unauthorized" });
+    expect(await stub().admitBatch({ uploadSecret: device.proof.pollSecret, batch: batch(device).bytes })).toMatchObject({ ok: false, error: "unauthorized" });
+    expect(await authority()).toEqual(before);
     expect(await statsUpload(device, { ...first, generation: hex(987654) })).toMatchObject({ ok: false, error: "recovery_required" });
     expect(await statsUpload(device, { ...first, report: { ...first.report, sources: [{ ...first.report.sources[0], status: "incomplete", warnings: 1 }] } })).toMatchObject({ ok: false, error: "invalid_input" });
     success(await statsUpload(device, first));
@@ -383,7 +483,7 @@ describe("v2 account snapshots", () => {
     success(await upload(device, batch(device, 1, [{ id: 1, provider: 2 }])));
     success(await statsUpload(device, request)); expect((await statsStatus(device)).revision).toBe(1);
   });
-  test("a writer's new upload supersedes its own stranded pending flight", async () => {
+  test("explicit abandonment fences A before B and rejects every delayed A replay", async () => {
     const device = await enroll(); await activate(); const first = statsRequest(device);
     await runInDurableObject(stub(), async instance => {
       const restore = replaceEnvironment(instance, original => ({ ...original, STAGING: bucketProxy(original.STAGING, async (method, _args, invoke) => {
@@ -396,41 +496,46 @@ describe("v2 account snapshots", () => {
     // A foreign device still cannot take the slot; only the writer supersedes.
     const other = await enroll();
     expect(await statsUpload(other, statsRequest(other))).toMatchObject({ ok: false, error: "conflict" });
-    const receipt = success(await statsUpload(device, statsRequest(device, { operationId: hex(90300) })));
-    expect(receipt.revision).toBe(1);
+    const replacement = statsRequest(device, { operationId: hex(90300) });
+    const charge = await runInDurableObject(stub(), (_instance, state) => new StatsState(state.storage.sql).control().immutableBytes);
+    expect(await statsUpload(device, replacement)).toEqual({ ok: false, error: "conflict" });
+    success(await abandon(device, first));
+    const receipt = success(await statsUpload(device, { ...replacement, expectedRevision: 1 }));
+    expect(receipt.revision).toBe(2);
+    const finalCharge = await runInDurableObject(stub(), (_instance, state) => new StatsState(state.storage.sql).control().immutableBytes);
+    expect(finalCharge).toBeGreaterThan(charge);
+    for (let replay = 0; replay < 3; replay++) expect(await statsUpload(device, first)).toEqual({ ok: false, error: "conflict" });
+    expect(await runInDurableObject(stub(), (_instance, state) => new StatsState(state.storage.sql).control().immutableBytes)).toBe(finalCharge);
     expect((await statsStatus(device)).nextSequence).toBe(2);
     expect(success(await stub().readUsageStats(statsQuery())).rows[0].tokens.input).toBe("10");
   });
-  test("another device's retained heads stay outside a writer's takeover scope", async () => {
+  test("foreign 120-token population cannot be hidden by an unproved 15-token snapshot", async () => {
     const device = await enroll(), other = await enroll();
-    success(await upload(other, batch(other, 1, [{ id: 1, provider: 2, day: DAY }])));
-    await activate();
-    const base = statsRequest(device, { mode: "preserve-history" });
-    const request = statsRequest(device, { mode: "preserve-history", report: { ...base.report,
-      sources: [{ ...base.report.sources[0], client: "claude", records: 1 }],
-      rows: [{ ...base.report.rows[0], client: "claude" }] } });
-    const status = await statsStatus(device, request);
-    expect(status).toMatchObject({ legacyRecords: 0, takeoverEligible: true });
-    success(await statsUpload(device, request));
-    expect(success(await stub().readUsageStats(statsQuery())).rows).toHaveLength(1);
-    // The foreign head remains readable through the retained v1 profile.
-    expect((await read()).days[1].claudeCode.usageOccurrences).toBe(1);
+    success(await upload(other, batch(other, 1, [{ id: 1, provider: 2, input: 120n, output: 0n }]))); await activate();
+    const base = statsRequest(device);
+    const request = statsRequest(device, { report: { ...base.report,
+      sources: [{ ...base.report.sources[0], client: "claude" }],
+      rows: [{ ...base.report.rows[0], client: "claude", tokens: { input: "15", cacheRead: "0", cacheWrite: "0", output: "0", reasoning: "0" } }] } });
+    expect(await statsStatus(device, request)).toMatchObject({ legacyRecords: 1, takeoverEligible: false });
+    expect(await statsUpload(device, request)).toEqual({ ok: false, error: "takeover_required" });
+    expect((await read()).days[1].claudeCode.observedAccountedTokens).toBe("120");
+    expect((await env.STAGING.list({ prefix: "usage-stats/v2/" })).objects).toHaveLength(0);
   });
-  test("reported-only leaderboard uses disjoint totals and never adds replaced legacy", async () => {
-    const device = await enroll(); success(await upload(device, batch(device, 1, [{ id: 1, reasoning: 1n }]))); await activate();
-    const first = statsRequest(device), status = await statsStatus(device);
-    success(await statsUpload(device, { ...first, takeover: { expectedV1Revision: status.v1Revision, headDigest: status.headDigest } }));
+  test("reported-only leaderboard sums disjoint source populations and excludes estimates", async () => {
+    const device = await enroll(); success(await upload(device, batch(device, 1, [{ id: 1, reasoning: 1n, provider: 2 }]))); await activate();
+    const first = statsRequest(device);
+    success(await statsUpload(device, first));
     const totals = await runInDurableObject(stub(), (_instance, state) => new StatsState(state.storage.sql).leaderboard({
       accountId: account, generation: env.USAGE_ENROLLMENT_GENERATION, observedAtMs: NOW, phase: "active", devices: [{
         deviceId: first.deviceId, enrolledAtMs: NOW, revokedAtMs: null, reservation: { intentId: device.proof.intentId, uploadCommitment: "" },
       }],
     }, { firstUtcDay: DAY, dayCount: 1 }, NOW));
-    expect(totals).toEqual({ observedTokens: "20", usageRecords: 1 });
+    expect(totals).toEqual({ observedTokens: "35", usageRecords: 2 });
     const estimated = statsRequest(device, { operationId: hex(20002), sequence: 2, expectedRevision: 1, report: { ...first.report,
       sources: [{ ...first.report.sources[0], tokenBasis: "estimated" }], rows: [{ ...first.report.rows[0], tokenBasis: "estimated" }] } });
     success(await statsUpload(device, estimated));
     success(await stub().setLeaderboardConsent({ schemaVersion: 1, operation: "set", accountId: account, sessionExpiresAtMs: NOW + PAIRING_TTL_MS, consent: true, publicHandle: "stats-test" }));
-    expect(success(await stub().readLeaderboardProjection({ schemaVersion: 1, accountId: account }))).toMatchObject({ observedTokens: "0", usageRecords: 0 });
+    expect(success(await stub().readLeaderboardProjection({ schemaVersion: 1, accountId: account }))).toMatchObject({ observedTokens: "15", usageRecords: 1 });
   });
   test("legacy tombstones cannot be resurrected by a snapshot takeover", async () => {
     const device = await enroll(), original = batch(device); success(await upload(device, original));
@@ -489,30 +594,12 @@ describe("v2 account snapshots", () => {
     expect((await env.STAGING.list({ prefix: "usage-stats/v2/" })).objects).toHaveLength(1);
     expect(success(await stub().readUsageStats(statsQuery())).revision).toBe(1);
   });
-  test("stored projections fully owning a day skip its legacy head decode", async () => {
-    const device = await enroll(); success(await upload(device, batch(device))); await activate();
-    const base = statsRequest(device);
-    // The codex head on DAY needs a takeover that dominates its retained usage.
-    const status = await statsStatus(device);
-    const covering = (client: string, sequence: number) => statsRequest(device, { operationId: hex(40000 + sequence), sequence,
-      expectedRevision: sequence - 1, takeover: client === "codex" ? { expectedV1Revision: status.v1Revision, headDigest: status.headDigest } : null,
-      report: { ...base.report, sources: [{ ...base.report.sources[0], client }],
-        rows: [{ ...base.report.rows[0], client, tokens: { input: "10", cacheRead: "2", cacheWrite: "3", output: "5", reasoning: "1" } }] } });
-    for (const [index, client] of ["codex", "claude", "devin-cli"].entries()) success(await statsUpload(device, covering(client, index + 1)));
-    // A decoded operation would fail outright; owning the day skips the fetch.
-    await runInDurableObject(stub(), (_instance, state) => state.storage.sql.exec("UPDATE usage_admission_heads SET operation = ?", new Uint8Array(184).buffer));
-    const report = success(await stub().readUsageStats(statsQuery()));
-    expect(report.rows).toHaveLength(3); expect(report.rows.every(row => row.utcDay === DAY)).toBe(true);
-  });
-  test("a legacy head still decodes while any legacy client lacks its day projection", async () => {
-    const device = await enroll(); success(await upload(device, batch(device))); await activate();
-    const base = statsRequest(device);
-    const status = await statsStatus(device);
-    const covering = (client: string, sequence: number) => statsRequest(device, { operationId: hex(40010 + sequence), sequence,
-      expectedRevision: sequence - 1, takeover: client === "codex" ? { expectedV1Revision: status.v1Revision, headDigest: status.headDigest } : null,
-      report: { ...base.report, sources: [{ ...base.report.sources[0], client }],
-        rows: [{ ...base.report.rows[0], client, tokens: { input: "10", cacheRead: "2", cacheWrite: "3", output: "5", reasoning: "1" } }] } });
-    for (const [index, client] of ["codex", "claude"].entries()) success(await statsUpload(device, covering(client, index + 1)));
+  test("all-client projections cannot conceal later corrupt legacy evidence", async () => {
+    const device = await enroll(); await activate(); const base = statsRequest(device);
+    for (const [index, client] of ["codex", "claude", "devin-cli"].entries()) success(await statsUpload(device, statsRequest(device, {
+      operationId: hex(40000 + index), sequence: index + 1, expectedRevision: index,
+      report: { ...base.report, sources: [{ ...base.report.sources[0], client }], rows: [{ ...base.report.rows[0], client }] } })));
+    success(await upload(device, batch(device)));
     await runInDurableObject(stub(), (_instance, state) => state.storage.sql.exec("UPDATE usage_admission_heads SET operation = ?", new Uint8Array(184).buffer));
     expect(await stub().readUsageStats(statsQuery())).toEqual({ ok: false, error: "storage_invalid" });
   });
@@ -549,7 +636,7 @@ describe("v2 account snapshots", () => {
     // The memo and the Durable Object instance die here; the projection blob is
     // corrupted to prove the next read neither parses it nor needs it.
     await runInDurableObject(stub(), (_instance, state) => state.storage.sql.exec("UPDATE usage_stats_days SET projection = ?", "x"));
-    await abortAllDurableObjects(); await activate();
+    await abortAllDurableObjects(); await activate(false);
     const report = success(await stub().readUsageStats(statsQuery()));
     expect(report.rows).toHaveLength(1);
     expect(report.rows[0].tokens.input).toBe("10");
@@ -568,27 +655,35 @@ describe("v2 account snapshots", () => {
       state.storage.sql.exec("DELETE FROM usage_stats_day_rows WHERE ordinal = 0");
     });
     expect(await read()).toEqual({ ok: false, error: "storage_invalid" });
-    // Meta missing entirely is not corruption: the day backfills from its
-    // verified projection and the next read stays on the exploded path.
+    // Missing metadata permits only a pure projection fallback. Explicit
+    // fenced maintenance owns rebuilding the derived rows.
     await runInDurableObject(stub(), (_instance, state) => state.storage.sql.exec("DELETE FROM usage_stats_day_meta"));
     expect(success(await read()).rows).toHaveLength(1);
     expect(await runInDurableObject(stub(), (_instance, state) =>
-      state.storage.sql.exec("SELECT COUNT(*) AS count FROM usage_stats_day_meta").toArray()[0].count)).toBe(1);
+      state.storage.sql.exec("SELECT COUNT(*) AS count FROM usage_stats_day_meta").toArray()[0].count)).toBe(0);
+    success(await stub().maintainAccount({ schemaVersion: 1, accountId: account, generation: env.USAGE_ENROLLMENT_GENERATION, operation: "prepare" }));
+    expect(await runInDurableObject(stub(), (_instance, state) => state.storage.sql.exec("SELECT COUNT(*) AS count FROM usage_stats_day_meta").one().count)).toBe(1);
     expect(success(await read()).rows).toHaveLength(1);
   });
 
-  test("schema six accounts migrate the read model and backfill it on first read", async () => {
+  test("schema six accounts migrate and backfill only through explicit fenced maintenance", async () => {
     const device = await enroll(); await activate();
     success(await statsUpload(device, statsRequest(device)));
-    // Reconstruct the pre-migration state: version six with no derived tables.
+    // Reconstruct the actual pre-transfer version-six schema. Existing current
+    // ownership sources may never be inferred from a successor writer.
     await runInDurableObject(stub(), (_instance, state) => {
       state.storage.sql.exec("DROP TABLE usage_stats_day_meta");
       state.storage.sql.exec("DROP TABLE usage_stats_day_rows");
+      const writer = state.storage.sql.exec("SELECT client, device_id FROM usage_stats_writers").one();
+      state.storage.sql.exec("DROP TABLE usage_stats_day_sources");
+      state.storage.sql.exec("DROP TABLE usage_stats_writers");
+      state.storage.sql.exec(LEGACY_STATS_WRITERS_SQL);
+      state.storage.sql.exec("INSERT INTO usage_stats_writers VALUES (?, ?)", writer.client, writer.device_id);
       state.storage.sql.exec("UPDATE account_enrollment SET schema_version = 6");
     });
     await abortAllDurableObjects(); await activate();
     expect(await runInDurableObject(stub(), (_instance, state) =>
-      state.storage.sql.exec("SELECT schema_version FROM account_enrollment WHERE id = 1").toArray()[0].schema_version)).toBe(7);
+      state.storage.sql.exec("SELECT schema_version FROM account_enrollment WHERE id = 1").toArray()[0].schema_version)).toBe(8);
     const report = success(await stub().readUsageStats(statsQuery()));
     expect(report.rows).toHaveLength(1);
     expect(report.rows[0].tokens.input).toBe("10");

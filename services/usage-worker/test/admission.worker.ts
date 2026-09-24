@@ -173,7 +173,7 @@ describe("dormant account admission", () => {
   });
 
   test("a regressing immutable journal timestamp fails the restart audit", async () => {
-    const device = await enroll(), first = batch(device), firstBytes = success(await upload(device, first));
+    const device = await enroll(), first = batch(device); success(await upload(device, first));
     vi.setSystemTime(NOW + 10);
     const correction = batch(device, 2, [{ id: 1, expected: first.operations[0].operationHash, output: 1n, day: DAY - 1 }]);
     const secondBytes = success(await upload(device, correction));
@@ -422,15 +422,17 @@ describe("dormant account admission", () => {
     expect(await snapshot()).toEqual(before);
   });
 
-  test("a failed history audit closes the enrollment status write path too", async () => {
+  test("status reads do not audit or write history, and an explicit failed audit closes later reads", async () => {
     const device = await enroll(); success(await upload(device, batch(device)));
     await runInDurableObject(stub(), (_instance, state) => state.storage.sql.exec("UPDATE usage_admission_control SET head_count = 2, live_count = 2").toArray());
     await abortAllDurableObjects();
     const revision = async () => runInDurableObject(stub(), (_instance, state) =>
       state.storage.sql.exec("SELECT revision FROM account_enrollment WHERE id = 1").one().revision);
     const before = await revision();
-    // readEnrollmentStatus settles a durable observed time and revision, so it
-    // is a write path: it must refuse rather than commit onto bad history.
+    expect(await stub().readEnrollmentStatus(device.proof)).toMatchObject({ ok: true });
+    expect(await revision()).toBe(before);
+    expect(await stub().maintainAccount({ schemaVersion: 1, accountId: account, generation: env.USAGE_ENROLLMENT_GENERATION,
+      operation: "scrub" })).toMatchObject({ ok: false });
     expect(await stub().readEnrollmentStatus(device.proof)).toMatchObject({ ok: false });
     expect(await revision()).toBe(before);
   });
@@ -663,13 +665,15 @@ describe("dormant account admission", () => {
       return { revision: retained.revision, payload };
     });
     await abortAllDurableObjects();
+    success(await stub().maintainAccount({ schemaVersion: 1, accountId: account, generation: env.USAGE_ENROLLMENT_GENERATION,
+      operation: "prepare" }));
     await runInDurableObject(stub(), (_instance, state) => {
       const after = state.storage.sql.exec("SELECT revision, schema_version, payload FROM account_enrollment").one();
-      expect(after.revision).toBe(before.revision);
+      expect(after.revision).toBe(Number(before.revision) + 1);
       expect(after.schema_version).toBe(5);
       // Migration preserves every prior field, records a null epoch pending
       // first fenced contact, and starts every account unpublished.
-      expect(JSON.parse(after.payload as string)).toEqual({ ...JSON.parse(before.payload) as object, fenceEpoch: null,
+      expect(JSON.parse(after.payload as string)).toEqual({ ...JSON.parse(before.payload) as object, fenceEpoch: 0,
         leaderboard: { consent: false, consentedAtMs: null, publicHandle: null, changedAtMs: 0 } });
       expect(state.storage.sql.exec("SELECT settled_sequence FROM usage_admission_devices").toArray()).toEqual([{ settled_sequence: 0 }, { settled_sequence: 0 }]);
     });
@@ -700,7 +704,10 @@ describe("dormant account admission", () => {
       expect(state.storage.sql.exec("SELECT name, sql FROM sqlite_schema WHERE name NOT GLOB '_cf_*' AND name NOT GLOB 'sqlite_*' AND name != '__cf_kv' ORDER BY name").toArray()).toEqual(manifest);
       expect(state.storage.sql.exec("SELECT revision, payload FROM account_enrollment").one()).toEqual(retained);
     });
-    await abortAllDurableObjects(); expect((await snapshot()).control.published_revision).toBe(0);
+    await abortAllDurableObjects();
+    success(await stub().maintainAccount({ schemaVersion: 1, accountId: account, generation: env.USAGE_ENROLLMENT_GENERATION,
+      operation: "prepare" }));
+    expect((await snapshot()).control.published_revision).toBe(0);
   });
 
   test.each(["INSERT INTO usage_admission_heads", "INSERT INTO usage_admission_days", "UPDATE usage_admission_devices SET settled_sequence", "UPDATE usage_admission_control SET published_revision", "DELETE FROM usage_admission_pending"])("actual publication rolls every table back after %s", async fault => {
@@ -776,7 +783,7 @@ describe("dormant account admission", () => {
     });
   }, 120_000);
 
-  test("capacity migration rebuilds first-generation control bounds and seeds the audit checkpoint", async () => {
+  test("fenced maintenance rebuilds first-generation control bounds and verifies the initial checkpoint from zero", async () => {
     const device = await enroll(), value = batch(device); success(await upload(device, value));
     await runInDurableObject(stub(), (_instance, state) => {
       state.storage.sql.exec("ALTER TABLE usage_admission_control RENAME TO usage_admission_control_current").toArray();
@@ -786,6 +793,8 @@ describe("dormant account admission", () => {
       state.storage.sql.exec("DROP TABLE usage_admission_audit").toArray();
     });
     await abortAllDurableObjects();
+    success(await stub().maintainAccount({ schemaVersion: 1, accountId: account,
+      generation: env.USAGE_ENROLLMENT_GENERATION, operation: "prepare" }));
     const migrated = await runInDurableObject(stub(), (_instance, state) => ({
       controlSql: state.storage.sql.exec("SELECT sql FROM sqlite_schema WHERE name = 'usage_admission_control'").one().sql,
       checkpoint: state.storage.sql.exec("SELECT * FROM usage_admission_audit").one(),
@@ -807,6 +816,22 @@ describe("dormant account admission", () => {
     await abortAllDurableObjects();
     success(await upload(device, batch(device, 3, [{ id: 3 }])));
     expect(await checkpoint()).toBe(2);
+  });
+  test("explicit from-zero scrub detects corruption hidden behind a same-storage checkpoint", async () => {
+    const device = await enroll();
+    success(await upload(device, batch(device, 1, [{ id: 1 }])));
+    success(await upload(device, batch(device, 2, [{ id: 2 }])));
+    const request = { schemaVersion: 1, accountId: account, generation: env.USAGE_ENROLLMENT_GENERATION, operation: "prepare" };
+    expect(success(await stub().maintainAccount(request))).toMatchObject({ admissionRevision: 2, auditBasis: "checkpoint-extension" });
+    await runInDurableObject(stub(), (_instance, state) => state.storage.sql.exec(
+      "UPDATE usage_admission_journal SET journal = zeroblob(length(journal)) WHERE revision = 1"));
+    // The checkpoint is a disclosed optimization, not independent evidence
+    // that retained older bytes have stayed intact.
+    expect(success(await stub().maintainAccount(request))).toMatchObject({ admissionRevision: 2, auditBasis: "checkpoint-extension" });
+    expect(await stub().maintainAccount({ ...request, operation: "scrub" })).toEqual({ ok: false, error: "storage_invalid" });
+    expect(await upload(device, batch(device, 3, [{ id: 3 }]))).toEqual({ ok: false, error: "recovery_required" });
+    expect(await runInDurableObject(stub(), (_instance, state) => state.storage.sql.exec(
+      "SELECT revision FROM usage_admission_audit").one().revision)).toBe(2);
   });
 
   test("4096 terminal revisions exhaust new custody but retain replay and self-revocation", async () => {

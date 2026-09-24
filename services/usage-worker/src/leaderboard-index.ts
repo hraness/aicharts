@@ -4,9 +4,10 @@ import {
   LEADERBOARD_INDEX_NAME, LEADERBOARD_MAX_MEMBERS, LEADERBOARD_MAX_RECORDS,
   LEADERBOARD_RANKING, leaderboardDecimal, leaderboardPublicHandle,
   parseLeaderboardProjection, rankLeaderboardEntries,
-  type LeaderboardSnapshotV1,
+  type LeaderboardProjectionV1, type LeaderboardSnapshotV1,
 } from "../../../lib/usage/leaderboard-contract";
-import { enrollmentAccount, enrollmentAccountName, enrollmentSnapshot, enrollmentTime } from "./enrollment-contract";
+import { enrollmentAccount, enrollmentAccountName, enrollmentHex, enrollmentRandom, enrollmentSnapshot, enrollmentTime } from "./enrollment-contract";
+import { RESTORE_FENCE_LEASE_TTL_MS, restoreFenceName } from "./restore-fence";
 
 export { LEADERBOARD_INDEX_NAME };
 /** How often a member's projection is re-verified at the account object. */
@@ -37,9 +38,8 @@ type IndexState = { schemaVersion: 1; members: IndexMember[]; tombstones: IndexT
 type IndexError = "invalid_input" | "unauthorized" | "recovery_required" | "clock_regressed"
   | "storage_invalid" | "storage_unavailable" | "limit" | "handle_unavailable";
 type IndexResult<T> = { ok: true; value: T } | { ok: false; error: IndexError };
-type VerifyVerdict = "remove" | "stale" | Readonly<{ update: Readonly<{
-  consentedAtMs: number; publicHandle: string; projection: IndexProjection;
-}> }>;
+type Delivery = Readonly<{ eventAtMs: number; projection: LeaderboardProjectionV1 }>;
+type Registration = Readonly<{ accountId: string; generation: string; epoch: number; workerVersion: string; token: string }>;
 const ok = <T>(value: T): IndexResult<T> => ({ ok: true, value });
 const err = (error: IndexError): IndexResult<never> => ({ ok: false, error });
 
@@ -123,25 +123,27 @@ export class LeaderboardIndex extends DurableObject<Env> {
   #healthy = true;
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
-    try {
-      ctx.storage.transactionSync(() => {
-        const objects = ctx.storage.sql.exec("SELECT type, name, sql FROM sqlite_schema WHERE name NOT GLOB '_cf_*' AND name NOT GLOB 'sqlite_*' AND name != '__cf_kv' LIMIT 4").toArray();
-        if (objects.length === 0) {
-          ctx.storage.sql.exec(SCHEMA_SQL);
-          ctx.storage.sql.exec("INSERT INTO leaderboard_index (id, schema_version, revision, payload) VALUES (1, 1, 0, NULL)");
-          return;
-        }
-        this.#schema();
-      });
-    } catch { this.#healthy = false; }
+    // Constructing this object for a public read never creates persistent state.
+    try { this.#schema(); } catch { this.#healthy = false; }
   }
 
+  #objects(): Record<string, SqlStorageValue>[] {
+    return this.ctx.storage.sql.exec("SELECT type, name, sql FROM sqlite_schema WHERE name NOT GLOB '_cf_*' AND name NOT GLOB 'sqlite_*' AND name != '__cf_kv' LIMIT 4").toArray();
+  }
   #schema(): void {
-    const objects = this.ctx.storage.sql.exec("SELECT type, name, sql FROM sqlite_schema WHERE name NOT GLOB '_cf_*' AND name NOT GLOB 'sqlite_*' AND name != '__cf_kv' LIMIT 4").toArray();
-    if (!this.#healthy || objects.length !== 1 || objects[0]?.type !== "table" || objects[0].name !== "leaderboard_index"
-      || objects[0].sql !== SCHEMA_SQL) throw new Error("storage_invalid");
+    const objects = this.#objects();
+    if (!this.#healthy || (objects.length !== 0 && (objects.length !== 1 || objects[0]?.type !== "table"
+      || objects[0].name !== "leaderboard_index" || objects[0].sql !== SCHEMA_SQL))) throw new Error("storage_invalid");
+  }
+  #initialize(): void {
+    this.#schema();
+    if (this.#objects().length === 0) {
+      this.ctx.storage.sql.exec(SCHEMA_SQL);
+      this.ctx.storage.sql.exec("INSERT INTO leaderboard_index (id, schema_version, revision, payload) VALUES (1, 1, 0, NULL)");
+    }
   }
   #stored(): { revision: number; state: IndexState } {
+    if (this.#objects().length === 0) return { revision: 0, state: { schemaVersion: 1, members: [], tombstones: [] } };
     const rows = this.ctx.storage.sql.exec("SELECT id, schema_version, revision, payload FROM leaderboard_index LIMIT 2").toArray();
     const row = rows[0];
     if (rows.length !== 1 || row?.id !== 1 || row.schema_version !== 1 || typeof row.revision !== "number"
@@ -165,142 +167,212 @@ export class LeaderboardIndex extends DurableObject<Env> {
     try { return this.ctx.id.equals(this.env.PUBLIC_INDEX.idFromName(LEADERBOARD_INDEX_NAME)); }
     catch { return false; }
   }
+  #accountStamp(state: IndexState, accountId: string): string {
+    return JSON.stringify([state.members.find(member => member.accountId === accountId) ?? null,
+      state.tombstones.find(tombstone => tombstone.accountId === accountId) ?? null]);
+  }
 
-  /** Apply one fenced consent decision. Stale replays at or before the newest
-   * applied/removed event are no-ops; a grant upserts the member (projection
-   * kept until re-verified), a withdrawal removes it and records a tombstone
-   * so an older grant replay cannot resurrect it. */
+  /** This execution owns its registration independently of the account RPC
+   * caller. A lost caller reply cannot release a still-running index update. */
+  async #acquire(accountId: string): Promise<Registration | null> {
+    const generation: unknown = this.env.USAGE_ENROLLMENT_GENERATION;
+    const workerVersion: unknown = this.env.USAGE_WORKER_VERSION;
+    if (!enrollmentHex(generation) || !enrollmentHex(workerVersion)) return null;
+    const stub = this.env.RESTORE_FENCES.getByName(restoreFenceName(accountId));
+    let epoch: number;
+    let raw: unknown;
+    try {
+      raw = await stub.read({ accountId, generation });
+      const { envelope, dispose } = rpcSnapshot(raw);
+      try {
+        const view = envelope?.ok === true ? enrollmentSnapshot(envelope.value, ["record", "inFlight", "observedAtMs"]) : null;
+        const record = view === null ? null : enrollmentSnapshot(view.record,
+          ["schemaVersion", "accountId", "generation", "epoch", "workerVersion", "phase", "established", "updatedAtMs"]);
+        if (record?.schemaVersion !== 1 || record.accountId !== accountId || record.generation !== generation
+          || record.workerVersion !== workerVersion || record.phase !== "open" || record.established !== true
+          || typeof record.epoch !== "number" || !Number.isSafeInteger(record.epoch) || record.epoch < 0) return null;
+        epoch = record.epoch;
+      } finally { dispose?.(); }
+    } catch { return null; }
+    const attemptId = enrollmentRandom();
+    const request = { accountId, generation, epoch, workerVersion, attemptId, leaseMs: RESTORE_FENCE_LEASE_TTL_MS };
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        raw = await stub.assertOpen(request);
+        const { envelope, dispose } = rpcSnapshot(raw);
+        try {
+          const lease = envelope?.ok === true ? enrollmentSnapshot(envelope.value, ["token", "epoch", "established", "deadlineMs"]) : null;
+          if (lease?.token === attemptId && lease.epoch === epoch && lease.established === true && enrollmentTime(lease.deadlineMs)) {
+            return Object.freeze({ accountId, generation, epoch, workerVersion, token: attemptId });
+          }
+          if (envelope?.ok === false) break;
+        } finally { dispose?.(); }
+      } catch { /* Reconcile the same durable execution, never a replacement. */ }
+    }
+    // No index continuation has begun. Terminal cancellation prevents a late
+    // reordered grant; an unavailable fence retains any uncertain holder.
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        raw = await stub.cancelAcquire({ accountId, generation, epoch, workerVersion, attemptId });
+        const { envelope, dispose } = rpcSnapshot(raw);
+        try { if (envelope?.ok === true && envelope.value === null) return null; }
+        finally { dispose?.(); }
+      } catch { /* Uncertain acquisition remains fail-closed. */ }
+    }
+    return null;
+  }
+
+  /** Release only after local SQL, alarm work, and every future canonical
+   * continuation have ended. Source reads are pure even if their reply is lost. */
+  async #settle(registration: Registration): Promise<void> {
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        const raw: unknown = await this.env.RESTORE_FENCES.getByName(restoreFenceName(registration.accountId))
+          .release({ accountId: registration.accountId, token: registration.token, committed: false });
+        const { envelope, dispose } = rpcSnapshot(raw);
+        try { if (envelope?.ok === true && envelope.value === null) return; }
+        finally { dispose?.(); }
+      } catch { /* A lost terminal reply reconciles this same decision. */ }
+    }
+  }
+
+  /** A coherent account-owned decision and projection, never caller authority. */
+  async #delivery(accountId: string): Promise<Delivery | null> {
+    let raw: unknown;
+    try {
+      raw = await this.env.ACCOUNT_ENROLLMENTS.getByName(enrollmentAccountName(accountId))
+        .readLeaderboardDelivery(Object.freeze({ schemaVersion: 1, accountId }));
+    } catch { return null; }
+    const { envelope, dispose } = rpcSnapshot(raw);
+    try {
+      const delivery = envelope?.ok === true ? enrollmentSnapshot(envelope.value, ["schemaVersion", "accountId", "eventAtMs", "projection"]) : null;
+      if (delivery?.schemaVersion !== 1 || delivery.accountId !== accountId || !enrollmentTime(delivery.eventAtMs)) return null;
+      const projection = parseLeaderboardProjection(delivery.projection);
+      if (projection === null || projection.accountId !== accountId
+        || (projection.consent && projection.consentedAtMs > delivery.eventAtMs)) return null;
+      return Object.freeze({ eventAtMs: delivery.eventAtMs, projection });
+    } finally { dispose?.(); }
+  }
+
+  /** The v1 apply is a reconciliation hint. Exact source confirmation and an
+   * account projection comparison keep stale intent from acquiring a newer epoch. */
   async applyConsent(input: unknown): Promise<IndexResult<Readonly<{ schemaVersion: 1 }>>> {
+    let registration: Registration | null = null;
     try {
       const request = parseLeaderboardConsentApply(input);
       if (request === null) return err("invalid_input");
       if (!this.#identity()) return err("unauthorized");
+      registration = await this.#acquire(request.accountId);
+      if (registration === null) return err("recovery_required");
+      const before = this.ctx.storage.transactionSync(() => {
+        this.#schema(); return this.#accountStamp(this.#stored().state, request.accountId);
+      });
+      const delivery = await this.#delivery(request.accountId);
+      if (delivery === null) return err("storage_unavailable");
+      const projection = delivery.projection;
+      if (delivery.eventAtMs !== request.eventAtMs || projection.consent !== request.consent
+        || (projection.consent && (projection.publicHandle !== request.publicHandle || projection.consentedAtMs !== request.consentedAtMs))) {
+        return err("recovery_required");
+      }
       const now = Date.now();
-      if (!enrollmentTime(now) || Object.is(now, -0)) return err("clock_regressed");
+      if (!enrollmentTime(now) || Object.is(now, -0) || now < delivery.eventAtMs) return err("clock_regressed");
       const applied = this.ctx.storage.transactionSync(() => {
         this.#schema();
-        const { revision, state } = this.#stored();
+        const stored = this.#stored(), state = stored.state;
+        // Another index decision during the source await wins. In particular,
+        // a delayed source reply cannot undo a completed withdrawal. A fresh
+        // retry can reconcile the current decision without rebinding old data.
+        if (this.#accountStamp(state, request.accountId) !== before) return err("storage_unavailable");
         const member = state.members.find(candidate => candidate.accountId === request.accountId);
-        const tombstone = state.tombstones.find(candidate => candidate.accountId === request.accountId);
-        const prior = Math.max(member?.eventAtMs ?? -1, tombstone?.eventAtMs ?? -1);
-        if (request.eventAtMs <= prior) return ok(Object.freeze({ schemaVersion: 1 as const }));
-        if (request.consent === false) {
-          // An authoritative withdrawal always removes the member and
-          // tombstones at the decision time so an older grant replay cannot
-          // resurrect it.
+        if (projection.consent === false) {
           state.members = state.members.filter(candidate => candidate.accountId !== request.accountId);
           state.tombstones = state.tombstones.filter(candidate => candidate.accountId !== request.accountId);
-          state.tombstones.push({ accountId: request.accountId, eventAtMs: request.eventAtMs });
+          state.tombstones.push({ accountId: request.accountId, eventAtMs: delivery.eventAtMs });
           evictTombstones(state);
-          this.#write(revision, state);
-          return ok(Object.freeze({ schemaVersion: 1 as const }));
-        }
-        if (state.members.some(candidate => candidate.accountId !== request.accountId
-          && candidate.publicHandle === request.publicHandle)) return err("handle_unavailable");
-        if (member === undefined && state.members.length >= LEADERBOARD_MAX_MEMBERS) return err("limit");
-        if (member !== undefined) {
-          member.eventAtMs = request.eventAtMs;
-          member.consentedAtMs = request.consentedAtMs as number;
-          member.publicHandle = request.publicHandle as string;
-          // A changed consent decision needs fresh source verification before
-          // any previously materialized totals can be published under it.
-          member.projection = null;
         } else {
-          state.members.push({ accountId: request.accountId, eventAtMs: request.eventAtMs,
-            consentedAtMs: request.consentedAtMs as number, publicHandle: request.publicHandle as string,
-            refreshedAtMs: 0, projection: null });
+          if (state.members.some(candidate => candidate.accountId !== request.accountId
+            && candidate.publicHandle === projection.publicHandle)) return err("handle_unavailable");
+          if (member === undefined && state.members.length >= LEADERBOARD_MAX_MEMBERS) return err("limit");
+          const verified: IndexMember = { accountId: request.accountId, eventAtMs: delivery.eventAtMs,
+            consentedAtMs: projection.consentedAtMs, publicHandle: projection.publicHandle,
+            refreshedAtMs: now, projection: this.#numericProjection(projection) };
+          state.members = state.members.filter(candidate => candidate.accountId !== request.accountId);
+          state.members.push(verified);
+          state.tombstones = state.tombstones.filter(candidate => candidate.accountId !== request.accountId);
         }
-        state.tombstones = state.tombstones.filter(candidate => candidate.accountId !== request.accountId);
-        this.#write(revision, state);
+        this.#initialize();
+        this.#write(stored.revision, state);
         return ok(Object.freeze({ schemaVersion: 1 as const }));
       });
       if (!applied.ok) return applied;
-      // Arm recovery before crossing the account RPC boundary. Retried applies
-      // also repair a previously failed alarm or verification.
-      await this.#schedule(now);
-      if (request.consent) await this.#refresh(now, request.accountId);
       await this.#schedule(now);
       return applied;
     } catch { return err("storage_unavailable"); }
+    finally { if (registration !== null) await this.#settle(registration); }
   }
 
-  /** One bounded source verification: consent is re-read at the account object.
-   * Only affirmative evidence removes a member — `consent: false`, enrollment
-   * loss, or a malformed authority reply. Transient failures keep the stale
-   * entry internally; public reads omit it after the verification lifetime. */
-  async #verify(accountId: string): Promise<VerifyVerdict> {
-    let raw: unknown;
-    try {
-      raw = await this.env.ACCOUNT_ENROLLMENTS.getByName(enrollmentAccountName(accountId))
-        .readLeaderboardProjection(Object.freeze({ schemaVersion: 1, accountId }));
-    } catch { return "stale"; }
-    const snapshot = rpcSnapshot(raw);
-    try {
-      if (snapshot.envelope === null || snapshot.dispose === null) return "remove";
-      const success = snapshot.envelope;
-      if (success.ok === true) {
-        const projection = parseLeaderboardProjection(success.value);
-        if (projection === null || projection.accountId !== accountId) return "remove";
-        if (projection.consent === false) return "remove";
-        return Object.freeze({ update: Object.freeze({
-          consentedAtMs: projection.consentedAtMs, publicHandle: projection.publicHandle,
-          projection: Object.freeze({ observedTokens: projection.observedTokens, usageRecords: projection.usageRecords,
-            windowFirstUtcDay: projection.windowFirstUtcDay, windowUtcDays: projection.windowUtcDays }),
-        }) });
-      }
-      if (success.ok === false && (success.error === "not_enrolled" || success.error === "unauthorized")) return "remove";
-      return "stale";
-    } finally { snapshot.dispose?.(); }
+  #numericProjection(projection: Extract<LeaderboardProjectionV1, { consent: true }>): IndexProjection {
+    return Object.freeze({ observedTokens: projection.observedTokens, usageRecords: projection.usageRecords,
+      windowFirstUtcDay: projection.windowFirstUtcDay, windowUtcDays: projection.windowUtcDays });
   }
 
-  /** Mutation/alarm work only. Persisted array order rotates attempted accounts
-   * behind untouched ones without adding fields older deployments cannot read. */
-  async #refresh(now: number, accountId?: string): Promise<void> {
+  /** Each account refresh owns a registration independent of its alarm caller.
+   * Persisted order rotates attempted accounts, including unavailable sources.
+   * Account comparison prevents delayed replies from replacing newer state. */
+  async #refresh(now: number): Promise<boolean> {
     const stale = this.ctx.storage.transactionSync(() => {
       this.#schema();
-      const { state } = this.#stored();
-      return state.members
-        .filter(member => (accountId === undefined || member.accountId === accountId)
-          && (member.projection === null || now - member.refreshedAtMs >= LEADERBOARD_RECHECK_MS))
-        .slice(0, accountId === undefined ? LEADERBOARD_REFRESHES_PER_CYCLE : 1)
-        .map(member => Object.freeze({ accountId: member.accountId, eventAtMs: member.eventAtMs,
-          refreshedAtMs: member.refreshedAtMs }));
+      return this.#stored().state.members.filter(member => member.projection === null
+        || now - member.refreshedAtMs >= LEADERBOARD_RECHECK_MS)
+        .map(member => member.accountId);
     });
-    for (const target of stale) {
-      const verdict = await this.#verify(target.accountId);
-      this.ctx.storage.transactionSync(() => {
-        this.#schema();
-        const { revision, state } = this.#stored();
-        const member = state.members.find(candidate => candidate.accountId === target.accountId);
-        if (member === undefined || member.eventAtMs !== target.eventAtMs
-          || member.refreshedAtMs !== target.refreshedAtMs) return;
-        // Every attempted source, including a failed one, yields its turn to
-        // the next stale member. Public ordering is computed separately.
-        state.members = state.members.filter(candidate => candidate.accountId !== target.accountId);
-        state.members.push(member);
-        if (verdict === "remove") {
-          // A verification removal records no tombstone: the source could not
-          // affirm consent, so the member drops now, and a retried consent
-          // apply at the same decision time can still self-heal later.
-          state.members = state.members.filter(candidate => candidate.accountId !== target.accountId);
-        } else if (verdict !== "stale") {
-          // A lost apply can leave a newer account handle at the source. It
-          // must never displace the member who already holds that handle.
-          if (state.members.some(candidate => candidate.accountId !== member.accountId
-            && candidate.publicHandle === verdict.update.publicHandle)) {
-            member.projection = null;
-            this.#write(revision, state);
-            return;
+    let scheduled = false, refreshed = 0;
+    for (const accountId of stale) {
+      if (refreshed >= LEADERBOARD_REFRESHES_PER_CYCLE) break;
+      const registration = await this.#acquire(accountId);
+      if (registration === null) continue;
+      refreshed++;
+      try {
+        const before = this.ctx.storage.transactionSync(() => {
+          this.#schema(); return this.#accountStamp(this.#stored().state, accountId);
+        });
+        const delivery = await this.#delivery(accountId);
+        const current = Date.now();
+        if (!enrollmentTime(current) || Object.is(current, -0) || current < now
+          || (delivery !== null && current < delivery.eventAtMs)) throw new Error("clock_regressed");
+        this.ctx.storage.transactionSync(() => {
+          this.#schema();
+          const stored = this.#stored(), state = stored.state;
+          if (this.#accountStamp(state, accountId) !== before) return;
+          const member = state.members.find(candidate => candidate.accountId === accountId);
+          if (member === undefined) return;
+          state.members = state.members.filter(candidate => candidate.accountId !== accountId);
+          if (delivery?.projection.consent === false) {
+            state.tombstones = state.tombstones.filter(candidate => candidate.accountId !== accountId);
+            state.tombstones.push({ accountId, eventAtMs: delivery.eventAtMs });
+            evictTombstones(state);
+          } else {
+            state.members.push(member);
+            if (delivery !== null && delivery.projection.consent) {
+              const projection = delivery.projection;
+              if (state.members.some(candidate => candidate.accountId !== accountId && candidate.publicHandle === projection.publicHandle)) {
+                member.projection = null;
+              } else {
+                member.eventAtMs = delivery.eventAtMs;
+                member.consentedAtMs = projection.consentedAtMs;
+                member.publicHandle = projection.publicHandle;
+                member.projection = this.#numericProjection(projection);
+                member.refreshedAtMs = current;
+              }
+            }
           }
-          member.consentedAtMs = verdict.update.consentedAtMs;
-          member.publicHandle = verdict.update.publicHandle;
-          member.projection = verdict.update.projection;
-          member.refreshedAtMs = now;
-          member.eventAtMs = Math.max(member.eventAtMs, verdict.update.consentedAtMs);
-        }
-        this.#write(revision, state);
-      });
+          this.#write(stored.revision, state);
+        });
+        await this.#schedule(current);
+        scheduled = true;
+      } finally { await this.#settle(registration); }
     }
+    return scheduled;
   }
 
   /** Keep periodic verification alive even when the current batch is complete.
@@ -351,8 +423,24 @@ export class LeaderboardIndex extends DurableObject<Env> {
       if (!this.#identity()) return;
       const now = Date.now();
       if (!enrollmentTime(now) || Object.is(now, -0)) return;
-      await this.#refresh(now);
-      await this.#schedule(now);
+      const accounts = this.ctx.storage.transactionSync(() => {
+        this.#schema(); return this.#stored().state.members.map(member => member.accountId);
+      });
+      // An absent/empty index needs no initialization or alarm mutation.
+      if (accounts.length === 0 || await this.#refresh(now)) return;
+      // Fresh members still need their next wake, owned by a current account
+      // registration. A closed fence cannot be bypassed merely to rearm work.
+      for (const accountId of accounts) {
+        const registration = await this.#acquire(accountId);
+        if (registration === null) continue;
+        try {
+          const current = Date.now();
+          if (!enrollmentTime(current) || Object.is(current, -0) || current < now) throw new Error("clock_regressed");
+          await this.#schedule(current); return;
+        }
+        finally { await this.#settle(registration); }
+      }
+      throw new Error("leaderboard_refresh_unavailable");
     } catch {
       // A thrown alarm is retried by the runtime; swallowing this failure can
       // permanently stop updates after a transient storage outage.

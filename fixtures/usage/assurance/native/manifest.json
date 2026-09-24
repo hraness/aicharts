@@ -1,0 +1,428 @@
+{
+  "schemaVersion": 1,
+  "baselineCommit": "a5bec6415ce640a61495db57bc9c2ce83fb83021",
+  "nativeSourceEquivalentThroughCommit": "696400da880d78e9a8b5ffd2b4265ea93c4948ce",
+  "origin": "Hand-authored synthetic counterexamples; no real sessions or credentials.",
+  "subjectHashScope": "Critical subject files and root Cargo inputs; these hashes do not attest a supplied executable or the entire workspace.",
+  "fixtureSha256": {
+    "autosubmit-descendant-trace.json": "0ef9db49ad852604433240b25bd387049cb81dd21f807dd74abc76b576a5a161",
+    "claude-known-owner-a.jsonl": "6503cd555922e810eaea59d8c2afa6cdd70f5038ccb336caa2b422e34111d028",
+    "claude-known-owner-b.jsonl": "eea248392581a39e4d7c631a4930457e5cafce8682674143c4d9e0e49c17dd05",
+    "codex-mtime.jsonl": "306a993f133b31346eb85cadbff099cad2c08990e023fd18a5af6caba20c30e2",
+    "cursor-harness.rs": "c490ff3bdad28d6ace0e434dd9506133cb04d6b1e7e8b2094d326522b23ebff2",
+    "cursor-partial-day.json": "db8415ba5277bf4f52f715ac61235e78722e4bb0c4e72934717e4e695375fc97",
+    "devin-totals-mismatch.json": "9e28babaa2d01a21eba2089b626662c73bca51326e7a11870b52e1c6e9acbb00"
+  },
+  "subjectSourceSha256": {
+    "Cargo.toml": "e7db3c647bf73e1aa57a08e91e1a2d20e1f89bdf1b49aeeee640ae52eb13c6fb",
+    "Cargo.lock": "2bbb4542b78b0aa8cecb5380bab0aa81290529d2b4c5ffb5dbac8d8d634e3f81",
+    "crates/aicharts-core/src/lib.rs": "e878285b1af636b3cd98bf0ab24d0000fe854b4bb61f954be6c07778d0412eeb",
+    "crates/aicharts-ledger/src/lib.rs": "3ed3c358869e13473aa46d4fefd60ade9c30c452ddcd654b536b93a618fba20e",
+    "crates/aicharts-cli/src/state.rs": "3ed8200f6bfc2895e7068d6be118ba5375eb3719d5e5475ed2e67dac1b7005c7",
+    "crates/aicharts-cli/src/source_refresh.rs": "b7e0c5f9faef679aa541de4193c14ce45ac68eb304494a8abfa399927146ac29",
+    "vendor/tokscale-core/src/offline.rs": "367a5ba037bacad072dd82ca27dbb10b42d78bf3ae9ed2429afe193f8fd5443a",
+    "vendor/tokscale-core/src/offline_io.rs": "ba9f591847d62e1c8011ac8410e61ee201c8726e4c76d726ac62be9e2ae31155",
+    "crates/aicharts-cli/src/autosubmit.rs": "cb215a3b1b002e227c44af96d0940227a35971e7588654a4d37f0dc1342bf28a",
+    "crates/aicharts-cli/src/capture/process.rs": "252002adff2c6b752afc529f00ce3d4288ab22197e1d0bdf9e7a27775b8e5b1d"
+  },
+  "cases": {
+    "F01": {
+      "title": "Conflicting known Claude attribution survives commit but fails source-order rebuild",
+      "evidence": "native-cli",
+      "inputs": {
+        "first": "claude-known-owner-a.jsonl",
+        "second": "claude-known-owner-b.jsonl",
+        "namespaceKey": "32 public bytes of ASCII Q",
+        "ordering": "Compute source HMAC from canonical synthetic path; replay ascending and descending."
+      },
+      "invariant": "Every successful commit reopens. A distinct known execution owner is rejected atomically; unknown-to-known enrichment remains allowed.",
+      "repairPolicy": "Reject conflicting known owners using ledger_measurement_conflict without advancing revision or adding an association. Authorized reassignment requires a separate versioned migration.",
+      "baseline": {
+        "ascending": {
+          "first": {
+            "exit": 0,
+            "error": "",
+            "ledgerRevision": 1,
+            "sources": 1,
+            "associations": 1,
+            "usageOccurrences": 1,
+            "tokens": "15"
+          },
+          "second": {
+            "exit": 0,
+            "error": "",
+            "ledgerRevision": 2,
+            "sources": 2,
+            "associations": 2,
+            "usageOccurrences": 1,
+            "tokens": "15"
+          },
+          "reopened": {
+            "exit": 0,
+            "error": "",
+            "ledgerRevision": 2,
+            "sources": 2,
+            "associations": 2,
+            "usageOccurrences": 1,
+            "tokens": "15"
+          }
+        },
+        "descending": {
+          "first": {
+            "exit": 0,
+            "error": "",
+            "ledgerRevision": 1,
+            "sources": 1,
+            "associations": 1,
+            "usageOccurrences": 1,
+            "tokens": "15"
+          },
+          "second": {
+            "exit": 0,
+            "error": "",
+            "ledgerRevision": 2,
+            "sources": 2,
+            "associations": 2,
+            "usageOccurrences": 1,
+            "tokens": "15"
+          },
+          "reopened": {
+            "exit": 2,
+            "error": "aicharts: ledger_invalid_state_do_not_reset"
+          }
+        }
+      },
+      "repaired": {
+        "ascending": {
+          "first": {
+            "exit": 0,
+            "error": "",
+            "ledgerRevision": 1,
+            "sources": 1,
+            "associations": 1,
+            "usageOccurrences": 1,
+            "tokens": "15"
+          },
+          "second": {
+            "exit": 2,
+            "error": "aicharts: ledger_measurement_conflict"
+          },
+          "reopened": {
+            "exit": 0,
+            "error": "",
+            "ledgerRevision": 1,
+            "sources": 1,
+            "associations": 1,
+            "usageOccurrences": 1,
+            "tokens": "15"
+          }
+        },
+        "descending": {
+          "first": {
+            "exit": 0,
+            "error": "",
+            "ledgerRevision": 1,
+            "sources": 1,
+            "associations": 1,
+            "usageOccurrences": 1,
+            "tokens": "15"
+          },
+          "second": {
+            "exit": 2,
+            "error": "aicharts: ledger_measurement_conflict"
+          },
+          "reopened": {
+            "exit": 0,
+            "error": "",
+            "ledgerRevision": 1,
+            "sources": 1,
+            "associations": 1,
+            "usageOccurrences": 1,
+            "tokens": "15"
+          }
+        }
+      }
+    },
+    "F05": {
+      "title": "Identical Codex event bytes disappear after mtime-only change",
+      "evidence": "native-cli",
+      "inputs": {
+        "source": "codex-mtime.jsonl",
+        "recentMtimeSeconds": 1790035200,
+        "oldMtimeSeconds": 1788048000,
+        "date": "2026-09-20"
+      },
+      "invariant": "Without established event-range evidence, changing mtime alone cannot remove admitted in-window observations.",
+      "baseline": {
+        "sourceBytesUnchanged": true,
+        "recent": {
+          "exit": 0,
+          "error": "",
+          "profile": "client-stats-v2",
+          "rows": 1,
+          "tokens": "13",
+          "records": 1,
+          "sources": [
+            {
+              "client": "codex",
+              "status": "observed",
+              "records": 1,
+              "warnings": 0
+            }
+          ]
+        },
+        "old": {
+          "exit": 0,
+          "error": "",
+          "profile": "client-stats-v2",
+          "rows": 0,
+          "tokens": "0",
+          "records": 0,
+          "sources": [
+            {
+              "client": "codex",
+              "status": "not_found",
+              "records": 0,
+              "warnings": 0
+            }
+          ]
+        }
+      },
+      "repaired": {
+        "sourceBytesUnchanged": true,
+        "recent": {
+          "exit": 0,
+          "error": "",
+          "profile": "client-stats-v2",
+          "rows": 1,
+          "tokens": "13",
+          "records": 1,
+          "sources": [
+            {
+              "client": "codex",
+              "status": "observed",
+              "records": 1,
+              "warnings": 0
+            }
+          ]
+        },
+        "old": {
+          "exit": 0,
+          "error": "",
+          "profile": "client-stats-v2",
+          "rows": 1,
+          "tokens": "13",
+          "records": 1,
+          "sources": [
+            {
+              "client": "codex",
+              "status": "observed",
+              "records": 1,
+              "warnings": 0
+            }
+          ]
+        }
+      }
+    },
+    "F06": {
+      "title": "Oversized selected source silently disappears from successful collection",
+      "evidence": "native-cli",
+      "inputs": {
+        "sourcePrefix": "claude-known-owner-a.jsonl",
+        "sourceBytes": 268435457,
+        "construction": "Sparse truncate to 256 MiB + 1 byte after checking the valid small-source control."
+      },
+      "invariant": "Every omitted selected source has an explicit machine-readable reason; an unsuccessful first wave leaves a reopenable empty state.",
+      "repairPolicy": "Conservative preflight refusal using existing source_byte_limit; a richer partial-scan protocol needs deliberate reviewed expectation changes.",
+      "baseline": {
+        "control": {
+          "exit": 0,
+          "error": "",
+          "ledgerRevision": 1,
+          "sources": 1,
+          "associations": 1,
+          "usageOccurrences": 1,
+          "tokens": "15"
+        },
+        "sourceBytes": 268435457,
+        "collect": {
+          "exit": 0,
+          "error": "",
+          "ledgerRevision": 0,
+          "sources": 0,
+          "associations": 0,
+          "usageOccurrences": 0,
+          "tokens": "0",
+          "sourcesSkipped": 0,
+          "bytesScanned": 0,
+          "warnings": [
+            "no_usage_measurements"
+          ]
+        },
+        "reopened": {
+          "exit": 0,
+          "error": "",
+          "ledgerRevision": 0,
+          "sources": 0,
+          "associations": 0,
+          "usageOccurrences": 0,
+          "tokens": "0"
+        }
+      },
+      "repaired": {
+        "control": {
+          "exit": 0,
+          "error": "",
+          "ledgerRevision": 1,
+          "sources": 1,
+          "associations": 1,
+          "usageOccurrences": 1,
+          "tokens": "15"
+        },
+        "sourceBytes": 268435457,
+        "collect": {
+          "exit": 2,
+          "error": "aicharts: source_byte_limit"
+        },
+        "reopened": {
+          "exit": 0,
+          "error": "",
+          "ledgerRevision": 0,
+          "sources": 0,
+          "associations": 0,
+          "usageOccurrences": 0,
+          "tokens": "0"
+        }
+      }
+    },
+    "F07": {
+      "title": "Partial-day Cursor refresh removes an event outside the fetched interval",
+      "evidence": "source-extracted-rust-functions-and-range-planner",
+      "inputs": {
+        "source": "cursor-partial-day.json",
+        "harness": "cursor-harness.rs",
+        "providerSimulation": "Return every synthetic old event in the exact inclusive requested range; no real provider calls."
+      },
+      "invariant": "Range planning and replacement preserve every cached event outside proven replacement coverage.",
+      "baseline": {
+        "originalEvents": 3,
+        "fetchedEvents": 2,
+        "mergedEvents": 2,
+        "sinceMs": 1790002800000,
+        "untilMs": 1790208000000,
+        "earliestEventRetained": false,
+        "mergedTimestamps": [
+          1790010000000,
+          1790175600000
+        ]
+      },
+      "repaired": {
+        "originalEvents": 3,
+        "mergedEvents": 3,
+        "earliestEventRetained": true,
+        "mergedTimestamps": [
+          1789981200000,
+          1790010000000,
+          1790175600000
+        ]
+      }
+    },
+    "F08": {
+      "title": "Devin totals mismatch warning is lost at the ledger boundary",
+      "evidence": "native-cli",
+      "inputs": {
+        "source": "devin-totals-mismatch.json"
+      },
+      "invariant": "Measurement diagnostics survive collect and a fresh ledger reopen without changing the measured 13-token population.",
+      "baseline": {
+        "ephemeral": {
+          "exit": 0,
+          "error": "",
+          "tokens": "13",
+          "usageOccurrences": 1,
+          "warnings": [
+            "devin_totals_mismatch",
+            "unknown_models",
+            "unmeasured_activity",
+            "unmeasured_prompts",
+            "unmeasured_reasoning"
+          ]
+        },
+        "persisted": {
+          "exit": 0,
+          "error": "",
+          "tokens": "13",
+          "usageOccurrences": 1,
+          "warnings": [
+            "unknown_models",
+            "unmeasured_activity",
+            "unmeasured_prompts",
+            "unmeasured_reasoning"
+          ]
+        },
+        "reopened": {
+          "exit": 0,
+          "error": "",
+          "tokens": "13",
+          "usageOccurrences": 1,
+          "warnings": [
+            "unknown_models",
+            "unmeasured_activity",
+            "unmeasured_prompts",
+            "unmeasured_reasoning"
+          ]
+        }
+      },
+      "repaired": {
+        "ephemeral": {
+          "exit": 0,
+          "error": "",
+          "tokens": "13",
+          "usageOccurrences": 1,
+          "warnings": [
+            "devin_totals_mismatch",
+            "unknown_models",
+            "unmeasured_activity",
+            "unmeasured_prompts",
+            "unmeasured_reasoning"
+          ]
+        },
+        "persisted": {
+          "exit": 0,
+          "error": "",
+          "tokens": "13",
+          "usageOccurrences": 1,
+          "warnings": [
+            "devin_totals_mismatch",
+            "unknown_models",
+            "unmeasured_activity",
+            "unmeasured_prompts",
+            "unmeasured_reasoning"
+          ]
+        },
+        "reopened": {
+          "exit": 0,
+          "error": "",
+          "tokens": "13",
+          "usageOccurrences": 1,
+          "warnings": [
+            "devin_totals_mismatch",
+            "unknown_models",
+            "unmeasured_activity",
+            "unmeasured_prompts",
+            "unmeasured_reasoning"
+          ]
+        }
+      }
+    }
+  },
+  "traceOnly": {
+    "F14": "autosubmit-descendant-trace.json"
+  },
+  "exitCodes": {
+    "0": "Corpus validation or all selected cases match the explicit --expect mode; baseline means the defects were reproduced.",
+    "1": "Unexpected product behavior or harness failure; never an accepted repair.",
+    "2": "Invalid command-line invocation.",
+    "3": "All cases are recognized, but at least one differs from --expect (repair, regression, or mixed progress)."
+  }
+}

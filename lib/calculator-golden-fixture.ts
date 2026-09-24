@@ -8,6 +8,12 @@ import type { CalculatorInputsSnapshot } from "./calculator-inputs-data";
  */
 export function goldenCalculatorSnapshot(): CalculatorInputsSnapshot {
   const snapshot = structuredClone(CALCULATOR_INPUTS);
+  // Retrieval clocks and the reporting period are live fields too. Keep the
+  // frozen refresh fixtures admissible after the checked source moves ahead.
+  for (const key of ["openAiApiPricing", "deepSeekApiPricing", "electricity", "gpuRental"] as const) {
+    snapshot[key].source.retrievedAt = "2026-09-10T00:00:00.000Z";
+  }
+  snapshot.electricity.period = "2026-06";
   snapshot.openAiApiPricing.current = {
     cachedInputPerMillion: 0.4,
     inputPerMillion: 4,

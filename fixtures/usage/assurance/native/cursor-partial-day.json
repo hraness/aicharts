@@ -1,0 +1,24 @@
+{
+  "untilMs": 1790208000000,
+  "billingStartMs": 1788220800000,
+  "earliestEventMs": 1789981200000,
+  "previous": {
+    "usageEventsDisplay": [
+      {
+        "timestamp": 1789981200000,
+        "model": "gpt-5",
+        "tokenUsage": { "inputTokens": 10, "outputTokens": 3 }
+      },
+      {
+        "timestamp": 1790010000000,
+        "model": "gpt-5",
+        "tokenUsage": { "inputTokens": 10, "outputTokens": 3 }
+      },
+      {
+        "timestamp": 1790175600000,
+        "model": "gpt-5",
+        "tokenUsage": { "inputTokens": 10, "outputTokens": 3 }
+      }
+    ]
+  }
+}

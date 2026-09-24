@@ -90,6 +90,12 @@ function snapshotTurn(value: unknown, utcDay: number): TerminalTurn | null {
   return { ...record, id, executionId, accountId, tokens } as TerminalTurn;
 }
 
+/** Owned copy for local numeric projections; this does not establish source coverage. */
+export function parseTerminalTurn(value: unknown, utcDay: number): TerminalTurn | null {
+  if (!integer(utcDay, 0xffff_ffff)) return null;
+  try { return snapshotTurn(value, utcDay); } catch { return null; }
+}
+
 const idKey = (value: Id): string => Array.from(value, byte => byte.toString(16).padStart(2, "0")).join("");
 function sameTurn(left: TerminalTurn, right: TerminalTurn): boolean {
   return idKey(left.executionId) === idKey(right.executionId) && idKey(left.accountId) === idKey(right.accountId)

@@ -151,7 +151,7 @@ On macOS, `enroll --state-dir DIR` changes how the local commands choose the led
 ./target/debug/aicharts collect --state-dir /absolute/private/directory/aicharts-state --key-file /absolute/private/directory/aicharts.key --codex /absolute/path/to/sessions --claude /absolute/path/to/projects --devin /absolute/path/to/atif-sessions
 ```
 
-`collect`, `collect-prefix`, `prefix-enable`, `status` and `outbox` reopen the same completed, custody-verified enrollment and operate on that account-bound ledger, so collection populates the pending queue `upload` later sends from. `inspect` resolves the same identity; `--occurrence-key-file` is refused on an enrolled directory (`occurrence_key_file_conflicts_with_enrollment`) because the account key is never a file. A directory holding only an unfinished, revoked or inconsistent enrollment record refuses closed with the enrollment seam's own fixed errors rather than silently using the legacy single-key identity; on non-macOS the same record refuses with `persistent_state_requires_qualified_macos_custody`. Unenrolled directories keep the legacy single-key behavior unchanged.
+`collect`, `collect-prefix`, `prefix-enable`, `status` and `outbox` reopen the same completed, custody-verified enrollment and operate on that account-bound ledger, so collection populates the pending queue `upload` later sends from. `inspect` and `upgrade` resolve the same identity; `--occurrence-key-file` is refused on an enrolled directory (`occurrence_key_file_conflicts_with_enrollment`) because the account key is never a file. A directory holding only an unfinished, revoked or inconsistent enrollment record refuses closed with the enrollment seam's own fixed errors rather than silently using the legacy single-key identity; on non-macOS the same record refuses with `persistent_state_requires_qualified_macos_custody`. Unenrolled directories keep the legacy single-key behavior unchanged.
 
 To check which account an existing installation belongs to without advancing enrollment, use the qualified signed collector:
 
@@ -245,11 +245,29 @@ With an existing private ledger and its original key, run:
 ./target/debug/aicharts inspect --state-dir /absolute/private/directory/aicharts-state --key-file /absolute/private/directory/aicharts.key --json
 ```
 
-For an existing account-bound split-key ledger, also supply `--occurrence-key-file` with the corresponding private key path. Omitting this option selects legacy identity; supplying it selects namespace version 1. The command does not guess keys, migrate a ledger or change identity. Never paste key bytes into an agent conversation.
+For enrolled state, the command resolves the account occurrence key from credential custody. For an unenrolled split-key ledger, supply `--occurrence-key-file` with its corresponding private key path. Otherwise, inspection uses the legacy identity. The command does not guess keys, migrate a ledger or change identity. Never paste key bytes into an agent conversation.
 
 `inspect` uses `ReadOnlyLedger` on supported macOS/Linux local filesystems. It validates the existing ledger, closes its read-only transaction, and checks identity and revision again immediately before rendering. It reads no Codex/Claude sources, makes no network calls, creates no state, and refuses any journal, WAL or shared-memory sidecar instead of repairing it. Preserve state on an error; do not remove a sidecar or substitute a writer. Ordinary reads can update access timestamps. This bounded snapshot is not a continuing lock, rollback proof or defense against hostile same-user modification.
 
-JSON contains exactly `schemaVersion: 1`, `operation: "inspect"`, `access: "read_only"`, `coverage: "partial"`, decimal-string `revision`, `tokens` and `outputTokens`, numeric `sources`, `usageOccurrences` and `pendingRecords`, fixed-code `warnings`, and `unavailable: ["prompts", "activity", "pricing"]`. It contains no paths, keys, occurrence IDs, source witnesses or frames. These totals describe persisted partial observations, not fresh source collection, a bill or accepted remote uploads. Missing coverage warnings are not retroactively added to an old ledger by inspection.
+JSON contains `schemaVersion: 1`, `operation: "inspect"`, `access: "read_only"`, `coverage: "partial"`, decimal-string `revision`, `tokens` and `outputTokens`, numeric `sources`, `usageOccurrences` and `pendingRecords`, fixed-code `warnings`, and `unavailable: ["prompts", "activity", "pricing"]`. Its `historyAudit` reports the retained schema version, disposition, attribution and numeric replay conflict counts, and recovery guidance; `numericBackupExported` reports whether an explicit export completed. The summary contains no paths, keys, occurrence IDs, source witnesses or frames. These totals describe persisted partial observations, not fresh source collection, a bill or accepted remote uploads. Missing coverage warnings are not retroactively added to an old ledger by inspection.
+
+To retain an exact numeric recovery copy, choose a new private directory:
+
+```sh
+./target/debug/aicharts inspect --state-dir /absolute/private/directory/aicharts-state --key-file /absolute/private/directory/aicharts.key --export-dir /absolute/private/directory/aicharts-numeric-backup --json
+```
+
+Export preserves the original database bytes, including quarantined facts and sender records, and verifies the copy. It refuses an existing target. Keys and enrollment anchors remain separate; retain them with the original state. The copy grants no upload authority. Inspection and export support the same 512 MiB database bound as the writer.
+
+If the audit reports `upgrade_required`, use the inspected revision with a new backup directory:
+
+```sh
+./target/debug/aicharts upgrade --state-dir /absolute/private/directory/aicharts-state --key-file /absolute/private/directory/aicharts.key --revision 42 --backup-dir /absolute/private/directory/aicharts-pre-upgrade
+```
+
+Replace `42` with the exact inspected revision. The explicit upgrade validates an exact private backup before atomically moving unambiguous schemas 1–4 to their corresponding schemas 5–8. It preserves source records, numeric frames, retained warnings, revision and sender state. An already-current ledger creates no backup and reports that no change occurred. Diagnostics omitted by an older collector require a separate explicit source rescan after upgrade.
+
+An `attribution_quarantined` or `numeric_replay_quarantined` history remains inspectable and exportable, but collection, upgrade, reindex and upload refuse. Preserve its original state, keys and source history for an evidenced reconciliation. The audit does not choose between conflicting known owners or infer a combined count from a history whose replay is undefined.
 
 The [AI Charts skill](../skills/aicharts/SKILL.md) can interpret this summary separately from its public benchmark lookup. The native command must already be available in a reviewed local binary; the skill does not build or install it automatically.
 

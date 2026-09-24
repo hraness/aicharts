@@ -457,9 +457,7 @@ fn claude_sidechain_copies_merge_into_the_parent_session() {
 }
 
 #[test]
-fn claude_execution_attribution_drift_merges_but_context_still_conflicts() {
-    // Ledgers written before session-level attribution can hold the same
-    // occurrence under a per-agent execution; merging must not wedge them.
+fn claude_known_owner_conflicts_are_rejected_in_both_orders() {
     let usage = |execution_id: Id, provider: Provider, model_id: u32| Usage {
         id: [1; 16],
         execution_id,
@@ -490,13 +488,16 @@ fn claude_execution_attribution_drift_merges_but_context_still_conflicts() {
         warnings: vec![],
         lines_read: 0,
     };
-    let merged = merge_collections(vec![
-        wrap(usage([2; 16], Provider::ClaudeCode, 0)),
-        wrap(usage([3; 16], Provider::ClaudeCode, 0)),
-    ])
-    .unwrap();
-    assert_eq!(merged.batches[0].usage.len(), 1);
-    assert_eq!(merged.batches[0].usage[0].execution_id, [3; 16]);
+    for (first, second) in [([2; 16], [3; 16]), ([3; 16], [2; 16])] {
+        assert_eq!(
+            merge_collections(vec![
+                wrap(usage(first, Provider::ClaudeCode, 0)),
+                wrap(usage(second, Provider::ClaudeCode, 0)),
+            ])
+            .err(),
+            Some(Error::ConflictingOccurrence)
+        );
+    }
     for (provider, model_id) in [
         (Provider::Devin, 0u32),
         (Provider::Codex, 0u32),

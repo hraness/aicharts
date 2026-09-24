@@ -5,11 +5,13 @@ mod inspection;
 mod prefix;
 mod sender;
 mod storage;
+mod upgrade;
 pub use storage::MAX_DATABASE_BYTES;
 
 pub use inspection::ReadOnlyLedger;
 pub use prefix::{CompletePrefix, PrefixScan, PrefixSnapshot, SourceCheckpoint};
 pub use sender::{BatchSettlement, FrozenBatch, SenderBinding, SenderStatus, SettledBatch};
+pub use upgrade::UpgradeOutcome;
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::Path;
@@ -38,6 +40,9 @@ pub enum Error {
     StaleRevision,
     SourceHistoryChanged,
     RecoveryRequired,
+    UpgradeRequired,
+    AttributionQuarantined,
+    NumericReplayQuarantined,
     SenderNotEnabled,
     SenderBindingMismatch,
     UploadInFlight,
@@ -61,6 +66,13 @@ impl Error {
             Self::StaleRevision => "ledger_changed_retry",
             Self::SourceHistoryChanged => "ledger_source_history_changed",
             Self::RecoveryRequired => "ledger_recovery_required",
+            Self::UpgradeRequired => "ledger_upgrade_required_use_inspect_then_upgrade",
+            Self::AttributionQuarantined => {
+                "ledger_attribution_quarantined_use_inspect_export_preserve_sources"
+            }
+            Self::NumericReplayQuarantined => {
+                "ledger_numeric_replay_quarantined_use_inspect_export_preserve_sources"
+            }
             Self::SenderNotEnabled => "ledger_sender_not_enabled",
             Self::SenderBindingMismatch => "ledger_sender_binding_mismatch",
             Self::UploadInFlight => "ledger_upload_in_flight",
@@ -199,6 +211,44 @@ pub struct InventoryRecord {
     pub frame: Vec<u8>,
 }
 
+/// Versioned diagnosis of retained facts, never an inferred owner resolution.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct HistoryAudit {
+    pub schema_version: u32,
+    pub attribution_conflicts: u64,
+    pub numeric_replay_conflicts: u64,
+}
+impl HistoryAudit {
+    pub fn disposition(self) -> &'static str {
+        if self.attribution_conflicts != 0 {
+            "attribution_quarantined"
+        } else if self.numeric_replay_conflicts != 0 {
+            "numeric_replay_quarantined"
+        } else if self.schema_version < 5 {
+            "upgrade_required"
+        } else {
+            "current"
+        }
+    }
+    pub fn require_unambiguous(self) -> Result<()> {
+        if self.attribution_conflicts != 0 {
+            Err(Error::AttributionQuarantined)
+        } else if self.numeric_replay_conflicts != 0 {
+            Err(Error::NumericReplayQuarantined)
+        } else {
+            Ok(())
+        }
+    }
+    fn require_current(self) -> Result<()> {
+        self.require_unambiguous()?;
+        if self.schema_version < 5 {
+            Err(Error::UpgradeRequired)
+        } else {
+            Ok(())
+        }
+    }
+}
+
 pub struct Ledger {
     connection: Connection,
     namespace: [u8; 32],
@@ -289,6 +339,9 @@ impl Ledger {
             .connection
             .transaction_with_behavior(TransactionBehavior::Immediate)?;
         let version = storage::schema_version(&tx)?;
+        if version < 5 {
+            return Err(Error::UpgradeRequired);
+        }
         match (storage::has_prefix(version), prefixes.is_some()) {
             (true, false) => return Err(Error::CompletePrefixRequired),
             (false, true) => return Err(Error::PrefixNotEnabled),
@@ -314,6 +367,7 @@ impl Ledger {
             .filter(|n| *n <= i64::MAX as u64)
             .ok_or(Error::Limit)?;
         let mut changed = BTreeSet::new();
+        let mut touched = BTreeMap::new();
         let mut sources_updated = 0;
         for scan in scans {
             let prefix_update = prefixes
@@ -415,6 +469,7 @@ impl Ledger {
                     Some(old) => merge_frames(old, &frame)?,
                     None => frame.clone(),
                 };
+                touched.insert(id, final_frame.clone());
                 if old.as_ref() != Some(&final_frame) {
                     tx.execute("INSERT INTO measurements(id,frame,revision) VALUES(?1,?2,?3) ON CONFLICT(id) DO UPDATE SET frame=excluded.frame,revision=excluded.revision", params![id.as_slice(), final_frame, next as i64])?;
                     tx.execute("INSERT INTO outbox(id,frame,revision) VALUES(?1,?2,?3) ON CONFLICT(id) DO UPDATE SET frame=excluded.frame,revision=excluded.revision", params![id.as_slice(), final_frame, next as i64])?;
@@ -444,6 +499,7 @@ impl Ledger {
             "UPDATE meta SET revision=?1 WHERE singleton=1",
             [result_revision as i64],
         )?;
+        validate_touched_projection(&tx, &touched)?;
         before_commit()?;
         tx.commit()?;
         Ok(ImportReport {
@@ -627,22 +683,34 @@ fn enforce_counts(connection: &Connection) -> Result<()> {
 }
 /// Rebuild the bounded numeric projection on open. Checksums alone cannot detect
 /// a valid frame stored under the wrong ID or a queue inconsistent with the ledger.
-fn validate_relations(connection: &Connection) -> Result<()> {
+fn audit_relations(connection: &Connection) -> Result<HistoryAudit> {
     let tx = connection.unchecked_transaction()?;
-    validate_relations_in(&tx)
+    audit_relations_in(&tx)
 }
-fn validate_relations_in(tx: &Connection) -> Result<()> {
+fn audit_relations_in(tx: &Connection) -> Result<HistoryAudit> {
     let sender = if storage::has_sender(storage::schema_version(tx)?) {
         Some(sender::validate(tx)?)
     } else {
         None
     };
-    validate_relations_with(tx, sender.as_ref().map(|state| &state.accepted))
+    audit_relations_with(tx, sender.as_ref().map(|state| &state.accepted))
+}
+fn validate_relations_in(tx: &Connection) -> Result<()> {
+    audit_relations_in(tx)?.require_current()
 }
 fn validate_relations_with(
     tx: &Connection,
     accepted: Option<&BTreeMap<Id, sender::Accepted>>,
 ) -> Result<()> {
+    audit_relations_with(tx, accepted)?.require_current()
+}
+fn audit_relations_with(
+    tx: &Connection,
+    accepted: Option<&BTreeMap<Id, sender::Accepted>>,
+) -> Result<HistoryAudit> {
+    let version = storage::schema_version(tx)?;
+    let mut owners = BTreeMap::<Id, BTreeSet<Id>>::new();
+    let mut numeric_conflicts = BTreeSet::<Id>::new();
     if storage::has_prefix(storage::schema_version(tx)?) {
         prefix::validate(tx)?;
     }
@@ -682,8 +750,29 @@ fn validate_relations_with(
         if checked_frame(&frame)?.usage[0].id != id {
             return Err(Error::InvalidState);
         }
+        let frame = if version < 5 {
+            let batch = checked_frame(&frame)?;
+            if batch.usage[0].provider == aicharts_protocol::Provider::ClaudeCode {
+                let owner = batch.usage[0].execution_id;
+                if owner != [0; 16] {
+                    owners.entry(id).or_default().insert(owner);
+                }
+                without_claude_owner(&frame)?
+            } else {
+                frame
+            }
+        } else {
+            frame
+        };
         let result = match merged.get(&id) {
-            Some(old) => merge_frames(old, &frame).map_err(|_| Error::InvalidState)?,
+            Some(old) => match merge_frames(old, &frame) {
+                Ok(merged) => merged,
+                Err(_) if version < 5 => {
+                    numeric_conflicts.insert(id);
+                    old.clone()
+                }
+                Err(_) => return Err(Error::InvalidState),
+            },
             None => frame,
         };
         merged.insert(id, result);
@@ -698,6 +787,7 @@ fn validate_relations_with(
     let mut rows = statement.query([])?;
     let mut count = 0;
     let mut pending_count = 0;
+    let mut numeric_candidates = BTreeMap::<Id, (Vec<u8>, bool)>::new();
     while let Some(row) = rows.next()? {
         count += 1;
         let id: Vec<u8> = row.get(0)?;
@@ -717,9 +807,38 @@ fn validate_relations_with(
         if pending {
             pending_count += 1;
         }
+        let projection = if version < 5 {
+            let batch = checked_frame(&frame)?;
+            if batch.usage[0].provider == aicharts_protocol::Provider::ClaudeCode {
+                let owner = batch.usage[0].execution_id;
+                if owners
+                    .get(&id)
+                    .map_or(owner != [0; 16], |set| !set.contains(&owner))
+                {
+                    return Err(Error::InvalidState);
+                }
+                without_claude_owner(&frame)?
+            } else {
+                frame.clone()
+            }
+        } else {
+            frame.clone()
+        };
+        let folded = merged.remove(&id);
+        let projection_matches = if numeric_conflicts.contains(&id) {
+            // A candidate is not yet trusted: a second bounded source pass below
+            // must witness its exact retained numeric/context/time projection
+            // and dominance over ALL sources. Claude owner membership is checked
+            // independently above. Never construct a componentwise maximum or
+            // replace the stored owner; these facts remain quarantined.
+            numeric_candidates.insert(id, (projection.clone(), false));
+            folded.is_some()
+        } else {
+            folded.as_ref() == Some(&projection)
+        };
         if row_revision == 0
             || row_revision > current
-            || merged.remove(&id).as_ref() != Some(&frame)
+            || !projection_matches
             || if accepted.is_some() {
                 pending == acknowledged
             } else {
@@ -736,8 +855,90 @@ fn validate_relations_with(
     {
         return Err(Error::InvalidState);
     }
+    if !numeric_candidates.is_empty() {
+        let mut statement =
+            tx.prepare("SELECT id,frame FROM source_usage ORDER BY source_id,id LIMIT 1000001")?;
+        let mut rows = statement.query([])?;
+        while let Some(row) = rows.next()? {
+            let id: Vec<u8> = row.get(0)?;
+            let id: Id = id.try_into().map_err(|_| Error::InvalidState)?;
+            let Some((projected, witnessed)) = numeric_candidates.get_mut(&id) else {
+                continue;
+            };
+            let frame: Vec<u8> = row.get(1)?;
+            let source = if checked_frame(&frame)?.usage[0].provider
+                == aicharts_protocol::Provider::ClaudeCode
+            {
+                without_claude_owner(&frame)?
+            } else {
+                frame
+            };
+            *witnessed |= &source == projected;
+            if merge_frames(projected, &source).map_err(|_| Error::InvalidState)? != *projected {
+                return Err(Error::InvalidState);
+            }
+        }
+        if numeric_candidates.values().any(|(_, witnessed)| !witnessed) {
+            return Err(Error::InvalidState);
+        }
+    }
+    Ok(HistoryAudit {
+        schema_version: version,
+        attribution_conflicts: owners.values().filter(|set| set.len() > 1).count() as u64,
+        numeric_replay_conflicts: numeric_candidates.len() as u64,
+    })
+}
+
+// Diagnostic comparison only. No stored, queued or accepted byte is changed.
+fn without_claude_owner(frame: &[u8]) -> Result<Vec<u8>> {
+    let mut batch = checked_frame(frame)?;
+    batch.usage[0].execution_id = [0; 16];
+    collection_frames(&Collection {
+        batches: vec![batch],
+        warnings: vec![],
+        lines_read: 0,
+    })?
+    .into_values()
+    .next()
+    .ok_or(Error::InvalidState)
+}
+
+/// The partial dominance operation can accept C,A,B incrementally while its
+/// canonical replay A,B,C refuses. Never commit such an unreopenable projection.
+/// Scan the bounded association table once, but decode/replay only touched IDs.
+/// An ID index can replace this conservative scan in the incremental-ingest phase.
+fn validate_touched_projection(tx: &Connection, touched: &BTreeMap<Id, Vec<u8>>) -> Result<()> {
+    if touched.is_empty() {
+        return Ok(());
+    }
+    let mut merged = BTreeMap::<Id, Vec<u8>>::new();
+    let mut statement =
+        tx.prepare("SELECT id,frame FROM source_usage ORDER BY source_id,id LIMIT 1000001")?;
+    let mut rows = statement.query([])?;
+    let mut count = 0;
+    while let Some(row) = rows.next()? {
+        count += 1;
+        if count > MAX_ASSOCIATIONS {
+            return Err(Error::Limit);
+        }
+        let id: Vec<u8> = row.get(0)?;
+        let id: Id = id.try_into().map_err(|_| Error::InvalidState)?;
+        if !touched.contains_key(&id) {
+            continue;
+        }
+        let frame: Vec<u8> = row.get(1)?;
+        let next = match merged.get(&id) {
+            Some(old) => merge_frames(old, &frame)?,
+            None => frame,
+        };
+        merged.insert(id, next);
+    }
+    if merged != *touched {
+        return Err(Error::InvalidMeasurement);
+    }
     Ok(())
 }
+
 fn policy(registry: &Registry) -> Policy<'_> {
     Policy {
         first_day: 0,
@@ -840,27 +1041,49 @@ const WARNINGS: [Warning; 15] = [
     Warning::UnmeasuredActivity,
     Warning::UnmeasuredPrompts,
     Warning::UnmeasuredReasoning,
-    Warning::NoUsageMeasurements,
+    Warning::DevinTotalsMismatch,
 ];
-fn warning_mask(warnings: &[Warning]) -> u64 {
-    WARNINGS
-        .iter()
-        .enumerate()
-        .filter(|(_, warning)| {
-            **warning != Warning::NoUsageMeasurements && warnings.contains(warning)
-        })
-        .fold(0, |mask, (i, _)| mask | (1 << i))
+// Exhaustive match: adding a core warning requires an explicit storage decision.
+fn warning_bit(warning: Warning) -> u64 {
+    1 << match warning {
+        Warning::MissingIdentity => 0,
+        Warning::MissingTimestamp => 1,
+        Warning::MissingUsageCounters => 2,
+        Warning::UnsupportedRecords => 3,
+        Warning::CodexInitialBaselineOmitted => 4,
+        Warning::CodexForkUnsupported => 5,
+        Warning::CodexCumulativeRegression => 6,
+        Warning::CodexMissingCumulative => 7,
+        Warning::ClaudeCacheTtlUnknown => 8,
+        Warning::UnknownExecution => 9,
+        Warning::UnknownModels => 10,
+        Warning::UnmeasuredActivity => 11,
+        Warning::UnmeasuredPrompts => 12,
+        Warning::UnmeasuredReasoning => 13,
+        Warning::DevinTotalsMismatch => 14,
+        Warning::NoUsageMeasurements => return 0, // derived from the inventory
+    }
 }
+fn warning_mask(warnings: &[Warning]) -> u64 {
+    warnings
+        .iter()
+        .fold(0, |mask, warning| mask | warning_bit(*warning))
+}
+
 fn warnings(mask: u64) -> Result<Vec<Warning>> {
     if mask >= 1 << WARNINGS.len() {
         return Err(Error::InvalidState);
     }
-    Ok(WARNINGS
+    let mut decoded: Vec<_> = WARNINGS
         .iter()
         .enumerate()
         .filter(|(i, _)| mask & (1 << i) != 0)
         .map(|(_, w)| *w)
-        .collect())
+        .collect();
+    // Storage bit stability and public warning order are separate contracts.
+    // Match core's BTreeSet order even when a new warning takes a later bit.
+    decoded.sort_unstable();
+    Ok(decoded)
 }
 
 #[cfg(test)]

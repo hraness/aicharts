@@ -214,7 +214,11 @@ fn inspect_legacy_split_and_prefix_layouts_are_exact_and_read_only() {
                 serde_json::json!({
                     "schemaVersion":1,"operation":"inspect","access":"read_only","coverage":"partial",
                     "revision":"1","sources":1,"usageOccurrences":1,"pendingRecords":1,"tokens":"140","outputTokens":"20",
-                    "warnings":["unmeasured_activity","unmeasured_prompts","unmeasured_reasoning"],"unavailable":["prompts","activity","pricing"]
+                    "warnings":["unmeasured_activity","unmeasured_prompts","unmeasured_reasoning"],"unavailable":["prompts","activity","pricing"],
+                    "numericBackupExported":false,
+                    "historyAudit":{"version":1,"schemaVersion":if prefix {7} else {5},
+                        "disposition":"current","attributionConflicts":0,"numericReplayConflicts":0,"basis":"retained_source_frames_only",
+                        "recovery":"No schema recovery required."}
                 })
             );
             let text = fixture.inspect(split, false);
@@ -381,5 +385,138 @@ fn inspect_sender_layouts_preserve_existing_frozen_uploads() {
         assert_eq!(value["revision"], "2");
         assert_eq!(value["pendingRecords"], 1);
         assert_eq!(image(&fixture.0), before);
+    }
+}
+
+#[test]
+fn explicit_numeric_export_is_byte_exact_private_and_never_overwrites() {
+    let fixture = Fixture::new();
+    fixture.initialize(false, true);
+    let before = image(&fixture.0.join("state"));
+    let args = [
+        "inspect",
+        "--state-dir",
+        "state",
+        "--key-file",
+        "checkpoint.key",
+        "--json",
+        "--export-dir",
+        "backup",
+    ];
+    let result = fixture.run(&args);
+    assert!(
+        result.status.success(),
+        "{}",
+        String::from_utf8_lossy(&result.stderr)
+    );
+    let report: serde_json::Value = serde_json::from_slice(&result.stdout).unwrap();
+    assert_eq!(report["numericBackupExported"], true);
+    assert_eq!(image(&fixture.0.join("state")), before);
+    assert_eq!(
+        fs::read(fixture.0.join("state/usage.sqlite3")).unwrap(),
+        fs::read(fixture.0.join("backup/usage.sqlite3")).unwrap()
+    );
+    assert_eq!(
+        fs::metadata(fixture.0.join("backup")).unwrap().mode() & 0o777,
+        0o700
+    );
+    assert_eq!(
+        fs::metadata(fixture.0.join("backup/usage.sqlite3"))
+            .unwrap()
+            .mode()
+            & 0o777,
+        0o600
+    );
+    assert_eq!(fixture.run(&args).status.code(), Some(2));
+    assert_eq!(image(&fixture.0.join("state")), before);
+    let no_revision = fixture.run(&[
+        "upgrade",
+        "--state-dir",
+        "state",
+        "--key-file",
+        "checkpoint.key",
+        "--backup-dir",
+        "unused",
+    ]);
+    assert_eq!(no_revision.status.code(), Some(2));
+    assert!(!fixture.0.join("unused").exists());
+    let current = fixture.run(&[
+        "upgrade",
+        "--state-dir",
+        "state",
+        "--key-file",
+        "checkpoint.key",
+        "--revision",
+        "1",
+        "--backup-dir",
+        "unused",
+    ]);
+    assert!(current.status.success());
+    assert!(String::from_utf8(current.stdout)
+        .unwrap()
+        .contains("No schema change or backup creation performed"));
+    assert!(!fixture.0.join("unused").exists());
+}
+
+#[test]
+fn legacy_single_and_unenrolled_split_histories_inspect_then_upgrade_with_exact_backup() {
+    for split in [false, true] {
+        let fixture = Fixture::new();
+        fixture.initialize(split, false);
+        let mut connection =
+            rusqlite::Connection::open(fixture.0.join("state/usage.sqlite3")).unwrap();
+        connection
+            .pragma_update(None, "foreign_keys", false)
+            .unwrap();
+        let tx = connection.transaction().unwrap();
+        let (id, stamp, warnings): (Vec<u8>, Vec<u8>, i64) = tx
+            .query_row("SELECT id,stamp,warnings FROM sources", [], |row| {
+                Ok((row.get(0)?, row.get(1)?, row.get(2)?))
+            })
+            .unwrap();
+        tx.execute_batch("DROP TABLE sources; CREATE TABLE sources(id BLOB PRIMARY KEY CHECK(length(id)=32), stamp BLOB NOT NULL CHECK(length(stamp)=48), warnings INTEGER NOT NULL CHECK(warnings>=0 AND warnings<16384)) STRICT;").unwrap();
+        tx.execute(
+            "INSERT INTO sources VALUES(?1,?2,?3)",
+            rusqlite::params![id, stamp, warnings],
+        )
+        .unwrap();
+        tx.pragma_update(None, "user_version", 1).unwrap();
+        tx.commit().unwrap();
+        drop(connection);
+        let before = fs::read(fixture.0.join("state/usage.sqlite3")).unwrap();
+        let inspected = fixture.inspect(split, true);
+        assert!(inspected.status.success());
+        let report: serde_json::Value = serde_json::from_slice(&inspected.stdout).unwrap();
+        assert_eq!(report["historyAudit"]["disposition"], "upgrade_required");
+        let mut args = vec![
+            "upgrade",
+            "--state-dir",
+            "state",
+            "--key-file",
+            "checkpoint.key",
+            "--revision",
+            "1",
+            "--backup-dir",
+            "backup",
+        ];
+        if split {
+            args.extend(["--occurrence-key-file", "occurrence.key"]);
+        }
+        let upgraded = fixture.run(&args);
+        assert!(
+            upgraded.status.success(),
+            "{}",
+            String::from_utf8_lossy(&upgraded.stderr)
+        );
+        assert_eq!(
+            fs::read(fixture.0.join("backup/usage.sqlite3")).unwrap(),
+            before
+        );
+        let inspected = fixture.inspect(split, true);
+        assert!(inspected.status.success());
+        let report: serde_json::Value = serde_json::from_slice(&inspected.stdout).unwrap();
+        assert_eq!(report["historyAudit"]["disposition"], "current");
+        assert_eq!(report["revision"], "1");
+        assert_eq!(report["tokens"], "140");
     }
 }

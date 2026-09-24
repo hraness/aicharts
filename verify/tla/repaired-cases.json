@@ -1,0 +1,1219 @@
+{
+  "schemaVersion": 1,
+  "claim": "finite-repaired-model-evidence-only",
+  "bounds": {
+    "workers": 1,
+    "heapMiB": 256,
+    "timeoutMs": 60000,
+    "maxOutputBytes": 1048576,
+    "maxDistinctStates": 300000
+  },
+  "cases": [
+    {
+      "id": "m1-repaired-safety",
+      "module": "M1RestoreRepaired",
+      "kind": "sanity",
+      "invariant": null,
+      "config": "configs/m1-repaired-safety.cfg",
+      "requiredActions": [],
+      "minTraceStates": 0,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": 2554
+    },
+    {
+      "id": "m1-repaired-success",
+      "module": "M1RestoreRepaired",
+      "kind": "witness",
+      "invariant": "NoSuccessWitness",
+      "config": "configs/m1-repaired-success.cfg",
+      "requiredActions": [
+        "Grant",
+        "ReadGrant",
+        "Dispatch",
+        "ProviderReturns",
+        "CanonicalCommit"
+      ],
+      "minTraceStates": 6,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m1-repaired-refusal",
+      "module": "M1RestoreRepaired",
+      "kind": "witness",
+      "invariant": "NoRefusalWitness",
+      "config": "configs/m1-repaired-refusal.cfg",
+      "requiredActions": [
+        "Grant",
+        "Close",
+        "RefusePublish"
+      ],
+      "minTraceStates": 4,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m1-repaired-recovery",
+      "module": "M1RestoreRepaired",
+      "kind": "witness",
+      "invariant": "NoRecoveryWitness",
+      "config": "configs/m1-repaired-recovery.cfg",
+      "requiredActions": [
+        "CanonicalCommit",
+        "RefusePublish",
+        "Release",
+        "PublishEpoch"
+      ],
+      "minTraceStates": 5,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m1-repaired-orphan",
+      "module": "M1RestoreRepaired",
+      "kind": "witness",
+      "invariant": "NoOrphanWitness",
+      "config": "configs/m1-repaired-orphan.cfg",
+      "requiredActions": [
+        "TerminalTimeout",
+        "Release",
+        "PublishEpoch",
+        "LateOrphan"
+      ],
+      "minTraceStates": 5,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m2-repaired-safety",
+      "module": "M2Ledger",
+      "kind": "sanity",
+      "invariant": null,
+      "config": "configs/m2-repaired-safety.cfg",
+      "requiredActions": [],
+      "minTraceStates": 0,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": 1572
+    },
+    {
+      "id": "m2-repaired-success",
+      "module": "M2Ledger",
+      "kind": "witness",
+      "invariant": "NoSuccessWitness",
+      "config": "configs/m2-repaired-success.cfg",
+      "requiredActions": [
+        "CommitScan"
+      ],
+      "minTraceStates": 2,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m2-repaired-refusal",
+      "module": "M2Ledger",
+      "kind": "witness",
+      "invariant": "NoRefusalWitness",
+      "config": "configs/m2-repaired-refusal.cfg",
+      "requiredActions": [
+        "RefuseIncompleteScan"
+      ],
+      "minTraceStates": 2,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m2-repaired-recovery",
+      "module": "M2Ledger",
+      "kind": "witness",
+      "invariant": "NoRecoveryWitness",
+      "config": "configs/m2-repaired-recovery.cfg",
+      "requiredActions": [
+        "CommitScan",
+        "Freeze",
+        "CommitScan",
+        "SettleExactReceipt",
+        "Reopen"
+      ],
+      "minTraceStates": 6,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m3-repaired-safety",
+      "module": "M3Admission",
+      "kind": "sanity",
+      "invariant": null,
+      "config": "configs/m3-repaired-safety.cfg",
+      "requiredActions": [],
+      "minTraceStates": 0,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": 200
+    },
+    {
+      "id": "m3-repaired-success",
+      "module": "M3Admission",
+      "kind": "witness",
+      "invariant": "NoSuccessWitness",
+      "config": "configs/m3-repaired-success.cfg",
+      "requiredActions": [
+        "Reserve",
+        "PutImmutable",
+        "FreezeDecision",
+        "PutJournal",
+        "Publish"
+      ],
+      "minTraceStates": 6,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m3-repaired-refusal",
+      "module": "M3Admission",
+      "kind": "witness",
+      "invariant": "NoRefusalWitness",
+      "config": "configs/m3-repaired-refusal.cfg",
+      "requiredActions": [
+        "Reserve",
+        "Revoke",
+        "FreezeDecision",
+        "Publish"
+      ],
+      "minTraceStates": 5,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m3-repaired-recovery",
+      "module": "M3Admission",
+      "kind": "witness",
+      "invariant": "NoRecoveryWitness",
+      "config": "configs/m3-repaired-recovery.cfg",
+      "requiredActions": [
+        "Publish",
+        "ReplayTerminal"
+      ],
+      "minTraceStates": 3,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m4-repaired-safety",
+      "module": "M4ContributionsRepaired",
+      "kind": "sanity",
+      "invariant": null,
+      "config": "configs/m4-repaired-safety.cfg",
+      "requiredActions": [],
+      "minTraceStates": 0,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": 138
+    },
+    {
+      "id": "m4-repaired-success",
+      "module": "M4ContributionsRepaired",
+      "kind": "witness",
+      "invariant": "NoSuccessWitness",
+      "config": "configs/m4-repaired-success.cfg",
+      "requiredActions": [
+        "Reserve",
+        "Commit"
+      ],
+      "minTraceStates": 3,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m4-repaired-refusal",
+      "module": "M4ContributionsRepaired",
+      "kind": "witness",
+      "invariant": "NoRefusalWitness",
+      "config": "configs/m4-repaired-refusal.cfg",
+      "requiredActions": [
+        "Reserve",
+        "RefuseSupersede",
+        "RefuseAmbiguousOverlap"
+      ],
+      "minTraceStates": 4,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m4-repaired-recovery",
+      "module": "M4ContributionsRepaired",
+      "kind": "witness",
+      "invariant": "NoRecoveryWitness",
+      "config": "configs/m4-repaired-recovery.cfg",
+      "requiredActions": [
+        "Commit",
+        "RevokePredecessor",
+        "TransferWriter"
+      ],
+      "minTraceStates": 4,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m4-repaired-abandonment",
+      "module": "M4ContributionsRepaired",
+      "kind": "witness",
+      "invariant": "NoAbandonmentWitness",
+      "config": "configs/m4-repaired-abandonment.cfg",
+      "requiredActions": [
+        "Reserve",
+        "Abandon",
+        "Reserve",
+        "Commit"
+      ],
+      "minTraceStates": 5,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m5-repaired-safety",
+      "module": "M5Authority",
+      "kind": "sanity",
+      "invariant": null,
+      "config": "configs/m5-repaired-safety.cfg",
+      "requiredActions": [],
+      "minTraceStates": 0,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": 544
+    },
+    {
+      "id": "m5-repaired-success",
+      "module": "M5Authority",
+      "kind": "witness",
+      "invariant": "NoSuccessWitness",
+      "config": "configs/m5-repaired-success.cfg",
+      "requiredActions": [
+        "NewAttempt",
+        "Authenticate",
+        "Confirm",
+        "StartRead",
+        "AcceptRead"
+      ],
+      "minTraceStates": 6,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m5-repaired-refusal",
+      "module": "M5Authority",
+      "kind": "witness",
+      "invariant": "NoRefusalWitness",
+      "config": "configs/m5-repaired-refusal.cfg",
+      "requiredActions": [
+        "StartRead",
+        "SwitchAccount",
+        "RefuseLateRead"
+      ],
+      "minTraceStates": 4,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m5-repaired-recovery",
+      "module": "M5Authority",
+      "kind": "witness",
+      "invariant": "NoRecoveryWitness",
+      "config": "configs/m5-repaired-recovery.cfg",
+      "requiredActions": [
+        "NewAttempt",
+        "NewAttempt",
+        "Authenticate",
+        "Confirm"
+      ],
+      "minTraceStates": 5,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m6-repaired-safety",
+      "module": "M6Consent",
+      "kind": "sanity",
+      "invariant": null,
+      "config": "configs/m6-repaired-safety.cfg",
+      "requiredActions": [],
+      "minTraceStates": 0,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": 162
+    },
+    {
+      "id": "m6-repaired-success",
+      "module": "M6Consent",
+      "kind": "witness",
+      "invariant": "NoSuccessWitness",
+      "config": "configs/m6-repaired-success.cfg",
+      "requiredActions": [
+        "GrantConsent",
+        "RefreshCurrent"
+      ],
+      "minTraceStates": 3,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m6-repaired-refusal",
+      "module": "M6Consent",
+      "kind": "witness",
+      "invariant": "NoRefusalWitness",
+      "config": "configs/m6-repaired-refusal.cfg",
+      "requiredActions": [
+        "DispatchHint",
+        "SourceReply",
+        "RefuseStaleDelivery"
+      ],
+      "minTraceStates": 4,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m6-repaired-recovery",
+      "module": "M6Consent",
+      "kind": "witness",
+      "invariant": "NoRecoveryWitness",
+      "config": "configs/m6-repaired-recovery.cfg",
+      "requiredActions": [
+        "GrantConsent",
+        "WithdrawConsent",
+        "RefreshCurrent"
+      ],
+      "minTraceStates": 4,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m7-repaired-safety",
+      "module": "M7Projection",
+      "kind": "sanity",
+      "invariant": null,
+      "config": "configs/m7-repaired-safety.cfg",
+      "requiredActions": [],
+      "minTraceStates": 0,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": 122
+    },
+    {
+      "id": "m7-repaired-success",
+      "module": "M7Projection",
+      "kind": "witness",
+      "invariant": "NoSuccessWitness",
+      "config": "configs/m7-repaired-success.cfg",
+      "requiredActions": [
+        "RegisterMaintenance",
+        "Prepare"
+      ],
+      "minTraceStates": 3,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m7-repaired-refusal",
+      "module": "M7Projection",
+      "kind": "witness",
+      "invariant": "NoRefusalWitness",
+      "config": "configs/m7-repaired-refusal.cfg",
+      "requiredActions": [
+        "Close",
+        "RefuseClosedMaintenance"
+      ],
+      "minTraceStates": 3,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m7-repaired-recovery",
+      "module": "M7Projection",
+      "kind": "witness",
+      "invariant": "NoRecoveryWitness",
+      "config": "configs/m7-repaired-recovery.cfg",
+      "requiredActions": [
+        "RegisterMaintenance",
+        "Prepare",
+        "CorruptAuthority",
+        "ScrubRefuses"
+      ],
+      "minTraceStates": 5,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m8-staged-safety",
+      "module": "M8StagedProjection",
+      "kind": "sanity",
+      "invariant": null,
+      "config": "configs/m8-staged-safety.cfg",
+      "requiredActions": [],
+      "minTraceStates": 0,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": 4512
+    },
+    {
+      "id": "m8-coalesced-safety",
+      "module": "M8StagedProjection",
+      "kind": "sanity",
+      "invariant": null,
+      "config": "configs/m8-coalesced-safety.cfg",
+      "requiredActions": [],
+      "minTraceStates": 0,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": 16712
+    },
+    {
+      "id": "m8-quota-safety",
+      "module": "M8StagedProjection",
+      "kind": "sanity",
+      "invariant": null,
+      "config": "configs/m8-quota-safety.cfg",
+      "requiredActions": [],
+      "minTraceStates": 0,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": 2704
+    },
+    {
+      "id": "m8-staged-success",
+      "module": "M8StagedProjection",
+      "kind": "witness",
+      "invariant": "NoSuccessWitness",
+      "config": "configs/m8-staged-success.cfg",
+      "requiredActions": [
+        "BeginRevision",
+        "Reserve",
+        "DispatchPut",
+        "PutAndVerify",
+        "CommitChunk",
+        "CommitChunk",
+        "CommitChunk",
+        "CommitChunk",
+        "ApplyRevision",
+        "Publish"
+      ],
+      "minTraceStates": 22,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m8-staged-recovery",
+      "module": "M8StagedProjection",
+      "kind": "witness",
+      "invariant": "NoRecoveryWitness",
+      "config": "configs/m8-staged-recovery.cfg",
+      "requiredActions": [
+        "LosePutAcknowledgement",
+        "SettleWorker",
+        "Restart",
+        "RegisterWorker",
+        "ReserveAgain",
+        "DispatchPut",
+        "PutAndVerify",
+        "CommitChunk",
+        "ApplyRevision"
+      ],
+      "minTraceStates": 26,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m8-coalesced-publication",
+      "module": "M8StagedProjection",
+      "kind": "witness",
+      "invariant": "NoCoalescingWitness",
+      "config": "configs/m8-coalesced-publication.cfg",
+      "requiredActions": [
+        "ApplyRevision",
+        "BeginRevision",
+        "ApplyRevision",
+        "Publish"
+      ],
+      "minTraceStates": 24,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m8-retention-wait",
+      "module": "M8StagedProjection",
+      "kind": "witness",
+      "invariant": "NoRetentionWaitWitness",
+      "config": "configs/m8-retention-wait.cfg",
+      "requiredActions": [
+        "ApplyRevision",
+        "BeginRevision",
+        "Publish",
+        "AdvanceClock",
+        "ApplyRevision"
+      ],
+      "minTraceStates": 25,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m8-retained-expiry",
+      "module": "M8StagedProjection",
+      "kind": "witness",
+      "invariant": "NoExpiryWitness",
+      "config": "configs/m8-retained-expiry.cfg",
+      "requiredActions": [
+        "ApplyRevision",
+        "BeginRevision",
+        "Publish",
+        "AdvanceClock",
+        "AdvanceClock",
+        "ApplyRevision",
+        "Publish"
+      ],
+      "minTraceStates": 27,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m8-concurrent-publication",
+      "module": "M8StagedProjection",
+      "kind": "witness",
+      "invariant": "NoConcurrentPublicationWitness",
+      "config": "configs/m8-concurrent-publication.cfg",
+      "requiredActions": [
+        "RegisterWorker",
+        "RegisterPublisher",
+        "ApplyRevision",
+        "BeginRevision",
+        "Reserve",
+        "DispatchPut",
+        "Publish"
+      ],
+      "minTraceStates": 18,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m8-close-drain",
+      "module": "M8StagedProjection",
+      "kind": "witness",
+      "invariant": "NoCloseDrainWitness",
+      "config": "configs/m8-close-drain.cfg",
+      "requiredActions": [
+        "RegisterWorker",
+        "Close",
+        "BeginRevision",
+        "ApplyRevision",
+        "SettleWorker",
+        "Drain"
+      ],
+      "minTraceStates": 23,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m8-capacity-refusal",
+      "module": "M8StagedProjection",
+      "kind": "witness",
+      "invariant": "NoCapacityRefusalWitness",
+      "config": "configs/m8-capacity-refusal.cfg",
+      "requiredActions": [
+        "BeginRevision",
+        "Reserve",
+        "CommitChunk",
+        "Reserve",
+        "CommitChunk",
+        "Reserve",
+        "CommitChunk"
+      ],
+      "minTraceStates": 15,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m8-negative-recharge",
+      "module": "M8StagedProjection",
+      "kind": "counterexample",
+      "invariant": "Safety",
+      "config": "configs/m8-negative-recharge.cfg",
+      "requiredActions": [
+        "Reserve",
+        "ReserveAgain"
+      ],
+      "minTraceStates": 5,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m8-negative-partial-apply",
+      "module": "M8StagedProjection",
+      "kind": "counterexample",
+      "invariant": "Safety",
+      "config": "configs/m8-negative-partial-apply.cfg",
+      "requiredActions": [
+        "CommitChunk",
+        "ApplyRevision"
+      ],
+      "minTraceStates": 8,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m8-negative-early-publish",
+      "module": "M8StagedProjection",
+      "kind": "counterexample",
+      "invariant": "Safety",
+      "config": "configs/m8-negative-early-publish.cfg",
+      "requiredActions": [
+        "ApplyRevision",
+        "Publish"
+      ],
+      "minTraceStates": 21,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m8-negative-early-drain",
+      "module": "M8StagedProjection",
+      "kind": "counterexample",
+      "invariant": "Safety",
+      "config": "configs/m8-negative-early-drain.cfg",
+      "requiredActions": [
+        "RegisterWorker",
+        "Close",
+        "Drain"
+      ],
+      "minTraceStates": 4,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m9-held-safety",
+      "module": "M9AccountWork",
+      "kind": "sanity",
+      "invariant": null,
+      "config": "configs/m9-held-safety.cfg",
+      "requiredActions": [],
+      "minTraceStates": 0,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": 637
+    },
+    {
+      "id": "m9-recovery-safety",
+      "module": "M9AccountWork",
+      "kind": "sanity",
+      "invariant": null,
+      "config": "configs/m9-recovery-safety.cfg",
+      "requiredActions": [],
+      "minTraceStates": 0,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": 921
+    },
+    {
+      "id": "m9-independent-progress",
+      "module": "M9AccountWork",
+      "kind": "witness",
+      "invariant": "NoIndependentProgressWitness",
+      "config": "configs/m9-independent-progress.cfg",
+      "requiredActions": [
+        "StartHandler",
+        "ClaimJobs",
+        "Dispatch",
+        "Dispatch",
+        "YieldHandler",
+        "CommitProjection",
+        "CompleteJob",
+        "StartHandler",
+        "ClaimJobs",
+        "Dispatch",
+        "CommitProjection",
+        "CompleteJob"
+      ],
+      "minTraceStates": 15,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m9-watchdog-stall",
+      "module": "M9AccountWork",
+      "kind": "witness",
+      "invariant": "NoWatchdogWitness",
+      "config": "configs/m9-watchdog-stall.cfg",
+      "requiredActions": [
+        "StartHandler",
+        "ClaimJobs",
+        "Tick",
+        "Dispatch",
+        "Dispatch",
+        "YieldHandler",
+        "CommitProjection",
+        "CompleteJob",
+        "StartHandler",
+        "ClaimJobs",
+        "YieldHandler",
+        "CommitProjection",
+        "CompleteJob",
+        "Watchdog"
+      ],
+      "minTraceStates": 18,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m9-late-settlement",
+      "module": "M9AccountWork",
+      "kind": "witness",
+      "invariant": "NoLateSettlementWitness",
+      "config": "configs/m9-late-settlement.cfg",
+      "requiredActions": [
+        "StartHandler",
+        "ClaimJobs",
+        "Tick",
+        "YieldHandler",
+        "CommitProjection",
+        "CompleteJob",
+        "StartHandler",
+        "ClaimJobs",
+        "YieldHandler",
+        "CommitProjection",
+        "CompleteJob",
+        "Watchdog",
+        "Close",
+        "CompleteJob",
+        "ReleaseLease",
+        "ReleaseLease",
+        "Drain"
+      ],
+      "minTraceStates": 24,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m9-restart-resume",
+      "module": "M9AccountWork",
+      "kind": "witness",
+      "invariant": "NoRecoveryWitness",
+      "config": "configs/m9-restart-resume.cfg",
+      "requiredActions": [
+        "ClaimJobs",
+        "Dispatch",
+        "Restart",
+        "LostProviderReturns",
+        "Watchdog",
+        "ExplicitResume",
+        "StartHandler",
+        "ClaimJobs",
+        "Dispatch",
+        "ProviderReturns",
+        "CommitProjection",
+        "CompleteJob"
+      ],
+      "minTraceStates": 15,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m9-completion-arm-refusal",
+      "module": "M9AccountWork",
+      "kind": "witness",
+      "invariant": "NoArmRefusalWitness",
+      "config": "configs/m9-completion-arm-refusal.cfg",
+      "requiredActions": [
+        "StartHandler",
+        "ClaimJobs",
+        "Dispatch",
+        "YieldHandler",
+        "ProviderFails",
+        "Watchdog",
+        "FailCompletionArm",
+        "ReleaseLease"
+      ],
+      "minTraceStates": 10,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m9-negative-early-release",
+      "module": "M9AccountWork",
+      "kind": "counterexample",
+      "invariant": "Safety",
+      "config": "configs/m9-negative-early-release.cfg",
+      "requiredActions": [
+        "ClaimJobs",
+        "Dispatch",
+        "Dispatch",
+        "YieldHandler",
+        "ReleaseLease"
+      ],
+      "minTraceStates": 7,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m9-negative-missing-arm",
+      "module": "M9AccountWork",
+      "kind": "counterexample",
+      "invariant": "Safety",
+      "config": "configs/m9-negative-missing-arm.cfg",
+      "requiredActions": [
+        "ClaimJobs",
+        "Dispatch",
+        "YieldHandler",
+        "ProviderFails",
+        "Watchdog",
+        "CompleteJob"
+      ],
+      "minTraceStates": 9,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m9-negative-stale-aba",
+      "module": "M9AccountWork",
+      "kind": "counterexample",
+      "invariant": "Safety",
+      "config": "configs/m9-negative-stale-aba.cfg",
+      "requiredActions": [
+        "ClaimJobs",
+        "Dispatch",
+        "YieldHandler",
+        "ProviderFails",
+        "Watchdog",
+        "FailCompletionArm",
+        "ExplicitResume",
+        "StartHandler",
+        "ClaimJobs",
+        "ReplayOldCapability"
+      ],
+      "minTraceStates": 13,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m10-single-safety",
+      "module": "M10ContributionFlight",
+      "kind": "sanity",
+      "invariant": null,
+      "config": "configs/m10-single-safety.cfg",
+      "requiredActions": [],
+      "minTraceStates": 0,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": 11685
+    },
+    {
+      "id": "m10-sequential-safety",
+      "module": "M10ContributionFlight",
+      "kind": "sanity",
+      "invariant": null,
+      "config": "configs/m10-sequential-safety.cfg",
+      "requiredActions": [],
+      "minTraceStates": 0,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": 8008
+    },
+    {
+      "id": "m10-cancel-before-reserve",
+      "module": "M10ContributionFlight",
+      "kind": "witness",
+      "invariant": "NoCancelBeforeReserveWitness",
+      "config": "configs/m10-cancel-before-reserve.cfg",
+      "requiredActions": [
+        "PersistFlight",
+        "SendUpload",
+        "ReadCancellationPosition",
+        "PersistCancellation",
+        "SendCancel",
+        "CancelAbsent",
+        "ReserveUpload"
+      ],
+      "minTraceStates": 9,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m10-held-cancellation",
+      "module": "M10ContributionFlight",
+      "kind": "witness",
+      "invariant": "NoHeldCancellationWitness",
+      "config": "configs/m10-held-cancellation.cfg",
+      "requiredActions": [
+        "PersistFlight",
+        "SendUpload",
+        "ReadCancellationPosition",
+        "PersistCancellation",
+        "SendCancel",
+        "ReserveUpload",
+        "DispatchR2",
+        "CancelPending",
+        "ProviderReturns",
+        "CommitUpload"
+      ],
+      "minTraceStates": 12,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m10-lost-reply-recovery",
+      "module": "M10ContributionFlight",
+      "kind": "witness",
+      "invariant": "NoLostReplyRecoveryWitness",
+      "config": "configs/m10-lost-reply-recovery.cfg",
+      "requiredActions": [
+        "PersistFlight",
+        "SendUpload",
+        "ReserveUpload",
+        "DispatchR2",
+        "ProviderReturns",
+        "CommitUpload",
+        "LoseReply",
+        "Restart",
+        "SendStatus",
+        "ReadStatus",
+        "VerifyTerminal",
+        "SendExactRetry",
+        "ReserveUpload",
+        "VerifyTerminal",
+        "SettleTerminal"
+      ],
+      "minTraceStates": 17,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m10-negative-null-clear",
+      "module": "M10ContributionFlight",
+      "kind": "counterexample",
+      "invariant": "Safety",
+      "config": "configs/m10-negative-null-clear.cfg",
+      "requiredActions": [
+        "PersistFlight",
+        "SendStatus",
+        "ReadStatus",
+        "ObserveNonterminal"
+      ],
+      "minTraceStates": 6,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m10-negative-cancel-sequence",
+      "module": "M10ContributionFlight",
+      "kind": "counterexample",
+      "invariant": "Safety",
+      "config": "configs/m10-negative-cancel-sequence.cfg",
+      "requiredActions": [
+        "PersistFlight",
+        "ReadCancellationPosition",
+        "PersistCancellation",
+        "SendCancel",
+        "CancelAbsent"
+      ],
+      "minTraceStates": 7,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m10-negative-old-reply",
+      "module": "M10ContributionFlight",
+      "kind": "counterexample",
+      "invariant": "Safety",
+      "config": "configs/m10-negative-old-reply.cfg",
+      "requiredActions": [
+        "PersistFlight",
+        "SendUpload",
+        "PersistCancellation",
+        "CancelAbsent",
+        "ReserveUpload",
+        "VerifyTerminal",
+        "VerifyTerminal",
+        "SettleTerminal",
+        "PrepareFlight",
+        "PersistFlight",
+        "SettleTerminal"
+      ],
+      "minTraceStates": 15,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m11-single-safety",
+      "module": "M11ContributionRebuild",
+      "kind": "sanity",
+      "invariant": null,
+      "config": "configs/m11-single-safety.cfg",
+      "requiredActions": [],
+      "minTraceStates": 0,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": 258698
+    },
+    {
+      "id": "m11-sequential-safety",
+      "module": "M11ContributionRebuild",
+      "kind": "sanity",
+      "invariant": null,
+      "config": "configs/m11-sequential-safety.cfg",
+      "requiredActions": [],
+      "minTraceStates": 0,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": 221596
+    },
+    {
+      "id": "m11-pending-recovery",
+      "module": "M11ContributionRebuild",
+      "kind": "witness",
+      "invariant": "NoPendingRecoveryWitness",
+      "config": "configs/m11-pending-recovery.cfg",
+      "requiredActions": [
+        "BeginJob",
+        "StartStep",
+        "CheckStep",
+        "ReadCommittedHead",
+        "ReserveStage",
+        "LoseReservationReply",
+        "Restart",
+        "StartStep",
+        "CheckStep",
+        "ReadCommittedHead",
+        "ReserveStage",
+        "DispatchPut",
+        "ProviderReturns",
+        "VerifyStoredStage",
+        "CommitHead",
+        "ReplayLast"
+      ],
+      "minTraceStates": 17,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m11-late-abort",
+      "module": "M11ContributionRebuild",
+      "kind": "witness",
+      "invariant": "NoLateAbortWitness",
+      "config": "configs/m11-late-abort.cfg",
+      "requiredActions": [
+        "BeginJob",
+        "StartStep",
+        "CheckStep",
+        "ReadCommittedHead",
+        "ReserveStage",
+        "DispatchPut",
+        "AbortJob",
+        "ProviderReturns",
+        "VerifyStoredStage"
+      ],
+      "minTraceStates": 10,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m11-comparison-retry",
+      "module": "M11ContributionRebuild",
+      "kind": "witness",
+      "invariant": "NoComparisonRetryWitness",
+      "config": "configs/m11-comparison-retry.cfg",
+      "requiredActions": [
+        "BeginJob",
+        "StartStep",
+        "CheckStep",
+        "ReadCommittedHead",
+        "ReserveStage",
+        "DispatchPut",
+        "ProviderReturns",
+        "VerifyStoredStage",
+        "CommitHead",
+        "StartStep",
+        "CheckStep",
+        "ReadCommittedHead",
+        "ReserveStage",
+        "EmptyStageProof",
+        "CommitHead",
+        "StartStep",
+        "CheckStep",
+        "ReadCommittedHead",
+        "ReserveStage",
+        "DispatchPut",
+        "ProviderReturns",
+        "VerifyStoredStage",
+        "CommitHead",
+        "StartStep",
+        "CheckStep",
+        "ReadLeftPage",
+        "FailRightPage",
+        "StartStep",
+        "CheckStep",
+        "ReadLeftPage",
+        "ReadRightPage",
+        "CommitComparison"
+      ],
+      "minTraceStates": 38,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m11-negative-quota",
+      "module": "M11ContributionRebuild",
+      "kind": "counterexample",
+      "invariant": "Safety",
+      "config": "configs/m11-negative-quota.cfg",
+      "requiredActions": [
+        "BeginJob",
+        "StartStep",
+        "CheckStep",
+        "ReadCommittedHead",
+        "ReserveStage"
+      ],
+      "minTraceStates": 6,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m11-negative-proof",
+      "module": "M11ContributionRebuild",
+      "kind": "counterexample",
+      "invariant": "Safety",
+      "config": "configs/m11-negative-proof.cfg",
+      "requiredActions": [
+        "BeginJob",
+        "StartStep",
+        "CheckStep",
+        "ReadCommittedHead",
+        "ReserveStage",
+        "PresentUnverifiedProof",
+        "CommitHead"
+      ],
+      "minTraceStates": 8,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m11-negative-comparison",
+      "module": "M11ContributionRebuild",
+      "kind": "counterexample",
+      "invariant": "Safety",
+      "config": "configs/m11-negative-comparison.cfg",
+      "requiredActions": [
+        "BeginJob",
+        "StartStep",
+        "CheckStep",
+        "ReadCommittedHead",
+        "ReserveStage",
+        "DispatchPut",
+        "ProviderReturns",
+        "VerifyStoredStage",
+        "CommitHead",
+        "StartStep",
+        "CheckStep",
+        "ReadCommittedHead",
+        "ReserveStage",
+        "EmptyStageProof",
+        "CommitHead",
+        "StartStep",
+        "CheckStep",
+        "ReadCommittedHead",
+        "ReserveStage",
+        "DispatchPut",
+        "ProviderReturns",
+        "VerifyStoredStage",
+        "CommitHead",
+        "StartStep",
+        "CheckStep",
+        "PresentUnownedComparison",
+        "CommitComparison"
+      ],
+      "minTraceStates": 28,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
+    }
+  ]
+}

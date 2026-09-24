@@ -90,7 +90,8 @@
 .usage-stats__chips dd { font-variant-numeric: tabular-nums; font-weight: 500; }
 .usage-stats__day-groups { flex: 1 1 15rem; }
 .usage-stats__actions { display: flex; flex-wrap: wrap; gap: .25rem 1.25rem; }
-.usage-stats__scale { color: var(--muted); display: flex; flex-direction: column; font-size: .68rem; inset-block-start: 2.8rem; inset-inline-start: 0; justify-content: space-between; block-size: 12rem; position: absolute; }
+.usage-stats__chart-body { position: relative; }
+.usage-stats__scale { color: var(--muted); display: flex; flex-direction: column; font-size: .68rem; inset-block-start: 0; inset-inline-start: 0; justify-content: space-between; block-size: 12rem; position: absolute; }
 .usage-stats__plot { align-items: end; border-block-end: 1px solid var(--grid); display: flex; gap: 3px; height: 12rem; margin-inline-start: 3.25rem; }
 .usage-stats__plot button { align-items: end; background: transparent; border: 0; border-radius: 0; display: flex; flex: 1; height: 100%; justify-content: center; min-inline-size: 0; padding: 0; position: relative; }
 .usage-stats__plot button > span { background: var(--foreground); display: block; inline-size: 100%; min-block-size: 2px; }
@@ -236,7 +237,7 @@
   .usage-stats__summary dl { border-block-start: 1px solid var(--grid); margin-block-start: 1.25rem; order: 3; padding-block: 1rem; }
   .usage-stats__cost { order: 4; }
   .usage-stats__qualification { order: 5; }
-  .usage-stats__qualification a { display: none; }
+  .usage-stats__qualification a[href="#stats-coverage"] { display: none; }
   .usage-stats__total { font-size: 2.75rem; }
   .usage-stats__summary dl { gap: .75rem; grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .usage-stats__summary dl > div { align-content: start; display: grid; font-size: .8rem; gap: .2rem; }
@@ -244,7 +245,7 @@
   .usage-stats__summary dd { font-size: .8rem; text-align: start; }
   .usage-stats__qualification { margin-block: .85rem 1.25rem; }
   .usage-stats__plot { gap: 2px; height: 9rem; margin-inline-start: 2.75rem; }
-  .usage-stats__scale { block-size: 9rem; inset-block-start: auto; }
+  .usage-stats__scale { block-size: 9rem; }
   .usage-stats__axis { font-size: .68rem; margin-inline-start: 2.75rem; }
   .usage-stats__components { gap: 1rem; grid-template-columns: 1fr; }
   .usage-stats__details summary > span { display: block; margin-block-start: .25rem; margin-inline-start: 1rem; }

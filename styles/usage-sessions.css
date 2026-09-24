@@ -32,6 +32,19 @@
 .usage-sessions__detail h2 { font-size: 1.4rem; letter-spacing: -.025em; }
 .usage-sessions__detail header p, .usage-sessions__detail header > span { color: var(--muted); font-size: .875rem; margin-block-start: .5rem; }
 .usage-sessions__detail h3 { font-size: 1rem; margin-block: 2rem 1rem; }
+.usage-sessions__rich { border-block: 1px solid var(--grid); margin-block: 2.5rem; padding-block: 1.5rem; }
+.usage-sessions__rich header { align-items: baseline; display: flex; flex-wrap: wrap; gap: .75rem 2rem; justify-content: space-between; }
+.usage-sessions__rich header p, .usage-sessions__rich header > span { color: var(--muted); font-size: .8rem; margin-block-start: .4rem; }
+.usage-sessions__rich-controls { display: flex; flex-wrap: wrap; gap: .75rem 1rem; margin-block: 1.25rem; }
+.usage-sessions__rich-control { display: grid; gap: .35rem; }
+.usage-sessions__rich-controls label { color: var(--muted); font-size: .75rem; }
+.usage-sessions__rich-controls select { background: var(--background); border: 1px solid var(--muted); border-radius: .35rem; color: var(--foreground); font: inherit; min-block-size: 2.5rem; min-inline-size: 11rem; padding: .45rem .65rem; }
+.usage-sessions__rich-grid { display: grid; gap: 1px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.usage-sessions__rich-card { background: var(--surface-raised); min-block-size: 8rem; padding: 1rem; }
+.usage-sessions__rich-card h4 { font-size: .8rem; font-weight: 600; margin: 0; }
+.usage-sessions__rich-card strong { display: block; font-size: 1.25rem; font-variant-numeric: tabular-nums; margin-block: .8rem .35rem; overflow-wrap: anywhere; }
+.usage-sessions__rich-card > span { color: var(--muted); font-size: .7rem; }
+.usage-sessions__rich-card p { color: var(--muted); font-size: .72rem; line-height: 1.45; margin-block-start: .7rem; }
 .usage-sessions__notice { border-block: 1px solid var(--grid); color: var(--muted); font-size: .85rem; line-height: 1.7; margin-block: 1.5rem; padding-block: 1rem; }
 .usage-sessions__bar { background: var(--surface-raised); block-size: 1rem; display: flex; gap: 2px; inline-size: 100%; }
 .usage-sessions__phase { flex-basis: 0; min-inline-size: 0; }
@@ -54,6 +67,7 @@
 @media (max-width: 800px) {
   .usage-sessions__aggregate { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .usage-sessions__phases { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .usage-sessions__rich-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .usage-sessions__scope span { flex-basis: 100%; margin-inline-start: 0; }
 }
 @media (max-width: 450px) {
@@ -61,6 +75,7 @@
   .usage-sessions__phases { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .usage-sessions__aggregate { gap: 1.5rem 1rem; }
   .usage-sessions__controls .usage-button { justify-content: center; }
+  .usage-sessions__rich-grid { grid-template-columns: 1fr; }
 }
 
 @media (forced-colors: active) {

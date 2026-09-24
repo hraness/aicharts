@@ -14,7 +14,7 @@ pub type Id = [u8; 16];
 
 pub const DAY_MS: u32 = 86_400_000;
 pub const MAX_RECORDS: usize = 4_096;
-pub const MAX_TOKEN_COUNTER: u64 = 1_000_000_000_000;
+pub const MAX_TOKEN_COUNTER: u64 = aicharts_metrics::MAX_WIRE_TOKEN_COUNTER;
 pub const MAX_CLOCK_UNCERTAINTY_MS: u32 = 60_000;
 pub const HEADER_BYTES: usize = 24;
 pub const USAGE_BYTES: usize = 112;
@@ -74,17 +74,7 @@ impl Tokens {
     /// Sum disjoint token categories, validating counter and reasoning bounds.
     /// Zero is a valid arithmetic result, but an all-zero usage record is invalid.
     pub fn total(&self) -> Result<u64, Error> {
-        if self
-            .counters()
-            .iter()
-            .any(|value| *value > MAX_TOKEN_COUNTER)
-            || self.reasoning_output > self.output
-        {
-            return Err(Error::InvalidTokens);
-        }
-        self.counters()[..5].iter().try_fold(0_u64, |sum, value| {
-            sum.checked_add(*value).ok_or(Error::InvalidTokens)
-        })
+        aicharts_metrics::wire_token_total(self.counters()).map_err(|_| Error::InvalidTokens)
     }
 
     fn counters(&self) -> [u64; 6] {

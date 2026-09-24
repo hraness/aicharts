@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "case": "m4-successful-retry-witness",
+  "invariant": "NoSuccessfulRetryWitness",
+  "provenance": "TLC 1.7.4 structured output; TLA values retained verbatim, not production adapter replay",
+  "states": [
+    {
+      "index": 1,
+      "action": "Init",
+      "location": "Initial predicate",
+      "state": "/\\ pending = \"none\"\n/\\ lastSuperseded = \"none\"\n/\\ retrySeen = FALSE\n/\\ seen = {}\n/\\ capacityRefused = FALSE\n/\\ superseded = {}\n/\\ frozen = FALSE\n/\\ committed = \"none\"\n/\\ charges = [A |-> 0, B |-> 0]"
+    },
+    {
+      "index": 2,
+      "action": "ReserveFirstA",
+      "location": "ReserveFirstA line 22, col 18 to line 22, col 45 of module M4Supersession",
+      "state": "/\\ pending = \"A\"\n/\\ lastSuperseded = \"none\"\n/\\ retrySeen = FALSE\n/\\ seen = {\"A\"}\n/\\ capacityRefused = FALSE\n/\\ superseded = {}\n/\\ frozen = FALSE\n/\\ committed = \"none\"\n/\\ charges = [A |-> 1, B |-> 0]"
+    },
+    {
+      "index": 3,
+      "action": "RetrySame",
+      "location": "RetrySame line 32, col 5 to line 34, col 52 of module M4Supersession",
+      "state": "/\\ pending = \"A\"\n/\\ lastSuperseded = \"none\"\n/\\ retrySeen = TRUE\n/\\ seen = {\"A\"}\n/\\ capacityRefused = FALSE\n/\\ superseded = {}\n/\\ frozen = FALSE\n/\\ committed = \"none\"\n/\\ charges = [A |-> 1, B |-> 0]"
+    },
+    {
+      "index": 4,
+      "action": "Freeze",
+      "location": "Freeze line 36, col 5 to line 38, col 63 of module M4Supersession",
+      "state": "/\\ pending = \"A\"\n/\\ lastSuperseded = \"none\"\n/\\ retrySeen = TRUE\n/\\ seen = {\"A\"}\n/\\ capacityRefused = FALSE\n/\\ superseded = {}\n/\\ frozen = TRUE\n/\\ committed = \"none\"\n/\\ charges = [A |-> 1, B |-> 0]"
+    },
+    {
+      "index": 5,
+      "action": "Publish",
+      "location": "Publish line 40, col 5 to line 42, col 47 of module M4Supersession",
+      "state": "/\\ pending = \"none\"\n/\\ lastSuperseded = \"none\"\n/\\ retrySeen = TRUE\n/\\ seen = {\"A\"}\n/\\ capacityRefused = FALSE\n/\\ superseded = {}\n/\\ frozen = TRUE\n/\\ committed = \"A\"\n/\\ charges = [A |-> 1, B |-> 0]"
+    }
+  ],
+  "kind": "witness",
+  "moduleSha256": "f5b9e66f50790ec06b0e1289e3ce16850e1a6c9f8a0a12a977feb37db6193805",
+  "configSha256": "ca11bf210224e840d2a7eff1a87cde699c86126c8df68872336ea1f3e0301aa5",
+  "counts": {
+    "generated": 14,
+    "distinct": 12,
+    "queued": 4
+  },
+  "tlcArtifactSha256": "936a262061c914694dfd669a543be24573c45d5aa0ff20a8b96b23d01e050e88"
+}

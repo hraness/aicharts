@@ -97,6 +97,12 @@ binary's per-output-directory lock. Use `bun run menubar:uninstall` to remove
 the installed copy. No app bundle, signing, or notarization is part of this
 companion.
 
+The build uses the committed Cargo lockfile. Installation stages the replacement
+in a private temporary directory and refuses symlinked or externally writable
+managed directories. Launch also refuses symlinked or externally writable
+executables. These checks preserve the explicit per-user installation boundary;
+the companion is not an updater or a privileged service.
+
 ## AI Charts agent skill
 
 The portable [AI Charts skill](skills/aicharts/SKILL.md) retrieves one public benchmark cohort at a time with its version, units, configuration, source and coverage intact. Its dependency-free Node.js helper makes anonymous requests only to `aicharts.io`, bounds response sizes and pagination, and never opens local usage data. A separate local mode can explain a supplied numeric summary or use an already available reviewed `aicharts inspect` binary for an explicitly selected ledger. It never collects source logs or uploads usage.

@@ -1,4 +1,5 @@
 import type { CodingAgentRecord } from "./coding-agent-data";
+import { compareStableText } from "./stable-text-order";
 import {
   recordsWithMetrics,
   xMetricValue,
@@ -25,7 +26,7 @@ export type ProviderPerformanceRange = Readonly<{
 function compareFrontierRecords(left: FrontierRecord, right: FrontierRecord): number {
   return left.xValue - right.xValue
     || right.yValue - left.yValue
-    || left.record.id.localeCompare(right.record.id);
+    || compareStableText(left.record.id, right.record.id);
 }
 
 /** Lower x and higher y are better; equal or dominated choices do not enter the frontier. */
@@ -102,6 +103,8 @@ export function providerPerformanceRanges(
     const value = yMetricValue(record, yMetric);
     if (value === null) continue;
     const group = grouped.get(record.providerId) ?? { name: record.providerName, values: [] };
+    // An observed provider rename must not make the label depend on row order.
+    if (compareStableText(record.providerName, group.name) < 0) group.name = record.providerName;
     group.values.push(value);
     grouped.set(record.providerId, group);
   }
@@ -129,6 +132,7 @@ export function providerPerformanceRanges(
   return ranges.sort((left, right) => (
     right.maximum - left.maximum
     || right.median - left.median
-    || left.providerName.localeCompare(right.providerName)
+    || compareStableText(left.providerName, right.providerName)
+    || compareStableText(left.providerId, right.providerId)
   ));
 }

@@ -1,9 +1,7 @@
 use super::{projection::Projection, Options, Outcome, Result, MAX_BYTES};
+use crate::owned_process::OwnedGroup;
 use crate::source_refresh::disk::Cache;
-use rustix::{
-    fs::{fcntl_getfl, fcntl_setfl, OFlags},
-    process::{kill_process_group, waitid, Pid, Signal, WaitId, WaitIdOptions},
-};
+use rustix::fs::{fcntl_getfl, fcntl_setfl, OFlags};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
 use sha2::{Digest, Sha256};
@@ -12,10 +10,10 @@ use std::{
     io::{ErrorKind, Read},
     os::unix::{
         fs::{MetadataExt, OpenOptionsExt},
-        process::{CommandExt, ExitStatusExt},
+        process::ExitStatusExt,
     },
     path::{Component, Path, PathBuf},
-    process::{Child, Command, Stdio},
+    process::{Command, Stdio},
     time::{Duration, Instant, SystemTime, UNIX_EPOCH},
 };
 const STDERR_CAP: usize = 4 * 1024 * 1024;
@@ -136,93 +134,6 @@ impl Executable {
     }
 }
 
-struct OwnedGroup {
-    child: Child,
-    pid: Pid,
-    closed: bool,
-}
-impl OwnedGroup {
-    fn spawn(command: &mut Command) -> Result<Self> {
-        let mut child = command
-            .process_group(0)
-            .spawn()
-            .map_err(|_| "capture_spawn_failed")?;
-        let pid = i32::try_from(child.id())
-            .ok()
-            .filter(|v| *v > 1)
-            .and_then(Pid::from_raw);
-        let Some(pid) = pid.filter(|pid| *pid != rustix::process::getpgrp()) else {
-            let _ = child.kill();
-            let _ = child.wait();
-            return Err("capture_process_identity_invalid");
-        };
-        Ok(Self {
-            child,
-            pid,
-            closed: false,
-        })
-    }
-    fn exited(&mut self) -> Result<bool> {
-        // Retain the leader's identity until group cleanup; try_wait would reap
-        // it and make a later numeric group signal unsafe after PID reuse.
-        match waitid(
-            WaitId::Pid(self.pid),
-            WaitIdOptions::EXITED | WaitIdOptions::NOHANG | WaitIdOptions::NOWAIT,
-        ) {
-            Ok(value) => Ok(value.is_some()),
-            Err(_) => {
-                self.closed = true;
-                Err("capture_process_custody_lost")
-            }
-        }
-    }
-    fn finish(&mut self) -> Result<std::process::ExitStatus> {
-        if self.closed {
-            return Err("capture_process_custody_lost");
-        }
-        match kill_process_group(self.pid, Signal::KILL) {
-            Ok(()) | Err(rustix::io::Errno::SRCH) => (),
-            // Darwin reports EPERM for a group containing only a zombie. Do
-            // not accept generic EPERM: retain the exited leader with WNOWAIT
-            // and require the complete kernel group list to contain only it.
-            #[cfg(target_os = "macos")]
-            Err(rustix::io::Errno::PERM)
-                if self.exited()?
-                    && aicharts_platform_process::groups::contains_only_leader(
-                        self.pid.as_raw_nonzero().get(),
-                    )? => {}
-            Err(_) => return Err("capture_process_cleanup_failed"),
-        }
-        let deadline = Instant::now() + Duration::from_secs(5);
-        loop {
-            match self.child.try_wait() {
-                Ok(Some(status)) => {
-                    self.closed = true;
-                    return Ok(status);
-                }
-                Ok(None) if Instant::now() < deadline => {
-                    std::thread::sleep(Duration::from_millis(10))
-                }
-                Err(error)
-                    if error.kind() == ErrorKind::Interrupted && Instant::now() < deadline =>
-                {
-                    continue;
-                }
-                _ => {
-                    self.closed = true;
-                    return Err("capture_process_cleanup_failed");
-                }
-            }
-        }
-    }
-}
-impl Drop for OwnedGroup {
-    fn drop(&mut self) {
-        if !self.closed {
-            let _ = self.finish();
-        }
-    }
-}
 fn now() -> Result<u64> {
     SystemTime::now()
         .duration_since(UNIX_EPOCH)
