@@ -69,7 +69,7 @@ export const GPT_6_SOL = {
   artificialAnalysis: {
     launchNoteOn: "September 22, 2026",
     capturedOn: "September 24, 2026",
-    headline:
+    summaryLine:
       "Intelligence Index and Coding Agent Index scores remain level with GPT-5.6, with progress in some evaluations and regressions in others",
     codingIndexScore: "57",
     codingIndexGain: "up 2 points from GPT-5.6 Sol (max)",
@@ -87,7 +87,6 @@ export const GPT_6_SOL = {
     inputPrice: "$2.00",
     outputPrice: "$10.00",
     cacheDiscount: "90%",
-    outputSpeed: "115.9",
     indexOutputTokens: "77M",
     contextWindow: "872k",
     releaseDate: "September 22, 2026",
@@ -166,7 +165,7 @@ function overviewBlocks(
   }
   return [
     table(
-      "GPT-6 Sol at max effort in the two AI Charts snapshots. Each score belongs to its own chart, task set, and cost definition.",
+      "GPT-6 Sol at max effort in the two AI Charts snapshots, each scored on its own task set with its own cost definition",
       ["Chart", "Configuration", "Score", "Cost per task", "Snapshot retrieved"],
       [
         [
@@ -204,7 +203,7 @@ function codingPlacementBlocks(
   const cost = record.economics.costUsd;
   const blocks: BlogBlock[] = [
     paragraph(
-      `${configurationLabel(record)} scores ${formatSnapshotScore(index)} on AA Index at a mean API cost of ${formatSnapshotCostUsd(cost)} per task in the snapshot retrieved ${retrievedAt}, ${spellOrdinal(rank)} of the ${indexedCount} configurations that carry an index. `,
+      `The ${formatSnapshotScore(index)} places ${configurationLabel(record)} ${spellOrdinal(rank)} of the ${indexedCount} configurations that carry an index in the snapshot retrieved ${retrievedAt}. `,
       higher.length === 0
         ? "No configuration scores higher."
         : `${capitalize(pluralConfigurations(higher.length))} score${higher.length === 1 ? "s" : ""} higher: ${joinNames(higher.map(candidate => `${configurationLabel(candidate)} at ${formatSnapshotScore(candidate.benchmarks.aaIndex)}`))}. The leader, ${configurationLabel(leader)}, is ${pointsPhrase(leader.benchmarks.aaIndex - index)} above it at ${formatSnapshotCostUsd(leader.economics.costUsd)} per task.`,
@@ -212,7 +211,7 @@ function codingPlacementBlocks(
   ];
   if (onCostFrontier) {
     blocks.push(paragraph(
-      "The row is on the chart’s cost frontier: no configuration costs less per task and scores at least as high.",
+      "The row is on the chart’s cost frontier: no other configuration scores at least as high at the same or lower cost per task.",
       cheapestHigher === undefined
         ? ""
         : ` The cheapest configuration that scores higher, ${configurationLabel(cheapestHigher.record)}, scores ${formatSnapshotScore(cheapestHigher.record.benchmarks.aaIndex)} at ${formatSnapshotCostUsd(cheapestHigher.record.economics.costUsd)} per task, ${formatFineCostMultiple(cheapestHigher.multiple)} the cost.`,
@@ -277,7 +276,7 @@ function codingPlacementBlocks(
     onCostFrontier
       ? "The snapshot agrees. "
       : "In this snapshot a cheaper row has since scored at least as high. ",
-    "Rankings on this chart move whenever Artificial Analysis publishes a new configuration, and the chart counts every harness, including multi-model pairings.",
+    "Rankings on this chart move whenever Artificial Analysis publishes a new configuration, and the chart counts every harness, including configurations such as Devin Fusion CLI that pair two models in one harness.",
   ));
   return blocks;
 }
@@ -321,7 +320,7 @@ function componentBlocks(
   ];
   if (components.length >= 2) {
     blocks.push(table(
-      `${CODING_CHART_LABEL} on each AA Index component in the snapshot retrieved ${retrievedAt}. Rank counts every configuration that carries the component.`,
+      `${CODING_CHART_LABEL} on each AA Index component in the snapshot retrieved ${retrievedAt}, ranked among every configuration that carries the component`,
       ["Component", "GPT-6 Sol score", "Rank", "Leader"],
       components.map(component => [
         textCell(SNAPSHOT_COLUMN_LABELS[component.metric]),
@@ -443,7 +442,7 @@ function generationBlocks(
           multipleCell(predecessor.usage.totalTokens, record.usage.totalTokens),
         ),
         metricRow(
-          "Mean active time per task",
+          "Mean harness time per task",
           formatMinutes(predecessor.economics.durationSeconds),
           formatMinutes(record.economics.durationSeconds),
           multipleCell(predecessor.economics.durationSeconds, record.economics.durationSeconds),
@@ -465,7 +464,7 @@ function generationBlocks(
       GPT_6_SOL.openAi.priceCutClaim,
       ".” ",
       tokenMultiple !== null && Math.abs(tokenMultiple - 1) <= 0.1
-        ? "With total tokens per task within a tenth of the earlier row, the lower cost per task in the snapshot is the price cut, not a shorter run."
+        ? "Total tokens per task stayed within a tenth of the earlier row, so the price cut accounts for the lower cost per task in the snapshot."
         : "The snapshot records both a price change and a change in tokens per task, so the cost step mixes the two.",
       " Artificial Analysis’s launch note reports the same step: “",
       GPT_6_SOL.artificialAnalysis.codingIndexGain,
@@ -498,16 +497,16 @@ function intelligenceBlocks(
       ),
     ];
   }
-  const { cheapestHigher, cohortSize, dominators, effortLadder, leader, neighbors, onCostFrontier, rank, record } = placement;
+  const { cheapestHigher, cohortSize, dominators, effortLadder, leader, neighbors, onCostFrontier, otherModes, rank, record } = placement;
   const cost = comparableTaskCost(record);
   const blocks: BlogBlock[] = [
     paragraph(
-      `${record.name} scores ${formatSnapshotScore(record.intelligenceIndex)} on the Intelligence Index at ${formatSnapshotCostUsd(cost)} per task in the snapshot retrieved ${retrievedAt}, with ${formatWholeTokens(record.outputTokensPerTask.total)} output tokens per task under index version ${indexVersion}. That is ${spellOrdinal(rank)} of the ${cohortSize} comparable configurations and ${pointsPhrase(leader.intelligenceIndex - record.intelligenceIndex)} below the leader, ${leader.name} at ${formatSnapshotScore(leader.intelligenceIndex)} for ${formatSnapshotCostUsd(comparableTaskCost(leader))}.`,
+      `${record.name} scores ${formatSnapshotScore(record.intelligenceIndex)} on the Intelligence Index at ${formatSnapshotCostUsd(cost)} per task in the snapshot retrieved ${retrievedAt}, with ${formatWholeTokens(record.outputTokensPerTask.total)} output tokens per task under index version ${indexVersion}. That is ${spellOrdinal(rank)} of the ${cohortSize} comparable configurations, meaning the rows with a measured cost per task, and ${pointsPhrase(leader.intelligenceIndex - record.intelligenceIndex)} below the leader, ${leader.name} at ${formatSnapshotScore(leader.intelligenceIndex)} for ${formatSnapshotCostUsd(comparableTaskCost(leader))}.`,
     ),
   ];
   if (onCostFrontier) {
     blocks.push(paragraph(
-      "The row is on this chart’s cost frontier as well: no comparable configuration scores higher at the same or lower cost per task.",
+      "The row is on this chart’s cost frontier as well, by the same test: no other comparable configuration scores at least as high at the same or lower cost per task.",
       cheapestHigher === undefined
         ? " No configuration scores higher."
         : ` The cheapest configuration that scores higher, ${cheapestHigher.record.name}, scores ${formatSnapshotScore(cheapestHigher.record.intelligenceIndex)} for ${formatSnapshotCostUsd(comparableTaskCost(cheapestHigher.record))}, ${formatFineCostMultiple(cheapestHigher.multiple)} the cost.`,
@@ -545,14 +544,17 @@ function intelligenceBlocks(
     const costliest = effortLadder[effortLadder.length - 1];
     blocks.push(
       paragraph(
-        `The snapshot stores ${spellCount(effortLadder.length)} comparable GPT-6 Sol rows, one per reasoning setting. `,
+        `The snapshot stores ${spellCount(effortLadder.length)} comparable GPT-6 Sol rows with an effort level, one per level. `,
         cheapest === undefined || costliest === undefined
           ? ""
-          : `From ${cheapest.record.name} to ${costliest.record.name}, the score moves from ${formatSnapshotScore(cheapest.record.intelligenceIndex)} to ${formatSnapshotScore(costliest.record.intelligenceIndex)} index points and the cost per task from ${formatSnapshotCostUsd(comparableTaskCost(cheapest.record))} to ${formatSnapshotCostUsd(comparableTaskCost(costliest.record))}. The table lists the rows cheapest first and states what each step buys over the row above it.`,
+          : `From ${cheapest.record.name} to ${costliest.record.name}, the score moves from ${formatSnapshotScore(cheapest.record.intelligenceIndex)} to ${formatSnapshotScore(costliest.record.intelligenceIndex)} index points and the cost per task from ${formatSnapshotCostUsd(comparableTaskCost(cheapest.record))} to ${formatSnapshotCostUsd(comparableTaskCost(costliest.record))}. The table lists the levels cheapest first and states what each step buys over the level above it.`,
+        otherModes.length === 0
+          ? ""
+          : ` The snapshot also stores ${joinNames(otherModes.map(mode => `${mode.name} at ${formatSnapshotScore(mode.intelligenceIndex)} for ${formatSnapshotCostUsd(comparableTaskCost(mode))} per task`))}, a different mode rather than an effort level, so the table leaves ${otherModes.length === 1 ? "it" : "them"} out.`,
       ),
       table(
-        `Comparable GPT-6 Sol rows by effort level in the snapshot retrieved ${retrievedAt}, cheapest first`,
-        ["Configuration", "Intelligence Index", "Cost per task", "Output tokens per task", "Points over the cheaper row", "Cost multiple of the cheaper row"],
+        `Comparable GPT-6 Sol effort levels in the snapshot retrieved ${retrievedAt}, cheapest first`,
+        ["Configuration", "Intelligence Index", "Cost per task", "Output tokens per task", "Points over the cheaper level", "Cost multiple of the cheaper level"],
         effortLadder.map(step => [
           ...intelligenceRowCells(step.record),
           textCell(formatWholeTokens(step.record.outputTokensPerTask.total)),
@@ -591,8 +593,8 @@ function costBlocks(
       `The coding-agent figure is the mean API cost of one task in Codex across the three coding benchmarks, including every tool call and repeated context the harness sends: ${formatMillionTokens(coding.record.usage.totalTokens)} total tokens per task in this snapshot. The Intelligence Index figure is a weighted average across ${spellCount(evaluationCount)} evaluations under a standardized harness, with ${formatWholeTokens(intelligence.record.outputTokensPerTask.total)} output tokens per task.`,
     ),
     callout(
-      "How to compare the two costs",
-      `Compare ${codingCost} with other rows on the coding-agent chart and ${indexCost} with other rows on the Intelligence Index chart. The two figures measure different tasks under different harnesses, and neither is the cost of running GPT-6 Sol on your own work.`,
+      "Which rows each cost compares with",
+      `${codingCost} compares with the other cost-per-task figures on the coding-agent chart, and ${indexCost} with the other figures on the Intelligence Index chart. A workload of your own has its own token mix and its own cost.`,
     ),
   ];
 }
@@ -634,7 +636,7 @@ export function createGpt6SolArticle(
   const frontierPhrase = coding === undefined || intelligence === undefined
     ? ""
     : coding.onCostFrontier && intelligence.onCostFrontier
-      ? "Both rows sit on their chart’s cost frontier."
+      ? "Each row sits on its own chart’s cost frontier."
       : coding.onCostFrontier
         ? "The coding-agent row sits on its chart’s cost frontier; on the Intelligence Index a cheaper configuration scores at least as high."
         : intelligence.onCostFrontier
@@ -645,20 +647,23 @@ export function createGpt6SolArticle(
     : `Codex · GPT-6 Sol (max) scores ${codingScore} on the coding-agent AA Index at ${codingCost} per task, ${spellOrdinal(coding.rank)} of ${coding.indexedCount} configurations, and GPT-6 Sol (max) scores ${intelligenceScore} on the Intelligence Index at ${intelligenceCost} per task. ${frontierPhrase}`;
   const seoDescription = codingScore === undefined || intelligenceScore === undefined
     ? "GPT-6 Sol appears on the AI Charts coding-agent chart and the Intelligence Index chart. See what each score measures and where the evidence stops."
-    : `GPT-6 Sol scores ${codingScore} on the AI Charts coding-agent AA Index in Codex at ${codingCost} per task and ${intelligenceScore} on the Intelligence Index at ${intelligenceCost}. See what each measures.`;
+    : `GPT-6 Sol scores ${codingScore} on the AI Charts coding-agent AA Index in Codex at ${codingCost} a task and ${intelligenceScore} on the Intelligence Index at ${intelligenceCost}. Each chart has its own tasks.`;
   const openingPlacement = coding === undefined
     ? "Artificial Analysis measured it the same day, and AI Charts stores GPT-6 Sol in two snapshots: the coding-agent chart and the Intelligence Index chart."
-    : `Artificial Analysis measured it the same day. In the coding-agent snapshot retrieved ${codingRetrievedAt}, ${configurationLabel(coding.record)} scores ${codingScore} on AA Index at a mean API cost of ${codingCost} per task, ${spellOrdinal(coding.rank)} of ${coding.indexedCount} configurations${coding.onCostFrontier ? " and on the chart’s cost frontier" : ""}.`;
+    : `Artificial Analysis measured it the same day. In the coding-agent snapshot retrieved ${codingRetrievedAt}, ${configurationLabel(coding.record)} scores ${codingScore} on AA Index at a mean API cost of ${codingCost} per task, ${spellOrdinal(coding.rank)} of ${coding.indexedCount} configurations${coding.onCostFrontier ? ", and no other configuration scores at least as high at the same or lower cost, which puts the row on the chart’s cost frontier" : ""}.`;
   const openingIndex = intelligence === undefined
     ? ""
-    : ` In the Intelligence Index snapshot retrieved ${intelligenceRetrievedAt}, ${intelligence.record.name} scores ${intelligenceScore} at ${intelligenceCost} per task, ${spellOrdinal(intelligence.rank)} of ${intelligence.cohortSize} comparable configurations${intelligence.onCostFrontier ? " and on that chart’s cost frontier" : ""}.`;
+    : ` In the Intelligence Index snapshot retrieved ${intelligenceRetrievedAt}, ${intelligence.record.name} scores ${intelligenceScore} at ${intelligenceCost} per task, ${spellOrdinal(intelligence.rank)} of ${intelligence.cohortSize} configurations with a measured cost per task${intelligence.onCostFrontier ? ", and on that chart’s cost frontier by the same test" : ""}.`;
 
   const codingHeading = coding === undefined
     ? "On the coding-agent chart"
-    : `On the coding-agent chart, ${spellOrdinal(coding.rank)} of ${coding.indexedCount} rows`;
+    : `On the coding-agent chart, ${spellOrdinal(coding.rank)} of ${coding.indexedCount} configurations`;
+  const costHeading = coding === undefined || intelligence === undefined
+    ? "Two costs per task"
+    : `Why ${formatSnapshotCostUsd(coding.record.economics.costUsd)} and ${formatSnapshotCostUsd(comparableTaskCost(intelligence.record))} are not one unit`;
   const intelligenceHeading = intelligence === undefined
     ? "On the Intelligence Index"
-    : `On the Intelligence Index, ${spellOrdinal(intelligence.rank)} of ${intelligence.cohortSize} comparable rows`;
+    : `On the Intelligence Index, ${spellOrdinal(intelligence.rank)} of ${intelligence.cohortSize} comparable configurations`;
 
   return {
     sourceNote: BLOG_SOURCE_NOTE,
@@ -693,9 +698,9 @@ export function createGpt6SolArticle(
       "aa-index-cost-coding-agents",
     ],
     nextStep: {
-      title: "Compare GPT-6 Sol on both charts",
+      title: "See where GPT-6 Sol sits today",
       description:
-        "The coding-agent chart plots every model, harness, and setting configuration in the current snapshot with its cost frontier. The capability and cost chart plots the comparable Intelligence Index cohort. The model page collects GPT-6 Sol’s rows from both.",
+        "Both charts redraw from each day’s snapshot, so the rank and frontier position above can move. The model page lists every GPT-6 Sol row the site holds.",
       links: [
         { href: "/coding", label: "Coding-agent chart" },
         { href: "/#intelligence-index", label: "Capability and cost chart" },
@@ -710,29 +715,29 @@ export function createGpt6SolArticle(
         GPT_6_SOL.openAi.announcedOn,
         " in ",
         GPT_6_SOL.openAi.availability,
-        ", at half the list price of GPT-5.6 Sol. ",
+        ", with API prices half those of GPT-5.6 Sol. ",
         openingPlacement,
         openingIndex,
       ),
-      heading("One model, two charts"),
+      heading("The two charts"),
       paragraph(
         "The ",
         { href: "/coding", text: "coding-agent chart" },
         " is a daily snapshot of the public ",
         { href: BLOG_SOURCES.artificialAnalysisCodingAgents.url, text: "Artificial Analysis coding-agents comparison" },
-        `. Each row is one configuration: a model, the agent harness that ran it, and an effort setting, scored on ${SNAPSHOT_COLUMN_LABELS.deepSwe}, ${SNAPSHOT_COLUMN_LABELS.terminalBench}, and ${SNAPSHOT_COLUMN_LABELS.sweAtlas}. AA Index is the composite of those three, and cost is the mean API cost of one task in that harness. GPT-6 Sol’s row is Codex · GPT-6 Sol at the max setting, with Codex being OpenAI’s own coding agent.`,
+        `. A row on it is a model running inside a named agent harness at one effort setting, and its AA Index averages three benchmarks: ${SNAPSHOT_COLUMN_LABELS.deepSwe}, ${SNAPSHOT_COLUMN_LABELS.terminalBench}, and ${SNAPSHOT_COLUMN_LABELS.sweAtlas}. Its cost is the mean API bill for one task in that harness. GPT-6 Sol appears once, inside Codex, OpenAI’s coding agent, at the max setting.`,
       ),
       paragraph(
         "The ",
         { href: BLOG_SOURCES.artificialAnalysisIntelligenceIndex.url, text: "Artificial Analysis Intelligence Index" },
-        ` measures a model behind an API under one standardized harness across ${spellCount(intelligenceSnapshot.benchmark.evaluationCount)} evaluations, weighted ${weights.agents}% agents, ${weights.coding}% coding, ${weights.scientific}% scientific reasoning, and ${weights.general}% general capability, at version ${indexVersion}. Its headline GPT-6 Sol row is GPT-6 Sol (max), the same effort setting as the coding-agent row, and the snapshot also stores the model’s lower effort levels as separate rows.`,
+        ` runs the model itself, through its API, under one harness that is the same for every model, across ${spellCount(intelligenceSnapshot.benchmark.evaluationCount)} evaluations weighted ${weights.agents}% agents, ${weights.coding}% coding, ${weights.scientific}% scientific reasoning, and ${weights.general}% general capability, at version ${indexVersion}. GPT-6 Sol (max) is its headline row, at the same effort setting as the coding-agent row, and each lower effort level of the model is a row of its own.`,
       ),
       ...overviewBlocks(coding, intelligence, codingRetrievedAt, intelligenceRetrievedAt),
       heading(codingHeading),
       ...codingPlacementBlocks(coding, codingRetrievedAt),
       heading("From GPT-5.6 Sol to GPT-6 Sol in Codex"),
       ...generationBlocks(coding, codingRetrievedAt),
-      heading("Three components, three different ranks"),
+      heading("Inside the AA Index"),
       ...componentBlocks(coding, codingRetrievedAt),
       heading(intelligenceHeading),
       ...intelligenceBlocks(intelligence, intelligenceRetrievedAt, indexVersion),
@@ -747,30 +752,28 @@ export function createGpt6SolArticle(
         GPT_6_SOL.artificialAnalysis.intelligenceScore,
         ", an ",
         GPT_6_SOL.artificialAnalysis.contextWindow,
-        " token context window, an output speed of ",
-        GPT_6_SOL.artificialAnalysis.outputSpeed,
-        " tokens per second on OpenAI’s API, and ",
+        " token context window, and ",
         GPT_6_SOL.artificialAnalysis.indexOutputTokens,
         " output tokens generated to run the whole index.",
       ),
       paragraph(
-        "The launch note’s headline puts the generation step this way: “",
-        GPT_6_SOL.artificialAnalysis.headline,
-        ".” It reports that “",
+        "The summary line under the launch note’s title puts the generation step this way: “",
+        GPT_6_SOL.artificialAnalysis.summaryLine,
+        ".” The note reports that “",
         GPT_6_SOL.artificialAnalysis.indexCostClaim,
         ",” and adds: “",
         GPT_6_SOL.artificialAnalysis.indexCostDriver,
         "” (“",
         GPT_6_SOL.artificialAnalysis.indexTokensClaim,
-        "”). Inside the index it records a knowledge-work regression, GDPval-AA v2.1, where “",
+        "”). Inside the index it records a regression on GDPval-AA v2.1, Artificial Analysis’s benchmark adapted from OpenAI’s dataset of economically valuable tasks and scored on an Elo rating scale, where “",
         GPT_6_SOL.artificialAnalysis.gdpvalRegression,
-        ",” and a change in answering behavior on AA-Omniscience: “",
+        ",” and a change in answering behavior on AA-Omniscience, its knowledge and hallucination benchmark: “",
         GPT_6_SOL.artificialAnalysis.hallucinationClaim,
         "” because “",
         GPT_6_SOL.artificialAnalysis.attemptRateClaim,
-        ".” The Intelligence Index snapshot does not store a GPT-5.6 Sol row, so the generation comparison on this chart rests on Artificial Analysis’s note alone.",
+        ".” Artificial Analysis’s note is the only source here for that step; the Intelligence Index snapshot stores no GPT-5.6 Sol row.",
       ),
-      heading("Two costs for one model"),
+      heading(costHeading),
       ...costBlocks(coding, intelligence, intelligenceSnapshot.benchmark.evaluationCount),
       heading("OpenAI’s own figures"),
       paragraph(
@@ -780,24 +783,24 @@ export function createGpt6SolArticle(
         GPT_6_SOL.openAi.vendorDeepSwe,
         " for GPT-6 Sol at max effort, plus vendor-run results on ",
         GPT_6_SOL.openAi.otherVendorBenchmarks,
-        ", none of which appears on an AI Charts chart. Those figures come from OpenAI’s evaluation setup, not from Codex under Artificial Analysis’s protocol, and OpenAI states that competitor figures in its tables were taken from public reports. Read them as the vendor’s description of its model and read the charts for independent measurements of one named configuration.",
+        ", none of which appears on an AI Charts chart. OpenAI ran those evaluations in its own environment or through its API and says the competitor figures in its tables come from public reports. The 68.8% and the 69.0 that Artificial Analysis measured in Codex come from separate runs under separate protocols.",
       ),
       heading("Limits"),
       list(
         [
-          `Every score and cost in this note is an Artificial Analysis measurement of the named configuration on the retrieval date, under ${SNAPSHOT_COLUMN_LABELS.deepSwe}, ${SNAPSHOT_COLUMN_LABELS.terminalBench}, and ${SNAPSHOT_COLUMN_LABELS.sweAtlas} for the coding-agent chart and Intelligence Index version ${indexVersion} for the capability chart. Neither establishes results on other tasks, repositories, or harnesses.`,
+          `The scores and costs in the tables and placement sentences above are Artificial Analysis measurements of Codex · GPT-6 Sol (max) and GPT-6 Sol (max) on the retrieval dates, under ${SNAPSHOT_COLUMN_LABELS.deepSwe}, ${SNAPSHOT_COLUMN_LABELS.terminalBench}, and ${SNAPSHOT_COLUMN_LABELS.sweAtlas} on the coding-agent chart and Intelligence Index version ${indexVersion} on the capability chart. They say nothing about other tasks, repositories, or harnesses.`,
         ],
         [
-          "Ranks, frontier positions, neighbors, component ranks, and generation multiples are AI Charts derivations from the snapshots named in each caption. They change when Artificial Analysis adds, removes, or rescores a configuration, and the checked snapshots advance daily.",
+          "The ranks, frontier positions, neighbor tables, component ranks, effort ladder, and GPT-5.6 Sol multiples are computed from those snapshots by AI Charts. A new, removed, or rescored configuration moves them, and both snapshots update daily.",
         ],
         [
-          "The coding-agent row measures GPT-6 Sol inside Codex at the max setting. The same model in another harness or at another effort level is a different configuration that this snapshot does not store.",
+          "GPT-6 Sol in Cursor, in another harness, or at a lower Codex effort setting is a configuration the coding-agent snapshot does not store, so this note says nothing about it.",
         ],
         [
-          "The GPT-5.6 Sol comparison holds the harness and setting fixed, but Artificial Analysis may have run the two generations weeks apart under evolving benchmark versions; the snapshot records outcomes, not run dates.",
+          "The GPT-5.6 Sol rows share the harness and setting with the GPT-6 Sol rows, but the snapshots record scores, not run dates; the two generations may have been measured weeks apart under different benchmark versions.",
         ],
         [
-          "OpenAI’s prices, availability, and benchmark figures belong to OpenAI. AI Charts did not run GPT-6 Sol and did not verify the vendor figures.",
+          "The 68.8% DeepSWE v1.1 figure, the prices, and the availability statement are OpenAI’s. AI Charts did not run GPT-6 Sol.",
         ],
       ),
     ],

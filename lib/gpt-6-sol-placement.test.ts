@@ -128,16 +128,26 @@ describe("GPT-6 Sol coding-agent placement", () => {
   });
 });
 
-function solRelease(slug: string, index: number, cost: number | null, tokens = 10_000) {
+function solRelease(
+  slug: string,
+  index: number,
+  cost: number | null,
+  tokens = 10_000,
+  effort: string | null = "max",
+) {
   const record = intelligenceRecord(slug, index, cost, tokens);
-  return { ...record, release: { name: "GPT-6 Sol", slug: GPT_6_SOL_INTELLIGENCE_SLUG } };
+  return {
+    ...record,
+    effort: effort === null ? null : { label: effort, level: 10, slug: effort },
+    release: { name: "GPT-6 Sol", slug: GPT_6_SOL_INTELLIGENCE_SLUG },
+  };
 }
 
 const solMax = solRelease(GPT_6_SOL_INTELLIGENCE_SLUG, 47.53, 1.06, 31_238);
-const solXhigh = solRelease("gpt-6-sol-xhigh", 44.1, 0.53, 16_013);
-const solHigh = solRelease("gpt-6-sol-high", 42.82, 0.37, 10_232);
-const solNonReasoning = solRelease("gpt-6-sol-non-reasoning", 28.09, 0.33, 4_912);
-const solLow = solRelease("gpt-6-sol-low", 33.9, 0.13, 3_358);
+const solXhigh = solRelease("gpt-6-sol-xhigh", 44.1, 0.53, 16_013, "xhigh");
+const solHigh = solRelease("gpt-6-sol-high", 42.82, 0.37, 10_232, "high");
+const solNonReasoning = solRelease("gpt-6-sol-non-reasoning", 28.09, 0.33, 4_912, null);
+const solLow = solRelease("gpt-6-sol-low", 33.9, 0.13, 3_358, "low");
 const opusMedium = intelligenceRecord("claude-opus-5-5-medium", 51.24, 1.34);
 const museMax = intelligenceRecord("muse-spark-1-3", 48.09, 1.6);
 const fableLow = intelligenceRecord("claude-fable-5-1-low", 46.82, 2.37);
@@ -167,14 +177,14 @@ describe("GPT-6 Sol Intelligence Index placement", () => {
     expect(placement.neighbors.map(record => record.slug)).toEqual(["muse-spark-1-3", "claude-fable-5-1-low"]);
     expect(placement.siblings.map(record => record.slug))
       .toEqual(["gpt-6-sol-xhigh", "gpt-6-sol-high", "gpt-6-sol-low", "gpt-6-sol-non-reasoning"]);
+    // The non-reasoning mode is a sibling but not a step on the effort ladder.
+    expect(placement.otherModes.map(record => record.slug)).toEqual(["gpt-6-sol-non-reasoning"]);
     expect(placement.effortLadder.map(step => step.record.slug))
-      .toEqual(["gpt-6-sol-low", "gpt-6-sol-non-reasoning", "gpt-6-sol-high", "gpt-6-sol-xhigh", "gpt-6-sol"]);
-    const [low, nonReasoning, high, , max] = placement.effortLadder;
+      .toEqual(["gpt-6-sol-low", "gpt-6-sol-high", "gpt-6-sol-xhigh", "gpt-6-sol"]);
+    const [low, high, , max] = placement.effortLadder;
     expect(low).toMatchObject({ costMultipleOverCheaper: null, pointsOverCheaper: null });
-    // A costlier level may score lower; the ladder prints that step as negative points.
-    expect(nonReasoning?.pointsOverCheaper).toBeCloseTo(28.09 - 33.9, 9);
-    expect(nonReasoning?.costMultipleOverCheaper).toBeCloseTo(0.33 / 0.13, 9);
-    expect(high?.pointsOverCheaper).toBeCloseTo(42.82 - 28.09, 9);
+    expect(high?.pointsOverCheaper).toBeCloseTo(42.82 - 33.9, 9);
+    expect(high?.costMultipleOverCheaper).toBeCloseTo(0.37 / 0.13, 9);
     expect(max?.pointsOverCheaper).toBeCloseTo(47.53 - 44.1, 9);
     expect(max?.costMultipleOverCheaper).toBeCloseTo(1.06 / 0.53, 9);
   });
@@ -188,8 +198,16 @@ describe("GPT-6 Sol Intelligence Index placement", () => {
     expect(placement?.effortLadder.map(step => step.record.slug)).toEqual([GPT_6_SOL_INTELLIGENCE_SLUG]);
   });
 
+  test("prints a negative step when a costlier effort level scores lower", () => {
+    const inverted = solRelease("gpt-6-sol-odd", 40, 0.9, 5_000, "odd");
+    const ladder = effortLadder(solMax, [solXhigh, inverted]);
+    expect(ladder.map(step => step.record.slug)).toEqual(["gpt-6-sol-xhigh", "gpt-6-sol-odd", "gpt-6-sol"]);
+    expect(ladder[1]?.pointsOverCheaper).toBeCloseTo(40 - 44.1, 9);
+    expect(ladder[1]?.costMultipleOverCheaper).toBeCloseTo(0.9 / 0.53, 9);
+  });
+
   test("orders the ladder cheapest first regardless of input order", () => {
-    const ladder = effortLadder(solMax, [solLow, solXhigh, solHigh]);
+    const ladder = effortLadder(solMax, [solLow, solXhigh, solHigh, solNonReasoning]);
     expect(ladder.map(step => step.record.slug)).toEqual(["gpt-6-sol-low", "gpt-6-sol-high", "gpt-6-sol-xhigh", "gpt-6-sol"]);
     for (let position = 1; position < ladder.length; position += 1) {
       const step = ladder[position];
@@ -213,8 +231,10 @@ describe("GPT-6 Sol Intelligence Index placement", () => {
     expect(placement.record.release.slug).toBe(GPT_6_SOL_INTELLIGENCE_SLUG);
     expect(placement.record.effort?.slug).toBe("max");
     const releaseRows = cohort.filter(record => record.release.slug === GPT_6_SOL_INTELLIGENCE_SLUG);
-    expect(placement.effortLadder.length).toBe(releaseRows.length);
     expect(placement.siblings.length).toBe(releaseRows.length - 1);
+    expect(placement.effortLadder.length + placement.otherModes.length).toBe(releaseRows.length);
+    expect(placement.effortLadder.every(step => step.record.effort !== null)).toBeTrue();
+    expect(placement.otherModes.every(record => record.effort === null)).toBeTrue();
     expect(placement.effortLadder.some(step => step.record.id === placement.record.id)).toBeTrue();
   });
 });

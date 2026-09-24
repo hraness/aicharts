@@ -871,7 +871,7 @@ describe("AI Charts benchmark notes", () => {
     expect(markdown).toContain(intelligenceParsed.value.benchmark.version);
     expect(markdown).toContain(GPT_6_SOL.openAi.priceCutClaim);
     expect(markdown).toContain(GPT_6_SOL.artificialAnalysis.codingFrontierClaim);
-    expect(markdown).toContain(GPT_6_SOL.artificialAnalysis.headline);
+    expect(markdown).toContain(GPT_6_SOL.artificialAnalysis.summaryLine);
     expect(markdown).toContain(GPT_6_SOL.artificialAnalysis.indexCostClaim);
     expect(markdown).toContain(GPT_6_SOL.artificialAnalysis.indexCostDriver);
     expect(markdown).toContain(GPT_6_SOL.artificialAnalysis.gdpvalRegression);
@@ -961,6 +961,10 @@ describe("AI Charts benchmark notes", () => {
       expect(markup).toContain(neighbor.name);
       expect(markup).toContain(formatFineCostMultiple((neighbor.costUsdPerTask?.total ?? 0) / cost));
     }
+    for (const mode of intelligence.otherModes) {
+      expect(markup).toContain(mode.name);
+      expect(markup).toContain("a different mode rather than an effort level");
+    }
     for (const step of intelligence.effortLadder) {
       expect(markup).toContain(step.record.name);
       expect(markup).toContain(formatSnapshotCostUsd(step.record.costUsdPerTask?.total ?? 0));
@@ -1020,7 +1024,7 @@ describe("AI Charts benchmark notes", () => {
     expect(solOnlyMarkdown).toContain("The row is on this chart’s cost frontier");
     expect(solOnlyMarkdown).toContain("zero other configurations within one index point");
     expect(solOnlyMarkdown).toContain("stores no other comparable GPT-6 Sol effort level");
-    expect(solOnly.dek).toContain("Both rows sit on their chart’s cost frontier.");
+    expect(solOnly.dek).toContain("Each row sits on its own chart’s cost frontier.");
 
     const solRecord = codingSnapshot.records.find(isSol);
     if (solRecord === undefined || solRecord.economics.costUsd === null || solRecord.benchmarks.aaIndex === null) {

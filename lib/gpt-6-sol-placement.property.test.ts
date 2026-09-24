@@ -94,8 +94,12 @@ test("the predecessor is a GPT-5.6 Sol row at the placed setting, or nothing", (
   }));
 });
 
-function solRow(slug: string, score: number, cost: number): ArtificialAnalysisIntelligenceRecord {
-  return { ...intelligenceRecord(slug, score, cost), release: { name: "GPT-6 Sol", slug: GPT_6_SOL_INTELLIGENCE_SLUG } };
+function solRow(slug: string, score: number, cost: number, effort = true): ArtificialAnalysisIntelligenceRecord {
+  return {
+    ...intelligenceRecord(slug, score, cost),
+    effort: effort ? { label: slug, level: 1, slug: "level" } : null,
+    release: { name: "GPT-6 Sol", slug: GPT_6_SOL_INTELLIGENCE_SLUG },
+  };
 }
 
 const intelligenceCohortArb = fc.record({
@@ -103,8 +107,8 @@ const intelligenceCohortArb = fc.record({
   others: fc.array(fc.record({ cost: costArb, index: fc.nat({ max: 99 }), score: scoreArb }), { maxLength: 24 })
     .map(items => items.map((item, position) => intelligenceRecord(`other-${item.index}-${position}`, item.score, item.cost))),
   score: scoreArb,
-  siblings: fc.array(fc.record({ cost: costArb, index: fc.nat({ max: 99 }), score: scoreArb }), { maxLength: 6 })
-    .map(items => items.map((item, position) => solRow(`gpt-6-sol-${item.index}-${position}`, item.score, item.cost))),
+  siblings: fc.array(fc.record({ cost: costArb, effort: fc.boolean(), index: fc.nat({ max: 99 }), score: scoreArb }), { maxLength: 6 })
+    .map(items => items.map((item, position) => solRow(`gpt-6-sol-${item.index}-${position}`, item.score, item.cost, item.effort))),
 }).map(({ cost, others, score, siblings }) => ({
   others,
   siblings,
@@ -124,7 +128,10 @@ test("siblings are exactly the other comparable rows of the same release, highes
       if (previous === undefined || current === undefined) throw new Error("Sibling list is short.");
       expect(previous.intelligenceIndex).toBeGreaterThanOrEqual(current.intelligenceIndex);
     }
-    expect(placement.effortLadder).toHaveLength(siblings.length + 1);
+    const withEffort = siblings.filter(sibling => sibling.effort !== null);
+    expect(placement.effortLadder).toHaveLength(withEffort.length + 1);
+    expect(placement.otherModes).toHaveLength(siblings.length - withEffort.length);
+    expect(placement.otherModes.every(record => record.effort === null)).toBeTrue();
   }));
 });
 
@@ -132,7 +139,7 @@ test("the effort ladder is a cost-ordered partition whose steps sum to the top-m
   assertProperty(fc.property(intelligenceCohortArb, ({ siblings, sol }) => {
     const ladder = effortLadder(sol, siblings);
     const ids = ladder.map(step => step.record.id).toSorted();
-    expect(ids).toEqual([sol, ...siblings].map(record => record.id).toSorted());
+    expect(ids).toEqual([sol, ...siblings.filter(sibling => sibling.effort !== null)].map(record => record.id).toSorted());
     const [first] = ladder;
     expect(first?.pointsOverCheaper).toBeNull();
     expect(first?.costMultipleOverCheaper).toBeNull();

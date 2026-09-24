@@ -42,8 +42,10 @@ export type SolEffortStep = Readonly<{
 }>;
 
 export type SolIntelligencePlacement = IntelligencePlacement & Readonly<{
-  /** Every comparable GPT-6 Sol row, including the placed one, cheapest first, with the step from the level before. */
+  /** The placed row and every comparable sibling that carries an effort level, cheapest first, with the step from the level before. */
   effortLadder: readonly SolEffortStep[];
+  /** Comparable siblings without an effort level, such as a non-reasoning mode, highest index first. */
+  otherModes: readonly ArtificialAnalysisIntelligenceRecord[];
 }>;
 
 /** Every Codex · GPT-6 Sol row that carries an AA Index and a cost, highest AA Index first. */
@@ -59,16 +61,22 @@ export function solCodingAgentPlacement(
   return codingAgentPlacement(records, GPT_6_SOL_CODING_CONFIGURATION, GPT_56_SOL_CODING_CONFIGURATION);
 }
 
+function hasEffortLevel(record: ArtificialAnalysisIntelligenceRecord): boolean {
+  return record.effort !== null;
+}
+
 /**
- * Orders every comparable row of one release cheapest first and states what
- * each step up the ladder buys. A step may buy negative points when a costlier
- * level scores lower, which the note must be able to print.
+ * Orders the placed row and the siblings that carry an effort level cheapest
+ * first and states what each step up the ladder buys. A step may buy negative
+ * points when a costlier level scores lower, which the note must be able to
+ * print. Siblings without an effort level are a different mode, not a step,
+ * and are left out.
  */
 export function effortLadder(
   record: ArtificialAnalysisIntelligenceRecord,
   siblings: readonly ArtificialAnalysisIntelligenceRecord[],
 ): readonly SolEffortStep[] {
-  const rows = [record, ...siblings].toSorted((left, right) => (
+  const rows = [record, ...siblings.filter(hasEffortLevel)].toSorted((left, right) => (
     comparableTaskCost(left) - comparableTaskCost(right) || left.id.localeCompare(right.id)
   ));
   return rows.map((current, position) => {
@@ -94,5 +102,6 @@ export function solIntelligencePlacement(
   return {
     ...placement,
     effortLadder: effortLadder(placement.record, placement.siblings),
+    otherModes: placement.siblings.filter(sibling => !hasEffortLevel(sibling)),
   };
 }
