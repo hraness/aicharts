@@ -77,6 +77,29 @@ async function confirmed(authenticationExpiresAtMs = NOW + PAIRING_TTL_MS) {
 }
 
 describe("internal pairing lifecycle, with no credential activation", () => {
+  test("fresh reservation reads leave the pairing constructor and storage empty", async () => {
+    const tables = () => runInDurableObject(stub(), (_instance, state) => state.storage.sql.exec(
+      "SELECT name FROM sqlite_schema WHERE name = 'pairing_state'").toArray());
+    expect(await tables()).toEqual([]);
+    expect(await stub().readEnrollmentReservation(enrollmentInput)).toEqual({ ok: false, error: "not_initialized" });
+    expect(await tables()).toEqual([]);
+  });
+  test("existing reservation and browser status reads never advance durable observations", async () => {
+    const proof = await confirmed();
+    const reserved = await stub().reserveEnrollment(enrollmentInput); expect(reserved.ok).toBe(true);
+    const before = await retainedRow(); vi.setSystemTime(NOW + 100);
+    expect(await stub().readEnrollmentReservation(enrollmentInput)).toEqual(reserved);
+    expect((await stub().browserStatus(proof)).ok).toBe(true);
+    expect(await retainedRow()).toEqual(before);
+  });
+  test("browser read projects expiry without renewing authority or writing a terminal decision", async () => {
+    await initialize(); const proof = await browser(), before = await retainedRow();
+    vi.setSystemTime(NOW + PAIRING_TTL_MS);
+    expect(await stub().browserStatus(proof)).toMatchObject({ ok: true, value: { state: "expired" } });
+    expect(await retainedRow()).toEqual(before);
+    expect(await stub().reserveEnrollment(enrollmentInput)).toEqual({ ok: false, error: "expired" });
+    expect((await retainedPayload() as { status: string }).status).toBe("expired");
+  });
   test("uninitialized polling fails closed", async () => {
     expect(await stub().poll(pollInput)).toEqual({ ok: false, error: "not_initialized" });
   });
@@ -759,6 +782,9 @@ describe("validated additive pairing schema migration", () => {
     }
     const before = await legacyFixture();
     await abortAllDurableObjects();
+    expect(await stub().readEnrollmentReservation(enrollmentInput)).toEqual({ ok: false, error: "storage_invalid" });
+    expect((await retainedRow()).schema_version).toBe(1);
+    expect(await stub().preparePairing({ intentId: ID })).toEqual({ ok: true, value: null });
     const migrated = await retainedRow();
     expect(migrated.schema_version).toBe(2);
     expect(migrated.revision).toBe(before.row.revision);
@@ -771,6 +797,7 @@ describe("validated additive pairing schema migration", () => {
     expect(await stub().poll(pollInput)).toEqual({ ok: false, error: "not_initialized" });
     await runInDurableObject(stub(), (_instance, state) => state.storage.sql.exec("UPDATE pairing_state SET schema_version = 1").toArray());
     await abortAllDurableObjects();
+    expect(await stub().preparePairing({ intentId: ID })).toEqual({ ok: true, value: null });
     expect(await retainedRow()).toEqual({ schema_version: 2, revision: 0, payload: null });
     expect(await stub().readEnrollmentReservation(enrollmentInput)).toEqual({ ok: false, error: "not_initialized" });
   });

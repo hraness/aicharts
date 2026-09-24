@@ -15,9 +15,9 @@ const PRIVATE: &str = "PRIVATE_LEDGER_CANARY_d83e09";
 #[path = "sender_tests.rs"]
 mod sender_tests;
 
-struct Fixture(PathBuf);
+pub(super) struct Fixture(pub(super) PathBuf);
 impl Fixture {
-    fn new() -> Self {
+    pub(super) fn new() -> Self {
         let mut random = [0; 16];
         getrandom::fill(&mut random).unwrap();
         let suffix: String = random.iter().map(|byte| format!("{byte:02x}")).collect();
@@ -1282,4 +1282,59 @@ fn readonly_guard_refuses_parent_alias_retargeting_and_unsafe_final_paths() {
         Some(Error::PrivateStateRequired)
     );
     assert_eq!(directory_image(&f.dir()), before);
+}
+
+#[test]
+fn known_owner_conflict_rolls_back_each_arrival_order_and_reopens() {
+    for reverse in [false, true] {
+        let f = Fixture::new();
+        let mut ledger = f.initialize();
+        let mut other = usage(1, 10);
+        other.execution_id = [10; 16];
+        let (first, second) = if reverse {
+            (other, usage(1, 10))
+        } else {
+            (usage(1, 10), other)
+        };
+        ledger
+            .commit_scans(0, vec![scan(1, 100, vec![first])])
+            .unwrap();
+        let before = summary(&ledger);
+        assert_eq!(
+            ledger
+                .commit_scans(1, vec![scan(2, 100, vec![second])])
+                .err(),
+            Some(Error::InvalidMeasurement)
+        );
+        assert_eq!(summary(&ledger), before);
+        drop(ledger);
+        assert_eq!(summary(&f.open()), before);
+    }
+}
+#[test]
+fn dominated_incomparable_source_trace_cannot_commit_an_unreopenable_projection() {
+    let f = Fixture::new();
+    let mut ledger = f.initialize();
+    let mut maximum = usage(1, 3);
+    maximum.tokens.input_uncached = 3;
+    let mut left = maximum.clone();
+    left.tokens.output = 1;
+    let mut right = maximum.clone();
+    right.tokens.input_uncached = 1;
+    ledger
+        .commit_scans(0, vec![scan(3, 100, vec![maximum])])
+        .unwrap();
+    ledger
+        .commit_scans(1, vec![scan(1, 100, vec![left])])
+        .unwrap();
+    let before = summary(&ledger);
+    assert_eq!(
+        ledger
+            .commit_scans(2, vec![scan(2, 100, vec![right])])
+            .err(),
+        Some(Error::InvalidMeasurement)
+    );
+    assert_eq!(summary(&ledger), before);
+    drop(ledger);
+    assert_eq!(summary(&f.open()), before);
 }

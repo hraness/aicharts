@@ -7,6 +7,7 @@ import { summarizeSessions, type SessionSummary } from "@/lib/usage/sessions";
 import { joinCompactionEvents, type CompactionEvent, type SessionCompactions } from "@/lib/usage/compaction";
 import { readCompactionFile, readSessionFile } from "./local-report-file";
 import { SESSION_EXAMPLE } from "@/lib/usage/session-example";
+import { RichMetricPanel } from "./rich-metric-panel";
 
 const labels: Record<SessionPhase, string> = { inference: "Inference", reply_wait: "Reply wait", approval_wait: "Approval wait", tool_wait: "Tool wait", unknown: "Unknown" };
 const numbers = new Intl.NumberFormat("en-US");
@@ -51,6 +52,7 @@ function SessionDetail({ value }: Readonly<{ value: SessionSummary }>) {
       <span>{duration(value.windowMs)} window</span></header>
     {value.session.source === "history" && <p className="usage-sessions__notice">History provides token observations. It does not establish streaming or wait intervals, so those times remain unknown.</p>}
     <Breakdown value={value} />
+    <RichMetricPanel session={value.session} />
     <section aria-labelledby="session-models-title"><h3 id="session-models-title">Model mix</h3>
       <p className="usage-daily__hint">Observed token share, including cache reads and writes. Reasoning tokens are already included in output. A requested model alone does not prove which model served a response.</p>
       <div className="usage-daily__table-scroll" role="region" aria-label="Model usage table" tabIndex={0}>

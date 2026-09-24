@@ -4,6 +4,7 @@ export const USAGE_ACCOUNT_PATH = "/api/usage/account";
 export const USAGE_ACCOUNT_URL = `https://aicharts.io${USAGE_ACCOUNT_PATH}`;
 export const USAGE_ACCOUNT_BYTES = 512;
 export const USAGE_ACCOUNT_MEDIA = "application/json; charset=utf-8";
+export const USAGE_ACCOUNT_HEADER = "x-aicharts-account-id";
 export type UsageAccountError = "authentication_required" | "unavailable" | "invalid_request" | "request_rejected" | "method_not_allowed";
 export type UsageAccountReply = Readonly<{ schemaVersion: 1; state: "ready"; account: Readonly<{ accountId: string }> }>
   | Readonly<{ schemaVersion: 1; error: Readonly<{ code: UsageAccountError }> }>;

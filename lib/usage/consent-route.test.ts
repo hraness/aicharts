@@ -1,4 +1,5 @@
 import { expect, mock, test } from "bun:test";
+import { USAGE_ACCOUNT_HEADER } from "./account-public";
 import {
   decodeUsageConsentPublicReply, encodeUsageConsentDecision,
   USAGE_CONSENT_PUBLIC_MEDIA, USAGE_CONSENT_PUBLIC_URL,
@@ -8,7 +9,8 @@ mock.module("server-only", () => ({}));
 const { createUsageConsentHandler } = await import("./consent-route");
 
 const view: LeaderboardConsentViewV1 = { schemaVersion: 1, consent: true, consentedAtMs: 1_800_000_000_000, publicHandle: "alpha-coder" };
-const ready = { kind: "query", result: { ok: true, value: view } };
+const accountId = `acct_${"a".repeat(32)}`;
+const ready = { kind: "query", accountId, result: { ok: true, value: view } };
 function incoming(options: { method?: string; url?: string; headers?: Record<string, string>;
   body?: Uint8Array<ArrayBuffer> | string | null; signal?: AbortSignal } = {}) {
   const method = options.method ?? "GET";
@@ -16,7 +18,7 @@ function incoming(options: { method?: string; url?: string; headers?: Record<str
   return new Request(options.url ?? USAGE_CONSENT_PUBLIC_URL, { method, signal: options.signal,
     body: body === null ? null : body,
     headers: { accept: "application/json", "sec-fetch-site": "same-origin",
-      ...(method === "POST" ? { origin: "https://aicharts.io", "content-type": "application/json" } : {}),
+      ...(method === "POST" ? { origin: "https://aicharts.io", "content-type": "application/json", [USAGE_ACCOUNT_HEADER]: accountId } : {}),
       ...options.headers } });
 }
 function fixture(options: { available?: () => boolean; query?: () => Promise<unknown> } = {}) {
@@ -53,13 +55,14 @@ test("GET status and POST decisions reach the authenticated query port", async (
   const f = fixture();
   const status = await f.handle(incoming({ headers: { cookie: "private-session-cookie" } }));
   expect(status.status).toBe(200);
+  expect(status.headers.get(USAGE_ACCOUNT_HEADER)).toBe(accountId);
   expect(await result(status)).toEqual({ schemaVersion: 1, state: "ready", value: view });
   const grant = encodeUsageConsentDecision({ consent: true, publicHandle: "alpha-coder" })!;
   const posted = await f.handle(incoming({ method: "POST", body: grant,
     headers: { "content-length": String(grant.byteLength) } }));
   expect(posted.status).toBe(200);
   expect(await result(posted)).toEqual({ schemaVersion: 1, state: "ready", value: view });
-  const absent = fixture({ query: async () => ({ kind: "query", result: { ok: false, error: "not_enrolled" } }) });
+  const absent = fixture({ query: async () => ({ kind: "query", accountId, result: { ok: false, error: "not_enrolled" } }) });
   const reply = await absent.handle(incoming());
   expect(reply.status).toBe(200);
   expect(await result(reply)).toEqual({ schemaVersion: 1, state: "not_enrolled" });
@@ -72,8 +75,18 @@ test("a checked authentication-required outcome becomes a fixed 401", async () =
   expect(await result(response)).toEqual({ schemaVersion: 1, error: { code: "authentication_required" } });
 });
 
+test("a consent write requires an exact expected account without admitting identity in its decision body", async () => {
+  const f = fixture();
+  for (const expected of [null, "", "foreign", `${accountId}, ${accountId}`]) {
+    const request = incoming({ method: "POST", body: encodeUsageConsentDecision({ consent: false, publicHandle: null })! });
+    if (expected === null) request.headers.delete(USAGE_ACCOUNT_HEADER); else request.headers.set(USAGE_ACCOUNT_HEADER, expected);
+    expect((await f.handle(request)).status).toBe(400);
+  }
+  expect(f.counts().calls).toBe(0);
+});
+
 test.each(["handle_unavailable", "publishing_full"])("a publishing refusal is an explicit private conflict response (%s)", async error => {
-  const f = fixture({ query: async () => ({ kind: "query", result: { ok: false, error } }) });
+  const f = fixture({ query: async () => ({ kind: "query", accountId, result: { ok: false, error } }) });
   const response = await f.handle(incoming({ method: "POST", body: encodeUsageConsentDecision({ consent: true, publicHandle: "taken" })! }));
   expect(response.status).toBe(409);
   expect(await result(response)).toEqual({ schemaVersion: 1, error: { code: error } });
@@ -168,10 +181,10 @@ test("malformed decision bodies never reach the authenticated query", async () =
 
 test("unchecked late outcomes are all fixed 503", async () => {
   for (const raw of [null, { kind: "unavailable" }, { kind: "authentication_required", email: "CONSENT_CANARY" },
-    { kind: "query", result: { ok: true, value: view, extra: "CONSENT_CANARY" } },
-    { kind: "query", result: { ok: true, value: { ...view, consent: false } } },
+    { kind: "query", accountId, result: { ok: true, value: view, extra: "CONSENT_CANARY" } },
+    { kind: "query", accountId, result: { ok: true, value: { ...view, consent: false } } },
     ...["invalid_input", "unauthorized", "expired", "recovery_required", "clock_regressed",
-      "storage_invalid", "storage_unavailable", "limit"].map(error => ({ kind: "query", result: { ok: false, error } }))]) {
+      "storage_invalid", "storage_unavailable", "limit"].map(error => ({ kind: "query", accountId, result: { ok: false, error } }))]) {
     const g = fixture({ query: async () => raw });
     const reply = await g.handle(incoming());
     expect(reply.status).toBe(503);

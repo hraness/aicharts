@@ -88,6 +88,24 @@ test("canonical totals preserve values above 2^53 and current provider token lim
   expect(parsed?.days[2].devin.observedAccountedTokens).toBe("60000000000000000");
   expect(JSON.stringify(parsed).length).toBeLessThan(PRIVATE_DAYS_MAX_RESPONSE_BYTES);
   source.days[2].codex = totals(1, "1");
+  expect(parsePrivateDaysValue(query, source)).not.toBeNull();
+});
+
+test("all one million admitted heads remain readable across daily buckets without weakening per-day or journal bounds", () => {
+  const query = { ...request, dayCount: 31 }, source = value(query);
+  source.journalRevision = 4_096;
+  let remaining = 1_000_000;
+  for (const day of source.days) {
+    const count = Math.min(65_536, remaining); remaining -= count;
+    day.codex = totals(count, String(count));
+  }
+  expect(remaining).toBe(0);
+  const parsed = parsePrivateDaysValue(query, source);
+  expect(parsed?.days.reduce((total, day) => total + day.codex.usageOccurrences, 0)).toBe(1_000_000);
+  expect(JSON.stringify(parsed).length).toBeLessThan(PRIVATE_DAYS_MAX_RESPONSE_BYTES);
+  source.days[30].claudeCode = totals(1, "1");
+  expect(parsePrivateDaysValue(query, source)).toBeNull();
+  source.days[30].claudeCode = totals(); source.journalRevision = 3_906;
   expect(parsePrivateDaysValue(query, source)).toBeNull();
 });
 

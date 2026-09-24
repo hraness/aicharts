@@ -2,7 +2,10 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { readAccountSummary, signOutUsageAccount, warmUsageAccountSession } from "@/lib/usage/account-read-client";
-import { subscribeUsageAccountSignOut } from "@/lib/usage/account-session-events";
+import { retainUsageAccountLifecycle } from "@/lib/usage/account-session-events";
+import { currentUsageAccountScope, subscribeUsageAccountInvalidation, type UsageAccountScope } from "@/lib/usage/account-generation";
+import { readInUsageAccountGeneration } from "@/lib/usage/account-generation-read";
+import { useAccountGeneration } from "./use-account-generation";
 
 export type AccountControlState = "loading" | "ready" | "authentication_required" | "unavailable" | "signing_out" | "sign_out_failed";
 type CopyState = "idle" | "copied" | "failed";
@@ -13,6 +16,9 @@ export function UsageAccountControl({ returnTo }: Readonly<{ returnTo: string }>
   const [accountId, setAccountId] = useState<string | null>(null);
   const [copyState, setCopyState] = useState<CopyState>("idle");
   const owner = useRef({ id: 0, controller: null as AbortController | null, mounted: false });
+  const [authority, setAuthority] = useState<UsageAccountScope | null>(null);
+  const generation = useAccountGeneration();
+  const visibleAccountId = authority !== null && authority.generation === generation && currentUsageAccountScope(authority) ? accountId : null;
 
   const read = useCallback(async () => {
     const current = owner.current, id = ++current.id;
@@ -23,25 +29,36 @@ export function UsageAccountControl({ returnTo }: Readonly<{ returnTo: string }>
       if (current.id === id) { setAccountId(null); setState("unavailable"); }
     }, 20_000);
     try {
-      const reply = await readAccountSummary(controller.signal, { onAuthenticationRequired: () => {
+      const bound = await readInUsageAccountGeneration(() => readAccountSummary(controller.signal, { onAuthenticationRequired: () => {
         if (current.id === id && !controller.signal.aborted) setAccountId(null);
-      } });
+      } }), reply => "account" in reply ? reply.account.accountId : null, () => current.id === id && !controller.signal.aborted,
+      reply => "error" in reply && reply.error.code === "authentication_required");
       if (current.id !== id || controller.signal.aborted) return;
-      if ("account" in reply) { setAccountId(reply.account.accountId); setState("ready"); }
-      else { setAccountId(null); setState(reply.error.code === "authentication_required" ? "authentication_required" : "unavailable"); }
+      if (bound === null) { setAuthority(null); setAccountId(null); setState("unavailable"); return; }
+      const { reply, scope } = bound;
+      if ("account" in reply && scope !== null && currentUsageAccountScope(scope)) { setAuthority(scope); setAccountId(reply.account.accountId); setState("ready"); }
+      else if ("account" in reply) { setAuthority(null); setAccountId(null); setState("unavailable"); }
+      else { setAuthority(null); setAccountId(null); setState(reply.error.code === "authentication_required" ? "authentication_required" : "unavailable"); }
     } catch {
       if (current.id === id && !controller.signal.aborted) { setAccountId(null); setState("unavailable"); }
     } finally { clearTimeout(deadline); if (current.id === id) current.controller = null; }
   }, []);
   useEffect(() => {
     const current = owner.current; current.mounted = true;
-    const unsubscribe = subscribeUsageAccountSignOut(() => {
+    const release = retainUsageAccountLifecycle();
+    const unsubscribe = subscribeUsageAccountInvalidation(reason => {
+      setAuthority(null); setAccountId(null); setCopyState("idle");
+      if (reason === "identity-changed") {
+        setState("loading");
+        if (current.controller === null) void read();
+        return;
+      }
       current.id++; current.controller?.abort(); current.controller = null;
-      setAccountId(null); setCopyState("idle"); setState("authentication_required");
+      setState(reason === "confirmed-signout" || reason === "authentication-required" ? "authentication_required" : "unavailable");
     });
     warmUsageAccountSession();
-    void read();
-    return () => { current.mounted = false; current.id++; current.controller?.abort(); unsubscribe(); };
+    void Promise.resolve().then(() => { if (current.mounted) return read(); });
+    return () => { current.mounted = false; current.id++; current.controller?.abort(); unsubscribe(); release(); };
   }, [read]);
 
   const signOut = async (switchAccount: boolean) => {
@@ -62,14 +79,14 @@ export function UsageAccountControl({ returnTo }: Readonly<{ returnTo: string }>
     finally { clearTimeout(deadline); if (current.id === id) current.controller = null; }
   };
   const copy = async () => {
-    if (accountId === null) return;
+    if (accountId === null || authority === null || !currentUsageAccountScope(authority)) return;
     const current = owner.current, id = current.id;
     try {
       await navigator.clipboard.writeText(accountId);
       if (current.id === id && current.mounted) setCopyState("copied");
     } catch { if (current.id === id && current.mounted) setCopyState("failed"); }
   };
-  return <UsageAccountPanel state={state} accountId={accountId} copyState={copyState} copy={() => void copy()} returnTo={returnTo}
+  return <UsageAccountPanel state={state} accountId={visibleAccountId} copyState={copyState} copy={() => void copy()} returnTo={returnTo}
     retry={() => { setState("loading"); setCopyState("idle"); void read(); }} signOut={switchAccount => void signOut(switchAccount)} />;
 }
 

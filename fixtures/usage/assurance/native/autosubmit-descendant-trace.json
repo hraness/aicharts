@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "finding": "F14",
+  "evidence": "source-trace-only",
+  "runtimeReproduced": false,
+  "baselineSource": "crates/aicharts-cli/src/autosubmit.rs",
+  "baselineFunction": "run_delegate",
+  "trace": [
+    { "action": "spawn_owned_group", "leader": "running", "descendant": "absent" },
+    { "action": "delegate_forks", "leader": "running", "descendant": "running" },
+    { "action": "leader_exits_zero", "leader": "exited_unreaped", "descendant": "running" },
+    { "action": "try_wait_reaps_leader", "leader": "reaped", "descendant": "running" },
+    { "action": "run_delegate_returns_ok", "leader": "reaped", "descendant": "running" }
+  ],
+  "violatedObligation": "Successful delegate settlement includes bounded settlement of its owned descendants.",
+  "futureQualification": [
+    "Use an owned synthetic descendant with a bounded lifetime and explicit cleanup.",
+    "Cover early leader success, failure, ECHILD, deadline, and a descendant that ignores TERM.",
+    "Keep the group leader pinned until group cleanup; do not signal a reused numeric group.",
+    "Run through the applicable supported-OS process custody lane."
+  ]
+}

@@ -1,0 +1,136 @@
+{
+  "schemaVersion": 1,
+  "route": "fresh-production-extraction-with-separate-mathematical-laws",
+  "qualification": "darwin-arm64 pilot; Linux qualification remains required before its CI claim",
+  "versions": {
+    "aeneas": "nightly-2026.09.23-12a018b",
+    "aeneasCommit": "12a018bb0fab3333be572dadc0eab5108758552b",
+    "charon": "0.1.270",
+    "charonCommit": "62585970fc75f61d83c7898ff8dfdd7edaa3c073",
+    "rust": "nightly-2026-09-17",
+    "lean": "4.31.0",
+    "leanCommit": "68218e876d2a38b1985b8590fff244a83c321783"
+  },
+  "artifacts": {
+    "aeneasMac": {
+      "url": "https://github.com/AeneasVerif/aeneas/releases/download/nightly-2026.09.23-12a018b/aeneas-macos-aarch64.tar.gz",
+      "sha256": "de4d3e79e166f706f9dace225594b9015a7eedb262056cc3357d4b71f7d87a86"
+    },
+    "aeneasLinux": {
+      "url": "https://github.com/AeneasVerif/aeneas/releases/download/nightly-2026.09.23-12a018b/aeneas-linux-x86_64.tar.gz",
+      "sha256": "4fc954f56f2f8d53304ee12d46df5023940a083f9b42717b29ee0b233f555acb"
+    },
+    "leanMac": {
+      "url": "https://github.com/leanprover/lean4/releases/download/v4.31.0/lean-4.31.0-darwin_aarch64.tar.zst",
+      "sha256": "264105500c8abdf37b68ffe03390a783ed259807807222698da8dd92d6ce0a27"
+    },
+    "leanLinux": {
+      "url": "https://github.com/leanprover/lean4/releases/download/v4.31.0/lean-4.31.0-linux.tar.zst",
+      "sha256": "07a633cc8d9151cbc08825ea4cdda50d4b02a2c9cb852c0131b13046f49cad7f"
+    }
+  },
+  "platforms": {
+    "darwin-arm64": {
+      "aeneas": {
+        "path": "target/assurance-tools/aeneas-12a018b/aeneas",
+        "sha256": "01a166bb48d247c3ed4bb2b0d5c19804edacde92bf059f24c07d407e36a04bfe"
+      },
+      "charon": {
+        "path": "target/assurance-tools/aeneas-12a018b/charon",
+        "sha256": "da04419dcecba39a657cae68ba07b9bbeb859a1be89261f453b1b23c75996b4f"
+      },
+      "charonDriver": {
+        "path": "target/assurance-tools/aeneas-12a018b/charon-driver",
+        "sha256": "3a1e60209d422ce34882f2abc22663f1279b0a8953467a977d7e00fa1058ebf7"
+      },
+      "lean": {
+        "path": "target/assurance-tools/lean-4.31.0-darwin_aarch64/bin/lean",
+        "sha256": "1b370cfcbf44e80d1b004ab1b1ab9a4c73951f9f7c242140bcff9bc577576554"
+      },
+      "lake": {
+        "path": "target/assurance-tools/lean-4.31.0-darwin_aarch64/bin/lake",
+        "sha256": "58261a1a2fa1a362376c71e02ca854a093e71cc5e6ea64b287a931cb2565273d"
+      },
+      "rustc": {
+        "path": "target/assurance-tools/rustup/toolchains/nightly-2026-09-17-aarch64-apple-darwin/bin/rustc",
+        "sha256": "25f765e04b0d2cea011e4e85b9d48e1587ea449786259e16b17f01cabc848c3b"
+      }
+    },
+    "linux-x64": {
+      "aeneas": {
+        "path": "target/assurance-tools/aeneas-linux-12a018b/aeneas",
+        "sha256": "96d3a9feca18e808c32bcf64f5c2b0980f8bf73631ae7b41463e5c9dcf9ab06f"
+      },
+      "charon": {
+        "path": "target/assurance-tools/aeneas-linux-12a018b/charon",
+        "sha256": "b801e6218aaa3ed59a33a435c8331258e6c48907fb145ca630b9b1d2f7e92e90"
+      },
+      "charonDriver": {
+        "path": "target/assurance-tools/aeneas-linux-12a018b/charon-driver",
+        "sha256": "50177da67d3dc8cc9ad6dbdc5419c082bccd0dcab770421dc45dc0c8899a0b96"
+      },
+      "lean": {
+        "path": "target/assurance-tools/lean-linux/lean-4.31.0-linux/bin/lean",
+        "sha256": "e8baaa71855a616dc351028f3ad2200051b0671f423a1696a100e809302d5550"
+      },
+      "lake": {
+        "path": "target/assurance-tools/lean-linux/lean-4.31.0-linux/bin/lake",
+        "sha256": "60330ab6f07dce20f3fa9ebb08e8b984ea9549eac172afeb15d9d2227060e2b3"
+      },
+      "rustc": {
+        "path": "target/assurance-tools/rustup/toolchains/nightly-2026-09-17-x86_64-unknown-linux-gnu/bin/rustc",
+        "sha256": "f6636ed825b134896bdbff0b433a0d064df766971b8b6610db5e18165d166aee"
+      }
+    }
+  },
+  "rustupHome": "target/assurance-tools/rustup",
+  "backendManifestSha256": "7d527c1294d4a157d9b4266728124893d3324db4fee7b21a34f1595c7bc61de5",
+  "allowedAxioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+  ],
+  "productionTheorems": [
+    "aicharts_metrics.checked_add_exact",
+    "aicharts_metrics.checked_add_bounded_exact",
+    "aicharts_metrics.checked_replace_exact",
+    "aicharts_metrics.array_u8_eq_spec",
+    "aicharts_metrics.merge_owner_exact",
+    "aicharts_metrics.pricing_admit_decimal_exact",
+    "aicharts_metrics.pricing_terminal_body_exact",
+    "aicharts_metrics.pricing_terminal_exact",
+    "aicharts_metrics.pricing_unit_product",
+    "aicharts_metrics.pricing_unit_first_body",
+    "aicharts_metrics.pricing_unit_tail_token",
+    "aicharts_metrics.pricing_unit_tail_body",
+    "aicharts_metrics.pricing_unit_tail_exact",
+    "aicharts_metrics.pricing_unit_rate_exact",
+    "aicharts_metrics.pricing_unit_success_witness",
+    "aicharts_metrics.pricing_unit_overflow_witness",
+    "aicharts_metrics.pricing_unit_limit_witness",
+    "aicharts_metrics.pricing_finish_post",
+    "aicharts_metrics.pricing_body_exact",
+    "aicharts_metrics.pricing_loop_exact",
+    "aicharts_metrics.pricing_all_rates_exact",
+    "aicharts_metrics.pricing_finish_success_iff",
+    "aicharts_metrics.pricing_fold_success_iff",
+    "aicharts_metrics.pricing_all_rates_success_formula",
+    "aicharts_metrics.pricing_expected_result_exact",
+    "aicharts_metrics.pricing_five_bucket_success_witness"
+  ],
+  "mathematicalTheorems": [
+    "UsageLaws.evidence_partition",
+    "UsageLaws.known_zero_is_observed",
+    "UsageLaws.total_append",
+    "UsageLaws.known_append",
+    "UsageLaws.unknown_append",
+    "UsageLaws.correction_conserves_other_observations",
+    "UsageLaws.reasoning_partition",
+    "UsageLaws.bounded_fold_exact",
+    "UsageLaws.bounded_fold_refuses_exactly_over_limit"
+  ],
+  "backends": {
+    "darwin-arm64": "target/assurance-tools/aeneas-12a018b/backends/lean",
+    "linux-x64": "target/assurance-tools/aeneas-linux-12a018b/backends/lean"
+  }
+}

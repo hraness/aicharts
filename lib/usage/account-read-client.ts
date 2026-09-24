@@ -2,7 +2,8 @@ import { broadcastSuiteOidcBrowserSignOut, loadSuiteOidcBrowserSession, signOutS
 import { readUsageAccount } from "./account-client";
 import { clearUsageAccountViews } from "./account-session-events";
 import { readPrivateDays } from "./private-days-client";
-import { readPrivateStats } from "./stats-client";
+import { readPrivateStats, disposeStatsReadReply, StatsReadDeadline } from "./stats-client";
+import type { MetricWorkerFactory } from "./metric-explorer-session";
 import { readUsageConsent } from "./consent-client";
 import type { PrivateDaysRange } from "./private-days-public";
 
@@ -15,6 +16,10 @@ type Options = Readonly<{
   /** Trusted test port; production uses the fixed freshness window. */
   sessionWarmMs?: number;
   onAuthenticationRequired?: () => void;
+  /** Trusted test port; production uses the bundled private stats worker. */
+  statsWorkerFactory?: MetricWorkerFactory;
+  /** Carry the same expiry through account-generation retries. */
+  statsDeadline?: StatsReadDeadline;
 }>;
 const unavailable = () => new Error("usage_unavailable");
 const SESSION_BYTES = 32_768;
@@ -134,13 +139,17 @@ async function settleTransient(signal: AbortSignal, options: Options): Promise<v
 }
 
 async function recoverRead<T>(read: () => Promise<T>, needsAuthentication: (reply: T) => boolean,
-  transient: (reply: T) => boolean, signal: AbortSignal, options: Options): Promise<T> {
+  transient: (reply: T) => boolean, signal: AbortSignal, options: Options, dispose: (reply: T) => void = () => {}): Promise<T> {
   if (signal.aborted) throw unavailable();
+  let owned: T | undefined;
+  const deliver = (reply: T): T => { owned = undefined; return reply; };
   // A thrown transport failure and a refused reply's error value are the same
   // transient outcome here: both mark one bounded retry, never recursion.
   const attempt = async (): Promise<{ reply: T | undefined; transient: boolean }> => {
+    if (owned !== undefined) { dispose(owned); owned = undefined; }
     try {
       const reply = await read();
+      owned = reply;
       return { reply, transient: !signal.aborted && transient(reply) };
     } catch (error) {
       if (!signal.aborted && error instanceof Error && error.message === "usage_unavailable") {
@@ -149,40 +158,42 @@ async function recoverRead<T>(read: () => Promise<T>, needsAuthentication: (repl
       throw error;
     }
   };
-  let outcome = await attempt();
-  if (signal.aborted) throw unavailable();
-  if (outcome.reply !== undefined && needsAuthentication(outcome.reply)) {
-    const first = outcome.reply;
-    options.onAuthenticationRequired?.();
+  try {
+    let outcome = await attempt();
     if (signal.aborted) throw unavailable();
-    try {
-      let joined = beginSessionFlight(signal, options);
-      let session = await untilAbort(joined.flight, signal);
-      // A null settlement means the joined flight died with its owner; a mere
-      // joiner may still drive one fresh protocol before giving up. A failed
-      // owned flight and a signed_out answer are both definitive as-is.
-      if (session === null && !joined.owner && !signal.aborted) {
-        joined = beginSessionFlight(signal, options);
-        session = await untilAbort(joined.flight, signal);
-      }
-      if (!signedIn(session)) return first;
-    } catch {
+    if (outcome.reply !== undefined && needsAuthentication(outcome.reply)) {
+      const first = outcome.reply;
+      options.onAuthenticationRequired?.();
       if (signal.aborted) throw unavailable();
-      return first;
+      try {
+        let joined = beginSessionFlight(signal, options);
+        let session = await untilAbort(joined.flight, signal);
+        // A null settlement means the joined flight died with its owner; a mere
+        // joiner may still drive one fresh protocol before giving up. A failed
+        // owned flight and a signed_out answer are both definitive as-is.
+        if (session === null && !joined.owner && !signal.aborted) {
+          joined = beginSessionFlight(signal, options);
+          session = await untilAbort(joined.flight, signal);
+        }
+        if (!signedIn(session)) return deliver(first);
+      } catch {
+        if (signal.aborted) throw unavailable();
+        return deliver(first);
+      }
+      if (signal.aborted) throw unavailable();
+      // Even an optimistic signed-in view must pass the original strict server
+      // read. A second authentication failure returns as-is; it cannot recurse.
+      outcome = await attempt();
+      if (signal.aborted) throw unavailable();
     }
-    if (signal.aborted) throw unavailable();
-    // Even an optimistic signed-in view must pass the original strict server
-    // read. A second authentication failure returns as-is; it cannot recurse.
-    outcome = await attempt();
-    if (signal.aborted) throw unavailable();
-  }
-  if (outcome.transient) {
-    await settleTransient(signal, options);
-    outcome = await attempt();
-    if (signal.aborted) throw unavailable();
-  }
-  if (outcome.reply === undefined) throw unavailable();
-  return outcome.reply;
+    if (outcome.transient) {
+      await settleTransient(signal, options);
+      outcome = await attempt();
+      if (signal.aborted) throw unavailable();
+    }
+    if (outcome.reply === undefined) throw unavailable();
+    return deliver(outcome.reply);
+  } finally { if (owned !== undefined) dispose(owned); }
 }
 
 /** Browser recovery only. Private GET handlers remain read-only, and consent
@@ -192,10 +203,16 @@ export function readAccountDays(range: PrivateDaysRange, signal: AbortSignal, op
     reply => "error" in reply && reply.error.code === "authentication_required",
     reply => "error" in reply && reply.error.code === "unavailable", signal, options);
 }
-export function readAccountStats(firstUtcDay: number, dayCount: number, signal: AbortSignal, options: Options = {}) {
-  return recoverRead(() => readPrivateStats(firstUtcDay, dayCount, signal, options.fetch),
-    reply => !reply.ok && reply.error === "authentication_required",
-    reply => !reply.ok && reply.error === "unavailable", signal, options);
+export async function readAccountStats(firstUtcDay: number, dayCount: number, signal: AbortSignal, options: Options = {}) {
+  const deadline = new StatsReadDeadline(signal, options.statsDeadline);
+  try {
+    const reply = await recoverRead(() => readPrivateStats(firstUtcDay, dayCount, deadline.signal, options.fetch,
+      { workerFactory: options.statsWorkerFactory, deadline }),
+      reply => !reply.ok && reply.error === "authentication_required",
+      reply => !reply.ok && reply.error === "unavailable", deadline.signal, options, disposeStatsReadReply);
+    if (!deadline.active()) { disposeStatsReadReply(reply); throw unavailable(); }
+    return reply;
+  } finally { deadline.finish(); }
 }
 export function readAccountConsent(signal: AbortSignal, options: Options = {}) {
   return recoverRead(() => readUsageConsent(signal, options.fetch),

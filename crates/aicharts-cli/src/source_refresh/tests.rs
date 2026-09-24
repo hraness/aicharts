@@ -107,9 +107,12 @@ fn pagination_is_complete_and_projects_only_recognized_usage_fields() {
         page(2, vec![event(1789779700000, 20)]),
     ]);
     let rows = fetch(&mut fixture, &auth(), Instant::now(), None).unwrap();
-    assert_eq!(rows.len(), 2);
+    assert_eq!(rows.rows.len(), 2);
     assert_eq!(fixture.calls, 2);
-    assert!(rows.iter().all(|r| r.get("privateTranscript").is_none()));
+    assert!(rows
+        .rows
+        .iter()
+        .all(|r| r.get("privateTranscript").is_none()));
 }
 #[test]
 fn repeated_pages_shrinking_totals_and_empty_truncation_are_rejected() {
@@ -134,7 +137,7 @@ fn append_only_drift_is_tolerated_and_boundary_duplicates_collapse() {
         page(3, vec![event(1789779700000, 20), grown.clone()]),
     ]);
     let rows = fetch(&mut fixture, &auth(), Instant::now(), None).unwrap();
-    assert_eq!(rows.len(), 3);
+    assert_eq!(rows.rows.len(), 3);
     // A boundary-shifted page can re-show an identical event; it collapses
     // instead of double counting, while a mass duplicate still refuses.
     let duped = event(1789779600000, 10);
@@ -143,7 +146,7 @@ fn append_only_drift_is_tolerated_and_boundary_duplicates_collapse() {
         page(2, vec![duped, event(1789779700000, 20)]),
     ]);
     let rows = fetch(&mut fixture, &auth(), Instant::now(), None).unwrap();
-    assert_eq!(rows.len(), 2);
+    assert_eq!(rows.rows.len(), 2);
 }
 #[test]
 fn malformed_usage_is_not_silently_dropped() {
@@ -171,22 +174,75 @@ fn total_deadline_refuses_late_success_without_publishing() {
     assert_eq!(fixture.calls, 0);
 }
 #[test]
-fn merge_replaces_present_utc_days_and_retains_older_absent_days() {
-    let older = event(1789606800000, 5);
-    let old_current = event(1789779600000, 10);
-    let new_current = event(1789779700000, 20);
-    let previous = merge(None, vec![older.clone(), old_current]).unwrap();
-    let result = merge(Some(&previous), vec![new_current.clone()]).unwrap();
+fn merge_replaces_exact_interval_and_retains_both_boundary_tails() {
+    // Monday 09:00 predates the queried Monday 15:00 start. The future
+    // Wednesday row exceeds a clock-rollback upper bound on the same day.
+    let start = 1_789_398_000_000;
+    let end = start + 2 * 86_400_000;
+    let old = vec![
+        event(start - 6 * 3_600_000, 5),
+        event(start, 10),
+        event(start + 2 * 3_600_000, 11),
+        event(end, 12),
+        event(end + 1, 13),
+    ];
+    let previous = serde_json::to_vec(&json!({"usageEventsDisplay":old})).unwrap();
+    let fresh = vec![event(start, 20), event(end, 30)];
+    let result = merge(
+        Some(&previous),
+        Fetched {
+            range: (start, end),
+            rows: fresh.clone(),
+        },
+    )
+    .unwrap();
     let result: Value = serde_json::from_slice(&result).unwrap();
-    let rows = result["usageEventsDisplay"].as_array().unwrap();
     assert_eq!(
-        rows,
-        &vec![project(&older).unwrap(), project(&new_current).unwrap()]
+        result["usageEventsDisplay"],
+        json!([
+            project(&old[0]).unwrap(),
+            project(&fresh[0]).unwrap(),
+            project(&fresh[1]).unwrap(),
+            project(&old[4]).unwrap()
+        ])
     );
     assert_eq!(
-        merge(Some(&previous), vec![]).unwrap_err(),
+        merge(
+            Some(&previous),
+            Fetched {
+                range: (start, end),
+                rows: vec![]
+            }
+        )
+        .unwrap_err(),
         "cursor_refresh_empty_preserved"
     );
+    assert_eq!(
+        merge(
+            Some(&previous),
+            Fetched {
+                range: (start, end),
+                rows: vec![event(start - 1, 10)]
+            }
+        )
+        .unwrap_err(),
+        "cursor_refresh_outside_range"
+    );
+}
+
+#[test]
+fn fetch_rejects_events_outside_requested_interval() {
+    for timestamp in [0, 1_900_000_000_000] {
+        let mut fixture = Fixture::new(vec![page(1, vec![event(timestamp, 10)])]);
+        assert!(fetch_at(
+            &mut fixture,
+            &auth(),
+            Instant::now(),
+            None,
+            1_790_000_000_000
+        )
+        .is_err());
+    }
 }
 
 #[cfg(unix)]
@@ -353,4 +409,51 @@ fn exact_numeric_counts_and_blank_conversation_fallback_are_preserved() {
     assert_eq!(value["tokenUsage"]["inputTokens"], 10);
     assert!(value.get("conversationId").is_none());
     assert!(integer(&json!(1.5)).is_err());
+}
+
+#[test]
+fn assurance_f07_replays_retained_partial_day_counterexample_through_native_fetch_and_merge() {
+    let fixture: Value = serde_json::from_str(include_str!(
+        "../../../../fixtures/usage/assurance/native/cursor-partial-day.json"
+    ))
+    .unwrap();
+    let previous = serde_json::to_vec(&fixture["previous"]).unwrap();
+    let until = fixture["untilMs"].as_u64().unwrap();
+    let since = latest_event_ms(&previous)
+        .unwrap()
+        .saturating_sub(OVERLAP_MS)
+        .min(until);
+    let old = fixture["previous"]["usageEventsDisplay"]
+        .as_array()
+        .unwrap();
+    let fresh: Vec<_> = old
+        .iter()
+        .filter(|event| (since..=until).contains(&event["timestamp"].as_u64().unwrap()))
+        .cloned()
+        .collect();
+    let mut transport = Fixture::new(vec![page(fresh.len(), fresh)]);
+    let fetched = fetch_at(
+        &mut transport,
+        &auth(),
+        Instant::now(),
+        latest_event_ms(&previous),
+        until,
+    )
+    .unwrap();
+    assert_eq!(fetched.range, (since, until));
+    assert_eq!(fetched.rows.len(), 2);
+    let result: Value = serde_json::from_slice(&merge(Some(&previous), fetched).unwrap()).unwrap();
+    let rows = result["usageEventsDisplay"].as_array().unwrap();
+    assert_eq!(rows.len(), old.len());
+    assert!(rows
+        .iter()
+        .any(|event| event["timestamp"] == fixture["earliestEventMs"]));
+    assert_eq!(
+        rows.iter()
+            .map(|event| event["timestamp"].as_u64().unwrap())
+            .collect::<Vec<_>>(),
+        old.iter()
+            .map(|event| event["timestamp"].as_u64().unwrap())
+            .collect::<Vec<_>>()
+    );
 }

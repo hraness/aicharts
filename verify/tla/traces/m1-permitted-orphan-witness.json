@@ -1,0 +1,71 @@
+{
+  "schemaVersion": 1,
+  "case": "m1-permitted-orphan-witness",
+  "invariant": "NoPermittedOrphanWitness",
+  "provenance": "TLC 1.7.4 structured output; TLA values retained verbatim, not production adapter replay",
+  "states": [
+    {
+      "index": 1,
+      "action": "Init",
+      "location": "Initial predicate",
+      "state": "/\\ publications = {}\n/\\ epoch = 0\n/\\ leases = {}\n/\\ settledGood = {}\n/\\ unfencedWrite = FALSE\n/\\ restored = FALSE\n/\\ maintenance = \"idle\"\n/\\ orphanWitness = FALSE\n/\\ objects = {}\n/\\ drainClaim = FALSE\n/\\ lateSQL = FALSE\n/\\ phase = \"open\"\n/\\ capturedEpoch = (opA :> 0 @@ opB :> 0)\n/\\ orphans = {}\n/\\ stage = (opA :> \"idle\" @@ opB :> \"idle\")\n/\\ clock = 0"
+    },
+    {
+      "index": 2,
+      "action": "Acquire",
+      "location": "Acquire line 23, col 5 to line 28, col 47 of module M1Restore",
+      "state": "/\\ publications = {}\n/\\ epoch = 0\n/\\ leases = {opA}\n/\\ settledGood = {}\n/\\ unfencedWrite = FALSE\n/\\ restored = FALSE\n/\\ maintenance = \"idle\"\n/\\ orphanWitness = FALSE\n/\\ objects = {}\n/\\ drainClaim = FALSE\n/\\ lateSQL = FALSE\n/\\ phase = \"open\"\n/\\ capturedEpoch = (opA :> 0 @@ opB :> 0)\n/\\ orphans = {}\n/\\ stage = (opA :> \"acquired\" @@ opB :> \"idle\")\n/\\ clock = 0"
+    },
+    {
+      "index": 3,
+      "action": "Dispatch",
+      "location": "Dispatch line 31, col 5 to line 34, col 75 of module M1Restore",
+      "state": "/\\ publications = {}\n/\\ epoch = 0\n/\\ leases = {opA}\n/\\ settledGood = {}\n/\\ unfencedWrite = FALSE\n/\\ restored = FALSE\n/\\ maintenance = \"idle\"\n/\\ orphanWitness = FALSE\n/\\ objects = {}\n/\\ drainClaim = FALSE\n/\\ lateSQL = FALSE\n/\\ phase = \"open\"\n/\\ capturedEpoch = (opA :> 0 @@ opB :> 0)\n/\\ orphans = {}\n/\\ stage = (opA :> \"provider\" @@ opB :> \"idle\")\n/\\ clock = 0"
+    },
+    {
+      "index": 4,
+      "action": "SettleWithoutContinuation",
+      "location": "SettleWithoutContinuation line 64, col 5 to line 68, col 62 of module M1Restore",
+      "state": "/\\ publications = {}\n/\\ epoch = 0\n/\\ leases = {}\n/\\ settledGood = {}\n/\\ unfencedWrite = FALSE\n/\\ restored = FALSE\n/\\ maintenance = \"idle\"\n/\\ orphanWitness = FALSE\n/\\ objects = {}\n/\\ drainClaim = FALSE\n/\\ lateSQL = FALSE\n/\\ phase = \"open\"\n/\\ capturedEpoch = (opA :> 0 @@ opB :> 0)\n/\\ orphans = {}\n/\\ stage = (opA :> \"tail\" @@ opB :> \"idle\")\n/\\ clock = 0"
+    },
+    {
+      "index": 5,
+      "action": "Close",
+      "location": "Close line 93, col 5 to line 96, col 75 of module M1Restore",
+      "state": "/\\ publications = {}\n/\\ epoch = 0\n/\\ leases = {}\n/\\ settledGood = {}\n/\\ unfencedWrite = FALSE\n/\\ restored = FALSE\n/\\ maintenance = \"idle\"\n/\\ orphanWitness = FALSE\n/\\ objects = {}\n/\\ drainClaim = FALSE\n/\\ lateSQL = FALSE\n/\\ phase = \"closed\"\n/\\ capturedEpoch = (opA :> 0 @@ opB :> 0)\n/\\ orphans = {}\n/\\ stage = (opA :> \"tail\" @@ opB :> \"idle\")\n/\\ clock = 0"
+    },
+    {
+      "index": 6,
+      "action": "ObserveDrain",
+      "location": "ObserveDrain line 99, col 5 to line 102, col 62 of module M1Restore",
+      "state": "/\\ publications = {}\n/\\ epoch = 0\n/\\ leases = {}\n/\\ settledGood = {}\n/\\ unfencedWrite = FALSE\n/\\ restored = FALSE\n/\\ maintenance = \"idle\"\n/\\ orphanWitness = FALSE\n/\\ objects = {}\n/\\ drainClaim = TRUE\n/\\ lateSQL = FALSE\n/\\ phase = \"closed\"\n/\\ capturedEpoch = (opA :> 0 @@ opB :> 0)\n/\\ orphans = {}\n/\\ stage = (opA :> \"tail\" @@ opB :> \"idle\")\n/\\ clock = 0"
+    },
+    {
+      "index": 7,
+      "action": "Restore",
+      "location": "Restore line 105, col 5 to line 108, col 62 of module M1Restore",
+      "state": "/\\ publications = {}\n/\\ epoch = 0\n/\\ leases = {}\n/\\ settledGood = {}\n/\\ unfencedWrite = FALSE\n/\\ restored = TRUE\n/\\ maintenance = \"idle\"\n/\\ orphanWitness = FALSE\n/\\ objects = {}\n/\\ drainClaim = TRUE\n/\\ lateSQL = FALSE\n/\\ phase = \"closed\"\n/\\ capturedEpoch = (opA :> 0 @@ opB :> 0)\n/\\ orphans = {}\n/\\ stage = (opA :> \"tail\" @@ opB :> \"idle\")\n/\\ clock = 0"
+    },
+    {
+      "index": 8,
+      "action": "PublishEpoch",
+      "location": "PublishEpoch line 111, col 5 to line 115, col 62 of module M1Restore",
+      "state": "/\\ publications = {}\n/\\ epoch = 1\n/\\ leases = {}\n/\\ settledGood = {}\n/\\ unfencedWrite = FALSE\n/\\ restored = TRUE\n/\\ maintenance = \"idle\"\n/\\ orphanWitness = FALSE\n/\\ objects = {}\n/\\ drainClaim = TRUE\n/\\ lateSQL = FALSE\n/\\ phase = \"open\"\n/\\ capturedEpoch = (opA :> 0 @@ opB :> 0)\n/\\ orphans = {}\n/\\ stage = (opA :> \"tail\" @@ opB :> \"idle\")\n/\\ clock = 0"
+    },
+    {
+      "index": 9,
+      "action": "LateImmutableOrphan",
+      "location": "LateImmutableOrphan line 71, col 5 to line 77, col 47 of module M1Restore",
+      "state": "/\\ publications = {}\n/\\ epoch = 1\n/\\ leases = {}\n/\\ settledGood = {}\n/\\ unfencedWrite = FALSE\n/\\ restored = TRUE\n/\\ maintenance = \"idle\"\n/\\ orphanWitness = TRUE\n/\\ objects = {opA}\n/\\ drainClaim = TRUE\n/\\ lateSQL = FALSE\n/\\ phase = \"open\"\n/\\ capturedEpoch = (opA :> 0 @@ opB :> 0)\n/\\ orphans = {opA}\n/\\ stage = (opA :> \"settled\" @@ opB :> \"idle\")\n/\\ clock = 0"
+    }
+  ],
+  "kind": "witness",
+  "moduleSha256": "79ccdd627f585fe49a64a8c541de381c392f8d769862ebc34eb8fab4ca6eb82c",
+  "configSha256": "39760170c7ab25e131714ef5f23e21cef2b45ebd0da598bd8000d823ad2d2675",
+  "counts": {
+    "generated": 667,
+    "distinct": 299,
+    "queued": 81
+  },
+  "tlcArtifactSha256": "936a262061c914694dfd669a543be24573c45d5aa0ff20a8b96b23d01e050e88"
+}

@@ -14,8 +14,8 @@
       "owner": "crates/aicharts-ledger/src/lib.rs",
       "deletion": "crates/aicharts-ledger/src/lib.rs",
       "budget": {
-        "rowsPerAccount": 100000,
-        "bytesPerAccountMonth": 52428800
+        "rowsPerAccount": 500000,
+        "sharedDatabaseBytes": 536870912
       },
       "note": "on-device canonical usage ledger; uploads are derived frames"
     },
@@ -25,8 +25,8 @@
       "owner": "crates/aicharts-cli/src/enrollment.rs",
       "deletion": "crates/aicharts-cli/src/enrollment.rs",
       "budget": {
-        "rowsPerAccount": 100000,
-        "bytesPerAccountMonth": 52428800
+        "rowsPerAccount": 1000000,
+        "accountJournalRevisions": 4096
       },
       "note": "enrolled upload of canonical frames to usage.aicharts.io"
     },
@@ -105,71 +105,6 @@
       "owner": "services/usage-worker/src/stats-http.ts",
       "note": "Bounded native snapshot/status and private query endpoints using existing enrollment and restore authority; max 4 MiB upload."
     },
-    "durable-object:usage_stats_control": {
-      "kind": "authoritative",
-      "retention": "account",
-      "owner": "services/usage-worker/src/stats-state.ts",
-      "deletion": "services/usage-worker/src/enrollment.ts",
-      "budget": {
-        "rowsPerAccount": 1
-      },
-      "note": "Numeric account projection control, canonical client writer ownership, settled idempotency receipts, or one pending immutable-object intent. Preserved under existing account lifecycle and restore fencing."
-    },
-    "durable-object:usage_stats_writers": {
-      "kind": "authoritative",
-      "retention": "account",
-      "owner": "services/usage-worker/src/stats-state.ts",
-      "deletion": "services/usage-worker/src/enrollment.ts",
-      "budget": {
-        "rowsPerAccount": 64
-      },
-      "note": "Numeric account projection control, canonical client writer ownership, settled idempotency receipts, or one pending immutable-object intent. Preserved under existing account lifecycle and restore fencing."
-    },
-    "durable-object:usage_stats_devices": {
-      "kind": "authoritative",
-      "retention": "account",
-      "owner": "services/usage-worker/src/stats-state.ts",
-      "deletion": "services/usage-worker/src/enrollment.ts",
-      "budget": {
-        "rowsPerAccount": 128
-      },
-      "note": "Numeric account projection control, canonical client writer ownership, settled idempotency receipts, or one pending immutable-object intent. Preserved under existing account lifecycle and restore fencing."
-    },
-    "durable-object:usage_stats_pending": {
-      "kind": "authoritative",
-      "retention": "account",
-      "owner": "services/usage-worker/src/stats-state.ts",
-      "deletion": "services/usage-worker/src/enrollment.ts",
-      "budget": {
-        "rowsPerAccount": 1
-      },
-      "note": "Numeric account projection control, canonical client writer ownership, settled idempotency receipts, or one pending immutable-object intent. Preserved under existing account lifecycle and restore fencing."
-    },
-    "durable-object:usage_stats_days": {
-      "kind": "derived",
-      "retention": "account",
-      "owner": "services/usage-worker/src/stats-state.ts",
-      "source": "r2:usage-stats-v2-snapshots",
-      "budget": {
-        "clientDaysPerAccount": 65536,
-        "aggregateRowsPerAccount": 262144,
-        "bytesPerAccount": 134217728
-      },
-      "note": "Rebuildable numeric daily projections; explicit replacement windows exclude overlapping v1 totals."
-    },
-    "r2:usage-stats-v2-snapshots": {
-      "kind": "authoritative",
-      "retention": "account",
-      "owner": "services/usage-worker/src/stats-objects.ts",
-      "deletion": "services/usage-worker/src/enrollment.ts",
-      "budget": {
-        "bytesPerSnapshot": 4194304,
-        "bytesPerReceipt": 1024,
-        "cumulativeBytesPerAccount": 8589934592,
-        "revisionsPerAccount": 1000000
-      },
-      "note": "Existing private R2 bucket; content-addressed numeric snapshots and immutable receipts. SQL references distinguish committed receipts from abandoned intents; no source transcripts or credentials."
-    },
     "local:usage-source-cache": {
       "kind": "authoritative",
       "retention": "persistent",
@@ -227,6 +162,999 @@
         "timeoutSeconds": 7200
       },
       "note": "Explicit user-requested process capture; only complete numeric observations retained, private cache bound to executable identity. Raw streams remain in bounded memory and are never persisted or echoed."
+    },
+    "local:usage-import-checkpoint": {
+      "kind": "derived",
+      "retention": "persistent",
+      "owner": "crates/aicharts-cli/src/source_checkpoint.rs",
+      "source": "explicit qualified local Codex profile sources",
+      "budget": {
+        "bytesPerCheckpoint": 268435456,
+        "filesPerCheckpoint": 65536,
+        "observationsPerCheckpoint": 2000000,
+        "payloadFilesPerStore": 2,
+        "lockFilesPerStore": 1,
+        "capacityRefs": {
+          "import-checkpoint-bytes": 268435456,
+          "import-checkpoint-files": 65536,
+          "import-checkpoint-observations": 2000000
+        }
+      },
+      "note": "Explicit incremental collection only. Private current/staged derived checkpoint plus stable lock; full consumed-prefix verification precedes reuse. Failed/partial/projection-refused scans retain prior bytes. Limits describe payloads, not physical disk allocation.",
+      "assurancePolicy": "derived-projections"
+    },
+    "local:usage-source-health": {
+      "kind": "authoritative",
+      "retention": "persistent",
+      "owner": "crates/aicharts-cli/src/source_health.rs",
+      "deletion": "crates/aicharts-cli/src/source_health.rs",
+      "budget": {
+        "bytesPerDocument": 131072,
+        "clientsPerDocument": 55,
+        "codesPerObservation": 16,
+        "payloadFilesPerStore": 2,
+        "lockFilesPerStore": 1,
+        "capacityRefs": {
+          "source-health-bytes": 131072,
+          "source-health-clients": 55,
+          "source-health-codes": 16
+        }
+      },
+      "note": "Only explicit mutating collection writes private numeric health. Independent last attempt, complete last good and exact-flight publication evidence; paths and opaque profile/flight bindings are withheld from exports. Current/staged payload and stable lock; no physical allocation claim.",
+      "assurancePolicy": "canonical-account-history"
+    },
+    "worker:usage_admission_audit": {
+      "kind": "authoritative",
+      "owner": "services/usage-worker/src/admission-schema.ts",
+      "retention": "account",
+      "assurancePolicy": "canonical-account-history",
+      "budget": {
+        "capacityRefs": {
+          "max-admission-heads": 1000000,
+          "max-admission-day-heads": 65536,
+          "max-admission-revisions": 4096,
+          "account-max-devices": 128
+        }
+      },
+      "deletion": "services/usage-worker/src/admission-schema.ts",
+      "note": "Limits refer to the shared owning store, not additive allocations for every table. Logical payload/row ceilings do not attest SQLite, index or object metadata overhead. Retention/reclamation remains qualification-gated under verify/assurance/retention.json; no quota-driven deletion."
+    },
+    "worker:usage_admission_control": {
+      "kind": "authoritative",
+      "owner": "services/usage-worker/src/admission-schema.ts",
+      "retention": "tombstone",
+      "assurancePolicy": "authority-and-deletion-controls",
+      "budget": {
+        "capacityRefs": {
+          "max-admission-heads": 1000000,
+          "max-admission-day-heads": 65536,
+          "max-admission-revisions": 4096,
+          "account-max-devices": 128
+        }
+      },
+      "deletion": "services/usage-worker/src/admission-schema.ts",
+      "note": "Limits refer to the shared owning store, not additive allocations for every table. Logical payload/row ceilings do not attest SQLite, index or object metadata overhead. Retention/reclamation remains qualification-gated under verify/assurance/retention.json; no quota-driven deletion."
+    },
+    "worker:usage_admission_days": {
+      "kind": "derived",
+      "owner": "services/usage-worker/src/admission-schema.ts",
+      "retention": "persistent",
+      "assurancePolicy": "derived-projections",
+      "budget": {
+        "capacityRefs": {
+          "max-admission-heads": 1000000,
+          "max-admission-day-heads": 65536,
+          "max-admission-revisions": 4096,
+          "account-max-devices": 128
+        }
+      },
+      "source": "committed canonical history and current authority controls",
+      "note": "Limits refer to the shared owning store, not additive allocations for every table. Logical payload/row ceilings do not attest SQLite, index or object metadata overhead. Retention/reclamation remains qualification-gated under verify/assurance/retention.json; no quota-driven deletion."
+    },
+    "worker:usage_admission_devices": {
+      "kind": "authoritative",
+      "owner": "services/usage-worker/src/admission-schema.ts",
+      "retention": "tombstone",
+      "assurancePolicy": "authority-and-deletion-controls",
+      "budget": {
+        "capacityRefs": {
+          "max-admission-heads": 1000000,
+          "max-admission-day-heads": 65536,
+          "max-admission-revisions": 4096,
+          "account-max-devices": 128
+        }
+      },
+      "deletion": "services/usage-worker/src/admission-schema.ts",
+      "note": "Limits refer to the shared owning store, not additive allocations for every table. Logical payload/row ceilings do not attest SQLite, index or object metadata overhead. Retention/reclamation remains qualification-gated under verify/assurance/retention.json; no quota-driven deletion."
+    },
+    "worker:usage_admission_heads": {
+      "kind": "authoritative",
+      "owner": "services/usage-worker/src/admission-schema.ts",
+      "retention": "account",
+      "assurancePolicy": "canonical-account-history",
+      "budget": {
+        "capacityRefs": {
+          "max-admission-heads": 1000000,
+          "max-admission-day-heads": 65536,
+          "max-admission-revisions": 4096,
+          "account-max-devices": 128
+        }
+      },
+      "deletion": "services/usage-worker/src/admission-schema.ts",
+      "note": "Limits refer to the shared owning store, not additive allocations for every table. Logical payload/row ceilings do not attest SQLite, index or object metadata overhead. Retention/reclamation remains qualification-gated under verify/assurance/retention.json; no quota-driven deletion."
+    },
+    "worker:usage_admission_journal": {
+      "kind": "authoritative",
+      "owner": "services/usage-worker/src/admission-schema.ts",
+      "retention": "tombstone",
+      "assurancePolicy": "authority-and-deletion-controls",
+      "budget": {
+        "capacityRefs": {
+          "max-admission-heads": 1000000,
+          "max-admission-day-heads": 65536,
+          "max-admission-revisions": 4096,
+          "account-max-devices": 128
+        }
+      },
+      "deletion": "services/usage-worker/src/admission-schema.ts",
+      "note": "Limits refer to the shared owning store, not additive allocations for every table. Logical payload/row ceilings do not attest SQLite, index or object metadata overhead. Retention/reclamation remains qualification-gated under verify/assurance/retention.json; no quota-driven deletion."
+    },
+    "worker:usage_admission_pending": {
+      "kind": "authoritative",
+      "owner": "services/usage-worker/src/admission-schema.ts",
+      "retention": "tombstone",
+      "assurancePolicy": "authority-and-deletion-controls",
+      "budget": {
+        "capacityRefs": {
+          "max-admission-heads": 1000000,
+          "max-admission-day-heads": 65536,
+          "max-admission-revisions": 4096,
+          "account-max-devices": 128
+        }
+      },
+      "deletion": "services/usage-worker/src/admission-schema.ts",
+      "note": "Limits refer to the shared owning store, not additive allocations for every table. Logical payload/row ceilings do not attest SQLite, index or object metadata overhead. Retention/reclamation remains qualification-gated under verify/assurance/retention.json; no quota-driven deletion."
+    },
+    "worker:account_enrollment": {
+      "kind": "authoritative",
+      "owner": "services/usage-worker/src/enrollment.ts",
+      "retention": "tombstone",
+      "assurancePolicy": "authority-and-deletion-controls",
+      "budget": {
+        "capacityRefs": {
+          "account-max-devices": 128,
+          "account-state-bytes": 131072
+        }
+      },
+      "deletion": "services/usage-worker/src/enrollment.ts",
+      "note": "Limits refer to the shared owning store, not additive allocations for every table. Logical payload/row ceilings do not attest SQLite, index or object metadata overhead. Retention/reclamation remains qualification-gated under verify/assurance/retention.json; no quota-driven deletion."
+    },
+    "worker:leaderboard_index": {
+      "kind": "authoritative",
+      "owner": "services/usage-worker/src/leaderboard-index.ts",
+      "retention": "tombstone",
+      "assurancePolicy": "authority-and-deletion-controls",
+      "budget": {
+        "capacityRefs": {
+          "leaderboard-max-members": 128,
+          "leaderboard-max-tombstones": 256,
+          "leaderboard-state-bytes": 131072
+        }
+      },
+      "deletion": "services/usage-worker/src/leaderboard-index.ts",
+      "note": "Limits refer to the shared owning store, not additive allocations for every table. Logical payload/row ceilings do not attest SQLite, index or object metadata overhead. Retention/reclamation remains qualification-gated under verify/assurance/retention.json; no quota-driven deletion."
+    },
+    "worker:pairing_state": {
+      "kind": "authoritative",
+      "owner": "services/usage-worker/src/pairing.ts",
+      "retention": "tombstone",
+      "assurancePolicy": "authority-and-deletion-controls",
+      "budget": {
+        "capacityRefs": {
+          "pairing-state-bytes": 8192
+        }
+      },
+      "deletion": "services/usage-worker/src/pairing.ts",
+      "note": "Limits refer to the shared owning store, not additive allocations for every table. Logical payload/row ceilings do not attest SQLite, index or object metadata overhead. Retention/reclamation remains qualification-gated under verify/assurance/retention.json; no quota-driven deletion."
+    },
+    "worker:fence_lease": {
+      "kind": "authoritative",
+      "owner": "services/usage-worker/src/restore-fence.ts",
+      "retention": "tombstone",
+      "assurancePolicy": "authority-and-deletion-controls",
+      "budget": {
+        "capacityRefs": {
+          "restore-max-leases": 64,
+          "restore-max-attempts": 1000000,
+          "restore-state-bytes": 65536
+        }
+      },
+      "deletion": "services/usage-worker/src/restore-fence.ts",
+      "note": "Limits refer to the shared owning store, not additive allocations for every table. Logical payload/row ceilings do not attest SQLite, index or object metadata overhead. Retention/reclamation remains qualification-gated under verify/assurance/retention.json; no quota-driven deletion."
+    },
+    "worker:restore_fence": {
+      "kind": "authoritative",
+      "owner": "services/usage-worker/src/restore-fence.ts",
+      "retention": "tombstone",
+      "assurancePolicy": "authority-and-deletion-controls",
+      "budget": {
+        "capacityRefs": {
+          "restore-max-leases": 64,
+          "restore-max-attempts": 1000000,
+          "restore-state-bytes": 65536
+        }
+      },
+      "deletion": "services/usage-worker/src/restore-fence.ts",
+      "note": "Limits refer to the shared owning store, not additive allocations for every table. Logical payload/row ceilings do not attest SQLite, index or object metadata overhead. Retention/reclamation remains qualification-gated under verify/assurance/retention.json; no quota-driven deletion."
+    },
+    "worker:usage_stats_control": {
+      "kind": "authoritative",
+      "owner": "services/usage-worker/src/stats-state.ts",
+      "retention": "tombstone",
+      "assurancePolicy": "authority-and-deletion-controls",
+      "budget": {
+        "capacityRefs": {
+          "max-stats-stored-days": 65536,
+          "max-stats-stored-rows": 262144,
+          "max-stats-stored-bytes": 134217728,
+          "max-stats-immutable-bytes": 8589934592,
+          "max-stats-revisions": 1000000,
+          "stats-day-sources": 65536
+        }
+      },
+      "deletion": "services/usage-worker/src/stats-state.ts",
+      "note": "Limits refer to the shared owning store, not additive allocations for every table. Logical payload/row ceilings do not attest SQLite, index or object metadata overhead. Retention/reclamation remains qualification-gated under verify/assurance/retention.json; no quota-driven deletion."
+    },
+    "worker:usage_stats_day_meta": {
+      "kind": "derived",
+      "owner": "services/usage-worker/src/stats-state.ts",
+      "retention": "persistent",
+      "assurancePolicy": "derived-projections",
+      "budget": {
+        "capacityRefs": {
+          "max-stats-stored-days": 65536,
+          "max-stats-stored-rows": 262144,
+          "max-stats-stored-bytes": 134217728,
+          "max-stats-immutable-bytes": 8589934592,
+          "max-stats-revisions": 1000000,
+          "stats-day-sources": 65536
+        }
+      },
+      "source": "committed canonical history and current authority controls",
+      "note": "Limits refer to the shared owning store, not additive allocations for every table. Logical payload/row ceilings do not attest SQLite, index or object metadata overhead. Retention/reclamation remains qualification-gated under verify/assurance/retention.json; no quota-driven deletion."
+    },
+    "worker:usage_stats_day_rows": {
+      "kind": "derived",
+      "owner": "services/usage-worker/src/stats-state.ts",
+      "retention": "persistent",
+      "assurancePolicy": "derived-projections",
+      "budget": {
+        "capacityRefs": {
+          "max-stats-stored-days": 65536,
+          "max-stats-stored-rows": 262144,
+          "max-stats-stored-bytes": 134217728,
+          "max-stats-immutable-bytes": 8589934592,
+          "max-stats-revisions": 1000000,
+          "stats-day-sources": 65536
+        }
+      },
+      "source": "committed canonical history and current authority controls",
+      "note": "Limits refer to the shared owning store, not additive allocations for every table. Logical payload/row ceilings do not attest SQLite, index or object metadata overhead. Retention/reclamation remains qualification-gated under verify/assurance/retention.json; no quota-driven deletion."
+    },
+    "worker:usage_stats_days": {
+      "kind": "authoritative",
+      "owner": "services/usage-worker/src/stats-state.ts",
+      "retention": "account",
+      "assurancePolicy": "canonical-account-history",
+      "budget": {
+        "capacityRefs": {
+          "max-stats-stored-days": 65536,
+          "max-stats-stored-rows": 262144,
+          "max-stats-stored-bytes": 134217728,
+          "max-stats-immutable-bytes": 8589934592,
+          "max-stats-revisions": 1000000,
+          "stats-day-sources": 65536
+        }
+      },
+      "deletion": "services/usage-worker/src/stats-state.ts",
+      "note": "Limits refer to the shared owning store, not additive allocations for every table. Logical payload/row ceilings do not attest SQLite, index or object metadata overhead. Retention/reclamation remains qualification-gated under verify/assurance/retention.json; no quota-driven deletion."
+    },
+    "worker:usage_stats_devices": {
+      "kind": "authoritative",
+      "owner": "services/usage-worker/src/stats-state.ts",
+      "retention": "tombstone",
+      "assurancePolicy": "authority-and-deletion-controls",
+      "budget": {
+        "capacityRefs": {
+          "max-stats-stored-days": 65536,
+          "max-stats-stored-rows": 262144,
+          "max-stats-stored-bytes": 134217728,
+          "max-stats-immutable-bytes": 8589934592,
+          "max-stats-revisions": 1000000,
+          "stats-day-sources": 65536
+        }
+      },
+      "deletion": "services/usage-worker/src/stats-state.ts",
+      "note": "Limits refer to the shared owning store, not additive allocations for every table. Logical payload/row ceilings do not attest SQLite, index or object metadata overhead. Retention/reclamation remains qualification-gated under verify/assurance/retention.json; no quota-driven deletion."
+    },
+    "worker:usage_stats_pending": {
+      "kind": "authoritative",
+      "owner": "services/usage-worker/src/stats-state.ts",
+      "retention": "tombstone",
+      "assurancePolicy": "authority-and-deletion-controls",
+      "budget": {
+        "capacityRefs": {
+          "max-stats-stored-days": 65536,
+          "max-stats-stored-rows": 262144,
+          "max-stats-stored-bytes": 134217728,
+          "max-stats-immutable-bytes": 8589934592,
+          "max-stats-revisions": 1000000,
+          "stats-day-sources": 65536
+        }
+      },
+      "deletion": "services/usage-worker/src/stats-state.ts",
+      "note": "Limits refer to the shared owning store, not additive allocations for every table. Logical payload/row ceilings do not attest SQLite, index or object metadata overhead. Retention/reclamation remains qualification-gated under verify/assurance/retention.json; no quota-driven deletion."
+    },
+    "worker:usage_stats_writers": {
+      "kind": "authoritative",
+      "owner": "services/usage-worker/src/stats-state.ts",
+      "retention": "tombstone",
+      "assurancePolicy": "authority-and-deletion-controls",
+      "budget": {
+        "capacityRefs": {
+          "max-stats-stored-days": 65536,
+          "max-stats-stored-rows": 262144,
+          "max-stats-stored-bytes": 134217728,
+          "max-stats-immutable-bytes": 8589934592,
+          "max-stats-revisions": 1000000,
+          "stats-day-sources": 65536
+        }
+      },
+      "deletion": "services/usage-worker/src/stats-state.ts",
+      "note": "Limits refer to the shared owning store, not additive allocations for every table. Logical payload/row ceilings do not attest SQLite, index or object metadata overhead. Retention/reclamation remains qualification-gated under verify/assurance/retention.json; no quota-driven deletion."
+    },
+    "ledger:measurements": {
+      "kind": "authoritative",
+      "owner": "crates/aicharts-ledger/src/storage.rs",
+      "retention": "account",
+      "assurancePolicy": "canonical-account-history",
+      "budget": {
+        "capacityRefs": {
+          "ledger-max-sources": 32768,
+          "ledger-max-occurrences": 500000,
+          "ledger-max-associations": 1000000,
+          "ledger-max-database-bytes": 536870912
+        }
+      },
+      "deletion": "crates/aicharts-ledger/src/storage.rs",
+      "note": "Limits refer to the shared owning store, not additive allocations for every table. Logical payload/row ceilings do not attest SQLite, index or object metadata overhead. Retention/reclamation remains qualification-gated under verify/assurance/retention.json; no quota-driven deletion."
+    },
+    "ledger:meta": {
+      "kind": "authoritative",
+      "owner": "crates/aicharts-ledger/src/storage.rs",
+      "retention": "tombstone",
+      "assurancePolicy": "authority-and-deletion-controls",
+      "budget": {
+        "capacityRefs": {
+          "ledger-max-sources": 32768,
+          "ledger-max-occurrences": 500000,
+          "ledger-max-associations": 1000000,
+          "ledger-max-database-bytes": 536870912
+        }
+      },
+      "deletion": "crates/aicharts-ledger/src/storage.rs",
+      "note": "Limits refer to the shared owning store, not additive allocations for every table. Logical payload/row ceilings do not attest SQLite, index or object metadata overhead. Retention/reclamation remains qualification-gated under verify/assurance/retention.json; no quota-driven deletion."
+    },
+    "ledger:outbox": {
+      "kind": "authoritative",
+      "owner": "crates/aicharts-ledger/src/storage.rs",
+      "retention": "tombstone",
+      "assurancePolicy": "authority-and-deletion-controls",
+      "budget": {
+        "capacityRefs": {
+          "ledger-max-sources": 32768,
+          "ledger-max-occurrences": 500000,
+          "ledger-max-associations": 1000000,
+          "ledger-max-database-bytes": 536870912
+        }
+      },
+      "deletion": "crates/aicharts-ledger/src/storage.rs",
+      "note": "Limits refer to the shared owning store, not additive allocations for every table. Logical payload/row ceilings do not attest SQLite, index or object metadata overhead. Retention/reclamation remains qualification-gated under verify/assurance/retention.json; no quota-driven deletion."
+    },
+    "ledger:source_usage": {
+      "kind": "authoritative",
+      "owner": "crates/aicharts-ledger/src/storage.rs",
+      "retention": "account",
+      "assurancePolicy": "canonical-account-history",
+      "budget": {
+        "capacityRefs": {
+          "ledger-max-sources": 32768,
+          "ledger-max-occurrences": 500000,
+          "ledger-max-associations": 1000000,
+          "ledger-max-database-bytes": 536870912
+        }
+      },
+      "deletion": "crates/aicharts-ledger/src/storage.rs",
+      "note": "Limits refer to the shared owning store, not additive allocations for every table. Logical payload/row ceilings do not attest SQLite, index or object metadata overhead. Retention/reclamation remains qualification-gated under verify/assurance/retention.json; no quota-driven deletion."
+    },
+    "ledger:sources": {
+      "kind": "authoritative",
+      "owner": "crates/aicharts-ledger/src/storage.rs",
+      "retention": "account",
+      "assurancePolicy": "canonical-account-history",
+      "budget": {
+        "capacityRefs": {
+          "ledger-max-sources": 32768,
+          "ledger-max-occurrences": 500000,
+          "ledger-max-associations": 1000000,
+          "ledger-max-database-bytes": 536870912
+        }
+      },
+      "deletion": "crates/aicharts-ledger/src/storage.rs",
+      "note": "Limits refer to the shared owning store, not additive allocations for every table. Logical payload/row ceilings do not attest SQLite, index or object metadata overhead. Retention/reclamation remains qualification-gated under verify/assurance/retention.json; no quota-driven deletion."
+    },
+    "ledger:sender_accepted": {
+      "kind": "authoritative",
+      "owner": "crates/aicharts-ledger/src/sender.rs",
+      "retention": "tombstone",
+      "assurancePolicy": "authority-and-deletion-controls",
+      "budget": {
+        "capacityRefs": {
+          "ledger-max-sources": 32768,
+          "ledger-max-occurrences": 500000,
+          "ledger-max-associations": 1000000,
+          "ledger-max-database-bytes": 536870912
+        }
+      },
+      "deletion": "crates/aicharts-ledger/src/sender.rs",
+      "note": "Limits refer to the shared owning store, not additive allocations for every table. Logical payload/row ceilings do not attest SQLite, index or object metadata overhead. Retention/reclamation remains qualification-gated under verify/assurance/retention.json; no quota-driven deletion."
+    },
+    "ledger:sender_batch": {
+      "kind": "authoritative",
+      "owner": "crates/aicharts-ledger/src/sender.rs",
+      "retention": "tombstone",
+      "assurancePolicy": "authority-and-deletion-controls",
+      "budget": {
+        "capacityRefs": {
+          "ledger-max-sources": 32768,
+          "ledger-max-occurrences": 500000,
+          "ledger-max-associations": 1000000,
+          "ledger-max-database-bytes": 536870912
+        }
+      },
+      "deletion": "crates/aicharts-ledger/src/sender.rs",
+      "note": "Limits refer to the shared owning store, not additive allocations for every table. Logical payload/row ceilings do not attest SQLite, index or object metadata overhead. Retention/reclamation remains qualification-gated under verify/assurance/retention.json; no quota-driven deletion."
+    },
+    "ledger:sender_batch_members": {
+      "kind": "authoritative",
+      "owner": "crates/aicharts-ledger/src/sender.rs",
+      "retention": "tombstone",
+      "assurancePolicy": "authority-and-deletion-controls",
+      "budget": {
+        "capacityRefs": {
+          "ledger-max-sources": 32768,
+          "ledger-max-occurrences": 500000,
+          "ledger-max-associations": 1000000,
+          "ledger-max-database-bytes": 536870912
+        }
+      },
+      "deletion": "crates/aicharts-ledger/src/sender.rs",
+      "note": "Limits refer to the shared owning store, not additive allocations for every table. Logical payload/row ceilings do not attest SQLite, index or object metadata overhead. Retention/reclamation remains qualification-gated under verify/assurance/retention.json; no quota-driven deletion."
+    },
+    "ledger:sender_binding": {
+      "kind": "authoritative",
+      "owner": "crates/aicharts-ledger/src/sender.rs",
+      "retention": "tombstone",
+      "assurancePolicy": "authority-and-deletion-controls",
+      "budget": {
+        "capacityRefs": {
+          "ledger-max-sources": 32768,
+          "ledger-max-occurrences": 500000,
+          "ledger-max-associations": 1000000,
+          "ledger-max-database-bytes": 536870912
+        }
+      },
+      "deletion": "crates/aicharts-ledger/src/sender.rs",
+      "note": "Limits refer to the shared owning store, not additive allocations for every table. Logical payload/row ceilings do not attest SQLite, index or object metadata overhead. Retention/reclamation remains qualification-gated under verify/assurance/retention.json; no quota-driven deletion."
+    },
+    "ledger:sender_reconciliation": {
+      "kind": "authoritative",
+      "owner": "crates/aicharts-ledger/src/sender.rs",
+      "retention": "tombstone",
+      "assurancePolicy": "authority-and-deletion-controls",
+      "budget": {
+        "capacityRefs": {
+          "ledger-max-sources": 32768,
+          "ledger-max-occurrences": 500000,
+          "ledger-max-associations": 1000000,
+          "ledger-max-database-bytes": 536870912
+        }
+      },
+      "deletion": "crates/aicharts-ledger/src/sender.rs",
+      "note": "Limits refer to the shared owning store, not additive allocations for every table. Logical payload/row ceilings do not attest SQLite, index or object metadata overhead. Retention/reclamation remains qualification-gated under verify/assurance/retention.json; no quota-driven deletion."
+    },
+    "ledger:sender_settled": {
+      "kind": "authoritative",
+      "owner": "crates/aicharts-ledger/src/sender.rs",
+      "retention": "tombstone",
+      "assurancePolicy": "authority-and-deletion-controls",
+      "budget": {
+        "capacityRefs": {
+          "ledger-max-sources": 32768,
+          "ledger-max-occurrences": 500000,
+          "ledger-max-associations": 1000000,
+          "ledger-max-database-bytes": 536870912
+        }
+      },
+      "deletion": "crates/aicharts-ledger/src/sender.rs",
+      "note": "Limits refer to the shared owning store, not additive allocations for every table. Logical payload/row ceilings do not attest SQLite, index or object metadata overhead. Retention/reclamation remains qualification-gated under verify/assurance/retention.json; no quota-driven deletion."
+    },
+    "ledger:source_prefixes": {
+      "kind": "authoritative",
+      "owner": "crates/aicharts-ledger/src/prefix.rs",
+      "retention": "account",
+      "assurancePolicy": "canonical-account-history",
+      "budget": {
+        "capacityRefs": {
+          "ledger-max-sources": 32768,
+          "ledger-max-occurrences": 500000,
+          "ledger-max-associations": 1000000,
+          "ledger-max-database-bytes": 536870912
+        }
+      },
+      "deletion": "crates/aicharts-ledger/src/prefix.rs",
+      "note": "Limits refer to the shared owning store, not additive allocations for every table. Logical payload/row ceilings do not attest SQLite, index or object metadata overhead. Retention/reclamation remains qualification-gated under verify/assurance/retention.json; no quota-driven deletion."
+    },
+    "r2:admission-batches-and-journals": {
+      "kind": "authoritative",
+      "owner": "services/usage-worker/src/admission-objects.ts",
+      "retention": "tombstone",
+      "assurancePolicy": "authority-and-deletion-controls",
+      "budget": {
+        "capacityRefs": {
+          "max-admission-heads": 1000000,
+          "max-admission-day-heads": 65536,
+          "max-admission-revisions": 4096,
+          "account-max-devices": 128
+        }
+      },
+      "deletion": "services/usage-worker/src/admission-objects.ts",
+      "note": "Limits refer to the shared owning store, not additive allocations for every table. Logical payload/row ceilings do not attest SQLite, index or object metadata overhead. Retention/reclamation remains qualification-gated under verify/assurance/retention.json; no quota-driven deletion."
+    },
+    "r2:stats-snapshots-and-receipts": {
+      "kind": "authoritative",
+      "owner": "services/usage-worker/src/stats-objects.ts",
+      "retention": "tombstone",
+      "assurancePolicy": "authority-and-deletion-controls",
+      "budget": {
+        "capacityRefs": {
+          "max-stats-stored-days": 65536,
+          "max-stats-stored-rows": 262144,
+          "max-stats-stored-bytes": 134217728,
+          "max-stats-immutable-bytes": 8589934592,
+          "max-stats-revisions": 1000000,
+          "stats-day-sources": 65536
+        }
+      },
+      "deletion": "services/usage-worker/src/stats-objects.ts",
+      "note": "Limits refer to the shared owning store, not additive allocations for every table. Logical payload/row ceilings do not attest SQLite, index or object metadata overhead. Retention/reclamation remains qualification-gated under verify/assurance/retention.json; no quota-driven deletion."
+    },
+    "r2:enrollment-namespace-anchors": {
+      "kind": "authoritative",
+      "owner": "services/usage-worker/src/namespace-anchor.ts",
+      "retention": "tombstone",
+      "assurancePolicy": "authority-and-deletion-controls",
+      "budget": {
+        "capacityRefs": {
+          "account-max-devices": 128,
+          "account-state-bytes": 131072
+        }
+      },
+      "deletion": "services/usage-worker/src/namespace-anchor.ts",
+      "note": "Limits refer to the shared owning store, not additive allocations for every table. Logical payload/row ceilings do not attest SQLite, index or object metadata overhead. Retention/reclamation remains qualification-gated under verify/assurance/retention.json; no quota-driven deletion."
+    },
+    "r2:staged-measurements": {
+      "kind": "authoritative",
+      "owner": "services/usage-worker/src/staging.ts",
+      "retention": "account",
+      "assurancePolicy": "canonical-account-history",
+      "budget": {
+        "capacityRefs": {
+          "wire-typescript-records": 4096
+        }
+      },
+      "deletion": "services/usage-worker/src/staging.ts",
+      "note": "Limits refer to the shared owning store, not additive allocations for every table. Logical payload/row ceilings do not attest SQLite, index or object metadata overhead. Retention/reclamation remains qualification-gated under verify/assurance/retention.json; no quota-driven deletion."
+    },
+    "worker:fence_attempt": {
+      "kind": "authoritative",
+      "owner": "services/usage-worker/src/restore-fence.ts",
+      "retention": "tombstone",
+      "assurancePolicy": "authority-and-deletion-controls",
+      "budget": {
+        "capacityRefs": {
+          "restore-max-leases": 64,
+          "restore-max-attempts": 1000000,
+          "restore-state-bytes": 65536
+        }
+      },
+      "deletion": "services/usage-worker/src/restore-fence.ts",
+      "note": "Limits refer to the shared owning store, not additive allocations for every table. Logical payload/row ceilings do not attest SQLite, index or object metadata overhead. Retention/reclamation remains qualification-gated under verify/assurance/retention.json; no quota-driven deletion."
+    },
+    "worker:usage_stats_day_sources": {
+      "kind": "authoritative",
+      "owner": "services/usage-worker/src/stats-state.ts",
+      "retention": "tombstone",
+      "assurancePolicy": "authority-and-deletion-controls",
+      "budget": {
+        "capacityRefs": {
+          "max-stats-stored-days": 65536,
+          "max-stats-stored-rows": 262144,
+          "max-stats-stored-bytes": 134217728,
+          "max-stats-immutable-bytes": 8589934592,
+          "max-stats-revisions": 1000000,
+          "stats-day-sources": 65536
+        }
+      },
+      "deletion": "services/usage-worker/src/stats-state.ts",
+      "note": "Limits refer to the shared owning store, not additive allocations for every table. Logical payload/row ceilings do not attest SQLite, index or object metadata overhead. Retention/reclamation remains qualification-gated under verify/assurance/retention.json; no quota-driven deletion."
+    },
+    "worker:usage_contribution_control": {
+      "kind": "authoritative",
+      "owner": "services/usage-worker/src/contributions-state.ts",
+      "retention": "tombstone",
+      "assurancePolicy": "authority-and-deletion-controls",
+      "budget": {
+        "capacityRefs": {
+          "contribution-max-heads": 262144,
+          "contribution-max-associations": 1048576,
+          "contribution-max-populations": 1024,
+          "contribution-max-operations": 1000000,
+          "contribution-max-immutable-bytes": 8589934592,
+          "contribution-max-metadata-bytes": 536870912
+        }
+      },
+      "deletion": "services/usage-worker/src/contributions-state.ts",
+      "note": "Limits refer to the shared owning store, not additive allocations for every table. Logical payload/row ceilings do not attest SQLite, index or object metadata overhead. Retention/reclamation remains qualification-gated under verify/assurance/retention.json; no quota-driven deletion."
+    },
+    "worker:usage_contribution_populations": {
+      "kind": "authoritative",
+      "owner": "services/usage-worker/src/contributions-state.ts",
+      "retention": "tombstone",
+      "assurancePolicy": "authority-and-deletion-controls",
+      "budget": {
+        "capacityRefs": {
+          "contribution-max-heads": 262144,
+          "contribution-max-associations": 1048576,
+          "contribution-max-populations": 1024,
+          "contribution-max-operations": 1000000,
+          "contribution-max-immutable-bytes": 8589934592,
+          "contribution-max-metadata-bytes": 536870912
+        }
+      },
+      "deletion": "services/usage-worker/src/contributions-state.ts",
+      "note": "Limits refer to the shared owning store, not additive allocations for every table. Logical payload/row ceilings do not attest SQLite, index or object metadata overhead. Retention/reclamation remains qualification-gated under verify/assurance/retention.json; no quota-driven deletion."
+    },
+    "worker:usage_contribution_heads": {
+      "kind": "authoritative",
+      "owner": "services/usage-worker/src/contributions-state.ts",
+      "retention": "account",
+      "assurancePolicy": "canonical-account-history",
+      "budget": {
+        "capacityRefs": {
+          "contribution-max-heads": 262144,
+          "contribution-max-associations": 1048576,
+          "contribution-max-populations": 1024,
+          "contribution-max-operations": 1000000,
+          "contribution-max-immutable-bytes": 8589934592,
+          "contribution-max-metadata-bytes": 536870912
+        }
+      },
+      "deletion": "services/usage-worker/src/contributions-state.ts",
+      "note": "Limits refer to the shared owning store, not additive allocations for every table. Logical payload/row ceilings do not attest SQLite, index or object metadata overhead. Retention/reclamation remains qualification-gated under verify/assurance/retention.json; no quota-driven deletion."
+    },
+    "worker:usage_contribution_memberships": {
+      "kind": "authoritative",
+      "owner": "services/usage-worker/src/contributions-state.ts",
+      "retention": "tombstone",
+      "assurancePolicy": "authority-and-deletion-controls",
+      "budget": {
+        "capacityRefs": {
+          "contribution-max-heads": 262144,
+          "contribution-max-associations": 1048576,
+          "contribution-max-populations": 1024,
+          "contribution-max-operations": 1000000,
+          "contribution-max-immutable-bytes": 8589934592,
+          "contribution-max-metadata-bytes": 536870912
+        }
+      },
+      "deletion": "services/usage-worker/src/contributions-state.ts",
+      "note": "Limits refer to the shared owning store, not additive allocations for every table. Logical payload/row ceilings do not attest SQLite, index or object metadata overhead. Retention/reclamation remains qualification-gated under verify/assurance/retention.json; no quota-driven deletion."
+    },
+    "worker:usage_contribution_operations": {
+      "kind": "authoritative",
+      "owner": "services/usage-worker/src/contributions-state.ts",
+      "retention": "tombstone",
+      "assurancePolicy": "authority-and-deletion-controls",
+      "budget": {
+        "capacityRefs": {
+          "contribution-max-heads": 262144,
+          "contribution-max-associations": 1048576,
+          "contribution-max-populations": 1024,
+          "contribution-max-operations": 1000000,
+          "contribution-max-immutable-bytes": 8589934592,
+          "contribution-max-metadata-bytes": 536870912
+        }
+      },
+      "deletion": "services/usage-worker/src/contributions-state.ts",
+      "note": "Limits refer to the shared owning store, not additive allocations for every table. Logical payload/row ceilings do not attest SQLite, index or object metadata overhead. Retention/reclamation remains qualification-gated under verify/assurance/retention.json; no quota-driven deletion."
+    },
+    "worker:usage_contribution_devices": {
+      "kind": "authoritative",
+      "owner": "services/usage-worker/src/contributions-state.ts",
+      "retention": "tombstone",
+      "assurancePolicy": "authority-and-deletion-controls",
+      "budget": {
+        "capacityRefs": {
+          "contribution-max-heads": 262144,
+          "contribution-max-associations": 1048576,
+          "contribution-max-populations": 1024,
+          "contribution-max-operations": 1000000,
+          "contribution-max-immutable-bytes": 8589934592,
+          "contribution-max-metadata-bytes": 536870912
+        }
+      },
+      "deletion": "services/usage-worker/src/contributions-state.ts",
+      "note": "Limits refer to the shared owning store, not additive allocations for every table. Logical payload/row ceilings do not attest SQLite, index or object metadata overhead. Retention/reclamation remains qualification-gated under verify/assurance/retention.json; no quota-driven deletion."
+    },
+    "r2:canonical-contribution-bodies": {
+      "kind": "authoritative",
+      "retention": "account",
+      "owner": "services/usage-worker/src/contributions-objects.ts",
+      "deletion": "services/usage-worker/src/contributions-state.ts",
+      "assurancePolicy": "canonical-account-history",
+      "budget": {
+        "capacityRefs": {
+          "contribution-max-bytes": 1048576,
+          "contribution-max-immutable-bytes": 8589934592,
+          "contribution-max-operations": 1000000
+        }
+      },
+      "note": "Content-addressed canonical batch bodies under usage-contributions/v3 in the existing private STAGING binding. Reservation charges possible immutable bytes before I/O; uncertain and abandoned bodies remain charged. Reclamation requires a separate qualified lifecycle operation."
+    },
+    "service:canonical-contributions-v3": {
+      "kind": "served",
+      "retention": "ephemeral",
+      "owner": "services/usage-worker/src/contributions-http.ts",
+      "budget": {
+        "requestBytes": 1049088,
+        "controlRequestBytes": 2048,
+        "responseBytes": 4096,
+        "concurrentRequestsPerIsolate": 8,
+        "headRequestBytes": 16384,
+        "headResponseBytes": 524288,
+        "headPageIds": 256,
+        "uploadRequestBytes": 1048576,
+        "cancelRequestBytes": 1049088,
+        "capacityRefs": {
+          "contribution-cancel-request-bytes": 1049088,
+          "contribution-cancel-response-bytes": 4096
+        }
+      },
+      "note": "Nine exact device-authenticated upload/status/heads/abandon/full-batch-cancel/population/activation/migration/cancel-migration endpoints. Full-batch cancellation retains one metadata-only terminal fence for an absent frozen operation, consumes its next device sequence and empty canonical revision once, and dispatches no content-store write. Head reads use indexed bounded pages with exact account, generation, device, writer, population and canonical-revision correlation. Exact master, admission, stats and contributions flags are required. No flag is enabled by publication. Account transactions own enrollment, restore, generation and cutover authority."
+    },
+    "r2:canonical-contribution-artifacts": {
+      "kind": "authoritative",
+      "retention": "tombstone",
+      "owner": "services/usage-worker/src/contributions-journal.ts",
+      "assurancePolicy": "authority-and-deletion-controls",
+      "budget": {
+        "capacityRefs": {
+          "contribution-journal-page-entries": 256,
+          "contribution-journal-page-bytes": 262144,
+          "contribution-journal-root-bytes": 16384,
+          "contribution-max-immutable-bytes": 8589934592,
+          "contribution-max-operations": 1000000
+        }
+      },
+      "note": "Immutable correction-reference pages, roots and sealed legacy migration manifests. Canonical SQL commitment, never R2 presence, establishes publication. All possible artifact bytes are reserved before I/O and uncertain outcomes remain charged.",
+      "deletion": "services/usage-worker/src/contributions-state.ts"
+    },
+    "r2:canonical-contribution-index": {
+      "kind": "derived",
+      "retention": "account",
+      "owner": "services/usage-worker/src/contribution-index-objects.ts",
+      "assurancePolicy": "derived-projections",
+      "budget": {
+        "capacityRefs": {
+          "contribution-index-leaf-cells": 128,
+          "contribution-index-branch-children": 64,
+          "contribution-index-max-level": 6,
+          "contribution-index-max-node-bytes": 262144,
+          "contribution-index-max-changes": 64,
+          "contribution-index-max-reads": 512,
+          "contribution-index-max-writes": 512,
+          "contribution-index-max-io-bytes": 33554432,
+          "contribution-index-max-page-cells": 256,
+          "contribution-index-scan-page-cells": 16,
+          "contribution-index-max-key-bytes": 512,
+          "contribution-projection-max-immutable-bytes": 4294967296,
+          "contribution-projection-max-publications": 64,
+          "contribution-projection-retire-ms": 930000,
+          "contribution-projection-max-control-bytes": 8192,
+          "contribution-rebuild-heads-per-step": 16
+        }
+      },
+      "note": "Immutable account/generation-bound B+tree nodes. Durable step reservations bound cumulative possible writes at 4 GiB independently of canonical source budgets; exact retries never recharge. Published roots become queryable only by their committed SQL reference. Internal whole-key-space scans return at most 16 cells with authenticated key/ordinal continuations; semantic comparison reads at most two such pages per step, with no writes or publication authority. Physical reclamation remains disabled pending retention/recovery qualification.",
+      "source": "committed canonical contribution journal including verified sealed legacy references"
+    },
+    "worker:usage_contribution_projection_control": {
+      "kind": "authoritative",
+      "retention": "tombstone",
+      "owner": "services/usage-worker/src/contribution-projection-state.ts",
+      "assurancePolicy": "authority-and-deletion-controls",
+      "budget": {
+        "capacityRefs": {
+          "contribution-journal-max-entries": 8448,
+          "contribution-replay-chunk-entries": 32,
+          "contribution-replay-max-source-bytes": 33554432,
+          "contribution-projection-max-immutable-bytes": 4294967296,
+          "contribution-projection-max-publications": 64,
+          "contribution-projection-retire-ms": 930000,
+          "contribution-projection-max-control-bytes": 8192
+        }
+      },
+      "deletion": "services/usage-worker/src/contribution-projection-state.ts",
+      "note": "Bounded projection reservation and committed publication authority only; numeric cells live in immutable content storage. Shared limits are not additional allocations per table. Every possible write is charged before provider I/O; uncertainty stays charged. Retired cursor references expire 930000ms after replacement and are pruned only by explicit publication. Physical node deletion and recovery invalidation remain qualification-gated."
+    },
+    "worker:usage_contribution_projection_pending": {
+      "kind": "authoritative",
+      "retention": "tombstone",
+      "owner": "services/usage-worker/src/contribution-projection-state.ts",
+      "assurancePolicy": "authority-and-deletion-controls",
+      "budget": {
+        "capacityRefs": {
+          "contribution-journal-max-entries": 8448,
+          "contribution-replay-chunk-entries": 32,
+          "contribution-replay-max-source-bytes": 33554432,
+          "contribution-projection-max-immutable-bytes": 4294967296,
+          "contribution-projection-max-publications": 64,
+          "contribution-projection-retire-ms": 930000,
+          "contribution-projection-max-control-bytes": 8192
+        }
+      },
+      "deletion": "services/usage-worker/src/contribution-projection-state.ts",
+      "note": "Bounded projection reservation and committed publication authority only; numeric cells live in immutable content storage. Shared limits are not additional allocations per table. Every possible write is charged before provider I/O; uncertainty stays charged. Retired cursor references expire 930000ms after replacement and are pruned only by explicit publication. Physical node deletion and recovery invalidation remain qualification-gated."
+    },
+    "worker:usage_contribution_projection_publications": {
+      "kind": "authoritative",
+      "retention": "tombstone",
+      "owner": "services/usage-worker/src/contribution-projection-state.ts",
+      "assurancePolicy": "authority-and-deletion-controls",
+      "budget": {
+        "capacityRefs": {
+          "contribution-journal-max-entries": 8448,
+          "contribution-replay-chunk-entries": 32,
+          "contribution-replay-max-source-bytes": 33554432,
+          "contribution-projection-max-immutable-bytes": 4294967296,
+          "contribution-projection-max-publications": 64,
+          "contribution-projection-retire-ms": 930000,
+          "contribution-projection-max-control-bytes": 8192
+        }
+      },
+      "deletion": "services/usage-worker/src/contribution-projection-state.ts",
+      "note": "Bounded projection reservation and committed publication authority only; numeric cells live in immutable content storage. Shared limits are not additional allocations per table. Every possible write is charged before provider I/O; uncertainty stays charged. Retired cursor references expire 930000ms after replacement and are pruned only by explicit publication. Physical node deletion and recovery invalidation remain qualification-gated."
+    },
+    "service:canonical-contribution-query": {
+      "kind": "served",
+      "retention": "ephemeral",
+      "owner": "services/usage-worker/src/contribution-query-http.ts",
+      "budget": {
+        "capacityRefs": {
+          "contribution-query-request-bytes": 4096,
+          "contribution-query-response-bytes": 1048576,
+          "contribution-index-max-page-cells": 256,
+          "contribution-index-max-reads": 512,
+          "contribution-index-max-io-bytes": 33554432
+        },
+        "concurrentRequestsPerIsolate": 8
+      },
+      "note": "Dormant account-private indexed page endpoint. Exact master, stats, contributions, auth and private-read flags plus verified workload identity are required. Caller account assertions come from the authenticated coordinator. Every page pins a retained committed root and exposes source/snapshot lag; reads perform no DML or projection work."
+    },
+    "worker:account_work": {
+      "kind": "authoritative",
+      "retention": "account",
+      "owner": "services/usage-worker/src/account-work-state.ts",
+      "deletion": "docs/usage-assurance.md",
+      "budget": {
+        "rowsPerAccount": 1,
+        "bytesPerRow": 4096,
+        "workClassesPerAccount": 2,
+        "attemptsPerWorkPosition": 8,
+        "capacityRefs": {
+          "account-work-control-bytes": 4096,
+          "account-work-attempts": 8,
+          "account-alarm-max-arms": 32,
+          "account-work-dispatch-yield-ms": 2000,
+          "account-work-watchdog-ms": 30000
+        }
+      },
+      "note": "Two bounded work identities, retry budgets and independently versioned dispatch flights. One durable watchdog marks unresolved I/O awaiting settlement; neither yielding nor expiry releases restore custody. Completion persists its next wake before clearing the flight. No numeric content or unbounded queue. New canonical accounts only; physical deletion remains gated by account recovery qualification.",
+      "assurancePolicy": "authority-and-deletion-controls"
+    },
+    "service:canonical-contribution-cell-scrub": {
+      "kind": "served",
+      "retention": "ephemeral",
+      "owner": "services/usage-worker/src/contribution-scrub.ts",
+      "budget": {
+        "capacityRefs": {
+          "contribution-scrub-max-heads": 16,
+          "contribution-scrub-max-source-bytes": 16777216,
+          "contribution-scrub-max-index-reads": 7,
+          "contribution-scrub-max-reads": 23,
+          "contribution-scrub-max-read-bytes": 18874368,
+          "contribution-scrub-deadline-ms": 30000,
+          "contribution-scrub-request-bytes": 2048,
+          "contribution-scrub-response-bytes": 8192
+        }
+      },
+      "note": "Trusted coordinator read-only diagnostic; no public route. Qualifies one cell relative to fresh V3 canonical SQL heads, with at most 16 heads, 16 source bodies and 7 index nodes; the 23 object reads and 18 MiB decoded budget exclude two namespace and two external restore-fence reads. One 30-second nonrenewable RPC deadline includes those authority checks. Legacy, larger and lagging accounts refuse explicitly. The fold is independent of projection deltas; no repair, checkpoint, quota, object or alarm write occurs. Logical read bounds do not attest physical storage, original source truth or whole-account correctness."
+    },
+    "local:canonical-contribution-checkpoint": {
+      "kind": "authoritative",
+      "retention": "account",
+      "owner": "crates/aicharts-cli/src/contribution_sync/disk.rs",
+      "deletion": "docs/usage-assurance.md",
+      "assurancePolicy": "authority-and-deletion-controls",
+      "budget": {
+        "capacityRefs": {
+          "native-contribution-body-base64": 1398104,
+          "native-contribution-terminal-bytes": 4096,
+          "native-contribution-terminal-base64": 5464,
+          "native-contribution-checkpoint-bytes": 2818056
+        },
+        "bytesPerCurrentOrStagedFile": 2834440,
+        "filesPerBinding": 3,
+        "retainedBodiesPerCheckpoint": 2
+      },
+      "note": "Inactive native V3 foundation; no command or transport route. One authenticated current/staged checkpoint and stable lock per account/device/generation owner across all populations. Exact current flight and last terminal body survive uncertainty; upload-to-cancel intent is durable before dispatch. Existing-only shared inspection performs no creation, promotion or sync. Explicit recovery verifies predecessor transitions and re-establishes durability before granting a borrowed flight capability. Never delete or overwrite checkpoint files to recover. Bounds describe logical payloads, not physical disk allocation; independent custody is still required to detect arbitrary older valid directory restores."
+    },
+    "worker:usage_contribution_rebuild_jobs": {
+      "kind": "authoritative",
+      "retention": "account",
+      "owner": "services/usage-worker/src/contribution-rebuild-state.ts",
+      "deletion": "docs/usage-assurance.md",
+      "assurancePolicy": "authority-and-deletion-controls",
+      "budget": {
+        "rowsPerAccount": 16,
+        "bytesPerRow": 16384,
+        "activeJobsPerAccount": 1,
+        "capacityRefs": {
+          "contribution-rebuild-max-jobs": 16,
+          "contribution-rebuild-metadata-bytes": 16384,
+          "contribution-rebuild-max-version": 32771
+        }
+      },
+      "note": "Explicit diagnostic job identities, pinned canonical/publication roots, checked source and comparison cursors, idempotent step receipts and reserved scratch writes. Up to 16 lifetime jobs including terminals; IDs never restart and no physical job deletion is implemented. Scratch objects share the existing cumulative 4 GiB projection write budget; uncertain/aborted writes are not refunded. This control table grants no publication or repair authority. Schema13 is added only by trusted fenced begin; status is SELECT-only."
+    },
+    "service:canonical-contribution-rebuild": {
+      "kind": "served",
+      "retention": "ephemeral",
+      "owner": "services/usage-worker/src/contribution-rebuild.ts",
+      "budget": {
+        "capacityRefs": {
+          "contribution-rebuild-heads-per-step": 16,
+          "contribution-rebuild-request-bytes": 2048,
+          "contribution-rebuild-response-bytes": 16384,
+          "contribution-rebuild-deadline-ms": 30000,
+          "contribution-rebuild-max-source-bytes": 16777216,
+          "contribution-rebuild-max-comparison-reads": 252,
+          "contribution-rebuild-max-comparison-bytes": 67108864,
+          "contribution-rebuild-max-reads": 1040,
+          "contribution-rebuild-max-read-bytes": 83886080
+        }
+      },
+      "note": "Trusted foreground diagnostic with no public route or alarm class. One step processes at most 16 canonical heads, or compares two internal 16-cell pages. Actual source/index read and scratch-write counters are retained with the step. 1040 object reads/80 MiB decoded content cover source bodies plus separate bounded index planning and stage readback; comparison caps252 reads/64 MiB. These exclude external namespace/fence checks. One nonrenewable 30-second RPC deadline includes external authority I/O, while actual provider puts retain restore custody until settlement. A match is relative to retained canonical SQL authority, not original source truth or a recovery/cutover certificate."
     }
   },
   "exempt": []

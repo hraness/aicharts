@@ -6,7 +6,11 @@ import { setUsageConsent } from "./consent-client";
 import type { PrivateDaysPublicReply } from "./private-days-public";
 import type { StatsPublicReply } from "./stats-public";
 import type { UsageConsentPublicReply } from "./consent-public";
+import { TestMetricWorker } from "./metric-explorer-test-worker";
 
+const accountId = `acct_${"a".repeat(32)}`;
+type Bound<T> = T extends { state: "not_enrolled" } | { error: "not_enrolled" } ? T & { accountId: string } : T;
+const bound = <T,>(value: T): Bound<T> => (typeof value === "object" && value !== null && (("state" in value && value.state === "not_enrolled") || ("error" in value && value.error === "not_enrolled")) ? { ...value, accountId } : value) as Bound<T>;
 const signedIn = { kind: "signed_in", session: { suiteAccountId: "PRIVATE_SESSION_CANARY" } };
 const missing = { schemaVersion: 1, error: { code: "authentication_required" } } satisfies PrivateDaysPublicReply & UsageConsentPublicReply;
 const absent = { schemaVersion: 1, state: "not_enrolled" } satisfies PrivateDaysPublicReply & UsageConsentPublicReply;
@@ -24,13 +28,13 @@ const clients = [
   { name: "daily", path: "/api/usage/days?firstUtcDay=10&dayCount=1", missing, absent, down, refused,
     read: (signal: AbortSignal, options: Options) => readAccountDays({ firstUtcDay: 10, dayCount: 1 }, signal, options) },
   { name: "stats", path: "/api/usage/stats?firstUtcDay=10&dayCount=1", missing: statsMissing, absent: statsAbsent, down: statsDown, refused: statsRefused,
-    read: (signal: AbortSignal, options: Options) => readAccountStats(10, 1, signal, options) },
+    read: (signal: AbortSignal, options: Options) => readAccountStats(10, 1, signal, { ...options, statsWorkerFactory: () => new TestMetricWorker() }) },
   { name: "consent", path: "/api/usage/consent", missing, absent, down, refused,
     read: (signal: AbortSignal, options: Options) => readAccountConsent(signal, options) },
   { name: "account", path: "/api/usage/account", missing, absent: accountReady, down: accountDown, refused: accountRefused,
     read: (signal: AbortSignal, options: Options) => readAccountSummary(signal, options) },
 ] as const;
-const json = (value: unknown, status = 200) => new Response(JSON.stringify(value), { status, headers: { "content-type": "application/json; charset=utf-8" } });
+const json = (value: unknown, status = 200) => new Response(JSON.stringify(value), { status, headers: { "content-type": "application/json; charset=utf-8", "x-aicharts-account-id": accountId } });
 const port = (run: (input: RequestInfo | URL, init?: RequestInit) => Promise<Response> | Response) => run as typeof fetch;
 function deferred<T>() {
   let resolve!: (value: T) => void;
@@ -53,7 +57,7 @@ for (const client of clients) {
     let reads = 0, cleared = 0;
     const fetch = port((input, init) => {
       paths.push(`${init?.method} ${input}`);
-      expect(init?.signal).toBe(controller.signal);
+      if (client.name === "stats") expect(init?.signal?.aborted).toBe(false); else expect(init?.signal).toBe(controller.signal);
       expect(init?.credentials).toBe("same-origin"); expect(init?.cache).toBe("no-store");
       expect(init?.redirect).toBe("error"); expect(init?.body).toBeUndefined();
       expect(new Headers(init?.headers).has("authorization")).toBe(false);
@@ -62,7 +66,7 @@ for (const client of clients) {
       return json(input === "/api/suite-auth/session" ? { kind: "refresh_required" } : signedIn);
     });
     const reply = await client.read(controller.signal, { fetch, withExclusiveLock: serialLock(), onAuthenticationRequired: () => { cleared++; } });
-    expect(reply).toEqual(client.absent); expect(JSON.stringify(reply)).not.toContain("PRIVATE_SESSION_CANARY");
+    expect(reply).toEqual(bound(client.absent)); expect(JSON.stringify(reply)).not.toContain("PRIVATE_SESSION_CANARY");
     expect(paths).toEqual([`GET ${client.path}`, "GET /api/suite-auth/session", "GET /api/suite-auth/session", "POST /api/suite-auth/refresh", `GET ${client.path}`]);
   });
 
@@ -97,7 +101,7 @@ for (const client of clients) {
     const reply = await client.read(new AbortController().signal, { transientRetryDelayMs: 0, fetch: port(input => {
       expect(input).toBe(client.path); return ++calls === 1 ? json(client.down, 503) : json(client.absent);
     }), onAuthenticationRequired: () => { cleared++; } });
-    expect(reply).toEqual(client.absent); expect(calls).toBe(2); expect(cleared).toBe(0);
+    expect(reply).toEqual(bound(client.absent)); expect(calls).toBe(2); expect(cleared).toBe(0);
   });
 
   test(`${client.name}: a thrown transport failure retries once on the same read`, async () => {
@@ -143,7 +147,7 @@ test("ordinary replies and unvalidated authentication bodies never enter session
     let calls = 0, cleared = 0;
     expect(await client.read(new AbortController().signal, { fetch: port(input => {
       expect(input).toBe(client.path); calls++; return json(client.absent);
-    }), onAuthenticationRequired: () => { cleared++; } })).toEqual(client.absent);
+    }), onAuthenticationRequired: () => { cleared++; } })).toEqual(bound(client.absent));
     expect(calls).toBe(1); expect(cleared).toBe(0);
     const malformed = () => client.read(new AbortController().signal, { transientRetryDelayMs: 0, fetch: port(input => {
       expect(input).toBe(client.path); return json({ ...client.missing, extra: "PRIVATE_CANARY" }, 401);
@@ -217,7 +221,7 @@ test("aborting a follower does not cancel the SDK local singleflight owner's ref
   await new Promise(resolve => setTimeout(resolve, 0));
   follower.abort(); expect(await refused).toEqual(new Error("usage_unavailable"));
   renewed = true; refreshed.resolve(json(signedIn));
-  expect(await first).toEqual(absent); expect(owner.signal.aborted).toBe(false);
+  expect(await first).toEqual(bound(absent)); expect(owner.signal.aborted).toBe(false);
   expect(posts).toBe(1); expect(followerSessions).toBe(0);
 });
 
@@ -229,7 +233,7 @@ test("concurrent dashboard readers use the SDK lock and rotate only once", async
     expect(input).toBe("/api/suite-auth/refresh"); posts++; renewed = true; return json(signedIn);
   });
   const replies = await Promise.all([0, 1].map(() => readAccountConsent(new AbortController().signal, { fetch, withExclusiveLock })));
-  expect(replies).toEqual([absent, absent]); expect(posts).toBe(1); expect(reads).toBe(4);
+  expect(replies).toEqual([bound(absent), bound(absent)]); expect(posts).toBe(1); expect(reads).toBe(4);
 });
 
 test("concurrent refused readers share one renewal flight", async () => {
@@ -240,7 +244,7 @@ test("concurrent refused readers share one renewal flight", async () => {
     expect(input).toBe("/api/suite-auth/refresh"); posts++; renewed = true; return json(signedIn);
   });
   const replies = await Promise.all([0, 1, 2].map(() => readAccountConsent(new AbortController().signal, { fetch, withExclusiveLock })));
-  expect(replies).toEqual([absent, absent, absent]);
+  expect(replies).toEqual([bound(absent), bound(absent), bound(absent)]);
   expect(reads).toBe(6); expect(posts).toBe(1); expect(sessions).toBe(2);
 });
 
@@ -267,7 +271,7 @@ test("a joiner whose shared flight died with its owner drives one fresh recovery
   expect(await refused).toEqual(new Error("usage_unavailable"));
   // The follower observed the null settlement and ran one fresh protocol —
   // its refresh succeeded, so its strict retry reads the private reply.
-  expect(await second).toEqual(absent);
+  expect(await second).toEqual(bound(absent));
   expect(reads).toBe(3); expect(posts).toBe(2); expect(sessions).toBe(4);
 });
 
@@ -287,7 +291,7 @@ test("the session warm shares its flight with recovery and respects the freshnes
   // its own status sequence.
   expect(sessions).toBe(2); expect(posts).toBe(1); expect(reads).toBe(1);
   renewed = true; refreshed.resolve(json(signedIn));
-  expect(await pending).toEqual(absent); expect(reads).toBe(2);
+  expect(await pending).toEqual(bound(absent)); expect(reads).toBe(2);
   // A fresh check suppresses a new warm entirely.
   warmUsageAccountSession({ fetch, withExclusiveLock: serialLock() });
   await new Promise(resolve => setTimeout(resolve, 0));
@@ -301,7 +305,7 @@ test("late renewed reads are suppressed when the caller replaces or cancels them
     if (input === "/api/suite-auth/session") return json(signedIn);
     if (++reads === 1) return json(statsMissing, 401);
     arrived.resolve(); return retry.promise;
-  }) });
+  }), statsWorkerFactory: () => new TestMetricWorker() });
   const refused = pending.then(() => null, (error: unknown) => error);
   await arrived.promise; controller.abort(); retry.resolve(json(statsAbsent)); expect(await refused).toEqual(new Error("usage_unavailable"));
   expect(reads).toBe(2);
@@ -344,7 +348,7 @@ test("the full SDK byte boundary fits even as one-byte chunks; one extra byte ca
       if (input === "/api/usage/consent") return ++reads === 1 ? json(missing, 401) : json(absent);
       return new Response(body, { headers: { "content-type": "application/json" } });
     }) });
-    expect(reply).toEqual(size === 32_768 ? absent : missing);
+    expect(reply).toEqual(size === 32_768 ? bound(absent) : missing);
     expect(reads).toBe(size === 32_768 ? 2 : 1); expect(pulls).toBeLessThanOrEqual(32_769);
     expect(cancelled).toBe(size === 32_768 ? 0 : 1);
   }
@@ -366,7 +370,7 @@ test("an aborted in-flight refresh cannot trigger a read when its response arriv
 
 test("failed consent POST is never renewed or replayed", async () => {
   const calls: string[] = [];
-  const result = await setUsageConsent({ consent: false, publicHandle: null }, new AbortController().signal, port((input, init) => {
+  const result = await setUsageConsent({ consent: false, publicHandle: null }, accountReady.account.accountId, new AbortController().signal, port((input, init) => {
     calls.push(`${init?.method} ${input}`); expect(init?.body).toBeInstanceOf(Uint8Array); return json(missing, 401);
   }));
   expect(result).toEqual(missing); expect(calls).toEqual(["POST /api/usage/consent"]);
@@ -427,7 +431,7 @@ test("SDK local singleflight cannot mistake a concurrent renewal for a successfu
     const signOut = signOutUsageAccount(new AbortController().signal, { withExclusiveLock: null, fetch: port(() => { signOutCalls++; return json({ kind: "signed_out" }); }) });
     const result = signOut.then(() => null, (error: unknown) => error);
     refresh.resolve(json(signedIn));
-    expect(await renewal).toEqual(absent); expect(await result).toEqual(new Error("usage_unavailable"));
+    expect(await renewal).toEqual(bound(absent)); expect(await result).toEqual(new Error("usage_unavailable"));
     expect(signOutCalls).toBe(0); expect(clears).toBe(0);
   } finally { unsubscribe(); }
 });

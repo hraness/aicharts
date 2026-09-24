@@ -391,6 +391,44 @@ fn resume_never_accepts_source_flags_and_live_requires_one_explicit_client() {
 }
 
 #[test]
+fn incremental_collection_requires_an_explicit_fresh_codex_profile() {
+    let args = |items: &[&str]| items.iter().map(|s| (*s).to_owned()).collect::<Vec<_>>();
+    let base = [
+        "stats-sync",
+        "--state-dir",
+        "/state",
+        "--key-file",
+        "/key",
+        "--home",
+        "/home",
+        "--client",
+        "codex",
+        "--source-root",
+        "/profile",
+    ];
+    let mut values = args(&base);
+    values.push("--incremental".into());
+    assert!(options(&values, 1_800_000_000_000).unwrap().incremental);
+    for extra in ["--resume", "--abandon", "--dry-run", "--incremental"] {
+        let mut invalid = values.clone();
+        invalid.push(extra.into());
+        assert!(options(&invalid, 1_800_000_000_000).is_err());
+    }
+    let mut no_profile = args(&base[..9]);
+    no_profile.push("--incremental".into());
+    assert_eq!(
+        options(&no_profile, 1_800_000_000_000).err(),
+        Some("stats_incremental_profile_required")
+    );
+    let mut other = values;
+    other[8] = "claude".into();
+    assert_eq!(
+        options(&other, 1_800_000_000_000).err(),
+        Some("stats_incremental_profile_required")
+    );
+}
+
+#[test]
 fn shared_wire_fixture_keeps_native_and_worker_hashes_identical() {
     for (text, expected) in [
         (
@@ -478,4 +516,29 @@ fn explicit_source_roots_pass_to_offline_collection_and_resume_rejects_them() {
         1_800_000_000_000
     )
     .is_err());
+}
+
+#[test]
+fn legacy_status_parser_accepts_admitted_million_record_population_and_refuses_excess() {
+    let device = upload().device_id;
+    for records in [100_001, MAX_LEGACY_RECORDS, MAX_LEGACY_RECORDS + 1] {
+        let bytes = serde_json::to_vec(
+            &serde_json::json!({"schemaVersion":2,"revision":0,"nextSequence":1,
+            "writerDeviceId":null,"v1Revision":12,"headDigest":"00".repeat(32),
+            "legacyRecords":records,"takeoverEligible":true}),
+        )
+        .unwrap();
+        let status: Status = serde_json::from_slice(&bytes).unwrap();
+        assert_eq!(
+            status.validate(&device),
+            if records <= MAX_LEGACY_RECORDS {
+                Ok(())
+            } else {
+                Err("stats_sync_invalid_response")
+            }
+        );
+        if records <= MAX_LEGACY_RECORDS {
+            assert!(status.takeover(&device).unwrap().is_some());
+        }
+    }
 }

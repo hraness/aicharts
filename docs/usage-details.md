@@ -82,6 +82,32 @@ over-limit sources. Numeric JSON remains on stdout and contains no paths or
 source content. Resolve the source issue and rescan; do not treat incomplete
 output as zero usage or delete retained published history.
 
+Inspect measured collection health separately from the stable `client-stats-v2`
+numeric report:
+
+```sh
+aicharts stats --home "$HOME" --client codex --source-root /absolute/codex-home/sessions --health-json
+aicharts stats-health --state-dir /absolute/private/state --home "$HOME" --client codex --source-root /absolute/codex-home/sessions --since 2026-09-01 --until 2026-09-19
+```
+
+`--health-json` runs a read-only scan and emits the `source-health-v1` profile.
+It records the selected UTC range, collection start/completion, parser generation,
+source event range, file/record counts, parsed and verified bytes, deferred tails,
+and measured clamp, fallback or schema problems. Unmeasured fields remain null.
+Verified bytes describe source-prefix checks, even when parsing reused a
+checkpoint. Estimated records and limited schema coverage stay explicit.
+Partial tails and measured clamp/fallback problems make a numeric report
+incomplete, so it cannot replace a published snapshot.
+
+Fresh enrolled `stats-sync` collection persists that evidence locally.
+`stats-health` reads its last attempt, last complete good observation and
+publication outcome without scanning sources or creating a file or lock. Use
+the same profile and dates: different or absent evidence is null. A failed scan
+preserves the previous good observation, including when previously present
+sources disappear. A pending or uncertain upload is
+separate from successful collection; neither implies publication succeeded.
+Both health exports withhold source paths and private profile/flight bindings.
+
 Large histories remain bounded: an import admits at most 65,536 files and
 128 GiB of source data. Streamed JSONL/NDJSON files may be up to 2 GiB, with a
 64 MiB line limit; whole-file JSON reads remain limited to 256 MiB. On supported
@@ -107,9 +133,16 @@ window is applied after that timestamp calculation.
   prove that a zero bucket had no usage.
 - **Records** are source observations. A record can describe a request or a
   session aggregate. It is not necessarily a message, prompt, or human action.
+- **Cache reads / whole input** divides cache-read tokens by uncached input,
+  cache reads and cache writes together. It is available only when every selected
+  record reports complete input categories and that denominator is nonzero.
+- **Source tok/s** divides the tokens from timed records by their summed source
+  duration. Every timed record must have known tokens and the duration must be
+  positive. Concurrent durations may overlap; this is not model decode speed.
 - **Reported cost** comes from source data. **Retail estimates** use available
   rates or a source estimate. Neither represents a subscription bill. A known
-  zero amount is different from an unavailable amount.
+  zero amount is different from an unavailable amount. The two amounts can cover
+  different records; their difference does not establish savings or an overcharge.
 - **Unknown** model or provider names have no admitted public identity. Private
   aliases, endpoint names, session titles, prompts, paths, and workspace names
   are excluded from the numeric report.
@@ -168,6 +201,17 @@ session still requires sign-in. Renewal stays within the current request's
 deadline and does not repeat a publishing change. Previously loaded account
 details are cleared when authentication is required; local reports and examples
 remain available.
+
+Private reports are bound to the account identified by the same authenticated
+response. A changed identity, suspended/restored page or renewed tab focus
+requires a fresh private read. A late reply cannot restore a retired report,
+including when the new account has no observations. Only the displayed private
+report is retained in memory; there is no previous-range report cache.
+
+CSV exports state the record grain and source-duration basis. Copied summaries
+and images state their scope and partial coverage. If a report closes or changes
+while its image is being prepared, the old image download is canceled. A failed
+replacement keeps the local report available for another export.
 
 The **Hraness account** disclosure on the overview and detailed reports verifies
 your current account and shows its full ID for comparison with

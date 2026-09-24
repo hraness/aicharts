@@ -378,19 +378,39 @@ fn latest_event_ms(previous: &[u8]) -> Option<u64> {
         .max()
 }
 
+#[derive(Debug)]
+struct Fetched {
+    // Inclusive provider request interval; deletion authority never extends
+    // to an unqueried part of either boundary day.
+    range: (u64, u64),
+    rows: Vec<Value>,
+}
+
 fn fetch(
     transport: &mut impl Transport,
     credential: &Credential,
     started: Instant,
     cache_latest_ms: Option<u64>,
-) -> Result<Vec<Value>> {
+) -> Result<Fetched> {
+    let until_ms = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map_err(|_| INVALID)?
+        .as_millis()
+        .try_into()
+        .map_err(|_| INVALID)?;
+    fetch_at(transport, credential, started, cache_latest_ms, until_ms)
+}
+
+fn fetch_at(
+    transport: &mut impl Transport,
+    credential: &Credential,
+    started: Instant,
+    cache_latest_ms: Option<u64>,
+    until_ms: u64,
+) -> Result<Fetched> {
     let summary = transport.summary(credential, remaining(started)?)?;
     remaining(started)?;
     let billing_start_ms = validate_summary(&summary)?;
-    let until_ms = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .map(|elapsed| elapsed.as_millis() as u64)
-        .map_err(|_| INVALID)?;
     // Pinning both bounds freezes the page range: events arriving while paging
     // cannot shift rows between pages or extend an already-sized total.
     let since_ms = match cache_latest_ms {
@@ -442,6 +462,13 @@ fn fetch(
         }
         for event in events {
             let projected = project(event)?;
+            let timestamp = projected
+                .get("timestamp")
+                .and_then(Value::as_u64)
+                .ok_or(INVALID)?;
+            if !(since_ms..=until_ms).contains(&timestamp) {
+                return Err("cursor_refresh_outside_range");
+            }
             let fingerprint =
                 Sha256::digest(serde_json::to_vec(&projected).map_err(|_| INVALID)?).to_vec();
             // Inserts inside the pinned window shift page boundaries, so the
@@ -460,7 +487,7 @@ fn fetch(
             return Err(INVALID);
         }
         if rows.len() == advertised {
-            return Ok(rows);
+            return Ok(Fetched { range, rows });
         }
         if events.is_empty() {
             return Err("cursor_refresh_incomplete");
@@ -479,12 +506,26 @@ struct Binding {
     client: String,
     account: String,
 }
-fn merge(previous: Option<&[u8]>, fresh: Vec<Value>) -> Result<Vec<u8>> {
+fn merge(previous: Option<&[u8]>, fetched: Fetched) -> Result<Vec<u8>> {
+    let Fetched {
+        range: (since, until),
+        rows: fresh,
+    } = fetched;
+    if since > until {
+        return Err(INVALID);
+    }
     if fresh.is_empty() {
         return Err("cursor_refresh_empty_preserved");
     }
     let fresh = fresh.iter().map(project).collect::<Result<Vec<_>>>()?;
-    let days: BTreeSet<_> = fresh.iter().map(day).collect::<Result<_>>()?;
+    if fresh.iter().any(|event| {
+        !event
+            .get("timestamp")
+            .and_then(Value::as_u64)
+            .is_some_and(|timestamp| (since..=until).contains(&timestamp))
+    }) {
+        return Err("cursor_refresh_outside_range");
+    }
     let mut rows = Vec::new();
     if let Some(previous) = previous {
         let previous: Value =
@@ -495,7 +536,11 @@ fn merge(previous: Option<&[u8]>, fresh: Vec<Value>) -> Result<Vec<u8>> {
             .ok_or("cursor_refresh_cache_invalid")?;
         for event in events {
             let event = project(event).map_err(|_| "cursor_refresh_cache_invalid")?;
-            if !days.contains(&day(&event)?) {
+            let timestamp = event
+                .get("timestamp")
+                .and_then(Value::as_u64)
+                .ok_or(INVALID)?;
+            if !(since..=until).contains(&timestamp) {
                 rows.push(event);
             }
         }
@@ -608,11 +653,11 @@ fn refresh(
         started,
         previous.as_deref().and_then(latest_event_ms),
     )?;
-    let received = fresh.len();
+    let received = fresh.rows.len();
     // A completely empty window is a successful no-change refresh: the retained
     // cache still holds the account's history. Only a cache-less first refresh
     // that finds nothing keeps the existing refusal.
-    let bytes = if fresh.is_empty() {
+    let bytes = if fresh.rows.is_empty() {
         previous.clone().ok_or("cursor_refresh_empty_preserved")?
     } else {
         merge(previous.as_deref(), fresh)?
@@ -622,5 +667,5 @@ fn refresh(
         cache.create_binding(&serde_json::to_vec(&expected).map_err(|_| INVALID)?)?;
     }
     cache.replace(&name, &bytes)?;
-    serde_json::to_string(&json!({"client":"cursor","refreshedEvents":received,"cacheBytes":bytes.len(),"historyPolicy":"replace_present_utc_days_retain_absent_days"})).map_err(|_| INVALID)
+    serde_json::to_string(&json!({"client":"cursor","refreshedEvents":received,"cacheBytes":bytes.len(),"historyPolicy":"replace_queried_interval_retain_outside"})).map_err(|_| INVALID)
 }

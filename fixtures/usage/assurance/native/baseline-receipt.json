@@ -1,0 +1,351 @@
+{
+  "baselineCommit": "a5bec6415ce640a61495db57bc9c2ce83fb83021",
+  "binaryProvenance": "Caller-supplied executable; source hashes do not attest the binary.",
+  "buildCommand": "cargo build --locked --offline -p aicharts-cli --target-dir target/trusted-path-audit",
+  "buildSourceCommit": "696400da880d78e9a8b5ffd2b4265ea93c4948ce",
+  "cases": {
+    "F01": {
+      "classification": "baseline_counterexample",
+      "evidence": {
+        "kind": "native-cli",
+        "networkExercised": false
+      },
+      "observed": {
+        "ascending": {
+          "first": {
+            "associations": 1,
+            "bytesScanned": 265,
+            "committedRevision": 1,
+            "error": "",
+            "exit": 0,
+            "ledgerRevision": 1,
+            "outputTokens": "3",
+            "sources": 1,
+            "sourcesSkipped": 0,
+            "tokens": "15",
+            "usageOccurrences": 1,
+            "warnings": [
+              "unknown_models",
+              "unmeasured_activity",
+              "unmeasured_prompts",
+              "unmeasured_reasoning"
+            ]
+          },
+          "reopened": {
+            "associations": 2,
+            "error": "",
+            "exit": 0,
+            "ledgerRevision": 2,
+            "outputTokens": "3",
+            "sources": 2,
+            "tokens": "15",
+            "usageOccurrences": 1,
+            "warnings": [
+              "unknown_models",
+              "unmeasured_activity",
+              "unmeasured_prompts",
+              "unmeasured_reasoning"
+            ]
+          },
+          "second": {
+            "associations": 2,
+            "bytesScanned": 265,
+            "committedRevision": 2,
+            "error": "",
+            "exit": 0,
+            "ledgerRevision": 2,
+            "outputTokens": "3",
+            "sources": 2,
+            "sourcesSkipped": 0,
+            "tokens": "15",
+            "usageOccurrences": 1,
+            "warnings": [
+              "unknown_models",
+              "unmeasured_activity",
+              "unmeasured_prompts",
+              "unmeasured_reasoning"
+            ]
+          }
+        },
+        "descending": {
+          "first": {
+            "associations": 1,
+            "bytesScanned": 265,
+            "committedRevision": 1,
+            "error": "",
+            "exit": 0,
+            "ledgerRevision": 1,
+            "outputTokens": "3",
+            "sources": 1,
+            "sourcesSkipped": 0,
+            "tokens": "15",
+            "usageOccurrences": 1,
+            "warnings": [
+              "unknown_models",
+              "unmeasured_activity",
+              "unmeasured_prompts",
+              "unmeasured_reasoning"
+            ]
+          },
+          "reopened": {
+            "error": "aicharts: ledger_invalid_state_do_not_reset",
+            "exit": 2
+          },
+          "second": {
+            "associations": 2,
+            "bytesScanned": 265,
+            "committedRevision": 2,
+            "error": "",
+            "exit": 0,
+            "ledgerRevision": 2,
+            "outputTokens": "3",
+            "sources": 2,
+            "sourcesSkipped": 0,
+            "tokens": "15",
+            "usageOccurrences": 1,
+            "warnings": [
+              "unknown_models",
+              "unmeasured_activity",
+              "unmeasured_prompts",
+              "unmeasured_reasoning"
+            ]
+          }
+        }
+      }
+    },
+    "F05": {
+      "classification": "baseline_counterexample",
+      "evidence": {
+        "kind": "native-cli",
+        "networkExercised": false
+      },
+      "observed": {
+        "old": {
+          "error": "",
+          "exit": 0,
+          "profile": "client-stats-v2",
+          "records": 0,
+          "rows": 0,
+          "sources": [
+            {
+              "client": "codex",
+              "latestAtMs": null,
+              "records": 0,
+              "status": "not_found",
+              "tokenBasis": "unavailable",
+              "warnings": 0
+            }
+          ],
+          "tokens": "0"
+        },
+        "recent": {
+          "error": "",
+          "exit": 0,
+          "profile": "client-stats-v2",
+          "records": 1,
+          "rows": 1,
+          "sources": [
+            {
+              "client": "codex",
+              "latestAtMs": 1789898400000,
+              "records": 1,
+              "status": "observed",
+              "tokenBasis": "reported",
+              "warnings": 0
+            }
+          ],
+          "tokens": "13"
+        },
+        "sourceBytesUnchanged": true
+      }
+    },
+    "F06": {
+      "classification": "baseline_counterexample",
+      "evidence": {
+        "kind": "native-cli",
+        "networkExercised": false
+      },
+      "observed": {
+        "collect": {
+          "associations": 0,
+          "bytesScanned": 0,
+          "committedRevision": 0,
+          "error": "",
+          "exit": 0,
+          "ledgerRevision": 0,
+          "outputTokens": "0",
+          "sources": 0,
+          "sourcesSkipped": 0,
+          "tokens": "0",
+          "usageOccurrences": 0,
+          "warnings": [
+            "no_usage_measurements"
+          ]
+        },
+        "control": {
+          "associations": 1,
+          "bytesScanned": 265,
+          "committedRevision": 1,
+          "error": "",
+          "exit": 0,
+          "ledgerRevision": 1,
+          "outputTokens": "3",
+          "sources": 1,
+          "sourcesSkipped": 0,
+          "tokens": "15",
+          "usageOccurrences": 1,
+          "warnings": [
+            "unknown_models",
+            "unmeasured_activity",
+            "unmeasured_prompts",
+            "unmeasured_reasoning"
+          ]
+        },
+        "reopened": {
+          "associations": 0,
+          "error": "",
+          "exit": 0,
+          "ledgerRevision": 0,
+          "outputTokens": "0",
+          "sources": 0,
+          "tokens": "0",
+          "usageOccurrences": 0,
+          "warnings": [
+            "no_usage_measurements"
+          ]
+        },
+        "sourceBytes": 268435457
+      }
+    },
+    "F07": {
+      "classification": "baseline_counterexample",
+      "evidence": {
+        "authenticatedAcquisitionExercised": false,
+        "extractedSourceSha256": "c480d384bda4ff961a606bfb353558da91b5218af4054ce237469c719b100b26",
+        "kind": "source-extracted-functions-and-range-planner",
+        "linkedLibrarySha256": {
+          "serde_json": "6e49dc55250012380d40712bed0c3b7e875fd4de0052865388a1a61bf924f80e",
+          "time": "6329515bc862fbacd762ff801c8887cafa0f755953018a22d25576af9ebfa619"
+        },
+        "networkExercised": false
+      },
+      "observed": {
+        "earliestEventRetained": false,
+        "fetchedEvents": 2,
+        "mergedEvents": 2,
+        "mergedTimestamps": [
+          1790010000000,
+          1790175600000
+        ],
+        "originalEvents": 3,
+        "sinceMs": 1790002800000,
+        "untilMs": 1790208000000
+      }
+    },
+    "F08": {
+      "classification": "baseline_counterexample",
+      "evidence": {
+        "kind": "native-cli",
+        "networkExercised": false
+      },
+      "observed": {
+        "ephemeral": {
+          "error": "",
+          "exit": 0,
+          "outputTokens": "3",
+          "tokens": "13",
+          "usageOccurrences": 1,
+          "warnings": [
+            "devin_totals_mismatch",
+            "unknown_models",
+            "unmeasured_activity",
+            "unmeasured_prompts",
+            "unmeasured_reasoning"
+          ]
+        },
+        "persisted": {
+          "associations": 1,
+          "bytesScanned": 461,
+          "committedRevision": 1,
+          "error": "",
+          "exit": 0,
+          "ledgerRevision": 1,
+          "outputTokens": "3",
+          "sources": 1,
+          "sourcesSkipped": 0,
+          "tokens": "13",
+          "usageOccurrences": 1,
+          "warnings": [
+            "unknown_models",
+            "unmeasured_activity",
+            "unmeasured_prompts",
+            "unmeasured_reasoning"
+          ]
+        },
+        "reopened": {
+          "associations": 1,
+          "error": "",
+          "exit": 0,
+          "ledgerRevision": 1,
+          "outputTokens": "3",
+          "sources": 1,
+          "tokens": "13",
+          "usageOccurrences": 1,
+          "warnings": [
+            "unknown_models",
+            "unmeasured_activity",
+            "unmeasured_prompts",
+            "unmeasured_reasoning"
+          ]
+        }
+      }
+    }
+  },
+  "expected": "baseline",
+  "fixtureSha256": {
+    "autosubmit-descendant-trace.json": "0ef9db49ad852604433240b25bd387049cb81dd21f807dd74abc76b576a5a161",
+    "claude-known-owner-a.jsonl": "6503cd555922e810eaea59d8c2afa6cdd70f5038ccb336caa2b422e34111d028",
+    "claude-known-owner-b.jsonl": "eea248392581a39e4d7c631a4930457e5cafce8682674143c4d9e0e49c17dd05",
+    "codex-mtime.jsonl": "306a993f133b31346eb85cadbff099cad2c08990e023fd18a5af6caba20c30e2",
+    "cursor-harness.rs": "c490ff3bdad28d6ace0e434dd9506133cb04d6b1e7e8b2094d326522b23ebff2",
+    "cursor-partial-day.json": "db8415ba5277bf4f52f715ac61235e78722e4bb0c4e72934717e4e695375fc97",
+    "devin-totals-mismatch.json": "9e28babaa2d01a21eba2089b626662c73bca51326e7a11870b52e1c6e9acbb00"
+  },
+  "mode": "execute",
+  "outcome": "all_baseline_counterexample",
+  "platform": {
+    "machine": "arm64",
+    "system": "Darwin"
+  },
+  "recordedOn": "2026-09-23",
+  "retainedArtifacts": {
+    "cli": "target/assurance-baseline/aicharts",
+    "scope": "Critical source snapshots only; not a standalone workspace checkout.",
+    "subjectRoot": "target/assurance-baseline/source"
+  },
+  "schemaVersion": 1,
+  "subjectSourceDrift": [],
+  "subjectSourceSha256": {
+    "Cargo.lock": "2bbb4542b78b0aa8cecb5380bab0aa81290529d2b4c5ffb5dbac8d8d634e3f81",
+    "Cargo.toml": "e7db3c647bf73e1aa57a08e91e1a2d20e1f89bdf1b49aeeee640ae52eb13c6fb",
+    "crates/aicharts-cli/src/autosubmit.rs": "cb215a3b1b002e227c44af96d0940227a35971e7588654a4d37f0dc1342bf28a",
+    "crates/aicharts-cli/src/capture/process.rs": "252002adff2c6b752afc529f00ce3d4288ab22197e1d0bdf9e7a27775b8e5b1d",
+    "crates/aicharts-cli/src/source_refresh.rs": "b7e0c5f9faef679aa541de4193c14ce45ac68eb304494a8abfa399927146ac29",
+    "crates/aicharts-cli/src/state.rs": "3ed8200f6bfc2895e7068d6be118ba5375eb3719d5e5475ed2e67dac1b7005c7",
+    "crates/aicharts-core/src/lib.rs": "e878285b1af636b3cd98bf0ab24d0000fe854b4bb61f954be6c07778d0412eeb",
+    "crates/aicharts-ledger/src/lib.rs": "3ed3c358869e13473aa46d4fefd60ade9c30c452ddcd654b536b93a618fba20e",
+    "vendor/tokscale-core/src/offline.rs": "367a5ba037bacad072dd82ca27dbb10b42d78bf3ae9ed2429afe193f8fd5443a",
+    "vendor/tokscale-core/src/offline_io.rs": "ba9f591847d62e1c8011ac8410e61ee201c8726e4c76d726ac62be9e2ae31155"
+  },
+  "tools": {
+    "cli": {
+      "sha256": "a47badffe7113b14c2bb15262bde2da5d1c18e16b165f21a889c1ab4c619bfda"
+    },
+    "rustc": {
+      "sha256": "d69d40bfd2e11825feb3538512b6ffcd63de91c35ec36bb876849f0f9f8fe6bd"
+    }
+  },
+  "traceOnly": [
+    "F14"
+  ]
+}

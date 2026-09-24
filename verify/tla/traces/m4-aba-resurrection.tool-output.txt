@@ -1,0 +1,93 @@
+@!@!@STARTMSG 2262:0 @!@!@
+TLC2 Version 2.19 of 08 August 2024 (rev: 5a47802)
+@!@!@ENDMSG 2262 @!@!@
+@!@!@STARTMSG 2110:1 @!@!@
+Invariant SupersededCannotReturn is violated.
+@!@!@ENDMSG 2110 @!@!@
+@!@!@STARTMSG 2121:1 @!@!@
+The behavior up to this point is:
+@!@!@ENDMSG 2121 @!@!@
+@!@!@STARTMSG 2217:4 @!@!@
+1: <Initial predicate>
+/\ pending = "none"
+/\ lastSuperseded = "none"
+/\ retrySeen = FALSE
+/\ seen = {}
+/\ capacityRefused = FALSE
+/\ superseded = {}
+/\ frozen = FALSE
+/\ committed = "none"
+/\ charges = [A |-> 0, B |-> 0]
+
+@!@!@ENDMSG 2217 @!@!@
+@!@!@STARTMSG 2217:4 @!@!@
+2: <ReserveFirstA line 22, col 18 to line 22, col 45 of module M4Supersession>
+/\ pending = "A"
+/\ lastSuperseded = "none"
+/\ retrySeen = FALSE
+/\ seen = {"A"}
+/\ capacityRefused = FALSE
+/\ superseded = {}
+/\ frozen = FALSE
+/\ committed = "none"
+/\ charges = [A |-> 1, B |-> 0]
+
+@!@!@ENDMSG 2217 @!@!@
+@!@!@STARTMSG 2217:4 @!@!@
+3: <Supersede line 26, col 5 to line 30, col 70 of module M4Supersession>
+/\ pending = "none"
+/\ lastSuperseded = "A"
+/\ retrySeen = FALSE
+/\ seen = {"A"}
+/\ capacityRefused = FALSE
+/\ superseded = {"A"}
+/\ frozen = FALSE
+/\ committed = "none"
+/\ charges = [A |-> 1, B |-> 0]
+
+@!@!@ENDMSG 2217 @!@!@
+@!@!@STARTMSG 2217:4 @!@!@
+4: <ReserveB line 23, col 13 to line 23, col 67 of module M4Supersession>
+/\ pending = "B"
+/\ lastSuperseded = "A"
+/\ retrySeen = FALSE
+/\ seen = {"A", "B"}
+/\ capacityRefused = FALSE
+/\ superseded = {"A"}
+/\ frozen = FALSE
+/\ committed = "none"
+/\ charges = [A |-> 1, B |-> 1]
+
+@!@!@ENDMSG 2217 @!@!@
+@!@!@STARTMSG 2217:4 @!@!@
+5: <Supersede line 26, col 5 to line 30, col 70 of module M4Supersession>
+/\ pending = "none"
+/\ lastSuperseded = "B"
+/\ retrySeen = FALSE
+/\ seen = {"A", "B"}
+/\ capacityRefused = FALSE
+/\ superseded = {"A", "B"}
+/\ frozen = FALSE
+/\ committed = "none"
+/\ charges = [A |-> 1, B |-> 1]
+
+@!@!@ENDMSG 2217 @!@!@
+@!@!@STARTMSG 2217:4 @!@!@
+6: <ReplayA line 24, col 12 to line 24, col 68 of module M4Supersession>
+/\ pending = "A"
+/\ lastSuperseded = "B"
+/\ retrySeen = FALSE
+/\ seen = {"A", "B"}
+/\ capacityRefused = FALSE
+/\ superseded = {"A", "B"}
+/\ frozen = FALSE
+/\ committed = "none"
+/\ charges = [A |-> 2, B |-> 1]
+
+@!@!@ENDMSG 2217 @!@!@
+@!@!@STARTMSG 2199:0 @!@!@
+16 states generated, 13 distinct states found, 3 states left on queue.
+@!@!@ENDMSG 2199 @!@!@
+@!@!@STARTMSG 2186:0 @!@!@
+Finished in 441ms at (2026-09-23 15:52:40)
+@!@!@ENDMSG 2186 @!@!@

@@ -1,11 +1,13 @@
 //! Explicit, local session snapshots. No account, ledger, provider config or network.
+use aicharts_core::rich_facts;
 use aicharts_protocol::Provider;
 use std::path::PathBuf;
-const HELP: &str = "AI Charts sessions — local, read-only\n\n  aicharts sessions --occurrence-key-file KEY [--codex FILE ...] [--claude FILE ...] [--devin FILE ...] [--json]\n\nExplicit regular files only. Exports known session token observations and\nqualified response-model labels, without transcript content. Historical timing\nis unknown. An unfinished final JSONL record is deferred; a Devin ATIF source\nis one whole document and parses completely or not at all. Nothing is uploaded.\n";
+const HELP: &str = "AI Charts sessions — local, read-only\n\n  aicharts sessions --occurrence-key-file KEY [--codex FILE ...] [--claude FILE ...] [--devin FILE ...] [--json]\n  aicharts sessions --occurrence-key-file KEY --codex FILE --profile rich-facts-v1 --source-epoch EPOCH --window-start-ms N --window-end-ms N --json\n\nExplicit regular files only. Exports known session token observations and\nqualified model labels, without transcript content. Historical timing\nis unknown. An unfinished final JSONL record is deferred; a Devin ATIF source\nis one whole document and parses completely or not at all. Nothing is uploaded.\n\nThe rich profile requires JSON, a stable nonsecret source generation (1..128\nASCII letters/digits/_/-), and an explicit half-open window of at most 31 days.\nIts revision-zero snapshot retains unknown lineage, token scope and cache TTL.\nA new generation is a separate namespace, not a deduplication mechanism.\n";
 struct Options {
     sources: Vec<(Provider, PathBuf)>,
     key: PathBuf,
     json: bool,
+    rich: Option<rich_facts::ExportOptions>,
 }
 fn options(args: &[String]) -> Result<Options, &'static str> {
     if args.first().map(String::as_str) != Some("sessions") {
@@ -14,10 +16,29 @@ fn options(args: &[String]) -> Result<Options, &'static str> {
     let mut sources = Vec::new();
     let mut key = None;
     let mut json = false;
+    let mut profile = None;
+    let mut epoch = None;
+    let mut start = None;
+    let mut end = None;
     let mut args = args[1..].iter();
     while let Some(flag) = args.next() {
         match flag.as_str() {
             "--json" if !json => json = true,
+            "--profile" | "--source-epoch" | "--window-start-ms" | "--window-end-ms" => {
+                let value = args
+                    .next()
+                    .filter(|value| !value.is_empty() && !value.starts_with("--"))
+                    .ok_or("missing_option_value")?;
+                let slot = match flag.as_str() {
+                    "--profile" => &mut profile,
+                    "--source-epoch" => &mut epoch,
+                    "--window-start-ms" => &mut start,
+                    _ => &mut end,
+                };
+                if slot.replace(value.as_str()).is_some() {
+                    return Err("invalid_option");
+                }
+            }
             "--codex" | "--claude" | "--devin" | "--occurrence-key-file" => {
                 let value = args
                     .next()
@@ -48,10 +69,40 @@ fn options(args: &[String]) -> Result<Options, &'static str> {
     if sources.is_empty() {
         return Err("explicit_source_required");
     }
+    let rich = match profile {
+        Some(rich_facts::PROFILE) => {
+            if !json {
+                return Err("rich_profile_requires_json");
+            }
+            let integer = |value: Option<&str>| -> Result<u64, &'static str> {
+                let value = value.ok_or("rich_profile_window_required")?;
+                if value.len() > 16
+                    || !value.bytes().all(|byte| byte.is_ascii_digit())
+                    || (value.len() > 1 && value.starts_with('0'))
+                {
+                    return Err("invalid_window");
+                }
+                value.parse().map_err(|_| "invalid_window")
+            };
+            Some(rich_facts::ExportOptions::new(
+                epoch.ok_or("source_epoch_required")?,
+                integer(start)?,
+                integer(end)?,
+            )?)
+        }
+        None | Some(aicharts_core::sessions::PROFILE) => {
+            if epoch.is_some() || start.is_some() || end.is_some() {
+                return Err("invalid_option");
+            }
+            None
+        }
+        Some(_) => return Err("invalid_profile"),
+    };
     Ok(Options {
         sources,
         key: key.ok_or("occurrence_key_required")?,
         json,
+        rich,
     })
 }
 pub(super) fn run(args: &[String]) -> Result<String, &'static str> {
@@ -65,8 +116,13 @@ pub(super) fn run(args: &[String]) -> Result<String, &'static str> {
     }
     #[cfg(not(any(target_os = "macos", target_os = "linux")))]
     {
-        let Options { sources, key, json } = options;
-        let _ = (sources, key, json);
+        let Options {
+            sources,
+            key,
+            json,
+            rich,
+        } = options;
+        let _ = (sources, key, json, rich);
         Err("sessions_unsupported_platform")
     }
 }
@@ -74,7 +130,7 @@ pub(super) fn run(args: &[String]) -> Result<String, &'static str> {
 #[cfg(any(target_os = "macos", target_os = "linux"))]
 mod native {
     use super::*;
-    use aicharts_core::sessions::{self, Metadata};
+    use aicharts_core::sessions;
     use aicharts_ledger::SourceStamp;
     use std::{
         fs::{self, File},
@@ -221,7 +277,7 @@ mod native {
             if lines > sessions::MAX_LINES || records > sessions::MAX_RECORDS {
                 return Err("record_limit");
             }
-            let metadata = if matches!(*provider, Provider::ClaudeCode | Provider::Devin) {
+            let metadata = {
                 source
                     .file
                     .seek(SeekFrom::Start(0))
@@ -231,17 +287,17 @@ mod native {
                     *provider,
                     &key.value,
                 )?
-            } else {
-                Metadata::default()
             };
             source.verify()?;
             parsed.push((tokens, metadata));
         }
         let report = sessions::join_sources(parsed)?;
-        let output = if options.json {
+        let output = if let Some(rich) = options.rich {
+            rich_facts::project_sessions(&report, &key.value, &rich)?.to_json()?
+        } else if options.json {
             serde_json::to_string(&report).map_err(|_| "summary_encode_failed")?
         } else {
-            format!("AI Charts sessions — local only; {} sessions with token observations; streaming and wait times unknown\n", report.sessions.len())
+            format!("AI Charts sessions — local only; {} sessions with token observations; streaming and wait times unknown\n", report.session_count())
         };
         if output.len() > 8 * 1024 * 1024 {
             return Err("report_size_limit");
@@ -297,6 +353,7 @@ mod native {
                         .map(|f| (provider, self.path.join(f)))
                         .collect(),
                     json: true,
+                    rich: None,
                 }
             }
         }
@@ -307,6 +364,134 @@ mod native {
         }
         const ROW: &[u8] = b"{\"type\":\"assistant\",\"timestamp\":\"2026-01-01T00:00:00Z\",\"sessionId\":\"s\",\"requestId\":\"r\",\"message\":{\"id\":\"m\",\"model\":\"claude-sonnet-4-6\",\"usage\":{\"input_tokens\":2,\"output_tokens\":3}}}\n";
         const ATIF: &[u8] = br#"{"schema_version":"ATIF-v1.7","session_id":"atif-native","agent":{"name":"devin"},"steps":[{"step_id":1,"source":"agent","timestamp":"2026-01-01T00:00:00Z","extra":{"generation_model":"swe-2-max"},"metrics":{"prompt_tokens":10,"completion_tokens":3,"cached_tokens":2}}],"final_metrics":{"total_prompt_tokens":10,"total_completion_tokens":3,"total_cached_tokens":2,"total_steps":1}}"#;
+        const CODEX: &[u8] = concat!(
+            "{\"type\":\"session_meta\",\"payload\":{\"id\":\"native-model-canary\",\"model\":\"gpt-5.5\"}}\n",
+            "{\"type\":\"event_msg\",\"timestamp\":\"2026-01-01T00:00:00Z\",\"payload\":{\"type\":\"token_count\",\"info\":{\"total_token_usage\":{\"input_tokens\":100,\"output_tokens\":0},\"last_token_usage\":{\"input_tokens\":100,\"output_tokens\":0}}}}\n",
+        ).as_bytes();
+        #[test]
+        fn codex_metadata_scanner_is_reached_by_the_real_session_capture() {
+            let f = Fixture::new();
+            f.write("codex", CODEX);
+            let output = capture(f.options_as(Provider::Codex, &["codex"]))
+                .unwrap()
+                .finish()
+                .unwrap();
+            let report: serde_json::Value = serde_json::from_str(&output).unwrap();
+            assert_eq!(report["sessions"][0]["usage"][0]["model"], "gpt-5.5");
+            assert_eq!(report["sessions"][0]["usage"][0]["modelBasis"], "request");
+            assert!(!output.contains("native-model-canary"));
+        }
+        #[test]
+        fn opt_in_rich_capture_preserves_key_source_guards_and_default_profile() {
+            let f = Fixture::new();
+            f.write("a", ROW);
+            let legacy = capture(f.options(&["a"])).unwrap().finish().unwrap();
+            let legacy: serde_json::Value = serde_json::from_str(&legacy).unwrap();
+            assert_eq!(legacy["profile"], "session-observations-v1");
+            let mut selected = f.options(&["a"]);
+            selected.rich = Some(
+                rich_facts::ExportOptions::new(
+                    "synthetic_source_v1",
+                    1_767_225_600_000,
+                    1_767_225_610_000,
+                )
+                .unwrap(),
+            );
+            let captured = capture(selected).unwrap();
+            let report: serde_json::Value = serde_json::from_str(&captured.output).unwrap();
+            assert_eq!(report["profile"], "rich-facts-v1");
+            assert_eq!(report["facts"].as_array().unwrap().len(), 1);
+            assert_eq!(report["facts"][0]["owner"]["lineage"], "unknown");
+            assert_eq!(report["facts"][0]["value"]["tokenScope"], "unknown");
+            assert_eq!(report["coverage"]["usage"], "partial");
+            fs::rename(f.path.join("a"), f.path.join("saved")).unwrap();
+            f.write("a", ROW);
+            assert_eq!(captured.finish(), Err("source_changed_during_scan"));
+            let mut selected = f.options(&["a"]);
+            selected.rich = Some(
+                rich_facts::ExportOptions::new(
+                    "synthetic_source_v1",
+                    1_767_225_600_000,
+                    1_767_225_610_000,
+                )
+                .unwrap(),
+            );
+            let captured = capture(selected).unwrap();
+            fs::rename(f.path.join("key"), f.path.join("saved-key")).unwrap();
+            f.write("key", &[9; 32]);
+            assert_eq!(captured.finish(), Err("key_changed_during_scan"));
+        }
+        #[test]
+        fn rich_profile_options_validate_before_opening_any_file() {
+            let base = [
+                "sessions",
+                "--codex",
+                "/missing/source",
+                "--occurrence-key-file",
+                "/missing/key",
+            ];
+            let rich = [
+                "--profile",
+                "rich-facts-v1",
+                "--source-epoch",
+                "synthetic_source_v1",
+                "--window-start-ms",
+                "0",
+                "--window-end-ms",
+                "1",
+                "--json",
+            ];
+            let args = base
+                .into_iter()
+                .chain(rich)
+                .map(str::to_owned)
+                .collect::<Vec<_>>();
+            assert!(super::super::options(&args).unwrap().rich.is_some());
+            for (from, to) in [
+                ("rich-facts-v1", "future-profile"),
+                ("synthetic_source_v1", "private/path"),
+                ("0", "+0"),
+                ("0", "00"),
+                ("1", "8640000000000001"),
+            ] {
+                let invalid = args
+                    .iter()
+                    .map(|value| {
+                        if value == from {
+                            to.to_owned()
+                        } else {
+                            value.clone()
+                        }
+                    })
+                    .collect::<Vec<_>>();
+                let error = super::super::run(&invalid).unwrap_err();
+                assert!(!error.contains("read"));
+            }
+            assert_eq!(
+                super::super::run(&args[..args.len() - 1]),
+                Err("rich_profile_requires_json")
+            );
+            for extra in [
+                vec!["--profile", "rich-facts-v1", "--json"],
+                vec!["--source-epoch", "unused"],
+                vec!["--window-start-ms", "0"],
+            ] {
+                let invalid = base
+                    .into_iter()
+                    .chain(extra)
+                    .map(str::to_owned)
+                    .collect::<Vec<_>>();
+                assert!(super::super::options(&invalid).is_err());
+            }
+            let mut duplicate = args.clone();
+            duplicate.extend(["--window-end-ms".to_owned(), "1".to_owned()]);
+            assert!(super::super::options(&duplicate).is_err());
+            assert!(
+                super::super::run(&["sessions".to_owned(), "--help".to_owned()])
+                    .unwrap()
+                    .contains("rich-facts-v1")
+            );
+        }
         #[test]
         fn copies_and_unfinished_tail_export_one_complete_usage() {
             let f = Fixture::new();

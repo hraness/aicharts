@@ -8,6 +8,8 @@ import { PAIRING_HTTP_CAPACITY, PAIRING_HTTP_STAGE_MS, PAIRING_HTTP_STAGE_MUTATI
 import { pairingHttpWork, type PairingHttpEffects } from "../../../lib/usage/pairing-http-work";
 import type { PairingHttpRequestLifetime, PairingHttpVerifier } from "./pairing-http";
 import { enrollmentAccountName } from "./enrollment-contract";
+import { rpcResultSnapshot as rpcSnapshot } from "./rpc-result";
+import { statsHash, statsUploadText } from "./stats-state";
 
 export interface StatsHttpEnvironment {
   readonly ACCOUNT_ENROLLMENTS: Readonly<{
@@ -15,30 +17,6 @@ export interface StatsHttpEnvironment {
   }>;
 }
 export interface StatsHttpDependencies extends PairingHttpEffects { verifier: PairingHttpVerifier; }
-
-function rpcSnapshot(raw: unknown): { envelope: Record<string, unknown> | null; dispose: (() => void) | null } {
-  let dispose: (() => void) | null = null;
-  try {
-    if (raw === null || typeof raw !== "object") return { envelope: null, dispose };
-    const disposal = Object.getOwnPropertyDescriptor(raw, Symbol.dispose);
-    if (disposal !== undefined && "value" in disposal && typeof disposal.value === "function") {
-      const method: (...args: unknown[]) => unknown = disposal.value;
-      dispose = () => { Reflect.apply(method, raw, []); };
-    }
-    if (dispose === null || Object.getPrototypeOf(raw) !== Object.prototype) return { envelope: null, dispose };
-    const names = Reflect.ownKeys(raw);
-    if (names.length !== 3 || !names.includes(Symbol.dispose)) return { envelope: null, dispose };
-    const envelope: Record<string, unknown> = Object.create(null);
-    for (const name of names) {
-      if (name === Symbol.dispose) continue;
-      if (name !== "ok" && name !== "value" && name !== "error") return { envelope: null, dispose };
-      const descriptor = Object.getOwnPropertyDescriptor(raw, name);
-      if (!descriptor || !("value" in descriptor) || descriptor.enumerable !== true) return { envelope: null, dispose };
-      envelope[name] = descriptor.value as unknown;
-    }
-    return { envelope, dispose };
-  } catch { return { envelope: null, dispose }; }
-}
 
 /** Dormant trusted-coordinator boundary. Workload verification precedes body
  * consumption and canonical account selection; it is not user authentication. */
@@ -151,8 +129,12 @@ export function createStatsUploadHttpHandler(dependencies: PairingHttpEffects) {
         catch { guard(); return deviceFailure("invalid_input"); }
         guard();
         const raw = statsJsonValue(bytes, cap);
-        const input = statusQuery ? parseStatsStatusRequest(raw) : abandon ? parseStatsAbandonRequest(raw) : parseStatsUpload(raw);
+        const statusInput = statusQuery ? parseStatsStatusRequest(raw) : null;
+        const abandonInput = abandon ? parseStatsAbandonRequest(raw) : null;
+        const uploadInput = !statusQuery && !abandon ? parseStatsUpload(raw) : null;
+        const input = statusInput ?? abandonInput ?? uploadInput;
         if (!input) return deviceFailure("invalid_input");
+        const bodyHash = uploadInput ? statsHash(statsUploadText(uploadInput)) : null;
         // Status reads keep the tight stage; fenced mutations carry the
         // once-per-lifetime account history audit's cold bound.
         return await work.stage(statusQuery ? PAIRING_HTTP_STAGE_MS : PAIRING_HTTP_STAGE_MUTATION_MS, async () => {
@@ -165,8 +147,22 @@ export function createStatsUploadHttpHandler(dependencies: PairingHttpEffects) {
           try {
             guard();
             if (!response.envelope || !response.dispose) return deviceFailure("storage_unavailable");
-            const result = statusQuery ? parseStatsResult(response.envelope, parseStatsStatus)
-              : abandon ? parseStatsResult(response.envelope, parseStatsAbandonment) : parseStatsResult(response.envelope, parseStatsReceipt);
+            const result = statusInput ? parseStatsResult(response.envelope, parseStatsStatus)
+              : abandonInput ? parseStatsResult(response.envelope, value => {
+                const terminal = parseStatsAbandonment(value);
+                if (!terminal) return null;
+                const receipt = terminal.outcome === "committed" ? terminal.receipt : terminal;
+                if (receipt.operationId !== abandonInput.operationId || receipt.bodyHash !== abandonInput.bodyHash || receipt.sequence !== abandonInput.sequence)
+                  return null;
+                return terminal.outcome === "committed" ? terminal.receipt.revision === abandonInput.expectedRevision + 1 ? terminal : null
+                  : terminal.expectedRevision === abandonInput.expectedRevision ? terminal : null;
+              }) : parseStatsResult(response.envelope, value => {
+                const receipt = parseStatsReceipt(value);
+                return receipt && uploadInput && receipt.bodyHash === bodyHash && receipt.operationId === uploadInput.operationId
+                  && receipt.sequence === uploadInput.sequence && receipt.revision === uploadInput.expectedRevision + 1
+                  && receipt.client === uploadInput.report.sources[0].client && receipt.firstUtcDay === uploadInput.report.firstUtcDay
+                  && receipt.dayCount === uploadInput.report.dayCount ? receipt : null;
+              });
             if (!result) return deviceFailure("storage_unavailable");
             if (!result.ok) return deviceFailure(result.error);
             const encoded = statsJsonBytes({ schemaVersion: 2, result }, 2_048);

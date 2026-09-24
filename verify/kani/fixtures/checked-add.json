@@ -1,0 +1,1517 @@
+{
+  "metadata": {
+    "version": "1.0",
+    "timestamp": "2026-09-23T21:17:04.466056Z",
+    "kani_version": "0.68.0",
+    "target": "aarch64-apple-darwin",
+    "build_mode": "release"
+  },
+  "tools": {
+    "kani": "0.68.0",
+    "rustc": "rustc 1.100.0-nightly (8925ea358 2026-08-20)",
+    "cbmc": "6.11.0 (cbmc-6.11.0)",
+    "goto_cc": "clang version 21.0.0 (goto-cc 6.11.0 (cbmc-6.11.0))",
+    "goto_instrument": "6.11.0 (cbmc-6.11.0)",
+    "solvers": [
+      {
+        "name": "cadical",
+        "version": null
+      }
+    ]
+  },
+  "harness_metadata": [
+    {
+      "pretty_name": "proofs::checked_add_full_u128_matches_129_bit_math",
+      "mangled_name": "_RNvNtCsgGAvY6C1qOf_16aicharts_metrics6proofs42checked_add_full_u128_matches_129_bit_math",
+      "crate_name": "aicharts_metrics",
+      "source": {
+        "file": "crates/aicharts-metrics/src/proofs.rs",
+        "start_line": 21,
+        "end_line": 29
+      },
+      "attributes": {
+        "kind": "Proof",
+        "should_panic": false
+      },
+      "contract": {
+        "contracted_function_name": null,
+        "recursion_tracker": null
+      },
+      "has_loop_contracts": false,
+      "is_automatically_generated": false,
+      "is_bounded": false,
+      "is_ctor_based": false
+    }
+  ],
+  "error_details": [
+    {
+      "harness_id": "proofs::checked_add_full_u128_matches_129_bit_math",
+      "has_errors": false
+    }
+  ],
+  "property_details": [
+    {
+      "harness_id": "proofs::checked_add_full_u128_matches_129_bit_math",
+      "property_details": {
+        "total_properties": 119,
+        "passed": 116,
+        "failed": 0,
+        "unreachable": 0,
+        "undetermined": 0,
+        "solver_error": 0,
+        "satisfied": 3,
+        "unsatisfiable": 0,
+        "covered": 0,
+        "uncovered": 0
+      }
+    }
+  ],
+  "verification_results": {
+    "summary": {
+      "total_harnesses": 1,
+      "executed": 1,
+      "status": "completed",
+      "successful": 1,
+      "failed": 0,
+      "duration_ms": 227
+    },
+    "results": [
+      {
+        "harness_id": "proofs::checked_add_full_u128_matches_129_bit_math",
+        "status": "Success",
+        "duration_ms": 227,
+        "checks": [
+          {
+            "id": 1,
+            "function": "proofs::reference_add",
+            "status": "Success",
+            "description": "attempt to add with overflow",
+            "location": {
+              "file": "crates/aicharts-metrics/src/proofs.rs",
+              "line": "11",
+              "column": "15"
+            },
+            "category": "assertion"
+          },
+          {
+            "id": 2,
+            "function": "proofs::reference_add",
+            "status": "Success",
+            "description": "attempt to shift right with overflow",
+            "location": {
+              "file": "crates/aicharts-metrics/src/proofs.rs",
+              "line": "12",
+              "column": "16"
+            },
+            "category": "assertion"
+          },
+          {
+            "id": 3,
+            "function": "proofs::reference_add",
+            "status": "Success",
+            "description": "attempt to shift right with overflow",
+            "location": {
+              "file": "crates/aicharts-metrics/src/proofs.rs",
+              "line": "12",
+              "column": "31"
+            },
+            "category": "assertion"
+          },
+          {
+            "id": 4,
+            "function": "proofs::reference_add",
+            "status": "Success",
+            "description": "attempt to add with overflow",
+            "location": {
+              "file": "crates/aicharts-metrics/src/proofs.rs",
+              "line": "12",
+              "column": "16"
+            },
+            "category": "assertion"
+          },
+          {
+            "id": 5,
+            "function": "proofs::reference_add",
+            "status": "Success",
+            "description": "attempt to shift right with overflow",
+            "location": {
+              "file": "crates/aicharts-metrics/src/proofs.rs",
+              "line": "12",
+              "column": "47"
+            },
+            "category": "assertion"
+          },
+          {
+            "id": 6,
+            "function": "proofs::reference_add",
+            "status": "Success",
+            "description": "attempt to add with overflow",
+            "location": {
+              "file": "crates/aicharts-metrics/src/proofs.rs",
+              "line": "12",
+              "column": "16"
+            },
+            "category": "assertion"
+          },
+          {
+            "id": 7,
+            "function": "proofs::reference_add",
+            "status": "Success",
+            "description": "attempt to shift left with overflow",
+            "location": {
+              "file": "crates/aicharts-metrics/src/proofs.rs",
+              "line": "16",
+              "column": "14"
+            },
+            "category": "assertion"
+          },
+          {
+            "id": 8,
+            "function": "proofs::checked_add_full_u128_matches_129_bit_math",
+            "status": "Success",
+            "description": "assertion failed: actual.ok() == reference_add(left, right)",
+            "location": {
+              "file": "crates/aicharts-metrics/src/proofs.rs",
+              "line": "25",
+              "column": "5"
+            },
+            "category": "assertion"
+          },
+          {
+            "id": 9,
+            "function": "proofs::checked_add_full_u128_matches_129_bit_math",
+            "status": "Satisfied",
+            "description": "cover condition: actual.is_ok()",
+            "location": {
+              "file": "crates/aicharts-metrics/src/proofs.rs",
+              "line": "26",
+              "column": "5"
+            },
+            "category": "cover"
+          },
+          {
+            "id": 10,
+            "function": "proofs::checked_add_full_u128_matches_129_bit_math",
+            "status": "Satisfied",
+            "description": "cover condition: actual == Err(Error::Overflow)",
+            "location": {
+              "file": "crates/aicharts-metrics/src/proofs.rs",
+              "line": "27",
+              "column": "5"
+            },
+            "category": "cover"
+          },
+          {
+            "id": 11,
+            "function": "proofs::checked_add_full_u128_matches_129_bit_math",
+            "status": "Satisfied",
+            "description": "cover condition: left == u128::MAX && right == 0 && actual == Ok(u128::MAX)",
+            "location": {
+              "file": "crates/aicharts-metrics/src/proofs.rs",
+              "line": "28",
+              "column": "5"
+            },
+            "category": "cover"
+          },
+          {
+            "id": 12,
+            "function": "std::result::Result::<u128, Error>::ok",
+            "status": "Success",
+            "description": "unreachable code",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/result.rs",
+              "line": "714",
+              "column": "15"
+            },
+            "category": "unreachable"
+          },
+          {
+            "id": 13,
+            "function": "core::num::<impl u128>::checked_add",
+            "status": "Success",
+            "description": "attempt to compute `unchecked_add` which would overflow",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/num/uint_macros.rs",
+              "line": "942",
+              "column": "31"
+            },
+            "category": "arithmetic_overflow"
+          },
+          {
+            "id": 14,
+            "function": "<std::option::Option<u128> as std::cmp::PartialEq>::eq",
+            "status": "Success",
+            "description": "unreachable code",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/option.rs",
+              "line": "2439",
+              "column": "15"
+            },
+            "category": "unreachable"
+          },
+          {
+            "id": 15,
+            "function": "<std::result::Result<u128, Error> as std::cmp::PartialEq>::eq",
+            "status": "Success",
+            "description": "unreachable code",
+            "location": {
+              "file": "crates/aicharts-metrics/src/lib.rs",
+              "line": "0",
+              "column": "0"
+            },
+            "category": "unreachable"
+          },
+          {
+            "id": 16,
+            "function": "arithmetic::checked_add",
+            "status": "Success",
+            "description": "unreachable code",
+            "location": {
+              "file": "crates/aicharts-metrics/src/arithmetic.rs",
+              "line": "5",
+              "column": "11"
+            },
+            "category": "unreachable"
+          },
+          {
+            "id": 17,
+            "function": "std::result::Result::<u128, Error>::is_ok",
+            "status": "Success",
+            "description": "unreachable code",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/result.rs",
+              "line": "594",
+              "column": "5"
+            },
+            "category": "unreachable"
+          },
+          {
+            "id": 18,
+            "function": "std::result::Result::<u128, Error>::is_ok",
+            "status": "Success",
+            "description": "dereference failure: pointer NULL",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/result.rs",
+              "line": "595",
+              "column": "18"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 19,
+            "function": "std::result::Result::<u128, Error>::is_ok",
+            "status": "Success",
+            "description": "dereference failure: pointer invalid",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/result.rs",
+              "line": "595",
+              "column": "18"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 20,
+            "function": "std::result::Result::<u128, Error>::is_ok",
+            "status": "Success",
+            "description": "dereference failure: deallocated dynamic object",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/result.rs",
+              "line": "595",
+              "column": "18"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 21,
+            "function": "std::result::Result::<u128, Error>::is_ok",
+            "status": "Success",
+            "description": "dereference failure: dead object",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/result.rs",
+              "line": "595",
+              "column": "18"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 22,
+            "function": "std::result::Result::<u128, Error>::is_ok",
+            "status": "Success",
+            "description": "dereference failure: pointer outside object bounds",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/result.rs",
+              "line": "595",
+              "column": "18"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 23,
+            "function": "std::result::Result::<u128, Error>::is_ok",
+            "status": "Success",
+            "description": "dereference failure: invalid integer address",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/result.rs",
+              "line": "595",
+              "column": "18"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 24,
+            "function": "<Error as std::cmp::PartialEq>::eq",
+            "status": "Success",
+            "description": "dereference failure: pointer NULL",
+            "location": {
+              "file": "crates/aicharts-metrics/src/lib.rs",
+              "line": "25",
+              "column": "34"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 25,
+            "function": "<Error as std::cmp::PartialEq>::eq",
+            "status": "Success",
+            "description": "dereference failure: pointer invalid",
+            "location": {
+              "file": "crates/aicharts-metrics/src/lib.rs",
+              "line": "25",
+              "column": "34"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 26,
+            "function": "<Error as std::cmp::PartialEq>::eq",
+            "status": "Success",
+            "description": "dereference failure: deallocated dynamic object",
+            "location": {
+              "file": "crates/aicharts-metrics/src/lib.rs",
+              "line": "25",
+              "column": "34"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 27,
+            "function": "<Error as std::cmp::PartialEq>::eq",
+            "status": "Success",
+            "description": "dereference failure: dead object",
+            "location": {
+              "file": "crates/aicharts-metrics/src/lib.rs",
+              "line": "25",
+              "column": "34"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 28,
+            "function": "<Error as std::cmp::PartialEq>::eq",
+            "status": "Success",
+            "description": "dereference failure: pointer outside object bounds",
+            "location": {
+              "file": "crates/aicharts-metrics/src/lib.rs",
+              "line": "25",
+              "column": "34"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 29,
+            "function": "<Error as std::cmp::PartialEq>::eq",
+            "status": "Success",
+            "description": "dereference failure: invalid integer address",
+            "location": {
+              "file": "crates/aicharts-metrics/src/lib.rs",
+              "line": "25",
+              "column": "34"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 30,
+            "function": "<Error as std::cmp::PartialEq>::eq",
+            "status": "Success",
+            "description": "dereference failure: pointer NULL",
+            "location": {
+              "file": "crates/aicharts-metrics/src/lib.rs",
+              "line": "25",
+              "column": "34"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 31,
+            "function": "<Error as std::cmp::PartialEq>::eq",
+            "status": "Success",
+            "description": "dereference failure: pointer invalid",
+            "location": {
+              "file": "crates/aicharts-metrics/src/lib.rs",
+              "line": "25",
+              "column": "34"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 32,
+            "function": "<Error as std::cmp::PartialEq>::eq",
+            "status": "Success",
+            "description": "dereference failure: deallocated dynamic object",
+            "location": {
+              "file": "crates/aicharts-metrics/src/lib.rs",
+              "line": "25",
+              "column": "34"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 33,
+            "function": "<Error as std::cmp::PartialEq>::eq",
+            "status": "Success",
+            "description": "dereference failure: dead object",
+            "location": {
+              "file": "crates/aicharts-metrics/src/lib.rs",
+              "line": "25",
+              "column": "34"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 34,
+            "function": "<Error as std::cmp::PartialEq>::eq",
+            "status": "Success",
+            "description": "dereference failure: pointer outside object bounds",
+            "location": {
+              "file": "crates/aicharts-metrics/src/lib.rs",
+              "line": "25",
+              "column": "34"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 35,
+            "function": "<Error as std::cmp::PartialEq>::eq",
+            "status": "Success",
+            "description": "dereference failure: invalid integer address",
+            "location": {
+              "file": "crates/aicharts-metrics/src/lib.rs",
+              "line": "25",
+              "column": "34"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 36,
+            "function": "std::cmp::impls::<impl std::cmp::PartialEq for &Error>::eq",
+            "status": "Success",
+            "description": "dereference failure: pointer NULL",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/cmp.rs",
+              "line": "2399",
+              "column": "27"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 37,
+            "function": "std::cmp::impls::<impl std::cmp::PartialEq for &Error>::eq",
+            "status": "Success",
+            "description": "dereference failure: pointer invalid",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/cmp.rs",
+              "line": "2399",
+              "column": "27"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 38,
+            "function": "std::cmp::impls::<impl std::cmp::PartialEq for &Error>::eq",
+            "status": "Success",
+            "description": "dereference failure: deallocated dynamic object",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/cmp.rs",
+              "line": "2399",
+              "column": "27"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 39,
+            "function": "std::cmp::impls::<impl std::cmp::PartialEq for &Error>::eq",
+            "status": "Success",
+            "description": "dereference failure: dead object",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/cmp.rs",
+              "line": "2399",
+              "column": "27"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 40,
+            "function": "std::cmp::impls::<impl std::cmp::PartialEq for &Error>::eq",
+            "status": "Success",
+            "description": "dereference failure: pointer outside object bounds",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/cmp.rs",
+              "line": "2399",
+              "column": "27"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 41,
+            "function": "std::cmp::impls::<impl std::cmp::PartialEq for &Error>::eq",
+            "status": "Success",
+            "description": "dereference failure: invalid integer address",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/cmp.rs",
+              "line": "2399",
+              "column": "27"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 42,
+            "function": "std::cmp::impls::<impl std::cmp::PartialEq for &Error>::eq",
+            "status": "Success",
+            "description": "dereference failure: pointer NULL",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/cmp.rs",
+              "line": "2399",
+              "column": "34"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 43,
+            "function": "std::cmp::impls::<impl std::cmp::PartialEq for &Error>::eq",
+            "status": "Success",
+            "description": "dereference failure: pointer invalid",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/cmp.rs",
+              "line": "2399",
+              "column": "34"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 44,
+            "function": "std::cmp::impls::<impl std::cmp::PartialEq for &Error>::eq",
+            "status": "Success",
+            "description": "dereference failure: deallocated dynamic object",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/cmp.rs",
+              "line": "2399",
+              "column": "34"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 45,
+            "function": "std::cmp::impls::<impl std::cmp::PartialEq for &Error>::eq",
+            "status": "Success",
+            "description": "dereference failure: dead object",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/cmp.rs",
+              "line": "2399",
+              "column": "34"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 46,
+            "function": "std::cmp::impls::<impl std::cmp::PartialEq for &Error>::eq",
+            "status": "Success",
+            "description": "dereference failure: pointer outside object bounds",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/cmp.rs",
+              "line": "2399",
+              "column": "34"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 47,
+            "function": "std::cmp::impls::<impl std::cmp::PartialEq for &Error>::eq",
+            "status": "Success",
+            "description": "dereference failure: invalid integer address",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/cmp.rs",
+              "line": "2399",
+              "column": "34"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 48,
+            "function": "std::cmp::impls::<impl std::cmp::PartialEq for &u128>::eq",
+            "status": "Success",
+            "description": "dereference failure: pointer NULL",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/cmp.rs",
+              "line": "2399",
+              "column": "27"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 49,
+            "function": "std::cmp::impls::<impl std::cmp::PartialEq for &u128>::eq",
+            "status": "Success",
+            "description": "dereference failure: pointer invalid",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/cmp.rs",
+              "line": "2399",
+              "column": "27"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 50,
+            "function": "std::cmp::impls::<impl std::cmp::PartialEq for &u128>::eq",
+            "status": "Success",
+            "description": "dereference failure: deallocated dynamic object",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/cmp.rs",
+              "line": "2399",
+              "column": "27"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 51,
+            "function": "std::cmp::impls::<impl std::cmp::PartialEq for &u128>::eq",
+            "status": "Success",
+            "description": "dereference failure: dead object",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/cmp.rs",
+              "line": "2399",
+              "column": "27"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 52,
+            "function": "std::cmp::impls::<impl std::cmp::PartialEq for &u128>::eq",
+            "status": "Success",
+            "description": "dereference failure: pointer outside object bounds",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/cmp.rs",
+              "line": "2399",
+              "column": "27"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 53,
+            "function": "std::cmp::impls::<impl std::cmp::PartialEq for &u128>::eq",
+            "status": "Success",
+            "description": "dereference failure: invalid integer address",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/cmp.rs",
+              "line": "2399",
+              "column": "27"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 54,
+            "function": "std::cmp::impls::<impl std::cmp::PartialEq for &u128>::eq",
+            "status": "Success",
+            "description": "dereference failure: pointer NULL",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/cmp.rs",
+              "line": "2399",
+              "column": "34"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 55,
+            "function": "std::cmp::impls::<impl std::cmp::PartialEq for &u128>::eq",
+            "status": "Success",
+            "description": "dereference failure: pointer invalid",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/cmp.rs",
+              "line": "2399",
+              "column": "34"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 56,
+            "function": "std::cmp::impls::<impl std::cmp::PartialEq for &u128>::eq",
+            "status": "Success",
+            "description": "dereference failure: deallocated dynamic object",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/cmp.rs",
+              "line": "2399",
+              "column": "34"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 57,
+            "function": "std::cmp::impls::<impl std::cmp::PartialEq for &u128>::eq",
+            "status": "Success",
+            "description": "dereference failure: dead object",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/cmp.rs",
+              "line": "2399",
+              "column": "34"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 58,
+            "function": "std::cmp::impls::<impl std::cmp::PartialEq for &u128>::eq",
+            "status": "Success",
+            "description": "dereference failure: pointer outside object bounds",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/cmp.rs",
+              "line": "2399",
+              "column": "34"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 59,
+            "function": "std::cmp::impls::<impl std::cmp::PartialEq for &u128>::eq",
+            "status": "Success",
+            "description": "dereference failure: invalid integer address",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/cmp.rs",
+              "line": "2399",
+              "column": "34"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 60,
+            "function": "<std::option::Option<u128> as std::cmp::PartialEq>::eq",
+            "status": "Success",
+            "description": "dereference failure: pointer NULL",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/option.rs",
+              "line": "2439",
+              "column": "15"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 61,
+            "function": "<std::option::Option<u128> as std::cmp::PartialEq>::eq",
+            "status": "Success",
+            "description": "dereference failure: pointer invalid",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/option.rs",
+              "line": "2439",
+              "column": "15"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 62,
+            "function": "<std::option::Option<u128> as std::cmp::PartialEq>::eq",
+            "status": "Success",
+            "description": "dereference failure: deallocated dynamic object",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/option.rs",
+              "line": "2439",
+              "column": "15"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 63,
+            "function": "<std::option::Option<u128> as std::cmp::PartialEq>::eq",
+            "status": "Success",
+            "description": "dereference failure: dead object",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/option.rs",
+              "line": "2439",
+              "column": "15"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 64,
+            "function": "<std::option::Option<u128> as std::cmp::PartialEq>::eq",
+            "status": "Success",
+            "description": "dereference failure: pointer outside object bounds",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/option.rs",
+              "line": "2439",
+              "column": "15"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 65,
+            "function": "<std::option::Option<u128> as std::cmp::PartialEq>::eq",
+            "status": "Success",
+            "description": "dereference failure: invalid integer address",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/option.rs",
+              "line": "2439",
+              "column": "15"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 66,
+            "function": "<std::option::Option<u128> as std::cmp::PartialEq>::eq",
+            "status": "Success",
+            "description": "dereference failure: pointer NULL",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/option.rs",
+              "line": "2439",
+              "column": "15"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 67,
+            "function": "<std::option::Option<u128> as std::cmp::PartialEq>::eq",
+            "status": "Success",
+            "description": "dereference failure: pointer invalid",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/option.rs",
+              "line": "2439",
+              "column": "15"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 68,
+            "function": "<std::option::Option<u128> as std::cmp::PartialEq>::eq",
+            "status": "Success",
+            "description": "dereference failure: deallocated dynamic object",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/option.rs",
+              "line": "2439",
+              "column": "15"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 69,
+            "function": "<std::option::Option<u128> as std::cmp::PartialEq>::eq",
+            "status": "Success",
+            "description": "dereference failure: dead object",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/option.rs",
+              "line": "2439",
+              "column": "15"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 70,
+            "function": "<std::option::Option<u128> as std::cmp::PartialEq>::eq",
+            "status": "Success",
+            "description": "dereference failure: pointer outside object bounds",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/option.rs",
+              "line": "2439",
+              "column": "15"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 71,
+            "function": "<std::option::Option<u128> as std::cmp::PartialEq>::eq",
+            "status": "Success",
+            "description": "dereference failure: invalid integer address",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/option.rs",
+              "line": "2439",
+              "column": "15"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 72,
+            "function": "<std::option::Option<u128> as std::cmp::PartialEq>::eq",
+            "status": "Success",
+            "description": "dereference failure: pointer NULL",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/option.rs",
+              "line": "2439",
+              "column": "15"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 73,
+            "function": "<std::option::Option<u128> as std::cmp::PartialEq>::eq",
+            "status": "Success",
+            "description": "dereference failure: pointer invalid",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/option.rs",
+              "line": "2439",
+              "column": "15"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 74,
+            "function": "<std::option::Option<u128> as std::cmp::PartialEq>::eq",
+            "status": "Success",
+            "description": "dereference failure: deallocated dynamic object",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/option.rs",
+              "line": "2439",
+              "column": "15"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 75,
+            "function": "<std::option::Option<u128> as std::cmp::PartialEq>::eq",
+            "status": "Success",
+            "description": "dereference failure: dead object",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/option.rs",
+              "line": "2439",
+              "column": "15"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 76,
+            "function": "<std::option::Option<u128> as std::cmp::PartialEq>::eq",
+            "status": "Success",
+            "description": "dereference failure: pointer outside object bounds",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/option.rs",
+              "line": "2439",
+              "column": "15"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 77,
+            "function": "<std::option::Option<u128> as std::cmp::PartialEq>::eq",
+            "status": "Success",
+            "description": "dereference failure: invalid integer address",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/option.rs",
+              "line": "2439",
+              "column": "15"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 78,
+            "function": "std::cmp::impls::<impl std::cmp::PartialEq for u128>::eq",
+            "status": "Success",
+            "description": "dereference failure: pointer NULL",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/cmp.rs",
+              "line": "2153",
+              "column": "54"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 79,
+            "function": "std::cmp::impls::<impl std::cmp::PartialEq for u128>::eq",
+            "status": "Success",
+            "description": "dereference failure: pointer invalid",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/cmp.rs",
+              "line": "2153",
+              "column": "54"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 80,
+            "function": "std::cmp::impls::<impl std::cmp::PartialEq for u128>::eq",
+            "status": "Success",
+            "description": "dereference failure: deallocated dynamic object",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/cmp.rs",
+              "line": "2153",
+              "column": "54"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 81,
+            "function": "std::cmp::impls::<impl std::cmp::PartialEq for u128>::eq",
+            "status": "Success",
+            "description": "dereference failure: dead object",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/cmp.rs",
+              "line": "2153",
+              "column": "54"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 82,
+            "function": "std::cmp::impls::<impl std::cmp::PartialEq for u128>::eq",
+            "status": "Success",
+            "description": "dereference failure: pointer outside object bounds",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/cmp.rs",
+              "line": "2153",
+              "column": "54"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 83,
+            "function": "std::cmp::impls::<impl std::cmp::PartialEq for u128>::eq",
+            "status": "Success",
+            "description": "dereference failure: invalid integer address",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/cmp.rs",
+              "line": "2153",
+              "column": "54"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 84,
+            "function": "std::cmp::impls::<impl std::cmp::PartialEq for u128>::eq",
+            "status": "Success",
+            "description": "dereference failure: pointer NULL",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/cmp.rs",
+              "line": "2153",
+              "column": "63"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 85,
+            "function": "std::cmp::impls::<impl std::cmp::PartialEq for u128>::eq",
+            "status": "Success",
+            "description": "dereference failure: pointer invalid",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/cmp.rs",
+              "line": "2153",
+              "column": "63"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 86,
+            "function": "std::cmp::impls::<impl std::cmp::PartialEq for u128>::eq",
+            "status": "Success",
+            "description": "dereference failure: deallocated dynamic object",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/cmp.rs",
+              "line": "2153",
+              "column": "63"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 87,
+            "function": "std::cmp::impls::<impl std::cmp::PartialEq for u128>::eq",
+            "status": "Success",
+            "description": "dereference failure: dead object",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/cmp.rs",
+              "line": "2153",
+              "column": "63"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 88,
+            "function": "std::cmp::impls::<impl std::cmp::PartialEq for u128>::eq",
+            "status": "Success",
+            "description": "dereference failure: pointer outside object bounds",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/cmp.rs",
+              "line": "2153",
+              "column": "63"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 89,
+            "function": "std::cmp::impls::<impl std::cmp::PartialEq for u128>::eq",
+            "status": "Success",
+            "description": "dereference failure: invalid integer address",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/cmp.rs",
+              "line": "2153",
+              "column": "63"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 90,
+            "function": "<std::result::Result<u128, Error> as std::cmp::PartialEq>::eq",
+            "status": "Success",
+            "description": "dereference failure: pointer NULL",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/result.rs",
+              "line": "554",
+              "column": "16"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 91,
+            "function": "<std::result::Result<u128, Error> as std::cmp::PartialEq>::eq",
+            "status": "Success",
+            "description": "dereference failure: pointer invalid",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/result.rs",
+              "line": "554",
+              "column": "16"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 92,
+            "function": "<std::result::Result<u128, Error> as std::cmp::PartialEq>::eq",
+            "status": "Success",
+            "description": "dereference failure: deallocated dynamic object",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/result.rs",
+              "line": "554",
+              "column": "16"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 93,
+            "function": "<std::result::Result<u128, Error> as std::cmp::PartialEq>::eq",
+            "status": "Success",
+            "description": "dereference failure: dead object",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/result.rs",
+              "line": "554",
+              "column": "16"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 94,
+            "function": "<std::result::Result<u128, Error> as std::cmp::PartialEq>::eq",
+            "status": "Success",
+            "description": "dereference failure: pointer outside object bounds",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/result.rs",
+              "line": "554",
+              "column": "16"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 95,
+            "function": "<std::result::Result<u128, Error> as std::cmp::PartialEq>::eq",
+            "status": "Success",
+            "description": "dereference failure: invalid integer address",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/result.rs",
+              "line": "554",
+              "column": "16"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 96,
+            "function": "<std::result::Result<u128, Error> as std::cmp::PartialEq>::eq",
+            "status": "Success",
+            "description": "dereference failure: pointer NULL",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/result.rs",
+              "line": "554",
+              "column": "16"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 97,
+            "function": "<std::result::Result<u128, Error> as std::cmp::PartialEq>::eq",
+            "status": "Success",
+            "description": "dereference failure: pointer invalid",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/result.rs",
+              "line": "554",
+              "column": "16"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 98,
+            "function": "<std::result::Result<u128, Error> as std::cmp::PartialEq>::eq",
+            "status": "Success",
+            "description": "dereference failure: deallocated dynamic object",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/result.rs",
+              "line": "554",
+              "column": "16"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 99,
+            "function": "<std::result::Result<u128, Error> as std::cmp::PartialEq>::eq",
+            "status": "Success",
+            "description": "dereference failure: dead object",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/result.rs",
+              "line": "554",
+              "column": "16"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 100,
+            "function": "<std::result::Result<u128, Error> as std::cmp::PartialEq>::eq",
+            "status": "Success",
+            "description": "dereference failure: pointer outside object bounds",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/result.rs",
+              "line": "554",
+              "column": "16"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 101,
+            "function": "<std::result::Result<u128, Error> as std::cmp::PartialEq>::eq",
+            "status": "Success",
+            "description": "dereference failure: invalid integer address",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/result.rs",
+              "line": "554",
+              "column": "16"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 102,
+            "function": "<std::result::Result<u128, Error> as std::cmp::PartialEq>::eq",
+            "status": "Success",
+            "description": "dereference failure: pointer NULL",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/result.rs",
+              "line": "554",
+              "column": "16"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 103,
+            "function": "<std::result::Result<u128, Error> as std::cmp::PartialEq>::eq",
+            "status": "Success",
+            "description": "dereference failure: pointer invalid",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/result.rs",
+              "line": "554",
+              "column": "16"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 104,
+            "function": "<std::result::Result<u128, Error> as std::cmp::PartialEq>::eq",
+            "status": "Success",
+            "description": "dereference failure: deallocated dynamic object",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/result.rs",
+              "line": "554",
+              "column": "16"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 105,
+            "function": "<std::result::Result<u128, Error> as std::cmp::PartialEq>::eq",
+            "status": "Success",
+            "description": "dereference failure: dead object",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/result.rs",
+              "line": "554",
+              "column": "16"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 106,
+            "function": "<std::result::Result<u128, Error> as std::cmp::PartialEq>::eq",
+            "status": "Success",
+            "description": "dereference failure: pointer outside object bounds",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/result.rs",
+              "line": "554",
+              "column": "16"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 107,
+            "function": "<std::result::Result<u128, Error> as std::cmp::PartialEq>::eq",
+            "status": "Success",
+            "description": "dereference failure: invalid integer address",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/result.rs",
+              "line": "554",
+              "column": "16"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 108,
+            "function": "<std::result::Result<u128, Error> as std::cmp::PartialEq>::eq",
+            "status": "Success",
+            "description": "dereference failure: pointer NULL",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/result.rs",
+              "line": "554",
+              "column": "16"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 109,
+            "function": "<std::result::Result<u128, Error> as std::cmp::PartialEq>::eq",
+            "status": "Success",
+            "description": "dereference failure: pointer invalid",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/result.rs",
+              "line": "554",
+              "column": "16"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 110,
+            "function": "<std::result::Result<u128, Error> as std::cmp::PartialEq>::eq",
+            "status": "Success",
+            "description": "dereference failure: deallocated dynamic object",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/result.rs",
+              "line": "554",
+              "column": "16"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 111,
+            "function": "<std::result::Result<u128, Error> as std::cmp::PartialEq>::eq",
+            "status": "Success",
+            "description": "dereference failure: dead object",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/result.rs",
+              "line": "554",
+              "column": "16"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 112,
+            "function": "<std::result::Result<u128, Error> as std::cmp::PartialEq>::eq",
+            "status": "Success",
+            "description": "dereference failure: pointer outside object bounds",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/result.rs",
+              "line": "554",
+              "column": "16"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 113,
+            "function": "<std::result::Result<u128, Error> as std::cmp::PartialEq>::eq",
+            "status": "Success",
+            "description": "dereference failure: invalid integer address",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/result.rs",
+              "line": "554",
+              "column": "16"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 114,
+            "function": "<std::result::Result<u128, Error> as std::cmp::PartialEq>::eq",
+            "status": "Success",
+            "description": "dereference failure: pointer NULL",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/result.rs",
+              "line": "554",
+              "column": "16"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 115,
+            "function": "<std::result::Result<u128, Error> as std::cmp::PartialEq>::eq",
+            "status": "Success",
+            "description": "dereference failure: pointer invalid",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/result.rs",
+              "line": "554",
+              "column": "16"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 116,
+            "function": "<std::result::Result<u128, Error> as std::cmp::PartialEq>::eq",
+            "status": "Success",
+            "description": "dereference failure: deallocated dynamic object",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/result.rs",
+              "line": "554",
+              "column": "16"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 117,
+            "function": "<std::result::Result<u128, Error> as std::cmp::PartialEq>::eq",
+            "status": "Success",
+            "description": "dereference failure: dead object",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/result.rs",
+              "line": "554",
+              "column": "16"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 118,
+            "function": "<std::result::Result<u128, Error> as std::cmp::PartialEq>::eq",
+            "status": "Success",
+            "description": "dereference failure: pointer outside object bounds",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/result.rs",
+              "line": "554",
+              "column": "16"
+            },
+            "category": "pointer_dereference"
+          },
+          {
+            "id": 119,
+            "function": "<std::result::Result<u128, Error> as std::cmp::PartialEq>::eq",
+            "status": "Success",
+            "description": "dereference failure: invalid integer address",
+            "location": {
+              "file": "/Users/runner/.rustup/toolchains/nightly-2026-08-21-aarch64-apple-darwin/lib/rustlib/src/rust/library/core/src/result.rs",
+              "line": "554",
+              "column": "16"
+            },
+            "category": "pointer_dereference"
+          }
+        ]
+      }
+    ]
+  },
+  "fixtureNotice": "One unchanged harness sliced from a recorded 17-harness run for evidence-admission regression tests; not a reusable proof receipt."
+}

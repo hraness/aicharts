@@ -1,6 +1,7 @@
 import { parseUsageStatsReport, STATS_MAX_DAY, STATS_MAX_DAYS, type UsageStatsReport } from "./stats-contract";
 import { isStatsClient } from "./stats-registry";
 import { privateDaysSnapshot as snapshot } from "./private-days-http-contract";
+import { PRIVATE_DAYS_MAX_HEADS } from "./private-days-contract";
 
 export const STATS_HTTP_URL = "https://usage.aicharts.io/internal/usage/stats";
 export const STATS_UPLOAD_URL = "https://usage.aicharts.io/v2/snapshots";
@@ -127,7 +128,7 @@ export function parseStatsStatus(value: unknown): StatsStatus | null {
   const dto = snapshot(value, ["schemaVersion", "revision", "nextSequence", "writerDeviceId", "v1Revision", "headDigest", "legacyRecords", "takeoverEligible"]);
   return dto?.schemaVersion === 2 && statsInteger(dto.revision) && statsInteger(dto.nextSequence, 1)
     && (dto.writerDeviceId === null || identity(dto.writerDeviceId)) && statsInteger(dto.v1Revision, 0, 4_096)
-    && statsHex(dto.headDigest) && statsInteger(dto.legacyRecords, 0, 100_000) && typeof dto.takeoverEligible === "boolean"
+    && statsHex(dto.headDigest) && statsInteger(dto.legacyRecords, 0, PRIVATE_DAYS_MAX_HEADS) && typeof dto.takeoverEligible === "boolean"
     ? Object.freeze({ schemaVersion: 2, revision: dto.revision, nextSequence: dto.nextSequence, writerDeviceId: dto.writerDeviceId,
       v1Revision: dto.v1Revision, headDigest: dto.headDigest, legacyRecords: dto.legacyRecords, takeoverEligible: dto.takeoverEligible }) : null;
 }

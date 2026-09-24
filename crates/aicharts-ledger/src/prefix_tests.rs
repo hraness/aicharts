@@ -234,12 +234,12 @@ fn migration_keeps_legacy_layout_data_and_is_explicit_atomic_idempotent() {
         assert_eq!(table_image(&f.raw(), &BASE), base);
         assert_eq!(
             storage::schema_version(&f.raw()).unwrap(),
-            if sender { 2 } else { 1 }
+            if sender { 6 } else { 5 }
         );
         let ledger = Ledger::migrate_complete_prefix(&f.dir(), &identity(), 1).unwrap();
         assert_eq!(
             storage::schema_version(&ledger.connection).unwrap(),
-            if sender { 4 } else { 3 }
+            if sender { 8 } else { 7 }
         );
         assert_eq!(table_image(&ledger.connection, &BASE), base);
         if let Some(rows) = sender_rows {
@@ -326,9 +326,9 @@ fn sender_migration_on_prefix_layout_preserves_witness_and_never_downgrades() {
             .err(),
         Some(Error::Storage)
     );
-    assert_eq!(storage::schema_version(&f.raw()).unwrap(), 3);
+    assert_eq!(storage::schema_version(&f.raw()).unwrap(), 7);
     let mut ledger = Ledger::migrate_sender_v2(&f.dir(), &identity(), 2, &BINDING).unwrap();
-    assert_eq!(storage::schema_version(&ledger.connection).unwrap(), 4);
+    assert_eq!(storage::schema_version(&ledger.connection).unwrap(), 8);
     assert_eq!(table_image(&ledger.connection, &BASE), base);
     assert_eq!(
         table_image(&ledger.connection, &["source_prefixes"]),
@@ -343,7 +343,7 @@ fn sender_migration_on_prefix_layout_preserves_witness_and_never_downgrades() {
     let before = directory_image(&f.dir());
     drop(Ledger::migrate_sender_v2(&f.dir(), &identity(), 0, &BINDING).unwrap());
     assert_eq!(directory_image(&f.dir()), before);
-    assert_eq!(storage::schema_version(&f.raw()).unwrap(), 4);
+    assert_eq!(storage::schema_version(&f.raw()).unwrap(), 8);
 }
 
 #[test]
@@ -766,7 +766,7 @@ fn exact_schema_rejects_every_wrong_layout_feature_combination() {
     for sender in [false, true] {
         for version in 1..=5 {
             let (f, ledger) = migrated(sender);
-            let expected = if sender { 4 } else { 3 };
+            let expected = if sender { 8 } else { 7 };
             if version == expected {
                 continue;
             }
@@ -934,10 +934,10 @@ fn process_death_never_partially_migrates_or_admits_prefix_numeric_pair() {
             assert_eq!(
                 storage::schema_version(&ledger.connection).unwrap(),
                 match (sender, phase) {
-                    (false, "migrate") => 1,
-                    (true, "migrate") => 2,
-                    (false, _) => 3,
-                    _ => 4,
+                    (false, "migrate") => 5,
+                    (true, "migrate") => 6,
+                    (false, _) => 7,
+                    _ => 8,
                 }
             );
             assert!(ledger.prefix_snapshot().unwrap().checkpoints[&[1; 32]]

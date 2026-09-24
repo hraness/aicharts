@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "claim": "production-guard-mutation-tested-correspondence-only",
+  "mutations": [
+    {
+      "id": "publish-with-live-registrations",
+      "source": "services/usage-worker/src/restore-fence.ts",
+      "exactBefore": "if (this.#inFlight() !== 0) return err(\"recovery_required\");",
+      "exactAfter": "if (this.#inFlight() < 0) return err(\"recovery_required\");",
+      "requireSingleSourceMatch": true,
+      "adapter": "services/usage-worker/test/assurance-conformance.worker.ts",
+      "testName": "M1 generated restore registration schedules",
+      "expectedSemanticFailure": "CONFORMANCE:M1:publish:outcome",
+      "requiredPositiveControl": "The unchanged adapter and all three retained seeds pass against the original production source.",
+      "refuse": ["compile or parse errors", "runtime setup failures", "timeouts", "missing tests", "missing semantic failure marker", "changed specification or adapter", "multiple or missing source matches"]
+    }
+  ]
+}

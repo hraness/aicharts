@@ -29,7 +29,7 @@ export interface PrivateDaysTransportDependencies extends PairingHttpEffects {
   registerLifetime(terminal: Promise<void>): void;
   beginSession(request: Request): PrivateDaysSessionScope | null;
 }
-export type PrivateDaysTransportOutcome = Readonly<{ kind: "query"; result: PrivateDaysQueryResult }>
+export type PrivateDaysTransportOutcome = Readonly<{ kind: "query"; accountId: string; result: PrivateDaysQueryResult }>
   | Readonly<{ kind: "authentication_required" }> | Readonly<{ kind: "unavailable" }>;
 const unavailable = () => new Error("private_days_transport_unavailable");
 const failedOutcome = (): PrivateDaysTransportOutcome => Object.freeze({ kind: "unavailable" });
@@ -147,7 +147,7 @@ export function createPrivateDaysTransport(dependencies: PrivateDaysTransportDep
           const domain = decodePrivateDaysHttpResponse(bytes, captured);
           if (domain === null) reject("decode");
           diagnostic?.domain(domain.ok ? "success" : domain.error);
-          guard(); diagnostic?.step("complete"); return Object.freeze({ kind: "query", result: domain });
+          guard(); diagnostic?.step("complete"); return Object.freeze({ kind: "query", accountId: captured.accountId, result: domain });
         } finally { if (!reading) await pairingHttpDiscard(response); }
       }, startedAt);
       diagnostic?.closeTransport(); return result;

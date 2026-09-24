@@ -6,6 +6,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { LeaderboardView } from "../components/usage/leaderboard-view";
 import { encodePrivateDaysPublicResponse, parsePrivateDaysPublicSearch, privateDaysPublicStatus,
   PRIVATE_DAYS_PUBLIC_MEDIA, type PrivateDaysPublicReply, type PrivateDaysRange } from "../lib/usage/private-days-public";
+import { USAGE_ACCOUNT_HEADER } from "../lib/usage/account-public";
 import { encodeUsageConsentPublicReply, USAGE_CONSENT_PUBLIC_MEDIA } from "../lib/usage/consent-public";
 import { parseLeaderboardSnapshot, type LeaderboardConsentViewV1 } from "../lib/usage/leaderboard-contract";
 import { verifyUsagePairing } from "./usage-pairing-browser";
@@ -183,6 +184,7 @@ export async function verifyUsageDashboard(browser: Browser, disabledBaseUrl: st
       const failures: string[] = [];
       const blockedOrigins = new Set<string>();
       page.on("pageerror", () => failures.push("browser runtime error"));
+      const accountId = `acct_${"a".repeat(32)}`;
       let mode: Mode = "ready", hold = false, requests = 0;
       const held: Route[] = [];
       let heldArrived: (() => void) | undefined;
@@ -211,11 +213,11 @@ export async function verifyUsageDashboard(browser: Browser, disabledBaseUrl: st
         }
         if (url.pathname === "/api/usage/account") {
           invariant(route.request().method() === "GET" && url.search === "", "Account identity must use its fixed read-only route.");
-          await route.fulfill({ status: 200, contentType: PRIVATE_DAYS_PUBLIC_MEDIA, body: JSON.stringify({ schemaVersion: 1, state: "ready", account: { accountId: `acct_${"a".repeat(32)}` } }) }); return;
+          await route.fulfill({ status: 200, contentType: PRIVATE_DAYS_PUBLIC_MEDIA, body: JSON.stringify({ schemaVersion: 1, state: "ready", account: { accountId } }) }); return;
         }
         if (url.pathname === "/api/usage/stats") {
           invariant(route.request().method() === "GET" && parseStatsPublicSearch(url.search), "The stats fallback must use the numeric GET contract.");
-          await route.fulfill({ status: 200, headers: { "content-type": STATS_PUBLIC_MEDIA, "cache-control": "private, no-store" }, body: '{"schemaVersion":2,"ok":false,"error":"not_started"}' });
+          await route.fulfill({ status: 200, headers: { "content-type": STATS_PUBLIC_MEDIA, "cache-control": "private, no-store", [USAGE_ACCOUNT_HEADER]: accountId }, body: '{"schemaVersion":2,"ok":false,"error":"not_started"}' });
           return;
         }
         if (url.pathname !== "/api/usage/days") { await route.continue(); return; }
@@ -227,7 +229,7 @@ export async function verifyUsageDashboard(browser: Browser, disabledBaseUrl: st
         if (hold) { held.push(route); heldArrived?.(); return; }
         const reply = fixture(mode, range), bytes = encodePrivateDaysPublicResponse(reply, range);
         invariant(bytes !== null, "Synthetic browser measurements must pass the public codec.");
-        await route.fulfill({ status: privateDaysPublicStatus(reply), headers: { "content-type": PRIVATE_DAYS_PUBLIC_MEDIA, "cache-control": "private, no-store" }, body: Buffer.from(bytes) });
+        await route.fulfill({ status: privateDaysPublicStatus(reply), headers: { "content-type": PRIVATE_DAYS_PUBLIC_MEDIA, "cache-control": "private, no-store", ...("state" in reply ? { [USAGE_ACCOUNT_HEADER]: accountId } : {}) }, body: Buffer.from(bytes) });
       });
       const loaded = async () => {
         await page.getByRole("heading", { name: "Codex", exact: true }).waitFor();
@@ -286,9 +288,16 @@ export async function verifyUsageDashboard(browser: Browser, disabledBaseUrl: st
         invariant(await page.locator(".usage-daily__plot").count() === 0, "Connected zero observations must not invent chart data.");
         await refresh("not_enrolled"); await page.getByRole("heading", { name: "No collector connected" }).waitFor();
         invariant(await page.locator(".usage-daily table").count() === 0, "Unenrolled state must clear previous measurements.");
-        await refresh("authentication_required"); await page.getByRole("button", { name: "Sign in with Hraness" }).waitFor();
-        invariant(await page.locator('form[action="/api/suite-auth/start"][method="get"] input[name="return_to"]').inputValue() === "/dashboard", "Document sign-in must return to this private page.");
-        await refresh("ready"); await loaded();
+        await refresh("authentication_required");
+        // A settled refusal clears every private view: the daily report unmounts
+        // and the account dashboard itself asks for sign-in.
+        const signIn = page.locator(".usage-stats__notice").getByRole("button", { name: "Sign in with Hraness" });
+        await signIn.waitFor();
+        invariant(await page.locator(".usage-daily").count() === 0, "An authentication refusal must clear the private daily report.");
+        invariant(await page.locator('.usage-stats__notice form[action="/api/suite-auth/start"][method="get"] input[name="return_to"]').inputValue() === "/dashboard", "Document sign-in must return to this private page.");
+        // Only a new document restores private reads after a settled refusal.
+        mode = "ready";
+        await page.goto(`${baseUrl}/dashboard`, { waitUntil: "domcontentloaded" }); await loaded();
         await refresh("unavailable"); await page.getByRole("heading", { name: "Usage is unavailable right now" }).waitFor();
         invariant(await page.locator(".usage-daily table").count() === 0, "Failed refresh must clear old values.");
         if (captureDirectory !== undefined) await page.screenshot({ path: resolve(captureDirectory, `${name}-unavailable.png`), fullPage: true });
@@ -324,7 +333,7 @@ export async function verifyUsageDashboard(browser: Browser, disabledBaseUrl: st
             if (refuseConsent) {
               const bytes = encodeUsageConsentPublicReply({ schemaVersion: 1, error: { code: "publishing_full" } });
               invariant(bytes !== null, "Capacity refusal must pass the public codec.");
-              await route.fulfill({ status: 409, headers: { "content-type": USAGE_CONSENT_PUBLIC_MEDIA, "cache-control": "private, no-store" }, body: Buffer.from(bytes) });
+              await route.fulfill({ status: 409, headers: { "content-type": USAGE_CONSENT_PUBLIC_MEDIA, "cache-control": "private, no-store", [USAGE_ACCOUNT_HEADER]: accountId }, body: Buffer.from(bytes) });
               return;
             }
             const decision = route.request().postDataJSON() as { consent: boolean; publicHandle: string | null };
@@ -336,7 +345,7 @@ export async function verifyUsageDashboard(browser: Browser, disabledBaseUrl: st
           }
           const bytes = encodeUsageConsentPublicReply({ schemaVersion: 1, state: "ready", value: consent });
           invariant(bytes !== null, "Consent fixture must pass its public codec.");
-          await route.fulfill({ status: 200, headers: { "content-type": USAGE_CONSENT_PUBLIC_MEDIA, "cache-control": "private, no-store" }, body: Buffer.from(bytes) });
+          await route.fulfill({ status: 200, headers: { "content-type": USAGE_CONSENT_PUBLIC_MEDIA, "cache-control": "private, no-store", [USAGE_ACCOUNT_HEADER]: accountId }, body: Buffer.from(bytes) });
         });
         await page.reload(); await loaded();
         const consentPanel = page.locator(".usage-consent");

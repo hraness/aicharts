@@ -125,7 +125,7 @@ describe("restore fence control channel", () => {
     expect(empty.record).toBeNull(); expect(empty.inFlight).toBe(0);
     expect(await error(closeRequest(accountId, generationId, 0))).toBe("recovery_required");
     // Establish epoch 0 through the adapter path (the channel has no lease op).
-    const grant = await stub(accountId).assertOpen({ accountId, generation: generationId, epoch: 0, workerVersion: VERSION, leaseMs: 5_000 });
+    const grant = await stub(accountId).assertOpen({ attemptId: enrollmentRandom(), accountId, generation: generationId, epoch: 0, workerVersion: VERSION, leaseMs: 5_000 });
     expect(grant.ok).toBe(true);
     const opened = await view(fenceRequest(accountId, generationId, "read"));
     expect(opened.record?.phase).toBe("open"); expect(opened.record?.epoch).toBe(0);
@@ -135,7 +135,7 @@ describe("restore fence control channel", () => {
     expect(closed.record?.phase).toBe("closed"); expect(closed.inFlight).toBe(1);
     expect(await error(closeRequest(accountId, generationId, 1))).toBe("recovery_required");
     // While closed, new mutating leases are refused; publish waits for drain.
-    const blocked = await stub(accountId).assertOpen({ accountId, generation: generationId, epoch: 0, workerVersion: VERSION, leaseMs: 5_000 });
+    const blocked = await stub(accountId).assertOpen({ attemptId: enrollmentRandom(), accountId, generation: generationId, epoch: 0, workerVersion: VERSION, leaseMs: 5_000 });
     expect(blocked.ok).toBe(false);
     expect(await error(publishRequest(accountId, generationId, 1))).toBe("recovery_required");
     if (!grant.ok) throw new Error("control_fixture_failure");

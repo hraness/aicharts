@@ -32,6 +32,14 @@ fn identity(stat: &Stat) -> (u64, u64) {
     (stat.st_dev as u64, stat.st_ino)
 }
 fn checked(fd: &OwnedFd, directory: bool, private: bool) -> Result<Stat> {
+    checked_with_unlinked(fd, directory, private, false)
+}
+fn checked_with_unlinked(
+    fd: &OwnedFd,
+    directory: bool,
+    private: bool,
+    allow_unlinked: bool,
+) -> Result<Stat> {
     let stat = fs::fstat(fd).map_err(|_| IO)?;
     let uid = rustix::process::geteuid().as_raw();
     let kind = if directory {
@@ -40,7 +48,7 @@ fn checked(fd: &OwnedFd, directory: bool, private: bool) -> Result<Stat> {
         FileType::RegularFile
     };
     if FileType::from_raw_mode(stat.st_mode) != kind
-        || (!directory && stat.st_nlink != 1)
+        || (!directory && stat.st_nlink != 1 && !(allow_unlinked && stat.st_nlink == 0))
         || stat.st_size < 0
         || (private
             && (stat.st_uid != uid
@@ -60,6 +68,8 @@ struct Edge {
     id: (u64, u64),
 }
 pub(crate) struct Cache {
+    maximum_bytes: usize,
+    single_stage: bool,
     root: OwnedFd,
     edges: Vec<Edge>,
     lock: OwnedFd,
@@ -68,7 +78,134 @@ pub(crate) struct Cache {
     observed: RefCell<BTreeMap<String, Option<Vec<u8>>>>,
 }
 impl Cache {
+    /// Read an existing private snapshot without opening or creating a lock.
+    /// An atomic rename may unlink the captured descriptor; its complete prior
+    /// bytes remain valid while in-place changes and directory swaps refuse.
+    pub(crate) fn read_existing(path: &Path, name: &str, cap: usize) -> Result<Option<Vec<u8>>> {
+        let names = components(path)?;
+        if name.is_empty()
+            || name.len() > 160
+            || name == "."
+            || name == ".."
+            || name
+                .bytes()
+                .any(|byte| !(byte.is_ascii_alphanumeric() || matches!(byte, b'.' | b'-' | b'_')))
+            || cap == 0
+            || cap > aicharts_import::MAX_CHECKPOINT_BYTES
+        {
+            return Err(INVALID);
+        }
+        let uid = rustix::process::geteuid().as_raw();
+        if uid != rustix::process::getuid().as_raw() {
+            return Err(INVALID);
+        }
+        let root = fs::open(
+            "/",
+            flags() | OFlags::RDONLY | OFlags::DIRECTORY,
+            Mode::empty(),
+        )
+        .map_err(|_| IO)?;
+        let mut edges: Vec<Edge> = Vec::new();
+        for (index, name) in names.iter().enumerate() {
+            let parent = edges.last().map_or(&root, |edge| &edge.fd);
+            let fd = match fs::openat(
+                parent,
+                name,
+                flags() | OFlags::RDONLY | OFlags::DIRECTORY,
+                Mode::empty(),
+            ) {
+                Ok(fd) => fd,
+                Err(Errno::NOENT) => return Ok(None),
+                Err(_) => return Err(IO),
+            };
+            let stat = checked(&fd, true, index + 1 == names.len())?;
+            if identity(&stat)
+                != identity(&fs::statat(parent, name, AtFlags::SYMLINK_NOFOLLOW).map_err(|_| IO)?)
+            {
+                return Err(INVALID);
+            }
+            edges.push(Edge {
+                fd,
+                name: name.clone(),
+                id: identity(&stat),
+            });
+        }
+        let validate_directory = || -> Result<()> {
+            if uid != rustix::process::geteuid().as_raw()
+                || uid != rustix::process::getuid().as_raw()
+            {
+                return Err(INVALID);
+            }
+            let mut parent = &root;
+            for (index, edge) in edges.iter().enumerate() {
+                if identity(&checked(&edge.fd, true, index + 1 == edges.len())?) != edge.id
+                    || identity(
+                        &fs::statat(parent, &edge.name, AtFlags::SYMLINK_NOFOLLOW)
+                            .map_err(|_| IO)?,
+                    ) != edge.id
+                {
+                    return Err(INVALID);
+                }
+                parent = &edge.fd;
+            }
+            Ok(())
+        };
+        let directory = &edges.last().ok_or(INVALID)?.fd;
+        let fd = match fs::openat(directory, name, flags() | OFlags::RDONLY, Mode::empty()) {
+            Ok(fd) => fd,
+            Err(Errno::NOENT) => {
+                validate_directory()?;
+                return Ok(None);
+            }
+            Err(_) => return Err(IO),
+        };
+        let before = checked_with_unlinked(&fd, false, true, true)?;
+        if before.st_size <= 0 || before.st_size as usize > cap {
+            return Err(INVALID);
+        }
+        validate_directory()?;
+        let mut file = File::from(fd);
+        let mut bytes = Vec::new();
+        (&mut file)
+            .take(cap as u64 + 1)
+            .read_to_end(&mut bytes)
+            .map_err(|_| IO)?;
+        let fd: OwnedFd = file.into();
+        let after = fs::fstat(&fd).map_err(|_| IO)?;
+        if bytes.len() != before.st_size as usize
+            || before.st_size != after.st_size
+            || before.st_mtime != after.st_mtime
+            || before.st_mtime_nsec != after.st_mtime_nsec
+            || before.st_uid != after.st_uid
+            || before.st_mode != after.st_mode
+            || identity(&before) != identity(&after)
+            || after.st_nlink > 1
+            || (after.st_nlink == 1
+                && (before.st_ctime != after.st_ctime
+                    || before.st_ctime_nsec != after.st_ctime_nsec))
+        {
+            return Err(INVALID);
+        }
+        #[cfg(target_os = "macos")]
+        aicharts_platform_acl::require_no_acl(fd.as_fd()).map_err(|_| INVALID)?;
+        validate_directory()?;
+        Ok(Some(bytes))
+    }
     pub(crate) fn open(path: &Path) -> Result<Self> {
+        Self::open_with_limit(path, super::MAX_BYTES)
+    }
+    #[cfg(any(test, target_os = "macos"))]
+    pub(crate) fn open_snapshot(path: &Path, maximum_bytes: usize) -> Result<Self> {
+        let mut cache = Self::open_with_limit(path, maximum_bytes)?;
+        cache.single_stage = true;
+        Ok(cache)
+    }
+    /// An explicit owner supplies its registered payload ceiling. Existing
+    /// acquisition caches retain their original MAX_BYTES boundary.
+    pub(crate) fn open_with_limit(path: &Path, maximum_bytes: usize) -> Result<Self> {
+        if maximum_bytes == 0 || maximum_bytes > aicharts_import::MAX_CHECKPOINT_BYTES {
+            return Err(INVALID);
+        }
         let names = components(path)?;
         let uid = rustix::process::geteuid().as_raw();
         if uid != rustix::process::getuid().as_raw() {
@@ -129,6 +266,8 @@ impl Cache {
         fs::flock(&lock, FlockOperation::NonBlockingLockExclusive)
             .map_err(|_| "source_refresh_busy")?;
         let cache = Self {
+            maximum_bytes,
+            single_stage: false,
             root,
             edges,
             lock,
@@ -177,7 +316,7 @@ impl Cache {
             || name
                 .bytes()
                 .any(|byte| !(byte.is_ascii_alphanumeric() || matches!(byte, b'.' | b'-' | b'_')))
-            || cap > super::MAX_BYTES
+            || cap > self.maximum_bytes
         {
             return Err(INVALID);
         }
@@ -261,13 +400,30 @@ impl Cache {
         self.replace("profile.json", bytes)
     }
     pub(crate) fn replace(&self, name: &str, bytes: &[u8]) -> Result<()> {
-        if bytes.is_empty() || bytes.len() > super::MAX_BYTES {
+        if bytes.is_empty() || bytes.len() > self.maximum_bytes {
             return Err(INVALID);
         }
         self.validate()?;
+        if self.single_stage {
+            // Retained crash stages need explicit recovery before another
+            // payload is created. The current complete snapshot stays readable.
+            for (index, entry) in fs::Dir::read_from(self.directory())
+                .map_err(|_| IO)?
+                .enumerate()
+            {
+                if index > 1024 {
+                    return Err(INVALID);
+                }
+                let entry = entry.map_err(|_| IO)?;
+                let name = entry.file_name().to_bytes();
+                if name.starts_with(b".refresh-") && name.ends_with(b".pending") {
+                    return Err("source_snapshot_recovery_required");
+                }
+            }
+        }
         // Refuse pre-existing symlinks/foreign files, even though rename would
         // replace the link itself, so cache corruption is never silently repaired.
-        let current = self.read(name, super::MAX_BYTES)?;
+        let current = self.read(name, self.maximum_bytes)?;
         let hash = current.as_ref().map(|bytes| Sha256::digest(bytes).to_vec());
         if self.observed.borrow().get(name) != Some(&hash) {
             return Err("source_refresh_cache_changed");
@@ -296,7 +452,7 @@ impl Cache {
             self.observed
                 .borrow_mut()
                 .insert(name.to_owned(), Some(Sha256::digest(bytes).to_vec()));
-            if self.read(name, super::MAX_BYTES)?.as_deref() != Some(bytes) {
+            if self.read(name, self.maximum_bytes)?.as_deref() != Some(bytes) {
                 return Err(INVALID);
             }
             Ok(())

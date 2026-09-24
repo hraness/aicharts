@@ -8,7 +8,9 @@ import {
   costPerMillionOutputTokensUsd,
   DEFAULT_CALCULATOR_KNOBS,
   deepSeekRateCard,
+  homeHardwareMonthlyCostUsd,
   monthlyTokenVolume,
+  requiredDecodeTps,
   unitsRequired,
   type DeepSeekWindow,
   type DutyCycle,
@@ -49,6 +51,42 @@ function withinOneNonnegativeUlp(actual: number, expected: number): boolean {
 }
 
 describe("calculator math laws", () => {
+  test("integer token budgets require the exact ceiling fleet after converting hours to seconds", () => {
+    assertProperty(fc.property(
+      fc.integer({ min: 0, max: 2_000_000_000 }),
+      fc.integer({ min: 1, max: 744 }),
+      fc.integer({ min: 1, max: 10_000 }),
+      (tokens, hours, tokensPerSecond) => {
+        const capacity = BigInt(hours) * 3_600n * BigInt(tokensPerSecond);
+        const required = (BigInt(tokens) + capacity - 1n) / capacity;
+        const expected = Number(required < 1n ? 1n : required);
+        expect(unitsRequired(requiredDecodeTps(tokens, hours), tokensPerSecond)).toBe(expected);
+      },
+    ));
+  });
+
+  test("electricity converts integer watt-hours and cents to the independent exact rational dollars", () => {
+    assertProperty(fc.property(
+      fc.record({
+        units: fc.integer({ min: 1, max: 1_000 }),
+        watts: fc.integer({ min: 50, max: 2_000 }),
+        hours: fc.integer({ min: 1, max: 744 }),
+        centsPerKwh: fc.integer({ min: 1, max: 60 }),
+      }),
+      ({ units, watts, hours, centsPerKwh }) => {
+        const expectedNumerator = BigInt(units) * BigInt(watts) * BigInt(hours) * BigInt(centsPerKwh);
+        // 1,000 Wh/kWh × 100 cents/dollar. This oracle does no staged float multiplication.
+        const expected = Number(expectedNumerator) / 100_000;
+        const actual = homeHardwareMonthlyCostUsd({
+          unitCount: units, unitTdpWatts: watts, hoursPerMonth: hours,
+          electricityUsdPerKwh: centsPerKwh / 100,
+          unitPriceUsd: 1_000, amortizationMonths: 24, residualValuePercent: 0,
+        }).electricityMonthlyUsd;
+        expect(Math.abs(actual - expected)).toBeLessThanOrEqual(8 * Number.EPSILON * expected);
+      },
+    ));
+  });
+
   test("pricing the implied volume on the valuation rates returns the spend", () => {
     assertProperty(fc.property(spendArbitrary, rateArbitrary, mixArbitrary, (spend, rates, mix) => {
       const volume = monthlyTokenVolume(spend, rates, mix);

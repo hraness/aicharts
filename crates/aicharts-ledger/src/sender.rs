@@ -212,9 +212,9 @@ impl Ledger {
             None,
             "user_version",
             if crate::storage::has_prefix(version) {
-                4
+                8
             } else {
-                2
+                6
             },
         )?;
         crate::storage::validate_schema(&tx, &ledger.namespace, false)?;

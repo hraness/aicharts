@@ -1,0 +1,304 @@
+{
+  "schemaVersion": 1,
+  "claim": "bounded-generated-production-conformance-only",
+  "tracePrefix": "ASSURANCE_CONFORMANCE ",
+  "expectedTraceCount": 39,
+  "adapters": {
+    "worker": {
+      "command": [
+        "bun",
+        "scripts/usage-worker-tools.ts",
+        "test-assurance-conformance"
+      ],
+      "source": "services/usage-worker/test/assurance-conformance.worker.ts",
+      "expectedTests": 30
+    },
+    "ledger": {
+      "command": [
+        "cargo",
+        "test",
+        "--locked",
+        "--offline",
+        "-p",
+        "aicharts-ledger",
+        "--test",
+        "assurance_conformance",
+        "--",
+        "--nocapture"
+      ],
+      "source": "crates/aicharts-ledger/tests/assurance_conformance.rs",
+      "expectedTests": 1
+    },
+    "browser-contract": {
+      "command": [
+        "bun",
+        "test",
+        "./verify/conformance/account-generation.test.ts"
+      ],
+      "source": "verify/conformance/account-generation.test.ts",
+      "expectedTests": 6
+    }
+  },
+  "cases": [
+    {
+      "model": "M1",
+      "adapter": "worker",
+      "seeds": [
+        1066793,
+        539363619,
+        1592639710
+      ],
+      "requiredCoverage": [
+        "grant-lost-reply:ok",
+        "diagnostic-deadline:ok",
+        "publish:recovery_required",
+        "grant-readback:ok",
+        "release-readback:ok",
+        "terminal-reacquire:conflict",
+        "publish:ok",
+        "old-epoch-grant:recovery_required"
+      ],
+      "minSteps": 3,
+      "maxSteps": 256
+    },
+    {
+      "model": "M1-cancel",
+      "adapter": "worker",
+      "seeds": [
+        1066793,
+        539363619,
+        1592639710
+      ],
+      "requiredCoverage": [
+        "cancel:ok",
+        "cancel-retry:ok",
+        "late-grant:conflict",
+        "release-conflict:conflict"
+      ],
+      "minSteps": 3,
+      "maxSteps": 256
+    },
+    {
+      "model": "M2",
+      "adapter": "ledger",
+      "seeds": [
+        1066793,
+        539363619,
+        1592639710
+      ],
+      "requiredCoverage": [
+        "commit:ok",
+        "freeze:ok",
+        "exact-retry:ok",
+        "oversized-source:limit",
+        "invalid-receipt:invalid",
+        "settle-old:ok",
+        "reopen:ok",
+        "settle-current:ok",
+        "receipt-retry:ok"
+      ],
+      "minSteps": 3,
+      "maxSteps": 256
+    },
+    {
+      "model": "M3",
+      "adapter": "worker",
+      "seeds": [
+        1066793,
+        539363619,
+        1592639710
+      ],
+      "requiredCoverage": [
+        "lose-batch-reply:storage_unavailable",
+        "lose-journal-reply:storage_unavailable",
+        "reopen:ok",
+        "resume:accepted",
+        "terminal-retry:accepted",
+        "predecessor-conflict:2",
+        "invalid-secret:unauthorized"
+      ],
+      "minSteps": 3,
+      "maxSteps": 256
+    },
+    {
+      "model": "M4-abandon",
+      "adapter": "worker",
+      "seeds": [
+        1066793,
+        539363619,
+        1592639710
+      ],
+      "requiredCoverage": [
+        "reserve-failure:storage_unavailable",
+        "implicit-supersede:conflict",
+        "abandon:ok",
+        "abandon-retry:ok",
+        "commit-replacement:ok",
+        "replay:conflict",
+        "replay:ok"
+      ],
+      "minSteps": 3,
+      "maxSteps": 256
+    },
+    {
+      "model": "M4-owner",
+      "adapter": "worker",
+      "seeds": [
+        1066793,
+        539363619,
+        1592639710
+      ],
+      "requiredCoverage": [
+        "commit:ok",
+        "transfer-active-predecessor:writer_conflict",
+        "revoke:ok",
+        "transfer:ok",
+        "retry-transfer:ok",
+        "old-writer:revoked",
+        "replace-predecessor:replacement_required"
+      ],
+      "minSteps": 3,
+      "maxSteps": 256
+    },
+    {
+      "model": "M4-overlap",
+      "adapter": "worker",
+      "seeds": [
+        1066793,
+        539363619,
+        1592639710
+      ],
+      "requiredCoverage": [
+        "legacy-commit:ok",
+        "ambiguous-takeover:takeover_required",
+        "legacy-read:ok"
+      ],
+      "minSteps": 3,
+      "maxSteps": 256
+    },
+    {
+      "model": "M5-pairing",
+      "adapter": "worker",
+      "seeds": [
+        1066793,
+        539363619,
+        1592639710
+      ],
+      "requiredCoverage": [
+        "new-attempt:ok",
+        "stale-attempt:unauthorized",
+        "unverified-attempt:invalid_transition",
+        "old-authentication:unauthorized",
+        "authenticate-approves:ok",
+        "replace-approved-attempt:invalid_transition",
+        "foreign-account:unauthorized",
+        "approval-readback:ok",
+        "confirm:ok",
+        "reserve-enrollment:ok",
+        "status-read:ok"
+      ],
+      "minSteps": 3,
+      "maxSteps": 256
+    },
+    {
+      "model": "M5-generation",
+      "adapter": "browser-contract",
+      "seeds": [
+        1066793,
+        539363619,
+        1592639710
+      ],
+      "requiredCoverage": [
+        "capture:ok",
+        "reply:identity-changed",
+        "reply:accepted",
+        "reply:stale",
+        "signout:ok"
+      ],
+      "minSteps": 3,
+      "maxSteps": 256
+    },
+    {
+      "model": "M5-negative",
+      "adapter": "browser-contract",
+      "seeds": [
+        1066793,
+        539363619,
+        1592639710
+      ],
+      "requiredCoverage": [
+        "adopt:ok",
+        "authenticated-absence:bound",
+        "signout:ok",
+        "delayed-negative:discarded"
+      ],
+      "minSteps": 3,
+      "maxSteps": 256
+    },
+    {
+      "model": "M6",
+      "adapter": "worker",
+      "seeds": [
+        1066793,
+        539363619,
+        1592639710
+      ],
+      "requiredCoverage": [
+        "grant:ok",
+        "source-reply-paused:pending",
+        "withdraw:ok",
+        "resume-old-delivery:storage_unavailable",
+        "old-hint-retry:recovery_required",
+        "public-read:ok"
+      ],
+      "minSteps": 3,
+      "maxSteps": 256
+    },
+    {
+      "model": "M7",
+      "adapter": "worker",
+      "seeds": [
+        1066793,
+        539363619,
+        1592639710
+      ],
+      "requiredCoverage": [
+        "read:ok",
+        "drop-derived-fixture:ok",
+        "reopen:ok",
+        "read-fallback:ok",
+        "prepare:ok",
+        "closed-maintenance:recovery_required"
+      ],
+      "minSteps": 3,
+      "maxSteps": 256
+    },
+    {
+      "model": "M7-scrub",
+      "adapter": "worker",
+      "seeds": [
+        1066793,
+        539363619,
+        1592639710
+      ],
+      "requiredCoverage": [
+        "prepare:ok",
+        "corrupt-old-authority-fixture:ok",
+        "checkpoint-extension:ok",
+        "full-scrub:storage_invalid"
+      ],
+      "minSteps": 3,
+      "maxSteps": 256
+    }
+  ],
+  "limits": {
+    "maxTraceBytes": 1048576,
+    "maxProcessOutputBytes": 8388608,
+    "timeoutMs": 180000
+  },
+  "limitations": [
+    "Three retained finite seeds per group; this is not exhaustive implementation refinement.",
+    "TLC exploration and production adapters have separate receipts and trusted abstractions.",
+    "Legacy population reconciliation, staged storage lifecycle, and public visibility/deletion deadlines await phases 5, 6, and 10."
+  ]
+}

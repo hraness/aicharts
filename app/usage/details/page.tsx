@@ -8,6 +8,7 @@ import { usagePageConfiguration } from "@/lib/usage/private-days-page";
 import { privateStatsEnabled } from "@/lib/usage/stats-page";
 import "@/styles/usage.css";
 import "@/styles/usage-stats.css";
+import "@/styles/usage-metric-explorer.css";
 import "@/styles/usage-account.css";
 
 export const metadata: Metadata = {

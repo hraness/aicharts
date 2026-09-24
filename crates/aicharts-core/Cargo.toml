@@ -6,6 +6,7 @@ license.workspace = true
 publish = false
 
 [dependencies]
+aicharts-metrics.workspace = true
 aicharts-protocol = { path = "../aicharts-protocol" }
 serde.workspace = true
 serde_json.workspace = true

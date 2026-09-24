@@ -84,7 +84,7 @@ impl Update {
 }
 
 impl Ledger {
-    /// Explicit additive migration: 1 -> 3, 2 -> 4. Existing 3/4 is validated
+    /// Explicit additive migration: 5 -> 7, 6 -> 8. Existing 7/8 is validated
     /// readback only. No namespace, numeric record, sender row or revision changes.
     pub fn migrate_complete_prefix(
         dir: &Path,
@@ -124,9 +124,9 @@ impl Ledger {
             None,
             "user_version",
             if crate::storage::has_sender(version) {
-                4
+                8
             } else {
-                3
+                7
             },
         )?;
         crate::storage::validate_schema(&tx, &ledger.namespace, false)?;

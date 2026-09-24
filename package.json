@@ -94,7 +94,7 @@
     "release-dates:check": "bun run scripts/check-model-release-dates.ts",
     "check:generated": "bun run colors:check && bun run model-icons:check && bun run data:check && bun run calculator:check && bun run aa-intelligence:check && bun run aa-intelligence-v4-3:check && bun run releases:check && bun run first-party-releases:check && bun run release-dates:check && bun run deepswe:check && bun run terminal-bench:check && bun run terminal-bench-science:check && bun run atlas:reasoning:check && bun run atlas:multimodal:check && bun run atlas:audio:check && bun run atlas:arena-media:check && bun run atlas:vals:check",
     "check:cost-surfaces": "bun ./scripts/check-cost-surfaces.mjs",
-    "check": "bun run check:cost-surfaces && bun run check:generated && bun run usage:check && bun run usage:worker:check && bun run skill:check && bun run release:archive:check && bun run release:manifest:check && bun run release:build:check && bun run release:assemble:check && bun run release:source:check && bun run release:source:hydrate:check && bun run release:linux:qualification:check && bun run release:linux:notices:check && bun run release:linux:runner:check && bun run typecheck && bun run lint && bun run test && bun run build && bun run test:browser",
+    "check": "bun run usage:assurance:check && bun run check:cost-surfaces && bun run check:generated && bun run usage:check && bun run usage:worker:check && bun run skill:check && bun run release:archive:check && bun run release:manifest:check && bun run release:build:check && bun run release:assemble:check && bun run release:source:check && bun run release:source:hydrate:check && bun run release:linux:qualification:check && bun run release:linux:notices:check && bun run release:linux:runner:check && bun run typecheck && bun run lint && bun run test && bun run build && bun run test:browser",
     "kb:refresh": "bunx --bun github:hraness/kb#v0.15.2 refresh --root kb",
     "kb:check:lane": "bunx --bun github:hraness/kb#v0.15.2 check --root kb --no-catalog",
     "kb:check": "bunx --bun github:hraness/kb#v0.15.2 check --root kb && bunx --bun github:hraness/kb#v0.15.2 agents check --root kb --repo .",
@@ -107,7 +107,13 @@
     "custody:signing": "bun run scripts/custody-signing.ts",
     "outputs": "bun -e 'const {mkdirSync}=require(\"node:fs\");const p=require(\"node:path\").join(process.cwd(),\"outputs\");mkdirSync(p,{recursive:true});console.log(p)'",
     "skill:support:sync": "bun run scripts/skill-support-runtime.ts",
-    "skill:support:check": "bun run scripts/skill-support-runtime.ts --check"
+    "skill:support:check": "bun run scripts/skill-support-runtime.ts --check",
+    "usage:formal:tla": "bun scripts/assurance-tla.ts",
+    "usage:assurance:check": "bun run scripts/assurance-registry.ts && python3 scripts/assurance-native-baseline.py",
+    "usage:formal:kani": "bun scripts/assurance-kani.ts",
+    "usage:formal:theorems": "bun scripts/assurance-theorems.ts",
+    "usage:adapters:check": "bun scripts/assurance-adapters.ts",
+    "usage:conformance:check": "bun scripts/assurance-conformance.ts"
   },
   "dependencies": {
     "@hraness/design-kit": "github:hraness/design-kit#v0.15.0",

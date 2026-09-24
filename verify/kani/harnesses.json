@@ -1,0 +1,204 @@
+{
+  "schemaVersion": 1,
+  "source": "crates/aicharts-metrics/src/proofs.rs",
+  "expectedHarnessCount": 17,
+  "scope": "Every harness must execute with all default safety, overflow, unwinding, undefined-function, and assertion reachability checks. Pricing rate and container partitions are explicit. A timeout or missing/unsatisfied cover is a failure.",
+  "harnesses": [
+    {
+      "name": "proofs::checked_add_full_u128_matches_129_bit_math",
+      "scalarDomain": "Two arbitrary u128 values; independent 129-bit limb oracle.",
+      "containerDomain": "None",
+      "requiredCoverCount": 3,
+      "requiredCoverDescriptions": [
+        "cover condition: actual.is_ok()",
+        "cover condition: actual == Err(Error::Overflow)",
+        "cover condition: left == u128::MAX && right == 0 && actual == Ok(u128::MAX)"
+      ]
+    },
+    {
+      "name": "proofs::bounded_add_full_u128_preserves_math_and_limit",
+      "scalarDomain": "Two arbitrary u128 operands and arbitrary u128 admission limit.",
+      "containerDomain": "None",
+      "requiredCoverCount": 3,
+      "requiredCoverDescriptions": [
+        "cover condition: actual.is_ok()",
+        "cover condition: actual == Err(Error::Overflow)",
+        "cover condition: actual == Err(Error::Limit)"
+      ]
+    },
+    {
+      "name": "proofs::decimal_admission_has_exact_profile_boundary",
+      "scalarDomain": "One arbitrary u128 value; fixed production 24-digit maximum.",
+      "containerDomain": "None",
+      "requiredCoverCount": 2,
+      "requiredCoverDescriptions": [
+        "cover condition: value == MAX_DECIMAL && admit_decimal(value) == Ok(value)",
+        "cover condition: value == MAX_DECIMAL + 1 && admit_decimal(value) == Err(Error::Limit)"
+      ]
+    },
+    {
+      "name": "proofs::replacement_full_u128_refuses_underflow_or_overflow",
+      "scalarDomain": "Three arbitrary u128 values; previous-contribution membership is a caller obligation.",
+      "containerDomain": "None",
+      "requiredCoverCount": 3,
+      "requiredCoverDescriptions": [
+        "cover condition: actual.is_ok()",
+        "cover condition: actual == Err(Error::Underflow)",
+        "cover condition: actual == Err(Error::Overflow)"
+      ]
+    },
+    {
+      "name": "proofs::six_bucket_sum_matches_wider_integer_reference",
+      "scalarDomain": "Six arbitrary u64 values accumulated in u128.",
+      "containerDomain": "Exactly six scalar buckets",
+      "requiredCoverCount": 2,
+      "requiredCoverDescriptions": [
+        "cover condition: expected > u128::from(u64::MAX)",
+        "cover condition: expected == 0"
+      ]
+    },
+    {
+      "name": "proofs::wire_total_full_u64_counts_the_output_subset_once",
+      "scalarDomain": "Six arbitrary u64 counters; actual production 10^12 limit and reasoning subset refusal.",
+      "containerDomain": "Exactly six wire counters",
+      "requiredCoverCount": 3,
+      "requiredCoverDescriptions": [
+        "cover condition: actual == Ok(5_000_000_000_000)",
+        "cover condition: actual == Err(Error::Limit)",
+        "cover condition: actual == Err(Error::InvalidPartition)"
+      ]
+    },
+    {
+      "name": "proofs::inclusive_output_full_u128_preserves_unknown_and_known_subsets",
+      "scalarDomain": "Two arbitrary u128 values and arbitrary known/unknown boolean.",
+      "containerDomain": "One inclusive output and optional reasoning subset",
+      "requiredCoverCount": 3,
+      "requiredCoverDescriptions": [
+        "cover condition: known && total == 0 && reasoning == 0 && actual.is_ok()",
+        "cover condition: !known && total == 0 && actual.is_ok()",
+        "cover condition: actual == Err(Error::InvalidPartition)"
+      ]
+    },
+    {
+      "name": "proofs::cache_ttl_full_u128_requires_an_exact_retained_partition",
+      "scalarDomain": "Three arbitrary u128 values; exact sum with overflow refusal.",
+      "containerDomain": "One write total and two TTL partitions",
+      "requiredCoverCount": 3,
+      "requiredCoverDescriptions": [
+        "cover condition: actual.is_ok()",
+        "cover condition: actual == Err(Error::Overflow)",
+        "cover condition: actual == Err(Error::InvalidPartition)"
+      ]
+    },
+    {
+      "name": "proofs::wire_profile_round_trip_preserves_full_admitted_counters",
+      "scalarDomain": "Six arbitrary u64 values; all production wire admission limits and known reasoning.",
+      "containerDomain": "Exactly six wire counters, five detailed buckets",
+      "requiredCoverCount": 2,
+      "requiredCoverDescriptions": [
+        "cover condition: actual.is_ok()",
+        "cover condition: actual.is_err()"
+      ]
+    },
+    {
+      "name": "proofs::detailed_profile_full_u128_never_fabricates_ttl",
+      "scalarDomain": "Five arbitrary u128 values; actual production 24-digit admission bound.",
+      "containerDomain": "Exactly five detailed buckets, six wire counters",
+      "requiredCoverCount": 2,
+      "requiredCoverDescriptions": [
+        "cover condition: actual.is_ok()",
+        "cover condition: actual == Err(Error::Limit)"
+      ]
+    },
+    {
+      "name": "proofs::owner_merge_full_ids_rejects_distinct_known_owners",
+      "scalarDomain": "Every pair of sixteen-byte IDs and both enrichment policies. Context equality is a caller precondition.",
+      "containerDomain": "Two IDs of exactly sixteen arbitrary u8 values each",
+      "requiredCoverCount": 3,
+      "requiredCoverDescriptions": [
+        "cover condition: actual.is_ok() && left == right && left != [0; 16]",
+        "cover condition: actual.is_ok() && left == [0; 16] && right != [0; 16]",
+        "cover condition: actual == Err(Error::OwnerConflict)"
+      ]
+    },
+    {
+      "name": "proofs::six_component_dominance_full_u64_is_partial_order_comparison",
+      "scalarDomain": "Every pair of six-component u64 vectors; all equality/dominance/conflict outcomes.",
+      "containerDomain": "Two arrays of exactly six u64 components each",
+      "requiredCoverCount": 4,
+      "requiredCoverDescriptions": [
+        "cover condition: actual == Dominance::Equal",
+        "cover condition: actual == Dominance::Left",
+        "cover condition: actual == Dominance::Right",
+        "cover condition: actual == Dominance::Conflict"
+      ]
+    },
+    {
+      "name": "proofs::rational_construction_full_u128_preserves_exact_components",
+      "scalarDomain": "Arbitrary u128 numerator and denominator; zero denominator refuses. Does not prove general rounding.",
+      "containerDomain": "One exact numerator/denominator pair",
+      "requiredCoverCount": 2,
+      "requiredCoverDescriptions": [
+        "cover condition: actual == Err(Error::ZeroDenominator)",
+        "cover condition: numerator == 0 && actual.is_ok()"
+      ]
+    },
+    {
+      "name": "proofs::price_zero_or_missing_rates_preserves_full_u128_token_domain",
+      "scalarDomain": "Five arbitrary u128 token quantities with all five rates absent.",
+      "containerDomain": "Exactly five token/rate buckets",
+      "requiredCoverCount": 2,
+      "requiredCoverDescriptions": [
+        "cover condition: actual == Ok(0)",
+        "cover condition: actual == Err(Error::MissingRate)"
+      ]
+    },
+    {
+      "name": "proofs::evidence_add_full_u128_keeps_zero_distinct_from_missing",
+      "scalarDomain": "Arbitrary u128 reported value, prior reported total, and prior reported count. Other initial totals and counts zero.",
+      "containerDomain": "One prior EvidenceTotals and one known reported or unknown observation",
+      "requiredCoverCount": 2,
+      "requiredCoverDescriptions": [
+        "cover condition: value == 0 && actual.is_ok()",
+        "cover condition: actual == Err(Error::Overflow)"
+      ]
+    },
+    {
+      "name": "proofs::checked_add_full_u128_has_the_same_result_for_both_parenthesizations",
+      "scalarDomain": "Three arbitrary u128 operands; both parenthesizations return the same exact sum or overflow.",
+      "containerDomain": "Exactly three operands",
+      "requiredCoverCount": 2,
+      "requiredCoverDescriptions": [
+        "cover condition: left.is_ok()",
+        "cover condition: left == Err(Error::Overflow)"
+      ]
+    },
+    {
+      "name": "proofs::matching_full_population_identity_never_confuses_missing_with_zero",
+      "scalarDomain": "Two full sixteen-byte population IDs, arbitrary u16 units/grains, two arbitrary u128 values and known booleans. Basis fixed to reported/estimated.",
+      "containerDomain": "Two quantities, each carrying one sixteen-byte identity",
+      "requiredCoverCount": 3,
+      "requiredCoverDescriptions": [
+        "cover condition: actual.is_ok() && left_value == 0",
+        "cover condition: matches!(actual, Err(Error::MissingEvidence)) && left_value == 0",
+        "cover condition: matches!(actual, Err(Error::PopulationMismatch))"
+      ]
+    }
+  ],
+  "theoremReplacements": [
+    {
+      "retiredHarness": "proofs::price_unit_rate_full_u128_obeys_record_rounding_and_refusal",
+      "reason": "Pinned Kani full-u128 division queries timed out without counterexample; required production-extracted Lean proof, three constructive witnesses, and exact half-up-offset mutation sensitivity passed before this transfer. Timeout is not evidence.",
+      "scalarDomain": "Every u128 token amount in the first bucket at unit rate, with four zero token buckets and their rates absent; unchanged u128 arithmetic and 24-digit admission. No arbitrary-tariff claim.",
+      "productionFunction": "aicharts_metrics::arithmetic::price_microusd",
+      "theoremFile": "verify/lean/Pricing.proofs.lean",
+      "theorem": "aicharts_metrics.pricing_unit_rate_exact",
+      "witnesses": [
+        "aicharts_metrics.pricing_unit_success_witness",
+        "aicharts_metrics.pricing_unit_overflow_witness",
+        "aicharts_metrics.pricing_unit_limit_witness"
+      ],
+      "requiredMutation": "wrong-half-up-offset"
+    }
+  ]
+}

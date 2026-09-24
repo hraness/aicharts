@@ -1,6 +1,7 @@
 import "server-only";
 import { after } from "next/server";
 import { usagePrivateReadAvailable } from "./auth-server";
+import { usageAccountId, USAGE_ACCOUNT_HEADER } from "./account-public";
 import { privateDaysSnapshot, privateDaysHttpLength } from "./private-days-http-contract";
 import { pairingHttpBody, PAIRING_HTTP_CLIENT_MS } from "./pairing-http-contract";
 import { pairingHttpWork, type PairingHttpEffects } from "./pairing-http-work";
@@ -18,15 +19,16 @@ export interface UsageConsentRouteDependencies extends PairingHttpEffects {
 }
 const status = Object.freeze({ invalid_request: 400, authentication_required: 401, request_rejected: 403,
   method_not_allowed: 405, handle_unavailable: 409, publishing_full: 409, unavailable: 503 } as const);
-function send(request: Request, bytes: Uint8Array<ArrayBuffer>, code?: UsageConsentPublicError): Response {
+function send(request: Request, bytes: Uint8Array<ArrayBuffer>, code?: UsageConsentPublicError, accountId?: string): Response {
   return new Response(request.method === "HEAD" ? null : bytes, { status: code === undefined ? 200 : status[code], headers: {
     "content-type": USAGE_CONSENT_PUBLIC_MEDIA, "cache-control": "private, no-store", pragma: "no-cache", vary: "Cookie",
     "referrer-policy": "no-referrer", "x-content-type-options": "nosniff", "x-robots-tag": "noindex, nofollow",
     ...(code === "method_not_allowed" ? { allow: "GET, POST" } : {}),
+    ...(accountId !== undefined ? { [USAGE_ACCOUNT_HEADER]: accountId } : {}),
   } });
 }
-function failure(request: Request, code: UsageConsentPublicError): Response {
-  return send(request, new TextEncoder().encode(`{"schemaVersion":1,"error":{"code":"${code}"}}`), code);
+function failure(request: Request, code: UsageConsentPublicError, accountId?: string): Response {
+  return send(request, new TextEncoder().encode(`{"schemaVersion":1,"error":{"code":"${code}"}}`), code, accountId);
 }
 
 /** Authenticated private consent boundary. The request body only carries the
@@ -69,22 +71,24 @@ export function createUsageConsentHandler(dependencies: UsageConsentRouteDepende
         if (bytes === null) return failure(request, "invalid_request");
         const decision = decodeUsageConsentDecision(bytes);
         if (decision === null) return failure(request, "invalid_request");
-        input = Object.freeze({ operation: "set", consent: decision.consent, publicHandle: decision.publicHandle });
+        const expectedAccountId = request.headers.get(USAGE_ACCOUNT_HEADER);
+        if (!usageAccountId(expectedAccountId)) return failure(request, "invalid_request");
+        input = Object.freeze({ operation: "set", consent: decision.consent, publicHandle: decision.publicHandle, expectedAccountId });
       }
       if (request.signal.aborted || available() !== true) return failure(request, "unavailable");
       const raw = await query(request, input);
       if (request.signal.aborted || available() !== true) return failure(request, "unavailable");
       const negative = privateDaysSnapshot(raw, ["kind"]);
       if (negative?.kind === "authentication_required") return failure(request, "authentication_required");
-      const outcome = privateDaysSnapshot(raw, ["kind", "result"]);
-      if (outcome?.kind !== "query") return failure(request, "unavailable");
+      const outcome = privateDaysSnapshot(raw, ["kind", "accountId", "result"]);
+      if (outcome?.kind !== "query" || !usageAccountId(outcome.accountId)) return failure(request, "unavailable");
       const success = privateDaysSnapshot(outcome.result, ["ok", "value"]);
       let reply: UsageConsentPublicReply;
       if (success?.ok === true) {
         reply = { schemaVersion: 1, state: "ready", value: success.value as never };
       } else {
         const absent = privateDaysSnapshot(outcome.result, ["ok", "error"]);
-        if (absent?.ok === false && (absent.error === "handle_unavailable" || absent.error === "publishing_full")) return failure(request, absent.error);
+        if (absent?.ok === false && (absent.error === "handle_unavailable" || absent.error === "publishing_full")) return failure(request, absent.error, outcome.accountId);
         if (absent?.ok === false && absent.error === "not_enrolled") {
           reply = { schemaVersion: 1, state: "not_enrolled" };
         } else return failure(request, "unavailable");
@@ -92,7 +96,7 @@ export function createUsageConsentHandler(dependencies: UsageConsentRouteDepende
       const checked = parseUsageConsentPublicReply(reply);
       if (checked === null) return failure(request, "unavailable");
       const bytes = encodeUsageConsentPublicReply(checked);
-      return bytes === null ? failure(request, "unavailable") : send(request, bytes);
+      return bytes === null ? failure(request, "unavailable") : send(request, bytes, undefined, outcome.accountId);
     } catch { return failure(request, "unavailable"); }
   };
 }

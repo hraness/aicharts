@@ -129,6 +129,27 @@ pub struct CodexTokenUsage {
     pub total_tokens: Option<i64>,
 }
 
+impl CodexTokenUsage {
+    fn needs_clamp(&self) -> bool {
+        [
+            self.input_tokens,
+            self.output_tokens,
+            self.cached_input_tokens,
+            self.cache_read_input_tokens,
+            self.reasoning_output_tokens,
+        ]
+        .into_iter()
+        .flatten()
+        .any(|value| value < 0)
+            || self
+                .cached_input_tokens
+                .unwrap_or(0)
+                .max(self.cache_read_input_tokens.unwrap_or(0))
+                > self.input_tokens.unwrap_or(0).max(0)
+            || self.reasoning_output_tokens.unwrap_or(0) > self.output_tokens.unwrap_or(0).max(0)
+    }
+}
+
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub(crate) struct CodexTotals {
     input: i64,
@@ -238,6 +259,14 @@ impl CodexTotals {
 
 #[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
 pub(crate) struct CodexParseState {
+    /// Counts measured at the source record boundary, retained with the parser
+    /// baseline. They are not inferred from already-normalized output buckets.
+    #[serde(default)]
+    pub audit_clamped_records: u64,
+    #[serde(default)]
+    pub audit_fallback_records: u64,
+    #[serde(default)]
+    pub audit_schema_mismatch_records: u64,
     pub current_model: Option<String>,
     #[serde(default)]
     pub current_turn_start_ms: Option<i64>,
@@ -704,8 +733,33 @@ fn parse_codex_reader<R: BufRead>(
                 if is_token_count {
                     let info = match payload.info {
                         Some(i) => i,
-                        None => continue,
+                        None => {
+                            state.audit_schema_mismatch_records += 1;
+                            crate::offline_io::fault("import_schema_mismatch");
+                            continue;
+                        }
                     };
+
+                    let raw_clamped = info
+                        .total_token_usage
+                        .as_ref()
+                        .is_some_and(CodexTokenUsage::needs_clamp)
+                        || info
+                            .last_token_usage
+                            .as_ref()
+                            .is_some_and(CodexTokenUsage::needs_clamp);
+                    if raw_clamped {
+                        state.audit_clamped_records += 1;
+                    }
+                    if info.total_token_usage.is_none()
+                        || info.last_token_usage.is_none()
+                        || parse_codex_entry_timestamp(entry.timestamp.as_deref()).is_none()
+                        || (payload_model.is_none()
+                            && info_model.is_none()
+                            && state.current_model.is_none())
+                    {
+                        state.audit_fallback_records += 1;
+                    }
 
                     let model = payload_model
                         .or(info_model)
@@ -765,6 +819,12 @@ fn parse_codex_reader<R: BufRead>(
                                     continue;
                                 }
                                 if let Some(delta) = total.delta_from(previous) {
+                                    if !raw_clamped
+                                        && (delta.cached > delta.input
+                                            || delta.reasoning > delta.output)
+                                    {
+                                        state.audit_clamped_records += 1;
+                                    }
                                     (delta.into_tokens(), Some(total))
                                 } else {
                                     state.previous_totals = Some(total);
@@ -780,7 +840,11 @@ fn parse_codex_reader<R: BufRead>(
                             // Only last, no previous
                             (None, Some(last), None) => (last.into_tokens(), None),
                             // Neither
-                            (None, None, _) => continue,
+                            (None, None, _) => {
+                                state.audit_schema_mismatch_records += 1;
+                                crate::offline_io::fault("import_schema_mismatch");
+                                continue;
+                            }
                         };
 
                     // Skip zero-token snapshots without advancing the baseline so
@@ -942,7 +1006,9 @@ fn parse_codex_reader<R: BufRead>(
             }
         }
 
-        if let Some((mut msg, used_fallback_timestamp)) = headless_message {
+        if let Some((mut msg, used_fallback_timestamp, clamped, fallback)) = headless_message {
+            state.audit_clamped_records += u64::from(clamped);
+            state.audit_fallback_records += u64::from(fallback);
             msg.set_workspace(
                 state.session_workspace_key.clone(),
                 state.session_workspace_label.clone(),
@@ -960,6 +1026,10 @@ fn parse_codex_reader<R: BufRead>(
         {
             parse_succeeded = false;
             continue;
+        }
+        if !valid_entry_json {
+            state.audit_schema_mismatch_records += 1;
+            crate::offline_io::fault("import_schema_mismatch");
         }
     }
 
@@ -1339,6 +1409,7 @@ fn extract_model_from_info(info: &CodexInfo) -> Option<String> {
 }
 
 struct CodexHeadlessUsage {
+    clamped: bool,
     input: i64,
     output: i64,
     cached: i64,
@@ -1354,7 +1425,7 @@ fn parse_codex_headless_line(
     session_provider: Option<&str>,
     session_agent: &Option<String>,
     session_is_headless: bool,
-) -> Option<(UnifiedMessage, bool)> {
+) -> Option<(UnifiedMessage, bool, bool, bool)> {
     // Ordinary rollout payloads can contain megabytes of source and tool
     // output. Headless accounting only reads these top-level fields; ignored
     // payloads remain syntax checked without building a second content tree.
@@ -1414,6 +1485,7 @@ fn parse_codex_headless_line(
         .or_else(|| current_model.clone())
         .unwrap_or_else(|| "unknown".to_string());
     let timestamp = usage.timestamp_ms.unwrap_or(fallback_timestamp);
+    let used_fallback = usage.timestamp_ms.is_none() || model == "unknown";
 
     if usage.input == 0 && usage.output == 0 && usage.cached == 0 {
         return None;
@@ -1446,6 +1518,8 @@ fn parse_codex_headless_line(
             agent,
         ),
         usage.timestamp_ms.is_none(),
+        usage.clamped,
+        used_fallback,
     ))
 }
 
@@ -1474,6 +1548,10 @@ fn extract_headless_usage(value: &Value) -> Option<CodexHeadlessUsage> {
     let timestamp_ms = extract_timestamp_from_value(value);
 
     Some(CodexHeadlessUsage {
+        clamped: input_tokens < 0
+            || output_tokens < 0
+            || cached_tokens < 0
+            || cached_tokens > input_tokens,
         input: input_tokens.saturating_sub(cached_tokens),
         output: output_tokens,
         cached: cached_tokens,

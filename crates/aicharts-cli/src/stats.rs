@@ -4,14 +4,19 @@ use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::PathBuf;
 use std::sync::OnceLock;
+mod health;
 mod pricing;
+pub(super) use health::run_retained_health;
+use health::CollectedStats;
+#[cfg(target_os = "macos")]
+pub(super) use health::{collect_persisted, observation_scope};
 
 pub(super) const DAY_MS: u64 = 86_400_000;
 pub(super) const MAX_ROWS: usize = 65_536;
 pub(super) const MAX_BYTES: usize = 32 * 1024 * 1024;
 const MAX_RECORDS: u64 = 10_000_000;
-const MAX_DECIMAL: u128 = 999_999_999_999_999_999_999_999;
-const HELP: &str = "AI Charts detailed stats — local, read-only\n\n  aicharts stats --home DIR (--all | --client ID ...) [--source-root DIR ...] [--since YYYY-MM-DD --until YYYY-MM-DD] [--json]\n  aicharts stats --list-clients\n\nThe default period is the last 30 UTC days, including today. Select up to 366\ndays. --home is an explicit absolute directory. To read one configured profile,\nselect one client and supply its exclusive absolute --source-root directories.\nWithout those roots, discovery uses the selected home and stays within it.\nLocal parser support includes every client in the pinned Tokscale registry.\nSome clients require an existing local export or API cache. This command does\nnot refresh credentials or contact providers. It never uploads anything.\n\nJSON contains day/client/model aggregates, disjoint token buckets, known costs\nand coverage. Unknown identities are withheld. Unknown costs stay unknown;\nreported charges and estimates are separate. Failed scans are incomplete, never\na successful empty replacement. Redirect --json output to import at /usage/details.\n";
+const MAX_DECIMAL: u128 = aicharts_metrics::MAX_DECIMAL;
+const HELP: &str = "AI Charts detailed stats — local, read-only\n\n  aicharts stats --home DIR (--all | --client ID ...) [--source-root DIR ...] [--since YYYY-MM-DD --until YYYY-MM-DD] [--json | --health-json]\n  aicharts stats --list-clients\n\nThe default period is the last 30 UTC days, including today. Select up to 366\ndays. --home is an explicit absolute directory. To read one configured profile,\nselect one client and supply its exclusive absolute --source-root directories.\nWithout those roots, discovery uses the selected home and stays within it.\nLocal parser support includes every client in the pinned Tokscale registry.\nSome clients require an existing local export or API cache. This command does\nnot refresh credentials or contact providers. It never uploads anything.\n\nJSON contains day/client/model aggregates, disjoint token buckets, known costs\nand coverage. Unknown identities are withheld. Unknown costs stay unknown;\nreported charges and estimates are separate. Failed scans are incomplete, never\na successful empty replacement. --health-json emits separate measured source\nhealth, including parsing work, partial tails and fixed warning codes. It keeps\nunknown counters null and does not create persistent state.\nRedirect --json output to import at /usage/details.\n";
 
 #[derive(Deserialize)]
 struct Registry {
@@ -91,6 +96,7 @@ pub(super) struct Options {
     pub first_utc_day: u64,
     pub day_count: u64,
     pub json: bool,
+    pub health_json: bool,
 }
 fn decimal(value: &str) -> Option<u128> {
     if value.is_empty()
@@ -271,12 +277,13 @@ pub(super) fn options(args: &[String], now: u64) -> Result<Options, &'static str
     let mut home = None;
     let mut clients = BTreeSet::new();
     let mut source_roots = Vec::new();
-    let (mut all, mut json) = (false, false);
+    let (mut all, mut json, mut health_json) = (false, false, false);
     let (mut since, mut until) = (None, None);
     let mut args = args.iter();
     while let Some(flag) = args.next() {
         match flag.as_str() {
-            "--json" if !json => json = true,
+            "--json" if !json && !health_json => json = true,
+            "--health-json" if !json && !health_json => health_json = true,
             "--all" if !all && clients.is_empty() => all = true,
             "--home" | "--client" | "--since" | "--until" | "--source-root" => {
                 let value = args
@@ -347,6 +354,7 @@ pub(super) fn options(args: &[String], now: u64) -> Result<Options, &'static str
         first_utc_day: start,
         day_count,
         json,
+        health_json,
     })
 }
 
@@ -363,17 +371,17 @@ struct Aggregate {
     timed_tokens: u128,
 }
 fn add(target: &mut u128, value: u128) -> Result<(), &'static str> {
-    *target = target
-        .checked_add(value)
-        .filter(|n| *n <= MAX_DECIMAL)
-        .ok_or("stats_value_limit")?;
+    *target = aicharts_metrics::checked_add_bounded(*target, value, MAX_DECIMAL)
+        .map_err(|_| "stats_value_limit")?;
     Ok(())
 }
 fn add_records(target: &mut u64, value: u64) -> Result<(), &'static str> {
-    *target = target
-        .checked_add(value)
-        .filter(|n| *n <= MAX_RECORDS)
-        .ok_or("stats_record_limit")?;
+    *target = aicharts_metrics::checked_add_bounded(
+        u128::from(*target),
+        u128::from(value),
+        u128::from(MAX_RECORDS),
+    )
+    .map_err(|_| "stats_record_limit")? as u64;
     Ok(())
 }
 fn model_identity(value: &str, known: &BTreeSet<String>) -> Option<String> {
@@ -545,8 +553,16 @@ pub(super) fn collect(options: &Options, now: u64) -> Result<Report, &'static st
 fn collect_with_clock(
     options: &Options,
     now: u64,
-    mut clock: impl FnMut() -> Result<u64, &'static str>,
+    clock: impl FnMut() -> Result<u64, &'static str>,
 ) -> Result<Report, &'static str> {
+    Ok(collect_detailed_with_clock(options, now, clock, None)?.report)
+}
+fn collect_detailed_with_clock(
+    options: &Options,
+    now: u64,
+    mut clock: impl FnMut() -> Result<u64, &'static str>,
+    mut persistence: Option<&mut health::Persistence>,
+) -> Result<CollectedStats, &'static str> {
     let mut report = Report {
         schema_version: 2,
         profile: "client-stats-v2".to_owned(),
@@ -559,6 +575,7 @@ fn collect_with_clock(
         sources: Vec::new(),
         rows: Vec::new(),
     };
+    let mut observations = Vec::new();
     for client in &options.clients {
         let (approved, source_roots) = if options.source_roots.is_empty() {
             (std::slice::from_ref(&options.home), None)
@@ -568,22 +585,25 @@ fn collect_with_clock(
                 Some(options.source_roots.as_slice()),
             )
         };
-        let imported = aicharts_import::collect_since(
+        let started_at_ms = report.generated_at_ms;
+        let mut imported = aicharts_import::collect_observed(
             &options.home,
             client,
             approved,
             source_roots,
             options.first_utc_day * DAY_MS,
+            persistence.as_mut().and_then(|store| store.checkpoint()),
         );
         // Sources can append while a long scan is running. The report's time
         // describes completion, so those valid observations are not rejected
         // merely because they occurred after discovery began.
         let completed_at = clock()?;
-        if completed_at < report.generated_at_ms {
+        if completed_at < report.generated_at_ms || completed_at > 8_640_000_000_000_000 {
             return Err("stats_clock_regressed");
         }
         report.generated_at_ms = completed_at;
         let result = imported
+            .result
             .map_err(|codes| {
                 // The importer returns only fixed source-owned error codes.
                 // Keep actionable local diagnostics out of the numeric DTO;
@@ -595,11 +615,29 @@ fn collect_with_clock(
             })
             .and_then(|import| project(client, import, options, completed_at));
         match result {
-            Ok((source, rows)) => {
+            Ok((mut source, rows)) => {
+                let warnings = health::publication_warnings(&imported.health);
+                if imported.health.outcome != aicharts_import::ImportOutcome::Complete
+                    || warnings > 0
+                {
+                    source.status = "incomplete".to_owned();
+                    source.warnings = warnings.max(1);
+                }
+                if warnings > 0
+                    && imported.health.outcome == aicharts_import::ImportOutcome::Complete
+                {
+                    health::projection_refused(&mut imported.health);
+                }
+                if source.status == "not_found" {
+                    // A complete discovery with no available source cannot
+                    // replace the last good measurement in retained health.
+                    health::projection_refused(&mut imported.health);
+                }
                 report.sources.push(source);
                 report.rows.extend(rows);
             }
             Err(code) => {
+                health::projection_refused(&mut imported.health);
                 diagnostic(client, code);
                 report.sources.push(Source {
                     client: client.clone(),
@@ -611,6 +649,23 @@ fn collect_with_clock(
                 });
             }
         }
+        if !imported.health.validate() {
+            return Err("stats_source_health_invalid");
+        }
+        let observation = crate::source_health::Observation {
+            started_at_ms,
+            completed_at_ms: completed_at,
+            health: imported.health,
+        };
+        let binding = persistence
+            .as_mut()
+            .map(|store| store.record(client, options, &observation))
+            .transpose()?;
+        observations.push(health::SourceObservation {
+            client: client.clone(),
+            observation,
+            binding,
+        });
         if report.rows.len() > MAX_ROWS {
             return Err("stats_row_limit");
         }
@@ -625,7 +680,18 @@ fn collect_with_clock(
         ))
     });
     validate_report(&report)?;
-    Ok(report)
+    let health = health::HealthReport {
+        schema_version: 1,
+        profile: "source-health-v1".to_owned(),
+        registry_revision: 1,
+        first_utc_day: options.first_utc_day,
+        day_count: options.day_count,
+        started_at_ms: now,
+        completed_at_ms: report.generated_at_ms,
+        sources: observations,
+    };
+    health.validate()?;
+    Ok(CollectedStats { report, health })
 }
 fn diagnostic(client: &str, code: &str) {
     if aicharts_import::clients().contains(&client)
@@ -645,7 +711,11 @@ pub(super) fn run(args: &[String]) -> Result<String, &'static str> {
     }
     let now = now_ms()?;
     let options = options(&args[1..], now)?;
-    let report = collect(&options, now)?;
+    let collected = collect_detailed_with_clock(&options, now, now_ms, None)?;
+    if options.health_json {
+        return serde_json::to_string(&collected.health).map_err(|_| "stats_encode_failed");
+    }
+    let report = collected.report;
     if options.json {
         return serde_json::to_string(&report).map_err(|_| "stats_encode_failed");
     }
@@ -671,12 +741,17 @@ pub(super) fn run(args: &[String]) -> Result<String, &'static str> {
         use std::fmt::Write;
         let _ = writeln!(
             output,
-            "{}: {} tokens · {} records · {} · {}",
-            source.client, total, source.records, source.token_basis, source.status
+            "{}: {} tokens · {} records · {} · {} · {} warnings",
+            source.client,
+            total,
+            source.records,
+            source.token_basis,
+            source.status,
+            source.warnings
         );
     }
     output
-        .push_str("Use --json to inspect or export all breakdowns at aicharts.io/usage/details.\n");
+        .push_str("Use --json for breakdowns at aicharts.io/usage/details; --health-json for measured source health.\n");
     Ok(output)
 }
 

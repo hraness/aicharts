@@ -11,13 +11,22 @@ const APPLICATION_ID: i32 = 0x4149434c;
 pub const MAX_DATABASE_BYTES: u64 = 512 * 1024 * 1024;
 const MAX_PAGES: i64 = (MAX_DATABASE_BYTES / 4096) as i64;
 pub(super) const MAX_SQLITE_VALUE_BYTES: i32 = 262_144;
-const TABLES: [(&str, &str); 5] = [
+pub(super) const LEGACY_TABLES: [(&str, &str); 5] = [
     ("meta", "CREATE TABLE meta(singleton INTEGER PRIMARY KEY CHECK(singleton=1), namespace BLOB NOT NULL CHECK(length(namespace)=32), revision INTEGER NOT NULL CHECK(revision>=0)) STRICT"),
     ("sources", "CREATE TABLE sources(id BLOB PRIMARY KEY CHECK(length(id)=32), stamp BLOB NOT NULL CHECK(length(stamp)=48), warnings INTEGER NOT NULL CHECK(warnings>=0 AND warnings<16384)) STRICT"),
     ("measurements", "CREATE TABLE measurements(id BLOB PRIMARY KEY CHECK(length(id)=16), frame BLOB NOT NULL CHECK(length(frame)=136), revision INTEGER NOT NULL CHECK(revision>0)) STRICT"),
     ("source_usage", "CREATE TABLE source_usage(source_id BLOB NOT NULL REFERENCES sources(id), id BLOB NOT NULL REFERENCES measurements(id), frame BLOB NOT NULL CHECK(length(frame)=136), PRIMARY KEY(source_id,id)) STRICT"),
     ("outbox", "CREATE TABLE outbox(id BLOB PRIMARY KEY REFERENCES measurements(id), revision INTEGER NOT NULL CHECK(revision>0), frame BLOB NOT NULL CHECK(length(frame)=136)) STRICT"),
 ];
+
+pub(super) const SOURCES_V5: &str = "CREATE TABLE sources(id BLOB PRIMARY KEY CHECK(length(id)=32), stamp BLOB NOT NULL CHECK(length(stamp)=48), warnings INTEGER NOT NULL CHECK(warnings>=0 AND warnings<32768)) STRICT";
+fn tables(version: u32) -> [(&'static str, &'static str); 5] {
+    let mut tables = LEGACY_TABLES;
+    if version >= 5 {
+        tables[1].1 = SOURCES_V5;
+    }
+    tables
+}
 
 pub(super) fn namespace(identity: &LedgerIdentity<'_>) -> Result<[u8; 32]> {
     let key = match identity {
@@ -97,7 +106,7 @@ fn validate_paths(dir: &Path) -> Result<()> {
     Ok(())
 }
 
-fn connect(path: &Path) -> Result<Connection> {
+pub(super) fn connect(path: &Path) -> Result<Connection> {
     let connection = Connection::open_with_flags(
         path,
         OpenFlags::SQLITE_OPEN_READ_WRITE
@@ -136,8 +145,8 @@ pub(super) fn initialize(dir: &Path, identity: &LedgerIdentity<'_>) -> Result<Co
     connection.pragma_update(None, "max_page_count", MAX_PAGES)?;
     let tx = connection.transaction_with_behavior(rusqlite::TransactionBehavior::Immediate)?;
     tx.pragma_update(None, "application_id", APPLICATION_ID)?;
-    tx.pragma_update(None, "user_version", 1)?;
-    for (_, sql) in TABLES {
+    tx.pragma_update(None, "user_version", 5)?;
+    for (_, sql) in tables(5) {
         tx.execute_batch(sql)?;
     }
     tx.execute(
@@ -162,6 +171,14 @@ pub(super) fn initialize(dir: &Path, identity: &LedgerIdentity<'_>) -> Result<Co
 
 #[cfg(unix)]
 pub(super) fn open(dir: &Path, identity: &LedgerIdentity<'_>) -> Result<Connection> {
+    let connection = open_existing(dir, identity)?;
+    let audit = crate::audit_relations(&connection)?;
+    audit.require_current()?;
+    Ok(connection)
+}
+
+#[cfg(unix)]
+pub(super) fn open_existing(dir: &Path, identity: &LedgerIdentity<'_>) -> Result<Connection> {
     let expected = namespace(identity)?;
     let resolved = private_state_path(dir)?;
     let dir = resolved.as_path();
@@ -178,7 +195,6 @@ pub(super) fn open(dir: &Path, identity: &LedgerIdentity<'_>) -> Result<Connecti
         return Err(Error::Limit);
     }
     validate_paths(dir)?;
-    crate::validate_relations(&connection)?;
     Ok(connection)
 }
 
@@ -198,6 +214,7 @@ pub(super) fn validate_schema(
     if application_id != APPLICATION_ID || mode != "delete" || page_size != 4096 {
         return Err(Error::InvalidState);
     }
+    let tables = tables(version);
     let mut count = 0;
     let mut statement = connection
         .prepare("SELECT name,sql,type FROM sqlite_schema WHERE sql IS NOT NULL LIMIT 13")?;
@@ -208,7 +225,7 @@ pub(super) fn validate_schema(
         let sql: String = row.get(1)?;
         let kind: String = row.get(2)?;
         if kind != "table"
-            || !TABLES
+            || !tables
                 .iter()
                 .chain(
                     if has_sender(version) {
@@ -232,7 +249,7 @@ pub(super) fn validate_schema(
         }
     }
     if count
-        != TABLES.len()
+        != tables.len()
             + if has_sender(version) {
                 crate::sender::TABLES.len()
             } else {
@@ -260,18 +277,18 @@ pub(super) fn validate_schema(
 
 pub(super) fn schema_version(connection: &Connection) -> Result<u32> {
     let version: u32 = connection.pragma_query_value(None, "user_version", |r| r.get(0))?;
-    if !matches!(version, 1..=4) {
+    if !matches!(version, 1..=8) {
         return Err(Error::InvalidState);
     }
     Ok(version)
 }
 
 pub(super) const fn has_sender(version: u32) -> bool {
-    matches!(version, 2 | 4)
+    matches!(version, 2 | 4 | 6 | 8)
 }
 
 pub(super) const fn has_prefix(version: u32) -> bool {
-    matches!(version, 3 | 4)
+    matches!(version, 3 | 4 | 7 | 8)
 }
 
 #[cfg(not(unix))]

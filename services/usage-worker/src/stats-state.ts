@@ -1,6 +1,5 @@
 import { LEADERBOARD_MAX_RECORDS } from "../../../lib/usage/leaderboard-contract";
 import { createHash } from "node:crypto";
-import { admissionHex } from "../../../lib/usage/admission";
 import { parseUsageStatsReport, statsDecimal, statsRowKey, statsTokenTotal, STATS_MAX_DAY, STATS_MAX_RECORDS, type SourceCoverage, type UsageStatsReport, type UsageStatsRow } from "../../../lib/usage/stats-contract";
 import { isStatsClient, isStatsModel, isStatsProvider } from "../../../lib/usage/stats-registry";
 import { STATS_HTTP_RESPONSE_BYTES, STATS_HTTP_RESPONSE_ROWS, parseStatsReceipt, statsHex, statsInteger, type StatsError, type StatsRange, type StatsReceipt, type StatsStatus, type StatsUpload } from "../../../lib/usage/stats-http-contract";
@@ -14,9 +13,12 @@ export const MAX_STATS_STORED_ROWS = 262_144;
 export const MAX_STATS_STORED_BYTES = 128 * 1024 * 1024;
 export const MAX_STATS_IMMUTABLE_BYTES = 8 * 1024 * 1024 * 1024;
 export const MAX_STATS_REVISIONS = 1_000_000;
+export const MAX_STATS_DAY_SOURCES = 65_536;
+export const LEGACY_STATS_WRITERS_SQL = `CREATE TABLE usage_stats_writers (client TEXT PRIMARY KEY NOT NULL, device_id TEXT NOT NULL CHECK (length(device_id) = 64)) WITHOUT ROWID`;
 export const STATS_SCHEMA = Object.freeze({
   usage_stats_control: `CREATE TABLE usage_stats_control (id INTEGER PRIMARY KEY CHECK (id = 1), revision INTEGER NOT NULL CHECK (revision BETWEEN 0 AND 1000000), updated_at_ms INTEGER NOT NULL CHECK (updated_at_ms BETWEEN 0 AND 8640000000000000), quarantined INTEGER NOT NULL CHECK (quarantined IN (0, 1)), immutable_bytes INTEGER NOT NULL CHECK (immutable_bytes BETWEEN 0 AND 8589934592))`,
-  usage_stats_writers: `CREATE TABLE usage_stats_writers (client TEXT PRIMARY KEY NOT NULL, device_id TEXT NOT NULL CHECK (length(device_id) = 64)) WITHOUT ROWID`,
+  usage_stats_writers: `CREATE TABLE usage_stats_writers (client TEXT PRIMARY KEY NOT NULL, device_id TEXT NOT NULL CHECK (length(device_id) = 64), ownership_revision INTEGER NOT NULL CHECK (ownership_revision BETWEEN 0 AND 1000000)) WITHOUT ROWID`,
+  usage_stats_day_sources: `CREATE TABLE usage_stats_day_sources (client TEXT NOT NULL, utc_day INTEGER NOT NULL CHECK (utc_day BETWEEN 0 AND 99999999), device_id TEXT NOT NULL CHECK (length(device_id) = 64), ownership_revision INTEGER NOT NULL CHECK (ownership_revision BETWEEN 0 AND 1000000), PRIMARY KEY (client, utc_day)) WITHOUT ROWID`,
   usage_stats_devices: `CREATE TABLE usage_stats_devices (device_id TEXT PRIMARY KEY NOT NULL CHECK (length(device_id) = 64), sequence INTEGER NOT NULL CHECK (sequence BETWEEN 1 AND 9007199254740991), receipt TEXT NOT NULL CHECK (length(receipt) <= 1024)) WITHOUT ROWID`,
   usage_stats_pending: `CREATE TABLE usage_stats_pending (id INTEGER PRIMARY KEY CHECK (id = 1), body_hash TEXT NOT NULL CHECK (length(body_hash) = 64), device_id TEXT NOT NULL CHECK (length(device_id) = 64), sequence INTEGER NOT NULL CHECK (sequence BETWEEN 1 AND 9007199254740991), expected_revision INTEGER NOT NULL CHECK (expected_revision BETWEEN 0 AND 999999), receipt TEXT CHECK (receipt IS NULL OR length(receipt) <= 1024))`,
   usage_stats_days: `CREATE TABLE usage_stats_days (client TEXT NOT NULL, utc_day INTEGER NOT NULL CHECK (utc_day BETWEEN 0 AND 99999999), revision INTEGER NOT NULL CHECK (revision BETWEEN 1 AND 1000000), body_hash TEXT NOT NULL CHECK (length(body_hash) = 64), projection_hash TEXT NOT NULL CHECK (length(projection_hash) = 64), row_count INTEGER NOT NULL CHECK (row_count BETWEEN 0 AND 8192), byte_count INTEGER NOT NULL CHECK (byte_count BETWEEN 1 AND 4194304), projection TEXT NOT NULL CHECK (length(projection) <= 4194304), PRIMARY KEY (client, utc_day)) WITHOUT ROWID`,
@@ -59,6 +61,54 @@ export class StatsState {
     const rows = this.sql.exec("SELECT device_id FROM usage_stats_writers WHERE client = ? LIMIT 2", client).toArray();
     requireStats(rows.length <= 1 && (!rows.length || statsHex(rows[0].device_id)));
     return rows.length ? rows[0].device_id as string : null;
+  }
+  transferWriter(authority: AdmissionAuthority, client: string, previousDeviceId: string, deviceId: string,
+    expectedRevision: number, now: number): { writerDeviceId: string; ownershipRevision: number } {
+    const control = this.control();
+    if (control.quarantined) throw new StatsFault("recovery_required");
+    if (now < control.updatedAtMs) throw new StatsFault("clock_regressed");
+    const row = this.sql.exec("SELECT device_id, ownership_revision FROM usage_stats_writers WHERE client = ? LIMIT 2", client).toArray();
+    if (row.length !== 1) throw new StatsFault("writer_conflict");
+    if (!authority.devices.some(device => device.deviceId === deviceId && device.revokedAtMs === null)) throw new StatsFault("unauthorized");
+    if (row[0].device_id === deviceId && row[0].ownership_revision === expectedRevision + 1)
+      return { writerDeviceId: deviceId, ownershipRevision: expectedRevision + 1 };
+    if (row[0].device_id !== previousDeviceId || previousDeviceId === deviceId
+      || !authority.devices.some(device => device.deviceId === previousDeviceId && device.revokedAtMs !== null)) throw new StatsFault("writer_conflict");
+    if (control.revision !== expectedRevision) throw new StatsFault("conflict");
+    if (control.revision >= MAX_STATS_REVISIONS) throw new StatsFault("limit");
+    const pending = this.pending();
+    if (pending !== null && pending.deviceId !== previousDeviceId) throw new StatsFault("conflict");
+    const ownershipRevision = control.revision + 1;
+    this.sql.exec("UPDATE usage_stats_writers SET device_id = ?, ownership_revision = ? WHERE client = ?", deviceId, ownershipRevision, client);
+    this.sql.exec("UPDATE usage_stats_control SET revision = ?, updated_at_ms = ? WHERE id = 1", ownershipRevision, now);
+    if (pending !== null) this.sql.exec("DELETE FROM usage_stats_pending WHERE id = 1");
+    // Each committed day retains its own original owner. Transfer does not
+    // attest that the successor's local ledger contains that population.
+    return { writerDeviceId: deviceId, ownershipRevision };
+  }
+  /** Fenced schema upgrade preserves the original writer attribution of every
+   * retained day. Historic generations never supported writer transfer. */
+  migrateOwnership(accountVersion: SqlStorageValue): void {
+    const definitions = new Map(this.sql.exec("SELECT name, sql FROM sqlite_schema WHERE name IN ('usage_stats_writers', 'usage_stats_day_sources') LIMIT 3")
+      .toArray().map(row => [String(row.name), row.sql]));
+    if (accountVersion === 8 || accountVersion === 9 || accountVersion === 10 || accountVersion === 11 || accountVersion === 12 || accountVersion === 13) {
+      // Current sources are authority, never a rebuildable projection. A
+      // restored old writer table or missing sources cannot attest ownership.
+      requireStats(definitions.get("usage_stats_writers") === STATS_SCHEMA.usage_stats_writers
+        && definitions.get("usage_stats_day_sources") === STATS_SCHEMA.usage_stats_day_sources);
+      return;
+    }
+    requireStats(accountVersion === 7 && definitions.get("usage_stats_writers") === LEGACY_STATS_WRITERS_SQL
+      && !definitions.has("usage_stats_day_sources"));
+    this.sql.exec("ALTER TABLE usage_stats_writers RENAME TO usage_stats_writers_retired");
+    this.sql.exec(STATS_SCHEMA.usage_stats_writers);
+    this.sql.exec("INSERT INTO usage_stats_writers SELECT client, device_id, 0 FROM usage_stats_writers_retired");
+    this.sql.exec("DROP TABLE usage_stats_writers_retired");
+    this.sql.exec(STATS_SCHEMA.usage_stats_day_sources);
+    const count = this.sql.exec("SELECT COUNT(*) AS count FROM usage_stats_days").one().count;
+    requireStats(statsInteger(count, 0, MAX_STATS_DAY_SOURCES));
+    this.sql.exec("INSERT INTO usage_stats_day_sources SELECT d.client, d.utc_day, w.device_id, w.ownership_revision FROM usage_stats_days d JOIN usage_stats_writers w ON w.client = d.client");
+    requireStats(this.sql.exec("SELECT COUNT(*) AS count FROM usage_stats_day_sources").one().count === count);
   }
   progress(device: string): { sequence: number; receipt: StatsReceipt | null } {
     const rows = this.sql.exec("SELECT sequence, receipt FROM usage_stats_devices WHERE device_id = ? LIMIT 2", device).toArray();
@@ -174,23 +224,28 @@ export class StatsState {
     requireStats(rows.length === row.row_count && hash.digest("hex") === row.rows_hash);
     return { latestAtMs: row.latest_at_ms, rows };
   }
-  /** Full parse fallback for a day whose derived model is not yet populated;
-   * the parsed report backfills it so a subsequent read stays on the scan. */
+  /** Pure fallback when a derived read model has not been populated. Explicit
+   * fenced maintenance owns backfill; an ordinary read never writes SQL. */
   #dayRows(raw: Record<string, SqlStorageValue>, control: Control): { latestAtMs: number | null; rows: readonly UsageStatsRow[] } {
     const day = this.#day(raw, control);
-    this.#explodeDay(day.client, day.utcDay, day.revision, day.report);
     return { latestAtMs: day.report.sources[0].latestAtMs, rows: day.report.rows };
   }
-  #legacy(authority: AdmissionAuthority, range: StatsRange, coveredDay: (day: number) => boolean = () => false) {
+  /** Owner must hold the restore registration and a synchronous transaction. */
+  backfillRows(authority: AdmissionAuthority | null): void {
+    const { control } = this.auditControl(authority);
+    let count = 0;
+    for (const raw of this.sql.exec("SELECT * FROM usage_stats_days LIMIT 65537")) {
+      requireStats(++count <= MAX_STATS_STORED_DAYS && authority);
+      const day = this.#day(raw, control);
+      if (this.#storedDayRows(day.client, day.utcDay, day.revision) === null) this.#explodeDay(day.client, day.utcDay, day.revision, day.report);
+    }
+  }
+  #legacy(authority: AdmissionAuthority, range: StatsRange) {
     const admission = new AdmissionState(this.sql), control = admission.control(), sql = this.sql;
     function* heads() {
       let count = 0;
       for (const row of sql.exec(`SELECT occurrence_id, utc_day FROM usage_admission_heads WHERE utc_day >= ? AND utc_day < ? ORDER BY occurrence_id LIMIT ${MAX_ADMISSION_HEADS + 1}`, range.firstUtcDay, range.firstUtcDay + range.dayCount)) {
         requireStats(row.occurrence_id instanceof ArrayBuffer && ++count <= MAX_ADMISSION_HEADS);
-        // Days already owned by the relevant projections contribute nothing
-        // downstream; skip the stored-operation fetch and frame decode. The
-        // indexed day agrees with the decoded day or the history audit fails.
-        if (statsInteger(row.utc_day, 0, 99_999_999) && coveredDay(row.utc_day)) continue;
         const head = admission.head(new Uint8Array(row.occurrence_id), authority, control);
         requireStats(head && head.day !== null);
         const batch = decodeUsageBatch(head.operation.frame, ADMISSION_POLICY_V1);
@@ -202,43 +257,31 @@ export class StatsState {
   }
   status(authority: AdmissionAuthority, deviceId: string, client: string, range: StatsRange): StatsStatus {
     let legacyRecords = 0, eligible = true;
-    const ownedDays = new Set(this.sql.exec("SELECT utc_day FROM usage_stats_days WHERE client = ? AND utc_day >= ? AND utc_day < ? LIMIT 367", client, range.firstUtcDay, range.firstUtcDay + range.dayCount).toArray().map(row => row.utc_day));
-    requireStats(ownedDays.size <= 366);
-    // A head on a day this client already owns contributes nothing regardless
-    // of its own source client.
-    const { control, heads } = this.#legacy(authority, range, day => ownedDays.has(day));
+    const { control, heads } = this.#legacy(authority, range);
     const hash = createHash("sha256").update("aicharts:stats-v2:legacy-heads\0").update(client).update("\0").update(`${range.firstUtcDay}:${range.dayCount}\0`);
     for (const { head, client: source } of heads) {
-      // Retained heads from other devices are their own evidence. Another
-      // machine's ledger is outside this writer's takeover scope and cannot
-      // strand this client's migration onto the stats profile.
-      if (source !== client || ownedDays.has(head.day!) || admissionHex(head.operation.deviceId) !== deviceId) continue;
+      if (source !== client) continue;
       hash.update(head.operation.occurrenceId).update(head.operation.operationHash);
-      legacyRecords++;
+      legacyRecords++; eligible = false;
     }
     // V1 tombstones deliberately discard their day/provider frame. Until an
     // explicit canonical reconciliation can establish that provenance, a
     // legacy-client snapshot must not resurrect an erased occurrence. Only
-    // this writer's own erasures could be resurrected by its own snapshots.
-    if (LEGACY_CLIENTS.includes(client) && ownedDays.size < range.dayCount) {
+    // device's erased population could be copied into an aggregate. Until an
+    // exact population proof exists, neither device identity nor totals prove
+    // overlap or disjointness. Guard every ambiguous legacy takeover.
+    if (LEGACY_CLIENTS.includes(client)) {
       const admission = new AdmissionState(this.sql);
       let tombstones = 0;
       for (const row of this.sql.exec(`SELECT occurrence_id FROM usage_admission_heads WHERE utc_day IS NULL ORDER BY occurrence_id LIMIT ${MAX_ADMISSION_HEADS + 1}`)) {
         requireStats(++tombstones <= MAX_ADMISSION_HEADS && row.occurrence_id instanceof ArrayBuffer);
         const head = admission.head(new Uint8Array(row.occurrence_id), authority, control);
         requireStats(head && head.operation.action === 2);
-        if (admissionHex(head.operation.deviceId) !== deviceId) continue;
         hash.update(head.operation.occurrenceId).update(head.operation.operationHash); eligible = false;
       }
     }
     return { schemaVersion: 2, revision: this.control().revision, nextSequence: this.progress(deviceId).sequence + 1,
       writerDeviceId: this.writer(client), v1Revision: control.revision, headDigest: hash.digest("hex"), legacyRecords, takeoverEligible: eligible };
-  }
-  /** A writer's new upload supersedes its own uncommitted flight. The parked
-   * bytes can never settle once the writer has dispatched a replacement, and
-   * their reserved immutable charge stays counted as recovery evidence. */
-  supersedePending(deviceId: string): void {
-    this.sql.exec("DELETE FROM usage_stats_pending WHERE id = 1 AND device_id = ?", deviceId);
   }
   #projections(request: StatsUpload, receipt: StatsReceipt): readonly { day: number; text: string; rows: number; report: UsageStatsReport }[] {
     const report = request.report, source = report.sources[0];
@@ -293,35 +336,6 @@ export class StatsState {
     const bytes = Number(total.bytes) - Number(replaced.bytes) + projections.reduce((sum, value) => sum + new TextEncoder().encode(value.text).length, 0);
     if (days > MAX_STATS_STORED_DAYS || rows > MAX_STATS_STORED_ROWS || bytes > MAX_STATS_STORED_BYTES) throw new StatsFault("limit");
   }
-  #checkLegacyCoverage(request: StatsUpload, authority: AdmissionAuthority): void {
-    const client = request.report.sources[0].client;
-    const owned = new Set(this.sql.exec("SELECT utc_day FROM usage_stats_days WHERE client = ? AND utc_day >= ? AND utc_day < ? LIMIT 367",
-      client, request.report.firstUtcDay, request.report.firstUtcDay + request.report.dayCount).toArray().map(row => row.utc_day));
-    requireStats(owned.size <= 366);
-    const incoming = new Map<number, { records: number; tokens: Record<keyof UsageStatsRow["tokens"], bigint> }>();
-    for (const row of request.report.rows) {
-      if (row.tokenBasis !== "reported") continue;
-      const value = incoming.get(row.utcDay) ?? { records: 0, tokens: { input: 0n, cacheRead: 0n, cacheWrite: 0n, output: 0n, reasoning: 0n } };
-      value.records += row.records;
-      for (const bucket of Object.keys(value.tokens) as (keyof typeof value.tokens)[]) value.tokens[bucket] += BigInt(row.tokens[bucket]);
-      incoming.set(row.utcDay, value);
-    }
-    // The digest proves which predecessor was reviewed. These inequalities
-    // separately prove that taking ownership cannot lose its numeric coverage.
-    // Subtract each retained occurrence from the incoming per-day populations;
-    // model regrouping is allowed, estimated rows cannot cover reported usage.
-    for (const { head, usage, client: original } of this.#legacy(authority, request.report, day => owned.has(day)).heads) {
-      if (original !== client || owned.has(head.day!) || admissionHex(head.operation.deviceId) !== request.deviceId) continue;
-      const value = incoming.get(head.day!), old = usage.tokens;
-      if (!value || --value.records < 0) throw new StatsFault("replacement_required");
-      const retained = { input: old.inputUncached, cacheRead: old.cacheRead, cacheWrite: old.cacheWrite5m + old.cacheWrite1h,
-        output: old.output - old.reasoningOutput, reasoning: old.reasoningOutput };
-      for (const bucket of Object.keys(retained) as (keyof typeof retained)[]) {
-        value.tokens[bucket] -= retained[bucket];
-        if (value.tokens[bucket] < 0n) throw new StatsFault("replacement_required");
-      }
-    }
-  }
   check(request: StatsUpload, authority: AdmissionAuthority): void {
     const control = this.control();
     if (control.quarantined) throw new StatsFault("recovery_required");
@@ -329,6 +343,14 @@ export class StatsState {
     const client = request.report.sources[0].client, status = this.status(authority, request.deviceId, client, request.report);
     if (status.writerDeviceId !== null && status.writerDeviceId !== request.deviceId) throw new StatsFault("writer_conflict");
     if (request.expectedRevision !== status.revision || request.sequence !== status.nextSequence) throw new StatsFault("conflict");
+    const selected = new Set(request.report.rows.map(row => row.utcDay));
+    for (const source of this.sql.exec("SELECT utc_day, device_id FROM usage_stats_day_sources WHERE client = ? AND utc_day >= ? AND utc_day < ? LIMIT 367",
+      client, request.mode === "replace-snapshot" ? 0 : request.report.firstUtcDay,
+      request.mode === "replace-snapshot" ? STATS_MAX_DAY + 1 : request.report.firstUtcDay + request.report.dayCount)) {
+      requireStats(statsInteger(source.utc_day, 0, STATS_MAX_DAY) && statsHex(source.device_id));
+      if (source.device_id !== request.deviceId && (request.mode !== "preserve-history" || selected.has(source.utc_day)))
+        throw new StatsFault("replacement_required");
+    }
     if (request.mode === "replace-snapshot") {
       const previous = this.sql.exec("SELECT d.utc_day, d.revision, m.revision AS pinned, m.latest_at_ms FROM usage_stats_days d LEFT JOIN usage_stats_day_meta m ON m.client = d.client AND m.utc_day = d.utc_day WHERE d.client = ? ORDER BY d.utc_day DESC LIMIT 2", client).toArray();
       requireStats(previous.length <= 1);
@@ -350,7 +372,6 @@ export class StatsState {
     }
     if (!status.takeoverEligible || (status.legacyRecords > 0 && request.takeover === null)) throw new StatsFault("takeover_required");
     if (request.takeover && (request.takeover.expectedV1Revision !== status.v1Revision || request.takeover.headDigest !== status.headDigest || !status.takeoverEligible)) throw new StatsFault("conflict");
-    if (request.takeover && status.legacyRecords > 0) this.#checkLegacyCoverage(request, authority);
   }
   reserve(request: StatsUpload, authority: AdmissionAuthority, now: number): void {
     this.check(request, authority);
@@ -391,13 +412,19 @@ export class StatsState {
       this.sql.exec("DELETE FROM usage_stats_days WHERE client = ?", receipt.client);
       this.sql.exec("DELETE FROM usage_stats_day_rows WHERE client = ?", receipt.client);
       this.sql.exec("DELETE FROM usage_stats_day_meta WHERE client = ?", receipt.client);
+      this.sql.exec("DELETE FROM usage_stats_day_sources WHERE client = ?", receipt.client);
     }
+    const writer = this.sql.exec("SELECT ownership_revision FROM usage_stats_writers WHERE client = ? LIMIT 1", receipt.client).toArray()[0];
+    const ownershipRevision = writer?.ownership_revision ?? receipt.revision;
+    requireStats(statsInteger(ownershipRevision, 0, receipt.revision));
     for (const day of projections) {
       this.sql.exec("INSERT INTO usage_stats_days (client, utc_day, revision, body_hash, projection_hash, row_count, byte_count, projection) VALUES (?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(client, utc_day) DO UPDATE SET revision = excluded.revision, body_hash = excluded.body_hash, projection_hash = excluded.projection_hash, row_count = excluded.row_count, byte_count = excluded.byte_count, projection = excluded.projection",
         receipt.client, day.day, receipt.revision, receipt.bodyHash, statsHash(day.text), day.rows, new TextEncoder().encode(day.text).length, day.text);
       this.#explodeDay(receipt.client, day.day, receipt.revision, day.report);
+      this.sql.exec("INSERT INTO usage_stats_day_sources (client, utc_day, device_id, ownership_revision) VALUES (?, ?, ?, ?) ON CONFLICT(client, utc_day) DO UPDATE SET device_id = excluded.device_id, ownership_revision = excluded.ownership_revision",
+        receipt.client, day.day, request.deviceId, ownershipRevision);
     }
-    this.sql.exec("INSERT INTO usage_stats_writers (client, device_id) VALUES (?, ?) ON CONFLICT(client) DO NOTHING", receipt.client, request.deviceId);
+    this.sql.exec("INSERT INTO usage_stats_writers (client, device_id, ownership_revision) VALUES (?, ?, ?) ON CONFLICT(client) DO NOTHING", receipt.client, request.deviceId, ownershipRevision);
     this.sql.exec("INSERT INTO usage_stats_devices (device_id, sequence, receipt) VALUES (?, ?, ?) ON CONFLICT(device_id) DO UPDATE SET sequence = excluded.sequence, receipt = excluded.receipt", request.deviceId, request.sequence, JSON.stringify(receipt));
     this.sql.exec("UPDATE usage_stats_control SET revision = ?, updated_at_ms = ? WHERE id = 1", receipt.revision, receipt.committedAtMs);
     this.sql.exec("DELETE FROM usage_stats_pending WHERE id = 1");
@@ -448,7 +475,7 @@ export class StatsState {
         && statsInteger(raw.row_count, 0, 8192) && statsInteger(raw.byte_count, 1, 4 * 1024 * 1024));
       owned.add(`${raw.client}:${raw.utc_day}`);
       // The exploded read model serves pinned days straight from typed storage;
-      // only a never-populated day pays the projection parse, and backfills.
+      // only a never-populated day pays the pure projection parse.
       const stored = this.#storedDayRows(raw.client, raw.utc_day, raw.revision);
       let latest: number | null, count: number;
       if (stored !== null) {
@@ -471,9 +498,9 @@ export class StatsState {
       coverage.set(raw.client, { latest: latest === null ? previous?.latest ?? null : Math.max(latest, previous?.latest ?? 0), empty: (previous?.empty ?? true) && count === 0 });
     }
     const legacy = new Map<string, UsageStatsRow>();
-    // A day already owned by every legacy provider's projection yields nothing.
-    for (const { head, usage, client } of this.#legacy(authority, range, day => LEGACY_CLIENTS.every(source => owned.has(`${source}:${day}`))).heads) {
-      if (owned.has(`${client}:${head.day}`)) continue;
+    // Ambiguous historical overlap is withheld, never silently hidden or summed.
+    for (const { head, usage, client } of this.#legacy(authority, range).heads) {
+      if (owned.has(`${client}:${head.day}`)) throw new StatsFault("takeover_required");
       const key = `${client}:${head.day}`, previous = legacy.get(key);
       const token = usage.tokens;
       const added = { input: token.inputUncached, cacheRead: token.cacheRead, cacheWrite: token.cacheWrite5m + token.cacheWrite1h,
@@ -535,8 +562,8 @@ export class StatsState {
       if (rowCount > MAX_STATS_STORED_ROWS || bytes > MAX_STATS_STORED_BYTES) throw new StatsFault("limit");
       for (const row of source) if (row.tokenBasis === "reported") add(statsTokenTotal(row.tokens), row.records);
     }
-    for (const { head, usage, client } of this.#legacy(authority, range, day => LEGACY_CLIENTS.every(source => owned.has(`${source}:${day}`))).heads) {
-      if (owned.has(`${client}:${head.day}`)) continue;
+    for (const { head, usage, client } of this.#legacy(authority, range).heads) {
+      if (owned.has(`${client}:${head.day}`)) throw new StatsFault("takeover_required");
       const token = usage.tokens;
       add(token.inputUncached + token.cacheRead + token.cacheWrite5m + token.cacheWrite1h + token.output, 1);
     }
@@ -555,7 +582,8 @@ export class StatsState {
     const control = this.control();
     const writers = this.sql.exec("SELECT * FROM usage_stats_writers LIMIT 65").toArray();
     requireStats(writers.length <= 64);
-    for (const writer of writers) requireStats(isStatsClient(writer.client) && authority?.devices.some(device => device.deviceId === writer.device_id));
+    for (const writer of writers) requireStats(isStatsClient(writer.client) && statsInteger(writer.ownership_revision, 0, control.revision)
+      && authority?.devices.some(device => device.deviceId === writer.device_id));
     requireStats(control.revision !== 0 || writers.length === 0);
     const devices = this.sql.exec("SELECT device_id FROM usage_stats_devices LIMIT 129").toArray();
     requireStats(devices.length <= 128);
@@ -576,6 +604,9 @@ export class StatsState {
       requireStats(++days <= MAX_STATS_STORED_DAYS && authority);
       const day = this.#day(raw, control); rows += day.report.rows.length; bytes += new TextEncoder().encode(day.text).length;
       requireStats(rows <= MAX_STATS_STORED_ROWS && bytes <= MAX_STATS_STORED_BYTES && clients.has(day.client));
+      const source = this.sql.exec("SELECT device_id, ownership_revision FROM usage_stats_day_sources WHERE client = ? AND utc_day = ? LIMIT 2", day.client, day.utcDay).toArray();
+      requireStats(source.length === 1 && statsInteger(source[0].ownership_revision, 0, day.revision)
+        && authority.devices.some(device => device.deviceId === source[0].device_id));
       const stored = this.#storedDayRows(day.client, day.utcDay, day.revision);
       if (stored !== null) requireStats(stored.latestAtMs === day.report.sources[0].latestAtMs
         && stored.rows.length === day.report.rows.length
@@ -584,6 +615,7 @@ export class StatsState {
     // The derived model may only cover days that still exist.
     const orphans = this.sql.exec("SELECT (SELECT COUNT(*) FROM usage_stats_day_meta m WHERE NOT EXISTS (SELECT 1 FROM usage_stats_days d WHERE d.client = m.client AND d.utc_day = m.utc_day)) + (SELECT COUNT(*) FROM usage_stats_day_rows r WHERE NOT EXISTS (SELECT 1 FROM usage_stats_days d WHERE d.client = r.client AND d.utc_day = r.utc_day)) AS orphans").toArray()[0];
     requireStats(orphans.orphans === 0);
+    requireStats(days <= MAX_STATS_DAY_SOURCES && this.sql.exec("SELECT COUNT(*) AS count FROM usage_stats_day_sources").one().count === days);
     requireStats(control.revision !== 0 || days === 0);
   }
 }

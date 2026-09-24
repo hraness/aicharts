@@ -196,6 +196,20 @@ describe("calculator inputs refresh flow", () => {
     expect(written).toHaveLength(0);
   });
 
+  test("retains the previous snapshot when the source period or retrieval clock regresses", async () => {
+    const stalePeriod = dependencies({ eiaPageBody: eiaPage.replace("June 2026", "May 2026") });
+    const result = await refreshCalculatorInputs(stalePeriod.deps);
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.error.message).toContain("period regressed");
+    expect(stalePeriod.written).toHaveLength(0);
+
+    const staleClock = dependencies();
+    const clockResult = await refreshCalculatorInputs({ ...staleClock.deps, now: () => "2020-01-01T00:00:00Z" });
+    expect(clockResult.ok).toBe(false);
+    if (!clockResult.ok) expect(clockResult.error.message).toContain("retrieval time regressed");
+    expect(staleClock.written).toHaveLength(0);
+  });
+
   test("does not write when a live rate jumps past the replacement bound", async () => {
     const { deps, written } = dependencies({
       openAiPage: openAiPromoPage

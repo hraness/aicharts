@@ -2,6 +2,9 @@
 use super::*;
 use aicharts_protocol::admission as wire;
 
+#[path = "upgrade_tests.rs"]
+mod upgrade_tests;
+
 #[path = "prefix_tests.rs"]
 mod prefix_tests;
 
@@ -131,7 +134,7 @@ fn migration_is_explicit_split_only_additive_atomic_and_idempotent() {
         f.raw()
             .pragma_query_value(None, "user_version", |row| row.get::<_, u32>(0))
             .unwrap(),
-        1
+        5
     );
     assert_eq!(
         Ledger::migrate_sender_v2(&f.dir(), &LedgerIdentity::Legacy(&KEY), 1, &BINDING).err(),
@@ -150,7 +153,7 @@ fn migration_is_explicit_split_only_additive_atomic_and_idempotent() {
         f.raw()
             .pragma_query_value(None, "user_version", |row| row.get::<_, u32>(0))
             .unwrap(),
-        1
+        5
     );
     let ledger = Ledger::migrate_sender_v2(&f.dir(), &identity(), 1, &BINDING).unwrap();
     assert_eq!(ledger.snapshot().unwrap().revision, old_snapshot.revision);

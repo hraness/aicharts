@@ -4,6 +4,17 @@ import {
   type UsageConsentPublicReply,
 } from "./consent-public";
 import type { UsageConsentDecision } from "./consent-contract";
+import { usageAccountId, USAGE_ACCOUNT_HEADER } from "./account-public";
+
+export type UsageConsentReadReply = (Extract<UsageConsentPublicReply, { error: unknown }> & Readonly<{ accountId?: string }>)
+  | (Exclude<UsageConsentPublicReply, { error: unknown }> & Readonly<{ accountId: string }>);
+
+function bindAccount(reply: UsageConsentPublicReply, response: Response): UsageConsentReadReply {
+  if ("error" in reply && reply.error.code !== "handle_unavailable" && reply.error.code !== "publishing_full") return reply;
+  const accountId = response.headers.get(USAGE_ACCOUNT_HEADER);
+  if (!usageAccountId(accountId)) throw unavailable();
+  return Object.freeze({ ...reply, accountId });
+}
 
 const unavailable = () => new Error("usage_unavailable");
 const statuses = [200, 400, 401, 403, 405, 409, 503] as const;
@@ -43,7 +54,7 @@ function statusOf(reply: UsageConsentPublicReply): number {
 export async function readUsageConsent(
   signal: AbortSignal,
   fetcher: typeof fetch = globalThis.fetch,
-): Promise<UsageConsentPublicReply> {
+): Promise<UsageConsentReadReply> {
   if (signal.aborted) throw unavailable();
   let response: Response | undefined;
   try {
@@ -54,7 +65,7 @@ export async function readUsageConsent(
     const bytes = await bounded(response, signal);
     const reply = decodeUsageConsentPublicReply(bytes);
     if (reply === null || statusOf(reply) !== response.status || signal.aborted) throw unavailable();
-    return reply;
+    return bindAccount(reply, response);
   } catch { throw unavailable(); }
   finally {
     if (response?.body !== null && response?.body !== undefined) {
@@ -63,26 +74,29 @@ export async function readUsageConsent(
   }
 }
 
-/** The consent decision is the only accepted body; account identity is always
- * derived server-side from the live session. */
+/** The expected account conditions the user's intent; the server still derives
+ * authority exclusively from the live session. Mutations are never retried. */
 export async function setUsageConsent(
   decision: UsageConsentDecision,
+  expectedAccountId: string,
   signal: AbortSignal,
   fetcher: typeof fetch = globalThis.fetch,
-): Promise<UsageConsentPublicReply> {
+): Promise<UsageConsentReadReply> {
   const body = encodeUsageConsentDecision(decision);
-  if (body === null || decodeUsageConsentDecision(body) === null || signal.aborted) throw unavailable();
+  if (body === null || decodeUsageConsentDecision(body) === null || !usageAccountId(expectedAccountId) || signal.aborted) throw unavailable();
   let response: Response | undefined;
   try {
     response = await fetcher(USAGE_CONSENT_PUBLIC_PATH, { method: "POST",
-      headers: { accept: "application/json", "content-type": "application/json", "content-length": `${body.length}` },
+      headers: { accept: "application/json", "content-type": "application/json", "content-length": `${body.length}`, [USAGE_ACCOUNT_HEADER]: expectedAccountId },
       credentials: "same-origin", cache: "no-store", redirect: "error", body, signal });
     if (signal.aborted || response.redirected || response.headers.get("content-type") !== USAGE_CONSENT_PUBLIC_MEDIA
       || !statuses.includes(response.status as 200)) throw unavailable();
     const bytes = await bounded(response, signal);
     const reply = decodeUsageConsentPublicReply(bytes);
     if (reply === null || statusOf(reply) !== response.status || signal.aborted) throw unavailable();
-    return reply;
+    const bound = bindAccount(reply, response);
+    if ("accountId" in bound && bound.accountId !== expectedAccountId) throw unavailable();
+    return bound;
   } catch { throw unavailable(); }
   finally {
     if (response?.body !== null && response?.body !== undefined) {

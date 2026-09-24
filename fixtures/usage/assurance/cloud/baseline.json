@@ -1,0 +1,307 @@
+{
+  "schemaVersion": 1,
+  "baselineCommit": "a5bec6415ce640a61495db57bc9c2ce83fb83021",
+  "evidenceDate": "2026-09-23",
+  "claim": "Expected historical counterexamples only; no production invariant, Cloudflare runtime, authentication, network schedule or live-provider qualification.",
+  "sourceSha256": {
+    "components/usage/stats-report-view.tsx": "2586ff3652d47bc246ade1a966dbc288e69d53bcfc9399392827ee0d21cc071a",
+    "components/usage/stats-view.ts": "239b15a2a596f7b32a9ecd8b0ca68f12c16bc7b00b25bf43962bd8cefe83c594",
+    "data/usage-registry.json": "0f6f35c3557f39214a39236bcf4e08ea514ff0494bcca809907220f67b1ae02b",
+    "lib/result.ts": "9ff8a47dae364c313ece7713a6414f3d28ad825e4a5c1fd6a9574e0cdc0f3770",
+    "lib/usage/admission.ts": "b10a5fba05db0a0411d208446bc8d1b77160b0d5a4392f092fa58693f0989445",
+    "lib/usage/leaderboard-contract.ts": "237f47c8f178dabc721da0d1e230a9c4af0a6ff9d92d8371df22a1708f180b76",
+    "lib/usage/private-days-contract.ts": "7e1e7710db624275093715c95a8ed6242e14d047a001fb3f87bbf74dce32faf4",
+    "lib/usage/private-days-http-contract.ts": "af9ab301576ced7a17ea2b4d1b93b5400e50f51ce38560477bda3f86071ba354",
+    "lib/usage/stats-contract.ts": "8bff90f049aa37bdb532c7a8e665f122a0cf5c864f621416442de1d547e9a90f",
+    "lib/usage/stats-http-contract.ts": "b2e8c82c65dea7abf71e4f421948bd2bb495503a112e8874b0f97f24c5553374",
+    "lib/usage/stats-registry.ts": "02652ccb5b60e471f978cb56c97f27fd3cfac276d4cc7e8724595fb5af6fb699",
+    "lib/usage/wire.ts": "e6b8e23652cc324daad75f9ac612ad850bbeaa3d000295fd51d8d5728dee49a9",
+    "services/usage-worker/src/admission-policy.ts": "5f47f4efee741e8dddf62be4944672d5b6e5ea42b33153ad201f8325cda4e476",
+    "services/usage-worker/src/admission-schema.ts": "d11a76c25debf49ec9edb73b644b68d27df8823166d270538a093ffb89c1d0c4",
+    "services/usage-worker/src/admission-state.ts": "d0b34719140a081217ac0eccb7910e281f8b4b6302d007c261a4e2b62ad5f5d3",
+    "services/usage-worker/src/stats-state.ts": "329b4f16e433fa0f93ec074a016dbeb3e134e0ccfeffbca553361ee17e234899",
+    "tsconfig.json": "5506dbb93bf0ac64625fd389d75a5a8fde47e5acc5836e42f9affbf47bcc3a09"
+  },
+  "inputs": {
+    "nowMs": 1750000000000,
+    "authority": {
+      "accountId": "acct_00000000000000000000000000000001",
+      "generation": "0000000000000000000000000000000000000000000000000000000000000002",
+      "observedAtMs": 1750000000000,
+      "phase": "active",
+      "devices": [
+        {
+          "deviceId": "0000000000000000000000000000000000000000000000000000000000000003",
+          "enrolledAtMs": 1749999999000,
+          "revokedAtMs": null,
+          "reservation": {
+            "intentId": "000000000000000000000000000000000000000000000000000000000000000d",
+            "uploadCommitment": "0000000000000000000000000000000000000000000000000000000000000017"
+          }
+        },
+        {
+          "deviceId": "0000000000000000000000000000000000000000000000000000000000000004",
+          "enrolledAtMs": 1749999999000,
+          "revokedAtMs": null,
+          "reservation": {
+            "intentId": "000000000000000000000000000000000000000000000000000000000000000e",
+            "uploadCommitment": "0000000000000000000000000000000000000000000000000000000000000018"
+          }
+        }
+      ]
+    },
+    "legacy": {
+      "deviceIndex": 1,
+      "occurrenceId": "00000000000000000000000000000005",
+      "inputTokens": "100",
+      "outputTokens": "20"
+    },
+    "upload": {
+      "schemaVersion": 2,
+      "operationId": "000000000000000000000000000000000000000000000000000000000000001e",
+      "accountId": "acct_00000000000000000000000000000001",
+      "deviceId": "0000000000000000000000000000000000000000000000000000000000000003",
+      "generation": "0000000000000000000000000000000000000000000000000000000000000002",
+      "sequence": 1,
+      "expectedRevision": 0,
+      "mode": "preserve-history",
+      "takeover": null,
+      "report": {
+        "schemaVersion": 2,
+        "profile": "client-stats-v2",
+        "registryRevision": 1,
+        "firstUtcDay": 20254,
+        "dayCount": 1,
+        "generatedAtMs": 1750000000000,
+        "revision": 0,
+        "updatedAtMs": null,
+        "sources": [
+          {
+            "client": "claude",
+            "status": "observed",
+            "tokenBasis": "reported",
+            "records": 1,
+            "warnings": 0,
+            "latestAtMs": 1749999999999
+          }
+        ],
+        "rows": [
+          {
+            "utcDay": 20254,
+            "client": "claude",
+            "provider": null,
+            "model": null,
+            "tokens": {
+              "input": "10",
+              "cacheRead": "0",
+              "cacheWrite": "0",
+              "output": "5",
+              "reasoning": "0"
+            },
+            "records": 1,
+            "reportedCostMicrousd": null,
+            "reportedCostRecords": 0,
+            "estimatedCostMicrousd": null,
+            "estimatedCostRecords": 0,
+            "durationMs": null,
+            "timedRecords": 0,
+            "timedTokens": "0",
+            "tokenBasis": "reported",
+            "breakdownCoverage": "partial"
+          }
+        ]
+      }
+    },
+    "metricRow": {
+      "utcDay": 20700,
+      "client": "claude",
+      "provider": "anthropic",
+      "model": null,
+      "tokens": {
+        "input": "0",
+        "cacheRead": "100",
+        "cacheWrite": "900",
+        "output": "0",
+        "reasoning": "0"
+      },
+      "records": 2,
+      "reportedCostMicrousd": "1000000",
+      "reportedCostRecords": 1,
+      "estimatedCostMicrousd": "3000000",
+      "estimatedCostRecords": 1,
+      "durationMs": null,
+      "timedRecords": 0,
+      "timedTokens": "0",
+      "tokenBasis": "reported",
+      "breakdownCoverage": "complete"
+    },
+    "capacityCounts": [
+      99999,
+      100000,
+      100001
+    ],
+    "groundTruth": {
+      "legacyAndDetailedPopulations": "disjoint",
+      "legacyOccurrence": "synthetic-device-b-event",
+      "detailedOccurrence": "synthetic-device-a-event",
+      "reportedCostObservation": "synthetic-reported-event",
+      "estimatedCostObservation": "synthetic-estimated-event",
+      "matchedCostObservations": 0
+    }
+  },
+  "findings": {
+    "F02": {
+      "name": "foreign-device-v1-omission",
+      "evidence": "actual-domain-classes-bun-sqlite",
+      "failureMeaning": "Hosted replacement hides a distinct legacy contribution although its current-head evidence remains retained. Device identity alone is not a future overlap proof.",
+      "expected": {
+        "observed": {
+          "legacyRecordsConsideredByTakeover": 0,
+          "takeoverEligible": true,
+          "hostedRecords": 1,
+          "hostedTokens": "15",
+          "retainedLegacyRecords": 1,
+          "retainedLegacyTokens": "120"
+        },
+        "reference": {
+          "disjointRecords": 2,
+          "disjointTokens": "135"
+        },
+        "invariantHolds": false
+      }
+    },
+    "F09": {
+      "name": "revoked-writer-lockout",
+      "evidence": "actual-domain-classes-bun-sqlite",
+      "failureMeaning": "Revocation retains the old writer slot and an enrolled replacement receives writer_conflict. Repair needs account-authorized transfer; this specimen does not authorize arbitrary takeover.",
+      "expected": {
+        "observed": {
+          "writerStillRevokedDevice": true,
+          "replacementError": "writer_conflict",
+          "retainedRecords": 1,
+          "retainedTokens": "15"
+        },
+        "reference": {
+          "requiredCapability": "account-authorized ownership transfer preserving history and fencing old work"
+        },
+        "invariantHolds": false
+      }
+    },
+    "F10": {
+      "name": "capacity-contract-drift",
+      "evidence": "actual-production-parsers",
+      "failureMeaning": "A below-storage-cap, below-per-day-cap, below-journal-cap payload is rejected after 100000 records. This is a small parser boundary specimen, not a million-head load test.",
+      "expected": {
+        "observed": {
+          "storageHeadCap": 1000000,
+          "privateDayPerDayCap": 65536,
+          "samples": [
+            {
+              "records": 99999,
+              "privateDaysAccepted": true,
+              "statsStatusAccepted": true
+            },
+            {
+              "records": 100000,
+              "privateDaysAccepted": true,
+              "statsStatusAccepted": true
+            },
+            {
+              "records": 100001,
+              "privateDaysAccepted": false,
+              "statsStatusAccepted": false
+            }
+          ],
+          "largestPrivateDaysBytes": 758
+        },
+        "reference": {
+          "allSamplesWithinStorageDayJournalAndByteLimits": true,
+          "compatibleRepresentationsAcceptAllSamples": true
+        },
+        "invariantHolds": false
+      }
+    },
+    "F11": {
+      "name": "pending-aba-and-recharge",
+      "evidence": "actual-domain-state-transitions-network-ordering-not-executed",
+      "failureMeaning": "Deleting pending A, reserving B, then replaying A revives A at unchanged revision/sequence and charges A again. This drives domain transitions; delayed authentication ordering remains a source trace.",
+      "expected": {
+        "observed": {
+          "earlierAReinstalled": true,
+          "singleReservationCharge": 2095,
+          "chargeAfterABA": 6285,
+          "revision": 1,
+          "publishedSequence": 1
+        },
+        "reference": {
+          "terminallySupersededACannotReturn": true,
+          "maximumChargeForTwoDistinctIntents": 4190
+        },
+        "invariantHolds": false
+      }
+    },
+    "F12": {
+      "name": "persistent-backfill-on-read",
+      "evidence": "actual-domain-classes-bun-sqlite",
+      "failureMeaning": "Missing derived projection rows cause both private read and leaderboard read to issue persistent DELETE/INSERT statements. Missing rows are injected only in a fresh synthetic database.",
+      "expected": {
+        "observed": {
+          "privateReadWrites": [
+            "DELETE usage_stats_day_rows",
+            "INSERT usage_stats_day_rows",
+            "INSERT usage_stats_day_meta"
+          ],
+          "leaderboardReadWrites": [
+            "DELETE usage_stats_day_rows",
+            "INSERT usage_stats_day_rows",
+            "INSERT usage_stats_day_meta"
+          ],
+          "warmPrivateReadWrites": [],
+          "privateResultTokens": "15",
+          "leaderboardResultTokens": "15"
+        },
+        "reference": {
+          "persistentWritesAllowedDuringRead": 0
+        },
+        "invariantHolds": false
+      }
+    },
+    "F15": {
+      "name": "cache-share-population",
+      "evidence": "production-parser-and-source-extracted-ui-formula",
+      "failureMeaning": "A complete disjoint input population with 100 cache reads and 900 cache writes displays 100 percent rather than 10 percent. Formula execution is not browser rendering.",
+      "expected": {
+        "observed": {
+          "rowAccepted": true,
+          "displayedCacheSharePercent": 100,
+          "zeroInputControl": null,
+          "withoutCacheWritesControl": 10
+        },
+        "reference": {
+          "wholeInputTokens": "1000",
+          "cacheSharePercent": 10
+        },
+        "invariantHolds": false
+      }
+    },
+    "F16": {
+      "name": "disjoint-cost-cohort-comparison",
+      "evidence": "production-parser-and-source-extracted-ui-formula",
+      "failureMeaning": "The reported and estimated costs cover two different observations, yet the view derives a 2000000-microusd difference. No matched-observation or savings claim is supported.",
+      "expected": {
+        "observed": {
+          "rowAccepted": true,
+          "reportedCostRecords": 1,
+          "estimatedCostRecords": 1,
+          "displayedDifferenceMicrousd": "2000000",
+          "missingEstimateControl": null
+        },
+        "reference": {
+          "matchedCostObservations": 0,
+          "comparableDifferenceMicrousd": null
+        },
+        "invariantHolds": false
+      }
+    }
+  }
+}

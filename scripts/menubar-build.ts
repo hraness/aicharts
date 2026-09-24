@@ -4,7 +4,7 @@ import { join, resolve } from "node:path";
 const repositoryRoot = resolve(import.meta.dir, "..");
 
 export async function buildMenubar(root = repositoryRoot): Promise<number> {
-  const child = spawn("cargo", ["build", "--release", "--manifest-path", join(root, "desktop", "Cargo.toml")], {
+  const child = spawn("cargo", ["build", "--release", "--locked", "--manifest-path", join(root, "desktop", "Cargo.toml")], {
     cwd: root,
     stdio: "inherit",
   });
