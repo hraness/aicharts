@@ -1,10 +1,10 @@
-import { contributionAccount, contributionHash, contributionIdentity, ContributionFault, CONTRIBUTION_MAX_OPERATIONS,
-  CONTRIBUTION_MAX_TIME, type ContributionError } from "../../../lib/usage/contributions";
+import { contributionAccount, contributionHash, contributionIdentity, ContributionFault, CONTRIBUTION_MAX_IMMUTABLE_BYTES,
+  CONTRIBUTION_MAX_OPERATIONS, CONTRIBUTION_MAX_TIME, type ContributionError } from "../../../lib/usage/contributions";
 import { contributionIndexKey, contributionIndexStageHash, parseContributionIndexReference, readContributionIndexCells, stageContributionIndex,
   CONTRIBUTION_INDEX_MAX_IO_BYTES, type ContributionIndexLoader, type ContributionIndexReference, type ContributionIndexStage } from "../../../lib/usage/contribution-index";
 import { contributionRowCellKey, planContributionRollups } from "../../../lib/usage/contribution-rollups";
 import { statsInteger, statsOwnRecord } from "../../../lib/usage/stats-contract";
-import { ContributionState } from "./contributions-state";
+import { ContributionState, CONTRIBUTION_MAX_METADATA_BYTES } from "./contributions-state";
 import { CONTRIBUTION_JOURNAL_MAX_ENTRIES } from "./contributions-journal";
 import { isVerifiedContributionChunk, isVerifiedContributionRevision, readCommittedContributionRevision,
   CONTRIBUTION_REPLAY_CHUNK_ENTRIES, type CommittedContributionRevision, type ContributionReplayPhase,
@@ -16,6 +16,10 @@ export const CONTRIBUTION_PROJECTION_MAX_PUBLICATIONS = 64;
 export const CONTRIBUTION_PROJECTION_RETIRE_MS = 930_000;
 export const CONTRIBUTION_PROJECTION_PUBLISH_INTERVAL_MS = 16_000;
 export const CONTRIBUTION_PROJECTION_MAX_CONTROL_BYTES = 8_192;
+/** A lifetime ceiling warns once cumulative bytes reach seven eighths of it.
+ * Exact integer arithmetic; no ratio is stored. */
+export const CONTRIBUTION_STORAGE_WARNING_NUMERATOR = 7;
+export const CONTRIBUTION_STORAGE_WARNING_DENOMINATOR = 8;
 export const CONTRIBUTION_PROJECTION_SCHEMA = Object.freeze({
   usage_contribution_projection_control: `CREATE TABLE usage_contribution_projection_control (id INTEGER PRIMARY KEY CHECK (id = 1), account_id TEXT NOT NULL, generation TEXT NOT NULL, applied_revision INTEGER NOT NULL, applied_root TEXT CHECK (applied_root IS NULL OR length(applied_root) <= 2048), published_revision INTEGER NOT NULL, published_root TEXT CHECK (published_root IS NULL OR length(published_root) <= 2048), staged_source TEXT CHECK (staged_source IS NULL OR length(staged_source) <= 2048), staged_root TEXT CHECK (staged_root IS NULL OR length(staged_root) <= 2048), phase TEXT CHECK (phase IS NULL OR phase IN ('retract', 'add')), cursor INTEGER NOT NULL, updated_at_ms INTEGER NOT NULL, immutable_bytes INTEGER NOT NULL)`,
   usage_contribution_projection_pending: `CREATE TABLE usage_contribution_projection_pending (id INTEGER PRIMARY KEY CHECK (id = 1), plan_hash TEXT NOT NULL, metadata TEXT NOT NULL CHECK (length(metadata) <= 8192), write_bytes INTEGER NOT NULL)`,
@@ -32,13 +36,47 @@ export type ContributionProjectionControl = Readonly<{
 export type ContributionProjectionPublication = Readonly<{
   revision: number; root: ContributionIndexReference | null; publishedAtMs: number; expiresAtMs: number | null;
 }>;
+export type ContributionStorageBudgetWarning = "derived_immutable_near_ceiling" | "canonical_immutable_near_ceiling"
+  | "canonical_metadata_near_ceiling";
+/** Cumulative lifetime physical-storage position of one account against its
+ * frozen logical ceilings. Charged bytes only grow: abort, retirement and
+ * cutover never refund, so reaching a ceiling is a refusal, not a reclaim.
+ * `remainingBytes` counts exact bytes still admissible under each ceiling. */
+export type ContributionStorageBudget = Readonly<{
+  derivedImmutableBytes: number; derivedImmutableCeilingBytes: number;
+  canonicalImmutableBytes: number; canonicalImmutableCeilingBytes: number;
+  canonicalMetadataBytes: number; canonicalMetadataCeilingBytes: number;
+  remainingBytes: Readonly<{ derivedImmutable: number; canonicalImmutable: number; canonicalMetadata: number }>;
+  warnings: readonly ContributionStorageBudgetWarning[];
+}>;
 export type ContributionProjectionStatus = Readonly<{
   schemaVersion: 3; accountId: string; generation: string; sourceRevision: number; appliedRevision: number; publishedRevision: number;
   appliedLag: number; publishedLag: number; lag: number;
   nextPublicationAtMs: number | null; publicationWait: "interval" | "retention" | "clock_limit" | null;
   staged: Readonly<{ revision: number; phase: ContributionReplayPhase; cursor: number; count: number }> | null;
-  pending: boolean; immutableBytes: number; refusal: ContributionError | null;
+  pending: boolean; immutableBytes: number; budget: ContributionStorageBudget; refusal: ContributionError | null;
 }>;
+const nearCeiling = (bytes: number, ceiling: number): boolean =>
+  bytes * CONTRIBUTION_STORAGE_WARNING_DENOMINATOR >= ceiling * CONTRIBUTION_STORAGE_WARNING_NUMERATOR;
+/** Pure over already validated control rows; every value is an exact integer
+ * within its declared ceiling, so the products stay below 2^53. */
+export function contributionStorageBudget(derivedImmutableBytes: number, canonicalImmutableBytes: number,
+  canonicalMetadataBytes: number): ContributionStorageBudget {
+  invariant(statsInteger(derivedImmutableBytes, 0, CONTRIBUTION_PROJECTION_MAX_IMMUTABLE_BYTES)
+    && statsInteger(canonicalImmutableBytes, 0, CONTRIBUTION_MAX_IMMUTABLE_BYTES)
+    && statsInteger(canonicalMetadataBytes, 0, CONTRIBUTION_MAX_METADATA_BYTES));
+  const warnings: ContributionStorageBudgetWarning[] = [];
+  if (nearCeiling(derivedImmutableBytes, CONTRIBUTION_PROJECTION_MAX_IMMUTABLE_BYTES)) warnings.push("derived_immutable_near_ceiling");
+  if (nearCeiling(canonicalImmutableBytes, CONTRIBUTION_MAX_IMMUTABLE_BYTES)) warnings.push("canonical_immutable_near_ceiling");
+  if (nearCeiling(canonicalMetadataBytes, CONTRIBUTION_MAX_METADATA_BYTES)) warnings.push("canonical_metadata_near_ceiling");
+  return Object.freeze({ derivedImmutableBytes, derivedImmutableCeilingBytes: CONTRIBUTION_PROJECTION_MAX_IMMUTABLE_BYTES,
+    canonicalImmutableBytes, canonicalImmutableCeilingBytes: CONTRIBUTION_MAX_IMMUTABLE_BYTES,
+    canonicalMetadataBytes, canonicalMetadataCeilingBytes: CONTRIBUTION_MAX_METADATA_BYTES,
+    remainingBytes: Object.freeze({ derivedImmutable: CONTRIBUTION_PROJECTION_MAX_IMMUTABLE_BYTES - derivedImmutableBytes,
+      canonicalImmutable: CONTRIBUTION_MAX_IMMUTABLE_BYTES - canonicalImmutableBytes,
+      canonicalMetadata: CONTRIBUTION_MAX_METADATA_BYTES - canonicalMetadataBytes }),
+    warnings: Object.freeze(warnings) });
+}
 type Step = Readonly<{
   schemaVersion: 3; accountId: string; generation: string; source: CommittedContributionRevision; appliedRevision: number;
   previousRoot: ContributionIndexReference | null; phase: ContributionReplayPhase; cursor: number; consumed: number;
@@ -229,7 +267,8 @@ export class ContributionProjectionState {
       appliedLag: source.revision - control.appliedRevision, publishedLag: source.revision - control.publishedRevision, lag: source.revision - control.publishedRevision,
       ...this.#publicationWindow(control, current, now),
       staged: control.source ? Object.freeze({ revision: control.source.revision, phase: control.phase!, cursor: control.cursor, count: control.source.deltaCount }) : null,
-      pending: this.pending() !== null, immutableBytes: control.immutableBytes, refusal });
+      pending: this.pending() !== null, immutableBytes: control.immutableBytes,
+      budget: contributionStorageBudget(control.immutableBytes, source.immutableBytes, source.metadataBytes), refusal });
   }
   begin(proof: VerifiedContributionRevision, authority: ContributionProjectionAuthority): void {
     if (!isVerifiedContributionRevision(proof)) throw new ContributionFault("invalid_input");
