@@ -81,7 +81,8 @@
   .usage-board table caption, .usage-consent__handle-field
 ) { font-size: var(--text-caption); line-height: 1.5; }
 [data-hraness-material="lantern"] :is(
-  .usage-daily__controls input, .usage-consent__handle-field input, .usage-sessions__scope select
+  .usage-daily__controls input, .usage-consent__handle-field input, .usage-sessions__scope select,
+  .usage-stats input, .usage-stats select
 ) {
   background: var(--surface);
   border-color: transparent;
@@ -92,7 +93,8 @@
   line-height: 1.5;
 }
 [data-hraness-material="lantern"] :is(
-  .usage-status, .usage-daily__controls, .usage-sessions__aggregate, .usage-consent__form
+  .usage-status, .usage-daily__controls, .usage-sessions__aggregate, .usage-consent__form,
+  .usage-stats__toolbar, .usage-stats__custom, .usage-stats__notice, .usage-stats__day-detail
 ) {
   border: 1px solid transparent;
   border-radius: var(--radius-lg);
@@ -103,6 +105,8 @@
 @media (forced-colors: active) {
   [data-hraness-material="lantern"] :is(
     .usage-daily__controls input, .usage-consent__handle-field input, .usage-sessions__scope select,
-    .usage-status, .usage-daily__controls, .usage-sessions__aggregate, .usage-consent__form
+    .usage-stats input, .usage-stats select,
+    .usage-status, .usage-daily__controls, .usage-sessions__aggregate, .usage-consent__form,
+    .usage-stats__toolbar, .usage-stats__custom, .usage-stats__notice, .usage-stats__day-detail
   ) { border-color: CanvasText; box-shadow: none; }
 }
