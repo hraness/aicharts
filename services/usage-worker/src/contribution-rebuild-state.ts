@@ -1,5 +1,5 @@
 import { contributionAccount, contributionBatchText, contributionBodyHash, contributionHash, contributionIdentity, contributionPayloadHash,
-  CONTRIBUTION_MAX_TIME, parseContributionBatch,
+  ContributionFault, CONTRIBUTION_MAX_TIME, parseContributionBatch,
   type ContributionBatch, type ContributionHead } from "../../../lib/usage/contributions";
 import { contributionIndexKey, contributionIndexStageHash, parseContributionIndexReference, readContributionIndexCells,
   readContributionIndexScanPage, stageContributionIndex, CONTRIBUTION_INDEX_MAX_IO_BYTES,
@@ -9,11 +9,11 @@ import { contributionRebuildRowCellKey, planContributionRebuildCells, CONTRIBUTI
   type ContributionRebuildInput } from "../../../lib/usage/contribution-rebuild";
 import { CONTRIBUTION_REBUILD_MAX_JOBS, CONTRIBUTION_REBUILD_METADATA_BYTES,
   parseContributionRebuildBudget, parseContributionRebuildReceipt, type ContributionRebuildBudget,
-  type ContributionRebuildDifference, type ContributionRebuildReceipt, type ContributionRebuildStatus,
+  type ContributionRebuildDifference, type ContributionRebuildReceipt, type ContributionRebuildStatus, type ContributionRebuildReadiness,
   type ContributionRebuildError } from "../../../lib/usage/contribution-rebuild-contract";
 import { statsInteger, statsOwnRecord } from "../../../lib/usage/stats-contract";
 import { ContributionState } from "./contributions-state";
-import { ContributionProjectionState, CONTRIBUTION_PROJECTION_MAX_IMMUTABLE_BYTES,
+import { ContributionProjectionState, CONTRIBUTION_PROJECTION_MAX_IMMUTABLE_BYTES, CONTRIBUTION_PROJECTION_RETIRE_MS,
   type ContributionProjectionAuthority } from "./contribution-projection-state";
 import { isVerifiedContributionBody, type VerifiedContributionBody } from "./contributions-objects";
 import { isVerifiedContributionIndex, type VerifiedContributionIndex } from "./contribution-index-objects";
@@ -29,10 +29,14 @@ type Pending = Readonly<{
   positionHash: string; chunkHash: string; consumed: number; liveHeads: number; nextHeadId: string;
   root: ContributionIndexReference | null; stageHash: string; writeBytes: number; writeObjects: number; hash: string;
 }>;
+/** A retired root stays referenced by cursors until its horizon and by any
+ * recovery reader thereafter; reclamation consults this record, never a guess. */
+type Cutover = Readonly<{ previousRoot: ContributionIndexReference | null; retiredAtMs: number; expiresAtMs: number }>;
 type Job = Readonly<{
   receipt: ContributionRebuildReceipt; createdAtMs: number; boundary: Readonly<{ operationId: string; bodyHash: string }>;
   lastHeadId: string; leftCursor: ContributionIndexScanCursor | null; rightCursor: ContributionIndexScanCursor | null;
   leftDone: boolean; rightDone: boolean; pending: Pending | null; lastPlanHash: string | null; reservedBytes: number;
+  cutover: Cutover | null;
 }>;
 export type CheckedContributionRebuildJob = Job;
 export type ContributionRebuildHeadChunk = Readonly<{ positionHash: string; hash: string; heads: readonly ContributionHead[];
@@ -59,6 +63,14 @@ const active = (job: Job) => job.receipt.phase === "building" || job.receipt.pha
 const positionHash = (job: Job) => contributionHash(`aicharts:contribution-rebuild-position:v3\0${JSON.stringify({
   receipt: job.receipt, createdAtMs: job.createdAtMs, boundary: job.boundary, lastHeadId: job.lastHeadId,
   leftCursor: job.leftCursor, rightCursor: job.rightCursor, leftDone: job.leftDone, rightDone: job.rightDone })}`);
+function cutover(value: unknown, receipt: ContributionRebuildReceipt): Cutover | null {
+  if (value === null) { require(receipt.phase !== "published"); return null; }
+  const raw = statsOwnRecord(value, ["previousRoot", "retiredAtMs", "expiresAtMs"]);
+  require(raw && receipt.phase === "published" && statsInteger(raw.retiredAtMs, receipt.completedAtMs, receipt.completedAtMs)
+    && statsInteger(raw.expiresAtMs, raw.retiredAtMs + CONTRIBUTION_PROJECTION_RETIRE_MS, raw.retiredAtMs + CONTRIBUTION_PROJECTION_RETIRE_MS));
+  const previousRoot = root(raw.previousRoot); require(same(previousRoot, receipt.publishedRoot));
+  return Object.freeze({ previousRoot, retiredAtMs: raw.retiredAtMs, expiresAtMs: raw.expiresAtMs });
+}
 const pendingHash = (value: Omit<Pending, "hash">) => contributionHash(`aicharts:contribution-rebuild-step:v3\0${JSON.stringify(value)}`);
 function cursor(value: unknown, reference: ContributionIndexReference | null, checked: number): ContributionIndexScanCursor | null {
   if (value === null) return null;
@@ -82,7 +94,7 @@ function pending(value: unknown): Pending | null {
 }
 function parseJob(value: unknown): Job {
   const raw = statsOwnRecord(value, ["receipt", "createdAtMs", "boundary", "lastHeadId", "leftCursor", "rightCursor", "leftDone", "rightDone",
-    "pending", "lastPlanHash", "reservedBytes"]);
+    "pending", "lastPlanHash", "reservedBytes", "cutover"]);
   const receipt = raw ? parseContributionRebuildReceipt(raw.receipt) : null;
   const boundary = raw ? statsOwnRecord(raw.boundary, ["operationId", "bodyHash"]) : null;
   require(raw && receipt && boundary && contributionIdentity(boundary.operationId) && contributionIdentity(boundary.bodyHash)
@@ -92,14 +104,14 @@ function parseJob(value: unknown): Job {
     && statsInteger(raw.reservedBytes, receipt.chargedBytes, CONTRIBUTION_PROJECTION_MAX_IMMUTABLE_BYTES)
     && receipt.headSteps === Math.ceil(receipt.processedHeads / CONTRIBUTION_REBUILD_HEADS_PER_STEP)
     && (receipt.phase !== "building" || receipt.processedHeads % CONTRIBUTION_REBUILD_HEADS_PER_STEP === 0)
-    && receipt.version === 1 + receipt.headSteps + receipt.comparisonSteps + (receipt.phase === "aborted" ? 1 : 0)
+    && receipt.version === 1 + receipt.headSteps + receipt.comparisonSteps + (receipt.phase === "aborted" || receipt.phase === "published" ? 1 : 0)
     && (receipt.action !== "begin" || (receipt.version === 1 && receipt.processedHeads === 0 && receipt.scratchRoot === null && receipt.chargedBytes === 0))
-    && (receipt.phase === "aborted") === (receipt.action === "abort"));
+    && (receipt.phase === "aborted") === (receipt.action === "abort") && (receipt.phase === "published") === (receipt.action === "publish"));
   const leftCursor = cursor(raw.leftCursor, receipt.scratchRoot, receipt.checkedCells);
   const rightCursor = cursor(raw.rightCursor, receipt.publishedRoot, receipt.checkedCells), staged = pending(raw.pending);
   const result: Job = Object.freeze({ receipt, createdAtMs: raw.createdAtMs, boundary: Object.freeze({ operationId: boundary.operationId, bodyHash: boundary.bodyHash }),
     lastHeadId: raw.lastHeadId, leftCursor, rightCursor, leftDone: raw.leftDone, rightDone: raw.rightDone,
-    pending: staged, lastPlanHash: raw.lastPlanHash as string | null, reservedBytes: raw.reservedBytes });
+    pending: staged, lastPlanHash: raw.lastPlanHash as string | null, reservedBytes: raw.reservedBytes, cutover: cutover(raw.cutover, receipt) });
   if (receipt.phase === "comparing") {
     require(staged === null && (result.leftDone ? leftCursor === null && receipt.checkedCells === (receipt.scratchRoot?.cells ?? 0)
       : receipt.checkedCells === 0 ? leftCursor === null : leftCursor !== null)
@@ -108,6 +120,7 @@ function parseJob(value: unknown): Job {
       && (!leftCursor || !rightCursor || leftCursor.afterKey === rightCursor.afterKey));
   } else require(leftCursor === null && rightCursor === null && !result.leftDone && !result.rightDone);
   if (receipt.phase === "building") require(receipt.comparisonSteps === 0 && receipt.checkedCells === 0);
+  if (receipt.phase === "published") require(staged === null && receipt.comparisonSteps >= 1 && result.reservedBytes === receipt.chargedBytes);
   if (staged) {
     require(receipt.phase === "building" || receipt.phase === "aborted");
     require(staged.consumed === Math.min(CONTRIBUTION_REBUILD_HEADS_PER_STEP, receipt.headCount - receipt.processedHeads)
@@ -147,8 +160,21 @@ export class ContributionRebuildState {
     if (insert) this.sql.exec("INSERT INTO usage_contribution_rebuild_jobs VALUES (?,?,?)", value.receipt.jobId, value.receipt.version, text);
     else this.sql.exec("UPDATE usage_contribution_rebuild_jobs SET version=?,metadata=? WHERE id=?", value.receipt.version, text, value.receipt.jobId);
   }
-  status(id: string): ContributionRebuildStatus | null {
-    const job = this.#read(id); return job ? Object.freeze({ receipt: job.receipt, pending: job.pending !== null, chargedBytes: job.reservedBytes }) : null;
+  /** SELECT-only. With an authority the anchor is evaluated read-only and its
+   * exact refusal is reported instead of being discovered by a later mutation. */
+  status(id: string, authority?: ContributionRebuildAuthority): ContributionRebuildStatus | null {
+    const job = this.#read(id);
+    return job ? Object.freeze({ receipt: job.receipt, pending: job.pending !== null, chargedBytes: job.reservedBytes,
+      readiness: authority ? this.#readiness(job, authority) : "unobserved" }) : null;
+  }
+  #readiness(job: Job, authority: ContributionRebuildAuthority): ContributionRebuildReadiness {
+    if (!active(job) && job.receipt.phase !== "match" && job.receipt.phase !== "mismatch") return "terminal";
+    try { this.#anchor(job, authority); return "ready"; }
+    catch (error) {
+      const code = error instanceof ContributionRebuildFault ? error.code : error instanceof ContributionFault ? error.code : "storage_invalid";
+      return code === "not_caught_up" || code === "legacy_unresolved" || code === "conflict" || code === "recovery_required"
+        || code === "generation_conflict" || code === "clock_regressed" ? code : "storage_invalid";
+    }
   }
   inventory(): readonly ContributionRebuildStatus[] {
     const rows = this.sql.exec("SELECT id FROM usage_contribution_rebuild_jobs ORDER BY id LIMIT ?", CONTRIBUTION_REBUILD_MAX_JOBS + 1).toArray();
@@ -158,7 +184,7 @@ export class ContributionRebuildState {
       require(contributionIdentity(row.id)); const job = this.#read(row.id); require(job);
       if (active(job)) activeCount++;
       if (values.length) require(job.receipt.accountId === values[0].receipt.accountId && job.receipt.generation === values[0].receipt.generation);
-      values.push(Object.freeze({ receipt: job.receipt, pending: job.pending !== null, chargedBytes: job.reservedBytes }));
+      values.push(Object.freeze({ receipt: job.receipt, pending: job.pending !== null, chargedBytes: job.reservedBytes, readiness: "unobserved" }));
     }
     require(activeCount <= 1); return Object.freeze(values);
   }
@@ -214,11 +240,11 @@ export class ContributionRebuildState {
         difference: null, budget: zeroBudget });
       const job: Job = Object.freeze({ receipt: value, createdAtMs: authority.observedAtMs,
         boundary: Object.freeze({ operationId: boundary.operationId, bodyHash: boundary.bodyHash }), lastHeadId: "", leftCursor: null, rightCursor: null,
-        leftDone: false, rightDone: false, pending: null, lastPlanHash: null, reservedBytes: 0 });
+        leftDone: false, rightDone: false, pending: null, lastPlanHash: null, reservedBytes: 0, cutover: null });
       this.#anchor(job, authority); this.#write(job, true); return value;
     });
   }
-  retry(id: string, expectedVersion: number, action: "advance" | "abort", authority: ContributionRebuildAuthority): ContributionRebuildReceipt | null {
+  retry(id: string, expectedVersion: number, action: "advance" | "abort" | "publish", authority: ContributionRebuildAuthority): ContributionRebuildReceipt | null {
     const job = this.#read(id); require(job, "not_started"); this.#base(authority, job);
     if (job.receipt.version === expectedVersion + 1 && job.receipt.expectedVersion === expectedVersion && job.receipt.action === action) return job.receipt;
     require(job.receipt.version === expectedVersion, "conflict"); return null;
@@ -380,5 +406,43 @@ export class ContributionRebuildState {
       // writes. Abort neither refunds their charge nor deletes any object.
       this.#write(Object.freeze({ ...job, receipt: value, leftCursor: null, rightCursor: null, leftDone: false, rightDone: false })); return value;
     });
+  }
+  /** Explicit repair cutover. Only a fully compared job (`match` or `mismatch`)
+   * may publish, and only while the anchor still holds: unchanged source
+   * revision, both frontiers at it, no staged or pending work, and the exact
+   * original root current and non-expiring. The receipt transition and the
+   * projection compare-and-swap commit in one SQL transaction, which is this
+   * step's durable intent: no object is written, so nothing is charged twice
+   * and the published root is exactly the verified scratch root. A repeated
+   * request at the same expected version returns the retained receipt. */
+  publish(id: string, expectedVersion: number, authority: ContributionRebuildAuthority): ContributionRebuildReceipt {
+    return this.storage.transactionSync(() => {
+      const repeated = this.retry(id, expectedVersion, "publish", authority); if (repeated) return repeated;
+      const job = this.#read(id)!;
+      require((job.receipt.phase === "match" || job.receipt.phase === "mismatch") && job.pending === null
+        && job.receipt.processedHeads === job.receipt.headCount && job.reservedBytes === job.receipt.chargedBytes, "conflict");
+      this.#anchor(job, authority);
+      const projection = new ContributionProjectionState(this.storage), control = projection.control();
+      require(same(control.publishedRoot, job.receipt.publishedRoot) && same(control.appliedRoot, job.receipt.publishedRoot), "conflict");
+      const published = projection.cutover(job.receipt.publishedRoot, job.receipt.scratchRoot, authority);
+      require(same(published.root, job.receipt.scratchRoot) && published.revision === job.receipt.sourceRevision);
+      const value = receipt({ ...job.receipt, version: job.receipt.version + 1, phase: "published", action: "publish",
+        expectedVersion, completedAtMs: authority.observedAtMs, budget: zeroBudget });
+      this.#write(Object.freeze({ ...job, receipt: value, cutover: Object.freeze({ previousRoot: job.receipt.publishedRoot,
+        retiredAtMs: authority.observedAtMs, expiresAtMs: authority.observedAtMs + CONTRIBUTION_PROJECTION_RETIRE_MS }) }));
+      const after = projection.control();
+      require(same(after.publishedRoot, job.receipt.scratchRoot) && same(after.appliedRoot, job.receipt.scratchRoot)
+        && after.immutableBytes === control.immutableBytes && after.publishedRevision === job.receipt.sourceRevision && after.appliedRevision === job.receipt.sourceRevision);
+      return value;
+    });
+  }
+  /** Retired roots recorded by cutovers, for reference walks. Read-only. */
+  retiredRoots(): readonly Cutover[] {
+    const values: Cutover[] = [];
+    for (const status of this.inventory()) {
+      const job = this.#read(status.receipt.jobId); require(job);
+      if (job.cutover) values.push(job.cutover);
+    }
+    return Object.freeze(values);
   }
 }

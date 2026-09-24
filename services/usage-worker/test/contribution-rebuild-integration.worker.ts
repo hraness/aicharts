@@ -4,6 +4,7 @@ import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { CONTRIBUTION_IDENTITY, CONTRIBUTION_PROFILE } from "../../../lib/usage/contributions";
 import { CONTRIBUTION_REBUILD_DEADLINE_MS, type ContributionRebuildReadRequest } from "../../../lib/usage/contribution-rebuild-contract";
 import { ContributionProjectionState } from "../src/contribution-projection-state";
+import { ContributionRebuildState } from "../src/contribution-rebuild-state";
 import { enrollmentAccountName } from "../src/enrollment-contract";
 import { PAIRING_TTL_MS, uploadSecretCommitment } from "../src/pairing";
 import { restoreFenceName } from "../src/restore-fence";
@@ -105,7 +106,8 @@ test("schema13 rebuild survives restart, retains exact step replies and never pu
     const projection = new ContributionProjectionState(ctx.storage).control();
     expect(projection.publishedRevision).toBe(3); expect(projection.publishedRoot).toEqual(initial.publishedRoot);
     const exec = vi.spyOn(ctx.storage.sql, "exec"), arm = vi.spyOn(ctx.storage, "setAlarm"), put = vi.spyOn(env.STAGING, "put");
-    expect(success(await instance.readContributionRebuild(request()))).toEqual({ receipt: matched, pending: false, chargedBytes: first.chargedBytes });
+    // The SELECT-only read RPC evaluates no authority anchor: readiness stays "unobserved" there.
+    expect(success(await instance.readContributionRebuild(request()))).toEqual({ receipt: matched, pending: false, chargedBytes: first.chargedBytes, readiness: "unobserved" });
     expect(exec.mock.calls.every(([sql]) => /^SELECT /u.test(sql))).toBe(true);
     expect(arm).not.toHaveBeenCalled(); expect(put).not.toHaveBeenCalled();
   });
@@ -207,5 +209,27 @@ test("a storage timeout preserves pending charge and restore custody until the a
       expect(recovered).toMatchObject({ version: 2, phase: "comparing", chargedBytes: status.chargedBytes });
       expect(new ContributionProjectionState(ctx.storage).control().immutableBytes).toBe(charge);
     } finally { allow = true; held.resolve(); owner.env = original; vi.useRealTimers(); vi.useFakeTimers({ toFake: ["Date"] }); vi.setSystemTime(now); }
+  });
+});
+
+test("the publish RPC performs the reviewed cutover with fenced post-checks while the execute RPC refuses it", async () => {
+  success(await stub().executeContributionRebuild(begin()));
+  success(await stub().executeContributionRebuild(advance(1)));
+  const matched = success(await stub().executeContributionRebuild(advance(2))); expect(matched.phase).toBe("match");
+  const publish = { ...request(), action: "publish" as const, expectedVersion: 3 };
+  expect(await stub().executeContributionRebuild(publish)).toEqual({ ok: false, error: "invalid_input" });
+  expect(await stub().publishContributionRebuild(advance(3))).toEqual({ ok: false, error: "invalid_input" });
+  expect(success(await stub().readContributionRebuild(request()))).toMatchObject({ receipt: matched, readiness: "unobserved" });
+  const published = success(await stub().publishContributionRebuild(publish));
+  expect(published).toMatchObject({ phase: "published", action: "publish", version: 4, sourceRevision: 3, scratchRoot: matched.scratchRoot, chargedBytes: matched.chargedBytes });
+  await abortAllDurableObjects(); await enable();
+  expect(success(await stub().publishContributionRebuild(publish))).toEqual(published);
+  expect(await stub().publishContributionRebuild({ ...publish, expectedVersion: 4 })).toEqual({ ok: false, error: "conflict" });
+  await runInDurableObject(stub(), async (instance, ctx) => {
+    const projection = new ContributionProjectionState(ctx.storage), control = projection.control();
+    expect(control.publishedRoot).toEqual(matched.scratchRoot); expect(control.appliedRoot).toEqual(matched.scratchRoot);
+    expect(control.publishedRevision).toBe(3); expect(projection.publication(3, now)).toMatchObject({ root: matched.scratchRoot, expiresAtMs: null });
+    expect(success(await instance.readContributionRebuild(request()))).toEqual({ receipt: published, pending: false, chargedBytes: matched.chargedBytes, readiness: "unobserved" });
+    expect(new ContributionRebuildState(ctx.storage).status(request().jobId, { accountId, generation: env.USAGE_ENROLLMENT_GENERATION, observedAtMs: now, active: true })).toMatchObject({ readiness: "terminal" });
   });
 });

@@ -304,4 +304,34 @@ export class ContributionProjectionState {
       return this.publication(control.appliedRevision, authority.observedAtMs);
     });
   }
+  /** Repair cutover: replace the current publication's root at its unchanged
+   * revision. This is a compare-and-swap over the source revision (both
+   * frontiers equal it), the absence of staged and pending work, and the exact
+   * current root on the control row and the non-expiring publication row. It
+   * charges nothing: the replacement root's objects were reserved and charged
+   * when they were written. Cursors pinned to the retired root read
+   * `snapshot_expired` from now on; the caller records that root and its
+   * retirement horizon so no reclamation can touch it before the horizon. */
+  cutover(expected: ContributionIndexReference | null, root: ContributionIndexReference | null,
+    authority: ContributionProjectionAuthority): ContributionProjectionPublication {
+    if ((expected !== null && !parseContributionIndexReference(expected)) || (root !== null && !parseContributionIndexReference(root)))
+      throw new ContributionFault("invalid_input");
+    return this.storage.transactionSync(() => {
+      const control = this.control(), source = this.#authority(control, authority).control();
+      if (control.source !== null || this.pending() !== null || control.appliedRevision !== control.publishedRevision
+        || control.publishedRevision !== source.revision || source.pendingOperation !== null) throw new ContributionFault("conflict");
+      const current = this.publication(control.publishedRevision, authority.observedAtMs);
+      if (current.expiresAtMs !== null || !same(current.root, expected) || !same(control.publishedRoot, expected)
+        || !same(control.appliedRoot, expected)) throw new ContributionFault("conflict");
+      if (control.publishedRevision === 0 && root !== null) throw new ContributionFault("conflict");
+      if (authority.observedAtMs > CONTRIBUTION_MAX_TIME - CONTRIBUTION_PROJECTION_RETIRE_MS) throw new ContributionFault("limit");
+      this.sql.exec("UPDATE usage_contribution_projection_control SET applied_root=?,published_root=?,updated_at_ms=? WHERE id=1",
+        encode(root), encode(root), authority.observedAtMs);
+      this.sql.exec("UPDATE usage_contribution_projection_publications SET root=?,published_at_ms=? WHERE revision=? AND expires_at_ms IS NULL",
+        encode(root), authority.observedAtMs, control.publishedRevision);
+      const result = this.publication(control.publishedRevision, authority.observedAtMs);
+      invariant(same(result.root, root) && result.expiresAtMs === null && result.publishedAtMs === authority.observedAtMs);
+      return result;
+    });
+  }
 }

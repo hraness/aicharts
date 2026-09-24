@@ -2180,4 +2180,90 @@ export class AccountEnrollment extends DurableObject<Env> {
       } finally { await this.#fenceSettle(operation.grant.accountId, operation.leaseToken, operation.committed); }
     } catch { return err("storage_unavailable"); }
   }
+
+  /** Separately reviewed repair cutover for a fully compared rebuild job. It
+   * accepts only an explicit `publish` request, shares the rebuild flight slot,
+   * performs no object I/O, and commits the receipt transition together with
+   * the projection compare-and-swap in one fenced SQL transaction. After the
+   * step both frontiers, the control roots and the non-expiring publication
+   * must equal the receipt's verified scratch root at the unchanged source
+   * revision, or the reply is refused as `conflict`. Implemented, not
+   * live-qualified: the contributions flag stays off in every deployment. */
+  async publishContributionRebuild(input: unknown): Promise<ContributionRebuildResult> {
+    const request = parseContributionRebuildRequest(input);
+    if (!request || request.action !== "publish") return { ok: false, error: "invalid_input" };
+    if (!this.#contributionsEnabled()) return { ok: false, error: "not_started" };
+    if (this.#generation() !== request.generation) return { ok: false, error: "recovery_required" };
+    if (this.#contributionRebuildFlight !== null) return { ok: false, error: "conflict" };
+    const marker = Object.freeze({}); this.#contributionRebuildFlight = marker;
+    return this.#boundedContributionRebuild(async live => {
+      try {
+        const admitted = () => { try { live(); return true; } catch { return false; } };
+        const acquired = await this.#fenceAcquire(request.accountId, request.generation, admitted);
+        if (!acquired.ok) { live(); return { ok: false, error: this.#contributionError(acquired.error) }; }
+        const observation: AdmissionObservation = { generation: request.generation, observed: Date.now(), fence: acquired.value.fence, committed: false };
+        try {
+          live();
+          const scope = { accountId: request.accountId, sessionExpiresAtMs: CONTRIBUTION_MAX_TIME };
+          const original = this.#privateDaysSnapshot(scope, observation, state => Object.freeze({ ...state.anchor }));
+          if (!original.ok) return { ok: false, error: this.#contributionError(original.error) };
+          const external = await readNamespaceAnchor(this.env.CONTROL, request.accountId);
+          live();
+          if (!external || !sameNamespaceAnchor(external, original.value)) throw new ContributionFault("recovery_required");
+          const rebuild = new ContributionRebuildState(this.ctx.storage);
+          const previous = this.#privateDaysSnapshot(scope, observation, () =>
+            this.#contributionRebuildPresent() ? rebuild.status(request.jobId) : null);
+          if (!previous.ok) return { ok: false, error: this.#contributionError(previous.error) };
+          const prior = previous.value?.receipt;
+          const retained = prior !== undefined && prior.version === request.expectedVersion + 1 && prior.action === "publish"
+            && prior.expectedVersion === request.expectedVersion;
+          const service = new AccountContributionRebuild({ STAGING: this.env.STAGING }, rebuild, (seen, action) => {
+            live();
+            return this.#transaction(seen, (state, now) => {
+              live();
+              if (!state || state.phase !== "active") throw new ContributionFault("not_enrolled");
+              if (state.accountId !== request.accountId || state.generation !== request.generation
+                || !sameNamespaceAnchor(state.anchor, original.value)) throw new ContributionFault("recovery_required");
+              if (!this.#contributionsActive() || !this.#contributionProjectionPresent() || !this.#accountWorkPresent()
+                || !this.#contributionRebuildPresent()) throw new ContributionFault("not_started");
+              const value = action(state, now);
+              live(); return { state, result: ok(value) };
+            });
+          });
+          const result = service.publish(request, observation);
+          live();
+          const last = await readNamespaceAnchor(this.env.CONTROL, request.accountId);
+          live();
+          if (!last || !sameNamespaceAnchor(last, original.value)) throw new ContributionFault("recovery_required");
+          const authority = await this.#readAuthority(request.accountId, request.generation);
+          live();
+          if (authority !== null) return { ok: false, error: this.#contributionError(authority) };
+          const current = this.#privateDaysSnapshot(scope, observation, state => {
+            if (!sameNamespaceAnchor(state.anchor, original.value)) throw new ContributionFault("recovery_required");
+            if (result.ok && !retained) {
+              const source = new ContributionState(this.ctx.storage).control(), projection = new ContributionProjectionState(this.ctx.storage);
+              const control = projection.control(), receipt = result.value;
+              if (source.accountId !== request.accountId || source.generation !== request.generation || source.phase !== "active"
+                || source.legacySeal !== null) throw new ContributionFault("recovery_required");
+              if (source.revision !== receipt.sourceRevision || source.headCount !== receipt.headCount || receipt.phase !== "published"
+                || JSON.stringify(control.publishedRoot) !== JSON.stringify(receipt.scratchRoot)
+                || JSON.stringify(control.appliedRoot) !== JSON.stringify(receipt.scratchRoot)) throw new ContributionFault("conflict");
+              if (source.pendingOperation !== null || control.source !== null || projection.pending() !== null
+                || control.appliedRevision !== receipt.sourceRevision || control.publishedRevision !== receipt.sourceRevision)
+                throw new ContributionRebuildFault("not_caught_up");
+              const publication = projection.publication(receipt.sourceRevision, observation.observed);
+              if (publication.expiresAtMs !== null || JSON.stringify(publication.root) !== JSON.stringify(receipt.scratchRoot))
+                throw new ContributionFault("conflict");
+            }
+          });
+          if (!current.ok) return { ok: false, error: isContributionRebuildError(current.error) ? current.error : "storage_unavailable" };
+          if (!result.ok) return { ok: false, error: isContributionRebuildError(result.error) ? result.error : "storage_invalid" };
+          const receipt = parseContributionRebuildReceipt(result.value);
+          return receipt && receipt.accountId === request.accountId && receipt.generation === request.generation
+            && receipt.jobId === request.jobId && receipt.action === "publish" && receipt.expectedVersion === request.expectedVersion
+            ? { ok: true, value: receipt } : { ok: false, error: "storage_invalid" };
+        } finally { await this.#fenceSettle(request.accountId, acquired.value.token, observation.committed); }
+      } finally { if (this.#contributionRebuildFlight === marker) this.#contributionRebuildFlight = null; }
+    });
+  }
 }
