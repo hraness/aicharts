@@ -63,26 +63,46 @@ jobs:
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
         with:
           bun-version: 1.3.14
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
       - name: Install frozen dependencies
         run: bun install --frozen-lockfile
       - name: Check bootstrap prerequisites
-        run: python3 --version && zstd --version && rustup --version
+        run: python3 --version && zstd --version && rustup --version && rustup show active-toolchain
+      # The adapter and conformance gates run the local Worker fixtures under
+      # workerd (vitest through scripts/usage-worker-tools.ts) and need only the
+      # installed dependencies plus the generated binding types; they run before
+      # tool provisioning so a protocol regression fails fast.
+      - name: Generate Worker binding types
+        run: bun scripts/usage-worker-tools.ts types
+      - name: Check protocol adapters
+        id: adapters
+        run: bun run usage:adapters:check
+      - name: Check implementation conformance schedules and mutant
+        if: ${{ !cancelled() }}
+        run: bun run usage:conformance:check
       - name: Record Linux disk headroom before provisioning
+        if: ${{ !cancelled() }}
         run: df -h .
       - name: Check bootstrap admission regressions
+        if: ${{ !cancelled() }}
         run: bun test scripts/assurance-tools.test.ts && python3 verify/tools/test_prepare.py
       - name: Provision checksum-pinned formal tools
         id: tools
+        if: ${{ !cancelled() }}
         run: bun scripts/assurance-tools.ts
       - name: Check model suites
         if: ${{ !cancelled() && steps.tools.outcome == 'success' }}
         run: bun run usage:formal:tla
-      - name: Check production Kani obligations and mutations
-        if: ${{ !cancelled() && steps.tools.outcome == 'success' }}
-        run: bun run usage:formal:kani
+      # Theorem receipts precede the Kani gate: every theorem replacement in
+      # verify/kani/harnesses.json must bind to a receipt for the same bytes.
       - name: Check fresh production Lean proofs and mutations
         if: ${{ !cancelled() && steps.tools.outcome == 'success' }}
         run: bun run usage:formal:theorems
+      - name: Check production Kani obligations and mutations
+        if: ${{ !cancelled() && steps.tools.outcome == 'success' }}
+        run: bun run usage:formal:kani
       - name: Record Linux tool footprint and remaining capacity
         if: always()
         run: |
@@ -94,6 +114,8 @@ jobs:
         with:
           name: formal-verification-${{ github.sha }}
           path: |
+            target/assurance/adapters/
+            target/assurance/conformance/
             target/assurance/tools/
             target/assurance/tla/
             target/assurance/kani/

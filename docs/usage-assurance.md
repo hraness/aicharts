@@ -24,19 +24,25 @@ Run `bun scripts/assurance-metric-baseline.ts` for the admitted high-cardinality
 
 `bun run usage:formal:tla` checks the fifteen historical baseline expectations
 and the repaired-model configurations with pinned TLC and Java. The repaired
-manifest now contains seventy-one cases: sixteen complete finite safety
+manifest now contains seventy-six cases: sixteen complete finite safety
 explorations, forty-two explicit success, refusal and recovery witnesses, and
-thirteen guard-removal counterexamples. The eight M11 contribution-rebuild cases
-have individual receipts, including complete single-job and sequential-job
-graphs of 258,698 and 221,596 distinct states. Both aggregate model suites pass
-with the current model and runner inputs. The baseline receipt is
-`target/assurance/tla/run-baseline-final-escalated/run-lz8Ip3/receipt.json` and
-the repaired receipt is
-`target/assurance/tla/run-m11-official-final-escalated/run-XWgJ9I/receipt.json`;
-together they qualify all 86 cases. The runner admits only the expected
-invariants, state counts and complete structured output. A witness is reachability
-evidence; no temporal liveness theorem follows from it. Conditional progress and
-trusted abstractions are recorded in the [action map](../verify/tla/repaired-action-map.md).
+eighteen guard-removal counterexamples, so every repaired model M1–M11 has at
+least one deliberately broken guard that must violate its safety invariant. The
+eight M11 contribution-rebuild cases have individual receipts, including complete
+single-job and sequential-job graphs of 258,698 and 221,596 distinct states.
+Every case runs under the required `development` bounds profile (one worker,
+256 MiB heap, 60-second deadline, 300,000 distinct states); the optional
+`nightly` profile (`bun scripts/assurance-tla.ts --profile nightly --suite nightly`)
+widens the M1 and M11 domains through numeric `CONSTANT` parameters under four
+workers, a 2 GiB heap, a 600-second deadline and 3,000,000 distinct states, and
+never substitutes for the development suites. Each run writes its own receipt
+under `target/assurance/tla/`, recording the profile, the captured model and
+configuration bytes and the complete state counts; the required Formal
+verification job is the standing execution evidence. The runner admits only the
+expected invariants, state counts and complete structured output. A witness is
+reachability evidence; no temporal liveness theorem follows from it. Conditional
+progress and trusted abstractions are recorded in the
+[action map](../verify/tla/repaired-action-map.md).
 The [account-work model](../verify/tla/account-work-action-map.md) separately covers
 independent consent/projection progress, held calls, watchdogs, late settlement,
 restart and explicit resume. Its bounded safety and reachability results do not
@@ -45,16 +51,24 @@ The [native-flight model](../verify/tla/native-flight-action-map.md) checks reta
 uploads, durable cancellation, lost replies, restart and stale-reply isolation.
 Its two-device finite models abstract bytes and durable publication; syscall,
 cryptographic and transport behavior require their own implementation evidence.
+The [contribution-rebuild model](../verify/tla/contribution-rebuild-action-map.md)
+maps the M11 diagnostic rebuild job to the controller's reservation, provider,
+commit, comparison, abort and replay boundaries.
 
 `bun run usage:conformance:check` executes generated commands against actual
-Worker, SQLite ledger and browser-authority code. It retains thirty-nine traces
+Worker, SQLite ledger and browser-authority code. It retains forty-two traces
 across three fixed seeds per group, compares each observed transition, and
-requires the declared action/outcome coverage. Both the positive control and a
-production-only restore-guard mutant run isolated source snapshots. The unchanged
-adapter must catch the mutant in all three schedules. Compiler/runtime failures,
-missing tests, timeouts and truncated output do not count as counterexamples.
-These bounded schedules connect selected model abstractions to implementation;
-they are not an exhaustive refinement proof.
+requires the declared action/outcome coverage. The Worker suite now includes an
+M11 schedule that drives a real diagnostic rebuild: repeated begin, head and
+comparison steps must return byte-identical receipts with no second charge and
+no new object, an eviction between retries must resume the retained receipt, and
+older, future and differently anchored requests must conflict. Both the positive
+control and a production-only restore-guard mutant run isolated source snapshots.
+The unchanged adapter must catch the mutant in all three schedules. The runner
+admits repaired model names M1–M11 only. Compiler/runtime failures, missing
+tests, timeouts and truncated output do not count as counterexamples. These
+bounded schedules connect selected model abstractions to implementation; they
+are not an exhaustive refinement proof.
 
 ## Production arithmetic proofs
 
@@ -97,9 +111,12 @@ step from executing or accepting a proof.
 Provision the pinned tools with `bun scripts/assurance-tools.ts`; use
 `--verify --offline` to inspect an existing installation. The
 [installation contract](../verify/tools/README.md) records platform, archive,
-Rust component and Lean dependency admission. CI requires the model, Kani and
-Lean jobs alongside the existing application and companion checks. A successful
-installation receipt is not a successful proof receipt.
+Rust component and Lean dependency admission. The required Formal verification
+job runs the adapter and conformance gates, then the model suites, the fresh
+Lean proofs and the Kani gate, alongside the existing application and companion
+checks; theorem receipts precede Kani because every theorem replacement must
+bind to a receipt for the same source bytes. A successful installation receipt
+is not a successful proof receipt.
 
 ## Canonical account transition
 
