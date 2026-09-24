@@ -48,8 +48,8 @@
       "subsets": {
         "reasoning": "output-inclusive"
       },
-      "unknown": "Historical session exports have unknown token scope, lineage, cache-write TTL and streaming timing. Multiple unknown or overlapping executions cannot produce additive token totals. Native session projection is explicitly revision zero.",
-      "coverage": "Explicit per-kind unsupported/partial/complete source evidence plus independent metric eligibility; local numeric facts only."
+      "unknown": "Historical session exports have unknown token scope, lineage, cache-write TTL and streaming timing. Multiple unknown or overlapping executions cannot produce additive token totals. Native projection is revision zero unless the exporter runs with a private state directory, where a durable per-source-epoch ledger assigns corrective revisions and retractions inside one generation only.",
+      "coverage": "Explicit per-kind unsupported/partial/complete source evidence measured by the producer (transcript request/tool/context fields counted present versus unmeasured) plus independent metric eligibility; local numeric facts only."
     }
   ],
   "conversionRules": [
