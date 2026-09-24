@@ -55,9 +55,14 @@ import {
   RESTORE_FENCE_GENESIS_EPOCH, RESTORE_FENCE_LEASE_TTL_MS, restoreFenceName,
   type FenceObservation,
 } from "./restore-fence";
+import {
+  LIFECYCLE_CLIENTS, LIFECYCLE_ERASE_STEPS, LIFECYCLE_MAX_TRANSFERS, parseReclamationLedger,
+  type LifecycleClient, type LifecycleTransferPhase, type ReclamationLedgerV1,
+} from "../../../lib/usage/lifecycle-contract";
 
 export type EnrollmentError = "invalid_input" | "unavailable" | "unauthorized" | "not_reserved" | "not_enrolled"
-  | StatsError | ContributionError | ContributionQueryError | ContributionRebuildError | "expired" | "conflict" | "recovery_required" | "revoked" | "storage_invalid" | "storage_unavailable" | "clock_regressed" | "limit" | "handle_unavailable" | "publishing_full";
+  | StatsError | ContributionError | ContributionQueryError | ContributionRebuildError | "expired" | "conflict" | "recovery_required" | "revoked" | "storage_invalid" | "storage_unavailable" | "clock_regressed" | "limit" | "handle_unavailable" | "publishing_full"
+  | "account_erased" | "device_revoked";
 export type EnrollmentResult<T> = { ok: true; value: T } | { ok: false; error: EnrollmentError };
 export type EnrollmentReceipt = Readonly<{
   schemaVersion: 1; accountId: string; intentId: string; reservationId: string;
@@ -81,6 +86,22 @@ type GenesisCompletion = { mode: "original" | "fresh-recovery"; intentId: string
 type LeaderboardState = {
   consent: boolean; consentedAtMs: number | null; publicHandle: string | null; changedAtMs: number;
 };
+/** Phase 10 lifecycle records, stored additively inside the enrollment payload
+ * so no new table or object surface exists. `erasure` is the durable erase
+ * intent: `token` is the confirmation secret, `step` the count of durably
+ * completed erase steps (see `LifecycleErasureViewV1`), `ledger` the
+ * reclamation record written at step 4. Transfers are a bounded history of
+ * writer transfers between this account's devices. */
+type LifecycleErasure = {
+  token: string; requestedAtMs: number; requestExpiresAtMs: number; confirmedAtMs: number | null; step: number;
+  completedAtMs: number | null; sealed: boolean; ledger: ReclamationLedgerV1 | null;
+};
+type LifecycleTransfer = {
+  transferId: string; client: LifecycleClient; fromDeviceId: string; toDeviceId: string; phase: LifecycleTransferPhase;
+  requestedAtMs: number; grantedAtMs: number | null; completedAtMs: number | null; expiresAtMs: number;
+  expectedRevision: number | null; ownershipRevision: number | null; refusal: string | null;
+};
+type LifecycleState = { erasure: LifecycleErasure | null; transfers: LifecycleTransfer[] };
 type State = {
   accountId: string; generation: string; observedAtMs: number; phase: "pending" | "active";
   // The restore epoch this state last committed under. `null` marks a
@@ -89,6 +110,9 @@ type State = {
   // stale (restored) and must refuse recovery_required.
   fenceEpoch: number | null; anchor: NamespaceAnchor; devices: Device[]; genesisCompletion: GenesisCompletion | null;
   leaderboard: LeaderboardState;
+  // Absent on every payload written before Phase 10; present only once a
+  // lifecycle operation committed. Absence is exactly "no lifecycle record".
+  lifecycle?: LifecycleState;
 };
 // `fence`/`leaseToken`/`committed` are the request-scoped restore-fence
 // context: `fence` is the authoritative epoch/established the lease pinned,
@@ -123,12 +147,14 @@ function sameGrant(left: EnrollmentReservation, right: EnrollmentReservation): b
 // leaderboard=true admits only the current schema-5 shape. These flags exist
 // solely so additive migrations can load older rows.
 function validState(value: unknown, legacy = false, fence = true, leaderboard = true): value is State {
-  const state = enrollmentSnapshot(value, ["accountId", "generation", "observedAtMs", "phase", ...(fence ? ["fenceEpoch"] : []), "anchor", "devices", ...(legacy ? [] : ["genesisCompletion"]), ...(leaderboard ? ["leaderboard"] : [])]);
+  const withLifecycle = leaderboard && value !== null && typeof value === "object" && Object.hasOwn(value, "lifecycle");
+  const state = enrollmentSnapshot(value, ["accountId", "generation", "observedAtMs", "phase", ...(fence ? ["fenceEpoch"] : []), "anchor", "devices", ...(legacy ? [] : ["genesisCompletion"]), ...(leaderboard ? ["leaderboard"] : []), ...(withLifecycle ? ["lifecycle"] : [])]);
   if (state === null || !enrollmentAccount(state.accountId) || !enrollmentHex(state.generation) || !enrollmentTime(state.observedAtMs)
     || (state.phase !== "pending" && state.phase !== "active") || !Array.isArray(state.devices)
     || state.devices.length > MAX_ENROLLED_DEVICES || (state.phase === "pending") !== (state.devices.length === 0)) return false;
   if (fence && !(state.fenceEpoch === null || (typeof state.fenceEpoch === "number" && Number.isSafeInteger(state.fenceEpoch) && state.fenceEpoch >= 0))) return false;
   if (leaderboard && !validLeaderboard(state.leaderboard, state.observedAtMs)) return false;
+  if (withLifecycle && !validLifecycle(state.lifecycle, state)) return false;
   const anchor = enrollmentSnapshot(state.anchor, ["accountId", "namespaceKey", "intentId", "reservationId", "generation", "createdAtMs"]);
   if (anchor === null || anchor.accountId !== state.accountId || anchor.generation !== state.generation
     || !enrollmentHex(anchor.namespaceKey) || !enrollmentHex(anchor.intentId) || !enrollmentHex(anchor.reservationId)
@@ -177,6 +203,74 @@ function consentViewOf(leaderboard: LeaderboardState): LeaderboardConsentViewV1 
   return Object.freeze({ schemaVersion: 1, consent: leaderboard.consent,
     consentedAtMs: leaderboard.consentedAtMs, publicHandle: leaderboard.publicHandle });
 }
+
+/** Lifecycle invariants. Erasure: `step` 0 exactly while unconfirmed; a
+ * confirmed erasure has withdrawn source consent; from step 3 every device is
+ * revoked; `completedAtMs` exists exactly from step 5; `sealed` exactly at
+ * step 6. Transfers: bounded, unique ids, devices of this account, ordered
+ * times, at most one live transfer per client. */
+function validLifecycle(value: unknown, owner: Record<string, unknown>): value is LifecycleState {
+  const lifecycle = enrollmentSnapshot(value, ["erasure", "transfers"]);
+  if (lifecycle === null || !Array.isArray(lifecycle.transfers) || lifecycle.transfers.length > LIFECYCLE_MAX_TRANSFERS) return false;
+  const observedAtMs = owner.observedAtMs as number;
+  const devices = Array.isArray(owner.devices) ? owner.devices as unknown[] : [];
+  const deviceOf = (id: unknown): Record<string, unknown> | null => {
+    if (!enrollmentHex(id)) return null;
+    const found = devices.find(raw => enrollmentSnapshot(raw, ["reservation", "deviceId", "enrolledAtMs", "revokedAtMs"])?.deviceId === id);
+    return found === undefined ? null : found as Record<string, unknown>;
+  };
+  if (lifecycle.erasure !== null) {
+    const erasure = enrollmentSnapshot(lifecycle.erasure, ["token", "requestedAtMs", "requestExpiresAtMs", "confirmedAtMs", "step", "completedAtMs", "sealed", "ledger"]);
+    if (erasure === null || !enrollmentHex(erasure.token) || !enrollmentTime(erasure.requestedAtMs) || erasure.requestedAtMs > observedAtMs
+      || !enrollmentTime(erasure.requestExpiresAtMs) || erasure.requestExpiresAtMs <= erasure.requestedAtMs
+      || typeof erasure.step !== "number" || !Number.isInteger(erasure.step) || erasure.step < 0 || erasure.step > LIFECYCLE_ERASE_STEPS
+      || typeof erasure.sealed !== "boolean") return false;
+    if (erasure.confirmedAtMs === null) {
+      if (erasure.step !== 0 || erasure.completedAtMs !== null || erasure.sealed || erasure.ledger !== null) return false;
+    } else {
+      if (!enrollmentTime(erasure.confirmedAtMs) || erasure.confirmedAtMs < erasure.requestedAtMs || erasure.confirmedAtMs > observedAtMs || erasure.step < 1) return false;
+      const leaderboard = enrollmentSnapshot(owner.leaderboard, ["consent", "consentedAtMs", "publicHandle", "changedAtMs"]);
+      if (leaderboard === null || leaderboard.consent !== false) return false;
+      if (erasure.step >= 3 && devices.some(raw => (raw as Record<string, unknown>).revokedAtMs === null)) return false;
+      if ((erasure.step >= 4) !== (erasure.ledger !== null)) return false;
+      if (erasure.ledger !== null) {
+        const ledger = parseReclamationLedger(erasure.ledger);
+        if (ledger === null || ledger.accountId !== owner.accountId || ledger.generation !== owner.generation || ledger.recordedAtMs > observedAtMs) return false;
+      }
+      if ((erasure.step >= 5) !== (erasure.completedAtMs !== null)) return false;
+      if (erasure.completedAtMs !== null && (!enrollmentTime(erasure.completedAtMs) || erasure.completedAtMs < erasure.confirmedAtMs || erasure.completedAtMs > observedAtMs)) return false;
+      if ((erasure.step === LIFECYCLE_ERASE_STEPS) !== erasure.sealed) return false;
+    }
+  }
+  const ids = new Set<string>(), live = new Set<string>();
+  for (const raw of lifecycle.transfers as unknown[]) {
+    const transfer = enrollmentSnapshot(raw, ["transferId", "client", "fromDeviceId", "toDeviceId", "phase", "requestedAtMs", "grantedAtMs",
+      "completedAtMs", "expiresAtMs", "expectedRevision", "ownershipRevision", "refusal"]);
+    if (transfer === null || !enrollmentHex(transfer.transferId) || ids.has(transfer.transferId)
+      || !(LIFECYCLE_CLIENTS as readonly unknown[]).includes(transfer.client) || deviceOf(transfer.fromDeviceId) === null
+      || deviceOf(transfer.toDeviceId) === null || transfer.fromDeviceId === transfer.toDeviceId
+      || (transfer.phase !== "requested" && transfer.phase !== "granted" && transfer.phase !== "completed" && transfer.phase !== "refused")
+      || !enrollmentTime(transfer.requestedAtMs) || transfer.requestedAtMs > observedAtMs
+      || !enrollmentTime(transfer.expiresAtMs) || transfer.expiresAtMs <= transfer.requestedAtMs
+      || !(transfer.grantedAtMs === null || (enrollmentTime(transfer.grantedAtMs) && transfer.grantedAtMs >= transfer.requestedAtMs && transfer.grantedAtMs <= observedAtMs))
+      || !(transfer.completedAtMs === null || (enrollmentTime(transfer.completedAtMs) && transfer.grantedAtMs !== null && transfer.completedAtMs >= (transfer.grantedAtMs as number) && transfer.completedAtMs <= observedAtMs))
+      || !(transfer.expectedRevision === null || (typeof transfer.expectedRevision === "number" && Number.isSafeInteger(transfer.expectedRevision) && transfer.expectedRevision >= 0))
+      || !(transfer.ownershipRevision === null || (typeof transfer.ownershipRevision === "number" && Number.isSafeInteger(transfer.ownershipRevision) && transfer.ownershipRevision >= 0))
+      || !(transfer.refusal === null || (typeof transfer.refusal === "string" && transfer.refusal.length > 0 && transfer.refusal.length <= 64))) return false;
+    if ((transfer.phase === "requested") !== (transfer.grantedAtMs === null && transfer.refusal === null)) return false;
+    if ((transfer.phase === "completed") !== (transfer.completedAtMs !== null)) return false;
+    if ((transfer.phase === "refused") !== (transfer.refusal !== null)) return false;
+    if (transfer.phase === "granted" && (transfer.grantedAtMs === null || transfer.expectedRevision === null)) return false;
+    if (transfer.phase === "completed" && transfer.grantedAtMs === null) return false;
+    if (transfer.phase === "requested" || transfer.phase === "granted") {
+      if (live.has(transfer.client as string)) return false;
+      live.add(transfer.client as string);
+    }
+    ids.add(transfer.transferId);
+  }
+  return true;
+}
+const erasureConfirmed = (state: State): boolean => state.lifecycle?.erasure?.confirmedAtMs != null;
 
 function supersededGenesis(state: State, grant: EnrollmentReservation): boolean {
   return state.genesisCompletion?.mode === "fresh-recovery" && state.anchor.intentId === grant.intentId;
@@ -243,11 +337,11 @@ export class AccountEnrollment extends DurableObject<Env> {
     // owns initialization, upgrades and checkpoint writes.
   }
 
-  #prepareFenced(accountId: string, generation: string, fence: FenceObservation): EnrollmentError | null {
+  #prepareFenced(accountId: string, generation: string, fence: FenceObservation, allowErased = false): EnrollmentError | null {
     try {
       this.ctx.storage.transactionSync(() => {
-        const before = this.#fencePreflight(accountId, generation);
-        if (!before.ok) throw new AdmissionFault(before.error === "unauthorized" ? "unauthorized" : "recovery_required");
+        const before = this.#fencePreflight(accountId, generation, allowErased);
+        if (!before.ok) throw new AdmissionFault(before.error === "unauthorized" ? "unauthorized" : before.error === "account_erased" ? "account_erased" : "recovery_required");
         if (before.value.epoch !== fence.epoch || (!before.value.established && fence.established)) throw new AdmissionFault("recovery_required");
         if (this.#objects().length === 0) {
           this.ctx.storage.sql.exec(SCHEMA_SQL);
@@ -267,7 +361,8 @@ export class AccountEnrollment extends DurableObject<Env> {
         this.#migrateFence();
         this.#migrateLeaderboard();
         new AdmissionState(this.ctx.storage.sql).auditControl(this.#stored(5).state);
-        if (!this.#statsPresent() && this.#statsEnabled()) {
+        // An erased account never regrows the optional stats tables it scrubbed.
+        if (!this.#statsPresent() && this.#statsEnabled() && !this.#erasureConfirmedStored()) {
           new StatsState(this.ctx.storage.sql).initialize();
           this.ctx.storage.sql.exec("UPDATE account_enrollment SET schema_version = 8 WHERE id = 1");
         }
@@ -296,6 +391,11 @@ export class AccountEnrollment extends DurableObject<Env> {
       });
       return null;
     } catch (error) { return error instanceof AdmissionFault || error instanceof ContributionFault || error instanceof ContributionRebuildFault ? error.code : "storage_invalid"; }
+  }
+  /** True once the stored payload carries a confirmed erasure. Reads the
+   * current schema-5+ row only; legacy rows cannot carry a lifecycle record. */
+  #erasureConfirmedStored(): boolean {
+    try { const state = this.#stored(5).state; return state !== null && erasureConfirmed(state); } catch { return false; }
   }
 
   #objects(): Record<string, SqlStorageValue>[] {
@@ -478,7 +578,7 @@ export class AccountEnrollment extends DurableObject<Env> {
   }
   /** Pure preflight admits existing legacy shapes only for a fenced upgrade.
    * It never converts absent or malformed authority into a genesis guess. */
-  #fencePreflight(accountId: string, generation: string): EnrollmentResult<{ epoch: number; established: boolean }> {
+  #fencePreflight(accountId: string, generation: string, allowErased = false): EnrollmentResult<{ epoch: number; established: boolean }> {
     try {
       if (!this.#healthy || this.#generation() !== generation) return err("recovery_required");
       if (!this.ctx.id.equals(this.env.ACCOUNT_ENROLLMENTS.idFromName(enrollmentAccountName(accountId)))) return err("unauthorized");
@@ -496,6 +596,9 @@ export class AccountEnrollment extends DurableObject<Env> {
       if (!validState(state, row.schema_version === 1, row.schema_version >= 4, row.schema_version >= 5)) return err("storage_invalid");
       if (state.accountId !== accountId) return err("unauthorized");
       if (state.generation !== generation) return err("recovery_required");
+      // The durable erasure tombstone: every ordinary path refuses a confirmed
+      // erasure. Only lifecycle status/export and erase resumption pass it.
+      if (!allowErased && erasureConfirmed(state)) return err("account_erased");
       return ok({ epoch: state.fenceEpoch ?? RESTORE_FENCE_GENESIS_EPOCH, established: true });
     } catch { return err("storage_invalid"); }
   }
@@ -568,11 +671,11 @@ export class AccountEnrollment extends DurableObject<Env> {
   /** Acquire a provider-operation lease from the external restore fence. The
    * fence is a separate store; the returned epoch/established are authoritative
    * and cross-checked against durable state inside the transaction. */
-  async #fenceAcquire(accountId: string, generation: string, admitted: () => boolean = () => true): Promise<EnrollmentResult<{ fence: FenceObservation; token: string }>> {
+  async #fenceAcquire(accountId: string, generation: string, admitted: () => boolean = () => true, allowErased = false): Promise<EnrollmentResult<{ fence: FenceObservation; token: string }>> {
     if (!admitted()) return err("storage_unavailable");
     const workerVersion = this.#workerVersion();
     if (workerVersion === null) return err("recovery_required");
-    const preflight = this.#fencePreflight(accountId, generation);
+    const preflight = this.#fencePreflight(accountId, generation, allowErased);
     if (!preflight.ok) return preflight;
     const stub = this.env.RESTORE_FENCES.getByName(restoreFenceName(accountId));
     // This ID belongs to one execution, not the retriable upload operation.
@@ -597,7 +700,7 @@ export class AccountEnrollment extends DurableObject<Env> {
             await this.#fenceSettle(accountId, input.attemptId, false);
             return err("storage_unavailable");
           }
-          const prepared = this.#prepareFenced(accountId, generation, fence);
+          const prepared = this.#prepareFenced(accountId, generation, fence, allowErased);
           if (prepared !== null) {
             await this.#fenceSettle(accountId, input.attemptId, false);
             return err(prepared);
@@ -607,7 +710,7 @@ export class AccountEnrollment extends DurableObject<Env> {
         const rejected = rpcSnapshot(raw, ["ok", "error"]);
         if (rejected?.ok === false) {
           const code = rejected.error;
-          failure = code === "recovery_required" || code === "clock_regressed" || code === "unauthorized" || code === "limit" ? code : "storage_invalid";
+          failure = code === "recovery_required" || code === "clock_regressed" || code === "unauthorized" || code === "limit" || code === "account_erased" ? code : "storage_invalid";
           if (!uncertain) return err(failure);
           break;
         }
@@ -1343,8 +1446,8 @@ export class AccountEnrollment extends DurableObject<Env> {
   }
   /** Pure external authority check. A read linearizes no later than its final
    * successful check; a close or epoch change during its awaits refuses it. */
-  async #readAuthority(accountId: string, generation: string): Promise<EnrollmentError | null> {
-    const local = this.#fencePreflight(accountId, generation);
+  async #readAuthority(accountId: string, generation: string, allowErased = false): Promise<EnrollmentError | null> {
+    const local = this.#fencePreflight(accountId, generation, allowErased);
     if (!local.ok) return local.error;
     let raw: unknown;
     try {
@@ -1356,20 +1459,23 @@ export class AccountEnrollment extends DurableObject<Env> {
       if (view === null || !statsInteger(view.inFlight, 0, 64) || !enrollmentTime(view.observedAtMs)) return "recovery_required";
       if (view.record === null) return local.value.established ? "recovery_required" : null;
       const record = enrollmentSnapshot(view.record, ["schemaVersion", "accountId", "generation", "epoch", "workerVersion", "phase", "established", "updatedAtMs"]);
+      // A sealed external tombstone refuses every ordinary read even when the
+      // local payload was restored from a pre-erasure snapshot.
+      if (record?.phase === "erased" && !allowErased) return "account_erased";
       return record?.schemaVersion === 1 && record.accountId === accountId && record.generation === generation
-        && record.epoch === local.value.epoch && record.workerVersion === this.#workerVersion() && record.phase === "open"
+        && record.epoch === local.value.epoch && record.workerVersion === this.#workerVersion() && (record.phase === "open" || record.phase === "erased")
         && enrollmentTime(record.updatedAtMs) && record.updatedAtMs <= view.observedAtMs
         && (record.established === false || (record.established === true && local.value.established)) ? null : "recovery_required";
     } catch { return "storage_unavailable"; }
     finally { disposeReply(raw); }
   }
-  async #readFenced<T>(accountId: string, read: () => Promise<EnrollmentResult<T>>): Promise<EnrollmentResult<T>> {
+  async #readFenced<T>(accountId: string, read: () => Promise<EnrollmentResult<T>>, allowErased = false): Promise<EnrollmentResult<T>> {
     const generation = this.#generation();
     if (generation === null) return err("recovery_required");
-    const before = await this.#readAuthority(accountId, generation);
+    const before = await this.#readAuthority(accountId, generation, allowErased);
     if (before !== null) return err(before);
     const result = await read();
-    const after = await this.#readAuthority(accountId, generation);
+    const after = await this.#readAuthority(accountId, generation, allowErased);
     return after === null ? result : err(after);
   }
   async admitStatsSnapshot(input: unknown): Promise<StatsResult<StatsReceipt>> {
@@ -1859,7 +1965,9 @@ export class AccountEnrollment extends DurableObject<Env> {
   async readLeaderboardDelivery(input: unknown): Promise<EnrollmentResult<{ schemaVersion: 1; accountId: string; eventAtMs: number; projection: LeaderboardProjectionV1 }>> {
     const request = enrollmentSnapshot(input, ["schemaVersion", "accountId"]);
     if (request?.schemaVersion !== 1 || !enrollmentAccount(request.accountId)) return err("invalid_input");
-    return this.#readFenced(request.accountId, () => this.#readLeaderboardDelivery(input));
+    // The index may read an erasing/erased source: it reads back as withdrawn
+    // (M6 Erase), which is how the index removes membership and never revives it.
+    return this.#readFenced(request.accountId, () => this.#readLeaderboardDelivery(input), true);
   }
   async #readLeaderboardDelivery(input: unknown): Promise<EnrollmentResult<{ schemaVersion: 1; accountId: string; eventAtMs: number; projection: LeaderboardProjectionV1 }>> {
     try {
@@ -1883,7 +1991,7 @@ export class AccountEnrollment extends DurableObject<Env> {
         if (external === null || !sameNamespaceAnchor(external, original.value) || !sameNamespaceAnchor(state.anchor, original.value)) throw new AdmissionFault("recovery_required");
         const projection = (): LeaderboardProjectionV1 => {
         const leaderboard = state.leaderboard;
-        if (leaderboard.consent !== true) {
+        if (leaderboard.consent !== true || erasureConfirmed(state)) {
           return Object.freeze({ schemaVersion: 1 as const, accountId: state.accountId, consent: false as const });
         }
         if (control.quarantined) throw new AdmissionFault("recovery_required");
