@@ -1,9 +1,10 @@
 # Production kernels and finite-history laws
 
 `bun run usage:formal:theorems` freshly extracts selected production Rust into
-Lean, checks the maintained proofs, and then runs four isolated production
-mutations. It also checks nine mathematical laws over arbitrary finite lists.
-It never imports a checked-in handwritten replacement for the Rust functions.
+Lean, checks the maintained proofs, and then runs the isolated negative
+controls listed in `mutations.json`: four production mutations of the extracted
+Rust bodies and one mutation of the separate mathematical laws. It never imports
+a checked-in handwritten replacement for the Rust functions.
 
 The production roots are `checked_add_bounded`, `checked_replace`,
 `price_microusd` and `merge_owner`. Extraction includes their actual dependencies
@@ -27,7 +28,10 @@ Three unit-rate witnesses cover the maximum admitted result, offset overflow
 and the first result beyond the profile limit. A five-bucket witness uses five
 distinct non-unit rates and returns exactly 55 micro-USD. Four production mutants
 must fail their named unchanged proofs: wrapping addition, owner replacement,
-the wrong half-up offset and erasing non-unit rate products.
+the wrong half-up offset and erasing non-unit rate products. A fifth control
+mutates the `UsageLaws` bounded-fold specification so that a law-file edit
+which silently weakens a theorem is also caught. The runner derives every
+negative control from the manifest; an unlisted or unmatched mutation refuses.
 
 `UsageLaws.lean` is a separate mathematical specification. Its nine theorems
 cover evidence counts, known zero versus missing, append aggregation,
@@ -75,7 +79,12 @@ bodies. The first maintained positive run took 1.317 seconds for extraction,
 0.536 seconds for translation and 16.234 seconds for Lean checking on this host;
 the separate list laws took 0.643 seconds. These are observed pilot timings,
 not a performance service level. The Verus pilot reported six verified and
-zero errors. Linux execution remains a separate qualification requirement.
+zero errors. Linux execution is recorded: the required Formal verification job
+of PR #422 (GitHub Actions run 36055796464, ubuntu-24.04) passed
+`usage:formal:theorems`, and `toolchain.json` names that run as the Linux
+qualification; each receipt records its own platform and is the only evidence
+for that run. The Verus snapshot in `pilot/verus.json` is a historical record
+with no runner, gate or CI job.
 
 The tool comparison also found real limits. Whole-crate extraction initially
 rejected an early return in `TokenPartition::to_wire`; selecting inherent
@@ -87,8 +96,9 @@ Pricing extraction and the general five-bucket proof now pass the maintained
 macOS gate. The full-u128 unit-rate Kani query hit its bounded solver deadlines;
 it transferred to the required Lean proof only after that proof, its witnesses
 and the offset mutation passed. `verify/kani/harnesses.json` records the explicit
-replacement; the seventeen remaining Kani harnesses retain all forty-four
-required covers.
+replacement, and the Kani gate refuses unless a theorem receipt for the same
+kernel bytes admits that replacement; the twenty Kani harnesses retain all
+fifty-three required covers.
 
 General arbitrary-rate pricing is covered by the extracted arithmetic proof.
 Arbitrary-denominator rounding, decimal tariff parsing, tariff validity and
