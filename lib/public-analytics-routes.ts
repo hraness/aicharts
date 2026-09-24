@@ -5,6 +5,7 @@
  * every other route-shaped value collapses to the shared `other` bucket.
  */
 export const PUBLIC_BLOG_SLUGS = [
+  "gpt-6-sol-coding-agent-index",
   "grok-4-7-coding-agent-index",
   "mimo-v2-6-pro-cost-frontier",
   "harness-design-coding-agents",

@@ -51,6 +51,67 @@ export const HOME_EDITORIAL_SLUGS = [
 ] as const satisfies readonly BlogSlug[];
 
 export const BLOG_ARTICLE_ADMISSIONS = {
+  "gpt-6-sol-coding-agent-index": {
+    canonicalOwner: blogArticlePath("gpt-6-sol-coding-agent-index"),
+    decision: "keep",
+    evidenceOwner: EVIDENCE_OWNER,
+    evidenceType: "checked-dataset-analysis",
+    harmIfWrong:
+      "A coding-agent AA Index and an Intelligence Index score for the same model at the same effort setting could be quoted as one ranking, the $2.99 mean harness cost per task could be compared with the $1.06 Intelligence Index cost per task or with a list price, a launch-day frontier claim could be repeated after cheaper higher-scoring rows entered the chart, a same-harness generation step could be read as a like-for-like rerun, or OpenAI’s vendor-run figures could be cited as independent evidence.",
+    hostFit:
+      "AI Charts stores GPT-6 Sol in both checked snapshots, the coding-agent chart with its Codex row and GPT-5.6 Sol predecessor and the Intelligence Index chart with one row per effort level, so it can derive rank, frontier position, component split, generation step, neighbors, and the effort ladder from the same data the charts plot without adding a data surface.",
+    humanReviewedOn: null,
+    lifecycleState: "indexable",
+    nearestUrls: [
+      {
+        distinction:
+          "The Grok 4.7 page places Grok Build · Grok 4.7 and names GPT-6 Sol only as a cheaper row that scores higher; this page makes GPT-6 Sol the subject, adds its Codex predecessor, its Intelligence Index effort ladder, and OpenAI’s price change, and never places Grok.",
+        url: blogArticlePath("grok-4-7-coding-agent-index"),
+      },
+      {
+        distinction:
+          "The AA Index page derives the whole coding-agent cost frontier and the AA Index per dollar view; this page reads one new row against that frontier, splits its index into components, and compares it with its predecessor in the same harness.",
+        url: blogArticlePath("aa-index-cost-coding-agents"),
+      },
+      {
+        distinction:
+          "The small-models page gives a decision rule for adopting a cheaper model on a product acceptance set and quotes a GPT-5.6 Luna cost anecdote; this page reports where a specific new model sits on two measured charts and what its scores and costs measure.",
+        url: blogArticlePath("small-models-have-arrived"),
+      },
+      {
+        distinction:
+          "The MiMo page places one open-weights model on the Intelligence Index cost frontier and tests an investor’s claims; this page places one proprietary model on both charts and explains why its two costs are not one unit.",
+        url: blogArticlePath("mimo-v2-6-pro-cost-frontier"),
+      },
+    ],
+    originalContribution:
+      "A snapshot-derived statement of Codex · GPT-6 Sol (max)’s AA Index rank, frontier position, cheapest higher-scoring row, and one-point neighbors; a same-harness GPT-5.6 Sol to GPT-6 Sol table showing the index gain came from Terminal-Bench 4 and SWE-Atlas-QnA while DeepSWE v1.1 fell, at half the cost per task with tokens per task nearly unchanged; a component table showing DeepSWE v1.1 and Terminal-Bench 4 near the top while SWE-Atlas-QnA sits mid-table; the Intelligence Index rank, frontier position, one-point neighbors, and a six-row effort ladder stating what each step buys; and an explicit separation of the two per-task costs behind one list price.",
+    overlapDecision:
+      "Keep separately: the Grok 4.7 page names GPT-6 Sol in one dominator sentence and shares the two-chart frame, but no current route places GPT-6 Sol, compares it with GPT-5.6 Sol in Codex, or tabulates its effort ladder, and fewer than a third of the headings or claims overlap the Grok, AA Index, small-models, or MiMo pages.",
+    primaryEvidence:
+      "The checked coding-agent snapshot supplies every AA Index, component score, cost, token, and duration value and the update log; the checked Intelligence Index snapshot supplies every Intelligence Index score, cost per task, and output token value for each effort level; Artificial Analysis’s launch note and model page supply the quoted launch-day claims, prices, speed, and context window; OpenAI’s launch page supplies the release date, availability, price change, and vendor-run figures.",
+    primarySourceIds: [
+      "artificialAnalysisCodingAgents",
+      "artificialAnalysisIntelligenceIndex",
+      "artificialAnalysisGpt6Sol",
+      "artificialAnalysisGpt6SolModel",
+      "openAiGpt6SolLuna",
+    ],
+    readerJob:
+      "Understand what Codex · GPT-6 Sol’s AA Index on the coding-agent chart measures, where the row lands against cheaper and higher-scoring configurations, how it moved from GPT-5.6 Sol in the same harness, how the Intelligence Index GPT-6 Sol (max) row and its lower effort levels differ from it, and why the two costs per task are not one unit.",
+    reassessOn: "2026-10-29",
+    reviewedBy: REVIEWED_BY,
+    reviewedOn: "2026-09-24",
+    scores: {
+      factualConfidence: 2,
+      hostFit: 2,
+      maintenanceValue: 2,
+      originalEvidence: 2,
+      readerUtility: 2,
+      voiceIntegrity: 2,
+    },
+    sourceCheckedOn: "2026-09-24",
+  },
   "grok-4-7-coding-agent-index": {
     canonicalOwner: blogArticlePath("grok-4-7-coding-agent-index"),
     decision: "keep",
