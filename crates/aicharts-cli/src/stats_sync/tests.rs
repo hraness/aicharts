@@ -391,7 +391,7 @@ fn resume_never_accepts_source_flags_and_live_requires_one_explicit_client() {
 }
 
 #[test]
-fn incremental_collection_requires_an_explicit_fresh_codex_profile() {
+fn incremental_collection_requires_an_explicit_checkpoint_client_profile() {
     let args = |items: &[&str]| items.iter().map(|s| (*s).to_owned()).collect::<Vec<_>>();
     let base = [
         "stats-sync",
@@ -409,11 +409,18 @@ fn incremental_collection_requires_an_explicit_fresh_codex_profile() {
     let mut values = args(&base);
     values.push("--incremental".into());
     assert!(options(&values, 1_800_000_000_000).unwrap().incremental);
-    for extra in ["--resume", "--abandon", "--dry-run", "--incremental"] {
+    for extra in ["--resume", "--abandon", "--incremental"] {
         let mut invalid = values.clone();
         invalid.push(extra.into());
         assert!(options(&invalid, 1_800_000_000_000).is_err());
     }
+    // An incremental dry run retains nothing but exercises the checkpoint path.
+    let dry = args(&["stats-sync", "--dry-run", "--incremental"])
+        .into_iter()
+        .chain(args(&base[5..]))
+        .collect::<Vec<_>>();
+    let dry = options(&dry, 1_800_000_000_000).unwrap();
+    assert!(dry.dry_run && dry.incremental);
     let mut no_profile = args(&base[..9]);
     no_profile.push("--incremental".into());
     assert_eq!(
@@ -421,11 +428,62 @@ fn incremental_collection_requires_an_explicit_fresh_codex_profile() {
         Some("stats_incremental_profile_required")
     );
     let mut other = values;
-    other[8] = "claude".into();
+    for client in ["claude", "cursor", "devin-cli", "devin-desktop"] {
+        other[8] = client.into();
+        assert!(options(&other, 1_800_000_000_000).unwrap().incremental);
+    }
+    other[8] = "gemini".into();
     assert_eq!(
         options(&other, 1_800_000_000_000).err(),
         Some("stats_incremental_profile_required")
     );
+}
+#[cfg(target_os = "macos")]
+#[test]
+fn incremental_dry_run_prints_the_same_report_as_a_full_dry_run_and_retains_nothing() {
+    let base = std::fs::canonicalize(std::env::temp_dir()).unwrap();
+    let home = base.join(format!("aicharts-dry-{}-{}", std::process::id(), line!()));
+    std::fs::create_dir(&home).unwrap();
+    let sessions = home.join("sessions");
+    std::fs::create_dir(&sessions).unwrap();
+    std::fs::write(
+        sessions.join("0192f3a4-5b6c-7d8e-9f01-23456789abcd.jsonl"),
+        "{\"type\":\"assistant\",\"timestamp\":\"2026-09-19T10:00:01.000Z\",\"requestId\":\"req_1\",\"message\":{\"id\":\"msg_1\",\"model\":\"claude-sonnet-4-5\",\"usage\":{\"input_tokens\":10,\"output_tokens\":3}}}\n",
+    )
+    .unwrap();
+    let before = std::fs::read_dir(&home).unwrap().count();
+    let args = |extra: &[&str]| {
+        [
+            "stats-sync",
+            "--dry-run",
+            "--home",
+            home.to_str().unwrap(),
+            "--client",
+            "claude",
+            "--source-root",
+            sessions.to_str().unwrap(),
+            "--since",
+            "2026-09-19",
+            "--until",
+            "2026-09-19",
+        ]
+        .iter()
+        .chain(extra)
+        .map(|s| (*s).to_owned())
+        .collect::<Vec<_>>()
+    };
+    let strip = |text: String| {
+        let mut value: serde_json::Value = serde_json::from_str(&text).unwrap();
+        value.as_object_mut().unwrap().remove("generatedAtMs");
+        value
+    };
+    let full = strip(run(&args(&[])).unwrap());
+    let incremental = strip(run(&args(&["--incremental"])).unwrap());
+    assert_eq!(full, incremental);
+    assert_eq!(incremental["sources"][0]["records"], 1);
+    assert_eq!(std::fs::read_dir(&home).unwrap().count(), before);
+    assert_eq!(std::fs::read_dir(&sessions).unwrap().count(), 1);
+    std::fs::remove_dir_all(&home).unwrap();
 }
 
 #[test]

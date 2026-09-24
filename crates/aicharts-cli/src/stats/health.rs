@@ -153,10 +153,15 @@ pub(crate) fn observation_scope(client: &str, options: &Options) -> [u8; 32] {
 }
 
 pub(super) struct Persistence {
+    /// None is an ephemeral dry run: nothing is retained on disk.
     #[cfg(unix)]
-    health: SourceHealthStore,
+    health: Option<SourceHealthStore>,
+    /// A checkpoint without a store is discarded with the run.
     #[cfg(unix)]
-    checkpoint: Option<(crate::source_checkpoint::SourceCheckpoint, ImportCheckpoint)>,
+    checkpoint: Option<(
+        Option<crate::source_checkpoint::SourceCheckpoint>,
+        ImportCheckpoint,
+    )>,
     #[cfg(unix)]
     replayed: bool,
 }
@@ -171,14 +176,14 @@ impl Persistence {
         if options.clients.len() != 1 {
             return Err("stats_sync_one_client_required");
         }
-        if incremental && (options.clients[0] != "codex" || options.source_roots.is_empty()) {
-            return Err("stats_incremental_profile_required");
-        }
+        let client = incremental
+            .then(|| crate::source_health::incremental_profile(options))
+            .transpose()?;
         let health = SourceHealthStore::open(&state.join("source-health-v1"))?;
         let mut replayed = false;
-        let checkpoint = if incremental {
+        let checkpoint = if let Some(client) = client {
             let store = crate::source_checkpoint::SourceCheckpoint::open(
-                &state.join("source-checkpoint-codex-v1"),
+                &state.join(format!("source-checkpoint-{client}-v1")),
             )?;
             let value = match store.load() {
                 Ok(value) => value,
@@ -188,14 +193,25 @@ impl Persistence {
                 }
                 Err(code) => return Err(code),
             };
-            Some((store, value))
+            Some((Some(store), value))
         } else {
             None
         };
         Ok(Self {
-            health,
+            health: Some(health),
             checkpoint,
             replayed,
+        })
+    }
+    /// An incremental dry run: the checkpoint path runs from a fresh, unsaved
+    /// checkpoint and no health evidence is retained.
+    #[cfg(target_os = "macos")]
+    pub(super) fn ephemeral(options: &Options) -> Result<Self, &'static str> {
+        crate::source_health::incremental_profile(options)?;
+        Ok(Self {
+            health: None,
+            checkpoint: Some((None, ImportCheckpoint::default())),
+            replayed: false,
         })
     }
     pub(super) fn checkpoint(&mut self) -> Option<&mut ImportCheckpoint> {
@@ -218,13 +234,21 @@ impl Persistence {
         }
         // Persist the attempt before replacing the derived cache. Any failure
         // preserves earlier complete evidence; no publication has begun yet.
-        let binding = self.health.record_attempt(
-            client,
-            observation_scope(client, options),
-            observation.clone(),
-        )?;
+        let binding = match &mut self.health {
+            Some(health) => health.record_attempt(
+                client,
+                observation_scope(client, options),
+                observation.clone(),
+            )?,
+            None => {
+                // An ephemeral attempt has an identity but leaves no evidence.
+                let mut attempt = [0u8; 32];
+                getrandom::fill(&mut attempt).map_err(|_| "source_health_random_unavailable")?;
+                attempt
+            }
+        };
         if observation.health.outcome == ImportOutcome::Complete {
-            if let Some((store, value)) = &self.checkpoint {
+            if let Some((Some(store), value)) = &self.checkpoint {
                 store.save(value)?;
             }
         }
@@ -245,18 +269,23 @@ impl Persistence {
         Err("stats_persistence_unavailable")
     }
 }
+/// `state` None is an incremental dry run that retains nothing.
 #[cfg(target_os = "macos")]
 pub(crate) fn collect_persisted(
     options: &Options,
     now: u64,
-    state: &Path,
+    state: Option<&Path>,
     incremental: bool,
 ) -> Result<CollectedStats, &'static str> {
     // The persistent and exported forms have independent fixed ceilings.
     const {
         assert!(MAX_HEALTH_REPORT_BYTES <= MAX_SOURCE_HEALTH_BYTES);
     }
-    let mut persistence = Persistence::open(options, state, incremental)?;
+    let mut persistence = match state {
+        Some(state) => Persistence::open(options, state, incremental)?,
+        None if incremental => Persistence::ephemeral(options)?,
+        None => return Err("invalid_option"),
+    };
     super::collect_detailed_with_clock(options, now, super::now_ms, Some(&mut persistence))
 }
 
