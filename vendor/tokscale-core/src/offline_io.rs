@@ -106,6 +106,9 @@ struct Audit {
     sqlite_completed: BTreeSet<PathBuf>,
     sqlite_budget_secs: u64,
     started: std::time::Instant,
+    /// Complete-content witnesses for immutable captures and regular files
+    /// admitted in this run. Guard::finish still verifies the source itself.
+    witnesses: BTreeMap<PathBuf, WholeWitness>,
 }
 
 fn sqlite_scan_budget(bytes: u64) -> Duration {
@@ -184,6 +187,7 @@ pub fn begin(roots: &[PathBuf]) -> Result<Guard, &'static str> {
         sqlite_completed: BTreeSet::new(),
         sqlite_budget_secs: 0,
         started: std::time::Instant::now(),
+        witnesses: BTreeMap::new(),
     });
     Ok(Guard { _serial: serial })
 }
@@ -331,6 +335,7 @@ pub(crate) fn codex_diagnostics(state: &crate::sessions::codex::CodexParseState)
 #[derive(Clone)]
 pub(crate) struct LogWitness {
     pub identity: (u64, u64),
+    pub modified: Option<(u64, u32)>,
     pub bytes: u64,
     pub digest: [u8; 32],
     pub complete_digest: [u8; 32],
@@ -380,6 +385,7 @@ pub(crate) fn log_witness(path: &Path, prefix: Option<u64>) -> io::Result<LogWit
     let identity = (0, 0);
     Ok(LogWitness {
         identity,
+        modified: modified_key(captured.source.modified),
         bytes: captured.parsed_bytes,
         digest: prefix_digest.expect("hashed requested prefix"),
         complete_digest: digest.finalize().into(),
@@ -1005,6 +1011,207 @@ pub(crate) fn sqlite_completed(path: &Path) {
     if let Some(a) = ACTIVE.lock().unwrap_or_else(|p| p.into_inner()).as_mut() {
         a.sqlite_completed.insert(path.to_path_buf());
     }
+}
+
+/// A file's complete-content witness for whole-file checkpoint reuse.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) struct WholeWitness {
+    pub identity: (u64, u64),
+    pub modified: Option<(u64, u32)>,
+    pub bytes: u64,
+    pub digest: [u8; 32],
+    /// The source can legitimately change while it is read (SQLite stores
+    /// own their sidecar lifetimes). A volatile witness is taken again after
+    /// parsing and must be identical before its rows are retained.
+    pub volatile: bool,
+}
+fn modified_key(modified: Option<SystemTime>) -> Option<(u64, u32)> {
+    let elapsed = modified?.duration_since(SystemTime::UNIX_EPOCH).ok()?;
+    Some((elapsed.as_secs(), elapsed.subsec_nanos()))
+}
+fn file_identity(metadata: &Metadata) -> (u64, u64) {
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::MetadataExt;
+        (metadata.dev(), metadata.ino())
+    }
+    #[cfg(not(unix))]
+    {
+        let _ = metadata;
+        (0, 0)
+    }
+}
+/// Hash a regular admitted file in full, counting the bytes as verification
+/// work and honouring the audit deadline.
+fn hash_regular(path: &Path, hash: &mut Sha256, limit: u64) -> io::Result<(Metadata, u64)> {
+    admit(path)?;
+    let mut file = open_regular(path).map_err(|_| error("import_source_unreadable"))?;
+    let metadata = file.metadata()?;
+    if metadata.len() > limit {
+        return Err(error("import_file_limit"));
+    }
+    let mut remaining = metadata.len();
+    let mut buffer = [0u8; 65_536];
+    while remaining > 0 {
+        let count = buffer.len().min(remaining as usize);
+        file.read_exact(&mut buffer[..count])
+            .map_err(|_| error("import_source_changed"))?;
+        hash.update(&buffer[..count]);
+        remaining -= count as u64;
+        let mut active = ACTIVE.lock().unwrap_or_else(|p| p.into_inner());
+        if let Some(audit) = active.as_mut() {
+            audit.work.verified_bytes += count as u64;
+            if audit.started.elapsed() > audit_time_limit(audit) {
+                audit.errors.insert("import_time_limit");
+                return Err(io::Error::other("import_time_limit"));
+            }
+        }
+    }
+    let bytes = metadata.len();
+    Ok((metadata, bytes))
+}
+/// Witness one whole source: the immutable captured prefix of an append log,
+/// or the complete bytes of a regular file. Results are cached for the run.
+pub(crate) fn whole_witness(path: &Path) -> io::Result<WholeWitness> {
+    if let Some(witness) = ACTIVE
+        .lock()
+        .unwrap_or_else(|p| p.into_inner())
+        .as_ref()
+        .and_then(|a| a.witnesses.get(path).cloned())
+    {
+        return Ok(witness);
+    }
+    let witness = if active() && append_log(path) {
+        let log = log_witness(path, None)?;
+        WholeWitness {
+            identity: log.identity,
+            modified: log.modified,
+            bytes: log.bytes,
+            digest: log.complete_digest,
+            volatile: false,
+        }
+    } else {
+        let mut hash = Sha256::new();
+        let (metadata, bytes) = hash_regular(path, &mut hash, MAX_FILE_BYTES)?;
+        WholeWitness {
+            identity: file_identity(&metadata),
+            modified: modified_key(metadata.modified().ok()),
+            bytes,
+            digest: hash.finalize().into(),
+            volatile: false,
+        }
+    };
+    if let Some(audit) = ACTIVE.lock().unwrap_or_else(|p| p.into_inner()).as_mut() {
+        if audit.witnesses.len() < MAX_FILES {
+            audit.witnesses.insert(path.to_path_buf(), witness.clone());
+        }
+    }
+    Ok(witness)
+}
+/// Witness a SQLite store together with its present sidecars. The digest
+/// covers the main file and each sidecar's name, presence and bytes.
+pub(crate) fn sqlite_witness(path: &Path) -> io::Result<WholeWitness> {
+    let mut hash = Sha256::new();
+    let (metadata, mut bytes) = hash_regular(path, &mut hash, MAX_FILE_BYTES)?;
+    let mut modified = modified_key(metadata.modified().ok());
+    for suffix in ["-wal", "-shm", "-journal"] {
+        let mut sidecar = path.as_os_str().to_os_string();
+        sidecar.push(suffix);
+        let sidecar = PathBuf::from(sidecar);
+        hash.update(suffix.as_bytes());
+        match hash_regular(&sidecar, &mut hash, MAX_FILE_BYTES) {
+            Ok((sidecar_metadata, sidecar_bytes)) => {
+                hash.update(sidecar_bytes.to_le_bytes());
+                bytes = bytes
+                    .checked_add(sidecar_bytes)
+                    .filter(|total| *total <= MAX_FILE_BYTES)
+                    .ok_or_else(|| error("import_file_limit"))?;
+                modified = modified.max(modified_key(sidecar_metadata.modified().ok()));
+            }
+            Err(e) if e.kind() == io::ErrorKind::NotFound => hash.update([0u8]),
+            Err(e) => return Err(e),
+        }
+    }
+    Ok(WholeWitness {
+        identity: file_identity(&metadata),
+        modified,
+        bytes,
+        digest: hash.finalize().into(),
+        volatile: true,
+    })
+}
+/// Digest of related inputs that change a source's rows without changing the
+/// source: each path with its present content digest or explicit absence.
+/// None means a related input could not be witnessed, so no reuse is safe.
+pub(crate) fn related_context(paths: &[PathBuf]) -> Option<[u8; 32]> {
+    let mut hash = Sha256::new();
+    hash.update((paths.len() as u64).to_le_bytes());
+    for path in paths {
+        let text = path.as_os_str().as_encoded_bytes();
+        hash.update((text.len() as u64).to_le_bytes());
+        hash.update(text);
+        match whole_witness(path) {
+            Ok(witness) => {
+                hash.update([1u8]);
+                hash.update(witness.digest);
+            }
+            Err(e) if e.kind() == io::ErrorKind::NotFound => hash.update([0u8]),
+            Err(_) => return None,
+        }
+    }
+    Some(hash.finalize().into())
+}
+
+thread_local! {
+    /// Diagnostics measured for the file this thread is parsing. Parser lanes
+    /// run in parallel; the run total lives in the shared audit.
+    static FILE_COUNTERS: std::cell::Cell<Option<crate::offline_checkpoint::FileCounters>> =
+        const { std::cell::Cell::new(None) };
+}
+pub(crate) fn begin_file_counters() {
+    FILE_COUNTERS.with(|c| c.set(Some(crate::offline_checkpoint::FileCounters::default())));
+}
+pub(crate) fn take_file_counters() -> crate::offline_checkpoint::FileCounters {
+    FILE_COUNTERS.with(|c| c.take().unwrap_or_default())
+}
+/// Re-emit the diagnostics retained with reused rows so health counters are
+/// identical to a full scan.
+pub(crate) fn file_diagnostics(counters: crate::offline_checkpoint::FileCounters) {
+    if let Some(audit) = ACTIVE.lock().unwrap_or_else(|p| p.into_inner()).as_mut() {
+        audit.work.clamped_records += counters.clamped_records;
+        audit.work.fallback_records += counters.fallback_records;
+        audit.work.schema_mismatch_records += counters.schema_mismatch_records;
+    }
+}
+fn record_diagnostic(update: fn(&mut crate::offline_checkpoint::FileCounters)) {
+    FILE_COUNTERS.with(|c| {
+        if let Some(mut counters) = c.get() {
+            update(&mut counters);
+            c.set(Some(counters));
+        }
+    });
+    if let Some(audit) = ACTIVE.lock().unwrap_or_else(|p| p.into_inner()).as_mut() {
+        let mut counters = crate::offline_checkpoint::FileCounters::default();
+        update(&mut counters);
+        audit.work.clamped_records += counters.clamped_records;
+        audit.work.fallback_records += counters.fallback_records;
+        audit.work.schema_mismatch_records += counters.schema_mismatch_records;
+    }
+}
+/// A source value was clamped (for example a negative token count) to keep
+/// the record measurable.
+pub(crate) fn record_clamped() {
+    record_diagnostic(|c| c.clamped_records += 1);
+}
+/// A record used file metadata or another substitute for a missing source
+/// field, most often its timestamp.
+pub(crate) fn record_fallback() {
+    record_diagnostic(|c| c.fallback_records += 1);
+}
+/// A record of a recognized kind did not match the source's record shape and
+/// was skipped. Non-usage records are not mismatches.
+pub(crate) fn record_schema_mismatch() {
+    record_diagnostic(|c| c.schema_mismatch_records += 1);
 }
 
 pub(crate) fn set_profile(client: &str, roots: &[PathBuf]) {

@@ -1,7 +1,7 @@
 //! AI Charts' only admitted entry point into the pinned local parsers.
 pub use crate::offline_checkpoint::{
-    OfflineCheckpoint, CHECKPOINT_GENERATION, MAX_CHECKPOINT_BYTES, MAX_CHECKPOINT_FILES,
-    MAX_CHECKPOINT_OBSERVATIONS,
+    OfflineCheckpoint, CHECKPOINT_CLIENTS, CHECKPOINT_GENERATION, MAX_CHECKPOINT_BYTES,
+    MAX_CHECKPOINT_FILES, MAX_CHECKPOINT_OBSERVATIONS,
 };
 pub use crate::offline_io::{
     ImportWork, ReadReceipt, MAX_BYTES, MAX_FILES, MAX_FILE_BYTES, MAX_LOG_BYTES, MAX_ROWS,
@@ -183,7 +183,7 @@ fn collect_observed_inner(
             .to_str()
             .ok_or_else(|| vec!["import_home_encoding_invalid"])?;
         let guard = crate::offline_io::begin(approved_roots).map_err(|e| vec![e])?;
-        if client == "codex" {
+        if CHECKPOINT_CLIENTS.contains(&client) {
             if let Some(checkpoint) = checkpoint {
                 crate::offline_io::set_checkpoint(checkpoint);
             }
