@@ -81,6 +81,17 @@ export function validatePolicy(value: unknown): value is Policy {
   return true;
 }
 
+const U128_MAX = (1n << 128n) - 1n;
+/** Cache writes split by TTL, as the native kernel's `CacheWrites::with_ttl`:
+ * the two ephemeral buckets must partition the declared total exactly, and a
+ * split beyond u128 is an overflow, never a wrapped total. */
+export function splitCacheWrites(total: bigint, fiveMinute: bigint, oneHour: bigint): Result<Readonly<{ total: bigint; fiveMinute: bigint; oneHour: bigint }>, WireError> {
+  if (total < 0n || fiveMinute < 0n || oneHour < 0n || total > U128_MAX || fiveMinute > U128_MAX || oneHour > U128_MAX) return err("invalid_tokens");
+  const sum = fiveMinute + oneHour;
+  if (sum > U128_MAX || sum !== total) return err("invalid_tokens");
+  return ok(Object.freeze({ total, fiveMinute, oneHour }));
+}
+
 /** Reasoning is a subset of output, not another billable token category. */
 export function totalTokens(value: unknown): Result<bigint, WireError> {
   if (!isRecord(value) || !exact(value, tokenKeys)) return err("invalid_tokens");
@@ -89,7 +100,9 @@ export function totalTokens(value: unknown): Result<bigint, WireError> {
   }
   const tokens = value as Tokens;
   if (tokens.reasoningOutput > tokens.output) return err("invalid_tokens");
-  return ok(tokens.inputUncached + tokens.cacheRead + tokens.cacheWrite5m + tokens.cacheWrite1h + tokens.output);
+  const cacheWrites = splitCacheWrites(tokens.cacheWrite5m + tokens.cacheWrite1h, tokens.cacheWrite5m, tokens.cacheWrite1h);
+  if (!cacheWrites.ok) return cacheWrites;
+  return ok(tokens.inputUncached + tokens.cacheRead + cacheWrites.value.total + tokens.output);
 }
 
 function validCommon(value: Record<string, unknown>): WireError | null {
