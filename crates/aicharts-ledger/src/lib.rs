@@ -893,7 +893,7 @@ fn audit_relations_with(
 fn without_claude_owner(frame: &[u8]) -> Result<Vec<u8>> {
     let mut batch = checked_frame(frame)?;
     batch.usage[0].execution_id = [0; 16];
-    collection_frames(Collection {
+    collection_frames(&Collection {
         batches: vec![batch],
         warnings: vec![],
         lines_read: 0,
