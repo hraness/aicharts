@@ -1214,6 +1214,77 @@
       "minTraceStates": 28,
       "minDistinctStates": 2,
       "expectedDistinctStates": null
+    },
+    {
+      "id": "m11-cutover-safety",
+      "module": "M11ContributionRebuild",
+      "kind": "sanity",
+      "invariant": null,
+      "config": "configs/m11-cutover-safety.cfg",
+      "requiredActions": [],
+      "minTraceStates": 0,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": 297828
+    },
+    {
+      "id": "m11-cutover-single-safety",
+      "module": "M11ContributionRebuild",
+      "kind": "sanity",
+      "invariant": null,
+      "config": "configs/m11-cutover-single-safety.cfg",
+      "requiredActions": [],
+      "minTraceStates": 0,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": 262730
+    },
+    {
+      "id": "m11-repair-match",
+      "module": "M11ContributionRebuild",
+      "kind": "witness",
+      "invariant": "NoRepairMatchWitness",
+      "config": "configs/m11-repair-match.cfg",
+      "requiredActions": [
+        "BeginJob",
+        "CommitComparison",
+        "CutoverJob",
+        "BeginJob",
+        "CommitComparison"
+      ],
+      "minTraceStates": 60,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m11-cutover-replay",
+      "module": "M11ContributionRebuild",
+      "kind": "witness",
+      "invariant": "NoCutoverReplayWitness",
+      "config": "configs/m11-cutover-replay.cfg",
+      "requiredActions": [
+        "BeginJob",
+        "CommitComparison",
+        "CutoverJob",
+        "ReplayLast"
+      ],
+      "minTraceStates": 30,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m11-negative-cutover",
+      "module": "M11ContributionRebuild",
+      "kind": "counterexample",
+      "invariant": "Safety",
+      "config": "configs/m11-negative-cutover.cfg",
+      "requiredActions": [
+        "BeginJob",
+        "CommitComparison",
+        "AdvanceSource",
+        "CutoverJob"
+      ],
+      "minTraceStates": 30,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
     }
   ]
 }
