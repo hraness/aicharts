@@ -28,7 +28,7 @@ export default async function DashboardPage() {
   const configuration = await usagePageConfiguration();
   return <>
     <SiteHeader current="/dashboard" />
-    <main className="usage-home usage-home--stats" id="main-content">
+    <main tabIndex={-1} className="usage-home usage-home--stats" id="main-content">
       <nav className="usage-stats-nav" aria-label="Usage views"><Link href="/dashboard" aria-current="page">Account overview</Link><Link href="/usage/details">Detailed reports</Link><Link href="/usage/sessions">Sessions</Link><Link href="/leaderboard">Leaderboard</Link></nav>
       {configuration.available ? <>
         <UsageAccountControl returnTo="/dashboard" />

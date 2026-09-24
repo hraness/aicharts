@@ -16,7 +16,7 @@ export const metadata = createPublicSiteMetadata({
 export default function BenchmarksPage() {
   return <>
     <SiteHeader current="/benchmarks" />
-    <main className="chart-home benchmarks-home" id="main-content">
+    <main tabIndex={-1} className="chart-home benchmarks-home" id="main-content">
       <header className="chart-page-intro"><h1>Explore benchmarks</h1><p>Choose a task, then compare models on the same test.</p><p className="chart-page-intro__coverage">{ATLAS_DATASETS.length} interactive charts · {ATLAS_ENTRIES.length} benchmarks and guides</p></header>
       <BenchmarkAtlasExplorer entries={ATLAS_ENTRIES} datasets={ATLAS_DATASETS} />
       <ChartPageFooter />

@@ -33,7 +33,7 @@ export default async function UsagePage() {
   const configuration = await usagePageConfiguration();
   return <>
     <SiteHeader current="/usage" />
-    <main className="usage-home" id="main-content">
+    <main tabIndex={-1} className="usage-home" id="main-content">
       <section className="usage-hero" aria-labelledby="usage-title">
         <div className="usage-hero__copy">
           <h1 id="usage-title">See how many tokens your AI agents use</h1>

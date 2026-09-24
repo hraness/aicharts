@@ -57,7 +57,7 @@ export async function BlogArticlePage({
   const editorialImage = imageForSlug(article.slug);
 
   return (
-    <main
+    <main tabIndex={-1}
       className="plain-publication__article"
       data-analytics-surface="blog_article"
       id="blog-content"

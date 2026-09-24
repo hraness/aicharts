@@ -112,7 +112,7 @@ function CodingModelPage({
   const commentary = modelCommentaryForCanonicalId(card.canonicalModelId);
   const intelligence = intelligenceObservationForCard(card);
   return (
-    <main
+    <main tabIndex={-1}
       className="model-card-detail"
       data-analytics-surface="model_card"
       id="model-cards-content"
@@ -241,7 +241,7 @@ function IndexModelDetailPage({
 }>) {
   const commentary = modelCommentaryForCanonicalId(page.canonicalModelId);
   return (
-    <main
+    <main tabIndex={-1}
       className="model-card-detail"
       data-analytics-surface="model_card"
       id="model-cards-content"

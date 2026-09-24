@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 };
 
 export default function SessionUsagePage() {
-  return <><SiteHeader current="/usage" /><main className="usage-home" id="main-content">
+  return <><SiteHeader current="/usage" /><main tabIndex={-1} className="usage-home" id="main-content">
     <SessionDashboard /><ChartPageFooter />
   </main></>;
 }
