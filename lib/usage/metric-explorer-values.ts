@@ -4,17 +4,27 @@ import { metricWindow, type MetricFold, type MetricTokenPart } from "./metric-ex
 export type MetricReason = "no-observations" | "missing-categories" | "zero-denominator" | "insufficient-window"
   | "grouping-required"
   | "period-coverage-unavailable" | "needs-observation-facts" | "needs-billing-evidence" | "needs-source-health"
-  | "needs-tariff-evidence" | "needs-account-dimensions" | "separate-benchmark-population";
+  | "needs-tariff-evidence" | "needs-account-dimensions" | "separate-benchmark-population"
+  | "matched-cohort-unavailable" | "no-baseline";
 export type MetricValue = Readonly<{ kind: "integer"; amount: bigint }> | Readonly<{ kind: "ratio"; numerator: bigint; denominator: bigint }>;
 export type MetricMeasure = Readonly<{
   id: string; version: 1; unit: string; status: "available" | "partial" | "unavailable"; value: MetricValue | null;
   eligibleRecords: bigint; selectedRecords: bigint; excludedRecords: bigint; reason: MetricReason | null;
   evidence: "observed-subtotal" | "eligible-cohort" | "planned";
 }>;
+/** Previous-period evidence for one cohort. `matched` is exposure: the previous
+ * window lies inside the report, both windows are complete and every day of both
+ * carries observations. `cohortMatched` adds identical group populations along
+ * the query's dimensions. `counterpart` is the same cohort's previous fold, or
+ * null when that cohort has no previous observations. */
+export type MetricComparisonContext = Readonly<{
+  population: MetricFold; counterpart: MetricFold | null; matched: boolean; reason: MetricReason | null;
+  cohortMatched: boolean; cohortReason: MetricReason | null;
+}>;
 export type MetricValueContext = Readonly<{
   firstUtcDay: number; dayCount: number; asOfUtcDay: number; groupBy: readonly string[];
   population: MetricFold; costKind: "reported" | "estimated";
-  sourceIssues: number;
+  sourceIssues: number; previous: MetricComparisonContext | null;
 }>;
 const catalog = new Map(METRIC_CATALOG.map(metric => [metric.id, metric]));
 const quantityParts: Readonly<Record<string, MetricTokenPart>> = {
@@ -26,7 +36,10 @@ const totals = new Set(["accounted-tokens", "model-consumed-tokens", "utc-day-to
   "cumulative-tokens", "weekday-token-heatmap"]);
 const cohortRatios = new Set(["input-output-token-ratio", "reasoning-output-share", "cached-input-share", "cache-write-input-share",
   "cache-read-token-share", "cache-write-token-share", "cache-reuse-to-write-ratio"]);
-export const SUPPORTED_METRIC_IDS: ReadonlySet<string> = new Set([...Object.keys(quantityParts), ...totals, ...cohortRatios,
+/** Matched comparisons carry signed changes; every other value is non-negative. */
+export const SIGNED_METRIC_IDS: ReadonlySet<string> = new Set(["previous-period-token-change", "previous-period-token-change-percent",
+  "compare-periods", "compare-clients", "compare-models", "composition-share-change"]);
+export const SUPPORTED_METRIC_IDS: ReadonlySet<string> = new Set([...Object.keys(quantityParts), ...totals, ...cohortRatios, ...SIGNED_METRIC_IDS,
   "inclusive-output-tokens", "client-token-share", "provider-token-share", "model-token-share", "unknown-model-token-share",
   "rolling-7-day-tokens", "rolling-30-day-tokens", "rolling-90-day-tokens", "observed-active-days", "observed-usage-streak", "peak-daily-tokens",
   "source-reported-charge", "dated-retail-estimated-cost", "unpriced-records", "pricing-record-coverage", "model-attribution-coverage",
@@ -35,7 +48,6 @@ export const SUPPORTED_METRIC_IDS: ReadonlySet<string> = new Set([...Object.keys
 
 export function metricDefinition(id: string): MetricCatalogEntry | undefined { return catalog.get(id); }
 export function unavailableMetricReason(definition: MetricCatalogEntry): MetricReason {
-  if (["previous-period-token-change", "previous-period-token-change-percent", "compare-periods", "compare-clients", "compare-models", "composition-share-change"].includes(definition.id)) return "period-coverage-unavailable";
   if (["compare-accounts", "compare-devices"].includes(definition.id)) return "needs-account-dimensions";
   if (definition.id === "cache-write-break-even" || definition.id === "modeled-cache-savings" || definition.id === "historical-repricing") return "needs-tariff-evidence";
   if (definition.availability === "billing-evidence" || definition.implementationPhase === "10") return "needs-billing-evidence";
@@ -56,11 +68,13 @@ export const METRIC_REASON_TEXT: Readonly<Record<MetricReason, string>> = Object
   "needs-tariff-evidence": "A compatible dated tariff and the same priced observation cohort are required.",
   "needs-account-dimensions": "This report has no compatible account or device contribution dimension.",
   "separate-benchmark-population": "Published evaluations are a separate population; personal usage is not a benchmark score.",
+  "matched-cohort-unavailable": "The two periods do not observe the same groups along this dimension, so a matched comparison is refused.",
+  "no-baseline": "The previous period has no accounted tokens; a percentage change has no baseline.",
 });
 export function metricRecommendedDimension(id: string): "client" | "provider" | "model" | "utc-day" | "utc-week" | "utc-month" | "weekday" | null {
-  if (["client-token-share", "cost-by-client"].includes(id)) return "client";
+  if (["client-token-share", "cost-by-client", "compare-clients"].includes(id)) return "client";
   if (id === "provider-token-share") return "provider";
-  if (["model-token-share", "cost-by-model"].includes(id)) return "model";
+  if (["model-token-share", "cost-by-model", "compare-models"].includes(id)) return "model";
   if (["utc-day-tokens", "cost-by-time"].includes(id)) return "utc-day";
   if (id === "utc-week-tokens") return "utc-week";
   if (id === "utc-month-tokens") return "utc-month";
@@ -95,10 +109,30 @@ export function metricExplanation(id: string): string | null {
   if (id === "observed-active-days") return "Distinct selected UTC days with a positive token contribution. Zero-token and token-unknown records do not prove positive token activity.";
   if (id === "observed-usage-streak") return "Consecutive positive-token UTC days ending on the selected range’s final day. An unobserved day ends the observed run without proving inactivity.";
   if (id === "peak-daily-tokens") return "Largest observed UTC-day token subtotal in the selection. With partial coverage, this is a lower-bound peak.";
+  if (id === "previous-period-token-change" || id === "compare-periods") return "Accounted tokens in the selected range minus the same-length range immediately before it. Both ranges must lie in the report with observations on every day; a group is compared with the same group in the previous range.";
+  if (id === "previous-period-token-change-percent") return "Signed token change ÷ the previous range’s accounted tokens on the same matched cohort. A zero baseline is refused rather than shown as infinity or zero.";
+  if (id === "compare-clients" || id === "compare-models") return "Signed accounted-token change per group between two matched, same-length ranges. The comparison is refused when the two ranges do not observe the same set of groups.";
+  if (id === "composition-share-change") return "Each group’s share of the selected population now minus its share in the previous range, in percentage points, on identical cohorts only.";
   if (id === "cumulative-tokens") return "Observed token subtotal from the selected start through the exclusive end of the selected range. The selected start is the explicit accumulation boundary.";
   if (id.startsWith("utc-") || id === "weekday-token-heatmap") return "The value is the selected range’s observed subtotal; the table groups it by the chosen UTC calendar bucket. Days with records are shown per group; complete calendar exposure is unknown.";
   if (Object.hasOwn(quantityParts, id)) return "Sum of the explicitly retained token category. In a partial breakdown, an unreported category is not a measured zero.";
   return null;
+}
+/** Exact signed difference and relative change between a current and a
+ * previous measure of the same metric. `percent` is null without a positive or
+ * negative baseline; a zero baseline is never rendered as zero or infinity. */
+export type MetricChange = Readonly<{ absolute: MetricValue; percent: Readonly<{ kind: "ratio"; numerator: bigint; denominator: bigint }> | null }>;
+export function metricChange(current: MetricValue | null, previous: MetricValue | null): MetricChange | null {
+  if (current === null || previous === null) return null;
+  const a = current.kind === "integer" ? { n: current.amount, d: 1n } : { n: current.numerator, d: current.denominator };
+  const b = previous.kind === "integer" ? { n: previous.amount, d: 1n } : { n: previous.numerator, d: previous.denominator };
+  if (a.d <= 0n || b.d <= 0n) return null;
+  const difference = a.n * b.d - b.n * a.d;
+  const absolute: MetricValue = current.kind === "integer" && previous.kind === "integer"
+    ? { kind: "integer", amount: difference } : { kind: "ratio", numerator: difference, denominator: a.d * b.d };
+  if (b.n === 0n) return Object.freeze({ absolute: Object.freeze(absolute), percent: null });
+  const denominator = a.d * b.n, sign = denominator < 0n ? -1n : 1n;
+  return Object.freeze({ absolute: Object.freeze(absolute), percent: Object.freeze({ kind: "ratio" as const, numerator: difference * sign, denominator: denominator * sign }) });
 }
 export function metricCollectionPath(definition: MetricCatalogEntry): Readonly<{ label: string; href: string | null }> {
   if (definition.family === "benchmark-context") return { label: "Open sourced model comparisons", href: "/" };
@@ -130,6 +164,24 @@ export function metricMeasure(id: string, fold: MetricFold, context: MetricValue
   if (!SUPPORTED_METRIC_IDS.has(id)) return result(null, 0n, unavailableMetricReason(definition), definition.unit, "planned");
   const dimension = metricRecommendedDimension(id);
   if (dimension !== null && !context.groupBy.includes(dimension)) return result(null, 0n, "grouping-required");
+  if (SIGNED_METRIC_IDS.has(id)) {
+    const previous = context.previous, cohortBound = id === "compare-clients" || id === "compare-models" || id === "composition-share-change";
+    if (cohortBound && context.groupBy.length === 0) return result(null, 0n, "grouping-required");
+    if (previous === null || !previous.matched) return result(null, 0n, previous?.reason ?? "period-coverage-unavailable");
+    if (cohortBound && !previous.cohortMatched) return result(null, 0n, previous.cohortReason ?? "matched-cohort-unavailable");
+    const counterpart = previous.counterpart;
+    if (counterpart === null) return result(null, 0n, "matched-cohort-unavailable");
+    if (fold.tokenRecords === 0n && counterpart.tokenRecords === 0n) return result(null, 0n, "no-observations", id.endsWith("-percent") ? "ratio" : id === "composition-share-change" ? "percentage-points" : "tokens");
+    if (id === "previous-period-token-change-percent") return counterpart.total === 0n ? result(null, fold.tokenRecords, "no-baseline", "ratio", "eligible-cohort")
+      : result({ kind: "ratio", numerator: fold.total - counterpart.total, denominator: counterpart.total }, fold.tokenRecords, null, "ratio", "eligible-cohort");
+    if (id === "composition-share-change") {
+      const current = context.population.total, prior = previous.population.total;
+      if (current === 0n || prior === 0n) return result(null, fold.tokenRecords, "zero-denominator", "percentage-points", "eligible-cohort");
+      // share_now − share_before, exact: (a/c − b/p) × 100 = (a·p − b·c) × 100 / (c·p).
+      return result({ kind: "ratio", numerator: (fold.total * prior - counterpart.total * current) * 100n, denominator: current * prior }, fold.tokenRecords, null, "percentage-points", "eligible-cohort");
+    }
+    return result({ kind: "integer", amount: fold.total - counterpart.total }, fold.tokenRecords, null, "tokens");
+  }
   if (totals.has(id)) return integer(fold.total, fold.tokenRecords, "tokens");
   const part = quantityParts[id];
   if (part !== undefined) {
