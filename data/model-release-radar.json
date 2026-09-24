@@ -3,7 +3,7 @@
   "source": {
     "method": "models-api",
     "name": "OpenRouter",
-    "retrievedAt": "2026-09-23T20:27:55.286Z",
+    "retrievedAt": "2026-09-23T23:45:58.249Z",
     "timestampMeaning": "source-added-at",
     "url": "https://openrouter.ai/api/v1/models?sort=newest"
   },
@@ -28,6 +28,12 @@
     "windowDays": 90
   },
   "observedListings": [
+    {
+      "id": "z-ai/glm-5.3-prime",
+      "model": "GLM 5.3 Prime",
+      "providerId": "z_ai",
+      "sourceAddedAt": "2026-09-23T21:40:51.000Z"
+    },
     {
       "id": "qwen/qwen3.8-max-prime",
       "model": "Qwen3.8 Max Prime",
@@ -336,6 +342,25 @@
     }
   ],
   "releases": [
+    {
+      "capabilities": {
+        "inputModalities": [
+          "text"
+        ],
+        "outputModalities": [
+          "text"
+        ],
+        "supportsTools": true
+      },
+      "canonicalSlug": "z-ai/glm-5.3-prime-20260921",
+      "id": "z-ai/glm-5.3-prime",
+      "model": "GLM 5.3 Prime",
+      "modelUrl": "https://openrouter.ai/z-ai/glm-5.3-prime",
+      "providerId": "z_ai",
+      "providerName": "Z.ai",
+      "sourceAddedAt": "2026-09-23T21:40:51.000Z",
+      "status": "awaiting-benchmark"
+    },
     {
       "capabilities": {
         "inputModalities": [
