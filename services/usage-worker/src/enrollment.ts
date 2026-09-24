@@ -294,11 +294,13 @@ export class AccountEnrollment extends DurableObject<Env> {
         const audited = this.#auditHistory();
         if (audited !== null) throw new AdmissionFault(audited === "storage_invalid" ? "storage_invalid" : "recovery_required");
         // Bounded automatic work: each registered mutation advances the v1 day
-        // totals span by span, for at most a quarter second of its own budget,
-        // until they cover the whole retained journal.
-        const admission = new AdmissionState(this.ctx.storage.sql), state = this.#stored(5).state, started = Date.now();
+        // totals span by span, at most eight spans and a quarter second of its
+        // own budget, until they cover the whole retained journal. The wall
+        // clock here is the monotonic one: the account's own observation clock
+        // must not be consumed by maintenance.
+        const admission = new AdmissionState(this.ctx.storage.sql), state = this.#stored(5).state, started = performance.now();
         let spans = 0;
-        while (!admission.advanceDayTotals(state).complete && ++spans < 64 && Date.now() - started < 250) { /* next span */ }
+        while (!admission.advanceDayTotals(state).complete && ++spans < 8 && performance.now() - started < 250) { /* next span */ }
       });
       return null;
     } catch (error) { return error instanceof AdmissionFault || error instanceof ContributionFault || error instanceof ContributionRebuildFault ? error.code : "storage_invalid"; }
