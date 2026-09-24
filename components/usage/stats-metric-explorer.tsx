@@ -5,7 +5,9 @@ import { METRIC_CATALOG, type MetricCatalogEntry } from "@/lib/usage/metric-expl
 import { METRIC_EXPLORER_VIEWS } from "@/lib/usage/metric-explorer-views";
 import { METRIC_REASON_TEXT, metricChange, metricCollectionPath, metricDefinition, metricExplanation, SIGNED_METRIC_IDS, SUPPORTED_METRIC_IDS,
   type MetricDimension, type MetricMeasure, type MetricValue } from "@/lib/usage/metric-explorer";
+import { RICH_SUPPORTED_METRIC_IDS } from "@/lib/usage/rich-metric-explorer";
 import { exportCurrentStatsImage } from "./stats-export";
+import { RichMetricExplorer, type RichExplorerSource } from "./rich-metric-explorer";
 import { metricGroupName } from "./stats-metric-projection";
 import { formatStatsDay, formatStatsInteger, formatStatsMoney } from "./stats-view";
 import type { MetricPresentation, MetricPresentationComparison } from "./stats-metric-presentation";
@@ -73,14 +75,16 @@ function downloadJson(value: string | Blob) {
   setTimeout(() => URL.revokeObjectURL(url), 1_000);
 }
 
-export function StatsMetricExplorer({ result, metricId, onMetric, secondary, onSecondary, onCostKind, onMetricSort, captureExport, prepareExport, pending = false }: Readonly<{
-  result: MetricPresentation; metricId: string; onMetric: (id: string) => void;
+const richIds = new Set(RICH_SUPPORTED_METRIC_IDS);
+export function StatsMetricExplorer({ result, metricId, onMetric, secondary, onSecondary, onCostKind, onMetricSort, captureExport, prepareExport, pending = false, rich }: Readonly<{
+  result: MetricPresentation; metricId: string; onMetric: (id: string) => void; rich?: RichExplorerSource;
   secondary: MetricDimension | null; onSecondary: (dimension: MetricDimension | null) => void;
   onCostKind: (kind: "reported" | "estimated") => void; onMetricSort: () => void;
   captureExport?: () => (() => boolean);
   prepareExport: () => Promise<string | Blob>; pending?: boolean;
 }>) {
-  const id = useId(), [view, setView] = useState(1), [search, setSearch] = useState(""), [page, setPage] = useState(0);
+  const id = useId(), [search, setSearch] = useState(""), [page, setPage] = useState(0);
+  const [view, setView] = useState(() => { const family = metricDefinition(metricId)?.family; const index = views.findIndex(item => family !== undefined && item.families.includes(family)); return index === -1 ? 1 : index; });
   const [exporting, setExporting] = useState(false), [exportStatus, setExportStatus] = useState("");
   const lifetime = useRef<object | null>(null), job = useRef<object | null>(null);
   const selection = useRef<MetricPresentation | null>(null);
@@ -98,6 +102,7 @@ export function StatsMetricExplorer({ result, metricId, onMetric, secondary, onS
   const pageCount = Math.max(1, Math.ceil(found.length / PAGE_SIZE)), currentPage = Math.min(page, pageCount - 1);
   const definition = metricDefinition(metricId)!, measure = result.measures.find(value => value.id === metricId)!;
   const supportedMatches = found.filter(metric => SUPPORTED_METRIC_IDS.has(metric.id)).length, unit = metricUnitLabel(measure);
+  const richLoaded = rich?.document != null, richMatches = found.filter(metric => richIds.has(metric.id)).length, richSelected = richIds.has(metricId);
   const path = metricCollectionPath(definition), matched = result.previous?.matched === true && !SIGNED_METRIC_IDS.has(metricId);
   const tabKey = (event: KeyboardEvent<HTMLButtonElement>, index: number) => {
     const next = event.key === "ArrowRight" ? (index + 1) % views.length : event.key === "ArrowLeft" ? (index + views.length - 1) % views.length
@@ -126,14 +131,14 @@ export function StatsMetricExplorer({ result, metricId, onMetric, secondary, onS
     <div className="usage-metrics__workspace">
       <div className="usage-metrics__catalog" role="tabpanel" id={`${id}-catalog`} aria-labelledby={`${id}-tab-${view}`}>
         <label>Find a metric<input type="search" value={search} maxLength={80} placeholder="Search all 241 definitions" onChange={event => { setSearch(event.target.value); setPage(0); }} /></label>
-        <p className="usage-stats__hint" role="status">{found.length} matching {found.length === 1 ? "definition" : "definitions"} · {supportedMatches} supported by this aggregate profile</p>
+        <p className="usage-stats__hint" role="status">{found.length} matching {found.length === 1 ? "definition" : "definitions"} · {supportedMatches} supported by this aggregate profile{richLoaded ? ` · ${richMatches} by the loaded session facts` : ""}</p>
         {found.length === 0 ? <p>No metric matches this search. Try “cache”, “cost”, “latency” or “coverage”.</p>
           : <ul className="usage-metrics__list" aria-label="Metric definitions">{found.slice(currentPage * PAGE_SIZE, (currentPage + 1) * PAGE_SIZE).map(metric => <li key={metric.id}>
             <button type="button" aria-pressed={metric.id === metricId} onClick={() => {
               revealAfterSelection.current = metric.id; onMetric(metric.id);
               if (metric.id === metricId) { revealAfterSelection.current = null; revealMetricDetail(detail.current); }
             }}><span>{metricTitle(metric)}</span>
-              <small>{SUPPORTED_METRIC_IDS.has(metric.id) ? "Aggregate evidence" : metric.availability === "local-profile" ? "Needs session facts" : "Needs more evidence"}</small></button>
+              <small>{SUPPORTED_METRIC_IDS.has(metric.id) ? "Aggregate evidence" : richIds.has(metric.id) ? richLoaded ? "Session facts" : "Needs session facts" : metric.availability === "local-profile" ? "Needs session facts" : "Needs more evidence"}</small></button>
           </li>)}</ul>}
         {pageCount > 1 && <div className="usage-metrics__pagination" aria-label="Metric pages"><button type="button" disabled={currentPage === 0} onClick={() => setPage(currentPage - 1)}>Previous</button>
           <span>{currentPage + 1} / {pageCount}</span><button type="button" disabled={currentPage + 1 === pageCount} onClick={() => setPage(currentPage + 1)}>Next</button></div>}
@@ -141,6 +146,7 @@ export function StatsMetricExplorer({ result, metricId, onMetric, secondary, onS
       <div className="usage-metrics__detail" ref={detail} tabIndex={-1} aria-labelledby={`${id}-answer`} aria-live="polite">
         <h3 id={`${id}-answer`}>{definition.question}</h3>
         {metricExplanation(metricId) !== null && <p>{metricExplanation(metricId)}</p>}
+        {richSelected && rich !== undefined ? <RichMetricExplorer source={rich} metricId={metricId} /> : <>
         <div className="usage-metrics__value"><strong>{formatMetricMeasure(measure)}</strong>{unit !== null && <span>{unit}</span>}</div>
         <p className="usage-stats__hint usage-metrics__comparison" data-matched={result.previous?.matched === true}>{comparisonText(result.previous, measure, result.query)}</p>
         {measure.value === null ? <div className="usage-metrics__unavailable"><p>{METRIC_REASON_TEXT[measure.reason!]}</p>
@@ -172,6 +178,7 @@ export function StatsMetricExplorer({ result, metricId, onMetric, secondary, onS
             <td>{formatStatsInteger(value.eligibleRecords)} / {formatStatsInteger(value.selectedRecords)}</td><td>{group.daysWithRecords}</td></tr>; })}</tbody>
         </table></div>}
         <p className="usage-stats__hint">Group totals are computed before ranking. “Other” retains every omitted contribution; percentages and distinct-day counts must not be added.</p>
+        </>}
       </div>
     </div>
     {exportStatus !== "" && <p className="usage-stats__hint" role="status">{exportStatus}</p>}

@@ -9,6 +9,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { LeaderboardView } from "../components/usage/leaderboard-view";
 import { parseLeaderboardSnapshot } from "../lib/usage/leaderboard-contract";
 import { createUsageStatsExample } from "../lib/usage/stats-example";
+import { SESSION_EXAMPLE } from "../lib/usage/session-example";
 import { parseUsageStatsReport, type UsageStatsReport } from "../lib/usage/stats-contract";
 import { parseStatsPublicSearch, statsPublicStatus, STATS_PUBLIC_MEDIA, type StatsPublicReply } from "../lib/usage/stats-public";
 import { encodePrivateDaysPublicResponse, parsePrivateDaysPublicSearch, PRIVATE_DAYS_PUBLIC_MEDIA } from "../lib/usage/private-days-public";
@@ -370,6 +371,31 @@ export async function verifyUsageStats(browser: Browser, baseUrl: string, captur
       const metricExport = JSON.parse(await Bun.file(metricFile).text()) as { profile: string; snapshot: { sha256: string }; query: { groupBy: string[] }; measures: { id: string; value: { numerator: string; denominator: string } | null }[] };
       invariant(metricExport.profile === "metric-explorer-v1" && /^[0-9a-f]{64}$/u.test(metricExport.snapshot.sha256), "Export must bind the complete captured report.");
       invariant(metricExport.query.groupBy.join("/") === "client/model" && metricExport.measures.some(value => value.id === "cached-input-share" && typeof value.value?.denominator === "string"), "Export must preserve exact metric fractions and selected dimensions.");
+      // Session facts join the same explorer: rich metrics evaluate locally once a
+      // session-observations-v1 file is opened, and refuse with a stated reason before.
+      await explorer.getByLabel("Find a metric").fill("token-size-p95");
+      await explorer.getByRole("button", { name: /^Token size p95/ }).click(); await settle(page);
+      const richPanel = explorer.getByRole("region", { name: "Session facts", exact: true });
+      invariant((await richPanel.textContent())?.includes("Open a session-observations-v1 or rich-facts-v1 file"), "A rich metric without loaded facts must state what to open, not show a zero.");
+      invariant(await richPanel.getByRole("button", { name: "Open session facts", exact: true }).count() === 1, "Local mode must offer the session-facts picker inline.");
+      await page.locator('input[aria-label="Open session facts"]').setInputFiles({ name: "sessions.json", mimeType: "application/json", buffer: Buffer.from(JSON.stringify(SESSION_EXAMPLE)) });
+      await richPanel.locator(".usage-rich__groups tbody tr").first().waitFor();
+      invariant((await explorer.getByRole("status").first().textContent())?.includes("1 by the loaded session facts"), "The catalog count must include metrics served by the loaded session facts.");
+      invariant(await richPanel.locator(".usage-rich__groups tbody tr").count() === 2, "Adapted session facts default to one group per session.");
+      invariant((await richPanel.locator(".usage-rich__groups").textContent())?.includes("26,900"), "The per-session P95 must match the session page's exact value.");
+      invariant(await richPanel.locator('option[value="local-day"][disabled]').count() === 1, "A report without a declared time zone must refuse calendar grouping instead of guessing.");
+      await richPanel.getByLabel("Group by", { exact: true }).selectOption("model");
+      invariant(await richPanel.locator(".usage-rich__groups tbody tr").count() >= 2, "Model grouping must partition the same facts.");
+      const richCsvEvent = page.waitForEvent("download");
+      await richPanel.getByRole("button", { name: "Export CSV", exact: true }).click();
+      const richCsvFile = await (await richCsvEvent).path(); invariant(richCsvFile, "Rich metric CSV must download.");
+      const richCsv = await Bun.file(richCsvFile).text();
+      invariant(richCsv.startsWith("metric_id,metric_version,unit,source_profile,snapshot_revision,") && richCsv.includes("\r\ntoken-size-p95,1,tokens,rich-facts-v1,"), "Rich CSV rows must carry the metric identity, version, unit and facts revision.");
+      invariant(richCsv.split("\r\n").filter(line => line.startsWith("token-size-p95,")).every(line => line.includes(",*,*,*,model,")), "Rich CSV rows must carry the filters and grouping that produced them.");
+      await page.locator(".usage-stats-source__menu > summary").click();
+      await page.getByRole("button", { name: "Close session facts", exact: true }).click();
+      await richPanel.getByRole("button", { name: "Open session facts", exact: true }).waitFor();
+      await page.locator(".usage-stats-source__menu > summary").click();
       const beforeDigestDownloads = downloads, releaseDigest = await holdNextMetricDigest(page);
       await explorer.getByRole("button", { name: "Export metric snapshot", exact: true }).click();
       await page.waitForFunction(() => document.documentElement.dataset.usageDigestHeld === "true");
@@ -686,7 +712,7 @@ if (import.meta.main) {
   const captureDirectory = captureIndex >= 0 ? process.argv[captureIndex + 1] : process.env.AICHARTS_STATS_BROWSER_CAPTURE_DIR;
   const inputs = ["package.json", "bun.lock", "tsconfig.json", "next.config.ts", "scripts/build-theme-bootstrap.ts", "scripts/usage-stats-browser.ts", "app/usage/details/page.tsx",
     "components/usage/stats-dashboard.tsx", "components/usage/stats-report-file.ts", "components/usage/stats-report-view.tsx", "components/usage/stats-view.ts",
-    "components/usage/stats-export.ts", "components/usage/stats-metric-explorer.tsx", "components/usage/stats-metric-projection.ts", "styles/usage-metric-explorer.css", "styles/usage-stats.css",
+    "components/usage/stats-export.ts", "components/usage/stats-metric-explorer.tsx", "components/usage/rich-metric-explorer.tsx", "lib/usage/rich-metric-explorer-view.ts", "lib/usage/metric-export.ts", "lib/usage/session-example.ts", "components/usage/stats-metric-projection.ts", "styles/usage-metric-explorer.css", "styles/usage-stats.css",
     "lib/usage/metric-explorer.ts", "lib/usage/metric-explorer-fold.ts", "lib/usage/metric-explorer-values.ts", "lib/usage/metric-explorer-catalog.ts",
     "lib/usage/metric-explorer-session.ts", "lib/usage/metric-explorer-worker.ts", "lib/usage/metric-explorer-worker-core.ts", "components/usage/stats-metric-presentation.ts", "components/usage/stats-metric-query.ts",
     "components/usage/stats-metric-daily-table.tsx",

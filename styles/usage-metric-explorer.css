@@ -42,3 +42,23 @@
   .usage-metrics__tabs { margin-inline-end: -.5rem; }
 }
 @media (max-width: 390px) { .usage-metrics__list { grid-template-columns: minmax(0, 1fr); } }
+.usage-rich { margin-block-start: .5rem; }
+.usage-rich .usage-stats__section-heading h3 { font-size: 1rem; font-weight: 550; }
+.usage-rich .usage-stats__section-heading p { color: var(--muted); font-size: .8rem; margin-block-start: .35rem; max-inline-size: 65ch; }
+.usage-rich__exports { display: flex; flex-wrap: wrap; gap: .25rem 1rem; }
+.usage-rich__controls { display: grid; gap: .75rem 1rem; grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); margin-block: 1.25rem; }
+.usage-rich__controls label { display: grid; font-size: .75rem; gap: .35rem; }
+.usage-rich__controls select { inline-size: 100%; min-block-size: 2.75rem; }
+.usage-rich__question { font-size: 1rem; font-weight: 550; margin-block: 1rem .25rem; max-inline-size: 55ch; text-wrap: balance; }
+.usage-rich__reason { font-size: .85rem; line-height: 1.6; max-inline-size: 65ch; }
+.usage-rich__distribution { margin-block: 1.25rem; }
+.usage-rich__percentiles td { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.usage-rich__percentiles code { color: var(--muted); font-family: inherit; font-size: .7rem; }
+.usage-rich__histogram { display: grid; gap: .3rem; list-style: none; margin: 1rem 0 0; padding: 0; }
+.usage-rich__histogram li { align-items: center; display: grid; font-size: .72rem; font-variant-numeric: tabular-nums; gap: .5rem; grid-template-columns: minmax(8rem, 12rem) minmax(0, 1fr) 3.5rem; min-block-size: 1.25rem; }
+.usage-rich__bin { color: var(--muted); overflow-wrap: anywhere; }
+.usage-rich__bar { background: var(--foreground); block-size: .75rem; display: block; inline-size: var(--share, 0%); min-inline-size: 1px; }
+.usage-rich__count { text-align: end; }
+.usage-rich__drilldown summary span { color: var(--muted); font-size: .75rem; margin-inline-start: .5rem; }
+.usage-rich__drilldown .usage-stats__text-button { min-block-size: 2.75rem; }
+@media (max-width: 720px) { .usage-rich__histogram li { grid-template-columns: minmax(0, 1fr) 3rem; } .usage-rich__histogram .usage-rich__bar { grid-column: 1 / -1; } .usage-rich__controls { grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr)); } }

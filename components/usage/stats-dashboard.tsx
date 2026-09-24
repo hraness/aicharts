@@ -7,6 +7,9 @@ import { retainUsageAccountLifecycle } from "@/lib/usage/account-session-events"
 import { currentUsageAccountScope, subscribeUsageAccountInvalidation, type UsageAccountScope } from "@/lib/usage/account-generation";
 import { readInUsageAccountGeneration } from "@/lib/usage/account-generation-read";
 import { createUsageStatsExample } from "@/lib/usage/stats-example";
+import { RICH_FACT_MAX_BYTES } from "@/lib/usage/rich-fact-contract";
+import { openRichFactsDocument, type RichFactsDocument } from "@/lib/usage/rich-metric-explorer-view";
+import type { RichExplorerAbsence, RichExplorerSource } from "./rich-metric-explorer";
 import { MetricReportSession } from "@/lib/usage/metric-explorer-session";
 import { disposeStatsReadReply, StatsReadDeadline } from "@/lib/usage/stats-client";
 import type { MetricReportMetadata } from "@/lib/usage/metric-explorer";
@@ -46,6 +49,18 @@ export function StatsDashboard({ todayUtcDay, remoteEnabled = false, startWithAc
   todayUtcDay: number; remoteEnabled?: boolean; startWithAccount?: boolean; fallback?: ReactNode; returnTo?: string;
 }>) {
   const [stored, setLoaded] = useState<Loaded | null>(null);
+  const [facts, setFacts] = useState<Readonly<{ document: RichFactsDocument | null; absence: RichExplorerAbsence | null; name: string | null }>>({ document: null, absence: null, name: null });
+  const factsPicker = useRef<HTMLInputElement>(null), factsSequence = useRef(0);
+  const importFacts = async (file: File) => {
+    const id = ++factsSequence.current;
+    if (!Number.isSafeInteger(file.size) || file.size > RICH_FACT_MAX_BYTES) { setFacts({ document: null, absence: "invalid", name: null }); return; }
+    let opened: Awaited<ReturnType<typeof openRichFactsDocument>>;
+    try { opened = await openRichFactsDocument(await file.text()); } catch { opened = { ok: false, error: "invalid_rich_facts" }; }
+    if (factsSequence.current !== id) return;
+    if (opened.ok) setFacts({ document: opened.value, absence: null, name: file.name });
+    else setFacts({ document: null, absence: opened.error === "session_window_limit" ? "window" : opened.error === "record_limit" || opened.error === "body_limit" ? "limit" : "invalid", name: null });
+  };
+  const closeFacts = () => { factsSequence.current++; setFacts({ document: null, absence: null, name: null }); };
   const generation = useAccountGeneration();
   const loaded = stored?.scope === "account" && (stored.authority.generation !== generation || !currentUsageAccountScope(stored.authority)) ? null : stored;
   const [status, setStatus] = useState<Status>(startWithAccount ? "loading" : "idle");
@@ -170,6 +185,8 @@ export function StatsDashboard({ todayUtcDay, remoteEnabled = false, startWithAc
     <button className="usage-stats__text-button" type="button" onClick={example}>Explore example</button>
     {remoteEnabled && !showFallback && <button className="usage-stats__text-button" type="button" onClick={() => loadAccount()} disabled={status === "loading"}>Load account</button>}
     {loaded && <button className="usage-stats__text-button" type="button" onClick={clear}>Close report</button>}
+    {loaded && loaded.scope !== "account" && <button className="usage-stats__text-button" type="button" onClick={() => factsPicker.current?.click()}>{facts.document ? "Replace session facts" : "Open session facts"}</button>}
+    {facts.document && <button className="usage-stats__text-button" type="button" onClick={closeFacts}>Close session facts</button>}
     <Link href="/usage/sessions">Session timing</Link>
   </>;
   return <>
@@ -180,9 +197,13 @@ export function StatsDashboard({ todayUtcDay, remoteEnabled = false, startWithAc
       <input ref={picker} type="file" accept=".json,application/json" hidden aria-label="Open numeric usage report" onChange={event => {
         const file = event.target.files?.[0]; event.target.value = ""; if (file) void importFile(file);
       }} />
+      <input ref={factsPicker} type="file" accept=".json,application/json" hidden aria-label="Open session facts" onChange={event => {
+        const file = event.target.files?.[0]; event.target.value = ""; if (file) void importFacts(file);
+      }} />
       {loaded ? <details className="usage-stats-source__menu"><summary>Change report</summary><div>{sourceControls}</div></details> : sourceControls}
     </div>
     <p className="usage-stats__sr" role="status">{status === "loading" ? "Loading numeric usage." : status === "ready" ? `${loaded?.scope === "example" ? "Synthetic example" : loaded?.scope === "local" ? "Local report" : "Account usage"} loaded.` : ""}</p>
+    {facts.absence !== null && <p className="usage-stats__notice" role="alert">{facts.absence === "window" ? "Session facts support at most 31 days between the first and last observation. Open a report with a shorter window." : facts.absence === "limit" ? "This session-facts file exceeds the bounded record limit. Open a smaller report." : "This file could not be read as session facts. Choose a session-observations-v1 or rich-facts-v1 JSON file up to 8 MiB. Any facts loaded before are closed."}</p>}
     {status === "invalid_file" && <p className="usage-stats__notice" role="alert">This file could not be read as a numeric usage report. Choose a client-stats-v2 JSON report up to 32 MiB. Your previous report is unchanged.</p>}
     {status === "unavailable" && <div className="usage-stats__notice" role="alert"><strong>Account usage could not be loaded</strong>
       <p>Your saved measurements have not changed. Any report below is the last one loaded. You can retry, request a shorter period, or inspect a local report.</p>
@@ -198,6 +219,8 @@ export function StatsDashboard({ todayUtcDay, remoteEnabled = false, startWithAc
         const id = pending.current.id;
         return () => pending.current.id === id && (loaded.scope !== "account" || currentUsageAccountScope(loaded.authority));
       }}
+      rich={loaded.scope === "account" ? { document: null, absence: "hosted" } satisfies RichExplorerSource
+        : { document: facts.document, absence: facts.document ? null : "not-loaded", onOpen: () => factsPicker.current?.click(), label: facts.name === null ? undefined : `Session facts from ${facts.name}` } satisfies RichExplorerSource}
       initialSelection={loaded.selection} busy={status === "loading"} onRangeRequest={loaded.scope === "account" ? loadAccount : undefined} onRefresh={loaded.scope === "account" ? filters => loadAccount({ firstUtcDay: filters.firstUtcDay, dayCount: filters.dayCount }, { client: filters.client, provider: filters.provider, model: filters.model, basis: filters.basis }) : undefined} />}
     {status === "loading" && !loaded && <StatsSkeleton />}
     {status === "idle" && <section className="usage-stats__empty"><h2>See the whole usage picture</h2><p>Open a numeric report to compare clients and models, inspect daily trends, and export exact totals. The file stays in this browser; opening it does not publish or upload anything.</p>

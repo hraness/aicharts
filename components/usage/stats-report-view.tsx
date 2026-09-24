@@ -10,6 +10,7 @@ import { exportCurrentStatsImage } from "./stats-export";
 import { useStatsMetricQuery, useStatsMetricDetail } from "./stats-metric-query";
 import type { MetricPresentation } from "./stats-metric-presentation";
 import { StatsMetricExplorer } from "./stats-metric-explorer";
+import type { RichExplorerSource } from "./rich-metric-explorer";
 import { StatsMetricDailyTable } from "./stats-metric-daily-table";
 import {
   ALL_STATS, formatStatsCompact, formatStatsDay, formatStatsInteger,
@@ -38,8 +39,8 @@ function saveCsv(text: string | Blob) {
   setTimeout(() => URL.revokeObjectURL(url), 1_000);
 }
 
-export function StatsReportView({ report, session, scope, todayUtcDay, onRangeRequest, onRefresh, initialSelection, captureExport, busy = false }: Readonly<{
-  report: UsageStatsReport | MetricReportMetadata; session?: MetricReportSession; scope: Scope; todayUtcDay: number;
+export function StatsReportView({ report, session, scope, todayUtcDay, onRangeRequest, onRefresh, initialSelection, captureExport, busy = false, rich }: Readonly<{
+  report: UsageStatsReport | MetricReportMetadata; session?: MetricReportSession; scope: Scope; todayUtcDay: number; rich?: RichExplorerSource;
   onRangeRequest?: (range: StatsRange, selection: StatsSelection) => void;
   onRefresh?: (filters: StatsFilters) => void; initialSelection?: StatsSelection; captureExport?: () => (() => boolean); busy?: boolean;
 }>) {
@@ -488,6 +489,7 @@ export function StatsReportView({ report, session, scope, todayUtcDay, onRangeRe
         setGrouping(dimension); if (secondGrouping === dimension) setSecondGrouping(null); if (split !== null) setSplit(dimension);
       } else if (dimension !== null) setSecondGrouping(dimension);
     }}
+      rich={rich ?? { document: null, absence: scope === "account" ? "hosted" : "not-loaded" }}
       secondary={secondGrouping} onSecondary={setSecondGrouping} onCostKind={setCostKind} pending={computation.pending} prepareExport={() => computation.prepare("json")}
       onMetricSort={() => setRankByMetric(true)} captureExport={() => {
         const epoch = exportLifetime.current, authority = captureExport?.() ?? (() => true);
