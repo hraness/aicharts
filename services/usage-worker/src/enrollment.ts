@@ -16,9 +16,8 @@ import { accountConsentWork, accountProjectionWork, accountWorkDeadline, account
 import { parseContributionQuery, type ContributionQuery, type ContributionQueryError, type ContributionQueryResult } from "../../../lib/usage/contribution-query";
 import { ContributionQueryFault, queryContributionPage } from "./contribution-query";
 import { parseContributionHeadQuery, type ContributionHeadQueryResult } from "../../../lib/usage/contribution-head-query";
-import { CONTRIBUTION_SCRUB_DEADLINE_MS, parseContributionScrubRequest, parseContributionScrubResult,
-  type ContributionScrubResult } from "../../../lib/usage/contribution-scrub";
-import { scrubContributionCell } from "./contribution-scrub";
+import { CONTRIBUTION_SCRUB_DEADLINE_MS, parseContributionScrubRequest, parseContributionScrubResult, type ContributionScrubResult, parseContributionScrubJobRequest, parseContributionScrubJobResult, type ContributionScrubJobResult } from "../../../lib/usage/contribution-scrub";
+import { scrubContributionCell, scrubContributionJobCell } from "./contribution-scrub";
 import { AccountContributionRebuild } from "./contribution-rebuild";
 import { CONTRIBUTION_REBUILD_SCHEMA, ContributionRebuildFault, ContributionRebuildState } from "./contribution-rebuild-state";
 import { CONTRIBUTION_REBUILD_DEADLINE_MS, isContributionRebuildError, parseContributionRebuildRequest,
@@ -2265,5 +2264,77 @@ export class AccountEnrollment extends DurableObject<Env> {
         } finally { await this.#fenceSettle(request.accountId, acquired.value.token, observation.committed); }
       } finally { if (this.#contributionRebuildFlight === marker) this.#contributionRebuildFlight = null; }
     });
+  }
+
+  /** Trusted coordinator diagnostic for accounts above the single-cell head
+   * envelope (plan 6.3): one cell of a rebuild job's verified scratch root
+   * against the job's pinned published root. No public route, no repair
+   * authority, no source reads; the job's own bounded, resumable head walk is
+   * the whole-account evidence. The invocation shares the single-cell scrub's
+   * nonrenewable deadline and authority fencing. Implemented, not
+   * live-qualified: the contributions flag stays off in every deployment. */
+  async scrubContributionJobCell(input: unknown): Promise<ContributionScrubJobResult> {
+    const request = parseContributionScrubJobRequest(input);
+    if (!request) return { ok: false, error: "invalid_input" };
+    if (!this.#contributionsEnabled()) return { ok: false, error: "not_started" };
+    if (this.#generation() !== request.generation) return { ok: false, error: "recovery_required" };
+    let retired = false, timer: ReturnType<typeof setTimeout> | undefined;
+    const deadline = performance.now() + CONTRIBUTION_SCRUB_DEADLINE_MS, expired = Object.freeze({});
+    const live = () => { if (retired || performance.now() >= deadline) throw expired; };
+    const run = async (): Promise<ContributionScrubJobResult> => {
+      live();
+      const before = await this.#readAuthority(request.accountId, request.generation);
+      live();
+      if (before !== null) return { ok: false, error: this.#contributionError(before) };
+      if (!this.#contributionsPresent() || !this.#contributionProjectionPresent() || !this.#contributionRebuildPresent()) return { ok: false, error: "not_started" };
+      const scope = { accountId: request.accountId, sessionExpiresAtMs: CONTRIBUTION_MAX_TIME };
+      const observation: AdmissionObservation = { generation: request.generation, observed: Date.now(), fence: null, committed: false };
+      const original = this.#privateDaysSnapshot(scope, observation, state => Object.freeze({ ...state.anchor }));
+      if (!original.ok) return { ok: false, error: this.#contributionError(original.error) };
+      const firstAnchor = await readNamespaceAnchor(this.env.CONTROL, request.accountId);
+      live();
+      if (!firstAnchor || !sameNamespaceAnchor(firstAnchor, original.value)) return { ok: false, error: "recovery_required" };
+      const observe = () => {
+        live();
+        const current = this.#privateDaysSnapshot(scope, observation, state => {
+          if (!sameNamespaceAnchor(state.anchor, original.value)) throw new ContributionFault("recovery_required");
+          return Object.freeze({ accountId: state.accountId, generation: state.generation,
+            active: state.phase === "active", observedAtMs: observation.observed });
+        });
+        if (!current.ok) throw new ContributionFault(this.#contributionError(current.error));
+        return current.value;
+      };
+      const rebuild = new ContributionRebuildState(this.ctx.storage);
+      const authority = observe();
+      const originalStatus = JSON.stringify(rebuild.status(request.jobId, authority));
+      const checked = await scrubContributionJobCell(this.env.STAGING, request, rebuild, observe);
+      live();
+      const lastAnchor = await readNamespaceAnchor(this.env.CONTROL, request.accountId);
+      live();
+      if (!lastAnchor || !sameNamespaceAnchor(lastAnchor, original.value)) return { ok: false, error: "recovery_required" };
+      const after = await this.#readAuthority(request.accountId, request.generation);
+      live();
+      if (after !== null) return { ok: false, error: this.#contributionError(after) };
+      const final = observe();
+      if (checked.ok) {
+        // Any job, source or projection movement during the outer authority
+        // awaits invalidates the receipt even though the roots stay readable.
+        const status = rebuild.status(request.jobId, final);
+        if (status === null || status.readiness !== "ready" || status.pending || status.receipt.version !== request.expectedVersion
+          || status.receipt.sourceRevision !== request.expectedRevision || (status.receipt.scratchRoot?.hash ?? null) !== checked.value.scratchRootHash
+          || (status.receipt.publishedRoot?.hash ?? null) !== checked.value.rootHash || JSON.stringify(status) !== originalStatus) throw new ContributionFault("conflict");
+      }
+      return parseContributionScrubJobResult(request, checked) ?? { ok: false, error: "storage_invalid" };
+    };
+    try {
+      const timeout = new Promise<never>((_, reject) => {
+        timer = setTimeout(() => { retired = true; reject(expired); }, CONTRIBUTION_SCRUB_DEADLINE_MS);
+      });
+      const result = await Promise.race([run(), timeout]);
+      live();
+      return result;
+    } catch (cause) {
+      return { ok: false, error: cause === expired ? "deadline" : cause instanceof ContributionFault ? cause.code : "storage_unavailable" };
+    } finally { retired = true; clearTimeout(timer); }
   }
 }
