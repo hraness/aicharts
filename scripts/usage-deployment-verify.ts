@@ -57,7 +57,9 @@ export const defaultOptions: Options = Object.freeze({
   deploymentId: null, projectId: null, output: "target/assurance/deployment/receipt.json",
 });
 
-const fail = (code: string): never => { throw new Error(`deployment_verify_${code}`); };
+// A function declaration (explicitly typed) lets control-flow analysis treat
+// each call as an assertion that never returns.
+function fail(code: string): never { throw new Error(`deployment_verify_${code}`); }
 
 export function parseArguments(argv: readonly string[], base: Options = defaultOptions): Options {
   const options = { ...base };
