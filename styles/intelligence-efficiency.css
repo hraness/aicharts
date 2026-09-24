@@ -1,5 +1,5 @@
 .intelligence-efficiency {
-  --brand-key: #805424;
+  --brand-key: light-dark(#805424, #d0a77c);
   --option-picker-accent: var(--brand-key);
   border-block: 1px solid var(--line);
   display: grid;
@@ -7,9 +7,6 @@
   padding: 24px var(--chart-content-inset);
 }
 
-[data-theme="dark"] .intelligence-efficiency {
-  --brand-key: #d0a77c;
-}
 
 .intelligence-efficiency__header {
   display: grid;

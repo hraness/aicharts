@@ -33,63 +33,28 @@
 }
 
 :root {
-  --background: #f8f7f4;
-  --foreground: #1c1917;
-  --muted: #6f6962;
-  --faint: #918a82;
-  --secondary: #ebe8e3;
-  --surface-raised: #fffefa;
-  --popover: #fffefa;
-  --grid: #dfdcd6;
-  --line: #b9b3ab;
-  --success: #26814d;
-  --warning: #a65f00;
   --space-1: .25rem;
   --space-3: .75rem;
   --space-4: 1rem;
   --text-body: .9375rem;
-  --text-caption: .75rem;
+  --text-caption: .8125rem;
   --font-weight-bold: 700;
   --font-sans: var(--font-text);
-  --font-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
   --interactive-target-min: 44px;
   --radius-lg: 14px;
-  --elevation-overlay: 0 18px 54px rgb(33 25 18 / 20%);
-  --surface: var(--surface-raised);
-  --inverse: var(--foreground);
-  --inverse-foreground: var(--background);
-  --hraness-site-accent: #1f5eea;
-  --hraness-site-accent-ink: #ffffff;
+  --hraness-site-accent: var(--primary);
+  --hraness-site-accent-ink: var(--primary-foreground);
   --aicharts-measure: 80rem;
   --aicharts-gutter: clamp(1.25rem, 4vw, 3rem);
-  color-scheme: light;
-}
-
-:root[data-theme="dark"] {
-  --background: #12100f;
-  --foreground: #f5f2ed;
-  --muted: #aaa29a;
-  --faint: #827a72;
-  --secondary: #292522;
-  --surface-raised: #1d1a18;
-  --popover: #211d1a;
-  --grid: #302b27;
-  --line: #514a44;
-  --success: #5fc98b;
-  --warning: #efae55;
-  --elevation-overlay: 0 18px 58px rgb(0 0 0 / 58%);
-  --hraness-site-accent: #8fb0ff;
-  --hraness-site-accent-ink: #0d1a3d;
-  color-scheme: dark;
 }
 
 /* Once the palette bridge applies, shared roles repaint the vendored plain
- * surfaces; the data-theme rules remain the pre-bootstrap fallback. */
-:root[data-palette][data-theme]:has(> body.plain-site) {
+ * surfaces in saved modes and during the no-JavaScript system appearance. */
+:root[data-palette]:has(> body.plain-site) {
   background: var(--background);
 }
-:root[data-palette][data-theme] .plain-site,
-.plain-site[data-palette][data-theme] {
+:root[data-palette] .plain-site,
+.plain-site[data-palette] {
   --plain-background: var(--background);
   --plain-foreground: var(--foreground);
   --plain-link: var(--primary);
@@ -238,7 +203,7 @@ body {
 .ui-menu__label, .ui-menu__description { display: block; }
 
 .ui-segmented-control {
-  background: color-mix(in oklch, var(--surface-raised) 92%, transparent);
+  background: color-mix(in srgb, var(--surface-raised) 92%, transparent);
   border: 1px solid var(--grid);
   border-radius: 10px;
 }
@@ -1076,7 +1041,7 @@ body {
   z-index: 6;
 }
 .share-trigger.ui-surface {
-  background: color-mix(in oklch, var(--surface-raised) 92%, transparent);
+  background: color-mix(in srgb, var(--surface-raised) 92%, transparent);
   color: var(--foreground);
 }
 .share-trigger.ui-surface:hover,
@@ -1262,7 +1227,7 @@ body {
 
 .pin-status {
   align-items: center;
-  background: color-mix(in oklch, var(--surface-raised) 92%, transparent);
+  background: color-mix(in srgb, var(--surface-raised) 92%, transparent);
   border-radius: 10px;
   display: flex;
   font-size: var(--text-caption);
@@ -1439,7 +1404,7 @@ body {
 }
 .chart-tooltip {
   backdrop-filter: blur(16px);
-  background: color-mix(in oklch, var(--popover) 94%, transparent);
+  background: color-mix(in srgb, var(--popover) 94%, transparent);
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
   box-shadow: var(--elevation-overlay);
@@ -1598,7 +1563,7 @@ body {
   grid-template-columns: minmax(0, 1fr);
 }
 .option-space-panel .ui-chart-row[data-selected] {
-  box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--foreground) 12%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--foreground) 12%, transparent);
 }
 
 .model-update-timeline {

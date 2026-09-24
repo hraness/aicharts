@@ -1,3 +1,4 @@
+import { HeroBackdrop } from "@hraness/design-kit/react";
 import { createPublicSiteMetadata } from "@hraness/web-discovery";
 import { MarketingRelated } from "@hraness/design-kit/react/server";
 import Link from "next/link";
@@ -31,7 +32,8 @@ export default function Home() {
   return <>
     <SiteHeader current="/" />
     <main className="chart-home hraness-marketing-main" id="main-content">
-      <header className="chart-page-intro">
+      <header className="chart-page-intro chart-home-hero hraness-material-wall">
+        <HeroBackdrop seed="aicharts" />
         <h1 id="home-title">{homeHeading}</h1>
         <p>{homeLede}</p>
       </header>

@@ -2,12 +2,11 @@
  * Plain site theme
  *
  * An opt-in document grammar for personal sites, open-source project pages,
- * and quiet documentation. Color appearance remains owned by `data-theme`;
- * this layer owns measure, typography, spacing, links, and minimal chrome.
+ * and quiet documentation. Shared Design Kit palettes own color appearance;
+ * this local layer owns measure, typography, spacing, links, and minimal chrome.
  */
 
 :root:has(> body.plain-site) {
-  background: #ffffff;
   overflow-x: clip;
   scrollbar-gutter: stable;
 }
@@ -16,16 +15,6 @@
   --plain-link-target-min: 0px;
   --plain-shell-measure: 34rem;
   --plain-shell-gutter: 1.25rem;
-  --plain-background: #ffffff;
-  --plain-foreground: #171717;
-  --plain-link: #2457a6;
-  --plain-line: #d8d8d8;
-  --plain-muted: #666666;
-  --plain-surface: #f4f4f4;
-  --plain-syntax-keyword: #785f28;
-  --plain-syntax-string: #2d6a42;
-  --plain-syntax-number: #9f3631;
-  --plain-syntax-name: #0d61ac;
 
   background: var(--plain-background);
   color: var(--plain-foreground);
@@ -46,43 +35,6 @@ body.plain-site {
 
 body.plain-site > main {
   flex: 1 0 auto;
-}
-
-:root[data-theme="dark"]:has(> body.plain-site) {
-  background: #151515;
-}
-
-:root[data-theme="dark"] .plain-site,
-.plain-site[data-theme="dark"] {
-  --plain-background: #151515;
-  --plain-foreground: #f2f2f2;
-  --plain-link: #8ab4ed;
-  --plain-line: #484848;
-  --plain-muted: #b6b6b6;
-  --plain-surface: #222222;
-  --plain-syntax-keyword: #c9ad74;
-  --plain-syntax-string: #76b38e;
-  --plain-syntax-number: #e18982;
-  --plain-syntax-name: #6aa9ed;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme]):has(> body.plain-site) {
-    background: #151515;
-  }
-
-  :root:not([data-theme]) > .plain-site {
-    --plain-background: #151515;
-    --plain-foreground: #f2f2f2;
-    --plain-link: #8ab4ed;
-    --plain-line: #484848;
-    --plain-muted: #b6b6b6;
-    --plain-surface: #222222;
-    --plain-syntax-keyword: #c9ad74;
-    --plain-syntax-string: #76b38e;
-    --plain-syntax-number: #e18982;
-    --plain-syntax-name: #6aa9ed;
-  }
 }
 
 .plain-site .syntax-code {

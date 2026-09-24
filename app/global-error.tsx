@@ -8,25 +8,27 @@ import {
 import { RouteErrorState, type RouteErrorProps } from "@/components/route-state";
 import "./globals.css";
 
-const initialPalette = getDesignPaletteTheme("paper", "light");
+const initialPalette = getDesignPaletteTheme("tokyo-night", "light");
 
 export default function GlobalError(props: RouteErrorProps) {
   return (
     <html
       className={initialPalette.className}
-      data-palette="paper"
+      data-palette="tokyo-night"
+      data-hraness-material="lantern"
+      data-hraness-pattern="mesh"
       lang="en"
       suppressHydrationWarning
     >
       <head>
         <meta content="light dark" name="color-scheme" />
         <meta
-          content="#f8f7f4"
+          content="#e1e2e7"
           media="(prefers-color-scheme: light)"
           name="theme-color"
         />
         <meta
-          content="#12100f"
+          content="#1a1b26"
           media="(prefers-color-scheme: dark)"
           name="theme-color"
         />
@@ -35,10 +37,10 @@ export default function GlobalError(props: RouteErrorProps) {
       </head>
       <body>
         <DesignPaletteProvider
-          defaultPreference={{ palette: "paper", mode: "system" }}
+          defaultPreference={{ palette: "tokyo-night", mode: "system" }}
           legacyStorageKey="aicharts-theme"
         >
-          <ThemeColorSync darkColor="#12100f" lightColor="#f8f7f4" />
+          <ThemeColorSync darkColor="#1a1b26" lightColor="#e1e2e7" />
           <RouteErrorState {...props} />
         </DesignPaletteProvider>
       </body>

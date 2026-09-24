@@ -4,8 +4,9 @@
   --model-card-rule: var(--grid);
 
   aspect-ratio: 1;
-  background: color-mix(in oklch, var(--secondary) 42%, var(--background));
-  border: 1px solid var(--grid);
+  background: var(--hraness-material-plane);
+  border: 1px solid transparent;
+  box-shadow: var(--hraness-material-lift);
   border-radius: .85rem;
   color: var(--model-card-ink);
   contain: paint;
@@ -34,8 +35,8 @@
 
 .model-logo-card__provider,
 .model-logo-card__release {
-  font-size: max(.625rem, 2.8cqi);
-  letter-spacing: .08em;
+  font-size: max(.6875rem, 2.8cqi);
+  letter-spacing: .045em;
   line-height: 1.2;
   text-transform: uppercase;
 }
@@ -58,7 +59,7 @@
 
 .model-logo-card__release > span:last-child {
   font-family: var(--font-mono);
-  font-size: max(.5625rem, 2.4cqi);
+  font-size: max(.6875rem, 2.4cqi);
   letter-spacing: .04em;
   margin-block-start: .35rem;
 }
@@ -101,7 +102,7 @@
   font-size: clamp(1rem, 7.2cqi, 1.55rem);
   font-weight: 650;
   letter-spacing: -.035em;
-  line-height: 1.05;
+  line-height: 1.15;
   margin: 0;
   overflow: hidden;
   text-wrap: balance;
@@ -129,7 +130,7 @@
 .model-logo-card__stat span {
   color: var(--model-card-muted);
   font-size: max(.625rem, 2.4cqi);
-  letter-spacing: .08em;
+  letter-spacing: .045em;
   text-transform: uppercase;
 }
 
@@ -169,7 +170,7 @@
   --model-cards-sticky-offset: var(--model-cards-header-block-size);
 
   background:
-    radial-gradient(circle at 50% -10%, color-mix(in oklch, var(--brand-key) 12%, transparent), transparent 34rem),
+    radial-gradient(circle at 50% -10%, color-mix(in srgb, var(--brand-key) 12%, transparent), transparent 34rem),
     var(--background);
   color: var(--foreground);
   display: flex;
@@ -292,8 +293,8 @@
 
 .model-release-radar {
   background:
-    radial-gradient(circle at 82% 18%, color-mix(in oklch, var(--accent) 8%, transparent), transparent 38%),
-    color-mix(in oklch, var(--secondary) 30%, transparent);
+    radial-gradient(circle at 82% 18%, color-mix(in srgb, var(--accent) 8%, transparent), transparent 38%),
+    color-mix(in srgb, var(--secondary) 30%, transparent);
   border-block: 1px solid var(--grid);
   display: grid;
   gap: 1rem clamp(1rem, 2.5vw, 2.25rem);
@@ -342,7 +343,7 @@
 
 .model-release-radar li a {
   align-items: start;
-  background: color-mix(in oklch, var(--background) 55%, transparent);
+  background: color-mix(in srgb, var(--background) 55%, transparent);
   border: 1px solid color-mix(in oklch, var(--release-provider) 30%, var(--grid));
   border-radius: .7rem;
   color: var(--foreground);
@@ -407,7 +408,7 @@
 
 .model-card-gallery__scope-filter {
   align-items: center;
-  background: color-mix(in oklch, var(--secondary) 52%, transparent);
+  background: color-mix(in srgb, var(--secondary) 52%, transparent);
   border: 1px solid var(--grid);
   border-radius: .65rem;
   color: var(--foreground);
@@ -449,7 +450,7 @@
   color: var(--background);
 }
 .model-card-gallery__scope-filter[data-selected] small {
-  color: color-mix(in oklch, var(--background) 72%, transparent);
+  color: color-mix(in srgb, var(--background) 72%, transparent);
 }
 
 .model-card-gallery__filter-definition {
@@ -545,7 +546,7 @@
 .model-card-detail__related h2,
 .model-commentary h2 {
   font-size: .82rem;
-  letter-spacing: .08em;
+  letter-spacing: .045em;
   margin-block-end: .9rem;
   text-transform: uppercase;
 }
@@ -565,7 +566,7 @@
 .model-card-detail__facts dl { display: grid; margin: 0; }
 .model-card-detail__facts dl > div {
   align-items: baseline;
-  border-block-start: 1px solid color-mix(in oklch, var(--grid) 58%, transparent);
+  border-block-start: 1px solid color-mix(in srgb, var(--grid) 58%, transparent);
   display: grid;
   gap: 1rem;
   grid-template-columns: minmax(7rem, .42fr) minmax(0, 1fr);
@@ -575,7 +576,7 @@
 .model-card-detail__facts dd { margin: 0; min-inline-size: 0; overflow-wrap: anywhere; }
 .model-card-detail__facts code { font-family: var(--font-mono); font-size: .82rem; }
 .model-card-detail__code-token {
-  background: color-mix(in oklch, var(--secondary) 82%, transparent);
+  background: color-mix(in srgb, var(--secondary) 82%, transparent);
   border: 1px solid color-mix(in oklch, var(--grid) 78%, var(--foreground) 22%);
   border-radius: .36rem;
   box-decoration-break: clone;
@@ -629,7 +630,7 @@
 }
 
 .model-commentary blockquote {
-  background: color-mix(in oklch, var(--secondary) 40%, transparent);
+  background: color-mix(in srgb, var(--secondary) 40%, transparent);
   border: 1px solid var(--grid);
   border-radius: .7rem;
   margin: 0;
