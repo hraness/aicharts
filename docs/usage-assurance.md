@@ -67,10 +67,15 @@ Structured results must contain every required assertion and cover. An exit code
 or timed-out solver summary alone cannot establish success.
 
 The current Kani inventory has seventeen production harnesses and forty-four
-reachable covers, with two production mutations. Nineteen unreachable checks
-have individually reviewed source or installed-library hash bindings; a new
-unreachable assertion refuses admission. Those exceptions cannot replace a
-reachable assertion in the actual harness.
+reachable covers, with two production mutations. On each supported platform,
+nineteen unreachable checks have individually reviewed source or
+installed-library hash bindings: six bound to the workspace source and thirteen
+bound to that platform's own bundled standard-library and `kani_core` rlibs.
+A new unreachable assertion refuses admission, and neither platform inherits
+the other's exceptions. Those exceptions cannot replace a reachable assertion
+in the actual harness. The Linux list was reviewed from the first ubuntu-24.04
+CI execution receipt; the required Formal verification job is the standing
+Linux execution evidence.
 
 `usage:formal:theorems` freshly extracts selected production bodies through
 pinned Charon/Aeneas and checks the maintained Lean proofs. Separate unbounded

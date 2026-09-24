@@ -330,10 +330,284 @@
           "sha256": "d28cb0e099f1c7fe85910e03eaea7b04cdcb0ce88b393acd17cfa9e849fda820"
         }
       },
-      "unreachableAssertions": []
+      "unreachableAssertions": [
+        {
+          "harness": "proofs::detailed_profile_full_u128_never_fabricates_ttl",
+          "function": "std::fmt::Arguments::<'_>::from_str",
+          "category": "assertion",
+          "description": "attempt to shift left with overflow",
+          "location": {
+            "file": "/home/runner/.rustup/toolchains/nightly-2026-08-21-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/fmt/mod.rs",
+            "line": "820",
+            "column": "38"
+          },
+          "binding": {
+            "kind": "installed",
+            "sha256": "72b277eb3f3bf311762c060b9b55d78130e72ccd2da2994c2b4ed9f9a74cd281",
+            "path": "target/assurance-tools/kani-linux/kani-0.68.0/lib/rustlib/x86_64-unknown-linux-gnu/lib/libcore-8e75218055a4771a.rlib"
+          },
+          "reviewedSource": {
+            "url": "https://raw.githubusercontent.com/rust-lang/rust/8925ea358/library/core/src/fmt/mod.rs",
+            "sha256": "54596bb5eb43b6f24c4815543c486c997ccac39f9b6dadefb4c98ddd106317c3"
+          },
+          "rationale": "Pinned Rust formatting constructs the panic message with s.len()<<1; shift count 1 is always below the target usize width. This is a formatting safety guard, not a harness domain assertion."
+        },
+        {
+          "harness": "proofs::six_bucket_sum_matches_wider_integer_reference",
+          "function": "kani::rustc_intrinsics::ptr_offset_from::<u64>",
+          "category": "assertion",
+          "description": "attempt to calculate the remainder with a divisor of zero",
+          "location": {
+            "file": "library/kani_core/src/models.rs",
+            "line": "93",
+            "column": "25"
+          },
+          "binding": {
+            "kind": "installed",
+            "sha256": "68c271bd1992d925936f5ec495e56ab0050fdea4d5692288268da79c315274ed",
+            "path": "target/assurance-tools/kani-linux/kani-0.68.0/lib/libkani_core-47948813a3681a94.rlib"
+          },
+          "reviewedSource": {
+            "url": "https://raw.githubusercontent.com/model-checking/kani/kani-0.68.0/library/kani_core/src/models.rs",
+            "sha256": "547ff8ab08feb9d26cc70d03f4be9b8267a52148695ddb10264c75f81ee4a39f"
+          },
+          "rationale": "Pinned Kani ptr_offset_from::<u64> divides/remainders an isize byte offset by sizeof(u64)=8: neither zero divisor nor MIN/-1 overflow is possible. Allocation/alignment safety checks and the actual numeric assertion remain checked."
+        },
+        {
+          "harness": "proofs::six_bucket_sum_matches_wider_integer_reference",
+          "function": "kani::rustc_intrinsics::ptr_offset_from::<u64>",
+          "category": "assertion",
+          "description": "attempt to calculate the remainder with overflow",
+          "location": {
+            "file": "library/kani_core/src/models.rs",
+            "line": "93",
+            "column": "25"
+          },
+          "binding": {
+            "kind": "installed",
+            "sha256": "68c271bd1992d925936f5ec495e56ab0050fdea4d5692288268da79c315274ed",
+            "path": "target/assurance-tools/kani-linux/kani-0.68.0/lib/libkani_core-47948813a3681a94.rlib"
+          },
+          "reviewedSource": {
+            "url": "https://raw.githubusercontent.com/model-checking/kani/kani-0.68.0/library/kani_core/src/models.rs",
+            "sha256": "547ff8ab08feb9d26cc70d03f4be9b8267a52148695ddb10264c75f81ee4a39f"
+          },
+          "rationale": "Pinned Kani ptr_offset_from::<u64> divides/remainders an isize byte offset by sizeof(u64)=8: neither zero divisor nor MIN/-1 overflow is possible. Allocation/alignment safety checks and the actual numeric assertion remain checked."
+        },
+        {
+          "harness": "proofs::six_bucket_sum_matches_wider_integer_reference",
+          "function": "kani::rustc_intrinsics::ptr_offset_from::<u64>",
+          "category": "assertion",
+          "description": "attempt to divide by zero",
+          "location": {
+            "file": "library/kani_core/src/models.rs",
+            "line": "97",
+            "column": "21"
+          },
+          "binding": {
+            "kind": "installed",
+            "sha256": "68c271bd1992d925936f5ec495e56ab0050fdea4d5692288268da79c315274ed",
+            "path": "target/assurance-tools/kani-linux/kani-0.68.0/lib/libkani_core-47948813a3681a94.rlib"
+          },
+          "reviewedSource": {
+            "url": "https://raw.githubusercontent.com/model-checking/kani/kani-0.68.0/library/kani_core/src/models.rs",
+            "sha256": "547ff8ab08feb9d26cc70d03f4be9b8267a52148695ddb10264c75f81ee4a39f"
+          },
+          "rationale": "Pinned Kani ptr_offset_from::<u64> divides/remainders an isize byte offset by sizeof(u64)=8: neither zero divisor nor MIN/-1 overflow is possible. Allocation/alignment safety checks and the actual numeric assertion remain checked."
+        },
+        {
+          "harness": "proofs::six_bucket_sum_matches_wider_integer_reference",
+          "function": "kani::rustc_intrinsics::ptr_offset_from::<u64>",
+          "category": "assertion",
+          "description": "attempt to divide with overflow",
+          "location": {
+            "file": "library/kani_core/src/models.rs",
+            "line": "97",
+            "column": "21"
+          },
+          "binding": {
+            "kind": "installed",
+            "sha256": "68c271bd1992d925936f5ec495e56ab0050fdea4d5692288268da79c315274ed",
+            "path": "target/assurance-tools/kani-linux/kani-0.68.0/lib/libkani_core-47948813a3681a94.rlib"
+          },
+          "reviewedSource": {
+            "url": "https://raw.githubusercontent.com/model-checking/kani/kani-0.68.0/library/kani_core/src/models.rs",
+            "sha256": "547ff8ab08feb9d26cc70d03f4be9b8267a52148695ddb10264c75f81ee4a39f"
+          },
+          "rationale": "Pinned Kani ptr_offset_from::<u64> divides/remainders an isize byte offset by sizeof(u64)=8: neither zero divisor nor MIN/-1 overflow is possible. Allocation/alignment safety checks and the actual numeric assertion remain checked."
+        },
+        {
+          "harness": "proofs::six_bucket_sum_matches_wider_integer_reference",
+          "function": "std::fmt::Arguments::<'_>::from_str",
+          "category": "assertion",
+          "description": "attempt to shift left with overflow",
+          "location": {
+            "file": "/home/runner/.rustup/toolchains/nightly-2026-08-21-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/fmt/mod.rs",
+            "line": "820",
+            "column": "38"
+          },
+          "binding": {
+            "kind": "installed",
+            "sha256": "72b277eb3f3bf311762c060b9b55d78130e72ccd2da2994c2b4ed9f9a74cd281",
+            "path": "target/assurance-tools/kani-linux/kani-0.68.0/lib/rustlib/x86_64-unknown-linux-gnu/lib/libcore-8e75218055a4771a.rlib"
+          },
+          "reviewedSource": {
+            "url": "https://raw.githubusercontent.com/rust-lang/rust/8925ea358/library/core/src/fmt/mod.rs",
+            "sha256": "54596bb5eb43b6f24c4815543c486c997ccac39f9b6dadefb4c98ddd106317c3"
+          },
+          "rationale": "Pinned Rust formatting constructs the panic message with s.len()<<1; shift count 1 is always below the target usize width. This is a formatting safety guard, not a harness domain assertion."
+        },
+        {
+          "harness": "proofs::six_component_dominance_full_u64_is_partial_order_comparison",
+          "function": "std::fmt::Arguments::<'_>::from_str",
+          "category": "assertion",
+          "description": "attempt to shift left with overflow",
+          "location": {
+            "file": "/home/runner/.rustup/toolchains/nightly-2026-08-21-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/fmt/mod.rs",
+            "line": "820",
+            "column": "38"
+          },
+          "binding": {
+            "kind": "installed",
+            "sha256": "72b277eb3f3bf311762c060b9b55d78130e72ccd2da2994c2b4ed9f9a74cd281",
+            "path": "target/assurance-tools/kani-linux/kani-0.68.0/lib/rustlib/x86_64-unknown-linux-gnu/lib/libcore-8e75218055a4771a.rlib"
+          },
+          "reviewedSource": {
+            "url": "https://raw.githubusercontent.com/rust-lang/rust/8925ea358/library/core/src/fmt/mod.rs",
+            "sha256": "54596bb5eb43b6f24c4815543c486c997ccac39f9b6dadefb4c98ddd106317c3"
+          },
+          "rationale": "Pinned Rust formatting constructs the panic message with s.len()<<1; shift count 1 is always below the target usize width. This is a formatting safety guard, not a harness domain assertion."
+        },
+        {
+          "harness": "proofs::wire_profile_round_trip_preserves_full_admitted_counters",
+          "function": "kani::rustc_intrinsics::ptr_offset_from::<u64>",
+          "category": "assertion",
+          "description": "attempt to calculate the remainder with a divisor of zero",
+          "location": {
+            "file": "library/kani_core/src/models.rs",
+            "line": "93",
+            "column": "25"
+          },
+          "binding": {
+            "kind": "installed",
+            "sha256": "68c271bd1992d925936f5ec495e56ab0050fdea4d5692288268da79c315274ed",
+            "path": "target/assurance-tools/kani-linux/kani-0.68.0/lib/libkani_core-47948813a3681a94.rlib"
+          },
+          "reviewedSource": {
+            "url": "https://raw.githubusercontent.com/model-checking/kani/kani-0.68.0/library/kani_core/src/models.rs",
+            "sha256": "547ff8ab08feb9d26cc70d03f4be9b8267a52148695ddb10264c75f81ee4a39f"
+          },
+          "rationale": "Pinned Kani ptr_offset_from::<u64> divides/remainders an isize byte offset by sizeof(u64)=8: neither zero divisor nor MIN/-1 overflow is possible. Allocation/alignment safety checks and the actual numeric assertion remain checked."
+        },
+        {
+          "harness": "proofs::wire_profile_round_trip_preserves_full_admitted_counters",
+          "function": "kani::rustc_intrinsics::ptr_offset_from::<u64>",
+          "category": "assertion",
+          "description": "attempt to calculate the remainder with overflow",
+          "location": {
+            "file": "library/kani_core/src/models.rs",
+            "line": "93",
+            "column": "25"
+          },
+          "binding": {
+            "kind": "installed",
+            "sha256": "68c271bd1992d925936f5ec495e56ab0050fdea4d5692288268da79c315274ed",
+            "path": "target/assurance-tools/kani-linux/kani-0.68.0/lib/libkani_core-47948813a3681a94.rlib"
+          },
+          "reviewedSource": {
+            "url": "https://raw.githubusercontent.com/model-checking/kani/kani-0.68.0/library/kani_core/src/models.rs",
+            "sha256": "547ff8ab08feb9d26cc70d03f4be9b8267a52148695ddb10264c75f81ee4a39f"
+          },
+          "rationale": "Pinned Kani ptr_offset_from::<u64> divides/remainders an isize byte offset by sizeof(u64)=8: neither zero divisor nor MIN/-1 overflow is possible. Allocation/alignment safety checks and the actual numeric assertion remain checked."
+        },
+        {
+          "harness": "proofs::wire_profile_round_trip_preserves_full_admitted_counters",
+          "function": "kani::rustc_intrinsics::ptr_offset_from::<u64>",
+          "category": "assertion",
+          "description": "attempt to divide by zero",
+          "location": {
+            "file": "library/kani_core/src/models.rs",
+            "line": "97",
+            "column": "21"
+          },
+          "binding": {
+            "kind": "installed",
+            "sha256": "68c271bd1992d925936f5ec495e56ab0050fdea4d5692288268da79c315274ed",
+            "path": "target/assurance-tools/kani-linux/kani-0.68.0/lib/libkani_core-47948813a3681a94.rlib"
+          },
+          "reviewedSource": {
+            "url": "https://raw.githubusercontent.com/model-checking/kani/kani-0.68.0/library/kani_core/src/models.rs",
+            "sha256": "547ff8ab08feb9d26cc70d03f4be9b8267a52148695ddb10264c75f81ee4a39f"
+          },
+          "rationale": "Pinned Kani ptr_offset_from::<u64> divides/remainders an isize byte offset by sizeof(u64)=8: neither zero divisor nor MIN/-1 overflow is possible. Allocation/alignment safety checks and the actual numeric assertion remain checked."
+        },
+        {
+          "harness": "proofs::wire_profile_round_trip_preserves_full_admitted_counters",
+          "function": "kani::rustc_intrinsics::ptr_offset_from::<u64>",
+          "category": "assertion",
+          "description": "attempt to divide with overflow",
+          "location": {
+            "file": "library/kani_core/src/models.rs",
+            "line": "97",
+            "column": "21"
+          },
+          "binding": {
+            "kind": "installed",
+            "sha256": "68c271bd1992d925936f5ec495e56ab0050fdea4d5692288268da79c315274ed",
+            "path": "target/assurance-tools/kani-linux/kani-0.68.0/lib/libkani_core-47948813a3681a94.rlib"
+          },
+          "reviewedSource": {
+            "url": "https://raw.githubusercontent.com/model-checking/kani/kani-0.68.0/library/kani_core/src/models.rs",
+            "sha256": "547ff8ab08feb9d26cc70d03f4be9b8267a52148695ddb10264c75f81ee4a39f"
+          },
+          "rationale": "Pinned Kani ptr_offset_from::<u64> divides/remainders an isize byte offset by sizeof(u64)=8: neither zero divisor nor MIN/-1 overflow is possible. Allocation/alignment safety checks and the actual numeric assertion remain checked."
+        },
+        {
+          "harness": "proofs::wire_profile_round_trip_preserves_full_admitted_counters",
+          "function": "std::fmt::Arguments::<'_>::from_str",
+          "category": "assertion",
+          "description": "attempt to shift left with overflow",
+          "location": {
+            "file": "/home/runner/.rustup/toolchains/nightly-2026-08-21-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/fmt/mod.rs",
+            "line": "820",
+            "column": "38"
+          },
+          "binding": {
+            "kind": "installed",
+            "sha256": "72b277eb3f3bf311762c060b9b55d78130e72ccd2da2994c2b4ed9f9a74cd281",
+            "path": "target/assurance-tools/kani-linux/kani-0.68.0/lib/rustlib/x86_64-unknown-linux-gnu/lib/libcore-8e75218055a4771a.rlib"
+          },
+          "reviewedSource": {
+            "url": "https://raw.githubusercontent.com/rust-lang/rust/8925ea358/library/core/src/fmt/mod.rs",
+            "sha256": "54596bb5eb43b6f24c4815543c486c997ccac39f9b6dadefb4c98ddd106317c3"
+          },
+          "rationale": "Pinned Rust formatting constructs the panic message with s.len()<<1; shift count 1 is always below the target usize width. This is a formatting safety guard, not a harness domain assertion."
+        },
+        {
+          "harness": "proofs::wire_total_full_u64_counts_the_output_subset_once",
+          "function": "std::fmt::Arguments::<'_>::from_str",
+          "category": "assertion",
+          "description": "attempt to shift left with overflow",
+          "location": {
+            "file": "/home/runner/.rustup/toolchains/nightly-2026-08-21-x86_64-unknown-linux-gnu/lib/rustlib/src/rust/library/core/src/fmt/mod.rs",
+            "line": "820",
+            "column": "38"
+          },
+          "binding": {
+            "kind": "installed",
+            "sha256": "72b277eb3f3bf311762c060b9b55d78130e72ccd2da2994c2b4ed9f9a74cd281",
+            "path": "target/assurance-tools/kani-linux/kani-0.68.0/lib/rustlib/x86_64-unknown-linux-gnu/lib/libcore-8e75218055a4771a.rlib"
+          },
+          "reviewedSource": {
+            "url": "https://raw.githubusercontent.com/rust-lang/rust/8925ea358/library/core/src/fmt/mod.rs",
+            "sha256": "54596bb5eb43b6f24c4815543c486c997ccac39f9b6dadefb4c98ddd106317c3"
+          },
+          "rationale": "Pinned Rust formatting constructs the panic message with s.len()<<1; shift count 1 is always below the target usize width. This is a formatting safety guard, not a harness domain assertion."
+        }
+      ]
     }
   },
-  "qualification": "Official macOS/Linux artifact pins. Linux has no admitted execution receipt yet; any unreviewed unreachable assertions refuse instead of inheriting macOS exceptions.",
+  "qualification": "Official macOS/Linux artifact pins. The Linux exceptions were reviewed from the first ubuntu-24.04 CI execution receipt (PR #422): the same thirteen unreachable standard-library and kani_core assertions as macOS, bound to the Linux bundle's own rlibs. Neither platform inherits the other's exceptions.",
   "unreachableAssertions": [
     {
       "harness": "proofs::detailed_profile_full_u128_never_fabricates_ttl",

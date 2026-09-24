@@ -55,7 +55,9 @@ bun run usage:formal:theorems
 
 CI's required Formal verification job runs these gates and uploads receipts and
 diagnostics even after failure. Check and Menubar remain independently required.
-Linux artifacts are pinned, but the first Linux execution remains a separate
-qualification: unexpected unreachable Kani checks fail until their exact
-locations, source hashes and justification have been independently reviewed.
-The macOS allowlist is not inherited by Linux.
+Linux artifacts are pinned and the first Linux execution has been reviewed:
+its thirteen unreachable Kani checks matched the macOS set and are now bound to
+the Linux bundle's own rlib hashes in `verify/kani/toolchain.json`. Any further
+unexpected unreachable check fails until its exact location, source hash and
+justification have been independently reviewed. The macOS allowlist is not
+inherited by Linux.

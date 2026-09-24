@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { admitKani, kaniHarnessesSchema, rejectKaniAssumptions, unreachableAssertionSchema, unreachableBindingKey } from "./assurance-kani";
 import { mutationsSchema, type ProofProcess } from "./assurance-proof-common";
+import { z } from "zod";
 
 const read = (path: string) => JSON.parse(readFileSync(resolve(import.meta.dir, "..", path), "utf8"));
 const fixture = () => read("verify/kani/fixtures/checked-add.json");
@@ -14,6 +15,25 @@ const process: ProofProcess = { command: "cargo-kani", args: [], exitCode: 0, si
   timedOut: false, outputExceeded: false, output: "", elapsedMs: 1 };
 const admit = (raw: unknown, command = process, negative = false) => admitKani(raw, command, [harness],
   "aarch64-apple-darwin", pin.rustc, exceptions, negative ? mutation : undefined);
+
+describe("Linux unreachable-assertion exceptions", () => {
+  test("mirror the reviewed macOS exceptions exactly and bind only to the Linux bundle", () => {
+    const parse = (items: unknown) => z.array(unreachableAssertionSchema).parse(items);
+    const linux = parse(pin.platforms["linux-x64"].unreachableAssertions), darwin = parse(pin.platforms["darwin-arm64"].unreachableAssertions);
+    const shape = (entry: z.infer<typeof unreachableAssertionSchema>) => JSON.stringify([entry.harness, entry.function, entry.category, entry.description,
+      entry.location.file.replace(/^\/(?:Users|home)\/runner\/\.rustup\/toolchains\/nightly-2026-08-21-(?:aarch64-apple-darwin|x86_64-unknown-linux-gnu)\//u, "<toolchain>/"),
+      entry.location.line, entry.location.column, entry.rationale]);
+    expect(linux.length).toBe(13);
+    expect(linux.map(shape).sort()).toEqual(darwin.map(shape).sort());
+    for (const entry of linux) {
+      expect(entry.binding.kind === "installed" && entry.binding.path.startsWith("target/assurance-tools/kani-linux/")).toBe(true);
+      expect(entry.location.file.includes("apple-darwin") || entry.location.file.startsWith("/Users/")).toBe(false);
+    }
+    for (const entry of darwin) {
+      expect(entry.binding.kind === "installed" && entry.binding.path.startsWith("target/assurance-tools/kani-macos/")).toBe(true);
+    }
+  });
+});
 
 describe("Kani structured evidence admission", () => {
   test("admits completed actual assertions and all exact covers", () => {

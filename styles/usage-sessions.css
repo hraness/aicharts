@@ -36,7 +36,8 @@
 .usage-sessions__rich header { align-items: baseline; display: flex; flex-wrap: wrap; gap: .75rem 2rem; justify-content: space-between; }
 .usage-sessions__rich header p, .usage-sessions__rich header > span { color: var(--muted); font-size: .8rem; margin-block-start: .4rem; }
 .usage-sessions__rich-controls { display: flex; flex-wrap: wrap; gap: .75rem 1rem; margin-block: 1.25rem; }
-.usage-sessions__rich-controls label { color: var(--muted); display: grid; font-size: .75rem; gap: .35rem; }
+.usage-sessions__rich-control { display: grid; gap: .35rem; }
+.usage-sessions__rich-controls label { color: var(--muted); font-size: .75rem; }
 .usage-sessions__rich-controls select { background: var(--background); border: 1px solid var(--muted); border-radius: .35rem; color: var(--foreground); font: inherit; min-block-size: 2.5rem; min-inline-size: 11rem; padding: .45rem .65rem; }
 .usage-sessions__rich-grid { display: grid; gap: 1px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .usage-sessions__rich-card { background: var(--surface-raised); min-block-size: 8rem; padding: 1rem; }

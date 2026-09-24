@@ -502,7 +502,7 @@ The integration owner controls manifests/lockfiles, shared schemas/capacity/metr
 
 ### Phase 3 — Exact metric kernel and theorem pilot
 
-- **Status:** In progress — production Kani/Lean gates admitted on macOS; reproducible Linux CI qualification remains open
+- **Status:** In progress — production Kani/Lean gates admitted on macOS and, from PR #422, executed on the required ubuntu-24.04 Formal verification job with reviewed Linux Kani exceptions; source refinement and unbounded claims remain open
 - **Depends on:** 0, 1A
 - **Objective:** Production arithmetic/normalization and core aggregation laws have appropriate proof evidence.
 - **Scope:** A new I/O-free owned metric kernel (proposed crates/aicharts-metrics), Kani harnesses, profile mappings and one theorem-route pilot. The integrator owns changes to existing callers shared with ingestion lanes.
@@ -1402,3 +1402,33 @@ owned populations from activation/grant authority, preserves disabled V3 flags,
 and requires a schema-compatible recovery artifact before production promotion.
 The dated schema-6 recovery artifact does not qualify rollback after newer
 schema transitions. No production state or feature flag changed.
+
+### 2026-09-24 — Integration with main, Linux proof execution and harness repairs
+
+The joined branch was committed, merged with current `main` (through #419) and
+opened as PR #422. Integration needed one help-text conflict in the CLI entry
+point and one semantic repair: the ledger's diagnostic path now borrows the
+collection because `collection_frames` takes a reference on `main`.
+
+The first CI run exposed three Linux-only gaps that macOS evidence could not
+show. Clippy on Linux rejected a platform-process test module declared before
+the Linux `contains_only_leader` implementation; the module now closes the
+file on every target. The Formal verification job provisioned all pinned tools,
+passed the fourteen model suites and the fresh Lean extraction, and refused
+Kani because the Linux bundle reports thirteen unreachable standard-library and
+`kani_core` assertions that the macOS allowlist deliberately did not cover.
+The retained receipt shows the same thirteen entries as macOS: `core::fmt`
+panic-message shifts and `kani_core` pointer-offset division. They are now
+admitted for `linux-x64` only, bound to the SHA-256 of the Linux bundle's own
+`libcore` and `libkani_core` rlibs (hashed from the pinned archive), with the
+same reviewed rationale and source hashes. A new test requires the Linux and
+macOS lists to mirror each other exactly and to bind only to their own bundle.
+
+The browser contracts were stale relative to the account-generation binding.
+The dashboard harness now serves the account header on every state reply and
+expects the product's real refusal behavior: an authentication-required reply
+clears the private daily report and the account dashboard itself asks for
+sign-in, so only a new document restores private reads. The session token-size
+control gained an explicit label association so its accessible name is the
+label text alone. No production state, feature flag or user data changed.
+

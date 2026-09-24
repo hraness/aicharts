@@ -84,3 +84,11 @@ The harnesses avoid `Result::unwrap()` in successful branches. On the pinned
 macOS Kani toolchain it pulled unsupported panic-formatting code into
 goto-instrument's sanity pass. Explicit result assertions preserve the same
 obligation without disabling a check or changing the production function.
+
+Unreachable assertions inside the standard library or `kani_core` are admitted
+only from a platform-specific reviewed list in `toolchain.json`, bound to the
+SHA-256 of the exact bundled rlib that contains them. macOS and Linux keep
+separate lists; neither inherits the other's exceptions. The Linux list was
+reviewed from the first ubuntu-24.04 CI execution receipt and contains the same
+thirteen entries as macOS (panic formatting in `core::fmt` and pointer-offset
+arithmetic in `kani_core`), each bound to the Linux bundle's own rlib.

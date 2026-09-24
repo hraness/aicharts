@@ -35,28 +35,6 @@ fn only_leader(group: i32, pids: &[i32], bytes: i32) -> Result<bool, &'static st
     Ok(members.len() == 1)
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    #[test]
-    fn only_a_complete_single_leader_list_proves_quiescence() {
-        assert_eq!(only_leader(123, &[123, 0, 0], 4), Ok(true));
-        assert_eq!(only_leader(123, &[123, 456, 0], 8), Ok(false));
-        for (pids, bytes) in [
-            ([123, 0, 0], 0),
-            ([123, 0, 0], -1),
-            ([123, 0, 0], 3),
-            ([123, 0, 0], 12),
-            ([456, 0, 0], 4),
-            ([123, 0, 0], 8),
-        ] {
-            assert!(only_leader(123, &pids, bytes).is_err());
-        }
-        assert!(contains_only_leader(0).is_err());
-        assert!(contains_only_leader(unsafe { libc::getpgrp() }).is_err());
-    }
-}
-
 /// Linux /proc qualification: a retained leader must be present, with no live
 /// descendant in the group. An orphan zombie is already unable to run effects;
 /// reaping it belongs to its adoptive parent, not this process.
@@ -115,4 +93,26 @@ pub fn contains_only_leader(group: i32) -> Result<bool, &'static str> {
 #[cfg(not(any(target_os = "macos", target_os = "linux")))]
 pub fn contains_only_leader(_: i32) -> Result<bool, &'static str> {
     Err(INVALID)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn only_a_complete_single_leader_list_proves_quiescence() {
+        assert_eq!(only_leader(123, &[123, 0, 0], 4), Ok(true));
+        assert_eq!(only_leader(123, &[123, 456, 0], 8), Ok(false));
+        for (pids, bytes) in [
+            ([123, 0, 0], 0),
+            ([123, 0, 0], -1),
+            ([123, 0, 0], 3),
+            ([123, 0, 0], 12),
+            ([456, 0, 0], 4),
+            ([123, 0, 0], 8),
+        ] {
+            assert!(only_leader(123, &pids, bytes).is_err());
+        }
+        assert!(contains_only_leader(0).is_err());
+        assert!(contains_only_leader(unsafe { libc::getpgrp() }).is_err());
+    }
 }

@@ -46,9 +46,12 @@ export function RichMetricPanel({ session }: Readonly<{ session: SessionObservat
     <header><div><h3 id="rich-metric-title">Measured session token sizes</h3>
       <p>Exact sizes of the recorded usage observations. Source coverage is partial.</p></div></header>
     <div className="usage-sessions__rich-controls">
-      <label>Token quantity<select value={quantity} onChange={event => setQuantity(event.target.value as RichMetricQuantity)}>
-        {quantities.map(value => <option key={value} value={value}>{value === "cacheWriteUnknown" ? "unknown cache write" : value}</option>)}
-      </select></label>
+      <div className="usage-sessions__rich-control">
+        <label htmlFor="rich-metric-quantity">Token quantity</label>
+        <select id="rich-metric-quantity" value={quantity} onChange={event => setQuantity(event.target.value as RichMetricQuantity)}>
+          {quantities.map(value => <option key={value} value={value}>{value === "cacheWriteUnknown" ? "unknown cache write" : value}</option>)}
+        </select>
+      </div>
     </div>
     {result === null && <p className="usage-sessions__notice" role="status">Computing local metric facts…</p>}
     {result !== null && !result.ok && <p className="usage-sessions__notice" role="alert">{errorText(result.error)}</p>}
