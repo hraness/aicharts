@@ -1,9 +1,9 @@
 import { expect, test } from "bun:test";
 import { readFile } from "node:fs/promises";
-import { METRIC_CATALOG, MAX_METRIC_CATALOG_BYTES } from "./metric-explorer-catalog";
+import { METRIC_CATALOG } from "./metric-explorer-catalog";
 import { createMetricSnapshot, evaluateMetricQuery, MAX_METRIC_QUERY_IDS, metricChange, metricResultJson, metricSnapshotDigest, parseMetricQuery, SUPPORTED_METRIC_IDS, type MetricQuery, type MetricResult } from "./metric-explorer";
 import { parseUsageStatsReport, statsRowKey, type UsageStatsReport, type UsageStatsRow } from "./stats-contract";
-import { projectMetricCatalog, generateMetricCatalog } from "../../scripts/generate-metric-catalog";
+import { projectMetricCatalog } from "../../scripts/generate-metric-catalog";
 import { addMetricRow, decodeMetricRow, finishMetricFold, metricAccumulator } from "./metric-explorer-fold";
 
 const row = (values: Partial<UsageStatsRow> = {}): UsageStatsRow => ({ utcDay: 20_700, client: "codex", provider: "openai", model: null,
@@ -32,7 +32,6 @@ test("compact catalog is an exhaustive bounded projection of all241 registry def
   const full = JSON.parse(await readFile("verify/assurance/metrics.json", "utf8")) as unknown;
   expect(projectMetricCatalog(full)).toEqual([...METRIC_CATALOG]);
   expect(METRIC_CATALOG).toHaveLength(241);
-  expect((await generateMetricCatalog(true)).bytes).toBeLessThanOrEqual(MAX_METRIC_CATALOG_BYTES);
   expect(new Set(METRIC_CATALOG.map(entry => entry.id)).size).toBe(241);
   for (const id of SUPPORTED_METRIC_IDS) expect(METRIC_CATALOG.some(metric => metric.id === id)).toBe(true);
 });

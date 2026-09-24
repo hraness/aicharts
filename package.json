@@ -109,6 +109,7 @@
     "skill:support:sync": "bun run scripts/skill-support-runtime.ts",
     "skill:support:check": "bun run scripts/skill-support-runtime.ts --check",
     "usage:formal:tla": "bun scripts/assurance-tla.ts",
+    "usage:metrics:coverage": "bun run scripts/assurance-metric-coverage.ts",
     "usage:assurance:check": "bun run scripts/assurance-registry.ts && python3 scripts/assurance-native-baseline.py",
     "usage:formal:kani": "bun scripts/assurance-kani.ts",
     "usage:formal:theorems": "bun scripts/assurance-theorems.ts",

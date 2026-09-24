@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { METRIC_CATALOG, type MetricCatalogEntry } from "@/lib/usage/metric-explorer-catalog";
+import { METRIC_EXPLORER_VIEWS } from "@/lib/usage/metric-explorer-views";
 import { METRIC_REASON_TEXT, metricChange, metricCollectionPath, metricDefinition, metricExplanation, SIGNED_METRIC_IDS, SUPPORTED_METRIC_IDS,
   type MetricDimension, type MetricMeasure, type MetricValue } from "@/lib/usage/metric-explorer";
 import { exportCurrentStatsImage } from "./stats-export";
@@ -9,15 +10,7 @@ import { metricGroupName } from "./stats-metric-projection";
 import { formatStatsDay, formatStatsInteger, formatStatsMoney } from "./stats-view";
 import type { MetricPresentation, MetricPresentationComparison } from "./stats-metric-presentation";
 
-const views = [
-  { name: "All metrics", families: [] },
-  { name: "Tokens", families: ["token-volume", "mix", "trends", "cache-economics", "comparisons"] },
-  { name: "Costs", families: ["costs", "billing-and-limits", "budgets-and-forecasts"] },
-  { name: "Performance", families: ["latency-and-generation", "activity-and-concurrency"] },
-  { name: "Sessions & agents", families: ["typical-sizes", "sessions-turns-and-agents", "context-and-compaction"] },
-  { name: "Reliability", families: ["reliability"] },
-  { name: "Coverage", families: ["coverage-and-freshness", "operations", "benchmark-context"] },
-] as const;
+const views = METRIC_EXPLORER_VIEWS;
 const PAGE_SIZE = 12;
 const percentages = new Set(["client-token-share", "provider-token-share", "model-token-share", "reasoning-output-share", "cached-input-share",
   "cache-write-input-share", "unknown-model-token-share", "cache-read-token-share", "cache-write-token-share", "pricing-record-coverage", "model-attribution-coverage",
