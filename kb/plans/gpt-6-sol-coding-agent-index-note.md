@@ -3,7 +3,7 @@ title: Publish the GPT-6 Sol coding-agent placement note
 description: Ship /blog/gpt-6-sol-coding-agent-index, a note that places Codex · GPT-6 Sol (max) on the coding-agent chart and GPT-6 Sol (max) on the Intelligence Index from the checked snapshots, and complete its Slopcamera figure through the documented generation path.
 type: plan
 area: blog
-status: blocked
+status: complete
 repository_scopes:
   - app/blog
   - lib/snapshot-placement.ts
