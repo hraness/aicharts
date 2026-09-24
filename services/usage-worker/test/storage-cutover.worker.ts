@@ -2,7 +2,7 @@ import { env } from "cloudflare:workers";
 import { abortAllDurableObjects, reset, runInDurableObject } from "cloudflare:test";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { CONTRIBUTION_IDENTITY, CONTRIBUTION_PROFILE, contributionHash, parseContributionBatch,
-  type ContributionAuthority, type ContributionBatch, type ContributionJournalBundle, type ContributionMutation } from "../../../lib/usage/contributions";
+  type ContributionAuthority, type ContributionBatch, type ContributionMutation } from "../../../lib/usage/contributions";
 import { readContributionIndexPage, stageContributionIndex, type ContributionIndexReference } from "../../../lib/usage/contribution-index";
 import { contributionCellKey, parseContributionCell, type ContributionCell } from "../../../lib/usage/contribution-rollups";
 import { parseContributionRebuildReceipt, type ContributionRebuildReadRequest, type ContributionRebuildReceipt,
@@ -11,13 +11,14 @@ import { parseUsageStatsRow, type UsageStatsRow } from "../../../lib/usage/stats
 import type { AdmissionObservation, AdmissionOwner, AdmissionTransaction } from "../src/account-admission";
 import { ContributionState } from "../src/contributions-state";
 import { ensureContributionBody } from "../src/contributions-objects";
-import { ensureContributionJournal } from "../src/contributions-journal";
+import { ensureContributionJournal, type ContributionJournalBundle } from "../src/contributions-journal";
 import { contributionIndexObjectKey, ensureContributionIndexStage, readContributionIndexObject } from "../src/contribution-index-objects";
 import { readCommittedContributionRevision, verifyContributionRevision, loadContributionRevisionChunk } from "../src/contribution-replay";
 import { ContributionProjectionState, CONTRIBUTION_PROJECTION_RETIRE_MS, planContributionProjectionChunk } from "../src/contribution-projection-state";
 import { ContributionRebuildState } from "../src/contribution-rebuild-state";
 import { AccountContributionRebuild } from "../src/contribution-rebuild";
 import { queryContributionPage, type ContributionQuerySnapshot } from "../src/contribution-query";
+import type { ContributionQueryCursor } from "../../../lib/usage/contribution-query";
 
 const hex = (value: number, width = 64) => value.toString(16).padStart(width, "0");
 const DEVICE = hex(3), POPULATION = hex(4), JOB = hex(910);
@@ -137,7 +138,7 @@ async function snapshot(): Promise<(revision: number | null) => ContributionQuer
       latestPublishedRevision: projection.publishedRevision, revision: current.revision, root: current.root, unresolvedLegacyBodies: 0, observedAtMs: now });
   };
 }
-const query = (cursor: unknown = null) => ({ schemaVersion: 3, accountId: account, sessionExpiresAtMs: now + 60_000, firstUtcDay: 20_000, dayCount: 366, limit: 4, cursor });
+const query = (cursor: ContributionQueryCursor | null = null) => ({ schemaVersion: 3 as const, accountId: account, sessionExpiresAtMs: now + 60_000, firstUtcDay: 20_000, dayCount: 366, limit: 4, cursor });
 
 beforeEach(() => {
   account = `acct_${hex(++serial, 32)}`; operation = serial * 1000; now = 1_000_000;

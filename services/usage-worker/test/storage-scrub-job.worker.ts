@@ -2,7 +2,7 @@ import { env } from "cloudflare:workers";
 import { abortAllDurableObjects, reset, runInDurableObject } from "cloudflare:test";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { CONTRIBUTION_IDENTITY, CONTRIBUTION_PROFILE, parseContributionBatch,
-  type ContributionAuthority, type ContributionBatch, type ContributionJournalBundle, type ContributionMutation } from "../../../lib/usage/contributions";
+  type ContributionAuthority, type ContributionBatch, type ContributionMutation } from "../../../lib/usage/contributions";
 import { readContributionIndexPage, stageContributionIndex, type ContributionIndexReference } from "../../../lib/usage/contribution-index";
 import { contributionCellKey, parseContributionCell, type ContributionCell, type ContributionCellDimensions } from "../../../lib/usage/contribution-rollups";
 import { CONTRIBUTION_SCRUB_MAX_HEADS, parseContributionScrubJobReceipt, parseContributionScrubJobRequest,
@@ -12,7 +12,7 @@ import { parseUsageStatsRow, type UsageStatsRow } from "../../../lib/usage/stats
 import type { AdmissionObservation, AdmissionOwner, AdmissionTransaction } from "../src/account-admission";
 import { ContributionState } from "../src/contributions-state";
 import { ensureContributionBody } from "../src/contributions-objects";
-import { ensureContributionJournal } from "../src/contributions-journal";
+import { ensureContributionJournal, type ContributionJournalBundle } from "../src/contributions-journal";
 import { ensureContributionIndexStage, readContributionIndexObject } from "../src/contribution-index-objects";
 import { readCommittedContributionRevision, verifyContributionRevision, loadContributionRevisionChunk } from "../src/contribution-replay";
 import { ContributionProjectionState, planContributionProjectionChunk } from "../src/contribution-projection-state";

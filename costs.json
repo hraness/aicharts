@@ -1137,6 +1137,26 @@
       },
       "note": "Explicit diagnostic job identities, pinned canonical/publication roots, checked source and comparison cursors, idempotent step receipts and reserved scratch writes. Up to 16 lifetime jobs including terminals; IDs never restart and no physical job deletion is implemented. Scratch objects share the existing cumulative 4 GiB projection write budget; uncertain/aborted writes are not refunded. This control table grants no publication or repair authority. Schema13 is added only by trusted fenced begin; status is SELECT-only."
     },
+    "worker:usage_reclamation_ledger": {
+      "kind": "authoritative",
+      "retention": "account",
+      "owner": "services/usage-worker/src/reclamation-state.ts",
+      "deletion": "docs/usage-assurance.md",
+      "assurancePolicy": "authority-and-deletion-controls",
+      "budget": {
+        "rowsPerAccount": 65536,
+        "bytesPerKey": 512,
+        "entriesPerStep": 4,
+        "walkReadsPerStep": 512,
+        "capacityRefs": {
+          "reclamation-ledger-max-entries": 65536,
+          "reclamation-ledger-max-key-bytes": 512,
+          "reclamation-entries-per-step": 4,
+          "reclamation-max-walk-reads": 512
+        }
+      },
+      "note": "Durable reclamation-ledger-v1: one row per candidate object keyed by (surface, key) with state recorded|held|deleting|reclaimed|refused, horizon, attempt and hold markers. Recording is idempotent and never deletes. The consuming job is disabled by default (AICHARTS_USAGE_RECLAMATION_ENABLED stays unset everywhere), creates the table only on an explicit flagged record, re-walks every reference inside the account transaction and deletes at most four quiescent, horizon-expired, unreferenced objects per step. Rows are never physically deleted; refused rows await operator review. Implemented, not live-qualified."
+    },
     "service:canonical-contribution-rebuild": {
       "kind": "served",
       "retention": "ephemeral",

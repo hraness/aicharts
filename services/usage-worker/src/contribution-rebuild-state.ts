@@ -436,6 +436,19 @@ export class ContributionRebuildState {
       return value;
     });
   }
+  /** Every index root a rebuild job still references at `now`: pinned canonical
+   * roots, scratch roots, an unreserved pending step root and retired roots
+   * whose cutover horizon has not passed. Read-only; for reference walks. */
+  referencedRoots(now: number): readonly ContributionIndexReference[] {
+    require(statsInteger(now, 0, CONTRIBUTION_MAX_TIME), "invalid_input");
+    const values: ContributionIndexReference[] = [];
+    for (const status of this.inventory()) {
+      const job = this.#read(status.receipt.jobId); require(job);
+      for (const root of [job.receipt.publishedRoot, job.receipt.scratchRoot, job.pending?.root ?? null,
+        job.cutover && job.cutover.expiresAtMs > now ? job.cutover.previousRoot : null]) if (root) values.push(root);
+    }
+    return Object.freeze(values);
+  }
   /** Retired roots recorded by cutovers, for reference walks. Read-only. */
   retiredRoots(): readonly Cutover[] {
     const values: Cutover[] = [];

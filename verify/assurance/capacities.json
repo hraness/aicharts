@@ -1542,6 +1542,46 @@
       }
     },
     {
+      "id": "reclamation-ledger-max-entries",
+      "scope": "physical-reclamation",
+      "unit": "count",
+      "value": 65536,
+      "source": {
+        "path": "lib/usage/reclamation-contract.ts",
+        "symbol": "RECLAMATION_LEDGER_MAX_ENTRIES"
+      }
+    },
+    {
+      "id": "reclamation-ledger-max-key-bytes",
+      "scope": "physical-reclamation",
+      "unit": "bytes",
+      "value": 512,
+      "source": {
+        "path": "lib/usage/reclamation-contract.ts",
+        "symbol": "RECLAMATION_LEDGER_MAX_KEY_BYTES"
+      }
+    },
+    {
+      "id": "reclamation-entries-per-step",
+      "scope": "physical-reclamation",
+      "unit": "count",
+      "value": 4,
+      "source": {
+        "path": "lib/usage/reclamation-contract.ts",
+        "symbol": "RECLAMATION_ENTRIES_PER_STEP"
+      }
+    },
+    {
+      "id": "reclamation-max-walk-reads",
+      "scope": "physical-reclamation",
+      "unit": "count",
+      "value": 512,
+      "source": {
+        "path": "lib/usage/reclamation-contract.ts",
+        "symbol": "RECLAMATION_MAX_WALK_READS"
+      }
+    },
+    {
       "id": "contribution-rebuild-request-bytes",
       "scope": "canonical-contribution-rebuild",
       "unit": "bytes",

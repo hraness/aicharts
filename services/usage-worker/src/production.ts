@@ -29,6 +29,7 @@ export type ProductionEnvironment = Env & {
   readonly AICHARTS_USAGE_PUBLIC_READ_ENABLED?: unknown;
   readonly AICHARTS_USAGE_STATS_ENABLED?: unknown;
   readonly AICHARTS_USAGE_CONTRIBUTIONS_ENABLED?: unknown;
+  readonly AICHARTS_USAGE_RECLAMATION_ENABLED?: unknown;
 };
 type Lifetime = PairingHttpRequestLifetime;
 type Handler<E> = (request: Request, env: E, ctx: Lifetime) => Promise<Response>;
@@ -76,6 +77,16 @@ const bindingReady = (env: ProductionEnvironment, names: readonly string[]): boo
       typeof (value as Record<string, unknown>)[method] === "function");
   } catch { return false; }
 });
+
+/** Physical reclamation has no HTTP route. Its capability is the exact string
+ * `"1"` plus the account, content and control bindings, and it stays unset in
+ * every deployment; this predicate exists so the shape is checked, not so the
+ * job runs. Never derive it from any other flag. */
+export function reclamationCapabilityReady(env: ProductionEnvironment): boolean {
+  return flagReady(env, "AICHARTS_USAGE_RECLAMATION_ENABLED") && flagReady(env, "AICHARTS_USAGE_WORKER_ENABLED")
+    && flagReady(env, "AICHARTS_USAGE_STATS_ENABLED") && flagReady(env, "AICHARTS_USAGE_CONTRIBUTIONS_ENABLED") && generationReady(env)
+    && bindingReady(env, ["ACCOUNT_ENROLLMENTS", "STAGING", "CONTROL"]);
+}
 
 /**
  * Compose the production-shaped routes once per isolate. The master and

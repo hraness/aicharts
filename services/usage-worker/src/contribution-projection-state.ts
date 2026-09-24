@@ -218,6 +218,18 @@ export class ContributionProjectionState {
       || !same(step.source, control.source) || !same(step.previousRoot, control.stagedRoot)
       || step.phase !== control.phase || step.cursor !== control.cursor) throw new ContributionFault("conflict");
   }
+  /** Every index root the projection still references: control roots, a
+   * pending step's previous and next roots and every retained publication row,
+   * expired or not (only an explicit publish prunes rows). Read-only. */
+  referencedRoots(): readonly ContributionIndexReference[] {
+    const control = this.control(), pending = this.pending(), values: ContributionIndexReference[] = [];
+    for (const root of [control.appliedRoot, control.publishedRoot, control.stagedRoot, pending?.step.previousRoot ?? null, pending?.step.root ?? null])
+      if (root) values.push(root);
+    const rows = this.sql.exec("SELECT root FROM usage_contribution_projection_publications LIMIT ?", CONTRIBUTION_PROJECTION_MAX_PUBLICATIONS + 1).toArray();
+    invariant(rows.length <= CONTRIBUTION_PROJECTION_MAX_PUBLICATIONS);
+    for (const row of rows) { const root = reference(row.root === null ? null : json(row.root)); if (root) values.push(root); }
+    return Object.freeze(values);
+  }
   publication(revision: number, now: number): ContributionProjectionPublication {
     const control = this.control(); this.#canonical(control, now);
     if (!statsInteger(revision, 0, control.publishedRevision)) throw new ContributionFault("invalid_input");

@@ -42,6 +42,9 @@ import {
 } from "../../../lib/usage/leaderboard-contract";
 import { parseUsageConsentRequest } from "../../../lib/usage/consent-contract";
 import { DAY_MS } from "../../../lib/usage/wire";
+import { parseReclamationRequest, RECLAMATION_DEADLINE_MS, type ReclamationResult } from "../../../lib/usage/reclamation-contract";
+import { AccountReclamation, reclamationErrorFrom } from "./reclamation";
+import { ReclamationState, RECLAMATION_SCHEMA } from "./reclamation-state";
 import {
   enrollmentAccount, enrollmentAccountName, enrollmentHex, enrollmentRandom,
   enrollmentSnapshot, enrollmentTime, parseEnrollmentProof, parseEnrollmentReservation,
@@ -307,9 +310,13 @@ export class AccountEnrollment extends DurableObject<Env> {
     const withProjection = !legacy && objects.some(object => object.name === "usage_contribution_projection_control");
     const withWork = !legacy && objects.some(object => object.name === "account_work");
     const withRebuild = !legacy && objects.some(object => object.name === "usage_contribution_rebuild_jobs");
+    // The reclamation ledger is created only by the flag-gated reclamation
+    // record path (never in production while the flag stays unset); it is
+    // tied to table presence, not to a schema version, so it stays additive.
+    const withReclamation = withRebuild && objects.some(object => object.name === "usage_reclamation_ledger");
     const expected: Record<string, string> = { account_enrollment: SCHEMA_SQL, ...(legacy ? {} : ADMISSION_SCHEMA),
       ...(withStats ? STATS_SCHEMA : {}), ...(withContributions ? CONTRIBUTION_SCHEMA : {}), ...(withProjection ? CONTRIBUTION_PROJECTION_SCHEMA : {}),
-      ...(withWork ? ACCOUNT_WORK_SCHEMA : {}), ...(withRebuild ? CONTRIBUTION_REBUILD_SCHEMA : {}) };
+      ...(withWork ? ACCOUNT_WORK_SCHEMA : {}), ...(withRebuild ? CONTRIBUTION_REBUILD_SCHEMA : {}), ...(withReclamation ? RECLAMATION_SCHEMA : {}) };
     if (!legacy) {
       const version = this.ctx.storage.sql.exec("SELECT schema_version FROM account_enrollment WHERE id = 1").toArray()[0]?.schema_version;
       if ((version === 6 || version === 7 || version === 8 || version === 9 || version === 10 || version === 11 || version === 12 || version === 13) !== withStats
@@ -2336,5 +2343,84 @@ export class AccountEnrollment extends DurableObject<Env> {
     } catch (cause) {
       return { ok: false, error: cause === expired ? "deadline" : cause instanceof ContributionFault ? cause.code : "storage_unavailable" };
     } finally { retired = true; clearTimeout(timer); }
+  }
+  /** Physical reclamation (plan 6.4): record, step or read the durable
+   * `reclamation-ledger-v1`. Disabled by default: the exact
+   * `AICHARTS_USAGE_RECLAMATION_ENABLED === "1"` capability stays unset in every
+   * deployment, so every action, including reads, refuses `disabled`. When
+   * enabled, a step shares the rebuild single-flight marker, runs under the
+   * restore fence and namespace anchor, re-walks every reference inside the
+   * account transaction and deletes only quiescent, horizon-expired,
+   * unreferenced objects. Implemented, not live-qualified. */
+  async executeReclamation(input: unknown): Promise<ReclamationResult> {
+    const request = parseReclamationRequest(input);
+    if (!request) return { ok: false, error: "invalid_input" };
+    const enabled = (this.env as Env & { AICHARTS_USAGE_RECLAMATION_ENABLED?: unknown }).AICHARTS_USAGE_RECLAMATION_ENABLED === "1";
+    if (!enabled) return { ok: false, error: "disabled" };
+    if (!this.#contributionsEnabled()) return { ok: false, error: "not_started" };
+    if (this.#generation() !== request.generation) return { ok: false, error: "recovery_required" };
+    if (this.#contributionRebuildFlight !== null) return { ok: false, error: "conflict" };
+    const marker = Object.freeze({}); this.#contributionRebuildFlight = marker;
+    let retired = false, timer: ReturnType<typeof setTimeout> | undefined;
+    const deadline = performance.now() + RECLAMATION_DEADLINE_MS, expired = Object.freeze({});
+    const live = () => { if (retired || performance.now() >= deadline) throw expired; };
+    const refuse = (error: EnrollmentError): ReclamationResult => ({ ok: false, error: reclamationErrorFrom(this.#contributionError(error)) });
+    const run = async (): Promise<ReclamationResult> => {
+      const admitted = () => { try { live(); return true; } catch { return false; } };
+      const acquired = await this.#fenceAcquire(request.accountId, request.generation, admitted);
+      if (!acquired.ok) { live(); return refuse(acquired.error); }
+      const observation: AdmissionObservation = { generation: request.generation, observed: Date.now(), fence: acquired.value.fence, committed: false };
+      try {
+        live();
+        const scope = { accountId: request.accountId, sessionExpiresAtMs: CONTRIBUTION_MAX_TIME };
+        const original = this.#privateDaysSnapshot(scope, observation, state => Object.freeze({ ...state.anchor }));
+        if (!original.ok) return refuse(original.error);
+        const external = await readNamespaceAnchor(this.env.CONTROL, request.accountId);
+        live();
+        if (!external || !sameNamespaceAnchor(external, original.value)) return { ok: false, error: "recovery_required" };
+        if (!this.#contributionsPresent() || !this.#contributionProjectionPresent() || !this.#accountWorkPresent() || !this.#contributionRebuildPresent())
+          return { ok: false, error: "not_started" };
+        const ledger = new ReclamationState(this.ctx.storage);
+        const service = new AccountReclamation({ STAGING: this.env.STAGING }, ledger, (seen, action) => {
+          live();
+          return this.#transaction(seen, (state, now) => {
+            live();
+            if (!state || state.phase !== "active") throw new ContributionFault("not_enrolled");
+            if (state.accountId !== request.accountId || state.generation !== request.generation
+              || !sameNamespaceAnchor(state.anchor, original.value)) throw new ContributionFault("recovery_required");
+            if (!this.#contributionsActive() || !this.#contributionProjectionPresent() || !this.#accountWorkPresent() || !this.#contributionRebuildPresent())
+              throw new ContributionFault("not_started");
+            if (!ReclamationState.present(this.ctx.storage)) {
+              // Only an explicit record creates the ledger; steps and reads
+              // never initialize storage.
+              if (request.action !== "record") throw new ContributionFault("not_started");
+              ledger.initialize();
+            }
+            const value = action(state, now);
+            live(); return { state, result: ok(value) };
+          });
+        }, { enabled });
+        const result = await service.execute(request, observation);
+        live();
+        const last = await readNamespaceAnchor(this.env.CONTROL, request.accountId);
+        live();
+        if (!last || !sameNamespaceAnchor(last, original.value)) return { ok: false, error: "recovery_required" };
+        const authority = await this.#readAuthority(request.accountId, request.generation);
+        live();
+        if (authority !== null) return refuse(authority);
+        return result;
+      } finally { await this.#fenceSettle(request.accountId, acquired.value.token, observation.committed); }
+    };
+    try {
+      const timeout = new Promise<never>((_, reject) => {
+        timer = setTimeout(() => { retired = true; reject(expired); }, RECLAMATION_DEADLINE_MS);
+      });
+      const running = run();
+      this.ctx.waitUntil(running.then(() => {}, () => {}));
+      const result = await Promise.race([running, timeout]);
+      live(); return result;
+    } catch (cause) {
+      return { ok: false, error: cause === expired ? "deadline" : cause instanceof ContributionFault ? reclamationErrorFrom(cause.code) : "storage_unavailable" };
+    } finally { retired = true; clearTimeout(timer); if (this.#contributionRebuildFlight === marker) this.#contributionRebuildFlight = null; }
   }
 }
