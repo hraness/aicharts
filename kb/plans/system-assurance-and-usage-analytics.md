@@ -1440,3 +1440,65 @@ in isolation and the standalone Bun suite passes with 2,102 tests. The required
 Linux CI run (Check, Menubar, Formal verification, Required) passed on the
 final commit.
 
+
+### 2026-09-24 — PR #422 merged and production-verified; completion program opened
+
+PR #422 was squash-merged to main as `fc95b51` at 20:45Z with the required
+Check, Menubar, Formal verification and Required jobs green (CI run
+36055796464). GitHub Production deployment 6647776777 resolved to Vercel
+deployment `dpl_3TA2bNgxfeQzY7Cf67XF6scjyUrm` on project
+`prj_0ppMfRRMDfiVsQ1JaekoxSZ7Mwgn`; the canonical origin served `/`,
+`/dashboard` and `/usage/sessions` with status 200 and an
+`X-Hraness-Delivery-Proof` header equal to the token recomputed from that
+identity. No feature flag, Worker deployment or user data changed.
+
+The remaining phases (3 source refinement, 4, 5, 6, 7, 8, 10, 7B, 11, 12)
+were split into nine disjoint-ownership lanes on the completion branch
+`codex/system-assurance-completion-20260924`: formal, kernel, cloud lifecycle,
+cloud storage, UI, native ingestion, native facts, delivery gates and delivery
+docs. The integrator owns this plan, the `check` chain, CI wiring and every
+registry not assigned to a lane; lanes propose edits to shared files. Lane
+paragraphs below record what each lane implemented, validated and left open.
+
+### 2026-09-24 — Kernel lane: production arithmetic routed through the kernel
+
+Phase 3 source refinement (SR-4 to SR-7) routed the remaining production
+arithmetic through `aicharts-metrics`. A new `decimal` module supplies
+canonical integer parsing and exact scaled half-up rounding; the detailed CLI
+cost conversion moved from an `f64` product to it, which corrected
+`0.0001245` USD (124 to 125 micro-USD) and a fabricated micro-dollar near
+2^53, both pinned as regressions. Row totals, summaries, the Claude cache TTL
+partition, Devin totals, ledger status counters and CLI collection counters
+now use `checked_sum`, `checked_add_bounded` and `CacheWrites::with_ttl` with
+unchanged results on valid input. A malformed checked-in tariff rate refuses
+the client's projection (incomplete source, warning, `ProjectionRefused` in
+measured health) rather than reading as an absent tariff; a test-only catalog
+seam exercises this end to end. Each report row's cost and timed cohorts are
+paired through `match_quantities` with the explorer's selection, and the
+TypeScript explorer applies the same pairing. `scripts/generate-kernel-vectors.ts`
+emits five seeded vector files (at least 2,064 cases each, production edges
+included) with a `--check` drift gate now wired into `check:generated`,
+evaluated by both the Rust kernel and the shared TypeScript. Focused cargo,
+clippy, fmt, bun, tsc and eslint gates passed. Kani/Lean coverage of the
+decimal functions and any live qualification remain open.
+
+### 2026-09-24 — Delivery docs lane: recorded evidence, publication path, claims
+
+Phase 12 delivery evidence and release path. The lane recorded PR #422's
+merge, deployment and proof facts in `docs/usage-activation.md` and added
+`usage:deployment:verify`, which recomputes the delivery-proof token from the
+inspected deployment identity and requires it on the three fixed pages; it
+passed for `fc95b51` at 22:33:45Z and for the next merge `1cf93bd` at
+22:53:14Z, and failed closed for `fc95b51` once the alias moved. The
+Cloudflare Worker was not redeployed; the runbook and worker guide state the
+schema-13 recovery-artifact prerequisite. The nonpublishing Linux
+qualification run 36066135869 at `fc95b51` failed at `read-link-map`
+(33,690,505 bytes over the 32 MiB bound); the shared bound was raised to
+64 MiB with boundary tests, and the tree remains Linux-unqualified until a new
+dispatch passes. A tag-triggered `cli-publish.yml` republishes a retained
+qualification as an immutable GitHub Release with OIDC provenance and
+post-publish digest and attestation verification; it is tested and unexecuted,
+with the macOS notarized release left to the owner. A claim inventory
+(`docs/usage-claims.md`, 67 rows) with `usage:claims:check` closed F26 and
+corrected two overclaims; the check runs inside `usage:assurance:check` and
+`release:publish:check` runs inside `check`.
