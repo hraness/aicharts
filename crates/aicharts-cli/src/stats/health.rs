@@ -12,7 +12,7 @@ use aicharts_import::{HealthCode, ImportHealth, ImportOutcome};
 use serde::Serialize;
 #[cfg(unix)]
 use sha2::{Digest, Sha256};
-#[cfg(unix)]
+#[cfg(any(test, target_os = "macos"))]
 use std::path::Path;
 
 pub(super) const MAX_HEALTH_REPORT_BYTES: usize = 65_536;
