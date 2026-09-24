@@ -1,11 +1,18 @@
 # Repaired protocol evidence and implementation mapping
 
-`repaired-cases.json` adds twelve safety configurations, 36 reachability
-controls and seven deliberately broken guards. The
+`repaired-cases.json` holds seventy-six cases: sixteen complete safety
+explorations, forty-two reachability controls and eighteen deliberately broken
+guards. Every repaired model M1–M11 now has at least one guard-removal
+counterexample; the M2 freeze, M3 revocation, M5 generation, M6 stale-delivery
+and M7 scrub guards are removed by `Unsafe…` constants whose configurations
+must reproduce the exact recorded `Safety` violation. The
 [M8 action map](staged-projection-action-map.md) records the staged index,
 coalesced publication, recovery and retained-cursor abstractions. The
 [M9 action map](account-work-action-map.md) records independent work-class
-progress, durable watchdogs, late completion and restore custody. Each safety
+progress, durable watchdogs, late completion and restore custody. The
+[M10 action map](native-flight-action-map.md) records native flight custody,
+and the [M11 action map](contribution-rebuild-action-map.md) records the
+private diagnostic rebuild. Each safety
 configuration checks `TypeOK` and `Safety`, enables
 deadlock detection, uses one TLC worker with the pinned toolchain, and explores
 the entire declared finite reachable graph. Witness configurations add an
