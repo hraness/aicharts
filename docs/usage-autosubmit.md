@@ -1,16 +1,19 @@
 # Scheduled usage publication
 
-`aicharts autosubmit` implements one configured refresh-and-publish cycle. It
-does not install a schedule; on macOS, launchd supplies the schedule. Live
-publication requires the existing macOS custody path. The command uses a
-custody-verified enrollment and keeps provider credentials separate from AI Charts credentials.
-Complete the [activation checks](usage-activation.md) before replacing another
-publisher. Keep the previous job and its configuration until the first AI Charts
-scheduled cycle and account readback have succeeded.
+`aicharts autosubmit` runs one refresh-and-publish cycle: it refreshes each
+configured client and uploads the latest totals to your AI Charts account. It
+does not install a schedule; on macOS, a launchd job that you set up runs it.
+Publishing works only on a Mac enrolled with `aicharts enroll`, and the command
+keeps provider credentials separate from your AI Charts credentials.
 
-The refresh adapters, capture wrapper, and cycle orchestration have synthetic
-test coverage. This guide records their implemented contracts, not a completed
-live provider qualification, deployment, or launchd cutover.
+If another publisher already uploads your usage, complete the
+[activation checks](usage-activation.md) before replacing it. Keep the previous
+job and its configuration until the first AI Charts scheduled cycle has
+succeeded and your account shows its data.
+
+The refresh adapters, capture wrapper, and cycle logic are tested with synthetic
+data. This guide describes what the code does. It does not record a completed
+test against live providers, a deployment, or a switch to a scheduled launchd job.
 
 ## Configuration
 
@@ -18,8 +21,8 @@ Store configuration in a private regular file with mode `0600`. Paths are
 absolute; shell variables in JSON are not expanded. `days` accepts 1–366; select
 up to 54 disjoint clients, with at most 128 source roots per client. A client
 entry may carry its own `days` (same 1–366 bound) to narrow or widen only that
-client's collection and refresh window — for example a source whose underlying
-store can drop committed rows benefits from a short window so a legitimately
+client's collection and refresh window. For example, a source whose underlying
+store can drop committed rows benefits from a short window, so a legitimately
 reduced stored day leaves the published range sooner. Up to 8 sinks, one per
 kind, may delegate delivery to other installed publishers. This example
 uses placeholder paths and must be changed to the existing enrollment and source locations:

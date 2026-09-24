@@ -66,9 +66,8 @@ export function atomFeed(
       `<updated>${isoDateTime(article.updatedAt)}</updated>`,
       `<summary type="text">${escapeXml(article.dek)}</summary>`,
       `<content type="html">${escapeXml(image === undefined || imageUrl === undefined
-        ? `<p>${article.authorshipDisclosure}</p><p>${article.dek}</p>`
-        : `<figure><img src="${imageUrl}" alt="${image.alt}"><figcaption>${image.caption}</figcaption></figure><p>${article.authorshipDisclosure}</p><p>${article.dek}</p>`)}</content>`,
-      "<contributor><name>AI-assisted editorial workflow</name></contributor>",
+        ? `<p>${article.sourceNote}</p><p>${article.dek}</p>`
+        : `<figure><img src="${imageUrl}" alt="${image.alt}"><figcaption>${image.caption}</figcaption></figure><p>${article.sourceNote}</p><p>${article.dek}</p>`)}</content>`,
       categories,
       ...article.sourceIds.map(sourceId => (
         `<link href="${escapeXml(BLOG_SOURCES[sourceId].url)}" rel="related" />`

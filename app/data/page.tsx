@@ -39,8 +39,8 @@ import { searchSite } from "../site";
 const dataSearchSite = {
   ...searchSite,
   description: BENCHMARK_DATA_DESCRIPTION,
-  socialTitle: "Benchmark Data and Method | AI Charts",
-  title: "Benchmark Data and Method | AI Charts",
+  socialTitle: "Benchmark data and method | AI Charts",
+  title: "Benchmark data and method | AI Charts",
 } as const;
 
 export const metadata: Metadata = createPublicSiteMetadata(

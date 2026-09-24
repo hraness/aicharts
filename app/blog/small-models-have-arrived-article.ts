@@ -1,5 +1,5 @@
 import {
-  BLOG_AUTHORSHIP_DISCLOSURE,
+  BLOG_SOURCE_NOTE,
   BLOG_SOURCES,
   callout,
   heading,
@@ -38,7 +38,7 @@ function textCell(value: string): InlineContent {
 
 export function createSmallModelsHaveArrivedArticle(): BlogArticle {
   return {
-    authorshipDisclosure: BLOG_AUTHORSHIP_DISCLOSURE,
+    sourceNote: BLOG_SOURCE_NOTE,
     slug: SMALL_MODELS_ARTICLE_SLUG,
     title: "GPT-5.6 Luna made one daily news page cost about $0.10",
     dek:

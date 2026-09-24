@@ -80,20 +80,20 @@ describe("focused chart destinations", () => {
   test("the leaderboard page renders paused, unavailable, empty, and ranked states honestly", () => {
     const paused = renderToStaticMarkup(createElement(LeaderboardView, { available: false, snapshot: null }));
     expect(paused).toContain("Public usage leaderboard");
-    expect(paused).toContain("Publishing paused");
-    expect(paused).toContain("Public publishing is not available yet");
+    expect(paused).toContain("Not live yet");
+    expect(paused).toContain("No public rankings yet");
     expect(paused).not.toContain("Reload rankings");
     const unavailable = renderToStaticMarkup(createElement(LeaderboardView, { available: true, snapshot: null }));
     expect(unavailable).toContain("Rankings could not be loaded");
     expect(unavailable).toContain("Reload rankings");
-    expect(unavailable).not.toContain("Publishing paused");
+    expect(unavailable).not.toContain("Not live yet");
     expect(unavailable).not.toContain("No published entries yet");
     const empty = renderToStaticMarkup(createElement(LeaderboardView, { available: true,
       snapshot: { schemaVersion: 1, ranking: "observed-tokens-30d-v1", computedAtMs: 1_800_000_000_000, entries: [] } }));
     expect(empty).toContain("Opt-in publishing");
     expect(empty).toContain("0 entries");
     expect(empty).toContain("No published entries yet");
-    expect(empty).not.toContain("Publishing paused");
+    expect(empty).not.toContain("Not live yet");
     const entries: LeaderboardEntryV1[] = [
       { rank: 1, publicHandle: "alpha-coder", observedTokens: "9007199254740993", usageRecords: 42,
         consentedAtMs: 1_799_000_000_000, refreshedAtMs: 1_800_000_000_000, windowFirstUtcDay: 20_900, windowUtcDays: 30 },

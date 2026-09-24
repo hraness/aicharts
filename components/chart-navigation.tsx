@@ -22,9 +22,9 @@ export function ChartFooterNav({
 
 export function ChartPageFooter() {
   return <ChartFooterNav label="Chart resources">
-    <Link href="/data">Data and methodology</Link>
-    <Link href="/models">Model cards</Link>
-    <Link href="/blog">Benchmark notes</Link>
+    <Link href="/data">Data</Link>
+    <Link href="/models">Models</Link>
+    <Link href="/blog">Notes</Link>
     <a href="https://github.com/hraness/aicharts">Open source <span aria-hidden="true">↗</span></a>
   </ChartFooterNav>;
 }

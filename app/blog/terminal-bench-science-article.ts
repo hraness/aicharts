@@ -9,7 +9,7 @@ import {
 import { formatRetrievedAt } from "@/lib/coding-agent-updates";
 
 import {
-  BLOG_AUTHORSHIP_DISCLOSURE,
+  BLOG_SOURCE_NOTE,
   BLOG_SOURCES,
   callout,
   heading,
@@ -117,7 +117,7 @@ export function createTerminalBenchScienceArticle(
   );
 
   return {
-    authorshipDisclosure: BLOG_AUTHORSHIP_DISCLOSURE,
+    sourceNote: BLOG_SOURCE_NOTE,
     slug: TERMINAL_BENCH_SCIENCE_ARTICLE_SLUG,
     title: "What Terminal-Bench-Science’s 30% result measures",
     dek:

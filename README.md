@@ -1,15 +1,18 @@
 # AI Charts
 
-[AI Charts](https://aicharts.io) is a portal for AI model benchmarks and
-individual token usage. Compare models and agents across capability, cost,
+[AI Charts](https://aicharts.io) publishes charts of AI model benchmarks and
+personal token usage. Compare models and coding agents on benchmark score, cost,
 speed, and token use, then inspect the source and configuration behind a result.
-The local usage tools help you understand your own coding-agent sessions.
-Local reports stay in the browser tab; account synchronization requires a
-separately enrolled collector and enabled service controls.
 
-The homepage leads with an interactive Pareto frontier: compare model capability against output tokens or cost, then inspect the configuration behind each point. The original coding-agent charts have a focused home at [`/coding`](https://aicharts.io/coding). The separate [`/benchmarks`](https://aicharts.io/benchmarks) library covers coding, reasoning, research, memory, images, video, audio, and world models. Charted results, source guides, and emerging evaluations are labeled separately; older research cohorts do not masquerade as current-product rankings.
+The repository also contains a local collector that measures your own coding
+agents' token use. It is in development and has no packaged release yet, so
+[build it from source](docs/usage-local.md#build-and-run). Reports you open on the site stay in your browser tab.
+Account sync needs a collector enrolled on a Mac and works only while the site's
+account service is enabled.
 
-The primary navigation is Charts (`/`), Benchmarks (`/benchmarks`), and Notes (`/blog`). Coding comparisons, cards, and source data are linked where relevant. Legacy root chart and atlas links still resolve to their corresponding workspace; new shares use that workspace’s URL. Each canonical page also has a Markdown representation through `Accept: text/markdown`.
+The homepage leads with an interactive Pareto frontier: compare model capability against output tokens or cost, then inspect the configuration behind each point. The original coding-agent charts have a focused home at [`/coding`](https://aicharts.io/coding). The separate [`/benchmarks`](https://aicharts.io/benchmarks) library covers coding, reasoning, research, memory, images, video, audio, and world models. Charted results, source guides, and emerging evaluations are labeled separately, and older research cohorts are labeled with their dates.
+
+The site header links Charts (`/`), Benchmarks (`/benchmarks`), Usage (`/usage`), Dashboard (`/dashboard`), Leaderboard (`/leaderboard`), and Notes (`/blog`). Coding comparisons, model pages, and source data are linked where relevant. Legacy root chart and atlas links resolve to the matching workspace; new shares use that workspace’s URL. Each canonical page also has a Markdown representation through `Accept: text/markdown`.
 
 ## Current benchmark portfolio
 
@@ -20,7 +23,7 @@ The site is a static-data Next.js and TypeScript application. Its benchmark snap
 - Compare checked ARC-AGI-2 and ARC-AGI-3 tracks, selected DeepResearch Bench II systems, and LongMemEval-V2 Small and Medium baselines without combining their scores.
 - Explore four separate Arena preference-rating cohorts for image generation, image editing, text-to-video, and image-to-video, with source dates, intervals, and vote counts. Compare selected open-weight speech configurations on the Open ASR AMI-Cleaned English test; lower word-error rate is better.
 - Explore WISE Verified image generation, GEditBench v2 editing, VideoPhy2 human evaluation, OmniDocBench v1.6_full document parsing, and WorldScore's historical author cohort. Other evaluations have source guides until their data imports are qualified.
-- Keep a checked, version-pinned Terminal-Bench-Science 0.1 owner snapshot—with per-domain results, uncertainty, cost, and token use—separate from GDPval-AA v2, OSWorld 2.0, and Humanity's Last Exam rather than collapsing the families into one composite score.
+- Keep a checked, version-pinned Terminal-Bench-Science 0.1 owner snapshot, with per-domain results, uncertainty, cost, and token use, separate from GDPval-AA v2, OSWorld 2.0, and Humanity's Last Exam instead of collapsing the families into one composite score.
 - Treat CursorBench 3.2 as supplemental closed evidence for the model-plus-Cursor system, not an independently reproducible coding standard.
 - Compare Artificial Analysis Intelligence Index v4.3.2 with native output-only tokens and cost per Index task in the leading model-level Pareto chart. The historical v4.1.1 dataset remains separately accessible; scores are never relabeled across versions.
 - Compare Artificial Analysis Coding Agent Index v1.5, DeepSWE v1.1, Terminal-Bench 4, and SWE-Atlas-QnA results.
@@ -54,25 +57,26 @@ bun run check
 
 The complete gate also requires Rust 1.97.1 with rustfmt and Clippy, pinned in `rust-toolchain.toml`. It validates generated files and the checked data contract, checks the local usage workspace and AI Charts skill helper, runs strict TypeScript and ESLint, executes example and property tests, and verifies the production build in a browser. The website's ordinary development/build commands do not invoke Rust.
 
-## Local usage foundation
+## Local usage tools
 
 The [detailed usage dashboard](https://aicharts.io/usage/details) adds UTC trends,
 client/provider/model drilldowns, token composition, separate cost bases, source
 coverage, and exact numeric exports. The `aicharts stats` command imports the
-known local formats of all 53 primary clients in the pinned Tokscale parser
-registry. See [detailed usage reports](docs/usage-details.md) for commands,
-acquisition requirements, and the difference between parsing coverage and live
-qualification. The [scheduled publisher guide](docs/usage-autosubmit.md) covers
+known local formats of the 55 sources in the pinned Tokscale parser registry.
+`--all` reads 54 of them; it leaves out the 9router selector because Gajae-Code
+already includes that channel. Run `aicharts stats --list-clients` for the list.
+See [detailed usage reports](docs/usage-details.md) for commands, acquisition
+requirements, and what parser support does and does not cover. The [scheduled publisher guide](docs/usage-autosubmit.md) covers
 native refresh profiles, dry runs, failure recovery and a reversible macOS cutover.
 
 The Rust workspace contains a local-only Codex/Claude Code usage reader, a closed numeric wire format, a private numeric SQLite ledger and matching TypeScript validation/rollups. Explicit collection can retain measurements across restarts with atomic source checkpoints and a pending-queue preview. The separate `inspect` command reads retained numeric totals without source scanning, writes or SQLite recovery. It does not enable sign-in, uploads, a public leaderboard or background collection. See [the local usage guide](docs/usage-local.md) for explicit source selection, private namespace keys and current measurement/recovery limitations.
 
-The [session usage view](https://aicharts.io/usage/sessions) opens local numeric reports for session totals, model mix and evidence-backed time breakdowns. Reports stay in the browser tab. See [session collection and timing](docs/usage-sessions.md) for the command, concurrent-work denominators and source coverage.
+The [session usage view](https://aicharts.io/usage/sessions) opens local numeric reports for session totals, model mix, and time breakdowns with their source coverage. Reports stay in the browser tab. See [session collection and timing](docs/usage-sessions.md) for the command, concurrent-work denominators and source coverage.
 
-The website includes Hraness Accounts sign-in and device enrollment behind
-explicit production controls. The [identity design](docs/usage-identity.md) and
-[activation runbook](docs/usage-activation.md) separate source validation from
-live qualification and record the active production boundaries.
+The website includes Hraness Accounts sign-in and device enrollment, each
+switched on separately in production. The [identity design](docs/usage-identity.md)
+and [activation runbook](docs/usage-activation.md) list what is live in
+production today and what still needs testing against real providers.
 
 ## Menu-bar companion
 
@@ -109,7 +113,7 @@ Use `node skills/aicharts/scripts/atlas.mjs support protocol --json` for the loc
 
 The [`data-refresh.yml`](.github/workflows/data-refresh.yml) workflow checks first-party release sources and OpenRouter discovery hourly, off the top of the hour. It checks Terminal-Bench 4, Terminal-Bench-Science 0.1, direct DeepSWE evidence, the lightweight Artificial Analysis Intelligence model snapshot, and the reasoning and multimodal atlas imports every four hours, then adds the heavier Artificial Analysis coding-agent import to one daily full run at 10:43 UTC. Manual runs can select release-only, benchmark-only, or full refreshes; the legacy `discovery` mode remains a combined non-AAI alias. Poll-metadata-only checks remain visible in Actions without creating a data pull request. It treats each importer as a separate failure domain:
 
-1. The registry has 28 lab-owned release sources from 23 active labs: Anthropic, OpenAI, Google DeepMind, Meta, xAI, Mistral AI, Cohere, DeepSeek, Z.ai, Moonshot AI/Kimi, Alibaba/Qwen, MiniMax, ByteDance Seed, Microsoft AI, NVIDIA Nemotron, Amazon Nova, Baidu ERNIE, Tencent Hunyuan, Xiaomi MiMo, AI21 Labs, IBM Granite, Ai2, and StepFun. Conservative URL parsing retains every parsed model in a multi-model release; unknown versioned model-family shapes enter the review queue as unresolved instead of disappearing, while reviewed irregular launches use exact route mappings. New canonical URLs drive discovery. Mutable source timestamps remain secondary evidence, and discovery never writes the reviewed official-date ledger.
+1. The registry has 30 lab-owned release sources from 24 labs: Anthropic, OpenAI, Google DeepMind, Meta, xAI, Mistral AI, Cohere, DeepSeek, Z.ai, Moonshot AI/Kimi, Alibaba/Qwen, MiniMax, ByteDance Seed, Microsoft AI, NVIDIA Nemotron, Amazon Nova, Baidu ERNIE, Tencent Hunyuan, Xiaomi MiMo, AI21 Labs, IBM Granite, Ai2, StepFun, and Cognition. Conservative URL parsing retains every parsed model in a multi-model release; unknown versioned model-family shapes enter the review queue as unresolved instead of disappearing, while reviewed irregular launches use exact route mappings. New canonical URLs drive discovery. Mutable source timestamps remain secondary evidence, and discovery never writes the reviewed official-date ledger.
 2. OpenRouter's public models API supplies a bounded 90-day identity radar and the model-ID catalog used to identify direct benchmark observations. Its listing timestamp is discovery metadata, not a claimed release date.
 3. Harbor Framework's official Terminal-Bench leaderboard repository supplies the current 4.0.0 snapshot. The importer pins one immutable commit, asserts the 4.0 leaderboard definition, and rejects duplicate configurations, incomplete trials, score arithmetic errors, version changes, or unsafe row loss.
 4. Terminal-Bench-Science's official 0.1 owner API supplies a separate scientific-workflow snapshot pinned to release `v0.1.0`, its immutable commit, and exact Harbor dataset version. The importer retains five-domain results, validates resolution-rate and binomial-error arithmetic, records unpublished protocol fields as null, and preserves aggregate and domain costs without inventing reconciliation.

@@ -1,7 +1,7 @@
 {
   "name": "aicharts",
   "version": "1.0.0",
-  "description": "A portal for AI model benchmarks and individual token usage: compare capability, cost, and speed, and inspect coding-agent usage locally.",
+  "description": "Charts of AI model benchmarks and personal token usage: compare models and coding agents on score, cost, and speed, and measure your own agents' usage locally.",
   "private": true,
   "type": "module",
   "license": "MIT",

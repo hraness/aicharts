@@ -6,7 +6,7 @@ AI Charts leads with capability-versus-resource Pareto charts: readers can see t
 
 The canonical public repository description is:
 
-> A portal for AI model benchmarks and individual token usage: compare capability, cost, and speed, and inspect coding-agent usage locally.
+> Charts of AI model benchmarks and personal token usage: compare models and coding agents on score, cost, and speed, and measure your own agents' usage locally.
 
 Distinguish charted results, source guides, and emerging evaluations. A benchmark guide is useful coverage, but is not a claim that AI Charts has imported its scores. Name historical cohorts and selected samples. Do not describe every chart as current or every modality as exhaustively covered. The product adds selection guidance, approachable charts, and explicit comparison boundaries to the evidence supplied by benchmark publishers and aggregators.
 
@@ -110,7 +110,7 @@ Import the verified Search Console property into [Bing Webmaster Tools](https://
 
 The canonical source repository is `https://github.com/hraness/aicharts`. Keep its public metadata aligned with the product:
 
-- description: `A portal for AI model benchmarks and individual token usage: compare capability, cost, and speed, and inspect coding-agent usage locally.`;
+- description: `Charts of AI model benchmarks and personal token usage: compare models and coding agents on score, cost, and speed, and measure your own agents' usage locally.`;
 - homepage: `https://aicharts.io`;
 - focused topics that name the technology, data form, and current benchmark domain without exhausting GitHub's topic limit;
 - a readable README that links the live chart, `/data`, `/blog`, source, notice, contribution, and security information;

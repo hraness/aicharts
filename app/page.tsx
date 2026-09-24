@@ -59,19 +59,19 @@ export default function Home() {
                 name: "xcb",
                 href: "https://xcb.sh",
                 role: "A metaharness for agent subscriptions",
-                relationship: "xcb runs the agent subscriptions Aicharts inspects and meters each account locally; its aicharts-format session exports stay on your machine.",
+                relationship: "xcb meters your agent-subscription usage locally and can write session exports in the AI Charts format, which stay on your machine.",
               },
               {
                 name: "Gobstopper",
                 href: "https://gobstopper.sh",
                 role: "Automatic context compaction for agent sessions",
-                relationship: "Gobstopper cuts the context bill; Aicharts makes the bill visible per model and per session.",
+                relationship: "Gobstopper compacts long agent sessions to cut context costs. AI Charts shows token use per model and per session.",
               },
               {
                 name: "Ghostget",
                 href: "https://ghostget.com",
-                role: "A bounded bridge to provider data",
-                relationship: "Ghostget bounds what each web read costs in tokens; Aicharts bounds what the models behind those reads cost.",
+                role: "A fast web gateway for agents",
+                relationship: "Ghostget limits how many tokens each web read costs. AI Charts compares what the models behind those reads cost.",
               },
             ],
           },
@@ -83,25 +83,25 @@ export default function Home() {
                 name: "PeopleBlade",
                 href: "https://peopleblade.com",
                 role: "A private contact book for you and your agent",
-                relationship: "PeopleBlade's agent researches your contacts; Aicharts shows which model does that work cheapest and what a run spent.",
+                relationship: "PeopleBlade's agent researches your contacts. AI Charts compares the benchmark scores and costs of models an agent like that can use.",
               },
               {
                 name: "Soulscrape",
                 href: "https://soulscrape.com",
                 role: "A dated, cited dossier on a person",
-                relationship: "A Soulscrape dossier run is exactly the kind of token spend Aicharts measures and compares.",
+                relationship: "A Soulscrape dossier run spends model tokens. AI Charts compares models by benchmark score and cost per task.",
               },
               {
                 name: "Textbutler",
                 href: "https://textbutler.app",
                 role: "A personal message butler for Mac",
-                relationship: "Textbutler drafts through your chosen agent; Aicharts benchmarks the models that can drive it.",
+                relationship: "Textbutler drafts through your chosen agent. AI Charts compares published benchmark results for the models that can drive it.",
               },
               {
                 name: "Wordcell",
                 href: "https://wordcell.io",
                 role: "A Markdown knowledge base for agents",
-                relationship: "Wordcell's agent queries your vault; Aicharts shows the capability and cost tradeoffs for that loop.",
+                relationship: "Wordcell's agent queries your vault. AI Charts compares the benchmark scores and costs of models that can run that agent.",
               },
             ],
           },
@@ -109,7 +109,7 @@ export default function Home() {
         heading="From the same workshop."
         headingId="related-title"
         label="Related"
-        summary="Each Hraness product owns one private domain and gives your agent the same kind of access: local, bounded, and inspectable."
+        summary="Other Hraness tools for people who work with AI agents."
       />
       <HomeExploreFooter />
       <LegacyChartNavigation />

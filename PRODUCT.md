@@ -24,7 +24,7 @@ The primary workflow begins on a developer machine with Codex and Claude Code se
 
 ## Capabilities and Constraints
 
-- Local measurement supports Codex and Claude Code JSONL and Devin ATIF exports. It does not read Cursor usage or the live Devin session database.
+- The v1 `usage`, `collect`, and `sync` commands read Codex and Claude Code JSONL and Devin ATIF exports. The `stats` report reads the 55 sources in the pinned Tokscale parser registry (`aicharts stats --list-clients`), including Cursor after a refresh, and `autosubmit` publishes up to 54 of them.
 - Metrics include tokens, prompts, activity at 15-minute granularity, throughput, hourly message counts, concurrent agents, and daily average turn runtime, tokens, and tool calls.
 - No transcript, prompt, tool input, model response, path, credential, or raw session object may enter remote storage.
 - Hraness Accounts are the intended sign-in authority; profile projection may include X, GitHub, LinkedIn, website, and an R2-backed avatar.

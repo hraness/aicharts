@@ -33,6 +33,7 @@ import {
 import { modelCommentaryForCanonicalId } from "@/lib/model-commentary";
 
 import {
+  indexModelPageDescription,
   modelCardDescription,
   modelCardTitle,
   searchSite,
@@ -55,7 +56,14 @@ export async function generateMetadata({
   const path = card?.path ?? indexPage?.path;
   if (displayTitle === undefined || path === undefined) notFound();
   const title = modelCardTitle(displayTitle);
-  const description = modelCardDescription(displayTitle);
+  const description = indexPage === undefined
+    ? modelCardDescription(displayTitle)
+    : indexModelPageDescription({
+      cost: indexPage.costUsdPerTask === null ? null : formatIntelligenceCost(indexPage.costUsdPerTask),
+      displayTitle,
+      score: formatIntelligenceIndex(indexPage.intelligenceIndex),
+      sourceName: indexPage.sourceName,
+    });
   const base = createPublicSiteMetadata({
     ...searchSite,
     description,

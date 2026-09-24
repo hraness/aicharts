@@ -86,14 +86,41 @@ test("property: a model that is not in the dataset is never named", () => {
 test("property: a relative unit never carries a points-based cost claim", () => {
   assertProperty(fc.property(datasetArbitrary(), dataset => {
     if (dataset.score.unit === "%") return;
-    expect(atlasTakeaways(dataset).join(" ")).not.toContain("Within 5 points");
+    const text = atlasTakeaways(dataset).join(" ");
+    expect(text).not.toContain("percentage points");
+    expect(text).not.toMatch(/points (?:lower|higher)/u);
   }));
 });
 
 test("property: a cost claim only appears when the dataset publishes a cost basis", () => {
   assertProperty(fc.property(datasetArbitrary(), dataset => {
     if (dataset.costLabel !== undefined) return;
-    expect(atlasTakeaways(dataset).join(" ")).not.toContain("cheapest result");
+    const text = atlasTakeaways(dataset).join(" ");
+    expect(text).not.toContain("cheapest result");
+    expect(text).not.toContain("$");
+  }));
+});
+
+test("property: a score gap is printed in points, never as a percent, and costs never as a smaller multiple", () => {
+  assertProperty(fc.property(datasetArbitrary(), dataset => {
+    const text = atlasTakeaways(dataset).join(" ");
+    expect(text).not.toMatch(/\d% points? (?:lower|higher)/u);
+    expect(text).not.toContain("gives up");
+    expect(text).not.toContain("less than");
+  }));
+});
+
+test("property: in a tie no co-leader is called the leader", () => {
+  assertProperty(fc.property(datasetArbitrary(), dataset => {
+    const [lead] = atlasTakeaways(dataset);
+    if (lead === undefined || !lead.includes("share the top score")) return;
+    expect(atlasTakeaways(dataset).join(" ")).not.toContain("the leader");
+  }));
+});
+
+test("property: no sentence opens with a numeral", () => {
+  assertProperty(fc.property(datasetArbitrary(), dataset => {
+    for (const sentence of atlasTakeaways(dataset)) expect(sentence).not.toMatch(/^\d/u);
   }));
 });
 
@@ -113,6 +140,12 @@ test("every published dataset produces readable takeaways", () => {
       expect(sentence).toMatch(/\.$/u);
       // The site's public prose contract forbids em dashes in authored copy.
       expect(sentence).not.toContain("—");
+      // Template edges found in the live cohorts: numeral-led sentences, a stray space
+      // before a percent sign, percent-formatted point gaps, and "N× less than".
+      expect(sentence).not.toMatch(/^\d/u);
+      expect(sentence).not.toContain(" %");
+      expect(sentence).not.toMatch(/\d% points? (?:lower|higher)/u);
+      expect(sentence).not.toContain("less than");
     }
   }
 });

@@ -14,7 +14,7 @@ import {
 import { formatRetrievedAt } from "@/lib/coding-agent-updates";
 
 import {
-  BLOG_AUTHORSHIP_DISCLOSURE,
+  BLOG_SOURCE_NOTE,
   BLOG_SOURCES,
   callout,
   heading,
@@ -88,7 +88,7 @@ export function createAaIndexCostArticle(
   );
 
   return {
-    authorshipDisclosure: BLOG_AUTHORSHIP_DISCLOSURE,
+    sourceNote: BLOG_SOURCE_NOTE,
     slug: AA_INDEX_COST_ARTICLE_SLUG,
     title: "Highest AA Index and lowest cost pick different coding agents",
     dek:

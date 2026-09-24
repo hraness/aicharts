@@ -53,7 +53,7 @@ export function LeaderboardView({ available, snapshot }: LeaderboardViewProps) {
           </aside>
         : <aside className="usage-status usage-status--paused" aria-label="Leaderboard status">
             <span className="usage-status__dot" aria-hidden="true" />
-            <div><strong>{available ? "Rankings unavailable" : "Publishing paused"}</strong><span>{available ? "The latest rankings could not be loaded." : "Public rankings are not enabled yet."}</span></div>
+            <div><strong>{available ? "Rankings unavailable" : "Not live yet"}</strong><span>{available ? "The latest rankings could not be loaded." : "Public publishing has not opened."}</span></div>
           </aside>}
     </section>
     {live && published > 0
@@ -76,11 +76,11 @@ export function LeaderboardView({ available, snapshot }: LeaderboardViewProps) {
             <div><h2 id="leaderboard-empty-title">No published entries yet</h2><p>Accounts appear after their owners choose a public handle and enable publishing from their private usage dashboard.</p><Link className="usage-inline-link" href="/dashboard">Manage publishing</Link></div>
           </section>
         : <section className="usage-empty" aria-labelledby="leaderboard-empty-title">
-            <div><h2 id="leaderboard-empty-title">{available ? "Rankings could not be loaded" : "Public publishing is not available yet"}</h2>
-              <p>{available ? "The leaderboard is temporarily unavailable. Reload to check again. Your private measurements and publishing choice are unchanged by this read." : "You can inspect local session reports now. Public rankings will appear here when publishing is enabled."}</p>
+            <div><h2 id="leaderboard-empty-title">{available ? "Rankings could not be loaded" : "No public rankings yet"}</h2>
+              <p>{available ? "The leaderboard is temporarily unavailable. Reload to check again. Your private data and publishing choice are unchanged." : "Rankings appear here once publishing opens. Until then, you can inspect your own usage in a local session report."}</p>
               {available ? <a className="usage-inline-link" href="/leaderboard">Reload rankings</a> : <Link className="usage-inline-link" href="/usage/sessions">Inspect local sessions</Link>}
             </div>
           </section>}
-    <section className="usage-trust" aria-labelledby="leaderboard-trust-title"><div><h2 id="leaderboard-trust-title">What these totals measure</h2><p>Observed tokens include input, output, and cache tokens from accepted usage records. Providers expose different records, and missing records are unknown. A higher total does not establish spending, time worked, or productivity.</p></div><ul><li>Explicit account consent</li><li>Partial token observations</li><li>UTC reporting windows</li><li>Withdrawal from your dashboard</li></ul></section>
+    <section className="usage-trust" aria-labelledby="leaderboard-trust-title"><div><h2 id="leaderboard-trust-title">What these totals measure</h2><p>Observed tokens include input, output, and cache tokens from the usage records the service accepted. Providers expose different records, and missing records are unknown. A total measures tokens, not spending, time worked, or productivity.</p></div><ul><li>Explicit account consent</li><li>Partial token observations</li><li>UTC reporting windows</li><li>Withdrawal from your dashboard</li></ul></section>
   </>;
 }

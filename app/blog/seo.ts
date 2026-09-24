@@ -34,7 +34,7 @@ const blogSearchSite = {
     alt: "AI Charts analysis of AI model and agent benchmarks",
     path: BLOG_SOCIAL_IMAGE_PATH,
   },
-  title: "AI Model & Agent Benchmark Analysis | AI Charts",
+  title: "AI model and agent benchmark analysis | AI Charts",
 } as const;
 
 const baseBlogCollectionMetadata = createPublicSiteMetadata(
@@ -200,10 +200,7 @@ export function blogArticleJsonLd(
     blogEditorialImage(article.slug) ?? null,
 ): Readonly<Record<string, unknown>> {
   if (editorialImage !== null) {
-    return {
-      ...articleJsonLd(searchSite, articleDiscovery(article, editorialImage)),
-      creditText: article.authorshipDisclosure,
-    };
+    return articleJsonLd(searchSite, articleDiscovery(article, editorialImage));
   }
   const path = blogArticlePath(article.slug);
   const url = absoluteWebUrl(searchSite.origin, path);
@@ -218,7 +215,6 @@ export function blogArticleJsonLd(
     },
     headline: article.title,
     description: article.seoDescription,
-    creditText: article.authorshipDisclosure,
     datePublished: isoDateTime(article.publishedAt),
     dateModified: isoDateTime(article.updatedAt),
     author: {

@@ -76,11 +76,10 @@ describe("homepage document", () => {
       `Artificial Analysis Intelligence Index v${currentIntelligenceData.benchmark.version}`,
     );
     expect(text).toContain(
-      `${currentIntelligenceData.selection.positiveCostRecordCount}-configuration positive-cost cohort`,
+      `the same ${currentIntelligenceData.selection.positiveCostRecordCount} configurations, the ones that report a task cost above zero`,
     );
     expect(text).toContain("no universal score is calculated");
-    expect(text).toContain("Recent Index listings and a source-backed release radar follow the chart");
-    expect(text).toContain("not invented scores");
+    expect(text).toContain("Recent Index listings and release radars for newly found models follow the chart");
     expect(text).toContain("Benchmark data and method");
     expect(text).toContain("Machine-readable site guide");
   });
@@ -176,16 +175,15 @@ describe("markdown representations", () => {
     expect(cards.body).toContain(
       `${FIRST_PARTY_RELEASE_SOURCE_SUMMARY.labCount} labs across ${FIRST_PARTY_RELEASE_SOURCE_SUMMARY.sourceCount} first-party sources`,
     );
-    expect(cards.body).toContain("Previously unseen canonical URLs create candidates");
+    expect(cards.body).toContain("Each date shows when AI Charts first found the page, which can differ from the official release date.");
     expect(cards.body).toContain("first observed");
     expect(cards.body).not.toContain("source changed");
     expect(cards.body).toContain("Claude Fable 5.1 and Claude Mythos 5.1");
     expect(cards.body).toContain("## Benchmark coverage radar");
     expect(cards.body).toContain("awaiting a complete four-benchmark Artificial Analysis index");
-    expect(cards.body).toContain("Discovery is not a score");
-    expect(cards.body).toContain("missing metrics shown explicitly");
+    expect(cards.body).toContain("missing metrics marked");
     expect(cards.body).toContain("DataCurve's mini-swe-agent leaderboard");
-    expect(cards.body).toContain("remains outside the Artificial Analysis chart and cards");
+    expect(cards.body).toContain("stays off the Artificial Analysis chart and model cards");
     for (const release of distinctModelReleaseHighlights) {
       expect(cards.body).toContain(`[${release.model}](${release.modelUrl})`);
       const evidence = directDeepSweEvidenceForRelease(release);
@@ -262,7 +260,7 @@ describe("markdown representations", () => {
       expect(document.body).toBe(articleToMarkdown(article, image));
       expect(document.body).toContain(`# ${article.title}`);
       expect(document.body).toContain(article.dek);
-      expect(document.body).toContain(article.authorshipDisclosure);
+      expect(document.body).toContain(article.sourceNote);
       if (image === undefined) {
         expect(document.body).not.toContain("/images/blog/");
         continue;
@@ -310,8 +308,11 @@ describe("agent instruction file", () => {
     expect(guide).toContain("Versioned source JSON downloads");
     expect(guide).toContain("/data/benchmark-atlas.json");
     expect(guide).toContain(
-      `${currentIntelligenceData.selection.positiveCostRecordCount}-configuration positive-cost cohort`,
+      `the same ${currentIntelligenceData.selection.positiveCostRecordCount} configurations, the ones that report a task cost above zero`,
     );
+    // The guide names the usage page with its current status.
+    expect(guide).toContain("/usage");
+    expect(guide).toContain("no packaged release yet");
     expect(guide).toContain("answer plus reasoning tokens");
     expect(guide).toContain("Accept: text/markdown");
     expect(guide).toContain("It does not expose OAuth, GraphQL, MCP, or commerce endpoints.");
