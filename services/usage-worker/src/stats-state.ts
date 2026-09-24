@@ -91,7 +91,7 @@ export class StatsState {
   migrateOwnership(accountVersion: SqlStorageValue): void {
     const definitions = new Map(this.sql.exec("SELECT name, sql FROM sqlite_schema WHERE name IN ('usage_stats_writers', 'usage_stats_day_sources') LIMIT 3")
       .toArray().map(row => [String(row.name), row.sql]));
-    if (accountVersion === 8) {
+    if (accountVersion === 8 || accountVersion === 9 || accountVersion === 10 || accountVersion === 11 || accountVersion === 12 || accountVersion === 13) {
       // Current sources are authority, never a rebuildable projection. A
       // restored old writer table or missing sources cannot attest ownership.
       requireStats(definitions.get("usage_stats_writers") === STATS_SCHEMA.usage_stats_writers

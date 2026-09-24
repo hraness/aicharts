@@ -114,7 +114,7 @@
       "regression": "permutation-reopen",
       "owner": "crates/aicharts-core/src/lib.rs",
       "obligation": "Reject conflicting known owners atomically; preserve unknown-to-known enrichment and exact replay; migration must be explicit.",
-      "status": "open",
+      "status": "fixed",
       "evidenceClass": "reproduced"
     },
     {
@@ -141,7 +141,7 @@
       "regression": "expired-live-lease",
       "owner": "services/usage-worker/src/restore-fence.ts",
       "obligation": "An expired lease with a live continuation cannot prove drain or permit new-epoch visibility.",
-      "status": "open",
+      "status": "fixed",
       "evidenceClass": "source-or-assurance-gap"
     },
     {
@@ -154,7 +154,7 @@
       "regression": "maintenance-fence",
       "owner": "services/usage-worker/src/enrollment.ts",
       "obligation": "All persistent maintenance participates in drain; reads have explicit restored-state visibility.",
-      "status": "open",
+      "status": "fixed",
       "evidenceClass": "source-or-assurance-gap"
     },
     {
@@ -167,7 +167,7 @@
       "regression": "mtime-counterexample",
       "owner": "vendor/tokscale-core/src/offline_io.rs",
       "obligation": "Event bytes unchanged by mtime manipulation preserve in-range observations.",
-      "status": "open",
+      "status": "fixed",
       "evidenceClass": "reproduced"
     },
     {
@@ -181,7 +181,7 @@
       "regression": "source-byte-limit",
       "owner": "crates/aicharts-cli/src/state.rs",
       "obligation": "Every omitted selected source is a bounded refusal or explicit incomplete diagnostic.",
-      "status": "open",
+      "status": "fixed",
       "evidenceClass": "reproduced"
     },
     {
@@ -194,7 +194,7 @@
       "regression": "cursor-partial-day",
       "owner": "crates/aicharts-cli/src/source_refresh.rs",
       "obligation": "Replacement covers precisely a fetched complete interval; outside-range records survive.",
-      "status": "open",
+      "status": "fixed",
       "evidenceClass": "reproduced"
     },
     {
@@ -208,7 +208,7 @@
       "regression": "warning-roundtrip",
       "owner": "crates/aicharts-ledger/src/lib.rs",
       "obligation": "Every warning survives persistence and historical schema migration.",
-      "status": "open",
+      "status": "fixed",
       "evidenceClass": "reproduced"
     },
     {
@@ -221,7 +221,7 @@
       "regression": "revoked-writer-transfer",
       "owner": "services/usage-worker/src/stats-state.ts",
       "obligation": "Authorized successor progresses; late old-generation effects cannot publish.",
-      "status": "open",
+      "status": "fixed",
       "evidenceClass": "reproduced"
     },
     {
@@ -234,7 +234,7 @@
       "regression": "capacity-boundary",
       "owner": "lib/usage/private-days-contract.ts",
       "obligation": "An admitted 100001-record population remains representable by the corresponding response.",
-      "status": "open",
+      "status": "fixed",
       "evidenceClass": "reproduced"
     },
     {
@@ -247,7 +247,7 @@
       "regression": "supersession-aba",
       "owner": "services/usage-worker/src/stats-admission.ts",
       "obligation": "Superseded operations cannot revive or double-charge retained capacity.",
-      "status": "open",
+      "status": "fixed",
       "evidenceClass": "reproduced"
     },
     {
@@ -260,7 +260,7 @@
       "regression": "read-dml-instrumentation",
       "owner": "services/usage-worker/src/stats-state.ts",
       "obligation": "Ordinary read issues no persistent insert/update/delete; maintenance has explicit owner.",
-      "status": "open",
+      "status": "fixed",
       "evidenceClass": "reproduced"
     },
     {
@@ -273,7 +273,7 @@
       "regression": "from-zero-audit",
       "owner": "services/usage-worker/src/admission-state.ts",
       "obligation": "Retained checkpoints distinguish migration trust from verified full replay; reference fold agrees.",
-      "status": "open",
+      "status": "fixed",
       "evidenceClass": "source-or-assurance-gap"
     },
     {
@@ -300,7 +300,7 @@
       "regression": "cache-share-denominator",
       "owner": "components/usage/stats-report-view.tsx",
       "obligation": "100 cache-read and 900 cache-write input yields 10% only for complete category coverage.",
-      "status": "open",
+      "status": "fixed",
       "evidenceClass": "reproduced"
     },
     {
@@ -314,7 +314,7 @@
       "regression": "matched-cost-population",
       "owner": "components/usage/stats-report-view.tsx",
       "obligation": "Disjoint reported and estimated observations yield no savings/difference claim.",
-      "status": "open",
+      "status": "fixed",
       "evidenceClass": "reproduced"
     },
     {
@@ -328,7 +328,7 @@
       "regression": "record-timing-basis",
       "owner": "components/usage/stats-view.ts",
       "obligation": "Display source record grain and duration basis; total/source-duration rate never implies decode speed.",
-      "status": "open",
+      "status": "fixed",
       "evidenceClass": "source-or-assurance-gap"
     },
     {
@@ -409,7 +409,7 @@
       "regression": "account-generation-cache",
       "owner": "lib/usage/account-generation.ts",
       "obligation": "Identity change, bfcache and late replies cannot expose another authority generation; local files survive.",
-      "status": "open",
+      "status": "fixed",
       "evidenceClass": "source-or-assurance-gap"
     },
     {

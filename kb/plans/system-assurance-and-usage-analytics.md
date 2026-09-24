@@ -490,7 +490,7 @@ The integration owner controls manifests/lockfiles, shared schemas/capacity/metr
 
 ### Phase 2B — Repaired protocols and implementation conformance
 
-- **Status:** In progress
+- **Status:** Complete
 - **Depends on:** 2A, 1A, 1B, 1C
 - **Objective:** M1–M7 have checked safety properties, explicit conditional liveness and replayable counterexamples.
 - **Scope:** verify/tla, model/action maps, trace format and CI evidence.
@@ -502,7 +502,7 @@ The integration owner controls manifests/lockfiles, shared schemas/capacity/metr
 
 ### Phase 3 — Exact metric kernel and theorem pilot
 
-- **Status:** In progress
+- **Status:** In progress — production Kani/Lean gates admitted on macOS; reproducible Linux CI qualification remains open
 - **Depends on:** 0, 1A
 - **Objective:** Production arithmetic/normalization and core aggregation laws have appropriate proof evidence.
 - **Scope:** A new I/O-free owned metric kernel (proposed crates/aicharts-metrics), Kani harnesses, profile mappings and one theorem-route pilot. The integrator owns changes to existing callers shared with ingestion lanes.
@@ -526,7 +526,7 @@ The integration owner controls manifests/lockfiles, shared schemas/capacity/metr
 
 ### Phase 5 — Canonical account contributions and migration
 
-- **Status:** Not started
+- **Status:** In progress — durable contributions, bounded retained-data migration and exact head/query RPC/HTTP joins; native durable producer and full recovery qualification remain open
 - **Depends on:** 1B, 2B, 3
 - **Objective:** Multi-device reporting, corrections and v1/v2 transitions have one lossless ownership model.
 - **Scope:** Contribution/control schemas, source overlap/replacement proofs, writer transfer, generation/capacity contract and numeric private facts.
@@ -538,7 +538,7 @@ The integration owner controls manifests/lockfiles, shared schemas/capacity/metr
 
 ### Phase 6 — Derived storage, queries and retention
 
-- **Status:** Not started
+- **Status:** In progress — exact correction cells, indexed queries, coalesced publication and bounded automatic work; independent rebuild, physical retention and operational qualification remain open
 - **Depends on:** 3, 5
 - **Objective:** Dashboard queries are bounded and fast while every result remains rebuildable from canonical facts.
 - **Scope:** F20/F21; indexes/exact manifests, sufficient statistics, partition rebuilds, snapshot cursors, resource accounting and GC.
@@ -548,9 +548,31 @@ The integration owner controls manifests/lockfiles, shared schemas/capacity/metr
 - **Validation:** bun run usage:worker:check; bun run check:cost-surfaces; new usage:query:check and usage:perf commands with deterministic rows/bytes budgets and named hardware latency runs; M7 trace replay.
 - **Recovery:** Derived state can be discarded/rebuilt by its owned maintenance path; authoritative data and deletion/ownership controls remain intact.
 
+The next scalable verifier must retain a durable job identity, source revision,
+head count, exact published reference, last canonical head ID and private scratch
+root. Each bounded step independently resolves committed head bodies, accumulates
+their sufficient statistics from zero, reserves possible scratch writes before
+I/O, and conditionally advances its cursor only after verified storage. Exact
+step retry must neither add a row twice nor charge twice. Source revision or
+authority changes refuse the step; they cannot splice two account histories.
+The first scalable envelope may explicitly refuse legacy data until a separate
+sealed-legacy resolver is qualified.
+
+Final comparison must stream every cell in key order from both roots with a
+bounded internal cursor, without the public query's 366-day restriction. Compare
+semantic cells and total traversal counts: B+tree hashes can differ solely
+because insertion histories differ. A diagnostic job grants no publication
+authority. Repair cutover needs a separately reviewed CAS over the original
+source revision, both projection frontiers, pending state and current root,
+while preserving cursor-retention and cumulative quota rules. Interrupted or
+abandoned scratch work remains charged and retained until qualified reclamation
+can prove that no recovery or query reference needs it. The resumable diagnostic
+is implemented with focused qualification in progress. Repair cutover, legacy
+resolution, physical reclamation and live recovery remain open.
+
 ### Phase 7 — Metric explorer and dashboard completeness
 
-- **Status:** Not started
+- **Status:** In progress — bounded worker-backed local/hosted explorer and catalog; production qualification and canonical/rich integration remain open
 - **Depends on:** 1C, 3; 6 before hosted completion
 - **Objective:** A cohesive private product answers all catalog questions supported by available evidence.
 - **Scope:** Overview and explorer, definition/coverage disclosure, comparisons, filters, distributions, table/export/share, local mode and accessibility.
@@ -562,7 +584,7 @@ The integration owner controls manifests/lockfiles, shared schemas/capacity/metr
 
 ### Phase 8 — Rich numeric instrumentation and drilldown
 
-- **Status:** Not started
+- **Status:** In progress — additive local numeric fact contract and qualified-profile adapters; hosted joins await canonical publication
 - **Depends on:** 3, 4, 5, 6
 - **Objective:** Session, turn, request, context, timing and reliability metrics have real attributable evidence.
 - **Scope:** F24; bounded local numeric OTel/producer adapters and opted-in private numeric facts; per-observation histograms/lineage and coverage.
@@ -574,7 +596,7 @@ The integration owner controls manifests/lockfiles, shared schemas/capacity/metr
 
 ### Phase 9 — Benchmark, calculator and companion assurance
 
-- **Status:** Not started
+- **Status:** Complete — bounded product-domain repairs and independent review; integrated browser and delivery gates remain Phases 11–12
 - **Depends on:** 0, 3
 - **Objective:** The rest of AI Charts shares the correctness discipline while retaining source-specific product semantics.
 - **Scope:** Snapshot admission/refresh, benchmark model/config identity, chart math/layout, calculator assumptions/rates, content provenance, discovery/export and companion boundaries.
@@ -728,3 +750,655 @@ The production build, TypeScript and focused ESLint passed. Focused client/formu
 Independent review accepted retained restore registrations, same-attempt lost-reply recovery, pure account/pairing/index reads, explicit fenced maintenance/scrub, explicit pending-snapshot abandonment, and retained per-day writer provenance. Invalid upload secrets refuse before consuming fence capacity; authorization is rechecked after asynchronous work. A canonical namespace write that outlives its outward deadline keeps its registration until the actual provider promise settles. Conditional immutable object tails are permitted only after terminal caller return with retained intent/charge and no remaining canonical continuation. Current schema cannot reconstruct lost authority from a successor writer; only the exact pre-transfer legacy schema/layout can initialize provenance.
 
 The integration owner ran `bun run usage:worker:check` through the installed compact-output wrapper on the converged source: 20 files, 488 tests passed in 131.13 seconds. Independent index review also covered fresh post-await clocks and exact source decision matching. No live-provider qualification was performed. These results do not establish exact legacy overlap reconciliation, arbitrary distributed schedules, eventual settlement after permanent process/provider loss, deletion, or global instantaneous withdrawal. Phases 2B, 5 and 10 retain those obligations. Phase 2B now owns maintained finite repaired models plus generated real-runtime correspondence; Phase 4 has begun its source/checkpoint/health inventory.
+
+### 2026-09-23 — Phase 2B accepted; arithmetic and ingestion qualification continue
+
+The maintained TLC runner passed the unchanged fifteen-case baseline and all
+thirty repaired configurations. The seven complete finite safety explorations
+visited 2,554 / 1,572 / 200 / 138 / 544 / 162 / 122 distinct states; twenty-three
+mechanism-specific reachability witnesses produced their exact named invariant
+violations. Receipts are `target/assurance/tla/run-9AMAwY/receipt.json` and
+`target/assurance/tla/run-3ADicM/receipt.json`. No fairness or checked temporal
+liveness is claimed; the action map names conditional progress assumptions and
+the transitions deferred to phases 5, 6 and 10.
+
+The integration owner accepted `target/assurance/conformance/run-LwEcWQ/receipt.json`:
+thirty Worker tests, six browser-authority tests and one actual SQLite-ledger test
+emitted all thirty-nine declared model/seed traces. Each seed exercises both lost
+immutable batch and lost journal replies. Exact action/outcome coverage, full
+observed state, original/staged source hashes and tool identity are checked.
+The production-only live-registration drain mutant fails the unchanged M1 adapter
+at the expected publication assertion for each of the three seeds. The staged
+positive controls all pass. Independent review repaired runner admission and
+staging gaps; its eleven parser/staging/environment tests pass with 84 assertions,
+along with strict targeted TypeScript and ESLint. Root reviewed the action mapping
+and retained evidence. The repository-wide integration gate remains Phase 11.
+
+The production arithmetic pilot chose fresh Charon/Aeneas extraction into Lean.
+The maintained route passed seventeen production declarations, nine separate
+mathematical laws and three production mutants in
+`target/assurance/theorems/run-TdYv2E/receipt.json`. This pricing result covers the
+complete u128 unit-rate domain; a broader arbitrary-rate proof is in progress.
+Verus also proved six extracted-body pilot functions, but that snapshot is not
+the maintained production translation. Seventeen Kani harnesses executed with
+44 satisfied covers; admission still awaits independent review of nineteen
+unreachable harness/runtime assertions. The former pricing timeout is explicitly
+mapped to the accepted production Lean theorem rather than treated as success.
+Linux tool qualification and stricter runner review remain open for Phase 3.
+
+Phase 4 now has an executed first-four-family vendor target, fixed-code numeric
+health and guarded local stores. Default detailed reports remain compatible and
+read-only; fresh enrolled collection records attempt/good/publication evidence
+separately. Actual workload measurements rejected the first Codex checkpoint
+optimization because serialization made append slower than full replay. Revised
+measurements include reload/codec costs; automatic checkpoint use remains off.
+Other source families retain authoritative full replay and explicit qualification
+limits. No source, provider or production account data was used in these checks.
+
+### 2026-09-23 — General pricing proof admitted; canonical and explorer lanes opened
+
+The maintained macOS Lean gate passed all 26 production declarations, nine
+separate mathematical laws and four isolated production mutants in
+`target/assurance/theorems/run-HBlRpk/receipt.json`. It freshly translated the
+unchanged Rust pricing loop and proves all five full-u128 token/rate buckets,
+ordered refusal, termination and the exact success formula. A constructive
+five-bucket non-unit witness yields 55 microdollars. Four optional exploratory
+witnesses remain ignored pilot material, not admitted proof obligations. The
+rate-erasure mutant preserves unit rates and fails the general body theorem.
+Independent review accepted the exact tactic-diagnostic admission; unrelated
+errors, timeout, changed inputs and additional axioms still refuse.
+
+The repository-local official Kani driver passed 17 harnesses, 44 covers and both
+production mutants in `target/assurance/kani/run-DZ1OJ3/receipt.json`. All nineteen
+unreachable assertions have exact reviewed hash/location bindings. One prior
+run correctly refused changed proof inputs and a Cargo-rewritten staged lockfile;
+the isolated workspace now starts with canonical Cargo headers, preserving the
+unchanged-stage check. The focused metric/core/protocol gate passed 179 Rust tests;
+wire/rollup/turn tests passed 99 tests and 8,019 assertions. These receipts are
+source-bound development evidence, not final integration or Linux qualification.
+
+Phase 4's actual vendor gate passed 193 compiled tests in
+`target/assurance/adapters/run-bTPw8e/receipt.json`. Import tests passed 26, source
+refresh 46, health 8 and checkpoint 1; owned all-targets Clippy passed. Root's
+stats/publication join passed 46 tests, including local synthetic TLS transport,
+missing-source preservation and distinct private same-millisecond attempts.
+The strongest 55-client retained-health fixture is 120,400 bytes within 131,072.
+Default JSON remains unchanged; collection, retained good evidence and publication
+are independent. Read-only health creates no file or lock. The checkpoint's
+measured persisted reload still regresses, so automatic use stays disabled;
+other adapters retain full replay. Performance and wider incremental qualification
+are not complete.
+
+Phase 5 now owns the exact canonical identity/membership/revision contract,
+reference fold and additive bounded transactional storage. Its explicit activation
+must fence legacy writers and bind retained migration evidence; schema creation
+alone cannot imply takeover. Phase 7 builds a bounded local metric engine and
+compact 241-metric catalog in parallel. Missing comparison exposure or rich facts
+stay explicit pending their producer integration. The cost gate now discovers
+owned SQL and checks every registered usage object family against matching cost,
+retention and actual capacity references. Logical limits do not establish physical
+storage overhead or authorize reclamation; F21 remains open.
+
+
+### 2026-09-23 — Canonical boundary and reproducible proof infrastructure
+
+The canonical store passed fourteen focused actual workerd tests, including an
+account RPC projection failure that rolls back nested SQL and succeeds on exact
+retry without another reservation. Fresh activation refuses a real retained V1
+120-token frame. Root integrated authenticated, restore-fenced contribution RPC
+and five bounded HTTP endpoints, all dormant behind a separate exact flag.
+Sixteen focused tests across contribution HTTP, existing stats HTTP and production
+routing passed. An independent reviewer found that the existing v2 HTTP handler
+accepted a shaped receipt without binding it to the submitted operation. The
+repair checks hash, operation, sequence, revision and applicable client/range;
+the six-test stats HTTP gate, including eleven foreign-receipt cases, passed.
+
+Every old write continuation now checks canonical activation inside its owner
+transaction. Independent review accepted the retained-terminal reconciliation
+branches and the unconditional cutover check. The expanded delayed-write fixture
+initially crashed workerd due to test-owned promise custody; this is recorded as
+a failed test attempt, not product evidence. Its corrected schedule and the
+retained-data migration remain under qualification.
+
+Migration will seal verified V1 identity history and keep bounded V3 overlays.
+It must bind retained journal/body/head commitments, preserve tombstones and
+suppress V1 facts already superseded by V2. Aggregate-only V2 populations remain
+explicitly unresolved; equal totals do not establish overlap. Original bytes
+stay retained. Canonical admission is not yet a complete producer/query product.
+
+All forty-five finite model cases passed with platform-pinned Java in
+`target/assurance/tla/run-ZaVeYV/receipt.json` and
+`target/assurance/tla/run-vWZNID/receipt.json`. The separate tool installer now
+admits official bounded archives, task-local dated Rust components, exact Lean
+Git dependencies and unchanged locks. Independent review accepted its installed
+path and archive guards and the required CI job. Eight Mac/Linux archives were
+freshly extracted and hashed; a fresh isolated Mac installation with exact
+source fetches and Lake hydration passed. This is artifact/installation evidence;
+Linux execution and its distinct unreachable-assertion review remain open.
+
+Cost discovery now also refuses a new unregistered object writer. Duplicate
+legacy registry aliases were consolidated into the exact schema-owned surfaces;
+sixty-six cost entries, sixty-nine capacity constants and forty-six assurance
+surfaces pass their consistency gate. Eighteen focused runner/cost tests passed
+with 105 assertions. Generated proof trees are excluded from TypeScript and Bun
+source-suite discovery; conformance stages its own configuration and explicitly
+selects its adapter path. Product-domain assurance opened in parallel with the
+migration and explorer lanes. Required final integration has not run yet.
+
+### 2026-09-23 — Replayable correction evidence and indexed snapshots
+
+The current macOS proof gates passed again after runner/environment changes:
+`target/assurance/kani/run-xvVjFe/receipt.json` admits seventeen harnesses and both
+negative controls; `target/assurance/theorems/run-7GvrqK/receipt.json` admits
+twenty-six production theorems, nine mathematical laws and four mutants. These
+are refreshed source-bound checks, not a whole-system proof or Linux receipt.
+
+Phase 5 now retains immutable correction-reference pages and a root bound to the
+account, generation, operation, body and predecessor/current revisions. The SQL
+journal commits the root; object existence never establishes acceptance. Every
+possible page/root byte is reserved before I/O. The sealed migration retains
+original V1/V2 objects, binds journal/head/source and numeric conservation
+commitments, preserves tombstones and keeps superseded V1 cells suppressed.
+Actual workerd tests passed 22 cases, including 120 plus a distinct 15 producing
+135, copied-source deduplication, unresolved V2 preservation, missing-object
+retry, staged source drift with explicit cancellation, and a moved correction
+whose predecessor resolves through the retained V1 body. Additional corruption
+and crash-edge review continues. Migration and exact cancellation have dormant
+fenced RPC/HTTP routes; producer/query and full migration qualification remain
+open.
+
+The pure rollup reducer keeps five disjoint token sums, exact u128 aggregates,
+and separate cost/category/timing cohorts. It retracts predecessors before
+adding replacements and returns no writable patch on failure. Independent
+review found that the delta array boundary could run custom iteration or
+getters; dense own-data admission now rejects those before any fold callback.
+The joined rollup/index tests passed fifteen cases and 33,786 assertions before
+the additional root-integrity repair below.
+
+The derived-index decision is an immutable, content-addressed B+tree. Whole
+account JSON would make small queries scan lifetime metadata; storing numeric
+cells in transactional SQL would duplicate rebuildable content in the expensive
+tier. Bounded leaves and branches permit path-copy updates and range pagination
+while a later control-plane transaction will publish one root/revision. The
+tree core bounds changes, reads, writes, bytes, depth and page size. An 8,400-cell
+multi-level test reads and replaces only the selected path. Old-root pagination
+remains exact during corrections and deletions.
+
+Independent index review found that disjoint pruning and no-op leaf reuse could
+trust unauthenticated root metadata. Every non-null root is now authenticated
+before pruning or reuse; seven tests and 4,557 assertions passed, including
+foreign account/generation and forged-bound regressions. Four actual R2 adapter
+tests passed for exact retry, read purity, copied-plan refusal, immutable
+conflicts and closed-continuation orphan reconciliation. Durable reservation,
+publication commitment, hosted cursor admission, maintenance and reclamation
+are still required before activation. Per-operation limits do not establish
+cumulative physical storage qualification.
+
+### 2026-09-23 — Explorer qualification and product-domain repairs
+
+The local explorer exposes all 241 definitions with exact supported values or
+specific missing-evidence reasons. Its shared query drives calendar, chart,
+group table, drilldown, CSV and digest-bound JSON. Global grouping precedes
+top-K; Other retains omitted contributions. Focused checks passed 53 tests and
+2,431 assertions, plus TypeScript and owned ESLint. The stable-source synthetic
+desktop/mobile browser journey passed in 125.612 seconds with retained captures
+and a source-bound receipt in `.impeccable/review/receipt.json`; its owned server
+closed cleanly. Earlier development runs were not passes: sibling-route cold
+compilation caused HMR reloads, and a process probe obscured cleanup evidence.
+Finite route prewarming and explicit child/port reconciliation repaired that
+harness. Fresh visual review and documentation handoffs remain in progress.
+
+Maximum-report responsiveness is explicitly unqualified. On the M5 Max/Bun
+1.3.14 helper workload, 65,536 admitted model/day rows (27,129,286 bytes) took
+median 584.63 ms to admit and 727.71 ms to query after two warmups and five
+samples. Repeated-run RSS reached about 2.016 GB, not an isolated peak or proof
+of a leak. Exact totals conserved, but this evidence does not meet the proposed
+interactive budget. Heap isolation and cancellable off-main-thread or indexed
+execution remain required; a small browser fixture cannot substitute for them.
+
+Phase 9 reproduced and repaired calculator calendar/month admission, duplicate
+subsidy labels, missing discovery dates, regressed retrieval/reporting periods,
+and automated source/policy drift. Exact identity now breaks collation-equivalent
+ranking ties, including stable provider aliases. Companion installation rejects
+symlinked/writable managed parents and uses private exclusive staging; the
+explicit native build preserves the lockfile. Root independent review accepted
+the bounded changes and their stated filesystem/float limitations. The focused
+gate passed 124 tests and 25,186 assertions; all 98 property tests passed with
+130,691 assertions; publication/privacy checks passed 58 tests and 1,380
+assertions. Offline generated checks, targeted types/lint and the locked macOS
+release build passed. No snapshot was refreshed and no real companion was
+launched. The aggregate integrated browser/build and delivery gates remain open.
+
+Phase 8 begins with an additive local fact profile and adapters for existing
+session, turn, telemetry and compaction evidence. Missing lineage, dispatch,
+streaming timing and outcomes remain unknown. Corrections and retractions keep
+source identity; inclusive/direct scopes and independently keyed histories do
+not acquire an overlap proof merely by being combined.
+
+### Committed replay, retained query snapshots and independent product review
+
+The canonical migration review added three concrete repairs before its final
+30-test workerd pass: actual bounded SQL row counts precede full replay; retained
+device batch/receipt copies contribute to metadata admission; and every migration
+receipt request-identity field matches its retained request. The original data
+remains intact on refusal. The sealed legacy point-read limitation remains:
+coordinated post-activation SQL corruption needs an independent full scrub, not
+a claimed per-read Merkle membership proof.
+
+The immutable index writer now binds an owned stage hash to context, root,
+ordered emitted object references and reserved bytes. Replay accepts only the
+next committed SQL revision, verifies every delta page and the complete ordered
+inventory hash, and resolves at most 32 identities per phase-separated chunk.
+The root's HTTP/index/replay gate passed 17 tests in 4.97 seconds. Pure query and
+rollup checks passed 15 tests with 29,298 assertions. An initial regression caught
+a new lookup helper admitting aggregate rows; it now requires one observation,
+as does the correction planner.
+
+The new projection controller passed 10 real-runtime tests, including a genuine
+enrolled RPC/schema-10 path, lost write acknowledgments and restart, old callback
+closure, rollback after stage movement, exact reservation retry, physical-write
+budget refusal and 64-live-reference pressure. Its first integration run found
+a missed schema-10 case in legacy stats ownership admission; the integrator
+repaired that compatibility branch without weakening the exact schema checks.
+The three projection tables contain control metadata; immutable cells remain in
+R2. All possible writes share a cumulative 4 GiB reservation bound. Retiring a
+current publication starts a 930-second cursor horizon; expired SQL references
+are pruned only by explicit publication, and no R2 reclamation is enabled.
+
+The query contract binds account, generation, committed revision, root, range,
+page limit and continuation key. It reports source and selected snapshot lag and
+unresolved legacy populations. Every provider await rechecks pure account
+snapshots; object presence grants no query authority. Four initial query-runtime
+tests passed; a subsequent first-page interleaving regression covers a newer
+publication completing during the read. Current HTTP/schema joins and the new
+interleaving still await the combined root gate and independent review. Automatic
+projection scheduling, full rebuild/scrub, query performance qualification,
+retention/recovery and staged-publication formal conformance remain open.
+
+Fresh dashboard review found four material local explorer issues, all repaired
+in one batch: the mobile jump link, answer reveal/focus, unavailable-unit wording,
+and singular/filtered catalog counts. A stable-source desktop/mobile journey
+passed in 99.541 seconds, all seven captures were inspected, and the owned process,
+pipes and port closed. The same independent reviewer gave a ship verdict on the
+four fixes. A fresh documenter confirmed the incumbent system and made no files;
+this ordinary extension did not warrant invented design-system records. Maximum
+report performance and hosted/rich integration remain open. Isolated unprofiled
+heap diagnostics returned live heap to roughly 20 MB after report release; high
+RSS represented retained allocator capacity in that run, while the profiler
+itself retained snapshots. This is not evidence of a product leak or a browser
+performance pass. The subsequent quiet maximum-report browser baseline measured
+1,997 ms admission, 1,852 ms first query, 1,271–1,396 ms repeated-query, 926 ms CSV
+and 153 ms JSON main-thread tasks. Its final combined privacy/runtime assertion
+failed; the diagnostic artifact is retained under
+`target/assurance/metric-explorer/browser-baseline/failed-performance.json`.
+That is a reproduced performance blocker, not qualification. The bounded worker
+and report-session join is now the owned repair lane.
+
+Phase 8's additive local contract now has seven kinds (usage, span, request,
+turn, tool, context and compaction). Root review caught source mutation during
+asynchronous hashing and inclusive ancestor/child double counting. Both were
+reproduced by failing regressions and repaired: all candidates are owned before
+await, and ambiguous token aggregation returns an explicit ineligibility reason
+with no usable total while independent timing/outcome metrics remain available.
+The focused joined gate passed 81 tests with 6,410 assertions, plus strict types
+and lint. The native session producer now exposes opt-in `rich-facts-v1` with an
+explicit source generation and half-open window. Four failing compatibility
+regressions established unknown-model attribution and an unreachable Codex
+metadata scanner; both paths are repaired. Native validation passed 394 CLI
+unit, 87 CLI integration and 141 core tests, plus strict all-targets Clippy;
+one existing ignored test was not counted. The synthetic socket test rerun used
+approved local loopback access. The joined TypeScript suite passed 82 tests,
+including independently derived cross-runtime HMAC fixtures. Root independently
+reviewed the native producer, retained descriptor/key checks, options and exact
+mapping. This remains a local revision-zero snapshot: continuous revision
+assignment, hosted consumption and rich dashboard joins remain open.
+
+The last collected registry checks passed with 163 source-bound capacities, 54 assurance
+surfaces and 77 total cost surfaces. These are inventory-consistency results,
+not physical storage, live deployment or whole-system correctness certification.
+
+The new native-producer audit found two prerequisites. A new device needs bounded
+named observation-head reads and revision-bound population-member pagination;
+the existing aggregate query cannot reconstruct those identities. Account-wide
+V3 activation also supersedes V1/V2 writes, so aggregate-only source accounts
+cannot be silently upgraded. Initial exact-source eligibility must be based on
+stable native identity or verified immutable/append-only prefix continuity:
+Codex timestamp/slot identities and Devin's position fallback do not justify
+arbitrary reordered-history corrections. Ambiguous rewrites must quarantine.
+
+The controller extension separates complete applied revisions from published
+snapshots. A hard 16-second minimum interval, including caught-up bursts, keeps
+930-second cursor retention below the defensive 64-reference cap while backlog
+application proceeds. Query watermarks now report source, latest applied,
+latest published and selected snapshot revisions with independently checked
+lags. The browser-safe query contract built successfully; 38 focused contract,
+rollup and index tests passed with 34,401 assertions before the new lag fields,
+and the lag contract's affected tests passed afterward. Five query runtime
+tests and seven initial work-control tests passed together; later attempt-version
+and alarm-ordering additions await their next gate.
+
+Automatic work is now joined under additive account schema 11. Consent and
+projection have independent identities, acknowledgment, eight attempts and
+versioned dispatch flights. A 2-second alarm yield leaves actual provider calls
+and restore custody intact. The 30-second durable watchdog moves unresolved
+work to visible `awaiting_settlement` once; the other class continues without
+an empty polling loop. Ordinary position changes preserve the flight identity;
+explicit resume invalidates old capabilities. A late completion persists its
+next wake before clearing a flight. Source commits also re-arm after immutable
+I/O and before the canonical SQL commit. The failed-arm regression preserves
+one pending reservation and exact immutable charge, then commits once on retry.
+
+Independent review found and repaired held-consent starvation and the late
+completion lost-wake window. The joined 35-case runtime gate passed work-state,
+automatic integration and projection tests, including multi-revision catch-up
+while consent is held, watchdog eviction, retry exhaustion, read-only work
+status and close/drain custody. Explicit foreground projection uses the same
+flight exclusion. The final focused 21-case gate also passed the held fence
+acquisition/alarm interleaving and unified durable-flight claim API; Worker
+TypeScript and owned-file lint passed. These later repairs are covered by the
+final integration gate again when the whole tree converges.
+The design accounts for Cloudflare's single replaceable, at-least-once alarm and
+null `getAlarm()` inside a handler ([alarm API](https://developers.cloudflare.com/durable-objects/api/alarms/)).
+Durable Objects' `waitUntil` does not extend execution lifetime; pending I/O is
+not proof against eviction ([state API](https://developers.cloudflare.com/durable-objects/api/state/#waituntil)).
+The legacy consent-only alarm remains separately scoped. No feature is activated.
+
+M8 covers bounded staged apply, charge conservation, coalesced publication,
+retained cursor references and actual completion before drain. M9 adds independent
+consent/projection progress, durable flights, one-shot watchdogs, late completion,
+shared custody, restart and explicit resume. Its two complete safety graphs have
+637 and 921 states; five witnesses and three guard-removal mutants qualify the
+declared finite transitions. The shared pinned runner passed all 70 configurations
+on macOS: 15 historical baseline expectations and 55 repaired cases, including
+12 complete safety explorations, 36 witnesses and seven guard-removal counterexamples.
+Eight runner tests passed with 87 assertions. The receipts are
+`target/assurance/tla/run-rezgFC/receipt.json` and
+`target/assurance/tla/run-3n7OhY/receipt.json`; the exact-byte audit at
+`target/assurance/m9-dev/official-hash-audit.json` matched all 70 captured cases,
+current/staged inputs, tool pins, logs and traces. This does not qualify Linux,
+prove source refinement or establish unbounded liveness. M9's atomic alarm-arm
+abstraction and excluded runtime queue are explicit in its action map.
+
+The exact-head HTTP join passed 11 tests, and two genuine retained-V1 migration
+regressions passed with exact payload/head references and tombstones preserved.
+Its pure contract passed seven tests with 344 assertions; six indexed Worker
+cases include all 8,192 population members. The endpoint never substitutes a
+membership assertion for the current head. The native producer kernel now
+prepares new observations and exact mirror assertions only. Fifteen Rust tests
+passed, including byte/hash parity, identity deduplication, partial-scan
+correction refusal, malformed correlated replies and limits; the later explicit
+u64-overflow case passed its focused test. Strict core Clippy, formatting, four
+TypeScript fixture tests with 33 assertions, owned lint and the narrow typecheck
+passed. Root independently reviewed the opaque inputs, partial eligibility,
+separate current/membership heads and frozen request/receipt correlations.
+Differing values remain refused pending durable correction authority, verified
+transport and frozen-flight settlement. This is not a V3 CLI upload or activation
+path.
+
+The worker-backed local dashboard passed 45 tests with 950 assertions and joined
+desktop/mobile browser journeys. File admission, queries and CSV/JSON exports
+run in a bounded worker session; only complete presentation values cross to the
+page. Closing, replacing or invalidating an account drops stale results and
+exports. Daily tables render only when opened and page at 31 days. In the final
+maximum development run, repeated-query main-thread tasks fell to 127–132 ms,
+but still exceeded the 50 ms target and 92–140 ms input frames missed the 100 ms
+target in some samples. Exact 65,536-row exports, privacy and worker cleanup
+passed. This is measured progress, not production responsiveness qualification.
+The hosted join now transfers bounded immutable response bytes into the same
+private worker for UTF-8 decoding, schema/range/status admission and snapshot
+capture. One monotonic 20-second deadline spans identity adoption, SDK recovery
+and retries. Invalidated attempts cancel and dispose their private session;
+account identity never enters report metadata or exports. The focused gate passed
+103 tests with 929 assertions across transport, generation, recovery, worker
+session and dashboard behavior, with owned lint clean. Root independently reviewed
+the hosted boundary and cancellation custody. Synthetic hosted-worker signout is
+qualified by the later production functional run below; live provider authority
+and maximum-workload performance remain separate obligations.
+
+The first fresh production diagnostic passed exact 65,536-row totals/groups,
+complete CSV, snapshot digest, privacy and worker cleanup. Five maximum-query
+samples had no page Long Tasks and 11.9–19.4 ms input-to-next-frame, but completion
+took 1,373.0–1,460.7 ms. This establishes responsiveness for those samples, not
+the modest-hardware completed-query p95 target. The 27 MB file-injection long task
+does not isolate native picker admission. Main heap excludes worker allocations.
+The later desktop/mobile journey failed a driver synchronization assumption;
+its account-report wait was repaired. An intervening build correctly refused
+unrelated cancellation test literal typing; those fixtures were repaired before
+further qualification. A later ready dashboard timed out on the driver's
+network-idle assumption; explicit readiness and exact-value assertions now
+establish the relevant application state.
+
+The next fresh production run passed desktop/light 1440×900 and mobile/dark
+390×900 journeys, including a held hosted worker response followed by sign-out,
+account switching, failures, local examples and exact daily totals. Both
+viewports had zero runtime errors and local provider effects; worker counts
+peaked at two and returned to zero. Root inspected the final desktop/mobile
+captures. Receipt
+`target/assurance/metric-explorer/browser-worker-production-functional-ready/receipt.json`
+binds build `WmXNu0ForKZftBPJDixse`, all 37 frontend/driver inputs and four build
+artifacts. Its source/artifact readback matched; owned processes were collected
+and the port refused connections afterward. This is production-build behavior
+against synthetic service responses, not live provider or maximum-latency
+qualification. Worker CPU, full memory and maximum hosted admission profiling
+continue in a separate bounded diagnostic.
+
+The current explorer implements 42 of the 241 catalog metrics for `client-stats-v2`.
+Rich observations, source health, canonical account/device views, matched-period
+comparisons and billing still need their actual capability joins. Phase 7B must
+check metric-to-view/filter/drilldown/export coverage; an unavailable explanation
+cannot complete an observable planned metric. Physical worker peak, simultaneous
+maximum last-good/candidate reports, the 32-metric/2 MiB presentation envelope,
+hosted maximum admission and complete account lifecycle journeys remain explicit
+qualification work.
+
+The independent single-cell scrub now has a trusted read-only RPC join. Its
+temporary envelope permits fresh V3 accounts with at most 16 retained canonical
+heads, 23 source/index object reads and 18 MiB of verified content. A separate
+zero-based fold checks the cell against canonical body/terminal evidence, without
+using projection deltas as its oracle. Both backend and outer RPC retire after a
+nonrenewable 30-second deadline; the RPC includes external namespace/fence checks
+and rechecks canonical revision/root afterward. Five pure tests passed with 534
+assertions. The combined runtime gate passed all 17 cases: eleven backend and
+six RPC integration cases, including the final-await full-reference race even
+when its hash is unchanged. Worker TypeScript, all owned-file lint and the
+registry/cost gates passed. Independent RPC review confirmed that late external
+replies cannot dispatch more SQL or object gets after retirement; already-started
+bounded stream parsing may still complete. Larger-account pagination,
+whole-index comparison, durable repair and recovery remain open.
+
+The next native-producer design audit reproduced a missing cancellation boundary:
+the existing abandon operation requires a server reservation. A frozen upload
+refused before reserve can remain stale indefinitely, while an absent status
+cannot exclude a delayed prior send. The sender must retain that uncertain flight
+until a correlated terminal result or a durable server cancellation excludes all
+late effects. V3 abandonment also consumes a device sequence, unlike the existing
+V2 sender's accounting. A full frozen-batch cancellation contract and recovery
+model must qualify before any CLI transport join; no local flight is cleared
+on an absent status.
+
+The full-batch cancellation now preserves an authenticated terminal even when
+the original upload never reserved server storage. It charges one metadata
+operation, advances the device sequence once and leaves immutable-byte capacity
+unchanged. An upload already paused in an R2 call later observes the same terminal
+and cannot publish heads or issue its next journal write. Creating this new
+terminal advances account schema 11 to 12 in the same transaction. Independent
+join review and runtime testing caught a stats ownership reader that still
+accepted only schema 11; it now validates the same unchanged ownership layout
+for schema 12.
+
+Five pure contract tests passed with 50 assertions. The final affected Worker
+run passed all 15 cancellation cases; its separate HTTP fixture failure reused
+a stub invalidated by the simulated Durable Object restart. After reacquiring
+the stub, the HTTP-only run passed all 13 cases, including schema 12 restart,
+delayed upload and correlated retry. The earlier 30 contribution cases passed
+without changes to their inputs. Worker types and owned-file lint passed. These
+are separate focused receipts, not a claim that all 58 cases ran together on the
+final tree. The HTTP receipt is
+`target/assurance/cancel-runtime-http-receipt.json`; the preceding cancellation
+pass is retained in `target/assurance/cancel-runtime-affected-receipt.json` and
+its captured test output.
+
+The native durable sender must also publish cancellation intent locally before
+its first network call. It retains the original immutable batch and switches
+the checkpoint action from upload to cancel; an uncertain reply cannot switch
+it back. A fresh cancellation revision requires another authenticated read and
+durable checkpoint publication. Read-only inspection uses an existing lock and
+never invokes the current V2 checkpoint constructor, which creates a lock, or
+its read path, which may publish a staged successor. The new V3 sidecar and
+strict exact-byte batch reopening are implemented; transport and CLI activation
+remain unjoined.
+
+The whole-index comparison foundation now scans the entire retained day/key
+space, with 16 cells per page and continuations bound to an actual cell and its
+ordinal. Its worst-case bound is 126 checked objects and less than 32 MiB per
+root page; a comparison step can read two such pages. The comparison owns its
+continuation, begins at zero, retains the same prefix on failed reads and checks
+semantic cells even when root hashes match. Different insertion histories may
+produce different hashes while comparing equal. This is an in-memory comparison
+session: process loss restarts comparison at zero, and a match grants no source
+or publication authority.
+
+All seven new scan/comparison tests passed, including maximum-height sparse
+trees, fabricated cursor ordinals, different insertion histories, boundary
+omissions, failed-read retry and concurrent-step exclusion. Existing index
+regressions also passed; the seeded correction property exceeded Bun's default
+five-second timeout under local concurrent work and passed unchanged assertions
+with an explicit 30-second test bound. Narrow strict types and owned lint passed.
+Independent source review accepted the traversal and prefix preservation, and
+the registry/cost gates passed with 147 capacities and 74 cost surfaces. Durable
+from-zero source accumulation and resumable scratch publication remain open.
+
+M10 now checks durable native upload/cancel decisions, cancellation before server
+reservation, a held object write, lost terminal replies, restart and stale-reply
+isolation. Its two complete finite safety graphs contain 11,685 and 8,008 states;
+three reachability traces and three guard-removal counterexamples qualify the
+declared abstraction. The expanded official run passed all 78 configurations:
+15 historical baseline expectations and 63 repaired cases, comprising 14 safety
+explorations, 39 witnesses and ten guard-removal counterexamples. The receipts are
+`target/assurance/tla/run-laiTQJ/receipt.json` and
+`target/assurance/tla/run-jXQ2eE/receipt.json`.
+The audit at `target/assurance/m10-dev/official-hash-audit.json` independently
+rechecked every current/staged input, case evaluation, tool pin, log and trace.
+Eight runner tests passed with 87 assertions and owned lint passed. This remains
+macOS finite-model evidence; Linux qualification, source refinement and unbounded
+liveness remain separate obligations.
+
+The native outbox passed 16 focused state/disk tests and the core producer passed
+18 tests. Strict all-target core/CLI Clippy and owned formatting also passed.
+Independent review found a missing population/writer guard in authenticated
+progress; the repaired guard and regression are included in those results. Tests
+exercise six durable-publication failure boundaries, retained cancellation,
+terminal acknowledgement loss, account/generation/scope refusal, path replacement,
+read-only inspection and late replies after a newer flight. Exact file hashes,
+commands and collected sessions are retained in
+`target/assurance/contribution-sync-native-summary.json`; the hashes were captured
+after the gates, not continuously attested across execution. The sidecar retains
+uncertain flights, and whole-directory rollback remains a recovery obligation.
+
+The next native join preserves original authenticated direct or status terminal
+responses, binds each fixed-origin exchange to current enrollment custody and
+keeps one durable flight across populations. Inspection stays local and
+observational. Existing `enrollment::enrolled()` calls durability reconciliation,
+including fsync, despite its read-only description; the new inspection command
+must not use it. No public V3 activation, grant or migration command is planned
+in this join. The narrow Claude partial-observation profile remains explicit.
+
+The independent rebuild fold now starts from empty scratch state, preserves
+unknown versus zero and separates cost, timing and token-basis cohorts. Five tests
+passed with 385 assertions, including 97 observations split across different
+chunk sizes, correction equivalence, overflow, invalid seeds and caller mutation.
+Narrow strict types and lint passed. A durable diagnostic rebuild will pin the
+source and publication, process 16 retained heads per step and compare complete
+semantic cells. It will reserve scratch bytes from the existing derived budget
+before object writes; it will not repair or publish the diagnostic root.
+
+The schema13/trusted-RPC join passed six real-workerd integration cases in
+13.12 seconds. They cover SELECT-only missing/status reads, restart and exact
+step replay, fresh-result refusal after final-await source/reference drift,
+late fence acquisition without further SQL, and retained restore custody after
+a storage timeout until the actual put settles. The last case also verifies
+that retry completes the same pending reservation without charging twice.
+The receipt is `target/assurance/rebuild-integration-runtime-receipt.json` with
+unchanged captured sources. An earlier five-pass run exposed a synthetic RPC
+mock missing its required disposal field; its refusal receipt is retained.
+Worker types, owned lint and registry/cost checks passed. Independent root-join
+review accepted the retirement, replay, authority and custody boundaries. The
+backend owner is extending focused source-state regressions and will rerun the
+joined cases after its final controller changes; this is not the aggregate gate.
+
+The native contribution-sync lane then completed its next join. `CorrelatedTerminal`
+now carries the committed population revision/head, and authenticated status
+refuses a committed terminal when the current population is absent, predates the
+receipt or contradicts its equal-revision head. The CLI exposes retained-terminal
+and durable-floor evidence and distinguishes committed from abandoned settlement
+outcomes. Its path parser rejects empty, dot and parent components; local
+inspection remains observational and the schema-1 checkpoint conversion is
+read-only until the first authenticated mutation. The focused Rust contribution
+sync suite passed 41 tests, the core producer 18 tests, strict all-target Clippy
+and explicit native formatting passed, and the TypeScript status contract passed
+19 tests with 552 assertions. Loopback transport, synthetic changed-writer
+history and exact-byte fixtures are covered; live enrollment, production
+transport, rollback fencing and V3 activation remain open.
+
+The rich local metric evaluator is now covered by 28 tests with 4,070 assertions,
+its source adapters by nine tests with 50 assertions, and the existing metric,
+fold and rebuild suites by 23 tests with 2,348 assertions. A shared-fixture
+mutation in the rich explorer test was repaired by cloning the nested selection;
+the combined run now passes. Rich support remains an explicit local capability:
+request, response and hosted account joins, billing/plan evidence and the
+unimplemented catalog rows still require Phase 7B/8 work.
+
+The dashboard profiling lane completed its remaining production-build episodes.
+The fresh build and 40 source plus four artifact hashes matched. The 65,536-group
+protocol preserved the exact 2,215,018,496-token total in a 699,922-byte view and
+405,287-byte bound export with a 1,060.2 ms wire path. Hosted 8,192-row and
+maximum-row worker admission measured 206.4 ms and 174.4 ms, query measured
+44.8 ms and 47.4 ms, no page Long Tasks occurred, and owned workers returned to
+zero. The renderer diagnostic reached 1,079.7 MB private footprint while holding
+two full reports; page V8 reached 322.60 MB and the worker reached 252.03 MB in
+the maximum-group episode. Playwright injection and renderer tracing contribute
+to those process figures, so this is a bounded diagnostic rather than a product
+memory budget or p95 qualification. Maximum-report optimization and hosted/rich
+joins remain open.
+
+M11 now extends the repaired TLA manifest with eight contribution-rebuild cases:
+single-job and sequential-job complete safety graphs, three recovery/comparison
+witnesses and three guard-removal counterexamples. Individual pinned receipts
+pass for all eight; the complete graphs contain 258,698 and 221,596 distinct
+states. The expanded manifest is 71 repaired cases (16 safety, 42 witnesses and
+13 mutants). The converged aggregate runs now pass all 15 baseline and 71
+repaired cases. Receipts are
+`target/assurance/tla/run-baseline-final-escalated/run-lz8Ip3/receipt.json` and
+`target/assurance/tla/run-m11-official-final-escalated/run-XWgJ9I/receipt.json`.
+The aggregate remains finite model evidence for the declared abstractions; it
+does not establish unbounded liveness or implementation refinement.
+
+### 2026-09-24 — Convergence review and integration boundaries
+
+Independent review found that `--cancel` requested status before recording local
+cancellation. A lost status response could therefore leave an upload resumable.
+The repaired command durably records its one-way cancellation decision first,
+then obtains fresh dispatch authority. All six injected publication failures
+stop before network access; restart preserves cancellation and an already
+committed terminal can still settle the exact flight. The focused native suite
+passes 45 tests, strict core/CLI Clippy and owned formatting pass, and
+`target/assurance/native-cancel-review/receipt.json` retains commands and hashes.
+
+The first aggregate attempt exposed a stale custody test binary whose embedded
+manifest path pointed to a removed disposable checkout. Rebuilding only that
+package cleared the failure. The subsequent run passed Rust, workerd, release
+checks, TypeScript and lint, then passed 2,065 Bun tests and failed three. The
+formal CI action inventory, analytics scan of generated proof trees, and stale
+private-days fixture expectation are corrected; all seven focused checks pass.
+The private-days fixture now verifies captured account identity for both
+authenticated `not_enrolled` responses. This is intermediate evidence; current
+review fixes and incoming main still require the converged aggregate gate.
+
+Generated proof trees are excluded from source lint and the analytics source
+scan. Synthetic browser captures under `.impeccable/review/` remain local
+evidence, excluded from version control alongside other generated receipts.
+The activation runbook now distinguishes the explicit uploader for existing
+owned populations from activation/grant authority, preserves disabled V3 flags,
+and requires a schema-compatible recovery artifact before production promotion.
+The dated schema-6 recovery artifact does not qualify rollback after newer
+schema transitions. No production state or feature flag changed.

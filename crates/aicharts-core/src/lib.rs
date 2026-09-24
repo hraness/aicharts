@@ -4,7 +4,9 @@
 //! HMAC-derived from native metadata, never content, paths, device identity or line
 //! position. See README.md for coverage limits; successful parsing is not attestation.
 
+pub mod contribution_producer;
 mod reader;
+pub mod rich_facts;
 mod schema;
 pub mod sessions;
 pub mod turns;
@@ -26,7 +28,7 @@ pub const MAX_MEASUREMENTS: usize = 100_000;
 /// One ATIF transcript is a whole JSON document; this bounds a single file,
 /// not the multi-source byte total the CLI applies above it.
 pub const MAX_DOC_BYTES: u64 = 64 * 1024 * 1024;
-const TOKEN_LIMIT: u64 = 1_000_000_000_000;
+const TOKEN_LIMIT: u64 = aicharts_metrics::MAX_WIRE_TOKEN_COUNTER;
 const DAY_MS: u64 = 86_400_000;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -126,15 +128,15 @@ impl Accumulator {
             if !same_source(old, &usage) {
                 // Missing attribution may be enriched; two known owners are
                 // conflicting evidence. Arrival order is never owner authority.
-                if !(usage.provider == Provider::ClaudeCode
-                    && same_context(old, &usage)
-                    && (old.execution_id == [0; 16] || usage.execution_id == [0; 16]))
-                {
+                if !same_context(old, &usage) {
                     return Err(Error::ConflictingOccurrence);
                 }
-                if usage.execution_id != [0; 16] {
-                    old.execution_id = usage.execution_id;
-                }
+                old.execution_id = aicharts_metrics::merge_owner(
+                    old.execution_id,
+                    usage.execution_id,
+                    usage.provider == Provider::ClaudeCode,
+                )
+                .map_err(|_| Error::ConflictingOccurrence)?;
             }
             if usage.provider == Provider::Codex {
                 if *old_day != day
@@ -147,19 +149,15 @@ impl Accumulator {
             }
             let old_values = values(&old.tokens);
             let new_values = values(&usage.tokens);
-            let new_dominates = new_values
-                .iter()
-                .zip(old_values)
-                .all(|(new, old)| *new >= old);
-            let old_dominates = old_values
-                .iter()
-                .zip(new_values)
-                .all(|(old, new)| *old >= new);
-            if !new_dominates && !old_dominates {
+            let dominance = aicharts_metrics::component_dominance(old_values, new_values);
+            if dominance == aicharts_metrics::Dominance::Conflict {
                 return Err(Error::ConflictingOccurrence);
             }
             let final_time = (*old_day, old.offset_ms).max((day, usage.offset_ms));
-            if new_dominates {
+            if matches!(
+                dominance,
+                aicharts_metrics::Dominance::Equal | aicharts_metrics::Dominance::Right
+            ) {
                 old.tokens = usage.tokens;
             }
             *old_day = final_time.0;
@@ -311,9 +309,7 @@ fn values(t: &Tokens) -> [u64; 6] {
     ]
 }
 fn bounded(tokens: Tokens) -> Result<Tokens, Error> {
-    if values(&tokens).iter().any(|&v| v > TOKEN_LIMIT) || tokens.reasoning_output > tokens.output {
-        return Err(Error::InvalidCounters);
-    }
+    tokens.total().map_err(|_| Error::InvalidCounters)?;
     Ok(tokens)
 }
 fn any_tokens(tokens: &Tokens) -> bool {

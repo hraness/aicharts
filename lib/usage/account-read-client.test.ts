@@ -6,6 +6,7 @@ import { setUsageConsent } from "./consent-client";
 import type { PrivateDaysPublicReply } from "./private-days-public";
 import type { StatsPublicReply } from "./stats-public";
 import type { UsageConsentPublicReply } from "./consent-public";
+import { TestMetricWorker } from "./metric-explorer-test-worker";
 
 const accountId = `acct_${"a".repeat(32)}`;
 type Bound<T> = T extends { state: "not_enrolled" } | { error: "not_enrolled" } ? T & { accountId: string } : T;
@@ -27,7 +28,7 @@ const clients = [
   { name: "daily", path: "/api/usage/days?firstUtcDay=10&dayCount=1", missing, absent, down, refused,
     read: (signal: AbortSignal, options: Options) => readAccountDays({ firstUtcDay: 10, dayCount: 1 }, signal, options) },
   { name: "stats", path: "/api/usage/stats?firstUtcDay=10&dayCount=1", missing: statsMissing, absent: statsAbsent, down: statsDown, refused: statsRefused,
-    read: (signal: AbortSignal, options: Options) => readAccountStats(10, 1, signal, options) },
+    read: (signal: AbortSignal, options: Options) => readAccountStats(10, 1, signal, { ...options, statsWorkerFactory: () => new TestMetricWorker() }) },
   { name: "consent", path: "/api/usage/consent", missing, absent, down, refused,
     read: (signal: AbortSignal, options: Options) => readAccountConsent(signal, options) },
   { name: "account", path: "/api/usage/account", missing, absent: accountReady, down: accountDown, refused: accountRefused,
@@ -56,7 +57,7 @@ for (const client of clients) {
     let reads = 0, cleared = 0;
     const fetch = port((input, init) => {
       paths.push(`${init?.method} ${input}`);
-      expect(init?.signal).toBe(controller.signal);
+      if (client.name === "stats") expect(init?.signal?.aborted).toBe(false); else expect(init?.signal).toBe(controller.signal);
       expect(init?.credentials).toBe("same-origin"); expect(init?.cache).toBe("no-store");
       expect(init?.redirect).toBe("error"); expect(init?.body).toBeUndefined();
       expect(new Headers(init?.headers).has("authorization")).toBe(false);
@@ -304,7 +305,7 @@ test("late renewed reads are suppressed when the caller replaces or cancels them
     if (input === "/api/suite-auth/session") return json(signedIn);
     if (++reads === 1) return json(statsMissing, 401);
     arrived.resolve(); return retry.promise;
-  }) });
+  }), statsWorkerFactory: () => new TestMetricWorker() });
   const refused = pending.then(() => null, (error: unknown) => error);
   await arrived.promise; controller.abort(); retry.resolve(json(statsAbsent)); expect(await refused).toEqual(new Error("usage_unavailable"));
   expect(reads).toBe(2);

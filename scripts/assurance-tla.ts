@@ -11,18 +11,19 @@ const modelRoot = resolve(root, "verify/tla");
 const identifier = z.string().regex(/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/u);
 const operator = z.string().regex(/^[A-Z][A-Za-z0-9]*$/u);
 const modelCaseSchema = z.object({
-  id: identifier, module: z.enum(["M1Restore", "M4Contributions", "M4Supersession"]),
+  id: identifier, module: z.enum(["M1Restore", "M4Contributions", "M4Supersession", "M1RestoreRepaired", "M2Ledger",
+    "M3Admission", "M4ContributionsRepaired", "M5Authority", "M6Consent", "M7Projection", "M8StagedProjection", "M9AccountWork", "M10ContributionFlight", "M11ContributionRebuild"]),
   kind: z.enum(["counterexample", "sanity", "witness"]), invariant: operator.nullable(),
   config: z.string().regex(/^configs\/[a-z0-9-]+\.cfg$/u),
   requiredActions: z.array(operator), minTraceStates: z.number().int().min(0).max(100),
-  minDistinctStates: z.number().int().min(2).max(100_000),
-  expectedDistinctStates: z.number().int().min(2).max(100_000).nullable(),
+  minDistinctStates: z.number().int().min(2).max(300_000),
+  expectedDistinctStates: z.number().int().min(2).max(300_000).nullable(),
 }).strict();
 const manifestSchema = z.object({
-  schemaVersion: z.literal(1), claim: z.literal("finite-baseline-model-evidence-only"),
-  bounds: z.object({ workers: z.literal(1), heapMiB: z.literal(256), timeoutMs: z.literal(30_000),
-    maxOutputBytes: z.literal(1_048_576), maxDistinctStates: z.literal(100_000) }).strict(),
-  cases: z.array(modelCaseSchema).min(1).max(32),
+  schemaVersion: z.literal(1), claim: z.enum(["finite-baseline-model-evidence-only", "finite-repaired-model-evidence-only"]),
+  bounds: z.object({ workers: z.literal(1), heapMiB: z.literal(256), timeoutMs: z.literal(60_000),
+    maxOutputBytes: z.literal(1_048_576), maxDistinctStates: z.literal(300_000) }).strict(),
+  cases: z.array(modelCaseSchema).min(1).max(80),
 }).strict();
 const pinSchema = z.object({
   schemaVersion: z.literal(1),
@@ -30,8 +31,8 @@ const pinSchema = z.object({
     sha256: z.literal("936a262061c914694dfd669a543be24573c45d5aa0ff20a8b96b23d01e050e88"),
     upstreamSha1: z.literal("bee4a54f3ee3d4afc347c3240ec2d9e93b075104") }).strict(),
   java: z.object({ runtimeVersion: z.literal("21.0.12.1+1-LTS"), vendor: z.literal("Eclipse Adoptium"),
-    localExecutable: z.string().min(1), qualifiedPlatform: z.literal("macOS-aarch64"),
-    localArchiveSha256: z.literal("dec50fc6f9fcd4fe3ae8cabf5a5fa68f6afc48841f7698e468e9aa5d54beed84") }).strict(),
+    platforms: z.record(z.string(), z.object({ executable: z.string().min(1), executableSha256: z.string().regex(/^[a-f0-9]{64}$/u),
+      archiveUrl: z.string().url(), archiveSha256: z.string().regex(/^[a-f0-9]{64}$/u) }).strict()) }).strict(),
   defaultJar: z.string().min(1),
 }).strict();
 
@@ -87,7 +88,7 @@ export function evaluateTlc(modelCase: ModelCase, result: ProcessResult) {
   if (!messages.some(message => message.code === 2262 && message.body.startsWith("TLC2 Version 2.19 "))) errors.push("wrong or missing TLC version");
   if (!messages.some(message => message.code === 2186 && message.body.startsWith("Finished in "))) errors.push("missing terminal TLC message");
   if (!counts || !Number.isSafeInteger(counts.generated) || !Number.isSafeInteger(counts.distinct) || !Number.isSafeInteger(counts.queued)
-      || counts.distinct < modelCase.minDistinctStates || counts.distinct > 100_000 || counts.generated < counts.distinct || counts.queued < 0) errors.push("missing, vacuous or excessive exploration counts");
+      || counts.distinct < modelCase.minDistinctStates || counts.distinct > 300_000 || counts.generated < counts.distinct || counts.queued < 0) errors.push("missing, vacuous or excessive exploration counts");
   if (counts && modelCase.expectedDistinctStates !== null && counts.distinct !== modelCase.expectedDistinctStates) errors.push("reachable-state count drift");
   const violations = messages.filter(message => message.code === 2110);
   if (modelCase.kind === "sanity") {
@@ -123,11 +124,22 @@ async function runProcess(command: string, args: readonly string[], timeoutMs: n
   });
 }
 
-export async function runTla(options: { java?: string; jar?: string; output?: string; case?: string } = {}) {
+export async function runTla(options: { java?: string; jar?: string; output?: string; case?: string; suite?: "all" | "baseline" | "repaired" } = {}): Promise<{ ok: boolean }> {
+  if ((options.suite ?? (options.case ? "baseline" : "all")) === "all") {
+    if (options.case) throw new Error("single_case_requires_named_suite");
+    const baseline = await runTla({ ...options, suite: "baseline" });
+    const repaired = await runTla({ ...options, suite: "repaired" });
+    const ok = baseline.ok && repaired.ok;
+    console.log(JSON.stringify({ ok, suites: ["baseline", "repaired"], claim: "finite-model-evidence; implementation correspondence requires its separate conformance receipt" }));
+    return { ok };
+  }
+  const suite = options.suite === "repaired" ? "repaired" : "baseline";
+  const manifestPath = suite === "repaired" ? "verify/tla/repaired-cases.json" : "verify/tla/cases.json";
   const runnerBytes = await boundedFile(fileURLToPath(import.meta.url));
-  const manifestText = (await boundedFile(resolve(modelRoot, "cases.json"))).toString("utf8");
+  const manifestText = (await boundedFile(resolve(root, manifestPath))).toString("utf8");
   const pinText = (await boundedFile(resolve(modelRoot, "toolchain.json"))).toString("utf8");
   const manifest = manifestSchema.parse(JSON.parse(manifestText) as unknown);
+  if (manifest.claim !== `finite-${suite}-model-evidence-only`) throw new Error("model_suite_claim_mismatch");
   const pin = pinSchema.parse(JSON.parse(pinText) as unknown);
   if (new Set(manifest.cases.map(item => item.id)).size !== manifest.cases.length) throw new Error("duplicate_model_case");
   if (manifest.cases.some(item => item.kind === "sanity" && item.expectedDistinctStates === null)) throw new Error("missing_complete_state_count");
@@ -137,10 +149,13 @@ export async function runTla(options: { java?: string; jar?: string; output?: st
     [name, await boundedFile(resolve(modelRoot, `${name}.tla`))] as const)));
   const configSnapshots = new Map(await Promise.all(selected.map(async item =>
     [item.config, await boundedFile(resolve(modelRoot, item.config))] as const)));
-  const java = resolve(root, options.java ?? pin.java.localExecutable), jar = resolve(root, options.jar ?? pin.defaultJar);
+  const platform = `${process.platform}-${process.arch}`, javaPin = pin.java.platforms[platform];
+  if (!javaPin) throw new Error(`unsupported_tlc_platform:${platform}`);
+  const java = resolve(root, options.java ?? javaPin.executable), jar = resolve(root, options.jar ?? pin.defaultJar);
   const jarBytes = await boundedFile(jar, 32 * 1024 * 1024);
   if (sha256(jarBytes) !== pin.tlc.sha256) throw new Error("tlc_artifact_checksum_mismatch");
   const javaExecutableSha256 = sha256(await boundedFile(java, 32 * 1024 * 1024));
+  if (javaExecutableSha256 !== javaPin.executableSha256) throw new Error("java_artifact_checksum_mismatch");
   const version = await runProcess(java, ["-version"], 5_000, 16_384);
   if (version.exitCode !== 0 || version.signal !== null || version.timedOut || version.outputExceeded
       || !version.output.includes(`Temurin-${pin.java.runtimeVersion.replace(/-LTS$/u, "")} (build ${pin.java.runtimeVersion})`)) throw new Error("java_runtime_version_mismatch");
@@ -187,16 +202,17 @@ export async function runTla(options: { java?: string; jar?: string; output?: st
   if (sha256(await boundedFile(stagedJar, 32 * 1024 * 1024)) !== pin.tlc.sha256
       || sha256(await boundedFile(java, 32 * 1024 * 1024)) !== javaExecutableSha256) throw new Error("tool_artifact_changed_during_execution");
   if (sha256(await boundedFile(fileURLToPath(import.meta.url))) !== sha256(runnerBytes)) throw new Error("runner_source_changed_during_execution");
-  const receipt = { schemaVersion: 1, recordedAt: new Date().toISOString(), claim: manifest.claim,
+  const receipt = { schemaVersion: 1, recordedAt: new Date().toISOString(), suite, claim: manifest.claim,
     limitations: ["Expected violations confirm reachable baseline model failures, never production safety.",
       "Sanity configurations check only their listed invariants over finite domains; no liveness property or implementation refinement is proved.",
-      "M1 source correspondence is reviewed mechanism mapping; its Durable Object failure schedules have not been executed."],
+      suite === "baseline" ? "Baseline correspondence records reviewed failure mechanisms; this receipt does not run production schedules."
+        : "Repaired model evidence is separate from generated real-runtime conformance and its source/action coverage receipt."],
     completeSuite: selected.length === manifest.cases.length, ok: results.every(result => result.ok),
     toolchain: { ...pin, observedJava: version.output.trim(), javaExecutableSha256,
       observedHost: { platform: process.platform, architecture: process.arch },
       javaBinding: "Runtime version and launcher bytes checked; full JRE libraries are a trusted environmental boundary. Archive digest records provisioning evidence, not a full installed-image measurement." },
     sourceSha256: { "scripts/assurance-tla.ts": sha256(runnerBytes),
-      "verify/tla/cases.json": sha256(manifestText), "verify/tla/toolchain.json": sha256(pinText) }, results };
+      [manifestPath]: sha256(manifestText), "verify/tla/toolchain.json": sha256(pinText) }, results };
   const receiptPath = resolve(runRoot, "receipt.json");
   await writeFile(receiptPath, `${JSON.stringify(receipt, null, 2)}\n`);
   console.log(JSON.stringify({ ok: receipt.ok, completeSuite: receipt.completeSuite, claim: receipt.claim, receipt: relative(root, receiptPath) }));
@@ -206,9 +222,10 @@ export async function runTla(options: { java?: string; jar?: string; output?: st
 if (import.meta.main) {
   try {
     const { values } = parseArgs({ args: process.argv.slice(2), strict: true, allowPositionals: false,
-      options: { java: { type: "string" }, jar: { type: "string" }, output: { type: "string" }, case: { type: "string" } } });
+      options: { java: { type: "string" }, jar: { type: "string" }, output: { type: "string" }, case: { type: "string" }, suite: { type: "string" } } });
     for (const value of [values.java, values.jar, values.output]) if (value && !isAbsolute(value) && value.split(/[\\/]/u).includes("..")) throw new Error("outside_relative_tool_path");
-    if (!(await runTla(values)).ok) process.exitCode = 1;
+    const suite = z.enum(["all", "baseline", "repaired"]).optional().parse(values.suite);
+    if (!(await runTla({ ...values, suite })).ok) process.exitCode = 1;
   } catch (error) {
     console.error(JSON.stringify({ ok: false, error: error instanceof Error ? error.message : "tla_runner_failed" }));
     process.exitCode = 1;

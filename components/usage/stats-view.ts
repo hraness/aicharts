@@ -19,7 +19,7 @@ export type StatsTotals = {
   /** Timed records with observed reported/estimated tokens, including measured zero. */
   timedTokenRecords: number;
 };
-export type StatsGroup = { key: string; name: string; totals: StatsTotals };
+export type StatsGroup = { key: string; name: string; totals: StatsTotals; other?: boolean };
 export type StatsBucket = StatsRange & { totals: StatsTotals };
 
 const number = new Intl.NumberFormat("en-US");
@@ -189,8 +189,6 @@ const utcWeekday = (day: number) => new Date(day * STATS_DAY_MS).getUTCDay();
  */
 export function statsDayGrid(rows: readonly UsageStatsRow[], range: StatsRange): StatsCalendarGrid {
   const first = Math.floor(range.firstUtcDay), dayCount = Math.floor(range.dayCount);
-  const weeks = Math.max(1, Math.ceil((utcWeekday(first) + dayCount) / 7));
-  const cells: (StatsDayCell | null)[] = new Array<StatsDayCell | null>(weeks * 7).fill(null);
   const dayTotals = new Map<number, { records: number; tokenRecords: number; tokens: bigint }>();
   for (const row of rows) {
     if (row.utcDay < first || row.utcDay >= first + dayCount) continue;
@@ -202,6 +200,14 @@ export function statsDayGrid(rows: readonly UsageStatsRow[], range: StatsRange):
     }
     dayTotals.set(row.utcDay, day);
   }
+  return statsDayGridFromTotals(dayTotals, range);
+}
+
+/** The dashboard shares its already selected daily fold with the calendar. */
+export function statsDayGridFromTotals(dayTotals: ReadonlyMap<number, { records: number; tokenRecords: number; tokens: bigint }>, range: StatsRange): StatsCalendarGrid {
+  const first = Math.floor(range.firstUtcDay), dayCount = Math.floor(range.dayCount);
+  const weeks = Math.max(1, Math.ceil((utcWeekday(first) + dayCount) / 7));
+  const cells: (StatsDayCell | null)[] = new Array<StatsDayCell | null>(weeks * 7).fill(null);
   const observed = [...dayTotals.values()].filter(day => day.tokenRecords > 0).map(day => day.tokens).sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
   const quartile = (p: number) => observed[Math.min(observed.length - 1, Math.floor((observed.length - 1) * p))] ?? 0n;
   const q1 = quartile(0.25), q2 = quartile(0.5), q3 = quartile(0.75), peakTokens = observed.at(-1) ?? 0n;

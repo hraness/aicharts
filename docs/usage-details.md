@@ -82,6 +82,32 @@ over-limit sources. Numeric JSON remains on stdout and contains no paths or
 source content. Resolve the source issue and rescan; do not treat incomplete
 output as zero usage or delete retained published history.
 
+Inspect measured collection health separately from the stable `client-stats-v2`
+numeric report:
+
+```sh
+aicharts stats --home "$HOME" --client codex --source-root /absolute/codex-home/sessions --health-json
+aicharts stats-health --state-dir /absolute/private/state --home "$HOME" --client codex --source-root /absolute/codex-home/sessions --since 2026-09-01 --until 2026-09-19
+```
+
+`--health-json` runs a read-only scan and emits the `source-health-v1` profile.
+It records the selected UTC range, collection start/completion, parser generation,
+source event range, file/record counts, parsed and verified bytes, deferred tails,
+and measured clamp, fallback or schema problems. Unmeasured fields remain null.
+Verified bytes describe source-prefix checks, even when parsing reused a
+checkpoint. Estimated records and limited schema coverage stay explicit.
+Partial tails and measured clamp/fallback problems make a numeric report
+incomplete, so it cannot replace a published snapshot.
+
+Fresh enrolled `stats-sync` collection persists that evidence locally.
+`stats-health` reads its last attempt, last complete good observation and
+publication outcome without scanning sources or creating a file or lock. Use
+the same profile and dates: different or absent evidence is null. A failed scan
+preserves the previous good observation, including when previously present
+sources disappear. A pending or uncertain upload is
+separate from successful collection; neither implies publication succeeded.
+Both health exports withhold source paths and private profile/flight bindings.
+
 Large histories remain bounded: an import admits at most 65,536 files and
 128 GiB of source data. Streamed JSONL/NDJSON files may be up to 2 GiB, with a
 64 MiB line limit; whole-file JSON reads remain limited to 256 MiB. On supported

@@ -125,6 +125,23 @@ describe("calculator inputs schema", () => {
     expect(namedSubsidyCeiling(snapshot.subsidyAnchor, "ChatGPT Pro 20x").impliedMultiple).toBe(70);
     expect(namedSubsidyCeiling(snapshot.subsidyAnchor, "Claude Max 20x").impliedMultiple).toBe(40);
   });
+
+  test("rejects impossible calendar dates and reporting months", () => {
+    for (const asOf of ["2026-02-29", "2026-04-31", "2026-13-01"]) {
+      expect(parseCalculatorInputsSnapshot(mutated(clone => { clone.plan.asOf = asOf; })).ok).toBe(false);
+    }
+    for (const period of ["2026-00", "2026-13"]) {
+      expect(parseCalculatorInputsSnapshot(mutated(clone => { clone.electricity.period = period; })).ok).toBe(false);
+    }
+    expect(parseCalculatorInputsSnapshot(mutated(clone => { clone.plan.asOf = "2024-02-29"; })).ok).toBe(true);
+  });
+
+  test("rejects ambiguous duplicate subsidy ceilings", () => {
+    const broken = mutated(clone => {
+      clone.subsidyAnchor.publishedCeilings.push({ ...clone.subsidyAnchor.publishedCeilings[0]!, impliedMultiple: 99 });
+    });
+    expect(parseCalculatorInputsSnapshot(broken).ok).toBe(false);
+  });
 });
 
 describe("calculator inputs provenance", () => {
@@ -154,6 +171,18 @@ describe("calculator inputs provenance", () => {
     for (const profile of snapshot.hardware.profiles) {
       expect(profile.sourceUrl.startsWith("https://")).toBe(true);
       expect(Number.isNaN(Date.parse(profile.sourceObservedOn))).toBe(false);
+    }
+  });
+
+  test("dated electricity and list-fallback edits advance discovery provenance", () => {
+    for (const update of [
+      (snapshot: CalculatorInputsSnapshot) => { snapshot.electricity.residentialPresets[0]!.asOf = "2099-01-01"; },
+      (snapshot: CalculatorInputsSnapshot) => { snapshot.openAiApiPricing.listFallbackDocumentedOn = "2099-01-01"; },
+      (snapshot: CalculatorInputsSnapshot) => { snapshot.subsidyAnchor.methodPublishedOn = "2099-01-01"; },
+    ]) {
+      const snapshot = checkedSnapshot();
+      update(snapshot);
+      expect(calculatorInputsModifiedAt(snapshot)).toBe("2099-01-01T00:00:00Z");
     }
   });
 });
@@ -208,5 +237,42 @@ describe("calculator inputs replacement guards", () => {
     const result = validateCalculatorInputsReplacement(previous, candidate);
     expect(result.ok).toBe(false);
     if (!result.ok) expect(result.error.message).toContain("Curated");
+  });
+
+  test("rejects stale retrievals in each source and a regressed EIA reporting period", () => {
+    const previous = checkedSnapshot();
+    for (const key of ["openAiApiPricing", "deepSeekApiPricing", "electricity", "gpuRental"] as const) {
+      const candidate = structuredClone(previous);
+      candidate[key].source.retrievedAt = "2000-01-01T00:00:00Z";
+      expect(validateCalculatorInputsReplacement(previous, candidate).ok).toBe(false);
+    }
+    const candidate = structuredClone(previous);
+    candidate.electricity.period = "2000-01";
+    expect(validateCalculatorInputsReplacement(previous, candidate).ok).toBe(false);
+  });
+
+  test("compares retrieval instants rather than offset timestamp spellings", () => {
+    const previous = checkedSnapshot();
+    previous.electricity.source.retrievedAt = "2026-06-01T01:00:00+01:00";
+    const candidate = structuredClone(previous);
+    candidate.electricity.source.retrievedAt = "2026-06-01T00:00:00Z";
+    expect(validateCalculatorInputsReplacement(previous, candidate).ok).toBe(true);
+  });
+
+  test("automated refresh cannot replace the source, policy or curated fallback date", () => {
+    const previous = checkedSnapshot();
+    const changes: readonly ((snapshot: CalculatorInputsSnapshot) => void)[] = [
+      snapshot => { snapshot.openAiApiPricing.source.url = "https://example.com/different-source"; },
+      snapshot => { snapshot.deepSeekApiPricing.source.name = "Different provider"; },
+      snapshot => { snapshot.gpuRental.methodology = "Cheapest single listing"; },
+      snapshot => { snapshot.deepSeekApiPricing.peakHoursPerWeek = 1; },
+      snapshot => { snapshot.deepSeekApiPricing.peakHoursUtc = "Different hours"; },
+      snapshot => { snapshot.openAiApiPricing.listFallbackDocumentedOn = "2099-01-01"; },
+    ];
+    for (const change of changes) {
+      const candidate = structuredClone(previous);
+      change(candidate);
+      expect(validateCalculatorInputsReplacement(previous, candidate).ok).toBe(false);
+    }
   });
 });

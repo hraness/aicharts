@@ -347,8 +347,8 @@
       "unit": "count",
       "value": 1000000000000,
       "source": {
-        "path": "crates/aicharts-protocol/src/lib.rs",
-        "symbol": "MAX_TOKEN_COUNTER"
+        "path": "crates/aicharts-metrics/src/lib.rs",
+        "symbol": "MAX_WIRE_TOKEN_COUNTER"
       }
     },
     {
@@ -379,6 +379,1256 @@
       "source": {
         "path": "services/usage-worker/src/stats-state.ts",
         "symbol": "MAX_STATS_DAY_SOURCES"
+      }
+    },
+    {
+      "id": "import-checkpoint-bytes",
+      "scope": "local-derived-checkpoint",
+      "unit": "bytes",
+      "value": 268435456,
+      "source": {
+        "path": "vendor/tokscale-core/src/offline_checkpoint.rs",
+        "symbol": "MAX_CHECKPOINT_BYTES"
+      }
+    },
+    {
+      "id": "import-checkpoint-files",
+      "scope": "local-derived-checkpoint",
+      "unit": "count",
+      "value": 65536,
+      "source": {
+        "path": "vendor/tokscale-core/src/offline_checkpoint.rs",
+        "symbol": "MAX_CHECKPOINT_FILES"
+      }
+    },
+    {
+      "id": "import-checkpoint-observations",
+      "scope": "local-derived-checkpoint",
+      "unit": "count",
+      "value": 2000000,
+      "source": {
+        "path": "vendor/tokscale-core/src/offline_checkpoint.rs",
+        "symbol": "MAX_CHECKPOINT_OBSERVATIONS"
+      }
+    },
+    {
+      "id": "source-health-bytes",
+      "scope": "local-source-health",
+      "unit": "bytes",
+      "value": 131072,
+      "source": {
+        "path": "crates/aicharts-cli/src/source_health.rs",
+        "symbol": "MAX_SOURCE_HEALTH_BYTES"
+      }
+    },
+    {
+      "id": "source-health-clients",
+      "scope": "local-source-health",
+      "unit": "count",
+      "value": 55,
+      "source": {
+        "path": "crates/aicharts-cli/src/source_health.rs",
+        "symbol": "MAX_SOURCE_HEALTH_CLIENTS"
+      }
+    },
+    {
+      "id": "source-health-codes",
+      "scope": "local-source-health",
+      "unit": "count",
+      "value": 16,
+      "source": {
+        "path": "crates/aicharts-import/src/observed.rs",
+        "symbol": "MAX_SOURCE_HEALTH_CODES"
+      }
+    },
+    {
+      "id": "source-health-report-bytes",
+      "scope": "local-source-health-export",
+      "unit": "bytes",
+      "value": 65536,
+      "source": {
+        "path": "crates/aicharts-cli/src/stats/health.rs",
+        "symbol": "MAX_HEALTH_REPORT_BYTES"
+      }
+    },
+    {
+      "id": "contribution-max-mutations",
+      "scope": "canonical-contributions",
+      "unit": "count",
+      "value": 256,
+      "source": {
+        "path": "lib/usage/contributions.ts",
+        "symbol": "CONTRIBUTION_MAX_MUTATIONS"
+      }
+    },
+    {
+      "id": "contribution-max-members",
+      "scope": "canonical-contributions",
+      "unit": "count",
+      "value": 8192,
+      "source": {
+        "path": "lib/usage/contributions.ts",
+        "symbol": "CONTRIBUTION_MAX_MEMBERS"
+      }
+    },
+    {
+      "id": "contribution-max-bytes",
+      "scope": "canonical-contributions",
+      "unit": "bytes",
+      "value": 1048576,
+      "source": {
+        "path": "lib/usage/contributions.ts",
+        "symbol": "CONTRIBUTION_MAX_BYTES"
+      }
+    },
+    {
+      "id": "contribution-max-heads",
+      "scope": "canonical-contributions",
+      "unit": "count",
+      "value": 262144,
+      "source": {
+        "path": "lib/usage/contributions.ts",
+        "symbol": "CONTRIBUTION_MAX_HEADS"
+      }
+    },
+    {
+      "id": "contribution-max-associations",
+      "scope": "canonical-contributions",
+      "unit": "count",
+      "value": 1048576,
+      "source": {
+        "path": "lib/usage/contributions.ts",
+        "symbol": "CONTRIBUTION_MAX_ASSOCIATIONS"
+      }
+    },
+    {
+      "id": "contribution-max-populations",
+      "scope": "canonical-contributions",
+      "unit": "count",
+      "value": 1024,
+      "source": {
+        "path": "lib/usage/contributions.ts",
+        "symbol": "CONTRIBUTION_MAX_POPULATIONS"
+      }
+    },
+    {
+      "id": "contribution-max-operations",
+      "scope": "canonical-contributions",
+      "unit": "count",
+      "value": 1000000,
+      "source": {
+        "path": "lib/usage/contribution-contract.ts",
+        "symbol": "CONTRIBUTION_MAX_OPERATIONS"
+      }
+    },
+    {
+      "id": "contribution-max-immutable-bytes",
+      "scope": "canonical-contributions",
+      "unit": "bytes",
+      "value": 8589934592,
+      "source": {
+        "path": "lib/usage/contributions.ts",
+        "symbol": "CONTRIBUTION_MAX_IMMUTABLE_BYTES"
+      }
+    },
+    {
+      "id": "pairing-state-bytes",
+      "scope": "private-control-state",
+      "unit": "bytes",
+      "value": 8192,
+      "source": {
+        "path": "services/usage-worker/src/pairing.ts",
+        "symbol": "MAX_PAYLOAD"
+      }
+    },
+    {
+      "id": "account-state-bytes",
+      "scope": "private-control-state",
+      "unit": "bytes",
+      "value": 131072,
+      "source": {
+        "path": "services/usage-worker/src/enrollment.ts",
+        "symbol": "MAX_PAYLOAD"
+      }
+    },
+    {
+      "id": "restore-state-bytes",
+      "scope": "private-control-state",
+      "unit": "bytes",
+      "value": 65536,
+      "source": {
+        "path": "services/usage-worker/src/restore-fence.ts",
+        "symbol": "MAX_PAYLOAD"
+      }
+    },
+    {
+      "id": "leaderboard-state-bytes",
+      "scope": "private-control-state",
+      "unit": "bytes",
+      "value": 131072,
+      "source": {
+        "path": "services/usage-worker/src/leaderboard-index.ts",
+        "symbol": "MAX_PAYLOAD"
+      }
+    },
+    {
+      "id": "contribution-max-metadata-bytes",
+      "scope": "account-v3-canonical",
+      "unit": "bytes",
+      "value": 536870912,
+      "source": {
+        "path": "services/usage-worker/src/contributions-state.ts",
+        "symbol": "CONTRIBUTION_MAX_METADATA_BYTES"
+      }
+    },
+    {
+      "id": "contribution-http-control-bytes",
+      "scope": "account-v3-http",
+      "unit": "bytes",
+      "value": 2048,
+      "source": {
+        "path": "lib/usage/contributions-http-contract.ts",
+        "symbol": "CONTRIBUTION_HTTP_CONTROL_BYTES"
+      }
+    },
+    {
+      "id": "contribution-http-response-bytes",
+      "scope": "account-v3-http",
+      "unit": "bytes",
+      "value": 4096,
+      "source": {
+        "path": "lib/usage/contributions-http-contract.ts",
+        "symbol": "CONTRIBUTION_HTTP_RESPONSE_BYTES"
+      }
+    },
+    {
+      "id": "metric-query-ids",
+      "scope": "local-metric-explorer",
+      "unit": "count",
+      "value": 32,
+      "source": {
+        "path": "lib/usage/metric-explorer.ts",
+        "symbol": "MAX_METRIC_QUERY_IDS"
+      }
+    },
+    {
+      "id": "metric-query-dimensions",
+      "scope": "local-metric-explorer",
+      "unit": "count",
+      "value": 2,
+      "source": {
+        "path": "lib/usage/metric-explorer.ts",
+        "symbol": "MAX_METRIC_QUERY_DIMENSIONS"
+      }
+    },
+    {
+      "id": "metric-top-k",
+      "scope": "local-metric-explorer",
+      "unit": "count",
+      "value": 50,
+      "source": {
+        "path": "lib/usage/metric-explorer.ts",
+        "symbol": "MAX_METRIC_TOP_K"
+      }
+    },
+    {
+      "id": "metric-composition-series",
+      "scope": "local-metric-explorer",
+      "unit": "count",
+      "value": 5,
+      "source": {
+        "path": "lib/usage/metric-explorer.ts",
+        "symbol": "MAX_METRIC_COMPOSITION_SERIES"
+      }
+    },
+    {
+      "id": "metric-groups",
+      "scope": "local-metric-explorer",
+      "unit": "count",
+      "value": 65536,
+      "source": {
+        "path": "lib/usage/metric-explorer.ts",
+        "symbol": "MAX_METRIC_GROUPS"
+      }
+    },
+    {
+      "id": "metric-buckets",
+      "scope": "local-metric-explorer",
+      "unit": "count",
+      "value": 366,
+      "source": {
+        "path": "lib/usage/metric-explorer.ts",
+        "symbol": "MAX_METRIC_BUCKETS"
+      }
+    },
+    {
+      "id": "metric-export-bytes",
+      "scope": "local-metric-explorer",
+      "unit": "bytes",
+      "value": 33554432,
+      "source": {
+        "path": "lib/usage/metric-explorer.ts",
+        "symbol": "MAX_METRIC_EXPORT_BYTES"
+      }
+    },
+    {
+      "id": "metric-catalog-rows",
+      "scope": "local-metric-explorer",
+      "unit": "count",
+      "value": 241,
+      "source": {
+        "path": "lib/usage/metric-explorer-catalog.ts",
+        "symbol": "MAX_METRIC_CATALOG_ROWS"
+      }
+    },
+    {
+      "id": "metric-catalog-bytes",
+      "scope": "local-metric-explorer",
+      "unit": "bytes",
+      "value": 65536,
+      "source": {
+        "path": "lib/usage/metric-explorer-catalog.ts",
+        "symbol": "MAX_METRIC_CATALOG_BYTES"
+      }
+    },
+    {
+      "id": "contribution-rollup-deltas",
+      "scope": "account-canonical-rollups",
+      "unit": "count",
+      "value": 8448,
+      "source": {
+        "path": "lib/usage/contribution-rollups.ts",
+        "symbol": "MAX_CONTRIBUTION_ROLLUP_DELTAS"
+      }
+    },
+    {
+      "id": "contribution-rollup-cells",
+      "scope": "account-canonical-rollups",
+      "unit": "count",
+      "value": 262144,
+      "source": {
+        "path": "lib/usage/contribution-rollups.ts",
+        "symbol": "MAX_CONTRIBUTION_ROLLUP_CELLS"
+      }
+    },
+    {
+      "id": "contribution-rollup-cell-bytes",
+      "scope": "account-canonical-rollups",
+      "unit": "bytes",
+      "value": 2048,
+      "source": {
+        "path": "lib/usage/contribution-rollups.ts",
+        "symbol": "MAX_CONTRIBUTION_ROLLUP_CELL_BYTES"
+      }
+    },
+    {
+      "id": "contribution-index-leaf-cells",
+      "scope": "account-derived-index",
+      "unit": "count",
+      "value": 128,
+      "source": {
+        "path": "lib/usage/contribution-index.ts",
+        "symbol": "CONTRIBUTION_INDEX_LEAF_CELLS"
+      }
+    },
+    {
+      "id": "contribution-index-branch-children",
+      "scope": "account-derived-index",
+      "unit": "count",
+      "value": 64,
+      "source": {
+        "path": "lib/usage/contribution-index.ts",
+        "symbol": "CONTRIBUTION_INDEX_BRANCH_CHILDREN"
+      }
+    },
+    {
+      "id": "contribution-index-max-level",
+      "scope": "account-derived-index",
+      "unit": "count",
+      "value": 6,
+      "source": {
+        "path": "lib/usage/contribution-index.ts",
+        "symbol": "CONTRIBUTION_INDEX_MAX_LEVEL"
+      }
+    },
+    {
+      "id": "contribution-index-max-node-bytes",
+      "scope": "account-derived-index",
+      "unit": "bytes",
+      "value": 262144,
+      "source": {
+        "path": "lib/usage/contribution-index.ts",
+        "symbol": "CONTRIBUTION_INDEX_MAX_NODE_BYTES"
+      }
+    },
+    {
+      "id": "contribution-index-max-changes",
+      "scope": "account-derived-index",
+      "unit": "count",
+      "value": 64,
+      "source": {
+        "path": "lib/usage/contribution-index.ts",
+        "symbol": "CONTRIBUTION_INDEX_MAX_CHANGES"
+      }
+    },
+    {
+      "id": "contribution-index-max-reads",
+      "scope": "account-derived-index",
+      "unit": "count",
+      "value": 512,
+      "source": {
+        "path": "lib/usage/contribution-index.ts",
+        "symbol": "CONTRIBUTION_INDEX_MAX_READS"
+      }
+    },
+    {
+      "id": "contribution-index-max-writes",
+      "scope": "account-derived-index",
+      "unit": "count",
+      "value": 512,
+      "source": {
+        "path": "lib/usage/contribution-index.ts",
+        "symbol": "CONTRIBUTION_INDEX_MAX_WRITES"
+      }
+    },
+    {
+      "id": "contribution-index-max-io-bytes",
+      "scope": "account-derived-index",
+      "unit": "bytes",
+      "value": 33554432,
+      "source": {
+        "path": "lib/usage/contribution-index.ts",
+        "symbol": "CONTRIBUTION_INDEX_MAX_IO_BYTES"
+      }
+    },
+    {
+      "id": "contribution-index-max-page-cells",
+      "scope": "account-derived-index",
+      "unit": "count",
+      "value": 256,
+      "source": {
+        "path": "lib/usage/contribution-index-contract.ts",
+        "symbol": "CONTRIBUTION_INDEX_MAX_PAGE_CELLS"
+      }
+    },
+    {
+      "id": "contribution-index-scan-page-cells",
+      "scope": "account-derived-index",
+      "unit": "count",
+      "value": 16,
+      "source": {
+        "path": "lib/usage/contribution-index.ts",
+        "symbol": "CONTRIBUTION_INDEX_SCAN_PAGE_CELLS"
+      }
+    },
+    {
+      "id": "contribution-index-max-key-bytes",
+      "scope": "account-derived-index",
+      "unit": "bytes",
+      "value": 512,
+      "source": {
+        "path": "lib/usage/contribution-index-contract.ts",
+        "symbol": "CONTRIBUTION_INDEX_MAX_KEY_BYTES"
+      }
+    },
+    {
+      "id": "contribution-journal-page-entries",
+      "scope": "account-canonical-journal",
+      "unit": "count",
+      "value": 256,
+      "source": {
+        "path": "services/usage-worker/src/contributions-journal.ts",
+        "symbol": "CONTRIBUTION_JOURNAL_PAGE_ENTRIES"
+      }
+    },
+    {
+      "id": "contribution-journal-page-bytes",
+      "scope": "account-canonical-journal",
+      "unit": "bytes",
+      "value": 262144,
+      "source": {
+        "path": "services/usage-worker/src/contributions-journal.ts",
+        "symbol": "CONTRIBUTION_JOURNAL_PAGE_BYTES"
+      }
+    },
+    {
+      "id": "contribution-journal-root-bytes",
+      "scope": "account-canonical-journal",
+      "unit": "bytes",
+      "value": 16384,
+      "source": {
+        "path": "services/usage-worker/src/contributions-journal.ts",
+        "symbol": "CONTRIBUTION_JOURNAL_ROOT_BYTES"
+      }
+    },
+    {
+      "id": "contribution-migration-max-heads",
+      "scope": "account-canonical-migration",
+      "unit": "count",
+      "value": 8192,
+      "source": {
+        "path": "services/usage-worker/src/contributions-migration.ts",
+        "symbol": "CONTRIBUTION_MIGRATION_MAX_HEADS"
+      }
+    },
+    {
+      "id": "contribution-migration-max-journals",
+      "scope": "account-canonical-migration",
+      "unit": "count",
+      "value": 256,
+      "source": {
+        "path": "services/usage-worker/src/contributions-migration.ts",
+        "symbol": "CONTRIBUTION_MIGRATION_MAX_JOURNALS"
+      }
+    },
+    {
+      "id": "contribution-migration-max-days",
+      "scope": "account-canonical-migration",
+      "unit": "count",
+      "value": 8192,
+      "source": {
+        "path": "services/usage-worker/src/contributions-migration.ts",
+        "symbol": "CONTRIBUTION_MIGRATION_MAX_DAYS"
+      }
+    },
+    {
+      "id": "contribution-migration-max-source-bytes",
+      "scope": "account-canonical-migration",
+      "unit": "bytes",
+      "value": 67108864,
+      "source": {
+        "path": "services/usage-worker/src/contributions-migration.ts",
+        "symbol": "CONTRIBUTION_MIGRATION_MAX_SOURCE_BYTES"
+      }
+    },
+    {
+      "id": "contribution-journal-max-entries",
+      "scope": "canonical-contribution-replay",
+      "unit": "count",
+      "value": 8448,
+      "source": {
+        "path": "services/usage-worker/src/contributions-journal.ts",
+        "symbol": "CONTRIBUTION_JOURNAL_MAX_ENTRIES"
+      }
+    },
+    {
+      "id": "contribution-replay-chunk-entries",
+      "scope": "canonical-contribution-replay",
+      "unit": "count",
+      "value": 32,
+      "source": {
+        "path": "services/usage-worker/src/contribution-replay.ts",
+        "symbol": "CONTRIBUTION_REPLAY_CHUNK_ENTRIES"
+      }
+    },
+    {
+      "id": "contribution-replay-max-source-bytes",
+      "scope": "canonical-contribution-replay",
+      "unit": "bytes",
+      "value": 33554432,
+      "source": {
+        "path": "services/usage-worker/src/contribution-replay.ts",
+        "symbol": "CONTRIBUTION_REPLAY_MAX_SOURCE_BYTES"
+      }
+    },
+    {
+      "id": "contribution-projection-max-immutable-bytes",
+      "scope": "canonical-contribution-projection",
+      "unit": "bytes",
+      "value": 4294967296,
+      "source": {
+        "path": "services/usage-worker/src/contribution-projection-state.ts",
+        "symbol": "CONTRIBUTION_PROJECTION_MAX_IMMUTABLE_BYTES"
+      }
+    },
+    {
+      "id": "contribution-projection-max-publications",
+      "scope": "canonical-contribution-projection",
+      "unit": "count",
+      "value": 64,
+      "source": {
+        "path": "services/usage-worker/src/contribution-projection-state.ts",
+        "symbol": "CONTRIBUTION_PROJECTION_MAX_PUBLICATIONS"
+      }
+    },
+    {
+      "id": "contribution-projection-retire-ms",
+      "scope": "canonical-contribution-projection",
+      "unit": "milliseconds",
+      "value": 930000,
+      "source": {
+        "path": "services/usage-worker/src/contribution-projection-state.ts",
+        "symbol": "CONTRIBUTION_PROJECTION_RETIRE_MS"
+      }
+    },
+    {
+      "id": "contribution-projection-max-control-bytes",
+      "scope": "canonical-contribution-projection",
+      "unit": "bytes",
+      "value": 8192,
+      "source": {
+        "path": "services/usage-worker/src/contribution-projection-state.ts",
+        "symbol": "CONTRIBUTION_PROJECTION_MAX_CONTROL_BYTES"
+      }
+    },
+    {
+      "id": "contribution-query-request-bytes",
+      "scope": "canonical-contribution-query",
+      "unit": "bytes",
+      "value": 4096,
+      "source": {
+        "path": "lib/usage/contribution-query.ts",
+        "symbol": "CONTRIBUTION_QUERY_REQUEST_BYTES"
+      }
+    },
+    {
+      "id": "contribution-query-response-bytes",
+      "scope": "canonical-contribution-query",
+      "unit": "bytes",
+      "value": 1048576,
+      "source": {
+        "path": "lib/usage/contribution-query.ts",
+        "symbol": "CONTRIBUTION_QUERY_RESPONSE_BYTES"
+      }
+    },
+    {
+      "id": "rich-fact-max-bytes",
+      "scope": "local-rich-facts",
+      "unit": "bytes",
+      "value": 8388608,
+      "source": {
+        "path": "lib/usage/rich-fact-contract.ts",
+        "symbol": "RICH_FACT_MAX_BYTES"
+      }
+    },
+    {
+      "id": "rich-fact-max-records",
+      "scope": "local-rich-facts",
+      "unit": "count",
+      "value": 50000,
+      "source": {
+        "path": "lib/usage/rich-fact-contract.ts",
+        "symbol": "RICH_FACT_MAX_RECORDS"
+      }
+    },
+    {
+      "id": "rich-fact-max-executions",
+      "scope": "local-rich-facts",
+      "unit": "count",
+      "value": 2000,
+      "source": {
+        "path": "lib/usage/rich-fact-contract.ts",
+        "symbol": "RICH_FACT_MAX_EXECUTIONS"
+      }
+    },
+    {
+      "id": "rich-fact-max-lineage-depth",
+      "scope": "local-rich-facts",
+      "unit": "count",
+      "value": 64,
+      "source": {
+        "path": "lib/usage/rich-fact-contract.ts",
+        "symbol": "RICH_FACT_MAX_LINEAGE_DEPTH"
+      }
+    },
+    {
+      "id": "rich-fact-max-window-ms",
+      "scope": "local-rich-facts",
+      "unit": "milliseconds",
+      "value": 2678400000,
+      "source": {
+        "path": "lib/usage/rich-fact-contract.ts",
+        "symbol": "RICH_FACT_MAX_WINDOW_MS"
+      }
+    },
+    {
+      "id": "native-rich-report-bytes",
+      "scope": "local-rich-facts",
+      "unit": "bytes",
+      "value": 8388608,
+      "source": {
+        "path": "crates/aicharts-core/src/rich_facts.rs",
+        "symbol": "MAX_REPORT_BYTES"
+      }
+    },
+    {
+      "id": "native-rich-max-facts",
+      "scope": "local-rich-facts",
+      "unit": "count",
+      "value": 50000,
+      "source": {
+        "path": "crates/aicharts-core/src/rich_facts.rs",
+        "symbol": "MAX_FACTS"
+      }
+    },
+    {
+      "id": "native-rich-max-executions",
+      "scope": "local-rich-facts",
+      "unit": "count",
+      "value": 2000,
+      "source": {
+        "path": "crates/aicharts-core/src/rich_facts.rs",
+        "symbol": "MAX_EXECUTIONS"
+      }
+    },
+    {
+      "id": "native-rich-max-window-ms",
+      "scope": "local-rich-facts",
+      "unit": "milliseconds",
+      "value": 2678400000,
+      "source": {
+        "path": "crates/aicharts-core/src/rich_facts.rs",
+        "symbol": "MAX_WINDOW_MS"
+      }
+    },
+    {
+      "id": "account-work-attempts",
+      "scope": "account-background-work",
+      "unit": "count",
+      "value": 8,
+      "source": {
+        "path": "services/usage-worker/src/account-work-state.ts",
+        "symbol": "ACCOUNT_WORK_MAX_ATTEMPTS"
+      }
+    },
+    {
+      "id": "account-work-retry-base-ms",
+      "scope": "account-background-work",
+      "unit": "milliseconds",
+      "value": 1000,
+      "source": {
+        "path": "services/usage-worker/src/account-work-state.ts",
+        "symbol": "ACCOUNT_WORK_RETRY_BASE_MS"
+      }
+    },
+    {
+      "id": "account-work-retry-max-ms",
+      "scope": "account-background-work",
+      "unit": "milliseconds",
+      "value": 60000,
+      "source": {
+        "path": "services/usage-worker/src/account-work-state.ts",
+        "symbol": "ACCOUNT_WORK_RETRY_MAX_MS"
+      }
+    },
+    {
+      "id": "account-work-control-bytes",
+      "scope": "account-background-work",
+      "unit": "bytes",
+      "value": 4096,
+      "source": {
+        "path": "services/usage-worker/src/account-work-state.ts",
+        "symbol": "ACCOUNT_WORK_MAX_BYTES"
+      }
+    },
+    {
+      "id": "account-work-ready-delay-ms",
+      "scope": "account-background-work",
+      "unit": "milliseconds",
+      "value": 1,
+      "source": {
+        "path": "services/usage-worker/src/account-work-state.ts",
+        "symbol": "ACCOUNT_WORK_READY_DELAY_MS"
+      }
+    },
+    {
+      "id": "account-alarm-max-arms",
+      "scope": "account-background-work",
+      "unit": "count",
+      "value": 32,
+      "source": {
+        "path": "services/usage-worker/src/account-alarm.ts",
+        "symbol": "ACCOUNT_ALARM_MAX_ARMS"
+      }
+    },
+    {
+      "id": "contribution-projection-publish-interval-ms",
+      "scope": "account-background-work",
+      "unit": "milliseconds",
+      "value": 16000,
+      "source": {
+        "path": "services/usage-worker/src/contribution-projection-state.ts",
+        "symbol": "CONTRIBUTION_PROJECTION_PUBLISH_INTERVAL_MS"
+      }
+    },
+    {
+      "id": "metric-cooperative-batch",
+      "scope": "local-metric-explorer",
+      "unit": "count",
+      "value": 512,
+      "source": {
+        "path": "lib/usage/metric-explorer.ts",
+        "symbol": "MAX_METRIC_COOPERATIVE_BATCH"
+      }
+    },
+    {
+      "id": "metric-workers-per-dashboard",
+      "scope": "local-metric-explorer",
+      "unit": "count",
+      "value": 2,
+      "source": {
+        "path": "lib/usage/metric-explorer-worker-core.ts",
+        "symbol": "MAX_METRIC_WORKERS_PER_DASHBOARD"
+      }
+    },
+    {
+      "id": "metric-pending-queries",
+      "scope": "local-metric-explorer",
+      "unit": "count",
+      "value": 1,
+      "source": {
+        "path": "lib/usage/metric-explorer-worker-core.ts",
+        "symbol": "MAX_METRIC_PENDING_QUERIES"
+      }
+    },
+    {
+      "id": "metric-retained-results",
+      "scope": "local-metric-explorer",
+      "unit": "count",
+      "value": 2,
+      "source": {
+        "path": "lib/usage/metric-explorer-worker-core.ts",
+        "symbol": "MAX_METRIC_RETAINED_RESULTS"
+      }
+    },
+    {
+      "id": "metric-active-exports",
+      "scope": "local-metric-explorer",
+      "unit": "count",
+      "value": 1,
+      "source": {
+        "path": "lib/usage/metric-explorer-worker-core.ts",
+        "symbol": "MAX_METRIC_ACTIVE_EXPORTS"
+      }
+    },
+    {
+      "id": "metric-request-id",
+      "scope": "local-metric-explorer",
+      "unit": "count",
+      "value": 2147483647,
+      "source": {
+        "path": "lib/usage/metric-explorer-worker-core.ts",
+        "symbol": "MAX_METRIC_REQUEST_ID"
+      }
+    },
+    {
+      "id": "metric-worker-operation-ms",
+      "scope": "local-metric-explorer",
+      "unit": "milliseconds",
+      "value": 30000,
+      "source": {
+        "path": "lib/usage/metric-explorer-session.ts",
+        "symbol": "MAX_METRIC_WORKER_OPERATION_MS"
+      }
+    },
+    {
+      "id": "metric-view-bytes",
+      "scope": "local-metric-explorer",
+      "unit": "bytes",
+      "value": 2097152,
+      "source": {
+        "path": "components/usage/stats-metric-presentation.ts",
+        "symbol": "MAX_METRIC_VIEW_BYTES"
+      }
+    },
+    {
+      "id": "stats-daily-table-days",
+      "scope": "local-metric-explorer",
+      "unit": "count",
+      "value": 31,
+      "source": {
+        "path": "components/usage/stats-metric-daily-table.tsx",
+        "symbol": "MAX_STATS_DAILY_TABLE_DAYS"
+      }
+    },
+    {
+      "id": "contribution-head-query-ids",
+      "scope": "account-canonical-heads",
+      "unit": "count",
+      "value": 256,
+      "source": {
+        "path": "lib/usage/contribution-head-query.ts",
+        "symbol": "CONTRIBUTION_HEAD_QUERY_MAX_IDS"
+      }
+    },
+    {
+      "id": "contribution-head-query-request-bytes",
+      "scope": "account-canonical-heads",
+      "unit": "bytes",
+      "value": 16384,
+      "source": {
+        "path": "lib/usage/contribution-head-query.ts",
+        "symbol": "CONTRIBUTION_HEAD_QUERY_REQUEST_BYTES"
+      }
+    },
+    {
+      "id": "contribution-head-query-response-bytes",
+      "scope": "account-canonical-heads",
+      "unit": "bytes",
+      "value": 524288,
+      "source": {
+        "path": "lib/usage/contribution-head-query.ts",
+        "symbol": "CONTRIBUTION_HEAD_QUERY_RESPONSE_BYTES"
+      }
+    },
+    {
+      "id": "account-work-dispatch-yield-ms",
+      "scope": "account-background-work",
+      "unit": "milliseconds",
+      "value": 2000,
+      "source": {
+        "path": "services/usage-worker/src/account-work-state.ts",
+        "symbol": "ACCOUNT_WORK_DISPATCH_YIELD_MS"
+      }
+    },
+    {
+      "id": "account-work-watchdog-ms",
+      "scope": "account-background-work",
+      "unit": "milliseconds",
+      "value": 30000,
+      "source": {
+        "path": "services/usage-worker/src/account-work-state.ts",
+        "symbol": "ACCOUNT_WORK_WATCHDOG_MS"
+      }
+    },
+    {
+      "id": "native-contribution-source-bytes",
+      "scope": "native-contribution-producer",
+      "unit": "bytes",
+      "value": 67108864,
+      "source": {
+        "path": "crates/aicharts-core/src/contribution_producer.rs",
+        "symbol": "MAX_SOURCE_BYTES"
+      }
+    },
+    {
+      "id": "native-contribution-observations",
+      "scope": "native-contribution-producer",
+      "unit": "count",
+      "value": 8192,
+      "source": {
+        "path": "crates/aicharts-core/src/contribution_producer.rs",
+        "symbol": "MAX_OBSERVATIONS"
+      }
+    },
+    {
+      "id": "native-contribution-mutations",
+      "scope": "native-contribution-producer",
+      "unit": "count",
+      "value": 256,
+      "source": {
+        "path": "crates/aicharts-core/src/contribution_producer.rs",
+        "symbol": "MAX_MUTATIONS"
+      }
+    },
+    {
+      "id": "native-contribution-query-bytes",
+      "scope": "native-contribution-producer",
+      "unit": "bytes",
+      "value": 16384,
+      "source": {
+        "path": "crates/aicharts-core/src/contribution_producer.rs",
+        "symbol": "MAX_QUERY_BYTES"
+      }
+    },
+    {
+      "id": "native-contribution-reply-bytes",
+      "scope": "native-contribution-producer",
+      "unit": "bytes",
+      "value": 524288,
+      "source": {
+        "path": "crates/aicharts-core/src/contribution_producer.rs",
+        "symbol": "MAX_REPLY_BYTES"
+      }
+    },
+    {
+      "id": "native-contribution-batch-bytes",
+      "scope": "native-contribution-producer",
+      "unit": "bytes",
+      "value": 1048576,
+      "source": {
+        "path": "crates/aicharts-core/src/contribution_producer.rs",
+        "symbol": "MAX_BATCH_BYTES"
+      }
+    },
+    {
+      "id": "stats-read-deadline-ms",
+      "scope": "hosted-detailed-report",
+      "unit": "milliseconds",
+      "value": 20000,
+      "source": {
+        "path": "lib/usage/stats-client.ts",
+        "symbol": "MAX_STATS_READ_MS"
+      }
+    },
+    {
+      "id": "stats-read-chunks",
+      "scope": "hosted-detailed-report",
+      "unit": "count",
+      "value": 65536,
+      "source": {
+        "path": "lib/usage/stats-client.ts",
+        "symbol": "MAX_STATS_READ_CHUNKS"
+      }
+    },
+    {
+      "id": "contribution-scrub-max-heads",
+      "scope": "canonical-single-cell-scrub",
+      "unit": "count",
+      "value": 16,
+      "source": {
+        "path": "lib/usage/contribution-scrub.ts",
+        "symbol": "CONTRIBUTION_SCRUB_MAX_HEADS"
+      }
+    },
+    {
+      "id": "contribution-scrub-max-source-bytes",
+      "scope": "canonical-single-cell-scrub",
+      "unit": "bytes",
+      "value": 16777216,
+      "source": {
+        "path": "lib/usage/contribution-scrub.ts",
+        "symbol": "CONTRIBUTION_SCRUB_MAX_SOURCE_BYTES"
+      }
+    },
+    {
+      "id": "contribution-scrub-max-index-reads",
+      "scope": "canonical-single-cell-scrub",
+      "unit": "count",
+      "value": 7,
+      "source": {
+        "path": "lib/usage/contribution-scrub.ts",
+        "symbol": "CONTRIBUTION_SCRUB_MAX_INDEX_READS"
+      }
+    },
+    {
+      "id": "contribution-scrub-max-reads",
+      "scope": "canonical-single-cell-scrub",
+      "unit": "count",
+      "value": 23,
+      "source": {
+        "path": "lib/usage/contribution-scrub.ts",
+        "symbol": "CONTRIBUTION_SCRUB_MAX_READS"
+      }
+    },
+    {
+      "id": "contribution-scrub-max-read-bytes",
+      "scope": "canonical-single-cell-scrub",
+      "unit": "bytes",
+      "value": 18874368,
+      "source": {
+        "path": "lib/usage/contribution-scrub.ts",
+        "symbol": "CONTRIBUTION_SCRUB_MAX_READ_BYTES"
+      }
+    },
+    {
+      "id": "contribution-scrub-deadline-ms",
+      "scope": "canonical-single-cell-scrub",
+      "unit": "milliseconds",
+      "value": 30000,
+      "source": {
+        "path": "lib/usage/contribution-scrub.ts",
+        "symbol": "CONTRIBUTION_SCRUB_DEADLINE_MS"
+      }
+    },
+    {
+      "id": "contribution-scrub-request-bytes",
+      "scope": "canonical-single-cell-scrub",
+      "unit": "bytes",
+      "value": 2048,
+      "source": {
+        "path": "lib/usage/contribution-scrub.ts",
+        "symbol": "CONTRIBUTION_SCRUB_REQUEST_BYTES"
+      }
+    },
+    {
+      "id": "contribution-scrub-response-bytes",
+      "scope": "canonical-single-cell-scrub",
+      "unit": "bytes",
+      "value": 8192,
+      "source": {
+        "path": "lib/usage/contribution-scrub.ts",
+        "symbol": "CONTRIBUTION_SCRUB_RESPONSE_BYTES"
+      }
+    },
+    {
+      "id": "contribution-cancel-request-bytes",
+      "scope": "canonical-contribution-cancel",
+      "unit": "bytes",
+      "value": 1049088,
+      "source": {
+        "path": "lib/usage/contribution-cancel.ts",
+        "symbol": "CONTRIBUTION_CANCEL_REQUEST_BYTES"
+      }
+    },
+    {
+      "id": "contribution-cancel-response-bytes",
+      "scope": "canonical-contribution-cancel",
+      "unit": "bytes",
+      "value": 4096,
+      "source": {
+        "path": "lib/usage/contribution-cancel.ts",
+        "symbol": "CONTRIBUTION_CANCEL_RESPONSE_BYTES"
+      }
+    },
+    {
+      "id": "contribution-rebuild-heads-per-step",
+      "scope": "canonical-rebuild",
+      "unit": "count",
+      "value": 16,
+      "source": {
+        "path": "lib/usage/contribution-rebuild.ts",
+        "symbol": "CONTRIBUTION_REBUILD_HEADS_PER_STEP"
+      }
+    },
+    {
+      "id": "native-contribution-body-base64",
+      "scope": "native-contribution-outbox",
+      "unit": "bytes",
+      "value": 1398104,
+      "source": {
+        "path": "crates/aicharts-cli/src/contribution_sync.rs",
+        "symbol": "MAX_BODY_BASE64"
+      }
+    },
+    {
+      "id": "native-contribution-terminal-bytes",
+      "scope": "native-contribution-outbox",
+      "unit": "bytes",
+      "value": 4096,
+      "source": {
+        "path": "crates/aicharts-cli/src/contribution_sync.rs",
+        "symbol": "MAX_TERMINAL_BYTES"
+      }
+    },
+    {
+      "id": "native-contribution-terminal-base64",
+      "scope": "native-contribution-outbox",
+      "unit": "bytes",
+      "value": 5464,
+      "source": {
+        "path": "crates/aicharts-cli/src/contribution_sync.rs",
+        "symbol": "MAX_TERMINAL_BASE64"
+      }
+    },
+    {
+      "id": "native-contribution-checkpoint-bytes",
+      "scope": "native-contribution-outbox",
+      "unit": "bytes",
+      "value": 2818056,
+      "source": {
+        "path": "crates/aicharts-cli/src/contribution_sync.rs",
+        "symbol": "MAX_CHECKPOINT_BYTES"
+      }
+    },
+    {
+      "id": "contribution-rebuild-max-jobs",
+      "scope": "canonical-contribution-rebuild",
+      "unit": "count",
+      "value": 16,
+      "source": {
+        "path": "lib/usage/contribution-rebuild-contract.ts",
+        "symbol": "CONTRIBUTION_REBUILD_MAX_JOBS"
+      }
+    },
+    {
+      "id": "contribution-rebuild-metadata-bytes",
+      "scope": "canonical-contribution-rebuild",
+      "unit": "bytes",
+      "value": 16384,
+      "source": {
+        "path": "lib/usage/contribution-rebuild-contract.ts",
+        "symbol": "CONTRIBUTION_REBUILD_METADATA_BYTES"
+      }
+    },
+    {
+      "id": "contribution-rebuild-request-bytes",
+      "scope": "canonical-contribution-rebuild",
+      "unit": "bytes",
+      "value": 2048,
+      "source": {
+        "path": "lib/usage/contribution-rebuild-contract.ts",
+        "symbol": "CONTRIBUTION_REBUILD_REQUEST_BYTES"
+      }
+    },
+    {
+      "id": "contribution-rebuild-response-bytes",
+      "scope": "canonical-contribution-rebuild",
+      "unit": "bytes",
+      "value": 16384,
+      "source": {
+        "path": "lib/usage/contribution-rebuild-contract.ts",
+        "symbol": "CONTRIBUTION_REBUILD_RESPONSE_BYTES"
+      }
+    },
+    {
+      "id": "contribution-rebuild-deadline-ms",
+      "scope": "canonical-contribution-rebuild",
+      "unit": "milliseconds",
+      "value": 30000,
+      "source": {
+        "path": "lib/usage/contribution-rebuild-contract.ts",
+        "symbol": "CONTRIBUTION_REBUILD_DEADLINE_MS"
+      }
+    },
+    {
+      "id": "contribution-rebuild-max-version",
+      "scope": "canonical-contribution-rebuild",
+      "unit": "count",
+      "value": 32771,
+      "source": {
+        "path": "lib/usage/contribution-rebuild-contract.ts",
+        "symbol": "CONTRIBUTION_REBUILD_MAX_VERSION"
+      }
+    },
+    {
+      "id": "contribution-rebuild-max-source-bytes",
+      "scope": "canonical-contribution-rebuild",
+      "unit": "bytes",
+      "value": 16777216,
+      "source": {
+        "path": "lib/usage/contribution-rebuild-contract.ts",
+        "symbol": "CONTRIBUTION_REBUILD_MAX_SOURCE_BYTES"
+      }
+    },
+    {
+      "id": "contribution-rebuild-max-comparison-reads",
+      "scope": "canonical-contribution-rebuild",
+      "unit": "count",
+      "value": 252,
+      "source": {
+        "path": "lib/usage/contribution-rebuild-contract.ts",
+        "symbol": "CONTRIBUTION_REBUILD_MAX_COMPARISON_READS"
+      }
+    },
+    {
+      "id": "contribution-rebuild-max-comparison-bytes",
+      "scope": "canonical-contribution-rebuild",
+      "unit": "bytes",
+      "value": 67108864,
+      "source": {
+        "path": "lib/usage/contribution-rebuild-contract.ts",
+        "symbol": "CONTRIBUTION_REBUILD_MAX_COMPARISON_BYTES"
+      }
+    },
+    {
+      "id": "contribution-rebuild-max-reads",
+      "scope": "canonical-contribution-rebuild",
+      "unit": "count",
+      "value": 1040,
+      "source": {
+        "path": "lib/usage/contribution-rebuild-contract.ts",
+        "symbol": "CONTRIBUTION_REBUILD_MAX_READS"
+      }
+    },
+    {
+      "id": "contribution-rebuild-max-read-bytes",
+      "scope": "canonical-contribution-rebuild",
+      "unit": "bytes",
+      "value": 83886080,
+      "source": {
+        "path": "lib/usage/contribution-rebuild-contract.ts",
+        "symbol": "CONTRIBUTION_REBUILD_MAX_READ_BYTES"
       }
     }
   ],
@@ -421,6 +1671,69 @@
     {
       "left": "max-admission-heads",
       "right": "native-stats-legacy-records",
+      "relation": "equal",
+      "status": "enforced",
+      "finding": null
+    },
+    {
+      "left": "native-rich-report-bytes",
+      "right": "rich-fact-max-bytes",
+      "relation": "equal",
+      "status": "enforced",
+      "finding": null
+    },
+    {
+      "left": "native-rich-max-facts",
+      "right": "rich-fact-max-records",
+      "relation": "equal",
+      "status": "enforced",
+      "finding": null
+    },
+    {
+      "left": "native-rich-max-executions",
+      "right": "rich-fact-max-executions",
+      "relation": "equal",
+      "status": "enforced",
+      "finding": null
+    },
+    {
+      "left": "native-rich-max-window-ms",
+      "right": "rich-fact-max-window-ms",
+      "relation": "equal",
+      "status": "enforced",
+      "finding": null
+    },
+    {
+      "left": "native-contribution-observations",
+      "right": "contribution-max-members",
+      "relation": "equal",
+      "status": "enforced",
+      "finding": null
+    },
+    {
+      "left": "native-contribution-mutations",
+      "right": "contribution-max-mutations",
+      "relation": "equal",
+      "status": "enforced",
+      "finding": null
+    },
+    {
+      "left": "native-contribution-query-bytes",
+      "right": "contribution-head-query-request-bytes",
+      "relation": "equal",
+      "status": "enforced",
+      "finding": null
+    },
+    {
+      "left": "native-contribution-reply-bytes",
+      "right": "contribution-head-query-response-bytes",
+      "relation": "equal",
+      "status": "enforced",
+      "finding": null
+    },
+    {
+      "left": "native-contribution-batch-bytes",
+      "right": "contribution-max-bytes",
       "relation": "equal",
       "status": "enforced",
       "finding": null

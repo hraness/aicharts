@@ -15,7 +15,7 @@ const MAX_BYTES: usize = 4 * 1024 * 1024;
 /// Shared admitted legacy population, not a response-body allocation bound.
 pub(crate) const MAX_LEGACY_RECORDS: u64 = 1_000_000;
 const SAFE: u64 = 9_007_199_254_740_991;
-const HELP: &str = "AI Charts stats sync — explicit enrolled numeric publication\n\n  aicharts stats-sync --state-dir DIR --key-file KEY --home DIR --client ID [--since YYYY-MM-DD --until YYYY-MM-DD] [--source-root DIR ...]\n  aicharts stats-sync --state-dir DIR --key-file KEY --resume\n  aicharts stats-sync --state-dir DIR --key-file KEY --abandon\n  aicharts stats-sync --dry-run --home DIR --client ID [--since YYYY-MM-DD --until YYYY-MM-DD] [--source-root DIR ...]\n\nSends one client's nonempty numeric snapshot to the fixed AI Charts service.\nRequires an existing custody-verified macOS enrollment and its local state key.\nEach client belongs to one installation. Incomplete, warning-bearing, empty,\nor missing-source scans refuse; no automatic clearing is available. A legacy\nownership transfer pins its exact predecessor and must pass the service's\nper-day reported-token and record-preservation guard. Provider exports must already exist locally. No provider credentials\nare read or refreshed by this command. Ordinary sync retains absent days and\nrefuses declining counters or lost known coverage. Explicit reconciliation is\nrequired; no replacement override is available. Warp publishes one latest\nbilling-counter snapshot and replaces its prior derived snapshot, so repeated\nrefreshes cannot add the same monthly spend. Immutable history is retained.\nCosts and unknown coverage remain separate from reported tokens.\n\nA frozen request is durably retained before sending. An uncertain result requires\n--resume, which retries those exact bytes without reading source files.\nFor a refused request that needs a fresh scan, --abandon obtains an authenticated\nserver fence before clearing only that pending flight. If already committed, it\nsettles the matching receipt instead. Uncertain abandonment keeps the flight.\nPublished data and immutable recovery evidence remain retained. Never remove\ncheckpoint files to recover: reconcile identity, generation or a revoked\nwriter through the service. --dry-run reads local sources and prints the report;\nit does not enroll, create state or send.\n";
+const HELP: &str = "AI Charts stats sync — explicit enrolled numeric publication\n\n  aicharts stats-sync --state-dir DIR --key-file KEY --home DIR --client ID [--since YYYY-MM-DD --until YYYY-MM-DD] [--source-root DIR ...]\n  aicharts stats-sync --state-dir DIR --key-file KEY --resume\n  aicharts stats-sync --state-dir DIR --key-file KEY --abandon\n  aicharts stats-sync --dry-run --home DIR --client ID [--since YYYY-MM-DD --until YYYY-MM-DD] [--source-root DIR ...]\n\nSends one client's nonempty numeric snapshot to the fixed AI Charts service.\nRequires an existing custody-verified macOS enrollment and its local state key.\nEach client belongs to one installation. Incomplete, warning-bearing, empty,\nor missing-source scans refuse; no automatic clearing is available. A legacy\nownership transfer pins its exact predecessor and must pass the service's\nper-day reported-token and record-preservation guard. Provider exports must already exist locally. No provider credentials\nare read or refreshed by this command. Ordinary sync retains absent days and\nrefuses declining counters or lost known coverage. Explicit reconciliation is\nrequired; no replacement override is available. Warp publishes one latest\nbilling-counter snapshot and replaces its prior derived snapshot, so repeated\nrefreshes cannot add the same monthly spend. Immutable history is retained.\nCosts and unknown coverage remain separate from reported tokens.\n\nA frozen request is durably retained before sending. An uncertain result requires\n--resume, which retries those exact bytes without reading source files.\nFor a refused request that needs a fresh scan, --abandon obtains an authenticated\nserver fence before clearing only that pending flight. If already committed, it\nsettles the matching receipt instead. Uncertain abandonment keeps the flight.\nPublished data and immutable recovery evidence remain retained. Never remove\ncheckpoint files to recover: reconcile identity, generation or a revoked\nwriter through the service. --dry-run reads local sources and prints the report;\nit does not enroll, create state or send.\n\nFresh enrolled collection records private source health independently of upload.\nUse stats-health with the same profile and dates to inspect it without writes.\n--incremental is an explicit local Codex optimization requiring exclusive\n--source-root directories; other sources always replay their authoritative stores.\nIt cannot accompany --dry-run, --resume or --abandon. Full prefix verification\nremains required; skipped parsing does not mean no source I/O.\n";
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 struct Upload {
@@ -392,11 +392,12 @@ struct Options {
     resume: bool,
     abandon: bool,
     dry_run: bool,
+    incremental: bool,
     collection: Option<stats::Options>,
 }
 fn options(args: &[String], now: u64) -> Result<Options, &'static str> {
-    let (mut directory, mut key, mut resume, mut abandon, mut dry_run) =
-        (None, None, false, false, false);
+    let (mut directory, mut key, mut resume, mut abandon, mut dry_run, mut incremental) =
+        (None, None, false, false, false, false);
     let mut collect = Vec::new();
     let mut index = 1;
     while index < args.len() {
@@ -404,6 +405,7 @@ fn options(args: &[String], now: u64) -> Result<Options, &'static str> {
             "--resume" if !resume => resume = true,
             "--abandon" if !abandon => abandon = true,
             "--dry-run" if !dry_run => dry_run = true,
+            "--incremental" if !incremental => incremental = true,
             "--state-dir" | "--key-file" => {
                 let flag = &args[index];
                 index += 1;
@@ -433,6 +435,7 @@ fn options(args: &[String], now: u64) -> Result<Options, &'static str> {
     if ((resume || abandon) && (dry_run || !collect.is_empty()))
         || (resume && abandon)
         || (dry_run && (directory.is_some() || key.is_some()))
+        || (incremental && (resume || abandon || dry_run))
     {
         return Err("invalid_option");
     }
@@ -446,6 +449,9 @@ fn options(args: &[String], now: u64) -> Result<Options, &'static str> {
         if options.clients.len() != 1 {
             return Err("stats_sync_one_client_required");
         }
+        if incremental && (options.clients[0] != "codex" || options.source_roots.is_empty()) {
+            return Err("stats_incremental_profile_required");
+        }
         Some(options)
     };
     Ok(Options {
@@ -454,6 +460,7 @@ fn options(args: &[String], now: u64) -> Result<Options, &'static str> {
         resume,
         abandon,
         dry_run,
+        incremental,
         collection,
     })
 }
@@ -515,12 +522,27 @@ fn send(options: Options, now: u64) -> Result<String, &'static str> {
         .with_pairing_secrets(|_, secret| https::Transport::new(secret))
         .map_err(|_| "attempt_custody")??;
     if options.abandon {
-        let receipt = abandon_retained(
+        let flight = checkpoint
+            .flight
+            .as_ref()
+            .ok_or("stats_sync_no_retained_flight")?;
+        let binding: [u8; 32] = Sha256::digest(encoded(flight)?).into();
+        let result = abandon_retained(
             &mut checkpoint,
             &mut disk,
             |flight| transport.abandon(flight),
             stats::now_ms,
-        )?;
+        );
+        record_publication_result(
+            directory,
+            binding,
+            match &result {
+                Ok(Some(_)) => crate::source_health::PublicationOutcome::Succeeded,
+                Ok(None) => crate::source_health::PublicationOutcome::Abandoned,
+                Err(_) => crate::source_health::PublicationOutcome::Uncertain,
+            },
+        );
+        let receipt = result?;
         return Ok(if let Some(receipt) = receipt {
             format!(
                 "{{\"schemaVersion\":2,\"status\":\"published\",\"revision\":{}}}",
@@ -538,10 +560,12 @@ fn send(options: Options, now: u64) -> Result<String, &'static str> {
         if checkpoint.flight.is_some() {
             return Err("stats_sync_resume_required");
         }
-        let report = publication_report(stats::collect(
-            options.collection.as_ref().ok_or("invalid_option")?,
-            now,
-        )?)?;
+        let collection = options.collection.as_ref().ok_or("invalid_option")?;
+        let collected = stats::collect_persisted(collection, now, directory, options.incremental)?;
+        let client = &collection.clients[0];
+        let (attempt, observed_completed_at_ms) = collected.observation_identity(client)?;
+        let scope = stats::observation_scope(client, collection);
+        let report = publication_report(collected.into_report())?;
         let status = transport.status(&StatusRequest {
             schema_version: 2,
             account_id: &account,
@@ -577,17 +601,63 @@ fn send(options: Options, now: u64) -> Result<String, &'static str> {
             report,
         };
         upload.validate()?;
+        let binding: [u8; 32] = Sha256::digest(encoded(&upload)?).into();
         checkpoint.flight = Some(upload);
         disk.write(&checkpoint)?;
+        let mut health =
+            crate::source_health::SourceHealthStore::open(&directory.join("source-health-v1"))?;
+        health.begin_publication(
+            client,
+            scope,
+            attempt,
+            binding,
+            observed_completed_at_ms,
+            stats::now_ms()?,
+        )?;
     }
-    let receipt = exchange_retained(
+    let binding: [u8; 32] = Sha256::digest(encoded(
+        checkpoint
+            .flight
+            .as_ref()
+            .ok_or("stats_sync_no_retained_flight")?,
+    )?)
+    .into();
+    let result = exchange_retained(
         &mut checkpoint,
         &mut disk,
         |flight| transport.upload(flight),
         stats::now_ms,
-    )?;
+    );
+    record_publication_result(
+        directory,
+        binding,
+        if result.is_ok() {
+            crate::source_health::PublicationOutcome::Succeeded
+        } else {
+            crate::source_health::PublicationOutcome::Uncertain
+        },
+    );
+    let receipt = result?;
     Ok(format!("{{\"schemaVersion\":2,\"status\":\"published\",\"client\":{},\"revision\":{},\"firstUtcDay\":{},\"dayCount\":{}}}",
         serde_json::to_string(&receipt.client).map_err(|_| "stats_json_invalid")?, receipt.revision, receipt.first_utc_day, receipt.day_count))
+}
+/// Health evidence never changes the outcome of a durably reconciled upload.
+/// A missing legacy binding stays unknown; a failed health write leaves the
+/// prior pending evidence and emits only an owned code, never a source path.
+#[cfg(target_os = "macos")]
+fn record_publication_result(
+    directory: &std::path::Path,
+    binding: [u8; 32],
+    outcome: crate::source_health::PublicationOutcome,
+) {
+    let result = (|| {
+        let mut health =
+            crate::source_health::SourceHealthStore::open(&directory.join("source-health-v1"))?;
+        health.reconcile_publication(binding, stats::now_ms()?, outcome)
+    })();
+    if result.is_err() {
+        eprintln!("aicharts: code=source_health_publication_unrecorded");
+    }
 }
 #[cfg(target_os = "macos")]
 fn exchange_retained(

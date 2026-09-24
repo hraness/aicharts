@@ -1,5 +1,9 @@
 import { STATS_HTTP_URL, STATS_UPLOAD_URL, STATS_STATUS_URL, STATS_ABANDON_URL } from "../../../lib/usage/stats-http-contract";
 import { createStatsHttpHandler, createStatsUploadHttpHandler, type StatsHttpEnvironment, type StatsUploadHttpEnvironment } from "./stats-http";
+import { contributionHttpCap } from "../../../lib/usage/contributions-http-contract";
+import { createContributionHttpHandler, type ContributionHttpEnvironment } from "./contributions-http";
+import { CONTRIBUTION_QUERY_URL } from "../../../lib/usage/contribution-query";
+import { createContributionQueryHttpHandler, type ContributionQueryHttpEnvironment } from "./contribution-query-http";
 import { createUsageOidcVerifier, type VerifierDependencies } from "../../../lib/usage/oidc/usage-oidc-verifier";
 import { PAIRING_HTTP_URL } from "../../../lib/usage/pairing-http-contract";
 import { PRIVATE_DAYS_HTTP_URL } from "../../../lib/usage/private-days-http-contract";
@@ -24,6 +28,7 @@ export type ProductionEnvironment = Env & {
   readonly AICHARTS_USAGE_PRIVATE_READ_ENABLED?: unknown;
   readonly AICHARTS_USAGE_PUBLIC_READ_ENABLED?: unknown;
   readonly AICHARTS_USAGE_STATS_ENABLED?: unknown;
+  readonly AICHARTS_USAGE_CONTRIBUTIONS_ENABLED?: unknown;
 };
 type Lifetime = PairingHttpRequestLifetime;
 type Handler<E> = (request: Request, env: E, ctx: Lifetime) => Promise<Response>;
@@ -39,6 +44,8 @@ export interface ProductionRouterOptions {
     leaderboard: Handler<LeaderboardHttpEnvironment>;
     stats: Handler<StatsHttpEnvironment>;
     statsUpload: Handler<StatsUploadHttpEnvironment>;
+    contributions: Handler<ContributionHttpEnvironment>;
+    contributionQuery: Handler<ContributionQueryHttpEnvironment>;
   }>;
 }
 
@@ -91,11 +98,15 @@ export function createProductionRouter(options: ProductionRouterOptions = {}) {
     leaderboard: options.handlers?.leaderboard ?? createLeaderboardHttpHandler(effects),
     stats: options.handlers?.stats ?? createStatsHttpHandler({ ...effects, verifier }),
     statsUpload: options.handlers?.statsUpload ?? createStatsUploadHttpHandler(effects),
+    contributions: options.handlers?.contributions ?? createContributionHttpHandler(effects),
+    contributionQuery: options.handlers?.contributionQuery ?? createContributionQueryHttpHandler({ ...effects, verifier }),
   };
   return async (request: Request, env: ProductionEnvironment, ctx: Lifetime): Promise<Response> => {
-    let path: "pairing" | "terminal" | "admission" | "privateDays" | "consent" | "leaderboard" | "stats" | "statsUpload" | null = null;
+    let path: "pairing" | "terminal" | "admission" | "privateDays" | "consent" | "leaderboard" | "stats" | "statsUpload" | "contributions" | "contributionQuery" | null = null;
     if (request.url === STATS_HTTP_URL) path = "stats";
     else if (request.url === STATS_UPLOAD_URL || request.url === STATS_STATUS_URL || request.url === STATS_ABANDON_URL) path = "statsUpload";
+    else if (contributionHttpCap(request.url) !== null) path = "contributions";
+    else if (request.url === CONTRIBUTION_QUERY_URL) path = "contributionQuery";
     else if (request.url === PAIRING_HTTP_URL) path = "pairing";
     else if (request.url === PRIVATE_DAYS_HTTP_URL) path = "privateDays";
     else if (request.url === TERMINAL_ENROLLMENT_URL) path = "terminal";
@@ -105,11 +116,21 @@ export function createProductionRouter(options: ProductionRouterOptions = {}) {
     if (path === null || !flagReady(env, "AICHARTS_USAGE_WORKER_ENABLED") || !generationReady(env)) return unavailable();
     const required = path === "pairing" ? ["PAIRINGS"]
       : path === "terminal" ? ["PAIRINGS", "ACCOUNT_ENROLLMENTS"]
-      : path === "admission" || path === "statsUpload" ? ["ACCOUNT_ENROLLMENTS", "STAGING", "CONTROL"]
+      : path === "admission" || path === "statsUpload" || path === "contributions" || path === "contributionQuery" ? ["ACCOUNT_ENROLLMENTS", "STAGING", "CONTROL"]
       : path === "consent" ? ["ACCOUNT_ENROLLMENTS", "PUBLIC_INDEX"]
       : path === "leaderboard" ? ["PUBLIC_INDEX", "ACCOUNT_ENROLLMENTS"]
       : ["ACCOUNT_ENROLLMENTS", "CONTROL"];
     if (!bindingReady(env, required)) return unavailable();
+    if (path === "contributionQuery") {
+      if (!flagReady(env, "AICHARTS_USAGE_STATS_ENABLED") || !flagReady(env, "AICHARTS_USAGE_CONTRIBUTIONS_ENABLED")
+        || !flagReady(env, "AICHARTS_USAGE_AUTH_ENABLED") || !flagReady(env, "AICHARTS_USAGE_PRIVATE_READ_ENABLED")) return unavailable();
+      try { return await handlers.contributionQuery(request, env, ctx); } catch { return unavailable(); }
+    }
+    if (path === "contributions") {
+      if (!flagReady(env, "AICHARTS_USAGE_STATS_ENABLED") || !flagReady(env, "AICHARTS_USAGE_CONTRIBUTIONS_ENABLED")
+        || !flagReady(env, "AICHARTS_USAGE_ADMISSION_ENABLED")) return unavailable();
+      try { return await handlers.contributions(request, env, ctx); } catch { return unavailable(); }
+    }
     if (path === "stats" || path === "statsUpload") {
       if (!flagReady(env, "AICHARTS_USAGE_STATS_ENABLED") || (path === "stats"
         ? !flagReady(env, "AICHARTS_USAGE_AUTH_ENABLED") || !flagReady(env, "AICHARTS_USAGE_PRIVATE_READ_ENABLED")

@@ -4,9 +4,9 @@
   "bounds": {
     "workers": 1,
     "heapMiB": 256,
-    "timeoutMs": 30000,
+    "timeoutMs": 60000,
     "maxOutputBytes": 1048576,
-    "maxDistinctStates": 100000
+    "maxDistinctStates": 300000
   },
   "cases": [
     {

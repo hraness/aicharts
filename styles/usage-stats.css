@@ -238,7 +238,7 @@
   .usage-stats__summary dl { border-block-start: 1px solid var(--grid); margin-block-start: 1.25rem; order: 3; padding-block: 1rem; }
   .usage-stats__cost { order: 4; }
   .usage-stats__qualification { order: 5; }
-  .usage-stats__qualification a { display: none; }
+  .usage-stats__qualification a[href="#stats-coverage"] { display: none; }
   .usage-stats__total { font-size: 2.75rem; }
   .usage-stats__summary dl { gap: .75rem; grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .usage-stats__summary dl > div { align-content: start; display: grid; font-size: .8rem; gap: .2rem; }

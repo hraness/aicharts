@@ -1,6 +1,7 @@
 import { expect, mock, test } from "bun:test";
 import { statsFixture } from "./stats-contract.test";
 import { readPrivateStats } from "./stats-client";
+import { TestMetricWorker } from "./metric-explorer-test-worker";
 import { parseStatsPublicSearch, STATS_ACCOUNT_HEADER, STATS_PUBLIC_MAX_BYTES, STATS_PUBLIC_MEDIA, STATS_PUBLIC_URL } from "./stats-public";
 mock.module("server-only", () => ({}));
 const { createStatsPublicHandler } = await import("./stats-route");
@@ -53,8 +54,12 @@ test("client checks range, revision, media, length and HTTP envelope consistency
     expect(input).toBe("/api/usage/stats?firstUtcDay=20715&dayCount=1"); expect(init?.credentials).toBe("same-origin"); expect(init?.redirect).toBe("error");
     return new Response(JSON.stringify(body), { status, headers: { "content-type": STATS_PUBLIC_MEDIA, [STATS_ACCOUNT_HEADER]: accountId, ...headers } });
   }) as typeof fetch;
-  const read = (f: typeof fetch) => readPrivateStats(range.firstUtcDay, range.dayCount, new AbortController().signal, f);
-  expect(await read(fetcher(good))).toEqual({ ...good, accountId });
+  const read = (f: typeof fetch) => readPrivateStats(range.firstUtcDay, range.dayCount, new AbortController().signal, f, { workerFactory: () => new TestMetricWorker() });
+  const accepted = await read(fetcher(good));
+  expect(accepted.ok).toBe(true);
+  if (!accepted.ok) throw new Error(accepted.error);
+  expect(accepted.accountId).toBe(accountId); expect({ ...accepted.session.metadata, rows: value.rows }).toEqual(value);
+  expect(Object.hasOwn(accepted, "value")).toBe(false); accepted.session.close();
   for (const f of [fetcher(good, 401), fetcher(good, 200, { "content-length": "1" }), fetcher(good, 200, { "content-length": String(STATS_PUBLIC_MAX_BYTES + 1) }), fetcher(good, 200, { "content-type": "text/html" }),
     fetcher({ ...good, value: statsFixture() }), fetcher({ ...good, value: { ...value, firstUtcDay: 20_716 } }), fetcher({ ...good, privateField: "PRIVATE_CANARY" })]) {
     expect(await read(f)).toEqual({ schemaVersion: 2, ok: false, error: "unavailable" });
@@ -68,7 +73,7 @@ test("a successful report without one canonical acquisition account is refused",
     const headers = new Headers({ "content-type": STATS_PUBLIC_MEDIA });
     if (identity !== null) headers.set(STATS_ACCOUNT_HEADER, identity);
     const read = await readPrivateStats(range.firstUtcDay, range.dayCount, new AbortController().signal,
-      (async () => new Response(JSON.stringify({ schemaVersion: 2, ok: true, value }), { headers })) as unknown as typeof fetch);
+      (async () => new Response(JSON.stringify({ schemaVersion: 2, ok: true, value }), { headers })) as unknown as typeof fetch, { workerFactory: () => new TestMetricWorker() });
     expect(read).toEqual({ schemaVersion: 2, ok: false, error: "unavailable" });
   }
 });

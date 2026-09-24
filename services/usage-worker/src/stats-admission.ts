@@ -1,4 +1,4 @@
-import { statsHex, type StatsReceipt, type StatsResult, type StatsStatus, type StatsStatusRequest, type StatsUpload } from "../../../lib/usage/stats-http-contract";
+import { parseStatsResult, statsHex, type StatsReceipt, type StatsResult, type StatsStatus, type StatsStatusRequest, type StatsUpload } from "../../../lib/usage/stats-http-contract";
 import type { StatsAbandonRequest, StatsAbandonment } from "../../../lib/usage/stats-http-contract";
 import { AdmissionFault } from "./admission-policy";
 import type { AdmissionObservation, AdmissionOwner } from "./account-admission";
@@ -30,7 +30,11 @@ export class AccountStats {
       if (this.state.control().quarantined) throw new StatsFault("recovery_required");
       return run(owner, now);
     });
-    if (!result.ok) throw new StatsFault(result.error === "not_reserved" || result.error === "unavailable" || result.error === "handle_unavailable" || result.error === "publishing_full" ? "storage_unavailable" : result.error);
+    if (!result.ok) {
+      // Other account protocols cannot widen the v2 wire failure vocabulary.
+      const failure = parseStatsResult(result, () => null);
+      throw new StatsFault(failure && !failure.ok ? failure.error : "storage_unavailable");
+    }
     return result.value;
   }
   async #authenticate(observation: AdmissionObservation, identity: Identity, secret: string): Promise<void> {

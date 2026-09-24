@@ -391,6 +391,44 @@ fn resume_never_accepts_source_flags_and_live_requires_one_explicit_client() {
 }
 
 #[test]
+fn incremental_collection_requires_an_explicit_fresh_codex_profile() {
+    let args = |items: &[&str]| items.iter().map(|s| (*s).to_owned()).collect::<Vec<_>>();
+    let base = [
+        "stats-sync",
+        "--state-dir",
+        "/state",
+        "--key-file",
+        "/key",
+        "--home",
+        "/home",
+        "--client",
+        "codex",
+        "--source-root",
+        "/profile",
+    ];
+    let mut values = args(&base);
+    values.push("--incremental".into());
+    assert!(options(&values, 1_800_000_000_000).unwrap().incremental);
+    for extra in ["--resume", "--abandon", "--dry-run", "--incremental"] {
+        let mut invalid = values.clone();
+        invalid.push(extra.into());
+        assert!(options(&invalid, 1_800_000_000_000).is_err());
+    }
+    let mut no_profile = args(&base[..9]);
+    no_profile.push("--incremental".into());
+    assert_eq!(
+        options(&no_profile, 1_800_000_000_000).err(),
+        Some("stats_incremental_profile_required")
+    );
+    let mut other = values;
+    other[8] = "claude".into();
+    assert_eq!(
+        options(&other, 1_800_000_000_000).err(),
+        Some("stats_incremental_profile_required")
+    );
+}
+
+#[test]
 fn shared_wire_fixture_keeps_native_and_worker_hashes_identical() {
     for (text, expected) in [
         (

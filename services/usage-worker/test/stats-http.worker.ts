@@ -133,3 +133,31 @@ test("default production router keeps v2 closed despite legacy admission flags",
     expect(response.status).toBe(503); expect(await response.text()).toBe('{"error":"usage_service_unavailable"}');
   } finally { await waitOnExecutionContext(ctx); }
 });
+test("shaped foreign v2 upload and abandonment receipts refuse without leaking acceptance", async () => {
+  const device = await activated(), input = device.input;
+  const receipt = { schemaVersion: 2, operationId: input.operationId, bodyHash: statsHash(statsUploadText(input)), sequence: input.sequence,
+    revision: input.expectedRevision + 1, committedAtMs: NOW, client: input.report.sources[0].client,
+    firstUtcDay: input.report.firstUtcDay, dayCount: input.report.dayCount };
+  let disposed = 0;
+  for (const change of [{ operationId: hex(900001) }, { bodyHash: hex(900002) }, { sequence: 2 }, { revision: 2 },
+    { client: "codex" }, { firstUtcDay: DAY - 1 }, { dayCount: 2 }]) {
+    const reply = (value: unknown) => ({ ok: true, value, [Symbol.dispose]() { disposed++; } });
+    const selected: StatsUploadHttpEnvironment = { ACCOUNT_ENROLLMENTS: { getByName() { return {
+      admitStatsSnapshot: async () => reply({ ...receipt, ...change }),
+      readStatsStatus: async () => { throw new Error("unexpected status"); },
+      abandonStatsSnapshot: async () => reply({ schemaVersion: 2, outcome: "committed", receipt: { ...receipt, ...change } }),
+    }; } } };
+    const ctx = createExecutionContext();
+    try {
+      const response = await createStatsUploadHttpHandler(effects)(request(STATS_UPLOAD_URL, input, device.proof.uploadSecret), selected, ctx);
+      expect(response.status).toBe(503);
+      expect(await response.json()).toMatchObject({ result: { ok: false, error: "storage_unavailable" } });
+      if ("operationId" in change || "bodyHash" in change || "sequence" in change || "revision" in change) {
+        const abandonment = { schemaVersion: 2, accountId: input.accountId, generation: input.generation, deviceId: input.deviceId,
+          operationId: input.operationId, bodyHash: receipt.bodyHash, sequence: input.sequence, expectedRevision: input.expectedRevision };
+        expect((await createStatsUploadHttpHandler(effects)(request(STATS_ABANDON_URL, abandonment, device.proof.uploadSecret), selected, ctx)).status).toBe(503);
+      }
+    } finally { await waitOnExecutionContext(ctx); }
+  }
+  expect(disposed).toBe(11);
+});

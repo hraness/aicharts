@@ -66,9 +66,21 @@ export async function verifyUsageSessions(browser: Browser, baseUrl: string): Pr
       invariant(await page.locator(".usage-sessions__table tbody tr").count() === 2, "Example must have two selectable sessions.");
       await page.getByRole("heading", { name: "Model mix", exact: true }).waitFor();
       invariant(await page.getByRole("rowheader", { name: "gpt-5.5", exact: true }).count() === 1, "Example must expose per-session model mix.");
+      const tokenSize = (title: string) => page.locator(".usage-sessions__rich-card")
+        .filter({ has: page.getByRole("heading", { name: title, exact: true }) });
+      await tokenSize("Median token size").getByText("25300", { exact: true }).waitFor();
+      await tokenSize("P95 token size").getByText("26900", { exact: true }).waitFor();
+      await page.getByLabel("Token quantity", { exact: true }).selectOption("output");
+      await tokenSize("Median token size").getByText("2100", { exact: true }).waitFor();
+      await tokenSize("Maximum token size").getByText("3000", { exact: true }).waitFor();
+      await page.getByLabel("Token quantity", { exact: true }).selectOption("total");
       await page.getByLabel("Show", { exact: true }).selectOption("claude_code");
       invariant(await page.locator(".usage-sessions__table tbody tr").count() === 1, "Provider filtering must change the aggregate scope.");
       await page.getByRole("rowheader", { name: "claude-sonnet-4-6", exact: true }).waitFor();
+      await tokenSize("Median token size").getByText("22200", { exact: true }).waitFor();
+      await page.getByLabel("Token quantity", { exact: true }).selectOption("reasoning");
+      await tokenSize("Median token size").getByText("Unavailable", { exact: true }).waitFor();
+      await page.getByLabel("Token quantity", { exact: true }).selectOption("total");
       await page.getByLabel("Show", { exact: true }).selectOption("all");
       await page.locator(".usage-sessions__select").first().click();
       await page.evaluate(async () => { await document.fonts.ready; });
@@ -100,6 +112,17 @@ export async function verifyUsageSessions(browser: Browser, baseUrl: string): Pr
       invariant(!(await page.locator("body").textContent())?.includes("DO_NOT_ECHO_COMPACTION_SOURCE"), "Rejected compaction content must never be echoed.");
       await page.getByRole("button", { name: "Explore an example", exact: true }).click();
       invariant(await page.getByText("Compactions applied", { exact: true }).count() === 0, "Replacing a report must clear its attached event log.");
+
+      const singleObservation = { ...SESSION_EXAMPLE, sessions: [{ ...SESSION_EXAMPLE.sessions[0],
+        source: "history", window: { startMs: 200, endMs: 200 }, spans: [],
+        usage: [{ ...SESSION_EXAMPLE.sessions[0]!.usage[0], atMs: 200, inputTokens: 13,
+          cacheReadTokens: 0, cacheWriteTokens: 0, outputTokens: 7, reasoningTokens: null }],
+      }] };
+      await page.locator('input[type="file"][accept="application/json,.json"]').setInputFiles({
+        name: "single-observation.json", mimeType: "application/json", buffer: Buffer.from(JSON.stringify(singleObservation)),
+      });
+      await tokenSize("Median token size").getByText("20", { exact: true }).waitFor();
+      await tokenSize("Maximum token size").getByText("20", { exact: true }).waitFor();
 
       const history = { ...SESSION_EXAMPLE, sessions: SESSION_EXAMPLE.sessions.map(s => ({ ...s, source: "history", spans: [] })) };
       await page.locator('input[type="file"][accept="application/json,.json"]').setInputFiles({ name: "local-report.json", mimeType: "application/json", buffer: Buffer.from(JSON.stringify(history)) });

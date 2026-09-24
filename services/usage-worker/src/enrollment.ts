@@ -3,10 +3,34 @@ import { parseStatsQuery, parseStatsStatusRequest, parseStatsUpload, statsIntege
 import { isStatsClient } from "../../../lib/usage/stats-registry";
 import { parseStatsAbandonRequest, type StatsAbandonment } from "../../../lib/usage/stats-http-contract";
 import type { UsageStatsReport } from "../../../lib/usage/stats-contract";
-import { StatsState, StatsFault, STATS_SCHEMA } from "./stats-state";
+import { StatsState, StatsFault, STATS_SCHEMA, statsHash, statsUploadText } from "./stats-state";
 import { AccountStats } from "./stats-admission";
+import { CONTRIBUTION_SCHEMA, ContributionState, type ContributionGrantReceipt } from "./contributions-state";
+import { AccountContributions } from "./contributions-admission";
+import { ContributionProjectionState, CONTRIBUTION_PROJECTION_SCHEMA } from "./contribution-projection-state";
+import { AccountContributionProjection, type ContributionProjectionAdvanceResult } from "./contribution-projection";
+import { AccountAlarm } from "./account-alarm";
+import { AccountWorkState, ACCOUNT_WORK_SCHEMA, ACCOUNT_WORK_READY_DELAY_MS, ACCOUNT_WORK_DISPATCH_YIELD_MS, type AccountWorkAttempt,
+  type AccountWorkAuthority, type AccountWorkKind, type AccountWorkSnapshot, type AccountWorkOutcome } from "./account-work-state";
+import { accountConsentWork, accountProjectionWork, accountWorkDeadline, accountWorkRecordDeadline, accountWorkRefusal } from "./account-work";
+import { parseContributionQuery, type ContributionQuery, type ContributionQueryError, type ContributionQueryResult } from "../../../lib/usage/contribution-query";
+import { ContributionQueryFault, queryContributionPage } from "./contribution-query";
+import { parseContributionHeadQuery, type ContributionHeadQueryResult } from "../../../lib/usage/contribution-head-query";
+import { CONTRIBUTION_SCRUB_DEADLINE_MS, parseContributionScrubRequest, parseContributionScrubResult,
+  type ContributionScrubResult } from "../../../lib/usage/contribution-scrub";
+import { scrubContributionCell } from "./contribution-scrub";
+import { AccountContributionRebuild } from "./contribution-rebuild";
+import { CONTRIBUTION_REBUILD_SCHEMA, ContributionRebuildFault, ContributionRebuildState } from "./contribution-rebuild-state";
+import { CONTRIBUTION_REBUILD_DEADLINE_MS, isContributionRebuildError, parseContributionRebuildRequest,
+  parseContributionRebuildReadRequest, parseContributionRebuildReceipt, type ContributionRebuildError,
+  type ContributionRebuildResult, type ContributionRebuildStatusResult } from "../../../lib/usage/contribution-rebuild-contract";
+import { parseContributionCancelRequest } from "../../../lib/usage/contribution-cancel";
+import { ContributionFault, CONTRIBUTION_MAX_TIME, isContributionError, parseContributionBatch, parseContributionGrant, parseContributionActivationRequest,
+  parseContributionMigrationRequest, type ContributionMigrationReceipt,
+  parseContributionStatusRequest, parseContributionAbandonRequest, type ContributionError, type ContributionResult,
+  type ContributionBatch, type ContributionTerminal, type ContributionStatus, type ContributionActivationReceipt } from "../../../lib/usage/contributions";
 import { createHash } from "node:crypto";
-import { admissionHex, type AdmissionBatch } from "../../../lib/usage/admission";
+import { admissionHex, equalAdmissionBytes, type AdmissionBatch } from "../../../lib/usage/admission";
 import { uploadSecretCommitment } from "./pairing";
 import { AccountAdmission, type AdmissionObservation } from "./account-admission";
 import { AdmissionFault, batchAccount, ownedAdmissionBatch } from "./admission-policy";
@@ -33,7 +57,7 @@ import {
 } from "./restore-fence";
 
 export type EnrollmentError = "invalid_input" | "unavailable" | "unauthorized" | "not_reserved" | "not_enrolled"
-  | StatsError | "expired" | "conflict" | "recovery_required" | "revoked" | "storage_invalid" | "storage_unavailable" | "clock_regressed" | "limit" | "handle_unavailable" | "publishing_full";
+  | StatsError | ContributionError | ContributionQueryError | ContributionRebuildError | "expired" | "conflict" | "recovery_required" | "revoked" | "storage_invalid" | "storage_unavailable" | "clock_regressed" | "limit" | "handle_unavailable" | "publishing_full";
 export type EnrollmentResult<T> = { ok: true; value: T } | { ok: false; error: EnrollmentError };
 export type EnrollmentReceipt = Readonly<{
   schemaVersion: 1; accountId: string; intentId: string; reservationId: string;
@@ -205,12 +229,16 @@ export class AccountEnrollment extends DurableObject<Env> {
   #historyAudited: "pending" | "passed" | "failed" = "pending";
   #leaseEstablishment = new Set<string>();
   #canonicalWrites = new Map<string, Set<Promise<void>>>();
+  #accountWorkFlights = new Map<AccountWorkKind, object>();
+  #contributionRebuildFlight: object | null = null;
   /** Completed stats reads are pure in (range, stats revision, admission
    * revision); the memo only ever serves after every fencing guard passes.
    * Bounded to a few ranges, dies with the object, and holds no authority. */
   #statsReadMemo = new Map<string, UsageStatsReport>();
+  readonly #accountAlarm: AccountAlarm;
   constructor(ctx: DurableObjectState, env: Env) {
     super(ctx, env);
+    this.#accountAlarm = new AccountAlarm(ctx.storage);
     // Construction is read-only. Explicit maintenance or a registered mutation
     // owns initialization, upgrades and checkpoint writes.
   }
@@ -244,24 +272,51 @@ export class AccountEnrollment extends DurableObject<Env> {
           this.ctx.storage.sql.exec("UPDATE account_enrollment SET schema_version = 8 WHERE id = 1");
         }
         if (this.#statsPresent()) new StatsState(this.ctx.storage.sql).auditControl(this.#stored(5).state);
+        if (this.#contributionsPresent()) {
+          const state = this.#stored(5).state;
+          const control = new ContributionState(this.ctx.storage).control();
+          if (state === null || state.phase !== "active" || control.accountId !== state.accountId
+            || control.generation !== state.generation) throw new AdmissionFault("storage_invalid");
+        }
+        if (this.#contributionProjectionPresent()) new ContributionProjectionState(this.ctx.storage).status(Date.now());
+        if (this.#accountWorkPresent()) {
+          const state = this.#stored(5).state;
+          if (!state) throw new ContributionFault("storage_invalid");
+          new AccountWorkState(this.ctx.storage).snapshot(this.#workAuthority(state, Date.now()));
+        }
+        if (this.#contributionRebuildPresent()) {
+          const state = this.#stored(5).state;
+          for (const job of new ContributionRebuildState(this.ctx.storage).inventory())
+            if (!state || job.receipt.accountId !== state.accountId || job.receipt.generation !== state.generation)
+              throw new ContributionRebuildFault("storage_invalid");
+        }
         this.#schema();
         const audited = this.#auditHistory();
         if (audited !== null) throw new AdmissionFault(audited === "storage_invalid" ? "storage_invalid" : "recovery_required");
       });
       return null;
-    } catch (error) { return error instanceof AdmissionFault ? error.code : "storage_invalid"; }
+    } catch (error) { return error instanceof AdmissionFault || error instanceof ContributionFault || error instanceof ContributionRebuildFault ? error.code : "storage_invalid"; }
   }
 
   #objects(): Record<string, SqlStorageValue>[] {
-    return this.ctx.storage.sql.exec("SELECT type, name, sql FROM sqlite_schema WHERE name NOT GLOB '_cf_*' AND name NOT GLOB 'sqlite_*' AND name != '__cf_kv' LIMIT 28").toArray();
+    return this.ctx.storage.sql.exec("SELECT type, name, sql FROM sqlite_schema WHERE name NOT GLOB '_cf_*' AND name NOT GLOB 'sqlite_*' AND name != '__cf_kv' LIMIT 30").toArray();
   }
   #schema(legacy = false): void {
     const objects = this.#objects();
     const withStats = !legacy && objects.some(object => object.name === "usage_stats_control");
-    const expected: Record<string, string> = { account_enrollment: SCHEMA_SQL, ...(legacy ? {} : ADMISSION_SCHEMA), ...(withStats ? STATS_SCHEMA : {}) };
+    const withContributions = !legacy && objects.some(object => object.name === "usage_contribution_control");
+    const withProjection = !legacy && objects.some(object => object.name === "usage_contribution_projection_control");
+    const withWork = !legacy && objects.some(object => object.name === "account_work");
+    const withRebuild = !legacy && objects.some(object => object.name === "usage_contribution_rebuild_jobs");
+    const expected: Record<string, string> = { account_enrollment: SCHEMA_SQL, ...(legacy ? {} : ADMISSION_SCHEMA),
+      ...(withStats ? STATS_SCHEMA : {}), ...(withContributions ? CONTRIBUTION_SCHEMA : {}), ...(withProjection ? CONTRIBUTION_PROJECTION_SCHEMA : {}),
+      ...(withWork ? ACCOUNT_WORK_SCHEMA : {}), ...(withRebuild ? CONTRIBUTION_REBUILD_SCHEMA : {}) };
     if (!legacy) {
       const version = this.ctx.storage.sql.exec("SELECT schema_version FROM account_enrollment WHERE id = 1").toArray()[0]?.schema_version;
-      if ((version === 6 || version === 7 || version === 8) !== withStats) throw new Error("storage_invalid");
+      if ((version === 6 || version === 7 || version === 8 || version === 9 || version === 10 || version === 11 || version === 12 || version === 13) !== withStats
+        || (version === 9 || version === 10 || version === 11 || version === 12 || version === 13) !== withContributions
+        || (version === 10 || version === 11 || version === 12 || version === 13) !== withProjection
+        || (version === 11 || version === 12 || version === 13) !== withWork || (version === 13) !== withRebuild) throw new Error("storage_invalid");
     }
     if (!this.#healthy || objects.length !== Object.keys(expected).length || objects.some(object => object.type !== "table"
       || typeof object.name !== "string" || !Object.hasOwn(expected, object.name) || object.sql !== expected[object.name])) throw new Error("storage_invalid");
@@ -325,7 +380,7 @@ export class AccountEnrollment extends DurableObject<Env> {
     const rows = this.ctx.storage.sql.exec("SELECT id, schema_version, revision, payload FROM account_enrollment LIMIT 2").toArray();
     const row = rows[0];
     if (rows.length !== 1 || row?.id !== 1) throw new Error("storage_invalid");
-    if (row.schema_version === 5 || row.schema_version === 6 || row.schema_version === 7 || row.schema_version === 8) return;
+    if (row.schema_version === 5 || row.schema_version === 6 || row.schema_version === 7 || row.schema_version === 8 || row.schema_version === 9 || row.schema_version === 10 || row.schema_version === 11 || row.schema_version === 12 || row.schema_version === 13) return;
     if (row.schema_version !== 4) throw new Error("storage_invalid");
     let payload = row.payload;
     if (payload !== null) {
@@ -399,6 +454,7 @@ export class AccountEnrollment extends DurableObject<Env> {
         admission.observe(now);
         const outcome = run(state, now);
         if (outcome.state !== null) {
+          if (this.#accountWorkPresent()) this.#syncAccountWork(outcome.state, now);
           // Pin the committed state to the epoch the lease observed so a later
           // restore to an older payload reads back a stale epoch and refuses.
           if (fence !== null) outcome.state.fenceEpoch = fence.epoch;
@@ -411,7 +467,8 @@ export class AccountEnrollment extends DurableObject<Env> {
         }
         return outcome.result;
       });
-    } catch (error) { return err(error instanceof AdmissionFault || error instanceof StatsFault ? error.code : "storage_invalid"); }
+    } catch (error) { return err(error instanceof AdmissionFault || error instanceof StatsFault || error instanceof ContributionFault
+      || error instanceof ContributionRebuildFault ? error.code : "storage_invalid"); }
   }
 
   /** The Worker deployment version this account object is running under. */
@@ -431,7 +488,7 @@ export class AccountEnrollment extends DurableObject<Env> {
       const rows = this.ctx.storage.sql.exec("SELECT id, schema_version, revision, payload FROM account_enrollment LIMIT 2").toArray();
       const row = rows[0];
       if (rows.length !== 1 || row.id !== 1 || typeof row.schema_version !== "number" || !Number.isInteger(row.schema_version)
-        || row.schema_version < 1 || row.schema_version > 8 || typeof row.revision !== "number" || !Number.isSafeInteger(row.revision)
+        || row.schema_version < 1 || row.schema_version > 13 || typeof row.revision !== "number" || !Number.isSafeInteger(row.revision)
         || row.revision < 0 || row.revision >= Number.MAX_SAFE_INTEGER) return err("storage_invalid");
       if (row.payload === null) return row.revision === 0 ? ok({ epoch: RESTORE_FENCE_GENESIS_EPOCH, established: false }) : err("storage_invalid");
       if (typeof row.payload !== "string" || row.payload.length > MAX_PAYLOAD || row.revision === 0) return err("storage_invalid");
@@ -511,7 +568,8 @@ export class AccountEnrollment extends DurableObject<Env> {
   /** Acquire a provider-operation lease from the external restore fence. The
    * fence is a separate store; the returned epoch/established are authoritative
    * and cross-checked against durable state inside the transaction. */
-  async #fenceAcquire(accountId: string, generation: string): Promise<EnrollmentResult<{ fence: FenceObservation; token: string }>> {
+  async #fenceAcquire(accountId: string, generation: string, admitted: () => boolean = () => true): Promise<EnrollmentResult<{ fence: FenceObservation; token: string }>> {
+    if (!admitted()) return err("storage_unavailable");
     const workerVersion = this.#workerVersion();
     if (workerVersion === null) return err("recovery_required");
     const preflight = this.#fencePreflight(accountId, generation);
@@ -523,6 +581,7 @@ export class AccountEnrollment extends DurableObject<Env> {
     let failure: EnrollmentError = "storage_unavailable";
     let uncertain = false;
     for (let attempt = 0; attempt < 3; attempt++) {
+      if (!admitted()) break;
       let raw: unknown;
       try {
         raw = await stub.assertOpen(input);
@@ -532,6 +591,12 @@ export class AccountEnrollment extends DurableObject<Env> {
           && (lease.established === true || lease.established === false) && enrollmentTime(lease.deadlineMs)) {
           const fence = Object.freeze({ epoch: input.epoch, established: lease.established });
           if (preflight.value.established) this.#leaseEstablishment.add(input.attemptId);
+          // A bounded caller can retire while acquisition is held. Settle the
+          // exact grant without preparing or reading its canonical storage.
+          if (!admitted()) {
+            await this.#fenceSettle(accountId, input.attemptId, false);
+            return err("storage_unavailable");
+          }
           const prepared = this.#prepareFenced(accountId, generation, fence);
           if (prepared !== null) {
             await this.#fenceSettle(accountId, input.attemptId, false);
@@ -565,9 +630,9 @@ export class AccountEnrollment extends DurableObject<Env> {
     }
     return err("recovery_required");
   }
-  /** Each execution can dispatch only one fixed-key anchor write. The external
-   * fence bounds simultaneous executions; completion deletes local custody.
-   * If this object dies first, the durable holder stays unresolved. */
+  /** Each caller bounds and reserves its provider writes before dispatch. The
+   * external fence retains actual anchor or diagnostic-index I/O; completion
+   * removes local custody. Eviction leaves the durable holder unresolved. */
   #retainCanonicalWrite(token: string | null, pending: Promise<unknown>): void {
     if (token === null) throw new Error("unregistered_write");
     const writes = this.#canonicalWrites.get(token) ?? new Set<Promise<void>>();
@@ -587,8 +652,8 @@ export class AccountEnrollment extends DurableObject<Env> {
     const writes = this.#canonicalWrites.get(token);
     if (writes !== undefined && writes.size > 0) {
       // Preserve the outward deadline while retaining custody of the actual
-      // canonical provider operation. waitUntil is liveness support, not proof
-      // of termination: process loss leaves the separate durable fence held.
+      // canonical provider operation. Durable Objects' waitUntil does not extend
+      // lifetime: process loss leaves the separate durable fence held.
       this.ctx.waitUntil(Promise.allSettled([...writes]).then(() => this.#fenceSettle(accountId, token, committed)));
       return;
     }
@@ -652,7 +717,17 @@ export class AccountEnrollment extends DurableObject<Env> {
     try {
       const admission = new AdmissionState(this.ctx.storage.sql);
       return await new AccountAdmission(this.env, admission, (observation, run) => {
-        const result = this.#transaction(observation, (state, now) => ({ state, result: ok(run(state, now)) }));
+        const result = this.#transaction(observation, (state, now) => {
+          // Every continuation is guarded inside the committing transaction:
+          // an activation during an R2 await cannot revive a legacy writer.
+          if (this.#contributionsActive()) {
+            if (!state || state.phase !== "active") throw new AdmissionFault("not_enrolled");
+            const settled = admission.progress(batch.deviceId, state);
+            if (!settled.batch || !settled.journal || !equalAdmissionBytes(settled.batch.bytes, batch.bytes))
+              throw new AdmissionFault("profile_superseded");
+          }
+          return { state, result: ok(run(state, now)) };
+        });
         committed ||= observation.committed;
         return result;
       }).admit({ uploadSecret, batch }, acquired.value.fence);
@@ -664,6 +739,550 @@ export class AccountEnrollment extends DurableObject<Env> {
   }
   #statsPresent(): boolean {
     return this.ctx.storage.sql.exec("SELECT name FROM sqlite_schema WHERE name = 'usage_stats_control' LIMIT 1").toArray().length === 1;
+  }
+  #contributionsPresent(): boolean {
+    return this.ctx.storage.sql.exec("SELECT name FROM sqlite_schema WHERE name = 'usage_contribution_control' LIMIT 1").toArray().length === 1;
+  }
+  #contributionProjectionPresent(): boolean {
+    return this.ctx.storage.sql.exec("SELECT name FROM sqlite_schema WHERE name = 'usage_contribution_projection_control' LIMIT 1").toArray().length === 1;
+  }
+  #contributionRebuildPresent(): boolean {
+    return this.ctx.storage.sql.exec("SELECT name FROM sqlite_schema WHERE name='usage_contribution_rebuild_jobs' LIMIT 1").toArray().length === 1;
+  }
+  #contributionsEnabled(): boolean {
+    return this.#statsEnabled() && (this.env as Env & { AICHARTS_USAGE_CONTRIBUTIONS_ENABLED?: string }).AICHARTS_USAGE_CONTRIBUTIONS_ENABLED === "1";
+  }
+  #contributionsActive(): boolean {
+    return this.#contributionsPresent() && new ContributionState(this.ctx.storage).control().phase === "active";
+  }
+  #accountWorkPresent(): boolean {
+    return this.ctx.storage.sql.exec("SELECT name FROM sqlite_schema WHERE name='account_work' LIMIT 1").toArray().length === 1;
+  }
+  #workAuthority(state: State, now: number): AccountWorkAuthority {
+    return { accountId: state.accountId, generation: state.generation, observedAtMs: now, active: state.phase === "active" };
+  }
+  /** Only a registered mutation may add the bounded maintenance metadata.
+   * The source commit, initial empty projection and work identity are atomic. */
+  #syncAccountWork(state: State, now: number, resume?: AccountWorkKind): AccountWorkSnapshot | null {
+    if (!this.#contributionsActive()) return null;
+    const projection = new ContributionProjectionState(this.ctx.storage);
+    if (!this.#contributionProjectionPresent()) {
+      projection.initialize(state.accountId, state.generation);
+      this.ctx.storage.sql.exec("UPDATE account_enrollment SET schema_version=10 WHERE id=1");
+    }
+    const authority = this.#workAuthority(state, now), work = new AccountWorkState(this.ctx.storage);
+    if (!this.#accountWorkPresent()) {
+      work.initialize(authority);
+      this.ctx.storage.sql.exec("UPDATE account_enrollment SET schema_version=11 WHERE id=1");
+    }
+    const consent = accountConsentWork(state.accountId, state.generation, state.leaderboard, now);
+    work.reconcile("consent", consent.key, consent.readyAtMs, authority, resume === "consent" && !this.#accountWorkFlights.has("consent"));
+    const target = accountProjectionWork(projection.status(now), now);
+    work.reconcile("projection", target.key, target.readyAtMs, authority, resume === "projection" && !this.#accountWorkFlights.has("projection"));
+    return work.snapshot(authority);
+  }
+  #workRun<T>(observation: AdmissionObservation, run: (state: State, now: number) => T): T {
+    const result = this.#transaction(observation, (state, now) => {
+      if (!state || state.phase !== "active") throw new ContributionFault("not_enrolled");
+      return { state, result: ok(run(state, now)) };
+    });
+    if (!result.ok) throw new ContributionFault(this.#contributionError(result.error));
+    return result.value;
+  }
+  async #armAccountWork(observation: AdmissionObservation, target?: number): Promise<void> {
+    const now = this.#workRun(observation, (_state, now) => now);
+    const deadline = target ?? now + ACCOUNT_WORK_READY_DELAY_MS;
+    if (!enrollmentTime(deadline) || deadline > CONTRIBUTION_MAX_TIME) throw new ContributionFault("clock_regressed");
+    await this.#accountAlarm.arm(deadline, () => { this.#workRun(observation, () => {}); });
+  }
+  async #rearmAccountWork(observation: AdmissionObservation): Promise<void> {
+    const deadline = this.#workRun(observation, (state, now) => {
+      const work = this.#syncAccountWork(state, now);
+      if (!work) return null;
+      // A disabled canonical feature cannot create background provider work;
+      // consent delivery remains independent of that feature's activation.
+      return this.#contributionsEnabled() ? accountWorkDeadline(work) : accountWorkRecordDeadline(work.consent);
+    });
+    if (deadline !== null) await this.#armAccountWork(observation, deadline);
+  }
+  async #advanceContributionProjection(observation: AdmissionObservation, request: { schemaVersion: 3; accountId: string; generation: string }): Promise<ContributionProjectionAdvanceResult> {
+    const projection = new ContributionProjectionState(this.ctx.storage);
+    return new AccountContributionProjection(this.env, projection, (seen, action) => this.#transaction(seen, (state, now) => {
+      if (!state || state.phase !== "active") throw new ContributionFault("not_enrolled");
+      if (state.accountId !== request.accountId || state.generation !== request.generation) throw new ContributionFault("unauthorized");
+      if (!this.#contributionsActive()) throw new ContributionFault("not_started");
+      this.#syncAccountWork(state, now);
+      const value = action(state, now);
+      this.#syncAccountWork(state, now);
+      return { state, result: ok(value) };
+    }), () => this.#armAccountWork(observation)).advance(request, observation);
+  }
+  /** Called synchronously inside the same transaction as activation. Control
+   * counters alone cannot hide a retained head, tombstone, journal or flight. */
+  #legacyContributionStateIsEmpty(): boolean {
+    const owner = this.#stored(5).state;
+    if (!owner || owner.phase !== "active" || !this.#statsPresent()) return false;
+    const legacy = new AdmissionState(this.ctx.storage.sql), first = legacy.control();
+    const stats = new StatsState(this.ctx.storage.sql), second = stats.control();
+    if (first.quarantined || first.revision !== 0 || first.heads !== 0 || first.live !== 0 || first.committed !== 0
+      || legacy.pending(owner) !== null || second.quarantined || second.revision !== 0 || second.immutableBytes !== 0
+      || stats.pending() !== null || stats.hasCommittedSnapshot()) return false;
+    for (const table of ["usage_admission_heads", "usage_admission_journal", "usage_stats_days", "usage_stats_devices"] as const) {
+      if (this.ctx.storage.sql.exec(`SELECT 1 FROM ${table} LIMIT 1`).toArray().length !== 0) return false;
+    }
+    return true;
+  }
+
+  async #contributionMutation<R extends Pick<ContributionBatch, "accountId" | "generation" | "deviceId">, T>(
+    input: unknown, parse: (value: unknown) => R | null, initialize: boolean,
+    run: (service: AccountContributions, request: R, secret: string, observation: AdmissionObservation) => Promise<ContributionResult<T>>,
+    afterAction?: (source: ContributionState, request: R) => void,
+  ): Promise<ContributionResult<T>> {
+    if (!this.#contributionsEnabled()) return { ok: false, error: "storage_unavailable" };
+    const dto = enrollmentSnapshot(input, ["uploadSecret", "request"]);
+    if (!dto || !enrollmentHex(dto.uploadSecret)) return { ok: false, error: "invalid_input" };
+    const request = parse(dto.request);
+    if (!request) return { ok: false, error: "invalid_input" };
+    const generation = this.#generation();
+    if (generation === null || request.generation !== generation) return { ok: false, error: "recovery_required" };
+    const authenticated = await this.#preauthenticateUpload(request.accountId, request.deviceId, generation, dto.uploadSecret);
+    if (authenticated !== null) return { ok: false, error: this.#contributionError(authenticated) };
+    const acquired = await this.#fenceAcquire(request.accountId, generation);
+    if (!acquired.ok) return { ok: false, error: this.#contributionError(acquired.error) };
+    const observation: AdmissionObservation = { generation, observed: Date.now(), fence: acquired.value.fence, committed: false };
+    try {
+      await this.#armAccountWork(observation);
+      const contribution = new ContributionState(this.ctx.storage);
+      const service = new AccountContributions(this.env, contribution, (seen, action) => this.#transaction(seen, (state, now) => {
+        if (!state || state.phase !== "active") throw new ContributionFault("not_enrolled");
+        if (state.accountId !== request.accountId || state.generation !== request.generation) throw new ContributionFault("unauthorized");
+        if (!this.#contributionsPresent()) {
+          if (!initialize) throw new ContributionFault("not_started");
+          contribution.initialize(state.accountId, state.generation);
+          this.ctx.storage.sql.exec("UPDATE account_enrollment SET schema_version = 9 WHERE id = 1");
+        }
+        const value = action(state, now);
+        this.#syncAccountWork(state, now);
+        afterAction?.(contribution, request);
+        return { state, result: ok(value) };
+      }), () => this.#armAccountWork(observation));
+      const result = await run(service, request, dto.uploadSecret, observation);
+      await this.#rearmAccountWork(observation);
+      return result;
+    } catch (cause) { return { ok: false, error: cause instanceof ContributionFault ? cause.code : "storage_unavailable" }; }
+    finally { await this.#fenceSettle(request.accountId, acquired.value.token, observation.committed); }
+  }
+  #contributionError(error: EnrollmentError): ContributionError {
+    return isContributionError(error) ? error : "storage_unavailable";
+  }
+  async activateContributions(input: unknown): Promise<ContributionResult<ContributionActivationReceipt>> {
+    return this.#contributionMutation(input, parseContributionActivationRequest, true,
+      (service, request, secret, seen) => service.activate(request, secret, seen, () => this.#legacyContributionStateIsEmpty()));
+  }
+  async migrateContributions(input: unknown): Promise<ContributionResult<ContributionMigrationReceipt>> {
+    return this.#contributionMutation(input, parseContributionMigrationRequest, true,
+      (service, request, secret, seen) => service.migrate(request, secret, seen));
+  }
+  async cancelContributionMigration(input: unknown): Promise<ContributionResult<ContributionTerminal>> {
+    return this.#contributionMutation(input, parseContributionMigrationRequest, false,
+      (service, request, secret, seen) => service.cancelMigration(request, secret, seen));
+  }
+  async grantContributionPopulation(input: unknown): Promise<ContributionResult<ContributionGrantReceipt>> {
+    return this.#contributionMutation(input, parseContributionGrant, true, (service, request, secret, seen) => service.grant(request, secret, seen));
+  }
+  async admitContributions(input: unknown): Promise<ContributionResult<ContributionTerminal>> {
+    return this.#contributionMutation(input, parseContributionBatch, false, (service, request, secret, seen) => service.admit(request, secret, seen));
+  }
+  async abandonContributions(input: unknown): Promise<ContributionResult<ContributionTerminal>> {
+    return this.#contributionMutation(input, parseContributionAbandonRequest, false, (service, request, secret, seen) => service.abandon(request, secret, seen));
+  }
+  async cancelContributions(input: unknown): Promise<ContributionResult<ContributionTerminal>> {
+    return this.#contributionMutation(input, parseContributionCancelRequest, false,
+      (service, request, secret, seen) => service.cancel(request, secret, seen), (source, request) => {
+        const operation = source.operation(request.batch.operationId);
+        // The tagged no-reservation terminal is admitted only by the new
+        // reader. Upgrade in the same SQL transaction as its first creation;
+        // older binaries must refuse rather than reinterpret its metadata.
+        if (operation?.kind === "batch" && operation.outcome === "abandoned" && operation.intent.deltaManifestHash === null)
+          this.ctx.storage.sql.exec("UPDATE account_enrollment SET schema_version=12 WHERE id=1 AND schema_version=11");
+      });
+  }
+  async readContributionStatus(input: unknown): Promise<ContributionResult<ContributionStatus>> {
+    const dto = enrollmentSnapshot(input, ["uploadSecret", "request"]), request = dto && parseContributionStatusRequest(dto.request);
+    if (!request || !dto || !enrollmentHex(dto.uploadSecret)) return { ok: false, error: "invalid_input" };
+    if (!this.#contributionsEnabled()) return { ok: false, error: "storage_unavailable" };
+    const generation = this.#generation();
+    if (generation === null || generation !== request.generation) return { ok: false, error: "recovery_required" };
+    const uploadSecret = dto.uploadSecret;
+    const result = await this.#readFenced(request.accountId, async () => {
+      if (!this.#contributionsPresent()) return err("not_started");
+      const scope = { accountId: request.accountId, sessionExpiresAtMs: 8_640_000_000_000_000 };
+      const observation: AdmissionObservation = { generation, observed: Date.now(), fence: null, committed: false };
+      return new AccountContributions(this.env, new ContributionState(this.ctx.storage), (seen, action) =>
+        this.#privateDaysSnapshot(scope, seen, state => action(state, seen.observed))).status(request, uploadSecret, observation);
+    });
+    return result.ok ? result : { ok: false, error: this.#contributionError(result.error) };
+  }
+  /** Device-private canonical references. The head query cannot initialize
+   * projections, repair memberships, arm alarms or advance stored clocks. */
+  async readContributionHeads(input: unknown): Promise<ContributionHeadQueryResult> {
+    const dto = enrollmentSnapshot(input, ["uploadSecret", "request"]), request = dto && parseContributionHeadQuery(dto.request);
+    if (!request || !dto || !enrollmentHex(dto.uploadSecret)) return { ok: false, error: "invalid_input" };
+    if (!this.#contributionsEnabled()) return { ok: false, error: "storage_unavailable" };
+    const generation = this.#generation();
+    if (generation === null || generation !== request.generation) return { ok: false, error: "recovery_required" };
+    const secret = dto.uploadSecret;
+    const result = await this.#readFenced(request.accountId, async () => {
+      if (!this.#contributionsPresent()) return err("not_started");
+      const scope = { accountId: request.accountId, sessionExpiresAtMs: CONTRIBUTION_MAX_TIME };
+      const observation: AdmissionObservation = { generation, observed: Date.now(), fence: null, committed: false };
+      return new AccountContributions(this.env, new ContributionState(this.ctx.storage), (seen, action) =>
+        this.#privateDaysSnapshot(scope, seen, state => action(state, seen.observed))).heads(request, secret, observation);
+    });
+    return result.ok ? result : { ok: false, error: this.#contributionError(result.error) };
+  }
+  /** Explicit trusted-coordinator maintenance. Each invocation advances at most
+   * one bounded chunk or empty revision; reads never dispatch this work. */
+  async advanceContributionProjection(input: unknown): Promise<ContributionProjectionAdvanceResult> {
+    const raw = enrollmentSnapshot(input, ["schemaVersion", "accountId", "generation"]);
+    if (raw?.schemaVersion !== 3 || !enrollmentAccount(raw.accountId) || !enrollmentHex(raw.generation))
+      return { ok: false, error: "invalid_input", status: null };
+    const request = { schemaVersion: 3 as const, accountId: raw.accountId, generation: raw.generation };
+    if (!this.#contributionsEnabled()) return { ok: false, error: "storage_unavailable", status: null };
+    if (this.#generation() !== request.generation) return { ok: false, error: "recovery_required", status: null };
+    if (this.#accountWorkFlights.has("projection")) return { ok: false, error: "conflict", status: null };
+    const acquired = await this.#fenceAcquire(request.accountId, request.generation);
+    if (!acquired.ok) return { ok: false, error: this.#contributionError(acquired.error), status: null };
+    const observation: AdmissionObservation = { generation: request.generation, observed: Date.now(), fence: acquired.value.fence, committed: false };
+    let marker: object | null = null;
+    try {
+      if (this.#accountWorkFlights.has("projection")) throw new ContributionFault("conflict");
+      await this.#armAccountWork(observation);
+      const attempt = this.#workRun(observation, (state, now) => {
+        if (this.#accountWorkFlights.has("projection")) throw new ContributionFault("conflict");
+        if (this.#syncAccountWork(state, now, "projection") === null) throw new ContributionFault("not_started");
+        const claimed = new AccountWorkState(this.ctx.storage).claim("projection", this.#workAuthority(state, now), "explicit");
+        marker = claimed ?? Object.freeze({}); this.#accountWorkFlights.set("projection", marker); return claimed;
+      });
+      const result = await this.#advanceContributionProjection(observation, request);
+      if (attempt !== null) {
+        await this.#armAccountWork(observation);
+        const outcome: AccountWorkOutcome = !result.ok ? { kind: "refuse", reason: accountWorkRefusal(result.error) }
+          : result.value.appliedLag === 0 && result.value.publishedLag > 0
+            ? { kind: "defer", readyAtMs: result.value.nextPublicationAtMs } : { kind: "progress" };
+        this.#workRun(observation, (state, now) => new AccountWorkState(this.ctx.storage).complete(attempt, outcome, this.#workAuthority(state, now)));
+      }
+      if (this.#accountWorkFlights.get("projection") === marker) this.#accountWorkFlights.delete("projection");
+      await this.#rearmAccountWork(observation);
+      return result;
+    } catch (cause) { return { ok: false, error: cause instanceof ContributionFault ? cause.code : "storage_unavailable", status: null }; }
+    finally {
+      if (marker !== null && this.#accountWorkFlights.get("projection") === marker) this.#accountWorkFlights.delete("projection");
+      await this.#fenceSettle(request.accountId, acquired.value.token, observation.committed);
+    }
+  }
+  /** Trusted maintenance read. Unresolved dispatches remain visible after an
+   * eviction; this read cannot resume work or release restore custody. */
+  async readContributionWork(input: unknown): Promise<ContributionResult<AccountWorkSnapshot>> {
+    const raw = enrollmentSnapshot(input, ["schemaVersion", "accountId", "generation"]);
+    if (raw?.schemaVersion !== 3 || !enrollmentAccount(raw.accountId) || !enrollmentHex(raw.generation)) return { ok: false, error: "invalid_input" };
+    const accountId = raw.accountId, generation = raw.generation;
+    if (this.#generation() !== generation) return { ok: false, error: "recovery_required" };
+    const result = await this.#readFenced(accountId, async () => {
+      if (!this.#accountWorkPresent()) return err("not_started");
+      const observation: AdmissionObservation = { generation, observed: Date.now(), fence: null, committed: false };
+      return this.#privateDaysSnapshot({ accountId, sessionExpiresAtMs: CONTRIBUTION_MAX_TIME }, observation,
+        state => new AccountWorkState(this.ctx.storage).snapshot(this.#workAuthority(state, observation.observed)));
+    });
+    return result.ok ? result : { ok: false, error: this.#contributionError(result.error) };
+  }
+  /** Account-private, trusted-coordinator read. A retained SQL publication is
+   * required even if the corresponding immutable objects still exist. */
+  async readContributionPage(input: unknown): Promise<ContributionQueryResult> {
+    const request = parseContributionQuery(input);
+    if (!request) return { ok: false, error: "invalid_input" };
+    const result = await this.#readFenced(request.accountId, () => this.#readContributionPage(request));
+    return result.ok ? result : { ok: false, error: result.error === "expired" || result.error === "snapshot_expired"
+      ? result.error : this.#contributionError(result.error) };
+  }
+  /** Trusted coordinator diagnostic; no public route or repair authority.
+   * Qualifies one cell against current canonical heads. The entire invocation,
+   * including external authority checks, has one nonrenewable deadline. */
+  async scrubContributionCell(input: unknown): Promise<ContributionScrubResult> {
+    const request = parseContributionScrubRequest(input);
+    if (!request) return { ok: false, error: "invalid_input" };
+    if (!this.#contributionsEnabled()) return { ok: false, error: "not_started" };
+    if (this.#generation() !== request.generation) return { ok: false, error: "recovery_required" };
+    let retired = false, timer: ReturnType<typeof setTimeout> | undefined;
+    const deadline = performance.now() + CONTRIBUTION_SCRUB_DEADLINE_MS, expired = Object.freeze({});
+    const live = () => { if (retired || performance.now() >= deadline) throw expired; };
+    const run = async (): Promise<ContributionScrubResult> => {
+      live();
+      const before = await this.#readAuthority(request.accountId, request.generation);
+      live();
+      if (before !== null) return { ok: false, error: this.#contributionError(before) };
+      if (!this.#contributionsPresent() || !this.#contributionProjectionPresent()) return { ok: false, error: "not_started" };
+      const scope = { accountId: request.accountId, sessionExpiresAtMs: CONTRIBUTION_MAX_TIME };
+      const observation: AdmissionObservation = { generation: request.generation, observed: Date.now(), fence: null, committed: false };
+      const original = this.#privateDaysSnapshot(scope, observation, state => Object.freeze({ ...state.anchor }));
+      if (!original.ok) return { ok: false, error: this.#contributionError(original.error) };
+      const firstAnchor = await readNamespaceAnchor(this.env.CONTROL, request.accountId);
+      live();
+      if (!firstAnchor || !sameNamespaceAnchor(firstAnchor, original.value)) return { ok: false, error: "recovery_required" };
+      const observe = () => {
+        // The backend invokes this before SQL and after each object await.
+        // An expired outer invocation cannot continue its private reads.
+        live();
+        const current = this.#privateDaysSnapshot(scope, observation, state => {
+          if (!sameNamespaceAnchor(state.anchor, original.value)) throw new ContributionFault("recovery_required");
+          return Object.freeze({ accountId: state.accountId, generation: state.generation,
+            active: state.phase === "active", observedAtMs: observation.observed });
+        });
+        if (!current.ok) throw new ContributionFault(this.#contributionError(current.error));
+        return current.value;
+      };
+      const canonical = new ContributionState(this.ctx.storage), projection = new ContributionProjectionState(this.ctx.storage);
+      observe();
+      const originalRoot = JSON.stringify(projection.control().publishedRoot);
+      const checked = await scrubContributionCell(this.env.STAGING, request, canonical, projection, observe);
+      live();
+      const lastAnchor = await readNamespaceAnchor(this.env.CONTROL, request.accountId);
+      live();
+      if (!lastAnchor || !sameNamespaceAnchor(lastAnchor, original.value)) return { ok: false, error: "recovery_required" };
+      const after = await this.#readAuthority(request.accountId, request.generation);
+      live();
+      if (after !== null) return { ok: false, error: this.#contributionError(after) };
+      observe();
+      if (checked.ok) {
+        // Canonical progress during the outer authority awaits invalidates the
+        // receipt even if the original immutable objects are still readable.
+        const source = canonical.control(), control = projection.control();
+        if (source.accountId !== request.accountId || control.accountId !== request.accountId
+          || source.generation !== request.generation || control.generation !== request.generation
+          || source.phase !== "active" || source.legacySeal !== null) throw new ContributionFault("recovery_required");
+        if (source.revision !== request.expectedRevision || source.headCount !== checked.value.checkedHeads
+          || control.appliedRevision !== request.expectedRevision || control.publishedRevision !== request.expectedRevision
+          || control.source !== null || projection.pending() !== null
+          || (control.publishedRoot?.hash ?? null) !== checked.value.rootHash
+          || JSON.stringify(control.publishedRoot) !== originalRoot) throw new ContributionFault("conflict");
+        const publication = projection.publication(request.expectedRevision, observation.observed);
+        if (publication.expiresAtMs !== null || JSON.stringify(publication.root) !== JSON.stringify(control.publishedRoot))
+          throw new ContributionFault("storage_invalid");
+      }
+      return parseContributionScrubResult(request, checked) ?? { ok: false, error: "storage_invalid" };
+    };
+    try {
+      const timeout = new Promise<never>((_, reject) => {
+        timer = setTimeout(() => { retired = true; reject(expired); }, CONTRIBUTION_SCRUB_DEADLINE_MS);
+      });
+      const result = await Promise.race([run(), timeout]);
+      live();
+      return result;
+    } catch (cause) {
+      return { ok: false, error: cause === expired ? "deadline" : cause instanceof ContributionFault ? cause.code : "storage_unavailable" };
+    } finally { retired = true; clearTimeout(timer); }
+  }
+  /** A caller timeout retires all canonical continuations. Cleanup still owns
+   * its exact fence token; neither the timer nor waitUntil can drain a pending
+   * provider write or prove execution survived eviction. */
+  async #boundedContributionRebuild<T>(run: (live: () => void) => Promise<
+    Readonly<{ ok: true; value: T }> | Readonly<{ ok: false; error: ContributionRebuildError }>>): Promise<
+      Readonly<{ ok: true; value: T }> | Readonly<{ ok: false; error: ContributionRebuildError }>> {
+    let retired = false, timer: ReturnType<typeof setTimeout> | undefined;
+    const deadline = performance.now() + CONTRIBUTION_REBUILD_DEADLINE_MS, expired = Object.freeze({});
+    const live = () => { if (retired || performance.now() >= deadline) throw expired; };
+    try {
+      const timeout = new Promise<never>((_, reject) => {
+        timer = setTimeout(() => { retired = true; reject(expired); }, CONTRIBUTION_REBUILD_DEADLINE_MS);
+      });
+      const running = run(live);
+      this.ctx.waitUntil(running.then(() => {}, () => {}));
+      const result = await Promise.race([running, timeout]);
+      live(); return result;
+    } catch (cause) {
+      return { ok: false, error: cause === expired ? "deadline" : cause instanceof ContributionRebuildFault ? cause.code
+        : cause instanceof ContributionFault ? cause.code : "storage_unavailable" };
+    } finally { retired = true; clearTimeout(timer); }
+  }
+  /** Trusted, explicit diagnostic maintenance. This never publishes its
+   * scratch root or schedules a new background work class. */
+  async executeContributionRebuild(input: unknown): Promise<ContributionRebuildResult> {
+    const request = parseContributionRebuildRequest(input);
+    if (!request) return { ok: false, error: "invalid_input" };
+    if (!this.#contributionsEnabled()) return { ok: false, error: "not_started" };
+    if (this.#generation() !== request.generation) return { ok: false, error: "recovery_required" };
+    if (this.#contributionRebuildFlight !== null) return { ok: false, error: "conflict" };
+    const marker = Object.freeze({}); this.#contributionRebuildFlight = marker;
+    return this.#boundedContributionRebuild(async live => {
+      try {
+        const admitted = () => { try { live(); return true; } catch { return false; } };
+        const acquired = await this.#fenceAcquire(request.accountId, request.generation, admitted);
+        if (!acquired.ok) { live(); return { ok: false, error: this.#contributionError(acquired.error) }; }
+        const observation: AdmissionObservation = { generation: request.generation, observed: Date.now(), fence: acquired.value.fence, committed: false };
+        try {
+          live();
+          const scope = { accountId: request.accountId, sessionExpiresAtMs: CONTRIBUTION_MAX_TIME };
+          const original = this.#privateDaysSnapshot(scope, observation, state => Object.freeze({ ...state.anchor }));
+          if (!original.ok) return { ok: false, error: this.#contributionError(original.error) };
+          const external = await readNamespaceAnchor(this.env.CONTROL, request.accountId);
+          live();
+          if (!external || !sameNamespaceAnchor(external, original.value)) throw new ContributionFault("recovery_required");
+          // The helper's own storage timeout may precede the provider result.
+          // Retain the raw put, rather than that timeout wrapper, as custody.
+          const bucket = new Proxy(this.env.STAGING, { get: (target, property) => {
+            const method: unknown = Reflect.get(target, property, target);
+            if ((property === "get" || property === "put") && typeof method === "function") return (...args: unknown[]) => {
+              live();
+              const pending = Reflect.apply(method, target, args) as Promise<unknown>;
+              if (property === "put") this.#retainCanonicalWrite(acquired.value.token, pending);
+              return pending.then(value => {
+                try { live(); } catch (cause) {
+                  if (property === "get" && value && typeof value === "object" && "body" in value
+                    && value.body instanceof ReadableStream) void value.body.cancel().catch(() => undefined);
+                  throw cause;
+                }
+                return value;
+              });
+            };
+            return typeof method === "function" ? method.bind(target) : method;
+          } });
+          const rebuild = new ContributionRebuildState(this.ctx.storage);
+          const previous = this.#privateDaysSnapshot(scope, observation, () =>
+            this.#contributionRebuildPresent() ? rebuild.status(request.jobId) : null);
+          if (!previous.ok) return { ok: false, error: this.#contributionError(previous.error) };
+          const prior = previous.value?.receipt;
+          const retained = prior !== undefined && (request.action === "begin" ? prior.sourceRevision === request.expectedRevision
+            : prior.version === request.expectedVersion + 1 && prior.action === request.action && prior.expectedVersion === request.expectedVersion);
+          const service = new AccountContributionRebuild({ STAGING: bucket }, rebuild, (seen, action) => {
+            // Check before entering #transaction, which advances stored clocks.
+            live();
+            return this.#transaction(seen, (state, now) => {
+              live();
+              if (!state || state.phase !== "active") throw new ContributionFault("not_enrolled");
+              if (state.accountId !== request.accountId || state.generation !== request.generation
+                || !sameNamespaceAnchor(state.anchor, original.value)) throw new ContributionFault("recovery_required");
+              if (!this.#contributionsActive() || !this.#contributionProjectionPresent() || !this.#accountWorkPresent())
+                throw new ContributionFault("not_started");
+              if (!this.#contributionRebuildPresent()) {
+                if (request.action !== "begin") throw new ContributionFault("not_started");
+                rebuild.initialize();
+                this.ctx.storage.sql.exec("UPDATE account_enrollment SET schema_version=13 WHERE id=1 AND schema_version IN (11,12)");
+              }
+              const value = action(state, now);
+              live(); return { state, result: ok(value) };
+            });
+          });
+          const result = await service.execute(request, observation);
+          live();
+          const last = await readNamespaceAnchor(this.env.CONTROL, request.accountId);
+          live();
+          if (!last || !sameNamespaceAnchor(last, original.value)) throw new ContributionFault("recovery_required");
+          const authority = await this.#readAuthority(request.accountId, request.generation);
+          live();
+          if (authority !== null) return { ok: false, error: this.#contributionError(authority) };
+          const current = this.#privateDaysSnapshot(scope, observation, state => {
+            if (!sameNamespaceAnchor(state.anchor, original.value)) throw new ContributionFault("recovery_required");
+            if (result.ok && request.action !== "abort" && !retained) {
+              const source = new ContributionState(this.ctx.storage).control(), projection = new ContributionProjectionState(this.ctx.storage);
+              const control = projection.control(), receipt = result.value;
+              if (source.accountId !== request.accountId || source.generation !== request.generation || source.phase !== "active"
+                || source.legacySeal !== null) throw new ContributionFault("recovery_required");
+              if (source.revision !== receipt.sourceRevision || source.headCount !== receipt.headCount
+                || JSON.stringify(control.publishedRoot) !== JSON.stringify(receipt.publishedRoot)
+                || JSON.stringify(control.appliedRoot) !== JSON.stringify(receipt.publishedRoot)) throw new ContributionFault("conflict");
+              if (source.pendingOperation !== null || control.source !== null || projection.pending() !== null
+                || control.appliedRevision !== receipt.sourceRevision || control.publishedRevision !== receipt.sourceRevision)
+                throw new ContributionRebuildFault("not_caught_up");
+              const publication = projection.publication(receipt.sourceRevision, observation.observed);
+              if (publication.expiresAtMs !== null || JSON.stringify(publication.root) !== JSON.stringify(receipt.publishedRoot))
+                throw new ContributionFault("conflict");
+            }
+          });
+          if (!current.ok) return { ok: false, error: isContributionRebuildError(current.error) ? current.error : "storage_unavailable" };
+          if (!result.ok) return { ok: false, error: isContributionRebuildError(result.error) ? result.error : "storage_invalid" };
+          const receipt = parseContributionRebuildReceipt(result.value);
+          return receipt && receipt.accountId === request.accountId && receipt.generation === request.generation
+            && receipt.jobId === request.jobId && receipt.action === request.action && receipt.expectedVersion === request.expectedVersion
+            ? { ok: true, value: receipt } : { ok: false, error: "storage_invalid" };
+        } finally { await this.#fenceSettle(request.accountId, acquired.value.token, observation.committed); }
+      } finally { if (this.#contributionRebuildFlight === marker) this.#contributionRebuildFlight = null; }
+    });
+  }
+  /** SELECT-only diagnostic status. Missing jobs stay missing; source drift or
+   * a retained pending step cannot cause initialization, abort or recovery. */
+  async readContributionRebuild(input: unknown): Promise<ContributionRebuildStatusResult> {
+    const request = parseContributionRebuildReadRequest(input);
+    if (!request) return { ok: false, error: "invalid_input" };
+    if (!this.#contributionsEnabled()) return { ok: false, error: "not_started" };
+    if (this.#generation() !== request.generation) return { ok: false, error: "recovery_required" };
+    return this.#boundedContributionRebuild(async live => {
+      live();
+      const before = await this.#readAuthority(request.accountId, request.generation);
+      live();
+      if (before !== null) return { ok: false, error: this.#contributionError(before) };
+      const scope = { accountId: request.accountId, sessionExpiresAtMs: CONTRIBUTION_MAX_TIME };
+      const observation: AdmissionObservation = { generation: request.generation, observed: Date.now(), fence: null, committed: false };
+      const original = this.#privateDaysSnapshot(scope, observation, state => Object.freeze({ ...state.anchor }));
+      if (!original.ok) return { ok: false, error: this.#contributionError(original.error) };
+      const external = await readNamespaceAnchor(this.env.CONTROL, request.accountId);
+      live();
+      if (!external || !sameNamespaceAnchor(external, original.value)) throw new ContributionFault("recovery_required");
+      const read = () => {
+        live();
+        return this.#privateDaysSnapshot(scope, observation, state => {
+          if (!sameNamespaceAnchor(state.anchor, original.value)) throw new ContributionFault("recovery_required");
+          if (!this.#contributionRebuildPresent()) return null;
+          const value = new ContributionRebuildState(this.ctx.storage).status(request.jobId);
+          if (value && (value.receipt.accountId !== request.accountId || value.receipt.generation !== request.generation))
+            throw new ContributionFault("storage_invalid");
+          if (value && value.receipt.completedAtMs > observation.observed) throw new ContributionFault("clock_regressed");
+          return value;
+        });
+      };
+      const first = read();
+      if (!first.ok) return { ok: false, error: this.#contributionError(first.error) };
+      const last = await readNamespaceAnchor(this.env.CONTROL, request.accountId);
+      live();
+      if (!last || !sameNamespaceAnchor(last, original.value)) throw new ContributionFault("recovery_required");
+      const after = await this.#readAuthority(request.accountId, request.generation);
+      live();
+      if (after !== null) return { ok: false, error: this.#contributionError(after) };
+      const current = read();
+      return current.ok ? current : { ok: false, error: this.#contributionError(current.error) };
+    });
+  }
+  async #readContributionPage(request: ContributionQuery): Promise<ContributionQueryResult> {
+    if (!this.#contributionsEnabled() || !this.#contributionProjectionPresent()) return { ok: false, error: "not_started" };
+    try {
+      const generation = this.#generation();
+      if (generation === null) return { ok: false, error: "recovery_required" };
+      const observation: AdmissionObservation = { generation, observed: Date.now(), fence: null, committed: false };
+      const original = this.#privateDaysSnapshot(request, observation, state => Object.freeze({ ...state.anchor }));
+      if (!original.ok) return { ok: false, error: original.error === "expired" ? "expired" : this.#contributionError(original.error) };
+      const external = await readNamespaceAnchor(this.env.CONTROL, request.accountId);
+      return await queryContributionPage(this.env.STAGING, request, revision => {
+        const result = this.#privateDaysSnapshot(request, observation, state => {
+          if (!external || !sameNamespaceAnchor(external, original.value) || !sameNamespaceAnchor(state.anchor, original.value))
+            throw new ContributionQueryFault("recovery_required");
+          const projection = new ContributionProjectionState(this.ctx.storage), status = projection.status(observation.observed);
+          let publication;
+          try { publication = projection.publication(revision ?? status.publishedRevision, observation.observed); }
+          catch (error) {
+            if (error instanceof ContributionFault && (error.code === "conflict" || error.code === "invalid_input")) throw new ContributionQueryFault("snapshot_expired");
+            throw error;
+          }
+          const source = new ContributionState(this.ctx.storage).control();
+          return Object.freeze({ accountId: state.accountId, generation: state.generation, sourceRevision: status.sourceRevision,
+            latestAppliedRevision: status.appliedRevision, latestPublishedRevision: status.publishedRevision, revision: publication.revision, root: publication.root,
+            unresolvedLegacyBodies: source.legacySeal?.v2BodyCount ?? 0, observedAtMs: observation.observed });
+        });
+        if (!result.ok) throw new ContributionQueryFault(result.error === "expired" || result.error === "snapshot_expired"
+          ? result.error : this.#contributionError(result.error));
+        return result.value;
+      });
+    } catch (error) {
+      return { ok: false, error: error instanceof ContributionFault || error instanceof ContributionQueryFault ? error.code : "storage_unavailable" };
+    }
   }
   /** Trusted coordinator maintenance, never dispatched by a read. The account,
    * generation and current schema/history define its idempotent target. A
@@ -714,6 +1333,7 @@ export class AccountEnrollment extends DurableObject<Env> {
         if (state.accountId !== accountId) return { state, result: err("unauthorized") };
         if (now >= (request.sessionExpiresAtMs as number)) return { state, result: err("expired") };
         if (external === null || !sameNamespaceAnchor(external, state.anchor)) return { state, result: err("recovery_required") };
+        if (this.#contributionsActive()) throw new StatsFault("profile_superseded");
         const value = new StatsState(this.ctx.storage.sql).transferWriter(state, request.client as string, request.previousDeviceId as string,
           request.deviceId as string, request.expectedRevision as number, now);
         this.#statsReadMemo.clear();
@@ -766,8 +1386,16 @@ export class AccountEnrollment extends DurableObject<Env> {
     if (!acquired.ok) return { ok: false, error: acquired.error as StatsError };
     const observation: AdmissionObservation = { generation, observed: Date.now(), fence: acquired.value.fence, committed: false };
     try {
-      return await new AccountStats(this.env, new StatsState(this.ctx.storage.sql), (seen, run) =>
-        this.#transaction(seen, (state, now) => ({ state, result: ok(run(state, now)) }))).admit(request, dto.uploadSecret, observation);
+      const stats = new StatsState(this.ctx.storage.sql), bodyHash = statsHash(statsUploadText(request));
+      return await new AccountStats(this.env, stats, (seen, run) =>
+        this.#transaction(seen, (state, now) => {
+          if (this.#contributionsActive()) {
+            const receipt = stats.progress(request.deviceId).receipt;
+            if (!receipt || receipt.bodyHash !== bodyHash || receipt.operationId !== request.operationId || receipt.sequence !== request.sequence)
+              throw new StatsFault("profile_superseded");
+          }
+          return { state, result: ok(run(state, now)) };
+        })).admit(request, dto.uploadSecret, observation);
     } finally { await this.#fenceSettle(request.accountId, acquired.value.token, observation.committed); }
   }
   async readStatsStatus(input: unknown): Promise<StatsResult<StatsStatus>> {
@@ -802,8 +1430,18 @@ export class AccountEnrollment extends DurableObject<Env> {
     if (!acquired.ok) return { ok: false, error: acquired.error as StatsError };
     const observation: AdmissionObservation = { generation, observed: Date.now(), fence: acquired.value.fence, committed: false };
     try {
-      return await new AccountStats(this.env, new StatsState(this.ctx.storage.sql), (seen, run) =>
-        this.#transaction(seen, (state, now) => ({ state, result: ok(run(state, now)) }))).abandon(request, dto.uploadSecret, observation);
+      const stats = new StatsState(this.ctx.storage.sql);
+      return await new AccountStats(this.env, stats, (seen, run) =>
+        this.#transaction(seen, (state, now) => {
+          if (this.#contributionsActive()) {
+            const progress = stats.progress(request.deviceId), receipt = progress.receipt;
+            const committed = receipt?.bodyHash === request.bodyHash && receipt.operationId === request.operationId
+              && receipt.sequence === request.sequence && receipt.revision === request.expectedRevision + 1;
+            const abandoned = progress.sequence === request.sequence - 1 && stats.control().revision > request.expectedRevision;
+            if (!committed && !abandoned) throw new StatsFault("profile_superseded");
+          }
+          return { state, result: ok(run(state, now)) };
+        })).abandon(request, dto.uploadSecret, observation);
     } finally { await this.#fenceSettle(request.accountId, acquired.value.token, observation.committed); }
   }
   async readUsageStats(input: unknown): Promise<StatsResult<UsageStatsReport>> {
@@ -863,7 +1501,8 @@ export class AccountEnrollment extends DurableObject<Env> {
         if (this.#generation() !== observation.generation) return err("recovery_required");
         return ok(value);
       });
-    } catch (error) { return err(error instanceof AdmissionFault || error instanceof StatsFault ? error.code : "storage_invalid"); }
+    } catch (error) { return err(error instanceof AdmissionFault || error instanceof StatsFault || error instanceof ContributionFault
+      || error instanceof ContributionQueryFault || error instanceof ContributionRebuildFault ? error.code : "storage_invalid"); }
   }
 
   /** Dormant trusted-coordinator RPC. The DTO establishes syntax, not user auth.
@@ -942,6 +1581,125 @@ export class AccountEnrollment extends DurableObject<Env> {
       } finally { disposeReply(raw); }
     } catch { return "unavailable"; }
   }
+  #acknowledgeConsent(observation: AdmissionObservation, view: LeaderboardConsentViewV1, eventAtMs: number): void {
+    this.#workRun(observation, (state, now) => {
+      if (!this.#accountWorkPresent()) return;
+      const target = accountConsentWork(state.accountId, state.generation, { ...view, changedAtMs: eventAtMs }, now);
+      if (target.key !== null) new AccountWorkState(this.ctx.storage).acknowledgeConsent(target.key, this.#workAuthority(state, now));
+    });
+  }
+
+  async #deliverConsentWork(observation: AdmissionObservation, attempt: AccountWorkAttempt): Promise<AccountWorkOutcome> {
+    const candidate = this.#workRun(observation, (state, now) => {
+      const target = accountConsentWork(state.accountId, state.generation, state.leaderboard, now);
+      if (target.key !== attempt.key) return null;
+      return { accountId: state.accountId, generation: state.generation, view: consentViewOf(state.leaderboard), eventAtMs: state.leaderboard.changedAtMs };
+    });
+    if (!candidate) return { kind: "progress" };
+    const result = await this.#publishLeaderboardConsent(candidate.accountId, candidate.view, candidate.eventAtMs);
+    if (result === "published") return { kind: "acknowledge" };
+    if ((result === "handle_unavailable" || result === "publishing_full") && await this.#restoreLeaderboardConsent(candidate.accountId,
+      candidate.generation, candidate, { consent: false, consentedAtMs: null, publicHandle: null, changedAtMs: 0 })) return { kind: "progress" };
+    return { kind: "refuse", reason: result === "unavailable" ? null : "publishing_refused" };
+  }
+  async #deliverProjectionWork(observation: AdmissionObservation, attempt: AccountWorkAttempt): Promise<AccountWorkOutcome> {
+    const result = await this.#advanceContributionProjection(observation, {
+      schemaVersion: 3, accountId: attempt.accountId, generation: attempt.generation,
+    });
+    if (!result.ok) return { kind: "refuse", reason: accountWorkRefusal(result.error) };
+    return result.value.appliedLag === 0 && result.value.publishedLag > 0
+      ? { kind: "defer", readyAtMs: result.value.nextPublicationAtMs } : { kind: "progress" };
+  }
+  async #runAccountWork(observation: AdmissionObservation, attempt: AccountWorkAttempt): Promise<void> {
+    try {
+      let outcome: AccountWorkOutcome;
+      try { outcome = await (attempt.kind === "consent" ? this.#deliverConsentWork(observation, attempt) : this.#deliverProjectionWork(observation, attempt)); }
+      catch (cause) { outcome = { kind: "refuse", reason: accountWorkRefusal(cause instanceof ContributionFault ? cause.code : "storage_unavailable") }; }
+      // A yielded handler has no provider retry left after its watchdog. Never
+      // expose pending retry work before a fresh wake is durable. A failed arm
+      // preserves the explicit unresolved flight for maintenance to reconcile.
+      await this.#armAccountWork(observation);
+      this.#workRun(observation, (state, now) =>
+        new AccountWorkState(this.ctx.storage).complete(attempt, outcome, this.#workAuthority(state, now)));
+    } finally {
+      // A class becomes eligible independently of the other class's provider
+      // call. Failed persistence leaves its durable flight for reconciliation.
+      if (this.#accountWorkFlights.get(attempt.kind) === attempt) this.#accountWorkFlights.delete(attempt.kind);
+      await this.#rearmAccountWork(observation);
+    }
+  }
+  /** One due attempt per class. Both start before either is awaited, so an
+   * unavailable public index cannot prevent a numeric projection from starting.
+   * A bounded yield releases only the handler. The independent durable flight
+   * watchdog and execution registration survive every unfinished continuation. */
+  async #accountWorkAlarm(): Promise<void> {
+    const candidate = this.ctx.storage.transactionSync(() => {
+      this.#schema(); const { state } = this.#stored(5);
+      return state?.phase === "active" ? { accountId: state.accountId, generation: state.generation } : null;
+    });
+    if (!candidate) return;
+    const acquired = await this.#fenceAcquire(candidate.accountId, candidate.generation);
+    if (!acquired.ok) {
+      if (acquired.error === "unavailable" || acquired.error === "storage_unavailable") throw new Error("account_work_authority_unavailable");
+      return;
+    }
+    const observation: AdmissionObservation = { generation: candidate.generation, observed: Date.now(), fence: acquired.value.fence, committed: false };
+    let delegated = false;
+    let jobsFinished = false, settlement: Promise<void> | null = null;
+    let finishHandler!: () => void;
+    const handlerFinished = new Promise<void>(resolve => { finishHandler = resolve; });
+    try {
+      const due = this.#workRun(observation, (state, now) => {
+        if (!this.#syncAccountWork(state, now)) return null;
+        const work = new AccountWorkState(this.ctx.storage), authority = this.#workAuthority(state, now);
+        for (const kind of ["consent", "projection"] as const) work.watch(kind, authority);
+        const snapshot = work.snapshot(authority);
+        return (["consent", "projection"] as const).filter(kind => (kind === "consent" || this.#contributionsEnabled())
+          && !this.#accountWorkFlights.has(kind) && snapshot[kind].flight === null
+          && snapshot[kind].nextAtMs !== null && snapshot[kind].nextAtMs! <= now);
+      });
+      if (!due || due.length === 0) { await this.#rearmAccountWork(observation); return; }
+      // This wake is durable before claim. A crash immediately after claim
+      // retains a bounded retry; the next handler observes its future deadline.
+      await this.#armAccountWork(observation);
+      const attempts = this.#workRun(observation, (state, now) => {
+        const work = new AccountWorkState(this.ctx.storage), authority = this.#workAuthority(state, now);
+        return due.flatMap(kind => { const attempt = work.claim(kind, authority); return attempt ? [attempt] : []; });
+      });
+      for (const attempt of attempts) this.#accountWorkFlights.set(attempt.kind, attempt);
+      // Establish the shared settlement owner before yielding. Neither a timer
+      // nor waitUntil can release this lease or attest to provider completion.
+      const completion = Promise.allSettled(attempts.map(attempt => this.#runAccountWork(observation, attempt)))
+        .then(results => { jobsFinished = true; return results; });
+      settlement = completion.then(async () => {
+        await handlerFinished;
+        await this.#fenceSettle(candidate.accountId, acquired.value.token, observation.committed);
+      });
+      // Unexpected settlement failure retains the durable holder. Attach the
+      // rejection handler now, including when the alarm returns before I/O.
+      void settlement.catch(() => {});
+      delegated = true;
+      let timer: ReturnType<typeof setTimeout> | undefined;
+      try {
+        const results = await Promise.race([completion, new Promise<null>(resolve => { timer = setTimeout(() => resolve(null), ACCOUNT_WORK_DISPATCH_YIELD_MS); })]);
+        if (results !== null) {
+          const failure = results.find(result => result.status === "rejected");
+          if (failure?.status === "rejected") throw failure.reason;
+        }
+        // If the initial preclaim wake was consumed, this preserves the single
+        // future watchdog. Once it fires, an unresolved class never busy-polls.
+        if (results === null) await this.#rearmAccountWork(observation);
+      } finally { if (timer !== undefined) clearTimeout(timer); }
+    } catch (cause) {
+      // Invalid or closed authority cannot be repaired by background polling.
+      // Transient storage failures retain the provider's bounded alarm retries.
+      if (!(cause instanceof ContributionFault) || accountWorkRefusal(cause.code) === null) throw cause;
+    } finally {
+      finishHandler();
+      if (!delegated) await this.#fenceSettle(candidate.accountId, acquired.value.token, observation.committed);
+      else if (jobsFinished) await settlement;
+    }
+  }
 
   /** Compensate only an explicit handle/capacity refusal, never an uncertain publish.
    * A newer user decision wins over this delayed restoration. */
@@ -952,6 +1710,7 @@ export class AccountEnrollment extends DurableObject<Env> {
     const observation: AdmissionObservation = { generation, observed: Date.now(), fence: acquired.value.fence, committed: false };
     let restored: { view: LeaderboardConsentViewV1; eventAtMs: number } | null = null;
     try {
+      await this.#armAccountWork(observation);
       const result = this.#transaction(observation, (state, now) => {
         if (state === null || state.accountId !== accountId) return { state: null, result: err("not_enrolled") };
         const current = state.leaderboard;
@@ -962,11 +1721,16 @@ export class AccountEnrollment extends DurableObject<Env> {
         state.leaderboard = previous.consent && previous.publicHandle === rejected.view.publicHandle
           ? { consent: false, consentedAtMs: null, publicHandle: null, changedAtMs: now }
           : { ...previous, changedAtMs: now };
+        this.#syncAccountWork(state, now);
         return { state, result: ok({ view: consentViewOf(state.leaderboard), eventAtMs: now }) };
       });
       if (!result.ok) return false;
       restored = result.value;
-      return restored === null || await this.#publishLeaderboardConsent(accountId, restored.view, restored.eventAtMs) === "published";
+      if (restored === null) return true;
+      const published = await this.#publishLeaderboardConsent(accountId, restored.view, restored.eventAtMs) === "published";
+      if (published) this.#acknowledgeConsent(observation, restored.view, restored.eventAtMs);
+      if (this.#accountWorkPresent()) await this.#rearmAccountWork(observation);
+      return published;
     } finally { await this.#fenceSettle(accountId, acquired.value.token, observation.committed); }
   }
 
@@ -974,6 +1738,7 @@ export class AccountEnrollment extends DurableObject<Env> {
    * so an index outage or lost response cannot strand a saved decision. The
    * latest stored decision is replayed; reads never perform this repair. */
   async alarm(): Promise<void> {
+    if (this.#accountWorkPresent()) { await this.#accountWorkAlarm(); return; }
     let candidate: { accountId: string; generation: string; view: LeaderboardConsentViewV1; eventAtMs: number } | null;
     try {
       candidate = this.ctx.storage.transactionSync(() => {
@@ -1004,7 +1769,7 @@ export class AccountEnrollment extends DurableObject<Env> {
           && state.leaderboard.publicHandle === candidate.view.publicHandle
           && state.leaderboard.consentedAtMs === candidate.view.consentedAtMs;
       });
-      if (!unchanged) { await this.ctx.storage.setAlarm(Date.now() + 60_000); return; }
+      if (!unchanged) { await this.#accountAlarm.arm(Date.now() + 60_000, () => {}); return; }
       const published = await this.#publishLeaderboardConsent(candidate.accountId, candidate.view, candidate.eventAtMs);
       if (published === "published") return;
       if ((published === "handle_unavailable" || published === "publishing_full") && await this.#restoreLeaderboardConsent(candidate.accountId,
@@ -1013,14 +1778,14 @@ export class AccountEnrollment extends DurableObject<Env> {
     } catch (error) {
       if (error instanceof SyntaxError || (error instanceof Error && error.message === "storage_invalid")) return;
       // Explicitly retain the retry after provider alarm retries are exhausted.
-      await this.ctx.storage.setAlarm(Date.now() + 60_000);
+      await this.#accountAlarm.arm(Date.now() + 60_000, () => {});
       throw new Error("consent_delivery_unavailable");
     } finally { await this.#fenceSettle(candidate.accountId, acquired.value.token, true); }
   }
 
   /** Fenced, idempotent consent write. The restore-fence lease is acquired and
-   * settled exactly like other mutations; an unchanged decision performs no
-   * write but still re-publishes, which repairs a previously lost apply. A
+   * settled exactly like other mutations; an unchanged decision retains its
+   * event identity and re-publishes, repairing a previously lost apply. A
    * withdrawal commits `consent: false` and removes the member from the index. */
   async setLeaderboardConsent(input: unknown): Promise<EnrollmentResult<LeaderboardConsentViewV1>> {
     try {
@@ -1039,7 +1804,7 @@ export class AccountEnrollment extends DurableObject<Env> {
       try {
         // Settle cannot cancel this alarm: an older request completing after a
         // newer one must not erase the newer decision's delivery retry.
-        await this.ctx.storage.setAlarm(observed + 60_000);
+        await this.#armAccountWork(observation, observed + 60_000);
         const result = this.#transaction<{ view: LeaderboardConsentViewV1; eventAtMs: number }>(observation, (state, now) => {
           if (state === null || state.accountId !== request.accountId) return { state, result: err(state === null ? "not_enrolled" : "unauthorized") };
           if (state.phase !== "active") return { state, result: err("not_enrolled") };
@@ -1066,13 +1831,19 @@ export class AccountEnrollment extends DurableObject<Env> {
         });
         if (!result.ok) return result;
         committed = result.value;
+        this.#workRun(observation, (state, now) => this.#syncAccountWork(state, now, "consent"));
         const published = await this.#publishLeaderboardConsent(request.accountId, committed.view, committed.eventAtMs);
-        if (published === "published") return ok(committed.view);
+        if (published === "published") {
+          this.#acknowledgeConsent(observation, committed.view, committed.eventAtMs);
+          if (this.#accountWorkPresent()) await this.#rearmAccountWork(observation);
+          return ok(committed.view);
+        }
         if ((published === "handle_unavailable" || published === "publishing_full") && previous !== null
           && await this.#restoreLeaderboardConsent(request.accountId, generation, committed, previous)) return err(published);
+        if (this.#accountWorkPresent()) await this.#rearmAccountWork(observation);
         return err("storage_unavailable");
       } finally { await this.#fenceSettle(request.accountId, acquired.value.token, observation.committed); }
-    } catch { return err("storage_unavailable"); }
+    } catch (cause) { return err(cause instanceof ContributionFault ? cause.code : "storage_unavailable"); }
   }
 
   /** Trusted internal projection for the materialized index only. The reply's

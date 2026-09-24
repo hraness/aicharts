@@ -64,3 +64,33 @@ test("a stale refusal cannot clear a newer identity", async () => {
   expect(await pending).toEqual({ reply: { authenticationRequired: false }, scope: null });
   expect(accepted.kind === "accepted" && currentUsageAccountScope(accepted.scope)).toBe(true);
 });
+
+test("owned replies are disposed exactly when generation admission drops them", async () => {
+  let calls = 0; const disposed: number[] = [];
+  const result = await readInUsageAccountGeneration(async () => ({ accountId: A, id: ++calls }), reply => reply.accountId, () => true,
+    () => false, { dispose: reply => disposed.push(reply.id) });
+  expect(result?.reply.id).toBe(2); expect(disposed).toEqual([1]);
+  const response = deferred<{ accountId: string; id: number }>(); let current = true;
+  const pending = readInUsageAccountGeneration(() => response.promise, reply => reply.accountId, () => current,
+    () => false, { dispose: reply => disposed.push(reply.id) });
+  current = false; response.resolve({ accountId: A, id: 3 });
+  expect(await pending).toBeNull(); expect(disposed).toEqual([1, 3]);
+  await expect(readInUsageAccountGeneration(async () => ({ accountId: A, id: 4 }), () => { throw new Error("refused identity"); }, () => true,
+    () => false, { dispose: reply => disposed.push(reply.id) })).rejects.toThrow("refused identity");
+  expect(disposed).toEqual([1, 3, 4]);
+});
+
+test("cancellable generation attempts end synchronously on invalidation and use one fresh signal", async () => {
+  const controller = new AbortController(), signals: AbortSignal[] = [];
+  const pending = readInUsageAccountGeneration(async signal => {
+    if (signal === undefined) throw new Error("missing signal");
+    signals.push(signal);
+    if (signals.length === 1) await new Promise<void>((_done, reject) => signal.addEventListener("abort", () => reject(new Error("invalidated")), { once: true }));
+    return { accountId: B };
+  }, reply => reply.accountId, () => true, () => false, { signal: controller.signal });
+  acceptUsageAccountReply(captureUsageAccountRead(), B);
+  expect(signals[0].aborted).toBe(true);
+  const result = await pending;
+  expect(signals).toHaveLength(2); expect(signals[1].aborted).toBe(false); expect(result?.reply.accountId).toBe(B);
+  expect(result?.scope && currentUsageAccountScope(result.scope)).toBe(true);
+});

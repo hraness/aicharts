@@ -307,15 +307,15 @@ pub fn scan_metadata<R: BufRead>(
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SessionUsage {
-    id: String,
-    at_ms: u64,
-    model: Option<&'static str>,
-    model_basis: &'static str,
-    input_tokens: u64,
-    cache_read_tokens: u64,
-    cache_write_tokens: u64,
-    output_tokens: u64,
-    reasoning_tokens: Option<u64>,
+    pub(crate) id: String,
+    pub(crate) at_ms: u64,
+    pub(crate) model: Option<&'static str>,
+    pub(crate) model_basis: &'static str,
+    pub(crate) input_tokens: u64,
+    pub(crate) cache_read_tokens: u64,
+    pub(crate) cache_write_tokens: u64,
+    pub(crate) output_tokens: u64,
+    pub(crate) reasoning_tokens: Option<u64>,
 }
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -326,12 +326,12 @@ pub struct Window {
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SessionObservation {
-    provider: &'static str,
-    session_id: String,
-    conversation_id: Option<String>,
+    pub(crate) provider: &'static str,
+    pub(crate) session_id: String,
+    pub(crate) conversation_id: Option<String>,
     window: Window,
     source: &'static str,
-    usage: Vec<SessionUsage>,
+    pub(crate) usage: Vec<SessionUsage>,
     spans: [(); 0],
 }
 #[derive(Serialize)]
@@ -339,7 +339,12 @@ pub struct SessionObservation {
 pub struct SessionReport {
     schema_version: u8,
     profile: &'static str,
-    pub sessions: Vec<SessionObservation>,
+    pub(crate) sessions: Vec<SessionObservation>,
+}
+impl SessionReport {
+    pub fn session_count(&self) -> usize {
+        self.sessions.len()
+    }
 }
 fn hex(id: Id) -> String {
     id.iter().map(|b| format!("{b:02x}")).collect()
@@ -407,7 +412,10 @@ pub fn join_sources(sources: Vec<(Collection, Metadata)>) -> Result<SessionRepor
             }
             let meta = metadata.get(&usage.id);
             let model = meta.and_then(|m| m.model);
-            let model_basis = meta.map(|m| m.basis).unwrap_or("unknown");
+            let model_basis = meta
+                .filter(|metadata| metadata.model.is_some())
+                .map(|metadata| metadata.basis)
+                .unwrap_or("unknown");
             let conversation = meta.and_then(|m| m.conversation).map(hex);
             let record = SessionUsage {
                 id: hex(usage.id),
@@ -540,6 +548,20 @@ mod tests {
         );
         assert!(!bytes.contains("PRIVATE_DO_NOT_RETAIN"));
         assert!(!bytes.contains("\"req\"") && !bytes.contains("\"session\""));
+    }
+    #[test]
+    fn unknown_claude_model_has_unknown_basis_in_the_cross_runtime_fixture() {
+        let report = join_sources(vec![source(
+            &claude(4, "PRIVATE_MODEL", "2"),
+            Provider::ClaudeCode,
+        )])
+        .unwrap();
+        assert_eq!(report.sessions[0].usage[0].model, None);
+        assert_eq!(report.sessions[0].usage[0].model_basis, "unknown");
+        assert_eq!(
+            serde_json::to_string(&report).unwrap(),
+            include_str!("../../../fixtures/usage/session-unknown-model-v1.json").trim()
+        );
     }
     #[test]
     fn codex_cumulative_snapshots_are_increments_not_repeated_totals() {
@@ -699,7 +721,14 @@ mod tests {
             );
             let report = join_sources(vec![source(&text, Provider::Codex)]).unwrap();
             assert_eq!(report.sessions[0].usage[0].model, expected);
-            assert_eq!(report.sessions[0].usage[0].model_basis, "request");
+            assert_eq!(
+                report.sessions[0].usage[0].model_basis,
+                if expected.is_some() {
+                    "request"
+                } else {
+                    "unknown"
+                }
+            );
             assert!(!serde_json::to_string(&report)
                 .unwrap()
                 .contains("PRIVATE_MODEL"));
@@ -740,7 +769,7 @@ mod tests {
         assert_eq!(attributed.usage[0].output_tokens, 20);
         assert_eq!(attributed.usage[0].reasoning_tokens, None);
         assert!(attributed.conversation_id.is_some());
-        assert_eq!(unattributed.usage[0].model_basis, "response");
+        assert_eq!(unattributed.usage[0].model_basis, "unknown");
         let bytes = serde_json::to_string(&report).unwrap();
         assert!(!bytes.contains("PRIVATE_DO_NOT_RETAIN"));
         assert!(!bytes.contains("PRIVATE_MODEL"));

@@ -10,9 +10,20 @@
   "java": {
     "runtimeVersion": "21.0.12.1+1-LTS",
     "vendor": "Eclipse Adoptium",
-    "localExecutable": "target/assurance-tools/jdk-21.0.12.1+1-jre/Contents/Home/bin/java",
-    "qualifiedPlatform": "macOS-aarch64",
-    "localArchiveSha256": "dec50fc6f9fcd4fe3ae8cabf5a5fa68f6afc48841f7698e468e9aa5d54beed84"
+    "platforms": {
+      "darwin-arm64": {
+        "executable": "target/assurance-tools/jdk-21.0.12.1+1-jre/Contents/Home/bin/java",
+        "executableSha256": "9be1d0a740ff6502df1a762145e62860f5de4b7e17658d9cb9498da3acf9d16c",
+        "archiveUrl": "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.12.1%2B1/OpenJDK21U-jre_aarch64_mac_hotspot_21.0.12.1_1.tar.gz",
+        "archiveSha256": "dec50fc6f9fcd4fe3ae8cabf5a5fa68f6afc48841f7698e468e9aa5d54beed84"
+      },
+      "linux-x64": {
+        "executable": "target/assurance-tools/jre-linux/jdk-21.0.12.1+1-jre/bin/java",
+        "executableSha256": "999c141a6e620c71aa4230ccb62341a89162f37818753ff006d766bf935dcbe1",
+        "archiveUrl": "https://github.com/adoptium/temurin21-binaries/releases/download/jdk-21.0.12.1%2B1/OpenJDK21U-jre_x64_linux_hotspot_21.0.12.1_1.tar.gz",
+        "archiveSha256": "2413149700df0f7d440500a84a8f764c535f21e5a5e87d38328b64eec2c5b500"
+      }
+    }
   },
   "defaultJar": "target/assurance-tools/tla2tools-1.7.4.jar"
 }

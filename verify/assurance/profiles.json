@@ -32,6 +32,24 @@
       "subsets": {},
       "unknown": "Provider/model/cost/duration remain nullable; missing metric coverage must not become measured zero. Generic record count is not a request count.",
       "coverage": "source status plus per-row breakdownCoverage and tokenBasis"
+    },
+    {
+      "id": "rich-facts-v1",
+      "source": "lib/usage/rich-fact-contract.ts",
+      "grain": "keyed source-generation and observation revision with metric-specific numeric facts",
+      "totalPartition": [
+        "inputUncached",
+        "cacheRead",
+        "cacheWrite5m",
+        "cacheWrite1h",
+        "cacheWriteUnknown",
+        "output-inclusive"
+      ],
+      "subsets": {
+        "reasoning": "output-inclusive"
+      },
+      "unknown": "Historical session exports have unknown token scope, lineage, cache-write TTL and streaming timing. Multiple unknown or overlapping executions cannot produce additive token totals. Native session projection is explicitly revision zero.",
+      "coverage": "Explicit per-kind unsupported/partial/complete source evidence plus independent metric eligibility; local numeric facts only."
     }
   ],
   "conversionRules": [

@@ -45,6 +45,23 @@ Existing native custody, renewed live acquisition, public
 publish/refresh/withdrawal, and scheduled cutover remain unqualified by this
 deployment. The old scheduled publisher was preserved.
 
+The system-assurance candidate adds a separately disabled
+`AICHARTS_USAGE_CONTRIBUTIONS_ENABLED` gate. Preserve its disabled state together
+with the stats and public-read flags during a foundation-only deployment. V3
+activation and grant routes require stats, contributions and admission together;
+an explicit native uploader does not activate a population. Do not enable those
+routes until the canonical migration, enrollment, transport and recovery
+acceptance checks have current evidence.
+
+Before deploying that candidate, inspect the exact target's schema versions and
+qualify a recovery artifact that understands every schema the candidate can
+commit. Registered mutations can migrate existing stats tables through schema 8
+even with the stats flag disabled; gated V3 work introduces later schemas. The
+dated schema-6-aware artifact above does not establish rollback compatibility
+for those transitions. Test the retained-data upgrade and recovery on synthetic
+copies, preserve committed authority, and record the recovery artifact's exact
+identity before promotion.
+
 The 2026-09-19 production inspection superseded the earlier unconfigured
 environment inventory. It found that Vercel project `aicharts` had production
 authentication, pairing and private-read flags, the cookie secret and the

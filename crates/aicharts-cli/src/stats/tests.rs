@@ -9,6 +9,7 @@ fn options_fixture() -> Options {
         first_utc_day: 20_715,
         day_count: 1,
         json: true,
+        health_json: false,
     }
 }
 fn message() -> UnifiedMessage {
@@ -309,4 +310,235 @@ fn a_live_scan_uses_completion_time_and_refuses_clock_regression() {
         "stats_clock_regressed"
     );
     std::fs::remove_dir_all(root).unwrap();
+}
+
+struct HealthFixture(PathBuf);
+impl HealthFixture {
+    fn new() -> Self {
+        static SERIAL: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
+        let base = std::fs::canonicalize(std::env::temp_dir()).unwrap();
+        let path = base.join(format!(
+            "aicharts-health-{}-{}-{}",
+            std::process::id(),
+            now_ms().unwrap(),
+            SERIAL.fetch_add(1, std::sync::atomic::Ordering::Relaxed)
+        ));
+        std::fs::create_dir(&path).unwrap();
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o700)).unwrap();
+        }
+        std::fs::create_dir_all(path.join("sessions")).unwrap();
+        Self(path)
+    }
+    fn source(&self) -> PathBuf {
+        self.0
+            .join("sessions/rollout-2026-09-19T10-00-00-0192f3a4-5b6c-7d8e-9f01-23456789abcd.jsonl")
+    }
+    fn options(&self) -> Options {
+        Options {
+            home: self.0.clone(),
+            source_roots: vec![self.0.join("sessions")],
+            ..options_fixture()
+        }
+    }
+    fn write(&self, input: u64) {
+        let context = "{\"timestamp\":\"2026-09-19T10:00:00Z\",\"type\":\"turn_context\",\"payload\":{\"model\":\"gpt-5.4\",\"title\":\"PRIVATE_HEALTH_CANARY\"}}\n";
+        let row = format!("{{\"timestamp\":\"2026-09-19T10:00:01Z\",\"type\":\"event_msg\",\"payload\":{{\"type\":\"token_count\",\"info\":{{\"total_token_usage\":{{\"input_tokens\":{input},\"cached_input_tokens\":2,\"output_tokens\":3,\"reasoning_output_tokens\":1}},\"last_token_usage\":{{\"input_tokens\":{input},\"cached_input_tokens\":2,\"output_tokens\":3,\"reasoning_output_tokens\":1}}}}}}}}\n");
+        std::fs::write(self.source(), context.to_owned() + &row).unwrap();
+    }
+}
+impl Drop for HealthFixture {
+    fn drop(&mut self) {
+        let _ = std::fs::remove_dir_all(&self.0);
+    }
+}
+
+#[test]
+fn source_health_distinguishes_complete_partial_failed_and_clamped_without_writes() {
+    use aicharts_import::{HealthCode, ImportOutcome};
+    let fixture = HealthFixture::new();
+    let options = fixture.options();
+    let now = options.first_utc_day * DAY_MS;
+    let collect =
+        || collect_detailed_with_clock(&options, now, || Ok(now + DAY_MS - 1), None).unwrap();
+    let absent = collect();
+    assert_eq!(absent.report.sources[0].status, "not_found");
+    assert_eq!(
+        absent.health.sources[0].observation.health.outcome,
+        ImportOutcome::Failed
+    );
+    assert_eq!(absent.health.sources[0].observation.health.records, Some(0));
+    fixture.write(10);
+    let good = collect();
+    assert_eq!(good.report.sources[0].status, "observed");
+    assert_eq!(good.report.sources[0].warnings, 0);
+    assert_eq!(
+        good.health.sources[0]
+            .observation
+            .health
+            .schema_mismatch_records,
+        Some(0)
+    );
+    let before = std::fs::read(fixture.source()).unwrap();
+    let output = serde_json::to_string(&good.health).unwrap();
+    assert!(!output.contains(fixture.0.to_str().unwrap()));
+    assert!(!output.contains("PRIVATE_HEALTH_CANARY"));
+    assert!(!output.contains("scope"));
+    assert_eq!(std::fs::read_dir(&fixture.0).unwrap().count(), 1);
+    assert_eq!(std::fs::read(fixture.source()).unwrap(), before);
+    let mut partial = before;
+    partial.extend_from_slice(b"{\"timestamp\":");
+    std::fs::write(fixture.source(), partial).unwrap();
+    let incomplete = collect();
+    assert_eq!(incomplete.report.sources[0].status, "incomplete");
+    assert!(incomplete.report.sources[0].records > 0);
+    assert!(incomplete.report.sources[0].warnings > 0);
+    assert_eq!(
+        incomplete.health.sources[0].observation.health.outcome,
+        ImportOutcome::Partial
+    );
+    std::fs::write(fixture.source(), b"{malformed}\n").unwrap();
+    let failed = collect();
+    assert_eq!(failed.report.sources[0].records, 0);
+    assert_eq!(failed.report.sources[0].status, "incomplete");
+    assert_eq!(
+        failed.health.sources[0].observation.health.outcome,
+        ImportOutcome::Failed
+    );
+    fixture.write(1); // The parser can normalize this invalid cache/input pair.
+    let clamped = collect();
+    assert_eq!(clamped.report.sources[0].status, "incomplete");
+    let evidence = &clamped.health.sources[0].observation.health;
+    assert_eq!(evidence.clamped_records, Some(1));
+    assert_eq!(evidence.outcome, ImportOutcome::Failed);
+    assert!(evidence.codes.contains(&HealthCode::Clamped));
+    assert!(evidence.codes.contains(&HealthCode::ProjectionRefused));
+}
+
+#[test]
+fn health_and_numeric_exports_have_distinct_explicit_profiles() {
+    let now = 20_716 * DAY_MS;
+    let args = |values: &[&str]| values.iter().map(|s| s.to_string()).collect::<Vec<_>>();
+    let base = ["--home", "/synthetic", "--client", "codex"];
+    let mut flags = args(&base);
+    flags.push("--health-json".into());
+    let value = options(&flags, now).unwrap();
+    assert!(value.health_json);
+    assert!(!value.json);
+    flags.push("--json".into());
+    assert!(options(&flags, now).is_err());
+    flags.pop();
+    flags.push("--health-json".into());
+    assert!(options(&flags, now).is_err());
+}
+
+#[cfg(unix)]
+#[test]
+fn incomplete_collection_preserves_persisted_good_observation_and_checkpoint() {
+    let fixture = HealthFixture::new();
+    let options = fixture.options();
+    fixture.write(10);
+    let state = fixture.0.join("state");
+    std::fs::create_dir(&state).unwrap();
+    let now = options.first_utc_day * DAY_MS;
+    let mut persistence = health::Persistence::open(&options, &state, true).unwrap();
+    let first = collect_detailed_with_clock(
+        &options,
+        now,
+        || Ok(now + DAY_MS - 2),
+        Some(&mut persistence),
+    )
+    .unwrap();
+    assert_eq!(first.report.sources[0].status, "observed");
+    let first_binding = first.health.sources[0].binding.unwrap();
+    let exported = serde_json::to_string(&first.health).unwrap();
+    assert!(!exported.contains("binding"));
+    assert!(!exported.contains("scope"));
+    let stored = state.join("source-checkpoint-codex-v1/checkpoint.bin");
+    let bytes = std::fs::read(&stored).unwrap();
+    drop(persistence);
+    let mut text = std::fs::read(fixture.source()).unwrap();
+    text.extend_from_slice(b"{\"timestamp\":");
+    std::fs::write(fixture.source(), text).unwrap();
+    let mut reopened = health::Persistence::open(&options, &state, true).unwrap();
+    let second = collect_detailed_with_clock(
+        &options,
+        now + DAY_MS - 2,
+        || Ok(now + DAY_MS - 1),
+        Some(&mut reopened),
+    )
+    .unwrap();
+    assert_eq!(second.report.sources[0].status, "incomplete");
+    assert_ne!(second.health.sources[0].binding.unwrap(), first_binding);
+    assert_eq!(std::fs::read(&stored).unwrap(), bytes);
+    drop(reopened);
+    let health =
+        crate::source_health::SourceHealthStore::open(&state.join("source-health-v1")).unwrap();
+    let status = health.status("codex", health::observation_scope("codex", &options));
+    assert_eq!(status.last_good.unwrap().completed_at_ms, now + DAY_MS - 2);
+    assert_eq!(
+        status.last_attempt.unwrap().health.outcome,
+        aicharts_import::ImportOutcome::Partial
+    );
+    assert!(status.last_publication.is_none());
+    drop(health);
+    std::fs::remove_file(fixture.source()).unwrap();
+    let mut missing = health::Persistence::open(&options, &state, true).unwrap();
+    let third = collect_detailed_with_clock(
+        &options,
+        now + DAY_MS - 1,
+        || Ok(now + DAY_MS - 1),
+        Some(&mut missing),
+    )
+    .unwrap();
+    assert_eq!(third.report.sources[0].status, "not_found");
+    assert_eq!(
+        third.health.sources[0].observation.health.outcome,
+        aicharts_import::ImportOutcome::Failed
+    );
+    assert_ne!(
+        third.health.sources[0].binding,
+        second.health.sources[0].binding
+    );
+    assert_eq!(std::fs::read(&stored).unwrap(), bytes);
+    drop(missing);
+    let status = crate::source_health::SourceHealthStore::read_status(
+        &state.join("source-health-v1"),
+        "codex",
+        health::observation_scope("codex", &options),
+    )
+    .unwrap()
+    .unwrap();
+    assert_eq!(status.last_good.unwrap().completed_at_ms, now + DAY_MS - 2);
+    assert_eq!(
+        status.last_attempt.unwrap().health.outcome,
+        aicharts_import::ImportOutcome::Failed
+    );
+    assert!(status.last_publication.is_none());
+}
+
+#[cfg(unix)]
+#[test]
+fn retained_health_inspection_does_not_create_an_absent_store_or_reveal_paths() {
+    let fixture = HealthFixture::new();
+    let state = fixture.0.join("missing-state");
+    let args = vec![
+        "stats-health".into(),
+        "--state-dir".into(),
+        state.to_str().unwrap().into(),
+        "--home".into(),
+        fixture.0.to_str().unwrap().into(),
+        "--client".into(),
+        "codex".into(),
+    ];
+    let text = run_retained_health(&args).unwrap();
+    let value: serde_json::Value = serde_json::from_str(&text).unwrap();
+    assert_eq!(value["profile"], "retained-source-health-v1");
+    for name in ["lastAttempt", "lastGood", "lastPublication"] {
+        assert!(value[name].is_null());
+    }
+    assert!(!state.exists());
+    assert!(!text.contains(fixture.0.to_str().unwrap()));
 }

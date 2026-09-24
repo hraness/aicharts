@@ -3,6 +3,7 @@
 mod account;
 mod autosubmit;
 mod capture;
+mod contribution_sync;
 mod daemon;
 mod enroll;
 #[cfg(unix)]
@@ -16,6 +17,9 @@ mod owned_process;
 mod prefix;
 mod reindex;
 mod sessions;
+#[cfg(unix)]
+mod source_checkpoint;
+mod source_health;
 mod source_refresh;
 mod state;
 mod stats;
@@ -73,7 +77,9 @@ const HELP: &str = "AI Charts Usage — local reports and enrolled publication
 
   aicharts --version [--json]
   aicharts stats --home DIR (--all | --client ID ...) [--since YYYY-MM-DD --until YYYY-MM-DD] [--json]
+  aicharts stats-health --state-dir DIR --home DIR --client ID [--since YYYY-MM-DD --until YYYY-MM-DD]
   aicharts stats-sync --state-dir DIR --key-file PATH --home DIR --client ID [--since YYYY-MM-DD --until YYYY-MM-DD]
+  aicharts contribution-sync --help
   aicharts refresh --help
   aicharts autosubmit --config-file PATH [--check | --dry-run]
   aicharts capture mcode --cache-dir DIR --executable PATH -- exec ...
@@ -81,6 +87,7 @@ const HELP: &str = "AI Charts Usage — local reports and enrolled publication
   aicharts support --help
   aicharts turns --codex FILE [--codex FILE ...] --occurrence-key-file KEY [--json]
   aicharts sessions --occurrence-key-file KEY [--codex FILE ...] [--claude FILE ...] [--devin FILE ...] [--json]
+  aicharts sessions --profile rich-facts-v1 --source-epoch EPOCH --window-start-ms N --window-end-ms N --occurrence-key-file KEY --codex FILE --json
   aicharts usage --key-file PATH [--codex FILE_OR_DIR] [--claude FILE_OR_DIR] [--devin FILE_OR_DIR] [--json]
   aicharts upload --state-dir DIR --key-file PATH [--resume]
   aicharts sync --complete-prefix --state-dir DIR --key-file PATH [--codex FILE_OR_DIR] [--claude FILE_OR_DIR] [--devin FILE_OR_DIR] [--max-batches N] [--reconcile-retained] [--json]
@@ -536,8 +543,14 @@ fn run(args: &[String]) -> Result<String, &'static str> {
     if args.first().map(String::as_str) == Some("stats") {
         return stats::run(args);
     }
+    if args.first().map(String::as_str) == Some("stats-health") {
+        return stats::run_retained_health(args);
+    }
     if args.first().map(String::as_str) == Some("stats-sync") {
         return stats_sync::run(args);
+    }
+    if args.first().map(String::as_str) == Some("contribution-sync") {
+        return contribution_sync::run(args);
     }
     if args.first().map(String::as_str) == Some("refresh") {
         return source_refresh::run(&args[1..]);

@@ -106,3 +106,30 @@ test("property: provider ranges enclose their medians", () => {
     }
   }), { numRuns: 500 });
 });
+
+test("property: distinct collation-equivalent IDs retain deterministic ties", () => {
+  assertProperty(fc.property(
+    fc.integer({ min: 0, max: 10_000 }),
+    fc.integer({ min: 0, max: 100 }),
+    fc.shuffledSubarray(["é", "e\u0301", "Å", "A\u030a"], { minLength: 4, maxLength: 4 }),
+    (cost, score, ids) => {
+      const records = ids.map(id => ({ ...record(id, id, cost, score), providerName: "Same public name" }));
+      const reversed = records.toReversed();
+      expect(computeParetoFrontier(records, "costUsd", "aaIndex"))
+        .toEqual(computeParetoFrontier(reversed, "costUsd", "aaIndex"));
+      expect(computeParetoSet(records, "costUsd", "aaIndex")).toHaveLength(4);
+      expect(computeParetoSet(records, "costUsd", "aaIndex"))
+        .toEqual(computeParetoSet(reversed, "costUsd", "aaIndex"));
+      expect(providerPerformanceRanges(records, "aaIndex"))
+        .toEqual(providerPerformanceRanges(reversed, "aaIndex"));
+    },
+  ), { numRuns: 100 });
+});
+
+test("provider aliases use the same display label in every row order", () => {
+  const rows = ["Lab new", "Lab old", "Lab old"].map((providerName, index) => ({
+    ...record(String(index), "same-provider", index + 1, 50), providerName,
+  }));
+  expect(providerPerformanceRanges(rows, "aaIndex"))
+    .toEqual(providerPerformanceRanges(rows.toReversed(), "aaIndex"));
+});

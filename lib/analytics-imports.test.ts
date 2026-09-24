@@ -4,12 +4,15 @@ import { join, relative, resolve } from "node:path";
 
 const repositoryRoot = resolve(import.meta.dir, "..");
 const excludedDirectories = new Set([".git", ".next", "node_modules"]);
+// Isolated conformance trees and downloaded proof tools are generated evidence,
+// not additional application entry points.
+const generatedRoots = new Set([join(repositoryRoot, "target"), join(repositoryRoot, "desktop", "target")]);
 
 function sourceFiles(directory: string): readonly string[] {
   return readdirSync(directory, { withFileTypes: true }).flatMap(entry => {
     const path = join(directory, entry.name);
     if (entry.isDirectory()) {
-      return excludedDirectories.has(entry.name) ? [] : sourceFiles(path);
+      return excludedDirectories.has(entry.name) || generatedRoots.has(path) ? [] : sourceFiles(path);
     }
     return entry.isFile() && (entry.name.endsWith(".ts") || entry.name.endsWith(".tsx"))
       ? [path]

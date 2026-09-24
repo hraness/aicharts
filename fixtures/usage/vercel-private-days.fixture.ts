@@ -66,7 +66,9 @@ try {
   for (const [token, account] of [["a.b.c", `acct_${"a".repeat(32)}`], ["d.e.f", `acct_${"b".repeat(32)}`]]) {
     expectedToken = token; expectedAccount = account;
     context = { headers: { "x-vercel-oidc-token": token } }; events.length = 0;
-    assert.equal(JSON.stringify(await client(request, range)), '{"kind":"query","result":{"ok":false,"error":"not_enrolled"}}');
+    assert.deepEqual(await client(request, range), {
+      kind: "query", accountId: account, result: { ok: false, error: "not_enrolled" },
+    });
     await terminals.at(-1);
   }
   assert.equal(contexts, 2); assert.equal(fetches, 2); assert.equal(reads, 2); assert.equal(finishes, 2);

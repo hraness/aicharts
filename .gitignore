@@ -13,6 +13,7 @@ artifacts/slopcamera/
 /outputs/
 /desktop/target/
 /target/
+/.impeccable/review/
 public/theme-bootstrap.js
 services/usage-worker/.wrangler/
 services/usage-worker/worker-configuration.d.ts

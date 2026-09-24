@@ -1,0 +1,4 @@
+[test]
+# Generated isolated proof/control trees are evidence artifacts, never another
+# copy of the source suite. Conformance runs its own explicitly selected tree.
+pathIgnorePatterns = ["target/**", "desktop/target/**"]

@@ -86,6 +86,9 @@ fn append_log(path: &Path) -> bool {
     )
 }
 struct Audit {
+    work: ImportWork,
+    checkpoint: Option<crate::offline_checkpoint::OfflineCheckpoint>,
+    next_checkpoint: crate::offline_checkpoint::OfflineCheckpoint,
     roots: Vec<PathBuf>,
     first_observed_ms: Option<u64>,
     profile: Option<(String, Vec<PathBuf>)>,
@@ -128,6 +131,19 @@ pub struct ReadReceipt {
     pub deferred_tail_files: usize,
 }
 
+/// Observed work, separate from logical source size. SQLite page I/O is not
+/// included in parsed_bytes; callers must preserve that qualification limit.
+#[derive(Clone, Debug, Default)]
+pub struct ImportWork {
+    pub parsed_bytes: u64,
+    pub verified_bytes: u64,
+    pub reused_files: u64,
+    pub clamped_records: u64,
+    pub fallback_records: u64,
+    pub schema_mismatch_records: u64,
+    pub checkpoint_capacity: bool,
+}
+
 pub struct Guard {
     _serial: MutexGuard<'static, ()>,
 }
@@ -148,6 +164,9 @@ pub fn begin(roots: &[PathBuf]) -> Result<Guard, &'static str> {
         checked.push(root.clone());
     }
     *ACTIVE.lock().map_err(|_| "import_guard_poisoned")? = Some(Audit {
+        work: ImportWork::default(),
+        checkpoint: None,
+        next_checkpoint: crate::offline_checkpoint::OfflineCheckpoint::default(),
         roots: checked,
         first_observed_ms: None,
         profile: None,
@@ -169,7 +188,17 @@ pub fn begin(roots: &[PathBuf]) -> Result<Guard, &'static str> {
     Ok(Guard { _serial: serial })
 }
 impl Guard {
+    #[cfg(test)]
     pub fn finish(self) -> Result<ReadReceipt, Vec<&'static str>> {
+        self.finish_observed().0
+    }
+    pub(crate) fn finish_observed(
+        self,
+    ) -> (
+        Result<ReadReceipt, Vec<&'static str>>,
+        ImportWork,
+        crate::offline_checkpoint::OfflineCheckpoint,
+    ) {
         let mut active = ACTIVE.lock().unwrap_or_else(|p| p.into_inner());
         let mut audit = active.take().expect("owned import guard");
         let limit = audit_time_limit(&audit);
@@ -180,8 +209,11 @@ impl Guard {
         // Verify every consumed log prefix in full; later appends are harmless.
         for (path, before) in &audit.files {
             if let Some(snapshot) = audit.snapshots.get(path) {
-                if let Err(code) = verify_snapshot(path, snapshot, audit.started, limit) {
-                    audit.errors.insert(code);
+                match verify_snapshot(path, snapshot, audit.started, limit) {
+                    Ok(bytes) => audit.work.verified_bytes += bytes,
+                    Err(code) => {
+                        audit.errors.insert(code);
+                    }
                 }
                 continue;
             }
@@ -215,7 +247,7 @@ impl Guard {
         if !audit.sqlite_opened.is_subset(&audit.sqlite_completed) {
             audit.errors.insert("import_sqlite_schema_unreadable");
         }
-        if audit.errors.is_empty() {
+        let result = if audit.errors.is_empty() {
             Ok(ReadReceipt {
                 files: audit.files.values().filter(|s| !s.directory).count(),
                 bytes: audit.bytes,
@@ -224,7 +256,8 @@ impl Guard {
             })
         } else {
             Err(audit.errors.into_iter().collect())
-        }
+        };
+        (result, audit.work, audit.next_checkpoint)
     }
 }
 impl Drop for Guard {
@@ -247,6 +280,110 @@ pub(crate) fn first_observed_ms() -> Option<u64> {
 
 pub(crate) fn active() -> bool {
     ACTIVE.lock().unwrap_or_else(|p| p.into_inner()).is_some()
+}
+pub(crate) fn set_checkpoint(checkpoint: crate::offline_checkpoint::OfflineCheckpoint) {
+    if let Some(audit) = ACTIVE.lock().unwrap_or_else(|p| p.into_inner()).as_mut() {
+        audit.checkpoint = Some(checkpoint);
+    }
+}
+pub(crate) fn checkpoint_enabled() -> bool {
+    ACTIVE
+        .lock()
+        .unwrap_or_else(|p| p.into_inner())
+        .as_ref()
+        .is_some_and(|a| a.checkpoint.is_some())
+}
+pub(crate) fn checkpoint_entry(path: &Path) -> Option<crate::offline_checkpoint::Entry> {
+    ACTIVE
+        .lock()
+        .unwrap_or_else(|p| p.into_inner())
+        .as_mut()?
+        .checkpoint
+        .as_mut()?
+        .entries
+        .remove(path)
+}
+pub(crate) fn save_checkpoint_entry(path: &Path, entry: crate::offline_checkpoint::Entry) {
+    if let Some(audit) = ACTIVE.lock().unwrap_or_else(|p| p.into_inner()).as_mut() {
+        audit
+            .next_checkpoint
+            .entries
+            .insert(path.to_path_buf(), entry);
+    }
+}
+pub(crate) fn reused_file() {
+    if let Some(audit) = ACTIVE.lock().unwrap_or_else(|p| p.into_inner()).as_mut() {
+        audit.work.reused_files += 1;
+    }
+}
+pub(crate) fn checkpoint_capacity() {
+    if let Some(audit) = ACTIVE.lock().unwrap_or_else(|p| p.into_inner()).as_mut() {
+        audit.work.checkpoint_capacity = true;
+    }
+}
+pub(crate) fn codex_diagnostics(state: &crate::sessions::codex::CodexParseState) {
+    if let Some(audit) = ACTIVE.lock().unwrap_or_else(|p| p.into_inner()).as_mut() {
+        audit.work.clamped_records += state.audit_clamped_records;
+        audit.work.fallback_records += state.audit_fallback_records;
+        audit.work.schema_mismatch_records += state.audit_schema_mismatch_records;
+    }
+}
+#[derive(Clone)]
+pub(crate) struct LogWitness {
+    pub identity: (u64, u64),
+    pub bytes: u64,
+    pub digest: [u8; 32],
+    pub complete_digest: [u8; 32],
+}
+/// Hash the complete consumed prefix of the same immutable capture used by
+/// the parser. Source identity and hash are never assembled from a later path
+/// reopen. Guard::finish still validates that capture against the source.
+pub(crate) fn log_witness(path: &Path, prefix: Option<u64>) -> io::Result<LogWitness> {
+    let captured = snapshot(path).inspect_err(snapshot_failure)?;
+    let amount = prefix.unwrap_or(captured.parsed_bytes);
+    if amount > captured.parsed_bytes {
+        // Truncation is an ordinary replay trigger, not a poisoned import.
+        return Err(io::Error::other("import_checkpoint_prefix_changed"));
+    }
+    let mut file = open_regular(&captured.path)?;
+    let mut digest = Sha256::new();
+    let mut remaining = captured.parsed_bytes;
+    let mut at = 0u64;
+    let mut prefix_digest = if amount == 0 {
+        Some(<[u8; 32]>::from(Sha256::digest([])))
+    } else {
+        None
+    };
+    let mut buffer = [0u8; 65_536];
+    while remaining > 0 {
+        let until_prefix = if at < amount { amount - at } else { remaining };
+        let count = buffer.len().min(remaining.min(until_prefix) as usize);
+        file.read_exact(&mut buffer[..count])?;
+        digest.update(&buffer[..count]);
+        remaining -= count as u64;
+        at += count as u64;
+        if at == amount {
+            prefix_digest = Some(digest.clone().finalize().into());
+        }
+        let mut active = ACTIVE.lock().unwrap_or_else(|p| p.into_inner());
+        if let Some(audit) = active.as_mut() {
+            audit.work.verified_bytes += count as u64;
+            if audit.started.elapsed() > audit_time_limit(audit) {
+                audit.errors.insert("import_time_limit");
+                return Err(io::Error::other("import_time_limit"));
+            }
+        }
+    }
+    #[cfg(unix)]
+    let identity = (captured.source.identity.0, captured.source.identity.1);
+    #[cfg(not(unix))]
+    let identity = (0, 0);
+    Ok(LogWitness {
+        identity,
+        bytes: captured.parsed_bytes,
+        digest: prefix_digest.expect("hashed requested prefix"),
+        complete_digest: digest.finalize().into(),
+    })
 }
 pub(crate) fn fault(code: &'static str) {
     if let Some(a) = ACTIVE.lock().unwrap_or_else(|p| p.into_inner()).as_mut() {
@@ -417,6 +554,9 @@ impl Read for ReadFile {
             .read(&mut buf[..amount])
             .map_err(|_| error("import_read_failed"))?;
         self.read_bytes += read as u64;
+        if let Some(audit) = ACTIVE.lock().unwrap_or_else(|p| p.into_inner()).as_mut() {
+            audit.work.parsed_bytes += read as u64;
+        }
         if self.read_bytes > self.limit {
             return Err(error("import_file_limit"));
         }
@@ -457,7 +597,7 @@ fn verify_snapshot(
     snapshot: &Snapshot,
     started: std::time::Instant,
     limit: Duration,
-) -> Result<(), &'static str> {
+) -> Result<u64, &'static str> {
     let mut source = open_regular(path).map_err(|_| "import_source_changed")?;
     let before = Stamp::of(&source.metadata().map_err(|_| "import_source_changed")?);
     if !same_identity(&before, &snapshot.source) || before.bytes < snapshot.source_bytes {
@@ -467,7 +607,7 @@ fn verify_snapshot(
         && before == snapshot.source
         && before.bytes == snapshot.source_bytes
     {
-        return Ok(());
+        return Ok(0);
     }
     let mut hash = Sha256::new();
     let mut remaining = snapshot.source_bytes;
@@ -510,7 +650,12 @@ fn verify_snapshot(
     {
         return Err("import_source_changed");
     }
-    Ok(())
+    Ok(snapshot.source_bytes
+        + if snapshot.digest.is_none() {
+            snapshot.parsed_bytes
+        } else {
+            0
+        })
 }
 fn snapshot(path: &Path) -> io::Result<Arc<Snapshot>> {
     // Serialize creation, not parsing. Every subsequent open shares exactly the

@@ -1,5 +1,6 @@
 import type { Result } from "./result";
 import { credentialFreeHttpsUrlSchema } from "./credential-free-https-url";
+import { isIsoCalendarDate } from "./iso-calendar-date";
 import { err, ok } from "./result";
 import { parseResult, z } from "./schema";
 
@@ -14,8 +15,9 @@ export const CALCULATOR_VAST_RENTAL_URL =
 export const CALCULATOR_SUBSIDY_METHOD_URL =
   "https://x.com/SemiAnalysis_/status/2064815042374074396" as const;
 
-const isoDateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/u);
-const isoMonthSchema = z.string().regex(/^\d{4}-\d{2}$/u);
+const isoDateSchema = z.string().refine(isIsoCalendarDate, "Expected a real ISO calendar date.");
+const isoMonthSchema = z.string().regex(/^\d{4}-\d{2}$/u)
+  .refine(value => isIsoCalendarDate(`${value}-01`), "Expected a real ISO calendar month.");
 const isoDateTimeSchema = z.string().datetime({ offset: true });
 const positiveFiniteSchema = z.number().finite().positive();
 const identifierSchema = z.string().regex(/^[a-z0-9][a-z0-9-]*$/u);
@@ -231,6 +233,17 @@ const subsidyAnchorSchema = z.object({
   secondarySourceName: z.string().min(1),
   secondarySourceUrl: credentialFreeHttpsUrlSchema,
 }).strict().superRefine((anchor, context) => {
+  const seenPlans = new Set<string>();
+  anchor.publishedCeilings.forEach((ceiling, index) => {
+    if (seenPlans.has(ceiling.plan)) {
+      context.addIssue({
+        code: "custom",
+        message: `Duplicate published subsidy ceiling for ${ceiling.plan}.`,
+        path: ["publishedCeilings", index, "plan"],
+      });
+    }
+    seenPlans.add(ceiling.plan);
+  });
   // The page and Markdown copy quote both named ceilings; keep them present so
   // a reviewed edit cannot silently blank the method paragraph.
   for (const plan of NAMED_SUBSIDY_CEILING_PLANS) {
@@ -362,6 +375,9 @@ export function calculatorInputsModifiedAt(snapshot: CalculatorInputsSnapshot): 
     snapshot.openAiApiPricing.source.retrievedAt,
     `${snapshot.plan.asOf}T00:00:00Z`,
     `${snapshot.subsidyAnchor.lastVerifiedOn}T00:00:00Z`,
+    `${snapshot.subsidyAnchor.methodPublishedOn}T00:00:00Z`,
+    `${snapshot.openAiApiPricing.listFallbackDocumentedOn}T00:00:00Z`,
+    ...snapshot.electricity.residentialPresets.map(preset => `${preset.asOf}T00:00:00Z`),
     ...snapshot.hardware.gpus.flatMap(gpu => (
       gpu.purchase === null ? [] : [`${gpu.purchase.asOf}T00:00:00Z`]
     )),
@@ -385,6 +401,19 @@ export function validateCalculatorInputsReplacement(
   previous: CalculatorInputsSnapshot,
   candidate: CalculatorInputsSnapshot,
 ): Result<void, Error> {
+  for (const key of ["openAiApiPricing", "deepSeekApiPricing", "electricity", "gpuRental"] as const) {
+    const previousSource = previous[key].source;
+    const candidateSource = candidate[key].source;
+    if (Date.parse(candidateSource.retrievedAt) < Date.parse(previousSource.retrievedAt)) {
+      return err(new Error(`${key} retrieval time regressed; retain the last validated snapshot.`));
+    }
+    if (candidateSource.url !== previousSource.url || candidateSource.name !== previousSource.name) {
+      return err(new Error(`${key} source identity changed; route source changes through review.`));
+    }
+  }
+  if (candidate.electricity.period < previous.electricity.period) {
+    return err(new Error("EIA reporting period regressed; retain the last validated snapshot."));
+  }
   const ratePairs: readonly (readonly [string, number, number])[] = [
     ["OpenAI input", previous.openAiApiPricing.current.inputPerMillion, candidate.openAiApiPricing.current.inputPerMillion],
     ["OpenAI cached input", previous.openAiApiPricing.current.cachedInputPerMillion, candidate.openAiApiPricing.current.cachedInputPerMillion],
@@ -427,10 +456,14 @@ export function validateCalculatorInputsReplacement(
     && JSON.stringify(previous.subsidyAnchor) === JSON.stringify(candidate.subsidyAnchor)
     && JSON.stringify(previous.plan) === JSON.stringify(candidate.plan)
     && JSON.stringify(previous.openAiApiPricing.listFallback) === JSON.stringify(candidate.openAiApiPricing.listFallback)
+    && previous.openAiApiPricing.listFallbackDocumentedOn === candidate.openAiApiPricing.listFallbackDocumentedOn
+    && previous.gpuRental.methodology === candidate.gpuRental.methodology
+    && previous.deepSeekApiPricing.peakHoursPerWeek === candidate.deepSeekApiPricing.peakHoursPerWeek
+    && previous.deepSeekApiPricing.peakHoursUtc === candidate.deepSeekApiPricing.peakHoursUtc
     && JSON.stringify(previous.electricity.residentialPresets) === JSON.stringify(candidate.electricity.residentialPresets);
   if (!curatedUnchanged) {
     return err(new Error(
-      "Curated sections (hardware, subsidy anchor, plan, list fallback, electricity presets) changed; route those edits through review.",
+      "Curated sections (hardware, subsidy anchor, plan, list fallback, electricity presets, rental methodology, peak-hour policy) changed; route those edits through review.",
     ));
   }
   return ok(undefined);

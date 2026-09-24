@@ -1,0 +1,44 @@
+.usage-metrics { border-block-start: 1px solid var(--grid); margin-block: 3rem; padding-block-start: 1.75rem; }
+.usage-metrics .usage-stats__section-heading p { color: var(--muted); font-size: .85rem; margin-block-start: .4rem; max-inline-size: 65ch; }
+.usage-metrics__tabs { border-block-end: 1px solid var(--grid); display: flex; gap: .25rem; margin-block: 1.25rem; overflow-x: auto; scrollbar-color: var(--muted) var(--background); }
+.usage-metrics__tabs button { background: transparent; border: 0; border-block-end: 2px solid transparent; color: var(--muted); flex: 0 0 auto; font-size: .8rem; min-block-size: 2.75rem; padding: .65rem .8rem; }
+.usage-metrics__tabs button[aria-selected="true"] { border-block-end-color: var(--foreground); color: var(--foreground); font-weight: 600; }
+.usage-metrics__tabs button:hover { background: var(--surface-raised); color: var(--foreground); }
+.usage-metrics__workspace { align-items: start; display: grid; gap: 2rem; grid-template-columns: minmax(14rem, .72fr) minmax(0, 1.65fr); }
+.usage-metrics__catalog label { font-size: .8rem; }
+.usage-metrics__catalog input { inline-size: 100%; min-block-size: 2.75rem; }
+.usage-metrics__list { list-style: none; margin: .5rem 0 0; padding: 0; }
+.usage-metrics__list li { border-block-end: 1px solid var(--grid); }
+.usage-metrics__list button { align-items: start; background: transparent; border: 0; color: var(--foreground); display: flex; flex-direction: column; gap: .2rem; inline-size: 100%; min-block-size: 3.5rem; padding: .75rem; text-align: start; }
+.usage-metrics__list button:hover { background: var(--surface-raised); }
+.usage-metrics__list button[aria-pressed="true"] { background: var(--secondary); box-shadow: inset 0 -2px var(--foreground); font-weight: 600; }
+.usage-metrics__list button span { font-size: .85rem; overflow-wrap: anywhere; }
+.usage-metrics__list small { color: var(--muted); font-size: .7rem; font-weight: 400; }
+.usage-metrics__pagination { align-items: center; display: flex; font-size: .75rem; gap: .75rem; justify-content: space-between; padding-block-start: .9rem; }
+.usage-metrics__pagination button { background: transparent; border: 1px solid var(--grid); border-radius: .35rem; color: var(--foreground); min-block-size: 2.75rem; padding-inline: .75rem; }
+.usage-metrics__detail { min-inline-size: 0; scroll-margin-block-start: 1rem; }
+.usage-metrics__detail:focus-visible { outline: 2px solid var(--foreground); outline-offset: 5px; }
+.usage-metrics__detail h3 { font-size: 1.1rem; font-weight: 550; line-height: 1.4; max-inline-size: 55ch; text-wrap: balance; }
+.usage-metrics__value { align-items: baseline; display: flex; flex-wrap: wrap; gap: .35rem .65rem; margin-block: .85rem; }
+.usage-metrics__value strong { font-size: 1.7rem; font-variant-numeric: tabular-nums; font-weight: 550; letter-spacing: -.02em; overflow-wrap: anywhere; }
+.usage-metrics__value span { color: var(--muted); font-size: .8rem; }
+.usage-metrics__detail > p, .usage-metrics__unavailable { font-size: .85rem; line-height: 1.6; max-inline-size: 65ch; }
+.usage-metrics__unavailable p + p { margin-block-start: .6rem; }
+.usage-metrics__unavailable a { display: inline-block; padding-block: .65rem; }
+.usage-metrics__definition { border-block: 1px solid var(--grid); margin-block: 1.25rem; padding-block: .3rem; }
+.usage-metrics__definition > div { display: grid; gap: 1rem; grid-template-columns: 8rem minmax(0, 1fr); padding-block: .55rem; }
+.usage-metrics__definition dt { color: var(--muted); font-size: .75rem; }
+.usage-metrics__definition dd { font-size: .75rem; font-variant-numeric: tabular-nums; margin: 0; overflow-wrap: anywhere; }
+.usage-metrics__definition code { font-family: inherit; font-variant-numeric: tabular-nums; }
+.usage-metrics__controls { align-items: end; display: flex; flex-wrap: wrap; gap: .75rem; margin-block: 1.25rem; }
+.usage-metrics__controls select { min-block-size: 2.75rem; }
+.usage-metrics :is(button, input, select, a):focus-visible { outline: 2px solid var(--foreground); outline-offset: 3px; }
+.usage-metrics ::selection { background: var(--foreground); color: var(--background); }
+@media (max-width: 720px) {
+  .usage-metrics__workspace { gap: 1.5rem; grid-template-columns: minmax(0, 1fr); }
+  .usage-metrics__list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .usage-metrics__list button { block-size: 100%; }
+  .usage-metrics__definition > div { gap: .5rem; grid-template-columns: 6.25rem minmax(0, 1fr); }
+  .usage-metrics__tabs { margin-inline-end: -.5rem; }
+}
+@media (max-width: 390px) { .usage-metrics__list { grid-template-columns: minmax(0, 1fr); } }

@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "scope": "Run in isolated copies against unchanged production-function harnesses. These are negative controls, never production modes.",
+  "mutations": [
+    {
+      "id": "wrapping-addition",
+      "source": "crates/aicharts-metrics/src/arithmetic.rs",
+      "exactBefore": "match left.checked_add(right) {\n        Some(value) => Ok(value),\n        None => Err(Error::Overflow),\n    }",
+      "exactAfter": "Ok(left.wrapping_add(right))",
+      "harness": "proofs::checked_add_full_u128_matches_129_bit_math",
+      "expectedFailedAssertion": "assertion failed: actual.ok() == reference_add(left, right)",
+      "requireSingleSourceMatch": true
+    },
+    {
+      "id": "last-known-owner-wins",
+      "source": "crates/aicharts-metrics/src/revision.rs",
+      "exactBefore": "Err(Error::OwnerConflict)",
+      "exactAfter": "Ok(right)",
+      "harness": "proofs::owner_merge_full_ids_rejects_distinct_known_owners",
+      "expectedFailedAssertion": "assertion failed: actual.is_ok() == valid",
+      "requireSingleSourceMatch": true
+    }
+  ]
+}

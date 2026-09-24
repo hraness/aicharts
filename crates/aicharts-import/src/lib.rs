@@ -1,10 +1,21 @@
 //! Local-only usage import. Raw source identities never belong in wire payloads.
 //! Callers must project these local observations into AI Charts' numeric contract.
+mod checkpoint;
+mod observed;
+pub use checkpoint::{
+    ImportCheckpoint, MAX_CHECKPOINT_BYTES, MAX_CHECKPOINT_FILES, MAX_CHECKPOINT_OBSERVATIONS,
+};
+pub use observed::{
+    collect_observed, HealthCode, ImportHealth, ImportOutcome, ObservedImport,
+    MAX_SOURCE_HEALTH_CODES, QUALIFICATION_ID,
+};
 pub use tokscale_core::offline::{
     all_clients, clients, collect, collect_profile, collect_since, profile_clients, token_basis,
     LocalImport, ReadReceipt, UPSTREAM_COMMIT,
 };
 pub use tokscale_core::sessions::{CostSource, UnifiedMessage};
+#[cfg(test)]
+mod observed_tests;
 
 #[cfg(test)]
 mod tests {

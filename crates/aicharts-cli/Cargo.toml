@@ -11,6 +11,7 @@ name = "aicharts"
 path = "src/main.rs"
 
 [dependencies]
+aicharts-metrics.workspace = true
 aicharts-core.workspace = true
 aicharts-custody.workspace = true
 aicharts-protocol.workspace = true

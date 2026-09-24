@@ -37,18 +37,11 @@ fn price(tariff: &Tariff, tokens: [u128; 5]) -> Option<u128> {
         &tariff.output,
         &tariff.output,
     ];
-    let mut pico = 0u128;
-    for (tokens, rate) in tokens.into_iter().zip(rates) {
-        if tokens == 0 {
-            continue;
-        }
-        let rate = rate.as_ref()?.parse::<u128>().ok()?;
-        pico = pico.checked_add(tokens.checked_mul(rate)?)?;
-    }
-    // One rounding operation per observed record, in exact integer arithmetic.
-    pico.checked_add(500_000)
-        .map(|amount| amount / 1_000_000)
-        .filter(|amount| *amount <= MAX_DECIMAL)
+    aicharts_metrics::price_microusd(
+        tokens,
+        rates.map(|rate| rate.as_ref().and_then(|value| value.parse::<u128>().ok())),
+    )
+    .ok()
 }
 
 #[cfg(test)]
