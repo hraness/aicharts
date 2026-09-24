@@ -57,6 +57,7 @@
     "release:linux:qualification:check": "node --check scripts/release/linux-qualification.mjs && node --test scripts/release/linux-qualification.check.mjs",
     "release:linux:runner:check": "node --check scripts/release/run-linux.mjs && node --test scripts/release/run-linux.check.mjs",
     "release:linux:notices:check": "node --check scripts/release/linux-notices.mjs && node --test scripts/release/linux-notices.check.mjs",
+    "release:publish:check": "node --check scripts/release/verify-publication.mjs && node --test scripts/release/verify-publication.check.mjs && bun test scripts/release/publish-workflow.test.ts",
     "typecheck": "tsc --noEmit",
     "colors:generate": "bun run scripts/generate-chart-colors.ts",
     "colors:check": "bun run scripts/generate-chart-colors.ts --check",
@@ -115,7 +116,9 @@
     "usage:formal:kani": "bun scripts/assurance-kani.ts",
     "usage:formal:theorems": "bun scripts/assurance-theorems.ts",
     "usage:adapters:check": "bun scripts/assurance-adapters.ts",
-    "usage:conformance:check": "bun scripts/assurance-conformance.ts"
+    "usage:conformance:check": "bun scripts/assurance-conformance.ts",
+    "usage:deployment:verify": "bun scripts/usage-deployment-verify.ts",
+    "usage:claims:check": "bun scripts/assurance-claims.ts"
   },
   "dependencies": {
     "@hraness/design-kit": "github:hraness/design-kit#v0.15.0",

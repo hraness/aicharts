@@ -19,7 +19,10 @@ const DPKG_QUERY_TIMEOUT_MS = 30_000;
 // independently bounded below.
 export const LINUX_NOTICES_MAX_BYTES = 64 * MiB;
 // One complete GNU bfd map must fit both the runner read and this parser.
-export const LINUX_LINK_MAP_MAX_BYTES = 32 * MiB;
+// The map size is a symbol-count proxy for the linked executable, not a
+// security bound. Raised from 32 MiB on 2026-09-24 after the fc95b51 map
+// measured 33,690,505 bytes; parsing stays bounded by this same constant.
+export const LINUX_LINK_MAP_MAX_BYTES = 64 * MiB;
 const TARGET = "x86_64-unknown-linux-gnu";
 const REGISTRY = "registry+https://github.com/rust-lang/crates.io-index";
 const ERRORS = new Set(["notices_invalid_input", "notices_limit", "notices_build_incomplete", "notices_unmapped_crate", "notices_crate_changed", "notices_unknown_native", "notices_rust_missing", "notices_system_missing", "notices_source_changed"]);

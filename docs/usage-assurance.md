@@ -146,7 +146,11 @@ its owning transaction. Exact retained terminal receipts remain reconcilable;
 delayed writes cannot resume through an old profile. Device credentials do not
 authorize account-wide tombstones. The nine `/v3/contributions` endpoints require
 the separate `AICHARTS_USAGE_CONTRIBUTIONS_ENABLED` flag in addition to the existing
-master, stats and admission flags. No deployment configuration enables it yet.
+master, stats and admission flags. No deployment configuration enables it: on
+2026-09-24 the Worker that would serve these endpoints had not been redeployed
+for the merged source, and the activation runbook records the recovery-artifact
+requirement that precedes that deployment; reverify flag names on both services
+before any activation. A names-only read of the Vercel production environment on 2026-09-24 listed `AICHARTS_USAGE_AUTH_ENABLED`, `AICHARTS_USAGE_PAIRING_ENABLED`, `AICHARTS_USAGE_PRIVATE_READ_ENABLED`, `AICHARTS_USAGE_STATS_ENABLED` and `NEXT_PUBLIC_SITE_URL`; no `AICHARTS_USAGE_CONTRIBUTIONS_ENABLED` or `AICHARTS_USAGE_PUBLIC_READ_ENABLED` name existed, and no value was read.
 Retained-data migration seals a bounded, independently replayed legacy inventory.
 Original objects remain intact; unresolved aggregate populations remain explicit
 and are not added to overlapping canonical observations. Migration cancellation

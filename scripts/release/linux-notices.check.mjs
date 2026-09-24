@@ -242,12 +242,13 @@ test("lld maps, empty maps and maps bound to another output refuse", () => {
   }
 });
 
-test("complete bfd maps above 8 MiB and at the shared 32 MiB bound retain exact attribution", () => {
-  assert.equal(LINUX_LINK_MAP_MAX_BYTES, 32 * 1024 * 1024);
+test("complete bfd maps above 8 MiB, at the measured fc95b51 size and at the shared 64 MiB bound retain exact attribution", () => {
+  assert.equal(LINUX_LINK_MAP_MAX_BYTES, 64 * 1024 * 1024);
   const f = fixture(), expected = planLinuxNotices(f.input);
   assert.equal(expected.ok, true);
   const measuredMap = f.input.linkMapBytes;
-  for (const size of [8 * 1024 * 1024 + 1, LINUX_LINK_MAP_MAX_BYTES]) {
+  // 33,690,505 bytes is the map that run 36066135869 refused under the old 32 MiB bound.
+  for (const size of [8 * 1024 * 1024 + 1, 33_690_505, LINUX_LINK_MAP_MAX_BYTES]) {
     // Ignored map whitespace changes size without changing any LOAD or OUTPUT.
     const padded = Buffer.alloc(size, 0x20); measuredMap.copy(padded); padded[size - 1] = 0x0a;
     f.input.linkMapBytes = padded;
