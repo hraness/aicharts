@@ -1432,3 +1432,11 @@ sign-in, so only a new document restores private reads. The session token-size
 control gained an explicit label association so its accessible name is the
 label text alone. No production state, feature flag or user data changed.
 
+Gate evidence: the complete `bun run check` passed on the joined tree before
+the final one-line Rust import gate. Two reruns on the final tree passed every
+stage except one main-inherited data-refresh workflow test that times out at
+its five-second budget when the host load average exceeds fifteen; it passes
+in isolation and the standalone Bun suite passes with 2,102 tests. The required
+Linux CI run (Check, Menubar, Formal verification, Required) passed on the
+final commit.
+
