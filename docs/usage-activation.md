@@ -6,6 +6,45 @@ rollback checks are complete.
 
 ## Recorded production evidence
 
+On 24 September 2026 (UTC), the system-assurance source merged to protected
+`main` as squash commit `fc95b51b6cd44527d154853cb3404ffeb26dcb39`
+([PR 422](https://github.com/hraness/aicharts/pull/422)) at 20:45:09Z after CI
+run 36055796464 (Check, Menubar, Formal verification and Required all passed).
+GitHub deployment 6647776777 (environment Production, success, 20:46:52Z)
+resolved to Vercel deployment `dpl_3TA2bNgxfeQzY7Cf67XF6scjyUrm` in project
+`prj_0ppMfRRMDfiVsQ1JaekoxSZ7Mwgn` (`aicharts`, target production, status
+Ready, URL `https://aicharts-k7kua357c-hraness.vercel.app`). At 22:33:45Z,
+`https://aicharts.io/`, `/dashboard` and `/usage/sessions` each returned HTTP
+200 with `X-Hraness-Delivery-Proof:
+v1.a675e938d8a6445dc654f2b5f2268fd1a3a1ab71e4017263f5d898606eae4aec`, equal to
+`productionDeliveryProofToken({deploymentId, projectId, projectName:
+"aicharts", sha})` recomputed locally by `bun run usage:deployment:verify --
+--sha fc95b51b6cd44527d154853cb3404ffeb26dcb39`. That command
+(`scripts/usage-deployment-verify.ts`) reads the GitHub Production deployment
+for one commit, resolves the Vercel identity through `vercel inspect`, requires
+the canonical alias on that exact deployment, recomputes the token and writes
+`target/assurance/deployment/receipt.json` only when every page check passes.
+It proves exact-deployment health for the Next.js site and nothing more.
+
+The Cloudflare Worker was **not** redeployed for that merge. The last Worker
+deployment remains the 21 September one recorded below; the `fc95b51` Worker
+source, whose account schemas reach version 13, is not deployed. It must not be
+deployed until a flags-off recovery artifact that understands every schema
+through 13 has been qualified on synthetic copies, because the retained
+schema-6-aware artifact cannot roll back the contribution schemas. Both
+services therefore serve different source trees: the site serves `main`, the
+Worker serves the 21 September version. The site's usage routes remain fenced
+by the same disabled flags, so this split changes no user-visible behavior.
+
+The alias moves with every later `main` merge. At 22:53:14Z the same verifier
+passed for the next merge, `1cf93bd51d42013cbc526c2542319d1df3ddd69c`
+(automated model-data refresh, PR 425; GitHub deployment 6649782774, Vercel
+`dpl_GGMYJjAUtEN13g7UyqWB3JKoCdhH`, token
+`v1.26203f1827269c12bd7b97aada5b545ef399aa5749d41fd3951a22b1e70d6ce9`), and a
+rerun for `fc95b51` correctly failed closed with `proof_mismatch`. A receipt
+is evidence for its own commit at its own time; rerun the verifier for the
+commit under discussion instead of reusing one.
+
 On September 21 (UTC), commit `3a1ddb93456da39fd6a06037f1902dc81acf2663`
 ([PR 349](https://github.com/hraness/aicharts/pull/349)) deployed to both
 production services after the complete source gate and protected-main checks.
@@ -45,17 +84,18 @@ Existing native custody, renewed live acquisition, public
 publish/refresh/withdrawal, and scheduled cutover remain unqualified by this
 deployment. The old scheduled publisher was preserved.
 
-The system-assurance candidate adds a separately disabled
-`AICHARTS_USAGE_CONTRIBUTIONS_ENABLED` gate. Preserve its disabled state together
-with the stats and public-read flags during a foundation-only deployment. V3
+The merged system-assurance source (`fc95b51`, above) adds a separately disabled
+`AICHARTS_USAGE_CONTRIBUTIONS_ENABLED` gate. Its Worker half is not yet deployed.
+Preserve that gate's disabled state together with the stats and public-read
+flags during the foundation-only Worker deployment that will follow. V3
 activation and grant routes require stats, contributions and admission together;
 an explicit native uploader does not activate a population. Do not enable those
 routes until the canonical migration, enrollment, transport and recovery
 acceptance checks have current evidence.
 
-Before deploying that candidate, inspect the exact target's schema versions and
-qualify a recovery artifact that understands every schema the candidate can
-commit. Registered mutations can migrate existing stats tables through schema 8
+Before deploying that Worker source, inspect the exact target's schema versions
+and qualify a recovery artifact that understands every schema the source can
+commit (through 13). Registered mutations can migrate existing stats tables through schema 8
 even with the stats flag disabled; gated V3 work introduces later schemas. The
 dated schema-6-aware artifact above does not establish rollback compatibility
 for those transitions. Test the retained-data upgrade and recovery on synthetic

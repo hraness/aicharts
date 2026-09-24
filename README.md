@@ -75,8 +75,11 @@ The [session usage view](https://aicharts.io/usage/sessions) opens local numeric
 
 The website includes Hraness Accounts sign-in and device enrollment, each
 switched on separately in production. The [identity design](docs/usage-identity.md)
-and [activation runbook](docs/usage-activation.md) list what is live in
-production today and what still needs testing against real providers.
+and [activation runbook](docs/usage-activation.md) record dated production
+evidence, the exact-deployment health check (`bun run usage:deployment:verify`)
+and what still needs testing against real providers. The
+[claim inventory](docs/usage-claims.md) lists every support, platform and
+live-status statement in this README and the usage guides with its evidence.
 
 ## Menu-bar companion
 
