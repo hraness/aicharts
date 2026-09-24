@@ -1,6 +1,6 @@
 import { DurableObject } from "cloudflare:workers";
 import { parseStatsQuery, parseStatsStatusRequest, parseStatsUpload, statsInteger, type StatsError, type StatsReceipt, type StatsResult, type StatsStatus } from "../../../lib/usage/stats-http-contract";
-import { isStatsClient } from "../../../lib/usage/stats-registry";
+import { parseStatsTotalsQuery, type StatsTotalsResult } from "../../../lib/usage/stats-totals-contract";
 import { parseStatsAbandonRequest, type StatsAbandonment } from "../../../lib/usage/stats-http-contract";
 import type { UsageStatsReport } from "../../../lib/usage/stats-contract";
 import { StatsState, StatsFault, STATS_SCHEMA, statsHash, statsUploadText } from "./stats-state";
@@ -261,8 +261,8 @@ export class AccountEnrollment extends DurableObject<Env> {
           this.ctx.storage.sql.exec("UPDATE account_enrollment SET schema_version = 3 WHERE id = 1");
         }
         this.#migrateStatsRows();
-        this.#migrateStatsOwnership();
         new AdmissionState(this.ctx.storage.sql).migrateCapacity();
+        this.#migrateStatsPartition();
         this.#schema();
         this.#migrateFence();
         this.#migrateLeaderboard();
@@ -293,6 +293,12 @@ export class AccountEnrollment extends DurableObject<Env> {
         this.#schema();
         const audited = this.#auditHistory();
         if (audited !== null) throw new AdmissionFault(audited === "storage_invalid" ? "storage_invalid" : "recovery_required");
+        // Bounded automatic work: each registered mutation advances the v1 day
+        // totals span by span, for at most a quarter second of its own budget,
+        // until they cover the whole retained journal.
+        const admission = new AdmissionState(this.ctx.storage.sql), state = this.#stored(5).state, started = Date.now();
+        let spans = 0;
+        while (!admission.advanceDayTotals(state).complete && ++spans < 64 && Date.now() - started < 250) { /* next span */ }
       });
       return null;
     } catch (error) { return error instanceof AdmissionFault || error instanceof ContributionFault || error instanceof ContributionRebuildFault ? error.code : "storage_invalid"; }
@@ -401,15 +407,19 @@ export class AccountEnrollment extends DurableObject<Env> {
   #migrateStatsRows(): void {
     const names = new Set(this.#objects().map(object => object.name));
     if (!names.has("usage_stats_control")) return;
-    for (const name of ["usage_stats_day_meta", "usage_stats_day_rows"] as const)
-      if (!names.has(name)) this.ctx.storage.sql.exec(STATS_SCHEMA[name]);
+    // Version six stores predate the exploded read model; the partition
+    // rebuild below creates every derived table, so only the ladder advances.
     const version = this.ctx.storage.sql.exec("SELECT schema_version FROM account_enrollment WHERE id = 1").toArray()[0]?.schema_version;
     if (version === 6) this.ctx.storage.sql.exec("UPDATE account_enrollment SET schema_version = 7 WHERE id = 1");
   }
-  #migrateStatsOwnership(): void {
+  /** Ownership by (client, day) became ownership by (client, day, device).
+   * The rebuild keeps every retained day under the device that published it
+   * and removes the retired single-writer tables; the version ladder is
+   * unchanged because the stats tables are recognised by their exact DDL. */
+  #migrateStatsPartition(): void {
     if (!this.#statsPresent()) return;
     const version = this.ctx.storage.sql.exec("SELECT schema_version FROM account_enrollment WHERE id = 1").one().schema_version;
-    new StatsState(this.ctx.storage.sql).migrateOwnership(version);
+    new StatsState(this.ctx.storage.sql).migratePartition();
     if (version === 7) this.ctx.storage.sql.exec("UPDATE account_enrollment SET schema_version = 8 WHERE id = 1");
   }
   #stored(version: 2 | 3 | 4 | 5): { revision: number; state: State | null } {
@@ -826,7 +836,7 @@ export class AccountEnrollment extends DurableObject<Env> {
     const stats = new StatsState(this.ctx.storage.sql), second = stats.control();
     if (first.quarantined || first.revision !== 0 || first.heads !== 0 || first.live !== 0 || first.committed !== 0
       || legacy.pending(owner) !== null || second.quarantined || second.revision !== 0 || second.immutableBytes !== 0
-      || stats.pending() !== null || stats.hasCommittedSnapshot()) return false;
+      || stats.pendings().length !== 0 || stats.hasCommittedSnapshot()) return false;
     for (const table of ["usage_admission_heads", "usage_admission_journal", "usage_stats_days", "usage_stats_devices"] as const) {
       if (this.ctx.storage.sql.exec(`SELECT 1 FROM ${table} LIMIT 1`).toArray().length !== 0) return false;
     }
@@ -1300,6 +1310,7 @@ export class AccountEnrollment extends DurableObject<Env> {
       const result = this.#transaction(observation, state => {
         const admission = new AdmissionState(this.ctx.storage.sql);
         admission.auditHistory(state, request.operation === "scrub");
+        while (!admission.advanceDayTotals(state).complete) { /* bounded by the journal revision cap */ }
         const stats = this.#statsPresent() ? new StatsState(this.ctx.storage.sql) : null;
         stats?.auditHistory(state);
         stats?.backfillRows(state);
@@ -1310,35 +1321,6 @@ export class AccountEnrollment extends DurableObject<Env> {
       });
       if (!result.ok && result.error === "storage_invalid") { this.#historyAudited = "failed"; this.#healthy = false; }
       return result;
-    } finally { await this.#fenceSettle(accountId, acquired.value.token, observation.committed); }
-  }
-  /** Trusted live-account recovery. It neither grants a new device credential
-   * nor claims that a successor ledger contains its predecessor's records. */
-  async recoverStatsWriter(input: unknown): Promise<EnrollmentResult<{ writerDeviceId: string; ownershipRevision: number }>> {
-    const request = enrollmentSnapshot(input, ["schemaVersion", "accountId", "sessionExpiresAtMs", "client", "previousDeviceId", "deviceId", "expectedRevision"]);
-    if (request?.schemaVersion !== 1 || !enrollmentAccount(request.accountId) || !enrollmentTime(request.sessionExpiresAtMs)
-      || !isStatsClient(request.client) || !enrollmentHex(request.previousDeviceId) || !enrollmentHex(request.deviceId)
-      || !statsInteger(request.expectedRevision, 0, 999_999)) return err("invalid_input");
-    if (!this.#statsEnabled()) return err("unavailable");
-    const generation = this.#generation();
-    if (generation === null) return err("recovery_required");
-    const accountId = request.accountId;
-    const acquired = await this.#fenceAcquire(accountId, generation);
-    if (!acquired.ok) return acquired;
-    const observation: AdmissionObservation = { generation, observed: Date.now(), fence: acquired.value.fence, committed: false };
-    try {
-      const external = await readNamespaceAnchor(this.env.CONTROL, accountId);
-      return this.#transaction(observation, (state, now) => {
-        if (state === null || state.phase !== "active") return { state, result: err("not_enrolled") };
-        if (state.accountId !== accountId) return { state, result: err("unauthorized") };
-        if (now >= (request.sessionExpiresAtMs as number)) return { state, result: err("expired") };
-        if (external === null || !sameNamespaceAnchor(external, state.anchor)) return { state, result: err("recovery_required") };
-        if (this.#contributionsActive()) throw new StatsFault("profile_superseded");
-        const value = new StatsState(this.ctx.storage.sql).transferWriter(state, request.client as string, request.previousDeviceId as string,
-          request.deviceId as string, request.expectedRevision as number, now);
-        this.#statsReadMemo.clear();
-        return { state, result: ok(value) };
-      });
     } finally { await this.#fenceSettle(accountId, acquired.value.token, observation.committed); }
   }
   /** Pure external authority check. A read linearizes no later than its final
@@ -1448,6 +1430,31 @@ export class AccountEnrollment extends DurableObject<Env> {
     const request = parseStatsQuery(input);
     if (!request) return { ok: false, error: "invalid_input" };
     return this.#readFenced(request.accountId, () => this.#readUsageStats(input)) as Promise<StatsResult<UsageStatsReport>>;
+  }
+  /** Lifetime totals for the private dashboard: every device's snapshot days
+   * plus retained v1 day totals no snapshot from that device covers. */
+  async readUsageTotals(input: unknown): Promise<StatsTotalsResult> {
+    const request = parseStatsTotalsQuery(input);
+    if (!request) return { ok: false, error: "invalid_input" };
+    return this.#readFenced(request.accountId, () => this.#readUsageTotals(input)) as Promise<StatsTotalsResult>;
+  }
+  async #readUsageTotals(input: unknown): Promise<StatsTotalsResult> {
+    const request = parseStatsTotalsQuery(input);
+    if (request === null) return { ok: false, error: "invalid_input" };
+    if (!this.#statsEnabled() || !this.#statsPresent()) return { ok: false, error: "storage_unavailable" };
+    try {
+      const generation = this.#generation(), observed = Date.now();
+      if (generation === null) return { ok: false, error: "recovery_required" };
+      const observation: AdmissionObservation = { generation, observed, fence: null, committed: false };
+      const original = this.#privateDaysSnapshot(request, observation, state => Object.freeze({ ...state.anchor }));
+      if (!original.ok) return { ok: false, error: original.error as StatsTotalsResult extends { ok: false; error: infer E } ? E : never };
+      const external = await readNamespaceAnchor(this.env.CONTROL, request.accountId);
+      const result = this.#privateDaysSnapshot(request, observation, state => {
+        if (!external || !sameNamespaceAnchor(external, original.value) || !sameNamespaceAnchor(state.anchor, original.value)) throw new StatsFault("recovery_required");
+        return new StatsState(this.ctx.storage.sql).totals(state, observation.observed);
+      });
+      return result.ok ? result : { ok: false, error: result.error as StatsTotalsResult extends { ok: false; error: infer E } ? E : never };
+    } catch { return { ok: false, error: "storage_unavailable" }; }
   }
   async #readUsageStats(input: unknown): Promise<StatsResult<UsageStatsReport>> {
     const request = parseStatsQuery(input);

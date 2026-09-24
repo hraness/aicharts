@@ -6,6 +6,7 @@ import { PAIRING_HTTP_URL } from "../../../lib/usage/pairing-http-contract";
 import { PRIVATE_DAYS_HTTP_URL } from "../../../lib/usage/private-days-http-contract";
 import { USAGE_CONSENT_HTTP_URL } from "../../../lib/usage/consent-http-contract";
 import { LEADERBOARD_HTTP_URL } from "../../../lib/usage/leaderboard-http-contract";
+import { STATS_TOTALS_URL } from "../../../lib/usage/stats-totals-contract";
 import { TERMINAL_ENROLLMENT_URL } from "../../../lib/usage/terminal-enrollment-contract";
 import { encodeTerminalEnrollmentRequest } from "../../../lib/usage/terminal-enrollment-contract";
 import { uploadSecretCommitment } from "../src/pairing";
@@ -33,7 +34,7 @@ function handlers(calls: string[]) {
 test("production router is closed by default and never dispatches dormant handlers", async () => {
   const calls: string[] = [], route = createProductionRouter({ handlers: handlers(calls) });
   for (const url of [PAIRING_HTTP_URL, TERMINAL_ENROLLMENT_URL, ADMISSION_HTTP_URL, PRIVATE_DAYS_HTTP_URL,
-    USAGE_CONSENT_HTTP_URL, LEADERBOARD_HTTP_URL, "https://usage.aicharts.io/unknown"]) {
+    USAGE_CONSENT_HTTP_URL, LEADERBOARD_HTTP_URL, STATS_TOTALS_URL, "https://usage.aicharts.io/unknown"]) {
     const response = await route(new Request(url, { method: "POST" }), environment(), context);
     expect(response.status).toBe(503);
     expect(await response.text()).toBe('{"error":"usage_service_unavailable"}');

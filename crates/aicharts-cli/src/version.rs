@@ -1,8 +1,19 @@
 //! Self-reported compiler metadata only; this is not release provenance.
 
+/// The Git commit the build script observed, when the tree was a checkout.
+/// It identifies a build; it does not verify that the tree was clean.
+pub(crate) const SOURCE_COMMIT: Option<&str> = option_env!("AICHARTS_SOURCE_COMMIT");
+
 pub(super) fn run(args: &[String]) -> Result<String, &'static str> {
     if args == ["--version"] {
-        return Ok(format!("aicharts {}\n", env!("CARGO_PKG_VERSION")));
+        return Ok(match SOURCE_COMMIT {
+            Some(commit) => format!(
+                "aicharts {} ({})\n",
+                env!("CARGO_PKG_VERSION"),
+                &commit[..12]
+            ),
+            None => format!("aicharts {}\n", env!("CARGO_PKG_VERSION")),
+        });
     }
     if args != ["--version", "--json"] {
         return Err("invalid_version_arguments");
@@ -14,7 +25,7 @@ pub(super) fn run(args: &[String]) -> Result<String, &'static str> {
         "build": {
             "os": std::env::consts::OS,
             "arch": std::env::consts::ARCH,
-            "sourceCommit": null,
+            "sourceCommit": SOURCE_COMMIT,
         },
         "provenance": "unverified",
     });
@@ -32,11 +43,16 @@ mod tests {
     }
 
     #[test]
-    fn text_is_exactly_the_cargo_version() {
-        assert_eq!(
-            run(&args(&["--version"])).unwrap(),
-            format!("aicharts {}\n", env!("CARGO_PKG_VERSION"))
-        );
+    fn text_is_the_cargo_version_plus_the_stamped_commit() {
+        let expected = match SOURCE_COMMIT {
+            Some(commit) => format!(
+                "aicharts {} ({})\n",
+                env!("CARGO_PKG_VERSION"),
+                &commit[..12]
+            ),
+            None => format!("aicharts {}\n", env!("CARGO_PKG_VERSION")),
+        };
+        assert_eq!(run(&args(&["--version"])).unwrap(), expected);
     }
 
     #[test]
@@ -51,7 +67,7 @@ mod tests {
                 "build": {
                     "os": std::env::consts::OS,
                     "arch": std::env::consts::ARCH,
-                    "sourceCommit": null,
+                    "sourceCommit": SOURCE_COMMIT,
                 },
                 "provenance": "unverified",
             })

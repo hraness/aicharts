@@ -115,10 +115,17 @@ fn version_text_needs_no_runtime_environment_or_initialized_state() {
     let fixture = Fixture::new();
     let output = fixture.run(&["--version"]);
     assert_eq!(output.status.code(), Some(0));
-    assert_eq!(
-        output.stdout,
-        format!("aicharts {}\n", env!("CARGO_PKG_VERSION")).as_bytes()
-    );
+    // The build script stamps the source commit when the tree is a checkout;
+    // the text form then carries its first twelve characters.
+    let expected = match option_env!("AICHARTS_SOURCE_COMMIT") {
+        Some(commit) => format!(
+            "aicharts {} ({})\n",
+            env!("CARGO_PKG_VERSION"),
+            &commit[..12]
+        ),
+        None => format!("aicharts {}\n", env!("CARGO_PKG_VERSION")),
+    };
+    assert_eq!(output.stdout, expected.as_bytes());
     assert!(output.stderr.is_empty());
     assert!(snapshot(&fixture.0).is_empty());
 }
@@ -149,7 +156,7 @@ fn json_identity_is_exact_and_cannot_be_qualified_by_runtime_environment() {
             "build": {
                 "os": std::env::consts::OS,
                 "arch": std::env::consts::ARCH,
-                "sourceCommit": null,
+                "sourceCommit": option_env!("AICHARTS_SOURCE_COMMIT"),
             },
             "provenance": "unverified",
         })
