@@ -50,7 +50,8 @@ async function settle(page: Page): Promise<void> {
 async function checkDormant(baseUrl: string): Promise<void> {
   const page = await fetch(`${baseUrl}/usage`), html = await page.text();
   invariant(page.status === 200, "Disabled usage page must remain available.");
-  for (const text of ["See what your AI agents actually use", "Set up tracking in three steps", "Private reads are paused; local reports still work.",
+  for (const text of ["See how many tokens your AI agents use", "Set up tracking in three steps", "Your online dashboard is paused. Local reports still work.",
+    "no packaged release yet", "Account sync runs on macOS only.",
     "aicharts stats --home", "No transcript uploads", 'href="/usage/details"', 'aria-current="page" href="/usage"',
     '<link rel="canonical" href="https://aicharts.io/usage"']) {
     invariant(html.includes(text), `The usage fallback must preserve local reporting, coverage and navigation: missing ${text}.`);
@@ -71,7 +72,7 @@ async function checkDormant(baseUrl: string): Promise<void> {
   }
   const leaderboard = await fetch(`${baseUrl}/leaderboard`), leaderboardHtml = await leaderboard.text();
   invariant(leaderboard.status === 200, "The public leaderboard page must remain available while reads are paused.");
-  for (const text of ["Public usage leaderboard", "Publishing paused", "Public publishing is not available yet",
+  for (const text of ["Public usage leaderboard", "Not live yet", "No public rankings yet",
     'aria-current="page" href="/leaderboard"', '<link rel="canonical" href="https://aicharts.io/leaderboard"']) {
     invariant(leaderboardHtml.includes(text), "The paused leaderboard must render its honest disabled state.");
   }

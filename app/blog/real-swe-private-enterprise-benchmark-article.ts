@@ -18,7 +18,7 @@ import {
 } from "@/lib/real-swe-snapshot-overlap";
 
 import {
-  BLOG_AUTHORSHIP_DISCLOSURE,
+  BLOG_SOURCE_NOTE,
   BLOG_SOURCES,
   callout,
   heading,
@@ -342,7 +342,7 @@ export function createRealSweArticle(
   const modelColumns = REAL_SWE.leaderboard.map(entry => entry.model);
 
   return {
-    authorshipDisclosure: BLOG_AUTHORSHIP_DISCLOSURE,
+    sourceNote: BLOG_SOURCE_NOTE,
     slug: REAL_SWE_ARTICLE_SLUG,
     title: "What Real-SWE’s 38.8% on private enterprise code measures",
     dek:

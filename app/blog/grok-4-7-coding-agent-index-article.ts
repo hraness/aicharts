@@ -29,7 +29,7 @@ import { comparableTaskCost, formatCostMultiple, formatPointGap } from "@/lib/mi
 import { spellCount } from "./real-swe-private-enterprise-benchmark-article";
 
 import {
-  BLOG_AUTHORSHIP_DISCLOSURE,
+  BLOG_SOURCE_NOTE,
   BLOG_SOURCES,
   callout,
   heading,
@@ -110,7 +110,7 @@ function checkedIntelligenceSnapshot(): ArtificialAnalysisIntelligenceV43Snapsho
   return parsed.value;
 }
 
-function utcCalendarDate(timestamp: string): string {
+export function utcCalendarDate(timestamp: string): string {
   const date = new Date(timestamp);
   if (!Number.isFinite(date.valueOf())) {
     throw new RangeError(`Invalid snapshot timestamp: ${timestamp}`);
@@ -118,7 +118,7 @@ function utcCalendarDate(timestamp: string): string {
   return date.toISOString().slice(0, 10);
 }
 
-function latestCalendarDate(...dates: readonly string[]): string {
+export function latestCalendarDate(...dates: readonly string[]): string {
   const [first, ...rest] = dates;
   if (first === undefined) throw new Error("At least one calendar date is required.");
   return rest.reduce((latest, current) => current > latest ? current : latest, first);
@@ -140,7 +140,7 @@ export function formatLongUtcDate(timestamp: string): string {
   return LONG_DATE.format(date);
 }
 
-function capitalize(value: string): string {
+export function capitalize(value: string): string {
   return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
@@ -148,7 +148,7 @@ function textCell(value: string): InlineContent {
   return [value];
 }
 
-function configurationLabel(record: CodingAgentRecord): string {
+export function configurationLabel(record: CodingAgentRecord): string {
   return `${record.seriesLabel} (${record.setting})`;
 }
 
@@ -171,11 +171,11 @@ function roundedScore(value: number): string {
   return String(Math.round(value));
 }
 
-function pluralConfigurations(count: number): string {
+export function pluralConfigurations(count: number): string {
   return count === 1 ? "one configuration" : `${spellCount(count)} configurations`;
 }
 
-function joinNames(names: readonly string[]): string {
+export function joinNames(names: readonly string[]): string {
   if (names.length <= 1) return names.join("");
   if (names.length === 2) return `${names[0]} and ${names[1]}`;
   return `${names.slice(0, -1).join(", ")}, and ${names[names.length - 1]}`;
@@ -620,7 +620,7 @@ export function createGrok47Article(
     : `Grok 4.7 scores ${codingScore} on the AI Charts coding-agent AA Index with Grok Build and ${intelligenceScore} on the Intelligence Index. See what each measures and where each sits on cost.`;
 
   return {
-    authorshipDisclosure: BLOG_AUTHORSHIP_DISCLOSURE,
+    sourceNote: BLOG_SOURCE_NOTE,
     slug: GROK_47_ARTICLE_SLUG,
     title,
     dek,

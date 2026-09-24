@@ -108,16 +108,16 @@ export function ModelReleaseRadars() {
         }))}
         note={(
           <>
-            Lab-owned release sources supply announcement candidates before an
-            aggregator may list every model. A newly observed canonical URL is
-            discovery evidence. Source timestamps and later edits are not official
-            release dates or benchmark scores; reviewed dates and scores keep their
-            own sources.
+            These links come from each lab&apos;s own release pages, so a model can
+            appear here before aggregators such as OpenRouter list it. The date shows
+            when AI Charts first found the page, which can differ from the official
+            release date. Official dates and benchmark scores come from their own
+            sources.
           </>
         )}
         summary={(
           <>
-            {FIRST_PARTY_RELEASE_SOURCE_SUMMARY.labCount} labs · {FIRST_PARTY_RELEASE_SOURCE_SUMMARY.sourceCount} first-party sources · reviewed URL evidence
+            {FIRST_PARTY_RELEASE_SOURCE_SUMMARY.labCount} labs · {FIRST_PARTY_RELEASE_SOURCE_SUMMARY.sourceCount} first-party sources
           </>
         )}
         title="New releases found at first-party sources"
@@ -147,14 +147,15 @@ export function ModelReleaseRadars() {
         })}
         note={(
           <>
-            Discovery is not a score. OpenRouter is the first-line model-identity
-            catalog, with Artificial Analysis used only when a model is unresolved;
-            when shown, early{" "}
+            Models listed here do not yet have a complete result on the Artificial
+            Analysis coding-agent chart. Where shown, an early{" "}
             <a href={DEEP_SWE_LEADERBOARD_URL}>DeepSWE v{DIRECT_DEEP_SWE_EVIDENCE.source.benchmarkVersion}</a>
-            {" "}pass@1 comes directly from DataCurve&apos;s mini-swe-agent leaderboard.
-            The direct result is harness-specific and stays off the Artificial
-            Analysis chart and cards. Partial Artificial Analysis observations can
-            appear there with missing metrics shown explicitly.
+            {" "}pass@1 comes straight from DataCurve&apos;s mini-swe-agent leaderboard,
+            matched to the model through OpenRouter&apos;s catalog, or through Artificial
+            Analysis when OpenRouter has no match. That result depends on DataCurve&apos;s
+            harness, so it stays off the Artificial Analysis chart and model cards.
+            Models with partial Artificial Analysis results can appear there, with
+            missing metrics marked.
           </>
         )}
         summary={(

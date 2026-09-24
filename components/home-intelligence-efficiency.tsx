@@ -125,17 +125,17 @@ export function HomeIntelligenceEfficiency({
             </p>
             <p>
               <strong>Cohort and frontier.</strong>{" "}
-              The source has {snapshot.selection.sourceRecordCount} records;{" "}
-              {snapshot.selection.measuredCompleteRecordCount} meet the non-estimated complete-measure rule,
-              and {cohort.length} also report a positive task cost. The curve connects configurations
-              offering the highest score at each resource budget; AI Charts derives it from this cohort.
-              No benchmark families are blended.
+              The source has {snapshot.selection.sourceRecordCount} records.{" "}
+              {snapshot.selection.measuredCompleteRecordCount} are current configurations with a non-estimated score,
+              output-token count, and cost breakdown, and {cohort.length} of those report a task cost above zero.
+              The curve connects the configurations with the highest score at each resource budget; AI Charts
+              draws it from this cohort. No benchmark families are blended.
             </p>
             <p>
               <strong>Index construction.</strong>{" "}
               The publisher’s {snapshot.benchmark.evaluationCount}-evaluation index weights{" "}
-              {methodologySummary(snapshot)}. These model-level output observations remain separate from
-              coding-agent configurations and total-token measurements.
+              {methodologySummary(snapshot)}. These model-level results are separate from the coding-agent
+              chart and its total-token counts.
             </p>
             <p>
               <strong>Source.</strong>{" "}

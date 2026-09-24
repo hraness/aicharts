@@ -191,6 +191,15 @@ export const BLOG_EDITORIAL_IMAGES = {
     "20260923T150512173Z-image-4365db6c-c83/receipt.json",
     "gateway_bc71b5ff0a604e44a40268303d9d329f.json",
   ),
+  "gpt-6-sol-coding-agent-index": image(
+    "gpt-6-sol-coding-agent-index",
+    "A matte ivory sphere rests on a charcoal ledge above two separate dark pools, each holding its own reflection of it.",
+    "One model measured twice: the coding-agent row in Codex and the Intelligence Index row are two readings of GPT-6 Sol, each on its own scale.",
+    "4f517cca6dafb7d1e54b01c8efee223f03f3c2d439af12a5d248c0ebe944b8a7",
+    "4e71b7f4f5783ea67e43acee8a19528645daddf74c4168abe787fd577c9a0a85",
+    "20260924T145006571Z-image-99c4db4e-93e/receipt.json",
+    "gateway_235223fbc0b94eba89ffd87e7b556768.json",
+  ),
 } as const satisfies EditorialImageRecord;
 
 export function blogEditorialImage<Slug extends BlogSlug>(

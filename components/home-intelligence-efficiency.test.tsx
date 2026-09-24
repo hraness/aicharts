@@ -221,8 +221,8 @@ describe("homepage Intelligence efficiency view", () => {
     expect(html.indexOf("intelligence-efficiency__method")).toBeLessThan(html.indexOf("Download JSON"));
     expect(html.match(/href="\/data\/artificial-analysis-intelligence.json"/gu)).toHaveLength(1);
     expect(html).toContain("The source has 127 records");
-    expect(html).toContain("127 meet the non-estimated complete-measure rule");
-    expect(html).toContain("127 also report a positive task cost");
+    expect(html).toContain("127 are current configurations with a non-estimated score");
+    expect(html).toContain("127 of those report a task cost above zero");
     expect(html).toContain("No benchmark families are blended");
     expect(html).toContain("9-evaluation index");
     expect(html).toContain("agents 34% · coding 24% · scientific 24% · general 18%");

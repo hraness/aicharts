@@ -55,5 +55,6 @@ describe("benchmark explorer URLs", () => {
     expect(formatAtlasScore(0.404, "score")).toBe("0.404");
     expect(formatAtlasScore(0.401, "score")).toBe("0.401");
     expect(formatAtlasScore(65.6529, "points", true)).toBe("65.6529");
+    expect(formatAtlasScore(6.96, "% WER")).toBe("6.96% WER");
   });
 });

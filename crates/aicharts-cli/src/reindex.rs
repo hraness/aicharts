@@ -99,7 +99,7 @@ mod unix {
     use crate::state::unix::{source_id, stamp, verify_path};
     use aicharts_core::{merge_collections, parse_reader};
     use aicharts_ledger::{Ledger, LedgerIdentity, ReadOnlyLedger, SourceScan, SourceStamp};
-    use aicharts_protocol::{encode, Batch, Id, Policy, Provider, Registry};
+    use aicharts_protocol::{encode, Batch, Id, Policy, Registry};
     use std::{
         collections::{BTreeMap, BTreeSet},
         fs,
@@ -208,7 +208,7 @@ mod unix {
                     source_id: source_id(checkpoint, &canonical, *provider),
                     stamp: before,
                     collection,
-                    allows_rewrite: *provider == Provider::Devin,
+                    allows_rewrite: true,
                 });
                 result.verification.push((path, canonical, before));
             }

@@ -12,7 +12,7 @@ import {
 import { formatRetrievedAt } from "@/lib/coding-agent-updates";
 
 import {
-  BLOG_AUTHORSHIP_DISCLOSURE,
+  BLOG_SOURCE_NOTE,
   BLOG_SOURCES,
   callout,
   heading,
@@ -299,7 +299,7 @@ export function createDevinFusionCostSavingArticle(
   const [astraLead, astraFusion, fableLead, fableFusion] = DEVIN_FUSION.headlinePoints;
 
   return {
-    authorshipDisclosure: BLOG_AUTHORSHIP_DISCLOSURE,
+    sourceNote: BLOG_SOURCE_NOTE,
     slug: DEVIN_FUSION_ARTICLE_SLUG,
     title: "What Devin Fusion’s 39% saving measures",
     dek:

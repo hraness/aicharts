@@ -12,7 +12,7 @@ import "@/styles/usage-leaderboard.css";
 export const metadata = createPublicSiteMetadata({
   ...searchSite,
   title: "AI usage leaderboard | AI Charts",
-  description: "An opt-in leaderboard for reported AI token usage across coding agents and AI clients, with coverage attached to every total.",
+  description: "An opt-in ranking of the AI tokens that accounts report from their coding agents and AI clients over 30 UTC days. Each entry shows its reporting window.",
 }, { canonicalPath: "/leaderboard" });
 
 export default async function LeaderboardPage() {

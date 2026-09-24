@@ -95,7 +95,7 @@ describe("benchmark dataset surface", () => {
   });
   test("publishes canonical, indexable page metadata", () => {
     expect(metadata).toMatchObject({
-      title: "Benchmark Data and Method | AI Charts",
+      title: "Benchmark data and method | AI Charts",
       description: BENCHMARK_DATA_DESCRIPTION,
       alternates: { canonical: "https://aicharts.io/data" },
       robots: INDEXABLE_ROBOTS,

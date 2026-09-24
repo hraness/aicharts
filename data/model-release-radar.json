@@ -3,7 +3,7 @@
   "source": {
     "method": "models-api",
     "name": "OpenRouter",
-    "retrievedAt": "2026-09-23T03:44:31.409Z",
+    "retrievedAt": "2026-09-23T23:45:58.249Z",
     "timestampMeaning": "source-added-at",
     "url": "https://openrouter.ai/api/v1/models?sort=newest"
   },
@@ -28,6 +28,18 @@
     "windowDays": 90
   },
   "observedListings": [
+    {
+      "id": "z-ai/glm-5.3-prime",
+      "model": "GLM 5.3 Prime",
+      "providerId": "z_ai",
+      "sourceAddedAt": "2026-09-23T21:40:51.000Z"
+    },
+    {
+      "id": "qwen/qwen3.8-max-prime",
+      "model": "Qwen3.8 Max Prime",
+      "providerId": "alibaba_cloud",
+      "sourceAddedAt": "2026-09-23T19:20:28.000Z"
+    },
     {
       "id": "openai/gpt-6-luna-pro",
       "model": "GPT-6 Luna Pro",
@@ -330,6 +342,46 @@
     }
   ],
   "releases": [
+    {
+      "capabilities": {
+        "inputModalities": [
+          "text"
+        ],
+        "outputModalities": [
+          "text"
+        ],
+        "supportsTools": true
+      },
+      "canonicalSlug": "z-ai/glm-5.3-prime-20260921",
+      "id": "z-ai/glm-5.3-prime",
+      "model": "GLM 5.3 Prime",
+      "modelUrl": "https://openrouter.ai/z-ai/glm-5.3-prime",
+      "providerId": "z_ai",
+      "providerName": "Z.ai",
+      "sourceAddedAt": "2026-09-23T21:40:51.000Z",
+      "status": "awaiting-benchmark"
+    },
+    {
+      "capabilities": {
+        "inputModalities": [
+          "image",
+          "text",
+          "video"
+        ],
+        "outputModalities": [
+          "text"
+        ],
+        "supportsTools": true
+      },
+      "canonicalSlug": "qwen/qwen3.8-max-prime-20260923",
+      "id": "qwen/qwen3.8-max-prime",
+      "model": "Qwen3.8 Max Prime",
+      "modelUrl": "https://openrouter.ai/qwen/qwen3.8-max-prime",
+      "providerId": "alibaba_cloud",
+      "providerName": "Alibaba Cloud",
+      "sourceAddedAt": "2026-09-23T19:20:28.000Z",
+      "status": "awaiting-benchmark"
+    },
     {
       "capabilities": {
         "inputModalities": [

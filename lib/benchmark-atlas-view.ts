@@ -41,7 +41,9 @@ export const ATLAS_CATEGORY_LABELS: Readonly<Record<BenchmarkAtlasCategory | "al
 
 export function formatAtlasScore(value: number, unit: string, exact = false): string {
   const formatted = new Intl.NumberFormat("en-US", { maximumFractionDigits: exact ? 8 : Math.abs(value) < 1 ? 4 : 2 }).format(value);
-  return unit === "%" ? `${formatted}%` : `${formatted}${unit && unit !== "points" && unit !== "score" ? ` ${unit}` : ""}`;
+  // "% WER" reads "6.96% WER": the percent sign stays attached to the number.
+  if (unit === "%" || unit.startsWith("% ")) return `${formatted}${unit}`;
+  return `${formatted}${unit && unit !== "points" && unit !== "score" ? ` ${unit}` : ""}`;
 }
 
 export function formatAtlasCost(value: number | null): string {

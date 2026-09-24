@@ -22,7 +22,7 @@ import {
 } from "@/lib/open-weight-coding-agents";
 
 import {
-  BLOG_AUTHORSHIP_DISCLOSURE,
+  BLOG_SOURCE_NOTE,
   BLOG_SOURCES,
   callout,
   heading,
@@ -159,7 +159,7 @@ export function createOpenModelsCodingAgentsArticle(
   const firstOpenFrontier = openFrontier[0];
 
   return {
-    authorshipDisclosure: BLOG_AUTHORSHIP_DISCLOSURE,
+    sourceNote: BLOG_SOURCE_NOTE,
     slug: OPEN_MODELS_ARTICLE_SLUG,
     title: "Open models closed SemiAnalysis composites, not this table",
     dek:

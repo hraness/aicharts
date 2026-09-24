@@ -45,8 +45,8 @@ export function BlogIndex({
         data={[
           blogCollectionJsonLd(imageForSlug),
           breadcrumbJsonLd([
-            { name: "Home", path: "/" },
-            { name: "Blog", path: "/blog" },
+            { name: "AI Charts", path: "/" },
+            { name: "Notes", path: "/blog" },
           ]),
         ]}
         id="aicharts-blog-collection-structured-data"

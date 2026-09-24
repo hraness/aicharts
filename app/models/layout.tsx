@@ -20,7 +20,7 @@ export default function ModelsLayout({ children }: Readonly<{ children: ReactNod
       <aside aria-label="Model card resources" className="model-cards-footer">
         <p>aicharts.io</p>
         <nav aria-label="Model card links" className="model-cards-footer__links">
-          <Link href="/data">Data and method</Link>
+          <Link href="/data">Data</Link>
         </nav>
       </aside>
     </div>

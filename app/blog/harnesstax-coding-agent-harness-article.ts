@@ -4,7 +4,7 @@ import { codingAgentDatasetModifiedAt } from "@/lib/coding-agent-dataset";
 import { formatRetrievedAt } from "@/lib/coding-agent-updates";
 
 import {
-  BLOG_AUTHORSHIP_DISCLOSURE,
+  BLOG_SOURCE_NOTE,
   BLOG_SOURCES,
   callout,
   heading,
@@ -330,7 +330,7 @@ export function createHarnessTaxArticle(
   const storesCodex = snapshotAgents.has("Codex");
 
   return {
-    authorshipDisclosure: BLOG_AUTHORSHIP_DISCLOSURE,
+    sourceNote: BLOG_SOURCE_NOTE,
     slug: HARNESS_TAX_ARTICLE_SLUG,
     title: "What HarnessTax’s same-model cost gap measures",
     dek:

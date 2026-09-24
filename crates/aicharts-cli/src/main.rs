@@ -127,6 +127,8 @@ contain exactly 32 private random bytes.
 keygen creates a new mode-0600 file on Unix and never overwrites an existing file.
 Persistent commands are Unix-only and require explicit initialization. collect
 rescans changed sources from the beginning; unchanged metadata skips parsing.
+Unstable or unfinished sources are deferred whole until a later pass; stable
+siblings can commit. sourcesDeferred counts these without advancing their state.
 inspect diagnoses legacy attribution conflicts without changing the ledger.
 inspect --export-dir creates an exact private numeric recovery copy, preserving
 source, outbox and sender facts; retain original keys and enrollment anchors.
@@ -157,9 +159,10 @@ pass for smoke/tests. --json requires a preceding --once. The default waits 15
 minutes after each pass. --complete-prefix selects collect-prefix for an already
 prefix-enabled ledger; it defers stable unfinished tails and never migrates state.
 Omitting it retains collect. A ledger mode mismatch fails before reading sources.
-It retries only bounded transient ledger busy/change results (three retries by default;
---retry-attempts accepts 0..8) before returning a fixed error. It never
-uploads or installs an OS service.
+It retries only transient ledger busy/change results immediately (three retries by
+default; --retry-attempts accepts 0..8). Exhausted contention or changing source
+snapshots wait the normal interval; fixed errors stop. --once returns remaining
+errors. It never uploads or installs an OS service.
 sync performs one supervised collection and bounded upload pass on an already
 enrolled macOS installation. It requires an existing prefix-enabled sender ledger;
 it never initializes, migrates, enrolls or installs a service. See sync --help.

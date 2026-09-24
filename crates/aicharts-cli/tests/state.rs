@@ -240,23 +240,18 @@ fn codex_append_recomputes_deltas_without_recounting_the_initial_request() {
 }
 
 #[test]
-fn partial_tail_and_malformed_multisource_import_leave_all_state_unchanged() {
+fn partial_tail_is_deferred_and_stable_malformed_input_remains_fatal() {
     let f = Fixture::new();
     f.init();
     fs::write(f.0.join("source.jsonl"), source("request_a", 20)).unwrap();
     f.collect();
     let before = f.status();
     f.append("{\"type\":\"assistant\"");
-    let partial = f.failed(&[
-        "collect",
-        "--state-dir",
-        "state",
-        "--key-file",
-        "private.key",
-        "--claude",
-        "source.jsonl",
-    ]);
-    assert_eq!(partial, "aicharts: source_partial_tail\n");
+    let partial = f.collect();
+    assert_eq!(partial["sourcesDeferred"], 1);
+    assert_eq!(partial["sourcesUpdated"], 0);
+    assert_eq!(partial["sourcesSkipped"], 0);
+    assert_eq!(partial["sourcesConflicted"], 0);
     assert_eq!(f.status(), before);
     fs::write(f.0.join("new.jsonl"), source("request_b", 30)).unwrap();
     fs::write(f.0.join("bad.jsonl"), format!("{{\"{PRIVATE}\":\n")).unwrap();
@@ -343,7 +338,9 @@ fn source_rotation_and_truncation_do_not_reset_prior_usage() {
         } else {
             fs::write(f.0.join("source.jsonl"), source("request_a", 20)).unwrap();
         }
-        f.failed(&[
+        // Rotation and truncation are legitimate file rewrites: retained
+        // history is absorbed, not rejected, so prior usage cannot reset.
+        let result = f.json(&[
             "collect",
             "--state-dir",
             "state",
@@ -351,8 +348,14 @@ fn source_rotation_and_truncation_do_not_reset_prior_usage() {
             "private.key",
             "--claude",
             "source.jsonl",
+            "--json",
         ]);
-        assert_eq!(f.status(), before);
+        assert_eq!(result["sourcesConflicted"], 0);
+        let after = f.status();
+        assert_eq!(after["sources"], before["sources"]);
+        assert_eq!(after["usageOccurrences"], before["usageOccurrences"]);
+        assert_eq!(after["pendingRecords"], before["pendingRecords"]);
+        assert_eq!(after["tokens"], before["tokens"]);
     }
 }
 
@@ -362,13 +365,14 @@ fn rewritten_history_cannot_disappear_even_when_the_file_grows() {
     f.init();
     fs::write(f.0.join("source.jsonl"), source("request_a", 20)).unwrap();
     f.collect();
-    let before = f.status();
     fs::write(
         f.0.join("source.jsonl"),
         source("request_b", 30) + &source("request_c", 40),
     )
     .unwrap();
-    f.failed(&[
+    // The rewrite dropped request_a entirely; its retained frame is absorbed
+    // while the new occurrences merge in — history cannot disappear.
+    f.json(&[
         "collect",
         "--state-dir",
         "state",
@@ -376,8 +380,46 @@ fn rewritten_history_cannot_disappear_even_when_the_file_grows() {
         "private.key",
         "--claude",
         "source.jsonl",
+        "--json",
     ]);
-    assert_eq!(f.status(), before);
+    let after = f.status();
+    assert_eq!(after["usageOccurrences"], 3);
+    assert_eq!(after["pendingRecords"], 3);
+    assert_eq!(after["tokens"], "540");
+}
+
+#[test]
+fn irreconcilable_source_is_skipped_without_stalling_the_wave() {
+    let f = Fixture::new();
+    f.init();
+    fs::write(f.0.join("source.jsonl"), source("request_a", 20)).unwrap();
+    fs::write(f.0.join("other.jsonl"), source("request_b", 30)).unwrap();
+    f.collect();
+    // Rewrite request_a with mutually regressed and advanced counters — an
+    // irreconcilable measurement, not a mergeable dominance rewrite.
+    fs::write(
+        f.0.join("source.jsonl"),
+        serde_json::json!({"type":"assistant","requestId":"request_a","sessionId":"session_a","timestamp":"2026-09-10T10:00:00Z",
+            "cwd":PRIVATE,"message":{"id":"message_a","content":[{"type":"text","text":PRIVATE}],
+            "usage":{"input_tokens":50,"output_tokens":999,"cache_read_input_tokens":50,"cache_creation_input_tokens":0}}}).to_string()+"\n",
+    )
+    .unwrap();
+    let result = f.json(&[
+        "collect",
+        "--state-dir",
+        "state",
+        "--key-file",
+        "private.key",
+        "--claude",
+        "source.jsonl",
+        "--claude",
+        "other.jsonl",
+        "--json",
+    ]);
+    assert_eq!(result["sourcesConflicted"], 1);
+    let after = f.status();
+    assert_eq!(after["usageOccurrences"], 2);
+    assert_eq!(after["tokens"], "350");
 }
 
 #[test]

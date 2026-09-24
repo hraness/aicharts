@@ -66,8 +66,8 @@ export async function BlogArticlePage({
         data={[
           blogArticleJsonLd(article, editorialImage ?? null),
           breadcrumbJsonLd([
-            { name: "Home", path: "/" },
-            { name: "Blog", path: "/blog" },
+            { name: "AI Charts", path: "/" },
+            { name: "Notes", path: "/blog" },
             { name: article.title, path },
           ]),
         ]}
@@ -83,14 +83,14 @@ export async function BlogArticlePage({
           className="plain-publication__breadcrumbs"
           items={[
             { href: "/", id: "aicharts", label: "AI Charts" },
-            { href: "/blog", id: "blog", label: "Blog" },
+            { href: "/blog", id: "blog", label: "Notes" },
             { id: article.slug, label: article.title },
           ]}
         />
         <h1>{article.title}</h1>
         <p className="plain-publication__article-dek">{article.dek}</p>
         <p className="plain-publication__article-meta">
-          <span>By AI Charts · AI-assisted</span>
+          <span>By AI Charts</span>
           <span aria-hidden="true"> · </span>
           <span>Published </span>
           <time dateTime={article.publishedAt}>
@@ -187,7 +187,7 @@ export async function BlogArticlePage({
           )}
 
           <p className="plain-publication__disclosure">
-            {article.authorshipDisclosure} {" "}
+            {article.sourceNote} {" "}
             Reported results apply to the named source, workload,
             configuration, and observation date. They do not establish
             performance on every task or product.

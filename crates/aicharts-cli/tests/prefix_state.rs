@@ -225,7 +225,7 @@ fn daemon_mode_is_explicit_before_source_io_and_never_migrates_state() {
 }
 
 #[test]
-fn daemon_default_keeps_snapshot_mode_and_refuses_unfinished_tail() {
+fn daemon_default_keeps_snapshot_mode_and_defers_whole_unfinished_source() {
     let f = Fixture::new();
     f.write(source("request_a", 20));
     let first = f.daemon(false, &["--claude", SOURCE]);
@@ -234,7 +234,10 @@ fn daemon_default_keeps_snapshot_mode_and_refuses_unfinished_tail() {
     assert_eq!(first["tokens"], "170");
     let before = f.state_bytes();
     f.append(b"{");
-    f.fail_daemon(false, &["--claude", SOURCE], "source_partial_tail");
+    let deferred = f.daemon(false, &["--claude", SOURCE]);
+    assert_eq!(deferred["sourcesDeferred"], 1);
+    assert_eq!(deferred["sourcesUpdated"], 0);
+    assert!(deferred.get("sourcesWithDeferredTail").is_none());
     assert_eq!(f.state_bytes(), before);
 }
 
@@ -463,7 +466,9 @@ fn command_mode_and_option_guards_run_before_source_reads_without_changing_legac
     assert_eq!(legacy["scanMode"], "full_changed_source_snapshot");
     assert!(legacy.get("sourcesWithDeferredTail").is_none());
     f.append(b"{");
-    f.fail_collect("collect", "source_partial_tail");
+    let deferred = f.collect("collect", &[]);
+    assert_eq!(deferred["sourcesDeferred"], 1);
+    assert_eq!(deferred["sourcesUpdated"], 0);
     f.enable(1);
     let before = f.state_bytes();
     f.fail(

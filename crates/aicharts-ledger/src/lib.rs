@@ -286,12 +286,21 @@ impl Ledger {
         expected_revision: u64,
         scans: Vec<SourceScan>,
     ) -> Result<ImportReport> {
+        self.commit_scans_ref(expected_revision, &scans)
+    }
+    /// Borrowed-scan commit so callers can retry a rejected wave per source
+    /// without cloning its collections.
+    pub fn commit_scans_ref(
+        &mut self,
+        expected_revision: u64,
+        scans: &[SourceScan],
+    ) -> Result<ImportReport> {
         self.commit_with(expected_revision, scans, || Ok(()))
     }
     fn commit_with<F: FnOnce() -> Result<()>>(
         &mut self,
         expected_revision: u64,
-        scans: Vec<SourceScan>,
+        scans: &[SourceScan],
         before_commit: F,
     ) -> Result<ImportReport> {
         self.commit_mode_with(expected_revision, scans, None, before_commit)
@@ -299,7 +308,7 @@ impl Ledger {
     fn commit_mode_with<F: FnOnce() -> Result<()>>(
         &mut self,
         expected_revision: u64,
-        scans: Vec<SourceScan>,
+        scans: &[SourceScan],
         prefixes: Option<BTreeMap<SourceId, prefix::Update>>,
         before_commit: F,
     ) -> Result<ImportReport> {
@@ -309,7 +318,7 @@ impl Ledger {
         }
         let mut seen = BTreeSet::new();
         let mut count = 0usize;
-        for scan in &scans {
+        for scan in scans {
             if scan.source_id == [0; 32] || !seen.insert(scan.source_id) {
                 return Err(Error::InvalidMeasurement);
             }
@@ -389,14 +398,17 @@ impl Ledger {
             if let Some((old, _)) = &old_source {
                 let old = SourceStamp::decode(old)?;
                 let minimum_bytes = previous_prefix.map_or(old.bytes, |prefix| prefix.bytes);
-                if old.device != scan.stamp.device
-                    || (!scan.allows_rewrite
-                        && (old.inode != scan.stamp.inode || minimum_bytes > scan.stamp.bytes))
+                // Rewrite-tolerant sources may be replaced wholesale — across
+                // devices, inodes and sizes — so only their content decides.
+                if !scan.allows_rewrite
+                    && (old.device != scan.stamp.device
+                        || old.inode != scan.stamp.inode
+                        || minimum_bytes > scan.stamp.bytes)
                 {
                     return Err(Error::SourceHistoryChanged);
                 }
             }
-            let mut records = collection_frames(scan.collection)?;
+            let mut records = collection_frames(&scan.collection)?;
             let mut old_statement = tx.prepare(&format!(
                 "SELECT id,frame FROM source_usage WHERE source_id=?1 LIMIT {}",
                 MAX_OCCURRENCES + 1
@@ -411,7 +423,14 @@ impl Ledger {
                 let id: Vec<u8> = row.get(0)?;
                 let id: Id = id.try_into().map_err(|_| Error::InvalidState)?;
                 let old: Vec<u8> = row.get(1)?;
-                let new = records.get(&id).ok_or(Error::SourceHistoryChanged)?;
+                let Some(new) = records.get(&id) else {
+                    // A rewrite may legitimately drop events; the retained row
+                    // keeps the dominant measurement so history cannot shrink.
+                    if scan.allows_rewrite {
+                        continue;
+                    }
+                    return Err(Error::SourceHistoryChanged);
+                };
                 // Whole-document sources replace their snapshot wholesale; a
                 // revision only has to merge without conflict. The reconciled
                 // frame becomes this source's stored state so the status audit
@@ -950,24 +969,24 @@ fn checked_frame(frame: &[u8]) -> Result<Batch> {
     }
     Ok(batch)
 }
-fn collection_frames(collection: Collection) -> Result<BTreeMap<Id, Vec<u8>>> {
+fn collection_frames(collection: &Collection) -> Result<BTreeMap<Id, Vec<u8>>> {
     let mut result = BTreeMap::new();
     let registry = Registry {
         revision: 1,
         models: vec![],
     };
-    for batch in collection.batches {
+    for batch in &collection.batches {
         if batch.registry_revision != 1 || !batch.prompts.is_empty() || !batch.intervals.is_empty()
         {
             return Err(Error::InvalidMeasurement);
         }
-        for usage in batch.usage {
+        for usage in &batch.usage {
             let id = usage.id;
             let frame = encode(
                 &Batch {
                     utc_day: batch.utc_day,
                     registry_revision: 1,
-                    usage: vec![usage],
+                    usage: vec![usage.clone()],
                     prompts: vec![],
                     intervals: vec![],
                 },
@@ -1001,7 +1020,7 @@ fn merge_frames(old: &[u8], new: &[u8]) -> Result<Vec<u8>> {
         },
     ])
     .map_err(|_| Error::InvalidMeasurement)?;
-    collection_frames(merged)?
+    collection_frames(&merged)?
         .into_values()
         .next()
         .ok_or(Error::InvalidMeasurement)

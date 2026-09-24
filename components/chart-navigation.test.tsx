@@ -15,11 +15,10 @@ describe("chart page footer nav", () => {
     expect(html).toContain('class="chart-page-footer"');
     expect(html).toContain('aria-label="Chart resources"');
     expect(html).toContain('href="/data"');
-    expect(html).toContain("Data and methodology");
-    expect(html).toContain('href="/models"');
-    expect(html).toContain("Model cards");
-    expect(html).toContain('href="/blog"');
-    expect(html).toContain("Benchmark notes");
+    // One label per destination, matching the site header and 404 links.
+    expect(html).toContain('href="/data">Data</a>');
+    expect(html).toContain('href="/models">Models</a>');
+    expect(html).toContain('href="/blog">Notes</a>');
     expect(html).toContain('href="https://github.com/hraness/aicharts"');
     expect(html).toContain("Open source");
     expect(html).not.toContain("chart-page-footer-stack");
@@ -37,7 +36,7 @@ describe("chart page footer nav", () => {
       expect(html).toContain(`href="/benchmarks?task=${link.task}#explore">${link.name}</a>`);
       expect(html).not.toContain(link.description);
     }
-    expect(html).toContain('href="/data">Data and methodology</a>');
+    expect(html).toContain('href="/data">Data</a>');
     expect(html).not.toContain("task-discovery");
     expect(html).not.toContain("/icons/task-");
     expect(html).not.toContain("<strong>");

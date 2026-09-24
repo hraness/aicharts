@@ -11,7 +11,7 @@ import { formatSnapshotScore } from "@/lib/coding-agent-snapshot-rows";
 import { formatRetrievedAt } from "@/lib/coding-agent-updates";
 
 import {
-  BLOG_AUTHORSHIP_DISCLOSURE,
+  BLOG_SOURCE_NOTE,
   BLOG_SOURCES,
   callout,
   heading,
@@ -113,7 +113,7 @@ export function createCodingAgentScoreHoldoutsArticle(
   );
 
   return {
-    authorshipDisclosure: BLOG_AUTHORSHIP_DISCLOSURE,
+    sourceNote: BLOG_SOURCE_NOTE,
     slug: HOLDOUT_ARTICLE_SLUG,
     title: "Why a coding-agent high score still needs a holdout",
     dek:
