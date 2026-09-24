@@ -216,14 +216,14 @@
   .usage-stats-source { gap: .35rem 1rem; }
   .usage-stats-source a { margin-inline-start: 0; }
   .usage-stats__toolbar { gap: .6rem; }
-  .usage-stats__mobile-controls { align-items: end; display: flex; gap: .75rem; inline-size: 100%; }
-  .usage-stats__mobile-controls label { flex: 1; }
+  .usage-stats__mobile-controls { align-items: end; display: flex; flex-wrap: wrap; gap: .75rem; inline-size: 100%; }
+  .usage-stats__mobile-controls label { flex: 1 1 9rem; min-inline-size: 0; }
   .usage-stats__desktop-periods, .usage-stats__filters[data-expanded="false"] { display: none; }
   .usage-stats__filters { inline-size: 100%; }
   .usage-stats__filters label { flex: 1 1 35%; min-inline-size: 0; }
   .usage-stats select { inline-size: 100%; max-inline-size: none; }
   .usage-stats__presets button { padding-inline: .6rem; }
-  .usage-stats__custom label { flex: 1 1 40%; min-inline-size: 0; }
+  .usage-stats__custom label { flex: 1 1 10rem; min-inline-size: 0; }
   .usage-stats__custom input { inline-size: 100%; }
   .usage-stats__overview { display: grid; }
   .usage-stats__range { order: 0; }

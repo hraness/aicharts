@@ -90,6 +90,7 @@
   box-shadow: var(--hraness-material-inset);
   caret-color: var(--hraness-material-focus);
   font-size: var(--text-body);
+  font-weight: 400;
   line-height: 1.5;
 }
 [data-hraness-material="lantern"] :is(

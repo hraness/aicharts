@@ -19,11 +19,15 @@
   flex-wrap: wrap;
   gap: 12px 24px;
 }
-.calculator-mode { display: grid; gap: .4rem; justify-items: start; }
+.calculator-mode { display: grid; gap: .4rem; justify-items: start; max-width: 100%; min-width: 0; }
 .calculator-mode__label { color: var(--muted); font-size: .875rem; }
-.calculator-mode .ui-segmented-control { display: inline-flex; gap: 2px; padding: 3px; }
-/* Calculator modes are settings, not chart instruments: readable text and comfortable targets. */
+/* Calculator modes are settings, not chart instruments: readable text, comfortable targets,
+ * and options that wrap onto a second row instead of leaving the viewport on phones. */
+.calculator-mode .ui-segmented-control { display: inline-flex; flex-wrap: wrap; gap: 2px; max-width: 100%; padding: 3px; }
 .calculator-mode .chart-segmented-control .ui-segmented-control__item { font-size: .8125rem; min-height: 2.25rem; padding: .4rem .75rem; }
+@media (hover: none), (pointer: coarse) {
+  .calculator-mode .chart-segmented-control .ui-segmented-control__item { min-height: var(--interactive-target-min); }
+}
 .calculator-profile-select { --option-picker-accent: var(--brand-key); width: 250px; max-width: 100%; }
 
 .calculator-chart { padding-block: 22px 10px; }
