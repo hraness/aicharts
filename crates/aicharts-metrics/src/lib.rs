@@ -42,6 +42,8 @@ pub enum Error {
 #[cfg(test)]
 mod decimal_tests;
 #[cfg(test)]
+mod vectors_tests;
+#[cfg(test)]
 mod tests;
 
 #[cfg(kani)]
