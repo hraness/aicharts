@@ -3,6 +3,7 @@ import { PUBLIC_BLOG_SLUGS } from "@/lib/public-analytics-routes";
 import { createAaIndexCostArticle } from "./aa-index-cost-article";
 import { createCodingAgentScoreHoldoutsArticle } from "./coding-agent-score-holdouts-article";
 import { createDevinFusionCostSavingArticle } from "./devin-fusion-cost-saving-article";
+import { createGpt6SolArticle } from "./gpt-6-sol-coding-agent-index-article";
 import { createGrok47Article } from "./grok-4-7-coding-agent-index-article";
 import { createHarnessDesignArticle } from "./harness-design-coding-agents-article";
 import { createHarnessTaxArticle } from "./harnesstax-coding-agent-harness-article";
@@ -83,7 +84,7 @@ export const BLOG_SOURCES = {
   },
   artificialAnalysisCodingAgents: {
     note:
-      "The public coding-agents comparison is the upstream source of the checked AI Charts snapshot. Model names, agent harnesses, settings, AA Index scores, and mean API costs are Artificial Analysis measurements.",
+      "The public coding-agents comparison is the source of the AI Charts coding-agent snapshot. Model names, agent harnesses, settings, AA Index scores, and mean API costs are Artificial Analysis measurements.",
     publication: "Artificial Analysis",
     title: "Coding Agents",
     url: "https://artificialanalysis.ai/agents/coding-agents/",
@@ -243,7 +244,7 @@ export const BLOG_SOURCES = {
   },
   artificialAnalysisIntelligenceIndex: {
     note:
-      "The public models leaderboard is the upstream source of the checked AI Charts Intelligence Index snapshot. Scores, per-task costs, and output tokens are Artificial Analysis measurements under Intelligence Index v4.3.2.",
+      "The public models leaderboard is the source of the AI Charts Intelligence Index snapshot. Scores, per-task costs, and output tokens are Artificial Analysis measurements under Intelligence Index v4.3.2.",
     publication: "Artificial Analysis",
     title: "LLM Leaderboard",
     url: "https://artificialanalysis.ai/models",
@@ -271,6 +272,30 @@ export const BLOG_SOURCES = {
     publication: "SpaceXAI",
     title: "Introducing Grok 4.7",
     url: "https://x.ai/news/grok-4-7",
+    year: 2026,
+  },
+  artificialAnalysisGpt6Sol: {
+    note:
+      "Cited for the September 22, 2026 launch note’s summary line, the 57 Coding Agent Index score for GPT-6 Sol (max) in Codex and its two-point step over GPT-5.6 Sol (max), the Terminal-Bench 4.0 and SWE-Atlas-QnA component gains, the Pareto-frontier and cost statements, the $1.06 against $1.99 Intelligence Index cost per task, the 31k against 29k output tokens per task, the GDPval-AA v2.1 regression, and the AA-Omniscience hallucination and attempt rates.",
+    publication: "Artificial Analysis",
+    title: "GPT-6 Sol and Luna push the cost efficiency frontier",
+    url: "https://artificialanalysis.ai/articles/gpt-6-sol-and-luna-push-the-cost-efficiency-frontier",
+    year: 2026,
+  },
+  artificialAnalysisGpt6SolModel: {
+    note:
+      "Cited, from the page captured September 24, 2026 UTC, for the 48 index score, the proprietary label, the September 22, 2026 release date, the $2.00 and $10.00 per million token prices with a 90% cache discount, the $1.06 cost per index task, the 77M output tokens across the index, and the 872k token context window.",
+    publication: "Artificial Analysis",
+    title: "GPT-6 Sol (max) - Intelligence, Performance & Price Analysis",
+    url: "https://artificialanalysis.ai/models/gpt-6-sol",
+    year: 2026,
+  },
+  openAiGpt6SolLuna: {
+    note:
+      "Cited for the September 22, 2026 release, the ChatGPT Work and Codex availability, the $4 to $2 and $20 to $10 per million token price change and OpenAI’s description of it, and the vendor-run DeepSWE v1.1 result and other vendor benchmarks that this site does not chart.",
+    publication: "OpenAI",
+    title: "Introducing GPT-6 Sol and Luna",
+    url: "https://openai.com/index/introducing-gpt-6-sol-and-luna/",
     year: 2026,
   },
 } as const satisfies Record<string, BlogSource>;
@@ -439,6 +464,7 @@ const mirrorCodeArticle = {
 } as const satisfies BlogArticle;
 
 export const blogArticles = [
+  createGpt6SolArticle(),
   createGrok47Article(),
   createMimoV26Article(),
   createHarnessDesignArticle(),

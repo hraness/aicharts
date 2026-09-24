@@ -22,6 +22,10 @@ import {
   mimoFrontierPosition,
   mimoScoreNeighbors,
 } from "@/lib/mimo-v2-6-pro-frontier";
+import {
+  solCodingAgentPlacement,
+  solIntelligencePlacement,
+} from "@/lib/gpt-6-sol-placement";
 import { PUBLIC_BLOG_SLUGS } from "@/lib/public-analytics-routes";
 import {
   currentCodingAgentBenchmarkLeaders,
@@ -98,6 +102,11 @@ import {
   harnessTaxAlternativeWins,
   largestSameModelCostRatio,
 } from "./harnesstax-coding-agent-harness-article";
+import {
+  GPT_6_SOL,
+  GPT_6_SOL_ARTICLE_PUBLISHED_AT,
+  createGpt6SolArticle,
+} from "./gpt-6-sol-coding-agent-index-article";
 import {
   GROK_47,
   GROK_47_ARTICLE_PUBLISHED_AT,
@@ -217,7 +226,11 @@ describe("AI Charts benchmark notes", () => {
       expect(articleToMarkdown(article)).toContain(BLOG_SOURCE_NOTE);
       // AI-drafting disclosure appears only on hraness.com (hraness/.github STYLE.md).
       expect(articleToMarkdown(article)).not.toMatch(/AI-assisted|Prepared with AI assistance/u);
-      if (article.slug === "grok-4-7-coding-agent-index") {
+      if (article.slug === "gpt-6-sol-coding-agent-index") {
+        expect(article.publishedAt).toBe(GPT_6_SOL_ARTICLE_PUBLISHED_AT);
+        expect(article.updatedAt >= article.publishedAt).toBeTrue();
+        expect(articleToMarkdown(article)).toContain("captured September 24, 2026 UTC");
+      } else if (article.slug === "grok-4-7-coding-agent-index") {
         expect(article.publishedAt).toBe(GROK_47_ARTICLE_PUBLISHED_AT);
         expect(article.updatedAt >= article.publishedAt).toBeTrue();
         expect(articleToMarkdown(article)).toContain("captured September 23, 2026 UTC");
@@ -822,6 +835,251 @@ describe("AI Charts benchmark notes", () => {
     });
     expect(laterRetrieval.updatedAt).toBe("2026-12-01");
     expect(articleToMarkdown(laterRetrieval)).toContain("Dec 1, 2026, 8:00 AM UTC");
+  });
+
+  test("places GPT-6 Sol on both checked charts from the same rows the charts plot", () => {
+    const codingParsed = parseCodingAgentSnapshot(codingAgentData);
+    if (!codingParsed.ok) throw codingParsed.error;
+    const intelligenceParsed = parseArtificialAnalysisIntelligenceV43Snapshot(intelligenceData);
+    if (!intelligenceParsed.ok) throw intelligenceParsed.error;
+    const article = getBlogArticle("gpt-6-sol-coding-agent-index");
+    expect(article).toBeDefined();
+    if (article === undefined) return;
+
+    const markup = renderToStaticMarkup(
+      createElement(ArticleBody, { blocks: article.body }),
+    );
+    const markdown = articleToMarkdown(article);
+
+    expect(article.section).toBe("AI model benchmarks");
+    expect(article.sourceIds).toEqual([
+      "artificialAnalysisCodingAgents",
+      "artificialAnalysisIntelligenceIndex",
+      "artificialAnalysisGpt6Sol",
+      "artificialAnalysisGpt6SolModel",
+      "openAiGpt6SolLuna",
+    ]);
+    expect(blogEditorialImage(article.slug)?.slug).toBe(article.slug);
+    for (const sourceId of article.sourceIds) {
+      expect(markup).toContain(`href="${BLOG_SOURCES[sourceId].url}"`);
+    }
+    expect(article.nextStep?.links.map(link => link.href))
+      .toEqual(["/coding", "/#intelligence-index", "/models/openai/gpt-6-sol/index"]);
+    expect(article.relatedSlugs).toContain("grok-4-7-coding-agent-index");
+    expect(markup).toContain(formatRetrievedAt(codingParsed.value.source.retrievedAt));
+    expect(markup).toContain(formatRetrievedAt(intelligenceParsed.value.source.retrievedAt));
+    expect(markdown).toContain(intelligenceParsed.value.benchmark.version);
+    expect(markdown).toContain(GPT_6_SOL.openAi.priceCutClaim);
+    expect(markdown).toContain(GPT_6_SOL.artificialAnalysis.codingFrontierClaim);
+    expect(markdown).toContain(GPT_6_SOL.artificialAnalysis.summaryLine);
+    expect(markdown).toContain(GPT_6_SOL.artificialAnalysis.indexCostClaim);
+    expect(markdown).toContain(GPT_6_SOL.artificialAnalysis.indexCostDriver);
+    expect(markdown).toContain(GPT_6_SOL.artificialAnalysis.gdpvalRegression);
+    expect(markdown).toContain(GPT_6_SOL.artificialAnalysis.hallucinationClaim);
+    expect(markdown).toContain(GPT_6_SOL.openAi.vendorDeepSwe);
+    // OpenAI’s vendor table is described once, never restated as chart evidence.
+    expect(markdown).not.toContain("CursorBench");
+    expect(markdown).not.toContain("33.2%");
+    expect(markdown).not.toContain("—");
+    expect(markdown).not.toContain("refresh");
+    expect(markdown).not.toContain("schema");
+    expect(markdown).not.toContain("`");
+    // The title states the finding and never reuses the “What X’s N measures” formula.
+    expect(article.title).not.toMatch(/^What .* measures$/u);
+    expect(article.title.length).toBeLessThanOrEqual(64);
+    expect(markdown).not.toContain("This note answers");
+
+    const coding = solCodingAgentPlacement(codingParsed.value.records);
+    expect(coding).toBeDefined();
+    if (coding === undefined) return;
+    const codingScore = formatSnapshotScore(coding.record.benchmarks.aaIndex);
+    const codingCost = formatSnapshotCostUsd(coding.record.economics.costUsd);
+    expect(article.title).toContain(codingScore);
+    expect(article.title).toContain(codingCost);
+    expect(article.dek).toContain(`${spellOrdinal(coding.rank)} of ${coding.indexedCount} configurations`);
+    expect(markup).toContain(codingScore);
+    expect(markup).toContain(codingCost);
+    expect(markdown).toContain(`${spellOrdinal(coding.rank)} of the ${coding.indexedCount} configurations`);
+    for (const candidate of coding.higher) {
+      expect(markup).toContain(candidate.seriesLabel);
+      expect(markup).toContain(formatSnapshotScore(candidate.benchmarks.aaIndex));
+    }
+    if (coding.onCostFrontier) {
+      expect(markdown).toContain("The row is on the chart’s cost frontier");
+      expect(markdown).toContain("The snapshot agrees.");
+    } else {
+      expect(markdown).toContain("The row is not on the chart’s cost frontier");
+      for (const dominator of coding.dominators) {
+        expect(markup).toContain(dominator.seriesLabel);
+      }
+    }
+    if (coding.cheapestHigher !== undefined) {
+      expect(markup).toContain(coding.cheapestHigher.record.seriesLabel);
+      expect(markup).toContain(formatFineCostMultiple(coding.cheapestHigher.multiple));
+    }
+    for (const neighbor of coding.neighbors) {
+      expect(markup).toContain(neighbor.seriesLabel);
+      expect(markup).toContain(formatFineCostMultiple(neighbor.economics.costUsd / coding.record.economics.costUsd));
+    }
+    for (const component of coding.components) {
+      expect(markup).toContain(`${component.rank} of ${component.count}`);
+      expect(markup).toContain(formatSnapshotScore(component.value));
+    }
+    for (const candidate of coding.lowerIndexHigherTerminal) {
+      expect(markup).toContain(candidate.seriesLabel);
+    }
+    if (coding.predecessor !== undefined) {
+      expect(markup).toContain(formatSnapshotScore(coding.predecessor.benchmarks.aaIndex));
+      expect(markup).toContain(formatSnapshotCostUsd(coding.predecessor.economics.costUsd));
+      expect(markup).toContain(formatMillionTokens(coding.predecessor.usage.totalTokens));
+      expect(markup).toContain(formatMinutes(coding.predecessor.economics.durationSeconds));
+      const previousIndex = coding.predecessor.benchmarks.aaIndex;
+      if (previousIndex !== null) {
+        expect(markup).toContain(`${formatPointGap(coding.record.benchmarks.aaIndex - previousIndex)} points`);
+      }
+    }
+
+    const intelligence = solIntelligencePlacement(intelligenceParsed.value.records);
+    expect(intelligence).toBeDefined();
+    if (intelligence === undefined) return;
+    const cost = intelligence.record.costUsdPerTask?.total ?? 0;
+    expect(markup).toContain(formatSnapshotScore(intelligence.record.intelligenceIndex));
+    expect(markup).toContain(formatSnapshotCostUsd(cost));
+    expect(markup).toContain(formatWholeTokens(intelligence.record.outputTokensPerTask.total));
+    expect(markdown).toContain(`${spellOrdinal(intelligence.rank)} of the ${intelligence.cohortSize} comparable configurations`);
+    expect(markup).toContain(intelligence.leader.name);
+    if (intelligence.onCostFrontier) {
+      expect(markdown).toContain("The row is on this chart’s cost frontier");
+    } else {
+      expect(markdown).toContain("The row is not on this chart’s cost frontier");
+    }
+    if (intelligence.cheapestHigher !== undefined) {
+      expect(markup).toContain(intelligence.cheapestHigher.record.name);
+      expect(markup).toContain(formatFineCostMultiple(intelligence.cheapestHigher.multiple));
+    }
+    for (const neighbor of intelligence.neighbors) {
+      expect(markup).toContain(neighbor.name);
+      expect(markup).toContain(formatFineCostMultiple((neighbor.costUsdPerTask?.total ?? 0) / cost));
+    }
+    for (const mode of intelligence.otherModes) {
+      expect(markup).toContain(mode.name);
+      expect(markup).toContain("a different mode rather than an effort level");
+    }
+    for (const step of intelligence.effortLadder) {
+      expect(markup).toContain(step.record.name);
+      expect(markup).toContain(formatSnapshotCostUsd(step.record.costUsdPerTask?.total ?? 0));
+      if (step.pointsOverCheaper !== null) {
+        expect(markup).toContain(formatPointGap(step.pointsOverCheaper));
+      }
+    }
+  });
+
+  test("states the GPT-6 Sol placement from the records it is given", () => {
+    const codingParsed = parseCodingAgentSnapshot(codingAgentData);
+    if (!codingParsed.ok) throw codingParsed.error;
+    const intelligenceParsed = parseArtificialAnalysisIntelligenceV43Snapshot(intelligenceData);
+    if (!intelligenceParsed.ok) throw intelligenceParsed.error;
+    const codingSnapshot = codingParsed.value;
+    const intelligenceSnapshot = intelligenceParsed.value;
+    const isSol = (record: { agent: string; model: string }): boolean => (
+      record.agent === "Codex" && record.model === "GPT-6 Sol"
+    );
+
+    const withoutCoding = createGpt6SolArticle({
+      ...codingSnapshot,
+      records: codingSnapshot.records.filter(record => !isSol(record)),
+    }, intelligenceSnapshot);
+    const withoutCodingMarkdown = articleToMarkdown(withoutCoding);
+    expect(withoutCoding.title).toBe("GPT-6 Sol on the AI Charts snapshots");
+    expect(withoutCodingMarkdown).toContain("does not store a Codex · GPT-6 Sol row");
+    expect(withoutCodingMarkdown).toContain("cannot split the index into its components");
+    expect(withoutCodingMarkdown).toContain("cannot compare the two generations in one harness");
+    expect(withoutCodingMarkdown).toContain("with one of the two rows absent");
+    expect(withoutCodingMarkdown).not.toContain("| Coding agents (AA Index) |");
+
+    const withoutIntelligence = createGpt6SolArticle(codingSnapshot, {
+      ...intelligenceSnapshot,
+      records: intelligenceSnapshot.records.filter(record => record.release.slug !== "gpt-6-sol"),
+    });
+    const withoutIntelligenceMarkdown = articleToMarkdown(withoutIntelligence);
+    expect(withoutIntelligence.title).toContain("GPT-6 Sol scores");
+    expect(withoutIntelligenceMarkdown).toContain("does not store a GPT-6 Sol (max) row with a positive cost per task");
+    expect(withoutIntelligenceMarkdown).not.toContain("| Intelligence Index |");
+
+    const solOnly = createGpt6SolArticle({
+      ...codingSnapshot,
+      records: codingSnapshot.records.filter(isSol),
+      updates: [],
+    }, {
+      ...intelligenceSnapshot,
+      records: intelligenceSnapshot.records.filter(record => record.slug === "gpt-6-sol"),
+    });
+    const solOnlyMarkdown = articleToMarkdown(solOnly);
+    expect(solOnlyMarkdown).toContain("No configuration scores higher.");
+    expect(solOnlyMarkdown).toContain("The row is on the chart’s cost frontier");
+    expect(solOnlyMarkdown).toContain("No other configuration scores within one AA Index point of it.");
+    expect(solOnlyMarkdown).toContain("GPT-6 Sol leads");
+    expect(solOnlyMarkdown).toContain("order GPT-6 Sol the same way");
+    expect(solOnlyMarkdown).toContain("does not store both Codex · GPT-5.6 Sol and Codex · GPT-6 Sol");
+    expect(solOnlyMarkdown).toContain("The row is on this chart’s cost frontier");
+    expect(solOnlyMarkdown).toContain("zero other configurations within one index point");
+    expect(solOnlyMarkdown).toContain("stores no other comparable GPT-6 Sol effort level");
+    expect(solOnly.dek).toContain("Each row sits on its own chart’s cost frontier.");
+
+    const solRecord = codingSnapshot.records.find(isSol);
+    if (solRecord === undefined || solRecord.economics.costUsd === null || solRecord.benchmarks.aaIndex === null) {
+      throw new Error("Checked snapshot must store the Codex · GPT-6 Sol row.");
+    }
+    const singleDominator = {
+      ...solRecord,
+      agent: "Twin Harness",
+      benchmarks: { ...solRecord.benchmarks, aaIndex: solRecord.benchmarks.aaIndex + 0.5 },
+      economics: { ...solRecord.economics, costUsd: solRecord.economics.costUsd / 2 },
+      id: "twin",
+      seriesId: "Twin Harness:twin",
+      seriesLabel: "Twin Harness · Twin",
+    };
+    const dominated = articleToMarkdown(createGpt6SolArticle({
+      ...codingSnapshot,
+      records: [...codingSnapshot.records.filter(isSol), singleDominator],
+      updates: [],
+    }, intelligenceSnapshot));
+    expect(dominated).toContain("One configuration scores higher: Twin Harness · Twin (max)");
+    expect(dominated).toContain("The row is not on the chart’s cost frontier: Twin Harness · Twin (max) scores");
+    expect(dominated).toContain("One other configuration scores within one AA Index point of it: Twin Harness · Twin (max)");
+    expect(dominated).toContain("0.5 points higher at 0.5x the cost");
+    expect(dominated).toContain("In this snapshot a cheaper row has since scored at least as high.");
+    expect(dominated).not.toContain("| Twin Harness · Twin |");
+
+    const twoDominators = articleToMarkdown(createGpt6SolArticle({
+      ...codingSnapshot,
+      records: [
+        ...codingSnapshot.records.filter(isSol),
+        singleDominator,
+        { ...singleDominator, id: "twin-2", seriesId: "Twin Harness:twin-2", seriesLabel: "Twin Harness · Twin 2" },
+      ],
+      updates: [],
+    }, intelligenceSnapshot));
+    expect(twoDominators).toContain("Two configurations cost the same or less per task and score at least as high");
+    expect(twoDominators).toContain("| Twin Harness · Twin |");
+    expect(twoDominators).toContain("Two other configurations score within one AA Index point of it.");
+
+    const laterRetrieval = createGpt6SolArticle({
+      ...codingSnapshot,
+      source: { ...codingSnapshot.source, retrievedAt: "2026-12-01T08:00:00.000Z" },
+    }, intelligenceSnapshot);
+    expect(laterRetrieval.updatedAt).toBe("2026-12-01");
+    expect(articleToMarkdown(laterRetrieval)).toContain("Dec 1, 2026, 8:00 AM UTC");
+
+    // A cost that would push the title past 64 characters drops the cost from the title.
+    const expensive = createGpt6SolArticle({
+      ...codingSnapshot,
+      records: codingSnapshot.records.map(record => (
+        isSol(record) ? { ...record, economics: { ...record.economics, costUsd: 1234.56 } } : record
+      )),
+    }, intelligenceSnapshot);
+    expect(expensive.title).toBe(`GPT-6 Sol scores ${formatSnapshotScore(solRecord.benchmarks.aaIndex)} on the coding-agent AA Index`);
+    expect(expensive.title.length).toBeLessThanOrEqual(64);
   });
 
   test("places Grok 4.7 on both checked charts from the same rows the charts plot", () => {
