@@ -126,6 +126,13 @@ export function StatsReportView({ report, session, scope, todayUtcDay, onRangeRe
     return `${range}: ${valueText}`;
   };
   const sourceList = report.sources.filter(source => filters.client === ALL_STATS || source.client === filters.client);
+  // Freshness (D8) is derived only from facts the report carries: its generation
+  // day against the current UTC day, source timestamps and collection status.
+  // Collector health facts do not exist yet, so the area states that explicitly.
+  const generatedUtcDay = Math.floor(report.generatedAtMs / 86_400_000);
+  const reportAgeDays = generatedUtcDay > todayUtcDay ? null : todayUtcDay - generatedUtcDay;
+  const latestSourceAtMs = report.sources.reduce<number | null>((latest, source) => source.latestAtMs !== null && (latest === null || source.latestAtMs > latest) ? source.latestAtMs : latest, null);
+  const missingSources = report.sources.filter(source => source.status !== "observed");
   const sourceByClient = new Map(report.sources.map(source => [source.client, source]));
   const periodEnd = filters.firstUtcDay + filters.dayCount - 1;
   const rangeText = `${formatStatsDay(filters.firstUtcDay)}–${formatStatsDay(periodEnd)}`;
@@ -499,6 +506,12 @@ export function StatsReportView({ report, session, scope, todayUtcDay, onRangeRe
     <section id="stats-coverage" className="usage-stats__coverage" aria-labelledby="stats-coverage-title">
       <div className="usage-stats__section-heading"><h2 id="stats-coverage-title">Source coverage & freshness</h2><span>{scope === "account" ? "Synced account" : scope === "example" ? "Example data" : "Local report · stays in this browser"}</span></div>
       <p>Report generated {stamp.format(report.generatedAtMs)} UTC. {report.updatedAtMs === null ? "No remote acceptance timestamp in this report." : `Last recorded update ${stamp.format(report.updatedAtMs)} UTC.`} These timestamps do not prove a scheduled collector is healthy.</p>
+      <dl className="usage-stats__freshness" aria-label="Freshness and missing sources">
+        <div><dt>Collector health</dt><dd><strong>No health facts.</strong> This report carries no collector health record, and hosted source health is not collected yet. A recent timestamp does not prove the collector still runs.</dd></div>
+        <div><dt>Report age</dt><dd>{reportAgeDays === null ? "Unknown: the report is generated after the current UTC day." : reportAgeDays === 0 ? "Generated on the current UTC day." : `Generated ${formatStatsInteger(reportAgeDays)} UTC ${reportAgeDays === 1 ? "day" : "days"} before the current day.`}</dd></div>
+        <div><dt>Latest source timestamp</dt><dd>{latestSourceAtMs === null ? "Unknown: no source in this report carries a timestamp." : `${stamp.format(latestSourceAtMs)} UTC`}</dd></div>
+        <div><dt>Missing sources</dt><dd>{missingSources.length === 0 ? "Every included source reports observations." : `${formatStatsInteger(missingSources.length)} included ${missingSources.length === 1 ? "source reports" : "sources report"} no observations: ${missingSources.map(source => `${statsLabel(source.client, "client")} (${sourceStates[source.status].toLowerCase()})`).join(", ")}.`} {STATS_CLIENTS.length - report.sources.length} of {STATS_CLIENTS.length} supported clients are not included; absence is not zero usage.</dd></div>
+      </dl>
       <div className="usage-stats__table-scroll" role="region" aria-label="Source coverage, scroll horizontally for all columns" tabIndex={0}>
         <table><caption>Collection status for the report’s declared window, {formatStatsDay(report.firstUtcDay)}–{formatStatsDay(end)}. Filters do not change collection status.</caption><thead><tr><th scope="col">Client</th><th scope="col">Collection</th><th scope="col">Token basis</th><th scope="col">Records</th><th scope="col">Warnings</th><th scope="col">Latest source timestamp (UTC)</th></tr></thead>
           <tbody>{sourceList.map(source => <tr key={source.client}><th scope="row">{statsLabel(source.client, "client")}</th><td>{sourceStates[source.status]}</td><td>{source.tokenBasis}</td><td>{formatStatsInteger(source.records)}</td><td>{formatStatsInteger(source.warnings)}</td><td>{source.latestAtMs === null ? "Unknown" : stamp.format(source.latestAtMs)}</td></tr>)}</tbody></table>

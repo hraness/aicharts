@@ -154,3 +154,22 @@ test("a timed unknown-token record withholds the combined rate without treating 
   expect(html).toContain("<dt>Sum of source durations</dt><dd>2,000 ms</dd>");
   expect(html).not.toContain("<td>50</td>");
 });
+
+test("the coverage section states freshness from report facts and explicit absence of collector health", () => {
+  const example = createUsageStatsExample(20_700);
+  const fresh = renderToStaticMarkup(<StatsReportView report={example} scope="local" todayUtcDay={20_700} />);
+  expect(fresh).toContain('aria-label="Freshness and missing sources"');
+  expect(fresh).toContain("<strong>No health facts.</strong>");
+  expect(fresh).toContain("hosted source health is not collected yet");
+  expect(fresh).toContain("Generated on the current UTC day.");
+  expect(fresh).toContain(`${STATS_CLIENTS.length - example.sources.length} of ${STATS_CLIENTS.length} supported clients are not included; absence is not zero usage.`);
+  const stale = renderToStaticMarkup(<StatsReportView report={example} scope="local" todayUtcDay={20_703} />);
+  expect(stale).toContain("Generated 3 UTC days before the current day.");
+  const future = renderToStaticMarkup(<StatsReportView report={example} scope="local" todayUtcDay={20_699} />);
+  expect(future).toContain("Unknown: the report is generated after the current UTC day.");
+  const missing = parseUsageStatsReport({ ...example, sources: [...example.sources, { client: "cline", status: "not_found", tokenBasis: "unavailable", records: 0, warnings: 0, latestAtMs: null }].toSorted((a, b) => a.client < b.client ? -1 : 1) });
+  expect(missing).not.toBeNull();
+  const html = renderToStaticMarkup(<StatsReportView report={missing!} scope="local" todayUtcDay={20_700} />);
+  expect(html).toContain("2 included sources report no observations: Cline (not found), OpenCode (not found).");
+  expect(fresh).toContain("1 included source reports no observations: OpenCode (not found).");
+});
