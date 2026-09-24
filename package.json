@@ -110,7 +110,7 @@
     "skill:support:check": "bun run scripts/skill-support-runtime.ts --check"
   },
   "dependencies": {
-    "@hraness/design-kit": "github:hraness/design-kit#v0.16.2",
+    "@hraness/design-kit": "github:hraness/design-kit#v0.16.3",
     "@hraness/site-footer": "github:hraness/site-footer#v0.15.0",
     "@hraness/suite-accounts": "github:hraness/suite-accounts#v0.9.15",
     "@hraness/ui": "github:hraness/ui#v0.5.18",
