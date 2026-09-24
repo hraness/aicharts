@@ -57,6 +57,7 @@
     "release:linux:qualification:check": "node --check scripts/release/linux-qualification.mjs && node --test scripts/release/linux-qualification.check.mjs",
     "release:linux:runner:check": "node --check scripts/release/run-linux.mjs && node --test scripts/release/run-linux.check.mjs",
     "release:linux:notices:check": "node --check scripts/release/linux-notices.mjs && node --test scripts/release/linux-notices.check.mjs",
+    "release:publish:check": "node --check scripts/release/verify-publication.mjs && node --test scripts/release/verify-publication.check.mjs && bun test scripts/release/publish-workflow.test.ts",
     "typecheck": "tsc --noEmit",
     "colors:generate": "bun run scripts/generate-chart-colors.ts",
     "colors:check": "bun run scripts/generate-chart-colors.ts --check",
