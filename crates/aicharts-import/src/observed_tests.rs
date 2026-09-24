@@ -168,9 +168,10 @@ fn observed_health_measures_clamps_without_exposing_private_source_fields() {
     }
     let warm = observed(&home, &root, &mut checkpoint);
     assert_eq!(warm.health.clamped_records, Some(1));
+    // An unqualified selector never fabricates measured counters.
     let other = collect_observed(
         &home,
-        "cursor",
+        "gemini",
         std::slice::from_ref(&home),
         Some(&[root]),
         0,
@@ -355,4 +356,306 @@ fn observed_incremental_equivalence_seed_a1c42026() {
         );
         checkpoint = ImportCheckpoint::decode(&checkpoint.encode().unwrap()).unwrap();
     }
+}
+
+/// One fixture-supported whole-file source: the client selector, its store
+/// file name, and content generators for the equivalence scenarios.
+struct WholeSource {
+    client: &'static str,
+    file: &'static str,
+    /// Complete store content for `rows` observations (1-based indices).
+    write: fn(rows: &[u64]) -> String,
+    /// One appended observation, only for append-only stores.
+    append: Option<fn(index: u64) -> String>,
+    /// Observations the oracle reports for `rows`; ACP streams aggregate.
+    rows: fn(count: usize) -> usize,
+}
+fn claude_row(index: u64) -> String {
+    format!(
+        "{{\"type\":\"assistant\",\"timestamp\":\"2026-09-20T10:{:02}:{:02}.000Z\",\"requestId\":\"req_{index}\",\"message\":{{\"id\":\"msg_{index}\",\"model\":\"claude-sonnet-4-5\",\"usage\":{{\"input_tokens\":{},\"output_tokens\":{},\"cache_read_input_tokens\":4}}}}}}\n",
+        index / 60,
+        index % 60,
+        10 * index,
+        3 * index
+    )
+}
+fn cursor_row(index: u64) -> String {
+    format!(
+        "{{\"timestamp\":\"{}\",\"model\":\"gpt-5-codex\",\"kind\":\"USAGE_EVENT_KIND_USAGE_BASED\",\"chargedCents\":3,\"tokenUsage\":{{\"inputTokens\":{},\"outputTokens\":{},\"cacheReadTokens\":5,\"totalCents\":3}},\"conversationId\":\"b92fdbf1-36d4-4d78-bd5b-afcb939eab16\"}}",
+        1_788_171_000_000u64 + 1_000 * index,
+        10 * index,
+        3 * index
+    )
+}
+fn devin_desktop_row(index: u64) -> String {
+    format!(
+        "{{\"notification\":{{\"sessionUpdate\":\"usage_update\",\"timestamp\":\"2026-09-20T10:{:02}:{:02}.000Z\",\"_meta\":{{\"cognition.ai/inputTokens\":{},\"cognition.ai/outputTokens\":{},\"cognition.ai/cachedReadTokens\":2}}}}}}\n",
+        index / 60,
+        index % 60,
+        10 * index,
+        3 * index
+    )
+}
+const WHOLE_SOURCES: [WholeSource; 3] = [
+    WholeSource {
+        client: "claude",
+        file: "0192f3a4-5b6c-7d8e-9f01-23456789abcd.jsonl",
+        write: |rows| rows.iter().map(|row| claude_row(*row)).collect(),
+        append: Some(claude_row),
+        rows: |count| count,
+    },
+    WholeSource {
+        client: "cursor",
+        file: "usage.json",
+        write: |rows| {
+            format!(
+                "{{\"totalUsageEventsCount\":{},\"usageEventsDisplay\":[{}]}}",
+                rows.len(),
+                rows.iter()
+                    .map(|row| cursor_row(*row))
+                    .collect::<Vec<_>>()
+                    .join(",")
+            )
+        },
+        append: None,
+        rows: |count| count,
+    },
+    WholeSource {
+        client: "devin-desktop",
+        file: "desktop-session.ndjson",
+        write: |rows| {
+            format!(
+                "{{\"notification\":{{\"sessionUpdate\":\"session_info_update\",\"title\":\"Build\"}}}}\n{}",
+                rows.iter()
+                    .map(|row| devin_desktop_row(*row))
+                    .collect::<String>()
+            )
+        },
+        append: Some(devin_desktop_row),
+        rows: |_| 1,
+    },
+];
+fn observed_client(
+    client: &str,
+    home: &Path,
+    root: &Path,
+    checkpoint: &mut ImportCheckpoint,
+) -> ObservedImport {
+    collect_observed(
+        home,
+        client,
+        &[home.to_owned()],
+        Some(&[root.to_owned()]),
+        0,
+        Some(checkpoint),
+    )
+}
+fn oracle_client(client: &str, home: &Path, root: &Path) -> LocalImport {
+    collect_since(
+        home,
+        client,
+        &[home.to_owned()],
+        Some(&[root.to_owned()]),
+        0,
+    )
+    .unwrap()
+}
+fn keep_mtime(file: &Path, at: std::time::SystemTime) {
+    fs::File::options()
+        .write(true)
+        .open(file)
+        .unwrap()
+        .set_modified(at)
+        .unwrap();
+}
+
+#[test]
+fn observed_whole_file_sources_reuse_warm_work_and_replay_every_correction_like_the_oracle() {
+    for source in &WHOLE_SOURCES {
+        let (_temp, home, root, _codex) = fixture();
+        let file = root.join(source.file);
+        let mut checkpoint = ImportCheckpoint::default();
+        fs::write(&file, (source.write)(&[1, 2])).unwrap();
+        let cold = observed_client(source.client, &home, &root, &mut checkpoint);
+        assert_eq!(
+            cold.health.outcome,
+            ImportOutcome::Complete,
+            "{}",
+            source.client
+        );
+        assert_eq!(cold.health.reused_files, 0);
+        assert!(!cold
+            .health
+            .codes
+            .contains(&HealthCode::CheckpointUnsupported));
+        assert!(!cold
+            .health
+            .codes
+            .contains(&HealthCode::SchemaCoverageLimited));
+        assert_eq!(cold.health.schema_mismatch_records, Some(0));
+        assert_eq!(cold.health.clamped_records, Some(0));
+        assert_eq!(cold.health.fallback_records, Some(0));
+        let expected = oracle_client(source.client, &home, &root).messages;
+        assert_eq!(expected.len(), (source.rows)(2), "{}", source.client);
+        assert_eq!(cold.result.unwrap().messages, expected);
+        assert!(checkpoint.state.is_some(), "{}", source.client);
+
+        let cold_max = cold.health.event_max_ms;
+        let warm = observed_client(source.client, &home, &root, &mut checkpoint);
+        assert_eq!(warm.health.reused_files, 1, "{}", source.client);
+        assert_eq!(warm.health.parsed_bytes, Some(0), "{}", source.client);
+        assert_eq!(warm.health.event_max_ms, cold_max, "{}", source.client);
+        assert!(warm.health.verified_bytes > 0);
+        assert_eq!(warm.result.unwrap().messages, expected);
+
+        // Append: the whole store is parsed again and matches the oracle.
+        if let Some(append_row) = source.append {
+            append(&file, &append_row(3));
+        } else {
+            fs::write(&file, (source.write)(&[1, 2, 3])).unwrap();
+        }
+        let appended = observed_client(source.client, &home, &root, &mut checkpoint);
+        assert_eq!(appended.health.reused_files, 0, "{}", source.client);
+        let expected = oracle_client(source.client, &home, &root).messages;
+        assert_eq!(expected.len(), (source.rows)(3), "{}", source.client);
+        assert!(appended.health.event_max_ms > cold_max, "{}", source.client);
+        assert_eq!(appended.result.unwrap().messages, expected);
+
+        // Copy with a preserved mtime changes the file identity only.
+        let old_time = fs::metadata(&file).unwrap().modified().unwrap();
+        let copy = root.join("copy.pending");
+        fs::copy(&file, &copy).unwrap();
+        fs::rename(&copy, &file).unwrap();
+        keep_mtime(&file, old_time);
+        let copied = observed_client(source.client, &home, &root, &mut checkpoint);
+        assert_eq!(copied.health.reused_files, 0, "{}", source.client);
+        assert_eq!(copied.result.unwrap().messages, expected);
+        let warm = observed_client(source.client, &home, &root, &mut checkpoint);
+        assert_eq!(warm.health.reused_files, 1, "{}", source.client);
+
+        // Late corrections under an unchanged mtime: truncation and a
+        // same-length in-place edit both change the content digest.
+        for rows in [&[1u64, 2][..], &[1, 5][..]] {
+            fs::write(&file, (source.write)(rows)).unwrap();
+            keep_mtime(&file, old_time);
+            let corrected = observed_client(source.client, &home, &root, &mut checkpoint);
+            assert_eq!(corrected.health.reused_files, 0, "{}", source.client);
+            assert_eq!(
+                corrected.result.unwrap().messages,
+                oracle_client(source.client, &home, &root).messages
+            );
+        }
+
+        // Rotation: the store moves aside and a new one starts.
+        let rotated = root.join(format!("rotated-{}", source.file));
+        fs::rename(&file, &rotated).unwrap();
+        fs::write(&file, (source.write)(&[7])).unwrap();
+        let after = observed_client(source.client, &home, &root, &mut checkpoint);
+        let expected = oracle_client(source.client, &home, &root).messages;
+        assert_eq!(after.result.unwrap().messages, expected);
+        fs::remove_file(&rotated).unwrap();
+        fs::remove_file(&file).unwrap();
+        let deleted = observed_client(source.client, &home, &root, &mut checkpoint);
+        assert!(deleted.result.unwrap().messages.is_empty());
+        assert_eq!(deleted.health.records, Some(0));
+    }
+}
+
+#[test]
+fn observed_whole_file_sources_measure_schema_mismatch_fallback_and_clamp_counters() {
+    let cases: [(&str, &str, &str, (u64, u64, u64)); 3] = [
+        (
+            "claude",
+            "0192f3a4-5b6c-7d8e-9f01-23456789abcd.jsonl",
+            // recognized row; unknown line; usage without a model; negative
+            // output and no timestamp on one assistant row
+            "{\"type\":\"assistant\",\"timestamp\":\"2026-09-20T10:00:01.000Z\",\"requestId\":\"req_1\",\"message\":{\"id\":\"msg_1\",\"model\":\"claude-sonnet-4-5\",\"usage\":{\"input_tokens\":10,\"output_tokens\":3}}}\n\
+             {\"unknown\":true}\n\
+             {\"type\":\"assistant\",\"timestamp\":\"2026-09-20T10:00:02.000Z\",\"requestId\":\"req_2\",\"message\":{\"id\":\"msg_2\",\"usage\":{\"input_tokens\":10,\"output_tokens\":3}}}\n\
+             {\"type\":\"assistant\",\"requestId\":\"req_3\",\"message\":{\"id\":\"msg_3\",\"model\":\"claude-sonnet-4-5\",\"usage\":{\"input_tokens\":10,\"output_tokens\":-3}}}\n",
+            (2, 1, 1),
+        ),
+        (
+            "cursor",
+            "usage.json",
+            "{\"usageEventsDisplay\":[\
+             {\"timestamp\":\"1788171000000\",\"model\":\"gpt-5-codex\",\"tokenUsage\":{\"inputTokens\":10,\"outputTokens\":3}},\
+             {\"timestamp\":\"1788171001000\",\"model\":\"\",\"tokenUsage\":{\"inputTokens\":10}},\
+             {\"timestamp\":\"1788171002000\",\"model\":\"gpt-5-codex\",\"tokenUsage\":{\"inputTokens\":-10,\"outputTokens\":3}}]}",
+            (1, 0, 1),
+        ),
+        (
+            "devin-desktop",
+            "desktop-session.ndjson",
+            "{\"notification\":{\"sessionUpdate\":\"usage_update\",\"_meta\":{\"cognition.ai/inputTokens\":10,\"cognition.ai/outputTokens\":3}}}\n\
+             42\n\
+             {\"notification\":{\"sessionUpdate\":\"usage_update\",\"_meta\":{\"cognition.ai/inputTokens\":-10,\"cognition.ai/outputTokens\":3}}}\n",
+            // ACP usage events without timestamps aggregate to one record
+            // whose time comes from the file, a measured fallback.
+            (1, 1, 1),
+        ),
+    ];
+    for (client, name, text, (mismatch, fallback, clamped)) in cases {
+        let (_temp, home, root, _codex) = fixture();
+        fs::write(root.join(name), text).unwrap();
+        let mut checkpoint = ImportCheckpoint::default();
+        let report = observed_client(client, &home, &root, &mut checkpoint);
+        assert_eq!(report.health.outcome, ImportOutcome::Complete, "{client}");
+        assert_eq!(
+            report.health.schema_mismatch_records,
+            Some(mismatch),
+            "{client}"
+        );
+        assert_eq!(report.health.fallback_records, Some(fallback), "{client}");
+        assert_eq!(report.health.clamped_records, Some(clamped), "{client}");
+        assert_eq!(
+            report.health.codes.contains(&HealthCode::Clamped),
+            clamped > 0
+        );
+        assert_eq!(
+            report.health.codes.contains(&HealthCode::Fallback),
+            fallback > 0
+        );
+        assert!(report.health.validate());
+        // Reused files re-emit the same counters without reparsing.
+        let warm = observed_client(client, &home, &root, &mut checkpoint);
+        assert_eq!(warm.health.reused_files, 1, "{client}");
+        assert_eq!(
+            warm.health.schema_mismatch_records,
+            Some(mismatch),
+            "{client}"
+        );
+        assert_eq!(warm.health.fallback_records, Some(fallback), "{client}");
+        assert_eq!(warm.health.clamped_records, Some(clamped), "{client}");
+        let json = serde_json::to_string(&warm.health).unwrap();
+        assert!(!json.contains(home.to_str().unwrap()));
+    }
+}
+
+#[test]
+fn observed_unqualified_selector_reports_unmeasured_coverage_and_unsupported_checkpoint() {
+    let (_temp, home, root, _codex) = fixture();
+    let mut checkpoint = ImportCheckpoint::default();
+    let report = collect_observed(
+        &home,
+        "gemini",
+        &[home.clone()],
+        Some(&[root]),
+        0,
+        Some(&mut checkpoint),
+    );
+    assert_eq!(report.health.schema_mismatch_records, None);
+    assert_eq!(report.health.clamped_records, None);
+    assert_eq!(report.health.fallback_records, None);
+    assert_eq!(report.health.parsed_bytes, None);
+    assert!(report
+        .health
+        .codes
+        .contains(&HealthCode::SchemaCoverageLimited));
+    assert!(report
+        .health
+        .codes
+        .contains(&HealthCode::CheckpointUnsupported));
+    assert!(report.health.validate());
+    assert!(checkpoint.state.is_none());
 }
