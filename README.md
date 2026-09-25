@@ -137,6 +137,8 @@ The [`data-refresh.yml`](.github/workflows/data-refresh.yml) workflow checks fir
 
 The repository keeps default workflow-token permissions read-only and grants write capabilities only inside this workflow. GitHub's repository-level “Allow GitHub Actions to create and approve pull requests” setting must remain enabled so that the scoped token can open its data PR; the workflow never submits reviews. First-party sources refresh independently, so one outage retains that source's last-known-good slice while healthy sources continue. A new candidate updates the durable release-review issue before benchmark refreshes run. Dependency installation is retried, and any unhealthy run creates or updates a separate automation-health issue. Source-shape changes, suspicious data loss, failed required CI, and unmerged update PRs still fail closed for publication, leaving the last-known-good production snapshot in place.
 
+Publication is bound to the CI run for the update PR's exact head commit. The workflow names that run, waits up to 25 minutes for its `Required` result, reconciles the branch once if `main` moves, and lets GitHub squash-merge when the check passes. Pull-request CI tests the merge with current `main`, so a red `main` fails the update PR without any fault in the refreshed data; the health issue then quotes the CI run and states which case applies, and the PR is closed so the next scheduled run rebuilds from current `main`. To retry sooner than the schedule, run `gh workflow run data-refresh.yml -f mode=full` (or `benchmarks` or `releases`) and read the run's step summary; the health issue closes itself after a healthy full run.
+
 To refresh locally:
 
 ```sh
