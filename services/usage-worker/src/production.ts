@@ -1,5 +1,5 @@
 import { STATS_HTTP_URL, STATS_UPLOAD_URL, STATS_STATUS_URL, STATS_ABANDON_URL } from "../../../lib/usage/stats-http-contract";
-import { STATS_TOTALS_URL } from "../../../lib/usage/stats-totals-contract";
+import { STATS_TOTALS_DEVICE_URL, STATS_TOTALS_URL } from "../../../lib/usage/stats-totals-contract";
 import { createStatsHttpHandler, createStatsTotalsHttpHandler, createStatsUploadHttpHandler, type StatsHttpEnvironment, type StatsUploadHttpEnvironment } from "./stats-http";
 import { contributionHttpCap } from "../../../lib/usage/contributions-http-contract";
 import { createContributionHttpHandler, type ContributionHttpEnvironment } from "./contributions-http";
@@ -119,7 +119,8 @@ export function createProductionRouter(options: ProductionRouterOptions = {}) {
     let path: "pairing" | "terminal" | "admission" | "privateDays" | "consent" | "leaderboard" | "stats" | "statsUpload" | "statsTotals" | "contributions" | "contributionQuery" | null = null;
     if (request.url === STATS_HTTP_URL) path = "stats";
     else if (request.url === STATS_TOTALS_URL) path = "statsTotals";
-    else if (request.url === STATS_UPLOAD_URL || request.url === STATS_STATUS_URL || request.url === STATS_ABANDON_URL) path = "statsUpload";
+    else if (request.url === STATS_UPLOAD_URL || request.url === STATS_STATUS_URL || request.url === STATS_ABANDON_URL
+      || request.url === STATS_TOTALS_DEVICE_URL) path = "statsUpload";
     else if (contributionHttpCap(request.url) !== null) path = "contributions";
     else if (request.url === CONTRIBUTION_QUERY_URL) path = "contributionQuery";
     else if (request.url === PAIRING_HTTP_URL) path = "pairing";

@@ -1,4 +1,4 @@
-//! `aicharts enroll` — enroll this installation for AI Charts Usage. Local
+//! `aicharts enroll` — enroll this installation for AI Charts. Local
 //! credential custody is prepared, then one intent-bound browser sign-in pairs
 //! the account. Nothing is uploaded and no transcript, source or secret leaves
 //! the device; enrollment only prepares the option to upload later.
@@ -58,7 +58,7 @@ pub(super) fn run(args: &[String]) -> Result<String, &'static str> {
     let directory = parse_options(args)?;
     let outcome = crate::enrollment::enroll(&directory, &mut CliIo)?;
     Ok(format!(
-        "Enrolled this installation for AI Charts Usage.\nAccount: {}\nDevice: {}\nNothing was uploaded; telemetry stays local until you enable upload.\n",
+        "Enrolled this installation for AI Charts.\nAccount: {}\nDevice: {}\nNothing was uploaded; telemetry stays local until you enable upload.\n",
         hex(&outcome.account_id),
         hex(&outcome.device_id)
     ))

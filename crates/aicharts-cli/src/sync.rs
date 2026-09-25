@@ -5,7 +5,7 @@ use aicharts_protocol::Provider;
 use std::io::Write;
 use std::path::PathBuf;
 
-const HELP: &str = "AI Charts sync — one supervised publishing pass
+const HELP: &str = "AI Charts sync: one supervised publishing pass
 
   aicharts sync --complete-prefix --state-dir DIR --key-file KEY
     [--codex FILE_OR_DIR ...] [--claude FILE_OR_DIR ...] [--devin FILE_OR_DIR ...]

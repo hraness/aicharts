@@ -272,7 +272,7 @@ export function StatsReportView({ report, session, scope, todayUtcDay, onRangeRe
           ? `${formatStatsCompact(totals.tokens)} tokens · ${formatStatsInteger(totals.records)} source records · ${totals.activeDays}/${filters.dayCount} days with records`
           : `${formatStatsInteger(totals.records)} source records · tokens unobserved`,
       }), image => downloadChartPng(image, `aicharts-usage-${statsDateInput(filters.firstUtcDay)}-${statsDateInput(periodEnd)}.png`));
-      if (downloaded) setShareStatus("Image downloaded. Coverage may be partial — see the report for source status.");
+      if (downloaded) setShareStatus("Image downloaded. Coverage may be partial; see the report for source status.");
       else if (mounted()) setShareStatus("Image canceled after the report changed. You can try again.");
     } catch { if (mounted()) setShareStatus("The image could not be prepared in this browser."); }
     finally { if (mounted()) { exportJob.current = null; setSharing(false); } }

@@ -102,7 +102,7 @@ pub(super) fn run(args: &[String]) -> Result<String, &'static str> {
                 "warnings": warnings, "unavailable": ["prompts", "activity", "pricing"]
             })).map_err(|_| "summary_encode_failed")
         } else {
-            Ok(format!("AI Charts local ledger — read-only inspection\nRevision: {}\nSources: {}; usage occurrences: {}; pending records: {}\nObserved tokens: {}; output tokens: {}\nCoverage: partial; prompt counts, activity and pricing unavailable.\nWarnings: {}\nHistory: {}; retained owner conflicts: {}; numeric replay conflicts: {}.\n{}\nNumeric recovery copy exported: {}. Retain original keys and enrollment anchors.\nNo sources scanned; nothing uploaded.\n",
+            Ok(format!("AI Charts local ledger: read-only inspection\nRevision: {}\nSources: {}; usage occurrences: {}; pending records: {}\nObserved tokens: {}; output tokens: {}\nCoverage: partial; prompt counts, activity and pricing unavailable.\nWarnings: {}\nHistory: {}; retained owner conflicts: {}; numeric replay conflicts: {}.\n{}\nNumeric recovery copy exported: {}. Retain original keys and enrollment anchors.\nNo sources scanned; nothing uploaded.\n",
                 status.revision, status.sources, status.usage_occurrences, status.pending_records,
                 status.tokens, status.output_tokens, warnings.join(", "), audit.disposition(), audit.attribution_conflicts, audit.numeric_replay_conflicts, recovery, options.export.is_some()))
         }

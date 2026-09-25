@@ -7,6 +7,9 @@ import { STATS_MAX_TIME, statsInteger } from "./stats-http-contract";
  * snapshot from that device covers. Unlike the windowed report this answer has
  * no date range, so it is the number a person compares with another tracker. */
 export const STATS_TOTALS_URL = "https://usage.aicharts.io/internal/usage/totals";
+/** Enrolled-device totals read: same answer as the dashboard totals, gated by
+ * the device's upload secret instead of a coordinator workload token. */
+export const STATS_TOTALS_DEVICE_URL = "https://usage.aicharts.io/v2/snapshots/totals";
 export const STATS_TOTALS_REQUEST_BYTES = 512;
 export const STATS_TOTALS_RESPONSE_BYTES = 256 * 1024;
 export const STATS_TOTALS_MAX_DEVICES = 128;
@@ -16,6 +19,7 @@ export const STATS_TOTALS_MEDIA = "application/json; charset=utf-8";
 const ZERO_TOKENS: StatsTokens = Object.freeze({ input: "0", cacheRead: "0", cacheWrite: "0", output: "0", reasoning: "0" });
 
 export type StatsTotalsQuery = Readonly<{ schemaVersion: 2; accountId: string; sessionExpiresAtMs: number }>;
+export type StatsTotalsDeviceRequest = Readonly<{ schemaVersion: 2; accountId: string; deviceId: string; generation: string }>;
 export type StatsTotalsCell = Readonly<{ records: number; days: number; firstUtcDay: number | null; lastUtcDay: number | null; tokens: StatsTokens }>;
 export type StatsTotalsBasis = "snapshots" | "legacy" | "mixed";
 export type StatsTotalsClient = StatsTotalsCell & Readonly<{ client: string; basis: StatsTotalsBasis }>;
@@ -43,6 +47,11 @@ export function parseStatsTotalsQuery(value: unknown): StatsTotalsQuery | null {
   const dto = statsOwnRecord(value, ["schemaVersion", "accountId", "sessionExpiresAtMs"]);
   return dto && dto.schemaVersion === 2 && account(dto.accountId) && statsInteger(dto.sessionExpiresAtMs, 0, STATS_MAX_TIME)
     ? Object.freeze({ schemaVersion: 2, accountId: dto.accountId, sessionExpiresAtMs: dto.sessionExpiresAtMs }) : null;
+}
+export function parseStatsTotalsDeviceRequest(value: unknown): StatsTotalsDeviceRequest | null {
+  const dto = statsOwnRecord(value, ["schemaVersion", "accountId", "deviceId", "generation"]);
+  return dto?.schemaVersion === 2 && account(dto.accountId) && identity(dto.deviceId) && identity(dto.generation)
+    ? Object.freeze({ schemaVersion: 2, accountId: dto.accountId, deviceId: dto.deviceId, generation: dto.generation }) : null;
 }
 function tokens(value: unknown): StatsTokens | null {
   const fields = statsOwnRecord(value, STATS_TOKEN_KEYS);
@@ -124,6 +133,10 @@ export function statsTotalsJsonValue(bytes: unknown, cap: number): unknown {
 }
 export const encodeStatsTotalsRequest = (value: unknown): Uint8Array<ArrayBuffer> | null => {
   const query = parseStatsTotalsQuery(value); return query ? statsTotalsJsonBytes(query, STATS_TOTALS_REQUEST_BYTES) : null;
+};
+export const encodeStatsTotalsDeviceRequest = (value: unknown): Uint8Array<ArrayBuffer> | null => {
+  const request = parseStatsTotalsDeviceRequest(value);
+  return request ? statsTotalsJsonBytes(request, STATS_TOTALS_REQUEST_BYTES) : null;
 };
 export const decodeStatsTotalsRequest = (bytes: unknown): StatsTotalsQuery | null => parseStatsTotalsQuery(statsTotalsJsonValue(bytes, STATS_TOTALS_REQUEST_BYTES));
 export function encodeStatsTotalsResponse(value: unknown): Uint8Array<ArrayBuffer> | null {

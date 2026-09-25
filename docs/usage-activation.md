@@ -6,6 +6,20 @@ rollback checks are complete.
 
 ## Recorded production evidence
 
+Later on September 25 (UTC), worker version
+`bd2bac95-bde7-4dfb-9bbe-303b4e13794f` (commit `2e593f7`,
+[PR 439](https://github.com/hraness/aicharts/pull/439)) was promoted to 100%
+traffic with the same flag set as `1afd47d9`, which remains the retained
+rollback version. The new revision adds the enrolled-device totals read
+`POST /v2/snapshots/totals`: it accepts only the exact schema-2 identity body,
+authenticates the retained upload secret, and answers the same lifetime
+projection as the coordinator totals route. A signed collector on `2e593f7`
+ran `stats-totals` from custody alone and received revision 84: 254.9 billion
+tokens across four enrolled devices, with per-client and per-device rows
+matching the committed history. This establishes authenticated account-total
+readback without a browser session; it does not change any write path or
+stored value.
+
 On September 25 (UTC), the device-partitioned usage deployment completed its
 first full local rollout on the primary collector Mac. Worker version
 `1afd47d9` (commit `376fe98`,

@@ -1,6 +1,6 @@
 import { DurableObject } from "cloudflare:workers";
 import { parseStatsQuery, parseStatsStatusRequest, parseStatsUpload, statsInteger, type StatsError, type StatsReceipt, type StatsResult, type StatsStatus } from "../../../lib/usage/stats-http-contract";
-import { parseStatsTotalsQuery, type StatsTotalsResult } from "../../../lib/usage/stats-totals-contract";
+import { parseStatsTotalsDeviceRequest, parseStatsTotalsQuery, type StatsTotals, type StatsTotalsResult } from "../../../lib/usage/stats-totals-contract";
 import { parseStatsAbandonRequest, type StatsAbandonment } from "../../../lib/usage/stats-http-contract";
 import type { UsageStatsReport } from "../../../lib/usage/stats-contract";
 import { StatsState, StatsFault, RETIRED_STATS_SCHEMA, STATS_SCHEMA, statsHash, statsUploadText } from "./stats-state";
@@ -1486,6 +1486,26 @@ export class AccountEnrollment extends DurableObject<Env> {
     const scope = { accountId: request.accountId, sessionExpiresAtMs: 8_640_000_000_000_000 };
     return new AccountStats(this.env, new StatsState(this.ctx.storage.sql), (seen, run) =>
       this.#privateDaysSnapshot(scope, seen, state => run(state, seen.observed))).status(request, dto.uploadSecret, observation);
+  }
+  /** Lifetime totals under enrolled-device custody: the upload-secret family,
+   * never the coordinator session. Same failure vocabulary as the status read. */
+  async readStatsTotals(input: unknown): Promise<StatsResult<StatsTotals>> {
+    const dto = enrollmentSnapshot(input, ["uploadSecret", "request"]), request = dto && parseStatsTotalsDeviceRequest(dto.request);
+    if (!request) return { ok: false, error: "invalid_input" };
+    return this.#readFenced(request.accountId, () => this.#readStatsTotals(input)) as Promise<StatsResult<StatsTotals>>;
+  }
+  async #readStatsTotals(input: unknown): Promise<StatsResult<StatsTotals>> {
+    if (!this.#statsEnabled() || !this.#statsPresent()) return { ok: false, error: "storage_unavailable" };
+    const dto = enrollmentSnapshot(input, ["uploadSecret", "request"]);
+    if (!dto || !enrollmentHex(dto.uploadSecret)) return { ok: false, error: "invalid_input" };
+    const request = parseStatsTotalsDeviceRequest(dto.request);
+    if (!request) return { ok: false, error: "invalid_input" };
+    const generation = this.#generation();
+    if (generation === null || request.generation !== generation) return { ok: false, error: "recovery_required" };
+    const observation: AdmissionObservation = { generation, observed: Date.now(), fence: null, committed: false };
+    const scope = { accountId: request.accountId, sessionExpiresAtMs: 8_640_000_000_000_000 };
+    return new AccountStats(this.env, new StatsState(this.ctx.storage.sql), (seen, run) =>
+      this.#privateDaysSnapshot(scope, seen, state => run(state, seen.observed))).totals(request, dto.uploadSecret, observation);
   }
   async abandonStatsSnapshot(input: unknown): Promise<StatsResult<StatsAbandonment>> {
     if (!this.#statsEnabled()) return { ok: false, error: "storage_unavailable" };

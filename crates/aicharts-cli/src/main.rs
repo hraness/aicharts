@@ -73,12 +73,13 @@ const USAGE_HINT_CODES: &[&str] = &[
     "upload_not_enabled_use_dry_run",
     "too_many_sources",
 ];
-const HELP: &str = "AI Charts Usage — local reports and enrolled publication
+const HELP: &str = "AI Charts: local reports and enrolled publication
 
   aicharts --version [--json]
   aicharts stats --home DIR (--all | --client ID ...) [--since YYYY-MM-DD --until YYYY-MM-DD] [--json]
   aicharts stats-health --state-dir DIR --home DIR --client ID [--since YYYY-MM-DD --until YYYY-MM-DD]
   aicharts stats-sync --state-dir DIR --key-file PATH --home DIR --client ID [--since YYYY-MM-DD --until YYYY-MM-DD]
+  aicharts stats-totals --state-dir DIR [--json]
   aicharts contribution-sync --help
   aicharts refresh --help
   aicharts autosubmit --config-file PATH [--check | --dry-run]
@@ -510,7 +511,7 @@ fn render(collection: &Collection, mode: Mode, json: bool) -> Result<String, &'s
         serde_json::to_string_pretty(&result).map_err(|_| "summary_encode_failed")
     } else {
         Ok(format!(
-            "AI Charts Usage — local only; nothing uploaded\nObserved tokens: {token_total}\nObserved output tokens: {output_total}\nUsage occurrences: {usage_total}\nPrompt counts and activity: unavailable\nCoverage: partial historical import\nPricing: unavailable; models remain unknown\nWarnings: {}\n",
+            "AI Charts: local only; nothing uploaded\nObserved tokens: {token_total}\nObserved output tokens: {output_total}\nUsage occurrences: {usage_total}\nPrompt counts and activity: unavailable\nCoverage: partial historical import\nPricing: unavailable; models remain unknown\nWarnings: {}\n",
             warnings.join(", ")
         ))
     }
@@ -563,6 +564,9 @@ fn run(args: &[String]) -> Result<String, &'static str> {
     }
     if args.first().map(String::as_str) == Some("stats-sync") {
         return stats_sync::run(args);
+    }
+    if args.first().map(String::as_str) == Some("stats-totals") {
+        return stats_sync::totals::run(args);
     }
     if args.first().map(String::as_str) == Some("contribution-sync") {
         return contribution_sync::run(args);

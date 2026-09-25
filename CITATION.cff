@@ -4,7 +4,7 @@ title: AI Charts
 type: software
 authors:
   - name: AI Charts contributors
-abstract: "Open-source interactive charts for comparing AI models and agents across performance, cost, speed, and token use."
+abstract: "AI Charts plots published AI benchmark scores against cost and tokens per task, and a local collector measures your own agents' token use."
 date-released: 2026-07-17
 license: MIT
 repository-code: "https://github.com/hraness/aicharts"
