@@ -249,7 +249,7 @@ export async function verifyUsageStats(browser: Browser, baseUrl: string, captur
         await capture("account-verified");
         await account.getByRole("button", { name: "Sign out", exact: true }).click();
         await account.getByRole("alert").waitFor();
-        invariant(signOutCalls === 1 && page.url() === `${baseUrl}/usage/details`, "A failed sign-out must not claim success or navigate.");
+        invariant(signOutCalls === 1 && page.url().split("?")[0] === `${baseUrl}/usage/details`, "A failed sign-out must not claim success or navigate.");
         await capture("account-sign-out-failed");
         await page.reload({ waitUntil: "networkidle" });
       }
@@ -401,8 +401,9 @@ export async function verifyUsageStats(browser: Browser, baseUrl: string, captur
       invariant((await explorer.getByRole("status").first().textContent())?.includes("1 by the loaded session facts"), "The catalog count must include metrics served by the loaded session facts.");
       invariant(await richPanel.locator(".usage-rich__groups tbody tr").count() === 2, "Adapted session facts default to one group per session.");
       invariant((await richPanel.locator(".usage-rich__groups").textContent())?.includes("26,900"), "The per-session P95 must match the session page's exact value.");
-      invariant(await richPanel.locator('option[value="local-day"][disabled]').count() === 1, "A report without a declared time zone must refuse calendar grouping instead of guessing.");
-      await richPanel.getByLabel("Group by", { exact: true }).selectOption("model");
+      invariant(await richPanel.locator('option[value="local-day"][disabled]').count() === 2 && await richPanel.locator('option[value="local-day"]:not([disabled])').count() === 0,
+        "A report without a declared time zone must refuse calendar grouping in both grouping controls instead of guessing.");
+      await richPanel.getByRole("combobox", { name: /^Group by/u }).selectOption("model");
       invariant(await richPanel.locator(".usage-rich__groups tbody tr").count() >= 2, "Model grouping must partition the same facts.");
       const richCsvEvent = page.waitForEvent("download");
       await richPanel.getByRole("button", { name: "Export CSV", exact: true }).click();
@@ -414,6 +415,11 @@ export async function verifyUsageStats(browser: Browser, baseUrl: string, captur
       await page.getByRole("button", { name: "Close session facts", exact: true }).click();
       await richPanel.getByRole("button", { name: "Open session facts", exact: true }).waitFor();
       await page.locator(".usage-stats-source__menu > summary").click();
+      // Leaving the rich metric restores the classic explorer with its grouping intact.
+      await explorer.getByLabel("Find a metric").fill("cached-input-share");
+      await explorer.getByRole("button", { name: /^Cached input share/ }).click();
+      await settle(page);
+      invariant(await explorer.getByLabel("Second grouping").inputValue() === "model", "Returning from a rich metric must keep the classic explorer's grouping selection.");
       const beforeDigestDownloads = downloads, releaseDigest = await holdNextMetricDigest(page);
       await explorer.getByRole("button", { name: "Export metric snapshot", exact: true }).click();
       await page.waitForFunction(() => document.documentElement.dataset.usageDigestHeld === "true");
@@ -428,7 +434,7 @@ export async function verifyUsageStats(browser: Browser, baseUrl: string, captur
       invariant((await explorer.getByRole("status").first().textContent())?.includes("1 matching definition · 1 supported"), "A supported comparison is counted, even while this range refuses it.");
       invariant((await explorer.textContent())?.includes("matched source populations, versions and exposure"), "A range that includes the current day must not invent matched period evidence.");
       invariant(await explorer.locator(".usage-metrics__comparison[data-matched=\"false\"]").count() === 1 && await explorer.locator("th", { hasText: "Change" }).count() === 0, "An unmatched comparison must not render change columns.");
-      invariant(await explorer.getByLabel("Compare", { exact: true }).inputValue() === "compare-periods", "The comparison selector must reflect the selected comparison metric.");
+      invariant(await explorer.getByRole("combobox", { name: "Compare", exact: true }).inputValue() === "compare-periods", "The comparison selector must reflect the selected comparison metric.");
       await capture("metric-explorer-unavailable");
       // Two complete, same-length ranges inside the example (indices 72–77 versus
       // 66–71; the example omits every 13th day) establish a matched comparison.
@@ -445,15 +451,16 @@ export async function verifyUsageStats(browser: Browser, baseUrl: string, captur
       const headline = signedInteger(await explorer.locator(".usage-metrics__value strong").textContent());
       const changeCells = await explorer.locator("tbody tr").evaluateAll(rows => rows.map(row => row.querySelectorAll("td")[0]?.textContent ?? ""));
       invariant(changeCells.length > 0 && changeCells.reduce((sum, cell) => sum + signedInteger(cell), 0n) === headline, "Per-group period changes must conserve the total change.");
-      await explorer.getByLabel("Compare", { exact: true }).selectOption("compare-clients");
+      await explorer.getByRole("combobox", { name: "Compare", exact: true }).selectOption("compare-clients");
       await settle(page);
       invariant(signedInteger(await explorer.locator(".usage-metrics__value strong").textContent()) === headline, "Compare clients at the client grouping equals the total matched change.");
-      invariant((await page.locator(".usage-stats__hint[data-matched=\"true\"]").textContent())?.includes("Matched change:"), "The trend hint must state the matched change on complete periods.");
-      await explorer.getByLabel("Compare", { exact: true }).selectOption("none");
+      invariant((await page.locator(".usage-stats__hint[data-matched=\"true\"]:not(.usage-metrics__comparison)").textContent())?.includes("Matched change:"), "The trend hint must state the matched change on complete periods.");
+      await explorer.getByRole("combobox", { name: "Compare", exact: true }).selectOption("none");
       await settle(page);
-      invariant(await explorer.getByLabel("Compare", { exact: true }).inputValue() === "none" && await explorer.locator("th", { hasText: "Previous" }).count() === 1 && await explorer.locator("th", { hasText: "Change" }).count() === 1, "A level metric on a matched range exposes previous and change columns per group.");
+      invariant(await explorer.getByRole("combobox", { name: "Compare", exact: true }).inputValue() === "none" && await explorer.locator("th", { hasText: "Previous" }).count() === 1 && await explorer.locator("th", { hasText: "Change" }).count() === 1, "A level metric on a matched range exposes previous and change columns per group.");
       const previousAndChange = await explorer.locator("tbody tr").evaluateAll(rows => rows.map(row => [...row.querySelectorAll("td")].slice(0, 3).map(cell => cell.textContent ?? "")));
-      invariant(previousAndChange.every(([value, previous, change]) => /^\+?[0-9,]+ \([+−-]?[0-9.]+%|no baseline\)$/u.test(change) && signedInteger(change.split(" ")[0]) === signedInteger(value) - signedInteger(previous)), "Each group's change must equal its value minus its previous value.");
+      invariant(previousAndChange.every(([value, previous, change]) => /^[+−-]?[0-9,]+ \((?:[+−-]?[0-9.]+%|no baseline)\)$/u.test(change) && signedInteger(change.split(" ")[0]) === signedInteger(value) - signedInteger(previous)),
+        `Each group's change must equal its value minus its previous value: ${JSON.stringify(previousAndChange)}.`);
       await capture("metric-explorer-matched");
       await choosePeriod(30);
       await explorer.getByLabel("Find a metric").fill("accounted-tokens");
@@ -550,7 +557,7 @@ export async function verifyUsageStats(browser: Browser, baseUrl: string, captur
         await account.locator("summary").click(); signOutFails = false;
         await account.getByRole("button", { name: "Sign out", exact: true }).click();
         await account.getByText("Sign-in required", { exact: true }).waitFor();
-        invariant(page.url() === `${baseUrl}/usage/details` && await page.locator(".usage-stats").count() === 1
+        invariant(page.url().split("?")[0] === `${baseUrl}/usage/details` && await page.locator(".usage-stats").count() === 1
           && await page.getByText("Local reports stay in this browser", { exact: true }).count() === 1 && Number(signOutCalls) === 2,
           "Ordinary sign-out must clear account identity without navigating away from the initiating tab's local report.");
         await account.locator("summary").click();
@@ -589,7 +596,7 @@ export async function verifyUsageStats(browser: Browser, baseUrl: string, captur
           await account.locator("summary").click();
           await account.getByRole("button", { name: "Sign out", exact: true }).click();
           await account.getByText("Sign-in required", { exact: true }).waitFor();
-          invariant(page.url() === `${baseUrl}/usage/details` && await page.locator(".usage-stats").count() === 1
+          invariant(page.url().split("?")[0] === `${baseUrl}/usage/details` && await page.locator(".usage-stats").count() === 1
             && await page.getByText("Example data · synthetic", { exact: true }).count() === 1 && Number(signOutCalls) === 3,
             "Ordinary sign-out must preserve the initiating tab's synthetic example.");
           await account.locator("summary").click();

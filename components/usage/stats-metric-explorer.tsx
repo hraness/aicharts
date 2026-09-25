@@ -152,7 +152,7 @@ export function StatsMetricExplorer({ result, metricId, onMetric, secondary, onS
       <div className="usage-metrics__detail" ref={detail} tabIndex={-1} aria-labelledby={`${id}-answer`} aria-live="polite">
         <h3 id={`${id}-answer`}>{definition.question}</h3>
         {metricExplanation(metricId) !== null && <p>{metricExplanation(metricId)}</p>}
-        {richSelected && rich !== undefined ? <RichMetricExplorer source={rich} metricId={metricId} /> : <>
+        {richSelected && rich !== undefined ? <RichMetricExplorer key={rich.document?.revision ?? "empty"} source={rich} metricId={metricId} /> : <>
         <div className="usage-metrics__value"><strong>{formatMetricMeasure(measure)}</strong>{unit !== null && <span>{unit}</span>}</div>
         <p className="usage-stats__hint usage-metrics__comparison" data-matched={result.previous?.matched === true}>{comparisonText(result.previous, measure, result.query)}</p>
         {measure.value === null ? <div className="usage-metrics__unavailable"><p>{METRIC_REASON_TEXT[measure.reason!]}</p>
