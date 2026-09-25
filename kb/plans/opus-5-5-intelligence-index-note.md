@@ -3,7 +3,7 @@ title: Publish the Claude Opus 5.5 Intelligence Index note
 description: Ship /blog/opus-5-5-intelligence-index, a note that places Claude Opus 5.5 (max) as the leading configuration on the Intelligence Index from the checked snapshot, tabulates its effort ladder and cost components, and separates it from the Claude Code · Opus 5 coding-agent row, and complete its Slopcamera figure through the documented generation path.
 type: plan
 area: blog
-status: blocked
+status: complete
 repository_scopes:
   - app/blog
   - lib/snapshot-placement.ts
@@ -61,12 +61,12 @@ Provenance: drafted by a Cursor cloud agent (Claude) on 2026-09-25 from the chec
 
 1. Verify the snapshot rows, fetch Artificial Analysis’s model page and Anthropic’s announcement, and record the quoted claims. Done 2026-09-25.
 2. Write the shared placement helpers, the Opus bindings, the article factory, registration, admission, and tests. Done 2026-09-25.
-3. Generate, review, and register the Slopcamera figure. Blocked 2026-09-25: the agent VM has no Vercel CLI login, no `VERCEL_TOKEN`, and no `AI_GATEWAY_API_KEY`, and the authenticated Vercel MCP connection is refused the project OIDC token (`403 forbidden`, resource `projectOIDCToken`). Prompt, provider options, and the source build are prepared; only the credentialed call is outstanding.
-4. Let CI pass, enable auto-merge on the task-owned pull request, and verify the live URL, figure, and Open Graph image.
+3. Generate, review, and register the Slopcamera figure. Done 2026-09-25 on the box with Vercel OIDC via `env -u VERCEL_OIDC_TOKEN vercel env run` against the linked aicharts project: one paid `openai/gpt-image-2` call, decode-passed, reviewed at 1536×864 and 384×216, registered WebP `75ec1742…` / prompt `bb9fbb63…`.
+4. Let CI pass, enable auto-merge on the task-owned pull request, and verify the live URL, figure, and Open Graph image. In progress 2026-09-25 after figure registration.
 
 ## Figure handoff
 
-The Slopcamera source build at the reviewed commit was cloned and built on the agent VM on 2026-09-25 (`bun install --frozen-lockfile --ignore-scripts`, `bun run build:sdk`, `bun run build:desktop:cli`; `slopcamera doctor --json` reports version 3.2.5 and `gatewayCredential.configured: false`). The prompt below and the reviewed provider options were written to ignored `artifacts/slopcamera/`. The project’s Vercel environment holds no `AI_GATEWAY_API_KEY`, so the documented `vercel env run` path authenticates the child with the project OIDC token the CLI mints; the Vercel MCP connection on the VM can read the project but is refused `projectOIDCToken` creation, and `vercel login` needs an interactive device code. Until the figure lands, `bun run typecheck` fails on `app/blog/editorial-images.ts` and `app/blog/blog.test.tsx` fails its image gate; both are the intended fail-closed behavior, and the pull request stays a draft.
+The Slopcamera source build at the reviewed commit (`66b4322030f4de24f4d5b6d0c2515c109259f901`, version 3.2.5) generated the figure on the box on 2026-09-25 through `env -u VERCEL_OIDC_TOKEN vercel env run` against the linked aicharts Vercel project (an ambient expired OIDC token must be unset so the CLI can mint a fresh one). One paid `openai/gpt-image-2` call produced `artifacts/slopcamera/generated/gateway/20260925T142331481Z-image-b610dbf3-4b0/image-01.webp` (50,676 bytes, SHA-256 `75ec1742daa7fd250ed5402fa3bb42af8d8b4a237e4bcde275a5e8c496d58cb0`); local validation `decode-passed`; reviewed at 1536×864 and 384×216 beside live figures; registered under `public/images/blog/opus-5-5-intelligence-index.webp` with matching `editorial-images.ts` and `images.manifest.json` rows (receipt `20260925T142331481Z-image-b610dbf3-4b0/receipt.json`, job `gateway_ed81c1ffbc75415f85306049c6668893.json`, prompt SHA-256 `bb9fbb63630ff778f6f59570636710d3cc7eb3b215058d323d808a12affc140a`).
 
 ### Prompt
 
