@@ -543,6 +543,32 @@
       ]
     },
     {
+      "selector": "micode-desktop",
+      "owner": "micode-desktop",
+      "qualification": "limited",
+      "testGroups": [
+        "offline"
+      ],
+      "formatVersion": "unqualified source variants",
+      "incremental": "unqualified",
+      "limits": [
+        "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
+      ]
+    },
+    {
+      "selector": "muse",
+      "owner": "muse",
+      "qualification": "limited",
+      "testGroups": [
+        "offline"
+      ],
+      "formatVersion": "unqualified source variants",
+      "incremental": "unqualified",
+      "limits": [
+        "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
+      ]
+    },
+    {
       "selector": "mux",
       "owner": "mux",
       "qualification": "limited",
