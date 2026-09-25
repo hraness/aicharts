@@ -90,6 +90,19 @@
       ]
     },
     {
+      "selector": "antigravity-extension",
+      "owner": "antigravity-extension",
+      "qualification": "limited",
+      "testGroups": [
+        "offline"
+      ],
+      "formatVersion": "unqualified source variants",
+      "incremental": "unqualified",
+      "limits": [
+        "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
+      ]
+    },
+    {
       "selector": "augment",
       "owner": "augment",
       "qualification": "limited",

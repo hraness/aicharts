@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "revision": 2,
+  "revision": 3,
   "source": {
     "clients": {
       "url": "https://github.com/junhoyeo/tokscale",
@@ -29,6 +29,10 @@
     {
       "id": "antigravity-cli",
       "name": "Antigravity CLI"
+    },
+    {
+      "id": "antigravity-extension",
+      "name": "Antigravity IDE Extension"
     },
     {
       "id": "augment",

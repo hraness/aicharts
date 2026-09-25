@@ -63,6 +63,7 @@ fn every_primary_profile_discovers_its_canonical_store() {
         ("micode-desktop", "mimocode.db"),
         ("muse", "2026/09/18/s/session.jsonl"),
         ("antigravity-cli", "s.db"),
+        ("antigravity-extension", "x.db"),
         ("junie", "events.jsonl"),
         ("zcode", "db.sqlite"),
         ("opencodereview", "s.jsonl"),

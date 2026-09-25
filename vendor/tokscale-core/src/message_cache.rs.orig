@@ -1109,16 +1109,6 @@ struct SharedParserFamily {
 /// responsibility.
 const SHARED_PARSER_FAMILIES: &[SharedParserFamily] = &[
     SharedParserFamily {
-        // Antigravity CLI and IDE extension conversation databases use the
-        // same gen_metadata parser in `sessions/antigravity_cli.rs`.
-        name: "antigravity generation database",
-        base: crate::sessions::antigravity_cli::ANTIGRAVITY_DB_PARSER_BASE_VERSION,
-        members: &[
-            (ClientId::AntigravityCli, 0),
-            (ClientId::AntigravityExtension, 0),
-        ],
-    },
-    SharedParserFamily {
         // Pi, Kimchi, Omp, and Senpi delegate to the pi-format parser in
         // `sessions/pi.rs`; Prime Agent rides on it through
         // `parse_pi_format_rlm_file_with_observer` (#1195, #1288).
@@ -1333,9 +1323,8 @@ fn parser_version(client: ClientId) -> u32 {
         // Devin CLI v1 could stop at a malformed chat_message. v2->v3:
         // message timestamp is now back-calculated to the turn start
         // (created_at - total_time_ms) instead of the recorded (end-anchored)
-        // created_at. Follow-up to #890. v3->v4 deduplicates CLI copies by
-        // request_id instead of database row id.
-        ClientId::DevinCli => 4,
+        // created_at. Follow-up to #890.
+        ClientId::DevinCli => 3,
         // Desktop v1 parsed a non-ACP shape and did not track its CLI title
         // lookup; its timestamp handling is unaffected by the #890 follow-up.
         ClientId::DevinDesktop => 2,
@@ -1519,6 +1508,7 @@ fn parser_version(client: ClientId) -> u32 {
         ClientId::Warp => 1,
         ClientId::Gjc => 1,
         ClientId::CommandCode => 1,
+        ClientId::AntigravityCli => 1,
         ClientId::Augment => 1,
         ClientId::CherryStudio => 1,
         ClientId::Mcode => 1,
@@ -1543,8 +1533,6 @@ fn parser_version(client: ClientId) -> u32 {
         | ClientId::Cline
         | ClientId::OpenCode
         | ClientId::MiMoCode
-        | ClientId::AntigravityCli
-        | ClientId::AntigravityExtension
         | ClientId::MiMoDesktop
         | ClientId::Kilo
         | ClientId::CodeBuddy
@@ -3616,8 +3604,8 @@ mod tests {
     }
 
     #[test]
-    fn test_devin_parser_versions_invalidate_v3_entries() {
-        assert_eq!(parser_version(ClientId::DevinCli), 4);
+    fn test_devin_parser_versions_invalidate_v1_entries() {
+        assert_eq!(parser_version(ClientId::DevinCli), 3);
         assert_eq!(parser_version(ClientId::DevinDesktop), 2);
     }
 
@@ -3655,7 +3643,7 @@ mod tests {
         // cache entries are also invalidated.
         assert_eq!(parser_version(ClientId::Junie), 3);
         assert_eq!(parser_version(ClientId::Jcode), 7);
-        assert_eq!(parser_version(ClientId::DevinCli), 4);
+        assert_eq!(parser_version(ClientId::DevinCli), 3);
         assert_eq!(parser_version(ClientId::Zcode), 3);
         assert_eq!(parser_version(ClientId::OpenCodeReview), 3);
         assert_eq!(parser_version(ClientId::Kiro), 2);
@@ -4706,13 +4694,6 @@ mod tests {
     #[test]
     fn test_shared_parser_family_roster_pins_exact_membership() {
         let expected: &[(&str, &[(ClientId, u32)])] = &[
-            (
-                "antigravity generation database",
-                &[
-                    (ClientId::AntigravityCli, 0),
-                    (ClientId::AntigravityExtension, 0),
-                ],
-            ),
             (
                 "pi-format",
                 &[
