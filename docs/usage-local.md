@@ -218,6 +218,18 @@ A retained uncertain batch stops the default pass with `upload_recovery_required
 
 An output-write failure exits `1`. `--json` emits one structured result, including command failures, without source paths or secrets. It reports the phase, collection counters, attempted and settled batches, acknowledged and pending records, and available sender state. `status: "complete"` describes the pending queue at that observation; measurement coverage remains partial.
 
+## Recovering a blocked uploader
+
+Work from the retained state; do not delete the ledger, the state directory or the checkpoint key. `account --state-dir DIR --diagnose --json` reports enrollment custody, sender health, pending records and fixed warning codes without writing.
+
+- `upload_recovery_required` means an earlier exchange ended uncertainly and its exact bytes are retained. Replay them once with `upload --resume --state-dir DIR --key-file PATH`. The resume settles only against a validated terminal journal and never sends a second distinct batch.
+- `upload_transport_blocked` is the transport's fixed name for a remote refusal — an admission conflict, account limit, revocation or superseded profile — not a local ledger fault. A single refusal may still park the flight; run the explicit `--resume` once. Repeated identical refusals are a server-side condition: check the account diagnostic and wait for the service fix rather than rebuilding local state.
+- `ledger_busy_retry` means a concurrent `daemon`, `sync` or `upload` holds the ledger. Serialize uploads — one scheduled uploader plus one supervised drain — and retry; it is not corruption.
+- `source_not_regular` or `source_symlink_not_allowed` means a selected source tree contains a socket, device node or symlink entry. Select the provider's session-data directories (`--codex …/.codex/sessions`, `--claude …/.claude/projects`, `--devin` ATIF exports) rather than whole provider homes.
+- A wrapped scheduled uploader should attempt `upload`, run `--resume` on `upload_recovery_required`, sleep through `ledger_busy_retry` and bound consecutive failures — never loop a speculative replay and never repair state automatically.
+
+A second enrolled machine needs no special migration: update the CLI, keep its state directory and checkpoint key, and let its scheduled uploader run. Retained flights settle on the next `--resume` or bounded pass; a superseded account profile or parked admission clears on the next server round, not by re-enrolment.
+
 ## Stable macOS signing for credential custody
 
 The file-based macOS Keychain binds each custody item's access list to the creating program's code signature. An ad hoc signed build designates its own code hash, so every recompile loses access to items an earlier build created. Sign each build with one persistent local identity so the binding is certificate-bound and survives rebuilds:
