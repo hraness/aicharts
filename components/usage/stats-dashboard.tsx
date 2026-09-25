@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import { readAccountStats, warmUsageAccountSession } from "@/lib/usage/account-read-client";
 import { retainUsageAccountLifecycle } from "@/lib/usage/account-session-events";
 import { currentUsageAccountScope, subscribeUsageAccountInvalidation, type UsageAccountScope } from "@/lib/usage/account-generation";
@@ -15,6 +15,7 @@ import { disposeStatsReadReply, StatsReadDeadline } from "@/lib/usage/stats-clie
 import type { MetricReportMetadata } from "@/lib/usage/metric-explorer";
 import { useAccountGeneration } from "./use-account-generation";
 import { StatsReportView } from "./stats-report-view";
+import { parseSavedViewSearch, savedViewRange, savedViewSearch, type SavedView, type SavedViewError } from "@/lib/usage/saved-views";
 import type { StatsRange, StatsSelection } from "./stats-view";
 
 type Loaded = { report: MetricReportMetadata; session: MetricReportSession; version: number; selection?: StatsSelection } &
@@ -45,6 +46,8 @@ function StatsSkeleton() {
   </div>;
 }
 
+const subscribeNever = () => () => undefined;
+
 export function StatsDashboard({ todayUtcDay, remoteEnabled = false, startWithAccount = false, fallback, returnTo = "/dashboard" }: Readonly<{
   todayUtcDay: number; remoteEnabled?: boolean; startWithAccount?: boolean; fallback?: ReactNode; returnTo?: string;
 }>) {
@@ -65,6 +68,20 @@ export function StatsDashboard({ todayUtcDay, remoteEnabled = false, startWithAc
   const loaded = stored?.scope === "account" && (stored.authority.generation !== generation || !currentUsageAccountScope(stored.authority)) ? null : stored;
   const [status, setStatus] = useState<Status>(startWithAccount ? "loading" : "idle");
   const [range, setRange] = useState<StatsRange>({ firstUtcDay: Math.max(0, todayUtcDay - 29), dayCount: Math.min(30, todayUtcDay + 1) });
+  // Saved views (D5) come from the URL the page opened with. The server
+  // snapshot is empty so hydration agrees; the first client snapshot is
+  // latched so a refused link keeps its notice after the URL follows the view.
+  const latchedSearch = useRef<string | null>(null);
+  const openedSearch = useSyncExternalStore(subscribeNever, useCallback(() => { latchedSearch.current ??= window.location.search; return latchedSearch.current; }, []), () => "");
+  const savedView = useMemo<Readonly<{ value: SavedView | null; refused: SavedViewError | null }>>(() => {
+    const parsed = parseSavedViewSearch(openedSearch);
+    return parsed === null ? { value: null, refused: null } : parsed.ok ? { value: parsed.value, refused: null } : { value: null, refused: parsed.error };
+  }, [openedSearch]);
+  const followView = useCallback((view: SavedView) => {
+    const search = savedViewSearch(view, window.location.search);
+    if (search === window.location.search) return;
+    window.history.replaceState(window.history.state, "", `${window.location.pathname}${search}${window.location.hash}`);
+  }, []);
   const pending = useRef({ id: 0, controller: null as AbortController | null,
     kind: null as "account" | "local" | "example" | null, loaded: null as Loaded | null });
   const picker = useRef<HTMLInputElement>(null);
@@ -142,7 +159,8 @@ export function StatsDashboard({ todayUtcDay, remoteEnabled = false, startWithAc
     if (remoteEnabled) warmUsageAccountSession();
     if (startWithAccount && remoteEnabled) {
       const id = ++owner.id, controller = new AbortController(); owner.controller = controller; owner.kind = "account";
-      const initial = { firstUtcDay: Math.max(0, todayUtcDay - 29), dayCount: Math.min(30, todayUtcDay + 1) };
+      const parsed = parseSavedViewSearch(window.location.search);
+      const initial = (parsed?.ok ? savedViewRange(parsed.value.range, todayUtcDay, null) : null) ?? { firstUtcDay: Math.max(0, todayUtcDay - 29), dayCount: Math.min(30, todayUtcDay + 1) };
       void read(initial, id, controller);
     }
     return () => { owner.id++; owner.controller?.abort(); owner.controller = null; owner.kind = null; };
@@ -204,6 +222,8 @@ export function StatsDashboard({ todayUtcDay, remoteEnabled = false, startWithAc
     </div>
     <p className="usage-stats__sr" role="status">{status === "loading" ? "Loading numeric usage." : status === "ready" ? `${loaded?.scope === "example" ? "Synthetic example" : loaded?.scope === "local" ? "Local report" : "Account usage"} loaded.` : ""}</p>
     {facts.absence !== null && <p className="usage-stats__notice" role="alert">{facts.absence === "window" ? "Session facts support at most 31 days between the first and last observation. Open a report with a shorter window." : facts.absence === "limit" ? "This session-facts file exceeds the bounded record limit. Open a smaller report." : "This file could not be read as session facts. Choose a session-observations-v1 or rich-facts-v1 JSON file up to 8 MiB. Any facts loaded before are closed."}</p>}
+    {savedView.refused !== null && <p className="usage-stats__notice" role="status">{savedView.refused === "saved_view_private" ? "This link carries a private identifier, so its view was not applied. Saved views only name public clients, providers, models, dates and metrics."
+      : savedView.refused === "saved_view_version" ? "This link uses a saved-view version this page does not know, so the default view is shown." : savedView.refused === "saved_view_limit" ? "This link is longer than a saved view allows, so the default view is shown." : "This link names a filter or metric this page cannot verify, so the default view is shown."}</p>}
     {status === "invalid_file" && <p className="usage-stats__notice" role="alert">This file could not be read as a numeric usage report. Choose a client-stats-v2 JSON report up to 32 MiB. Your previous report is unchanged.</p>}
     {status === "unavailable" && <div className="usage-stats__notice" role="alert"><strong>Account usage could not be loaded</strong>
       <p>Your saved measurements have not changed. Any report below is the last one loaded. You can retry, request a shorter period, or inspect a local report.</p>
@@ -221,7 +241,7 @@ export function StatsDashboard({ todayUtcDay, remoteEnabled = false, startWithAc
       }}
       rich={loaded.scope === "account" ? { document: null, absence: "hosted" } satisfies RichExplorerSource
         : { document: facts.document, absence: facts.document ? null : "not-loaded", onOpen: () => factsPicker.current?.click(), label: facts.name === null ? undefined : `Session facts from ${facts.name}` } satisfies RichExplorerSource}
-      initialSelection={loaded.selection} busy={status === "loading"} onRangeRequest={loaded.scope === "account" ? loadAccount : undefined} onRefresh={loaded.scope === "account" ? filters => loadAccount({ firstUtcDay: filters.firstUtcDay, dayCount: filters.dayCount }, { client: filters.client, provider: filters.provider, model: filters.model, basis: filters.basis }) : undefined} />}
+      savedView={savedView.value} onSavedView={followView} initialSelection={loaded.selection} busy={status === "loading"} onRangeRequest={loaded.scope === "account" ? loadAccount : undefined} onRefresh={loaded.scope === "account" ? filters => loadAccount({ firstUtcDay: filters.firstUtcDay, dayCount: filters.dayCount }, { client: filters.client, provider: filters.provider, model: filters.model, basis: filters.basis }) : undefined} />}
     {status === "loading" && !loaded && <StatsSkeleton />}
     {status === "idle" && <section className="usage-stats__empty"><h2>See the whole usage picture</h2><p>Open a numeric report to compare clients and models, inspect daily trends, and export exact totals. The file stays in this browser; opening it does not publish or upload anything.</p>
       <button className="usage-button usage-button--primary" type="button" onClick={example}>Explore a working example</button>

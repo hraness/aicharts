@@ -629,6 +629,34 @@ export async function verifyUsageStats(browser: Browser, baseUrl: string, captur
           invariant(await page.locator(".usage-stats").count() === 0, "A late successful account response must not restore private data after cross-tab sign-out.");
         }
       }
+      // Saved views (D5): a version-1 link migrates in place, seeds the
+      // selection, keeps foreign parameters and follows later changes; a link
+      // carrying a private identifier is refused whole with a stated reason.
+      await page.goto(`${baseUrl}/usage/details?utm_source=check&view=1&days=7&group=model&second=utc-day&metric=peak-daily-tokens`, { waitUntil: "networkidle" });
+      await page.getByRole("button", { name: "Explore a working example", exact: true }).click();
+      await page.getByRole("heading", { name: "Daily usage", exact: true }).waitFor(); await settle(page);
+      const migrated = new URL(page.url()).searchParams;
+      invariant(migrated.get("utm_source") === "check" && migrated.get("view") === "2" && migrated.get("range") === "7d" && migrated.get("group") === "model" && migrated.get("then") === "utc-day"
+        && migrated.get("metric") === "peak-daily-tokens" && !migrated.has("days") && !migrated.has("second"), `A version-1 link must migrate in place: ${page.url()}`);
+      const pressedGrouping = () => page.getByRole("group", { name: "Group usage by", exact: true }).locator("button[aria-pressed=\"true\"]").textContent();
+      invariant(name === "mobile" ? await page.getByLabel("Period", { exact: true }).inputValue() === "7" : await page.locator(".usage-stats__desktop-periods button[aria-pressed=\"true\"]").textContent() === "7 days", "The saved preset must select its period.");
+      invariant(await pressedGrouping() === "Models", "The saved grouping must be applied.");
+      const savedExplorer = page.getByRole("region", { name: "Metric explorer", exact: true });
+      invariant(await savedExplorer.getByLabel("Second grouping").inputValue() === "utc-day" && (await savedExplorer.locator(".usage-metrics__definition").textContent())?.includes("peak-daily-tokens"), "The saved second grouping and metric must be applied.");
+      await page.getByRole("group", { name: "Group usage by", exact: true }).getByRole("button", { name: "Clients", exact: true }).click(); await settle(page);
+      const followed = new URL(page.url()).searchParams;
+      invariant(!followed.has("group") && followed.get("utm_source") === "check" && followed.get("metric") === "peak-daily-tokens", `The link must follow the selection and keep foreign parameters: ${page.url()}`);
+      await page.getByRole("button", { name: "Copy view link", exact: true }).click();
+      await page.getByRole("status").filter({ hasText: "View link copied" }).waitFor();
+      const copiedLink = await page.locator("html").getAttribute("data-copied-account");
+      invariant(copiedLink === page.url(), `The copied link must equal the followed URL: ${copiedLink} versus ${page.url()}.`);
+      await page.goto(`${baseUrl}/usage/details?view=2&group=model&session=${"a".repeat(32)}`, { waitUntil: "networkidle" });
+      await page.getByRole("status").filter({ hasText: "carries a private identifier" }).waitFor();
+      await page.getByRole("button", { name: "Explore a working example", exact: true }).click();
+      await page.getByRole("heading", { name: "Daily usage", exact: true }).waitFor(); await settle(page);
+      invariant(await pressedGrouping() === "Clients", "A refused link must not apply any of its fields.");
+      invariant(!new URL(page.url()).searchParams.has("session") && await page.getByRole("status").filter({ hasText: "carries a private identifier" }).count() === 1, "Following the view must drop private parameters and keep the refusal visible.");
+      await capture("stats-saved-view");
       statsMode = "not_started";
       accountSignedOut = false; // A distinct synthetic signed-in visit for daily cleanup.
       // Network quiescence is not the daily report's ready boundary. Require
@@ -730,7 +758,7 @@ if (import.meta.main) {
   const captureDirectory = captureIndex >= 0 ? process.argv[captureIndex + 1] : process.env.AICHARTS_STATS_BROWSER_CAPTURE_DIR;
   const inputs = ["package.json", "bun.lock", "tsconfig.json", "next.config.ts", "scripts/build-theme-bootstrap.ts", "scripts/usage-stats-browser.ts", "app/usage/details/page.tsx",
     "components/usage/stats-dashboard.tsx", "components/usage/stats-report-file.ts", "components/usage/stats-report-view.tsx", "components/usage/stats-view.ts",
-    "components/usage/stats-export.ts", "components/usage/stats-metric-explorer.tsx", "components/usage/rich-metric-explorer.tsx", "lib/usage/rich-metric-explorer-view.ts", "lib/usage/metric-export.ts", "lib/usage/session-example.ts", "components/usage/stats-metric-projection.ts", "styles/usage-metric-explorer.css", "styles/usage-stats.css",
+    "components/usage/stats-export.ts", "components/usage/stats-metric-explorer.tsx", "components/usage/rich-metric-explorer.tsx", "lib/usage/rich-metric-explorer-view.ts", "lib/usage/metric-export.ts", "lib/usage/session-example.ts", "lib/usage/saved-views.ts", "components/usage/stats-metric-projection.ts", "styles/usage-metric-explorer.css", "styles/usage-stats.css",
     "lib/usage/metric-explorer.ts", "lib/usage/metric-explorer-fold.ts", "lib/usage/metric-explorer-values.ts", "lib/usage/metric-explorer-catalog.ts",
     "lib/usage/metric-explorer-session.ts", "lib/usage/metric-explorer-worker.ts", "lib/usage/metric-explorer-worker-core.ts", "components/usage/stats-metric-presentation.ts", "components/usage/stats-metric-query.ts",
     "components/usage/stats-metric-daily-table.tsx",

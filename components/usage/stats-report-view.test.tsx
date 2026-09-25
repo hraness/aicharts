@@ -5,6 +5,7 @@ import { parseUsageStatsReport, type UsageStatsRow } from "@/lib/usage/stats-con
 import { STATS_CLIENTS } from "@/lib/usage/stats-registry";
 import { StatsReportView } from "./stats-report-view";
 import { StatsDashboard } from "./stats-dashboard";
+import { DEFAULT_SAVED_VIEW } from "@/lib/usage/saved-views";
 
 test("the detailed report prioritizes total and trend before explanation and offers exact accessible detail", () => {
   const html = renderToStaticMarkup(<StatsReportView report={createUsageStatsExample(20_700)} scope="example" todayUtcDay={20_700} />);
@@ -172,4 +173,22 @@ test("the coverage section states freshness from report facts and explicit absen
   const html = renderToStaticMarkup(<StatsReportView report={missing!} scope="local" todayUtcDay={20_700} />);
   expect(html).toContain("2 included sources report no observations: Cline (not found), OpenCode (not found).");
   expect(fresh).toContain("1 included source reports no observations: OpenCode (not found).");
+});
+
+test("a saved view seeds period, filters, grouping, chart and explorer selection; a range outside the report is refused alone", () => {
+  const example = createUsageStatsExample(20_700);
+  const html = renderToStaticMarkup(<StatsReportView report={example} scope="local" todayUtcDay={20_700} savedView={{ ...DEFAULT_SAVED_VIEW, range: { kind: "preset", days: 7 }, client: "codex",
+    grouping: "model", secondGrouping: "utc-day", metric: "cached-input-share", costKind: "estimated", chart: "records", split: "provider" }} />);
+  expect(html).toContain('aria-pressed="true">7 days</button>');
+  expect(html).toContain('<option value="codex" selected="">');
+  expect(html).toContain('aria-pressed="true">Models</button>');
+  expect(html).toContain('<option value="utc-day" selected="">');
+  expect(html).toContain('<option value="estimated" selected="">Dated retail estimate</option>');
+  expect(html).toContain('aria-pressed="true">Records</button>');
+  expect(html).toContain('aria-pressed="true">Providers</button>');
+  expect(html).toContain("<dt>Definition</dt><dd>cached-input-share · version 1</dd>");
+  const outside = renderToStaticMarkup(<StatsReportView report={example} scope="local" todayUtcDay={20_700} savedView={{ ...DEFAULT_SAVED_VIEW, range: { kind: "dates", firstUtcDay: 10, dayCount: 3 }, grouping: "model" }} />);
+  expect(outside).toContain('aria-pressed="true">30 days</button>');
+  expect(outside).toContain('aria-pressed="true">Models</button>');
+  expect(html).toContain("Copy view link");
 });
