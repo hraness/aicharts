@@ -4,7 +4,7 @@ import { metricPresentation } from "../../components/usage/stats-metric-presenta
 import { formatMetricValue } from "../../components/usage/stats-metric-explorer";
 import { createMetricSnapshot, disposeMetricSnapshot, evaluateMetricQuery, metricResultJson, type MetricDimension, type MetricQuery } from "./metric-explorer";
 import { METRIC_CSV_COLUMNS, metricCsv, parseCsv } from "./metric-export";
-import { parseUsageStatsReport, statsRowKey, type UsageStatsReport, type UsageStatsRow } from "./stats-contract";
+import { parseUsageStatsReport, STATS_MAX_TOKENS_PER_RECORD, statsRowKey, type UsageStatsReport, type UsageStatsRow } from "./stats-contract";
 
 /** Three export surfaces read one evaluated selection: the JSON snapshot, the
  * per-metric CSV and the on-screen presentation (the explorer table renders
@@ -15,10 +15,13 @@ import { parseUsageStatsReport, statsRowKey, type UsageStatsReport, type UsageSt
 const clients = ["codex", "claude", "cline"] as const;
 const models = ["gpt-5", "gpt-5-mini", "claude-opus-4-1", null] as const;
 const column = (name: typeof METRIC_CSV_COLUMNS[number]) => METRIC_CSV_COLUMNS.indexOf(name);
-const rowArbitrary = fc.record({
-  day: fc.integer({ min: 0, max: 19 }), client: fc.constantFrom(...clients), model: fc.constantFrom(...models),
-  input: fc.bigInt({ min: 0n, max: 10n ** 12n }), cacheRead: fc.bigInt({ min: 0n, max: 10n ** 9n }), output: fc.bigInt({ min: 0n, max: 10n ** 9n }),
-  records: fc.integer({ min: 1, max: 40 }), estimated: fc.option(fc.bigInt({ min: 0n, max: 10n ** 9n }), { nil: null }),
+const rowArbitrary = fc.integer({ min: 1, max: 40 }).chain(records => {
+  const bucket = fc.bigInt({ min: 0n, max: (BigInt(records) * STATS_MAX_TOKENS_PER_RECORD) / 3n });
+  return fc.record({
+    day: fc.integer({ min: 0, max: 19 }), client: fc.constantFrom(...clients), model: fc.constantFrom(...models),
+    input: bucket, cacheRead: bucket, output: bucket,
+    records: fc.constant(records), estimated: fc.option(fc.bigInt({ min: 0n, max: 10n ** 9n }), { nil: null }),
+  });
 });
 const queryArbitrary = fc.record({
   firstOffset: fc.integer({ min: 0, max: 10 }), dayCount: fc.integer({ min: 1, max: 10 }),

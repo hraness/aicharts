@@ -93,9 +93,9 @@ describe("pinned TLC evidence admission", () => {
     expect(traces).toBe(13);
   });
   test("the repaired suite retains every guard-removal counterexample with its exact expected trace", () => {
-    expect(repaired.cases).toHaveLength(87);
+    expect(repaired.cases).toHaveLength(88);
     expect(Object.fromEntries(["counterexample", "sanity", "witness"].map(kind =>
-      [kind, repaired.cases.filter(item => item.kind === kind).length]))).toEqual({ counterexample: 22, sanity: 19, witness: 46 });
+      [kind, repaired.cases.filter(item => item.kind === kind).length]))).toEqual({ counterexample: 22, sanity: 20, witness: 46 });
     const guard = (id: string, constant: string) => {
       const value = repaired.cases.find(item => item.id === id);
       if (!value) throw new Error(`missing_guard_case:${id}`);
