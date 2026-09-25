@@ -1855,3 +1855,17 @@ once deployed. #456 moved enforcement to `parseStatsUpload` (upload admission
 only) with tests before the deploy. Post-deploy, the consent, stats and
 totals routes return their structured refusals; authenticated readback rides
 the device's own collector cycle.
+
+### 2026-09-25 — Contributions and public leaderboard read activated
+
+Same `1831da3` tree, redeployed as version `e19bc6be` at 100% with two flag
+changes: `CONTRIBUTIONS_ENABLED=1` and `PUBLIC_READ_ENABLED=1` (worker), and
+`AICHARTS_USAGE_PUBLIC_READ_ENABLED=1` added to the Vercel production
+environment (effective on its next deployment). Verified live: the public
+index is empty (`entries: []`), so the runbook's re-publication precondition
+was already satisfied; v3 routes return contract refusals rather than
+`unavailable`. Reclamation and fence-control stay unset as destructive
+operator capabilities. Still separate: per-account V3 `activate`/`migrate`/
+`grant` ops (no CLI driver exists — the upload credential never leaves the
+signed binary's custody), and leaderboard publication which needs the
+account owner's consent and handle.

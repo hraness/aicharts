@@ -130,6 +130,29 @@ deployments record shows `a9bf7b17` at 100%. Real authenticated traffic is
 exercised by the device's own collector cycle; no synthetic account was
 written.
 
+Later on September 25 (UTC), with owner authorization, worker version
+`e19bc6be-d7cc-4755-a3f5-117155e98a05` (same `1831da3` tree plus two flag
+changes) was promoted to 100% traffic, enabling
+`AICHARTS_USAGE_CONTRIBUTIONS_ENABLED=1` and
+`AICHARTS_USAGE_PUBLIC_READ_ENABLED=1`. `wrangler versions view` showed the
+version identical to the live one except those two vars. The public-read
+precondition held: `GET https://usage.aicharts.io/v1/leaderboard` answered
+`{"ranking":"observed-tokens-30d-v1","entries":[]}` — the index is empty, so
+no member needed controlled re-publication. The v3 contribution routes began
+answering contract refusals (`invalid_input`) instead of `unavailable`, and
+the consent and private routes kept their fences. On the site,
+`AICHARTS_USAGE_PUBLIC_READ_ENABLED=1` was added to the Vercel production
+environment; it takes effect on the next production deployment.
+`AICHARTS_USAGE_RECLAMATION_ENABLED` and `AICHARTS_USAGE_FENCE_CONTROL_ENABLED`
+remain unset: they are destructive operator capabilities, not user-facing
+features, and their runbook says they are never a deployment default.
+
+Per-account V3 activation is a separate device-side sequence
+(`activate` → `migrate` → `grant`) authenticated by the enrolled upload
+credential inside the signed collector; no CLI command issues those ops yet.
+Publishing to the now-live leaderboard additionally requires the account
+owner's consent decision and a public handle through `/api/usage/consent`.
+
 On September 21 (UTC), commit `3a1ddb93456da39fd6a06037f1902dc81acf2663`
 ([PR 349](https://github.com/hraness/aicharts/pull/349)) deployed to both
 production services after the complete source gate and protected-main checks.
