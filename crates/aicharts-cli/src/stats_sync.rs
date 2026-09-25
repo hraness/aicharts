@@ -477,6 +477,31 @@ fn dry_run_report(report: Report) -> Result<String, &'static str> {
     validate_publication(report.clone())?;
     serde_json::to_string(&report).map_err(|_| "stats_json_invalid")
 }
+/// Account-global journal and snapshot revisions for the contribution
+/// migration expectation. The service answers those fields from account-scoped
+/// control records; the client/range inputs only scope sequence fields this
+/// caller does not consume.
+#[cfg(target_os = "macos")]
+pub(crate) fn account_revisions(directory: &std::path::Path) -> Result<(u64, u64), &'static str> {
+    let enrolled = crate::enrollment::enrolled(directory)?;
+    let account = format!("acct_{}", hex(&enrolled.account_id));
+    let device = hex(&enrolled.device_id);
+    let generation = hex(&enrolled.recovery_generation);
+    let mut transport = enrolled
+        .pairing
+        .with_pairing_secrets(|_, secret| https::Transport::new(secret))
+        .map_err(|_| "attempt_custody")??;
+    let status = transport.status(&StatusRequest {
+        schema_version: 2,
+        account_id: &account,
+        device_id: &device,
+        generation: &generation,
+        client: "codex",
+        first_utc_day: 0,
+        day_count: 1,
+    })?;
+    Ok((status.v1_revision, status.revision))
+}
 pub(super) fn run(args: &[String]) -> Result<String, &'static str> {
     if args.len() == 2 && args[1] == "--help" {
         return Ok(HELP.to_owned());

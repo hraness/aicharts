@@ -221,15 +221,23 @@ The current/staged file ceiling is 2,834,440 bytes each, including the envelope;
 each checkpoint retains at most the current flight and latest terminal body.
 Restoring an entire older, internally valid directory before an uncertain send
 reaches the server still needs an independent recovery fence. The explicit
-`contribution-sync` uploader is available to enrolled macOS clients for an
-already-active population they own. It has no CLI activation, grant or migration
-command. Complete-source correction/removal authority and production activation
-remain separate qualification requirements. HTTP activation and grant routes
-require the stats, contributions and admission flags together.
+`contribution-sync` uploader is available to enrolled macOS clients. It now
+drives the full v3 lifecycle: `--status` reports the remote control view,
+`--activate` opens a fresh account, `--migrate` seals committed v1/v2 revisions
+into v3, `--grant` attaches the population, and `--onboard` runs the bounded
+provision pass in order. Every control operation records its exact request
+bytes in a keyed, MAC-checked journal before dispatch; an uncertain exchange
+replays identical bytes, a decided refusal settles durably, and a later retry
+opens a fresh operation on current evidence. Complete-source
+correction/removal authority and production activation remain separate
+qualification requirements. HTTP activation and grant routes require the
+stats, contributions and admission flags together.
 
-The current native contribution-sync join passes 45 focused Rust tests, including
-the command orchestrator, schema-1-to-schema-2 read-only migration, exact-byte
-send and status/cancel/resume flows, multi-exchange TLS transport, changed-writer
+The current native contribution-sync join passes 59 focused Rust tests, including
+the command orchestrator, schema-1-to-schema-2 read-only migration, the durable
+ops journal (crash-safe staging, tamper refusal, exact replay and settled
+retries), exact-byte send and status/cancel/resume flows, the
+activate/migrate/grant exchanges, multi-exchange TLS transport, changed-writer
 history refusal and output that distinguishes committed from abandoned outcomes.
 Cancellation intent is durably recorded before the first status request. A failed
 status response leaves a cancel-only flight; each injected local publication

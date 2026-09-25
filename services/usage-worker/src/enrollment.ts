@@ -134,6 +134,20 @@ type Operation = {
 export const MAX_ENROLLED_DEVICES = 128; // Includes revoked receipts; never evict identity to reclaim a slot.
 const MAX_PAYLOAD = 131_072;
 const SCHEMA_SQL = "CREATE TABLE account_enrollment (id INTEGER PRIMARY KEY CHECK (id = 1), schema_version INTEGER NOT NULL, revision INTEGER NOT NULL CHECK (revision >= 0), payload TEXT CHECK (payload IS NULL OR length(payload) <= 131072))";
+/** Ordered schema steps: schema version N means every step through N has run,
+ * and each family table must exist exactly when the stored version reached its
+ * `since` step. A newer unknown version fails closed, so an older binary never
+ * rewrites state it cannot read. Adding a step means bumping SCHEMA_LATEST,
+ * appending one entry here, and extending the ordered migration chain in
+ * #prepareFenced plus the family module's expected DDL. */
+const SCHEMA_LATEST = 13;
+const SCHEMA_FAMILIES: ReadonlyArray<readonly [table: string, since: number]> = [
+  ["usage_stats_control", 6],
+  ["usage_contribution_control", 9],
+  ["usage_contribution_projection_control", 10],
+  ["account_work", 11],
+  ["usage_contribution_rebuild_jobs", 13],
+];
 const ok = <T>(value: T): EnrollmentResult<T> => ({ ok: true, value });
 const err = (error: EnrollmentError): EnrollmentResult<never> => ({ ok: false, error });
 
@@ -402,10 +416,9 @@ export class AccountEnrollment extends DurableObject<Env> {
       ...(withWork ? ACCOUNT_WORK_SCHEMA : {}), ...(withRebuild ? CONTRIBUTION_REBUILD_SCHEMA : {}), ...(withReclamation ? RECLAMATION_SCHEMA : {}) };
     if (!legacy) {
       const version = this.ctx.storage.sql.exec("SELECT schema_version FROM account_enrollment WHERE id = 1").toArray()[0]?.schema_version;
-      if ((version === 6 || version === 7 || version === 8 || version === 9 || version === 10 || version === 11 || version === 12 || version === 13) !== withStats
-        || (version === 9 || version === 10 || version === 11 || version === 12 || version === 13) !== withContributions
-        || (version === 10 || version === 11 || version === 12 || version === 13) !== withProjection
-        || (version === 11 || version === 12 || version === 13) !== withWork || (version === 13) !== withRebuild) throw new Error("storage_invalid");
+      if (typeof version !== "number" || !Number.isSafeInteger(version) || version < 1 || version > SCHEMA_LATEST) throw new Error("storage_invalid");
+      const present = new Set(objects.map(object => object.name));
+      for (const [table, since] of SCHEMA_FAMILIES) if ((version >= since) !== present.has(table)) throw new Error("storage_invalid");
     }
     if (!this.#healthy || objects.length !== Object.keys(expected).length || objects.some(object => object.type !== "table"
       || typeof object.name !== "string" || !Object.hasOwn(expected, object.name) || object.sql !== expected[object.name])) throw new Error("storage_invalid");
@@ -469,7 +482,7 @@ export class AccountEnrollment extends DurableObject<Env> {
     const rows = this.ctx.storage.sql.exec("SELECT id, schema_version, revision, payload FROM account_enrollment LIMIT 2").toArray();
     const row = rows[0];
     if (rows.length !== 1 || row?.id !== 1) throw new Error("storage_invalid");
-    if (row.schema_version === 5 || row.schema_version === 6 || row.schema_version === 7 || row.schema_version === 8 || row.schema_version === 9 || row.schema_version === 10 || row.schema_version === 11 || row.schema_version === 12 || row.schema_version === 13) return;
+    if (typeof row.schema_version === "number" && row.schema_version >= 5) return;
     if (row.schema_version !== 4) throw new Error("storage_invalid");
     let payload = row.payload;
     if (payload !== null) {
@@ -581,7 +594,7 @@ export class AccountEnrollment extends DurableObject<Env> {
       const rows = this.ctx.storage.sql.exec("SELECT id, schema_version, revision, payload FROM account_enrollment LIMIT 2").toArray();
       const row = rows[0];
       if (rows.length !== 1 || row.id !== 1 || typeof row.schema_version !== "number" || !Number.isInteger(row.schema_version)
-        || row.schema_version < 1 || row.schema_version > 13 || typeof row.revision !== "number" || !Number.isSafeInteger(row.revision)
+        || row.schema_version < 1 || row.schema_version > SCHEMA_LATEST || typeof row.revision !== "number" || !Number.isSafeInteger(row.revision)
         || row.revision < 0 || row.revision >= Number.MAX_SAFE_INTEGER) return err("storage_invalid");
       if (row.payload === null) return row.revision === 0 ? ok({ epoch: RESTORE_FENCE_GENESIS_EPOCH, established: false }) : err("storage_invalid");
       if (typeof row.payload !== "string" || row.payload.length > MAX_PAYLOAD || row.revision === 0) return err("storage_invalid");
