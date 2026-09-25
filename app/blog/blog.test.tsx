@@ -1063,13 +1063,12 @@ describe("AI Charts benchmark notes", () => {
     if (opus5 === undefined) return;
     expect(markup).toContain(formatSnapshotScore(opus5.record.benchmarks.aaIndex));
     expect(markup).toContain(formatSnapshotCostUsd(opus5.record.economics.costUsd));
-    expect(markdown).toContain(`${spellOrdinal(opus5.rank)} of ${opus5.indexedCount} configurations`);
     expect(markdown).toContain("stores one configuration that runs Claude Opus 5.5: Claude Code · Opus 5.5 (max)");
     expect(markdown).toContain("It also stores the previous generation, Claude Code · Opus 5 (max)");
     expect(markdown).not.toContain("no row runs Claude Opus 5.5 in any harness");
-    for (const dominator of opus5.dominators) {
-      expect(markup).toContain(dominator.seriesLabel);
-    }
+    expect(markdown).not.toContain("inside Claude Code, Cursor, or another harness is a configuration the coding-agent snapshot does not store");
+    expect(markdown).toContain("The coding-agent scores above are the Claude Code · Opus 5.5 (max) row");
+    expect(markdown).toContain("and of Claude Code · Opus 5.5 (max) and Claude Code · Opus 5 (max) under DeepSWE v1.1, Terminal-Bench 4, and SWE-Atlas-QnA");
     expect(markdown).toContain("| Coding agents (AA Index) | Claude Code · Opus 5 (max) | Claude Opus 5 |");
   });
 

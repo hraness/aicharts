@@ -421,10 +421,11 @@ describe("public model cards", () => {
       profileSlug: "max",
       providerId: "anthropic",
     });
+    const [creatorSlug, modelSlug] = opus55.canonicalModelId.split("/");
     const detailPage = await ModelCardPage({
       params: Promise.resolve({
-        creatorSlug: opus55.creatorSlug,
-        modelSlug: opus55.modelSlug,
+        creatorSlug: creatorSlug ?? "unlisted",
+        modelSlug: modelSlug ?? "",
         profileSlug: opus55.profileSlug,
       }),
     });
