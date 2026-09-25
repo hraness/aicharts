@@ -127,7 +127,15 @@
     "UsageLaws.correction_conserves_other_observations",
     "UsageLaws.reasoning_partition",
     "UsageLaws.bounded_fold_exact",
-    "UsageLaws.bounded_fold_refuses_exactly_over_limit"
+    "UsageLaws.bounded_fold_refuses_exactly_over_limit",
+    "UsageLaws.dedupSeen_retains",
+    "UsageLaws.dedupSeen_absorbs",
+    "UsageLaws.dedupSeen_all_seen",
+    "UsageLaws.dedupSeen_append",
+    "UsageLaws.dedupSum_all_seen",
+    "UsageLaws.dedupSum_append",
+    "UsageLaws.dedup_replay_neutral",
+    "UsageLaws.dedupSum_distinct"
   ],
   "backends": {
     "darwin-arm64": "target/assurance-tools/aeneas-12a018b/backends/lean",

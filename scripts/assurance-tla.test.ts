@@ -23,9 +23,10 @@ describe("pinned TLC evidence admission", () => {
       "m4-foreign-population-loss", "m4-contributions-structural-sanity", "m4-proven-overlap-sanity",
       "m4-read-retry-witness", "m4-aba-resurrection", "m4-aba-double-charge",
       "m4-supersession-structural-sanity", "m4-successful-retry-witness", "m4-capacity-refusal-witness",
+      "m12-unguarded-overcount-commits", "m12-committed-overcount-persists",
     ].sort());
     expect(Object.fromEntries(["counterexample", "sanity", "witness"].map(kind =>
-      [kind, manifest.cases.filter(item => item.kind === kind).length]))).toEqual({ counterexample: 6, sanity: 4, witness: 5 });
+      [kind, manifest.cases.filter(item => item.kind === kind).length]))).toEqual({ counterexample: 7, sanity: 4, witness: 6 });
   });
   test("admits the recorded expected violation and completed sanity output separately", () => {
     const counterexample = evaluateTlc(failure, result(log(failure.id), 12));
@@ -87,6 +88,6 @@ describe("pinned TLC evidence admission", () => {
       expect(trace.configSha256).toBe(hash(modelCase.config));
       traces++;
     }
-    expect(traces).toBe(11);
+    expect(traces).toBe(13);
   });
 });

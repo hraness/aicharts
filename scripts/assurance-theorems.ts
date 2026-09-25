@@ -16,7 +16,7 @@ const pinSchema = z.object({ schemaVersion: z.literal(1), route: z.string(), qua
     lean: executable, lake: executable, rustc: executable }).strict()),
   backends: z.record(z.string(), z.string()), rustupHome: z.string(), backendManifestSha256: digest,
   allowedAxioms: z.array(z.enum(["propext", "Classical.choice", "Quot.sound"])).length(3), productionTheorems: z.array(z.string()).length(26),
-  mathematicalTheorems: z.array(z.string()).length(9) }).strict();
+  mathematicalTheorems: z.array(z.string()).length(17) }).strict();
 
 export function admitLean(result: ProofProcess, expected: string[], allowedAxioms: string[]) {
   const errors: string[] = [];
@@ -119,7 +119,7 @@ export async function runTheorems() {
   const mathSource = snapshot.bytes.get("verify/lean/UsageLaws.lean")!.toString("utf8");
   rejectAdmissions(proofTemplate); rejectAdmissions(mathSource);
   const mutations = mutationsSchema.parse(JSON.parse(snapshot.bytes.get("verify/kani/mutations.json")!.toString("utf8"))).mutations;
-  if (mutations.map(item => item.id).sort().join(",") !== "last-known-owner-wins,wrapping-addition") throw new Error("wrong_theorem_mutations");
+  if (mutations.map(item => item.id).sort().join(",") !== "baseline-delta-clamps-underflow,last-known-owner-wins,wrapping-addition") throw new Error("wrong_theorem_mutations");
   const pricingSource = { source: z.literal("crates/aicharts-metrics/src/arithmetic.rs"),
     exactBefore: z.string().min(1), exactAfter: z.string().min(1), requireSingleSourceMatch: z.literal(true) };
   const pricingMutations = z.object({ schemaVersion: z.literal(1), mutations: z.array(z.discriminatedUnion("id", [
@@ -130,7 +130,8 @@ export async function runTheorems() {
   if (pricingMutations.map(item => item.id).sort().join(",") !== "non-unit-rate-erased,wrong-half-up-offset") throw new Error("wrong_pricing_mutations");
   const cases: { name: string; mutation?: SourceMutation; expectedTheorem?: string }[] = [
     { name: "production" }, ...mutations.map(mutation => ({ name: mutation.id, mutation,
-      expectedTheorem: mutation.id === "wrapping-addition" ? "checked_add_exact" : "merge_owner_exact" })),
+      expectedTheorem: mutation.id === "wrapping-addition" ? "checked_add_exact"
+        : mutation.id === "baseline-delta-clamps-underflow" ? "checked_replace_exact" : "merge_owner_exact" })),
     ...pricingMutations.map(mutation => ({ name: mutation.id, mutation, expectedTheorem: mutation.expectedTheorem }))];
   const results = [];
   for (const item of cases) {
@@ -181,7 +182,7 @@ export async function runTheorems() {
   let toolsUnchanged = true;
   for (const [path, hash] of Object.entries(toolHashes)) if (sha256(await readProofFile(resolve(proofRoot, path), 536_870_912)) !== hash) toolsUnchanged = false;
   const receipt = { schemaVersion: 1, ...await gitIdentity(), createdAt: new Date().toISOString(),
-    claim: "eight freshly extracted production functions; twenty-six production proof declarations and nine separate mathematical laws",
+    claim: "eight freshly extracted production functions; twenty-six production proof declarations and seventeen separate mathematical laws",
     limitations: ["No theorem of Rust/SQL/provider whole-system refinement or arbitrary occurrence-merge associativity.",
       "Rust/Charon/Aeneas translation, standard-library models, Lean kernel/installed libraries and the pinned build environment are trusted boundaries.",
       "Mathematical finite-history laws are separate specifications; bounded-add and replacement prove numeric refusal without classifying every error variant.",
@@ -193,7 +194,7 @@ export async function runTheorems() {
       && results.every(result => result.evaluation.ok) && mathematicalEvaluation.ok };
   const path = resolve(run, "receipt.json");
   await writeFile(path, `${JSON.stringify(receipt, null, 2)}\n`);
-  console.log(JSON.stringify({ ok: receipt.ok, receipt: relative(proofRoot, path), productionTheorems: pin.productionTheorems.length, mathematicalTheorems: 9, negativeControls: 4 }));
+  console.log(JSON.stringify({ ok: receipt.ok, receipt: relative(proofRoot, path), productionTheorems: pin.productionTheorems.length, mathematicalTheorems: 17, negativeControls: 5 }));
   return receipt;
 }
 

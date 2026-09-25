@@ -67,6 +67,26 @@ fn replacement_full_u128_refuses_underflow_or_overflow() {
 }
 
 #[kani::proof]
+fn cumulative_baseline_delta_conserves_the_counter() {
+    // A forked cumulative counter contributes only its delta above the
+    // inherited baseline: checked_replace(snapshot, baseline, 0) is exactly
+    // snapshot − baseline. Conservation is the law the replay bug violated:
+    // baseline + delta must reconstruct snapshot — nothing counted twice,
+    // nothing lost. An equal snapshot is a replay and contributes zero; a
+    // lower snapshot is invalid evidence and must underflow, never clamp.
+    let snapshot: u128 = kani::any();
+    let baseline: u128 = kani::any();
+    let delta = checked_replace(snapshot, baseline, 0);
+    assert_eq!(delta.ok(), snapshot.checked_sub(baseline));
+    if let Ok(d) = delta {
+        assert_eq!(baseline.checked_add(d), Some(snapshot));
+    }
+    kani::cover!(snapshot == baseline && delta == Ok(0));
+    kani::cover!(snapshot > baseline && delta.is_ok());
+    kani::cover!(snapshot < baseline && delta == Err(Error::Underflow));
+}
+
+#[kani::proof]
 #[kani::unwind(7)]
 fn six_bucket_sum_matches_wider_integer_reference() {
     let values: [u64; 6] = kani::any();

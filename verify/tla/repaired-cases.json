@@ -1214,6 +1214,17 @@
       "minTraceStates": 28,
       "minDistinctStates": 2,
       "expectedDistinctStates": null
+    },
+    {
+      "id": "m12-guarded-merge-sanity",
+      "module": "M12MonotonicMerge",
+      "kind": "sanity",
+      "invariant": null,
+      "requiredActions": [],
+      "minTraceStates": 0,
+      "config": "configs/m12-guarded-merge-sanity.cfg",
+      "minDistinctStates": 4,
+      "expectedDistinctStates": 4
     }
   ]
 }

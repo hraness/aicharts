@@ -19,6 +19,15 @@
       "harness": "proofs::owner_merge_full_ids_rejects_distinct_known_owners",
       "expectedFailedAssertion": "assertion failed: actual.is_ok() == valid",
       "requireSingleSourceMatch": true
+    },
+    {
+      "id": "baseline-delta-clamps-underflow",
+      "source": "crates/aicharts-metrics/src/arithmetic.rs",
+      "exactBefore": "match total.checked_sub(previous) {\n        Some(remainder) => checked_add(remainder, replacement),\n        None => Err(Error::Underflow),\n    }",
+      "exactAfter": "checked_add(total.saturating_sub(previous), replacement)",
+      "harness": "proofs::cumulative_baseline_delta_conserves_the_counter",
+      "expectedFailedAssertion": "assertion failed: delta.ok() == snapshot.checked_sub(baseline)",
+      "requireSingleSourceMatch": true
     }
   ]
 }

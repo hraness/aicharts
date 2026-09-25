@@ -130,6 +130,8 @@ fn local_readiness_checks_wire_size_and_warp_snapshot_semantics_without_state() 
         .iter()
         .map(|v| v.as_str().unwrap().to_owned())
         .collect();
+    models.sort_by_key(|model| std::cmp::Reverse(model.len()));
+    models.truncate(32);
     models.sort();
     assert!(models.len() >= 32);
     let mut large = original;
@@ -137,31 +139,35 @@ fn local_readiness_checks_wire_size_and_warp_snapshot_semantics_without_state() 
     let template = large.rows[0].clone();
     large.rows.clear();
     for day in 0..256 {
-        for model in models.iter().take(32) {
+        for model in models.iter() {
             let mut row = template.clone();
             row.utc_day = large.first_utc_day + day;
             row.model = Some(model.clone());
-            row.records = 1;
+            // The per-record plausibility bound admits at most 8,388,608
+            // tokens per record, so wire-size pressure must come from the
+            // unbounded cost and duration fields instead.
+            row.records = 1_000;
             row.tokens = stats::Tokens {
-                input: "9".repeat(24),
-                cache_read: "9".repeat(24),
-                cache_write: "9".repeat(24),
-                output: "9".repeat(24),
-                reasoning: "9".repeat(24),
+                input: "8388608000".to_owned(),
+                cache_read: "0".to_owned(),
+                cache_write: "0".to_owned(),
+                output: "0".to_owned(),
+                reasoning: "0".to_owned(),
             };
             row.reported_cost_microusd = Some("9".repeat(24));
             row.reported_cost_records = 1;
-            row.estimated_cost_microusd = None;
-            row.estimated_cost_records = 0;
+            row.estimated_cost_microusd = Some("9".repeat(24));
+            row.estimated_cost_records = 1;
             row.duration_ms = Some("9".repeat(24));
             row.timed_records = 1;
-            row.timed_tokens = "9".repeat(24);
+            row.timed_tokens = "8388608000".to_owned();
             large.rows.push(row);
         }
     }
-    large.sources[0].records = large.rows.len() as u64;
+    large.sources[0].records = large.rows.len() as u64 * 1_000;
     stats::validate_report(&large).unwrap();
-    assert!(serde_json::to_vec(&large).unwrap().len() > MAX_BYTES);
+    let wire = serde_json::to_vec(&large).unwrap().len();
+    assert!(wire > MAX_BYTES, "{wire} <= {MAX_BYTES}");
     assert_eq!(validate_publication(large), Err("stats_sync_limit"));
 }
 #[test]

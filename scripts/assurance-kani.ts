@@ -22,7 +22,7 @@ export const unreachableBindingKey = (entry: UnreachableAssertion) => entry.bind
 export const kaniHarnessSchema = z.object({ name: text, scalarDomain: text, containerDomain: text,
   requiredCoverCount: count.positive(), requiredCoverDescriptions: z.array(text).min(1) }).strict();
 export const kaniHarnessesSchema = z.object({ schemaVersion: z.literal(1), source: z.literal("crates/aicharts-metrics/src/proofs.rs"),
-  expectedHarnessCount: z.literal(17), scope: text, harnesses: z.array(kaniHarnessSchema).length(17),
+  expectedHarnessCount: z.literal(18), scope: text, harnesses: z.array(kaniHarnessSchema).length(18),
   theoremReplacements: z.array(z.object({ retiredHarness: text, reason: text, scalarDomain: text, productionFunction: text,
     theoremFile: z.literal("verify/lean/Pricing.proofs.lean"), theorem: z.literal("aicharts_metrics.pricing_unit_rate_exact"),
     witnesses: z.array(text).length(3), requiredMutation: z.literal("wrong-half-up-offset") }).strict()).length(1) }).strict();

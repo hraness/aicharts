@@ -1,7 +1,7 @@
 import { expect, test } from "bun:test";
 import fc from "fast-check";
 import { createUsageStatsExample } from "@/lib/usage/stats-example";
-import { parseUsageStatsReport, parseUsageStatsRow, type UsageStatsReport, type UsageStatsRow } from "@/lib/usage/stats-contract";
+import { parseUsageStatsReport, parseUsageStatsRow, STATS_MAX_TOKENS_PER_RECORD, type UsageStatsReport, type UsageStatsRow } from "@/lib/usage/stats-contract";
 import { ALL_STATS, UNKNOWN_STATS, bucketStatsRows, filterStatsRows, filterStatsSnapshots, formatStatsMoney, groupStatsRows, previousStatsPeriod, statsBucketValue, statsCacheReadShare, statsDayGrid, statsInputRange, statsRowsCsv, statsSourceTokenRate, statsSplitBuckets, statsSummaryText, sumStatsRows, type StatsFilters } from "./stats-view";
 
 const example = createUsageStatsExample(20_700);
@@ -138,16 +138,16 @@ test("source rates preserve observed zero and weight exact matched durations, wh
 
 test("source-rate eligibility is order independent across generated known and unknown timed populations", () => {
   fc.assert(fc.property(fc.array(fc.record({
-    tokens: fc.bigInt({ min: 0n, max: 10n ** 24n - 1n }), duration: fc.bigInt({ min: 1n, max: 10n ** 20n }),
+    rate: fc.bigInt({ min: 0n, max: STATS_MAX_TOKENS_PER_RECORD }), duration: fc.bigInt({ min: 1n, max: 10n ** 20n }),
     unknown: fc.boolean(), records: fc.integer({ min: 1, max: 1000 }),
   }), { minLength: 1, maxLength: 30 }), samples => {
     const rows = samples.map(sample => row({ records: sample.records, timedRecords: sample.records,
-      timedTokens: sample.unknown ? "0" : String(sample.tokens), durationMs: String(sample.duration),
+      timedTokens: sample.unknown ? "0" : String(sample.rate * BigInt(sample.records)), durationMs: String(sample.duration),
       tokenBasis: sample.unknown ? "unavailable" : "reported", breakdownCoverage: sample.unknown ? "partial" : "complete",
-      tokens: { input: sample.unknown ? "0" : String(sample.tokens), cacheRead: "0", cacheWrite: "0", output: "0", reasoning: "0" } }));
+      tokens: { input: sample.unknown ? "0" : String(sample.rate * BigInt(sample.records)), cacheRead: "0", cacheWrite: "0", output: "0", reasoning: "0" } }));
     for (const value of rows) expect(parseUsageStatsRow(value)).toEqual(value);
     const expected = samples.some(sample => sample.unknown) ? null
-      : samples.reduce((sum, sample) => sum + sample.tokens, 0n) * 1000n / samples.reduce((sum, sample) => sum + sample.duration, 0n);
+      : samples.reduce((sum, sample) => sum + sample.rate * BigInt(sample.records), 0n) * 1000n / samples.reduce((sum, sample) => sum + sample.duration, 0n);
     expect(statsSourceTokenRate(sumStatsRows(rows))).toBe(expected);
     expect(statsSourceTokenRate(sumStatsRows([...rows].reverse()))).toBe(expected);
   }), { numRuns: 100, seed: 23092026 });

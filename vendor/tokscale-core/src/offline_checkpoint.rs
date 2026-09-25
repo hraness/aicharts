@@ -11,7 +11,11 @@ use std::sync::Arc;
 pub const MAX_CHECKPOINT_BYTES: usize = 256 * 1024 * 1024;
 pub const MAX_CHECKPOINT_FILES: usize = 65_536;
 pub const MAX_CHECKPOINT_OBSERVATIONS: usize = 2_000_000;
-pub const CHECKPOINT_GENERATION: u32 = 2;
+// Generation 3: dedup keys are scoped by logical turn id when present, so a
+// replayed parent turn collapses against the parent's own record at any fork
+// depth. Retained generation-2 keys cannot match new emissions; bumping the
+// generation discards them and forces a verified full reparse.
+pub const CHECKPOINT_GENERATION: u32 = 3;
 
 #[derive(Clone, Debug, Default)]
 pub struct OfflineCheckpoint {

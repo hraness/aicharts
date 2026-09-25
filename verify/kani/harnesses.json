@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "source": "crates/aicharts-metrics/src/proofs.rs",
-  "expectedHarnessCount": 17,
+  "expectedHarnessCount": 18,
   "scope": "Every harness must execute with all default safety, overflow, unwinding, undefined-function, and assertion reachability checks. Pricing rate and container partitions are explicit. A timeout or missing/unsatisfied cover is a failure.",
   "harnesses": [
     {
@@ -45,6 +45,17 @@
         "cover condition: actual.is_ok()",
         "cover condition: actual == Err(Error::Underflow)",
         "cover condition: actual == Err(Error::Overflow)"
+      ]
+    },
+    {
+      "name": "proofs::cumulative_baseline_delta_conserves_the_counter",
+      "scalarDomain": "Two arbitrary u128 values: cumulative snapshot and inherited baseline.",
+      "containerDomain": "None",
+      "requiredCoverCount": 3,
+      "requiredCoverDescriptions": [
+        "cover condition: snapshot == baseline && delta == Ok(0)",
+        "cover condition: snapshot > baseline && delta.is_ok()",
+        "cover condition: snapshot < baseline && delta == Err(Error::Underflow)"
       ]
     },
     {

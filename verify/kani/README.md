@@ -5,7 +5,7 @@ functions. They do not replace arithmetic or ownership with verification stubs.
 Kani checks the stated finite scalar and container domains; the theorem lane
 owns the separate unbounded finite-history argument.
 
-The required Kani inventory contains seventeen harnesses and forty-four covers.
+The required Kani inventory contains eighteen harnesses and forty-seven covers.
 The full-u128 unit-rate pricing obligation is discharged by the separate required
 Lean route against freshly extracted production code. That theorem quantifies
 every u128 token count, proves termination, and includes constructive success,
