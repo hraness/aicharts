@@ -1,7 +1,13 @@
 {
   "schemaVersion": 1,
   "claim": "finite-nightly-model-evidence-only",
-  "bounds": { "workers": 4, "heapMiB": 2048, "timeoutMs": 600000, "maxOutputBytes": 8388608, "maxDistinctStates": 3000000 },
+  "bounds": {
+    "workers": 4,
+    "heapMiB": 2048,
+    "timeoutMs": 600000,
+    "maxOutputBytes": 8388608,
+    "maxDistinctStates": 3000000
+  },
   "cases": [
     {
       "id": "m1-nightly-safety",
@@ -12,7 +18,7 @@
       "requiredActions": [],
       "minTraceStates": 0,
       "minDistinctStates": 2555,
-      "expectedDistinctStates": null
+      "expectedDistinctStates": 44934
     },
     {
       "id": "m1-nightly-orphan",
@@ -20,7 +26,12 @@
       "kind": "witness",
       "invariant": "NoOrphanWitness",
       "config": "configs/m1-nightly-orphan.cfg",
-      "requiredActions": ["TerminalTimeout", "Release", "PublishEpoch", "LateOrphan"],
+      "requiredActions": [
+        "TerminalTimeout",
+        "Release",
+        "PublishEpoch",
+        "LateOrphan"
+      ],
       "minTraceStates": 5,
       "minDistinctStates": 2,
       "expectedDistinctStates": null
@@ -34,7 +45,7 @@
       "requiredActions": [],
       "minTraceStates": 0,
       "minDistinctStates": 221597,
-      "expectedDistinctStates": null
+      "expectedDistinctStates": 1805384
     },
     {
       "id": "m11-nightly-negative-quota",
@@ -42,7 +53,13 @@
       "kind": "counterexample",
       "invariant": "Safety",
       "config": "configs/m11-nightly-negative-quota.cfg",
-      "requiredActions": ["BeginJob", "StartStep", "CheckStep", "ReadCommittedHead", "ReserveStage"],
+      "requiredActions": [
+        "BeginJob",
+        "StartStep",
+        "CheckStep",
+        "ReadCommittedHead",
+        "ReserveStage"
+      ],
       "minTraceStates": 6,
       "minDistinctStates": 2,
       "expectedDistinctStates": null
