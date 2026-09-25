@@ -1,13 +1,14 @@
 import type { ArtificialAnalysisIntelligenceRecord } from "./artificial-analysis-intelligence-data";
 import type { CodingAgentRecord } from "./coding-agent-data";
-import { comparableTaskCost } from "./mimo-v2-6-pro-frontier";
 import {
   codingAgentPlacement,
   codingAgentRecordsFor,
-  intelligencePlacement,
+  effortLadder,
+  releaseIntelligencePlacement,
   type CodingAgentPlacement,
   type CostedCodingAgentRecord,
-  type IntelligencePlacement,
+  type EffortStep,
+  type ReleaseIntelligencePlacement,
 } from "./snapshot-placement";
 
 /**
@@ -33,20 +34,11 @@ export const GPT_6_SOL_INTELLIGENCE_SLUG = "gpt-6-sol" as const;
 
 export type SolCodingAgentPlacement = CodingAgentPlacement;
 
-export type SolEffortStep = Readonly<{
-  /** Index points added over the next cheaper effort level, or null for the cheapest level. */
-  pointsOverCheaper: number | null;
-  /** Cost as a multiple of the next cheaper effort level, or null for the cheapest level. */
-  costMultipleOverCheaper: number | null;
-  record: ArtificialAnalysisIntelligenceRecord;
-}>;
+export type SolEffortStep = EffortStep;
 
-export type SolIntelligencePlacement = IntelligencePlacement & Readonly<{
-  /** The placed row and every comparable sibling that carries an effort level, cheapest first, with the step from the level before. */
-  effortLadder: readonly SolEffortStep[];
-  /** Comparable siblings without an effort level, such as a non-reasoning mode, highest index first. */
-  otherModes: readonly ArtificialAnalysisIntelligenceRecord[];
-}>;
+export type SolIntelligencePlacement = ReleaseIntelligencePlacement;
+
+export { effortLadder };
 
 /** Every Codex · GPT-6 Sol row that carries an AA Index and a cost, highest AA Index first. */
 export function solCodingAgentRecords(
@@ -61,47 +53,9 @@ export function solCodingAgentPlacement(
   return codingAgentPlacement(records, GPT_6_SOL_CODING_CONFIGURATION, GPT_56_SOL_CODING_CONFIGURATION);
 }
 
-function hasEffortLevel(record: ArtificialAnalysisIntelligenceRecord): boolean {
-  return record.effort !== null;
-}
-
-/**
- * Orders the placed row and the siblings that carry an effort level cheapest
- * first and states what each step up the ladder buys. A step may buy negative
- * points when a costlier level scores lower, which the note must be able to
- * print. Siblings without an effort level are a different mode, not a step,
- * and are left out.
- */
-export function effortLadder(
-  record: ArtificialAnalysisIntelligenceRecord,
-  siblings: readonly ArtificialAnalysisIntelligenceRecord[],
-): readonly SolEffortStep[] {
-  const rows = [record, ...siblings.filter(hasEffortLevel)].toSorted((left, right) => (
-    comparableTaskCost(left) - comparableTaskCost(right) || left.id.localeCompare(right.id)
-  ));
-  return rows.map((current, position) => {
-    const cheaper = rows[position - 1];
-    return {
-      costMultipleOverCheaper: cheaper === undefined
-        ? null
-        : comparableTaskCost(current) / comparableTaskCost(cheaper),
-      pointsOverCheaper: cheaper === undefined
-        ? null
-        : current.intelligenceIndex - cheaper.intelligenceIndex,
-      record: current,
-    };
-  });
-}
-
 export function solIntelligencePlacement(
   records: readonly ArtificialAnalysisIntelligenceRecord[],
   pointWindow = 1,
 ): SolIntelligencePlacement | undefined {
-  const placement = intelligencePlacement(records, GPT_6_SOL_INTELLIGENCE_SLUG, pointWindow);
-  if (placement === undefined) return undefined;
-  return {
-    ...placement,
-    effortLadder: effortLadder(placement.record, placement.siblings),
-    otherModes: placement.siblings.filter(sibling => !hasEffortLevel(sibling)),
-  };
+  return releaseIntelligencePlacement(records, GPT_6_SOL_INTELLIGENCE_SLUG, pointWindow);
 }
