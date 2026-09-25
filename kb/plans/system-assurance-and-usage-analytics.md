@@ -1869,3 +1869,28 @@ operator capabilities. Still separate: per-account V3 `activate`/`migrate`/
 `grant` ops (no CLI driver exists — the upload credential never leaves the
 signed binary's custody), and leaderboard publication which needs the
 account owner's consent and handle.
+
+### 2026-09-25 — CLI V3 lifecycle driver and schema-ladder foundation
+
+The enrolled collector now drives the full account lifecycle that the
+activated Worker exposes: `aicharts contribution-sync` gained `--status`,
+`--activate`, `--migrate`, `--grant` and a one-pass `--onboard` that observes
+then activates or migrates as retained history requires and grants the
+population. Each control operation persists its exact request bytes into a
+keyed, MAC-authenticated journal (`contribution-ops-v3`) under the state key
+before dispatch — an uncertain exchange replays identical bytes, a decided
+refusal settles durably, and a later retry opens a fresh operation on current
+evidence. `--migrate` reads the exact v1/v2 revisions via the stats status
+read and seals them into v3; `--grant` defaults to the device's derived
+primary population, and `--send`/`--initialize` may omit `--population-id`
+when the journal retains exactly one successful grant. `--inspect` reports
+the ops journal without creating files. 59 focused contribution-sync tests
+pass, including crash-staged journal recovery, tamper refusal, lost-reply
+replay, refused-intent fresh retry, and refused-grant population resolution.
+
+On the Worker, `services/usage-worker/src/enrollment.ts` now owns the schema
+ladder in one place: `SCHEMA_LATEST` plus an ordered `SCHEMA_FAMILIES` table
+(version ⇒ required family table), replacing five scattered literal ranges.
+Adding schema step N now means bumping the constant, appending one table
+entry, and extending the ordered migration chain — an unknown newer version
+still fails closed so an older binary never rewrites state it cannot read.

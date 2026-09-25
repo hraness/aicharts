@@ -149,9 +149,18 @@ features, and their runbook says they are never a deployment default.
 
 Per-account V3 activation is a separate device-side sequence
 (`activate` → `migrate` → `grant`) authenticated by the enrolled upload
-credential inside the signed collector; no CLI command issues those ops yet.
-Publishing to the now-live leaderboard additionally requires the account
-owner's consent decision and a public handle through `/api/usage/consent`.
+credential inside the signed collector. The collector drives it with explicit
+`aicharts contribution-sync` operations — `--status` observes, `--activate`
+opens a fresh account, `--migrate` seals committed v1/v2 revisions into v3,
+`--grant` attaches the population, and `--onboard` runs the bounded pass in
+order for new enrollments. Each operation records its exact request bytes in a
+keyed, MAC-checked journal (`contribution-ops-v3`) before dispatch: a reply
+that never arrived replays the identical request, a decided refusal settles
+durably, and a later retry opens a fresh operation on current evidence.
+Journal records are never deleted; a tampered or foreign journal refuses
+before any network access. Publishing to the now-live leaderboard
+additionally requires the account owner's consent decision and a public
+handle through `/api/usage/consent`.
 
 On September 21 (UTC), commit `3a1ddb93456da39fd6a06037f1902dc81acf2663`
 ([PR 349](https://github.com/hraness/aicharts/pull/349)) deployed to both

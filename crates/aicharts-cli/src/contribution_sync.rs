@@ -11,6 +11,8 @@ mod command;
 mod disk;
 #[cfg(target_os = "macos")]
 mod https;
+#[cfg(target_os = "macos")]
+mod ops;
 #[cfg(test)]
 mod tests;
 mod wire;

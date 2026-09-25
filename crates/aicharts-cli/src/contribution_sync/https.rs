@@ -62,6 +62,9 @@ enum Endpoint {
     Heads,
     Upload,
     Cancel,
+    Activate,
+    Migrate,
+    Grant,
 }
 impl Endpoint {
     fn url(self) -> &'static str {
@@ -70,6 +73,9 @@ impl Endpoint {
             Self::Heads => "https://usage.aicharts.io/v3/contributions/heads",
             Self::Upload => "https://usage.aicharts.io/v3/contributions",
             Self::Cancel => "https://usage.aicharts.io/v3/contributions/cancel",
+            Self::Activate => "https://usage.aicharts.io/v3/contributions/activate",
+            Self::Migrate => "https://usage.aicharts.io/v3/contributions/migrate",
+            Self::Grant => "https://usage.aicharts.io/v3/contributions/populations",
         }
     }
     fn request_cap(self) -> usize {
@@ -78,13 +84,14 @@ impl Endpoint {
             Self::Heads => MAX_QUERY_BYTES,
             Self::Upload => MAX_BATCH_BYTES,
             Self::Cancel => CANCEL_BYTES,
+            Self::Activate | Self::Migrate | Self::Grant => wire::CONTROL_REQUEST_BYTES,
         }
     }
     fn response_cap(self) -> usize {
-        if matches!(self, Self::Heads) {
-            MAX_REPLY_BYTES
-        } else {
-            MAX_TERMINAL_BYTES
+        match self {
+            Self::Heads => MAX_REPLY_BYTES,
+            Self::Activate | Self::Migrate | Self::Grant => wire::CONTROL_REPLY_BYTES,
+            _ => MAX_TERMINAL_BYTES,
         }
     }
 }
@@ -431,6 +438,65 @@ impl Transport {
         Ok(AuthenticatedHeads {
             heads,
             expires_at: reply.expires_at,
+        })
+    }
+    /// Read-only control view for the ops driver: a status exchange whose
+    /// population probe may be absent; only validated control fields return.
+    pub(super) fn control(
+        &self,
+        population: &str,
+        deadline: &Deadline,
+    ) -> Result<wire::ControlView, &'static str> {
+        let request = wire::StatusRequest::new(self.binding(), population, None)?;
+        let reply = self.exchange(Endpoint::Status, deadline, || request.bytes())?;
+        let checked = wire::status(200, &reply.bytes, &request, None)?;
+        if Instant::now() >= reply.expires_at {
+            return Err(UNCERTAIN);
+        }
+        Ok(checked.control)
+    }
+    fn control_op<R>(
+        &self,
+        endpoint: Endpoint,
+        deadline: &Deadline,
+        body: &[u8],
+        correlate: impl FnOnce(u16, &[u8]) -> Result<R, &'static str>,
+    ) -> Result<R, &'static str> {
+        let reply = self.exchange(endpoint, deadline, || Ok(body.to_vec()))?;
+        let result = correlate(200, &reply.bytes)?;
+        if Instant::now() >= reply.expires_at {
+            return Err(UNCERTAIN);
+        }
+        Ok(result)
+    }
+    pub(super) fn activate(
+        &self,
+        request: &wire::ActivateRequest,
+        deadline: &Deadline,
+    ) -> Result<u64, &'static str> {
+        let body = wire::control_body(request)?;
+        self.control_op(Endpoint::Activate, deadline, &body, |code, bytes| {
+            wire::activation_receipt(code, bytes, request)
+        })
+    }
+    pub(super) fn migrate(
+        &self,
+        request: &wire::MigrateRequest,
+        deadline: &Deadline,
+    ) -> Result<wire::MigrationSettled, &'static str> {
+        let body = wire::control_body(request)?;
+        self.control_op(Endpoint::Migrate, deadline, &body, |code, bytes| {
+            wire::migration_receipt(code, bytes, request)
+        })
+    }
+    pub(super) fn grant(
+        &self,
+        request: &wire::GrantRequest,
+        deadline: &Deadline,
+    ) -> Result<wire::GrantSettled, &'static str> {
+        let body = wire::control_body(request)?;
+        self.control_op(Endpoint::Grant, deadline, &body, |code, bytes| {
+            wire::grant_receipt(code, bytes, request)
         })
     }
     pub(super) fn dispatch(

@@ -134,7 +134,7 @@ impl StatusRequest {
         Ok(bytes)
     }
 }
-#[derive(Deserialize)]
+#[derive(Clone, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 struct Population {
     id: String,
@@ -212,6 +212,7 @@ pub(super) struct Position {
 pub(super) struct CheckedStatus {
     pub(super) position: Option<Position>,
     pub(super) terminal: Option<CorrelatedTerminal>,
+    pub(super) control: ControlView,
 }
 pub(super) fn status(
     status_code: u16,
@@ -283,6 +284,14 @@ pub(super) fn status(
     } else {
         None
     };
+    let population_present = value.population.is_some();
+    let position_owned = population_present
+        && value.phase == Phase::Active
+        && value
+            .population
+            .as_ref()
+            .is_some_and(|p| p.device_id == request.device_id);
+    let population_revision = value.population.as_ref().map_or(0, |p| p.revision);
     let position = value
         .population
         .filter(|p| value.phase == Phase::Active && p.device_id == request.device_id)
@@ -301,7 +310,20 @@ pub(super) fn status(
             population_revision: p.revision,
             population_head: p.head_hash,
         });
-    Ok(CheckedStatus { position, terminal })
+    Ok(CheckedStatus {
+        position,
+        terminal,
+        control: ControlView {
+            revision: value.revision,
+            prepared: value.phase == Phase::Prepared,
+            activated: value.activation_hash.is_some(),
+            migrated: value.migration_manifest_hash.is_some(),
+            population_present,
+            population_owned: position_owned,
+            population_revision,
+            next_sequence: value.next_sequence,
+        },
+    })
 }
 pub(super) fn status_terminal(
     bytes: &[u8],
@@ -316,6 +338,284 @@ pub(super) fn status_terminal(
     status(200, bytes, &request, Some(batch))?
         .terminal
         .ok_or(INVALID)
+}
+
+pub(super) const CONTROL_REQUEST_BYTES: usize = 2_048;
+pub(super) const CONTROL_REPLY_BYTES: usize = 4_096;
+const MAX_HEADS: u64 = 262_144;
+const MAX_UNRESOLVED_BODIES: u64 = 65_536;
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub(super) struct ActivateRequest {
+    schema_version: u8,
+    operation_id: String,
+    account_id: String,
+    generation: String,
+    device_id: String,
+    expected_revision: u64,
+    mode: String,
+}
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub(super) struct MigrateRequest {
+    schema_version: u8,
+    operation_id: String,
+    account_id: String,
+    generation: String,
+    device_id: String,
+    expected_revision: u64,
+    expected_v1_revision: u64,
+    expected_v2_revision: u64,
+}
+#[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub(super) struct GrantRequest {
+    schema_version: u8,
+    operation_id: String,
+    account_id: String,
+    generation: String,
+    device_id: String,
+    population_id: String,
+    expected_revision: u64,
+    expected_writer_revision: u64,
+    previous_device_id: Option<String>,
+    abandon_operation_id: Option<String>,
+}
+pub(super) fn activate_request(
+    binding: &Binding,
+    operation: &str,
+    expected_revision: u64,
+) -> Result<ActivateRequest, &'static str> {
+    binding.validate()?;
+    if !identity(operation, 64) || expected_revision >= MAX_REVISION {
+        return Err(INVALID);
+    }
+    Ok(ActivateRequest {
+        schema_version: 3,
+        operation_id: operation.into(),
+        account_id: binding.account_id.clone(),
+        generation: binding.generation.clone(),
+        device_id: binding.device_id.clone(),
+        expected_revision,
+        mode: "fresh-empty".into(),
+    })
+}
+pub(super) fn migrate_request(
+    binding: &Binding,
+    operation: &str,
+    expected_revision: u64,
+    expected_v1_revision: u64,
+    expected_v2_revision: u64,
+) -> Result<MigrateRequest, &'static str> {
+    binding.validate()?;
+    if !identity(operation, 64)
+        || expected_revision >= MAX_REVISION
+        || expected_v1_revision > 4_096
+        || expected_v2_revision > MAX_REVISION
+    {
+        return Err(INVALID);
+    }
+    Ok(MigrateRequest {
+        schema_version: 3,
+        operation_id: operation.into(),
+        account_id: binding.account_id.clone(),
+        generation: binding.generation.clone(),
+        device_id: binding.device_id.clone(),
+        expected_revision,
+        expected_v1_revision,
+        expected_v2_revision,
+    })
+}
+pub(super) fn grant_request(
+    binding: &Binding,
+    operation: &str,
+    population: &str,
+    expected_revision: u64,
+) -> Result<GrantRequest, &'static str> {
+    binding.validate()?;
+    if !identity(operation, 64) || !identity(population, 64) || expected_revision >= MAX_REVISION {
+        return Err(INVALID);
+    }
+    Ok(GrantRequest {
+        schema_version: 3,
+        operation_id: operation.into(),
+        account_id: binding.account_id.clone(),
+        generation: binding.generation.clone(),
+        device_id: binding.device_id.clone(),
+        population_id: population.into(),
+        expected_revision,
+        expected_writer_revision: 0,
+        previous_device_id: None,
+        abandon_operation_id: None,
+    })
+}
+pub(super) fn control_body<T: Serialize>(request: &T) -> Result<Vec<u8>, &'static str> {
+    let bytes = serde_json::to_vec(request).map_err(|_| INVALID)?;
+    if bytes.is_empty() || bytes.len() > CONTROL_REQUEST_BYTES {
+        return Err(INVALID);
+    }
+    Ok(bytes)
+}
+/// Activation replay preserves the request verbatim so the reserved body hash
+/// matches; the receipt's revision must be exactly the admitted successor.
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct ActivationReply {
+    schema_version: u8,
+    operation_id: String,
+    account_id: String,
+    generation: String,
+    device_id: String,
+    expected_revision: u64,
+    mode: String,
+    body_hash: String,
+    revision: u64,
+}
+pub(super) fn activation_receipt(
+    status_code: u16,
+    bytes: &[u8],
+    request: &ActivateRequest,
+) -> Result<u64, &'static str> {
+    let value: ActivationReply = response(status_code, bytes, CONTROL_REPLY_BYTES)?;
+    if value.schema_version != 3
+        || value.operation_id != request.operation_id
+        || value.account_id != request.account_id
+        || value.generation != request.generation
+        || value.device_id != request.device_id
+        || value.expected_revision != request.expected_revision
+        || value.mode != request.mode
+        || !identity(&value.body_hash, 64)
+        || value.revision != request.expected_revision + 1
+    {
+        return Err(INVALID);
+    }
+    Ok(value.revision)
+}
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct MigrationReply {
+    schema_version: u8,
+    operation_id: String,
+    account_id: String,
+    generation: String,
+    device_id: String,
+    expected_revision: u64,
+    expected_v1_revision: u64,
+    expected_v2_revision: u64,
+    body_hash: String,
+    revision: u64,
+    manifest_hash: String,
+    delta_manifest_hash: String,
+    delta_count: u64,
+    head_count: u64,
+    suppressed_v1_heads: u64,
+    unresolved_v2_bodies: u64,
+}
+pub(super) struct MigrationSettled {
+    pub(super) revision: u64,
+    pub(super) manifest_hash: String,
+    pub(super) head_count: u64,
+    pub(super) suppressed_v1_heads: u64,
+    pub(super) unresolved_v2_bodies: u64,
+}
+pub(super) fn migration_receipt(
+    status_code: u16,
+    bytes: &[u8],
+    request: &MigrateRequest,
+) -> Result<MigrationSettled, &'static str> {
+    let value: MigrationReply = response(status_code, bytes, CONTROL_REPLY_BYTES)?;
+    if value.schema_version != 3
+        || value.operation_id != request.operation_id
+        || value.account_id != request.account_id
+        || value.generation != request.generation
+        || value.device_id != request.device_id
+        || value.expected_revision != request.expected_revision
+        || value.expected_v1_revision != request.expected_v1_revision
+        || value.expected_v2_revision != request.expected_v2_revision
+        || !identity(&value.body_hash, 64)
+        || value.revision != request.expected_revision + 1
+        || !identity(&value.manifest_hash, 64)
+        || !identity(&value.delta_manifest_hash, 64)
+        || value.delta_count > MAX_HEADS
+        || !(value.delta_count..=MAX_HEADS).contains(&value.head_count)
+        || value.suppressed_v1_heads > value.head_count
+        || value.unresolved_v2_bodies > MAX_UNRESOLVED_BODIES
+    {
+        return Err(INVALID);
+    }
+    Ok(MigrationSettled {
+        revision: value.revision,
+        manifest_hash: value.manifest_hash,
+        head_count: value.head_count,
+        suppressed_v1_heads: value.suppressed_v1_heads,
+        unresolved_v2_bodies: value.unresolved_v2_bodies,
+    })
+}
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct GrantedPopulation {
+    id: String,
+    generation: String,
+    device_id: String,
+    writer_revision: u64,
+    revision: u64,
+    head_hash: String,
+    member_count: u64,
+}
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct GrantReply {
+    schema_version: u8,
+    operation_id: String,
+    body_hash: String,
+    revision: u64,
+    population: GrantedPopulation,
+}
+pub(super) struct GrantSettled {
+    pub(super) revision: u64,
+    pub(super) population_revision: u64,
+    pub(super) writer_revision: u64,
+    pub(super) member_count: u64,
+}
+pub(super) fn grant_receipt(
+    status_code: u16,
+    bytes: &[u8],
+    request: &GrantRequest,
+) -> Result<GrantSettled, &'static str> {
+    let value: GrantReply = response(status_code, bytes, CONTROL_REPLY_BYTES)?;
+    if value.schema_version != 3
+        || value.operation_id != request.operation_id
+        || !identity(&value.body_hash, 64)
+        || !(request.expected_revision + 1..=MAX_REVISION).contains(&value.revision)
+        || value.population.id != request.population_id
+        || value.population.generation != request.generation
+        || value.population.device_id != request.device_id
+        || !(1..=MAX_REVISION).contains(&value.population.writer_revision)
+        || value.population.revision > value.revision
+        || !hexadecimal(&value.population.head_hash, 64)
+        || (value.population.revision == 0) != value.population.head_hash.bytes().all(|b| b == b'0')
+        || value.population.member_count > 8_192
+    {
+        return Err(INVALID);
+    }
+    Ok(GrantSettled {
+        revision: value.revision,
+        population_revision: value.population.revision,
+        writer_revision: value.population.writer_revision,
+        member_count: value.population.member_count,
+    })
+}
+/// Control-state view for the ops driver: only the fields an activation or
+/// grant decision may consume, all validated by the shared status parse.
+pub(super) struct ControlView {
+    pub(super) revision: u64,
+    pub(super) prepared: bool,
+    pub(super) activated: bool,
+    pub(super) migrated: bool,
+    pub(super) population_present: bool,
+    pub(super) population_owned: bool,
+    pub(super) population_revision: u64,
+    pub(super) next_sequence: u64,
 }
 
 #[cfg(test)]

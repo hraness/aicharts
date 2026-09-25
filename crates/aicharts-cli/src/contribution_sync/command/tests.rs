@@ -218,7 +218,7 @@ fn paths_are_bounded_literal_absolute_names_and_help_needs_no_files() {
     let help = run(&args(&["contribution-sync", "--help"])).unwrap();
     assert!(help.contains("--inspect"));
     assert!(help.contains("Coverage remains partial"));
-    assert!(help.contains("never activates V3"));
+    assert!(help.contains("explicit and opt-in"));
 }
 
 #[cfg(target_os = "macos")]
