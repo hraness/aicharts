@@ -2359,8 +2359,11 @@ export class AccountEnrollment extends DurableObject<Env> {
     if (!enabled) return { ok: false, error: "disabled" };
     if (!this.#contributionsEnabled()) return { ok: false, error: "not_started" };
     if (this.#generation() !== request.generation) return { ok: false, error: "recovery_required" };
-    if (this.#contributionRebuildFlight !== null) return { ok: false, error: "conflict" };
-    const marker = Object.freeze({}); this.#contributionRebuildFlight = marker;
+    // The step holds both the rebuild and the projection flight markers from its
+    // verification transaction through the provider delete, so no stage can
+    // re-reference a node between the reference re-check and the delete.
+    if (this.#contributionRebuildFlight !== null || this.#accountWorkFlights.has("projection")) return { ok: false, error: "conflict" };
+    const marker = Object.freeze({}); this.#contributionRebuildFlight = marker; this.#accountWorkFlights.set("projection", marker);
     let retired = false, timer: ReturnType<typeof setTimeout> | undefined;
     const deadline = performance.now() + RECLAMATION_DEADLINE_MS, expired = Object.freeze({});
     const live = () => { if (retired || performance.now() >= deadline) throw expired; };
@@ -2421,6 +2424,10 @@ export class AccountEnrollment extends DurableObject<Env> {
       live(); return result;
     } catch (cause) {
       return { ok: false, error: cause === expired ? "deadline" : cause instanceof ContributionFault ? reclamationErrorFrom(cause.code) : "storage_unavailable" };
-    } finally { retired = true; clearTimeout(timer); if (this.#contributionRebuildFlight === marker) this.#contributionRebuildFlight = null; }
+    } finally {
+      retired = true; clearTimeout(timer);
+      if (this.#contributionRebuildFlight === marker) this.#contributionRebuildFlight = null;
+      if (this.#accountWorkFlights.get("projection") === marker) this.#accountWorkFlights.delete("projection");
+    }
   }
 }

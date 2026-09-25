@@ -1285,6 +1285,113 @@
       "minTraceStates": 30,
       "minDistinctStates": 2,
       "expectedDistinctStates": null
+    },
+    {
+      "id": "m12-reclamation-narrow-safety",
+      "module": "M12Reclamation",
+      "kind": "sanity",
+      "invariant": null,
+      "config": "configs/m12-reclamation-narrow-safety.cfg",
+      "requiredActions": [],
+      "minTraceStates": 0,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": 26208
+    },
+    {
+      "id": "m12-crash-resume",
+      "module": "M12Reclamation",
+      "kind": "witness",
+      "invariant": "NoCrashResumeWitness",
+      "config": "configs/m12-crash-resume.cfg",
+      "requiredActions": [
+        "Record",
+        "Retire",
+        "Begin",
+        "MarkDeleting",
+        "Delete",
+        "Crash",
+        "Begin",
+        "ResumeReclaimed"
+      ],
+      "minTraceStates": 11,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m12-conflict-hold",
+      "module": "M12Reclamation",
+      "kind": "witness",
+      "invariant": "NoConflictHoldWitness",
+      "config": "configs/m12-conflict-hold.cfg",
+      "requiredActions": [
+        "Record",
+        "Retire",
+        "Begin",
+        "Reref",
+        "Conflict",
+        "Begin",
+        "Hold"
+      ],
+      "minTraceStates": 10,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m12-negative-horizon",
+      "module": "M12Reclamation",
+      "kind": "counterexample",
+      "invariant": "Retention",
+      "config": "configs/m12-negative-horizon.cfg",
+      "requiredActions": [
+        "Record",
+        "Retire",
+        "Begin",
+        "MarkDeleting",
+        "Delete",
+        "MarkReclaimed"
+      ],
+      "minTraceStates": 8,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m12-negative-walk",
+      "module": "M12Reclamation",
+      "kind": "counterexample",
+      "invariant": "Safety",
+      "config": "configs/m12-negative-walk.cfg",
+      "requiredActions": [
+        "Record",
+        "Retire",
+        "Begin",
+        "Reref",
+        "MarkDeleting",
+        "Delete"
+      ],
+      "minTraceStates": 9,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m12-negative-replay",
+      "module": "M12Reclamation",
+      "kind": "counterexample",
+      "invariant": "Safety",
+      "config": "configs/m12-negative-replay.cfg",
+      "requiredActions": [
+        "Record",
+        "Retire",
+        "Begin",
+        "MarkDeleting",
+        "Crash",
+        "Reref",
+        "Begin",
+        "ResumeUnsafe",
+        "Delete"
+      ],
+      "minTraceStates": 12,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
     }
   ]
 }

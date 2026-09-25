@@ -12,7 +12,7 @@ const identifier = z.string().regex(/^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/u);
 const operator = z.string().regex(/^[A-Z][A-Za-z0-9]*$/u);
 const modelCaseSchema = z.object({
   id: identifier, module: z.enum(["M1Restore", "M4Contributions", "M4Supersession", "M1RestoreRepaired", "M2Ledger",
-    "M3Admission", "M4ContributionsRepaired", "M5Authority", "M6Consent", "M7Projection", "M8StagedProjection", "M9AccountWork", "M10ContributionFlight", "M11ContributionRebuild"]),
+    "M3Admission", "M4ContributionsRepaired", "M5Authority", "M6Consent", "M7Projection", "M8StagedProjection", "M9AccountWork", "M10ContributionFlight", "M11ContributionRebuild", "M12Reclamation"]),
   kind: z.enum(["counterexample", "sanity", "witness"]), invariant: operator.nullable(),
   config: z.string().regex(/^configs\/[a-z0-9-]+\.cfg$/u),
   requiredActions: z.array(operator), minTraceStates: z.number().int().min(0).max(100),
@@ -23,7 +23,7 @@ const manifestSchema = z.object({
   schemaVersion: z.literal(1), claim: z.enum(["finite-baseline-model-evidence-only", "finite-repaired-model-evidence-only"]),
   bounds: z.object({ workers: z.literal(1), heapMiB: z.literal(256), timeoutMs: z.literal(60_000),
     maxOutputBytes: z.literal(1_048_576), maxDistinctStates: z.literal(300_000) }).strict(),
-  cases: z.array(modelCaseSchema).min(1).max(80),
+  cases: z.array(modelCaseSchema).min(1).max(96),
 }).strict();
 const pinSchema = z.object({
   schemaVersion: z.literal(1),
