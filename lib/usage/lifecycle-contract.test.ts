@@ -3,7 +3,7 @@ import costs from "../../costs.json";
 import {
   decodeUsageLifecycleHttpRequest, decodeUsageLifecycleHttpResponse, encodeUsageLifecycleHttpRequest, encodeUsageLifecycleHttpResponse,
   LIFECYCLE_ERASE_STEPS, LIFECYCLE_EXPORT_CONTRACT, LIFECYCLE_EXPORT_EXCLUDED, LIFECYCLE_EXPORT_SECTIONS, LIFECYCLE_RECLAMATION_CONTRACT,
-  LIFECYCLE_STATUS_CONTRACT, lifecycleReplyMatches, parseLifecycleExportPage, parseLifecycleStatus, parseReclamationLedger,
+  LIFECYCLE_STATUS_CONTRACT, lifecycleJson, lifecycleReplyMatches, parseLifecycleExportPage, parseLifecycleStatus, parseReclamationLedger,
   parseUsageLifecycleOperation, parseUsageLifecycleRequest, parseUsageLifecycleResult, USAGE_LIFECYCLE_OPERATIONS,
   USAGE_LIFECYCLE_REQUEST_BYTES, USAGE_LIFECYCLE_RESPONSE_BYTES, type LifecycleExportPageV1, type LifecycleStatusV1,
 } from "./lifecycle-contract";
@@ -82,4 +82,23 @@ test("export sections and exclusions cover every account-scoped surface in costs
   expect(missing).toEqual([]);
   for (const name of [...excluded, ...exported]) if (name !== "worker:lifecycle") expect(inventory).toContain(name);
   expect(new Set(LIFECYCLE_EXPORT_SECTIONS).size).toBe(LIFECYCLE_EXPORT_SECTIONS.length);
+});
+
+test("checked JSON objects are plain, structured-cloneable and keep a __proto__ key as data", () => {
+  const input = JSON.parse('{"a":{"b":[1,"x",null]},"__proto__":{"polluted":true}}') as unknown;
+  const checked = lifecycleJson(input) as Record<string, unknown>;
+  expect(Object.getPrototypeOf(checked)).toBe(Object.prototype);
+  expect(Object.getPrototypeOf(checked.a)).toBe(Object.prototype);
+  expect(Object.keys(checked)).toEqual(["a", "__proto__"]);
+  expect(({} as Record<string, unknown>).polluted).toBeUndefined();
+  expect(structuredClone(checked)).toEqual(checked);
+  expect(Object.isFrozen(checked)).toBe(true);
+});
+
+test("exclusions and parsed replies survive structured cloning across the RPC boundary", () => {
+  for (const entry of LIFECYCLE_EXPORT_EXCLUDED) expect(Object.getPrototypeOf(entry)).toBe(Object.prototype);
+  expect(structuredClone(LIFECYCLE_EXPORT_EXCLUDED)).toEqual([...LIFECYCLE_EXPORT_EXCLUDED]);
+  const parsed = parseLifecycleStatus(status);
+  expect(parsed).not.toBeNull();
+  expect(structuredClone(parsed)).toEqual(parsed);
 });

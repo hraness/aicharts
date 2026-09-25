@@ -11,7 +11,9 @@ import { restoreFenceName } from "../src/restore-fence";
 import { LEADERBOARD_INDEX_NAME } from "../../../lib/usage/leaderboard-contract";
 import { parseStatsUpload, type StatsUpload } from "../../../lib/usage/stats-http-contract";
 import { parseUsageStatsReport } from "../../../lib/usage/stats-contract";
-import { DAY_MS } from "../../../lib/usage/wire";
+import { DAY_MS, encodeUsageBatch } from "../../../lib/usage/wire";
+import { decodeAdmissionBatch, encodeAdmissionBatch, encodeAdmissionOperation } from "../../../lib/usage/admission";
+import { ADMISSION_POLICY_V1 } from "../src/admission-policy";
 import { parseUsageLifecycleValue, type UsageLifecycleOperationInput, type UsageLifecycleValue } from "../../../lib/usage/lifecycle-contract";
 
 export const NOW = Math.ceil(Date.now() / DAY_MS) * DAY_MS + DAY_MS / 2, DAY = Math.floor(NOW / DAY_MS);
@@ -107,3 +109,22 @@ export const enrollmentRow = (id = fixture.account) => runInDurableObject(stub(i
   return { schemaVersion: row.schema_version as number, revision: row.revision as number, payload: JSON.parse(String(row.payload)) as Record<string, unknown> };
 });
 export const fenceRecord = async (id = fixture.account) => success(await fence(id).read({ accountId: id, generation: env.USAGE_ENROLLMENT_GENERATION })).record;
+/** Admit one numeric usage batch from `device` so the admission tables and
+ * R2 batch/journal objects hold account-owned content. */
+export async function admitUsage(device: Device, tokens = 10n, id = fixture.account, sequence = 1, utcDay = DAY - 1) {
+  const occurrenceId = admissionIdBytes(hex(sequence, 16));
+  const frame = success(encodeUsageBatch({ utcDay, registryRevision: 1,
+    usage: [{ id: occurrenceId, executionId: new Uint8Array(16), accountId: new Uint8Array(16), offsetMs: 1,
+      provider: 1, authMode: 0, evidence: 1, modelId: 0, contextTier: 0,
+      tokens: { inputUncached: tokens, cacheRead: 0n, cacheWrite5m: 0n, cacheWrite1h: 0n, output: 5n, reasoningOutput: 0n } }],
+    prompts: [], intervals: [] }, ADMISSION_POLICY_V1));
+  const operation = success(encodeAdmissionOperation({ accountId: admissionIdBytes(id.slice(5)),
+    deviceId: device.id, generation: admissionIdBytes(env.USAGE_ENROLLMENT_GENERATION), action: 1, sequence,
+    occurrenceId, expectedHeadHash: new Uint8Array(32), frame }, ADMISSION_POLICY_V1));
+  const batch = success(decodeAdmissionBatch(success(encodeAdmissionBatch([operation], ADMISSION_POLICY_V1)), ADMISSION_POLICY_V1));
+  return stub(id).admitBatch({ uploadSecret: device.proof.uploadSecret, batch: batch.bytes });
+}
+export function replaceEnvironment(instance: unknown, change: (original: Env) => Env): () => void {
+  const object = instance as { env: Env }, original = object.env;
+  object.env = change(original); return () => { object.env = original; };
+}

@@ -43,8 +43,10 @@ const count = (value: unknown, max: number): value is number => typeof value ===
 const ascii = (value: unknown, max: number): value is string => typeof value === "string" && value.length >= 1 && value.length <= max && /^[\x21-\x7e]+$/u.test(value);
 const text = (value: unknown, max: number): value is string => typeof value === "string" && value.length >= 1 && value.length <= max && /^[\x20-\x7e]+$/u.test(value);
 const isClient = (value: unknown): value is LifecycleClient => typeof value === "string" && (LIFECYCLE_CLIENTS as readonly string[]).includes(value);
+/** A frozen plain copy of a literal with code-defined keys. Lifecycle values
+ * cross the Durable Object RPC boundary, which refuses null-prototype objects. */
 function owned<T extends object>(value: T): Readonly<T> {
-  return Object.freeze(Object.assign(Object.create(null), value)) as Readonly<T>;
+  return Object.freeze({ ...value });
 }
 /** Plain JSON values only (finite numbers, ASCII-safe strings are checked at
  * encode time), bounded depth and width. Export row values pass through here. */
@@ -65,14 +67,16 @@ export function lifecycleJson(value: unknown, depth = 0): LifecycleJson | null |
   if (prototype !== null && prototype !== Object.prototype) return undefined;
   const descriptors = Object.getOwnPropertyDescriptors(value), names = Reflect.ownKeys(descriptors);
   if (names.length > 256) return undefined;
-  const result: Record<string, LifecycleJson> = Object.create(null);
+  // A plain object: Workers RPC refuses to serialize null-prototype objects.
+  // Keys are defined as own properties, so `__proto__` stays ordinary data.
+  const result: Record<string, LifecycleJson> = {};
   for (const name of names) {
     if (typeof name !== "string" || !text(name, 128)) return undefined;
     const descriptor = descriptors[name];
     if (!("value" in descriptor) || descriptor.enumerable !== true) return undefined;
     const checked = lifecycleJson(descriptor.value, depth + 1);
     if (checked === undefined) return undefined;
-    result[name] = checked;
+    Object.defineProperty(result, name, { value: checked, enumerable: true, writable: true, configurable: true });
   }
   return Object.freeze(result);
 }

@@ -2326,6 +2326,12 @@ export class AccountEnrollment extends DurableObject<Env> {
   /** Fenced read that tolerates the erasure tombstone. Pending accounts and
    * absent state read as not_enrolled exactly like the consent route. */
   async #lifecycleRead<T>(scope: LifecycleScope, read: (state: State, revision: number, admission: AdmissionState, control: AdmissionControl, now: number) => T): Promise<EnrollmentResult<T>> {
+    // Status and export stay readable after erasure only while the local
+    // payload itself reflects the confirmed erasure. A restored pre-erasure
+    // payload under a sealed fence tombstone refuses like every other read.
+    let allowErased = false;
+    try { allowErased = this.ctx.storage.transactionSync(() => { const { state } = this.#stored(5); return state !== null && erasureConfirmed(state); }); }
+    catch { allowErased = false; }
     return this.#readFenced(scope.accountId, async () => {
       const generation = this.#generation(), observed = Date.now();
       if (generation === null) return err("recovery_required");
@@ -2333,7 +2339,7 @@ export class AccountEnrollment extends DurableObject<Env> {
       const observation: AdmissionObservation = { generation, observed, fence: null, committed: false };
       return this.#privateDaysSnapshot(scope, observation, (state, admission, control) =>
         read(state, this.#stored(5).revision, admission, control, observation.observed), false);
-    }, true);
+    }, allowErased);
   }
   /** Fenced mutation on a live (non-erased) active account with an unexpired
    * session. `run` sees the fenced state and the transaction clock. */
