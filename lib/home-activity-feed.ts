@@ -1,4 +1,5 @@
-import { blogArticlePath, blogArticles } from "@/app/blog/articles";
+import { blogArticlePath } from "@/app/blog/articles";
+import { indexableBlogArticles } from "@/app/blog/article-admissions";
 
 import {
   formatIntelligenceCost,
@@ -45,7 +46,7 @@ function calendarDate(value: string): string {
 }
 
 function recentNoteItems(): readonly HomeActivityItem[] {
-  return [...blogArticles]
+  return [...indexableBlogArticles]
     .map(article => ({
       detail: article.dek,
       href: blogArticlePath(article.slug),

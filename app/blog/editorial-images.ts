@@ -83,6 +83,15 @@ function image<Slug extends BlogSlug>(
 }
 
 export const BLOG_EDITORIAL_IMAGES = {
+  "introducing-ai-charts": image(
+    "introducing-ai-charts",
+    "Seven small ivory forms, from a sphere to a pyramid, sit on separate charcoal plinths along one shelf, each with a blank tag hanging from a thin brass rail.",
+    "Each result on AI Charts keeps its own source, version, and retrieval date, and each benchmark stays on its own scale.",
+    "a78e4bdcb6a852d67dc0738215690ad7d05ef6065da5fe65adb1b5ca6f695093",
+    "3233a72ede320006ad35729ce91c2acf056c7a63a29c302d6d85652794f8d00a",
+    "20260924T212044913Z-image-a289b94d-c1e/receipt.json",
+    "gateway_1bae97d06d1942f4a81732af7bc5510f.json",
+  ),
   "terminal-bench-science": image(
     "terminal-bench-science",
     "A dark circular well sits under a brass-marked measuring beam on a tall stand, with four small brass weights on a round tray.",
