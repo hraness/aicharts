@@ -73,7 +73,7 @@ const USAGE_HINT_CODES: &[&str] = &[
     "upload_not_enabled_use_dry_run",
     "too_many_sources",
 ];
-const HELP: &str = "AI Charts Usage — local reports and enrolled publication
+const HELP: &str = "AI Charts: local reports and enrolled publication
 
   aicharts --version [--json]
   aicharts stats --home DIR (--all | --client ID ...) [--since YYYY-MM-DD --until YYYY-MM-DD] [--json]
@@ -502,7 +502,7 @@ fn render(collection: &Collection, mode: Mode, json: bool) -> Result<String, &'s
         serde_json::to_string_pretty(&result).map_err(|_| "summary_encode_failed")
     } else {
         Ok(format!(
-            "AI Charts Usage — local only; nothing uploaded\nObserved tokens: {token_total}\nObserved output tokens: {output_total}\nUsage occurrences: {usage_total}\nPrompt counts and activity: unavailable\nCoverage: partial historical import\nPricing: unavailable; models remain unknown\nWarnings: {}\n",
+            "AI Charts: local only; nothing uploaded\nObserved tokens: {token_total}\nObserved output tokens: {output_total}\nUsage occurrences: {usage_total}\nPrompt counts and activity: unavailable\nCoverage: partial historical import\nPricing: unavailable; models remain unknown\nWarnings: {}\n",
             warnings.join(", ")
         ))
     }

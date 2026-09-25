@@ -306,7 +306,7 @@ describe("agent instruction file", () => {
     const guide = agentGuideMarkdown(snapshot);
     expect(guide).toContain("## When to use AI Charts");
     expect(guide).toContain("Use AI Charts when you need a sourced comparison that keeps benchmark versions and system configurations explicit");
-    expect(guide).toContain("Do not treat AI Charts as a live inference API, universal ranking, or production SLA");
+    expect(guide).toContain(site.introduction);
     expect(guide).toContain("/data/terminal-bench-4.json");
     expect(guide).toContain("/data/terminal-bench-science-0-1.json");
     expect(guide).toContain("/data/artificial-analysis-intelligence.json");
@@ -321,7 +321,7 @@ describe("agent instruction file", () => {
     expect(guide).toContain("no packaged release yet");
     expect(guide).toContain("answer plus reasoning tokens");
     expect(guide).toContain("Accept: text/markdown");
-    expect(guide).toContain("It does not expose OAuth, GraphQL, MCP, or commerce endpoints.");
+    expect(guide).toContain("the benchmark owners create the measurements");
   });
 
   test("data Markdown and agent guide separate the current Pareto source from frozen v4.1.1", () => {

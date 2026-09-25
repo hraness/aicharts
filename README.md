@@ -1,8 +1,8 @@
 # AI Charts
 
-[AI Charts](https://aicharts.io) publishes charts of AI model benchmarks and
-personal token usage. Compare models and coding agents on benchmark score, cost,
-speed, and token use, then inspect the source and configuration behind a result.
+[AI Charts](https://aicharts.io) plots published AI benchmark scores against
+cost and tokens per task, marking the best score at every budget. A local
+collector measures your own agents' token use.
 
 The repository also contains a local collector that measures your own coding
 agents' token use. It is in development and has no packaged release yet, so
@@ -69,7 +69,7 @@ See [detailed usage reports](docs/usage-details.md) for commands, acquisition
 requirements, and what parser support does and does not cover. The [scheduled publisher guide](docs/usage-autosubmit.md) covers
 native refresh profiles, dry runs, failure recovery and a reversible macOS cutover.
 
-The Rust workspace contains a local-only Codex/Claude Code usage reader, a closed numeric wire format, a private numeric SQLite ledger and matching TypeScript validation/rollups. Explicit collection can retain measurements across restarts with atomic source checkpoints and a pending-queue preview. The separate `inspect` command reads retained numeric totals without source scanning, writes or SQLite recovery. It does not enable sign-in, uploads, a public leaderboard or background collection. See [the local usage guide](docs/usage-local.md) for explicit source selection, private namespace keys and current measurement/recovery limitations.
+The Rust workspace contains a local-only Codex/Claude Code usage reader, a closed numeric wire format, a private numeric SQLite ledger and matching TypeScript validation/rollups. Explicit collection can retain measurements across restarts with atomic source checkpoints and a pending-queue preview. The separate `inspect` command reads retained numeric totals without source scanning, writes or SQLite recovery. The `inspect` command does not enable sign-in, uploads, a public leaderboard or background collection. See [the local usage guide](docs/usage-local.md) for explicit source selection, private namespace keys and current measurement/recovery limitations.
 
 The [session usage view](https://aicharts.io/usage/sessions) opens local numeric reports for session totals, model mix, and time breakdowns with their source coverage. Reports stay in the browser tab. See [session collection and timing](docs/usage-sessions.md) for the command, concurrent-work denominators and source coverage.
 

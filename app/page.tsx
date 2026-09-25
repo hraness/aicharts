@@ -11,7 +11,15 @@ import { ProjectAskAiAboutThis } from "@/components/project-ask-ai-about-this";
 import { ModelReleaseRadars } from "@/components/release-radar";
 import { SiteHeader } from "@/components/site-header";
 import { parseArtificialAnalysisIntelligenceV43Snapshot } from "@/lib/artificial-analysis-intelligence-v4-3-data";
-import { homeHeading, homeLede, searchSite, site } from "./site";
+import {
+  homeEyebrow,
+  homeHeading,
+  homeLede,
+  homePrimaryAction,
+  homeSecondaryAction,
+  searchSite,
+  site,
+} from "./site";
 
 function TopicIcon({ className, size, slug }: Readonly<{ className: string; size: number; slug: string }>) {
   // Decorative local SVG; next/image cannot optimize vector sources.
@@ -32,8 +40,13 @@ export default function Home() {
     <SiteHeader current="/" />
     <main className="chart-home hraness-marketing-main" id="main-content">
       <header className="chart-page-intro">
+        <p className="chart-page-intro__eyebrow">{homeEyebrow}</p>
         <h1 id="home-title">{homeHeading}</h1>
         <p>{homeLede}</p>
+        <p className="chart-page-intro__actions">
+          <Link href={homePrimaryAction.href}>{homePrimaryAction.label}</Link>
+          <Link href={homeSecondaryAction.href}>{homeSecondaryAction.label}</Link>
+        </p>
       </header>
       <ChartNavigation current="/" />
       <HomeIntelligenceEfficiency snapshot={parsed.value} />
@@ -58,20 +71,20 @@ export default function Home() {
               {
                 name: "xcb",
                 href: "https://xcb.sh",
-                role: "A metaharness for agent subscriptions",
-                relationship: "xcb meters your agent-subscription usage locally and can write session exports in the AI Charts format, which stay on your machine.",
+                role: "Routes coding tasks across the Claude, Codex, and Devin plans you have",
+                relationship: "xcb measures subscription usage locally and, when you turn on exports, writes session files in the AI Charts format. Automatic upload is not available.",
               },
               {
                 name: "Gobstopper",
                 href: "https://gobstopper.sh",
-                role: "Automatic context compaction for agent sessions",
-                relationship: "Gobstopper compacts long agent sessions to cut context costs. AI Charts shows token use per model and per session.",
+                role: "Compacts long agent sessions into smaller copies, keeping every byte",
+                relationship: null,
               },
               {
                 name: "Ghostget",
                 href: "https://ghostget.com",
-                role: "A fast web gateway for agents",
-                relationship: "Ghostget limits how many tokens each web read costs. AI Charts compares what the models behind those reads cost.",
+                role: "Named web actions for AI agents: read pages, save media, use connected accounts",
+                relationship: null,
               },
             ],
           },
@@ -82,26 +95,26 @@ export default function Home() {
               {
                 name: "PeopleBlade",
                 href: "https://peopleblade.com",
-                role: "A private contact book for you and your agent",
-                relationship: "PeopleBlade's agent researches your contacts. AI Charts compares the benchmark scores and costs of models an agent like that can use.",
+                role: "Local personal CRM for everyone you know, built for your agent",
+                relationship: null,
               },
               {
                 name: "Soulscrape",
                 href: "https://soulscrape.com",
-                role: "A dated, cited dossier on a person",
-                relationship: "A Soulscrape dossier run spends model tokens. AI Charts compares models by benchmark score and cost per task.",
+                role: "Free agent skill that writes dated dossiers on people, sources cited",
+                relationship: null,
               },
               {
                 name: "Textbutler",
                 href: "https://textbutler.app",
-                role: "A personal message butler for Mac",
-                relationship: "Textbutler drafts through your chosen agent. AI Charts compares published benchmark results for the models that can drive it.",
+                role: "AI butler for the iMessage, WhatsApp, and Beeper chats you choose",
+                relationship: null,
               },
               {
                 name: "Wordcell",
                 href: "https://wordcell.io",
-                role: "A Markdown knowledge base for agents",
-                relationship: "Wordcell's agent queries your vault. AI Charts compares the benchmark scores and costs of models that can run that agent.",
+                role: "Markdown knowledge base that gives agents the decisions behind code",
+                relationship: null,
               },
             ],
           },

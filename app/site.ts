@@ -1,13 +1,18 @@
+// Canonical public identity lines come from the portfolio messaging record
+// for `aicharts` (hraness/jungle registry, commit a9988b903).
 export const site = {
-  description: "Explore AI model benchmarks and local token usage tools. Compare published results, costs, and configurations, and inspect your own coding-agent sessions.",
+  category: "AI model comparison charts",
+  description: "AI Charts plots published AI benchmark scores against cost and tokens per task, and a local collector measures your own agents' token use.",
   domain: "aicharts.io",
   emoji: "◉",
+  introduction: "Picking a model means guessing at a tradeoff between quality and price, because benchmark scores and prices live in different places. AI Charts plots published benchmark scores against cost and tokens per task on one chart, so the strongest option at each budget is visible instead of implied. A local collector measures your own agents' token use, so the cost question covers your work, not only the models. AI Charts is free and open source.",
   name: "AI Charts",
   origin: "https://aicharts.io",
   palette: {
     chromatic: { key: "#5e2e02", support: "#fefefd" },
     tonal: { highlight: "#e1e0e0", shadow: "#291201" },
   },
+  tagline: "See which model wins at each price.",
 } as const;
 
 export const searchSite = {
@@ -15,15 +20,18 @@ export const searchSite = {
   name: site.name,
   origin: site.origin,
   socialImage: {
-    alt: "AI Charts comparison of AI models and agents",
+    alt: "AI Charts: See which model wins at each price.",
     path: "/opengraph-image",
   },
-  title: "AI model and agent comparison charts | AI Charts",
+  title: "AI Charts | See which model wins at each price.",
 } as const;
 
-export const homeHeading = "Compare AI models";
+export const homeEyebrow = site.category;
+export const homeHeading = site.tagline;
 export const homeLede =
-  "The chart plots model configurations by Intelligence Index score against cost or output tokens per task.";
+  "Benchmark scores plotted against cost and tokens per task, plus a local collector for your own agents' token use.";
+export const homePrimaryAction = { href: "/#intelligence-index", label: "Browse the charts" } as const;
+export const homeSecondaryAction = { href: "/usage", label: "Measure your agent" } as const;
 export const homeTaskLinks = [
   { task: "coding", name: "Coding", description: "Build, debug, and work in a terminal." },
   { task: "reasoning", name: "Reasoning", description: "Solve unfamiliar problems." },

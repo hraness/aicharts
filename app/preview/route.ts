@@ -7,7 +7,7 @@ import {
 } from "@/lib/coding-agent-dataset";
 import { formatRetrievedAt } from "@/lib/coding-agent-updates";
 
-import { site } from "../site";
+import { homeHeading, searchSite, site } from "../site";
 
 export const dynamic = "force-static";
 
@@ -61,7 +61,7 @@ const document = `<!doctype html>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex, nofollow, noarchive">
   <link rel="canonical" href="${canonicalUrl}">
-  <title>AI model and agent comparison charts | AI Charts</title>
+  <title>${escapeHtml(searchSite.title)}</title>
   <style>
     * { box-sizing: border-box; }
     html { color-scheme: light; }
@@ -176,7 +176,7 @@ const document = `<!doctype html>
   <main>
     <header>
       <div class="brand"><i aria-hidden="true" class="mark"></i>${site.domain}</div>
-      <h1>AI model and agent comparison charts</h1>
+      <h1>${escapeHtml(homeHeading)}</h1>
       <p class="summary">${summary.recordCount} model-agent configurations across ${summary.modelCount} models and ${summary.providerCount} providers.</p>
     </header>
     <ul aria-label="Current coding-agent benchmark leaders">${leaderCards}

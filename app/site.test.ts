@@ -2,8 +2,11 @@ import { describe, expect, test } from "bun:test";
 
 import packageJson from "../package.json";
 import {
+  homeEyebrow,
   homeHeading,
   homeLede,
+  homePrimaryAction,
+  homeSecondaryAction,
   notFoundRecoveryLinks,
   notFoundSearchSite,
   searchSite,
@@ -11,21 +14,29 @@ import {
 } from "./site";
 
 describe("AI Charts public positioning", () => {
-  test("keeps umbrella metadata general and decision-oriented", () => {
-    // The title keeps the umbrella search intent and the brand suffix.
-    expect(searchSite.title.toLowerCase()).toContain("ai model and agent comparison charts");
-    expect(searchSite.title.endsWith(" | AI Charts")).toBeTrue();
+  test("carries the canonical product messaging", () => {
+    // Canonical lines come from the portfolio messaging record (hraness/jungle
+    // a9988b903): the title is the product name plus the tagline.
+    expect(searchSite.title).toBe(`${site.name} | ${site.tagline}`);
     expect(searchSite.title).not.toContain("&");
-    expect(homeHeading).toBe("Compare AI models");
-    for (const dimension of ["AI model benchmarks", "local token usage", "coding-agent sessions"]) {
-      expect(site.description).toContain(dimension);
+    expect(site.tagline).toBe("See which model wins at each price.");
+    expect(site.category).toBe("AI model comparison charts");
+    expect(homeHeading).toBe(site.tagline);
+    expect(homeEyebrow).toBe(site.category);
+    // The meta description names the two product halves: published benchmark
+    // charts and the local token collector.
+    expect(site.description.startsWith(`${site.name} `)).toBeTrue();
+    for (const fact of ["benchmark scores", "cost", "tokens per task", "local collector"]) {
+      expect(site.description).toContain(fact);
     }
-    expect(site.description).toContain("published results");
-    expect(site.description).toContain("configurations");
-    // The lede names what the homepage chart plots: the Index score against cost or output tokens.
-    for (const fact of ["Intelligence Index", "cost", "tokens"]) expect(homeLede).toContain(fact);
-    expect(homeLede.length).toBeLessThan(110);
+    // The hero summary names the chart and the local collector.
+    for (const fact of ["Benchmark scores", "cost", "tokens per task", "local collector"]) {
+      expect(homeLede).toContain(fact);
+    }
+    expect(homeLede.length).toBeLessThan(160);
     expect(homeLede).not.toMatch(/universal|definitive|best model overall/iu);
+    expect(homePrimaryAction.href.startsWith("/")).toBeTrue();
+    expect(homeSecondaryAction.href).toBe("/usage");
     expect(searchSite.description).toBe(site.description);
     expect(searchSite.origin).toBe("https://aicharts.io");
     expect(site.description.length).toBeLessThanOrEqual(160);
@@ -53,9 +64,9 @@ describe("AI Charts public positioning", () => {
       new URL("../docs/seo-strategy.md", import.meta.url),
     ).text();
 
-    // The package and repository description expand the portfolio registry line
-    // ("model benchmarks and personal token usage"), and the strategy quotes it.
-    expect(packageJson.description).toContain("model benchmarks and personal token usage");
+    // The package and repository descriptions carry the canonical meta line,
+    // and the strategy quotes it.
+    expect(packageJson.description).toBe(site.description);
     expect(packageJson.description).not.toContain("—");
     expect(strategy).toContain(`> ${packageJson.description}`);
     expect(strategy).toContain(`- description: \`${packageJson.description}\``);

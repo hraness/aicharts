@@ -22,7 +22,13 @@ import { ATLAS_DATASETS, ATLAS_ENTRIES } from "@/lib/benchmark-atlas-catalog";
 import type { BenchmarkAtlasDataset, BenchmarkAtlasEntry } from "@/lib/benchmark-atlas";
 
 import Home from "./page";
-import { homeHeading, homeLede } from "./site";
+import {
+  homeEyebrow,
+  homeHeading,
+  homeLede,
+  homePrimaryAction,
+  homeSecondaryAction,
+} from "./site";
 
 const parsed = parseCodingAgentSnapshot(codingAgentData);
 if (!parsed.ok) throw parsed.error;
@@ -144,7 +150,13 @@ describe("homepage canonical content", () => {
     expect(source).not.toContain("HomeBenchmarkPortfolio");
     expect(existsSync(new URL("./loading.tsx", import.meta.url))).toBeFalse();
     expect(markup).toContain(`<h1 id="home-title">${homeHeading}</h1>`);
-    expect(markup).toContain(homeLede);
+    expect(markup).toContain(homeEyebrow);
+    // Server markup escapes the apostrophe in the canonical hero summary.
+    expect(markup).toContain(homeLede.replaceAll("'", "&#x27;"));
+    expect(markup).toContain(`href="${homePrimaryAction.href}"`);
+    expect(markup).toContain(homePrimaryAction.label);
+    expect(markup).toContain(`href="${homeSecondaryAction.href}"`);
+    expect(markup).toContain(homeSecondaryAction.label);
     expect(markup).toContain('aria-label="Chart collection"');
     expect(markup).toContain('href="/coding"');
     expect(markup).toContain('href="/benchmarks"');

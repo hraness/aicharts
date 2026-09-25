@@ -16,7 +16,7 @@ pub(super) const MAX_ROWS: usize = 65_536;
 pub(super) const MAX_BYTES: usize = 32 * 1024 * 1024;
 const MAX_RECORDS: u64 = 10_000_000;
 const MAX_DECIMAL: u128 = aicharts_metrics::MAX_DECIMAL;
-const HELP: &str = "AI Charts detailed stats — local, read-only\n\n  aicharts stats --home DIR (--all | --client ID ...) [--source-root DIR ...] [--since YYYY-MM-DD --until YYYY-MM-DD] [--json | --health-json]\n  aicharts stats --list-clients\n\nThe default period is the last 30 UTC days, including today. Select up to 366\ndays. --home is an explicit absolute directory. To read one configured profile,\nselect one client and supply its exclusive absolute --source-root directories.\nWithout those roots, discovery uses the selected home and stays within it.\nLocal parser support includes every client in the pinned Tokscale registry.\nSome clients require an existing local export or API cache. This command does\nnot refresh credentials or contact providers. It never uploads anything.\n\nJSON contains day/client/model aggregates, disjoint token buckets, known costs\nand coverage. Unknown identities are withheld. Unknown costs stay unknown;\nreported charges and estimates are separate. Failed scans are incomplete, never\na successful empty replacement. --health-json emits separate measured source\nhealth, including parsing work, partial tails and fixed warning codes. It keeps\nunknown counters null and does not create persistent state.\nRedirect --json output to import at /usage/details.\n";
+const HELP: &str = "AI Charts detailed stats: local, read-only\n\n  aicharts stats --home DIR (--all | --client ID ...) [--source-root DIR ...] [--since YYYY-MM-DD --until YYYY-MM-DD] [--json | --health-json]\n  aicharts stats --list-clients\n\nThe default period is the last 30 UTC days, including today. Select up to 366\ndays. --home is an explicit absolute directory. To read one configured profile,\nselect one client and supply its exclusive absolute --source-root directories.\nWithout those roots, discovery uses the selected home and stays within it.\nLocal parser support includes every client in the pinned Tokscale registry.\nSome clients require an existing local export or API cache. This command does\nnot refresh credentials or contact providers. It never uploads anything.\n\nJSON contains day/client/model aggregates, disjoint token buckets, known costs\nand coverage. Unknown identities are withheld. Unknown costs stay unknown;\nreported charges and estimates are separate. Failed scans are incomplete, never\na successful empty replacement. --health-json emits separate measured source\nhealth, including parsing work, partial tails and fixed warning codes. It keeps\nunknown counters null and does not create persistent state.\nRedirect --json output to import at /usage/details.\n";
 
 #[derive(Deserialize)]
 struct Registry {
@@ -719,7 +719,7 @@ pub(super) fn run(args: &[String]) -> Result<String, &'static str> {
     if options.json {
         return serde_json::to_string(&report).map_err(|_| "stats_encode_failed");
     }
-    let mut output = "AI Charts detailed stats — local only; nothing uploaded\nUTC period; token buckets are disjoint. Costs may be unmeasured.\n".to_owned();
+    let mut output = "AI Charts detailed stats: local only; nothing uploaded\nUTC period; token buckets are disjoint. Costs may be unmeasured.\n".to_owned();
     for source in &report.sources {
         let total: u128 = report
             .rows

@@ -43,7 +43,6 @@ export default async function UsagePage() {
               ? <Link className="usage-button usage-button--primary" href="/dashboard">Open your dashboard</Link>
               : <Link className="usage-button usage-button--primary" href="/usage/details">Open a local report</Link>}
             <Link className="usage-button usage-button--quiet" href="#usage-setup">Set up tracking</Link>
-            <Link className="usage-button usage-button--quiet" href="/leaderboard">Public leaderboard</Link>
           </div>
         </div>
         <aside className="usage-status" aria-label="Status">
