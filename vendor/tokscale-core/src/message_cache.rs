@@ -36,6 +36,9 @@ use std::time::UNIX_EPOCH;
 // wire migration below: unrelated clients retain their cache, while OpenCode
 // keeps its parsed messages and takes one full scan to acquire the new map.
 const CACHE_FORMAT_VERSION: u32 = 7;
+// Only MiMo uses this envelope. Its positional v7 entry remains nested intact,
+// with exact per-row provenance stored beside it; unrelated shards stay v7.
+const MICODE_CACHE_FORMAT_VERSION: u32 = 8;
 const LEGACY_CACHE_FORMAT_VERSION_V4: u32 = 4;
 const LEGACY_CACHE_FORMAT_VERSION_V5: u32 = 5;
 const LEGACY_CACHE_FORMAT_VERSION_V6: u32 = 6;
@@ -1184,8 +1187,16 @@ const SHARED_PARSER_FAMILIES: &[SharedParserFamily] = &[
             // submit validation does not reject valid unknown-model MiMo
             // usage offline. v2->v3: duplicate merging now upgrades the
             // retained row when a later copy carries an explicit cost,
-            // including zero.
-            (ClientId::MiMoCode, 2),
+            // including zero. v3->v4: Xiaomi MiMo AI desktop sessions share
+            // the same mimocode SQLite store and are re-stamped as
+            // `micode-desktop` when `session.version` starts with `desktop-`;
+            // warm v3 entries still label every row `micode`.
+            // Desktop and CLI parse through the same `parse_micode_sqlite`
+            // entrypoint and therefore share MiMo Code's invalidation history.
+            // v5->v6: deduplicate forked history across desktop/CLI surfaces
+            // while retaining the original call's surface attribution.
+            (ClientId::MiMoCode, 5),
+            (ClientId::MiMoDesktop, 5),
             (ClientId::Kilo, 0),
         ],
     },
@@ -1504,6 +1515,9 @@ fn parser_version(client: ClientId) -> u32 {
         ClientId::Mcode => 1,
         ClientId::LmStudio => 1,
         ClientId::Hindsight => 1,
+        // v2 preserves actual provider identity; v3 clears stale provider
+        // metadata when a persisted reset/sentinel snapshot removes it.
+        ClientId::Muse => 3,
         // Shared-family members are versioned by `SHARED_PARSER_FAMILIES`
         // through the roster lookup at the top of this function. Listing
         // them here keeps the match exhaustive at compile time; reaching
@@ -1520,6 +1534,7 @@ fn parser_version(client: ClientId) -> u32 {
         | ClientId::Cline
         | ClientId::OpenCode
         | ClientId::MiMoCode
+        | ClientId::MiMoDesktop
         | ClientId::Kilo
         | ClientId::CodeBuddy
         | ClientId::WorkBuddy
@@ -1617,6 +1632,10 @@ pub(crate) struct CachedSourceEntry {
     /// other than the message list it was taken with would skip rows and
     /// under-report.
     pub opencode_incremental: Option<crate::sessions::opencode_schema::OpenCodeIncrementalState>,
+    /// MiMo-only parallel row provenance. This is NOT another v7 positional
+    /// field: the namespace-specific envelope serializes it beside that entry.
+    #[serde(skip)]
+    pub micode_metadata: Option<Vec<crate::sessions::micode::MiMoRowMetadata>>,
 }
 
 /// Exact version-4 entry layout. Keeping this wire type lets existing shards
@@ -1646,6 +1665,7 @@ impl From<LegacyCachedSourceEntryV4> for CachedSourceEntry {
             codex_incremental: entry.codex_incremental,
             prime_accounting: None,
             opencode_incremental: None,
+            micode_metadata: None,
         }
     }
 }
@@ -1677,6 +1697,7 @@ impl From<LegacyCachedSourceEntryV5> for CachedSourceEntry {
             codex_incremental: entry.codex_incremental,
             prime_accounting: entry.prime_accounting,
             opencode_incremental: None,
+            micode_metadata: None,
         }
     }
 }
@@ -1725,6 +1746,7 @@ impl From<LegacyCachedSourceEntryV6> for CachedSourceEntry {
             codex_incremental: entry.codex_incremental,
             prime_accounting: entry.prime_accounting,
             opencode_incremental: None,
+            micode_metadata: None,
         }
     }
 }
@@ -1748,7 +1770,22 @@ impl CachedSourceEntry {
             codex_incremental,
             prime_accounting: None,
             opencode_incremental: None,
+            micode_metadata: None,
         }
+    }
+
+    pub(crate) fn with_micode_metadata(
+        mut self,
+        metadata: Vec<crate::sessions::micode::MiMoRowMetadata>,
+    ) -> Self {
+        self.micode_metadata = Some(metadata);
+        self
+    }
+
+    pub(crate) fn has_valid_micode_metadata(&self) -> bool {
+        self.micode_metadata.as_ref().is_some_and(|metadata| {
+            metadata.len() == self.messages.len() && metadata.iter().all(|row| row.is_valid())
+        })
     }
 
     /// Attach the mark a later OpenCode scan resumes from.
@@ -1797,6 +1834,7 @@ impl CachedSourceEntry {
             codex_incremental: self.codex_incremental.take(),
             prime_accounting: self.prime_accounting.take(),
             opencode_incremental: self.opencode_incremental.take(),
+            micode_metadata: self.micode_metadata.take(),
         }
     }
 
@@ -2583,6 +2621,36 @@ fn read_shard_with_limit(
         return ShardReadStatus::Stale;
     }
 
+    if envelope.format_version == MICODE_CACHE_FORMAT_VERSION {
+        if identity.namespace != ClientId::MiMoCode.as_str() {
+            return ShardReadStatus::Stale;
+        }
+        type MiMoWireEntry = (
+            CachedSourceEntry,
+            Option<Vec<crate::sessions::micode::MiMoRowMetadata>>,
+        );
+        return match bincode::options()
+            .with_limit(max_shard_bytes)
+            .deserialize::<Vec<MiMoWireEntry>>(&envelope.payload)
+        {
+            Ok(entries) => ShardReadStatus::Loaded(
+                entries
+                    .into_iter()
+                    .map(|(mut entry, metadata)| {
+                        entry.micode_metadata = metadata;
+                        if !entry.has_valid_micode_metadata() {
+                            // Keep the messages available for diagnostics, but force
+                            // the MiMo loader to rebuild the entire matched pair.
+                            entry.micode_metadata = None;
+                        }
+                        entry
+                    })
+                    .collect(),
+            ),
+            Err(error) => ShardReadStatus::Invalid(error.to_string()),
+        };
+    }
+
     if envelope.format_version == LEGACY_CACHE_FORMAT_VERSION_V4 {
         return match bincode::options()
             .with_limit(max_shard_bytes)
@@ -2635,12 +2703,27 @@ fn write_shard_with_limit(
     entries: &[CachedSourceEntry],
     max_shard_bytes: u64,
 ) -> std::io::Result<()> {
-    let payload = bincode::options()
-        .with_limit(max_shard_bytes)
-        .serialize(entries)
-        .map_err(std::io::Error::other)?;
+    let is_micode = identity.namespace == ClientId::MiMoCode.as_str();
+    let payload = if is_micode {
+        let entries: Vec<_> = entries
+            .iter()
+            .map(|entry| (entry, &entry.micode_metadata))
+            .collect();
+        bincode::options()
+            .with_limit(max_shard_bytes)
+            .serialize(&entries)
+    } else {
+        bincode::options()
+            .with_limit(max_shard_bytes)
+            .serialize(entries)
+    }
+    .map_err(std::io::Error::other)?;
     let envelope = CachedShardEnvelope {
-        format_version: CACHE_FORMAT_VERSION,
+        format_version: if is_micode {
+            MICODE_CACHE_FORMAT_VERSION
+        } else {
+            CACHE_FORMAT_VERSION
+        },
         parser_namespace: identity.namespace.to_string(),
         parser_version: identity.parser_version,
         payload,
@@ -4569,7 +4652,13 @@ mod tests {
 
     #[test]
     fn test_micode_parser_version_invalidates_rows_without_cost_provenance() {
-        assert_eq!(parser_version(ClientId::MiMoCode), 3);
+        assert_eq!(parser_version(ClientId::MiMoCode), 6);
+        assert_eq!(parser_version(ClientId::MiMoDesktop), 6);
+    }
+
+    #[test]
+    fn test_muse_parser_version_invalidates_stale_provider_metadata_after_reset() {
+        assert_eq!(parser_version(ClientId::Muse), 3);
     }
 
     #[test]
@@ -4628,7 +4717,8 @@ mod tests {
                 "opencode schema",
                 &[
                     (ClientId::OpenCode, 2),
-                    (ClientId::MiMoCode, 2),
+                    (ClientId::MiMoCode, 5),
+                    (ClientId::MiMoDesktop, 5),
                     (ClientId::Kilo, 0),
                 ],
             ),
@@ -5589,6 +5679,176 @@ mod tests {
         std::fs::write(file.path(), rewritten).unwrap();
 
         assert!(!codex_prefix_matches(file.path(), &incremental_cache));
+    }
+
+    fn micode_test_metadata() -> crate::sessions::micode::MiMoRowMetadata {
+        crate::sessions::micode::MiMoRowMetadata {
+            session_created_bits: Some(1_780_000_000_000.0f64.to_bits()),
+            row: crate::sessions::opencode_schema::OpenCodeRowMetadata {
+                created_bits: 1_780_000_000_000.125f64.to_bits(),
+                completed_bits: Some(1_780_000_000_050.625f64.to_bits()),
+                has_embedded_id: true,
+            },
+        }
+    }
+
+    #[test]
+    fn test_micode_metadata_keeps_exact_generic_v7_entry_bytes() {
+        let source = write_temp_file(b"{}\n");
+        let identity = CacheIdentity::for_client(ClientId::Claude);
+        let entry = test_entry(identity, source.path(), "session")
+            .with_micode_metadata(vec![micode_test_metadata()]);
+        // Bincode struct fields are positional. This tuple is the exact v7
+        // receiving layout before the serde-skipped in-memory field existed.
+        let v7 = (
+            &entry.parser_namespace,
+            entry.parser_version,
+            &entry.path,
+            &entry.fingerprint,
+            &entry.messages,
+            &entry.fallback_timestamp_indices,
+            &entry.codex_incremental,
+            &entry.prime_accounting,
+            &entry.opencode_incremental,
+        );
+        let bytes = bincode::options().serialize(&entry).unwrap();
+        assert_eq!(bytes, bincode::options().serialize(&v7).unwrap());
+        let decoded: CachedSourceEntry = bincode::options().deserialize(&bytes).unwrap();
+        assert!(decoded.micode_metadata.is_none());
+        assert_eq!(decoded.messages[0].session_id, "session");
+    }
+
+    #[test]
+    fn test_micode_envelope_roundtrip_and_take_payload_keep_exact_provenance() {
+        let source = write_temp_file(b"{}\n");
+        let identity = CacheIdentity::for_client(ClientId::MiMoCode);
+        let mut entry = test_entry(identity, source.path(), "session")
+            .with_micode_metadata(vec![micode_test_metadata()]);
+        let taken = entry.take_payload();
+        assert!(entry.messages.is_empty());
+        assert!(entry.micode_metadata.is_none());
+        assert!(taken.has_valid_micode_metadata());
+        let dir = TempDir::new().unwrap();
+        let path = dir.path().join("shard.bin");
+        write_shard_with_limit(&path, identity, &[taken], MAX_CACHE_SHARD_BYTES).unwrap();
+        let envelope: CachedShardEnvelope = bincode::options()
+            .deserialize_from(BufReader::new(File::open(&path).unwrap()))
+            .unwrap();
+        assert_eq!(envelope.format_version, MICODE_CACHE_FORMAT_VERSION);
+        match read_shard(&path, identity) {
+            ShardReadStatus::Loaded(entries) => {
+                assert!(entries[0].has_valid_micode_metadata());
+                assert_eq!(
+                    entries[0].micode_metadata.as_deref(),
+                    Some([micode_test_metadata()].as_slice())
+                );
+            }
+            _ => panic!("unexpected MiMo cache result"),
+        }
+    }
+
+    #[test]
+    #[serial_test::serial]
+    fn test_micode_drained_clean_payload_survives_dirty_sibling_shard_save() {
+        let cache_home = TempDir::new().unwrap();
+        let _env = sandbox_cache_env(cache_home.path());
+        let source_home = TempDir::new().unwrap();
+        let first = source_home.path().join("first.db");
+        std::fs::write(&first, b"first").unwrap();
+        let identity = CacheIdentity::for_client(ClientId::MiMoCode);
+        let shard = CacheKey::new(identity, &first).shard();
+        let second = (0..10000)
+            .map(|i| source_home.path().join(format!("sibling-{i}.db")))
+            .find(|path| CacheKey::new(identity, path).shard() == shard)
+            .unwrap();
+        std::fs::write(&second, b"second").unwrap();
+        let mut initial = SourceMessageCache::load();
+        for (path, id) in [(&first, "first"), (&second, "second")] {
+            initial.insert(
+                test_entry(identity, path, id).with_micode_metadata(vec![micode_test_metadata()]),
+            );
+        }
+        initial.save_if_dirty();
+        let mut next = SourceMessageCache::load();
+        let untouched = next.take(identity, &first).unwrap();
+        assert!(untouched.has_valid_micode_metadata());
+        assert!(next.entry_messages_released(identity, &first));
+        std::fs::write(&second, b"second changed").unwrap();
+        next.insert(
+            test_entry(identity, &second, "changed")
+                .with_micode_metadata(vec![micode_test_metadata()]),
+        );
+        next.save_if_dirty();
+        let reloaded = SourceMessageCache::load();
+        let first_again = reloaded.take(identity, &first).unwrap();
+        let second_again = reloaded.take(identity, &second).unwrap();
+        assert!(first_again.has_valid_micode_metadata());
+        assert!(second_again.has_valid_micode_metadata());
+        assert_eq!(first_again.messages[0].session_id, "first");
+        assert_eq!(second_again.messages[0].session_id, "changed");
+    }
+
+    #[test]
+    fn test_micode_envelope_rejects_wrong_namespace_and_invalid_metadata() {
+        let source = write_temp_file(b"{}\n");
+        let dir = TempDir::new().unwrap();
+        let path = dir.path().join("shard.bin");
+        let identity = CacheIdentity::for_client(ClientId::MiMoCode);
+        for metadata in [
+            vec![],
+            vec![crate::sessions::micode::MiMoRowMetadata {
+                session_created_bits: Some(f64::NAN.to_bits()),
+                ..micode_test_metadata()
+            }],
+        ] {
+            let entry =
+                test_entry(identity, source.path(), "session").with_micode_metadata(metadata);
+            write_shard_with_limit(&path, identity, &[entry], MAX_CACHE_SHARD_BYTES).unwrap();
+            assert!(
+                matches!(read_shard(&path,identity),ShardReadStatus::Loaded(entries) if entries[0].micode_metadata.is_none())
+            );
+        }
+        let unrelated = CacheIdentity::for_client(ClientId::Claude);
+        let entry = test_entry(unrelated, source.path(), "retained-claude");
+        write_shard_with_limit(&path, unrelated, &[entry], MAX_CACHE_SHARD_BYTES).unwrap();
+        let mut envelope: CachedShardEnvelope = bincode::options()
+            .deserialize_from(BufReader::new(File::open(&path).unwrap()))
+            .unwrap();
+        assert_eq!(envelope.format_version, CACHE_FORMAT_VERSION);
+        envelope.format_version = MICODE_CACHE_FORMAT_VERSION;
+        std::fs::write(&path, bincode::options().serialize(&envelope).unwrap()).unwrap();
+        assert!(matches!(
+            read_shard(&path, unrelated),
+            ShardReadStatus::Stale
+        ));
+        envelope.parser_namespace = identity.namespace.to_string();
+        envelope.parser_version = identity.parser_version;
+        envelope.payload = vec![0xff, 0xff];
+        std::fs::write(&path, bincode::options().serialize(&envelope).unwrap()).unwrap();
+        assert!(matches!(
+            read_shard(&path, identity),
+            ShardReadStatus::Invalid(_)
+        ));
+    }
+
+    #[test]
+    fn test_legacy_micode_v7_has_no_provenance_and_requires_one_reparse() {
+        let source = write_temp_file(b"{}\n");
+        let identity = CacheIdentity::for_client(ClientId::MiMoCode);
+        let entry = test_entry(identity, source.path(), "legacy");
+        let envelope = CachedShardEnvelope {
+            format_version: CACHE_FORMAT_VERSION,
+            parser_namespace: identity.namespace.to_string(),
+            parser_version: identity.parser_version,
+            payload: bincode::options().serialize(&vec![entry]).unwrap(),
+        };
+        let dir = TempDir::new().unwrap();
+        let path = dir.path().join("legacy.bin");
+        std::fs::write(&path, bincode::options().serialize(&envelope).unwrap()).unwrap();
+        assert!(
+            matches!(read_shard(&path,identity),ShardReadStatus::Loaded(entries)
+            if entries[0].messages.len()==1 && !entries[0].has_valid_micode_metadata())
+        );
     }
 
     #[test]

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "revision": 1,
+  "revision": 2,
   "source": {
     "clients": {
       "url": "https://github.com/junhoyeo/tokscale",
@@ -161,6 +161,14 @@
     {
       "id": "micode",
       "name": "MiMo Code"
+    },
+    {
+      "id": "micode-desktop",
+      "name": "Xiaomi MiMo AI"
+    },
+    {
+      "id": "muse",
+      "name": "Muse Code"
     },
     {
       "id": "mux",
