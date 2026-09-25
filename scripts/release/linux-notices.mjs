@@ -356,7 +356,7 @@ export async function collectLinuxNotices(input) {
           add(`Cargo ${pkg.name} ${pkg.version} (MIT) / LICENSE`, bytes);
           continue;
         }
-        if (!inside(source, pkg.manifest_path) || !/^aicharts-(?:cli|core|custody|ledger|protocol|import|platform-process)$/u.test(pkg.name) || pkg.license !== "MIT") fail("notices_unmapped_crate");
+        if (!inside(source, pkg.manifest_path) || !/^aicharts-(?:cli|core|custody|ledger|metrics|protocol|import|platform-process)$/u.test(pkg.name) || pkg.license !== "MIT") fail("notices_unmapped_crate");
         continue; // Project LICENSE is a separate mandatory archive member.
       }
       if (pkg.source === SUPPORT_SOURCE) {

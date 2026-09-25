@@ -495,6 +495,16 @@ test("custody attribution rejects unknown or renamed workspace crates, foreign s
   }
 });
 
+test("every reviewed workspace crate in the CLI graph is attributed to the project license", async () => {
+  for (const name of ["aicharts-core", "aicharts-custody", "aicharts-import", "aicharts-ledger", "aicharts-metrics", "aicharts-platform-process", "aicharts-protocol"]) {
+    await diskFixture(async f => {
+      addCustody(f, { id: `path+file:///source/${name}#0.1.0`, name, manifest_path: `${f.input.sourceDirectory}/crates/${name}/Cargo.toml` });
+      // The bare fixture carries no Rust notices, so passing attribution stops at that later stage.
+      assert.deepEqual(await collectLinuxNotices(f.input), { ok: false, error: "notices_rust_missing" }, name);
+    });
+  }
+});
+
 test("collector refuses unmapped crate instead of admitting nonempty notice bytes", async () => {
   await diskFixture(async (f, policy, save) => {
     policy.packages = []; await save();
