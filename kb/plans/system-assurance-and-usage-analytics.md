@@ -502,7 +502,7 @@ The integration owner controls manifests/lockfiles, shared schemas/capacity/metr
 
 ### Phase 3 — Exact metric kernel and theorem pilot
 
-- **Status:** In progress — production Kani/Lean gates admitted on macOS and, from PR #422, executed on the required ubuntu-24.04 Formal verification job with reviewed Linux Kani exceptions; source refinement and unbounded claims remain open
+- **Status:** In progress — production Kani/Lean gates admitted on macOS and, from PR #422, executed on the required ubuntu-24.04 Formal verification job with reviewed Linux Kani exceptions; rounding harness bounded to a deterministic domain, conformance through M12 and the nightly suite landed; source refinement and unbounded claims remain open
 - **Depends on:** 0, 1A
 - **Objective:** Production arithmetic/normalization and core aggregation laws have appropriate proof evidence.
 - **Scope:** A new I/O-free owned metric kernel (proposed crates/aicharts-metrics), Kani harnesses, profile mappings and one theorem-route pilot. The integrator owns changes to existing callers shared with ingestion lanes.
@@ -514,7 +514,7 @@ The integration owner controls manifests/lockfiles, shared schemas/capacity/metr
 
 ### Phase 4 — Source qualification, incremental ingestion and health
 
-- **Status:** In progress
+- **Status:** In progress — checkpoint generation 3, incremental ingestion across all advertised local sources and a per-publication source-health-v1 summary landed; private provider qualification and hosted publication remain open
 - **Depends on:** 0, 1A
 - **Objective:** Advertised source support has evidence, collection scales with changes, and failed refreshes remain visible.
 - **Scope:** F18/F19; vendor compatibility target, source/version manifest, numeric health channel, checkpoints and refresh acquisition.
@@ -526,7 +526,7 @@ The integration owner controls manifests/lockfiles, shared schemas/capacity/metr
 
 ### Phase 5 — Canonical account contributions and migration
 
-- **Status:** In progress — durable contributions, bounded retained-data migration and exact head/query RPC/HTTP joins; native durable producer and full recovery qualification remain open
+- **Status:** In progress — durable contributions, bounded retained-data migration, exact head/query RPC/HTTP joins, native rich-fact producers with revision-ledger sync and the reviewed rebuild cutover CAS landed; full recovery and live contribution qualification remain open
 - **Depends on:** 1B, 2B, 3
 - **Objective:** Multi-device reporting, corrections and v1/v2 transitions have one lossless ownership model.
 - **Scope:** Contribution/control schemas, source overlap/replacement proofs, writer transfer, generation/capacity contract and numeric private facts.
@@ -538,7 +538,7 @@ The integration owner controls manifests/lockfiles, shared schemas/capacity/metr
 
 ### Phase 6 — Derived storage, queries and retention
 
-- **Status:** In progress — exact correction cells, indexed queries, coalesced publication and bounded automatic work; independent rebuild, physical retention and operational qualification remain open
+- **Status:** In progress — exact correction cells, indexed queries, coalesced publication, bounded automatic work, the reviewed rebuild cutover CAS and the flag-off reclamation ledger (M12) landed; legacy resolution, live reclamation activation and operational qualification remain open
 - **Depends on:** 3, 5
 - **Objective:** Dashboard queries are bounded and fast while every result remains rebuildable from canonical facts.
 - **Scope:** F20/F21; indexes/exact manifests, sufficient statistics, partition rebuilds, snapshot cursors, resource accounting and GC.
@@ -572,7 +572,7 @@ resolution, physical reclamation and live recovery remain open.
 
 ### Phase 7 — Metric explorer and dashboard completeness
 
-- **Status:** In progress — bounded worker-backed local/hosted explorer and catalog; production qualification and canonical/rich integration remain open
+- **Status:** In progress — bounded worker-backed local/hosted explorer and catalog plus rich metric explorer, saved views, CSV export and per-metric coverage states; production qualification and canonical/rich integration remain open
 - **Depends on:** 1C, 3; 6 before hosted completion
 - **Objective:** A cohesive private product answers all catalog questions supported by available evidence.
 - **Scope:** Overview and explorer, definition/coverage disclosure, comparisons, filters, distributions, table/export/share, local mode and accessibility.
@@ -584,7 +584,7 @@ resolution, physical reclamation and live recovery remain open.
 
 ### Phase 8 — Rich numeric instrumentation and drilldown
 
-- **Status:** In progress — additive local numeric fact contract and qualified-profile adapters; hosted joins await canonical publication
+- **Status:** In progress — additive local numeric fact contract, qualified-profile adapters and bounded rich-fact producers with lineage; hosted joins await canonical publication
 - **Depends on:** 3, 4, 5, 6
 - **Objective:** Session, turn, request, context, timing and reliability metrics have real attributable evidence.
 - **Scope:** F24; bounded local numeric OTel/producer adapters and opted-in private numeric facts; per-observation histograms/lineage and coverage.
@@ -608,7 +608,7 @@ resolution, physical reclamation and live recovery remain open.
 
 ### Phase 10 — Privacy, account lifecycle and recovery operations
 
-- **Status:** Not started
+- **Status:** In progress — account lifecycle RPC (status, export, device list/revoke, two-step erase, writer transfer) with erasure tombstone, resumable steps and restore-fence sealing landed; manual billing/budgets/alerts and live recovery drills remain open
 - **Depends on:** 5, 6, 8
 - **Objective:** Users can inspect, export, move and remove their data, and operators can recover without resurrecting revoked authority.
 - **Scope:** F22/F25/F26; account-controlled devices/transfer, export/erase, retention/tombstones, consent/index liveness, health, backup/restore and incident procedures; numeric manual billing, budgets, transparent forecasts and opt-in in-product alerts per the shipping matrix.
@@ -620,7 +620,7 @@ resolution, physical reclamation and live recovery remain open.
 
 ### Phase 7B — Final metric and account-journey integration
 
-- **Status:** Not started
+- **Status:** In progress — local account journeys, saved views, exports and coverage states landed on the merged branch; canonical/lifecycle browser journeys await hosted qualification
 - **Depends on:** 6, 7, 8, 10
 - **Objective:** Newly supported rich metrics and lifecycle operations work throughout the complete product.
 - **Scope:** Dashboard/explorer/account views, private drilldown, exports, accessibility and end-to-end browser journeys after Phases 6, 7, 8 and 10.
@@ -632,7 +632,7 @@ resolution, physical reclamation and live recovery remain open.
 
 ### Phase 11 — Independent review and converged assurance gate
 
-- **Status:** Not started
+- **Status:** In progress — fuzz, fault-matrix, security and nightly suites landed with their receipts; the converged gate and independent review run on the merged integration candidate
 - **Depends on:** 1A, 1B, 1C, 2A, 2B, 3–10, 7B
 - **Objective:** The exact integration candidate meets the claimed correctness, performance and support envelope.
 - **Scope:** Full claim/metric/capability coverage, independent specification and implementation review, required CI, security/fuzz/fault/performance/native/browser evidence.
@@ -644,7 +644,7 @@ resolution, physical reclamation and live recovery remain open.
 
 ### Phase 12 — Delivery and production qualification
 
-- **Status:** Not started
+- **Status:** In progress — all lanes integrated on the completion branch; protected-main PR, required CI and production verification pending
 - **Depends on:** 11
 - **Objective:** Deliver the verified artifact and the fully working supported product, with exact production evidence.
 - **Scope:** Task-owned protected-main PRs, required independent review/CI, immutable distribution, deployment, account/provider/native acceptance and scheduled cutover.
@@ -1527,3 +1527,28 @@ tests). A daily 09:00 UTC nightly workflow runs the TLA nightly profile,
 200,000-iteration fuzz, the fault matrix, the security gate and an optional
 perf baseline; a non-required security workflow runs on every pull request.
 All implemented and locally passing; none live-qualified.
+
+### 2026-09-24 — Completion integration: all six remaining lanes merged
+
+All outstanding lanes landed on `codex/system-assurance-completion-20260924`
+with `--no-ff` merges: formal assurance (conformance M8–M11, Lean route, Kani
+coverage, nightly TLA), cloud account lifecycle (lifecycle RPC, erasure
+tombstone, restore fence), cloud storage (rebuild cutover CAS, reclamation
+ledger, M12 model), native ingestion (checkpoint generation 3, incremental
+sources, source-health-v1), native facts (rich-fact producers, revision
+ledger, contribution sync) and the UI lane (rich metric explorer, saved
+views, CSV export, coverage states). Three merge seams needed repair, none
+semantic: the M11 cutover configs predated the JobCount/Quota
+parameterization and now pin the development bounds their cases measured;
+the lifecycle lane's worker files carried latent type errors its validation
+never reached (missing `schemaVersion` on the erase withdrawal view, an
+`account_erased` fence refusal now carried by a dedicated `FenceRefusal`
+sentinel outside `AdmissionFault`'s domain, and a test RPC call whose mapped
+stub type exceeded the instantiation budget); and the conformance schedule's
+status expectation gained the rebuild contract's `readiness` field
+(`unobserved` without supplied authority). The nightly manifest gained the
+measured 1,511,899-state M12 wide-reclamation case. Integrated evidence so
+far: adapters 195/195, conformance 42 traces 0 failures, theorems 26+9,
+TLA baseline+repaired complete suite 87/87 including all cutover cases.
+The contributions flag remains off in every deployment; the reclamation
+ledger is implemented but not live-qualified.
