@@ -80,11 +80,14 @@ with default safety and unwinding checks, positive covers and production mutants
 Structured results must contain every required assertion and cover. An exit code
 or timed-out solver summary alone cannot establish success.
 
-The current Kani inventory has seventeen production harnesses and forty-four
-reachable covers, with two production mutations. On each supported platform,
-nineteen unreachable checks have individually reviewed source or
-installed-library hash bindings: six bound to the workspace source and thirteen
-bound to that platform's own bundled standard-library and `kani_core` rlibs.
+The current Kani inventory has twenty production harnesses and fifty-three
+reachable covers, with thirteen production mutations that each must fail their
+named unchanged assertion. The manifest names the production functions behind
+every harness, and a test requires each kernel `pub fn` to be covered by a
+harness or a theorem replacement. On each supported platform, eighteen
+unreachable checks have individually reviewed source or installed-library hash
+bindings: five bound to the workspace source and thirteen bound to that
+platform's own bundled standard-library and `kani_core` rlibs.
 A new unreachable assertion refuses admission, and neither platform inherits
 the other's exceptions. Those exceptions cannot replace a reachable assertion
 in the actual harness. The Linux list was reviewed from the first ubuntu-24.04
@@ -100,7 +103,13 @@ nine separate mathematical laws. Pricing covers five full-u128 token buckets and
 five optional full-u128 rates: exact multiplication, ordered missing-rate/overflow
 refusal, per-observation half-up rounding and the 24-digit profile limit. A
 five-bucket non-unit example and success/refusal witnesses accompany the general
-theorem. All four production mutants must fail their named unchanged theorem.
+theorem. All four production mutants and the separate bounded-fold law control
+listed in `verify/lean/mutations.json` must fail their named unchanged theorem.
+The Kani gate binds its pricing theorem replacement to a theorem receipt for the
+same kernel bytes and refuses without one. The Lean route has executed on
+ubuntu-24.04 in the required Formal verification job (PR #422, run
+36055796464) as well as on the macOS pilot host; each receipt records its own
+platform.
 These results do not validate tariff provenance or provider-reported quantities.
 The proof toolchain, compiler, standard-library models and their installed runtime
 remain trusted boundaries. See the [theorem route](../verify/lean/README.md) and
