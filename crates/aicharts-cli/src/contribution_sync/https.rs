@@ -277,15 +277,27 @@ impl Transport {
             .with_pairing_secrets(|_, secret| bearer(secret))
             .map_err(|_| "attempt_custody")?
     }
-    pub(super) fn read_claude<R: BufRead>(
+    pub(super) fn read_native<R: BufRead>(
         &self,
+        provider: aicharts_protocol::Provider,
         reader: R,
     ) -> Result<NativeObservations, &'static str> {
         self.current_enrollment()?
             .namespace
             .with_namespace_key(|key| {
-                NativeObservations::read_claude(reader, &self.binding().account_id, key)
-                    .map_err(|error| error.code())
+                let account = &self.binding().account_id;
+                match provider {
+                    aicharts_protocol::Provider::ClaudeCode => {
+                        NativeObservations::read_claude(reader, account, key)
+                    }
+                    aicharts_protocol::Provider::Codex => {
+                        NativeObservations::read_codex(reader, account, key)
+                    }
+                    aicharts_protocol::Provider::Devin => {
+                        return Err("contribution_sync_unsupported_provider")
+                    }
+                }
+                .map_err(|error| error.code())
             })
             .map_err(|_| "attempt_custody")?
     }
