@@ -111,10 +111,10 @@
       "requireSingleSourceMatch": true
     },
     {
-      "id": "pricing-zero-bucket-requires-rate",
+      "id": "pricing-missing-rate-priced-as-zero",
       "source": "crates/aicharts-metrics/src/arithmetic.rs",
-      "exactBefore": "if token_count != 0 {",
-      "exactAfter": "if token_count != 0 || rates[index].is_none() {",
+      "exactBefore": "let rate = rates[index].ok_or(Error::MissingRate)?;",
+      "exactAfter": "let rate = rates[index].unwrap_or(0);",
       "harness": "proofs::price_zero_or_missing_rates_preserves_full_u128_token_domain",
       "expectedFailedAssertion": "assertion failed: actual == Ok(0) == tokens == [0; 5]",
       "requireSingleSourceMatch": true

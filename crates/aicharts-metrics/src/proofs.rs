@@ -424,21 +424,20 @@ fn matching_full_population_identity_never_confuses_missing_with_zero() {
 fn rounded_production_width_ratio_follows_floor_ceiling_and_half_up_laws() {
     // The domain is built from an exact quotient, nonzero denominator and
     // remainder below it so the reference needs no division: the only division
-    // circuits are the production u128 ones under test. Wider symbolic operands
-    // (u16 quotient with u8 denominator, or u32 with u16) exceeded a 900-second
-    // CaDiCaL budget without a counterexample, so this bounded u8 domain is the
-    // admitted Kani evidence; it exercises every rule and the exact half-up law
-    // but does not qualify production-width operands. The gate refuses
-    // `kani::assume`, so the domain is reached by total maps instead: a zero
-    // denominator maps to one and an out-of-range remainder maps to zero, which
-    // still reaches every nonzero u8 denominator and every remainder below it.
+    // circuits are the production u128 ones under test. Division solving cost
+    // is dominated by denominator width: a u8 denominator needed ~276 seconds
+    // against the pinned 300-second harness budget, u7 ~118 seconds, and wider
+    // operand pairs exceeded a 900-second CaDiCaL budget without a
+    // counterexample, so this bounded domain (u8 quotient, u6 denominator) is
+    // the admitted Kani evidence; it exercises every rule and the exact
+    // half-up law for odd and even denominators but does not qualify
+    // production-width operands. The gate refuses solver assumptions, so the
+    // domain is reached by total maps instead: the raw byte maps onto every
+    // denominator in one through sixty-four and an out-of-range remainder maps
+    // to zero, which still reaches every remainder below it.
     let quotient: u8 = kani::any();
     let raw_denominator: u8 = kani::any();
-    let denominator = if raw_denominator == 0 {
-        1
-    } else {
-        raw_denominator
-    };
+    let denominator = raw_denominator % 64 + 1;
     let raw_remainder: u8 = kani::any();
     let remainder = if raw_remainder < denominator {
         raw_remainder

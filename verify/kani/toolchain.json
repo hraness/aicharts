@@ -659,7 +659,7 @@
       "binding": {
         "kind": "workspace",
         "path": "crates/aicharts-metrics/src/proofs.rs",
-        "sha256": "6583e219afa2df90124a694724566188b9fc1f1b15373871324702ba473cdcef"
+        "sha256": "1a954f0195df84ab214bcfe93f6507a2d760ad1883c942f2499ac688b0dfb675"
       },
       "rationale": "A successful known InclusiveOutput constructor preserves Some(reasoning) with reasoning<=total, so disjoint cannot return MissingReasoning; reachable subset/sum assertions and success/refusal covers remain."
     },
@@ -676,7 +676,7 @@
       "binding": {
         "kind": "workspace",
         "path": "crates/aicharts-metrics/src/proofs.rs",
-        "sha256": "6583e219afa2df90124a694724566188b9fc1f1b15373871324702ba473cdcef"
+        "sha256": "1a954f0195df84ab214bcfe93f6507a2d760ad1883c942f2499ac688b0dfb675"
       },
       "rationale": "An admitted known wire record bounds each counter by 10^12, preserves the reasoning subset and bounds merged TTL writes by 2*10^12, below the detailed 24-digit limit; reachable round-trip/total assertions remain."
     },

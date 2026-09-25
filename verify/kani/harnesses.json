@@ -261,7 +261,7 @@
         "arithmetic::ExactRatio::new",
         "arithmetic::ExactRatio::rounded"
       ],
-      "scalarDomain": "Bounded: every exact u8 quotient, nonzero u8 denominator and u8 remainder below it, reconstructed into the numerator so the reference needs no division; one symbolic rounding rule per execution. Wider u16/u8 and u32/u16 operand domains exceeded a 900-second solver budget without a counterexample (timeout is not evidence), so production-width rounding is not qualified by this harness.",
+      "scalarDomain": "Bounded: every exact u8 quotient, nonzero denominator in one through sixty-four and remainder below it, reconstructed into the numerator so the reference needs no division; one symbolic rounding rule per execution. A u8 denominator consumed ~276 seconds of the pinned 300-second harness budget and wider operand pairs exceeded a 900-second solver budget without a counterexample (timeout is not evidence), so production-width rounding is not qualified by this harness.",
       "containerDomain": "One exact ratio and one of the three rounding rules",
       "requiredCoverCount": 4,
       "requiredCoverDescriptions": [
