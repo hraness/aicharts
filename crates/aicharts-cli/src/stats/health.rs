@@ -559,10 +559,7 @@ impl SourceHealthSummary {
                 count(health.and_then(|health| health.files)),
             ),
             ("stale-partition-count", Value::Null),
-            (
-                "sync-backlog-count",
-                count(backlog.map(|backlog| u64::from(backlog))),
-            ),
+            ("sync-backlog-count", count(backlog.map(u64::from))),
             ("warning-observation-count", count(warnings)),
         ];
         let summary = Self {

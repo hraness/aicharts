@@ -563,7 +563,8 @@ fn observed_whole_file_sources_reuse_warm_work_and_replay_every_correction_like_
 
 #[test]
 fn observed_whole_file_sources_measure_schema_mismatch_fallback_and_clamp_counters() {
-    let cases: [(&str, &str, &str, (u64, u64, u64)); 3] = [
+    type Case = (&'static str, &'static str, &'static str, (u64, u64, u64));
+    let cases: [Case; 3] = [
         (
             "claude",
             "0192f3a4-5b6c-7d8e-9f01-23456789abcd.jsonl",
@@ -639,8 +640,8 @@ fn observed_unqualified_selector_reports_unmeasured_coverage_and_unsupported_che
     let report = collect_observed(
         &home,
         "gemini",
-        &[home.clone()],
-        Some(&[root]),
+        std::slice::from_ref(&home),
+        Some(std::slice::from_ref(&root)),
         0,
         Some(&mut checkpoint),
     );
