@@ -559,7 +559,7 @@ function codingContrastBlocks(
   }
   blocks.push(paragraph(
     opus5IndexRows.length === 0
-      ? `The Intelligence Index snapshot retrieved ${intelligenceRetrievedAt} stores no Claude Opus 5 row, so the step from Opus 5 to Opus 5.5 that Anthropic describes cannot be measured on the Index from this snapshot, and the coding-agent chart stores no Opus 5.5 row to measure it there.`
+      ? `The Intelligence Index snapshot retrieved ${intelligenceRetrievedAt} stores no Claude Opus 5 row, so the step from Opus 5 to Opus 5.5 that Anthropic describes cannot be measured on the Index from this snapshot${opus55Rows.length === 0 ? ", and the coding-agent chart stores no Opus 5.5 row to measure it there" : ""}.`
       : `The Intelligence Index snapshot retrieved ${intelligenceRetrievedAt} also stores ${pluralConfigurations(opus5IndexRows.length)} of Claude Opus 5: ${joinNames(opus5IndexRows.map(row => `${row.name} at ${scoreAndCost(row)}`))}.`,
   ));
   return blocks;
@@ -632,6 +632,13 @@ export function createOpus55Article(
     ? "The effort levels"
     : `${capitalize(spellCount(intelligence.effortLadder.length))} effort levels of one model`;
   const costHeading = cost === undefined ? "Where the cost per task goes" : `Where the ${cost} goes`;
+  const codingScoreSubjects = [
+    ...opus55Rows.map(row => configurationLabel(row)),
+    ...(opus5 === undefined ? [] : [configurationLabel(opus5.record)]),
+  ];
+  const codingScoreClause = codingScoreSubjects.length === 0
+    ? ""
+    : `, and of ${joinNames(codingScoreSubjects)} under ${SNAPSHOT_COLUMN_LABELS.deepSwe}, ${SNAPSHOT_COLUMN_LABELS.terminalBench}, and ${SNAPSHOT_COLUMN_LABELS.sweAtlas}`;
 
   return {
     sourceNote: BLOG_SOURCE_NOTE,
@@ -706,13 +713,15 @@ export function createOpus55Article(
       heading("Limits"),
       list(
         [
-          `The scores, costs, and token counts above are Artificial Analysis measurements of the ${MODEL_NAME} rows on the retrieval date under Intelligence Index version ${indexVersion}, and of ${CODING_ROW_LABEL} under ${SNAPSHOT_COLUMN_LABELS.deepSwe}, ${SNAPSHOT_COLUMN_LABELS.terminalBench}, and ${SNAPSHOT_COLUMN_LABELS.sweAtlas}. They say nothing about other tasks, prompts, or harnesses.`,
+          `The scores, costs, and token counts above are Artificial Analysis measurements of the ${MODEL_NAME} rows on the retrieval date under Intelligence Index version ${indexVersion}${codingScoreClause}. They say nothing about other tasks, prompts, or harnesses.`,
         ],
         [
           "The rank, frontier walk, nearest-score table, effort ladder, and cost shares are computed from those snapshots by AI Charts. A new, removed, or rescored configuration moves them, and both snapshots update on a schedule.",
         ],
         [
-          `${MODEL_NAME} inside Claude Code, Cursor, or another harness is a configuration the coding-agent snapshot does not store, so this note says nothing about it.`,
+          opus55Rows.length === 0
+            ? `${MODEL_NAME} inside Claude Code, Cursor, or another harness is a configuration the coding-agent snapshot does not store, so this note says nothing about it.`
+            : `The coding-agent scores above are the ${joinNames(opus55Rows.map(row => configurationLabel(row)))} ${opus55Rows.length === 1 ? "row" : "rows"} in the snapshot. They say nothing about ${MODEL_NAME} inside a harness the snapshot does not store.`,
         ],
         [
           "The Adaptive Reasoning and Default Fallback settings in the row names are recorded by Artificial Analysis and not defined in the snapshot; the per-evaluation scores behind the composite are not stored either.",

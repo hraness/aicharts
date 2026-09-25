@@ -50,6 +50,7 @@ export const PUBLIC_MODEL_CARD_PATHS = [
   "/models/unlisted/gpt-6-sol.51d76cb8a0598a113a64caf1/max",
   "/models/unlisted/grok-4-6.8d0cb9ac05267687236dffd8/xhigh",
   "/models/unlisted/grok-4-7.4d350d6b4877df4c73975497/xhigh",
+  "/models/unlisted/opus-5-5.b958c16d6e9d4ca8979907a4/max",
   "/models/anthropic/claude-opus-5-5/index",
   "/models/openai/gpt-6-luna/index",
   "/models/openai/gpt-6-sol/index",
