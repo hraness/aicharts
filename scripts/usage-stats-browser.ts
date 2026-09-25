@@ -247,9 +247,11 @@ export async function verifyUsageStats(browser: Browser, baseUrl: string, captur
         await account.getByRole("status").filter({ hasText: "Copied" }).waitFor();
         invariant(await page.locator("html").getAttribute("data-copied-account") === accountId, "Copy must preserve the full canonical account ID.");
         await capture("account-verified");
+        const urlBeforeFailedSignOut = page.url();
         await account.getByRole("button", { name: "Sign out", exact: true }).click();
         await account.getByRole("alert").waitFor();
-        invariant(signOutCalls === 1 && page.url().split("?")[0] === `${baseUrl}/usage/details`, "A failed sign-out must not claim success or navigate.");
+        invariant(signOutCalls === 1 && page.url() === urlBeforeFailedSignOut && new URL(page.url()).pathname === "/usage/details",
+          "A failed sign-out must not claim success or navigate.");
         await capture("account-sign-out-failed");
         await page.reload({ waitUntil: "networkidle" });
       }
@@ -555,9 +557,10 @@ export async function verifyUsageStats(browser: Browser, baseUrl: string, captur
       localInteraction = false;
       if (await account.count()) {
         await account.locator("summary").click(); signOutFails = false;
+        const urlBeforeSignOut = page.url();
         await account.getByRole("button", { name: "Sign out", exact: true }).click();
         await account.getByText("Sign-in required", { exact: true }).waitFor();
-        invariant(page.url().split("?")[0] === `${baseUrl}/usage/details` && await page.locator(".usage-stats").count() === 1
+        invariant(page.url() === urlBeforeSignOut && new URL(page.url()).pathname === "/usage/details" && await page.locator(".usage-stats").count() === 1
           && await page.getByText("Local reports stay in this browser", { exact: true }).count() === 1 && Number(signOutCalls) === 2,
           "Ordinary sign-out must clear account identity without navigating away from the initiating tab's local report.");
         await account.locator("summary").click();
@@ -594,9 +597,10 @@ export async function verifyUsageStats(browser: Browser, baseUrl: string, captur
           "Authentication failure must preserve a synthetic example.");
         if (await account.count()) {
           await account.locator("summary").click();
+          const urlBeforeFailedAuthSignOut = page.url();
           await account.getByRole("button", { name: "Sign out", exact: true }).click();
           await account.getByText("Sign-in required", { exact: true }).waitFor();
-          invariant(page.url().split("?")[0] === `${baseUrl}/usage/details` && await page.locator(".usage-stats").count() === 1
+          invariant(page.url() === urlBeforeFailedAuthSignOut && new URL(page.url()).pathname === "/usage/details" && await page.locator(".usage-stats").count() === 1
             && await page.getByText("Example data · synthetic", { exact: true }).count() === 1 && Number(signOutCalls) === 3,
             "Ordinary sign-out must preserve the initiating tab's synthetic example.");
           await account.locator("summary").click();

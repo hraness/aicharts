@@ -3,6 +3,7 @@ import { runInDurableObject } from "cloudflare:test";
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { LIFECYCLE_ERASE_REQUEST_TTL_MS, LIFECYCLE_ERASE_STEPS, parseReclamationLedger } from "../../../lib/usage/lifecycle-contract";
 import { ADMISSION_SCHEMA } from "../src/admission-schema";
+import { RETIRED_STATS_SCHEMA } from "../src/stats-state";
 import { NOW, activateStats, admitUsage, afterEachLifecycle, beforeEachLifecycle, enroll, enrollmentRow, fence, fenceRecord, fixture, grant, hex,
   index, indexState, initializeIndex, lifecycle, lifecycleValue, replaceEnvironment, session, statsRequest, statsUpload, stub, tables } from "./lifecycle-fixture";
 
@@ -156,4 +157,25 @@ test("erase requests expire, wrong tokens refuse, and confirmation needs a live 
   expect(replaced.token).not.toBe(requested.token);
   expect(await lifecycleValue({ operation: "status" }, "status", session(fixture.account, later + 1_000))).toMatchObject({ phase: "active", erasure: { phase: "requested", requestedAtMs: later } });
   expect(await lifecycle({ operation: "erase_confirm", token: requested.token }, session(fixture.account, later + 1_000))).toEqual({ ok: false, error: "unauthorized" });
+});
+
+test("a store that still holds the retired per-client tables erases completely", async () => {
+  await populate();
+  // Rewrite the partitioned stats tables into the retired (client, day)
+  // ownership shape, the layout of a store the device partition never
+  // migrated, so the scrub step meets tables the current schema never creates.
+  await runInDurableObject(stub(), (_instance, state) => {
+    const sql = state.storage.sql;
+    for (const table of ["usage_stats_day_rows", "usage_stats_day_meta", "usage_stats_day_totals", "usage_stats_retired", "usage_stats_days", "usage_stats_pending"]) sql.exec(`DROP TABLE IF EXISTS ${table}`);
+    for (const table of ["usage_stats_writers", "usage_stats_day_sources", "usage_stats_pending", "usage_stats_days", "usage_stats_day_meta", "usage_stats_day_rows"] as const) sql.exec(RETIRED_STATS_SCHEMA[table]);
+  });
+  expect(await tables()).toEqual(expect.arrayContaining(["usage_stats_writers", "usage_stats_day_sources", "usage_stats_days", "usage_stats_pending"]));
+  const requested = await lifecycleValue({ operation: "erase_request" }, "erase_request");
+  vi.setSystemTime(NOW + 1);
+  const erased = await lifecycleValue({ operation: "erase_confirm", token: requested.token }, "erase_progress");
+  expect(erased.erasure).toMatchObject({ phase: "erased", step: LIFECYCLE_ERASE_STEPS, sealed: true });
+  // The retired tables are gone with everything else; only the admission
+  // tables and the enrollment tombstone remain.
+  expect(await tables()).toEqual(ADMISSION_TABLES);
+  expect(await lifecycleValue({ operation: "status" }, "status")).toMatchObject({ phase: "erased", devices: { active: 0, revoked: 2 } });
 });
