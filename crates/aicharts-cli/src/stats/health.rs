@@ -260,7 +260,7 @@ pub(crate) fn collect_persisted(
     super::collect_detailed_with_clock(options, now, super::now_ms, Some(&mut persistence))
 }
 
-const HEALTH_HELP: &str = "AI Charts source health — local, read-only\n\n  aicharts stats-health --state-dir DIR --home DIR --client ID [--source-root DIR ...] [--since YYYY-MM-DD --until YYYY-MM-DD]\n\nReads the last collection attempt, last complete good observation and independent\npublication outcome for this exact profile and UTC range. It does not scan source\nfiles, open a write lock, create state, refresh providers or upload anything.\nUse the same home, exclusive roots and dates as the collection. A missing or\ndifferent profile has null evidence; it is never reported as a successful scan.\nOutput contains fixed codes, bounded numbers and times, with no source paths.\n";
+const HEALTH_HELP: &str = "AI Charts source health: local, read-only\n\n  aicharts stats-health --state-dir DIR --home DIR --client ID [--source-root DIR ...] [--since YYYY-MM-DD --until YYYY-MM-DD]\n\nReads the last collection attempt, last complete good observation and independent\npublication outcome for this exact profile and UTC range. It does not scan source\nfiles, open a write lock, create state, refresh providers or upload anything.\nUse the same home, exclusive roots and dates as the collection. A missing or\ndifferent profile has null evidence; it is never reported as a successful scan.\nOutput contains fixed codes, bounded numbers and times, with no source paths.\n";
 pub(crate) fn run_retained_health(args: &[String]) -> Result<String, &'static str> {
     if args == ["stats-health", "--help"] || args == ["stats-health", "-h"] {
         return Ok(HEALTH_HELP.to_owned());

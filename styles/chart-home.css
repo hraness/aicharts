@@ -22,6 +22,9 @@
 .chart-page-intro { padding-block: 36px 26px; }
 .chart-page-intro h1 { font-size: clamp(28px, 3vw, 38px); line-height: 1.15; font-weight: 550; letter-spacing: -.035em; }
 .chart-page-intro > p { color: var(--muted); margin-top: 10px; font-size: 16px; line-height: 1.6; max-width: 65ch; }
+.chart-page-intro > .chart-page-intro__eyebrow { margin-top: 0; margin-bottom: 8px; font-size: 12px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
+.chart-page-intro > .chart-page-intro__actions { display: flex; flex-wrap: wrap; gap: 10px 24px; margin-top: 14px; }
+.chart-page-intro__actions a { color: var(--foreground); font-weight: 550; text-decoration-thickness: 1px; text-underline-offset: 3px; }
 .chart-page-intro .chart-page-intro__coverage { font-size: 12px; margin-top: 8px; }
 .benchmarks-home .chart-page-intro { display: grid; grid-template-columns: 1fr auto; column-gap: 24px; padding-block: 26px 20px; }
 .benchmarks-home .chart-page-intro h1 { font-size: 28px; }

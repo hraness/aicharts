@@ -2,7 +2,7 @@
 use aicharts_core::rich_facts;
 use aicharts_protocol::Provider;
 use std::path::PathBuf;
-const HELP: &str = "AI Charts sessions — local, read-only\n\n  aicharts sessions --occurrence-key-file KEY [--codex FILE ...] [--claude FILE ...] [--devin FILE ...] [--json]\n  aicharts sessions --occurrence-key-file KEY --codex FILE --profile rich-facts-v1 --source-epoch EPOCH --window-start-ms N --window-end-ms N --json\n\nExplicit regular files only. Exports known session token observations and\nqualified model labels, without transcript content. Historical timing\nis unknown. An unfinished final JSONL record is deferred; a Devin ATIF source\nis one whole document and parses completely or not at all. Nothing is uploaded.\n\nThe rich profile requires JSON, a stable nonsecret source generation (1..128\nASCII letters/digits/_/-), and an explicit half-open window of at most 31 days.\nIts revision-zero snapshot retains unknown lineage, token scope and cache TTL.\nA new generation is a separate namespace, not a deduplication mechanism.\n";
+const HELP: &str = "AI Charts sessions: local, read-only\n\n  aicharts sessions --occurrence-key-file KEY [--codex FILE ...] [--claude FILE ...] [--devin FILE ...] [--json]\n  aicharts sessions --occurrence-key-file KEY --codex FILE --profile rich-facts-v1 --source-epoch EPOCH --window-start-ms N --window-end-ms N --json\n\nExplicit regular files only. Exports known session token observations and\nqualified model labels, without transcript content. Historical timing\nis unknown. An unfinished final JSONL record is deferred; a Devin ATIF source\nis one whole document and parses completely or not at all. Nothing is uploaded.\n\nThe rich profile requires JSON, a stable nonsecret source generation (1..128\nASCII letters/digits/_/-), and an explicit half-open window of at most 31 days.\nIts revision-zero snapshot retains unknown lineage, token scope and cache TTL.\nA new generation is a separate namespace, not a deduplication mechanism.\n";
 struct Options {
     sources: Vec<(Provider, PathBuf)>,
     key: PathBuf,
@@ -297,7 +297,7 @@ mod native {
         } else if options.json {
             serde_json::to_string(&report).map_err(|_| "summary_encode_failed")?
         } else {
-            format!("AI Charts sessions — local only; {} sessions with token observations; streaming and wait times unknown\n", report.session_count())
+            format!("AI Charts sessions: local only; {} sessions with token observations; streaming and wait times unknown\n", report.session_count())
         };
         if output.len() > 8 * 1024 * 1024 {
             return Err("report_size_limit");

@@ -330,6 +330,6 @@ export function statsSummaryText(scope: "local" | "example" | "account", filters
     .map(group => `${group.name} ${formatStatsCompact(group.totals.tokens)}`);
   if (top.length > 0) lines.push(`Top by tokens: ${top.join(" · ")}`);
   lines.push("Record grain and duration meaning are source-defined; records are not comparable request, turn or session counts.");
-  lines.push(`Measured by AI Charts — ${scope === "account" ? "account report" : scope === "example" ? "synthetic example" : "local report"} · coverage may be partial.`);
+  lines.push(`Measured by AI Charts · ${scope === "account" ? "account report" : scope === "example" ? "synthetic example" : "local report"} · coverage may be partial.`);
   return lines.join("\n");
 }

@@ -8,6 +8,7 @@ import {
   formatBenchmarkScore,
 } from "@/lib/coding-agent-dataset";
 
+import { homeHeading, searchSite } from "../site";
 import { GET } from "./route";
 
 const expectedContentSecurityPolicy = [
@@ -47,7 +48,7 @@ describe("Hraness AI Charts preview", () => {
     );
     expect(body).toContain('<meta name="robots" content="noindex, nofollow, noarchive">');
     expect(body).toContain('<link rel="canonical" href="https://aicharts.io/">');
-    expect(body).toContain("<title>AI model and agent comparison charts | AI Charts</title>");
+    expect(body).toContain(`<title>${searchSite.title}</title>`);
   });
 
   test("renders a bounded, inert summary of the checked benchmark snapshot", async () => {
@@ -57,7 +58,7 @@ describe("Hraness AI Charts preview", () => {
     const leaders = currentCodingAgentBenchmarkLeaders(parsed.value);
     const body = await GET().text();
 
-    expect(body).toContain("<h1>AI model and agent comparison charts</h1>");
+    expect(body).toContain(`<h1>${homeHeading}</h1>`);
     expect(body).toContain(
       `${summary.recordCount} model-agent configurations across ${summary.modelCount} models and ${summary.providerCount} providers.`,
     );
