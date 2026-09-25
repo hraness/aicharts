@@ -30,6 +30,13 @@ import {
   solCodingAgentPlacement,
   solIntelligencePlacement,
 } from "@/lib/gpt-6-sol-placement";
+import {
+  inputCostShare,
+  opus5CodingAgentPlacement,
+  opusIntelligencePlacement,
+  reasoningShare,
+  taskCostBreakdown,
+} from "@/lib/claude-opus-5-5-placement";
 import { PUBLIC_BLOG_SLUGS } from "@/lib/public-analytics-routes";
 import {
   currentCodingAgentBenchmarkLeaders,
@@ -122,6 +129,13 @@ import {
   GPT_6_SOL_ARTICLE_PUBLISHED_AT,
   createGpt6SolArticle,
 } from "./gpt-6-sol-coding-agent-index-article";
+import {
+  CLAUDE_OPUS_55,
+  OPUS_55_ARTICLE_PUBLISHED_AT,
+  createOpus55Article,
+  effortLabel,
+  formatSharePercent,
+} from "./opus-5-5-intelligence-index-article";
 import {
   GROK_47,
   GROK_47_ARTICLE_PUBLISHED_AT,
@@ -247,6 +261,10 @@ describe("AI Charts benchmark notes", () => {
         expect(article.publishedAt).toBe(INTRODUCING_AI_CHARTS_PUBLISHED_AT);
         expect(article.updatedAt >= article.publishedAt).toBeTrue();
         expect(provenance).toStartWith("Drafted with AI from the source code and reviewed by ");
+      } else if (article.slug === "opus-5-5-intelligence-index") {
+        expect(article.publishedAt).toBe(OPUS_55_ARTICLE_PUBLISHED_AT);
+        expect(article.updatedAt >= article.publishedAt).toBeTrue();
+        expect(articleToMarkdown(article)).toContain("captured September 25, 2026 UTC");
       } else if (article.slug === "gpt-6-sol-coding-agent-index") {
         expect(article.publishedAt).toBe(GPT_6_SOL_ARTICLE_PUBLISHED_AT);
         expect(article.updatedAt >= article.publishedAt).toBeTrue();
@@ -327,8 +345,11 @@ describe("AI Charts benchmark notes", () => {
       expect(admission.canonicalOwner).toBe(blogArticlePath(article.slug));
       expect(admission.decision).toBe("keep");
       expect(admission.lifecycleState).toBe("indexable");
-      expect(["Codex editorial review", "Claude Opus 5.5 (claude-opus-5-5) editorial review"])
-        .toContain(admission.reviewedBy);
+      expect([
+        "Codex editorial review",
+        "Claude Opus 5.5 (claude-opus-5-5) editorial review",
+        "weekday-monitor AI editorial review",
+      ]).toContain(admission.reviewedBy);
       expect(admission.reviewerType).toBe("ai");
       expect(admission.humanReviewedOn).toBeNull();
       expect(admission.readerJob.trim()).toBe(admission.readerJob);
@@ -905,6 +926,262 @@ describe("AI Charts benchmark notes", () => {
     });
     expect(laterRetrieval.updatedAt).toBe("2026-12-01");
     expect(articleToMarkdown(laterRetrieval)).toContain("Dec 1, 2026, 8:00 AM UTC");
+  });
+
+  test("places Claude Opus 5.5 on the checked Intelligence Index from the same rows the chart plots", () => {
+    const codingParsed = parseCodingAgentSnapshot(codingAgentData);
+    if (!codingParsed.ok) throw codingParsed.error;
+    const intelligenceParsed = parseArtificialAnalysisIntelligenceV43Snapshot(intelligenceData);
+    if (!intelligenceParsed.ok) throw intelligenceParsed.error;
+    const article = getBlogArticle("opus-5-5-intelligence-index");
+    expect(article).toBeDefined();
+    if (article === undefined) return;
+
+    const markup = renderToStaticMarkup(
+      createElement(ArticleBody, { blocks: article.body }),
+    );
+    const markdown = articleToMarkdown(article);
+
+    expect(article.section).toBe("AI model benchmarks");
+    expect(article.sourceIds).toEqual([
+      "artificialAnalysisIntelligenceIndex",
+      "artificialAnalysisClaudeOpus55Model",
+      "anthropicClaudeOpus55",
+      "artificialAnalysisCodingAgents",
+    ]);
+    expect(blogEditorialImage(article.slug)?.slug).toBe(article.slug);
+    for (const sourceId of article.sourceIds) {
+      expect(markup).toContain(`href="${BLOG_SOURCES[sourceId].url}"`);
+    }
+    expect(article.nextStep?.links.map(link => link.href))
+      .toEqual(["/#intelligence-index", "/models/anthropic/claude-opus-5-5/index", "/coding"]);
+    expect(article.relatedSlugs).toEqual(["gpt-6-sol-coding-agent-index", "mimo-v2-6-pro-cost-frontier"]);
+    expect(markup).toContain(formatRetrievedAt(intelligenceParsed.value.source.retrievedAt));
+    expect(markup).toContain(formatRetrievedAt(codingParsed.value.source.retrievedAt));
+    expect(markdown).toContain(intelligenceParsed.value.benchmark.version);
+    for (const evaluation of intelligenceParsed.value.benchmark.evaluations) {
+      expect(markdown).toContain(evaluation);
+    }
+    // Every quotation is verbatim from the fetched primary pages.
+    expect(markdown).toContain(CLAUDE_OPUS_55.anthropic.headlineClaim);
+    expect(markdown).toContain(CLAUDE_OPUS_55.anthropic.cacheReadClaim);
+    expect(markdown).toContain(CLAUDE_OPUS_55.anthropic.benchmarkSettingClaim);
+    expect(markdown).toContain(CLAUDE_OPUS_55.anthropic.marginClaim);
+    expect(markdown).toContain(CLAUDE_OPUS_55.anthropic.safeguardFallbackClaim);
+    expect(markdown).toContain(CLAUDE_OPUS_55.anthropic.vendorTerminalBench);
+    expect(markdown).toContain(CLAUDE_OPUS_55.anthropic.modelId);
+    expect(markdown).toContain(CLAUDE_OPUS_55.artificialAnalysis.summaryClaim);
+    expect(markdown).toContain(CLAUDE_OPUS_55.artificialAnalysis.verbosityClaim);
+    expect(markdown).toContain(`index score of ${CLAUDE_OPUS_55.artificialAnalysis.intelligenceScore}`);
+    expect(markdown).toContain(`${CLAUDE_OPUS_55.artificialAnalysis.cacheDiscount} cache discount`);
+    // Anthropic’s vendor table is described once, never restated as chart evidence.
+    expect(markdown).not.toContain("54.4%");
+    expect(markdown).not.toContain("1846");
+    expect(markdown).not.toContain("—");
+    expect(markdown).not.toContain("refresh");
+    expect(markdown).not.toContain("schema");
+    expect(markdown).not.toContain("`");
+    expect(markdown).not.toContain("This note answers");
+    // Internal delivery vocabulary stays out of the public page.
+    for (const word of ["admission", "admitted", "bounded", "custody", "gate", "lane", "manifest", "provenance", "receipt"]) {
+      expect(markdown.toLowerCase()).not.toContain(word);
+    }
+    expect(article.title).not.toMatch(/^What .* measures$/u);
+    expect(article.title.length).toBeLessThanOrEqual(64);
+    expect(article.dek.length).toBeLessThanOrEqual(200);
+
+    const intelligence = opusIntelligencePlacement(intelligenceParsed.value.records);
+    expect(intelligence).toBeDefined();
+    if (intelligence === undefined) return;
+    const score = formatSnapshotScore(intelligence.record.intelligenceIndex);
+    const cost = intelligence.record.costUsdPerTask?.total ?? 0;
+    const costText = formatSnapshotCostUsd(cost);
+    expect(article.title).toContain(score);
+    if (intelligence.rank === 1) {
+      expect(article.title).toContain("leads the Intelligence Index");
+      expect(markdown).toContain("No configuration scores higher.");
+    } else {
+      expect(article.title).toContain("scores");
+    }
+    expect(article.dek).toContain(`${spellOrdinal(intelligence.rank)} of ${intelligence.cohortSize} configurations`);
+    expect(markdown).toContain(`${spellOrdinal(intelligence.rank)} of the ${intelligence.cohortSize} comparable configurations`);
+    expect(markup).toContain(intelligence.record.name);
+    expect(markup).toContain(costText);
+    expect(markup).toContain(formatWholeTokens(intelligence.record.outputTokensPerTask.total));
+    if (intelligence.onCostFrontier) {
+      expect(markdown).toContain("The row is on the chart’s cost frontier");
+    } else {
+      expect(markdown).toContain("The row is not on the chart’s cost frontier");
+    }
+    if (intelligence.neighbors.length === 0) {
+      expect(markdown).toContain("No other configuration scores within one index point of it.");
+    }
+    for (const neighbor of intelligence.neighbors) {
+      expect(markup).toContain(neighbor.name);
+    }
+    for (const entry of intelligence.closestBelow) {
+      expect(markup).toContain(entry.record.name);
+      expect(markup).toContain(formatSnapshotCostUsd(entry.record.costUsdPerTask?.total ?? 0));
+      expect(markup).toContain(formatFineCostMultiple(entry.costMultiple));
+    }
+    for (const vertex of intelligence.frontierRun) {
+      expect(markup).toContain(effortLabel(vertex));
+    }
+    if (intelligence.firstOtherFrontier !== undefined) {
+      expect(markup).toContain(intelligence.firstOtherFrontier.name);
+      expect(markdown).toContain(`every frontier point that costs more than ${formatSnapshotCostUsd(intelligence.firstOtherFrontier.costUsdPerTask?.total ?? 0)} per task`);
+    }
+    for (const step of intelligence.effortLadder) {
+      expect(markup).toContain(effortLabel(step.record));
+      expect(markup).toContain(formatSnapshotCostUsd(step.record.costUsdPerTask?.total ?? 0));
+      expect(markup).toContain(formatWholeTokens(step.record.outputTokensPerTask.total));
+      expect(markup).toContain(formatSharePercent(reasoningShare(step.record)));
+      expect(markup).toContain(formatSharePercent(inputCostShare(step.record)));
+      const breakdown = taskCostBreakdown(step.record);
+      expect(markup).toContain(formatSnapshotCostUsd(breakdown.input));
+      expect(markup).toContain(formatSnapshotCostUsd(breakdown.cacheRead));
+      expect(markup).toContain(formatSnapshotCostUsd(breakdown.output));
+      expect(markup).toContain(formatSnapshotCostUsd(breakdown.reasoning));
+      if (step.pointsOverCheaper !== null) {
+        expect(markup).toContain(formatPointGap(step.pointsOverCheaper));
+      }
+      if (step.costMultipleOverCheaper !== null) {
+        expect(markup).toContain(formatFineCostMultiple(step.costMultipleOverCheaper));
+      }
+    }
+    for (const mode of intelligence.otherModes) {
+      expect(markup).toContain(mode.name);
+    }
+    const defaultLevel = intelligence.effortLadder.find(step => step.record.effort?.slug === CLAUDE_OPUS_55.anthropic.defaultEffort);
+    if (defaultLevel !== undefined) {
+      expect(markdown).toContain(`names ${CLAUDE_OPUS_55.anthropic.defaultEffort} as the default effort level`);
+      expect(markdown).toContain(`${formatFineCostMultiple((defaultLevel.record.costUsdPerTask?.total ?? 0) / cost)} its cost`);
+    }
+
+    const opus5 = opus5CodingAgentPlacement(codingParsed.value.records);
+    expect(opus5).toBeDefined();
+    if (opus5 === undefined) return;
+    expect(markup).toContain(formatSnapshotScore(opus5.record.benchmarks.aaIndex));
+    expect(markup).toContain(formatSnapshotCostUsd(opus5.record.economics.costUsd));
+    expect(markdown).toContain(`${spellOrdinal(opus5.rank)} of ${opus5.indexedCount} configurations`);
+    expect(markdown).toContain("That row is Opus 5, the previous Opus generation");
+    for (const dominator of opus5.dominators) {
+      expect(markup).toContain(dominator.seriesLabel);
+    }
+    expect(markdown).toContain("| Coding agents (AA Index) | Claude Code · Opus 5 (max) | Claude Opus 5 |");
+  });
+
+  test("states the Claude Opus 5.5 placement from the records it is given", () => {
+    const codingParsed = parseCodingAgentSnapshot(codingAgentData);
+    if (!codingParsed.ok) throw codingParsed.error;
+    const intelligenceParsed = parseArtificialAnalysisIntelligenceV43Snapshot(intelligenceData);
+    if (!intelligenceParsed.ok) throw intelligenceParsed.error;
+    const codingSnapshot = codingParsed.value;
+    const intelligenceSnapshot = intelligenceParsed.value;
+    const opusRows = intelligenceSnapshot.records.filter(record => record.release.slug === "claude-opus-5-5");
+    const opusMax = opusRows.find(record => record.slug === "claude-opus-5-5");
+    if (opusMax === undefined || opusMax.costUsdPerTask === null) {
+      throw new Error("Checked snapshot must store the Claude Opus 5.5 max row.");
+    }
+
+    const withoutOpus = createOpus55Article({
+      ...intelligenceSnapshot,
+      records: intelligenceSnapshot.records.filter(record => record.release.slug !== "claude-opus-5-5"),
+    }, codingSnapshot);
+    const withoutOpusMarkdown = articleToMarkdown(withoutOpus);
+    expect(withoutOpus.title).toBe("Claude Opus 5.5 on the Intelligence Index snapshot");
+    expect(withoutOpusMarkdown).toContain("does not store a Claude Opus 5.5 max-effort row");
+    expect(withoutOpusMarkdown).toContain("cannot tabulate the model’s effort levels");
+    expect(withoutOpusMarkdown).toContain("cannot split the cost per task into its components");
+    expect(withoutOpusMarkdown).toContain("## Rank among comparable configurations");
+    expect(withoutOpusMarkdown).toContain("## Where the cost per task goes");
+    expect(withoutOpusMarkdown).not.toContain("| Intelligence Index |");
+    expect(withoutOpus.seoDescription.length).toBeLessThanOrEqual(160);
+
+    // Only the max row: no ladder, no neighbors, a one-vertex frontier run.
+    const maxOnly = createOpus55Article({
+      ...intelligenceSnapshot,
+      records: [opusMax],
+    }, { ...codingSnapshot, records: [], updates: [] });
+    const maxOnlyMarkdown = articleToMarkdown(maxOnly);
+    expect(maxOnlyMarkdown).toContain("stores no other comparable Claude Opus 5.5 effort level");
+    expect(maxOnlyMarkdown).toContain("No other configuration scores within one index point of it.");
+    expect(maxOnlyMarkdown).toContain("the first point is a Claude Opus 5.5 row: max");
+    expect(maxOnlyMarkdown).toContain("No configuration from another model is on the frontier.");
+    expect(maxOnly.dek).toContain("first of 1 configuration.");
+    expect(maxOnlyMarkdown).toContain("no row runs Claude Opus 5.5 in any harness");
+    expect(maxOnlyMarkdown).toContain("stores no Claude Code · Opus 5 row either");
+    expect(maxOnlyMarkdown).not.toContain("| Effort level |");
+    expect(maxOnly.title).toBe(`Claude Opus 5.5 leads the Intelligence Index at ${formatSnapshotScore(opusMax.intelligenceIndex)} for ${formatSnapshotCostUsd(opusMax.costUsdPerTask.total)}`);
+
+    // A cheaper, higher-scoring twin takes the lead and the top of the frontier.
+    const twin = {
+      ...opusMax,
+      id: "twin-id",
+      intelligenceIndex: opusMax.intelligenceIndex + 0.5,
+      name: "Twin (max)",
+      release: { name: "Twin", slug: "twin" },
+      slug: "twin",
+      costUsdPerTask: { ...opusMax.costUsdPerTask, total: opusMax.costUsdPerTask.total / 2, input: opusMax.costUsdPerTask.input / 2, output: opusMax.costUsdPerTask.output / 2, answer: opusMax.costUsdPerTask.answer / 2, reasoning: opusMax.costUsdPerTask.reasoning / 2, cacheRead: opusMax.costUsdPerTask.cacheRead / 2, cacheWrite: opusMax.costUsdPerTask.cacheWrite / 2, nonCacheInput: opusMax.costUsdPerTask.nonCacheInput / 2 },
+    };
+    const dominated = createOpus55Article({
+      ...intelligenceSnapshot,
+      records: [...opusRows, twin],
+    }, codingSnapshot);
+    const dominatedMarkdown = articleToMarkdown(dominated);
+    expect(dominated.title).toBe(`Claude Opus 5.5 scores ${formatSnapshotScore(opusMax.intelligenceIndex)} on the Intelligence Index`);
+    expect(dominatedMarkdown).toContain("## Second of 6 comparable configurations");
+    expect(dominatedMarkdown).toContain("One configuration scores higher; the leader, Twin (max), is 0.5 points above it");
+    expect(dominatedMarkdown).toContain("The row is not on the chart’s cost frontier: one configuration scores at least as high");
+    expect(dominatedMarkdown).toContain("The cheapest configuration that scores higher, Twin (max)");
+    expect(dominatedMarkdown).toContain("One configuration scores within one index point of it: Twin (max)");
+    expect(dominatedMarkdown).toContain("The highest-scoring point on the cost frontier belongs to another model, Twin (max)");
+    expect(dominated.dek).not.toContain("cost frontier");
+
+    // An Opus 5.5 coding-agent row, once one exists, is listed instead of denied.
+    const opus5Row = codingSnapshot.records.find(record => record.agent === "Claude Code" && record.model === "Opus 5");
+    if (opus5Row === undefined) throw new Error("Checked snapshot must store the Claude Code · Opus 5 row.");
+    const opus55Row = { ...opus5Row, id: "opus-5-5-cc", model: "Opus 5.5", modelLabel: "Opus 5.5 (max)", seriesId: "Claude Code:opus-5-5", seriesLabel: "Claude Code · Opus 5.5" };
+    const withCodingRow = articleToMarkdown(createOpus55Article(intelligenceSnapshot, {
+      ...codingSnapshot,
+      records: [...codingSnapshot.records, opus55Row],
+    }));
+    expect(withCodingRow).toContain("stores one configuration that runs Claude Opus 5.5: Claude Code · Opus 5.5 (max)");
+    expect(withCodingRow).toContain("It also stores the previous generation, Claude Code · Opus 5 (max)");
+    expect(withCodingRow).not.toContain("no row runs Claude Opus 5.5 in any harness");
+    const withTwoCodingRows = articleToMarkdown(createOpus55Article(intelligenceSnapshot, {
+      ...codingSnapshot,
+      records: [...codingSnapshot.records, opus55Row, { ...opus55Row, agent: "Cursor", id: "opus-5-5-cursor", seriesId: "Cursor:opus-5-5", seriesLabel: "Cursor · Opus 5.5" }],
+    }));
+    expect(withTwoCodingRows).toContain("stores two configurations that run Claude Opus 5.5");
+    expect(withTwoCodingRows).toContain("| Claude Code · Opus 5.5 (max) |");
+
+    // An Opus 5 row on the Index is listed instead of denied.
+    const opus5Index = { ...opusMax, id: "opus-5-id", name: "Claude Opus 5 (max)", release: { name: "Claude Opus 5", slug: "claude-opus-5" }, slug: "claude-opus-5", intelligenceIndex: 50 };
+    const withOpus5Index = articleToMarkdown(createOpus55Article({
+      ...intelligenceSnapshot,
+      records: [...intelligenceSnapshot.records, opus5Index],
+    }, codingSnapshot));
+    expect(withOpus5Index).toContain("also stores one configuration of Claude Opus 5: Claude Opus 5 (max)");
+
+    const laterRetrieval = createOpus55Article({
+      ...intelligenceSnapshot,
+      source: { ...intelligenceSnapshot.source, retrievedAt: "2026-12-01T08:00:00.000Z" },
+    }, codingSnapshot);
+    expect(laterRetrieval.updatedAt).toBe("2026-12-01");
+    expect(articleToMarkdown(laterRetrieval)).toContain("Dec 1, 2026, 8:00 AM UTC");
+
+    // A cost that would push the title past 64 characters drops the cost from the title.
+    const expensive = createOpus55Article({
+      ...intelligenceSnapshot,
+      records: intelligenceSnapshot.records.map(record => (
+        record.id === opusMax.id && record.costUsdPerTask !== null
+          ? { ...record, costUsdPerTask: { ...record.costUsdPerTask, total: 1234.56, input: 1234.56 - record.costUsdPerTask.output } }
+          : record
+      )),
+    }, codingSnapshot);
+    expect(expensive.title).toBe(`Claude Opus 5.5 leads the Intelligence Index at ${formatSnapshotScore(opusMax.intelligenceIndex)}`);
+    expect(expensive.title.length).toBeLessThanOrEqual(64);
   });
 
   test("places GPT-6 Sol on both checked charts from the same rows the charts plot", () => {

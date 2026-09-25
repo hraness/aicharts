@@ -80,6 +80,21 @@ export type IntelligencePlacement = Readonly<{
   siblings: readonly ArtificialAnalysisIntelligenceRecord[];
 }>;
 
+export type EffortStep = Readonly<{
+  /** Index points added over the next cheaper effort level, or null for the cheapest level. */
+  pointsOverCheaper: number | null;
+  /** Cost as a multiple of the next cheaper effort level, or null for the cheapest level. */
+  costMultipleOverCheaper: number | null;
+  record: ArtificialAnalysisIntelligenceRecord;
+}>;
+
+export type ReleaseIntelligencePlacement = IntelligencePlacement & Readonly<{
+  /** The placed row and every comparable sibling that carries an effort level, cheapest first, with the step from the level before. */
+  effortLadder: readonly EffortStep[];
+  /** Comparable siblings without an effort level, such as a non-reasoning mode, highest index first. */
+  otherModes: readonly ArtificialAnalysisIntelligenceRecord[];
+}>;
+
 function hasIndex(record: CodingAgentRecord): record is IndexedCodingAgentRecord {
   return record.benchmarks.aaIndex !== null;
 }
@@ -282,6 +297,53 @@ export function intelligencePlacement(
     rank: competitionRank(record.intelligenceIndex, cohort.map(candidate => candidate.intelligenceIndex)),
     record,
     siblings,
+  };
+}
+
+function hasEffortLevel(record: ArtificialAnalysisIntelligenceRecord): boolean {
+  return record.effort !== null;
+}
+
+/**
+ * Orders the placed row and the siblings that carry an effort level cheapest
+ * first and states what each step up the ladder buys. A step may buy negative
+ * points when a costlier level scores lower, which a note must be able to
+ * print. Siblings without an effort level are a different mode, not a step,
+ * and are left out.
+ */
+export function effortLadder(
+  record: ArtificialAnalysisIntelligenceRecord,
+  siblings: readonly ArtificialAnalysisIntelligenceRecord[],
+): readonly EffortStep[] {
+  const rows = [record, ...siblings.filter(hasEffortLevel)].toSorted((left, right) => (
+    comparableTaskCost(left) - comparableTaskCost(right) || left.id.localeCompare(right.id)
+  ));
+  return rows.map((current, position) => {
+    const cheaper = rows[position - 1];
+    return {
+      costMultipleOverCheaper: cheaper === undefined
+        ? null
+        : comparableTaskCost(current) / comparableTaskCost(cheaper),
+      pointsOverCheaper: cheaper === undefined
+        ? null
+        : current.intelligenceIndex - cheaper.intelligenceIndex,
+      record: current,
+    };
+  });
+}
+
+/** `intelligencePlacement` plus the release’s effort ladder and its other modes. */
+export function releaseIntelligencePlacement(
+  records: readonly ArtificialAnalysisIntelligenceRecord[],
+  slug: string,
+  pointWindow = 1,
+): ReleaseIntelligencePlacement | undefined {
+  const placement = intelligencePlacement(records, slug, pointWindow);
+  if (placement === undefined) return undefined;
+  return {
+    ...placement,
+    effortLadder: effortLadder(placement.record, placement.siblings),
+    otherModes: placement.siblings.filter(sibling => !hasEffortLevel(sibling)),
   };
 }
 

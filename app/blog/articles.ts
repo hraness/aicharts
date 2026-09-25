@@ -12,6 +12,7 @@ import { createHarnessTaxArticle } from "./harnesstax-coding-agent-harness-artic
 import { createIntroducingAiChartsArticle } from "./introducing-ai-charts-article";
 import { createMimoV26Article } from "./mimo-v2-6-pro-cost-frontier-article";
 import { createOpenModelsCodingAgentsArticle } from "./open-models-coding-agents-article";
+import { createOpus55Article } from "./opus-5-5-intelligence-index-article";
 import { createRealSweArticle } from "./real-swe-private-enterprise-benchmark-article";
 import { createSmallModelsHaveArrivedArticle } from "./small-models-have-arrived-article";
 import { createTerminalBenchScienceArticle } from "./terminal-bench-science-article";
@@ -307,6 +308,22 @@ export const BLOG_SOURCES = {
     url: "https://openai.com/index/introducing-gpt-6-sol-and-luna/",
     year: 2026,
   },
+  anthropicClaudeOpus55: {
+    note:
+      "Cited for the September 22, 2026 release, the $4 and $20 per million token prices against $5 and $25 for Opus 5, the $0.20 cache-read price, the 40% cost claim against Opus 5, medium as the default effort level, the max-effort setting behind Anthropic’s benchmark table, the statement that thinking can no longer be switched off, the safeguard fallback sentence, and the vendor-run benchmark table that this site does not chart.",
+    publication: "Anthropic",
+    title: "Introducing Claude Opus 5.5",
+    url: "https://www.anthropic.com/news/claude-opus-5-5",
+    year: 2026,
+  },
+  artificialAnalysisClaudeOpus55Model: {
+    note:
+      "Cited, from the page captured September 25, 2026 UTC, for the 58 index score, the proprietary label, the September 22, 2026 release date, the $4.00 and $20.00 per million token prices with a 95% cache discount based on Anthropic’s API, the $5.98 cost per index task, the 260M output tokens across the index, the 1M token context window, and its summary and verbosity sentences.",
+    publication: "Artificial Analysis",
+    title: "Claude Opus 5.5 (max with fallback) - Intelligence, Performance & Price Analysis",
+    url: "https://artificialanalysis.ai/models/claude-opus-5-5",
+    year: 2026,
+  },
   terminalBenchRepository: {
     note:
       "The benchmark owners’ repository publishes Terminal-Bench and its versioned task releases. The version-pinned Terminal-Bench 4.0 cohort in the AI Charts benchmarks library comes from the owners, separately from Artificial Analysis’s own Terminal-Bench 4 runs.",
@@ -487,6 +504,7 @@ const mirrorCodeArticle = {
 
 export const blogArticles = [
   createIntroducingAiChartsArticle(),
+  createOpus55Article(),
   createGpt6SolArticle(),
   createGrok47Article(),
   createMimoV26Article(),
