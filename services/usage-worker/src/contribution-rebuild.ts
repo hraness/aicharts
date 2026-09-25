@@ -39,8 +39,8 @@ export class AccountContributionRebuild {
   status(input: unknown, observation: AdmissionObservation): ContributionRebuildStatusResult {
     const request = parseContributionRebuildReadRequest(input);
     if (!request) return { ok: false, error: "invalid_input" };
-    try { return { ok: true, value: this.#run(request, observation, () => undefined, (_owner, now) => {
-      const value = this.state.status(request.jobId);
+    try { return { ok: true, value: this.#run(request, observation, () => undefined, (owner, now) => {
+      const value = this.state.status(request.jobId, authority(owner, now));
       if (value && (value.receipt.accountId !== request.accountId || value.receipt.generation !== request.generation))
         throw new ContributionRebuildFault("storage_invalid");
       if (value && value.receipt.completedAtMs > now) throw new ContributionRebuildFault("clock_regressed");
@@ -60,6 +60,8 @@ export class AccountContributionRebuild {
       lastObserved = now; return callback(owner, now);
     });
     const work = async (): Promise<ContributionRebuildResult> => {
+      // Diagnostic execution never publishes. The cutover has its own entry.
+      if (request.action === "publish") return { ok: false, error: "invalid_input" };
       if (request.action === "begin") return { ok: true, value: run((owner, now) => this.state.begin(request.jobId, request.expectedRevision, authority(owner, now))) };
       if (request.action === "abort") return { ok: true, value: run((owner, now) => this.state.abort(request.jobId, request.expectedVersion, authority(owner, now))) };
       const repeated = run((owner, now) => this.state.retry(request.jobId, request.expectedVersion, "advance", authority(owner, now)));
@@ -129,5 +131,15 @@ export class AccountContributionRebuild {
     });
     try { return await Promise.race([work().catch(error => ({ ok: false as const, error: failure(error) })), timeout]); }
     finally { retired = true; clearTimeout(timer); }
+  }
+  /** Separately reviewed repair cutover. Accepts only an explicit `publish`
+   * request; every other action is refused here, exactly as `publish` is
+   * refused by `execute`. The step is one SQL transaction with no object I/O. */
+  publish(input: unknown, observation: AdmissionObservation): ContributionRebuildResult {
+    const request = parseContributionRebuildRequest(input);
+    if (!request || request.action !== "publish") return { ok: false, error: "invalid_input" };
+    try { return { ok: true, value: this.#run(request, observation, () => undefined,
+      (owner, now) => this.state.publish(request.jobId, request.expectedVersion, authority(owner, now))) }; }
+    catch (error) { return { ok: false, error: failure(error) }; }
   }
 }

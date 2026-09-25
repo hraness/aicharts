@@ -5,7 +5,10 @@ EXTENDS Naturals, FiniteSets
 \* fold. One-item chunks/pages expose the durable boundaries represented by
 \* the implementation's sixteen-item envelopes. Identity tokens abstract full
 \* immutable references; equal semantic cells need not have equal tokens.
-CONSTANTS Sequential, WrongPublished, UnsafeQuota, UnsafeProof, UnsafeComparison
+\* Cutover admits the explicit, separately reviewed repair publication of a
+\* fully compared job. UnsafeCutover removes only its anchor re-check.
+CONSTANTS Sequential, WrongPublished, UnsafeQuota, UnsafeProof, UnsafeComparison,
+  Cutover, UnsafeCutover
 \* JobCount sequential jobs and the shared charge Quota; development uses 2 and
 \* 4, nightly explores 3 and 6.
 CONSTANTS JobCount, Quota
@@ -13,7 +16,7 @@ Jobs == IF Sequential THEN 1..JobCount ELSE {1}
 Heads == 1..3
 Cells == 1..2
 Tokens == 1..(3 * JobCount)
-Phases == {"absent", "building", "comparing", "match", "mismatch", "aborted"}
+Phases == {"absent", "building", "comparing", "match", "mismatch", "aborted", "published"}
 Zero == [cell \in Cells |-> 0]
 Fold(revision, prefix) == [cell \in Cells |->
   IF cell = 1 THEN IF prefix >= 1 THEN IF revision = 0 THEN 1 ELSE 3 ELSE 0
@@ -48,7 +51,9 @@ Init == s = [job |-> [j \in Jobs |-> EmptyJob], receipt |-> [j \in Jobs |-> Empt
   heldAbort |-> FALSE, lateRejected |-> FALSE,
   rightFailed |-> FALSE, failedPrefix |-> 0, comparedAfterFailure |-> FALSE,
   forgedProof |-> FALSE, forgedComparison |-> FALSE,
-  paired |-> [j \in Jobs |-> {}]]
+  paired |-> [j \in Jobs |-> {}],
+  published |-> Published, publishedBy |-> 0, publishedRevision |-> 0,
+  unanchoredCutover |-> FALSE, replayedPublished |-> FALSE]
 
 Active(job) == s.job[job].phase \in {"building", "comparing"}
 Anchor(job) == s.authority /\ ~s.sourcePending
@@ -61,11 +66,13 @@ Admitted == Current /\ Anchor(s.run.job)
 PendingExact == s.job[s.run.job].pending = s.run.head
   /\ s.run.head = s.job[s.run.job].cursor + 1
 Durable(value) == <<value.job, value.receipt, value.sharedCharge,
-  value.reservations, value.objects, value.paired>>
+  value.reservations, value.objects, value.paired, value.published, value.publishedBy>>
 ActiveJobs == {job \in Jobs : Active(job)}
 
+\* Publication identity 2 is the root a mismatch cutover published; a later
+\* job pins it exactly as the implementation pins the current root.
 BeginJob == /\ s.authority /\ ~s.sourcePending
-  /\ s.sourceRevision = 0 /\ s.publication = 0
+  /\ s.sourceRevision = 0 /\ s.publication \in {0, 2}
   /\ ActiveJobs = {} /\ s.allocated < Cardinality(Jobs)
   /\ LET j == s.allocated + 1
          value == [EmptyJob EXCEPT !.phase = "building", !.version = 1,
@@ -168,7 +175,7 @@ FailRightPage == /\ ~Sequential /\ ~s.rightFailed /\ s.run.phase = "right"
 ReadRightPage == /\ s.run.phase = "right"
   /\ IF Admitted
     THEN s' = [s EXCEPT !.run.right = TRUE, !.run.compareOwned = TRUE,
-      !.run.equal = s.job[s.run.job].scratch[s.run.key] = Published[s.run.key], !.run.phase = "comparison"]
+      !.run.equal = s.job[s.run.job].scratch[s.run.key] = s.published[s.run.key], !.run.phase = "comparison"]
     ELSE s' = [s EXCEPT !.run.phase = "refused"]
 PresentUnownedComparison == /\ ~s.forgedComparison /\ s.run.phase = "left"
   /\ Admitted
@@ -193,11 +200,29 @@ AbortJob(job) == /\ s.authority /\ Active(job)
          !.lastExpected = s.job[job].version]
      IN s' = [s EXCEPT !.job[job] = value, !.receipt[job] = Receipt(job, value),
        !.heldAbort = @ \/ (s.provider.phase = "held" /\ s.provider.job = job)]
+\* The compare-and-swap of a verified rebuild over the unchanged source
+\* revision, projection frontiers, pending state and current root. It is a
+\* distinct durable step with its own version; `advance` never reaches it.
+\* No reservation or shared charge changes: the scratch root was charged
+\* while it was built and the replaced root stays retained for cursors.
+CutoverJob(job) == /\ Cutover /\ s.authority
+  /\ s.job[job].phase \in {"match", "mismatch"}
+  /\ (UnsafeCutover \/ Anchor(job))
+  /\ LET value == [s.job[job] EXCEPT !.phase = "published", !.version = @ + 1,
+         !.lastExpected = s.job[job].version]
+     IN s' = [s EXCEPT !.job[job] = value, !.receipt[job] = Receipt(job, value),
+       !.heldReply = Receipt(job, value), !.published = s.job[job].scratch,
+       !.publishedBy = job, !.publishedRevision = s.job[job].revision,
+       \* A repaired root is a new publication identity; a matching root is
+       \* not, so other jobs pinned to it keep their anchor.
+       !.publication = IF s.job[job].phase = "mismatch" THEN 2 ELSE s.publication,
+       !.unanchoredCutover = @ \/ ~Anchor(job)]
 RetireCall == /\ s.run.phase # "idle"
   /\ s' = [s EXCEPT !.run = EmptyRun]
 ResetRefusal == /\ s.run.phase = "refused" /\ s' = [s EXCEPT !.run = EmptyRun]
 ReplayLast(job) == /\ s.authority /\ s.job[job].lastExpected > 0 /\ job \notin s.replayed
-  /\ LET next == [s EXCEPT !.replayed = @ \cup {job}, !.heldReply = s.receipt[job]]
+  /\ LET next == [s EXCEPT !.replayed = @ \cup {job}, !.heldReply = s.receipt[job],
+         !.replayedPublished = @ \/ s.receipt[job].phase = "published"]
      IN s' = [next EXCEPT !.replayPure = s.replayPure /\ Durable(next) = Durable(s)
        /\ next.heldReply = s.receipt[job]]
 DeliverHeldReply == /\ s.heldReply.job # 0 /\ ~s.delivered
@@ -224,10 +249,11 @@ Next == BeginJob \/ CheckStep \/ ReadCommittedHead \/ ReserveStage \/ LoseReserv
   \/ PresentUnownedComparison \/ CommitComparison \/ RetireCall \/ ResetRefusal
   \/ DeliverHeldReply \/ AdvanceSource \/ ChangePublication \/ ReserveForeignSource \/ RevokeAuthority
   \/ InvalidateHeadEvidence \/ Quiescent
-  \/ (\E job \in Jobs : StartStep(job) \/ AbortJob(job) \/ ReplayLast(job) \/ RejectOlderVersion(job))
+  \/ (\E job \in Jobs : StartStep(job) \/ AbortJob(job) \/ ReplayLast(job) \/ RejectOlderVersion(job)
+    \/ CutoverJob(job))
 
 TypeOK == /\ s.allocated \in 0..Cardinality(Jobs)
-  /\ s.sourceRevision \in 0..1 /\ s.publication \in 0..1 /\ s.sharedCharge \in 0..Quota
+  /\ s.sourceRevision \in 0..1 /\ s.publication \in 0..2 /\ s.sharedCharge \in 0..Quota
   /\ s.objects \subseteq Tokens /\ s.reservations \subseteq (Jobs \X Heads)
   /\ s.epoch \in 0..1 /\ s.replayed \subseteq Jobs /\ s.failedPrefix \in 0..2
   /\ s.environment \in {"unchanged", "source", "publication", "pending", "authority", "evidence"}
@@ -238,9 +264,11 @@ TypeOK == /\ s.allocated \in 0..Cardinality(Jobs)
       /\ s.job[j].cursor \in 0..3 /\ s.job[j].compared \in 0..2
       /\ s.job[j].charged \in 0..2 /\ s.job[j].pending \in 0..3
       /\ s.job[j].root \in Tokens \cup {0} /\ s.paired[j] \subseteq Cells)
+  /\ s.published \in [Cells -> 0..3] /\ s.publishedBy \in Jobs \cup {0} /\ s.publishedRevision \in 0..1
   /\ <<s.sourcePending, s.authority, s.evidence, s.restarted, s.lostReservation, s.retriedPending,
       s.committedRetry, s.replayPure, s.delivered, s.staleRefused, s.heldAbort, s.lateRejected,
-      s.rightFailed, s.comparedAfterFailure, s.forgedProof, s.forgedComparison>> \in [1..16 -> BOOLEAN]
+      s.rightFailed, s.comparedAfterFailure, s.forgedProof, s.forgedComparison,
+      s.unanchoredCutover, s.replayedPublished>> \in [1..18 -> BOOLEAN]
 
 ChargedReservations == {pair \in s.reservations : Live(pair[2])}
 Safety == /\ Cardinality(ActiveJobs) <= 1
@@ -252,15 +280,33 @@ Safety == /\ Cardinality(ActiveJobs) <= 1
     /\ s.job[job].charged = Cardinality({pair \in ChargedReservations : pair[1] = job})
     /\ (s.job[job].pending # 0 => <<job, s.job[job].pending>> \in s.reservations)
     /\ (\A key \in 1..s.job[job].compared : key \in s.paired[job]
-        /\ s.job[job].scratch[key] = Published[key])
+        /\ s.job[job].scratch[key] = s.published[key])
     /\ (s.job[job].phase = "match" => s.job[job].cursor = 3
-        /\ s.job[job].compared = 2 /\ s.job[job].scratch = Published)
+        /\ s.job[job].compared = 2 /\ s.job[job].scratch = s.published)
+    /\ (s.job[job].phase = "published" => s.job[job].cursor = 3
+        /\ s.job[job].pending = 0 /\ s.publishedBy # 0)
     /\ (s.receipt[job].job # 0 => s.receipt[job].version = s.job[job].version
         /\ s.receipt[job].cursor = s.job[job].cursor /\ s.receipt[job].scratch = s.job[job].scratch))
+  \* Cutover safety: never over a changed source revision, pending foreign
+  \* reservation, drifted publication or revoked authority; the published
+  \* cells always equal the complete verified scratch fold of a published
+  \* job at the source revision it pinned, and nothing was charged again.
+  /\ ~s.unanchoredCutover
+  /\ (s.publishedBy # 0 => s.job[s.publishedBy].phase = "published"
+    /\ s.published = s.job[s.publishedBy].scratch
+    /\ s.published = Fold(s.publishedRevision, 3)
+    /\ s.publishedRevision = s.job[s.publishedBy].revision
+    /\ s.job[s.publishedBy].charged = Cardinality({pair \in ChargedReservations : pair[1] = s.publishedBy}))
 
 NoPendingRecoveryWitness == ~(s.committedRetry /\ 1 \in s.replayed)
 NoLateAbortWitness == ~(s.heldAbort /\ s.lateRejected /\ s.job[1].phase = "aborted"
   /\ Token(1, 1) \in s.objects /\ s.job[1].cursor = 0)
 NoComparisonRetryWitness == ~(s.rightFailed /\ s.failedPrefix = 1 /\ s.comparedAfterFailure
   /\ s.job[1].phase = "mismatch" /\ s.job[1].compared = 1)
+\* A mismatch repaired by cutover lets a later full rebuild match the repaired
+\* publication; the retained publish receipt replays purely after delivery.
+NoRepairMatchWitness == ~(s.publishedBy = 1 /\ s.job[1].compared = 1
+  /\ s.job[2].phase = "match")
+NoCutoverReplayWitness == ~(s.publishedBy = 1 /\ s.replayedPublished /\ s.replayPure
+  /\ s.heldReply.phase = "published")
 =============================================================================

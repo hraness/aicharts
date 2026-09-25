@@ -257,7 +257,7 @@ test("shared projection quota is charged atomically and exhausted rebuild admiss
   await run((_state, storage) => storage.sql.exec("UPDATE usage_contribution_projection_control SET immutable_bytes=? WHERE id=1", CONTRIBUTION_PROJECTION_MAX_IMMUTABLE_BYTES));
   const put = vi.spyOn(env.STAGING, "put");
   expect(await execute(advanceRequest(initial.version))).toEqual({ ok: false, error: "limit" });
-  expect(put).not.toHaveBeenCalled(); expect((await status())!).toEqual({ receipt: initial, pending: false, chargedBytes: 0 });
+  expect(put).not.toHaveBeenCalled(); expect((await status())!).toEqual({ receipt: initial, pending: false, chargedBytes: 0, readiness: "unobserved" });
   expect(await quota()).toBe(CONTRIBUTION_PROJECTION_MAX_IMMUTABLE_BYTES);
 });
 test("aborted scratch charges remain visible to later ordinary projection reservations", async () => {

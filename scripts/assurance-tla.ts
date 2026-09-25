@@ -19,7 +19,7 @@ export const tlaProfiles = {
 export type TlaProfile = keyof typeof tlaProfiles;
 const modelCaseSchema = (maxDistinctStates: number) => z.object({
   id: identifier, module: z.enum(["M1Restore", "M4Contributions", "M4Supersession", "M1RestoreRepaired", "M2Ledger",
-    "M3Admission", "M4ContributionsRepaired", "M5Authority", "M6Consent", "M7Projection", "M8StagedProjection", "M9AccountWork", "M10ContributionFlight", "M11ContributionRebuild"]),
+    "M3Admission", "M4ContributionsRepaired", "M5Authority", "M6Consent", "M7Projection", "M8StagedProjection", "M9AccountWork", "M10ContributionFlight", "M11ContributionRebuild", "M12Reclamation"]),
   kind: z.enum(["counterexample", "sanity", "witness"]), invariant: operator.nullable(),
   config: z.string().regex(/^configs\/[a-z0-9-]+\.cfg$/u),
   requiredActions: z.array(operator), minTraceStates: z.number().int().min(0).max(100),
@@ -32,7 +32,7 @@ export const manifestSchema = (profile: TlaProfile) => {
     schemaVersion: z.literal(1), claim: z.enum(["finite-baseline-model-evidence-only", "finite-repaired-model-evidence-only", "finite-nightly-model-evidence-only"]),
     bounds: z.object({ workers: z.literal(bounds.workers), heapMiB: z.literal(bounds.heapMiB), timeoutMs: z.literal(bounds.timeoutMs),
       maxOutputBytes: z.literal(bounds.maxOutputBytes), maxDistinctStates: z.literal(bounds.maxDistinctStates) }).strict(),
-    cases: z.array(modelCaseSchema(bounds.maxDistinctStates)).min(1).max(80),
+    cases: z.array(modelCaseSchema(bounds.maxDistinctStates)).min(1).max(96),
   }).strict();
 };
 const pinSchema = z.object({

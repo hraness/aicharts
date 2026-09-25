@@ -63,6 +63,17 @@
       "minTraceStates": 6,
       "minDistinctStates": 2,
       "expectedDistinctStates": null
+    },
+    {
+      "id": "m12-nightly-reclamation-wide-safety",
+      "module": "M12Reclamation",
+      "kind": "sanity",
+      "invariant": null,
+      "config": "configs/m12-reclamation-safety.cfg",
+      "requiredActions": [],
+      "minTraceStates": 0,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": 1511899
     }
   ]
 }
