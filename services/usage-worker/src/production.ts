@@ -1,5 +1,6 @@
 import { STATS_HTTP_URL, STATS_UPLOAD_URL, STATS_STATUS_URL, STATS_ABANDON_URL } from "../../../lib/usage/stats-http-contract";
-import { createStatsHttpHandler, createStatsUploadHttpHandler, type StatsHttpEnvironment, type StatsUploadHttpEnvironment } from "./stats-http";
+import { STATS_TOTALS_URL } from "../../../lib/usage/stats-totals-contract";
+import { createStatsHttpHandler, createStatsTotalsHttpHandler, createStatsUploadHttpHandler, type StatsHttpEnvironment, type StatsUploadHttpEnvironment } from "./stats-http";
 import { contributionHttpCap } from "../../../lib/usage/contributions-http-contract";
 import { createContributionHttpHandler, type ContributionHttpEnvironment } from "./contributions-http";
 import { CONTRIBUTION_QUERY_URL } from "../../../lib/usage/contribution-query";
@@ -44,6 +45,7 @@ export interface ProductionRouterOptions {
     leaderboard: Handler<LeaderboardHttpEnvironment>;
     stats: Handler<StatsHttpEnvironment>;
     statsUpload: Handler<StatsUploadHttpEnvironment>;
+    statsTotals: Handler<StatsHttpEnvironment>;
     contributions: Handler<ContributionHttpEnvironment>;
     contributionQuery: Handler<ContributionQueryHttpEnvironment>;
   }>;
@@ -98,12 +100,14 @@ export function createProductionRouter(options: ProductionRouterOptions = {}) {
     leaderboard: options.handlers?.leaderboard ?? createLeaderboardHttpHandler(effects),
     stats: options.handlers?.stats ?? createStatsHttpHandler({ ...effects, verifier }),
     statsUpload: options.handlers?.statsUpload ?? createStatsUploadHttpHandler(effects),
+    statsTotals: options.handlers?.statsTotals ?? createStatsTotalsHttpHandler({ ...effects, verifier }),
     contributions: options.handlers?.contributions ?? createContributionHttpHandler(effects),
     contributionQuery: options.handlers?.contributionQuery ?? createContributionQueryHttpHandler({ ...effects, verifier }),
   };
   return async (request: Request, env: ProductionEnvironment, ctx: Lifetime): Promise<Response> => {
-    let path: "pairing" | "terminal" | "admission" | "privateDays" | "consent" | "leaderboard" | "stats" | "statsUpload" | "contributions" | "contributionQuery" | null = null;
+    let path: "pairing" | "terminal" | "admission" | "privateDays" | "consent" | "leaderboard" | "stats" | "statsUpload" | "statsTotals" | "contributions" | "contributionQuery" | null = null;
     if (request.url === STATS_HTTP_URL) path = "stats";
+    else if (request.url === STATS_TOTALS_URL) path = "statsTotals";
     else if (request.url === STATS_UPLOAD_URL || request.url === STATS_STATUS_URL || request.url === STATS_ABANDON_URL) path = "statsUpload";
     else if (contributionHttpCap(request.url) !== null) path = "contributions";
     else if (request.url === CONTRIBUTION_QUERY_URL) path = "contributionQuery";
@@ -131,12 +135,14 @@ export function createProductionRouter(options: ProductionRouterOptions = {}) {
         || !flagReady(env, "AICHARTS_USAGE_ADMISSION_ENABLED")) return unavailable();
       try { return await handlers.contributions(request, env, ctx); } catch { return unavailable(); }
     }
-    if (path === "stats" || path === "statsUpload") {
-      if (!flagReady(env, "AICHARTS_USAGE_STATS_ENABLED") || (path === "stats"
+    if (path === "stats" || path === "statsTotals" || path === "statsUpload") {
+      if (!flagReady(env, "AICHARTS_USAGE_STATS_ENABLED") || (path !== "statsUpload"
         ? !flagReady(env, "AICHARTS_USAGE_AUTH_ENABLED") || !flagReady(env, "AICHARTS_USAGE_PRIVATE_READ_ENABLED")
         : !flagReady(env, "AICHARTS_USAGE_ADMISSION_ENABLED"))) return unavailable();
-      try { return path === "stats" ? await handlers.stats(request, env, ctx) : await handlers.statsUpload(request, env, ctx); }
-      catch { return unavailable(); }
+      try {
+        return path === "stats" ? await handlers.stats(request, env, ctx)
+          : path === "statsTotals" ? await handlers.statsTotals(request, env, ctx) : await handlers.statsUpload(request, env, ctx);
+      } catch { return unavailable(); }
     }
     if (path === "pairing") {
       if (!flagReady(env, "AICHARTS_USAGE_AUTH_ENABLED") || !flagReady(env, "AICHARTS_USAGE_PAIRING_ENABLED")) return unavailable();

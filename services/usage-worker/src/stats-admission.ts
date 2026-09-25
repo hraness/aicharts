@@ -56,7 +56,7 @@ export class AccountStats {
   async status(request: StatsStatusRequest, secret: string, observation: AdmissionObservation): Promise<StatsResult<StatsStatus>> {
     try {
       await this.#authenticate(observation, request, secret);
-      return { ok: true, value: this.#run(observation, request, owner => this.state.status(owner, request.deviceId, request.client, request)) };
+      return { ok: true, value: this.#run(observation, request, () => this.state.status(request.deviceId)) };
     } catch (error) { return { ok: false, error: error instanceof StatsFault || error instanceof AdmissionFault ? error.code : "storage_unavailable" }; }
   }
   async abandon(request: StatsAbandonRequest, secret: string, observation: AdmissionObservation): Promise<StatsResult<StatsAbandonment>> {
@@ -69,28 +69,28 @@ export class AccountStats {
     try {
       await this.#authenticate(observation, request, secret);
       const bodyHash = statsHash(statsUploadText(request));
-      const locate = (): StatsReceipt | null => this.#run(observation, request, owner => {
+      const locate = (): StatsReceipt | null => this.#run(observation, request, () => {
         const progress = this.state.progress(request.deviceId);
         if (progress.receipt?.bodyHash === bodyHash && progress.receipt.sequence === request.sequence && progress.receipt.operationId === request.operationId) return progress.receipt;
-        const pending = this.state.pending();
-        if (!pending || pending.bodyHash !== bodyHash || pending.deviceId !== request.deviceId) throw new StatsFault("conflict");
-        this.state.check(request, owner);
+        const pending = this.state.pending(request.deviceId);
+        if (!pending || pending.bodyHash !== bodyHash) throw new StatsFault("conflict");
+        this.state.check(request);
         return null;
       });
-      const settled = this.#run(observation, request, (owner, now) => {
+      const settled = this.#run(observation, request, (_owner, now) => {
         if (request.report.generatedAtMs > now || request.report.firstUtcDay + request.report.dayCount - 1 > Math.floor(now / 86_400_000)) throw new StatsFault("invalid_input");
         const progress = this.state.progress(request.deviceId);
         if (progress.receipt?.bodyHash === bodyHash && progress.receipt.sequence === request.sequence && progress.receipt.operationId === request.operationId) return progress.receipt;
-        const pending = this.state.pending();
+        const pending = this.state.pending(request.deviceId);
         if (pending) {
-          if (pending.deviceId !== request.deviceId) throw new StatsFault("conflict");
-          if (pending.bodyHash === bodyHash) { this.state.check(request, owner); return null; }
-          // A different body has no authority to erase the retained intent.
-          // Explicit abandon first advances the durable predecessor revision;
-          // a delayed A can then neither displace B nor reserve/charge again.
-          throw new StatsFault("conflict");
+          if (pending.bodyHash === bodyHash) { this.state.check(request); return null; }
+          // A newer body from the same device retires its own earlier intent
+          // durably before reserving: the predecessor's charge and objects
+          // stay as evidence and every delayed stage of it now refuses.
+          this.state.check(request);
+          this.state.supersedePending(request.deviceId);
         }
-        this.state.reserve(request, owner, now);
+        this.state.reserve(request, now);
         return null;
       });
       if (settled) return { ok: true, value: settled };
@@ -102,7 +102,7 @@ export class AccountStats {
         if (snapshot.error === "storage_conflict") this.#run(observation, request, () => this.state.quarantine());
         throw new StatsFault(snapshot.error === "storage_conflict" ? "storage_invalid" : "storage_unavailable");
       }
-      const receipt = this.#run(observation, request, (owner, now) => this.state.freeze(request, owner, now));
+      const receipt = this.#run(observation, request, (_owner, now) => this.state.freeze(request, now));
       const retained = await ensureStatsReceipt(this.env.CONTROL, request, receipt, admitted);
       const afterReceipt = locate();
       if (afterReceipt) return { ok: true, value: afterReceipt };
@@ -110,7 +110,7 @@ export class AccountStats {
         if (retained.error === "storage_conflict") this.#run(observation, request, () => this.state.quarantine());
         throw new StatsFault(retained.error === "storage_conflict" ? "storage_invalid" : "storage_unavailable");
       }
-      return { ok: true, value: this.#run(observation, request, owner => this.state.publish(request, owner)) };
+      return { ok: true, value: this.#run(observation, request, () => this.state.publish(request)) };
     } catch (error) { return { ok: false, error: error instanceof StatsFault || error instanceof AdmissionFault ? error.code : "storage_unavailable" }; }
   }
 }

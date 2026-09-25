@@ -5,6 +5,7 @@ import { readPrivateDays } from "./private-days-client";
 import { readPrivateStats, disposeStatsReadReply, StatsReadDeadline } from "./stats-client";
 import type { MetricWorkerFactory } from "./metric-explorer-session";
 import { readUsageConsent } from "./consent-client";
+import { readPrivateTotals } from "./stats-totals-client";
 import type { PrivateDaysRange } from "./private-days-public";
 
 type Options = Readonly<{
@@ -213,6 +214,11 @@ export async function readAccountStats(firstUtcDay: number, dayCount: number, si
     if (!deadline.active()) { disposeStatsReadReply(reply); throw unavailable(); }
     return reply;
   } finally { deadline.finish(); }
+}
+export function readAccountTotals(signal: AbortSignal, options: Options = {}) {
+  return recoverRead(() => readPrivateTotals(signal, options.fetch),
+    reply => !reply.ok && reply.error === "authentication_required",
+    reply => !reply.ok && reply.error === "unavailable", signal, options);
 }
 export function readAccountConsent(signal: AbortSignal, options: Options = {}) {
   return recoverRead(() => readUsageConsent(signal, options.fetch),

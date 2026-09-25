@@ -260,3 +260,20 @@
   .usage-stats__skeleton-axis { margin-inline-start: 2.75rem; }
   .usage-stats__skeleton-total { block-size: 2.9rem; inline-size: 9rem; }
 }
+
+/* All-time account totals above the windowed report. */
+.usage-totals { border: 1px solid var(--border); border-radius: .75rem; display: grid; gap: 1.25rem; margin-block: 1.5rem; padding: 1.25rem; }
+.usage-totals h2 { color: var(--muted); font-size: .8rem; font-weight: 500; margin: 0; }
+.usage-totals__headline { display: grid; gap: .35rem; }
+.usage-totals__figure { font-size: 1.6rem; font-variant-numeric: tabular-nums; margin: 0; }
+.usage-totals__figure strong { font-weight: 700; }
+.usage-totals__muted { color: var(--muted); font-size: .85rem; margin: 0; }
+.usage-totals__notice { color: var(--muted); font-size: .85rem; margin: 0; }
+.usage-totals__tables { display: grid; gap: 1.25rem; grid-template-columns: 1fr 1fr; }
+.usage-totals__table { border-collapse: collapse; font-size: .85rem; width: 100%; }
+.usage-totals__table caption { color: var(--muted); font-size: .8rem; margin-block-end: .5rem; text-align: start; }
+.usage-totals__table th, .usage-totals__table td { border-block-start: 1px solid var(--border); padding: .45rem .5rem; text-align: start; vertical-align: top; }
+.usage-totals__table td { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.usage-totals__table thead th { color: var(--muted); font-weight: 500; }
+.usage-totals__table tbody th { font-weight: 500; }
+@media (max-width: 720px) { .usage-totals__tables { grid-template-columns: 1fr; } .usage-totals__table td { white-space: normal; } }

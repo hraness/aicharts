@@ -66,4 +66,24 @@ export const ADMISSION_SCHEMA = Object.freeze({
   revision INTEGER NOT NULL CHECK (revision BETWEEN 0 AND 4096),
   committed_at_ms INTEGER NOT NULL CHECK (committed_at_ms BETWEEN 0 AND 8640000000000000)
 )`,
+  // Rebuildable per-day totals of the live v1 heads, keyed by the device that
+  // uploaded them, in the same disjoint token buckets as a v2 snapshot row.
+  // Lifetime reads sum these without decoding a single head; the cursor
+  // records the journal revision through which the totals are complete.
+  usage_admission_day_totals: `CREATE TABLE usage_admission_day_totals (
+  utc_day INTEGER NOT NULL CHECK (utc_day BETWEEN 0 AND 4294967295),
+  device_id TEXT NOT NULL CHECK (length(device_id) = 64),
+  provider INTEGER NOT NULL CHECK (provider IN (1, 2, 3)),
+  heads INTEGER NOT NULL CHECK (heads BETWEEN 0 AND 65536),
+  input_tokens TEXT NOT NULL,
+  cache_read_tokens TEXT NOT NULL,
+  cache_write_tokens TEXT NOT NULL,
+  output_tokens TEXT NOT NULL,
+  reasoning_tokens TEXT NOT NULL,
+  PRIMARY KEY (utc_day, device_id, provider)
+) WITHOUT ROWID`,
+  usage_admission_day_totals_cursor: `CREATE TABLE usage_admission_day_totals_cursor (
+  id INTEGER PRIMARY KEY CHECK (id = 1),
+  verified_revision INTEGER NOT NULL CHECK (verified_revision BETWEEN 0 AND 4096)
+)`,
 });

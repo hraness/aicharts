@@ -130,7 +130,7 @@
       ],
       "requiredCoverage": [
         "reserve-failure:storage_unavailable",
-        "implicit-supersede:conflict",
+        "supersede:ok",
         "abandon:ok",
         "abandon-retry:ok",
         "commit-replacement:ok",
@@ -141,7 +141,7 @@
       "maxSteps": 256
     },
     {
-      "model": "M4-owner",
+      "model": "M4-devices",
       "adapter": "worker",
       "seeds": [
         1066793,
@@ -150,12 +150,11 @@
       ],
       "requiredCoverage": [
         "commit:ok",
-        "transfer-active-predecessor:writer_conflict",
+        "second-device:ok",
+        "stale-revision:ok",
         "revoke:ok",
-        "transfer:ok",
-        "retry-transfer:ok",
-        "old-writer:revoked",
-        "replace-predecessor:replacement_required"
+        "old-device:revoked",
+        "read:ok"
       ],
       "minSteps": 3,
       "maxSteps": 256
@@ -170,7 +169,8 @@
       ],
       "requiredCoverage": [
         "legacy-commit:ok",
-        "ambiguous-takeover:takeover_required",
+        "foreign-snapshot:ok",
+        "own-snapshot:ok",
         "legacy-read:ok"
       ],
       "minSteps": 3,
