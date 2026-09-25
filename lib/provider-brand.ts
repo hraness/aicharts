@@ -1,12 +1,12 @@
+import { providerMark, providerMarkGlyphDataUri } from "@hraness/design-kit";
 import { providerColors } from "./chart-colors.generated";
-import { lobeModelIconDataUrls } from "./model-card-icons.generated";
 
 /**
  * Visual identity for one model creator or provider inside compact pickers.
  * The chip color comes from the generated chart palette when the provider is
- * charted, the icon is a pinned Lobe glyph rendered through a CSS mask so the
- * glyph color can guarantee contrast, and the monogram covers providers
- * without a pinned icon.
+ * charted, the icon is the shared design-kit provider glyph rendered through
+ * a CSS mask so the glyph color can guarantee contrast, and the monogram
+ * covers providers without a registered mark.
  */
 export type ProviderBrand = Readonly<{
   chipColor: string;
@@ -15,13 +15,7 @@ export type ProviderBrand = Readonly<{
   monogram: string;
 }>;
 
-type LobeIconKey = keyof typeof lobeModelIconDataUrls;
-
-type BrandIdentity = Readonly<{
-  iconKey: LobeIconKey | null;
-  providerId: keyof typeof providerColors;
-}>;
-
+const MASK_GLYPH_COLOR = "#f7f6f2";
 const DARK_GLYPH = "#1c1917";
 const LIGHT_GLYPH = "#f7f6f2";
 const FALLBACK_CHIP_COLOR = "#6f6962";
@@ -29,28 +23,30 @@ const FALLBACK_CHIP_COLOR = "#6f6962";
 /**
  * Charted providers by folded alias. Benchmark sources disagree on naming
  * ("SpaceXAI", "xAI", "Z.AI", "Z AI", "Kimi", "Moonshot AI"), so aliases fold
- * to lowercase alphanumerics before lookup.
+ * to lowercase alphanumerics before lookup. Only the chart palette binding
+ * lives here; icon identity resolves through the shared provider-mark
+ * registry.
  */
-const brandIdentitiesByAlias: Readonly<Record<string, BrandIdentity>> = {
-  alibaba: { iconKey: "alibabacloud", providerId: "alibaba_cloud" },
-  alibabacloud: { iconKey: "alibabacloud", providerId: "alibaba_cloud" },
-  anthropic: { iconKey: "claude", providerId: "anthropic" },
-  claude: { iconKey: "claude", providerId: "anthropic" },
-  cognition: { iconKey: null, providerId: "cognition" },
-  cursor: { iconKey: "cursor", providerId: "cursor" },
-  deepseek: { iconKey: "deepseek", providerId: "deepseek" },
-  gemini: { iconKey: "gemini", providerId: "google" },
-  google: { iconKey: "gemini", providerId: "google" },
-  googledeepmind: { iconKey: "gemini", providerId: "google" },
-  kimi: { iconKey: "moonshot", providerId: "moonshot_ai" },
-  meta: { iconKey: "meta", providerId: "meta" },
-  moonshot: { iconKey: "moonshot", providerId: "moonshot_ai" },
-  moonshotai: { iconKey: "moonshot", providerId: "moonshot_ai" },
-  nvidia: { iconKey: "nvidia", providerId: "nvidia" },
-  openai: { iconKey: "openai", providerId: "openai" },
-  spacexai: { iconKey: "xai", providerId: "xai" },
-  xai: { iconKey: "xai", providerId: "xai" },
-  zai: { iconKey: "zai", providerId: "z_ai" },
+const providerIdsByAlias: Readonly<Record<string, keyof typeof providerColors>> = {
+  alibaba: "alibaba_cloud",
+  alibabacloud: "alibaba_cloud",
+  anthropic: "anthropic",
+  claude: "anthropic",
+  cognition: "cognition",
+  cursor: "cursor",
+  deepseek: "deepseek",
+  gemini: "google",
+  google: "google",
+  googledeepmind: "google",
+  kimi: "moonshot_ai",
+  meta: "meta",
+  moonshot: "moonshot_ai",
+  moonshotai: "moonshot_ai",
+  nvidia: "nvidia",
+  openai: "openai",
+  spacexai: "xai",
+  xai: "xai",
+  zai: "z_ai",
 };
 
 function foldedBrandAlias(identity: string): string {
@@ -95,21 +91,25 @@ export function providerBrand(
   displayName: string,
   ...additionalIdentities: readonly string[]
 ): ProviderBrand {
-  let identity: BrandIdentity | null = null;
+  let providerId: keyof typeof providerColors | null = null;
+  let iconUrl: string | null = null;
   for (const candidate of [displayName, ...additionalIdentities]) {
-    const matched = brandIdentitiesByAlias[foldedBrandAlias(candidate)];
-    if (matched !== undefined) {
-      identity = matched;
-      break;
+    if (providerId === null) {
+      const matched = providerIdsByAlias[foldedBrandAlias(candidate)];
+      if (matched !== undefined) providerId = matched;
+    }
+    if (iconUrl === null) {
+      const mark = providerMark(candidate);
+      if (mark !== undefined) {
+        iconUrl = providerMarkGlyphDataUri(mark, MASK_GLYPH_COLOR);
+      }
     }
   }
-  const chipColor = identity === null
-    ? FALLBACK_CHIP_COLOR
-    : providerColors[identity.providerId];
+  const chipColor = providerId === null ? FALLBACK_CHIP_COLOR : providerColors[providerId];
   return {
     chipColor,
     glyphColor: chipGlyphColor(chipColor),
-    iconUrl: identity?.iconKey == null ? null : lobeModelIconDataUrls[identity.iconKey],
+    iconUrl,
     monogram: brandMonogram(displayName),
   };
 }
