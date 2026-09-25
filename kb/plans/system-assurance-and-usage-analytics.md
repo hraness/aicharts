@@ -1584,3 +1584,45 @@ far: adapters 195/195, conformance 42 traces 0 failures, theorems 26+9,
 TLA baseline+repaired complete suite 87/87 including all cutover cases.
 The contributions flag remains off in every deployment; the reclamation
 ledger is implemented but not live-qualified.
+
+### 2026-09-25 — Main integrated: writer transfer retired, browser contracts repaired, full gate
+
+The completion branch absorbed `origin/main` at `b8c013b` (device-partitioned
+snapshots and lifetime totals from PR #427 through the 25 September rollout
+evidence). Six textual conflicts resolved mechanically: the path-filtered CI
+keeps main's shape with the branch's publication check, protocol adapter and
+conformance gates and Lean-before-Kani ordering; the collector's help text is
+main's with the branch's `--incremental` paragraph; both evidence logs keep
+both entries; `surfaces.json` carries main's six stats surfaces plus the
+reclamation ledger; the workflow action-pin multiset was regenerated. Four
+joins were semantic. First, the lifecycle lane's writer transfer
+(`transfer_request`, `transfer_grant`, `transfer_complete`) had nothing left
+to move once snapshots became per (client, day, device), so the operations,
+their views, RPCs and traces are retired from the lifecycle contract and the
+enrollment object; device revocation and the two-step erase stay. Second,
+main's four new account-scoped tables (`usage_stats_retired`,
+`usage_stats_day_totals`, `usage_admission_day_totals` and its cursor) join
+the export sections, and the erase step also drops the retired
+(client, day) tables so an unmigrated store erases completely; the coverage
+test that pins every `costs.json` surface to a section or a reason caught the
+gap. Third, a failed publication no longer stops later clients, so the
+contribution-sync test expects the remaining `publish` calls while every
+contribution send stays withheld for that cycle. Fourth, the UI lane's
+browser contracts had only ever run against a stale build: wrapping
+`<label>` selects need role queries, leaving a rich metric must re-select a
+classic one, the matched trend hint excludes the comparison paragraph,
+per-group changes may be negative, saved views keep their query string, and
+hour-of-day is refused in both grouping controls. The rich explorer remounts
+per facts revision. Evidence on the merged tree at host load 50–73 on 18 cores from concurrent
+sessions: typecheck, lint, Rust fmt, clippy and 470 CLI tests (19 autosubmit
+tests after the expectation fix), skill and eleven release checks, generated
+data, the assurance registry with claims and metric coverage (48 explorer and
+50 rich metrics exported), 83 cost surfaces, conformance 42 traces with 0
+failures, build, browser run 11 (pairing, stats desktop and mobile, sessions,
+dashboard, atlas), Bun 2221 of 2223 and vitest 716 of 721 tests. The seven
+misses are timeouts in tests byte-identical to main, which main's CI run
+36090166125 finishes in 20–50 % of their budgets, and the adapter gate's
+180 s cold build bound could not be met at this load (the bound is checked,
+not widened); the pull request's `Required` check on GitHub runners is the
+binding aggregate for those. Not activated: the contributions flag stays off
+in every deployment, the Worker is not redeployed, and no live drill ran.
