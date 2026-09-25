@@ -447,4 +447,21 @@ export class LeaderboardIndex extends DurableObject<Env> {
       throw new Error("leaderboard_refresh_unavailable");
     }
   }
+
+  /** Pure account-scoped membership read for lifecycle status. It reports
+   * whether the account is a current member and, once a waitlist exists, its
+   * position; it never contacts the account object or writes. */
+  async readMembership(input: unknown): Promise<IndexResult<Readonly<{ schemaVersion: 1; member: boolean; waitlist: Readonly<{ position: number; total: number }> | null }>>> {
+    try {
+      const request = enrollmentSnapshot(input, ["schemaVersion", "accountId"]);
+      if (request?.schemaVersion !== 1 || !enrollmentAccount(request.accountId)) return err("invalid_input");
+      if (!this.#identity()) return err("unauthorized");
+      const accountId = request.accountId;
+      return this.ctx.storage.transactionSync(() => {
+        this.#schema();
+        const { state } = this.#stored();
+        return ok(Object.freeze({ schemaVersion: 1 as const, member: state.members.some(member => member.accountId === accountId), waitlist: null }));
+      });
+    } catch { return err("storage_unavailable"); }
+  }
 }
