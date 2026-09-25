@@ -176,6 +176,8 @@ fn actual_tls_sends_exact_numeric_body_and_sensitive_bearer_and_parses_receipt()
             agent(server.addr),
             &format!("https://usage.test:{}/v2/snapshots", server.addr.port()),
             &bytes,
+            4,
+            CAP,
         )
         .unwrap();
     result.matches(&request, 1_800_000_000_000).unwrap();
@@ -185,7 +187,7 @@ fn actual_tls_lost_reply_and_truncated_body_never_manufacture_receipt() {
     for reply in [None, Some(b"HTTP/1.1 200 OK\r\nContent-Type: application/json; charset=utf-8\r\nContent-Length: 20\r\nConnection: close\r\n\r\n{}".as_slice())] {
         let server = Server::new(move |stream| { read_request(stream).unwrap(); if let Some(reply) = reply { stream.write_all(reply).unwrap(); stream.flush().unwrap(); } });
         let mut transport = Transport::new(&[0xa5; 32]).unwrap();
-        assert!(transport.exchange_with_agent::<Receipt>(agent(server.addr), &format!("https://usage.test:{}/v2/snapshots", server.addr.port()), b"{}").is_err());
+        assert!(transport.exchange_with_agent::<Receipt>(agent(server.addr), &format!("https://usage.test:{}/v2/snapshots", server.addr.port()), b"{}", 4, CAP).is_err());
     }
 }
 #[test]
@@ -225,6 +227,8 @@ fn actual_tls_abandonment_correlates_the_exact_flight_fence() {
                 server.addr.port()
             ),
             &bytes,
+            4,
+            CAP,
         )
         .unwrap();
     assert_eq!(proof.validate(&request, 1_800_000_000_000).unwrap(), None);
