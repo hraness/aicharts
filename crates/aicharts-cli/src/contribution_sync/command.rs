@@ -14,6 +14,7 @@ enum Command {
     Migrate,
     Grant,
     Onboard,
+    CancelMigration,
 }
 struct Options {
     command: Command,
@@ -60,6 +61,7 @@ fn options(args: &[String]) -> Result<Options, &'static str> {
             "--activate" => Some(Command::Activate),
             "--migrate" => Some(Command::Migrate),
             "--grant" => Some(Command::Grant),
+            "--cancel-migration" => Some(Command::CancelMigration),
             _ => None,
         };
         if let Some(action) = action {
@@ -103,6 +105,7 @@ fn options(args: &[String]) -> Result<Options, &'static str> {
                 | Command::Resume
                 | Command::Cancel
                 | Command::Inspect
+                | Command::CancelMigration
         ) && (population.is_some() || source.is_some())
         || matches!(command, Command::Onboard) && source.is_some()
     {
@@ -430,6 +433,9 @@ fn run_macos(options: Options) -> Result<String, &'static str> {
                 &deadline,
                 crate::stats_sync::account_revisions,
             )
+        }
+        Command::CancelMigration => {
+            return super::ops::cancel_migration(&options.directory, &key, &transport, &deadline)
         }
         Command::Grant => {
             return super::ops::grant(

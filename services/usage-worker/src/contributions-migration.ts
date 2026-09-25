@@ -13,8 +13,16 @@ import { contributionArtifact, contributionDeltaBundle, ensureContributionArtifa
   type ContributionArtifact, type ContributionJournalBundle, type VerifiedContributionJournal } from "./contributions-journal";
 import { enrollmentStorageCall } from "./namespace-anchor";
 
-export const CONTRIBUTION_MIGRATION_MAX_HEADS = 8_192;
-export const CONTRIBUTION_MIGRATION_MAX_JOURNALS = 256;
+// One retained head per distinct occurrence, replayed into an in-memory map
+// alongside the sealed day/body vectors inside one transaction. 65,536 keeps
+// a founder-scale history (≈10k session files ≈ tens of thousands of heads)
+// inside the single-shot budget while staying well under the durable-object
+// heap; beyond it, chunked migration is the follow-on.
+export const CONTRIBUTION_MIGRATION_MAX_HEADS = 65_536;
+// The retained journal table itself CHECKs revision <= 4,096, so a journal
+// cap at the table maximum covers every reachable account; it is the
+// single-transaction replay budget, not a storage invariant.
+export const CONTRIBUTION_MIGRATION_MAX_JOURNALS = 4_096;
 export const CONTRIBUTION_MIGRATION_MAX_DAYS = 8_192;
 export const CONTRIBUTION_MIGRATION_MAX_SOURCE_BYTES = 67_108_864;
 type SourceObject = Readonly<{ bucket: "STAGING" | "CONTROL"; key: string; media: string; schema: string; bytes: Uint8Array<ArrayBuffer> }>;

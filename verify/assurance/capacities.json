@@ -865,7 +865,7 @@
       "id": "contribution-migration-max-heads",
       "scope": "account-canonical-migration",
       "unit": "count",
-      "value": 8192,
+      "value": 65536,
       "source": {
         "path": "services/usage-worker/src/contributions-migration.ts",
         "symbol": "CONTRIBUTION_MIGRATION_MAX_HEADS"
@@ -875,7 +875,7 @@
       "id": "contribution-migration-max-journals",
       "scope": "account-canonical-migration",
       "unit": "count",
-      "value": 256,
+      "value": 4096,
       "source": {
         "path": "services/usage-worker/src/contributions-migration.ts",
         "symbol": "CONTRIBUTION_MIGRATION_MAX_JOURNALS"

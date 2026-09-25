@@ -359,7 +359,7 @@ pub(super) struct ActivateRequest {
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(super) struct MigrateRequest {
     schema_version: u8,
-    operation_id: String,
+    pub(super) operation_id: String,
     account_id: String,
     generation: String,
     device_id: String,
@@ -550,6 +550,32 @@ pub(super) fn migration_receipt(
         suppressed_v1_heads: value.suppressed_v1_heads,
         unresolved_v2_bodies: value.unresolved_v2_bodies,
     })
+}
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct AbandonedReply {
+    outcome: String,
+    operation_id: String,
+    body_hash: String,
+    revision: u64,
+}
+/// The terminal for an explicit migration cancellation. Only an `abandoned`
+/// outcome may close a pending migration; a committed batch-shaped terminal
+/// or any mismatched operation refuses.
+pub(super) fn migration_terminal(
+    status_code: u16,
+    bytes: &[u8],
+    request: &MigrateRequest,
+) -> Result<(String, u64), &'static str> {
+    let value: AbandonedReply = response(status_code, bytes, CONTROL_REPLY_BYTES)?;
+    if value.outcome != "abandoned"
+        || value.operation_id != request.operation_id
+        || !identity(&value.body_hash, 64)
+        || !(1..=MAX_REVISION).contains(&value.revision)
+    {
+        return Err(INVALID);
+    }
+    Ok((value.body_hash, value.revision))
 }
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]

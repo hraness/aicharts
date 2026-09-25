@@ -1437,3 +1437,77 @@ fn refused_intent_settles_durably_and_retry_uses_a_fresh_operation() {
     assert_ne!(first["operationId"], second["operationId"]);
     drop(dir);
 }
+
+#[test]
+fn pending_migration_abandons_through_exact_replay_and_retries_fresh() {
+    let dir = scratch();
+    let bodies = Arc::new(Mutex::new(Vec::<Vec<u8>>::new()));
+    let captured = bodies.clone();
+    // Steps: status (not_started), migrate dispatch drops (uncertain),
+    // status (not_started), cancel-migration (abandoned terminal),
+    // status (not_started), migrate (refused conflict — the account moved on).
+    let _server = Server::steps(5, move |index, stream| {
+        let (_h, body) = request(stream);
+        captured.lock().unwrap().push(body.clone());
+        match index {
+            0 | 3 => respond_status(
+                stream,
+                409,
+                &serde_json::to_vec(&serde_json::json!({
+                "schemaVersion": 3, "result": { "ok": false, "error": "not_started" } }))
+                .unwrap(),
+            ),
+            1 => {}
+            2 => {
+                let request: serde_json::Value = serde_json::from_slice(&body).unwrap();
+                respond(
+                    stream,
+                    &serde_json::to_vec(&serde_json::json!({
+                    "schemaVersion": 3, "result": { "ok": true, "value": {
+                        "outcome": "abandoned", "operationId": request["operationId"],
+                        "bodyHash": "9".repeat(64), "revision": 1 } } }))
+                    .unwrap(),
+                );
+            }
+            _ => respond_status(
+                stream,
+                409,
+                &serde_json::to_vec(&serde_json::json!({
+                "schemaVersion": 3, "result": { "ok": false, "error": "conflict" } }))
+                .unwrap(),
+            ),
+        }
+    });
+    let transport = ops_transport(_server.addr);
+    let deadline = Deadline::command().unwrap();
+    let revisions = |_: &std::path::Path| -> Result<(u64, u64), &'static str> { Ok((0, 0)) };
+    // Dispatch is lost: the intent persists pending and the op reports uncertain.
+    assert_eq!(
+        super::super::ops::migrate(&dir.0, &KEY, &transport, &deadline, revisions).unwrap_err(),
+        super::UNCERTAIN
+    );
+    // Cancel replays the retained request bytes byte-for-byte.
+    let out = super::super::ops::cancel_migration(&dir.0, &KEY, &transport, &deadline).unwrap();
+    assert!(out.contains("\"abandoned\""), "{out}");
+    let sent: Vec<Vec<u8>> = bodies.lock().unwrap().clone();
+    assert_eq!(
+        sent.len(),
+        3,
+        "{}",
+        sent.iter()
+            .map(|b| String::from_utf8_lossy(b).to_string())
+            .collect::<Vec<_>>()
+            .join(
+                "
+"
+            )
+    );
+    assert_eq!(sent[1], sent[2]);
+    // The abandoned intent is decided: a later migrate builds a fresh request
+    // and the server's conflict settles it as a refusal.
+    assert_eq!(
+        super::super::ops::migrate(&dir.0, &KEY, &transport, &deadline, revisions).unwrap_err(),
+        "contribution_sync_conflict"
+    );
+    drop(dir);
+}
