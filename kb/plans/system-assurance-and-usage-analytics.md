@@ -644,7 +644,7 @@ resolution, physical reclamation and live recovery remain open.
 
 ### Phase 12 — Delivery and production qualification
 
-- **Status:** In progress — completion PR #441 merged as `2356eff` and the site production-verified; Linux CLI qualification refused an unmapped workspace crate and is re-dispatched after the closeout fix; Worker redeploy, flags and live drills stay owner-gated
+- **Status:** In progress — completion PR #441 merged as `2356eff` and the site production-verified; after the notice-policy fixes (#444, #446) the Linux CLI qualification passed at `40874b2`; Worker redeploy, usage flags, immutable publication and live drills stay owner-gated
 - **Depends on:** 11
 - **Objective:** Deliver the verified artifact and the fully working supported product, with exact production evidence.
 - **Scope:** Task-owned protected-main PRs, required independent review/CI, immutable distribution, deployment, account/provider/native acceptance and scheduled cutover.
@@ -1774,3 +1774,14 @@ notice-policy entry off 0.23.44. The 0.23.45 archive digest equals the
 dependency graph against the policy found no other unmapped crate. A new
 regression requires every policy entry to be a locked registry package with
 the same archive checksum; it fails naming `rustls@0.23.44` without the fix.
+
+The rustls policy fix merged as `40874b2` ([PR 446](https://github.com/hraness/aicharts/pull/446))
+and the site was production-verified at that commit
+(`dpl_o6HJWcj3qVrBecbBwQqQ3X9uQ8TX`, three pages, recomputed token). Linux CLI
+qualification run [36109602971](https://github.com/hraness/aicharts/actions/runs/36109602971)
+on `40874b2` passed (`checksPassed: true`) through all smoke stages and
+`persist-assets`, retaining the qualification artifact. This is the first
+Linux qualification of the system-assurance tree. It is artifact admission
+only: no `cli-v` tag or immutable release was published, and the macOS
+notarized release, Worker redeploy, usage flags and live drills remain
+owner-gated.

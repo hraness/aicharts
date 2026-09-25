@@ -18,12 +18,12 @@ Dated evidence is evidence for its own commit at its own time. Rerun the named c
 
 ## Platform and provider summary
 
-| Surface | State on 2026-09-24 |
+| Surface | State on 2026-09-25 |
 | --- | --- |
-| Linux x86-64 CLI | Qualified once by run 35498763628 for `c6b2b3e665cc82b72ab7d64a6a147624c6d1a783` on 2026-09-20; the newest attempt, run 36066135869 for `fc95b51b6cd44527d154853cb3404ffeb26dcb39`, failed at `read-link-map` and produced no artifact. No release or tag exists; `.github/workflows/cli-publish.yml` is implemented and unexecuted. |
+| Linux x86-64 CLI | Qualified by run 36109602971 for `40874b2186a399ecde237c019aa75a8b2c4a0793` on 2026-09-25 (artifact retained), after runs 36066135869 (`fc95b51`, `read-link-map`), 36104682547 (`2356eff`, unmapped `aicharts-metrics`) and 36108512661 (`f495d9f`, stale `rustls` notice entry) refused. An earlier qualification, run 35498763628 for `c6b2b3e`, dates from 2026-09-20. No release or tag exists; `.github/workflows/cli-publish.yml` is implemented and unexecuted. |
 | macOS | Source-only for the CLI and companion. One real enrollment and one accepted native upload were recorded on 2026-09-16; on 2026-09-19 the retained CLI returned `attempt_recovery_required`. No notarized or publicly distributed macOS build exists; it needs Apple credentials held by the owner. |
 | Windows | Unsupported. No build, qualification or documentation claim. |
-| Next.js site (`aicharts.io`) | Exact-deployment health verified for `fc95b51` at 2026-09-24T22:33:45Z and for `1cf93bd` at 22:53:14Z by `bun run usage:deployment:verify`; usage routes remain fenced by the recorded flags. |
+| Next.js site (`aicharts.io`) | Exact-deployment health verified by `bun run usage:deployment:verify` for `fc95b51` and `1cf93bd` on 2026-09-24, and for `2356eff` (PR 441), `f495d9f` (PR 444) and `40874b2` (PR 446) on 2026-09-25; usage routes remain fenced by the recorded flags. |
 | Cloudflare Worker | Last deployment `4c2b0b07-5838-468d-8161-2b27a84cab46` on 2026-09-21; the merged `fc95b51` Worker source is not deployed pending a schema-13-aware recovery artifact. |
 | Codex, Claude Code, Devin | Authenticated dashboard readback across these three on 2026-09-21 (historical); local parsing is source-only. |
 | Cursor, Trae, Warp, Hindsight, Antigravity, MiniMax Code, the Tokscale registry sources | Implemented and tested against synthetic inputs; no live provider qualification. |
@@ -45,6 +45,8 @@ Dated evidence is evidence for its own commit at its own time. Rerun the named c
 | each returned HTTP 200 with `X-Hraness-Delivery-Proof: | docs/usage-activation.md | Verifier receipt 2026-09-24T22:33:45Z, `dpl_3TA2bNgxfeQzY7Cf67XF6scjyUrm` | evidenced |
 | The Cloudflare Worker was **not** redeployed for that merge | docs/usage-activation.md | Integrator inspection 2026-09-24: last Worker deployment unchanged from 2026-09-21 | evidenced |
 | the same verifier passed for the next merge | docs/usage-activation.md | Verifier receipt 2026-09-24T22:53:14Z, `dpl_GGMYJjAUtEN13g7UyqWB3JKoCdhH` | evidenced |
+| The site was verified at that commit on | docs/usage-activation.md | Verifier receipt 2026-09-25 for `40874b2`, `dpl_o6HJWcj3qVrBecbBwQqQ3X9uQ8TX` | evidenced |
+| run 36109602971 qualified the Linux CLI at | docs/usage-activation.md | Run 36109602971 summary `checksPassed: true`, 2026-09-25 | evidenced |
 | deployed to both production services after the complete source gate | docs/usage-activation.md | PR 349, `dpl_HRUt74pjFKM4bQe6DNkbr7E86TqX`, Worker `4c2b0b07-5838-468d-8161-2b27a84cab46`, 2026-09-21 | historical |
 | Its worker, authentication, enrollment, pairing, admission and private-read flags were enabled | docs/usage-activation.md | Production inspection 2026-09-19 of Worker version `36447868-30b8-4cb4-8bcd-cb9fd6913946` | historical |
 | production deployment identity checks remain authoritative | docs/usage-activation.md | `lib/usage/auth-server.ts` tests in `bun run test` | source-only |
