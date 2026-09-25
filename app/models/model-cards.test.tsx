@@ -264,7 +264,7 @@ describe("public model cards", () => {
     for (const markup of [live, portrait, social]) {
       expect(markup).toContain(card.displayTitle);
       expect(markup).toContain(card.harnessLabel);
-      expect(markup).toContain("data:image/svg+xml;base64,");
+      expect(markup).toContain("data:image/svg+xml");
       expect(markup).not.toContain("with fallback");
       expect(markup).not.toContain("Artificial Analysis");
       expect(markup).not.toContain(card.sourceDate);

@@ -1,4 +1,4 @@
-import { lobeModelIconDataUrls } from "./model-card-icons.generated";
+import { providerMark, providerMarkGlyphDataUri } from "@hraness/design-kit";
 import {
   modelCardMonogramGlyphs,
   type ModelCardMonogramCharacter,
@@ -51,14 +51,18 @@ function monogramPathMarkup(monogram: string): string {
 
 /** Returns pinned, same-origin-safe SVG bytes for server-rendered cards and images. */
 export function modelIconDataUrl(key: LobeModelIconKey | null, fallbackLabel = "AI"): string {
-  if (key === null) {
-    const monogram = modelMonogram(fallbackLabel);
-    const cached = genericIconDataUrls.get(monogram);
-    if (cached !== undefined) return cached;
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128"><metadata>Monogram artwork rendered to paths from NebulaSans-Bold.otf 1.010; copyright (c) 2024 Nebula Entertainment &amp; Broadcasting LLC; SIL Open Font License 1.1; source archive SHA-256 a9b56ef15e24b6e8195af7457cc75f714ecf5501fc3c20a69f546c8f589e7bdb.</metadata><rect x="8" y="8" width="112" height="112" rx="32" fill="none" stroke="#f7f6f2" stroke-width="8"/>${monogramPathMarkup(monogram)}</svg>`;
-    const value = `data:image/svg+xml;base64,${Buffer.from(svg).toString("base64")}`;
-    genericIconDataUrls.set(monogram, value);
-    return value;
+  if (key !== null) {
+    const mark = providerMark(key);
+    if (mark === undefined) {
+      throw new Error(`Provider-mark registry must cover icon key ${key}.`);
+    }
+    return providerMarkGlyphDataUri(mark, "#f7f6f2");
   }
-  return lobeModelIconDataUrls[key];
+  const monogram = modelMonogram(fallbackLabel);
+  const cached = genericIconDataUrls.get(monogram);
+  if (cached !== undefined) return cached;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128"><metadata>Monogram artwork rendered to paths from NebulaSans-Bold.otf 1.010; copyright (c) 2024 Nebula Entertainment &amp; Broadcasting LLC; SIL Open Font License 1.1; source archive SHA-256 a9b56ef15e24b6e8195af7457cc75f714ecf5501fc3c20a69f546c8f589e7bdb.</metadata><rect x="8" y="8" width="112" height="112" rx="32" fill="none" stroke="#f7f6f2" stroke-width="8"/>${monogramPathMarkup(monogram)}</svg>`;
+  const value = `data:image/svg+xml;base64,${Buffer.from(svg).toString("base64")}`;
+  genericIconDataUrls.set(monogram, value);
+  return value;
 }

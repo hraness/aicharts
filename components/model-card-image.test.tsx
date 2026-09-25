@@ -60,7 +60,7 @@ describe("model card ImageResponse rendering", () => {
       expect(social).toContain(`>${stat.value}</span>`);
     }
     expect(social).toContain(`>${card.profileLabel} profile</span>`);
-    expect(social.match(/data:image\/svg\+xml;base64,/gu)).toHaveLength(1);
+    expect(social.match(/data:image\/svg\+xml/gu)).toHaveLength(1);
   });
 
   test("renders an explicit pending release state without inventing a date", () => {
@@ -97,7 +97,7 @@ describe("model card ImageResponse rendering", () => {
     expect([...cardByProvider.keys()].sort()).toEqual(Object.keys(modelCardProviderColors).sort());
     for (const card of cardByProvider.values()) {
       const markup = renderToStaticMarkup(<ModelCardRasterFace card={card} compact />);
-      expect(markup).toContain("data:image/svg+xml;base64,");
+      expect(markup).toContain("data:image/svg+xml");
       expect(markup).not.toContain("data-illumination-motif");
       const raster = await new ImageResponse(<ModelCardRasterFace card={card} compact />, {
         height: 350,
@@ -199,7 +199,7 @@ describe("model card ImageResponse rendering", () => {
         providerCount={providerCount}
       />,
     );
-    expect(markup.match(/data:image\/svg\+xml;base64,/gu)).toHaveLength(providerCount);
+    expect(markup.match(/data:image\/svg\+xml/gu)).toHaveLength(providerCount);
     expect(markup).toContain(">MODELS</span>");
     expect(markup).toContain(">Models</span>");
     expect(markup).toContain(">Index · cost · coding agents</span>");
@@ -240,7 +240,7 @@ describe("model card ImageResponse rendering", () => {
       />
     );
     const markup = renderToStaticMarkup(image);
-    expect(markup.match(/data:image\/svg\+xml;base64,/gu)).toHaveLength(MODEL_CARD_COLLECTION_CREST_LIMIT);
+    expect(markup.match(/data:image\/svg\+xml/gu)).toHaveLength(MODEL_CARD_COLLECTION_CREST_LIMIT);
     expect(markup).toContain('data-provider-overflow="6"');
     expect(markup).toContain(">+6</span>");
 
