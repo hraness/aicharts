@@ -1109,6 +1109,16 @@ struct SharedParserFamily {
 /// responsibility.
 const SHARED_PARSER_FAMILIES: &[SharedParserFamily] = &[
     SharedParserFamily {
+        // Antigravity CLI and IDE extension conversation databases use the
+        // same gen_metadata parser in `sessions/antigravity_cli.rs`.
+        name: "antigravity generation database",
+        base: crate::sessions::antigravity_cli::ANTIGRAVITY_DB_PARSER_BASE_VERSION,
+        members: &[
+            (ClientId::AntigravityCli, 0),
+            (ClientId::AntigravityExtension, 0),
+        ],
+    },
+    SharedParserFamily {
         // Pi, Kimchi, Omp, and Senpi delegate to the pi-format parser in
         // `sessions/pi.rs`; Prime Agent rides on it through
         // `parse_pi_format_rlm_file_with_observer` (#1195, #1288).
@@ -1473,7 +1483,14 @@ fn parser_version(client: ClientId) -> u32 {
         // `data.compactionId` before the per-transcript `seq` fallback. Reparse
         // released v4 rows so unrelated summaries with otherwise identical
         // call data are no longer collapsed across files (#1187).
-        ClientId::Dsh => 5,
+        // v5->v6: current DSH assistant settlements can keep usage only in
+        // their embedded stream, and failed attempts are durable
+        // `assistant/attempt` events. Reparse old rows so those provider calls
+        // are included in usage and cost totals (#1348).
+        // v6->v7: attempt sequence numbers restart in each transcript, so
+        // fallback attempt keys now include the session id to avoid merging
+        // unrelated sessions in the shared parse lane.
+        ClientId::Dsh => 7,
         // First version of the fx (vercel-labs) usage-v2.json parser. Entries
         // are versioned from the start so later parser changes have an
         // obvious local counter to bump, like every other client here.
@@ -1508,7 +1525,6 @@ fn parser_version(client: ClientId) -> u32 {
         ClientId::Warp => 1,
         ClientId::Gjc => 1,
         ClientId::CommandCode => 1,
-        ClientId::AntigravityCli => 1,
         ClientId::Augment => 1,
         ClientId::CherryStudio => 1,
         ClientId::Mcode => 1,
@@ -1533,6 +1549,8 @@ fn parser_version(client: ClientId) -> u32 {
         | ClientId::Cline
         | ClientId::OpenCode
         | ClientId::MiMoCode
+        | ClientId::AntigravityCli
+        | ClientId::AntigravityExtension
         | ClientId::MiMoDesktop
         | ClientId::Kilo
         | ClientId::CodeBuddy
@@ -4138,11 +4156,10 @@ mod tests {
     }
 
     #[test]
-    fn test_dsh_compaction_identity_parser_version_invalidates_v4_entries() {
-        // A finished transcript is never rewritten when attribution starts
-        // preferring compactionId, so its fingerprint remains valid and only
-        // the parser version can retire the seq-keyed row released in v4.14.0.
-        assert_eq!(parser_version(ClientId::Dsh), 5);
+    fn test_dsh_attempt_identity_parser_version_invalidates_v6_entries() {
+        // DSH transcript files are append-only, so v6 cache entries keep the
+        // old cross-session attempt keys unless the source is reparsed.
+        assert_eq!(parser_version(ClientId::Dsh), 7);
     }
 
     /// Names the row that only a served cache can put in a report. No DSH
@@ -4348,7 +4365,7 @@ mod tests {
 "#,
         );
         let current_identity = CacheIdentity::for_client(ClientId::Dsh);
-        assert_eq!(current_identity.parser_version, 5);
+        assert_eq!(current_identity.parser_version, 7);
         // Pinned at 3, the identity 4.14.0 cached under, rather than derived
         // from the running version: this is the row that release left on disk.
         let stale_identity = CacheIdentity {
@@ -4408,7 +4425,7 @@ mod tests {
         let cached = persisted
             .get(current_identity, &source)
             .expect("the scan must persist the entry it reparsed");
-        assert_eq!(cached.parser_version, 5);
+        assert_eq!(cached.parser_version, 7);
         assert_eq!(cached.messages.len(), 1);
         assert_eq!(cached.messages[0].model_id, "glm-5.3");
 
@@ -4435,7 +4452,7 @@ mod tests {
 "#,
         );
         let current_identity = CacheIdentity::for_client(ClientId::Dsh);
-        assert_eq!(current_identity.parser_version, 5);
+        assert_eq!(current_identity.parser_version, 7);
         // Pinned at 4, the identity 4.15.0 cached under; see the v3 test.
         let stale_identity = CacheIdentity {
             namespace: current_identity.namespace,
@@ -4494,7 +4511,7 @@ mod tests {
         let cached = persisted
             .get(current_identity, &source)
             .expect("the scan must persist the entry it reparsed");
-        assert_eq!(cached.parser_version, 5);
+        assert_eq!(cached.parser_version, 7);
         assert_eq!(cached.messages, scanned);
 
         let warm = scan_dsh(source_home.path());
@@ -4694,6 +4711,13 @@ mod tests {
     #[test]
     fn test_shared_parser_family_roster_pins_exact_membership() {
         let expected: &[(&str, &[(ClientId, u32)])] = &[
+            (
+                "antigravity generation database",
+                &[
+                    (ClientId::AntigravityCli, 0),
+                    (ClientId::AntigravityExtension, 0),
+                ],
+            ),
             (
                 "pi-format",
                 &[
