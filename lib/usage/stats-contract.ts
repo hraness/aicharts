@@ -132,6 +132,11 @@ function source(value: unknown): SourceCoverage | null {
   if (["empty", "not_found", "unavailable"].includes(raw.status) && (raw.records !== 0 || raw.latestAtMs !== null)) return null;
   return Object.freeze({ ...raw }) as SourceCoverage;
 }
+/** Admission plausibility: a row's tokens may not exceed its records times the
+ * per-record bound. Only new uploads are held to it; committed history and
+ * replies derived from it keep parsing, so a pre-bound overcount stays readable
+ * instead of turning every read of that account into a storage failure. */
+export const statsRowWithinRecordBound = (row: UsageStatsRow): boolean => statsTokenTotal(row.tokens) <= BigInt(row.records) * STATS_MAX_TOKENS_PER_RECORD;
 export function parseUsageStatsRow(value: unknown): UsageStatsRow | null {
   try {
     const raw = statsOwnRecord(value, rowKeys);
@@ -149,7 +154,6 @@ export function parseUsageStatsRow(value: unknown): UsageStatsRow | null {
     const tokenFields = statsOwnRecord(raw.tokens, STATS_TOKEN_KEYS);
     if (tokenFields === null || STATS_TOKEN_KEYS.some(key => !statsDecimal(tokenFields[key]))) return null;
     const tokens = Object.freeze({ ...tokenFields }) as StatsTokens;
-    if (statsTokenTotal(tokens) > BigInt(raw.records) * STATS_MAX_TOKENS_PER_RECORD) return null;
     if (raw.tokenBasis === "unavailable" && (statsTokenTotal(tokens) !== 0n || raw.timedTokens !== "0" || raw.breakdownCoverage !== "partial")) return null;
     if (BigInt(raw.timedTokens) > statsTokenTotal(tokens) || (raw.timedRecords === 0 && raw.timedTokens !== "0")) return null;
     return Object.freeze({ ...raw, tokens }) as UsageStatsRow;

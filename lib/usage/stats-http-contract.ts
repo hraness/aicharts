@@ -1,4 +1,4 @@
-import { parseUsageStatsReport, STATS_MAX_DAY, STATS_MAX_DAYS, type UsageStatsReport } from "./stats-contract";
+import { parseUsageStatsReport, statsRowWithinRecordBound, STATS_MAX_DAY, STATS_MAX_DAYS, type UsageStatsReport } from "./stats-contract";
 import { isStatsClient } from "./stats-registry";
 import { privateDaysSnapshot as snapshot } from "./private-days-http-contract";
 import { PRIVATE_DAYS_MAX_HEADS } from "./private-days-contract";
@@ -106,7 +106,8 @@ export function parseStatsUpload(value: unknown): StatsUpload | null {
       takeover = Object.freeze({ expectedV1Revision: prior.expectedV1Revision, headDigest: prior.headDigest });
     }
     const report = parseUsageStatsReport(dto.report);
-    if (!report || report.revision !== 0 || report.updatedAtMs !== null || report.sources.length !== 1 || report.rows.length > STATS_UPLOAD_ROWS) return null;
+    if (!report || report.revision !== 0 || report.updatedAtMs !== null || report.sources.length !== 1 || report.rows.length > STATS_UPLOAD_ROWS
+      || !report.rows.every(statsRowWithinRecordBound)) return null;
     const source = report.sources[0];
     if ((source.client === "warp") !== (dto.mode === "replace-snapshot")) return null;
     if (dto.mode === "replace-snapshot" && (report.dayCount !== 1 || source.status !== "observed" || source.records === 0
