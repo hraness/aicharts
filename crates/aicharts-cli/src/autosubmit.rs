@@ -13,7 +13,7 @@ use std::{
 const INVALID: &str = "autosubmit_config_invalid";
 const BUDGET: Duration = Duration::from_secs(1800);
 const SINK_BUDGET: Duration = Duration::from_secs(600);
-const HELP: &str = "AI Charts automatic publication — one configured cycle\n\n  aicharts autosubmit --config-file ABS [--check | --dry-run]\n\nA private mode0600 JSON configuration selects clients, explicit source roots,\nprovider refreshes, and an existing enrolled state/key. Each invocation performs\none cycle; launchd controls its schedule. --check validates configuration only.\n--dry-run scans local sources without refreshing providers, opening enrollment,\nor publishing. Neither option changes the existing scheduled publisher.\n\nA retained uncertain upload is resumed from its exact frozen bytes before new\nwork. Failed acquisition skips publication for that client. Other clients may\ncontinue; partial failure exits nonzero and reports only fixed error codes.\nNo paths, account identifiers, credentials, prompts or source content are logged.\nHistory-preserving publication refuses unexplained reductions; it never resets\nstate to resolve a failure. Configured sinks then attempt one delegated delivery\neach; they still run when publication needs reconciliation, their output is\ndiscarded, and a sink failure reports a fixed code without reordering\npublication. The whole cycle is bounded to 30 minutes between individually\nbounded operations. See docs/usage-autosubmit.md for configuration.\n";
+const HELP: &str = "AI Charts automatic publication — one configured cycle\n\n  aicharts autosubmit --config-file ABS [--check | --dry-run] [--contribution-sync]\n\nA private mode0600 JSON configuration selects clients, explicit source roots,\nprovider refreshes, and an existing enrolled state/key. Each invocation performs\none cycle; launchd controls its schedule. --check validates configuration only.\n--dry-run scans local sources without refreshing providers, opening enrollment,\nor publishing. Neither option changes the existing scheduled publisher.\n\nA retained uncertain upload is resumed from its exact frozen bytes before new\nwork. Failed acquisition skips publication for that client. Other clients may\ncontinue; partial failure exits nonzero and reports only fixed error codes.\nNo paths, account identifiers, credentials, prompts or source content are logged.\nHistory-preserving publication refuses unexplained reductions; it never resets\nstate to resolve a failure. Configured sinks then attempt one delegated delivery\neach; they still run when publication needs reconciliation, their output is\ndiscarded, and a sink failure reports a fixed code without reordering\npublication. --contribution-sync (default off) additionally runs the explicit\ncontribution sender for each configured native source after every client\npublished cleanly, draining up to the configured batches; it needs the\ncontributionSync block, refuses outside qualified macOS custody with the\nsender's own code, and is skipped by --dry-run and after any publication\nfailure. The whole cycle is bounded to 30 minutes between individually\nbounded operations. See docs/usage-autosubmit.md for configuration.\n";
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -27,6 +27,89 @@ struct Config {
     clients: Vec<Client>,
     #[serde(default)]
     sinks: Vec<Sink>,
+    #[serde(default)]
+    contribution_sync: Option<ContributionSync>,
+}
+/// Opt-in native contribution sending. Nothing here activates V3 or grants
+/// ownership; the explicit sender rejects an account that is not already
+/// active and enrolled on this device.
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+struct ContributionSync {
+    state_dir: PathBuf,
+    key_file: PathBuf,
+    population_id: String,
+    sources: Vec<ContributionSource>,
+    #[serde(default = "one_batch")]
+    max_batches: u8,
+}
+fn one_batch() -> u8 {
+    1
+}
+const MAX_CONTRIBUTION_BATCHES: u8 = 8;
+#[derive(Deserialize)]
+#[serde(
+    tag = "provider",
+    rename_all = "lowercase",
+    rename_all_fields = "camelCase",
+    deny_unknown_fields
+)]
+enum ContributionSource {
+    Claude { file: PathBuf },
+    Codex { file: PathBuf },
+}
+impl ContributionSource {
+    fn provider(&self) -> &'static str {
+        match self {
+            Self::Claude { .. } => "claude",
+            Self::Codex { .. } => "codex",
+        }
+    }
+    fn file(&self) -> &Path {
+        match self {
+            Self::Claude { file } | Self::Codex { file } => file,
+        }
+    }
+}
+impl ContributionSync {
+    fn valid(&self, config: &Config) -> bool {
+        path_valid(&self.state_dir)
+            && path_valid(&self.key_file)
+            && self.state_dir != config.runtime_dir
+            && self.state_dir != config.home
+            && self.population_id.len() == 64
+            && self
+                .population_id
+                .bytes()
+                .all(|byte| matches!(byte, b'0'..=b'9' | b'a'..=b'f'))
+            && (1..=MAX_CONTRIBUTION_BATCHES).contains(&self.max_batches)
+            && !self.sources.is_empty()
+            && self.sources.len() <= 8
+            && self.sources.iter().all(|source| path_valid(source.file()))
+            && self
+                .sources
+                .iter()
+                .map(ContributionSource::file)
+                .collect::<BTreeSet<_>>()
+                .len()
+                == self.sources.len()
+    }
+    fn args(&self, source: &ContributionSource) -> Result<Vec<String>, &'static str> {
+        Ok(vec![
+            "contribution-sync".into(),
+            "--send".into(),
+            "--state-dir".into(),
+            argument(&self.state_dir)?,
+            "--key-file".into(),
+            argument(&self.key_file)?,
+            "--population-id".into(),
+            self.population_id.clone(),
+            format!("--{}", source.provider()),
+            argument(source.file())?,
+            "--max-batches".into(),
+            self.max_batches.to_string(),
+        ])
+    }
 }
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -262,6 +345,13 @@ fn parse(bytes: &[u8], now: u64) -> Result<Config, &'static str> {
     {
         return Err(INVALID);
     }
+    if config
+        .contribution_sync
+        .as_ref()
+        .is_some_and(|sync| !sync.valid(&config))
+    {
+        return Err(INVALID);
+    }
     let mut sinks = BTreeSet::new();
     for sink in &config.sinks {
         let Sink::Tokscale { binary } = sink;
@@ -408,6 +498,13 @@ trait Runner {
         dry_run: bool,
     ) -> Result<(), &'static str>;
     fn sink(&mut self, sink: &Sink, budget: Duration) -> Result<(), &'static str>;
+    /// One explicit native send; the returned summary is the sender's own
+    /// JSON status line, which carries no paths or identifiers.
+    fn contribution_sync(
+        &mut self,
+        sync: &ContributionSync,
+        source: &ContributionSource,
+    ) -> Result<String, &'static str>;
 }
 struct Native;
 impl Runner for Native {
@@ -459,12 +556,35 @@ impl Runner for Native {
             Err("autosubmit_requires_unix")
         }
     }
+    fn contribution_sync(
+        &mut self,
+        sync: &ContributionSync,
+        source: &ContributionSource,
+    ) -> Result<String, &'static str> {
+        crate::contribution_sync::run(&sync.args(source)?)
+    }
+}
+/// The bounded status a contribution send reports back into the cycle summary.
+fn contribution_status(summary: &str) -> &'static str {
+    let value: serde_json::Value = match serde_json::from_str(summary) {
+        Ok(value) => value,
+        Err(_) => return "sent",
+    };
+    match value["status"].as_str() {
+        Some("settled") => "settled",
+        Some("drained") => "drained",
+        Some("batch_limit") => "batch_limit",
+        Some("stopped") => "stopped",
+        Some("selected_observations_match") => "selected_observations_match",
+        _ => "sent",
+    }
 }
 fn execute(
     config: &Config,
     runner: &mut impl Runner,
     mut clock: impl FnMut() -> Result<u64, &'static str>,
     dry_run: bool,
+    contribution_sync: bool,
     mut elapsed: impl FnMut() -> Duration,
 ) -> Result<Outcome, &'static str> {
     let mut steps = Vec::new();
@@ -575,6 +695,58 @@ fn execute(
             }
         }
     }
+    // The native sender runs only behind the explicit flag and only after every
+    // client published cleanly: a retained aggregate flight or a failed step
+    // must be reconciled before another write path starts. It never runs in a
+    // dry run. A failed or uncertain send stops later sources; the sender's
+    // own retained flight is resumed by the next explicit invocation.
+    if let Some(sync) = config
+        .contribution_sync
+        .as_ref()
+        .filter(|_| contribution_sync)
+    {
+        let clean = status == "complete" && !failed && !dry_run;
+        for source in &sync.sources {
+            let client = Some(source.provider().to_owned());
+            if !clean {
+                steps.push(Step {
+                    client,
+                    action: "contribution_sync",
+                    status: "skipped",
+                    error: None,
+                });
+                continue;
+            }
+            if elapsed() >= BUDGET {
+                failed = true;
+                steps.push(Step {
+                    client,
+                    action: "contribution_sync",
+                    status: "not_started",
+                    error: Some("autosubmit_deadline"),
+                });
+                break;
+            }
+            match runner.contribution_sync(sync, source) {
+                Ok(summary) => steps.push(Step {
+                    client,
+                    action: "contribution_sync",
+                    status: contribution_status(&summary),
+                    error: None,
+                }),
+                Err(code) => {
+                    failed = true;
+                    steps.push(Step {
+                        client,
+                        action: "contribution_sync",
+                        status: "failed",
+                        error: Some(code),
+                    });
+                    break;
+                }
+            }
+        }
+    }
     // Delegated sinks are an independent delivery channel: they still run when
     // a retained flight or a failed step stopped publication above, bounded by
     // the same cycle deadline.
@@ -627,6 +799,15 @@ fn execute(
         dry_run,
     )
 }
+/// The flag is explicit and the block is explicit: one without the other is a
+/// configuration error rather than a silent no-op or a silent send.
+fn require_contribution_sync(config: &Config, flag: bool) -> Result<(), &'static str> {
+    match (flag, config.contribution_sync.is_some()) {
+        (true, false) => Err("autosubmit_contribution_sync_unconfigured"),
+        (false, true) => Err("autosubmit_contribution_sync_flag_required"),
+        _ => Ok(()),
+    }
+}
 pub(super) fn run(args: &[String]) -> Result<Outcome, &'static str> {
     if args == ["autosubmit", "--help"] || args == ["autosubmit", "-h"] {
         return Ok(Outcome {
@@ -634,12 +815,13 @@ pub(super) fn run(args: &[String]) -> Result<Outcome, &'static str> {
             exit_code: 0,
         });
     }
-    let (mut config, mut check, mut dry_run) = (None, false, false);
+    let (mut config, mut check, mut dry_run, mut contribution_sync) = (None, false, false, false);
     let mut index = 1;
     while index < args.len() {
         match args[index].as_str() {
             "--check" if !check && !dry_run => check = true,
             "--dry-run" if !check && !dry_run => dry_run = true,
+            "--contribution-sync" if !contribution_sync => contribution_sync = true,
             "--config-file" if config.is_none() => {
                 index += 1;
                 config = Some(PathBuf::from(
@@ -656,7 +838,7 @@ pub(super) fn run(args: &[String]) -> Result<Outcome, &'static str> {
     }
     #[cfg(not(unix))]
     {
-        let _ = (path, check, dry_run);
+        let _ = (path, check, dry_run, contribution_sync);
         Err("autosubmit_requires_unix")
     }
     #[cfg(unix)]
@@ -664,22 +846,33 @@ pub(super) fn run(args: &[String]) -> Result<Outcome, &'static str> {
         let now = crate::stats::now_ms()?;
         let source = crate::source_refresh::disk::read_secret(&path)?;
         let config = parse(source.as_bytes(), now)?;
+        require_contribution_sync(&config, contribution_sync)?;
         if check {
             return outcome(Vec::new(), "configuration_valid", true);
         }
         let start = Instant::now();
         if dry_run {
-            return execute(&config, &mut Native, crate::stats::now_ms, true, || {
-                start.elapsed()
-            });
+            return execute(
+                &config,
+                &mut Native,
+                crate::stats::now_ms,
+                true,
+                contribution_sync,
+                || start.elapsed(),
+            );
         }
         // A stable private lock serializes the complete refresh/publish cycle,
         // including manual invocations. The enrollment directory stays separate.
         let runtime = crate::source_refresh::disk::Cache::open(&config.runtime_dir)?;
         runtime.require_entries(&["refresh.lock", "last-cycle.json"])?;
-        let outcome = execute(&config, &mut Native, crate::stats::now_ms, false, || {
-            start.elapsed()
-        })?;
+        let outcome = execute(
+            &config,
+            &mut Native,
+            crate::stats::now_ms,
+            false,
+            contribution_sync,
+            || start.elapsed(),
+        )?;
         runtime.replace("last-cycle.json", outcome.summary.as_bytes())?;
         Ok(outcome)
     }
@@ -704,6 +897,7 @@ mod tests {
         fail_publish: bool,
         fail_sink: bool,
         empty_client: Option<&'static str>,
+        contribution: Vec<Result<&'static str, &'static str>>,
     }
     impl Runner for Fake {
         fn resume(&mut self, _: &Config) -> Result<(), &'static str> {
@@ -751,6 +945,277 @@ mod tests {
                 Ok(())
             }
         }
+        fn contribution_sync(
+            &mut self,
+            sync: &ContributionSync,
+            source: &ContributionSource,
+        ) -> Result<String, &'static str> {
+            self.calls.push(format!(
+                "contribution:{}:{}",
+                source.provider(),
+                sync.max_batches
+            ));
+            let reply = if self.contribution.is_empty() {
+                Ok("settled")
+            } else {
+                self.contribution.remove(0)
+            };
+            reply.map(|status| format!("{{\"schemaVersion\":3,\"status\":\"{status}\"}}"))
+        }
+    }
+    fn contribution_value() -> serde_json::Value {
+        serde_json::json!({"stateDir":"/private/contribution","keyFile":"/private/key","populationId":"ab".repeat(32),"sources":[{"provider":"claude","file":"/private/claude.jsonl"},{"provider":"codex","file":"/private/codex.jsonl"}],"maxBatches":3})
+    }
+    fn contribution_configuration() -> Config {
+        let mut value = config_value();
+        value["sinks"] = serde_json::json!([{"kind":"tokscale","binary":"/usr/bin/tokscale"}]);
+        value["contributionSync"] = contribution_value();
+        parse(&serde_json::to_vec(&value).unwrap(), NOW).unwrap()
+    }
+    fn steps(out: &Outcome) -> Vec<serde_json::Value> {
+        let value: serde_json::Value = serde_json::from_str(&out.summary).unwrap();
+        value["steps"].as_array().unwrap().clone()
+    }
+    #[test]
+    fn contribution_sync_runs_only_behind_the_flag_after_clean_publication_and_before_sinks() {
+        let mut fake = Fake::default();
+        let out = execute(
+            &contribution_configuration(),
+            &mut fake,
+            || Ok(NOW),
+            false,
+            false,
+            || Duration::ZERO,
+        )
+        .unwrap();
+        assert!(!fake
+            .calls
+            .iter()
+            .any(|call| call.starts_with("contribution")));
+        assert!(!out.summary.contains("contribution_sync"));
+        let mut fake = Fake {
+            contribution: vec![Ok("drained"), Ok("batch_limit")],
+            ..Default::default()
+        };
+        let out = execute(
+            &contribution_configuration(),
+            &mut fake,
+            || Ok(NOW),
+            false,
+            true,
+            || Duration::ZERO,
+        )
+        .unwrap();
+        assert_eq!(
+            fake.calls,
+            [
+                "resume",
+                "refresh:cursor",
+                "publish:cursor",
+                "publish:claude",
+                "contribution:claude:3",
+                "contribution:codex:3",
+                "sink:sink_tokscale"
+            ]
+        );
+        assert_eq!(out.exit_code, 0);
+        let steps = steps(&out);
+        assert!(steps.contains(
+            &serde_json::json!({"client":"claude","action":"contribution_sync","status":"drained"})
+        ));
+        assert!(steps.contains(&serde_json::json!({"client":"codex","action":"contribution_sync","status":"batch_limit"})));
+        assert!(!out.summary.contains("/private"));
+        assert!(!out.summary.contains(&"ab".repeat(32)));
+        // An unknown sender status is reported with a fixed word, never relayed.
+        assert_eq!(contribution_status("{\"status\":\"/private/x\"}"), "sent");
+        assert_eq!(contribution_status("not json"), "sent");
+    }
+    #[test]
+    fn contribution_sync_is_skipped_after_any_publication_failure_and_in_dry_runs() {
+        for (mut fake, dry_run, expected) in [
+            (
+                Fake {
+                    fail_publish: true,
+                    ..Default::default()
+                },
+                false,
+                vec![
+                    "resume",
+                    "refresh:cursor",
+                    "publish:cursor",
+                    "sink:sink_tokscale",
+                ],
+            ),
+            (
+                Fake {
+                    fail_refresh: true,
+                    ..Default::default()
+                },
+                false,
+                vec![
+                    "resume",
+                    "refresh:cursor",
+                    "publish:claude",
+                    "sink:sink_tokscale",
+                ],
+            ),
+            (
+                Fake {
+                    fail_resume: true,
+                    ..Default::default()
+                },
+                false,
+                vec!["resume", "sink:sink_tokscale"],
+            ),
+            (Fake::default(), true, vec!["scan:cursor", "scan:claude"]),
+        ] {
+            let out = execute(
+                &contribution_configuration(),
+                &mut fake,
+                || Ok(NOW),
+                dry_run,
+                true,
+                || Duration::ZERO,
+            )
+            .unwrap();
+            assert_eq!(fake.calls, expected);
+            let skipped = steps(&out)
+                .iter()
+                .filter(|step| step["action"] == "contribution_sync" && step["status"] == "skipped")
+                .count();
+            assert_eq!(skipped, 2);
+        }
+    }
+    #[test]
+    fn a_failed_contribution_send_stops_later_sources_but_not_sinks() {
+        let mut fake = Fake {
+            contribution: vec![Err("contribution_sync_exchange_uncertain")],
+            ..Default::default()
+        };
+        let out = execute(
+            &contribution_configuration(),
+            &mut fake,
+            || Ok(NOW),
+            false,
+            true,
+            || Duration::ZERO,
+        )
+        .unwrap();
+        assert_eq!(
+            fake.calls,
+            [
+                "resume",
+                "refresh:cursor",
+                "publish:cursor",
+                "publish:claude",
+                "contribution:claude:3",
+                "sink:sink_tokscale"
+            ]
+        );
+        assert_eq!(out.exit_code, 1);
+        let value: serde_json::Value = serde_json::from_str(&out.summary).unwrap();
+        assert_eq!(value["status"], "partial_failure");
+        assert!(steps(&out).contains(&serde_json::json!({"client":"claude","action":"contribution_sync","status":"failed","error":"contribution_sync_exchange_uncertain"})));
+        // The cycle deadline is honoured before each send.
+        let mut fake = Fake::default();
+        let mut ticks = 0u32;
+        let out = execute(
+            &contribution_configuration(),
+            &mut fake,
+            || Ok(NOW),
+            false,
+            true,
+            || {
+                ticks += 1;
+                if ticks > 4 {
+                    BUDGET
+                } else {
+                    Duration::ZERO
+                }
+            },
+        )
+        .unwrap();
+        assert!(!fake
+            .calls
+            .iter()
+            .any(|call| call.starts_with("contribution")));
+        assert!(steps(&out).contains(&serde_json::json!({"client":"claude","action":"contribution_sync","status":"not_started","error":"autosubmit_deadline"})));
+        assert_eq!(out.exit_code, 1);
+    }
+    #[test]
+    fn contribution_sync_configuration_and_flag_are_validated_together() {
+        let config = contribution_configuration();
+        let sync = config.contribution_sync.as_ref().unwrap();
+        assert_eq!(
+            sync.args(&sync.sources[1]).unwrap(),
+            [
+                "contribution-sync",
+                "--send",
+                "--state-dir",
+                "/private/contribution",
+                "--key-file",
+                "/private/key",
+                "--population-id",
+                &"ab".repeat(32),
+                "--codex",
+                "/private/codex.jsonl",
+                "--max-batches",
+                "3"
+            ]
+        );
+        assert_eq!(require_contribution_sync(&config, true), Ok(()));
+        assert_eq!(
+            require_contribution_sync(&config, false),
+            Err("autosubmit_contribution_sync_flag_required")
+        );
+        let plain = configuration();
+        assert_eq!(require_contribution_sync(&plain, false), Ok(()));
+        assert_eq!(
+            require_contribution_sync(&plain, true),
+            Err("autosubmit_contribution_sync_unconfigured")
+        );
+        let mut default = config_value();
+        default["contributionSync"] = contribution_value();
+        default["contributionSync"]
+            .as_object_mut()
+            .unwrap()
+            .remove("maxBatches");
+        let parsed = parse(&serde_json::to_vec(&default).unwrap(), NOW).unwrap();
+        assert_eq!(parsed.contribution_sync.unwrap().max_batches, 1);
+        for mutate in [
+            |value: &mut serde_json::Value| value["maxBatches"] = 0.into(),
+            |value: &mut serde_json::Value| value["maxBatches"] = 9.into(),
+            |value: &mut serde_json::Value| value["populationId"] = "AB".repeat(32).into(),
+            |value: &mut serde_json::Value| value["populationId"] = "ab".repeat(31).into(),
+            |value: &mut serde_json::Value| value["sources"] = serde_json::json!([]),
+            |value: &mut serde_json::Value| {
+                value["sources"] = serde_json::json!([{"provider":"devin","file":"/private/d"}])
+            },
+            |value: &mut serde_json::Value| value["sources"] = serde_json::json!([{"provider":"claude","file":"/private/a"},{"provider":"codex","file":"/private/a"}]),
+            |value: &mut serde_json::Value| {
+                value["sources"] = serde_json::json!([{"provider":"claude","file":"relative"}])
+            },
+            |value: &mut serde_json::Value| {
+                value["sources"] = serde_json::Value::Array(
+                    (0..9)
+                        .map(|index| serde_json::json!({"provider":"claude","file":format!("/private/{index}")}))
+                        .collect(),
+                )
+            },
+            |value: &mut serde_json::Value| value["stateDir"] = "/private/runtime".into(),
+            |value: &mut serde_json::Value| value["stateDir"] = "/synthetic".into(),
+            |value: &mut serde_json::Value| value["keyFile"] = "key".into(),
+            |value: &mut serde_json::Value| value["fenceDir"] = "/private/fence".into(),
+        ] {
+            let mut value = config_value();
+            let mut sync = contribution_value();
+            mutate(&mut sync);
+            value["contributionSync"] = sync;
+            assert_eq!(
+                parse(&serde_json::to_vec(&value).unwrap(), NOW).err(),
+                Some(INVALID)
+            );
+        }
     }
     #[test]
     fn failed_refresh_never_publishes_old_cache_but_other_clients_continue() {
@@ -762,6 +1227,7 @@ mod tests {
             &configuration(),
             &mut fake,
             || Ok(NOW),
+            false,
             false,
             || Duration::ZERO,
         )
@@ -780,6 +1246,7 @@ mod tests {
                 &mut fake,
                 || Ok(NOW),
                 true,
+                false,
                 || Duration::ZERO
             )
             .unwrap()
@@ -800,6 +1267,7 @@ mod tests {
                 &mut fake,
                 || Ok(NOW),
                 dry_run,
+                false,
                 || Duration::ZERO,
             )
             .unwrap();
@@ -831,6 +1299,7 @@ mod tests {
                 &mut fake,
                 || Ok(NOW),
                 false,
+                false,
                 || Duration::ZERO
             )
             .unwrap()
@@ -846,6 +1315,7 @@ mod tests {
             &configuration(),
             &mut fake,
             || Ok(NOW),
+            false,
             false,
             || Duration::ZERO,
         )
@@ -883,6 +1353,7 @@ mod tests {
             &configuration(),
             &mut fake,
             || Ok(times.next().unwrap()),
+            false,
             false,
             || Duration::ZERO,
         )
@@ -923,7 +1394,15 @@ mod tests {
     #[test]
     fn cycle_budget_does_not_start_another_scan() {
         let mut fake = Fake::default();
-        let out = execute(&configuration(), &mut fake, || Ok(NOW), true, || BUDGET).unwrap();
+        let out = execute(
+            &configuration(),
+            &mut fake,
+            || Ok(NOW),
+            true,
+            false,
+            || BUDGET,
+        )
+        .unwrap();
         assert!(fake.calls.is_empty());
         assert_eq!(out.exit_code, 1);
     }
@@ -939,6 +1418,7 @@ mod tests {
             &sink_configuration(),
             &mut fake,
             || Ok(NOW),
+            false,
             false,
             || Duration::ZERO,
         )
@@ -969,6 +1449,7 @@ mod tests {
             &sink_configuration(),
             &mut fake,
             || Ok(NOW),
+            false,
             false,
             || Duration::ZERO,
         )
@@ -1009,6 +1490,7 @@ mod tests {
                 &mut fake,
                 || Ok(NOW),
                 false,
+                false,
                 || Duration::ZERO,
             )
             .unwrap();
@@ -1029,6 +1511,7 @@ mod tests {
             &mut fake,
             || Ok(NOW),
             true,
+            false,
             || Duration::ZERO,
         )
         .unwrap();
@@ -1046,6 +1529,7 @@ mod tests {
             &sink_configuration(),
             &mut fake,
             || Ok(NOW),
+            false,
             false,
             || BUDGET,
         )
