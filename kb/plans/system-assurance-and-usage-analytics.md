@@ -1894,3 +1894,14 @@ ladder in one place: `SCHEMA_LATEST` plus an ordered `SCHEMA_FAMILIES` table
 Adding schema step N now means bumping the constant, appending one table
 entry, and extending the ordered migration chain — an unknown newer version
 still fails closed so an older binary never rewrites state it cannot read.
+
+The first live migration attempt against the owner account refused with
+`limit`: the single-shot cap `CONTRIBUTION_MIGRATION_MAX_JOURNALS` was 256
+while the account retains 952 committed v1 journals. The cap is a transaction
+budget, not a storage invariant, so it moved to 4,096 — matching the
+`expectedV1Revision` wire bound; past that, chunked migration is the
+follow-on. In the same change the CLI gained `--cancel-migration`: it replays
+the retained pending request to `/v3/contributions/migrate/cancel`, records
+the abandoned terminal on the migrate record, and lets `--migrate` retry
+fresh — the escape for a wedged `pendingOperation`. The focused suite is now
+60 tests.
