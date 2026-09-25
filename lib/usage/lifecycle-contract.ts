@@ -1,5 +1,5 @@
-/** Account lifecycle contract (Phase 10): export, erase, device revocation,
- * writer transfer and publishing liveness. This module is the frozen HTTP/RPC
+/** Account lifecycle contract (Phase 10): export, erase, device revocation
+ * and publishing liveness. This module is the frozen HTTP/RPC
  * contract shared by the worker, the Next proxy and any UI. The browser-facing
  * route accepts only an operation body; `accountId` and `sessionExpiresAtMs`
  * are derived from the live server session, never from the caller.
@@ -28,13 +28,9 @@ export const LIFECYCLE_EXPORT_MAX_CURSOR_LENGTH = 96;
 /** An unconfirmed erase request lapses after one day; confirmation is durable. */
 export const LIFECYCLE_ERASE_REQUEST_TTL_MS = 86_400_000;
 export const LIFECYCLE_ERASE_STEPS = 6;
-export const LIFECYCLE_TRANSFER_TTL_MS = 3_600_000;
-export const LIFECYCLE_MAX_TRANSFERS = 16;
 export const LIFECYCLE_MAX_RECLAMATION_ENTRIES = 16;
 export const LIFECYCLE_MAX_EXCLUSIONS = 32;
 export const LIFECYCLE_MAX_TIME = 8_640_000_000_000_000;
-export const LIFECYCLE_CLIENTS = Object.freeze(["codex", "claude-code", "devin"] as const);
-export type LifecycleClient = typeof LIFECYCLE_CLIENTS[number];
 
 const hex64 = (value: unknown): value is string => typeof value === "string" && value.length === 64 && /^[0-9a-f]{64}$/u.test(value);
 const account = (value: unknown): value is string => typeof value === "string" && /^acct_[0-9a-f]{32}$/u.test(value);
@@ -42,7 +38,6 @@ const time = (value: unknown): value is number => typeof value === "number" && N
 const count = (value: unknown, max: number): value is number => typeof value === "number" && Number.isSafeInteger(value) && value >= 0 && value <= max;
 const ascii = (value: unknown, max: number): value is string => typeof value === "string" && value.length >= 1 && value.length <= max && /^[\x21-\x7e]+$/u.test(value);
 const text = (value: unknown, max: number): value is string => typeof value === "string" && value.length >= 1 && value.length <= max && /^[\x20-\x7e]+$/u.test(value);
-const isClient = (value: unknown): value is LifecycleClient => typeof value === "string" && (LIFECYCLE_CLIENTS as readonly string[]).includes(value);
 /** A frozen plain copy of a literal with code-defined keys. Lifecycle values
  * cross the Durable Object RPC boundary, which refuses null-prototype objects. */
 function owned<T extends object>(value: T): Readonly<T> {
@@ -88,13 +83,10 @@ export type UsageLifecycleOperationInput =
   | Readonly<{ operation: "devices" }>
   | Readonly<{ operation: "revoke_device"; deviceId: string }>
   | Readonly<{ operation: "erase_request" }>
-  | Readonly<{ operation: "erase_confirm"; token: string }>
-  | Readonly<{ operation: "transfer_request"; client: LifecycleClient; fromDeviceId: string; toDeviceId: string }>
-  | Readonly<{ operation: "transfer_grant"; transferId: string }>
-  | Readonly<{ operation: "transfer_complete"; transferId: string }>;
+  | Readonly<{ operation: "erase_confirm"; token: string }>;
 export type UsageLifecycleOperation = UsageLifecycleOperationInput["operation"];
 export const USAGE_LIFECYCLE_OPERATIONS: readonly UsageLifecycleOperation[] = Object.freeze(["status", "export", "devices", "revoke_device",
-  "erase_request", "erase_confirm", "transfer_request", "transfer_grant", "transfer_complete"]);
+  "erase_request", "erase_confirm"]);
 /** Reads leave no durable trace; every other operation records intent first. */
 export const USAGE_LIFECYCLE_READ_OPERATIONS: readonly UsageLifecycleOperation[] = Object.freeze(["status", "export", "devices"]);
 
@@ -113,17 +105,6 @@ export function parseUsageLifecycleOperation(value: unknown): UsageLifecycleOper
   if (revoke !== null) return revoke.operation === "revoke_device" && hex64(revoke.deviceId) ? owned({ operation: "revoke_device", deviceId: revoke.deviceId }) : null;
   const confirm = privateDaysSnapshot(value, ["operation", "token"]);
   if (confirm !== null) return confirm.operation === "erase_confirm" && hex64(confirm.token) ? owned({ operation: "erase_confirm", token: confirm.token }) : null;
-  const transfer = privateDaysSnapshot(value, ["operation", "client", "fromDeviceId", "toDeviceId"]);
-  if (transfer !== null) {
-    if (transfer.operation !== "transfer_request" || !isClient(transfer.client) || !hex64(transfer.fromDeviceId) || !hex64(transfer.toDeviceId)
-      || transfer.fromDeviceId === transfer.toDeviceId) return null;
-    return owned({ operation: "transfer_request", client: transfer.client, fromDeviceId: transfer.fromDeviceId, toDeviceId: transfer.toDeviceId });
-  }
-  const staged = privateDaysSnapshot(value, ["operation", "transferId"]);
-  if (staged !== null) {
-    if ((staged.operation !== "transfer_grant" && staged.operation !== "transfer_complete") || !hex64(staged.transferId)) return null;
-    return owned({ operation: staged.operation, transferId: staged.transferId });
-  }
   return null;
 }
 export type UsageLifecycleRequestV1 = Readonly<{ schemaVersion: 1; accountId: string; sessionExpiresAtMs: number }> & UsageLifecycleOperationInput;
@@ -163,12 +144,6 @@ export type LifecycleErasureViewV1 = Readonly<{
   phase: LifecycleErasurePhase; step: number; stepCount: number; requestedAtMs: number; requestExpiresAtMs: number;
   confirmedAtMs: number | null; completedAtMs: number | null; sealed: boolean;
 }>;
-export type LifecycleTransferPhase = "requested" | "granted" | "completed" | "refused";
-export type LifecycleTransferViewV1 = Readonly<{
-  transferId: string; client: LifecycleClient; fromDeviceId: string; toDeviceId: string; phase: LifecycleTransferPhase;
-  requestedAtMs: number; grantedAtMs: number | null; completedAtMs: number | null; expiresAtMs: number;
-  expectedRevision: number | null; ownershipRevision: number | null; refusal: string | null;
-}>;
 /** `waitlist` is `null` when the account is not waiting; `waitlistKnown` is
  * false when the index could not be consulted (explicit missingness). */
 export type LifecyclePublishingViewV1 = Readonly<{
@@ -178,13 +153,12 @@ export type LifecyclePublishingViewV1 = Readonly<{
 export type LifecycleStatusV1 = Readonly<{
   schemaVersion: 1; kind: "status"; contract: typeof LIFECYCLE_STATUS_CONTRACT; accountId: string; generation: string;
   phase: "active" | "erasing" | "erased"; stateRevision: number; devices: Readonly<{ active: number; revoked: number }>;
-  erasure: LifecycleErasureViewV1 | null; transfers: readonly LifecycleTransferViewV1[]; publishing: LifecyclePublishingViewV1;
+  erasure: LifecycleErasureViewV1 | null; publishing: LifecyclePublishingViewV1;
 }>;
 export type LifecycleDevicesV1 = Readonly<{ schemaVersion: 1; kind: "devices"; devices: readonly LifecycleDeviceViewV1[] }>;
 export type LifecycleDeviceV1 = Readonly<{ schemaVersion: 1; kind: "device"; device: LifecycleDeviceViewV1 }>;
 export type LifecycleEraseRequestV1 = Readonly<{ schemaVersion: 1; kind: "erase_request"; token: string; requestedAtMs: number; requestExpiresAtMs: number }>;
 export type LifecycleEraseProgressV1 = Readonly<{ schemaVersion: 1; kind: "erase_progress"; erasure: LifecycleErasureViewV1 }>;
-export type LifecycleTransferV1 = Readonly<{ schemaVersion: 1; kind: "transfer"; transfer: LifecycleTransferViewV1 }>;
 export type LifecycleExportItemV1 = Readonly<{ surface: string; key: string; value: LifecycleJson }>;
 export type LifecycleExportExclusionV1 = Readonly<{ surface: string; reason: string }>;
 /** One export page. `cursor` resumes the next page; `null` ends the export.
@@ -203,7 +177,7 @@ export type ReclamationLedgerV1 = Readonly<{
   entries: readonly LifecycleReclamationEntryV1[];
 }>;
 export type UsageLifecycleValue = LifecycleStatusV1 | LifecycleDevicesV1 | LifecycleDeviceV1 | LifecycleEraseRequestV1
-  | LifecycleEraseProgressV1 | LifecycleTransferV1 | LifecycleExportPageV1;
+  | LifecycleEraseProgressV1 | LifecycleExportPageV1;
 export type UsageLifecycleResult = Readonly<{ ok: true; value: UsageLifecycleValue }> | Readonly<{ ok: false; error: UsageLifecycleError }>;
 
 export function parseLifecycleDeviceView(value: unknown): LifecycleDeviceViewV1 | null {
@@ -227,26 +201,6 @@ export function parseLifecycleErasureView(value: unknown): LifecycleErasureViewV
     requestExpiresAtMs: erasure.requestExpiresAtMs, confirmedAtMs: erasure.confirmedAtMs as number | null,
     completedAtMs: erasure.completedAtMs as number | null, sealed: erasure.sealed });
 }
-export function parseLifecycleTransferView(value: unknown): LifecycleTransferViewV1 | null {
-  const transfer = privateDaysSnapshot(value, ["transferId", "client", "fromDeviceId", "toDeviceId", "phase", "requestedAtMs", "grantedAtMs",
-    "completedAtMs", "expiresAtMs", "expectedRevision", "ownershipRevision", "refusal"]);
-  if (transfer === null || !hex64(transfer.transferId) || !isClient(transfer.client) || !hex64(transfer.fromDeviceId) || !hex64(transfer.toDeviceId)
-    || transfer.fromDeviceId === transfer.toDeviceId || !time(transfer.requestedAtMs) || !time(transfer.expiresAtMs) || transfer.expiresAtMs < transfer.requestedAtMs
-    || (transfer.phase !== "requested" && transfer.phase !== "granted" && transfer.phase !== "completed" && transfer.phase !== "refused")
-    || !(transfer.grantedAtMs === null || (time(transfer.grantedAtMs) && transfer.grantedAtMs >= transfer.requestedAtMs))
-    || !(transfer.completedAtMs === null || (time(transfer.completedAtMs) && transfer.grantedAtMs !== null && transfer.completedAtMs >= transfer.grantedAtMs))
-    || !(transfer.expectedRevision === null || count(transfer.expectedRevision, 999_999))
-    || !(transfer.ownershipRevision === null || count(transfer.ownershipRevision, 1_000_000))
-    || !(transfer.refusal === null || text(transfer.refusal, 64))) return null;
-  if ((transfer.phase === "requested") !== (transfer.grantedAtMs === null && transfer.phase !== "refused")
-    || (transfer.phase === "completed") !== (transfer.completedAtMs !== null)
-    || (transfer.phase === "refused") !== (transfer.refusal !== null)) return null;
-  return owned({ transferId: transfer.transferId, client: transfer.client, fromDeviceId: transfer.fromDeviceId, toDeviceId: transfer.toDeviceId,
-    phase: transfer.phase, requestedAtMs: transfer.requestedAtMs, grantedAtMs: transfer.grantedAtMs as number | null,
-    completedAtMs: transfer.completedAtMs as number | null, expiresAtMs: transfer.expiresAtMs,
-    expectedRevision: transfer.expectedRevision as number | null, ownershipRevision: transfer.ownershipRevision as number | null,
-    refusal: transfer.refusal as string | null });
-}
 export function parseLifecyclePublishingView(value: unknown): LifecyclePublishingViewV1 | null {
   const publishing = privateDaysSnapshot(value, ["consent", "publicHandle", "member", "waitlist", "waitlistKnown"]);
   if (publishing === null || typeof publishing.consent !== "boolean" || typeof publishing.waitlistKnown !== "boolean"
@@ -269,7 +223,7 @@ function parseArray<T>(value: unknown, max: number, parse: (item: unknown) => T 
   return Object.freeze(items);
 }
 export function parseLifecycleStatus(value: unknown): LifecycleStatusV1 | null {
-  const status = privateDaysSnapshot(value, ["schemaVersion", "kind", "contract", "accountId", "generation", "phase", "stateRevision", "devices", "erasure", "transfers", "publishing"]);
+  const status = privateDaysSnapshot(value, ["schemaVersion", "kind", "contract", "accountId", "generation", "phase", "stateRevision", "devices", "erasure", "publishing"]);
   if (status?.schemaVersion !== 1 || status.kind !== "status" || status.contract !== LIFECYCLE_STATUS_CONTRACT || !account(status.accountId)
     || !hex64(status.generation) || (status.phase !== "active" && status.phase !== "erasing" && status.phase !== "erased")
     || !count(status.stateRevision, Number.MAX_SAFE_INTEGER)) return null;
@@ -278,12 +232,11 @@ export function parseLifecycleStatus(value: unknown): LifecycleStatusV1 | null {
   const erasure = status.erasure === null ? null : parseLifecycleErasureView(status.erasure);
   if (status.erasure !== null && erasure === null) return null;
   if ((status.phase === "erased") !== (erasure?.phase === "erased") || (status.phase === "erasing") !== (erasure?.phase === "confirmed")) return null;
-  const transfers = parseArray(status.transfers, LIFECYCLE_MAX_TRANSFERS, parseLifecycleTransferView);
   const publishing = parseLifecyclePublishingView(status.publishing);
-  if (transfers === null || publishing === null) return null;
+  if (publishing === null) return null;
   return owned({ schemaVersion: 1 as const, kind: "status" as const, contract: LIFECYCLE_STATUS_CONTRACT, accountId: status.accountId,
     generation: status.generation, phase: status.phase, stateRevision: status.stateRevision,
-    devices: owned({ active: devices.active, revoked: devices.revoked }), erasure, transfers, publishing });
+    devices: owned({ active: devices.active, revoked: devices.revoked }), erasure, publishing });
 }
 export function parseLifecycleExportPage(value: unknown): LifecycleExportPageV1 | null {
   const page = privateDaysSnapshot(value, ["schemaVersion", "kind", "contract", "accountId", "generation", "exportedAtMs", "stateRevision",
@@ -353,11 +306,6 @@ export function parseUsageLifecycleValue(value: unknown): UsageLifecycleValue | 
       const erasure = reply?.schemaVersion === 1 ? parseLifecycleErasureView(reply.erasure) : null;
       return erasure === null ? null : owned({ schemaVersion: 1 as const, kind: "erase_progress" as const, erasure });
     }
-    case "transfer": {
-      const reply = privateDaysSnapshot(value, ["schemaVersion", "kind", "transfer"]);
-      const transfer = reply?.schemaVersion === 1 ? parseLifecycleTransferView(reply.transfer) : null;
-      return transfer === null ? null : owned({ schemaVersion: 1 as const, kind: "transfer" as const, transfer });
-    }
     default: return null;
   }
 }
@@ -379,8 +327,7 @@ export function lifecycleReplyMatches(operation: UsageLifecycleOperation, value:
     case "devices": return value.kind === "devices";
     case "revoke_device": return value.kind === "device";
     case "erase_request": return value.kind === "erase_request";
-    case "erase_confirm": return value.kind === "erase_progress";
-    default: return value.kind === "transfer";
+    default: return value.kind === "erase_progress";
   }
 }
 
@@ -445,9 +392,9 @@ export function decodeUsageLifecycleHttpResponse(value: unknown): UsageLifecycle
  * the union covers the inventory, so a new surface cannot silently vanish. */
 export const LIFECYCLE_EXPORT_SECTIONS: readonly string[] = Object.freeze([
   "account_enrollment", "usage_admission_control", "usage_admission_audit", "usage_admission_devices", "usage_admission_heads",
-  "usage_admission_journal", "usage_admission_days", "usage_admission_pending",
+  "usage_admission_journal", "usage_admission_days", "usage_admission_pending", "usage_admission_day_totals", "usage_admission_day_totals_cursor",
   "usage_stats_control", "usage_stats_writers", "usage_stats_day_sources", "usage_stats_devices", "usage_stats_pending",
-  "usage_stats_days", "usage_stats_day_meta", "usage_stats_day_rows",
+  "usage_stats_days", "usage_stats_day_meta", "usage_stats_day_rows", "usage_stats_retired", "usage_stats_day_totals",
   "usage_contribution_control", "usage_contribution_populations", "usage_contribution_heads", "usage_contribution_memberships",
   "usage_contribution_operations", "usage_contribution_devices",
   "usage_contribution_projection_control", "usage_contribution_projection_pending", "usage_contribution_projection_publications",
@@ -464,7 +411,7 @@ export const LIFECYCLE_EXPORT_EXCLUDED: readonly LifecycleExportExclusionV1[] = 
   owner("r2:canonical-contribution-artifacts", "content-addressed journal artifacts keyed by the exported usage_contribution_operations rows"),
   owner("r2:canonical-contribution-index", "derived projection rebuilt from exported heads; keyed by the exported projection publications"),
   owner("r2:admission-batches-and-journals", "content-addressed by the exported usage_admission_journal rows"),
-  owner("r2:stats-snapshots-and-receipts", "content-addressed by the exported usage_stats_days and usage_stats_day_sources rows"),
+  owner("r2:stats-snapshots-and-receipts", "content-addressed by the exported usage_stats_days rows, or usage_stats_day_sources rows in a store not yet partitioned by device"),
   owner("r2:enrollment-namespace-anchors", "mirror of the exported enrollment anchor metadata without the namespace key"),
   owner("r2:staged-measurements", "transient pre-admission staging with no account-owned durable content"),
 ]);

@@ -16,7 +16,7 @@ test("an account session lists every enrolled device and revokes any of them, ke
   const after = await lifecycleValue({ operation: "devices" }, "devices");
   expect(after.devices.map(device => device.state)).toEqual(["revoked", "active"]);
   const status = await lifecycleValue({ operation: "status" }, "status");
-  expect(status).toMatchObject({ phase: "active", devices: { active: 1, revoked: 1 }, erasure: null, transfers: [] });
+  expect(status).toMatchObject({ phase: "active", devices: { active: 1, revoked: 1 }, erasure: null });
   expect(status.stateRevision).toBeGreaterThan(0);
 });
 

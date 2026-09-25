@@ -1029,10 +1029,13 @@ mod tests {
                     ..Default::default()
                 },
                 false,
+                // A failed publication no longer stops the remaining clients,
+                // but it still withholds every contribution send this cycle.
                 vec![
                     "resume",
                     "refresh:cursor",
                     "publish:cursor",
+                    "publish:claude",
                     "sink:sink_tokscale",
                 ],
             ),

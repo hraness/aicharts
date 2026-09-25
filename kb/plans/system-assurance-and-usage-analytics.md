@@ -529,7 +529,7 @@ The integration owner controls manifests/lockfiles, shared schemas/capacity/metr
 - **Status:** In progress — durable contributions, bounded retained-data migration, exact head/query RPC/HTTP joins, native rich-fact producers with revision-ledger sync and the reviewed rebuild cutover CAS landed; full recovery and live contribution qualification remain open
 - **Depends on:** 1B, 2B, 3
 - **Objective:** Multi-device reporting, corrections and v1/v2 transitions have one lossless ownership model.
-- **Scope:** Contribution/control schemas, source overlap/replacement proofs, writer transfer, generation/capacity contract and numeric private facts.
+- **Scope:** Contribution/control schemas, source overlap/replacement proofs, writer transfer (retired with the writer concept in PR #427), generation/capacity contract and numeric private facts.
 - **Out of scope:** Treating device totals as automatically disjoint or buying a new data platform.
 - **Approach:** Prefer independent contributions with stable observation/provenance identity; use complete snapshots only within explicitly owned scopes. Retain v1 compatibility until a verified takeover covers its facts. Separate canonical controls from derived stats.
 - **Acceptance:** Mirrored histories deduplicate, disjoint histories sum, incomplete scans never erase, moving corrections update old/new cells, old writer callbacks refuse, and retry/rejection uses capacity once. Genuine old database fixtures migrate atomically or recover with original bytes intact.
@@ -608,7 +608,7 @@ resolution, physical reclamation and live recovery remain open.
 
 ### Phase 10 — Privacy, account lifecycle and recovery operations
 
-- **Status:** In progress — account lifecycle RPC (status, export, device list/revoke, two-step erase, writer transfer) with erasure tombstone, resumable steps and restore-fence sealing landed; manual billing/budgets/alerts and live recovery drills remain open
+- **Status:** In progress — account lifecycle RPC (status, export, device list/revoke, two-step erase; the writer transfer was retired with the per-client writer in PR #427) with erasure tombstone, resumable steps and restore-fence sealing landed; manual billing/budgets/alerts and live recovery drills remain open
 - **Depends on:** 5, 6, 8
 - **Objective:** Users can inspect, export, move and remove their data, and operators can recover without resurrecting revoked authority.
 - **Scope:** F22/F25/F26; account-controlled devices/transfer, export/erase, retention/tombstones, consent/index liveness, health, backup/restore and incident procedures; numeric manual billing, budgets, transparent forecasts and opt-in in-product alerts per the shipping matrix.

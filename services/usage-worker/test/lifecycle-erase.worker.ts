@@ -69,7 +69,6 @@ test("a two-step erase withdraws the public index first, revokes devices, record
   expect(await lifecycleValue({ operation: "erase_confirm", token: requested.token }, "erase_progress")).toEqual(erased);
   for (const refused of [
     lifecycle({ operation: "erase_request" }), lifecycle({ operation: "revoke_device", deviceId: first.deviceId }),
-    lifecycle({ operation: "transfer_request", client: "codex", fromDeviceId: first.deviceId, toDeviceId: second.deviceId }),
     stub().setLeaderboardConsent(grant("revive")), stub().readLeaderboardConsent({ ...session(), operation: "status" }),
     statsUpload(first, statsRequest(first, { expectedRevision: 1, sequence: 2 })), admitUsage(second, 10n, fixture.account, 2),
   ]) expect(await refused).toEqual({ ok: false, error: "account_erased" });

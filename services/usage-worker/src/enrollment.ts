@@ -3,7 +3,7 @@ import { parseStatsQuery, parseStatsStatusRequest, parseStatsUpload, statsIntege
 import { parseStatsTotalsQuery, type StatsTotalsResult } from "../../../lib/usage/stats-totals-contract";
 import { parseStatsAbandonRequest, type StatsAbandonment } from "../../../lib/usage/stats-http-contract";
 import type { UsageStatsReport } from "../../../lib/usage/stats-contract";
-import { StatsState, StatsFault, STATS_SCHEMA, statsHash, statsUploadText } from "./stats-state";
+import { StatsState, StatsFault, RETIRED_STATS_SCHEMA, STATS_SCHEMA, statsHash, statsUploadText } from "./stats-state";
 import { AccountStats } from "./stats-admission";
 import { CONTRIBUTION_SCHEMA, ContributionState, type ContributionGrantReceipt } from "./contributions-state";
 import { AccountContributions } from "./contributions-admission";
@@ -58,13 +58,13 @@ import {
   type FenceObservation,
 } from "./restore-fence";
 import {
-  LIFECYCLE_CLIENTS, LIFECYCLE_ERASE_REQUEST_TTL_MS, LIFECYCLE_ERASE_STEPS, LIFECYCLE_EXPORT_CONTRACT, LIFECYCLE_EXPORT_EXCLUDED,
-  LIFECYCLE_EXPORT_PAGE_BYTES, LIFECYCLE_EXPORT_PAGE_ITEMS, LIFECYCLE_EXPORT_SECTIONS, LIFECYCLE_MAX_TRANSFERS, LIFECYCLE_RECLAMATION_CONTRACT,
-  LIFECYCLE_STATUS_CONTRACT, LIFECYCLE_TRANSFER_TTL_MS, isUsageLifecycleError, lifecycleJson, parseReclamationLedger, parseUsageLifecycleRequest,
-  type LifecycleClient, type LifecycleDeviceV1, type LifecycleDeviceViewV1, type LifecycleDevicesV1, type LifecycleEraseProgressV1,
+  LIFECYCLE_ERASE_REQUEST_TTL_MS, LIFECYCLE_ERASE_STEPS, LIFECYCLE_EXPORT_CONTRACT, LIFECYCLE_EXPORT_EXCLUDED,
+  LIFECYCLE_EXPORT_PAGE_BYTES, LIFECYCLE_EXPORT_PAGE_ITEMS, LIFECYCLE_EXPORT_SECTIONS, LIFECYCLE_RECLAMATION_CONTRACT,
+  LIFECYCLE_STATUS_CONTRACT, isUsageLifecycleError, lifecycleJson, parseReclamationLedger, parseUsageLifecycleRequest,
+  type LifecycleDeviceV1, type LifecycleDeviceViewV1, type LifecycleDevicesV1, type LifecycleEraseProgressV1,
   type LifecycleEraseRequestV1, type LifecycleErasureViewV1, type LifecycleExportItemV1, type LifecycleExportPageV1, type LifecycleJson,
-  type LifecyclePublishingViewV1, type LifecycleReclamationEntryV1, type LifecycleStatusV1, type LifecycleTransferPhase, type LifecycleTransferV1,
-  type LifecycleTransferViewV1, type ReclamationLedgerV1, type UsageLifecycleError, type UsageLifecycleResult, type UsageLifecycleValue,
+  type LifecyclePublishingViewV1, type LifecycleReclamationEntryV1, type LifecycleStatusV1,
+  type ReclamationLedgerV1, type UsageLifecycleError, type UsageLifecycleResult, type UsageLifecycleValue,
 } from "../../../lib/usage/lifecycle-contract";
 /** Rows per exported table; every account table is bounded well below this
  * by its own schema ceiling, so exceeding it is a storage invariant failure. */
@@ -105,18 +105,12 @@ type LeaderboardState = {
  * so no new table or object surface exists. `erasure` is the durable erase
  * intent: `token` is the confirmation secret, `step` the count of durably
  * completed erase steps (see `LifecycleErasureViewV1`), `ledger` the
- * reclamation record written at step 4. Transfers are a bounded history of
- * writer transfers between this account's devices. */
+ * reclamation record written at step 4. */
 type LifecycleErasure = {
   token: string; requestedAtMs: number; requestExpiresAtMs: number; confirmedAtMs: number | null; step: number;
   completedAtMs: number | null; sealed: boolean; ledger: ReclamationLedgerV1 | null;
 };
-type LifecycleTransfer = {
-  transferId: string; client: LifecycleClient; fromDeviceId: string; toDeviceId: string; phase: LifecycleTransferPhase;
-  requestedAtMs: number; grantedAtMs: number | null; completedAtMs: number | null; expiresAtMs: number;
-  expectedRevision: number | null; ownershipRevision: number | null; refusal: string | null;
-};
-type LifecycleState = { erasure: LifecycleErasure | null; transfers: LifecycleTransfer[] };
+type LifecycleState = { erasure: LifecycleErasure | null };
 type State = {
   accountId: string; generation: string; observedAtMs: number; phase: "pending" | "active";
   // The restore epoch this state last committed under. `null` marks a
@@ -222,18 +216,12 @@ function consentViewOf(leaderboard: LeaderboardState): LeaderboardConsentViewV1 
 /** Lifecycle invariants. Erasure: `step` 0 exactly while unconfirmed; a
  * confirmed erasure has withdrawn source consent; from step 3 every device is
  * revoked; `completedAtMs` exists exactly from step 5; `sealed` exactly at
- * step 6. Transfers: bounded, unique ids, devices of this account, ordered
- * times, at most one live transfer per client. */
+ * step 6. */
 function validLifecycle(value: unknown, owner: Record<string, unknown>): value is LifecycleState {
-  const lifecycle = enrollmentSnapshot(value, ["erasure", "transfers"]);
-  if (lifecycle === null || !Array.isArray(lifecycle.transfers) || lifecycle.transfers.length > LIFECYCLE_MAX_TRANSFERS) return false;
+  const lifecycle = enrollmentSnapshot(value, ["erasure"]);
+  if (lifecycle === null) return false;
   const observedAtMs = owner.observedAtMs as number;
   const devices = Array.isArray(owner.devices) ? owner.devices as unknown[] : [];
-  const deviceOf = (id: unknown): Record<string, unknown> | null => {
-    if (!enrollmentHex(id)) return null;
-    const found = devices.find(raw => enrollmentSnapshot(raw, ["reservation", "deviceId", "enrolledAtMs", "revokedAtMs"])?.deviceId === id);
-    return found === undefined ? null : found as Record<string, unknown>;
-  };
   if (lifecycle.erasure !== null) {
     const erasure = enrollmentSnapshot(lifecycle.erasure, ["token", "requestedAtMs", "requestExpiresAtMs", "confirmedAtMs", "step", "completedAtMs", "sealed", "ledger"]);
     if (erasure === null || !enrollmentHex(erasure.token) || !enrollmentTime(erasure.requestedAtMs) || erasure.requestedAtMs > observedAtMs
@@ -256,32 +244,6 @@ function validLifecycle(value: unknown, owner: Record<string, unknown>): value i
       if (erasure.completedAtMs !== null && (!enrollmentTime(erasure.completedAtMs) || erasure.completedAtMs < erasure.confirmedAtMs || erasure.completedAtMs > observedAtMs)) return false;
       if ((erasure.step === LIFECYCLE_ERASE_STEPS) !== erasure.sealed) return false;
     }
-  }
-  const ids = new Set<string>(), live = new Set<string>();
-  for (const raw of lifecycle.transfers as unknown[]) {
-    const transfer = enrollmentSnapshot(raw, ["transferId", "client", "fromDeviceId", "toDeviceId", "phase", "requestedAtMs", "grantedAtMs",
-      "completedAtMs", "expiresAtMs", "expectedRevision", "ownershipRevision", "refusal"]);
-    if (transfer === null || !enrollmentHex(transfer.transferId) || ids.has(transfer.transferId)
-      || !(LIFECYCLE_CLIENTS as readonly unknown[]).includes(transfer.client) || deviceOf(transfer.fromDeviceId) === null
-      || deviceOf(transfer.toDeviceId) === null || transfer.fromDeviceId === transfer.toDeviceId
-      || (transfer.phase !== "requested" && transfer.phase !== "granted" && transfer.phase !== "completed" && transfer.phase !== "refused")
-      || !enrollmentTime(transfer.requestedAtMs) || transfer.requestedAtMs > observedAtMs
-      || !enrollmentTime(transfer.expiresAtMs) || transfer.expiresAtMs <= transfer.requestedAtMs
-      || !(transfer.grantedAtMs === null || (enrollmentTime(transfer.grantedAtMs) && transfer.grantedAtMs >= transfer.requestedAtMs && transfer.grantedAtMs <= observedAtMs))
-      || !(transfer.completedAtMs === null || (enrollmentTime(transfer.completedAtMs) && transfer.grantedAtMs !== null && transfer.completedAtMs >= (transfer.grantedAtMs as number) && transfer.completedAtMs <= observedAtMs))
-      || !(transfer.expectedRevision === null || (typeof transfer.expectedRevision === "number" && Number.isSafeInteger(transfer.expectedRevision) && transfer.expectedRevision >= 0))
-      || !(transfer.ownershipRevision === null || (typeof transfer.ownershipRevision === "number" && Number.isSafeInteger(transfer.ownershipRevision) && transfer.ownershipRevision >= 0))
-      || !(transfer.refusal === null || (typeof transfer.refusal === "string" && transfer.refusal.length > 0 && transfer.refusal.length <= 64))) return false;
-    if ((transfer.phase === "requested") !== (transfer.grantedAtMs === null && transfer.refusal === null)) return false;
-    if ((transfer.phase === "completed") !== (transfer.completedAtMs !== null)) return false;
-    if ((transfer.phase === "refused") !== (transfer.refusal !== null)) return false;
-    if (transfer.phase === "granted" && (transfer.grantedAtMs === null || transfer.expectedRevision === null)) return false;
-    if (transfer.phase === "completed" && transfer.grantedAtMs === null) return false;
-    if (transfer.phase === "requested" || transfer.phase === "granted") {
-      if (live.has(transfer.client as string)) return false;
-      live.add(transfer.client as string);
-    }
-    ids.add(transfer.transferId);
   }
   return true;
 }
@@ -2319,7 +2281,7 @@ export class AccountEnrollment extends DurableObject<Env> {
 
   /* -------------------------------------------------- Phase 10 lifecycle */
   /** Account-session lifecycle operations: status, export, device list and
-   * revocation, two-step erase and ordered writer transfer. Reads pass the
+   * revocation and two-step erase. Reads pass the
    * erasure tombstone so an erased account can still prove its state; every
    * mutation acquires the restore fence, records durable intent before any
    * effect, and is idempotent under retry. The reply vocabulary is the frozen
@@ -2335,10 +2297,7 @@ export class AccountEnrollment extends DurableObject<Env> {
         case "devices": result = await this.#lifecycleDevices(request); break;
         case "revoke_device": result = await this.#lifecycleRevoke(request, request.deviceId); break;
         case "erase_request": result = await this.#lifecycleEraseRequest(request); break;
-        case "erase_confirm": result = await this.#lifecycleEraseConfirm(request, request.token); break;
-        case "transfer_request": result = await this.#lifecycleTransferRequest(request, request.client, request.fromDeviceId, request.toDeviceId); break;
-        case "transfer_grant": result = await this.#lifecycleTransferGrant(request, request.transferId); break;
-        default: result = await this.#lifecycleTransferComplete(request, request.transferId); break;
+        default: result = await this.#lifecycleEraseConfirm(request, request.token); break;
       }
     } catch { result = err("storage_unavailable"); }
     return result.ok ? result : { ok: false, error: lifecycleError(result.error) };
@@ -2443,7 +2402,7 @@ export class AccountEnrollment extends DurableObject<Env> {
   }
   /** Any enrolled device of the account can be revoked by an account session.
    * Historical facts stay: the device row keeps its enrollment and gains a
-   * revocation time; live transfers naming it as successor are refused. */
+   * revocation time. */
   async #lifecycleRevoke(scope: LifecycleScope, deviceId: string): Promise<EnrollmentResult<LifecycleDeviceV1>> {
     return this.#lifecycleMutation(scope, (state, now) => {
       const device = state.devices.find(candidate => candidate.deviceId === deviceId);
@@ -2451,9 +2410,6 @@ export class AccountEnrollment extends DurableObject<Env> {
       if (device.revokedAtMs !== null) return { state: null, result: ok(Object.freeze({ schemaVersion: 1 as const, kind: "device" as const, device: lifecycleDeviceOf(device) })) };
       device.revokedAtMs = now;
       if (this.#statsPresent()) new StatsState(this.ctx.storage.sql).revokeDevice(deviceId);
-      for (const transfer of state.lifecycle?.transfers ?? []) {
-        if (transfer.toDeviceId === deviceId && (transfer.phase === "requested" || transfer.phase === "granted")) refuseTransfer(transfer, "successor_revoked");
-      }
       return { state, result: ok(Object.freeze({ schemaVersion: 1 as const, kind: "device" as const, device: lifecycleDeviceOf(device) })) };
     });
   }
@@ -2468,7 +2424,7 @@ export class AccountEnrollment extends DurableObject<Env> {
       }
       const erasure: LifecycleErasure = { token: enrollmentRandom(), requestedAtMs: now, requestExpiresAtMs: now + LIFECYCLE_ERASE_REQUEST_TTL_MS,
         confirmedAtMs: null, step: 0, completedAtMs: null, sealed: false, ledger: null };
-      state.lifecycle = { erasure, transfers: state.lifecycle?.transfers ?? [] };
+      state.lifecycle = { erasure };
       return { state, result: ok(Object.freeze({ schemaVersion: 1 as const, kind: "erase_request" as const, token: erasure.token,
         requestedAtMs: erasure.requestedAtMs, requestExpiresAtMs: erasure.requestExpiresAtMs })) };
     });
@@ -2535,7 +2491,6 @@ export class AccountEnrollment extends DurableObject<Env> {
               for (const device of state.devices) {
                 if (device.revokedAtMs === null) { device.revokedAtMs = now; if (this.#statsPresent()) new StatsState(this.ctx.storage.sql).revokeDevice(device.deviceId); }
               }
-              for (const transfer of state.lifecycle?.transfers ?? []) if (transfer.phase === "requested" || transfer.phase === "granted") refuseTransfer(transfer, "account_erased");
               record.step = 3;
               return null;
             });
@@ -2547,7 +2502,7 @@ export class AccountEnrollment extends DurableObject<Env> {
             advanced = step(4, (state, record, now) => {
               const sql = this.ctx.storage.sql;
               for (const name of [...Object.keys(CONTRIBUTION_REBUILD_SCHEMA), ...Object.keys(ACCOUNT_WORK_SCHEMA), ...Object.keys(CONTRIBUTION_PROJECTION_SCHEMA),
-                ...Object.keys(CONTRIBUTION_SCHEMA), ...Object.keys(STATS_SCHEMA), ...Object.keys(ADMISSION_SCHEMA)]) sql.exec(`DROP TABLE IF EXISTS ${name}`);
+                ...Object.keys(CONTRIBUTION_SCHEMA), ...Object.keys(STATS_SCHEMA), ...Object.keys(RETIRED_STATS_SCHEMA), ...Object.keys(ADMISSION_SCHEMA)]) sql.exec(`DROP TABLE IF EXISTS ${name}`);
               new AdmissionState(sql).initialize(state);
               sql.exec("UPDATE account_enrollment SET schema_version = 5 WHERE id = 1");
               this.#statsReadMemo.clear();
@@ -2626,84 +2581,6 @@ export class AccountEnrollment extends DurableObject<Env> {
     } catch { return false; }
     finally { disposeReply(raw); }
   }
-  /** Transfer request: the account session records the intent to move one
-   * client's writer authority from an active predecessor to an active
-   * successor. A revoked predecessor cannot originate a transfer, and one
-   * live transfer per client bounds concurrency. */
-  async #lifecycleTransferRequest(scope: LifecycleScope, client: LifecycleClient, fromDeviceId: string, toDeviceId: string): Promise<EnrollmentResult<LifecycleTransferV1>> {
-    if (fromDeviceId === toDeviceId) return err("invalid_input");
-    return this.#lifecycleMutation(scope, (state, now) => {
-      const from = state.devices.find(device => device.deviceId === fromDeviceId), to = state.devices.find(device => device.deviceId === toDeviceId);
-      if (from === undefined || to === undefined) return { state: null, result: err("not_enrolled") };
-      if (from.revokedAtMs !== null || to.revokedAtMs !== null) return { state: null, result: err("device_revoked") };
-      const transfers = state.lifecycle?.transfers ?? [];
-      for (const transfer of transfers) if ((transfer.phase === "requested" || transfer.phase === "granted") && now >= transfer.expiresAtMs) refuseTransfer(transfer, "expired");
-      const live = transfers.find(transfer => transfer.client === client && (transfer.phase === "requested" || transfer.phase === "granted"));
-      if (live !== undefined) {
-        if (live.fromDeviceId === fromDeviceId && live.toDeviceId === toDeviceId) return { state, result: ok(lifecycleTransferReply(live)) };
-        return { state, result: err("conflict") };
-      }
-      while (transfers.length >= LIFECYCLE_MAX_TRANSFERS) {
-        const oldest = transfers.map((transfer, index) => ({ transfer, index })).filter(entry => entry.transfer.phase === "completed" || entry.transfer.phase === "refused")
-          .sort((a, b) => a.transfer.requestedAtMs - b.transfer.requestedAtMs)[0];
-        if (oldest === undefined) return { state, result: err("limit") };
-        transfers.splice(oldest.index, 1);
-      }
-      const transfer: LifecycleTransfer = { transferId: enrollmentRandom(), client, fromDeviceId, toDeviceId, phase: "requested", requestedAtMs: now,
-        grantedAtMs: null, completedAtMs: null, expiresAtMs: now + LIFECYCLE_TRANSFER_TTL_MS, expectedRevision: null, ownershipRevision: null, refusal: null };
-      transfers.push(transfer);
-      state.lifecycle = { erasure: state.lifecycle?.erasure ?? null, transfers };
-      return { state, result: ok(lifecycleTransferReply(transfer)) };
-    });
-  }
-  /** Transfer grant: the ordered control decision. It revokes the predecessor
-   * (so the predecessor can never write after the decision) and pins the
-   * stats revision the completion must observe. */
-  async #lifecycleTransferGrant(scope: LifecycleScope, transferId: string): Promise<EnrollmentResult<LifecycleTransferV1>> {
-    return this.#lifecycleMutation(scope, (state, now) => {
-      const transfer = state.lifecycle?.transfers.find(candidate => candidate.transferId === transferId);
-      if (transfer === undefined) return { state: null, result: err("conflict") };
-      if (transfer.phase === "granted" || transfer.phase === "completed") return { state: null, result: ok(lifecycleTransferReply(transfer)) };
-      if (transfer.phase === "refused") return { state: null, result: err("conflict") };
-      if (now >= transfer.expiresAtMs) { refuseTransfer(transfer, "expired"); return { state, result: err("expired") }; }
-      const to = state.devices.find(device => device.deviceId === transfer.toDeviceId);
-      if (to === undefined || to.revokedAtMs !== null) { refuseTransfer(transfer, "successor_revoked"); return { state, result: err("device_revoked") }; }
-      if (!this.#statsPresent()) return { state: null, result: err("unavailable") };
-      const from = state.devices.find(device => device.deviceId === transfer.fromDeviceId);
-      if (from === undefined) return { state: null, result: err("storage_invalid") };
-      const stats = new StatsState(this.ctx.storage.sql);
-      if (from.revokedAtMs === null) { from.revokedAtMs = now; stats.revokeDevice(from.deviceId); }
-      transfer.phase = "granted"; transfer.grantedAtMs = now; transfer.expectedRevision = stats.control().revision;
-      return { state, result: ok(lifecycleTransferReply(transfer)) };
-    });
-  }
-  /** Transfer completion applies the granted decision to the stats writer
-   * table under the pinned revision. Deterministic refusals are recorded on
-   * the transfer; transient faults leave it granted for retry. */
-  async #lifecycleTransferComplete(scope: LifecycleScope, transferId: string): Promise<EnrollmentResult<LifecycleTransferV1>> {
-    return this.#lifecycleMutation(scope, (state, now) => {
-      const transfer = state.lifecycle?.transfers.find(candidate => candidate.transferId === transferId);
-      if (transfer === undefined) return { state: null, result: err("conflict") };
-      if (transfer.phase === "completed") return { state: null, result: ok(lifecycleTransferReply(transfer)) };
-      if (transfer.phase !== "granted" || transfer.expectedRevision === null) return { state: null, result: err("conflict") };
-      if (now >= transfer.expiresAtMs) { refuseTransfer(transfer, "expired"); return { state, result: err("expired") }; }
-      if (!this.#statsPresent()) return { state: null, result: err("unavailable") };
-      if (this.#contributionsActive()) return { state: null, result: err("conflict") };
-      try {
-        const applied = new StatsState(this.ctx.storage.sql).transferWriter(state, transfer.client, transfer.fromDeviceId, transfer.toDeviceId, transfer.expectedRevision, now);
-        this.#statsReadMemo.clear();
-        transfer.phase = "completed"; transfer.completedAtMs = now; transfer.ownershipRevision = applied.ownershipRevision;
-        return { state, result: ok(lifecycleTransferReply(transfer)) };
-      } catch (error) {
-        if (error instanceof StatsFault && (error.code === "writer_conflict" || error.code === "unauthorized" || error.code === "conflict")) {
-          refuseTransfer(transfer, error.code);
-          return { state, result: err(error.code === "unauthorized" ? "device_revoked" : "conflict") };
-        }
-        throw error;
-      }
-    });
-  }
-
   /** Separately reviewed repair cutover for a fully compared rebuild job. It
    * accepts only an explicit `publish` request, shares the rebuild flight slot,
    * performs no object I/O, and commits the receipt transition together with
@@ -2962,9 +2839,6 @@ function lifecycleError(code: EnrollmentError): UsageLifecycleError {
   if (code === "writer_conflict" || code === "handle_unavailable" || code === "publishing_full") return "conflict";
   return "unavailable";
 }
-function refuseTransfer(transfer: LifecycleTransfer, refusal: string): void {
-  transfer.phase = "refused"; transfer.refusal = refusal;
-}
 function lifecycleDeviceOf(device: Device): LifecycleDeviceViewV1 {
   return Object.freeze({ deviceId: device.deviceId, enrolledAtMs: device.enrolledAtMs, revokedAtMs: device.revokedAtMs,
     state: device.revokedAtMs === null ? "active" as const : "revoked" as const });
@@ -2974,21 +2848,13 @@ function lifecycleErasureOf(erasure: LifecycleErasure): LifecycleErasureViewV1 {
     step: erasure.step, stepCount: LIFECYCLE_ERASE_STEPS, requestedAtMs: erasure.requestedAtMs, requestExpiresAtMs: erasure.requestExpiresAtMs,
     confirmedAtMs: erasure.confirmedAtMs, completedAtMs: erasure.completedAtMs, sealed: erasure.sealed });
 }
-function lifecycleTransferOf(transfer: LifecycleTransfer): LifecycleTransferViewV1 {
-  return Object.freeze({ transferId: transfer.transferId, client: transfer.client, fromDeviceId: transfer.fromDeviceId, toDeviceId: transfer.toDeviceId,
-    phase: transfer.phase, requestedAtMs: transfer.requestedAtMs, grantedAtMs: transfer.grantedAtMs, completedAtMs: transfer.completedAtMs,
-    expiresAtMs: transfer.expiresAtMs, expectedRevision: transfer.expectedRevision, ownershipRevision: transfer.ownershipRevision, refusal: transfer.refusal });
-}
-function lifecycleTransferReply(transfer: LifecycleTransfer): LifecycleTransferV1 {
-  return Object.freeze({ schemaVersion: 1 as const, kind: "transfer" as const, transfer: lifecycleTransferOf(transfer) });
-}
 function lifecycleStatusOf(state: State, revision: number): LifecycleStatusV1 {
   const erasure = state.lifecycle?.erasure ?? null, view = erasure === null ? null : lifecycleErasureOf(erasure);
   return Object.freeze({ schemaVersion: 1 as const, kind: "status" as const, contract: LIFECYCLE_STATUS_CONTRACT, accountId: state.accountId,
     generation: state.generation, phase: view?.phase === "erased" ? "erased" as const : view?.phase === "confirmed" ? "erasing" as const : "active" as const,
     stateRevision: revision,
     devices: Object.freeze({ active: state.devices.filter(device => device.revokedAtMs === null).length, revoked: state.devices.filter(device => device.revokedAtMs !== null).length }),
-    erasure: view, transfers: Object.freeze((state.lifecycle?.transfers ?? []).map(lifecycleTransferOf)),
+    erasure: view,
     publishing: Object.freeze({ consent: state.leaderboard.consent, publicHandle: state.leaderboard.publicHandle, member: null, waitlist: null, waitlistKnown: false }) });
 }
 /** The durable reclamation contract (`reclamation-ledger-v1`) consumed by the
@@ -3052,10 +2918,9 @@ function exportSectionItems(sql: SqlStorage, section: string, state: State, revi
     return [header(true, values.length), ...values.map((value, index) => exportItem(section, keys[index], value))];
   }
   if (section === "lifecycle") {
-    const erasure = state.lifecycle?.erasure ?? null, transfers = state.lifecycle?.transfers ?? [];
-    const values: LifecycleJson[] = [erasure === null ? null : exportValue({ ...lifecycleErasureOf(erasure), ledger: erasure.ledger }),
-      ...transfers.map(transfer => exportValue(lifecycleTransferOf(transfer)))];
-    const keys = ["erasure", ...transfers.map((_transfer, index) => `transfer:${index}`)];
+    const erasure = state.lifecycle?.erasure ?? null;
+    const values: LifecycleJson[] = [erasure === null ? null : exportValue({ ...lifecycleErasureOf(erasure), ledger: erasure.ledger })];
+    const keys = ["erasure"];
     return [header(state.lifecycle !== undefined, values.length), ...values.map((value, index) => exportItem(section, keys[index], value))];
   }
   if (!(LIFECYCLE_EXPORT_SECTIONS as readonly string[]).includes(section)) throw new AdmissionFault("storage_invalid");
