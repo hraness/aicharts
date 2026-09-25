@@ -115,6 +115,87 @@
         },
         "version": null
       },
+      "id": "cb24f3a2-82ab-4f97-be88-92a28118bf1c",
+      "metrics": {
+        "domains": {
+          "earth": {
+            "nTrials": 24,
+            "passes": 15,
+            "resolutionRatePercent": 62.5,
+            "standardErrorPercent": 9.882117688026186,
+            "totalCostUsd": 638.2260182000001,
+            "totalTokens": 1340109649
+          },
+          "engineering": {
+            "nTrials": 27,
+            "passes": 17,
+            "resolutionRatePercent": 62.96296296296296,
+            "standardErrorPercent": 9.293489539618284,
+            "totalCostUsd": 1028.4841072,
+            "totalTokens": 1652861078
+          },
+          "life": {
+            "nTrials": 57,
+            "passes": 31,
+            "resolutionRatePercent": 54.385964912280706,
+            "standardErrorPercent": 6.597132965516611,
+            "totalCostUsd": 970.3947527000001,
+            "totalTokens": 1929930990
+          },
+          "mathematical": {
+            "nTrials": 51,
+            "passes": 39,
+            "resolutionRatePercent": 76.47058823529412,
+            "standardErrorPercent": 5.939743109381192,
+            "totalCostUsd": 1159.0756179999998,
+            "totalTokens": 1684896896
+          },
+          "physical": {
+            "nTrials": 51,
+            "passes": 31,
+            "resolutionRatePercent": 60.78431372549019,
+            "standardErrorPercent": 6.836606453024293,
+            "totalCostUsd": 1078.0771736999998,
+            "totalTokens": 2139129551
+          }
+        },
+        "nTrials": 210,
+        "passes": 133,
+        "resolutionRatePercent": 63.33333333333333,
+        "standardErrorPercent": 3.3253873546101445,
+        "totalCostUsd": 4874.2576698,
+        "totalTokens": 8746928164
+      },
+      "model": {
+        "display": {
+          "label": "Opus 5.5",
+          "url": "https://www.anthropic.com/claude-opus-5-5"
+        },
+        "organization": {
+          "label": "Anthropic",
+          "url": "https://www.anthropic.com"
+        },
+        "version": null
+      },
+      "rank": 2,
+      "reasoningEffort": "max",
+      "releaseDate": "2026-09-22",
+      "safeguardMode": null,
+      "sourceUpdatedAt": "2026-09-23T16:29:34.906395+00:00",
+      "sourceUrl": "https://hub.harborframework.com/datasets/terminal-bench-science/terminal-bench-science/0.1.0/leaderboards/v0-1-eval/rows/cb24f3a2-82ab-4f97-be88-92a28118bf1c"
+    },
+    {
+      "harness": {
+        "display": {
+          "label": "Claude Code",
+          "url": "https://claude.com/product/claude-code"
+        },
+        "organization": {
+          "label": "Anthropic",
+          "url": "https://www.anthropic.com"
+        },
+        "version": null
+      },
       "id": "1264a994-632f-4742-a143-a848a6ad4114",
       "metrics": {
         "domains": {
@@ -177,7 +258,7 @@
         },
         "version": null
       },
-      "rank": 2,
+      "rank": 3,
       "reasoningEffort": "max",
       "releaseDate": "2026-09-01",
       "safeguardMode": null,
@@ -258,7 +339,7 @@
         },
         "version": null
       },
-      "rank": 3,
+      "rank": 4,
       "reasoningEffort": "max",
       "releaseDate": "2026-07-24",
       "safeguardMode": null,
@@ -339,7 +420,7 @@
         },
         "version": null
       },
-      "rank": 4,
+      "rank": 5,
       "reasoningEffort": "max",
       "releaseDate": "2026-07-09",
       "safeguardMode": null,
@@ -420,7 +501,7 @@
         },
         "version": null
       },
-      "rank": 5,
+      "rank": 6,
       "reasoningEffort": "max",
       "releaseDate": "2026-06-09",
       "safeguardMode": null,
@@ -501,7 +582,7 @@
         },
         "version": null
       },
-      "rank": 6,
+      "rank": 7,
       "reasoningEffort": "max",
       "releaseDate": "2026-09-10",
       "safeguardMode": null,
@@ -582,7 +663,7 @@
         },
         "version": null
       },
-      "rank": 7,
+      "rank": 8,
       "reasoningEffort": "xhigh",
       "releaseDate": "2026-09-21",
       "safeguardMode": null,
@@ -663,7 +744,7 @@
         },
         "version": null
       },
-      "rank": 8,
+      "rank": 9,
       "reasoningEffort": "high",
       "releaseDate": "2026-09-02",
       "safeguardMode": null,
@@ -744,7 +825,7 @@
         },
         "version": null
       },
-      "rank": 9,
+      "rank": 10,
       "reasoningEffort": "max",
       "releaseDate": "2026-05-28",
       "safeguardMode": null,
@@ -825,7 +906,7 @@
         },
         "version": null
       },
-      "rank": 10,
+      "rank": 11,
       "reasoningEffort": "max",
       "releaseDate": "2026-07-09",
       "safeguardMode": null,
@@ -906,7 +987,7 @@
         },
         "version": null
       },
-      "rank": 11,
+      "rank": 12,
       "reasoningEffort": "max",
       "releaseDate": "2026-08-14",
       "safeguardMode": null,
@@ -987,7 +1068,7 @@
         },
         "version": null
       },
-      "rank": 12,
+      "rank": 13,
       "reasoningEffort": "max",
       "releaseDate": "2026-07-16",
       "safeguardMode": null,
@@ -1068,7 +1149,7 @@
         },
         "version": null
       },
-      "rank": 13,
+      "rank": 14,
       "reasoningEffort": "xhigh",
       "releaseDate": "2026-08-12",
       "safeguardMode": null,
@@ -1149,7 +1230,7 @@
         },
         "version": null
       },
-      "rank": 14,
+      "rank": 15,
       "reasoningEffort": "high",
       "releaseDate": "2026-08-13",
       "safeguardMode": null,
@@ -1230,7 +1311,7 @@
         },
         "version": null
       },
-      "rank": 15,
+      "rank": 16,
       "reasoningEffort": "max",
       "releaseDate": "2026-08-13",
       "safeguardMode": null,
@@ -1311,7 +1392,7 @@
         },
         "version": null
       },
-      "rank": 16,
+      "rank": 17,
       "reasoningEffort": "max",
       "releaseDate": "2026-07-09",
       "safeguardMode": null,
@@ -1327,7 +1408,7 @@
     "leaderboardId": "9a545a14-78d0-44b4-9003-afe062522a47",
     "leaderboardName": "v0-1-eval",
     "leaderboardPackage": "terminal-bench-science/terminal-bench-science",
-    "leaderboardUpdatedAt": "2026-09-22T11:46:04.426644+00:00",
+    "leaderboardUpdatedAt": "2026-09-23T16:29:34.906395+00:00",
     "leaderboardUrl": "https://hub.harborframework.com/datasets/terminal-bench-science/terminal-bench-science/0.1.0?leaderboard=v0-1-eval&tab=leaderboard",
     "method": "version-pinned-release-owner-leaderboard-api",
     "name": "Terminal-Bench-Science and Harbor Framework",
@@ -1340,7 +1421,7 @@
     "releaseTag": "v0.1.0",
     "releaseUrl": "https://github.com/harbor-framework/terminal-bench-science/releases/tag/v0.1.0",
     "repositoryUrl": "https://github.com/harbor-framework/terminal-bench-science",
-    "retrievedAt": "2026-09-23T03:44:41.725Z",
+    "retrievedAt": "2026-09-25T15:34:56.683Z",
     "sourceClass": "benchmark-owner"
   }
 }
