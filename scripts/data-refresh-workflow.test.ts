@@ -397,8 +397,11 @@ describe("scheduled model-data refresh", () => {
 
   test("publishes only the fifteen current owned snapshots through the protected-branch contract", () => {
     const publish = String(step("publish").run);
-    expect(refresh["timeout-minutes"]).toBe(45);
+    // About 15 minutes of validation plus two bounded publication rounds.
+    expect(refresh["timeout-minutes"]).toBe(90);
     expect(refresh.env).toMatchObject({
+      PUBLISH_DISPATCH_WAIT: "18",
+      PUBLISH_REQUIRED_WAIT: "150",
       ARENA_MEDIA_PATH: "data/arena-media.json",
       ATLAS_AUDIO_PATH: "data/benchmark-atlas-audio.json",
       ATLAS_MULTIMODAL_PATH: "data/benchmark-atlas-multimodal.json",
@@ -476,26 +479,45 @@ describe("scheduled model-data refresh", () => {
     expect(publish).toContain('"HEAD:refs/heads/${REFRESH_BRANCH}"');
     expect(publish).toContain('gh pr create --base main');
     expect(publish).toContain('pr_number="${pr_url##*/}"');
-    // Strict required checks refuse a behind-main merge; the bounded round
-    // reconciles through update-branch and then lets natural CI checks satisfy
-    // the required status before enabling squash auto-merge.
+    // A run that stopped mid-publication may leave its PR open; the next run
+    // retires it before opening a fresher one.
+    expect(publish).toContain('select(.headRefName | startswith("automation/model-data-refresh-"))');
+    expect(publish.indexOf("Superseded by the newer refresh")).toBeLessThan(publish.indexOf("gh pr create --base main"));
+    // Publication binds itself to the CI run for the exact PR head: it names
+    // that run, waits for its Required result, and records why it stopped.
     expect(publish).toContain("for publish_round in 1 2");
-    expect(publish).toContain('--json mergeStateStatus --jq');
-    expect(publish).toContain('"repos/${GITHUB_REPOSITORY}/pulls/${pr_number}/update-branch"');
-    expect(publish).toContain('--json headRefOid --jq');
-    expect(publish).toContain('gh pr merge "$pr_url" --auto --squash --delete-branch');
-    expect(publish).toContain('for merge_attempt in {1..90}');
-    expect(publish).toContain('if [[ "$merge_attempt" -lt 90 ]]; then sleep 10; fi');
-    expect(publish).toContain('gh pr merge "$pr_url" --disable-auto || true');
-    expect(publish).toContain('gh pr close "$pr_url" --delete-branch || true');
-    expect(publish).toContain('if [[ "$pr_state" != "MERGED" ]]');
-    expect(publish).not.toContain("HEAD:main");
+    expect(publish).toContain('gh run list --workflow ci.yml --commit "$1"');
+    expect(publish).toContain('select(.name == "Required")');
+    expect(publish).toContain('echo "ci_run_url=${ci_run_url}" >> "$GITHUB_OUTPUT"');
+    expect(publish).toContain('echo "detail=${detail}" >> "$GITHUB_OUTPUT"');
+    expect(publish).toContain('for merge_attempt in $(seq 1 "$PUBLISH_REQUIRED_WAIT")');
+    expect(publish).toContain('while [[ "$dispatch_waited" -lt "$PUBLISH_DISPATCH_WAIT" ]]');
+    // Only a pull_request event lands check runs in the PR's merge rollup, so
+    // the one re-dispatch is a close-and-reopen, never a workflow_dispatch or
+    // a hand-written commit status.
+    expect(publish).toContain('gh pr reopen "$pr_url"');
     expect(publish).not.toContain('gh workflow run ci.yml --ref "$REFRESH_BRANCH"');
     expect(publish).not.toContain('"repos/${GITHUB_REPOSITORY}/statuses/${head_sha}"');
+    // Strict required checks refuse a behind-main merge; one update-branch
+    // round reconciles, and GitHub squashes once Required passes.
+    expect(publish).toContain('"repos/${GITHUB_REPOSITORY}/pulls/${pr_number}/update-branch"');
+    expect(publish).toContain('gh pr merge "$pr_url" --auto --squash --delete-branch || true');
+    expect(publish).toContain('gh pr merge "$pr_url" --squash --delete-branch || true');
+    expect(publish).toContain('if [[ "$merge_state" == "BEHIND" || "$merge_state" == "DIRTY" ]]; then break; fi');
+    // A Required failure is classified against main's own latest CI so the
+    // alert distinguishes an inherited red main from a data admission problem.
+    expect(publish).toContain("gh run list --workflow ci.yml --branch main --event push --status completed");
+    expect(publish).toContain("the refreshed data was not implicated");
+    expect(publish).toContain("needs a reviewed admission change");
+    // Every stop disables auto-merge, closes the PR, and deletes the branch.
+    expect(publish).toContain('gh pr merge "$pr_url" --disable-auto >/dev/null 2>&1 || true');
+    expect(publish).toContain('gh pr close "$pr_url" --delete-branch --comment "Publication stopped: ${detail}');
+    expect(publish).toContain('if [[ "$(pr_field state)" != "MERGED" ]]');
+    expect(publish).not.toContain("HEAD:main");
     expect(publish.indexOf('echo "pr_url=${pr_url}"')).toBeLessThan(
-      publish.indexOf('"repos/${GITHUB_REPOSITORY}/pulls/${pr_number}/update-branch"'),
+      publish.indexOf('echo "ci_run_url=${ci_run_url}"'),
     );
-    expect(publish.indexOf('"repos/${GITHUB_REPOSITORY}/pulls/${pr_number}/update-branch"')).toBeLessThan(
+    expect(publish.indexOf('echo "ci_run_url=${ci_run_url}"')).toBeLessThan(
       publish.indexOf('gh pr merge "$pr_url" --auto'),
     );
     expect(ciWorkflow.on).toHaveProperty("workflow_dispatch");
@@ -645,7 +667,51 @@ describe("scheduled model-data refresh", () => {
     expect(result.log).toContain("Publication: `skipped`");
     expect(result.log).toContain("Update PR: not created");
     expect(result.log).toContain("Required CI: not dispatched");
+    expect(result.log).toContain("Publication detail: not recorded; see the run log");
     expect(result.log).not.toContain("ACTION:close");
+    expect(result.stdout).toContain("::error title=Model data refresh unhealthy");
+  });
+
+  test("executes health reporting that quotes the dispatched CI run and the recorded stop reason", async () => {
+    // Regression for issue 404: Required CI ran and failed on an inherited
+    // red main, yet the alert claimed it was never dispatched.
+    const health = steps.find(candidate => candidate.name === "Report health and manage the durable alert");
+    const detail = "Required CI concluded failure (https://github.com/hraness/aicharts/actions/runs/36111402549) against a main whose own latest CI is failure at 3646ce2 (https://github.com/hraness/aicharts/actions/runs/36110949531); the refreshed data was not implicated. The next scheduled refresh retries after main is fixed forward.";
+    const result = await executeWorkflowShell(String(health?.run), {
+      candidates: [],
+      extraEnvironment: {
+        FAKE_HEALTH_ISSUE_NUMBER: "",
+        PUBLISH_CI_RUN_URL: "https://github.com/hraness/aicharts/actions/runs/36111402549",
+        PUBLISH_DETAIL: detail,
+        PUBLISH_OUTCOME: "failure",
+        PUBLISH_PR_URL: "https://github.com/hraness/aicharts/pull/448",
+        REFRESH_MODE: "releases",
+        RUN_BENCHMARK_REFRESH: "false",
+        ARENA_MEDIA_OUTCOME: "skipped",
+        ATLAS_AUDIO_OUTCOME: "skipped",
+        ATLAS_VALS_OUTCOME: "skipped",
+        ATLAS_MULTIMODAL_OUTCOME: "skipped",
+        ATLAS_REASONING_OUTCOME: "skipped",
+        CALCULATOR_OUTCOME: "skipped",
+        DEEP_SWE_OUTCOME: "skipped",
+        INTELLIGENCE_OUTCOME: "skipped",
+        TERMINAL_BENCH_OUTCOME: "skipped",
+        TERMINAL_BENCH_SCIENCE_OUTCOME: "skipped",
+        SNAPSHOT_CHANGED: "true",
+        VALIDATION_OUTCOME: "success",
+      },
+      issueBody: "",
+    });
+
+    expect(result.status).toBe(1);
+    expect(result.stderr).toBe("");
+    expect(result.log).toContain("ACTION:create");
+    expect(result.log).toContain("Validation: `success`");
+    expect(result.log).toContain("Publication: `failure`");
+    expect(result.log).toContain("Update PR: https://github.com/hraness/aicharts/pull/448");
+    expect(result.log).toContain("Required CI: https://github.com/hraness/aicharts/actions/runs/36111402549");
+    expect(result.log).toContain(`Publication detail: ${detail}`);
+    expect(result.log).not.toContain("not dispatched");
     expect(result.stdout).toContain("::error title=Model data refresh unhealthy");
   });
 
