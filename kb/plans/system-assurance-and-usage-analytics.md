@@ -1785,3 +1785,54 @@ Linux qualification of the system-assurance tree. It is artifact admission
 only: no `cli-v` tag or immutable release was published, and the macOS
 notarized release, Worker redeploy, usage flags and live drills remain
 owner-gated.
+
+### 2026-09-25 — Parser-semantics hardening: admission bound, fork-tree properties, formal coverage
+
+The Tokscale reconciliation's root cause (replayed inherited cumulative
+counters counted as own turns) closed as a permanent assurance layer rather
+than a one-off fix. The work merged as `7743848`
+([PR 449](https://github.com/hraness/aicharts/pull/449)) after a semantic
+merge with main's assurance manifests.
+
+- Admission plausibility bound: `MAX_TOKENS_PER_RECORD = 8_388_608` enforced in
+  both the shared report contract (`STATS_MAX_TOKENS_PER_RECORD`) and the
+  CLI's `validate_report`, so an impossible per-record token total can never
+  commit under the monotonic server merge. Every registered client is
+  event-granular and `replace-snapshot` clients are `tokenBasis: unavailable`,
+  so no legitimate row approaches the bound.
+- Codex nested-fork dedup fix: generated fork-tree metamorphic tests (own
+  turns, replay prefixes, shared cumulative counters, UUIDv7/v4 id modes)
+  caught that replayed turns at depth ≥ 2 emitted dedup keys scoped to the
+  immediate parent rather than the logical turn, inflating ~2×. Dedup keys
+  are now scoped by `current_turn_id`; `CHECKPOINT_GENERATION` moved to 3 so
+  retained generation-2 keys cannot survive the format change.
+- Golden fixture: `codex_inherited_cumulative_replay.jsonl` pins the shared
+  12.9M-counter miniature to expected disjoint per-day totals.
+- Differential oracle: the generated suite asserts dedup-level sums equal the
+  generator's ground truth even when per-file parses intentionally overcount
+  under non-v7 ids.
+- TLA+: `M12MonotonicMerge` proves the unguarded merge commits a replayed
+  overcount (`m12-unguarded-overcount-commits`) and that a committed overcount
+  persists under retry (`m12-committed-overcount-persists`), with
+  `m12-guarded-merge-sanity` covering the admitted bounded merge; frozen
+  traces bind module and config hashes.
+- Kani: 21st harness `cumulative_baseline_delta_conserves_the_counter` proves
+  `baseline + delta = snapshot` on `checked_replace` with underflow refused;
+  mutation `baseline-delta-clamps-underflow` fails when the kernel clamps.
+  Manifests: 56 covers, 14 mutations, repinned unreachable-assertion bindings
+  on the merged `proofs.rs`.
+- Lean: eight dedup/lineage laws (`dedupSeen_retains`, `dedupSeen_absorbs`,
+  `dedupSeen_all_seen`, `dedupSeen_append`, `dedupSum_all_seen`,
+  `dedupSum_append`, `dedup_replay_neutral`, `dedupSum_distinct`) verified on
+  the pinned toolchain; 17 mathematical theorems total on allowed axioms.
+- Wide-arithmetic tests were reframed: admission generators now produce
+  physically plausible rows (tokens ≤ records × bound), and layers that fold
+  admitted rows exercise >2^53 sums through accumulated max-bound rows
+  (`records: 1` for contribution deltas).
+
+Evidence: `bun run check` green on the merged tree (2225 test files' worth
+across unit, worker, browser and script suites); full TLA+ suite (17
+baseline + 88 repaired cases) green; Kani receipt binds 21 harnesses and 14
+mutations; theorems receipt binds 26 production + 17 mathematical theorems
+with 5 negative controls; adapter qualification binds 204 tests including
+the raised codex group (81) and the merged devin group (16).
