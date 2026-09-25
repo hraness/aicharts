@@ -158,9 +158,14 @@ keyed, MAC-checked journal (`contribution-ops-v3`) before dispatch: a reply
 that never arrived replays the identical request, a decided refusal settles
 durably, and a later retry opens a fresh operation on current evidence.
 Journal records are never deleted; a tampered or foreign journal refuses
-before any network access. Publishing to the now-live leaderboard
-additionally requires the account owner's consent decision and a public
-handle through `/api/usage/consent`.
+before any network access. `--cancel-migration` replays a retained pending
+migration request to the dedicated cancel route and settles the local intent,
+so a wedged `pendingOperation` is always unwedgeable from the device. A
+single migration is bounded at 4,096 retained v1 journals, 8,192 heads,
+8,192 days, and 64 MiB of v1 source bytes; accounts beyond that envelope need
+a chunked-migration follow-on rather than a bigger one-shot. Publishing to
+the now-live leaderboard additionally requires the account owner's consent
+decision and a public handle through `/api/usage/consent`.
 
 On September 21 (UTC), commit `3a1ddb93456da39fd6a06037f1902dc81acf2663`
 ([PR 349](https://github.com/hraness/aicharts/pull/349)) deployed to both
