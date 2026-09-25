@@ -148,6 +148,51 @@ pub fn load_devin_desktop_session_lookup(
     lookup
 }
 
+/// `message_nodes` has no `created_at` index, so a timestamp filter alone
+/// leaf-scans the whole store. `row_id` is AUTOINCREMENT and monotone with
+/// `created_at` in practice, so the report's lower bound is probed by primary
+/// key and the windowed query reads only the tail pages it can still
+/// attribute. The probe floor carries one week of slack so mild insertion
+/// disorder cannot skip an in-window row; the exact `created_at` predicate
+/// below still decides each scanned row.
+const ROW_BOUND_SLACK_SECS: i64 = 7 * 86_400;
+
+fn devin_row_bound(conn: &rusqlite::Connection, floor_secs: i64) -> Option<i64> {
+    let bound_secs = floor_secs.saturating_sub(ROW_BOUND_SLACK_SECS);
+    let (mut lo, mut hi) = conn
+        .query_row(
+            "SELECT min(row_id) - 1, max(row_id) FROM message_nodes",
+            [],
+            |row| Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?)),
+        )
+        .ok()?;
+    let mut probe = conn
+        .prepare(
+            "SELECT row_id, typeof(created_at), created_at FROM message_nodes \
+             WHERE row_id <= ?1 ORDER BY row_id DESC LIMIT 1",
+        )
+        .ok()?;
+    while lo < hi {
+        let mid = lo + (hi - lo) / 2 + 1;
+        // Sparse ids: the probe returns the largest row at or below `mid`.
+        match probe
+            .query_row([mid], |row| {
+                Ok((
+                    row.get::<_, i64>(0)?,
+                    row.get::<_, String>(1)?,
+                    row.get::<_, Option<i64>>(2)?,
+                ))
+            })
+            .ok()
+        {
+            Some((_, kind, Some(created))) if kind == "integer" && created < bound_secs => lo = mid,
+            Some((row_id, _, _)) => hi = row_id - 1,
+            None => hi = mid - 1,
+        }
+    }
+    Some(lo)
+}
+
 pub fn parse_devin_cli_sqlite(db_path: &Path) -> Vec<UnifiedMessage> {
     let fallback_timestamp = file_modified_timestamp_ms(db_path);
     let Some(conn) = open_readonly_sqlite_opt(db_path) else {
@@ -179,14 +224,21 @@ pub fn parse_devin_cli_sqlite(db_path: &Path) -> Vec<UnifiedMessage> {
     // a response written later may have started within the requested range.
     // Null/malformed timestamps remain visible to the existing parser checks.
     let query = match crate::offline_io::first_observed_ms() {
-        Some(first_ms) => query.replace(
-            "ORDER BY m.row_id",
-            &format!(
-                "WHERE CASE WHEN typeof(m.created_at) = 'integer' AND m.created_at >= 0 \
-             THEN m.created_at >= {} ELSE 1 END ORDER BY m.row_id",
-                first_ms / 1000
-            ),
-        ),
+        Some(first_ms) => {
+            let floor_secs = i64::try_from(first_ms / 1000).unwrap_or(i64::MAX);
+            let mut predicates = Vec::new();
+            if let Some(bound) = devin_row_bound(&conn, floor_secs) {
+                predicates.push(format!("m.row_id > {bound}"));
+            }
+            predicates.push(format!(
+                "CASE WHEN typeof(m.created_at) = 'integer' AND m.created_at >= 0 \
+             THEN m.created_at >= {floor_secs} ELSE 1 END"
+            ));
+            query.replace(
+                "ORDER BY m.row_id",
+                &format!("WHERE {} ORDER BY m.row_id", predicates.join(" AND ")),
+            )
+        }
         None => query.to_owned(),
     };
     let mut messages = Vec::new();
@@ -641,6 +693,7 @@ mod tests {
     }
 
     #[test]
+    #[serial_test::serial]
     fn report_lower_bound_keeps_late_writes_that_back_anchor_into_the_window() {
         let dir = TempDir::new().unwrap();
         let root = std::fs::canonicalize(dir.path()).unwrap();
@@ -668,6 +721,37 @@ mod tests {
         assert_eq!(bounded.len(), 2);
         assert_eq!(bounded[0].timestamp, 1_700_000_005_000);
         assert_eq!(bounded[1].timestamp, 1_700_000_015_000);
+    }
+
+    #[test]
+    #[serial_test::serial]
+    fn row_bound_seeks_past_rows_before_the_slack_floor() {
+        let dir = TempDir::new().unwrap();
+        let db = create_devin_cli_db(&dir);
+        let conn = Connection::open(&db).unwrap();
+        insert_session(&conn, "one", "/synthetic", "claude-sonnet-4");
+        let row = r#"{"role":"assistant","metadata":{"metrics":{"input_tokens":10,"output_tokens":2,"total_time_ms":5000}}}"#;
+        // Stale rows are monotone before the slack floor; a gap in row ids
+        // exercises the sparse-id probe.
+        let mut stale_ids = Vec::new();
+        for offset in 0..5 {
+            stale_ids.push(insert_message(&conn, "one", row, 1_699_000_000 + offset));
+        }
+        insert_message(&conn, "one", row, 1_699_000_010);
+        conn.execute(
+            "DELETE FROM message_nodes WHERE row_id = ?1",
+            rusqlite::params![stale_ids[3]],
+        )
+        .unwrap();
+        for offset in 0..3 {
+            insert_message(&conn, "one", row, 1_700_000_000 + offset);
+        }
+        let floor_secs = 1_700_000_000_i64;
+        let bound = devin_row_bound(&conn, floor_secs).unwrap();
+        // Rows strictly before the slack floor are below the bound; the
+        // windowed query's exact `created_at` predicate (covered by the
+        // report-lower-bound test) still decides each scanned row.
+        assert_eq!(bound, 6);
     }
 
     fn insert_session(conn: &Connection, id: &str, working_directory: &str, model: &str) {
@@ -704,6 +788,7 @@ mod tests {
     }
 
     #[test]
+    #[serial_test::serial]
     fn test_parse_devin_cli_sqlite_reads_assistant_metrics() {
         let dir = TempDir::new().unwrap();
         let db_path = create_devin_cli_db(&dir);
@@ -742,6 +827,7 @@ mod tests {
     }
 
     #[test]
+    #[serial_test::serial]
     fn test_total_time_ms_timestamp_is_start_anchored() {
         // Regression (follow-up to #890): `message_nodes.created_at` is
         // stamped when the row is written, which happens once the assistant
@@ -777,6 +863,7 @@ mod tests {
     }
 
     #[test]
+    #[serial_test::serial]
     fn test_parse_devin_cli_sqlite_skips_non_assistant_and_missing_model() {
         let dir = TempDir::new().unwrap();
         let db_path = create_devin_cli_db(&dir);
@@ -804,6 +891,7 @@ mod tests {
     }
 
     #[test]
+    #[serial_test::serial]
     fn test_parse_devin_cli_sqlite_falls_back_to_session_model() {
         // When generation_model is absent, fall back to sessions.model.
         let dir = TempDir::new().unwrap();
@@ -825,6 +913,7 @@ mod tests {
     }
 
     #[test]
+    #[serial_test::serial]
     fn test_parse_devin_cli_sqlite_skips_adaptive_session_model() {
         // When generation_model is absent and sessions.model is "adaptive"
         // (a routing mode), the row should be skipped rather than reported
@@ -847,6 +936,7 @@ mod tests {
     }
 
     #[test]
+    #[serial_test::serial]
     fn test_parse_devin_cli_sqlite_skips_zero_usage() {
         let dir = TempDir::new().unwrap();
         let db_path = create_devin_cli_db(&dir);
@@ -866,6 +956,7 @@ mod tests {
     }
 
     #[test]
+    #[serial_test::serial]
     fn test_parse_devin_cli_sqlite_skips_malformed_rows_without_losing_later_usage() {
         let dir = TempDir::new().unwrap();
         let db_path = create_devin_cli_db(&dir);
@@ -888,6 +979,7 @@ mod tests {
     }
 
     #[test]
+    #[serial_test::serial]
     fn test_parse_devin_desktop_ndjson_extracts_usage() {
         let dir = TempDir::new().unwrap();
         let path = dir.path().join("event.ndjson");
@@ -913,6 +1005,7 @@ mod tests {
     }
 
     #[test]
+    #[serial_test::serial]
     fn test_parse_devin_desktop_usage_update_without_acp_fields_keeps_legacy_metrics() {
         let dir = TempDir::new().unwrap();
         let path = dir.path().join("legacy-usage-update.ndjson");
@@ -931,6 +1024,7 @@ mod tests {
     }
 
     #[test]
+    #[serial_test::serial]
     fn test_parse_devin_desktop_ndjson_keeps_distinct_events_with_identical_usage() {
         // Two events with identical model/tokens/timestamp at different line
         // positions must both survive — they represent distinct API calls.
@@ -952,6 +1046,7 @@ mod tests {
     }
 
     #[test]
+    #[serial_test::serial]
     fn test_parse_devin_desktop_acp_usage_aggregates_and_resolves_cli_title() {
         let dir = TempDir::new().unwrap();
         let db_path = create_devin_cli_db(&dir);
@@ -993,6 +1088,7 @@ mod tests {
     }
 
     #[test]
+    #[serial_test::serial]
     fn test_parse_devin_desktop_does_not_resolve_an_ambiguous_title() {
         let dir = TempDir::new().unwrap();
         let db_path = create_devin_cli_db(&dir);
@@ -1029,6 +1125,7 @@ mod tests {
     }
 
     #[test]
+    #[serial_test::serial]
     fn test_parse_devin_cli_sqlite_returns_empty_for_missing_db() {
         let messages = parse_devin_cli_sqlite(Path::new("/nonexistent/devin/sessions.db"));
         assert!(messages.is_empty());
