@@ -1502,3 +1502,28 @@ with the macOS notarized release left to the owner. A claim inventory
 (`docs/usage-claims.md`, 67 rows) with `usage:claims:check` closed F26 and
 corrected two overclaims; the check runs inside `usage:assurance:check` and
 `release:publish:check` runs inside `check`.
+
+### 2026-09-24 — Delivery gates lane: fuzz, fault matrix, security and nightly
+
+Phase 11 gates. `bun run usage:fuzz` runs the new `crates/aicharts-fuzz`
+crate: seeded xorshift stateful and property suites for ledger command
+sequences over real SQLite (commit, freeze, settle, reopen, backup, restore),
+usage and admission wire round trips with byte corruption and single-violation
+injection, and metrics arithmetic, token-partition and dominance laws, across
+four named seeds, admitting one receipt per suite and seed at the configured
+workload; 28 receipts passed at 1,000 iterations in 4 m 14 s.
+`bun run usage:fault-matrix` inventories eleven existing injected-failure
+suites (six worker files, five cargo groups) by exact test name, fails when
+any is missing, and passed all eleven in 53 s; it covers crash-before,
+crash-after, lost-reply, restore-race and capacity exhaustion and records
+disk-full as an uncovered gap. `bun run security:check` audits both Cargo
+locks and bun.lock, verifies every dependency, crate, action and bunx target
+is pinned and hashed, scans tracked files for credential shapes, and
+re-applies the PostHog boundary plus a privacy canary over analytics and
+discovery surfaces; its first run found the real RUSTSEC-2026-0285 advisory
+against the exact `rustls = 0.23.44` pin, which the integrator raised to
+0.23.45. `test:property` now reaches nested `lib/**` property files (108
+tests). A daily 09:00 UTC nightly workflow runs the TLA nightly profile,
+200,000-iteration fuzz, the fault matrix, the security gate and an optional
+perf baseline; a non-required security workflow runs on every pull request.
+All implemented and locally passing; none live-qualified.
