@@ -91,7 +91,7 @@ describe("homepage canonical content", () => {
   test("keeps the Pareto chart prominent and gives each other chart workspace its own destination", async () => {
     const source = await Bun.file(new URL("./page.tsx", import.meta.url)).text();
     const markup = renderToStaticMarkup(createElement(Home));
-    const mainAt = markup.indexOf('<main class="chart-home hraness-marketing-main" id="main-content">');
+    const mainAt = markup.indexOf('<main tabindex="-1" class="chart-home hraness-marketing-main" id="main-content">');
     const stripAt = markup.indexOf('class="home-index-strip"');
     const radarAt = markup.indexOf('class="model-release-radar"');
     const calculatorAt = markup.indexOf('class="home-calculator"');

@@ -24,11 +24,11 @@ type BrandThemeStyle = CSSProperties & Readonly<{
 }>;
 
 /**
- * SSR renders the Paper light palette tokens so the first paint is stable.
+ * SSR renders the Tokyo Night light palette tokens so the first paint is stable.
  * The blocking bootstrap replaces them with the stored preference before
- * paint; without JavaScript the `:root` fallbacks keep the Paper light look.
+ * paint; without JavaScript shared palette CSS follows the operating system.
  */
-const initialPalette = getDesignPaletteTheme("paper", "light");
+const initialPalette = getDesignPaletteTheme("tokyo-night", "light");
 
 const brandTheme: BrandThemeStyle = {
   "--brand-highlight": site.palette.tonal.highlight,
@@ -45,8 +45,8 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   colorScheme: "light dark",
   themeColor: [
-    { color: "#f8f7f4", media: "(prefers-color-scheme: light)" },
-    { color: "#12100f", media: "(prefers-color-scheme: dark)" },
+    { color: "#e1e2e7", media: "(prefers-color-scheme: light)" },
+    { color: "#1a1b26", media: "(prefers-color-scheme: dark)" },
   ],
 };
 
@@ -84,7 +84,8 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
     <html
       className={initialPalette.className}
       data-hraness-material="lantern"
-      data-palette="paper"
+      data-hraness-pattern="mesh"
+      data-palette="tokyo-night"
       lang="en"
       style={brandTheme}
       suppressHydrationWarning
@@ -95,10 +96,10 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
       </head>
       <body>
         <DesignPaletteProvider
-          defaultPreference={{ palette: "paper", mode: "system" }}
+          defaultPreference={{ palette: "tokyo-night", mode: "system" }}
           legacyStorageKey="aicharts-theme"
         >
-          <ThemeColorSync darkColor="#12100f" lightColor="#f8f7f4" />
+          <ThemeColorSync darkColor="#1a1b26" lightColor="#e1e2e7" />
           <script
             dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData).replaceAll("<", "\\u003c") }}
             type="application/ld+json"

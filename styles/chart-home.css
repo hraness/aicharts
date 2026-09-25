@@ -75,7 +75,7 @@
   .chart-home { padding-inline: 20px; }
   .chart-page-intro { padding-block: 26px 18px; }
   .benchmarks-home .chart-page-intro { display: block; }
-  .chart-page-intro > p { font-size: 14px; }
+  .chart-page-intro > p { font-size: 1rem; }
   .chart-home > .intelligence-efficiency { padding-top: 22px; }
   .coding-home .chart-metric-controls { flex-wrap: wrap; row-gap: 12px; }
   .coding-home .chart-benchmark-select { width: 100%; flex-basis: 100%; }

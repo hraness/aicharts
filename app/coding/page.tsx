@@ -24,7 +24,7 @@ export default function CodingPage() {
   const modelCardPaths = Object.fromEntries(MODEL_CARD_VARIANTS.flatMap(variant => variant.observations.map(observation => [observation.id, variant.path] as const)));
   return <>
     <SiteHeader current="/coding" />
-    <main className="chart-home coding-home" id="main-content">
+    <main tabIndex={-1} className="chart-home coding-home" id="main-content">
       <header className="chart-page-intro"><h1>Coding agent comparisons</h1><p>Each point is one model running in one agent harness at one effort setting, plotted by benchmark score against cost, time, or tokens per task.</p></header>
       <ChartNavigation current="/coding" />
       <Suspense fallback={<RouteLoadingState />}>

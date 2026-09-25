@@ -119,7 +119,7 @@
     "@hraness/design-kit": "github:hraness/design-kit#v0.17.0",
     "@hraness/site-footer": "github:hraness/site-footer#v0.15.0",
     "@hraness/suite-accounts": "github:hraness/suite-accounts#v0.9.15",
-    "@hraness/ui": "github:hraness/ui#v0.5.16",
+    "@hraness/ui": "github:hraness/ui#v0.5.18",
     "@hraness/vercel-delivery": "github:hraness/vercel-delivery#v0.1.2",
     "@hraness/web-discovery": "github:hraness/web-discovery#v0.8.0",
     "@hugeicons/core-free-icons": "^4.3.0",

@@ -1,7 +1,7 @@
 .leaderboard-home { padding-block-start: 2rem; padding-block-end: 6rem; }
 .leaderboard-home .usage-hero { gap: 1.5rem 2rem; padding-block-end: 2rem; }
 .leaderboard-home .usage-hero h1 { font-size: 2rem; letter-spacing: -.03em; line-height: 1.15; max-inline-size: none; }
-.leaderboard-home .usage-hero__lede { font-size: .95rem; margin-block-start: .75rem; max-inline-size: 65ch; }
+.leaderboard-home .usage-hero__lede { font-size: 1rem; margin-block-start: .75rem; max-inline-size: 65ch; }
 .leaderboard-home .usage-hero__actions { margin-block-start: 1rem; }
 .leaderboard-home .usage-status__dot { background: var(--muted); }
 .leaderboard-home .usage-board { padding-block-start: 1.5rem; }

@@ -29,3 +29,90 @@
   box-shadow: var(--hraness-material-inset);
   caret-color: var(--hraness-material-focus);
 }
+
+/* A compact lit introduction keeps the chart close to the product promise. */
+.chart-page-intro.chart-home-hero {
+  isolation: isolate;
+  overflow: clip;
+  position: relative;
+  border-radius: var(--radius-lg);
+  margin-block: 1.5rem;
+  padding: clamp(1.5rem, 4vw, 3rem);
+}
+.chart-home-hero > :not([data-hraness-hero-backdrop]) { position: relative; z-index: 1; }
+.chart-home-hero h1 { max-inline-size: 24ch; text-wrap: balance; }
+.chart-home-hero > p { text-wrap: pretty; }
+
+[data-hraness-material="lantern"] :is(.home-calculator, .home-activity__list a, .home-index-strip__row .model-logo-card) {
+  border-color: transparent;
+  background-color: var(--surface);
+  box-shadow: var(--hraness-material-lift);
+}
+[data-hraness-material="lantern"] .home-calculator__cta { border-color: transparent; box-shadow: var(--hraness-material-lift); }
+[data-hraness-material="lantern"] :is(.home-activity, .coding-benchmark-links, .aicharts-ask-ai) { border-top: 0; }
+[data-hraness-material="lantern"] :is(.home-activity__heading p, .home-index-strip__heading p, .home-calculator p, .home-activity__detail) { font-size: 1rem; line-height: 1.65; }
+[data-hraness-material="lantern"] :is(.home-activity__kind, .home-activity__list time) { font-size: .8125rem; letter-spacing: 0; text-transform: none; }
+[data-hraness-material="lantern"] .plain-publication { line-height: 1.75; }
+[data-hraness-material="lantern"] .plain-publication :is(pre, .plain-publication__table-scroll) { min-inline-size: 0; max-inline-size: 100%; overflow-x: auto; overscroll-behavior-inline: contain; }
+
+@media (forced-colors: active) {
+  [data-hraness-material="lantern"] :is(.home-calculator, .home-activity__list a, .home-index-strip__row .model-logo-card, .home-calculator__cta) { border-color: CanvasText; }
+}
+
+/* Reading and form roles share the foundation; plots and table encodings stay local. */
+.usage-home { --text-body: 1rem; --text-caption: .875rem; }
+[data-hraness-material="lantern"] :is(
+  .usage-hero__lede, .usage-status div span, .usage-metric-row p,
+  .usage-daily__privacy, .usage-daily__coverage, .usage-daily__hint, .usage-daily__error,
+  .usage-sessions__privacy, .usage-sessions__source, .usage-sessions__aggregate p,
+  .usage-sessions__detail header p, .usage-sessions__notice,
+  .usage-board__hint, .usage-consent__copy, .usage-consent__form > span, .usage-publishing-notice,
+  .usage-totals > p, p.usage-totals__muted, .usage-totals__notice
+) {
+  font-size: var(--text-body);
+  line-height: 1.65;
+  text-wrap: pretty;
+}
+[data-hraness-material="lantern"] :is(
+  .usage-daily__controls label, .usage-daily__controls > span, .usage-daily__range,
+  .usage-daily__overview h2, .usage-daily__totals dt, .usage-daily__figure figcaption span,
+  .usage-daily__details summary span, .usage-daily table caption,
+  .usage-sessions__aggregate dt, .usage-sessions__detail header > span,
+  .usage-sessions__select span, .usage-sessions__model-basis,
+  .usage-board table caption, .usage-consent__handle-field,
+  .usage-totals h2, .usage-totals__table caption
+) { font-size: var(--text-caption); line-height: 1.5; }
+[data-hraness-material="lantern"] .usage-totals__table :is(th, td) { border-block-start: 1px solid var(--grid); }
+[data-hraness-material="lantern"] :is(
+  .usage-daily__controls input, .usage-consent__handle-field input, .usage-sessions__scope select,
+  .usage-stats input, .usage-stats select
+) {
+  background: var(--surface);
+  border-color: transparent;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--hraness-material-inset);
+  caret-color: var(--hraness-material-focus);
+  font-size: var(--text-body);
+  font-weight: 400;
+  line-height: 1.5;
+}
+[data-hraness-material="lantern"] :is(
+  .usage-status, .usage-daily__controls, .usage-sessions__aggregate, .usage-consent__form,
+  .usage-stats__toolbar, .usage-stats__custom, .usage-stats__notice, .usage-stats__day-detail,
+  .usage-totals
+) {
+  border: 1px solid transparent;
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--hraness-material-lift);
+  padding: clamp(1rem, 3vw, 1.5rem);
+}
+@media (forced-colors: active) {
+  [data-hraness-material="lantern"] :is(
+    .usage-daily__controls input, .usage-consent__handle-field input, .usage-sessions__scope select,
+    .usage-stats input, .usage-stats select,
+    .usage-status, .usage-daily__controls, .usage-sessions__aggregate, .usage-consent__form,
+    .usage-stats__toolbar, .usage-stats__custom, .usage-stats__notice, .usage-stats__day-detail,
+    .usage-totals
+  ) { border-color: CanvasText; box-shadow: none; }
+}

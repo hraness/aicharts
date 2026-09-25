@@ -8,10 +8,10 @@ import { renderToStaticMarkup } from "react-dom/server";
 import GlobalError from "./global-error";
 import NotFound from "./not-found";
 
-test("appearance starts Paper, System and uses the shared persisted runtime", () => {
+test("appearance starts Tokyo Night, System and uses the shared persisted runtime", () => {
   const html = renderToStaticMarkup(
     <DesignPaletteProvider
-      defaultPreference={{ palette: "paper", mode: "system" }}
+      defaultPreference={{ palette: "tokyo-night", mode: "system" }}
       legacyStorageKey="aicharts-theme"
     >
       <ThemeMenuButton aria-label="Chart appearance" />
@@ -19,7 +19,7 @@ test("appearance starts Paper, System and uses the shared persisted runtime", ()
   );
 
   expect(html).toContain('data-presentation="menu"');
-  expect(html).toContain('aria-label="Chart appearance: Paper, System"');
+  expect(html).toContain('aria-label="Chart appearance: Tokyo Night, System"');
 });
 
 test("AI Charts does not keep a second theme runtime", async () => {
@@ -30,7 +30,7 @@ test("AI Charts does not keep a second theme runtime", async () => {
 
   expect(layout).toContain("DesignPaletteProvider");
   expect(layout).toContain('legacyStorageKey="aicharts-theme"');
-  expect(layout).toContain('data-palette="paper"');
+  expect(layout).toContain('data-palette="tokyo-night"');
   expect(layout).toContain('src="/theme-bootstrap.js"');
   expect(controls).toContain('from "@hraness/design-kit/react"');
   expect(controls).not.toContain("localStorage");
@@ -46,10 +46,10 @@ test("fallback documents remain control-free", () => {
   expect(`${globalError}${notFound}`).not.toContain("hraness-design-theme-toggle");
   expect(globalError).toContain('<meta content="light dark" name="color-scheme"/>');
   expect(globalError).toContain(
-    '<meta content="#f8f7f4" media="(prefers-color-scheme: light)" name="theme-color"/>',
+    '<meta content="#e1e2e7" media="(prefers-color-scheme: light)" name="theme-color"/>',
   );
   expect(globalError).toContain(
-    '<meta content="#12100f" media="(prefers-color-scheme: dark)" name="theme-color"/>',
+    '<meta content="#1a1b26" media="(prefers-color-scheme: dark)" name="theme-color"/>',
   );
   expect(notFound).toContain("<h1>Page not found</h1>");
   expect(notFound).toContain('href="/"');
