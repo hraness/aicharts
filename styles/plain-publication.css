@@ -357,6 +357,18 @@
   margin-top: 0.8rem;
 }
 
+.plain-site.plain-publication .plain-publication__provenance {
+  max-width: none;
+  margin: 0.35rem 0 0;
+  color: var(--plain-muted);
+  font-size: 0.85rem;
+  line-height: inherit;
+}
+
+.plain-site.plain-publication .plain-publication__related-products {
+  margin-top: 2rem;
+}
+
 .plain-site.plain-publication .plain-publication__editorial-figure {
   margin: 2rem 0 0;
 }

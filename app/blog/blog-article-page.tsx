@@ -1,10 +1,17 @@
 import { Breadcrumbs } from "@/components/ui";
 import { TrackedChartLink } from "@/components/tracked-chart-link";
+import { relatedFor } from "@hraness/design-kit/portfolio";
+import {
+  ArticleByline,
+  ArticleProvenance,
+  ArticleRelatedProducts,
+} from "@hraness/design-kit/react/server";
 import { JsonLdScript } from "@hraness/web-discovery/json-ld";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { ArticleBody } from "./article-body";
+import { blogArticleProvenance } from "./article-admissions";
 import { EditorialFigure } from "./editorial-figure";
 import {
   blogEditorialImage,
@@ -20,6 +27,7 @@ import {
   type BlogSlug,
 } from "./articles";
 import {
+  BLOG_ARTICLE_AUTHOR,
   blogArticleJsonLd,
   breadcrumbJsonLd,
 } from "./seo";
@@ -54,6 +62,7 @@ export async function BlogArticlePage({
       ? [{ text: block.text }]
       : []);
   const path = blogArticlePath(article.slug);
+  const relatedProducts = relatedFor("aicharts");
   const editorialImage = imageForSlug(article.slug);
 
   return (
@@ -90,7 +99,7 @@ export async function BlogArticlePage({
         <h1>{article.title}</h1>
         <p className="plain-publication__article-dek">{article.dek}</p>
         <p className="plain-publication__article-meta">
-          <span>By AI Charts</span>
+          <ArticleByline author={BLOG_ARTICLE_AUTHOR} />
           <span aria-hidden="true"> · </span>
           <span>Published </span>
           <time dateTime={article.publishedAt}>
@@ -108,6 +117,7 @@ export async function BlogArticlePage({
           <span aria-hidden="true"> · </span>
           <span>{articleReadingMinutes(article)} min read</span>
         </p>
+        <ArticleProvenance provenance={blogArticleProvenance(article.slug)} />
         {editorialImage === undefined ? null : (
           <EditorialFigure image={editorialImage} preload />
         )}
@@ -185,6 +195,13 @@ export async function BlogArticlePage({
               </ol>
             </section>
           )}
+
+          {article.showRelatedProducts === true && relatedProducts.length > 0 ? (
+            <ArticleRelatedProducts
+              headingId="related-products-title"
+              items={relatedProducts}
+            />
+          ) : null}
 
           <p className="plain-publication__disclosure">
             {article.sourceNote} {" "}

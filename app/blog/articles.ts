@@ -1,3 +1,5 @@
+import type { ArticleAuthor } from "@hraness/design-kit";
+
 import { site } from "../site";
 import { PUBLIC_BLOG_SLUGS } from "@/lib/public-analytics-routes";
 import { createAaIndexCostArticle } from "./aa-index-cost-article";
@@ -7,6 +9,7 @@ import { createGpt6SolArticle } from "./gpt-6-sol-coding-agent-index-article";
 import { createGrok47Article } from "./grok-4-7-coding-agent-index-article";
 import { createHarnessDesignArticle } from "./harness-design-coding-agents-article";
 import { createHarnessTaxArticle } from "./harnesstax-coding-agent-harness-article";
+import { createIntroducingAiChartsArticle } from "./introducing-ai-charts-article";
 import { createMimoV26Article } from "./mimo-v2-6-pro-cost-frontier-article";
 import { createOpenModelsCodingAgentsArticle } from "./open-models-coding-agents-article";
 import { createRealSweArticle } from "./real-swe-private-enterprise-benchmark-article";
@@ -14,6 +17,12 @@ import { createSmallModelsHaveArrivedArticle } from "./small-models-have-arrived
 import { createTerminalBenchScienceArticle } from "./terminal-bench-science-article";
 
 export const BLOG_SLUGS = PUBLIC_BLOG_SLUGS;
+
+/** Every note carries the organization byline (owner decision, 2026-09-23). */
+export const BLOG_ARTICLE_AUTHOR = {
+  kind: "organization",
+  name: "Hraness",
+} as const satisfies ArticleAuthor;
 
 export const blogDescription =
   "Sourced analysis of AI model and agent benchmarks: what each evaluation measures, what the results show, and where the evidence stops.";
@@ -298,11 +307,22 @@ export const BLOG_SOURCES = {
     url: "https://openai.com/index/introducing-gpt-6-sol-and-luna/",
     year: 2026,
   },
+  terminalBenchRepository: {
+    note:
+      "The benchmark owners’ repository publishes Terminal-Bench and its versioned task releases. The version-pinned Terminal-Bench 4.0 cohort in the AI Charts benchmarks library comes from the owners, separately from Artificial Analysis’s own Terminal-Bench 4 runs.",
+    publication: "Harbor Framework",
+    title: "Terminal-Bench",
+    url: "https://github.com/harbor-framework/terminal-bench",
+    year: 2026,
+  },
 } as const satisfies Record<string, BlogSource>;
 
 export type BlogSourceId = keyof typeof BLOG_SOURCES;
 
-/** Where each note's figures come from. AI-drafting disclosure appears only on hraness.com, never here. */
+/**
+ * Where each note's figures come from. The drafting and review note is separate:
+ * every note renders it from its admission record (owner decision, 2026-09-23).
+ */
 export const BLOG_SOURCE_NOTE =
   "Figures come from the cited primary sources and the AI Charts datasets. AI Charts did not rerun the reported benchmarks.";
 
@@ -322,6 +342,8 @@ export interface BlogArticle {
   readonly section?: string;
   readonly seoDescription: string;
   readonly showChartCta?: boolean;
+  /** Show the portfolio's registered relations for AI Charts after the body. */
+  readonly showRelatedProducts?: true;
   readonly slug: BlogSlug;
   readonly sourceIds: readonly BlogSourceId[];
   readonly title: string;
@@ -464,6 +486,7 @@ const mirrorCodeArticle = {
 } as const satisfies BlogArticle;
 
 export const blogArticles = [
+  createIntroducingAiChartsArticle(),
   createGpt6SolArticle(),
   createGrok47Article(),
   createMimoV26Article(),
@@ -522,9 +545,15 @@ export type BlogArticleMarkdownImage = Readonly<{
   src: string;
 }>;
 
+/**
+ * Canonical Markdown for one note. `provenance` is the drafting and review
+ * sentence from the note's admission record; the page and this document
+ * state it the same way.
+ */
 export function articleToMarkdown(
   article: BlogArticle,
   editorialImage?: BlogArticleMarkdownImage,
+  provenance?: string,
 ): string {
   const published = article.publishedAt === article.updatedAt
     ? article.publishedAt
@@ -583,8 +612,9 @@ export function articleToMarkdown(
     "",
     article.dek,
     "",
-    `Published ${published}.`,
+    `By ${BLOG_ARTICLE_AUTHOR.name}. Published ${published}.`,
     "",
+    ...(provenance === undefined ? [] : [provenance, ""]),
     article.sourceNote,
     "",
     ...(editorialImage === undefined ? [] : [
