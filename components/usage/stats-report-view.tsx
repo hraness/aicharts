@@ -10,6 +10,8 @@ import { exportCurrentStatsImage } from "./stats-export";
 import { useStatsMetricQuery, useStatsMetricDetail } from "./stats-metric-query";
 import type { MetricPresentation } from "./stats-metric-presentation";
 import { StatsMetricExplorer } from "./stats-metric-explorer";
+import type { RichExplorerSource } from "./rich-metric-explorer";
+import { savedViewFromSelection, savedViewRange, savedViewSearch, type SavedView } from "@/lib/usage/saved-views";
 import { StatsMetricDailyTable } from "./stats-metric-daily-table";
 import {
   ALL_STATS, formatStatsCompact, formatStatsDay, formatStatsInteger,
@@ -38,15 +40,19 @@ function saveCsv(text: string | Blob) {
   setTimeout(() => URL.revokeObjectURL(url), 1_000);
 }
 
-export function StatsReportView({ report, session, scope, todayUtcDay, onRangeRequest, onRefresh, initialSelection, captureExport, busy = false }: Readonly<{
-  report: UsageStatsReport | MetricReportMetadata; session?: MetricReportSession; scope: Scope; todayUtcDay: number;
+export function StatsReportView({ report, session, scope, todayUtcDay, onRangeRequest, onRefresh, initialSelection, captureExport, busy = false, rich, savedView = null, onSavedView }: Readonly<{
+  report: UsageStatsReport | MetricReportMetadata; session?: MetricReportSession; scope: Scope; todayUtcDay: number; rich?: RichExplorerSource;
   onRangeRequest?: (range: StatsRange, selection: StatsSelection) => void;
   onRefresh?: (filters: StatsFilters) => void; initialSelection?: StatsSelection; captureExport?: () => (() => boolean); busy?: boolean;
+  /** A validated saved view (D5) seeds the initial selection; every later change is reported back so the link can follow. */
+  savedView?: SavedView | null; onSavedView?: (view: SavedView) => void;
 }>) {
   const end = report.firstUtcDay + report.dayCount - 1;
-  const initialRange = scope === "account" ? { firstUtcDay: report.firstUtcDay, dayCount: report.dayCount }
+  const defaultRange = scope === "account" ? { firstUtcDay: report.firstUtcDay, dayCount: report.dayCount }
     : { firstUtcDay: Math.max(report.firstUtcDay, end - 29), dayCount: Math.min(30, report.dayCount) };
-  const [requestedFilters, setFilters] = useState<StatsFilters>({ ...initialRange, client: ALL_STATS, provider: ALL_STATS, model: ALL_STATS, basis: "reported", ...initialSelection });
+  // A saved range outside the loaded report is refused, not clamped; the other saved fields still apply.
+  const initialRange = savedViewRange(savedView?.range ?? null, scope === "account" ? todayUtcDay : end, { firstUtcDay: report.firstUtcDay, dayCount: report.dayCount }) ?? defaultRange;
+  const [requestedFilters, setFilters] = useState<StatsFilters>({ ...initialRange, client: savedView?.client ?? ALL_STATS, provider: savedView?.provider ?? ALL_STATS, model: savedView?.model ?? ALL_STATS, basis: savedView?.basis ?? "reported", ...initialSelection });
   const [first, setFirst] = useState(statsDateInput(initialRange.firstUtcDay));
   const [last, setLast] = useState(statsDateInput(end));
   const [custom, setCustom] = useState(![1, 7, 30, 90].some(days => {
@@ -55,17 +61,17 @@ export function StatsReportView({ report, session, scope, todayUtcDay, onRangeRe
   }));
   const [filtersExpanded, setFiltersExpanded] = useState(false);
   const [rangeError, setRangeError] = useState<string | null>(null);
-  const [grouping, setGrouping] = useState<StatsGrouping>("client");
-  const [secondGrouping, setSecondGrouping] = useState<MetricDimension | null>(null);
-  const [explorerMetric, setExplorerMetric] = useState("accounted-tokens");
-  const [costKind, setCostKind] = useState<"reported" | "estimated">("reported");
+  const [grouping, setGrouping] = useState<StatsGrouping>(savedView?.grouping ?? "client");
+  const [secondGrouping, setSecondGrouping] = useState<MetricDimension | null>(savedView?.secondGrouping ?? null);
+  const [explorerMetric, setExplorerMetric] = useState(savedView?.metric ?? "accounted-tokens");
+  const [costKind, setCostKind] = useState<"reported" | "estimated">(savedView?.costKind ?? "reported");
   const [rankByMetric, setRankByMetric] = useState(false);
   const [sort, setSort] = useState<{ key: StatsSort; ascending: boolean }>({ key: "tokens", ascending: false });
   const [selectedDay, setSelectedDay] = useState<StatsRange | null>(null);
   const [chartFocus, setChartFocus] = useState(0);
   const [mapFocus, setMapFocus] = useState<number | null>(null);
-  const [metric, setMetric] = useState<StatsMetric>("tokens");
-  const [split, setSplit] = useState<StatsGrouping | null>(null);
+  const [metric, setMetric] = useState<StatsMetric>(savedView?.chart ?? "tokens");
+  const [split, setSplit] = useState<StatsGrouping | null>(savedView?.split ?? null);
   const [showAllGroups, setShowAllGroups] = useState(false);
   const [exportError, setExportError] = useState(false);
   const [exportingRows, setExportingRows] = useState(false);
@@ -125,11 +131,30 @@ export function StatsReportView({ report, session, scope, todayUtcDay, onRangeRe
     return `${range}: ${valueText}`;
   };
   const sourceList = report.sources.filter(source => filters.client === ALL_STATS || source.client === filters.client);
+  // Freshness (D8) is derived only from facts the report carries: its generation
+  // day against the current UTC day, source timestamps and collection status.
+  // Collector health facts do not exist yet, so the area states that explicitly.
+  const generatedUtcDay = Math.floor(report.generatedAtMs / 86_400_000);
+  const reportAgeDays = generatedUtcDay > todayUtcDay ? null : todayUtcDay - generatedUtcDay;
+  const latestSourceAtMs = report.sources.reduce<number | null>((latest, source) => source.latestAtMs !== null && (latest === null || source.latestAtMs > latest) ? source.latestAtMs : latest, null);
+  const missingSources = report.sources.filter(source => source.status !== "observed");
   const sourceByClient = new Map(report.sources.map(source => [source.client, source]));
   const periodEnd = filters.firstUtcDay + filters.dayCount - 1;
   const rangeText = `${formatStatsDay(filters.firstUtcDay)}–${formatStatsDay(periodEnd)}`;
   const anchor = scope === "account" ? todayUtcDay : end;
   const presetRange = (days: number) => ({ firstUtcDay: Math.max(0, anchor - days + 1), dayCount: Math.min(days, anchor + 1) });
+  const currentView = useMemo(() => savedViewFromSelection({ range: { firstUtcDay: requestedFilters.firstUtcDay, dayCount: requestedFilters.dayCount }, anchor,
+    client: requestedFilters.client, provider: requestedFilters.provider, model: requestedFilters.model, basis: requestedFilters.basis,
+    grouping, secondGrouping, metric: explorerMetric, costKind, chart: metric, split }), [requestedFilters, anchor, grouping, secondGrouping, explorerMetric, costKind, metric, split]);
+  const currentViewSearch = savedViewSearch(currentView);
+  useEffect(() => { onSavedView?.(currentView); }, [currentView, currentViewSearch, onSavedView]);
+  const copyViewLink = async () => {
+    try {
+      await navigator.clipboard.writeText(`${window.location.origin}${window.location.pathname}${savedViewSearch(currentView, window.location.search)}`);
+      setCopyStatus(scope === "account" ? "View link copied. It restores this period, filters, grouping and metric for the signed-in account; it carries no usage data."
+        : "View link copied. It restores this period, filters, grouping and metric once the same report is opened again; it carries no usage data.");
+    } catch { setCopyStatus("The view link could not be copied. Try again in this browser."); }
+  };
   const periodValue = [1, 7, 30, 90].find(days => {
     const range = presetRange(days);
     return range.firstUtcDay === requestedFilters.firstUtcDay && range.dayCount === requestedFilters.dayCount;
@@ -406,7 +431,11 @@ export function StatsReportView({ report, session, scope, todayUtcDay, onRangeRe
       </ul>}
       <div className="usage-stats__axis" aria-hidden="true"><span>{formatStatsDay(filters.firstUtcDay)}</span><span>{formatStatsDay(periodEnd)}</span></div>
       <p className="usage-stats__hint">{metric === "speed" ? "Dots mark an unavailable rate: timed records need known token counts and a positive total duration. The rate divides tokens by recorded source seconds; duration definitions can differ by client. It is not decode speed or time spent working." : "Dots indicate no observations for this metric; they do not establish no activity. Exact values are available by selecting a bar or opening daily data."}</p>
-      {prior && prior.tokenRecords > 0 && metric === "tokens" && <p className="usage-stats__hint">Observed subtotal in the previous {filters.dayCount} days: {formatStatsInteger(prior.tokens)} {filters.basis} tokens. Matched changes are unavailable because this report does not retain compatible coverage and exposure for both periods.</p>}
+      {prior && prior.tokenRecords > 0 && metric === "tokens" && <p className="usage-stats__hint" data-matched={explored.previous?.matched === true}>Observed subtotal in the previous {filters.dayCount} days: {formatStatsInteger(prior.tokens)} {filters.basis} tokens.{" "}
+        {explored.previous?.matched === true
+          ? <>Matched change: {totals.tokens - prior.tokens > 0n ? "+" : ""}{formatStatsInteger(totals.tokens - prior.tokens)} tokens{prior.tokens > 0n ? ` (${totals.tokens - prior.tokens > 0n ? "+" : ""}${statsRatio(totals.tokens - prior.tokens, prior.tokens).toFixed(1)}%)` : " (no baseline)"}; both periods are complete and inside this report.</>
+          : <>Matched changes are unavailable: {explored.previous === null ? "the previous period lies outside this report." : (explored.previous.daysWithRecords < filters.dayCount ? `only ${explored.previous.daysWithRecords} of its ${filters.dayCount} days are observed.` : "the selected period is not yet complete.")} A change is refused, not shown as zero.</>}
+      </p>}
       {selectedDay && detailTotals && <div className="usage-stats__day-detail" role="region" aria-label="Selected period detail">
         <div><h3>{formatStatsDay(selectedDay.firstUtcDay)}{selectedDay.dayCount > 1 ? `–${formatStatsDay(selectedDay.firstUtcDay + selectedDay.dayCount - 1)}` : ""}</h3>
           <p>{detailTotals.tokenRecords > 0 ? `${formatStatsInteger(detailTotals.tokens)} ${filters.basis} tokens` : "Token usage unknown"} · {formatStatsInteger(detailTotals.records)} records</p></div>
@@ -436,6 +465,7 @@ export function StatsReportView({ report, session, scope, todayUtcDay, onRangeRe
       <div className="usage-stats__section-heading"><h2 id="stats-breakdown-title">Where the tokens went</h2>
         <div className="usage-stats__actions">
           <button type="button" className="usage-stats__text-button" disabled={computation.pending} onClick={() => void copySummary()}>Copy summary</button>
+          <button type="button" className="usage-stats__text-button" onClick={() => void copyViewLink()}>Copy view link</button>
           <button type="button" className="usage-stats__text-button" onClick={() => void exportRows()} disabled={computation.pending || exportingRows || sharing || (explored.rowCount === 0 && explored.snapshotRowCount === 0)}>{exportingRows ? "Preparing numeric CSV…" : "Download numeric CSV"}</button>
         </div>
       </div>
@@ -484,7 +514,8 @@ export function StatsReportView({ report, session, scope, todayUtcDay, onRangeRe
         setGrouping(dimension); if (secondGrouping === dimension) setSecondGrouping(null); if (split !== null) setSplit(dimension);
       } else if (dimension !== null) setSecondGrouping(dimension);
     }}
-      secondary={secondGrouping} onSecondary={setSecondGrouping} onCostKind={setCostKind} pending={computation.pending} prepareExport={() => computation.prepare("json")}
+      rich={rich ?? { document: null, absence: scope === "account" ? "hosted" : "not-loaded" }}
+      secondary={secondGrouping} onSecondary={setSecondGrouping} onCostKind={setCostKind} pending={computation.pending} prepareExport={format => computation.prepare(format === "json" ? "json" : { metricCsv: explorerMetric })}
       onMetricSort={() => setRankByMetric(true)} captureExport={() => {
         const epoch = exportLifetime.current, authority = captureExport?.() ?? (() => true);
         return () => epoch !== null && exportLifetime.current === epoch && exportSelection.current === explored && authority();
@@ -493,6 +524,12 @@ export function StatsReportView({ report, session, scope, todayUtcDay, onRangeRe
     <section id="stats-coverage" className="usage-stats__coverage" aria-labelledby="stats-coverage-title">
       <div className="usage-stats__section-heading"><h2 id="stats-coverage-title">Source coverage & freshness</h2><span>{scope === "account" ? "Synced account" : scope === "example" ? "Example data" : "Local report · stays in this browser"}</span></div>
       <p>Report generated {stamp.format(report.generatedAtMs)} UTC. {report.updatedAtMs === null ? "No remote acceptance timestamp in this report." : `Last recorded update ${stamp.format(report.updatedAtMs)} UTC.`} These timestamps do not prove a scheduled collector is healthy.</p>
+      <dl className="usage-stats__freshness" aria-label="Freshness and missing sources">
+        <div><dt>Collector health</dt><dd><strong>No health facts.</strong> This report carries no collector health record, and hosted source health is not collected yet. A recent timestamp does not prove the collector still runs.</dd></div>
+        <div><dt>Report age</dt><dd>{reportAgeDays === null ? "Unknown: the report is generated after the current UTC day." : reportAgeDays === 0 ? "Generated on the current UTC day." : `Generated ${formatStatsInteger(reportAgeDays)} UTC ${reportAgeDays === 1 ? "day" : "days"} before the current day.`}</dd></div>
+        <div><dt>Latest source timestamp</dt><dd>{latestSourceAtMs === null ? "Unknown: no source in this report carries a timestamp." : `${stamp.format(latestSourceAtMs)} UTC`}</dd></div>
+        <div><dt>Missing sources</dt><dd>{missingSources.length === 0 ? "Every included source reports observations." : `${formatStatsInteger(missingSources.length)} included ${missingSources.length === 1 ? "source reports" : "sources report"} no observations: ${missingSources.map(source => `${statsLabel(source.client, "client")} (${sourceStates[source.status].toLowerCase()})`).join(", ")}.`} {STATS_CLIENTS.length - report.sources.length} of {STATS_CLIENTS.length} supported clients are not included; absence is not zero usage.</dd></div>
+      </dl>
       <div className="usage-stats__table-scroll" role="region" aria-label="Source coverage, scroll horizontally for all columns" tabIndex={0}>
         <table><caption>Collection status for the report’s declared window, {formatStatsDay(report.firstUtcDay)}–{formatStatsDay(end)}. Filters do not change collection status.</caption><thead><tr><th scope="col">Client</th><th scope="col">Collection</th><th scope="col">Token basis</th><th scope="col">Records</th><th scope="col">Warnings</th><th scope="col">Latest source timestamp (UTC)</th></tr></thead>
           <tbody>{sourceList.map(source => <tr key={source.client}><th scope="row">{statsLabel(source.client, "client")}</th><td>{sourceStates[source.status]}</td><td>{source.tokenBasis}</td><td>{formatStatsInteger(source.records)}</td><td>{formatStatsInteger(source.warnings)}</td><td>{source.latestAtMs === null ? "Unknown" : stamp.format(source.latestAtMs)}</td></tr>)}</tbody></table>

@@ -502,7 +502,7 @@ The integration owner controls manifests/lockfiles, shared schemas/capacity/metr
 
 ### Phase 3 — Exact metric kernel and theorem pilot
 
-- **Status:** In progress — production Kani/Lean gates admitted on macOS and, from PR #422, executed on the required ubuntu-24.04 Formal verification job with reviewed Linux Kani exceptions; source refinement and unbounded claims remain open
+- **Status:** In progress — production Kani/Lean gates admitted on macOS and, from PR #422, executed on the required ubuntu-24.04 Formal verification job with reviewed Linux Kani exceptions; rounding harness bounded to a deterministic domain, conformance through M12 and the nightly suite landed; source refinement and unbounded claims remain open
 - **Depends on:** 0, 1A
 - **Objective:** Production arithmetic/normalization and core aggregation laws have appropriate proof evidence.
 - **Scope:** A new I/O-free owned metric kernel (proposed crates/aicharts-metrics), Kani harnesses, profile mappings and one theorem-route pilot. The integrator owns changes to existing callers shared with ingestion lanes.
@@ -514,7 +514,7 @@ The integration owner controls manifests/lockfiles, shared schemas/capacity/metr
 
 ### Phase 4 — Source qualification, incremental ingestion and health
 
-- **Status:** In progress
+- **Status:** In progress — checkpoint generation 3, incremental ingestion across all advertised local sources and a per-publication source-health-v1 summary landed; private provider qualification and hosted publication remain open
 - **Depends on:** 0, 1A
 - **Objective:** Advertised source support has evidence, collection scales with changes, and failed refreshes remain visible.
 - **Scope:** F18/F19; vendor compatibility target, source/version manifest, numeric health channel, checkpoints and refresh acquisition.
@@ -526,10 +526,10 @@ The integration owner controls manifests/lockfiles, shared schemas/capacity/metr
 
 ### Phase 5 — Canonical account contributions and migration
 
-- **Status:** In progress — durable contributions, bounded retained-data migration and exact head/query RPC/HTTP joins; native durable producer and full recovery qualification remain open
+- **Status:** In progress — durable contributions, bounded retained-data migration, exact head/query RPC/HTTP joins, native rich-fact producers with revision-ledger sync and the reviewed rebuild cutover CAS landed; full recovery and live contribution qualification remain open
 - **Depends on:** 1B, 2B, 3
 - **Objective:** Multi-device reporting, corrections and v1/v2 transitions have one lossless ownership model.
-- **Scope:** Contribution/control schemas, source overlap/replacement proofs, writer transfer, generation/capacity contract and numeric private facts.
+- **Scope:** Contribution/control schemas, source overlap/replacement proofs, writer transfer (retired with the writer concept in PR #427), generation/capacity contract and numeric private facts.
 - **Out of scope:** Treating device totals as automatically disjoint or buying a new data platform.
 - **Approach:** Prefer independent contributions with stable observation/provenance identity; use complete snapshots only within explicitly owned scopes. Retain v1 compatibility until a verified takeover covers its facts. Separate canonical controls from derived stats.
 - **Acceptance:** Mirrored histories deduplicate, disjoint histories sum, incomplete scans never erase, moving corrections update old/new cells, old writer callbacks refuse, and retry/rejection uses capacity once. Genuine old database fixtures migrate atomically or recover with original bytes intact.
@@ -538,7 +538,7 @@ The integration owner controls manifests/lockfiles, shared schemas/capacity/metr
 
 ### Phase 6 — Derived storage, queries and retention
 
-- **Status:** In progress — exact correction cells, indexed queries, coalesced publication and bounded automatic work; independent rebuild, physical retention and operational qualification remain open
+- **Status:** In progress — exact correction cells, indexed queries, coalesced publication, bounded automatic work, the reviewed rebuild cutover CAS and the flag-off reclamation ledger (M12) landed; legacy resolution, live reclamation activation and operational qualification remain open
 - **Depends on:** 3, 5
 - **Objective:** Dashboard queries are bounded and fast while every result remains rebuildable from canonical facts.
 - **Scope:** F20/F21; indexes/exact manifests, sufficient statistics, partition rebuilds, snapshot cursors, resource accounting and GC.
@@ -572,7 +572,7 @@ resolution, physical reclamation and live recovery remain open.
 
 ### Phase 7 — Metric explorer and dashboard completeness
 
-- **Status:** In progress — bounded worker-backed local/hosted explorer and catalog; production qualification and canonical/rich integration remain open
+- **Status:** In progress — bounded worker-backed local/hosted explorer and catalog plus rich metric explorer, saved views, CSV export and per-metric coverage states; production qualification and canonical/rich integration remain open
 - **Depends on:** 1C, 3; 6 before hosted completion
 - **Objective:** A cohesive private product answers all catalog questions supported by available evidence.
 - **Scope:** Overview and explorer, definition/coverage disclosure, comparisons, filters, distributions, table/export/share, local mode and accessibility.
@@ -584,7 +584,7 @@ resolution, physical reclamation and live recovery remain open.
 
 ### Phase 8 — Rich numeric instrumentation and drilldown
 
-- **Status:** In progress — additive local numeric fact contract and qualified-profile adapters; hosted joins await canonical publication
+- **Status:** In progress — additive local numeric fact contract, qualified-profile adapters and bounded rich-fact producers with lineage; hosted joins await canonical publication
 - **Depends on:** 3, 4, 5, 6
 - **Objective:** Session, turn, request, context, timing and reliability metrics have real attributable evidence.
 - **Scope:** F24; bounded local numeric OTel/producer adapters and opted-in private numeric facts; per-observation histograms/lineage and coverage.
@@ -608,7 +608,7 @@ resolution, physical reclamation and live recovery remain open.
 
 ### Phase 10 — Privacy, account lifecycle and recovery operations
 
-- **Status:** Not started
+- **Status:** In progress — account lifecycle RPC (status, export, device list/revoke, two-step erase; the writer transfer was retired with the per-client writer in PR #427) with erasure tombstone, resumable steps and restore-fence sealing landed; manual billing/budgets/alerts and live recovery drills remain open
 - **Depends on:** 5, 6, 8
 - **Objective:** Users can inspect, export, move and remove their data, and operators can recover without resurrecting revoked authority.
 - **Scope:** F22/F25/F26; account-controlled devices/transfer, export/erase, retention/tombstones, consent/index liveness, health, backup/restore and incident procedures; numeric manual billing, budgets, transparent forecasts and opt-in in-product alerts per the shipping matrix.
@@ -620,7 +620,7 @@ resolution, physical reclamation and live recovery remain open.
 
 ### Phase 7B — Final metric and account-journey integration
 
-- **Status:** Not started
+- **Status:** In progress — local account journeys, saved views, exports and coverage states landed on the merged branch; canonical/lifecycle browser journeys await hosted qualification
 - **Depends on:** 6, 7, 8, 10
 - **Objective:** Newly supported rich metrics and lifecycle operations work throughout the complete product.
 - **Scope:** Dashboard/explorer/account views, private drilldown, exports, accessibility and end-to-end browser journeys after Phases 6, 7, 8 and 10.
@@ -632,7 +632,7 @@ resolution, physical reclamation and live recovery remain open.
 
 ### Phase 11 — Independent review and converged assurance gate
 
-- **Status:** Not started
+- **Status:** In progress — fuzz, fault-matrix, security and nightly suites landed with their receipts; the converged gate and independent review run on the merged integration candidate
 - **Depends on:** 1A, 1B, 1C, 2A, 2B, 3–10, 7B
 - **Objective:** The exact integration candidate meets the claimed correctness, performance and support envelope.
 - **Scope:** Full claim/metric/capability coverage, independent specification and implementation review, required CI, security/fuzz/fault/performance/native/browser evidence.
@@ -644,7 +644,7 @@ resolution, physical reclamation and live recovery remain open.
 
 ### Phase 12 — Delivery and production qualification
 
-- **Status:** Not started
+- **Status:** In progress — completion PR #441 merged as `2356eff` and the site production-verified; after the notice-policy fixes (#444, #446) the Linux CLI qualification passed at `40874b2`; Worker redeploy, usage flags, immutable publication and live drills stay owner-gated
 - **Depends on:** 11
 - **Objective:** Deliver the verified artifact and the fully working supported product, with exact production evidence.
 - **Scope:** Task-owned protected-main PRs, required independent review/CI, immutable distribution, deployment, account/provider/native acceptance and scheduled cutover.
@@ -1513,3 +1513,275 @@ since submitted days can only rise. The remaining ~118B device gap is
 consistent with roughly double-counted codex history plus days whose
 files were deleted before either tool could re-audit them; it is not
 explained by missing local sources alone.
+
+### 2026-09-24 — PR #422 merged and production-verified; completion program opened
+
+PR #422 was squash-merged to main as `fc95b51` at 20:45Z with the required
+Check, Menubar, Formal verification and Required jobs green (CI run
+36055796464). GitHub Production deployment 6647776777 resolved to Vercel
+deployment `dpl_3TA2bNgxfeQzY7Cf67XF6scjyUrm` on project
+`prj_0ppMfRRMDfiVsQ1JaekoxSZ7Mwgn`; the canonical origin served `/`,
+`/dashboard` and `/usage/sessions` with status 200 and an
+`X-Hraness-Delivery-Proof` header equal to the token recomputed from that
+identity. No feature flag, Worker deployment or user data changed.
+
+The remaining phases (3 source refinement, 4, 5, 6, 7, 8, 10, 7B, 11, 12)
+were split into nine disjoint-ownership lanes on the completion branch
+`codex/system-assurance-completion-20260924`: formal, kernel, cloud lifecycle,
+cloud storage, UI, native ingestion, native facts, delivery gates and delivery
+docs. The integrator owns this plan, the `check` chain, CI wiring and every
+registry not assigned to a lane; lanes propose edits to shared files. Lane
+paragraphs below record what each lane implemented, validated and left open.
+
+### 2026-09-24 — Kernel lane: production arithmetic routed through the kernel
+
+Phase 3 source refinement (SR-4 to SR-7) routed the remaining production
+arithmetic through `aicharts-metrics`. A new `decimal` module supplies
+canonical integer parsing and exact scaled half-up rounding; the detailed CLI
+cost conversion moved from an `f64` product to it, which corrected
+`0.0001245` USD (124 to 125 micro-USD) and a fabricated micro-dollar near
+2^53, both pinned as regressions. Row totals, summaries, the Claude cache TTL
+partition, Devin totals, ledger status counters and CLI collection counters
+now use `checked_sum`, `checked_add_bounded` and `CacheWrites::with_ttl` with
+unchanged results on valid input. A malformed checked-in tariff rate refuses
+the client's projection (incomplete source, warning, `ProjectionRefused` in
+measured health) rather than reading as an absent tariff; a test-only catalog
+seam exercises this end to end. Each report row's cost and timed cohorts are
+paired through `match_quantities` with the explorer's selection, and the
+TypeScript explorer applies the same pairing. `scripts/generate-kernel-vectors.ts`
+emits five seeded vector files (at least 2,064 cases each, production edges
+included) with a `--check` drift gate now wired into `check:generated`,
+evaluated by both the Rust kernel and the shared TypeScript. Focused cargo,
+clippy, fmt, bun, tsc and eslint gates passed. Kani/Lean coverage of the
+decimal functions and any live qualification remain open.
+
+### 2026-09-24 — Delivery docs lane: recorded evidence, publication path, claims
+
+Phase 12 delivery evidence and release path. The lane recorded PR #422's
+merge, deployment and proof facts in `docs/usage-activation.md` and added
+`usage:deployment:verify`, which recomputes the delivery-proof token from the
+inspected deployment identity and requires it on the three fixed pages; it
+passed for `fc95b51` at 22:33:45Z and for the next merge `1cf93bd` at
+22:53:14Z, and failed closed for `fc95b51` once the alias moved. The
+Cloudflare Worker was not redeployed; the runbook and worker guide state the
+schema-13 recovery-artifact prerequisite. The nonpublishing Linux
+qualification run 36066135869 at `fc95b51` failed at `read-link-map`
+(33,690,505 bytes over the 32 MiB bound); the shared bound was raised to
+64 MiB with boundary tests, and the tree remains Linux-unqualified until a new
+dispatch passes. A tag-triggered `cli-publish.yml` republishes a retained
+qualification as an immutable GitHub Release with OIDC provenance and
+post-publish digest and attestation verification; it is tested and unexecuted,
+with the macOS notarized release left to the owner. A claim inventory
+(`docs/usage-claims.md`, 67 rows) with `usage:claims:check` closed F26 and
+corrected two overclaims; the check runs inside `usage:assurance:check` and
+`release:publish:check` runs inside `check`.
+
+### 2026-09-24 — Delivery gates lane: fuzz, fault matrix, security and nightly
+
+Phase 11 gates. `bun run usage:fuzz` runs the new `crates/aicharts-fuzz`
+crate: seeded xorshift stateful and property suites for ledger command
+sequences over real SQLite (commit, freeze, settle, reopen, backup, restore),
+usage and admission wire round trips with byte corruption and single-violation
+injection, and metrics arithmetic, token-partition and dominance laws, across
+four named seeds, admitting one receipt per suite and seed at the configured
+workload; 28 receipts passed at 1,000 iterations in 4 m 14 s.
+`bun run usage:fault-matrix` inventories eleven existing injected-failure
+suites (six worker files, five cargo groups) by exact test name, fails when
+any is missing, and passed all eleven in 53 s; it covers crash-before,
+crash-after, lost-reply, restore-race and capacity exhaustion and records
+disk-full as an uncovered gap. `bun run security:check` audits both Cargo
+locks and bun.lock, verifies every dependency, crate, action and bunx target
+is pinned and hashed, scans tracked files for credential shapes, and
+re-applies the PostHog boundary plus a privacy canary over analytics and
+discovery surfaces; its first run found the real RUSTSEC-2026-0285 advisory
+against the exact `rustls = 0.23.44` pin, which the integrator raised to
+0.23.45. `test:property` now reaches nested `lib/**` property files (108
+tests). A daily 09:00 UTC nightly workflow runs the TLA nightly profile,
+200,000-iteration fuzz, the fault matrix, the security gate and an optional
+perf baseline; a non-required security workflow runs on every pull request.
+All implemented and locally passing; none live-qualified.
+
+### 2026-09-24 — Completion integration: all six remaining lanes merged
+
+All outstanding lanes landed on `codex/system-assurance-completion-20260924`
+with `--no-ff` merges: formal assurance (conformance M8–M11, Lean route, Kani
+coverage, nightly TLA), cloud account lifecycle (lifecycle RPC, erasure
+tombstone, restore fence), cloud storage (rebuild cutover CAS, reclamation
+ledger, M12 model), native ingestion (checkpoint generation 3, incremental
+sources, source-health-v1), native facts (rich-fact producers, revision
+ledger, contribution sync) and the UI lane (rich metric explorer, saved
+views, CSV export, coverage states). Three merge seams needed repair, none
+semantic: the M11 cutover configs predated the JobCount/Quota
+parameterization and now pin the development bounds their cases measured;
+the lifecycle lane's worker files carried latent type errors its validation
+never reached (missing `schemaVersion` on the erase withdrawal view, an
+`account_erased` fence refusal now carried by a dedicated `FenceRefusal`
+sentinel outside `AdmissionFault`'s domain, and a test RPC call whose mapped
+stub type exceeded the instantiation budget); and the conformance schedule's
+status expectation gained the rebuild contract's `readiness` field
+(`unobserved` without supplied authority). The nightly manifest gained the
+measured 1,511,899-state M12 wide-reclamation case. Integrated evidence so
+far: adapters 195/195, conformance 42 traces 0 failures, theorems 26+9,
+TLA baseline+repaired complete suite 87/87 including all cutover cases.
+The contributions flag remains off in every deployment; the reclamation
+ledger is implemented but not live-qualified.
+
+### 2026-09-25 — Main integrated: writer transfer retired, browser contracts repaired, full gate
+
+The completion branch absorbed `origin/main` at `b8c013b` (device-partitioned
+snapshots and lifetime totals from PR #427 through the 25 September rollout
+evidence). Six textual conflicts resolved mechanically: the path-filtered CI
+keeps main's shape with the branch's publication check, protocol adapter and
+conformance gates and Lean-before-Kani ordering; the collector's help text is
+main's with the branch's `--incremental` paragraph; both evidence logs keep
+both entries; `surfaces.json` carries main's six stats surfaces plus the
+reclamation ledger; the workflow action-pin multiset was regenerated. Four
+joins were semantic. First, the lifecycle lane's writer transfer
+(`transfer_request`, `transfer_grant`, `transfer_complete`) had nothing left
+to move once snapshots became per (client, day, device), so the operations,
+their views, RPCs and traces are retired from the lifecycle contract and the
+enrollment object; device revocation and the two-step erase stay. Second,
+main's four new account-scoped tables (`usage_stats_retired`,
+`usage_stats_day_totals`, `usage_admission_day_totals` and its cursor) join
+the export sections, and the erase step also drops the retired
+(client, day) tables so an unmigrated store erases completely; the coverage
+test that pins every `costs.json` surface to a section or a reason caught the
+gap. Third, a failed publication no longer stops later clients, so the
+contribution-sync test expects the remaining `publish` calls while every
+contribution send stays withheld for that cycle. Fourth, the UI lane's
+browser contracts had only ever run against a stale build: wrapping
+`<label>` selects need role queries, leaving a rich metric must re-select a
+classic one, the matched trend hint excludes the comparison paragraph,
+per-group changes may be negative, saved views keep their query string, and
+hour-of-day is refused in both grouping controls. The rich explorer remounts
+per facts revision. Evidence on the merged tree at host load 50–73 on 18 cores from concurrent
+sessions: typecheck, lint, Rust fmt, clippy and 470 CLI tests (19 autosubmit
+tests after the expectation fix), skill and eleven release checks, generated
+data, the assurance registry with claims and metric coverage (48 explorer and
+50 rich metrics exported), 83 cost surfaces, conformance 42 traces with 0
+failures, build, browser run 11 (pairing, stats desktop and mobile, sessions,
+dashboard, atlas), Bun 2221 of 2223 and vitest 716 of 721 tests. The seven
+misses are timeouts in tests byte-identical to main, which main's CI run
+36090166125 finishes in 20–50 % of their budgets, and the adapter gate's
+180 s cold build bound could not be met at this load (the bound is checked,
+not widened); the pull request's `Required` check on GitHub runners is the
+binding aggregate for those. Not activated: the contributions flag stays off
+in every deployment, the Worker is not redeployed, and no live drill ran.
+
+Main moved again before the pull request had a check. GitHub creates no
+`pull_request` run while it cannot build the merge ref, and the branch
+conflicted with the canonical product messaging (#438), the enrolled-device
+totals read (#439) and its plan record (#440); the workflow file itself was
+sound. The second absorption (`f796696`) resolved four CLI help strings,
+keeping the branch's extended text under main's colon heads, and the plan
+log kept both entries; the branch adds no em-dash copy of its own. An
+independent read-only review of the four joins and the browser repairs
+confirmed each of them (no transfer symbol left anywhere, every
+`CREATE TABLE` name in an export section or a stated exclusion, autosubmit
+continuing past a failed publication while withholding every contribution
+send, each browser assertion at least as strong as before) and found one
+test-only weakening: the three sign-out checks in the stats contract had
+started comparing the URL without its query string, which would have
+accepted a sign-out that rewrote the saved view. They now capture the URL
+before the click and require it unchanged and still on `/usage/details`.
+The review's missing case is added: a store rewritten into the retired
+(client, day) ownership shape erases down to the admission tables. Two
+review notes are recorded, not acted on, because no build of this branch's
+Worker has run anywhere: the persisted lifecycle object is exact-keyed to
+`{ erasure }`, and the export cursor is positional over the section list;
+both would need a tolerance only for state that does not exist.
+
+The first CI run for the pull request (36099527593) passed every job except
+Worker: the protocol adapter and conformance gates, moved into that
+unfiltered job by the first integration, need the pinned Rust toolchain
+(`rustup which --toolchain 1.97.1`) and warm dependency artifacts under
+their checked 180 s bounds, which the lane branches' formal job had
+provided implicitly and a bare Bun job does not. The adapter gate takes
+3 s on a warm build directory and fails its bound cold, so the job now
+installs the toolchain, restores a cache of the two gate build directories
+and the crate registry, builds the gate dependencies without a bound
+(the conformance pre-build with `CARGO_INCREMENTAL` unset, as the gate
+strips it), then runs the bounded gates and saves the cache even on
+failure; the bounds themselves are unchanged. Focused evidence on the
+re-merged tree at host load 47–50: typecheck, lint, Rust fmt, clippy and
+123 focused CLI tests, 114 focused Bun tests, worker tsc with 105 focused
+worker tests and the 5 erase tests, generated data, the assurance
+registry, the pin audit, build and browser run 12 (pairing, stats desktop
+and mobile, dashboard, atlas) with the restored sign-out checks.
+
+The second run (36101030837) carried that wiring. With a cold cache the
+unbounded pre-build took 78 s for the adapter dependencies and crate and
+14 s for the conformance test binary, and the bounded gates then ran on
+Linux for the first time in this repository's CI: the adapter gate reached
+discovery 34 s after starting against its 180 s build bound, and the
+conformance gate passed in 28 s. Discovery failed on
+`adapter_test_count_drift:codex`. Main's PR #434 added three Codex parser
+tests (a null-`info` token count as a rate-limit heartbeat, a missing
+`info` key as a schema mismatch, an unresolvable model refusing the
+measurement fallback) without qualifying them in
+`vendor/tokscale-core/QUALIFICATION.json`; main's CI does not run the
+adapter gate, so the manifest still expected 74 Codex tests where the
+compiled crate lists 77. The manifest now expects 77. Discovery of the
+test executable built from the merged vendor tree lists 2287 tests: 77
+Codex, 77 Claude Code, 24 Cursor, 14 Devin and 6 offline, a qualified
+selection of 198. The same run's receipt retention followed the
+conformance stages' `node_modules` symlink and their tool symlinks into a
+1.01 GB artifact of 213,348 files; the upload now excludes both and keeps
+the receipts, logs, traces and staged sources.
+
+### 2026-09-25 — PR #441 merged and production-verified; Linux notices attribution
+
+The completion branch merged to protected `main` as squash commit
+`2356eff8e3113bf7cdb94d691c086d640e2ea022`
+([PR 441](https://github.com/hraness/aicharts/pull/441)) at 06:49:29Z after
+CI run 36102541354 on head `f4ecca3` (Changes, Checks, Build, Worker with
+the adapter and conformance gates, Rust, Menubar, Formal verification and
+`Required` all passed, plus the supply-chain workflow and CodeQL). Main had
+moved by one unrelated commit (#442); the merge was clean. GitHub
+deployment 6655372605 (Production, success, 06:51:07Z) resolved to Vercel
+`dpl_H4hVYpFsJ9VqwfexFHSNDZWBah8D` (project `prj_0ppMfRRMDfiVsQ1JaekoxSZ7Mwgn`,
+Ready, URL `https://aicharts-cki4omw9r-hraness.vercel.app`), and at
+06:51:37Z `bun run usage:deployment:verify --sha 2356eff…` found `/`,
+`/dashboard` and `/usage/sessions` at HTTP 200 with
+`X-Hraness-Delivery-Proof: v1.b8d6279f57266c1cfc729f38fe834b9bfa28a554d0526343abbcff0eb9bdfbde`,
+the recomputed token. The Cloudflare Worker was not redeployed.
+
+Linux CLI qualification run 36104682547 on `2356eff` passed the stages that
+had stopped run 36066135869: `read-link-map` (the 64 MiB bound), the ELF and
+runtime-library checks against glibc 2.34, and all fourteen installed smoke
+tests. It then refused at `notices` with `notices_unmapped_crate`: the
+reviewed attribution list of workspace crates predated the kernel lane,
+whose `aicharts-metrics` crate is now in the CLI graph. The crate has no
+dependencies and inherits the workspace MIT license, so the closeout adds it
+to the list and a regression that each of the seven workspace crates in the
+CLI graph passes attribution; that regression fails with exactly the CI
+error when the list omits the crate. The tree stays Linux-unqualified until
+a dispatch on the merged fix passes.
+
+The fix merged as `f495d9f` ([PR 444](https://github.com/hraness/aicharts/pull/444)),
+which also qualified the Devin row-bound test that #442 added without a
+manifest update (the adapter manifest now expects 15 Devin tests, matching
+discovery); its first Build attempt hit the homepage browser flake that main
+also shows (a transient duplicate `#model-updates` or `#chart` section during
+a bookmark redirect), and the rerun passed. The site was production-verified
+again at `f495d9f` (`dpl_2wBgHwhjCaiPZiLqJZrjoJrpuFG4`, three pages, recomputed
+token). Qualification run 36108512661 on `f495d9f` again stopped at `notices`
+with `notices_unmapped_crate`, now for a registry crate: the delivery-gates
+integrator raised `rustls` to 0.23.45 for RUSTSEC-2026-0285 without moving its
+notice-policy entry off 0.23.44. The 0.23.45 archive digest equals the
+`Cargo.lock` checksum and its three license texts are byte-identical to
+0.23.44's, so only the version and checksum change. A diff of the CLI's Linux
+dependency graph against the policy found no other unmapped crate. A new
+regression requires every policy entry to be a locked registry package with
+the same archive checksum; it fails naming `rustls@0.23.44` without the fix.
+
+The rustls policy fix merged as `40874b2` ([PR 446](https://github.com/hraness/aicharts/pull/446))
+and the site was production-verified at that commit
+(`dpl_o6HJWcj3qVrBecbBwQqQ3X9uQ8TX`, three pages, recomputed token). Linux CLI
+qualification run [36109602971](https://github.com/hraness/aicharts/actions/runs/36109602971)
+on `40874b2` passed (`checksPassed: true`) through all smoke stages and
+`persist-assets`, retaining the qualification artifact. This is the first
+Linux qualification of the system-assurance tree. It is artifact admission
+only: no `cli-v` tag or immutable release was published, and the macOS
+notarized release, Worker redeploy, usage flags and live drills remain
+owner-gated.

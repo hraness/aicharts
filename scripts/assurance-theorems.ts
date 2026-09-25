@@ -1,7 +1,7 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import { dirname, relative, resolve } from "node:path";
 import { z } from "zod";
-import { completed, gitIdentity, mutationsSchema, proofRoot, proofRunDirectory, readProofFile,
+import { applyExactMutation, completed, gitIdentity, proofRoot, proofRunDirectory, readProofFile,
   runProofProcess, sha256, snapshotUnchanged, sourceSnapshot, stageKernel, kernelStageUnchanged, proofEnvironment, proofFilesUnchanged,
   type SourceMutation, type ProofProcess } from "./assurance-proof-common";
 
@@ -16,7 +16,15 @@ const pinSchema = z.object({ schemaVersion: z.literal(1), route: z.string(), qua
     lean: executable, lake: executable, rustc: executable }).strict()),
   backends: z.record(z.string(), z.string()), rustupHome: z.string(), backendManifestSha256: digest,
   allowedAxioms: z.array(z.enum(["propext", "Classical.choice", "Quot.sound"])).length(3), productionTheorems: z.array(z.string()).length(26),
-  mathematicalTheorems: z.array(z.string()).length(17) }).strict();
+  mathematicalTheorems: z.array(z.string()).length(9) }).strict();
+
+const theoremName = z.string().regex(/^[a-z_]+$/u);
+const leanMutation = <Source extends z.ZodType<string>>(source: Source) => z.object({ id: z.string().regex(/^[a-z-]+$/u), source,
+  exactBefore: z.string().min(1), exactAfter: z.string().min(1), expectedTheorem: theoremName, requireSingleSourceMatch: z.literal(true) }).strict();
+/** Negative controls are derived from this manifest, never hard-coded in the runner. */
+export const leanMutationsSchema = z.object({ schemaVersion: z.literal(1), scope: z.string().min(1),
+  production: z.array(leanMutation(z.string().regex(/^crates\/aicharts-metrics\/src\/[a-z]+\.rs$/u))).min(1).max(16),
+  mathematical: z.array(leanMutation(z.literal("verify/lean/UsageLaws.lean"))).min(1).max(16) }).strict();
 
 export function admitLean(result: ProofProcess, expected: string[], allowedAxioms: string[]) {
   const errors: string[] = [];
@@ -35,23 +43,30 @@ export function rejectAdmissions(source: string) {
   if (/\b(?:sorry|admit|axiom|unsafe|native_decide|run_tac)\b|implemented_by|extern|set_option\s+(?:debug|Elab\.async)/u.test(source)) throw new Error("unreviewed_proof_escape");
 }
 
-/** An expected mutant must reach Lean and fail inside the named unchanged theorem.
- * Compile/extract/runtime failure, unknown constant, timeout or a different theorem is insufficient. */
+/** An expected mutant must reach Lean and fail inside the named unchanged theorem's own proof,
+ * and Lean must record that exact theorem as depending on `sorryAx`. Compile/extract/runtime
+ * failure, unknown constant, timeout, a different theorem or an error outside the proof body is insufficient. */
 export function admitLeanMutation(result: ProofProcess, source: string, theorem: string, proofPath: string) {
   const lines = source.split("\n");
   if (!/^[a-z_]+$/u.test(theorem)) return false;
   const start = lines.findIndex(line => new RegExp(`^theorem ${theorem}(?:\\s|$)`, "u").test(line));
   if (start < 0 || !completed(result) || result.exitCode !== 1) return false;
-  let end = lines.findIndex((line, index) => index > start && /^(?:theorem |#print |end )/u.test(line));
+  let end = lines.findIndex((line, index) => index > start && /^(?:theorem |#print |end |def |structure |inductive |namespace )/u.test(line));
   if (end < 0) end = lines.length;
+  // The proof body begins at the `:=` of the named declaration; errors on statement lines are not proof failures.
+  const body = lines.findIndex((line, index) => index >= start && index < end && /:=/u.test(line));
+  if (body < 0) return false;
   if (/unknownIdentifier|Unknown constant|unknown tactic|failed to synthesize|maximum (?:recursion|heartbeats)|internal error|stack overflow|^\s*(?:error|fatal error|panic):/imu.test(result.output)) return false;
   const errors = [...result.output.matchAll(/^(.+\.lean):(\d+):\d+: error(?:\([^)]*\))?: ([^\n]+)/gmu)];
   // No unrelated parse/import/proof failures may masquerade as the negative
   // control. Lean's downstream sorryAx reports are expected after this error;
   // they are never accepted as a successful theorem proof.
-  return errors.length > 0 && errors.every(match => resolve(match[1]) === resolve(proofPath)
-    && Number(match[2]) >= start + 1 && Number(match[2]) <= end
-    && /unsolved goals|tactic.*failed|no progress|failed to prove|^Step failed: could not find a local assumption or a theorem to apply$/iu.test(match[3]));
+  const inside = errors.length > 0 && errors.every(match => resolve(match[1]) === resolve(proofPath)
+    && Number(match[2]) >= body + 1 && Number(match[2]) <= end
+    && /unsolved goals|tactic.*failed|no progress|failed to prove|could not prove the goal|^Step failed: could not find a local assumption or a theorem to apply$/iu.test(match[3]));
+  const recorded = [...result.output.matchAll(/^'((?:[A-Za-z_][A-Za-z0-9_]*\.)*[a-z_]+)' depends on axioms: \[([^\]]*)\]$/gmu)]
+    .some(match => (match[1] === theorem || match[1].endsWith(`.${theorem}`)) && match[2].split(",").map(value => value.trim()).includes("sorryAx"));
+  return inside && recorded;
 }
 
 const productionDefinitions = ["arithmetic.admit_decimal", "arithmetic.checked_add", "arithmetic.checked_add_bounded",
@@ -81,8 +96,7 @@ async function requireProcess(result: ProofProcess, file: string) {
 
 export async function runTheorems() {
   const extras = ["scripts/assurance-proof-common.ts", "scripts/assurance-proof-common.test.ts", "scripts/assurance-theorems.ts", "scripts/assurance-theorems.test.ts", "verify/lean/toolchain.json",
-    "verify/lean/UsageLaws.lean", "verify/lean/ProductionKernels.proofs.lean", "verify/kani/mutations.json"];
-  extras.push("verify/lean/Pricing.proofs.lean", "verify/lean/pricing-mutations.json");
+    "verify/lean/UsageLaws.lean", "verify/lean/ProductionKernels.proofs.lean", "verify/lean/Pricing.proofs.lean", "verify/lean/mutations.json"];
   const snapshot = await sourceSnapshot(extras);
   const pin = pinSchema.parse(JSON.parse(snapshot.bytes.get("verify/lean/toolchain.json")!.toString("utf8")));
   const platform = `${process.platform}-${process.arch}`;
@@ -118,21 +132,13 @@ export async function runTheorems() {
     + snapshot.bytes.get("verify/lean/Pricing.proofs.lean")!.toString("utf8");
   const mathSource = snapshot.bytes.get("verify/lean/UsageLaws.lean")!.toString("utf8");
   rejectAdmissions(proofTemplate); rejectAdmissions(mathSource);
-  const mutations = mutationsSchema.parse(JSON.parse(snapshot.bytes.get("verify/kani/mutations.json")!.toString("utf8"))).mutations;
-  if (mutations.map(item => item.id).sort().join(",") !== "baseline-delta-clamps-underflow,last-known-owner-wins,wrapping-addition") throw new Error("wrong_theorem_mutations");
-  const pricingSource = { source: z.literal("crates/aicharts-metrics/src/arithmetic.rs"),
-    exactBefore: z.string().min(1), exactAfter: z.string().min(1), requireSingleSourceMatch: z.literal(true) };
-  const pricingMutations = z.object({ schemaVersion: z.literal(1), mutations: z.array(z.discriminatedUnion("id", [
-    z.object({ ...pricingSource, id: z.literal("wrong-half-up-offset"), expectedTheorem: z.literal("pricing_terminal_body_exact") }).strict(),
-    z.object({ ...pricingSource, id: z.literal("non-unit-rate-erased"), expectedTheorem: z.literal("pricing_body_exact") }).strict(),
-  ])).length(2) }).strict()
-    .parse(JSON.parse(snapshot.bytes.get("verify/lean/pricing-mutations.json")!.toString("utf8")) as unknown).mutations;
-  if (pricingMutations.map(item => item.id).sort().join(",") !== "non-unit-rate-erased,wrong-half-up-offset") throw new Error("wrong_pricing_mutations");
+  const manifest = leanMutationsSchema.parse(JSON.parse(snapshot.bytes.get("verify/lean/mutations.json")!.toString("utf8")) as unknown);
+  const ids = [...manifest.production, ...manifest.mathematical].map(item => item.id);
+  if (new Set(ids).size !== ids.length) throw new Error("duplicate_theorem_mutation_id");
+  for (const item of manifest.production) if (!pin.productionTheorems.includes(`aicharts_metrics.${item.expectedTheorem}`)) throw new Error(`unknown_production_mutation_theorem:${item.id}`);
+  for (const item of manifest.mathematical) if (!pin.mathematicalTheorems.includes(`UsageLaws.${item.expectedTheorem}`)) throw new Error(`unknown_mathematical_mutation_theorem:${item.id}`);
   const cases: { name: string; mutation?: SourceMutation; expectedTheorem?: string }[] = [
-    { name: "production" }, ...mutations.map(mutation => ({ name: mutation.id, mutation,
-      expectedTheorem: mutation.id === "wrapping-addition" ? "checked_add_exact"
-        : mutation.id === "baseline-delta-clamps-underflow" ? "checked_replace_exact" : "merge_owner_exact" })),
-    ...pricingMutations.map(mutation => ({ name: mutation.id, mutation, expectedTheorem: mutation.expectedTheorem }))];
+    { name: "production" }, ...manifest.production.map(mutation => ({ name: mutation.id, mutation, expectedTheorem: mutation.expectedTheorem }))];
   const results = [];
   for (const item of cases) {
     if (item.mutation && !results[0]?.evaluation.ok) break;
@@ -174,27 +180,42 @@ export async function runTheorems() {
   const mathematical = await runProofProcess(tools.lean, [mathPath], run, env);
   await writeFile(resolve(run, "mathematical.log"), mathematical.output);
   const mathematicalEvaluation = admitLean(mathematical, pin.mathematicalTheorems, pin.allowedAxioms);
+  const mathematicalMutations = [], mathematicalHashes: Record<string, string> = { "UsageLaws.lean": sha256(mathSource) };
+  for (const mutation of manifest.mathematical) {
+    if (!mathematicalEvaluation.ok) break;
+    const mutated = applyExactMutation(mathSource, mutation), directory = resolve(run, "mathematical-mutations", mutation.id);
+    await mkdir(directory, { recursive: true });
+    const path = resolve(directory, "UsageLaws.lean");
+    await writeFile(path, mutated);
+    const process = await runProofProcess(tools.lean, [path], directory, env);
+    await writeFile(resolve(directory, "proof.log"), process.output);
+    mathematicalHashes[`mathematical-mutations/${mutation.id}/UsageLaws.lean`] = sha256(mutated);
+    mathematicalMutations.push({ mutation: mutation.id, source: mutation.source, expectedFailedTheorem: mutation.expectedTheorem, process,
+      evaluation: { ok: admitLeanMutation(process, mutated, mutation.expectedTheorem, path), expectedFailedTheorem: mutation.expectedTheorem } });
+  }
   const inputsUnchanged = await snapshotUnchanged(snapshot);
   const backendUnchanged = await proofFilesUnchanged(backend, backendHashes);
   const stagesUnchanged = (await Promise.all(results.map(async result => await kernelStageUnchanged(result)
     && await proofFilesUnchanged(result.path, result.artifactHashes)))).every(Boolean)
-    && await proofFilesUnchanged(run, { "UsageLaws.lean": sha256(mathSource) });
+    && await proofFilesUnchanged(run, mathematicalHashes);
   let toolsUnchanged = true;
   for (const [path, hash] of Object.entries(toolHashes)) if (sha256(await readProofFile(resolve(proofRoot, path), 536_870_912)) !== hash) toolsUnchanged = false;
   const receipt = { schemaVersion: 1, ...await gitIdentity(), createdAt: new Date().toISOString(),
-    claim: "eight freshly extracted production functions; twenty-six production proof declarations and seventeen separate mathematical laws",
+    claim: "eight freshly extracted production functions; twenty-six production proof declarations and nine separate mathematical laws",
     limitations: ["No theorem of Rust/SQL/provider whole-system refinement or arbitrary occurrence-merge associativity.",
       "Rust/Charon/Aeneas translation, standard-library models, Lean kernel/installed libraries and the pinned build environment are trusted boundaries.",
       "Mathematical finite-history laws are separate specifications; bounded-add and replacement prove numeric refusal without classifying every error variant.",
       "Pricing quantifies five full-u128 token buckets and five optional full-u128 rates, proves exact ordered refusal and the success formula; tariff provenance and observation populations remain external obligations.",
       "Binary hashes and dependency lock are checked; dynamically loaded runtime/library bytes are not a complete installed-image attestation."],
     platform, pin, versions, toolHashes, backendHashes, backendUnchanged, environment: env, sourceSha256: snapshot.hashes, inputsUnchanged, toolsUnchanged, stagesUnchanged,
-    results, mathematical, mathematicalEvaluation,
+    results, mathematical, mathematicalEvaluation, mathematicalMutations,
     ok: inputsUnchanged && toolsUnchanged && backendUnchanged && stagesUnchanged && results.length === cases.length
-      && results.every(result => result.evaluation.ok) && mathematicalEvaluation.ok };
+      && results.every(result => result.evaluation.ok) && mathematicalEvaluation.ok
+      && mathematicalMutations.length === manifest.mathematical.length && mathematicalMutations.every(result => result.evaluation.ok) };
   const path = resolve(run, "receipt.json");
   await writeFile(path, `${JSON.stringify(receipt, null, 2)}\n`);
-  console.log(JSON.stringify({ ok: receipt.ok, receipt: relative(proofRoot, path), productionTheorems: pin.productionTheorems.length, mathematicalTheorems: 17, negativeControls: 5 }));
+  console.log(JSON.stringify({ ok: receipt.ok, receipt: relative(proofRoot, path), productionTheorems: pin.productionTheorems.length, mathematicalTheorems: pin.mathematicalTheorems.length,
+    negativeControls: { production: results.length - 1, mathematical: mathematicalMutations.length } }));
   return receipt;
 }
 

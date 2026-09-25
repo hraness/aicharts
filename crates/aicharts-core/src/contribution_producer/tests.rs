@@ -754,3 +754,105 @@ fn capacity_and_sequence_exhaustion_refuse_without_emitting_a_prefix() {
     );
     refuses(encode(&"12345", 6), Error::Limit);
 }
+
+fn codex_line(at: &str, total: [u64; 5], last: [u64; 5]) -> String {
+    let usage = |v: [u64; 5]| {
+        format!("{{\"input_tokens\":{},\"cached_input_tokens\":{},\"cache_write_input_tokens\":{},\"output_tokens\":{},\"reasoning_output_tokens\":{},\"total_tokens\":{}}}", v[0], v[1], v[2], v[3], v[4], v[0] + v[3])
+    };
+    format!("{{\"timestamp\":\"2026-01-01T12:00:{at}Z\",\"type\":\"event_msg\",\"payload\":{{\"type\":\"token_count\",\"info\":{{\"total_token_usage\":{},\"last_token_usage\":{},\"model_context_window\":272000}},\"rate_limits\":null}}}}", usage(total), usage(last))
+}
+fn codex_meta() -> String {
+    r#"{"timestamp":"2026-01-01T12:00:00Z","type":"session_meta","payload":{"id":"22222222-3333-4444-8555-666666666666","timestamp":"2026-01-01T12:00:00Z","cwd":"/PRIVATE_PATH_CANARY","originator":"codex_cli_rs","cli_version":"0.156.1","source":"cli"}}"#.into()
+}
+fn codex_observations(lines: &[String]) -> NativeObservations {
+    NativeObservations::read_codex(Cursor::new(lines.join("\n")), &account_id(1), &[0x43; 32])
+        .unwrap()
+}
+
+#[test]
+fn codex_single_timestamp_observations_are_native_and_same_instant_slots_are_quarantined() {
+    let stable = vec![
+        codex_meta(),
+        codex_line("01", [1200, 1000, 0, 40, 10], [1200, 1000, 0, 40, 10]),
+        codex_line("02", [2500, 2000, 0, 90, 20], [1300, 1000, 0, 50, 10]),
+    ];
+    let read = codex_observations(&stable);
+    assert_eq!(read.len(), 2);
+    assert_eq!(read.quarantine(), &Quarantine::default());
+    assert_eq!(read.coverage(), "partial");
+    let query = read.head_query(&scope(), 12, 0).unwrap().unwrap();
+    assert!(!String::from_utf8_lossy(query.bytes()).contains("PRIVATE"));
+    let row = NativeRow::native("codex", 20_454, &aicharts_protocol::Tokens::default()).unwrap();
+    assert!(serde_json::to_string(&row)
+        .unwrap()
+        .contains("\"client\":\"codex\""));
+    refuses(
+        NativeRow::native("devin-cli", 20_454, &aicharts_protocol::Tokens::default()),
+        Error::Source(crate::Error::InvalidCounters),
+    );
+
+    // Two distinct deltas at one timestamp take stream-order slots: neither is
+    // a stable identity under reordering, so both are withheld while the
+    // single-timestamp observations around them stay eligible.
+    let mut ambiguous = stable.clone();
+    ambiguous.push(codex_line(
+        "03",
+        [3000, 2000, 0, 100, 20],
+        [500, 0, 0, 10, 0],
+    ));
+    ambiguous.push(codex_line(
+        "03",
+        [3600, 2000, 0, 110, 20],
+        [600, 0, 0, 10, 0],
+    ));
+    ambiguous.push(codex_line(
+        "04",
+        [4000, 2000, 0, 120, 20],
+        [400, 0, 0, 10, 0],
+    ));
+    let read = codex_observations(&ambiguous);
+    assert_eq!(read.len(), 3);
+    assert_eq!(
+        read.quarantine(),
+        &Quarantine {
+            same_instant_slots: 2,
+            rewritten_history: 0
+        }
+    );
+    assert_eq!(read.quarantine().total(), 2);
+    let ids: Vec<_> = read.facts.iter().map(|f| f.id.clone()).collect();
+    let before: Vec<_> = codex_observations(&stable)
+        .facts
+        .iter()
+        .map(|f| f.id.clone())
+        .collect();
+    assert!(before.iter().all(|id| ids.contains(id)));
+
+    // A cumulative regression is evidence of a rewritten history: every
+    // observation of that source is quarantined, none is corrected or sent.
+    let mut rewritten = stable.clone();
+    rewritten.push(codex_line("05", [2000, 1500, 0, 60, 10], [100, 0, 0, 5, 0]));
+    let read = codex_observations(&rewritten);
+    assert!(read.is_empty());
+    assert_eq!(
+        read.quarantine(),
+        &Quarantine {
+            same_instant_slots: 0,
+            rewritten_history: 2
+        }
+    );
+    assert!(read
+        .warnings()
+        .contains(&crate::Warning::CodexCumulativeRegression));
+    assert!(read.head_query(&scope(), 12, 0).unwrap().is_none());
+
+    // A Claude transcript read as Codex, and Claude sources, keep their own client.
+    assert!(codex_observations(&fixture().source_lines).is_empty());
+    assert!(
+        serde_json::to_string(&observations(&fixture().source_lines).facts[0].row)
+            .unwrap()
+            .contains("\"client\":\"claude\"")
+    );
+    assert!(NativeObservations::read_codex(Cursor::new(""), "acct_bad", &[0x43; 32]).is_err());
+    assert!(NativeObservations::read_codex(Cursor::new(""), &account_id(1), &[0; 32]).is_err());
+}

@@ -1,767 +1,767 @@
 {
-  "schemaVersion": 1,
-  "claim": "synthetic-adapter-evidence-only",
-  "upstreamCommit": "d8fd670a46857e5290e71b10245dc522a344fc17",
-  "bounds": {
-    "buildTimeoutMs": 180000,
-    "testTimeoutMs": 120000,
-    "maxOutputBytes": 8388608,
-    "maxSourceBytes": 67108864,
-    "workers": 1
+ "schemaVersion": 1,
+ "claim": "synthetic-adapter-evidence-only",
+ "upstreamCommit": "d8fd670a46857e5290e71b10245dc522a344fc17",
+ "bounds": {
+  "buildTimeoutMs": 180000,
+  "testTimeoutMs": 120000,
+  "maxOutputBytes": 8388608,
+  "maxSourceBytes": 67108864,
+  "workers": 1
+ },
+ "groups": [
+  {
+   "id": "codex",
+   "prefix": "sessions::codex::tests::",
+   "expectedTests": 81
   },
-  "groups": [
-    {
-      "id": "codex",
-      "prefix": "sessions::codex::tests::",
-      "expectedTests": 81
-    },
-    {
-      "id": "claude",
-      "prefix": "sessions::claudecode::tests::",
-      "expectedTests": 77
-    },
-    {
-      "id": "cursor",
-      "prefix": "sessions::cursor::tests::",
-      "expectedTests": 24
-    },
-    {
-      "id": "devin",
-      "prefix": "sessions::devin::tests::",
-      "expectedTests": 14
-    },
-    {
-      "id": "offline",
-      "prefix": "offline::tests::",
-      "expectedTests": 4
-    }
-  ],
-  "adapters": [
-    {
-      "selector": "9router",
-      "owner": "gjc",
-      "qualification": "limited",
-      "testGroups": [
-        "offline"
-      ],
-      "formatVersion": "unqualified source variants",
-      "incremental": "unqualified",
-      "limits": [
-        "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
-      ]
-    },
-    {
-      "selector": "amp",
-      "owner": "amp",
-      "qualification": "limited",
-      "testGroups": [
-        "offline"
-      ],
-      "formatVersion": "unqualified source variants",
-      "incremental": "unqualified",
-      "limits": [
-        "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
-      ]
-    },
-    {
-      "selector": "antigravity",
-      "owner": "antigravity",
-      "qualification": "limited",
-      "testGroups": [
-        "offline"
-      ],
-      "formatVersion": "unqualified source variants",
-      "incremental": "unqualified",
-      "limits": [
-        "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
-      ]
-    },
-    {
-      "selector": "antigravity-cli",
-      "owner": "antigravity-cli",
-      "qualification": "limited",
-      "testGroups": [
-        "offline"
-      ],
-      "formatVersion": "unqualified source variants",
-      "incremental": "unqualified",
-      "limits": [
-        "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
-      ]
-    },
-    {
-      "selector": "augment",
-      "owner": "augment",
-      "qualification": "limited",
-      "testGroups": [
-        "offline"
-      ],
-      "formatVersion": "unqualified source variants",
-      "incremental": "unqualified",
-      "limits": [
-        "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
-      ]
-    },
-    {
-      "selector": "cherrystudio",
-      "owner": "cherrystudio",
-      "qualification": "limited",
-      "testGroups": [
-        "offline"
-      ],
-      "formatVersion": "unqualified source variants",
-      "incremental": "unqualified",
-      "limits": [
-        "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
-      ]
-    },
-    {
-      "selector": "claude",
-      "owner": "claude",
-      "qualification": "fixture-supported",
-      "testGroups": [
-        "claude",
-        "offline"
-      ],
-      "formatVersion": "pinned synthetic fixtures only",
-      "incremental": "unqualified",
-      "limits": [
-        "No live provider or installed-client version qualification.",
-        "Unknown source schema is not a complete-source claim."
-      ]
-    },
-    {
-      "selector": "cline",
-      "owner": "cline",
-      "qualification": "limited",
-      "testGroups": [
-        "offline"
-      ],
-      "formatVersion": "unqualified source variants",
-      "incremental": "unqualified",
-      "limits": [
-        "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
-      ]
-    },
-    {
-      "selector": "codebuddy",
-      "owner": "codebuddy",
-      "qualification": "limited",
-      "testGroups": [
-        "offline"
-      ],
-      "formatVersion": "unqualified source variants",
-      "incremental": "unqualified",
-      "limits": [
-        "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
-      ]
-    },
-    {
-      "selector": "codebuff",
-      "owner": "codebuff",
-      "qualification": "limited",
-      "testGroups": [
-        "offline"
-      ],
-      "formatVersion": "unqualified source variants",
-      "incremental": "unqualified",
-      "limits": [
-        "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
-      ]
-    },
-    {
-      "selector": "codex",
-      "owner": "codex",
-      "qualification": "fixture-supported",
-      "testGroups": [
-        "codex",
-        "offline"
-      ],
-      "formatVersion": "pinned synthetic fixtures only",
-      "incremental": "unqualified",
-      "limits": [
-        "No live provider or installed-client version qualification.",
-        "Unknown source schema is not a complete-source claim.",
-        "Persisted checkpoint append remains slower than full reparse in the bounded synthetic measurements; see CHECKPOINT-QUALIFICATION.md. Automatic use is unqualified."
-      ]
-    },
-    {
-      "selector": "commandcode",
-      "owner": "commandcode",
-      "qualification": "limited",
-      "testGroups": [
-        "offline"
-      ],
-      "formatVersion": "unqualified source variants",
-      "incremental": "unqualified",
-      "limits": [
-        "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
-      ]
-    },
-    {
-      "selector": "copilot",
-      "owner": "copilot",
-      "qualification": "limited",
-      "testGroups": [
-        "offline"
-      ],
-      "formatVersion": "unqualified source variants",
-      "incremental": "unqualified",
-      "limits": [
-        "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
-      ]
-    },
-    {
-      "selector": "crush",
-      "owner": "crush",
-      "qualification": "limited",
-      "testGroups": [
-        "offline"
-      ],
-      "formatVersion": "unqualified source variants",
-      "incremental": "unqualified",
-      "limits": [
-        "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
-      ]
-    },
-    {
-      "selector": "cursor",
-      "owner": "cursor",
-      "qualification": "fixture-supported",
-      "testGroups": [
-        "cursor",
-        "offline"
-      ],
-      "formatVersion": "pinned synthetic fixtures only",
-      "incremental": "unqualified",
-      "limits": [
-        "No live provider or installed-client version qualification.",
-        "Unknown source schema is not a complete-source claim."
-      ]
-    },
-    {
-      "selector": "devin-cli",
-      "owner": "devin-cli",
-      "qualification": "fixture-supported",
-      "testGroups": [
-        "devin",
-        "offline"
-      ],
-      "formatVersion": "pinned synthetic fixtures only",
-      "incremental": "unqualified",
-      "limits": [
-        "No live provider or installed-client version qualification.",
-        "Unknown source schema is not a complete-source claim."
-      ]
-    },
-    {
-      "selector": "devin-desktop",
-      "owner": "devin-desktop",
-      "qualification": "fixture-supported",
-      "testGroups": [
-        "devin",
-        "offline"
-      ],
-      "formatVersion": "pinned synthetic fixtures only",
-      "incremental": "unqualified",
-      "limits": [
-        "No live provider or installed-client version qualification.",
-        "Unknown source schema is not a complete-source claim."
-      ]
-    },
-    {
-      "selector": "droid",
-      "owner": "droid",
-      "qualification": "limited",
-      "testGroups": [
-        "offline"
-      ],
-      "formatVersion": "unqualified source variants",
-      "incremental": "unqualified",
-      "limits": [
-        "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
-      ]
-    },
-    {
-      "selector": "dsh",
-      "owner": "dsh",
-      "qualification": "limited",
-      "testGroups": [
-        "offline"
-      ],
-      "formatVersion": "unqualified source variants",
-      "incremental": "unqualified",
-      "limits": [
-        "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
-      ]
-    },
-    {
-      "selector": "freebuff",
-      "owner": "freebuff",
-      "qualification": "limited",
-      "testGroups": [
-        "offline"
-      ],
-      "formatVersion": "unqualified source variants",
-      "incremental": "unqualified",
-      "limits": [
-        "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
-      ]
-    },
-    {
-      "selector": "fx",
-      "owner": "fx",
-      "qualification": "limited",
-      "testGroups": [
-        "offline"
-      ],
-      "formatVersion": "unqualified source variants",
-      "incremental": "unqualified",
-      "limits": [
-        "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
-      ]
-    },
-    {
-      "selector": "gemini",
-      "owner": "gemini",
-      "qualification": "limited",
-      "testGroups": [
-        "offline"
-      ],
-      "formatVersion": "unqualified source variants",
-      "incremental": "unqualified",
-      "limits": [
-        "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
-      ]
-    },
-    {
-      "selector": "gjc",
-      "owner": "gjc",
-      "qualification": "limited",
-      "testGroups": [
-        "offline"
-      ],
-      "formatVersion": "unqualified source variants",
-      "incremental": "unqualified",
-      "limits": [
-        "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
-      ]
-    },
-    {
-      "selector": "goose",
-      "owner": "goose",
-      "qualification": "limited",
-      "testGroups": [
-        "offline"
-      ],
-      "formatVersion": "unqualified source variants",
-      "incremental": "unqualified",
-      "limits": [
-        "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
-      ]
-    },
-    {
-      "selector": "grok",
-      "owner": "grok",
-      "qualification": "limited",
-      "testGroups": [
-        "offline"
-      ],
-      "formatVersion": "unqualified source variants",
-      "incremental": "unqualified",
-      "limits": [
-        "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
-      ]
-    },
-    {
-      "selector": "hermes",
-      "owner": "hermes",
-      "qualification": "limited",
-      "testGroups": [
-        "offline"
-      ],
-      "formatVersion": "unqualified source variants",
-      "incremental": "unqualified",
-      "limits": [
-        "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
-      ]
-    },
-    {
-      "selector": "hindsight",
-      "owner": "hindsight",
-      "qualification": "limited",
-      "testGroups": [
-        "offline"
-      ],
-      "formatVersion": "unqualified source variants",
-      "incremental": "unqualified",
-      "limits": [
-        "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
-      ]
-    },
-    {
-      "selector": "jcode",
-      "owner": "jcode",
-      "qualification": "limited",
-      "testGroups": [
-        "offline"
-      ],
-      "formatVersion": "unqualified source variants",
-      "incremental": "unqualified",
-      "limits": [
-        "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
-      ]
-    },
-    {
-      "selector": "junie",
-      "owner": "junie",
-      "qualification": "limited",
-      "testGroups": [
-        "offline"
-      ],
-      "formatVersion": "unqualified source variants",
-      "incremental": "unqualified",
-      "limits": [
-        "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
-      ]
-    },
-    {
-      "selector": "kilo",
-      "owner": "kilo",
-      "qualification": "limited",
-      "testGroups": [
-        "offline"
-      ],
-      "formatVersion": "unqualified source variants",
-      "incremental": "unqualified",
-      "limits": [
-        "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
-      ]
-    },
-    {
-      "selector": "kilocode",
-      "owner": "kilocode",
-      "qualification": "limited",
-      "testGroups": [
-        "offline"
-      ],
-      "formatVersion": "unqualified source variants",
-      "incremental": "unqualified",
-      "limits": [
-        "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
-      ]
-    },
-    {
-      "selector": "kimchi",
-      "owner": "kimchi",
-      "qualification": "limited",
-      "testGroups": [
-        "offline"
-      ],
-      "formatVersion": "unqualified source variants",
-      "incremental": "unqualified",
-      "limits": [
-        "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
-      ]
-    },
-    {
-      "selector": "kimi",
-      "owner": "kimi",
-      "qualification": "limited",
-      "testGroups": [
-        "offline"
-      ],
-      "formatVersion": "unqualified source variants",
-      "incremental": "unqualified",
-      "limits": [
-        "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
-      ]
-    },
-    {
-      "selector": "kiro",
-      "owner": "kiro",
-      "qualification": "limited",
-      "testGroups": [
-        "offline"
-      ],
-      "formatVersion": "unqualified source variants",
-      "incremental": "unqualified",
-      "limits": [
-        "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
-      ]
-    },
-    {
-      "selector": "lmstudio",
-      "owner": "lmstudio",
-      "qualification": "limited",
-      "testGroups": [
-        "offline"
-      ],
-      "formatVersion": "unqualified source variants",
-      "incremental": "unqualified",
-      "limits": [
-        "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
-      ]
-    },
-    {
-      "selector": "mcode",
-      "owner": "mcode",
-      "qualification": "limited",
-      "testGroups": [
-        "offline"
-      ],
-      "formatVersion": "unqualified source variants",
-      "incremental": "unqualified",
-      "limits": [
-        "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
-      ]
-    },
-    {
-      "selector": "micode",
-      "owner": "micode",
-      "qualification": "limited",
-      "testGroups": [
-        "offline"
-      ],
-      "formatVersion": "unqualified source variants",
-      "incremental": "unqualified",
-      "limits": [
-        "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
-      ]
-    },
-    {
-      "selector": "mux",
-      "owner": "mux",
-      "qualification": "limited",
-      "testGroups": [
-        "offline"
-      ],
-      "formatVersion": "unqualified source variants",
-      "incremental": "unqualified",
-      "limits": [
-        "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
-      ]
-    },
-    {
-      "selector": "omp",
-      "owner": "omp",
-      "qualification": "limited",
-      "testGroups": [
-        "offline"
-      ],
-      "formatVersion": "unqualified source variants",
-      "incremental": "unqualified",
-      "limits": [
-        "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
-      ]
-    },
-    {
-      "selector": "openclaw",
-      "owner": "openclaw",
-      "qualification": "limited",
-      "testGroups": [
-        "offline"
-      ],
-      "formatVersion": "unqualified source variants",
-      "incremental": "unqualified",
-      "limits": [
-        "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
-      ]
-    },
-    {
-      "selector": "opencode",
-      "owner": "opencode",
-      "qualification": "limited",
-      "testGroups": [
-        "offline"
-      ],
-      "formatVersion": "unqualified source variants",
-      "incremental": "unqualified",
-      "limits": [
-        "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
-      ]
-    },
-    {
-      "selector": "opencodereview",
-      "owner": "opencodereview",
-      "qualification": "limited",
-      "testGroups": [
-        "offline"
-      ],
-      "formatVersion": "unqualified source variants",
-      "incremental": "unqualified",
-      "limits": [
-        "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
-      ]
-    },
-    {
-      "selector": "pi",
-      "owner": "pi",
-      "qualification": "limited",
-      "testGroups": [
-        "offline"
-      ],
-      "formatVersion": "unqualified source variants",
-      "incremental": "unqualified",
-      "limits": [
-        "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
-      ]
-    },
-    {
-      "selector": "prime-agent",
-      "owner": "prime-agent",
-      "qualification": "limited",
-      "testGroups": [
-        "offline"
-      ],
-      "formatVersion": "unqualified source variants",
-      "incremental": "unqualified",
-      "limits": [
-        "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
-      ]
-    },
-    {
-      "selector": "qwen",
-      "owner": "qwen",
-      "qualification": "limited",
-      "testGroups": [
-        "offline"
-      ],
-      "formatVersion": "unqualified source variants",
-      "incremental": "unqualified",
-      "limits": [
-        "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
-      ]
-    },
-    {
-      "selector": "reasonix",
-      "owner": "reasonix",
-      "qualification": "limited",
-      "testGroups": [
-        "offline"
-      ],
-      "formatVersion": "unqualified source variants",
-      "incremental": "unqualified",
-      "limits": [
-        "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
-      ]
-    },
-    {
-      "selector": "roocode",
-      "owner": "roocode",
-      "qualification": "limited",
-      "testGroups": [
-        "offline"
-      ],
-      "formatVersion": "unqualified source variants",
-      "incremental": "unqualified",
-      "limits": [
-        "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
-      ]
-    },
-    {
-      "selector": "senpi",
-      "owner": "senpi",
-      "qualification": "limited",
-      "testGroups": [
-        "offline"
-      ],
-      "formatVersion": "unqualified source variants",
-      "incremental": "unqualified",
-      "limits": [
-        "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
-      ]
-    },
-    {
-      "selector": "synthetic",
-      "owner": "synthetic",
-      "qualification": "limited",
-      "testGroups": [
-        "offline"
-      ],
-      "formatVersion": "unqualified source variants",
-      "incremental": "unqualified",
-      "limits": [
-        "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
-      ]
-    },
-    {
-      "selector": "trae",
-      "owner": "trae",
-      "qualification": "limited",
-      "testGroups": [
-        "offline"
-      ],
-      "formatVersion": "unqualified source variants",
-      "incremental": "unqualified",
-      "limits": [
-        "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
-      ]
-    },
-    {
-      "selector": "unsloth",
-      "owner": "unsloth",
-      "qualification": "limited",
-      "testGroups": [
-        "offline"
-      ],
-      "formatVersion": "unqualified source variants",
-      "incremental": "unqualified",
-      "limits": [
-        "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
-      ]
-    },
-    {
-      "selector": "warp",
-      "owner": "warp",
-      "qualification": "limited",
-      "testGroups": [
-        "offline"
-      ],
-      "formatVersion": "unqualified source variants",
-      "incremental": "unqualified",
-      "limits": [
-        "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
-      ]
-    },
-    {
-      "selector": "workbuddy",
-      "owner": "workbuddy",
-      "qualification": "limited",
-      "testGroups": [
-        "offline"
-      ],
-      "formatVersion": "unqualified source variants",
-      "incremental": "unqualified",
-      "limits": [
-        "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
-      ]
-    },
-    {
-      "selector": "zcode",
-      "owner": "zcode",
-      "qualification": "limited",
-      "testGroups": [
-        "offline"
-      ],
-      "formatVersion": "unqualified source variants",
-      "incremental": "unqualified",
-      "limits": [
-        "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
-      ]
-    },
-    {
-      "selector": "zed",
-      "owner": "zed",
-      "qualification": "limited",
-      "testGroups": [
-        "offline"
-      ],
-      "formatVersion": "unqualified source variants",
-      "incremental": "unqualified",
-      "limits": [
-        "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
-      ]
-    }
-  ]
+  {
+   "id": "claude",
+   "prefix": "sessions::claudecode::tests::",
+   "expectedTests": 77
+  },
+  {
+   "id": "cursor",
+   "prefix": "sessions::cursor::tests::",
+   "expectedTests": 24
+  },
+  {
+   "id": "devin",
+   "prefix": "sessions::devin::tests::",
+   "expectedTests": 15
+  },
+  {
+   "id": "offline",
+   "prefix": "offline::tests::",
+   "expectedTests": 6
+  }
+ ],
+ "adapters": [
+  {
+   "selector": "9router",
+   "owner": "gjc",
+   "qualification": "limited",
+   "testGroups": [
+    "offline"
+   ],
+   "formatVersion": "unqualified source variants",
+   "incremental": "unqualified",
+   "limits": [
+    "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
+   ]
+  },
+  {
+   "selector": "amp",
+   "owner": "amp",
+   "qualification": "limited",
+   "testGroups": [
+    "offline"
+   ],
+   "formatVersion": "unqualified source variants",
+   "incremental": "unqualified",
+   "limits": [
+    "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
+   ]
+  },
+  {
+   "selector": "antigravity",
+   "owner": "antigravity",
+   "qualification": "limited",
+   "testGroups": [
+    "offline"
+   ],
+   "formatVersion": "unqualified source variants",
+   "incremental": "unqualified",
+   "limits": [
+    "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
+   ]
+  },
+  {
+   "selector": "antigravity-cli",
+   "owner": "antigravity-cli",
+   "qualification": "limited",
+   "testGroups": [
+    "offline"
+   ],
+   "formatVersion": "unqualified source variants",
+   "incremental": "unqualified",
+   "limits": [
+    "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
+   ]
+  },
+  {
+   "selector": "augment",
+   "owner": "augment",
+   "qualification": "limited",
+   "testGroups": [
+    "offline"
+   ],
+   "formatVersion": "unqualified source variants",
+   "incremental": "unqualified",
+   "limits": [
+    "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
+   ]
+  },
+  {
+   "selector": "cherrystudio",
+   "owner": "cherrystudio",
+   "qualification": "limited",
+   "testGroups": [
+    "offline"
+   ],
+   "formatVersion": "unqualified source variants",
+   "incremental": "unqualified",
+   "limits": [
+    "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
+   ]
+  },
+  {
+   "selector": "claude",
+   "owner": "claude",
+   "qualification": "fixture-supported",
+   "testGroups": [
+    "claude",
+    "offline"
+   ],
+   "formatVersion": "pinned synthetic fixtures only",
+   "incremental": "unqualified",
+   "limits": [
+    "No live provider or installed-client version qualification.",
+    "Unknown source schema is not a complete-source claim."
+   ]
+  },
+  {
+   "selector": "cline",
+   "owner": "cline",
+   "qualification": "limited",
+   "testGroups": [
+    "offline"
+   ],
+   "formatVersion": "unqualified source variants",
+   "incremental": "unqualified",
+   "limits": [
+    "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
+   ]
+  },
+  {
+   "selector": "codebuddy",
+   "owner": "codebuddy",
+   "qualification": "limited",
+   "testGroups": [
+    "offline"
+   ],
+   "formatVersion": "unqualified source variants",
+   "incremental": "unqualified",
+   "limits": [
+    "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
+   ]
+  },
+  {
+   "selector": "codebuff",
+   "owner": "codebuff",
+   "qualification": "limited",
+   "testGroups": [
+    "offline"
+   ],
+   "formatVersion": "unqualified source variants",
+   "incremental": "unqualified",
+   "limits": [
+    "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
+   ]
+  },
+  {
+   "selector": "codex",
+   "owner": "codex",
+   "qualification": "fixture-supported",
+   "testGroups": [
+    "codex",
+    "offline"
+   ],
+   "formatVersion": "pinned synthetic fixtures only",
+   "incremental": "unqualified",
+   "limits": [
+    "No live provider or installed-client version qualification.",
+    "Unknown source schema is not a complete-source claim.",
+    "Persisted checkpoint append remains slower than full reparse in the bounded synthetic measurements; see CHECKPOINT-QUALIFICATION.md. Automatic use is unqualified."
+   ]
+  },
+  {
+   "selector": "commandcode",
+   "owner": "commandcode",
+   "qualification": "limited",
+   "testGroups": [
+    "offline"
+   ],
+   "formatVersion": "unqualified source variants",
+   "incremental": "unqualified",
+   "limits": [
+    "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
+   ]
+  },
+  {
+   "selector": "copilot",
+   "owner": "copilot",
+   "qualification": "limited",
+   "testGroups": [
+    "offline"
+   ],
+   "formatVersion": "unqualified source variants",
+   "incremental": "unqualified",
+   "limits": [
+    "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
+   ]
+  },
+  {
+   "selector": "crush",
+   "owner": "crush",
+   "qualification": "limited",
+   "testGroups": [
+    "offline"
+   ],
+   "formatVersion": "unqualified source variants",
+   "incremental": "unqualified",
+   "limits": [
+    "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
+   ]
+  },
+  {
+   "selector": "cursor",
+   "owner": "cursor",
+   "qualification": "fixture-supported",
+   "testGroups": [
+    "cursor",
+    "offline"
+   ],
+   "formatVersion": "pinned synthetic fixtures only",
+   "incremental": "unqualified",
+   "limits": [
+    "No live provider or installed-client version qualification.",
+    "Unknown source schema is not a complete-source claim."
+   ]
+  },
+  {
+   "selector": "devin-cli",
+   "owner": "devin-cli",
+   "qualification": "fixture-supported",
+   "testGroups": [
+    "devin",
+    "offline"
+   ],
+   "formatVersion": "pinned synthetic fixtures only",
+   "incremental": "unqualified",
+   "limits": [
+    "No live provider or installed-client version qualification.",
+    "Unknown source schema is not a complete-source claim."
+   ]
+  },
+  {
+   "selector": "devin-desktop",
+   "owner": "devin-desktop",
+   "qualification": "fixture-supported",
+   "testGroups": [
+    "devin",
+    "offline"
+   ],
+   "formatVersion": "pinned synthetic fixtures only",
+   "incremental": "unqualified",
+   "limits": [
+    "No live provider or installed-client version qualification.",
+    "Unknown source schema is not a complete-source claim."
+   ]
+  },
+  {
+   "selector": "droid",
+   "owner": "droid",
+   "qualification": "limited",
+   "testGroups": [
+    "offline"
+   ],
+   "formatVersion": "unqualified source variants",
+   "incremental": "unqualified",
+   "limits": [
+    "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
+   ]
+  },
+  {
+   "selector": "dsh",
+   "owner": "dsh",
+   "qualification": "limited",
+   "testGroups": [
+    "offline"
+   ],
+   "formatVersion": "unqualified source variants",
+   "incremental": "unqualified",
+   "limits": [
+    "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
+   ]
+  },
+  {
+   "selector": "freebuff",
+   "owner": "freebuff",
+   "qualification": "limited",
+   "testGroups": [
+    "offline"
+   ],
+   "formatVersion": "unqualified source variants",
+   "incremental": "unqualified",
+   "limits": [
+    "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
+   ]
+  },
+  {
+   "selector": "fx",
+   "owner": "fx",
+   "qualification": "limited",
+   "testGroups": [
+    "offline"
+   ],
+   "formatVersion": "unqualified source variants",
+   "incremental": "unqualified",
+   "limits": [
+    "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
+   ]
+  },
+  {
+   "selector": "gemini",
+   "owner": "gemini",
+   "qualification": "limited",
+   "testGroups": [
+    "offline"
+   ],
+   "formatVersion": "unqualified source variants",
+   "incremental": "unqualified",
+   "limits": [
+    "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
+   ]
+  },
+  {
+   "selector": "gjc",
+   "owner": "gjc",
+   "qualification": "limited",
+   "testGroups": [
+    "offline"
+   ],
+   "formatVersion": "unqualified source variants",
+   "incremental": "unqualified",
+   "limits": [
+    "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
+   ]
+  },
+  {
+   "selector": "goose",
+   "owner": "goose",
+   "qualification": "limited",
+   "testGroups": [
+    "offline"
+   ],
+   "formatVersion": "unqualified source variants",
+   "incremental": "unqualified",
+   "limits": [
+    "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
+   ]
+  },
+  {
+   "selector": "grok",
+   "owner": "grok",
+   "qualification": "limited",
+   "testGroups": [
+    "offline"
+   ],
+   "formatVersion": "unqualified source variants",
+   "incremental": "unqualified",
+   "limits": [
+    "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
+   ]
+  },
+  {
+   "selector": "hermes",
+   "owner": "hermes",
+   "qualification": "limited",
+   "testGroups": [
+    "offline"
+   ],
+   "formatVersion": "unqualified source variants",
+   "incremental": "unqualified",
+   "limits": [
+    "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
+   ]
+  },
+  {
+   "selector": "hindsight",
+   "owner": "hindsight",
+   "qualification": "limited",
+   "testGroups": [
+    "offline"
+   ],
+   "formatVersion": "unqualified source variants",
+   "incremental": "unqualified",
+   "limits": [
+    "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
+   ]
+  },
+  {
+   "selector": "jcode",
+   "owner": "jcode",
+   "qualification": "limited",
+   "testGroups": [
+    "offline"
+   ],
+   "formatVersion": "unqualified source variants",
+   "incremental": "unqualified",
+   "limits": [
+    "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
+   ]
+  },
+  {
+   "selector": "junie",
+   "owner": "junie",
+   "qualification": "limited",
+   "testGroups": [
+    "offline"
+   ],
+   "formatVersion": "unqualified source variants",
+   "incremental": "unqualified",
+   "limits": [
+    "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
+   ]
+  },
+  {
+   "selector": "kilo",
+   "owner": "kilo",
+   "qualification": "limited",
+   "testGroups": [
+    "offline"
+   ],
+   "formatVersion": "unqualified source variants",
+   "incremental": "unqualified",
+   "limits": [
+    "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
+   ]
+  },
+  {
+   "selector": "kilocode",
+   "owner": "kilocode",
+   "qualification": "limited",
+   "testGroups": [
+    "offline"
+   ],
+   "formatVersion": "unqualified source variants",
+   "incremental": "unqualified",
+   "limits": [
+    "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
+   ]
+  },
+  {
+   "selector": "kimchi",
+   "owner": "kimchi",
+   "qualification": "limited",
+   "testGroups": [
+    "offline"
+   ],
+   "formatVersion": "unqualified source variants",
+   "incremental": "unqualified",
+   "limits": [
+    "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
+   ]
+  },
+  {
+   "selector": "kimi",
+   "owner": "kimi",
+   "qualification": "limited",
+   "testGroups": [
+    "offline"
+   ],
+   "formatVersion": "unqualified source variants",
+   "incremental": "unqualified",
+   "limits": [
+    "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
+   ]
+  },
+  {
+   "selector": "kiro",
+   "owner": "kiro",
+   "qualification": "limited",
+   "testGroups": [
+    "offline"
+   ],
+   "formatVersion": "unqualified source variants",
+   "incremental": "unqualified",
+   "limits": [
+    "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
+   ]
+  },
+  {
+   "selector": "lmstudio",
+   "owner": "lmstudio",
+   "qualification": "limited",
+   "testGroups": [
+    "offline"
+   ],
+   "formatVersion": "unqualified source variants",
+   "incremental": "unqualified",
+   "limits": [
+    "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
+   ]
+  },
+  {
+   "selector": "mcode",
+   "owner": "mcode",
+   "qualification": "limited",
+   "testGroups": [
+    "offline"
+   ],
+   "formatVersion": "unqualified source variants",
+   "incremental": "unqualified",
+   "limits": [
+    "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
+   ]
+  },
+  {
+   "selector": "micode",
+   "owner": "micode",
+   "qualification": "limited",
+   "testGroups": [
+    "offline"
+   ],
+   "formatVersion": "unqualified source variants",
+   "incremental": "unqualified",
+   "limits": [
+    "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
+   ]
+  },
+  {
+   "selector": "mux",
+   "owner": "mux",
+   "qualification": "limited",
+   "testGroups": [
+    "offline"
+   ],
+   "formatVersion": "unqualified source variants",
+   "incremental": "unqualified",
+   "limits": [
+    "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
+   ]
+  },
+  {
+   "selector": "omp",
+   "owner": "omp",
+   "qualification": "limited",
+   "testGroups": [
+    "offline"
+   ],
+   "formatVersion": "unqualified source variants",
+   "incremental": "unqualified",
+   "limits": [
+    "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
+   ]
+  },
+  {
+   "selector": "openclaw",
+   "owner": "openclaw",
+   "qualification": "limited",
+   "testGroups": [
+    "offline"
+   ],
+   "formatVersion": "unqualified source variants",
+   "incremental": "unqualified",
+   "limits": [
+    "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
+   ]
+  },
+  {
+   "selector": "opencode",
+   "owner": "opencode",
+   "qualification": "limited",
+   "testGroups": [
+    "offline"
+   ],
+   "formatVersion": "unqualified source variants",
+   "incremental": "unqualified",
+   "limits": [
+    "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
+   ]
+  },
+  {
+   "selector": "opencodereview",
+   "owner": "opencodereview",
+   "qualification": "limited",
+   "testGroups": [
+    "offline"
+   ],
+   "formatVersion": "unqualified source variants",
+   "incremental": "unqualified",
+   "limits": [
+    "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
+   ]
+  },
+  {
+   "selector": "pi",
+   "owner": "pi",
+   "qualification": "limited",
+   "testGroups": [
+    "offline"
+   ],
+   "formatVersion": "unqualified source variants",
+   "incremental": "unqualified",
+   "limits": [
+    "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
+   ]
+  },
+  {
+   "selector": "prime-agent",
+   "owner": "prime-agent",
+   "qualification": "limited",
+   "testGroups": [
+    "offline"
+   ],
+   "formatVersion": "unqualified source variants",
+   "incremental": "unqualified",
+   "limits": [
+    "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
+   ]
+  },
+  {
+   "selector": "qwen",
+   "owner": "qwen",
+   "qualification": "limited",
+   "testGroups": [
+    "offline"
+   ],
+   "formatVersion": "unqualified source variants",
+   "incremental": "unqualified",
+   "limits": [
+    "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
+   ]
+  },
+  {
+   "selector": "reasonix",
+   "owner": "reasonix",
+   "qualification": "limited",
+   "testGroups": [
+    "offline"
+   ],
+   "formatVersion": "unqualified source variants",
+   "incremental": "unqualified",
+   "limits": [
+    "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
+   ]
+  },
+  {
+   "selector": "roocode",
+   "owner": "roocode",
+   "qualification": "limited",
+   "testGroups": [
+    "offline"
+   ],
+   "formatVersion": "unqualified source variants",
+   "incremental": "unqualified",
+   "limits": [
+    "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
+   ]
+  },
+  {
+   "selector": "senpi",
+   "owner": "senpi",
+   "qualification": "limited",
+   "testGroups": [
+    "offline"
+   ],
+   "formatVersion": "unqualified source variants",
+   "incremental": "unqualified",
+   "limits": [
+    "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
+   ]
+  },
+  {
+   "selector": "synthetic",
+   "owner": "synthetic",
+   "qualification": "limited",
+   "testGroups": [
+    "offline"
+   ],
+   "formatVersion": "unqualified source variants",
+   "incremental": "unqualified",
+   "limits": [
+    "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
+   ]
+  },
+  {
+   "selector": "trae",
+   "owner": "trae",
+   "qualification": "limited",
+   "testGroups": [
+    "offline"
+   ],
+   "formatVersion": "unqualified source variants",
+   "incremental": "unqualified",
+   "limits": [
+    "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
+   ]
+  },
+  {
+   "selector": "unsloth",
+   "owner": "unsloth",
+   "qualification": "limited",
+   "testGroups": [
+    "offline"
+   ],
+   "formatVersion": "unqualified source variants",
+   "incremental": "unqualified",
+   "limits": [
+    "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
+   ]
+  },
+  {
+   "selector": "warp",
+   "owner": "warp",
+   "qualification": "limited",
+   "testGroups": [
+    "offline"
+   ],
+   "formatVersion": "unqualified source variants",
+   "incremental": "unqualified",
+   "limits": [
+    "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
+   ]
+  },
+  {
+   "selector": "workbuddy",
+   "owner": "workbuddy",
+   "qualification": "limited",
+   "testGroups": [
+    "offline"
+   ],
+   "formatVersion": "unqualified source variants",
+   "incremental": "unqualified",
+   "limits": [
+    "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
+   ]
+  },
+  {
+   "selector": "zcode",
+   "owner": "zcode",
+   "qualification": "limited",
+   "testGroups": [
+    "offline"
+   ],
+   "formatVersion": "unqualified source variants",
+   "incremental": "unqualified",
+   "limits": [
+    "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
+   ]
+  },
+  {
+   "selector": "zed",
+   "owner": "zed",
+   "qualification": "limited",
+   "testGroups": [
+    "offline"
+   ],
+   "formatVersion": "unqualified source variants",
+   "incremental": "unqualified",
+   "limits": [
+    "Selector and empty-root boundary exist; nonempty source variants have not passed this maintained qualification selection."
+   ]
+  }
+ ]
 }

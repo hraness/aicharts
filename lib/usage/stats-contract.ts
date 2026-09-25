@@ -1,3 +1,4 @@
+import { err, ok, type Result } from "../result";
 import { isStatsClient, isStatsModel, isStatsProvider, STATS_REGISTRY_REVISION } from "./stats-registry";
 
 export const STATS_PROFILE = "client-stats-v2" as const;
@@ -73,7 +74,51 @@ function array(value: unknown, maximum: number): readonly unknown[] | null {
   return owned;
 }
 export const statsRowKey = (row: UsageStatsRow): string => [String(row.utcDay).padStart(8, "0"), row.client, row.provider ?? "", row.model ?? "", row.tokenBasis].join("\u0000");
-export const statsTokenTotal = (tokens: StatsTokens): bigint => STATS_TOKEN_KEYS.reduce((total, key) => total + BigInt(tokens[key]), 0n);
+
+export const STATS_U128_MAX = (1n << 128n) - 1n;
+/** The 24-digit `statsDecimal` ceiling, as the native kernel's `MAX_DECIMAL`. */
+export const STATS_MAX_DECIMAL = 10n ** 24n - 1n;
+export type StatsArithmeticError = "overflow" | "limit";
+/** Full-width addition, then a separate profile limit, as the native kernel's
+ * `checked_add_bounded`. Overflow and limit refusals stay distinct. */
+export function statsCheckedAddBounded(left: bigint, right: bigint, limit: bigint): Result<bigint, StatsArithmeticError> {
+  if (left < 0n || right < 0n || left > STATS_U128_MAX || right > STATS_U128_MAX) return err("overflow");
+  const sum = left + right;
+  if (sum > STATS_U128_MAX) return err("overflow");
+  return sum > limit ? err("limit") : ok(sum);
+}
+/** Five bounded buckets never exceed this, so a refusal is a corrupted row. */
+const STATS_MAX_TOKEN_TOTAL = 5n * STATS_MAX_DECIMAL;
+export const statsTokenTotal = (tokens: StatsTokens): bigint => STATS_TOKEN_KEYS.reduce((total, key) => {
+  const sum = statsCheckedAddBounded(total, BigInt(tokens[key]), STATS_MAX_TOKEN_TOTAL);
+  if (!sum.ok) throw new Error("stats_token_total_invalid");
+  return sum.value;
+}, 0n);
+export type StatsPricingError = StatsArithmeticError | "missing_rate";
+/** The native retail estimate, as the kernel's `price_microusd`: rates are
+ * pico-USD per token in bucket order (input, cache read, cache write, output,
+ * reasoning); a used bucket needs a rate, an unused bucket does not; one
+ * half-up rounding per observation, then the 24-digit profile limit. This is
+ * the differential reference for the native estimate; hosted views never
+ * price usage themselves. */
+export function statsPriceMicrousd(tokens: readonly [bigint, bigint, bigint, bigint, bigint], rates: readonly [bigint | null, bigint | null, bigint | null, bigint | null, bigint | null]): Result<bigint, StatsPricingError> {
+  let pico = 0n;
+  for (let index = 0; index < 5; index++) {
+    const count = tokens[index]!, rate = rates[index]!;
+    if (count < 0n || count > STATS_U128_MAX || (rate !== null && (rate < 0n || rate > STATS_U128_MAX))) return err("overflow");
+    if (count === 0n) continue;
+    if (rate === null) return err("missing_rate");
+    const amount = count * rate;
+    if (amount > STATS_U128_MAX) return err("overflow");
+    const sum = statsCheckedAddBounded(pico, amount, STATS_U128_MAX);
+    if (!sum.ok) return sum;
+    pico = sum.value;
+  }
+  const offset = statsCheckedAddBounded(pico, 500_000n, STATS_U128_MAX);
+  if (!offset.ok) return offset;
+  const rounded = offset.value / 1_000_000n;
+  return rounded > STATS_MAX_DECIMAL ? err("limit") : ok(rounded);
+}
 
 const sourceKeys = ["client", "status", "tokenBasis", "records", "warnings", "latestAtMs"];
 const rowKeys = ["utcDay", "client", "provider", "model", "tokens", "records", "reportedCostMicrousd", "reportedCostRecords", "estimatedCostMicrousd", "estimatedCostRecords", "durationMs", "timedRecords", "timedTokens", "tokenBasis", "breakdownCoverage"];

@@ -1,6 +1,6 @@
 import { expect, spyOn, test } from "bun:test";
 import { readFileSync } from "node:fs";
-import { richFactsFromCompactions, richFactsFromSessions, richFactsFromTerminalTurns, type RichAdapterOptions } from "./rich-fact-adapters";
+import { richFactsFromClaudeTranscript, richFactsFromCodexTranscript, richFactsFromCompactions, richFactsFromSessions, richFactsFromTerminalTurns, richFactsFromTranscripts, type RichAdapterOptions, type TranscriptSource } from "./rich-fact-adapters";
 import { summarizeRichFacts } from "./rich-facts";
 import { parseOtlpTraces } from "./session-telemetry";
 import type { SessionReport } from "./session-contract";
@@ -173,4 +173,91 @@ test("adapters refuse foreign fields/accessors and never activate a source or cl
   const empty = await richFactsFromTerminalTurns([], options());
   if (!empty.ok) throw new Error(empty.error);
   expect(Object.values(empty.value.coverage)).not.toContain("complete");
+});
+
+// ---- Native transcript adapters (shared fixtures with crates/aicharts-core/src/rich_facts/transcript.rs) ----
+const transcriptFixture = (name: string) => readFileSync(new URL(`../../fixtures/usage/${name}`, import.meta.url), "utf8");
+const transcriptOptions = (): RichAdapterOptions => ({ key: new Uint8Array(32).fill(9), sourceEpoch: "synthetic_source_v1", window: { startMs: 1_767_225_600_000, endMs: 1_767_225_660_000 } });
+const transcriptSources = (): TranscriptSource[] => [
+  { provider: "claude_code", text: transcriptFixture("rich-claude-transcript-v1.jsonl") },
+  { provider: "codex", text: transcriptFixture("rich-codex-transcript-v1.jsonl") },
+  { provider: "codex", text: transcriptFixture("rich-codex-transcript-child-v1.jsonl") },
+  { provider: "claude_code", text: transcriptFixture("rich-claude-transcript-v2.jsonl") },
+];
+const START = 1_767_225_600_000;
+
+test("transcript adapters reproduce the Rust producer's report byte for byte from the shared fixtures", async () => {
+  const result = await richFactsFromTranscripts(transcriptSources(), transcriptOptions());
+  expect(result.ok).toBe(true);
+  if (!result.ok) return;
+  expect<unknown>(result.value.report).toEqual(JSON.parse(transcriptFixture("rich-transcript-v1.json")));
+  expect(result.value.measured).toEqual({ skippedRecords: 3, linesRead: 28 });
+  expect(result.value.report.coverage).toEqual({ usage: "partial", span: "unsupported", request: "partial", turn: "unsupported", tool: "partial", context: "partial", compaction: "unsupported" });
+  const serialized = JSON.stringify(result.value.report);
+  for (const canary of ["PRIVATE_", "synthetic_source_v1", "11111111-2222", "22222222-3333", "req_synthetic", "msg_synthetic", "toolu_synthetic", "call_synthetic", "agent_synthetic", "/private/synthetic", "2.1.281", "0.156.1"]) expect(serialized).not.toContain(canary);
+});
+
+test("transcript request facts expose exact terminal and prompt timestamps and never fabricate streaming timing", async () => {
+  const result = await richFactsFromClaudeTranscript(transcriptFixture("rich-claude-transcript-v1.jsonl"), transcriptOptions());
+  expect(result.ok).toBe(true);
+  if (!result.ok) return;
+  const requests = result.value.report.facts.filter(fact => fact.kind === "request" && fact.owner.lineage === "root").map(fact => fact.value);
+  expect(requests).toHaveLength(3);
+  expect(requests[0]).toMatchObject({ stage: "terminal", outcome: "success", requestedAtMs: START + 1_000, terminalAtMs: START + 3_500, dispatchedAtMs: null, firstTokenAtMs: null, lastTokenAtMs: null, retryOf: null, clockUncertaintyMs: null });
+  expect(requests[2]).toMatchObject({ outcome: "error", terminalAtMs: START + 6_000 });
+  const usage = result.value.report.facts.filter(fact => fact.kind === "usage" && fact.owner.lineage === "root");
+  expect(usage.map(fact => fact.value && "grain" in fact.value ? fact.value.grain : null)).toEqual(["request", "response", "request", "response"]);
+  expect(usage[0]!.value).toMatchObject({ model: "claude-sonnet-4-6", modelBasis: "response", tokens: { output: "4", cacheWrite5m: "20", cacheWrite1h: "10", cacheWriteUnknown: "0" } });
+  const context = result.value.report.facts.filter(fact => fact.kind === "context").map(fact => fact.value);
+  expect(context[0]).toMatchObject({ tokens: "140", limitTokens: null });
+  const summary = summarizeRichFacts(result.value.report, { ...richSelection, window: transcriptOptions().window, lineage: "all" });
+  expect(summary.ok && summary.value.tokens?.total.sum).toBe(140n + 4n + 205n + 7n + 13n);
+  const child = result.value.report.facts.find(fact => fact.owner.lineage === "child")!;
+  expect(child.owner.parentExecutionId).toBe(result.value.report.facts.find(fact => fact.owner.lineage === "root")!.owner.executionId);
+});
+
+test("codex transcripts carry slot identities, context limits, unknown outcomes and parent threads", async () => {
+  const parent = await richFactsFromCodexTranscript(transcriptFixture("rich-codex-transcript-v1.jsonl"), transcriptOptions());
+  const child = await richFactsFromCodexTranscript(transcriptFixture("rich-codex-transcript-child-v1.jsonl"), transcriptOptions());
+  expect(parent.ok && child.ok).toBe(true);
+  if (!parent.ok || !child.ok) return;
+  expect(parent.value.report.facts.map(fact => fact.kind)).toEqual(["request", "context", "request", "context", "tool", "tool"]);
+  expect(parent.value.report.facts[0]!.owner.lineage).toBe("root");
+  expect(parent.value.report.facts[0]!.value).toMatchObject({ outcome: "unknown", requestedAtMs: null, terminalAtMs: START + 12_000 });
+  expect(parent.value.report.facts[1]!.value).toMatchObject({ tokens: "1200", limitTokens: "272000" });
+  expect(parent.value.report.facts[0]!.id).not.toBe(parent.value.report.facts[2]!.id);
+  expect(parent.value.report.facts[5]!.value).toMatchObject({ stage: "terminal", outcome: "unknown" });
+  expect(parent.value.report.coverage.usage).toBe("unsupported");
+  expect(parent.value.measured).toEqual({ skippedRecords: 1, linesRead: 11 });
+  expect(child.value.report.facts[0]!.owner).toMatchObject({ lineage: "child", parentExecutionId: parent.value.report.facts[0]!.owner.executionId, conversationId: parent.value.report.facts[0]!.owner.conversationId });
+  const unknown = await richFactsFromCodexTranscript([
+    JSON.stringify({ timestamp: "2026-01-01T00:00:10Z", type: "session_meta", payload: { id: "s1", source: "unknown_origin" } }),
+    JSON.stringify({ timestamp: "2026-01-01T00:00:11Z", type: "event_msg", payload: { type: "token_count", info: { last_token_usage: { input_tokens: 5 } } } }),
+  ].join("\n"), transcriptOptions());
+  expect(unknown.ok && unknown.value.report.facts[0]!.owner.lineage).toBe("unknown");
+});
+
+test("transcript adapters refuse conflicting owners, duplicate scans, identity changes and bad sources", async () => {
+  const claude = transcriptFixture("rich-claude-transcript-v1.jsonl");
+  expect(await richFactsFromTranscripts([{ provider: "claude_code", text: claude }, { provider: "claude_code", text: claude }], transcriptOptions())).toEqual({ ok: false, error: "conflicting_fact" });
+  const orphan = [JSON.stringify({ timestamp: "2026-01-01T00:00:10Z", type: "session_meta", payload: { id: "s1", source: "cli" } }),
+    JSON.stringify({ timestamp: "2026-01-01T00:00:11Z", type: "event_msg", payload: { type: "token_count", info: { last_token_usage: { input_tokens: 5 } } } })].join("\n");
+  const child = [JSON.stringify({ timestamp: "2026-01-01T00:00:10Z", type: "session_meta", payload: { id: "s1", parent_thread_id: "p" } }),
+    JSON.stringify({ timestamp: "2026-01-01T00:00:12Z", type: "event_msg", payload: { type: "token_count", info: { last_token_usage: { input_tokens: 5 } } } })].join("\n");
+  expect(await richFactsFromTranscripts([{ provider: "codex", text: orphan }, { provider: "codex", text: child }], transcriptOptions())).toEqual({ ok: false, error: "conflicting_owner" });
+  const changed = [JSON.stringify({ timestamp: "2026-01-01T00:00:10Z", type: "session_meta", payload: { id: "s1", source: "cli" } }),
+    JSON.stringify({ timestamp: "2026-01-01T00:00:10Z", type: "session_meta", payload: { id: "s2", source: "cli" } })].join("\n");
+  expect(await richFactsFromCodexTranscript(changed, transcriptOptions())).toEqual({ ok: false, error: "invalid_rich_facts" });
+  expect(await richFactsFromClaudeTranscript("{not json", transcriptOptions())).toEqual({ ok: false, error: "invalid_rich_facts" });
+  expect(await richFactsFromTranscripts([{ provider: "devin" as never, text: "" }], transcriptOptions())).toEqual({ ok: false, error: "invalid_rich_facts" });
+  expect(await richFactsFromClaudeTranscript(claude, { ...transcriptOptions(), key: new Uint8Array(32) })).toEqual({ ok: false, error: "invalid_rich_facts" });
+  const narrow = await richFactsFromClaudeTranscript(claude, { ...transcriptOptions(), window: { startMs: START + 4_000, endMs: START + 5_000 } });
+  expect(narrow.ok && narrow.value.report.facts.map(fact => [fact.kind, fact.atMs])).toEqual([["tool", START + 4_000]]);
+});
+
+test("stale prompts beyond one window span are not requested timestamps", async () => {
+  const source = [JSON.stringify({ type: "user", timestamp: "2025-11-01T00:00:00Z", uuid: "u1", sessionId: "s", message: { role: "user", content: "x" } }),
+    JSON.stringify({ type: "assistant", timestamp: "2026-01-01T00:00:02Z", uuid: "a1", parentUuid: "u1", requestId: "r", sessionId: "s", message: { id: "m", model: "claude-sonnet-4-6", stop_reason: "end_turn", usage: { input_tokens: 1, output_tokens: 1 } } })].join("\n");
+  const result = await richFactsFromClaudeTranscript(source, transcriptOptions());
+  expect(result.ok && result.value.report.facts[0]!.value).toMatchObject({ requestedAtMs: null, terminalAtMs: START + 2_000 });
 });

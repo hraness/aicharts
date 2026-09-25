@@ -21,6 +21,7 @@ pub(super) fn upload() -> Upload {
         mode: "preserve-history".to_owned(),
         takeover: None,
         report: report(),
+        health: None,
     }
 }
 #[test]
@@ -397,7 +398,7 @@ fn resume_never_accepts_source_flags_and_live_requires_one_explicit_client() {
 }
 
 #[test]
-fn incremental_collection_requires_an_explicit_fresh_codex_profile() {
+fn incremental_collection_requires_an_explicit_checkpoint_client_profile() {
     let args = |items: &[&str]| items.iter().map(|s| (*s).to_owned()).collect::<Vec<_>>();
     let base = [
         "stats-sync",
@@ -415,11 +416,18 @@ fn incremental_collection_requires_an_explicit_fresh_codex_profile() {
     let mut values = args(&base);
     values.push("--incremental".into());
     assert!(options(&values, 1_800_000_000_000).unwrap().incremental);
-    for extra in ["--resume", "--abandon", "--dry-run", "--incremental"] {
+    for extra in ["--resume", "--abandon", "--incremental"] {
         let mut invalid = values.clone();
         invalid.push(extra.into());
         assert!(options(&invalid, 1_800_000_000_000).is_err());
     }
+    // An incremental dry run retains nothing but exercises the checkpoint path.
+    let dry = args(&["stats-sync", "--dry-run", "--incremental"])
+        .into_iter()
+        .chain(args(&base[5..]))
+        .collect::<Vec<_>>();
+    let dry = options(&dry, 1_800_000_000_000).unwrap();
+    assert!(dry.dry_run && dry.incremental);
     let mut no_profile = args(&base[..9]);
     no_profile.push("--incremental".into());
     assert_eq!(
@@ -427,11 +435,62 @@ fn incremental_collection_requires_an_explicit_fresh_codex_profile() {
         Some("stats_incremental_profile_required")
     );
     let mut other = values;
-    other[8] = "claude".into();
+    for client in ["claude", "cursor", "devin-cli", "devin-desktop"] {
+        other[8] = client.into();
+        assert!(options(&other, 1_800_000_000_000).unwrap().incremental);
+    }
+    other[8] = "gemini".into();
     assert_eq!(
         options(&other, 1_800_000_000_000).err(),
         Some("stats_incremental_profile_required")
     );
+}
+#[cfg(target_os = "macos")]
+#[test]
+fn incremental_dry_run_prints_the_same_report_as_a_full_dry_run_and_retains_nothing() {
+    let base = std::fs::canonicalize(std::env::temp_dir()).unwrap();
+    let home = base.join(format!("aicharts-dry-{}-{}", std::process::id(), line!()));
+    std::fs::create_dir(&home).unwrap();
+    let sessions = home.join("sessions");
+    std::fs::create_dir(&sessions).unwrap();
+    std::fs::write(
+        sessions.join("0192f3a4-5b6c-7d8e-9f01-23456789abcd.jsonl"),
+        "{\"type\":\"assistant\",\"timestamp\":\"2026-09-19T10:00:01.000Z\",\"requestId\":\"req_1\",\"message\":{\"id\":\"msg_1\",\"model\":\"claude-sonnet-4-5\",\"usage\":{\"input_tokens\":10,\"output_tokens\":3}}}\n",
+    )
+    .unwrap();
+    let before = std::fs::read_dir(&home).unwrap().count();
+    let args = |extra: &[&str]| {
+        [
+            "stats-sync",
+            "--dry-run",
+            "--home",
+            home.to_str().unwrap(),
+            "--client",
+            "claude",
+            "--source-root",
+            sessions.to_str().unwrap(),
+            "--since",
+            "2026-09-19",
+            "--until",
+            "2026-09-19",
+        ]
+        .iter()
+        .chain(extra)
+        .map(|s| (*s).to_owned())
+        .collect::<Vec<_>>()
+    };
+    let strip = |text: String| {
+        let mut value: serde_json::Value = serde_json::from_str(&text).unwrap();
+        value.as_object_mut().unwrap().remove("generatedAtMs");
+        value
+    };
+    let full = strip(run(&args(&[])).unwrap());
+    let incremental = strip(run(&args(&["--incremental"])).unwrap());
+    assert_eq!(full, incremental);
+    assert_eq!(incremental["sources"][0]["records"], 1);
+    assert_eq!(std::fs::read_dir(&home).unwrap().count(), before);
+    assert_eq!(std::fs::read_dir(&sessions).unwrap().count(), 1);
+    std::fs::remove_dir_all(&home).unwrap();
 }
 
 #[test]
@@ -547,4 +606,228 @@ fn legacy_status_parser_accepts_admitted_million_record_population_and_refuses_e
             assert!(status.takeover(&device).unwrap().is_some());
         }
     }
+}
+fn complete_health() -> aicharts_import::ImportHealth {
+    aicharts_import::ImportHealth {
+        schema_version: 1,
+        outcome: aicharts_import::ImportOutcome::Complete,
+        parser_generation: "aicharts-3-1".to_owned(),
+        qualification_id: aicharts_import::QUALIFICATION_ID.to_owned(),
+        files: Some(3),
+        logical_bytes: Some(40_000),
+        parsed_bytes: Some(1_000),
+        verified_bytes: 39_000,
+        reused_files: 2,
+        records: Some(120),
+        deferred_tail_files: Some(0),
+        schema_mismatch_records: Some(4),
+        clamped_records: Some(1),
+        fallback_records: Some(0),
+        estimated_records: Some(2),
+        event_min_ms: Some(1_789_000_000_000),
+        event_max_ms: Some(1_789_800_000_000),
+        codes: vec![
+            aicharts_import::HealthCode::Clamped,
+            aicharts_import::HealthCode::Estimated,
+        ],
+    }
+}
+fn failed_health() -> aicharts_import::ImportHealth {
+    aicharts_import::ImportHealth {
+        outcome: aicharts_import::ImportOutcome::Failed,
+        files: None,
+        logical_bytes: None,
+        parsed_bytes: None,
+        verified_bytes: 0,
+        reused_files: 0,
+        records: None,
+        deferred_tail_files: None,
+        schema_mismatch_records: None,
+        clamped_records: None,
+        fallback_records: None,
+        estimated_records: None,
+        event_min_ms: None,
+        event_max_ms: None,
+        codes: vec![
+            aicharts_import::HealthCode::SourceFailed,
+            aicharts_import::HealthCode::SchemaCoverageLimited,
+        ],
+        ..complete_health()
+    }
+}
+fn shared_status() -> crate::source_health::SourceHealth {
+    use crate::source_health::{Observation, Publication, PublicationOutcome};
+    crate::source_health::SourceHealth {
+        last_attempt: Some(Observation {
+            started_at_ms: 1_789_862_300_000,
+            completed_at_ms: 1_789_862_301_500,
+            health: complete_health(),
+        }),
+        last_good: Some(Observation {
+            started_at_ms: 1_789_862_300_000,
+            completed_at_ms: 1_789_862_301_500,
+            health: complete_health(),
+        }),
+        last_publication: Some(Publication {
+            observed_completed_at_ms: 1_789_862_000_000,
+            at_ms: 1_789_862_000_250,
+            outcome: PublicationOutcome::Succeeded,
+        }),
+    }
+}
+#[test]
+fn source_health_summary_derives_exact_catalog_metrics_and_matches_the_shared_fixture() {
+    let now = 1_789_862_310_000;
+    let summary =
+        stats::health::SourceHealthSummary::from_status("codex", &shared_status(), now).unwrap();
+    let metric = |id: &str| summary.metrics[id].clone();
+    assert_eq!(metric("parser-schema-refusal-count"), serde_json::json!(4));
+    assert_eq!(metric("excluded-observation-count"), serde_json::json!(4));
+    assert_eq!(metric("warning-observation-count"), serde_json::json!(3));
+    assert_eq!(metric("deferred-observation-count"), serde_json::json!(0));
+    assert_eq!(
+        metric("last-collection-attempt"),
+        serde_json::json!(1_789_862_301_500u64)
+    );
+    assert_eq!(
+        metric("last-collection-success"),
+        serde_json::json!(1_789_862_301_500u64)
+    );
+    assert_eq!(metric("acquisition-lag"), serde_json::json!(62_301_500));
+    assert_eq!(metric("publication-lag"), serde_json::json!(250));
+    assert_eq!(
+        metric("data-through-watermark"),
+        serde_json::json!(1_789_800_000_000u64)
+    );
+    assert_eq!(metric("selected-source-count"), serde_json::json!(3));
+    assert_eq!(metric("scan-files"), serde_json::json!(3));
+    assert_eq!(metric("scan-bytes"), serde_json::json!(40_000));
+    assert_eq!(metric("scan-duration"), serde_json::json!(1_500));
+    assert_eq!(
+        metric("no-change-work"),
+        serde_json::json!({"files": 3, "parsedBytes": 1_000, "reusedFiles": 2, "verifiedBytes": 39_000})
+    );
+    // The good observation is newer than the last successful publication.
+    assert_eq!(metric("sync-backlog-count"), serde_json::json!(1));
+    assert_eq!(metric("oldest-sync-backlog-age"), serde_json::json!(8_500));
+    assert_eq!(
+        metric("collector-rejection-reason-count"),
+        serde_json::json!(0)
+    );
+    assert_eq!(
+        metric("collector-version-status"),
+        serde_json::json!("aicharts-3-1/aicharts-adapters-v1/health-v1")
+    );
+    assert_eq!(
+        metric("collector-qualification-status"),
+        serde_json::json!("fixture-supported")
+    );
+    for id in [
+        "detected-source-count",
+        "missing-source-count",
+        "pricing-record-coverage",
+        "model-attribution-coverage",
+        "measured-denominator-ratio",
+        "stale-partition-count",
+        "incremental-catch-up-lag",
+        "collector-queue-depth",
+        "local-database-bytes",
+        "local-wal-bytes",
+        "collector-retry-reason-count",
+    ] {
+        assert_eq!(metric(id), serde_json::Value::Null, "{id}");
+    }
+    let text = include_str!("../../../../fixtures/usage/source-health-v1.json").trim();
+    assert_eq!(serde_json::to_string(&summary).unwrap(), text);
+    let decoded: stats::health::SourceHealthSummary = serde_json::from_str(text).unwrap();
+    assert_eq!(decoded, summary);
+    let mut with_health = upload();
+    with_health.health = Some(summary.clone());
+    with_health.validate().unwrap();
+    let encoded = serde_json::to_string(&with_health).unwrap();
+    assert!(encoded.ends_with(&format!(",\"health\":{text}}}")));
+    assert_eq!(
+        serde_json::from_str::<Upload>(&encoded).unwrap(),
+        with_health
+    );
+    assert!(!serde_json::to_string(&upload()).unwrap().contains("health"));
+    let mut json = serde_json::to_value(&with_health).unwrap();
+    json["health"]["metrics"]["scan-bytes"] = serde_json::json!(1.5);
+    assert!(serde_json::from_value::<Upload>(json.clone())
+        .unwrap()
+        .validate()
+        .is_err());
+    json["health"]["metrics"]["scan-bytes"] = serde_json::json!(1);
+    json["health"]["metrics"]["private-path"] = serde_json::json!("/Users/x");
+    assert!(serde_json::from_value::<Upload>(json.clone())
+        .unwrap()
+        .validate()
+        .is_err());
+    json["health"]["metrics"]
+        .as_object_mut()
+        .unwrap()
+        .remove("private-path");
+    json["health"]["extra"] = serde_json::json!(1);
+    assert!(serde_json::from_value::<Upload>(json).is_err());
+}
+#[test]
+fn source_health_summary_keeps_a_failed_attempt_beside_retained_good_evidence() {
+    use crate::source_health::Observation;
+    let mut status = shared_status();
+    status.last_attempt = Some(Observation {
+        started_at_ms: 1_789_862_305_000,
+        completed_at_ms: 1_789_862_305_100,
+        health: failed_health(),
+    });
+    let summary =
+        stats::health::SourceHealthSummary::from_status("codex", &status, 1_789_862_310_000)
+            .unwrap();
+    assert_eq!(
+        summary.metrics["last-collection-attempt"],
+        serde_json::json!(1_789_862_305_100u64)
+    );
+    assert_eq!(
+        summary.metrics["last-collection-success"],
+        serde_json::json!(1_789_862_301_500u64)
+    );
+    assert_eq!(
+        summary.metrics["collector-rejection-reason-count"],
+        serde_json::json!(1)
+    );
+    assert_eq!(
+        summary.metrics["collector-qualification-status"],
+        serde_json::json!("limited")
+    );
+    assert_eq!(summary.metrics["scan-bytes"], serde_json::Value::Null);
+    assert_eq!(summary.metrics["acquisition-lag"], serde_json::Value::Null);
+    assert_eq!(
+        summary.metrics["data-through-watermark"],
+        serde_json::json!(1_789_800_000_000u64)
+    );
+    assert_eq!(
+        summary.metrics["no-change-work"],
+        serde_json::json!({"files": null, "parsedBytes": null, "reusedFiles": 0, "verifiedBytes": 0})
+    );
+    // A failed observation can never pose as good evidence.
+    let mut bad = summary.clone();
+    bad.last_good = bad.last_attempt.clone();
+    assert_eq!(bad.validate("codex"), Err("stats_source_health_invalid"));
+    assert_eq!(
+        summary.validate("claude"),
+        Err("stats_source_health_invalid")
+    );
+    let mut empty = summary.clone();
+    empty.metrics.clear();
+    assert_eq!(empty.validate("codex"), Err("stats_source_health_invalid"));
+    let none = stats::health::SourceHealthSummary::from_status(
+        "codex",
+        &crate::source_health::SourceHealth {
+            last_attempt: None,
+            last_good: None,
+            last_publication: None,
+        },
+        0,
+    )
+    .unwrap();
+    assert!(none.metrics.values().all(|value| value.is_null()));
 }

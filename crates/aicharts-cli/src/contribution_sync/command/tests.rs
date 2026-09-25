@@ -54,9 +54,92 @@ fn command_requires_one_explicit_action_and_its_exact_options() {
     .unwrap();
     assert_eq!(send.command, Command::Send);
     assert_eq!(
-        send.source.as_deref(),
-        Some(Path::new("/private/source.jsonl"))
+        send.source
+            .as_ref()
+            .map(|(provider, path)| (*provider, path.as_path())),
+        Some((
+            aicharts_protocol::Provider::ClaudeCode,
+            Path::new("/private/source.jsonl")
+        ))
     );
+    assert_eq!(send.max_batches, 1);
+    let codex = options(&args(&[
+        "contribution-sync",
+        "--send",
+        "--state-dir",
+        "/private/state",
+        "--key-file",
+        "/private/key",
+        "--population-id",
+        &population,
+        "--codex",
+        "/private/rollout.jsonl",
+        "--max-batches",
+        "8",
+    ]))
+    .unwrap();
+    assert_eq!(
+        codex
+            .source
+            .as_ref()
+            .map(|(provider, path)| (*provider, path.as_path())),
+        Some((
+            aicharts_protocol::Provider::Codex,
+            Path::new("/private/rollout.jsonl")
+        ))
+    );
+    assert_eq!(codex.max_batches, MAX_BATCHES);
+    for (count, ok) in [
+        ("1", true),
+        ("8", true),
+        ("0", false),
+        ("9", false),
+        ("01", false),
+        ("x", false),
+    ] {
+        let parsed = options(&args(&[
+            "contribution-sync",
+            "--send",
+            "--state-dir",
+            "/private/state",
+            "--key-file",
+            "/private/key",
+            "--population-id",
+            &population,
+            "--claude",
+            "/private/source.jsonl",
+            "--max-batches",
+            count,
+        ]));
+        assert_eq!(parsed.is_ok(), ok, "{count}");
+    }
+    // Two sources, or draining outside --send, are refused before any effect.
+    assert!(options(&args(&[
+        "contribution-sync",
+        "--send",
+        "--state-dir",
+        "/private/state",
+        "--key-file",
+        "/private/key",
+        "--population-id",
+        &population,
+        "--claude",
+        "/private/source.jsonl",
+        "--codex",
+        "/private/rollout.jsonl",
+    ]))
+    .is_err());
+    assert!(options(&args(&[
+        "contribution-sync",
+        "--resume",
+        "--state-dir",
+        "/private/state",
+        "--key-file",
+        "/private/key",
+        "--max-batches",
+        "2",
+    ]))
+    .is_err());
 }
 
 #[test]

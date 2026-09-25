@@ -139,6 +139,21 @@
       "expectedDistinctStates": null
     },
     {
+      "id": "m2-negative-freeze",
+      "module": "M2Ledger",
+      "kind": "counterexample",
+      "invariant": "Safety",
+      "config": "configs/m2-negative-freeze.cfg",
+      "requiredActions": [
+        "CommitScan",
+        "Freeze",
+        "Freeze"
+      ],
+      "minTraceStates": 4,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
+    },
+    {
       "id": "m3-repaired-safety",
       "module": "M3Admission",
       "kind": "sanity",
@@ -193,6 +208,24 @@
         "ReplayTerminal"
       ],
       "minTraceStates": 3,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m3-negative-revocation",
+      "module": "M3Admission",
+      "kind": "counterexample",
+      "invariant": "Safety",
+      "config": "configs/m3-negative-revocation.cfg",
+      "requiredActions": [
+        "Reserve",
+        "Revoke",
+        "PutImmutable",
+        "FreezeDecision",
+        "PutJournal",
+        "Publish"
+      ],
+      "minTraceStates": 7,
       "minDistinctStates": 2,
       "expectedDistinctStates": null
     },
@@ -327,6 +360,22 @@
       "expectedDistinctStates": null
     },
     {
+      "id": "m5-negative-generation",
+      "module": "M5Authority",
+      "kind": "counterexample",
+      "invariant": "Safety",
+      "config": "configs/m5-negative-generation.cfg",
+      "requiredActions": [
+        "StartRead",
+        "SwitchAccount",
+        "SwitchAccount",
+        "AcceptRead"
+      ],
+      "minTraceStates": 5,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
+    },
+    {
       "id": "m6-repaired-safety",
       "module": "M6Consent",
       "kind": "sanity",
@@ -382,6 +431,24 @@
       "expectedDistinctStates": null
     },
     {
+      "id": "m6-negative-stale-delivery",
+      "module": "M6Consent",
+      "kind": "counterexample",
+      "invariant": "Safety",
+      "config": "configs/m6-negative-stale-delivery.cfg",
+      "requiredActions": [
+        "GrantConsent",
+        "DispatchHint",
+        "SourceReply",
+        "WithdrawConsent",
+        "RefreshCurrent",
+        "ApplyDelivery"
+      ],
+      "minTraceStates": 7,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
+    },
+    {
       "id": "m7-repaired-safety",
       "module": "M7Projection",
       "kind": "sanity",
@@ -433,6 +500,20 @@
         "ScrubRefuses"
       ],
       "minTraceStates": 5,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m7-negative-scrub",
+      "module": "M7Projection",
+      "kind": "counterexample",
+      "invariant": "Safety",
+      "config": "configs/m7-negative-scrub.cfg",
+      "requiredActions": [
+        "RegisterMaintenance",
+        "ScrubRefuses"
+      ],
+      "minTraceStates": 3,
       "minDistinctStates": 2,
       "expectedDistinctStates": null
     },
@@ -1212,6 +1293,184 @@
         "CommitComparison"
       ],
       "minTraceStates": 28,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m11-cutover-safety",
+      "module": "M11ContributionRebuild",
+      "kind": "sanity",
+      "invariant": null,
+      "config": "configs/m11-cutover-safety.cfg",
+      "requiredActions": [],
+      "minTraceStates": 0,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": 297828
+    },
+    {
+      "id": "m11-cutover-single-safety",
+      "module": "M11ContributionRebuild",
+      "kind": "sanity",
+      "invariant": null,
+      "config": "configs/m11-cutover-single-safety.cfg",
+      "requiredActions": [],
+      "minTraceStates": 0,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": 262730
+    },
+    {
+      "id": "m11-repair-match",
+      "module": "M11ContributionRebuild",
+      "kind": "witness",
+      "invariant": "NoRepairMatchWitness",
+      "config": "configs/m11-repair-match.cfg",
+      "requiredActions": [
+        "BeginJob",
+        "CommitComparison",
+        "CutoverJob",
+        "BeginJob",
+        "CommitComparison"
+      ],
+      "minTraceStates": 60,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m11-cutover-replay",
+      "module": "M11ContributionRebuild",
+      "kind": "witness",
+      "invariant": "NoCutoverReplayWitness",
+      "config": "configs/m11-cutover-replay.cfg",
+      "requiredActions": [
+        "BeginJob",
+        "CommitComparison",
+        "CutoverJob",
+        "ReplayLast"
+      ],
+      "minTraceStates": 30,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m11-negative-cutover",
+      "module": "M11ContributionRebuild",
+      "kind": "counterexample",
+      "invariant": "Safety",
+      "config": "configs/m11-negative-cutover.cfg",
+      "requiredActions": [
+        "BeginJob",
+        "CommitComparison",
+        "AdvanceSource",
+        "CutoverJob"
+      ],
+      "minTraceStates": 30,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m12-reclamation-narrow-safety",
+      "module": "M12Reclamation",
+      "kind": "sanity",
+      "invariant": null,
+      "config": "configs/m12-reclamation-narrow-safety.cfg",
+      "requiredActions": [],
+      "minTraceStates": 0,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": 26208
+    },
+    {
+      "id": "m12-crash-resume",
+      "module": "M12Reclamation",
+      "kind": "witness",
+      "invariant": "NoCrashResumeWitness",
+      "config": "configs/m12-crash-resume.cfg",
+      "requiredActions": [
+        "Record",
+        "Retire",
+        "Begin",
+        "MarkDeleting",
+        "Delete",
+        "Crash",
+        "Begin",
+        "ResumeReclaimed"
+      ],
+      "minTraceStates": 11,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m12-conflict-hold",
+      "module": "M12Reclamation",
+      "kind": "witness",
+      "invariant": "NoConflictHoldWitness",
+      "config": "configs/m12-conflict-hold.cfg",
+      "requiredActions": [
+        "Record",
+        "Retire",
+        "Begin",
+        "Reref",
+        "Conflict",
+        "Begin",
+        "Hold"
+      ],
+      "minTraceStates": 10,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m12-negative-horizon",
+      "module": "M12Reclamation",
+      "kind": "counterexample",
+      "invariant": "Retention",
+      "config": "configs/m12-negative-horizon.cfg",
+      "requiredActions": [
+        "Record",
+        "Retire",
+        "Begin",
+        "MarkDeleting",
+        "Delete",
+        "MarkReclaimed"
+      ],
+      "minTraceStates": 8,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m12-negative-walk",
+      "module": "M12Reclamation",
+      "kind": "counterexample",
+      "invariant": "Safety",
+      "config": "configs/m12-negative-walk.cfg",
+      "requiredActions": [
+        "Record",
+        "Retire",
+        "Begin",
+        "Reref",
+        "MarkDeleting",
+        "Delete"
+      ],
+      "minTraceStates": 9,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m12-negative-replay",
+      "module": "M12Reclamation",
+      "kind": "counterexample",
+      "invariant": "Safety",
+      "config": "configs/m12-negative-replay.cfg",
+      "requiredActions": [
+        "Record",
+        "Retire",
+        "Begin",
+        "MarkDeleting",
+        "Crash",
+        "Reref",
+        "Begin",
+        "ResumeUnsafe",
+        "Delete"
+      ],
+      "minTraceStates": 12,
       "minDistinctStates": 2,
       "expectedDistinctStates": null
     },

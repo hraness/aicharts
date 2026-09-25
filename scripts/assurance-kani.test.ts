@@ -1,14 +1,20 @@
 import { describe, expect, test } from "bun:test";
-import { readFileSync } from "node:fs";
+import { mkdirSync, readFileSync, utimesSync, writeFileSync } from "node:fs";
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { resolve } from "node:path";
-import { admitKani, kaniHarnessesSchema, rejectKaniAssumptions, unreachableAssertionSchema, unreachableBindingKey } from "./assurance-kani";
+import { admitKani, admitTheoremReplacement, bindTheoremReplacement, kaniHarnessesSchema, rejectKaniAssumptions, replacementKernelFile,
+  theoremReceiptCandidates, unreachableAssertionSchema, unreachableBindingKey } from "./assurance-kani";
 import { mutationsSchema, type ProofProcess } from "./assurance-proof-common";
 import { z } from "zod";
 
 const read = (path: string) => JSON.parse(readFileSync(resolve(import.meta.dir, "..", path), "utf8"));
 const fixture = () => read("verify/kani/fixtures/checked-add.json");
-const harness = kaniHarnessesSchema.parse(read("verify/kani/harnesses.json")).harnesses[0];
-const mutation = mutationsSchema.parse(read("verify/kani/mutations.json")).mutations[0];
+const inventory = kaniHarnessesSchema.parse(read("verify/kani/harnesses.json"));
+const harness = inventory.harnesses[0];
+const mutations = mutationsSchema.parse(read("verify/kani/mutations.json")).mutations;
+const mutation = mutations[0];
+const text = (path: string) => readFileSync(resolve(import.meta.dir, "..", path), "utf8");
 const pin = read("verify/kani/toolchain.json");
 const exceptions = [...pin.unreachableAssertions, ...pin.platforms["darwin-arm64"].unreachableAssertions];
 const process: ProofProcess = { command: "cargo-kani", args: [], exitCode: 0, signal: null,
@@ -119,6 +125,121 @@ describe("Kani structured evidence admission", () => {
     for (const source of ["kani::assume(value < 100);", "#[kani::stub(actual, fake)]", "#[kani::stub_verified(actual)]",
       "#[kani::requires(value < 100)]", "#[kani::proof_for_contract(actual)]"]) {
       expect(() => rejectKaniAssumptions(source)).toThrow("unreviewed_kani_assumption_or_stub");
+    }
+  });
+});
+
+describe("production function coverage manifest", () => {
+  /** Every `pub fn` of the kernel crate, as `module::[Type::]name`, parsed from the production sources only. */
+  const publicFunctions = () => {
+    const names = new Set<string>();
+    for (const file of ["arithmetic", "evidence", "revision", "tokens", "lib"]) {
+      const source = text(`crates/aicharts-metrics/src/${file}.rs`);
+      let owner: string | null = null, depth = 0, ownerDepth = -1;
+      for (const line of source.split("\n")) {
+        const implementation = /^impl(?:<[^>]*>)?\s+([A-Z][A-Za-z0-9]*)/u.exec(line);
+        if (implementation && depth === 0) { owner = implementation[1]; ownerDepth = 0; }
+        const declaration = /^\s*pub\s+(?:const\s+)?fn\s+([a-z_][a-z0-9_]*)/u.exec(line);
+        if (declaration) names.add(`${file}::${owner && depth > ownerDepth ? `${owner}::` : ""}${declaration[1]}`);
+        for (const char of line.replace(/"[^"]*"/gu, "")) {
+          if (char === "{") depth++;
+          if (char === "}") { depth--; if (owner && depth === ownerDepth) owner = null; }
+        }
+      }
+    }
+    return [...names].sort();
+  };
+  test("every kernel pub fn is named by a harness or a theorem replacement", () => {
+    const actual = publicFunctions();
+    expect(actual.length).toBe(31);
+    expect(actual).toContain("arithmetic::ExactRatio::rounded");
+    expect(actual).toContain("tokens::InclusiveOutput::from_disjoint");
+    const covered = new Set([...inventory.harnesses.flatMap(item => item.functions),
+      ...inventory.theoremReplacements.map(item => item.productionFunction.replace(/^aicharts_metrics::/u, ""))]);
+    expect(actual.filter(name => !covered.has(name))).toEqual([]);
+    // Every named function must exist and be called by the harness body that names it.
+    const proofs = text("crates/aicharts-metrics/src/proofs.rs");
+    for (const item of inventory.harnesses) {
+      const start = proofs.indexOf(`fn ${item.name.slice("proofs::".length)}(`);
+      expect(start).toBeGreaterThan(0);
+      const next = proofs.indexOf("#[kani::proof]", start), body = proofs.slice(start, next < 0 ? undefined : next);
+      for (const name of item.functions) {
+        expect(actual).toContain(name);
+        expect(body).toContain(name.split("::").at(-1)!);
+      }
+    }
+    expect(inventory.harnesses.reduce((sum, item) => sum + item.requiredCoverCount, 0)).toBe(53);
+  });
+  test("the schema refuses a harness without named functions or an unknown module path", () => {
+    expect(() => kaniHarnessesSchema.parse({ ...inventory, harnesses: inventory.harnesses.map((item, index) => index ? item : { ...item, functions: [] }) })).toThrow();
+    expect(() => kaniHarnessesSchema.parse({ ...inventory, harnesses: inventory.harnesses.map((item, index) => index ? item : { ...item, functions: ["proofs::any_basis"] }) })).toThrow();
+  });
+  test("every mutation targets one exact production match and a declared harness", () => {
+    expect(mutations.length).toBe(13);
+    expect(new Set(mutations.map(item => item.id)).size).toBe(mutations.length);
+    for (const item of mutations) {
+      expect(text(item.source).split(item.exactBefore).length).toBe(2);
+      expect(inventory.harnesses.map(harness => harness.name)).toContain(item.harness);
+    }
+  });
+});
+
+describe("theorem replacement receipt binding", () => {
+  const replacement = inventory.theoremReplacements[0];
+  const kernel = replacementKernelFile(replacement);
+  const hashes = { [kernel]: "a".repeat(64), [replacement.theoremFile]: "b".repeat(64), "crates/aicharts-metrics/src/proofs.rs": "c".repeat(64) };
+  const receipt = () => ({ schemaVersion: 1, ok: true, sourceSha256: { ...hashes },
+    pin: { productionTheorems: [replacement.theorem, ...replacement.witnesses, "aicharts_metrics.other"] },
+    results: [
+      { mutation: null, evaluation: { ok: true, axioms: [replacement.theorem, ...replacement.witnesses, "aicharts_metrics.other"].map(theorem => ({ theorem, axioms: ["propext"] })) } },
+      { mutation: replacement.requiredMutation, evaluation: { ok: true, expectedFailedTheorem: "pricing_terminal_body_exact" } },
+      { mutation: "other-mutation", evaluation: { ok: true, expectedFailedTheorem: "pricing_body_exact" } }] });
+  test("binds the kernel file, the theorem file, the theorem names and the required negative control", () => {
+    expect(kernel).toBe("crates/aicharts-metrics/src/arithmetic.rs");
+    expect(admitTheoremReplacement(receipt(), hashes, replacement)).toEqual({ ok: true, errors: [] });
+    for (const [change, error] of [
+      [(copy: ReturnType<typeof receipt>) => { copy.ok = false; }, "theorem_receipt_not_ok"],
+      [(copy: ReturnType<typeof receipt>) => { copy.sourceSha256[kernel] = "d".repeat(64); }, `theorem_receipt_source_drift:${kernel}`],
+      [(copy: ReturnType<typeof receipt>) => { delete copy.sourceSha256[kernel]; }, `theorem_receipt_source_drift:${kernel}`],
+      [(copy: ReturnType<typeof receipt>) => { copy.sourceSha256[replacement.theoremFile] = "d".repeat(64); }, `theorem_receipt_source_drift:${replacement.theoremFile}`],
+      [(copy: ReturnType<typeof receipt>) => { copy.pin.productionTheorems = ["aicharts_metrics.other"]; }, "theorem_receipt_missing_theorem_pin"],
+      [(copy: ReturnType<typeof receipt>) => { copy.results[0].evaluation.ok = false; }, "theorem_receipt_missing_proof"],
+      [(copy: ReturnType<typeof receipt>) => { copy.results[0].evaluation.axioms = copy.results[0].evaluation.axioms!.filter(item => item.theorem !== replacement.witnesses[1]); }, "theorem_receipt_missing_proof"],
+      [(copy: ReturnType<typeof receipt>) => { copy.results.splice(0, 1); }, "theorem_receipt_missing_proof"],
+      [(copy: ReturnType<typeof receipt>) => { copy.results[1].evaluation.ok = false; }, "theorem_receipt_missing_required_mutation"],
+      [(copy: ReturnType<typeof receipt>) => { copy.results[1].mutation = "renamed"; }, "theorem_receipt_missing_required_mutation"],
+      [(copy: ReturnType<typeof receipt>) => { delete copy.results[1].evaluation.expectedFailedTheorem; }, "theorem_receipt_missing_required_mutation"],
+    ] as const) {
+      const copy = receipt(); change(copy);
+      const evaluation = admitTheoremReplacement(copy, hashes, replacement);
+      expect(evaluation.ok).toBe(false);
+      expect(evaluation.errors).toContain(error);
+    }
+    // A receipt for other kernel bytes than the ones now under test is stale evidence.
+    expect(admitTheoremReplacement(receipt(), { ...hashes, [kernel]: "e".repeat(64) }, replacement).ok).toBe(false);
+    expect(admitTheoremReplacement(receipt(), {}, replacement).ok).toBe(false);
+  });
+  test("the gate binds the newest admitted receipt for the exact bytes and refuses when none binds", async () => {
+    const parent = mkdtempSync(resolve(tmpdir(), "kani-theorem-receipts-"));
+    const write = (name: string, value: unknown, ageSeconds: number) => {
+      mkdirSync(resolve(parent, name)); const path = resolve(parent, name, "receipt.json");
+      writeFileSync(path, JSON.stringify(value)); const when = new Date(Date.now() - ageSeconds * 1000); utimesSync(path, when, when);
+    };
+    await expect(bindTheoremReplacement(replacement, hashes, parent)).rejects.toThrow("missing_theorem_receipt");
+    mkdirSync(resolve(parent, "run-noreceipt"));
+    write("run-zzz-stale", { ...receipt(), sourceSha256: { ...hashes, [kernel]: "9".repeat(64) } }, 30);
+    await expect(bindTheoremReplacement(replacement, hashes, parent)).rejects.toThrow(`theorem_receipt_source_drift:${kernel}`);
+    write("run-aaa-admitted", receipt(), 20);
+    write("run-mmm-failed-newer", { ...receipt(), ok: false }, 10);
+    expect(await theoremReceiptCandidates(parent)).toEqual(["run-mmm-failed-newer", "run-aaa-admitted", "run-zzz-stale"].map(name => resolve(parent, name, "receipt.json")));
+    expect((await bindTheoremReplacement(replacement, hashes, parent)).receipt.endsWith("run-aaa-admitted/receipt.json")).toBe(true);
+    // Different kernel bytes than every receipt: no evidence, so refusal names each candidate's reason.
+    await expect(bindTheoremReplacement(replacement, { ...hashes, [kernel]: "f".repeat(64) }, parent)).rejects.toThrow("unbound_theorem_replacement:");
+    expect(await theoremReceiptCandidates(resolve(parent, "absent"))).toEqual([]);
+  });
+  test("a missing or malformed receipt is a refusal", () => {
+    for (const raw of [null, undefined, {}, "receipt", { ...receipt(), schemaVersion: 2 }, { ...receipt(), results: [] }]) {
+      expect(admitTheoremReplacement(raw, hashes, replacement)).toEqual({ ok: false, errors: ["missing_or_malformed_theorem_receipt"] });
     }
   });
 });

@@ -356,12 +356,16 @@ pub fn parse_cursor_events_json(path: &Path) -> Vec<UnifiedMessage> {
         // entire cache.
         let event: CursorUsageEvent = match serde_json::from_value(row) {
             Ok(event) => event,
-            Err(_) => continue,
+            Err(_) => {
+                crate::offline_io::record_schema_mismatch();
+                continue;
+            }
         };
 
         let model = event.model.unwrap_or_default();
         let model = model.trim();
         if model.is_empty() {
+            crate::offline_io::record_schema_mismatch();
             continue;
         }
 
@@ -371,6 +375,7 @@ pub fn parse_cursor_events_json(path: &Path) -> Vec<UnifiedMessage> {
             .map(parse_ms_timestamp)
             .unwrap_or(0);
         if timestamp == 0 {
+            crate::offline_io::record_schema_mismatch();
             continue;
         }
 
@@ -387,6 +392,17 @@ pub fn parse_cursor_events_json(path: &Path) -> Vec<UnifiedMessage> {
         };
 
         let token_usage = event.token_usage.unwrap_or_default();
+        if [
+            token_usage.input_tokens,
+            token_usage.output_tokens,
+            token_usage.cache_read_tokens,
+            token_usage.cache_write_tokens,
+        ]
+        .iter()
+        .any(|value| value.is_some_and(|value| value < 0))
+        {
+            crate::offline_io::record_clamped();
+        }
 
         // Cursor reports two different amounts. `tokenUsage.totalCents` is the
         // metered cost of the event's own tokens; `chargedCents` is what the
@@ -486,43 +502,49 @@ fn parse_cursor_csv_file(path: &Path) -> Vec<UnifiedMessage> {
         // Need at least enough columns for the format
         let min_fields = cost_idx + 1;
         if fields.len() < min_fields {
+            crate::offline_io::record_schema_mismatch();
             continue;
         }
 
         let date_str = fields[0].trim().trim_matches('"');
         let model = fields[model_idx].trim().trim_matches('"');
-        let input_with_cache_write: i64 = fields[input_cache_write_idx]
-            .trim()
-            .trim_matches('"')
-            .parse()
-            .unwrap_or(0);
-        let input_without_cache_write: i64 = fields[input_no_cache_idx]
-            .trim()
-            .trim_matches('"')
-            .parse()
-            .unwrap_or(0);
-        let cache_read: i64 = fields[cache_read_idx]
-            .trim()
-            .trim_matches('"')
-            .parse()
-            .unwrap_or(0);
-        let output_tokens: i64 = fields[output_idx]
-            .trim()
-            .trim_matches('"')
-            .parse()
-            .unwrap_or(0);
+        // An unparsable token column measures as zero: a substitute value.
+        let mut substituted = false;
+        let mut token_column = |index: usize| -> i64 {
+            let text = fields[index].trim().trim_matches('"');
+            text.parse().unwrap_or_else(|_| {
+                substituted = true;
+                0
+            })
+        };
+        let input_with_cache_write = token_column(input_cache_write_idx);
+        let input_without_cache_write = token_column(input_no_cache_idx);
+        let cache_read = token_column(cache_read_idx);
+        let output_tokens = token_column(output_idx);
         let cost_str = fields[cost_idx].trim().trim_matches('"');
         let cost = parse_finite_cost(cost_str);
 
         // Skip empty or errored entries
         if model.is_empty() {
+            crate::offline_io::record_schema_mismatch();
             continue;
         }
 
         // Parse timestamp from date string
         let timestamp = parse_date_to_timestamp(date_str);
         if timestamp == 0 {
+            crate::offline_io::record_schema_mismatch();
             continue;
+        }
+        if substituted {
+            crate::offline_io::record_fallback();
+        }
+        if input_with_cache_write < 0
+            || input_without_cache_write < 0
+            || cache_read < 0
+            || output_tokens < 0
+        {
+            crate::offline_io::record_clamped();
         }
 
         // Cursor exports independent token buckets rather than cumulative totals.

@@ -3,7 +3,7 @@ import { parseStatsQuery, parseStatsStatusRequest, parseStatsUpload, statsIntege
 import { parseStatsTotalsDeviceRequest, parseStatsTotalsQuery, type StatsTotals, type StatsTotalsResult } from "../../../lib/usage/stats-totals-contract";
 import { parseStatsAbandonRequest, type StatsAbandonment } from "../../../lib/usage/stats-http-contract";
 import type { UsageStatsReport } from "../../../lib/usage/stats-contract";
-import { StatsState, StatsFault, STATS_SCHEMA, statsHash, statsUploadText } from "./stats-state";
+import { StatsState, StatsFault, RETIRED_STATS_SCHEMA, STATS_SCHEMA, statsHash, statsUploadText } from "./stats-state";
 import { AccountStats } from "./stats-admission";
 import { CONTRIBUTION_SCHEMA, ContributionState, type ContributionGrantReceipt } from "./contributions-state";
 import { AccountContributions } from "./contributions-admission";
@@ -16,9 +16,8 @@ import { accountConsentWork, accountProjectionWork, accountWorkDeadline, account
 import { parseContributionQuery, type ContributionQuery, type ContributionQueryError, type ContributionQueryResult } from "../../../lib/usage/contribution-query";
 import { ContributionQueryFault, queryContributionPage } from "./contribution-query";
 import { parseContributionHeadQuery, type ContributionHeadQueryResult } from "../../../lib/usage/contribution-head-query";
-import { CONTRIBUTION_SCRUB_DEADLINE_MS, parseContributionScrubRequest, parseContributionScrubResult,
-  type ContributionScrubResult } from "../../../lib/usage/contribution-scrub";
-import { scrubContributionCell } from "./contribution-scrub";
+import { CONTRIBUTION_SCRUB_DEADLINE_MS, parseContributionScrubRequest, parseContributionScrubResult, type ContributionScrubResult, parseContributionScrubJobRequest, parseContributionScrubJobResult, type ContributionScrubJobResult } from "../../../lib/usage/contribution-scrub";
+import { scrubContributionCell, scrubContributionJobCell } from "./contribution-scrub";
 import { AccountContributionRebuild } from "./contribution-rebuild";
 import { CONTRIBUTION_REBUILD_SCHEMA, ContributionRebuildFault, ContributionRebuildState } from "./contribution-rebuild-state";
 import { CONTRIBUTION_REBUILD_DEADLINE_MS, isContributionRebuildError, parseContributionRebuildRequest,
@@ -29,7 +28,7 @@ import { ContributionFault, CONTRIBUTION_MAX_TIME, isContributionError, parseCon
   parseContributionMigrationRequest, type ContributionMigrationReceipt,
   parseContributionStatusRequest, parseContributionAbandonRequest, type ContributionError, type ContributionResult,
   type ContributionBatch, type ContributionTerminal, type ContributionStatus, type ContributionActivationReceipt } from "../../../lib/usage/contributions";
-import { createHash } from "node:crypto";
+import { createHash, timingSafeEqual } from "node:crypto";
 import { admissionHex, equalAdmissionBytes, type AdmissionBatch } from "../../../lib/usage/admission";
 import { uploadSecretCommitment } from "./pairing";
 import { AccountAdmission, type AdmissionObservation } from "./account-admission";
@@ -43,22 +42,43 @@ import {
 } from "../../../lib/usage/leaderboard-contract";
 import { parseUsageConsentRequest } from "../../../lib/usage/consent-contract";
 import { DAY_MS } from "../../../lib/usage/wire";
+import { parseReclamationRequest, RECLAMATION_DEADLINE_MS, type ReclamationResult } from "../../../lib/usage/reclamation-contract";
+import { AccountReclamation, reclamationErrorFrom } from "./reclamation";
+import { ReclamationState, RECLAMATION_SCHEMA } from "./reclamation-state";
 import {
   enrollmentAccount, enrollmentAccountName, enrollmentHex, enrollmentRandom,
   enrollmentSnapshot, enrollmentTime, parseEnrollmentProof, parseEnrollmentReservation,
   type EnrollmentProof, type EnrollmentReservation,
 } from "./enrollment-contract";
 import {
-  ensureNamespaceAnchor, enrollmentStorageCall, readNamespaceAnchor, sameNamespaceAnchor, type NamespaceAnchor,
+  ensureNamespaceAnchor, enrollmentStorageCall, namespaceAnchorKey, readNamespaceAnchor, sameNamespaceAnchor, type NamespaceAnchor,
 } from "./namespace-anchor";
 import {
   RESTORE_FENCE_GENESIS_EPOCH, RESTORE_FENCE_LEASE_TTL_MS, restoreFenceName,
   type FenceObservation,
 } from "./restore-fence";
+import {
+  LIFECYCLE_ERASE_REQUEST_TTL_MS, LIFECYCLE_ERASE_STEPS, LIFECYCLE_EXPORT_CONTRACT, LIFECYCLE_EXPORT_EXCLUDED,
+  LIFECYCLE_EXPORT_PAGE_BYTES, LIFECYCLE_EXPORT_PAGE_ITEMS, LIFECYCLE_EXPORT_SECTIONS, LIFECYCLE_RECLAMATION_CONTRACT,
+  LIFECYCLE_STATUS_CONTRACT, isUsageLifecycleError, lifecycleJson, parseReclamationLedger, parseUsageLifecycleRequest,
+  type LifecycleDeviceV1, type LifecycleDeviceViewV1, type LifecycleDevicesV1, type LifecycleEraseProgressV1,
+  type LifecycleEraseRequestV1, type LifecycleErasureViewV1, type LifecycleExportItemV1, type LifecycleExportPageV1, type LifecycleJson,
+  type LifecyclePublishingViewV1, type LifecycleReclamationEntryV1, type LifecycleStatusV1,
+  type ReclamationLedgerV1, type UsageLifecycleError, type UsageLifecycleResult, type UsageLifecycleValue,
+} from "../../../lib/usage/lifecycle-contract";
+/** Rows per exported table; every account table is bounded well below this
+ * by its own schema ceiling, so exceeding it is a storage invariant failure. */
+const LIFECYCLE_EXPORT_MAX_ROWS = 300_000;
 
 export type EnrollmentError = "invalid_input" | "unavailable" | "unauthorized" | "not_reserved" | "not_enrolled"
-  | StatsError | ContributionError | ContributionQueryError | ContributionRebuildError | "expired" | "conflict" | "recovery_required" | "revoked" | "storage_invalid" | "storage_unavailable" | "clock_regressed" | "limit" | "handle_unavailable" | "publishing_full";
+  | StatsError | ContributionError | ContributionQueryError | ContributionRebuildError | "expired" | "conflict" | "recovery_required" | "revoked" | "storage_invalid" | "storage_unavailable" | "clock_regressed" | "limit" | "handle_unavailable" | "publishing_full"
+  | "account_erased" | "device_revoked";
 export type EnrollmentResult<T> = { ok: true; value: T } | { ok: false; error: EnrollmentError };
+/** Carries a fence-preflight refusal out of the fenced transaction; unlike the
+ * storage-invariant faults its code is the refused operation's own reply. */
+class FenceRefusal extends Error {
+  constructor(readonly code: EnrollmentError) { super(code); }
+}
 export type EnrollmentReceipt = Readonly<{
   schemaVersion: 1; accountId: string; intentId: string; reservationId: string;
   deviceId: string; enrolledAtMs: number; namespaceVersion: 1;
@@ -81,6 +101,16 @@ type GenesisCompletion = { mode: "original" | "fresh-recovery"; intentId: string
 type LeaderboardState = {
   consent: boolean; consentedAtMs: number | null; publicHandle: string | null; changedAtMs: number;
 };
+/** Phase 10 lifecycle records, stored additively inside the enrollment payload
+ * so no new table or object surface exists. `erasure` is the durable erase
+ * intent: `token` is the confirmation secret, `step` the count of durably
+ * completed erase steps (see `LifecycleErasureViewV1`), `ledger` the
+ * reclamation record written at step 4. */
+type LifecycleErasure = {
+  token: string; requestedAtMs: number; requestExpiresAtMs: number; confirmedAtMs: number | null; step: number;
+  completedAtMs: number | null; sealed: boolean; ledger: ReclamationLedgerV1 | null;
+};
+type LifecycleState = { erasure: LifecycleErasure | null };
 type State = {
   accountId: string; generation: string; observedAtMs: number; phase: "pending" | "active";
   // The restore epoch this state last committed under. `null` marks a
@@ -89,6 +119,9 @@ type State = {
   // stale (restored) and must refuse recovery_required.
   fenceEpoch: number | null; anchor: NamespaceAnchor; devices: Device[]; genesisCompletion: GenesisCompletion | null;
   leaderboard: LeaderboardState;
+  // Absent on every payload written before Phase 10; present only once a
+  // lifecycle operation committed. Absence is exactly "no lifecycle record".
+  lifecycle?: LifecycleState;
 };
 // `fence`/`leaseToken`/`committed` are the request-scoped restore-fence
 // context: `fence` is the authoritative epoch/established the lease pinned,
@@ -123,12 +156,14 @@ function sameGrant(left: EnrollmentReservation, right: EnrollmentReservation): b
 // leaderboard=true admits only the current schema-5 shape. These flags exist
 // solely so additive migrations can load older rows.
 function validState(value: unknown, legacy = false, fence = true, leaderboard = true): value is State {
-  const state = enrollmentSnapshot(value, ["accountId", "generation", "observedAtMs", "phase", ...(fence ? ["fenceEpoch"] : []), "anchor", "devices", ...(legacy ? [] : ["genesisCompletion"]), ...(leaderboard ? ["leaderboard"] : [])]);
+  const withLifecycle = leaderboard && value !== null && typeof value === "object" && Object.hasOwn(value, "lifecycle");
+  const state = enrollmentSnapshot(value, ["accountId", "generation", "observedAtMs", "phase", ...(fence ? ["fenceEpoch"] : []), "anchor", "devices", ...(legacy ? [] : ["genesisCompletion"]), ...(leaderboard ? ["leaderboard"] : []), ...(withLifecycle ? ["lifecycle"] : [])]);
   if (state === null || !enrollmentAccount(state.accountId) || !enrollmentHex(state.generation) || !enrollmentTime(state.observedAtMs)
     || (state.phase !== "pending" && state.phase !== "active") || !Array.isArray(state.devices)
     || state.devices.length > MAX_ENROLLED_DEVICES || (state.phase === "pending") !== (state.devices.length === 0)) return false;
   if (fence && !(state.fenceEpoch === null || (typeof state.fenceEpoch === "number" && Number.isSafeInteger(state.fenceEpoch) && state.fenceEpoch >= 0))) return false;
   if (leaderboard && !validLeaderboard(state.leaderboard, state.observedAtMs)) return false;
+  if (withLifecycle && !validLifecycle(state.lifecycle, state)) return false;
   const anchor = enrollmentSnapshot(state.anchor, ["accountId", "namespaceKey", "intentId", "reservationId", "generation", "createdAtMs"]);
   if (anchor === null || anchor.accountId !== state.accountId || anchor.generation !== state.generation
     || !enrollmentHex(anchor.namespaceKey) || !enrollmentHex(anchor.intentId) || !enrollmentHex(anchor.reservationId)
@@ -177,6 +212,42 @@ function consentViewOf(leaderboard: LeaderboardState): LeaderboardConsentViewV1 
   return Object.freeze({ schemaVersion: 1, consent: leaderboard.consent,
     consentedAtMs: leaderboard.consentedAtMs, publicHandle: leaderboard.publicHandle });
 }
+
+/** Lifecycle invariants. Erasure: `step` 0 exactly while unconfirmed; a
+ * confirmed erasure has withdrawn source consent; from step 3 every device is
+ * revoked; `completedAtMs` exists exactly from step 5; `sealed` exactly at
+ * step 6. */
+function validLifecycle(value: unknown, owner: Record<string, unknown>): value is LifecycleState {
+  const lifecycle = enrollmentSnapshot(value, ["erasure"]);
+  if (lifecycle === null) return false;
+  const observedAtMs = owner.observedAtMs as number;
+  const devices = Array.isArray(owner.devices) ? owner.devices as unknown[] : [];
+  if (lifecycle.erasure !== null) {
+    const erasure = enrollmentSnapshot(lifecycle.erasure, ["token", "requestedAtMs", "requestExpiresAtMs", "confirmedAtMs", "step", "completedAtMs", "sealed", "ledger"]);
+    if (erasure === null || !enrollmentHex(erasure.token) || !enrollmentTime(erasure.requestedAtMs) || erasure.requestedAtMs > observedAtMs
+      || !enrollmentTime(erasure.requestExpiresAtMs) || erasure.requestExpiresAtMs <= erasure.requestedAtMs
+      || typeof erasure.step !== "number" || !Number.isInteger(erasure.step) || erasure.step < 0 || erasure.step > LIFECYCLE_ERASE_STEPS
+      || typeof erasure.sealed !== "boolean") return false;
+    if (erasure.confirmedAtMs === null) {
+      if (erasure.step !== 0 || erasure.completedAtMs !== null || erasure.sealed || erasure.ledger !== null) return false;
+    } else {
+      if (!enrollmentTime(erasure.confirmedAtMs) || erasure.confirmedAtMs < erasure.requestedAtMs || erasure.confirmedAtMs > observedAtMs || erasure.step < 1) return false;
+      const leaderboard = enrollmentSnapshot(owner.leaderboard, ["consent", "consentedAtMs", "publicHandle", "changedAtMs"]);
+      if (leaderboard === null || leaderboard.consent !== false) return false;
+      if (erasure.step >= 3 && devices.some(raw => (raw as Record<string, unknown>).revokedAtMs === null)) return false;
+      if ((erasure.step >= 4) !== (erasure.ledger !== null)) return false;
+      if (erasure.ledger !== null) {
+        const ledger = parseReclamationLedger(erasure.ledger);
+        if (ledger === null || ledger.accountId !== owner.accountId || ledger.generation !== owner.generation || ledger.recordedAtMs > observedAtMs) return false;
+      }
+      if ((erasure.step >= 5) !== (erasure.completedAtMs !== null)) return false;
+      if (erasure.completedAtMs !== null && (!enrollmentTime(erasure.completedAtMs) || erasure.completedAtMs < erasure.confirmedAtMs || erasure.completedAtMs > observedAtMs)) return false;
+      if ((erasure.step === LIFECYCLE_ERASE_STEPS) !== erasure.sealed) return false;
+    }
+  }
+  return true;
+}
+const erasureConfirmed = (state: State): boolean => state.lifecycle?.erasure?.confirmedAtMs != null;
 
 function supersededGenesis(state: State, grant: EnrollmentReservation): boolean {
   return state.genesisCompletion?.mode === "fresh-recovery" && state.anchor.intentId === grant.intentId;
@@ -243,11 +314,11 @@ export class AccountEnrollment extends DurableObject<Env> {
     // owns initialization, upgrades and checkpoint writes.
   }
 
-  #prepareFenced(accountId: string, generation: string, fence: FenceObservation): EnrollmentError | null {
+  #prepareFenced(accountId: string, generation: string, fence: FenceObservation, allowErased = false): EnrollmentError | null {
     try {
       this.ctx.storage.transactionSync(() => {
-        const before = this.#fencePreflight(accountId, generation);
-        if (!before.ok) throw new AdmissionFault(before.error === "unauthorized" ? "unauthorized" : "recovery_required");
+        const before = this.#fencePreflight(accountId, generation, allowErased);
+        if (!before.ok) throw new FenceRefusal(before.error === "unauthorized" ? "unauthorized" : before.error === "account_erased" ? "account_erased" : "recovery_required");
         if (before.value.epoch !== fence.epoch || (!before.value.established && fence.established)) throw new AdmissionFault("recovery_required");
         if (this.#objects().length === 0) {
           this.ctx.storage.sql.exec(SCHEMA_SQL);
@@ -267,7 +338,8 @@ export class AccountEnrollment extends DurableObject<Env> {
         this.#migrateFence();
         this.#migrateLeaderboard();
         new AdmissionState(this.ctx.storage.sql).auditControl(this.#stored(5).state);
-        if (!this.#statsPresent() && this.#statsEnabled()) {
+        // An erased account never regrows the optional stats tables it scrubbed.
+        if (!this.#statsPresent() && this.#statsEnabled() && !this.#erasureConfirmedStored()) {
           new StatsState(this.ctx.storage.sql).initialize();
           this.ctx.storage.sql.exec("UPDATE account_enrollment SET schema_version = 8 WHERE id = 1");
         }
@@ -303,7 +375,12 @@ export class AccountEnrollment extends DurableObject<Env> {
         while (!admission.advanceDayTotals(state).complete && ++spans < 8 && performance.now() - started < 250) { /* next span */ }
       });
       return null;
-    } catch (error) { return error instanceof AdmissionFault || error instanceof ContributionFault || error instanceof ContributionRebuildFault ? error.code : "storage_invalid"; }
+    } catch (error) { return error instanceof FenceRefusal || error instanceof AdmissionFault || error instanceof ContributionFault || error instanceof ContributionRebuildFault ? error.code : "storage_invalid"; }
+  }
+  /** True once the stored payload carries a confirmed erasure. Reads the
+   * current schema-5+ row only; legacy rows cannot carry a lifecycle record. */
+  #erasureConfirmedStored(): boolean {
+    try { const state = this.#stored(5).state; return state !== null && erasureConfirmed(state); } catch { return false; }
   }
 
   #objects(): Record<string, SqlStorageValue>[] {
@@ -316,9 +393,13 @@ export class AccountEnrollment extends DurableObject<Env> {
     const withProjection = !legacy && objects.some(object => object.name === "usage_contribution_projection_control");
     const withWork = !legacy && objects.some(object => object.name === "account_work");
     const withRebuild = !legacy && objects.some(object => object.name === "usage_contribution_rebuild_jobs");
+    // The reclamation ledger is created only by the flag-gated reclamation
+    // record path (never in production while the flag stays unset); it is
+    // tied to table presence, not to a schema version, so it stays additive.
+    const withReclamation = withRebuild && objects.some(object => object.name === "usage_reclamation_ledger");
     const expected: Record<string, string> = { account_enrollment: SCHEMA_SQL, ...(legacy ? {} : ADMISSION_SCHEMA),
       ...(withStats ? STATS_SCHEMA : {}), ...(withContributions ? CONTRIBUTION_SCHEMA : {}), ...(withProjection ? CONTRIBUTION_PROJECTION_SCHEMA : {}),
-      ...(withWork ? ACCOUNT_WORK_SCHEMA : {}), ...(withRebuild ? CONTRIBUTION_REBUILD_SCHEMA : {}) };
+      ...(withWork ? ACCOUNT_WORK_SCHEMA : {}), ...(withRebuild ? CONTRIBUTION_REBUILD_SCHEMA : {}), ...(withReclamation ? RECLAMATION_SCHEMA : {}) };
     if (!legacy) {
       const version = this.ctx.storage.sql.exec("SELECT schema_version FROM account_enrollment WHERE id = 1").toArray()[0]?.schema_version;
       if ((version === 6 || version === 7 || version === 8 || version === 9 || version === 10 || version === 11 || version === 12 || version === 13) !== withStats
@@ -490,7 +571,7 @@ export class AccountEnrollment extends DurableObject<Env> {
   }
   /** Pure preflight admits existing legacy shapes only for a fenced upgrade.
    * It never converts absent or malformed authority into a genesis guess. */
-  #fencePreflight(accountId: string, generation: string): EnrollmentResult<{ epoch: number; established: boolean }> {
+  #fencePreflight(accountId: string, generation: string, allowErased = false): EnrollmentResult<{ epoch: number; established: boolean }> {
     try {
       if (!this.#healthy || this.#generation() !== generation) return err("recovery_required");
       if (!this.ctx.id.equals(this.env.ACCOUNT_ENROLLMENTS.idFromName(enrollmentAccountName(accountId)))) return err("unauthorized");
@@ -508,6 +589,9 @@ export class AccountEnrollment extends DurableObject<Env> {
       if (!validState(state, row.schema_version === 1, row.schema_version >= 4, row.schema_version >= 5)) return err("storage_invalid");
       if (state.accountId !== accountId) return err("unauthorized");
       if (state.generation !== generation) return err("recovery_required");
+      // The durable erasure tombstone: every ordinary path refuses a confirmed
+      // erasure. Only lifecycle status/export and erase resumption pass it.
+      if (!allowErased && erasureConfirmed(state)) return err("account_erased");
       return ok({ epoch: state.fenceEpoch ?? RESTORE_FENCE_GENESIS_EPOCH, established: true });
     } catch { return err("storage_invalid"); }
   }
@@ -580,11 +664,11 @@ export class AccountEnrollment extends DurableObject<Env> {
   /** Acquire a provider-operation lease from the external restore fence. The
    * fence is a separate store; the returned epoch/established are authoritative
    * and cross-checked against durable state inside the transaction. */
-  async #fenceAcquire(accountId: string, generation: string, admitted: () => boolean = () => true): Promise<EnrollmentResult<{ fence: FenceObservation; token: string }>> {
+  async #fenceAcquire(accountId: string, generation: string, admitted: () => boolean = () => true, allowErased = false): Promise<EnrollmentResult<{ fence: FenceObservation; token: string }>> {
     if (!admitted()) return err("storage_unavailable");
     const workerVersion = this.#workerVersion();
     if (workerVersion === null) return err("recovery_required");
-    const preflight = this.#fencePreflight(accountId, generation);
+    const preflight = this.#fencePreflight(accountId, generation, allowErased);
     if (!preflight.ok) return preflight;
     const stub = this.env.RESTORE_FENCES.getByName(restoreFenceName(accountId));
     // This ID belongs to one execution, not the retriable upload operation.
@@ -609,7 +693,7 @@ export class AccountEnrollment extends DurableObject<Env> {
             await this.#fenceSettle(accountId, input.attemptId, false);
             return err("storage_unavailable");
           }
-          const prepared = this.#prepareFenced(accountId, generation, fence);
+          const prepared = this.#prepareFenced(accountId, generation, fence, allowErased);
           if (prepared !== null) {
             await this.#fenceSettle(accountId, input.attemptId, false);
             return err(prepared);
@@ -619,7 +703,7 @@ export class AccountEnrollment extends DurableObject<Env> {
         const rejected = rpcSnapshot(raw, ["ok", "error"]);
         if (rejected?.ok === false) {
           const code = rejected.error;
-          failure = code === "recovery_required" || code === "clock_regressed" || code === "unauthorized" || code === "limit" ? code : "storage_invalid";
+          failure = code === "recovery_required" || code === "clock_regressed" || code === "unauthorized" || code === "limit" || code === "account_erased" ? code : "storage_invalid";
           if (!uncertain) return err(failure);
           break;
         }
@@ -1327,8 +1411,8 @@ export class AccountEnrollment extends DurableObject<Env> {
   }
   /** Pure external authority check. A read linearizes no later than its final
    * successful check; a close or epoch change during its awaits refuses it. */
-  async #readAuthority(accountId: string, generation: string): Promise<EnrollmentError | null> {
-    const local = this.#fencePreflight(accountId, generation);
+  async #readAuthority(accountId: string, generation: string, allowErased = false): Promise<EnrollmentError | null> {
+    const local = this.#fencePreflight(accountId, generation, allowErased);
     if (!local.ok) return local.error;
     let raw: unknown;
     try {
@@ -1340,20 +1424,23 @@ export class AccountEnrollment extends DurableObject<Env> {
       if (view === null || !statsInteger(view.inFlight, 0, 64) || !enrollmentTime(view.observedAtMs)) return "recovery_required";
       if (view.record === null) return local.value.established ? "recovery_required" : null;
       const record = enrollmentSnapshot(view.record, ["schemaVersion", "accountId", "generation", "epoch", "workerVersion", "phase", "established", "updatedAtMs"]);
+      // A sealed external tombstone refuses every ordinary read even when the
+      // local payload was restored from a pre-erasure snapshot.
+      if (record?.phase === "erased" && !allowErased) return "account_erased";
       return record?.schemaVersion === 1 && record.accountId === accountId && record.generation === generation
-        && record.epoch === local.value.epoch && record.workerVersion === this.#workerVersion() && record.phase === "open"
+        && record.epoch === local.value.epoch && record.workerVersion === this.#workerVersion() && (record.phase === "open" || record.phase === "erased")
         && enrollmentTime(record.updatedAtMs) && record.updatedAtMs <= view.observedAtMs
         && (record.established === false || (record.established === true && local.value.established)) ? null : "recovery_required";
     } catch { return "storage_unavailable"; }
     finally { disposeReply(raw); }
   }
-  async #readFenced<T>(accountId: string, read: () => Promise<EnrollmentResult<T>>): Promise<EnrollmentResult<T>> {
+  async #readFenced<T>(accountId: string, read: () => Promise<EnrollmentResult<T>>, allowErased = false): Promise<EnrollmentResult<T>> {
     const generation = this.#generation();
     if (generation === null) return err("recovery_required");
-    const before = await this.#readAuthority(accountId, generation);
+    const before = await this.#readAuthority(accountId, generation, allowErased);
     if (before !== null) return err(before);
     const result = await read();
-    const after = await this.#readAuthority(accountId, generation);
+    const after = await this.#readAuthority(accountId, generation, allowErased);
     return after === null ? result : err(after);
   }
   async admitStatsSnapshot(input: unknown): Promise<StatsResult<StatsReceipt>> {
@@ -1888,7 +1975,9 @@ export class AccountEnrollment extends DurableObject<Env> {
   async readLeaderboardDelivery(input: unknown): Promise<EnrollmentResult<{ schemaVersion: 1; accountId: string; eventAtMs: number; projection: LeaderboardProjectionV1 }>> {
     const request = enrollmentSnapshot(input, ["schemaVersion", "accountId"]);
     if (request?.schemaVersion !== 1 || !enrollmentAccount(request.accountId)) return err("invalid_input");
-    return this.#readFenced(request.accountId, () => this.#readLeaderboardDelivery(input));
+    // The index may read an erasing/erased source: it reads back as withdrawn
+    // (M6 Erase), which is how the index removes membership and never revives it.
+    return this.#readFenced(request.accountId, () => this.#readLeaderboardDelivery(input), true);
   }
   async #readLeaderboardDelivery(input: unknown): Promise<EnrollmentResult<{ schemaVersion: 1; accountId: string; eventAtMs: number; projection: LeaderboardProjectionV1 }>> {
     try {
@@ -1912,7 +2001,7 @@ export class AccountEnrollment extends DurableObject<Env> {
         if (external === null || !sameNamespaceAnchor(external, original.value) || !sameNamespaceAnchor(state.anchor, original.value)) throw new AdmissionFault("recovery_required");
         const projection = (): LeaderboardProjectionV1 => {
         const leaderboard = state.leaderboard;
-        if (leaderboard.consent !== true) {
+        if (leaderboard.consent !== true || erasureConfirmed(state)) {
           return Object.freeze({ schemaVersion: 1 as const, accountId: state.accountId, consent: false as const });
         }
         if (control.quarantined) throw new AdmissionFault("recovery_required");
@@ -2209,4 +2298,655 @@ export class AccountEnrollment extends DurableObject<Env> {
       } finally { await this.#fenceSettle(operation.grant.accountId, operation.leaseToken, operation.committed); }
     } catch { return err("storage_unavailable"); }
   }
+
+  /* -------------------------------------------------- Phase 10 lifecycle */
+  /** Account-session lifecycle operations: status, export, device list and
+   * revocation and two-step erase. Reads pass the
+   * erasure tombstone so an erased account can still prove its state; every
+   * mutation acquires the restore fence, records durable intent before any
+   * effect, and is idempotent under retry. The reply vocabulary is the frozen
+   * `lifecycle-contract` so the HTTP handler never sees internal codes. */
+  async lifecycle(input: unknown): Promise<UsageLifecycleResult> {
+    const request = parseUsageLifecycleRequest(input);
+    if (request === null) return { ok: false, error: "invalid_input" };
+    let result: EnrollmentResult<UsageLifecycleValue>;
+    try {
+      switch (request.operation) {
+        case "status": result = await this.#lifecycleStatus(request); break;
+        case "export": result = await this.#lifecycleExport(request, request.cursor); break;
+        case "devices": result = await this.#lifecycleDevices(request); break;
+        case "revoke_device": result = await this.#lifecycleRevoke(request, request.deviceId); break;
+        case "erase_request": result = await this.#lifecycleEraseRequest(request); break;
+        default: result = await this.#lifecycleEraseConfirm(request, request.token); break;
+      }
+    } catch { result = err("storage_unavailable"); }
+    return result.ok ? result : { ok: false, error: lifecycleError(result.error) };
+  }
+  /** Fenced read that tolerates the erasure tombstone. Pending accounts and
+   * absent state read as not_enrolled exactly like the consent route. */
+  async #lifecycleRead<T>(scope: LifecycleScope, read: (state: State, revision: number, admission: AdmissionState, control: AdmissionControl, now: number) => T): Promise<EnrollmentResult<T>> {
+    // Status and export stay readable after erasure only while the local
+    // payload itself reflects the confirmed erasure. A restored pre-erasure
+    // payload under a sealed fence tombstone refuses like every other read.
+    let allowErased = false;
+    try { allowErased = this.ctx.storage.transactionSync(() => { const { state } = this.#stored(5); return state !== null && erasureConfirmed(state); }); }
+    catch { allowErased = false; }
+    return this.#readFenced(scope.accountId, async () => {
+      const generation = this.#generation(), observed = Date.now();
+      if (generation === null) return err("recovery_required");
+      if (!enrollmentTime(observed) || Object.is(observed, -0)) return err("clock_regressed");
+      const observation: AdmissionObservation = { generation, observed, fence: null, committed: false };
+      return this.#privateDaysSnapshot(scope, observation, (state, admission, control) =>
+        read(state, this.#stored(5).revision, admission, control, observation.observed), false);
+    }, allowErased);
+  }
+  /** Fenced mutation on a live (non-erased) active account with an unexpired
+   * session. `run` sees the fenced state and the transaction clock. */
+  async #lifecycleMutation<T>(scope: LifecycleScope, run: (state: State, now: number) => { state: State | null; result: EnrollmentResult<T> }): Promise<EnrollmentResult<T>> {
+    const generation = this.#generation();
+    if (generation === null) return err("recovery_required");
+    if (!this.ctx.id.equals(this.env.ACCOUNT_ENROLLMENTS.idFromName(enrollmentAccountName(scope.accountId)))) return err("unauthorized");
+    const observed = Date.now();
+    if (!enrollmentTime(observed) || Object.is(observed, -0)) return err("clock_regressed");
+    const acquired = await this.#fenceAcquire(scope.accountId, generation);
+    if (!acquired.ok) return acquired;
+    const observation: AdmissionObservation = { generation, observed, fence: acquired.value.fence, committed: false };
+    try {
+      return this.#transaction<T>(observation, (state, now) => {
+        if (state === null || state.accountId !== scope.accountId) return { state: null, result: err(state === null ? "not_enrolled" : "unauthorized") };
+        if (state.phase !== "active") return { state: null, result: err("not_enrolled") };
+        if (erasureConfirmed(state)) return { state: null, result: err("account_erased") };
+        if (now >= scope.sessionExpiresAtMs) return { state: null, result: err("expired") };
+        return run(state, now);
+      });
+    } finally { await this.#fenceSettle(scope.accountId, acquired.value.token, observation.committed); }
+  }
+  async #lifecycleStatus(scope: LifecycleScope): Promise<EnrollmentResult<LifecycleStatusV1>> {
+    const local = await this.#lifecycleRead(scope, (state, revision) => lifecycleStatusOf(state, revision));
+    if (!local.ok) return local;
+    const status = local.value;
+    // Index membership is best-effort context, never authority: an
+    // unavailable index reports `waitlistKnown: false` rather than a guess.
+    const membership = await this.#lifecycleMembership(scope.accountId);
+    if (membership === null) return local;
+    const publishing: LifecyclePublishingViewV1 = Object.freeze({ consent: status.publishing.consent, publicHandle: status.publishing.publicHandle,
+      member: membership.member, waitlist: status.publishing.consent && !membership.member ? membership.waitlist : null, waitlistKnown: true });
+    return ok(Object.freeze({ ...status, publishing }));
+  }
+  async #lifecycleMembership(accountId: string): Promise<Readonly<{ member: boolean; waitlist: Readonly<{ position: number; total: number }> | null }> | null> {
+    let raw: unknown;
+    try {
+      raw = await this.env.PUBLIC_INDEX.getByName(LEADERBOARD_INDEX_NAME).readMembership({ schemaVersion: 1, accountId });
+      const reply = rpcSnapshot(raw, ["ok", "value"]);
+      const view = reply?.ok === true ? enrollmentSnapshot(reply.value, ["schemaVersion", "member", "waitlist"]) : null;
+      if (view?.schemaVersion !== 1 || typeof view.member !== "boolean") return null;
+      if (view.waitlist === null) return Object.freeze({ member: view.member, waitlist: null });
+      const waitlist = enrollmentSnapshot(view.waitlist, ["position", "total"]);
+      if (waitlist === null || !statsInteger(waitlist.position, 1, 4_096) || !statsInteger(waitlist.total, 1, 4_096) || waitlist.position > waitlist.total) return null;
+      return Object.freeze({ member: view.member, waitlist: Object.freeze({ position: waitlist.position, total: waitlist.total }) });
+    } catch { return null; }
+    finally { disposeReply(raw); }
+  }
+  async #lifecycleDevices(scope: LifecycleScope): Promise<EnrollmentResult<LifecycleDevicesV1>> {
+    return this.#lifecycleRead(scope, state => Object.freeze({ schemaVersion: 1 as const, kind: "devices" as const,
+      devices: Object.freeze(state.devices.map(lifecycleDeviceOf)) }));
+  }
+  /** Lossless bounded export (`lifecycle-export-v1`): one section per page
+   * step, rows in primary-key order, positional cursor `<section>:<offset>`.
+   * The page carries the state and admission revisions so a consumer can
+   * detect a mutation between pages and restart. */
+  async #lifecycleExport(scope: LifecycleScope, cursor: string | null): Promise<EnrollmentResult<LifecycleExportPageV1>> {
+    const position = parseExportCursor(cursor);
+    if (position === null) return err("invalid_input");
+    return this.#lifecycleRead(scope, (state, revision, _admission, control, now) => {
+      let { section, offset } = position;
+      let items = exportSectionItems(this.ctx.storage.sql, LIFECYCLE_EXPORT_SECTIONS[section], state, revision);
+      while (offset >= items.length) {
+        if (++section >= LIFECYCLE_EXPORT_SECTIONS.length) throw new AdmissionFault("invalid_input");
+        offset = 0;
+        items = exportSectionItems(this.ctx.storage.sql, LIFECYCLE_EXPORT_SECTIONS[section], state, revision);
+      }
+      const page: LifecycleExportItemV1[] = [];
+      let bytes = 0;
+      for (let index = offset; index < items.length && page.length < LIFECYCLE_EXPORT_PAGE_ITEMS; index++) {
+        const item = items[index], size = new TextEncoder().encode(JSON.stringify(item)).length;
+        if (page.length > 0 && bytes + size > LIFECYCLE_EXPORT_PAGE_BYTES) break;
+        page.push(item); bytes += size;
+      }
+      const next = offset + page.length < items.length ? `${section}:${offset + page.length}`
+        : section + 1 < LIFECYCLE_EXPORT_SECTIONS.length ? `${section + 1}:0` : null;
+      return Object.freeze({ schemaVersion: 1 as const, kind: "export" as const, contract: LIFECYCLE_EXPORT_CONTRACT, accountId: state.accountId,
+        generation: state.generation, exportedAtMs: now, stateRevision: revision, admissionRevision: control.revision,
+        section: LIFECYCLE_EXPORT_SECTIONS[section], items: Object.freeze(page), cursor: next, excluded: LIFECYCLE_EXPORT_EXCLUDED });
+    });
+  }
+  /** Any enrolled device of the account can be revoked by an account session.
+   * Historical facts stay: the device row keeps its enrollment and gains a
+   * revocation time. */
+  async #lifecycleRevoke(scope: LifecycleScope, deviceId: string): Promise<EnrollmentResult<LifecycleDeviceV1>> {
+    return this.#lifecycleMutation(scope, (state, now) => {
+      const device = state.devices.find(candidate => candidate.deviceId === deviceId);
+      if (device === undefined) return { state: null, result: err("not_enrolled") };
+      if (device.revokedAtMs !== null) return { state: null, result: ok(Object.freeze({ schemaVersion: 1 as const, kind: "device" as const, device: lifecycleDeviceOf(device) })) };
+      device.revokedAtMs = now;
+      if (this.#statsPresent()) new StatsState(this.ctx.storage.sql).revokeDevice(deviceId);
+      return { state, result: ok(Object.freeze({ schemaVersion: 1 as const, kind: "device" as const, device: lifecycleDeviceOf(device) })) };
+    });
+  }
+  /** Step one of erase: a durable intent with a confirmation token. An
+   * unexpired unconfirmed request is returned again rather than replaced. */
+  async #lifecycleEraseRequest(scope: LifecycleScope): Promise<EnrollmentResult<LifecycleEraseRequestV1>> {
+    return this.#lifecycleMutation(scope, (state, now) => {
+      const existing = state.lifecycle?.erasure ?? null;
+      if (existing !== null && existing.confirmedAtMs === null && now < existing.requestExpiresAtMs) {
+        return { state: null, result: ok(Object.freeze({ schemaVersion: 1 as const, kind: "erase_request" as const, token: existing.token,
+          requestedAtMs: existing.requestedAtMs, requestExpiresAtMs: existing.requestExpiresAtMs })) };
+      }
+      const erasure: LifecycleErasure = { token: enrollmentRandom(), requestedAtMs: now, requestExpiresAtMs: now + LIFECYCLE_ERASE_REQUEST_TTL_MS,
+        confirmedAtMs: null, step: 0, completedAtMs: null, sealed: false, ledger: null };
+      state.lifecycle = { erasure };
+      return { state, result: ok(Object.freeze({ schemaVersion: 1 as const, kind: "erase_request" as const, token: erasure.token,
+        requestedAtMs: erasure.requestedAtMs, requestExpiresAtMs: erasure.requestExpiresAtMs })) };
+    });
+  }
+  /** Step two of erase: bounded, resumable execution. Each step commits its
+   * own durable progress so an interrupted erase resumes at the same step:
+   * 1 confirm and withdraw source consent, 2 remove index membership,
+   * 3 revoke every device, 4 record the R2 reclamation ledger, 5 scrub the
+   * SQL surfaces (the enrollment row stays as the tombstone), 6 seal the
+   * external fence. Order matters: the public index is withdrawn before any
+   * other effect (M6 apply order), and the fence seal is last so a restored
+   * older payload refuses instead of reviving. */
+  async #lifecycleEraseConfirm(scope: LifecycleScope, token: string): Promise<EnrollmentResult<LifecycleEraseProgressV1>> {
+    const generation = this.#generation();
+    if (generation === null) return err("recovery_required");
+    if (!this.ctx.id.equals(this.env.ACCOUNT_ENROLLMENTS.idFromName(enrollmentAccountName(scope.accountId)))) return err("unauthorized");
+    const sealed = await this.#lifecycleSealed(scope, generation, token);
+    if (sealed !== null) return sealed;
+    const observed = Date.now();
+    if (!enrollmentTime(observed) || Object.is(observed, -0)) return err("clock_regressed");
+    const acquired = await this.#fenceAcquire(scope.accountId, generation, () => true, true);
+    if (!acquired.ok) return acquired;
+    const observation: AdmissionObservation = { generation, observed, fence: acquired.value.fence, committed: false };
+    const progress = (erasure: LifecycleErasure): EnrollmentResult<LifecycleEraseProgressV1> =>
+      ok(Object.freeze({ schemaVersion: 1 as const, kind: "erase_progress" as const, erasure: lifecycleErasureOf(erasure) }));
+    const step = (expected: number | null, apply: (state: State, erasure: LifecycleErasure, now: number) => EnrollmentError | null): EnrollmentResult<{ erasure: LifecycleErasure; eventAtMs: number }> =>
+      this.#transaction(observation, (state, now) => {
+        if (state === null || state.accountId !== scope.accountId) return { state: null, result: err(state === null ? "not_enrolled" : "unauthorized") };
+        if (state.phase !== "active") return { state: null, result: err("not_enrolled") };
+        const erasure = state.lifecycle?.erasure ?? null;
+        if (erasure === null) return { state: null, result: err("conflict") };
+        if (!sameToken(erasure.token, token)) return { state: null, result: err("unauthorized") };
+        if (now >= scope.sessionExpiresAtMs || (erasure.confirmedAtMs === null && now >= erasure.requestExpiresAtMs)) return { state: null, result: err("expired") };
+        const snapshot = (): { erasure: LifecycleErasure; eventAtMs: number } => ({ erasure: { ...erasure, ledger: erasure.ledger }, eventAtMs: state.leaderboard.changedAtMs });
+        if (expected === null || erasure.step !== expected) return { state: null, result: ok(snapshot()) };
+        const refused = apply(state, erasure, now);
+        return refused === null ? { state, result: ok(snapshot()) } : { state: null, result: err(refused) };
+      });
+    try {
+      for (let round = 0; round <= LIFECYCLE_ERASE_STEPS; round++) {
+        const current = step(null, () => null);
+        if (!current.ok) return current;
+        const erasure = current.value.erasure;
+        let advanced: EnrollmentResult<{ erasure: LifecycleErasure; eventAtMs: number }>;
+        switch (erasure.step) {
+          case 0:
+            advanced = step(0, (state, record, now) => {
+              if (state.leaderboard.consent && now <= state.leaderboard.changedAtMs) return "clock_regressed";
+              if (state.leaderboard.consent) state.leaderboard = { consent: false, consentedAtMs: null, publicHandle: null, changedAtMs: now };
+              record.confirmedAtMs = now; record.step = 1;
+              return null;
+            });
+            break;
+          case 1: {
+            const withdrawal: LeaderboardConsentViewV1 = Object.freeze({ schemaVersion: 1, consent: false, consentedAtMs: null, publicHandle: null });
+            const published = await this.#publishLeaderboardConsent(scope.accountId, withdrawal, current.value.eventAtMs);
+            if (published !== "published") return err("storage_unavailable");
+            this.#acknowledgeConsent(observation, withdrawal, current.value.eventAtMs);
+            advanced = step(1, (_state, record) => { record.step = 2; return null; });
+            break;
+          }
+          case 2:
+            advanced = step(2, (state, record, now) => {
+              for (const device of state.devices) {
+                if (device.revokedAtMs === null) { device.revokedAtMs = now; if (this.#statsPresent()) new StatsState(this.ctx.storage.sql).revokeDevice(device.deviceId); }
+              }
+              record.step = 3;
+              return null;
+            });
+            break;
+          case 3:
+            advanced = step(3, (state, record, now) => { record.ledger = reclamationLedgerOf(state, now); record.step = 4; return null; });
+            break;
+          case 4:
+            advanced = step(4, (state, record, now) => {
+              const sql = this.ctx.storage.sql;
+              for (const name of [...Object.keys(CONTRIBUTION_REBUILD_SCHEMA), ...Object.keys(ACCOUNT_WORK_SCHEMA), ...Object.keys(CONTRIBUTION_PROJECTION_SCHEMA),
+                ...Object.keys(CONTRIBUTION_SCHEMA), ...Object.keys(STATS_SCHEMA), ...Object.keys(RETIRED_STATS_SCHEMA), ...Object.keys(ADMISSION_SCHEMA)]) sql.exec(`DROP TABLE IF EXISTS ${name}`);
+              new AdmissionState(sql).initialize(state);
+              sql.exec("UPDATE account_enrollment SET schema_version = 5 WHERE id = 1");
+              this.#statsReadMemo.clear();
+              record.completedAtMs = now; record.step = 5;
+              return null;
+            });
+            break;
+          case 5: {
+            const erased = await this.#lifecycleSealFence(scope.accountId, generation, observation.fence?.epoch ?? RESTORE_FENCE_GENESIS_EPOCH);
+            if (!erased) return err("storage_unavailable");
+            advanced = step(5, (_state, record) => { record.step = LIFECYCLE_ERASE_STEPS; record.sealed = true; return null; });
+            break;
+          }
+          default: return progress(erasure);
+        }
+        if (!advanced.ok) return advanced;
+      }
+      return err("limit");
+    } finally { await this.#fenceSettle(scope.accountId, acquired.value.token, observation.committed); }
+  }
+  /** Tombstone-first resumption. A sealed fence refuses every lease, so an
+   * erasure whose local seal (step 6) was lost after the external seal
+   * finalizes from the tombstone itself; a fully sealed erasure replies
+   * without touching the fence at all. */
+  async #lifecycleSealed(scope: LifecycleScope, generation: string, token: string): Promise<EnrollmentResult<LifecycleEraseProgressV1> | null> {
+    let local: { revision: number; state: State } | null;
+    try {
+      local = this.ctx.storage.transactionSync(() => {
+        if (this.#objects().length === 0) return null;
+        this.#schema();
+        const { revision, state } = this.#stored(5);
+        return state === null ? null : { revision, state };
+      });
+    } catch { return null; }
+    if (local === null) return null;
+    const { state } = local, erasure = state.lifecycle?.erasure ?? null;
+    if (state.accountId !== scope.accountId || state.generation !== generation || erasure === null || erasure.step < LIFECYCLE_ERASE_STEPS - 1 || !sameToken(erasure.token, token)) return null;
+    const now = Date.now();
+    if (!enrollmentTime(now) || Object.is(now, -0)) return err("clock_regressed");
+    if (now >= scope.sessionExpiresAtMs) return err("expired");
+    if (erasure.step === LIFECYCLE_ERASE_STEPS) return ok(Object.freeze({ schemaVersion: 1 as const, kind: "erase_progress" as const, erasure: lifecycleErasureOf(erasure) }));
+    let raw: unknown;
+    try {
+      raw = await this.env.RESTORE_FENCES.getByName(restoreFenceName(scope.accountId)).read({ accountId: scope.accountId, generation });
+      const reply = rpcSnapshot(raw, ["ok", "value"]);
+      const view = reply?.ok === true ? enrollmentSnapshot(reply.value, ["record", "inFlight", "observedAtMs"]) : null;
+      const record = view === null ? null : enrollmentSnapshot(view.record, ["schemaVersion", "accountId", "generation", "epoch", "workerVersion", "phase", "established", "updatedAtMs"]);
+      if (record?.phase !== "erased" || record.accountId !== scope.accountId || record.generation !== generation) return null;
+    } catch { return null; }
+    finally { disposeReply(raw); }
+    try {
+      return this.ctx.storage.transactionSync(() => {
+        this.#schema();
+        const { revision, state: current } = this.#stored(5);
+        const record = current?.lifecycle?.erasure ?? null;
+        if (current === null || record === null || !sameToken(record.token, token) || record.step !== LIFECYCLE_ERASE_STEPS - 1) throw new AdmissionFault("recovery_required");
+        record.step = LIFECYCLE_ERASE_STEPS; record.sealed = true;
+        if (!validState(current)) throw new AdmissionFault("storage_invalid");
+        const payload = JSON.stringify(current);
+        if (payload.length > MAX_PAYLOAD) throw new AdmissionFault("storage_invalid");
+        this.ctx.storage.sql.exec("UPDATE account_enrollment SET revision = ?, payload = ? WHERE id = 1", revision + 1, payload);
+        return ok(Object.freeze({ schemaVersion: 1 as const, kind: "erase_progress" as const, erasure: lifecycleErasureOf(record) }));
+      });
+    } catch (error) { return err(error instanceof AdmissionFault ? error.code : "storage_invalid"); }
+  }
+  async #lifecycleSealFence(accountId: string, generation: string, epoch: number): Promise<boolean> {
+    const workerVersion = this.#workerVersion();
+    if (workerVersion === null) return false;
+    let raw: unknown;
+    try {
+      raw = await this.env.RESTORE_FENCES.getByName(restoreFenceName(accountId)).erase({ accountId, generation, epoch, workerVersion });
+      const reply = rpcSnapshot(raw, ["ok", "value"]);
+      const view = reply?.ok === true ? enrollmentSnapshot(reply.value, ["record", "inFlight", "observedAtMs"]) : null;
+      const record = view === null ? null : enrollmentSnapshot(view.record, ["schemaVersion", "accountId", "generation", "epoch", "workerVersion", "phase", "established", "updatedAtMs"]);
+      return record?.phase === "erased" && record.accountId === accountId && record.generation === generation;
+    } catch { return false; }
+    finally { disposeReply(raw); }
+  }
+  /** Separately reviewed repair cutover for a fully compared rebuild job. It
+   * accepts only an explicit `publish` request, shares the rebuild flight slot,
+   * performs no object I/O, and commits the receipt transition together with
+   * the projection compare-and-swap in one fenced SQL transaction. After the
+   * step both frontiers, the control roots and the non-expiring publication
+   * must equal the receipt's verified scratch root at the unchanged source
+   * revision, or the reply is refused as `conflict`. Implemented, not
+   * live-qualified: the contributions flag stays off in every deployment. */
+  async publishContributionRebuild(input: unknown): Promise<ContributionRebuildResult> {
+    const request = parseContributionRebuildRequest(input);
+    if (!request || request.action !== "publish") return { ok: false, error: "invalid_input" };
+    if (!this.#contributionsEnabled()) return { ok: false, error: "not_started" };
+    if (this.#generation() !== request.generation) return { ok: false, error: "recovery_required" };
+    if (this.#contributionRebuildFlight !== null) return { ok: false, error: "conflict" };
+    const marker = Object.freeze({}); this.#contributionRebuildFlight = marker;
+    return this.#boundedContributionRebuild(async live => {
+      try {
+        const admitted = () => { try { live(); return true; } catch { return false; } };
+        const acquired = await this.#fenceAcquire(request.accountId, request.generation, admitted);
+        if (!acquired.ok) { live(); return { ok: false, error: this.#contributionError(acquired.error) }; }
+        const observation: AdmissionObservation = { generation: request.generation, observed: Date.now(), fence: acquired.value.fence, committed: false };
+        try {
+          live();
+          const scope = { accountId: request.accountId, sessionExpiresAtMs: CONTRIBUTION_MAX_TIME };
+          const original = this.#privateDaysSnapshot(scope, observation, state => Object.freeze({ ...state.anchor }));
+          if (!original.ok) return { ok: false, error: this.#contributionError(original.error) };
+          const external = await readNamespaceAnchor(this.env.CONTROL, request.accountId);
+          live();
+          if (!external || !sameNamespaceAnchor(external, original.value)) throw new ContributionFault("recovery_required");
+          const rebuild = new ContributionRebuildState(this.ctx.storage);
+          const previous = this.#privateDaysSnapshot(scope, observation, () =>
+            this.#contributionRebuildPresent() ? rebuild.status(request.jobId) : null);
+          if (!previous.ok) return { ok: false, error: this.#contributionError(previous.error) };
+          const prior = previous.value?.receipt;
+          const retained = prior !== undefined && prior.version === request.expectedVersion + 1 && prior.action === "publish"
+            && prior.expectedVersion === request.expectedVersion;
+          const service = new AccountContributionRebuild({ STAGING: this.env.STAGING }, rebuild, (seen, action) => {
+            live();
+            return this.#transaction(seen, (state, now) => {
+              live();
+              if (!state || state.phase !== "active") throw new ContributionFault("not_enrolled");
+              if (state.accountId !== request.accountId || state.generation !== request.generation
+                || !sameNamespaceAnchor(state.anchor, original.value)) throw new ContributionFault("recovery_required");
+              if (!this.#contributionsActive() || !this.#contributionProjectionPresent() || !this.#accountWorkPresent()
+                || !this.#contributionRebuildPresent()) throw new ContributionFault("not_started");
+              const value = action(state, now);
+              live(); return { state, result: ok(value) };
+            });
+          });
+          const result = service.publish(request, observation);
+          live();
+          const last = await readNamespaceAnchor(this.env.CONTROL, request.accountId);
+          live();
+          if (!last || !sameNamespaceAnchor(last, original.value)) throw new ContributionFault("recovery_required");
+          const authority = await this.#readAuthority(request.accountId, request.generation);
+          live();
+          if (authority !== null) return { ok: false, error: this.#contributionError(authority) };
+          const current = this.#privateDaysSnapshot(scope, observation, state => {
+            if (!sameNamespaceAnchor(state.anchor, original.value)) throw new ContributionFault("recovery_required");
+            if (result.ok && !retained) {
+              const source = new ContributionState(this.ctx.storage).control(), projection = new ContributionProjectionState(this.ctx.storage);
+              const control = projection.control(), receipt = result.value;
+              if (source.accountId !== request.accountId || source.generation !== request.generation || source.phase !== "active"
+                || source.legacySeal !== null) throw new ContributionFault("recovery_required");
+              if (source.revision !== receipt.sourceRevision || source.headCount !== receipt.headCount || receipt.phase !== "published"
+                || JSON.stringify(control.publishedRoot) !== JSON.stringify(receipt.scratchRoot)
+                || JSON.stringify(control.appliedRoot) !== JSON.stringify(receipt.scratchRoot)) throw new ContributionFault("conflict");
+              if (source.pendingOperation !== null || control.source !== null || projection.pending() !== null
+                || control.appliedRevision !== receipt.sourceRevision || control.publishedRevision !== receipt.sourceRevision)
+                throw new ContributionRebuildFault("not_caught_up");
+              const publication = projection.publication(receipt.sourceRevision, observation.observed);
+              if (publication.expiresAtMs !== null || JSON.stringify(publication.root) !== JSON.stringify(receipt.scratchRoot))
+                throw new ContributionFault("conflict");
+            }
+          });
+          if (!current.ok) return { ok: false, error: isContributionRebuildError(current.error) ? current.error : "storage_unavailable" };
+          if (!result.ok) return { ok: false, error: isContributionRebuildError(result.error) ? result.error : "storage_invalid" };
+          const receipt = parseContributionRebuildReceipt(result.value);
+          return receipt && receipt.accountId === request.accountId && receipt.generation === request.generation
+            && receipt.jobId === request.jobId && receipt.action === "publish" && receipt.expectedVersion === request.expectedVersion
+            ? { ok: true, value: receipt } : { ok: false, error: "storage_invalid" };
+        } finally { await this.#fenceSettle(request.accountId, acquired.value.token, observation.committed); }
+      } finally { if (this.#contributionRebuildFlight === marker) this.#contributionRebuildFlight = null; }
+    });
+  }
+
+  /** Trusted coordinator diagnostic for accounts above the single-cell head
+   * envelope (plan 6.3): one cell of a rebuild job's verified scratch root
+   * against the job's pinned published root. No public route, no repair
+   * authority, no source reads; the job's own bounded, resumable head walk is
+   * the whole-account evidence. The invocation shares the single-cell scrub's
+   * nonrenewable deadline and authority fencing. Implemented, not
+   * live-qualified: the contributions flag stays off in every deployment. */
+  async scrubContributionJobCell(input: unknown): Promise<ContributionScrubJobResult> {
+    const request = parseContributionScrubJobRequest(input);
+    if (!request) return { ok: false, error: "invalid_input" };
+    if (!this.#contributionsEnabled()) return { ok: false, error: "not_started" };
+    if (this.#generation() !== request.generation) return { ok: false, error: "recovery_required" };
+    let retired = false, timer: ReturnType<typeof setTimeout> | undefined;
+    const deadline = performance.now() + CONTRIBUTION_SCRUB_DEADLINE_MS, expired = Object.freeze({});
+    const live = () => { if (retired || performance.now() >= deadline) throw expired; };
+    const run = async (): Promise<ContributionScrubJobResult> => {
+      live();
+      const before = await this.#readAuthority(request.accountId, request.generation);
+      live();
+      if (before !== null) return { ok: false, error: this.#contributionError(before) };
+      if (!this.#contributionsPresent() || !this.#contributionProjectionPresent() || !this.#contributionRebuildPresent()) return { ok: false, error: "not_started" };
+      const scope = { accountId: request.accountId, sessionExpiresAtMs: CONTRIBUTION_MAX_TIME };
+      const observation: AdmissionObservation = { generation: request.generation, observed: Date.now(), fence: null, committed: false };
+      const original = this.#privateDaysSnapshot(scope, observation, state => Object.freeze({ ...state.anchor }));
+      if (!original.ok) return { ok: false, error: this.#contributionError(original.error) };
+      const firstAnchor = await readNamespaceAnchor(this.env.CONTROL, request.accountId);
+      live();
+      if (!firstAnchor || !sameNamespaceAnchor(firstAnchor, original.value)) return { ok: false, error: "recovery_required" };
+      const observe = () => {
+        live();
+        const current = this.#privateDaysSnapshot(scope, observation, state => {
+          if (!sameNamespaceAnchor(state.anchor, original.value)) throw new ContributionFault("recovery_required");
+          return Object.freeze({ accountId: state.accountId, generation: state.generation,
+            active: state.phase === "active", observedAtMs: observation.observed });
+        });
+        if (!current.ok) throw new ContributionFault(this.#contributionError(current.error));
+        return current.value;
+      };
+      const rebuild = new ContributionRebuildState(this.ctx.storage);
+      const authority = observe();
+      const originalStatus = JSON.stringify(rebuild.status(request.jobId, authority));
+      const checked = await scrubContributionJobCell(this.env.STAGING, request, rebuild, observe);
+      live();
+      const lastAnchor = await readNamespaceAnchor(this.env.CONTROL, request.accountId);
+      live();
+      if (!lastAnchor || !sameNamespaceAnchor(lastAnchor, original.value)) return { ok: false, error: "recovery_required" };
+      const after = await this.#readAuthority(request.accountId, request.generation);
+      live();
+      if (after !== null) return { ok: false, error: this.#contributionError(after) };
+      const final = observe();
+      if (checked.ok) {
+        // Any job, source or projection movement during the outer authority
+        // awaits invalidates the receipt even though the roots stay readable.
+        const status = rebuild.status(request.jobId, final);
+        if (status === null || status.readiness !== "ready" || status.pending || status.receipt.version !== request.expectedVersion
+          || status.receipt.sourceRevision !== request.expectedRevision || (status.receipt.scratchRoot?.hash ?? null) !== checked.value.scratchRootHash
+          || (status.receipt.publishedRoot?.hash ?? null) !== checked.value.rootHash || JSON.stringify(status) !== originalStatus) throw new ContributionFault("conflict");
+      }
+      return parseContributionScrubJobResult(request, checked) ?? { ok: false, error: "storage_invalid" };
+    };
+    try {
+      const timeout = new Promise<never>((_, reject) => {
+        timer = setTimeout(() => { retired = true; reject(expired); }, CONTRIBUTION_SCRUB_DEADLINE_MS);
+      });
+      const result = await Promise.race([run(), timeout]);
+      live();
+      return result;
+    } catch (cause) {
+      return { ok: false, error: cause === expired ? "deadline" : cause instanceof ContributionFault ? cause.code : "storage_unavailable" };
+    } finally { retired = true; clearTimeout(timer); }
+  }
+  /** Physical reclamation (plan 6.4): record, step or read the durable
+   * `reclamation-ledger-v1`. Disabled by default: the exact
+   * `AICHARTS_USAGE_RECLAMATION_ENABLED === "1"` capability stays unset in every
+   * deployment, so every action, including reads, refuses `disabled`. When
+   * enabled, a step shares the rebuild single-flight marker, runs under the
+   * restore fence and namespace anchor, re-walks every reference inside the
+   * account transaction and deletes only quiescent, horizon-expired,
+   * unreferenced objects. Implemented, not live-qualified. */
+  async executeReclamation(input: unknown): Promise<ReclamationResult> {
+    const request = parseReclamationRequest(input);
+    if (!request) return { ok: false, error: "invalid_input" };
+    const enabled = (this.env as Env & { AICHARTS_USAGE_RECLAMATION_ENABLED?: unknown }).AICHARTS_USAGE_RECLAMATION_ENABLED === "1";
+    if (!enabled) return { ok: false, error: "disabled" };
+    if (!this.#contributionsEnabled()) return { ok: false, error: "not_started" };
+    if (this.#generation() !== request.generation) return { ok: false, error: "recovery_required" };
+    // The step holds both the rebuild and the projection flight markers from its
+    // verification transaction through the provider delete, so no stage can
+    // re-reference a node between the reference re-check and the delete.
+    if (this.#contributionRebuildFlight !== null || this.#accountWorkFlights.has("projection")) return { ok: false, error: "conflict" };
+    const marker = Object.freeze({}); this.#contributionRebuildFlight = marker; this.#accountWorkFlights.set("projection", marker);
+    let retired = false, timer: ReturnType<typeof setTimeout> | undefined;
+    const deadline = performance.now() + RECLAMATION_DEADLINE_MS, expired = Object.freeze({});
+    const live = () => { if (retired || performance.now() >= deadline) throw expired; };
+    const refuse = (error: EnrollmentError): ReclamationResult => ({ ok: false, error: reclamationErrorFrom(this.#contributionError(error)) });
+    const run = async (): Promise<ReclamationResult> => {
+      const admitted = () => { try { live(); return true; } catch { return false; } };
+      const acquired = await this.#fenceAcquire(request.accountId, request.generation, admitted);
+      if (!acquired.ok) { live(); return refuse(acquired.error); }
+      const observation: AdmissionObservation = { generation: request.generation, observed: Date.now(), fence: acquired.value.fence, committed: false };
+      try {
+        live();
+        const scope = { accountId: request.accountId, sessionExpiresAtMs: CONTRIBUTION_MAX_TIME };
+        const original = this.#privateDaysSnapshot(scope, observation, state => Object.freeze({ ...state.anchor }));
+        if (!original.ok) return refuse(original.error);
+        const external = await readNamespaceAnchor(this.env.CONTROL, request.accountId);
+        live();
+        if (!external || !sameNamespaceAnchor(external, original.value)) return { ok: false, error: "recovery_required" };
+        if (!this.#contributionsPresent() || !this.#contributionProjectionPresent() || !this.#accountWorkPresent() || !this.#contributionRebuildPresent())
+          return { ok: false, error: "not_started" };
+        const ledger = new ReclamationState(this.ctx.storage);
+        const service = new AccountReclamation({ STAGING: this.env.STAGING }, ledger, (seen, action) => {
+          live();
+          return this.#transaction(seen, (state, now) => {
+            live();
+            if (!state || state.phase !== "active") throw new ContributionFault("not_enrolled");
+            if (state.accountId !== request.accountId || state.generation !== request.generation
+              || !sameNamespaceAnchor(state.anchor, original.value)) throw new ContributionFault("recovery_required");
+            if (!this.#contributionsActive() || !this.#contributionProjectionPresent() || !this.#accountWorkPresent() || !this.#contributionRebuildPresent())
+              throw new ContributionFault("not_started");
+            if (!ReclamationState.present(this.ctx.storage)) {
+              // Only an explicit record creates the ledger; steps and reads
+              // never initialize storage.
+              if (request.action !== "record") throw new ContributionFault("not_started");
+              ledger.initialize();
+            }
+            const value = action(state, now);
+            live(); return { state, result: ok(value) };
+          });
+        }, { enabled });
+        const result = await service.execute(request, observation);
+        live();
+        const last = await readNamespaceAnchor(this.env.CONTROL, request.accountId);
+        live();
+        if (!last || !sameNamespaceAnchor(last, original.value)) return { ok: false, error: "recovery_required" };
+        const authority = await this.#readAuthority(request.accountId, request.generation);
+        live();
+        if (authority !== null) return refuse(authority);
+        return result;
+      } finally { await this.#fenceSettle(request.accountId, acquired.value.token, observation.committed); }
+    };
+    try {
+      const timeout = new Promise<never>((_, reject) => {
+        timer = setTimeout(() => { retired = true; reject(expired); }, RECLAMATION_DEADLINE_MS);
+      });
+      const running = run();
+      this.ctx.waitUntil(running.then(() => {}, () => {}));
+      const result = await Promise.race([running, timeout]);
+      live(); return result;
+    } catch (cause) {
+      return { ok: false, error: cause === expired ? "deadline" : cause instanceof ContributionFault ? reclamationErrorFrom(cause.code) : "storage_unavailable" };
+    } finally {
+      retired = true; clearTimeout(timer);
+      if (this.#contributionRebuildFlight === marker) this.#contributionRebuildFlight = null;
+      if (this.#accountWorkFlights.get("projection") === marker) this.#accountWorkFlights.delete("projection");
+    }
+  }
+}
+
+/* ------------------------------------------------ Phase 10 lifecycle helpers */
+type LifecycleScope = Readonly<{ accountId: string; sessionExpiresAtMs: number }>;
+function sameToken(stored: string, offered: string): boolean {
+  const a = new TextEncoder().encode(stored), b = new TextEncoder().encode(offered);
+  return a.length === b.length && timingSafeEqual(a, b);
+}
+function lifecycleError(code: EnrollmentError): UsageLifecycleError {
+  if (isUsageLifecycleError(code)) return code;
+  if (code === "revoked") return "device_revoked";
+  if (code === "not_reserved") return "not_enrolled";
+  if (code === "writer_conflict" || code === "handle_unavailable" || code === "publishing_full") return "conflict";
+  return "unavailable";
+}
+function lifecycleDeviceOf(device: Device): LifecycleDeviceViewV1 {
+  return Object.freeze({ deviceId: device.deviceId, enrolledAtMs: device.enrolledAtMs, revokedAtMs: device.revokedAtMs,
+    state: device.revokedAtMs === null ? "active" as const : "revoked" as const });
+}
+function lifecycleErasureOf(erasure: LifecycleErasure): LifecycleErasureViewV1 {
+  return Object.freeze({ phase: erasure.confirmedAtMs === null ? "requested" as const : erasure.step === LIFECYCLE_ERASE_STEPS && erasure.sealed ? "erased" as const : "confirmed" as const,
+    step: erasure.step, stepCount: LIFECYCLE_ERASE_STEPS, requestedAtMs: erasure.requestedAtMs, requestExpiresAtMs: erasure.requestExpiresAtMs,
+    confirmedAtMs: erasure.confirmedAtMs, completedAtMs: erasure.completedAtMs, sealed: erasure.sealed });
+}
+function lifecycleStatusOf(state: State, revision: number): LifecycleStatusV1 {
+  const erasure = state.lifecycle?.erasure ?? null, view = erasure === null ? null : lifecycleErasureOf(erasure);
+  return Object.freeze({ schemaVersion: 1 as const, kind: "status" as const, contract: LIFECYCLE_STATUS_CONTRACT, accountId: state.accountId,
+    generation: state.generation, phase: view?.phase === "erased" ? "erased" as const : view?.phase === "confirmed" ? "erasing" as const : "active" as const,
+    stateRevision: revision,
+    devices: Object.freeze({ active: state.devices.filter(device => device.revokedAtMs === null).length, revoked: state.devices.filter(device => device.revokedAtMs !== null).length }),
+    erasure: view,
+    publishing: Object.freeze({ consent: state.leaderboard.consent, publicHandle: state.leaderboard.publicHandle, member: null, waitlist: null, waitlistKnown: false }) });
+}
+/** The durable reclamation contract (`reclamation-ledger-v1`) consumed by the
+ * storage lane. Objects are recorded by prefix, never deleted here; counts are
+ * unknown at record time because listing is provider I/O outside the fence. */
+function reclamationLedgerOf(state: State, now: number): ReclamationLedgerV1 {
+  const accountId = state.accountId, generation = state.generation, accountHex = accountId.slice(5);
+  const entry = (bucket: "STAGING" | "CONTROL", surface: string, prefix: string, note: string): LifecycleReclamationEntryV1 => Object.freeze({ bucket, surface, prefix, objects: null, note });
+  return Object.freeze({ schemaVersion: 1 as const, contract: LIFECYCLE_RECLAMATION_CONTRACT, accountId, generation, recordedAtMs: now, entries: Object.freeze([
+    entry("CONTROL", "r2:enrollment-namespace-anchors", namespaceAnchorKey(accountId), "exact key; delete last so stale writers keep refusing on anchor mismatch"),
+    entry("STAGING", "r2:admission-batches-and-journals", `usage-admission/v1/${accountHex}/${generation}/batches/`, "content-addressed batch objects of this generation"),
+    entry("CONTROL", "r2:admission-batches-and-journals", `usage-admission/v1/${accountHex}/${generation}/journal/`, "journal receipts of this generation"),
+    entry("STAGING", "r2:stats-snapshots-and-receipts", `usage-stats/v2/${accountId}/${generation}/snapshots/`, "stats snapshot bodies of this generation"),
+    entry("CONTROL", "r2:stats-snapshots-and-receipts", `usage-stats/v2/${accountId}/${generation}/receipts/`, "stats receipts of this generation"),
+    entry("STAGING", "r2:canonical-contribution-bodies", `usage-contributions/v3/${accountId}/`, "contribution bodies; includes the artifacts/ sub-prefix listed separately"),
+    entry("STAGING", "r2:canonical-contribution-artifacts", `usage-contributions/v3/${accountId}/artifacts/`, "journal artifacts (sub-prefix of the bodies entry)"),
+    entry("STAGING", "r2:canonical-contribution-index", `usage-projections/v3/${accountId}/${generation}/`, "derived projection nodes of this generation"),
+  ]) });
+}
+function parseExportCursor(cursor: string | null): { section: number; offset: number } | null {
+  if (cursor === null) return { section: 0, offset: 0 };
+  const match = /^([0-9]{1,2}):([0-9]{1,9})$/.exec(cursor);
+  if (match === null) return null;
+  const section = Number(match[1]), offset = Number(match[2]);
+  if (String(section) !== match[1] || String(offset) !== match[2] || section >= LIFECYCLE_EXPORT_SECTIONS.length) return null;
+  return { section, offset };
+}
+function exportValue(value: unknown): LifecycleJson {
+  if (value === null || typeof value === "boolean" || typeof value === "string") return value;
+  if (typeof value === "number") { if (!Number.isFinite(value)) throw new AdmissionFault("storage_invalid"); return value; }
+  if (typeof value === "bigint") return value.toString();
+  if (value instanceof ArrayBuffer) return Object.freeze({ $bytes: Array.from(new Uint8Array(value), byte => byte.toString(16).padStart(2, "0")).join("") });
+  if (ArrayBuffer.isView(value)) return Object.freeze({ $bytes: Array.from(new Uint8Array(value.buffer, value.byteOffset, value.byteLength), byte => byte.toString(16).padStart(2, "0")).join("") });
+  const checked = lifecycleJson(value);
+  if (checked === undefined) throw new AdmissionFault("storage_invalid");
+  return checked;
+}
+function exportRow(row: Record<string, SqlStorageValue>): LifecycleJson {
+  const value: Record<string, LifecycleJson> = {};
+  for (const key of Object.keys(row).sort()) value[key] = exportValue(row[key]);
+  return Object.freeze(value);
+}
+const exportItem = (surface: string, key: string, value: LifecycleJson): LifecycleExportItemV1 => Object.freeze({ surface, key, value });
+/** Every item of one export section: a `table` header, then rows. Composed
+ * sections (`account_enrollment`, `lifecycle`) publish the parsed payload
+ * minus credential material; table sections publish raw rows in primary-key
+ * order, so the export is lossless for every account-owned SQL surface. */
+function exportSectionItems(sql: SqlStorage, section: string, state: State, revision: number): LifecycleExportItemV1[] {
+  const header = (present: boolean, rows: number) => exportItem(section, "table", Object.freeze({ present, rows }));
+  if (section === "account_enrollment") {
+    const schemaVersion = exportValue(sql.exec("SELECT schema_version FROM account_enrollment WHERE id = 1").one().schema_version);
+    const anchor = { accountId: state.anchor.accountId, intentId: state.anchor.intentId, reservationId: state.anchor.reservationId,
+      generation: state.anchor.generation, createdAtMs: state.anchor.createdAtMs };
+    const values: LifecycleJson[] = [
+      Object.freeze({ schemaVersion, revision, accountId: state.accountId, generation: state.generation, observedAtMs: state.observedAtMs, phase: state.phase,
+        fenceEpoch: state.fenceEpoch, genesisCompletion: exportValue(state.genesisCompletion), leaderboard: exportValue(state.leaderboard) }),
+      exportValue(anchor),
+      ...state.devices.map(device => exportValue({ deviceId: device.deviceId, enrolledAtMs: device.enrolledAtMs, revokedAtMs: device.revokedAtMs, reservation: device.reservation })),
+    ];
+    const keys = ["state", "anchor", ...state.devices.map((_device, index) => `device:${index}`)];
+    return [header(true, values.length), ...values.map((value, index) => exportItem(section, keys[index], value))];
+  }
+  if (section === "lifecycle") {
+    const erasure = state.lifecycle?.erasure ?? null;
+    const values: LifecycleJson[] = [erasure === null ? null : exportValue({ ...lifecycleErasureOf(erasure), ledger: erasure.ledger })];
+    const keys = ["erasure"];
+    return [header(state.lifecycle !== undefined, values.length), ...values.map((value, index) => exportItem(section, keys[index], value))];
+  }
+  if (!(LIFECYCLE_EXPORT_SECTIONS as readonly string[]).includes(section)) throw new AdmissionFault("storage_invalid");
+  const present = sql.exec("SELECT name FROM sqlite_schema WHERE type = 'table' AND name = ? LIMIT 1", section).toArray().length === 1;
+  if (!present) return [header(false, 0)];
+  const rows = sql.exec(`SELECT * FROM ${section} LIMIT ${LIFECYCLE_EXPORT_MAX_ROWS + 1}`).toArray();
+  if (rows.length > LIFECYCLE_EXPORT_MAX_ROWS) throw new AdmissionFault("limit");
+  return [header(true, rows.length), ...rows.map((row, index) => exportItem(section, `row:${index}`, exportRow(row)))];
 }

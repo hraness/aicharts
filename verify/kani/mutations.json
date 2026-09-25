@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "scope": "Run in isolated copies against unchanged production-function harnesses. These are negative controls, never production modes.",
+  "scope": "Run in isolated copies against unchanged production-function harnesses. Each mutant restores one named bug class and must fail exactly its named unchanged assertion. These are negative controls, never production modes.",
   "mutations": [
     {
       "id": "wrapping-addition",
@@ -27,6 +27,105 @@
       "exactAfter": "checked_add(total.saturating_sub(previous), replacement)",
       "harness": "proofs::cumulative_baseline_delta_conserves_the_counter",
       "expectedFailedAssertion": "assertion failed: delta.ok() == snapshot.checked_sub(baseline)",
+      "requireSingleSourceMatch": true
+    },
+    {
+      "id": "decimal-limit-excludes-maximum",
+      "source": "crates/aicharts-metrics/src/arithmetic.rs",
+      "exactBefore": "if value <= MAX_DECIMAL {",
+      "exactAfter": "if value < MAX_DECIMAL {",
+      "harness": "proofs::decimal_admission_has_exact_profile_boundary",
+      "expectedFailedAssertion": "assertion failed: admit_decimal(value).is_ok() == value <= MAX_DECIMAL",
+      "requireSingleSourceMatch": true
+    },
+    {
+      "id": "bounded-add-limit-slack",
+      "source": "crates/aicharts-metrics/src/arithmetic.rs",
+      "exactBefore": "Ok(value) if value <= limit => Ok(value),",
+      "exactAfter": "Ok(value) if value <= limit.saturating_add(1) => Ok(value),",
+      "harness": "proofs::bounded_add_full_u128_preserves_math_and_limit",
+      "expectedFailedAssertion": "assertion failed: actual.ok() == expected",
+      "requireSingleSourceMatch": true
+    },
+    {
+      "id": "replacement-underflow-wraps",
+      "source": "crates/aicharts-metrics/src/arithmetic.rs",
+      "exactBefore": "match total.checked_sub(previous) {",
+      "exactAfter": "match Some(total.wrapping_sub(previous)) {",
+      "harness": "proofs::replacement_full_u128_refuses_underflow_or_overflow",
+      "expectedFailedAssertion": "assertion failed: actual.ok() == expected",
+      "requireSingleSourceMatch": true
+    },
+    {
+      "id": "wire-reasoning-equal-output-refused",
+      "source": "crates/aicharts-metrics/src/tokens.rs",
+      "exactBefore": "if counters[5] > counters[4] {",
+      "exactAfter": "if counters[5] >= counters[4] {",
+      "harness": "proofs::wire_total_full_u64_counts_the_output_subset_once",
+      "expectedFailedAssertion": "assertion failed: actual.is_ok() == valid",
+      "requireSingleSourceMatch": true
+    },
+    {
+      "id": "wire-limit-off-by-one",
+      "source": "crates/aicharts-metrics/src/tokens.rs",
+      "exactBefore": "*value > MAX_WIRE_TOKEN_COUNTER)",
+      "exactAfter": "*value > MAX_WIRE_TOKEN_COUNTER + 1)",
+      "harness": "proofs::wire_total_full_u64_counts_the_output_subset_once",
+      "expectedFailedAssertion": "assertion failed: actual.is_ok() == valid",
+      "requireSingleSourceMatch": true
+    },
+    {
+      "id": "cache-ttl-partition-under-total",
+      "source": "crates/aicharts-metrics/src/tokens.rs",
+      "exactBefore": "if checked_add(five_minute, one_hour)? != total {",
+      "exactAfter": "if checked_add(five_minute, one_hour)? > total {",
+      "harness": "proofs::cache_ttl_full_u128_requires_an_exact_retained_partition",
+      "expectedFailedAssertion": "assertion failed: actual.is_ok() == reference_add(five, hour) == Some(total)",
+      "requireSingleSourceMatch": true
+    },
+    {
+      "id": "dominance-conflict-prefers-left",
+      "source": "crates/aicharts-metrics/src/revision.rs",
+      "exactBefore": "(true, true) => Dominance::Conflict,",
+      "exactAfter": "(true, true) => Dominance::Left,",
+      "harness": "proofs::six_component_dominance_full_u64_is_partial_order_comparison",
+      "expectedFailedAssertion": "assertion failed: actual == Dominance::Left == left_dominates && left != right",
+      "requireSingleSourceMatch": true
+    },
+    {
+      "id": "evidence-zero-value-uncounted",
+      "source": "crates/aicharts-metrics/src/evidence.rs",
+      "exactBefore": "next.reported_records = checked_add(next.reported_records, 1)?;",
+      "exactAfter": "next.reported_records = checked_add(next.reported_records, u128::from(value != 0))?;",
+      "harness": "proofs::evidence_add_full_u128_keeps_zero_distinct_from_missing",
+      "expectedFailedAssertion": "assertion failed: actual.map(|next| basis_components(next, basis)).ok() == expected_sum.zip(expected_count)",
+      "requireSingleSourceMatch": true
+    },
+    {
+      "id": "matching-identity-ignores-unit-and-grain",
+      "source": "crates/aicharts-metrics/src/evidence.rs",
+      "exactBefore": "if left.population != right.population {",
+      "exactAfter": "if left.population.identity != right.population.identity {",
+      "harness": "proofs::matching_full_population_identity_never_confuses_missing_with_zero",
+      "expectedFailedAssertion": "assertion failed: actual.is_ok() == left_population == right_population && left_known && right_known",
+      "requireSingleSourceMatch": true
+    },
+    {
+      "id": "rational-zero-over-zero-admitted",
+      "source": "crates/aicharts-metrics/src/arithmetic.rs",
+      "exactBefore": "if denominator == 0 {",
+      "exactAfter": "if denominator == 0 && numerator != 0 {",
+      "harness": "proofs::rational_construction_full_u128_preserves_exact_components",
+      "expectedFailedAssertion": "assertion failed: actual.is_ok() == denominator != 0",
+      "requireSingleSourceMatch": true
+    },
+    {
+      "id": "pricing-missing-rate-priced-as-zero",
+      "source": "crates/aicharts-metrics/src/arithmetic.rs",
+      "exactBefore": "let rate = rates[index].ok_or(Error::MissingRate)?;",
+      "exactAfter": "let rate = rates[index].unwrap_or(0);",
+      "harness": "proofs::price_zero_or_missing_rates_preserves_full_u128_token_domain",
+      "expectedFailedAssertion": "assertion failed: actual == Ok(0) == tokens == [0; 5]",
       "requireSingleSourceMatch": true
     }
   ]

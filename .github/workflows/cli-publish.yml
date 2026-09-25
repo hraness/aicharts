@@ -1,0 +1,156 @@
+name: Publish Linux CLI
+
+# Immutable distribution for the Linux CLI profile (docs/usage-release-publish.md).
+#
+# The nonpublishing "Qualify Linux CLI" workflow builds, measures and smokes
+# the exact main commit and retains its assembled assets for seven days. Its
+# runner admits only that workflow's identity on refs/heads/main, so this
+# workflow does not rebuild. It resolves the tag to a main commit, selects the
+# newest successful qualification run of that exact commit, re-verifies the
+# retained assets against the manifest, checksums and qualification receipt,
+# publishes them as a GitHub Release with OIDC build provenance, and then
+# downloads the published assets and verifies their digests and attestations.
+# There is no human approval gate. A tag whose commit has no successful
+# qualification run within the retention window fails closed; re-dispatch the
+# qualification on main and rerun this workflow for the same tag.
+
+on:
+  push:
+    tags:
+      - "cli-v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing cli-vMAJOR.MINOR.PATCH tag whose commit has a successful Qualify Linux CLI run"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cli-publish-${{ inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.repository == 'hraness/aicharts'
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      RELEASE_TAG_INPUT: ${{ inputs.tag || github.ref_name }}
+    steps:
+      - name: Resolve the tag to a main commit with no existing release
+        run: |
+          set -euo pipefail
+          tag="$RELEASE_TAG_INPUT"
+          [[ "$tag" =~ ^cli-v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]] || { echo "publish_invalid_tag"; exit 1; }
+          version="${tag#cli-v}"
+          ref="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${tag}" --jq '[.object.type, .object.sha] | join(" ")')"
+          object_type="${ref%% *}"; commit="${ref##* }"
+          if [[ "$object_type" == "tag" ]]; then
+            commit="$(gh api "repos/${GITHUB_REPOSITORY}/git/tags/${commit}" --jq '.object.sha')"
+          fi
+          [[ "$commit" =~ ^[0-9a-f]{40}$ ]] || { echo "publish_tag_unresolved"; exit 1; }
+          status="$(gh api "repos/${GITHUB_REPOSITORY}/compare/main...${commit}" --jq '.status')"
+          [[ "$status" == "identical" || "$status" == "behind" ]] || { echo "publish_commit_not_on_main"; exit 1; }
+          if gh release view "$tag" --json tagName >/dev/null 2>&1; then echo "publish_release_exists"; exit 1; fi
+          {
+            echo "RELEASE_TAG=${tag}"
+            echo "RELEASE_VERSION=${version}"
+            echo "RELEASE_COMMIT=${commit}"
+          } >> "$GITHUB_ENV"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ env.RELEASE_COMMIT }}
+          persist-credentials: false
+          fetch-depth: 1
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+      - name: Require the tagged version to equal the workspace version
+        run: |
+          set -euo pipefail
+          workspace_version="$(node -e 'const m=require("node:fs").readFileSync("Cargo.toml","utf8").match(/^version = "((?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*)\.(?:0|[1-9][0-9]*))"$/mu); if(!m) process.exit(1); process.stdout.write(m[1]);')"
+          [[ "$workspace_version" == "$RELEASE_VERSION" ]] || { echo "publish_version_mismatch"; exit 1; }
+      - name: Select the newest successful qualification run of the exact commit
+        run: |
+          set -euo pipefail
+          selected="$(gh run list --workflow cli-release.yml --branch main --commit "$RELEASE_COMMIT" --status success --event workflow_dispatch \
+            --json databaseId,headSha,conclusion,createdAt --limit 20 \
+            --jq '[.[] | select(.headSha == env.RELEASE_COMMIT and .conclusion == "success")] | sort_by(.createdAt) | last | select(. != null) | .databaseId')"
+          [[ "$selected" =~ ^[1-9][0-9]{0,19}$ ]] || { echo "publish_qualification_missing"; exit 1; }
+          attempt="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${selected}" --jq '.run_attempt')"
+          [[ "$attempt" =~ ^[1-9][0-9]{0,5}$ ]] || { echo "publish_qualification_attempt_invalid"; exit 1; }
+          {
+            echo "QUALIFICATION_RUN_ID=${selected}"
+            echo "QUALIFICATION_RUN_ATTEMPT=${attempt}"
+          } >> "$GITHUB_ENV"
+      - name: Download and re-verify the retained qualification assets
+        run: |
+          set -euo pipefail
+          staging="$(mktemp -d)"
+          echo "PUBLISH_STAGING=${staging}" >> "$GITHUB_ENV"
+          gh run download "$QUALIFICATION_RUN_ID" --name "linux-qualification-${RELEASE_COMMIT}-${QUALIFICATION_RUN_ATTEMPT}" --dir "${staging}/artifact"
+          node scripts/release/verify-publication.mjs \
+            --artifact "${staging}/artifact" --tag "$RELEASE_TAG" --commit "$RELEASE_COMMIT" \
+            --run-id "$QUALIFICATION_RUN_ID" --run-attempt "$QUALIFICATION_RUN_ATTEMPT" --receipt "${staging}/publication.json"
+          (cd "${staging}/artifact/assets" && sha256sum --check --strict SHA256SUMS)
+      - name: Publish the immutable GitHub Release
+        run: |
+          set -euo pipefail
+          assets="${PUBLISH_STAGING}/artifact/assets"
+          notes="${PUBLISH_STAGING}/notes.md"
+          {
+            echo "Linux x86-64 CLI, agent skill and exact source archive for commit \`${RELEASE_COMMIT}\`."
+            echo
+            echo "Built and smoke-tested by nonpublishing qualification run ${QUALIFICATION_RUN_ID} (attempt ${QUALIFICATION_RUN_ATTEMPT}) on \`main\`; republished unchanged by run ${GITHUB_RUN_ID}."
+            echo
+            echo '```text'
+            cat "${assets}/SHA256SUMS"
+            echo '```'
+            echo
+            echo "Verify provenance with \`gh attestation verify <asset> --repo ${GITHUB_REPOSITORY}\`. This release enables no authentication, enrollment, uploads, background collection, native custody or updates; see docs/usage-release-publish.md."
+          } > "$notes"
+          gh release create "$RELEASE_TAG" --verify-tag --latest=false \
+            --title "aicharts CLI ${RELEASE_VERSION} (Linux x86-64)" --notes-file "$notes" \
+            "${assets}/aicharts-${RELEASE_VERSION}-x86_64-unknown-linux-gnu.tar.gz" \
+            "${assets}/aicharts-skill-${RELEASE_VERSION}.tar.gz" \
+            "${assets}/aicharts-source-${RELEASE_VERSION}.tar.gz" \
+            "${assets}/release-manifest.json" \
+            "${assets}/SHA256SUMS" \
+            "${PUBLISH_STAGING}/artifact/qualification.json" \
+            "${PUBLISH_STAGING}/publication.json"
+      - name: Attest build provenance for every checksummed asset
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
+        with:
+          subject-checksums: ${{ env.PUBLISH_STAGING }}/artifact/assets/SHA256SUMS
+      - name: Download the published assets and verify digests and attestations
+        run: |
+          set -euo pipefail
+          verify="$(mktemp -d)"
+          gh release download "$RELEASE_TAG" --dir "$verify"
+          (cd "$verify" && sha256sum --check --strict SHA256SUMS)
+          for name in "aicharts-${RELEASE_VERSION}-x86_64-unknown-linux-gnu.tar.gz" "aicharts-skill-${RELEASE_VERSION}.tar.gz" "aicharts-source-${RELEASE_VERSION}.tar.gz" release-manifest.json SHA256SUMS qualification.json publication.json; do
+            source="${PUBLISH_STAGING}/artifact/assets/${name}"
+            [[ -f "$source" ]] || source="${PUBLISH_STAGING}/artifact/${name}"
+            [[ -f "$source" ]] || source="${PUBLISH_STAGING}/${name}"
+            cmp -- "$source" "${verify}/${name}" || { echo "publish_asset_drift:${name}"; exit 1; }
+          done
+          for name in "aicharts-${RELEASE_VERSION}-x86_64-unknown-linux-gnu.tar.gz" "aicharts-skill-${RELEASE_VERSION}.tar.gz" "aicharts-source-${RELEASE_VERSION}.tar.gz" release-manifest.json; do
+            gh attestation verify "${verify}/${name}" --repo "$GITHUB_REPOSITORY" \
+              --signer-workflow "${GITHUB_REPOSITORY}/.github/workflows/cli-publish.yml" --deny-self-hosted-runners
+          done
+      - name: Retain the bounded publication receipt
+        if: always() && env.PUBLISH_STAGING != ''
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: cli-publication-${{ env.RELEASE_TAG }}-${{ github.run_attempt }}
+          path: ${{ env.PUBLISH_STAGING }}/publication.json
+          if-no-files-found: warn
+          retention-days: 90

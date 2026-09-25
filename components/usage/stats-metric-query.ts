@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import { createMetricSnapshot, disposeMetricSnapshot, evaluateMetricQuery, metricResultJson, type MetricQuery, type MetricReportMetadata } from "@/lib/usage/metric-explorer";
 import type { UsageStatsReport } from "@/lib/usage/stats-contract";
 import type { MetricReportSession } from "@/lib/usage/metric-explorer-session";
+import type { MetricExportFormat } from "@/lib/usage/metric-explorer-worker-core";
+import { metricCsv } from "@/lib/usage/metric-export";
 import { metricPresentation, type MetricPresentation } from "./stats-metric-presentation";
 import { statsBoundRowsCsv } from "./stats-export";
 import type { StatsRange } from "./stats-view";
@@ -40,11 +42,11 @@ export function useStatsMetricQuery(report: MetricReportMetadata | UsageStatsRep
     if (!result.ok) throw new Error(result.code);
     const value = metricPresentation(result.value); disposeMetricSnapshot(empty); return value;
   }, [current, report, query]);
-  const prepare = async (format: "json" | "csv"): Promise<string | Blob> => {
+  const prepare = async (format: MetricExportFormat): Promise<string | Blob> => {
     if (pending || current === null) throw new Error("metric_query_cancelled");
     if (session !== undefined) return session.export(current, format);
     if (inline === null) throw new Error("metric_result_invalid");
-    return format === "json" ? metricResultJson(inline.result) : statsBoundRowsCsv(inline.result);
+    return format === "json" ? metricResultJson(inline.result) : format === "csv" ? statsBoundRowsCsv(inline.result) : metricCsv(inline.result, format.metricCsv);
   };
   return { view: current ?? placeholder, current, pending, error, prepare, snapshot };
 }

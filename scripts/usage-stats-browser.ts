@@ -9,7 +9,9 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { LeaderboardView } from "../components/usage/leaderboard-view";
 import { parseLeaderboardSnapshot } from "../lib/usage/leaderboard-contract";
 import { createUsageStatsExample } from "../lib/usage/stats-example";
-import { parseUsageStatsReport, STATS_MAX_RECORDS, STATS_MAX_TOKENS_PER_RECORD, type UsageStatsReport } from "../lib/usage/stats-contract";
+import { SESSION_EXAMPLE } from "../lib/usage/session-example";
+import { METRIC_CSV_COLUMNS, parseCsv } from "../lib/usage/metric-export";
+import { parseUsageStatsReport, STATS_MAX_TOKENS_PER_RECORD, type UsageStatsReport } from "../lib/usage/stats-contract";
 import { parseStatsPublicSearch, statsPublicStatus, STATS_PUBLIC_MEDIA, type StatsPublicReply } from "../lib/usage/stats-public";
 import { encodePrivateDaysPublicResponse, parsePrivateDaysPublicSearch, PRIVATE_DAYS_PUBLIC_MEDIA } from "../lib/usage/private-days-public";
 import { USAGE_ACCOUNT_HEADER } from "../lib/usage/account-public";
@@ -245,9 +247,11 @@ export async function verifyUsageStats(browser: Browser, baseUrl: string, captur
         await account.getByRole("status").filter({ hasText: "Copied" }).waitFor();
         invariant(await page.locator("html").getAttribute("data-copied-account") === accountId, "Copy must preserve the full canonical account ID.");
         await capture("account-verified");
+        const urlBeforeFailedSignOut = page.url();
         await account.getByRole("button", { name: "Sign out", exact: true }).click();
         await account.getByRole("alert").waitFor();
-        invariant(signOutCalls === 1 && page.url() === `${baseUrl}/usage/details`, "A failed sign-out must not claim success or navigate.");
+        invariant(signOutCalls === 1 && page.url() === urlBeforeFailedSignOut && new URL(page.url()).pathname === "/usage/details",
+          "A failed sign-out must not claim success or navigate.");
         await capture("account-sign-out-failed");
         await page.reload({ waitUntil: "networkidle" });
       }
@@ -370,6 +374,54 @@ export async function verifyUsageStats(browser: Browser, baseUrl: string, captur
       const metricExport = JSON.parse(await Bun.file(metricFile).text()) as { profile: string; snapshot: { sha256: string }; query: { groupBy: string[] }; measures: { id: string; value: { numerator: string; denominator: string } | null }[] };
       invariant(metricExport.profile === "metric-explorer-v1" && /^[0-9a-f]{64}$/u.test(metricExport.snapshot.sha256), "Export must bind the complete captured report.");
       invariant(metricExport.query.groupBy.join("/") === "client/model" && metricExport.measures.some(value => value.id === "cached-input-share" && typeof value.value?.denominator === "string"), "Export must preserve exact metric fractions and selected dimensions.");
+      // The per-metric CSV (D4/D12) binds the same selection: identity columns on
+      // every row, the same fingerprint as the JSON export, one total row plus
+      // the listed groups, and exact decimal values rather than rounded display.
+      const metricCsvEvent = page.waitForEvent("download");
+      await explorer.getByRole("button", { name: "Export metric CSV", exact: true }).click();
+      const metricCsvDownload = await metricCsvEvent, metricCsvFile = await metricCsvDownload.path(); invariant(metricCsvFile, "Metric CSV must download.");
+      invariant(metricCsvDownload.suggestedFilename() === "aicharts-metric-cached-input-share.csv", `Metric CSV must be named after its metric: ${metricCsvDownload.suggestedFilename()}.`);
+      const metricCsvRows = parseCsv(await Bun.file(metricCsvFile).text());
+      invariant(metricCsvRows[0].join(",") === METRIC_CSV_COLUMNS.join(","), "Metric CSV must carry the documented identity columns.");
+      const csvTotal = metricCsvRows[1], csvColumn = (name: typeof METRIC_CSV_COLUMNS[number]) => csvTotal[METRIC_CSV_COLUMNS.indexOf(name)];
+      const jsonShare = metricExport.measures.find(value => value.id === "cached-input-share")!.value!;
+      invariant(csvColumn("metric_id") === "cached-input-share" && csvColumn("metric_version") === "1" && csvColumn("scope") === "total" && csvColumn("group_by") === "client+model"
+        && csvColumn("snapshot_sha256") === metricExport.snapshot.sha256 && csvColumn("value") === jsonShare.numerator && csvColumn("denominator") === jsonShare.denominator,
+        `Metric CSV total must carry the metric identity, fingerprint and the JSON export's exact fraction: ${JSON.stringify(csvTotal)}.`);
+      invariant(metricCsvRows.length - 2 === await explorer.locator("tbody tr").count() && metricCsvRows.slice(2).every(row => row[METRIC_CSV_COLUMNS.indexOf("scope")] === "group" || row[METRIC_CSV_COLUMNS.indexOf("scope")] === "other"),
+        "Metric CSV must list exactly the groups shown on screen.");
+      await explorer.getByRole("status").filter({ hasText: "Downloaded cached-input-share as CSV" }).waitFor();
+      // Session facts join the same explorer: rich metrics evaluate locally once a
+      // session-observations-v1 file is opened, and refuse with a stated reason before.
+      await explorer.getByLabel("Find a metric").fill("token-size-p95");
+      await explorer.getByRole("button", { name: /^Token size p95/ }).click(); await settle(page);
+      const richPanel = explorer.getByRole("region", { name: "Session facts", exact: true });
+      invariant((await richPanel.textContent())?.includes("Open a session-observations-v1 or rich-facts-v1 file"), "A rich metric without loaded facts must state what to open, not show a zero.");
+      invariant(await richPanel.getByRole("button", { name: "Open session facts", exact: true }).count() === 1, "Local mode must offer the session-facts picker inline.");
+      await page.locator('input[aria-label="Open session facts"]').setInputFiles({ name: "sessions.json", mimeType: "application/json", buffer: Buffer.from(JSON.stringify(SESSION_EXAMPLE)) });
+      await richPanel.locator(".usage-rich__groups tbody tr").first().waitFor();
+      invariant((await explorer.getByRole("status").first().textContent())?.includes("1 by the loaded session facts"), "The catalog count must include metrics served by the loaded session facts.");
+      invariant(await richPanel.locator(".usage-rich__groups tbody tr").count() === 2, "Adapted session facts default to one group per session.");
+      invariant((await richPanel.locator(".usage-rich__groups").textContent())?.includes("26,900"), "The per-session P95 must match the session page's exact value.");
+      invariant(await richPanel.locator('option[value="local-day"][disabled]').count() === 2 && await richPanel.locator('option[value="local-day"]:not([disabled])').count() === 0,
+        "A report without a declared time zone must refuse calendar grouping in both grouping controls instead of guessing.");
+      await richPanel.getByRole("combobox", { name: /^Group by/u }).selectOption("model");
+      invariant(await richPanel.locator(".usage-rich__groups tbody tr").count() >= 2, "Model grouping must partition the same facts.");
+      const richCsvEvent = page.waitForEvent("download");
+      await richPanel.getByRole("button", { name: "Export CSV", exact: true }).click();
+      const richCsvFile = await (await richCsvEvent).path(); invariant(richCsvFile, "Rich metric CSV must download.");
+      const richCsv = await Bun.file(richCsvFile).text();
+      invariant(richCsv.startsWith("metric_id,metric_version,unit,source_profile,snapshot_revision,") && richCsv.includes("\r\ntoken-size-p95,1,tokens,rich-facts-v1,"), "Rich CSV rows must carry the metric identity, version, unit and facts revision.");
+      invariant(richCsv.split("\r\n").filter(line => line.startsWith("token-size-p95,")).every(line => line.includes(",*,*,*,model,")), "Rich CSV rows must carry the filters and grouping that produced them.");
+      await page.locator(".usage-stats-source__menu > summary").click();
+      await page.getByRole("button", { name: "Close session facts", exact: true }).click();
+      await richPanel.getByRole("button", { name: "Open session facts", exact: true }).waitFor();
+      await page.locator(".usage-stats-source__menu > summary").click();
+      // Leaving the rich metric restores the classic explorer with its grouping intact.
+      await explorer.getByLabel("Find a metric").fill("cached-input-share");
+      await explorer.getByRole("button", { name: /^Cached input share/ }).click();
+      await settle(page);
+      invariant(await explorer.getByLabel("Second grouping").inputValue() === "model", "Returning from a rich metric must keep the classic explorer's grouping selection.");
       const beforeDigestDownloads = downloads, releaseDigest = await holdNextMetricDigest(page);
       await explorer.getByRole("button", { name: "Export metric snapshot", exact: true }).click();
       await page.waitForFunction(() => document.documentElement.dataset.usageDigestHeld === "true");
@@ -381,9 +433,38 @@ export async function verifyUsageStats(browser: Browser, baseUrl: string, captur
       await explorer.getByRole("button", { name: /^Compare periods/ }).click();
       await settle(page);
       invariant((await explorer.locator(".usage-metrics__value").textContent()) === "Unavailable", "Unavailable comparisons must omit unresolved placeholder units.");
-      invariant((await explorer.getByRole("status").first().textContent())?.includes("1 matching definition · 0 supported"), "An unsupported search match cannot inherit the global supported count.");
-      invariant((await explorer.textContent())?.includes("matched source populations, versions and exposure"), "Aligned dates must not invent matched period evidence.");
+      invariant((await explorer.getByRole("status").first().textContent())?.includes("1 matching definition · 1 supported"), "A supported comparison is counted, even while this range refuses it.");
+      invariant((await explorer.textContent())?.includes("matched source populations, versions and exposure"), "A range that includes the current day must not invent matched period evidence.");
+      invariant(await explorer.locator(".usage-metrics__comparison[data-matched=\"false\"]").count() === 1 && await explorer.locator("th", { hasText: "Change" }).count() === 0, "An unmatched comparison must not render change columns.");
+      invariant(await explorer.getByRole("combobox", { name: "Compare", exact: true }).inputValue() === "compare-periods", "The comparison selector must reflect the selected comparison metric.");
       await capture("metric-explorer-unavailable");
+      // Two complete, same-length ranges inside the example (indices 72–77 versus
+      // 66–71; the example omits every 13th day) establish a matched comparison.
+      const throughInput = page.getByLabel("Through", { exact: true });
+      if (name === "mobile") await page.getByLabel("Period", { exact: true }).selectOption("custom");
+      else if (await page.getByRole("button", { name: "Custom", exact: true }).getAttribute("aria-expanded") !== "true") await page.getByRole("button", { name: "Custom", exact: true }).click();
+      const exampleToday = Date.parse(`${await throughInput.inputValue()}T00:00:00.000Z`) / 86_400_000;
+      const isoDay = (day: number) => new Date(day * 86_400_000).toISOString().slice(0, 10);
+      await page.getByLabel("From", { exact: true }).fill(isoDay(exampleToday - 17)); await throughInput.fill(isoDay(exampleToday - 12));
+      await page.getByRole("button", { name: "Apply dates", exact: true }).click(); await settle(page);
+      const signedInteger = (text: string | null) => { invariant(text !== null && /^[+−-]?[0-9,]+$/u.test(text), `Expected a signed integer, got ${text}.`); return BigInt(text.replace(/[+,]/gu, "").replace("−", "-")); };
+      const matchedText = await explorer.locator(".usage-metrics__comparison[data-matched=\"true\"]").textContent();
+      invariant(matchedText?.includes("matched, so this value is the exact signed change") && matchedText.includes("Both periods observe the same groups"), `A complete matched range must state the matched window: ${matchedText}`);
+      const headline = signedInteger(await explorer.locator(".usage-metrics__value strong").textContent());
+      const changeCells = await explorer.locator("tbody tr").evaluateAll(rows => rows.map(row => row.querySelectorAll("td")[0]?.textContent ?? ""));
+      invariant(changeCells.length > 0 && changeCells.reduce((sum, cell) => sum + signedInteger(cell), 0n) === headline, "Per-group period changes must conserve the total change.");
+      await explorer.getByRole("combobox", { name: "Compare", exact: true }).selectOption("compare-clients");
+      await settle(page);
+      invariant(signedInteger(await explorer.locator(".usage-metrics__value strong").textContent()) === headline, "Compare clients at the client grouping equals the total matched change.");
+      invariant((await page.locator(".usage-stats__hint[data-matched=\"true\"]:not(.usage-metrics__comparison)").textContent())?.includes("Matched change:"), "The trend hint must state the matched change on complete periods.");
+      await explorer.getByRole("combobox", { name: "Compare", exact: true }).selectOption("none");
+      await settle(page);
+      invariant(await explorer.getByRole("combobox", { name: "Compare", exact: true }).inputValue() === "none" && await explorer.locator("th", { hasText: "Previous" }).count() === 1 && await explorer.locator("th", { hasText: "Change" }).count() === 1, "A level metric on a matched range exposes previous and change columns per group.");
+      const previousAndChange = await explorer.locator("tbody tr").evaluateAll(rows => rows.map(row => [...row.querySelectorAll("td")].slice(0, 3).map(cell => cell.textContent ?? "")));
+      invariant(previousAndChange.every(([value, previous, change]) => /^[+−-]?[0-9,]+ \((?:[+−-]?[0-9.]+%|no baseline)\)$/u.test(change) && signedInteger(change.split(" ")[0]) === signedInteger(value) - signedInteger(previous)),
+        `Each group's change must equal its value minus its previous value: ${JSON.stringify(previousAndChange)}.`);
+      await capture("metric-explorer-matched");
+      await choosePeriod(30);
       await explorer.getByLabel("Find a metric").fill("accounted-tokens");
       await explorer.getByRole("button", { name: /^Accounted tokens/ }).click();
       await explorer.getByLabel("Second grouping").selectOption("none");
@@ -485,9 +566,10 @@ export async function verifyUsageStats(browser: Browser, baseUrl: string, captur
       localInteraction = false;
       if (await account.count()) {
         await account.locator("summary").click(); signOutFails = false;
+        const urlBeforeSignOut = page.url();
         await account.getByRole("button", { name: "Sign out", exact: true }).click();
         await account.getByText("Sign-in required", { exact: true }).waitFor();
-        invariant(page.url() === `${baseUrl}/usage/details` && await page.locator(".usage-stats").count() === 1
+        invariant(page.url() === urlBeforeSignOut && new URL(page.url()).pathname === "/usage/details" && await page.locator(".usage-stats").count() === 1
           && await page.getByText("Local reports stay in this browser", { exact: true }).count() === 1 && Number(signOutCalls) === 2,
           "Ordinary sign-out must clear account identity without navigating away from the initiating tab's local report.");
         await account.locator("summary").click();
@@ -524,9 +606,10 @@ export async function verifyUsageStats(browser: Browser, baseUrl: string, captur
           "Authentication failure must preserve a synthetic example.");
         if (await account.count()) {
           await account.locator("summary").click();
+          const urlBeforeFailedAuthSignOut = page.url();
           await account.getByRole("button", { name: "Sign out", exact: true }).click();
           await account.getByText("Sign-in required", { exact: true }).waitFor();
-          invariant(page.url() === `${baseUrl}/usage/details` && await page.locator(".usage-stats").count() === 1
+          invariant(page.url() === urlBeforeFailedAuthSignOut && new URL(page.url()).pathname === "/usage/details" && await page.locator(".usage-stats").count() === 1
             && await page.getByText("Example data · synthetic", { exact: true }).count() === 1 && Number(signOutCalls) === 3,
             "Ordinary sign-out must preserve the initiating tab's synthetic example.");
           await account.locator("summary").click();
@@ -566,6 +649,34 @@ export async function verifyUsageStats(browser: Browser, baseUrl: string, captur
           invariant(await page.locator(".usage-stats").count() === 0, "A late successful account response must not restore private data after cross-tab sign-out.");
         }
       }
+      // Saved views (D5): a version-1 link migrates in place, seeds the
+      // selection, keeps foreign parameters and follows later changes; a link
+      // carrying a private identifier is refused whole with a stated reason.
+      await page.goto(`${baseUrl}/usage/details?utm_source=check&view=1&days=7&group=model&second=utc-day&metric=peak-daily-tokens`, { waitUntil: "networkidle" });
+      await page.getByRole("button", { name: "Explore a working example", exact: true }).click();
+      await page.getByRole("heading", { name: "Daily usage", exact: true }).waitFor(); await settle(page);
+      const migrated = new URL(page.url()).searchParams;
+      invariant(migrated.get("utm_source") === "check" && migrated.get("view") === "2" && migrated.get("range") === "7d" && migrated.get("group") === "model" && migrated.get("then") === "utc-day"
+        && migrated.get("metric") === "peak-daily-tokens" && !migrated.has("days") && !migrated.has("second"), `A version-1 link must migrate in place: ${page.url()}`);
+      const pressedGrouping = () => page.getByRole("group", { name: "Group usage by", exact: true }).locator("button[aria-pressed=\"true\"]").textContent();
+      invariant(name === "mobile" ? await page.getByLabel("Period", { exact: true }).inputValue() === "7" : await page.locator(".usage-stats__desktop-periods button[aria-pressed=\"true\"]").textContent() === "7 days", "The saved preset must select its period.");
+      invariant(await pressedGrouping() === "Models", "The saved grouping must be applied.");
+      const savedExplorer = page.getByRole("region", { name: "Metric explorer", exact: true });
+      invariant(await savedExplorer.getByLabel("Second grouping").inputValue() === "utc-day" && (await savedExplorer.locator(".usage-metrics__definition").textContent())?.includes("peak-daily-tokens"), "The saved second grouping and metric must be applied.");
+      await page.getByRole("group", { name: "Group usage by", exact: true }).getByRole("button", { name: "Clients", exact: true }).click(); await settle(page);
+      const followed = new URL(page.url()).searchParams;
+      invariant(!followed.has("group") && followed.get("utm_source") === "check" && followed.get("metric") === "peak-daily-tokens", `The link must follow the selection and keep foreign parameters: ${page.url()}`);
+      await page.getByRole("button", { name: "Copy view link", exact: true }).click();
+      await page.getByRole("status").filter({ hasText: "View link copied" }).waitFor();
+      const copiedLink = await page.locator("html").getAttribute("data-copied-account");
+      invariant(copiedLink === page.url(), `The copied link must equal the followed URL: ${copiedLink} versus ${page.url()}.`);
+      await page.goto(`${baseUrl}/usage/details?view=2&group=model&session=${"a".repeat(32)}`, { waitUntil: "networkidle" });
+      await page.getByRole("status").filter({ hasText: "carries a private identifier" }).waitFor();
+      await page.getByRole("button", { name: "Explore a working example", exact: true }).click();
+      await page.getByRole("heading", { name: "Daily usage", exact: true }).waitFor(); await settle(page);
+      invariant(await pressedGrouping() === "Clients", "A refused link must not apply any of its fields.");
+      invariant(!new URL(page.url()).searchParams.has("session") && await page.getByRole("status").filter({ hasText: "carries a private identifier" }).count() === 1, "Following the view must drop private parameters and keep the refusal visible.");
+      await capture("stats-saved-view");
       statsMode = "not_started";
       accountSignedOut = false; // A distinct synthetic signed-in visit for daily cleanup.
       // Network quiescence is not the daily report's ready boundary. Require
@@ -667,7 +778,7 @@ if (import.meta.main) {
   const captureDirectory = captureIndex >= 0 ? process.argv[captureIndex + 1] : process.env.AICHARTS_STATS_BROWSER_CAPTURE_DIR;
   const inputs = ["package.json", "bun.lock", "tsconfig.json", "next.config.ts", "scripts/build-theme-bootstrap.ts", "scripts/usage-stats-browser.ts", "app/usage/details/page.tsx",
     "components/usage/stats-dashboard.tsx", "components/usage/stats-report-file.ts", "components/usage/stats-report-view.tsx", "components/usage/stats-view.ts",
-    "components/usage/stats-export.ts", "components/usage/stats-metric-explorer.tsx", "components/usage/stats-metric-projection.ts", "styles/usage-metric-explorer.css", "styles/usage-stats.css",
+    "components/usage/stats-export.ts", "components/usage/stats-metric-explorer.tsx", "components/usage/rich-metric-explorer.tsx", "lib/usage/rich-metric-explorer-view.ts", "lib/usage/metric-export.ts", "lib/usage/session-example.ts", "lib/usage/saved-views.ts", "components/usage/stats-metric-projection.ts", "styles/usage-metric-explorer.css", "styles/usage-stats.css",
     "lib/usage/metric-explorer.ts", "lib/usage/metric-explorer-fold.ts", "lib/usage/metric-explorer-values.ts", "lib/usage/metric-explorer-catalog.ts",
     "lib/usage/metric-explorer-session.ts", "lib/usage/metric-explorer-worker.ts", "lib/usage/metric-explorer-worker-core.ts", "components/usage/stats-metric-presentation.ts", "components/usage/stats-metric-query.ts",
     "components/usage/stats-metric-daily-table.tsx",

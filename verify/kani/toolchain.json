@@ -4,7 +4,10 @@
   "cbmc": "6.11.0",
   "rustc": "rustc 1.100.0-nightly (8925ea358 2026-08-20)",
   "toolchain": "nightly-2026-08-21",
-  "harnessTimeoutSeconds": 90,
+  "harnessTimeoutSeconds": {
+    "production": 300,
+    "mutation": 90
+  },
   "platforms": {
     "darwin-arm64": {
       "target": "aarch64-apple-darwin",
@@ -644,36 +647,19 @@
       "rationale": "Fixed indices 5 and 4 of [u64; 6] cannot fail their bounds checks; detailed partitions also refuse to_wire before this call because TTL remains unknown."
     },
     {
-      "harness": "proofs::evidence_add_full_u128_keeps_zero_distinct_from_missing",
-      "function": "proofs::evidence_add_full_u128_keeps_zero_distinct_from_missing",
-      "category": "assertion",
-      "description": "\"the unknown count starts at zero\"",
-      "location": {
-        "file": "crates/aicharts-metrics/src/proofs.rs",
-        "line": "311",
-        "column": "9"
-      },
-      "binding": {
-        "kind": "workspace",
-        "path": "crates/aicharts-metrics/src/proofs.rs",
-        "sha256": "e5a88e25fe39f4b77660a7106b50f2781e1656c4100270ae16c4f2405af4ec41"
-      },
-      "rationale": "The Unknown branch increments an initially zero unknown_records count to 1 and cannot overflow; reachable assertions preserve reported totals/count and assert unknown_records=1."
-    },
-    {
       "harness": "proofs::inclusive_output_full_u128_preserves_unknown_and_known_subsets",
       "function": "proofs::inclusive_output_full_u128_preserves_unknown_and_known_subsets",
       "category": "assertion",
       "description": "\"a valid known subset must split\"",
       "location": {
         "file": "crates/aicharts-metrics/src/proofs.rs",
-        "line": "140",
+        "line": "194",
         "column": "17"
       },
       "binding": {
         "kind": "workspace",
         "path": "crates/aicharts-metrics/src/proofs.rs",
-        "sha256": "e5a88e25fe39f4b77660a7106b50f2781e1656c4100270ae16c4f2405af4ec41"
+        "sha256": "ed463c0e7c3b06aee0796ea92f721a7161d20a7384d16da5d96ca7cb89b44600"
       },
       "rationale": "A successful known InclusiveOutput constructor preserves Some(reasoning) with reasoning<=total, so disjoint cannot return MissingReasoning; reachable subset/sum assertions and success/refusal covers remain."
     },
@@ -684,13 +670,13 @@
       "description": "\"an admitted known wire partition must fit detailed buckets\"",
       "location": {
         "file": "crates/aicharts-metrics/src/proofs.rs",
-        "line": "182",
+        "line": "236",
         "column": "13"
       },
       "binding": {
         "kind": "workspace",
         "path": "crates/aicharts-metrics/src/proofs.rs",
-        "sha256": "e5a88e25fe39f4b77660a7106b50f2781e1656c4100270ae16c4f2405af4ec41"
+        "sha256": "ed463c0e7c3b06aee0796ea92f721a7161d20a7384d16da5d96ca7cb89b44600"
       },
       "rationale": "An admitted known wire record bounds each counter by 10^12, preserves the reasoning subset and bounds merged TTL writes by 2*10^12, below the detailed 24-digit limit; reachable round-trip/total assertions remain."
     },

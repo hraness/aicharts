@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "route": "fresh-production-extraction-with-separate-mathematical-laws",
-  "qualification": "darwin-arm64 pilot; Linux qualification remains required before its CI claim",
+  "qualification": "darwin-arm64 pilot host and ubuntu-24.04 CI execution: PR #422, GitHub Actions run 36055796464, Formal verification job (usage:formal:theorems passed); each run's receipt records its own platform and is the only evidence for that run",
   "versions": {
     "aeneas": "nightly-2026.09.23-12a018b",
     "aeneasCommit": "12a018bb0fab3333be572dadc0eab5108758552b",
