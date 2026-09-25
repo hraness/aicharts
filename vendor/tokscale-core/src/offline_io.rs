@@ -113,11 +113,20 @@ fn sqlite_scan_budget(bytes: u64) -> Duration {
         (bytes / SQLITE_SCAN_BYTES_PER_SEC).clamp(SQLITE_SCAN_MIN_SECS, SQLITE_SCAN_MAX_SECS),
     )
 }
+/// Every admitted byte of a text source is still read and parsed, so the
+/// deadline also scales with corpus size at the same conservative sequential
+/// floor as SQLite. A small corpus stays dominated by the fixed base; a large
+/// one cannot strand its own scan inside it.
+fn text_scan_budget(bytes: u64) -> Duration {
+    Duration::from_secs((bytes / SQLITE_SCAN_BYTES_PER_SEC).min(AUDIT_MAX_SECS.saturating_sub(60)))
+}
 /// The overall deadline is the fixed base plus headroom for every admitted
-/// SQLite source's scaled scan budget, never exceeding AUDIT_MAX_SECS.
+/// SQLite source's scaled scan budget and the admitted text corpus, never
+/// exceeding AUDIT_MAX_SECS.
 fn audit_time_limit(a: &Audit) -> Duration {
     Duration::from_secs(AUDIT_BASE_SECS)
         .max(Duration::from_secs(a.sqlite_budget_secs.saturating_add(60)))
+        .max(text_scan_budget(a.bytes).saturating_add(Duration::from_secs(60)))
         .min(Duration::from_secs(AUDIT_MAX_SECS))
 }
 
@@ -1331,6 +1340,60 @@ mod tests {
         let reader = sqlite(&path).unwrap();
         sqlite_completed(&path);
         drop(reader);
+        ACTIVE.lock().unwrap().as_mut().unwrap().started =
+            std::time::Instant::now() - Duration::from_secs(121);
+        assert_eq!(guard.finish().unwrap_err(), vec!["import_time_limit"]);
+    }
+    #[test]
+    fn text_scan_budget_scales_with_admitted_corpus_size() {
+        assert_eq!(text_scan_budget(0), Duration::from_secs(0));
+        assert_eq!(text_scan_budget(1024), Duration::from_secs(0));
+        assert_eq!(
+            text_scan_budget(3 * 1024 * 1024 * 1024),
+            Duration::from_secs(96)
+        );
+        assert_eq!(
+            text_scan_budget(32 * 1024 * 1024 * 1024),
+            Duration::from_secs(1024)
+        );
+        assert_eq!(
+            text_scan_budget(u64::MAX),
+            Duration::from_secs(AUDIT_MAX_SECS - 60)
+        );
+    }
+    #[test]
+    fn large_text_corpus_extends_the_bounded_audit_deadline() {
+        let (_temp, root) = root();
+        let path = root.join("session.jsonl");
+        fs::write(&path, b"{}\n").unwrap();
+        let guard = begin(std::slice::from_ref(&root)).unwrap();
+        read(&path).unwrap();
+        // Twenty admitted GiB of text raise the deadline well past the 120 s
+        // base without relaxing any other audit check.
+        ACTIVE.lock().unwrap().as_mut().unwrap().bytes = 20 * 1024 * 1024 * 1024;
+        ACTIVE.lock().unwrap().as_mut().unwrap().started =
+            std::time::Instant::now() - Duration::from_secs(200);
+        guard.finish().unwrap();
+    }
+    #[test]
+    fn scaled_text_deadline_stays_bounded() {
+        let (_temp, root) = root();
+        let path = root.join("session.jsonl");
+        fs::write(&path, b"{}\n").unwrap();
+        let guard = begin(std::slice::from_ref(&root)).unwrap();
+        read(&path).unwrap();
+        ACTIVE.lock().unwrap().as_mut().unwrap().bytes = u64::MAX;
+        ACTIVE.lock().unwrap().as_mut().unwrap().started =
+            std::time::Instant::now() - Duration::from_secs(AUDIT_MAX_SECS + 1);
+        assert_eq!(guard.finish().unwrap_err(), vec!["import_time_limit"]);
+    }
+    #[test]
+    fn small_text_corpus_keeps_the_base_audit_deadline() {
+        let (_temp, root) = root();
+        let path = root.join("session.jsonl");
+        fs::write(&path, b"{}\n").unwrap();
+        let guard = begin(std::slice::from_ref(&root)).unwrap();
+        read(&path).unwrap();
         ACTIVE.lock().unwrap().as_mut().unwrap().started =
             std::time::Instant::now() - Duration::from_secs(121);
         assert_eq!(guard.finish().unwrap_err(), vec!["import_time_limit"]);
