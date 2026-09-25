@@ -250,38 +250,44 @@ source does not authorize enabling those controls or replacing an existing job
 without the cutover evidence above.
 
 V2 uses the existing `AccountEnrollment` Durable Object and private R2 resources.
-Its account schema adds control, writer, device-receipt, pending-intent, and
-daily-projection tables while preserving v1 records. A client has one device
-writer. Exact retries retain their original operation and receipt. Ordinary snapshots preserve historical days and refuse unexplained reductions
-in existing numeric observations. Explicit reviewed replacement windows have
-a separate mode. Warp replaces only its own latest billing snapshot; its
-refresh date never becomes a daily activity total. Queries select the owned
-profile for each client/day and never add overlapping v1 and v2 totals. Estimated or unavailable
-token observations do not enter reported-token rankings.
+Its account schema adds control, device-receipt, per-device pending-intent,
+retired-flight, daily-projection and daily-totals tables while preserving v1
+records. Every day is stored under the device that published it: devices never
+contend for a client, never replace each other's days, and reads sum the
+devices for each row. Exact retries retain their original operation and
+receipt. Ordinary snapshots preserve historical days and keep the larger of the
+retained cell and a fresh scan, so a rotated or trimmed source never lowers
+history. Explicit reviewed replacement windows have a separate mode. Warp
+replaces only its own latest billing snapshot; its refresh date never becomes a
+daily activity total. Estimated or unavailable token observations do not enter
+reported-token rankings.
 
-A legacy head digest and bucket totals cannot prove overlap or disjointness.
-Current source refuses any ambiguous v1/v2 takeover and leaves legacy history
-readable. It also refuses a mixed client/day projection instead of choosing
-one profile and hiding records. Exact mirrored-history deduplication and
-lossless multi-device reconciliation remain unqualified; do not activate a
-legacy cutover until their canonical population proof is implemented and tested.
+Retained v1 heads stay readable as a legacy layer attributed to the device
+that uploaded them. A device's own snapshot for a client and day shadows its
+own heads for that client and day; other devices' heads remain separate
+contributions, so a foreign 120-token history beside a local 15-token snapshot
+reports 135. Snapshot status is constant-cost: it never decodes heads and never
+requires a takeover. The status reply keeps its schema-2 shape (`writerDeviceId`
+null, `legacyRecords` 0, `takeoverEligible` true) so older collectors keep
+working.
 
-A new upload cannot supersede a different pending snapshot automatically.
-Explicit `stats-sync --abandon` with the existing state and key pins the exact
-flight. It either returns its already committed receipt or advances the account
-revision to fence every late retry, without consuming the device upload
-sequence. It clears only the matching pending intent and keeps immutable
-objects and byte reservations. The native checkpoint clears a flight only
-after correlated proof; uncertain replies remain frozen. The scheduled
-publisher never abandons a flight automatically. A maintenance revision can
-exist before a published report; reads must not infer publication from revision.
+The expected revision a device sends only has to be one the account has
+reached; two devices publishing at once never conflict. The receipt keeps the
+revision the device expected while the account revision still advances. A newer
+snapshot from the same device retires its own uncertain predecessor before
+reserving: the predecessor's charge and objects stay as evidence, its exact
+bytes are refused on replay, and the collector reconciles a retained flight on
+its next run without a person. `stats-sync --abandon` remains the explicit form
+of that proof; it either returns the committed receipt or fences the flight.
 
-Trusted internal `recoverStatsWriter` requires the current account session,
-exact ownership revision, a revoked predecessor and an active successor. It
-changes future writer authority while retaining the original owner of each
-historical day. A successor cannot replace a predecessor's day without exact
-population evidence. This internal RPC has no newly qualified public recovery
-journey in this phase.
+Lifetime totals (`/internal/usage/totals`, served to the dashboard at
+`/api/usage/totals`) sum the per-device daily-totals rows plus retained v1 day
+totals no snapshot from that device covers. The v1 day totals are a rebuildable
+projection maintained at each admission and backfilled one bounded span of
+journal revisions per fenced mutation after deployment; the reply reports the
+verified revision and `legacyComplete` so a dashboard can say when the index
+still lags. `maintainAccount({operation:"prepare"})` drives the backfill to
+completion, and `scrub` recomputes it from every live head.
 
 Each upload is limited to 4 MiB and 8,192 aggregate rows. Account projections are
 limited to 65,536 client-days, 262,144 rows, and 128 MiB. Hosted reads are capped

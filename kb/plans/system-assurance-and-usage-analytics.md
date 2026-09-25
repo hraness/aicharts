@@ -160,7 +160,7 @@ These are inspected source precedents, not proofs rerun during this audit.
 | Same Valhalla baseline | verify/ledger.rs proves a separate Verus ledger model; docs/verification.md records 13 verified, 0 errors with Verus 0.2026.09.13.671956e. | Historical recorded result; separate vector-based model has no inspected machine-checked refinement to the production BTreeMap implementation. |
 | Same Valhalla baseline | vhalla-ledger/tests/recovery_hegel.rs and journal/src/tests.rs exercise command sequences, crash-before/after/I/O faults, actual files and reopen; witness tests use independent Python vectors. | Sampled/fault-injected evidence has stated bounds. Preserve minimized failures as named deterministic regressions. |
 | Platonik 81a507807d5a52cec9322f03eee3868610b34d96 | platonik-core/src/check.rs:1617 verifies checked addition of 13 arbitrary u64 components against a u128 reference. | Excellent token/cost template. Presence of a harness is not a freshly passing required CI proof. |
-| HRA e4f4afe2c45efa1eb71b12885f385f38696d3f1d | Seeded authority simulations assert action coverage and healthy reachability; retained SQLite migration tests compare complete snapshots after injected failure. | Existing unrelated work was present; selected source was inspected, not validated as a clean integration tree. Reachability is not a fairness/liveness proof. |
+| Retired session runtime e4f4afe2c45efa1eb71b12885f385f38696d3f1d | Seeded authority simulations assert action coverage and healthy reachability; retained SQLite migration tests compare complete snapshots after injected failure. | Existing unrelated work was present; selected source was inspected, not validated as a clean integration tree. Reachability is not a fairness/liveness proof. |
 | Wordcell 7e50bb196ac4d8b376fdaf110b6218474d13a28d | Rust/Wasm/TypeScript parity and bounded resource-schedule properties. | Count actually compared cases; early returns can silently reduce effective property coverage. |
 
 Valhalla's inspected proof files were unchanged relative to its locally known origin/main ba00721c07078f5e5aca3bd879941287a417c0b7. These nearby repositories were not freshly fetched. No tracked TLA+/Lean project was found in the five bounded baselines inspected; this says nothing about uninspected branches or repositories.
@@ -1440,3 +1440,35 @@ in isolation and the standalone Bun suite passes with 2,102 tests. The required
 Linux CI run (Check, Menubar, Formal verification, Required) passed on the
 final commit.
 
+### 2026-09-24 — Device-partitioned snapshots, constant-cost status and lifetime totals
+
+Live use on two Macs exposed the seam this plan had recorded as F02 without
+serving the person using the product. Snapshot status decoded every retained v1
+head in the requested range on each call (about 20 seconds for a 205k-head
+account against a five-second stage budget), every legacy client with any v1
+history was refused with `takeover_required`, one device owned each client, and
+one pending intent per account let one Mac park the other. The account's own
+number (25.2 billion tokens from v1 occurrences) also disagreed with the
+tokscale-compatible `stats` parse of the same files (176 billion) because v1
+counts a strict subset of records.
+
+Repairs landed together: `usage_stats_days`, `_day_meta` and `_day_rows` are
+keyed by (client, day, device); the writer and day-source tables are retired
+through a fenced `migratePartition` that keeps every retained day under its
+recorded source device; `status` is O(1) and keeps its schema-2 shape; the
+expected revision only has to be one the account reached; pending intents are
+per device and a newer same-device body retires its uncertain predecessor,
+whose bytes are then refused (`usage_stats_retired`); preserve-history keeps
+the per-row envelope instead of refusing reductions; reads sum devices and add
+retained heads only where the same device has no snapshot for that client/day
+(F02's 120 + 15 = 135 holds); `usage_admission_day_totals` is a rebuildable v1
+day projection maintained at admission, backfilled one span per fenced
+mutation and recomputed by scrub; `readUsageTotals` and `/api/usage/totals`
+serve lifetime totals per client and device to a new dashboard panel. The
+collector's `stats-sync` reconciles a retained flight itself, `autosubmit`
+cycles no longer stop at the first failure, and `daemon --publish-config` runs
+collection and publication in one supervised process that never exits on a
+pass result. Conformance traces M4-abandon, M4-devices and M4-overlap and the
+stats suite encode the new semantics; F09's writer transfer is retired with the
+writer concept. Open: the M4 TLA+ modules still describe the retired writer
+transfer as historical evidence, and the v1 uploader remains a manual path.

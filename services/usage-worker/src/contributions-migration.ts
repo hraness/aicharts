@@ -53,7 +53,7 @@ export function captureContributionMigration(sql: SqlStorage, authority: Admissi
   const admission = new AdmissionState(sql), stats = new StatsState(sql), first = admission.control(), second = stats.control();
   if (first.quarantined || second.quarantined) throw new ContributionFault("recovery_required");
   if (first.heads > CONTRIBUTION_MIGRATION_MAX_HEADS || first.revision > CONTRIBUTION_MIGRATION_MAX_JOURNALS) throw new ContributionFault("limit");
-  if (admission.pending(authority) !== null || stats.pending() !== null) throw new ContributionFault("conflict");
+  if (admission.pending(authority) !== null || stats.pendings().length !== 0) throw new ContributionFault("conflict");
   // Do not let an understated/corrupt control row admit a larger legacy scan.
   // The extra row detects overflow without traversing the remaining history.
   const actualHeads = sql.exec("SELECT COUNT(*) AS count FROM (SELECT occurrence_id FROM usage_admission_heads LIMIT ?)", CONTRIBUTION_MIGRATION_MAX_HEADS + 1).one().count;
@@ -105,7 +105,9 @@ export function captureContributionMigration(sql: SqlStorage, authority: Admissi
     headEntries.push([id, admissionHex(current.operation.operationHash), contributionHash(current.operation.frame), current.revision, current.day]);
   }
   checked(storedHeads.length === heads.size);
-  const rawDays = paged(sql, "SELECT d.*, s.device_id, s.ownership_revision FROM usage_stats_days d JOIN usage_stats_day_sources s ON s.client=d.client AND s.utc_day=d.utc_day ORDER BY d.client,d.utc_day", CONTRIBUTION_MIGRATION_MAX_DAYS);
+  // Days are partitioned by the device that published them; the publishing
+  // revision is the only ownership generation a day has.
+  const rawDays = paged(sql, "SELECT d.*, d.revision AS ownership_revision FROM usage_stats_days d ORDER BY d.client,d.utc_day,d.device_id", CONTRIBUTION_MIGRATION_MAX_DAYS);
   const bodies = new Map<string, { bodyHash: string; deviceId: string; revision: number; committedAtMs: number; days: LegacyDay[] }>();
   const days: LegacyDay[] = rawDays.map(raw => {
     checked(typeof raw.projection === "string"); const report = parseUsageStatsReport(JSON.parse(raw.projection) as unknown);
@@ -129,7 +131,9 @@ export function captureContributionMigration(sql: SqlStorage, authority: Admissi
     if (!body) bodies.set(receipt.bodyHash, { bodyHash: receipt.bodyHash, deviceId: raw.device_id, revision: receipt.revision, committedAtMs: receipt.committedAtMs, days: [] });
   }
   if (bodies.size > CONTRIBUTION_MIGRATION_MAX_DAYS) throw new ContributionFault("limit");
-  const writers = paged(sql, "SELECT * FROM usage_stats_writers ORDER BY client", 64);
+  // Device partitions replaced the single writer per client; the sealed
+  // manifest keeps an empty writer list for its retained shape.
+  const writers: Record<string, SqlStorageValue>[] = [];
   const sourceDays = days.map(day => ({ client: day.client, day: day.day, revision: day.revision, bodyHash: day.bodyHash, projectionHash: day.projectionHash, bytes: day.bytes, deviceId: day.deviceId, ownershipRevision: day.ownershipRevision })), headDigest = digest(headEntries), journalDigest = digest(journals);
   const v1Sources = sourceObjects.map(({ bytes, ...source }) => ({ ...source, hash: contributionHash(bytes), size: bytes.length }));
   const owned = new Set(days.map(day => `${day.client}:${day.day}`)); let suppressed = 0;

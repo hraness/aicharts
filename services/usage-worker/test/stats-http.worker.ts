@@ -3,6 +3,8 @@ import { createExecutionContext, waitOnExecutionContext, reset, runInDurableObje
 import { afterEach, beforeEach, expect, test, vi } from "vitest";
 import { STATS_HTTP_URL, STATS_UPLOAD_URL, STATS_STATUS_URL, decodeStatsHttpResponse, encodeStatsHttpRequest, parseStatsUpload, type StatsUpload } from "../../../lib/usage/stats-http-contract";
 import { STATS_ABANDON_URL, parseStatsAbandonment } from "../../../lib/usage/stats-http-contract";
+import { STATS_TOTALS_URL, decodeStatsTotalsResponse, encodeStatsTotalsRequest } from "../../../lib/usage/stats-totals-contract";
+import { createStatsTotalsHttpHandler } from "../src/stats-http";
 import { statsHash, statsUploadText } from "../src/stats-state";
 import { parseUsageStatsReport } from "../../../lib/usage/stats-contract";
 import { admissionIdBytes } from "../src/admission-state";
@@ -160,4 +162,27 @@ test("shaped foreign v2 upload and abandonment receipts refuse without leaking a
     } finally { await waitOnExecutionContext(ctx); }
   }
   expect(disposed).toBe(11);
+});
+test("lifetime totals travel through the verified workload boundary with bounded framing", async () => {
+  const device = await activated();
+  expect((await uploadCall(device.input, device.proof.uploadSecret)).status).toBe(200);
+  const query = { schemaVersion: 2, accountId: account, sessionExpiresAtMs: NOW + PAIRING_TTL_MS };
+  const call = async (body: Uint8Array | null, token: string, headers: Record<string, string> = {}) => {
+    const ctx = createExecutionContext();
+    try {
+      return await createStatsTotalsHttpHandler({ ...effects, verifier })(new Request(STATS_TOTALS_URL, { method: "POST", body,
+        headers: { "content-type": "application/json", accept: "application/json", authorization: `Bearer ${token}`, ...headers } }), env, ctx);
+    } finally { await waitOnExecutionContext(ctx); }
+  };
+  const reply = await call(encodeStatsTotalsRequest(query), "a.b.c");
+  expect(reply.status).toBe(200); expect(reply.headers.get("cache-control")).toBe("private, no-store");
+  const parsed = decodeStatsTotalsResponse(new Uint8Array(await reply.arrayBuffer()));
+  expect(parsed).toMatchObject({ ok: true, value: { revision: 1, legacyComplete: true, total: { records: 1, days: 1, tokens: { input: "7", cacheWrite: "5" } },
+    clients: [{ client: "cursor", basis: "snapshots", records: 1 }], devices: [{ deviceId: device.input.deviceId, records: 1 }] } });
+  expect((await call(encodeStatsTotalsRequest(query), "wrong")).status).toBe(401);
+  expect((await call(new TextEncoder().encode(JSON.stringify({ ...query, uploadSecret: "PRIVATE_CANARY" })), "a.b.c")).status).toBe(400);
+  expect((await call(encodeStatsTotalsRequest(query), "a.b.c", { cookie: "session=PRIVATE_CANARY" })).status).toBe(400);
+  const routed = await worker.fetch(new Request(STATS_TOTALS_URL, { method: "POST", body: encodeStatsTotalsRequest(query),
+    headers: { "content-type": "application/json", accept: "application/json", authorization: "Bearer a.b.c" } }), env, createExecutionContext());
+  expect(routed.status).toBe(503); // The production router keeps the route closed until its flags are set.
 });

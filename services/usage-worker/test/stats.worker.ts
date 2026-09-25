@@ -1,5 +1,6 @@
 import { AccountEnrollment } from "../src/enrollment";
-import { LEGACY_STATS_WRITERS_SQL, MAX_STATS_IMMUTABLE_BYTES, STATS_SCHEMA, StatsState, statsHash, statsUploadText } from "../src/stats-state";
+import { LEGACY_STATS_WRITERS_SQL, MAX_STATS_IMMUTABLE_BYTES, RETIRED_STATS_SCHEMA, STATS_SCHEMA, StatsState, statsHash, statsUploadText } from "../src/stats-state";
+import { parseStatsTotals } from "../../../lib/usage/stats-totals-contract";
 import { parseStatsUpload, type StatsUpload } from "../../../lib/usage/stats-http-contract";
 import registry from "../../../data/usage-registry.json";
 import { statsRowKey, parseUsageStatsReport } from "../../../lib/usage/stats-contract";
@@ -117,6 +118,33 @@ const abandonRequest = (request: StatsUpload) => ({ schemaVersion: 2, accountId:
   bodyHash: statsHash(statsUploadText(request)) });
 const abandon = (device: Device, request: StatsUpload) => stub().abandonStatsSnapshot({ uploadSecret: device.proof.uploadSecret, request: abandonRequest(request) });
 const statsQuery = () => ({ schemaVersion: 2, accountId: account, sessionExpiresAtMs: NOW + PAIRING_TTL_MS, firstUtcDay: DAY - 1, dayCount: 2 });
+const totalsQuery = () => ({ schemaVersion: 2, accountId: account, sessionExpiresAtMs: NOW + PAIRING_TTL_MS });
+async function totals() {
+  const value = success(await stub().readUsageTotals(totalsQuery()));
+  expect(parseStatsTotals(value)).toEqual(value); return value;
+}
+/** Rewrite a partitioned store into the retired (client, day) ownership shape
+ * so the fenced migration can be exercised against a genuine old layout. */
+async function retireStorage(dropSources = false) {
+  await runInDurableObject(stub(), (_instance, state) => {
+    const sql = state.storage.sql;
+    const days = sql.exec("SELECT * FROM usage_stats_days ORDER BY client, utc_day").toArray();
+    const pending = sql.exec("SELECT * FROM usage_stats_pending").toArray();
+    for (const table of ["usage_stats_day_rows", "usage_stats_day_meta", "usage_stats_day_totals", "usage_stats_retired", "usage_stats_days", "usage_stats_pending"]) sql.exec(`DROP TABLE ${table}`);
+    for (const table of ["usage_stats_writers", "usage_stats_day_sources", "usage_stats_pending", "usage_stats_days", "usage_stats_day_meta", "usage_stats_day_rows"] as const) sql.exec(RETIRED_STATS_SCHEMA[table]);
+    const writers = new Map<string, string>();
+    for (const day of days) {
+      sql.exec("INSERT INTO usage_stats_days (client, utc_day, revision, body_hash, projection_hash, row_count, byte_count, projection) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+        day.client, day.utc_day, day.revision, day.body_hash, day.projection_hash, day.row_count, day.byte_count, day.projection);
+      if (!dropSources) sql.exec("INSERT INTO usage_stats_day_sources VALUES (?, ?, ?, ?)", day.client, day.utc_day, day.device_id, day.revision);
+      if (!writers.has(String(day.client))) writers.set(String(day.client), String(day.device_id));
+    }
+    for (const [client, device] of writers) sql.exec("INSERT INTO usage_stats_writers VALUES (?, ?, ?)", client, device, 1);
+    for (const row of pending) sql.exec("INSERT INTO usage_stats_pending (id, body_hash, device_id, sequence, expected_revision, receipt) VALUES (1, ?, ?, ?, ?, ?)",
+      row.body_hash, row.device_id, row.sequence, row.expected_revision, row.receipt);
+    if (dropSources) sql.exec("DROP TABLE usage_stats_day_sources");
+  });
+}
 async function statsStatus(device: Device, request = statsRequest(device)) {
   return success(await stub().readStatsStatus({ uploadSecret: device.proof.uploadSecret, request: {
     schemaVersion: 2, accountId: account, deviceId: request.deviceId, generation: env.USAGE_ENROLLMENT_GENERATION,
@@ -190,55 +218,67 @@ describe("v2 account snapshots", () => {
       } finally { release.resolve(); await pending; restore(); }
     });
   });
-  test("revoked writer recovery advances authority while preserving predecessor days", async () => {
-    const predecessor = await enroll(), successor = await enroll(); await activate();
-    const original = statsRequest(predecessor); success(await statsUpload(predecessor, original));
-    const replacement = statsRequest(successor, { expectedRevision: 1 });
-    const recovery = { schemaVersion: 1, accountId: account, sessionExpiresAtMs: NOW + PAIRING_TTL_MS,
-      client: "codex", previousDeviceId: original.deviceId, deviceId: replacement.deviceId, expectedRevision: 1 };
-    expect(await stub().recoverStatsWriter(recovery)).toEqual({ ok: false, error: "writer_conflict" });
-    success(await stub().revokeEnrollment(predecessor.proof));
-    expect(await statsUpload(successor, replacement)).toEqual({ ok: false, error: "writer_conflict" });
-    const transferred = success(await stub().recoverStatsWriter(recovery));
-    expect(transferred).toEqual({ writerDeviceId: replacement.deviceId, ownershipRevision: 2 });
-    expect(success(await stub().recoverStatsWriter(recovery))).toEqual(transferred);
-    expect(await statsUpload(predecessor, { ...original, sequence: 2, expectedRevision: 2 })).toEqual({ ok: false, error: "revoked" });
-    expect(await statsUpload(successor, { ...replacement, expectedRevision: 2 })).toEqual({ ok: false, error: "replacement_required" });
+  test("devices publish the same client independently; reads sum their days and a revoked device keeps its history", async () => {
+    const first = await enroll(), second = await enroll(); await activate();
+    const original = statsRequest(first); success(await statsUpload(first, original));
+    // The second device neither owns nor contends for the client, and a stale
+    // expected revision from before the first device's commit still publishes.
+    const replacement = statsRequest(second, { expectedRevision: 0 });
+    const receipt = success(await statsUpload(second, replacement));
+    expect(receipt.revision).toBe(1);
+    expect((await statsStatus(second)).revision).toBe(2);
+    const report = success(await stub().readUsageStats(statsQuery()));
+    expect(report.rows).toHaveLength(1);
+    expect(report.rows[0]).toMatchObject({ client: "codex", records: 2, tokens: { input: "20", cacheRead: "4", cacheWrite: "6", output: "8", reasoning: "2" } });
+    success(await stub().revokeEnrollment(first.proof));
+    expect(await statsUpload(first, { ...original, sequence: 2, expectedRevision: 2 })).toEqual({ ok: false, error: "revoked" });
+    expect(success(await stub().readUsageStats(statsQuery())).rows[0].records).toBe(2);
     const previousDay = { ...replacement.report, firstUtcDay: DAY - 1, sources: [{ ...replacement.report.sources[0], latestAtMs: (DAY - 1) * DAY_MS + 1 }],
       rows: [{ ...replacement.report.rows[0], utcDay: DAY - 1 }] };
-    success(await statsUpload(successor, { ...replacement, expectedRevision: 2, report: previousDay }));
-    const report = success(await stub().readUsageStats(statsQuery()));
-    expect(report.rows).toHaveLength(2);
-    expect(report.rows.map(row => row.tokens.input)).toEqual(["10", "10"]);
-    expect(await runInDurableObject(stub(), (_instance, state) => state.storage.sql.exec(
-      "SELECT device_id, ownership_revision FROM usage_stats_day_sources WHERE client = 'codex' ORDER BY utc_day").toArray()))
-      .toEqual([{ device_id: replacement.deviceId, ownership_revision: 2 }, { device_id: original.deviceId, ownership_revision: 1 }]);
+    success(await statsUpload(second, { ...replacement, operationId: hex(70100), sequence: 2, expectedRevision: 2, report: previousDay }));
+    expect(success(await stub().readUsageStats(statsQuery())).rows.map(row => [row.utcDay, row.records])).toEqual([[DAY - 1, 1], [DAY, 2]]);
+    const partitions = await runInDurableObject(stub(), (_instance, state) => state.storage.sql.exec(
+      "SELECT device_id, utc_day FROM usage_stats_days WHERE client = 'codex' ORDER BY utc_day, device_id").toArray());
+    const sorted = (rows: { device_id: unknown; utc_day: unknown }[]) => [...rows].sort((a, b) => `${a.utc_day}${a.device_id}` < `${b.utc_day}${b.device_id}` ? -1 : 1);
+    expect(sorted(partitions as { device_id: unknown; utc_day: unknown }[])).toEqual(sorted([{ device_id: replacement.deviceId, utc_day: DAY - 1 }, { device_id: original.deviceId, utc_day: DAY }, { device_id: replacement.deviceId, utc_day: DAY }]));
   });
-  test.each(["missing sources", "restored legacy writer"] as const)("writer recovery cannot reconstruct authority from %s", async corruption => {
-    const predecessor = await enroll(), successor = await enroll(); await activate();
-    const original = statsRequest(predecessor); success(await statsUpload(predecessor, original));
-    const replacement = statsRequest(successor, { expectedRevision: 2 });
-    success(await stub().revokeEnrollment(predecessor.proof));
-    success(await stub().recoverStatsWriter({ schemaVersion: 1, accountId: account, sessionExpiresAtMs: NOW + PAIRING_TTL_MS,
-      client: "codex", previousDeviceId: original.deviceId, deviceId: replacement.deviceId, expectedRevision: 1 }));
-    const retained = await runInDurableObject(stub(), (_instance, state) => {
-      const days = state.storage.sql.exec("SELECT * FROM usage_stats_days").toArray();
-      state.storage.sql.exec("DROP TABLE usage_stats_day_sources");
-      if (corruption === "restored legacy writer") {
-        state.storage.sql.exec("DROP TABLE usage_stats_writers");
-        state.storage.sql.exec(LEGACY_STATS_WRITERS_SQL);
-        state.storage.sql.exec("INSERT INTO usage_stats_writers VALUES ('codex', ?)", replacement.deviceId);
-      }
-      return days;
-    });
+
+  test("partition migration attributes retained days to their recorded source device", async () => {
+    const first = await enroll(), second = await enroll(); await activate();
+    success(await statsUpload(first, statsRequest(first)));
+    const cursor = statsRequest(second, { expectedRevision: 1, report: { ...statsRequest(second).report,
+      sources: [{ ...statsRequest(second).report.sources[0], client: "cursor" }], rows: [{ ...statsRequest(second).report.rows[0], client: "cursor" }] } });
+    success(await statsUpload(second, cursor));
+    const before = success(await stub().readUsageStats(statsQuery()));
+    await retireStorage();
+    await abortAllDurableObjects(); await activate();
+    const after = success(await stub().readUsageStats(statsQuery()));
+    expect(after.rows).toEqual(before.rows);
+    expect(await runInDurableObject(stub(), (_instance, state) => ({
+      days: state.storage.sql.exec("SELECT client, device_id FROM usage_stats_days ORDER BY client").toArray(),
+      totals: state.storage.sql.exec("SELECT client, device_id, records FROM usage_stats_day_totals ORDER BY client").toArray(),
+      retired: state.storage.sql.exec("SELECT name FROM sqlite_schema WHERE name IN ('usage_stats_writers', 'usage_stats_day_sources')").toArray(),
+    }))).toEqual({ days: [{ client: "codex", device_id: statsRequest(first).deviceId }, { client: "cursor", device_id: cursor.deviceId }],
+      totals: [{ client: "codex", device_id: statsRequest(first).deviceId, records: 1 }, { client: "cursor", device_id: cursor.deviceId, records: 1 }], retired: [] });
+    // The old single-writer table alone (a schema-seven store) attributes every
+    // retained day of a client to that writer.
+    success(await statsUpload(second, statsRequest(second, { operationId: hex(70200), sequence: 2, expectedRevision: 2 })));
+    expect((await totals()).devices.map(device => device.records)).toEqual([1, 2]);
+  });
+  test("partition migration refuses a retained day without a recorded source device", async () => {
+    const device = await enroll(); await activate();
+    success(await statsUpload(device, statsRequest(device)));
+    const retained = await runInDurableObject(stub(), (_instance, state) => state.storage.sql.exec("SELECT client, utc_day, projection FROM usage_stats_days").toArray());
+    await retireStorage(true);
+    await runInDurableObject(stub(), (_instance, state) => state.storage.sql.exec("DELETE FROM usage_stats_writers"));
+    await abortAllDurableObjects();
+    await activate(false);
     expect(await stub().maintainAccount({ schemaVersion: 1, accountId: account,
       generation: env.USAGE_ENROLLMENT_GENERATION, operation: "prepare" })).toEqual({ ok: false, error: "storage_invalid" });
-    expect(await statsUpload(successor, replacement)).toEqual({ ok: false, error: "storage_invalid" });
-    expect(await runInDurableObject(stub(), (_instance, state) => ({
-      days: state.storage.sql.exec("SELECT * FROM usage_stats_days").toArray(),
-      sourceTables: state.storage.sql.exec("SELECT name FROM sqlite_schema WHERE name = 'usage_stats_day_sources'").toArray(),
-    }))).toEqual({ days: retained, sourceTables: [] });
+    expect(await statsUpload(device, statsRequest(device, { operationId: hex(70300), sequence: 2, expectedRevision: 1 }))).toEqual({ ok: false, error: "storage_invalid" });
+    expect(await runInDurableObject(stub(), (_instance, state) => state.storage.sql.exec("SELECT client, utc_day, projection FROM usage_stats_days").toArray())).toEqual(retained);
   });
+
   test("explicit abandonment fences an unreserved request idempotently and reports an already committed result", async () => {
     const device = await enroll(); await activate(); const first = statsRequest(device);
     success(await stub().setLeaderboardConsent({ schemaVersion: 1, operation: "set", accountId: account, sessionExpiresAtMs: NOW + PAIRING_TTL_MS, consent: true, publicHandle: "abandon-test" }));
@@ -254,7 +294,7 @@ describe("v2 account snapshots", () => {
     const retry = statsRequest(device, { expectedRevision: 1, operationId: hex(90101) });
     const receipt = success(await statsUpload(device, retry));
     expect(success(await abandon(device, retry))).toEqual({ schemaVersion: 2, outcome: "committed", receipt });
-    expect(await abandon(device, first)).toEqual({ ok: false, error: "conflict" });
+    expect(success(await abandon(device, first))).toMatchObject({ outcome: "abandoned", fencedAtRevision: 2 });
     expect(success(await stub().readUsageStats(statsQuery())).rows[0].tokens.input).toBe("10");
   });
   test("maintenance-only revisions retain legacy fallback while an empty committed snapshot starts v2", async () => {
@@ -289,7 +329,7 @@ describe("v2 account snapshots", () => {
           const before = new StatsState(state.storage.sql).control().immutableBytes;
           expect(success(await instance.abandonStatsSnapshot({ uploadSecret: device.proof.uploadSecret, request: abandonRequest(request) }))).toMatchObject({ outcome: "abandoned", fencedAtRevision: 1 });
           expect(new StatsState(state.storage.sql).control().immutableBytes).toBe(before);
-          expect(new StatsState(state.storage.sql).pending()).toBeNull();
+          expect(new StatsState(state.storage.sql).pending(request.deviceId)).toBeNull();
         }
         return result;
       }) }));
@@ -304,7 +344,7 @@ describe("v2 account snapshots", () => {
     expect(await statsUpload(device, request)).toEqual({ ok: false, error: "conflict" });
     success(await statsUpload(device, statsRequest(device, { expectedRevision: 1, operationId: hex(90102) })));
   });
-  test("abandonment cannot disturb another pending intent or authenticated device progress", async () => {
+  test("abandonment cannot disturb another device's pending intent or progress", async () => {
     const device = await enroll(), other = await enroll(); await activate(); const first = statsRequest(device);
     await runInDurableObject(stub(), async instance => {
       const restore = replaceEnvironment(instance, current => ({ ...current, STAGING: bucketProxy(current.STAGING, async (method, _args, invoke) => {
@@ -313,29 +353,39 @@ describe("v2 account snapshots", () => {
       try { expect(await instance.admitStatsSnapshot({ uploadSecret: device.proof.uploadSecret, request: first })).toEqual({ ok: false, error: "storage_unavailable" }); }
       finally { restore(); }
     });
-    const before = await runInDurableObject(stub(), (_instance, state) => ({ control: new StatsState(state.storage.sql).control(), pending: new StatsState(state.storage.sql).pending() }));
-    expect(await abandon(other, statsRequest(other))).toEqual({ ok: false, error: "conflict" });
+    const pendingBefore = await runInDurableObject(stub(), (_instance, state) => new StatsState(state.storage.sql).pending(first.deviceId));
+    expect(pendingBefore).not.toBeNull();
+    // Another device abandoning its own never-reserved flight only fences its
+    // own bytes; the first device's retained intent is untouched.
+    expect(success(await abandon(other, statsRequest(other)))).toMatchObject({ outcome: "abandoned", fencedAtRevision: 1 });
     expect(await stub().abandonStatsSnapshot({ uploadSecret: device.proof.pollSecret, request: abandonRequest(first) })).toEqual({ ok: false, error: "unauthorized" });
-    expect(await runInDurableObject(stub(), (_instance, state) => ({ control: new StatsState(state.storage.sql).control(), pending: new StatsState(state.storage.sql).pending() }))).toEqual(before);
+    expect(await runInDurableObject(stub(), (_instance, state) => new StatsState(state.storage.sql).pending(first.deviceId))).toEqual(pendingBefore);
     const receipt = success(await statsUpload(device, first));
+    expect(receipt.revision).toBe(1);
     expect(success(await abandon(device, first))).toEqual({ schemaVersion: 2, outcome: "committed", receipt });
-    expect(await abandon(device, { ...first, operationId: hex(91234) })).toEqual({ ok: false, error: "conflict" });
+    expect(success(await abandon(device, { ...first, operationId: hex(91234) }))).toMatchObject({ outcome: "abandoned", fencedAtRevision: 2 });
+    expect(await statsUpload(other, statsRequest(other))).toEqual({ ok: false, error: "conflict" }); // Its abandoned bytes stay retired.
+    success(await statsUpload(other, statsRequest(other, { operationId: hex(91235) })));
   });
-  test("aggregate equality and dominance never prove legacy population overlap", async () => {
+
+  test("a device's own retained heads are shadowed by its snapshot for that client and day", async () => {
     const device = await enroll();
     success(await upload(device, batch(device, 1, [{ id: 1, input: 120n, output: 0n }]))); await activate();
     const request = statsRequest(device), status = await statsStatus(device);
-    expect(status).toMatchObject({ legacyRecords: 1, takeoverEligible: false });
+    expect(status).toMatchObject({ legacyRecords: 0, takeoverEligible: true, writerDeviceId: null, v1Revision: 1 });
     const before = await read();
-    for (const amount of ["15", "120", "240"]) {
-      const report = { ...request.report, rows: [{ ...request.report.rows[0], tokens: { input: amount, cacheRead: "0", cacheWrite: "0", output: "0", reasoning: "0" } }] };
-      expect(await statsUpload(device, { ...request, report, takeover: { expectedV1Revision: status.v1Revision, headDigest: status.headDigest } }))
-        .toEqual({ ok: false, error: "takeover_required" });
-    }
+    const report = { ...request.report, rows: [{ ...request.report.rows[0], tokens: { input: "15", cacheRead: "0", cacheWrite: "0", output: "0", reasoning: "0" } }] };
+    success(await statsUpload(device, { ...request, report }));
+    // The private v1 read still shows the retained head; the combined report
+    // serves the device's snapshot for that client and day instead of it.
     expect(await read()).toEqual(before);
-    expect((await env.STAGING.list({ prefix: "usage-stats/v2/" })).objects).toHaveLength(0);
-    expect(await runInDurableObject(stub(), (_instance, state) => new StatsState(state.storage.sql).control().immutableBytes)).toBe(0);
+    const combined = success(await stub().readUsageStats(statsQuery()));
+    expect(combined.rows).toHaveLength(1);
+    expect(combined.rows[0]).toMatchObject({ client: "codex", records: 1, tokens: { input: "15" } });
+    expect((await env.STAGING.list({ prefix: "usage-stats/v2/" })).objects).toHaveLength(1);
+    expect((await totals()).total).toMatchObject({ records: 1, days: 1, tokens: { input: "15" } });
   });
+
   test("Warp refresh replaces its prior counter snapshot while preserving immutable evidence", async () => {
     const device = await enroll(); await activate();
     const base = statsRequest(device);
@@ -362,7 +412,7 @@ describe("v2 account snapshots", () => {
     success(await statsUpload(device, warp(DAY, 2, "0", 3)));
     expect(success(await stub().readUsageStats(statsQuery())).rows.find(row => row.client === "warp")).toMatchObject({ records: 2, reportedCostMicrousd: "0" });
   });
-  test("routine sync preserves absent days and refuses loss within an observed day", async () => {
+  test("routine sync preserves absent days and keeps the per-row maximum when a fresh scan shrinks", async () => {
     const device = await enroll(); await activate();
     const base = statsRequest(device, { mode: "preserve-history" });
     const original = base.report.rows[0];
@@ -375,26 +425,32 @@ describe("v2 account snapshots", () => {
     const next = statsRequest(device, { mode: "preserve-history", operationId: hex(70001), expectedRevision: 1, sequence: 2,
       report: { ...first.report, sources: [{ ...first.report.sources[0], records: 2 }], rows: [complete] } });
     success(await statsUpload(device, next));
-    expect(success(await stub().readUsageStats(statsQuery())).rows).toHaveLength(2);
     const before = success(await stub().readUsageStats(statsQuery()));
-    const changes = [
+    expect(before.rows).toHaveLength(2);
+    const shrunk = [
       { tokens: { ...complete.tokens, input: "9" } }, { records: 1, estimatedCostRecords: 0, estimatedCostMicrousd: null },
-      { model: "gpt-5" }, { breakdownCoverage: "partial" as const },
-      { reportedCostMicrousd: "99" }, { estimatedCostMicrousd: null, estimatedCostRecords: 0 },
+      { breakdownCoverage: "partial" as const }, { reportedCostMicrousd: "99" }, { estimatedCostMicrousd: null, estimatedCostRecords: 0 },
       { durationMs: "999" }, { timedRecords: 0, durationMs: null, timedTokens: "0" }, { timedTokens: "9" },
     ];
-    for (const change of changes) {
+    let sequence = 3;
+    for (const change of shrunk) {
       const row = { ...complete, ...change };
-      const request = statsRequest(device, { mode: "preserve-history", operationId: hex(70002), expectedRevision: 2, sequence: 3,
+      const request = statsRequest(device, { mode: "preserve-history", operationId: hex(70000 + sequence), expectedRevision: sequence - 1, sequence,
         report: { ...base.report, sources: [{ ...base.report.sources[0], records: row.records }], rows: [row] } });
-      expect(await statsUpload(device, request)).toEqual({ ok: false, error: "replacement_required" });
-      expect(success(await stub().readUsageStats(statsQuery()))).toEqual(before);
+      success(await statsUpload(device, request)); sequence++;
+      // A reduced fresh scan never lowers the retained cell.
+      expect(success(await stub().readUsageStats(statsQuery())).rows).toEqual(before.rows);
     }
-    const grew = { ...complete, tokens: { ...complete.tokens, input: "11" } };
-    success(await statsUpload(device, statsRequest(device, { mode: "preserve-history", operationId: hex(70003), expectedRevision: 2, sequence: 3,
-      report: { ...base.report, sources: [{ ...base.report.sources[0], records: 2 }], rows: [grew] } })));
-    expect(success(await stub().readUsageStats(statsQuery())).rows[1].tokens.input).toBe("11");
+    const grew = { ...complete, tokens: { ...complete.tokens, input: "11" } }, added = { ...complete, model: "gpt-5", records: 1, reportedCostRecords: 0, reportedCostMicrousd: null, estimatedCostRecords: 0, estimatedCostMicrousd: null, timedRecords: 0, timedTokens: "0", durationMs: null };
+    success(await statsUpload(device, statsRequest(device, { mode: "preserve-history", operationId: hex(70090), expectedRevision: sequence - 1, sequence,
+      report: { ...base.report, sources: [{ ...base.report.sources[0], records: 3 }], rows: [grew, added].sort((a, b) => statsRowKey(a) < statsRowKey(b) ? -1 : 1) } })));
+    const after = success(await stub().readUsageStats(statsQuery()));
+    expect(after.rows).toHaveLength(3);
+    expect(after.rows.find(row => row.utcDay === DAY && row.model === null)?.tokens.input).toBe("11");
+    expect(after.rows.find(row => row.model === "gpt-5")?.records).toBe(1);
+    expect(after.rows.find(row => row.utcDay === DAY - 1)).toEqual(before.rows[0]);
   });
+
   test("default closed; additive activation preserves v1 and read/status cause no writes", async () => {
     const device = await enroll(), v1 = batch(device); success(await upload(device, v1));
     expect(await statsUpload(device, statsRequest(device))).toEqual({ ok: false, error: "storage_unavailable" });
@@ -404,7 +460,7 @@ describe("v2 account snapshots", () => {
       v1: state.storage.sql.exec("SELECT * FROM usage_admission_control").toArray(),
     }));
     const stored = await snapshot();
-    const status = await statsStatus(device); expect(status).toMatchObject({ revision: 0, nextSequence: 1, legacyRecords: 1, takeoverEligible: false });
+    const status = await statsStatus(device); expect(status).toMatchObject({ revision: 0, nextSequence: 1, legacyRecords: 0, takeoverEligible: true, v1Revision: 1 });
     expect(await stub().readUsageStats(statsQuery())).toMatchObject({ ok: false, error: "not_started" });
     expect(await snapshot()).toEqual(stored);
   });
@@ -434,16 +490,19 @@ describe("v2 account snapshots", () => {
     expect(rows).toHaveLength(1); expect(rows[0].utcDay).toBe(DAY - 1);
     expect((await read()).days[0].codex.usageOccurrences).toBe(1); // Retained original profile remains readable.
   });
-  test("later ambiguous v1 overlap is retained but withheld from combined reports", async () => {
+  test("a second device publishes the same client while retained heads from another day still project", async () => {
     const device = await enroll(), other = await enroll(); await activate(); const first = statsRequest(device);
     success(await statsUpload(device, first));
-    // V1 heads stay retained evidence even on days the stats profile owns.
+    // V1 heads stay retained evidence; the same device's snapshot shadows them
+    // for that client and day only.
     success(await upload(device, batch(device)));
-    expect(await statsUpload(other, statsRequest(other, { expectedRevision: 1 }))).toMatchObject({ ok: false, error: "writer_conflict" });
+    success(await statsUpload(other, statsRequest(other, { expectedRevision: 1 })));
     success(await upload(device, batch(device, 2, [{ id: 2, day: DAY - 1 }])));
-    expect(await stub().readUsageStats(statsQuery())).toEqual({ ok: false, error: "takeover_required" });
+    const report = success(await stub().readUsageStats(statsQuery()));
+    expect(report.rows.map(row => [row.utcDay, row.records, row.tokens.input])).toEqual([[DAY - 1, 1, "10"], [DAY, 2, "20"]]);
     expect((await read()).days.reduce((sum, day) => sum + day.codex.usageOccurrences, 0)).toBe(2);
   });
+
   test("wrong secret/account/generation, expired session and incomplete scans refuse", async () => {
     const device = await enroll(); await activate(); const first = statsRequest(device);
     const authority = async () => ({
@@ -483,7 +542,7 @@ describe("v2 account snapshots", () => {
     success(await upload(device, batch(device, 1, [{ id: 1, provider: 2 }])));
     success(await statsUpload(device, request)); expect((await statsStatus(device)).revision).toBe(1);
   });
-  test("explicit abandonment fences A before B and rejects every delayed A replay", async () => {
+  test("a newer same-device snapshot supersedes its uncertain predecessor, which can never commit or recharge", async () => {
     const device = await enroll(); await activate(); const first = statsRequest(device);
     await runInDurableObject(stub(), async instance => {
       const restore = replaceEnvironment(instance, original => ({ ...original, STAGING: bucketProxy(original.STAGING, async (method, _args, invoke) => {
@@ -492,35 +551,43 @@ describe("v2 account snapshots", () => {
       try { expect(await instance.admitStatsSnapshot({ uploadSecret: device.proof.uploadSecret, request: first })).toMatchObject({ ok: false, error: "storage_unavailable" }); }
       finally { restore(); }
     });
-    expect(await runInDurableObject(stub(), (_instance, state) => new StatsState(state.storage.sql).pending())).not.toBeNull();
-    // A foreign device still cannot take the slot; only the writer supersedes.
+    expect(await runInDurableObject(stub(), (_instance, state) => new StatsState(state.storage.sql).pending(first.deviceId))).not.toBeNull();
+    // Another device is never blocked by this device's retained intent.
     const other = await enroll();
-    expect(await statsUpload(other, statsRequest(other))).toMatchObject({ ok: false, error: "conflict" });
-    const replacement = statsRequest(device, { operationId: hex(90300) });
+    expect(success(await statsUpload(other, statsRequest(other))).revision).toBe(1);
     const charge = await runInDurableObject(stub(), (_instance, state) => new StatsState(state.storage.sql).control().immutableBytes);
-    expect(await statsUpload(device, replacement)).toEqual({ ok: false, error: "conflict" });
-    success(await abandon(device, first));
-    const receipt = success(await statsUpload(device, { ...replacement, expectedRevision: 1 }));
-    expect(receipt.revision).toBe(2);
+    const replacement = statsRequest(device, { operationId: hex(90300), report: { ...first.report, rows: [{ ...first.report.rows[0], tokens: { ...first.report.rows[0].tokens, input: "12" } }] } });
+    const receipt = success(await statsUpload(device, replacement));
+    expect(receipt.revision).toBe(1); // The device's expected revision, not the account's.
+    expect((await statsStatus(device)).revision).toBe(2);
     const finalCharge = await runInDurableObject(stub(), (_instance, state) => new StatsState(state.storage.sql).control().immutableBytes);
     expect(finalCharge).toBeGreaterThan(charge);
     for (let replay = 0; replay < 3; replay++) expect(await statsUpload(device, first)).toEqual({ ok: false, error: "conflict" });
     expect(await runInDurableObject(stub(), (_instance, state) => new StatsState(state.storage.sql).control().immutableBytes)).toBe(finalCharge);
     expect((await statsStatus(device)).nextSequence).toBe(2);
-    expect(success(await stub().readUsageStats(statsQuery())).rows[0].tokens.input).toBe("10");
+    expect(success(await abandon(device, first))).toMatchObject({ outcome: "abandoned", fencedAtRevision: 2 });
+    const rows = success(await stub().readUsageStats(statsQuery())).rows;
+    expect(rows).toHaveLength(1); expect(rows[0]).toMatchObject({ records: 2, tokens: { input: "22" } });
   });
-  test("foreign 120-token population cannot be hidden by an unproved 15-token snapshot", async () => {
+
+  test("a foreign 120-token population and a local 15-token snapshot report 135", async () => {
     const device = await enroll(), other = await enroll();
     success(await upload(other, batch(other, 1, [{ id: 1, provider: 2, input: 120n, output: 0n }]))); await activate();
     const base = statsRequest(device);
     const request = statsRequest(device, { report: { ...base.report,
       sources: [{ ...base.report.sources[0], client: "claude" }],
       rows: [{ ...base.report.rows[0], client: "claude", tokens: { input: "15", cacheRead: "0", cacheWrite: "0", output: "0", reasoning: "0" } }] } });
-    expect(await statsStatus(device, request)).toMatchObject({ legacyRecords: 1, takeoverEligible: false });
-    expect(await statsUpload(device, request)).toEqual({ ok: false, error: "takeover_required" });
+    expect(await statsStatus(device, request)).toMatchObject({ legacyRecords: 0, takeoverEligible: true });
+    success(await statsUpload(device, request));
     expect((await read()).days[1].claudeCode.observedAccountedTokens).toBe("120");
-    expect((await env.STAGING.list({ prefix: "usage-stats/v2/" })).objects).toHaveLength(0);
+    const combined = success(await stub().readUsageStats(statsQuery()));
+    expect(combined.rows).toHaveLength(1);
+    expect(combined.rows[0]).toMatchObject({ client: "claude", records: 2, tokens: { input: "135" } });
+    const lifetime = await totals();
+    expect(lifetime.total).toMatchObject({ records: 2, tokens: { input: "135" } });
+    expect(lifetime.devices.map(entry => [entry.records, entry.clients[0]?.basis])).toEqual([[1, "snapshots"], [1, "legacy"]]);
   });
+
   test("reported-only leaderboard sums disjoint source populations and excludes estimates", async () => {
     const device = await enroll(); success(await upload(device, batch(device, 1, [{ id: 1, reasoning: 1n, provider: 2 }]))); await activate();
     const first = statsRequest(device);
@@ -537,14 +604,51 @@ describe("v2 account snapshots", () => {
     success(await stub().setLeaderboardConsent({ schemaVersion: 1, operation: "set", accountId: account, sessionExpiresAtMs: NOW + PAIRING_TTL_MS, consent: true, publicHandle: "stats-test" }));
     expect(success(await stub().readLeaderboardProjection({ schemaVersion: 1, accountId: account }))).toMatchObject({ observedTokens: "15", usageRecords: 1 });
   });
-  test("legacy tombstones cannot be resurrected by a snapshot takeover", async () => {
+  test("tombstoned heads never count and a snapshot for that client and day publishes without a takeover", async () => {
     const device = await enroll(), original = batch(device); success(await upload(device, original));
     success(await upload(device, batch(device, 2, [{ id: 1, tombstone: true, expected: original.operations[0].operationHash }])));
     await activate(); const request = statsRequest(device), status = await statsStatus(device);
-    expect(status).toMatchObject({ legacyRecords: 0, takeoverEligible: false });
-    expect(await statsUpload(device, { ...request, takeover: { expectedV1Revision: status.v1Revision, headDigest: status.headDigest } }))
-      .toMatchObject({ ok: false, error: "takeover_required" });
+    expect(status).toMatchObject({ legacyRecords: 0, takeoverEligible: true, v1Revision: 2 });
+    success(await statsUpload(device, request));
+    const combined = success(await stub().readUsageStats(statsQuery()));
+    expect(combined.rows).toHaveLength(1); expect(combined.rows[0].records).toBe(1);
+    expect((await totals()).total.records).toBe(1);
   });
+  test("lifetime totals combine snapshot days with unshadowed retained heads and report backfill progress", async () => {
+    const device = await enroll(), other = await enroll();
+    success(await upload(device, batch(device, 1, [{ id: 1, input: 100n, output: 10n, reasoning: 4n }, { id: 2, day: DAY - 3, provider: 2, input: 7n, cache: 3n, write5m: 1n, write1h: 2n, output: 5n }])));
+    success(await upload(other, batch(other, 1, [{ id: 3, day: DAY - 1, provider: 3, input: 1n, output: 1n }])));
+    await activate();
+    success(await statsUpload(device, statsRequest(device)));
+    const lifetime = await totals();
+    expect(lifetime).toMatchObject({ legacyRevision: 2, legacyVerifiedRevision: 2, legacyComplete: true, revision: 1 });
+    // Own codex head at DAY is shadowed by the snapshot; the claude head and
+    // the other device's devin head still count, in disjoint v2 buckets.
+    expect(lifetime.total).toMatchObject({ records: 3, days: 3, firstUtcDay: DAY - 3, lastUtcDay: DAY });
+    expect(lifetime.total.tokens).toEqual({ input: "18", cacheRead: "5", cacheWrite: "6", output: "10", reasoning: "1" });
+    expect(lifetime.clients.map(client => [client.client, client.basis, client.records])).toEqual([["claude", "legacy", 1], ["codex", "snapshots", 1], ["devin-cli", "legacy", 1]]);
+    expect(lifetime.devices.map(entry => [entry.deviceId === statsRequest(device).deviceId, entry.records, entry.clients.map(client => client.client)]))
+      .toEqual([[true, 2, ["claude", "codex"]], [false, 1, ["devin-cli"]]]);
+    // A correction of a counted head subtracts the old frame and counts the new one exactly once.
+    success(await upload(device, batch(device, 3, [{ id: 1, expected: batch(device, 1, [{ id: 1, input: 100n, output: 10n, reasoning: 4n }]).operations[0].operationHash, input: 50n, output: 10n, reasoning: 4n }])));
+    const corrected = await totals();
+    expect(corrected.legacyVerifiedRevision).toBe(3);
+    expect(corrected.total.tokens.input).toBe("18"); // Still shadowed for DAY by the snapshot.
+    const tombstoned = batch(device, 4, [{ id: 2, tombstone: true, expected: batch(device, 1, [{ id: 1, input: 100n, output: 10n, reasoning: 4n }, { id: 2, day: DAY - 3, provider: 2, input: 7n, cache: 3n, write5m: 1n, write1h: 2n, output: 5n }]).operations[1].operationHash }]);
+    success(await upload(device, tombstoned));
+    expect((await totals()).total).toMatchObject({ records: 2, tokens: { input: "11", cacheRead: "2", cacheWrite: "3", output: "5", reasoning: "1" } });
+    // A store whose totals lag the journal is backfilled one bounded span per fenced mutation.
+    await runInDurableObject(stub(), (_instance, state) => {
+      state.storage.sql.exec("DELETE FROM usage_admission_day_totals");
+      state.storage.sql.exec("UPDATE usage_admission_day_totals_cursor SET verified_revision = 0");
+    });
+    expect((await totals()).legacyComplete).toBe(false);
+    success(await stub().maintainAccount({ schemaVersion: 1, accountId: account, generation: env.USAGE_ENROLLMENT_GENERATION, operation: "prepare" }));
+    const rebuilt = await totals();
+    expect(rebuilt.legacyComplete).toBe(true);
+    expect(rebuilt.total).toMatchObject({ records: 2, tokens: { input: "11", cacheRead: "2", cacheWrite: "3", output: "5", reasoning: "1" } });
+  });
+
   test("revoking a pending device fences its delayed result and releases unrelated clients", async () => {
     const device = await enroll(), other = await enroll(); await activate(); const request = statsRequest(device);
     await runInDurableObject(stub(), async instance => {
@@ -669,13 +773,13 @@ describe("v2 account snapshots", () => {
   test("schema six accounts migrate and backfill only through explicit fenced maintenance", async () => {
     const device = await enroll(); await activate();
     success(await statsUpload(device, statsRequest(device)));
-    // Reconstruct the actual pre-transfer version-six schema. Existing current
-    // ownership sources may never be inferred from a successor writer.
+    // Reconstruct the actual version-six shape: a single legacy writer row,
+    // no day sources and no exploded read model.
+    await retireStorage(true);
     await runInDurableObject(stub(), (_instance, state) => {
       state.storage.sql.exec("DROP TABLE usage_stats_day_meta");
       state.storage.sql.exec("DROP TABLE usage_stats_day_rows");
       const writer = state.storage.sql.exec("SELECT client, device_id FROM usage_stats_writers").one();
-      state.storage.sql.exec("DROP TABLE usage_stats_day_sources");
       state.storage.sql.exec("DROP TABLE usage_stats_writers");
       state.storage.sql.exec(LEGACY_STATS_WRITERS_SQL);
       state.storage.sql.exec("INSERT INTO usage_stats_writers VALUES (?, ?)", writer.client, writer.device_id);
@@ -688,8 +792,11 @@ describe("v2 account snapshots", () => {
     expect(report.rows).toHaveLength(1);
     expect(report.rows[0].tokens.input).toBe("10");
     // The backfilled model now serves without the projection parse.
-    expect(await runInDurableObject(stub(), (_instance, state) =>
-      state.storage.sql.exec("SELECT COUNT(*) AS count FROM usage_stats_day_rows").toArray()[0].count)).toBe(1);
+    expect(await runInDurableObject(stub(), (_instance, state) => ({
+      rows: state.storage.sql.exec("SELECT COUNT(*) AS count FROM usage_stats_day_rows").toArray()[0].count,
+      device: state.storage.sql.exec("SELECT device_id FROM usage_stats_days").one().device_id,
+    }))).toEqual({ rows: 1, device: statsRequest(device).deviceId });
   });
+
 
 });

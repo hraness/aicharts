@@ -102,7 +102,7 @@ const HELP: &str = "AI Charts Usage — local reports and enrolled publication
   aicharts inspect --state-dir DIR --key-file PATH [--occurrence-key-file PATH] [--json] [--export-dir NEW_DIR]
   aicharts account --state-dir ABSOLUTE_DIR [--json]
   aicharts account --state-dir ABSOLUTE_DIR --diagnose [--json]
-  aicharts daemon [--once] [--complete-prefix] --state-dir DIR --key-file PATH [--codex FILE_OR_DIR] [--claude FILE_OR_DIR] [--devin FILE_OR_DIR] [--interval-seconds N] [--retry-attempts N] [--json]
+  aicharts daemon [--once] [--complete-prefix] --state-dir DIR --key-file PATH [--codex FILE_OR_DIR] [--claude FILE_OR_DIR] [--devin FILE_OR_DIR] [--interval-seconds N] [--retry-attempts N] [--publish-config PATH] [--publish-interval-seconds N] [--json]
   aicharts enroll --state-dir DIR
   aicharts outbox --dry-run --state-dir DIR --key-file PATH [--limit 1..256] [--after ID --revision N]
   aicharts reindex-plan --dry-run --state-dir OLD --key-file PATH [--codex FILE_OR_DIR] [--claude FILE_OR_DIR] [--devin FILE_OR_DIR] [--json]
@@ -160,9 +160,13 @@ minutes after each pass. --complete-prefix selects collect-prefix for an already
 prefix-enabled ledger; it defers stable unfinished tails and never migrates state.
 Omitting it retains collect. A ledger mode mismatch fails before reading sources.
 It retries only transient ledger busy/change results immediately (three retries by
-default; --retry-attempts accepts 0..8). Exhausted contention or changing source
-snapshots wait the normal interval; fixed errors stop. --once returns remaining
-errors. It never uploads or installs an OS service.
+default; --retry-attempts accepts 0..8). Every other pass result, including a
+fixed error, is reported and the daemon waits the normal interval; only --once
+returns the error. --publish-config runs one autosubmit cycle from that
+configuration on its own schedule (--publish-interval-seconds, default 3600,
+at least 300), so one long-lived process both collects and publishes; a failed
+cycle is reported and retried at the next due pass. It never installs an OS
+service.
 sync performs one supervised collection and bounded upload pass on an already
 enrolled macOS installation. It requires an existing prefix-enabled sender ledger;
 it never initializes, migrates, enrolls or installs a service. See sync --help.
