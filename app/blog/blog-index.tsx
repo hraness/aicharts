@@ -10,10 +10,10 @@ import {
 import {
   articleReadingMinutes,
   blogArticlePath,
-  blogArticles,
   blogDescription,
   type BlogSlug,
 } from "./articles";
+import { indexableBlogArticles as blogArticles } from "./article-admissions";
 import {
   blogCollectionJsonLd,
   breadcrumbJsonLd,

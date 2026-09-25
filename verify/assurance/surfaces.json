@@ -183,16 +183,6 @@
       "controlEvidence": true
     },
     {
-      "id": "worker:usage_stats_writers",
-      "table": "usage_stats_writers",
-      "owner": "services/usage-worker/src/stats-state.ts",
-      "kind": "authoritative",
-      "retentionPolicy": "authority-and-deletion-controls",
-      "rebuildFrom": null,
-      "lifecycleStatus": "qualification-required",
-      "controlEvidence": true
-    },
-    {
       "id": "ledger:measurements",
       "table": "measurements",
       "owner": "crates/aicharts-ledger/src/storage.rs",
@@ -363,16 +353,6 @@
       "controlEvidence": true
     },
     {
-      "id": "worker:usage_stats_day_sources",
-      "table": "usage_stats_day_sources",
-      "owner": "services/usage-worker/src/stats-state.ts",
-      "kind": "authoritative",
-      "retentionPolicy": "authority-and-deletion-controls",
-      "rebuildFrom": null,
-      "lifecycleStatus": "qualification-required",
-      "controlEvidence": true
-    },
-    {
       "id": "local:usage-import-checkpoint",
       "table": null,
       "owner": "crates/aicharts-cli/src/source_checkpoint.rs",
@@ -536,6 +516,66 @@
       "id": "worker:usage_contribution_rebuild_jobs",
       "table": "usage_contribution_rebuild_jobs",
       "owner": "services/usage-worker/src/contribution-rebuild-state.ts",
+      "kind": "authoritative",
+      "retentionPolicy": "authority-and-deletion-controls",
+      "rebuildFrom": null,
+      "lifecycleStatus": "qualification-required",
+      "controlEvidence": true
+    },
+    {
+      "id": "worker:usage_stats_retired",
+      "table": "usage_stats_retired",
+      "owner": "services/usage-worker/src/stats-state.ts",
+      "kind": "authoritative",
+      "retentionPolicy": "authority-and-deletion-controls",
+      "rebuildFrom": null,
+      "lifecycleStatus": "qualification-required",
+      "controlEvidence": true
+    },
+    {
+      "id": "worker:usage_stats_day_totals",
+      "table": "usage_stats_day_totals",
+      "owner": "services/usage-worker/src/stats-state.ts",
+      "kind": "derived",
+      "retentionPolicy": "derived-projections",
+      "rebuildFrom": "committed snapshot day projections",
+      "lifecycleStatus": "qualification-required",
+      "controlEvidence": false
+    },
+    {
+      "id": "worker:usage_admission_day_totals",
+      "table": "usage_admission_day_totals",
+      "owner": "services/usage-worker/src/admission-schema.ts",
+      "kind": "derived",
+      "retentionPolicy": "derived-projections",
+      "rebuildFrom": "live admission heads by journal revision",
+      "lifecycleStatus": "qualification-required",
+      "controlEvidence": false
+    },
+    {
+      "id": "worker:usage_admission_day_totals_cursor",
+      "table": "usage_admission_day_totals_cursor",
+      "owner": "services/usage-worker/src/admission-schema.ts",
+      "kind": "derived",
+      "retentionPolicy": "derived-projections",
+      "rebuildFrom": "live admission heads by journal revision",
+      "lifecycleStatus": "qualification-required",
+      "controlEvidence": false
+    },
+    {
+      "id": "worker:usage_stats_writers",
+      "table": "usage_stats_writers",
+      "owner": "services/usage-worker/src/stats-state.ts",
+      "kind": "authoritative",
+      "retentionPolicy": "authority-and-deletion-controls",
+      "rebuildFrom": null,
+      "lifecycleStatus": "qualification-required",
+      "controlEvidence": true
+    },
+    {
+      "id": "worker:usage_stats_day_sources",
+      "table": "usage_stats_day_sources",
+      "owner": "services/usage-worker/src/stats-state.ts",
       "kind": "authoritative",
       "retentionPolicy": "authority-and-deletion-controls",
       "rebuildFrom": null,

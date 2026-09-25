@@ -495,24 +495,6 @@
       "deletion": "services/usage-worker/src/stats-state.ts",
       "note": "Limits refer to the shared owning store, not additive allocations for every table. Logical payload/row ceilings do not attest SQLite, index or object metadata overhead. Retention/reclamation remains qualification-gated under verify/assurance/retention.json; no quota-driven deletion."
     },
-    "worker:usage_stats_writers": {
-      "kind": "authoritative",
-      "owner": "services/usage-worker/src/stats-state.ts",
-      "retention": "tombstone",
-      "assurancePolicy": "authority-and-deletion-controls",
-      "budget": {
-        "capacityRefs": {
-          "max-stats-stored-days": 65536,
-          "max-stats-stored-rows": 262144,
-          "max-stats-stored-bytes": 134217728,
-          "max-stats-immutable-bytes": 8589934592,
-          "max-stats-revisions": 1000000,
-          "stats-day-sources": 65536
-        }
-      },
-      "deletion": "services/usage-worker/src/stats-state.ts",
-      "note": "Limits refer to the shared owning store, not additive allocations for every table. Logical payload/row ceilings do not attest SQLite, index or object metadata overhead. Retention/reclamation remains qualification-gated under verify/assurance/retention.json; no quota-driven deletion."
-    },
     "ledger:measurements": {
       "kind": "authoritative",
       "owner": "crates/aicharts-ledger/src/storage.rs",
@@ -779,24 +761,6 @@
         }
       },
       "deletion": "services/usage-worker/src/restore-fence.ts",
-      "note": "Limits refer to the shared owning store, not additive allocations for every table. Logical payload/row ceilings do not attest SQLite, index or object metadata overhead. Retention/reclamation remains qualification-gated under verify/assurance/retention.json; no quota-driven deletion."
-    },
-    "worker:usage_stats_day_sources": {
-      "kind": "authoritative",
-      "owner": "services/usage-worker/src/stats-state.ts",
-      "retention": "tombstone",
-      "assurancePolicy": "authority-and-deletion-controls",
-      "budget": {
-        "capacityRefs": {
-          "max-stats-stored-days": 65536,
-          "max-stats-stored-rows": 262144,
-          "max-stats-stored-bytes": 134217728,
-          "max-stats-immutable-bytes": 8589934592,
-          "max-stats-revisions": 1000000,
-          "stats-day-sources": 65536
-        }
-      },
-      "deletion": "services/usage-worker/src/stats-state.ts",
       "note": "Limits refer to the shared owning store, not additive allocations for every table. Logical payload/row ceilings do not attest SQLite, index or object metadata overhead. Retention/reclamation remains qualification-gated under verify/assurance/retention.json; no quota-driven deletion."
     },
     "worker:usage_contribution_control": {
@@ -1175,6 +1139,120 @@
         }
       },
       "note": "Trusted foreground diagnostic with no public route or alarm class. One step processes at most 16 canonical heads, or compares two internal 16-cell pages. Actual source/index read and scratch-write counters are retained with the step. 1040 object reads/80 MiB decoded content cover source bodies plus separate bounded index planning and stage readback; comparison caps252 reads/64 MiB. These exclude external namespace/fence checks. One nonrenewable 30-second RPC deadline includes external authority I/O, while actual provider puts retain restore custody until settlement. A match is relative to retained canonical SQL authority, not original source truth or a recovery/cutover certificate."
+    },
+    "worker:usage_stats_retired": {
+      "kind": "authoritative",
+      "owner": "services/usage-worker/src/stats-state.ts",
+      "retention": "tombstone",
+      "assurancePolicy": "authority-and-deletion-controls",
+      "budget": {
+        "capacityRefs": {
+          "max-stats-stored-days": 65536,
+          "max-stats-stored-rows": 262144,
+          "max-stats-stored-bytes": 134217728,
+          "max-stats-immutable-bytes": 8589934592,
+          "max-stats-revisions": 1000000,
+          "stats-day-sources": 65536
+        }
+      },
+      "deletion": "services/usage-worker/src/stats-state.ts",
+      "note": "Limits refer to the shared owning store, not additive allocations for every table. Logical payload/row ceilings do not attest SQLite, index or object metadata overhead. Retention/reclamation remains qualification-gated under verify/assurance/retention.json; no quota-driven deletion."
+    },
+    "worker:usage_stats_day_totals": {
+      "kind": "derived",
+      "owner": "services/usage-worker/src/stats-state.ts",
+      "retention": "persistent",
+      "assurancePolicy": "derived-projections",
+      "budget": {
+        "capacityRefs": {
+          "max-stats-stored-days": 65536,
+          "max-stats-stored-rows": 262144,
+          "max-stats-stored-bytes": 134217728,
+          "max-stats-immutable-bytes": 8589934592,
+          "max-stats-revisions": 1000000,
+          "stats-day-sources": 65536
+        }
+      },
+      "source": "committed snapshot day projections",
+      "note": "Limits refer to the shared owning store, not additive allocations for every table. Logical payload/row ceilings do not attest SQLite, index or object metadata overhead. Retention/reclamation remains qualification-gated under verify/assurance/retention.json; no quota-driven deletion."
+    },
+    "worker:usage_admission_day_totals": {
+      "kind": "derived",
+      "owner": "services/usage-worker/src/admission-schema.ts",
+      "retention": "persistent",
+      "assurancePolicy": "derived-projections",
+      "budget": {
+        "capacityRefs": {
+          "max-stats-stored-days": 65536,
+          "max-stats-stored-rows": 262144,
+          "max-stats-stored-bytes": 134217728,
+          "max-stats-immutable-bytes": 8589934592,
+          "max-stats-revisions": 1000000,
+          "stats-day-sources": 65536
+        }
+      },
+      "source": "live admission heads by journal revision",
+      "note": "Limits refer to the shared owning store, not additive allocations for every table. Logical payload/row ceilings do not attest SQLite, index or object metadata overhead. Retention/reclamation remains qualification-gated under verify/assurance/retention.json; no quota-driven deletion."
+    },
+    "worker:usage_admission_day_totals_cursor": {
+      "kind": "derived",
+      "owner": "services/usage-worker/src/admission-schema.ts",
+      "retention": "persistent",
+      "assurancePolicy": "derived-projections",
+      "budget": {
+        "capacityRefs": {
+          "max-stats-stored-days": 65536,
+          "max-stats-stored-rows": 262144,
+          "max-stats-stored-bytes": 134217728,
+          "max-stats-immutable-bytes": 8589934592,
+          "max-stats-revisions": 1000000,
+          "stats-day-sources": 65536
+        }
+      },
+      "source": "live admission heads by journal revision",
+      "note": "Limits refer to the shared owning store, not additive allocations for every table. Logical payload/row ceilings do not attest SQLite, index or object metadata overhead. Retention/reclamation remains qualification-gated under verify/assurance/retention.json; no quota-driven deletion."
+    },
+    "worker:usage_stats_writers": {
+      "kind": "authoritative",
+      "owner": "services/usage-worker/src/stats-state.ts",
+      "retention": "tombstone",
+      "assurancePolicy": "authority-and-deletion-controls",
+      "budget": {
+        "capacityRefs": {
+          "max-stats-stored-days": 65536,
+          "max-stats-stored-rows": 262144,
+          "max-stats-stored-bytes": 134217728,
+          "max-stats-immutable-bytes": 8589934592,
+          "max-stats-revisions": 1000000,
+          "stats-day-sources": 65536
+        }
+      },
+      "deletion": "services/usage-worker/src/stats-state.ts",
+      "note": "Retired (client, day) ownership shape. The CREATE statement is retained only so migratePartition can recognise and rebuild an existing store; no current store keeps this table after its first fenced mutation."
+    },
+    "worker:usage_stats_day_sources": {
+      "kind": "authoritative",
+      "owner": "services/usage-worker/src/stats-state.ts",
+      "retention": "tombstone",
+      "assurancePolicy": "authority-and-deletion-controls",
+      "budget": {
+        "capacityRefs": {
+          "max-stats-stored-days": 65536,
+          "max-stats-stored-rows": 262144,
+          "max-stats-stored-bytes": 134217728,
+          "max-stats-immutable-bytes": 8589934592,
+          "max-stats-revisions": 1000000,
+          "stats-day-sources": 65536
+        }
+      },
+      "deletion": "services/usage-worker/src/stats-state.ts",
+      "note": "Retired (client, day) ownership shape. The CREATE statement is retained only so migratePartition can recognise and rebuild an existing store; no current store keeps this table after its first fenced mutation."
+    },
+    "route:/api/usage/totals": {
+      "kind": "served",
+      "retention": "ephemeral",
+      "owner": "app/api/usage/totals/route.ts",
+      "note": "Lifetime account totals: one bounded worker read per request (256 KiB reply cap), private, no-store, no persistence."
     }
   },
   "exempt": []

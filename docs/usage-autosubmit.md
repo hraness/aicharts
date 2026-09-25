@@ -229,14 +229,25 @@ local credentials without advancing enrollment or uploading data. This identity
 match does not replace live publication, numeric readback or unattended custody
 qualification; see [enrolled state](usage-local.md#enrolled-state-directory).
 
-The LaunchAgent's `ProgramArguments` are separate arguments, for example the
-absolute binary path, `autosubmit`, `--config-file`, and the absolute private
-configuration path. Use label `io.aicharts.autosubmit`, `RunAtLoad`,
-`ProcessType=Background`, and a deliberate `StartInterval`. Do not enable a
-new schedule until a manual live cycle and account totals have been checked.
-The interval is a scheduling request, not guaranteed daily delivery: firings
-while the Mac sleeps or the job is already running are missed. Verify the
-actual completion timestamp and result in `last-cycle.json`.
+Prefer one long-lived job: `aicharts daemon ... --publish-config
+/absolute/private/autosubmit.json` collects every 15 minutes and runs this
+cycle on its own schedule (`--publish-interval-seconds`, default one hour) in
+the same process, with `RunAtLoad` and `KeepAlive` so it survives crashes and
+logins. A separate `io.aicharts.autosubmit` LaunchAgent whose
+`ProgramArguments` are the absolute binary path, `autosubmit`, `--config-file`
+and the absolute private configuration path, with `RunAtLoad`,
+`ProcessType=Background` and a deliberate `StartInterval`, still works. Do not
+enable a new schedule until a manual live cycle and account totals have been
+checked. An interval is a scheduling request, not guaranteed daily delivery:
+firings while the Mac sleeps or the job is already running are missed. Verify
+the actual completion timestamp and result in `last-cycle.json`.
+
+Every device publishes its own snapshots; the account sums devices per client
+and day, so a second Mac needs no ownership transfer and its cycles never
+conflict with the first. Each publication first resends a retained uncertain
+flight; a refusal that names those exact bytes is settled through the
+service's authenticated abandonment proof before fresh work, so a stuck cycle
+recovers on its own at the next run. Only network uncertainty keeps a flight.
 
 Record the old job's label, file, arguments, user GUI domain and enabled state.
 After the first AI Charts scheduled cycle succeeds, persistently disable the
@@ -253,11 +264,14 @@ Use the fixed error code in `last-cycle.json` to investigate a completed cycle.
 Configuration, lock, or runtime-storage failures can occur before this file is
 updated; also inspect the command's exit status and fixed error output. Never
 remove enrollment, key, checkpoint or pending-upload files to make a retry run.
-Account/generation mismatches, revoked devices and unexplained source reductions
-require explicit reconciliation. For a terminally refused frozen request, the
-authenticated `stats-sync --abandon` protocol fences a late retry before clearing
-that flight; never delete the checkpoint manually. A credential rotation that changes a profile's
-bound scope requires a separate profile or a reviewed migration.
+Account/generation mismatches and revoked devices require explicit
+reconciliation. A fresh scan that is smaller than retained history never
+lowers it: the service keeps the larger of each retained cell and the new
+observation. A terminally refused frozen request is settled automatically by
+the next cycle through the authenticated `stats-sync --abandon` proof, which
+fences a late retry before clearing that flight; never delete the checkpoint
+manually. A credential rotation that changes a profile's bound scope requires a
+separate profile or a reviewed migration.
 
 ## Local retention
 

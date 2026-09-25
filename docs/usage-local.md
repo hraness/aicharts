@@ -43,7 +43,7 @@ are reconciled by their keyed native identities; partial tails remain deferred
 until a terminating newline, and copied or forked subagent histories are not
 reconstructed as new root usage.
 
-`daemon` repeats the existing local `collect` command in one foreground process. It requires the same explicit state directory, private key and provider source paths; it does not discover paths, install a service, read provider credentials, or contact a server. The default interval is 15 minutes and is bounded to 60 seconds through 24 hours. Use `--once` for a single supervised pass or smoke test:
+`daemon` repeats the existing local `collect` command in one foreground process. It requires the same explicit state directory, private key and provider source paths; it does not discover paths, install a service or read provider credentials. With `--publish-config /absolute/autosubmit.json` the same process also runs one [scheduled publication cycle](usage-autosubmit.md) on its own schedule (`--publish-interval-seconds`, default one hour, at least five minutes), so one supervised process both collects and publishes. The default collection interval is 15 minutes and is bounded to 60 seconds through 24 hours. Use `--once` for a single supervised pass or smoke test:
 
 ```sh
 ./target/debug/aicharts daemon --once --state-dir /absolute/private/aicharts-state \
@@ -112,7 +112,7 @@ On macOS/Linux, initialize a new state directory outside the repository using yo
 
 The new directory has mode 0700 and its database has mode 0600. Initialization refuses an existing directory. A failed initialization can leave an incomplete directory; it is never automatically overwritten. Keep the key: a different key cannot open this ledger, and a missing directory is not silently recreated by collection.
 
-The foreground `daemon` runner uses the same collector and ledger. It retries only transient `ledger_busy_retry` and `ledger_changed_retry` results immediately, three times by default with bounded 1/2/4-second delays; `--retry-attempts 0..8` changes that bound. After exhausted ledger retries or a changing source snapshot, a long-running daemon reports the result and waits its normal interval before the next pass. Source changes never trigger immediate retries. Malformed stable input, invalid state, and other fixed errors still stop the process. `--once` returns any remaining collection error. Legacy collection defers each unstable or unfinished source as described below; explicit complete-prefix mode defers stable unfinished suffixes but still rejects changing snapshots for that pass.
+The foreground `daemon` runner uses the same collector and ledger. It retries only transient `ledger_busy_retry` and `ledger_changed_retry` results immediately, three times by default with bounded 1/2/4-second delays; `--retry-attempts 0..8` changes that bound. Every other pass result, including exhausted retries, a changing source snapshot, malformed stable input and an invalid ledger state, is reported on standard error and the daemon waits its normal interval before the next pass. The process never exits on a pass result, so a supervisor's restart policy is never turned into a restart loop; a pass can succeed once the source or ledger condition clears, and a fixed ledger state is visible in the log. `--once` returns any remaining collection error. A failed publication cycle is reported the same way and retried at the next due pass. Legacy collection defers each unstable or unfinished source as described below; explicit complete-prefix mode defers stable unfinished suffixes but still rejects changing snapshots for that pass.
 
 Collect explicit sources and inspect retained totals after a restart:
 
@@ -217,6 +217,18 @@ A retained uncertain batch stops the default pass with `upload_recovery_required
 | `2` | A refusal, rejection, or failure stopped the pass. | Inspect the fixed error code and retained state before recovery. |
 
 An output-write failure exits `1`. `--json` emits one structured result, including command failures, without source paths or secrets. It reports the phase, collection counters, attempted and settled batches, acknowledged and pending records, and available sender state. `status: "complete"` describes the pending queue at that observation; measurement coverage remains partial.
+
+## Recovering a blocked uploader
+
+Work from the retained state; do not delete the ledger, the state directory or the checkpoint key. `account --state-dir DIR --diagnose --json` reports enrollment custody, sender health, pending records and fixed warning codes without writing.
+
+- `upload_recovery_required` means an earlier exchange ended uncertainly and its exact bytes are retained. Replay them once with `upload --resume --state-dir DIR --key-file PATH`. The resume settles only against a validated terminal journal and never sends a second distinct batch.
+- `upload_transport_blocked` is the transport's fixed name for a remote refusal — an admission conflict, account limit, revocation or superseded profile — not a local ledger fault. A single refusal may still park the flight; run the explicit `--resume` once. Repeated identical refusals are a server-side condition: check the account diagnostic and wait for the service fix rather than rebuilding local state.
+- `ledger_busy_retry` means a concurrent `daemon`, `sync` or `upload` holds the ledger. Serialize uploads — one scheduled uploader plus one supervised drain — and retry; it is not corruption.
+- `source_not_regular` or `source_symlink_not_allowed` means a selected source tree contains a socket, device node or symlink entry. Select the provider's session-data directories (`--codex …/.codex/sessions`, `--claude …/.claude/projects`, `--devin` ATIF exports) rather than whole provider homes.
+- A wrapped scheduled uploader should attempt `upload`, run `--resume` on `upload_recovery_required`, sleep through `ledger_busy_retry` and bound consecutive failures — never loop a speculative replay and never repair state automatically.
+
+A second enrolled machine needs no special migration: update the CLI, keep its state directory and checkpoint key, and let its scheduled uploader run. Retained flights settle on the next `--resume` or bounded pass; a superseded account profile or parked admission clears on the next server round, not by re-enrolment.
 
 ## Stable macOS signing for credential custody
 

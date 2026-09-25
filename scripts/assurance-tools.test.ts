@@ -65,12 +65,29 @@ describe("formal tool provisioning admission", () => {
       { ...actual, packages: [{ ...actual.packages[0], url: "https://example.com/mathlib" }] },
     ]) expect(() => assertPackages(changed, expected)).toThrow("lean_dependency_manifest_drift");
   });
-  test("CI preserves Check and Menubar and requires formal results with failure artifacts", async () => {
+  test("CI preserves every complete-gate command across parallel jobs and requires formal results with failure artifacts", async () => {
     const workflow = parse(await readFile(new URL("../.github/workflows/ci.yml", import.meta.url), "utf8"));
-    expect(workflow.jobs.required.needs).toEqual(["check", "menubar", "formal"]);
-    expect(workflow.jobs.required.steps[0].run).toContain('test "$FORMAL_RESULT" = success');
-    expect(workflow.jobs.check.steps.some((step: { run?: string }) => step.run === "bun run check")).toBe(true);
+    const jobs = Object.keys(workflow.jobs).filter(name => name !== "required");
+    expect([...workflow.jobs.required.needs].sort()).toEqual([...jobs].sort());
+    expect(workflow.jobs.required.if).toBe("always()");
+    const gate = String(workflow.jobs.required.steps[0].run);
+    for (const name of ["CHANGES", "CHECKS", "BUILD", "WORKER", "RUST", "MENUBAR", "FORMAL"]) expect(gate).toContain(`test "$${name}_RESULT" = success`);
+    // A filtered job may only pass as a deliberate skip recorded by the change filter.
+    for (const [result, changed] of [["RUST", "RUST"], ["MENUBAR", "DESKTOP"], ["FORMAL", "FORMAL"]]) {
+      expect(gate).toContain(`{ test "$${result}_RESULT" = skipped && test "$${changed}_CHANGED" = false; }`);
+    }
+    // Every command of the local complete gate (`bun run check`) still runs in CI, split across parallel jobs.
+    const pkg = JSON.parse(await readFile(new URL("../package.json", import.meta.url), "utf8"));
+    const gateCommands: string[] = pkg.scripts.check.split(" && ");
+    const ciJobs = Object.values(workflow.jobs as Record<string, { steps?: { run?: string }[] }>);
+    const ciRuns = new Set(ciJobs.flatMap(job => (job.steps ?? []).map(step => step.run)));
+    for (const command of gateCommands) expect(ciRuns.has(command)).toBe(true);
+    expect(workflow.jobs.build.steps.map((step: { run?: string }) => step.run).filter(Boolean).slice(-2)).toEqual(["bun run build", "bun run test:browser"]);
     expect(workflow.jobs.menubar.steps.some((step: { run?: string }) => step.run?.includes("cargo build --release --locked"))).toBe(true);
+    for (const name of ["rust", "menubar", "formal"]) expect(workflow.jobs[name].needs).toEqual(["changes"]);
+    expect(workflow.jobs.checks.if).toBeUndefined();
+    expect(workflow.jobs.build.if).toBeUndefined();
+    expect(workflow.jobs.worker.if).toBeUndefined();
     const steps = workflow.jobs.formal.steps;
     for (const step of steps) if (step.uses) expect(step.uses).toMatch(/@[0-9a-f]{40}$/u);
     expect(steps.find((step: { uses?: string }) => step.uses?.startsWith("actions/upload-artifact@")).if).toBe("always()");

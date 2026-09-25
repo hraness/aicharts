@@ -125,10 +125,10 @@
         "S03",
         "S10"
       ],
-      "regression": "cross-device-takeover",
+      "regression": "device-partition-sum",
       "owner": "services/usage-worker/src/stats-state.ts",
-      "obligation": "Disjoint 120 and 15 remain 135; only proven-owned overlap may be replaced.",
-      "status": "open",
+      "obligation": "Disjoint 120 and 15 remain 135: snapshot days are owned per device, a device shadows only its own retained heads, and reads sum devices.",
+      "status": "fixed",
       "evidenceClass": "reproduced"
     },
     {
@@ -218,9 +218,9 @@
         "S08",
         "S13"
       ],
-      "regression": "revoked-writer-transfer",
+      "regression": "revoked-device-partition",
       "owner": "services/usage-worker/src/stats-state.ts",
-      "obligation": "Authorized successor progresses; late old-generation effects cannot publish.",
+      "obligation": "A revoked device keeps its published days and its later uploads refuse; no writer slot exists to transfer, so a successor device publishes its own partition immediately.",
       "status": "fixed",
       "evidenceClass": "reproduced"
     },

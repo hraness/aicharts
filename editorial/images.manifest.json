@@ -22,6 +22,26 @@
   },
   "images": [
     {
+      "slug": "introducing-ai-charts",
+      "promptSha256": "3233a72ede320006ad35729ce91c2acf056c7a63a29c302d6d85652794f8d00a",
+      "master": {
+        "path": "/images/blog/introducing-ai-charts.webp",
+        "width": 1536,
+        "height": 864,
+        "bytes": 73200,
+        "sha256": "a78e4bdcb6a852d67dc0738215690ad7d05ef6065da5fe65adb1b5ca6f695093"
+      },
+      "receiptPath": "artifacts/slopcamera/generated/gateway/20260924T212044913Z-image-a289b94d-c1e/receipt.json",
+      "jobPath": "artifacts/slopcamera/generated/gateway-jobs/gateway_1bae97d06d1942f4a81732af7bc5510f.json",
+      "generator": {
+        "package": "@hraness/slopcamera",
+        "version": "3.2.5",
+        "sourceCommit": "66b4322030f4de24f4d5b6d0c2515c109259f901"
+      },
+      "validation": "decode-passed",
+      "review": "accepted"
+    },
+    {
       "slug": "terminal-bench-science",
       "promptSha256": "826a45b4469a95b6aa1692a976c503dc870421345784dce7279fae06e4b8a743",
       "master": {

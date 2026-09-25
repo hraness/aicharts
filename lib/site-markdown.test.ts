@@ -1,5 +1,8 @@
 import { describe, expect, test } from "bun:test";
 
+import { articleProvenanceSentence } from "@hraness/design-kit";
+
+import { blogArticleProvenance } from "@/app/blog/article-admissions";
 import { articleToMarkdown, blogArticles } from "@/app/blog/articles";
 import { blogEditorialImage } from "@/app/blog/editorial-images";
 import {
@@ -257,7 +260,10 @@ describe("markdown representations", () => {
       const document = markdownForPath(`/blog/${article.slug}`);
       expect(document.found).toBeTrue();
       const image = blogEditorialImage(article.slug);
-      expect(document.body).toBe(articleToMarkdown(article, image));
+      const provenance = articleProvenanceSentence(blogArticleProvenance(article.slug));
+      expect(document.body).toBe(articleToMarkdown(article, image, provenance));
+      expect(document.body).toContain(`By Hraness.`);
+      expect(document.body).toContain(provenance);
       expect(document.body).toContain(`# ${article.title}`);
       expect(document.body).toContain(article.dek);
       expect(document.body).toContain(article.sourceNote);

@@ -169,20 +169,19 @@ async function statsImage(account: string) {
   return runInDurableObject(accountStub(account), (_instance, state) => ({
     revision: state.storage.sql.exec("SELECT revision FROM usage_stats_control").one().revision,
     charged: state.storage.sql.exec("SELECT immutable_bytes FROM usage_stats_control").one().immutable_bytes,
-    pending: state.storage.sql.exec("SELECT body_hash FROM usage_stats_pending").toArray()[0]?.body_hash ?? null,
-    days: state.storage.sql.exec("SELECT utc_day AS day, device_id AS device, ownership_revision AS ownership FROM usage_stats_day_sources ORDER BY utc_day").toArray(),
-    writers: state.storage.sql.exec("SELECT device_id AS device, ownership_revision AS ownership FROM usage_stats_writers ORDER BY client").toArray(),
-    values: state.storage.sql.exec("SELECT input_tokens FROM usage_stats_day_rows ORDER BY utc_day").toArray().map(row => row.input_tokens),
+    pending: state.storage.sql.exec("SELECT body_hash FROM usage_stats_pending ORDER BY device_id").toArray().map(row => row.body_hash),
+    days: state.storage.sql.exec("SELECT utc_day AS day, device_id AS device FROM usage_stats_days ORDER BY utc_day, device_id").toArray(),
+    retired: state.storage.sql.exec("SELECT body_hash FROM usage_stats_retired ORDER BY body_hash").toArray().map(row => row.body_hash),
+    values: state.storage.sql.exec("SELECT input_tokens FROM usage_stats_day_rows ORDER BY utc_day, device_id").toArray().map(row => row.input_tokens),
   }));
 }
 
-test.each(CONFORMANCE_SEEDS)("M4 generated A B A abandonment retains charges and predecessor fence seed=%i", async seed => {
+test.each(CONFORMANCE_SEEDS)("M4 generated A B A supersession retains charges and retires the predecessor seed=%i", async seed => {
   const account = accountId(), device = await enroll(account), stub = accountStub(account);
   await activateStats(account);
   const random = scheduleRandom(seed), first = statsRequest(account, device, 1 + random(100)), second = statsRequest(account, device, 200 + random(100));
   const trace = new ConformanceTrace("M4-abandon", seed);
-  const model = { revision: 0, charged: 0, pending: null as string | null,
-    days: [] as { day: number; device: string; ownership: number }[], writers: [] as { device: string; ownership: number }[], values: [] as string[] };
+  const model = { revision: 0, charged: 0, pending: [] as string[], days: [] as { day: number; device: string }[], retired: [] as string[], values: [] as string[] };
   const lost = await runInDurableObject(stub, async instance => {
     const restore = replaceEnvironment(instance, original => ({ ...original, STAGING: bucketFault(original.STAGING, async (method, _args, invoke) => {
       if (method === "put") throw new Error("synthetic_before_put"); return invoke();
@@ -190,81 +189,96 @@ test.each(CONFORMANCE_SEEDS)("M4 generated A B A abandonment retains charges and
     try { return await instance.admitStatsSnapshot({ uploadSecret: device.proof.uploadSecret, request: first }); }
     finally { restore(); }
   });
-  model.charged = statsCharge(first); model.pending = statsHash(JSON.stringify(first));
+  model.charged = statsCharge(first); model.pending = [statsHash(JSON.stringify(first))];
   trace.compare("reserve-failure", { operation: "A" }, outcome(lost), "storage_unavailable", await statsImage(account), model);
-  const blocked = await stub.admitStatsSnapshot({ uploadSecret: device.proof.uploadSecret, request: second });
-  trace.compare("implicit-supersede", { operation: "B" }, outcome(blocked), "conflict", await statsImage(account), model);
+  // A newer body from the same device retires the uncertain predecessor and
+  // publishes at the device's own next sequence; the predecessor's charge stays.
+  const superseded = await stub.admitStatsSnapshot({ uploadSecret: device.proof.uploadSecret, request: second });
+  model.revision = 1; model.charged += statsCharge(second); model.pending = []; model.retired = [statsHash(JSON.stringify(first))];
+  model.days = [{ day: DAY, device: second.deviceId }]; model.values = [second.report.rows[0].tokens!.input!];
+  trace.compare("supersede", { operation: "B" }, outcome(superseded), "ok", await statsImage(account), model);
   const abandoned = await stub.abandonStatsSnapshot({ uploadSecret: device.proof.uploadSecret, request: statsAbandon(first) });
-  model.revision = 1; model.pending = null;
   trace.compare("abandon", { operation: "A" }, outcome(abandoned), "ok", await statsImage(account), model);
   const retryAbandon = await stub.abandonStatsSnapshot({ uploadSecret: device.proof.uploadSecret, request: statsAbandon(first) });
   trace.compare("abandon-retry", { operation: "A" }, outcome(retryAbandon), "ok", await statsImage(account), model);
-  const replacement = { ...second, expectedRevision: 1 };
+  const replacement = { ...second, operationId: hex(++serial + 20000), sequence: 2, expectedRevision: 1 };
   const committed = await stub.admitStatsSnapshot({ uploadSecret: device.proof.uploadSecret, request: replacement });
   model.revision = 2; model.charged += statsCharge(replacement);
-  model.days = [{ day: DAY, device: replacement.deviceId, ownership: 2 }];
-  model.writers = [{ device: replacement.deviceId, ownership: 2 }]; model.values = [replacement.report.rows[0].tokens!.input!];
-  trace.compare("commit-replacement", { operation: "B", expectedRevision: 1 }, outcome(committed), "ok", await statsImage(account), model);
-  for (const operation of scheduleShuffle(seed, ["A", "B", "A", "B", "A"])) {
+  trace.compare("commit-replacement", { operation: "C", expectedRevision: 1 }, outcome(committed), "ok", await statsImage(account), model);
+  for (const operation of scheduleShuffle(seed, ["A", "C", "A", "C", "A"])) {
     const result = await stub.admitStatsSnapshot({ uploadSecret: device.proof.uploadSecret, request: operation === "A" ? first : replacement });
     trace.compare("replay", { operation }, outcome(result), operation === "A" ? "conflict" : "ok", await statsImage(account), model);
   }
-  trace.finish(["reserve-failure:storage_unavailable", "implicit-supersede:conflict", "abandon:ok", "abandon-retry:ok",
+  trace.finish(["reserve-failure:storage_unavailable", "supersede:ok", "abandon:ok", "abandon-retry:ok",
     "commit-replacement:ok", "replay:conflict", "replay:ok"]);
 });
 
-test.each(CONFORMANCE_SEEDS)("M4 generated writer recovery preserves predecessor attribution seed=%i", async seed => {
-  const account = accountId(), predecessor = await enroll(account), successor = await enroll(account), stub = accountStub(account);
+test.each(CONFORMANCE_SEEDS)("M4 generated device partitions sum concurrent publishers and survive revocation seed=%i", async seed => {
+  const account = accountId(), first = await enroll(account), second = await enroll(account), stub = accountStub(account);
   await activateStats(account);
-  const random = scheduleRandom(seed), original = statsRequest(account, predecessor, 10 + random(100));
-  const replacement = statsRequest(account, successor, 200 + random(100), { expectedRevision: 1 });
-  const recovery = { schemaVersion: 1, accountId: account, sessionExpiresAtMs: NOW + PAIRING_TTL_MS,
-    client: "codex", previousDeviceId: original.deviceId, deviceId: replacement.deviceId, expectedRevision: 1 };
-  const trace = new ConformanceTrace("M4-owner", seed);
-  const model = { revision: 1, charged: statsCharge(original), pending: null,
-    days: [{ day: DAY, device: original.deviceId, ownership: 1 }],
-    writers: [{ device: original.deviceId, ownership: 1 }], values: [original.report.rows[0].tokens!.input!] };
-  const committed = await stub.admitStatsSnapshot({ uploadSecret: predecessor.proof.uploadSecret, request: original });
+  const random = scheduleRandom(seed), original = statsRequest(account, first, 10 + random(100));
+  const stale = statsRequest(account, second, 200 + random(100), { expectedRevision: 0 });
+  const trace = new ConformanceTrace("M4-devices", seed);
+  const model = { revision: 1, charged: statsCharge(original), pending: [] as string[],
+    days: [{ day: DAY, device: original.deviceId }], retired: [] as string[], values: [original.report.rows[0].tokens!.input!] };
+  const committed = await stub.admitStatsSnapshot({ uploadSecret: first.proof.uploadSecret, request: original });
   trace.compare("commit", { device: "A" }, outcome(committed), "ok", await statsImage(account), model);
-  const refused = await stub.recoverStatsWriter(recovery);
-  trace.compare("transfer-active-predecessor", {}, outcome(refused), "writer_conflict", await statsImage(account), model);
-  const revoked = await stub.revokeEnrollment(predecessor.proof);
+  // B publishes with the revision it saw before A committed; its receipt keeps
+  // that expectation while the account revision still advances.
+  const concurrent = await stub.admitStatsSnapshot({ uploadSecret: second.proof.uploadSecret, request: stale });
+  model.revision = 2; model.charged += statsCharge(stale);
+  model.days = [{ day: DAY, device: original.deviceId }, { day: DAY, device: stale.deviceId }].sort((a, b) => a.device < b.device ? -1 : 1);
+  model.values = model.days.map(day => day.device === original.deviceId ? original.report.rows[0].tokens!.input! : stale.report.rows[0].tokens!.input!);
+  trace.compare("stale-revision", { device: "B", expectedRevision: 0 }, outcome(concurrent), "ok", await statsImage(account), model);
+  const earlier = statsRequest(account, second, 300 + random(100), { sequence: 2, expectedRevision: 2, report: { ...stale.report, firstUtcDay: DAY - 1,
+    sources: [{ ...stale.report.sources[0], latestAtMs: (DAY - 1) * DAY_MS + 1 }], rows: [{ ...stale.report.rows[0], utcDay: DAY - 1 }] } });
+  const next = await stub.admitStatsSnapshot({ uploadSecret: second.proof.uploadSecret, request: earlier });
+  model.revision = 3; model.charged += statsCharge(earlier);
+  model.days = [{ day: DAY - 1, device: earlier.deviceId }, ...model.days]; model.values = [earlier.report.rows[0].tokens!.input!, ...model.values];
+  trace.compare("second-device", { device: "B", sequence: 2 }, outcome(next), "ok", await statsImage(account), model);
+  const query = { schemaVersion: 2, accountId: account, sessionExpiresAtMs: NOW + PAIRING_TTL_MS, firstUtcDay: DAY, dayCount: 1 };
+  const read = await stub.readUsageStats(query);
+  const summed = String(BigInt(original.report.rows[0].tokens!.input!) + BigInt(stale.report.rows[0].tokens!.input!));
+  expect(success(read).rows).toHaveLength(1); expect(success(read).rows[0].tokens.input).toBe(summed);
+  trace.compare("read", { summed }, outcome(read), "ok", await statsImage(account), model);
+  const revoked = await stub.revokeEnrollment(first.proof);
   trace.compare("revoke", { device: "A" }, outcome(revoked), "ok", await statsImage(account), model);
-  const transferred = await stub.recoverStatsWriter(recovery);
-  model.revision = 2; model.writers = [{ device: replacement.deviceId, ownership: 2 }];
-  trace.compare("transfer", { from: "A", to: "B" }, outcome(transferred), "ok", await statsImage(account), model);
-  for (const command of scheduleShuffle(seed, ["retry-transfer", "old-writer", "replace-predecessor"])) {
-    const result = command === "retry-transfer" ? await stub.recoverStatsWriter(recovery)
-      : command === "old-writer" ? await stub.admitStatsSnapshot({ uploadSecret: predecessor.proof.uploadSecret, request: { ...original, sequence: 2, expectedRevision: 2 } })
-        : await stub.admitStatsSnapshot({ uploadSecret: successor.proof.uploadSecret, request: { ...replacement, expectedRevision: 2 } });
-    trace.compare(command, {}, outcome(result), command === "retry-transfer" ? "ok" : command === "old-writer" ? "revoked" : "replacement_required", await statsImage(account), model);
-  }
-  trace.finish(["commit:ok", "transfer-active-predecessor:writer_conflict", "revoke:ok", "transfer:ok", "retry-transfer:ok",
-    "old-writer:revoked", "replace-predecessor:replacement_required"]);
+  const late = await stub.admitStatsSnapshot({ uploadSecret: first.proof.uploadSecret, request: { ...original, sequence: 2, expectedRevision: 3 } });
+  trace.compare("old-device", { device: "A" }, outcome(late), "revoked", await statsImage(account), model);
+  trace.finish(["commit:ok", "stale-revision:ok", "second-device:ok", "read:ok", "revoke:ok", "old-device:revoked"]);
 });
 
-test.each(CONFORMANCE_SEEDS)("M4 generated ambiguous legacy overlap preserves foreign history seed=%i", async seed => {
+test.each(CONFORMANCE_SEEDS)("M4 generated foreign legacy history is preserved beside a local snapshot seed=%i", async seed => {
   const account = accountId(), predecessor = await enroll(account), successor = await enroll(account), stub = accountStub(account);
-  const random = scheduleRandom(seed), legacyTokens = 120 + random(100), replacementTokens = 1 + random(15);
+  const random = scheduleRandom(seed), legacyTokens = 120 + random(100), replacementTokens = 1 + random(15), ownTokens = 200 + random(50);
   const batch = admission(account, predecessor, legacyTokens);
   success(await stub.admitBatch({ uploadSecret: predecessor.proof.uploadSecret, batch: batch.bytes }));
   await activateStats(account);
   const request = statsRequest(account, successor, replacementTokens), trace = new ConformanceTrace("M4-overlap", seed);
+  const query = { schemaVersion: 2, accountId: account, sessionExpiresAtMs: NOW + PAIRING_TTL_MS, firstUtcDay: DAY, dayCount: 1 };
   const observe = async () => {
     const legacy = success(await stub.readImportedDays({ schemaVersion: 1, accountId: account,
       sessionExpiresAtMs: NOW + PAIRING_TTL_MS, firstUtcDay: DAY, dayCount: 1 }));
-    const stats = await statsImage(account);
-    return { legacyTokens: legacy.days[0].codex.observedAccountedTokens, revision: stats.revision, charged: stats.charged,
-      pending: stats.pending, days: stats.days, snapshots: (await env.STAGING.list({ prefix: "usage-stats/v2/" })).objects.length };
+    const stats = await statsImage(account), combined = await stub.readUsageStats(query);
+    return { legacyTokens: legacy.days[0].codex.observedAccountedTokens, combined: combined.ok ? combined.value.rows[0]?.tokens.input ?? null : combined.error,
+      revision: stats.revision, pending: stats.pending, days: stats.days, snapshots: (await env.STAGING.list({ prefix: "usage-stats/v2/" })).objects.length };
   };
-  const model = { legacyTokens: String(legacyTokens), revision: 0, charged: 0, pending: null, days: [], snapshots: 0 };
+  const model = { legacyTokens: String(legacyTokens), combined: "not_started" as string, revision: 0, pending: [] as string[], days: [] as { day: number; device: string }[], snapshots: 0 };
   trace.compare("legacy-commit", { legacyTokens }, "ok", "ok", await observe(), model);
-  for (let attempt = 0; attempt < 2 + random(3); attempt++) {
-    const result = await stub.admitStatsSnapshot({ uploadSecret: successor.proof.uploadSecret, request });
-    trace.compare("ambiguous-takeover", { replacementTokens, attempt }, outcome(result), "takeover_required", await observe(), model);
-  }
+  // A different device's snapshot adds to the retained foreign heads: 120 and
+  // 15 report 135, and nothing is hidden.
+  const foreign = await stub.admitStatsSnapshot({ uploadSecret: successor.proof.uploadSecret, request });
+  model.revision = 1; model.days = [{ day: DAY, device: request.deviceId }]; model.snapshots = 1; model.combined = String(legacyTokens + replacementTokens);
+  trace.compare("foreign-snapshot", { replacementTokens }, outcome(foreign), "ok", await observe(), model);
+  // The head's own device publishing a snapshot for that client and day
+  // shadows exactly its own heads; the foreign snapshot still counts.
+  const own = statsRequest(account, predecessor, ownTokens, { expectedRevision: 1 });
+  const shadowed = await stub.admitStatsSnapshot({ uploadSecret: predecessor.proof.uploadSecret, request: own });
+  model.revision = 2; model.days = [{ day: DAY, device: own.deviceId }, { day: DAY, device: request.deviceId }].sort((a, b) => a.device < b.device ? -1 : 1);
+  model.snapshots = 2; model.combined = String(ownTokens + replacementTokens);
+  trace.compare("own-snapshot", { ownTokens }, outcome(shadowed), "ok", await observe(), model);
   trace.compare("legacy-read", {}, "ok", "ok", await observe(), model);
-  trace.finish(["legacy-commit:ok", "ambiguous-takeover:takeover_required", "legacy-read:ok"]);
+  trace.finish(["legacy-commit:ok", "foreign-snapshot:ok", "own-snapshot:ok", "legacy-read:ok"]);
 });
 
 test.each(CONFORMANCE_SEEDS)("M7 generated pure reads and fenced derived rebuild seed=%i", async seed => {
@@ -279,7 +293,7 @@ test.each(CONFORMANCE_SEEDS)("M7 generated pure reads and fenced derived rebuild
     canonical: state.storage.sql.exec("SELECT projection FROM usage_stats_days").one().projection,
     metadata: state.storage.sql.exec("SELECT COUNT(*) AS count FROM usage_stats_day_meta").one().count,
     rows: state.storage.sql.exec("SELECT input_tokens FROM usage_stats_day_rows").toArray().map(row => row.input_tokens),
-    sources: state.storage.sql.exec("SELECT * FROM usage_stats_day_sources").toArray(),
+    totals: state.storage.sql.exec("SELECT client, utc_day, device_id, records FROM usage_stats_day_totals").toArray(),
   }));
   const baseline = await image(), model = structuredClone(baseline);
   const query = { schemaVersion: 2, accountId: account, sessionExpiresAtMs: NOW + PAIRING_TTL_MS, firstUtcDay: DAY, dayCount: 1 };

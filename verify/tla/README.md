@@ -90,6 +90,12 @@ F02 and F11 production-state methods were executed in Phase 0 against the finger
 
 ### Frozen M4 repair obligations
 
+As of 24 September 2026 the implementation partitions snapshot days by device
+(see `kb/plans/system-assurance-and-usage-analytics.md`, implementation log).
+The writer-transfer actions modelled below are retained as historical
+evidence of the earlier design; the worker conformance traces `M4-devices`
+and `M4-overlap` now exercise device partitions and same-device shadowing.
+
 - Ownership/replacement belongs to an immutable source scope with proved overlap and interval coverage. Preserve every foreign contribution. Shared client names, dates, totals or same/different device IDs cannot establish overlap. Account-authorized writer transfer preserves committed history and fences the old generation.
 - Supersession is a durable terminal decision/generation change. Delayed A cannot regain its old authority after B, and the same retained intent cannot be charged twice. Every callback/readback uses the exact operation identity, predecessor and generation.
 - Publish only through the authoritative committed-publication record. Preserve v1's declared revocation boundary: revocation before freeze rejects, while an already-frozen terminal decision remains reconcilable. A revoked v2 writer cannot newly publish; its authorized successor needs a real transition.

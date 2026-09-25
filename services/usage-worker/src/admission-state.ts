@@ -7,7 +7,8 @@ import {
 } from "./admission-policy";
 import { ADMISSION_SCHEMA, LEGACY_ADMISSION_CONTROL_SQL } from "./admission-schema";
 import { parsePrivateDaysRequest, parsePrivateDaysValue, type PrivateDaysRequestV1, type PrivateDaysV1 } from "../../../lib/usage/private-days-contract";
-import { decodeUsageBatch, totalTokens } from "../../../lib/usage/wire";
+import { decodeUsageBatch, totalTokens, type Usage } from "../../../lib/usage/wire";
+import type { StatsTokens } from "../../../lib/usage/stats-contract";
 
 export type AdmissionAuthority = {
   accountId: string; generation: string; observedAtMs: number; phase: "pending" | "active";
@@ -34,6 +35,19 @@ function journalLifetime(authority: AdmissionAuthority, batch: AdmissionBatch, j
     : device.revokedAtMs === null || journal.committedAtMs <= device.revokedAtMs);
 }
 
+export const legacyClient = (provider: number): string => provider === 1 ? "codex" : provider === 2 ? "claude" : "devin-cli";
+/** A v1 frame in the disjoint v2 token buckets: reasoning leaves output and
+ * both cache-write lifetimes collapse into one bucket. */
+export function legacyTokens(usage: Pick<Usage, "tokens">): StatsTokens {
+  const token = usage.tokens;
+  return Object.freeze({ input: token.inputUncached.toString(), cacheRead: token.cacheRead.toString(),
+    cacheWrite: (token.cacheWrite5m + token.cacheWrite1h).toString(), output: (token.output - token.reasoningOutput).toString(),
+    reasoning: token.reasoningOutput.toString() });
+}
+export const DAY_TOTALS_SPAN_REVISIONS = 64;
+export type LegacyDayTotal = Readonly<{ utcDay: number; deviceId: string; provider: 1 | 2 | 3; heads: number; tokens: StatsTokens }>;
+const decimal = (value: unknown): value is string => typeof value === "string" && /^(?:0|[1-9][0-9]{0,38})$/u.test(value);
+
 /** Synchronous SQL phases only. The owner supplies transactions and authority. */
 export class AdmissionState {
   constructor(readonly sql: SqlStorage) {}
@@ -42,6 +56,7 @@ export class AdmissionState {
     for (const definition of Object.values(ADMISSION_SCHEMA)) this.sql.exec(definition);
     this.sql.exec("INSERT INTO usage_admission_control (id, policy_version, published_revision, committed_at_ms, observed_at_ms, head_count, live_count, quarantined) VALUES (1, 1, 0, 0, ?, 0, 0, 0)", authority?.observedAtMs ?? 0);
     this.sql.exec("INSERT INTO usage_admission_audit (id, revision, committed_at_ms) VALUES (1, 0, 0)");
+    this.sql.exec("INSERT INTO usage_admission_day_totals_cursor (id, verified_revision) VALUES (1, 0)");
     for (const device of authority?.devices ?? []) this.addDevice(device.deviceId);
   }
   /** One-time widening of the retained-head ceiling plus installation of the
@@ -69,10 +84,91 @@ export class AdmissionState {
     } else requireAdmission(controlSql === ADMISSION_SCHEMA.usage_admission_control);
     if (definitions.has("usage_admission_audit")) {
       requireAdmission(definitions.get("usage_admission_audit") === ADMISSION_SCHEMA.usage_admission_audit);
+    } else {
+      this.sql.exec(ADMISSION_SCHEMA.usage_admission_audit);
+      this.sql.exec("INSERT INTO usage_admission_audit (id, revision, committed_at_ms) VALUES (1, 0, 0)");
+    }
+    this.migrateDayTotals();
+  }
+  /** Installs the rebuildable per-day totals beside an existing head table.
+   * The cursor starts at zero: nothing is counted until a bounded backfill
+   * step verifies it, so a store never serves a partial sum as complete. */
+  migrateDayTotals(): void {
+    const definitions = new Map(this.sql.exec("SELECT name, sql FROM sqlite_schema WHERE name IN ('usage_admission_day_totals', 'usage_admission_day_totals_cursor') LIMIT 4")
+      .toArray().map(row => [String(row.name), row.sql]));
+    if (definitions.has("usage_admission_day_totals") || definitions.has("usage_admission_day_totals_cursor")) {
+      requireAdmission(definitions.get("usage_admission_day_totals") === ADMISSION_SCHEMA.usage_admission_day_totals
+        && definitions.get("usage_admission_day_totals_cursor") === ADMISSION_SCHEMA.usage_admission_day_totals_cursor);
       return;
     }
-    this.sql.exec(ADMISSION_SCHEMA.usage_admission_audit);
-    this.sql.exec("INSERT INTO usage_admission_audit (id, revision, committed_at_ms) VALUES (1, 0, 0)");
+    this.sql.exec(ADMISSION_SCHEMA.usage_admission_day_totals);
+    this.sql.exec(ADMISSION_SCHEMA.usage_admission_day_totals_cursor);
+    this.sql.exec("INSERT INTO usage_admission_day_totals_cursor (id, verified_revision) VALUES (1, 0)");
+  }
+  dayTotalsCursor(): { verifiedRevision: number } {
+    const rows = this.sql.exec("SELECT verified_revision FROM usage_admission_day_totals_cursor LIMIT 2").toArray();
+    requireAdmission(rows.length === 1 && integer(rows[0].verified_revision, 0, MAX_ADMISSION_REVISIONS));
+    return { verifiedRevision: rows[0].verified_revision };
+  }
+  #dayTotal(row: Row): LegacyDayTotal {
+    requireAdmission(integer(row.utc_day, 0, 4_294_967_295) && typeof row.device_id === "string" && /^[0-9a-f]{64}$/u.test(row.device_id)
+      && (row.provider === 1 || row.provider === 2 || row.provider === 3) && integer(row.heads, 0, MAX_ADMISSION_DAY_HEADS)
+      && decimal(row.input_tokens) && decimal(row.cache_read_tokens) && decimal(row.cache_write_tokens) && decimal(row.output_tokens) && decimal(row.reasoning_tokens));
+    return Object.freeze({ utcDay: row.utc_day, deviceId: row.device_id, provider: row.provider, heads: row.heads,
+      tokens: Object.freeze({ input: row.input_tokens, cacheRead: row.cache_read_tokens, cacheWrite: row.cache_write_tokens, output: row.output_tokens, reasoning: row.reasoning_tokens }) });
+  }
+  /** Every retained per-day total, in key order. Rows with zero live heads
+   * are removed at write time, so each row is a real contribution. */
+  *legacyDayTotals(): Generator<LegacyDayTotal> {
+    let count = 0;
+    for (const row of this.sql.exec(`SELECT * FROM usage_admission_day_totals ORDER BY utc_day, device_id, provider LIMIT ${MAX_ADMISSION_HEADS + 1}`)) {
+      requireAdmission(++count <= MAX_ADMISSION_HEADS);
+      yield this.#dayTotal(row);
+    }
+  }
+  #applyDayTotal(head: AdmissionHead, sign: 1n | -1n): void {
+    if (head.day === null) return;
+    const frame = decodeUsageBatch(head.operation.frame, ADMISSION_POLICY_V1);
+    requireAdmission(frame.ok);
+    const usage = frame.value.usage[0], tokens = legacyTokens(usage), deviceId = admissionHex(head.operation.deviceId);
+    const rows = this.sql.exec("SELECT * FROM usage_admission_day_totals WHERE utc_day = ? AND device_id = ? AND provider = ? LIMIT 2", head.day, deviceId, usage.provider).toArray();
+    requireAdmission(rows.length <= 1);
+    const current = rows.length ? this.#dayTotal(rows[0]) : { utcDay: head.day, deviceId, provider: usage.provider, heads: 0,
+      tokens: { input: "0", cacheRead: "0", cacheWrite: "0", output: "0", reasoning: "0" } as StatsTokens };
+    const heads = current.heads + Number(sign);
+    const next = Object.fromEntries((["input", "cacheRead", "cacheWrite", "output", "reasoning"] as const).map(key => [key, BigInt(current.tokens[key]) + sign * BigInt(tokens[key])]));
+    requireAdmission(heads >= 0 && Object.values(next).every(value => value >= 0n));
+    if (heads === 0) {
+      requireAdmission(Object.values(next).every(value => value === 0n));
+      this.sql.exec("DELETE FROM usage_admission_day_totals WHERE utc_day = ? AND device_id = ? AND provider = ?", head.day, deviceId, usage.provider);
+      return;
+    }
+    this.sql.exec("INSERT INTO usage_admission_day_totals (utc_day, device_id, provider, heads, input_tokens, cache_read_tokens, cache_write_tokens, output_tokens, reasoning_tokens) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?) ON CONFLICT(utc_day, device_id, provider) DO UPDATE SET heads = excluded.heads, input_tokens = excluded.input_tokens, cache_read_tokens = excluded.cache_read_tokens, cache_write_tokens = excluded.cache_write_tokens, output_tokens = excluded.output_tokens, reasoning_tokens = excluded.reasoning_tokens",
+      head.day, deviceId, usage.provider, heads, next.input.toString(), next.cacheRead.toString(), next.cacheWrite.toString(), next.output.toString(), next.reasoning.toString());
+  }
+  /** Bounded backfill: count the heads whose current journal revision lies in
+   * the next span past the cursor, then advance the cursor to that span's end.
+   * Each head is counted exactly once, at the revision it currently carries;
+   * a later rewrite of a counted head subtracts it at publish time. */
+  advanceDayTotals(authority: AdmissionAuthority | null, control = this.control(), span = DAY_TOTALS_SPAN_REVISIONS): { verifiedRevision: number; complete: boolean } {
+    requireAdmission(integer(span, 1, MAX_ADMISSION_REVISIONS));
+    const cursor = this.dayTotalsCursor();
+    if (cursor.verifiedRevision >= control.revision) return { verifiedRevision: cursor.verifiedRevision, complete: true };
+    const target = Math.min(control.revision, cursor.verifiedRevision + span);
+    let count = 0;
+    for (const row of this.sql.exec(`SELECT * FROM usage_admission_heads WHERE journal_revision > ? AND journal_revision <= ? AND utc_day IS NOT NULL ORDER BY journal_revision LIMIT ${MAX_ADMISSION_HEADS + 1}`, cursor.verifiedRevision, target)) {
+      requireAdmission(authority && ++count <= MAX_ADMISSION_HEADS);
+      this.#applyDayTotal(this.#head(row, authority, control), 1n);
+    }
+    this.sql.exec("UPDATE usage_admission_day_totals_cursor SET verified_revision = ? WHERE id = 1", target);
+    return { verifiedRevision: target, complete: target === control.revision };
+  }
+  /** From-zero recomputation for the scrub path: every live head recounted,
+   * cursor set to the current revision. Linear in retained heads. */
+  rebuildDayTotals(authority: AdmissionAuthority | null, control = this.control()): void {
+    this.sql.exec("DELETE FROM usage_admission_day_totals");
+    this.sql.exec("UPDATE usage_admission_day_totals_cursor SET verified_revision = 0 WHERE id = 1");
+    requireAdmission(this.advanceDayTotals(authority, control, MAX_ADMISSION_REVISIONS).complete);
   }
   addDevice(device: string): void {
     this.sql.exec("INSERT INTO usage_admission_devices (device_id, settled_sequence, last_batch, last_journal) VALUES (?, 0, NULL, NULL)", admissionIdBytes(device));
@@ -246,11 +342,20 @@ export class AdmissionState {
     // later failure rolls the immutable receipt back with the mutable views.
     this.sql.exec("INSERT INTO usage_admission_journal (revision, batch, journal, committed_at_ms) VALUES (?, ?, ?, ?)",
       journal.accountJournalRevision, batch.bytes, journal.bytes, journal.committedAtMs);
+    // Day totals: a rewritten head that the cursor already counted is
+    // subtracted here; the new state is added inline only when the totals are
+    // complete through the predecessor revision, otherwise the bounded backfill
+    // reaches this revision later and counts it exactly once.
+    const cursor = this.dayTotalsCursor(), caughtUp = cursor.verifiedRevision === control.revision;
     if (journal.status === 1) batch.operations.forEach((operation, index) => {
       if (journal.receipts[index].outcome > 3) return;
+      const before = heads[index];
+      if (before && before.day !== null && before.revision <= cursor.verifiedRevision) this.#applyDayTotal(before, -1n);
       this.sql.exec("INSERT INTO usage_admission_heads (occurrence_id, operation, journal_revision, utc_day) VALUES (?, ?, ?, ?) ON CONFLICT(occurrence_id) DO UPDATE SET operation = excluded.operation, journal_revision = excluded.journal_revision, utc_day = excluded.utc_day",
         operation.occurrenceId, operation.bytes, journal.accountJournalRevision, operationDay(operation)?.day ?? null);
+      if (caughtUp) this.#applyDayTotal({ operation, revision: journal.accountJournalRevision, day: operationDay(operation)?.day ?? null }, 1n);
     });
+    if (caughtUp) this.sql.exec("UPDATE usage_admission_day_totals_cursor SET verified_revision = ? WHERE id = 1", journal.accountJournalRevision);
     for (const [day, count] of projection.days) {
       if (count === 0) this.sql.exec("DELETE FROM usage_admission_days WHERE utc_day = ?", day);
       else this.sql.exec("INSERT INTO usage_admission_days (utc_day, live_count) VALUES (?, ?) ON CONFLICT(utc_day) DO UPDATE SET live_count = excluded.live_count", day, count);
@@ -300,9 +405,11 @@ export class AdmissionState {
     this.#auditDelta(authority, fromZero ? { revision: 0, committedAtMs: 0 } : this.#auditCheckpoint());
   }
   /** Fenced maintenance may checkpoint a verified extension, or explicitly
-   * scrub from zero without trusting the existing checkpoint's prefix. */
+   * scrub from zero without trusting the existing checkpoint's prefix; a scrub
+   * also recomputes the retained day totals from every live head. */
   auditHistory(authority: AdmissionAuthority | null, fromZero = false): void {
     this.verifyHistory(authority, fromZero);
+    if (fromZero) this.rebuildDayTotals(authority);
     const control = this.auditControl(authority);
     this.sql.exec("INSERT INTO usage_admission_audit (id, revision, committed_at_ms) VALUES (1, ?, ?) ON CONFLICT(id) DO UPDATE SET revision = excluded.revision, committed_at_ms = excluded.committed_at_ms",
       control.revision, control.committed);
@@ -402,6 +509,13 @@ export class AdmissionState {
       requireAdmission(authority);
       const heads = this.heads(pending.batch, authority, control);
       this.projection(pending.batch, pending.journal ?? decideAdmission(pending.batch, heads, false), heads, control);
+    }
+    // Day totals never run ahead of the journal; every retained row belongs
+    // to an enrolled device.
+    requireAdmission(this.dayTotalsCursor().verifiedRevision <= control.revision);
+    let totalRows = 0;
+    for (const row of this.sql.exec(`SELECT * FROM usage_admission_day_totals LIMIT ${MAX_ADMISSION_HEADS + 1}`)) {
+      requireAdmission(++totalRows <= MAX_ADMISSION_HEADS && authority?.devices.some(device => device.deviceId === this.#dayTotal(row).deviceId));
     }
   }
 }

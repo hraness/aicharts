@@ -600,6 +600,10 @@ fn execute(
             }),
             Err("stats_sync_no_retained_flight") => (),
             Err(code) => {
+                // The resume already disposed of any terminal refusal through
+                // the service's proof; what remains is network uncertainty or a
+                // broken enrollment, and no provider or source I/O is spent on
+                // a cycle that cannot publish.
                 steps.push(Step {
                     client: None,
                     action: "resume",
@@ -667,6 +671,9 @@ fn execute(
                     error: None,
                 }),
                 Err(code) => {
+                    // A retained flight fences only this device's next
+                    // publication, and the next client's run reconciles it
+                    // before its own work; later clients still publish.
                     failed = true;
                     steps.push(Step {
                         client: Some(client.client.clone()),
@@ -674,23 +681,6 @@ fn execute(
                         status: "failed",
                         error: Some(code),
                     });
-                    // Once a send may have started, a retained flight can fence
-                    // all later clients. It is reconciled once at the next
-                    // cycle start.
-                    if !dry_run
-                        && (code.starts_with("stats_sync_")
-                            && !matches!(
-                                code,
-                                "stats_sync_incomplete_source"
-                                    | "stats_sync_one_client_required"
-                                    | "stats_sync_legacy_takeover_required"
-                                    | "stats_sync_writer_conflict"
-                                    | "stats_sync_remote_progress_changed"
-                            ))
-                    {
-                        status = "resume_required";
-                        break;
-                    }
                 }
             }
         }
@@ -1320,7 +1310,18 @@ mod tests {
             || Duration::ZERO,
         )
         .unwrap();
-        assert_eq!(fake.calls, ["resume", "refresh:cursor", "publish:cursor"]);
+        // A publication that stays uncertain no longer stops the remaining
+        // clients: each one resends the retained flight first and fails fast
+        // without source I/O when the network is still unavailable.
+        assert_eq!(
+            fake.calls,
+            [
+                "resume",
+                "refresh:cursor",
+                "publish:cursor",
+                "publish:claude"
+            ]
+        );
     }
     #[test]
     fn scope_and_credential_shape_are_validated_before_effects() {
@@ -1464,13 +1465,17 @@ mod tests {
     }
     #[test]
     fn sinks_still_run_when_publication_needs_reconciliation() {
-        for (mut fake, calls) in [
+        // An uncertain resume ends the cycle before provider or source I/O;
+        // an uncertain publication lets the remaining clients try. Sinks run
+        // either way.
+        for (mut fake, calls, status) in [
             (
                 Fake {
                     fail_resume: true,
                     ..Default::default()
                 },
                 vec!["resume", "sink:sink_tokscale"],
+                "resume_required",
             ),
             (
                 Fake {
@@ -1481,8 +1486,10 @@ mod tests {
                     "resume",
                     "refresh:cursor",
                     "publish:cursor",
+                    "publish:claude",
                     "sink:sink_tokscale",
                 ],
+                "partial_failure",
             ),
         ] {
             let out = execute(
@@ -1496,7 +1503,8 @@ mod tests {
             .unwrap();
             assert_eq!(fake.calls, calls);
             let value: serde_json::Value = serde_json::from_str(&out.summary).unwrap();
-            assert_eq!(value["status"], "resume_required");
+            assert_eq!(value["status"], status);
+            assert_eq!(out.exit_code, 1);
             assert!(value["steps"].as_array().unwrap().iter().any(|step| {
                 step
                     == &serde_json::json!({"client":null,"action":"sink_tokscale","status":"submitted"})
