@@ -5,6 +5,10 @@ use super::{
 };
 use serde::{de::DeserializeOwned, Deserialize, Deserializer, Serialize};
 
+/// Native per-observation clients the producer may emit. Aggregate clients
+/// and unsupported identities never become native rows.
+pub(super) const NATIVE_CLIENTS: [&str; 2] = ["claude", "codex"];
+
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub(super) struct NativeTokens {
@@ -34,11 +38,12 @@ pub(super) struct NativeRow {
     breakdown_coverage: String,
 }
 impl NativeRow {
-    pub(super) fn from_claude(
+    pub(super) fn native(
+        client: &str,
         utc_day: u32,
         tokens: &aicharts_protocol::Tokens,
     ) -> Result<Self, Error> {
-        if utc_day > 99_999_999 {
+        if utc_day > 99_999_999 || !NATIVE_CLIENTS.contains(&client) {
             return Err(Error::Source(crate::Error::InvalidCounters));
         }
         let cache_write = tokens
@@ -51,7 +56,7 @@ impl NativeRow {
             .ok_or(Error::Limit)?;
         Ok(Self {
             utc_day,
-            client: "claude".into(),
+            client: client.into(),
             provider: None,
             model: None,
             tokens: NativeTokens {
@@ -207,7 +212,7 @@ impl Batch {
 impl NativeRow {
     fn check_native(&self) -> Result<(), Error> {
         if self.utc_day > 99_999_999
-            || self.client != "claude"
+            || !NATIVE_CLIENTS.contains(&self.client.as_str())
             || self.provider.is_some()
             || self.model.is_some()
             || self.records != 1

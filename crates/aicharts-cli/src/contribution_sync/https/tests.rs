@@ -694,6 +694,153 @@ fn matching_selection_checks_final_snapshot_and_reports_its_revision_without_wri
 }
 
 #[test]
+fn drain_continues_after_a_committed_batch_and_stops_on_match_abandonment_or_limit() {
+    use serde_json::json;
+    use sha2::{Digest, Sha256};
+    for committed in [true, false] {
+        let original = batch(1, 12, 4);
+        let (fixture, observations) = observations();
+        let initial = serde_json::to_vec(&status_value(&original, None, 12, 1)).unwrap();
+        let first_heads = fixture["headReplyText"]
+            .as_str()
+            .unwrap()
+            .as_bytes()
+            .to_vec();
+        let mut matched: serde_json::Value =
+            serde_json::from_str(fixture["headReplyText"].as_str().unwrap()).unwrap();
+        for (index, entry) in matched["result"]["value"]["entries"]
+            .as_array_mut()
+            .unwrap()
+            .iter_mut()
+            .enumerate()
+        {
+            let id = entry["id"].clone();
+            let payload = fixture["payloadHashes"][index].clone();
+            *entry = json!({"id":id,"membershipHeadHash":h(50),"head":{"id":id,"headHash":h(50),"payloadHash":payload,
+                "reference":{"kind":"batch-v3","bodyHash":h(51),"index":index,"payloadHash":payload},
+                "deleted":false,"members":1,"legacySupport":false,"suppressedLegacy":false}});
+        }
+        matched["result"]["value"]["revision"] = json!(13);
+        matched["result"]["value"]["population"]["memberCount"] = json!(2);
+        matched["result"]["value"]["population"]["revision"] = json!(1);
+        let committed_head = Arc::new(Mutex::new(String::new()));
+        let head_slot = committed_head.clone();
+        let scope = original.scope();
+        let mut next_status = status_value(&original, None, 13, 2);
+        next_status["result"]["value"]["population"]["revision"] = json!(1);
+        next_status["result"]["value"]["population"]["memberCount"] = json!(2);
+        let server = Server::steps(if committed { 7 } else { 4 }, move |index, stream| {
+            let (headers, body) = request(stream);
+            match index {
+                0 | 2 => {
+                    assert!(headers.starts_with("POST /v3/contributions/status HTTP/1.1"));
+                    respond(stream, &initial);
+                }
+                1 => {
+                    assert!(headers.starts_with("POST /v3/contributions/heads HTTP/1.1"));
+                    respond(stream, &first_heads);
+                }
+                3 => {
+                    assert!(headers.starts_with("POST /v3/contributions HTTP/1.1"));
+                    let frozen = PreparedBatch::reopen(
+                        &scope,
+                        &body,
+                        &format!("{:x}", Sha256::digest(&body)),
+                    )
+                    .unwrap();
+                    assert_eq!(frozen.sequence(), 1);
+                    if committed {
+                        let terminal = committed_reply(&frozen);
+                        let value: serde_json::Value =
+                            serde_json::from_slice(&direct_bytes(&terminal)).unwrap();
+                        *head_slot.lock().unwrap() = value["result"]["value"]["receipt"]
+                            ["populationHead"]
+                            .as_str()
+                            .unwrap()
+                            .to_owned();
+                        respond(stream, &direct_bytes(&terminal));
+                    } else {
+                        respond(stream, &direct_bytes(&reply(&frozen, 13)));
+                    }
+                }
+                4 | 6 => {
+                    assert!(headers.starts_with("POST /v3/contributions/status HTTP/1.1"));
+                    let mut status = next_status.clone();
+                    status["result"]["value"]["population"]["headHash"] =
+                        json!(head_slot.lock().unwrap().clone());
+                    respond(stream, &serde_json::to_vec(&status).unwrap());
+                }
+                5 => {
+                    assert!(headers.starts_with("POST /v3/contributions/heads HTTP/1.1"));
+                    let mut heads = matched.clone();
+                    heads["result"]["value"]["population"]["headHash"] =
+                        json!(head_slot.lock().unwrap().clone());
+                    respond(stream, &serde_json::to_vec(&heads).unwrap());
+                }
+                _ => unreachable!(),
+            }
+        });
+        let path = scratch();
+        let transport = transport(server.addr, &original);
+        let mut outbox =
+            Outbox::initialize(&path.0, &KEY, transport.binding(), &progress(&original)).unwrap();
+        let result = crate::contribution_sync::command::drain(
+            &mut outbox,
+            &transport,
+            &Deadline::command().unwrap(),
+            original.scope().population_id(),
+            &observations,
+            3,
+        )
+        .unwrap();
+        let result: serde_json::Value = serde_json::from_str(&result).unwrap();
+        assert_eq!(result["quarantined"], 0);
+        let batches = result["batches"].as_array().unwrap();
+        assert_eq!(batches[0]["status"], "settled");
+        assert_eq!(batches[0]["sequence"], 1);
+        if committed {
+            assert_eq!(result["status"], "drained");
+            assert_eq!(batches.len(), 2);
+            assert_eq!(batches[0]["outcome"], "committed");
+            assert_eq!(batches[1]["status"], "selected_observations_match");
+            assert_eq!(batches[1]["canonicalRevision"], 13);
+            assert_eq!(transport.exchanges.get(), 7);
+        } else {
+            assert_eq!(result["status"], "stopped");
+            assert_eq!(batches.len(), 1);
+            assert_eq!(batches[0]["outcome"], "abandoned");
+            assert_eq!(transport.exchanges.get(), 4);
+        }
+        assert_eq!(outbox.checkpoint.last_sequence, 1);
+        assert_eq!(outbox.checkpoint.last_revision, 13);
+        assert!(outbox.checkpoint.flight.is_none());
+    }
+    // Out-of-range draining refuses before any exchange or state read.
+    let original = batch(1, 12, 4);
+    let (_, observations) = observations();
+    let path = scratch();
+    let server = Server::new(|_| {});
+    let transport = transport(server.addr, &original);
+    let mut outbox =
+        Outbox::initialize(&path.0, &KEY, transport.binding(), &progress(&original)).unwrap();
+    for limit in [0, 9] {
+        assert_eq!(
+            crate::contribution_sync::command::drain(
+                &mut outbox,
+                &transport,
+                &Deadline::command().unwrap(),
+                original.scope().population_id(),
+                &observations,
+                limit,
+            )
+            .err(),
+            Some("invalid_option")
+        );
+    }
+    assert_eq!(transport.exchanges.get(), 0);
+}
+
+#[test]
 fn failed_initial_cancel_status_remains_cancel_only_after_restart() {
     let original = batch(1, 12, 4);
     let expected = original.bytes().to_vec();

@@ -1,0 +1,1022 @@
+{
+  "schemaVersion": 1,
+  "profile": "rich-facts-v1",
+  "provenance": {
+    "profile": "numeric-producer-v1",
+    "version": 1,
+    "sourceId": "9513f0386a8e15b4ec91f5f41d65ccb0"
+  },
+  "window": {
+    "startMs": 1767225600000,
+    "endMs": 1767225660000
+  },
+  "coverage": {
+    "usage": "partial",
+    "span": "unsupported",
+    "request": "partial",
+    "turn": "unsupported",
+    "tool": "partial",
+    "context": "partial",
+    "compaction": "unsupported"
+  },
+  "facts": [
+    {
+      "id": "c8f5b4e7610bfcee5b417343e0cbb1dd",
+      "revision": 0,
+      "provenance": {
+        "profile": "numeric-producer-v1",
+        "version": 1,
+        "sourceId": "9513f0386a8e15b4ec91f5f41d65ccb0"
+      },
+      "owner": {
+        "provider": "claude_code",
+        "accountId": null,
+        "executionId": "e47b72420d42a7adadfcb188b3b7aa89",
+        "conversationId": "7ae0a6b2f51259b4b7f9007557484cc3",
+        "lineage": "root",
+        "parentExecutionId": null
+      },
+      "kind": "tool",
+      "atMs": 1767225603500,
+      "value": {
+        "kind": "tool",
+        "observationId": "a6f82ebc2e4231571ece956244baaf32",
+        "stage": "requested",
+        "outcome": "unknown"
+      }
+    },
+    {
+      "id": "38af24f578e211cd329e0fc476b68bd9",
+      "revision": 0,
+      "provenance": {
+        "profile": "numeric-producer-v1",
+        "version": 1,
+        "sourceId": "9513f0386a8e15b4ec91f5f41d65ccb0"
+      },
+      "owner": {
+        "provider": "claude_code",
+        "accountId": null,
+        "executionId": "e47b72420d42a7adadfcb188b3b7aa89",
+        "conversationId": "7ae0a6b2f51259b4b7f9007557484cc3",
+        "lineage": "root",
+        "parentExecutionId": null
+      },
+      "kind": "tool",
+      "atMs": 1767225604000,
+      "value": {
+        "kind": "tool",
+        "observationId": "4aabdfd2abc3aeb8da095b4c9e13a768",
+        "stage": "terminal",
+        "outcome": "success"
+      }
+    },
+    {
+      "id": "1ae445c5a5034a753165c7b6cf4a9535",
+      "revision": 0,
+      "provenance": {
+        "profile": "numeric-producer-v1",
+        "version": 1,
+        "sourceId": "9513f0386a8e15b4ec91f5f41d65ccb0"
+      },
+      "owner": {
+        "provider": "claude_code",
+        "accountId": null,
+        "executionId": "e47b72420d42a7adadfcb188b3b7aa89",
+        "conversationId": "7ae0a6b2f51259b4b7f9007557484cc3",
+        "lineage": "root",
+        "parentExecutionId": null
+      },
+      "kind": "request",
+      "atMs": 1767225603500,
+      "value": {
+        "kind": "request",
+        "observationId": "f1fccf71a1d163d9dae802c01b94549b",
+        "stage": "terminal",
+        "outcome": "success",
+        "requestedAtMs": 1767225601000,
+        "dispatchedAtMs": null,
+        "terminalAtMs": 1767225603500,
+        "firstTokenAtMs": null,
+        "lastTokenAtMs": null,
+        "clockUncertaintyMs": null,
+        "retryOf": null
+      }
+    },
+    {
+      "id": "fc36a6cda7bcc7a4ec2007f05b56cf63",
+      "revision": 0,
+      "provenance": {
+        "profile": "numeric-producer-v1",
+        "version": 1,
+        "sourceId": "9513f0386a8e15b4ec91f5f41d65ccb0"
+      },
+      "owner": {
+        "provider": "claude_code",
+        "accountId": null,
+        "executionId": "e47b72420d42a7adadfcb188b3b7aa89",
+        "conversationId": "7ae0a6b2f51259b4b7f9007557484cc3",
+        "lineage": "root",
+        "parentExecutionId": null
+      },
+      "kind": "usage",
+      "atMs": 1767225603500,
+      "value": {
+        "kind": "usage",
+        "grain": "request",
+        "tokenScope": "direct",
+        "observationId": "f1fccf71a1d163d9dae802c01b94549b",
+        "model": "claude-sonnet-4-6",
+        "modelBasis": "response",
+        "tokens": {
+          "inputUncached": "10",
+          "cacheRead": "100",
+          "cacheWrite5m": "20",
+          "cacheWrite1h": "10",
+          "cacheWriteUnknown": "0",
+          "output": "4",
+          "reasoning": null
+        }
+      }
+    },
+    {
+      "id": "db237bb5991a8f015122ccf6d5d6f78d",
+      "revision": 0,
+      "provenance": {
+        "profile": "numeric-producer-v1",
+        "version": 1,
+        "sourceId": "9513f0386a8e15b4ec91f5f41d65ccb0"
+      },
+      "owner": {
+        "provider": "claude_code",
+        "accountId": null,
+        "executionId": "e47b72420d42a7adadfcb188b3b7aa89",
+        "conversationId": "7ae0a6b2f51259b4b7f9007557484cc3",
+        "lineage": "root",
+        "parentExecutionId": null
+      },
+      "kind": "usage",
+      "atMs": 1767225603500,
+      "value": {
+        "kind": "usage",
+        "grain": "response",
+        "tokenScope": "direct",
+        "observationId": "ccecce0023335e1df8fe90db87a552b5",
+        "model": "claude-sonnet-4-6",
+        "modelBasis": "response",
+        "tokens": {
+          "inputUncached": "10",
+          "cacheRead": "100",
+          "cacheWrite5m": "20",
+          "cacheWrite1h": "10",
+          "cacheWriteUnknown": "0",
+          "output": "4",
+          "reasoning": null
+        }
+      }
+    },
+    {
+      "id": "942f90e6f36ed6d7f481864a29a76551",
+      "revision": 0,
+      "provenance": {
+        "profile": "numeric-producer-v1",
+        "version": 1,
+        "sourceId": "9513f0386a8e15b4ec91f5f41d65ccb0"
+      },
+      "owner": {
+        "provider": "claude_code",
+        "accountId": null,
+        "executionId": "e47b72420d42a7adadfcb188b3b7aa89",
+        "conversationId": "7ae0a6b2f51259b4b7f9007557484cc3",
+        "lineage": "root",
+        "parentExecutionId": null
+      },
+      "kind": "context",
+      "atMs": 1767225603500,
+      "value": {
+        "kind": "context",
+        "observationId": "a1973691676e3d990dc6e4ca300bcefd",
+        "tokens": "140",
+        "limitTokens": null
+      }
+    },
+    {
+      "id": "c7c3cc6d028180d4d5a181ed2a796e87",
+      "revision": 0,
+      "provenance": {
+        "profile": "numeric-producer-v1",
+        "version": 1,
+        "sourceId": "9513f0386a8e15b4ec91f5f41d65ccb0"
+      },
+      "owner": {
+        "provider": "claude_code",
+        "accountId": null,
+        "executionId": "e47b72420d42a7adadfcb188b3b7aa89",
+        "conversationId": "7ae0a6b2f51259b4b7f9007557484cc3",
+        "lineage": "root",
+        "parentExecutionId": null
+      },
+      "kind": "request",
+      "atMs": 1767225605000,
+      "value": {
+        "kind": "request",
+        "observationId": "67dbc798009d5a39e4686fc4b034cedc",
+        "stage": "terminal",
+        "outcome": "success",
+        "requestedAtMs": 1767225604000,
+        "dispatchedAtMs": null,
+        "terminalAtMs": 1767225605000,
+        "firstTokenAtMs": null,
+        "lastTokenAtMs": null,
+        "clockUncertaintyMs": null,
+        "retryOf": null
+      }
+    },
+    {
+      "id": "5784c2fc9284a11d01aa4e76d7488a8c",
+      "revision": 0,
+      "provenance": {
+        "profile": "numeric-producer-v1",
+        "version": 1,
+        "sourceId": "9513f0386a8e15b4ec91f5f41d65ccb0"
+      },
+      "owner": {
+        "provider": "claude_code",
+        "accountId": null,
+        "executionId": "e47b72420d42a7adadfcb188b3b7aa89",
+        "conversationId": "7ae0a6b2f51259b4b7f9007557484cc3",
+        "lineage": "root",
+        "parentExecutionId": null
+      },
+      "kind": "usage",
+      "atMs": 1767225605000,
+      "value": {
+        "kind": "usage",
+        "grain": "request",
+        "tokenScope": "direct",
+        "observationId": "67dbc798009d5a39e4686fc4b034cedc",
+        "model": "claude-sonnet-4-6",
+        "modelBasis": "response",
+        "tokens": {
+          "inputUncached": "5",
+          "cacheRead": "200",
+          "cacheWrite5m": "0",
+          "cacheWrite1h": "0",
+          "cacheWriteUnknown": "0",
+          "output": "7",
+          "reasoning": null
+        }
+      }
+    },
+    {
+      "id": "990ab2d9b0bc4d416431bed4d4768127",
+      "revision": 0,
+      "provenance": {
+        "profile": "numeric-producer-v1",
+        "version": 1,
+        "sourceId": "9513f0386a8e15b4ec91f5f41d65ccb0"
+      },
+      "owner": {
+        "provider": "claude_code",
+        "accountId": null,
+        "executionId": "e47b72420d42a7adadfcb188b3b7aa89",
+        "conversationId": "7ae0a6b2f51259b4b7f9007557484cc3",
+        "lineage": "root",
+        "parentExecutionId": null
+      },
+      "kind": "usage",
+      "atMs": 1767225605000,
+      "value": {
+        "kind": "usage",
+        "grain": "response",
+        "tokenScope": "direct",
+        "observationId": "f5e3eb2b825f90292ebbf2f1149ece2d",
+        "model": "claude-sonnet-4-6",
+        "modelBasis": "response",
+        "tokens": {
+          "inputUncached": "5",
+          "cacheRead": "200",
+          "cacheWrite5m": "0",
+          "cacheWrite1h": "0",
+          "cacheWriteUnknown": "0",
+          "output": "7",
+          "reasoning": null
+        }
+      }
+    },
+    {
+      "id": "146794606db7e10cda1b5056629f336a",
+      "revision": 0,
+      "provenance": {
+        "profile": "numeric-producer-v1",
+        "version": 1,
+        "sourceId": "9513f0386a8e15b4ec91f5f41d65ccb0"
+      },
+      "owner": {
+        "provider": "claude_code",
+        "accountId": null,
+        "executionId": "e47b72420d42a7adadfcb188b3b7aa89",
+        "conversationId": "7ae0a6b2f51259b4b7f9007557484cc3",
+        "lineage": "root",
+        "parentExecutionId": null
+      },
+      "kind": "context",
+      "atMs": 1767225605000,
+      "value": {
+        "kind": "context",
+        "observationId": "bb6c69d07eaabe21cade6808548a7df5",
+        "tokens": "205",
+        "limitTokens": null
+      }
+    },
+    {
+      "id": "c6674af28567d44bc564c87b0377e094",
+      "revision": 0,
+      "provenance": {
+        "profile": "numeric-producer-v1",
+        "version": 1,
+        "sourceId": "9513f0386a8e15b4ec91f5f41d65ccb0"
+      },
+      "owner": {
+        "provider": "claude_code",
+        "accountId": null,
+        "executionId": "e47b72420d42a7adadfcb188b3b7aa89",
+        "conversationId": "7ae0a6b2f51259b4b7f9007557484cc3",
+        "lineage": "root",
+        "parentExecutionId": null
+      },
+      "kind": "request",
+      "atMs": 1767225606000,
+      "value": {
+        "kind": "request",
+        "observationId": "0bd4d51fd47acbc6032b0834751d3d7d",
+        "stage": "terminal",
+        "outcome": "error",
+        "requestedAtMs": null,
+        "dispatchedAtMs": null,
+        "terminalAtMs": 1767225606000,
+        "firstTokenAtMs": null,
+        "lastTokenAtMs": null,
+        "clockUncertaintyMs": null,
+        "retryOf": null
+      }
+    },
+    {
+      "id": "488907fdd48e5ad5a84df61356de3a26",
+      "revision": 0,
+      "provenance": {
+        "profile": "numeric-producer-v1",
+        "version": 1,
+        "sourceId": "9513f0386a8e15b4ec91f5f41d65ccb0"
+      },
+      "owner": {
+        "provider": "claude_code",
+        "accountId": null,
+        "executionId": "6bf848b520e86c27608847881d8b6556",
+        "conversationId": "7ae0a6b2f51259b4b7f9007557484cc3",
+        "lineage": "child",
+        "parentExecutionId": "e47b72420d42a7adadfcb188b3b7aa89"
+      },
+      "kind": "request",
+      "atMs": 1767225608000,
+      "value": {
+        "kind": "request",
+        "observationId": "ae0a0052ff73acf0885b4e76fa5cb79e",
+        "stage": "terminal",
+        "outcome": "success",
+        "requestedAtMs": 1767225607000,
+        "dispatchedAtMs": null,
+        "terminalAtMs": 1767225608000,
+        "firstTokenAtMs": null,
+        "lastTokenAtMs": null,
+        "clockUncertaintyMs": null,
+        "retryOf": null
+      }
+    },
+    {
+      "id": "a4e3931dada5d79bb579c2e9c9b27586",
+      "revision": 0,
+      "provenance": {
+        "profile": "numeric-producer-v1",
+        "version": 1,
+        "sourceId": "9513f0386a8e15b4ec91f5f41d65ccb0"
+      },
+      "owner": {
+        "provider": "claude_code",
+        "accountId": null,
+        "executionId": "6bf848b520e86c27608847881d8b6556",
+        "conversationId": "7ae0a6b2f51259b4b7f9007557484cc3",
+        "lineage": "child",
+        "parentExecutionId": "e47b72420d42a7adadfcb188b3b7aa89"
+      },
+      "kind": "usage",
+      "atMs": 1767225608000,
+      "value": {
+        "kind": "usage",
+        "grain": "request",
+        "tokenScope": "direct",
+        "observationId": "ae0a0052ff73acf0885b4e76fa5cb79e",
+        "model": "claude-haiku-4-5-20251001",
+        "modelBasis": "response",
+        "tokens": {
+          "inputUncached": "3",
+          "cacheRead": "0",
+          "cacheWrite5m": "8",
+          "cacheWrite1h": "0",
+          "cacheWriteUnknown": "0",
+          "output": "2",
+          "reasoning": null
+        }
+      }
+    },
+    {
+      "id": "45598231abba4f77e36274cab11fd31d",
+      "revision": 0,
+      "provenance": {
+        "profile": "numeric-producer-v1",
+        "version": 1,
+        "sourceId": "9513f0386a8e15b4ec91f5f41d65ccb0"
+      },
+      "owner": {
+        "provider": "claude_code",
+        "accountId": null,
+        "executionId": "6bf848b520e86c27608847881d8b6556",
+        "conversationId": "7ae0a6b2f51259b4b7f9007557484cc3",
+        "lineage": "child",
+        "parentExecutionId": "e47b72420d42a7adadfcb188b3b7aa89"
+      },
+      "kind": "usage",
+      "atMs": 1767225608000,
+      "value": {
+        "kind": "usage",
+        "grain": "response",
+        "tokenScope": "direct",
+        "observationId": "22b86d326409b49d78980eb185a3f145",
+        "model": "claude-haiku-4-5-20251001",
+        "modelBasis": "response",
+        "tokens": {
+          "inputUncached": "3",
+          "cacheRead": "0",
+          "cacheWrite5m": "8",
+          "cacheWrite1h": "0",
+          "cacheWriteUnknown": "0",
+          "output": "2",
+          "reasoning": null
+        }
+      }
+    },
+    {
+      "id": "eb6004c64d3a076a28a98580cb44dbc1",
+      "revision": 0,
+      "provenance": {
+        "profile": "numeric-producer-v1",
+        "version": 1,
+        "sourceId": "9513f0386a8e15b4ec91f5f41d65ccb0"
+      },
+      "owner": {
+        "provider": "claude_code",
+        "accountId": null,
+        "executionId": "6bf848b520e86c27608847881d8b6556",
+        "conversationId": "7ae0a6b2f51259b4b7f9007557484cc3",
+        "lineage": "child",
+        "parentExecutionId": "e47b72420d42a7adadfcb188b3b7aa89"
+      },
+      "kind": "context",
+      "atMs": 1767225608000,
+      "value": {
+        "kind": "context",
+        "observationId": "230d2800ddb7345eec60f6adb24e47db",
+        "tokens": "11",
+        "limitTokens": null
+      }
+    },
+    {
+      "id": "4bb4d2117573331b1d38fc2e7562c4f7",
+      "revision": 0,
+      "provenance": {
+        "profile": "numeric-producer-v1",
+        "version": 1,
+        "sourceId": "9513f0386a8e15b4ec91f5f41d65ccb0"
+      },
+      "owner": {
+        "provider": "codex",
+        "accountId": null,
+        "executionId": "30bd1bd78cbbee306b4e33fd461c3fec",
+        "conversationId": "7a874a0decb18f3679537dd7408b7832",
+        "lineage": "root",
+        "parentExecutionId": null
+      },
+      "kind": "request",
+      "atMs": 1767225612000,
+      "value": {
+        "kind": "request",
+        "observationId": "96360512191169edc211fa2fdf2d8753",
+        "stage": "terminal",
+        "outcome": "unknown",
+        "requestedAtMs": null,
+        "dispatchedAtMs": null,
+        "terminalAtMs": 1767225612000,
+        "firstTokenAtMs": null,
+        "lastTokenAtMs": null,
+        "clockUncertaintyMs": null,
+        "retryOf": null
+      }
+    },
+    {
+      "id": "b5f3566554b3fdebf9d8c18fe27fce92",
+      "revision": 0,
+      "provenance": {
+        "profile": "numeric-producer-v1",
+        "version": 1,
+        "sourceId": "9513f0386a8e15b4ec91f5f41d65ccb0"
+      },
+      "owner": {
+        "provider": "codex",
+        "accountId": null,
+        "executionId": "30bd1bd78cbbee306b4e33fd461c3fec",
+        "conversationId": "7a874a0decb18f3679537dd7408b7832",
+        "lineage": "root",
+        "parentExecutionId": null
+      },
+      "kind": "context",
+      "atMs": 1767225612000,
+      "value": {
+        "kind": "context",
+        "observationId": "b2098c16e2608fbae2ee3121b8269344",
+        "tokens": "1200",
+        "limitTokens": "272000"
+      }
+    },
+    {
+      "id": "f99a6ee95261788a002b0eb9b71bc74a",
+      "revision": 0,
+      "provenance": {
+        "profile": "numeric-producer-v1",
+        "version": 1,
+        "sourceId": "9513f0386a8e15b4ec91f5f41d65ccb0"
+      },
+      "owner": {
+        "provider": "codex",
+        "accountId": null,
+        "executionId": "30bd1bd78cbbee306b4e33fd461c3fec",
+        "conversationId": "7a874a0decb18f3679537dd7408b7832",
+        "lineage": "root",
+        "parentExecutionId": null
+      },
+      "kind": "request",
+      "atMs": 1767225612000,
+      "value": {
+        "kind": "request",
+        "observationId": "f401af4ed665a6bd940e699e0bfc320f",
+        "stage": "terminal",
+        "outcome": "unknown",
+        "requestedAtMs": null,
+        "dispatchedAtMs": null,
+        "terminalAtMs": 1767225612000,
+        "firstTokenAtMs": null,
+        "lastTokenAtMs": null,
+        "clockUncertaintyMs": null,
+        "retryOf": null
+      }
+    },
+    {
+      "id": "55fb83998f66c34c13267aebeece893e",
+      "revision": 0,
+      "provenance": {
+        "profile": "numeric-producer-v1",
+        "version": 1,
+        "sourceId": "9513f0386a8e15b4ec91f5f41d65ccb0"
+      },
+      "owner": {
+        "provider": "codex",
+        "accountId": null,
+        "executionId": "30bd1bd78cbbee306b4e33fd461c3fec",
+        "conversationId": "7a874a0decb18f3679537dd7408b7832",
+        "lineage": "root",
+        "parentExecutionId": null
+      },
+      "kind": "context",
+      "atMs": 1767225612000,
+      "value": {
+        "kind": "context",
+        "observationId": "29770e85419e9bc41fa3226691419195",
+        "tokens": "1300",
+        "limitTokens": "272000"
+      }
+    },
+    {
+      "id": "20148c737c370c1bf4d61f612f4bbf20",
+      "revision": 0,
+      "provenance": {
+        "profile": "numeric-producer-v1",
+        "version": 1,
+        "sourceId": "9513f0386a8e15b4ec91f5f41d65ccb0"
+      },
+      "owner": {
+        "provider": "codex",
+        "accountId": null,
+        "executionId": "30bd1bd78cbbee306b4e33fd461c3fec",
+        "conversationId": "7a874a0decb18f3679537dd7408b7832",
+        "lineage": "root",
+        "parentExecutionId": null
+      },
+      "kind": "tool",
+      "atMs": 1767225613000,
+      "value": {
+        "kind": "tool",
+        "observationId": "1b52213bf185814808b8f50b8c1f005e",
+        "stage": "requested",
+        "outcome": "unknown"
+      }
+    },
+    {
+      "id": "1e832abd50afe0e208c655f99c9f0dcd",
+      "revision": 0,
+      "provenance": {
+        "profile": "numeric-producer-v1",
+        "version": 1,
+        "sourceId": "9513f0386a8e15b4ec91f5f41d65ccb0"
+      },
+      "owner": {
+        "provider": "codex",
+        "accountId": null,
+        "executionId": "30bd1bd78cbbee306b4e33fd461c3fec",
+        "conversationId": "7a874a0decb18f3679537dd7408b7832",
+        "lineage": "root",
+        "parentExecutionId": null
+      },
+      "kind": "tool",
+      "atMs": 1767225614000,
+      "value": {
+        "kind": "tool",
+        "observationId": "2eb973360fb41f33b7763223f70b73f3",
+        "stage": "terminal",
+        "outcome": "unknown"
+      }
+    },
+    {
+      "id": "ebc70ab07eeb1c24c2aa90eb130822c8",
+      "revision": 0,
+      "provenance": {
+        "profile": "numeric-producer-v1",
+        "version": 1,
+        "sourceId": "9513f0386a8e15b4ec91f5f41d65ccb0"
+      },
+      "owner": {
+        "provider": "codex",
+        "accountId": null,
+        "executionId": "09b28f672f375e19cd4f28f22b96e778",
+        "conversationId": "7a874a0decb18f3679537dd7408b7832",
+        "lineage": "child",
+        "parentExecutionId": "30bd1bd78cbbee306b4e33fd461c3fec"
+      },
+      "kind": "request",
+      "atMs": 1767225621000,
+      "value": {
+        "kind": "request",
+        "observationId": "51ac9f8ceb70b7c74e85f5da039f2d64",
+        "stage": "terminal",
+        "outcome": "unknown",
+        "requestedAtMs": null,
+        "dispatchedAtMs": null,
+        "terminalAtMs": 1767225621000,
+        "firstTokenAtMs": null,
+        "lastTokenAtMs": null,
+        "clockUncertaintyMs": null,
+        "retryOf": null
+      }
+    },
+    {
+      "id": "30b37df36720ab20efa8c71e0fcb055a",
+      "revision": 0,
+      "provenance": {
+        "profile": "numeric-producer-v1",
+        "version": 1,
+        "sourceId": "9513f0386a8e15b4ec91f5f41d65ccb0"
+      },
+      "owner": {
+        "provider": "codex",
+        "accountId": null,
+        "executionId": "09b28f672f375e19cd4f28f22b96e778",
+        "conversationId": "7a874a0decb18f3679537dd7408b7832",
+        "lineage": "child",
+        "parentExecutionId": "30bd1bd78cbbee306b4e33fd461c3fec"
+      },
+      "kind": "context",
+      "atMs": 1767225621000,
+      "value": {
+        "kind": "context",
+        "observationId": "2ee7583349c04f4f5cfe3cbaccaa4394",
+        "tokens": "400",
+        "limitTokens": "272000"
+      }
+    },
+    {
+      "id": "13b4a0b03b9f19e6bc9888ff05bf5b63",
+      "revision": 0,
+      "provenance": {
+        "profile": "numeric-producer-v1",
+        "version": 1,
+        "sourceId": "9513f0386a8e15b4ec91f5f41d65ccb0"
+      },
+      "owner": {
+        "provider": "codex",
+        "accountId": null,
+        "executionId": "09b28f672f375e19cd4f28f22b96e778",
+        "conversationId": "7a874a0decb18f3679537dd7408b7832",
+        "lineage": "child",
+        "parentExecutionId": "30bd1bd78cbbee306b4e33fd461c3fec"
+      },
+      "kind": "tool",
+      "atMs": 1767225622000,
+      "value": {
+        "kind": "tool",
+        "observationId": "ec5a355c82b921ba993deb72d9ccef74",
+        "stage": "requested",
+        "outcome": "unknown"
+      }
+    },
+    {
+      "id": "fff6e8f072217c241dd8de04c1065869",
+      "revision": 0,
+      "provenance": {
+        "profile": "numeric-producer-v1",
+        "version": 1,
+        "sourceId": "9513f0386a8e15b4ec91f5f41d65ccb0"
+      },
+      "owner": {
+        "provider": "codex",
+        "accountId": null,
+        "executionId": "09b28f672f375e19cd4f28f22b96e778",
+        "conversationId": "7a874a0decb18f3679537dd7408b7832",
+        "lineage": "child",
+        "parentExecutionId": "30bd1bd78cbbee306b4e33fd461c3fec"
+      },
+      "kind": "tool",
+      "atMs": 1767225623000,
+      "value": {
+        "kind": "tool",
+        "observationId": "74a486e938b6783a9f864487d7ce3f5b",
+        "stage": "terminal",
+        "outcome": "unknown"
+      }
+    },
+    {
+      "id": "8313ceb83a86e169e35f3a964e35be62",
+      "revision": 0,
+      "provenance": {
+        "profile": "numeric-producer-v1",
+        "version": 1,
+        "sourceId": "9513f0386a8e15b4ec91f5f41d65ccb0"
+      },
+      "owner": {
+        "provider": "claude_code",
+        "accountId": null,
+        "executionId": "c6db2081881fe7b6b59405a26b3e5f31",
+        "conversationId": "4538b2492dfe69393f00533352c4272a",
+        "lineage": "root",
+        "parentExecutionId": null
+      },
+      "kind": "request",
+      "atMs": 1767225631000,
+      "value": {
+        "kind": "request",
+        "observationId": "ef903e2b5f5003e77c9eed864bc08dbd",
+        "stage": "terminal",
+        "outcome": "success",
+        "requestedAtMs": 1767225630000,
+        "dispatchedAtMs": null,
+        "terminalAtMs": 1767225631000,
+        "firstTokenAtMs": null,
+        "lastTokenAtMs": null,
+        "clockUncertaintyMs": null,
+        "retryOf": null
+      }
+    },
+    {
+      "id": "2f2be9cbefe9dc4a7f14bea937b34c9d",
+      "revision": 0,
+      "provenance": {
+        "profile": "numeric-producer-v1",
+        "version": 1,
+        "sourceId": "9513f0386a8e15b4ec91f5f41d65ccb0"
+      },
+      "owner": {
+        "provider": "claude_code",
+        "accountId": null,
+        "executionId": "c6db2081881fe7b6b59405a26b3e5f31",
+        "conversationId": "4538b2492dfe69393f00533352c4272a",
+        "lineage": "root",
+        "parentExecutionId": null
+      },
+      "kind": "usage",
+      "atMs": 1767225631000,
+      "value": {
+        "kind": "usage",
+        "grain": "request",
+        "tokenScope": "direct",
+        "observationId": "ef903e2b5f5003e77c9eed864bc08dbd",
+        "model": "claude-opus-4-5-20251101",
+        "modelBasis": "response",
+        "tokens": {
+          "inputUncached": "12",
+          "cacheRead": "300",
+          "cacheWrite5m": "0",
+          "cacheWrite1h": "0",
+          "cacheWriteUnknown": "40",
+          "output": "9",
+          "reasoning": null
+        }
+      }
+    },
+    {
+      "id": "67aabf011ff551efb840f77f231f01b2",
+      "revision": 0,
+      "provenance": {
+        "profile": "numeric-producer-v1",
+        "version": 1,
+        "sourceId": "9513f0386a8e15b4ec91f5f41d65ccb0"
+      },
+      "owner": {
+        "provider": "claude_code",
+        "accountId": null,
+        "executionId": "c6db2081881fe7b6b59405a26b3e5f31",
+        "conversationId": "4538b2492dfe69393f00533352c4272a",
+        "lineage": "root",
+        "parentExecutionId": null
+      },
+      "kind": "usage",
+      "atMs": 1767225631000,
+      "value": {
+        "kind": "usage",
+        "grain": "response",
+        "tokenScope": "direct",
+        "observationId": "34a118b6caf3f3ae57d56757cb01cde2",
+        "model": "claude-opus-4-5-20251101",
+        "modelBasis": "response",
+        "tokens": {
+          "inputUncached": "12",
+          "cacheRead": "300",
+          "cacheWrite5m": "0",
+          "cacheWrite1h": "0",
+          "cacheWriteUnknown": "40",
+          "output": "9",
+          "reasoning": null
+        }
+      }
+    },
+    {
+      "id": "49e6675eeaafeed6a232b8dc5e0c0ab0",
+      "revision": 0,
+      "provenance": {
+        "profile": "numeric-producer-v1",
+        "version": 1,
+        "sourceId": "9513f0386a8e15b4ec91f5f41d65ccb0"
+      },
+      "owner": {
+        "provider": "claude_code",
+        "accountId": null,
+        "executionId": "c6db2081881fe7b6b59405a26b3e5f31",
+        "conversationId": "4538b2492dfe69393f00533352c4272a",
+        "lineage": "root",
+        "parentExecutionId": null
+      },
+      "kind": "context",
+      "atMs": 1767225631000,
+      "value": {
+        "kind": "context",
+        "observationId": "67fb9af1a715738d3e37456ed11b1768",
+        "tokens": "352",
+        "limitTokens": null
+      }
+    },
+    {
+      "id": "e6871b3d2c7220449e8e8299f4250ff3",
+      "revision": 0,
+      "provenance": {
+        "profile": "numeric-producer-v1",
+        "version": 1,
+        "sourceId": "9513f0386a8e15b4ec91f5f41d65ccb0"
+      },
+      "owner": {
+        "provider": "claude_code",
+        "accountId": null,
+        "executionId": "c6db2081881fe7b6b59405a26b3e5f31",
+        "conversationId": "4538b2492dfe69393f00533352c4272a",
+        "lineage": "root",
+        "parentExecutionId": null
+      },
+      "kind": "request",
+      "atMs": 1767225632000,
+      "value": {
+        "kind": "request",
+        "observationId": "2dc6cb67279d548059795ff9b1336e47",
+        "stage": "terminal",
+        "outcome": "refusal",
+        "requestedAtMs": null,
+        "dispatchedAtMs": null,
+        "terminalAtMs": 1767225632000,
+        "firstTokenAtMs": null,
+        "lastTokenAtMs": null,
+        "clockUncertaintyMs": null,
+        "retryOf": null
+      }
+    },
+    {
+      "id": "33d36be4671bc85a8f637eaabe75ca38",
+      "revision": 0,
+      "provenance": {
+        "profile": "numeric-producer-v1",
+        "version": 1,
+        "sourceId": "9513f0386a8e15b4ec91f5f41d65ccb0"
+      },
+      "owner": {
+        "provider": "claude_code",
+        "accountId": null,
+        "executionId": "c6db2081881fe7b6b59405a26b3e5f31",
+        "conversationId": "4538b2492dfe69393f00533352c4272a",
+        "lineage": "root",
+        "parentExecutionId": null
+      },
+      "kind": "usage",
+      "atMs": 1767225632000,
+      "value": {
+        "kind": "usage",
+        "grain": "request",
+        "tokenScope": "direct",
+        "observationId": "2dc6cb67279d548059795ff9b1336e47",
+        "model": "claude-opus-4-5-20251101",
+        "modelBasis": "response",
+        "tokens": {
+          "inputUncached": "2",
+          "cacheRead": "352",
+          "cacheWrite5m": "0",
+          "cacheWrite1h": "0",
+          "cacheWriteUnknown": "0",
+          "output": "1",
+          "reasoning": null
+        }
+      }
+    },
+    {
+      "id": "e0c8ef066b5122e0b001b38f24e39366",
+      "revision": 0,
+      "provenance": {
+        "profile": "numeric-producer-v1",
+        "version": 1,
+        "sourceId": "9513f0386a8e15b4ec91f5f41d65ccb0"
+      },
+      "owner": {
+        "provider": "claude_code",
+        "accountId": null,
+        "executionId": "c6db2081881fe7b6b59405a26b3e5f31",
+        "conversationId": "4538b2492dfe69393f00533352c4272a",
+        "lineage": "root",
+        "parentExecutionId": null
+      },
+      "kind": "usage",
+      "atMs": 1767225632000,
+      "value": {
+        "kind": "usage",
+        "grain": "response",
+        "tokenScope": "direct",
+        "observationId": "aaa58cd71362742fe12c9bccd689929f",
+        "model": "claude-opus-4-5-20251101",
+        "modelBasis": "response",
+        "tokens": {
+          "inputUncached": "2",
+          "cacheRead": "352",
+          "cacheWrite5m": "0",
+          "cacheWrite1h": "0",
+          "cacheWriteUnknown": "0",
+          "output": "1",
+          "reasoning": null
+        }
+      }
+    },
+    {
+      "id": "3fcb7175af4861dd1569082b09262b88",
+      "revision": 0,
+      "provenance": {
+        "profile": "numeric-producer-v1",
+        "version": 1,
+        "sourceId": "9513f0386a8e15b4ec91f5f41d65ccb0"
+      },
+      "owner": {
+        "provider": "claude_code",
+        "accountId": null,
+        "executionId": "c6db2081881fe7b6b59405a26b3e5f31",
+        "conversationId": "4538b2492dfe69393f00533352c4272a",
+        "lineage": "root",
+        "parentExecutionId": null
+      },
+      "kind": "context",
+      "atMs": 1767225632000,
+      "value": {
+        "kind": "context",
+        "observationId": "68fae1ed6e4ce2797f9b61b3aac39d99",
+        "tokens": "354",
+        "limitTokens": null
+      }
+    }
+  ]
+}
