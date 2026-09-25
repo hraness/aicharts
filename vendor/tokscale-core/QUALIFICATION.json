@@ -28,7 +28,7 @@
     {
       "id": "devin",
       "prefix": "sessions::devin::tests::",
-      "expectedTests": 14
+      "expectedTests": 15
     },
     {
       "id": "offline",
