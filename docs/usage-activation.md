@@ -103,7 +103,10 @@ still applies, and every usage flag is unchanged. Linux qualification run
 36104682547 on that commit passed the link-map, ELF, runtime-library and all
 fourteen smoke stages, then refused at `notices` because the new
 `aicharts-metrics` workspace crate was missing from the reviewed attribution
-list; the tree remains Linux-unqualified until a dispatch on the fix passes.
+list. After that fix (`f495d9f`, PR 444) and the `rustls` 0.23.45 notice-policy
+entry (`40874b2`, PR 446), run 36109602971 qualified the Linux CLI at
+`40874b2` and retained its artifact; no release was published from it. The
+site was verified at that commit on `dpl_o6HJWcj3qVrBecbBwQqQ3X9uQ8TX`.
 
 On September 21 (UTC), commit `3a1ddb93456da39fd6a06037f1902dc81acf2663`
 ([PR 349](https://github.com/hraness/aicharts/pull/349)) deployed to both
