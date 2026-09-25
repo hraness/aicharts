@@ -88,22 +88,29 @@ describe("checked Terminal-Bench-Science data", () => {
       expect(record.sourceUrl).toBe(terminalBenchScienceRowUrl(record.id));
       expect(record.sourceUrl).not.toContain("/latest/");
     }
-    expect(parsed.value.records[0]).toMatchObject({
-      harness: { display: { label: "Codex" } },
+    // Owner rank orders by resolution rate; the checked order is the owner's.
+    const rates = parsed.value.records.map(record => record.metrics.resolutionRatePercent);
+    expect(rates).toEqual([...rates].sort((left, right) => right - left));
+  });
+
+  test("retains the reviewed owner rows by identity rather than by leaderboard position", () => {
+    // A row keeps its score for the pinned 0.1.0 leaderboard; its position
+    // changes whenever the owner admits a new system, and the automated
+    // refresh cannot edit this file, so positions are a law above, not a pin.
+    const parsed = parseTerminalBenchScienceSnapshot(terminalBenchScienceData);
+    if (!parsed.ok) throw parsed.error;
+    const row = (model: string, harness: string) => parsed.value.records.find(record =>
+      record.model.display.label === model && record.harness.display.label === harness,
+    );
+
+    expect(row("GPT-6 Astra", "Codex")).toMatchObject({
       metrics: { resolutionRatePercent: 68.0952380952381 },
-      model: { display: { label: "GPT-6 Astra" } },
-      rank: 1,
     });
-    expect(parsed.value.records[1]).toMatchObject({
-      harness: { display: { label: "Claude Code" } },
+    expect(row("Fable 5.1", "Claude Code")).toMatchObject({
       metrics: { resolutionRatePercent: 40 },
-      model: { display: { label: "Fable 5.1" } },
-      rank: 2,
     });
-    expect(parsed.value.records[2]).toMatchObject({
+    expect(row("Opus 5", "Claude Code")).toMatchObject({
       metrics: { resolutionRatePercent: 30 },
-      model: { display: { label: "Opus 5" } },
-      rank: 3,
     });
   });
 
