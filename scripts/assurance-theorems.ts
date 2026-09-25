@@ -16,7 +16,7 @@ const pinSchema = z.object({ schemaVersion: z.literal(1), route: z.string(), qua
     lean: executable, lake: executable, rustc: executable }).strict()),
   backends: z.record(z.string(), z.string()), rustupHome: z.string(), backendManifestSha256: digest,
   allowedAxioms: z.array(z.enum(["propext", "Classical.choice", "Quot.sound"])).length(3), productionTheorems: z.array(z.string()).length(26),
-  mathematicalTheorems: z.array(z.string()).length(9) }).strict();
+  mathematicalTheorems: z.array(z.string()).length(17) }).strict();
 
 const theoremName = z.string().regex(/^[a-z_]+$/u);
 const leanMutation = <Source extends z.ZodType<string>>(source: Source) => z.object({ id: z.string().regex(/^[a-z-]+$/u), source,

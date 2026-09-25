@@ -62,6 +62,9 @@
     },
     {
       "name": "proofs::cumulative_baseline_delta_conserves_the_counter",
+      "functions": [
+        "arithmetic::checked_replace"
+      ],
       "scalarDomain": "Two arbitrary u128 values: cumulative snapshot and inherited baseline.",
       "containerDomain": "None",
       "requiredCoverCount": 3,
