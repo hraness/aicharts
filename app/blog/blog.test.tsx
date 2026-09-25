@@ -1,5 +1,9 @@
 import { describe, expect, test } from "bun:test";
-import { INDEXABLE_ROBOTS } from "@hraness/web-discovery";
+import {
+  articleProvenanceSentence,
+  assertArticleAdmissions,
+} from "@hraness/design-kit";
+import { INDEXABLE_ROBOTS, NOINDEX_ROBOTS } from "@hraness/web-discovery";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
@@ -66,7 +70,18 @@ import {
   getBlogArticle,
   headingId,
 } from "./articles";
-import { BLOG_ARTICLE_ADMISSIONS } from "./article-admissions";
+import {
+  BLOG_ARTICLE_ADMISSIONS,
+  blogArticleProvenance,
+  indexableArticles,
+  indexableBlogArticles,
+  sharedArticleAdmission,
+  sharedArticleAdmissions,
+} from "./article-admissions";
+import {
+  INTRODUCING_AI_CHARTS_NOTE_LINKS,
+  INTRODUCING_AI_CHARTS_PUBLISHED_AT,
+} from "./introducing-ai-charts-article";
 import {
   DEVIN_FUSION,
   createDevinFusionCostSavingArticle,
@@ -224,9 +239,15 @@ describe("AI Charts benchmark notes", () => {
       expect(articleToMarkdown(article)).not.toContain("/images/blog/");
       expect(article.sourceNote).toBe(BLOG_SOURCE_NOTE);
       expect(articleToMarkdown(article)).toContain(BLOG_SOURCE_NOTE);
-      // AI-drafting disclosure appears only on hraness.com (hraness/.github STYLE.md).
-      expect(articleToMarkdown(article)).not.toMatch(/AI-assisted|Prepared with AI assistance/u);
-      if (article.slug === "gpt-6-sol-coding-agent-index") {
+      // Every post discloses AI drafting and its reviewer (Ben, 2026-09-23).
+      const provenance = articleProvenanceSentence(blogArticleProvenance(article.slug));
+      expect(provenance).toStartWith("Drafted with AI");
+      expect(articleToMarkdown(article, undefined, provenance)).toContain(provenance);
+      if (article.slug === "introducing-ai-charts") {
+        expect(article.publishedAt).toBe(INTRODUCING_AI_CHARTS_PUBLISHED_AT);
+        expect(article.updatedAt >= article.publishedAt).toBeTrue();
+        expect(provenance).toStartWith("Drafted with AI from the source code and reviewed by ");
+      } else if (article.slug === "gpt-6-sol-coding-agent-index") {
         expect(article.publishedAt).toBe(GPT_6_SOL_ARTICLE_PUBLISHED_AT);
         expect(article.updatedAt >= article.publishedAt).toBeTrue();
         expect(articleToMarkdown(article)).toContain("captured September 24, 2026 UTC");
@@ -306,7 +327,9 @@ describe("AI Charts benchmark notes", () => {
       expect(admission.canonicalOwner).toBe(blogArticlePath(article.slug));
       expect(admission.decision).toBe("keep");
       expect(admission.lifecycleState).toBe("indexable");
-      expect(admission.reviewedBy).toBe("Codex editorial review");
+      expect(["Codex editorial review", "Claude Opus 5.5 (claude-opus-5-5) editorial review"])
+        .toContain(admission.reviewedBy);
+      expect(admission.reviewerType).toBe("ai");
       expect(admission.humanReviewedOn).toBeNull();
       expect(admission.readerJob.trim()).toBe(admission.readerJob);
       expect(admission.originalContribution.trim())
@@ -337,6 +360,53 @@ describe("AI Charts benchmark notes", () => {
       const days = (reassess.getTime() - reviewed.getTime()) / 86_400_000;
       expect(days).toBeGreaterThanOrEqual(28);
       expect(days).toBeLessThanOrEqual(56);
+    }
+  });
+
+  test("validates every admission against the shared article contract", () => {
+    expect(() => assertArticleAdmissions(sharedArticleAdmissions())).not.toThrow();
+    const introducing = sharedArticleAdmission("introducing-ai-charts");
+    expect(introducing.review?.reviewerType).toBe("ai");
+    expect(introducing.review?.reviewer).not.toMatch(/human/iu);
+    expect(introducing.drafting).toBe("ai-from-source");
+    expect(introducing.observations.length).toBeGreaterThanOrEqual(2);
+    expect(introducing.refreshTriggers.length).toBeGreaterThanOrEqual(1);
+  });
+
+  test("keeps quarantined posts noindex and out of every list", () => {
+    const quarantined = new Set<string>(["introducing-ai-charts"]);
+    const lifecycleFor = (slug: string) =>
+      quarantined.has(slug) ? "quarantined" as const : "indexable" as const;
+    const listed = indexableArticles(blogArticles, lifecycleFor);
+    expect(listed.map(article => article.slug)).not.toContain("introducing-ai-charts");
+    expect(listed.length).toBe(blogArticles.length - 1);
+
+    const article = getBlogArticle("introducing-ai-charts");
+    if (article === undefined) throw new Error("Missing introducing article.");
+    const metadata = blogArticleMetadata(
+      article,
+      blogEditorialImage(article.slug),
+      "quarantined",
+    );
+    expect(metadata.robots).toEqual(NOINDEX_ROBOTS);
+    expect(
+      blogArticleMetadata(article, blogEditorialImage(article.slug)).robots,
+    ).toEqual(INDEXABLE_ROBOTS);
+
+    const feed = atomFeed(blogEditorialImage, listed);
+    expect(feed).not.toContain("/blog/introducing-ai-charts");
+    const entries = blogSitemapEntries(blogEditorialImage, listed);
+    expect(entries.map(entry => entry.url).join("\n"))
+      .not.toContain("/blog/introducing-ai-charts");
+
+    // Every live post is indexable today.
+    expect(indexableBlogArticles.map(item => item.slug)).toEqual([...BLOG_SLUGS]);
+  });
+
+  test("links other notes by their live titles", () => {
+    for (const link of Object.values(INTRODUCING_AI_CHARTS_NOTE_LINKS)) {
+      const target = getBlogArticle(link.href.slice("/blog/".length) as never);
+      expect(target?.title).toBe(link.text);
     }
   });
 
@@ -1759,8 +1829,12 @@ describe("AI Charts benchmark notes", () => {
         `<span aria-current="page">${article.title}</span>`,
       );
       expect(markup).toContain(`dateTime="${article.publishedAt}"`);
-      expect(markup).toContain("By AI Charts");
-      expect(markup).not.toMatch(/AI-assisted|Prepared with AI assistance/u);
+      expect(markup).toContain("By Hraness");
+      expect(markup).not.toContain("By AI Charts");
+      expect(markup).toContain('class="plain-publication__provenance"');
+      expect(markup).toContain(
+        articleProvenanceSentence(blogArticleProvenance(article.slug)),
+      );
       expect(markup).toContain(article.sourceNote);
       if (editorialImage === undefined) {
         expect(markup).not.toContain("<figure");

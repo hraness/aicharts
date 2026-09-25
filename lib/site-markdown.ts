@@ -1,9 +1,15 @@
+import { articleProvenanceSentence } from "@hraness/design-kit";
+
 import {
   articleToMarkdown,
   blogArticlePath,
   blogArticles,
   blogDescription,
 } from "@/app/blog/articles";
+import {
+  blogArticleProvenance,
+  indexableBlogArticles,
+} from "@/app/blog/article-admissions";
 import { blogEditorialImage } from "@/app/blog/editorial-images";
 import {
   homeHeading,
@@ -559,7 +565,7 @@ function blogIndexMarkdown(): string {
     "",
     "## Articles",
     "",
-    ...blogArticles.flatMap(article => [
+    ...indexableBlogArticles.flatMap(article => [
       `### [${article.title}](${absolute(blogArticlePath(article.slug))})`,
       "",
       ...editorialImageMarkdown(article.slug),
@@ -738,7 +744,7 @@ export function agentGuideMarkdown(
     `- [Historical Intelligence v4.1.1 JSON](${absolute("/data/artificial-analysis-intelligence.json")}). Frozen earlier cohort; not refreshed or comparable with the current index scale.`,
     `- [Artificial Analysis coding-agent JSON](${absolute(CODING_AGENT_DATASET_DOWNLOAD_PATH)}). Machine-readable copy of the separate coding-agent chart records.`,
     `- [Notes](${absolute("/blog")}). Sourced notes on named evaluations.`,
-    ...blogArticles.map(article => (
+    ...indexableBlogArticles.map(article => (
       `- [${article.title}](${absolute(blogArticlePath(article.slug))})`
     )),
     `- [XML sitemap](${absolute("/sitemap.xml")})`,
@@ -818,7 +824,11 @@ export function markdownForPath(pathname: string): MarkdownDocument {
     const article = blogArticles.find(candidate => candidate.slug === slug);
     if (article !== undefined) {
       return {
-        body: articleToMarkdown(article, blogEditorialImage(article.slug)),
+        body: articleToMarkdown(
+          article,
+          blogEditorialImage(article.slug),
+          articleProvenanceSentence(blogArticleProvenance(article.slug)),
+        ),
         contentType: MARKDOWN_CONTENT_TYPE,
         found: true,
       };

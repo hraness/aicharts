@@ -32,7 +32,8 @@ import type { ModelCardPresentation } from "@/lib/model-card-presentation";
 import { modelCardRouteStatus } from "@/lib/model-card-route-status";
 import { parseTerminalBenchSnapshot } from "@/lib/terminal-bench-data";
 import { parseTerminalBenchScienceSnapshot } from "@/lib/terminal-bench-science-data";
-import { blogArticlePath, blogArticles } from "./blog/articles";
+import { blogArticlePath, type BlogArticle, type BlogSlug } from "./blog/articles";
+import { indexableBlogArticles } from "./blog/article-admissions";
 import { blogEditorialImage, type BlogEditorialImage } from "./blog/editorial-images";
 import { BLOG_SOCIAL_IMAGE_PATH } from "./blog/seo";
 import { searchSite, site } from "./site";
@@ -43,9 +44,11 @@ export function indexableModelCards(
   return cards.filter(card => !modelCardRouteStatus(card).isProvisional);
 }
 
+/** Sitemap entries for indexable notes only; quarantined and archived notes stay out. */
 export function blogSitemapEntries(
-  imageForSlug: (slug: (typeof blogArticles)[number]["slug"])
-    => BlogEditorialImage | undefined = blogEditorialImage,
+  imageForSlug: (slug: BlogSlug) => BlogEditorialImage | undefined =
+    blogEditorialImage,
+  blogArticles: readonly BlogArticle[] = indexableBlogArticles,
 ): MetadataRoute.Sitemap {
   const absolute = (path: string) => new URL(path, site.origin).toString();
   return blogArticles.map((article) => {
@@ -174,9 +177,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     {
       changeFrequency: "monthly",
       images: [absolute(BLOG_SOCIAL_IMAGE_PATH)],
-      lastModified: blogArticles.reduce(
+      lastModified: indexableBlogArticles.reduce(
         (latest, article) => article.updatedAt > latest ? article.updatedAt : latest,
-        blogArticles[0]?.updatedAt ?? "2026-08-04",
+        indexableBlogArticles[0]?.updatedAt ?? "2026-08-04",
       ),
       priority: 0.8,
       url: absolute("/blog"),

@@ -7,9 +7,11 @@ import { searchSite } from "../site";
 import {
   BLOG_SOURCES,
   blogArticlePath,
-  blogArticles,
   blogDescription,
+  type BlogArticle,
+  type BlogSlug,
 } from "./articles";
+import { indexableBlogArticles } from "./article-admissions";
 import {
   blogEditorialImage,
   representativeEditorialImage,
@@ -30,8 +32,9 @@ function isoDateTime(date: string): string {
 }
 
 export function atomFeed(
-  imageForSlug: (slug: (typeof blogArticles)[number]["slug"])
-    => BlogEditorialImage | undefined = blogEditorialImage,
+  imageForSlug: (slug: BlogSlug) => BlogEditorialImage | undefined =
+    blogEditorialImage,
+  blogArticles: readonly BlogArticle[] = indexableBlogArticles,
 ): string {
   const blogUrl = absoluteWebUrl(searchSite.origin, "/blog");
   const feedUrl = absoluteWebUrl(searchSite.origin, "/blog/feed.xml");
@@ -85,7 +88,7 @@ export function atomFeed(
     `<link href="${escapeXml(blogUrl)}" rel="alternate" />`,
     `<link href="${escapeXml(feedUrl)}" rel="self" type="application/atom+xml" />`,
     `<updated>${isoDateTime(updated)}</updated>`,
-    "<author><name>AI Charts</name><uri>https://aicharts.io/blog</uri></author>",
+    "<author><name>Hraness</name></author>",
     entries,
     "</feed>",
   ].join("");

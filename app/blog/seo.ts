@@ -1,23 +1,29 @@
+import type { ArticleLifecycle } from "@hraness/design-kit";
 import {
   absoluteWebUrl,
   articleJsonLd,
   createArticleMetadata,
   createPublicSiteMetadata,
   INDEXABLE_ROBOTS,
+  NOINDEX_ROBOTS,
   type ArticleDiscovery,
 } from "@hraness/web-discovery";
 import type { Metadata } from "next";
 
 import { searchSite, site } from "../site";
 import {
+  BLOG_ARTICLE_AUTHOR,
   BLOG_SOURCES,
   blogArticleSection,
   blogArticlePath,
-  blogArticles,
   blogDescription,
   type BlogArticle,
   type BlogSlug,
 } from "./articles";
+import {
+  blogArticleLifecycle,
+  indexableBlogArticles,
+} from "./article-admissions";
 import {
   blogEditorialImage,
   representativeEditorialImage,
@@ -25,6 +31,8 @@ import {
 } from "./editorial-images";
 
 export const BLOG_SOCIAL_IMAGE_PATH = "/blog/opengraph-image" as const;
+
+export { BLOG_ARTICLE_AUTHOR };
 
 const blogSearchSite = {
   ...searchSite,
@@ -75,7 +83,7 @@ function articleDiscovery(
 ): ArticleDiscovery {
   const section = blogArticleSection(article);
   return {
-    authors: [{ kind: "Organization", name: "AI Charts", path: "/blog" }],
+    authors: [{ kind: "Organization", name: BLOG_ARTICLE_AUTHOR.name }],
     canonicalPath: blogArticlePath(article.slug),
     category: section,
     ...(article.sourceIds.length === 0 ? {} : {
@@ -107,13 +115,15 @@ export function blogArticleMetadata(
   article: BlogArticle,
   editorialImage: BlogEditorialImage | null =
     blogEditorialImage(article.slug) ?? null,
+  lifecycle: ArticleLifecycle = blogArticleLifecycle(article.slug),
 ): Metadata {
+  const robots = lifecycle === "indexable" ? INDEXABLE_ROBOTS : NOINDEX_ROBOTS;
   if (editorialImage !== null) {
     const metadata = createArticleMetadata(
       searchSite,
       articleDiscovery(article, editorialImage),
     );
-    return { ...metadata, creator: "AI Charts" };
+    return { ...metadata, creator: BLOG_ARTICLE_AUTHOR.name, robots };
   }
   const path = blogArticlePath(article.slug);
   const canonical = absoluteWebUrl(searchSite.origin, path);
@@ -123,11 +133,8 @@ export function blogArticleMetadata(
     title: article.title,
     description: article.seoDescription,
     alternates: { canonical },
-    authors: [{
-      name: "AI Charts",
-      url: absoluteWebUrl(searchSite.origin, "/blog"),
-    }],
-    creator: "AI Charts",
+    authors: [{ name: BLOG_ARTICLE_AUTHOR.name }],
+    creator: BLOG_ARTICLE_AUTHOR.name,
     publisher: "AI Charts",
     category: section,
     openGraph: {
@@ -139,11 +146,11 @@ export function blogArticleMetadata(
       description: article.seoDescription,
       publishedTime: isoDateTime(article.publishedAt),
       modifiedTime: isoDateTime(article.updatedAt),
-      authors: [absoluteWebUrl(searchSite.origin, "/blog")],
+      authors: [BLOG_ARTICLE_AUTHOR.name],
       section,
       tags: [...article.keywords],
     },
-    robots: INDEXABLE_ROBOTS,
+    robots,
     twitter: {
       card: "summary",
       title: article.title,
@@ -174,8 +181,8 @@ export function blogCollectionJsonLd(
     },
     mainEntity: {
       "@type": "ItemList",
-      numberOfItems: blogArticles.length,
-      itemListElement: blogArticles.map((article, index) => {
+      numberOfItems: indexableBlogArticles.length,
+      itemListElement: indexableBlogArticles.map((article, index) => {
         const editorialImage = imageForSlug(article.slug);
         return {
           "@type": "ListItem",
@@ -204,7 +211,6 @@ export function blogArticleJsonLd(
   }
   const path = blogArticlePath(article.slug);
   const url = absoluteWebUrl(searchSite.origin, path);
-  const blogUrl = absoluteWebUrl(searchSite.origin, "/blog");
   return {
     "@context": "https://schema.org",
     "@type": "BlogPosting",
@@ -219,8 +225,7 @@ export function blogArticleJsonLd(
     dateModified: isoDateTime(article.updatedAt),
     author: {
       "@type": "Organization",
-      name: "AI Charts",
-      url: blogUrl,
+      name: BLOG_ARTICLE_AUTHOR.name,
     },
     publisher: {
       "@type": "Organization",

@@ -1,5 +1,17 @@
 import {
+  articleProvenanceFromAdmission,
+  type ArticleAdmission,
+  type ArticleDraftingKind,
+  type ArticleIsoDate,
+  type ArticleLifecycle,
+  type ArticleProvenanceRecord,
+} from "@hraness/design-kit";
+
+import {
+  BLOG_SOURCES,
   blogArticlePath,
+  blogArticles,
+  type BlogArticle,
   type BlogSlug,
   type BlogSourceId,
 } from "./articles";
@@ -15,7 +27,11 @@ export type BlogArticleAdmission = Readonly<{
   homepageRole?: string;
   hostFit: string;
   humanReviewedOn: `${number}-${number}-${number}` | null;
-  lifecycleState: "indexable";
+  /**
+   * `quarantined` and `archived` notes stay readable but ship `noindex` and
+   * stay out of the sitemap, feed, llms.txt, and every list of notes.
+   */
+  lifecycleState: ArticleLifecycle;
   nearestUrls: readonly Readonly<{
     distinction: string;
     url: `/blog/${BlogSlug}`;
@@ -26,7 +42,30 @@ export type BlogArticleAdmission = Readonly<{
   primarySourceIds: readonly BlogSourceId[];
   readerJob: string;
   reassessOn: `${number}-${number}-${number}`;
-  reviewedBy: "Codex editorial review";
+  /** How the note was drafted; the visible provenance note states it. */
+  drafting: ArticleDraftingKind;
+  /** The recorded reviewer. An AI reviewer is named as AI and never called human. */
+  reviewedBy: typeof REVIEWED_BY | typeof CLAUDE_REVIEWED_BY;
+  reviewerType: "ai";
+  /**
+   * The answer a reader could not get from the obvious first result. Older
+   * records predate this field; their original contribution stands in.
+   */
+  nonObviousAnswer?: string;
+  /**
+   * Observations the site made itself, not paraphrases of the sources. Older
+   * records predate this field; their original contribution and host fit
+   * stand in.
+   */
+  observations?: readonly string[];
+  /** Events that force a refresh. Older records derive them from their sources and evidence type. */
+  refreshTriggers?: readonly string[];
+  /** First-party sources checked for the note that it does not cite on the page. */
+  reviewSources?: readonly Readonly<{
+    checkedOn: `${number}-${number}-${number}`;
+    title: string;
+    url: `https://${string}`;
+  }>[];
   reviewedOn: `${number}-${number}-${number}`;
   scores: Readonly<{
     factualConfidence: AdmissionScore;
@@ -43,6 +82,11 @@ const REVIEWED_ON = "2026-09-02" as const;
 const REASSESS_ON = "2026-10-13" as const;
 const EVIDENCE_OWNER = "AI Charts editorial" as const;
 const REVIEWED_BY = "Codex editorial review" as const;
+const CLAUDE_REVIEWED_BY = "Claude Opus 5.5 (claude-opus-5-5) editorial review" as const;
+/** Notes written before the drafting field existed were drafted by AI agents from their cited sources. */
+const AI_DRAFTED = "ai" as const;
+const AI_REVIEWER = "ai" as const;
+const INTRODUCING_REVIEWED_ON = "2026-09-24" as const;
 
 export const HOME_EDITORIAL_SLUGS = [
   "small-models-have-arrived",
@@ -51,6 +95,96 @@ export const HOME_EDITORIAL_SLUGS = [
 ] as const satisfies readonly BlogSlug[];
 
 export const BLOG_ARTICLE_ADMISSIONS = {
+  "introducing-ai-charts": {
+    canonicalOwner: blogArticlePath("introducing-ai-charts"),
+    decision: "keep",
+    drafting: "ai-from-source",
+    evidenceOwner: EVIDENCE_OWNER,
+    evidenceType: "primary-source-synthesis",
+    harmIfWrong:
+      "A reader could treat AI Charts as a composite ranking, read Artificial Analysis’s Terminal-Bench 4 scores as the owners’ Terminal-Bench 4.0 results, compare costs that use different denominators, or expect a packaged usage collector that does not exist yet.",
+    hostFit:
+      "AI Charts owns the charts, benchmarks library, data page, and notes this post describes, and every product claim was checked against the product’s own source, checked snapshots, and refresh schedule.",
+    humanReviewedOn: null,
+    lifecycleState: "indexable",
+    nearestUrls: [
+      {
+        distinction:
+          "The AA Index page derives one snapshot’s coding-agent cost frontier and names the configurations on it; this post explains what the cost frontier means on the chart and links there for the worked example.",
+        url: blogArticlePath("aa-index-cost-coding-agents"),
+      },
+      {
+        distinction:
+          "The holdout page argues why a public-suite score needs a private test set; this post names that as a question AI Charts cannot answer and links there.",
+        url: blogArticlePath("coding-agent-score-holdouts"),
+      },
+    ],
+    nonObviousAnswer:
+      "A coding-agent score belongs to a configuration (model, harness, effort) on one benchmark version and date, so AI Charts plots configurations on a cost frontier and keeps Artificial Analysis’s Terminal-Bench 4 results apart from the owners’ version-pinned Terminal-Bench 4.0 cohort because they come from different harnesses.",
+    observations: [
+      "The coding chart’s hover shows the model, harness and effort setting, AA Index and component scores, cost, time, and total tokens, and shows no uncertainty; source-reported intervals appear only in the benchmarks library, labeled with the source’s interval type.",
+      "The coding chart is built from the Artificial Analysis Coding Agent Index v1.5 snapshot only, while the owners’ version-pinned Terminal-Bench 4.0 snapshot sits in the benchmarks library as its own cohort.",
+      "The data refresh checks the Intelligence Index snapshot every four hours and the coding-agent snapshot daily, and the earlier Intelligence Index v4.1.1 data is frozen.",
+    ],
+    originalContribution:
+      "A product-level map of which AI Charts page answers which model or coding-agent question, why coding-agent results are plotted as configurations on a cost frontier, what the site will not answer, and why the two Terminal-Bench 4 result sets are kept apart.",
+    overlapDecision:
+      "Keep separately: no current note introduces the product, its page roles, or its limits; each linked note covers one benchmark or result, and fewer than a third of this post’s headings or claims overlap any of them.",
+    primaryEvidence:
+      "The AI Charts source (README, third-party notice, search strategy, chart and library components, checked snapshots, and data-refresh schedule) supplies every product claim; Artificial Analysis and the Terminal-Bench owners supply the source names and versions.",
+    primarySourceIds: [
+      "artificialAnalysisCodingAgents",
+      "artificialAnalysisIntelligenceIndex",
+      "terminalBenchRepository",
+    ],
+    readerJob:
+      "Decide whether AI Charts can answer a model or coding-agent choice, and which of its charts, library, data page, or notes to open for it.",
+    reassessOn: "2026-11-05",
+    refreshTriggers: [
+      "Artificial Analysis Intelligence Index version change on the homepage chart or unfreezing of the v4.1.1 dataset",
+      "Artificial Analysis Coding Agent Index version or component change on the coding chart",
+      "The owners’ Terminal-Bench 4.0 cohort is moved, re-versioned, or merged with Artificial Analysis’s harness results",
+      "A change to the coding chart’s hover fields, pinning, or axes, or to the library labels (charted, source guide, emerging evaluation)",
+      "A change to the data-refresh schedule",
+      "Rename, retitle, or removal of any of the four linked notes",
+      "The local token-use collector gets a packaged release or its status changes in the portfolio facts",
+      "An AI Charts rename or portfolio one-liner change in the design kit",
+    ],
+    reviewedBy: CLAUDE_REVIEWED_BY,
+    reviewedOn: INTRODUCING_REVIEWED_ON,
+    reviewerType: AI_REVIEWER,
+    reviewSources: [
+      {
+        checkedOn: INTRODUCING_REVIEWED_ON,
+        title: "AI Charts README",
+        url: "https://github.com/hraness/aicharts/blob/644dc2d/README.md",
+      },
+      {
+        checkedOn: INTRODUCING_REVIEWED_ON,
+        title: "AI Charts third-party notice",
+        url: "https://github.com/hraness/aicharts/blob/644dc2d/NOTICE.md",
+      },
+      {
+        checkedOn: INTRODUCING_REVIEWED_ON,
+        title: "AI Charts search strategy",
+        url: "https://github.com/hraness/aicharts/blob/644dc2d/docs/seo-strategy.md",
+      },
+      {
+        checkedOn: INTRODUCING_REVIEWED_ON,
+        title: "AI Charts data-refresh workflow",
+        url: "https://github.com/hraness/aicharts/blob/644dc2d/.github/workflows/data-refresh.yml",
+      },
+    ],
+    scores: {
+      factualConfidence: 2,
+      hostFit: 2,
+      maintenanceValue: 1,
+      originalEvidence: 1,
+      readerUtility: 2,
+      voiceIntegrity: 2,
+    },
+    sourceCheckedOn: INTRODUCING_REVIEWED_ON,
+  },
   "gpt-6-sol-coding-agent-index": {
     canonicalOwner: blogArticlePath("gpt-6-sol-coding-agent-index"),
     decision: "keep",
@@ -100,7 +234,9 @@ export const BLOG_ARTICLE_ADMISSIONS = {
     readerJob:
       "Understand what Codex · GPT-6 Sol’s AA Index on the coding-agent chart measures, where the row lands against cheaper and higher-scoring configurations, how it moved from GPT-5.6 Sol in the same harness, how the Intelligence Index GPT-6 Sol (max) row and its lower effort levels differ from it, and why the two costs per task are not one unit.",
     reassessOn: "2026-10-29",
+    drafting: AI_DRAFTED,
     reviewedBy: REVIEWED_BY,
+    reviewerType: AI_REVIEWER,
     reviewedOn: "2026-09-24",
     scores: {
       factualConfidence: 2,
@@ -161,7 +297,9 @@ export const BLOG_ARTICLE_ADMISSIONS = {
     readerJob:
       "Understand where Grok 4.7 lands on the AI Charts coding-agent chart and Intelligence Index chart, what its AA Index, component scores, Intelligence Index, and two costs per task measure, how it compares with Grok 4.6 in the same harness, and where independent evidence stops and vendor claims begin.",
     reassessOn: "2026-10-28",
+    drafting: AI_DRAFTED,
     reviewedBy: REVIEWED_BY,
+    reviewerType: AI_REVIEWER,
     reviewedOn: "2026-09-23",
     scores: {
       factualConfidence: 2,
@@ -219,7 +357,9 @@ export const BLOG_ARTICLE_ADMISSIONS = {
     readerJob:
       "Understand what MiMo-V2.6-Pro’s 46 on the Intelligence Index and $0.13 per task measure, where the model sits on the measured cost frontier, how far Das’s price and cybersecurity claims are supported by primary sources, and what remains a vendor or single-user observation.",
     reassessOn: "2026-10-27",
+    drafting: AI_DRAFTED,
     reviewedBy: REVIEWED_BY,
+    reviewerType: AI_REVIEWER,
     reviewedOn: "2026-09-22",
     scores: {
       factualConfidence: 2,
@@ -269,7 +409,9 @@ export const BLOG_ARTICLE_ADMISSIONS = {
     readerJob:
       "Understand which harness components (planning, action space, and context management) move coding-agent success and cost under a fixed loop, under what model and budget conditions, and how to read those results beside the AI Charts chart without merging benchmark versions.",
     reassessOn: "2026-10-26",
+    drafting: AI_DRAFTED,
     reviewedBy: REVIEWED_BY,
+    reviewerType: AI_REVIEWER,
     reviewedOn: "2026-09-21",
     scores: {
       factualConfidence: 2,
@@ -319,7 +461,9 @@ export const BLOG_ARTICLE_ADMISSIONS = {
     readerJob:
       "Understand what HarnessTax’s same-model cost gap measures when a coding model changes harness, and read that study beside the AI Charts chart without merging the two scales.",
     reassessOn: "2026-10-22",
+    drafting: AI_DRAFTED,
     reviewedBy: REVIEWED_BY,
+    reviewerType: AI_REVIEWER,
     reviewedOn: "2026-09-17",
     scores: {
       factualConfidence: 2,
@@ -379,7 +523,9 @@ export const BLOG_ARTICLE_ADMISSIONS = {
     readerJob:
       "Understand what Real-SWE's 38.8% top resolve rate measures for model and harness pairs on private enterprise code, and read that ranking beside the AI Charts coding-agent snapshot without merging the two scales.",
     reassessOn: "2026-10-19",
+    drafting: AI_DRAFTED,
     reviewedBy: REVIEWED_BY,
+    reviewerType: AI_REVIEWER,
     reviewedOn: "2026-09-14",
     scores: {
       factualConfidence: 2,
@@ -429,7 +575,9 @@ export const BLOG_ARTICLE_ADMISSIONS = {
     readerJob:
       "Understand which comparison produces Devin Fusion's 39% saving, what score that comparison gave up, and how to read the other Fusion percentages Cognition has published.",
     reassessOn: "2026-10-16",
+    drafting: AI_DRAFTED,
     reviewedBy: REVIEWED_BY,
+    reviewerType: AI_REVIEWER,
     reviewedOn: "2026-09-11",
     scores: {
       factualConfidence: 2,
@@ -477,7 +625,9 @@ export const BLOG_ARTICLE_ADMISSIONS = {
     readerJob:
       "Understand what Terminal-Bench-Science's leading 30% result actually measures and which constraints remain outside that number.",
     reassessOn: REASSESS_ON,
+    drafting: AI_DRAFTED,
     reviewedBy: REVIEWED_BY,
+    reviewerType: AI_REVIEWER,
     reviewedOn: REVIEWED_ON,
     scores: {
       factualConfidence: 2,
@@ -526,7 +676,9 @@ export const BLOG_ARTICLE_ADMISSIONS = {
     readerJob:
       "Decide when a lower-cost model can make a frequently used AI feature viable without assuming that cheaper means adequate.",
     reassessOn: REASSESS_ON,
+    drafting: AI_DRAFTED,
     reviewedBy: REVIEWED_BY,
+    reviewerType: AI_REVIEWER,
     reviewedOn: REVIEWED_ON,
     scores: {
       factualConfidence: 2,
@@ -575,7 +727,9 @@ export const BLOG_ARTICLE_ADMISSIONS = {
     readerJob:
       "Judge why a high coding-agent score still needs cases that the optimizing system could not inspect.",
     reassessOn: REASSESS_ON,
+    drafting: AI_DRAFTED,
     reviewedBy: REVIEWED_BY,
+    reviewerType: AI_REVIEWER,
     reviewedOn: REVIEWED_ON,
     scores: {
       factualConfidence: 2,
@@ -623,7 +777,9 @@ export const BLOG_ARTICLE_ADMISSIONS = {
     readerJob:
       "Compare an open-model catch-up claim with current coding-agent rows without treating unlike evaluations as one leaderboard.",
     reassessOn: REASSESS_ON,
+    drafting: AI_DRAFTED,
     reviewedBy: REVIEWED_BY,
+    reviewerType: AI_REVIEWER,
     reviewedOn: REVIEWED_ON,
     scores: {
       factualConfidence: 2,
@@ -668,7 +824,9 @@ export const BLOG_ARTICLE_ADMISSIONS = {
     readerJob:
       "Choose coding-agent configurations by the observed AA Index and mean task-cost trade-off rather than score alone.",
     reassessOn: REASSESS_ON,
+    drafting: AI_DRAFTED,
     reviewedBy: REVIEWED_BY,
+    reviewerType: AI_REVIEWER,
     reviewedOn: REVIEWED_ON,
     scores: {
       factualConfidence: 2,
@@ -714,7 +872,9 @@ export const BLOG_ARTICLE_ADMISSIONS = {
     readerJob:
       "Understand what MirrorCode tests when an agent reimplements a complete program and how far its current results can be generalized.",
     reassessOn: REASSESS_ON,
+    drafting: AI_DRAFTED,
     reviewedBy: REVIEWED_BY,
+    reviewerType: AI_REVIEWER,
     reviewedOn: REVIEWED_ON,
     scores: {
       factualConfidence: 2,
@@ -727,3 +887,97 @@ export const BLOG_ARTICLE_ADMISSIONS = {
     sourceCheckedOn: "2026-08-05",
   },
 } as const satisfies Record<BlogSlug, BlogArticleAdmission>;
+
+export function blogArticleAdmission(slug: BlogSlug): BlogArticleAdmission {
+  return (BLOG_ARTICLE_ADMISSIONS as Readonly<Record<BlogSlug, BlogArticleAdmission>>)[slug];
+}
+
+export function blogArticleLifecycle(slug: BlogSlug): ArticleLifecycle {
+  return blogArticleAdmission(slug).lifecycleState;
+}
+
+/**
+ * The notes every discovery surface lists: the index, collection schema,
+ * sitemap, feed, llms.txt, and homepage activity. Quarantined and archived
+ * notes keep their page but appear in none of these.
+ */
+export function indexableArticles<Article extends Pick<BlogArticle, "slug">>(
+  articles: readonly Article[],
+  lifecycleFor: (slug: BlogSlug) => ArticleLifecycle = blogArticleLifecycle,
+): Article[] {
+  return articles.filter(article => lifecycleFor(article.slug) === "indexable");
+}
+
+export const indexableBlogArticles: readonly BlogArticle[] =
+  indexableArticles(blogArticles);
+
+function isoDate(value: `${number}-${number}-${number}`): ArticleIsoDate {
+  return value;
+}
+
+/**
+ * Projects a site record into the shared design-kit admission shape that
+ * `assertArticleAdmissions()` validates. Fields older records predate are
+ * derived from what they do record, never invented: the original contribution
+ * answers the reader, the contribution and host fit are the site's own
+ * observations, and the cited sources and evidence type name the refresh
+ * triggers. The shared record lists the three closest pages.
+ */
+export function sharedArticleAdmission(slug: BlogSlug): ArticleAdmission {
+  const admission = blogArticleAdmission(slug);
+  const citedSources = admission.primarySourceIds.map((sourceId) => {
+    const source = BLOG_SOURCES[sourceId];
+    return {
+      checkedOn: isoDate(admission.sourceCheckedOn),
+      title: source.title,
+      url: source.url,
+    };
+  });
+  const reviewSources = (admission.reviewSources ?? []).map(source => ({
+    checkedOn: isoDate(source.checkedOn),
+    title: source.title,
+    url: source.url,
+  }));
+  const derivedTriggers = [
+    `A cited source changes a claim this note relies on: ${admission.primarySourceIds.map(sourceId => BLOG_SOURCES[sourceId].title).join("; ")}`,
+    ...(admission.evidenceType === "checked-dataset-analysis"
+      ? ["A data refresh changes a checked snapshot row this note derives its figures from"]
+      : []),
+  ];
+  return {
+    drafting: admission.drafting,
+    harmIfWrong: admission.harmIfWrong,
+    hostFit: admission.hostFit,
+    href: admission.canonicalOwner,
+    humanReview: null,
+    lifecycle: admission.lifecycleState,
+    nearestUrls: admission.nearestUrls.slice(0, 3).map(neighbor => ({
+      distinction: neighbor.distinction,
+      url: neighbor.url,
+    })),
+    nonObviousAnswer: admission.nonObviousAnswer ?? admission.originalContribution,
+    observations: admission.observations
+      ?? [admission.originalContribution, admission.hostFit],
+    originalContribution: admission.originalContribution,
+    owner: admission.evidenceOwner,
+    readerJob: admission.readerJob,
+    reassessOn: isoDate(admission.reassessOn),
+    refreshTriggers: admission.refreshTriggers ?? derivedTriggers,
+    review: {
+      reviewedOn: isoDate(admission.reviewedOn),
+      reviewer: admission.reviewedBy,
+      reviewerType: admission.reviewerType,
+    },
+    scores: admission.scores,
+    sources: [...citedSources, ...reviewSources],
+  };
+}
+
+export function sharedArticleAdmissions(): readonly ArticleAdmission[] {
+  return blogArticles.map(article => sharedArticleAdmission(article.slug));
+}
+
+/** The drafting and review note every note shows, from its admission record. */
+export function blogArticleProvenance(slug: BlogSlug): ArticleProvenanceRecord {
+  return articleProvenanceFromAdmission(sharedArticleAdmission(slug));
+}
