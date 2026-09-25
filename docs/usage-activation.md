@@ -88,6 +88,23 @@ rerun for `fc95b51` correctly failed closed with `proof_mismatch`. A receipt
 is evidence for its own commit at its own time; rerun the verifier for the
 commit under discussion instead of reusing one.
 
+On 25 September 2026 (UTC), the system-assurance completion merged as squash
+commit `2356eff8e3113bf7cdb94d691c086d640e2ea022`
+([PR 441](https://github.com/hraness/aicharts/pull/441)) at 06:49:29Z after CI
+run 36102541354 passed every job including `Required`. GitHub deployment
+6655372605 (Production, success, 06:51:07Z) resolved to Vercel deployment
+`dpl_H4hVYpFsJ9VqwfexFHSNDZWBah8D` (same project, target production, status
+Ready, URL `https://aicharts-cki4omw9r-hraness.vercel.app`). At 06:51:37Z the
+verifier found `/`, `/dashboard` and `/usage/sessions` at HTTP 200 with
+`X-Hraness-Delivery-Proof:
+v1.b8d6279f57266c1cfc729f38fe834b9bfa28a554d0526343abbcff0eb9bdfbde`. The
+Worker was not redeployed; the schema-13 recovery-artifact prerequisite above
+still applies, and every usage flag is unchanged. Linux qualification run
+36104682547 on that commit passed the link-map, ELF, runtime-library and all
+fourteen smoke stages, then refused at `notices` because the new
+`aicharts-metrics` workspace crate was missing from the reviewed attribution
+list; the tree remains Linux-unqualified until a dispatch on the fix passes.
+
 On September 21 (UTC), commit `3a1ddb93456da39fd6a06037f1902dc81acf2663`
 ([PR 349](https://github.com/hraness/aicharts/pull/349)) deployed to both
 production services after the complete source gate and protected-main checks.

@@ -644,7 +644,7 @@ resolution, physical reclamation and live recovery remain open.
 
 ### Phase 12 — Delivery and production qualification
 
-- **Status:** In progress — all lanes integrated on the completion branch; protected-main PR, required CI and production verification pending
+- **Status:** In progress — completion PR #441 merged as `2356eff` and the site production-verified; Linux CLI qualification refused an unmapped workspace crate and is re-dispatched after the closeout fix; Worker redeploy, flags and live drills stay owner-gated
 - **Depends on:** 11
 - **Objective:** Deliver the verified artifact and the fully working supported product, with exact production evidence.
 - **Scope:** Task-owned protected-main PRs, required independent review/CI, immutable distribution, deployment, account/provider/native acceptance and scheduled cutover.
@@ -1728,3 +1728,32 @@ selection of 198. The same run's receipt retention followed the
 conformance stages' `node_modules` symlink and their tool symlinks into a
 1.01 GB artifact of 213,348 files; the upload now excludes both and keeps
 the receipts, logs, traces and staged sources.
+
+### 2026-09-25 — PR #441 merged and production-verified; Linux notices attribution
+
+The completion branch merged to protected `main` as squash commit
+`2356eff8e3113bf7cdb94d691c086d640e2ea022`
+([PR 441](https://github.com/hraness/aicharts/pull/441)) at 06:49:29Z after
+CI run 36102541354 on head `f4ecca3` (Changes, Checks, Build, Worker with
+the adapter and conformance gates, Rust, Menubar, Formal verification and
+`Required` all passed, plus the supply-chain workflow and CodeQL). Main had
+moved by one unrelated commit (#442); the merge was clean. GitHub
+deployment 6655372605 (Production, success, 06:51:07Z) resolved to Vercel
+`dpl_H4hVYpFsJ9VqwfexFHSNDZWBah8D` (project `prj_0ppMfRRMDfiVsQ1JaekoxSZ7Mwgn`,
+Ready, URL `https://aicharts-cki4omw9r-hraness.vercel.app`), and at
+06:51:37Z `bun run usage:deployment:verify --sha 2356eff…` found `/`,
+`/dashboard` and `/usage/sessions` at HTTP 200 with
+`X-Hraness-Delivery-Proof: v1.b8d6279f57266c1cfc729f38fe834b9bfa28a554d0526343abbcff0eb9bdfbde`,
+the recomputed token. The Cloudflare Worker was not redeployed.
+
+Linux CLI qualification run 36104682547 on `2356eff` passed the stages that
+had stopped run 36066135869: `read-link-map` (the 64 MiB bound), the ELF and
+runtime-library checks against glibc 2.34, and all fourteen installed smoke
+tests. It then refused at `notices` with `notices_unmapped_crate`: the
+reviewed attribution list of workspace crates predated the kernel lane,
+whose `aicharts-metrics` crate is now in the CLI graph. The crate has no
+dependencies and inherits the workspace MIT license, so the closeout adds it
+to the list and a regression that each of the seven workspace crates in the
+CLI graph passes attribution; that regression fails with exactly the CI
+error when the list omits the crate. The tree stays Linux-unqualified until
+a dispatch on the merged fix passes.
