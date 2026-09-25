@@ -6,6 +6,35 @@ rollback checks are complete.
 
 ## Recorded production evidence
 
+On September 25 (UTC), the device-partitioned usage deployment completed its
+first full local rollout on the primary collector Mac. Worker version
+`1afd47d9` (commit `376fe98`,
+[PR 427](https://github.com/hraness/aicharts/pull/427)) serves at 100% traffic
+with enrollment, pairing, admission, stats and private-read flags enabled and
+public read disabled. The per-device schema migration completed inside a
+fenced admission mutation: an early uploader observed `upload_transport_unavailable`
+at the 20-second HTTP RPC stage while the Durable Object transaction
+continued, and a later `stats-sync` returned `published`, proving the
+migration committed. The retained v1 flight was settled by explicit
+`upload --resume` (256 acknowledged, settled sequence 211019) before the v1
+scheduled publisher was retired; collection remains local-only.
+
+Signed collector `aicharts 0.1.0 (9c78386…)` published per-client v2 snapshots:
+claude revision 64 (117 days), devin-cli revision 65 (117 days), cursor
+revisions 66–67 (365 + 117 days). Codex then published revisions 70–71
+(150 + 118 days) after [PR 434](https://github.com/hraness/aicharts/pull/434)
+recognized `token_count` rate-limit heartbeats (`"info":null`) and stopped
+charging model-less complete usage as a measurement fallback. A launchd
+`LowPriorityIO`/`Background` daemon pass still refused the ~31.5 GB Codex
+corpus at the fixed 120-second import budget, so
+[PR 436](https://github.com/hraness/aicharts/pull/436) scales the deadline by
+admitted bytes at the existing conservative floor; the signed binary on
+`6c00cf2` runs the single `io.aicharts.daemon` job with `--publish-config`
+covering all four clients. The former `io.aicharts.upload` and
+`io.aicharts.autosubmit` jobs were removed with plists retained as backups.
+This is dated rollout evidence for one device; the second Mac remains on the
+documented other-machine procedure until its own run records matching output.
+
 On September 21 (UTC), commit `3a1ddb93456da39fd6a06037f1902dc81acf2663`
 ([PR 349](https://github.com/hraness/aicharts/pull/349)) deployed to both
 production services after the complete source gate and protected-main checks.
