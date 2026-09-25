@@ -108,6 +108,28 @@ entry (`40874b2`, PR 446), run 36109602971 qualified the Linux CLI at
 `40874b2` and retained its artifact; no release was published from it. The
 site was verified at that commit on `dpl_o6HJWcj3qVrBecbBwQqQ3X9uQ8TX`.
 
+Later on September 25 (UTC), worker version
+`a9bf7b17-dbaa-4147-a233-c954eb110c6b` (commit `1831da3`, [PR 441](https://github.com/hraness/aicharts/pull/441)
+through [PR 456](https://github.com/hraness/aicharts/pull/456)) was promoted to
+100% traffic. Its bindings, vars, namespace identities, compatibility flags and
+exports were compared field-for-field against the live version before promotion
+and are identical: the same eight flags (public read stays `0`; no
+contributions or reclamation variable exists), the same generation and
+worker-version pins, the same four namespaces and both buckets. `bd2bac95`
+stays the retained rollback version; under this flag set the new revision adds
+no reachable storage write, so the rollback target reads the same schemas.
+
+The revision carries the system-assurance completion — the account lifecycle
+RPC, the reclamation ledger, contribution rebuild and sync — all unreachable
+while their flags stay unset, plus the fenced per-record admission bound of
+`1831da3` (`parseStatsUpload` enforces it; stored-day re-reads and query
+replies keep parsing committed pre-bound history). After promotion at
+16:41:49Z the consent, stats and totals routes returned their structured
+refusals (`invalid_request`, `invalid_input`) to malformed requests, and the
+deployments record shows `a9bf7b17` at 100%. Real authenticated traffic is
+exercised by the device's own collector cycle; no synthetic account was
+written.
+
 On September 21 (UTC), commit `3a1ddb93456da39fd6a06037f1902dc81acf2663`
 ([PR 349](https://github.com/hraness/aicharts/pull/349)) deployed to both
 production services after the complete source gate and protected-main checks.

@@ -1836,3 +1836,22 @@ baseline + 88 repaired cases) green; Kani receipt binds 21 harnesses and 14
 mutations; theorems receipt binds 26 production + 17 mathematical theorems
 with 5 negative controls; adapter qualification binds 204 tests including
 the raised codex group (81) and the merged devin group (16).
+
+### 2026-09-25 — Worker redeployed on the completion tree
+
+With owner authorization, the production Worker `aicharts-usage-local-only`
+was redeployed from `1831da3` through wrangler `versions upload` and
+`versions deploy`. Version `a9bf7b17-dbaa-4147-a233-c954eb110c6b` reached 100%
+traffic at 16:41:49Z with `bd2bac95` retained as the rollback version.
+Pre-promotion, `wrangler versions view` on the uploaded build showed every
+binding, var, namespace id, compatibility flag and export identical to the
+live version — same generation and worker-version pins, public read `0`, no
+contributions or reclamation var, so no new storage write is reachable and
+the rollback stays compatible. A pre-deploy review of `2e593f7..main` found
+every new write path unreachable under the deployed flag set except one real
+defect: #449's per-record token bound had been placed in the shared row
+parser, so committed pre-bound history would have failed stored-day re-reads
+once deployed. #456 moved enforcement to `parseStatsUpload` (upload admission
+only) with tests before the deploy. Post-deploy, the consent, stats and
+totals routes return their structured refusals; authenticated readback rides
+the device's own collector cycle.
