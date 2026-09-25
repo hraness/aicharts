@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::PathBuf;
 use std::sync::OnceLock;
-mod health;
+pub(crate) mod health;
 mod pricing;
 pub(super) use health::run_retained_health;
 use health::CollectedStats;

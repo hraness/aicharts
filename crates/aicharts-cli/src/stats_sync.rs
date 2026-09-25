@@ -29,6 +29,10 @@ struct Upload {
     mode: String,
     takeover: Option<Takeover>,
     report: Report,
+    /// `source-health-v1` summary of the publishing collection; absent only
+    /// for flights frozen before the field existed.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    health: Option<stats::health::SourceHealthSummary>,
 }
 #[derive(Clone, Serialize, Deserialize, Debug, PartialEq)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
@@ -256,6 +260,7 @@ pub(super) fn validate_publication(report: Report) -> Result<(), &'static str> {
             head_digest: "1".repeat(64),
         }),
         report,
+        health: None,
     }
     .validate()
 }
@@ -286,6 +291,9 @@ impl Upload {
             return Err("stats_sync_state_invalid");
         }
         eligible(&self.report)?;
+        if let Some(health) = &self.health {
+            health.validate(&self.report.sources[0].client)?;
+        }
         encoded(self)?;
         Ok(())
     }
@@ -578,6 +586,17 @@ fn send(options: Options, now: u64) -> Result<String, &'static str> {
         let client = &collection.clients[0];
         let (attempt, observed_completed_at_ms) = collected.observation_identity(client)?;
         let scope = stats::observation_scope(client, collection);
+        // The retained status of this same scope: the attempt just recorded,
+        // the last good observation and the previous publication state.
+        let health = crate::source_health::SourceHealthStore::read_status(
+            &directory.join("source-health-v1"),
+            client,
+            scope,
+        )?
+        .map(|status| {
+            stats::health::SourceHealthSummary::from_status(client, &status, stats::now_ms()?)
+        })
+        .transpose()?;
         let report = publication_report(collected.into_report())?;
         let status = transport.status(&StatusRequest {
             schema_version: 2,
@@ -612,6 +631,7 @@ fn send(options: Options, now: u64) -> Result<String, &'static str> {
             .to_owned(),
             takeover,
             report,
+            health,
         };
         upload.validate()?;
         let binding: [u8; 32] = Sha256::digest(encoded(&upload)?).into();
