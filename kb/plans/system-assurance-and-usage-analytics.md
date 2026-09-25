@@ -1472,3 +1472,44 @@ pass result. Conformance traces M4-abandon, M4-devices and M4-overlap and the
 stats suite encode the new semantics; F09's writer transfer is retired with the
 writer concept. Open: the M4 TLA+ modules still describe the retired writer
 transfer as historical evidence, and the v1 uploader remains a manual path.
+
+### 2026-09-25 — Enrolled-device totals read and the Tokscale reconciliation
+
+The account totals projection shipped behind the coordinator's workload
+token, so a custody install could publish snapshots but could not ask what
+the account sums to without a browser session. A device read on the
+upload-secret family now closes that: `v2/snapshots/totals` accepts only
+the exact schema-2 identity body (account, device, generation), reuses the
+status path's fenced read, secret-commitment and namespace-anchor checks,
+answers through the same totals projection the dashboard renders, and sits
+under the same production admission gate as upload and status. The CLI
+exposes it as `stats-totals`, which opens custody and the strict transport
+only — never the ledger, sources, or enrollment state — and validates the
+full wire projection before rendering.
+
+Reconciling this Mac against the Tokscale public profile separated three
+phenomena that look identical in a single number. Cursor reconciles almost
+exactly: days where only cursor data existed aggregate to 1.02× between
+the server and the immutable CSV, and Tokscale's extra ~2.4B is June–
+September 2025 CSV rows outside the 366-day publishable window, not a
+counting difference. Devin and Claude local totals are newer and larger
+than Tokscale's own cached parse of the same surviving files because its
+parsers skip `adaptive`-mode sessions and rows without a generation model
+(24.6B of real DB tokens versus its 3.8B) — those are Tokscale
+undercounts, not gaps here.
+
+The material discrepancy is Codex and it is a server-side overcount. The
+local corpus still holds the rollout files for every disputed July–August
+day; raw per-turn `last_token_usage` deltas sum to ~123.4B and the
+fork-aware local total is ~104.5B, while the server carries ~230B
+attributable to codex. 2,037 Codex Desktop/VS Code forked rollouts each
+report a final cumulative `total_token_usage` near 12B — an inherited
+shared counter, not per-session usage — and summing those values as
+session totals would project ~14.3TB. Upstream history shows the
+submitting build straddled parser corrections (reasoning tokens counted
+twice, legacy replay turns escaping the child boundary); the server's
+monotonic per-day merge then preserved the inflated values permanently,
+since submitted days can only rise. The remaining ~118B device gap is
+consistent with roughly double-counted codex history plus days whose
+files were deleted before either tool could re-audit them; it is not
+explained by missing local sources alone.
