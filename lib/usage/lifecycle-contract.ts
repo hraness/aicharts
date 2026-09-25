@@ -451,7 +451,7 @@ export const LIFECYCLE_EXPORT_SECTIONS: readonly string[] = Object.freeze([
   "usage_contribution_control", "usage_contribution_populations", "usage_contribution_heads", "usage_contribution_memberships",
   "usage_contribution_operations", "usage_contribution_devices",
   "usage_contribution_projection_control", "usage_contribution_projection_pending", "usage_contribution_projection_publications",
-  "account_work", "usage_contribution_rebuild_jobs", "lifecycle",
+  "account_work", "usage_contribution_rebuild_jobs", "usage_reclamation_ledger", "lifecycle",
 ]);
 export const LIFECYCLE_EXPORT_EXCLUDED: readonly LifecycleExportExclusionV1[] = Object.freeze([
   owner("worker:account_enrollment#anchor.namespaceKey", "credential material; the namespace key is never exported"),

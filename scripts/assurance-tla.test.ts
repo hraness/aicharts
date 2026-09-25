@@ -92,9 +92,9 @@ describe("pinned TLC evidence admission", () => {
     expect(traces).toBe(11);
   });
   test("the repaired suite retains every guard-removal counterexample with its exact expected trace", () => {
-    expect(repaired.cases).toHaveLength(76);
+    expect(repaired.cases).toHaveLength(87);
     expect(Object.fromEntries(["counterexample", "sanity", "witness"].map(kind =>
-      [kind, repaired.cases.filter(item => item.kind === kind).length]))).toEqual({ counterexample: 18, sanity: 16, witness: 42 });
+      [kind, repaired.cases.filter(item => item.kind === kind).length]))).toEqual({ counterexample: 22, sanity: 19, witness: 46 });
     const guard = (id: string, constant: string) => {
       const value = repaired.cases.find(item => item.id === id);
       if (!value) throw new Error(`missing_guard_case:${id}`);
@@ -121,7 +121,7 @@ describe("nightly bounds profile", () => {
     expect(manifestSchema("development").safeParse(JSON.parse(nightlyText)).success).toBe(false);
     expect(manifestSchema("development").safeParse(JSON.parse(repairedText)).success).toBe(true);
     expect(manifestSchema("nightly").safeParse(JSON.parse(repairedText)).success).toBe(false);
-    expect(nightly.cases.map(item => item.id)).toEqual(["m1-nightly-safety", "m1-nightly-orphan", "m11-nightly-sequential-safety", "m11-nightly-negative-quota"]);
+    expect(nightly.cases.map(item => item.id)).toEqual(["m1-nightly-safety", "m1-nightly-orphan", "m11-nightly-sequential-safety", "m11-nightly-negative-quota", "m12-nightly-reclamation-wide-safety"]);
     // The nightly M1/M11 sanity floors exceed their development counterparts, so the nightly configs explore a wider domain.
     expect(nightly.cases.find(item => item.id === "m1-nightly-safety")?.minDistinctStates).toBeGreaterThan(2554);
     expect(nightly.cases.find(item => item.id === "m11-nightly-sequential-safety")?.minDistinctStates).toBeGreaterThan(221596);
@@ -134,9 +134,9 @@ describe("nightly bounds profile", () => {
     for (const constant of ["CONSTANT OpCount = 0", "CONSTANT OpCount = -1", "CONSTANT OpCount = 1000", "CONSTANT OpCount = 03", "CONSTANT OpCount = 3 + 1"]) {
       expect(validateTlcConfig(config.replace("CONSTANT OpCount = 3", constant), value)).toContain("unreviewed configuration directive");
     }
-    for (const id of ["m11-nightly-sequential-safety", "m11-nightly-negative-quota"]) {
+    for (const [id, quota] of [["m11-nightly-sequential-safety", 3], ["m11-nightly-negative-quota", 6]] as const) {
       const m11 = readFileSync(resolve(models, `configs/${id}.cfg`), "utf8");
-      expect(m11).toContain("CONSTANT JobCount = 3"); expect(m11).toContain("CONSTANT Quota = 6");
+      expect(m11).toContain("CONSTANT JobCount = 3"); expect(m11).toContain(`CONSTANT Quota = ${quota}`);
     }
     expect(readFileSync(resolve(models, "configs/m11-sequential-safety.cfg"), "utf8")).toContain("CONSTANT JobCount = 2");
   });
