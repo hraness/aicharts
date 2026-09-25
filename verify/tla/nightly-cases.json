@@ -1,0 +1,68 @@
+{
+  "schemaVersion": 1,
+  "claim": "finite-nightly-model-evidence-only",
+  "bounds": {
+    "workers": 4,
+    "heapMiB": 2048,
+    "timeoutMs": 600000,
+    "maxOutputBytes": 8388608,
+    "maxDistinctStates": 3000000
+  },
+  "cases": [
+    {
+      "id": "m1-nightly-safety",
+      "module": "M1RestoreRepaired",
+      "kind": "sanity",
+      "invariant": null,
+      "config": "configs/m1-nightly-safety.cfg",
+      "requiredActions": [],
+      "minTraceStates": 0,
+      "minDistinctStates": 2555,
+      "expectedDistinctStates": 44934
+    },
+    {
+      "id": "m1-nightly-orphan",
+      "module": "M1RestoreRepaired",
+      "kind": "witness",
+      "invariant": "NoOrphanWitness",
+      "config": "configs/m1-nightly-orphan.cfg",
+      "requiredActions": [
+        "TerminalTimeout",
+        "Release",
+        "PublishEpoch",
+        "LateOrphan"
+      ],
+      "minTraceStates": 5,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
+    },
+    {
+      "id": "m11-nightly-sequential-safety",
+      "module": "M11ContributionRebuild",
+      "kind": "sanity",
+      "invariant": null,
+      "config": "configs/m11-nightly-sequential-safety.cfg",
+      "requiredActions": [],
+      "minTraceStates": 0,
+      "minDistinctStates": 221597,
+      "expectedDistinctStates": 1805384
+    },
+    {
+      "id": "m11-nightly-negative-quota",
+      "module": "M11ContributionRebuild",
+      "kind": "counterexample",
+      "invariant": "Safety",
+      "config": "configs/m11-nightly-negative-quota.cfg",
+      "requiredActions": [
+        "BeginJob",
+        "StartStep",
+        "CheckStep",
+        "ReadCommittedHead",
+        "ReserveStage"
+      ],
+      "minTraceStates": 6,
+      "minDistinctStates": 2,
+      "expectedDistinctStates": null
+    }
+  ]
+}

@@ -2,6 +2,10 @@
 EXTENDS Naturals
 \* Two accounts and browser attempts; response identity is bound independently
 \* of successful data. Missing/conflict responses have the same account guard.
+\* UnsafeGeneration removes the ownership-generation check from read acceptance:
+\* a response captured before two account switches becomes visible (negative
+\* control only).
+CONSTANT UnsafeGeneration
 VARIABLE s
 Init == s = [account |-> 1, generation |-> 0, attempt |-> 0, authenticatedAttempt |-> 0,
   authenticatedAccount |-> 0, approved |-> 0, enrolled |-> 0,
@@ -28,7 +32,7 @@ SwitchAccount == /\ s.generation < 2
 StartRead == /\ s.requestAccount = 0 /\ ~s.expired
   /\ s' = [s EXCEPT !.requestAccount = s.account, !.requestGeneration = s.generation]
 AcceptRead == /\ s.requestAccount = s.account /\ s.requestAccount # 0
-  /\ s.requestGeneration = s.generation /\ ~s.expired /\ ~s.accepted
+  /\ (UnsafeGeneration \/ s.requestGeneration = s.generation) /\ ~s.expired /\ ~s.accepted
   /\ s' = [s EXCEPT !.visible = s.requestAccount, !.accepted = TRUE]
 RefuseLateRead == /\ s.requestAccount # 0 /\ ~s.refused
   /\ (s.requestAccount # s.account \/ s.requestGeneration # s.generation \/ s.expired)

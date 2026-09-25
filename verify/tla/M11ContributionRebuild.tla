@@ -6,10 +6,13 @@ EXTENDS Naturals, FiniteSets
 \* the implementation's sixteen-item envelopes. Identity tokens abstract full
 \* immutable references; equal semantic cells need not have equal tokens.
 CONSTANTS Sequential, WrongPublished, UnsafeQuota, UnsafeProof, UnsafeComparison
-Jobs == IF Sequential THEN 1..2 ELSE {1}
+\* JobCount sequential jobs and the shared charge Quota; development uses 2 and
+\* 4, nightly explores 3 and 6.
+CONSTANTS JobCount, Quota
+Jobs == IF Sequential THEN 1..JobCount ELSE {1}
 Heads == 1..3
 Cells == 1..2
-Tokens == 1..6
+Tokens == 1..(3 * JobCount)
 Phases == {"absent", "building", "comparing", "match", "mismatch", "aborted"}
 Zero == [cell \in Cells |-> 0]
 Fold(revision, prefix) == [cell \in Cells |->
@@ -94,7 +97,7 @@ ReserveStage == /\ s.run.phase = "planned" /\ s.run.owned
              THEN s' = [s EXCEPT !.run.phase = "reserved",
                !.retriedPending = @ \/ (s.restarted /\ s.lostReservation)]
              ELSE s' = [s EXCEPT !.run.phase = "refused"]
-           ELSE IF s.sharedCharge + Cost(head) <= 4
+           ELSE IF s.sharedCharge + Cost(head) <= Quota
              THEN s' = [s EXCEPT !.job[j].pending = head,
                !.job[j].charged = @ + Cost(head),
                \* This mutant omits only the shared quota UPDATE; the job
@@ -224,7 +227,7 @@ Next == BeginJob \/ CheckStep \/ ReadCommittedHead \/ ReserveStage \/ LoseReserv
   \/ (\E job \in Jobs : StartStep(job) \/ AbortJob(job) \/ ReplayLast(job) \/ RejectOlderVersion(job))
 
 TypeOK == /\ s.allocated \in 0..Cardinality(Jobs)
-  /\ s.sourceRevision \in 0..1 /\ s.publication \in 0..1 /\ s.sharedCharge \in 0..4
+  /\ s.sourceRevision \in 0..1 /\ s.publication \in 0..1 /\ s.sharedCharge \in 0..Quota
   /\ s.objects \subseteq Tokens /\ s.reservations \subseteq (Jobs \X Heads)
   /\ s.epoch \in 0..1 /\ s.replayed \subseteq Jobs /\ s.failedPrefix \in 0..2
   /\ s.environment \in {"unchanged", "source", "publication", "pending", "authority", "evidence"}
