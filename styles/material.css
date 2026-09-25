@@ -66,7 +66,8 @@
   .usage-daily__privacy, .usage-daily__coverage, .usage-daily__hint, .usage-daily__error,
   .usage-sessions__privacy, .usage-sessions__source, .usage-sessions__aggregate p,
   .usage-sessions__detail header p, .usage-sessions__notice,
-  .usage-board__hint, .usage-consent__copy, .usage-consent__form > span, .usage-publishing-notice
+  .usage-board__hint, .usage-consent__copy, .usage-consent__form > span, .usage-publishing-notice,
+  .usage-totals > p, p.usage-totals__muted, .usage-totals__notice
 ) {
   font-size: var(--text-body);
   line-height: 1.65;
@@ -78,8 +79,10 @@
   .usage-daily__details summary span, .usage-daily table caption,
   .usage-sessions__aggregate dt, .usage-sessions__detail header > span,
   .usage-sessions__select span, .usage-sessions__model-basis,
-  .usage-board table caption, .usage-consent__handle-field
+  .usage-board table caption, .usage-consent__handle-field,
+  .usage-totals h2, .usage-totals__table caption
 ) { font-size: var(--text-caption); line-height: 1.5; }
+[data-hraness-material="lantern"] .usage-totals__table :is(th, td) { border-block-start: 1px solid var(--grid); }
 [data-hraness-material="lantern"] :is(
   .usage-daily__controls input, .usage-consent__handle-field input, .usage-sessions__scope select,
   .usage-stats input, .usage-stats select
@@ -95,7 +98,8 @@
 }
 [data-hraness-material="lantern"] :is(
   .usage-status, .usage-daily__controls, .usage-sessions__aggregate, .usage-consent__form,
-  .usage-stats__toolbar, .usage-stats__custom, .usage-stats__notice, .usage-stats__day-detail
+  .usage-stats__toolbar, .usage-stats__custom, .usage-stats__notice, .usage-stats__day-detail,
+  .usage-totals
 ) {
   border: 1px solid transparent;
   border-radius: var(--radius-lg);
@@ -108,6 +112,7 @@
     .usage-daily__controls input, .usage-consent__handle-field input, .usage-sessions__scope select,
     .usage-stats input, .usage-stats select,
     .usage-status, .usage-daily__controls, .usage-sessions__aggregate, .usage-consent__form,
-    .usage-stats__toolbar, .usage-stats__custom, .usage-stats__notice, .usage-stats__day-detail
+    .usage-stats__toolbar, .usage-stats__custom, .usage-stats__notice, .usage-stats__day-detail,
+    .usage-totals
   ) { border-color: CanvasText; box-shadow: none; }
 }
