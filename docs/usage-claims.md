@@ -24,7 +24,7 @@ Dated evidence is evidence for its own commit at its own time. Rerun the named c
 | macOS | Source-only for the CLI and companion. One real enrollment and one accepted native upload were recorded on 2026-09-16; on 2026-09-19 the retained CLI returned `attempt_recovery_required`. No notarized or publicly distributed macOS build exists; it needs Apple credentials held by the owner. |
 | Windows | Unsupported. No build, qualification or documentation claim. |
 | Next.js site (`aicharts.io`) | Exact-deployment health verified by `bun run usage:deployment:verify` for `fc95b51` and `1cf93bd` on 2026-09-24, and for `2356eff` (PR 441), `f495d9f` (PR 444) and `40874b2` (PR 446) on 2026-09-25; usage routes remain fenced by the recorded flags. |
-| Cloudflare Worker | Version `a9bf7b17-dbaa-4147-a233-c954eb110c6b` (`1831da3`, PRs 441-456) deployed 2026-09-25T16:41Z with `bd2bac95` (`2e593f7`) retained as rollback; bindings, vars and flags verified identical to the live config; lifecycle, reclamation and contribution paths remain unreachable behind absent flags. |
+| Cloudflare Worker | Version `e19bc6be-d7cc-4755-a3f5-117155e98a05` (`1831da3`) deployed 2026-09-25 with `bd2bac95` retained as rollback; contributions and public leaderboard read enabled, public index verified empty, reclamation and fence-control capabilities stay unset; per-account V3 activation and consent-gated publication remain separate steps. |
 | Codex, Claude Code, Devin | Authenticated dashboard readback across these three on 2026-09-21 (historical); local parsing is source-only. |
 | Cursor, Trae, Warp, Hindsight, Antigravity, MiniMax Code, the Tokscale registry sources | Implemented and tested against synthetic inputs; no live provider qualification. |
 | Hraness Accounts sign-in, pairing, private reads | Production flag names present on 2026-09-19 and 2026-09-24; signed-in readback recorded 2026-09-21 (historical); no current-tree live qualification. |
@@ -46,6 +46,7 @@ Dated evidence is evidence for its own commit at its own time. Rerun the named c
 | The Cloudflare Worker was **not** redeployed for that merge | docs/usage-activation.md | Integrator inspection 2026-09-24: last Worker deployment unchanged from 2026-09-21 | evidenced |
 | the same verifier passed for the next merge | docs/usage-activation.md | Verifier receipt 2026-09-24T22:53:14Z, `dpl_GGMYJjAUtEN13g7UyqWB3JKoCdhH` | evidenced |
 | The site was verified at that commit on | docs/usage-activation.md | Verifier receipt 2026-09-25 for `40874b2`, `dpl_o6HJWcj3qVrBecbBwQqQ3X9uQ8TX` | evidenced |
+| `AICHARTS_USAGE_PUBLIC_READ_ENABLED=1` was added to the Vercel production environment | docs/usage-activation.md | `vercel env ls` after `vercel env add`, 2026-09-25 | evidenced |
 | run 36109602971 qualified the Linux CLI at | docs/usage-activation.md | Run 36109602971 summary `checksPassed: true`, 2026-09-25 | evidenced |
 | deployed to both production services after the complete source gate | docs/usage-activation.md | PR 349, `dpl_HRUt74pjFKM4bQe6DNkbr7E86TqX`, Worker `4c2b0b07-5838-468d-8161-2b27a84cab46`, 2026-09-21 | historical |
 | Its worker, authentication, enrollment, pairing, admission and private-read flags were enabled | docs/usage-activation.md | Production inspection 2026-09-19 of Worker version `36447868-30b8-4cb4-8bcd-cb9fd6913946` | historical |
